@@ -1,0 +1,11 @@
+== Needed ==
+* Change the SPI interface to support all USB commands
+* Support panda lib abstractly connecting over wifi or USB
+* Refactor the Honda safety code to be universal
+
+== Wanted ==
+* Change USB to use interrupt endpoint instead of bulk for can recv
+* Write elm327 emulator in boardesp/elm327.c and make it work with Torque
+* Write a kernel driver to support socketcan. Kline as serial interfaces?
+* Write a Windows J2534 DLL to support windows tools
+

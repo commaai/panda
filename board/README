@@ -1,0 +1,9 @@
+== Building ==
+
+./get_sdk.sh
+
+dfu-util from 
+git@github.com:dsigma/dfu-util.git
+
+
+

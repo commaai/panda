@@ -1,0 +1,4 @@
+proxy
+*.bin
+esp-open-sdk
+a.out
