@@ -17,8 +17,12 @@ See [panda.py](https://github.com/commaai/panda/blob/master/lib/panda.py) for ho
 For example, to receive CAN messages:
 ```
 >>> from panda.lib.panda import Panda
->>> panda = Panda.open()
+>>> panda = Panda()
 >>> panda.can_recv()
+```
+And to send one on bus 0:
+```
+>>> panda.can_send(0x1aa, "message", 0)
 ```
 
 Directory structure
