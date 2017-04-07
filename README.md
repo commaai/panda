@@ -33,7 +33,7 @@ Directory structure
 - lib        -- Python userspace library for interfacing with the panda
 - tests      -- Tests and helper programs for panda
 
-Programming
+Programming (over USB)
 ------
 
 Programming the STM32
