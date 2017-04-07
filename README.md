@@ -1,6 +1,8 @@
 Welcome to panda
 ======
 
+**This repo is a work in progress and will be for the next month while we ship our first pandas to [chffr](http://getchffr.com) users. If you want a panda, download our dashcam app [chffr](http://getchffr.com) and earn comma points!**
+
 [panda](http://github.com/commaai/panda) is the nicest universal car interface you've ever seen. 
 
 It supports 3x CAN, 2x LIN, and 1x GMLAN.
@@ -58,5 +60,5 @@ Check out the hardware [guide](https://github.com/commaai/panda/blob/master/docs
 Licensing
 ------
 
-panda software is released under the MIT license. See LICENSE
+panda software is released under the MIT license unless otherwise specified.
 
