@@ -9,9 +9,17 @@ It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?
 
 It is 2nd gen hardware, reusing code and parts from the [NEO](https://github.com/commaai/neo) interface board.
 
-Hardware
+Usage
 ------
-Check out the hardware [guide](https://github.com/commaai/panda/raw/master/docs/guide.pdf)
+
+See [panda.py](https://github.com/commaai/panda/blob/master/lib/panda.py) for how to interact with the panda.
+
+For example, to receive CAN messages:
+```
+>>> from panda.lib.panda import Panda
+>>> panda = Panda.open()
+>>> panda.can_recv()
+```
 
 Directory structure
 ------
@@ -21,7 +29,7 @@ Directory structure
 - lib        -- Python userspace library for interfacing with the panda
 - tests      -- Tests and helper programs for panda
 
-Usage
+Programming
 ------
 
 Programming the STM32
@@ -37,6 +45,10 @@ cd boardesp
 ./get_sdk.sh
 make
 ```
+
+Hardware
+------
+Check out the hardware [guide](https://github.com/commaai/panda/blob/master/docs/guide.pdf)
 
 Licensing
 ------
