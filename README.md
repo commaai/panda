@@ -11,7 +11,7 @@ It is 2nd gen hardware, reusing code and parts from the [NEO](https://github.com
 
 Hardware
 ------
-Check out the hardware [guide](https://github.com/commaai/panda/raw/master/guide.pdf)
+Check out the hardware [guide](https://github.com/commaai/panda/raw/master/docs/guide.pdf)
 
 Directory structure
 ------
