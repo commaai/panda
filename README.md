@@ -24,6 +24,7 @@ And to send one on bus 0:
 ```
 >>> panda.can_send(0x1aa, "message", 0)
 ```
+More examples coming soon
 
 Directory structure
 ------
