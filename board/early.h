@@ -56,14 +56,14 @@ inline void early() {
       enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
     }
 
-    // these are outputs to control the ESP
-    GPIOC->MODER = GPIO_MODER_MODER14_0 | GPIO_MODER_MODER5_0;
-
     // enable the ESP, disable ESP boot mode
     // unless we are on a giant panda, then there's no ESP
     if (!is_giant_panda) {
       GPIOC->ODR = (1 << 14) | (1 << 5);
     }
+
+    // these are outputs to control the ESP
+    GPIOC->MODER = GPIO_MODER_MODER14_0 | GPIO_MODER_MODER5_0;
   #endif
 
   if (enter_bootloader_mode == ENTER_BOOTLOADER_MAGIC) {
