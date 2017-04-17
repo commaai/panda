@@ -50,7 +50,8 @@ obj/$(STARTUP_FILE).o: $(STARTUP_FILE).s
 obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.$(PROJ_NAME).o
   # hack
 	$(CC) -Wl,--section-start,.isr_vector=0x8004000 $(CFLAGS) -o obj/$(PROJ_NAME).elf $^
-	$(OBJCOPY) -v -O binary obj/$(PROJ_NAME).elf $@
+	$(OBJCOPY) -v -O binary obj/$(PROJ_NAME).elf obj/code.bin
+	./tools/sign.py obj/code.bin $@
 
 obj/bootstub.$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/bootstub.$(PROJ_NAME).o obj/sha.o obj/rsa.o
 	$(CC) $(CFLAGS) -o obj/bootstub.$(PROJ_NAME).elf $^

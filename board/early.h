@@ -5,22 +5,27 @@ void *g_pfnVectors;
 
 int has_external_debug_serial = 0;
 int is_giant_panda = 0;
+#define PULL_EFFECTIVE_DELAY 10
 
 // must call again from main because BSS is zeroed
 inline void detect() {
+  volatile int i;
   // detect has_external_debug_serial
   GPIOA->PUPDR |= GPIO_PUPDR_PUPDR3_1;
+  for (i=0;i<PULL_EFFECTIVE_DELAY;i++);
   has_external_debug_serial = (GPIOA->IDR & (1 << 3)) == (1 << 3);
   
   // detect is_giant_panda
   is_giant_panda = 0;
 #ifdef PANDA
   GPIOB->PUPDR |= GPIO_PUPDR_PUPDR1_1;
+  for (i=0;i<PULL_EFFECTIVE_DELAY;i++);
   is_giant_panda = (GPIOB->IDR & (1 << 1)) == (1 << 1);
 #endif
 }
 
 inline void early() {
+  volatile int i;
   // if wrong chip, reboot
   volatile unsigned int id = DBGMCU->IDCODE;
   #ifdef STM32F4
@@ -41,6 +46,16 @@ inline void early() {
   detect();
   
   #ifdef PANDA
+    // check if the ESP is trying to put me in boot mode
+    // enable pull up
+    GPIOB->PUPDR |= GPIO_PUPDR_PUPDR0_0;
+    for (i=0;i<PULL_EFFECTIVE_DELAY;i++);
+
+    // if it's driven low, jump to uart bootloader
+    if (!(GPIOB->IDR & 1)) {
+      enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+    }
+
     // these are outputs to control the ESP
     GPIOC->MODER = GPIO_MODER_MODER14_0 | GPIO_MODER_MODER5_0;
 
@@ -48,14 +63,6 @@ inline void early() {
     // unless we are on a giant panda, then there's no ESP
     if (!is_giant_panda) {
       GPIOC->ODR = (1 << 14) | (1 << 5);
-    }
-
-    // check if the ESP is trying to put me in boot mode
-    // enable pull up
-    GPIOB->PUPDR |= GPIO_PUPDR_PUPDR0_0;
-    // if it's driven low, jump to uart bootloader
-    if (!(GPIOB->IDR & 1)) {
-      enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
     }
   #endif
 
