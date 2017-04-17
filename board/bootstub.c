@@ -8,6 +8,7 @@ void *_origin = 0x8004000;
 #endif
 
 #include "early.h"
+#include "libc.h"
 
 void __initialize_hardware_early() {
   early();

@@ -241,6 +241,8 @@ inline int putc(uart_ring *q, char elem) {
 // ********************* includes *********************
 
 #include "libc.h"
+#include "gpio.h"
+#include "uart.h"
 #include "adc.h"
 #include "timer.h"
 #include "usb.h"
@@ -696,6 +698,8 @@ void __initialize_hardware_early() {
 int main() {
   // init devices
   clock_init();
+  periph_init();
+
   detect();
   gpio_init();
 

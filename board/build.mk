@@ -36,6 +36,13 @@ obj/bootstub.$(PROJ_NAME).o: bootstub.c early.h
 obj/main.$(PROJ_NAME).o: main.c *.h obj/gitversion.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
+# TODO(geohot): learn to use Makefiles
+obj/sha.o: crypto/sha.c
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+obj/rsa.o: crypto/rsa.c
+	$(CC) $(CFLAGS) -o $@ -c $<
+
 obj/$(STARTUP_FILE).o: $(STARTUP_FILE).s
 	mkdir -p obj
 	$(CC) $(CFLAGS) -o $@ -c $<
@@ -45,7 +52,7 @@ obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.$(PROJ_NAME).o
 	$(CC) -Wl,--section-start,.isr_vector=0x8004000 $(CFLAGS) -o obj/$(PROJ_NAME).elf $^
 	$(OBJCOPY) -v -O binary obj/$(PROJ_NAME).elf $@
 
-obj/bootstub.$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/bootstub.$(PROJ_NAME).o
+obj/bootstub.$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/bootstub.$(PROJ_NAME).o obj/sha.o obj/rsa.o
 	$(CC) $(CFLAGS) -o obj/bootstub.$(PROJ_NAME).elf $^
 	$(OBJCOPY) -v -O binary obj/bootstub.$(PROJ_NAME).elf $@
 	
