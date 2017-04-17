@@ -1,3 +1,16 @@
+// board enforces
+//   in-state
+//      accel set/resume
+//   out-state
+//      cancel button
+
+
+// all commands: brake and steering
+// if controls_allowed
+//     allow all commands up to limit
+// else
+//     block all commands that produce actuation
+
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // state machine to enter and exit controls
   // 0x1A6 for the ILX, 0x296 for the Civic Touring

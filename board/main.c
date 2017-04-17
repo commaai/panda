@@ -305,19 +305,6 @@ void CAN3_TX_IRQHandler() {
 }
 #endif
 
-// board enforces
-//   in-state
-//      accel set/resume
-//   out-state
-//      cancel button
-
-
-// all commands: brake and steering
-// if controls_allowed
-//     allow all commands up to limit
-// else
-//     block all commands that produce actuation
-
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
 void can_rx(CAN_TypeDef *CAN, int can_number) {
@@ -819,8 +806,7 @@ int main() {
     set_led(LED_RED, 1);
     delay(2000000);
 
-    // ESP io proxy
-    //set_led(LED_BLUE, !(GPIOB->IDR&1));
+    // turn off the blue LED, turned on by CAN
     set_led(LED_BLUE, 0);
 
     #ifdef ENABLE_SPI
@@ -849,13 +835,6 @@ int main() {
       // turn off fan
       set_fan_speed(0);
     }
-
-    // if we've been on for a bit and we didn't connect on USB, power up the ESP
-    // TODO: make better logic for this
-    /*if (cnt > 5 && !did_usb_enumerate) {
-      // enable the ESP, disable ESP boot mode
-      GPIOC->ODR = (1 << 14) | (1 << 5);
-    }*/
   }
 
   return 0;
