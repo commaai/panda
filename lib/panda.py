@@ -5,6 +5,11 @@ import socket
 import usb1
 from usb1 import USBErrorIO, USBErrorOverflow
 
+try:
+  from hexdump import hexdump
+except:
+  pass
+
 # stupid tunneling of USB over wifi and SPI
 class WifiHandle(object):
   def __init__(self, ip="192.168.0.10", port=1337):
@@ -12,31 +17,31 @@ class WifiHandle(object):
 
   def __recv(self):
     ret = self.sock.recv(0x44)
-    from hexdump import hexdump
-    hexdump(ret)
-    return ret
+    length = struct.unpack("I", ret[0:4])[0]
+    return ret[4:4+length]
 
   def controlWrite(self, request_type, request, value, index, data, timeout=0):
-    # ignore data, panda doesn't use it
-    return self.controlRead(self, request_type, request, value, index, 0, timeout)
+    # ignore data in reply, panda doesn't use it
+    return self.controlRead(request_type, request, value, index, 0, timeout)
 
   def controlRead(self, request_type, request, value, index, length, timeout=0):
-    self.sock.send(struct.pack("IBBHHH", 0, request_type, request, value, index, length))
+    self.sock.send(struct.pack("HHBBHHH", 0, 0, request_type, request, value, index, length))
     return self.__recv()
 
   def bulkWrite(self, endpoint, data, timeout=0):
     assert len(data) <= 0x10
-    self.sock.send(struct.pack("I", endpoint)+data)
+    self.sock.send(struct.pack("HH", endpoint, len(data))+data)
     self.__recv()  # to /dev/null
 
   def bulkRead(self, endpoint, length, timeout=0):
-    self.sock.send(struct.pack("I", endpoint))
+    self.sock.send(struct.pack("HH", endpoint, 0))
     return self.__recv()
 
 class Panda(object):
   def __init__(self, serial=None, claim=True):
     if serial == "WIFI":
       self.handle = WifiHandle()
+      print "opening WIFI device"
     else:
       context = usb1.USBContext()
 
@@ -66,7 +71,7 @@ class Panda(object):
   # ******************* health *******************
 
   def health(self):
-    dat = self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xd2, 0, 0, 0x20)
+    dat = self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xd2, 0, 0, 13)
     a = struct.unpack("IIBBBBB", dat)
     return {"voltage": a[0], "current": a[1],
             "started": a[2], "controls_allowed": a[3],
@@ -156,8 +161,8 @@ class Panda(object):
     self.kline_drain(bus=bus)
     if checksum:
       x += get_checksum(x)
-    for i in range(0, len(x), 0x10):
-      ts = x[i:i+0x10]
+    for i in range(0, len(x), 0xf):
+      ts = x[i:i+0xf]
       self.handle.bulkWrite(2, chr(bus)+ts)
       echo = self.kline_ll_recv(len(ts), bus=bus)
       if echo != ts:

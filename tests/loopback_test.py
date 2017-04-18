@@ -14,6 +14,14 @@ def get_test_string():
 def run_test():
   pandas = Panda.list()
   print pandas
+
+  if len(pandas) == 0:
+    print "NO PANDAS"
+    assert False
+
+  if len(pandas) == 1:
+    # if we only have one on USB, assume the other is on wifi
+    pandas.append("WIFI")
   h = map(lambda x: Panda(x), pandas)
   print h
 

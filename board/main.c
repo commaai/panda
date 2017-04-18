@@ -410,7 +410,7 @@ void set_fan_speed(int fan_speed) {
 }
 
 int usb_cb_ep1_in(uint8_t *usbdata, int len) {
-  CAN_FIFOMailBox_TypeDef reply[4];
+  CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;;
 
   int ilen = 0;
   while (ilen < min(len/0x10, 4) && pop(&can_rx_q, &reply[ilen])) ilen++;
@@ -592,23 +592,37 @@ void ADC_IRQHandler(void) {
 uint8_t spi_buf[SPI_BUF_SIZE];
 int spi_buf_count = 0;
 int spi_total_count = 0;
-uint8_t spi_tx_buf[0x40];
+uint8_t spi_tx_buf[0x44];
 
 void handle_spi(uint8_t *data, int len) {
-  memset(spi_tx_buf, 0xaa, 0x10);
-  spi_tx_buf[0] = 1;
-  spi_tx_buf[1] = 2;
-  spi_tx_buf[2] = 3;
-  spi_tx_buf[3] = 4;
-  spi_tx_buf[4] = 5;
-  spi_tx_buf[5] = 6;
-  spi_tx_dma(spi_tx_buf, 0x10);
-
-  // last thing
-  hexdump(data, len);
+  memset(spi_tx_buf, 0xaa, 0x44);
+  // data[0]  = endpoint
+  // data[2]  = length
+  // data[4:] = data
+  int *resp_len = (int*)spi_tx_buf;
+  *resp_len = 0;
+  switch (data[0]) {
+    case 0:
+      // control transfer
+      *resp_len = usb_cb_control_msg(data+4, spi_tx_buf+4);
+      break;
+    case 1:
+      // ep 1, read
+      *resp_len = usb_cb_ep1_in(spi_tx_buf+4, 0x40);
+      break;
+    case 2:
+      // ep 2, send serial
+      usb_cb_ep2_out(data+4, data[2]);
+      break;
+    case 3:
+      // ep 3, send CAN
+      usb_cb_ep3_out(data+4, data[2]);
+      break;
+  }
+  spi_tx_dma(spi_tx_buf, 0x44);
 }
 
-void SPI1_IRQHandler(void) {
+/*void SPI1_IRQHandler(void) {
   // status is 0x43
   if (SPI1->SR & SPI_SR_RXNE) {
     uint8_t dat = SPI1->DR;
@@ -633,7 +647,7 @@ void SPI1_IRQHandler(void) {
     puth(stat);
     puts("\n");
   }
-}
+}*/
 
 // SPI RX
 void DMA2_Stream2_IRQHandler(void) {
@@ -654,6 +668,7 @@ void DMA2_Stream2_IRQHandler(void) {
 void DMA2_Stream3_IRQHandler(void) {
   // ack
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
+  //puts("spi tx done\n");
 
   // reenable interrupt
   //EXTI->IMR |= (1 << 4);
@@ -666,7 +681,7 @@ void EXTI4_IRQHandler(void) {
   if (pr & (1 << 4)) {
     spi_total_count = 0;
     spi_rx_dma(spi_buf, 0x14);
-    puts("exti4\n");
+    //puts("exti4\n");
   }
   EXTI->PR = pr;
 }

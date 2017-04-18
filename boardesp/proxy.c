@@ -26,6 +26,9 @@ struct espconn tcp_conn;
 // TCP specific protocol structure.
 esp_tcp tcp_proto;
 
+uint32_t sendData[0x14] = {0};
+uint32_t recvData[0x40] = {0};
+
 static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
   if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin)) {
     // set gpio low
@@ -38,9 +41,6 @@ static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
   // nothing too big
   if (len > 0x14) return;
 
-  uint32_t value = 0xD3D4D5D6;
-  uint32_t sendData[0x40] = {0};
-
   SpiData spiData;
 
   spiData.cmd = 2;
@@ -50,17 +50,35 @@ static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
 
   // manual CS pin
   gpio_output_set(0, (1 << 5), 0, 0);
+  memset(sendData, 0xCC, 0x14);
+
+  // send request
   memcpy(((void*)sendData), data, len);
   spiData.data = sendData;
   spiData.dataLen = 0x14;
   SPIMasterSendData(SpiNum_HSPI, &spiData);
 
-  spiData.data = sendData;
-  spiData.dataLen = 0x44;
+  // give the ST time to be ready, 1 ms
+  // TODO: how can we do this better?
+  os_delay_us(1000);
+
+  // blank out recvData
+  memset(recvData, 0xBB, 0x44);
+
+  // receive the length
+  spiData.data = recvData;
+  spiData.dataLen = 4;
   SPIMasterRecvData(SpiNum_HSPI, &spiData);
+  int length = recvData[0];
+
+  // got response, 0x40 works, 0x44 does not
+  spiData.data = recvData+1;
+  spiData.dataLen = 0x40;
+  SPIMasterRecvData(SpiNum_HSPI, &spiData);
+
   gpio_output_set((1 << 5), 0, 0, 0);
 
-  espconn_send(&tcp_conn, sendData, 0x40);
+  espconn_send(&tcp_conn, recvData, 0x44);
 }
 
 void ICACHE_FLASH_ATTR tcp_connect_cb(void *arg) {
