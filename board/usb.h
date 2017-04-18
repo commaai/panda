@@ -46,10 +46,41 @@ USB_OTG_GlobalTypeDef *USBx = USB_OTG_FS;
 
 #define USB_OTG_SPEED_FULL 3
 
+#define MAX_RESP_LEN 0x80
+uint8_t resp[MAX_RESP_LEN];
+
+typedef union
+{
+  uint16_t w;
+  struct BW
+  {
+    uint8_t msb;
+    uint8_t lsb;
+  }
+  bw; 
+}
+uint16_t_uint8_t;
+
+
+typedef union _USB_Setup
+{
+  uint32_t d8[2];
+  
+  struct _SetupPkt_Struc
+  {
+    uint8_t           bmRequestType;
+    uint8_t           bRequest;
+    uint16_t_uint8_t  wValue;
+    uint16_t_uint8_t  wIndex;
+    uint16_t_uint8_t  wLength;
+  } b;
+} 
+USB_Setup_TypeDef; 
+
 // interfaces
 void usb_cb_enumeration_complete();
-void usb_cb_control_msg();
-void usb_cb_ep1_in(int len);
+int  usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *usbdata);
+int  usb_cb_ep1_in(uint8_t *usbdata, int len);
 void usb_cb_ep2_out(uint8_t *usbdata, int len);
 void usb_cb_ep3_out(uint8_t *usbdata, int len);
 
@@ -107,34 +138,6 @@ uint16_t string_3_desc[] = {
   0x030a,
   'n', 'o', 'n', 'e'
 };
-
-typedef union
-{
-  uint16_t w;
-  struct BW
-  {
-    uint8_t msb;
-    uint8_t lsb;
-  }
-  bw; 
-}
-uint16_t_uint8_t;
-
-
-typedef union _USB_Setup
-{
-  uint32_t d8[2];
-  
-  struct _SetupPkt_Struc
-  {
-    uint8_t           bmRequestType;
-    uint8_t           bRequest;
-    uint16_t_uint8_t  wValue;
-    uint16_t_uint8_t  wIndex;
-    uint16_t_uint8_t  wLength;
-  } b;
-} 
-USB_Setup_TypeDef; 
 
 // current packet
 USB_Setup_TypeDef setup;
@@ -224,7 +227,7 @@ char to_hex_char(int a) {
 
 void usb_setup() {
   int i;
-  uint8_t resp[0x80];
+  int resp_len;
   // setup packet is ready
   switch (setup.b.bRequest) {
     case USB_REQ_SET_CONFIGURATION:
@@ -332,7 +335,9 @@ void usb_setup() {
       USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
       break;
     default:
-      usb_cb_control_msg();
+      resp_len = usb_cb_control_msg(&setup, resp);
+      USB_WritePacket(resp, min(resp_len, setup.b.wLength.w), 0);
+      USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
   }
 }
 
@@ -612,7 +617,7 @@ void usb_irqhandler(void) {
         puts("  IN PACKET QUEUE\n"); 
       #endif
       // TODO: always assuming max len, can we get the length?
-      usb_cb_ep1_in(0x40);
+      USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40), 1);
     }
 
     // clear interrupts

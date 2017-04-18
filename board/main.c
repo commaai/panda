@@ -147,6 +147,10 @@ void debug_ring_callback(uart_ring *ring) {
       enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
       NVIC_SystemReset();
     }
+    if (rcv == 'x') {
+      // normal reset
+      NVIC_SystemReset();
+    }
   }
 }
 
@@ -405,19 +409,13 @@ void set_fan_speed(int fan_speed) {
   TIM3->CCR3 = fan_speed;
 }
 
-void usb_cb_ep1_in(int len) {
+int usb_cb_ep1_in(uint8_t *usbdata, int len) {
   CAN_FIFOMailBox_TypeDef reply[4];
 
   int ilen = 0;
   while (ilen < min(len/0x10, 4) && pop(&can_rx_q, &reply[ilen])) ilen++;
 
-  /*#ifdef DEBUG
-    puts("FIFO SENDING ");
-    puth(ilen);
-    puts("\n");
-  #endif*/
-
-  USB_WritePacket((void *)reply, ilen*0x10, 1);
+  return ilen*0x10;
 }
 
 // send on serial, first byte to select
@@ -478,37 +476,32 @@ void usb_cb_enumeration_complete() {
 }
 
 
-#define MAX_RESP_LEN 0x30
-void usb_cb_control_msg() {
-  uint8_t resp[MAX_RESP_LEN];
+int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
   int resp_len = 0;
   uart_ring *ur = NULL;
   int i;
-  switch (setup.b.bRequest) {
+  switch (setup->b.bRequest) {
     case 0xd1:
       enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
       NVIC_SystemReset();
       break;
     case 0xd2:
       resp_len = get_health_pkt(resp);
-      USB_WritePacket(resp, resp_len, 0);
-      USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
       break;
     case 0xd3:
-      set_fan_speed(setup.b.wValue.w);
-      USB_WritePacket(0, 0, 0);
-      USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+      set_fan_speed(setup->b.wValue.w);
       break;
     case 0xd6: // GET_VERSION
-      USB_WritePacket(gitversion, min(sizeof(gitversion), setup.b.wLength.w), 0);
-      USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+      // assert(sizeof(gitversion) <= MAX_RESP_LEN);
+      memcpy(resp, gitversion, sizeof(gitversion));
+      resp_len = sizeof(gitversion);
       break;
     case 0xd8: // RESET
       NVIC_SystemReset();
       break;
     case 0xda: // ESP RESET
       // pull low for ESP boot mode
-      if (setup.b.wValue.w == 1) {
+      if (setup->b.wValue.w == 1) {
         GPIOC->ODR &= ~(1 << 5);
       }
 
@@ -520,48 +513,26 @@ void usb_cb_control_msg() {
 
       // reset done, no more boot mode
       // TODO: ESP doesn't seem to listen here
-      if (setup.b.wValue.w == 1) {
+      if (setup->b.wValue.w == 1) {
         GPIOC->ODR |= (1 << 5);
       }
-
-      USB_WritePacket(0, 0, 0);
-      USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
       break;
     case 0xdb: // toggle GMLAN
-      set_can2_mode(setup.b.wValue.w);
-
-      // null reply
-      USB_WritePacket(resp, resp_len, 0);
-      USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+      set_can2_mode(setup->b.wValue.w);
       break;
     case 0xe0: // uart read
-      ur = get_ring_by_number(setup.b.wValue.w);
+      ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) break;
-      if (setup.b.bRequest == 0xe0) {
-        // read
-        while (resp_len < min(setup.b.wLength.w, MAX_RESP_LEN) && getc(ur, &resp[resp_len])) {
-          ++resp_len;
-        }
-        /*puts("uart read: ");
-        puth(setup.b.wLength.w);
-        puts(" ");
-        puth(resp_len);
-        puts("\n");*/
-        USB_WritePacket(resp, resp_len, 0);
-        USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+      // read
+      while (resp_len < min(setup->b.wLength.w, MAX_RESP_LEN) && getc(ur, &resp[resp_len])) {
+        ++resp_len;
       }
-      break;
     case 0xe1: // uart set baud rate
-      ur = get_ring_by_number(setup.b.wValue.w);
-      uart_set_baud(ur->uart, setup.b.wIndex.w);
-      //puth(ur->uart->BRR); puts("\n");
-
-      // null reply
-      USB_WritePacket(resp, resp_len, 0);
-      USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+      ur = get_ring_by_number(setup->b.wValue.w);
+      uart_set_baud(ur->uart, setup->b.wIndex.w);
       break;
     case 0xf0: // k-line wValue pulse on uart2
-      if (setup.b.wValue.w == 1) {
+      if (setup->b.wValue.w == 1) {
         GPIOC->ODR &= ~(1 << 10);
         GPIOC->MODER &= ~GPIO_MODER_MODER10_1;
         GPIOC->MODER |= GPIO_MODER_MODER10_0;
@@ -571,10 +542,9 @@ void usb_cb_control_msg() {
         GPIOC->MODER |= GPIO_MODER_MODER12_0;
       }
 
-      //delay((int)setup.b.wValue.w * 8000);
       for (i = 0; i < 80; i++) {
         delay(8000);
-        if (setup.b.wValue.w == 1) {
+        if (setup->b.wValue.w == 1) {
           GPIOC->ODR |= (1 << 10);
           GPIOC->ODR &= ~(1 << 10);
         } else {
@@ -583,7 +553,7 @@ void usb_cb_control_msg() {
         }
       }
 
-      if (setup.b.wValue.w == 1) {
+      if (setup->b.wValue.w == 1) {
         GPIOC->MODER &= ~GPIO_MODER_MODER10_0;
         GPIOC->MODER |= GPIO_MODER_MODER10_1;
       } else {
@@ -592,18 +562,14 @@ void usb_cb_control_msg() {
       }
 
       delay(140 * 9000);
-      //delay((int)setup.b.wIndex.w * 8000);
-
-      // null reply
-      USB_WritePacket(resp, resp_len, 0);
-      USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
       break;
     default:
       puts("NO HANDLER ");
-      puth(setup.b.bRequest);
+      puth(setup->b.bRequest);
       puts("\n");
       break;
   }
+  return resp_len;
 }
 
 
@@ -626,7 +592,7 @@ uint8_t spi_buf[SPI_BUF_SIZE];
 int spi_buf_count = 0;
 uint8_t spi_tx_buf[0x10];
 
-/*void SPI1_IRQHandler(void) {
+void SPI1_IRQHandler(void) {
   // status is 0x43
   if (SPI1->SR & SPI_SR_RXNE) {
     uint8_t dat = SPI1->DR;
@@ -636,25 +602,26 @@ uint8_t spi_tx_buf[0x10];
     }
   }
 
-  if (SPI1->SR & SPI_SR_TXE) {
+  /*if (SPI1->SR & SPI_SR_TXE) {
     // all i send is U U U no matter what
     //SPI1->DR = 'U';
-  }
+  }*/
 
   int stat = SPI1->SR;
+  //if (stat & ((~SPI_SR_RXNE) & (~SPI_SR_TXE) & (~SPI_SR_BSY))) {
   if (stat & ((~SPI_SR_RXNE) & (~SPI_SR_TXE) & (~SPI_SR_BSY))) {
     puts("SPI status: ");
     puth(stat);
     puts("\n");
   }
-}*/
+}
 
 void DMA2_Stream3_IRQHandler(void) {
   // ack
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
 
   // reenable interrupt
-  EXTI->IMR |= (1 << 4);
+  //EXTI->IMR |= (1 << 4);
   //puts("stop\n");
 }
 
@@ -662,14 +629,22 @@ void EXTI4_IRQHandler(void) {
   int pr = EXTI->PR;
   // SPI CS rising
   if (pr & (1 << 4)) {
-    if (pop(&can_rx_q, spi_tx_buf)) {
+    puts("exti4\n");
+    memset(spi_tx_buf, 0xaa, 0x10);
+    spi_tx_buf[0] = 1;
+    spi_tx_buf[1] = 2;
+    spi_tx_buf[2] = 3;
+    spi_tx_buf[3] = 4;
+    spi_tx_buf[4] = 5;
+    spi_tx_buf[5] = 6;
+    spi_tx_dma(spi_tx_buf, 0x10);
+    /*if (pop(&can_rx_q, spi_tx_buf)) {
       spi_tx_dma(spi_tx_buf, 0x10);
     } else {
       memset(spi_tx_buf, 0, 0x10);
       spi_tx_dma(spi_tx_buf, 0x10);
-    }
-    //puts("start\n");
-    EXTI->IMR &= ~(1 << 4);
+    }*/
+    //EXTI->IMR &= ~(1 << 4);
   }
   EXTI->PR = pr;
 }
@@ -769,7 +744,7 @@ int main() {
 
 #ifdef ENABLE_SPI
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);
-  //NVIC_EnableIRQ(SPI1_IRQn);
+  NVIC_EnableIRQ(SPI1_IRQn);
 
   // setup interrupt on falling edge of SPI enable (on PA4)
   SYSCFG->EXTICR[2] = SYSCFG_EXTICR2_EXTI4_PA;

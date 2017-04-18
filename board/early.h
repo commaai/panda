@@ -1,4 +1,5 @@
 #define ENTER_BOOTLOADER_MAGIC 0xdeadbeef
+#define POST_BOOTLOADER_MAGIC 0xdeadb111
 extern uint32_t enter_bootloader_mode;
 extern void *_app_start[];
 void *g_pfnVectors;
@@ -25,6 +26,12 @@ inline void detect() {
 }
 
 inline void early() {
+  // after it's been in the bootloader, things are initted differently, so we reset
+  if (enter_bootloader_mode == POST_BOOTLOADER_MAGIC) {
+    enter_bootloader_mode = 0;
+    NVIC_SystemReset();
+  }
+
   volatile int i;
   // if wrong chip, reboot
   volatile unsigned int id = DBGMCU->IDCODE;
@@ -78,7 +85,7 @@ inline void early() {
     #endif
 
     // do enter bootloader
-    enter_bootloader_mode = 0;
+    enter_bootloader_mode = POST_BOOTLOADER_MAGIC;
     void (*bootloader)(void) = (void (*)(void)) (*((uint32_t *)0x1fff0004));
 
     // jump to bootloader

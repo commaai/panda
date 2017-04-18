@@ -8,6 +8,16 @@
 #include "tcp_ota.h"
 #include "driver/spi_interface.h"
 
+#define min(a,b) \
+ ({ __typeof__ (a) _a = (a); \
+     __typeof__ (b) _b = (b); \
+   _a < _b ? _a : _b; })
+
+#define max(a,b) \
+ ({ __typeof__ (a) _a = (a); \
+     __typeof__ (b) _b = (b); \
+   _a > _b ? _a : _b; })
+
 static const int pin = 2;
 static volatile os_timer_t some_timer;
 
@@ -68,6 +78,40 @@ void ICACHE_FLASH_ATTR some_timerfunc(void *arg)
   }
 }
 
+static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
+  if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin)) {
+    // set gpio low
+    gpio_output_set(0, (1 << pin), 0, 0);
+  } else {
+    // set gpio high
+    gpio_output_set((1 << pin), 0, 0, 0);
+  }
+
+  uint32_t value = 0xD3D4D5D6;
+  uint32_t sendData[8] = {0};
+
+  SpiData spiData;
+
+  spiData.cmd = 2;
+  spiData.cmdLen = 0;
+  spiData.addr = NULL;
+  spiData.addrLen = 0;
+
+  // manual CS pin
+  gpio_output_set(0, (1 << 5), 0, 0);
+  memcpy(sendData, data, len);
+  spiData.data = sendData;
+  spiData.dataLen = len;
+  SPIMasterSendData(SpiNum_HSPI, &spiData);
+
+  spiData.data = sendData;
+  spiData.dataLen = 16;
+  SPIMasterRecvData(SpiNum_HSPI, &spiData);
+  gpio_output_set((1 << 5), 0, 0, 0);
+
+  espconn_send(&tcp_conn, sendData, 0x10);
+}
+
 int did_start_timer = 0;
 
 void ICACHE_FLASH_ATTR tcp_connect_cb(void *arg) {
@@ -78,13 +122,14 @@ void ICACHE_FLASH_ATTR tcp_connect_cb(void *arg) {
   uint16_t len = strlen(message);
   espconn_send (&tcp_conn, message, len);*/
 
-  if (!did_start_timer) {
+  /*if (!did_start_timer) {
     // not atomic!
     did_start_timer = 1;
     // setup timer (100ms, repeating)
     os_timer_setfn(&some_timer, (os_timer_func_t *)some_timerfunc, NULL);
     os_timer_arm(&some_timer, 50, 1);
-  }
+  }*/
+  espconn_regist_recvcb(conn, tcp_rx_cb);
 }
 
 void ICACHE_FLASH_ATTR wifi_init() {

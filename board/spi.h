@@ -1,7 +1,10 @@
 void spi_init() {
   puts("SPI init\n");
   SPI1->CR1 = SPI_CR1_SPE;
+
+  // enable SPI interrupts
   //SPI1->CR2 = SPI_CR2_RXNEIE | SPI_CR2_ERRIE | SPI_CR2_TXEIE;
+  SPI1->CR2 = SPI_CR2_RXNEIE;
 }
 
 void spi_tx_dma(void *addr, int len) {
