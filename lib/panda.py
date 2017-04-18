@@ -1,22 +1,54 @@
 # python library to interface with panda
 import struct
 
+import socket
 import usb1
 from usb1 import USBErrorIO, USBErrorOverflow
 
+# stupid tunneling of USB over wifi and SPI
+class WifiHandle(object):
+  def __init__(self, ip="192.168.0.10", port=1337):
+    self.sock = socket.create_connection((ip, port))
+
+  def __recv(self):
+    ret = self.sock.recv(0x44)
+    from hexdump import hexdump
+    hexdump(ret)
+    return ret
+
+  def controlWrite(self, request_type, request, value, index, data, timeout=0):
+    # ignore data, panda doesn't use it
+    return self.controlRead(self, request_type, request, value, index, 0, timeout)
+
+  def controlRead(self, request_type, request, value, index, length, timeout=0):
+    self.sock.send(struct.pack("IBBHHH", 0, request_type, request, value, index, length))
+    return self.__recv()
+
+  def bulkWrite(self, endpoint, data, timeout=0):
+    assert len(data) <= 0x10
+    self.sock.send(struct.pack("I", endpoint)+data)
+    self.__recv()  # to /dev/null
+
+  def bulkRead(self, endpoint, length, timeout=0):
+    self.sock.send(struct.pack("I", endpoint))
+    return self.__recv()
+
 class Panda(object):
   def __init__(self, serial=None, claim=True):
-    context = usb1.USBContext()
+    if serial == "WIFI":
+      self.handle = WifiHandle()
+    else:
+      context = usb1.USBContext()
 
-    self.handle = None
-    for device in context.getDeviceList(skip_on_error=True):
-      if device.getVendorID() == 0xbbaa and device.getProductID() == 0xddcc:
-        if serial is None or device.getSerialNumber() == serial:
-          print "opening device", device.getSerialNumber()
-          self.handle = device.open()
-          if claim:
-            self.handle.claimInterface(0)
-          break
+      self.handle = None
+      for device in context.getDeviceList(skip_on_error=True):
+        if device.getVendorID() == 0xbbaa and device.getProductID() == 0xddcc:
+          if serial is None or device.getSerialNumber() == serial:
+            print "opening device", device.getSerialNumber()
+            self.handle = device.open()
+            if claim:
+              self.handle.claimInterface(0)
+            break
 
     assert self.handle != None
 
@@ -27,6 +59,8 @@ class Panda(object):
     for device in context.getDeviceList(skip_on_error=True):
       if device.getVendorID() == 0xbbaa and device.getProductID() == 0xddcc:
         ret.append(device.getSerialNumber())
+    # TODO: detect if this is real
+    #ret += ["WIFI"]
     return ret
 
   # ******************* health *******************
@@ -87,7 +121,7 @@ class Panda(object):
   def serial_read(self, port_number):
     return self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, port_number, 0, 0x100)
 
-  def serial_write(self, port_number):
+  def serial_write(self, port_number, ln):
     return self.handle.bulkWrite(2, chr(port_number) + ln)
 
   # ******************* kline *******************

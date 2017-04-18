@@ -24,3 +24,23 @@ void spi_tx_dma(void *addr, int len) {
   SPI1->CR2 |= SPI_CR2_TXDMAEN;
 }
 
+void spi_rx_dma(void *addr, int len) {
+  // disable DMA
+  SPI1->CR2 &= ~SPI_CR2_RXDMAEN;
+  DMA2_Stream2->CR &= ~DMA_SxCR_EN;
+
+  // drain the bus
+  uint8_t dat = SPI1->DR;
+
+  // DMA2, stream 2, channel 3
+  DMA2_Stream2->M0AR = addr;
+  DMA2_Stream2->NDTR = len;
+  DMA2_Stream2->PAR = &(SPI1->DR);
+
+  // channel3, increment memory, periph -> memory, enable
+  DMA2_Stream2->CR = DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_EN;
+  DMA2_Stream2->CR |= DMA_SxCR_TCIE;
+
+  SPI1->CR2 |= SPI_CR2_RXDMAEN;
+}
+

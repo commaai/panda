@@ -22,6 +22,6 @@ if __name__ == "__main__":
         sys.stdout.flush()
       if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
         ln = sys.stdin.readline()
-        panda.serial_write(port_number)
+        panda.serial_write(port_number, ln)
       time.sleep(0.05)
 

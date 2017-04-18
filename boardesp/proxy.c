@@ -26,58 +26,6 @@ struct espconn tcp_conn;
 // TCP specific protocol structure.
 esp_tcp tcp_proto;
 
-uint8_t buf[0x40*0x10];
-
-void ICACHE_FLASH_ATTR some_timerfunc(void *arg)
-{
-  // uart testing
-  /*uart0_sendStr("hello uart0\n");
-  uart1_sendStr_no_wait("hello uart1\n");*/
-  //uart0_sendStr("hello uart0\n");
-
-  if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin)) {
-    // set gpio low
-    gpio_output_set(0, (1 << pin), 0, 0);
-  } else {
-    // set gpio high
-    gpio_output_set((1 << pin), 0, 0, 0);
-  }
-
-  // *** SPI MODE ***
-
-  uint32_t value = 0xD3D4D5D6;
-  uint32_t sendData[8] = {0};
-  SpiData spiData;
-
-  int i = 0;
-  int first = 1;
-  while (i < 0x40) {
-    spiData.cmd = 2;
-    spiData.cmdLen = 0;
-    spiData.addr = NULL;
-    spiData.addrLen = 0;
-    spiData.data = sendData;
-    spiData.dataLen = 16;
-
-    // manual CS pin
-    gpio_output_set(0, (1 << 5), 0, 0);
-    SPIMasterRecvData(SpiNum_HSPI, &spiData);
-    gpio_output_set((1 << 5), 0, 0, 0);
-
-    if (sendData[0] != 0) {
-      memcpy(buf + i*0x10, sendData, 0x10);
-      i++;
-    } else {
-      if (first == 0) break;
-    }
-    first = 0;
-  }
-
-  if (i != 0) {
-    espconn_send(&tcp_conn, buf, i*0x10);
-  }
-}
-
 static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
   if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin)) {
     // set gpio low
@@ -87,8 +35,11 @@ static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
     gpio_output_set((1 << pin), 0, 0, 0);
   }
 
+  // nothing too big
+  if (len > 0x14) return;
+
   uint32_t value = 0xD3D4D5D6;
-  uint32_t sendData[8] = {0};
+  uint32_t sendData[0x40] = {0};
 
   SpiData spiData;
 
@@ -99,36 +50,22 @@ static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
 
   // manual CS pin
   gpio_output_set(0, (1 << 5), 0, 0);
-  memcpy(sendData, data, len);
+  memcpy(((void*)sendData), data, len);
   spiData.data = sendData;
-  spiData.dataLen = len;
+  spiData.dataLen = 0x14;
   SPIMasterSendData(SpiNum_HSPI, &spiData);
 
   spiData.data = sendData;
-  spiData.dataLen = 16;
+  spiData.dataLen = 0x44;
   SPIMasterRecvData(SpiNum_HSPI, &spiData);
   gpio_output_set((1 << 5), 0, 0, 0);
 
-  espconn_send(&tcp_conn, sendData, 0x10);
+  espconn_send(&tcp_conn, sendData, 0x40);
 }
-
-int did_start_timer = 0;
 
 void ICACHE_FLASH_ATTR tcp_connect_cb(void *arg) {
   struct espconn *conn = (struct espconn *)arg;
   espconn_set_opt(&tcp_conn, ESPCONN_NODELAY);
-
-  /*char message[] = "hello\r\n";
-  uint16_t len = strlen(message);
-  espconn_send (&tcp_conn, message, len);*/
-
-  /*if (!did_start_timer) {
-    // not atomic!
-    did_start_timer = 1;
-    // setup timer (100ms, repeating)
-    os_timer_setfn(&some_timer, (os_timer_func_t *)some_timerfunc, NULL);
-    os_timer_arm(&some_timer, 50, 1);
-  }*/
   espconn_regist_recvcb(conn, tcp_rx_cb);
 }
 

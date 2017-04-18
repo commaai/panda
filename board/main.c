@@ -527,6 +527,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
       while (resp_len < min(setup->b.wLength.w, MAX_RESP_LEN) && getc(ur, &resp[resp_len])) {
         ++resp_len;
       }
+      break;
     case 0xe1: // uart set baud rate
       ur = get_ring_by_number(setup->b.wValue.w);
       uart_set_baud(ur->uart, setup->b.wIndex.w);
@@ -587,25 +588,43 @@ void ADC_IRQHandler(void) {
 
 #ifdef ENABLE_SPI
 
-#define SPI_BUF_SIZE 128
+#define SPI_BUF_SIZE 256
 uint8_t spi_buf[SPI_BUF_SIZE];
 int spi_buf_count = 0;
-uint8_t spi_tx_buf[0x10];
+int spi_total_count = 0;
+uint8_t spi_tx_buf[0x40];
+
+void handle_spi(uint8_t *data, int len) {
+  memset(spi_tx_buf, 0xaa, 0x10);
+  spi_tx_buf[0] = 1;
+  spi_tx_buf[1] = 2;
+  spi_tx_buf[2] = 3;
+  spi_tx_buf[3] = 4;
+  spi_tx_buf[4] = 5;
+  spi_tx_buf[5] = 6;
+  spi_tx_dma(spi_tx_buf, 0x10);
+
+  // last thing
+  hexdump(data, len);
+}
 
 void SPI1_IRQHandler(void) {
   // status is 0x43
   if (SPI1->SR & SPI_SR_RXNE) {
     uint8_t dat = SPI1->DR;
-    spi_buf[spi_buf_count] = dat;
-    if (spi_buf_count < SPI_BUF_SIZE-1) {
-      spi_buf_count += 1;
+    if (spi_total_count == 0) {
+      spi_total_count = dat;
+    } else {
+      spi_buf[spi_buf_count] = dat;
+      if (spi_buf_count < SPI_BUF_SIZE-1) {
+        spi_buf_count += 1;
+      }
+    }
+
+    if (spi_buf_count == spi_total_count) {
+      handle_spi(spi_buf, spi_total_count);
     }
   }
-
-  /*if (SPI1->SR & SPI_SR_TXE) {
-    // all i send is U U U no matter what
-    //SPI1->DR = 'U';
-  }*/
 
   int stat = SPI1->SR;
   //if (stat & ((~SPI_SR_RXNE) & (~SPI_SR_TXE) & (~SPI_SR_BSY))) {
@@ -616,6 +635,22 @@ void SPI1_IRQHandler(void) {
   }
 }
 
+// SPI RX
+void DMA2_Stream2_IRQHandler(void) {
+  // ack
+  DMA2->LIFCR = DMA_LIFCR_CTCIF2;
+  handle_spi(spi_buf, 0x14);
+
+  /*if (spi_total_count == 0) {
+    spi_total_count = spi_buf[0];
+    spi_rx_dma(spi_buf, spi_total_count);
+  } else {
+    puts("dma rx\n");
+    hexdump(spi_buf, spi_total_count+1);
+  }*/
+}
+
+// SPI TX
 void DMA2_Stream3_IRQHandler(void) {
   // ack
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
@@ -629,22 +664,9 @@ void EXTI4_IRQHandler(void) {
   int pr = EXTI->PR;
   // SPI CS rising
   if (pr & (1 << 4)) {
+    spi_total_count = 0;
+    spi_rx_dma(spi_buf, 0x14);
     puts("exti4\n");
-    memset(spi_tx_buf, 0xaa, 0x10);
-    spi_tx_buf[0] = 1;
-    spi_tx_buf[1] = 2;
-    spi_tx_buf[2] = 3;
-    spi_tx_buf[3] = 4;
-    spi_tx_buf[4] = 5;
-    spi_tx_buf[5] = 6;
-    spi_tx_dma(spi_tx_buf, 0x10);
-    /*if (pop(&can_rx_q, spi_tx_buf)) {
-      spi_tx_dma(spi_tx_buf, 0x10);
-    } else {
-      memset(spi_tx_buf, 0, 0x10);
-      spi_tx_dma(spi_tx_buf, 0x10);
-    }*/
-    //EXTI->IMR &= ~(1 << 4);
   }
   EXTI->PR = pr;
 }
@@ -693,10 +715,6 @@ int main() {
 
 #ifdef ENABLE_SPI
   spi_init();
-
-  // set up DMA
-  //memset(spi_tx_buf, 0, 0x10);
-  //spi_tx_dma(spi_tx_buf, 0x10);
 #endif
 
   // timer for fan PWM
@@ -743,8 +761,9 @@ int main() {
 #endif
 
 #ifdef ENABLE_SPI
+  NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);
-  NVIC_EnableIRQ(SPI1_IRQn);
+  //NVIC_EnableIRQ(SPI1_IRQn);
 
   // setup interrupt on falling edge of SPI enable (on PA4)
   SYSCFG->EXTICR[2] = SYSCFG_EXTICR2_EXTI4_PA;
@@ -785,10 +804,10 @@ int main() {
     set_led(LED_BLUE, 0);
 
     #ifdef ENABLE_SPI
-      if (spi_buf_count > 0) {
+      /*if (spi_buf_count > 0) {
         hexdump(spi_buf, spi_buf_count);
         spi_buf_count = 0;
-      }
+      }*/
     #endif
 
     // started logic
