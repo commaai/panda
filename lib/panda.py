@@ -79,13 +79,22 @@ class Panda(object):
             "started_signal_detected": a[5],
             "started_alt": a[6]}
 
-  # ******************* can *******************
+  # ******************* configuration *******************
 
   def set_gmlan(self, on):
     if on:
       self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xdb, 1, 0, '')
     else:
       self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xdb, 0, 0, '')
+
+  def set_uart_baud(self, uart, rate):
+    self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe1, uart, rate, '')
+
+  def set_uart_parity(self, uart, parity):
+    # parity, 0=off, 1=even, 2=odd
+    self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe2, uart, parity, '')
+
+  # ******************* can *******************
 
   def can_send_many(self, arr):
     snds = []

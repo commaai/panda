@@ -532,6 +532,27 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
       ur = get_ring_by_number(setup->b.wValue.w);
       uart_set_baud(ur->uart, setup->b.wIndex.w);
       break;
+    case 0xe2: // uart set parity
+      ur = get_ring_by_number(setup->b.wValue.w);
+      switch (setup->b.wIndex.w) {
+        case 0:
+          // disable parity
+          ur->uart->CR1 &= ~USART_CR1_PCE;
+          break;
+        case 1:
+          // even parity
+          ur->uart->CR1 &= ~USART_CR1_PS;
+          ur->uart->CR1 |= USART_CR1_PCE;
+          break;
+        case 2:
+          // odd parity
+          ur->uart->CR1 |= USART_CR1_PS;
+          ur->uart->CR1 |= USART_CR1_PCE;
+          break;
+        default:
+          break;
+      }
+      break;
     case 0xf0: // k-line wValue pulse on uart2
       if (setup->b.wValue.w == 1) {
         GPIOC->ODR &= ~(1 << 10);
