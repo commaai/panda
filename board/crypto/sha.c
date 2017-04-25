@@ -29,10 +29,6 @@
 
 #include "sha.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdint.h>
-
 #define rol(bits, value) (((value) << (bits)) | ((value) >> (32 - (bits))))
 
 static void SHA1_Transform(SHA_CTX* ctx) {

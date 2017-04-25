@@ -27,7 +27,7 @@
 #ifndef SYSTEM_CORE_INCLUDE_MINCRYPT_HASH_INTERNAL_H_
 #define SYSTEM_CORE_INCLUDE_MINCRYPT_HASH_INTERNAL_H_
 
-#include <stdint.h>
+#include "stdint.h"
 
 #ifdef __cplusplus
 extern "C" {

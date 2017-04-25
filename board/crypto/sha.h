@@ -26,7 +26,6 @@
 #ifndef SYSTEM_CORE_INCLUDE_MINCRYPT_SHA1_H_
 #define SYSTEM_CORE_INCLUDE_MINCRYPT_SHA1_H_
 
-#include <stdint.h>
 #include "hash-internal.h"
 
 #ifdef __cplusplus
