@@ -28,11 +28,11 @@
 #ifndef SYSTEM_CORE_INCLUDE_MINCRYPT_RSA_H_
 #define SYSTEM_CORE_INCLUDE_MINCRYPT_RSA_H_
 
+#include "stdint.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "stdint.h"
 
 #define RSANUMBYTES 256           /* 2048 bit key length */
 #define RSANUMWORDS (RSANUMBYTES / sizeof(uint32_t))
