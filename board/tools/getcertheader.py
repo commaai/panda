@@ -4,18 +4,18 @@ import struct
 from Crypto.PublicKey import RSA
 
 def egcd(a, b):
-	if a == 0:
-		return (b, 0, 1)
-	else:
-		g, y, x = egcd(b % a, a)
-		return (g, x - (b // a) * y, y)
+  if a == 0:
+    return (b, 0, 1)
+  else:
+    g, y, x = egcd(b % a, a)
+    return (g, x - (b // a) * y, y)
 
 def modinv(a, m):
-	g, x, y = egcd(a, m)
-	if g != 1:
-		raise Exception('modular inverse does not exist')
-	else:
-		return x % m
+  g, x, y = egcd(a, m)
+  if g != 1:
+    raise Exception('modular inverse does not exist')
+  else:
+    return x % m
 
 def to_c_string(x):
   mod = (hex(x)[2:-1].rjust(0x100, '0'))
