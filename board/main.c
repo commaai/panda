@@ -530,10 +530,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
       break;
     case 0xe1: // uart set baud rate
       ur = get_ring_by_number(setup->b.wValue.w);
+      if (!ur) break;
       uart_set_baud(ur->uart, setup->b.wIndex.w);
       break;
     case 0xe2: // uart set parity
       ur = get_ring_by_number(setup->b.wValue.w);
+      if (!ur) break;
       switch (setup->b.wIndex.w) {
         case 0:
           // disable parity

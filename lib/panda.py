@@ -133,7 +133,7 @@ class Panda(object):
   # ******************* serial *******************
 
   def serial_read(self, port_number):
-    return self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, port_number, 0, 0x100)
+    return self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, port_number, 0, 0x40)
 
   def serial_write(self, port_number, ln):
     return self.handle.bulkWrite(2, chr(port_number) + ln)
@@ -148,7 +148,7 @@ class Panda(object):
     # drain buffer
     bret = ""
     while 1:
-      ret = self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, bus, 0, 0x100)
+      ret = self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, bus, 0, 0x40)
       if len(ret) == 0:
         break
       bret += str(ret)
