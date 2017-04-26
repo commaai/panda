@@ -559,6 +559,15 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
     case 0xd8: // RESET
       NVIC_SystemReset();
       break;
+    case 0xd9: // ESP SET POWER
+      if (setup->b.wValue.w == 1) {
+        // on
+        GPIOC->ODR |= (1 << 14);
+      } else {
+        // off
+        GPIOC->ODR &= ~(1 << 14);
+      }
+      break;
     case 0xda: // ESP RESET
       // pull low for ESP boot mode
       if (setup->b.wValue.w == 1) {
