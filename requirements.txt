@@ -1,2 +1,3 @@
 libusb1
 hexdump
+pycrypto
