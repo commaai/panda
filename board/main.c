@@ -136,6 +136,57 @@ uart_ring *get_ring_by_number(int a) {
   }
 }
 
+void accord_framing_callback(uart_ring *q) {
+  uint8_t r_ptr_rx_tmp = q->r_ptr_rx;
+  int sof1 = -1;
+  int sof2 = -1;
+  int i;
+  uint8_t junk;
+  while (q->w_ptr_rx != r_ptr_rx_tmp) {
+    if ((q->elems_rx[r_ptr_rx_tmp] & 0x80) == 0) {
+      if (sof1 == -1) {
+        sof1 = r_ptr_rx_tmp;
+      } else {
+        sof2 = r_ptr_rx_tmp;
+        break;
+      }
+    }
+    r_ptr_rx_tmp++;
+  }
+  
+  // drop until SOF1
+  if (sof1 != -1) {
+    for (i = 0; i < sof1; i++) getc(q, &junk);
+  }
+
+  if (sof2 != -1) {
+    if (sof2-sof1 > 8) {
+      // drop oversized packet
+      for (i = 0; i < sof2-sof1; i++) getc(q, &junk);
+    } else {
+      // packet received
+      CAN_FIFOMailBox_TypeDef to_push;
+      to_push.RIR = 0;
+      to_push.RDTR = sof2-sof1;
+      to_push.RDLR = 0;
+      to_push.RDHR = 0;
+
+      // 8 is K-line, 9 is L-line
+      if (q->uart == UART5) {
+        to_push.RDTR |= 8 << 4;
+      } else if (q->uart == USART3) {
+        to_push.RDTR |= 9 << 4;
+      }
+
+      // get data from queue
+      for (i = 0; i < sof2-sof1; i++) {
+        getc(q, &(((uint8_t*)(&to_push.RDLR))[i]));
+      }
+
+      push(&can_rx_q, &to_push);
+    }
+  }
+}
 
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
@@ -554,6 +605,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
         default:
           break;
       }
+      break;
+    case 0xe3: // uart install accord framing callback
+      ur = get_ring_by_number(setup->b.wValue.w);
+      if (!ur) break;
+      ur->callback = accord_framing_callback;
       break;
     case 0xf0: // k-line wValue pulse on uart2
       if (setup->b.wValue.w == 1) {
