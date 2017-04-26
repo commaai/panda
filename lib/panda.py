@@ -94,6 +94,9 @@ class Panda(object):
     # parity, 0=off, 1=even, 2=odd
     self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe2, uart, parity, '')
 
+  def set_uart_callback(self, uart, install):
+    self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe3, uart, int(install), '')
+
   # ******************* can *******************
 
   def can_send_many(self, arr):
