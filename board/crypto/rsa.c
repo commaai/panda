@@ -184,13 +184,33 @@ static const uint8_t sha_padding[RSANUMBYTES] = {
 };
 */
 
+static const uint8_t sha_padding_1024[RSANUMBYTES] = {
+    0x00, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0x00,
+
+    // 20 bytes of hash go here.
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
+
 // SHA-1 of PKCS1.5 signature sha_padding for 2048 bit, as above.
 // At the location of the bytes of the hash all 00 are hashed.
-static const uint8_t kExpectedPadShaRsa2048[SHA_DIGEST_SIZE] = {
+/*static const uint8_t kExpectedPadShaRsa2048[SHA_DIGEST_SIZE] = {
     0xdc, 0xbd, 0xbe, 0x42, 0xd5, 0xf5, 0xa7, 0x2e,
     0x6e, 0xfc, 0xf5, 0x5d, 0xaf, 0x9d, 0xea, 0x68,
     0x7c, 0xfb, 0xf1, 0x67
-};
+};*/
 
 // Verify a 2048-bit RSA PKCS1.5 signature against an expected hash.
 // Both e=3 and e=65537 are supported.  hash_len may be
@@ -230,13 +250,24 @@ int RSA_verify(const RSAPublicKey *key,
 
     modpow(key, buf);  // In-place exponentiation.
 
+#ifdef TEST_RSA
+    printf("sig\n");
+    for (i=0;i<len;i++) { if(i!=0 && i%0x10 == 0) printf("\n"); printf("%02X ", signature[i]); } printf("\n");
+    printf("hash\n");
+    for (i=0;i<hash_len;i++) { if(i!=0 && i%0x10 == 0) printf("\n"); printf("%02X ", hash[i]); } printf("\n");
+    printf("out\n");
+    for (i=0;i<RSANUMBYTES;i++) { if(i!=0 && i%0x10 == 0) printf("\n"); printf("%02X ", buf[i]); } printf("\n");
+    printf("target\n");
+    for (i=0;i<RSANUMBYTES;i++) { if(i!=0 && i%0x10 == 0) printf("\n"); printf("%02X ", sha_padding_1024[i]); } printf("\n");
+#endif
+
     // Xor sha portion, so it all becomes 00 iff equal.
     for (i = len - hash_len; i < len; ++i) {
         buf[i] ^= *hash++;
     }
 
     // Hash resulting buf, in-place.
-    switch (hash_len) {
+    /*switch (hash_len) {
         case SHA_DIGEST_SIZE:
             padding_hash = kExpectedPadShaRsa2048;
             SHA_hash(buf, len, buf);
@@ -245,9 +276,16 @@ int RSA_verify(const RSAPublicKey *key,
             return 0;
     }
 
+
     // Compare against expected hash value.
     for (i = 0; i < hash_len; ++i) {
         if (buf[i] != padding_hash[i]) {
+            return 0;
+        }
+    }*/
+
+    for (i = 0; i < RSANUMBYTES; ++i) {
+        if (buf[i] != sha_padding_1024[i]) {
             return 0;
         }
     }

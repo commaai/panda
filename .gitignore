@@ -1,4 +1,5 @@
 *.pyc
 .*.swp
 *.o
+a.out
 

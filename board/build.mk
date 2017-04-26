@@ -37,7 +37,7 @@ obj/gitversion.h:
 	echo "const uint8_t gitversion[] = \"RELEASE\";" > $@
 endif
 
-obj/cert.h:
+obj/cert.h: tools/getcertheader.py
 	./tools/getcertheader.py $(CERT) > $@
 
 obj/bootstub.$(PROJ_NAME).o: bootstub.c early.h obj/cert.h

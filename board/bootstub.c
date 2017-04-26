@@ -27,16 +27,16 @@ int main() {
 
   // validate length
   int len = _app_start[0];
-  if (len < 4) fail();
+  if (len < 8) fail();
 
   // compute SHA hash
   char digest[SHA_DIGEST_SIZE];
-  SHA_hash(&_app_start[1], len, digest);
+  SHA_hash(&_app_start[1], len-4, digest);
 
   // verify RSA signature
-  /*if (!RSA_verify(&rsa_key, ((void*)&_app_start[1]) + len, 0x80, digest, SHA_DIGEST_SIZE)) {
+  if (!RSA_verify(&rsa_key, ((void*)&_app_start[0]) + len, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
     fail();
-  }*/
+  }
 
   // jump to flash
   ((void(*)()) _app_start[1])();
