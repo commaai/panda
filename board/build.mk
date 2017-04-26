@@ -5,6 +5,8 @@ CC = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
 OBJDUMP = arm-none-eabi-objdump
 
+CERT = ../certs/debug
+
 MACHINE = $(shell uname -m)
 OS = $(shell uname -o)
 
@@ -35,7 +37,10 @@ obj/gitversion.h:
 	echo "const uint8_t gitversion[] = \"RELEASE\";" > $@
 endif
 
-obj/bootstub.$(PROJ_NAME).o: bootstub.c early.h
+obj/cert.h:
+	./tools/getcertheader.py $(CERT) > $@
+
+obj/bootstub.$(PROJ_NAME).o: bootstub.c early.h obj/cert.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 obj/main.$(PROJ_NAME).o: main.c *.h obj/gitversion.h
@@ -56,7 +61,7 @@ obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.$(PROJ_NAME).o
   # hack
 	$(CC) -Wl,--section-start,.isr_vector=0x8004000 $(CFLAGS) -o obj/$(PROJ_NAME).elf $^
 	$(OBJCOPY) -v -O binary obj/$(PROJ_NAME).elf obj/code.bin
-	./tools/sign.py obj/code.bin $@
+	./tools/sign.py obj/code.bin $@ $(CERT)
 
 obj/bootstub.$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/bootstub.$(PROJ_NAME).o obj/sha.o obj/rsa.o
 	$(CC) $(CFLAGS) -o obj/bootstub.$(PROJ_NAME).elf $^
