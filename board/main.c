@@ -615,18 +615,18 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
       if (!ur) break;
       switch (setup->b.wIndex.w) {
         case 0:
-          // disable parity
-          ur->uart->CR1 &= ~USART_CR1_PCE;
+          // disable parity, 8-bit
+          ur->uart->CR1 &= ~(USART_CR1_PCE | USART_CR1_M);
           break;
         case 1:
-          // even parity
+          // even parity, 9-bit
           ur->uart->CR1 &= ~USART_CR1_PS;
-          ur->uart->CR1 |= USART_CR1_PCE;
+          ur->uart->CR1 |= USART_CR1_PCE | USART_CR1_M;
           break;
         case 2:
-          // odd parity
+          // odd parity, 9-bit
           ur->uart->CR1 |= USART_CR1_PS;
-          ur->uart->CR1 |= USART_CR1_PCE;
+          ur->uart->CR1 |= USART_CR1_PCE | USART_CR1_M;
           break;
         default:
           break;
