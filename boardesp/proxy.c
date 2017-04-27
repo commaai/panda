@@ -33,6 +33,15 @@ uint32_t sendData[0x14] = {0};
 uint32_t recvData[0x40] = {0};
 
 static int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, int recvDataLen) {
+  // blink the led during SPI comm
+  if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin)) {
+    // set gpio low
+    gpio_output_set(0, (1 << pin), 0, 0);
+  } else {
+    // set gpio high
+    gpio_output_set((1 << pin), 0, 0, 0);
+  }
+
   SpiData spiData;
 
   spiData.cmd = 2;
@@ -75,14 +84,6 @@ static int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, in
 
 
 static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
-  if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin)) {
-    // set gpio low
-    gpio_output_set(0, (1 << pin), 0, 0);
-  } else {
-    // set gpio high
-    gpio_output_set((1 << pin), 0, 0, 0);
-  }
-
   // nothing too big
   if (len > 0x14) return;
 
@@ -123,9 +124,17 @@ void ICACHE_FLASH_ATTR some_timerfunc(void *arg) {
 
 volatile int timer_started = 0;
 
+void ICACHE_FLASH_ATTR inter_disc_cb(void *arg) {
+  if (timer_started) {
+    os_timer_disarm(&some_timer);
+    timer_started = 0;
+  }
+}
+
 void ICACHE_FLASH_ATTR inter_connect_cb(void *arg) {
   struct espconn *conn = (struct espconn *)arg;
-  espconn_set_opt(&tcp_conn, ESPCONN_NODELAY);
+  espconn_set_opt(&inter_conn, ESPCONN_NODELAY);
+  espconn_regist_disconcb(conn, inter_disc_cb);
 
   // setup timer at 200hz
   // TODO: disable when it runs out
