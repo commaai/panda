@@ -51,7 +51,7 @@ class FakePort(object):
       self.handle.bulkWrite(2, "\x01" + buf[i:i+SEND_STEP])
 
   def flushInput(self):
-    while self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, 1, 0, 0x100) != "":
+    while self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, 1, 0, 0x40) != "":
       pass
 
   def flushOutput(self):

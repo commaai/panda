@@ -19,28 +19,20 @@
    _a > _b ? _a : _b; })
 
 static const int pin = 2;
-static volatile os_timer_t some_timer;
 
 // Structure holding the TCP connection information.
 struct espconn tcp_conn;
 // TCP specific protocol structure.
 esp_tcp tcp_proto;
 
+// interrupt communication on port 1338
+struct espconn inter_conn;
+esp_tcp inter_proto;
+
 uint32_t sendData[0x14] = {0};
 uint32_t recvData[0x40] = {0};
 
-static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
-  if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin)) {
-    // set gpio low
-    gpio_output_set(0, (1 << pin), 0, 0);
-  } else {
-    // set gpio high
-    gpio_output_set((1 << pin), 0, 0, 0);
-  }
-
-  // nothing too big
-  if (len > 0x14) return;
-
+static int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, int recvDataLen) {
   SpiData spiData;
 
   spiData.cmd = 2;
@@ -53,7 +45,7 @@ static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
   memset(sendData, 0xCC, 0x14);
 
   // send request
-  memcpy(((void*)sendData), data, len);
+  memcpy(((void*)sendData), dat, len);
   spiData.data = sendData;
   spiData.dataLen = 0x14;
   SPIMasterSendData(SpiNum_HSPI, &spiData);
@@ -73,10 +65,29 @@ static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
 
   // got response, 0x40 works, 0x44 does not
   spiData.data = recvData+1;
-  spiData.dataLen = 0x40;
+  spiData.dataLen = recvDataLen;
   SPIMasterRecvData(SpiNum_HSPI, &spiData);
 
   gpio_output_set((1 << 5), 0, 0, 0);
+
+  return length;
+}
+
+
+static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
+  if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin)) {
+    // set gpio low
+    gpio_output_set(0, (1 << pin), 0, 0);
+  } else {
+    // set gpio high
+    gpio_output_set((1 << pin), 0, 0, 0);
+  }
+
+  // nothing too big
+  if (len > 0x14) return;
+
+  // do the SPI comm
+  spi_comm(data, len, recvData, 0x40);
 
   espconn_send(&tcp_conn, recvData, 0x44);
 }
@@ -85,6 +96,39 @@ void ICACHE_FLASH_ATTR tcp_connect_cb(void *arg) {
   struct espconn *conn = (struct espconn *)arg;
   espconn_set_opt(&tcp_conn, ESPCONN_NODELAY);
   espconn_regist_recvcb(conn, tcp_rx_cb);
+}
+
+static volatile os_timer_t some_timer;
+void ICACHE_FLASH_ATTR some_timerfunc(void *arg) {
+  uint8_t timerRecvData[0x44] = {0};
+  uint8_t buf[0x44*0x10];
+  int i = 0;
+  int j;
+
+  while (i < 0x40) {
+    int len = spi_comm("\x01\x00\x00\x00", 4, timerRecvData, 0x40);
+    if (len == 0) break;
+
+    // if it sends it, assume it's valid CAN
+    for (j = 0; j < len; j += 0x10) {
+      memcpy(buf + i*0x10, (timerRecvData+4)+j, 0x10);
+      i++;
+    }
+  }
+
+  if (i != 0) {
+    espconn_send(&tcp_conn, buf, i*0x10);
+  }
+}
+
+void ICACHE_FLASH_ATTR inter_connect_cb(void *arg) {
+  struct espconn *conn = (struct espconn *)arg;
+  espconn_set_opt(&tcp_conn, ESPCONN_NODELAY);
+
+  // setup timer at 200hz
+  // TODO: disable when it runs out
+  os_timer_setfn(&some_timer, (os_timer_func_t *)some_timerfunc, NULL);
+  os_timer_arm(&some_timer, 5, 1);
 }
 
 void ICACHE_FLASH_ATTR wifi_init() {
@@ -120,6 +164,15 @@ void ICACHE_FLASH_ATTR wifi_init() {
   espconn_regist_connectcb(&tcp_conn, tcp_connect_cb);
   espconn_accept(&tcp_conn);
   espconn_regist_time(&tcp_conn, 60, 0); // 60s timeout for all connections
+
+  // setup inter server
+  inter_proto.local_port = 1338;
+  inter_conn.type = ESPCONN_TCP;
+  inter_conn.state = ESPCONN_NONE;
+  inter_conn.proto.tcp = &inter_proto;
+  espconn_regist_connectcb(&inter_conn, inter_connect_cb);
+  espconn_accept(&inter_conn);
+  espconn_regist_time(&inter_conn, 60, 0); // 60s timeout for all connections
 }
 
 #define LOOP_PRIO 2
