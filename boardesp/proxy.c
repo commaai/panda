@@ -117,9 +117,11 @@ void ICACHE_FLASH_ATTR some_timerfunc(void *arg) {
   }
 
   if (i != 0) {
-    espconn_send(&tcp_conn, buf, i*0x10);
+    espconn_send(&inter_conn, buf, i*0x10);
   }
 }
+
+volatile int timer_started = 0;
 
 void ICACHE_FLASH_ATTR inter_connect_cb(void *arg) {
   struct espconn *conn = (struct espconn *)arg;
@@ -127,8 +129,11 @@ void ICACHE_FLASH_ATTR inter_connect_cb(void *arg) {
 
   // setup timer at 200hz
   // TODO: disable when it runs out
-  os_timer_setfn(&some_timer, (os_timer_func_t *)some_timerfunc, NULL);
-  os_timer_arm(&some_timer, 5, 1);
+  if (!timer_started) {
+    os_timer_setfn(&some_timer, (os_timer_func_t *)some_timerfunc, NULL);
+    os_timer_arm(&some_timer, 5, 1);
+    timer_started = 1;
+  }
 }
 
 void ICACHE_FLASH_ATTR wifi_init() {
