@@ -513,8 +513,8 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len) {
     } else if (flags == 8 || flags == 9) {
       // fake LIN as CAN
       uart_ring *lin_ring = (flags == 8) ? &lin1_ring : &lin2_ring;
-      for (i = 0; i < (tf[1] & 0xF); i++ ){
-        putc(lin_ring, ((uint8_t*)tf[2])[i]);
+      for (i = 0; i < (tf[1] & 0xF); i++) {
+        putc(lin_ring, ((uint8_t*)&tf[2])[i]);
       }
       continue;
     } else {
