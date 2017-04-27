@@ -194,6 +194,7 @@ void ICACHE_FLASH_ATTR wifi_init() {
 static os_event_t my_queue[QUEUE_SIZE];
 void loop();
 
+void ICACHE_FLASH_ATTR web_init();
 void ICACHE_FLASH_ATTR elm327_init();
 void ICACHE_FLASH_ATTR st_ota_init();
 void ICACHE_FLASH_ATTR uart0_init(int flashing_mode);
@@ -237,6 +238,7 @@ void ICACHE_FLASH_ATTR user_init()
   ota_init();
   st_ota_init();
   elm327_init();
+  web_init();
 
   // jump to OS
   system_os_task(loop, LOOP_PRIO, my_queue, QUEUE_SIZE);

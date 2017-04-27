@@ -22,7 +22,7 @@ tcp_ota.o: tcp_ota.c
 oldflash: proxy-0x00000.bin
 	./tools/esptool.py write_flash 0 proxy-0x00000.bin 0x40000 proxy-0x40000.bin
 
-user1.bin: proxy.o tcp_ota.o st_ota.o elm327.o
+user1.bin: proxy.o tcp_ota.o st_ota.o elm327.o webserver.o
 	$(CC) $(CFLAGS) $^ -o a.out -L$(SDK_BASE)/ld -T$(SDK_BASE)/ld/eagle.app.v6.new.1024.app1.ld $(LDLIBS)
 	$(OBJCP) --only-section .text -O binary a.out eagle.app.v6.text.bin
 	$(OBJCP) --only-section .data -O binary a.out eagle.app.v6.data.bin
@@ -32,7 +32,7 @@ user1.bin: proxy.o tcp_ota.o st_ota.o elm327.o
 	rm -f eagle.app.v6.*.bin
 	mv eagle.app.flash.bin $@
 
-user2.bin: proxy.o tcp_ota.o st_ota.o elm327.o
+user2.bin: proxy.o tcp_ota.o st_ota.o elm327.o webserver.o
 	$(CC) $(CFLAGS) $^ -o a.out -L$(SDK_BASE)/ld -T$(SDK_BASE)/ld/eagle.app.v6.new.1024.app2.ld $(LDLIBS)
 	$(OBJCP) --only-section .text -O binary a.out eagle.app.v6.text.bin
 	$(OBJCP) --only-section .data -O binary a.out eagle.app.v6.data.bin
