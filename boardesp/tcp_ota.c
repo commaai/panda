@@ -25,6 +25,8 @@
 
 #include "cert.h"
 
+#define min(a,b) ((a) < (b) ? (a) : (b))
+
 #define FIRMWARE_SIZE 503808
 
 // The TCP port used to listen to for connections.
@@ -301,14 +303,32 @@ LOCAL void ICACHE_FLASH_ATTR ota_rx_cb(void *arg, char *data, uint16_t len) {
                     }
 
                     if (ota_firmware_received == ota_firmware_size) {
-                        /*char digest[SHA_DIGEST_SIZE];
-                        SHA_hash(start_address, ota_firmware_size-RSANUMBYTES, digest);
-                        if (!RSA_verify(&rsa_key, start_address+ota_firmware_size-RSANUMBYTES, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
+                        char digest[SHA_DIGEST_SIZE];
+                        uint32_t rsa[RSANUMBYTES/4];
+                        uint32_t dat[0x80/4];
+                        int ll;
+                        spi_flash_read(start_address+ota_firmware_size-RSANUMBYTES, rsa, RSANUMBYTES);
+
+                        // 32-bit aligned accesses only
+                        SHA_CTX ctx;
+                        SHA_init(&ctx);
+                        for (ll = 0; ll < ota_firmware_size-RSANUMBYTES; ll += 0x80) {
+                          spi_flash_read(start_address + ll, dat, 0x80);
+                          SHA_update(&ctx, dat, min((ota_firmware_size-RSANUMBYTES)-ll, 0x80));
+                        }
+                        memcpy(digest, SHA_final(&ctx), SHA_DIGEST_SIZE);
+
+                        /*char buf[0x20];
+                        os_sprintf(buf, "%d: %02x %02x %02x %02x", ota_firmware_size-RSANUMBYTES, digest[0], digest[1], digest[2], digest[3]);
+                        espconn_send(conn, buf, strlen(buf));*/
+
+                        if (!RSA_verify(&rsa_key, rsa, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
                           espconn_send(conn, "Signature check FAILED. OTA fail.......\r\n", 41);
-                        } else {*/
+                        } else {
                           // We've flashed all of the firmware now, reboot into the new firmware.
                           os_printf("Preparing to update firmware.\n");
-                          espconn_send(conn, "Signature check truth. Rebooting in 2s.\r\n", 41);
+
+                          espconn_send(conn, "Signature check true.  Rebooting in 2s.\r\n", 41);
                           os_free(ota_firmware);
                           ota_firmware_size = 0;
                           ota_firmware_received = 0;
@@ -319,7 +339,7 @@ LOCAL void ICACHE_FLASH_ATTR ota_rx_cb(void *arg, char *data, uint16_t len) {
                           os_timer_disarm(&ota_reboot_timer);
                           os_timer_setfn(&ota_reboot_timer, (os_timer_func_t *)system_upgrade_reboot, NULL);
                           os_timer_arm(&ota_reboot_timer, 2000, 1);
-                        //}
+                        }
                     }
                 }
                 break;
