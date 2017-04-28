@@ -543,15 +543,16 @@ void usb_cb_enumeration_complete() {
   did_usb_enumerate = 1;
 }
 
-
-int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
+int __usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
   int resp_len = 0;
   uart_ring *ur = NULL;
   int i;
   switch (setup->b.bRequest) {
     case 0xd1:
-      enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-      NVIC_SystemReset();
+      if (hardwired) {
+        enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+        NVIC_SystemReset();
+      }
       break;
     case 0xd2:
       resp_len = get_health_pkt(resp);
@@ -682,6 +683,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
   return resp_len;
 }
 
+int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
+  return __usb_cb_control_msg(setup, resp, 1);
+}
+
 
 void OTG_FS_IRQHandler(void) {
   NVIC_DisableIRQ(OTG_FS_IRQn);
@@ -713,7 +718,7 @@ void handle_spi(uint8_t *data, int len) {
   switch (data[0]) {
     case 0:
       // control transfer
-      *resp_len = usb_cb_control_msg(data+4, spi_tx_buf+4);
+      *resp_len = __usb_cb_control_msg(data+4, spi_tx_buf+4, 0);
       break;
     case 1:
       // ep 1, read
