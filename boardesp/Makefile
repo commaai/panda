@@ -6,6 +6,8 @@ LDFLAGS = -Teagle.app.v6.ld
 OBJCP = xtensa-lx106-elf-objcopy
 SDK_BASE = esp-open-sdk/ESP8266_NONOS_SDK_V1.5.4_16_05_20
 
+CERT = ../certs/debugesp
+
 flash: user1.bin
 	#./tools/esptool.py write_flash 0 $(SDK_BASE)/bin/boot_v1.5.bin 0x01000 user1.bin 0x81000 user2.bin 0x3FE000 $(SDK_BASE)/bin/blank.bin
 	./tools/esptool.py write_flash 0 $(SDK_BASE)/bin/boot_v1.5.bin 0x01000 user1.bin 0x3FE000 $(SDK_BASE)/bin/blank.bin
@@ -30,7 +32,7 @@ user1.bin: proxy.o tcp_ota.o st_ota.o elm327.o webserver.o ../crypto/sha.c ../cr
 	$(OBJCP) --only-section .irom0.text -O binary a.out eagle.app.v6.irom0text.bin
 	COMPILE=gcc python ./esp-open-sdk/ESP8266_NONOS_SDK_V1.5.4_16_05_20/tools/gen_appbin.py a.out 2 0 32 4 0
 	rm -f eagle.app.v6.*.bin
-	mv eagle.app.flash.bin $@
+	../crypto/sign.py eagle.app.flash.bin $@ $(CERT)
 
 user2.bin: proxy.o tcp_ota.o st_ota.o elm327.o webserver.o ../crypto/sha.c ../crypto/rsa.c
 	$(CC) $(CFLAGS) $^ -o a.out -L$(SDK_BASE)/ld -T$(SDK_BASE)/ld/eagle.app.v6.new.1024.app2.ld $(LDLIBS)
@@ -40,7 +42,7 @@ user2.bin: proxy.o tcp_ota.o st_ota.o elm327.o webserver.o ../crypto/sha.c ../cr
 	$(OBJCP) --only-section .irom0.text -O binary a.out eagle.app.v6.irom0text.bin
 	COMPILE=gcc python ./esp-open-sdk/ESP8266_NONOS_SDK_V1.5.4_16_05_20/tools/gen_appbin.py a.out 2 0 32 4 0
 	rm -f eagle.app.v6.*.bin
-	mv eagle.app.flash.bin $@
+	../crypto/sign.py eagle.app.flash.bin $@ $(CERT)
 
 ota: user1.bin user2.bin
 	./tools/tcp_flash.py 192.168.0.10 user1.bin user2.bin
