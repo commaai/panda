@@ -322,9 +322,8 @@ LOCAL void ICACHE_FLASH_ATTR ota_rx_cb(void *arg, char *data, uint16_t len) {
                         os_sprintf(buf, "%d: %02x %02x %02x %02x", ota_firmware_size-RSANUMBYTES, digest[0], digest[1], digest[2], digest[3]);
                         espconn_send(conn, buf, strlen(buf));*/
 
-                        if (!RSA_verify(&debugesp_rsa_key, rsa, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
-                          espconn_send(conn, "Signature check FAILED. OTA fail.......\r\n", 41);
-                        } else {
+                        if (RSA_verify(&releaseesp_rsa_key, rsa, RSANUMBYTES, digest, SHA_DIGEST_SIZE) ||
+                            RSA_verify(&debugesp_rsa_key, rsa, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
                           // We've flashed all of the firmware now, reboot into the new firmware.
                           os_printf("Preparing to update firmware.\n");
 
@@ -339,6 +338,8 @@ LOCAL void ICACHE_FLASH_ATTR ota_rx_cb(void *arg, char *data, uint16_t len) {
                           os_timer_disarm(&ota_reboot_timer);
                           os_timer_setfn(&ota_reboot_timer, (os_timer_func_t *)system_upgrade_reboot, NULL);
                           os_timer_arm(&ota_reboot_timer, 2000, 1);
+                        } else {
+                          espconn_send(conn, "Signature check FAILED. OTA fail.......\r\n", 41);
                         }
                     }
                 }
