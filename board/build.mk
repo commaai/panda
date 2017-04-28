@@ -38,7 +38,7 @@ obj/gitversion.h:
 endif
 
 obj/cert.h: tools/getcertheader.py
-	./tools/getcertheader.py $(CERT) > $@
+	./tools/getcertheader.py $(CERT).pub > $@
 
 obj/bootstub.$(PROJ_NAME).o: bootstub.c early.h obj/cert.h
 	$(CC) $(CFLAGS) -o $@ -c $<
