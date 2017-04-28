@@ -9,8 +9,10 @@ SDK_BASE = esp-open-sdk/ESP8266_NONOS_SDK_V1.5.4_16_05_20
 CERT = ../certs/debugesp
 
 flash: user1.bin
-	#./tools/esptool.py write_flash 0 $(SDK_BASE)/bin/boot_v1.5.bin 0x01000 user1.bin 0x81000 user2.bin 0x3FE000 $(SDK_BASE)/bin/blank.bin
 	./tools/esptool.py write_flash 0 $(SDK_BASE)/bin/boot_v1.5.bin 0x01000 user1.bin 0x3FE000 $(SDK_BASE)/bin/blank.bin
+
+flashall: user1.bin user2.bin
+	./tools/esptool.py write_flash 0 $(SDK_BASE)/bin/boot_v1.5.bin 0x01000 user1.bin 0x81000 user2.bin 0x3FE000 $(SDK_BASE)/bin/blank.bin
 
 proxy-0x00000.bin: proxy
 	./tools/esptool.py elf2image $^
@@ -19,9 +21,10 @@ proxy: proxy.o tcp_ota.o
 
 proxy.o: proxy.c
 
-tcp_ota.o: tcp_ota.c
+cert.h:
 	../crypto/getcertheader.py $(CERT).pub > cert.h
-	$(CC) $(CFLAGS) -c $^ -o $@
+
+tcp_ota.o: tcp_ota.c cert.h
 
 sha.o: ../crypto/sha.c
 	$(CC) $(CFLAGS) -c $^ -o $@
@@ -40,7 +43,8 @@ user1.bin: proxy.o tcp_ota.o st_ota.o elm327.o webserver.o sha.o rsa.o
 	$(OBJCP) --only-section .irom0.text -O binary a.out eagle.app.v6.irom0text.bin
 	COMPILE=gcc python ./esp-open-sdk/ESP8266_NONOS_SDK_V1.5.4_16_05_20/tools/gen_appbin.py a.out 2 0 32 4 0
 	rm -f eagle.app.v6.*.bin
-	../crypto/sign.py eagle.app.flash.bin $@ $(CERT)
+	mv eagle.app.flash.bin $@
+	../crypto/sign.py $@ $@ $(CERT)
 
 user2.bin: proxy.o tcp_ota.o st_ota.o elm327.o webserver.o sha.o rsa.o
 	$(CC) $(CFLAGS) $^ -o a.out -L$(SDK_BASE)/ld -T$(SDK_BASE)/ld/eagle.app.v6.new.1024.app2.ld $(LDLIBS)
@@ -50,7 +54,8 @@ user2.bin: proxy.o tcp_ota.o st_ota.o elm327.o webserver.o sha.o rsa.o
 	$(OBJCP) --only-section .irom0.text -O binary a.out eagle.app.v6.irom0text.bin
 	COMPILE=gcc python ./esp-open-sdk/ESP8266_NONOS_SDK_V1.5.4_16_05_20/tools/gen_appbin.py a.out 2 0 32 4 0
 	rm -f eagle.app.v6.*.bin
-	../crypto/sign.py eagle.app.flash.bin $@ $(CERT)
+	mv eagle.app.flash.bin $@
+	../crypto/sign.py $@ $@ $(CERT)
 
 ota: user1.bin user2.bin
 	./tools/tcp_flash.py 192.168.0.10 user1.bin user2.bin
