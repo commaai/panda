@@ -20,6 +20,11 @@
 #include "espmissingincludes.h"
 #include "tcp_ota.h"
 
+#include "crypto/rsa.h"
+#include "crypto/sha.h"
+
+#include "cert.h"
+
 #define FIRMWARE_SIZE 503808
 
 // The TCP port used to listen to for connections.
@@ -267,7 +272,7 @@ LOCAL void ICACHE_FLASH_ATTR ota_rx_cb(void *arg, char *data, uint16_t len) {
                     }
 
                     // Find out the starting address for the flash write.
-                    int address;
+                    int address, start_address;
                     uint8_t current = system_upgrade_userbin_check();
                     if (current == UPGRADE_FW_BIN1) {
                         // The next flash, user2.bin, will start after 4KB boot, user1, 16KB user params, 4KB reserved.
@@ -276,6 +281,7 @@ LOCAL void ICACHE_FLASH_ATTR ota_rx_cb(void *arg, char *data, uint16_t len) {
                         // The next flash, user1.bin, will start after 4KB boot.
                         address = 4*1024;
                     }
+                    start_address = address;
                     address += ota_firmware_received - ota_firmware_len;
 
 
@@ -295,19 +301,25 @@ LOCAL void ICACHE_FLASH_ATTR ota_rx_cb(void *arg, char *data, uint16_t len) {
                     }
 
                     if (ota_firmware_received == ota_firmware_size) {
-                        // We've flashed all of the firmware now, reboot into the new firmware.
-                        os_printf("Preparing to update firmware.\n");
-                        espconn_send(conn, "Flash upgrade success. Rebooting in 2s.\r\n", 41);
-                        os_free(ota_firmware);
-                        ota_firmware_size = 0;
-                        ota_firmware_received = 0;
-                        ota_firmware_len = 0;
-                        ota_state = REBOOTING;
-                        system_upgrade_flag_set(UPGRADE_FLAG_FINISH);
-                        os_printf("Scheduling reboot.\n");
-                        os_timer_disarm(&ota_reboot_timer);
-                        os_timer_setfn(&ota_reboot_timer, (os_timer_func_t *)system_upgrade_reboot, NULL);
-                        os_timer_arm(&ota_reboot_timer, 2000, 1);
+                        /*char digest[SHA_DIGEST_SIZE];
+                        SHA_hash(start_address, ota_firmware_size-RSANUMBYTES, digest);
+                        if (!RSA_verify(&rsa_key, start_address+ota_firmware_size-RSANUMBYTES, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
+                          espconn_send(conn, "Signature check FAILED. OTA fail.......\r\n", 41);
+                        } else {*/
+                          // We've flashed all of the firmware now, reboot into the new firmware.
+                          os_printf("Preparing to update firmware.\n");
+                          espconn_send(conn, "Signature check truth. Rebooting in 2s.\r\n", 41);
+                          os_free(ota_firmware);
+                          ota_firmware_size = 0;
+                          ota_firmware_received = 0;
+                          ota_firmware_len = 0;
+                          ota_state = REBOOTING;
+                          system_upgrade_flag_set(UPGRADE_FLAG_FINISH);
+                          os_printf("Scheduling reboot.\n");
+                          os_timer_disarm(&ota_reboot_timer);
+                          os_timer_setfn(&ota_reboot_timer, (os_timer_func_t *)system_upgrade_reboot, NULL);
+                          os_timer_arm(&ota_reboot_timer, 2000, 1);
+                        //}
                     }
                 }
                 break;
