@@ -50,7 +50,7 @@ void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 }
 
-void safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // BRAKE: safety check
   if ((to_send->RIR>>21) == 0x1FA) {
     if (controls_allowed) {
@@ -78,6 +78,7 @@ void safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   } 
 
-  // block all other messages?
+  // 1 allows the message through
+  return 1;
 }
 

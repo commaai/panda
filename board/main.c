@@ -314,7 +314,7 @@ inline int putc(uart_ring *q, char elem) {
 #include "spi.h"
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
-void safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
+int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
 #include "honda_safety.h"
 
 // ***************************** CAN *****************************
@@ -338,8 +338,6 @@ void process_can(CAN_TypeDef *CAN, can_ring *can_q, int can_number) {
   CAN_FIFOMailBox_TypeDef to_send;
   if ((CAN->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
     if (pop(can_q, &to_send)) {
-      safety_tx_hook(&to_send);
-
       // only send if we have received a packet
       CAN->sTxMailBox[0].TDLR = to_send.RDLR;
       CAN->sTxMailBox[0].TDHR = to_send.RDHR;
@@ -493,45 +491,50 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len) {
   int i;
   for (dpkt = 0; dpkt < len; dpkt += 0x10) {
     uint32_t *tf = (uint32_t*)(&usbdata[dpkt]);
-    int flags = (tf[1] >> 4) & 0xF;
 
-    //puth(flags); puts("\n");
-    CAN_TypeDef *CAN;
-    can_ring *can_q;
-    int can_number;
-    if (flags == can_numbering[0])  {
-      CAN = CAN1;
-      can_q = &can_tx1_q;
-    } else if (flags == can_numbering[1]) {
-      CAN = CAN2;
-      can_q = &can_tx2_q;
-    #ifdef CAN3
-    } else if (flags == can_numbering[2]) {
-      CAN = CAN3;
-      can_q = &can_tx3_q;
-    #endif
-    } else if (flags == 8 || flags == 9) {
-      // fake LIN as CAN
-      uart_ring *lin_ring = (flags == 8) ? &lin1_ring : &lin2_ring;
-      for (i = 0; i < (tf[1] & 0xF); i++) {
-        putc(lin_ring, ((uint8_t*)&tf[2])[i]);
-      }
-      continue;
-    } else {
-      // no crash
-      continue;
-    }
-
-    // add CAN packet to send queue
+    // make a copy
     CAN_FIFOMailBox_TypeDef to_push;
     to_push.RDHR = tf[3];
     to_push.RDLR = tf[2];
-    to_push.RDTR = tf[1] & 0xF;
+    to_push.RDTR = tf[1];
     to_push.RIR = tf[0];
-    push(can_q, &to_push);
 
-    // flags = can_number
-    process_can(CAN, can_q, flags);
+    int flags = (to_push.RDTR >> 4) & 0xF;
+    if (safety_tx_hook(&to_push)) {
+      CAN_TypeDef *CAN;
+      can_ring *can_q;
+      int can_number;
+      if (flags == can_numbering[0])  {
+        CAN = CAN1;
+        can_q = &can_tx1_q;
+      } else if (flags == can_numbering[1]) {
+        CAN = CAN2;
+        can_q = &can_tx2_q;
+      #ifdef CAN3
+      } else if (flags == can_numbering[2]) {
+        CAN = CAN3;
+        can_q = &can_tx3_q;
+      #endif
+      } else if (flags == 8 || flags == 9) {
+        // fake LIN as CAN
+        uart_ring *lin_ring = (flags == 8) ? &lin1_ring : &lin2_ring;
+        for (i = 0; i < min(8, to_push.RDTR & 0xF); i++) {
+          putc(lin_ring, ((uint8_t*)&to_push.RDLR)[i]);
+        }
+        continue;
+      } else {
+        // no crash
+        continue;
+      }
+
+      // add CAN packet to send queue
+      // bus number isn't passed through
+      to_push.RDTR &= 0xF;
+      push(can_q, &to_push);
+
+      // flags = can_number
+      process_can(CAN, can_q, flags);
+    }
   }
 }
 
