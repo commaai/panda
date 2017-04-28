@@ -34,7 +34,7 @@ void lock_bootloader() {
 }
 
 void __initialize_hardware_early() {
-  lock_bootloader();
+  //lock_bootloader();
   early();
 }
 
