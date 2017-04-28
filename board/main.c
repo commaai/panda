@@ -551,6 +551,13 @@ int __usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired)
   uart_ring *ur = NULL;
   int i;
   switch (setup->b.bRequest) {
+    case 0xd0:
+      // fetch serial number
+      #ifdef PANDA
+        memcpy(resp, 0x1fff79e0, 0x20);
+        resp_len = 0x20;
+      #endif
+      break;
     case 0xd1:
       if (hardwired) {
         enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;

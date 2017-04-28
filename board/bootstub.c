@@ -59,9 +59,11 @@ int main() {
     goto good;
   }
 
-  // allow debug cert for now
-  if (RSA_verify(&debug_rsa_key, ((void*)&_app_start[0]) + len, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
-    goto good;
+  // allow debug cert if unlocked
+  if ( ((FLASH->OPTCR>>8)&0xFF) == 0xAA ) {
+    if (RSA_verify(&debug_rsa_key, ((void*)&_app_start[0]) + len, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
+      goto good;
+    }
   }
 
 // here is a failure

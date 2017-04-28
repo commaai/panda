@@ -1,6 +1,7 @@
 # python library to interface with panda
 import struct
 
+import hashlib
 import socket
 import usb1
 from usb1 import USBErrorIO, USBErrorOverflow
@@ -78,6 +79,20 @@ class Panda(object):
             "gas_interceptor_detected": a[4],
             "started_signal_detected": a[5],
             "started_alt": a[6]}
+
+  # ******************* control *******************
+
+  def enter_bootloader(self):
+    try:
+      self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xd1, 0, 0, '')
+    except Exception:
+      pass
+
+  def get_serial(self):
+    dat = self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xd0, 0, 0, 0x20)
+    hexdump(dat)
+    assert dat[0x1c:] == hashlib.sha1(dat[0:0x1c]).digest()[0:4]
+    return [dat[0:0x10], dat[0x10:0x10+10]]
 
   # ******************* configuration *******************
 
