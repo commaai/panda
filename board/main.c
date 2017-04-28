@@ -897,6 +897,8 @@ int main() {
 #endif
   __enable_irq();
 
+  puts("OPTCR: "); puth(FLASH->OPTCR); puts("\n");
+
   // LED should keep on blinking all the time
   uint64_t cnt;
   for (cnt=0;;cnt++) {

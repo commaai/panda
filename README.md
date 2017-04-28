@@ -62,6 +62,7 @@ To print out the serial console from the STM32, run tests/debug_console.py
 
 Hardware
 ------
+
 Check out the hardware [guide](https://github.com/commaai/panda/blob/master/docs/guide.pdf)
 
 Licensing

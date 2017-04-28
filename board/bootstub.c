@@ -13,7 +13,28 @@
 
 #include "obj/cert.h"
 
+void lock_bootloader() {
+  if (FLASH->OPTCR & FLASH_OPTCR_nWRP_0) {
+    FLASH->OPTKEYR = 0x08192A3B;
+    FLASH->OPTKEYR = 0x4C5D6E7F;
+
+    // write protect the bootloader
+    FLASH->OPTCR &= ~FLASH_OPTCR_nWRP_0;
+
+    // OPT program
+    FLASH->OPTCR |= FLASH_OPTCR_OPTSTRT;
+    while (FLASH->SR & FLASH_SR_BSY);
+
+    // relock it
+    FLASH->OPTCR |= FLASH_OPTCR_OPTLOCK;
+
+    // reset
+    NVIC_SystemReset();
+  }
+}
+
 void __initialize_hardware_early() {
+  lock_bootloader();
   early();
 }
 
