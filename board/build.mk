@@ -38,7 +38,7 @@ obj/gitversion.h:
 endif
 
 obj/cert.h: ../crypto/getcertheader.py
-	../crypto/getcertheader.py $(CERT).pub > $@
+	../crypto/getcertheader.py ../certs/debug.pub ../certs/release.pub > $@
 
 obj/bootstub.$(PROJ_NAME).o: bootstub.c early.h obj/cert.h
 	$(CC) $(CFLAGS) -o $@ -c $<

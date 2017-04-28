@@ -55,10 +55,18 @@ int main() {
   SHA_hash(&_app_start[1], len-4, digest);
 
   // verify RSA signature
-  if (!RSA_verify(&rsa_key, ((void*)&_app_start[0]) + len, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
-    fail();
+  if (RSA_verify(&release_rsa_key, ((void*)&_app_start[0]) + len, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
+    goto good;
   }
 
+  // allow debug cert for now
+  if (RSA_verify(&debug_rsa_key, ((void*)&_app_start[0]) + len, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
+    goto good;
+  }
+
+// here is a failure
+  fail();
+good:
   // jump to flash
   ((void(*)()) _app_start[1])();
   return 0;

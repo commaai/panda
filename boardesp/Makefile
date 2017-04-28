@@ -22,7 +22,7 @@ proxy: proxy.o tcp_ota.o
 proxy.o: proxy.c
 
 cert.h:
-	../crypto/getcertheader.py $(CERT).pub > cert.h
+	../crypto/getcertheader.py ../certs/debugesp.pub ../certs/releaseesp.pub > cert.h
 
 tcp_ota.o: tcp_ota.c cert.h
 

@@ -29,15 +29,18 @@ def to_c_uint32(x):
     x /= (2**32)
   return "{"+'U,'.join(map(str, nums))+"U}"
 
-rsa = RSA.importKey(open(sys.argv[1]).read())
-rr = pow(2**1024, 2, rsa.n)
-n0inv = 2**32 - modinv(rsa.n, 2**32)
+for fn in sys.argv[1:]:
+  rsa = RSA.importKey(open(fn).read())
+  rr = pow(2**1024, 2, rsa.n)
+  n0inv = 2**32 - modinv(rsa.n, 2**32)
 
-print 'RSAPublicKey rsa_key = {.len = 0x20,'
-print '  .n0inv = %dU,' % n0inv
-print '  .n = %s,' % to_c_uint32(rsa.n)
-print '  .rr = %s,' % to_c_uint32(rr)
-print '  .exponent = %d,' % rsa.e
-print '};'
+  cname = fn.split("/")[-1].split(".")[0] + "_rsa_key"
+
+  print 'RSAPublicKey '+cname+' = {.len = 0x20,'
+  print '  .n0inv = %dU,' % n0inv
+  print '  .n = %s,' % to_c_uint32(rsa.n)
+  print '  .rr = %s,' % to_c_uint32(rr)
+  print '  .exponent = %d,' % rsa.e
+  print '};'
 
 

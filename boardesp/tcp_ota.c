@@ -322,7 +322,7 @@ LOCAL void ICACHE_FLASH_ATTR ota_rx_cb(void *arg, char *data, uint16_t len) {
                         os_sprintf(buf, "%d: %02x %02x %02x %02x", ota_firmware_size-RSANUMBYTES, digest[0], digest[1], digest[2], digest[3]);
                         espconn_send(conn, buf, strlen(buf));*/
 
-                        if (!RSA_verify(&rsa_key, rsa, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
+                        if (!RSA_verify(&debugesp_rsa_key, rsa, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
                           espconn_send(conn, "Signature check FAILED. OTA fail.......\r\n", 41);
                         } else {
                           // We've flashed all of the firmware now, reboot into the new firmware.
