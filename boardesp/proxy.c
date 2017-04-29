@@ -217,7 +217,6 @@ void loop();
 void ICACHE_FLASH_ATTR web_init();
 void ICACHE_FLASH_ATTR elm327_init();
 void ICACHE_FLASH_ATTR st_ota_init();
-void ICACHE_FLASH_ATTR uart0_init(int flashing_mode);
 
 void ICACHE_FLASH_ATTR user_init()
 {
@@ -249,7 +248,6 @@ void ICACHE_FLASH_ATTR user_init()
   gpio_output_set(0, 0, (1 << 5), 0);
   gpio_output_set((1 << 5), 0, 0, 0);
 
-  uart0_init(0);
   os_printf("hello\n");
 
   // needs SPI
