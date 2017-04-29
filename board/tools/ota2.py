@@ -21,11 +21,6 @@ def main():
   print "flashing 0x%X bytes" % len(dat)
 
   sock = socket.create_connection(("192.168.0.10", 1337))
-
-  # reset
-  cmd(sock, 0x14)
-  sock.recv(0x100)
-  time.sleep(0.1)
   
   # unlock flash
   cmd(sock, 0x10)
@@ -34,6 +29,8 @@ def main():
   # erase sector
   cmd(sock, 0x11, 1)
   sock.recv(0x100)
+
+  # wait for erase
   while 1:
     cmd(sock, 0xf)
     ret = sock.recv(0x100)
@@ -48,9 +45,6 @@ def main():
     ret = sock.recv(0x100)
     #hexdump(ret)
     assert ret[0x30:0x40] == td
-
-  # reset
-  cmd(sock, 0x13)
 
   # reboot normal
   cntl.send("nr")
