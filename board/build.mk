@@ -5,7 +5,12 @@ CC = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
 OBJDUMP = arm-none-eabi-objdump
 
-CERT = ../certs/debug
+ifeq ($(RELEASE),1)
+  CERT = ../../pandaextra/certs/release
+else
+  CERT = ../certs/debug
+  CFLAGS += "-DALLOW_DEBUG"
+endif
 
 MACHINE = $(shell uname -m)
 OS = $(shell uname -o)

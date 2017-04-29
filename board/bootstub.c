@@ -49,12 +49,12 @@ int main() {
     goto good;
   }
 
-  // allow debug cert if unlocked
-  if ( ((FLASH->OPTCR>>8)&0xFF) == 0xAA ) {
-    if (RSA_verify(&debug_rsa_key, ((void*)&_app_start[0]) + len, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
-      goto good;
-    }
+  // allow debug if built from source
+#ifdef ALLOW_DEBUG
+  if (RSA_verify(&debug_rsa_key, ((void*)&_app_start[0]) + len, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
+    goto good;
   }
+#endif
 
 // here is a failure
   fail();

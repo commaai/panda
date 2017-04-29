@@ -323,7 +323,12 @@ LOCAL void ICACHE_FLASH_ATTR ota_rx_cb(void *arg, char *data, uint16_t len) {
                         espconn_send(conn, buf, strlen(buf));*/
 
                         if (RSA_verify(&releaseesp_rsa_key, rsa, RSANUMBYTES, digest, SHA_DIGEST_SIZE) ||
-                            RSA_verify(&debugesp_rsa_key, rsa, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
+                          #ifdef ALLOW_DEBUG
+                            RSA_verify(&debugesp_rsa_key, rsa, RSANUMBYTES, digest, SHA_DIGEST_SIZE)
+                          #else
+                            false
+                          #endif
+                          ) {
                           // We've flashed all of the firmware now, reboot into the new firmware.
                           os_printf("Preparing to update firmware.\n");
 

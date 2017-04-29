@@ -6,10 +6,12 @@ LDFLAGS = -Teagle.app.v6.ld
 OBJCP = xtensa-lx106-elf-objcopy
 SDK_BASE = esp-open-sdk/ESP8266_NONOS_SDK_V1.5.4_16_05_20
 
-CERT = ../certs/debugesp
-
-flash: user1.bin
-	./tools/esptool.py write_flash 0 $(SDK_BASE)/bin/boot_v1.5.bin 0x01000 user1.bin 0x3FE000 $(SDK_BASE)/bin/blank.bin
+ifeq ($(RELEASE),1)
+  CERT = ../../pandaextra/certs/releaseesp
+else
+  CERT = ../certs/debugesp
+  CFLAGS += "-DALLOW_DEBUG"
+endif
 
 flashall: user1.bin user2.bin
 	./tools/esptool.py write_flash 0 $(SDK_BASE)/bin/boot_v1.5.bin 0x01000 user1.bin 0x81000 user2.bin 0x3FE000 $(SDK_BASE)/bin/blank.bin
