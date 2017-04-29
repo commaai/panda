@@ -53,16 +53,6 @@ inline void early() {
   detect();
   
   #ifdef PANDA
-    // check if the ESP is trying to put me in boot mode
-    // enable pull up
-    GPIOB->PUPDR |= GPIO_PUPDR_PUPDR0_0;
-    for (i=0;i<PULL_EFFECTIVE_DELAY;i++);
-
-    // if it's driven low, jump to uart bootloader
-    if (!(GPIOB->IDR & 1)) {
-      enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-    }
-
     // enable the ESP, disable ESP boot mode
     // unless we are on a giant panda, then there's no ESP
     if (!is_giant_panda) {
@@ -71,6 +61,19 @@ inline void early() {
 
     // these are outputs to control the ESP
     GPIOC->MODER = GPIO_MODER_MODER14_0 | GPIO_MODER_MODER5_0;
+
+    // check if the ESP is trying to put me in boot mode
+    // enable pull up
+    GPIOB->PUPDR |= GPIO_PUPDR_PUPDR0_0;
+    for (i=0;i<PULL_EFFECTIVE_DELAY;i++);
+    
+    #ifdef BOOTSTUB
+      // if it's driven low, jump to spi flasher
+      if (!(GPIOB->IDR & 1)) {
+        spi_flasher();
+      }
+    #endif
+
   #endif
 
   if (enter_bootloader_mode == ENTER_BOOTLOADER_MAGIC) {

@@ -1,5 +1,5 @@
 void spi_init() {
-  puts("SPI init\n");
+  //puts("SPI init\n");
   SPI1->CR1 = SPI_CR1_SPE;
 
   // enable SPI interrupts

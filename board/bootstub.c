@@ -1,46 +1,36 @@
+#define BOOTSTUB
+
 #ifdef STM32F4
   #define PANDA
   #include "stm32f4xx.h"
+  #include "stm32f4xx_hal_gpio_ex.h"
 #else
   #include "stm32f2xx.h"
+  #include "stm32f2xx_hal_gpio_ex.h"
 #endif
 
 #include "early.h"
 #include "libc.h"
+#include "spi.h"
 
 #include "crypto/rsa.h"
 #include "crypto/sha.h"
 
 #include "obj/cert.h"
 
-void lock_bootloader() {
-  if (FLASH->OPTCR & FLASH_OPTCR_nWRP_0) {
-    FLASH->OPTKEYR = 0x08192A3B;
-    FLASH->OPTKEYR = 0x4C5D6E7F;
-
-    // write protect the bootloader
-    FLASH->OPTCR &= ~FLASH_OPTCR_nWRP_0;
-
-    // OPT program
-    FLASH->OPTCR |= FLASH_OPTCR_OPTSTRT;
-    while (FLASH->SR & FLASH_SR_BSY);
-
-    // relock it
-    FLASH->OPTCR |= FLASH_OPTCR_OPTLOCK;
-
-    // reset
-    NVIC_SystemReset();
-  }
-}
+#include "spi_flasher.h"
 
 void __initialize_hardware_early() {
-  //lock_bootloader();
   early();
 }
 
 void fail() {
+#ifdef PANDA
+  spi_flasher();
+#else
   enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
   NVIC_SystemReset();
+#endif
 }
 
 int main() {
