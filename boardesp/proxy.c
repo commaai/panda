@@ -216,7 +216,6 @@ void loop();
 
 void ICACHE_FLASH_ATTR web_init();
 void ICACHE_FLASH_ATTR elm327_init();
-void ICACHE_FLASH_ATTR st_ota_init();
 
 void ICACHE_FLASH_ATTR user_init()
 {
@@ -261,7 +260,6 @@ void ICACHE_FLASH_ATTR user_init()
   wifi_init();
 
   // support ota upgrades
-  st_ota_init();
   elm327_init();
   web_init();
 
