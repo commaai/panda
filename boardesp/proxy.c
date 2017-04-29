@@ -7,6 +7,7 @@
 
 #include "tcp_ota.h"
 #include "driver/spi_interface.h"
+#include "crypto/sha.h"
 
 #define min(a,b) \
  ({ __typeof__ (a) _a = (a); \
@@ -32,16 +33,7 @@ esp_tcp inter_proto;
 uint32_t sendData[0x14] = {0};
 uint32_t recvData[0x40] = {0};
 
-static int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, int recvDataLen) {
-  // blink the led during SPI comm
-  if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin)) {
-    // set gpio low
-    gpio_output_set(0, (1 << pin), 0, 0);
-  } else {
-    // set gpio high
-    gpio_output_set((1 << pin), 0, 0, 0);
-  }
-
+static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, int recvDataLen) {
   SpiData spiData;
 
   spiData.cmd = 2;
@@ -82,6 +74,18 @@ static int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, in
   return length;
 }
 
+static int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, int recvDataLen) {
+  // blink the led during SPI comm
+  if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin)) {
+    // set gpio low
+    gpio_output_set(0, (1 << pin), 0, 0);
+  } else {
+    // set gpio high
+    gpio_output_set((1 << pin), 0, 0, 0);
+  }
+
+  __spi_comm(dat, len, recvData, recvDataLen);
+}
 
 static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
   // nothing too big
@@ -146,13 +150,29 @@ void ICACHE_FLASH_ATTR inter_connect_cb(void *arg) {
 }
 
 void ICACHE_FLASH_ATTR wifi_init() {
+  // default ssid and password
+  char ssid[32];
+  memset(ssid, 0, 32);
+  os_sprintf(ssid, "panda-%08x-BROKEN", system_get_chip_id()); 
+  char password[] = "testing123";
+
+  // fetch secure ssid and password
+  uint8_t digest[SHA_DIGEST_SIZE];
+  char resp[0x20];
+  __spi_comm("\x00\x00\x00\x00\x40\xD0\x00\x00\x00\x00\x20\x00", 0xC, recvData, 0x40);
+  memcpy(resp, recvData+1, 0x20);
+
+  SHA_hash(resp, 0x1C, digest);
+  if (memcmp(digest, resp+0x1C, 4) == 0) {
+    // OTP is valid
+    memcpy(ssid+6, resp, 0x10);
+    memcpy(password, resp+0x10, 10);
+  }
+
   // start wifi AP
   wifi_set_opmode(SOFTAP_MODE);
   struct softap_config config;
   wifi_softap_get_config(&config);
-  char ssid[32];
-  os_sprintf(ssid, "panda-%08x", system_get_chip_id()); 
-  char password[] = "testing123"; //password must be 8 characters or longer
   strcpy(config.ssid, ssid); 
   strcpy(config.password, password);
   config.ssid_len = strlen(ssid);
@@ -232,6 +252,7 @@ void ICACHE_FLASH_ATTR user_init()
   uart0_init(0);
   os_printf("hello\n");
 
+  // needs SPI
   wifi_init();
 
   // support ota upgrades

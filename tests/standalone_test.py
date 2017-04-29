@@ -10,6 +10,7 @@ if __name__ == "__main__":
   else:
     p = Panda()
   print p.health()
+  print p.get_serial()
 
   a = 0
   while 1:
@@ -20,6 +21,8 @@ if __name__ == "__main__":
     p.can_send(0xaa, msg, 4)
     time.sleep(0.01)
 
-    print p.can_recv()
+    dat = p.can_recv()
+    if len(dat) > 0:
+      print dat
     a += 1
 
