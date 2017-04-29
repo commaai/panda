@@ -38,6 +38,9 @@ class WifiHandle(object):
     self.sock.send(struct.pack("HH", endpoint, 0))
     return self.__recv()
 
+  def close(self):
+    self.sock.close()
+
 class Panda(object):
   def __init__(self, serial=None, claim=True):
     if serial == "WIFI":
@@ -57,6 +60,9 @@ class Panda(object):
             break
 
     assert self.handle != None
+
+  def close(self):
+    self.handle.close()
 
   @staticmethod
   def list():
