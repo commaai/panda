@@ -41,7 +41,7 @@ def main():
   # program
   for i in tqdm(range(0, len(dat), 0x10)):
     td = dat[i:i+0x10]
-    cmd(sock, 0x12, 0, td)
+    cmd(sock, 0x12, 4, td)
     ret = sock.recv(0x100)
     #hexdump(ret)
     assert ret[0x30:0x40] == td

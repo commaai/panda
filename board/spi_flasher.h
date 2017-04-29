@@ -88,17 +88,19 @@ void spi_flasher() {
             }
             break;
           case 0x12:
-            for (i = 0; i < 4; i++) {
-              // program byte 1
-              FLASH->CR = FLASH_CR_PSIZE_1 | FLASH_CR_PG;
+            if (spi_rx_buf[2] <= 4) {
+              for (i = 0; i < spi_rx_buf[2]; i++) {
+                // program byte 1
+                FLASH->CR = FLASH_CR_PSIZE_1 | FLASH_CR_PG;
 
-              *prog_ptr = *(uint32_t*)(spi_rx_buf+4+(i*4));
-              while (FLASH->SR & FLASH_SR_BSY);
+                *prog_ptr = *(uint32_t*)(spi_rx_buf+4+(i*4));
+                while (FLASH->SR & FLASH_SR_BSY);
 
-              *(uint64_t*)(&spi_tx_buf[0x30+(i*4)]) = *prog_ptr;
-              prog_ptr++;
+                *(uint64_t*)(&spi_tx_buf[0x30+(i*4)]) = *prog_ptr;
+                prog_ptr++;
+              }
+              spi_tx_buf[1] = 0xff;
             }
-            spi_tx_buf[1] = 0xff;
             break;
           case 0x13:
             // reset

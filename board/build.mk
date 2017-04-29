@@ -37,7 +37,8 @@ main: obj/$(PROJ_NAME).bin
 	./tools/dfu-util-$(MACHINE) --reset-stm32 -a 0 -s 0x08000000
 
 ota: obj/$(PROJ_NAME).bin
-	./tools/ota2.py $<
+	#./tools/ota2.py $<
+	curl http://192.168.0.10/stupdate --upload-file $<
 
 ifneq ($(wildcard ../.git/HEAD),) 
 obj/gitversion.h: ../.git/HEAD ../.git/index

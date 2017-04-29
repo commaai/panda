@@ -5,8 +5,8 @@
 #include "user_interface.h"
 #include "espconn.h"
 
-#include "tcp_ota.h"
 #include "driver/spi_interface.h"
+#include "driver/uart.h"
 #include "crypto/sha.h"
 
 #define min(a,b) \
@@ -74,7 +74,7 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   return length;
 }
 
-static int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, int recvDataLen) {
+int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, int recvDataLen) {
   // blink the led during SPI comm
   if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin)) {
     // set gpio low
@@ -248,13 +248,19 @@ void ICACHE_FLASH_ATTR user_init()
   gpio_output_set(0, 0, (1 << 5), 0);
   gpio_output_set((1 << 5), 0, 0, 0);
 
+  // uart init
+  uart_init(BIT_RATE_115200, BIT_RATE_115200);
+
+  // led init
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
+  gpio_output_set(0, (1 << pin), (1 << pin), 0);
+
   os_printf("hello\n");
 
   // needs SPI
   wifi_init();
 
   // support ota upgrades
-  ota_init();
   st_ota_init();
   elm327_init();
   web_init();

@@ -60,6 +60,8 @@ Debugging
 
 To print out the serial console from the STM32, run tests/debug_console.py
 
+To print out the serial console from the ESP8266, run PORT=1 tests/debug_console.py
+
 Hardware
 ------
 

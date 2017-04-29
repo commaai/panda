@@ -19,14 +19,14 @@ flashall: user1.bin user2.bin
 proxy-0x00000.bin: proxy
 	./tools/esptool.py elf2image $^
 
-proxy: proxy.o tcp_ota.o
+proxy: proxy.o
 
 proxy.o: proxy.c
 
 cert.h:
 	../crypto/getcertheader.py ../certs/debugesp.pub ../certs/releaseesp.pub > cert.h
 
-tcp_ota.o: tcp_ota.c cert.h
+webserver.o: webserver.c cert.h
 
 sha.o: ../crypto/sha.c
 	$(CC) $(CFLAGS) -c $^ -o $@
@@ -37,7 +37,7 @@ rsa.o: ../crypto/rsa.c
 oldflash: proxy-0x00000.bin
 	./tools/esptool.py write_flash 0 proxy-0x00000.bin 0x40000 proxy-0x40000.bin
 
-user1.bin: proxy.o tcp_ota.o st_ota.o elm327.o webserver.o sha.o rsa.o
+user1.bin: proxy.o st_ota.o elm327.o webserver.o sha.o rsa.o
 	$(CC) $(CFLAGS) $^ -o a.out -L$(SDK_BASE)/ld -T$(SDK_BASE)/ld/eagle.app.v6.new.1024.app1.ld $(LDLIBS)
 	$(OBJCP) --only-section .text -O binary a.out eagle.app.v6.text.bin
 	$(OBJCP) --only-section .data -O binary a.out eagle.app.v6.data.bin
@@ -48,7 +48,7 @@ user1.bin: proxy.o tcp_ota.o st_ota.o elm327.o webserver.o sha.o rsa.o
 	mv eagle.app.flash.bin $@
 	../crypto/sign.py $@ $@ $(CERT)
 
-user2.bin: proxy.o tcp_ota.o st_ota.o elm327.o webserver.o sha.o rsa.o
+user2.bin: proxy.o st_ota.o elm327.o webserver.o sha.o rsa.o
 	$(CC) $(CFLAGS) $^ -o a.out -L$(SDK_BASE)/ld -T$(SDK_BASE)/ld/eagle.app.v6.new.1024.app2.ld $(LDLIBS)
 	$(OBJCP) --only-section .text -O binary a.out eagle.app.v6.text.bin
 	$(OBJCP) --only-section .data -O binary a.out eagle.app.v6.data.bin
@@ -60,7 +60,8 @@ user2.bin: proxy.o tcp_ota.o st_ota.o elm327.o webserver.o sha.o rsa.o
 	../crypto/sign.py $@ $@ $(CERT)
 
 ota: user1.bin user2.bin
-	./tools/tcp_flash.py 192.168.0.10 user1.bin user2.bin
+	curl http://192.168.0.10/espupdate1 --upload-file user1.bin
+	curl http://192.168.0.10/espupdate2 --upload-file user2.bin
 
 clean:
 	rm -f proxy proxy.o proxy-0x00000.bin proxy-0x40000.bin eagle.app.* user1.bin user2.bin a.out *.o cert.h
