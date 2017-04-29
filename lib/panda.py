@@ -93,6 +93,10 @@ class Panda(object):
     assert dat[0x1c:] == hashlib.sha1(dat[0:0x1c]).digest()[0:4]
     return [dat[0:0x10], dat[0x10:0x10+10]]
 
+  def get_secret(self):
+    dat = self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xd0, 1, 0, 0x10)
+    return dat.encode("hex")
+
   # ******************* configuration *******************
 
   def set_gmlan(self, on):

@@ -554,8 +554,13 @@ int __usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired)
     case 0xd0:
       // fetch serial number
       #ifdef PANDA
-        memcpy(resp, 0x1fff79e0, 0x20);
-        resp_len = 0x20;
+        if (setup->b.wValue.w == 1) {
+          memcpy(resp, 0x1fff79c0, 0x10);
+          resp_len = 0x10;
+        } else {
+          memcpy(resp, 0x1fff79e0, 0x20);
+          resp_len = 0x20;
+        }
       #endif
       break;
     case 0xd1:
