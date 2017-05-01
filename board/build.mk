@@ -57,10 +57,10 @@ obj/main.$(PROJ_NAME).o: main.c *.h obj/gitversion.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 # TODO(geohot): learn to use Makefiles
-obj/sha.o: ../crypto/sha.c
+obj/sha.$(PROJ_NAME).o: ../crypto/sha.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-obj/rsa.o: ../crypto/rsa.c
+obj/rsa.$(PROJ_NAME).o: ../crypto/rsa.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 obj/$(STARTUP_FILE).o: $(STARTUP_FILE).s
@@ -73,7 +73,7 @@ obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.$(PROJ_NAME).o
 	$(OBJCOPY) -v -O binary obj/$(PROJ_NAME).elf obj/code.bin
 	SETLEN=1 ../crypto/sign.py obj/code.bin $@ $(CERT)
 
-obj/bootstub.$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/bootstub.$(PROJ_NAME).o obj/sha.o obj/rsa.o
+obj/bootstub.$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/bootstub.$(PROJ_NAME).o obj/sha.$(PROJ_NAME).o obj/rsa.$(PROJ_NAME).o
 	$(CC) $(CFLAGS) -o obj/bootstub.$(PROJ_NAME).elf $^
 	$(OBJCOPY) -v -O binary obj/bootstub.$(PROJ_NAME).elf $@
 	
