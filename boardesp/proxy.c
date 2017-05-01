@@ -157,16 +157,21 @@ void ICACHE_FLASH_ATTR wifi_init() {
   char password[] = "testing123";
 
   // fetch secure ssid and password
-  uint8_t digest[SHA_DIGEST_SIZE];
-  char resp[0x20];
-  __spi_comm("\x00\x00\x00\x00\x40\xD0\x00\x00\x00\x00\x20\x00", 0xC, recvData, 0x40);
-  memcpy(resp, recvData+1, 0x20);
+  // update, try 3 times
+  for (int i = 0; i < 3; i++) {
+    uint8_t digest[SHA_DIGEST_SIZE];
+    char resp[0x20];
+    __spi_comm("\x00\x00\x00\x00\x40\xD0\x00\x00\x00\x00\x20\x00", 0xC, recvData, 0x40);
+    memcpy(resp, recvData+1, 0x20);
 
-  SHA_hash(resp, 0x1C, digest);
-  if (memcmp(digest, resp+0x1C, 4) == 0) {
-    // OTP is valid
-    memcpy(ssid+6, resp, 0x10);
-    memcpy(password, resp+0x10, 10);
+    SHA_hash(resp, 0x1C, digest);
+    if (memcmp(digest, resp+0x1C, 4) == 0) {
+      // OTP is valid
+      memcpy(ssid+6, resp, 0x10);
+      memcpy(password, resp+0x10, 10);
+      break;
+    }
+    os_delay_us(50000);
   }
 
   // start wifi AP
