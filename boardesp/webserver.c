@@ -173,57 +173,59 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
       st_set_boot_mode(0);
     }
   } else if (state == RECEIVING_ESP_FIRMWARE) {
-    os_printf("receiving esp firmware: %d/%d -- 0x%x - 0x%x\n", len, content_length,
-      esp_address, esp_address_erase_limit);
-    content_length -= len;
-    while (esp_address_erase_limit < (esp_address + len)) {
-      os_printf("erasing 0x%X\n", esp_address_erase_limit);
-      spi_flash_erase_sector(esp_address_erase_limit / SPI_FLASH_SEC_SIZE);
-      esp_address_erase_limit += SPI_FLASH_SEC_SIZE;
-    }
-    SpiFlashOpResult res = spi_flash_write(esp_address, data, len);
-    if (res != SPI_FLASH_RESULT_OK) {
-      os_printf("flash fail @ 0x%x\n", esp_address);
-    }
-    esp_address += len;
-
-    if (content_length == 0) {
-      char digest[SHA_DIGEST_SIZE];
-      uint32_t rsa[RSANUMBYTES/4];
-      uint32_t dat[0x80/4];
-      int ll;
-      spi_flash_read(esp_address-RSANUMBYTES, rsa, RSANUMBYTES);
-
-      // 32-bit aligned accesses only
-      SHA_CTX ctx;
-      SHA_init(&ctx);
-      for (ll = start_address; ll < esp_address-RSANUMBYTES; ll += 0x80) {
-        spi_flash_read(ll, dat, 0x80);
-        SHA_update(&ctx, dat, min((esp_address-RSANUMBYTES)-ll, 0x80));
+    if ((esp_address+len) < (start_address + FIRMWARE_SIZE)) {
+      os_printf("receiving esp firmware: %d/%d -- 0x%x - 0x%x\n", len, content_length,
+        esp_address, esp_address_erase_limit);
+      content_length -= len;
+      while (esp_address_erase_limit < (esp_address + len)) {
+        os_printf("erasing 0x%X\n", esp_address_erase_limit);
+        spi_flash_erase_sector(esp_address_erase_limit / SPI_FLASH_SEC_SIZE);
+        esp_address_erase_limit += SPI_FLASH_SEC_SIZE;
       }
-      memcpy(digest, SHA_final(&ctx), SHA_DIGEST_SIZE);
-
-      if (RSA_verify(&releaseesp_rsa_key, rsa, RSANUMBYTES, digest, SHA_DIGEST_SIZE) ||
-        #ifdef ALLOW_DEBUG
-          RSA_verify(&debugesp_rsa_key, rsa, RSANUMBYTES, digest, SHA_DIGEST_SIZE)
-        #else
-          false
-        #endif
-        ) {
-        os_printf("RSA verify success!\n");
-        espconn_send(&web_conn, "success!\n", 9);
-        system_upgrade_flag_set(UPGRADE_FLAG_FINISH);
-
-        // reboot
-        os_printf("Scheduling reboot.\n");
-        os_timer_disarm(&ota_reboot_timer);
-        os_timer_setfn(&ota_reboot_timer, (os_timer_func_t *)system_upgrade_reboot, NULL);
-        os_timer_arm(&ota_reboot_timer, 2000, 1);
-      } else {
-        os_printf("RSA verify FAILURE\n");
-        espconn_send(&web_conn, "failure!\n", 9);
+      SpiFlashOpResult res = spi_flash_write(esp_address, data, len);
+      if (res != SPI_FLASH_RESULT_OK) {
+        os_printf("flash fail @ 0x%x\n", esp_address);
       }
-      espconn_disconnect(conn);
+      esp_address += len;
+
+      if (content_length == 0) {
+        char digest[SHA_DIGEST_SIZE];
+        uint32_t rsa[RSANUMBYTES/4];
+        uint32_t dat[0x80/4];
+        int ll;
+        spi_flash_read(esp_address-RSANUMBYTES, rsa, RSANUMBYTES);
+
+        // 32-bit aligned accesses only
+        SHA_CTX ctx;
+        SHA_init(&ctx);
+        for (ll = start_address; ll < esp_address-RSANUMBYTES; ll += 0x80) {
+          spi_flash_read(ll, dat, 0x80);
+          SHA_update(&ctx, dat, min((esp_address-RSANUMBYTES)-ll, 0x80));
+        }
+        memcpy(digest, SHA_final(&ctx), SHA_DIGEST_SIZE);
+
+        if (RSA_verify(&releaseesp_rsa_key, rsa, RSANUMBYTES, digest, SHA_DIGEST_SIZE) ||
+          #ifdef ALLOW_DEBUG
+            RSA_verify(&debugesp_rsa_key, rsa, RSANUMBYTES, digest, SHA_DIGEST_SIZE)
+          #else
+            false
+          #endif
+          ) {
+          os_printf("RSA verify success!\n");
+          espconn_send(&web_conn, "success!\n", 9);
+          system_upgrade_flag_set(UPGRADE_FLAG_FINISH);
+
+          // reboot
+          os_printf("Scheduling reboot.\n");
+          os_timer_disarm(&ota_reboot_timer);
+          os_timer_setfn(&ota_reboot_timer, (os_timer_func_t *)system_upgrade_reboot, NULL);
+          os_timer_arm(&ota_reboot_timer, 2000, 1);
+        } else {
+          os_printf("RSA verify FAILURE\n");
+          espconn_send(&web_conn, "failure!\n", 9);
+        }
+        espconn_disconnect(conn);
+      }
     }
   }
 }

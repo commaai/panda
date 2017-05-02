@@ -50,7 +50,7 @@ void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 }
 
-int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
   // BRAKE: safety check
   if ((to_send->RIR>>21) == 0x1FA) {
     if (controls_allowed) {
@@ -79,10 +79,10 @@ int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   } 
 
   // 1 allows the message through
-  return 1;
+  return hardwired;
 }
 
-int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
-  return 1;
+int safety_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired) {
+  return hardwired;
 }
 

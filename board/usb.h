@@ -79,10 +79,10 @@ USB_Setup_TypeDef;
 
 // interfaces
 void usb_cb_enumeration_complete();
-int  usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *usbdata);
-int  usb_cb_ep1_in(uint8_t *usbdata, int len);
-void usb_cb_ep2_out(uint8_t *usbdata, int len);
-void usb_cb_ep3_out(uint8_t *usbdata, int len);
+int  usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *usbdata, int hardwired);
+int  usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired);
+void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired);
+void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired);
 
 uint8_t device_desc[] = {
   0x12,0x01,0x00,0x01,
@@ -335,7 +335,7 @@ void usb_setup() {
       USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
       break;
     default:
-      resp_len = usb_cb_control_msg(&setup, resp);
+      resp_len = usb_cb_control_msg(&setup, resp, 1);
       USB_WritePacket(resp, min(resp_len, setup.b.wLength.w), 0);
       USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
   }
@@ -488,11 +488,11 @@ void usb_irqhandler(void) {
       #endif
 
       if (endpoint == 2) {
-        usb_cb_ep2_out(usbdata, len);
+        usb_cb_ep2_out(usbdata, len, 1);
       }
 
       if (endpoint == 3) {
-        usb_cb_ep3_out(usbdata, len);
+        usb_cb_ep3_out(usbdata, len, 1);
       }
     } else if (((rxst & USB_OTG_GRXSTSP_PKTSTS) >> 17) == STS_SETUP_UPDT) {
       USB_ReadPacket(&setup, 8);
@@ -617,7 +617,7 @@ void usb_irqhandler(void) {
         puts("  IN PACKET QUEUE\n"); 
       #endif
       // TODO: always assuming max len, can we get the length?
-      USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40), 1);
+      USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
     }
 
     // clear interrupts

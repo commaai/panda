@@ -314,8 +314,8 @@ inline int putc(uart_ring *q, char elem) {
 #include "spi.h"
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
-int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
-int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
+int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired);
+int safety_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired);
 
 #ifdef PANDA_SAFETY
 #include "panda_safety.h"
@@ -473,7 +473,7 @@ void set_fan_speed(int fan_speed) {
   TIM3->CCR3 = fan_speed;
 }
 
-int usb_cb_ep1_in(uint8_t *usbdata, int len) {
+int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) {
   CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;;
 
   int ilen = 0;
@@ -483,18 +483,18 @@ int usb_cb_ep1_in(uint8_t *usbdata, int len) {
 }
 
 // send on serial, first byte to select
-void usb_cb_ep2_out(uint8_t *usbdata, int len) {
+void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
   int i;
   if (len == 0) return;
   uart_ring *ur = get_ring_by_number(usbdata[0]);
   if (!ur) return;
-  if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1)) {
+  if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1, hardwired)) {
     for (i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
   }
 }
 
 // send on CAN
-void usb_cb_ep3_out(uint8_t *usbdata, int len) {
+void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
   int dpkt = 0;
   int i;
   for (dpkt = 0; dpkt < len; dpkt += 0x10) {
@@ -508,7 +508,7 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len) {
     to_push.RIR = tf[0];
 
     int flags = (to_push.RDTR >> 4) & 0xF;
-    if (safety_tx_hook(&to_push)) {
+    if (safety_tx_hook(&to_push, hardwired)) {
       CAN_TypeDef *CAN;
       can_ring *can_q;
       int can_number;
@@ -554,7 +554,7 @@ void usb_cb_enumeration_complete() {
   did_usb_enumerate = 1;
 }
 
-int __usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
+int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
   int resp_len = 0;
   uart_ring *ur = NULL;
   int i;
@@ -706,10 +706,6 @@ int __usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired)
   return resp_len;
 }
 
-int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
-  return __usb_cb_control_msg(setup, resp, 1);
-}
-
 
 void OTG_FS_IRQHandler(void) {
   NVIC_DisableIRQ(OTG_FS_IRQn);
@@ -741,19 +737,19 @@ void handle_spi(uint8_t *data, int len) {
   switch (data[0]) {
     case 0:
       // control transfer
-      *resp_len = __usb_cb_control_msg(data+4, spi_tx_buf+4, 0);
+      *resp_len = usb_cb_control_msg((USB_Setup_TypeDef *)(data+4), spi_tx_buf+4, 0);
       break;
     case 1:
       // ep 1, read
-      *resp_len = usb_cb_ep1_in(spi_tx_buf+4, 0x40);
+      *resp_len = usb_cb_ep1_in(spi_tx_buf+4, 0x40, 0);
       break;
     case 2:
       // ep 2, send serial
-      usb_cb_ep2_out(data+4, data[2]);
+      usb_cb_ep2_out(data+4, data[2], 0);
       break;
     case 3:
       // ep 3, send CAN
-      usb_cb_ep3_out(data+4, data[2]);
+      usb_cb_ep3_out(data+4, data[2], 0);
       break;
   }
   spi_tx_dma(spi_tx_buf, 0x44);
