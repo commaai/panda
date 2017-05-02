@@ -22,6 +22,9 @@ def run_test():
   if len(pandas) == 1:
     # if we only have one on USB, assume the other is on wifi
     pandas.append("WIFI")
+  run_test_w_pandas(pandas)
+
+def run_test_w_pandas(pandas):
   h = map(lambda x: Panda(x), pandas)
   print h
 
