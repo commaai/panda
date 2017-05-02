@@ -7,6 +7,7 @@ import random
 import struct
 from panda.lib.panda import Panda
 from hexdump import hexdump
+from itertools import permutations
 
 def get_test_string():
   return "test"+os.urandom(10)
@@ -28,11 +29,12 @@ def run_test_w_pandas(pandas):
   h = map(lambda x: Panda(x), pandas)
   print h
 
-  h[0].set_controls_allowed(True)
-  h[1].set_controls_allowed(True)
+  for hh in h:
+    hh.set_controls_allowed(True)
 
   # test both directions
-  for ho in [[0,1], [1,0]]:
+  for ho in permutations(range(len(h)), r=2):
+    print "***************** TESTING", ho
 
     # **** test health packet ****
     print "health", ho[0], h[ho[0]].health()
@@ -101,9 +103,13 @@ def run_test_w_pandas(pandas):
       print "CAN pass", bus, ho
 
 if __name__ == "__main__":
-  i = 0
-  while 1:
-    print "************* testing %d" % i
-    run_test()
+  if len(sys.argv) > 1:
+    for i in range(int(sys.argv[1])):
+      run_test()
+  else :
+    i = 0
+    while 1:
+      print "************* testing %d" % i
+      run_test()
     i += 1
 
