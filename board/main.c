@@ -97,6 +97,7 @@ typedef struct uart_ring {
   void (*callback)(struct uart_ring*);
 } uart_ring;
 
+inline int getc(uart_ring *q, char *elem);
 inline int putc(uart_ring *q, char elem);
 
 // esp = USART1
@@ -141,7 +142,7 @@ void accord_framing_callback(uart_ring *q) {
   int sof1 = -1;
   int sof2 = -1;
   int i;
-  uint8_t junk;
+  char junk;
   int jlen = 0;
   int plen = 0;
   while (q->w_ptr_rx != r_ptr_rx_tmp) {
@@ -189,7 +190,7 @@ void accord_framing_callback(uart_ring *q) {
 
       // get data from queue
       for (i = 0; i < plen; i++) {
-        getc(q, &(((uint8_t*)(&to_push.RDLR))[i]));
+        getc(q, &(((char*)(&to_push.RDLR))[i]));
       }
 
       push(&can_rx_q, &to_push);
@@ -511,7 +512,6 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
     if (safety_tx_hook(&to_push, hardwired)) {
       CAN_TypeDef *CAN;
       can_ring *can_q;
-      int can_number;
       if (flags == can_numbering[0])  {
         CAN = CAN1;
         can_q = &can_tx1_q;
@@ -562,11 +562,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xd0:
       // fetch serial number
       #ifdef PANDA
+        // addresses are OTP
         if (setup->b.wValue.w == 1) {
-          memcpy(resp, 0x1fff79c0, 0x10);
+          memcpy(resp, (void *)0x1fff79c0, 0x10);
           resp_len = 0x10;
         } else {
-          memcpy(resp, 0x1fff79e0, 0x20);
+          memcpy(resp, (void *)0x1fff79e0, 0x20);
           resp_len = 0x20;
         }
       #endif
@@ -625,7 +626,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) break;
       // read
-      while (resp_len < min(setup->b.wLength.w, MAX_RESP_LEN) && getc(ur, &resp[resp_len])) {
+      while (resp_len < min(setup->b.wLength.w, MAX_RESP_LEN) && getc(ur, (char*)&resp[resp_len])) {
         ++resp_len;
       }
       break;

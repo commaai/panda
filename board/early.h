@@ -3,6 +3,7 @@
 extern uint32_t enter_bootloader_mode;
 extern void *_app_start[];
 void *g_pfnVectors;
+void spi_flasher();
 
 int has_external_debug_serial = 0;
 int is_giant_panda = 0;

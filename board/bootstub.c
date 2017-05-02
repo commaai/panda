@@ -37,11 +37,11 @@ int main() {
   clock_init();
 
   // validate length
-  int len = _app_start[0];
+  int len = (int)_app_start[0];
   if (len < 8) fail();
 
   // compute SHA hash
-  char digest[SHA_DIGEST_SIZE];
+  uint8_t digest[SHA_DIGEST_SIZE];
   SHA_hash(&_app_start[1], len-4, digest);
 
   // verify RSA signature

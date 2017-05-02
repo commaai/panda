@@ -286,13 +286,13 @@ void usb_setup() {
         case USB_DESC_TYPE_STRING:
           switch (setup.b.wValue.bw.msb) {
             case 0:
-              USB_WritePacket(string_0_desc, min(sizeof(string_0_desc), setup.b.wLength.w), 0);
+              USB_WritePacket((uint8_t*)string_0_desc, min(sizeof(string_0_desc), setup.b.wLength.w), 0);
               break;
             case 1:
-              USB_WritePacket(string_1_desc, min(sizeof(string_1_desc), setup.b.wLength.w), 0);
+              USB_WritePacket((uint8_t*)string_1_desc, min(sizeof(string_1_desc), setup.b.wLength.w), 0);
               break;
             case 2:
-              USB_WritePacket(string_2_desc, min(sizeof(string_2_desc), setup.b.wLength.w), 0);
+              USB_WritePacket((uint8_t*)string_2_desc, min(sizeof(string_2_desc), setup.b.wLength.w), 0);
               break;
             case 3:
               #ifdef PANDA

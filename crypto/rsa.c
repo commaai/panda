@@ -226,7 +226,7 @@ int RSA_verify(const RSAPublicKey *key,
                const int hash_len) {
     uint8_t buf[RSANUMBYTES];
     int i;
-    const uint8_t* padding_hash;
+    //const uint8_t* padding_hash;
 
     if (key->len != RSANUMWORDS) {
         return 0;  // Wrong key passed in.

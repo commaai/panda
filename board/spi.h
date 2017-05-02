@@ -13,9 +13,9 @@ void spi_tx_dma(void *addr, int len) {
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
 
   // DMA2, stream 3, channel 3
-  DMA2_Stream3->M0AR = addr;
+  DMA2_Stream3->M0AR = (uint32_t)addr;
   DMA2_Stream3->NDTR = len;
-  DMA2_Stream3->PAR = &(SPI1->DR);
+  DMA2_Stream3->PAR = (uint32_t)&(SPI1->DR);
 
   // channel3, increment memory, memory -> periph, enable
   DMA2_Stream3->CR = DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_EN;
@@ -31,11 +31,12 @@ void spi_rx_dma(void *addr, int len) {
 
   // drain the bus
   uint8_t dat = SPI1->DR;
+  (void)dat;
 
   // DMA2, stream 2, channel 3
-  DMA2_Stream2->M0AR = addr;
+  DMA2_Stream2->M0AR = (uint32_t)addr;
   DMA2_Stream2->NDTR = len;
-  DMA2_Stream2->PAR = &(SPI1->DR);
+  DMA2_Stream2->PAR = (uint32_t)&(SPI1->DR);
 
   // channel3, increment memory, periph -> memory, enable
   DMA2_Stream2->CR = DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_EN;
