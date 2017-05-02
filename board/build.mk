@@ -27,6 +27,11 @@ all: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
 	./tools/dfu-util-$(MACHINE) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
 	./tools/dfu-util-$(MACHINE) --reset-stm32 -a 0 -s 0x08000000
 
+dfu: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
+	./tools/dfu-util-$(MACHINE) -a 0 -s 0x08000000 -D obj/bootstub.$(PROJ_NAME).bin
+	./tools/dfu-util-$(MACHINE) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
+	./tools/dfu-util-$(MACHINE) --reset-stm32 -a 0 -s 0x08000000
+
 bootstub: obj/bootstub.$(PROJ_NAME).bin
 	./tools/enter_download_mode.py
 	./tools/dfu-util-$(MACHINE) -a 0 -s 0x08000000 -D obj/bootstub.$(PROJ_NAME).bin
