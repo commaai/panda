@@ -82,3 +82,7 @@ int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return 1;
 }
 
+int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
+  return 1;
+}
+

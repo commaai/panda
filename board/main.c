@@ -315,7 +315,13 @@ inline int putc(uart_ring *q, char elem) {
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
+int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
+
+#ifdef PANDA_SAFETY
+#include "panda_safety.h"
+#else
 #include "honda_safety.h"
+#endif
 
 // ***************************** CAN *****************************
 
@@ -482,7 +488,9 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len) {
   if (len == 0) return;
   uart_ring *ur = get_ring_by_number(usbdata[0]);
   if (!ur) return;
-  for (i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
+  if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1)) {
+    for (i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
+  }
 }
 
 // send on CAN
