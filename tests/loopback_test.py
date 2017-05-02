@@ -25,6 +25,9 @@ def run_test():
   h = map(lambda x: Panda(x), pandas)
   print h
 
+  h[0].set_controls_allowed(True)
+  h[1].set_controls_allowed(True)
+
   # test both directions
   for ho in [[0,1], [1,0]]:
 

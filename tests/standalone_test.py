@@ -11,6 +11,7 @@ if __name__ == "__main__":
     p = Panda()
   print p.health()
   print p.get_serial()
+  p.set_controls_allowed(True)
 
   a = 0
   while 1:

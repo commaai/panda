@@ -105,6 +105,12 @@ class Panda(object):
 
   # ******************* configuration *******************
 
+  def set_controls_allowed(self, on):
+    if on:
+      self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xdc, 0x1337, 0, '')
+    else:
+      self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xdc, 0, 0, '')
+
   def set_gmlan(self, on):
     if on:
       self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xdb, 1, 0, '')

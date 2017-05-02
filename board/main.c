@@ -622,6 +622,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xdb: // toggle GMLAN
       set_can2_mode(setup->b.wValue.w);
       break;
+    case 0xdc: // set controls allowed
+      controls_allowed = setup->b.wValue.w == 0x1337;
+      break;
     case 0xe0: // uart read
       ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) break;
