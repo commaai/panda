@@ -146,7 +146,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
           state = RECEIVING_ESP_FIRMWARE;
           esp_address = 4*1024;
         } else {
-          espconn_send_string(&web_conn, "HTTP/1.0 404 Not Found\nContent-Type: text/html\n\nwrong!");
+          espconn_send_string(&web_conn, "HTTP/1.0 404 Not Found\nContent-Type: text/html\n\nwrong!\n");
           espconn_disconnect(conn);
         }
         esp_address_erase_limit = esp_address;
@@ -223,7 +223,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
           os_timer_arm(&ota_reboot_timer, 2000, 1);
         } else {
           os_printf("RSA verify FAILURE\n");
-          espconn_send_string(&web_conn, "HTTP/1.0 500 Internal Server Error\n\n");
+          espconn_send_string(&web_conn, "HTTP/1.0 500 Internal Server Error\nContent-Type: text/html\n\nrsa verify fail\n");
         }
         espconn_disconnect(conn);
       }
