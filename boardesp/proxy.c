@@ -58,7 +58,10 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   for(int i = 0;(gpio_input_get() & (1 << 4)) && i < 1000; i++) {
 	os_delay_us(10);
   }
-  
+  // print error if handshake not successful 
+  if(gpio_input_get() & (1 << 4))
+	os_print("ERROR: SPI receive failed\n");
+	
   // blank out recvData
   memset(recvData, 0xBB, 0x44);
 

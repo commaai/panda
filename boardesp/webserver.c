@@ -62,6 +62,13 @@ void st_set_boot_mode(int boot_mode) {
     // boot mode (pull low)
     gpio_output_set(0, (1 << 4), (1 << 4), 0);
     st_reset();
+	// use cs as a handshake for spi_flasher
+	// set cs as input and wait for it to go high
+	gpio_output_set(0, 0, 0, (1 << 5));
+	//TODO: remove infinite loop
+	while(!(gpio_input_get() & (1 << 5)));
+	// set cs back to original
+	gpio_output_set((1 << 5), 0, (1 << 5), 0);
   } else {
     // no boot mode (pull high)
     gpio_output_set((1 << 4), 0, (1 << 4), 0);

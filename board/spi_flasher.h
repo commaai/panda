@@ -19,13 +19,22 @@
 }*/
 
 void spi_flasher() {
+  //set cs to high to indicate entry into spi_flasher
+  GPIOA->MODER &= GPIO_MODER_MODER4;
+  GPIOB->MODER |= GPIO_MODER_MODER4_0;
+  GPIOA->ODR |= GPIO_ODR_OD4;
+  
   // green LED on for flashing
   GPIOC->MODER |= GPIO_MODER_MODER7_0;
   GPIOC->ODR &= ~(1 << (6 + 1));
 
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
-
+ 
+  //wait for esp to start sending
+  //TODO: can we do without this?
+  while(!(GPIOB->IDR & GPIO_IDR_ID0));
+  
   // setup SPI
   GPIOA->MODER = GPIO_MODER_MODER4_1 | GPIO_MODER_MODER5_1 |
                  GPIO_MODER_MODER6_1 | GPIO_MODER_MODER7_1;

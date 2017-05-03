@@ -732,6 +732,12 @@ int spi_total_count = 0;
 uint8_t spi_tx_buf[0x44];
 
 void handle_spi(uint8_t *data, int len) {
+  // handshake with esp
+  // Set boot0 to output and pull high
+  GPIOB->MODER &= ~(GPIO_MODER_MODER0);
+  GPIOB->MODER |= GPIO_MODER_MODER0_0;
+  GPIOB->ODR |= GPIO_ODR_OD0; 
+  
   memset(spi_tx_buf, 0xaa, 0x44);
   // data[0]  = endpoint
   // data[2]  = length
@@ -740,22 +746,10 @@ void handle_spi(uint8_t *data, int len) {
   *resp_len = 0;
   switch (data[0]) {
     case 0:
-	  // handshake with esp
-	  // Set boot0 to output and pull high
-	  GPIOB->MODER &= ~(GPIO_MODER_MODER0);
-	  GPIOB->MODER |= GPIO_MODER_MODER0_0;
-	  GPIOB->ODR |= GPIO_ODR_OD0; 
-  
       // control transfer
       *resp_len = usb_cb_control_msg((USB_Setup_TypeDef *)(data+4), spi_tx_buf+4, 0);
       break;
     case 1:
-	  // handshake with esp
-	  // Set boot0 to output and pull high
-	  GPIOB->MODER &= ~(GPIO_MODER_MODER0);
-	  GPIOB->MODER |= GPIO_MODER_MODER0_0;
-	  GPIOB->ODR |= GPIO_ODR_OD0; 
-  
       // ep 1, read
       *resp_len = usb_cb_ep1_in(spi_tx_buf+4, 0x40, 0);
       break;
