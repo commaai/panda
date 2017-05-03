@@ -11,6 +11,13 @@ if __name__ == "__main__":
     p = Panda()
   print p.health()
   print p.get_serial()
+
+  t1 = time.time()
+  for i in range(100):
+    p.get_serial()
+  t2 = time.time()
+  print "100 requests took %.2f ms" % ((t2-t1)*1000)
+
   p.set_controls_allowed(True)
 
   a = 0
