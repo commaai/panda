@@ -113,13 +113,13 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
           st_set_boot_mode(1);
 
           // unlock flash
-          while (!st_cmd(0x10, 0, NULL));
+          st_cmd(0x10, 0, NULL);
 
           // erase sector 1
           st_cmd(0x11, 1, NULL);
 
           // wait for erase
-          while (!st_cmd(0xf, 0, NULL));
+          st_cmd(0xf, 0, NULL);
         }
       }
     } else if ((memcmp(data, "PUT /espupdate1 ", 16) == 0) ||

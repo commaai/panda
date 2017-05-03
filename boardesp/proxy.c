@@ -54,8 +54,8 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   spiData.dataLen = 0x14;
   SPIMasterSendData(SpiNum_HSPI, &spiData);
 
-  // give the ST time to be ready, up to 10ms
-  for (int i = 0;(gpio_input_get() & (1 << 4)) && i < 1000; i++) os_delay_us(10);
+  // give the ST time to be ready, up to 1s
+  for (int i = 0;(gpio_input_get() & (1 << 4)) && i < 100000; i++) os_delay_us(10);
 
   // TODO: handle this better
   if (gpio_input_get() & (1 << 4)) os_printf("ERROR: SPI receive failed\n");
