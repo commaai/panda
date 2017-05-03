@@ -41,6 +41,9 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   spiData.addr = NULL;
   spiData.addrLen = 0;
 
+  // float boot pin
+  gpio_output_set(0, 0, 0, (1 << 4));
+
   // manual CS pin
   gpio_output_set(0, (1 << 5), 0, 0);
   memset(sendData, 0xCC, 0x14);
@@ -51,9 +54,11 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   spiData.dataLen = 0x14;
   SPIMasterSendData(SpiNum_HSPI, &spiData);
 
-  // give the ST time to be ready, 1 ms
-  // TODO: how can we do this better?
-  os_delay_us(1000);
+  // give the ST time to be ready, up to 10ms
+  for (int i = 0;(gpio_input_get() & (1 << 4)) && i < 1000; i++) os_delay_us(10);
+
+  // TODO: handle this better
+  if (gpio_input_get() & (1 << 4)) os_printf("ERROR: SPI receive failed\n");
 
   // blank out recvData
   memset(recvData, 0xBB, 0x44);
@@ -69,7 +74,11 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   spiData.dataLen = recvDataLen;
   SPIMasterRecvData(SpiNum_HSPI, &spiData);
 
+  // clear CS
   gpio_output_set((1 << 5), 0, 0, 0);
+
+  // set boot pin back
+  gpio_output_set((1 << 4), 0, (1 << 4), 0);
 
   return length;
 }

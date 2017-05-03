@@ -757,59 +757,29 @@ void handle_spi(uint8_t *data, int len) {
       break;
   }
   spi_tx_dma(spi_tx_buf, 0x44);
+
+  // signal data is ready by driving low
+  // esp must be configured as input by this point
+  GPIOB->MODER &= ~(GPIO_MODER_MODER0);
+  GPIOB->MODER |= GPIO_MODER_MODER0_0;
+  GPIOB->ODR &= ~(GPIO_ODR_ODR_0);
 }
-
-/*void SPI1_IRQHandler(void) {
-  // status is 0x43
-  if (SPI1->SR & SPI_SR_RXNE) {
-    uint8_t dat = SPI1->DR;
-    if (spi_total_count == 0) {
-      spi_total_count = dat;
-    } else {
-      spi_buf[spi_buf_count] = dat;
-      if (spi_buf_count < SPI_BUF_SIZE-1) {
-        spi_buf_count += 1;
-      }
-    }
-
-    if (spi_buf_count == spi_total_count) {
-      handle_spi(spi_buf, spi_total_count);
-    }
-  }
-
-  int stat = SPI1->SR;
-  //if (stat & ((~SPI_SR_RXNE) & (~SPI_SR_TXE) & (~SPI_SR_BSY))) {
-  if (stat & ((~SPI_SR_RXNE) & (~SPI_SR_TXE) & (~SPI_SR_BSY))) {
-    puts("SPI status: ");
-    puth(stat);
-    puts("\n");
-  }
-}*/
 
 // SPI RX
 void DMA2_Stream2_IRQHandler(void) {
   // ack
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
   handle_spi(spi_buf, 0x14);
-
-  /*if (spi_total_count == 0) {
-    spi_total_count = spi_buf[0];
-    spi_rx_dma(spi_buf, spi_total_count);
-  } else {
-    puts("dma rx\n");
-    hexdump(spi_buf, spi_total_count+1);
-  }*/
 }
 
 // SPI TX
 void DMA2_Stream3_IRQHandler(void) {
   // ack
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
-  //puts("spi tx done\n");
 
-  // reenable interrupt
-  //EXTI->IMR |= (1 << 4);
-  //puts("stop\n");
+  // reset handshake back to pull up
+  GPIOB->MODER &= ~(GPIO_MODER_MODER0);
+  GPIOB->PUPDR |= GPIO_PUPDR_PUPDR0_0;
 }
 
 void EXTI4_IRQHandler(void) {

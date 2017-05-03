@@ -120,10 +120,20 @@ void spi_flasher() {
       DMA2->LIFCR = DMA_LIFCR_CTCIF2;
 
       spi_tx_dma(spi_tx_buf, 0x44);
+
+      // signal data is ready by driving low
+      // esp must be configured as input by this point
+      /*GPIOB->MODER &= ~(GPIO_MODER_MODER0);
+      GPIOB->MODER |= GPIO_MODER_MODER0_0;
+      GPIOB->ODR &= ~(GPIO_ODR_ODR_0);*/
     }
 
     if (DMA2->LISR & DMA_LISR_TCIF3) {
       DMA2->LIFCR = DMA_LIFCR_CTCIF3;
+
+      // reset handshake back to pull up
+      /*GPIOB->MODER &= ~(GPIO_MODER_MODER0);
+      GPIOB->PUPDR |= GPIO_PUPDR_PUPDR0_0;*/
     }
   }
 }
