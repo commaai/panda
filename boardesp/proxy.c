@@ -51,10 +51,14 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   spiData.dataLen = 0x14;
   SPIMasterSendData(SpiNum_HSPI, &spiData);
 
-  // give the ST time to be ready, 1 ms
-  // TODO: how can we do this better?
-  os_delay_us(1000);
-
+  // use the boot0 pin as a handshake with the ST
+  // set boot0 as input
+  gpio_output_set(0,0,0,(1 << 4));
+  //wait for boot0 to be set to LOW by ST, counter to avoid infinite loop
+  for(int i = 0;(gpio_input_get() & (1 << 4)) && i < 100; i++) {
+	os_delay_us(10);
+  }
+  
   // blank out recvData
   memset(recvData, 0xBB, 0x44);
 
@@ -70,6 +74,9 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   SPIMasterRecvData(SpiNum_HSPI, &spiData);
 
   gpio_output_set((1 << 5), 0, 0, 0);
+  
+  //set boot0 to old state
+  gpio_output_set((1 << 4), 0, (1 << 4), 0);
 
   return length;
 }

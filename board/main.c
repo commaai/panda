@@ -740,10 +740,22 @@ void handle_spi(uint8_t *data, int len) {
   *resp_len = 0;
   switch (data[0]) {
     case 0:
+	  // handshake with esp
+	  // Set boot0 to output and pull high
+	  GPIOB->MODER &= ~(0x3);
+	  GPIOB->MODER |= GPIO_MODER_MODER0_0;
+	  GPIOB->ODR |= (1); 
+  
       // control transfer
       *resp_len = usb_cb_control_msg((USB_Setup_TypeDef *)(data+4), spi_tx_buf+4, 0);
       break;
     case 1:
+	  // handshake with esp
+	  // Set boot0 to output and pull high
+	  GPIOB->MODER &= ~(0x3);
+	  GPIOB->MODER |= GPIO_MODER_MODER0_0;
+	  GPIOB->ODR |= (1); 
+  
       // ep 1, read
       *resp_len = usb_cb_ep1_in(spi_tx_buf+4, 0x40, 0);
       break;
@@ -757,6 +769,9 @@ void handle_spi(uint8_t *data, int len) {
       break;
   }
   spi_tx_dma(spi_tx_buf, 0x44);
+  
+  // signal transfer ready
+  GPIOB->ODR &= ~(1); 
 }
 
 /*void SPI1_IRQHandler(void) {
@@ -807,6 +822,10 @@ void DMA2_Stream3_IRQHandler(void) {
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
   //puts("spi tx done\n");
 
+  // Set boot0 to old state
+  GPIOB->MODER &= ~(0x3); 
+  GPIOB->PUPDR |= GPIO_PUPDR_PUPDR0_0;
+  
   // reenable interrupt
   //EXTI->IMR |= (1 << 4);
   //puts("stop\n");
