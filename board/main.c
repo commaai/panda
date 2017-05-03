@@ -732,6 +732,12 @@ int spi_total_count = 0;
 uint8_t spi_tx_buf[0x44];
 
 void handle_spi(uint8_t *data, int len) {
+  // handshake with esp
+  // Set boot0 to output and pull high
+  GPIOB->MODER &= ~(GPIO_MODER_MODER0);
+  GPIOB->MODER |= GPIO_MODER_MODER0_0;
+  GPIOB->ODR |= GPIO_ODR_OD0; 
+  
   memset(spi_tx_buf, 0xaa, 0x44);
   // data[0]  = endpoint
   // data[2]  = length
@@ -757,6 +763,9 @@ void handle_spi(uint8_t *data, int len) {
       break;
   }
   spi_tx_dma(spi_tx_buf, 0x44);
+  
+  // signal transfer ready
+  GPIOB->ODR &= ~(GPIO_ODR_OD0); 
 }
 
 /*void SPI1_IRQHandler(void) {
@@ -807,6 +816,10 @@ void DMA2_Stream3_IRQHandler(void) {
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
   //puts("spi tx done\n");
 
+  // Set boot0 to old state
+  GPIOB->MODER &= ~(GPIO_MODER_MODER0); 
+  GPIOB->PUPDR |= GPIO_PUPDR_PUPDR0_0;
+  
   // reenable interrupt
   //EXTI->IMR |= (1 << 4);
   //puts("stop\n");
