@@ -53,6 +53,12 @@ void spi_flasher() {
     lastval = val;
 
     if (rcv && (DMA2->LISR & DMA_LISR_TCIF2)) {
+	  // handshake with esp
+	  // Set boot0 to output and pull high
+	  GPIOB->MODER &= ~(GPIO_MODER_MODER0);
+	  GPIOB->MODER |= GPIO_MODER_MODER0_0;
+	  GPIOB->ODR |= GPIO_ODR_OD0; 
+	  
       rcv = 0;
       memset(spi_tx_buf, 0, 0x44);
       spi_tx_buf[0x40] = 0xde;
@@ -120,6 +126,8 @@ void spi_flasher() {
       DMA2->LIFCR = DMA_LIFCR_CTCIF2;
 
       spi_tx_dma(spi_tx_buf, 0x44);
+	  // signal transfer ready
+	  GPIOB->ODR &= ~(GPIO_ODR_OD0); 
     }
 
     if (DMA2->LISR & DMA_LISR_TCIF3) {

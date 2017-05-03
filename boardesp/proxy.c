@@ -55,7 +55,7 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   // set boot0 as input
   gpio_output_set(0,0,0,(1 << 4));
   //wait for boot0 to be set to LOW by ST, counter to avoid infinite loop
-  for(int i = 0;(gpio_input_get() & (1 << 4)) && i < 100; i++) {
+  for(int i = 0;(gpio_input_get() & (1 << 4)) && i < 1000; i++) {
 	os_delay_us(10);
   }
   
