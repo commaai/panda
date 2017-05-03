@@ -13,6 +13,7 @@
 #include "cert.h"
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
+#define espconn_send_string(conn, x) espconn_send(conn, x, strlen(x))
 
 char staticpage[] = "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
 "<html><body><tt>This is your comma.ai panda<br/><br/>\n"
@@ -94,7 +95,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
 
     // index
     if (memcmp(data, "GET / ", 6) == 0) {
-      espconn_send(&web_conn, staticpage, strlen(staticpage));
+      espconn_send_string(&web_conn, staticpage);
       espconn_disconnect(conn);
     } else if (memcmp(data, "PUT /stupdate ", 14) == 0) {
       os_printf("init st firmware\n");
@@ -145,7 +146,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
           state = RECEIVING_ESP_FIRMWARE;
           esp_address = 4*1024;
         } else {
-          espconn_send(&web_conn, "wrong!\n", 7);
+          espconn_send_string(&web_conn, "HTTP/1.0 404 Not Found\nContent-Type: text/html\n\nwrong!");
           espconn_disconnect(conn);
         }
         esp_address_erase_limit = esp_address;
@@ -168,7 +169,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
     }
     if (content_length == 0) {
       os_printf("done!\n");
-      espconn_send(&web_conn, "success!\n", 9);
+      espconn_send_string(&web_conn, "HTTP/1.0 200 OK\nContent-Type: text/html\n\nsuccess!\n");
       espconn_disconnect(conn);
       st_set_boot_mode(0);
     }
@@ -212,7 +213,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
           #endif
           ) {
           os_printf("RSA verify success!\n");
-          espconn_send(&web_conn, "success!\n", 9);
+          espconn_send_string(&web_conn, "HTTP/1.0 200 OK\nContent-Type: text/html\n\nsuccess!\n");
           system_upgrade_flag_set(UPGRADE_FLAG_FINISH);
 
           // reboot
@@ -222,7 +223,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
           os_timer_arm(&ota_reboot_timer, 2000, 1);
         } else {
           os_printf("RSA verify FAILURE\n");
-          espconn_send(&web_conn, "failure!\n", 9);
+          espconn_send_string(&web_conn, "HTTP/1.0 500 Internal Server Error\n\n");
         }
         espconn_disconnect(conn);
       }
