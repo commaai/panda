@@ -53,6 +53,8 @@ void spi_flasher() {
     lastval = val;
 
     if (rcv && (DMA2->LISR & DMA_LISR_TCIF2)) {
+      DMA2->LIFCR = DMA_LIFCR_CTCIF2;
+
       rcv = 0;
       memset(spi_tx_buf, 0, 0x44);
       spi_tx_buf[0x40] = 0xde;
@@ -60,12 +62,14 @@ void spi_flasher() {
       spi_tx_buf[0x42] = 0xd0;
       spi_tx_buf[0x43] = 0x0d;
 
-      *(uint32_t*)(&spi_tx_buf[4]) = FLASH->CR;
-      *(uint32_t*)(&spi_tx_buf[8]) = (uint32_t)prog_ptr;
-
-      if (spi_rx_buf[0] == (0xff^spi_rx_buf[1]) &&
-          spi_rx_buf[2] == (0xff^spi_rx_buf[3])) {
+      if (memcmp("\x00\x00\x00\x00\x40\xD0\x00\x00\x00\x00\x20\x00", spi_rx_buf, 0xC) == 0) {
+        *(uint32_t*)(&spi_tx_buf[0]) = 0x20;
+        memcpy(spi_tx_buf+4, (void *)0x1fff79e0, 0x20);
+      } else if (spi_rx_buf[0] == (0xff^spi_rx_buf[1]) &&
+                 spi_rx_buf[2] == (0xff^spi_rx_buf[3])) {
         spi_tx_buf[0] = 0xff;
+        *(uint32_t*)(&spi_tx_buf[4]) = FLASH->CR;
+        *(uint32_t*)(&spi_tx_buf[8]) = (uint32_t)prog_ptr;
         // valid
         switch (spi_rx_buf[0]) {
           case 0x10:
@@ -114,10 +118,8 @@ void spi_flasher() {
           default:
             break;
         }
+        memcpy(spi_tx_buf+0x10, spi_rx_buf, 0x14);
       }
-
-      memcpy(spi_tx_buf+0x10, spi_rx_buf, 0x14);
-      DMA2->LIFCR = DMA_LIFCR_CTCIF2;
 
       spi_tx_dma(spi_tx_buf, 0x44);
 

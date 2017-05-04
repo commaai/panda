@@ -77,3 +77,11 @@ void *memcpy(void *dest, const void *src, unsigned int n) {
   return dest;
 }
 
+int memcmp(const void * ptr1, const void * ptr2, unsigned int num) {
+  int i;
+  for (i = 0; i < num; i++) {
+    if ( ((uint8_t*)ptr1)[i] != ((uint8_t*)ptr2)[i] ) return -1;
+  }
+  return 0;
+}
+
