@@ -78,6 +78,9 @@ inline void early() {
   #endif
 
   if (enter_bootloader_mode == ENTER_BOOTLOADER_MAGIC) {
+    // ESP OFF
+    GPIOC->ODR &= ~((1 << 14) | (1 << 5));
+
     // green LED on
     // sadly, on the NEO board the bootloader turns it off
     #ifdef PANDA

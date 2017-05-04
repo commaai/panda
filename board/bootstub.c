@@ -26,7 +26,21 @@ void __initialize_hardware_early() {
 
 void fail() {
 #ifdef PANDA
-  spi_flasher();
+  volatile int i;
+  // detect usb host
+  GPIOA->PUPDR |= GPIO_PUPDR_PUPDR11_0;
+  for (i=0;i<PULL_EFFECTIVE_DELAY;i++);
+  int no_usb = GPIOA->IDR & (1 << 11);
+  GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPDR11_0);
+
+  if (no_usb) {
+    // no usb host, go to SPI flasher
+    spi_flasher();
+  } else {
+    // has usb host, go to USB flasher
+    enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+    NVIC_SystemReset();
+  }
 #else
   enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
   NVIC_SystemReset();
@@ -38,7 +52,7 @@ int main() {
 
   // validate length
   int len = (int)_app_start[0];
-  if (len < 8) fail();
+  if ((len < 8) || (((uint32_t)&_app_start[0] + RSANUMBYTES) >= 0x8100000)) fail();
 
   // compute SHA hash
   uint8_t digest[SHA_DIGEST_SIZE];

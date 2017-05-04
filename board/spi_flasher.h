@@ -20,8 +20,8 @@
 
 void spi_flasher() {
   // green LED on for flashing
-  GPIOC->MODER |= GPIO_MODER_MODER7_0;
-  GPIOC->ODR &= ~(1 << (6 + 1));
+  GPIOC->MODER |= GPIO_MODER_MODER6_0;
+  GPIOC->ODR &= ~(1 << 6);
 
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
