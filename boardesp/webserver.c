@@ -10,17 +10,20 @@
 #include "crypto/rsa.h"
 #include "crypto/sha.h"
 
+#include "gitversion.h"
 #include "cert.h"
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define espconn_send_string(conn, x) espconn_send(conn, x, strlen(x))
 
+char resp[0x800];
 char staticpage[] = "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
-"<html><body><tt>This is your comma.ai panda<br/><br/>\n"
-"It's open source. Find the code <a href=\"https://github.com/commaai/panda\">here</a>";
+"<pre>This is your comma.ai panda<br/><br/>"
+"It's open source. Find the code <a href=\"https://github.com/commaai/panda\">here</a><br/>";
 
 static struct espconn web_conn;
 static esp_tcp web_proto;
+extern char ssid[];
 
 LOCAL os_timer_t ota_reboot_timer;
 
@@ -95,7 +98,25 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
 
     // index
     if (memcmp(data, "GET / ", 6) == 0) {
-      espconn_send_string(&web_conn, staticpage);
+      strcpy(resp, staticpage);
+      ets_strcat(resp, "<br/>ssid: ");
+      ets_strcat(resp, ssid);
+      ets_strcat(resp, "<br/>");
+
+      ets_strcat(resp, "<br/>st version:     ");
+      uint32_t recvData[0x11];
+      int len = spi_comm("\x00\x00\x00\x00\x40\xD6\x00\x00\x00\x00\x40\x00", 0xC, recvData, 0x40);
+      ets_memcpy(resp+strlen(resp), recvData+1, len);
+
+      ets_strcat(resp, "<br/>esp version:    ");
+      ets_strcat(resp, gitversion);
+      uint8_t current = system_upgrade_userbin_check();
+      if (current == UPGRADE_FW_BIN1) {
+        ets_strcat(resp, "<br/>esp flash file: user2.bin");
+      } else {
+        ets_strcat(resp, "<br/>esp flash file: user1.bin");
+      }
+      espconn_send_string(&web_conn, resp);
       espconn_disconnect(conn);
     } else if (memcmp(data, "PUT /stupdate ", 14) == 0) {
       os_printf("init st firmware\n");

@@ -26,7 +26,20 @@ proxy.o: proxy.c
 cert.h:
 	../crypto/getcertheader.py ../certs/debugesp.pub ../certs/releaseesp.pub > cert.h
 
-webserver.o: webserver.c cert.h
+ifneq ($(wildcard ../.git/HEAD),) 
+gitversion.h: ../.git/HEAD ../.git/index
+	echo "const uint8_t gitversion[] = \"$(shell git rev-parse HEAD)\";" > $@
+else
+ifneq ($(wildcard ../../.git/modules/panda/HEAD),) 
+gitversion.h: ../../.git/modules/panda/HEAD ../../.git/modules/panda/index
+	echo "const uint8_t gitversion[] = \"$(shell git rev-parse HEAD)\";" > $@
+else
+gitversion.h: 
+	echo "const uint8_t gitversion[] = \"RELEASE\";" > $@
+endif
+endif
+
+webserver.o: webserver.c cert.h gitversion.h
 
 sha.o: ../crypto/sha.c
 	$(CC) $(CFLAGS) -c $^ -o $@

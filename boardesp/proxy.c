@@ -19,6 +19,7 @@
      __typeof__ (b) _b = (b); \
    _a > _b ? _a : _b; })
 
+char ssid[32];
 static const int pin = 2;
 
 // Structure holding the TCP connection information.
@@ -93,7 +94,7 @@ int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, int recvD
     gpio_output_set((1 << pin), 0, 0, 0);
   }
 
-  __spi_comm(dat, len, recvData, recvDataLen);
+  return __spi_comm(dat, len, recvData, recvDataLen);
 }
 
 static void ICACHE_FLASH_ATTR tcp_rx_cb(void *arg, char *data, uint16_t len) {
@@ -160,7 +161,6 @@ void ICACHE_FLASH_ATTR inter_connect_cb(void *arg) {
 
 void ICACHE_FLASH_ATTR wifi_init() {
   // default ssid and password
-  char ssid[32];
   memset(ssid, 0, 32);
   os_sprintf(ssid, "panda-%08x-BROKEN", system_get_chip_id()); 
   char password[] = "testing123";

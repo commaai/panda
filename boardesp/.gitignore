@@ -3,3 +3,4 @@ proxy
 esp-open-sdk
 a.out
 cert.h
+gitversion.h
