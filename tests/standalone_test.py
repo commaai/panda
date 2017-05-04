@@ -9,8 +9,8 @@ if __name__ == "__main__":
     p = Panda("WIFI")
   else:
     p = Panda()
-  print p.health()
   print p.get_serial()
+  print p.health()
 
   t1 = time.time()
   for i in range(100):
