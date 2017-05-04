@@ -56,12 +56,12 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   gpio_output_set(0,0,0,(1 << 4));
   //wait for boot0 to be set to LOW by ST, counter to avoid infinite loop
   for(int i = 0;(gpio_input_get() & (1 << 4)) && i < 1000; i++) {
-	os_delay_us(10);
+    os_delay_us(10);
   }
   // print error if handshake not successful 
   if(gpio_input_get() & (1 << 4))
-	os_print("ERROR: SPI receive failed\n");
-	
+    os_printf("ERROR: SPI receive failed\n");
+
   // blank out recvData
   memset(recvData, 0xBB, 0x44);
 
@@ -77,7 +77,7 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   SPIMasterRecvData(SpiNum_HSPI, &spiData);
 
   gpio_output_set((1 << 5), 0, 0, 0);
-  
+
   //set boot0 to old state
   gpio_output_set((1 << 4), 0, (1 << 4), 0);
 
