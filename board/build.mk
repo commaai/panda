@@ -49,8 +49,13 @@ ifneq ($(wildcard ../.git/HEAD),)
 obj/gitversion.h: ../.git/HEAD ../.git/index
 	echo "const uint8_t gitversion[] = \"$(shell git rev-parse HEAD)\";" > $@
 else
+ifneq ($(wildcard ../../.git/modules/panda/HEAD),) 
+obj/gitversion.h: ../../.git/modules/panda/HEAD ../../.git/modules/panda/index
+	echo "const uint8_t gitversion[] = \"$(shell git rev-parse HEAD)\";" > $@
+else
 obj/gitversion.h: 
 	echo "const uint8_t gitversion[] = \"RELEASE\";" > $@
+endif
 endif
 
 obj/cert.h: ../crypto/getcertheader.py
