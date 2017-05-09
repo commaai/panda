@@ -26,11 +26,19 @@ void can_init(CAN_TypeDef *CAN) {
   CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
   while((CAN->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
 
-  // PCLK = 24000000, 500000 is 48 clocks
-  // from http://www.bittiming.can-wiki.ino/
-  CAN->BTR = 0x001c0002;
+  // http://www.bittiming.can-wiki.info/
+  // PCLK = 24 MHz
+  uint32_t pclk = 24000;
+  uint32_t num_time_quanta = 16;
 
-  // loopback mode for debugging
+  // 500 kbps
+  uint32_t prescaler = pclk / num_time_quanta / 500;
+
+  // seg 1: 13 time quanta, seg 2: 2 time quanta
+  CAN->BTR = (CAN_BTR_TS1_0 * 12) |
+    CAN_BTR_TS2_0 | (prescaler - 1);
+
+  // silent loopback mode for debugging
   #ifdef CAN_LOOPBACK_MODE
     CAN->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
   #endif

@@ -132,7 +132,13 @@ class Panda(object):
   def can_send_many(self, arr):
     snds = []
     for addr, _, dat, bus in arr:
-      snd = struct.pack("II", ((addr << 21) | 1), len(dat) | (bus << 4)) + dat
+      transmit = 1
+      extended = 4
+      if addr >= 0x800:
+        rir = (addr << 3) | transmit | extended
+      else:
+        rir = (addr << 21) | transmit
+      snd = struct.pack("II", rir, len(dat) | (bus << 4)) + dat
       snd = snd.ljust(0x10, '\x00')
       snds.append(snd)
 
@@ -152,7 +158,12 @@ class Panda(object):
       for j in range(0, len(dat), 0x10):
         ddat = dat[j:j+0x10]
         f1, f2 = struct.unpack("II", ddat[0:8])
-        ret.append((f1 >> 21, f2>>16, ddat[8:8+(f2&0xF)], (f2>>4)&0xf))
+        extended = 4
+        if f1 & extended:
+          address = f1 >> 3
+        else:
+          address = f1 >> 21
+        ret.append((address, f2>>16, ddat[8:8+(f2&0xF)], (f2>>4)&0xf))
       return ret
     dat = ""
     while 1:

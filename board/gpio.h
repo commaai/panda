@@ -36,7 +36,12 @@ void periph_init() {
 }
 
 void set_can2_mode(int use_gmlan) {
-  uint32_t speed;
+
+  // http://www.bittiming.can-wiki.info/#bxCAN
+  // 24 MHz, sample point at 87.5%
+  uint32_t pclk = 24000;
+  uint32_t num_time_quanta = 16;
+  uint32_t prescaler;
 
   // connects to CAN2 xcvr or GMLAN xcvr
   if (use_gmlan) {
@@ -60,10 +65,10 @@ void set_can2_mode(int use_gmlan) {
     GPIOB->MODER |= GPIO_MODER_MODER14_0 | GPIO_MODER_MODER15_0;
 
     // 83.3 kbps
-    //speed = 0x001c0011;
+    // prescaler = pclk / num_time_quanta * 10 / 833;
 
     // 33.3 kbps
-    speed = 0x001c002d;
+    prescaler = pclk / num_time_quanta * 10 / 333;
   } else {
     // disable GMLAN
     GPIOB->MODER &= ~(GPIO_MODER_MODER12_1 | GPIO_MODER_MODER13_1);
@@ -73,7 +78,8 @@ void set_can2_mode(int use_gmlan) {
     GPIOB->MODER |= GPIO_MODER_MODER5_1 | GPIO_MODER_MODER6_1;
     GPIOB->AFR[0] |= GPIO_AF9_CAN2 << (5*4) | GPIO_AF9_CAN2 << (6*4);
 
-    speed = 0x001c0002;
+    // 500 kbps
+    prescaler = pclk / num_time_quanta / 500;
   }
 
   // init
@@ -81,7 +87,9 @@ void set_can2_mode(int use_gmlan) {
   while((CAN2->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
 
   // set speed
-  CAN2->BTR = speed;
+  // seg 1: 13 time quanta, seg 2: 2 time quanta
+  CAN2->BTR = (CAN_BTR_TS1_0 * 12) |
+    CAN_BTR_TS2_0 | (prescaler - 1);
 
   // running
   CAN2->MCR = CAN_MCR_TTCM;
