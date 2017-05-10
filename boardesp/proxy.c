@@ -202,6 +202,8 @@ void ICACHE_FLASH_ATTR wifi_init() {
   IP4_ADDR(&ip_config.gw, 0, 0, 0, 0);
   IP4_ADDR(&ip_config.netmask, 255, 255, 255, 0);
   wifi_set_ip_info(SOFTAP_IF, &ip_config);
+  int stupid_gateway = 0;
+  wifi_softap_set_dhcps_offer_option(OFFER_ROUTER, &stupid_gateway);
   wifi_softap_dhcps_start();
 
   // setup tcp server
