@@ -391,7 +391,9 @@ void can_rx(CAN_TypeDef *CAN, int can_number) {
 
     safety_rx_hook(&to_push);
 
-    set_led(LED_BLUE, 1);
+    #ifdef PANDA
+      set_led(LED_GREEN, 1);
+    #endif
     push(&can_rx_q, &to_push);
 
     // next
@@ -915,8 +917,12 @@ int main() {
     /*puts("voltage: "); puth(adc_get(ADCCHAN_VOLTAGE)); puts("  ");
     puts("current: "); puth(adc_get(ADCCHAN_CURRENT)); puts("\n");*/
 
-    // set LED to be controls allowed
-    set_led(LED_GREEN, controls_allowed);
+    // set LED to be controls allowed, blue on panda, green on legacy
+    #ifdef PANDA
+      set_led(LED_BLUE, controls_allowed);
+    #else
+      set_led(LED_GREEN, controls_allowed);
+    #endif
 
     // blink the red LED
     set_led(LED_RED, 0);
@@ -924,8 +930,10 @@ int main() {
     set_led(LED_RED, 1);
     delay(2000000);
 
-    // turn off the blue LED, turned on by CAN
-    set_led(LED_BLUE, 0);
+    // turn off the green LED, turned on by CAN
+    #ifdef PANDA
+      set_led(LED_GREEN, 0);
+    #endif
 
     #ifdef ENABLE_SPI
       /*if (spi_buf_count > 0) {
