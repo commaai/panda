@@ -224,12 +224,12 @@ void gpio_init() {
 }
 
 #ifdef PANDA
-  #define LED_RED 3
-  #define LED_GREEN 1
-  #define LED_BLUE 0
+  #define LED_RED 9
+  #define LED_GREEN 7
+  #define LED_BLUE 6
 #else
-  #define LED_RED 0
-  #define LED_GREEN 1
+  #define LED_RED 10
+  #define LED_GREEN 11
   #define LED_BLUE -1
 #endif
 
@@ -238,16 +238,16 @@ void set_led(int led_num, int on) {
   if (on) {
     // turn on
     #ifdef PANDA
-      GPIOC->ODR &= ~(1 << (6 + led_num));
+      GPIOC->ODR &= ~(1 << led_num);
     #else
-      GPIOB->ODR &= ~(1 << (10 + led_num));
+      GPIOB->ODR &= ~(1 << led_num);
     #endif
   } else {
     // turn off
     #ifdef PANDA
-      GPIOC->ODR |= (1 << (6 + led_num));
+      GPIOC->ODR |= (1 << led_num);
     #else
-      GPIOB->ODR |= (1 << (10 + led_num));
+      GPIOB->ODR |= (1 << led_num);
     #endif
   }
 }
