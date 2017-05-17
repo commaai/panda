@@ -1,6 +1,5 @@
 # python library to interface with panda
 import struct
-
 import hashlib
 import socket
 import usb1
@@ -10,6 +9,38 @@ try:
   from hexdump import hexdump
 except:
   pass
+
+def parse_can_buffer(dat):
+  ret = []
+  for j in range(0, len(dat), 0x10):
+    ddat = dat[j:j+0x10]
+    f1, f2 = struct.unpack("II", ddat[0:8])
+    extended = 4
+    if f1 & extended:
+      address = f1 >> 3
+    else:
+      address = f1 >> 21
+    ret.append((address, f2>>16, ddat[8:8+(f2&0xF)], (f2>>4)&0xf))
+  return ret
+
+class PandaWifiStreaming(object):
+  def __init__(self, ip="192.168.0.10", port=1338):
+    self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    self.sock.sendto("hello", (ip, port))
+    self.sock.setblocking(0)
+    self.ip = ip
+    self.port = port
+
+  def can_recv(self):
+    ret = []
+    while 1:
+      try:
+        dat, addr = self.sock.recvfrom(0x200*0x10)
+        if addr == (self.ip, self.port):
+          ret += parse_can_buffer(dat)
+      except socket.error:
+        break
+    return ret
 
 # stupid tunneling of USB over wifi and SPI
 class WifiHandle(object):
@@ -153,18 +184,6 @@ class Panda(object):
     self.can_send_many([[addr, None, dat, bus]])
 
   def can_recv(self):
-    def __parse_can_buffer(dat):
-      ret = []
-      for j in range(0, len(dat), 0x10):
-        ddat = dat[j:j+0x10]
-        f1, f2 = struct.unpack("II", ddat[0:8])
-        extended = 4
-        if f1 & extended:
-          address = f1 >> 3
-        else:
-          address = f1 >> 21
-        ret.append((address, f2>>16, ddat[8:8+(f2&0xF)], (f2>>4)&0xf))
-      return ret
     dat = ""
     while 1:
       try:
@@ -172,7 +191,7 @@ class Panda(object):
         break
       except (USBErrorIO, USBErrorOverflow):
         print "CAN: BAD RECV, RETRYING"
-    return __parse_can_buffer(dat)
+    return parse_can_buffer(dat)
 
   # ******************* serial *******************
 

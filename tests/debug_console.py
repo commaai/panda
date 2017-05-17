@@ -13,6 +13,9 @@ if __name__ == "__main__":
   port_number = int(os.getenv("PORT", 0))
 
   serials = Panda.list()
+  if os.getenv("SERIAL"):
+    serials = filter(lambda x: x==os.getenv("SERIAL"), serials)
+
   pandas = map(lambda x: Panda(x, False), serials)
   while 1:
     for i, panda in enumerate(pandas):
