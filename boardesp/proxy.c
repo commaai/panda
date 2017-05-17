@@ -249,7 +249,7 @@ void ICACHE_FLASH_ATTR user_init()
   // configure SPI
   SpiAttr hSpiAttr;
   hSpiAttr.bitOrder = SpiBitOrder_MSBFirst;
-  hSpiAttr.speed = SpiSpeed_0_5MHz;
+  hSpiAttr.speed = SpiSpeed_10MHz;
   hSpiAttr.mode = SpiMode_Master;
   hSpiAttr.subMode = SpiSubMode_0;
 
