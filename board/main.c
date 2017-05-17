@@ -2,6 +2,7 @@
 //#define DEBUG_USB
 //#define CAN_LOOPBACK_MODE
 //#define USE_INTERNAL_OSC
+//#define REVC
 
 #ifdef STM32F4
   #define PANDA

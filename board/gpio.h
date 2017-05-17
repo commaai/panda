@@ -159,10 +159,25 @@ void gpio_init() {
 #endif
 
   // K enable + L enable
+#ifdef REVC
+  // K-line enable moved from B4->B7 to make room for GMLAN on CAN3
+  GPIOB->ODR |= (1 << 7);
+  GPIOB->MODER |= GPIO_MODER_MODER7_0;
+#else
   GPIOB->ODR |= (1 << 4);
   GPIOB->MODER |= GPIO_MODER_MODER4_0;
+#endif
+
   GPIOA->ODR |= (1 << 14);
   GPIOA->MODER |= GPIO_MODER_MODER14_0;
+
+#ifdef REVC
+  // set DCP mode on the charger
+  /*GPIOB->ODR &= ~(1 << 2);
+  GPIOB->MODER |= GPIO_MODER_MODER2_0;
+  GPIOA->ODR &= ~(1 << 13);
+  GPIOA->MODER |= GPIO_MODER_MODER13_0;*/
+#endif
 
   // USART 2 for debugging
   GPIOA->MODER |= GPIO_MODER_MODER2_1 | GPIO_MODER_MODER3_1;
