@@ -1,27 +1,5 @@
 void can_init(CAN_TypeDef *CAN) {
-  // enable CAN busses
-  if (CAN == CAN1) {
-    #ifdef PANDA
-      // CAN1_EN
-      GPIOC->ODR &= ~(1 << 1);
-    #else
-      // CAN1_EN
-      GPIOB->ODR |= (1 << 3);
-    #endif
-  } else if (CAN == CAN2) {
-    #ifdef PANDA
-      // CAN2_EN
-      GPIOC->ODR &= ~(1 << 13);
-    #else
-      // CAN2_EN
-      GPIOB->ODR |= (1 << 4);
-    #endif
-  #ifdef CAN3
-  } else if (CAN == CAN3) {
-    // CAN3_EN
-    GPIOA->ODR &= ~(1 << 0);
-  #endif
-  }
+  set_can_enable(CAN, 1);
 
   CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
   while((CAN->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);

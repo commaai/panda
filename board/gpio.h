@@ -4,6 +4,56 @@
   #include "stm32f2xx_hal_gpio_ex.h"
 #endif
 
+#include "llgpio.h"
+
+void set_can_enable(CAN_TypeDef *CAN, int enabled) {
+  // enable CAN busses
+  if (CAN == CAN1) {
+    #ifdef PANDA
+      // CAN1_EN
+      set_gpio_output(GPIOC, 1, !enabled);
+    #else
+      // CAN1_EN
+      set_gpio_output(GPIOB, 3, enabled);
+    #endif
+  } else if (CAN == CAN2) {
+    #ifdef PANDA
+      // CAN2_EN
+      set_gpio_output(GPIOC, 13, !enabled);
+    #else
+      // CAN2_EN
+      set_gpio_output(GPIOC, 4, enabled);
+    #endif
+  #ifdef CAN3
+  } else if (CAN == CAN3) {
+    // CAN3_EN
+    set_gpio_output(GPIOA, 0, !enabled);
+  #endif
+  }
+}
+
+#ifdef PANDA
+  #define LED_RED 9
+  #define LED_GREEN 7
+  #define LED_BLUE 6
+#else
+  #define LED_RED 10
+  #define LED_GREEN 11
+  #define LED_BLUE -1
+#endif
+
+void set_led(int led_num, int on) {
+  if (led_num == -1) return;
+
+  #ifdef PANDA
+    set_gpio_output(GPIOC, led_num, !on);
+  #else
+    set_gpio_output(GPIOB, led_num, !on);
+  #endif
+}
+
+
+// TODO: does this belong here?
 void periph_init() { 
   // enable GPIOB, UART2, CAN, USB clock
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
@@ -107,149 +157,97 @@ void gpio_init() {
   GPIOB->AFR[0] = 0;
   GPIOB->AFR[1] = 0;
 
-  // enable USB power tied to +
-  GPIOA->MODER = GPIO_MODER_MODER0_0;
+  // C2,C3: analog mode, voltage and current sense
+  set_gpio_mode(GPIOC, 2, MODE_ANALOG);
+  set_gpio_mode(GPIOC, 3, MODE_ANALOG);
 
-  // always set to zero, ESP in boot mode and reset
-  //GPIOB->MODER = GPIO_MODER_MODER0_0;
+  // C8: FAN aka TIM3_CH4
+  set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
 
-  // analog mode
-  GPIOC->MODER |= GPIO_MODER_MODER3 | GPIO_MODER_MODER2;
-  //GPIOC->MODER |= GPIO_MODER_MODER1 | GPIO_MODER_MODER0;
+  // turn off LEDs and set mode
+  set_led(LED_RED, 0);
+  set_led(LED_GREEN, 0);
+  set_led(LED_BLUE, 0);
 
-  // FAN on C9, aka TIM3_CH4
-  GPIOC->MODER |= GPIO_MODER_MODER8_1;
-  GPIOC->AFR[1] = GPIO_AF2_TIM3 << ((8-8)*4);
-  // IGNITION on C13
+  // turn off CANs and set mode
+  set_can_enable(CAN1, 0);
+  set_can_enable(CAN2, 0);
+#ifdef CAN3
+  set_can_enable(CAN3, 0);
+#endif
 
-  #ifdef PANDA
-    // turn off LEDs and set mode
-    GPIOC->ODR |= (1 << 6) | (1 << 7) | (1 << 9);
-    GPIOC->MODER |= GPIO_MODER_MODER6_0 | GPIO_MODER_MODER7_0 | GPIO_MODER_MODER9_0;
-
-    // set mode for ESP_RST line and enable it
-    // (done in init_hardware_early
-    //GPIOC->ODR |= (1 << 14) | (1 << 5);
-    //GPIOC->MODER |= GPIO_MODER_MODER14_0 | GPIO_MODER_MODER5_0;
-
-    // panda CAN enables
-    GPIOC->ODR |= (1 << 13) | (1 << 1);
-    GPIOC->MODER |= GPIO_MODER_MODER13_0 | GPIO_MODER_MODER1_0;
-
-    // enable started_alt
-    GPIOA->PUPDR |= GPIO_PUPDR_PUPDR1_0;
-  #else
-    // turn off LEDs and set mode
-    GPIOB->ODR = (1 << 10) | (1 << 11) | (1 << 12);
-    GPIOB->MODER = GPIO_MODER_MODER10_0 | GPIO_MODER_MODER11_0 | GPIO_MODER_MODER12_0;
-    
-    // non panda CAN enables
-    GPIOB->MODER |= GPIO_MODER_MODER3_0 | GPIO_MODER_MODER7_0;
-  #endif
+  // enable started_alt on the panda
+#ifdef PANDA
+  set_gpio_pullup(GPIOA, 1, PULL_UP);
+#endif
 
   // CAN 2 in normal mode
   set_can2_mode(0);
 
-  // CAN 1
-  GPIOB->MODER |= GPIO_MODER_MODER8_1 | GPIO_MODER_MODER9_1;
+  // B8,B9: CAN 1
 #ifdef STM32F4
-  GPIOB->AFR[1] |= GPIO_AF8_CAN1 << ((8-8)*4) | GPIO_AF8_CAN1 << ((9-8)*4);
+  set_gpio_alternate(GPIOB, 8, GPIO_AF8_CAN1);
+  set_gpio_alternate(GPIOB, 9, GPIO_AF8_CAN1);
 #else
-  GPIOB->AFR[1] |= GPIO_AF9_CAN1 << ((8-8)*4) | GPIO_AF9_CAN1 << ((9-8)*4);
+  set_gpio_alternate(GPIOB, 8, GPIO_AF9_CAN1);
+  set_gpio_alternate(GPIOB, 9, GPIO_AF9_CAN1);
 #endif
 
-  // K enable + L enable
-#ifdef REVC
-  // K-line enable moved from B4->B7 to make room for GMLAN on CAN3
-  GPIOB->ODR |= (1 << 7);
-  GPIOB->MODER |= GPIO_MODER_MODER7_0;
-#else
-  GPIOB->ODR |= (1 << 4);
-  GPIOB->MODER |= GPIO_MODER_MODER4_0;
-#endif
+  #ifdef REVC
+    // K-line enable moved from B4->B7 to make room for GMLAN on CAN3
+    set_gpio_output(GPIOB, 7, 1);
+  #else
+    set_gpio_output(GPIOB, 4, 1);
+  #endif
 
-  GPIOA->ODR |= (1 << 14);
-  GPIOA->MODER |= GPIO_MODER_MODER14_0;
+  // L-line enable
+  set_gpio_output(GPIOA, 14, 1);
 
-#ifdef REVC
-  // set DCP mode on the charger
-  /*GPIOB->ODR &= ~(1 << 2);
-  GPIOB->MODER |= GPIO_MODER_MODER2_0;
-  GPIOA->ODR &= ~(1 << 13);
-  GPIOA->MODER |= GPIO_MODER_MODER13_0;*/
-#endif
+  #ifdef REVC
+    // set DCP mode on the charger (breaks USB!)
+    set_gpio_output(GPIOB, 2, 0);
+    set_gpio_output(GPIOA, 13, 0);
+  #endif
 
-  // USART 2 for debugging
-  GPIOA->MODER |= GPIO_MODER_MODER2_1 | GPIO_MODER_MODER3_1;
-  GPIOA->AFR[0] = GPIO_AF7_USART2 << (2*4) | GPIO_AF7_USART2 << (3*4);
+  // A2,A3: USART 2 for debugging
+  set_gpio_alternate(GPIOA, 2, GPIO_AF7_USART2);
+  set_gpio_alternate(GPIOA, 3, GPIO_AF7_USART2);
 
-  // USART 1 for talking to the ESP
-  GPIOA->MODER |= GPIO_MODER_MODER9_1 | GPIO_MODER_MODER10_1;
-  GPIOA->AFR[1] = GPIO_AF7_USART1 << ((9-8)*4) | GPIO_AF7_USART1 << ((10-8)*4);
+  // A9,A10: USART 1 for talking to the ESP
+  set_gpio_alternate(GPIOA, 9, GPIO_AF7_USART1);
+  set_gpio_alternate(GPIOA, 10, GPIO_AF7_USART1);
 
-  // USART 3 is L-Line
-  GPIOC->MODER |= GPIO_MODER_MODER10_1 | GPIO_MODER_MODER11_1;
-  GPIOC->AFR[1] |= GPIO_AF7_USART3 << ((10-8)*4) | GPIO_AF7_USART3 << ((11-8)*4);
-  GPIOC->PUPDR = GPIO_PUPDR_PUPDR11_0;
 
-  // USB
-  GPIOA->MODER |= GPIO_MODER_MODER11_1 | GPIO_MODER_MODER12_1;
+  // A11,A12: USB
+  set_gpio_alternate(GPIOA, 11, GPIO_AF10_OTG_FS);
+  set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG_FS);
   GPIOA->OSPEEDR = GPIO_OSPEEDER_OSPEEDR11 | GPIO_OSPEEDER_OSPEEDR12;
-  GPIOA->AFR[1] |= GPIO_AF10_OTG_FS << ((11-8)*4) | GPIO_AF10_OTG_FS << ((12-8)*4);
-  GPIOA->PUPDR |= GPIO_PUPDR_PUPDR2_0 | GPIO_PUPDR_PUPDR3_0;
 
-  // GMLAN, ignition sense, pull up
-  GPIOB->PUPDR |= GPIO_PUPDR_PUPDR12_0;
+  // B12: GMLAN, ignition sense, pull up
+  set_gpio_pullup(GPIOB, 12, PULL_UP);
 
-  // setup SPI
-  GPIOA->MODER |= GPIO_MODER_MODER4_1 | GPIO_MODER_MODER5_1 |
-                  GPIO_MODER_MODER6_1 | GPIO_MODER_MODER7_1;
-  GPIOA->AFR[0] |= GPIO_AF5_SPI1 << (4*4) | GPIO_AF5_SPI1 << (5*4) |
-                   GPIO_AF5_SPI1 << (6*4) | GPIO_AF5_SPI1 << (7*4);
+  // A4,A5,A6,A7: setup SPI
+  set_gpio_alternate(GPIOA, 4, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 5, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 6, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 7, GPIO_AF5_SPI1);
 
   // CAN3 setup
   #ifdef CAN3
-    GPIOA->MODER |= GPIO_MODER_MODER8_1 | GPIO_MODER_MODER15_1;
-    GPIOA->AFR[1] |= GPIO_AF11_CAN3 << ((8-8)*4) | GPIO_AF11_CAN3 << ((15-8)*4);
+    set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
+    set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
   #endif
 
-  // K-Line setup
   #ifdef PANDA
-    GPIOC->AFR[1] |= GPIO_AF8_UART5 << ((12-8)*4);
-    GPIOC->MODER |= GPIO_MODER_MODER12_1;
-    GPIOD->AFR[0] = GPIO_AF8_UART5 << (2*4);
-    GPIOD->MODER = GPIO_MODER_MODER2_1;
-    GPIOD->PUPDR = GPIO_PUPDR_PUPDR2_0;
+    // C10,C11: USART 3 is L-Line
+    set_gpio_alternate(GPIOC, 10, GPIO_AF7_USART3);
+    set_gpio_alternate(GPIOC, 11, GPIO_AF7_USART3);
+    set_gpio_pullup(GPIOC, 11, PULL_UP);
+
+    // K-Line setup
+    set_gpio_alternate(GPIOC, 12, GPIO_AF8_UART5);
+    set_gpio_alternate(GPIOD, 2, GPIO_AF8_UART5);
+    set_gpio_pullup(GPIOD, 2, PULL_UP);
   #endif
 }
-
-#ifdef PANDA
-  #define LED_RED 9
-  #define LED_GREEN 7
-  #define LED_BLUE 6
-#else
-  #define LED_RED 10
-  #define LED_GREEN 11
-  #define LED_BLUE -1
-#endif
-
-void set_led(int led_num, int on) {
-  if (led_num == -1) return;
-  if (on) {
-    // turn on
-    #ifdef PANDA
-      GPIOC->ODR &= ~(1 << led_num);
-    #else
-      GPIOB->ODR &= ~(1 << led_num);
-    #endif
-  } else {
-    // turn off
-    #ifdef PANDA
-      GPIOC->ODR |= (1 << led_num);
-    #else
-      GPIOB->ODR |= (1 << led_num);
-    #endif
-  }
-}
-
 
