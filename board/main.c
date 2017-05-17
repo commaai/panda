@@ -50,41 +50,50 @@ int did_usb_enumerate = 0;
 
 // ********************* instantiate queues *********************
 
-#define FIFO_SIZE 0x100
-
 typedef struct {
-  uint8_t w_ptr;
-  uint8_t r_ptr;
-  CAN_FIFOMailBox_TypeDef elems[FIFO_SIZE];
+  uint32_t w_ptr;
+  uint32_t r_ptr;
+  uint32_t fifo_size;
+  CAN_FIFOMailBox_TypeDef *elems;
 } can_ring;
 
-can_ring can_rx_q = { .w_ptr = 0, .r_ptr = 0 };
-can_ring can_tx1_q = { .w_ptr = 0, .r_ptr = 0 };
-can_ring can_tx2_q = { .w_ptr = 0, .r_ptr = 0 };
-can_ring can_tx3_q = { .w_ptr = 0, .r_ptr = 0 };
+#define can_buffer(x, size) \
+  CAN_FIFOMailBox_TypeDef elems_##x[size]; \
+  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = size, .elems = (CAN_FIFOMailBox_TypeDef *)&elems_##x };
+
+can_buffer(rx_q, 0x1000)
+can_buffer(tx1_q, 0x100)
+can_buffer(tx2_q, 0x100)
+can_buffer(tx3_q, 0x100)
 
 // ********************* interrupt safe queue *********************
 
 inline int pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   if (q->w_ptr != q->r_ptr) {
     *elem = q->elems[q->r_ptr];
-    q->r_ptr += 1;
+    if ((q->r_ptr + 1) == q->fifo_size) q->r_ptr = 0;
+    else q->r_ptr += 1;
     return 1;
   }
   return 0;
 }
 
 inline int push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
-  uint8_t next_w_ptr = q->w_ptr + 1;
+  uint32_t next_w_ptr;
+  if ((q->w_ptr + 1) == q->fifo_size) next_w_ptr = 0;
+  else next_w_ptr = q->w_ptr + 1;
   if (next_w_ptr != q->r_ptr) {
     q->elems[q->w_ptr] = *elem;
     q->w_ptr = next_w_ptr;
     return 1;
   }
+  puts("push failed!\n");
   return 0;
 }
 
 // ***************************** serial port queues *****************************
+
+#define FIFO_SIZE 0x100
 
 typedef struct uart_ring {
   uint8_t w_ptr_tx;

@@ -29,11 +29,11 @@ if __name__ == "__main__":
   p_out.can_recv()
   p_in.can_recv()
   
-  BATCH_SIZE = 1
+  BATCH_SIZE = 16
   for a in tqdm(range(0, 10000, BATCH_SIZE)):
     for b in range(0, BATCH_SIZE):
       msg = "\xaa"*4 + struct.pack("I", a+b)
-      if a%2 == 0:
+      if a%1 == 0:
         p_out.can_send(0xaa, msg, 0)
 
     dat_out, dat_in = p_out.can_recv(), p_in.can_recv()
@@ -48,12 +48,13 @@ if __name__ == "__main__":
 
   # swag
   print "waiting for packets"
-  time.sleep(1.0)
+  time.sleep(2.0)
   dat_in = p_in.can_recv()
+  print len(dat_in)
   num_in = [struct.unpack("I", i[4:])[0] for _, _, i, _ in dat_in]
   set_in.update(num_in)
 
   if len(set_out - set_in):
     print "MISSING %d" % len(set_out - set_in)
-    if len(set_out - set_in) < 100:
+    if len(set_out - set_in) < 256:
       print map(hex, sorted(list(set_out - set_in)))
