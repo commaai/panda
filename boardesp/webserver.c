@@ -19,7 +19,8 @@
 char resp[0x800];
 char staticpage[] = "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
 "<pre>This is your comma.ai panda<br/><br/>"
-"It's open source. Find the code <a href=\"https://github.com/commaai/panda\">here</a><br/>";
+"It's open source. Find the code <a href=\"https://github.com/commaai/panda\">here</a><br/>"
+"Designed to work with our dashcam, <a href=\"http://chffr.comma.ai\">chffr</a><br/>";
 
 static struct espconn web_conn;
 static esp_tcp web_proto;

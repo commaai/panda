@@ -145,17 +145,28 @@ void ICACHE_FLASH_ATTR poll_can(void *arg) {
   }
 }
 
-int timer_started = 0;
+int udp_sending = 0;
+
+static volatile os_timer_t udp_timeout;
+void ICACHE_FLASH_ATTR udp_timeout_func(void *arg) {
+  udp_sending = 0;
+}
+
 void ICACHE_FLASH_ATTR inter_recv_cb(void *arg, char *pusrdata, unsigned short length) {
   os_printf("UDP recv\n");
   remot_info *premot = NULL;
   if (espconn_get_connection_info(&inter_conn,&premot,0) == ESPCONN_OK) {
-		timer_started = 1;
+		udp_sending = 1;
 		inter_conn.proto.udp->remote_port = premot->remote_port;
 		inter_conn.proto.udp->remote_ip[0] = premot->remote_ip[0];
 		inter_conn.proto.udp->remote_ip[1] = premot->remote_ip[1];
 		inter_conn.proto.udp->remote_ip[2] = premot->remote_ip[2];
 		inter_conn.proto.udp->remote_ip[3] = premot->remote_ip[3];
+
+    // start 5 second timer
+    os_timer_disarm(&udp_timeout);
+    os_timer_setfn(&udp_timeout, (os_timer_func_t *)udp_timeout_func, NULL);
+    os_timer_arm(&udp_timeout, 5*1000, 0);
   }
 }
 
@@ -293,7 +304,7 @@ void ICACHE_FLASH_ATTR user_init()
 
 
 void ICACHE_FLASH_ATTR loop(os_event_t *events) {
-  if (timer_started) {
+  if (udp_sending) {
     if (queue_send_len == -1) {
       poll_can(NULL);
     } else {
