@@ -22,7 +22,7 @@ void set_can_enable(CAN_TypeDef *CAN, int enabled) {
       set_gpio_output(GPIOC, 13, !enabled);
     #else
       // CAN2_EN
-      set_gpio_output(GPIOC, 4, enabled);
+      set_gpio_output(GPIOB, 4, enabled);
     #endif
   #ifdef CAN3
   } else if (CAN == CAN3) {
