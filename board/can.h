@@ -21,6 +21,11 @@ void can_init(CAN_TypeDef *CAN) {
     CAN->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
   #endif
 
+#ifdef PANDA_SAFETY
+  // default to silent mode to prevent issues with Ford
+  CAN->BTR |= CAN_BTR_SILM;
+#endif
+
   // reset
   CAN->MCR = CAN_MCR_TTCM;
 
