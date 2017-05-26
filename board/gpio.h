@@ -241,7 +241,7 @@ void gpio_init() {
   #endif
 
   #ifdef REVC
-    // B2,B13: set DCP mode on the charger (breaks USB!)
+    // B2,A13: set DCP mode on the charger (breaks USB!)
     set_gpio_output(GPIOB, 2, 0);
     set_gpio_output(GPIOA, 13, 0);
   #endif
