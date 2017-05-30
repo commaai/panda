@@ -46,7 +46,7 @@ class FakePort(object):
         self.handle.claimInterface(0)
 
     # will only work on new st, old ones will stay @ 921600
-    self.baudrate = 460800
+    self.baudrate = 230400
 
   @property
   def baudrate(self):
