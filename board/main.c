@@ -885,11 +885,20 @@ int main() {
   usb_init();
 
   // default to silent mode to prevent issues with Ford
+#ifdef PANDA_SAFETY
   can_init(CAN1, 1);
   can_init(CAN2, 1);
-#ifdef CAN3
-  can_init(CAN3, 1);
+  #ifdef CAN3
+    can_init(CAN3, 1);
+  #endif
+#else
+  can_init(CAN1, 0);
+  can_init(CAN2, 0);
+  #ifdef CAN3
+    can_init(CAN3, 0);
+  #endif
 #endif
+
   adc_init();
 
 #ifdef ENABLE_SPI

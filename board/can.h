@@ -21,11 +21,9 @@ void can_init(CAN_TypeDef *CAN, int silent) {
     CAN->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
   #endif
 
-#ifdef PANDA_SAFETY
   if (silent) {
     CAN->BTR |= CAN_BTR_SILM;
   }
-#endif
 
   // reset
   CAN->MCR = CAN_MCR_TTCM;
