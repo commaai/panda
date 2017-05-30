@@ -661,6 +661,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     case 0xdc: // set controls allowed
       controls_allowed = setup->b.wValue.w == 0x1337;
+      // take CAN out of SILM, careful with speed!
+      can_init(CAN1, 0);
+      can_init(CAN2, 0);
+      #ifdef CAN3
+        can_init(CAN3, 0);
+      #endif
       break;
     case 0xdd: // enable can forwarding
       if (setup->b.wValue.w != 0 && setup->b.wValue.w <= CAN_MAX) {
@@ -873,10 +879,11 @@ int main() {
   // enable USB
   usb_init();
 
-  can_init(CAN1);
-  can_init(CAN2);
+  // default to silent mode to prevent issues with Ford
+  can_init(CAN1, 1);
+  can_init(CAN2, 1);
 #ifdef CAN3
-  can_init(CAN3);
+  can_init(CAN3, 1);
 #endif
   adc_init();
 

@@ -1,4 +1,4 @@
-void can_init(CAN_TypeDef *CAN) {
+void can_init(CAN_TypeDef *CAN, int silent) {
   set_can_enable(CAN, 1);
 
   CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
@@ -22,8 +22,9 @@ void can_init(CAN_TypeDef *CAN) {
   #endif
 
 #ifdef PANDA_SAFETY
-  // default to silent mode to prevent issues with Ford
-  CAN->BTR |= CAN_BTR_SILM;
+  if (silent) {
+    CAN->BTR |= CAN_BTR_SILM;
+  }
 #endif
 
   // reset
