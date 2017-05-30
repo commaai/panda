@@ -45,6 +45,18 @@ class FakePort(object):
         self.handle = device.open()
         self.handle.claimInterface(0)
 
+    # will only work on new st, old ones will stay @ 921600
+    self.baudrate = 460800
+
+  @property
+  def baudrate(self):
+    return self._baudrate
+
+  @baudrate.setter
+  def baudrate(self, x):
+    print "set baud to", x
+    self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe4, 1, x/300, '')
+
   def write(self, buf):
     SEND_STEP = 0x20
     for i in range(0, len(buf), SEND_STEP):

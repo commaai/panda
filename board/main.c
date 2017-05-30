@@ -720,6 +720,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         ur->callback = NULL;
       }
       break;
+    case 0xe4: // uart set baud rate extended
+      ur = get_ring_by_number(setup->b.wValue.w);
+      if (!ur) break;
+      uart_set_baud(ur->uart, (int)setup->b.wIndex.w*300);
+      break;
     case 0xf0: // k-line wValue pulse on uart2
       if (setup->b.wValue.w == 1) {
         GPIOC->ODR &= ~(1 << 10);
