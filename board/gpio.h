@@ -85,31 +85,50 @@ void periph_init() {
   RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 }
 
-void set_can2_mode(int use_gmlan) {
+void set_can_mode(int can, int use_gmlan) {
   // http://www.bittiming.can-wiki.info/#bxCAN
   // 24 MHz, sample point at 87.5%
   uint32_t pclk = 24000;
   uint32_t num_time_quanta = 16;
   uint32_t prescaler;
+  CAN_TypeDef *CAN = NULL;
+  if (can == 2) CAN = CAN2;
+#ifdef CAN3
+  else if (can == 3) CAN = CAN3;
+#endif
+  if (CAN == NULL) return;
 
   // connects to CAN2 xcvr or GMLAN xcvr
   if (use_gmlan) {
-    // B5,B6: disable normal mode
-    set_gpio_mode(GPIOB, 5, MODE_INPUT);
-    set_gpio_mode(GPIOB, 6, MODE_INPUT);
+    if (can == 2) {
+      // B5,B6: disable normal mode
+      set_gpio_mode(GPIOB, 5, MODE_INPUT);
+      set_gpio_mode(GPIOB, 6, MODE_INPUT);
 
-    // B12,B13: gmlan mode
-    set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
-    set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
+      // B12,B13: gmlan mode
+      set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
+      set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
 
-    /* GMLAN mode pins:
-    M0(B15)  M1(B14)  mode
-    =======================
-    0        0        sleep
-    1        0        100kbit
-    0        1        high voltage wakeup
-    1        1        33kbit (normal)
-    */
+      /* GMLAN mode pins:
+      M0(B15)  M1(B14)  mode
+      =======================
+      0        0        sleep
+      1        0        100kbit
+      0        1        high voltage wakeup
+      1        1        33kbit (normal)
+      */
+
+#ifdef REVC
+    } else if (can == 3) {
+      // A8,A15: disable normal mode
+      set_gpio_mode(GPIOA, 8, MODE_INPUT);
+      set_gpio_mode(GPIOA, 15, MODE_INPUT);
+
+      // B3,B4: enable gmlan mode
+      set_gpio_alternate(GPIOB, 3, GPIO_AF11_CAN3);
+      set_gpio_alternate(GPIOB, 4, GPIO_AF11_CAN3);
+#endif
+    }
 
     // put gmlan transceiver in normal mode
     set_gpio_output(GPIOB, 14, 1);
@@ -121,30 +140,42 @@ void set_can2_mode(int use_gmlan) {
     // 33.3 kbps
     prescaler = pclk / num_time_quanta * 10 / 333;
   } else {
-    // B12,B13: disable gmlan mode
-    set_gpio_mode(GPIOB, 12, MODE_INPUT);
-    set_gpio_mode(GPIOB, 13, MODE_INPUT);
+    if (can == 2) {
+      // B12,B13: disable gmlan mode
+      set_gpio_mode(GPIOB, 12, MODE_INPUT);
+      set_gpio_mode(GPIOB, 13, MODE_INPUT);
 
-    // B5,B6: normal mode
-    set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
-    set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
+      // B5,B6: normal mode
+      set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
+      set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
+    } else if (can == 3) {
+      #ifdef REVC
+        // B3,B4: disable gmlan mode
+        set_gpio_mode(GPIOB, 3, MODE_INPUT);
+        set_gpio_mode(GPIOB, 4, MODE_INPUT);
+      #endif
+
+      // A8,A15: normal mode
+      set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
+      set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
+    }
 
     // 500 kbps
     prescaler = pclk / num_time_quanta / 500;
   }
 
   // init
-  CAN2->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
-  while((CAN2->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
+  CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
+  while((CAN->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
 
   // set speed
   // seg 1: 13 time quanta, seg 2: 2 time quanta
-  CAN2->BTR = (CAN_BTR_TS1_0 * 12) |
+  CAN->BTR = (CAN_BTR_TS1_0 * 12) |
     CAN_BTR_TS2_0 | (prescaler - 1);
 
   // running
-  CAN2->MCR = CAN_MCR_TTCM;
-  while((CAN2->MSR & CAN_MSR_INAK) == CAN_MSR_INAK);
+  CAN->MCR = CAN_MCR_TTCM;
+  while((CAN->MSR & CAN_MSR_INAK) == CAN_MSR_INAK);
 }
 
 // board specific
@@ -209,13 +240,12 @@ void gpio_init() {
 
   // B5,B6: CAN 2
   set_can_enable(CAN2, 0);
-  set_can2_mode(0);
+  set_can_mode(2, 0);
 
   // A8,A15: CAN3
   #ifdef CAN3
     set_can_enable(CAN3, 0);
-    set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
-    set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
+    set_can_mode(3, 0);
   #endif
 
   #ifdef PANDA
@@ -242,8 +272,8 @@ void gpio_init() {
 
   #ifdef REVC
     // B2,A13: set DCP mode on the charger (breaks USB!)
-    set_gpio_output(GPIOB, 2, 0);
-    set_gpio_output(GPIOA, 13, 0);
+    /*set_gpio_output(GPIOB, 2, 0);
+    set_gpio_output(GPIOA, 13, 0);*/
   #endif
 }
 

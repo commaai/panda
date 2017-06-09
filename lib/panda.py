@@ -142,11 +142,11 @@ class Panda(object):
     else:
       self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xdc, 0, 0, '')
 
-  def set_gmlan(self, on):
+  def set_gmlan(self, on, bus=2):
     if on:
-      self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xdb, 1, 0, '')
+      self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xdb, 1, bus, '')
     else:
-      self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xdb, 0, 0, '')
+      self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xdb, 0, bus, '')
 
   def set_uart_baud(self, uart, rate):
     self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe1, uart, rate, '')

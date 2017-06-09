@@ -657,7 +657,13 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       }
       break;
     case 0xdb: // toggle GMLAN
-      set_can2_mode(setup->b.wValue.w);
+      if (setup->b.wIndex.w == 3) {
+        set_can_mode(2, 0);
+        set_can_mode(3, setup->b.wValue.w);
+      } else {
+        set_can_mode(3, 0);
+        set_can_mode(2, setup->b.wValue.w);
+      }
       break;
     case 0xdc: // set controls allowed
       controls_allowed = setup->b.wValue.w == 0x1337;
