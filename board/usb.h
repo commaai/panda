@@ -11,8 +11,8 @@ USB_OTG_GlobalTypeDef *USBx = USB_OTG_FS;
 #define USBx_HOST       ((USB_OTG_HostTypeDef *)((uint32_t)USBx + USB_OTG_HOST_BASE))
 #define USBx_HOST_PORT  ((USB_OTG_HostPortTypeDef *)((uint32_t)USBx + USB_OTG_HOST_PORT_BASE))
 #define USBx_DEVICE     ((USB_OTG_DeviceTypeDef *)((uint32_t)USBx + USB_OTG_DEVICE_BASE))
-#define USBx_INEP(i)    ((USB_OTG_INEndpointTypeDef *)((uint32_t)USBx + USB_OTG_IN_ENDPOINT_BASE + (i)*USB_OTG_EP_REG_SIZE))        
-#define USBx_OUTEP(i)   ((USB_OTG_OUTEndpointTypeDef *)((uint32_t)USBx + USB_OTG_OUT_ENDPOINT_BASE + (i)*USB_OTG_EP_REG_SIZE))        
+#define USBx_INEP(i)    ((USB_OTG_INEndpointTypeDef *)((uint32_t)USBx + USB_OTG_IN_ENDPOINT_BASE + (i)*USB_OTG_EP_REG_SIZE))
+#define USBx_OUTEP(i)   ((USB_OTG_OUTEndpointTypeDef *)((uint32_t)USBx + USB_OTG_OUT_ENDPOINT_BASE + (i)*USB_OTG_EP_REG_SIZE))
 #define USBx_DFIFO(i)   *(__IO uint32_t *)((uint32_t)USBx + USB_OTG_FIFO_BASE + (i) * USB_OTG_FIFO_SIZE)
 #define USBx_PCGCCTL    *(__IO uint32_t *)((uint32_t)USBx + USB_OTG_PCGCCTL_BASE)
 
@@ -57,7 +57,7 @@ typedef union
     uint8_t msb;
     uint8_t lsb;
   }
-  bw; 
+  bw;
 }
 uint16_t_uint8_t;
 
@@ -65,7 +65,7 @@ uint16_t_uint8_t;
 typedef union _USB_Setup
 {
   uint32_t d8[2];
-  
+
   struct _SetupPkt_Struc
   {
     uint8_t           bmRequestType;
@@ -74,8 +74,8 @@ typedef union _USB_Setup
     uint16_t_uint8_t  wIndex;
     uint16_t_uint8_t  wLength;
   } b;
-} 
-USB_Setup_TypeDef; 
+}
+USB_Setup_TypeDef;
 
 // interfaces
 void usb_cb_enumeration_complete();
@@ -84,37 +84,77 @@ int  usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired);
 void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired);
 void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired);
 
+// descriptor types
+// same as setupdat.h
+#define DSCR_DEVICE_TYPE 1
+#define DSCR_CONFIG_TYPE 2
+#define DSCR_STRING_TYPE 3
+#define DSCR_INTERFACE_TYPE 4
+#define DSCR_ENDPOINT_TYPE 5
+#define DSCR_DEVQUAL_TYPE 6
+
+// for the repeating interfaces
+#define DSCR_INTERFACE_LEN 9
+#define DSCR_ENDPOINT_LEN 7
+#define DSCR_CONFIG_LEN 9
+#define DSCR_DEVICE_LEN 18
+
+// endpoint types
+#define ENDPOINT_TYPE_CONTROL 0
+#define ENDPOINT_TYPE_ISO 1
+#define ENDPOINT_TYPE_BULK 2
+#define ENDPOINT_TYPE_INT 3
+
+//Convert machine byte order to USB byte order
+#define TOUSBORDER(num)\
+  (num&0xFF), ((num>>8)&0xFF)
+
 uint8_t device_desc[] = {
-  0x12,0x01,0x00,0x01,
-  0xFF,0xFF,0xFF,0x40,
-  (USB_VID>>0)&0xFF,(USB_VID>>8)&0xFF,
-  (USB_PID>>0)&0xFF,(USB_PID>>8)&0xFF,
+  DSCR_DEVICE_LEN, DSCR_DEVICE_TYPE, 0x00, 0x01, //Length, Type, bcdUSB
+  0xFF, 0xFF, 0xFF, 0x40, // Class, Subclass, Protocol, Max Packet Size
+  TOUSBORDER(USB_VID), // idVendor
+  TOUSBORDER(USB_PID), // idProduct
 #ifdef STM32F4
-  0x00,0x23,
+  0x00, 0x23, // bcdDevice
 #else
-  0x00,0x22,
+  0x00, 0x22, // bcdDevice
 #endif
-  0x01,0x02,
-  0x03,0x01};
+  0x01, 0x02, // Manufacturer, Product
+  0x03, 0x01 // Serial Number, Num Configurations
+};
+
+#define ENDPOINT_RCV 0x80
+#define ENDPOINT_SND 0x00
 
 uint8_t configuration_desc[] = {
-  0x09, 0x02, 0x27, 0x00,
-  0x01, 0x01, 0x00, 0xc0,
-  0x32,
+  DSCR_CONFIG_LEN, DSCR_CONFIG_TYPE, // Length, Type,
+  0x27, 0x00, // Total Len (uint16)
+  0x01, 0x01, 0x00, // Num Interface, Config Value, Configuration
+  0xc0, 0x32, // Attributes, Max Power
   // interface 0
-  0x09, 0x04, 0x00, 0x00,
-  0x03, 0xff, 0xFF, 0xFF,
-  0x00,
+  DSCR_INTERFACE_LEN, DSCR_INTERFACE_TYPE, // Length, Type
+  0x00, 0x00, 0x03, // Index, Alt Index idx, Endpoint count
+  0xff, 0xFF, 0xFF, // Class, Subclass, Protocol
+  0x00, // Interface
   // endpoint 1, read CAN
-  0x07, 0x05, 0x81, 0x02, 0x40, 0x00, 0x00,
+  DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+  ENDPOINT_RCV | 1, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
+  TOUSBORDER(0x0040), // Max Packet (0x0040)
+  0x00, // Polling Interval
   // endpoint 2, send serial
-  0x07, 0x05, 0x02, 0x02, 0x40, 0x00, 0x00,
+  DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+  ENDPOINT_SND | 2, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
+  TOUSBORDER(0x0040), // Max Packet (0x0040)
+  0x00, // Polling Interval
   // endpoint 3, send CAN
-  0x07, 0x05, 0x03, 0x02, 0x40, 0x00, 0x00,
+  DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+  ENDPOINT_SND | 3, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
+  TOUSBORDER(0x0040), // Max Packet (0x0040)
+  0x00, // Polling Interval
 };
 
 uint8_t string_0_desc[] = {
-  0x04, 0x03, 0x09, 0x04
+  0x04, DSCR_STRING_TYPE, 0x09, 0x04
 };
 
 uint16_t string_1_desc[] = {
@@ -146,9 +186,9 @@ uint8_t usbdata[0x100];
 // packet read and write
 
 void *USB_ReadPacket(void *dest, uint16_t len) {
-  uint32_t i=0; 
-  uint32_t count32b = (len + 3) / 4; 
-  
+  uint32_t i=0;
+  uint32_t count32b = (len + 3) / 4;
+
   for ( i = 0; i < count32b; i++, dest += 4 ) {
     // packed?
     *(__attribute__((__packed__)) uint32_t *)dest = USBx_DFIFO(0);
@@ -162,7 +202,7 @@ void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
     hexdump(src, len);
   #endif
   uint32_t count32b = 0, i = 0;
-  count32b = (len + 3) / 4; 
+  count32b = (len + 3) / 4;
 
   // bullshit
   USBx_INEP(ep)->DIEPTSIZ = (USB_OTG_DIEPTSIZ_PKTCNT & (1 << 19)) | (len & USB_OTG_DIEPTSIZ_XFRSIZ);
@@ -552,7 +592,7 @@ void usb_irqhandler(void) {
 
     if (USBx_OUTEP(2)->DOEPINT & USB_OTG_DOEPINT_XFRC) {
       #ifdef DEBUG_USB
-        puts("  OUT2 PACKET XFRC\n"); 
+        puts("  OUT2 PACKET XFRC\n");
       #endif
       USBx_OUTEP(2)->DOEPTSIZ = (1 << 19) | 0x40;
       USBx_OUTEP(2)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
@@ -560,13 +600,13 @@ void usb_irqhandler(void) {
 
     if (USBx_OUTEP(3)->DOEPINT & USB_OTG_DOEPINT_XFRC) {
       #ifdef DEBUG_USB
-        puts("  OUT3 PACKET XFRC\n"); 
+        puts("  OUT3 PACKET XFRC\n");
       #endif
       USBx_OUTEP(3)->DOEPTSIZ = (1 << 19) | 0x40;
       USBx_OUTEP(3)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
     } else if (USBx_OUTEP(3)->DOEPINT & 0x2000) {
       #ifdef DEBUG_USB
-        puts("  OUT3 PACKET WTF\n"); 
+        puts("  OUT3 PACKET WTF\n");
       #endif
       // if NAK was set trigger this, unknown interrupt
       USBx_OUTEP(3)->DOEPTSIZ = (1 << 19) | 0x40;
@@ -606,15 +646,15 @@ void usb_irqhandler(void) {
     // this happens first
     if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_XFRC) {
       #ifdef DEBUG_USB
-        puts("  IN PACKET SEND\n"); 
+        puts("  IN PACKET SEND\n");
       #endif
       //USBx_DEVICE->DIEPEMPMSK = ~(1 << 1);
     }
-    
+
     // *** IN token received when TxFIFO is empty
     if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
       #ifdef DEBUG_USB
-        puts("  IN PACKET QUEUE\n"); 
+        puts("  IN PACKET QUEUE\n");
       #endif
       // TODO: always assuming max len, can we get the length?
       USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
@@ -633,4 +673,3 @@ void usb_irqhandler(void) {
 
   //USBx->GINTMSK = 0xFFFFFFFF & ~(USB_OTG_GINTMSK_NPTXFEM | USB_OTG_GINTMSK_PTXFEM | USB_OTG_GINTSTS_SOF | USB_OTG_GINTSTS_EOPF);
 }
-
