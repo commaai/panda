@@ -62,13 +62,7 @@ endif
 obj/cert.h: ../crypto/getcertheader.py
 	../crypto/getcertheader.py ../certs/debug.pub ../certs/release.pub > $@
 
-obj/bootstub.$(PROJ_NAME).o: bootstub.c obj/cert.h
-	$(CC) $(CFLAGS) -o $@ -c $<
-
-obj/main.$(PROJ_NAME).o: main.c obj/gitversion.h
-	$(CC) $(CFLAGS) -o $@ -c $<
-
-obj/early.$(PROJ_NAME).o: early.c
+obj/%.$(PROJ_NAME).o: %.c obj/cert.h obj/gitversion.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 obj/%.$(PROJ_NAME).o: ../crypto/%.c
