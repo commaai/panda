@@ -20,40 +20,41 @@ ifeq ($(OS),GNU/Linux)
   MACHINE := "$(MACHINE)-linux"
 endif
 
-# this pushes the unchangable bootstub too
-all: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
-	./tools/enter_download_mode.py
-	./tools/dfu-util-$(MACHINE) -a 0 -s 0x08000000 -D obj/bootstub.$(PROJ_NAME).bin
-	./tools/dfu-util-$(MACHINE) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
-	./tools/dfu-util-$(MACHINE) --reset-stm32 -a 0 -s 0x08000000
+DFU_UTIL = "./tools/dfu-util-$(MACHINE)"
 
-dfu: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
-	./tools/dfu-util-$(MACHINE) -a 0 -s 0x08000000 -D obj/bootstub.$(PROJ_NAME).bin
-	./tools/dfu-util-$(MACHINE) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
-	./tools/dfu-util-$(MACHINE) --reset-stm32 -a 0 -s 0x08000000
+# this pushes the unchangable bootstub too
+all: compileall #dfu
+
+compileall: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
+
+dfu:
+	./tools/enter_download_mode.py
+	$(DFU_UTIL) -a 0 -s 0x08000000 -D obj/bootstub.$(PROJ_NAME).bin
+	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
+	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
 
 bootstub: obj/bootstub.$(PROJ_NAME).bin
 	./tools/enter_download_mode.py
-	./tools/dfu-util-$(MACHINE) -a 0 -s 0x08000000 -D obj/bootstub.$(PROJ_NAME).bin
-	./tools/dfu-util-$(MACHINE) --reset-stm32 -a 0 -s 0x08000000
+	$(DFU_UTIL) -a 0 -s 0x08000000 -D obj/bootstub.$(PROJ_NAME).bin
+	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
 
 main: obj/$(PROJ_NAME).bin
 	./tools/enter_download_mode.py
-	./tools/dfu-util-$(MACHINE) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
-	./tools/dfu-util-$(MACHINE) --reset-stm32 -a 0 -s 0x08000000
+	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
+	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
 
-ota: obj/$(PROJ_NAME).bin
+ota: main_bin
 	curl http://192.168.0.10/stupdate --upload-file $<
 
-ifneq ($(wildcard ../.git/HEAD),) 
+ifneq ($(wildcard ../.git/HEAD),)
 obj/gitversion.h: ../.git/HEAD ../.git/index
 	echo "const uint8_t gitversion[] = \"$(shell git rev-parse HEAD)\";" > $@
 else
-ifneq ($(wildcard ../../.git/modules/panda/HEAD),) 
+ifneq ($(wildcard ../../.git/modules/panda/HEAD),)
 obj/gitversion.h: ../../.git/modules/panda/HEAD ../../.git/modules/panda/index
 	echo "const uint8_t gitversion[] = \"$(shell git rev-parse HEAD)\";" > $@
 else
-obj/gitversion.h: 
+obj/gitversion.h:
 	echo "const uint8_t gitversion[] = \"RELEASE\";" > $@
 endif
 endif
@@ -61,21 +62,19 @@ endif
 obj/cert.h: ../crypto/getcertheader.py
 	../crypto/getcertheader.py ../certs/debug.pub ../certs/release.pub > $@
 
-obj/bootstub.$(PROJ_NAME).o: bootstub.c early.h obj/cert.h spi_flasher.h
+obj/bootstub.$(PROJ_NAME).o: bootstub.c obj/cert.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-obj/main.$(PROJ_NAME).o: main.c *.h obj/gitversion.h
+obj/main.$(PROJ_NAME).o: main.c obj/gitversion.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-# TODO(geohot): learn to use Makefiles
-obj/sha.$(PROJ_NAME).o: ../crypto/sha.c
+obj/early.$(PROJ_NAME).o: early.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-obj/rsa.$(PROJ_NAME).o: ../crypto/rsa.c
+obj/%.$(PROJ_NAME).o: ../crypto/%.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 obj/$(STARTUP_FILE).o: $(STARTUP_FILE).s
-	mkdir -p obj
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.$(PROJ_NAME).o
@@ -87,7 +86,6 @@ obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.$(PROJ_NAME).o
 obj/bootstub.$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/bootstub.$(PROJ_NAME).o obj/sha.$(PROJ_NAME).o obj/rsa.$(PROJ_NAME).o
 	$(CC) $(CFLAGS) -o obj/bootstub.$(PROJ_NAME).elf $^
 	$(OBJCOPY) -v -O binary obj/bootstub.$(PROJ_NAME).elf $@
-	
+
 clean:
 	rm -f obj/*
-
