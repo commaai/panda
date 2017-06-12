@@ -53,6 +53,9 @@ int started_signal_detected = 0;
 // TODO: check for UART high
 int did_usb_enumerate = 0;
 
+// Declare puts to supress warning
+int puts ( const char * str );
+
 // ********************* instantiate queues *********************
 
 typedef struct {
