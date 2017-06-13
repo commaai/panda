@@ -61,7 +61,7 @@ int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
   }
 
   // STEER: safety check
-  if ((to_send->RIR>>21) == 0xE4) {
+  if ((to_send->RIR>>21) == 0xE4 || (to_send->RIR>>21) == 0x194) {
     if (controls_allowed) {
       to_send->RDLR &= 0xFFFFFFFF;
     } else {
