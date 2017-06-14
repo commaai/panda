@@ -1,9 +1,12 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import os
-import struct
+import sys
 import time
 from collections import defaultdict
-from panda.lib.panda import Panda
+
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
+from panda import Panda
 
 # fake
 def sec_since_boot():
@@ -16,7 +19,7 @@ def can_printer():
   lp = sec_since_boot()
   msgs = defaultdict(list)
   canbus = int(os.getenv("CAN", 0))
-  while 1:
+  while True:
     can_recv = p.can_recv()
     for address, _, dat, src  in can_recv:
       if src == canbus:
@@ -27,9 +30,8 @@ def can_printer():
       dd += "%5.2f\n" % (sec_since_boot() - start)
       for k,v in sorted(zip(msgs.keys(), map(lambda x: x[-1].encode("hex"), msgs.values()))):
         dd += "%s(%6d) %s\n" % ("%04X(%4d)" % (k,k),len(msgs[k]), v)
-      print dd
+      print(dd)
       lp = sec_since_boot()
 
 if __name__ == "__main__":
   can_printer()
-
