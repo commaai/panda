@@ -138,9 +138,9 @@ uint8_t configuration_desc[] = {
   0x00, // Interface
   // endpoint 1, read CAN
   DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
-  ENDPOINT_RCV | 1, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
+  ENDPOINT_RCV | 1, ENDPOINT_TYPE_INT, // Endpoint Num/Direction, Type
   TOUSBORDER(0x0040), // Max Packet (0x0040)
-  0x00, // Polling Interval
+  0x0A, // Polling Interval (10 frames)
   // endpoint 2, send serial
   DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
   ENDPOINT_SND | 2, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
@@ -515,7 +515,6 @@ void usb_irqhandler(void) {
       puts("\n");
     #endif
 
-
     if (((rxst & USB_OTG_GRXSTSP_PKTSTS) >> 17) == STS_DATA_UPDT) {
       int endpoint = (rxst & USB_OTG_GRXSTSP_EPNUM);
       int len = (rxst & USB_OTG_GRXSTSP_BCNT) >> 4;
@@ -632,8 +631,7 @@ void usb_irqhandler(void) {
     USBx_OUTEP(3)->DOEPINT = USBx_OUTEP(3)->DOEPINT;
   }
 
-
-  // in endpoint hit
+  // interrupt endpoint hit (Page 1221)
   if (gintsts & USB_OTG_GINTSTS_IEPINT) {
     #ifdef DEBUG_USB
       puts("  ");
@@ -643,28 +641,29 @@ void usb_irqhandler(void) {
       puts(" IN ENDPOINT\n");
     #endif
 
-    // this happens first
-    if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_XFRC) {
-      #ifdef DEBUG_USB
-        puts("  IN PACKET SEND\n");
-      #endif
-      //USBx_DEVICE->DIEPEMPMSK = ~(1 << 1);
+    // Should likely check the EP of the IN request even if there is
+    // only one IN endpoint.
+
+    // May need to set NAK in OTG_DIEPCTL0 when nothing to send.
+    // Appears USB core automatically sets NAK. WritePacket clear.
+
+    // Check if there is anything to actually send.
+    if (can_rx_q.w_ptr != can_rx_q.r_ptr) {
+      // *** IN token received when TxFIFO is empty
+      if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
+        #ifdef DEBUG_USB
+        puts("  IN PACKET QUEUE\n");
+        #endif
+	// TODO: always assuming max len, can we get the length?
+	USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
+      }
     }
 
-    // *** IN token received when TxFIFO is empty
-    if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
-      #ifdef DEBUG_USB
-        puts("  IN PACKET QUEUE\n");
-      #endif
-      // TODO: always assuming max len, can we get the length?
-      USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
-    }
 
     // clear interrupts
-    USBx_INEP(0)->DIEPINT = USBx_INEP(0)->DIEPINT;
+    USBx_INEP(0)->DIEPINT = USBx_INEP(0)->DIEPINT; // Why ep0?
     USBx_INEP(1)->DIEPINT = USBx_INEP(1)->DIEPINT;
   }
-
 
   // clear all interrupts we handled
   USBx_DEVICE->DAINT = daint;
