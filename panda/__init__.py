@@ -98,7 +98,8 @@ class Panda(object):
     cls.__instance_count += 1
     if cls.__ctx_event_thread is None:
       # Create thread
-      cls.__ctx_event_thread = threading.Thread(target=cls.__handle_events, daemon=True)
+      cls.__ctx_event_thread = threading.Thread(target=cls.__handle_events)
+      cls.__ctx_event_thread.daemon = True
       cls.__ctx_event_thread.start()
 
   @classmethod
