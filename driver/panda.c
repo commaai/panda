@@ -8,6 +8,7 @@
  * @see https://github.com/commaai/panda for the full project.
  */
 
+#include <linux/can.h>
 #include <linux/can/dev.h>
 #include <linux/can/error.h>
 #include <linux/init.h>             // Macros used to mark up functions e.g., __init __exit
@@ -30,6 +31,8 @@
 
 #define PANDA_CAN_TRANSMIT 1
 #define PANDA_CAN_EXTENDED 4
+
+#define PANDA_BITRATE 500000
 
 static const struct usb_device_id panda_usb_table[] = {
   { USB_DEVICE(PANDA_VENDOR_ID, PANDA_PRODUCT_ID) },
@@ -318,9 +321,6 @@ static int panda_usb_start(struct panda_priv *priv)
   return 0;
 }
 
-
-//static u8 outdat[] = {0x01, 0x00, 0x40, 0x15, 0x08, 0x00, 0x00, 0x00,
-//		      0xAA, 0xAA, 0xAA, 0xAA, 0x07, 0x00, 0x00, 0x00};
 static u8 payload[] = {0xAA, 0xAA, 0xAA, 0xAA, 0x07, 0x00, 0x00, 0x00};
 
 void my_timer_callback( unsigned long data )
@@ -337,8 +337,61 @@ void my_timer_callback( unsigned long data )
   //  printk("Sent out %d bytes on timer\n", actual_size);
   //}
 
-  mod_timer(&priv->timer, jiffies + msecs_to_jiffies(1000));
+  mod_timer(&priv->timer, jiffies + msecs_to_jiffies(2000));
 }
+
+
+/* Open USB device */
+static int panda_usb_open(struct net_device *netdev)
+{
+  struct panda_priv *priv = netdev_priv(netdev);
+  int err;
+
+  /* common open */
+  err = open_candev(netdev);
+  if (err)
+    return err;
+
+  //priv->can_speed_check = true;
+  priv->can.state = CAN_STATE_ERROR_ACTIVE;
+
+  netif_start_queue(netdev);
+
+  netdev_err(netdev, "Panda device %d opened\n", priv->id);
+
+  return 0;
+}
+
+/* Close USB device */
+static int panda_usb_close(struct net_device *netdev)
+{
+  struct panda_priv *priv = netdev_priv(netdev);
+
+  priv->can.state = CAN_STATE_STOPPED;
+
+  netif_stop_queue(netdev);
+
+  /* Stop polling */
+  panda_urb_unlink(priv);
+
+  close_candev(netdev);
+  //can_led_event(netdev, CAN_LED_EVENT_STOP);
+
+  return 0;
+}
+
+static netdev_tx_t panda_usb_start_xmit2(struct sk_buff *skb,
+				       struct net_device *netdev)
+{
+  netdev_err(netdev, "Received data from socket\n");
+  return NETDEV_TX_OK;
+}
+
+static const struct net_device_ops panda_netdev_ops = {
+  .ndo_open = panda_usb_open,
+  .ndo_stop = panda_usb_close,
+  .ndo_start_xmit = panda_usb_start_xmit2,
+};
 
 static int panda_usb_probe(struct usb_interface *intf,
 			  const struct usb_device_id *id)
@@ -367,16 +420,28 @@ static int panda_usb_probe(struct usb_interface *intf,
 
   /* Init CAN device */
   priv->can.state = CAN_STATE_STOPPED;
+  //priv->can.do_set_termination = panda_set_termination;
+  //priv->can.do_set_mode = panda_net_set_mode;
+  //priv->can.do_get_berr_counter = panda_net_get_berr_counter;
+  //priv->can.do_set_bittiming = panda_net_set_bittiming;
 
-  //err = register_candev(netdev);
-  //if (err) {
-  //  netdev_err(netdev, "couldn't register CAN device: %d\n", err);
-  //  goto cleanup_free_candev;
-  //}
+  priv->can.bittiming.bitrate = PANDA_BITRATE;
+
+  netdev->netdev_ops = &panda_netdev_ops;
+
+  netdev->flags |= IFF_ECHO; /* we support local echo */
+
+  SET_NETDEV_DEV(netdev, &intf->dev);
+
+  err = register_candev(netdev);
+  if (err) {
+    netdev_err(netdev, "couldn't register PANDA CAN device: %d\n", err);
+    goto cleanup_free_candev;
+  }
 
   err = panda_usb_start(priv);
   if (err) {
-    dev_info(&intf->dev, "Failed to initialize Comma.ai Panda CAN controller\n");
+    dev_err(&intf->dev, "Failed to initialize Comma.ai Panda CAN controller\n");
     goto cleanup_unregister_candev;
   }
 
@@ -388,16 +453,15 @@ static int panda_usb_probe(struct usb_interface *intf,
     goto cleanup_unregister_candev;
   }
 
-  // 0x01, 0x00, 0x40, 0x15, 0x08, 0x00, 0x00, 0x00, 0xAA, 0xAA, 0xAA, 0xAA, 0x07, 0x00, 0x00, 0x00
-
   setup_timer(&priv->timer, my_timer_callback, (unsigned long) priv);
-  mod_timer(&priv->timer, jiffies + msecs_to_jiffies(1000));
+  mod_timer(&priv->timer, jiffies + msecs_to_jiffies(2000));
+
+  dev_err(&intf->dev, "PANDA INIT SUCCESS\n");
 
   return 0;
 
  cleanup_unregister_candev:
-  //unregister_candev(priv->netdev);
-  goto cleanup_free_candev;
+  unregister_candev(priv->netdev);
 
  cleanup_free_candev:
   free_candev(priv->netdev);
@@ -416,7 +480,7 @@ static void panda_usb_disconnect(struct usb_interface *intf)
 
   del_timer(&priv->timer);
 
-  //unregister_candev(priv->netdev);
+  unregister_candev(priv->netdev);
   free_candev(priv->netdev);
 
   panda_urb_unlink(priv);
