@@ -13,35 +13,25 @@ else
   CFLAGS += "-DALLOW_DEBUG"
 endif
 
-MACHINE = $(shell uname -m)
-OS = $(shell uname -o)
-
-ifeq ($(OS),GNU/Linux)
-  MACHINE := "$(MACHINE)-linux"
-endif
-
-DFU_UTIL = "./tools/dfu-util-$(MACHINE)"
+DFU_UTIL = "dfu-util"
 
 # this pushes the unchangable bootstub too
 all: compileall dfu
 
 compileall: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
 
-dfu:
+download_mode:
 	./tools/enter_download_mode.py
-	$(DFU_UTIL) -a 0 -s 0x08000000 -D obj/bootstub.$(PROJ_NAME).bin
-	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
-	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
 
-bootstub: obj/bootstub.$(PROJ_NAME).bin
-	./tools/enter_download_mode.py
+dfu: download_mode
 	$(DFU_UTIL) -a 0 -s 0x08000000 -D obj/bootstub.$(PROJ_NAME).bin
-	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
+	$(DFU_UTIL) -a 0 -s 0x08004000:leave -D obj/$(PROJ_NAME).bin
 
-main: obj/$(PROJ_NAME).bin
-	./tools/enter_download_mode.py
-	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
-	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
+bootstub: obj/bootstub.$(PROJ_NAME).bin download_mode
+	$(DFU_UTIL) -a 0 -s 0x08000000:leave -D obj/bootstub.$(PROJ_NAME).bin
+
+main: obj/$(PROJ_NAME).bin download_mode
+	$(DFU_UTIL) -a 0 -s 0x08004000:leave -D obj/$(PROJ_NAME).bin
 
 ota: main_bin
 	curl http://192.168.0.10/stupdate --upload-file $<
