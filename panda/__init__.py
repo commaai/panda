@@ -91,17 +91,25 @@ class Panda(object):
   def _context(cls):
     if cls.__ctx is None:
       cls.__ctx = usb1.USBContext()
-      def handle_events():
-        while cls.__instance_count:
-          cls._context().handleEvents()
-
-      # Create thread
-      cls.__ctx_event_thread = threading.Thread(target=handle_events, daemon=True)
-      cls.__ctx_event_thread.start()
     return cls.__ctx
 
+  @classmethod
+  def __start_usb_int_thread(cls):
+    cls.__instance_count += 1
+    if cls.__ctx_event_thread is None:
+      # Create thread
+      cls.__ctx_event_thread = threading.Thread(target=cls.__handle_events, daemon=True)
+      cls.__ctx_event_thread.start()
+
+  @classmethod
+  def __handle_events(cls):
+    while cls.__instance_count:
+      cls._context().handleEvents()
+    cls.__ctx_event_thread = None
+
   def __init__(self, serial=None, claim=True):
-    type(self).__instance_count += 1
+    type(self).__start_usb_int_thread()
+    self._serial = serial
     if serial == "WIFI":
       self._handle = WifiHandle()
       print("opening WIFI device")
@@ -133,6 +141,9 @@ class Panda(object):
 
   def close(self):
     self._handle.close()
+
+  def __repr__(self):
+    return "%s(serial:'%s')"%(type(self).__name__, self._serial)
 
   @staticmethod
   def read_can_in_int_data(data):
