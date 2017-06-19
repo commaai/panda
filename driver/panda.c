@@ -217,50 +217,102 @@ static netdev_tx_t panda_usb_start_xmit(struct panda_priv *priv, u16 addr, u16 b
   return NETDEV_TX_OK;
 }
 
+static void panda_usb_read_int_callback(struct urb *urb)
+{
+  struct panda_priv *priv = urb->context;
+  struct net_device *netdev;
+  int retval;
+  int pos = 0;
+  int num_recv = 0;
+
+  netdev = priv->netdev;
+
+  //if (!netif_device_present(netdev))
+  //  return;
+
+  switch (urb->status) {
+  case 0: /* success */
+    break;
+  case -ENOENT:
+  case -ESHUTDOWN:
+    return;
+  default:
+    netdev_info(netdev, "Rx URB aborted (%d)\n", urb->status);
+    goto resubmit_urb;
+  }
+
+  while (pos < urb->actual_length) {
+    struct panda_usb_can_msg *msg;
+
+    if (pos + sizeof(struct panda_usb_can_msg) > urb->actual_length) {
+      netdev_err(priv->netdev, "format error\n");
+      break;
+    }
+
+    msg = (struct panda_usb_can_msg *)(urb->transfer_buffer + pos);
+
+    num_recv++;
+    //panda_usb_process_rx(priv, msg);
+
+    pos += sizeof(struct panda_usb_can_msg);
+  }
+
+  netdev_info(netdev, "Received (%d) entries\n", num_recv);
+
+ resubmit_urb:
+  usb_fill_int_urb(urb, priv->udev,
+		    usb_rcvintpipe(priv->udev, 1),
+		    urb->transfer_buffer, PANDA_USB_RX_BUFF_SIZE,
+		    panda_usb_read_int_callback, priv, 10);
+
+  retval = usb_submit_urb(urb, GFP_ATOMIC);
+
+  if (retval == -ENODEV)
+    netif_device_detach(netdev);
+  else if (retval)
+    netdev_err(netdev, "failed resubmitting read bulk urb: %d\n", retval);
+}
 
 
 static int panda_usb_start(struct panda_priv *priv)
 {
-  //struct net_device *netdev = priv->netdev;
-  //int err, i;
-  //struct urb *urb = NULL;
-  //u8 *buf;
+  struct net_device *netdev = priv->netdev;
+  int err;
+  struct urb *urb = NULL;
+  u8 *buf;
 
-  ///* create a URB, and a buffer for it */
-  //urb = usb_alloc_urb(0, GFP_KERNEL);
-  //if (!urb) {
-  //  err = -ENOMEM;
-  //  break;
-  //}
-  //
-  //buf = usb_alloc_coherent(priv->udev, PANDA_USB_RX_BUFF_SIZE,
-  //			   GFP_KERNEL, &urb->transfer_dma);
-  //if (!buf) {
-  //  netdev_err(netdev, "No memory left for USB buffer\n");
-  //  usb_free_urb(urb);
-  //  err = -ENOMEM;
-  //  break;
-  //}
-  //
-  //
-  //usb_fill_control_urb(urb, priv->udev,
-  //		    usb_sndctrlpipe(priv->udev, 0),
-  //		    buf, PANDA_USB_RX_BUFF_SIZE,
-  //		    panda_usb_read_bulk_callback, priv);
-  //urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
-  //usb_anchor_urb(urb, &priv->rx_submitted);
-  //
-  //err = usb_submit_urb(urb, GFP_KERNEL);
-  //if (err) {
-  //  usb_unanchor_urb(urb);
-  //  usb_free_coherent(priv->udev, PANDA_USB_RX_BUFF_SIZE,
-  //		      buf, urb->transfer_dma);
-  //  usb_free_urb(urb);
-  //  break;
-  //}
-  //
-  ///* Drop reference, USB core will take care of freeing it */
-  //usb_free_urb(urb);
+  /* create a URB, and a buffer for it */
+  urb = usb_alloc_urb(0, GFP_KERNEL);
+  if (!urb) {
+    return -ENOMEM;
+  }
+
+  buf = usb_alloc_coherent(priv->udev, PANDA_USB_RX_BUFF_SIZE,
+			   GFP_KERNEL, &urb->transfer_dma);
+  if (!buf) {
+    netdev_err(netdev, "No memory left for USB buffer\n");
+    usb_free_urb(urb);
+    return -ENOMEM;
+  }
+
+  usb_fill_int_urb(urb, priv->udev,
+                   usb_rcvintpipe(priv->udev, 1),
+                   buf, PANDA_USB_RX_BUFF_SIZE,
+                   panda_usb_read_int_callback, priv, 10);
+  urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
+  usb_anchor_urb(urb, &priv->rx_submitted);
+
+  err = usb_submit_urb(urb, GFP_KERNEL);
+  if (err) {
+  usb_unanchor_urb(urb);
+    usb_free_coherent(priv->udev, PANDA_USB_RX_BUFF_SIZE, buf, urb->transfer_dma);
+    usb_free_urb(urb);
+    netdev_err(netdev, "Failed in start, while submitting urb.\n");
+    return err;
+  }
+
+  /* Drop reference, USB core will take care of freeing it */
+  usb_free_urb(urb);
 
 
   return 0;
