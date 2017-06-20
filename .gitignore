@@ -4,3 +4,5 @@
 a.out
 *~
 .#*
+dist/
+pandacan.egg-info/

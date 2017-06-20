@@ -6,7 +6,7 @@ import hashlib
 import socket
 import usb1
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 class PandaHashMismatchException(Exception):
   def __init__(self, hash_, expected_hash):
