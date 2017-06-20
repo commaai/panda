@@ -16,6 +16,11 @@ It is 2nd gen hardware, reusing code and parts from the [NEO](https://github.com
 Usage
 ------
 
+To install the library:
+```
+# pip install pandacan
+```
+
 See [panda.py](https://github.com/commaai/panda/blob/master/lib/panda.py) for how to interact with the panda.
 
 For example, to receive CAN messages:
