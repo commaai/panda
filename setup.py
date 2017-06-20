@@ -34,7 +34,7 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 setup(
-    name='panda',
+    name='pandacan',
     version=find_version("panda", "__init__.py"),
     url='https://github.com/commaai/panda',
     author='Comma.ai',
