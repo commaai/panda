@@ -1,23 +1,25 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import os
 import sys
 import time
-import usb1
 import random
-import struct
-from panda.lib.panda import Panda
+
 from hexdump import hexdump
 from itertools import permutations
+
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
+from panda import Panda
 
 def get_test_string():
   return "test"+os.urandom(10)
 
 def run_test():
   pandas = Panda.list()
-  print pandas
+  print(pandas)
 
   if len(pandas) == 0:
-    print "NO PANDAS"
+    print("NO PANDAS")
     assert False
 
   if len(pandas) == 1:
@@ -27,17 +29,17 @@ def run_test():
 
 def run_test_w_pandas(pandas):
   h = map(lambda x: Panda(x), pandas)
-  print h
+  print(h)
 
   for hh in h:
     hh.set_controls_allowed(True)
 
   # test both directions
   for ho in permutations(range(len(h)), r=2):
-    print "***************** TESTING", ho
+    print("***************** TESTING", ho)
 
     # **** test health packet ****
-    print "health", ho[0], h[ho[0]].health()
+    print("health", ho[0], h[ho[0]].health())
 
     # **** test K/L line loopback ****
     for bus in [2,3]:
@@ -55,11 +57,11 @@ def run_test_w_pandas(pandas):
       hexdump(st)
       hexdump(ret)
       assert st == ret
-      print "K/L pass", bus, ho
+      print("K/L pass", bus, ho)
 
     # **** test can line loopback ****
     for bus in [0,1,4,5,6]:
-      print "test can", bus
+      print("test can", bus)
       # flush
       cans_echo = h[ho[0]].can_recv()
       cans_loop = h[ho[1]].can_recv()
@@ -89,7 +91,7 @@ def run_test_w_pandas(pandas):
       cans_echo = h[ho[0]].can_recv()
       cans_loop = h[ho[1]].can_recv()
 
-      print bus, cans_echo, cans_loop
+      print(bus, cans_echo, cans_loop)
 
       assert len(cans_echo) == 1
       assert len(cans_loop) == 1
@@ -102,10 +104,10 @@ def run_test_w_pandas(pandas):
 
       assert cans_echo[0][3] == bus+2
       if cans_loop[0][3] != bus:
-        print "EXPECTED %d GOT %d" % (bus, cans_loop[0][3])
+        print("EXPECTED %d GOT %d" % (bus, cans_loop[0][3]))
       assert cans_loop[0][3] == bus
 
-      print "CAN pass", bus, ho
+      print("CAN pass", bus, ho)
 
 if __name__ == "__main__":
   if len(sys.argv) > 1:
@@ -113,8 +115,7 @@ if __name__ == "__main__":
       run_test()
   else :
     i = 0
-    while 1:
-      print "************* testing %d" % i
+    while True:
+      print("************* testing %d" % i)
       run_test()
     i += 1
-
