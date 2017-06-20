@@ -37,7 +37,7 @@ setup(
     name='pandacan',
     version=find_version("panda", "__init__.py"),
     url='https://github.com/commaai/panda',
-    author='Comma.ai',
+    author='comma.ai',
     author_email='',
     packages=[
         'panda',
