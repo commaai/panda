@@ -140,7 +140,7 @@ uint8_t configuration_desc[] = {
   DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
   ENDPOINT_RCV | 1, ENDPOINT_TYPE_INT, // Endpoint Num/Direction, Type
   TOUSBORDER(0x0040), // Max Packet (0x0040)
-  0x0A, // Polling Interval (10 frames)
+  0x05, // Polling Interval (5 frames)
   // endpoint 2, send serial
   DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
   ENDPOINT_SND | 2, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
