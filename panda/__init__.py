@@ -4,6 +4,7 @@ import binascii
 import struct
 import hashlib
 import socket
+import threading
 import usb1
 
 __version__ = '0.0.2'
@@ -79,34 +80,82 @@ class WifiHandle(object):
 
 class Panda(object):
   REQUEST_TYPE = usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
+  __ctx = None
+  __instance_count = 0
+  # There are of course issues of this thread hanging around long
+  # after its use, but since it is limited to one thread for all
+  # instances of this class, that may be a fair place to start.
+  __ctx_event_thread = None
+
+  @classmethod
+  def _context(cls):
+    if cls.__ctx is None:
+      cls.__ctx = usb1.USBContext()
+    return cls.__ctx
+
+  @classmethod
+  def __start_usb_int_thread(cls):
+    cls.__instance_count += 1
+    if cls.__ctx_event_thread is None:
+      # Create thread
+      cls.__ctx_event_thread = threading.Thread(target=cls.__handle_events)
+      cls.__ctx_event_thread.daemon = True
+      cls.__ctx_event_thread.start()
+
+  @classmethod
+  def __handle_events(cls):
+    while cls.__instance_count:
+      cls._context().handleEvents()
+    cls.__ctx_event_thread = None
 
   def __init__(self, serial=None, claim=True):
+    type(self).__start_usb_int_thread()
+    self._serial = serial
     if serial == "WIFI":
-      self.handle = WifiHandle()
+      self._handle = WifiHandle()
       print("opening WIFI device")
     else:
-      context = usb1.USBContext()
-
-      self.handle = None
-      for device in context.getDeviceList(skip_on_error=True):
+      self._handle = None
+      self._can_in_buff = []
+      for device in Panda._context().getDeviceList(skip_on_error=True):
         if device.getVendorID() == 0xbbaa and device.getProductID() == 0xddcc:
           if serial is None or device.getSerialNumber() == serial:
             print("opening device", device.getSerialNumber())
-            self.handle = device.open()
+            self._handle = device.open()
             if claim:
-              self.handle.claimInterface(0)
+              self._handle.claimInterface(0)
             break
 
-    assert self.handle != None
+      # Initialize libUSB1's async API helper objects to receive CAN data async.
+      self._interrupt_helper = usb1.USBTransferHelper()
+      self._interrupt_helper.setEventCallback(usb1.TRANSFER_COMPLETED,
+                                              Panda.read_can_in_int_data)
+      self._transfer = self._handle.getTransfer()
+      self._transfer.setInterrupt(
+        usb1.ENDPOINT_IN | 1, 0x40, callback=self._interrupt_helper, user_data=self);
+      self._transfer.submit() # Submit for handleEvents to process in thread.
+
+    assert self._handle != None
+
+  def __del__(self):
+    type(self).__instance_count -= 1
 
   def close(self):
-    self.handle.close()
+    self._handle.close()
+
+  def __repr__(self):
+    return "%s(serial:'%s')"%(type(self).__name__, self._serial)
 
   @staticmethod
-  def list():
-    context = usb1.USBContext()
+  def read_can_in_int_data(data):
+    data.getUserData()._can_in_buff += parse_can_buffer(
+      data.getBuffer()[:data.getActualLength()])
+    return True
+
+  @classmethod
+  def list(cls):
     ret = []
-    for device in context.getDeviceList(skip_on_error=True):
+    for device in Panda._context().getDeviceList(skip_on_error=True):
       if device.getVendorID() == 0xbbaa and device.getProductID() == 0xddcc:
         ret.append(device.getSerialNumber())
     # TODO: detect if this is real
@@ -116,7 +165,7 @@ class Panda(object):
   # ******************* health *******************
 
   def health(self):
-    dat = self.handle.controlRead(Panda.REQUEST_TYPE, 0xd2, 0, 0, 13)
+    dat = self._handle.controlRead(Panda.REQUEST_TYPE, 0xd2, 0, 0, 13)
     a = struct.unpack("IIBBBBB", dat)
     return {"voltage": a[0], "current": a[1],
             "started": a[2], "controls_allowed": a[3],
@@ -128,38 +177,38 @@ class Panda(object):
 
   def enter_bootloader(self):
     try:
-      self.handle.controlWrite(Panda.REQUEST_TYPE, 0xd1, 0, 0, b'')
+      self._handle.controlWrite(Panda.REQUEST_TYPE, 0xd1, 0, 0, b'')
     except Exception as e:
       print(e)
       pass
 
   def get_serial(self):
-    dat = self.handle.controlRead(Panda.REQUEST_TYPE, 0xd0, 0, 0, 0x20)
+    dat = self._handle.controlRead(Panda.REQUEST_TYPE, 0xd0, 0, 0, 0x20)
     hashsig, calc_hash = dat[0x1c:], hashlib.sha1(dat[0:0x1c]).digest()[0:4]
     if hashsig != calc_hash:
       raise PandaHashMismatchException(calc_hash, hashsig)
     return [dat[0:0x10], dat[0x10:0x10+10]]
 
   def get_secret(self):
-    return self.handle.controlRead(Panda.REQUEST_TYPE, 0xd0, 1, 0, 0x10)
+    return self._handle.controlRead(Panda.REQUEST_TYPE, 0xd0, 1, 0, 0x10)
 
   # ******************* configuration *******************
 
   def set_controls_allowed(self, on):
-      self.handle.controlWrite(Panda.REQUEST_TYPE, 0xdc, (0x1337 if on else 0), 0, b'')
+      self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdc, (0x1337 if on else 0), 0, b'')
 
   def set_gmlan(self, on, bus=2):
-    self.handle.controlWrite(Panda.REQUEST_TYPE, 0xdb, 1, bus, b'')
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdb, 1, bus, b'')
 
   def set_uart_baud(self, uart, rate):
-    self.handle.controlWrite(Panda.REQUEST_TYPE, 0xe1, uart, rate, b'')
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xe1, uart, rate, b'')
 
   def set_uart_parity(self, uart, parity):
     # parity, 0=off, 1=even, 2=odd
-    self.handle.controlWrite(Panda.REQUEST_TYPE, 0xe2, uart, parity, b'')
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xe2, uart, parity, b'')
 
   def set_uart_callback(self, uart, install):
-    self.handle.controlWrite(Panda.REQUEST_TYPE, 0xe3, uart, int(install), b'')
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xe3, uart, int(install), b'')
 
   # ******************* can *******************
 
@@ -179,7 +228,7 @@ class Panda(object):
     while True:
       try:
         print("DAT: %s"%b''.join(snds).__repr__())
-        self.handle.bulkWrite(3, b''.join(snds))
+        self._handle.bulkWrite(3, b''.join(snds))
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD SEND MANY, RETRYING")
@@ -188,34 +237,29 @@ class Panda(object):
     self.can_send_many([[addr, None, dat, bus]])
 
   def can_recv(self):
-    dat = bytearray()
-    while True:
-      try:
-        dat = self.handle.bulkRead(1, 0x10*256)
-        break
-      except (usb1.USBErrorIO, usb1.USBErrorOverflow):
-        print("CAN: BAD RECV, RETRYING")
-    return parse_can_buffer(dat)
+    dat = self._can_in_buff
+    self._can_in_buff = []
+    return dat
 
   # ******************* serial *******************
 
   def serial_read(self, port_number):
-    return self.handle.controlRead(Panda.REQUEST_TYPE, 0xe0, port_number, 0, 0x40)
+    return self._handle.controlRead(Panda.REQUEST_TYPE, 0xe0, port_number, 0, 0x40)
 
   def serial_write(self, port_number, ln):
-    return self.handle.bulkWrite(2, chr(port_number) + ln)
+    return self._handle.bulkWrite(2, chr(port_number) + ln)
 
   # ******************* kline *******************
 
   # pulse low for wakeup
   def kline_wakeup(self):
-    self.handle.controlWrite(Panda.REQUEST_TYPE, 0xf0, 0, 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xf0, 0, 0, b'')
 
   def kline_drain(self, bus=2):
     # drain buffer
     bret = bytearray()
     while True:
-      ret = self.handle.controlRead(Panda.REQUEST_TYPE, 0xe0, bus, 0, 0x40)
+      ret = self._handle.controlRead(Panda.REQUEST_TYPE, 0xe0, bus, 0, 0x40)
       if len(ret) == 0:
         break
       bret += ret
@@ -224,7 +268,7 @@ class Panda(object):
   def kline_ll_recv(self, cnt, bus=2):
     echo = bytearray()
     while len(echo) != cnt:
-      echo += self.handle.controlRead(Panda.REQUEST_TYPE, 0xe0, bus, 0, cnt-len(echo))
+      echo += self._handle.controlRead(Panda.REQUEST_TYPE, 0xe0, bus, 0, cnt-len(echo))
     return echo
 
   def kline_send(self, x, bus=2, checksum=True):
@@ -239,7 +283,7 @@ class Panda(object):
       x += get_checksum(x)
     for i in range(0, len(x), 0xf):
       ts = x[i:i+0xf]
-      self.handle.bulkWrite(2, chr(bus)+ts)
+      self._handle.bulkWrite(2, chr(bus)+ts)
       echo = self.kline_ll_recv(len(ts), bus=bus)
       if echo != ts:
         print("**** ECHO ERROR %d ****" % i)
