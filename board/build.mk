@@ -15,6 +15,15 @@ endif
 
 DFU_UTIL = "dfu-util"
 
+#For phones
+MACHINE = $(shell uname -m)
+OS = $(shell uname -o)
+ifeq ($(MACHINE),aarch64)
+  ifneq ($(OS),GNU/Linux)
+    DFU_UTIL = "./tools/dfu-util-aarch64"
+  endif
+endif
+
 # this pushes the unchangable bootstub too
 all: compileall dfu
 
