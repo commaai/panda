@@ -128,29 +128,49 @@ uint8_t device_desc[] = {
 
 uint8_t configuration_desc[] = {
   DSCR_CONFIG_LEN, DSCR_CONFIG_TYPE, // Length, Type,
-  0x27, 0x00, // Total Len (uint16)
+  TOUSBORDER(0x0045), // Total Len (uint16)
   0x01, 0x01, 0x00, // Num Interface, Config Value, Configuration
   0xc0, 0x32, // Attributes, Max Power
-  // interface 0
+  // interface 0 ALT 0
   DSCR_INTERFACE_LEN, DSCR_INTERFACE_TYPE, // Length, Type
   0x00, 0x00, 0x03, // Index, Alt Index idx, Endpoint count
-  0xff, 0xFF, 0xFF, // Class, Subclass, Protocol
+  0XFF, 0xFF, 0xFF, // Class, Subclass, Protocol
   0x00, // Interface
-  // endpoint 1, read CAN
-  DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
-  ENDPOINT_RCV | 1, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
-  TOUSBORDER(0x0040), // Max Packet (0x0040)
-  0x00, // Polling Interval
-  // endpoint 2, send serial
-  DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
-  ENDPOINT_SND | 2, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
-  TOUSBORDER(0x0040), // Max Packet (0x0040)
-  0x00, // Polling Interval
-  // endpoint 3, send CAN
-  DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
-  ENDPOINT_SND | 3, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
-  TOUSBORDER(0x0040), // Max Packet (0x0040)
-  0x00, // Polling Interval
+    // endpoint 1, read CAN
+    DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+    ENDPOINT_RCV | 1, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
+    TOUSBORDER(0x0040), // Max Packet (0x0040)
+    0x00, // Polling Interval (NA)
+    // endpoint 2, send serial
+    DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+    ENDPOINT_SND | 2, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
+    TOUSBORDER(0x0040), // Max Packet (0x0040)
+    0x00, // Polling Interval
+    // endpoint 3, send CAN
+    DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+    ENDPOINT_SND | 3, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
+    TOUSBORDER(0x0040), // Max Packet (0x0040)
+    0x00, // Polling Interval
+  // interface 0 ALT 1
+  DSCR_INTERFACE_LEN, DSCR_INTERFACE_TYPE, // Length, Type
+  0x00, 0x01, 0x03, // Index, Alt Index idx, Endpoint count
+  0XFF, 0xFF, 0xFF, // Class, Subclass, Protocol
+  0x00, // Interface
+    // endpoint 1, read CAN
+    DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+    ENDPOINT_RCV | 1, ENDPOINT_TYPE_INT, // Endpoint Num/Direction, Type
+    TOUSBORDER(0x0040), // Max Packet (0x0040)
+    0x05, // Polling Interval (5 frames)
+    // endpoint 2, send serial
+    DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+    ENDPOINT_SND | 2, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
+    TOUSBORDER(0x0040), // Max Packet (0x0040)
+    0x00, // Polling Interval
+    // endpoint 3, send CAN
+    DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+    ENDPOINT_SND | 3, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
+    TOUSBORDER(0x0040), // Max Packet (0x0040)
+    0x00, // Polling Interval
 };
 
 uint8_t string_0_desc[] = {
@@ -183,6 +203,9 @@ uint16_t string_3_desc[] = {
 USB_Setup_TypeDef setup;
 uint8_t usbdata[0x100];
 
+// Store the current interface alt setting.
+int current_int0_alt_setting = 0;
+
 // packet read and write
 
 void *USB_ReadPacket(void *dest, uint16_t len) {
@@ -198,14 +221,17 @@ void *USB_ReadPacket(void *dest, uint16_t len) {
 
 void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
   #ifdef DEBUG_USB
-    puts("writing ");
-    hexdump(src, len);
+  puts("writing ");
+  hexdump(src, len);
   #endif
+
+  uint8_t numpacket = (len+(MAX_RESP_LEN-1))/MAX_RESP_LEN;
   uint32_t count32b = 0, i = 0;
   count32b = (len + 3) / 4;
 
   // bullshit
-  USBx_INEP(ep)->DIEPTSIZ = (USB_OTG_DIEPTSIZ_PKTCNT & (1 << 19)) | (len & USB_OTG_DIEPTSIZ_XFRSIZ);
+  USBx_INEP(ep)->DIEPTSIZ = ((numpacket << 19) & USB_OTG_DIEPTSIZ_PKTCNT) |
+                            (len               & USB_OTG_DIEPTSIZ_XFRSIZ);
   USBx_INEP(ep)->DIEPCTL |= (USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA);
 
   // load the FIFO
@@ -374,6 +400,12 @@ void usb_setup() {
       USB_WritePacket((void*)&resp, 2, 0);
       USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
       break;
+    case USB_REQ_SET_INTERFACE:
+      // Store the alt setting number for IN EP behavior.
+      current_int0_alt_setting = setup.b.wValue.w;
+      USB_WritePacket(0, 0, 0);
+      USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+      break;
     default:
       resp_len = usb_cb_control_msg(&setup, resp, 1);
       USB_WritePacket(resp, min(resp_len, setup.b.wLength.w), 0);
@@ -515,7 +547,6 @@ void usb_irqhandler(void) {
       puts("\n");
     #endif
 
-
     if (((rxst & USB_OTG_GRXSTSP_PKTSTS) >> 17) == STS_DATA_UPDT) {
       int endpoint = (rxst & USB_OTG_GRXSTSP_EPNUM);
       int len = (rxst & USB_OTG_GRXSTSP_BCNT) >> 4;
@@ -632,8 +663,7 @@ void usb_irqhandler(void) {
     USBx_OUTEP(3)->DOEPINT = USBx_OUTEP(3)->DOEPINT;
   }
 
-
-  // in endpoint hit
+  // interrupt endpoint hit (Page 1221)
   if (gintsts & USB_OTG_GINTSTS_IEPINT) {
     #ifdef DEBUG_USB
       puts("  ");
@@ -643,28 +673,50 @@ void usb_irqhandler(void) {
       puts(" IN ENDPOINT\n");
     #endif
 
-    // this happens first
-    if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_XFRC) {
-      #ifdef DEBUG_USB
-        puts("  IN PACKET SEND\n");
-      #endif
-      //USBx_DEVICE->DIEPEMPMSK = ~(1 << 1);
-    }
+    // Should likely check the EP of the IN request even if there is
+    // only one IN endpoint.
 
-    // *** IN token received when TxFIFO is empty
-    if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
-      #ifdef DEBUG_USB
+    // No need to set NAK in OTG_DIEPCTL0 when nothing to send,
+    // Appears USB core automatically sets NAK. WritePacket clears it.
+
+    // Handle the two interface alternate settings. Setting 0 is has
+    // EP1 as bulk. Setting 1 has EP1 as interrupt. The code to handle
+    // these two EP variations are very similar and can be
+    // restructured for smaller code footprint. Keeping split out for
+    // now for clarity.
+
+    //TODO add default case. Should it NAK?
+    switch(current_int0_alt_setting){
+    case 0: ////// Bulk config
+      // *** IN token received when TxFIFO is empty
+      if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
+        #ifdef DEBUG_USB
         puts("  IN PACKET QUEUE\n");
-      #endif
-      // TODO: always assuming max len, can we get the length?
-      USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
+        #endif
+        // TODO: always assuming max len, can we get the length?
+        USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
+      }
+      break;
+
+    case 1: ////// Interrupt config
+      // Check if there is anything to actually send.
+      if (can_rx_q.w_ptr != can_rx_q.r_ptr) {
+        // *** IN token received when TxFIFO is empty
+        if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
+          #ifdef DEBUG_USB
+          puts("  IN PACKET QUEUE\n");
+          #endif
+          // TODO: always assuming max len, can we get the length?
+          USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
+        }
+      }
+      break;
     }
 
     // clear interrupts
-    USBx_INEP(0)->DIEPINT = USBx_INEP(0)->DIEPINT;
+    USBx_INEP(0)->DIEPINT = USBx_INEP(0)->DIEPINT; // Why ep0?
     USBx_INEP(1)->DIEPINT = USBx_INEP(1)->DIEPINT;
   }
-
 
   // clear all interrupts we handled
   USBx_DEVICE->DAINT = daint;
