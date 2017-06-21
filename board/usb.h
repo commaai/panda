@@ -224,7 +224,7 @@ void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
     puts("writing ");
     hexdump(src, len);
   #endif
-  uint8_t numpacket = (len+63)/64;
+    uint8_t numpacket = (len+(MAX_RESP_LEN-1))/MAX_RESP_LEN;
   uint32_t count32b = 0, i = 0;
   count32b = (len + 3) / 4;
 
