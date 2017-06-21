@@ -221,10 +221,11 @@ void *USB_ReadPacket(void *dest, uint16_t len) {
 
 void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
   #ifdef DEBUG_USB
-    puts("writing ");
-    hexdump(src, len);
+  puts("writing ");
+  hexdump(src, len);
   #endif
-    uint8_t numpacket = (len+(MAX_RESP_LEN-1))/MAX_RESP_LEN;
+
+  uint8_t numpacket = (len+(MAX_RESP_LEN-1))/MAX_RESP_LEN;
   uint32_t count32b = 0, i = 0;
   count32b = (len + 3) / 4;
 
