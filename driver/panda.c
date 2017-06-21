@@ -284,6 +284,12 @@ static int panda_usb_start(struct panda_priv *priv)
   struct urb *urb = NULL;
   u8 *buf;
 
+  err = usb_set_interface(priv->udev, 0, 1);
+  if (err) {
+    netdev_err(netdev, "Can not set alternate setting to 1, error: %i", err);
+    return err;
+  }
+
   /* create a URB, and a buffer for it */
   urb = usb_alloc_urb(0, GFP_KERNEL);
   if (!urb) {
