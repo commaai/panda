@@ -48,5 +48,33 @@ int main(void)
 
   printf("Wrote %d bytes\n", nbytes);
 
+  while (1) {
+    struct can_frame framein;
+
+    // Read in a CAN frame
+    int numBytes = read(s, &framein, CANFD_MTU);
+    switch (numBytes) {
+    case CAN_MTU:
+      if(framein.can_id & 0x80000000)
+	printf("Received %u byte payload; canid 0x%lx (EXT)\n",
+	       framein.can_dlc, framein.can_id & 0x7FFFFFFF);
+      else
+	printf("Received %u byte payload; canid 0x%lx\n", framein.can_dlc, framein.can_id);
+      break;
+    case CANFD_MTU:
+      // TODO: Should make an example for CAN FD
+      break;
+    case -1:
+      // Check the signal value on interrupt
+      //if (EINTR == errno)
+      //  continue;
+
+      // Delay before continuing
+      sleep(1);
+    default:
+      continue;
+    }
+  }
+
   return 0;
 }

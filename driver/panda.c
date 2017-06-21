@@ -34,6 +34,8 @@
 
 #define PANDA_BITRATE 500000
 
+#define PANDA_DLC_MASK  0x0F
+
 static const struct usb_device_id panda_usb_table[] = {
   { USB_DEVICE(PANDA_VENDOR_ID, PANDA_PRODUCT_ID) },
   {} /* Terminating entry */
@@ -108,6 +110,7 @@ static void panda_usb_write_bulk_callback(struct urb *urb)
     netdev_info(netdev, "Tx URB aborted (%d)\n", urb->status);
 
   printk("PANDA SENT OUT DATA\n");
+  //netdev_err(netdev, "PANDA SENT OUT DATA\n");
 
   /* Release the context */
   //mcba_usb_free_ctx(ctx);
@@ -220,6 +223,39 @@ static netdev_tx_t panda_usb_start_xmit(struct panda_priv *priv, u16 addr, u16 b
   return NETDEV_TX_OK;
 }
 
+static void panda_usb_process_can_rx(struct panda_priv *priv,
+				     struct panda_usb_can_msg *msg)
+{
+  struct can_frame *cf;
+  struct sk_buff *skb;
+  struct net_device_stats *stats = &priv->netdev->stats;
+  //u16 sid;
+
+  skb = alloc_can_skb(priv->netdev, &cf);
+  if (!skb)
+    return;
+
+  if(msg->rir & PANDA_CAN_EXTENDED){
+    cf->can_id = (msg->rir >> 3) | CAN_EFF_FLAG;
+  }else{
+    cf->can_id = (msg->rir >> 21);
+  }
+
+  // TODO: Handle Remote Frames
+  //if (msg->dlc & MCBA_DLC_RTR_MASK)
+  //  cf->can_id |= CAN_RTR_FLAG;
+
+  cf->can_dlc = get_can_dlc(msg->bus_dat_len & PANDA_DLC_MASK);
+
+  memcpy(cf->data, msg->data, cf->can_dlc);
+
+  stats->rx_packets++;
+  stats->rx_bytes += cf->can_dlc;
+
+  netif_rx(skb);
+}
+
+
 static void panda_usb_read_int_callback(struct urb *urb)
 {
   struct panda_priv *priv = urb->context;
@@ -230,8 +266,8 @@ static void panda_usb_read_int_callback(struct urb *urb)
 
   netdev = priv->netdev;
 
-  //if (!netif_device_present(netdev))
-  //  return;
+  if (!netif_device_present(netdev))
+    return;
 
   switch (urb->status) {
   case 0: /* success */
@@ -244,6 +280,8 @@ static void panda_usb_read_int_callback(struct urb *urb)
     goto resubmit_urb;
   }
 
+  printk("PANDA RECEIVED CAN DATA\n");
+
   while (pos < urb->actual_length) {
     struct panda_usb_can_msg *msg;
 
@@ -255,12 +293,10 @@ static void panda_usb_read_int_callback(struct urb *urb)
     msg = (struct panda_usb_can_msg *)(urb->transfer_buffer + pos);
 
     num_recv++;
-    //panda_usb_process_rx(priv, msg);
+    panda_usb_process_can_rx(priv, msg);
 
     pos += sizeof(struct panda_usb_can_msg);
   }
-
-  netdev_info(netdev, "Received (%d) entries\n", num_recv);
 
  resubmit_urb:
   usb_fill_int_urb(urb, priv->udev,
@@ -328,13 +364,18 @@ static int panda_usb_start(struct panda_priv *priv)
 }
 
 static u8 payload[] = {0xAA, 0xAA, 0xAA, 0xAA, 0x07, 0x00, 0x00, 0x00};
+int packet_len = 8;
+int dir = 0;
 
 void my_timer_callback( unsigned long data )
 {
   int err;//, actual_size;
   struct panda_priv *priv = (struct panda_priv *) data;
 
-  err = panda_usb_start_xmit(priv, 0xAA, 0, payload, 8);
+  if(packet_len % 2)
+    err = panda_usb_start_xmit(priv, 0x8AA, 0, payload, packet_len);
+  else
+    err = panda_usb_start_xmit(priv, 0xAA, 0, payload, packet_len);
   //err = panda_write_can(priv, outdat, sizeof(outdat), &actual_size);
   if(err != NETDEV_TX_OK){
     printk("PANDA TIMER failed to do usb thing. Err: %d\n", err);
@@ -344,6 +385,16 @@ void my_timer_callback( unsigned long data )
   //}
 
   mod_timer(&priv->timer, jiffies + msecs_to_jiffies(2000));
+
+  if(dir){
+    packet_len ++;
+    if(packet_len >= 8)
+      dir = 0;
+  }else{
+    packet_len --;
+    if(packet_len <= 0)
+      dir = 1;
+  }
 }
 
 
