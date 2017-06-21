@@ -17,8 +17,6 @@
 #include <linux/netdevice.h>
 #include <linux/usb.h>
 
-#include <linux/timer.h>
-
 /* vendor and product id */
 #define PANDA_MODULE_NAME "panda"
 #define PANDA_VENDOR_ID 0XBBAA
@@ -49,8 +47,6 @@ struct panda_priv {
   struct usb_anchor rx_submitted;
 
   unsigned int id;
-
-  struct timer_list timer;
 };
 
 struct __packed panda_usb_can_msg {
@@ -169,58 +165,6 @@ static netdev_tx_t panda_usb_xmit(struct panda_priv *priv,
   usb_free_urb(urb);
 
   return err;
-}
-
-
-static netdev_tx_t panda_usb_start_xmit(struct panda_priv *priv, u16 addr, u16 bus,
-					u8 *dat, unsigned int len)
-//struct sk_buff *skb, struct net_device *netdev)
-{
-  //struct panda_priv *priv = netdev_priv(netdev);
-  //struct can_frame *cf = (struct can_frame *)skb->data;
-  struct panda_usb_ctx *ctx = NULL;
-  //struct net_device_stats *stats = &priv->netdev->stats;
-  //u16 sid;
-  int err;
-  struct panda_usb_can_msg usb_msg = {};
-
-  //if (can_dropped_invalid_skb(netdev, skb))
-  //  return NETDEV_TX_OK;
-
-  //ctx = panda_usb_get_free_ctx(priv, cf);
-  //if (!ctx)
-  //  return NETDEV_TX_BUSY;
-
-  //can_put_echo_skb(skb, priv->netdev, ctx->ndx);
-
-  if(addr >= 0x800){
-    usb_msg.rir = cpu_to_le32((addr << 3) | PANDA_CAN_TRANSMIT | PANDA_CAN_EXTENDED);
-  }else{
-    usb_msg.rir = cpu_to_le32((addr << 21) | PANDA_CAN_TRANSMIT);
-  }
-  usb_msg.bus_dat_len = cpu_to_le32(len | (bus << 4));
-
-  //usb_msg.dlc = cf->can_dlc;
-
-  //memcpy(usb_msg.data, cf->data, usb_msg.dlc);
-  memcpy(usb_msg.data, dat, len);
-
-  //if (cf->can_id & CAN_RTR_FLAG)
-  //  usb_msg.dlc |= PANDA_DLC_RTR_MASK;
-
-  err = panda_usb_xmit(priv, (struct panda_usb_can_msg *)&usb_msg, ctx);
-  if (err)
-    goto xmit_failed;
-
-  return NETDEV_TX_OK;
-
- xmit_failed:
-  //can_free_echo_skb(priv->netdev, ctx->ndx);
-  //panda_usb_free_ctx(ctx);
-  //dev_kfree_skb(skb);
-  //stats->tx_dropped++;
-
-  return NETDEV_TX_OK;
 }
 
 static void panda_usb_process_can_rx(struct panda_priv *priv,
@@ -363,41 +307,6 @@ static int panda_usb_start(struct panda_priv *priv)
   return 0;
 }
 
-static u8 payload[] = {0xAA, 0xAA, 0xAA, 0xAA, 0x07, 0x00, 0x00, 0x00};
-int packet_len = 8;
-int dir = 0;
-
-void my_timer_callback( unsigned long data )
-{
-  int err;//, actual_size;
-  struct panda_priv *priv = (struct panda_priv *) data;
-
-  if(packet_len % 2)
-    err = panda_usb_start_xmit(priv, 0x8AA, 0, payload, packet_len);
-  else
-    err = panda_usb_start_xmit(priv, 0xAA, 0, payload, packet_len);
-  //err = panda_write_can(priv, outdat, sizeof(outdat), &actual_size);
-  if(err != NETDEV_TX_OK){
-    printk("PANDA TIMER failed to do usb thing. Err: %d\n", err);
-  }
-  //}else{
-  //  printk("Sent out %d bytes on timer\n", actual_size);
-  //}
-
-  mod_timer(&priv->timer, jiffies + msecs_to_jiffies(2000));
-
-  if(dir){
-    packet_len ++;
-    if(packet_len >= 8)
-      dir = 0;
-  }else{
-    packet_len --;
-    if(packet_len <= 0)
-      dir = 1;
-  }
-}
-
-
 /* Open USB device */
 static int panda_usb_open(struct net_device *netdev)
 {
@@ -437,17 +346,60 @@ static int panda_usb_close(struct net_device *netdev)
   return 0;
 }
 
-static netdev_tx_t panda_usb_start_xmit2(struct sk_buff *skb,
-				       struct net_device *netdev)
+static netdev_tx_t panda_usb_start_xmit(struct sk_buff *skb,
+					struct net_device *netdev)
 {
-  netdev_err(netdev, "Received data from socket\n");
+  struct panda_priv *priv = netdev_priv(netdev);
+  struct can_frame *cf = (struct can_frame *)skb->data;
+  struct net_device_stats *stats = &priv->netdev->stats;
+  int err;
+  struct panda_usb_can_msg usb_msg = {};
+  int bus = 0;
+
+  if (can_dropped_invalid_skb(netdev, skb)){
+    printk("Invalid CAN packet");
+    return NETDEV_TX_OK;
+  }
+
+  //Warning: cargo cult. Can't tell what this is for, but it is
+  //everywhere and encouraged in the documentation.
+  //can_put_echo_skb(skb, priv->netdev, ctx->ndx);
+
+  if(cf->can_id & CAN_EFF_FLAG){
+    usb_msg.rir = cpu_to_le32(((cf->can_id & 0x1FFFFFFF) << 3) |
+			      PANDA_CAN_TRANSMIT | PANDA_CAN_EXTENDED);
+  }else{
+    usb_msg.rir = cpu_to_le32(((cf->can_id & 0x7FF) << 21) | PANDA_CAN_TRANSMIT);
+  }
+  usb_msg.bus_dat_len = cpu_to_le32((cf->can_dlc & 0x0F) | (bus << 4));
+
+  memcpy(usb_msg.data, cf->data, cf->can_dlc);
+
+  //TODO Handle Remote Frames
+  //if (cf->can_id & CAN_RTR_FLAG)
+  //  usb_msg.dlc |= PANDA_DLC_RTR_MASK;
+
+  netdev_err(netdev, "Received data from socket. canid: %x; len: %d\n", cf->can_id, cf->can_dlc);
+
+  err = panda_usb_xmit(priv, &usb_msg, 0);//ctx);
+  if (err)
+    goto xmit_failed;
+
+  return NETDEV_TX_OK;
+
+ xmit_failed:
+  //can_free_echo_skb(priv->netdev, ctx->ndx);
+  //panda_usb_free_ctx(ctx);
+  dev_kfree_skb(skb);
+  stats->tx_dropped++;
+
   return NETDEV_TX_OK;
 }
 
 static const struct net_device_ops panda_netdev_ops = {
   .ndo_open = panda_usb_open,
   .ndo_stop = panda_usb_close,
-  .ndo_start_xmit = panda_usb_start_xmit2,
+  .ndo_start_xmit = panda_usb_start_xmit,
 };
 
 static int panda_usb_probe(struct usb_interface *intf,
@@ -510,9 +462,6 @@ static int panda_usb_probe(struct usb_interface *intf,
     goto cleanup_unregister_candev;
   }
 
-  setup_timer(&priv->timer, my_timer_callback, (unsigned long) priv);
-  mod_timer(&priv->timer, jiffies + msecs_to_jiffies(2000));
-
   dev_err(&intf->dev, "PANDA INIT SUCCESS\n");
 
   return 0;
@@ -534,8 +483,6 @@ static void panda_usb_disconnect(struct usb_interface *intf)
   usb_set_intfdata(intf, NULL);
 
   dev_info(&intf->dev, "Removed Comma.ai Panda CAN controller (ID: %u)\n", priv->id);
-
-  del_timer(&priv->timer);
 
   unregister_candev(priv->netdev);
   free_candev(priv->netdev);

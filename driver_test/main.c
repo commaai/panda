@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <pthread.h>
 
 #include <net/if.h>
 #include <sys/types.h>
@@ -11,10 +12,48 @@
 #include <linux/can.h>
 #include <linux/can/raw.h>
 
+static unsigned char payload[] = {0xAA, 0xAA, 0xAA, 0xAA, 0x07, 0x00, 0x00, 0x00};
+int packet_len = 8;
+int dir = 0;
+
+void *write_thread( void *dat ){
+  int nbytes;
+  struct can_frame frame;
+  int s = *((int*) dat);
+
+  while(1){
+    if(packet_len % 2){
+      frame.can_id  = 0x8AA | CAN_EFF_FLAG;
+    }else{
+      frame.can_id  = 0xAA;
+    }
+
+    frame.can_dlc = packet_len;
+    memcpy(frame.data, payload, frame.can_dlc);
+
+    nbytes = write(s, &frame, sizeof(struct can_frame));
+
+    printf("Wrote %d bytes; addr: %lx; datlen: %d\n", nbytes, frame.can_id, frame.can_dlc);
+
+    if(dir){
+      packet_len++;
+      if(packet_len >= 8)
+	dir = 0;
+    }else{
+      packet_len--;
+      if(packet_len <= 0)
+	dir = 1;
+    }
+
+    sleep(2);
+  }
+}
+
+
 int main(void)
 {
-  int s;
-  int nbytes;
+  pthread_t sndthread;
+  int err, s, nbytes;
   struct sockaddr_can addr;
   struct can_frame frame;
   struct ifreq ifr;
@@ -39,15 +78,15 @@ int main(void)
     return -2;
   }
 
-  frame.can_id  = 0x123;
-  frame.can_dlc = 2;
-  frame.data[0] = 0x11;
-  frame.data[1] = 0x22;
+  /////// Create Write Thread
 
-  nbytes = write(s, &frame, sizeof(struct can_frame));
+  err = pthread_create( &sndthread, NULL, write_thread, (void*) &s);
+  if(err){
+    fprintf(stderr,"Error - pthread_create() return code: %d\n", err);
+    exit(EXIT_FAILURE);
+  }
 
-  printf("Wrote %d bytes\n", nbytes);
-
+  /////// Listen to socket
   while (1) {
     struct can_frame framein;
 

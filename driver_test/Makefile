@@ -1,2 +1,2 @@
 all:
-	gcc main.c -o cantest
+	gcc main.c -o cantest -pthread -lpthread
