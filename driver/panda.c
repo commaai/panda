@@ -52,6 +52,7 @@ struct panda_inf_priv {
   struct usb_anchor tx_submitted;
   atomic_t free_ctx_cnt;
   u8 interface_num;
+  u8 mcu_can_ifnum;
   struct panda_dev_priv *priv_dev;
 };
 
@@ -432,24 +433,24 @@ static int panda_usb_close(struct net_device *netdev)
 static netdev_tx_t panda_usb_start_xmit(struct sk_buff *skb,
 					struct net_device *netdev)
 {
-  struct panda_inf_priv *priv = netdev_priv(netdev);
+  struct panda_inf_priv *priv_inf = netdev_priv(netdev);
   struct can_frame *cf = (struct can_frame *)skb->data;
   struct panda_usb_ctx *ctx = NULL;
-  struct net_device_stats *stats = &priv->netdev->stats;
+  struct net_device_stats *stats = &priv_inf->netdev->stats;
   int err;
   struct panda_usb_can_msg usb_msg = {};
-  int bus = 0;
+  int bus = priv_inf->mcu_can_ifnum;
 
   if (can_dropped_invalid_skb(netdev, skb)){
     printk("Invalid CAN packet");
     return NETDEV_TX_OK;
   }
 
-  ctx = panda_usb_get_free_ctx(priv, cf);
+  ctx = panda_usb_get_free_ctx(priv_inf, cf);
 
   //Warning: cargo cult. Can't tell what this is for, but it is
   //everywhere and encouraged in the documentation.
-  can_put_echo_skb(skb, priv->netdev, ctx->ndx);
+  can_put_echo_skb(skb, priv_inf->netdev, ctx->ndx);
 
   if(cf->can_id & CAN_EFF_FLAG){
     usb_msg.rir = cpu_to_le32(((cf->can_id & 0x1FFFFFFF) << 3) |
@@ -467,14 +468,14 @@ static netdev_tx_t panda_usb_start_xmit(struct sk_buff *skb,
 
   netdev_err(netdev, "Received data from socket. canid: %x; len: %d\n", cf->can_id, cf->can_dlc);
 
-  err = panda_usb_xmit(priv, &usb_msg, ctx);
+  err = panda_usb_xmit(priv_inf, &usb_msg, ctx);
   if (err)
     goto xmit_failed;
 
   return NETDEV_TX_OK;
 
  xmit_failed:
-  can_free_echo_skb(priv->netdev, ctx->ndx);
+  can_free_echo_skb(priv_inf->netdev, ctx->ndx);
   panda_usb_free_ctx(ctx);
   dev_kfree_skb(skb);
   stats->tx_dropped++;
@@ -521,6 +522,7 @@ static int panda_usb_probe(struct usb_interface *intf,
     priv_inf->netdev = netdev;
     priv_inf->priv_dev = priv_dev;
     priv_inf->interface_num = inf_num;
+    priv_inf->mcu_can_ifnum = can_numbering[inf_num];
 
     init_usb_anchor(&priv_dev->rx_submitted);
     init_usb_anchor(&priv_inf->tx_submitted);

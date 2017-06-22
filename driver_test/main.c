@@ -12,6 +12,8 @@
 #include <linux/can.h>
 #include <linux/can/raw.h>
 
+const char *ifname = "can0";
+
 static unsigned char payload[] = {0xAA, 0xAA, 0xAA, 0xAA, 0x07, 0x00, 0x00, 0x00};
 int packet_len = 8;
 int dir = 0;
@@ -22,6 +24,7 @@ void *write_thread( void *dat ){
   int s = *((int*) dat);
 
   while(1){
+    for(int i = 0; i < 1; i ++){
     if(packet_len % 2){
       frame.can_id  = 0x8AA | CAN_EFF_FLAG;
     }else{
@@ -44,7 +47,7 @@ void *write_thread( void *dat ){
       if(packet_len <= 0)
 	dir = 1;
     }
-
+    }
     sleep(2);
   }
 }
@@ -57,8 +60,6 @@ int main(void)
   struct sockaddr_can addr;
   struct can_frame frame;
   struct ifreq ifr;
-
-  const char *ifname = "can0";
 
   if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
     perror("Error while opening socket");
