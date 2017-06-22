@@ -45,8 +45,6 @@ struct panda_priv {
   struct net_device *netdev;
   struct usb_anchor tx_submitted;
   struct usb_anchor rx_submitted;
-
-  unsigned int id;
 };
 
 struct __packed panda_usb_can_msg {
@@ -58,8 +56,6 @@ struct __packed panda_usb_can_msg {
 struct panda_usb_ctx {
   struct panda_priv *priv;
 };
-
-unsigned int curr_id = 0;
 
 static void panda_urb_unlink(struct panda_priv *priv)
 {
@@ -104,9 +100,6 @@ static void panda_usb_write_bulk_callback(struct urb *urb)
 
   if (urb->status)
     netdev_info(netdev, "Tx URB aborted (%d)\n", urb->status);
-
-  printk("PANDA SENT OUT DATA\n");
-  //netdev_err(netdev, "PANDA SENT OUT DATA\n");
 
   /* Release the context */
   //mcba_usb_free_ctx(ctx);
@@ -199,7 +192,6 @@ static void panda_usb_process_can_rx(struct panda_priv *priv,
   netif_rx(skb);
 }
 
-
 static void panda_usb_read_int_callback(struct urb *urb)
 {
   struct panda_priv *priv = urb->context;
@@ -223,8 +215,6 @@ static void panda_usb_read_int_callback(struct urb *urb)
     netdev_info(netdev, "Rx URB aborted (%d)\n", urb->status);
     goto resubmit_urb;
   }
-
-  printk("PANDA RECEIVED CAN DATA\n");
 
   while (pos < urb->actual_length) {
     struct panda_usb_can_msg *msg;
@@ -323,8 +313,6 @@ static int panda_usb_open(struct net_device *netdev)
 
   netif_start_queue(netdev);
 
-  netdev_err(netdev, "Panda device %d opened\n", priv->id);
-
   return 0;
 }
 
@@ -341,7 +329,6 @@ static int panda_usb_close(struct net_device *netdev)
   panda_urb_unlink(priv);
 
   close_candev(netdev);
-  //can_led_event(netdev, CAN_LED_EVENT_STOP);
 
   return 0;
 }
@@ -420,7 +407,6 @@ static int panda_usb_probe(struct usb_interface *intf,
 
   priv->udev = usbdev;
   priv->netdev = netdev;
-  priv->id = curr_id++;
 
   init_usb_anchor(&priv->rx_submitted);
   init_usb_anchor(&priv->tx_submitted);
@@ -454,15 +440,13 @@ static int panda_usb_probe(struct usb_interface *intf,
     goto cleanup_unregister_candev;
   }
 
-  dev_info(&intf->dev, "Comma.ai Panda CAN controller connected (ID: %u)\n", priv->id);
-
   err = panda_set_output_enable(priv, true);
   if (err) {
     dev_info(&intf->dev, "Failed to initialize send enable message to Panda.\n");
     goto cleanup_unregister_candev;
   }
 
-  dev_err(&intf->dev, "PANDA INIT SUCCESS\n");
+  dev_info(&intf->dev, "Comma.ai Panda CAN controller connected\n");
 
   return 0;
 
@@ -482,7 +466,7 @@ static void panda_usb_disconnect(struct usb_interface *intf)
 
   usb_set_intfdata(intf, NULL);
 
-  dev_info(&intf->dev, "Removed Comma.ai Panda CAN controller (ID: %u)\n", priv->id);
+  netdev_info(priv->netdev, "device disconnected\n");
 
   unregister_candev(priv->netdev);
   free_candev(priv->netdev);
