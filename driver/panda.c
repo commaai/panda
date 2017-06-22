@@ -22,8 +22,9 @@
 #define PANDA_VENDOR_ID 0XBBAA
 #define PANDA_PRODUCT_ID 0XDDCC
 
-// I don't get this yet
 #define PANDA_MAX_TX_URBS 20
+#define PANDA_CTX_FREE PANDA_MAX_TX_URBS
+
 #define PANDA_USB_RX_BUFF_SIZE 0x40
 #define PANDA_USB_TX_BUFF_SIZE (sizeof(struct panda_usb_can_msg))
 
@@ -34,17 +35,20 @@
 
 #define PANDA_DLC_MASK  0x0F
 
-static const struct usb_device_id panda_usb_table[] = {
-  { USB_DEVICE(PANDA_VENDOR_ID, PANDA_PRODUCT_ID) },
-  {} /* Terminating entry */
+struct panda_usb_ctx {
+  struct panda_priv *priv;
+  u32 ndx;
+  u8 dlc;
 };
 
 struct panda_priv {
   struct can_priv can;
+  struct panda_usb_ctx tx_context[PANDA_MAX_TX_URBS];
   struct usb_device *udev;
   struct net_device *netdev;
   struct usb_anchor tx_submitted;
   struct usb_anchor rx_submitted;
+  atomic_t free_ctx_cnt;
 };
 
 struct __packed panda_usb_can_msg {
@@ -53,9 +57,68 @@ struct __packed panda_usb_can_msg {
   u8 data[8];
 };
 
-struct panda_usb_ctx {
-  struct panda_priv *priv;
+static const struct usb_device_id panda_usb_table[] = {
+  { USB_DEVICE(PANDA_VENDOR_ID, PANDA_PRODUCT_ID) },
+  {} /* Terminating entry */
 };
+
+MODULE_DEVICE_TABLE(usb, panda_usb_table);
+
+// CTX handling shamlessly ripped from mcba_usb.c linux driver
+static inline void panda_init_ctx(struct panda_priv *priv)
+{
+  int i = 0;
+
+  for (i = 0; i < PANDA_MAX_TX_URBS; i++) {
+    priv->tx_context[i].ndx = PANDA_CTX_FREE;
+    priv->tx_context[i].priv = priv;
+  }
+
+  atomic_set(&priv->free_ctx_cnt, ARRAY_SIZE(priv->tx_context));
+}
+
+static inline struct panda_usb_ctx *panda_usb_get_free_ctx(struct panda_priv *priv,
+							 struct can_frame *cf)
+{
+  int i = 0;
+  struct panda_usb_ctx *ctx = NULL;
+
+  for (i = 0; i < PANDA_MAX_TX_URBS; i++) {
+    if (priv->tx_context[i].ndx == PANDA_CTX_FREE) {
+      ctx = &priv->tx_context[i];
+      ctx->ndx = i;
+      ctx->dlc = cf->can_dlc;
+
+      atomic_dec(&priv->free_ctx_cnt);
+      break;
+    }
+  }
+
+  printk("CTX num %d\n", atomic_read(&priv->free_ctx_cnt));
+  if (!atomic_read(&priv->free_ctx_cnt)){
+    /* That was the last free ctx. Slow down tx path */
+    printk("SENDING TOO FAST\n");
+    netif_stop_queue(priv->netdev);
+  }
+
+  return ctx;
+}
+
+/* panda_usb_free_ctx and panda_usb_get_free_ctx are executed by different
+ * threads. The order of execution in below function is important.
+ */
+static inline void panda_usb_free_ctx(struct panda_usb_ctx *ctx)
+{
+  /* Increase number of free ctxs before freeing ctx */
+  atomic_inc(&ctx->priv->free_ctx_cnt);
+
+  ctx->ndx = PANDA_CTX_FREE;
+
+  /* Wake up the queue once ctx is marked free */
+  netif_wake_queue(ctx->priv->netdev);
+}
+
+
 
 static void panda_urb_unlink(struct panda_priv *priv)
 {
@@ -87,22 +150,19 @@ static void panda_usb_write_bulk_callback(struct urb *urb)
   usb_free_coherent(urb->dev, urb->transfer_buffer_length,
 		    urb->transfer_buffer, urb->transfer_dma);
 
-  //if (ctx->can) {
-  //  if (!netif_device_present(netdev))
-  //    return;
-  //
-  //  netdev->stats.tx_packets++;
-  //  netdev->stats.tx_bytes += ctx->dlc;
-  //
-  //  can_led_event(netdev, CAN_LED_EVENT_TX);
-  //  can_get_echo_skb(netdev, ctx->ndx);
-  //}
+  if (!netif_device_present(netdev))
+    return;
+
+  netdev->stats.tx_packets++;
+  netdev->stats.tx_bytes += ctx->dlc;
+
+  can_get_echo_skb(netdev, ctx->ndx);
 
   if (urb->status)
     netdev_info(netdev, "Tx URB aborted (%d)\n", urb->status);
 
   /* Release the context */
-  //mcba_usb_free_ctx(ctx);
+  panda_usb_free_ctx(ctx);
 }
 
 
@@ -131,7 +191,7 @@ static netdev_tx_t panda_usb_xmit(struct panda_priv *priv,
   usb_fill_bulk_urb(urb, priv->udev,
 		    usb_sndbulkpipe(priv->udev, 3), buf,
 		    PANDA_USB_TX_BUFF_SIZE, panda_usb_write_bulk_callback,
-		    priv);//ctx);
+		    ctx);
 
   urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
   usb_anchor_urb(urb, &priv->tx_submitted);
@@ -236,7 +296,7 @@ static void panda_usb_read_int_callback(struct urb *urb)
   usb_fill_int_urb(urb, priv->udev,
 		    usb_rcvintpipe(priv->udev, 1),
 		    urb->transfer_buffer, PANDA_USB_RX_BUFF_SIZE,
-		    panda_usb_read_int_callback, priv, 10);
+		    panda_usb_read_int_callback, priv, 5);
 
   retval = usb_submit_urb(urb, GFP_ATOMIC);
 
@@ -253,6 +313,8 @@ static int panda_usb_start(struct panda_priv *priv)
   int err;
   struct urb *urb = NULL;
   u8 *buf;
+
+  panda_init_ctx(priv);
 
   err = usb_set_interface(priv->udev, 0, 1);
   if (err) {
@@ -338,6 +400,7 @@ static netdev_tx_t panda_usb_start_xmit(struct sk_buff *skb,
 {
   struct panda_priv *priv = netdev_priv(netdev);
   struct can_frame *cf = (struct can_frame *)skb->data;
+  struct panda_usb_ctx *ctx = NULL;
   struct net_device_stats *stats = &priv->netdev->stats;
   int err;
   struct panda_usb_can_msg usb_msg = {};
@@ -348,9 +411,11 @@ static netdev_tx_t panda_usb_start_xmit(struct sk_buff *skb,
     return NETDEV_TX_OK;
   }
 
+  ctx = panda_usb_get_free_ctx(priv, cf);
+
   //Warning: cargo cult. Can't tell what this is for, but it is
   //everywhere and encouraged in the documentation.
-  //can_put_echo_skb(skb, priv->netdev, ctx->ndx);
+  can_put_echo_skb(skb, priv->netdev, ctx->ndx);
 
   if(cf->can_id & CAN_EFF_FLAG){
     usb_msg.rir = cpu_to_le32(((cf->can_id & 0x1FFFFFFF) << 3) |
@@ -368,15 +433,15 @@ static netdev_tx_t panda_usb_start_xmit(struct sk_buff *skb,
 
   netdev_err(netdev, "Received data from socket. canid: %x; len: %d\n", cf->can_id, cf->can_dlc);
 
-  err = panda_usb_xmit(priv, &usb_msg, 0);//ctx);
+  err = panda_usb_xmit(priv, &usb_msg, ctx);
   if (err)
     goto xmit_failed;
 
   return NETDEV_TX_OK;
 
  xmit_failed:
-  //can_free_echo_skb(priv->netdev, ctx->ndx);
-  //panda_usb_free_ctx(ctx);
+  can_free_echo_skb(priv->netdev, ctx->ndx);
+  panda_usb_free_ctx(ctx);
   dev_kfree_skb(skb);
   stats->tx_dropped++;
 
@@ -487,4 +552,3 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jessy Diamond Exum <jessy.diamondman@gmail.com>");
 MODULE_DESCRIPTION("SocketCAN driver for Comma.ai's Panda Adapter.");
 MODULE_VERSION("0.1");
-MODULE_DEVICE_TABLE(usb, panda_usb_table);
