@@ -36,19 +36,27 @@
 #define PANDA_DLC_MASK  0x0F
 
 struct panda_usb_ctx {
-  struct panda_priv *priv;
+  struct panda_inf_priv *priv;
   u32 ndx;
   u8 dlc;
 };
 
-struct panda_priv {
+struct panda_dev_priv;
+
+struct panda_inf_priv {
   struct can_priv can;
   struct panda_usb_ctx tx_context[PANDA_MAX_TX_URBS];
-  struct usb_device *udev;
   struct net_device *netdev;
   struct usb_anchor tx_submitted;
   struct usb_anchor rx_submitted;
   atomic_t free_ctx_cnt;
+  u8 interface_num;
+  struct panda_dev_priv *priv_dev;
+};
+
+struct panda_dev_priv {
+  struct usb_device *udev;
+  struct panda_inf_priv *interfaces[3];
 };
 
 struct __packed panda_usb_can_msg {
@@ -56,6 +64,9 @@ struct __packed panda_usb_can_msg {
   u32 bus_dat_len;
   u8 data[8];
 };
+
+// panda:       CAN1 = 0   CAN2 = 1   CAN3 = 4
+const int can_numbering[] = {0,1,4};
 
 static const struct usb_device_id panda_usb_table[] = {
   { USB_DEVICE(PANDA_VENDOR_ID, PANDA_PRODUCT_ID) },
@@ -65,7 +76,7 @@ static const struct usb_device_id panda_usb_table[] = {
 MODULE_DEVICE_TABLE(usb, panda_usb_table);
 
 // CTX handling shamlessly ripped from mcba_usb.c linux driver
-static inline void panda_init_ctx(struct panda_priv *priv)
+static inline void panda_init_ctx(struct panda_inf_priv *priv)
 {
   int i = 0;
 
@@ -77,7 +88,7 @@ static inline void panda_init_ctx(struct panda_priv *priv)
   atomic_set(&priv->free_ctx_cnt, ARRAY_SIZE(priv->tx_context));
 }
 
-static inline struct panda_usb_ctx *panda_usb_get_free_ctx(struct panda_priv *priv,
+static inline struct panda_usb_ctx *panda_usb_get_free_ctx(struct panda_inf_priv *priv,
 							 struct can_frame *cf)
 {
   int i = 0;
@@ -120,22 +131,18 @@ static inline void panda_usb_free_ctx(struct panda_usb_ctx *ctx)
 
 
 
-static void panda_urb_unlink(struct panda_priv *priv)
+static void panda_urb_unlink(struct panda_inf_priv *priv)
 {
   usb_kill_anchored_urbs(&priv->rx_submitted);
   usb_kill_anchored_urbs(&priv->tx_submitted);
 }
 
-static int panda_set_output_enable(struct panda_priv* priv, bool enable){
-  return usb_control_msg(priv->udev, usb_sndctrlpipe(priv->udev, 0),
+static int panda_set_output_enable(struct panda_inf_priv* priv, bool enable){
+  return usb_control_msg(priv->priv_dev->udev,
+			 usb_sndctrlpipe(priv->priv_dev->udev, 0),
 			 0xDC, USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			 enable ? 0x1337 : 0, 0, NULL, 0, USB_CTRL_SET_TIMEOUT);
 }
-
-//static int panda_write_can(struct panda_priv* priv, u8 *buf, unsigned int len, int *actual_len){
-//  return usb_bulk_msg(priv->udev, usb_sndbulkpipe(priv->udev, 3),
-//		      buf, len, actual_len, 5000);
-//}
 
 static void panda_usb_write_bulk_callback(struct urb *urb)
 {
@@ -166,7 +173,7 @@ static void panda_usb_write_bulk_callback(struct urb *urb)
 }
 
 
-static netdev_tx_t panda_usb_xmit(struct panda_priv *priv,
+static netdev_tx_t panda_usb_xmit(struct panda_inf_priv *priv,
 				  struct panda_usb_can_msg *usb_msg,
 				  struct panda_usb_ctx *ctx)
 {
@@ -179,7 +186,8 @@ static netdev_tx_t panda_usb_xmit(struct panda_priv *priv,
   if (!urb)
     return -ENOMEM;
 
-  buf = usb_alloc_coherent(priv->udev, PANDA_USB_TX_BUFF_SIZE, GFP_ATOMIC,
+  buf = usb_alloc_coherent(priv->priv_dev->udev,
+			   PANDA_USB_TX_BUFF_SIZE, GFP_ATOMIC,
 			   &urb->transfer_dma);
   if (!buf) {
     err = -ENOMEM;
@@ -188,8 +196,8 @@ static netdev_tx_t panda_usb_xmit(struct panda_priv *priv,
 
   memcpy(buf, usb_msg, PANDA_USB_TX_BUFF_SIZE);
 
-  usb_fill_bulk_urb(urb, priv->udev,
-		    usb_sndbulkpipe(priv->udev, 3), buf,
+  usb_fill_bulk_urb(urb, priv->priv_dev->udev,
+		    usb_sndbulkpipe(priv->priv_dev->udev, 3), buf,
 		    PANDA_USB_TX_BUFF_SIZE, panda_usb_write_bulk_callback,
 		    ctx);
 
@@ -207,7 +215,7 @@ static netdev_tx_t panda_usb_xmit(struct panda_priv *priv,
 
  failed:
   usb_unanchor_urb(urb);
-  usb_free_coherent(priv->udev, PANDA_USB_TX_BUFF_SIZE, buf, urb->transfer_dma);
+  usb_free_coherent(priv->priv_dev->udev, PANDA_USB_TX_BUFF_SIZE, buf, urb->transfer_dma);
 
   if (err == -ENODEV)
     netif_device_detach(priv->netdev);
@@ -220,7 +228,7 @@ static netdev_tx_t panda_usb_xmit(struct panda_priv *priv,
   return err;
 }
 
-static void panda_usb_process_can_rx(struct panda_priv *priv,
+static void panda_usb_process_can_rx(struct panda_inf_priv *priv,
 				     struct panda_usb_can_msg *msg)
 {
   struct can_frame *cf;
@@ -254,7 +262,7 @@ static void panda_usb_process_can_rx(struct panda_priv *priv,
 
 static void panda_usb_read_int_callback(struct urb *urb)
 {
-  struct panda_priv *priv = urb->context;
+  struct panda_inf_priv *priv = urb->context;
   struct net_device *netdev;
   int retval;
   int pos = 0;
@@ -293,8 +301,8 @@ static void panda_usb_read_int_callback(struct urb *urb)
   }
 
  resubmit_urb:
-  usb_fill_int_urb(urb, priv->udev,
-		    usb_rcvintpipe(priv->udev, 1),
+  usb_fill_int_urb(urb, priv->priv_dev->udev,
+		    usb_rcvintpipe(priv->priv_dev->udev, 1),
 		    urb->transfer_buffer, PANDA_USB_RX_BUFF_SIZE,
 		    panda_usb_read_int_callback, priv, 5);
 
@@ -307,16 +315,16 @@ static void panda_usb_read_int_callback(struct urb *urb)
 }
 
 
-static int panda_usb_start(struct panda_priv *priv)
+static int panda_usb_start(struct panda_inf_priv *priv_inf)
 {
-  struct net_device *netdev = priv->netdev;
+  struct net_device *netdev = priv_inf->netdev;
   int err;
   struct urb *urb = NULL;
   u8 *buf;
 
-  panda_init_ctx(priv);
+  panda_init_ctx(priv_inf);
 
-  err = usb_set_interface(priv->udev, 0, 1);
+  err = usb_set_interface(priv_inf->priv_dev->udev, 0, 1);
   if (err) {
     netdev_err(netdev, "Can not set alternate setting to 1, error: %i", err);
     return err;
@@ -328,7 +336,7 @@ static int panda_usb_start(struct panda_priv *priv)
     return -ENOMEM;
   }
 
-  buf = usb_alloc_coherent(priv->udev, PANDA_USB_RX_BUFF_SIZE,
+  buf = usb_alloc_coherent(priv_inf->priv_dev->udev, PANDA_USB_RX_BUFF_SIZE,
 			   GFP_KERNEL, &urb->transfer_dma);
   if (!buf) {
     netdev_err(netdev, "No memory left for USB buffer\n");
@@ -336,17 +344,18 @@ static int panda_usb_start(struct panda_priv *priv)
     return -ENOMEM;
   }
 
-  usb_fill_int_urb(urb, priv->udev,
-                   usb_rcvintpipe(priv->udev, 1),
+  usb_fill_int_urb(urb, priv_inf->priv_dev->udev,
+                   usb_rcvintpipe(priv_inf->priv_dev->udev, 1),
                    buf, PANDA_USB_RX_BUFF_SIZE,
-                   panda_usb_read_int_callback, priv, 10);
+                   panda_usb_read_int_callback, priv_inf, 5);
   urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
-  usb_anchor_urb(urb, &priv->rx_submitted);
+  usb_anchor_urb(urb, &priv_inf->rx_submitted);
 
   err = usb_submit_urb(urb, GFP_KERNEL);
   if (err) {
   usb_unanchor_urb(urb);
-    usb_free_coherent(priv->udev, PANDA_USB_RX_BUFF_SIZE, buf, urb->transfer_dma);
+    usb_free_coherent(priv_inf->priv_dev->udev, PANDA_USB_RX_BUFF_SIZE,
+		      buf, urb->transfer_dma);
     usb_free_urb(urb);
     netdev_err(netdev, "Failed in start, while submitting urb.\n");
     return err;
@@ -362,7 +371,7 @@ static int panda_usb_start(struct panda_priv *priv)
 /* Open USB device */
 static int panda_usb_open(struct net_device *netdev)
 {
-  struct panda_priv *priv = netdev_priv(netdev);
+  struct panda_inf_priv *priv = netdev_priv(netdev);
   int err;
 
   /* common open */
@@ -381,7 +390,7 @@ static int panda_usb_open(struct net_device *netdev)
 /* Close USB device */
 static int panda_usb_close(struct net_device *netdev)
 {
-  struct panda_priv *priv = netdev_priv(netdev);
+  struct panda_inf_priv *priv = netdev_priv(netdev);
 
   priv->can.state = CAN_STATE_STOPPED;
 
@@ -398,7 +407,7 @@ static int panda_usb_close(struct net_device *netdev)
 static netdev_tx_t panda_usb_start_xmit(struct sk_buff *skb,
 					struct net_device *netdev)
 {
-  struct panda_priv *priv = netdev_priv(netdev);
+  struct panda_inf_priv *priv = netdev_priv(netdev);
   struct can_frame *cf = (struct can_frame *)skb->data;
   struct panda_usb_ctx *ctx = NULL;
   struct net_device_stats *stats = &priv->netdev->stats;
@@ -458,34 +467,46 @@ static int panda_usb_probe(struct usb_interface *intf,
 			  const struct usb_device_id *id)
 {
   struct net_device *netdev;
-  struct panda_priv *priv;
+  struct panda_inf_priv *priv_inf;
   int err = -ENOMEM;
+  struct panda_dev_priv *priv_dev;
   struct usb_device *usbdev = interface_to_usbdev(intf);
 
-  netdev = alloc_candev(sizeof(struct panda_priv), PANDA_MAX_TX_URBS);
-  if (!netdev) {
-    dev_err(&intf->dev, "Couldn't alloc candev\n");
+  priv_dev = kmalloc(sizeof(struct panda_dev_priv), GFP_KERNEL);
+  if (!priv_dev) {
+    dev_err(&intf->dev, "Couldn't alloc priv_dev\n");
     return -ENOMEM;
   }
+  priv_dev->udev = usbdev;
+  usb_set_intfdata(intf, priv_dev);
 
-  priv = netdev_priv(netdev);
+  ////// Interface privs
+  netdev = alloc_candev(sizeof(struct panda_inf_priv), PANDA_MAX_TX_URBS);
+  if (!netdev) {
+    dev_err(&intf->dev, "Couldn't alloc candev\n");
+    goto cleanup_free_priv_dev;
+  }
 
-  priv->udev = usbdev;
-  priv->netdev = netdev;
+  priv_inf = netdev_priv(netdev);
 
-  init_usb_anchor(&priv->rx_submitted);
-  init_usb_anchor(&priv->tx_submitted);
+  priv_dev->interfaces[0] = priv_inf;
+  priv_inf->interface_num = 0;
 
-  usb_set_intfdata(intf, priv);
+  priv_inf->priv_dev = priv_dev;
+  priv_inf->netdev = netdev;
+
+  init_usb_anchor(&priv_inf->rx_submitted);
+  init_usb_anchor(&priv_inf->tx_submitted);
+
 
   /* Init CAN device */
-  priv->can.state = CAN_STATE_STOPPED;
-  //priv->can.do_set_termination = panda_set_termination;
-  //priv->can.do_set_mode = panda_net_set_mode;
-  //priv->can.do_get_berr_counter = panda_net_get_berr_counter;
-  //priv->can.do_set_bittiming = panda_net_set_bittiming;
+  priv_inf->can.state = CAN_STATE_STOPPED;
+  //priv_inf->can.do_set_termination = panda_set_termination;
+  //priv_inf->can.do_set_mode = panda_net_set_mode;
+  //priv_inf->can.do_get_berr_counter = panda_net_get_berr_counter;
+  //priv_inf->can.do_set_bittiming = panda_net_set_bittiming;
 
-  priv->can.bittiming.bitrate = PANDA_BITRATE;
+  priv_inf->can.bittiming.bitrate = PANDA_BITRATE;
 
   netdev->netdev_ops = &panda_netdev_ops;
 
@@ -499,13 +520,13 @@ static int panda_usb_probe(struct usb_interface *intf,
     goto cleanup_free_candev;
   }
 
-  err = panda_usb_start(priv);
+  err = panda_usb_start(priv_inf);
   if (err) {
     dev_err(&intf->dev, "Failed to initialize Comma.ai Panda CAN controller\n");
     goto cleanup_unregister_candev;
   }
 
-  err = panda_set_output_enable(priv, true);
+  err = panda_set_output_enable(priv_inf, true);
   if (err) {
     dev_info(&intf->dev, "Failed to initialize send enable message to Panda.\n");
     goto cleanup_unregister_candev;
@@ -516,10 +537,13 @@ static int panda_usb_probe(struct usb_interface *intf,
   return 0;
 
  cleanup_unregister_candev:
-  unregister_candev(priv->netdev);
+  unregister_candev(priv_inf->netdev);
 
  cleanup_free_candev:
-  free_candev(priv->netdev);
+  free_candev(priv_inf->netdev);
+
+ cleanup_free_priv_dev:
+  kfree(priv_dev);
 
   return err;
 }
@@ -527,16 +551,18 @@ static int panda_usb_probe(struct usb_interface *intf,
 /* Called by the usb core when driver is unloaded or device is removed */
 static void panda_usb_disconnect(struct usb_interface *intf)
 {
-  struct panda_priv *priv = usb_get_intfdata(intf);
+  struct panda_dev_priv *priv_dev = usb_get_intfdata(intf);
+  struct panda_inf_priv *priv_inf = priv_dev->interfaces[0];
 
   usb_set_intfdata(intf, NULL);
 
-  netdev_info(priv->netdev, "device disconnected\n");
+  netdev_info(priv_inf->netdev, "device disconnected\n");
 
-  unregister_candev(priv->netdev);
-  free_candev(priv->netdev);
+  unregister_candev(priv_inf->netdev);
+  free_candev(priv_inf->netdev);
 
-  panda_urb_unlink(priv);
+  panda_urb_unlink(priv_inf);
+  kfree(priv_dev);
 }
 
 static struct usb_driver panda_usb_driver = {
