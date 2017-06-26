@@ -1,6 +1,6 @@
 /**
  * @file    panda.c
- * @author  Jeddy Diamond Exum
+ * @author  Jessy Diamond Exum
  * @date    16 June 2017
  * @version 0.1
  * @brief   Driver for the Comma.ai Panda CAN adapter to allow it to be controlled via
