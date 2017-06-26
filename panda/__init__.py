@@ -170,6 +170,7 @@ class Panda(object):
     transmit = 1
     extended = 4
     for addr, _, dat, bus in arr:
+      assert len(dat) <= 8
       if addr >= 0x800:
         rir = (addr << 3) | transmit | extended
       else:
