@@ -242,7 +242,7 @@ class Panda(object):
       x += get_checksum(x)
     for i in range(0, len(x), 0xf):
       ts = x[i:i+0xf]
-      self._handle.bulkWrite(2, chr(bus)+ts)
+      self._handle.bulkWrite(2, chr(bus).encode()+ts)
       echo = self.kline_ll_recv(len(ts), bus=bus)
       if echo != ts:
         print("**** ECHO ERROR %d ****" % i)
