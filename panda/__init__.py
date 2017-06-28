@@ -95,7 +95,7 @@ class Panda(object):
             self._handle = device.open()
             if claim:
               self._handle.claimInterface(0)
-              self._handle.setInterfaceAltSetting(0, 0)
+              #self._handle.setInterfaceAltSetting(0, 0)
             break
 
     assert self._handle != None
