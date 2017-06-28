@@ -99,4 +99,3 @@ int can_cksum(uint8_t *dat, int len, int addr, int idx) {
   s = 8-s;
   return s&0xF;
 }
-

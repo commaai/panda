@@ -1,14 +1,10 @@
-#ifdef STM32F4
-  #define PANDA
-  #include "stm32f4xx.h"
-#else
-  #include "stm32f2xx.h"
-#endif
-
+#include "config.h"
 #include "early.h"
+#include "llgpio.h"
 
 int has_external_debug_serial = 0;
 int is_giant_panda = 0;
+int revision = PANDA_REV_AB;
 void *g_pfnVectors;
 
 // must call again from main because BSS is zeroed
@@ -19,12 +15,28 @@ void detect() {
   for (i=0;i<PULL_EFFECTIVE_DELAY;i++);
   has_external_debug_serial = (GPIOA->IDR & (1 << 3)) == (1 << 3);
 
-  // detect is_giant_panda
-  is_giant_panda = 0;
 #ifdef PANDA
-  GPIOB->PUPDR |= GPIO_PUPDR_PUPDR1_1;
+  // detect is_giant_panda
+  set_gpio_pullup(GPIOB, 1, PULL_DOWN);
   for (i=0;i<PULL_EFFECTIVE_DELAY;i++);
-  is_giant_panda = (GPIOB->IDR & (1 << 1)) == (1 << 1);
+  is_giant_panda = get_gpio_input(GPIOB, 1);
+
+  // detect panda REV C.
+  // A13 floats in REV AB. In REV C, A13 is pulled up to 5V with a 10K
+  // resistor and attached to the USB power control chip CTRL
+  // line. Pulling A13 down with an internal 50k resistor in REV C
+  // will produce a voltage divider that results in a high logic
+  // level. Checking if this pin reads high with a pull down should
+  // differentiate REV AB from C.
+  set_gpio_mode(GPIOA, 13, MODE_INPUT);
+  set_gpio_pullup(GPIOA, 13, PULL_DOWN);
+  for (i=0;i<PULL_EFFECTIVE_DELAY;i++);
+  if(get_gpio_input(GPIOA, 13))
+    revision = PANDA_REV_C;
+
+  // RESET pull up/down
+  set_gpio_pullup(GPIOA, 13, PULL_NONE);
+
 #endif
 }
 
