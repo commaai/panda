@@ -95,8 +95,7 @@ class Panda(object):
             self._handle = device.open()
             if claim:
               self._handle.claimInterface(0)
-              # TODO: Do we need to cupport claim=False?
-              self._handle.setInterfaceAltSetting(0,0)
+              self._handle.setInterfaceAltSetting(0, 0)
             break
 
     assert self._handle != None
@@ -222,7 +221,7 @@ class Panda(object):
       if len(ret) == 0:
         break
       bret += ret
-    return bret
+    return bytes(bret)
 
   def kline_ll_recv(self, cnt, bus=2):
     echo = bytearray()

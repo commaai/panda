@@ -54,8 +54,10 @@ def run_test_w_pandas(pandas):
       # check for receive
       ret = h[ho[1]].kline_drain(bus=bus)
 
-      print("ST Data: ", st)
-      print("RET Data:", bytes(ret))
+      print("ST Data:")
+      hexdump(st)
+      print("RET Data:")
+      hexdump(ret)
       assert st == ret
       print("K/L pass", bus, ho, "\n")
 

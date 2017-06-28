@@ -18,7 +18,7 @@ if __name__ == "__main__":
   if os.getenv("SERIAL"):
     serials = filter(lambda x: x==os.getenv("SERIAL"), serials)
 
-  pandas = map(lambda x: Panda(x, False), serials)
+  pandas = list(map(lambda x: Panda(x, False), serials))
   while True:
     for i, panda in enumerate(pandas):
       while True:
@@ -28,7 +28,7 @@ if __name__ == "__main__":
           sys.stdout.flush()
         else:
           break
-      if select.select([sys.stdin], [], [], 0)[0][0] == sys.stdin:
+      if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
         ln = sys.stdin.readline()
         panda.serial_write(port_number, ln)
       time.sleep(0.01)
