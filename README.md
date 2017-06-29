@@ -1,7 +1,7 @@
 Welcome to panda
 ======
 
-[panda](http://github.com/commaai/panda) is the nicest universal car interface you've ever seen.
+[panda](http://github.com/commaai/panda) is the nicest universal car interface ever.
 
 <img src="https://github.com/commaai/panda/blob/master/panda.png">
 
