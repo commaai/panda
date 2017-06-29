@@ -1,8 +1,6 @@
 Welcome to panda
 ======
 
-**This repo is a work in progress and will be for the next month while we ship our first pandas to [chffr](http://getchffr.com) users. This is not production code, and shouldn't be used as such. We are open sourcing it early for developers to start building panda support. If you want a panda, download our dashcam app [chffr](http://getchffr.com) and earn comma points!**
-
 [panda](http://github.com/commaai/panda) is the nicest universal car interface you've ever seen.
 
 <img src="https://github.com/commaai/panda/blob/master/panda.png">
