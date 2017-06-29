@@ -6,6 +6,7 @@
  * @brief   Driver for the Comma.ai Panda CAN adapter to allow it to be controlled via
  * the Linux SocketCAN interface.
  * @see https://github.com/commaai/panda for the full project.
+ * @see Inspired by net/can/usb/mcba_usb.c from Linux Kernel 4.12-rc4.
  */
 
 #include <linux/can.h>

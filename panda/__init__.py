@@ -95,8 +95,7 @@ class Panda(object):
             self._handle = device.open()
             if claim:
               self._handle.claimInterface(0)
-              # TODO: Do we need to cupport claim=False?
-              self._handle.setInterfaceAltSetting(0,0)
+              self._handle.setInterfaceAltSetting(0, 0)
             break
 
     assert self._handle != None
@@ -222,7 +221,7 @@ class Panda(object):
       if len(ret) == 0:
         break
       bret += ret
-    return bret
+    return bytes(bret)
 
   def kline_ll_recv(self, cnt, bus=2):
     echo = bytearray()
@@ -242,7 +241,7 @@ class Panda(object):
       x += get_checksum(x)
     for i in range(0, len(x), 0xf):
       ts = x[i:i+0xf]
-      self._handle.bulkWrite(2, chr(bus)+ts)
+      self._handle.bulkWrite(2, chr(bus).encode()+ts)
       echo = self.kline_ll_recv(len(ts), bus=bus)
       if echo != ts:
         print("**** ECHO ERROR %d ****" % i)

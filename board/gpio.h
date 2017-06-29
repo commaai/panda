@@ -54,7 +54,7 @@ void set_led(int led_num, int on) {
 
 
 // TODO: does this belong here?
-void periph_init() { 
+void periph_init() {
   // enable GPIOB, UART2, CAN, USB clock
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
@@ -118,8 +118,7 @@ void set_can_mode(int can, int use_gmlan) {
       1        1        33kbit (normal)
       */
 
-#ifdef REVC
-    } else if (can == 3) {
+    } else if (revision == PANDA_REV_C && can == 3) {
       // A8,A15: disable normal mode
       set_gpio_mode(GPIOA, 8, MODE_INPUT);
       set_gpio_mode(GPIOA, 15, MODE_INPUT);
@@ -127,7 +126,6 @@ void set_can_mode(int can, int use_gmlan) {
       // B3,B4: enable gmlan mode
       set_gpio_alternate(GPIOB, 3, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOB, 4, GPIO_AF11_CAN3);
-#endif
     }
 
     // put gmlan transceiver in normal mode
@@ -149,11 +147,11 @@ void set_can_mode(int can, int use_gmlan) {
       set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
       set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
     } else if (can == 3) {
-      #ifdef REVC
+      if(revision == PANDA_REV_C){
         // B3,B4: disable gmlan mode
         set_gpio_mode(GPIOB, 3, MODE_INPUT);
         set_gpio_mode(GPIOB, 4, MODE_INPUT);
-      #endif
+      }
 
       // A8,A15: normal mode
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
@@ -250,11 +248,10 @@ void gpio_init() {
 
   #ifdef PANDA
     // K-line enable moved from B4->B7 to make room for GMLAN on CAN3
-    #ifdef REVC
-      set_gpio_output(GPIOB, 7, 1);
-    #else
-      set_gpio_output(GPIOB, 4, 1);
-    #endif
+    if(revision == PANDA_REV_C)
+      set_gpio_output(GPIOB, 7, 1); // REV C
+    else
+      set_gpio_output(GPIOB, 4, 1); // REV AB
 
     // C12,D2: K-Line setup on UART 5
     set_gpio_alternate(GPIOC, 12, GPIO_AF8_UART5);
@@ -270,10 +267,12 @@ void gpio_init() {
     set_gpio_pullup(GPIOC, 11, PULL_UP);
   #endif
 
-  #ifdef REVC
+  if(revision == PANDA_REV_C) {
     // B2,A13: set DCP mode on the charger (breaks USB!)
-    /*set_gpio_output(GPIOB, 2, 0);
-    set_gpio_output(GPIOA, 13, 0);*/
-  #endif
-}
+    //set_gpio_output(GPIOB, 2, 0);
+    //set_gpio_output(GPIOA, 13, 0);
 
+    //set_gpio_output(GPIOA, 13, 1); //CTRL 1
+    //set_gpio_output(GPIOB, 2, 0);  //CTRL 2
+  }
+}

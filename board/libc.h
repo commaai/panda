@@ -12,29 +12,18 @@
 // **** shitty libc ****
 
 void clock_init() {
-  #ifdef USE_INTERNAL_OSC
-    // enable internal oscillator
-    RCC->CR |= RCC_CR_HSION;
-    while ((RCC->CR & RCC_CR_HSIRDY) == 0);
-  #else
-    // enable external oscillator
-    RCC->CR |= RCC_CR_HSEON;
-    while ((RCC->CR & RCC_CR_HSERDY) == 0);
-  #endif
+  // enable external oscillator
+  RCC->CR |= RCC_CR_HSEON;
+  while ((RCC->CR & RCC_CR_HSERDY) == 0);
 
   // divide shit
   RCC->CFGR = RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_PPRE1_DIV4;
-  #ifdef USE_INTERNAL_OSC
+  #ifdef PANDA
     RCC->PLLCFGR = RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLM_3 |
-                   RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLN_5 | RCC_PLLCFGR_PLLSRC_HSI;
+                   RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLN_5 | RCC_PLLCFGR_PLLSRC_HSE;
   #else
-    #ifdef PANDA
-      RCC->PLLCFGR = RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLM_3 |
-                     RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLN_5 | RCC_PLLCFGR_PLLSRC_HSE;
-    #else
-      RCC->PLLCFGR = RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLM_3 |
-                     RCC_PLLCFGR_PLLN_7 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLSRC_HSE;
-    #endif
+    RCC->PLLCFGR = RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLM_3 |
+                   RCC_PLLCFGR_PLLN_7 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLSRC_HSE;
   #endif
 
   // start PLL
@@ -84,4 +73,3 @@ int memcmp(const void * ptr1, const void * ptr2, unsigned int num) {
   }
   return 0;
 }
-

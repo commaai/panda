@@ -12,7 +12,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda
 
 def get_test_string():
-  return "test"+os.urandom(10)
+  return b"test"+os.urandom(10)
 
 def run_test():
   pandas = Panda.list()
@@ -28,8 +28,8 @@ def run_test():
   run_test_w_pandas(pandas)
 
 def run_test_w_pandas(pandas):
-  h = map(lambda x: Panda(x), pandas)
-  print(h)
+  h = list(map(lambda x: Panda(x), pandas))
+  print("H", h)
 
   for hh in h:
     hh.set_controls_allowed(True)
@@ -48,50 +48,54 @@ def run_test_w_pandas(pandas):
 
       # send the characters
       st = get_test_string()
-      st = "\xaa"+chr(len(st)+3)+st
+      st = b"\xaa"+chr(len(st)+3).encode()+st
       h[ho[0]].kline_send(st, bus=bus, checksum=False)
 
       # check for receive
       ret = h[ho[1]].kline_drain(bus=bus)
 
+      print("ST Data:")
       hexdump(st)
+      print("RET Data:")
       hexdump(ret)
       assert st == ret
-      print("K/L pass", bus, ho)
+      print("K/L pass", bus, ho, "\n")
 
     # **** test can line loopback ****
     for bus in [0,1,4,5,6]:
-      print("test can", bus)
+      panda0 = h[ho[0]]
+      panda1 = h[ho[1]]
+      print("\ntest can", bus)
       # flush
-      cans_echo = h[ho[0]].can_recv()
-      cans_loop = h[ho[1]].can_recv()
+      cans_echo = panda0.can_recv()
+      cans_loop = panda1.can_recv()
 
       # set GMLAN mode
       if bus == 5:
-        h[ho[0]].set_gmlan(True,2)
-        h[ho[1]].set_gmlan(True,2)
+        panda0.set_gmlan(True,2)
+        panda1.set_gmlan(True,2)
         bus = 1    # GMLAN is multiplexed with CAN2
       elif bus == 6:
         # on REV B panda, this just retests CAN2 GMLAN
-        h[ho[0]].set_gmlan(True,3)
-        h[ho[1]].set_gmlan(True,3)
+        panda0.set_gmlan(True,3)
+        panda1.set_gmlan(True,3)
         bus = 4    # GMLAN is also multiplexed with CAN3
       else:
-        h[ho[0]].set_gmlan(False)
-        h[ho[1]].set_gmlan(False)
+        panda0.set_gmlan(False)
+        panda1.set_gmlan(False)
 
       # send the characters
       # pick addresses high enough to not conflict with honda code
       at = random.randint(1024, 2000)
       st = get_test_string()[0:8]
-      h[ho[0]].can_send(at, st, bus)
+      panda0.can_send(at, st, bus)
       time.sleep(0.1)
 
       # check for receive
-      cans_echo = h[ho[0]].can_recv()
-      cans_loop = h[ho[1]].can_recv()
+      cans_echo = panda0.can_recv()
+      cans_loop = panda1.can_recv()
 
-      print(bus, cans_echo, cans_loop)
+      print("Bus", bus, "echo", cans_echo, "loop", cans_loop)
 
       assert len(cans_echo) == 1
       assert len(cans_loop) == 1
@@ -118,4 +122,4 @@ if __name__ == "__main__":
     while True:
       print("************* testing %d" % i)
       run_test()
-    i += 1
+      i += 1
