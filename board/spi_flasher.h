@@ -1,3 +1,5 @@
+#include "libc.h"
+
 /*void lock_bootloader() {
   if (FLASH->OPTCR & FLASH_OPTCR_nWRP_0) {
     FLASH->OPTKEYR = 0x08192A3B;
