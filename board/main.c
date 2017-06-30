@@ -1,28 +1,8 @@
 #include "config.h"
 #include "early.h"
-
-#define NULL ((void*)0)
-
-
-// assign CAN numbering
-// old:         CAN1 = 1   CAN2 = 0
-// panda:       CAN1 = 0   CAN2 = 1   CAN3 = 4
-#ifdef PANDA
-  int can_numbering[] = {0,1,4};
-#else
-  int can_numbering[] = {1,0,-1};
-#endif
-
-// can forwards FROM -> TO
-#define CAN_MAX 3
-int can_forwarding[] = {-1,-1,-1};
-
-// *** end config ***
-
 #include "obj/gitversion.h"
 
 // debug safety check: is controls allowed?
-int controls_allowed = 0;
 int started = 0;
 int can_live = 0, pending_can_live = 0;
 
@@ -34,69 +14,18 @@ int started_signal_detected = 0;
 // TODO: check for UART high
 int did_usb_enumerate = 0;
 
-// Declare puts to supress warning
-int puts ( const char * str );
 
-// ********************* instantiate queues *********************
+#include "uart.h"
+#include "can.h"
 
-typedef struct {
-  uint32_t w_ptr;
-  uint32_t r_ptr;
-  uint32_t fifo_size;
-  CAN_FIFOMailBox_TypeDef *elems;
-} can_ring;
-
-#define can_buffer(x, size) \
-  CAN_FIFOMailBox_TypeDef elems_##x[size]; \
-  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = size, .elems = (CAN_FIFOMailBox_TypeDef *)&elems_##x };
+// ********************* instantiate can queues *********************
 
 can_buffer(rx_q, 0x1000)
 can_buffer(tx1_q, 0x100)
 can_buffer(tx2_q, 0x100)
 can_buffer(tx3_q, 0x100)
 
-// ********************* interrupt safe queue *********************
-
-int pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
-  if (q->w_ptr != q->r_ptr) {
-    *elem = q->elems[q->r_ptr];
-    if ((q->r_ptr + 1) == q->fifo_size) q->r_ptr = 0;
-    else q->r_ptr += 1;
-    return 1;
-  }
-  return 0;
-}
-
-int push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
-  uint32_t next_w_ptr;
-  if ((q->w_ptr + 1) == q->fifo_size) next_w_ptr = 0;
-  else next_w_ptr = q->w_ptr + 1;
-  if (next_w_ptr != q->r_ptr) {
-    q->elems[q->w_ptr] = *elem;
-    q->w_ptr = next_w_ptr;
-    return 1;
-  }
-  puts("push failed!\n");
-  return 0;
-}
-
 // ***************************** serial port queues *****************************
-
-#define FIFO_SIZE 0x100
-
-typedef struct uart_ring {
-  uint8_t w_ptr_tx;
-  uint8_t r_ptr_tx;
-  uint8_t elems_tx[FIFO_SIZE];
-  uint8_t w_ptr_rx;
-  uint8_t r_ptr_rx;
-  uint8_t elems_rx[FIFO_SIZE];
-  USART_TypeDef *uart;
-  void (*callback)(struct uart_ring*);
-} uart_ring;
-
-int getc(uart_ring *q, char *elem);
-int putc(uart_ring *q, char elem);
 
 // esp = USART1
 uart_ring esp_ring = { .w_ptr_tx = 0, .r_ptr_tx = 0,
@@ -113,12 +42,6 @@ uart_ring lin2_ring = { .w_ptr_tx = 0, .r_ptr_tx = 0,
                         .uart = USART3 };
 
 // debug = USART2
-void debug_ring_callback(uart_ring *ring);
-uart_ring debug_ring = { .w_ptr_tx = 0, .r_ptr_tx = 0,
-                         .w_ptr_rx = 0, .r_ptr_rx = 0,
-                         .uart = USART2,
-                         .callback = debug_ring_callback};
-
 
 uart_ring *get_ring_by_number(int a) {
   switch(a) {
@@ -213,36 +136,6 @@ void debug_ring_callback(uart_ring *ring) {
   }
 }
 
-// ***************************** serial port *****************************
-
-void uart_ring_process(uart_ring *q) {
-  // TODO: check if external serial is connected
-  int sr = q->uart->SR;
-
-  if (q->w_ptr_tx != q->r_ptr_tx) {
-    if (sr & USART_SR_TXE) {
-      q->uart->DR = q->elems_tx[q->r_ptr_tx];
-      q->r_ptr_tx += 1;
-    } else {
-      // push on interrupt later
-      q->uart->CR1 |= USART_CR1_TXEIE;
-    }
-  } else {
-    // nothing to send
-    q->uart->CR1 &= ~USART_CR1_TXEIE;
-  }
-
-  if (sr & USART_SR_RXNE) {
-    uint8_t c = q->uart->DR;  // TODO: can drop packets
-    uint8_t next_w_ptr = q->w_ptr_rx + 1;
-    if (next_w_ptr != q->r_ptr_rx) {
-      q->elems_rx[q->w_ptr_rx] = c;
-      q->w_ptr_rx = next_w_ptr;
-      if (q->callback) q->callback(q);
-    }
-  }
-}
-
 // interrupt boilerplate
 
 void USART1_IRQHandler(void) {
@@ -269,47 +162,12 @@ void UART5_IRQHandler(void) {
   NVIC_EnableIRQ(UART5_IRQn);
 }
 
-int getc(uart_ring *q, char *elem) {
-  if (q->w_ptr_rx != q->r_ptr_rx) {
-    *elem = q->elems_rx[q->r_ptr_rx];
-    q->r_ptr_rx += 1;
-    return 1;
-  }
-  return 0;
-}
-
-int injectc(uart_ring *q, char elem) {
-  uint8_t next_w_ptr = q->w_ptr_rx + 1;
-  int ret = 0;
-  if (next_w_ptr != q->r_ptr_rx) {
-    q->elems_rx[q->w_ptr_rx] = elem;
-    q->w_ptr_rx = next_w_ptr;
-    ret = 1;
-  }
-  return ret;
-}
-
-int putc(uart_ring *q, char elem) {
-  uint8_t next_w_ptr = q->w_ptr_tx + 1;
-  int ret = 0;
-  if (next_w_ptr != q->r_ptr_tx) {
-    q->elems_tx[q->w_ptr_tx] = elem;
-    q->w_ptr_tx = next_w_ptr;
-    ret = 1;
-  }
-  uart_ring_process(q);
-  return ret;
-}
-
 // ********************* includes *********************
-
 #include "libc.h"
 #include "gpio.h"
-#include "uart.h"
 #include "adc.h"
 #include "timer.h"
 #include "usb.h"
-#include "can.h"
 #include "spi.h"
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
@@ -322,6 +180,8 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired);
 #include "honda_safety.h"
 #endif
 
+#define PANDA_CANB_RETURN_FLAG 0x80
+
 // ***************************** CAN *****************************
 
 void process_can(CAN_TypeDef *CAN, can_ring *can_q, int can_number) {
@@ -333,7 +193,11 @@ void process_can(CAN_TypeDef *CAN, can_ring *can_q, int can_number) {
   if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
     CAN_FIFOMailBox_TypeDef to_push;
     to_push.RIR = CAN->sTxMailBox[0].TIR;
-    to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000F) | ((can_number+2) << 4);
+    to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000F) |
+      ((PANDA_CANB_RETURN_FLAG | (can_number & 0x7F)) << 4);
+    puts("RDTR: ");
+    puth(to_push.RDTR);
+    puts("\n");
     to_push.RDLR = CAN->sTxMailBox[0].TDLR;
     to_push.RDHR = CAN->sTxMailBox[0].TDHR;
     push(&can_rx_q, &to_push);
@@ -359,16 +223,16 @@ void process_can(CAN_TypeDef *CAN, can_ring *can_q, int can_number) {
 
 
 void CAN1_TX_IRQHandler() {
-  process_can(CAN1, &can_tx1_q, can_numbering[0]);
+  process_can(can_numbering[0], &can_tx1_q, 0);
 }
 
 void CAN2_TX_IRQHandler() {
-  process_can(CAN2, &can_tx2_q, can_numbering[1]);
+  process_can(can_numbering[1], &can_tx2_q, 1);
 }
 
-#ifdef CAN3
+#ifdef PANDA
 void CAN3_TX_IRQHandler() {
-  process_can(CAN3, &can_tx3_q, can_numbering[2]);
+  process_can(can_numbering[2], &can_tx3_q, 2);
 }
 #endif
 
@@ -377,7 +241,7 @@ void send_can(CAN_FIFOMailBox_TypeDef *to_push, int flags);
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
 void can_rx(CAN_TypeDef *CAN, int can_index) {
-  int can_number = can_numbering[can_index];
+  //int can_number = can_numbering[can_index];
   while (CAN->RF0R & CAN_RF0R_FMP0) {
     // can is live
     pending_can_live = 1;
@@ -391,18 +255,18 @@ void can_rx(CAN_TypeDef *CAN, int can_index) {
 
     // forwarding (panda only)
     #ifdef PANDA
-      if (can_forwarding[can_index] != -1 && can_numbering[can_forwarding[can_index]] != -1) {
+      if (can_forwarding[can_index] != -1 && can_forwarding[can_index] != -1) {
         CAN_FIFOMailBox_TypeDef to_send;
         to_send.RIR = to_push.RIR | 1; // TXRQ
         to_send.RDTR = to_push.RDTR;
         to_send.RDLR = to_push.RDLR;
         to_send.RDHR = to_push.RDHR;
-        send_can(&to_send, can_numbering[can_forwarding[can_index]]);
+        send_can(&to_send, can_forwarding[can_index]);
       }
     #endif
 
     // modify RDTR for our API
-    to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (can_number << 4);
+    to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (can_index << 4);
 
     safety_rx_hook(&to_push);
 
@@ -491,6 +355,17 @@ void set_fan_speed(int fan_speed) {
   TIM3->CCR3 = fan_speed;
 }
 
+void usb_cb_ep0_out(uint8_t *usbdata, int len, int hardwired) {
+  if(setup.b.bRequest == 0xde){
+    puts("Setting baud rate from usb\n");
+    uint32_t bitrate = *(int*)usbdata;
+    uint16_t canb_id = setup.b.wValue.w;
+
+    can_bitrate[canb_id] = bitrate;
+    can_init(canb_id);
+  }
+}
+
 int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) {
   CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;;
 
@@ -513,27 +388,30 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
 
 void send_can(CAN_FIFOMailBox_TypeDef *to_push, int flags) {
   int i;
-  CAN_TypeDef *CAN;
   can_ring *can_q;
-  if (flags == can_numbering[0])  {
-    CAN = CAN1;
+  uart_ring *lin_ring;
+  CAN_TypeDef *CAN = can_numbering[flags];
+  switch(flags){
+  case 0:
     can_q = &can_tx1_q;
-  } else if (flags == can_numbering[1]) {
-    CAN = CAN2;
+    break;
+  case 1:
     can_q = &can_tx2_q;
+    break;
   #ifdef CAN3
-  } else if (flags == can_numbering[2]) {
-    CAN = CAN3;
+  case 2:
     can_q = &can_tx3_q;
+    break;
   #endif
-  } else if (flags == 8 || flags == 9) {
+  case 8:
+  case 9:
     // fake LIN as CAN
-    uart_ring *lin_ring = (flags == 8) ? &lin1_ring : &lin2_ring;
+    lin_ring = (flags == 8) ? &lin1_ring : &lin2_ring;
     for (i = 0; i < min(8, to_push->RDTR & 0xF); i++) {
       putc(lin_ring, ((uint8_t*)&to_push->RDLR)[i]);
     }
     return;
-  } else {
+  default:
     // no crash
     return;
   }
@@ -549,6 +427,7 @@ void send_can(CAN_FIFOMailBox_TypeDef *to_push, int flags) {
 
 // send on CAN
 void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
+  puts("usb_cb_ep3_out called\n");
   int dpkt = 0;
   for (dpkt = 0; dpkt < len; dpkt += 0x10) {
     uint32_t *tf = (uint32_t*)(&usbdata[dpkt]);
@@ -652,10 +531,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xdc: // set controls allowed
       controls_allowed = setup->b.wValue.w == 0x1337;
       // take CAN out of SILM, careful with speed!
-      can_init(CAN1, 0);
-      can_init(CAN2, 0);
+      can_init(0);
+      can_init(1);
       #ifdef CAN3
-        can_init(CAN3, 0);
+      can_init(2);
       #endif
       break;
     case 0xdd: // enable can forwarding
@@ -664,6 +543,27 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         if (setup->b.wIndex.w <= CAN_MAX) {
           can_forwarding[setup->b.wValue.w-1] = setup->b.wIndex.w-1;
         }
+      }
+      break;
+    case 0xde: // Set Can bitrate
+      puts("Set can bitrate\n");
+      if (!(setup->b.wValue.w < CAN_MAX && setup->b.wLength.w == 4)) {
+	return -1;
+      }
+      break;
+    case 0xdf: // Set Can bitrate
+      puts("Get can bitrate\n");
+      if (setup->b.wValue.w < CAN_MAX) {
+	//TODO: Make fail if asking for can3 and no can3
+	puts("Canid: ");
+	puth(setup->b.wValue.w);
+	puts(" bitrate: ");
+	puth(can_bitrate[setup->b.wValue.w]);
+	puts("\n");
+	memcpy(resp, (void *)&can_bitrate[setup->b.wValue.w], 4);
+	resp_len = 4;
+      }else{
+	return -1;
       }
       break;
     case 0xe0: // uart read
@@ -751,7 +651,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       puts("NO HANDLER ");
       puth(setup->b.bRequest);
       puts("\n");
-      break;
+      return -1;
   }
   return resp_len;
 }
@@ -867,27 +767,24 @@ int main() {
   uart_init(USART3, 10400);
   USART3->CR2 |= USART_CR2_LINEN;
 
-  /*puts("EXTERNAL");
-  puth(has_external_debug_serial);
-  puts("\n");*/
-
   // enable USB
   usb_init();
 
   // default to silent mode to prevent issues with Ford
 #ifdef PANDA_SAFETY
-  can_init(CAN1, 1);
-  can_init(CAN2, 1);
-  #ifdef CAN3
-    can_init(CAN3, 1);
-  #endif
+  controls_allowed = 0;
 #else
-  can_init(CAN1, 0);
-  can_init(CAN2, 0);
-  #ifdef CAN3
-    can_init(CAN3, 0);
-  #endif
+  controls_allowed = 1;
 #endif
+  puts("Can0 default bitrate ");
+  puth(can_bitrate[0]);
+  puts("\n");
+
+  can_init(0);
+  can_init(1);
+  #ifdef CAN3
+    can_init(2);
+  #endif
 
   adc_init();
 

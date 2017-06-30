@@ -1,6 +1,7 @@
 #include "config.h"
 #include "early.h"
 #include "llgpio.h"
+#include "uart.h"
 
 int has_external_debug_serial = 0;
 int is_giant_panda = 0;
