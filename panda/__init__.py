@@ -24,7 +24,7 @@ def parse_can_buffer(dat):
       address = f1 >> 3
     else:
       address = f1 >> 21
-    ret.append((address, f2>>16, ddat[8:8+(f2&0xF)], (f2>>4)&0xf))
+    ret.append((address, f2>>16, ddat[8:8+(f2&0xF)], (f2>>4)&0xFFF))
   return ret
 
 class PandaWifiStreaming(object):
@@ -81,6 +81,7 @@ class Panda(object):
   REQUEST_TYPE = usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
 
   def __init__(self, serial=None, claim=True):
+    self._serial = serial
     if serial == "WIFI":
       self._handle = WifiHandle()
       print("opening WIFI device")
@@ -95,7 +96,7 @@ class Panda(object):
             self._handle = device.open()
             if claim:
               self._handle.claimInterface(0)
-              self._handle.setInterfaceAltSetting(0, 0)
+              #self._handle.setInterfaceAltSetting(0, 0)
             break
 
     assert self._handle != None
@@ -147,7 +148,14 @@ class Panda(object):
   # ******************* configuration *******************
 
   def set_controls_allowed(self, on):
-      self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdc, (0x1337 if on else 0), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdc, (0x1337 if on else 0), 0, b'')
+
+  def set_can_baud(self, bus, baud):
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xde, bus, 0, struct.pack('I', baud))
+    return self.get_can_baud(bus)
+
+  def get_can_baud(self, bus):
+    return struct.unpack("I", self._handle.controlRead(Panda.REQUEST_TYPE, 0xdf, bus, 0, 4))[0]
 
   def set_gmlan(self, on, bus=2):
     self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdb, 1, bus, b'')

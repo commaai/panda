@@ -62,7 +62,7 @@ def run_test_w_pandas(pandas):
       print("K/L pass", bus, ho, "\n")
 
     # **** test can line loopback ****
-    for bus in [0,1,4,5,6]:
+    for bus, gmlan in [(0, False), (1, False), (2, False), (1, True), (2, True)]:
       panda0 = h[ho[0]]
       panda1 = h[ho[1]]
       print("\ntest can", bus)
@@ -71,18 +71,8 @@ def run_test_w_pandas(pandas):
       cans_loop = panda1.can_recv()
 
       # set GMLAN mode
-      if bus == 5:
-        panda0.set_gmlan(True,2)
-        panda1.set_gmlan(True,2)
-        bus = 1    # GMLAN is multiplexed with CAN2
-      elif bus == 6:
-        # on REV B panda, this just retests CAN2 GMLAN
-        panda0.set_gmlan(True,3)
-        panda1.set_gmlan(True,3)
-        bus = 4    # GMLAN is also multiplexed with CAN3
-      else:
-        panda0.set_gmlan(False)
-        panda1.set_gmlan(False)
+      panda0.set_gmlan(gmlan, bus)
+      panda1.set_gmlan(gmlan, bus)
 
       # send the characters
       # pick addresses high enough to not conflict with honda code
@@ -106,7 +96,7 @@ def run_test_w_pandas(pandas):
       assert cans_echo[0][2] == st
       assert cans_loop[0][2] == st
 
-      assert cans_echo[0][3] == bus+2
+      assert cans_echo[0][3] == 0x80 | bus
       if cans_loop[0][3] != bus:
         print("EXPECTED %d GOT %d" % (bus, cans_loop[0][3]))
       assert cans_loop[0][3] == bus

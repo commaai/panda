@@ -10,30 +10,15 @@
 #include "early.h"
 #include "can.h"
 
-void set_can_enable(CAN_TypeDef *CAN, int enabled) {
+void set_can_enable(uint8_t canid, int enabled) {
   // enable CAN busses
-  if (CAN == CAN1) {
-    #ifdef PANDA
-      // CAN1_EN
-      set_gpio_output(GPIOC, 1, !enabled);
-    #else
-      // CAN1_EN
-      set_gpio_output(GPIOB, 3, enabled);
-    #endif
-  } else if (CAN == CAN2) {
-    #ifdef PANDA
-      // CAN2_EN
-      set_gpio_output(GPIOC, 13, !enabled);
-    #else
-      // CAN2_EN
-      set_gpio_output(GPIOB, 4, enabled);
-    #endif
-  #ifdef CAN3
-  } else if (CAN == CAN3) {
-    // CAN3_EN
-    set_gpio_output(GPIOA, 0, !enabled);
-  #endif
-  }
+  gpio_pin *pin = &can_ports[canid].pin;
+
+  //enable,   high_val = 1;  1 xnor 1 = 1
+  //enable,  ~high_val = 0;  1 xnor 0 = 0
+  //~enable,  high_val = 0;  0 xnor 1 = 0
+  //~enable, ~high_val = 1;  0 xnor 0 = 1
+  set_gpio_output(pin->port, pin->num, !(enabled ^ pin->high_val));
 }
 
 void set_led(int led_num, int on) {
@@ -88,7 +73,7 @@ void set_can_mode(int can, int use_gmlan) {
   CAN_TypeDef *CAN;
 
   if(can >= CAN_MAX) return;
-  CAN = can_numbering[can];
+  CAN = can_ports[can].CAN;
 
   // connects to CAN2 xcvr or GMLAN xcvr
   if (use_gmlan) {
@@ -219,7 +204,7 @@ void gpio_init() {
 #endif
 
   // B8,B9: CAN 1
-  set_can_enable(CAN1, 0);
+  set_can_enable(0, 0);
 #ifdef STM32F4
   set_gpio_alternate(GPIOB, 8, GPIO_AF8_CAN1);
   set_gpio_alternate(GPIOB, 9, GPIO_AF8_CAN1);
@@ -229,13 +214,13 @@ void gpio_init() {
 #endif
 
   // B5,B6: CAN 2
-  set_can_enable(CAN2, 0);
-  set_can_mode(2, 0);
+  set_can_enable(1, 0);
+  set_can_mode(1, 0);
 
   // A8,A15: CAN3
   #ifdef CAN3
-    set_can_enable(CAN3, 0);
-    set_can_mode(3, 0);
+    set_can_enable(2, 0);
+    set_can_mode(2, 0);
   #endif
 
   #ifdef PANDA

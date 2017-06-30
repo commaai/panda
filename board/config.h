@@ -42,4 +42,6 @@
 #define PANDA_REV_AB 0
 #define PANDA_REV_C 1
 
+#define PANDA_SAFETY
+
 #endif

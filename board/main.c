@@ -223,16 +223,16 @@ void process_can(CAN_TypeDef *CAN, can_ring *can_q, int can_number) {
 
 
 void CAN1_TX_IRQHandler() {
-  process_can(can_numbering[0], &can_tx1_q, 0);
+  process_can(can_ports[0].CAN, &can_tx1_q, 0);
 }
 
 void CAN2_TX_IRQHandler() {
-  process_can(can_numbering[1], &can_tx2_q, 1);
+  process_can(can_ports[1].CAN, &can_tx2_q, 1);
 }
 
 #ifdef PANDA
 void CAN3_TX_IRQHandler() {
-  process_can(can_numbering[2], &can_tx3_q, 2);
+  process_can(can_ports[2].CAN, &can_tx3_q, 2);
 }
 #endif
 
@@ -241,7 +241,7 @@ void send_can(CAN_FIFOMailBox_TypeDef *to_push, int flags);
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
 void can_rx(CAN_TypeDef *CAN, int can_index) {
-  //int can_number = can_numbering[can_index];
+  //int can_number = can_ports[can_index].CAN;
   while (CAN->RF0R & CAN_RF0R_FMP0) {
     // can is live
     pending_can_live = 1;
@@ -255,13 +255,13 @@ void can_rx(CAN_TypeDef *CAN, int can_index) {
 
     // forwarding (panda only)
     #ifdef PANDA
-      if (can_forwarding[can_index] != -1 && can_forwarding[can_index] != -1) {
+      if (can_ports[can_index].forwarding != -1) {
         CAN_FIFOMailBox_TypeDef to_send;
         to_send.RIR = to_push.RIR | 1; // TXRQ
         to_send.RDTR = to_push.RDTR;
         to_send.RDLR = to_push.RDLR;
         to_send.RDHR = to_push.RDHR;
-        send_can(&to_send, can_forwarding[can_index]);
+        send_can(&to_send, can_ports[can_index].forwarding);
       }
     #endif
 
@@ -361,7 +361,7 @@ void usb_cb_ep0_out(uint8_t *usbdata, int len, int hardwired) {
     uint32_t bitrate = *(int*)usbdata;
     uint16_t canb_id = setup.b.wValue.w;
 
-    can_bitrate[canb_id] = bitrate;
+    can_ports[canb_id].bitrate = bitrate;
     can_init(canb_id);
   }
 }
@@ -390,7 +390,7 @@ void send_can(CAN_FIFOMailBox_TypeDef *to_push, int flags) {
   int i;
   can_ring *can_q;
   uart_ring *lin_ring;
-  CAN_TypeDef *CAN = can_numbering[flags];
+  CAN_TypeDef *CAN = can_ports[flags].CAN;
   switch(flags){
   case 0:
     can_q = &can_tx1_q;
@@ -538,10 +538,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       #endif
       break;
     case 0xdd: // enable can forwarding
+      //TODO: standardize canid
       if (setup->b.wValue.w != 0 && setup->b.wValue.w <= CAN_MAX) {
         // 0 sets it to -1
         if (setup->b.wIndex.w <= CAN_MAX) {
-          can_forwarding[setup->b.wValue.w-1] = setup->b.wIndex.w-1;
+          can_ports[setup->b.wValue.w-1].forwarding = setup->b.wIndex.w-1;
         }
       }
       break;
@@ -558,9 +559,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
 	puts("Canid: ");
 	puth(setup->b.wValue.w);
 	puts(" bitrate: ");
-	puth(can_bitrate[setup->b.wValue.w]);
+	puth(can_ports[setup->b.wValue.w].bitrate);
 	puts("\n");
-	memcpy(resp, (void *)&can_bitrate[setup->b.wValue.w], 4);
+	memcpy(resp, (void *)&can_ports[setup->b.wValue.w].bitrate, 4);
 	resp_len = 4;
       }else{
 	return -1;
@@ -776,9 +777,6 @@ int main() {
 #else
   controls_allowed = 1;
 #endif
-  puts("Can0 default bitrate ");
-  puth(can_bitrate[0]);
-  puts("\n");
 
   can_init(0);
   can_init(1);

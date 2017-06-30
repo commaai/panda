@@ -1,11 +1,26 @@
 #ifndef PANDA_CAN_H
 #define PANDA_CAN_H
 
+#include <stdbool.h>
 #define CAN_TIMEOUT 1000000
 
-extern CAN_TypeDef *can_numbering[];
-extern int8_t can_forwarding[];
-extern uint32_t can_bitrate[];
+typedef struct {
+  GPIO_TypeDef* port;
+  uint8_t num;
+  bool high_val;
+} gpio_pin;
+
+typedef struct {
+  CAN_TypeDef *CAN;
+  int8_t forwarding;
+  uint32_t bitrate;
+  bool gmlan;
+  bool gmlan_support;
+  uint8_t safety_mode;
+  gpio_pin pin;
+} can_port_desc;
+
+extern can_port_desc can_ports[];
 
 #ifdef PANDA
   #define CAN_MAX 3

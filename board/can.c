@@ -6,19 +6,50 @@
 #include "libc.h"
 
 // assign CAN numbering
-// old:         CAN1 = 1   CAN2 = 0
-// panda:       CAN1 = 0   CAN2 = 1   CAN3 = 2
 #ifdef PANDA
-  CAN_TypeDef *can_numbering[] = {CAN1, CAN2, CAN3};
-  int8_t can_forwarding[] = {-1, -1, -1};
-  uint32_t can_bitrate[] = {CAN_DEFAULT_BITRATE,
-			  CAN_DEFAULT_BITRATE,
-			  CAN_DEFAULT_BITRATE};
+// panda:       CAN1 = 0   CAN2 = 1   CAN3 = 2
+  can_port_desc can_ports[] = {
+    {.CAN=CAN1,
+     .forwarding=-1,
+     .bitrate=CAN_DEFAULT_BITRATE,
+     .gmlan_support=false,
+     .gmlan=false,
+     .safety_mode=0,
+     .pin={GPIOC, 1, 0}},
+    {.CAN=CAN2,
+     .forwarding=-1,
+     .bitrate=CAN_DEFAULT_BITRATE,
+     .gmlan_support=true,
+     .gmlan=false,
+     .safety_mode=0,
+     .pin={GPIOC, 13, 0}},
+    //TODO Make gmlan support correct for REV B
+    {.CAN=CAN3,
+     .forwarding=-1,
+     .bitrate=CAN_DEFAULT_BITRATE,
+     .gmlan_support=true,
+     .gmlan=false,
+     .safety_mode=0,
+     .pin={GPIOA, 0, 0}},
+  };
 #else
-  CAN_TypeDef *can_numbering[] = {CAN2, CAN1};
-  int8_t can_forwarding[] = {-1,-1};
-  uint32_t can_bitrate[] = {CAN_DEFAULT_BITRATE,
-			    CAN_DEFAULT_BITRATE};
+// old:         CAN1 = 1   CAN2 = 0
+  can_port_desc can_ports[] = {
+    {.CAN=CAN2,
+     .forwarding=-1,
+     .bitrate=CAN_DEFAULT_BITRATE,
+     .gmlan_support=false,
+     .gmlan=false,
+     .safety_mode=0,
+     .pin={GPIOB, 3, 1}},
+    {.CAN=CAN1,
+     .forwarding=-1,
+     .bitrate=CAN_DEFAULT_BITRATE,
+     .gmlan_support=false,
+     .gmlan=false,
+     .safety_mode=0,
+     .pin={GPIOB, 4, 1}},
+  };
 #endif
 
 int controls_allowed = 0;
@@ -49,13 +80,13 @@ int push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
 // ********************* CAN Functions *********************
 
 void can_init(uint8_t canid) {
-  uint32_t bitrate = can_bitrate[canid];
-  CAN_TypeDef *CAN = can_numbering[canid];
+  uint32_t bitrate = can_ports[canid].bitrate;
+  CAN_TypeDef *CAN = can_ports[canid].CAN;
   uint8_t quanta;
   uint16_t prescaler;
   uint8_t seq1, seq2;
 
-  puts("Configuring Can Interface index ");
+  puts("Can init: ");
   puth(canid);
   puts("\n");
 
@@ -63,9 +94,9 @@ void can_init(uint8_t canid) {
   if(bitrate > 1000000)
     bitrate = 1000000;
 
-  puts("Can Speed request to ");
-  puth(bitrate);
-  puts("\n");
+  //puts("  Speed req: ");
+  //puth(bitrate);
+  //puts("\n");
 
   //TODO: Try doing both and find the more accurate values.
   if(min((FREQ / 2) / bitrate, 16) == 16){
@@ -85,13 +116,17 @@ void can_init(uint8_t canid) {
   if(prescaler > 0x3FF)
     prescaler = 0x3FF;
 
-  can_bitrate[canid] = FREQ/quanta/prescaler;
+  can_ports[canid].bitrate = FREQ/quanta/prescaler;
 
-  puts("Can Speed set to ");
-  puth(can_bitrate[canid]);
+  puts("  Speed: ");
+  puth(can_ports[canid].bitrate);
   puts("\n");
+  if (controls_allowed)
+    puts("  Output Enabled\n");
+  else
+    puts("  Output Disabled\n");
 
-  set_can_enable(CAN, 1);
+  set_can_enable(canid, 1);
 
   // Move CAN to initialization mode and sync.
   CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
@@ -119,9 +154,9 @@ void can_init(uint8_t canid) {
 
   if (tmp == CAN_TIMEOUT) {
     set_led(LED_BLUE, 1);
-    puts("CAN init FAILED!!!!!\n");
+    puts("  init FAILED!!!!!\n");
   } else {
-    puts("CAN init done\n");
+    puts("  init SUCCESS\n");
   }
 
   // accept all filter

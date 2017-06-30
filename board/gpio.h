@@ -1,4 +1,4 @@
-void set_can_enable(CAN_TypeDef *CAN, int enabled);
+void set_can_enable(uint8_t canid, int enabled);
 
 void set_led(int led_num, int on);
 
