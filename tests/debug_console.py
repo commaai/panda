@@ -19,6 +19,10 @@ if __name__ == "__main__":
     serials = filter(lambda x: x==os.getenv("SERIAL"), serials)
 
   pandas = list(map(lambda x: Panda(x, False), serials))
+
+  for i, p in enumerate(pandas):
+    print("%s Panda %s%s" % (setcolor[i], p._serial, unsetcolor))
+
   while True:
     for i, panda in enumerate(pandas):
       while True:

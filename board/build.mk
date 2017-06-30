@@ -7,7 +7,6 @@ OBJDUMP = arm-none-eabi-objdump
 
 ifeq ($(RELEASE),1)
   CERT = ../../pandaextra/certs/release
-  CFLAGS += "-DPANDA_SAFETY"
 else
   CERT = ../certs/debug
   CFLAGS += "-DALLOW_DEBUG"
