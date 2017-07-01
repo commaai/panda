@@ -1,6 +1,8 @@
 #include "config.h"
 #include "early.h"
 #include "obj/gitversion.h"
+#include "uart.h"
+#include "can.h"
 
 // debug safety check: is controls allowed?
 int started = 0;
@@ -13,10 +15,6 @@ int started_signal_detected = 0;
 // detect high on UART
 // TODO: check for UART high
 int did_usb_enumerate = 0;
-
-
-#include "uart.h"
-#include "can.h"
 
 // ********************* instantiate can queues *********************
 
@@ -184,17 +182,19 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired);
 
 // ***************************** CAN *****************************
 
-void process_can(CAN_TypeDef *CAN, can_ring *can_q, int can_number) {
+void process_can(uint8_t canid, can_ring *can_q) {
   #ifdef DEBUG
     puts("process CAN TX\n");
   #endif
+
+  CAN_TypeDef *CAN = can_ports[canid].CAN;
 
   // add successfully transmitted message to my fifo
   if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
     CAN_FIFOMailBox_TypeDef to_push;
     to_push.RIR = CAN->sTxMailBox[0].TIR;
     to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000F) |
-      ((PANDA_CANB_RETURN_FLAG | (can_number & 0x7F)) << 4);
+      ((PANDA_CANB_RETURN_FLAG | (canid & 0x7F)) << 4);
     puts("RDTR: ");
     puth(to_push.RDTR);
     puts("\n");
@@ -223,16 +223,16 @@ void process_can(CAN_TypeDef *CAN, can_ring *can_q, int can_number) {
 
 
 void CAN1_TX_IRQHandler() {
-  process_can(can_ports[0].CAN, &can_tx1_q, 0);
+  process_can(0, &can_tx1_q);
 }
 
 void CAN2_TX_IRQHandler() {
-  process_can(can_ports[1].CAN, &can_tx2_q, 1);
+  process_can(1, &can_tx2_q);
 }
 
 #ifdef PANDA
 void CAN3_TX_IRQHandler() {
-  process_can(can_ports[2].CAN, &can_tx3_q, 2);
+  process_can(2, &can_tx3_q);
 }
 #endif
 
@@ -386,12 +386,12 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
   }
 }
 
-void send_can(CAN_FIFOMailBox_TypeDef *to_push, int flags) {
-  int i;
+void send_can(CAN_FIFOMailBox_TypeDef *to_push, int canid) {
   can_ring *can_q;
-  uart_ring *lin_ring;
-  CAN_TypeDef *CAN = can_ports[flags].CAN;
-  switch(flags){
+
+  if(canid >= CAN_MAX) return;
+
+  switch(canid){
   case 0:
     can_q = &can_tx1_q;
     break;
@@ -403,14 +403,6 @@ void send_can(CAN_FIFOMailBox_TypeDef *to_push, int flags) {
     can_q = &can_tx3_q;
     break;
   #endif
-  case 8:
-  case 9:
-    // fake LIN as CAN
-    lin_ring = (flags == 8) ? &lin1_ring : &lin2_ring;
-    for (i = 0; i < min(8, to_push->RDTR & 0xF); i++) {
-      putc(lin_ring, ((uint8_t*)&to_push->RDLR)[i]);
-    }
-    return;
   default:
     // no crash
     return;
@@ -421,8 +413,8 @@ void send_can(CAN_FIFOMailBox_TypeDef *to_push, int flags) {
   to_push->RDTR &= 0xF;
   push(can_q, to_push);
 
-  // flags = can_number
-  process_can(CAN, can_q, flags);
+  // canid = can_number
+  process_can(canid, can_q);
 }
 
 // send on CAN
@@ -538,35 +530,25 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       #endif
       break;
     case 0xdd: // enable can forwarding
-      //TODO: standardize canid
-      if (setup->b.wValue.w != 0 && setup->b.wValue.w <= CAN_MAX) {
-        // 0 sets it to -1
-        if (setup->b.wIndex.w <= CAN_MAX) {
-          can_ports[setup->b.wValue.w-1].forwarding = setup->b.wIndex.w-1;
-        }
-      }
+      if (setup->b.wValue.w < CAN_MAX) { //Set forwarding
+	can_ports[setup->b.wValue.w].forwarding = setup->b.wIndex.w;
+      }else if(setup->b.wValue.w == 0xFF){ //Clear Forwarding
+	can_ports[setup->b.wValue.w].forwarding = -1;
+      }else
+	return -1;
       break;
     case 0xde: // Set Can bitrate
-      puts("Set can bitrate\n");
-      if (!(setup->b.wValue.w < CAN_MAX && setup->b.wLength.w == 4)) {
+      if (!(setup->b.wValue.w < CAN_MAX && setup->b.wLength.w == 4))
 	return -1;
-      }
       break;
-    case 0xdf: // Set Can bitrate
-      puts("Get can bitrate\n");
+    case 0xdf: // Get Can bitrate
       if (setup->b.wValue.w < CAN_MAX) {
-	//TODO: Make fail if asking for can3 and no can3
-	puts("Canid: ");
-	puth(setup->b.wValue.w);
-	puts(" bitrate: ");
-	puth(can_ports[setup->b.wValue.w].bitrate);
-	puts("\n");
 	memcpy(resp, (void *)&can_ports[setup->b.wValue.w].bitrate, 4);
 	resp_len = 4;
-      }else{
-	return -1;
+	break;
       }
-      break;
+      puts("Invalid num\n");
+      return -1;
     case 0xe0: // uart read
       ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) break;

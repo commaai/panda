@@ -64,20 +64,24 @@ void periph_init() {
   RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 }
 
-void set_can_mode(int can, int use_gmlan) {
-  // http://www.bittiming.can-wiki.info/#bxCAN
-  // 24 MHz, sample point at 87.5%
-  uint32_t pclk = 24000;
-  uint32_t num_time_quanta = 16;
-  uint32_t prescaler;
-  CAN_TypeDef *CAN;
+void set_can_mode(int canid, int use_gmlan) {
+  if(canid >= CAN_MAX) return;
 
-  if(can >= CAN_MAX) return;
-  CAN = can_ports[can].CAN;
+  if(!can_ports[canid].gmlan_support) return;
+  can_ports[canid].gmlan = use_gmlan;
+
+  /* GMLAN mode pins:
+     M0(B15)  M1(B14)  mode
+     =======================
+     0        0        sleep
+     1        0        100kbit
+     0        1        high voltage wakeup
+     1        1        33kbit (normal)
+  */
 
   // connects to CAN2 xcvr or GMLAN xcvr
   if (use_gmlan) {
-    if (can == 1) {
+    if (canid == 1) {
       // B5,B6: disable normal mode
       set_gpio_mode(GPIOB, 5, MODE_INPUT);
       set_gpio_mode(GPIOB, 6, MODE_INPUT);
@@ -86,16 +90,7 @@ void set_can_mode(int can, int use_gmlan) {
       set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
       set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
 
-      /* GMLAN mode pins:
-      M0(B15)  M1(B14)  mode
-      =======================
-      0        0        sleep
-      1        0        100kbit
-      0        1        high voltage wakeup
-      1        1        33kbit (normal)
-      */
-
-    } else if (revision == PANDA_REV_C && can == 2) {
+    } else if (revision == PANDA_REV_C && canid == 2) {
       // A8,A15: disable normal mode
       set_gpio_mode(GPIOA, 8, MODE_INPUT);
       set_gpio_mode(GPIOA, 15, MODE_INPUT);
@@ -105,17 +100,9 @@ void set_can_mode(int can, int use_gmlan) {
       set_gpio_alternate(GPIOB, 4, GPIO_AF11_CAN3);
     }
 
-    // put gmlan transceiver in normal mode
-    set_gpio_output(GPIOB, 14, 1);
-    set_gpio_output(GPIOB, 15, 1);
-
-    // 83.3 kbps
-    // prescaler = pclk / num_time_quanta * 10 / 833;
-
-    // 33.3 kbps
-    prescaler = pclk / num_time_quanta * 10 / 333;
+    can_ports[canid].bitrate = GMLAN_DEFAULT_BITRATE;
   } else {
-    if (can == 1) {
+    if (canid == 1) {
       // B12,B13: disable gmlan mode
       set_gpio_mode(GPIOB, 12, MODE_INPUT);
       set_gpio_mode(GPIOB, 13, MODE_INPUT);
@@ -123,7 +110,7 @@ void set_can_mode(int can, int use_gmlan) {
       // B5,B6: normal mode
       set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
       set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
-    } else if (can == 2) {
+    } else if (canid == 2) {
       if(revision == PANDA_REV_C){
         // B3,B4: disable gmlan mode
         set_gpio_mode(GPIOB, 3, MODE_INPUT);
@@ -135,22 +122,13 @@ void set_can_mode(int can, int use_gmlan) {
       set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
     }
 
-    // 500 kbps
-    prescaler = pclk / num_time_quanta / 500;
+    can_ports[canid].bitrate = CAN_DEFAULT_BITRATE;
   }
 
-  // init
-  CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
-  while((CAN->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
+  set_gpio_output(GPIOB, 14, use_gmlan);
+  set_gpio_output(GPIOB, 15, use_gmlan);
 
-  // set speed
-  // seg 1: 13 time quanta, seg 2: 2 time quanta
-  CAN->BTR = (CAN_BTR_TS1_0 * 12) |
-    CAN_BTR_TS2_0 | (prescaler - 1);
-
-  // running
-  CAN->MCR = CAN_MCR_TTCM;
-  while((CAN->MSR & CAN_MSR_INAK) == CAN_MSR_INAK);
+  can_init(canid);
 }
 
 // board specific
