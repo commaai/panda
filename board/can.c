@@ -80,8 +80,8 @@ int push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
 // ********************* CAN Functions *********************
 
 void can_init(uint8_t canid) {
-  uint32_t bitrate = can_ports[canid].bitrate;
-  CAN_TypeDef *CAN = can_ports[canid].CAN;
+  uint32_t bitrate;
+  CAN_TypeDef *CAN;
   uint8_t quanta;
   uint16_t prescaler;
   uint8_t seq1, seq2;
@@ -89,6 +89,11 @@ void can_init(uint8_t canid) {
   puts("Can init: ");
   puth(canid);
   puts("\n");
+
+  if(canid >= CAN_MAX) return;
+
+  bitrate = can_ports[canid].bitrate;
+  CAN = can_ports[canid].CAN;
 
   //MAX 1 Megabaud
   if(bitrate > 1000000)
