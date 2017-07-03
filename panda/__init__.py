@@ -157,8 +157,8 @@ class Panda(object):
   def get_can_baud(self, bus):
     return struct.unpack("I", self._handle.controlRead(Panda.REQUEST_TYPE, 0xdf, bus, 0, 4))[0]
 
-  def set_gmlan(self, on, bus=2):
-    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdb, 1, bus, b'')
+  def set_gmlan(self, bus, on):
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdb, bus, bool(on), b'')
 
   def set_uart_baud(self, uart, rate):
     self._handle.controlWrite(Panda.REQUEST_TYPE, 0xe1, uart, rate, b'')

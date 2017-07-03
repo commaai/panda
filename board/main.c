@@ -512,13 +512,42 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       }
       break;
     case 0xdb: // toggle GMLAN
-      if (setup->b.wIndex.w == 3) {
-        set_can_mode(2, 0);
-        set_can_mode(3, setup->b.wValue.w);
-      } else {
-        set_can_mode(3, 0);
-        set_can_mode(2, setup->b.wValue.w);
+      puts("Toggle GMLAN canid: ");
+
+      uint16_t canid = setup->b.wValue.w;
+      bool gmlan_enable = setup->b.wIndex.w;
+
+      puth(canid);
+      puts(" mode ");
+      puth(gmlan_enable);
+      puts("\n");
+
+      if (canid >= CAN_MAX){
+	puts("  Out of range!\n");
+	return -1;
       }
+
+      can_port_desc *port = &can_ports[canid];
+
+      //Fail if canid doesn't support gmlan
+      if(!port->gmlan_support)
+	return -1;
+
+      //ACK the USB pipe but don't do anything; nothing to do.
+      if(port->gmlan == gmlan_enable){
+	puts("The CAN bus is already in the requested gmlan config.\n");
+	break;
+      }
+
+      // Check to see if anyther canid is acting as gmlan, disable it.
+      if(gmlan_enable)
+	for(i = 0; i < CAN_MAX; i++)
+	  if(can_ports[i].gmlan){
+	    puts("Disable old gmlan mode\n");
+	    set_can_mode(i, 0);
+	  }
+
+      set_can_mode(canid, gmlan_enable);
       break;
     case 0xdc: // set controls allowed
       controls_allowed = setup->b.wValue.w == 0x1337;
