@@ -356,7 +356,7 @@ void set_fan_speed(int fan_speed) {
 }
 
 void usb_cb_ep0_out(uint8_t *usbdata, int len, int hardwired) {
-  if(setup.b.bRequest == 0xde){
+  if (setup.b.bRequest == 0xde) {
     puts("Setting baud rate from usb\n");
     uint32_t bitrate = *(int*)usbdata;
     uint16_t canb_id = setup.b.wValue.w;
@@ -389,9 +389,9 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
 void send_can(CAN_FIFOMailBox_TypeDef *to_push, int canid) {
   can_ring *can_q;
 
-  if(canid >= CAN_MAX) return;
+  if (canid >= CAN_MAX) return;
 
-  switch(canid){
+  switch(canid) {
   case 0:
     can_q = &can_tx1_q;
     break;
@@ -522,7 +522,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       puth(gmlan_enable);
       puts("\n");
 
-      if (canid >= CAN_MAX){
+      if (canid >= CAN_MAX) {
         puts("  Out of range!\n");
         return -1;
       }
@@ -530,22 +530,24 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       can_port_desc *port = &can_ports[canid];
 
       //Fail if canid doesn't support gmlan
-      if(!port->gmlan_support)
+      if (!port->gmlan_support)
         return -1;
 
       //ACK the USB pipe but don't do anything; nothing to do.
-      if(port->gmlan == gmlan_enable){
+      if (port->gmlan == gmlan_enable) {
         puts("The CAN bus is already in the requested gmlan config.\n");
         break;
       }
 
       // Check to see if anyther canid is acting as gmlan, disable it.
-      if(gmlan_enable)
-        for(i = 0; i < CAN_MAX; i++)
-          if(can_ports[i].gmlan){
+      if (gmlan_enable) {
+        for (i = 0; i < CAN_MAX; i++) {
+          if (can_ports[i].gmlan) {
             puts("Disable old gmlan mode\n");
             set_can_mode(i, 0);
           }
+        }
+      }
 
       set_can_mode(canid, gmlan_enable);
       break;
@@ -561,9 +563,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xdd: // enable can forwarding
       if (setup->b.wValue.w < CAN_MAX) { //Set forwarding
         can_ports[setup->b.wValue.w].forwarding = setup->b.wIndex.w;
-      }else if(setup->b.wValue.w == 0xFF){ //Clear Forwarding
+      } else if (setup->b.wValue.w == 0xFF) { //Clear Forwarding
         can_ports[setup->b.wValue.w].forwarding = -1;
-      }else
+      } else
         return -1;
       break;
     case 0xde: // Set Can bitrate
