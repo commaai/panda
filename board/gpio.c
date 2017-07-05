@@ -91,6 +91,7 @@ void set_can_mode(int canid, int use_gmlan) {
       set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
 
     } else if (revision == PANDA_REV_C && canid == 2) {
+      #ifdef CAN3
       // A8,A15: disable normal mode
       set_gpio_mode(GPIOA, 8, MODE_INPUT);
       set_gpio_mode(GPIOA, 15, MODE_INPUT);
@@ -98,6 +99,7 @@ void set_can_mode(int canid, int use_gmlan) {
       // B3,B4: enable gmlan mode
       set_gpio_alternate(GPIOB, 3, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOB, 4, GPIO_AF11_CAN3);
+      #endif
     }
 
     can_ports[canid].bitrate = GMLAN_DEFAULT_BITRATE;
@@ -111,6 +113,7 @@ void set_can_mode(int canid, int use_gmlan) {
       set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
       set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
     } else if (canid == 2) {
+      #ifdef CAN3
       if(revision == PANDA_REV_C){
         // B3,B4: disable gmlan mode
         set_gpio_mode(GPIOB, 3, MODE_INPUT);
@@ -120,6 +123,7 @@ void set_can_mode(int canid, int use_gmlan) {
       // A8,A15: normal mode
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
+      #endif
     }
 
     can_ports[canid].bitrate = CAN_DEFAULT_BITRATE;
