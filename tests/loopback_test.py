@@ -35,25 +35,36 @@ def run_test_w_pandas(pandas, can_speeds, gmlan_speeds, sleep_duration=0):
   for hh in h:
     hh.set_controls_allowed(True)
 
+  # Currently can not set can/gmlan baud over wifi.
+  set_speed = not any((p._serial == "WIFI" for p in h))
+  if not set_speed:
+    print("*** Can not set speed on wifi pandas ***")
+
   # test both directions
   for ho in permutations(range(len(h)), r=2):
     print("***************** TESTING", ho)
 
+    panda_snd, panda_rcv = h[ho[0]], h[ho[1]]
+
+    if(panda_snd._serial == "WIFI"):
+      print("  *** Can not send can data over wifi panda. Skipping! ***")
+      continue
+
     # **** test health packet ****
-    print("health", ho[0], h[ho[0]].health())
+    print("health", ho[0], panda_snd.health())
 
     # **** test K/L line loopback ****
     for bus in [2,3]:
       # flush the output
-      h[ho[1]].kline_drain(bus=bus)
+      panda_rcv.kline_drain(bus=bus)
 
       # send the characters
       st = get_test_string()
       st = b"\xaa"+chr(len(st)+3).encode()+st
-      h[ho[0]].kline_send(st, bus=bus, checksum=False)
+      panda_snd.kline_send(st, bus=bus, checksum=False)
 
       # check for receive
-      ret = h[ho[1]].kline_drain(bus=bus)
+      ret = panda_rcv.kline_drain(bus=bus)
 
       print("ST Data:")
       hexdump(st)
@@ -65,37 +76,36 @@ def run_test_w_pandas(pandas, can_speeds, gmlan_speeds, sleep_duration=0):
 
     # **** test can line loopback ****
     for bus, gmlan in [(0, None), (1, False), (2, False), (1, True), (2, True)]:
-      panda0 = h[ho[0]]
-      panda1 = h[ho[1]]
       print("\ntest can", bus, "gmlan" if gmlan else "")
       # flush
-      cans_echo = panda0.can_recv()
-      cans_loop = panda1.can_recv()
+      cans_echo = panda_snd.can_recv()
+      cans_loop = panda_rcv.can_recv()
 
       # set GMLAN mode
       if(gmlan is not None):
-        panda0.set_gmlan(bus, gmlan)
-        panda1.set_gmlan(bus, gmlan)
+        panda_snd.set_gmlan(bus, gmlan)
+        panda_rcv.set_gmlan(bus, gmlan)
 
-      if gmlan:
-        print("Setting GMLAN %d Speed to %d" % (bus, gmlan_speeds[bus]))
-        panda0.set_can_baud(bus, gmlan_speeds[bus])
-        panda1.set_can_baud(bus, gmlan_speeds[bus])
-      else:
-        print("Setting CanBus %d Speed to %d" % (bus, can_speeds[bus]))
-        panda0.set_can_baud(bus, can_speeds[bus])
-        panda1.set_can_baud(bus, can_speeds[bus])
+      if set_speed:
+        if gmlan:
+          print("Setting GMLAN %d Speed to %d" % (bus, gmlan_speeds[bus]))
+          panda_snd.set_can_baud(bus, gmlan_speeds[bus])
+          panda_rcv.set_can_baud(bus, gmlan_speeds[bus])
+        else:
+          print("Setting CanBus %d Speed to %d" % (bus, can_speeds[bus]))
+          panda_snd.set_can_baud(bus, can_speeds[bus])
+          panda_rcv.set_can_baud(bus, can_speeds[bus])
 
       # send the characters
       # pick addresses high enough to not conflict with honda code
       at = random.randint(1024, 2000)
       st = get_test_string()[0:8]
-      panda0.can_send(at, st, bus)
+      panda_snd.can_send(at, st, bus)
       time.sleep(0.1)
 
       # check for receive
-      cans_echo = panda0.can_recv()
-      cans_loop = panda1.can_recv()
+      cans_echo = panda_snd.can_recv()
+      cans_loop = panda_rcv.can_recv()
 
       print("Bus", bus, "echo", cans_echo, "loop", cans_loop)
 
