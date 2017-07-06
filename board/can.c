@@ -7,18 +7,28 @@
 #include "libc.h"
 #include "rev.h"
 
+int can_live = 0, pending_can_live = 0;
+
 // assign CAN numbering
 #ifdef PANDA
-// panda: CAN1 = 0   CAN2 = 1   CAN3 = 2
+  // ********************* instantiate can queues *********************
+  can_buffer(rx_q, 0x1000)
+  can_buffer(tx1_q, 0x100)
+  can_buffer(tx2_q, 0x100)
+  can_buffer(tx3_q, 0x100)
+
+  // panda: CAN1 = 0   CAN2 = 1   CAN3 = 2
   can_port_desc can_ports[] = {
     {CAN_PORT_DESC_INITIALIZER,
      .CAN = CAN1,
+     .msg_buff = &can_tx1_q,
      .can_pins = {{GPIOB, 8, GPIO_AF8_CAN1}, {GPIOB, 9, GPIO_AF8_CAN1}},
      .enable_pin = {GPIOC, 1, 0},
      .gmlan_support = false,
     },
     {CAN_PORT_DESC_INITIALIZER,
      .CAN = CAN2,
+     .msg_buff = &can_tx2_q,
      .can_pins = {{GPIOB, 5, GPIO_AF9_CAN2}, {GPIOB, 6, GPIO_AF9_CAN2}},
      .enable_pin = {GPIOC, 13, 0},
      .gmlan_support = true,
@@ -27,6 +37,7 @@
     //TODO Make gmlan support correct for REV B
     {CAN_PORT_DESC_INITIALIZER,
      .CAN = CAN3,
+     .msg_buff = &can_tx3_q,
      .can_pins = {{GPIOA, 8, GPIO_AF11_CAN3}, {GPIOA, 15, GPIO_AF11_CAN3}},
      .enable_pin = {GPIOA, 0, 0},
      .gmlan_support = true,
@@ -34,16 +45,22 @@
     }
   };
 #else
-// old:   CAN1 = 1   CAN2 = 0
+  // ********************* instantiate can queues *********************
+  can_buffer(rx_q, 0x1000)
+  can_buffer(tx1_q, 0x100)
+  can_buffer(tx2_q, 0x100)
+  // old:   CAN1 = 1   CAN2 = 0
   can_port_desc can_ports[] = {
     {CAN_PORT_DESC_INITIALIZER,
      .CAN = CAN2,
+     .msg_buff = &can_tx1_q,
      .can_pins = {{GPIOB, 5, GPIO_AF9_CAN2}, {GPIOB, 6, GPIO_AF9_CAN2}},
      .enable_pin = {GPIOB, 4, 1},
      .gmlan_support = false,
     },
     {CAN_PORT_DESC_INITIALIZER,
      .CAN = CAN1,
+     .msg_buff = &can_tx2_q,
      .can_pins = {{GPIOB, 8, GPIO_AF9_CAN1}, {GPIOB, 9, GPIO_AF9_CAN1}},
      .enable_pin = {GPIOB, 3, 1},
      .gmlan_support = false,
@@ -263,12 +280,13 @@ void set_can_mode(int canid, int use_gmlan) {
 }
 
 // CAN error
-void can_sce(CAN_TypeDef *CAN) {
+void can_sce(uint8_t canid) {
+  CAN_TypeDef *CAN = can_ports[canid].CAN;
   #ifdef DEBUG
-    if (CAN==CAN1) puts("CAN1:  ");
-    if (CAN==CAN2) puts("CAN2:  ");
+    if (canid==0) puts("CAN1:  ");
+    if (canid==1) puts("CAN2:  ");
     #ifdef CAN3
-      if (CAN==CAN3) puts("CAN3:  ");
+      if (canid==2) puts("CAN3:  ");
     #endif
     puts("MSR:");
     puth(CAN->MSR);
@@ -291,6 +309,75 @@ void can_sce(CAN_TypeDef *CAN) {
   CAN->MSR = CAN->MSR;
 }
 
+void CAN1_SCE_IRQHandler() {
+  can_sce(0);
+}
+
+void CAN2_SCE_IRQHandler() {
+  can_sce(1);
+}
+
+void CAN3_SCE_IRQHandler() {
+  can_sce(2);
+}
+
+//This function doens't have a good home yet. Suppress warning.
+void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
+
+// CAN receive handlers
+// blink blue when we are receiving CAN messages
+void can_rx(int can_index) {
+  CAN_TypeDef *CAN = can_ports[can_index].CAN;
+  while (CAN->RF0R & CAN_RF0R_FMP0) {
+    // can is live
+    pending_can_live = 1;
+
+    // add to my fifo
+    CAN_FIFOMailBox_TypeDef to_push;
+    to_push.RIR = CAN->sFIFOMailBox[0].RIR;
+    to_push.RDTR = CAN->sFIFOMailBox[0].RDTR;
+    to_push.RDLR = CAN->sFIFOMailBox[0].RDLR;
+    to_push.RDHR = CAN->sFIFOMailBox[0].RDHR;
+
+    // forwarding (panda only)
+    #ifdef PANDA
+      if (can_ports[can_index].forwarding != -1) {
+        CAN_FIFOMailBox_TypeDef to_send;
+        to_send.RIR = to_push.RIR | 1; // TXRQ
+        to_send.RDTR = to_push.RDTR;
+        to_send.RDLR = to_push.RDLR;
+        to_send.RDHR = to_push.RDHR;
+        send_can(&to_send, can_ports[can_index].forwarding);
+      }
+    #endif
+
+    // modify RDTR for our API
+    to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (can_index << 4);
+
+    safety_rx_hook(&to_push);
+
+    #ifdef PANDA
+      set_led(LED_GREEN, 1);
+    #endif
+    push(&can_rx_q, &to_push);
+
+    // next
+    CAN->RF0R |= CAN_RF0R_RFOM0;
+  }
+}
+
+void CAN1_RX0_IRQHandler() {
+  can_rx(0);
+}
+
+void CAN2_RX0_IRQHandler() {
+  can_rx(1);
+}
+
+void CAN3_RX0_IRQHandler() {
+  can_rx(2);
+}
+
 int can_cksum(uint8_t *dat, int len, int addr, int idx) {
   int i;
   int s = 0;
@@ -304,4 +391,71 @@ int can_cksum(uint8_t *dat, int len, int addr, int idx) {
   s += idx;
   s = 8-s;
   return s&0xF;
+}
+
+void process_can(uint8_t canid) {
+  CAN_TypeDef *CAN;
+
+  #ifdef DEBUG
+    puts("process CAN TX\n");
+  #endif
+
+  if (canid >= CAN_MAX) return;
+  CAN = can_ports[canid].CAN;
+
+  // add successfully transmitted message to my fifo
+  if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
+    CAN_FIFOMailBox_TypeDef to_push;
+    to_push.RIR = CAN->sTxMailBox[0].TIR;
+    to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000F) |
+      ((PANDA_CANB_RETURN_FLAG | (canid & 0x7F)) << 4);
+    puts("RDTR: ");
+    puth(to_push.RDTR);
+    puts("\n");
+    to_push.RDLR = CAN->sTxMailBox[0].TDLR;
+    to_push.RDHR = CAN->sTxMailBox[0].TDHR;
+    push(&can_rx_q, &to_push);
+  }
+
+  // check for empty mailbox
+  CAN_FIFOMailBox_TypeDef to_send;
+  if ((CAN->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
+    if (pop(can_ports[canid].msg_buff, &to_send)) {
+      // only send if we have received a packet
+      CAN->sTxMailBox[0].TDLR = to_send.RDLR;
+      CAN->sTxMailBox[0].TDHR = to_send.RDHR;
+      CAN->sTxMailBox[0].TDTR = to_send.RDTR;
+      CAN->sTxMailBox[0].TIR = to_send.RIR;
+    }
+  }
+
+  // clear interrupt
+  CAN->TSR |= CAN_TSR_RQCP0;
+}
+
+// send more, possible for these to not trigger?
+
+
+void CAN1_TX_IRQHandler() {
+  process_can(0);
+}
+
+void CAN2_TX_IRQHandler() {
+  process_can(1);
+}
+
+void CAN3_TX_IRQHandler() {
+  process_can(2);
+}
+
+void send_can(CAN_FIFOMailBox_TypeDef *to_push, int canid) {
+  if (canid >= CAN_MAX) return;
+
+  // add CAN packet to send queue
+  // bus number isn't passed through
+  to_push->RDTR &= 0xF;
+  push(can_ports[canid].msg_buff, to_push);
+
+  // canid = can_number
+  process_can(canid);
 }

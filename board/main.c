@@ -3,10 +3,25 @@
 #include "obj/gitversion.h"
 #include "uart.h"
 #include "can.h"
+#include "libc.h"
+#include "gpio.h"
+#include "adc.h"
+#include "timer.h"
+#include "usb.h"
+#include "spi.h"
+
+void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
+int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired);
+int safety_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired);
+
+#ifdef PANDA_SAFETY
+#include "panda_safety.h"
+#else
+#include "honda_safety.h"
+#endif
 
 // debug safety check: is controls allowed?
 int started = 0;
-int can_live = 0, pending_can_live = 0;
 
 // optional features
 int gas_interceptor_detected = 0;
@@ -15,46 +30,6 @@ int started_signal_detected = 0;
 // detect high on UART
 // TODO: check for UART high
 int did_usb_enumerate = 0;
-
-// ********************* instantiate can queues *********************
-
-can_buffer(rx_q, 0x1000)
-can_buffer(tx1_q, 0x100)
-can_buffer(tx2_q, 0x100)
-can_buffer(tx3_q, 0x100)
-
-// ***************************** serial port queues *****************************
-
-// esp = USART1
-uart_ring esp_ring = { .w_ptr_tx = 0, .r_ptr_tx = 0,
-                       .w_ptr_rx = 0, .r_ptr_rx = 0,
-                       .uart = USART1 };
-
-// lin1, K-LINE = UART5
-// lin2, L-LINE = USART3
-uart_ring lin1_ring = { .w_ptr_tx = 0, .r_ptr_tx = 0,
-                        .w_ptr_rx = 0, .r_ptr_rx = 0,
-                        .uart = UART5 };
-uart_ring lin2_ring = { .w_ptr_tx = 0, .r_ptr_tx = 0,
-                        .w_ptr_rx = 0, .r_ptr_rx = 0,
-                        .uart = USART3 };
-
-// debug = USART2
-
-uart_ring *get_ring_by_number(int a) {
-  switch(a) {
-    case 0:
-      return &debug_ring;
-    case 1:
-      return &esp_ring;
-    case 2:
-      return &lin1_ring;
-    case 3:
-      return &lin2_ring;
-    default:
-      return NULL;
-  }
-}
 
 void accord_framing_callback(uart_ring *q) {
   uint8_t r_ptr_rx_tmp = q->r_ptr_rx;
@@ -116,207 +91,6 @@ void accord_framing_callback(uart_ring *q) {
     }
   }
 }
-
-void debug_ring_callback(uart_ring *ring) {
-  char rcv;
-  while (getc(ring, &rcv)) {
-    putc(ring, rcv);
-
-    // jump to DFU flash
-    if (rcv == 'z') {
-      enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-      NVIC_SystemReset();
-    }
-    if (rcv == 'x') {
-      // normal reset
-      NVIC_SystemReset();
-    }
-  }
-}
-
-// interrupt boilerplate
-
-void USART1_IRQHandler(void) {
-  NVIC_DisableIRQ(USART1_IRQn);
-  uart_ring_process(&esp_ring);
-  NVIC_EnableIRQ(USART1_IRQn);
-}
-
-void USART2_IRQHandler(void) {
-  NVIC_DisableIRQ(USART2_IRQn);
-  uart_ring_process(&debug_ring);
-  NVIC_EnableIRQ(USART2_IRQn);
-}
-
-void USART3_IRQHandler(void) {
-  NVIC_DisableIRQ(USART3_IRQn);
-  uart_ring_process(&lin2_ring);
-  NVIC_EnableIRQ(USART3_IRQn);
-}
-
-void UART5_IRQHandler(void) {
-  NVIC_DisableIRQ(UART5_IRQn);
-  uart_ring_process(&lin1_ring);
-  NVIC_EnableIRQ(UART5_IRQn);
-}
-
-// ********************* includes *********************
-#include "libc.h"
-#include "gpio.h"
-#include "adc.h"
-#include "timer.h"
-#include "usb.h"
-#include "spi.h"
-
-void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
-int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired);
-int safety_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired);
-
-#ifdef PANDA_SAFETY
-#include "panda_safety.h"
-#else
-#include "honda_safety.h"
-#endif
-
-#define PANDA_CANB_RETURN_FLAG 0x80
-
-// ***************************** CAN *****************************
-
-void process_can(uint8_t canid, can_ring *can_q) {
-  #ifdef DEBUG
-    puts("process CAN TX\n");
-  #endif
-
-  CAN_TypeDef *CAN = can_ports[canid].CAN;
-
-  // add successfully transmitted message to my fifo
-  if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
-    CAN_FIFOMailBox_TypeDef to_push;
-    to_push.RIR = CAN->sTxMailBox[0].TIR;
-    to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000F) |
-      ((PANDA_CANB_RETURN_FLAG | (canid & 0x7F)) << 4);
-    puts("RDTR: ");
-    puth(to_push.RDTR);
-    puts("\n");
-    to_push.RDLR = CAN->sTxMailBox[0].TDLR;
-    to_push.RDHR = CAN->sTxMailBox[0].TDHR;
-    push(&can_rx_q, &to_push);
-  }
-
-  // check for empty mailbox
-  CAN_FIFOMailBox_TypeDef to_send;
-  if ((CAN->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
-    if (pop(can_q, &to_send)) {
-      // only send if we have received a packet
-      CAN->sTxMailBox[0].TDLR = to_send.RDLR;
-      CAN->sTxMailBox[0].TDHR = to_send.RDHR;
-      CAN->sTxMailBox[0].TDTR = to_send.RDTR;
-      CAN->sTxMailBox[0].TIR = to_send.RIR;
-    }
-  }
-
-  // clear interrupt
-  CAN->TSR |= CAN_TSR_RQCP0;
-}
-
-// send more, possible for these to not trigger?
-
-
-void CAN1_TX_IRQHandler() {
-  process_can(0, &can_tx1_q);
-}
-
-void CAN2_TX_IRQHandler() {
-  process_can(1, &can_tx2_q);
-}
-
-#ifdef PANDA
-void CAN3_TX_IRQHandler() {
-  process_can(2, &can_tx3_q);
-}
-#endif
-
-void send_can(CAN_FIFOMailBox_TypeDef *to_push, int flags);
-
-// CAN receive handlers
-// blink blue when we are receiving CAN messages
-void can_rx(CAN_TypeDef *CAN, int can_index) {
-  //int can_number = can_ports[can_index].CAN;
-  while (CAN->RF0R & CAN_RF0R_FMP0) {
-    // can is live
-    pending_can_live = 1;
-
-    // add to my fifo
-    CAN_FIFOMailBox_TypeDef to_push;
-    to_push.RIR = CAN->sFIFOMailBox[0].RIR;
-    to_push.RDTR = CAN->sFIFOMailBox[0].RDTR;
-    to_push.RDLR = CAN->sFIFOMailBox[0].RDLR;
-    to_push.RDHR = CAN->sFIFOMailBox[0].RDHR;
-
-    // forwarding (panda only)
-    #ifdef PANDA
-      if (can_ports[can_index].forwarding != -1) {
-        CAN_FIFOMailBox_TypeDef to_send;
-        to_send.RIR = to_push.RIR | 1; // TXRQ
-        to_send.RDTR = to_push.RDTR;
-        to_send.RDLR = to_push.RDLR;
-        to_send.RDHR = to_push.RDHR;
-        send_can(&to_send, can_ports[can_index].forwarding);
-      }
-    #endif
-
-    // modify RDTR for our API
-    to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (can_index << 4);
-
-    safety_rx_hook(&to_push);
-
-    #ifdef PANDA
-      set_led(LED_GREEN, 1);
-    #endif
-    push(&can_rx_q, &to_push);
-
-    // next
-    CAN->RF0R |= CAN_RF0R_RFOM0;
-  }
-}
-
-void CAN1_RX0_IRQHandler() {
-  //puts("CANRX1");
-  //delay(10000);
-  can_rx(CAN1, 0);
-}
-
-void CAN2_RX0_IRQHandler() {
-  //puts("CANRX0");
-  //delay(10000);
-  can_rx(CAN2, 1);
-}
-
-#ifdef CAN3
-void CAN3_RX0_IRQHandler() {
-  //puts("CANRX0");
-  //delay(10000);
-  can_rx(CAN3, 2);
-}
-#endif
-
-void CAN1_SCE_IRQHandler() {
-  //puts("CAN1_SCE\n");
-  can_sce(CAN1);
-}
-
-void CAN2_SCE_IRQHandler() {
-  //puts("CAN2_SCE\n");
-  can_sce(CAN2);
-}
-
-#ifdef CAN3
-void CAN3_SCE_IRQHandler() {
-  //puts("CAN3_SCE\n");
-  can_sce(CAN3);
-}
-#endif
-
 
 // ***************************** USB port *****************************
 
@@ -387,37 +161,6 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
   if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1, hardwired)) {
     for (i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
   }
-}
-
-void send_can(CAN_FIFOMailBox_TypeDef *to_push, int canid) {
-  can_ring *can_q;
-
-  if (canid >= CAN_MAX) return;
-
-  switch(canid) {
-  case 0:
-    can_q = &can_tx1_q;
-    break;
-  case 1:
-    can_q = &can_tx2_q;
-    break;
-  #ifdef CAN3
-  case 2:
-    can_q = &can_tx3_q;
-    break;
-  #endif
-  default:
-    // no crash
-    return;
-  }
-
-  // add CAN packet to send queue
-  // bus number isn't passed through
-  to_push->RDTR &= 0xF;
-  push(can_q, to_push);
-
-  // canid = can_number
-  process_can(canid, can_q);
 }
 
 // send on CAN
@@ -675,7 +418,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
   return resp_len;
 }
 
-
 void OTG_FS_IRQHandler(void) {
   NVIC_DisableIRQ(OTG_FS_IRQn);
   //__disable_irq();
@@ -872,16 +614,6 @@ int main() {
     // reset this every 16th pass
     if ((cnt&0xF) == 0) pending_can_live = 0;
 
-    /*#ifdef DEBUG
-      puts("** blink ");
-      puth(can_rx_q.r_ptr); puts(" "); puth(can_rx_q.w_ptr); puts("  ");
-      puth(can_tx1_q.r_ptr); puts(" "); puth(can_tx1_q.w_ptr); puts("  ");
-      puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
-    #endif*/
-
-    /*puts("voltage: "); puth(adc_get(ADCCHAN_VOLTAGE)); puts("  ");
-    puts("current: "); puth(adc_get(ADCCHAN_CURRENT)); puts("\n");*/
-
     // set LED to be controls allowed, blue on panda, green on legacy
     #ifdef PANDA
       set_led(LED_BLUE, controls_allowed);
@@ -898,13 +630,6 @@ int main() {
     // turn off the green LED, turned on by CAN
     #ifdef PANDA
       set_led(LED_GREEN, 0);
-    #endif
-
-    #ifdef ENABLE_SPI
-      /*if (spi_buf_count > 0) {
-        hexdump(spi_buf, spi_buf_count);
-        spi_buf_count = 0;
-      }*/
     #endif
 
     // started logic
