@@ -57,8 +57,11 @@ class WifiHandle(object):
     return ret[4:4+length]
 
   def controlWrite(self, request_type, request, value, index, data, timeout=0):
-    # ignore data in reply, panda doesn't use it
-    return self.controlRead(request_type, request, value, index, 0, timeout)
+    self.sock.send(
+      struct.pack("HHBBHHH", 0, 0, request_type, request, value, index, len(data)) + data
+    )
+    retdata = self.__recv()
+    assert len(retdata) == 0
 
   def controlRead(self, request_type, request, value, index, length, timeout=0):
     self.sock.send(struct.pack("HHBBHHH", 0, 0, request_type, request, value, index, length))
