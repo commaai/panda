@@ -35,11 +35,6 @@ def run_test_w_pandas(pandas, can_speeds, gmlan_speeds, sleep_duration=0):
   for hh in h:
     hh.set_controls_allowed(True)
 
-  # Currently can not set can/gmlan baud over wifi.
-  set_speed = not any((p._serial == "WIFI" for p in h))
-  if not set_speed:
-    print("*** Can not set speed on wifi pandas ***")
-
   # test both directions
   for ho in permutations(range(len(h)), r=2):
     print("***************** TESTING", ho)
@@ -86,15 +81,14 @@ def run_test_w_pandas(pandas, can_speeds, gmlan_speeds, sleep_duration=0):
         panda_snd.set_gmlan(bus, gmlan)
         panda_rcv.set_gmlan(bus, gmlan)
 
-      if set_speed:
-        if gmlan:
-          print("Setting GMLAN %d Speed to %d" % (bus, gmlan_speeds[bus]))
-          panda_snd.set_can_baud(bus, gmlan_speeds[bus])
-          panda_rcv.set_can_baud(bus, gmlan_speeds[bus])
-        else:
-          print("Setting CanBus %d Speed to %d" % (bus, can_speeds[bus]))
-          panda_snd.set_can_baud(bus, can_speeds[bus])
-          panda_rcv.set_can_baud(bus, can_speeds[bus])
+      if gmlan:
+        print("Setting GMLAN %d Speed to %d" % (bus, gmlan_speeds[bus]))
+        panda_snd.set_can_baud(bus, gmlan_speeds[bus])
+        panda_rcv.set_can_baud(bus, gmlan_speeds[bus])
+      else:
+        print("Setting CanBus %d Speed to %d" % (bus, can_speeds[bus]))
+        panda_snd.set_can_baud(bus, can_speeds[bus])
+        panda_rcv.set_can_baud(bus, can_speeds[bus])
 
       # send the characters
       # pick addresses high enough to not conflict with honda code
