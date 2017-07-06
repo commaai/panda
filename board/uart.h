@@ -21,7 +21,7 @@ extern int has_external_debug_serial;
 
 extern uart_ring debug_ring;
 
-void debug_ring_callback(uart_ring *ring);
+uart_ring *get_ring_by_number(int a);
 
 void uart_set_baud(USART_TypeDef *u, int baud);
 
