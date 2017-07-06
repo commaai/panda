@@ -4,6 +4,14 @@
 #include <stdbool.h>
 #define CAN_TIMEOUT 1000000
 
+#define CAN_PORT_DESC_INITIALIZER               \
+  .forwarding=-1,				\
+  .bitrate=CAN_DEFAULT_BITRATE,                 \
+  .bitrate=CAN_DEFAULT_BITRATE,                 \
+  .gmlan=false,                                 \
+  .gmlan_bitrate=GMLAN_DEFAULT_BITRATE,         \
+  .safety_mode=0
+
 typedef struct {
   GPIO_TypeDef* port;
   uint8_t num;
@@ -11,13 +19,22 @@ typedef struct {
 } gpio_pin;
 
 typedef struct {
+  GPIO_TypeDef* port;
+  uint8_t num;
+  uint32_t setting;
+} gpio_alt_setting;
+
+typedef struct {
   CAN_TypeDef *CAN;
   int8_t forwarding;
   uint32_t bitrate;
   bool gmlan;
   bool gmlan_support;
+  uint32_t gmlan_bitrate;
   uint8_t safety_mode;
-  gpio_pin pin;
+  gpio_pin enable_pin;
+  gpio_alt_setting can_pins[2];
+  gpio_alt_setting gmlan_pins[2];
 } can_port_desc;
 
 extern can_port_desc can_ports[];
@@ -50,6 +67,8 @@ int push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 // ********************* CAN Functions *********************
 
 void can_init(uint8_t canid);
+
+void set_can_mode(int can, int use_gmlan);
 
 // CAN error
 void can_sce(CAN_TypeDef *CAN);

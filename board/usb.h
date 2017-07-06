@@ -1,5 +1,7 @@
 // **** supporting defines ****
 
+#include "config.h"
+
 typedef struct
 {
   __IO uint32_t HPRT;
@@ -241,6 +243,14 @@ void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
   }
 }
 
+void USB_Stall_EP0(){
+  //TODO: Handle stalling both in and out requests.
+  //Check why INEP works for both in and out requests.
+  USBx_INEP(0)->DIEPCTL |= (USB_OTG_DIEPCTL_STALL | USB_OTG_DIEPCTL_EPENA);
+
+  //USBx_OUTEP(0)->DOEPCTL |= (USB_OTG_DOEPCTL_STALL | USB_OTG_DOEPCTL_EPENA);
+}
+
 void usb_reset() {
   // unmask endpoint interrupts, so many sets
   USBx_DEVICE->DAINT = 0xFFFFFFFF;
@@ -407,17 +417,19 @@ void usb_setup() {
       USB_WritePacket(0, 0, 0);
       USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
       //USBx_INEP(0)->DIEPINT = USBx_INEP(0)->DIEPINT
+      #ifdef DEBUG_USB
       puts("Setting Interface Alt: ");
       puth(current_int0_alt_setting);
       puts("\n");
+      #endif
       break;
     default:
       resp_len = usb_cb_control_msg(&setup, resp, 1);
       if(resp_len == -1){
-	USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_STALL;
+        USB_Stall_EP0();
       }else{
-	USB_WritePacket(resp, min(resp_len, setup.b.wLength.w), 0);
-	USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+        USB_WritePacket(resp, min(resp_len, setup.b.wLength.w), 0);
+        USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
       }
   }
 }
@@ -493,7 +505,6 @@ void usb_init() {
 }
 
 // ***************************** USB port *****************************
-int dumb = 0;
 void usb_irqhandler(void) {
   //USBx->GINTMSK = 0;
 
@@ -503,14 +514,15 @@ void usb_irqhandler(void) {
 
   // gintsts SUSPEND? 04008428
   #ifdef DEBUG_USB
-    puth(gintsts);
-    puts(" ");
-    /*puth(USBx->GCCFG);
-    puts(" ");*/
-    puth(gotgint);
-    puts(" ep ");
+    puts("USB interrupt (DAINT[EP]:");
     puth(daint);
-    puts(" USB interrupt!\n");
+    puts(" GINTSTS:");
+    puth(gintsts);
+    //puts(" GCCFG:");
+    //puth(USBx->GCCFG);
+    //puts(" GOTGINT:");
+    //puth(gotgint);
+    puts(")\n");
   #endif
 
   if (gintsts & USB_OTG_GINTSTS_CIDSCHG) {
@@ -542,7 +554,7 @@ void usb_irqhandler(void) {
     //USBx->GOTGINT = USBx->GOTGINT;
   }
 
-  // RX FIFO first
+  // RX FIFO Has Data (OUT TRANSFER)
   if (gintsts & USB_OTG_GINTSTS_RXFLVL) {
     // 1. Read the Receive status pop register
     volatile unsigned int rxst = USBx->GRXSTSP;
@@ -557,7 +569,7 @@ void usb_irqhandler(void) {
       puts("\n");
     #endif
 
-    if (((rxst & USB_OTG_GRXSTSP_PKTSTS) >> 17) == STS_DATA_UPDT) {
+    if (((rxst & USB_OTG_GRXSTSP_PKTSTS) >> 17) == STS_DATA_UPDT) { //OUT DATA PKT RECEIVED
       int endpoint = (rxst & USB_OTG_GRXSTSP_EPNUM);
       int len = (rxst & USB_OTG_GRXSTSP_BCNT) >> 4;
       USB_ReadPacket(&usbdata, len);
@@ -569,7 +581,7 @@ void usb_irqhandler(void) {
       #endif
 
       if(endpoint == 0){
-	usb_cb_ep0_out(usbdata, len, 1);
+        usb_cb_ep0_out(usbdata, len, 1);
       }
 
       if (endpoint == 2) {
@@ -669,6 +681,9 @@ void usb_irqhandler(void) {
 
     // respond to setup packets
     if (USBx_OUTEP(0)->DOEPINT & USB_OTG_DOEPINT_STUP) {
+      #ifdef DEBUG_USB
+      puts("Processing SETUP\n");
+      #endif
       usb_setup();
     }
 
@@ -704,11 +719,10 @@ void usb_irqhandler(void) {
     case 0: ////// Bulk config
       // *** IN token received when TxFIFO is empty
       if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
-	puth(dumb++);
-	if (can_rx_q.w_ptr != can_rx_q.r_ptr)
-	  puts("Rx CAN bulk: There is CAN data to send.\n");
-	else
-	  puts("Rx CAN bulk: No can data\n");
+        if (can_rx_q.w_ptr != can_rx_q.r_ptr)
+          puts("Rx CAN bulk: There is CAN data to send.\n");
+        else
+          puts("Rx CAN bulk: No can data\n");
 
         #ifdef DEBUG_USB
         puts("  IN PACKET QUEUE\n");

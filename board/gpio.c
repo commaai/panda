@@ -1,25 +1,9 @@
-#ifdef STM32F4
-  #include "stm32f4xx_hal_gpio_ex.h"
-#else
-  #include "stm32f2xx_hal_gpio_ex.h"
-#endif
-
 #include "config.h"
 #include "gpio.h"
 #include "llgpio.h"
 #include "early.h"
 #include "can.h"
-
-void set_can_enable(uint8_t canid, int enabled) {
-  // enable CAN busses
-  gpio_pin *pin = &can_ports[canid].pin;
-
-  //enable,   high_val = 1;  1 xnor 1 = 1
-  //enable,  ~high_val = 0;  1 xnor 0 = 0
-  //~enable,  high_val = 0;  0 xnor 1 = 0
-  //~enable, ~high_val = 1;  0 xnor 0 = 1
-  set_gpio_output(pin->port, pin->num, !(enabled ^ pin->high_val));
-}
+#include "rev.h"
 
 void set_led(int led_num, int on) {
   if (led_num == -1) return;
@@ -31,6 +15,20 @@ void set_led(int led_num, int on) {
   #endif
 }
 
+/* In REVC, this should always be enabled under normal
+ * operation. Otherwise, the CAN transceiver chip will try to pull the
+ * pus lines to ground and anger other CAN devices. Eddie is looking
+ * into if this is useful or not. */
+void set_can_enable(uint8_t canid, int enabled) {
+  // enable CAN busses
+  gpio_pin *pin = &can_ports[canid].enable_pin;
+
+  //enable,   high_val = 1;  1 xnor 1 = 1
+  //enable,  ~high_val = 0;  1 xnor 0 = 0
+  //~enable,  high_val = 0;  0 xnor 1 = 0
+  //~enable, ~high_val = 1;  0 xnor 0 = 1
+  set_gpio_output(pin->port, pin->num, !(enabled ^ pin->high_val));
+}
 
 // TODO: does this belong here?
 void periph_init() {
@@ -62,77 +60,6 @@ void periph_init() {
 
   // needed?
   RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
-}
-
-void set_can_mode(int canid, int use_gmlan) {
-  if(canid >= CAN_MAX) return;
-
-  if(!can_ports[canid].gmlan_support) return;
-  can_ports[canid].gmlan = use_gmlan;
-
-  /* GMLAN mode pins:
-     M0(B15)  M1(B14)  mode
-     =======================
-     0        0        sleep
-     1        0        100kbit
-     0        1        high voltage wakeup
-     1        1        33kbit (normal)
-  */
-
-  // connects to CAN2 xcvr or GMLAN xcvr
-  if (use_gmlan) {
-    if (canid == 1) {
-      // B5,B6: disable normal mode
-      set_gpio_mode(GPIOB, 5, MODE_INPUT);
-      set_gpio_mode(GPIOB, 6, MODE_INPUT);
-
-      // B12,B13: gmlan mode
-      set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
-      set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
-
-    } else if (revision == PANDA_REV_C && canid == 2) {
-      #ifdef CAN3
-      // A8,A15: disable normal mode
-      set_gpio_mode(GPIOA, 8, MODE_INPUT);
-      set_gpio_mode(GPIOA, 15, MODE_INPUT);
-
-      // B3,B4: enable gmlan mode
-      set_gpio_alternate(GPIOB, 3, GPIO_AF11_CAN3);
-      set_gpio_alternate(GPIOB, 4, GPIO_AF11_CAN3);
-      #endif
-    }
-
-    can_ports[canid].bitrate = GMLAN_DEFAULT_BITRATE;
-  } else {
-    if (canid == 1) {
-      // B12,B13: disable gmlan mode
-      set_gpio_mode(GPIOB, 12, MODE_INPUT);
-      set_gpio_mode(GPIOB, 13, MODE_INPUT);
-
-      // B5,B6: normal mode
-      set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
-      set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
-    } else if (canid == 2) {
-      #ifdef CAN3
-      if(revision == PANDA_REV_C){
-        // B3,B4: disable gmlan mode
-        set_gpio_mode(GPIOB, 3, MODE_INPUT);
-        set_gpio_mode(GPIOB, 4, MODE_INPUT);
-      }
-
-      // A8,A15: normal mode
-      set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
-      set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
-      #endif
-    }
-
-    can_ports[canid].bitrate = CAN_DEFAULT_BITRATE;
-  }
-
-  set_gpio_output(GPIOB, 14, use_gmlan);
-  set_gpio_output(GPIOB, 15, use_gmlan);
-
-  can_init(canid);
 }
 
 // board specific
@@ -185,29 +112,9 @@ void gpio_init() {
   set_gpio_alternate(GPIOA, 7, GPIO_AF5_SPI1);
 #endif
 
-  // B8,B9: CAN 1
-  set_can_enable(0, 0);
-#ifdef STM32F4
-  set_gpio_alternate(GPIOB, 8, GPIO_AF8_CAN1);
-  set_gpio_alternate(GPIOB, 9, GPIO_AF8_CAN1);
-#else
-  set_gpio_alternate(GPIOB, 8, GPIO_AF9_CAN1);
-  set_gpio_alternate(GPIOB, 9, GPIO_AF9_CAN1);
-#endif
-
-  // B5,B6: CAN 2
-  set_can_enable(1, 0);
-  set_can_mode(1, 0);
-
-  // A8,A15: CAN3
-  #ifdef CAN3
-    set_can_enable(2, 0);
-    set_can_mode(2, 0);
-  #endif
-
   #ifdef PANDA
     // K-line enable moved from B4->B7 to make room for GMLAN on CAN3
-    if(revision == PANDA_REV_C)
+    if(revision == REV_C)
       set_gpio_output(GPIOB, 7, 1); // REV C
     else
       set_gpio_output(GPIOB, 4, 1); // REV AB
@@ -226,7 +133,7 @@ void gpio_init() {
     set_gpio_pullup(GPIOC, 11, PULL_UP);
   #endif
 
-  if(revision == PANDA_REV_C) {
+  if(revision == REV_C) {
     // B2,A13: set DCP mode on the charger (breaks USB!)
     //set_gpio_output(GPIOB, 2, 0);
     //set_gpio_output(GPIOA, 13, 0);

@@ -361,7 +361,10 @@ void usb_cb_ep0_out(uint8_t *usbdata, int len, int hardwired) {
     uint32_t bitrate = *(int*)usbdata;
     uint16_t canb_id = setup.b.wValue.w;
 
-    can_ports[canb_id].bitrate = bitrate;
+    if (can_ports[canb_id].gmlan)
+      can_ports[canb_id].gmlan_bitrate = bitrate;
+    else
+      can_ports[canb_id].bitrate = bitrate;
     can_init(canb_id);
   }
 }
@@ -513,6 +516,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     case 0xdb: // toggle GMLAN
       puts("Toggle GMLAN canid: ");
+      puth(setup->b.wValue.w);
 
       uint16_t canid = setup->b.wValue.w;
       bool gmlan_enable = setup->b.wIndex.w;
@@ -523,42 +527,39 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       puts("\n");
 
       if (canid >= CAN_MAX) {
-        puts("  Out of range!\n");
+        puts(" !!Out of range!!\n");
         return -1;
       }
 
       can_port_desc *port = &can_ports[canid];
 
+      //puts(" gmlan_support ");
+      //puth(port->gmlan_support);
+      //puts(" mode ");
+      //puth(gmlan_enable);
+      //puts("\n");
+
       //Fail if canid doesn't support gmlan
-      if (!port->gmlan_support)
+      if (!port->gmlan_support) {
+        puts(" !!Unsupported!!\n");
         return -1;
+      }
 
       //ACK the USB pipe but don't do anything; nothing to do.
       if (port->gmlan == gmlan_enable) {
-        puts("The CAN bus is already in the requested gmlan config.\n");
+        puts(" ~~Nochange~~.\n");
         break;
       }
 
       // Check to see if anyther canid is acting as gmlan, disable it.
-      if (gmlan_enable) {
-        for (i = 0; i < CAN_MAX; i++) {
-          if (can_ports[i].gmlan) {
-            puts("Disable old gmlan mode\n");
-            set_can_mode(i, 0);
-          }
-        }
-      }
-
       set_can_mode(canid, gmlan_enable);
+      puts(" Done\n");
       break;
     case 0xdc: // set controls allowed
       controls_allowed = setup->b.wValue.w == 0x1337;
       // take CAN out of SILM, careful with speed!
-      can_init(0);
-      can_init(1);
-      #ifdef CAN3
-      can_init(2);
-      #endif
+      for(i=0; i < CAN_MAX; i++)
+        can_init(i);
       break;
     case 0xdd: // enable can forwarding
       if (setup->b.wValue.w < CAN_MAX) { //Set forwarding
@@ -574,7 +575,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     case 0xdf: // Get Can bitrate
       if (setup->b.wValue.w < CAN_MAX) {
-        memcpy(resp, (void *)&can_ports[setup->b.wValue.w].bitrate, 4);
+        if(can_ports[setup->b.wValue.w].gmlan){
+          memcpy(resp, (void *)&can_ports[setup->b.wValue.w].gmlan_bitrate, 4);
+        }else{
+          memcpy(resp, (void *)&can_ports[setup->b.wValue.w].bitrate, 4);
+        }
         resp_len = 4;
         break;
       }
@@ -762,6 +767,8 @@ void __initialize_hardware_early() {
 }
 
 int main() {
+  int i;
+
   // init devices
   clock_init();
   periph_init();
@@ -784,18 +791,15 @@ int main() {
   // enable USB
   usb_init();
 
-  // default to silent mode to prevent issues with Ford
+  // enable CAN
 #ifdef PANDA_SAFETY
   controls_allowed = 0;
 #else
   controls_allowed = 1;
 #endif
 
-  can_init(0);
-  can_init(1);
-  #ifdef CAN3
-    can_init(2);
-  #endif
+  for(i=0; i < CAN_MAX; i++)
+    can_init(i);
 
   adc_init();
 
@@ -817,7 +821,6 @@ int main() {
 
   // set PWM
   set_fan_speed(65535);
-
 
   puts("**** INTERRUPTS ON ****\n");
   __disable_irq();
