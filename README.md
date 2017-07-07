@@ -5,7 +5,7 @@ Welcome to panda
 
 <a href="https://panda.comma.ai"><img src="https://github.com/commaai/panda/blob/master/panda.png">
 
-<img src="https://github.com/commaai/panda/blob/master/pandaorder.png"></a>
+<img src="https://github.com/commaai/panda/blob/master/buy.png"></a>
 
 It supports 3x CAN, 2x LIN, and 1x GMLAN. It also charges a phone. On the computer side, it has both USB and Wi-Fi.
 
