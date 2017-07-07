@@ -5,6 +5,8 @@ Welcome to panda
 
 <img src="https://github.com/commaai/panda/blob/master/panda.png">
 
+<a href="https://panda.comma.ai"><img src="https://github.com/commaai/panda/blob/master/order.png"></a>
+
 It supports 3x CAN, 2x LIN, and 1x GMLAN. It also charges a phone. On the computer side, it has both USB and Wi-Fi.
 
 It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?querycriteria=productId=LN2004) for low level stuff and an [ESP8266](https://en.wikipedia.org/wiki/ESP8266) for Wi-Fi. They are connected over high speed SPI, so the panda is actually capable of dumping the full contents of the busses over Wi-Fi, unlike every other dongle on amazon. ELM327 is weak, panda is strong.
