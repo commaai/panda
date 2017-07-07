@@ -3,9 +3,9 @@ Welcome to panda
 
 [panda](http://github.com/commaai/panda) is the nicest universal car interface ever.
 
-<center><a href="https://panda.comma.ai"><img src="https://github.com/commaai/panda/blob/master/panda.png">
+<a href="https://panda.comma.ai"><img src="https://github.com/commaai/panda/blob/master/panda.png">
 
-<img src="https://github.com/commaai/panda/blob/master/order.png"></a></center>
+<img src="https://github.com/commaai/panda/blob/master/order.png"></a>
 
 It supports 3x CAN, 2x LIN, and 1x GMLAN. It also charges a phone. On the computer side, it has both USB and Wi-Fi.
 
