@@ -4,4 +4,3 @@ void timer_init(TIM_TypeDef *TIM, int psc) {
   TIM->CR1 = TIM_CR1_CEN;
   TIM->SR = 0;
 }
-
