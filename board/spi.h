@@ -1,47 +1,9 @@
-void spi_init() {
-  //puts("SPI init\n");
-  SPI1->CR1 = SPI_CR1_SPE;
+#ifndef PANDA_SPI_H
+#define PANDA_SPI_H
 
-  // enable SPI interrupts
-  //SPI1->CR2 = SPI_CR2_RXNEIE | SPI_CR2_ERRIE | SPI_CR2_TXEIE;
-  SPI1->CR2 = SPI_CR2_RXNEIE;
-}
+void spi_init();
 
-void spi_tx_dma(void *addr, int len) {
-  // disable DMA
-  SPI1->CR2 &= ~SPI_CR2_TXDMAEN;
-  DMA2_Stream3->CR &= ~DMA_SxCR_EN;
+void spi_tx_dma(void *addr, int len);
+void spi_rx_dma(void *addr, int len);
 
-  // DMA2, stream 3, channel 3
-  DMA2_Stream3->M0AR = (uint32_t)addr;
-  DMA2_Stream3->NDTR = len;
-  DMA2_Stream3->PAR = (uint32_t)&(SPI1->DR);
-
-  // channel3, increment memory, memory -> periph, enable
-  DMA2_Stream3->CR = DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_EN;
-  DMA2_Stream3->CR |= DMA_SxCR_TCIE;
-
-  SPI1->CR2 |= SPI_CR2_TXDMAEN;
-}
-
-void spi_rx_dma(void *addr, int len) {
-  // disable DMA
-  SPI1->CR2 &= ~SPI_CR2_RXDMAEN;
-  DMA2_Stream2->CR &= ~DMA_SxCR_EN;
-
-  // drain the bus
-  uint8_t dat = SPI1->DR;
-  (void)dat;
-
-  // DMA2, stream 2, channel 3
-  DMA2_Stream2->M0AR = (uint32_t)addr;
-  DMA2_Stream2->NDTR = len;
-  DMA2_Stream2->PAR = (uint32_t)&(SPI1->DR);
-
-  // channel3, increment memory, periph -> memory, enable
-  DMA2_Stream2->CR = DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_EN;
-  DMA2_Stream2->CR |= DMA_SxCR_TCIE;
-
-  SPI1->CR2 |= SPI_CR2_RXDMAEN;
-}
-
+#endif
