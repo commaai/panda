@@ -148,7 +148,7 @@ void can_init(uint8_t canid) {
   } else {
     for (i = 0; i < CAN_MAX; i++)
       if (can_ports[i].gmlan)
-	break;
+        break;
     if (i == CAN_MAX){
       set_gpio_output(GPIOB, 14, 0);
       set_gpio_output(GPIOB, 15, 0);
@@ -268,7 +268,7 @@ void set_can_mode(int canid, int use_gmlan) {
   if (use_gmlan)
     for (i = 0; i < CAN_MAX; i++)
       if (can_ports[i].gmlan)
-	set_can_mode(i, 0);
+        set_can_mode(i, 0);
 
   if (!can_ports[canid].gmlan_support) use_gmlan = 0;
   can_ports[canid].gmlan = use_gmlan;

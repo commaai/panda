@@ -27,7 +27,7 @@ extern can_ring can_rx_q;
 // ********************* port description types *********************
 
 #define CAN_PORT_DESC_INITIALIZER               \
-  .forwarding=-1,				\
+  .forwarding=-1,                               \
   .bitrate=CAN_DEFAULT_BITRATE,                 \
   .bitrate=CAN_DEFAULT_BITRATE,                 \
   .gmlan=false,                                 \

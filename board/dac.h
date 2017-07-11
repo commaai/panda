@@ -13,4 +13,3 @@ void dac_set(int channel, uint32_t value) {
     DAC->DHR12R2 = value;
   }
 }
-
