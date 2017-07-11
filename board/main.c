@@ -162,7 +162,7 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
     to_push.RDTR = tf[1];
     to_push.RIR = tf[0];
 
-    int canid = (to_push.RDTR >> 4) & 0xF;
+    uint8_t canid = (to_push.RDTR >> 4) & 0xF;
     if (safety_tx_hook(&to_push, hardwired)) {
       send_can(&to_push, canid);
     }

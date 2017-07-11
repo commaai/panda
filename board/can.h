@@ -76,9 +76,9 @@ int push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 
 void can_init(uint8_t canid);
 
-void set_can_mode(int can, int use_gmlan);
+void set_can_mode(uint16_t can, bool use_gmlan);
 
-void send_can(CAN_FIFOMailBox_TypeDef *to_push, int flags);
+void send_can(CAN_FIFOMailBox_TypeDef *to_push, uint8_t canid);
 
 // CAN error
 //void can_sce(uint8_t canid);

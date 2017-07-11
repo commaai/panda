@@ -10,6 +10,11 @@
 
 bool can_live = false, pending_can_live = false, can_loopback = false;
 
+#define NO_ACTIVE_GMLAN -1
+int active_gmlan_port_id = NO_ACTIVE_GMLAN; // default disabled
+
+#define GMLAN_PORT_ID 3
+
 // assign CAN numbering
 #ifdef PANDA
   // ********************* instantiate can queues *********************
@@ -260,17 +265,20 @@ void can_init(uint8_t canid) {
   //CAN->IER = CAN_IER_TMEIE | CAN_IER_FMPIE0 | CAN_IER_FMPIE1;
 }
 
-void set_can_mode(int canid, int use_gmlan) {
-  int i;
-
+void set_can_mode(uint16_t canid, bool use_gmlan) {
   if (canid >= CAN_MAX) return;
+  if (!can_ports[canid].gmlan_support) use_gmlan = false;
 
-  if (use_gmlan)
-    for (i = 0; i < CAN_MAX; i++)
-      if (can_ports[i].gmlan)
-        set_can_mode(i, 0);
+  if (use_gmlan) {
+    // If enabling gmlan, and another port is already enabled, disable it.
+    if(active_gmlan_port_id != NO_ACTIVE_GMLAN && active_gmlan_port_id != canid)
+      set_can_mode(active_gmlan_port_id, 0);
+    active_gmlan_port_id = canid;
+  } else if(active_gmlan_port_id != NO_ACTIVE_GMLAN && active_gmlan_port_id == canid) {
+    // If disabling gmlan, and this port is gmlan enabled, unregister it.
+    active_gmlan_port_id = -1;
+  }
 
-  if (!can_ports[canid].gmlan_support) use_gmlan = 0;
   can_ports[canid].gmlan = use_gmlan;
 
   can_init(canid);
@@ -318,8 +326,8 @@ void CAN3_SCE_IRQHandler() {
 
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
-void can_rx(int can_index) {
-  CAN_TypeDef *CAN = can_ports[can_index].CAN;
+void can_rx(uint8_t canid) {
+  CAN_TypeDef *CAN = can_ports[canid].CAN;
   while (CAN->RF0R & CAN_RF0R_FMP0) {
     // can is live
     pending_can_live = 1;
@@ -333,18 +341,22 @@ void can_rx(int can_index) {
 
     // forwarding (panda only)
     #ifdef PANDA
-      if (can_ports[can_index].forwarding != -1) {
+      if (can_ports[canid].forwarding != -1) {
         CAN_FIFOMailBox_TypeDef to_send;
         to_send.RIR = to_push.RIR | 1; // TXRQ
         to_send.RDTR = to_push.RDTR;
         to_send.RDLR = to_push.RDLR;
         to_send.RDHR = to_push.RDHR;
-        send_can(&to_send, can_ports[can_index].forwarding);
+        send_can(&to_send, can_ports[canid].forwarding);
       }
     #endif
 
     // modify RDTR for our API
-    to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (can_index << 4);
+    if(canid == active_gmlan_port_id) {
+      to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (GMLAN_PORT_ID << 4);
+    } else {
+      to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (canid << 4);
+    }
 
     safety_rx_hook(&to_push);
 
@@ -387,12 +399,20 @@ int can_cksum(uint8_t *dat, int len, int addr, int idx) {
 
 void process_can(uint8_t canid) {
   CAN_TypeDef *CAN;
+  uint8_t reported_canid = canid;
 
   #ifdef DEBUG
     puts("process CAN TX\n");
   #endif
 
+  // canid of 3 is the virtual GMLAN (CAN4)
   if (canid >= CAN_MAX) return;
+
+  // Remap canid to gmlan if port has gmlan enabled
+  if (canid == active_gmlan_port_id) {
+      reported_canid = GMLAN_PORT_ID;
+  }
+
   CAN = can_ports[canid].CAN;
 
   // add successfully transmitted message to my fifo
@@ -400,10 +420,12 @@ void process_can(uint8_t canid) {
     CAN_FIFOMailBox_TypeDef to_push;
     to_push.RIR = CAN->sTxMailBox[0].TIR;
     to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000F) |
-      ((PANDA_CANB_RETURN_FLAG | (canid & 0x7F)) << 4);
+      ((PANDA_CANB_RETURN_FLAG | (reported_canid & 0x7F)) << 4);
+
     puts("RDTR: ");
     puth(to_push.RDTR);
     puts("\n");
+
     to_push.RDLR = CAN->sTxMailBox[0].TDLR;
     to_push.RDHR = CAN->sTxMailBox[0].TDHR;
     push(&can_rx_q, &to_push);
@@ -440,8 +462,20 @@ void CAN3_TX_IRQHandler() {
   process_can(2);
 }
 
-void send_can(CAN_FIFOMailBox_TypeDef *to_push, int canid) {
-  if (canid >= CAN_MAX) return;
+void send_can(CAN_FIFOMailBox_TypeDef *to_push, uint8_t canid) {
+  // canid of 3 is the virtual GMLAN (CAN4)
+  if (canid >= CAN_MAX && canid != GMLAN_PORT_ID) return;
+
+  // TODO: Error for using disabled port
+  if (active_gmlan_port_id == canid) return;
+
+  // Remap gmlan output to real can port
+  if (canid == GMLAN_PORT_ID) {
+    if (active_gmlan_port_id == NO_ACTIVE_GMLAN)
+      return; // No gmlan port enabled
+    else
+      canid = active_gmlan_port_id;
+  }
 
   // add CAN packet to send queue
   // bus number isn't passed through
