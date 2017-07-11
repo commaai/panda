@@ -28,6 +28,8 @@ def run_test(can_speeds, gmlan_speeds, sleep_duration=0):
     pandas.append("WIFI")
   run_test_w_pandas(pandas, can_speeds, gmlan_speeds, sleep_duration)
 
+GMLAN_BUS = 3 # Virtual 'CAN 4'
+
 def run_test_w_pandas(pandas, can_speeds, gmlan_speeds, sleep_duration=0):
   h = list(map(lambda x: Panda(x), pandas))
   print("H", h)
@@ -85,7 +87,9 @@ def run_test_w_pandas(pandas, can_speeds, gmlan_speeds, sleep_duration=0):
         print("Setting GMLAN %d Speed to %d" % (bus, gmlan_speeds[bus]))
         panda_snd.set_can_baud(bus, gmlan_speeds[bus])
         panda_rcv.set_can_baud(bus, gmlan_speeds[bus])
+        bus = GMLAN_BUS
       else:
+        print("bus", bus)
         print("Setting CanBus %d Speed to %d" % (bus, can_speeds[bus]))
         panda_snd.set_can_baud(bus, can_speeds[bus])
         panda_rcv.set_can_baud(bus, can_speeds[bus])
