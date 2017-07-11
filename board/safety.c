@@ -61,7 +61,7 @@ typedef struct {
 const safety_hook_config safety_hook_registry[] = {
   {0x0000, &nooutput_hooks},
   {0x0001, &honda_hooks},
-  {0xFFFF, &alloutput_hooks},
+  {0x1337, &alloutput_hooks},
 };
 
 #define HOOK_CONFIG_COUNT (sizeof(safety_hook_registry)/sizeof(safety_hook_config))
