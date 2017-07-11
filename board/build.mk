@@ -79,7 +79,7 @@ obj/%.$(PROJ_NAME).o: ../crypto/%.c
 obj/$(STARTUP_FILE).o: $(STARTUP_FILE).s
 	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
 
-obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.$(PROJ_NAME).o obj/early.$(PROJ_NAME).o obj/llgpio.$(PROJ_NAME).o obj/can.$(PROJ_NAME).o obj/uart.$(PROJ_NAME).o obj/gpio.$(PROJ_NAME).o obj/libc.$(PROJ_NAME).o obj/spi.$(PROJ_NAME).o obj/usb.$(PROJ_NAME).o
+obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.$(PROJ_NAME).o obj/early.$(PROJ_NAME).o obj/llgpio.$(PROJ_NAME).o obj/can.$(PROJ_NAME).o obj/uart.$(PROJ_NAME).o obj/gpio.$(PROJ_NAME).o obj/libc.$(PROJ_NAME).o obj/spi.$(PROJ_NAME).o obj/usb.$(PROJ_NAME).o obj/safety.$(PROJ_NAME).o
   # hack
 	$(CC) $(DEPFLAGS) -Wl,--section-start,.isr_vector=0x8004000 $(CFLAGS) -o obj/$(PROJ_NAME).elf $^
 	$(OBJCOPY) -v -O binary obj/$(PROJ_NAME).elf obj/code.bin

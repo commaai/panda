@@ -2,6 +2,8 @@
 #define PANDA_CAN_H
 
 #include <stdbool.h>
+#include "rev.h"
+
 #define CAN_TIMEOUT 1000000
 #define PANDA_CANB_RETURN_FLAG 0x80
 
@@ -31,7 +33,6 @@ extern can_ring can_rx_q;
   .gmlan=false,                                 \
   .gmlan_bitrate=GMLAN_DEFAULT_BITRATE,         \
   .safety_mode=0
-
 typedef struct {
   GPIO_TypeDef* port;
   uint8_t num;
@@ -84,7 +85,5 @@ void send_can(CAN_FIFOMailBox_TypeDef *to_push, int flags);
 //void can_sce(uint8_t canid);
 
 int can_cksum(uint8_t *dat, int len, int addr, int idx);
-
-extern int controls_allowed;
 
 #endif

@@ -4,6 +4,10 @@
 #include "libc.h"
 #include "uart.h"
 
+// detect high on UART
+// TODO: check for UART high
+int did_usb_enumerate = 0;
+
 uint8_t device_desc[] = {
   DSCR_DEVICE_LEN, DSCR_DEVICE_TYPE, 0x00, 0x01, //Length, Type, bcdUSB
   0xFF, 0xFF, 0xFF, 0x40, // Class, Subclass, Protocol, Max Packet Size
@@ -98,8 +102,15 @@ uint8_t usbdata[0x100];
 // Store the current interface alt setting.
 int current_int0_alt_setting = 0;
 
-// packet read and write
+void usb_cb_enumeration_complete() {
+  // power down the ESP
+  // this doesn't work and makes the board unflashable
+  // because the ESP spews shit on serial on startup
+  //GPIOC->ODR &= ~(1 << 14);
+  did_usb_enumerate = 1;
+}
 
+// packet read and write
 void *USB_ReadPacket(void *dest, uint16_t len) {
   uint32_t i=0;
   uint32_t count32b = (len + 3) / 4;
