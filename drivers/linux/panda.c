@@ -154,7 +154,7 @@ static void panda_urb_unlink(struct panda_inf_priv *priv)
 
 #define SAFETY_NOOUTPUT 0
 #define SAFETY_HONDA 1
-#define SAFETY_ALLOUTPUT 0xFFFF
+#define SAFETY_ALLOUTPUT 0x1337
 
 static int panda_set_output_mode(struct panda_inf_priv* priv, bool enable){
   return usb_control_msg(priv->priv_dev->udev,
