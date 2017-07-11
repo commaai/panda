@@ -8,7 +8,7 @@
 #include "rev.h"
 #include "safety.h"
 
-int can_live = 0, pending_can_live = 0;
+bool can_live = false, pending_can_live = false, can_loopback = false;
 
 // assign CAN numbering
 #ifdef PANDA
@@ -222,9 +222,9 @@ void can_init(uint8_t canid) {
              (prescaler - 1);
 
   // silent loopback mode for debugging
-  #ifdef CAN_LOOPBACK_MODE
+  if (can_loopback) {
     CAN->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
-  #endif
+  }
 
   if (!is_output_enabled()) {
     CAN->BTR |= CAN_BTR_SILM;
@@ -282,9 +282,7 @@ void can_sce(uint8_t canid) {
   #ifdef DEBUG
     if (canid==0) puts("CAN1:  ");
     if (canid==1) puts("CAN2:  ");
-    #ifdef CAN3
-      if (canid==2) puts("CAN3:  ");
-    #endif
+    if (canid==2) puts("CAN3:  ");
     puts("MSR:");
     puth(CAN->MSR);
     puts(" TSR:");

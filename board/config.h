@@ -5,7 +5,6 @@
 
 //#define DEBUG
 //#define DEBUG_USB
-//#define CAN_LOOPBACK_MODE
 
 #define USB_VID 0xbbaa
 #define USB_PID 0xddcc

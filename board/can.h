@@ -7,7 +7,7 @@
 #define CAN_TIMEOUT 1000000
 #define PANDA_CANB_RETURN_FLAG 0x80
 
-extern int can_live, pending_can_live;
+extern bool can_live, pending_can_live, can_loopback;
 
 // ********************* queues types *********************
 
@@ -31,8 +31,8 @@ extern can_ring can_rx_q;
   .bitrate=CAN_DEFAULT_BITRATE,                 \
   .bitrate=CAN_DEFAULT_BITRATE,                 \
   .gmlan=false,                                 \
-  .gmlan_bitrate=GMLAN_DEFAULT_BITRATE,         \
-  .safety_mode=0
+  .gmlan_bitrate=GMLAN_DEFAULT_BITRATE
+
 typedef struct {
   GPIO_TypeDef* port;
   uint8_t num;
@@ -52,7 +52,6 @@ typedef struct {
   bool gmlan;
   bool gmlan_support;
   uint32_t gmlan_bitrate;
-  uint8_t safety_mode;
   gpio_pin enable_pin;
   gpio_alt_setting can_pins[2];
   gpio_alt_setting gmlan_pins[2];

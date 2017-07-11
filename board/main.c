@@ -353,6 +353,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       if (!ur) break;
       uart_set_baud(ur->uart, (int)setup->b.wIndex.w*300);
       break;
+    case 0xe5: // Set CAN loopback (for testing)
+      can_loopback = (setup->b.wValue.w > 0);
+      for(i=0; i < CAN_MAX; i++)
+        can_init(i);
+      break;
     case 0xf0: // k-line wValue pulse on uart2
       if (setup->b.wValue.w == 1) {
         GPIOC->ODR &= ~(1 << 10);
