@@ -9,26 +9,12 @@
 #include "timer.h"
 #include "usb.h"
 #include "spi.h"
-
-void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
-int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired);
-int safety_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired);
-
-#ifdef PANDA_SAFETY
-#include "panda_safety.h"
-#else
-#include "honda_safety.h"
-#endif
+#include "safety.h"
 
 int started = 0;
 
 // optional features
-int gas_interceptor_detected = 0;
 int started_signal_detected = 0;
-
-// detect high on UART
-// TODO: check for UART high
-int did_usb_enumerate = 0;
 
 void accord_framing_callback(uart_ring *q) {
   uint8_t r_ptr_rx_tmp = q->r_ptr_rx;
@@ -117,7 +103,7 @@ int get_health_pkt(void *dat) {
   health->started_alt = 0;
 #endif
 
-  health->controls_allowed = controls_allowed;
+  health->controls_allowed = is_output_enabled();
 
   health->gas_interceptor_detected = gas_interceptor_detected;
   health->started_signal_detected = started_signal_detected;
@@ -176,19 +162,11 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
     to_push.RDTR = tf[1];
     to_push.RIR = tf[0];
 
-    int flags = (to_push.RDTR >> 4) & 0xF;
+    int canid = (to_push.RDTR >> 4) & 0xF;
     if (safety_tx_hook(&to_push, hardwired)) {
-      send_can(&to_push, flags);
+      send_can(&to_push, canid);
     }
   }
-}
-
-void usb_cb_enumeration_complete() {
-  // power down the ESP
-  // this doesn't work and makes the board unflashable
-  // because the ESP spews shit on serial on startup
-  //GPIOC->ODR &= ~(1 << 14);
-  did_usb_enumerate = 1;
 }
 
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
@@ -297,9 +275,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       set_can_mode(canid, gmlan_enable);
       puts(" Done\n");
       break;
-    case 0xdc: // set controls allowed
-      controls_allowed = setup->b.wValue.w == 0x1337;
-      // take CAN out of SILM, careful with speed!
+    case 0xdc: // set controls allowed / safety policy
+      set_safety_mode(setup->b.wValue.w);
       for(i=0; i < CAN_MAX; i++)
         can_init(i);
       break;
@@ -538,13 +515,6 @@ int main() {
   // enable USB
   usb_init();
 
-  // enable CAN
-#ifdef PANDA_SAFETY
-  controls_allowed = 0;
-#else
-  controls_allowed = 1;
-#endif
-
   for(i=0; i < CAN_MAX; i++)
     can_init(i);
 
@@ -621,9 +591,9 @@ int main() {
 
     // set LED to be controls allowed, blue on panda, green on legacy
     #ifdef PANDA
-      set_led(LED_BLUE, controls_allowed);
+      set_led(LED_BLUE, is_output_enabled());
     #else
-      set_led(LED_GREEN, controls_allowed);
+      set_led(LED_GREEN, is_output_enabled());
     #endif
 
     // blink the red LED

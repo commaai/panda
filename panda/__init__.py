@@ -80,6 +80,10 @@ class WifiHandle(object):
   def close(self):
     self.sock.close()
 
+SAFETY_NOOUTPUT = 0
+SAFETY_HONDA = 1
+SAFETY_ALLOUTPUT = 0xFFFF
+
 class Panda(object):
   REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
   REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
@@ -151,8 +155,8 @@ class Panda(object):
 
   # ******************* configuration *******************
 
-  def set_controls_allowed(self, on):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, (0x1337 if on else 0), 0, b'')
+  def set_controls_mode(self, mode=SAFETY_ALLOUTPUT):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, 0, b'')
 
   def set_can_baud(self, bus, baud):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xde, bus, 0, struct.pack('I', baud))

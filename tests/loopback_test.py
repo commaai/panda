@@ -33,7 +33,7 @@ def run_test_w_pandas(pandas, can_speeds, gmlan_speeds, sleep_duration=0):
   print("H", h)
 
   for hh in h:
-    hh.set_controls_allowed(True)
+    hh.set_controls_mode()
 
   # test both directions
   for ho in permutations(range(len(h)), r=2):

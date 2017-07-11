@@ -80,12 +80,13 @@ typedef union _USB_Setup
 USB_Setup_TypeDef;
 
 // interfaces
-void usb_cb_enumeration_complete();
 int  usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *usbdata, int hardwired);
 void usb_cb_ep0_out(USB_Setup_TypeDef *setup, uint8_t *usbdata, int hardwired);
 int  usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired);
 void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired);
 void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired);
+
+extern int did_usb_enumerate;
 
 // descriptor types
 // same as setupdat.h

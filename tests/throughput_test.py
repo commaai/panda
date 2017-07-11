@@ -25,7 +25,7 @@ if __name__ == "__main__":
   #  p_in.can_recv()
   #sys.exit(0)
 
-  p_out.set_controls_allowed(True)
+  p_out.set_controls_mode()
 
   set_out, set_in = set(), set()
 
