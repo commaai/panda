@@ -152,16 +152,11 @@ static void panda_urb_unlink(struct panda_inf_priv *priv)
   usb_kill_anchored_urbs(&priv->tx_submitted);
 }
 
-#define SAFETY_NOOUTPUT 0
-#define SAFETY_HONDA 1
-#define SAFETY_ALLOUTPUT 0x1337
-
-static int panda_set_output_mode(struct panda_inf_priv* priv, bool enable){
+static int panda_set_output_enable(struct panda_inf_priv* priv, bool enable){
   return usb_control_msg(priv->priv_dev->udev,
 			 usb_sndctrlpipe(priv->priv_dev->udev, 0),
 			 0xDC, USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-			 enable ? SAFETY_ALLOUTPUT : SAFETY_NOOUTPUT, 0, NULL,
-			 0, USB_CTRL_SET_TIMEOUT);
+			 enable ? 0x1337 : 0, 0, NULL, 0, USB_CTRL_SET_TIMEOUT);
 }
 
 static void panda_usb_write_bulk_callback(struct urb *urb)

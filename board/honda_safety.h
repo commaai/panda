@@ -4,15 +4,14 @@
 //   out-state
 //      cancel button
 
-#include "safety.h"
-#include "can.h"
 
 // all commands: brake and steering
 // if controls_allowed
 //     allow all commands up to limit
 // else
 //     block all commands that produce actuation
-void honda__rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+
+void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // state machine to enter and exit controls
   // 0x1A6 for the ILX, 0x296 for the Civic Touring
   if ((to_push->RIR>>21) == 0x1A6 || (to_push->RIR>>21) == 0x296) {
@@ -51,7 +50,7 @@ void honda__rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 }
 
-int honda__tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
+int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
   // BRAKE: safety check
   if ((to_send->RIR>>21) == 0x1FA) {
     if (controls_allowed) {
@@ -68,7 +67,7 @@ int honda__tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
     } else {
       to_send->RDLR &= 0xFFFF0000;
     }
-  }
+  } 
 
   // GAS: safety check
   if ((to_send->RIR>>21) == 0x200) {
@@ -77,23 +76,13 @@ int honda__tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
     } else {
       to_send->RDLR &= 0xFFFF0000;
     }
-  }
+  } 
 
   // 1 allows the message through
   return hardwired;
 }
 
-int honda__tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired) {
+int safety_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired) {
   return hardwired;
 }
 
-void honda__init() {
-  controls_allowed = true;
-}
-
-const safety_hooks honda_hooks = {
-  .init = honda__init,
-  .rx = honda__rx_hook,
-  .tx = honda__tx_hook,
-  .tx_lin = honda__tx_lin_hook,
-};

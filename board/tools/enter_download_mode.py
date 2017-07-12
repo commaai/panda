@@ -11,9 +11,12 @@ def enter_download_mode(device):
 
   try:
     handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xd1, 0, 0, b'')
-  except Exception:
-    pass
-  time.sleep(1)
+  except usb1.USBErrorIO as e:
+    print("Device download mode enabled.")
+    time.sleep(1)
+  else:
+    print("Device failed to enter download mode.")
+    sys.exit(1)
 
 def find_first_panda(context=None):
   context = context or usb1.USBContext()

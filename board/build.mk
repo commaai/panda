@@ -1,7 +1,3 @@
-DEPDIR := obj/.d
-$(shell mkdir -p $(DEPDIR) >/dev/null)
-DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
-
 CFLAGS += -I inc -I ../ -nostdlib -fno-builtin
 CFLAGS += -Tstm32_flash.ld
 
@@ -11,6 +7,7 @@ OBJDUMP = arm-none-eabi-objdump
 
 ifeq ($(RELEASE),1)
   CERT = ../../pandaextra/certs/release
+  CFLAGS += "-DPANDA_SAFETY"
 else
   CERT = ../certs/debug
   CFLAGS += "-DALLOW_DEBUG"
@@ -71,23 +68,23 @@ obj/cert.h: ../crypto/getcertheader.py
 	../crypto/getcertheader.py ../certs/debug.pub ../certs/release.pub > $@
 
 obj/%.$(PROJ_NAME).o: %.c obj/cert.h obj/gitversion.h config.h
-	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 obj/%.$(PROJ_NAME).o: ../crypto/%.c
-	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 obj/$(STARTUP_FILE).o: $(STARTUP_FILE).s
-	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $<
 
-obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.$(PROJ_NAME).o obj/early.$(PROJ_NAME).o obj/llgpio.$(PROJ_NAME).o obj/can.$(PROJ_NAME).o obj/uart.$(PROJ_NAME).o obj/gpio.$(PROJ_NAME).o obj/libc.$(PROJ_NAME).o obj/spi.$(PROJ_NAME).o obj/usb.$(PROJ_NAME).o obj/safety.$(PROJ_NAME).o
+obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.$(PROJ_NAME).o obj/early.$(PROJ_NAME).o obj/llgpio.$(PROJ_NAME).o
   # hack
-	$(CC) $(DEPFLAGS) -Wl,--section-start,.isr_vector=0x8004000 $(CFLAGS) -o obj/$(PROJ_NAME).elf $^
+	$(CC) -Wl,--section-start,.isr_vector=0x8004000 $(CFLAGS) -o obj/$(PROJ_NAME).elf $^
 	$(OBJCOPY) -v -O binary obj/$(PROJ_NAME).elf obj/code.bin
 	SETLEN=1 ../crypto/sign.py obj/code.bin $@ $(CERT)
 
-obj/bootstub.$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/bootstub.$(PROJ_NAME).o obj/sha.$(PROJ_NAME).o obj/rsa.$(PROJ_NAME).o obj/early.$(PROJ_NAME).o obj/llgpio.$(PROJ_NAME).o obj/libc.$(PROJ_NAME).o obj/spi.$(PROJ_NAME).o
-	$(CC) $(DEPFLAGS) $(CFLAGS) -o obj/bootstub.$(PROJ_NAME).elf $^
+obj/bootstub.$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/bootstub.$(PROJ_NAME).o obj/sha.$(PROJ_NAME).o obj/rsa.$(PROJ_NAME).o obj/early.$(PROJ_NAME).o obj/llgpio.$(PROJ_NAME).o
+	$(CC) $(CFLAGS) -o obj/bootstub.$(PROJ_NAME).elf $^
 	$(OBJCOPY) -v -O binary obj/bootstub.$(PROJ_NAME).elf $@
 
 clean:
-	rm -fr obj
+	rm -f obj/*

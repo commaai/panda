@@ -1,12 +1,10 @@
 #include "config.h"
 #include "early.h"
 #include "llgpio.h"
-#include "uart.h"
-#include "rev.h"
 
 int has_external_debug_serial = 0;
 int is_giant_panda = 0;
-enum rev revision = REV_A;
+int revision = PANDA_REV_AB;
 void *g_pfnVectors;
 
 // must call again from main because BSS is zeroed
@@ -34,9 +32,7 @@ void detect() {
   set_gpio_pullup(GPIOA, 13, PULL_DOWN);
   for (i=0;i<PULL_EFFECTIVE_DELAY;i++);
   if(get_gpio_input(GPIOA, 13))
-    revision = REV_C;
-  else
-    revision = REV_B;
+    revision = PANDA_REV_C;
 
   // RESET pull up/down
   set_gpio_pullup(GPIOA, 13, PULL_NONE);

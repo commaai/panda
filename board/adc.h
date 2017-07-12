@@ -36,3 +36,4 @@ uint32_t adc_get(int channel) {
 
   return ADC1->JDR1;
 }
+

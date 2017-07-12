@@ -4,7 +4,6 @@ import os
 import sys
 import time
 import random
-import argparse
 
 from hexdump import hexdump
 from itertools import permutations
@@ -15,7 +14,7 @@ from panda import Panda
 def get_test_string():
   return b"test"+os.urandom(10)
 
-def run_test(can_speeds, gmlan_speeds, sleep_duration=0):
+def run_test():
   pandas = Panda.list()
   print(pandas)
 
@@ -26,42 +25,34 @@ def run_test(can_speeds, gmlan_speeds, sleep_duration=0):
   if len(pandas) == 1:
     # if we only have one on USB, assume the other is on wifi
     pandas.append("WIFI")
-  run_test_w_pandas(pandas, can_speeds, gmlan_speeds, sleep_duration)
+  run_test_w_pandas(pandas)
 
-GMLAN_BUS = 3 # Virtual 'CAN 4'
-
-def run_test_w_pandas(pandas, can_speeds, gmlan_speeds, sleep_duration=0):
+def run_test_w_pandas(pandas):
   h = list(map(lambda x: Panda(x), pandas))
   print("H", h)
 
   for hh in h:
-    hh.set_controls_mode()
+    hh.set_controls_allowed(True)
 
   # test both directions
   for ho in permutations(range(len(h)), r=2):
     print("***************** TESTING", ho)
 
-    panda_snd, panda_rcv = h[ho[0]], h[ho[1]]
-
-    if(panda_snd._serial == "WIFI"):
-      print("  *** Can not send can data over wifi panda. Skipping! ***")
-      continue
-
     # **** test health packet ****
-    print("health", ho[0], panda_snd.health())
+    print("health", ho[0], h[ho[0]].health())
 
     # **** test K/L line loopback ****
     for bus in [2,3]:
       # flush the output
-      panda_rcv.kline_drain(bus=bus)
+      h[ho[1]].kline_drain(bus=bus)
 
       # send the characters
       st = get_test_string()
       st = b"\xaa"+chr(len(st)+3).encode()+st
-      panda_snd.kline_send(st, bus=bus, checksum=False)
+      h[ho[0]].kline_send(st, bus=bus, checksum=False)
 
       # check for receive
-      ret = panda_rcv.kline_drain(bus=bus)
+      ret = h[ho[1]].kline_drain(bus=bus)
 
       print("ST Data:")
       hexdump(st)
@@ -69,41 +60,40 @@ def run_test_w_pandas(pandas, can_speeds, gmlan_speeds, sleep_duration=0):
       hexdump(ret)
       assert st == ret
       print("K/L pass", bus, ho, "\n")
-      time.sleep(sleep_duration)
 
     # **** test can line loopback ****
-    for bus, gmlan in [(0, None), (1, False), (2, False), (1, True), (2, True)]:
-      print("\ntest can", bus, "gmlan" if gmlan else "")
+    for bus in [0,1,4,5,6]:
+      panda0 = h[ho[0]]
+      panda1 = h[ho[1]]
+      print("\ntest can", bus)
       # flush
-      cans_echo = panda_snd.can_recv()
-      cans_loop = panda_rcv.can_recv()
+      cans_echo = panda0.can_recv()
+      cans_loop = panda1.can_recv()
 
       # set GMLAN mode
-      if(gmlan is not None):
-        panda_snd.set_gmlan(bus, gmlan)
-        panda_rcv.set_gmlan(bus, gmlan)
-
-      if gmlan:
-        print("Setting GMLAN %d Speed to %d" % (bus, gmlan_speeds[bus]))
-        panda_snd.set_can_baud(bus, gmlan_speeds[bus])
-        panda_rcv.set_can_baud(bus, gmlan_speeds[bus])
-        bus = GMLAN_BUS
+      if bus == 5:
+        panda0.set_gmlan(True,2)
+        panda1.set_gmlan(True,2)
+        bus = 1    # GMLAN is multiplexed with CAN2
+      elif bus == 6:
+        # on REV B panda, this just retests CAN2 GMLAN
+        panda0.set_gmlan(True,3)
+        panda1.set_gmlan(True,3)
+        bus = 4    # GMLAN is also multiplexed with CAN3
       else:
-        print("bus", bus)
-        print("Setting CanBus %d Speed to %d" % (bus, can_speeds[bus]))
-        panda_snd.set_can_baud(bus, can_speeds[bus])
-        panda_rcv.set_can_baud(bus, can_speeds[bus])
+        panda0.set_gmlan(False)
+        panda1.set_gmlan(False)
 
       # send the characters
       # pick addresses high enough to not conflict with honda code
       at = random.randint(1024, 2000)
       st = get_test_string()[0:8]
-      panda_snd.can_send(at, st, bus)
+      panda0.can_send(at, st, bus)
       time.sleep(0.1)
 
       # check for receive
-      cans_echo = panda_snd.can_recv()
-      cans_loop = panda_rcv.can_recv()
+      cans_echo = panda0.can_recv()
+      cans_loop = panda1.can_recv()
 
       print("Bus", bus, "echo", cans_echo, "loop", cans_loop)
 
@@ -116,31 +106,20 @@ def run_test_w_pandas(pandas, can_speeds, gmlan_speeds, sleep_duration=0):
       assert cans_echo[0][2] == st
       assert cans_loop[0][2] == st
 
-      assert cans_echo[0][3] == 0x80 | bus
+      assert cans_echo[0][3] == bus+2
       if cans_loop[0][3] != bus:
         print("EXPECTED %d GOT %d" % (bus, cans_loop[0][3]))
       assert cans_loop[0][3] == bus
-      time.sleep(sleep_duration)
 
       print("CAN pass", bus, ho)
 
 if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument("-n", type=int, help="Number of test iterations to run")
-  parser.add_argument("-can1baud", type=int, help="Baud Rate of CAN1", default=500000)
-  parser.add_argument("-can2baud", type=int, help="Baud Rate of CAN2", default=500000)
-  parser.add_argument("-can3baud", type=int, help="Baud Rate of CAN3", default=500000)
-  parser.add_argument("-gmlan2baud", type=int, help="Baud Rate of GMLAN2", default=33333)
-  parser.add_argument("-gmlan3baud", type=int, help="Baud Rate of GMLAN3", default=33333)
-  parser.add_argument("-sleep", type=int, help="Sleep time between tests", default=0)
-  args = parser.parse_args()
-
-  can_speeds = (args.can1baud, args.can2baud, args.can3baud)
-  gmlan_speeds = (None, args.gmlan2baud, args.gmlan2baud)
-
-  if args.n is None:
+  if len(sys.argv) > 1:
+    for i in range(int(sys.argv[1])):
+      run_test()
+  else :
+    i = 0
     while True:
-      run_test(can_speeds, gmlan_speeds, sleep_duration=args.sleep)
-  else:
-    for i in range(args.n):
-      run_test(can_speeds, gmlan_speeds, sleep_duration=args.sleep)
+      print("************* testing %d" % i)
+      run_test()
+      i += 1

@@ -1,88 +1,101 @@
-#ifndef PANDA_CAN_H
-#define PANDA_CAN_H
+void can_init(CAN_TypeDef *CAN, int silent) {
+  set_can_enable(CAN, 1);
 
-#include <stdbool.h>
-#include "rev.h"
+  CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
+  while((CAN->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
 
-#define CAN_TIMEOUT 1000000
-#define PANDA_CANB_RETURN_FLAG 0x80
+  // http://www.bittiming.can-wiki.info/
+  // PCLK = 24 MHz
+  uint32_t pclk = 24000;
+  uint32_t num_time_quanta = 16;
 
-extern bool can_live, pending_can_live, can_loopback;
+  // 500 kbps
+  uint32_t prescaler = pclk / num_time_quanta / 500;
 
-// ********************* queues types *********************
+  // seg 1: 13 time quanta, seg 2: 2 time quanta
+  CAN->BTR = (CAN_BTR_TS1_0 * 12) |
+    CAN_BTR_TS2_0 | (prescaler - 1);
 
-typedef struct {
-  uint32_t w_ptr;
-  uint32_t r_ptr;
-  uint32_t fifo_size;
-  CAN_FIFOMailBox_TypeDef *elems;
-} can_ring;
+  // silent loopback mode for debugging
+  #ifdef CAN_LOOPBACK_MODE
+    CAN->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
+  #endif
 
-#define can_buffer(x, size) \
-  CAN_FIFOMailBox_TypeDef elems_##x[size]; \
-  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = size, .elems = (CAN_FIFOMailBox_TypeDef *)&elems_##x };
+  if (silent) {
+    CAN->BTR |= CAN_BTR_SILM;
+  }
 
-extern can_ring can_rx_q;
+  // reset
+  CAN->MCR = CAN_MCR_TTCM;
 
-// ********************* port description types *********************
+  #define CAN_TIMEOUT 1000000
+  int tmp = 0;
+  while((CAN->MSR & CAN_MSR_INAK) == CAN_MSR_INAK && tmp < CAN_TIMEOUT) tmp++;
 
-#define CAN_PORT_DESC_INITIALIZER               \
-  .forwarding=-1,                               \
-  .bitrate=CAN_DEFAULT_BITRATE,                 \
-  .bitrate=CAN_DEFAULT_BITRATE,                 \
-  .gmlan=false,                                 \
-  .gmlan_bitrate=GMLAN_DEFAULT_BITRATE
+  if (tmp == CAN_TIMEOUT) {
+    set_led(LED_BLUE, 1);
+    puts("CAN init FAILED!!!!!\n");
+  } else {
+    puts("CAN init done\n");
+  }
 
-typedef struct {
-  GPIO_TypeDef* port;
-  uint8_t num;
-  bool high_val;
-} gpio_pin;
+  // accept all filter
+  CAN->FMR |= CAN_FMR_FINIT;
 
-typedef struct {
-  GPIO_TypeDef* port;
-  uint8_t num;
-  uint32_t setting;
-} gpio_alt_setting;
+  // no mask
+  CAN->sFilterRegister[0].FR1 = 0;
+  CAN->sFilterRegister[0].FR2 = 0;
+  CAN->sFilterRegister[14].FR1 = 0;
+  CAN->sFilterRegister[14].FR2 = 0;
+  CAN->FA1R |= 1 | (1 << 14);
 
-typedef struct {
-  CAN_TypeDef *CAN;
-  int8_t forwarding;
-  uint32_t bitrate;
-  bool gmlan;
-  bool gmlan_support;
-  uint32_t gmlan_bitrate;
-  gpio_pin enable_pin;
-  gpio_alt_setting can_pins[2];
-  gpio_alt_setting gmlan_pins[2];
-  can_ring *msg_buff;
-} can_port_desc;
+  CAN->FMR &= ~(CAN_FMR_FINIT);
 
-extern can_port_desc can_ports[];
-
-#ifdef PANDA
-  #define CAN_MAX 3
-#else
-  #define CAN_MAX 2
-#endif
-
-// ********************* interrupt safe queue *********************
-
-int pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
-
-int push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
-
-// ********************* CAN Functions *********************
-
-void can_init(uint8_t canid);
-
-void set_can_mode(uint16_t can, bool use_gmlan);
-
-void send_can(CAN_FIFOMailBox_TypeDef *to_push, uint8_t canid);
+  // enable all CAN interrupts
+  CAN->IER = 0xFFFFFFFF;
+  //CAN->IER = CAN_IER_TMEIE | CAN_IER_FMPIE0 | CAN_IER_FMPIE1;
+}
 
 // CAN error
-//void can_sce(uint8_t canid);
+void can_sce(CAN_TypeDef *CAN) {
+  #ifdef DEBUG
+    if (CAN==CAN1) puts("CAN1:  ");
+    if (CAN==CAN2) puts("CAN2:  ");
+    #ifdef CAN3
+      if (CAN==CAN3) puts("CAN3:  ");
+    #endif
+    puts("MSR:");
+    puth(CAN->MSR);
+    puts(" TSR:");
+    puth(CAN->TSR);
+    puts(" RF0R:");
+    puth(CAN->RF0R);
+    puts(" RF1R:");
+    puth(CAN->RF1R);
+    puts(" ESR:");
+    puth(CAN->ESR);
+    puts("\n");
+  #endif
 
-int can_cksum(uint8_t *dat, int len, int addr, int idx);
+  // clear
+  //CAN->sTxMailBox[0].TIR &= ~(CAN_TI0R_TXRQ);
+  CAN->TSR |= CAN_TSR_ABRQ0;
+  //CAN->ESR |= CAN_ESR_LEC;
+  //CAN->MSR &= ~(CAN_MSR_ERRI);
+  CAN->MSR = CAN->MSR;
+}
 
-#endif
+int can_cksum(uint8_t *dat, int len, int addr, int idx) {
+  int i;
+  int s = 0;
+  for (i = 0; i < len; i++) {
+    s += (dat[i] >> 4);
+    s += dat[i] & 0xF;
+  }
+  s += (addr>>0)&0xF;
+  s += (addr>>4)&0xF;
+  s += (addr>>8)&0xF;
+  s += idx;
+  s = 8-s;
+  return s&0xF;
+}

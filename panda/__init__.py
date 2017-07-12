@@ -24,7 +24,7 @@ def parse_can_buffer(dat):
       address = f1 >> 3
     else:
       address = f1 >> 21
-    ret.append((address, f2>>16, ddat[8:8+(f2&0xF)], (f2>>4)&0xFFF))
+    ret.append((address, f2>>16, ddat[8:8+(f2&0xF)], (f2>>4)&0xf))
   return ret
 
 class PandaWifiStreaming(object):
@@ -57,11 +57,8 @@ class WifiHandle(object):
     return ret[4:4+length]
 
   def controlWrite(self, request_type, request, value, index, data, timeout=0):
-    self.sock.send(
-      struct.pack("HHBBHHH", 0, 0, request_type, request, value, index, len(data)) + data
-    )
-    retdata = self.__recv()
-    assert len(retdata) == 0
+    # ignore data in reply, panda doesn't use it
+    return self.controlRead(request_type, request, value, index, 0, timeout)
 
   def controlRead(self, request_type, request, value, index, length, timeout=0):
     self.sock.send(struct.pack("HHBBHHH", 0, 0, request_type, request, value, index, length))
@@ -80,16 +77,10 @@ class WifiHandle(object):
   def close(self):
     self.sock.close()
 
-SAFETY_NOOUTPUT = 0
-SAFETY_HONDA = 1
-SAFETY_ALLOUTPUT = 0x1337
-
 class Panda(object):
-  REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
-  REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
+  REQUEST_TYPE = usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
 
   def __init__(self, serial=None, claim=True):
-    self._serial = serial
     if serial == "WIFI":
       self._handle = WifiHandle()
       print("opening WIFI device")
@@ -104,7 +95,7 @@ class Panda(object):
             self._handle = device.open()
             if claim:
               self._handle.claimInterface(0)
-              #self._handle.setInterfaceAltSetting(0, 0)
+              self._handle.setInterfaceAltSetting(0, 0)
             break
 
     assert self._handle != None
@@ -126,7 +117,7 @@ class Panda(object):
   # ******************* health *******************
 
   def health(self):
-    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 13)
+    dat = self._handle.controlRead(Panda.REQUEST_TYPE, 0xd2, 0, 0, 13)
     a = struct.unpack("IIBBBBB", dat)
     return {"voltage": a[0], "current": a[1],
             "started": a[2], "controls_allowed": a[3],
@@ -138,45 +129,38 @@ class Panda(object):
 
   def enter_bootloader(self):
     try:
-      self._handle.controlWrite(Panda.REQUEST_OUT, 0xd1, 0, 0, b'')
+      self._handle.controlWrite(Panda.REQUEST_TYPE, 0xd1, 0, 0, b'')
     except Exception as e:
       print(e)
       pass
 
   def get_serial(self):
-    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
+    dat = self._handle.controlRead(Panda.REQUEST_TYPE, 0xd0, 0, 0, 0x20)
     hashsig, calc_hash = dat[0x1c:], hashlib.sha1(dat[0:0x1c]).digest()[0:4]
     if hashsig != calc_hash:
       raise PandaHashMismatchException(calc_hash, hashsig)
     return [dat[0:0x10], dat[0x10:0x10+10]]
 
   def get_secret(self):
-    return self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 1, 0, 0x10)
+    return self._handle.controlRead(Panda.REQUEST_TYPE, 0xd0, 1, 0, 0x10)
 
   # ******************* configuration *******************
 
-  def set_controls_mode(self, mode=SAFETY_ALLOUTPUT):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, 0, b'')
+  def set_controls_allowed(self, on):
+      self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdc, (0x1337 if on else 0), 0, b'')
 
-  def set_can_baud(self, bus, baud):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xde, bus, 0, struct.pack('I', baud))
-    return self.get_can_baud(bus)
-
-  def get_can_baud(self, bus):
-    return struct.unpack("I", self._handle.controlRead(Panda.REQUEST_IN, 0xdf, bus, 0, 4))[0]
-
-  def set_gmlan(self, bus, on):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, bus, bool(on), b'')
+  def set_gmlan(self, on, bus=2):
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdb, 1, bus, b'')
 
   def set_uart_baud(self, uart, rate):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe1, uart, rate, b'')
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xe1, uart, rate, b'')
 
   def set_uart_parity(self, uart, parity):
     # parity, 0=off, 1=even, 2=odd
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe2, uart, parity, b'')
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xe2, uart, parity, b'')
 
   def set_uart_callback(self, uart, install):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe3, uart, int(install), b'')
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xe3, uart, int(install), b'')
 
   # ******************* can *******************
 
@@ -218,7 +202,7 @@ class Panda(object):
   # ******************* serial *******************
 
   def serial_read(self, port_number):
-    return self._handle.controlRead(Panda.REQUEST_IN, 0xe0, port_number, 0, 0x40)
+    return self._handle.controlRead(Panda.REQUEST_TYPE, 0xe0, port_number, 0, 0x40)
 
   def serial_write(self, port_number, ln):
     return self._handle.bulkWrite(2, chr(port_number) + ln)
@@ -227,13 +211,13 @@ class Panda(object):
 
   # pulse low for wakeup
   def kline_wakeup(self):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 0, 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xf0, 0, 0, b'')
 
   def kline_drain(self, bus=2):
     # drain buffer
     bret = bytearray()
     while True:
-      ret = self._handle.controlRead(Panda.REQUEST_IN, 0xe0, bus, 0, 0x40)
+      ret = self._handle.controlRead(Panda.REQUEST_TYPE, 0xe0, bus, 0, 0x40)
       if len(ret) == 0:
         break
       bret += ret
@@ -242,7 +226,7 @@ class Panda(object):
   def kline_ll_recv(self, cnt, bus=2):
     echo = bytearray()
     while len(echo) != cnt:
-      echo += self._handle.controlRead(Panda.REQUEST_IN, 0xe0, bus, 0, cnt-len(echo))
+      echo += self._handle.controlRead(Panda.REQUEST_TYPE, 0xe0, bus, 0, cnt-len(echo))
     return echo
 
   def kline_send(self, x, bus=2, checksum=True):
