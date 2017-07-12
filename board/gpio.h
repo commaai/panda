@@ -123,9 +123,11 @@ void set_can_mode(int can, int use_gmlan) {
       set_gpio_mode(GPIOA, 8, MODE_INPUT);
       set_gpio_mode(GPIOA, 15, MODE_INPUT);
 
+#ifdef CAN3
       // B3,B4: enable gmlan mode
       set_gpio_alternate(GPIOB, 3, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOB, 4, GPIO_AF11_CAN3);
+#endif
     }
 
     // put gmlan transceiver in normal mode
@@ -153,9 +155,11 @@ void set_can_mode(int can, int use_gmlan) {
         set_gpio_mode(GPIOB, 4, MODE_INPUT);
       }
 
+#ifdef CAN3
       // A8,A15: normal mode
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
+#endif
     }
 
     // 500 kbps
