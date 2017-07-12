@@ -62,38 +62,28 @@ def run_test_w_pandas(pandas):
       print("K/L pass", bus, ho, "\n")
 
     # **** test can line loopback ****
-    for bus in [0,1,4,5,6]:
-      panda0 = h[ho[0]]
-      panda1 = h[ho[1]]
+    for bus, gmlan in [(0, False), (1, False), (2, False), (1, True), (2, True)]:
+      sndpanda = h[ho[0]]
+      rcvpanda = h[ho[1]]
       print("\ntest can", bus)
       # flush
-      cans_echo = panda0.can_recv()
-      cans_loop = panda1.can_recv()
+      cans_echo = sndpanda.can_recv()
+      cans_loop = rcvpanda.can_recv()
 
       # set GMLAN mode
-      if bus == 5:
-        panda0.set_gmlan(True,2)
-        panda1.set_gmlan(True,2)
-        bus = 1    # GMLAN is multiplexed with CAN2
-      elif bus == 6:
-        # on REV B panda, this just retests CAN2 GMLAN
-        panda0.set_gmlan(True,3)
-        panda1.set_gmlan(True,3)
-        bus = 4    # GMLAN is also multiplexed with CAN3
-      else:
-        panda0.set_gmlan(False)
-        panda1.set_gmlan(False)
+      sndpanda.set_gmlan(bus, gmlan)
+      rcvpanda.set_gmlan(bus, gmlan)
 
       # send the characters
       # pick addresses high enough to not conflict with honda code
       at = random.randint(1024, 2000)
       st = get_test_string()[0:8]
-      panda0.can_send(at, st, bus)
+      sndpanda.can_send(at, st, bus)
       time.sleep(0.1)
 
       # check for receive
-      cans_echo = panda0.can_recv()
-      cans_loop = panda1.can_recv()
+      cans_echo = sndpanda.can_recv()
+      cans_loop = rcvpanda.can_recv()
 
       print("Bus", bus, "echo", cans_echo, "loop", cans_loop)
 
@@ -106,7 +96,7 @@ def run_test_w_pandas(pandas):
       assert cans_echo[0][2] == st
       assert cans_loop[0][2] == st
 
-      assert cans_echo[0][3] == bus+2
+      assert cans_echo[0][3] == 0x80 | bus
       if cans_loop[0][3] != bus:
         print("EXPECTED %d GOT %d" % (bus, cans_loop[0][3]))
       assert cans_loop[0][3] == bus
