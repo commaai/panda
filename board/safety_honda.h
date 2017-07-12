@@ -87,7 +87,12 @@ int honda__tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired) {
   return hardwired;
 }
 
+void honda__init() {
+  controls_allowed = true;
+}
+
 const safety_hooks honda_hooks = {
+  .init = honda__init,
   .rx = honda__rx_hook,
   .tx = honda__tx_hook,
   .tx_lin = honda__tx_lin_hook,

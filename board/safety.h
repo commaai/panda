@@ -7,11 +7,13 @@ void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired);
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired);
 
+typedef void (*safety_hook_init)();
 typedef void (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);
 typedef int (*tx_hook)(CAN_FIFOMailBox_TypeDef *to_send, int hardwired);
 typedef int (*tx_lin_hook)(int lin_num, uint8_t *data, int len, int hardwired);
 
 typedef struct {
+  safety_hook_init init;
   rx_hook rx;
   tx_hook tx;
   tx_lin_hook tx_lin;

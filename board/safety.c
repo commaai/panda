@@ -10,12 +10,20 @@ int gas_interceptor_detected = 0;
 
 void default__rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {}
 
+void nooutput__init() {
+  controls_allowed = false;
+}
+
 int nooutput__tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
   return false;
 }
 
 int nooutput__tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired) {
   return false;
+}
+
+void alloutput__init() {
+  controls_allowed = true;
 }
 
 int alloutput__tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
@@ -27,12 +35,14 @@ int alloutput__tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired) {
 }
 
 const safety_hooks nooutput_hooks = {
+  .init = nooutput__init,
   .rx = default__rx_hook,
   .tx = alloutput__tx_hook,
   .tx_lin = alloutput__tx_lin_hook,
 };
 
 const safety_hooks alloutput_hooks = {
+  .init = alloutput__init,
   .rx = default__rx_hook,
   .tx = alloutput__tx_hook,
   .tx_lin = alloutput__tx_lin_hook,
@@ -77,7 +87,7 @@ int set_safety_mode(uint16_t mode){
   for(i = 0; i < HOOK_CONFIG_COUNT; i++){
     if(safety_hook_registry[i].id == mode){
       current_hooks = safety_hook_registry[i].hooks;
-      controls_allowed = 1;
+      current_hooks->init();
       return 0;
     }
   }
