@@ -80,6 +80,7 @@ USB_Setup_TypeDef;
 // interfaces
 void usb_cb_enumeration_complete();
 int  usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *usbdata, int hardwired);
+void usb_cb_ep0_out(USB_Setup_TypeDef *setup, uint8_t *usbdata, int hardwired);
 int  usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired);
 void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired);
 void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired);
@@ -221,8 +222,8 @@ void *USB_ReadPacket(void *dest, uint16_t len) {
 
 void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
   #ifdef DEBUG_USB
-  puts("writing ");
-  hexdump(src, len);
+  //puts("writing ");
+  //hexdump(src, len);
   #endif
 
   uint8_t numpacket = (len+(MAX_RESP_LEN-1))/MAX_RESP_LEN;
@@ -405,6 +406,12 @@ void usb_setup() {
       current_int0_alt_setting = setup.b.wValue.w;
       USB_WritePacket(0, 0, 0);
       USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+      //USBx_INEP(0)->DIEPINT = USBx_INEP(0)->DIEPINT
+      #ifdef DEBUG_USB
+      puts("Setting Interface Alt: ");
+      puth(current_int0_alt_setting);
+      puts("\n");
+      #endif
       break;
     default:
       resp_len = usb_cb_control_msg(&setup, resp, 1);
@@ -470,10 +477,11 @@ void usb_init() {
   // all interrupts except TXFIFO EMPTY
   //USBx->GINTMSK = 0xFFFFFFFF & ~(USB_OTG_GINTMSK_NPTXFEM | USB_OTG_GINTMSK_PTXFEM | USB_OTG_GINTSTS_SOF | USB_OTG_GINTSTS_EOPF);
   //USBx->GINTMSK = 0xFFFFFFFF & ~(USB_OTG_GINTMSK_NPTXFEM | USB_OTG_GINTMSK_PTXFEM);
-  USBx->GINTMSK = USB_OTG_GINTMSK_USBRST | USB_OTG_GINTMSK_ENUMDNEM | USB_OTG_GINTMSK_OTGINT |
-                  USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_GONAKEFFM | USB_OTG_GINTMSK_GINAKEFFM |
-                  USB_OTG_GINTMSK_OEPINT | USB_OTG_GINTMSK_IEPINT | USB_OTG_GINTMSK_USBSUSPM |
-                  USB_OTG_GINTMSK_CIDSCHGM | USB_OTG_GINTMSK_SRQIM | USB_OTG_GINTMSK_MMISM;
+  //SRQ is when a 'session' starts.
+  USBx->GINTMSK = USB_OTG_GINTMSK_SRQIM    | USB_OTG_GINTMSK_CIDSCHGM  | USB_OTG_GINTMSK_OEPINT    |
+                  USB_OTG_GINTMSK_IEPINT   | USB_OTG_GINTMSK_ENUMDNEM  | USB_OTG_GINTMSK_USBRST    |
+                  USB_OTG_GINTMSK_USBSUSPM | USB_OTG_GINTMSK_GONAKEFFM | USB_OTG_GINTMSK_GINAKEFFM |
+                  USB_OTG_GINTMSK_RXFLVLM  | USB_OTG_GINTMSK_OTGINT    | USB_OTG_GINTMSK_MMISM;
 
   USBx->GAHBCFG = USB_OTG_GAHBCFG_GINT;
 
@@ -483,7 +491,6 @@ void usb_init() {
 }
 
 // ***************************** USB port *****************************
-
 void usb_irqhandler(void) {
   //USBx->GINTMSK = 0;
 
@@ -557,6 +564,10 @@ void usb_irqhandler(void) {
         puts("\n");
         hexdump(&usbdata, len);
       #endif
+
+      if(endpoint == 0){
+        usb_cb_ep0_out(&setup, usbdata, 1);
+      }
 
       if (endpoint == 2) {
         usb_cb_ep2_out(usbdata, len, 1);
@@ -692,6 +703,10 @@ void usb_irqhandler(void) {
       if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
         #ifdef DEBUG_USB
         puts("  IN PACKET QUEUE\n");
+        if (can_rx_q.w_ptr != can_rx_q.r_ptr)
+          puts("Rx CAN bulk: There is CAN data to send.\n");
+        else
+          puts("Rx CAN bulk: No can data\n");
         #endif
         // TODO: always assuming max len, can we get the length?
         USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
