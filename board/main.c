@@ -126,6 +126,18 @@ void set_fan_speed(int fan_speed) {
   TIM3->CCR3 = fan_speed;
 }
 
+void usb_cb_ep0_out(USB_Setup_TypeDef *setup, uint8_t *usbdata, int hardwired) {
+  if (setup->b.bRequest == 0xde) {
+    if (!(setup->b.wValue.w < CAN_MAX && setup->b.wLength.w == 4)) return;
+
+    uint32_t bitrate = *(int*)usbdata;
+    uint16_t canb_id = setup->b.wValue.w;
+
+    can_bitrate[canb_id] = bitrate;
+    can_init(canb_id);
+  }
+}
+
 int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) {
   CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;;
 
@@ -265,6 +277,18 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         can_forwarding[setup->b.wValue.w] = -1;
       }
       break;
+    case 0xde: // Set Can bitrate
+      // Handled in EP0 data OUT (usb_cb_ep0_out)
+      if (!(setup->b.wValue.w < CAN_MAX && setup->b.wLength.w == 4))
+        puts("Invalid bitrate or canid value.\n");
+      break;
+    case 0xdf: // Get Can bitrate
+      if (setup->b.wValue.w < CAN_MAX) {
+        memcpy(resp, (void *)&can_bitrate[setup->b.wValue.w], 4);
+        resp_len = 4;
+      }
+      //Return nothing if invalid canbus id.
+      break;
     case 0xe0: // uart read
       ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) break;
@@ -376,6 +400,7 @@ int spi_total_count = 0;
 uint8_t spi_tx_buf[0x44];
 
 void handle_spi(uint8_t *data, int len) {
+  USB_Setup_TypeDef *fake_setup;
   memset(spi_tx_buf, 0xaa, 0x44);
   // data[0]  = endpoint
   // data[2]  = length
@@ -385,7 +410,11 @@ void handle_spi(uint8_t *data, int len) {
   switch (data[0]) {
     case 0:
       // control transfer
-      *resp_len = usb_cb_control_msg((USB_Setup_TypeDef *)(data+4), spi_tx_buf+4, 0);
+      fake_setup = (USB_Setup_TypeDef *)(data+4);
+      *resp_len = usb_cb_control_msg(fake_setup, spi_tx_buf+4, 0);
+      // Handle CTRL writes with data
+      if (*resp_len == 0 && (fake_setup->b.bmRequestType & 0x80) == 0 && fake_setup->b.wLength.w)
+        usb_cb_ep0_out(fake_setup, data+4+sizeof(USB_Setup_TypeDef), 0);
       break;
     case 1:
       // ep 1, read
