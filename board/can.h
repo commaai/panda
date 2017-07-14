@@ -1,4 +1,5 @@
-void can_init(CAN_TypeDef *CAN, int silent) {
+void can_init(uint8_t bus_number, int silent) {
+  CAN_TypeDef *CAN = CANIF_FROM_BUS_NUM(bus_number);
   set_can_enable(CAN, 1);
 
   CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
