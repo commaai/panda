@@ -1,4 +1,4 @@
-void can_init(uint8_t bus_number, int silent) {
+void can_init(uint8_t bus_number) {
   CAN_TypeDef *CAN = CANIF_FROM_BUS_NUM(bus_number);
   set_can_enable(CAN, 1);
 
@@ -22,7 +22,7 @@ void can_init(uint8_t bus_number, int silent) {
     CAN->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
   }
 
-  if (silent) {
+  if (!controls_allowed) {
     CAN->BTR |= CAN_BTR_SILM;
   }
 

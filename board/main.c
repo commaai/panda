@@ -1,5 +1,6 @@
 #include "config.h"
 #include "early.h"
+#include <stdbool.h>
 
 #define NULL ((void*)0)
 
@@ -333,16 +334,7 @@ int putc(uart_ring *q, char elem) {
 #include "usb.h"
 #include "can.h"
 #include "spi.h"
-
-void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
-int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired);
-int safety_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired);
-
-#ifdef PANDA_SAFETY
-#include "panda_safety.h"
-#else
-#include "honda_safety.h"
-#endif
+#include "safety.h"
 
 // ***************************** CAN *****************************
 
@@ -643,10 +635,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       }
       break;
     case 0xdc: // set controls allowed
-      controls_allowed = setup->b.wValue.w == 0x1337;
-      // take CAN out of SILM, careful with speed!
+      set_safety_mode(setup->b.wValue.w);
       for(i=0; i < CAN_MAX; i++)
-        can_init(i, 0);
+        can_init(i);
       break;
     case 0xdd: // enable can forwarding
       //wValue = Can Bus Num to forward from
@@ -875,11 +866,7 @@ int main() {
 
   // default to silent mode to prevent issues with Ford
   for(i=0; i < CAN_MAX; i++)
-    #ifdef PANDA_SAFETY
-    can_init(i, 1);
-    #else
-    can_init(i, 0);
-    #endif
+    can_init(i);
 
   adc_init();
 
