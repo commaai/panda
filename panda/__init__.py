@@ -148,7 +148,11 @@ class Panda(object):
   # ******************* configuration *******************
 
   def set_controls_allowed(self, on):
-      self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdc, (0x1337 if on else 0), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdc, (0x1337 if on else 0), 0, b'')
+
+  def set_can_forwarding(self, from_bus, to_bus):
+    """This feature may not work correctly with saturated busses"""
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdd, from_bus, to_bus, b'')
 
   def set_gmlan(self, on, bus=2):
     self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdb, on, bus, b'')
