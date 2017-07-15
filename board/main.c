@@ -24,7 +24,7 @@ int can_forwarding[] = {-1,-1,-1};
 // debug safety check: is controls allowed?
 int controls_allowed = 0;
 int started = 0;
-int can_live = 0, pending_can_live = 0;
+int can_live = 0, pending_can_live = 0, can_loopback = 0;
 
 // optional features
 int gas_interceptor_detected = 0;
@@ -714,6 +714,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) break;
       uart_set_baud(ur->uart, (int)setup->b.wIndex.w*300);
+      break;
+    case 0xe5: // Set CAN loopback (for testing)
+      can_loopback = (setup->b.wValue.w > 0);
+      can_init(CAN1, 0);
+      can_init(CAN2, 0);
+      #ifdef CAN3
+        can_init(CAN3, 0);
+      #endif
       break;
     case 0xf0: // k-line wValue pulse on uart2
       if (setup->b.wValue.w == 1) {

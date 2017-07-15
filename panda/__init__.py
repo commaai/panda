@@ -152,6 +152,9 @@ class Panda(object):
   def set_gmlan(self, on, bus=2):
     self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdb, 1, bus, b'')
 
+  def set_can_loopback(self, enable):
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xe5, bool(enable), 0, b'')
+
   def set_uart_baud(self, uart, rate):
     self._handle.controlWrite(Panda.REQUEST_TYPE, 0xe1, uart, rate, b'')
 
