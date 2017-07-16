@@ -5,17 +5,37 @@
 
 
 // assign CAN numbering
+// bus num: Can bus number on ODB connector. Sent to/from USB
+//    Min: 0; Max: 127; Bit 7 marks message as receipt (bus 129 is receipt for but 1)
+// cans: Look up MCU can interface from bus number
+// can number: numeric lookup for MCU CAN interfaces (0 = CAN1, 1 = CAN2, etc);
+// bus_lookup: Translates from 'can number' to 'bus number'.
+// can_num_lookup: Translates from 'bus number' to 'can number'.
+// can_forwarding: Given a bus num, lookup bus num to forward to. -1 means no forward.
+
 // old:         CAN1 = 1   CAN2 = 0
 // panda:       CAN1 = 0   CAN2 = 1   CAN3 = 4
 #ifdef PANDA
-  int can_numbering[] = {0,1,4};
+  CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
+  uint8_t bus_lookup[] = {0,1,2};
+  uint8_t can_num_lookup[] = {0,1,2}; //bus num -> can num
+  int8_t can_forwarding[] = {-1, -1, -1};
+  #define CAN_MAX 3
 #else
-  int can_numbering[] = {1,0,-1};
+  CAN_TypeDef *cans[] = {CAN2, CAN1};
+  uint8_t bus_lookup[] = {1,0};
+  uint8_t can_num_lookup[] = {1,0}; //bus num -> can num
+  int8_t can_forwarding[] = {-1,-1};
+  #define CAN_MAX 2
 #endif
 
-// can forwards FROM -> TO
-#define CAN_MAX 3
-int can_forwarding[] = {-1,-1,-1};
+#define CANIF_FROM_CAN_NUM(num) (cans[bus_lookup[num]])
+#define CANIF_FROM_BUS_NUM(num) (cans[num])
+#define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
+#define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
+
+#define CAN_BUS_RET_FLAG 0x80
+#define CAN_BUS_NUM_MASK 0x7F
 
 // *** end config ***
 
@@ -54,6 +74,8 @@ can_buffer(rx_q, 0x1000)
 can_buffer(tx1_q, 0x100)
 can_buffer(tx2_q, 0x100)
 can_buffer(tx3_q, 0x100)
+
+can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
 
 // ********************* interrupt safe queue *********************
 
@@ -324,7 +346,9 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired);
 
 // ***************************** CAN *****************************
 
-void process_can(CAN_TypeDef *CAN, can_ring *can_q, int can_number) {
+void process_can(uint8_t can_number) {
+  CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
+  uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
   #ifdef DEBUG
     puts("process CAN TX\n");
   #endif
@@ -333,7 +357,7 @@ void process_can(CAN_TypeDef *CAN, can_ring *can_q, int can_number) {
   if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
     CAN_FIFOMailBox_TypeDef to_push;
     to_push.RIR = CAN->sTxMailBox[0].TIR;
-    to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000F) | ((can_number+2) << 4);
+    to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000F) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
     to_push.RDLR = CAN->sTxMailBox[0].TDLR;
     to_push.RDHR = CAN->sTxMailBox[0].TDHR;
     push(&can_rx_q, &to_push);
@@ -342,7 +366,7 @@ void process_can(CAN_TypeDef *CAN, can_ring *can_q, int can_number) {
   // check for empty mailbox
   CAN_FIFOMailBox_TypeDef to_send;
   if ((CAN->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
-    if (pop(can_q, &to_send)) {
+    if (pop(can_queues[bus_number], &to_send)) {
       // only send if we have received a packet
       CAN->sTxMailBox[0].TDLR = to_send.RDLR;
       CAN->sTxMailBox[0].TDHR = to_send.RDHR;
@@ -359,25 +383,24 @@ void process_can(CAN_TypeDef *CAN, can_ring *can_q, int can_number) {
 
 
 void CAN1_TX_IRQHandler() {
-  process_can(CAN1, &can_tx1_q, can_numbering[0]);
+  process_can(0);
 }
 
 void CAN2_TX_IRQHandler() {
-  process_can(CAN2, &can_tx2_q, can_numbering[1]);
+  process_can(1);
 }
 
-#ifdef CAN3
 void CAN3_TX_IRQHandler() {
-  process_can(CAN3, &can_tx3_q, can_numbering[2]);
+  process_can(2);
 }
-#endif
 
-void send_can(CAN_FIFOMailBox_TypeDef *to_push, int flags);
+void send_can(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
 
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
-void can_rx(CAN_TypeDef *CAN, int can_index) {
-  int can_number = can_numbering[can_index];
+void can_rx(uint8_t can_number) {
+  CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
+  uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
   while (CAN->RF0R & CAN_RF0R_FMP0) {
     // can is live
     pending_can_live = 1;
@@ -391,18 +414,18 @@ void can_rx(CAN_TypeDef *CAN, int can_index) {
 
     // forwarding (panda only)
     #ifdef PANDA
-      if (can_forwarding[can_index] != -1 && can_numbering[can_forwarding[can_index]] != -1) {
+      if (can_forwarding[bus_number] != -1) {
         CAN_FIFOMailBox_TypeDef to_send;
         to_send.RIR = to_push.RIR | 1; // TXRQ
         to_send.RDTR = to_push.RDTR;
         to_send.RDLR = to_push.RDLR;
         to_send.RDHR = to_push.RDHR;
-        send_can(&to_send, can_numbering[can_forwarding[can_index]]);
+        send_can(&to_send, can_forwarding[bus_number]);
       }
     #endif
 
     // modify RDTR for our API
-    to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (can_number << 4);
+    to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (bus_number << 4);
 
     safety_rx_hook(&to_push);
 
@@ -419,22 +442,20 @@ void can_rx(CAN_TypeDef *CAN, int can_index) {
 void CAN1_RX0_IRQHandler() {
   //puts("CANRX1");
   //delay(10000);
-  can_rx(CAN1, 0);
+  can_rx(0);
 }
 
 void CAN2_RX0_IRQHandler() {
   //puts("CANRX0");
   //delay(10000);
-  can_rx(CAN2, 1);
+  can_rx(1);
 }
 
-#ifdef CAN3
 void CAN3_RX0_IRQHandler() {
   //puts("CANRX0");
   //delay(10000);
-  can_rx(CAN3, 2);
+  can_rx(2);
 }
-#endif
 
 void CAN1_SCE_IRQHandler() {
   //puts("CAN1_SCE\n");
@@ -511,40 +532,12 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
   }
 }
 
-void send_can(CAN_FIFOMailBox_TypeDef *to_push, int flags) {
-  int i;
-  CAN_TypeDef *CAN;
-  can_ring *can_q;
-  if (flags == can_numbering[0])  {
-    CAN = CAN1;
-    can_q = &can_tx1_q;
-  } else if (flags == can_numbering[1]) {
-    CAN = CAN2;
-    can_q = &can_tx2_q;
-  #ifdef CAN3
-  } else if (flags == can_numbering[2]) {
-    CAN = CAN3;
-    can_q = &can_tx3_q;
-  #endif
-  } else if (flags == 8 || flags == 9) {
-    // fake LIN as CAN
-    uart_ring *lin_ring = (flags == 8) ? &lin1_ring : &lin2_ring;
-    for (i = 0; i < min(8, to_push->RDTR & 0xF); i++) {
-      putc(lin_ring, ((uint8_t*)&to_push->RDLR)[i]);
-    }
-    return;
-  } else {
-    // no crash
-    return;
-  }
-
+void send_can(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
   // add CAN packet to send queue
   // bus number isn't passed through
   to_push->RDTR &= 0xF;
-  push(can_q, to_push);
-
-  // flags = can_number
-  process_can(CAN, can_q, flags);
+  push(can_queues[bus_number], to_push);
+  process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
 }
 
 // send on CAN
@@ -560,9 +553,9 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
     to_push.RDTR = tf[1];
     to_push.RIR = tf[0];
 
-    int flags = (to_push.RDTR >> 4) & 0xF;
+    uint8_t bus_number = (to_push.RDTR >> 4) & CAN_BUS_NUM_MASK;
     if (safety_tx_hook(&to_push, hardwired)) {
-      send_can(&to_push, flags);
+      send_can(&to_push, bus_number);
     }
   }
 }
@@ -641,29 +634,28 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       }
       break;
     case 0xdb: // toggle GMLAN
-      if (setup->b.wIndex.w == 3) {
+      if (setup->b.wIndex.w == 1) {
+        set_can_mode(3, 0); // TODO: Make set_can_mode bus num 'sane' as well.
+        set_can_mode(2, setup->b.wValue.w);
+      } else if (setup->b.wIndex.w == 2) {
         set_can_mode(2, 0);
         set_can_mode(3, setup->b.wValue.w);
-      } else {
-        set_can_mode(3, 0);
-        set_can_mode(2, setup->b.wValue.w);
       }
       break;
     case 0xdc: // set controls allowed
       controls_allowed = setup->b.wValue.w == 0x1337;
       // take CAN out of SILM, careful with speed!
-      can_init(CAN1, 0);
-      can_init(CAN2, 0);
-      #ifdef CAN3
-        can_init(CAN3, 0);
-      #endif
+      for(i=0; i < CAN_MAX; i++)
+        can_init(i, 0);
       break;
     case 0xdd: // enable can forwarding
-      if (setup->b.wValue.w != 0 && setup->b.wValue.w <= CAN_MAX) {
-        // 0 sets it to -1
-        if (setup->b.wIndex.w <= CAN_MAX) {
-          can_forwarding[setup->b.wValue.w-1] = setup->b.wIndex.w-1;
-        }
+      //wValue = Can Bus Num to forward from
+      //wIndex = Can Bus Num to forward to
+      if (setup->b.wValue.w < CAN_MAX && setup->b.wIndex.w < CAN_MAX &&
+          setup->b.wValue.w != setup->b.wIndex.w) { //Set forwarding
+        can_forwarding[setup->b.wValue.w] = setup->b.wIndex.w & CAN_BUS_NUM_MASK;
+      }else if(setup->b.wValue.w < CAN_MAX && setup->b.wIndex.w == 0xFF){ //Clear Forwarding
+        can_forwarding[setup->b.wValue.w] = -1;
       }
       break;
     case 0xe0: // uart read
@@ -848,6 +840,8 @@ void __initialize_hardware_early() {
 }
 
 int main() {
+  int i;
+
   // init devices
   clock_init();
   periph_init();
@@ -875,19 +869,12 @@ int main() {
   usb_init();
 
   // default to silent mode to prevent issues with Ford
-#ifdef PANDA_SAFETY
-  can_init(CAN1, 1);
-  can_init(CAN2, 1);
-  #ifdef CAN3
-    can_init(CAN3, 1);
-  #endif
-#else
-  can_init(CAN1, 0);
-  can_init(CAN2, 0);
-  #ifdef CAN3
-    can_init(CAN3, 0);
-  #endif
-#endif
+  for(i=0; i < CAN_MAX; i++)
+    #ifdef PANDA_SAFETY
+    can_init(i, 1);
+    #else
+    can_init(i, 0);
+    #endif
 
   adc_init();
 

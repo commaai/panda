@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import random
+import argparse
 
 from hexdump import hexdump
 from itertools import permutations
@@ -14,7 +15,7 @@ from panda import Panda
 def get_test_string():
   return b"test"+os.urandom(10)
 
-def run_test():
+def run_test(sleep_duration):
   pandas = Panda.list()
   print(pandas)
 
@@ -25,9 +26,9 @@ def run_test():
   if len(pandas) == 1:
     # if we only have one on USB, assume the other is on wifi
     pandas.append("WIFI")
-  run_test_w_pandas(pandas)
+  run_test_w_pandas(pandas, sleep_duration)
 
-def run_test_w_pandas(pandas):
+def run_test_w_pandas(pandas, sleep_duration):
   h = list(map(lambda x: Panda(x), pandas))
   print("H", h)
 
@@ -37,6 +38,12 @@ def run_test_w_pandas(pandas):
   # test both directions
   for ho in permutations(range(len(h)), r=2):
     print("***************** TESTING", ho)
+
+    panda0, panda1 = h[ho[0]], h[ho[1]]
+
+    if(panda0._serial == "WIFI"):
+      print("  *** Can not send can data over wifi panda. Skipping! ***")
+      continue
 
     # **** test health packet ****
     print("health", ho[0], h[ho[0]].health())
@@ -60,29 +67,18 @@ def run_test_w_pandas(pandas):
       hexdump(ret)
       assert st == ret
       print("K/L pass", bus, ho, "\n")
+      time.sleep(sleep_duration)
 
     # **** test can line loopback ****
-    for bus in [0,1,4,5,6]:
-      panda0 = h[ho[0]]
-      panda1 = h[ho[1]]
+    for bus, gmlan in [(0, None), (1, False), (2, False), (1, True), (2, True)]:
       print("\ntest can", bus)
       # flush
       cans_echo = panda0.can_recv()
       cans_loop = panda1.can_recv()
 
-      # set GMLAN mode
-      if bus == 5:
-        panda0.set_gmlan(True,2)
-        panda1.set_gmlan(True,2)
-        bus = 1    # GMLAN is multiplexed with CAN2
-      elif bus == 6:
-        # on REV B panda, this just retests CAN2 GMLAN
-        panda0.set_gmlan(True,3)
-        panda1.set_gmlan(True,3)
-        bus = 4    # GMLAN is also multiplexed with CAN3
-      else:
-        panda0.set_gmlan(False)
-        panda1.set_gmlan(False)
+      if gmlan is not None:
+        panda0.set_gmlan(gmlan, bus)
+        panda1.set_gmlan(gmlan, bus)
 
       # send the characters
       # pick addresses high enough to not conflict with honda code
@@ -106,20 +102,23 @@ def run_test_w_pandas(pandas):
       assert cans_echo[0][2] == st
       assert cans_loop[0][2] == st
 
-      assert cans_echo[0][3] == bus+2
+      assert cans_echo[0][3] == 0x80 | bus
       if cans_loop[0][3] != bus:
         print("EXPECTED %d GOT %d" % (bus, cans_loop[0][3]))
       assert cans_loop[0][3] == bus
 
       print("CAN pass", bus, ho)
+      time.sleep(sleep_duration)
 
 if __name__ == "__main__":
-  if len(sys.argv) > 1:
-    for i in range(int(sys.argv[1])):
-      run_test()
-  else :
-    i = 0
+  parser = argparse.ArgumentParser()
+  parser.add_argument("-n", type=int, help="Number of test iterations to run")
+  parser.add_argument("-sleep", type=int, help="Sleep time between tests", default=0)
+  args = parser.parse_args()
+
+  if args.n is None:
     while True:
-      print("************* testing %d" % i)
-      run_test()
-      i += 1
+      run_test(sleep_duration=args.sleep)
+  else:
+    for i in range(args.n):
+      run_test(sleep_duration=args.sleep)
