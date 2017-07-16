@@ -3,7 +3,6 @@
 
 //#define DEBUG
 //#define DEBUG_USB
-//#define CAN_LOOPBACK_MODE
 
 #ifdef STM32F4
   #define PANDA

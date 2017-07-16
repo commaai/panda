@@ -18,9 +18,9 @@ void can_init(uint8_t bus_number, int silent) {
     CAN_BTR_TS2_0 | (prescaler - 1);
 
   // silent loopback mode for debugging
-  #ifdef CAN_LOOPBACK_MODE
+  if (can_loopback) {
     CAN->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
-  #endif
+  }
 
   if (silent) {
     CAN->BTR |= CAN_BTR_SILM;
