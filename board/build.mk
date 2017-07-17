@@ -7,8 +7,8 @@ OBJDUMP = arm-none-eabi-objdump
 
 ifeq ($(RELEASE),1)
   CERT = ../../pandaextra/certs/release
-  CFLAGS += "-DPANDA_SAFETY"
 else
+  # enable the debug cert
   CERT = ../certs/debug
   CFLAGS += "-DALLOW_DEBUG"
 endif
@@ -22,14 +22,16 @@ endif
 
 DFU_UTIL = "./tools/dfu-util-$(MACHINE)"
 
-# this pushes the unchangable bootstub too
+# this no longer pushes the bootstub
 all: compileall dfu
+
+# this one does
+recover: compileall dfu_recover
 
 compileall: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
 
 dfu:
 	./tools/enter_download_mode.py
-	$(DFU_UTIL) -a 0 -s 0x08000000 -D obj/bootstub.$(PROJ_NAME).bin
 	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
 	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
 

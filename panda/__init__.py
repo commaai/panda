@@ -5,8 +5,10 @@ import struct
 import hashlib
 import socket
 import usb1
+import os
+import time
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 class PandaHashMismatchException(Exception):
   def __init__(self, hash_, expected_hash):
@@ -77,11 +79,11 @@ class WifiHandle(object):
   def close(self):
     self.sock.close()
 
-SAFETY_NOOUTPUT = 0
-SAFETY_HONDA = 1
-SAFETY_ALLOUTPUT = 0x1337
-
 class Panda(object):
+  SAFETY_NOOUTPUT = 0
+  SAFETY_HONDA = 1
+  SAFETY_ALLOUTPUT = 0x1337
+
   REQUEST_TYPE = usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
 
   def __init__(self, serial=None, claim=True):
@@ -107,6 +109,14 @@ class Panda(object):
 
   def close(self):
     self._handle.close()
+
+  @staticmethod
+  def program():
+    BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
+    # TODO: check for legacy board
+    os.system("cd %s && make" % os.path.join(BASEDIR, "board"))
+    # TODO: check for errors
+    time.sleep(1)
 
   @staticmethod
   def list():
@@ -151,21 +161,22 @@ class Panda(object):
 
   # ******************* configuration *******************
 
-  def set_safety_mode(self, mode=SAFETY_ALLOUTPUT):
+  def set_esp_power(self, on):
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xd9, int(on), 0, b'')
+
+  def set_safety_mode(self, mode=SAFETY_NOOUTPUT):
     self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdc, mode, 0, b'')
 
-  def set_controls_allowed(self, on):
-    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xde, (0x1337 if on else 0), 0, b'')
-
   def set_can_forwarding(self, from_bus, to_bus):
-    """This feature may not work correctly with saturated busses"""
+    # TODO: This feature may not work correctly with saturated buses
     self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdd, from_bus, to_bus, b'')
 
   def set_gmlan(self, on, bus=2):
-    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdb, on, bus, b'')
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdb, int(on), bus, b'')
 
   def set_can_loopback(self, enable):
-    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xe5, bool(enable), 0, b'')
+    # set can loopback mode for all buses
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xe5, int(enable), 0, b'')
 
   def set_uart_baud(self, uart, rate):
     self._handle.controlWrite(Panda.REQUEST_TYPE, 0xe1, uart, rate, b'')
@@ -195,7 +206,7 @@ class Panda(object):
 
     while True:
       try:
-        print("DAT: %s"%b''.join(snds).__repr__())
+        #print("DAT: %s"%b''.join(snds).__repr__())
         self._handle.bulkWrite(3, b''.join(snds))
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
