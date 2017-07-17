@@ -634,9 +634,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         set_can_mode(3, setup->b.wValue.w);
       }
       break;
-    case 0xdc: // set controls allowed
+    case 0xdc: // set safety mode
       set_safety_mode(setup->b.wValue.w);
-      for(i=0; i < CAN_MAX; i++)
+      for (i=0; i < CAN_MAX; i++)
+        // TODO: make this not disable GMLAN
         can_init(i, 0);
       break;
     case 0xdd: // enable can forwarding
@@ -648,6 +649,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       }else if(setup->b.wValue.w < CAN_MAX && setup->b.wIndex.w == 0xFF){ //Clear Forwarding
         can_forwarding[setup->b.wValue.w] = -1;
       }
+      break;
+    case 0xde: // set controls allowed
+      controls_allowed = setup->b.wValue.w == 0x1337;
       break;
     case 0xe0: // uart read
       ur = get_ring_by_number(setup->b.wValue.w);

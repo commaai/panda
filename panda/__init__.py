@@ -151,14 +151,11 @@ class Panda(object):
 
   # ******************* configuration *******************
 
-  def set_controls_mode(self, mode=SAFETY_ALLOUTPUT):
+  def set_safety_mode(self, mode=SAFETY_ALLOUTPUT):
     self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdc, mode, 0, b'')
 
   def set_controls_allowed(self, on):
-    self.set_controls_mode(SAFETY_ALLOUTPUT if on else SAFETY_NOOUTPUT)
-
-  def set_controls_allowed(self, on):
-    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xdc, (0x1337 if on else 0), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_TYPE, 0xde, (0x1337 if on else 0), 0, b'')
 
   def set_can_forwarding(self, from_bus, to_bus):
     """This feature may not work correctly with saturated busses"""
