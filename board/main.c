@@ -14,8 +14,8 @@
 // can_num_lookup: Translates from 'bus number' to 'can number'.
 // can_forwarding: Given a bus num, lookup bus num to forward to. -1 means no forward.
 
-// old:         CAN1 = 1   CAN2 = 0
-// panda:       CAN1 = 0   CAN2 = 1   CAN3 = 4
+// NEO:         Bus 1=CAN1   Bus 2=CAN2
+// Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 3=CAN3
 #ifdef PANDA
   CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
   uint8_t bus_lookup[] = {0,1,2};
@@ -637,7 +637,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xdc: // set controls allowed
       set_safety_mode(setup->b.wValue.w);
       for(i=0; i < CAN_MAX; i++)
-        can_init(i);
+        can_init(i, 0);
       break;
     case 0xdd: // enable can forwarding
       //wValue = Can Bus Num to forward from
@@ -866,7 +866,11 @@ int main() {
 
   // default to silent mode to prevent issues with Ford
   for(i=0; i < CAN_MAX; i++)
-    can_init(i);
+    #ifdef PANDA_SAFETY
+    can_init(i, 1);
+    #else
+    can_init(i, 0);
+    #endif
 
   adc_init();
 
