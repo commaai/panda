@@ -17,12 +17,12 @@
 // can_forwarding: Given a bus num, lookup bus num to forward to. -1 means no forward.
 
 // NEO:         Bus 1=CAN1   Bus 2=CAN2
-// Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 3=CAN3
+// Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
 #ifdef PANDA
   CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
   uint8_t bus_lookup[] = {0,1,2};
   uint8_t can_num_lookup[] = {0,1,2}; //bus num -> can num
-  int8_t can_forwarding[] = {-1, -1, -1};
+  int8_t can_forwarding[] = {-1,-1,-1};
   #define CAN_MAX 3
 #else
   CAN_TypeDef *cans[] = {CAN2, CAN1};
@@ -157,67 +157,6 @@ uart_ring *get_ring_by_number(int a) {
       return &lin2_ring;
     default:
       return NULL;
-  }
-}
-
-void accord_framing_callback(uart_ring *q) {
-  uint8_t r_ptr_rx_tmp = q->r_ptr_rx;
-  int sof1 = -1;
-  int sof2 = -1;
-  int i;
-  char junk;
-  int jlen = 0;
-  int plen = 0;
-  while (q->w_ptr_rx != r_ptr_rx_tmp) {
-    if ((q->elems_rx[r_ptr_rx_tmp] & 0x80) == 0) {
-      if (sof1 == -1) {
-        sof1 = r_ptr_rx_tmp;
-      } else {
-        sof2 = r_ptr_rx_tmp;
-        break;
-      }
-    }
-    if (sof1 != -1) {
-      plen++;
-    } else {
-      jlen++;
-    }
-    r_ptr_rx_tmp++;
-  }
-
-  // drop until SOF1
-  if (sof1 != -1) {
-    for (i = 0; i < jlen; i++) getc(q, &junk);
-  }
-
-  if (sof2 != -1) {
-    //puth(sof1); puts(" "); puth(sof2); puts("\n");
-
-    if (plen > 8) {
-      // drop oversized packet
-      for (i = 0; i < plen; i++) getc(q, &junk);
-    } else {
-      // packet received
-      CAN_FIFOMailBox_TypeDef to_push;
-      to_push.RIR = 0;
-      to_push.RDTR = plen;
-      to_push.RDLR = 0;
-      to_push.RDHR = 0;
-
-      // 8 is K-line, 9 is L-line
-      if (q->uart == UART5) {
-        to_push.RDTR |= 8 << 4;
-      } else if (q->uart == USART3) {
-        to_push.RDTR |= 9 << 4;
-      }
-
-      // get data from queue
-      for (i = 0; i < plen; i++) {
-        getc(q, &(((char*)(&to_push.RDLR))[i]));
-      }
-
-      push(&can_rx_q, &to_push);
-    }
   }
 }
 
@@ -700,16 +639,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
           break;
         default:
           break;
-      }
-      break;
-    // **** 0xe3: uart install accord framing callback
-    case 0xe3:
-      ur = get_ring_by_number(setup->b.wValue.w);
-      if (!ur) break;
-      if (setup->b.wIndex.w == 1) {
-        ur->callback = accord_framing_callback;
-      } else {
-        ur->callback = NULL;
       }
       break;
     // **** 0xe4: uart set baud rate extended
