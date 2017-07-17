@@ -709,11 +709,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     case 0xe5: // Set CAN loopback (for testing)
       can_loopback = (setup->b.wValue.w > 0);
-      can_init(CAN1, 0);
-      can_init(CAN2, 0);
-      #ifdef CAN3
-        can_init(CAN3, 0);
-      #endif
+      for(i=0; i < CAN_MAX; i++)
+        can_init(i, 0);
       break;
     case 0xf0: // k-line wValue pulse on uart2
       if (setup->b.wValue.w == 1) {
