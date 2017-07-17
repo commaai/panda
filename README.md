@@ -78,6 +78,13 @@ To print out the serial console from the STM32, run tests/debug_console.py
 
 To print out the serial console from the ESP8266, run PORT=1 tests/debug_console.py
 
+Safety Model
+------
+
+When a panda powers up, by default it's in "SAFETY_NOOUTPUT" mode. While in no output mode, the buses are also forced to be silent. In order to send messages, you have to select a safety mode. Currently, setting safety modes is only supported over USB.
+
+Safety modes can also optionally support "controls_allowed", which allows or blocks a subset of messages based on a piece of state in the board.
+
 Hardware
 ------
 

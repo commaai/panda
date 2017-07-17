@@ -1,4 +1,4 @@
-void can_init(uint8_t bus_number, int silent) {
+void can_init(uint8_t bus_number) {
   CAN_TypeDef *CAN = CANIF_FROM_BUS_NUM(bus_number);
   set_can_enable(CAN, 1);
 
@@ -22,7 +22,7 @@ void can_init(uint8_t bus_number, int silent) {
     CAN->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
   }
 
-  if (silent) {
+  if (can_silent) {
     CAN->BTR |= CAN_BTR_SILM;
   }
 
@@ -55,6 +55,12 @@ void can_init(uint8_t bus_number, int silent) {
   // enable all CAN interrupts
   CAN->IER = 0xFFFFFFFF;
   //CAN->IER = CAN_IER_TMEIE | CAN_IER_FMPIE0 | CAN_IER_FMPIE1;
+}
+
+void can_init_all() {
+  for (int i=0; i < CAN_MAX; i++) {
+    can_init(i);
+  }
 }
 
 // CAN error
@@ -100,3 +106,4 @@ int can_cksum(uint8_t *dat, int len, int addr, int idx) {
   s = 8-s;
   return s&0xF;
 }
+

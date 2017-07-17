@@ -37,10 +37,14 @@ typedef struct {
   const safety_hooks *hooks;
 } safety_hook_config;
 
+#define SAFETY_NOOUTPUT 0
+#define SAFETY_HONDA 1
+#define SAFETY_ALLOUTPUT 0x1337
+
 const safety_hook_config safety_hook_registry[] = {
-  {0x0000, &nooutput_hooks},
-  {0x0001, &honda_hooks},
-  {0x1337, &alloutput_hooks},
+  {SAFETY_NOOUTPUT, &nooutput_hooks},
+  {SAFETY_HONDA, &honda_hooks},
+  {SAFETY_ALLOUTPUT, &alloutput_hooks},
 };
 
 #define HOOK_CONFIG_COUNT (sizeof(safety_hook_registry)/sizeof(safety_hook_config))

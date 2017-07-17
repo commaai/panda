@@ -4,6 +4,8 @@
 
 #define NULL ((void*)0)
 
+#define COMPILE_TIME_ASSERT(pred)            \
+    switch(0){case 0:case pred:;}
 
 // assign CAN numbering
 // bus num: Can bus number on ODB connector. Sent to/from USB
@@ -45,7 +47,7 @@
 // debug safety check: is controls allowed?
 int controls_allowed = 0;
 int started = 0;
-int can_live = 0, pending_can_live = 0, can_loopback = 0;
+int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = 1;
 
 // optional features
 int gas_interceptor_detected = 0;
@@ -565,8 +567,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
   uart_ring *ur = NULL;
   int i;
   switch (setup->b.bRequest) {
+    // **** 0xd0: fetch serial number
     case 0xd0:
-      // fetch serial number
       #ifdef PANDA
         // addresses are OTP
         if (setup->b.wValue.w == 1) {
@@ -578,27 +580,33 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         }
       #endif
       break;
+    // **** 0xd1: enter bootloader mode
     case 0xd1:
       if (hardwired) {
         enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
         NVIC_SystemReset();
       }
       break;
+    // **** 0xd2: get health packet
     case 0xd2:
       resp_len = get_health_pkt(resp);
       break;
+    // **** 0xd3: set fan speed
     case 0xd3:
       set_fan_speed(setup->b.wValue.w);
       break;
-    case 0xd6: // GET_VERSION
-      // assert(sizeof(gitversion) <= MAX_RESP_LEN);
+    // **** 0xd6: get version
+    case 0xd6:
+      COMPILE_TIME_ASSERT(sizeof(gitversion) <= MAX_RESP_LEN)
       memcpy(resp, gitversion, sizeof(gitversion));
       resp_len = sizeof(gitversion);
       break;
-    case 0xd8: // RESET
+    // **** 0xd8: reset ST
+    case 0xd8:
       NVIC_SystemReset();
       break;
-    case 0xd9: // ESP SET POWER
+    // **** 0xd9: set ESP power
+    case 0xd9:
       if (setup->b.wValue.w == 1) {
         // on
         GPIOC->ODR |= (1 << 14);
@@ -607,7 +615,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         GPIOC->ODR &= ~(1 << 14);
       }
       break;
-    case 0xda: // ESP RESET
+    // **** 0xda: reset ESP, with optional boot mode
+    case 0xda:
       // pull low for ESP boot mode
       if (setup->b.wValue.w == 1) {
         GPIOC->ODR &= ~(1 << 5);
@@ -625,7 +634,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         GPIOC->ODR |= (1 << 5);
       }
       break;
-    case 0xdb: // toggle GMLAN
+    // **** 0xdb: set GMLAN multiplexing mode
+    case 0xdb:
       if (setup->b.wIndex.w == 1) {
         set_can_mode(3, 0); // TODO: Make set_can_mode bus num 'sane' as well.
         set_can_mode(2, setup->b.wValue.w);
@@ -634,26 +644,28 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         set_can_mode(3, setup->b.wValue.w);
       }
       break;
-    case 0xdc: // set safety mode
-      set_safety_mode(setup->b.wValue.w);
-      for (i=0; i < CAN_MAX; i++)
-        // TODO: make this not disable GMLAN
-        can_init(i, 0);
+    // **** 0xdc: set safety mode
+    case 0xdc:
+      if (hardwired) {
+        // silent mode if the safety mode is nooutput
+        can_silent = (setup->b.wValue.w == SAFETY_NOOUTPUT);
+        set_safety_mode(setup->b.wValue.w);
+        can_init_all();
+      }
       break;
-    case 0xdd: // enable can forwarding
-      //wValue = Can Bus Num to forward from
-      //wIndex = Can Bus Num to forward to
+    // **** 0xdd: enable can forwarding
+    case 0xdd:
+      // wValue = Can Bus Num to forward from
+      // wIndex = Can Bus Num to forward to
       if (setup->b.wValue.w < CAN_MAX && setup->b.wIndex.w < CAN_MAX &&
           setup->b.wValue.w != setup->b.wIndex.w) { //Set forwarding
         can_forwarding[setup->b.wValue.w] = setup->b.wIndex.w & CAN_BUS_NUM_MASK;
-      }else if(setup->b.wValue.w < CAN_MAX && setup->b.wIndex.w == 0xFF){ //Clear Forwarding
+      } else if(setup->b.wValue.w < CAN_MAX && setup->b.wIndex.w == 0xFF){ //Clear Forwarding
         can_forwarding[setup->b.wValue.w] = -1;
       }
       break;
-    case 0xde: // set controls allowed
-      controls_allowed = setup->b.wValue.w == 0x1337;
-      break;
-    case 0xe0: // uart read
+    // **** 0xe0: uart read
+    case 0xe0:
       ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) break;
       // read
@@ -661,12 +673,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         ++resp_len;
       }
       break;
-    case 0xe1: // uart set baud rate
+    // **** 0xe1: uart set baud rate
+    case 0xe1:
       ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) break;
       uart_set_baud(ur->uart, setup->b.wIndex.w);
       break;
-    case 0xe2: // uart set parity
+    // **** 0xe2: uart set parity
+    case 0xe2:
       ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) break;
       switch (setup->b.wIndex.w) {
@@ -688,7 +702,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
           break;
       }
       break;
-    case 0xe3: // uart install accord framing callback
+    // **** 0xe3: uart install accord framing callback
+    case 0xe3:
       ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) break;
       if (setup->b.wIndex.w == 1) {
@@ -697,15 +712,16 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         ur->callback = NULL;
       }
       break;
-    case 0xe4: // uart set baud rate extended
+    // **** 0xe4: uart set baud rate extended
+    case 0xe4:
       ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) break;
       uart_set_baud(ur->uart, (int)setup->b.wIndex.w*300);
       break;
-    case 0xe5: // Set CAN loopback (for testing)
+    // **** 0xe5: set CAN loopback (for testing)
+    case 0xe5:
       can_loopback = (setup->b.wValue.w > 0);
-      for(i=0; i < CAN_MAX; i++)
-        can_init(i, 0);
+      can_init_all();
       break;
     case 0xf0: // k-line wValue pulse on uart2
       if (setup->b.wValue.w == 1) {
@@ -840,8 +856,6 @@ void __initialize_hardware_early() {
 }
 
 int main() {
-  int i;
-
   // init devices
   clock_init();
   periph_init();
@@ -869,12 +883,8 @@ int main() {
   usb_init();
 
   // default to silent mode to prevent issues with Ford
-  for(i=0; i < CAN_MAX; i++)
-    #ifdef PANDA_SAFETY
-    can_init(i, 1);
-    #else
-    can_init(i, 0);
-    #endif
+  can_silent = 1;
+  can_init_all();
 
   adc_init();
 
