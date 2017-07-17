@@ -11,7 +11,7 @@
 // else
 //     block all commands that produce actuation
 
-void honda__rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // state machine to enter and exit controls
   // 0x1A6 for the ILX, 0x296 for the Civic Touring
   if ((to_push->RIR>>21) == 0x1A6 || (to_push->RIR>>21) == 0x296) {
@@ -50,7 +50,7 @@ void honda__rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 }
 
-int honda__tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
+static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
   // BRAKE: safety check
   if ((to_send->RIR>>21) == 0x1FA) {
     if (controls_allowed) {
@@ -82,17 +82,17 @@ int honda__tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
   return hardwired;
 }
 
-int honda__tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired) {
+static int honda_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired) {
   return hardwired;
 }
 
-void honda__init() {
-  controls_allowed = true;
+static void honda_init() {
 }
 
 const safety_hooks honda_hooks = {
-  .init = honda__init,
-  .rx = honda__rx_hook,
-  .tx = honda__tx_hook,
-  .tx_lin = honda__tx_lin_hook,
+  .init = honda_init,
+  .rx = honda_rx_hook,
+  .tx = honda_tx_hook,
+  .tx_lin = honda_tx_lin_hook,
 };
+

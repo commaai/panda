@@ -15,47 +15,8 @@ typedef struct {
 } safety_hooks;
 
 // Include the actual safety policies.
-#include "safety_honda.h"
-
-void default__rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {}
-
-void nooutput__init() {
-  controls_allowed = false;
-}
-
-int nooutput__tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
-  return false;
-}
-
-int nooutput__tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired) {
-  return false;
-}
-
-void alloutput__init() {
-  controls_allowed = true;
-}
-
-int alloutput__tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
-  return hardwired;
-}
-
-int alloutput__tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired) {
-  return hardwired;
-}
-
-const safety_hooks nooutput_hooks = {
-  .init = nooutput__init,
-  .rx = default__rx_hook,
-  .tx = alloutput__tx_hook,
-  .tx_lin = alloutput__tx_lin_hook,
-};
-
-const safety_hooks alloutput_hooks = {
-  .init = alloutput__init,
-  .rx = default__rx_hook,
-  .tx = alloutput__tx_hook,
-  .tx_lin = alloutput__tx_lin_hook,
-};
+#include "safety/safety_defaults.h"
+#include "safety/safety_honda.h"
 
 const safety_hooks *current_hooks = &nooutput_hooks;
 
@@ -70,7 +31,6 @@ int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired){
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired){
   return current_hooks->tx_lin(lin_num, data, len, hardwired);
 }
-
 
 typedef struct {
   uint16_t id;
@@ -87,13 +47,13 @@ const safety_hook_config safety_hook_registry[] = {
 
 int set_safety_mode(uint16_t mode){
   int i;
-  for(i = 0; i < HOOK_CONFIG_COUNT; i++){
-    if(safety_hook_registry[i].id == mode){
+  for (i = 0; i < HOOK_CONFIG_COUNT; i++){
+    if (safety_hook_registry[i].id == mode){
       current_hooks = safety_hook_registry[i].hooks;
       current_hooks->init();
       return 0;
     }
   }
-
   return -1;
 }
+
