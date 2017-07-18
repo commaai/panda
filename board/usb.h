@@ -686,21 +686,8 @@ void usb_irqhandler(void) {
     // now for clarity.
 
     //TODO add default case. Should it NAK?
-    switch(current_int0_alt_setting){
-    case 0: ////// Bulk config
-      // *** IN token received when TxFIFO is empty
-      if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
-        #ifdef DEBUG_USB
-        puts("  IN PACKET QUEUE\n");
-        #endif
-        // TODO: always assuming max len, can we get the length?
-        USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
-      }
-      break;
-
-    case 1: ////// Interrupt config
-      // Check if there is anything to actually send.
-      if (can_rx_q.w_ptr != can_rx_q.r_ptr) {
+    switch (current_int0_alt_setting) {
+      case 0: ////// Bulk config
         // *** IN token received when TxFIFO is empty
         if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
           #ifdef DEBUG_USB
@@ -709,8 +696,21 @@ void usb_irqhandler(void) {
           // TODO: always assuming max len, can we get the length?
           USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
         }
-      }
-      break;
+        break;
+
+      case 1: ////// Interrupt config
+        // Check if there is anything to actually send.
+        if (can_rx_q.w_ptr != can_rx_q.r_ptr) {
+          // *** IN token received when TxFIFO is empty
+          if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
+            #ifdef DEBUG_USB
+            puts("  IN PACKET QUEUE\n");
+            #endif
+            // TODO: always assuming max len, can we get the length?
+            USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
+          }
+        }
+        break;
     }
 
     // clear interrupts

@@ -127,6 +127,7 @@ def test_throughput():
     st = time.time()
     p.can_send_many([(0x1aa, 0, "\xaa"*8, 0)]*MSG_COUNT)
     r = []
+
     while len(r) < 200 and (time.time() - st) < 3:
       r.extend(p.can_recv())
 
@@ -145,5 +146,13 @@ def test_throughput():
     assert_less(saturation_pct, 100)
 
     print("loopback 100 messages at speed %d in %.2f ms, comp speed is %.2f, percent %.2f" % (speed, et, comp_kbps, saturation_pct))
+
+
+def test_serial_echo():
+  p = connect_wo_esp()
+
+  print(p.serial_read(Panda.SERIAL_DEBUG))
+  p.serial_write(Panda.SERIAL_DEBUG, "swag")
+  assert_equal(p.serial_read(Panda.SERIAL_DEBUG), "swag")
 
 

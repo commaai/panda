@@ -87,8 +87,6 @@ void can_init(uint8_t bus_number) {
   if (tmp == CAN_TIMEOUT) {
     set_led(LED_BLUE, 1);
     puts("CAN init FAILED!!!!!\n");
-  } else {
-    puts("CAN init done\n");
   }
 
   // accept all filter

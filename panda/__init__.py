@@ -78,6 +78,11 @@ class Panda(object):
   SAFETY_HONDA = 1
   SAFETY_ALLOUTPUT = 0x1337
 
+  SERIAL_DEBUG = 0
+  SERIAL_ESP = 1
+  SERIAL_LIN1 = 2
+  SERIAL_LIN2 = 3
+
   REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
   REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
 
@@ -229,7 +234,13 @@ class Panda(object):
   # ******************* serial *******************
 
   def serial_read(self, port_number):
-    return self._handle.controlRead(Panda.REQUEST_IN, 0xe0, port_number, 0, 0x40)
+    ret = []
+    while 1:
+      lret = bytes(self._handle.controlRead(Panda.REQUEST_IN, 0xe0, port_number, 0, 0x40))
+      if len(lret) == 0:
+        break
+      ret.append(lret)
+    return b''.join(ret)
 
   def serial_write(self, port_number, ln):
     return self._handle.bulkWrite(2, chr(port_number) + ln)
