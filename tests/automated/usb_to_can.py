@@ -150,9 +150,6 @@ def test_throughput():
 def test_serial_debug():
   p = connect_wo_esp()
   junk = p.serial_read(Panda.SERIAL_DEBUG)
-
-  # careful, don't send x or z
   p.call_control_api(0xc0)
   assert(p.serial_read(Panda.SERIAL_DEBUG).startswith("can "))
-  #assert_equal(p.serial_read(Panda.SERIAL_LIN1), "swag")
 
