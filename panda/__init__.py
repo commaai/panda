@@ -84,6 +84,7 @@ class Panda(object):
   SAFETY_HONDA = 1
   SAFETY_ALLOUTPUT = 0x1337
 
+  REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
   REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
 
   def __init__(self, serial=None, claim=True):
@@ -132,7 +133,7 @@ class Panda(object):
   # ******************* health *******************
 
   def health(self):
-    dat = self._handle.controlRead(Panda.REQUEST_OUT, 0xd2, 0, 0, 13)
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 13)
     a = struct.unpack("IIBBBBB", dat)
     return {"voltage": a[0], "current": a[1],
             "started": a[2], "controls_allowed": a[3],
@@ -150,14 +151,14 @@ class Panda(object):
       pass
 
   def get_serial(self):
-    dat = self._handle.controlRead(Panda.REQUEST_OUT, 0xd0, 0, 0, 0x20)
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
     hashsig, calc_hash = dat[0x1c:], hashlib.sha1(dat[0:0x1c]).digest()[0:4]
     if hashsig != calc_hash:
       raise PandaHashMismatchException(calc_hash, hashsig)
     return [dat[0:0x10], dat[0x10:0x10+10]]
 
   def get_secret(self):
-    return self._handle.controlRead(Panda.REQUEST_OUT, 0xd0, 1, 0, 0x10)
+    return self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 1, 0, 0x10)
 
   # ******************* configuration *******************
 
@@ -228,7 +229,7 @@ class Panda(object):
   # ******************* serial *******************
 
   def serial_read(self, port_number):
-    return self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, port_number, 0, 0x40)
+    return self._handle.controlRead(Panda.REQUEST_IN, 0xe0, port_number, 0, 0x40)
 
   def serial_write(self, port_number, ln):
     return self._handle.bulkWrite(2, chr(port_number) + ln)
@@ -243,7 +244,7 @@ class Panda(object):
     # drain buffer
     bret = bytearray()
     while True:
-      ret = self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, 0x40)
+      ret = self._handle.controlRead(Panda.REQUEST_IN, 0xe0, bus, 0, 0x40)
       if len(ret) == 0:
         break
       bret += ret
