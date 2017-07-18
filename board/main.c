@@ -7,39 +7,6 @@
 #define COMPILE_TIME_ASSERT(pred)            \
     switch(0){case 0:case pred:;}
 
-// assign CAN numbering
-// bus num: Can bus number on ODB connector. Sent to/from USB
-//    Min: 0; Max: 127; Bit 7 marks message as receipt (bus 129 is receipt for but 1)
-// cans: Look up MCU can interface from bus number
-// can number: numeric lookup for MCU CAN interfaces (0 = CAN1, 1 = CAN2, etc);
-// bus_lookup: Translates from 'can number' to 'bus number'.
-// can_num_lookup: Translates from 'bus number' to 'can number'.
-// can_forwarding: Given a bus num, lookup bus num to forward to. -1 means no forward.
-
-// NEO:         Bus 1=CAN1   Bus 2=CAN2
-// Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
-#ifdef PANDA
-  CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
-  uint8_t bus_lookup[] = {0,1,2};
-  uint8_t can_num_lookup[] = {0,1,2}; //bus num -> can num
-  int8_t can_forwarding[] = {-1,-1,-1};
-  #define CAN_MAX 3
-#else
-  CAN_TypeDef *cans[] = {CAN2, CAN1};
-  uint8_t bus_lookup[] = {1,0};
-  uint8_t can_num_lookup[] = {1,0}; //bus num -> can num
-  int8_t can_forwarding[] = {-1,-1};
-  #define CAN_MAX 2
-#endif
-
-#define CANIF_FROM_CAN_NUM(num) (cans[bus_lookup[num]])
-#define CANIF_FROM_BUS_NUM(num) (cans[num])
-#define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
-#define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
-
-#define CAN_BUS_RET_FLAG 0x80
-#define CAN_BUS_NUM_MASK 0x7F
-
 // *** end config ***
 
 #include "obj/gitversion.h"
@@ -312,21 +279,6 @@ void process_can(uint8_t can_number) {
   CAN->TSR |= CAN_TSR_RQCP0;
 }
 
-// send more, possible for these to not trigger?
-
-
-void CAN1_TX_IRQHandler() {
-  process_can(0);
-}
-
-void CAN2_TX_IRQHandler() {
-  process_can(1);
-}
-
-void CAN3_TX_IRQHandler() {
-  process_can(2);
-}
-
 void send_can(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
 
 // CAN receive handlers
@@ -372,39 +324,18 @@ void can_rx(uint8_t can_number) {
   }
 }
 
-void CAN1_RX0_IRQHandler() {
-  //puts("CANRX1");
-  //delay(10000);
-  can_rx(0);
-}
+void CAN1_TX_IRQHandler() { process_can(0); }
+void CAN1_RX0_IRQHandler() { can_rx(0); }
+void CAN1_SCE_IRQHandler() { can_sce(CAN1); }
 
-void CAN2_RX0_IRQHandler() {
-  //puts("CANRX0");
-  //delay(10000);
-  can_rx(1);
-}
-
-void CAN3_RX0_IRQHandler() {
-  //puts("CANRX0");
-  //delay(10000);
-  can_rx(2);
-}
-
-void CAN1_SCE_IRQHandler() {
-  //puts("CAN1_SCE\n");
-  can_sce(CAN1);
-}
-
-void CAN2_SCE_IRQHandler() {
-  //puts("CAN2_SCE\n");
-  can_sce(CAN2);
-}
+void CAN2_TX_IRQHandler() { process_can(1); }
+void CAN2_RX0_IRQHandler() { can_rx(1); }
+void CAN2_SCE_IRQHandler() { can_sce(CAN2); }
 
 #ifdef CAN3
-void CAN3_SCE_IRQHandler() {
-  //puts("CAN3_SCE\n");
-  can_sce(CAN3);
-}
+void CAN3_TX_IRQHandler() { process_can(2); }
+void CAN3_RX0_IRQHandler() { can_rx(2); }
+void CAN3_SCE_IRQHandler() { can_sce(CAN3); }
 #endif
 
 
@@ -603,6 +534,13 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         can_forwarding[setup->b.wValue.w] = -1;
       }
       break;
+    // **** 0xde: set can bitrate
+    case 0xde:
+      if (setup->b.wValue.w < CAN_MAX) {
+        can_speed[setup->b.wValue.w] = setup->b.wIndex.w;
+        can_init(setup->b.wValue.w);
+      }
+      break;
     // **** 0xe0: uart read
     case 0xe0:
       ur = get_ring_by_number(setup->b.wValue.w);
@@ -652,7 +590,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       can_loopback = (setup->b.wValue.w > 0);
       can_init_all();
       break;
-    case 0xf0: // k-line wValue pulse on uart2
+    // **** 0xf0: do k-line wValue pulse on uart2 for Acura
+    case 0xf0:
       if (setup->b.wValue.w == 1) {
         GPIOC->ODR &= ~(1 << 10);
         GPIOC->MODER &= ~GPIO_MODER_MODER10_1;

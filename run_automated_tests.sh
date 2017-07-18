@@ -1,3 +1,3 @@
 #!/bin/bash
-nosetests -s tests/automated/*.py
+nosetests -x -s tests/automated/*.py
 

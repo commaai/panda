@@ -1,3 +1,47 @@
+// assign CAN numbering
+// bus num: Can bus number on ODB connector. Sent to/from USB
+//    Min: 0; Max: 127; Bit 7 marks message as receipt (bus 129 is receipt for but 1)
+// cans: Look up MCU can interface from bus number
+// can number: numeric lookup for MCU CAN interfaces (0 = CAN1, 1 = CAN2, etc);
+// bus_lookup: Translates from 'can number' to 'bus number'.
+// can_num_lookup: Translates from 'bus number' to 'can number'.
+// can_forwarding: Given a bus num, lookup bus num to forward to. -1 means no forward.
+
+
+// NEO:         Bus 1=CAN1   Bus 2=CAN2
+// Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
+#ifdef PANDA
+  CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
+  uint8_t bus_lookup[] = {0,1,2};
+  uint8_t can_num_lookup[] = {0,1,2}; //bus num -> can num
+  int8_t can_forwarding[] = {-1,-1,-1};
+  uint32_t can_speed[] = {5000, 5000, 5000}; // 500 kbps
+  #define CAN_MAX 3
+#else
+  CAN_TypeDef *cans[] = {CAN2, CAN1};
+  uint8_t bus_lookup[] = {1,0};
+  uint8_t can_num_lookup[] = {1,0}; //bus num -> can num
+  int8_t can_forwarding[] = {-1,-1};
+  uint32_t can_speed[] = {5000, 5000};
+  #define CAN_MAX 2
+#endif
+
+#define NO_ACTIVE_GMLAN -1
+int active_gmlan_port_id = NO_ACTIVE_GMLAN;
+
+#define CANIF_FROM_CAN_NUM(num) (cans[bus_lookup[num]])
+#define CANIF_FROM_BUS_NUM(num) (cans[num])
+#define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
+#define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
+
+#define CAN_BUS_RET_FLAG 0x80
+#define CAN_BUS_NUM_MASK 0x7F
+
+#define CAN_PCLK 24000
+// 333 = 33.3 kbps
+// 5000 = 500 kbps
+#define can_speed_to_prescaler(x) (CAN_PCLK / 16 * 10 / x)
+
 void can_init(uint8_t bus_number) {
   CAN_TypeDef *CAN = CANIF_FROM_BUS_NUM(bus_number);
   set_can_enable(CAN, 1);
@@ -5,17 +49,9 @@ void can_init(uint8_t bus_number) {
   CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
   while((CAN->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
 
-  // http://www.bittiming.can-wiki.info/
-  // PCLK = 24 MHz
-  uint32_t pclk = 24000;
-  uint32_t num_time_quanta = 16;
-
-  // 500 kbps
-  uint32_t prescaler = pclk / num_time_quanta / 500;
-
   // seg 1: 13 time quanta, seg 2: 2 time quanta
   CAN->BTR = (CAN_BTR_TS1_0 * 12) |
-    CAN_BTR_TS2_0 | (prescaler - 1);
+    CAN_BTR_TS2_0 | (can_speed_to_prescaler(can_speed[bus_number]) - 1);
 
   // silent loopback mode for debugging
   if (can_loopback) {

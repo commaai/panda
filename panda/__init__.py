@@ -10,12 +10,6 @@ import time
 
 __version__ = '0.0.3'
 
-class PandaHashMismatchException(Exception):
-  def __init__(self, hash_, expected_hash):
-    super(PandaHashMismatchException, self).__init__(
-      "Hash '%s' did not match the expected hash '%s'"%\
-      (binascii.hexlify(hash_), binascii.hexlify(expected_hash)))
-
 def parse_can_buffer(dat):
   ret = []
   for j in range(0, len(dat), 0x10):
@@ -153,8 +147,7 @@ class Panda(object):
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
     hashsig, calc_hash = dat[0x1c:], hashlib.sha1(dat[0:0x1c]).digest()[0:4]
-    if hashsig != calc_hash:
-      raise PandaHashMismatchException(calc_hash, hashsig)
+    assert(hashsig == calc_hash)
     return [dat[0:0x10], dat[0x10:0x10+10]]
 
   def get_secret(self):
@@ -178,6 +171,9 @@ class Panda(object):
   def set_can_loopback(self, enable):
     # set can loopback mode for all buses
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe5, int(enable), 0, b'')
+
+  def set_can_speed_kbps(self, bus, speed):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xde, bus, int(speed*10), b'')
 
   def set_uart_baud(self, uart, rate):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe1, uart, rate, b'')
