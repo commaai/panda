@@ -47,19 +47,36 @@ can_buffer(tx3_q, 0x100)
 
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
 
+// ********************* IRQ helpers *********************
+
+int critical_depth = 0;
+void enter_critical_section() {
+  __disable_irq();
+  // this is safe because interrupts are disabled
+  critical_depth += 1;
+}
+
+void exit_critical_section() {
+  // this is safe because interrupts are disabled
+  critical_depth -= 1;
+  if (critical_depth == 0) {
+    __enable_irq();
+  }
+}
+
 // ********************* interrupt safe queue *********************
 
 int pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   int ret = 0;
 
-  __disable_irq();
+  enter_critical_section();
   if (q->w_ptr != q->r_ptr) {
     *elem = q->elems[q->r_ptr];
     if ((q->r_ptr + 1) == q->fifo_size) q->r_ptr = 0;
     else q->r_ptr += 1;
     ret = 1;
   }
-  __enable_irq();
+  exit_critical_section();
 
   return ret;
 }
@@ -68,7 +85,7 @@ int push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   int ret = 0;
   uint32_t next_w_ptr;
 
-  __disable_irq();
+  enter_critical_section();
   if ((q->w_ptr + 1) == q->fifo_size) next_w_ptr = 0;
   else next_w_ptr = q->w_ptr + 1;
   if (next_w_ptr != q->r_ptr) {
@@ -76,9 +93,8 @@ int push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
     q->w_ptr = next_w_ptr;
     ret = 1;
   }
-  __enable_irq();
-
-  puts("push failed!\n");
+  exit_critical_section();
+  if (ret == 0) puts("push failed!\n");
   return ret;
 }
 
@@ -257,6 +273,8 @@ int putc(uart_ring *q, char elem) {
 // ***************************** CAN *****************************
 
 void process_can(uint8_t can_number) {
+  enter_critical_section();
+
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
   #ifdef DEBUG
@@ -265,6 +283,8 @@ void process_can(uint8_t can_number) {
 
   // add successfully transmitted message to my fifo
   if ((CAN->TSR & CAN_TSR_RQCP0) == CAN_TSR_RQCP0) {
+    can_txd_cnt += 1;
+
     if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
       CAN_FIFOMailBox_TypeDef to_push;
       to_push.RIR = CAN->sTxMailBox[0].TIR;
@@ -275,11 +295,15 @@ void process_can(uint8_t can_number) {
     }
 
     if ((CAN->TSR & CAN_TSR_TERR0) == CAN_TSR_TERR0) {
-      puts("CAN TX ERROR!\n");
+      #ifdef DEBUG
+        puts("CAN TX ERROR!\n");
+      #endif
     }
 
     if ((CAN->TSR & CAN_TSR_ALST0) == CAN_TSR_ALST0) {
-      puts("CAN TX ARBITRATION LOST!\n");
+      #ifdef DEBUG
+        puts("CAN TX ARBITRATION LOST!\n");
+      #endif
     }
 
     // clear interrupt
@@ -290,6 +314,7 @@ void process_can(uint8_t can_number) {
   CAN_FIFOMailBox_TypeDef to_send;
   if ((CAN->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
     if (pop(can_queues[bus_number], &to_send)) {
+      can_tx_cnt += 1;
       // only send if we have received a packet
       CAN->sTxMailBox[0].TDLR = to_send.RDLR;
       CAN->sTxMailBox[0].TDHR = to_send.RDHR;
@@ -297,6 +322,8 @@ void process_can(uint8_t can_number) {
       CAN->sTxMailBox[0].TIR = to_send.RIR;
     }
   }
+
+  exit_critical_section();
 }
 
 void send_can(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
@@ -307,6 +334,8 @@ void can_rx(uint8_t can_number) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
   while (CAN->RF0R & CAN_RF0R_FMP0) {
+    can_rx_cnt += 1;
+
     // can is live
     pending_can_live = 1;
 
@@ -396,7 +425,7 @@ void set_fan_speed(int fan_speed) {
 }
 
 int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) {
-  CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;;
+  CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;
 
   int ilen = 0;
   while (ilen < min(len/0x10, 4) && pop(&can_rx_q, &reply[ilen])) ilen++;
@@ -899,7 +928,14 @@ int main() {
       // turn off fan
       set_fan_speed(0);
     }
+
+    /*puts("can tx: "); puth(can_tx_cnt);
+    puts(" txd: "); puth(can_txd_cnt);
+    puts(" rx: "); puth(can_rx_cnt);
+    puts(" err: "); puth(can_err_cnt);
+    puts("\n");*/
   }
 
   return 0;
 }
+

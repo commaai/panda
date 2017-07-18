@@ -7,6 +7,10 @@
 // can_num_lookup: Translates from 'bus number' to 'can number'.
 // can_forwarding: Given a bus num, lookup bus num to forward to. -1 means no forward.
 
+int can_rx_cnt = 0;
+int can_tx_cnt = 0;
+int can_txd_cnt = 0;
+int can_err_cnt = 0;
 
 // NEO:         Bus 1=CAN1   Bus 2=CAN2
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
@@ -114,6 +118,7 @@ void can_init_all() {
 
 // CAN error
 void can_sce(CAN_TypeDef *CAN) {
+  can_err_cnt += 1;
   #ifdef DEBUG
     if (CAN==CAN1) puts("CAN1:  ");
     if (CAN==CAN2) puts("CAN2:  ");

@@ -23,30 +23,15 @@ endif
 DFU_UTIL = "./tools/dfu-util-$(MACHINE)"
 
 # this no longer pushes the bootstub
-all: compileall dfu
+all: obj/$(PROJ_NAME).bin
+	./tools/enter_download_mode.py
+	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
+	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
 
 # this one does
-recover: compileall dfu_recover
-
-compileall: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
-
-dfu:
-	./tools/enter_download_mode.py
-	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
-	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
-
-dfu_recover:
-	$(DFU_UTIL) -a 0 -s 0x08000000 -D obj/bootstub.$(PROJ_NAME).bin
-	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
-	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
-
-bootstub: obj/bootstub.$(PROJ_NAME).bin
+recover: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
 	./tools/enter_download_mode.py
 	$(DFU_UTIL) -a 0 -s 0x08000000 -D obj/bootstub.$(PROJ_NAME).bin
-	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
-
-main: obj/$(PROJ_NAME).bin
-	./tools/enter_download_mode.py
 	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
 	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
 

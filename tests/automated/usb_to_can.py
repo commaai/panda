@@ -89,6 +89,7 @@ def test_reliability():
     st = time.time()
 
     p.can_send_many(ts)
+
     r = []
     while len(r) < 200 and (time.time() - st) < 0.5:
       r.extend(p.can_recv())
