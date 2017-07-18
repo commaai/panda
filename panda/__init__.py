@@ -113,9 +113,9 @@ class Panda(object):
       cmd = "make clean"
     else:
       cmd = "true"
-    os.system("cd %s && %s && make" % (os.path.join(BASEDIR, "board"), cmd))
-    # TODO: check for errors
+    ret = os.system("cd %s && %s && make" % (os.path.join(BASEDIR, "board"), cmd))
     time.sleep(1)
+    return ret==0
 
   @staticmethod
   def list():

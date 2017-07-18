@@ -8,7 +8,7 @@ from nose.tools import timed, assert_equal, assert_less, assert_greater
 # must run first
 def test_build_download_connect():
   # download the latest code
-  Panda.program(True)
+  assert(Panda.program(True))
 
   # connect to the panda
   p = Panda()
@@ -81,19 +81,24 @@ def test_reliability():
   p.set_can_loopback(True)
   p.set_can_speed_kbps(0, 1000)
 
+  addrs = range(100, 100+MSG_COUNT)
+  ts = [(j, 0, "\xaa"*8, 0) for j in addrs]
+
   # 100 loops
   for i in range(LOOP_COUNT):
     st = time.time()
-    p.can_send_many([(0x1aa, 0, "\xaa"*8, 0)]*MSG_COUNT)
+
+    p.can_send_many(ts)
     r = []
-    while len(r) < 200 and (time.time() - st) < 3:
+    while len(r) < 200 and (time.time() - st) < 0.5:
       r.extend(p.can_recv())
 
     sent_echo = filter(lambda x: x[3] == 0x80, r)
     loopback_resp = filter(lambda x: x[3] == 0, r)
 
-    assert_equal(len(sent_echo), 100)
-    assert_equal(len(loopback_resp), 100)
+    assert_equal(sorted(map(lambda x: x[0], loopback_resp)), addrs)
+    assert_equal(sorted(map(lambda x: x[0], sent_echo)), addrs)
+    assert_equal(len(r), 200)
 
     # take sub 20ms
     et = (time.time()-st)*1000.0

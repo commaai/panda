@@ -100,8 +100,10 @@ void can_init(uint8_t bus_number) {
   CAN->FMR &= ~(CAN_FMR_FINIT);
 
   // enable all CAN interrupts
-  CAN->IER = 0xFFFFFFFF;
+  //CAN->IER = 0xFFFFFFFF;
   //CAN->IER = CAN_IER_TMEIE | CAN_IER_FMPIE0 | CAN_IER_FMPIE1;
+  //CAN->IER = CAN_IER_TMEIE;
+  CAN->IER = CAN_IER_TMEIE | CAN_IER_FMPIE0;
 }
 
 void can_init_all() {

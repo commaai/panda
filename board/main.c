@@ -50,26 +50,36 @@ can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
 // ********************* interrupt safe queue *********************
 
 int pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
+  int ret = 0;
+
+  __disable_irq();
   if (q->w_ptr != q->r_ptr) {
     *elem = q->elems[q->r_ptr];
     if ((q->r_ptr + 1) == q->fifo_size) q->r_ptr = 0;
     else q->r_ptr += 1;
-    return 1;
+    ret = 1;
   }
-  return 0;
+  __enable_irq();
+
+  return ret;
 }
 
 int push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
+  int ret = 0;
   uint32_t next_w_ptr;
+
+  __disable_irq();
   if ((q->w_ptr + 1) == q->fifo_size) next_w_ptr = 0;
   else next_w_ptr = q->w_ptr + 1;
   if (next_w_ptr != q->r_ptr) {
     q->elems[q->w_ptr] = *elem;
     q->w_ptr = next_w_ptr;
-    return 1;
+    ret = 1;
   }
+  __enable_irq();
+
   puts("push failed!\n");
-  return 0;
+  return ret;
 }
 
 // ***************************** serial port queues *****************************
@@ -254,13 +264,26 @@ void process_can(uint8_t can_number) {
   #endif
 
   // add successfully transmitted message to my fifo
-  if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
-    CAN_FIFOMailBox_TypeDef to_push;
-    to_push.RIR = CAN->sTxMailBox[0].TIR;
-    to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000F) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
-    to_push.RDLR = CAN->sTxMailBox[0].TDLR;
-    to_push.RDHR = CAN->sTxMailBox[0].TDHR;
-    push(&can_rx_q, &to_push);
+  if ((CAN->TSR & CAN_TSR_RQCP0) == CAN_TSR_RQCP0) {
+    if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
+      CAN_FIFOMailBox_TypeDef to_push;
+      to_push.RIR = CAN->sTxMailBox[0].TIR;
+      to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000F) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
+      to_push.RDLR = CAN->sTxMailBox[0].TDLR;
+      to_push.RDHR = CAN->sTxMailBox[0].TDHR;
+      push(&can_rx_q, &to_push);
+    }
+
+    if ((CAN->TSR & CAN_TSR_TERR0) == CAN_TSR_TERR0) {
+      puts("CAN TX ERROR!\n");
+    }
+
+    if ((CAN->TSR & CAN_TSR_ALST0) == CAN_TSR_ALST0) {
+      puts("CAN TX ARBITRATION LOST!\n");
+    }
+
+    // clear interrupt
+    CAN->TSR |= CAN_TSR_RQCP0;
   }
 
   // check for empty mailbox
@@ -274,9 +297,6 @@ void process_can(uint8_t can_number) {
       CAN->sTxMailBox[0].TIR = to_send.RIR;
     }
   }
-
-  // clear interrupt
-  CAN->TSR |= CAN_TSR_RQCP0;
 }
 
 void send_can(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
@@ -311,7 +331,6 @@ void can_rx(uint8_t can_number) {
 
     // modify RDTR for our API
     to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (bus_number << 4);
-
     safety_rx_hook(&to_push);
 
     #ifdef PANDA
