@@ -281,38 +281,39 @@ void process_can(uint8_t can_number) {
     puts("process CAN TX\n");
   #endif
 
-  // add successfully transmitted message to my fifo
-  if ((CAN->TSR & CAN_TSR_RQCP0) == CAN_TSR_RQCP0) {
-    can_txd_cnt += 1;
-
-    if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
-      CAN_FIFOMailBox_TypeDef to_push;
-      to_push.RIR = CAN->sTxMailBox[0].TIR;
-      to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000F) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
-      to_push.RDLR = CAN->sTxMailBox[0].TDLR;
-      to_push.RDHR = CAN->sTxMailBox[0].TDHR;
-      push(&can_rx_q, &to_push);
-    }
-
-    if ((CAN->TSR & CAN_TSR_TERR0) == CAN_TSR_TERR0) {
-      #ifdef DEBUG
-        puts("CAN TX ERROR!\n");
-      #endif
-    }
-
-    if ((CAN->TSR & CAN_TSR_ALST0) == CAN_TSR_ALST0) {
-      #ifdef DEBUG
-        puts("CAN TX ARBITRATION LOST!\n");
-      #endif
-    }
-
-    // clear interrupt
-    CAN->TSR |= CAN_TSR_RQCP0;
-  }
-
   // check for empty mailbox
   CAN_FIFOMailBox_TypeDef to_send;
   if ((CAN->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
+    // add successfully transmitted message to my fifo
+    if ((CAN->TSR & CAN_TSR_RQCP0) == CAN_TSR_RQCP0) {
+      can_txd_cnt += 1;
+
+      if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
+        CAN_FIFOMailBox_TypeDef to_push;
+        to_push.RIR = CAN->sTxMailBox[0].TIR;
+        to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000F) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
+        to_push.RDLR = CAN->sTxMailBox[0].TDLR;
+        to_push.RDHR = CAN->sTxMailBox[0].TDHR;
+        push(&can_rx_q, &to_push);
+      }
+
+      if ((CAN->TSR & CAN_TSR_TERR0) == CAN_TSR_TERR0) {
+        #ifdef DEBUG
+          puts("CAN TX ERROR!\n");
+        #endif
+      }
+
+      if ((CAN->TSR & CAN_TSR_ALST0) == CAN_TSR_ALST0) {
+        #ifdef DEBUG
+          puts("CAN TX ARBITRATION LOST!\n");
+        #endif
+      }
+
+      // clear interrupt
+      // careful, this can also be cleared by requesting a transmission
+      CAN->TSR |= CAN_TSR_RQCP0;
+    }
+
     if (pop(can_queues[bus_number], &to_send)) {
       can_tx_cnt += 1;
       // only send if we have received a packet
