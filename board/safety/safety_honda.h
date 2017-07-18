@@ -54,27 +54,27 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
   // BRAKE: safety check
   if ((to_send->RIR>>21) == 0x1FA) {
     if (controls_allowed) {
-      to_send->RDLR &= 0xFFFFFF3F;
+      if ((to_send->RDLR & 0xFFFFFF3F) != to_send->RDLR) return 0;
     } else {
-      to_send->RDLR &= 0xFFFF0000;
+      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
     }
   }
 
   // STEER: safety check
   if ((to_send->RIR>>21) == 0xE4 || (to_send->RIR>>21) == 0x194) {
     if (controls_allowed) {
-      to_send->RDLR &= 0xFFFFFFFF;
+      // all messages are fine here
     } else {
-      to_send->RDLR &= 0xFFFF0000;
+      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
     }
   }
 
   // GAS: safety check
   if ((to_send->RIR>>21) == 0x200) {
     if (controls_allowed) {
-      to_send->RDLR &= 0xFFFFFFFF;
+      // all messages are fine here
     } else {
-      to_send->RDLR &= 0xFFFF0000;
+      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
     }
   }
 

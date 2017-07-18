@@ -59,5 +59,3 @@ def test_safety_nooutput():
   r = p.can_recv()
   assert len(r) == 0
 
-
-
