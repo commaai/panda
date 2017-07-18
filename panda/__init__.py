@@ -133,6 +133,9 @@ class Panda(object):
     #ret += ["WIFI"]
     return ret
 
+  def call_control_api(self, msg):
+    self._handle.controlWrite(Panda.REQUEST_OUT, msg, 0, 0, b'')
+
   # ******************* health *******************
 
   def health(self):

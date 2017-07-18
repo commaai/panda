@@ -147,12 +147,12 @@ def test_throughput():
 
     print("loopback 100 messages at speed %d in %.2f ms, comp speed is %.2f, percent %.2f" % (speed, et, comp_kbps, saturation_pct))
 
-
-def test_serial_echo():
+def test_serial_debug():
   p = connect_wo_esp()
+  junk = p.serial_read(Panda.SERIAL_DEBUG)
 
-  print(p.serial_read(Panda.SERIAL_DEBUG))
-  p.serial_write(Panda.SERIAL_DEBUG, "swag")
-  assert_equal(p.serial_read(Panda.SERIAL_DEBUG), "swag")
-
+  # careful, don't send x or z
+  p.call_control_api(0xc0)
+  assert(p.serial_read(Panda.SERIAL_DEBUG).startswith("can "))
+  #assert_equal(p.serial_read(Panda.SERIAL_LIN1), "swag")
 

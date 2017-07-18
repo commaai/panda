@@ -173,6 +173,7 @@ void debug_ring_callback(uart_ring *ring) {
 // ***************************** serial port *****************************
 
 void uart_ring_process(uart_ring *q) {
+  enter_critical_section();
   // TODO: check if external serial is connected
   int sr = q->uart->SR;
 
@@ -198,63 +199,69 @@ void uart_ring_process(uart_ring *q) {
       if (q->callback) q->callback(q);
     }
   }
+  exit_critical_section();
 }
 
 // interrupt boilerplate
 
 void USART1_IRQHandler(void) {
-  NVIC_DisableIRQ(USART1_IRQn);
   uart_ring_process(&esp_ring);
-  NVIC_EnableIRQ(USART1_IRQn);
 }
 
 void USART2_IRQHandler(void) {
-  NVIC_DisableIRQ(USART2_IRQn);
   uart_ring_process(&debug_ring);
-  NVIC_EnableIRQ(USART2_IRQn);
 }
 
 void USART3_IRQHandler(void) {
-  NVIC_DisableIRQ(USART3_IRQn);
   uart_ring_process(&lin2_ring);
-  NVIC_EnableIRQ(USART3_IRQn);
 }
 
 void UART5_IRQHandler(void) {
-  NVIC_DisableIRQ(UART5_IRQn);
   uart_ring_process(&lin1_ring);
-  NVIC_EnableIRQ(UART5_IRQn);
 }
 
 int getc(uart_ring *q, char *elem) {
+  int ret = 0;
+  enter_critical_section();
   if (q->w_ptr_rx != q->r_ptr_rx) {
     *elem = q->elems_rx[q->r_ptr_rx];
     q->r_ptr_rx += 1;
-    return 1;
+    ret = 1;
   }
-  return 0;
+  exit_critical_section();
+  return ret;
 }
 
 int injectc(uart_ring *q, char elem) {
-  uint8_t next_w_ptr = q->w_ptr_rx + 1;
   int ret = 0;
+  uint8_t next_w_ptr;
+
+  enter_critical_section();
+  next_w_ptr = q->w_ptr_rx + 1;
   if (next_w_ptr != q->r_ptr_rx) {
     q->elems_rx[q->w_ptr_rx] = elem;
     q->w_ptr_rx = next_w_ptr;
     ret = 1;
   }
+  exit_critical_section();
+
   return ret;
 }
 
 int putc(uart_ring *q, char elem) {
-  uint8_t next_w_ptr = q->w_ptr_tx + 1;
   int ret = 0;
+  uint8_t next_w_ptr;
+
+  enter_critical_section();
+  next_w_ptr = q->w_ptr_tx + 1;
   if (next_w_ptr != q->r_ptr_tx) {
     q->elems_tx[q->w_ptr_tx] = elem;
     q->w_ptr_tx = next_w_ptr;
     ret = 1;
   }
   uart_ring_process(q);
+  exit_critical_section();
+
   return ret;
 }
 
@@ -441,6 +448,7 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
   uart_ring *ur = get_ring_by_number(usbdata[0]);
   if (!ur) return;
   if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1, hardwired)) {
+    puts("PUTTING BYTES\n");
     for (i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
   }
 }
@@ -486,6 +494,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
   uart_ring *ur = NULL;
   int i;
   switch (setup->b.bRequest) {
+    // **** 0xc0: get CAN debug info
+    case 0xc0:
+      puts("can tx: "); puth(can_tx_cnt);
+      puts(" txd: "); puth(can_txd_cnt);
+      puts(" rx: "); puth(can_rx_cnt);
+      puts(" err: "); puth(can_err_cnt);
+      puts("\n");
+      break;
     // **** 0xd0: fetch serial number
     case 0xd0:
       #ifdef PANDA
@@ -929,12 +945,6 @@ int main() {
       // turn off fan
       set_fan_speed(0);
     }
-
-    /*puts("can tx: "); puth(can_tx_cnt);
-    puts(" txd: "); puth(can_txd_cnt);
-    puts(" rx: "); puth(can_rx_cnt);
-    puts(" err: "); puth(can_err_cnt);
-    puts("\n");*/
   }
 
   return 0;
