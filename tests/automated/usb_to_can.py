@@ -10,7 +10,7 @@ LEGACY = os.getenv("LEGACY") is not None
 # must run first
 def test_build_download_connect():
   # download the latest code
-  assert(Panda.program(True, legacy=True))
+  assert(Panda.program(True, legacy=LEGACY))
 
   # connect to the panda
   p = Panda()

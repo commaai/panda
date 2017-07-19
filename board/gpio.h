@@ -131,6 +131,30 @@ void set_can_mode(int can, int use_gmlan) {
   }
 }
 
+#define USB_POWER_CLIENT 0
+#define USB_POWER_CDP 1
+#define USB_POWER_DCP 2
+
+void set_usb_power_mode(int mode) {
+  switch (mode) {
+    case USB_POWER_CLIENT:
+      // B2,A13: set client mode
+      set_gpio_output(GPIOB, 2, 0);
+      set_gpio_output(GPIOA, 13, 1);
+      break;
+    case USB_POWER_CDP:
+      // B2,A13: set CDP mode
+      set_gpio_output(GPIOB, 2, 1);
+      set_gpio_output(GPIOA, 13, 1);
+      break;
+    case USB_POWER_DCP:
+      // B2,A13: set DCP mode on the charger (breaks USB!)
+      set_gpio_output(GPIOB, 2, 0);
+      set_gpio_output(GPIOA, 13, 0);
+      break;
+  }
+}
+
 // board specific
 void gpio_init() {
   // pull low to hold ESP in reset??
@@ -235,12 +259,9 @@ void gpio_init() {
     set_gpio_pullup(GPIOC, 11, PULL_UP);
   #endif
 
-  if(revision == PANDA_REV_C) {
-    // B2,A13: set DCP mode on the charger (breaks USB!)
-    //set_gpio_output(GPIOB, 2, 0);
-    //set_gpio_output(GPIOA, 13, 0);
-
-    //set_gpio_output(GPIOA, 13, 1); //CTRL 1
-    //set_gpio_output(GPIOB, 2, 0);  //CTRL 2
+  if (revision == PANDA_REV_C) {
+    //set_usb_power_mode(USB_POWER_CDP);
+    set_usb_power_mode(USB_POWER_CLIENT);
   }
 }
+

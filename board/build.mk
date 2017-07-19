@@ -35,7 +35,7 @@ recover: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
 	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
 	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
 
-ota: main_bin
+ota: obj/$(PROJ_NAME).bin
 	curl http://192.168.0.10/stupdate --upload-file $<
 
 ifneq ($(wildcard ../.git/HEAD),)
