@@ -17,25 +17,23 @@ int can_err_cnt = 0;
 #ifdef PANDA
   CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
   uint8_t bus_lookup[] = {0,1,2};
-  uint8_t can_num_lookup[] = {0,1,2}; //bus num -> can num
-  int8_t can_forwarding[] = {-1,-1,-1};
-  uint32_t can_speed[] = {5000, 5000, 5000}; // 500 kbps
+  uint8_t can_num_lookup[] = {0,1,2,-1};
+  int8_t can_forwarding[] = {-1,-1,-1,-1};
+  uint32_t can_speed[] = {5000, 5000, 5000, 333};
   #define CAN_MAX 3
+  #define BUS_MAX 4
 #else
-  CAN_TypeDef *cans[] = {CAN2, CAN1};
+  CAN_TypeDef *cans[] = {CAN1, CAN2};
   uint8_t bus_lookup[] = {1,0};
-  uint8_t can_num_lookup[] = {1,0}; //bus num -> can num
+  uint8_t can_num_lookup[] = {1,0};
   int8_t can_forwarding[] = {-1,-1};
   uint32_t can_speed[] = {5000, 5000};
   #define CAN_MAX 2
+  #define BUS_MAX 2
 #endif
 
-
-#define NO_ACTIVE_GMLAN -1
-int active_gmlan_port_id = NO_ACTIVE_GMLAN;
-
-#define CANIF_FROM_CAN_NUM(num) (cans[bus_lookup[num]])
-#define CANIF_FROM_BUS_NUM(num) (cans[num])
+#define CANIF_FROM_CAN_NUM(num) (cans[num])
+//#define CANIF_FROM_BUS_NUM(num) (cans[can_num_lookup[num]])
 #define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
 #define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
 
@@ -56,8 +54,10 @@ int active_gmlan_port_id = NO_ACTIVE_GMLAN;
 // 5000 = 500 kbps
 #define can_speed_to_prescaler(x) (CAN_PCLK / CAN_QUANTA * 10 / (x))
 
-void can_init(uint8_t bus_number) {
-  CAN_TypeDef *CAN = CANIF_FROM_BUS_NUM(bus_number);
+void can_init(uint8_t can_number) {
+  if (can_number == 0xff) return;
+
+  CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   set_can_enable(CAN, 1);
 
   CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
@@ -66,7 +66,7 @@ void can_init(uint8_t bus_number) {
   // set time quanta from defines
   CAN->BTR = (CAN_BTR_TS1_0 * (CAN_SEQ1-1)) |
              (CAN_BTR_TS2_0 * (CAN_SEQ2-1)) |
-             (can_speed_to_prescaler(can_speed[bus_number]) - 1);
+             (can_speed_to_prescaler(can_speed[BUS_NUM_FROM_CAN_NUM(can_number)]) - 1);
 
   // silent loopback mode for debugging
   if (can_loopback) {
@@ -87,6 +87,8 @@ void can_init(uint8_t bus_number) {
   if (tmp == CAN_TIMEOUT) {
     set_led(LED_BLUE, 1);
     puts("CAN init FAILED!!!!!\n");
+    puth(can_number); puts(" ");
+    puth(BUS_NUM_FROM_CAN_NUM(can_number)); puts("\n");
   }
 
   // accept all filter
@@ -106,6 +108,9 @@ void can_init(uint8_t bus_number) {
   //CAN->IER = CAN_IER_TMEIE | CAN_IER_FMPIE0 | CAN_IER_FMPIE1;
   //CAN->IER = CAN_IER_TMEIE;
   CAN->IER = CAN_IER_TMEIE | CAN_IER_FMPIE0;
+
+  // in case there are queued up messages
+  process_can(can_number);
 }
 
 void can_init_all() {

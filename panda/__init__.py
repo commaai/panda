@@ -83,6 +83,9 @@ class Panda(object):
   SERIAL_LIN1 = 2
   SERIAL_LIN2 = 3
 
+  GMLAN_CAN2 = 1
+  GMLAN_CAN3 = 2
+
   REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
   REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
 
@@ -177,8 +180,11 @@ class Panda(object):
     # TODO: This feature may not work correctly with saturated buses
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdd, from_bus, to_bus, b'')
 
-  def set_gmlan(self, on, bus=2):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, int(on), bus, b'')
+  def set_gmlan(self, bus=2):
+    if bus is None:
+      self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, 0, 0, b'')
+    elif bus in [Panda.GMLAN_CAN2, Panda.GMLAN_CAN3]:
+      self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, 1, bus, b'')
 
   def set_can_loopback(self, enable):
     # set can loopback mode for all buses

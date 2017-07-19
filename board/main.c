@@ -43,9 +43,14 @@ typedef struct {
 can_buffer(rx_q, 0x1000)
 can_buffer(tx1_q, 0x100)
 can_buffer(tx2_q, 0x100)
-can_buffer(tx3_q, 0x100)
 
-can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
+#ifdef PANDA
+  can_buffer(tx3_q, 0x100)
+  can_buffer(txgmlan_q, 0x100)
+  can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
+#else
+  can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q};
+#endif
 
 // ********************* IRQ helpers *********************
 
@@ -280,6 +285,8 @@ int putc(uart_ring *q, char elem) {
 // ***************************** CAN *****************************
 
 void process_can(uint8_t can_number) {
+  if (can_number == 0xff) return;
+
   enter_critical_section();
 
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
@@ -571,12 +578,45 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     // **** 0xdb: set GMLAN multiplexing mode
     case 0xdb:
-      if (setup->b.wIndex.w == 1) {
-        set_can_mode(3, 0); // TODO: Make set_can_mode bus num 'sane' as well.
-        set_can_mode(2, setup->b.wValue.w);
-      } else if (setup->b.wIndex.w == 2) {
-        set_can_mode(2, 0);
-        set_can_mode(3, setup->b.wValue.w);
+      if (setup->b.wValue.w == 1) {
+        // GMLAN ON
+        if (setup->b.wIndex.w == 1) {
+          puts("GMLAN on CAN2\n");
+          // GMLAN on CAN2
+          set_can_mode(1, 1);
+          bus_lookup[1] = 3;
+          can_num_lookup[1] = -1;
+          can_num_lookup[3] = 1;
+          can_init(1);
+        } else if (setup->b.wIndex.w == 2) {
+          puts("GMLAN on CAN3\n");
+          // GMLAN on CAN3
+          set_can_mode(2, 1);
+          bus_lookup[2] = 3;
+          can_num_lookup[2] = -1;
+          can_num_lookup[3] = 2;
+          can_init(2);
+        }
+      } else {
+        // GMLAN OFF
+        switch (can_num_lookup[3]) {
+          case 1:
+            puts("disable GMLAN on CAN2\n");
+            set_can_mode(1, 0);
+            bus_lookup[1] = 1;
+            can_num_lookup[1] = 1;
+            can_num_lookup[3] = -1;
+            can_init(1);
+            break;
+          case 2:
+            puts("disable GMLAN on CAN3\n");
+            set_can_mode(2, 0);
+            bus_lookup[2] = 2;
+            can_num_lookup[2] = 2;
+            can_num_lookup[3] = -1;
+            can_init(2);
+            break;
+        }
       }
       break;
     // **** 0xdc: set safety mode
@@ -592,18 +632,18 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xdd:
       // wValue = Can Bus Num to forward from
       // wIndex = Can Bus Num to forward to
-      if (setup->b.wValue.w < CAN_MAX && setup->b.wIndex.w < CAN_MAX &&
-          setup->b.wValue.w != setup->b.wIndex.w) { //Set forwarding
+      if (setup->b.wValue.w < BUS_MAX && setup->b.wIndex.w < BUS_MAX &&
+          setup->b.wValue.w != setup->b.wIndex.w) { // set forwarding
         can_forwarding[setup->b.wValue.w] = setup->b.wIndex.w & CAN_BUS_NUM_MASK;
-      } else if(setup->b.wValue.w < CAN_MAX && setup->b.wIndex.w == 0xFF){ //Clear Forwarding
+      } else if(setup->b.wValue.w < BUS_MAX && setup->b.wIndex.w == 0xFF){ //Clear Forwarding
         can_forwarding[setup->b.wValue.w] = -1;
       }
       break;
     // **** 0xde: set can bitrate
     case 0xde:
-      if (setup->b.wValue.w < CAN_MAX) {
+      if (setup->b.wValue.w < BUS_MAX) {
         can_speed[setup->b.wValue.w] = setup->b.wIndex.w;
-        can_init(setup->b.wValue.w);
+        can_init(CAN_NUM_FROM_BUS_NUM(setup->b.wValue.w));
       }
       break;
     // **** 0xe0: uart read

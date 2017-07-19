@@ -86,21 +86,9 @@ void periph_init() {
 }
 
 void set_can_mode(int can, int use_gmlan) {
-  // http://www.bittiming.can-wiki.info/#bxCAN
-  // 24 MHz, sample point at 87.5%
-  uint32_t pclk = 24000;
-  uint32_t num_time_quanta = 16;
-  uint32_t prescaler;
-  CAN_TypeDef *CAN = NULL;
-  if (can == 2) CAN = CAN2;
-#ifdef CAN3
-  else if (can == 3) CAN = CAN3;
-#endif
-  if (CAN == NULL) return;
-
   // connects to CAN2 xcvr or GMLAN xcvr
   if (use_gmlan) {
-    if (can == 2) {
+    if (can == 1) {
       // B5,B6: disable normal mode
       set_gpio_mode(GPIOB, 5, MODE_INPUT);
       set_gpio_mode(GPIOB, 6, MODE_INPUT);
@@ -108,39 +96,19 @@ void set_can_mode(int can, int use_gmlan) {
       // B12,B13: gmlan mode
       set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
       set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
-
-      /* GMLAN mode pins:
-      M0(B15)  M1(B14)  mode
-      =======================
-      0        0        sleep
-      1        0        100kbit
-      0        1        high voltage wakeup
-      1        1        33kbit (normal)
-      */
-
-    } else if (revision == PANDA_REV_C && can == 3) {
+#ifdef CAN3
+    } else if (revision == PANDA_REV_C && can == 2) {
       // A8,A15: disable normal mode
       set_gpio_mode(GPIOA, 8, MODE_INPUT);
       set_gpio_mode(GPIOA, 15, MODE_INPUT);
 
-#ifdef CAN3
       // B3,B4: enable gmlan mode
       set_gpio_alternate(GPIOB, 3, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOB, 4, GPIO_AF11_CAN3);
 #endif
     }
-
-    // put gmlan transceiver in normal mode
-    set_gpio_output(GPIOB, 14, 1);
-    set_gpio_output(GPIOB, 15, 1);
-
-    // 83.3 kbps
-    // prescaler = pclk / num_time_quanta * 10 / 833;
-
-    // 33.3 kbps
-    prescaler = pclk / num_time_quanta * 10 / 333;
   } else {
-    if (can == 2) {
+    if (can == 1) {
       // B12,B13: disable gmlan mode
       set_gpio_mode(GPIOB, 12, MODE_INPUT);
       set_gpio_mode(GPIOB, 13, MODE_INPUT);
@@ -148,36 +116,19 @@ void set_can_mode(int can, int use_gmlan) {
       // B5,B6: normal mode
       set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
       set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
-    } else if (can == 3) {
+#ifdef CAN3
+    } else if (can == 2) {
       if(revision == PANDA_REV_C){
         // B3,B4: disable gmlan mode
         set_gpio_mode(GPIOB, 3, MODE_INPUT);
         set_gpio_mode(GPIOB, 4, MODE_INPUT);
       }
-
-#ifdef CAN3
       // A8,A15: normal mode
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
 #endif
     }
-
-    // 500 kbps
-    prescaler = pclk / num_time_quanta / 500;
   }
-
-  // init
-  CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
-  while((CAN->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
-
-  // set speed
-  // seg 1: 13 time quanta, seg 2: 2 time quanta
-  CAN->BTR = (CAN_BTR_TS1_0 * 12) |
-    CAN_BTR_TS2_0 | (prescaler - 1);
-
-  // running
-  CAN->MCR = CAN_MCR_TTCM;
-  while((CAN->MSR & CAN_MSR_INAK) == CAN_MSR_INAK);
 }
 
 // board specific
@@ -242,13 +193,26 @@ void gpio_init() {
 
   // B5,B6: CAN 2
   set_can_enable(CAN2, 0);
-  set_can_mode(2, 0);
+  set_can_mode(1, 0);
 
-  // A8,A15: CAN3
+  // A8,A15: CAN 3
   #ifdef CAN3
     set_can_enable(CAN3, 0);
-    set_can_mode(3, 0);
+    set_can_mode(2, 0);
   #endif
+
+  /* GMLAN mode pins:
+  M0(B15)  M1(B14)  mode
+  =======================
+  0        0        sleep
+  1        0        100kbit
+  0        1        high voltage wakeup
+  1        1        33kbit (normal)
+  */
+
+  // put gmlan transceiver in normal mode
+  set_gpio_output(GPIOB, 14, 1);
+  set_gpio_output(GPIOB, 15, 1);
 
   #ifdef PANDA
     // K-line enable moved from B4->B7 to make room for GMLAN on CAN3
