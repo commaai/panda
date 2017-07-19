@@ -461,11 +461,13 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
 }
 
 void send_can(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
-  // add CAN packet to send queue
-  // bus number isn't passed through
-  to_push->RDTR &= 0xF;
-  push(can_queues[bus_number], to_push);
-  process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
+  if (bus_number < BUS_MAX) {
+    // add CAN packet to send queue
+    // bus number isn't passed through
+    to_push->RDTR &= 0xF;
+    push(can_queues[bus_number], to_push);
+    process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
+  }
 }
 
 // send on CAN
@@ -578,46 +580,48 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     // **** 0xdb: set GMLAN multiplexing mode
     case 0xdb:
-      if (setup->b.wValue.w == 1) {
-        // GMLAN ON
-        if (setup->b.wIndex.w == 1) {
-          puts("GMLAN on CAN2\n");
-          // GMLAN on CAN2
-          set_can_mode(1, 1);
-          bus_lookup[1] = 3;
-          can_num_lookup[1] = -1;
-          can_num_lookup[3] = 1;
-          can_init(1);
-        } else if (setup->b.wIndex.w == 2) {
-          puts("GMLAN on CAN3\n");
-          // GMLAN on CAN3
-          set_can_mode(2, 1);
-          bus_lookup[2] = 3;
-          can_num_lookup[2] = -1;
-          can_num_lookup[3] = 2;
-          can_init(2);
-        }
-      } else {
-        // GMLAN OFF
-        switch (can_num_lookup[3]) {
-          case 1:
-            puts("disable GMLAN on CAN2\n");
-            set_can_mode(1, 0);
-            bus_lookup[1] = 1;
-            can_num_lookup[1] = 1;
-            can_num_lookup[3] = -1;
+      #ifdef PANDA
+        if (setup->b.wValue.w == 1) {
+          // GMLAN ON
+          if (setup->b.wIndex.w == 1) {
+            puts("GMLAN on CAN2\n");
+            // GMLAN on CAN2
+            set_can_mode(1, 1);
+            bus_lookup[1] = 3;
+            can_num_lookup[1] = -1;
+            can_num_lookup[3] = 1;
             can_init(1);
-            break;
-          case 2:
-            puts("disable GMLAN on CAN3\n");
-            set_can_mode(2, 0);
-            bus_lookup[2] = 2;
-            can_num_lookup[2] = 2;
-            can_num_lookup[3] = -1;
+          } else if (setup->b.wIndex.w == 2 && revision == PANDA_REV_C) {
+            puts("GMLAN on CAN3\n");
+            // GMLAN on CAN3
+            set_can_mode(2, 1);
+            bus_lookup[2] = 3;
+            can_num_lookup[2] = -1;
+            can_num_lookup[3] = 2;
             can_init(2);
-            break;
+          }
+        } else {
+          // GMLAN OFF
+          switch (can_num_lookup[3]) {
+            case 1:
+              puts("disable GMLAN on CAN2\n");
+              set_can_mode(1, 0);
+              bus_lookup[1] = 1;
+              can_num_lookup[1] = 1;
+              can_num_lookup[3] = -1;
+              can_init(1);
+              break;
+            case 2:
+              puts("disable GMLAN on CAN3\n");
+              set_can_mode(2, 0);
+              bus_lookup[2] = 2;
+              can_num_lookup[2] = 2;
+              can_num_lookup[3] = -1;
+              can_init(2);
+              break;
+          }
         }
-      }
+      #endif
       break;
     // **** 0xdc: set safety mode
     case 0xdc:

@@ -114,14 +114,14 @@ class Panda(object):
     self._handle.close()
 
   @staticmethod
-  def program(clean=False):
+  def program(clean=False, legacy=False):
     BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
     # TODO: check for legacy board
     if clean:
       cmd = "make clean"
     else:
       cmd = "true"
-    ret = os.system("cd %s && %s && make" % (os.path.join(BASEDIR, "board"), cmd))
+    ret = os.system("cd %s && %s && make -f %s" % (os.path.join(BASEDIR, "board"), cmd, "Makefile.legacy" if legacy else "Makefile"))
     time.sleep(1)
     return ret==0
 

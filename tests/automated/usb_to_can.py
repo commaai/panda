@@ -5,10 +5,12 @@ import time
 from panda import Panda
 from nose.tools import timed, assert_equal, assert_less, assert_greater
 
+LEGACY = os.getenv("LEGACY") is not None
+
 # must run first
 def test_build_download_connect():
   # download the latest code
-  assert(Panda.program(True))
+  assert(Panda.program(True, legacy=True))
 
   # connect to the panda
   p = Panda()
@@ -34,7 +36,12 @@ def test_can_loopback():
   # enable CAN loopback mode
   p.set_can_loopback(True)
 
-  for bus in [0,1,2]:
+  if LEGACY:
+    busses = [0,1]
+  else:
+    busses = [0,1,2]
+
+  for bus in busses:
     # set bus 0 speed to 250
     p.set_can_speed_kbps(bus, 250)
 
@@ -138,7 +145,6 @@ def test_throughput():
   # enable CAN loopback mode
   p.set_can_loopback(True)
 
-
   for speed in [100,250,500,750,1000]:
     # set bus 0 speed to speed
     p.set_can_speed_kbps(0, speed)
@@ -154,6 +160,9 @@ def test_throughput():
     print("loopback 100 messages at speed %d, comp speed is %.2f, percent %.2f" % (speed, comp_kbps, saturation_pct))
 
 def test_gmlan():
+  if LEGACY:
+    return
+
   p = connect_wo_esp()
 
   # enable output mode
