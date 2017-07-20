@@ -130,7 +130,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
         content_length = skip_atoi(&cl);
         os_printf("with content length %d\n", content_length);
 
-        if (content_length > 0 && content_length <= 16384) {
+        if (content_length > 0 && content_length <= 32768) {
           // boot mode
           st_set_boot_mode(1);
 
@@ -139,8 +139,10 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
 
           // erase sector 1
           st_cmd(0x11, 1, NULL);
+          st_cmd(0xf, 0, NULL);
 
-          // wait for erase
+          // erase sector 2
+          st_cmd(0x11, 2, NULL);
           st_cmd(0xf, 0, NULL);
         }
       }
