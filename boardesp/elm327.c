@@ -11,8 +11,8 @@
 
 //Version 1.5 is an invalid version used by many pirate clones
 //that only partially support 1.0.
-#define START_MSG "\r\rELM327 v1.5\r\r>"
-#define IDENT_MSG "ELM327 v1.5\r\r"
+#define START_MSG "\r\rELM327 v1.0\r\r>"
+#define IDENT_MSG "ELM327 v1.0\r\r"
 #define DEVICE_DESC "Panda\n\n"
 
 static struct espconn elm_conn;
@@ -34,6 +34,9 @@ static bool elm_mode_linefeed = false;
 static bool elm_mode_additional_headers = false;
 static bool elm_mode_auto_protocol = true;
 static uint8_t elm_selected_protocol = 1;
+static bool elm_mode_print_spaces = true;
+static uint8_t elm_mode_adaptive_timing = 1;
+
 
 static char hex_lookup[] = {'0', '1', '2', '3', '4', '5', '6', '7',
                             '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
@@ -125,6 +128,7 @@ enum at_cmd_ids_t { // FULL ELM 1.0 list
 
   AT_AMP1,
   AT_AL,
+  AT_AT0, AT_AT1, AT_AT2, // Added ELM 1.2, expected by Torque
   AT_BD,
   AT_BI,
   AT_CAF0, AT_CAF1,
@@ -149,6 +153,7 @@ enum at_cmd_ids_t { // FULL ELM 1.0 list
   AT_PC,
   AT_R0, AT_R1,
   AT_RV,
+  AT_S0, AT_S1, // Added ELM 1.3, expected by Torque
   AT_SH_6, AT_SH_3,
   AT_SPA, AT_SP,
   AT_ST,
@@ -168,6 +173,9 @@ typedef struct {
 
 static const at_cmd_reg_t at_cmd_reg[] = {
   {"@1",  2, 2, AT_AMP1},
+  {"AT0", 3, 3, AT_AT0}, // Added ELM 1.2, expected by Torque
+  {"AT1", 3, 3, AT_AT1}, // Added ELM 1.2, expected by Torque
+  {"AT2", 3, 3, AT_AT2}, // Added ELM 1.2, expected by Torque
   {"DP",  2, 2, AT_DP},
   {"DPN", 3, 3, AT_DPN},
   {"E0",  2, 2, AT_E0},
@@ -179,6 +187,8 @@ static const at_cmd_reg_t at_cmd_reg[] = {
   {"L1",  2, 2, AT_L1},
   {"M0",  2, 2, AT_M0},
   //{"M1",  2, 2, AT_M1},
+  {"S0",  2, 2, AT_S0}, // Added ELM 1.3, expected by Torque
+  {"S1",  2, 2, AT_S1}, // Added ELM 1.3, expected by Torque
   {"SP",  2, 3, AT_SP},
   {"SPA", 3, 4, AT_SPA},
   {"Z",   1, 1, AT_Z},
@@ -197,10 +207,25 @@ static enum at_cmd_ids_t ICACHE_FLASH_ATTR elm_parse_at_cmd(char *cmd, uint16_t 
 
 static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
   uint8_t tmp;
+  int i;
+  os_printf("DOING STUFF ");
+  for(i = 0; i < len; i++)
+    os_printf("%c", cmd[i]);
+  os_printf("\r\n");
+
   switch(elm_parse_at_cmd(cmd, len)){
   case AT_AMP1:
     elm_append_rsp(DEVICE_DESC, sizeof(DEVICE_DESC));
     return;
+  case AT_AT0: //DISABLE ADAPTIVE TIMING
+    elm_mode_adaptive_timing = 0;
+    break;
+  case AT_AT1: //SET ADAPTIVE TIMING TO AUTO1
+    elm_mode_adaptive_timing = 1;
+    break;
+  case AT_AT2: //SET ADAPTIVE TIMING TO AUTO2
+    elm_mode_adaptive_timing = 2;
+    break;
   case AT_DP: //DESCRIBE THE PROTOCOL BY NAME
     if(elm_mode_auto_protocol && elm_selected_protocol != 0)
       elm_append_rsp("AUTO, ", 6);
@@ -238,6 +263,12 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
   case AT_M0: //DISABLE NONVOLATILE STORAGE
     //Memory storage is likely unnecessary
     break;
+  case AT_S0: //DISABLE PRINTING SPACES IN ECU RESPONSES
+    elm_mode_print_spaces = false;
+    break;
+  case AT_S1: //ENABLE PRINTING SPACES IN ECU RESPONSES
+    elm_mode_print_spaces = true;
+    break;
   case AT_SP: //SET PROTOCOL
     tmp = elm_decode_hex_char(cmd[2]);
     if(tmp == -1 || tmp >= ELM_PROTOCOL_COUNT) {
@@ -262,6 +293,8 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     elm_mode_additional_headers = false;
     elm_mode_auto_protocol = true;
     elm_selected_protocol = 1;
+    elm_mode_print_spaces = true;
+    elm_mode_adaptive_timing = 1;
     elm_append_rsp(START_MSG, sizeof(START_MSG)-1);
     break;
   default:
@@ -273,6 +306,8 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
 }
 
 static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
+  os_printf("DOING STUFF2 %s\n", data);
+
   rsp_buff_len = 0;
   len = elm_msg_find_cr_or_eos(data, len);
 
@@ -310,6 +345,8 @@ static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
 }
 
 void ICACHE_FLASH_ATTR elm_tcp_connect_cb(void *arg) {
+  os_printf("CONN MADE\n");
+
   struct espconn *conn = (struct espconn *)arg;
   espconn_set_opt(&elm_conn, ESPCONN_NODELAY);
   espconn_regist_recvcb(conn, elm_rx_cb);
@@ -325,4 +362,5 @@ void ICACHE_FLASH_ATTR elm327_init() {
   espconn_regist_connectcb(&elm_conn, elm_tcp_connect_cb);
   espconn_accept(&elm_conn);
   espconn_regist_time(&elm_conn, 60, 0); // 60s timeout for all connections
+  os_printf("Started elm stuff\n");
 }
