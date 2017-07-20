@@ -158,23 +158,6 @@ uart_ring *get_ring_by_number(int a) {
   }
 }
 
-void debug_ring_callback(uart_ring *ring) {
-  char rcv;
-  while (getc(ring, &rcv)) {
-    putc(ring, rcv);
-
-    // jump to DFU flash
-    if (rcv == 'z') {
-      enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-      NVIC_SystemReset();
-    }
-    if (rcv == 'x') {
-      // normal reset
-      NVIC_SystemReset();
-    }
-  }
-}
-
 // ***************************** serial port *****************************
 
 void uart_ring_process(uart_ring *q) {
@@ -281,6 +264,41 @@ int putc(uart_ring *q, char elem) {
 #include "can.h"
 #include "spi.h"
 #include "safety.h"
+
+// ********************* debugging *********************
+
+void debug_ring_callback(uart_ring *ring) {
+  char rcv;
+  while (getc(ring, &rcv)) {
+    putc(ring, rcv);
+
+    // jump to DFU flash
+    if (rcv == 'z') {
+      enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+      NVIC_SystemReset();
+    }
+
+    // normal reset
+    if (rcv == 'x') {
+      NVIC_SystemReset();
+    }
+
+    // enable CDP mode
+    if (rcv == 'C') {
+      puts("switching USB to CDP mode\n");
+      set_usb_power_mode(USB_POWER_CDP);
+    }
+    if (rcv == 'c') {
+      puts("switching USB to client mode\n");
+      set_usb_power_mode(USB_POWER_CLIENT);
+    }
+    if (rcv == 'D') {
+      puts("switching USB to DCP mode\n");
+      set_usb_power_mode(USB_POWER_DCP);
+    }
+  }
+}
+
 
 // ***************************** CAN *****************************
 
@@ -851,9 +869,10 @@ int main() {
   uart_init(USART3, 10400);
   USART3->CR2 |= USART_CR2_LINEN;
 
-  /*puts("EXTERNAL");
+  // print if we have a hardware serial port
+  puts("EXTERNAL ");
   puth(has_external_debug_serial);
-  puts("\n");*/
+  puts("\n");
 
   // enable USB
   usb_init();
@@ -934,12 +953,12 @@ int main() {
     // reset this every 16th pass
     if ((cnt&0xF) == 0) pending_can_live = 0;
 
-    /*#ifdef DEBUG
+    #ifdef DEBUG
       puts("** blink ");
       puth(can_rx_q.r_ptr); puts(" "); puth(can_rx_q.w_ptr); puts("  ");
       puth(can_tx1_q.r_ptr); puts(" "); puth(can_tx1_q.w_ptr); puts("  ");
       puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
-    #endif*/
+    #endif
 
     /*puts("voltage: "); puth(adc_get(ADCCHAN_VOLTAGE)); puts("  ");
     puts("current: "); puth(adc_get(ADCCHAN_CURRENT)); puts("\n");*/
