@@ -24,7 +24,7 @@ if __name__ == "__main__":
       while True:
         ret = panda.serial_read(port_number)
         if len(ret) > 0:
-          sys.stdout.write(setcolor[i] + ret.decode('utf8') + unsetcolor)
+          sys.stdout.write(setcolor[i] + str(ret) + unsetcolor)
           sys.stdout.flush()
         else:
           break

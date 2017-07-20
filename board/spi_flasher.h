@@ -35,8 +35,8 @@ void spi_flasher() {
   // flasher
   spi_init();
 
-  char spi_rx_buf[0x14];
-  char spi_tx_buf[0x44];
+  unsigned char spi_rx_buf[0x14];
+  unsigned char spi_tx_buf[0x44];
 
   int i;
   int sec;
@@ -93,6 +93,7 @@ void spi_flasher() {
             break;
           case 0x12:
             if (spi_rx_buf[2] <= 4) {
+              set_led(LED_RED, 0);
               for (i = 0; i < spi_rx_buf[2]; i++) {
                 // program byte 1
                 FLASH->CR = FLASH_CR_PSIZE_1 | FLASH_CR_PG;
@@ -103,6 +104,7 @@ void spi_flasher() {
                 *(uint64_t*)(&spi_tx_buf[0x30+(i*4)]) = *prog_ptr;
                 prog_ptr++;
               }
+              set_led(LED_RED, 1);
               spi_tx_buf[1] = 0xff;
             }
             break;

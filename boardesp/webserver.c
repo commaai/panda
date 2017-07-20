@@ -2,6 +2,7 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "gpio.h"
+#include "mem.h"
 #include "os_type.h"
 #include "user_interface.h"
 #include "espconn.h"
@@ -13,6 +14,7 @@
 #include "gitversion.h"
 #include "cert.h"
 
+#define max(a,b) ((a) > (b) ? (a) : (b))
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define espconn_send_string(conn, x) espconn_send(conn, x, strlen(x))
 
@@ -26,9 +28,51 @@ static struct espconn web_conn;
 static esp_tcp web_proto;
 extern char ssid[];
 
+char *st_firmware;
+int real_content_length, content_length = 0;
+char *st_firmware_ptr;
 LOCAL os_timer_t ota_reboot_timer;
 
 #define FIRMWARE_SIZE 503808
+
+void st_flash() {
+  int i;
+
+  // stupid watchdog test
+  //system_soft_wdt_stop();
+
+  // boot mode
+  st_set_boot_mode(1);
+
+  // unlock flash
+  st_cmd(0x10, 0, NULL);
+  st_cmd(0xf, 0, NULL);
+
+  // erase sector 1
+  st_cmd(0x11, 1, NULL);
+  st_cmd(0xf, 0, NULL);
+
+  if (real_content_length >= 16384) {
+    // erase sector 2
+    st_cmd(0x11, 2, NULL);
+    st_cmd(0xf, 0, NULL);
+  }
+
+  // real content length will always be 0x10 aligned
+  for (i = 0; i < real_content_length; i += 0x10) {
+    st_cmd(0x12, 4, &st_firmware[i]);
+    system_soft_wdt_feed();
+  }
+
+  // reboot into normal mode
+  st_set_boot_mode(0);
+
+  // done with this
+  os_free(st_firmware);
+
+  // watchdog done
+  //system_soft_wdt_restart();
+}
 
 typedef enum {
     NOT_STARTED,
@@ -41,7 +85,6 @@ typedef enum {
 } web_state_t;
 
 web_state_t state = NOT_STARTED;
-int content_length = 0;
 int esp_address, esp_address_erase_limit, start_address;
 
 void hexdump(char *data, int len) {
@@ -57,7 +100,7 @@ void st_reset() {
   // reset the ST
   gpio16_output_conf();
   gpio16_output_set(0);
-  os_delay_us(10000);
+  os_delay_us(1000);
   gpio16_output_set(1);
   os_delay_us(10000);
 }
@@ -123,28 +166,16 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
       os_printf("init st firmware\n");
       char *cl = strstr(data, "Content-Length: ");
       if (cl != NULL) {
-        state = RECEIVING_ST_FIRMWARE;
-
         // get content length
         cl += strlen("Content-Length: ");
         content_length = skip_atoi(&cl);
         os_printf("with content length %d\n", content_length);
 
-        if (content_length > 0 && content_length <= 32768) {
-          // boot mode
-          st_set_boot_mode(1);
-
-          // unlock flash
-          st_cmd(0x10, 0, NULL);
-
-          // erase sector 1
-          st_cmd(0x11, 1, NULL);
-          st_cmd(0xf, 0, NULL);
-
-          // erase sector 2
-          st_cmd(0x11, 2, NULL);
-          st_cmd(0xf, 0, NULL);
-        }
+        // should be small enough to fit in RAM
+        real_content_length = (content_length+0xF)&(~0xF);
+        st_firmware_ptr = st_firmware = os_malloc(real_content_length);
+        memset(st_firmware, 0, real_content_length);
+        state = RECEIVING_ST_FIRMWARE;
       }
     } else if ((memcmp(data, "PUT /espupdate1 ", 16) == 0) ||
                (memcmp(data, "PUT /espupdate2 ", 16) == 0)) {
@@ -181,21 +212,21 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
     }
   } else if (state == RECEIVING_ST_FIRMWARE) {
     os_printf("receiving st firmware: %d/%d\n", len, content_length);
+    memcpy(st_firmware_ptr, data, min(content_length, len));
+    st_firmware_ptr += len;
     content_length -= len;
 
-    // TODO: must be 4 bytes aligned
-    for (i = 0; i < len; i += 0x10) {
-      if (len-i < 0x10) {
-        st_cmd(0x12, (len-i)/4, data+i);
-      } else {
-        st_cmd(0x12, 4, data+i);
-      }
-    }
-    if (content_length == 0) {
+    if (content_length <= 0 && real_content_length > 1000) {
+      state = NOT_STARTED;
       os_printf("done!\n");
-      espconn_send_string(&web_conn, "HTTP/1.0 200 OK\nContent-Type: text/html\n\nsuccess!\n");
+      espconn_send_string(&web_conn, "HTTP/1.0 200 OK\nContent-Type: text/html\n\nflashing...\n");
       espconn_disconnect(conn);
-      st_set_boot_mode(0);
+
+      // reboot
+      os_printf("Scheduling st_flash in 100ms.\n");
+      os_timer_disarm(&ota_reboot_timer);
+      os_timer_setfn(&ota_reboot_timer, (os_timer_func_t *)st_flash, NULL);
+      os_timer_arm(&ota_reboot_timer, 100, 0);
     }
   } else if (state == RECEIVING_ESP_FIRMWARE) {
     if ((esp_address+len) < (start_address + FIRMWARE_SIZE)) {
@@ -214,6 +245,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
       esp_address += len;
 
       if (content_length == 0) {
+
         char digest[SHA_DIGEST_SIZE];
         uint32_t rsa[RSANUMBYTES/4];
         uint32_t dat[0x80/4];
@@ -244,7 +276,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
           os_printf("Scheduling reboot.\n");
           os_timer_disarm(&ota_reboot_timer);
           os_timer_setfn(&ota_reboot_timer, (os_timer_func_t *)system_upgrade_reboot, NULL);
-          os_timer_arm(&ota_reboot_timer, 2000, 1);
+          os_timer_arm(&ota_reboot_timer, 2000, 0);
         } else {
           os_printf("RSA verify FAILURE\n");
           espconn_send_string(&web_conn, "HTTP/1.0 500 Internal Server Error\nContent-Type: text/html\n\nrsa verify fail\n");

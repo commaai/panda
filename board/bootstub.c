@@ -12,6 +12,7 @@
 #include "early.h"
 #include "libc.h"
 #include "spi.h"
+#include "gpio.h"
 
 #include "crypto/rsa.h"
 #include "crypto/sha.h"

@@ -295,7 +295,12 @@ void ICACHE_FLASH_ATTR user_init()
   web_init();
 
   // set gpio high, so LED is off by default
-  gpio_output_set((1 << pin), 0, 0, 0);
+  for (int i = 0; i < 5; i++) {
+    gpio_output_set(0, (1 << pin), 0, 0);
+    os_delay_us(50000);
+    gpio_output_set((1 << pin), 0, 0, 0);
+    os_delay_us(50000);
+  }
 
   // jump to OS
   system_os_task(loop, LOOP_PRIO, my_queue, QUEUE_SIZE);
