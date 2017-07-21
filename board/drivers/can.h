@@ -3,13 +3,6 @@ int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = 1;
 
 // ********************* instantiate queues *********************
 
-typedef struct {
-  uint32_t w_ptr;
-  uint32_t r_ptr;
-  uint32_t fifo_size;
-  CAN_FIFOMailBox_TypeDef *elems;
-} can_ring;
-
 #define can_buffer(x, size) \
   CAN_FIFOMailBox_TypeDef elems_##x[size]; \
   can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = size, .elems = (CAN_FIFOMailBox_TypeDef *)&elems_##x };
@@ -28,7 +21,7 @@ can_buffer(tx2_q, 0x100)
 
 // ********************* interrupt safe queue *********************
 
-int pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
+int can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   int ret = 0;
 
   enter_critical_section();
@@ -43,7 +36,7 @@ int pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   return ret;
 }
 
-int push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
+int can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   int ret = 0;
   uint32_t next_w_ptr;
 
@@ -56,7 +49,7 @@ int push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
     ret = 1;
   }
   exit_critical_section();
-  if (ret == 0) puts("push failed!\n");
+  if (ret == 0) puts("can_push failed!\n");
   return ret;
 }
 
@@ -84,7 +77,6 @@ int can_err_cnt = 0;
   int8_t can_forwarding[] = {-1,-1,-1,-1};
   uint32_t can_speed[] = {5000, 5000, 5000, 333};
   #define CAN_MAX 3
-  #define BUS_MAX 4
 #else
   CAN_TypeDef *cans[] = {CAN1, CAN2};
   uint8_t bus_lookup[] = {1,0};
@@ -92,15 +84,11 @@ int can_err_cnt = 0;
   int8_t can_forwarding[] = {-1,-1};
   uint32_t can_speed[] = {5000, 5000};
   #define CAN_MAX 2
-  #define BUS_MAX 2
 #endif
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
 #define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
 #define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
-
-#define CAN_BUS_RET_FLAG 0x80
-#define CAN_BUS_NUM_MASK 0x7F
 
 // other option
 /*#define CAN_QUANTA 16
@@ -297,7 +285,7 @@ void process_can(uint8_t can_number) {
         to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000F) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
         to_push.RDLR = CAN->sTxMailBox[0].TDLR;
         to_push.RDHR = CAN->sTxMailBox[0].TDHR;
-        push(&can_rx_q, &to_push);
+        can_push(&can_rx_q, &to_push);
       }
 
       if ((CAN->TSR & CAN_TSR_TERR0) == CAN_TSR_TERR0) {
@@ -317,7 +305,7 @@ void process_can(uint8_t can_number) {
       CAN->TSR |= CAN_TSR_RQCP0;
     }
 
-    if (pop(can_queues[bus_number], &to_send)) {
+    if (can_pop(can_queues[bus_number], &to_send)) {
       can_tx_cnt += 1;
       // only send if we have received a packet
       CAN->sTxMailBox[0].TDLR = to_send.RDLR;
@@ -329,8 +317,6 @@ void process_can(uint8_t can_number) {
 
   exit_critical_section();
 }
-
-void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
 
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
@@ -369,7 +355,7 @@ void can_rx(uint8_t can_number) {
     #ifdef PANDA
       set_led(LED_GREEN, 1);
     #endif
-    push(&can_rx_q, &to_push);
+    can_push(&can_rx_q, &to_push);
 
     // next
     CAN->RF0R |= CAN_RF0R_RFOM0;
@@ -396,16 +382,13 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
       // add CAN packet to send queue
       // bus number isn't passed through
       to_push->RDTR &= 0xF;
-      push(can_queues[bus_number], to_push);
+      can_push(can_queues[bus_number], to_push);
       process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
     }
   }
 }
 
-void can_set_silent(int silent) {
-  if (can_silent != silent) {
-    can_silent = silent;
-    can_init_all();
-  }
+void can_set_forwarding(int from, int to) {
+  can_forwarding[from] = to;
 }
 

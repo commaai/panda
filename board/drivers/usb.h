@@ -51,40 +51,6 @@ USB_OTG_GlobalTypeDef *USBx = USB_OTG_FS;
 #define MAX_RESP_LEN 0x40
 uint8_t resp[MAX_RESP_LEN];
 
-typedef union
-{
-  uint16_t w;
-  struct BW
-  {
-    uint8_t msb;
-    uint8_t lsb;
-  }
-  bw;
-}
-uint16_t_uint8_t;
-
-typedef union _USB_Setup
-{
-  uint32_t d8[2];
-
-  struct _SetupPkt_Struc
-  {
-    uint8_t           bmRequestType;
-    uint8_t           bRequest;
-    uint16_t_uint8_t  wValue;
-    uint16_t_uint8_t  wIndex;
-    uint16_t_uint8_t  wLength;
-  } b;
-}
-USB_Setup_TypeDef;
-
-// interfaces
-void usb_cb_enumeration_complete();
-int  usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *usbdata, int hardwired);
-int  usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired);
-void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired);
-void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired);
-
 // descriptor types
 // same as setupdat.h
 #define DSCR_DEVICE_TYPE 1

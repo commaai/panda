@@ -2,22 +2,6 @@
 
 // ***************************** serial port queues *****************************
 
-#define FIFO_SIZE 0x100
-
-typedef struct uart_ring {
-  uint8_t w_ptr_tx;
-  uint8_t r_ptr_tx;
-  uint8_t elems_tx[FIFO_SIZE];
-  uint8_t w_ptr_rx;
-  uint8_t r_ptr_rx;
-  uint8_t elems_rx[FIFO_SIZE];
-  USART_TypeDef *uart;
-  void (*callback)(struct uart_ring*);
-} uart_ring;
-
-int getc(uart_ring *q, char *elem);
-int putc(uart_ring *q, char elem);
-
 // esp = USART1
 uart_ring esp_ring = { .w_ptr_tx = 0, .r_ptr_tx = 0,
                        .w_ptr_rx = 0, .r_ptr_rx = 0,

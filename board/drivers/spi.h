@@ -5,7 +5,6 @@
 uint8_t spi_buf[SPI_BUF_SIZE];
 int spi_buf_count = 0;
 int spi_total_count = 0;
-uint8_t spi_tx_buf[0x44];
 
 void spi_init() {
   //puts("SPI init\n");
@@ -66,13 +65,11 @@ void spi_rx_dma(void *addr, int len) {
 
 // ***************************** SPI IRQs *****************************
 
-void spi_cb_handle(uint8_t *data, int len);
-
 // SPI RX
 void DMA2_Stream2_IRQHandler(void) {
   // ack
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
-  spi_cb_handle(spi_buf, 0x14);
+  spi_cb_rx(spi_buf, 0x13);
 }
 
 // SPI TX

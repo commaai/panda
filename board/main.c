@@ -22,6 +22,8 @@ int gas_interceptor_detected = 0;
 #include "gpio.h"
 #include "safety.h"
 
+#include "drivers/drivers.h"
+
 #include "drivers/uart.h"
 #include "drivers/adc.h"
 #include "drivers/usb.h"
@@ -98,7 +100,7 @@ int get_health_pkt(void *dat) {
 int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) {
   CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;
   int ilen = 0;
-  while (ilen < min(len/0x10, 4) && pop(&can_rx_q, &reply[ilen])) ilen++;
+  while (ilen < min(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) ilen++;
   return ilen*0x10;
 }
 
@@ -239,7 +241,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xdc:
       if (hardwired) {
         safety_set_mode(setup->b.wValue.w);
-        can_set_silent(setup->b.wValue.w == SAFETY_NOOUTPUT);
+        can_silent = (setup->b.wValue.w == SAFETY_NOOUTPUT);
+        can_init_all();
       }
       break;
     // **** 0xdd: enable can forwarding
@@ -248,9 +251,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       // wIndex = Can Bus Num to forward to
       if (setup->b.wValue.w < BUS_MAX && setup->b.wIndex.w < BUS_MAX &&
           setup->b.wValue.w != setup->b.wIndex.w) { // set forwarding
-        can_forwarding[setup->b.wValue.w] = setup->b.wIndex.w & CAN_BUS_NUM_MASK;
+        can_set_forwarding(setup->b.wValue.w, setup->b.wIndex.w & CAN_BUS_NUM_MASK);
       } else if(setup->b.wValue.w < BUS_MAX && setup->b.wIndex.w == 0xFF){ //Clear Forwarding
-        can_forwarding[setup->b.wValue.w] = -1;
+        can_set_forwarding(setup->b.wValue.w, -1);
       }
       break;
     // **** 0xde: set can bitrate
@@ -353,7 +356,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
 
 #ifdef ENABLE_SPI
 
-void spi_cb_handle(uint8_t *data, int len) {
+uint8_t spi_tx_buf[0x44];
+
+void spi_cb_rx(uint8_t *data, int len) {
   memset(spi_tx_buf, 0xaa, 0x44);
   // data[0]  = endpoint
   // data[2]  = length
@@ -426,7 +431,7 @@ int main() {
 
   // default to silent mode to prevent issues with Ford
   safety_set_mode(SAFETY_NOOUTPUT);
-  can_set_silent(1);
+  can_silent = 1;
   can_init_all();
 
   adc_init();
