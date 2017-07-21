@@ -6,16 +6,6 @@
 
 #include "obj/gitversion.h"
 
-// debug safety check: is controls allowed?
-int started = 0;
-
-// optional features
-int started_signal_detected = 0;
-
-// these are set in the Honda safety hooks...this is the wrong place
-int controls_allowed = 0;
-int gas_interceptor_detected = 0;
-
 // ********************* includes *********************
 
 #include "libc.h"
@@ -29,6 +19,20 @@ int gas_interceptor_detected = 0;
 #include "drivers/usb.h"
 #include "drivers/can.h"
 #include "drivers/spi.h"
+#include "drivers/timer.h"
+
+// ***************************** fan *****************************
+
+void fan_init() {
+  // timer for fan PWM
+  TIM3->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1;
+  TIM3->CCER = TIM_CCER_CC3E;
+  timer_init(TIM3, 10);
+}
+
+void fan_set_speed(int fan_speed) {
+  TIM3->CCR3 = fan_speed;
+}
 
 // ********************* serial debugging *********************
 
@@ -76,14 +80,19 @@ int get_health_pkt(void *dat) {
     uint8_t started_signal_detected;
     uint8_t started_alt;
   } *health = dat;
+  #ifdef PANDA
+    int started_signal = (GPIOB->IDR & (1 << 12)) == 0;
+  #else
+    int started_signal = (GPIOC->IDR & (1 << 13)) != 0;
+  #endif
 
   health->voltage = adc_get(ADCCHAN_VOLTAGE);
-#ifdef ENABLE_CURRENT_SENSOR
+#ifdef PANDA
   health->current = adc_get(ADCCHAN_CURRENT);
 #else
   health->current = 0;
 #endif
-  health->started = started;
+  health->started = started_signal;
 
 #ifdef PANDA
   health->started_alt = (GPIOA->IDR & (1 << 1)) == 0;
@@ -93,7 +102,10 @@ int get_health_pkt(void *dat) {
 
   health->controls_allowed = controls_allowed;
   health->gas_interceptor_detected = gas_interceptor_detected;
-  health->started_signal_detected = started_signal_detected;
+
+  // DEPRECATED
+  health->started_signal_detected = 0;
+
   return sizeof(*health);
 }
 
@@ -134,10 +146,6 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
 }
 
 void usb_cb_enumeration_complete() {
-  // power down the ESP
-  // this doesn't work and makes the board unflashable
-  // because the ESP spews shit on serial on startup
-  //GPIOC->ODR &= ~(1 << 14);
   puts("USB enumeration complete\n");
 }
 
@@ -268,7 +276,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) break;
       // read
-      while (resp_len < min(setup->b.wLength.w, MAX_RESP_LEN) && getc(ur, (char*)&resp[resp_len])) {
+      while ((resp_len < min(setup->b.wLength.w, MAX_RESP_LEN)) &&
+                         getc(ur, (char*)&resp[resp_len])) {
         ++resp_len;
       }
       break;
@@ -354,8 +363,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
   return resp_len;
 }
 
-#ifdef ENABLE_SPI
+#ifdef PANDA
 
+// can't go on the stack cause it's DMAed
 uint8_t spi_tx_buf[0x44];
 
 void spi_cb_rx(uint8_t *data, int len) {
@@ -392,7 +402,12 @@ void spi_cb_rx(uint8_t *data, int len) {
   GPIOB->ODR &= ~(GPIO_ODR_ODR_0);
 }
 
+#else
+
+void spi_cb_rx(uint8_t *data, int len) {};
+
 #endif
+
 
 // ***************************** main code *****************************
 
@@ -436,7 +451,7 @@ int main() {
 
   adc_init();
 
-#ifdef ENABLE_SPI
+#ifdef PANDA
   spi_init();
 #endif
 
@@ -447,8 +462,6 @@ int main() {
   puts("**** INTERRUPTS ON ****\n");
 
   __enable_irq();
-
-  puts("OPTCR: "); puth(FLASH->OPTCR); puts("\n");
 
   // LED should keep on blinking all the time
   uint64_t cnt;
@@ -464,9 +477,6 @@ int main() {
       puth(can_tx1_q.r_ptr); puts(" "); puth(can_tx1_q.w_ptr); puts("  ");
       puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
     #endif
-
-    /*puts("voltage: "); puth(adc_get(ADCCHAN_VOLTAGE)); puts("  ");
-    puts("current: "); puth(adc_get(ADCCHAN_CURRENT)); puts("\n");*/
 
     // set LED to be controls allowed, blue on panda, green on legacy
     #ifdef PANDA
@@ -485,26 +495,6 @@ int main() {
     #ifdef PANDA
       set_led(LED_GREEN, 0);
     #endif
-
-    // started logic
-    #ifdef PANDA
-      int started_signal = (GPIOB->IDR & (1 << 12)) == 0;
-    #else
-      int started_signal = (GPIOC->IDR & (1 << 13)) != 0;
-    #endif
-    if (started_signal) { started_signal_detected = 1; }
-
-    if (started_signal || (!started_signal_detected && can_live)) {
-      started = 1;
-
-      // turn on fan at half speed
-      fan_set_speed(32768);
-    } else {
-      started = 0;
-
-      // turn off fan
-      fan_set_speed(0);
-    }
   }
 
   return 0;

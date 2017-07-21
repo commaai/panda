@@ -14,6 +14,9 @@ typedef struct {
   tx_lin_hook tx_lin;
 } safety_hooks;
 
+// This can be set by the safety hooks.
+int controls_allowed = 0;
+
 // Include the actual safety policies.
 #include "safety/safety_defaults.h"
 #include "safety/safety_honda.h"

@@ -61,6 +61,11 @@ void adc_init();
 uint32_t adc_get(int channel);
 
 
+// ********************* TIMER *********************
+
+void timer_init(TIM_TypeDef *TIM, int psc);
+
+
 // ********************* SPI *********************
 // IRQs: DMA2_Stream2, DMA2_Stream3, EXTI4
 
@@ -96,8 +101,11 @@ extern int can_live, pending_can_live;
 extern int can_loopback, can_silent;
 extern uint32_t can_speed[];
 
+void can_set_forwarding(int from, int to);
+
 void can_init(uint8_t can_number);
+void can_init_all();
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
 int can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
-void can_set_forwarding(int from, int to);
+
 

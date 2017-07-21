@@ -6,6 +6,71 @@
 
 #include "llgpio.h"
 
+// ********************* bringup *********************
+
+void clock_init() {
+  // enable external oscillator
+  RCC->CR |= RCC_CR_HSEON;
+  while ((RCC->CR & RCC_CR_HSERDY) == 0);
+
+  // divide shit
+  RCC->CFGR = RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_PPRE1_DIV4;
+  #ifdef PANDA
+    RCC->PLLCFGR = RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLM_3 |
+                   RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLN_5 | RCC_PLLCFGR_PLLSRC_HSE;
+  #else
+    RCC->PLLCFGR = RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLM_3 |
+                   RCC_PLLCFGR_PLLN_7 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLSRC_HSE;
+  #endif
+
+  // start PLL
+  RCC->CR |= RCC_CR_PLLON;
+  while ((RCC->CR & RCC_CR_PLLRDY) == 0);
+
+  // Configure Flash prefetch, Instruction cache, Data cache and wait state
+  // *** without this, it breaks ***
+  FLASH->ACR = FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_5WS;
+
+  // switch to PLL
+  RCC->CFGR |= RCC_CFGR_SW_PLL;
+  while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
+
+  // *** running on PLL ***
+}
+
+void periph_init() {
+  // enable GPIOB, UART2, CAN, USB clock
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+
+  RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+  RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+  RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
+  #ifdef PANDA
+    RCC->APB1ENR |= RCC_APB1ENR_UART5EN;
+  #endif
+  RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
+  RCC->APB1ENR |= RCC_APB1ENR_CAN2EN;
+  #ifdef CAN3
+    RCC->APB1ENR |= RCC_APB1ENR_CAN3EN;
+  #endif
+  RCC->APB1ENR |= RCC_APB1ENR_DACEN;
+  RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+  //RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
+  RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+  RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
+  RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
+  RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
+  RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+
+  // needed?
+  RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+}
+
+// ********************* setters *********************
+
 void set_can_enable(CAN_TypeDef *CAN, int enabled) {
   // enable CAN busses
   if (CAN == CAN1) {
@@ -50,39 +115,6 @@ void set_led(int led_num, int on) {
   #else
     set_gpio_output(GPIOB, led_num, !on);
   #endif
-}
-
-
-// TODO: does this belong here?
-void periph_init() {
-  // enable GPIOB, UART2, CAN, USB clock
-  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
-  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
-  RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
-
-  RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-  RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
-  RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
-  #ifdef PANDA
-    RCC->APB1ENR |= RCC_APB1ENR_UART5EN;
-  #endif
-  RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
-  RCC->APB1ENR |= RCC_APB1ENR_CAN2EN;
-  #ifdef CAN3
-    RCC->APB1ENR |= RCC_APB1ENR_CAN3EN;
-  #endif
-  RCC->APB1ENR |= RCC_APB1ENR_DACEN;
-  RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
-  //RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
-  RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-  RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
-  RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
-  RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
-  RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
-
-  // needed?
-  RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 }
 
 void set_can_mode(int can, int use_gmlan) {
@@ -155,6 +187,8 @@ void set_usb_power_mode(int mode) {
   }
 }
 
+// ********************* big init function *********************
+
 // board specific
 void gpio_init() {
   // pull low to hold ESP in reset??
@@ -206,7 +240,6 @@ void gpio_init() {
 #endif
 
   // B8,B9: CAN 1
-  set_can_enable(CAN1, 0);
 #ifdef STM32F4
   set_gpio_alternate(GPIOB, 8, GPIO_AF8_CAN1);
   set_gpio_alternate(GPIOB, 9, GPIO_AF8_CAN1);
@@ -214,15 +247,16 @@ void gpio_init() {
   set_gpio_alternate(GPIOB, 8, GPIO_AF9_CAN1);
   set_gpio_alternate(GPIOB, 9, GPIO_AF9_CAN1);
 #endif
+  set_can_enable(CAN1, 1);
 
   // B5,B6: CAN 2
-  set_can_enable(CAN2, 0);
   set_can_mode(1, 0);
+  set_can_enable(CAN2, 1);
 
   // A8,A15: CAN 3
   #ifdef CAN3
-    set_can_enable(CAN3, 0);
     set_can_mode(2, 0);
+    set_can_enable(CAN3, 1);
   #endif
 
   /* GMLAN mode pins:
@@ -263,23 +297,5 @@ void gpio_init() {
     //set_usb_power_mode(USB_POWER_CDP);
     set_usb_power_mode(USB_POWER_CLIENT);
   }
-}
-
-void timer_init(TIM_TypeDef *TIM, int psc) {
-  TIM->PSC = psc-1;
-  TIM->DIER = TIM_DIER_UIE;
-  TIM->CR1 = TIM_CR1_CEN;
-  TIM->SR = 0;
-}
-
-void fan_init() {
-  // timer for fan PWM
-  TIM3->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1;
-  TIM3->CCER = TIM_CCER_CC3E;
-  timer_init(TIM3, 10);
-}
-
-void fan_set_speed(int fan_speed) {
-  TIM3->CCR3 = fan_speed;
 }
 

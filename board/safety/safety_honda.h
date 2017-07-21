@@ -4,6 +4,8 @@
 //   out-state
 //      cancel button
 
+// these are set in the Honda safety hooks...this is the wrong place
+int gas_interceptor_detected = 0;
 
 // all commands: brake and steering
 // if controls_allowed

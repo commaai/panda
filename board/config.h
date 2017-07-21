@@ -11,15 +11,20 @@
   #include "stm32f2xx.h"
 #endif
 
-#ifdef PANDA
-  #define ENABLE_CURRENT_SENSOR
-  #define ENABLE_SPI
-#endif
-
 #define USB_VID 0xbbaa
 #define USB_PID 0xddcc
 
 #define NULL ((void*)0)
 #define COMPILE_TIME_ASSERT(pred) switch(0){case 0:case pred:;}
+
+#define min(a,b) \
+ ({ __typeof__ (a) _a = (a); \
+     __typeof__ (b) _b = (b); \
+   _a < _b ? _a : _b; })
+
+#define max(a,b) \
+ ({ __typeof__ (a) _a = (a); \
+     __typeof__ (b) _b = (b); \
+   _a > _b ? _a : _b; })
 
 #endif
