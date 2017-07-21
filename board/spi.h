@@ -1,3 +1,4 @@
+#ifdef ENABLE_SPI
 // IRQs: DMA2_Stream2, DMA2_Stream3, EXTI4
 
 #define SPI_BUF_SIZE 256
@@ -94,4 +95,6 @@ void EXTI4_IRQHandler(void) {
   }
   EXTI->PR = pr;
 }
+
+#endif
 

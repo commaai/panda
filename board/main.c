@@ -3,9 +3,7 @@
 #include <stdbool.h>
 
 #define NULL ((void*)0)
-
-#define COMPILE_TIME_ASSERT(pred)            \
-    switch(0){case 0:case pred:;}
+#define COMPILE_TIME_ASSERT(pred) switch(0){case 0:case pred:;}
 
 // *** end config ***
 
@@ -37,10 +35,7 @@ int puts ( const char * str );
 #include "usb.h"
 #include "safety.h"
 #include "can.h"
-
-#ifdef ENABLE_SPI
 #include "spi.h"
-#endif
 
 // ********************* debugging *********************
 
@@ -431,6 +426,7 @@ int main() {
   // enable main uart
   uart_init(USART2, 115200);
 
+#ifdef PANDA
   // enable ESP uart
   uart_init(USART1, 115200);
 
@@ -439,6 +435,7 @@ int main() {
   UART5->CR2 |= USART_CR2_LINEN;
   uart_init(USART3, 10400);
   USART3->CR2 |= USART_CR2_LINEN;
+#endif
 
   // print if we have a hardware serial port
   puts("EXTERNAL ");
@@ -506,13 +503,6 @@ int main() {
     // turn off the green LED, turned on by CAN
     #ifdef PANDA
       set_led(LED_GREEN, 0);
-    #endif
-
-    #ifdef ENABLE_SPI
-      /*if (spi_buf_count > 0) {
-        hexdump(spi_buf, spi_buf_count);
-        spi_buf_count = 0;
-      }*/
     #endif
 
     // started logic
