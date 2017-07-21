@@ -19,4 +19,7 @@
 #define USB_VID 0xbbaa
 #define USB_PID 0xddcc
 
+#define NULL ((void*)0)
+#define COMPILE_TIME_ASSERT(pred) switch(0){case 0:case pred:;}
+
 #endif

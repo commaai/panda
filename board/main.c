@@ -2,27 +2,22 @@
 #include "early.h"
 #include <stdbool.h>
 
-#define NULL ((void*)0)
-#define COMPILE_TIME_ASSERT(pred) switch(0){case 0:case pred:;}
-
 // *** end config ***
 
 #include "obj/gitversion.h"
 
 // debug safety check: is controls allowed?
-int controls_allowed = 0;
 int started = 0;
 
 // optional features
-int gas_interceptor_detected = 0;
 int started_signal_detected = 0;
 
-// detect high on UART
-// TODO: check for UART high
-int did_usb_enumerate = 0;
+// these are set in the Honda safety hooks...this is the wrong place
+int controls_allowed = 0;
+int gas_interceptor_detected = 0;
 
 // Declare puts to supress warning
-int puts ( const char * str );
+int puts(const char * str);
 
 // ********************* includes *********************
 
@@ -36,7 +31,7 @@ int puts ( const char * str );
 #include "can.h"
 #include "spi.h"
 
-// ********************* debugging *********************
+// ********************* serial debugging *********************
 
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
@@ -145,7 +140,6 @@ void usb_cb_enumeration_complete() {
   // because the ESP spews shit on serial on startup
   //GPIOC->ODR &= ~(1 << 14);
   puts("USB enumeration complete\n");
-  did_usb_enumerate = 1;
 }
 
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
@@ -246,8 +240,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     // **** 0xdc: set safety mode
     case 0xdc:
       if (hardwired) {
-        // silent mode if the safety mode is nooutput
-        set_safety_mode(setup->b.wValue.w);
+        safety_set_mode(setup->b.wValue.w);
+        can_set_silent(setup->b.wValue.w == SAFETY_NOOUTPUT);
       }
       break;
     // **** 0xdd: enable can forwarding
@@ -404,12 +398,14 @@ void __initialize_hardware_early() {
 }
 
 int main() {
+  // shouldn't have interrupts here, but just in case
   __disable_irq();
 
   // init devices
   clock_init();
   periph_init();
 
+  // detect the revision and init the GPIOs
   detect();
   gpio_init();
 
@@ -427,16 +423,12 @@ int main() {
   USART3->CR2 |= USART_CR2_LINEN;
 #endif
 
-  // print if we have a hardware serial port
-  puts("EXTERNAL ");
-  puth(has_external_debug_serial);
-  puts("\n");
-
   // enable USB
   usb_init();
 
   // default to silent mode to prevent issues with Ford
-  set_safety_mode(SAFETY_NOOUTPUT);
+  safety_set_mode(SAFETY_NOOUTPUT);
+  can_set_silent(1);
   can_init_all();
 
   adc_init();

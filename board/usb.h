@@ -63,7 +63,6 @@ typedef union
 }
 uint16_t_uint8_t;
 
-
 typedef union _USB_Setup
 {
   uint32_t d8[2];
