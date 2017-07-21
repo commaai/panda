@@ -227,6 +227,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
           if (setup->b.wIndex.w == 1) {
             can_set_gmlan(1);
           } else if (setup->b.wIndex.w == 2) {
+            // might be ignored on rev b panda
             can_set_gmlan(2);
           }
         } else {

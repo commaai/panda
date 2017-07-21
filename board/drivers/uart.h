@@ -133,8 +133,9 @@ int putc(uart_ring *q, char elem) {
     q->w_ptr_tx = next_w_ptr;
     ret = 1;
   }
-  uart_ring_process(q);
   exit_critical_section();
+
+  uart_ring_process(q);
 
   return ret;
 }
