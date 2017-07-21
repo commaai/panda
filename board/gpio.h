@@ -265,6 +265,13 @@ void gpio_init() {
   }
 }
 
+void timer_init(TIM_TypeDef *TIM, int psc) {
+  TIM->PSC = psc-1;
+  TIM->DIER = TIM_DIER_UIE;
+  TIM->CR1 = TIM_CR1_CEN;
+  TIM->SR = 0;
+}
+
 void fan_init() {
   // timer for fan PWM
   TIM3->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1;

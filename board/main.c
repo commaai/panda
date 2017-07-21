@@ -16,20 +16,17 @@ int started_signal_detected = 0;
 int controls_allowed = 0;
 int gas_interceptor_detected = 0;
 
-// Declare puts to supress warning
-int puts(const char * str);
-
 // ********************* includes *********************
 
 #include "libc.h"
 #include "gpio.h"
-#include "uart.h"
-#include "adc.h"
-#include "timer.h"
-#include "usb.h"
 #include "safety.h"
-#include "can.h"
-#include "spi.h"
+
+#include "drivers/uart.h"
+#include "drivers/adc.h"
+#include "drivers/usb.h"
+#include "drivers/can.h"
+#include "drivers/spi.h"
 
 // ********************* serial debugging *********************
 

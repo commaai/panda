@@ -20,7 +20,6 @@ void adc_init() {
 }
 
 uint32_t adc_get(int channel) {
-
   // includes length
   //ADC1->SQR1 = 0;
 
