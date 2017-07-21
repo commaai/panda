@@ -96,6 +96,7 @@ void UART5_IRQHandler(void) { uart_ring_process(&lin1_ring); }
 
 int getc(uart_ring *q, char *elem) {
   int ret = 0;
+
   enter_critical_section();
   if (q->w_ptr_rx != q->r_ptr_rx) {
     *elem = q->elems_rx[q->r_ptr_rx];
@@ -103,6 +104,7 @@ int getc(uart_ring *q, char *elem) {
     ret = 1;
   }
   exit_critical_section();
+
   return ret;
 }
 
@@ -182,7 +184,13 @@ void uart_init(USART_TypeDef *u, int baud) {
 
 void putch(const char a) {
   if (has_external_debug_serial) {
-    putc(&debug_ring, a);
+    /*while ((debug_ring.uart->SR & USART_SR_TXE) == 0);
+    debug_ring.uart->DR = a;*/
+
+    // assuming debugging is important if there's external serial connected
+    while (!putc(&debug_ring, a));
+
+    //putc(&debug_ring, a);
   } else {
     injectc(&debug_ring, a);
   }
