@@ -1,3 +1,5 @@
+// IRQs: OTG_FS
+
 // **** supporting defines ****
 
 typedef struct
@@ -480,6 +482,9 @@ void usb_init() {
   // DCTL startup value is 2 on new chip, 0 on old chip
   // THIS IS FUCKING BULLSHIT
   USBx_DEVICE->DCTL = 0;
+
+  // enable the IRQ
+  NVIC_EnableIRQ(OTG_FS_IRQn);
 }
 
 // ***************************** USB port *****************************
@@ -699,15 +704,15 @@ void usb_irqhandler(void) {
         break;
 
       case 1: ////// Interrupt config
-        // Check if there is anything to actually send.
-        if (can_rx_q.w_ptr != can_rx_q.r_ptr) {
-          // *** IN token received when TxFIFO is empty
-          if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
-            #ifdef DEBUG_USB
-            puts("  IN PACKET QUEUE\n");
-            #endif
-            // TODO: always assuming max len, can we get the length?
-            USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
+        // *** IN token received when TxFIFO is empty
+        if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
+          #ifdef DEBUG_USB
+          puts("  IN PACKET QUEUE\n");
+          #endif
+          // TODO: always assuming max len, can we get the length?
+          int len = usb_cb_ep1_in(resp, 0x40, 1);
+          if (len > 0) {
+            USB_WritePacket((void *)resp, len, 1);
           }
         }
         break;
@@ -725,3 +730,12 @@ void usb_irqhandler(void) {
 
   //USBx->GINTMSK = 0xFFFFFFFF & ~(USB_OTG_GINTMSK_NPTXFEM | USB_OTG_GINTMSK_PTXFEM | USB_OTG_GINTSTS_SOF | USB_OTG_GINTSTS_EOPF);
 }
+
+void OTG_FS_IRQHandler(void) {
+  NVIC_DisableIRQ(OTG_FS_IRQn);
+  //__disable_irq();
+  usb_irqhandler();
+  //__enable_irq();
+  NVIC_EnableIRQ(OTG_FS_IRQn);
+}
+

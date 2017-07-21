@@ -1,4 +1,3 @@
-
 #define min(a,b) \
  ({ __typeof__ (a) _a = (a); \
      __typeof__ (b) _b = (b); \
@@ -73,3 +72,21 @@ int memcmp(const void * ptr1, const void * ptr2, unsigned int num) {
   }
   return 0;
 }
+
+// ********************* IRQ helpers *********************
+
+int critical_depth = 0;
+void enter_critical_section() {
+  __disable_irq();
+  // this is safe because interrupts are disabled
+  critical_depth += 1;
+}
+
+void exit_critical_section() {
+  // this is safe because interrupts are disabled
+  critical_depth -= 1;
+  if (critical_depth == 0) {
+    __enable_irq();
+  }
+}
+
