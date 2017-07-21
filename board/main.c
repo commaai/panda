@@ -37,7 +37,10 @@ int puts ( const char * str );
 #include "usb.h"
 #include "safety.h"
 #include "can.h"
+
+#ifdef ENABLE_SPI
 #include "spi.h"
+#endif
 
 // ********************* debugging *********************
 
