@@ -1,4 +1,5 @@
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE, CAN2_TX, CAN2_RX0, CAN2_SCE, CAN3_TX, CAN3_RX0, CAN3_SCE
+int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = 1;
 
 // ********************* instantiate queues *********************
 
@@ -329,7 +330,7 @@ void process_can(uint8_t can_number) {
   exit_critical_section();
 }
 
-void send_can(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
+void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
 
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
@@ -357,7 +358,7 @@ void can_rx(uint8_t can_number) {
         to_send.RDTR = to_push.RDTR;
         to_send.RDLR = to_push.RDLR;
         to_send.RDHR = to_push.RDHR;
-        send_can(&to_send, can_forwarding[bus_number]);
+        can_send(&to_send, can_forwarding[bus_number]);
       }
     #endif
 
@@ -389,13 +390,22 @@ void CAN3_RX0_IRQHandler() { can_rx(2); }
 void CAN3_SCE_IRQHandler() { can_sce(CAN3); }
 #endif
 
-void send_can(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
-  if (bus_number < BUS_MAX) {
-    // add CAN packet to send queue
-    // bus number isn't passed through
-    to_push->RDTR &= 0xF;
-    push(can_queues[bus_number], to_push);
-    process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
+void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
+  if (safety_tx_hook(to_push)) {
+    if (bus_number < BUS_MAX) {
+      // add CAN packet to send queue
+      // bus number isn't passed through
+      to_push->RDTR &= 0xF;
+      push(can_queues[bus_number], to_push);
+      process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
+    }
+  }
+}
+
+void can_set_silent(int silent) {
+  if (can_silent != silent) {
+    can_silent = silent;
+    can_init_all();
   }
 }
 

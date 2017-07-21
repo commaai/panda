@@ -12,7 +12,6 @@
 // debug safety check: is controls allowed?
 int controls_allowed = 0;
 int started = 0;
-int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = 1;
 
 // optional features
 int gas_interceptor_detected = 0;
@@ -83,6 +82,7 @@ int get_health_pkt(void *dat) {
     uint8_t started_signal_detected;
     uint8_t started_alt;
   } *health = dat;
+
   health->voltage = adc_get(ADCCHAN_VOLTAGE);
 #ifdef ENABLE_CURRENT_SENSOR
   health->current = adc_get(ADCCHAN_CURRENT);
@@ -98,32 +98,25 @@ int get_health_pkt(void *dat) {
 #endif
 
   health->controls_allowed = controls_allowed;
-
   health->gas_interceptor_detected = gas_interceptor_detected;
   health->started_signal_detected = started_signal_detected;
   return sizeof(*health);
 }
 
-void set_fan_speed(int fan_speed) {
-  TIM3->CCR3 = fan_speed;
-}
-
 int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) {
   CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;
-
   int ilen = 0;
   while (ilen < min(len/0x10, 4) && pop(&can_rx_q, &reply[ilen])) ilen++;
-
   return ilen*0x10;
 }
 
-// send on serial, first byte to select
+// send on serial, first byte to select the ring
 void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
   int i;
   if (len == 0) return;
   uart_ring *ur = get_ring_by_number(usbdata[0]);
   if (!ur) return;
-  if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1, hardwired)) {
+  if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1)) {
     for (i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
   }
 }
@@ -142,9 +135,7 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
     to_push.RIR = tf[0];
 
     uint8_t bus_number = (to_push.RDTR >> 4) & CAN_BUS_NUM_MASK;
-    if (safety_tx_hook(&to_push, hardwired)) {
-      send_can(&to_push, bus_number);
-    }
+    can_send(&to_push, bus_number);
   }
 }
 
@@ -153,6 +144,7 @@ void usb_cb_enumeration_complete() {
   // this doesn't work and makes the board unflashable
   // because the ESP spews shit on serial on startup
   //GPIOC->ODR &= ~(1 << 14);
+  puts("USB enumeration complete\n");
   did_usb_enumerate = 1;
 }
 
@@ -195,7 +187,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     // **** 0xd3: set fan speed
     case 0xd3:
-      set_fan_speed(setup->b.wValue.w);
+      fan_set_speed(setup->b.wValue.w);
       break;
     // **** 0xd6: get version
     case 0xd6:
@@ -255,9 +247,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xdc:
       if (hardwired) {
         // silent mode if the safety mode is nooutput
-        can_silent = (setup->b.wValue.w == SAFETY_NOOUTPUT);
         set_safety_mode(setup->b.wValue.w);
-        can_init_all();
       }
       break;
     // **** 0xdd: enable can forwarding
@@ -371,7 +361,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
 
 #ifdef ENABLE_SPI
 
-void handle_spi(uint8_t *data, int len) {
+void spi_cb_handle(uint8_t *data, int len) {
   memset(spi_tx_buf, 0xaa, 0x44);
   // data[0]  = endpoint
   // data[2]  = length
@@ -446,7 +436,7 @@ int main() {
   usb_init();
 
   // default to silent mode to prevent issues with Ford
-  can_silent = 1;
+  set_safety_mode(SAFETY_NOOUTPUT);
   can_init_all();
 
   adc_init();
@@ -455,13 +445,9 @@ int main() {
   spi_init();
 #endif
 
-  // timer for fan PWM
-  TIM3->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1;
-  TIM3->CCER = TIM_CCER_CC3E;
-  timer_init(TIM3, 10);
-
   // set PWM
-  set_fan_speed(65535);
+  fan_init();
+  fan_set_speed(65535);
 
   puts("**** INTERRUPTS ON ****\n");
 
@@ -517,12 +503,12 @@ int main() {
       started = 1;
 
       // turn on fan at half speed
-      set_fan_speed(32768);
+      fan_set_speed(32768);
     } else {
       started = 0;
 
       // turn off fan
-      set_fan_speed(0);
+      fan_set_speed(0);
     }
   }
 

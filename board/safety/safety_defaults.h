@@ -5,11 +5,11 @@ void default_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {}
 static void nooutput_init() {
 }
 
-static int nooutput_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
+static int nooutput_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return false;
 }
 
-static int nooutput_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired) {
+static int nooutput_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   return false;
 }
 
@@ -25,12 +25,12 @@ const safety_hooks nooutput_hooks = {
 static void alloutput_init() {
 }
 
-static int alloutput_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
-  return hardwired;
+static int alloutput_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+  return true;
 }
 
-static int alloutput_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired) {
-  return hardwired;
+static int alloutput_tx_lin_hook(int lin_num, uint8_t *data, int len) {
+  return true;
 }
 
 const safety_hooks alloutput_hooks = {

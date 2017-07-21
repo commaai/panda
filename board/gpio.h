@@ -265,3 +265,14 @@ void gpio_init() {
   }
 }
 
+void fan_init() {
+  // timer for fan PWM
+  TIM3->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1;
+  TIM3->CCER = TIM_CCER_CC3E;
+  timer_init(TIM3, 10);
+}
+
+void fan_set_speed(int fan_speed) {
+  TIM3->CCR3 = fan_speed;
+}
+

@@ -66,13 +66,13 @@ void spi_rx_dma(void *addr, int len) {
 
 // ***************************** SPI IRQs *****************************
 
-void handle_spi(uint8_t *data, int len);
+void spi_cb_handle(uint8_t *data, int len);
 
 // SPI RX
 void DMA2_Stream2_IRQHandler(void) {
   // ack
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
-  handle_spi(spi_buf, 0x14);
+  spi_cb_handle(spi_buf, 0x14);
 }
 
 // SPI TX

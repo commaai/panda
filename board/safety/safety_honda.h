@@ -50,7 +50,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 }
 
-static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
+static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // BRAKE: safety check
   if ((to_send->RIR>>21) == 0x1FA) {
     if (controls_allowed) {
@@ -79,11 +79,12 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send, int hardwired) {
   }
 
   // 1 allows the message through
-  return hardwired;
+  return true;
 }
 
-static int honda_tx_lin_hook(int lin_num, uint8_t *data, int len, int hardwired) {
-  return hardwired;
+static int honda_tx_lin_hook(int lin_num, uint8_t *data, int len) {
+  // TODO: add safety if using LIN
+  return true;
 }
 
 static void honda_init() {
