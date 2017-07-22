@@ -6,6 +6,52 @@
 
 #include "llgpio.h"
 
+// ********************* dynamic configuration detection *********************
+
+#define PANDA_REV_AB 0
+#define PANDA_REV_C 1
+
+#define PULL_EFFECTIVE_DELAY 10
+
+int has_external_debug_serial = 0;
+int is_giant_panda = 0;
+int is_entering_bootmode = 0;
+int revision = PANDA_REV_AB;
+
+int detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode) {
+  set_gpio_mode(GPIO, pin, MODE_INPUT);
+  set_gpio_pullup(GPIO, pin, mode);
+  for (volatile int i=0; i<PULL_EFFECTIVE_DELAY; i++);
+  int ret = get_gpio_input(GPIO, pin);
+  set_gpio_pullup(GPIOB, pin, PULL_NONE);
+  return ret;
+}
+
+// must call again from main because BSS is zeroed
+void detect() {
+  volatile int i;
+
+  // detect has_external_debug_serial
+  has_external_debug_serial = detect_with_pull(GPIOA, 3, PULL_DOWN);
+
+#ifdef PANDA
+  // detect is_giant_panda
+  is_giant_panda = detect_with_pull(GPIOB, 1, PULL_DOWN);
+
+  // detect panda REV C.
+  // A13 floats in REV AB. In REV C, A13 is pulled up to 5V with a 10K
+  // resistor and attached to the USB power control chip CTRL
+  // line. Pulling A13 down with an internal 50k resistor in REV C
+  // will produce a voltage divider that results in a high logic
+  // level. Checking if this pin reads high with a pull down should
+  // differentiate REV AB from C.
+  revision = detect_with_pull(GPIOA, 13, PULL_DOWN) ? PANDA_REV_C : PANDA_REV_AB;
+
+  // check if the ESP is trying to put me in boot mode
+  is_entering_bootmode = detect_with_pull(GPIOB, 0, PULL_UP);
+#endif
+}
+
 // ********************* bringup *********************
 
 void clock_init() {
@@ -187,6 +233,28 @@ void set_usb_power_mode(int mode) {
   }
 }
 
+#define ESP_DISABLED 0
+#define ESP_ENABLED 1
+#define ESP_BOOTMODE 2
+
+void set_esp_mode(int mode) {
+  switch (mode) {
+    case ESP_DISABLED:
+      // ESP OFF
+      set_gpio_output(GPIOC, 14, 0);
+      set_gpio_output(GPIOC, 5, 0);
+      break;
+    case ESP_ENABLED:
+      set_gpio_output(GPIOC, 14, 1);
+      set_gpio_output(GPIOC, 5, 1);
+      break;
+    case ESP_BOOTMODE:
+      set_gpio_output(GPIOC, 14, 1);
+      set_gpio_output(GPIOC, 5, 0);
+      break;
+  }
+}
+
 // ********************* big init function *********************
 
 // board specific
@@ -296,6 +364,79 @@ void gpio_init() {
   if (revision == PANDA_REV_C) {
     //set_usb_power_mode(USB_POWER_CDP);
     set_usb_power_mode(USB_POWER_CLIENT);
+  }
+}
+
+// ********************* early bringup *********************
+
+#define ENTER_BOOTLOADER_MAGIC 0xdeadbeef
+#define POST_BOOTLOADER_MAGIC 0xdeadb111
+
+extern void *g_pfnVectors;
+extern uint32_t enter_bootloader_mode;
+
+void jump_to_bootloader() {
+  // do enter bootloader
+  enter_bootloader_mode = POST_BOOTLOADER_MAGIC;
+  void (*bootloader)(void) = (void (*)(void)) (*((uint32_t *)0x1fff0004));
+
+  // jump to bootloader
+  bootloader();
+
+  // LOOP
+  while(1);
+}
+
+void early() {
+  // after it's been in the bootloader, things are initted differently, so we reset
+  if (enter_bootloader_mode == POST_BOOTLOADER_MAGIC) {
+    enter_bootloader_mode = 0;
+    NVIC_SystemReset();
+  }
+
+
+  volatile int i;
+  // if wrong chip, reboot
+  volatile unsigned int id = DBGMCU->IDCODE;
+  #ifdef STM32F4
+    if ((id&0xFFF) != 0x463) enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+  #else
+    if ((id&0xFFF) != 0x411) enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+  #endif
+
+  // setup interrupt table
+  SCB->VTOR = (uint32_t)&g_pfnVectors;
+
+  // early GPIOs float everything
+  RCC->AHB1ENR = RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN;
+  GPIOA->MODER = 0; GPIOB->MODER = 0; GPIOC->MODER = 0;
+  GPIOA->ODR = 0; GPIOB->ODR = 0; GPIOC->ODR = 0;
+  GPIOA->PUPDR = 0; GPIOB->PUPDR = 0; GPIOC->PUPDR = 0;
+
+  #ifdef PANDA
+    detect();
+
+    // enable the ESP, disable ESP boot mode
+    // unless we are on a giant panda, then there's no ESP
+    if (is_giant_panda) {
+      set_esp_mode(ESP_DISABLED);
+    } else {
+      set_esp_mode(ESP_ENABLED);
+    }
+
+    #ifdef BOOTSTUB
+      if (is_entering_bootmode) {
+        spi_flasher();
+      }
+    #endif
+  #endif
+
+
+  if (enter_bootloader_mode == ENTER_BOOTLOADER_MAGIC) {
+    set_esp_mode(ESP_DISABLED);
+    set_led(LED_GREEN, 1);
+
+    jump_to_bootloader();
   }
 }
 

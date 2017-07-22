@@ -1,5 +1,4 @@
 #include "config.h"
-#include "early.h"
 #include <stdbool.h>
 
 // *** end config ***
@@ -177,6 +176,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     // **** 0xd1: enter bootloader mode
     case 0xd1:
+      // this allows reflashing of the bootstub
+      // so it's blocked over wifi
       if (hardwired) {
         enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
         NVIC_SystemReset();
@@ -203,31 +204,22 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     // **** 0xd9: set ESP power
     case 0xd9:
       if (setup->b.wValue.w == 1) {
-        // on
-        GPIOC->ODR |= (1 << 14);
+        set_esp_mode(ESP_ENABLED);
       } else {
-        // off
-        GPIOC->ODR &= ~(1 << 14);
+        set_esp_mode(ESP_DISABLED);
       }
       break;
     // **** 0xda: reset ESP, with optional boot mode
     case 0xda:
-      // pull low for ESP boot mode
-      if (setup->b.wValue.w == 1) {
-        GPIOC->ODR &= ~(1 << 5);
-      }
-
-      // do ESP reset
-      GPIOC->ODR &= ~(1 << 14);
+      set_esp_mode(ESP_DISABLED);
       delay(1000000);
-      GPIOC->ODR |= (1 << 14);
-      delay(1000000);
-
-      // reset done, no more boot mode
-      // TODO: ESP doesn't seem to listen here
       if (setup->b.wValue.w == 1) {
-        GPIOC->ODR |= (1 << 5);
+        set_esp_mode(ESP_BOOTMODE);
+      } else {
+        set_esp_mode(ESP_ENABLED);
       }
+      delay(1000000);
+      set_esp_mode(ESP_ENABLED);
       break;
     // **** 0xdb: set GMLAN multiplexing mode
     case 0xdb:
@@ -247,6 +239,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     // **** 0xdc: set safety mode
     case 0xdc:
+      // this is the only way to leave silent mode
+      // and it's blocked over WiFi
       if (hardwired) {
         safety_set_mode(setup->b.wValue.w);
         can_silent = (setup->b.wValue.w == SAFETY_NOOUTPUT);
