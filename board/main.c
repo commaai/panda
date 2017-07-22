@@ -419,6 +419,15 @@ int main() {
 
   // detect the revision and init the GPIOs
   detect();
+  puts("config:\n");
+  #ifdef PANDA
+    puts(revision == PANDA_REV_C ? "  panda rev c\n" : "  panda rev a or b\n");
+  #else
+    puts("  legacy\n");
+  #endif
+  puts(has_external_debug_serial ? "  external serial\n" : "  not external serial\n");
+  puts(is_giant_panda ? "  GIANTpanda detected\n" : "  not GIANTpanda\n");
+  puts(is_entering_bootmode ? "  ESP wants bootmode\n" : "  no bootmode\n");
   gpio_init();
 
   // enable main uart

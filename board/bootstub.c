@@ -9,9 +9,8 @@
   #include "stm32f2xx_hal_gpio_ex.h"
 #endif
 
-#include "early.h"
 #include "libc.h"
-#include "spi.h"
+#include "drivers/spi.h"
 #include "gpio.h"
 
 #include "crypto/rsa.h"
@@ -20,6 +19,8 @@
 #include "obj/cert.h"
 
 #include "spi_flasher.h"
+
+void spi_cb_rx(uint8_t *data, int len) {};
 
 void __initialize_hardware_early() {
   early();
@@ -42,11 +43,15 @@ void fail() {
     enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
     NVIC_SystemReset();
   }
+
 #else
   enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
   NVIC_SystemReset();
 #endif
 }
+
+// know where to sig check
+extern void *_app_start[];
 
 int main() {
   clock_init();

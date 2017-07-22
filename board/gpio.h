@@ -29,8 +29,6 @@ int detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode) {
 
 // must call again from main because BSS is zeroed
 void detect() {
-  volatile int i;
-
   // detect has_external_debug_serial
   has_external_debug_serial = detect_with_pull(GPIOA, 3, PULL_DOWN);
 
@@ -48,7 +46,7 @@ void detect() {
   revision = detect_with_pull(GPIOA, 13, PULL_DOWN) ? PANDA_REV_C : PANDA_REV_AB;
 
   // check if the ESP is trying to put me in boot mode
-  is_entering_bootmode = detect_with_pull(GPIOB, 0, PULL_UP);
+  is_entering_bootmode = !detect_with_pull(GPIOB, 0, PULL_UP);
 #endif
 }
 
@@ -394,8 +392,6 @@ void early() {
     NVIC_SystemReset();
   }
 
-
-  volatile int i;
   // if wrong chip, reboot
   volatile unsigned int id = DBGMCU->IDCODE;
   #ifdef STM32F4
