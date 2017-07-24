@@ -58,6 +58,7 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   // give the ST time to be ready, up to 1s
   for (int i = 0;(gpio_input_get() & (1 << 4)) && i < 100000; i++) {
     os_delay_us(10);
+    system_soft_wdt_feed();
   }
 
   // TODO: handle this better
