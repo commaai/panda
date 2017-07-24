@@ -243,6 +243,7 @@ void set_esp_mode(int mode) {
       set_gpio_output(GPIOC, 5, 0);
       break;
     case ESP_ENABLED:
+      // ESP ON
       set_gpio_output(GPIOC, 14, 1);
       set_gpio_output(GPIOC, 5, 1);
       break;
@@ -419,12 +420,6 @@ void early() {
     } else {
       set_esp_mode(ESP_ENABLED);
     }
-
-    #ifdef BOOTSTUB
-      if (is_entering_bootmode) {
-        spi_flasher();
-      }
-    #endif
   #endif
 
 

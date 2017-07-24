@@ -10,8 +10,13 @@
 #endif
 
 #include "libc.h"
-#include "drivers/spi.h"
 #include "gpio.h"
+
+
+void spi_cb_rx(uint8_t *data, int len) {};
+
+#include "drivers/drivers.h"
+#include "drivers/spi.h"
 
 #include "crypto/rsa.h"
 #include "crypto/sha.h"
@@ -20,30 +25,23 @@
 
 #include "spi_flasher.h"
 
-void spi_cb_rx(uint8_t *data, int len) {};
-
 void __initialize_hardware_early() {
   early();
+
+  if (is_entering_bootmode) {
+    spi_flasher();
+  }
 }
 
 void fail() {
 #ifdef PANDA
-  volatile int i;
   // detect usb host
-  GPIOA->PUPDR |= GPIO_PUPDR_PUPDR11_0;
-  for (i=0;i<PULL_EFFECTIVE_DELAY;i++);
-  int no_usb = GPIOA->IDR & (1 << 11);
-  GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPDR11_0);
+  int no_usb = detect_with_pull(GPIOA, 11, PULL_UP);
 
   if (no_usb) {
     // no usb host, go to SPI flasher
     spi_flasher();
-  } else {
-    // has usb host, go to USB flasher
-    enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-    NVIC_SystemReset();
   }
-
 #else
   enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
   NVIC_SystemReset();
