@@ -50,8 +50,8 @@ void ICACHE_FLASH_ATTR st_flash() {
     os_printf("st_flash: wait for echo\n");
     int i;
     for (i = 0; i < 10; i++) {
+      os_printf("  attempt: %d\n", i);
       if (st_cmd(0xf, 0, NULL) == 1) break;
-      os_printf("  miss: %d\n", i);
     }
 
     // unlock flash

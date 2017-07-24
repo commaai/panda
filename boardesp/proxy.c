@@ -55,8 +55,8 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   spiData.dataLen = 0x14;
   SPIMasterSendData(SpiNum_HSPI, &spiData);
 
-  // give the ST time to be ready, up to 1s
-  for (int i = 0;(gpio_input_get() & (1 << 4)) && i < 100000; i++) {
+  // give the ST time to be ready, up to 500ms
+  for (int i = 0;(gpio_input_get() & (1 << 4)) && i < 50000; i++) {
     os_delay_us(10);
     system_soft_wdt_feed();
   }
