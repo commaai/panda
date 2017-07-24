@@ -35,43 +35,60 @@ LOCAL os_timer_t ota_reboot_timer;
 
 #define FIRMWARE_SIZE 503808
 
-void st_flash() {
+void ICACHE_FLASH_ATTR st_flash() {
   int i;
 
-  // stupid watchdog test
-  //system_soft_wdt_stop();
+  if (st_firmware != NULL) {
+    // stupid watchdog test
+    //system_soft_wdt_stop();
 
-  // boot mode
-  st_set_boot_mode(1);
+    // boot mode
+    os_printf("st_flash: enter boot mode\n");
+    st_set_boot_mode(1);
 
-  // unlock flash
-  st_cmd(0x10, 0, NULL);
-  st_cmd(0xf, 0, NULL);
+    // echo
+    os_printf("st_flash: wait for echo\n");
+    int i;
+    for (i = 0; i < 10; i++) {
+      if (st_cmd(0xf, 0, NULL) == 1) break;
+      os_printf("  miss: %d\n", i);
+    }
 
-  // erase sector 1
-  st_cmd(0x11, 1, NULL);
-  st_cmd(0xf, 0, NULL);
+    // unlock flash
+    os_printf("st_flash: unlock flash\n");
+    st_cmd(0x10, 0, NULL);
 
-  if (real_content_length >= 16384) {
-    // erase sector 2
-    st_cmd(0x11, 2, NULL);
-    st_cmd(0xf, 0, NULL);
+    // erase sector 1
+    os_printf("st_flash: erase sector 1\n");
+    st_cmd(0x11, 1, NULL);
+
+    if (real_content_length >= 16384) {
+      // erase sector 2
+      os_printf("st_flash: erase sector 2\n");
+      st_cmd(0x11, 2, NULL);
+    }
+
+    // real content length will always be 0x10 aligned
+    os_printf("st_flash: flashing\n");
+    for (i = 0; i < real_content_length; i += 0x10) {
+      if (!st_cmd(0x12, 4, &st_firmware[i])) {
+        os_printf("st_flash: FAILED, BAILING\n");
+        break;
+      }
+      system_soft_wdt_feed();
+    }
+
+    // reboot into normal mode
+    os_printf("st_flash: rebooting\n");
+    st_set_boot_mode(0);
+
+    // done with this
+    os_free(st_firmware);
+    st_firmware = NULL;
+
+    // watchdog done
+    //system_soft_wdt_restart();
   }
-
-  // real content length will always be 0x10 aligned
-  for (i = 0; i < real_content_length; i += 0x10) {
-    st_cmd(0x12, 4, &st_firmware[i]);
-    system_soft_wdt_feed();
-  }
-
-  // reboot into normal mode
-  st_set_boot_mode(0);
-
-  // done with this
-  os_free(st_firmware);
-
-  // watchdog done
-  //system_soft_wdt_restart();
 }
 
 typedef enum {
@@ -87,7 +104,7 @@ typedef enum {
 web_state_t state = NOT_STARTED;
 int esp_address, esp_address_erase_limit, start_address;
 
-void hexdump(char *data, int len) {
+void ICACHE_FLASH_ATTR hexdump(char *data, int len) {
   int i;
   for (i=0;i<len;i++) {
     if (i!=0 && (i%0x10)==0) os_printf("\n");
@@ -96,7 +113,7 @@ void hexdump(char *data, int len) {
   os_printf("\n");
 }
 
-void st_reset() {
+void ICACHE_FLASH_ATTR st_reset() {
   // reset the ST
   gpio16_output_conf();
   gpio16_output_set(0);
@@ -105,7 +122,7 @@ void st_reset() {
   os_delay_us(10000);
 }
 
-void st_set_boot_mode(int boot_mode) {
+void ICACHE_FLASH_ATTR st_set_boot_mode(int boot_mode) {
   if (boot_mode) {
     // boot mode (pull low)
     gpio_output_set(0, (1 << 4), (1 << 4), 0);
@@ -115,9 +132,12 @@ void st_set_boot_mode(int boot_mode) {
     gpio_output_set((1 << 4), 0, (1 << 4), 0);
     st_reset();
   }
+
+  // float boot pin
+  gpio_output_set(0, 0, 0, (1 << 4));
 }
 
-int st_cmd(int d1, int d2, char *data) {
+int ICACHE_FLASH_ATTR st_cmd(int d1, int d2, char *data) {
   uint32_t __dat[0x14];
   char *dat = (char *)__dat;
   memset(dat, 0, 0x14);
@@ -127,10 +147,31 @@ int st_cmd(int d1, int d2, char *data) {
   dat[2] = d2;
   dat[3] = 0xFF^d2;
   if (data != NULL) memcpy(dat+4, data, 0x10);
-  hexdump(dat, 0x14);
+  //hexdump(dat, 0x14);
 
   spi_comm(dat, 0x14, recv, 0x40);
-  return memcmp(recv+0x10, "\xde\xad\xd0\x0d", 4)==0;
+  //hexdump(recv, 0x44);
+  int good = memcmp(recv+2, "\xde\xad\xd0\x0d", 4)==0;
+
+  if (!good) {
+    os_printf("ST command failed!\n");
+    hexdump(recv, 0x44);
+    return 0;
+  }
+
+  if (((uint8_t*)recv)[6] != d1) {
+    os_printf("ST command WRONG\n");
+    hexdump(recv, 0x44);
+    return 0;
+  }
+
+  if (((uint8_t*)recv)[5] != 0xFF) {
+    os_printf("ST command logical fail\n");
+    hexdump(recv, 0x44);
+    return 0;
+  }
+
+  return 1;
 }
 
 static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
@@ -182,7 +223,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
       // 0x1000   = user1.bin
       // 0x81000  = user2.bin
       // 0x3FE000 = blank.bin
-      os_printf("init st firmware\n");
+      os_printf("init esp firmware\n");
       char *cl = strstr(data, "Content-Length: ");
       if (cl != NULL) {
         // get content length

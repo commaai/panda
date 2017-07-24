@@ -12,9 +12,6 @@
 #include "libc.h"
 #include "gpio.h"
 
-
-void spi_cb_rx(uint8_t *data, int len) {};
-
 #include "drivers/drivers.h"
 #include "drivers/spi.h"
 

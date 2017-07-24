@@ -70,8 +70,7 @@ void timer_init(TIM_TypeDef *TIM, int psc);
 // IRQs: DMA2_Stream2, DMA2_Stream3, EXTI4
 
 void spi_init();
-void spi_cb_rx(uint8_t *data, int len);
-void spi_tx_dma(void *addr, int len);
+int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out);
 
 
 // ********************* CAN *********************

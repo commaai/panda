@@ -3,6 +3,7 @@
 
 //#define DEBUG
 //#define DEBUG_USB
+//#define DEBUG_SPI
 
 #ifdef STM32F4
   #define PANDA

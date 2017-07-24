@@ -358,25 +358,20 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
 }
 
 #ifdef PANDA
-
-// can't go on the stack cause it's DMAed
-uint8_t spi_tx_buf[0x44];
-
-void spi_cb_rx(uint8_t *data, int len) {
-  memset(spi_tx_buf, 0xaa, 0x44);
+int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
   // data[0]  = endpoint
   // data[2]  = length
   // data[4:] = data
-  int *resp_len = (int*)spi_tx_buf;
-  *resp_len = 0;
+
+  int resp_len = 0;
   switch (data[0]) {
     case 0:
       // control transfer
-      *resp_len = usb_cb_control_msg((USB_Setup_TypeDef *)(data+4), spi_tx_buf+4, 0);
+      resp_len = usb_cb_control_msg((USB_Setup_TypeDef *)(data+4), data_out, 0);
       break;
     case 1:
       // ep 1, read
-      *resp_len = usb_cb_ep1_in(spi_tx_buf+4, 0x40, 0);
+      resp_len = usb_cb_ep1_in(data_out, 0x40, 0);
       break;
     case 2:
       // ep 2, send serial
@@ -387,18 +382,12 @@ void spi_cb_rx(uint8_t *data, int len) {
       usb_cb_ep3_out(data+4, data[2], 0);
       break;
   }
-  spi_tx_dma(spi_tx_buf, 0x44);
-
-  // signal data is ready by driving low
-  // esp must be configured as input by this point
-  GPIOB->MODER &= ~(GPIO_MODER_MODER0);
-  GPIOB->MODER |= GPIO_MODER_MODER0_0;
-  GPIOB->ODR &= ~(GPIO_ODR_ODR_0);
+  return resp_len;
 }
 
 #else
 
-void spi_cb_rx(uint8_t *data, int len) {};
+int spi_cb_rx(uint8_t *data, int len) { return 0; };
 
 #endif
 
@@ -460,7 +449,7 @@ int main() {
 
   // set PWM
   fan_init();
-  fan_set_speed(65535);
+  fan_set_speed(0);
 
   puts("**** INTERRUPTS ON ****\n");
 

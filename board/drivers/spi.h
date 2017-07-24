@@ -17,6 +17,10 @@ void spi_init() {
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);
   //NVIC_EnableIRQ(SPI1_IRQn);
 
+  // reset handshake back to pull up
+  GPIOB->MODER &= ~(GPIO_MODER_MODER0);
+  GPIOB->PUPDR |= GPIO_PUPDR_PUPDR0_0;
+
   // setup interrupt on falling edge of SPI enable (on PA4)
   SYSCFG->EXTICR[2] = SYSCFG_EXTICR2_EXTI4_PA;
   EXTI->IMR = (1 << 4);
@@ -39,6 +43,12 @@ void spi_tx_dma(void *addr, int len) {
   DMA2_Stream3->CR |= DMA_SxCR_TCIE;
 
   SPI1->CR2 |= SPI_CR2_TXDMAEN;
+
+  // signal data is ready by driving low
+  // esp must be configured as input by this point
+  GPIOB->MODER &= ~(GPIO_MODER_MODER0);
+  GPIOB->MODER |= GPIO_MODER_MODER0_0;
+  GPIOB->ODR &= ~(GPIO_ODR_ODR_0);
 }
 
 void spi_rx_dma(void *addr, int len) {
@@ -64,17 +74,32 @@ void spi_rx_dma(void *addr, int len) {
 
 // ***************************** SPI IRQs *****************************
 
+// can't go on the stack cause it's DMAed
+uint8_t spi_tx_buf[0x44];
+
 // SPI RX
 void DMA2_Stream2_IRQHandler(void) {
   // ack
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
-  spi_cb_rx(spi_buf, 0x13);
+  int *resp_len = (int*)spi_tx_buf;
+  memset(spi_tx_buf, 0xaa, 0x44);
+  *resp_len = spi_cb_rx(spi_buf, 0x13, spi_tx_buf+4);
+  #ifdef DEBUG_SPI
+    puts("SPI write: ");
+    puth(*resp_len);
+    puts("\n");
+  #endif
+  spi_tx_dma(spi_tx_buf, *resp_len + 4);
 }
 
 // SPI TX
 void DMA2_Stream3_IRQHandler(void) {
   // ack
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
+
+  #ifdef DEBUG_SPI
+    puts("SPI handshake\n");
+  #endif  
 
   // reset handshake back to pull up
   GPIOB->MODER &= ~(GPIO_MODER_MODER0);
