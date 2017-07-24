@@ -1,100 +1,152 @@
-// can't go on the stack cause it's DMAed
-uint8_t spi_tx_buf[0x44];
-
-uint32_t *prog_ptr;
+// flasher state variables
+uint32_t *prog_ptr = NULL;
 int unlocked = 0;
 
-int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
-  // get serial number even in bootstub mode
-  if (memcmp("\x00\x00\x00\x00\x40\xD0\x00\x00\x00\x00\x20\x00", data, 0xC) == 0) {
-    memcpy(data_out, (void *)0x1fff79e0, 0x20);
-    return 0x20;
-  }
+int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
+  int resp_len = 0;
 
-  // flasher mode
-  if (data[0] == (0xff^data[1]) &&
-      data[2] == (0xff^data[3])) {
-    int sec;
-    memset(data_out, 0, 4);
-    memcpy(data_out+4, "\xde\xad\xd0\x0d", 4);
-    data_out[0] = 0xff;
-    data_out[2] = data[0];
-    data_out[3] = data[1];
-    switch (data[0]) {
-      case 0xf:
-        // echo
-        data_out[1] = 0xff;
-        break;
-      case 0x10:
-        // unlock flash
-        if (FLASH->CR & FLASH_CR_LOCK) {
-          FLASH->KEYR = 0x45670123;
-          FLASH->KEYR = 0xCDEF89AB;
-          data_out[1] = 0xff;
-        }
-        set_led(LED_GREEN, 1);
-        unlocked = 1;
-        prog_ptr = (uint32_t *)0x8004000;
-        break;
-      case 0x11:
-        // erase
-        sec = data[2] & 0xF;
-        // don't erase the bootloader
-        if (sec != 0 && sec < 12 && unlocked) {
-          FLASH->CR = (sec << 3) | FLASH_CR_SER;
-          FLASH->CR |= FLASH_CR_STRT;
-          while (FLASH->SR & FLASH_SR_BSY);
-          data_out[1] = 0xff;
-        }
-        break;
-      case 0x12:
-        if (data[2] <= 4 && unlocked) {
-          set_led(LED_RED, 0);
-          for (int i = 0; i < data[2]; i++) {
-            // program byte 1
-            FLASH->CR = FLASH_CR_PSIZE_1 | FLASH_CR_PG;
+  // flasher machine
+  memset(resp, 0, 4);
+  memcpy(resp+4, "\xde\xad\xd0\x0d", 4);
+  resp[0] = 0xff;
+  resp[2] = setup->b.bRequest;
+  resp[3] = ~setup->b.bRequest;
+  *((uint32_t **)&resp[8]) = prog_ptr;
+  resp_len = 0xc;
 
-            *prog_ptr = *(uint32_t*)(data+4+(i*4));
-            while (FLASH->SR & FLASH_SR_BSY);
-
-            //*(uint64_t*)(&spi_tx_buf[0x30+(i*4)]) = *prog_ptr;
-            prog_ptr++;
-          }
-          set_led(LED_RED, 1);
-          data_out[1] = 0xff;
+  int sec;
+  switch (setup->b.bRequest) {
+    // **** 0xb0: flasher echo
+    case 0xb0:
+      resp[1] = 0xff;
+      break;
+    // **** 0xb1: unlock flash
+    case 0xb1:
+      if (FLASH->CR & FLASH_CR_LOCK) {
+        FLASH->KEYR = 0x45670123;
+        FLASH->KEYR = 0xCDEF89AB;
+        resp[1] = 0xff;
+      }
+      set_led(LED_GREEN, 1);
+      unlocked = 1;
+      prog_ptr = (uint32_t *)0x8004000;
+      break;
+    // **** 0xb2: erase sector
+    case 0xb2:
+      sec = setup->b.wValue.w;
+      // don't erase the bootloader
+      if (sec != 0 && sec < 12 && unlocked) {
+        FLASH->CR = (sec << 3) | FLASH_CR_SER;
+        FLASH->CR |= FLASH_CR_STRT;
+        while (FLASH->SR & FLASH_SR_BSY);
+        resp[1] = 0xff;
+      }
+      break;
+    // **** 0xd0: fetch serial number
+    case 0xd0:
+      #ifdef PANDA
+        // addresses are OTP
+        if (setup->b.wValue.w == 1) {
+          memcpy(resp, (void *)0x1fff79c0, 0x10);
+          resp_len = 0x10;
+        } else {
+          memcpy(resp, (void *)0x1fff79e0, 0x20);
+          resp_len = 0x20;
         }
-        break;
-      case 0x13:
-        // reset
+      #endif
+      break;
+    // **** 0xd1: enter bootloader mode
+    case 0xd1:
+      // this allows reflashing of the bootstub
+      // so it's blocked over wifi
+      if (hardwired) {
+        enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
         NVIC_SystemReset();
-        break;
-      default:
-        break;
-    }
+      }
+      break;
+    // **** 0xd6: get version
+    case 0xd6:
+      COMPILE_TIME_ASSERT(sizeof(gitversion) <= MAX_RESP_LEN)
+      memcpy(resp, gitversion, sizeof(gitversion));
+      resp_len = sizeof(gitversion);
+      break;
+    // **** 0xd8: reset ST
+    case 0xd8:
+      NVIC_SystemReset();
+      break;
   }
-  
-  return 8;
+  return resp_len;
 }
 
-void spi_flasher() {
-  __disable_irq();
-  
+int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) { return 0; }
+void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) { }
+void usb_cb_enumeration_complete() { }
+
+void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
+  set_led(LED_RED, 0);
+  for (int i = 0; i < len/4; i++) {
+    // program byte 1
+    FLASH->CR = FLASH_CR_PSIZE_1 | FLASH_CR_PG;
+
+    *prog_ptr = *(uint32_t*)(usbdata+(i*4));
+    while (FLASH->SR & FLASH_SR_BSY);
+
+    //*(uint64_t*)(&spi_tx_buf[0x30+(i*4)]) = *prog_ptr;
+    prog_ptr++;
+  }
+  set_led(LED_RED, 1);
+}
+
+
+int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
+  int resp_len = 0;
+  switch (data[0]) {
+    case 0:
+      // control transfer
+      resp_len = usb_cb_control_msg((USB_Setup_TypeDef *)(data+4), data_out, 0);
+      break;
+    case 2:
+      // ep 2, flash!
+      usb_cb_ep2_out(data+4, data[2], 0);
+      break;
+  }
+  return resp_len;
+}
+
+void soft_flasher_start() {
+  // safe to call twice?
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+  RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
 
-  // setup SPI
-  GPIOA->MODER = GPIO_MODER_MODER4_1 | GPIO_MODER_MODER5_1 |
-                 GPIO_MODER_MODER6_1 | GPIO_MODER_MODER7_1;
-  GPIOA->AFR[0] = GPIO_AF5_SPI1 << (4*4) | GPIO_AF5_SPI1 << (5*4) |
-                  GPIO_AF5_SPI1 << (6*4) | GPIO_AF5_SPI1 << (7*4);
+  // A4,A5,A6,A7: setup SPI
+  set_gpio_alternate(GPIOA, 4, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 5, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 6, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 7, GPIO_AF5_SPI1);
+
+  // A11,A12: USB
+  set_gpio_alternate(GPIOA, 11, GPIO_AF10_OTG_FS);
+  set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG_FS);
+  GPIOA->OSPEEDR = GPIO_OSPEEDER_OSPEEDR11 | GPIO_OSPEEDER_OSPEEDR12;
+
+  // flasher
+  spi_init();
 
   // blue LED on for flashing
   set_led(LED_BLUE, 1);
 
-  // flasher
-  spi_init();
+  // enable USB
+  usb_init();
+
   __enable_irq();
 
-  while (1) { }
+  while (1) {
+    // blink the blue LED fast
+    set_led(LED_BLUE, 0);
+    delay(500000);
+    set_led(LED_BLUE, 1);
+    delay(500000);
+  }
 }
 

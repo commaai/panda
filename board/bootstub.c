@@ -1,5 +1,8 @@
 #define BOOTSTUB
 
+#include "config.h"
+#include "obj/gitversion.h"
+
 #ifdef STM32F4
   #define PANDA
   #include "stm32f4xx.h"
@@ -14,6 +17,7 @@
 
 #include "drivers/drivers.h"
 #include "drivers/spi.h"
+#include "drivers/usb.h"
 
 #include "crypto/rsa.h"
 #include "crypto/sha.h"
@@ -22,34 +26,29 @@
 
 #include "spi_flasher.h"
 
+int puts(const char *a) { return 0; }
+void puth(unsigned int i) {}
+
 void __initialize_hardware_early() {
   early();
 
-  if (is_entering_bootmode) {
-    spi_flasher();
-  }
 }
 
 void fail() {
-#ifdef PANDA
-  // detect usb host
-  int no_usb = detect_with_pull(GPIOA, 11, PULL_UP);
-
-  if (no_usb) {
-    // no usb host, go to SPI flasher
-    spi_flasher();
-  }
-#else
-  enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-  NVIC_SystemReset();
-#endif
+  soft_flasher_start();
 }
 
 // know where to sig check
 extern void *_app_start[];
 
 int main() {
+  __disable_irq();
   clock_init();
+
+  if (enter_bootloader_mode == ENTER_SOFTLOADER_MAGIC) {
+    enter_bootloader_mode = 0;
+    soft_flasher_start();
+  }
 
   // validate length
   int len = (int)_app_start[0];

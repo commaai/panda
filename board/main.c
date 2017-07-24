@@ -1,8 +1,4 @@
 #include "config.h"
-#include <stdbool.h>
-
-// *** end config ***
-
 #include "obj/gitversion.h"
 
 // ********************* includes *********************
@@ -178,9 +174,17 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xd1:
       // this allows reflashing of the bootstub
       // so it's blocked over wifi
-      if (hardwired) {
-        enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-        NVIC_SystemReset();
+      switch (setup->b.wValue.w) {
+        case 0:
+          if (hardwired) {
+            enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+            NVIC_SystemReset();
+          }
+          break;
+        case 1:
+          enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
+          NVIC_SystemReset();
+          break;
       }
       break;
     // **** 0xd2: get health packet

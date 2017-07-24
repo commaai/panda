@@ -38,6 +38,8 @@ recover: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
 ota: obj/$(PROJ_NAME).bin
 	curl http://192.168.0.10/stupdate --upload-file $<
 
+bin: obj/$(PROJ_NAME).bin
+
 ifneq ($(wildcard ../.git/HEAD),)
 obj/gitversion.h: ../.git/HEAD ../.git/index
 	echo "const uint8_t gitversion[] = \"$(shell git rev-parse HEAD)\";" > $@

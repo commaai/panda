@@ -369,6 +369,7 @@ void gpio_init() {
 // ********************* early bringup *********************
 
 #define ENTER_BOOTLOADER_MAGIC 0xdeadbeef
+#define ENTER_SOFTLOADER_MAGIC 0xdeadc0de
 #define POST_BOOTLOADER_MAGIC 0xdeadb111
 
 extern void *g_pfnVectors;
@@ -406,6 +407,9 @@ void early() {
 
   // early GPIOs float everything
   RCC->AHB1ENR = RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN;
+  RCC->APB2ENR = 0;
+  RCC->AHB2ENR = 0;
+
   GPIOA->MODER = 0; GPIOB->MODER = 0; GPIOC->MODER = 0;
   GPIOA->ODR = 0; GPIOB->ODR = 0; GPIOC->ODR = 0;
   GPIOA->PUPDR = 0; GPIOB->PUPDR = 0; GPIOC->PUPDR = 0;
@@ -428,6 +432,10 @@ void early() {
     set_led(LED_GREEN, 1);
 
     jump_to_bootloader();
+  }
+
+  if (is_entering_bootmode) {
+    enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
   }
 }
 

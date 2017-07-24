@@ -48,7 +48,6 @@ USB_OTG_GlobalTypeDef *USBx = USB_OTG_FS;
 
 #define USB_OTG_SPEED_FULL 3
 
-#define MAX_RESP_LEN 0x40
 uint8_t resp[MAX_RESP_LEN];
 
 // descriptor types

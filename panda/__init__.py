@@ -10,6 +10,8 @@ import time
 
 __version__ = '0.0.3'
 
+BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
+
 def parse_can_buffer(dat):
   ret = []
   for j in range(0, len(dat), 0x10):
@@ -91,7 +93,18 @@ class Panda(object):
 
   def __init__(self, serial=None, claim=True):
     self._serial = serial
-    if serial == "WIFI":
+    self._handle = None
+    self.connect(claim)
+
+  def close(self):
+    self._handle.close()
+    self._handle = None
+
+  def connect(self, claim=True):
+    if self._handle != None:
+      self.close()
+
+    if self._serial == "WIFI":
       self._handle = WifiHandle()
       print("opening WIFI device")
     else:
@@ -99,23 +112,67 @@ class Panda(object):
 
       self._handle = None
       for device in context.getDeviceList(skip_on_error=True):
-        if device.getVendorID() == 0xbbaa and device.getProductID() == 0xddcc:
-          if serial is None or device.getSerialNumber() == serial:
+        if device.getVendorID() == 0xbbaa and device.getProductID() in [0xddcc, 0xddee]:
+          if self._serial is None or device.getSerialNumber() == self._serial:
             print("opening device", device.getSerialNumber())
+            self.bootstub = device.getProductID() == 0xddee
+            self.legacy = (device.getbcdDevice() != 0x2300)
             self._handle = device.open()
             if claim:
               self._handle.claimInterface(0)
               #self._handle.setInterfaceAltSetting(0, 0) #Issue in USB stack
             break
 
-    assert self._handle != None
+    assert(self._handle != None)
 
-  def close(self):
-    self._handle.close()
+  def reset(self, enter_bootstub=False):
+    # reset
+    try:
+      if enter_bootstub:
+        self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 1, 0, b'')
+      else:
+        self._handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'')
+    except Exception:
+      pass
+    time.sleep(1.0)
+    self.connect()
+
+  def flash(self):
+    if not self.bootstub:
+      self.reset(True)
+
+    assert(self.bootstub)
+    ret = os.system("cd %s && make clean && make -f %s bin" % (os.path.join(BASEDIR, "board"), "Makefile.legacy" if self.legacy else "Makefile"))
+
+    # TODO: build and detect legacy
+    with open(os.path.join(BASEDIR, "board", "obj", "code.bin" if self.legacy else "panda.bin")) as f:
+      dat = f.read()
+
+    fr = self._handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
+    from hexdump import hexdump
+    hexdump(str(fr))
+
+    # unlock flash
+    print("flash: unlocking")
+    self._handle.controlWrite(Panda.REQUEST_IN, 0xb1, 0, 0, b'')
+
+    # erase sectors 1 and 2
+    print("flash: erasing")
+    self._handle.controlWrite(Panda.REQUEST_IN, 0xb2, 1, 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_IN, 0xb2, 2, 0, b'')
+
+    # flash over EP2
+    print("flash: flashing")
+    for i in range(0, len(dat), 0x40):
+      self._handle.bulkWrite(2, dat[i:i+0x40])
+
+    # reset
+    print("flash: resetting")
+    self.reset()
+
 
   @staticmethod
   def program(clean=False, legacy=False):
-    BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
     # TODO: check for legacy board
     if clean:
       cmd = "make clean"
