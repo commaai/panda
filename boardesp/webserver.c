@@ -35,9 +35,40 @@ LOCAL os_timer_t ota_reboot_timer;
 
 #define FIRMWARE_SIZE 503808
 
-void ICACHE_FLASH_ATTR st_flash() {
-  int i;
+typedef struct {
+  uint16_t ep;
+  uint16_t extra_len;
+  uint8_t request_type;
+  uint8_t request;
+  uint16_t value;
+  uint16_t index;
+  uint16_t length;
+  uint8_t data[0x40];
+} usb_msg;
 
+
+int ICACHE_FLASH_ATTR usb_cmd(int ep, int len, int request,
+                              int value, int index, char *data) {
+  usb_msg usb = {0};
+
+  usb.ep = ep;
+  usb.extra_len = (ep == 0) ? 0 : len;
+  usb.request_type = 0xc0;
+  usb.request = request;
+  usb.value = value;
+  usb.index = index;
+  if (data != NULL) {
+    memcpy(&usb.data, data, usb.extra_len);
+  }
+
+  uint32_t recv[0x44/4];
+  spi_comm(&usb, sizeof(usb)-0x40+usb.extra_len, recv, 0x40);
+
+  return recv[0];
+}
+ 
+
+void ICACHE_FLASH_ATTR st_flash() {
   if (st_firmware != NULL) {
     // stupid watchdog test
     //system_soft_wdt_stop();
@@ -48,46 +79,40 @@ void ICACHE_FLASH_ATTR st_flash() {
 
     // echo
     os_printf("st_flash: wait for echo\n");
-    int i;
-    for (i = 0; i < 10; i++) {
+    for (int i = 0; i < 10; i++) {
       os_printf("  attempt: %d\n", i);
-      if (st_cmd(0xf, 0, NULL) == 1) break;
+      if (usb_cmd(0, 0, 0xb0, 0, 0, NULL) > 0) break;
     }
 
     // unlock flash
     os_printf("st_flash: unlock flash\n");
-    st_cmd(0x10, 0, NULL);
+    usb_cmd(0, 0, 0xb1, 0, 0, NULL);
 
     // erase sector 1
     os_printf("st_flash: erase sector 1\n");
-    st_cmd(0x11, 1, NULL);
+    usb_cmd(0, 0, 0xb2, 1, 0, NULL);
 
     if (real_content_length >= 16384) {
       // erase sector 2
       os_printf("st_flash: erase sector 2\n");
-      st_cmd(0x11, 2, NULL);
+      usb_cmd(0, 0, 0xb2, 2, 0, NULL);
     }
 
     // real content length will always be 0x10 aligned
     os_printf("st_flash: flashing\n");
-    for (i = 0; i < real_content_length; i += 0x10) {
-      if (!st_cmd(0x12, 4, &st_firmware[i])) {
-        os_printf("st_flash: FAILED, BAILING\n");
-        break;
-      }
+    for (int i = 0; i < real_content_length; i += 0x10) {
+      int rl = min(0x10, real_content_length-i);
+      usb_cmd(2, rl, 0, 0, 0, &st_firmware[i]);
       system_soft_wdt_feed();
     }
 
     // reboot into normal mode
     os_printf("st_flash: rebooting\n");
-    st_set_boot_mode(0);
+    usb_cmd(0, 0, 0xd8, 0, 0, NULL);
 
     // done with this
     os_free(st_firmware);
     st_firmware = NULL;
-
-    // watchdog done
-    //system_soft_wdt_restart();
   }
 }
 
@@ -135,43 +160,6 @@ void ICACHE_FLASH_ATTR st_set_boot_mode(int boot_mode) {
 
   // float boot pin
   gpio_output_set(0, 0, 0, (1 << 4));
-}
-
-int ICACHE_FLASH_ATTR st_cmd(int d1, int d2, char *data) {
-  uint32_t __dat[0x14];
-  char *dat = (char *)__dat;
-  memset(dat, 0, 0x14);
-  uint32_t recv[0x44/4];
-  dat[0] = d1;
-  dat[1] = 0xFF^d1;
-  dat[2] = d2;
-  dat[3] = 0xFF^d2;
-  if (data != NULL) memcpy(dat+4, data, 0x10);
-  //hexdump(dat, 0x14);
-
-  spi_comm(dat, 0x14, recv, 0x40);
-  //hexdump(recv, 0x44);
-  int good = memcmp(recv+2, "\xde\xad\xd0\x0d", 4)==0;
-
-  if (!good) {
-    os_printf("ST command failed!\n");
-    hexdump(recv, 0x44);
-    return 0;
-  }
-
-  if (((uint8_t*)recv)[6] != d1) {
-    os_printf("ST command WRONG\n");
-    hexdump(recv, 0x44);
-    return 0;
-  }
-
-  if (((uint8_t*)recv)[5] != 0xFF) {
-    os_printf("ST command logical fail\n");
-    hexdump(recv, 0x44);
-    return 0;
-  }
-
-  return 1;
 }
 
 static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {

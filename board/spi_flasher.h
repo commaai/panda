@@ -133,19 +133,19 @@ void soft_flasher_start() {
   // flasher
   spi_init();
 
-  // blue LED on for flashing
-  set_led(LED_BLUE, 1);
-
   // enable USB
   usb_init();
+
+  // green LED on for flashing
+  set_led(LED_GREEN, 1);
 
   __enable_irq();
 
   while (1) {
-    // blink the blue LED fast
-    set_led(LED_BLUE, 0);
+    // blink the green LED fast
+    set_led(LED_GREEN, 0);
     delay(500000);
-    set_led(LED_BLUE, 1);
+    set_led(LED_GREEN, 1);
     delay(500000);
   }
 }

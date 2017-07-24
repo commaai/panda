@@ -148,9 +148,9 @@ class Panda(object):
     with open(os.path.join(BASEDIR, "board", "obj", "code.bin" if self.legacy else "panda.bin")) as f:
       dat = f.read()
 
+    # confirm flasher is present
     fr = self._handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
-    from hexdump import hexdump
-    hexdump(str(fr))
+    assert fr[4:8] == "\xde\xad\xd0\x0d"
 
     # unlock flash
     print("flash: unlocking")
@@ -162,14 +162,14 @@ class Panda(object):
     self._handle.controlWrite(Panda.REQUEST_IN, 0xb2, 2, 0, b'')
 
     # flash over EP2
+    STEP = 0x10
     print("flash: flashing")
-    for i in range(0, len(dat), 0x40):
-      self._handle.bulkWrite(2, dat[i:i+0x40])
+    for i in range(0, len(dat), STEP):
+      self._handle.bulkWrite(2, dat[i:i+STEP])
 
     # reset
     print("flash: resetting")
     self.reset()
-
 
   @staticmethod
   def program(clean=False, legacy=False):
