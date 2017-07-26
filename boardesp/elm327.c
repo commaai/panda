@@ -7,6 +7,8 @@
 
 #include "driver/uart.h"
 
+#define min(a,b) ((a) < (b) ? (a) : (b))
+
 #define ELM_PORT 35000
 
 //Version 1.5 is an invalid version used by many pirate clones
@@ -14,6 +16,11 @@
 #define START_MSG "\r\rELM327 v1.0\r\r>"
 #define IDENT_MSG "ELM327 v1.0\r\r"
 #define DEVICE_DESC "Panda\n\n"
+
+typedef __attribute__((packed)) struct {
+  uint8_t len;
+  uint8_t dat[7]; //mode and data
+} elm_obd_msg;
 
 static struct espconn elm_conn;
 static esp_tcp elm_proto;
@@ -36,6 +43,7 @@ static bool elm_mode_auto_protocol = true;
 static uint8_t elm_selected_protocol = 1;
 static bool elm_mode_print_spaces = true;
 static uint8_t elm_mode_adaptive_timing = 1;
+static bool elm_mode_allow_long = false;
 
 
 static char hex_lookup[] = {'0', '1', '2', '3', '4', '5', '6', '7',
@@ -43,16 +51,16 @@ static char hex_lookup[] = {'0', '1', '2', '3', '4', '5', '6', '7',
 
 static char* elm_protocols[] = {
   "AUTO",
-  "SAE J1850 PWM",
-  "SAE J1850 VPW",
-  "ISO 9141-2",
-  "ISO 14230-4 (KWP 5BAUD)",
-  "ISO 14230-4 (KWP FAST)",
-  "ISO 15765-4 (CAN 11/500)",
-  "ISO 15765-4 (CAN 29/500)",
-  "ISO 15765-4 (CAN 11/250)",
-  "ISO 15765-4 (CAN 29/250)",
-  "SAE J1939 (CAN 29/250)",
+  "SAE J1850 PWM",            //Pin 1 & 10, 41.6 kbit/s. Supported by Panda?
+  "SAE J1850 VPW",            //Pin 1, GM vehicles. GMLAN? But 10.4 kbit/s
+  "ISO 9141-2",               //KLINE (Lline optional)
+  "ISO 14230-4 (KWP 5BAUD)",  //KLINE (Lline optional)
+  "ISO 14230-4 (KWP FAST)",   //KLINE (Lline optional)
+  "ISO 15765-4 (CAN 11/500)", //CAN
+  "ISO 15765-4 (CAN 29/500)", //CAN
+  "ISO 15765-4 (CAN 11/250)", //CAN
+  "ISO 15765-4 (CAN 29/250)", //CAN
+  "SAE J1939 (CAN 29/250)",   //CAN Probably
   "USER1 (CAN 11/125)",
   "USER2 (CAN 11/50)",
 };
@@ -173,6 +181,7 @@ typedef struct {
 
 static const at_cmd_reg_t at_cmd_reg[] = {
   {"@1",  2, 2, AT_AMP1},
+  {"AL",  2, 2, AT_AL},
   {"AT0", 3, 3, AT_AT0}, // Added ELM 1.2, expected by Torque
   {"AT1", 3, 3, AT_AT1}, // Added ELM 1.2, expected by Torque
   {"AT2", 3, 3, AT_AT2}, // Added ELM 1.2, expected by Torque
@@ -187,6 +196,7 @@ static const at_cmd_reg_t at_cmd_reg[] = {
   {"L1",  2, 2, AT_L1},
   {"M0",  2, 2, AT_M0},
   //{"M1",  2, 2, AT_M1},
+  {"NL",  2, 2, AT_NL},
   {"S0",  2, 2, AT_S0}, // Added ELM 1.3, expected by Torque
   {"S1",  2, 2, AT_S1}, // Added ELM 1.3, expected by Torque
   {"SP",  2, 3, AT_SP},
@@ -214,9 +224,12 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
   os_printf("\r\n");
 
   switch(elm_parse_at_cmd(cmd, len)){
-  case AT_AMP1:
+  case AT_AMP1: //RETURN DEVICE DESCRIPTION
     elm_append_rsp(DEVICE_DESC, sizeof(DEVICE_DESC));
     return;
+  case AT_AL: //DISABLE LONG MESSAGE SUPPORT (>7 BYTES)
+    elm_mode_allow_long = true;
+    break;
   case AT_AT0: //DISABLE ADAPTIVE TIMING
     elm_mode_adaptive_timing = 0;
     break;
@@ -263,6 +276,9 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
   case AT_M0: //DISABLE NONVOLATILE STORAGE
     //Memory storage is likely unnecessary
     break;
+  case AT_NL: //DISABLE LONG MESSAGE SUPPORT (>7 BYTES)
+    elm_mode_allow_long = false;
+    break;
   case AT_S0: //DISABLE PRINTING SPACES IN ECU RESPONSES
     elm_mode_print_spaces = false;
     break;
@@ -295,6 +311,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     elm_selected_protocol = 1;
     elm_mode_print_spaces = true;
     elm_mode_adaptive_timing = 1;
+    elm_mode_allow_long = false;
     elm_append_rsp(START_MSG, sizeof(START_MSG)-1);
     break;
   default:
@@ -303,6 +320,33 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
   }
 
   elm_append_rsp("OK\r\r", 4);
+}
+
+static uint8_t ICACHE_FLASH_ATTR elm_decode_hex_byte(char* data) {
+  return (elm_decode_hex_char(data[0]) << 4) | elm_decode_hex_char(data[1]);
+}
+
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
+  elm_obd_msg msg = {};
+  msg.len = (len-1)/2;
+
+  if((msg.len > 7 && !elm_mode_allow_long) || msg.len > 8){
+    elm_append_rsp("?\r\r", 3);
+    return;
+  }
+
+  msg.len = min(msg.len, 7);
+
+  for(int i = 0; i < msg.len; i++){
+    msg.dat[i] = elm_decode_hex_byte(&cmd[i*2]);
+  }
+
+  os_printf("Got data: %d bytes.\r\n  ", msg.len);
+  for(int i = 0; i < 7; i++){
+    os_printf("%02x ", msg.dat[i]);
+  }
+  os_printf("\n");
+  elm_append_rsp("SEARCHING...\rUNABLE TO CONNECT\r\r", 32);
 }
 
 static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
@@ -328,8 +372,7 @@ static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
     if(elm_msg_is_at_cmd(stripped_msg, stripped_msg_len)) {
       elm_process_at_cmd(stripped_msg+2, stripped_msg_len-2);
     } else {
-      //TODO: Implement CAN writes
-      elm_append_rsp("SEARCHING...\rUNABLE TO CONNECT\r\r", 32);
+      elm_process_obd_cmd(stripped_msg, stripped_msg_len);
     }
     elm_append_rsp(">", 1);
     //in_msg_len = 0;
