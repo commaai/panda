@@ -114,7 +114,8 @@ int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
 }
 
 void soft_flasher_start() {
-  // safe to call twice?
+  enter_bootloader_mode = 0;
+
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
   RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;

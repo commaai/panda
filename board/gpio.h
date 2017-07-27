@@ -370,27 +370,30 @@ void gpio_init() {
 
 #define ENTER_BOOTLOADER_MAGIC 0xdeadbeef
 #define ENTER_SOFTLOADER_MAGIC 0xdeadc0de
-#define POST_BOOTLOADER_MAGIC 0xdeadb111
+#define BOOT_NORMAL 0xdeadb111
 
 extern void *g_pfnVectors;
 extern uint32_t enter_bootloader_mode;
 
 void jump_to_bootloader() {
   // do enter bootloader
-  enter_bootloader_mode = POST_BOOTLOADER_MAGIC;
+  enter_bootloader_mode = 0;
   void (*bootloader)(void) = (void (*)(void)) (*((uint32_t *)0x1fff0004));
 
   // jump to bootloader
   bootloader();
 
-  // LOOP
-  while(1);
+  // reset on exit
+  enter_bootloader_mode = BOOT_NORMAL;
+  NVIC_SystemReset();
 }
 
 void early() {
   // after it's been in the bootloader, things are initted differently, so we reset
-  if (enter_bootloader_mode == POST_BOOTLOADER_MAGIC) {
-    enter_bootloader_mode = 0;
+  if (enter_bootloader_mode != BOOT_NORMAL &&
+      enter_bootloader_mode != ENTER_BOOTLOADER_MAGIC &&
+      enter_bootloader_mode != ENTER_SOFTLOADER_MAGIC) {
+    enter_bootloader_mode = BOOT_NORMAL;
     NVIC_SystemReset();
   }
 

@@ -182,6 +182,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
           }
           break;
         case 1:
+          set_led(LED_BLUE, 1);
+          while(1);
           enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
           NVIC_SystemReset();
           break;

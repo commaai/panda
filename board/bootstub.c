@@ -31,7 +31,6 @@ void puth(unsigned int i) {}
 
 void __initialize_hardware_early() {
   early();
-
 }
 
 void fail() {

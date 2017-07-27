@@ -112,6 +112,7 @@ class Panda(object):
 
       self._handle = None
       for device in context.getDeviceList(skip_on_error=True):
+        #print(device)
         if device.getVendorID() == 0xbbaa and device.getProductID() in [0xddcc, 0xddee]:
           if self._serial is None or device.getSerialNumber() == self._serial:
             print("opening device", device.getSerialNumber())
@@ -125,21 +126,25 @@ class Panda(object):
 
     assert(self._handle != None)
 
-  def reset(self, enter_bootstub=False):
+  def reset(self, enter_bootstub=False, enter_bootloader=False):
     # reset
     try:
-      if enter_bootstub:
-        self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 1, 0, b'')
+      if enter_bootloader:
+        self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 0, 0, b'')
       else:
-        self._handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'')
+        if enter_bootstub:
+          self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 1, 0, b'')
+        else:
+          self._handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'')
     except Exception:
       pass
     time.sleep(1.0)
-    self.connect()
+    if not enter_bootloader:
+      self.connect()
 
   def flash(self):
     if not self.bootstub:
-      self.reset(True)
+      self.reset(enter_bootstub=True)
 
     assert(self.bootstub)
     ret = os.system("cd %s && make clean && make -f %s bin" % (os.path.join(BASEDIR, "board"), "Makefile.legacy" if self.legacy else "Makefile"))

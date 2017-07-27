@@ -13,14 +13,7 @@ else
   CFLAGS += "-DALLOW_DEBUG"
 endif
 
-MACHINE = $(shell uname -m)
-OS = $(shell uname -o)
-
-ifeq ($(OS),GNU/Linux)
-  MACHINE := "$(MACHINE)-linux"
-endif
-
-DFU_UTIL = "./tools/dfu-util-$(MACHINE)"
+DFU_UTIL = "dfu-util"
 
 # this no longer pushes the bootstub
 all: obj/$(PROJ_NAME).bin
@@ -28,12 +21,14 @@ all: obj/$(PROJ_NAME).bin
 	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
 	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
 
-# this one does
+# this flashes everything
 recover: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
-	./tools/enter_download_mode.py
-	$(DFU_UTIL) -a 0 -s 0x08000000 -D obj/bootstub.$(PROJ_NAME).bin
+	-python -c "from panda import Panda; Panda().reset(enter_bootloader=True)"
 	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
-	$(DFU_UTIL) --reset-stm32 -a 0 -s 0x08000000
+	$(DFU_UTIL) -a 0 -s 0x08000000:leave -D obj/bootstub.$(PROJ_NAME).bin
+
+flash:
+	python -c "from panda import Panda; Panda().flash()"
 
 ota: obj/$(PROJ_NAME).bin
 	curl http://192.168.0.10/stupdate --upload-file $<
