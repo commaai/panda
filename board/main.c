@@ -177,13 +177,13 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       switch (setup->b.wValue.w) {
         case 0:
           if (hardwired) {
+            puts("-> entering bootloader\n");
             enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
             NVIC_SystemReset();
           }
           break;
         case 1:
-          set_led(LED_BLUE, 1);
-          while(1);
+          puts("-> entering softloader\n");
           enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
           NVIC_SystemReset();
           break;
@@ -408,12 +408,15 @@ int main() {
   // shouldn't have interrupts here, but just in case
   __disable_irq();
 
-  // init devices
+  // init early devices
   clock_init();
   periph_init();
+  detect();
+
+  // print hello
+  puts("\n\n\n************************ MAIN START ************************\n");
 
   // detect the revision and init the GPIOs
-  detect();
   puts("config:\n");
   #ifdef PANDA
     puts(revision == PANDA_REV_C ? "  panda rev c\n" : "  panda rev a or b\n");

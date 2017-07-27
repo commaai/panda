@@ -204,11 +204,11 @@ void puth2(unsigned int i) {
   }
 }
 
-void hexdump(void *a, int l) {
+void hexdump(const void *a, int l) {
   int i;
   for (i=0;i<l;i++) {
     if (i != 0 && (i&0xf) == 0) puts("\n");
-    puth2(((unsigned char*)a)[i]);
+    puth2(((const unsigned char*)a)[i]);
     puts(" ");
   }
   puts("\n");

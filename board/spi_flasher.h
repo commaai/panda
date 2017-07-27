@@ -2,6 +2,8 @@
 uint32_t *prog_ptr = NULL;
 int unlocked = 0;
 
+void debug_ring_callback(uart_ring *ring) {}
+
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
   int resp_len = 0;
 
@@ -114,11 +116,14 @@ int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
 }
 
 void soft_flasher_start() {
+  puts("\n\n\n************************ FLASHER START ************************\n");
+
   enter_bootloader_mode = 0;
 
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
   RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
+  RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
 
   // A4,A5,A6,A7: setup SPI
   set_gpio_alternate(GPIOA, 4, GPIO_AF5_SPI1);
@@ -126,10 +131,17 @@ void soft_flasher_start() {
   set_gpio_alternate(GPIOA, 6, GPIO_AF5_SPI1);
   set_gpio_alternate(GPIOA, 7, GPIO_AF5_SPI1);
 
+  // A2,A3: USART 2 for debugging
+  set_gpio_alternate(GPIOA, 2, GPIO_AF7_USART2);
+  set_gpio_alternate(GPIOA, 3, GPIO_AF7_USART2);
+
   // A11,A12: USB
   set_gpio_alternate(GPIOA, 11, GPIO_AF10_OTG_FS);
   set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG_FS);
   GPIOA->OSPEEDR = GPIO_OSPEEDER_OSPEEDR11 | GPIO_OSPEEDER_OSPEEDR12;
+
+  // enable main uart
+  uart_init(USART2, 115200);
 
   // flasher
   spi_init();

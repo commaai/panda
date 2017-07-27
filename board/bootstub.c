@@ -18,6 +18,7 @@
 #include "drivers/drivers.h"
 #include "drivers/spi.h"
 #include "drivers/usb.h"
+#include "drivers/uart.h"
 
 #include "crypto/rsa.h"
 #include "crypto/sha.h"
@@ -25,9 +26,6 @@
 #include "obj/cert.h"
 
 #include "spi_flasher.h"
-
-int puts(const char *a) { return 0; }
-void puth(unsigned int i) {}
 
 void __initialize_hardware_early() {
   early();
@@ -51,7 +49,7 @@ int main() {
 
   // validate length
   int len = (int)_app_start[0];
-  if ((len < 8) || (((uint32_t)&_app_start[0] + RSANUMBYTES) >= 0x8100000)) fail();
+  if ((len < 8) || (len > (0x1000000 - 0x4000 - 4 - RSANUMBYTES))) goto fail;
 
   // compute SHA hash
   uint8_t digest[SHA_DIGEST_SIZE];
@@ -70,7 +68,9 @@ int main() {
 #endif
 
 // here is a failure
+fail:
   fail();
+  return 0;
 good:
   // jump to flash
   ((void(*)()) _app_start[1])();

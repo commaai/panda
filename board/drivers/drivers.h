@@ -52,7 +52,7 @@ int putc(uart_ring *q, char elem);
 
 int puts(const char *a);
 void puth(unsigned int i);
-void hexdump(void *a, int l);
+void hexdump(const void *a, int l);
 
 
 // ********************* ADC *********************
