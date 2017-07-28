@@ -4,6 +4,7 @@
 #include "os_type.h"
 #include "user_interface.h"
 #include "espconn.h"
+#include "mem.h"
 
 #include "driver/uart.h"
 
@@ -13,9 +14,18 @@
 
 //Version 1.5 is an invalid version used by many pirate clones
 //that only partially support 1.0.
-#define START_MSG "\r\rELM327 v1.0\r\r>"
 #define IDENT_MSG "ELM327 v1.0\r\r"
 #define DEVICE_DESC "Panda\n\n"
+
+#define SHOW_CONNECTION(msg, p_conn) os_printf("%s %p, proto %p, %d.%d.%d.%d:%d disconnect\r\n", \
+        msg, p_conn, (p_conn)->proto.tcp, (p_conn)->proto.tcp->remote_ip[0], \
+        (p_conn)->proto.tcp->remote_ip[1], (p_conn)->proto.tcp->remote_ip[2], \
+        (p_conn)->proto.tcp->remote_ip[3], (p_conn)->proto.tcp->remote_port)
+
+typedef struct _elm_tcp_conn {
+  struct espconn *conn;
+  struct _elm_tcp_conn *next;
+} elm_tcp_conn_t;
 
 typedef __attribute__((packed)) struct {
   uint8_t len;
@@ -24,6 +34,8 @@ typedef __attribute__((packed)) struct {
 
 static struct espconn elm_conn;
 static esp_tcp elm_proto;
+
+static elm_tcp_conn_t *connection_list = NULL;
 
 //static const int pin = 2;
 
@@ -312,7 +324,8 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     elm_mode_print_spaces = true;
     elm_mode_adaptive_timing = 1;
     elm_mode_allow_long = false;
-    elm_append_rsp(START_MSG, sizeof(START_MSG)-1);
+    elm_append_rsp("\r\r", 2);
+    elm_append_rsp(IDENT_MSG, sizeof(IDENT_MSG)-1);
     break;
   default:
     elm_append_rsp("?\r\r", 3);
@@ -350,7 +363,7 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
 }
 
 static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
-  os_printf("DOING STUFF2 %s\n", data);
+  os_printf("Got ELM Data In: '%s'\n", data);
 
   rsp_buff_len = 0;
   len = elm_msg_find_cr_or_eos(data, len);
@@ -375,25 +388,54 @@ static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
       elm_process_obd_cmd(stripped_msg, stripped_msg_len);
     }
     elm_append_rsp(">", 1);
-    //in_msg_len = 0;
   }
 
-  espconn_send(&elm_conn, rsp_buff, rsp_buff_len);
+  // All ELM operations are global, so send data out to all connections
+  for(elm_tcp_conn_t *iter = connection_list; iter != NULL; iter = iter->next)
+    espconn_send(iter->conn, rsp_buff, rsp_buff_len);
 
   //Just clear the buffer if full with no termination
   if(in_msg_len == sizeof(in_msg) && in_msg[in_msg_len-1] != '\r')
     in_msg_len = 0;
+}
 
-  //uart0_tx_buffer(data, len);
+void ICACHE_FLASH_ATTR elm_tcp_disconnect_cb(void *arg){
+  struct espconn *pesp_conn = (struct espconn *)arg;
+
+  elm_tcp_conn_t * prev = NULL;
+  for(elm_tcp_conn_t *iter = connection_list; iter != NULL; iter=iter->next){
+    struct espconn *conn = iter->conn;
+    //SHOW_CONNECTION("Considering Disconnecting", conn);
+    if(!memcmp(pesp_conn->proto.tcp->remote_ip, conn->proto.tcp->remote_ip, 4) &&
+       pesp_conn->proto.tcp->remote_port == conn->proto.tcp->remote_port){
+      os_printf("Deleting ELM Connection!\n");
+      if(prev){
+        prev->next = iter->next;
+      } else {
+        connection_list = iter->next;
+      }
+      os_free(iter);
+      break;
+    }
+
+    prev = iter;
+  }
 }
 
 void ICACHE_FLASH_ATTR elm_tcp_connect_cb(void *arg) {
-  os_printf("CONN MADE\n");
-
-  struct espconn *conn = (struct espconn *)arg;
+  struct espconn *pesp_conn = (struct espconn *)arg;
+  //SHOW_CONNECTION("New connection", pesp_conn);
   espconn_set_opt(&elm_conn, ESPCONN_NODELAY);
-  espconn_regist_recvcb(conn, elm_rx_cb);
-  espconn_send(&elm_conn, START_MSG, sizeof(START_MSG)-1);
+  espconn_regist_recvcb(pesp_conn, elm_rx_cb);
+
+  elm_tcp_conn_t *newconn = os_malloc(sizeof(elm_tcp_conn_t));
+  if(!newconn) {
+    os_printf("Failed to allocate place for connection\n");
+  } else {
+    newconn->next = connection_list;
+    newconn->conn = pesp_conn;
+    connection_list = newconn;
+  }
 }
 
 void ICACHE_FLASH_ATTR elm327_init() {
@@ -403,7 +445,7 @@ void ICACHE_FLASH_ATTR elm327_init() {
   elm_conn.state = ESPCONN_NONE;
   elm_conn.proto.tcp = &elm_proto;
   espconn_regist_connectcb(&elm_conn, elm_tcp_connect_cb);
+  espconn_regist_disconcb(&elm_conn, elm_tcp_disconnect_cb);
   espconn_accept(&elm_conn);
   espconn_regist_time(&elm_conn, 60, 0); // 60s timeout for all connections
-  os_printf("Started elm stuff\n");
 }
