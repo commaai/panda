@@ -381,15 +381,15 @@ void usb_setup() {
 
 void usb_init() {
   // full speed PHY, do reset and remove power down
-  puth(USBx->GRSTCTL);
-  puts(" resetting PHY\n");
+  /*puth(USBx->GRSTCTL);
+  puts(" resetting PHY\n");*/
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL) == 0);
-  puts("AHB idle\n");
+  //puts("AHB idle\n");
 
   // reset PHY here
   USBx->GRSTCTL |= USB_OTG_GRSTCTL_CSRST;
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_CSRST) == USB_OTG_GRSTCTL_CSRST);
-  puts("reset done\n");
+  //puts("reset done\n");
 
   // internal PHY, force device mode
   USBx->GUSBCFG = USB_OTG_GUSBCFG_PHYSEL | USB_OTG_GUSBCFG_FDMOD;
@@ -486,9 +486,9 @@ void usb_irqhandler(void) {
   }
 
   if (gintsts & USB_OTG_GINTSTS_ENUMDNE) {
-    puts("enumeration done ");
+    puts("enumeration done");
     // Full speed, ENUMSPD
-    puth(USBx_DEVICE->DSTS);
+    //puth(USBx_DEVICE->DSTS);
     puts("\n");
   }
 
@@ -566,9 +566,9 @@ void usb_irqhandler(void) {
 
   if (gintsts & USB_OTG_GINTSTS_SRQINT) {
     // we want to do "A-device host negotiation protocol" since we are the A-device
-    puts("start request\n");
+    /*puts("start request\n");
     puth(USBx->GOTGCTL);
-    puts("\n");
+    puts("\n");*/
     //USBx->GUSBCFG |= USB_OTG_GUSBCFG_FDMOD;
     //USBx_HOST_PORT->HPRT = USB_OTG_HPRT_PPWR | USB_OTG_HPRT_PENA;
     //USBx->GOTGCTL |= USB_OTG_GOTGCTL_SRQ;

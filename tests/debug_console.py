@@ -13,12 +13,13 @@ unsetcolor = "\033[00m"
 
 if __name__ == "__main__":
   port_number = int(os.getenv("PORT", 0))
+  claim = os.getenv("CLAIM") is not None
 
   serials = Panda.list()
   if os.getenv("SERIAL"):
     serials = filter(lambda x: x==os.getenv("SERIAL"), serials)
 
-  pandas = list(map(lambda x: Panda(x, False), serials))
+  pandas = list(map(lambda x: Panda(x, claim=claim), serials))
   while True:
     for i, panda in enumerate(pandas):
       while True:
@@ -30,5 +31,6 @@ if __name__ == "__main__":
           break
       if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
         ln = sys.stdin.readline()
-        panda.serial_write(port_number, ln)
+        if claim:
+          panda.serial_write(port_number, ln)
       time.sleep(0.01)

@@ -145,7 +145,8 @@ class Panda(object):
     except Exception:
       pass
     if not enter_bootloader:
-      self.connect(wait=True)
+      time.sleep(0.5)
+      self.connect()
 
   def flash(self, fn=None):
     if not self.bootstub:

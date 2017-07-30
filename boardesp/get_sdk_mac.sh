@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# from http://www.esp8266.com/wiki/doku.php?id=setup-osx-compiler-esp8266
+
 brew install gnu-sed --with-default-names
 brew tap homebrew/dupes
 brew install gperf
@@ -11,10 +14,11 @@ brew install automake
 brew install libtool
 brew install help2man
 
-hdiutil create esp-open-sdk.dmg -volname "esp-open-sdk" -size 1g -fs "Case-sensitive HFS+"
+brew uninstall gperf
+
+hdiutil create esp-open-sdk.dmg -volname "esp-open-sdk" -size 10g -fs "Case-sensitive HFS+"
 hdiutil mount esp-open-sdk.dmg
 ln -s /Volumes/esp-open-sdk esp-open-sdk
-mkdir -p esp-open-sdk
 cd esp-open-sdk
 
 git init

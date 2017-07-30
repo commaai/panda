@@ -69,6 +69,8 @@ typedef struct uart_ring {
   void (*callback)(struct uart_ring*);
 } uart_ring;
 
+void uart_init(USART_TypeDef *u, int baud);
+
 int getc(uart_ring *q, char *elem);
 int putc(uart_ring *q, char elem);
 
