@@ -112,7 +112,9 @@ void EXTI4_IRQHandler(void) {
   if (pr & (1 << 4)) {
     spi_total_count = 0;
     spi_rx_dma(spi_buf, 0x14);
-    //puts("exti4\n");
+    #ifdef DEBUG_SPI
+      puts("exti4\n");
+    #endif
   }
   EXTI->PR = pr;
 }
