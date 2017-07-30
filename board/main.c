@@ -431,8 +431,12 @@ int main() {
   puts(is_entering_bootmode ? "  ESP wants bootmode\n" : "  no bootmode\n");
   gpio_init();
 
-  // enable main uart
-  uart_init(USART2, 115200);
+  // enable main uart if it's connected
+  if (has_external_debug_serial) {
+    // WEIRDNESS: without this gate around the UART, it would "crash", but only if the ESP is enabled
+    // assuming it's because the lines were left floating and spurious noise was on them
+    uart_init(USART2, 115200);
+  }
 
 #ifdef PANDA
   // enable ESP uart

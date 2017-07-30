@@ -23,7 +23,6 @@
 #include "drivers/usb.h"
 //#include "drivers/uart.h"
 
-void uart_init(USART_TypeDef *u, int baud) {}
 int puts(const char *a) { return 0; }
 void puth(unsigned int i) {}
 

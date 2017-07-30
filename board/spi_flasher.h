@@ -140,9 +140,6 @@ void soft_flasher_start() {
   set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG_FS);
   GPIOA->OSPEEDR = GPIO_OSPEEDER_OSPEEDR11 | GPIO_OSPEEDER_OSPEEDR12;
 
-  // enable main uart
-  uart_init(USART2, 115200);
-
   // flasher
   spi_init();
 
