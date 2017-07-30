@@ -100,7 +100,7 @@ class Panda(object):
     self._handle.close()
     self._handle = None
 
-  def connect(self, claim=True):
+  def connect(self, claim=True, wait=False):
     if self._handle != None:
       self.close()
 
@@ -109,22 +109,28 @@ class Panda(object):
       print("opening WIFI device")
     else:
       context = usb1.USBContext()
-
       self._handle = None
-      for device in context.getDeviceList(skip_on_error=True):
-        #print(device)
-        if device.getVendorID() == 0xbbaa and device.getProductID() in [0xddcc, 0xddee]:
-          if self._serial is None or device.getSerialNumber() == self._serial:
-            print("opening device", device.getSerialNumber())
-            self.bootstub = device.getProductID() == 0xddee
-            self.legacy = (device.getbcdDevice() != 0x2300)
-            self._handle = device.open()
-            if claim:
-              self._handle.claimInterface(0)
-              #self._handle.setInterfaceAltSetting(0, 0) #Issue in USB stack
-            break
 
+      while 1:
+        try:
+          for device in context.getDeviceList(skip_on_error=True):
+            #print(device)
+            if device.getVendorID() == 0xbbaa and device.getProductID() in [0xddcc, 0xddee]:
+              if self._serial is None or device.getSerialNumber() == self._serial:
+                print("opening device", device.getSerialNumber())
+                self.bootstub = device.getProductID() == 0xddee
+                self.legacy = (device.getbcdDevice() != 0x2300)
+                self._handle = device.open()
+                if claim:
+                  self._handle.claimInterface(0)
+                  #self._handle.setInterfaceAltSetting(0, 0) #Issue in USB stack
+                break
+        except Exception as e:
+          print("exception", e)
+        if wait == False or self._handle != None:
+          break
     assert(self._handle != None)
+    print("connected")
 
   def reset(self, enter_bootstub=False, enter_bootloader=False):
     # reset
@@ -138,19 +144,20 @@ class Panda(object):
           self._handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'')
     except Exception:
       pass
-    time.sleep(1.0)
     if not enter_bootloader:
-      self.connect()
+      self.connect(wait=True)
 
-  def flash(self):
+  def flash(self, fn=None):
     if not self.bootstub:
       self.reset(enter_bootstub=True)
-
     assert(self.bootstub)
-    ret = os.system("cd %s && make clean && make -f %s bin" % (os.path.join(BASEDIR, "board"), "Makefile.legacy" if self.legacy else "Makefile"))
 
-    # TODO: build and detect legacy
-    with open(os.path.join(BASEDIR, "board", "obj", "code.bin" if self.legacy else "panda.bin")) as f:
+    if fn is None:
+      ret = os.system("cd %s && make clean && make -f %s bin" % (os.path.join(BASEDIR, "board"),
+                      "Makefile.legacy" if self.legacy else "Makefile"))
+      fn = os.path.join(BASEDIR, "board", "obj", "code.bin" if self.legacy else "panda.bin")
+
+    with open(fn) as f:
       dat = f.read()
 
     # confirm flasher is present
