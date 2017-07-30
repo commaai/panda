@@ -1,9 +1,9 @@
 PATH := esp-open-sdk/xtensa-lx106-elf/bin:$(PATH)
-CC = xtensa-lx106-elf-gcc
+CC = esp-open-sdk/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc
 CFLAGS = -Iinclude/ -I. -I../ -mlongcalls -Iesp-open-sdk/ESP8266_NONOS_SDK_V1.5.4_16_05_20/driver_lib/include -std=c99 -DICACHE_FLASH
 LDLIBS = -nostdlib -Wl,--start-group -lmain -lnet80211 -lwpa -llwip -lpp -lphy -Wl,--end-group -lgcc -ldriver -Wl,--gc-sections
 LDFLAGS = -Teagle.app.v6.ld
-OBJCP = xtensa-lx106-elf-objcopy
+OBJCP = esp-open-sdk/xtensa-lx106-elf/bin/xtensa-lx106-elf-objcopy
 SDK_BASE = esp-open-sdk/ESP8266_NONOS_SDK_V1.5.4_16_05_20
 
 ifeq ($(RELEASE),1)
