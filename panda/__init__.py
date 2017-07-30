@@ -185,13 +185,8 @@ class Panda(object):
     self.reset()
 
   @staticmethod
-  def program(clean=False, legacy=False):
-    # TODO: check for legacy board
-    if clean:
-      cmd = "make clean"
-    else:
-      cmd = "true"
-    ret = os.system("cd %s && %s && make -f %s" % (os.path.join(BASEDIR, "board"), cmd, "Makefile.legacy" if legacy else "Makefile"))
+  def recover(legacy=False):
+    ret = os.system("cd %s && make clean && make -f %s recover" % (os.path.join(BASEDIR, "board"), "Makefile.legacy" if legacy else "Makefile"))
     time.sleep(1)
     return ret==0
 

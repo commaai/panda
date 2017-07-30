@@ -5,16 +5,6 @@ import time
 from panda import Panda
 from nose.tools import timed, assert_equal, assert_less, assert_greater
 
-LEGACY = os.getenv("LEGACY") is not None
-
-# must run first
-def test_build_download_connect():
-  # download the latest code
-  assert(Panda.program(True, legacy=LEGACY))
-
-  # connect to the panda
-  p = Panda()
-
 def connect_wo_esp():
   # connect to the panda
   p = Panda()
@@ -36,7 +26,7 @@ def test_can_loopback():
   # enable CAN loopback mode
   p.set_can_loopback(True)
 
-  if LEGACY:
+  if p.legacy:
     busses = [0,1]
   else:
     busses = [0,1,2]
@@ -160,10 +150,10 @@ def test_throughput():
     print("loopback 100 messages at speed %d, comp speed is %.2f, percent %.2f" % (speed, comp_kbps, saturation_pct))
 
 def test_gmlan():
-  if LEGACY:
-    return
-
   p = connect_wo_esp()
+
+  if p.legacy:
+    return
 
   # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
