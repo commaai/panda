@@ -38,14 +38,17 @@ LOCAL os_timer_t ota_reboot_timer;
 typedef struct {
   uint16_t ep;
   uint16_t extra_len;
-  uint8_t request_type;
-  uint8_t request;
-  uint16_t value;
-  uint16_t index;
-  uint16_t length;
-  uint8_t data[0x40];
+  union {
+    struct {
+      uint8_t request_type;
+      uint8_t request;
+      uint16_t value;
+      uint16_t index;
+      uint16_t length;
+    } control;
+    uint8_t data[0x10];
+  } u;
 } usb_msg;
-
 
 int ICACHE_FLASH_ATTR usb_cmd(int ep, int len, int request,
                               int value, int index, char *data) {
@@ -53,16 +56,17 @@ int ICACHE_FLASH_ATTR usb_cmd(int ep, int len, int request,
 
   usb.ep = ep;
   usb.extra_len = (ep == 0) ? 0 : len;
-  usb.request_type = 0xc0;
-  usb.request = request;
-  usb.value = value;
-  usb.index = index;
-  if (data != NULL) {
-    memcpy(&usb.data, data, usb.extra_len);
+  if (ep == 0) {
+    usb.u.control.request_type = 0xc0;
+    usb.u.control.request = request;
+    usb.u.control.value = value;
+    usb.u.control.index = index;
+  } else {
+    memcpy(&usb.u.data, data, usb.extra_len);
   }
 
   uint32_t recv[0x44/4];
-  spi_comm(&usb, sizeof(usb)-0x40+usb.extra_len, recv, 0x40);
+  spi_comm(&usb, sizeof(usb), recv, 0x40);
 
   return recv[0];
 }
@@ -70,9 +74,6 @@ int ICACHE_FLASH_ATTR usb_cmd(int ep, int len, int request,
 
 void ICACHE_FLASH_ATTR st_flash() {
   if (st_firmware != NULL) {
-    // stupid watchdog test
-    //system_soft_wdt_stop();
-
     // boot mode
     os_printf("st_flash: enter boot mode\n");
     st_set_boot_mode(1);
