@@ -1,6 +1,7 @@
 from panda import Panda
 from nose.tools import timed, assert_equal, assert_less, assert_greater
 import time
+import os
 
 def connect_wo_esp():
   # connect to the panda
@@ -13,6 +14,18 @@ def connect_wo_esp():
   # clear old junk
   while len(p.can_recv()) > 0:
     pass
+
+def connect_wifi():
+  p = Panda()
+  ssid, pw = p.get_serial()
+  ssid = ssid.strip("\x00")
+  assert(ssid.isalnum())
+  assert(pw.isalnum())
+  ssid = "panda-" + ssid
+
+  # Mac OS X only
+  # TODO: Ubuntu
+  os.system("networksetup -setairportnetwork en0 %s %s" % (ssid, pw))
 
 def time_many_sends(p, bus):
   MSG_COUNT = 100
@@ -34,3 +47,4 @@ def time_many_sends(p, bus):
   comp_kbps = (1+11+1+1+1+4+8*8+15+1+1+1+7)*MSG_COUNT / et
 
   return comp_kbps
+

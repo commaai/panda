@@ -187,6 +187,18 @@ class Panda(object):
     self.reset()
 
   @staticmethod
+  def flash_ota_st():
+    ret = os.system("cd %s && make clean && make ota" % (os.path.join(BASEDIR, "board")))
+    time.sleep(1)
+    return ret==0
+
+  @staticmethod
+  def flash_ota_wifi():
+    ret = os.system("cd %s && make clean && make ota" % (os.path.join(BASEDIR, "boardesp")))
+    time.sleep(1)
+    return ret==0
+
+  @staticmethod
   def recover(legacy=False):
     ret = os.system("cd %s && make clean && make -f %s recover" % (os.path.join(BASEDIR, "board"), "Makefile.legacy" if legacy else "Makefile"))
     time.sleep(1)

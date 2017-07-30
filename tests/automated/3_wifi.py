@@ -1,6 +1,8 @@
 from __future__ import print_function
 import os
 from panda import Panda
+from helpers import connect_wifi
+import requests
 
 def test_get_serial():
   p = Panda()
@@ -14,16 +16,15 @@ def test_get_serial_in_flash_mode():
   p.reset()
 
 def test_connect_wifi():
-  p = Panda()
-  ssid, pw = p.get_serial()
-  ssid = ssid.strip("\x00")
-  assert(ssid.isalnum())
-  assert(pw.isalnum())
-  ssid = "panda-" + ssid
+  connect_wifi()
 
-  # Mac OS X only
-  # TODO: Ubuntu
-  os.system("networksetup -setairportnetwork en0 %s %s" % (ssid, pw))
+def test_flash_wifi():
+  Panda.flash_ota_wifi()
+  connect_wifi()
 
+def test_webpage_fetch():
+  r = requests.get("http://192.168.0.10/")
+  print(r.text)
 
+  assert "This is your comma.ai panda" in r.text
 

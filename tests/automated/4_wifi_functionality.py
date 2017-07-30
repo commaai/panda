@@ -1,15 +1,11 @@
 from __future__ import print_function
-import requests
 import time
 from panda import Panda
 from helpers import time_many_sends
 from nose.tools import timed, assert_equal, assert_less, assert_greater
 
-def test_webpage_fetch():
-  r = requests.get("http://192.168.0.10/")
-  print(r.text)
-
-  assert "This is your comma.ai panda" in r.text
+def test_wifi_flash_st():
+  Panda.flash_ota_st()
 
 def test_get_serial_wifi():
   p = Panda("WIFI")
