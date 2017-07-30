@@ -27,6 +27,7 @@ bin: obj/$(PROJ_NAME).bin
 # this flashes everything
 recover: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
 	-python -c "from panda import Panda; Panda().reset(enter_bootloader=True)"
+	sleep 0.5
 	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
 	$(DFU_UTIL) -a 0 -s 0x08000000:leave -D obj/bootstub.$(PROJ_NAME).bin
 
@@ -46,7 +47,7 @@ endif
 obj/cert.h: ../crypto/getcertheader.py
 	../crypto/getcertheader.py ../certs/debug.pub ../certs/release.pub > $@
 
-obj/%.$(PROJ_NAME).o: %.c obj/cert.h obj/gitversion.h config.h
+obj/%.$(PROJ_NAME).o: %.c obj/cert.h obj/gitversion.h config.h drivers/*.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 obj/%.$(PROJ_NAME).o: ../crypto/%.c

@@ -61,7 +61,8 @@ Programming the STM32
 ```
 cd board
 ./get_sdk.sh
-make
+make recover   # initially
+make           # future
 ```
 
 Programming the ESP

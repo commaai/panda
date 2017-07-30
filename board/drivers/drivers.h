@@ -1,3 +1,6 @@
+#ifndef PANDA_DRIVERS_H
+#define PANDA_DRIVERS_H
+
 // ********************* USB *********************
 // IRQs: OTG_FS
 
@@ -61,6 +64,12 @@ void adc_init();
 uint32_t adc_get(int channel);
 
 
+// ********************* DAC *********************
+
+void dac_init();
+uint32_t dac_set(int channel, uint32_t value);
+
+
 // ********************* TIMER *********************
 
 void timer_init(TIM_TypeDef *TIM, int psc);
@@ -107,4 +116,5 @@ void can_init_all();
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
 int can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 
+#endif
 
