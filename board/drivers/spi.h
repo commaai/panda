@@ -57,7 +57,7 @@ void spi_rx_dma(void *addr, int len) {
   DMA2_Stream2->CR &= ~DMA_SxCR_EN;
 
   // drain the bus
-  uint8_t dat = SPI1->DR;
+  volatile uint8_t dat = SPI1->DR;
   (void)dat;
 
   // DMA2, stream 2, channel 3
@@ -108,13 +108,13 @@ void DMA2_Stream3_IRQHandler(void) {
 
 void EXTI4_IRQHandler(void) {
   int pr = EXTI->PR;
+  #ifdef DEBUG_SPI
+    puts("exti4\n");
+  #endif
   // SPI CS rising
   if (pr & (1 << 4)) {
     spi_total_count = 0;
     spi_rx_dma(spi_buf, 0x14);
-    #ifdef DEBUG_SPI
-      puts("exti4\n");
-    #endif
   }
   EXTI->PR = pr;
 }
