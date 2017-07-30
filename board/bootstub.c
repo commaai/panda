@@ -13,9 +13,12 @@
 #endif
 
 #include "libc.h"
-#include "gpio.h"
 
 #include "drivers/drivers.h"
+
+#include "drivers/llgpio.h"
+#include "gpio.h"
+
 #include "drivers/spi.h"
 #include "drivers/usb.h"
 #include "drivers/uart.h"

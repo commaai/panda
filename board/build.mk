@@ -56,13 +56,13 @@ obj/%.$(PROJ_NAME).o: ../crypto/%.c
 obj/$(STARTUP_FILE).o: $(STARTUP_FILE).s
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.$(PROJ_NAME).o obj/llgpio.$(PROJ_NAME).o
+obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.$(PROJ_NAME).o
   # hack
 	$(CC) -Wl,--section-start,.isr_vector=0x8004000 $(CFLAGS) -o obj/$(PROJ_NAME).elf $^
 	$(OBJCOPY) -v -O binary obj/$(PROJ_NAME).elf obj/code.bin
 	SETLEN=1 ../crypto/sign.py obj/code.bin $@ $(CERT)
 
-obj/bootstub.$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/bootstub.$(PROJ_NAME).o obj/sha.$(PROJ_NAME).o obj/rsa.$(PROJ_NAME).o  obj/llgpio.$(PROJ_NAME).o
+obj/bootstub.$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/bootstub.$(PROJ_NAME).o obj/sha.$(PROJ_NAME).o obj/rsa.$(PROJ_NAME).o
 	$(CC) $(CFLAGS) -o obj/bootstub.$(PROJ_NAME).elf $^
 	$(OBJCOPY) -v -O binary obj/bootstub.$(PROJ_NAME).elf $@
 

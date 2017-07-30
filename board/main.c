@@ -4,10 +4,12 @@
 // ********************* includes *********************
 
 #include "libc.h"
-#include "gpio.h"
 #include "safety.h"
 
 #include "drivers/drivers.h"
+
+#include "drivers/llgpio.h"
+#include "gpio.h"
 
 #include "drivers/uart.h"
 #include "drivers/adc.h"
@@ -15,6 +17,7 @@
 #include "drivers/can.h"
 #include "drivers/spi.h"
 #include "drivers/timer.h"
+
 
 // ***************************** fan *****************************
 

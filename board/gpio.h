@@ -4,8 +4,6 @@
   #include "stm32f2xx_hal_gpio_ex.h"
 #endif
 
-#include "llgpio.h"
-
 // ********************* dynamic configuration detection *********************
 
 #define PANDA_REV_AB 0

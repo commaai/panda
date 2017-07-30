@@ -1,6 +1,3 @@
-#include "config.h"
-#include "llgpio.h"
-
 void set_gpio_mode(GPIO_TypeDef *GPIO, int pin, int mode) {
   uint32_t tmp = GPIO->MODER;
   tmp &= ~(3 << (pin*2));
@@ -35,3 +32,4 @@ void set_gpio_pullup(GPIO_TypeDef *GPIO, int pin, int mode) {
 int get_gpio_input(GPIO_TypeDef *GPIO, int pin) {
   return (GPIO->IDR & (1 << pin)) == (1 << pin);
 }
+
