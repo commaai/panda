@@ -13,6 +13,7 @@
 #endif
 
 #include "libc.h"
+#include "provision.h"
 
 #include "drivers/drivers.h"
 

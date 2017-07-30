@@ -107,9 +107,11 @@ class Panda(object):
     if self._serial == "WIFI":
       self._handle = WifiHandle()
       print("opening WIFI device")
+      self.wifi = True
     else:
       context = usb1.USBContext()
       self._handle = None
+      self.wifi = False
 
       while 1:
         try:
@@ -287,7 +289,11 @@ class Panda(object):
     while True:
       try:
         #print("DAT: %s"%b''.join(snds).__repr__())
-        self._handle.bulkWrite(3, b''.join(snds))
+        if self.wifi:
+          for s in snds:
+            self._handle.bulkWrite(3, s)
+        else:
+          self._handle.bulkWrite(3, b''.join(snds))
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD SEND MANY, RETRYING")

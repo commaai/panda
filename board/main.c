@@ -5,6 +5,7 @@
 
 #include "libc.h"
 #include "safety.h"
+#include "provision.h"
 
 #include "drivers/drivers.h"
 
@@ -168,8 +169,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
           memcpy(resp, (void *)0x1fff79c0, 0x10);
           resp_len = 0x10;
         } else {
-          memcpy(resp, (void *)0x1fff79e0, 0x20);
-          resp_len = 0x20;
+          get_provision_chunk(resp);
+          resp_len = PROVISION_CHUNK_LEN;
         }
       #endif
       break;

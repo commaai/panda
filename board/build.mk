@@ -47,7 +47,7 @@ endif
 obj/cert.h: ../crypto/getcertheader.py
 	../crypto/getcertheader.py ../certs/debug.pub ../certs/release.pub > $@
 
-obj/%.$(PROJ_NAME).o: %.c obj/cert.h obj/gitversion.h config.h drivers/*.h gpio.h
+obj/%.$(PROJ_NAME).o: %.c obj/cert.h obj/gitversion.h config.h drivers/*.h gpio.h provision.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 obj/%.$(PROJ_NAME).o: ../crypto/%.c
