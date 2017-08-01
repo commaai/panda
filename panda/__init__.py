@@ -156,9 +156,10 @@ class Panda(object):
     assert(self.bootstub)
 
     if fn is None:
-      ret = os.system("cd %s && make clean && make -f %s bin" % (os.path.join(BASEDIR, "board"),
-                      "Makefile.legacy" if self.legacy else "Makefile"))
-      fn = os.path.join(BASEDIR, "board", "obj", "code.bin" if self.legacy else "panda.bin")
+      ret = os.system("cd %s && make clean && make -f %s %s" % (os.path.join(BASEDIR, "board"),
+                      "Makefile.legacy" if self.legacy else "Makefile",
+                      "obj/comma.bin" if self.legacy else "obj/panda.bin"))
+      fn = os.path.join(BASEDIR, "board", "obj", "comma.bin" if self.legacy else "panda.bin")
 
     with open(fn) as f:
       dat = f.read()

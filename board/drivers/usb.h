@@ -258,7 +258,6 @@ char to_hex_char(int a) {
 }
 
 void usb_setup() {
-  int i;
   int resp_len;
   // setup packet is ready
   switch (setup.b.bRequest) {
@@ -332,7 +331,7 @@ void usb_setup() {
                 resp[1] = 0x03;
 
                 // 96 bits = 12 bytes
-                for (i = 0; i < 12; i++){
+                for (int i = 0; i < 12; i++){
                   uint8_t cc = ((uint8_t *)UID_BASE)[i];
                   resp[2 + i*4 + 0] = to_hex_char((cc>>4)&0xF);
                   resp[2 + i*4 + 1] = '\0';
@@ -342,7 +341,7 @@ void usb_setup() {
 
                 USB_WritePacket(resp, min(resp[0], setup.b.wLength.w), 0);
               #else
-                USB_WritePacket(string_3_desc, min(sizeof(string_3_desc), setup.b.wLength.w), 0);
+                USB_WritePacket((const uint8_t *)string_3_desc, min(sizeof(string_3_desc), setup.b.wLength.w), 0);
               #endif
               break;
             default:
