@@ -1,10 +1,9 @@
 import os
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
-os.chdir(os.path.join(BASEDIR, "../board"))
 
 def build(target, mkfile="Makefile"):
-  assert(os.system('make -f %s clean && make -f %s %s >/dev/null' % (mkfile, mkfile, target)) == 0)
+  assert(os.system('cd %s && make -f %s clean && make -f %s %s >/dev/null' % (os.path.join(BASEDIR, "../board"), mkfile, mkfile, target)) == 0)
 
 def test_build_legacy():
   build("obj/comma.bin", "Makefile.legacy")
