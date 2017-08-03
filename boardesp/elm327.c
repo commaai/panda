@@ -128,7 +128,7 @@ static int ICACHE_FLASH_ATTR panda_usbemu_can_write(bool ext, uint32_t addr,
   *(uint32_t*)(sendData+8) = canlen | (0 << 4); //0 is CAN bus number.
   //CAN DATA
   memcpy(sendData+12, candata, canlen);
-  memcpy(sendData+12+canlen, 0, 8-canlen); //Zero the rest
+  for(int i = 12+canlen; i < 20; i++) sendData[i] = 0; //Zero the rest
 
   int returned_count = spi_comm(sendData, 0x14, recvData, 0x40);
   os_printf("Got %d bytes from Panda\n", returned_count);
