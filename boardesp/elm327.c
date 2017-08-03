@@ -72,12 +72,68 @@ static char* elm_protocols[] = {
   "ISO 15765-4 (CAN 29/500)", //CAN
   "ISO 15765-4 (CAN 11/250)", //CAN
   "ISO 15765-4 (CAN 29/250)", //CAN
-  "SAE J1939 (CAN 29/250)",   //CAN Probably
-  "USER1 (CAN 11/125)",
-  "USER2 (CAN 11/50)",
+  "SAE J1939 (CAN 29/250)",   //CAN
+  "USER1 (CAN 11/125)",       //CAN
+  "USER2 (CAN 11/50)",        //CAN
 };
 
 #define ELM_PROTOCOL_COUNT (sizeof(elm_protocols)/sizeof(char*))
+
+int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, int recvDataLen);
+
+static uint8_t sendData[0x14] = {0};
+static uint32_t recvData[0x40] = {0};
+static int ICACHE_FLASH_ATTR panda_usbemu_ctrl_write(uint8_t request_type, uint8_t request,
+                                                      uint16_t value, uint16_t index, uint16_t length) {
+  //self.sock.send(struct.pack("HHBBHHH", 0, 0, request_type, request, value, index, length));
+  *(uint16_t*)(sendData) = 0;
+  *(uint16_t*)(sendData+2) = 0;
+  sendData[4] = request_type;
+  sendData[5] = request;
+  *(uint16_t*)(sendData+6) = value;
+  *(uint16_t*)(sendData+8) = index;
+  *(uint16_t*)(sendData+10) = length;
+
+  int returned_count = spi_comm(sendData, 0x10, recvData, 0x40);
+  os_printf("Got %d bytes from Panda\n", returned_count);
+  return returned_count;
+}
+
+#define panda_set_can0_kbaud(kbps) panda_usbemu_ctrl_write(0x40, 0xde, 0, kbps*10, 0)
+#define panda_set_safety_mode(mode) panda_usbemu_ctrl_write(0x40, 0xdc, mode, 0, 0)
+
+#define PANDA_CAN_FLAG_TRANSMIT 1
+#define PANDA_CAN_FLAG_EXTENDED 4
+
+#define PANDA_USB_CAN_WRITE_BUS_NUM 3
+
+static int ICACHE_FLASH_ATTR panda_usbemu_can_write(bool ext, uint32_t addr,
+                                                    char *candata, uint8_t canlen) {
+  //self.sock.send(struct.pack("HHBBHHH", 0, 0, request_type, request, value, index, length));
+  uint32_t rir;
+
+  if(canlen > 8) return 0;
+
+  if(ext || addr >= 0x800){
+    rir = (addr << 3) | PANDA_CAN_FLAG_TRANSMIT | PANDA_CAN_FLAG_EXTENDED;
+  }else{
+    rir = (addr << 21) | PANDA_CAN_FLAG_TRANSMIT;
+  }
+
+  //Wifi USB Wrapper
+  *(uint16_t*)(sendData) = 3; //USB Bulk Endpoint ID.
+  *(uint16_t*)(sendData+2) = canlen;
+  //BULK MESSAGE
+  *(uint32_t*)(sendData+4) = rir;
+  *(uint32_t*)(sendData+8) = canlen | (0 << 4); //0 is CAN bus number.
+  //CAN DATA
+  memcpy(sendData+12, candata, canlen);
+  memcpy(sendData+12+canlen, 0, 8-canlen); //Zero the rest
+
+  int returned_count = spi_comm(sendData, 0x14, recvData, 0x40);
+  os_printf("Got %d bytes from Panda\n", returned_count);
+  return returned_count;
+}
 
 static int8_t ICACHE_FLASH_ATTR elm_decode_hex_char(char b){
   if(b >= '0' && b <= '9') return b - '0';
@@ -326,6 +382,8 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     elm_mode_allow_long = false;
     elm_append_rsp("\r\r", 2);
     elm_append_rsp(IDENT_MSG, sizeof(IDENT_MSG)-1);
+    panda_set_can0_kbaud(500);
+    panda_set_safety_mode(0x1337);
     break;
   default:
     elm_append_rsp("?\r\r", 3);
@@ -359,6 +417,9 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
     os_printf("%02x ", msg.dat[i]);
   }
   os_printf("\n");
+
+  panda_usbemu_can_write(0, 0x7DF, (uint8_t*)&msg, msg.len+1);
+
   elm_append_rsp("SEARCHING...\rUNABLE TO CONNECT\r\r", 32);
 }
 
