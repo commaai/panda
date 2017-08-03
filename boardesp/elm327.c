@@ -27,7 +27,7 @@ typedef struct _elm_tcp_conn {
   struct _elm_tcp_conn *next;
 } elm_tcp_conn_t;
 
-typedef __attribute__((packed)) struct {
+typedef struct __attribute__((packed)) {
   uint8_t len;
   uint8_t dat[7]; //mode and data
 } elm_obd_msg;
@@ -102,6 +102,21 @@ static int ICACHE_FLASH_ATTR panda_usbemu_ctrl_write(uint8_t request_type, uint8
 #define panda_set_can0_kbaud(kbps) panda_usbemu_ctrl_write(0x40, 0xde, 0, kbps*10, 0)
 #define panda_set_safety_mode(mode) panda_usbemu_ctrl_write(0x40, 0xdc, mode, 0, 0)
 
+typedef struct __attribute__((packed)) {
+  bool tx : 1;
+  bool : 1;
+  bool ext : 1;
+  uint32_t addr : 29;
+
+  uint8_t len : 4;
+  uint8_t bus : 8;
+  uint8_t : 4; //unused
+  uint16_t ts : 16;
+  uint8_t data[8];
+} panda_can_msg_t;
+
+#define panda_get_can_addr(recv) ((recv->ext) ? (recv->addr) : (recv->addr >> 18))
+
 #define PANDA_CAN_FLAG_TRANSMIT 1
 #define PANDA_CAN_FLAG_EXTENDED 4
 
@@ -109,7 +124,6 @@ static int ICACHE_FLASH_ATTR panda_usbemu_ctrl_write(uint8_t request_type, uint8
 
 static int ICACHE_FLASH_ATTR panda_usbemu_can_write(bool ext, uint32_t addr,
                                                     char *candata, uint8_t canlen) {
-  //self.sock.send(struct.pack("HHBBHHH", 0, 0, request_type, request, value, index, length));
   uint32_t rir;
 
   if(canlen > 8) return 0;
@@ -131,8 +145,26 @@ static int ICACHE_FLASH_ATTR panda_usbemu_can_write(bool ext, uint32_t addr,
   for(int i = 12+canlen; i < 20; i++) sendData[i] = 0; //Zero the rest
 
   int returned_count = spi_comm(sendData, 0x14, recvData, 0x40);
-  os_printf("Got %d bytes from Panda\n", returned_count);
+  if(returned_count)
+    os_printf("ELM Can send expected 0 bytes back from panda. Got %d bytes instead\n", returned_count);
   return returned_count;
+}
+
+static int ICACHE_FLASH_ATTR panda_usbemu_can_read() {
+  int returned_count = spi_comm((uint8_t *)((const uint16 []){1,0}), 4, recvData, 0x40);
+  os_printf("Reading CAN. Got %d (%x) bytes from panda\n", returned_count, returned_count);
+
+  panda_can_msg_t *can_msgs = (panda_can_msg_t*)(recvData+1);
+
+  for(int i = 0; i < returned_count/sizeof(panda_can_msg_t); i++){
+    panda_can_msg_t *recv = &can_msgs[i];
+    os_printf("    RECV: Bus: %d; Addr: %08x; ext: %d; tx: %d; Len: %d; ",
+              recv->bus, panda_get_can_addr(recv), recv->ext, recv->tx, recv->len);
+    for(int j = 0; j < recv->len; j++) os_printf("%02x ", recv->data[j]);
+    os_printf("Ts: %d\n", recv->ts);
+  }
+
+  return returned_count/sizeof(panda_can_msg_t);
 }
 
 static int8_t ICACHE_FLASH_ATTR elm_decode_hex_char(char b){
@@ -386,6 +418,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     panda_set_safety_mode(0x1337);
     break;
   default:
+    panda_usbemu_can_read();
     elm_append_rsp("?\r\r", 3);
     return;
   }
@@ -412,7 +445,7 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
     msg.dat[i] = elm_decode_hex_byte(&cmd[i*2]);
   }
 
-  os_printf("Got data: %d bytes.\r\n  ", msg.len);
+  os_printf("ELM CAN data for tx: %d bytes.\r\n  ", msg.len);
   for(int i = 0; i < 7; i++){
     os_printf("%02x ", msg.dat[i]);
   }
