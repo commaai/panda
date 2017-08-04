@@ -56,6 +56,8 @@ static uint8_t elm_selected_protocol = 1;
 static bool elm_mode_print_spaces = true;
 static uint8_t elm_mode_adaptive_timing = 1;
 static bool elm_mode_allow_long = false;
+#define ELM_MODE_TIMEOUT_DEFAULT 200;
+static uint16_t elm_mode_timeout = ELM_MODE_TIMEOUT_DEFAULT;
 
 
 static char hex_lookup[] = {'0', '1', '2', '3', '4', '5', '6', '7',
@@ -78,6 +80,14 @@ static char* elm_protocols[] = {
 };
 
 #define ELM_PROTOCOL_COUNT (sizeof(elm_protocols)/sizeof(char*))
+
+// All ELM operations are global, so send data out to all connections
+void ICACHE_FLASH_ATTR elm_tcp_tx_all_conns(char *buff, uint16_t len) {
+  for(elm_tcp_conn_t *iter = connection_list; iter != NULL; iter = iter->next){
+    int8_t err = espconn_send(iter->conn, rsp_buff, rsp_buff_len);
+    if(err) os_printf("  Wifi TX failed with error code %d\n", err);
+  }
+}
 
 int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, int recvDataLen);
 
@@ -115,7 +125,7 @@ typedef struct __attribute__((packed)) {
   uint8_t data[8];
 } panda_can_msg_t;
 
-#define panda_get_can_addr(recv) ((recv->ext) ? (recv->addr) : (recv->addr >> 18))
+#define panda_get_can_addr(recv) (((recv)->ext) ? ((recv)->addr) : ((recv)->addr >> 18))
 
 #define PANDA_CAN_FLAG_TRANSMIT 1
 #define PANDA_CAN_FLAG_EXTENDED 4
@@ -135,7 +145,7 @@ static int ICACHE_FLASH_ATTR panda_usbemu_can_write(bool ext, uint32_t addr,
   }
 
   //Wifi USB Wrapper
-  *(uint16_t*)(sendData) = 3; //USB Bulk Endpoint ID.
+  *(uint16_t*)(sendData) = PANDA_USB_CAN_WRITE_BUS_NUM; //USB Bulk Endpoint ID.
   *(uint16_t*)(sendData+2) = canlen;
   //BULK MESSAGE
   *(uint32_t*)(sendData+4) = rir;
@@ -150,19 +160,37 @@ static int ICACHE_FLASH_ATTR panda_usbemu_can_write(bool ext, uint32_t addr,
   return returned_count;
 }
 
-static int ICACHE_FLASH_ATTR panda_usbemu_can_read() {
+//static int ICACHE_FLASH_ATTR panda_usbemu_can_read() {
+//  int returned_count = spi_comm((uint8_t *)((const uint16 []){1,0}), 4, recvData, 0x40);
+//  os_printf("Reading CAN. Got %d (%x) bytes from panda\n", returned_count, returned_count);
+//
+//  panda_can_msg_t *can_msgs = (panda_can_msg_t*)(recvData+1);
+//
+//  for(int i = 0; i < returned_count/sizeof(panda_can_msg_t); i++){
+//    panda_can_msg_t *recv = &can_msgs[i];
+//    os_printf("    RECV: Bus: %d; Addr: %08x; ext: %d; tx: %d; Len: %d; ",
+//              recv->bus, panda_get_can_addr(recv), recv->ext, recv->tx, recv->len);
+//    for(int j = 0; j < recv->len; j++) os_printf("%02x ", recv->data[j]);
+//    os_printf("Ts: %d\n", recv->ts);
+//  }
+//
+//  return returned_count/sizeof(panda_can_msg_t);
+//}
+
+static int ICACHE_FLASH_ATTR panda_usbemu_can_read2(panda_can_msg_t **can_msgs) {
   int returned_count = spi_comm((uint8_t *)((const uint16 []){1,0}), 4, recvData, 0x40);
   os_printf("Reading CAN. Got %d (%x) bytes from panda\n", returned_count, returned_count);
 
-  panda_can_msg_t *can_msgs = (panda_can_msg_t*)(recvData+1);
+  //panda_can_msg_t *can_msgs = (panda_can_msg_t*)(recvData+1);
+  *can_msgs = (panda_can_msg_t*)(recvData+1);
 
-  for(int i = 0; i < returned_count/sizeof(panda_can_msg_t); i++){
-    panda_can_msg_t *recv = &can_msgs[i];
-    os_printf("    RECV: Bus: %d; Addr: %08x; ext: %d; tx: %d; Len: %d; ",
-              recv->bus, panda_get_can_addr(recv), recv->ext, recv->tx, recv->len);
-    for(int j = 0; j < recv->len; j++) os_printf("%02x ", recv->data[j]);
-    os_printf("Ts: %d\n", recv->ts);
-  }
+  //for(int i = 0; i < returned_count/sizeof(panda_can_msg_t); i++){
+  //  panda_can_msg_t *recv = can_msgs[i];
+  //  os_printf("    RECV: Bus: %d; Addr: %08x; ext: %d; tx: %d; Len: %d; ",
+  //            recv->bus, panda_get_can_addr(recv), recv->ext, recv->tx, recv->len);
+  //  for(int j = 0; j < recv->len; j++) os_printf("%02x ", recv->data[j]);
+  //  os_printf("Ts: %d\n", recv->ts);
+  //}
 
   return returned_count/sizeof(panda_can_msg_t);
 }
@@ -172,6 +200,19 @@ static int8_t ICACHE_FLASH_ATTR elm_decode_hex_char(char b){
   if(b >= 'A' && b <= 'F') return (b - 'A') + 10;
   if(b >= 'a' && b <= 'f') return (b - 'a') + 10;
   return -1;
+}
+
+static uint8_t ICACHE_FLASH_ATTR elm_decode_hex_byte(char* data) {
+  return (elm_decode_hex_char(data[0]) << 4) | elm_decode_hex_char(data[1]);
+}
+
+static bool ICACHE_FLASH_ATTR elm_check_valid_hex_chars(char* data, uint8_t len) {
+  for(int i = 0; i < len; i++){
+    char b = data[i];
+    if(!((b >= '0' && b <= '9') || (b >= 'A' && b <= 'F') || (b >= 'a' && b <= 'f')))
+      return 0;
+  }
+  return 1;
 }
 
 static uint16_t ICACHE_FLASH_ATTR elm_strip(char *data, uint16_t lenin,
@@ -229,6 +270,53 @@ static void ICACHE_FLASH_ATTR elm_append_in_msg(char *data, uint16_t len) {
     len = sizeof(in_msg) - in_msg_len;
   memcpy(in_msg + in_msg_len, data, len);
   in_msg_len += len;
+}
+
+
+int loopcount = 0;
+static volatile os_timer_t elm_timeout;
+
+void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
+  loopcount--;
+  if(loopcount>0) {
+    for(int pass = 0; pass < 16 && loopcount; pass++){
+      panda_can_msg_t *can_msgs;
+      int num_can_msgs = panda_usbemu_can_read2(&can_msgs);
+      if(!num_can_msgs) break;
+
+      for(int i = 0; i < num_can_msgs; i++){
+
+        panda_can_msg_t *recv = &can_msgs[i];
+        //os_printf("    RECV: Bus: %d; Addr: %08x; ext: %d; tx: %d; Len: %d; ",
+        //          recv->bus, panda_get_can_addr(recv), recv->ext, recv->tx, recv->len);
+        //for(int j = 0; j < recv->len; j++) os_printf("%02x ", recv->data[j]);
+        //os_printf("Ts: %d\n", recv->ts);
+
+        if((panda_get_can_addr(recv) & 0x7F8) == 0x7E8 && recv->len == 8
+           && recv->data[0] <= 7) {
+          os_printf("Found matching message, index: %d\n", i);
+          loopcount = 0;
+
+          for(int j = 0; j < recv->data[0]; j++){
+            elm_append_rsp(&hex_lookup[recv->data[j+1] >> 4], 1);
+            elm_append_rsp(&hex_lookup[recv->data[j+1] & 0xF], 1);
+            elm_append_rsp(" ", 1);
+          }
+          elm_append_rsp("\r\r>", 3);
+          elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
+          rsp_buff_len = 0;
+
+          return;
+        }
+      }
+    }
+    //elm_tcp_tx_all_conns(".", 1)
+    os_timer_arm(&elm_timeout, 1000, 0);
+  } else {
+    elm_append_rsp("UNABLE TO CONNECT\r\r>", 21);
+    elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
+    rsp_buff_len = 0;
+  }
 }
 
 enum at_cmd_ids_t { // FULL ELM 1.0 list
@@ -301,6 +389,7 @@ static const at_cmd_reg_t at_cmd_reg[] = {
   {"S1",  2, 2, AT_S1}, // Added ELM 1.3, expected by Torque
   {"SP",  2, 3, AT_SP},
   {"SPA", 3, 4, AT_SPA},
+  {"ST",  2, 4, AT_ST},
   {"Z",   1, 1, AT_Z},
 };
 #define AT_CMD_REG_LEN (sizeof(at_cmd_reg)/sizeof(at_cmd_reg_t))
@@ -403,6 +492,16 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     elm_selected_protocol = tmp;
     elm_mode_auto_protocol = true;
     break;
+  case AT_ST:  //SET TIMEOUT
+    if(!elm_check_valid_hex_chars(&cmd[2], 2)) {
+      elm_append_rsp("?\r\r", 3);
+      return;
+    }
+
+    tmp = elm_decode_hex_byte(&cmd[2]);
+    //20 for CAN, 4 for LIN
+    elm_mode_timeout = tmp ? tmp*20 : ELM_MODE_TIMEOUT_DEFAULT;
+    break;
   case AT_Z: //RESET
     elm_mode_echo = true;
     elm_mode_linefeed = false;
@@ -412,13 +511,14 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     elm_mode_print_spaces = true;
     elm_mode_adaptive_timing = 1;
     elm_mode_allow_long = false;
+    //elm_mode_timeout = ELM_MODE_TIMEOUT_DEFAULT;
+
     elm_append_rsp("\r\r", 2);
     elm_append_rsp(IDENT_MSG, sizeof(IDENT_MSG)-1);
     panda_set_can0_kbaud(500);
     panda_set_safety_mode(0x1337);
     break;
   default:
-    panda_usbemu_can_read();
     elm_append_rsp("?\r\r", 3);
     return;
   }
@@ -426,15 +526,12 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
   elm_append_rsp("OK\r\r", 4);
 }
 
-static uint8_t ICACHE_FLASH_ATTR elm_decode_hex_byte(char* data) {
-  return (elm_decode_hex_char(data[0]) << 4) | elm_decode_hex_char(data[1]);
-}
-
 static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
   elm_obd_msg msg = {};
   msg.len = (len-1)/2;
-
-  if((msg.len > 7 && !elm_mode_allow_long) || msg.len > 8){
+  //os_printf("Len to obd: %d\n", len);
+  if((msg.len > 7 && !elm_mode_allow_long) || msg.len > 8 ||
+     !elm_check_valid_hex_chars(cmd, len-1)) {
     elm_append_rsp("?\r\r", 3);
     return;
   }
@@ -445,7 +542,7 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
     msg.dat[i] = elm_decode_hex_byte(&cmd[i*2]);
   }
 
-  os_printf("ELM CAN data for tx: %d bytes.\r\n  ", msg.len);
+  os_printf("ELM CAN tx dat: %d.\r\n  ", msg.len);
   for(int i = 0; i < 7; i++){
     os_printf("%02x ", msg.dat[i]);
   }
@@ -453,7 +550,13 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
 
   panda_usbemu_can_write(0, 0x7DF, (uint8_t*)&msg, msg.len+1);
 
-  elm_append_rsp("SEARCHING...\rUNABLE TO CONNECT\r\r", 32);
+  elm_append_rsp("SEARCHING...\r", 13);
+
+  os_printf("Starting up timer\n");
+  loopcount = 4;
+  os_timer_disarm(&elm_timeout);
+  os_timer_setfn(&elm_timeout, (os_timer_func_t *)elm_timer_cb, NULL);
+  os_timer_arm(&elm_timeout, 1000, 0);
 }
 
 static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
@@ -461,6 +564,19 @@ static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
 
   rsp_buff_len = 0;
   len = elm_msg_find_cr_or_eos(data, len);
+
+  if(loopcount){
+    os_timer_disarm(&elm_timeout);
+    loopcount = 0;
+    os_printf("Tearing down timer. msg len: %d\n", len);
+    elm_append_rsp("STOPPED\r\r>", 10);
+    if(len == 1 && data[0] == '\r') {
+      os_printf("Empty msg source of interrupt.\n");
+      elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
+      rsp_buff_len = 0;
+      return;
+    }
+  }
 
   if(!(len == 1 && data[0] == '\r') && in_msg_len && in_msg[in_msg_len-1] == '\r'){
     in_msg_len = 0;
@@ -478,15 +594,14 @@ static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
 
     if(elm_msg_is_at_cmd(stripped_msg, stripped_msg_len)) {
       elm_process_at_cmd(stripped_msg+2, stripped_msg_len-2);
+      elm_append_rsp(">", 1);
     } else {
       elm_process_obd_cmd(stripped_msg, stripped_msg_len);
     }
-    elm_append_rsp(">", 1);
   }
 
-  // All ELM operations are global, so send data out to all connections
-  for(elm_tcp_conn_t *iter = connection_list; iter != NULL; iter = iter->next)
-    espconn_send(iter->conn, rsp_buff, rsp_buff_len);
+  elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
+  rsp_buff_len = 0;
 
   //Just clear the buffer if full with no termination
   if(in_msg_len == sizeof(in_msg) && in_msg[in_msg_len-1] != '\r')
@@ -521,6 +636,8 @@ void ICACHE_FLASH_ATTR elm_tcp_connect_cb(void *arg) {
   //SHOW_CONNECTION("New connection", pesp_conn);
   espconn_set_opt(&elm_conn, ESPCONN_NODELAY);
   espconn_regist_recvcb(pesp_conn, elm_rx_cb);
+  //Allow several sends to be queued at a time.
+  espconn_tcp_set_buf_count(pesp_conn, 3);
 
   elm_tcp_conn_t *newconn = os_malloc(sizeof(elm_tcp_conn_t));
   if(!newconn) {
