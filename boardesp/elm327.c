@@ -14,7 +14,7 @@
 
 //Version 1.5 is an invalid version used by many pirate clones
 //that only partially support 1.0.
-#define IDENT_MSG "ELM327 v1.0\r\r"
+#define IDENT_MSG "ELM327 v1.5\r\r"
 #define DEVICE_DESC "Panda\n\n"
 
 #define SHOW_CONNECTION(msg, p_conn) os_printf("%s %p, proto %p, %d.%d.%d.%d:%d disconnect\r\n", \
@@ -125,7 +125,9 @@ typedef struct __attribute__((packed)) {
   uint8_t data[8];
 } panda_can_msg_t;
 
-#define panda_get_can_addr(recv) (((recv)->ext) ? ((recv)->addr) : ((recv)->addr >> 18))
+//TODO: Masking is likely unnecessary for these bit fields.
+#define panda_get_can_addr(recv) (((recv)->ext) ? ((recv)->addr & 0x1FFFFFFF) :\
+                                  (((recv)->addr >> 18) & 0x7FF))
 
 #define PANDA_CAN_FLAG_TRANSMIT 1
 #define PANDA_CAN_FLAG_EXTENDED 4
@@ -160,38 +162,9 @@ static int ICACHE_FLASH_ATTR panda_usbemu_can_write(bool ext, uint32_t addr,
   return returned_count;
 }
 
-//static int ICACHE_FLASH_ATTR panda_usbemu_can_read() {
-//  int returned_count = spi_comm((uint8_t *)((const uint16 []){1,0}), 4, recvData, 0x40);
-//  os_printf("Reading CAN. Got %d (%x) bytes from panda\n", returned_count, returned_count);
-//
-//  panda_can_msg_t *can_msgs = (panda_can_msg_t*)(recvData+1);
-//
-//  for(int i = 0; i < returned_count/sizeof(panda_can_msg_t); i++){
-//    panda_can_msg_t *recv = &can_msgs[i];
-//    os_printf("    RECV: Bus: %d; Addr: %08x; ext: %d; tx: %d; Len: %d; ",
-//              recv->bus, panda_get_can_addr(recv), recv->ext, recv->tx, recv->len);
-//    for(int j = 0; j < recv->len; j++) os_printf("%02x ", recv->data[j]);
-//    os_printf("Ts: %d\n", recv->ts);
-//  }
-//
-//  return returned_count/sizeof(panda_can_msg_t);
-//}
-
-static int ICACHE_FLASH_ATTR panda_usbemu_can_read2(panda_can_msg_t **can_msgs) {
+static int ICACHE_FLASH_ATTR panda_usbemu_can_read(panda_can_msg_t **can_msgs) {
   int returned_count = spi_comm((uint8_t *)((const uint16 []){1,0}), 4, recvData, 0x40);
-  os_printf("Reading CAN. Got %d (%x) bytes from panda\n", returned_count, returned_count);
-
-  //panda_can_msg_t *can_msgs = (panda_can_msg_t*)(recvData+1);
   *can_msgs = (panda_can_msg_t*)(recvData+1);
-
-  //for(int i = 0; i < returned_count/sizeof(panda_can_msg_t); i++){
-  //  panda_can_msg_t *recv = can_msgs[i];
-  //  os_printf("    RECV: Bus: %d; Addr: %08x; ext: %d; tx: %d; Len: %d; ",
-  //            recv->bus, panda_get_can_addr(recv), recv->ext, recv->tx, recv->len);
-  //  for(int j = 0; j < recv->len; j++) os_printf("%02x ", recv->data[j]);
-  //  os_printf("Ts: %d\n", recv->ts);
-  //}
-
   return returned_count/sizeof(panda_can_msg_t);
 }
 
@@ -272,7 +245,6 @@ static void ICACHE_FLASH_ATTR elm_append_in_msg(char *data, uint16_t len) {
   in_msg_len += len;
 }
 
-
 int loopcount = 0;
 static volatile os_timer_t elm_timeout;
 
@@ -281,7 +253,7 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
   if(loopcount>0) {
     for(int pass = 0; pass < 16 && loopcount; pass++){
       panda_can_msg_t *can_msgs;
-      int num_can_msgs = panda_usbemu_can_read2(&can_msgs);
+      int num_can_msgs = panda_usbemu_can_read(&can_msgs);
       if(!num_can_msgs) break;
 
       for(int i = 0; i < num_can_msgs; i++){
@@ -297,10 +269,38 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
           os_printf("Found matching message, index: %d\n", i);
           loopcount = 0;
 
+          if(elm_mode_additional_headers){
+            //Show address
+            uint32_t addr = panda_get_can_addr(recv);
+            if(recv->ext){
+              elm_append_rsp(&hex_lookup[addr>>28], 1);
+              elm_append_rsp(&hex_lookup[(addr>>24)&0xF], 1);
+              elm_append_rsp(&hex_lookup[(addr>>20)&0xF], 1);
+              elm_append_rsp(&hex_lookup[(addr>>16)&0xF], 1);
+              elm_append_rsp(&hex_lookup[(addr>12)&0xF], 1);
+              elm_append_rsp(&hex_lookup[(addr>>8)&0xF], 1);
+              elm_append_rsp(&hex_lookup[(addr>>4)&0xF], 1);
+              elm_append_rsp(&hex_lookup[addr&0xF], 1);
+            } else {
+              elm_append_rsp(&hex_lookup[addr >> 8], 1);
+              elm_append_rsp(&hex_lookup[(addr >> 4) & 0xF], 1);
+              elm_append_rsp(&hex_lookup[addr & 0xF], 1);
+            }
+            if(elm_mode_print_spaces)
+              elm_append_rsp(" ", 1);
+
+            //Show size byte
+            elm_append_rsp(&hex_lookup[recv->data[0] >> 4], 1);
+            elm_append_rsp(&hex_lookup[recv->data[0] & 0xF], 1);
+            if(elm_mode_print_spaces)
+              elm_append_rsp(" ", 1);
+          }
+
           for(int j = 0; j < recv->data[0]; j++){
             elm_append_rsp(&hex_lookup[recv->data[j+1] >> 4], 1);
             elm_append_rsp(&hex_lookup[recv->data[j+1] & 0xF], 1);
-            elm_append_rsp(" ", 1);
+            if(elm_mode_print_spaces)
+              elm_append_rsp(" ", 1);
           }
           elm_append_rsp("\r\r>", 3);
           elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
@@ -311,9 +311,10 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
       }
     }
     //elm_tcp_tx_all_conns(".", 1)
-    os_timer_arm(&elm_timeout, 1000, 0);
+    os_timer_arm(&elm_timeout, elm_mode_timeout, 0);
   } else {
-    elm_append_rsp("UNABLE TO CONNECT\r\r>", 21);
+    //elm_append_rsp("UNABLE TO CONNECT\r\r>", 21);
+    elm_append_rsp("NO DATA\r\r>", 10);
     elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
     rsp_buff_len = 0;
   }
@@ -459,6 +460,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     return;
   case AT_L0: //LINEFEED OFF
     elm_mode_linefeed = false;
+    break;
   case AT_L1: //LINEFEED ON
     elm_mode_linefeed = true;
     break;
@@ -517,7 +519,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     elm_append_rsp(IDENT_MSG, sizeof(IDENT_MSG)-1);
     panda_set_can0_kbaud(500);
     panda_set_safety_mode(0x1337);
-    break;
+    return;
   default:
     elm_append_rsp("?\r\r", 3);
     return;
@@ -532,7 +534,7 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
   //os_printf("Len to obd: %d\n", len);
   if((msg.len > 7 && !elm_mode_allow_long) || msg.len > 8 ||
      !elm_check_valid_hex_chars(cmd, len-1)) {
-    elm_append_rsp("?\r\r", 3);
+    elm_append_rsp("?\r\r>", 4);
     return;
   }
 
@@ -550,13 +552,13 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
 
   panda_usbemu_can_write(0, 0x7DF, (uint8_t*)&msg, msg.len+1);
 
-  elm_append_rsp("SEARCHING...\r", 13);
+  //elm_append_rsp("SEARCHING...\r", 13);
 
   os_printf("Starting up timer\n");
   loopcount = 4;
   os_timer_disarm(&elm_timeout);
   os_timer_setfn(&elm_timeout, (os_timer_func_t *)elm_timer_cb, NULL);
-  os_timer_arm(&elm_timeout, 1000, 0);
+  os_timer_arm(&elm_timeout, elm_mode_timeout, 0);
 }
 
 static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
