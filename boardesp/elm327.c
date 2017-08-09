@@ -65,8 +65,8 @@ static char hex_lookup[] = {'0', '1', '2', '3', '4', '5', '6', '7',
 
 static char* elm_protocols[] = {
   "AUTO",
-  "SAE J1850 PWM",            //Pin 1 & 10, 41.6 kbit/s. Supported by Panda?
-  "SAE J1850 VPW",            //Pin 1, GM vehicles. GMLAN? But 10.4 kbit/s
+  "SAE J1850 PWM",            //Pin 2 & 10, 41.6 kbit/s. Supported by Panda?
+  "SAE J1850 VPW",            //Pin 2, 10.4 kbit/s
   "ISO 9141-2",               //KLINE (Lline optional)
   "ISO 14230-4 (KWP 5BAUD)",  //KLINE (Lline optional)
   "ISO 14230-4 (KWP FAST)",   //KLINE (Lline optional)
@@ -95,8 +95,9 @@ int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, int recvD
 
 static uint8_t sendData[0x14] = {0};
 static uint32_t recvData[0x40] = {0};
+static uint32_t recvDataDummy[0x40] = {0}; // Used for CAN write operations (no received data)
 static int ICACHE_FLASH_ATTR panda_usbemu_ctrl_write(uint8_t request_type, uint8_t request,
-                                                      uint16_t value, uint16_t index, uint16_t length) {
+                                                     uint16_t value, uint16_t index, uint16_t length) {
   //self.sock.send(struct.pack("HHBBHHH", 0, 0, request_type, request, value, index, length));
   *(uint16_t*)(sendData) = 0;
   *(uint16_t*)(sendData+2) = 0;
@@ -108,6 +109,8 @@ static int ICACHE_FLASH_ATTR panda_usbemu_ctrl_write(uint8_t request_type, uint8
 
   int returned_count = spi_comm(sendData, 0x10, recvData, 0x40);
   os_printf("Got %d bytes from Panda\n", returned_count);
+  if(returned_count > 0x40)
+    return 0;
   return returned_count;
 }
 
@@ -158,14 +161,21 @@ static int ICACHE_FLASH_ATTR panda_usbemu_can_write(bool ext, uint32_t addr,
   memcpy(sendData+12, candata, canlen);
   for(int i = 12+canlen; i < 20; i++) sendData[i] = 0; //Zero the rest
 
-  int returned_count = spi_comm(sendData, 0x14, recvData, 0x40);
+  /* spi_comm will erase data in the recv buffer even if you are only
+   * interested in sending data that gets no response (like writing
+   * can data). This behavior becomes problematic when trying to send
+   * a can message while processsing received can messages. A dummy
+   * recv buffer is used here so received data is not overwritten. */
+  int returned_count = spi_comm(sendData, 0x14, recvDataDummy, 0x40);
   if(returned_count)
     os_printf("ELM Can send expected 0 bytes back from panda. Got %d bytes instead\n", returned_count);
+  if(returned_count > 0x40) return 0;
   return returned_count;
 }
 
 static int ICACHE_FLASH_ATTR panda_usbemu_can_read(panda_can_msg_t **can_msgs) {
   int returned_count = spi_comm((uint8_t *)((const uint16 []){1,0}), 4, recvData, 0x40);
+  if(returned_count > 0x40) return 0;
   *can_msgs = (panda_can_msg_t*)(recvData+1);
   return returned_count/sizeof(panda_can_msg_t);
 }
@@ -306,6 +316,8 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
             return;
 
           } else if((recv->data[0] & 0xF0) == 0x10) {
+            panda_usbemu_can_write(0, 0x7E0 | (panda_get_can_addr(recv)&0x7), "\x30\x00\x00", 3);
+
             did_multimessage = 1;
             os_printf("Found matching multi message, index: %d, len %d\n", i,
                       ((recv->data[0]&0xF)<<8) | recv->data[1]);
@@ -321,10 +333,6 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
               for(int j = 0; j < 8; j++) elm_append_rsp_hex_byte(recv->data[j]);
             }
 
-            //TODO: This erases the rest of the messages in the recv buffer.
-            //Messages could be lost (example: multiple car parts sending
-            //multi line messages at the same time in response to an OBD cmd).
-            panda_usbemu_can_write(0, 0x7E0 | (panda_get_can_addr(recv)&0x7), "\x30\x00\x00", 3);
             elm_append_rsp_const("\r");
             elm_tcp_tx_flush();
 

@@ -72,7 +72,10 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   // receive the length
   spiData.data = recvData;
   spiData.dataLen = 4;
-  SPIMasterRecvData(SpiNum_HSPI, &spiData);
+  if(SPIMasterRecvData(SpiNum_HSPI, &spiData) == -1) {
+    // TODO: Handle gracefully. Maybe fail if len read fails?
+    os_printf("SPI Failed to recv length\n");
+  }
   int length = recvData[0];
 
   if (length > 0x40) {
@@ -82,7 +85,10 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   // got response, 0x40 works, 0x44 does not
   spiData.data = recvData+1;
   spiData.dataLen = recvDataLen;
-  SPIMasterRecvData(SpiNum_HSPI, &spiData);
+  if(SPIMasterRecvData(SpiNum_HSPI, &spiData) == -1) {
+    // TODO: Handle gracefully. Maybe retry if payload failed.
+    os_printf("SPI Failed to recv payload\n");
+  }
 
   // clear CS
   gpio_output_set((1 << 5), 0, 0, 0);
