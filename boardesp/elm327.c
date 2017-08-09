@@ -83,6 +83,7 @@ static char* elm_protocols[] = {
 
 // All ELM operations are global, so send data out to all connections
 void ICACHE_FLASH_ATTR elm_tcp_tx_all_conns(char *buff, uint16_t len) {
+  if(!len) return; // Was causing small error messages
   for(elm_tcp_conn_t *iter = connection_list; iter != NULL; iter = iter->next){
     int8_t err = espconn_send(iter->conn, rsp_buff, rsp_buff_len);
     if(err) os_printf("  Wifi TX failed with error code %d\n", err);
@@ -238,6 +239,14 @@ static void ICACHE_FLASH_ATTR elm_append_rsp(char *data, uint16_t len) {
   }
 }
 
+#define elm_append_rsp_const(str) elm_append_rsp(str, sizeof(str)-1)
+
+static void ICACHE_FLASH_ATTR elm_append_rsp_hex_byte(uint8_t num) {
+  elm_append_rsp(&hex_lookup[num >> 4], 1);
+  elm_append_rsp(&hex_lookup[num & 0xF], 1);
+  if(elm_mode_print_spaces) elm_append_rsp(" ", 1);
+}
+
 static void ICACHE_FLASH_ATTR elm_append_in_msg(char *data, uint16_t len) {
   if(in_msg_len + len > sizeof(in_msg))
     len = sizeof(in_msg) - in_msg_len;
@@ -247,6 +256,8 @@ static void ICACHE_FLASH_ATTR elm_append_in_msg(char *data, uint16_t len) {
 
 int loopcount = 0;
 static volatile os_timer_t elm_timeout;
+
+bool did_multimessage = 0;
 
 void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
   loopcount--;
@@ -259,62 +270,123 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
       for(int i = 0; i < num_can_msgs; i++){
 
         panda_can_msg_t *recv = &can_msgs[i];
-        //os_printf("    RECV: Bus: %d; Addr: %08x; ext: %d; tx: %d; Len: %d; ",
-        //          recv->bus, panda_get_can_addr(recv), recv->ext, recv->tx, recv->len);
-        //for(int j = 0; j < recv->len; j++) os_printf("%02x ", recv->data[j]);
-        //os_printf("Ts: %d\n", recv->ts);
+        os_printf("    RECV: Bus: %d; Addr: %08x; ext: %d; tx: %d; Len: %d; ",
+                  recv->bus, panda_get_can_addr(recv), recv->ext, recv->tx, recv->len);
+        for(int j = 0; j < recv->len; j++) os_printf("%02x ", recv->data[j]);
+        os_printf("Ts: %d\n", recv->ts);
 
-        if((panda_get_can_addr(recv) & 0x7F8) == 0x7E8 && recv->len == 8
-           && recv->data[0] <= 7) {
-          os_printf("Found matching message, index: %d\n", i);
-          loopcount = 0;
+        //TODO make elm only print messages that hade the same PID
+        if ((panda_get_can_addr(recv) & 0x7F8) == 0x7E8 && recv->len == 8) {
+          if(recv->data[0] <= 7) {
+            os_printf("Found matching message, index: %d\n", i);
+            loopcount = 0;
 
-          if(elm_mode_additional_headers){
-            //Show address
-            uint32_t addr = panda_get_can_addr(recv);
-            if(recv->ext){
-              elm_append_rsp(&hex_lookup[addr>>28], 1);
-              elm_append_rsp(&hex_lookup[(addr>>24)&0xF], 1);
-              elm_append_rsp(&hex_lookup[(addr>>20)&0xF], 1);
-              elm_append_rsp(&hex_lookup[(addr>>16)&0xF], 1);
-              elm_append_rsp(&hex_lookup[(addr>12)&0xF], 1);
-              elm_append_rsp(&hex_lookup[(addr>>8)&0xF], 1);
-              elm_append_rsp(&hex_lookup[(addr>>4)&0xF], 1);
-              elm_append_rsp(&hex_lookup[addr&0xF], 1);
-            } else {
-              elm_append_rsp(&hex_lookup[addr >> 8], 1);
-              elm_append_rsp(&hex_lookup[(addr >> 4) & 0xF], 1);
-              elm_append_rsp(&hex_lookup[addr & 0xF], 1);
+            if(elm_mode_additional_headers){
+              //Show address
+              uint32_t addr = panda_get_can_addr(recv);
+              if(recv->ext){
+                elm_append_rsp_hex_byte(addr>>24);
+                elm_append_rsp_hex_byte(addr>>16);
+                elm_append_rsp_hex_byte(addr>>8);
+                elm_append_rsp_hex_byte(addr);
+              } else {
+                elm_append_rsp(&hex_lookup[addr>>8], 1);
+                elm_append_rsp_hex_byte(addr);
+              }
+
+              //Show size byte
+              elm_append_rsp_hex_byte(recv->data[0]);
             }
-            if(elm_mode_print_spaces)
-              elm_append_rsp(" ", 1);
 
-            //Show size byte
-            elm_append_rsp(&hex_lookup[recv->data[0] >> 4], 1);
-            elm_append_rsp(&hex_lookup[recv->data[0] & 0xF], 1);
-            if(elm_mode_print_spaces)
-              elm_append_rsp(" ", 1);
+            for(int j = 0; j < recv->data[0]; j++)
+              elm_append_rsp_hex_byte(recv->data[j+1]);
+
+            elm_append_rsp_const("\r\r>");
+            elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
+            rsp_buff_len = 0;
+
+            return;
+
+          } else if((recv->data[0] & 0xF0) == 0x10) {
+            did_multimessage = 1;
+            os_printf("Found matching multi message, index: %d, len %d\n", i,
+                      ((recv->data[0]&0xF)<<8) | recv->data[1]);
+
+            if(!elm_mode_additional_headers) {
+              elm_append_rsp(&hex_lookup[recv->data[0]&0xF], 1);
+              elm_append_rsp_hex_byte(recv->data[1]);
+              elm_append_rsp_const("\r");
+
+              elm_append_rsp_const("0:");
+              if(elm_mode_print_spaces) elm_append_rsp_const(" ");
+              for(int j = 0; j < 6; j++)
+                elm_append_rsp_hex_byte(recv->data[j+2]);
+              elm_append_rsp_const("\r");
+
+            } else {
+              //Show address
+              uint32_t addr = panda_get_can_addr(recv);
+              if(recv->ext){
+                elm_append_rsp_hex_byte(addr>>24);
+                elm_append_rsp_hex_byte(addr>>16);
+                elm_append_rsp_hex_byte(addr>>8);
+                elm_append_rsp_hex_byte(addr);
+              } else {
+                elm_append_rsp(&hex_lookup[addr>>8], 1);
+                elm_append_rsp_hex_byte(addr);
+              }
+              for(int j = 0; j < 8; j++)
+                elm_append_rsp_hex_byte(recv->data[j]);
+              elm_append_rsp_const("\r");
+            }
+
+            panda_usbemu_can_write(0, 0x7E0 | (panda_get_can_addr(recv)&0x7), "\x30\x00\x00", 3);
+
+            elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
+            rsp_buff_len = 0;
+
+          } else if (did_multimessage && (recv->data[0] & 0xF0) == 0x20) {
+            os_printf("Found extra multi message data, index: %d\n", i);
+            if(!elm_mode_additional_headers) {
+              elm_append_rsp(&hex_lookup[recv->data[0] & 0xF], 1);
+              elm_append_rsp_const(":");
+              if(elm_mode_print_spaces) elm_append_rsp_const(" ");
+              for(int j = 1; j < 8; j++)
+                elm_append_rsp_hex_byte(recv->data[j]);
+              elm_append_rsp_const("\r");
+
+            } else {
+              //Show address
+              uint32_t addr = panda_get_can_addr(recv);
+              if(recv->ext){
+                elm_append_rsp_hex_byte(addr>>24);
+                elm_append_rsp_hex_byte(addr>>16);
+                elm_append_rsp_hex_byte(addr>>8);
+                elm_append_rsp_hex_byte(addr);
+              } else {
+                elm_append_rsp(&hex_lookup[addr>>8], 1);
+                elm_append_rsp_hex_byte(addr);
+              }
+              for(int j = 0; j < 8; j++)
+                elm_append_rsp_hex_byte(recv->data[j]);
+              elm_append_rsp_const("\r");
+            }
           }
-
-          for(int j = 0; j < recv->data[0]; j++){
-            elm_append_rsp(&hex_lookup[recv->data[j+1] >> 4], 1);
-            elm_append_rsp(&hex_lookup[recv->data[j+1] & 0xF], 1);
-            if(elm_mode_print_spaces)
-              elm_append_rsp(" ", 1);
-          }
-          elm_append_rsp("\r\r>", 3);
-          elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
-          rsp_buff_len = 0;
-
-          return;
         }
       }
     }
     //elm_tcp_tx_all_conns(".", 1)
     os_timer_arm(&elm_timeout, elm_mode_timeout, 0);
   } else {
-    //elm_append_rsp("UNABLE TO CONNECT\r\r>", 21);
-    elm_append_rsp("NO DATA\r\r>", 10);
+    if(did_multimessage) {
+      os_printf("End of multi message\n");
+      did_multimessage = 0;
+      elm_append_rsp_const("\r>");
+    } else {
+      os_printf("No data collected\n");
+      //elm_append_rsp_const("UNABLE TO CONNECT\r\r>");
+      elm_append_rsp_const("NO DATA\r\r>");
+    }
     elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
     rsp_buff_len = 0;
   }
@@ -534,7 +606,7 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
   //os_printf("Len to obd: %d\n", len);
   if((msg.len > 7 && !elm_mode_allow_long) || msg.len > 8 ||
      !elm_check_valid_hex_chars(cmd, len-1)) {
-    elm_append_rsp("?\r\r>", 4);
+    elm_append_rsp_const("?\r\r>");
     return;
   }
 
@@ -552,7 +624,7 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
 
   panda_usbemu_can_write(0, 0x7DF, (uint8_t*)&msg, msg.len+1);
 
-  //elm_append_rsp("SEARCHING...\r", 13);
+  //elm_append("SEARCHING...\r");
 
   os_printf("Starting up timer\n");
   loopcount = 4;
@@ -562,7 +634,7 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
 }
 
 static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
-  os_printf("Got ELM Data In: '%s'\n", data);
+  os_printf("\nGot ELM Data In: '%.*s'\n", len-1, data);
 
   rsp_buff_len = 0;
   len = elm_msg_find_cr_or_eos(data, len);

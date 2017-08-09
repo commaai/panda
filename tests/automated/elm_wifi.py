@@ -143,3 +143,43 @@ def test_elm_basic_send_can():
         sim.stop()
         sim.join()
         s.close()
+
+def test_elm_send_can_multimsg():
+    s = elm_connect()
+    serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
+    sim = elm_car_simulator.ELMCanCarSimulator(serial)
+    sim.start()
+
+    try:
+        sync_reset(s)
+        send_compare(s, b'ATSP6\r', b"ATSP6\rOK\r\r>") # Set Proto
+        send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>') # Echo OFF
+
+        send_compare(s, b'0902\r', # headers OFF, Spaces ON
+                     b"014 \r"
+                     "0: 49 02 01 31 44 34 \r"
+                     "1: 47 50 30 30 52 35 35 \r"
+                     "2: 42 31 32 33 34 35 36 \r\r>")
+
+        send_compare(s, b'ATS0\r', b'OK\r\r>') # Spaces OFF
+        send_compare(s, b'0902\r', # Headers OFF, Spaces OFF
+                     b"014\r"
+                     "0:490201314434\r"
+                     "1:47503030523535\r"
+                     "2:42313233343536\r\r>")
+
+        send_compare(s, b'ATH1\r', b'OK\r\r>') # Headers ON
+        send_compare(s, b'0902\r', # Headers ON, Spaces OFF
+                     b"7E81014490201314434\r"
+                     "7E82147503030523535\r"
+                     "7E82242313233343536\r\r>")
+
+        send_compare(s, b'ATS1\r', b'OK\r\r>') # Spaces ON
+        send_compare(s, b'0902\r', # Headers ON, Spaces ON
+                     b"7E8 10 14 49 02 01 31 44 34 \r"
+                     "7E8 21 47 50 30 30 52 35 35 \r"
+                     "7E8 22 42 31 32 33 34 35 36 \r\r>")
+    finally:
+        sim.stop()
+        sim.join()
+        s.close()

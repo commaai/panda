@@ -22,6 +22,13 @@ class ELMCanCarSimulator(threading.Thread):
     def stop(self):
         self.__stop = True
 
+    def _can_send(self, addr, msg):
+        print("    Reply (%x)" % addr, binascii.hexlify(msg))
+        return self._p.can_send(addr, msg + b'\x00'*(8-len(msg)), 0)
+
+    def _addr_matches(self, addr):
+        return addr in (0x7DF, 0x7E0, 0x18db33f1)
+
     def run(self):
         self._p.set_can_speed_kbps(0, 500)
         self._p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
@@ -33,24 +40,22 @@ class ELMCanCarSimulator(threading.Thread):
 
     def _process_msg(self, mode, pid, address, ts, data, src):
         #Check functional address of 11 bit and 29 bit CAN
-        if address == 0x18db33f1: return
+        #if address == 0x18db33f1: return
 
-        dat_trim = data[1:1+data[0]]
-        print("MSG", binascii.hexlify(dat_trim), "Addr:", hex(address),
-              "Mode:", hex(dat_trim[0])[2:].zfill(2),
-              "PID:", hex(dat_trim[1])[2:].zfill(2), "Len:", data[0],
-              binascii.hexlify(dat_trim[2:]) if dat_trim[2:] else '')
+        print("MSG", binascii.hexlify(data[1:1+data[0]]), "Addr:", hex(address),
+              "Mode:", hex(mode)[2:].zfill(2), "PID:", hex(pid)[2:].zfill(2),
+              "Len:", data[0], binascii.hexlify(data[3:1+data[0]]) if data[3:1+data[0]] else '')
 
-        if address == 0x7DF or address == 0x7E0:# or address == 0x18db33f1:
+        if self._addr_matches(address):
             outmsg = None
             if data[:3] == b'\x30\x00\x00' and len(self._multipart_data):
                 print("Request for more data");
+                outaddr = 0x7E8 if address == 0x7DF or address == 0x7E0 else 0x18DAF110
                 msgnum = 1
                 while(self._multipart_data):
                     datalen = min(7, len(self._multipart_data))
                     msgpiece = struct.pack("B", 0x20 | msgnum) + self._multipart_data[:datalen]
-                    print("    Reply", binascii.hexlify(msgpiece))
-                    p.can_send(outaddr, msgpiece + b'\x00'*(8-len(msgpiece)), 0)
+                    self._can_send(outaddr, msgpiece)
                     self._multipart_data = self._multipart_data[7:]
                     msgnum = (msgnum+1)%0x10
                     time.sleep(0.01)
@@ -83,21 +88,18 @@ class ELMCanCarSimulator(threading.Thread):
                     outmsg = b"\xAA"*(0xFFF-3)
 
             if outmsg:
-                outaddr = 0x7E8 if address == 0x7DF or address == 0x7E0 else 0
+                outaddr = 0x7E8 if address == 0x7DF or address == 0x7E0 else 0x18DAF110
 
                 if len(outmsg) <= 5:
-                    outmsg = struct.pack("BBB", len(outmsg)+2, 0x40|data[1], pid) + outmsg
-                    outmsg += b'\x00'*(8-len(outmsg))
-                    print("    Reply", binascii.hexlify(outmsg))
-                    self._p.can_send(outaddr, outmsg, 0)
+                    self._can_send(outaddr,
+                                   struct.pack("BBB", len(outmsg)+2, 0x40|data[1], pid) + outmsg)
                 else:
                     first_msg_len = min(3, len(outmsg)%7)
                     payload_len = len(outmsg)+3
                     msgpiece = struct.pack("BBBBB", 0x10 | ((payload_len>>8)&0xF),
                                            payload_len&0xFF,
                                            0x40|data[1], pid, 1) + outmsg[:first_msg_len]
-                    print("    Reply", binascii.hexlify(msgpiece))
-                    self._p.can_send(outaddr, msgpiece + b'\x00'*(8-len(msgpiece)), 0)
+                    self._can_send(outaddr, msgpiece)
                     self._multipart_data = outmsg[first_msg_len:]
 
 
