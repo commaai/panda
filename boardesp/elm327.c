@@ -455,7 +455,10 @@ static enum at_cmd_ids_t ICACHE_FLASH_ATTR elm_parse_at_cmd(char *cmd, uint16_t 
 
 static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
   uint8_t tmp;
-  os_printf("AT COMMAND: %.*s\r\n", len, cmd);
+
+  os_printf("AT COMMAND ");
+  for(int i = 0; i < len; i++) os_printf("%c", cmd[i]);
+  os_printf("\r\n");
 
   switch(elm_parse_at_cmd(cmd, len)){
   case AT_AMP1: //RETURN DEVICE DESCRIPTION
@@ -602,7 +605,7 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
 }
 
 static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
-  os_printf("\nGot ELM Data In: '%.*s'\n", len-1, data);
+  os_printf("\nGot ELM Data In: '%s'\n", data);
 
   rsp_buff_len = 0;
   len = elm_msg_find_cr_or_eos(data, len);
