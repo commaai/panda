@@ -82,12 +82,13 @@ static char* elm_protocols[] = {
 #define ELM_PROTOCOL_COUNT (sizeof(elm_protocols)/sizeof(char*))
 
 // All ELM operations are global, so send data out to all connections
-void ICACHE_FLASH_ATTR elm_tcp_tx_all_conns(char *buff, uint16_t len) {
-  if(!len) return; // Was causing small error messages
+void ICACHE_FLASH_ATTR elm_tcp_tx_flush() {
+  if(!rsp_buff_len) return; // Was causing small error messages
   for(elm_tcp_conn_t *iter = connection_list; iter != NULL; iter = iter->next){
     int8_t err = espconn_send(iter->conn, rsp_buff, rsp_buff_len);
     if(err) os_printf("  Wifi TX failed with error code %d\n", err);
   }
+  rsp_buff_len = 0;
 }
 
 int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, int recvDataLen);
@@ -114,15 +115,15 @@ static int ICACHE_FLASH_ATTR panda_usbemu_ctrl_write(uint8_t request_type, uint8
 #define panda_set_safety_mode(mode) panda_usbemu_ctrl_write(0x40, 0xdc, mode, 0, 0)
 
 typedef struct __attribute__((packed)) {
-  bool tx : 1;
-  bool : 1;
-  bool ext : 1;
+  bool tx       : 1;
+  bool          : 1;
+  bool ext      : 1;
   uint32_t addr : 29;
 
-  uint8_t len : 4;
-  uint8_t bus : 8;
-  uint8_t : 4; //unused
-  uint16_t ts : 16;
+  uint8_t len   : 4;
+  uint8_t bus   : 8;
+  uint8_t       : 4; //unused
+  uint16_t ts   : 16;
   uint8_t data[8];
 } panda_can_msg_t;
 
@@ -218,9 +219,7 @@ static int ICACHE_FLASH_ATTR elm_msg_find_cr_or_eos(char *data, uint16_t len){
 }
 
 static int ICACHE_FLASH_ATTR elm_msg_is_at_cmd(char *data, uint16_t len){
-  if(len < 4) return 0;
-  if(data[0] == 'A' && data[1] == 'T') return 1;
-  return 0;
+  return len >= 4 && data[0] == 'A' && data[1] == 'T';
 }
 
 static void ICACHE_FLASH_ATTR elm_append_rsp(char *data, uint16_t len) {
@@ -230,8 +229,7 @@ static void ICACHE_FLASH_ATTR elm_append_rsp(char *data, uint16_t len) {
     memcpy(rsp_buff + rsp_buff_len, data, len);
     rsp_buff_len += len;
   } else {
-    int i;
-    for(i=0; i < len && rsp_buff_len < sizeof(rsp_buff); i++){
+    for(int i=0; i < len && rsp_buff_len < sizeof(rsp_buff); i++){
       rsp_buff[rsp_buff_len++] = data[i];
       if(data[i] == '\r' && rsp_buff_len < sizeof(rsp_buff))
         rsp_buff[rsp_buff_len++] = '\n';
@@ -244,7 +242,7 @@ static void ICACHE_FLASH_ATTR elm_append_rsp(char *data, uint16_t len) {
 static void ICACHE_FLASH_ATTR elm_append_rsp_hex_byte(uint8_t num) {
   elm_append_rsp(&hex_lookup[num >> 4], 1);
   elm_append_rsp(&hex_lookup[num & 0xF], 1);
-  if(elm_mode_print_spaces) elm_append_rsp(" ", 1);
+  if(elm_mode_print_spaces) elm_append_rsp_const(" ");
 }
 
 static void ICACHE_FLASH_ATTR elm_append_in_msg(char *data, uint16_t len) {
@@ -252,6 +250,21 @@ static void ICACHE_FLASH_ATTR elm_append_in_msg(char *data, uint16_t len) {
     len = sizeof(in_msg) - in_msg_len;
   memcpy(in_msg + in_msg_len, data, len);
   in_msg_len += len;
+}
+
+void ICACHE_FLASH_ATTR elm_append_rsp_can_msg_addr(panda_can_msg_t *recv) {
+  //Show address
+  uint32_t addr = panda_get_can_addr(recv);
+  os_printf("Printing can address: %08x\n", addr);
+  if(recv->ext){
+    elm_append_rsp_hex_byte(addr>>24);
+    elm_append_rsp_hex_byte(addr>>16);
+    elm_append_rsp_hex_byte(addr>>8);
+    elm_append_rsp_hex_byte(addr);
+  } else {
+    elm_append_rsp(&hex_lookup[addr>>8], 1);
+    elm_append_rsp_hex_byte(addr);
+  }
 }
 
 int loopcount = 0;
@@ -275,36 +288,21 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
         for(int j = 0; j < recv->len; j++) os_printf("%02x ", recv->data[j]);
         os_printf("Ts: %d\n", recv->ts);
 
-        //TODO make elm only print messages that hade the same PID
+        //TODO make elm only print messages that have the same PID
         if ((panda_get_can_addr(recv) & 0x7F8) == 0x7E8 && recv->len == 8) {
           if(recv->data[0] <= 7) {
             os_printf("Found matching message, index: %d\n", i);
             loopcount = 0;
 
             if(elm_mode_additional_headers){
-              //Show address
-              uint32_t addr = panda_get_can_addr(recv);
-              if(recv->ext){
-                elm_append_rsp_hex_byte(addr>>24);
-                elm_append_rsp_hex_byte(addr>>16);
-                elm_append_rsp_hex_byte(addr>>8);
-                elm_append_rsp_hex_byte(addr);
-              } else {
-                elm_append_rsp(&hex_lookup[addr>>8], 1);
-                elm_append_rsp_hex_byte(addr);
-              }
-
-              //Show size byte
-              elm_append_rsp_hex_byte(recv->data[0]);
+              elm_append_rsp_can_msg_addr(recv);
+              for(int j = 0; j < recv->data[0]+1; j++) elm_append_rsp_hex_byte(recv->data[j]);
+            } else {
+              for(int j = 1; j < recv->data[0]+1; j++) elm_append_rsp_hex_byte(recv->data[j]);
             }
 
-            for(int j = 0; j < recv->data[0]; j++)
-              elm_append_rsp_hex_byte(recv->data[j+1]);
-
             elm_append_rsp_const("\r\r>");
-            elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
-            rsp_buff_len = 0;
-
+            elm_tcp_tx_flush();
             return;
 
           } else if((recv->data[0] & 0xF0) == 0x10) {
@@ -315,80 +313,50 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
             if(!elm_mode_additional_headers) {
               elm_append_rsp(&hex_lookup[recv->data[0]&0xF], 1);
               elm_append_rsp_hex_byte(recv->data[1]);
-              elm_append_rsp_const("\r");
-
-              elm_append_rsp_const("0:");
+              elm_append_rsp_const("\r0:");
               if(elm_mode_print_spaces) elm_append_rsp_const(" ");
-              for(int j = 0; j < 6; j++)
-                elm_append_rsp_hex_byte(recv->data[j+2]);
-              elm_append_rsp_const("\r");
-
+              for(int j = 2; j < 8; j++) elm_append_rsp_hex_byte(recv->data[j]);
             } else {
-              //Show address
-              uint32_t addr = panda_get_can_addr(recv);
-              if(recv->ext){
-                elm_append_rsp_hex_byte(addr>>24);
-                elm_append_rsp_hex_byte(addr>>16);
-                elm_append_rsp_hex_byte(addr>>8);
-                elm_append_rsp_hex_byte(addr);
-              } else {
-                elm_append_rsp(&hex_lookup[addr>>8], 1);
-                elm_append_rsp_hex_byte(addr);
-              }
-              for(int j = 0; j < 8; j++)
-                elm_append_rsp_hex_byte(recv->data[j]);
-              elm_append_rsp_const("\r");
+              elm_append_rsp_can_msg_addr(recv);
+              for(int j = 0; j < 8; j++) elm_append_rsp_hex_byte(recv->data[j]);
             }
 
+            //TODO: This erases the rest of the messages in the recv buffer.
+            //Messages could be lost (example: multiple car parts sending
+            //multi line messages at the same time in response to an OBD cmd).
             panda_usbemu_can_write(0, 0x7E0 | (panda_get_can_addr(recv)&0x7), "\x30\x00\x00", 3);
-
-            elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
-            rsp_buff_len = 0;
+            elm_append_rsp_const("\r");
+            elm_tcp_tx_flush();
 
           } else if (did_multimessage && (recv->data[0] & 0xF0) == 0x20) {
             os_printf("Found extra multi message data, index: %d\n", i);
+
             if(!elm_mode_additional_headers) {
               elm_append_rsp(&hex_lookup[recv->data[0] & 0xF], 1);
               elm_append_rsp_const(":");
               if(elm_mode_print_spaces) elm_append_rsp_const(" ");
-              for(int j = 1; j < 8; j++)
-                elm_append_rsp_hex_byte(recv->data[j]);
-              elm_append_rsp_const("\r");
-
+              for(int j = 1; j < 8; j++) elm_append_rsp_hex_byte(recv->data[j]);
             } else {
-              //Show address
-              uint32_t addr = panda_get_can_addr(recv);
-              if(recv->ext){
-                elm_append_rsp_hex_byte(addr>>24);
-                elm_append_rsp_hex_byte(addr>>16);
-                elm_append_rsp_hex_byte(addr>>8);
-                elm_append_rsp_hex_byte(addr);
-              } else {
-                elm_append_rsp(&hex_lookup[addr>>8], 1);
-                elm_append_rsp_hex_byte(addr);
-              }
-              for(int j = 0; j < 8; j++)
-                elm_append_rsp_hex_byte(recv->data[j]);
-              elm_append_rsp_const("\r");
+              elm_append_rsp_can_msg_addr(recv);
+              for(int j = 0; j < 8; j++) elm_append_rsp_hex_byte(recv->data[j]);
             }
+            elm_append_rsp_const("\r");
           }
         }
       }
     }
-    //elm_tcp_tx_all_conns(".", 1)
     os_timer_arm(&elm_timeout, elm_mode_timeout, 0);
   } else {
     if(did_multimessage) {
       os_printf("End of multi message\n");
       did_multimessage = 0;
-      elm_append_rsp_const("\r>");
     } else {
       os_printf("No data collected\n");
       //elm_append_rsp_const("UNABLE TO CONNECT\r\r>");
-      elm_append_rsp_const("NO DATA\r\r>");
+      elm_append_rsp_const("NO DATA\r");
     }
-    elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
-    rsp_buff_len = 0;
+    elm_append_rsp_const("\r>");
+    elm_tcp_tx_flush();
   }
 }
 
@@ -479,15 +447,11 @@ static enum at_cmd_ids_t ICACHE_FLASH_ATTR elm_parse_at_cmd(char *cmd, uint16_t 
 
 static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
   uint8_t tmp;
-  int i;
-  os_printf("DOING STUFF ");
-  for(i = 0; i < len; i++)
-    os_printf("%c", cmd[i]);
-  os_printf("\r\n");
+  os_printf("AT COMMAND: %.*s\r\n", len, cmd);
 
   switch(elm_parse_at_cmd(cmd, len)){
   case AT_AMP1: //RETURN DEVICE DESCRIPTION
-    elm_append_rsp(DEVICE_DESC, sizeof(DEVICE_DESC));
+    elm_append_rsp_const(DEVICE_DESC);
     return;
   case AT_AL: //DISABLE LONG MESSAGE SUPPORT (>7 BYTES)
     elm_mode_allow_long = true;
@@ -503,17 +467,17 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     break;
   case AT_DP: //DESCRIBE THE PROTOCOL BY NAME
     if(elm_mode_auto_protocol && elm_selected_protocol != 0)
-      elm_append_rsp("AUTO, ", 6);
+      elm_append_rsp_const("AUTO, ");
     elm_append_rsp(elm_protocols[elm_selected_protocol],
                    strlen(elm_protocols[elm_selected_protocol]));
-    elm_append_rsp("\r\r", 2);
+    elm_append_rsp_const("\r\r");
     return;
   case AT_DPN: //DESCRIBE THE PROTOCOL BY NUMBER
     //TODO: Required. Report currently selected protocol
     if(elm_mode_auto_protocol)
-      elm_append_rsp("A", 1);
+      elm_append_rsp_const("A");
     elm_append_rsp(&hex_lookup[elm_selected_protocol], 1);
-    elm_append_rsp("\r\r", 2);
+    elm_append_rsp_const("\r\r");
     return; // Don't display 'OK'
   case AT_E0: //ECHO OFF
     elm_mode_echo = false;
@@ -551,7 +515,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
   case AT_SP: //SET PROTOCOL
     tmp = elm_decode_hex_char(cmd[2]);
     if(tmp == -1 || tmp >= ELM_PROTOCOL_COUNT) {
-      elm_append_rsp("?\r\r", 3);
+      elm_append_rsp_const("?\r\r");
       return;
     }
     elm_selected_protocol = tmp;
@@ -560,7 +524,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
   case AT_SPA: //SET PROTOCOL WITH AUTO FALLBACK
     tmp = elm_decode_hex_char(cmd[3]);
     if(tmp == -1 || tmp >= ELM_PROTOCOL_COUNT) {
-      elm_append_rsp("?\r\r", 3);
+      elm_append_rsp_const("?\r\r");
       return;
     }
     elm_selected_protocol = tmp;
@@ -568,7 +532,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     break;
   case AT_ST:  //SET TIMEOUT
     if(!elm_check_valid_hex_chars(&cmd[2], 2)) {
-      elm_append_rsp("?\r\r", 3);
+      elm_append_rsp_const("?\r\r");
       return;
     }
 
@@ -585,41 +549,37 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     elm_mode_print_spaces = true;
     elm_mode_adaptive_timing = 1;
     elm_mode_allow_long = false;
-    //elm_mode_timeout = ELM_MODE_TIMEOUT_DEFAULT;
+    elm_mode_timeout = ELM_MODE_TIMEOUT_DEFAULT;
 
-    elm_append_rsp("\r\r", 2);
+    elm_append_rsp_const("\r\r");
     elm_append_rsp(IDENT_MSG, sizeof(IDENT_MSG)-1);
     panda_set_can0_kbaud(500);
     panda_set_safety_mode(0x1337);
     return;
   default:
-    elm_append_rsp("?\r\r", 3);
+    elm_append_rsp_const("?\r\r");
     return;
   }
 
-  elm_append_rsp("OK\r\r", 4);
+  elm_append_rsp_const("OK\r\r");
 }
 
 static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
   elm_obd_msg msg = {};
   msg.len = (len-1)/2;
-  //os_printf("Len to obd: %d\n", len);
-  if((msg.len > 7 && !elm_mode_allow_long) || msg.len > 8 ||
-     !elm_check_valid_hex_chars(cmd, len-1)) {
+  if((msg.len > 7 && !elm_mode_allow_long) || msg.len > 8) {
     elm_append_rsp_const("?\r\r>");
     return;
   }
 
   msg.len = min(msg.len, 7);
 
-  for(int i = 0; i < msg.len; i++){
+  for(int i = 0; i < msg.len; i++)
     msg.dat[i] = elm_decode_hex_byte(&cmd[i*2]);
-  }
 
   os_printf("ELM CAN tx dat: %d.\r\n  ", msg.len);
-  for(int i = 0; i < 7; i++){
+  for(int i = 0; i < 7; i++)
     os_printf("%02x ", msg.dat[i]);
-  }
   os_printf("\n");
 
   panda_usbemu_can_write(0, 0x7DF, (uint8_t*)&msg, msg.len+1);
@@ -643,11 +603,10 @@ static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
     os_timer_disarm(&elm_timeout);
     loopcount = 0;
     os_printf("Tearing down timer. msg len: %d\n", len);
-    elm_append_rsp("STOPPED\r\r>", 10);
+    elm_append_rsp_const("STOPPED\r\r>");
     if(len == 1 && data[0] == '\r') {
       os_printf("Empty msg source of interrupt.\n");
-      elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
-      rsp_buff_len = 0;
+      elm_tcp_tx_flush();
       return;
     }
   }
@@ -668,14 +627,15 @@ static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
 
     if(elm_msg_is_at_cmd(stripped_msg, stripped_msg_len)) {
       elm_process_at_cmd(stripped_msg+2, stripped_msg_len-2);
-      elm_append_rsp(">", 1);
-    } else {
+      elm_append_rsp_const(">");
+    } else if(elm_check_valid_hex_chars(stripped_msg, stripped_msg_len - 1)) {
       elm_process_obd_cmd(stripped_msg, stripped_msg_len);
+    } else {
+      elm_append_rsp_const("?\r\r>");
     }
   }
 
-  elm_tcp_tx_all_conns(rsp_buff, rsp_buff_len);
-  rsp_buff_len = 0;
+  elm_tcp_tx_flush();
 
   //Just clear the buffer if full with no termination
   if(in_msg_len == sizeof(in_msg) && in_msg[in_msg_len-1] != '\r')
