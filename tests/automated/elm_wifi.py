@@ -156,6 +156,49 @@ def test_elm_send_can_multimsg():
 
     try:
         sync_reset(s)
+        send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>') # Echo OFF
+        send_compare(s, b'ATS1\r', b'OK\r\r>') # Spaces OFF
+        send_compare(s, b'ATH1\r', b'OK\r\r>') # Headers ON
+
+        send_compare(s, b'ATSP6\r', b"OK\r\r>") # Set Proto ISO 15765-4 (CAN 11/500)
+        sim.add_extra_noise(b'\x03\x41\x0D\xFA', addr=0x7E9)# Inject message into the stream
+        send_compare(s, b'010D\r',
+                     b"7E8 03 41 0D 53 \r"
+                     "7E9 03 41 0D FA \r\r>") # Check it was ignored.
+    finally:
+        sim.stop()
+        sim.join()
+        s.close()
+
+def test_elm_can_check_mode_pid():
+    s = elm_connect()
+    serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
+    sim = elm_car_simulator.ELMCanCarSimulator(serial)
+    sim.start()
+
+    try:
+        sync_reset(s)
+        send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>') # Echo OFF
+        send_compare(s, b'ATS0\r', b'OK\r\r>') # Spaces OFF
+        send_compare(s, b'ATH0\r', b'OK\r\r>') # Headers OFF
+
+        send_compare(s, b'ATSP6\r', b"OK\r\r>") # Set Proto ISO 15765-4 (CAN 11/500)
+        sim.add_extra_noise(b'\x03\x41\x0E\xFA')# Inject message into the stream
+        send_compare(s, b'010D\r', b"410D53\r\r>") # Check it was ignored.
+        send_compare(s, b'0100\r', b"4100FFFFFFFE\r\r>") # Check it was ignored again.
+    finally:
+        sim.stop()
+        sim.join()
+        s.close()
+
+def test_elm_send_can_multiline_msg():
+    s = elm_connect()
+    serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
+    sim = elm_car_simulator.ELMCanCarSimulator(serial)
+    sim.start()
+
+    try:
+        sync_reset(s)
         send_compare(s, b'ATSP6\r', b"ATSP6\rOK\r\r>") # Set Proto
         send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>') # Echo OFF
 
@@ -190,7 +233,7 @@ def test_elm_send_can_multimsg():
 
 # TODO: Expand test to full throughput.
 # Max throughput currently causes dropped wifi packets
-def test_elm_send_can_multimsg_throughput():
+def test_elm_send_can_multiline_msg_throughput():
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
     sim = elm_car_simulator.ELMCanCarSimulator(serial)
@@ -225,25 +268,22 @@ def test_elm_can_baud():
         sync_reset(s)
         send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>') # Echo OFF
         send_compare(s, b'ATS0\r', b'OK\r\r>') # Spaces OFF
-        send_compare(s, b'ATH0\r', b'OK\r\r>') # Headers ON
+        send_compare(s, b'ATH1\r', b'OK\r\r>') # Headers ON
 
         send_compare(s, b'ATSP6\r', b"OK\r\r>") # Set Proto ISO 15765-4 (CAN 11/500)
-        send_compare(s, b'0100\r', b"4100FFFFFFFE\r\r>")
+        send_compare(s, b'0100\r', b"7E8064100FFFFFFFE\r\r>")
 
         send_compare(s, b'ATSP8\r', b"OK\r\r>") # Set Proto ISO 15765-4 (CAN 11/250)
         send_compare(s, b'0100\r', b"CAN ERROR\r\r>")
 
-        #sim.stop()
-        #sim.join()
-        #sim = elm_car_simulator.ELMCanCarSimulator(serial, can_kbaud=250)
-        #sim.start()
+
         sim.change_can_baud(250)
 
         send_compare(s, b'ATSP6\r', b"OK\r\r>") # Set Proto ISO 15765-4 (CAN 11/500)
         send_compare(s, b'0100\r', b"CAN ERROR\r\r>")
 
         send_compare(s, b'ATSP8\r', b"OK\r\r>") # Set Proto ISO 15765-4 (CAN 11/250)
-        send_compare(s, b'0100\r', b"4100FFFFFFFE\r\r>")
+        send_compare(s, b'0100\r', b"7E8064100FFFFFFFE\r\r>")
     finally:
         sim.stop()
         sim.join()

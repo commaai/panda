@@ -298,6 +298,9 @@ static volatile os_timer_t elm_timeout;
 static bool did_multimessage = false;
 static bool got_msg_this_run = false;
 static bool can_tx_worked = false;
+static uint8_t elm_msg_mode;
+static uint8_t elm_msg_pid;
+
 
 void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
   loopcount--;
@@ -319,7 +322,8 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
 
         //TODO make elm only print messages that have the same PID
         if (recv->bus==0 && (panda_get_can_addr(recv) & 0x7F8) == 0x7E8 && recv->len == 8) {
-          if(recv->data[0] <= 7) {
+          if(recv->data[0] <= 7 &&
+             recv->data[1] == (0x40|elm_msg_mode) && recv->data[2] == elm_msg_pid) {
             got_msg_this_run = true;
             loopcount = LOOPCOUNT_FULL;
             os_printf("      CAN msg response, index: %d\n", i);
@@ -336,7 +340,8 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
             elm_tcp_tx_flush();
             //return;
 
-          } else if((recv->data[0] & 0xF0) == 0x10) {
+          } else if((recv->data[0] & 0xF0) == 0x10 &&
+                    recv->data[2] == (0x40|elm_msg_mode) && recv->data[3] == elm_msg_pid) {
             got_msg_this_run = true;
             loopcount = LOOPCOUNT_FULL;
             panda_usbemu_can_write(0, 0x7E0 | (panda_get_can_addr(recv)&0x7), "\x30\x00\x00", 3);
@@ -420,6 +425,11 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
   for(int i = 0; i < msg.len; i++)
     msg.dat[i] = elm_decode_hex_byte(&cmd[i*2]);
 
+  elm_msg_mode = msg.dat[0];
+  elm_msg_pid = msg.dat[1];
+
+  os_printf("Stored Mode: %02x; Pid: %02x\n", elm_msg_mode, elm_msg_pid);
+
   os_printf("ELM CAN tx dat: %d.\r\n  ", msg.len);
   for(int i = 0; i < 7; i++)
     os_printf("%02x ", msg.dat[i]);
@@ -437,7 +447,7 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
 }
 
 void ICACHE_FLASH_ATTR elm_switch_proto(){
-  elm_protocol_t* proto = elm_current_proto();
+  const elm_protocol_t* proto = elm_current_proto();
   if(!proto->supported) return;
   switch(proto->type) {
   case AUTO:
@@ -626,7 +636,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     elm_mode_additional_headers = true;
     break;
   case AT_I: //IDENTIFY SELF
-    elm_append_rsp(IDENT_MSG, sizeof(IDENT_MSG)-1);
+    elm_append_rsp_const(IDENT_MSG);
     return;
   case AT_L0: //LINEFEED OFF
     elm_mode_linefeed = false;
@@ -688,7 +698,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     elm_mode_timeout = ELM_MODE_TIMEOUT_DEFAULT;
 
     elm_append_rsp_const("\r\r");
-    elm_append_rsp(IDENT_MSG, sizeof(IDENT_MSG)-1);
+    elm_append_rsp_const(IDENT_MSG);
     panda_set_safety_mode(0x1337);
     elm_switch_proto();
     return;
@@ -724,7 +734,7 @@ static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
   if(loopcount){
     os_timer_disarm(&elm_timeout);
     loopcount = 0;
-    os_printf("Tearing down timer. msg len: %d\n", len);
+    os_printf("Interrupting operation, stopping timer. msg len: %d\n", len);
     elm_append_rsp_const("STOPPED\r\r>");
     if(len == 1 && data[0] == '\r') {
       os_printf("Empty msg source of interrupt.\n");

@@ -7,6 +7,7 @@ import struct
 import binascii
 import time
 import threading
+from collections import deque
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda
@@ -18,6 +19,7 @@ class ELMCanCarSimulator(threading.Thread):
         self.__stop = False
         self._multipart_data = None
         self._can_kbaud = can_kbaud
+        self._extra_noise_msgs = deque()
 
         self._p.can_recv() # Toss whatever was already there
 
@@ -26,7 +28,11 @@ class ELMCanCarSimulator(threading.Thread):
 
     def _can_send(self, addr, msg):
         print("    Reply (%x)" % addr, binascii.hexlify(msg))
-        return self._p.can_send(addr, msg + b'\x00'*(8-len(msg)), 0)
+        self._p.can_send(addr, msg + b'\x00'*(8-len(msg)), 0)
+        if self._extra_noise_msgs:
+            noise = self._extra_noise_msgs.popleft()
+            self._p.can_send(noise[0] if noise[0] is not None else addr,
+                             noise[1] + b'\x00'*(8-len(noise[1])), 0)
 
     def _addr_matches(self, addr):
         return addr in (0x7DF, 0x7E0, 0x18db33f1)
@@ -43,6 +49,9 @@ class ELMCanCarSimulator(threading.Thread):
     def change_can_baud(self, kbaud):
         self._can_kbaud = kbaud
         self._p.set_can_speed_kbps(0, self._can_kbaud)
+
+    def add_extra_noise(self, noise_msg, addr=None):
+        self._extra_noise_msgs.append((addr, noise_msg))
 
     def _process_msg(self, mode, pid, address, ts, data, src):
         #Check functional address of 11 bit and 29 bit CAN
