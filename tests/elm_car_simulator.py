@@ -84,7 +84,13 @@ class ELMCanCarSimulator(threading.Thread):
             elif mode == 0x09: # Mode: Request vehicle information
                 if pid == 0x02:   # Show VIN
                     outmsg = b"1D4GP00R55B123456"
-                if pid == 0xFF:   # test very long multi message
+                if pid == 0xFD:   # test long multi message
+                    parts = (b'\xAA\xAA\xAA' + struct.pack(">I", num) for num in range(80))
+                    outmsg = b'\xAA\xAA\xAA' + b''.join(parts)
+                if pid == 0xFE:   # test very long multi message
+                    parts = (b'\xAA\xAA\xAA' + struct.pack(">I", num) for num in range(584))
+                    outmsg = b'\xAA\xAA\xAA' + b''.join(parts) + b'\xAA'
+                if pid == 0xFF:
                     outmsg = b"\xAA"*(0xFFF-3)
 
             if outmsg:

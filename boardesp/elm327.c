@@ -45,7 +45,7 @@ static uint16 stripped_msg_len = 0;
 static char in_msg[0x100];
 static uint16 in_msg_len = 0;
 
-static char rsp_buff[0x200];
+static char rsp_buff[536]; //TCP min MTU
 static uint16 rsp_buff_len = 0;
 
 static bool elm_mode_echo = true;
@@ -173,13 +173,6 @@ static int ICACHE_FLASH_ATTR panda_usbemu_can_write(bool ext, uint32_t addr,
   return returned_count;
 }
 
-static int ICACHE_FLASH_ATTR panda_usbemu_can_read(panda_can_msg_t **can_msgs) {
-  int returned_count = spi_comm((uint8_t *)((const uint16 []){1,0}), 4, recvData, 0x40);
-  if(returned_count > 0x40) return 0;
-  *can_msgs = (panda_can_msg_t*)(recvData+1);
-  return returned_count/sizeof(panda_can_msg_t);
-}
-
 static int8_t ICACHE_FLASH_ATTR elm_decode_hex_char(char b){
   if(b >= '0' && b <= '9') return b - '0';
   if(b >= 'A' && b <= 'F') return (b - 'A') + 10;
@@ -233,8 +226,11 @@ static int ICACHE_FLASH_ATTR elm_msg_is_at_cmd(char *data, uint16_t len){
 }
 
 static void ICACHE_FLASH_ATTR elm_append_rsp(char *data, uint16_t len) {
-  if(rsp_buff_len + len > sizeof(rsp_buff))
+  uint16_t overflow_len = 0;
+  if(rsp_buff_len + len > sizeof(rsp_buff)) {
+    overflow_len = rsp_buff_len + len - sizeof(rsp_buff);
     len = sizeof(rsp_buff) - rsp_buff_len;
+  }
   if(!elm_mode_linefeed) {
     memcpy(rsp_buff + rsp_buff_len, data, len);
     rsp_buff_len += len;
@@ -244,6 +240,11 @@ static void ICACHE_FLASH_ATTR elm_append_rsp(char *data, uint16_t len) {
       if(data[i] == '\r' && rsp_buff_len < sizeof(rsp_buff))
         rsp_buff[rsp_buff_len++] = '\n';
     }
+  }
+  if(overflow_len) {
+    os_printf("Packet full, sending\n");
+    elm_tcp_tx_flush();
+    elm_append_rsp(data + len, overflow_len);
   }
 }
 
@@ -265,7 +266,6 @@ static void ICACHE_FLASH_ATTR elm_append_in_msg(char *data, uint16_t len) {
 void ICACHE_FLASH_ATTR elm_append_rsp_can_msg_addr(panda_can_msg_t *recv) {
   //Show address
   uint32_t addr = panda_get_can_addr(recv);
-  os_printf("Printing can address: %08x\n", addr);
   if(recv->ext){
     elm_append_rsp_hex_byte(addr>>24);
     elm_append_rsp_hex_byte(addr>>16);
@@ -277,17 +277,31 @@ void ICACHE_FLASH_ATTR elm_append_rsp_can_msg_addr(panda_can_msg_t *recv) {
   }
 }
 
+#define LOOPCOUNT_FULL 4
 int loopcount = 0;
 static volatile os_timer_t elm_timeout;
 
-bool did_multimessage = 0;
+bool did_multimessage = false;
+bool got_msg_this_run = false;
 
 void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
   loopcount--;
   if(loopcount>0) {
     for(int pass = 0; pass < 16 && loopcount; pass++){
       panda_can_msg_t *can_msgs;
-      int num_can_msgs = panda_usbemu_can_read(&can_msgs);
+
+
+      int returned_count = spi_comm((uint8_t *)((const uint16 []){1,0}), 4, recvData, 0x40);
+      //os_printf("returned count = %d\n", returned_count);
+      if(returned_count > 0x40 || returned_count < 0){
+        os_printf("CAN read got invalid length\n");
+        continue;
+      }
+      can_msgs = (panda_can_msg_t*)(recvData+1);
+      int num_can_msgs = returned_count/sizeof(panda_can_msg_t);
+      os_printf("Received %d can messages\n", num_can_msgs);
+
+      //int num_can_msgs = panda_usbemu_can_read(&can_msgs);
       if(!num_can_msgs) break;
 
       for(int i = 0; i < num_can_msgs; i++){
@@ -301,8 +315,9 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
         //TODO make elm only print messages that have the same PID
         if ((panda_get_can_addr(recv) & 0x7F8) == 0x7E8 && recv->len == 8) {
           if(recv->data[0] <= 7) {
-            os_printf("Found matching message, index: %d\n", i);
-            loopcount = 0;
+            got_msg_this_run = true;
+            loopcount = LOOPCOUNT_FULL;
+            os_printf("      CAN msg response, index: %d\n", i);
 
             if(elm_mode_additional_headers){
               elm_append_rsp_can_msg_addr(recv);
@@ -311,15 +326,18 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
               for(int j = 1; j < recv->data[0]+1; j++) elm_append_rsp_hex_byte(recv->data[j]);
             }
 
-            elm_append_rsp_const("\r\r>");
+            //elm_append_rsp_const("\r\r>");
+            elm_append_rsp_const("\r");
             elm_tcp_tx_flush();
-            return;
+            //return;
 
           } else if((recv->data[0] & 0xF0) == 0x10) {
+            got_msg_this_run = true;
+            loopcount = LOOPCOUNT_FULL;
             panda_usbemu_can_write(0, 0x7E0 | (panda_get_can_addr(recv)&0x7), "\x30\x00\x00", 3);
 
             did_multimessage = 1;
-            os_printf("Found matching multi message, index: %d, len %d\n", i,
+            os_printf("      CAN multimsg start response, index: %d, len %d\n", i,
                       ((recv->data[0]&0xF)<<8) | recv->data[1]);
 
             if(!elm_mode_additional_headers) {
@@ -337,7 +355,9 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
             elm_tcp_tx_flush();
 
           } else if (did_multimessage && (recv->data[0] & 0xF0) == 0x20) {
-            os_printf("Found extra multi message data, index: %d\n", i);
+            got_msg_this_run = true;
+            loopcount = LOOPCOUNT_FULL;
+            os_printf("      CAN multimsg data response, index: %d\n", i);
 
             if(!elm_mode_additional_headers) {
               elm_append_rsp(&hex_lookup[recv->data[0] & 0xF], 1);
@@ -358,11 +378,12 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
     if(did_multimessage) {
       os_printf("End of multi message\n");
       did_multimessage = 0;
-    } else {
+    } else if(!got_msg_this_run) {
       os_printf("No data collected\n");
       //elm_append_rsp_const("UNABLE TO CONNECT\r\r>");
       elm_append_rsp_const("NO DATA\r");
     }
+    got_msg_this_run = false;
     elm_append_rsp_const("\r>");
     elm_tcp_tx_flush();
   }
@@ -598,7 +619,7 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
   //elm_append("SEARCHING...\r");
 
   os_printf("Starting up timer\n");
-  loopcount = 4;
+  loopcount = LOOPCOUNT_FULL;
   os_timer_disarm(&elm_timeout);
   os_timer_setfn(&elm_timeout, (os_timer_func_t *)elm_timer_cb, NULL);
   os_timer_arm(&elm_timeout, elm_mode_timeout, 0);

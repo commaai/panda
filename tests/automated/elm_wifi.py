@@ -139,6 +139,10 @@ def test_elm_basic_send_can():
         send_compare(s, b'010D\r', b"7E8 03 41 0D 53 \r\r>")
 
         send_compare(s, b'1F00\r', b"NO DATA\r\r>") # Unhandled msg, no response.
+
+        # Repeat last check to see if it still works after NO DATA was received
+        send_compare(s, b'0100\r', b"7E8 06 41 00 FF FF FF FE \r\r>")
+        send_compare(s, b'010D\r', b"7E8 03 41 0D 53 \r\r>")
     finally:
         sim.stop()
         sim.join()
@@ -179,6 +183,33 @@ def test_elm_send_can_multimsg():
                      b"7E8 10 14 49 02 01 31 44 34 \r"
                      "7E8 21 47 50 30 30 52 35 35 \r"
                      "7E8 22 42 31 32 33 34 35 36 \r\r>")
+    finally:
+        sim.stop()
+        sim.join()
+        s.close()
+
+# TODO: Expand test to full throughput.
+# Max throughput currently causes dropped wifi packets
+def test_elm_send_can_multimsg_throughput():
+    s = elm_connect()
+    serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
+    sim = elm_car_simulator.ELMCanCarSimulator(serial)
+    sim.start()
+
+    try:
+        sync_reset(s)
+        send_compare(s, b'ATSP6\r', b"ATSP6\rOK\r\r>") # Set Proto
+        send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>') # Echo OFF
+        send_compare(s, b'ATS0\r', b'OK\r\r>') # Spaces OFF
+        send_compare(s, b'ATH1\r', b'OK\r\r>') # Headers ON
+
+        send_compare(s, b'09fd\r', # headers OFF, Spaces ON
+                     ("7E8123649FD01AAAAAA\r" +
+                     "".join(
+                         ("7E82"+hex((num+1)%0x10)[2:].upper()+"AAAAAA" +
+                          hex(num)[2:].upper().zfill(8) + "\r" for num in range(80))
+                     ) + "\r>").encode()
+        )
     finally:
         sim.stop()
         sim.join()
