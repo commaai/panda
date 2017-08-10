@@ -50,9 +50,9 @@ class ELMCanCarSimulator(threading.Thread):
 
         print("MSG", binascii.hexlify(data[1:1+data[0]]), "Addr:", hex(address),
               "Mode:", hex(mode)[2:].zfill(2), "PID:", hex(pid)[2:].zfill(2),
-              "Len:", data[0], binascii.hexlify(data[3:1+data[0]]) if data[3:1+data[0]] else '')
+              "canLen:", len(data), binascii.hexlify(data))
 
-        if self._addr_matches(address):
+        if self._addr_matches(address) and len(data) == 8:
             outmsg = None
             if data[:3] == b'\x30\x00\x00' and len(self._multipart_data):
                 print("Request for more data");

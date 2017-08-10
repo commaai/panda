@@ -180,14 +180,17 @@ static int ICACHE_FLASH_ATTR panda_usbemu_can_write(bool ext, uint32_t addr,
     rir = (addr << 21) | PANDA_CAN_FLAG_TRANSMIT;
   }
 
+  #define MAX_CAN_LEN 8
+
   //Wifi USB Wrapper
   *(uint16_t*)(sendData) = PANDA_USB_CAN_WRITE_BUS_NUM; //USB Bulk Endpoint ID.
-  *(uint16_t*)(sendData+2) = canlen;
+  *(uint16_t*)(sendData+2) = MAX_CAN_LEN;
   //BULK MESSAGE
   *(uint32_t*)(sendData+4) = rir;
-  *(uint32_t*)(sendData+8) = canlen | (0 << 4); //0 is CAN bus number.
+  *(uint32_t*)(sendData+8) = MAX_CAN_LEN | (0 << 4); //0 is CAN bus number.
   //CAN DATA
   memcpy(sendData+12, candata, canlen);
+  memset(sendData+12+canlen, 0, MAX_CAN_LEN-canlen);
   for(int i = 12+canlen; i < 20; i++) sendData[i] = 0; //Zero the rest
 
   /* spi_comm will erase data in the recv buffer even if you are only
@@ -217,11 +220,12 @@ void ICACHE_FLASH_ATTR elm_switch_proto(){
     // that could not be sent asap. Try to clear it away.
     // TODO: A better solution would be to clear out the
     // CAN mailboxes on the MCU when the speed changes.
-    for(int pass = 0; pass < 16; pass++){
+    for(int pass = 0; pass < 32; pass++){
       panda_can_msg_t *can_msgs;
       int num_can_msgs = panda_usbemu_can_read(&can_msgs);
       if(num_can_msgs < -1) continue;
       //if(!num_can_msgs) break;
+      for(int j=0; j<1000; j++) __asm__("");
     }
     break;
   default:
