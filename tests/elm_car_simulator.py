@@ -12,11 +12,13 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda
 
 class ELMCanCarSimulator(threading.Thread):
-    def __init__(self, sn, *args, **kwargs):
+    def __init__(self, sn, can_kbaud=500, *args, **kwargs):
         super(ELMCanCarSimulator, self).__init__(*args, **kwargs)
         self._p = Panda(sn if sn else Panda.list()[0])
         self.__stop = False
         self._multipart_data = None
+        self._can_kbaud = can_kbaud
+
         self._p.can_recv() # Toss whatever was already there
 
     def stop(self):
@@ -30,13 +32,17 @@ class ELMCanCarSimulator(threading.Thread):
         return addr in (0x7DF, 0x7E0, 0x18db33f1)
 
     def run(self):
-        self._p.set_can_speed_kbps(0, 500)
+        self._p.set_can_speed_kbps(0, self._can_kbaud)
         self._p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
         while not self.__stop:
             for address, ts, data, src in self._p.can_recv():
                 if src is 0 and len(data) >= 3:
                     self._process_msg(data[1], data[2], address, ts, data, src)
+
+    def change_can_baud(self, kbaud):
+        self._can_kbaud = kbaud
+        self._p.set_can_speed_kbps(0, self._can_kbaud)
 
     def _process_msg(self, mode, pid, address, ts, data, src):
         #Check functional address of 11 bit and 29 bit CAN
@@ -111,5 +117,6 @@ class ELMCanCarSimulator(threading.Thread):
 
 if __name__ == "__main__":
     serial = os.getenv("SERIAL") if os.getenv("SERIAL") else None
-    sim = ELMCanCarSimulator(serial)
+    kbaud = int(os.getenv("CANKBAUD")) if os.getenv("CANKBAUD") else 500
+    sim = ELMCanCarSimulator(serial, can_kbaud=kbaud)
     sim.start()

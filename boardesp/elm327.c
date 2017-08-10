@@ -48,38 +48,55 @@ static uint16 in_msg_len = 0;
 static char rsp_buff[536]; //TCP min MTU
 static uint16 rsp_buff_len = 0;
 
+#define ELM_MODE_SELECTED_PROTOCOL_DEFAULT 6
+#define ELM_MODE_TIMEOUT_DEFAULT 200;
+
 static bool elm_mode_echo = true;
 static bool elm_mode_linefeed = false;
 static bool elm_mode_additional_headers = false;
 static bool elm_mode_auto_protocol = true;
-static uint8_t elm_selected_protocol = 1;
+static uint8_t elm_selected_protocol = ELM_MODE_SELECTED_PROTOCOL_DEFAULT;
 static bool elm_mode_print_spaces = true;
 static uint8_t elm_mode_adaptive_timing = 1;
 static bool elm_mode_allow_long = false;
-#define ELM_MODE_TIMEOUT_DEFAULT 200;
 static uint16_t elm_mode_timeout = ELM_MODE_TIMEOUT_DEFAULT;
 
 
 static char hex_lookup[] = {'0', '1', '2', '3', '4', '5', '6', '7',
                             '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
-static char* elm_protocols[] = {
-  "AUTO",
-  "SAE J1850 PWM",            //Pin 2 & 10, 41.6 kbit/s. Supported by Panda?
-  "SAE J1850 VPW",            //Pin 2, 10.4 kbit/s
-  "ISO 9141-2",               //KLINE (Lline optional)
-  "ISO 14230-4 (KWP 5BAUD)",  //KLINE (Lline optional)
-  "ISO 14230-4 (KWP FAST)",   //KLINE (Lline optional)
-  "ISO 15765-4 (CAN 11/500)", //CAN
-  "ISO 15765-4 (CAN 29/500)", //CAN
-  "ISO 15765-4 (CAN 11/250)", //CAN
-  "ISO 15765-4 (CAN 29/250)", //CAN
-  "SAE J1939 (CAN 29/250)",   //CAN
-  "USER1 (CAN 11/125)",       //CAN
-  "USER2 (CAN 11/50)",        //CAN
+typedef enum {
+  AUTO, LIN, CAN11, CAN29, NA
+} elm_proto_type_t;
+
+typedef struct {
+  bool supported;
+  elm_proto_type_t type;
+  uint16_t cbaud; //Centibaud (cbaud * 10 = kbaud)
+  char* name;
+} elm_protocol_t;
+
+static const elm_protocol_t elm_protocols[] = {
+  {true,  AUTO,   0,    "AUTO",                    },
+  {false, NA,     416,  "SAE J1850 PWM",           }, //BUS+/- Outdated
+  {false, NA,     104,  "SAE J1850 VPW",           }, //BUS+ Outdated
+  {false, LIN,    104,  "ISO 9141-2",              }, //KLINE (Lline optional)
+  {false, LIN,    104,  "ISO 14230-4 (KWP 5BAUD)", }, //KLINE (Lline optional)
+  {false, LIN,    104,  "ISO 14230-4 (KWP FAST)",  }, //KLINE (Lline optional)
+  {true,  CAN11,  5000, "ISO 15765-4 (CAN 11/500)",}, //CAN
+  {true,  CAN29,  5000, "ISO 15765-4 (CAN 29/500)",}, //CAN
+  {true,  CAN11,  2500, "ISO 15765-4 (CAN 11/250)",}, //CAN
+  {true,  CAN29,  2500, "ISO 15765-4 (CAN 29/250)",}, //CAN
+  {false, CAN29,  2500, "SAE J1939 (CAN 29/250)",  }, //CAN
+  {false, CAN11,  1250, "USER1 (CAN 11/125)",      }, //CAN
+  {false, CAN11,  500,  "USER2 (CAN 11/50)",       }, //CAN
 };
 
-#define ELM_PROTOCOL_COUNT (sizeof(elm_protocols)/sizeof(char*))
+#define ELM_PROTOCOL_COUNT (sizeof(elm_protocols)/sizeof(elm_protocol_t))
+#define elm_current_proto (elm_protocols[elm_selected_protocol])
+//elm_protocol_t* ICACHE_FLASH_ATTR elm_current_proto() {
+//  return &elm_protocols[elm_selected_protocol];
+//}
 
 // All ELM operations are global, so send data out to all connections
 void ICACHE_FLASH_ATTR elm_tcp_tx_flush() {
@@ -114,6 +131,7 @@ static int ICACHE_FLASH_ATTR panda_usbemu_ctrl_write(uint8_t request_type, uint8
   return returned_count;
 }
 
+#define panda_set_can0_cbaud(cbps) panda_usbemu_ctrl_write(0x40, 0xde, 0, cbps, 0)
 #define panda_set_can0_kbaud(kbps) panda_usbemu_ctrl_write(0x40, 0xde, 0, kbps*10, 0)
 #define panda_set_safety_mode(mode) panda_usbemu_ctrl_write(0x40, 0xdc, mode, 0, 0)
 
@@ -138,6 +156,17 @@ typedef struct __attribute__((packed)) {
 #define PANDA_CAN_FLAG_EXTENDED 4
 
 #define PANDA_USB_CAN_WRITE_BUS_NUM 3
+
+static int ICACHE_FLASH_ATTR panda_usbemu_can_read(panda_can_msg_t** can_msgs) {
+  int returned_count = spi_comm((uint8_t *)((const uint16 []){1,0}), 4, recvData, 0x40);
+  //os_printf("returned count = %d\n", returned_count);
+  if(returned_count > 0x40 || returned_count < 0){
+    os_printf("CAN read got invalid length\n");
+    return -1;
+  }
+  *can_msgs = (panda_can_msg_t*)(recvData+1);
+  return returned_count/sizeof(panda_can_msg_t);
+}
 
 static int ICACHE_FLASH_ATTR panda_usbemu_can_write(bool ext, uint32_t addr,
                                                     char *candata, uint8_t canlen) {
@@ -171,6 +200,33 @@ static int ICACHE_FLASH_ATTR panda_usbemu_can_write(bool ext, uint32_t addr,
     os_printf("ELM Can send expected 0 bytes back from panda. Got %d bytes instead\n", returned_count);
   if(returned_count > 0x40) return 0;
   return returned_count;
+}
+
+void ICACHE_FLASH_ATTR elm_switch_proto(){
+  if(!elm_current_proto.supported) return;
+  switch(elm_current_proto.type) {
+  case AUTO:
+    break;
+  case LIN:
+    break;
+  case CAN11:
+  case CAN29:
+    panda_set_can0_cbaud(elm_current_proto.cbaud);
+
+    // Kind of a hack to deal with Panda resending data
+    // that could not be sent asap. Try to clear it away.
+    // TODO: A better solution would be to clear out the
+    // CAN mailboxes on the MCU when the speed changes.
+    for(int pass = 0; pass < 16; pass++){
+      panda_can_msg_t *can_msgs;
+      int num_can_msgs = panda_usbemu_can_read(&can_msgs);
+      if(num_can_msgs < -1) continue;
+      //if(!num_can_msgs) break;
+    }
+    break;
+  default:
+    break;
+  }
 }
 
 static int8_t ICACHE_FLASH_ATTR elm_decode_hex_char(char b){
@@ -281,27 +337,19 @@ void ICACHE_FLASH_ATTR elm_append_rsp_can_msg_addr(panda_can_msg_t *recv) {
 int loopcount = 0;
 static volatile os_timer_t elm_timeout;
 
-bool did_multimessage = false;
-bool got_msg_this_run = false;
+// Used only by elm_timer_cb, so not volatile
+static bool did_multimessage = false;
+static bool got_msg_this_run = false;
+static bool can_tx_worked = false;
 
 void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
   loopcount--;
   if(loopcount>0) {
     for(int pass = 0; pass < 16 && loopcount; pass++){
       panda_can_msg_t *can_msgs;
-
-
-      int returned_count = spi_comm((uint8_t *)((const uint16 []){1,0}), 4, recvData, 0x40);
-      //os_printf("returned count = %d\n", returned_count);
-      if(returned_count > 0x40 || returned_count < 0){
-        os_printf("CAN read got invalid length\n");
-        continue;
-      }
-      can_msgs = (panda_can_msg_t*)(recvData+1);
-      int num_can_msgs = returned_count/sizeof(panda_can_msg_t);
+      int num_can_msgs = panda_usbemu_can_read(&can_msgs);
       os_printf("Received %d can messages\n", num_can_msgs);
-
-      //int num_can_msgs = panda_usbemu_can_read(&can_msgs);
+      if(num_can_msgs < -1) continue;
       if(!num_can_msgs) break;
 
       for(int i = 0; i < num_can_msgs; i++){
@@ -313,7 +361,7 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
         os_printf("Ts: %d\n", recv->ts);
 
         //TODO make elm only print messages that have the same PID
-        if ((panda_get_can_addr(recv) & 0x7F8) == 0x7E8 && recv->len == 8) {
+        if (recv->bus==0 && (panda_get_can_addr(recv) & 0x7F8) == 0x7E8 && recv->len == 8) {
           if(recv->data[0] <= 7) {
             got_msg_this_run = true;
             loopcount = LOOPCOUNT_FULL;
@@ -370,6 +418,10 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
             }
             elm_append_rsp_const("\r");
           }
+        } else if (recv->bus == 0x80 && (panda_get_can_addr(recv) & 0x7FF) == 0x7DF && recv->len == 8) {
+          //Can send receipt
+          os_printf("      Got CAN tx receipt\n");
+          can_tx_worked = true;
         }
       }
     }
@@ -381,9 +433,14 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
     } else if(!got_msg_this_run) {
       os_printf("No data collected\n");
       //elm_append_rsp_const("UNABLE TO CONNECT\r\r>");
-      elm_append_rsp_const("NO DATA\r");
+      if(can_tx_worked){
+        elm_append_rsp_const("NO DATA\r");
+      } else {
+        elm_append_rsp_const("CAN ERROR\r");
+      }
     }
     got_msg_this_run = false;
+    can_tx_worked = false;
     elm_append_rsp_const("\r>");
     elm_tcp_tx_flush();
   }
@@ -500,8 +557,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
   case AT_DP: //DESCRIBE THE PROTOCOL BY NAME
     if(elm_mode_auto_protocol && elm_selected_protocol != 0)
       elm_append_rsp_const("AUTO, ");
-    elm_append_rsp(elm_protocols[elm_selected_protocol],
-                   strlen(elm_protocols[elm_selected_protocol]));
+    elm_append_rsp(elm_current_proto.name, strlen(elm_current_proto.name));
     elm_append_rsp_const("\r\r");
     return;
   case AT_DPN: //DESCRIBE THE PROTOCOL BY NUMBER
@@ -552,6 +608,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     }
     elm_selected_protocol = tmp;
     elm_mode_auto_protocol = (tmp == 0);
+    elm_switch_proto();
     break;
   case AT_SPA: //SET PROTOCOL WITH AUTO FALLBACK
     tmp = elm_decode_hex_char(cmd[3]);
@@ -561,6 +618,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     }
     elm_selected_protocol = tmp;
     elm_mode_auto_protocol = true;
+    elm_switch_proto();
     break;
   case AT_ST:  //SET TIMEOUT
     if(!elm_check_valid_hex_chars(&cmd[2], 2)) {
@@ -577,7 +635,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     elm_mode_linefeed = false;
     elm_mode_additional_headers = false;
     elm_mode_auto_protocol = true;
-    elm_selected_protocol = 1;
+    elm_selected_protocol = ELM_MODE_SELECTED_PROTOCOL_DEFAULT;
     elm_mode_print_spaces = true;
     elm_mode_adaptive_timing = 1;
     elm_mode_allow_long = false;
@@ -585,8 +643,8 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
 
     elm_append_rsp_const("\r\r");
     elm_append_rsp(IDENT_MSG, sizeof(IDENT_MSG)-1);
-    panda_set_can0_kbaud(500);
     panda_set_safety_mode(0x1337);
+    elm_switch_proto();
     return;
   default:
     elm_append_rsp_const("?\r\r");
