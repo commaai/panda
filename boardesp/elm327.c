@@ -300,7 +300,7 @@ typedef struct elm_protocol {
   bool supported;
   elm_proto_type_t type;
   uint16_t cbaud; //Centibaud (cbaud * 10 = kbaud)
-  void (*process_obd)(char*, uint16_t);
+  void (*process_obd)(const struct elm_protocol*, char*, uint16_t);
   void (*init)(const struct elm_protocol*);
   char* name;
 } elm_protocol_t;
@@ -326,7 +326,8 @@ static uint8_t elm_msg_mode;
 static uint8_t elm_msg_pid;
 
 
-void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
+void ICACHE_FLASH_ATTR elm_ISO15765_timer_cb(void *arg){
+  const elm_protocol_t* proto = (const elm_protocol_t*) arg;
   loopcount--;
   if(loopcount>0) {
     for(int pass = 0; pass < 16 && loopcount; pass++){
@@ -351,8 +352,12 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
         os_printf("Ts: %d\n", recv->ts);
         #endif
 
-        //TODO make elm only print messages that have the same PID
-        if (recv->bus==0 && (panda_get_can_addr(recv) & 0x7F8) == 0x7E8 && recv->len == 8) {
+        if (recv->bus==0 && recv->len == 8 &&
+            (
+             (proto->type == CAN11 && !recv->ext && (panda_get_can_addr(recv) & 0x7F8) == 0x7E8) ||
+             (proto->type == CAN29 && recv->ext && (panda_get_can_addr(recv) & 0x1FFFFF00) == 0x18DAF100)
+            )
+           ) {
           if(recv->data[0] <= 7 &&
              recv->data[1] == (0x40|elm_msg_mode) && recv->data[2] == elm_msg_pid) {
             got_msg_this_run = true;
@@ -378,7 +383,11 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
                     recv->data[2] == (0x40|elm_msg_mode) && recv->data[3] == elm_msg_pid) {
             got_msg_this_run = true;
             loopcount = LOOPCOUNT_FULL;
-            panda_usbemu_can_write(0, 0x7E0 | (panda_get_can_addr(recv)&0x7), "\x30\x00\x00", 3);
+            panda_usbemu_can_write(0,
+                                   (proto->type==CAN11) ?
+                                   0x7E0 | (panda_get_can_addr(recv)&0x7) :
+                                   (0x18DA00F1 | (((panda_get_can_addr(recv))&0xFF)<<8)),
+                                   "\x30\x00\x00", 3);
 
             did_multimessage = true;
             os_printf("      CAN multimsg start response, index: %d, len %d\n", i,
@@ -418,16 +427,14 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
               elm_append_rsp_const("\r");
             }
           }
-        } else if (recv->bus == 0x80 && (panda_get_can_addr(recv) & 0x7FF) == 0x7DF && recv->len == 8) {
+        } else if (recv->bus == 0x80 && recv->len == 8 &&
+                   (panda_get_can_addr(recv) == ((proto->type==CAN11) ? 0x7DF : 0x18DB33F1))
+                  ) {
           //Can send receipt
           #ifdef ELM_DEBUG
           os_printf("      Got CAN tx receipt\n");
           #endif
           can_tx_worked = true;
-        } else {
-          if(recv->bus == 0x80) os_printf("      correct bus\n");
-          if((panda_get_can_addr(recv) & 0x7FF) == 0x7DF) os_printf("      correct addr\n");
-          if(recv->len == 8) os_printf("      correct len\n");
         }
       }
     }
@@ -475,7 +482,8 @@ static void ICACHE_FLASH_ATTR elm_init_ISO15765(const elm_protocol_t* proto){
   }
 }
 
-static void ICACHE_FLASH_ATTR elm_process_obd_cmd_ISO15765(char *cmd, uint16_t len) {
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_ISO15765(const elm_protocol_t* proto,
+                                                           char *cmd, uint16_t len) {
   elm_obd_msg msg = {};
   msg.len = (len-1)/2;
   if((msg.len > 7 && !elm_mode_allow_long) || msg.len > 8) {
@@ -498,7 +506,8 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_ISO15765(char *cmd, uint16_t l
   os_printf("\n");
   #endif
 
-  panda_usbemu_can_write(0, 0x7DF, (uint8_t*)&msg, msg.len+1);
+  panda_usbemu_can_write(0, (proto->type==CAN11) ? 0x7DF : 0x18DB33F1,
+                         (uint8_t*)&msg, msg.len+1);
 
   #ifdef ELM_DEBUG
   os_printf("Starting up timer\n");
@@ -506,7 +515,7 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_ISO15765(char *cmd, uint16_t l
 
   loopcount = LOOPCOUNT_FULL;
   os_timer_disarm(&elm_timeout);
-  os_timer_setfn(&elm_timeout, (os_timer_func_t *)elm_timer_cb, NULL);
+  os_timer_setfn(&elm_timeout, (os_timer_func_t *)elm_ISO15765_timer_cb, proto);
   os_timer_arm(&elm_timeout, elm_mode_timeout, 0);
 }
 
@@ -537,16 +546,17 @@ static void ICACHE_FLASH_ATTR elm_autodetect_cb(bool proto_worked){
     os_printf("Autodetect proto success\n");
     is_auto_detecting = false;
     elm_selected_protocol = elm_autodetect_proto_iter;
-    elm_current_proto()->process_obd(elm_staged_auto_msg, elm_staged_auto_msg_len);
+    elm_current_proto()->process_obd(elm_current_proto(),
+                                     elm_staged_auto_msg, elm_staged_auto_msg_len);
   } else {
     os_printf("Autodetect proto failed\n");
     for(elm_autodetect_proto_iter++; elm_autodetect_proto_iter < ELM_PROTOCOL_COUNT;
         elm_autodetect_proto_iter++){
       const elm_protocol_t *proto = &elm_protocols[elm_autodetect_proto_iter];
       if(proto->supported && proto->type != AUTO) {
-        os_printf("*** trying %s\n", proto->name);
+      os_printf("*** AUTO trying '%s'\n", proto->name);
         proto->init(proto);
-        proto->process_obd("0100", 4);
+        proto->process_obd(proto, "0100", 4);
         return;
       }
     }
@@ -557,7 +567,8 @@ static void ICACHE_FLASH_ATTR elm_autodetect_cb(bool proto_worked){
   }
 }
 
-static void ICACHE_FLASH_ATTR elm_process_obd_cmd_AUTO(char *cmd, uint16_t len) {
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_AUTO(const elm_protocol_t* proto,
+                                                       char *cmd, uint16_t len) {
   elm_append_rsp_const("SEARCHING...\r");
   elm_staged_auto_msg_len = len;
   elm_staged_auto_msg = cmd;
@@ -568,25 +579,30 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_AUTO(char *cmd, uint16_t len) 
     if(proto->supported && proto->type != AUTO) {
       os_printf("*** AUTO trying '%s'\n", proto->name);
       proto->init(proto);
-      proto->process_obd("0100", 4); // Try sending on the bus
+      proto->process_obd(proto, "0100", 4); // Try sending on the bus
       break;
     }
+    os_printf("ERROR: auto detect entering invalid state.");
   }
 }
 
-static void ICACHE_FLASH_ATTR elm_process_obd_cmd_J1850(char *cmd, uint16_t len) {
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_J1850(const elm_protocol_t* proto,
+                                                        char *cmd, uint16_t len) {
   elm_append_rsp_const("NO DATA\r\r>");
 }
 
-static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LIN5baud(char *cmd, uint16_t len) {
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LIN5baud(const elm_protocol_t* proto,
+                                                           char *cmd, uint16_t len) {
   elm_append_rsp_const("BUS INIT: ...ERROR\r\r>");
 }
 
-static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LINFast(char *cmd, uint16_t len) {
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LINFast(const elm_protocol_t* proto,
+                                                          char *cmd, uint16_t len) {
   elm_append_rsp_const("BUS INIT: ERROR\r\r>");
 }
 
-static void ICACHE_FLASH_ATTR elm_process_obd_cmd_CANGen(char *cmd, uint16_t len) {
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_CANGen(const elm_protocol_t* proto,
+                                                         char *cmd, uint16_t len) {
   elm_append_rsp_const("NO DATA\r\r>");
 }
 
@@ -598,9 +614,9 @@ static const elm_protocol_t elm_protocols[] = {
   {false, LIN,   104,  elm_process_obd_cmd_LIN5baud, NULL,              "ISO 14230-4 (KWP 5BAUD)", },
   {false, LIN,   104,  elm_process_obd_cmd_LINFast,  NULL,              "ISO 14230-4 (KWP FAST)",  },
   {true,  CAN11, 5000, elm_process_obd_cmd_ISO15765, elm_init_ISO15765, "ISO 15765-4 (CAN 11/500)",},
-  {false, CAN29, 5000, elm_process_obd_cmd_ISO15765, elm_init_ISO15765, "ISO 15765-4 (CAN 29/500)",},
+  {true,  CAN29, 5000, elm_process_obd_cmd_ISO15765, elm_init_ISO15765, "ISO 15765-4 (CAN 29/500)",},
   {true,  CAN11, 2500, elm_process_obd_cmd_ISO15765, elm_init_ISO15765, "ISO 15765-4 (CAN 11/250)",},
-  {false, CAN29, 2500, elm_process_obd_cmd_ISO15765, elm_init_ISO15765, "ISO 15765-4 (CAN 29/250)",},
+  {true,  CAN29, 2500, elm_process_obd_cmd_ISO15765, elm_init_ISO15765, "ISO 15765-4 (CAN 29/250)",},
   {false, CAN29, 2500, elm_process_obd_cmd_CANGen,   NULL,              "SAE J1939 (CAN 29/250)",  },
   {false, CAN11, 1250, elm_process_obd_cmd_CANGen,   NULL,              "USER1 (CAN 11/125)",      },
   {false, CAN11, 500,  elm_process_obd_cmd_CANGen,   NULL,              "USER2 (CAN 11/50)",       },
@@ -880,7 +896,7 @@ static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
       elm_process_at_cmd(stripped_msg+2, stripped_msg_len-2);
       elm_append_rsp_const(">");
     } else if(elm_check_valid_hex_chars(stripped_msg, stripped_msg_len - 1)) {
-      elm_current_proto()->process_obd(stripped_msg, stripped_msg_len);
+      elm_current_proto()->process_obd(elm_current_proto(), stripped_msg, stripped_msg_len);
     } else {
       elm_append_rsp_const("?\r\r>");
     }

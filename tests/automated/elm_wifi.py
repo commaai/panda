@@ -169,17 +169,30 @@ def test_elm_protocol_autodetect_ISO15765():
     try:
         sync_reset(s)
         send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>') # Echo OFF
-
-        send_compare(s, b'ATSP0\r', b"OK\r\r>")
+        send_compare(s, b'ATH1\r', b'OK\r\r>') # Headers ON
         send_compare(s, b'ATS0\r', b"OK\r\r>")
-        send_compare(s, b'010D\r', b"SEARCHING...\r410D53\r\r>", timeout=10)
+
+        sim.can_mode_11b()
+        send_compare(s, b'ATSP0\r', b"OK\r\r>")
+        send_compare(s, b'010D\r', b"SEARCHING...\r7E803410D53\r\r>", timeout=10)
         send_compare(s, b'ATDPN\r', b"A6\r\r>")
 
-        sim.change_can_baud(250)
+        sim.can_mode_29b()
         send_compare(s, b'ATSP0\r', b"OK\r\r>")
-        send_compare(s, b'ATS0\r', b"OK\r\r>")
-        send_compare(s, b'010D\r', b"SEARCHING...\r410D53\r\r>", timeout=10)
+        send_compare(s, b'010D\r', b"SEARCHING...\r18DAF11003410D53\r\r>", timeout=10)
+        send_compare(s, b'ATDPN\r', b"A7\r\r>")
+
+        sim.change_can_baud(250)
+
+        sim.can_mode_11b()
+        send_compare(s, b'ATSP0\r', b"OK\r\r>")
+        send_compare(s, b'010D\r', b"SEARCHING...\r7E803410D53\r\r>", timeout=10)
         send_compare(s, b'ATDPN\r', b"A8\r\r>")
+
+        sim.can_mode_29b()
+        send_compare(s, b'ATSP0\r', b"OK\r\r>")
+        send_compare(s, b'010D\r', b"SEARCHING...\r18DAF11003410D53\r\r>", timeout=10)
+        send_compare(s, b'ATDPN\r', b"A9\r\r>")
     finally:
         sim.stop()
         sim.join()

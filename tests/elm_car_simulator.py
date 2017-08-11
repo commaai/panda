@@ -13,7 +13,8 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda
 
 class ELMCanCarSimulator(threading.Thread):
-    def __init__(self, sn, can_kbaud=500, silent=False, *args, **kwargs):
+    def __init__(self, sn, can_kbaud=500, silent=False,
+                 can11b=True, can29b=True, *args, **kwargs):
         super(ELMCanCarSimulator, self).__init__(*args, **kwargs)
         self._p = Panda(sn if sn else Panda.list()[0])
         self.__stop = False
@@ -22,6 +23,8 @@ class ELMCanCarSimulator(threading.Thread):
         self._extra_noise_msgs = deque()
         self.__silent = silent
         self.__on = True
+        self.__can11b = can11b
+        self.__can29b = can29b
 
         self._p.can_recv() # Toss whatever was already there
 
@@ -38,7 +41,11 @@ class ELMCanCarSimulator(threading.Thread):
                              noise[1] + b'\x00'*(8-len(noise[1])), 0)
 
     def _addr_matches(self, addr):
-        return addr in (0x7DF, 0x7E0, 0x18db33f1)
+        if self.__can11b and (addr == 0x7DF or (addr & 0x7F8) == 0x7E0):
+            return True
+        if self.__can29b and (addr == 0x18db33f1 or (addr & 0x1FFF00FF) == 0x18da00f1):
+            return True
+        return False
 
     def run(self):
         self._p.set_can_speed_kbps(0, self._can_kbaud)
@@ -59,10 +66,19 @@ class ELMCanCarSimulator(threading.Thread):
     def set_enable(self, on):
         self.__on = on
 
-    def _process_msg(self, mode, pid, address, ts, data, src):
-        #Check functional address of 11 bit and 29 bit CAN
-        #if address == 0x18db33f1: return
+    def can_mode_11b(self):
+        self.__can11b = True
+        self.__can29b = False
 
+    def can_mode_29b(self):
+        self.__can11b = False
+        self.__can29b = True
+
+    def can_mode_11b_29b(self):
+        self.__can11b = True
+        self.__can29b = True
+
+    def _process_msg(self, mode, pid, address, ts, data, src):
         if not self.__silent:
             print("MSG", binascii.hexlify(data[1:1+data[0]]), "Addr:", hex(address),
                   "Mode:", hex(mode)[2:].zfill(2), "PID:", hex(pid)[2:].zfill(2),
@@ -135,5 +151,12 @@ class ELMCanCarSimulator(threading.Thread):
 if __name__ == "__main__":
     serial = os.getenv("SERIAL") if os.getenv("SERIAL") else None
     kbaud = int(os.getenv("CANKBAUD")) if os.getenv("CANKBAUD") else 500
+    bitwidth = int(os.getenv("CANBITWIDTH")) if os.getenv("CANBITWIDTH") else 0
     sim = ELMCanCarSimulator(serial, can_kbaud=kbaud)
+    if(bitwidth == 0):
+        sim.can_mode_11b_29b()
+    if(bitwidth == 11):
+        sim.can_mode_11b()
+    if(bitwidth == 29):
+        sim.can_mode_29b()
     sim.start()
