@@ -580,10 +580,10 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_AUTO(const elm_protocol_t* pro
       os_printf("*** AUTO trying '%s'\n", proto->name);
       proto->init(proto);
       proto->process_obd(proto, "0100", 4); // Try sending on the bus
-      break;
+      return;
     }
-    os_printf("ERROR: auto detect entering invalid state.");
   }
+  os_printf("ERROR: auto detect entering invalid state.\n");
 }
 
 static void ICACHE_FLASH_ATTR elm_process_obd_cmd_J1850(const elm_protocol_t* proto,
