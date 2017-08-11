@@ -8,6 +8,8 @@ import pytest
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 import elm_car_simulator
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
+from panda import Panda
 
 def elm_connect():
     s = socket.create_connection(("192.168.0.10", 35000))
@@ -404,4 +406,55 @@ def test_elm_can_baud():
     finally:
         sim.stop()
         sim.join()
+        s.close()
+
+def test_elm_panda_safety_mode_ISO15765():
+    s = elm_connect()
+    serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
+    p_car = Panda(serial) # Configure this so the messages will send
+    p_car.set_can_speed_kbps(0, 500)
+    p_car.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+
+    p_elm = Panda("WIFI")
+
+    #sim = elm_car_simulator.ELMCanCarSimulator(serial)
+    #sim.start()
+
+    def did_send(p, addr, dat, bus):
+        p.can_send(addr, dat, bus)
+        t = time.time()
+        while time.time()-t < 0.5:
+            msg = p.can_recv()
+            for addrin, _, datin, busin in msg:
+                if (0x80 | bus) == busin and addr == addrin and datin == dat:
+                    return True
+            time.sleep(0.01)
+        return False
+
+    try:
+        sync_reset(s) # Reset elm (which requests the ELM327 safety mode)
+        send_compare(s, b'ATSP6\r', b"ATSP6\rOK\r\r>") # Set Proto ISO 15765-4 (CAN 11/500)
+
+        #29 bit
+        assert not did_send(p_elm, 0x18DB33F1, b'\x02\x01\x00\x00\x00\x00\x00\x00', 1) #wrong canid
+        assert not did_send(p_elm, 0x18DB33F1, b'\x02\x01\x00', 0) #wrong length
+        assert not did_send(p_elm, 0x10000000, b'\x02\x01\x00\x00\x00\x00\x00\x00', 0) #bad addr
+        assert not did_send(p_elm, 0x18DAF133, b'\x02\x01\x00\x00\x00\x00\x00\x00', 0) #bad addr (phy addr)
+        assert not did_send(p_elm, 0x18DAF000, b'\x02\x01\x00\x00\x00\x00\x00\x00', 0) #bad addr
+        assert not did_send(p_elm, 0x18DAF1F3, b'\x02\x01\x00\x00\x00\x00\x00\x00', 0) #bad addr! (phys rsp to elm)
+
+        assert did_send(p_elm, 0x18DB33F1, b'\x02\x01\x00\x00\x00\x00\x00\x00', 0) #good! (obd func req)
+        assert did_send(p_elm, 0x18DA10F1, b'\x02\x01\x00\x00\x00\x00\x00\x00', 0) #good! (phys response)
+
+        #11 bit
+        assert not did_send(p_elm, 0X7DF, b'\x02\x01\x00\x00\x00\x00\x00\x00', 1) #wrong canid
+        assert not did_send(p_elm, 0X7DF, b'\x02\x01\x00', 0) #wrong length
+        assert not did_send(p_elm, 0xAA, b'\x02\x01\x00\x00\x00\x00\x00\x00', 0) #bad addr
+        assert not did_send(p_elm, 0x7DA, b'\x02\x01\x00\x00\x00\x00\x00\x00', 0) #bad addr (phy addr)
+        assert not did_send(p_elm, 0x7E8, b'\x02\x01\x00\x00\x00\x00\x00\x00', 0) #bad addr (sending 'response')
+
+        assert did_send(p_elm, 0x7DF, b'\x02\x01\x00\x00\x00\x00\x00\x00', 0) #good! (obd func req)
+        assert did_send(p_elm, 0x7E1, b'\x02\x01\x00\x00\x00\x00\x00\x00', 0) #good! (phys response)
+
+    finally:
         s.close()

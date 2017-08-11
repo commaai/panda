@@ -828,7 +828,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
 
     elm_append_rsp_const("\r\r");
     elm_append_rsp_const(IDENT_MSG);
-    panda_set_safety_mode(0x1337);
+    panda_set_safety_mode(0xE327);
     elm_switch_proto();
     return;
   default:

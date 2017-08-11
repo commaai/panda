@@ -251,7 +251,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xdc:
       // this is the only way to leave silent mode
       // and it's blocked over WiFi
-      if (hardwired) {
+      // Allow ELM security mode to be set over wifi.
+      if (hardwired || setup->b.wValue.w == SAFETY_ELM327) {
         safety_set_mode(setup->b.wValue.w);
         can_silent = (setup->b.wValue.w == SAFETY_NOOUTPUT);
         can_init_all();
@@ -508,4 +509,3 @@ int main() {
 
   return 0;
 }
-
