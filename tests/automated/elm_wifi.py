@@ -333,6 +333,36 @@ def test_elm_send_can_multiline_msg_throughput():
         sim.join()
         s.close()
 
+def test_elm_interrupted_obd_cmd_resets_state():
+    s = elm_connect()
+    serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
+    sim = elm_car_simulator.ELMCanCarSimulator(serial, silent=True)
+    sim.start()
+
+    try:
+        sync_reset(s)
+        send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>') # Echo OFF
+        send_compare(s, b'ATS0\r', b'OK\r\r>') # Spaces OFF
+        s.send(b"09fd\r")
+        ready = select.select([s], [], [], 4)
+        assert ready[0], "Socket did not receive data within the timeout duration."
+        s.send(b"ATI\r")
+
+        assert b"236\r0:49FD01AAAAAA\r" in s.recv(10000)
+
+        #Will likely have to be improved to scan for STOPPED if the FW gets more responsive.
+        ready = select.select([s], [], [], 4)
+        assert ready[0], "Socket did not receive data within the timeout duration."
+
+        assert b"STOPPED" in s.recv(10000)
+
+        sim.set_enable(False)
+        send_compare(s, b'09fd\r', b"NO DATA\r\r>")
+    finally:
+        sim.stop()
+        sim.join()
+        s.close()
+
 def test_elm_can_baud():
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None

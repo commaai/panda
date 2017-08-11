@@ -849,6 +849,9 @@ static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
   if(loopcount){
     os_timer_disarm(&elm_timeout);
     loopcount = 0;
+    got_msg_this_run = false;
+    can_tx_worked = false;
+    did_multimessage = false;
 
     os_printf("Interrupting operation, stopping timer. msg len: %d\n", len);
     elm_append_rsp_const("STOPPED\r\r>");
