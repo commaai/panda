@@ -23,11 +23,11 @@ def sendrecv(s, dat):
     s.send(dat)
     return read_or_fail(s)
 
-def send_compare(s, dat, ret):
+def send_compare(s, dat, ret, timeout=4):
     s.send(dat)
     res = b''
     while ret.startswith(res) and ret != res:
-        ready = select.select([s], [], [], 4)
+        ready = select.select([s], [], [], timeout)
         if not ready[0]:
             print("current recv data:", repr(res))
             break;
@@ -112,10 +112,83 @@ def test_elm_setget_protocol():
     finally:
         s.close()
 
+def test_elm_protocol_failure():
+    s = elm_connect()
+
+    try:
+        sync_reset(s)
+        send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>') # Echo OFF
+
+        send_compare(s, b'ATSP0\r', b"OK\r\r>")
+        send_compare(s, b'0100\r', b"SEARCHING...\rUNABLE TO CONNECT\r\r>", timeout=10)
+
+        send_compare(s, b'ATSP1\r', b"OK\r\r>")
+        send_compare(s, b'0100\r', b"NO DATA\r\r>")
+
+        send_compare(s, b'ATSP2\r', b"OK\r\r>")
+        send_compare(s, b'0100\r', b"NO DATA\r\r>")
+
+        send_compare(s, b'ATSP3\r', b"OK\r\r>")
+        send_compare(s, b'0100\r', b"BUS INIT: ...ERROR\r\r>")
+
+        send_compare(s, b'ATSP4\r', b"OK\r\r>")
+        send_compare(s, b'0100\r', b"BUS INIT: ...ERROR\r\r>")
+
+        send_compare(s, b'ATSP5\r', b"OK\r\r>")
+        send_compare(s, b'0100\r', b"BUS INIT: ERROR\r\r>")
+
+        #send_compare(s, b'ATSP6\r', b"OK\r\r>")
+        #send_compare(s, b'0100\r', b"NO DATA\r\r>")
+        #
+        #send_compare(s, b'ATSP7\r', b"OK\r\r>")
+        #send_compare(s, b'0100\r', b"NO DATA\r\r>")
+        #
+        #send_compare(s, b'ATSP8\r', b"OK\r\r>")
+        #send_compare(s, b'0100\r', b"NO DATA\r\r>")
+        #
+        #send_compare(s, b'ATSP9\r', b"OK\r\r>")
+        #send_compare(s, b'0100\r', b"NO DATA\r\r>")
+        #
+        #send_compare(s, b'ATSPA\r', b"OK\r\r>")
+        #send_compare(s, b'0100\r', b"NO DATA\r\r>")
+        #
+        #send_compare(s, b'ATSPB\r', b"OK\r\r>")
+        #send_compare(s, b'0100\r', b"NO DATA\r\r>")
+        #
+        #send_compare(s, b'ATSPC\r', b"OK\r\r>")
+        #send_compare(s, b'0100\r', b"NO DATA\r\r>")
+    finally:
+        s.close()
+
+def test_elm_protocol_autodetect_ISO15765():
+    s = elm_connect()
+    serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
+    sim = elm_car_simulator.ELMCanCarSimulator(serial, silent=True)
+    sim.start()
+
+    try:
+        sync_reset(s)
+        send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>') # Echo OFF
+
+        send_compare(s, b'ATSP0\r', b"OK\r\r>")
+        send_compare(s, b'ATS0\r', b"OK\r\r>")
+        send_compare(s, b'010D\r', b"SEARCHING...\r410D53\r\r>", timeout=10)
+        send_compare(s, b'ATDPN\r', b"A6\r\r>")
+
+        sim.change_can_baud(250)
+        send_compare(s, b'ATSP0\r', b"OK\r\r>")
+        send_compare(s, b'ATS0\r', b"OK\r\r>")
+        send_compare(s, b'010D\r', b"SEARCHING...\r410D53\r\r>", timeout=10)
+        send_compare(s, b'ATDPN\r', b"A8\r\r>")
+    finally:
+        sim.stop()
+        sim.join()
+        s.close()
+
 def test_elm_basic_send_can():
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
-    sim = elm_car_simulator.ELMCanCarSimulator(serial)
+    sim = elm_car_simulator.ELMCanCarSimulator(serial, silent=True)
     sim.start()
 
     try:
@@ -170,6 +243,8 @@ def test_elm_send_can_multimsg():
         sim.join()
         s.close()
 
+"""The ability to correctly filter out messages with the wrong PID is not
+implemented correctly in the reference device."""
 def test_elm_can_check_mode_pid():
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
@@ -275,7 +350,6 @@ def test_elm_can_baud():
 
         send_compare(s, b'ATSP8\r', b"OK\r\r>") # Set Proto ISO 15765-4 (CAN 11/250)
         send_compare(s, b'0100\r', b"CAN ERROR\r\r>")
-
 
         sim.change_can_baud(250)
 

@@ -8,6 +8,8 @@
 
 #include "driver/uart.h"
 
+//#define ELM_DEBUG
+
 #define min(a,b) ((a) < (b) ? (a) : (b))
 int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, int recvDataLen);
 
@@ -76,7 +78,7 @@ static uint32_t pandaRecvData[0x40] = {0};
 static uint32_t pandaRecvDataDummy[0x40] = {0}; // Used for CAN write operations (no received data)
 
 #define ELM_MODE_SELECTED_PROTOCOL_DEFAULT 6
-#define ELM_MODE_TIMEOUT_DEFAULT 200;
+#define ELM_MODE_TIMEOUT_DEFAULT 20;
 
 static bool elm_mode_echo = true;
 static bool elm_mode_linefeed = false;
@@ -98,7 +100,22 @@ void ICACHE_FLASH_ATTR elm_tcp_tx_flush() {
   if(!rsp_buff_len) return; // Was causing small error messages
   for(elm_tcp_conn_t *iter = connection_list; iter != NULL; iter = iter->next){
     int8_t err = espconn_send(iter->conn, rsp_buff, rsp_buff_len);
-    if(err) os_printf("  Wifi TX failed with error code %d\n", err);
+    if(err){
+      os_printf("  Wifi TX error code %d\n", err);
+      if(err == ESPCONN_ARG) {
+        if(iter == connection_list) {
+          connection_list = iter->next;
+        } else {
+          for(elm_tcp_conn_t *iter2 = connection_list; iter2 != NULL; iter2 = iter2->next)
+            if(iter2->next == iter) {
+              iter2->next = iter->next;
+              break;
+            }
+        }
+        os_printf("  deleting orphaned connection. iter: %p; conn: %p\n", iter, iter->conn);
+        os_free(iter);
+      }
+    }
   }
   rsp_buff_len = 0;
 }
@@ -165,7 +182,6 @@ static int ICACHE_FLASH_ATTR panda_usbemu_ctrl_write(uint8_t request_type, uint8
   *(uint16_t*)(pandaSendData+10) = length;
 
   int returned_count = spi_comm(pandaSendData, 0x10, pandaRecvData, 0x40);
-  os_printf("Got %d bytes from Panda\n", returned_count);
   if(returned_count > 0x40)
     return 0;
   return returned_count;
@@ -177,7 +193,6 @@ static int ICACHE_FLASH_ATTR panda_usbemu_ctrl_write(uint8_t request_type, uint8
 
 static int ICACHE_FLASH_ATTR panda_usbemu_can_read(panda_can_msg_t** can_msgs) {
   int returned_count = spi_comm((uint8_t *)((const uint16 []){1,0}), 4, pandaRecvData, 0x40);
-  //os_printf("returned count = %d\n", returned_count);
   if(returned_count > 0x40 || returned_count < 0){
     os_printf("CAN read got invalid length\n");
     return -1;
@@ -281,18 +296,27 @@ typedef enum {
   AUTO, LIN, CAN11, CAN29, NA
 } elm_proto_type_t;
 
-typedef struct {
+typedef struct elm_protocol {
   bool supported;
   elm_proto_type_t type;
   uint16_t cbaud; //Centibaud (cbaud * 10 = kbaud)
+  void (*process_obd)(char*, uint16_t);
+  void (*init)(const struct elm_protocol*);
   char* name;
 } elm_protocol_t;
 
 static const elm_protocol_t* ICACHE_FLASH_ATTR elm_current_proto();
+static void ICACHE_FLASH_ATTR elm_autodetect_cb(bool);
+
+static const elm_protocol_t elm_protocols[];
+//(sizeof(elm_protocols)/sizeof(elm_protocol_t))
+#define ELM_PROTOCOL_COUNT 13
 
 #define LOOPCOUNT_FULL 4
-int loopcount = 0;
+static int loopcount = 0;
 static volatile os_timer_t elm_timeout;
+
+static bool is_auto_detecting = false;
 
 // Used only by elm_timer_cb, so not volatile
 static bool did_multimessage = false;
@@ -308,17 +332,24 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
     for(int pass = 0; pass < 16 && loopcount; pass++){
       panda_can_msg_t *can_msgs;
       int num_can_msgs = panda_usbemu_can_read(&can_msgs);
-      os_printf("Received %d can messages\n", num_can_msgs);
+
+      #ifdef ELM_DEBUG
+      if(num_can_msgs) os_printf("  Received %d can messages\n", num_can_msgs);
+      #endif
+
       if(num_can_msgs < -1) continue;
       if(!num_can_msgs) break;
 
       for(int i = 0; i < num_can_msgs; i++){
 
         panda_can_msg_t *recv = &can_msgs[i];
+
+        #ifdef ELM_DEBUG
         os_printf("    RECV: Bus: %d; Addr: %08x; ext: %d; tx: %d; Len: %d; ",
                   recv->bus, panda_get_can_addr(recv), recv->ext, recv->tx, recv->len);
         for(int j = 0; j < recv->len; j++) os_printf("%02x ", recv->data[j]);
         os_printf("Ts: %d\n", recv->ts);
+        #endif
 
         //TODO make elm only print messages that have the same PID
         if (recv->bus==0 && (panda_get_can_addr(recv) & 0x7F8) == 0x7E8 && recv->len == 8) {
@@ -326,19 +357,22 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
              recv->data[1] == (0x40|elm_msg_mode) && recv->data[2] == elm_msg_pid) {
             got_msg_this_run = true;
             loopcount = LOOPCOUNT_FULL;
+
+            #ifdef ELM_DEBUG
             os_printf("      CAN msg response, index: %d\n", i);
+            #endif
 
-            if(elm_mode_additional_headers){
-              elm_append_rsp_can_msg_addr(recv);
-              for(int j = 0; j < recv->data[0]+1; j++) elm_append_rsp_hex_byte(recv->data[j]);
-            } else {
-              for(int j = 1; j < recv->data[0]+1; j++) elm_append_rsp_hex_byte(recv->data[j]);
+            if(!is_auto_detecting){
+              if(elm_mode_additional_headers){
+                elm_append_rsp_can_msg_addr(recv);
+                for(int j = 0; j < recv->data[0]+1; j++) elm_append_rsp_hex_byte(recv->data[j]);
+              } else {
+                for(int j = 1; j < recv->data[0]+1; j++) elm_append_rsp_hex_byte(recv->data[j]);
+              }
+
+              elm_append_rsp_const("\r");
+              elm_tcp_tx_flush();
             }
-
-            //elm_append_rsp_const("\r\r>");
-            elm_append_rsp_const("\r");
-            elm_tcp_tx_flush();
-            //return;
 
           } else if((recv->data[0] & 0xF0) == 0x10 &&
                     recv->data[2] == (0x40|elm_msg_mode) && recv->data[3] == elm_msg_pid) {
@@ -350,39 +384,45 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
             os_printf("      CAN multimsg start response, index: %d, len %d\n", i,
                       ((recv->data[0]&0xF)<<8) | recv->data[1]);
 
-            if(!elm_mode_additional_headers) {
-              elm_append_rsp(&hex_lookup[recv->data[0]&0xF], 1);
-              elm_append_rsp_hex_byte(recv->data[1]);
-              elm_append_rsp_const("\r0:");
-              if(elm_mode_print_spaces) elm_append_rsp_const(" ");
-              for(int j = 2; j < 8; j++) elm_append_rsp_hex_byte(recv->data[j]);
-            } else {
-              elm_append_rsp_can_msg_addr(recv);
-              for(int j = 0; j < 8; j++) elm_append_rsp_hex_byte(recv->data[j]);
-            }
+            if(!is_auto_detecting){
+              if(!elm_mode_additional_headers) {
+                elm_append_rsp(&hex_lookup[recv->data[0]&0xF], 1);
+                elm_append_rsp_hex_byte(recv->data[1]);
+                elm_append_rsp_const("\r0:");
+                if(elm_mode_print_spaces) elm_append_rsp_const(" ");
+                for(int j = 2; j < 8; j++) elm_append_rsp_hex_byte(recv->data[j]);
+              } else {
+                elm_append_rsp_can_msg_addr(recv);
+                for(int j = 0; j < 8; j++) elm_append_rsp_hex_byte(recv->data[j]);
+              }
 
-            elm_append_rsp_const("\r");
-            elm_tcp_tx_flush();
+              elm_append_rsp_const("\r");
+              elm_tcp_tx_flush();
+            }
 
           } else if (did_multimessage && (recv->data[0] & 0xF0) == 0x20) {
             got_msg_this_run = true;
             loopcount = LOOPCOUNT_FULL;
             os_printf("      CAN multimsg data response, index: %d\n", i);
 
-            if(!elm_mode_additional_headers) {
-              elm_append_rsp(&hex_lookup[recv->data[0] & 0xF], 1);
-              elm_append_rsp_const(":");
-              if(elm_mode_print_spaces) elm_append_rsp_const(" ");
-              for(int j = 1; j < 8; j++) elm_append_rsp_hex_byte(recv->data[j]);
-            } else {
-              elm_append_rsp_can_msg_addr(recv);
-              for(int j = 0; j < 8; j++) elm_append_rsp_hex_byte(recv->data[j]);
+            if(!is_auto_detecting){
+              if(!elm_mode_additional_headers) {
+                elm_append_rsp(&hex_lookup[recv->data[0] & 0xF], 1);
+                elm_append_rsp_const(":");
+                if(elm_mode_print_spaces) elm_append_rsp_const(" ");
+                for(int j = 1; j < 8; j++) elm_append_rsp_hex_byte(recv->data[j]);
+              } else {
+                elm_append_rsp_can_msg_addr(recv);
+                for(int j = 0; j < 8; j++) elm_append_rsp_hex_byte(recv->data[j]);
+              }
+              elm_append_rsp_const("\r");
             }
-            elm_append_rsp_const("\r");
           }
         } else if (recv->bus == 0x80 && (panda_get_can_addr(recv) & 0x7FF) == 0x7DF && recv->len == 8) {
           //Can send receipt
+          #ifdef ELM_DEBUG
           os_printf("      Got CAN tx receipt\n");
+          #endif
           can_tx_worked = true;
         } else {
           if(recv->bus == 0x80) os_printf("      correct bus\n");
@@ -393,26 +433,49 @@ void ICACHE_FLASH_ATTR elm_timer_cb(void *arg){
     }
     os_timer_arm(&elm_timeout, elm_mode_timeout, 0);
   } else {
+    bool got_msg_this_run_backup = got_msg_this_run;
     if(did_multimessage) {
-      os_printf("End of multi message\n");
+      os_printf("  End of multi message\n");
     } else if(!got_msg_this_run) {
-      os_printf("No data collected\n");
-      //elm_append_rsp_const("UNABLE TO CONNECT\r\r>");
-      if(can_tx_worked){
-        elm_append_rsp_const("NO DATA\r");
-      } else {
-        elm_append_rsp_const("CAN ERROR\r");
+      os_printf("  No data collected\n");
+      if(!is_auto_detecting) {
+        if(can_tx_worked) {
+          elm_append_rsp_const("NO DATA\r");
+        } else {
+          elm_append_rsp_const("CAN ERROR\r");
+        }
       }
     }
     did_multimessage = false;
     got_msg_this_run = false;
     can_tx_worked = false;
-    elm_append_rsp_const("\r>");
-    elm_tcp_tx_flush();
+
+    if(!is_auto_detecting) {
+      elm_append_rsp_const("\r>");
+      elm_tcp_tx_flush();
+    } else {
+      elm_autodetect_cb(got_msg_this_run_backup);
+    }
   }
 }
 
-static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
+static void ICACHE_FLASH_ATTR elm_init_ISO15765(const elm_protocol_t* proto){
+  panda_set_can0_cbaud(proto->cbaud);
+
+  // Kind of a hack to deal with Panda resending data
+  // that could not be sent asap. Try to clear it away.
+  // TODO: A better solution would be to clear out the
+  // CAN mailboxes on the MCU when the speed changes.
+  for(int pass = 0; pass < 32; pass++){
+    panda_can_msg_t *can_msgs;
+    int num_can_msgs = panda_usbemu_can_read(&can_msgs);
+    if(num_can_msgs < -1) continue;
+    //if(!num_can_msgs) break;
+    for(int j=0; j<1000; j++) __asm__(""); //Small Delay
+  }
+}
+
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_ISO15765(char *cmd, uint16_t len) {
   elm_obd_msg msg = {};
   msg.len = (len-1)/2;
   if((msg.len > 7 && !elm_mode_allow_long) || msg.len > 8) {
@@ -428,18 +491,19 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd(char *cmd, uint16_t len) {
   elm_msg_mode = msg.dat[0];
   elm_msg_pid = msg.dat[1];
 
-  os_printf("Stored Mode: %02x; Pid: %02x\n", elm_msg_mode, elm_msg_pid);
-
-  os_printf("ELM CAN tx dat: %d.\r\n  ", msg.len);
+  #ifdef ELM_DEBUG
+  os_printf("Sending CAN OBD: %02x; ", msg.len);
   for(int i = 0; i < 7; i++)
     os_printf("%02x ", msg.dat[i]);
   os_printf("\n");
+  #endif
 
   panda_usbemu_can_write(0, 0x7DF, (uint8_t*)&msg, msg.len+1);
 
-  //elm_append("SEARCHING...\r");
-
+  #ifdef ELM_DEBUG
   os_printf("Starting up timer\n");
+  #endif
+
   loopcount = LOOPCOUNT_FULL;
   os_timer_disarm(&elm_timeout);
   os_timer_setfn(&elm_timeout, (os_timer_func_t *)elm_timer_cb, NULL);
@@ -456,42 +520,91 @@ void ICACHE_FLASH_ATTR elm_switch_proto(){
     break;
   case CAN11:
   case CAN29:
-    panda_set_can0_cbaud(proto->cbaud);
-
-    // Kind of a hack to deal with Panda resending data
-    // that could not be sent asap. Try to clear it away.
-    // TODO: A better solution would be to clear out the
-    // CAN mailboxes on the MCU when the speed changes.
-    for(int pass = 0; pass < 32; pass++){
-      panda_can_msg_t *can_msgs;
-      int num_can_msgs = panda_usbemu_can_read(&can_msgs);
-      if(num_can_msgs < -1) continue;
-      //if(!num_can_msgs) break;
-      for(int j=0; j<1000; j++) __asm__(""); //Small Delay
-    }
     break;
   default:
     break;
   }
+
+  if(proto->init) proto->init(proto);
+}
+
+static int elm_autodetect_proto_iter;
+static uint16_t elm_staged_auto_msg_len;
+static char* elm_staged_auto_msg;
+
+static void ICACHE_FLASH_ATTR elm_autodetect_cb(bool proto_worked){
+  if(proto_worked) {
+    os_printf("Autodetect proto success\n");
+    is_auto_detecting = false;
+    elm_selected_protocol = elm_autodetect_proto_iter;
+    elm_current_proto()->process_obd(elm_staged_auto_msg, elm_staged_auto_msg_len);
+  } else {
+    os_printf("Autodetect proto failed\n");
+    for(elm_autodetect_proto_iter++; elm_autodetect_proto_iter < ELM_PROTOCOL_COUNT;
+        elm_autodetect_proto_iter++){
+      const elm_protocol_t *proto = &elm_protocols[elm_autodetect_proto_iter];
+      if(proto->supported && proto->type != AUTO) {
+        os_printf("*** trying %s\n", proto->name);
+        proto->init(proto);
+        proto->process_obd("0100", 4);
+        return;
+      }
+    }
+    is_auto_detecting = false;
+    elm_append_rsp_const("UNABLE TO CONNECT\r\r>");
+    elm_tcp_tx_flush();
+    os_printf("Autodetect failed\n");
+  }
+}
+
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_AUTO(char *cmd, uint16_t len) {
+  elm_append_rsp_const("SEARCHING...\r");
+  elm_staged_auto_msg_len = len;
+  elm_staged_auto_msg = cmd;
+  is_auto_detecting = true;
+  for(elm_autodetect_proto_iter = 0; elm_autodetect_proto_iter < ELM_PROTOCOL_COUNT;
+      elm_autodetect_proto_iter++){
+    const elm_protocol_t *proto = &elm_protocols[elm_autodetect_proto_iter];
+    if(proto->supported && proto->type != AUTO) {
+      os_printf("*** AUTO trying '%s'\n", proto->name);
+      proto->init(proto);
+      proto->process_obd("0100", 4); // Try sending on the bus
+      break;
+    }
+  }
+}
+
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_J1850(char *cmd, uint16_t len) {
+  elm_append_rsp_const("NO DATA\r\r>");
+}
+
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LIN5baud(char *cmd, uint16_t len) {
+  elm_append_rsp_const("BUS INIT: ...ERROR\r\r>");
+}
+
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LINFast(char *cmd, uint16_t len) {
+  elm_append_rsp_const("BUS INIT: ERROR\r\r>");
+}
+
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_CANGen(char *cmd, uint16_t len) {
+  elm_append_rsp_const("NO DATA\r\r>");
 }
 
 static const elm_protocol_t elm_protocols[] = {
-  {true,  AUTO,   0,    "AUTO",                    },
-  {false, NA,     416,  "SAE J1850 PWM",           }, //BUS+/- Outdated
-  {false, NA,     104,  "SAE J1850 VPW",           }, //BUS+ Outdated
-  {false, LIN,    104,  "ISO 9141-2",              }, //KLINE (Lline optional)
-  {false, LIN,    104,  "ISO 14230-4 (KWP 5BAUD)", }, //KLINE (Lline optional)
-  {false, LIN,    104,  "ISO 14230-4 (KWP FAST)",  }, //KLINE (Lline optional)
-  {true,  CAN11,  5000, "ISO 15765-4 (CAN 11/500)",}, //CAN
-  {true,  CAN29,  5000, "ISO 15765-4 (CAN 29/500)",}, //CAN
-  {true,  CAN11,  2500, "ISO 15765-4 (CAN 11/250)",}, //CAN
-  {true,  CAN29,  2500, "ISO 15765-4 (CAN 29/250)",}, //CAN
-  {false, CAN29,  2500, "SAE J1939 (CAN 29/250)",  }, //CAN
-  {false, CAN11,  1250, "USER1 (CAN 11/125)",      }, //CAN
-  {false, CAN11,  500,  "USER2 (CAN 11/50)",       }, //CAN
+  {true,  AUTO,  0,    elm_process_obd_cmd_AUTO,     NULL,              "AUTO",                    },
+  {false, NA,    416,  elm_process_obd_cmd_J1850,    NULL,              "SAE J1850 PWM",           },
+  {false, NA,    104,  elm_process_obd_cmd_J1850,    NULL,              "SAE J1850 VPW",           },
+  {false, LIN,   104,  elm_process_obd_cmd_LIN5baud, NULL,              "ISO 9141-2",              },
+  {false, LIN,   104,  elm_process_obd_cmd_LIN5baud, NULL,              "ISO 14230-4 (KWP 5BAUD)", },
+  {false, LIN,   104,  elm_process_obd_cmd_LINFast,  NULL,              "ISO 14230-4 (KWP FAST)",  },
+  {true,  CAN11, 5000, elm_process_obd_cmd_ISO15765, elm_init_ISO15765, "ISO 15765-4 (CAN 11/500)",},
+  {false, CAN29, 5000, elm_process_obd_cmd_ISO15765, elm_init_ISO15765, "ISO 15765-4 (CAN 29/500)",},
+  {true,  CAN11, 2500, elm_process_obd_cmd_ISO15765, elm_init_ISO15765, "ISO 15765-4 (CAN 11/250)",},
+  {false, CAN29, 2500, elm_process_obd_cmd_ISO15765, elm_init_ISO15765, "ISO 15765-4 (CAN 29/250)",},
+  {false, CAN29, 2500, elm_process_obd_cmd_CANGen,   NULL,              "SAE J1939 (CAN 29/250)",  },
+  {false, CAN11, 1250, elm_process_obd_cmd_CANGen,   NULL,              "USER1 (CAN 11/125)",      },
+  {false, CAN11, 500,  elm_process_obd_cmd_CANGen,   NULL,              "USER2 (CAN 11/50)",       },
 };
-
-#define ELM_PROTOCOL_COUNT (sizeof(elm_protocols)/sizeof(elm_protocol_t))
 
 static const elm_protocol_t* ICACHE_FLASH_ATTR elm_current_proto() {
   return &elm_protocols[elm_selected_protocol];
@@ -726,7 +839,9 @@ static int ICACHE_FLASH_ATTR elm_msg_is_at_cmd(char *data, uint16_t len){
 }
 
 static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
+  #ifdef ELM_DEBUG
   os_printf("\nGot ELM Data In: '%s'\n", data);
+  #endif
 
   rsp_buff_len = 0;
   len = elm_msg_find_cr_or_eos(data, len);
@@ -734,6 +849,7 @@ static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
   if(loopcount){
     os_timer_disarm(&elm_timeout);
     loopcount = 0;
+
     os_printf("Interrupting operation, stopping timer. msg len: %d\n", len);
     elm_append_rsp_const("STOPPED\r\r>");
     if(len == 1 && data[0] == '\r') {
@@ -761,7 +877,7 @@ static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
       elm_process_at_cmd(stripped_msg+2, stripped_msg_len-2);
       elm_append_rsp_const(">");
     } else if(elm_check_valid_hex_chars(stripped_msg, stripped_msg_len - 1)) {
-      elm_process_obd_cmd(stripped_msg, stripped_msg_len);
+      elm_current_proto()->process_obd(stripped_msg, stripped_msg_len);
     } else {
       elm_append_rsp_const("?\r\r>");
     }

@@ -13,13 +13,15 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda
 
 class ELMCanCarSimulator(threading.Thread):
-    def __init__(self, sn, can_kbaud=500, *args, **kwargs):
+    def __init__(self, sn, can_kbaud=500, silent=False, *args, **kwargs):
         super(ELMCanCarSimulator, self).__init__(*args, **kwargs)
         self._p = Panda(sn if sn else Panda.list()[0])
         self.__stop = False
         self._multipart_data = None
         self._can_kbaud = can_kbaud
         self._extra_noise_msgs = deque()
+        self.__silent = silent
+        self.__on = True
 
         self._p.can_recv() # Toss whatever was already there
 
@@ -27,7 +29,8 @@ class ELMCanCarSimulator(threading.Thread):
         self.__stop = True
 
     def _can_send(self, addr, msg):
-        print("    Reply (%x)" % addr, binascii.hexlify(msg))
+        if not self.__silent:
+            print("    Reply (%x)" % addr, binascii.hexlify(msg))
         self._p.can_send(addr, msg + b'\x00'*(8-len(msg)), 0)
         if self._extra_noise_msgs:
             noise = self._extra_noise_msgs.popleft()
@@ -43,7 +46,7 @@ class ELMCanCarSimulator(threading.Thread):
 
         while not self.__stop:
             for address, ts, data, src in self._p.can_recv():
-                if src is 0 and len(data) >= 3:
+                if self.__on and src is 0 and len(data) >= 3:
                     self._process_msg(data[1], data[2], address, ts, data, src)
 
     def change_can_baud(self, kbaud):
@@ -53,18 +56,23 @@ class ELMCanCarSimulator(threading.Thread):
     def add_extra_noise(self, noise_msg, addr=None):
         self._extra_noise_msgs.append((addr, noise_msg))
 
+    def set_enable(self, on):
+        self.__on = on
+
     def _process_msg(self, mode, pid, address, ts, data, src):
         #Check functional address of 11 bit and 29 bit CAN
         #if address == 0x18db33f1: return
 
-        print("MSG", binascii.hexlify(data[1:1+data[0]]), "Addr:", hex(address),
-              "Mode:", hex(mode)[2:].zfill(2), "PID:", hex(pid)[2:].zfill(2),
-              "canLen:", len(data), binascii.hexlify(data))
+        if not self.__silent:
+            print("MSG", binascii.hexlify(data[1:1+data[0]]), "Addr:", hex(address),
+                  "Mode:", hex(mode)[2:].zfill(2), "PID:", hex(pid)[2:].zfill(2),
+                  "canLen:", len(data), binascii.hexlify(data))
 
         if self._addr_matches(address) and len(data) == 8:
             outmsg = None
             if data[:3] == b'\x30\x00\x00' and len(self._multipart_data):
-                print("Request for more data");
+                if not self.__silent:
+                    print("Request for more data");
                 outaddr = 0x7E8 if address == 0x7DF or address == 0x7E0 else 0x18DAF110
                 msgnum = 1
                 while(self._multipart_data):
