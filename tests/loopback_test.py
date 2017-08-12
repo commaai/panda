@@ -33,7 +33,7 @@ def run_test_w_pandas(pandas, sleep_duration):
   print("H", h)
 
   for hh in h:
-    hh.set_controls_allowed(True)
+    hh.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
   # test both directions
   for ho in permutations(range(len(h)), r=2):
@@ -79,10 +79,11 @@ def run_test_w_pandas(pandas, sleep_duration):
       if gmlan is not None:
         panda0.set_gmlan(gmlan, bus)
         panda1.set_gmlan(gmlan, bus)
+        if gmlan:
+          bus = 3
 
       # send the characters
-      # pick addresses high enough to not conflict with honda code
-      at = random.randint(1024, 2000)
+      at = random.randint(1, 2000)
       st = get_test_string()[0:8]
       panda0.can_send(at, st, bus)
       time.sleep(0.1)
