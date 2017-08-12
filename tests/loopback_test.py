@@ -70,17 +70,19 @@ def run_test_w_pandas(pandas, sleep_duration):
       time.sleep(sleep_duration)
 
     # **** test can line loopback ****
-    for bus, gmlan in [(0, None), (1, False), (2, False), (1, True), (2, True)]:
+    for bus, gmlan in [(0, False), (1, False), (2, False), (1, True), (2, True)]:
       print("\ntest can", bus)
       # flush
       cans_echo = panda0.can_recv()
       cans_loop = panda1.can_recv()
 
-      if gmlan is not None:
-        panda0.set_gmlan(gmlan, bus)
-        panda1.set_gmlan(gmlan, bus)
-        if gmlan:
-          bus = 3
+      if gmlan is True:
+        panda0.set_gmlan(bus)
+        panda1.set_gmlan(bus)
+        bus = 3
+      else:
+        panda0.set_gmlan(None)
+        panda1.set_gmlan(None)
 
       # send the characters
       at = random.randint(1, 2000)
