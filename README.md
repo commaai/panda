@@ -58,6 +58,9 @@ Programming (over USB)
 ------
 
 Programming the STM32
+
+Note: boot0 pin must be connected to 5v USB pin for 1 second when the panda is first powered on, to enter DFU mode. 
+When panda is in DFU mode, not LEDs should be lit. If they are, unplug the USB and try again.
 ```
 cd board
 ./get_sdk.sh
