@@ -55,14 +55,16 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   spiData.dataLen = 0x14;
   SPIMasterSendData(SpiNum_HSPI, &spiData);
 
+  #define SPI_TIMEOUT 50000
   // give the ST time to be ready, up to 500ms
-  for (int i = 0;(gpio_input_get() & (1 << 4)) && i < 50000; i++) {
+  int i;
+  for (i = 0; (gpio_input_get() & (1 << 4)) && i < SPI_TIMEOUT; i++) {
     os_delay_us(10);
     system_soft_wdt_feed();
   }
 
   // TODO: handle this better
-  if (gpio_input_get() & (1 << 4)) os_printf("ERROR: SPI receive failed\n");
+  if (i == SPI_TIMEOUT) os_printf("ERROR: SPI receive failed\n");
 
   // blank out recvData
   memset(recvData, 0xBB, 0x44);
@@ -167,11 +169,12 @@ void ICACHE_FLASH_ATTR udp_callback_func(void *arg) {
   if (udp_countdown > 0) {
     os_timer_arm(&udp_callback, 5, 0);
     udp_countdown--;
+  } else {
+    os_printf("UDP timeout\n");
   }
 }
 
 void ICACHE_FLASH_ATTR inter_recv_cb(void *arg, char *pusrdata, unsigned short length) {
-  os_printf("UDP recv\n");
   remot_info *premot = NULL;
   if (espconn_get_connection_info(&inter_conn,&premot,0) == ESPCONN_OK) {
 		inter_conn.proto.udp->remote_port = premot->remote_port;
@@ -180,11 +183,18 @@ void ICACHE_FLASH_ATTR inter_recv_cb(void *arg, char *pusrdata, unsigned short l
 		inter_conn.proto.udp->remote_ip[2] = premot->remote_ip[2];
 		inter_conn.proto.udp->remote_ip[3] = premot->remote_ip[3];
 
-    // start 5 second timer
-    os_timer_disarm(&udp_callback);
-    udp_countdown = 200*5;
-    os_timer_setfn(&udp_callback, (os_timer_func_t *)udp_callback_func, NULL);
-    os_timer_arm(&udp_callback, 5, 0);
+
+    if (udp_countdown == 0) {
+      os_printf("UDP recv\n");
+      udp_countdown = 200*5;
+
+      // start 5 second timer
+      os_timer_disarm(&udp_callback);
+      os_timer_setfn(&udp_callback, (os_timer_func_t *)udp_callback_func, NULL);
+      os_timer_arm(&udp_callback, 5, 0);
+    } else {
+      udp_countdown = 200*5;
+    }
   }
 }
 
