@@ -2,6 +2,7 @@ from panda import Panda
 from nose.tools import timed, assert_equal, assert_less, assert_greater
 import time
 import os
+import random
 
 def connect_wo_esp():
   # connect to the panda
@@ -27,19 +28,21 @@ def connect_wifi():
   # TODO: Ubuntu
   os.system("networksetup -setairportnetwork en0 %s %s" % (ssid, pw))
 
-def time_many_sends(p, bus, precv=None, msg_count=100):
+def time_many_sends(p, bus, precv=None, msg_count=100, msg_id=None):
   if precv == None:
     precv = p
+  if msg_id == None:
+    msg_id = random.randint(0x100, 0x200)
 
   st = time.time()
-  p.can_send_many([(0x1aa, 0, "\xaa"*8, bus)]*msg_count)
+  p.can_send_many([(msg_id, 0, "\xaa"*8, bus)]*msg_count)
   r = []
 
   while len(r) < (msg_count*2) and (time.time() - st) < 3:
     r.extend(precv.can_recv())
 
-  sent_echo = filter(lambda x: x[3] == 0x80 | bus, r)
-  loopback_resp = filter(lambda x: x[3] == bus, r)
+  sent_echo = filter(lambda x: x[3] == 0x80 | bus and x[0] == msg_id, r)
+  loopback_resp = filter(lambda x: x[3] == bus and x[0] == msg_id, r)
 
   assert_equal(len(sent_echo), msg_count)
   assert_equal(len(loopback_resp), msg_count)

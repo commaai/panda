@@ -326,6 +326,11 @@ void ICACHE_FLASH_ATTR loop(os_event_t *events) {
       }
     }
   }
+
+  // 5ms pause = 200 hz polling
+  // TODO: Ratekeeperize this
+  os_delay_us(5000);
+
   system_os_post(LOOP_PRIO, 0, 0);
 }
 

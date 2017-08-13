@@ -7,6 +7,7 @@ import socket
 import usb1
 import os
 import time
+import traceback
 
 __version__ = '0.0.3'
 
@@ -44,7 +45,9 @@ class PandaWifiStreaming(object):
         dat, addr = self.sock.recvfrom(0x200*0x10)
         if addr == (self.ip, self.port):
           ret += parse_can_buffer(dat)
-      except socket.error:
+      except socket.error as e:
+        if e.errno != 35:
+          traceback.print_exc()
         break
     return ret
 
