@@ -53,14 +53,19 @@ class ELMCarSimulator():
             self.__lin_monitor_thread.join()
         if self.__can_monitor_thread.is_alive():
             self.__can_monitor_thread.join()
+        if self.__p:
+            print("closing handle")
+            self.__p.close()
 
     def set_enable(self, on):
         self.__on = on
 
     def start(self):
         self.panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-        self.__lin_monitor_thread.start()
-        self.__can_monitor_thread.start()
+        if self.__lin_enable:
+            self.__lin_monitor_thread.start()
+        if self.__can_enable:
+            self.__can_monitor_thread.start()
 
     #########################
     # LIN related functions #
@@ -79,14 +84,14 @@ class ELMCarSimulator():
                 continue
 
             lin_buff += lin_msg
-            if not self.__lin_active:
-                if lin_buff.endswith(b'\xc1\x33\xf1\x81\x66'):
-                    lin_buff = bytearray()
-                    self.__lin_active = True
-                    print("GOT LIN (KWP FAST) WAKEUP SIGNAL")
-                    self._lin_send(0x10, b'\xC1\x8F\xE9')
-                    self.__reset_lin_timeout()
-            else:
+            if lin_buff.endswith(b'\xc1\x33\xf1\x81\x66'):
+                lin_buff = bytearray()
+                self.__lin_active = True
+                print("GOT LIN (KWP FAST) WAKEUP SIGNAL")
+                self._lin_send(0x10, b'\xC1\x8F\xE9')
+                self.__reset_lin_timeout()
+                continue
+            if self.__lin_active:
                 msglen = lin_buff[0] & 0x7
                 if lin_buff[0] & 0xF8 not in (0x80, 0xC0):
                     print("Invalid bytes at start of message")
