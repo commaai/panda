@@ -76,13 +76,13 @@ def run_test_w_pandas(pandas, sleep_duration):
       cans_echo = panda0.can_recv()
       cans_loop = panda1.can_recv()
 
+      panda0.set_gmlan(None)
+      panda1.set_gmlan(None)
+
       if gmlan is True:
         panda0.set_gmlan(bus)
         panda1.set_gmlan(bus)
         bus = 3
-      else:
-        panda0.set_gmlan(None)
-        panda1.set_gmlan(None)
 
       # send the characters
       at = random.randint(1, 2000)
