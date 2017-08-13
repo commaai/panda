@@ -165,7 +165,7 @@ def test_elm_protocol_failure():
 def test_elm_protocol_autodetect_ISO15765():
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
-    sim = elm_car_simulator.ELMCanCarSimulator(serial, silent=True)
+    sim = elm_car_simulator.ELMCarSimulator(serial, lin=False, silent=True)
     sim.start()
 
     try:
@@ -203,7 +203,7 @@ def test_elm_protocol_autodetect_ISO15765():
 def test_elm_basic_send_can():
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
-    sim = elm_car_simulator.ELMCanCarSimulator(serial, silent=True)
+    sim = elm_car_simulator.ELMCarSimulator(serial, lin=False, silent=True)
     sim.start()
 
     try:
@@ -239,7 +239,7 @@ def test_elm_basic_send_can():
 def test_elm_send_can_multimsg():
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
-    sim = elm_car_simulator.ELMCanCarSimulator(serial)
+    sim = elm_car_simulator.ELMCarSimulator(serial, lin=False)
     sim.start()
 
     try:
@@ -249,7 +249,7 @@ def test_elm_send_can_multimsg():
         send_compare(s, b'ATH1\r', b'OK\r\r>') # Headers ON
 
         send_compare(s, b'ATSP6\r', b"OK\r\r>") # Set Proto ISO 15765-4 (CAN 11/500)
-        sim.add_extra_noise(b'\x03\x41\x0D\xFA', addr=0x7E9)# Inject message into the stream
+        sim.can_add_extra_noise(b'\x03\x41\x0D\xFA', addr=0x7E9)# Inject message into the stream
         send_compare(s, b'010D\r',
                      b"7E8 03 41 0D 53 \r"
                      "7E9 03 41 0D FA \r\r>") # Check it was ignored.
@@ -263,7 +263,7 @@ implemented correctly in the reference device."""
 def test_elm_can_check_mode_pid():
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
-    sim = elm_car_simulator.ELMCanCarSimulator(serial)
+    sim = elm_car_simulator.ELMCarSimulator(serial, lin=False)
     sim.start()
 
     try:
@@ -273,7 +273,7 @@ def test_elm_can_check_mode_pid():
         send_compare(s, b'ATH0\r', b'OK\r\r>') # Headers OFF
 
         send_compare(s, b'ATSP6\r', b"OK\r\r>") # Set Proto ISO 15765-4 (CAN 11/500)
-        sim.add_extra_noise(b'\x03\x41\x0E\xFA')# Inject message into the stream
+        sim.can_add_extra_noise(b'\x03\x41\x0E\xFA')# Inject message into the stream
         send_compare(s, b'010D\r', b"410D53\r\r>") # Check it was ignored.
         send_compare(s, b'0100\r', b"4100FFFFFFFE\r\r>") # Check it was ignored again.
     finally:
@@ -284,7 +284,7 @@ def test_elm_can_check_mode_pid():
 def test_elm_send_can_multiline_msg():
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
-    sim = elm_car_simulator.ELMCanCarSimulator(serial)
+    sim = elm_car_simulator.ELMCarSimulator(serial, lin=False)
     sim.start()
 
     try:
@@ -326,7 +326,7 @@ def test_elm_send_can_multiline_msg():
 def test_elm_send_can_multiline_msg_throughput():
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
-    sim = elm_car_simulator.ELMCanCarSimulator(serial)
+    sim = elm_car_simulator.ELMCarSimulator(serial, lin=False)
     sim.start()
 
     try:
@@ -351,7 +351,7 @@ def test_elm_send_can_multiline_msg_throughput():
 def test_elm_interrupted_obd_cmd_resets_state():
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
-    sim = elm_car_simulator.ELMCanCarSimulator(serial, silent=True)
+    sim = elm_car_simulator.ELMCarSimulator(serial, lin=False, silent=True)
     sim.start()
 
     try:
@@ -381,7 +381,7 @@ def test_elm_interrupted_obd_cmd_resets_state():
 def test_elm_can_baud():
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
-    sim = elm_car_simulator.ELMCanCarSimulator(serial)
+    sim = elm_car_simulator.ELMCarSimulator(serial, lin=False)
     sim.start()
 
     try:
@@ -417,7 +417,7 @@ def test_elm_panda_safety_mode_ISO15765():
 
     p_elm = Panda("WIFI")
 
-    #sim = elm_car_simulator.ELMCanCarSimulator(serial)
+    #sim = elm_car_simulator.ELMCarSimulator(serial, lin=False)
     #sim.start()
 
     def did_send(p, addr, dat, bus):

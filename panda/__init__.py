@@ -343,7 +343,7 @@ class Panda(object):
     return b''.join(ret)
 
   def serial_write(self, port_number, ln):
-    return self._handle.bulkWrite(2, chr(port_number) + ln)
+    return self._handle.bulkWrite(2, struct.pack("B", port_number) + ln)
 
   # ******************* kline *******************
 
@@ -370,9 +370,8 @@ class Panda(object):
   def kline_send(self, x, bus=2, checksum=True):
     def get_checksum(dat):
       result = 0
-      result += sum(map(ord, dat))
-      result = -result
-      return chr(result&0xFF)
+      result += sum(map(ord, dat)) if isinstance(b'dat', str) else sum(dat)
+      return struct.pack("B", result % 0x100)
 
     self.kline_drain(bus=bus)
     if checksum:
@@ -391,4 +390,3 @@ class Panda(object):
     msg = self.kline_ll_recv(2, bus=bus)
     msg += self.kline_ll_recv(ord(msg[1])-2, bus=bus)
     return msg
-
