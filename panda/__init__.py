@@ -28,10 +28,14 @@ def parse_can_buffer(dat):
 class PandaWifiStreaming(object):
   def __init__(self, ip="192.168.0.10", port=1338):
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    self.sock.sendto("hello", (ip, port))
     self.sock.setblocking(0)
     self.ip = ip
     self.port = port
+    self.kick()
+
+  def kick(self):
+    # must be called at least every 5 seconds
+    self.sock.sendto("hello", (self.ip, self.port))
 
   def can_recv(self):
     ret = []
