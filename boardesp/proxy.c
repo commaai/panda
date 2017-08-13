@@ -152,18 +152,28 @@ void ICACHE_FLASH_ATTR poll_can(void *arg) {
   }
 }
 
-int udp_sending = 0;
+int udp_countdown = 0;
 
-static volatile os_timer_t udp_timeout;
-void ICACHE_FLASH_ATTR udp_timeout_func(void *arg) {
-  udp_sending = 0;
+static volatile os_timer_t udp_callback;
+void ICACHE_FLASH_ATTR udp_callback_func(void *arg) {
+  if (queue_send_len == -1) {
+    poll_can(NULL);
+  } else {
+    int ret = espconn_sendto(&inter_conn, buf, queue_send_len);
+    if (ret == 0) {
+      queue_send_len = -1;
+    }
+  }
+  if (udp_countdown > 0) {
+    os_timer_arm(&udp_callback, 5, 0);
+    udp_countdown--;
+  }
 }
 
 void ICACHE_FLASH_ATTR inter_recv_cb(void *arg, char *pusrdata, unsigned short length) {
   os_printf("UDP recv\n");
   remot_info *premot = NULL;
   if (espconn_get_connection_info(&inter_conn,&premot,0) == ESPCONN_OK) {
-		udp_sending = 1;
 		inter_conn.proto.udp->remote_port = premot->remote_port;
 		inter_conn.proto.udp->remote_ip[0] = premot->remote_ip[0];
 		inter_conn.proto.udp->remote_ip[1] = premot->remote_ip[1];
@@ -171,9 +181,10 @@ void ICACHE_FLASH_ATTR inter_recv_cb(void *arg, char *pusrdata, unsigned short l
 		inter_conn.proto.udp->remote_ip[3] = premot->remote_ip[3];
 
     // start 5 second timer
-    os_timer_disarm(&udp_timeout);
-    os_timer_setfn(&udp_timeout, (os_timer_func_t *)udp_timeout_func, NULL);
-    os_timer_arm(&udp_timeout, 5*1000, 0);
+    os_timer_disarm(&udp_callback);
+    udp_countdown = 200*5;
+    os_timer_setfn(&udp_callback, (os_timer_func_t *)udp_callback_func, NULL);
+    os_timer_arm(&udp_callback, 5, 0);
   }
 }
 
@@ -255,8 +266,7 @@ void loop();
 void ICACHE_FLASH_ATTR web_init();
 void ICACHE_FLASH_ATTR elm327_init();
 
-void ICACHE_FLASH_ATTR user_init()
-{
+void ICACHE_FLASH_ATTR user_init() {
   // init gpio subsystem
   gpio_init();
 
@@ -316,21 +326,6 @@ void ICACHE_FLASH_ATTR user_init()
 
 
 void ICACHE_FLASH_ATTR loop(os_event_t *events) {
-  if (udp_sending) {
-    if (queue_send_len == -1) {
-      poll_can(NULL);
-    } else {
-      int ret = espconn_sendto(&inter_conn, buf, queue_send_len);
-      if (ret == 0) {
-        queue_send_len = -1;
-      }
-    }
-  }
-
-  // 5ms pause = 200 hz polling
-  // TODO: Ratekeeperize this
-  os_delay_us(5000);
-
   system_os_post(LOOP_PRIO, 0, 0);
 }
 

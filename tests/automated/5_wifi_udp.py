@@ -11,7 +11,9 @@ def test_udp_doesnt_drop():
   p.set_can_loopback(True)
 
   pwifi = PandaWifiStreaming()
-  pwifi.can_recv()
+  while 1:
+    if len(pwifi.can_recv()) == 0:
+      break
 
   for msg_count in [1, 100]:
     for i in range({1: 0x80, 100: 0x10}[msg_count]):
@@ -27,7 +29,7 @@ def test_udp_doesnt_drop():
         sys.stdout.flush()
       else:
         print("UDP WIFI loopback %d messages at speed %d, comp speed is %.2f, percent %.2f" % (msg_count, speed, comp_kbps, saturation_pct))
-        assert_greater(saturation_pct, 60)
+        assert_greater(saturation_pct, 50)
         assert_less(saturation_pct, 100)
     print("")
 
