@@ -397,7 +397,7 @@ int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
 
 #else
 
-int spi_cb_rx(uint8_t *data, int len) { return 0; };
+int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) { return 0; };
 
 #endif
 

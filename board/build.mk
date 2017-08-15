@@ -67,4 +67,4 @@ obj/bootstub.$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/bootstub.$(PROJ_NAME).o
 	$(OBJCOPY) -v -O binary obj/bootstub.$(PROJ_NAME).elf $@
 
 clean:
-	rm -f obj/*
+	@rm -f obj/*

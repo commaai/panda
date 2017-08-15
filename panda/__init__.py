@@ -7,6 +7,7 @@ import socket
 import usb1
 import os
 import time
+import traceback
 
 __version__ = '0.0.3'
 
@@ -28,10 +29,14 @@ def parse_can_buffer(dat):
 class PandaWifiStreaming(object):
   def __init__(self, ip="192.168.0.10", port=1338):
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    self.sock.sendto("hello", (ip, port))
     self.sock.setblocking(0)
     self.ip = ip
     self.port = port
+    self.kick()
+
+  def kick(self):
+    # must be called at least every 5 seconds
+    self.sock.sendto("hello", (self.ip, self.port))
 
   def can_recv(self):
     ret = []
@@ -40,7 +45,9 @@ class PandaWifiStreaming(object):
         dat, addr = self.sock.recvfrom(0x200*0x10)
         if addr == (self.ip, self.port):
           ret += parse_can_buffer(dat)
-      except socket.error:
+      except socket.error as e:
+        if e.errno != 35:
+          traceback.print_exc()
         break
     return ret
 
@@ -156,9 +163,10 @@ class Panda(object):
     assert(self.bootstub)
 
     if fn is None:
-      ret = os.system("cd %s && make clean && make -f %s bin" % (os.path.join(BASEDIR, "board"),
-                      "Makefile.legacy" if self.legacy else "Makefile"))
-      fn = os.path.join(BASEDIR, "board", "obj", "code.bin" if self.legacy else "panda.bin")
+      ret = os.system("cd %s && make clean && make -f %s %s" % (os.path.join(BASEDIR, "board"),
+                      "Makefile.legacy" if self.legacy else "Makefile",
+                      "obj/comma.bin" if self.legacy else "obj/panda.bin"))
+      fn = os.path.join(BASEDIR, "board", "obj", "comma.bin" if self.legacy else "panda.bin")
 
     with open(fn) as f:
       dat = f.read()
