@@ -4,7 +4,7 @@ This will allow the panda to work with tools such as `can-utils`
 
 
 installation:
- - make link
+ - make link (only needed the first time. It will report an error on subsequent attempts to link)
  - make all
  - make install
 
