@@ -355,12 +355,14 @@ uint16_t ICACHE_FLASH_ATTR elm_LIN_read_into_ringbuff() {
     if(lin_ringbuff_start == lin_ringbuff_end) lin_ringbuff_start++;
   }
 
+  #ifdef ELM_DEBUG
   if(bytelen){
     os_printf("    RB Data (%d %d %d): ", lin_ringbuff_start, lin_ringbuff_end, lin_ringbuff_len);
     for(int i = 0; i < sizeof(lin_ringbuff); i++)
       os_printf("%02x ", lin_ringbuff[i]);
     os_printf("\n");
   }
+  #endif
 
   return bytelen;
 }
@@ -585,7 +587,8 @@ void ICACHE_FLASH_ATTR elm_LINFast_timer_cb(void *arg){
     for(int pass = 0; pass < 16 && loopcount; pass++){
       elm_LIN_read_into_ringbuff();
 
-      if(lin_ringbuff_len > 0){
+      while(lin_ringbuff_len > 0){
+        //if(lin_ringbuff_len > 0){
         if(lin_ringbuff_get(0) & 0x80 != 0x80){
           os_printf("Resetting LIN bus due to bad first byte.\n");
           loopcount = 0;
@@ -605,6 +608,7 @@ void ICACHE_FLASH_ATTR elm_LINFast_timer_cb(void *arg){
           os_printf("Processing LIN MSG. BuffLen %d; expect %d\n", lin_ringbuff_len, newmsg_len);
           #endif
           got_msg_this_run = true;
+          loopcount = LOOPCOUNT_FULL;
 
           if(!is_auto_detecting){
             if(elm_mode_additional_headers){
@@ -616,6 +620,8 @@ void ICACHE_FLASH_ATTR elm_LINFast_timer_cb(void *arg){
           }
 
           lin_ringbuff_consume(newmsg_len);
+        } else {
+          break; //Stop consuming data if there is not enough data for the next msg.
         }
       }
     }
@@ -727,8 +733,9 @@ void ICACHE_FLASH_ATTR elm_LINFast_businit_timer_cb(void *arg){
           } else {
             os_printf("LIN success. Silent because in autodetect.\n");
             elm_autodetect_cb(true);
+            // TODO: Since bus init is good, is it ok to skip sending the '0100' msg?
           }
-
+          return;
         }
       }
     }
