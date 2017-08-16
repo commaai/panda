@@ -119,10 +119,11 @@ static uint16_t elm_mode_keepalive_period = ELM_MODE_KEEPALIVE_PERIOD_DEFAULT;
 // All ELM operations are global, so send data out to all connections
 void ICACHE_FLASH_ATTR elm_tcp_tx_flush() {
   if(!rsp_buff_len) return; // Was causing small error messages
+
   for(elm_tcp_conn_t *iter = connection_list; iter != NULL; iter = iter->next){
     int8_t err = espconn_send(iter->conn, rsp_buff, rsp_buff_len);
     if(err){
-      os_printf("  Wifi TX error code %d\n", err);
+      os_printf("  Wifi %p TX error code %d\n", iter->conn, err);
       if(err == ESPCONN_ARG) {
         if(iter == connection_list) {
           connection_list = iter->next;
@@ -605,7 +606,9 @@ void ICACHE_FLASH_ATTR elm_LINFast_timer_cb(void *arg){
         uint8_t newmsg_len = 4 + (lin_ringbuff_get(0) & 0x7);
         if(lin_ringbuff_len >= newmsg_len) {
           #ifdef ELM_DEBUG
-          os_printf("Processing LIN MSG. BuffLen %d; expect %d\n", lin_ringbuff_len, newmsg_len);
+          os_printf("Processing LIN MSG. BuffLen %d; expect %d. Dat: ", lin_ringbuff_len, newmsg_len);
+          for(int i = 0; i < newmsg_len; i++) os_printf("%02x ", lin_ringbuff_get(i));
+          os_printf("\n");
           #endif
           got_msg_this_run = true;
           loopcount = LOOPCOUNT_FULL;
@@ -1370,7 +1373,7 @@ static int ICACHE_FLASH_ATTR elm_msg_is_at_cmd(char *data, uint16_t len){
 
 static void ICACHE_FLASH_ATTR elm_rx_cb(void *arg, char *data, uint16_t len) {
   #ifdef ELM_DEBUG
-  os_printf("\nGot ELM Data In: '%s'\n", data);
+  //os_printf("\nGot ELM Data In: '%s'\n", data);
   #endif
 
   rsp_buff_len = 0;
@@ -1454,13 +1457,22 @@ void ICACHE_FLASH_ATTR elm_tcp_connect_cb(void *arg) {
   //Allow several sends to be queued at a time.
   espconn_tcp_set_buf_count(pesp_conn, 3);
 
-  elm_tcp_conn_t *newconn = os_malloc(sizeof(elm_tcp_conn_t));
-  if(!newconn) {
-    os_printf("Failed to allocate place for connection\n");
+  bool connection_address_already_there = false;
+  for(elm_tcp_conn_t *iter2 = connection_list; iter2 != NULL; iter2 = iter2->next)
+    if(iter2->conn == pesp_conn){connection_address_already_there = true; break;}
+
+  if(connection_address_already_there) {
+    os_printf("ELM WIFI: Memory reuse of recently killed connection\n");
   } else {
-    newconn->next = connection_list;
-    newconn->conn = pesp_conn;
-    connection_list = newconn;
+    os_printf("ELM WIFI: Adding connection\n");
+    elm_tcp_conn_t *newconn = os_malloc(sizeof(elm_tcp_conn_t));
+    if(!newconn) {
+      os_printf("Failed to allocate place for connection\n");
+    } else {
+      newconn->next = connection_list;
+      newconn->conn = pesp_conn;
+      connection_list = newconn;
+    }
   }
 }
 
