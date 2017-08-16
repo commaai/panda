@@ -11,6 +11,7 @@
 //#define ELM_DEBUG
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
+#define max(a,b) ((a) > (b) ? (a) : (b))
 int ICACHE_FLASH_ATTR spi_comm(char *dat, int len, uint32_t *recvData, int recvDataLen);
 
 #define ELM_PORT 35000
@@ -49,6 +50,7 @@ typedef struct __attribute__((packed)) {
 #define PANDA_CAN_FLAG_EXTENDED 4
 
 #define PANDA_USB_CAN_WRITE_BUS_NUM 3
+#define PANDA_USB_LIN_WRITE_BUS_NUM 2
 
 typedef struct _elm_tcp_conn {
   struct espconn *conn;
@@ -58,7 +60,24 @@ typedef struct _elm_tcp_conn {
 typedef struct __attribute__((packed)) {
   uint8_t len;
   uint8_t dat[7]; //mode and data
-} elm_obd_msg;
+} elm_can_obd_msg;
+
+typedef struct __attribute__((packed)) {
+  uint8_t priority;
+  uint8_t receiver;
+  uint8_t sender;
+
+  uint8_t dat[8]; //mode, data, and checksum
+} elm_lin_obd_msg;
+
+typedef struct __attribute__((packed)) {
+  uint16_t usb_ep_num;
+  uint16_t payload_len;
+
+  uint8_t serial_port;
+  //uint8_t msg[8+3];
+  elm_lin_obd_msg msg;
+} elm_lin_usb_msg;
 
 static struct espconn elm_conn;
 static esp_tcp elm_proto;
@@ -79,6 +98,7 @@ static uint32_t pandaRecvDataDummy[0x40] = {0}; // Used for CAN write operations
 
 #define ELM_MODE_SELECTED_PROTOCOL_DEFAULT 6
 #define ELM_MODE_TIMEOUT_DEFAULT 20;
+#define ELM_MODE_KEEPALIVE_PERIOD_DEFAULT (0x92*20)
 
 static bool elm_mode_echo = true;
 static bool elm_mode_linefeed = false;
@@ -89,6 +109,7 @@ static bool elm_mode_print_spaces = true;
 static uint8_t elm_mode_adaptive_timing = 1;
 static bool elm_mode_allow_long = false;
 static uint16_t elm_mode_timeout = ELM_MODE_TIMEOUT_DEFAULT;
+static uint16_t elm_mode_keepalive_period = ELM_MODE_KEEPALIVE_PERIOD_DEFAULT;
 
 /***********************************************
  ***       ELM CLI response functions        ***
@@ -182,8 +203,8 @@ static int ICACHE_FLASH_ATTR panda_usbemu_ctrl_write(uint8_t request_type, uint8
   *(uint16_t*)(pandaSendData+10) = length;
 
   int returned_count = spi_comm(pandaSendData, 0x10, pandaRecvData, 0x40);
-  if(returned_count > 0x40)
-    return 0;
+  if(returned_count > 0x40 || returned_count < 0)
+    return -1;
   return returned_count;
 }
 
@@ -238,6 +259,112 @@ static int ICACHE_FLASH_ATTR panda_usbemu_can_write(bool ext, uint32_t addr,
   return returned_count;
 }
 
+elm_lin_obd_msg lin_last_sent_msg;
+uint16_t lin_last_sent_msg_len = 0;
+bool lin_await_msg_echo = false;
+
+static int ICACHE_FLASH_ATTR panda_usbemu_kline_read(uint16_t len) {
+  int returned_count = panda_usbemu_ctrl_write(0xC0, 0xE0, 2, 0, len);
+  if(returned_count > len || returned_count < 0){
+    os_printf("LIN read got invalid length\n");
+    return -1;
+  }
+
+  #ifdef ELM_DEBUG
+  if(returned_count) {
+    os_printf("LIN Received %d bytes\n", returned_count);
+    os_printf("    Data: ");
+    for(int i = 0; i < returned_count; i++)
+      os_printf("%02x ", ((char*)(pandaRecvData+1))[i]);
+    os_printf("\n");
+  }
+  #endif
+  return returned_count;
+}
+
+static int ICACHE_FLASH_ATTR panda_usbemu_kline_write(elm_lin_obd_msg *msg) {
+  elm_lin_usb_msg usb_msg = {};
+
+  lin_last_sent_msg_len = (msg->priority & 0x07) + 4;
+  memcpy(&lin_last_sent_msg, msg, lin_last_sent_msg_len);
+  lin_await_msg_echo = true;
+
+  usb_msg.usb_ep_num = PANDA_USB_LIN_WRITE_BUS_NUM; //USB Bulk Endpoint ID.
+  usb_msg.payload_len = lin_last_sent_msg_len + 1;
+  usb_msg.serial_port = 2;
+  memcpy(&usb_msg.msg, msg, sizeof(elm_lin_obd_msg));
+
+  /* spi_comm will erase data in the recv buffer even if you are only
+   * interested in sending data that gets no response (like writing
+   * can data). This behavior becomes problematic when trying to send
+   * a can message while processsing received can messages. A dummy
+   * recv buffer is used here so received data is not overwritten. */
+  int returned_count = spi_comm((char*)&usb_msg, sizeof(elm_lin_usb_msg), pandaRecvDataDummy, 0x40);
+
+  if(returned_count)
+    os_printf("ELM LIN send expected 0 bytes back from panda. Got %d bytes instead\n", returned_count);
+  if(returned_count > 0x40) return 0;
+  return returned_count;
+}
+
+/****************************************
+ *** Ringbuffer                       ***
+ ****************************************/
+
+//typedef struct {
+//  uint8_t *buff;
+//  unsigned int bufflen;
+//  unsigned int start;
+//  unsigned int end;
+//} elm_ringbuff_t;
+//
+//#define gen_ringbuffer(x, size) \
+//  static uint8_t ringbuff_data__##x[size];\
+//  elm_ringbuff_t ##x = {ringbuff_data__##x, size, 0, 0};
+//
+//#define ringbuff_len(rb) ((((rb).bufflen + (rb).end) - (rb).start) % (rb).bufflen)
+//#define ringbuff_item(rb, index) ((rb).buff[((rb).start + index) % (rb).bufflen])
+//#define ringbuff_consume(rb, len) {(rb).start = (((rb).start + len) % (rb).bufflen);}
+//#define ringbuff_clear(rb) {(rb).start = 0; (rb).end = 0;}
+
+//To deal with lag with reading from panda, store init data in ring buffer
+uint8_t lin_ringbuff[0x20];
+uint8_t lin_ringbuff_start = 0;
+uint8_t lin_ringbuff_end = 0;
+#define lin_ringbuff_len \
+  (((sizeof(lin_ringbuff) + lin_ringbuff_end) - lin_ringbuff_start)% sizeof(lin_ringbuff))
+#define lin_ringbuff_get(index) (lin_ringbuff[(lin_ringbuff_start + index) % sizeof(lin_ringbuff)])
+#define lin_ringbuff_consume(len) lin_ringbuff_start = ((lin_ringbuff_start + len) % sizeof(lin_ringbuff))
+#define lin_ringbuff_clear()\
+  {lin_ringbuff_start = 0;  \
+  lin_ringbuff_end = 0;}
+
+int ICACHE_FLASH_ATTR elm_LIN_ringbuff_memcmp(uint8_t *data, uint16_t len) {
+  if(len > lin_ringbuff_len) return 1;
+  for(int i = 0; i < len; i++)
+    if(lin_ringbuff_get(i) != data[i]) return 1;
+  return 0; // Going with memcpy ret format where 0 means 'equal'
+}
+
+uint16_t ICACHE_FLASH_ATTR elm_LIN_read_into_ringbuff() {
+  int bytelen = panda_usbemu_kline_read((sizeof(lin_ringbuff) - lin_ringbuff_len) - 1);
+  if(bytelen < 0) return 0;
+  for(int j = 0; j < bytelen; j++) {
+    lin_ringbuff[lin_ringbuff_end % sizeof(lin_ringbuff)] = ((char*)(pandaRecvData+1))[j];
+    lin_ringbuff_end = (lin_ringbuff_end + 1) % sizeof(lin_ringbuff);
+    if(lin_ringbuff_start == lin_ringbuff_end) lin_ringbuff_start++;
+  }
+
+  if(bytelen){
+    os_printf("    RB Data (%d %d %d): ", lin_ringbuff_start, lin_ringbuff_end, lin_ringbuff_len);
+    for(int i = 0; i < sizeof(lin_ringbuff); i++)
+      os_printf("%02x ", lin_ringbuff[i]);
+    os_printf("\n");
+  }
+
+  return bytelen;
+}
+
 /****************************************
  *** String parsing utility functions ***
  ****************************************/
@@ -249,11 +376,11 @@ static int8_t ICACHE_FLASH_ATTR elm_decode_hex_char(char b){
   return -1;
 }
 
-static uint8_t ICACHE_FLASH_ATTR elm_decode_hex_byte(char* data) {
+static uint8_t ICACHE_FLASH_ATTR elm_decode_hex_byte(const char* data) {
   return (elm_decode_hex_char(data[0]) << 4) | elm_decode_hex_char(data[1]);
 }
 
-static bool ICACHE_FLASH_ATTR elm_check_valid_hex_chars(char* data, uint8_t len) {
+static bool ICACHE_FLASH_ATTR elm_check_valid_hex_chars(const char* data, uint8_t len) {
   for(int i = 0; i < len; i++){
     char b = data[i];
     if(!((b >= '0' && b <= '9') || (b >= 'A' && b <= 'F') || (b >= 'a' && b <= 'f')))
@@ -262,7 +389,7 @@ static bool ICACHE_FLASH_ATTR elm_check_valid_hex_chars(char* data, uint8_t len)
   return 1;
 }
 
-static uint16_t ICACHE_FLASH_ATTR elm_strip(char *data, uint16_t lenin,
+static uint16_t ICACHE_FLASH_ATTR elm_strip(const char *data, uint16_t lenin,
                                             char *outbuff, uint16_t outbufflen) {
   uint16_t count = 0;
   for(uint16_t i = 0; i < lenin; i++) {
@@ -300,7 +427,7 @@ typedef struct elm_protocol {
   bool supported;
   elm_proto_type_t type;
   uint16_t cbaud; //Centibaud (cbaud * 10 = kbaud)
-  void (*process_obd)(const struct elm_protocol*, char*, uint16_t);
+  void (*process_obd)(const struct elm_protocol*, const char*, uint16_t);
   void (*init)(const struct elm_protocol*);
   char* name;
 } elm_protocol_t;
@@ -315,6 +442,7 @@ static const elm_protocol_t elm_protocols[];
 #define LOOPCOUNT_FULL 4
 static int loopcount = 0;
 static volatile os_timer_t elm_timeout;
+static volatile os_timer_t elm_proto_aux_timeout;
 
 static bool is_auto_detecting = false;
 
@@ -322,9 +450,377 @@ static bool is_auto_detecting = false;
 static bool did_multimessage = false;
 static bool got_msg_this_run = false;
 static bool can_tx_worked = false;
-static uint8_t elm_msg_mode;
-static uint8_t elm_msg_pid;
+static uint8_t elm_msg_mode_ret_filter;
+static uint8_t elm_msg_pid_ret_filter;
 
+/*****************************************************
+ *** ELM protocol specification and implementation ***
+ ***  -> SAE J1850 implementation (Unsupported)    ***
+ *****************************************************/
+
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_J1850(const elm_protocol_t* proto,
+                                                        const char *cmd, uint16_t len) {
+  elm_append_rsp_const("NO DATA\r\r>");
+}
+
+/*****************************************************
+ *** ELM protocol specification and implementation ***
+ ***  -> ISO 14230-4 implementation                ***
+ *****************************************************/
+
+bool lin_bus_initialized = false;
+const char *lin_cmd_backup = NULL; //Holds msg while bus init is done
+uint16_t lin_cmd_backup_len;
+
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LIN5baud(const elm_protocol_t* proto,
+                                                           const char *cmd, uint16_t len) {
+  elm_append_rsp_const("BUS INIT: ...ERROR\r\r>");
+}
+
+void ICACHE_FLASH_ATTR elm_LINFast_keepalive_timer_cb(void *arg) {
+  if(!lin_bus_initialized) {
+    os_printf("WARNING! Elm LIN keepalive timer running while bus is not initialized\n");
+    return;
+  }
+  elm_lin_obd_msg msg = {};
+
+  msg.priority = 0xC0 | 1;
+  msg.receiver = 0x33;
+  msg.sender = 0xF1;
+  msg.dat[0] = 0x3E;
+  msg.dat[1] = msg.dat[0] + msg.priority + msg.receiver + msg.sender; // checksum
+
+  #ifdef ELM_DEBUG
+  os_printf("Sending LIN KEEPALIVE: Priority: %02x; RecvAddr: %02x; SendAddr: %02x;  (%02x); ",
+            msg.priority, msg.receiver, msg.sender, 1);
+  for(int i = 0; i < 2; i++) os_printf("%02x ", msg.dat[i]);
+  os_printf("\n");
+  #endif
+
+  //TODO handle all this crap with not shouting ERROR on failed keepallive msg.
+  panda_usbemu_kline_write(&msg);
+}
+
+static void ICACHE_FLASH_ATTR elm_init_LINFast(const elm_protocol_t* proto){
+  lin_bus_initialized = false;
+  lin_await_msg_echo = false;
+
+  lin_ringbuff_clear();
+
+  os_timer_disarm(&elm_proto_aux_timeout);
+  os_timer_setfn(&elm_proto_aux_timeout, (os_timer_func_t *)elm_LINFast_keepalive_timer_cb, proto);
+}
+
+int ICACHE_FLASH_ATTR elm_LINFast_process_echo() {
+  if(!lin_await_msg_echo) {
+    os_printf("Echo abort. Nothing waiting echo\n");
+    return 1;
+  }
+
+  for(int i = 0; i < 4; i++){
+    if(lin_ringbuff_len < lin_last_sent_msg_len) elm_LIN_read_into_ringbuff();
+
+    if(lin_ringbuff_len >= lin_last_sent_msg_len){
+      os_printf("Got enough data %d\n", lin_last_sent_msg_len);
+      if(!elm_LIN_ringbuff_memcmp((uint8_t*)&lin_last_sent_msg, lin_last_sent_msg_len)) {
+        os_printf("LIN data was sent successfully.\n");
+        lin_ringbuff_consume(lin_last_sent_msg_len);
+        lin_await_msg_echo = false;
+        return 1;
+      } else {
+        #ifdef ELM_DEBUG
+        os_printf("Somehow failed\n");
+        os_printf("    RB Data (%d %d %d): ", lin_ringbuff_start, lin_ringbuff_end, lin_ringbuff_len);
+        for(int i = 0; i < sizeof(lin_ringbuff); i++)
+          os_printf("%02x ", lin_ringbuff[i]);
+        os_printf("\n");
+        os_printf("         MSG Data (%d): ", lin_last_sent_msg_len);
+        for(int i = 0; i < lin_last_sent_msg_len; i++)
+          os_printf("%02x ", ((uint8_t*)&lin_last_sent_msg)[i]);
+        os_printf("\n");
+        #endif
+
+        lin_ringbuff_clear();
+        return -1;
+      }
+    }
+  }
+
+  return !lin_await_msg_echo; //true if echo handled
+}
+
+void ICACHE_FLASH_ATTR elm_LINFast_timer_cb(void *arg){
+  const elm_protocol_t* proto = (const elm_protocol_t*) arg;
+  loopcount--;
+  os_printf("LIN CB call\n");
+
+  if(!lin_bus_initialized) {
+    os_printf("WARNING: LIN CB called without bus initialized!");
+    return; // TODO: shoulnd't ever happen. Handle?
+  }
+
+  int echo_result = elm_LINFast_process_echo();
+
+  if(echo_result == -1 || (echo_result == 0 && loopcount == 0)) {
+    if(!is_auto_detecting){
+      elm_append_rsp_const("BUS ERROR\r\r>");
+      elm_tcp_tx_flush();
+    }
+    loopcount = 0;
+    lin_bus_initialized = 0;
+    return;
+  }
+
+  if(echo_result == 0) {
+    #ifdef ELM_DEBUG
+    os_printf("Not ready to process\n");
+    #endif
+    os_timer_arm(&elm_timeout, 30, 0);
+    return; // Not ready to go on
+  }
+
+  os_printf("Processing ELM %d\n", lin_ringbuff_len);
+
+  if(loopcount>0) {
+    for(int pass = 0; pass < 16 && loopcount; pass++){
+      elm_LIN_read_into_ringbuff();
+
+      if(lin_ringbuff_len > 0){
+        if(lin_ringbuff_get(0) & 0x80 != 0x80){
+          os_printf("Resetting LIN bus due to bad first byte.\n");
+          loopcount = 0;
+          lin_bus_initialized = false;
+          lin_ringbuff_clear();
+
+          if(!is_auto_detecting){
+            elm_append_rsp_const("ERROR\r\r>");
+            elm_tcp_tx_flush();
+          }
+          return;
+        }
+
+        uint8_t newmsg_len = 4 + (lin_ringbuff_get(0) & 0x7);
+        if(lin_ringbuff_len >= newmsg_len) {
+          #ifdef ELM_DEBUG
+          os_printf("Processing LIN MSG. BuffLen %d; expect %d\n", lin_ringbuff_len, newmsg_len);
+          #endif
+          got_msg_this_run = true;
+
+          if(!is_auto_detecting){
+            if(elm_mode_additional_headers){
+              for(int i = 0; i < newmsg_len; i++) elm_append_rsp_hex_byte(lin_ringbuff_get(i));
+            } else {
+              for(int i = 3; i < newmsg_len - 1; i++) elm_append_rsp_hex_byte(lin_ringbuff_get(i));
+            }
+            elm_append_rsp_const("\r");
+          }
+
+          lin_ringbuff_consume(newmsg_len);
+        }
+      }
+    }
+    os_timer_arm(&elm_timeout, 50, 0);
+  } else {
+    bool got_msg_this_run_backup = got_msg_this_run;
+    if(!got_msg_this_run) {
+      os_printf("  No data collected\n");
+      if(!is_auto_detecting) {
+        elm_append_rsp_const("NO DATA\r");
+      }
+    }
+    got_msg_this_run = false;
+
+    if(!is_auto_detecting) {
+      elm_append_rsp_const("\r>");
+      elm_tcp_tx_flush();
+    } else {
+      elm_autodetect_cb(got_msg_this_run_backup);
+    }
+
+  }
+}
+
+void ICACHE_FLASH_ATTR elm_LINFast_businit_timer_cb(void *arg){
+  const elm_protocol_t* proto = (const elm_protocol_t*) arg;
+  loopcount--;
+  os_printf("LIN INIT CB call\n");
+
+  int echo_result = elm_LINFast_process_echo();
+
+  if(echo_result == -1 || (echo_result == 0 && loopcount == 0)) {
+    os_printf("Init failed with echo test\n");
+    if(!is_auto_detecting){
+      if(echo_result == -1)
+        elm_append_rsp_const("BUS ERROR\r\r>");
+      else
+        elm_append_rsp_const("ERROR\r\r>");
+      elm_tcp_tx_flush();
+    } else {
+      elm_autodetect_cb(false);
+    }
+    loopcount = 0;
+    lin_bus_initialized = 0;
+    return;
+  }
+
+  if(echo_result == 0) {
+    os_printf("Not ready to process\n");
+    os_timer_arm(&elm_timeout, elm_mode_timeout, 0);
+    return; // Not ready to go on
+  }
+
+  os_printf("Bus init ready to process %d bytes\n", lin_ringbuff_len);
+
+  if(lin_bus_initialized) return; // TODO: shoulnd't ever happen. Handle?
+
+  if(loopcount>0) {
+    //Keep waiting for response
+    for(int i = 0; i < 4; i++){
+      elm_LIN_read_into_ringbuff();
+
+      if(lin_ringbuff_len > 0){
+        if(lin_ringbuff_get(0) & 0x80 != 0x80){
+          os_printf("Resetting LIN bus due to bad first byte.\n");
+          loopcount = 0;
+          lin_ringbuff_clear();
+
+          if(!is_auto_detecting){
+            elm_append_rsp_const("ERROR\r\r>");
+            elm_tcp_tx_flush();
+          } else {
+            elm_autodetect_cb(false);
+          }
+          return;
+        }
+
+        uint8_t newmsg_len = 4 + (lin_ringbuff_get(0) & 0x7);
+        if(lin_ringbuff_len < newmsg_len) {
+          os_printf("Resetting LIN because returned init data was wrong.\n");
+          loopcount = 0;
+          lin_ringbuff_clear();
+
+          if(!is_auto_detecting){
+            elm_append_rsp_const("ERROR\r\r>");
+            elm_tcp_tx_flush();
+          } else {
+            elm_autodetect_cb(false);
+          }
+          return;
+        }
+
+        if(!elm_LIN_ringbuff_memcmp("\x83\xF1\x10\xC1\x8F\xE9\xBD", 7)) {
+          lin_ringbuff_consume(7);
+          lin_bus_initialized = true;
+          //lin_ringbuff_clear();
+
+          os_printf("BUS INITIALIZED\n");
+
+          //os_timer_disarm(&elm_proto_aux_timeout);
+          //os_timer_arm(&elm_proto_aux_timeout, elm_mode_keepalive_period, 0);
+
+          if(!is_auto_detecting) {
+            elm_append_rsp_const("OK\r");
+            elm_tcp_tx_flush();
+
+            //Do the send that was delayed
+            proto->process_obd(proto, lin_cmd_backup, lin_cmd_backup_len);
+          } else {
+            os_printf("LIN success. Silent because in autodetect.\n");
+            elm_autodetect_cb(true);
+          }
+
+        }
+      }
+    }
+    os_timer_arm(&elm_timeout, elm_mode_timeout, 0);
+  } else {
+    os_printf("Fall through on bus init\n");
+    if(!is_auto_detecting){
+      elm_append_rsp_const("ERROR\r\r>");
+      elm_tcp_tx_flush();
+    } else {
+      elm_autodetect_cb(false);
+    }
+  }
+}
+
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LINFast(const elm_protocol_t* proto,
+                                                          const char *cmd, uint16_t len) {
+  os_printf("ELM OBD (%d) '%s'", len, cmd);
+  elm_lin_obd_msg msg = {};
+  uint8_t bytelen = (len-1)/2;
+  if((bytelen > 7 && !elm_mode_allow_long) || bytelen > 8) {
+    elm_append_rsp_const("?\r\r>");
+    return;
+  }
+
+  if(!lin_bus_initialized) {
+    if(!is_auto_detecting)
+      elm_append_rsp_const("BUS INIT: ");
+
+    // Kind of a hack to deal with Panda resending data
+    // that could not be sent asap. Try to clear it away.
+    // TODO: A better solution would be to clear out the
+    // CAN mailboxes on the MCU when the speed changes.
+    for(int pass = 0; pass < 32; pass++){
+      int num_can_msgs = panda_usbemu_kline_read(0x40);
+      if(num_can_msgs < 0) continue;
+      if(!num_can_msgs) break;
+      for(int j=0; j<1000; j++) __asm__(""); //Small Delay
+    }
+
+    lin_cmd_backup = cmd;
+    lin_cmd_backup_len = len;
+
+    bytelen = 1;
+    msg.dat[0] = 0x81;
+    msg.dat[1] = 0x81; // checksum
+  } else {
+    bytelen = min(bytelen, 7);
+    for(int i = 0; i < bytelen; i++){
+      msg.dat[i] = elm_decode_hex_byte(&cmd[i*2]);
+      msg.dat[bytelen] += msg.dat[i];
+    }
+
+    elm_msg_mode_ret_filter = msg.dat[0];
+    elm_msg_pid_ret_filter = msg.dat[1];
+  }
+
+  msg.priority = 0xC0 | bytelen;
+  msg.receiver = 0x33;
+  msg.sender = 0xF1;
+  msg.dat[bytelen] += msg.priority + msg.receiver + msg.sender; // checksum
+
+  #ifdef ELM_DEBUG
+  os_printf("Sending LIN OBD: Priority: %02x; RecvAddr: %02x; SendAddr: %02x;  (%02x); ",
+            msg.priority, msg.receiver, msg.sender, bytelen);
+  for(int i = 0; i < 8; i++) os_printf("%02x ", msg.dat[i]);
+  os_printf("\n");
+  #endif
+
+  panda_usbemu_kline_write(&msg);
+
+  loopcount = LOOPCOUNT_FULL + 1;
+  os_timer_disarm(&elm_timeout);
+
+  if(lin_bus_initialized) {
+    os_timer_setfn(&elm_timeout, (os_timer_func_t *)elm_LINFast_timer_cb, proto);
+    elm_LINFast_timer_cb((void*)proto);
+    //TODO Decide when to start this timer
+    //os_timer_disarm(&elm_proto_aux_timeout);
+    //os_timer_arm(&elm_proto_aux_timeout, elm_mode_keepalive_period, 0);
+
+    //os_timer_arm(&elm_timeout, 50, 0);
+  } else {
+    os_timer_setfn(&elm_timeout, (os_timer_func_t *)elm_LINFast_businit_timer_cb, proto);
+    elm_LINFast_businit_timer_cb((void*)proto);
+  }
+}
+
+/*****************************************************
+ *** ELM protocol specification and implementation ***
+ ***  -> ISO 15765-4 implementation                ***
+ *****************************************************/
 
 void ICACHE_FLASH_ATTR elm_ISO15765_timer_cb(void *arg){
   const elm_protocol_t* proto = (const elm_protocol_t*) arg;
@@ -338,7 +834,7 @@ void ICACHE_FLASH_ATTR elm_ISO15765_timer_cb(void *arg){
       if(num_can_msgs) os_printf("  Received %d can messages\n", num_can_msgs);
       #endif
 
-      if(num_can_msgs < -1) continue;
+      if(num_can_msgs < 0) continue;
       if(!num_can_msgs) break;
 
       for(int i = 0; i < num_can_msgs; i++){
@@ -359,7 +855,8 @@ void ICACHE_FLASH_ATTR elm_ISO15765_timer_cb(void *arg){
             )
            ) {
           if(recv->data[0] <= 7 &&
-             recv->data[1] == (0x40|elm_msg_mode) && recv->data[2] == elm_msg_pid) {
+             recv->data[1] == (0x40|elm_msg_mode_ret_filter) &&
+             recv->data[2] == elm_msg_pid_ret_filter) {
             got_msg_this_run = true;
             loopcount = LOOPCOUNT_FULL;
 
@@ -380,7 +877,8 @@ void ICACHE_FLASH_ATTR elm_ISO15765_timer_cb(void *arg){
             }
 
           } else if((recv->data[0] & 0xF0) == 0x10 &&
-                    recv->data[2] == (0x40|elm_msg_mode) && recv->data[3] == elm_msg_pid) {
+                    recv->data[2] == (0x40|elm_msg_mode_ret_filter) &&
+                    recv->data[3] == elm_msg_pid_ret_filter) {
             got_msg_this_run = true;
             loopcount = LOOPCOUNT_FULL;
             panda_usbemu_can_write(0,
@@ -390,8 +888,11 @@ void ICACHE_FLASH_ATTR elm_ISO15765_timer_cb(void *arg){
                                    "\x30\x00\x00", 3);
 
             did_multimessage = true;
+
+            #ifdef ELM_DEBUG
             os_printf("      CAN multimsg start response, index: %d, len %d\n", i,
                       ((recv->data[0]&0xF)<<8) | recv->data[1]);
+            #endif
 
             if(!is_auto_detecting){
               if(!elm_mode_additional_headers) {
@@ -412,7 +913,9 @@ void ICACHE_FLASH_ATTR elm_ISO15765_timer_cb(void *arg){
           } else if (did_multimessage && (recv->data[0] & 0xF0) == 0x20) {
             got_msg_this_run = true;
             loopcount = LOOPCOUNT_FULL;
+            #ifdef ELM_DEBUG
             os_printf("      CAN multimsg data response, index: %d\n", i);
+            #endif
 
             if(!is_auto_detecting){
               if(!elm_mode_additional_headers) {
@@ -476,15 +979,16 @@ static void ICACHE_FLASH_ATTR elm_init_ISO15765(const elm_protocol_t* proto){
   for(int pass = 0; pass < 32; pass++){
     panda_can_msg_t *can_msgs;
     int num_can_msgs = panda_usbemu_can_read(&can_msgs);
-    if(num_can_msgs < -1) continue;
+    if(num_can_msgs < 0) continue;
     //if(!num_can_msgs) break;
+    //os_delay_us(1000);
     for(int j=0; j<1000; j++) __asm__(""); //Small Delay
   }
 }
 
 static void ICACHE_FLASH_ATTR elm_process_obd_cmd_ISO15765(const elm_protocol_t* proto,
-                                                           char *cmd, uint16_t len) {
-  elm_obd_msg msg = {};
+                                                           const char *cmd, uint16_t len) {
+  elm_can_obd_msg msg = {};
   msg.len = (len-1)/2;
   if((msg.len > 7 && !elm_mode_allow_long) || msg.len > 8) {
     elm_append_rsp_const("?\r\r>");
@@ -496,8 +1000,8 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_ISO15765(const elm_protocol_t*
   for(int i = 0; i < msg.len; i++)
     msg.dat[i] = elm_decode_hex_byte(&cmd[i*2]);
 
-  elm_msg_mode = msg.dat[0];
-  elm_msg_pid = msg.dat[1];
+  elm_msg_mode_ret_filter = msg.dat[0];
+  elm_msg_pid_ret_filter = msg.dat[1];
 
   #ifdef ELM_DEBUG
   os_printf("Sending CAN OBD: %02x; ", msg.len);
@@ -519,27 +1023,24 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_ISO15765(const elm_protocol_t*
   os_timer_arm(&elm_timeout, elm_mode_timeout, 0);
 }
 
-void ICACHE_FLASH_ATTR elm_switch_proto(){
-  const elm_protocol_t* proto = elm_current_proto();
-  if(!proto->supported) return;
-  switch(proto->type) {
-  case AUTO:
-    break;
-  case LIN:
-    break;
-  case CAN11:
-  case CAN29:
-    break;
-  default:
-    break;
-  }
+/*****************************************************
+ *** ELM protocol specification and implementation ***
+ ***  -> Stuf for unsupported CAN protocols        ***
+ *****************************************************/
 
-  if(proto->init) proto->init(proto);
+static void ICACHE_FLASH_ATTR elm_process_obd_cmd_CANGen(const elm_protocol_t* proto,
+                                                         const char *cmd, uint16_t len) {
+  elm_append_rsp_const("NO DATA\r\r>");
 }
+
+/*****************************************************
+ *** ELM protocol specification and implementation ***
+ ***  -> AUTO Detect implementation                ***
+ *****************************************************/
 
 static int elm_autodetect_proto_iter;
 static uint16_t elm_staged_auto_msg_len;
-static char* elm_staged_auto_msg;
+static const char* elm_staged_auto_msg;
 
 static void ICACHE_FLASH_ATTR elm_autodetect_cb(bool proto_worked){
   if(proto_worked) {
@@ -556,7 +1057,7 @@ static void ICACHE_FLASH_ATTR elm_autodetect_cb(bool proto_worked){
       if(proto->supported && proto->type != AUTO) {
       os_printf("*** AUTO trying '%s'\n", proto->name);
         proto->init(proto);
-        proto->process_obd(proto, "0100", 4);
+        proto->process_obd(proto, "0100\r", 5);
         return;
       }
     }
@@ -568,7 +1069,7 @@ static void ICACHE_FLASH_ATTR elm_autodetect_cb(bool proto_worked){
 }
 
 static void ICACHE_FLASH_ATTR elm_process_obd_cmd_AUTO(const elm_protocol_t* proto,
-                                                       char *cmd, uint16_t len) {
+                                                       const char *cmd, uint16_t len) {
   elm_append_rsp_const("SEARCHING...\r");
   elm_staged_auto_msg_len = len;
   elm_staged_auto_msg = cmd;
@@ -579,32 +1080,17 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_AUTO(const elm_protocol_t* pro
     if(proto->supported && proto->type != AUTO) {
       os_printf("*** AUTO trying '%s'\n", proto->name);
       proto->init(proto);
-      proto->process_obd(proto, "0100", 4); // Try sending on the bus
+      proto->process_obd(proto, "0100\r", 5); // Try sending on the bus
       return;
     }
   }
   os_printf("ERROR: auto detect entering invalid state.\n");
 }
 
-static void ICACHE_FLASH_ATTR elm_process_obd_cmd_J1850(const elm_protocol_t* proto,
-                                                        char *cmd, uint16_t len) {
-  elm_append_rsp_const("NO DATA\r\r>");
-}
-
-static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LIN5baud(const elm_protocol_t* proto,
-                                                           char *cmd, uint16_t len) {
-  elm_append_rsp_const("BUS INIT: ...ERROR\r\r>");
-}
-
-static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LINFast(const elm_protocol_t* proto,
-                                                          char *cmd, uint16_t len) {
-  elm_append_rsp_const("BUS INIT: ERROR\r\r>");
-}
-
-static void ICACHE_FLASH_ATTR elm_process_obd_cmd_CANGen(const elm_protocol_t* proto,
-                                                         char *cmd, uint16_t len) {
-  elm_append_rsp_const("NO DATA\r\r>");
-}
+/*****************************************************
+ *** ELM protocol specification and implementation ***
+ ***  -> Protocol Registry and related functions.  ***
+ *****************************************************/
 
 static const elm_protocol_t elm_protocols[] = {
   {true,  AUTO,  0,    elm_process_obd_cmd_AUTO,     NULL,              "AUTO",                    },
@@ -612,7 +1098,7 @@ static const elm_protocol_t elm_protocols[] = {
   {false, NA,    104,  elm_process_obd_cmd_J1850,    NULL,              "SAE J1850 VPW",           },
   {false, LIN,   104,  elm_process_obd_cmd_LIN5baud, NULL,              "ISO 9141-2",              },
   {false, LIN,   104,  elm_process_obd_cmd_LIN5baud, NULL,              "ISO 14230-4 (KWP 5BAUD)", },
-  {false, LIN,   104,  elm_process_obd_cmd_LINFast,  NULL,              "ISO 14230-4 (KWP FAST)",  },
+  {true,  LIN,   104,  elm_process_obd_cmd_LINFast,  elm_init_LINFast,  "ISO 14230-4 (KWP FAST)",  },
   {true,  CAN11, 5000, elm_process_obd_cmd_ISO15765, elm_init_ISO15765, "ISO 15765-4 (CAN 11/500)",},
   {true,  CAN29, 5000, elm_process_obd_cmd_ISO15765, elm_init_ISO15765, "ISO 15765-4 (CAN 29/500)",},
   {true,  CAN11, 2500, elm_process_obd_cmd_ISO15765, elm_init_ISO15765, "ISO 15765-4 (CAN 11/250)",},
@@ -624,6 +1110,12 @@ static const elm_protocol_t elm_protocols[] = {
 
 static const elm_protocol_t* ICACHE_FLASH_ATTR elm_current_proto() {
   return &elm_protocols[elm_selected_protocol];
+}
+
+void ICACHE_FLASH_ATTR elm_switch_proto(){
+  const elm_protocol_t* proto = elm_current_proto();
+  if(!proto->supported) return;
+  if(proto->init) proto->init(proto);
 }
 
 /*******************************************
@@ -701,6 +1193,7 @@ static const at_cmd_reg_t at_cmd_reg[] = {
   {"SP",  2, 3, AT_SP},
   {"SPA", 3, 4, AT_SPA},
   {"ST",  2, 4, AT_ST},
+  {"SW",  2, 4, AT_SW},
   {"Z",   1, 1, AT_Z},
 };
 #define AT_CMD_REG_LEN (sizeof(at_cmd_reg)/sizeof(at_cmd_reg_t))
@@ -815,6 +1308,19 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     //20 for CAN, 4 for LIN
     elm_mode_timeout = tmp ? tmp*20 : ELM_MODE_TIMEOUT_DEFAULT;
     break;
+  case AT_SW:
+    if(!elm_check_valid_hex_chars(&cmd[2], 2)) {
+      elm_append_rsp_const("?\r\r");
+      return;
+    }
+
+    elm_mode_keepalive_period = max(elm_decode_hex_byte(&cmd[2]), 0x20) * 20;
+    if(lin_bus_initialized){
+      os_timer_disarm(&elm_proto_aux_timeout);
+      //if(elm_mode_keepalive_period)
+      //  os_timer_arm(&elm_proto_aux_timeout, elm_mode_keepalive_period, 0);
+    }
+    break;
   case AT_Z: //RESET
     elm_mode_echo = true;
     elm_mode_linefeed = false;
@@ -825,6 +1331,7 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     elm_mode_adaptive_timing = 1;
     elm_mode_allow_long = false;
     elm_mode_timeout = ELM_MODE_TIMEOUT_DEFAULT;
+    elm_mode_keepalive_period = ELM_MODE_KEEPALIVE_PERIOD_DEFAULT;
 
     elm_append_rsp_const("\r\r");
     elm_append_rsp_const(IDENT_MSG);
@@ -959,5 +1466,5 @@ void ICACHE_FLASH_ATTR elm327_init() {
   espconn_regist_connectcb(&elm_conn, elm_tcp_connect_cb);
   espconn_regist_disconcb(&elm_conn, elm_tcp_disconnect_cb);
   espconn_accept(&elm_conn);
-  espconn_regist_time(&elm_conn, 60, 0); // 60s timeout for all connections
+  espconn_regist_time(&elm_conn, 0, 0); // 60s timeout for all connections
 }

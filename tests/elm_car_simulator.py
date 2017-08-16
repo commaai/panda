@@ -111,6 +111,7 @@ class ELMCarSimulator():
         RECV = 0xF1
         SEND = 0x33 # Car OBD Functional Address
         headers = struct.pack("BBB", PHYS_ADDR | len(msg), RECV, to_addr)
+        print("    Sending LIN", binascii.hexlify(headers+msg))
         self.panda.kline_send(headers + msg)
 
     def __reset_lin_timeout(self):
@@ -163,8 +164,10 @@ class ELMCarSimulator():
 
         while not self.__stop:
             for address, ts, data, src in self.panda.can_recv():
-                if self.__on and src is 0 and len(data) >= 3:
+                if self.__on and src is 0 and len(data) == 8 and data[0] >= 2:
                     self.__can_process_msg(data[1], data[2], address, ts, data, src)
+                else:
+                    print("Rejecting CAN message", src, hex(address), binascii.hexlify(data))
 
     def can_mode_11b(self):
         self.__can11b = True
@@ -284,7 +287,9 @@ if __name__ == "__main__":
     serial = os.getenv("SERIAL") if os.getenv("SERIAL") else None
     kbaud = int(os.getenv("CANKBAUD")) if os.getenv("CANKBAUD") else 500
     bitwidth = int(os.getenv("CANBITWIDTH")) if os.getenv("CANBITWIDTH") else 0
-    sim = ELMCarSimulator(serial, can_kbaud=kbaud)
+    canenable = bool(int(os.getenv("CANENABLE"))) if os.getenv("CANENABLE") else True
+    linenable = bool(int(os.getenv("LINENABLE"))) if os.getenv("LINENABLE") else True
+    sim = ELMCarSimulator(serial, can_kbaud=kbaud, can=canenable, lin=linenable)
     if(bitwidth == 0):
         sim.can_mode_11b_29b()
     if(bitwidth == 11):
