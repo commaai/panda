@@ -53,6 +53,12 @@ int can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   return ret;
 }
 
+void can_clear(can_ring *q) {
+  enter_critical_section();
+  q->w_ptr = 0;
+  q->r_ptr = 0;
+  exit_critical_section();
+}
 
 // assign CAN numbering
 // bus num: Can bus number on ODB connector. Sent to/from USB
@@ -393,4 +399,3 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
 void can_set_forwarding(int from, int to) {
   can_forwarding[from] = to;
 }
-

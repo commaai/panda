@@ -213,6 +213,8 @@ static int ICACHE_FLASH_ATTR panda_usbemu_ctrl_write(uint8_t request_type, uint8
 #define panda_set_can0_kbaud(kbps) panda_usbemu_ctrl_write(0x40, 0xde, 0, kbps*10, 0)
 #define panda_set_safety_mode(mode) panda_usbemu_ctrl_write(0x40, 0xdc, mode, 0, 0)
 #define panda_kline_wakeup_pulse() panda_usbemu_ctrl_write(0x40, 0xf0, 0, 0, 0)
+#define panda_clear_can_rx() panda_usbemu_ctrl_write(0x40, 0xf1, 0xFFFF, 0, 0)
+#define panda_clear_lin_txrx() panda_usbemu_ctrl_write(0x40, 0xf2, 2, 0, 0)
 
 static int ICACHE_FLASH_ATTR panda_usbemu_can_read(panda_can_msg_t** can_msgs) {
   int returned_count = spi_comm((uint8_t *)((const uint16 []){1,0}), 4, pandaRecvData, 0x40);
@@ -773,20 +775,11 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LINFast(const elm_protocol_t* 
     return;
   }
 
+  panda_clear_lin_txrx();
+
   if(!lin_bus_initialized) {
     if(!is_auto_detecting)
       elm_append_rsp_const("BUS INIT: ");
-
-    // Kind of a hack to deal with Panda resending data
-    // that could not be sent asap. Try to clear it away.
-    // TODO: A better solution would be to clear out the
-    // CAN mailboxes on the MCU when the speed changes.
-    for(int pass = 0; pass < 32; pass++){
-      int num_can_msgs = panda_usbemu_kline_read(0x40);
-      if(num_can_msgs < 0) continue;
-      if(!num_can_msgs) break;
-      for(int j=0; j<1000; j++) __asm__(""); //Small Delay
-    }
 
     lin_cmd_backup = cmd;
     lin_cmd_backup_len = len;
@@ -992,19 +985,6 @@ void ICACHE_FLASH_ATTR elm_ISO15765_timer_cb(void *arg){
 
 static void ICACHE_FLASH_ATTR elm_init_ISO15765(const elm_protocol_t* proto){
   panda_set_can0_cbaud(proto->cbaud);
-
-  // Kind of a hack to deal with Panda resending data
-  // that could not be sent asap. Try to clear it away.
-  // TODO: A better solution would be to clear out the
-  // CAN mailboxes on the MCU when the speed changes.
-  for(int pass = 0; pass < 32; pass++){
-    panda_can_msg_t *can_msgs;
-    int num_can_msgs = panda_usbemu_can_read(&can_msgs);
-    if(num_can_msgs < 0) continue;
-    //if(!num_can_msgs) break;
-    //os_delay_us(1000);
-    for(int j=0; j<1000; j++) __asm__(""); //Small Delay
-  }
 }
 
 static void ICACHE_FLASH_ATTR elm_process_obd_cmd_ISO15765(const elm_protocol_t* proto,
@@ -1030,6 +1010,8 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_ISO15765(const elm_protocol_t*
     os_printf("%02x ", msg.dat[i]);
   os_printf("\n");
   #endif
+
+  panda_clear_can_rx();
 
   panda_usbemu_can_write(0, (proto->type==CAN11) ? 0x7DF : 0x18DB33F1,
                          (uint8_t*)&msg, msg.len+1);

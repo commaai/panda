@@ -126,6 +126,15 @@ int putc(uart_ring *q, char elem) {
   return ret;
 }
 
+void clear_uart_buff(uart_ring *q) {
+  enter_critical_section();
+  q->w_ptr_tx = 0;
+  q->r_ptr_tx = 0;
+  q->w_ptr_rx = 0;
+  q->r_ptr_rx = 0;
+  exit_critical_section();
+}
+
 // ***************************** start UART code *****************************
 
 #define __DIV(_PCLK_, _BAUD_)                        (((_PCLK_)*25)/(4*(_BAUD_)))
@@ -146,7 +155,7 @@ void uart_init(USART_TypeDef *u, int baud) {
   // enable uart and tx+rx mode
   u->CR1 = USART_CR1_UE;
   uart_set_baud(u, baud);
-  
+
   u->CR1 |= USART_CR1_TE | USART_CR1_RE;
   //u->CR2 = USART_CR2_STOP_0 | USART_CR2_STOP_1;
   //u->CR2 = USART_CR2_STOP_0;
@@ -213,4 +222,3 @@ void hexdump(const void *a, int l) {
   }
   puts("\n");
 }
-
