@@ -212,6 +212,7 @@ static int ICACHE_FLASH_ATTR panda_usbemu_ctrl_write(uint8_t request_type, uint8
 #define panda_set_can0_cbaud(cbps) panda_usbemu_ctrl_write(0x40, 0xde, 0, cbps, 0)
 #define panda_set_can0_kbaud(kbps) panda_usbemu_ctrl_write(0x40, 0xde, 0, kbps*10, 0)
 #define panda_set_safety_mode(mode) panda_usbemu_ctrl_write(0x40, 0xdc, mode, 0, 0)
+#define panda_kline_wakeup_pulse() panda_usbemu_ctrl_write(0x40, 0xf0, 0, 0, 0)
 
 static int ICACHE_FLASH_ATTR panda_usbemu_can_read(panda_can_msg_t** can_msgs) {
   int returned_count = spi_comm((uint8_t *)((const uint16 []){1,0}), 4, pandaRecvData, 0x40);
@@ -532,7 +533,7 @@ int ICACHE_FLASH_ATTR elm_LINFast_process_echo() {
         return 1;
       } else {
         #ifdef ELM_DEBUG
-        os_printf("Somehow failed\n");
+        os_printf("Echo not correct.\n");
         os_printf("    RB Data (%d %d %d): ", lin_ringbuff_start, lin_ringbuff_end, lin_ringbuff_len);
         for(int i = 0; i < sizeof(lin_ringbuff); i++)
           os_printf("%02x ", lin_ringbuff[i]);
@@ -543,8 +544,14 @@ int ICACHE_FLASH_ATTR elm_LINFast_process_echo() {
         os_printf("\n");
         #endif
 
-        lin_ringbuff_clear();
-        return -1;
+        if(lin_bus_initialized) {
+          lin_ringbuff_clear();
+          return -1;
+        } else {
+          os_printf("Lin init echo misaligned? Consuming byte (%02x). Retry.\n", lin_ringbuff_get(0));
+          lin_ringbuff_consume(1);
+          continue;
+        }
       }
     }
   }
@@ -658,6 +665,10 @@ void ICACHE_FLASH_ATTR elm_LINFast_businit_timer_cb(void *arg){
 
   if(echo_result == -1 || (echo_result == 0 && loopcount == 0)) {
     os_printf("Init failed with echo test\n");
+
+    loopcount = 0;
+    lin_bus_initialized = 0;
+
     if(!is_auto_detecting){
       if(echo_result == -1)
         elm_append_rsp_const("BUS ERROR\r\r>");
@@ -667,8 +678,6 @@ void ICACHE_FLASH_ATTR elm_LINFast_businit_timer_cb(void *arg){
     } else {
       elm_autodetect_cb(false);
     }
-    loopcount = 0;
-    lin_bus_initialized = 0;
     return;
   }
 
@@ -785,6 +794,8 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LINFast(const elm_protocol_t* 
     bytelen = 1;
     msg.dat[0] = 0x81;
     msg.dat[1] = 0x81; // checksum
+
+    panda_kline_wakeup_pulse();
   } else {
     bytelen = min(bytelen, 7);
     for(int i = 0; i < bytelen; i++){

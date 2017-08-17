@@ -84,7 +84,7 @@ class ELMCarSimulator():
                 continue
 
             lin_buff += lin_msg
-            if lin_buff.endswith(b'\xc1\x33\xf1\x81\x66'):
+            if lin_buff.endswith(b'\x00\xc1\x33\xf1\x81\x66'): # Leading 0 is wakeup
                 lin_buff = bytearray()
                 self.__lin_active = True
                 print("GOT LIN (KWP FAST) WAKEUP SIGNAL")
@@ -111,7 +111,7 @@ class ELMCarSimulator():
         RECV = 0xF1
         SEND = 0x33 # Car OBD Functional Address
         headers = struct.pack("BBB", PHYS_ADDR | len(msg), RECV, to_addr)
-        print("    Sending LIN", binascii.hexlify(headers+msg))
+        print("    Sending LIN", binascii.hexlify(headers+msg), hex(sum(bytearray(headers+msg))%0x100))
         self.panda.kline_send(headers + msg)
 
     def __reset_lin_timeout(self):
@@ -165,6 +165,7 @@ class ELMCarSimulator():
         while not self.__stop:
             for address, ts, data, src in self.panda.can_recv():
                 if self.__on and src is 0 and len(data) == 8 and data[0] >= 2:
+                    print("Processing CAN message", src, hex(address), binascii.hexlify(data))
                     self.__can_process_msg(data[1], data[2], address, ts, data, src)
                 else:
                     print("Rejecting CAN message", src, hex(address), binascii.hexlify(data))
