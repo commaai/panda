@@ -36,8 +36,8 @@ def send_compare(s, dat, ret, timeout=4):
             print("current recv data:", repr(res))
             break;
         res += s.recv(1000)
-    print("final recv data: '%s'" % repr(res))
-    assert ret == res, "Data does not agree (%s) (%s)"%(repr(ret), repr(res))
+    #print("final recv data: '%s'" % repr(res))
+    assert ret == res#, "Data does not agree (%s) (%s)"%(repr(ret), repr(res))
 
 def sync_reset(s):
     s.send("ATZ\r")
@@ -268,6 +268,32 @@ def test_elm_send_lin_multiline_msg():
         sim.join()
         s.close()
 
+def test_elm_send_lin_multiline_msg_throughput():
+    s = elm_connect()
+    serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
+    sim = elm_car_simulator.ELMCarSimulator(serial, can=False, silent=True)
+    sim.start()
+
+    try:
+        sync_reset(s)
+        send_compare(s, b'ATSP5\r', b"ATSP5\rOK\r\r>") # Set Proto
+        send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>') # Echo OFF
+        send_compare(s, b'ATS0\r', b'OK\r\r>') # Spaces OFF
+        send_compare(s, b'ATH0\r', b'OK\r\r>') # Headers OFF
+
+        send_compare(s, b'09fc\r', # headers OFF, Spaces OFF
+                     b"BUS INIT: OK\r" +
+                     b''.join((b'49FC' + hex(num+1)[2:].upper().zfill(2) +
+                               b'AAAA' + hex(num+1)[2:].upper().zfill(4) + b'\r'
+                               for num in range(80))) +
+                     b"\r>",
+                     timeout=10
+        )
+    finally:
+        sim.stop()
+        sim.join()
+        s.close()
+
 def test_elm_panda_safety_mode_KWPFast():
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
     p_car = Panda(serial) # Configure this so the messages will send
@@ -476,12 +502,10 @@ def test_elm_send_can_multiline_msg():
         sim.join()
         s.close()
 
-# TODO: Expand test to full throughput.
-# Max throughput currently causes dropped wifi packets
 def test_elm_send_can_multiline_msg_throughput():
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
-    sim = elm_car_simulator.ELMCarSimulator(serial, lin=False)
+    sim = elm_car_simulator.ELMCarSimulator(serial, lin=False, silent=True)
     sim.start()
 
     try:
@@ -491,12 +515,14 @@ def test_elm_send_can_multiline_msg_throughput():
         send_compare(s, b'ATS0\r', b'OK\r\r>') # Spaces OFF
         send_compare(s, b'ATH1\r', b'OK\r\r>') # Headers ON
 
-        send_compare(s, b'09fd\r', # headers ON, Spaces OFF
-                     ("7E8123649FD01AAAAAA\r" +
-                     "".join(
-                         ("7E82"+hex((num+1)%0x10)[2:].upper()+"AAAAAA" +
-                          hex(num)[2:].upper().zfill(8) + "\r" for num in range(80))
-                     ) + "\r>").encode()
+        rows = 584
+        send_compare(s, b'09ff\r', # headers ON, Spaces OFF
+                     ("7E8" + "1" + hex((rows*7)+6)[2:].upper().zfill(3) + "49FF01"+"AA0000\r" +
+                      "".join(
+                          ("7E82"+hex((num+1)%0x10)[2:].upper()+("AA"*5) +
+                           hex(num+1)[2:].upper().zfill(4) + "\r" for num in range(rows))
+                      ) + "\r>").encode(),
+                     timeout=10
         )
     finally:
         sim.stop()

@@ -544,7 +544,7 @@ int ICACHE_FLASH_ATTR elm_LINFast_process_echo() {
         os_printf("\n");
         #endif
 
-        if(lin_bus_initialized) {
+        if(lin_bus_initialized || loopcount == 0 && i == 4) {
           lin_ringbuff_clear();
           return -1;
         } else {

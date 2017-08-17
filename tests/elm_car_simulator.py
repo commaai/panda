@@ -104,14 +104,17 @@ class ELMCarSimulator():
                 lin_buff = bytearray()
 
     def _lin_send(self, to_addr, msg):
-        print("    LIN Reply (%x)" % to_addr, binascii.hexlify(msg))
+        if not self.__silent:
+            print("    LIN Reply (%x)" % to_addr, binascii.hexlify(msg))
 
         PHYS_ADDR = 0x80
         FUNC_ADDR = 0xC0
         RECV = 0xF1
         SEND = 0x33 # Car OBD Functional Address
         headers = struct.pack("BBB", PHYS_ADDR | len(msg), RECV, to_addr)
-        print("    Sending LIN", binascii.hexlify(headers+msg), hex(sum(bytearray(headers+msg))%0x100))
+        if not self.__silent:
+            print("    Sending LIN", binascii.hexlify(headers+msg),
+                  hex(sum(bytearray(headers+msg))%0x100))
         self.panda.kline_send(headers + msg)
 
     def __reset_lin_timeout(self):
@@ -144,7 +147,7 @@ class ELMCarSimulator():
             if len(outmsg) <= 5:
                 self._lin_send(0x10, obd_header + outmsg)
             else:
-                first_msg_len = min(4, len(outmsg)%4)
+                first_msg_len = min(4, len(outmsg)%4) or 4
                 self._lin_send(0x10, obd_header + b'\x01' +
                                b'\x00'*(4-first_msg_len) +
                                outmsg[:first_msg_len])
@@ -165,9 +168,10 @@ class ELMCarSimulator():
         while not self.__stop:
             for address, ts, data, src in self.panda.can_recv():
                 if self.__on and src is 0 and len(data) == 8 and data[0] >= 2:
-                    print("Processing CAN message", src, hex(address), binascii.hexlify(data))
+                    if not self.__silent:
+                        print("Processing CAN message", src, hex(address), binascii.hexlify(data))
                     self.__can_process_msg(data[1], data[2], address, ts, data, src)
-                else:
+                elif not self.__silent:
                     print("Rejecting CAN message", src, hex(address), binascii.hexlify(data))
 
     def can_mode_11b(self):
@@ -274,6 +278,8 @@ class ELMCarSimulator():
         elif mode == 0x09: # Mode: Request vehicle information
             if pid == 0x02:   # Show VIN
                 return b"1D4GP00R55B123456"
+            if pid == 0xFC:   # test long multi message. Ligned up for LIN responses
+                return b''.join((struct.pack(">BBH", 0xAA, 0xAA, num+1) for num in range(80)))
             if pid == 0xFD:   # test long multi message
                 parts = (b'\xAA\xAA\xAA' + struct.pack(">I", num) for num in range(80))
                 return b'\xAA\xAA\xAA' + b''.join(parts)
@@ -281,7 +287,9 @@ class ELMCarSimulator():
                 parts = (b'\xAA\xAA\xAA' + struct.pack(">I", num) for num in range(584))
                 return b'\xAA\xAA\xAA' + b''.join(parts) + b'\xAA'
             if pid == 0xFF:
-                return b"\xAA"*(0xFFF-3)
+                return b'\xAA\x00\x00' +\
+                        b"".join(((b'\xAA'*5)+struct.pack(">H", num+1) for num in range(584)))
+                #return b"\xAA"*100#(0xFFF-3)
 
 
 if __name__ == "__main__":
