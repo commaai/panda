@@ -5,6 +5,7 @@ import time
 import socket
 import select
 import pytest
+import struct
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 import elm_car_simulator
@@ -267,6 +268,54 @@ def test_elm_send_lin_multiline_msg():
         sim.join()
         s.close()
 
+def test_elm_panda_safety_mode_KWPFast():
+    serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
+    p_car = Panda(serial) # Configure this so the messages will send
+    p_car.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+    p_car.kline_drain()
+
+    p_elm = Panda("WIFI")
+    p_elm.set_safety_mode(0xE327);
+
+    def get_checksum(dat):
+        result = 0
+        result += sum(map(ord, dat)) if isinstance(b'dat', str) else sum(dat)
+        return struct.pack("B", result % 0x100)
+
+    def timed_recv_check(p, bus, goodmsg):
+        t = time.time()
+        msg = bytearray()
+
+        while time.time()-t < 0.5 and len(msg) != len(goodmsg):
+            msg += p._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, len(goodmsg)-len(msg))
+            #print("Received", repr(msg))
+            if msg == goodmsg:
+                return True
+            time.sleep(0.01)
+        return False
+
+    def kline_send(p, x, bus=2):
+        p.kline_drain(bus=bus)
+        p._handle.bulkWrite(2, chr(bus).encode()+x)
+        return timed_recv_check(p, bus, x)
+
+    def did_send(priority, toaddr, fromaddr, dat, bus=2, checkbyte=None):
+        msgout = struct.pack("BBB", priority | len(dat), toaddr, fromaddr) + dat
+        msgout += get_checksum(msgout) if checkbyte is None else checkbyte
+        print("Sending", hex(priority), hex(toaddr), hex(fromaddr), repr(msgout))
+
+        if not kline_send(p_elm, msgout, bus=bus):
+            return False
+        return timed_recv_check(p_car, bus, msgout)
+
+    assert not did_send(0xC0, 0x33, 0xF1, b'\x01\x0F', bus=3) #wrong bus
+    assert not did_send(0xC0, 0x33, 0xF1, b'') #wrong length
+    assert not did_send(0xB0, 0x33, 0xF1, b'\x01\x0E') #bad priority
+    assert not did_send(0xC0, 0x00, 0xF1, b'\x01\x0D') #bad addr
+    assert not did_send(0xC0, 0x33, 0x00, b'\x01\x0C') #bad addr
+
+    assert did_send(0xC0, 0x33, 0xF1, b'\x01\x0B') #good! (obd func req)
+
 #////////////
 def test_elm_protocol_autodetect_ISO15765():
     s = elm_connect()
@@ -522,6 +571,7 @@ def test_elm_panda_safety_mode_ISO15765():
     p_car.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
     p_elm = Panda("WIFI")
+    p_elm.set_safety_mode(0xE327);
 
     #sim = elm_car_simulator.ELMCarSimulator(serial, lin=False)
     #sim.start()
@@ -539,7 +589,6 @@ def test_elm_panda_safety_mode_ISO15765():
 
     try:
         sync_reset(s) # Reset elm (which requests the ELM327 safety mode)
-        send_compare(s, b'ATSP6\r', b"ATSP6\rOK\r\r>") # Set Proto ISO 15765-4 (CAN 11/500)
 
         #29 bit
         assert not did_send(p_elm, 0x18DB33F1, b'\x02\x01\x00\x00\x00\x00\x00\x00', 1) #wrong canid

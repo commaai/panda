@@ -19,13 +19,17 @@ static int elm327_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return true;
 }
 
-//static int elm327_tx_lin_hook(int lin_num, uint8_t *data, int len) {
-//  return false;
-//}
+static int elm327_tx_lin_hook(int lin_num, uint8_t *data, int len) {
+  if(lin_num != 0) return false; //Only operate on LIN 0, aka serial 2
+  if(len < 5 || len > 11) return false; //Valid KWP size
+  if(!((data[0] & 0xF8) == 0xC0 && (data[0] & 0x07) > 0 &&
+       data[1] == 0x33 && data[2] == 0xF1)) return false; //Bad msg
+  return true;
+}
 
 const safety_hooks elm327_hooks = {
   .init = NULL,
   .rx = elm327_rx_hook,
   .tx = elm327_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
+  .tx_lin = elm327_tx_lin_hook,
 };
