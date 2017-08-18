@@ -84,6 +84,7 @@ class ELMCarSimulator():
                 continue
 
             lin_buff += lin_msg
+            #print("    ** Buff", lin_buff)
             if lin_buff.endswith(b'\x00\xc1\x33\xf1\x81\x66'): # Leading 0 is wakeup
                 lin_buff = bytearray()
                 self.__lin_active = True
@@ -127,6 +128,10 @@ class ELMCarSimulator():
         print("LIN TIMEOUT")
         self.__lin_timer = None
         self.__lin_active = False
+
+    @property
+    def lin_active(self):
+        return self.__lin_active
 
     def __lin_process_msg(self, priority, toaddr, fromaddr, data):
         self.__reset_lin_timeout()

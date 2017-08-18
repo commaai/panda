@@ -342,6 +342,34 @@ def test_elm_panda_safety_mode_KWPFast():
 
     assert did_send(0xC0, 0x33, 0xF1, b'\x01\x0B') #good! (obd func req)
 
+def test_elm_lin_keepalive():
+    s = elm_connect()
+    serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
+    sim = elm_car_simulator.ELMCarSimulator(serial, can=False, silent=True)
+    sim.start()
+
+    try:
+        sync_reset(s)
+        send_compare(s, b'ATSP5\r', b"ATSP5\rOK\r\r>") # Set Proto
+        send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>') # Echo OFF
+        send_compare(s, b'ATS0\r', b'OK\r\r>') # Spaces OFF
+        send_compare(s, b'ATH0\r', b'OK\r\r>') # Headers OFF
+
+        send_compare(s, b'0100\r', b"BUS INIT: OK\r4100FFFFFFFE\r\r>")
+        assert sim.lin_active
+        time.sleep(6)
+        assert sim.lin_active
+
+        send_compare(s, b'ATPC\r', b"OK\r\r>") #STOP KEEPALIVE
+        assert sim.lin_active
+        time.sleep(6)
+        assert not sim.lin_active
+
+    finally:
+        sim.stop()
+        sim.join()
+        s.close()
+
 #////////////
 def test_elm_protocol_autodetect_ISO15765():
     s = elm_connect()

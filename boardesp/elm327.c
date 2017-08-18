@@ -111,6 +111,8 @@ static bool elm_mode_allow_long = false;
 static uint16_t elm_mode_timeout = ELM_MODE_TIMEOUT_DEFAULT;
 static uint16_t elm_mode_keepalive_period = ELM_MODE_KEEPALIVE_PERIOD_DEFAULT;
 
+bool lin_bus_initialized = false;
+
 /***********************************************
  ***       ELM CLI response functions        ***
  *** (for sending data back to the terminal) ***
@@ -289,12 +291,8 @@ static int ICACHE_FLASH_ATTR panda_usbemu_kline_read(uint16_t len) {
 static int ICACHE_FLASH_ATTR panda_usbemu_kline_write(elm_lin_obd_msg *msg) {
   elm_lin_usb_msg usb_msg = {};
 
-  lin_last_sent_msg_len = (msg->priority & 0x07) + 4;
-  memcpy(&lin_last_sent_msg, msg, lin_last_sent_msg_len);
-  lin_await_msg_echo = true;
-
   usb_msg.usb_ep_num = PANDA_USB_LIN_WRITE_BUS_NUM; //USB Bulk Endpoint ID.
-  usb_msg.payload_len = lin_last_sent_msg_len + 1;
+  usb_msg.payload_len = (msg->priority & 0x07) + 4 + 1; //The +1 is for serial_port
   usb_msg.serial_port = 2;
   memcpy(&usb_msg.msg, msg, sizeof(elm_lin_obd_msg));
 
@@ -308,6 +306,7 @@ static int ICACHE_FLASH_ATTR panda_usbemu_kline_write(elm_lin_obd_msg *msg) {
   if(returned_count)
     os_printf("ELM LIN send expected 0 bytes back from panda. Got %d bytes instead\n", returned_count);
   if(returned_count > 0x40) return 0;
+
   return returned_count;
 }
 
@@ -434,11 +433,15 @@ typedef struct elm_protocol {
   elm_proto_type_t type;
   uint16_t cbaud; //Centibaud (cbaud * 10 = kbaud)
   void (*process_obd)(const struct elm_protocol*, const char*, uint16_t);
+  //init is used to init and de-init a protocol. Init functions should
+  //not do things that would leave a new protocol in an invalid state
+  //after the new protocol's init is called (e.g. No arming timers).
   void (*init)(const struct elm_protocol*);
   char* name;
 } elm_protocol_t;
 
 static const elm_protocol_t* ICACHE_FLASH_ATTR elm_current_proto();
+void ICACHE_FLASH_ATTR elm_reset_aux_timer();
 static void ICACHE_FLASH_ATTR elm_autodetect_cb(bool);
 
 static const elm_protocol_t elm_protocols[];
@@ -474,13 +477,32 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_J1850(const elm_protocol_t* pr
  ***  -> ISO 14230-4 implementation                ***
  *****************************************************/
 
-bool lin_bus_initialized = false;
 const char *lin_cmd_backup = NULL; //Holds msg while bus init is done
-uint16_t lin_cmd_backup_len;
+uint16_t lin_cmd_backup_len = 0;
+bool lin_waiting_keepalive_echo = false;
 
 static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LIN5baud(const elm_protocol_t* proto,
                                                            const char *cmd, uint16_t len) {
   elm_append_rsp_const("BUS INIT: ...ERROR\r\r>");
+}
+
+bool ICACHE_FLASH_ATTR elm_lin_keepalive_echo() {
+  if(lin_waiting_keepalive_echo) {
+    for(int pass = 0; pass < 4 && lin_ringbuff_len < 5; pass++) {
+      elm_LIN_read_into_ringbuff();
+    }
+
+    lin_waiting_keepalive_echo = false;
+    //keepalive Echo should always come before other message echo.
+    if(lin_ringbuff_len >= 5 && !elm_LIN_ringbuff_memcmp("\xc1\x33\xf1\x3e\x23", 5)){
+      lin_ringbuff_consume(5);
+      return true;
+    } else {
+      os_printf("Keep alive echo failed\n");
+      return false;
+    }
+  }
+  return true;
 }
 
 void ICACHE_FLASH_ATTR elm_LINFast_keepalive_timer_cb(void *arg) {
@@ -488,6 +510,20 @@ void ICACHE_FLASH_ATTR elm_LINFast_keepalive_timer_cb(void *arg) {
     os_printf("WARNING! Elm LIN keepalive timer running while bus is not initialized\n");
     return;
   }
+  if(loopcount) {
+    os_printf("WARNING! Elm LIN keepalive timer during a tx/rx loop!\n");
+    return;
+  }
+  if(lin_ringbuff_len) {
+    os_printf("WARNING! lin_ringbuff_len should be 0 when a keepalive echo is processed.\n");
+    return;
+  }
+
+  if(!elm_lin_keepalive_echo()) {
+    lin_bus_initialized = false;
+    return;
+  }
+
   elm_lin_obd_msg msg = {};
 
   msg.priority = 0xC0 | 1;
@@ -503,21 +539,34 @@ void ICACHE_FLASH_ATTR elm_LINFast_keepalive_timer_cb(void *arg) {
   os_printf("\n");
   #endif
 
-  //TODO handle all this crap with not shouting ERROR on failed keepallive msg.
+  lin_waiting_keepalive_echo = true;
+
   panda_usbemu_kline_write(&msg);
+  elm_reset_aux_timer();
 }
 
 static void ICACHE_FLASH_ATTR elm_init_LINFast(const elm_protocol_t* proto){
-  lin_bus_initialized = false;
-  lin_await_msg_echo = false;
-
-  lin_ringbuff_clear();
-
   os_timer_disarm(&elm_proto_aux_timeout);
   os_timer_setfn(&elm_proto_aux_timeout, (os_timer_func_t *)elm_LINFast_keepalive_timer_cb, proto);
+
+  lin_bus_initialized = false;
+  lin_await_msg_echo = false;
+  lin_waiting_keepalive_echo = false;
+
+  lin_cmd_backup = NULL;
+  lin_cmd_backup_len = 0;
+
+  lin_ringbuff_clear();
+  panda_clear_lin_txrx();
 }
 
 int ICACHE_FLASH_ATTR elm_LINFast_process_echo() {
+  if(!elm_lin_keepalive_echo()) {
+    os_printf("Keepalive echo not detected.\n");
+    lin_ringbuff_clear();
+    return -1;
+  }
+
   if(!lin_await_msg_echo) {
     os_printf("Echo abort. Nothing waiting echo\n");
     return 1;
@@ -579,7 +628,7 @@ void ICACHE_FLASH_ATTR elm_LINFast_timer_cb(void *arg){
       elm_tcp_tx_flush();
     }
     loopcount = 0;
-    lin_bus_initialized = 0;
+    lin_bus_initialized = false;
     return;
   }
 
@@ -632,6 +681,7 @@ void ICACHE_FLASH_ATTR elm_LINFast_timer_cb(void *arg){
           }
 
           lin_ringbuff_consume(newmsg_len);
+          //elm_reset_aux_timer();
         } else {
           break; //Stop consuming data if there is not enough data for the next msg.
         }
@@ -655,6 +705,8 @@ void ICACHE_FLASH_ATTR elm_LINFast_timer_cb(void *arg){
       elm_autodetect_cb(got_msg_this_run_backup);
     }
 
+    //TX RX over, resume Keepalive timer
+    elm_reset_aux_timer();
   }
 }
 
@@ -735,15 +787,19 @@ void ICACHE_FLASH_ATTR elm_LINFast_businit_timer_cb(void *arg){
 
           os_printf("BUS INITIALIZED\n");
 
-          //os_timer_disarm(&elm_proto_aux_timeout);
-          //os_timer_arm(&elm_proto_aux_timeout, elm_mode_keepalive_period, 0);
+          elm_reset_aux_timer();
 
           if(!is_auto_detecting) {
             elm_append_rsp_const("OK\r");
-            elm_tcp_tx_flush();
 
             //Do the send that was delayed
-            proto->process_obd(proto, lin_cmd_backup, lin_cmd_backup_len);
+            if(lin_cmd_backup_len) {
+              elm_tcp_tx_flush();
+              proto->process_obd(proto, lin_cmd_backup, lin_cmd_backup_len);
+            } else {
+              elm_append_rsp_const("\r>");
+              elm_tcp_tx_flush();
+            }
           } else {
             os_printf("LIN success. Silent because in autodetect.\n");
             elm_autodetect_cb(true);
@@ -762,6 +818,7 @@ void ICACHE_FLASH_ATTR elm_LINFast_businit_timer_cb(void *arg){
     } else {
       elm_autodetect_cb(false);
     }
+    elm_reset_aux_timer();
   }
 }
 
@@ -775,9 +832,11 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LINFast(const elm_protocol_t* 
     return;
   }
 
-  panda_clear_lin_txrx();
+  os_timer_disarm(&elm_proto_aux_timeout);
 
   if(!lin_bus_initialized) {
+    panda_clear_lin_txrx();
+
     if(!is_auto_detecting)
       elm_append_rsp_const("BUS INIT: ");
 
@@ -788,6 +847,7 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LINFast(const elm_protocol_t* 
     msg.dat[0] = 0x81;
     msg.dat[1] = 0x81; // checksum
 
+    os_printf("WAKEUP PULSE\n");
     panda_kline_wakeup_pulse();
   } else {
     bytelen = min(bytelen, 7);
@@ -812,6 +872,9 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LINFast(const elm_protocol_t* 
   os_printf("\n");
   #endif
 
+  lin_last_sent_msg_len = (msg.priority & 0x07) + 4;
+  memcpy(&lin_last_sent_msg, &msg, lin_last_sent_msg_len);
+  lin_await_msg_echo = true;
   panda_usbemu_kline_write(&msg);
 
   loopcount = LOOPCOUNT_FULL + 1;
@@ -820,11 +883,6 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LINFast(const elm_protocol_t* 
   if(lin_bus_initialized) {
     os_timer_setfn(&elm_timeout, (os_timer_func_t *)elm_LINFast_timer_cb, proto);
     elm_LINFast_timer_cb((void*)proto);
-    //TODO Decide when to start this timer
-    //os_timer_disarm(&elm_proto_aux_timeout);
-    //os_timer_arm(&elm_proto_aux_timeout, elm_mode_keepalive_period, 0);
-
-    //os_timer_arm(&elm_timeout, 50, 0);
   } else {
     os_timer_setfn(&elm_timeout, (os_timer_func_t *)elm_LINFast_businit_timer_cb, proto);
     elm_LINFast_businit_timer_cb((void*)proto);
@@ -1053,21 +1111,22 @@ static void ICACHE_FLASH_ATTR elm_autodetect_cb(bool proto_worked){
     elm_current_proto()->process_obd(elm_current_proto(),
                                      elm_staged_auto_msg, elm_staged_auto_msg_len);
   } else {
-    os_printf("Autodetect proto failed\n");
     for(elm_autodetect_proto_iter++; elm_autodetect_proto_iter < ELM_PROTOCOL_COUNT;
         elm_autodetect_proto_iter++){
       const elm_protocol_t *proto = &elm_protocols[elm_autodetect_proto_iter];
       if(proto->supported && proto->type != AUTO) {
-      os_printf("*** AUTO trying '%s'\n", proto->name);
+        os_printf("*** AUTO trying '%s'\n", proto->name);
         proto->init(proto);
-        proto->process_obd(proto, "0100\r", 5);
+        proto->process_obd(proto, "0100\r", 5); // Try sending on the bus
         return;
       }
     }
+
+    //if(elm_autodetect_main()) return;
     is_auto_detecting = false;
+    os_printf("Autodetect failed\n");
     elm_append_rsp_const("UNABLE TO CONNECT\r\r>");
     elm_tcp_tx_flush();
-    os_printf("Autodetect failed\n");
   }
 }
 
@@ -1077,17 +1136,9 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_AUTO(const elm_protocol_t* pro
   elm_staged_auto_msg_len = len;
   elm_staged_auto_msg = cmd;
   is_auto_detecting = true;
-  for(elm_autodetect_proto_iter = 0; elm_autodetect_proto_iter < ELM_PROTOCOL_COUNT;
-      elm_autodetect_proto_iter++){
-    const elm_protocol_t *proto = &elm_protocols[elm_autodetect_proto_iter];
-    if(proto->supported && proto->type != AUTO) {
-      os_printf("*** AUTO trying '%s'\n", proto->name);
-      proto->init(proto);
-      proto->process_obd(proto, "0100\r", 5); // Try sending on the bus
-      return;
-    }
-  }
-  os_printf("ERROR: auto detect entering invalid state.\n");
+
+  elm_autodetect_proto_iter = 0;
+  elm_autodetect_cb(false);
 }
 
 /*****************************************************
@@ -1115,10 +1166,14 @@ static const elm_protocol_t* ICACHE_FLASH_ATTR elm_current_proto() {
   return &elm_protocols[elm_selected_protocol];
 }
 
-void ICACHE_FLASH_ATTR elm_switch_proto(){
-  const elm_protocol_t* proto = elm_current_proto();
-  if(!proto->supported) return;
-  if(proto->init) proto->init(proto);
+void ICACHE_FLASH_ATTR elm_reset_aux_timer() {
+    os_timer_disarm(&elm_proto_aux_timeout);
+    if(elm_mode_keepalive_period)
+      os_timer_arm(&elm_proto_aux_timeout, elm_mode_keepalive_period, 0);
+}
+
+void ICACHE_FLASH_ATTR elm_proto_reinit(const elm_protocol_t *proto) {
+    if(proto->init) proto->init(proto);
 }
 
 /*******************************************
@@ -1191,6 +1246,7 @@ static const at_cmd_reg_t at_cmd_reg[] = {
   {"M0",  2, 2, AT_M0},
   //{"M1",  2, 2, AT_M1},
   {"NL",  2, 2, AT_NL},
+  {"PC",  2, 2, AT_PC},
   {"S0",  2, 2, AT_S0}, // Added ELM 1.3, expected by Torque
   {"S1",  2, 2, AT_S1}, // Added ELM 1.3, expected by Torque
   {"SP",  2, 3, AT_SP},
@@ -1275,6 +1331,13 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
   case AT_NL: //DISABLE LONG MESSAGE SUPPORT (>7 BYTES)
     elm_mode_allow_long = false;
     break;
+  case AT_PC: //PROTOCOL CANCEL (Stop timers and stuff)
+    {
+      //Init functions should idenpotently prepare the protocol to be used.
+      //Thus, the init function can be used as a protocol cancel function
+      elm_proto_reinit(elm_current_proto());
+      break;
+    }
   case AT_S0: //DISABLE PRINTING SPACES IN ECU RESPONSES
     elm_mode_print_spaces = false;
     break;
@@ -1287,9 +1350,15 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
       elm_append_rsp_const("?\r\r");
       return;
     }
+
+    //De-Init previous protocol
+    elm_proto_reinit(elm_current_proto());
+
     elm_selected_protocol = tmp;
     elm_mode_auto_protocol = (tmp == 0);
-    elm_switch_proto();
+
+    //Init new protocol
+    elm_proto_reinit(elm_current_proto());
     break;
   case AT_SPA: //SET PROTOCOL WITH AUTO FALLBACK
     tmp = elm_decode_hex_char(cmd[3]);
@@ -1297,9 +1366,15 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
       elm_append_rsp_const("?\r\r");
       return;
     }
+
+    //De-Init previous protocol
+    elm_proto_reinit(elm_current_proto());
+
     elm_selected_protocol = tmp;
     elm_mode_auto_protocol = true;
-    elm_switch_proto();
+
+    //Init new protocol
+    elm_proto_reinit(elm_current_proto());
     break;
   case AT_ST:  //SET TIMEOUT
     if(!elm_check_valid_hex_chars(&cmd[2], 2)) {
@@ -1311,17 +1386,19 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     //20 for CAN, 4 for LIN
     elm_mode_timeout = tmp ? tmp*20 : ELM_MODE_TIMEOUT_DEFAULT;
     break;
-  case AT_SW:
+  case AT_SW:  //SET WAKEUP TIME INTERVAL
     if(!elm_check_valid_hex_chars(&cmd[2], 2)) {
       elm_append_rsp_const("?\r\r");
       return;
     }
 
-    elm_mode_keepalive_period = max(elm_decode_hex_byte(&cmd[2]), 0x20) * 20;
+    tmp = elm_decode_hex_byte(&cmd[2]);
+    elm_mode_keepalive_period = tmp ? max(tmp, 0x20) * 20 : 0;
+
     if(lin_bus_initialized){
       os_timer_disarm(&elm_proto_aux_timeout);
-      //if(elm_mode_keepalive_period)
-      //  os_timer_arm(&elm_proto_aux_timeout, elm_mode_keepalive_period, 0);
+      if(elm_mode_keepalive_period)
+        os_timer_arm(&elm_proto_aux_timeout, elm_mode_keepalive_period, 0);
     }
     break;
   case AT_Z: //RESET
@@ -1339,7 +1416,8 @@ static void ICACHE_FLASH_ATTR elm_process_at_cmd(char *cmd, uint16_t len) {
     elm_append_rsp_const("\r\r");
     elm_append_rsp_const(IDENT_MSG);
     panda_set_safety_mode(0xE327);
-    elm_switch_proto();
+
+    elm_proto_reinit(elm_current_proto());
     return;
   default:
     elm_append_rsp_const("?\r\r");
@@ -1439,6 +1517,17 @@ void ICACHE_FLASH_ATTR elm_tcp_disconnect_cb(void *arg){
     }
 
     prev = iter;
+  }
+
+  if(connection_list == NULL) {
+    //If all clients are disconnected, reset the protocol (cancels
+    //keep alive timers). This will not detect inproperly killed
+    //connections. In this case, periodic events associated with the
+    //current protocol will continue until a new client attaches, a
+    //command is sent generating a response (ELM will try to responde
+    //to the dead connection, and remove it upon error), and finally,
+    //the new client disconnects. OFC a power cycle is also an option.
+    elm_proto_reinit(elm_current_proto());
   }
 }
 
