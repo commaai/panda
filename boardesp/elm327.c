@@ -314,23 +314,8 @@ static int ICACHE_FLASH_ATTR panda_usbemu_kline_write(elm_lin_obd_msg *msg) {
  *** Ringbuffer                       ***
  ****************************************/
 
-//typedef struct {
-//  uint8_t *buff;
-//  unsigned int bufflen;
-//  unsigned int start;
-//  unsigned int end;
-//} elm_ringbuff_t;
-//
-//#define gen_ringbuffer(x, size) \
-//  static uint8_t ringbuff_data__##x[size];\
-//  elm_ringbuff_t ##x = {ringbuff_data__##x, size, 0, 0};
-//
-//#define ringbuff_len(rb) ((((rb).bufflen + (rb).end) - (rb).start) % (rb).bufflen)
-//#define ringbuff_item(rb, index) ((rb).buff[((rb).start + index) % (rb).bufflen])
-//#define ringbuff_consume(rb, len) {(rb).start = (((rb).start + len) % (rb).bufflen);}
-//#define ringbuff_clear(rb) {(rb).start = 0; (rb).end = 0;}
-
-//To deal with lag with reading from panda, store init data in ring buffer
+//LIN data is delivered in chunks of arbitrary size. Using a
+//ringbuffer to handle it.
 uint8_t lin_ringbuff[0x20];
 uint8_t lin_ringbuff_start = 0;
 uint8_t lin_ringbuff_end = 0;
@@ -576,9 +561,13 @@ int ICACHE_FLASH_ATTR elm_LINFast_process_echo() {
     if(lin_ringbuff_len < lin_last_sent_msg_len) elm_LIN_read_into_ringbuff();
 
     if(lin_ringbuff_len >= lin_last_sent_msg_len){
+      #ifdef ELM_DEBUG
       os_printf("Got enough data %d\n", lin_last_sent_msg_len);
+      #endif
       if(!elm_LIN_ringbuff_memcmp((uint8_t*)&lin_last_sent_msg, lin_last_sent_msg_len)) {
+        #ifdef ELM_DEBUG
         os_printf("LIN data was sent successfully.\n");
+        #endif
         lin_ringbuff_consume(lin_last_sent_msg_len);
         lin_await_msg_echo = false;
         return 1;
@@ -613,7 +602,9 @@ int ICACHE_FLASH_ATTR elm_LINFast_process_echo() {
 void ICACHE_FLASH_ATTR elm_LINFast_timer_cb(void *arg){
   const elm_protocol_t* proto = (const elm_protocol_t*) arg;
   loopcount--;
+  #ifdef ELM_DEBUG
   os_printf("LIN CB call\n");
+  #endif
 
   if(!lin_bus_initialized) {
     os_printf("WARNING: LIN CB called without bus initialized!");
@@ -640,7 +631,9 @@ void ICACHE_FLASH_ATTR elm_LINFast_timer_cb(void *arg){
     return; // Not ready to go on
   }
 
+  #ifdef ELM_DEBUG
   os_printf("Processing ELM %d\n", lin_ringbuff_len);
+  #endif
 
   if(loopcount>0) {
     for(int pass = 0; pass < 16 && loopcount; pass++){
@@ -691,7 +684,9 @@ void ICACHE_FLASH_ATTR elm_LINFast_timer_cb(void *arg){
   } else {
     bool got_msg_this_run_backup = got_msg_this_run;
     if(!got_msg_this_run) {
+      #ifdef ELM_DEBUG
       os_printf("  No data collected\n");
+      #endif
       if(!is_auto_detecting) {
         elm_append_rsp_const("NO DATA\r");
       }
@@ -713,12 +708,16 @@ void ICACHE_FLASH_ATTR elm_LINFast_timer_cb(void *arg){
 void ICACHE_FLASH_ATTR elm_LINFast_businit_timer_cb(void *arg){
   const elm_protocol_t* proto = (const elm_protocol_t*) arg;
   loopcount--;
+  #ifdef ELM_DEBUG
   os_printf("LIN INIT CB call\n");
+  #endif
 
   int echo_result = elm_LINFast_process_echo();
 
   if(echo_result == -1 || (echo_result == 0 && loopcount == 0)) {
+    #ifdef ELM_DEBUG
     os_printf("Init failed with echo test\n");
+    #endif
 
     loopcount = 0;
     lin_bus_initialized = 0;
@@ -736,12 +735,16 @@ void ICACHE_FLASH_ATTR elm_LINFast_businit_timer_cb(void *arg){
   }
 
   if(echo_result == 0) {
+    #ifdef ELM_DEBUG
     os_printf("Not ready to process\n");
+    #endif
     os_timer_arm(&elm_timeout, elm_mode_timeout, 0);
     return; // Not ready to go on
   }
 
+  #ifdef ELM_DEBUG
   os_printf("Bus init ready to process %d bytes\n", lin_ringbuff_len);
+  #endif
 
   if(lin_bus_initialized) return; // TODO: shoulnd't ever happen. Handle?
 
@@ -801,7 +804,9 @@ void ICACHE_FLASH_ATTR elm_LINFast_businit_timer_cb(void *arg){
               elm_tcp_tx_flush();
             }
           } else {
+            #ifdef ELM_DEBUG
             os_printf("LIN success. Silent because in autodetect.\n");
+            #endif
             elm_autodetect_cb(true);
             // TODO: Since bus init is good, is it ok to skip sending the '0100' msg?
           }
@@ -811,7 +816,9 @@ void ICACHE_FLASH_ATTR elm_LINFast_businit_timer_cb(void *arg){
     }
     os_timer_arm(&elm_timeout, elm_mode_timeout, 0);
   } else {
+    #ifdef ELM_DEBUG
     os_printf("Fall through on bus init\n");
+    #endif
     if(!is_auto_detecting){
       elm_append_rsp_const("ERROR\r\r>");
       elm_tcp_tx_flush();
@@ -824,7 +831,6 @@ void ICACHE_FLASH_ATTR elm_LINFast_businit_timer_cb(void *arg){
 
 static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LINFast(const elm_protocol_t* proto,
                                                           const char *cmd, uint16_t len) {
-  os_printf("ELM OBD (%d) '%s'", len, cmd);
   elm_lin_obd_msg msg = {};
   uint8_t bytelen = (len-1)/2;
   if((bytelen > 7 && !elm_mode_allow_long) || bytelen > 8) {
@@ -847,7 +853,6 @@ static void ICACHE_FLASH_ATTR elm_process_obd_cmd_LINFast(const elm_protocol_t* 
     msg.dat[0] = 0x81;
     msg.dat[1] = 0x81; // checksum
 
-    os_printf("WAKEUP PULSE\n");
     panda_kline_wakeup_pulse();
   } else {
     bytelen = min(bytelen, 7);
