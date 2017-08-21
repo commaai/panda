@@ -332,6 +332,17 @@ class Panda(object):
         print("CAN: BAD RECV, RETRYING")
     return parse_can_buffer(dat)
 
+  def can_clear(self, bus):
+    """Clears all messages from the specified internal CAN ringbuffer as
+    though it were drained.
+
+    Args:
+      bus (int): can bus number to clear a tx queue, or 0xFFFF to clear the
+        global can rx queue.
+
+    """
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf1, bus, 0, b'')
+
   # ******************* serial *******************
 
   def serial_read(self, port_number):
@@ -344,7 +355,17 @@ class Panda(object):
     return b''.join(ret)
 
   def serial_write(self, port_number, ln):
-    return self._handle.bulkWrite(2, chr(port_number) + ln)
+    return self._handle.bulkWrite(2, struct.pack("B", port_number) + ln)
+
+  def serial_clear(self, port_number):
+    """Clears all messages (tx and rx) from the specified internal uart
+    ringbuffer as though it were drained.
+
+    Args:
+      port_number (int): port number of the uart to clear.
+
+    """
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf2, port_number, 0, b'')
 
   # ******************* kline *******************
 
@@ -371,9 +392,8 @@ class Panda(object):
   def kline_send(self, x, bus=2, checksum=True):
     def get_checksum(dat):
       result = 0
-      result += sum(map(ord, dat))
-      result = -result
-      return chr(result&0xFF)
+      result += sum(map(ord, dat)) if isinstance(b'dat', str) else sum(dat)
+      return struct.pack("B", result % 0x100)
 
     self.kline_drain(bus=bus)
     if checksum:
@@ -392,4 +412,3 @@ class Panda(object):
     msg = self.kline_ll_recv(2, bus=bus)
     msg += self.kline_ll_recv(ord(msg[1])-2, bus=bus)
     return msg
-

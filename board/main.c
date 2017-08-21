@@ -117,12 +117,11 @@ int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) {
 
 // send on serial, first byte to select the ring
 void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
-  int i;
   if (len == 0) return;
   uart_ring *ur = get_ring_by_number(usbdata[0]);
   if (!ur) return;
   if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1)) {
-    for (i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
+    for (int i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
   }
 }
 
@@ -251,7 +250,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xdc:
       // this is the only way to leave silent mode
       // and it's blocked over WiFi
-      if (hardwired) {
+      // Allow ELM security mode to be set over wifi.
+      if (hardwired || setup->b.wValue.w == SAFETY_ELM327) {
         safety_set_mode(setup->b.wValue.w);
         can_silent = (setup->b.wValue.w == SAFETY_NOOUTPUT);
         can_init_all();
@@ -358,6 +358,26 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
 
       delay(140 * 9000);
       break;
+    // **** 0xf1: Clear CAN ring buffer.
+    case 0xf1:
+      if (setup->b.wValue.w == 0xFFFF) {
+        puts("Clearing CAN Rx queue\n");
+        can_clear(&can_rx_q);
+      } else if (setup->b.wValue.w < BUS_MAX) {
+        puts("Clearing CAN Tx queue\n");
+        can_clear(can_queues[setup->b.wValue.w]);
+      }
+      break;
+    // **** 0xf2: Clear UART ring buffer.
+    case 0xf2:
+      {
+        uart_ring * rb = get_ring_by_number(setup->b.wValue.w);
+        if (rb) {
+          puts("Clearing UART queue.\n");
+          clear_uart_buff(rb);
+        }
+        break;
+      }
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);
@@ -508,4 +528,3 @@ int main() {
 
   return 0;
 }
-
