@@ -61,9 +61,19 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xd1:
       // this allows reflashing of the bootstub
       // so it's blocked over wifi
-      if (hardwired) {
-        enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-        NVIC_SystemReset();
+      switch (setup->b.wValue.w) {
+        case 0:
+          if (hardwired) {
+            puts("-> entering bootloader\n");
+            enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+            NVIC_SystemReset();
+          }
+          break;
+        case 1:
+          puts("-> entering softloader\n");
+          enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
+          NVIC_SystemReset();
+          break;
       }
       break;
     // **** 0xd6: get version

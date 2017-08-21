@@ -136,6 +136,7 @@ class Panda(object):
                 break
         except Exception as e:
           print("exception", e)
+          traceback.print_exc()
         if wait == False or self._handle != None:
           break
     assert(self._handle != None)
@@ -154,7 +155,7 @@ class Panda(object):
     except Exception:
       pass
     if not enter_bootloader:
-      time.sleep(0.5)
+      time.sleep(1.0)
       self.connect()
 
   def flash(self, fn=None):
