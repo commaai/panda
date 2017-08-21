@@ -1,5 +1,5 @@
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE, CAN2_TX, CAN2_RX0, CAN2_SCE, CAN3_TX, CAN3_RX0, CAN3_SCE
-int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = 1;
+int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = 0xff;
 
 // ********************* instantiate queues *********************
 
@@ -132,7 +132,7 @@ void can_init(uint8_t can_number) {
     CAN->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
   }
 
-  if (can_silent) {
+  if (can_silent & (1 << can_number)) {
     CAN->BTR |= CAN_BTR_SILM;
   }
 
