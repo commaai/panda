@@ -27,15 +27,15 @@ cert.h:
 	../crypto/getcertheader.py ../certs/debugesp.pub ../certs/releaseesp.pub > cert.h
 
 ifneq ($(wildcard ../.git/HEAD),) 
-gitversion.h: ../.git/HEAD ../.git/index
-	echo "const uint8_t gitversion[] = \"$(shell git rev-parse HEAD)\";" > $@
+gitversion.h: ../VERSION ../.git/HEAD ../.git/index
+	echo "const uint8_t gitversion[] = \"$(shell cat ../VERSION)-$(shell git rev-parse HEAD)\";" > $@
 else
 ifneq ($(wildcard ../../.git/modules/panda/HEAD),) 
-gitversion.h: ../../.git/modules/panda/HEAD ../../.git/modules/panda/index
-	echo "const uint8_t gitversion[] = \"$(shell git rev-parse HEAD)\";" > $@
+gitversion.h: ../VERSION ../../.git/modules/panda/HEAD ../../.git/modules/panda/index
+	echo "const uint8_t gitversion[] = \"$(shell cat ../VERSION)-$(shell git rev-parse HEAD)\";" > $@
 else
-gitversion.h: 
-	echo "const uint8_t gitversion[] = \"RELEASE\";" > $@
+gitversion.h: ../VERSION
+	echo "const uint8_t gitversion[] = \"$(shell cat ../VERSION)-RELEASE\";" > $@
 endif
 endif
 
