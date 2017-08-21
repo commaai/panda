@@ -79,8 +79,6 @@ uint8_t spi_tx_buf[0x44];
 
 // SPI RX
 void DMA2_Stream2_IRQHandler(void) {
-  // ack
-  DMA2->LIFCR = DMA_LIFCR_CTCIF2;
   int *resp_len = (int*)spi_tx_buf;
   memset(spi_tx_buf, 0xaa, 0x44);
   *resp_len = spi_cb_rx(spi_buf, 0x14, spi_tx_buf+4);
@@ -90,13 +88,13 @@ void DMA2_Stream2_IRQHandler(void) {
     puts("\n");
   #endif
   spi_tx_dma(spi_tx_buf, *resp_len + 4);
+
+  // ack
+  DMA2->LIFCR = DMA_LIFCR_CTCIF2;
 }
 
 // SPI TX
 void DMA2_Stream3_IRQHandler(void) {
-  // ack
-  DMA2->LIFCR = DMA_LIFCR_CTCIF3;
-
   #ifdef DEBUG_SPI
     puts("SPI handshake\n");
   #endif  
@@ -104,14 +102,17 @@ void DMA2_Stream3_IRQHandler(void) {
   // reset handshake back to pull up
   GPIOB->MODER &= ~(GPIO_MODER_MODER0);
   GPIOB->PUPDR |= GPIO_PUPDR_PUPDR0_0;
+
+  // ack
+  DMA2->LIFCR = DMA_LIFCR_CTCIF3;
 }
 
 void EXTI4_IRQHandler(void) {
-  int pr = EXTI->PR;
+  volatile int pr = EXTI->PR;
   #ifdef DEBUG_SPI
     puts("exti4\n");
   #endif
-  // SPI CS rising
+  // SPI CS falling
   if (pr & (1 << 4)) {
     spi_total_count = 0;
     spi_rx_dma(spi_buf, 0x14);

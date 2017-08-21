@@ -16,7 +16,7 @@ def test_udp_doesnt_drop():
       break
 
   for msg_count in [1, 100]:
-    for i in range({1: 0x80, 100: 0x10}[msg_count]):
+    for i in range({1: 0x80, 100: 0x20}[msg_count]):
       pwifi.kick()
 
       speed = 500
@@ -29,7 +29,7 @@ def test_udp_doesnt_drop():
         sys.stdout.flush()
       else:
         print("UDP WIFI loopback %d messages at speed %d, comp speed is %.2f, percent %.2f" % (msg_count, speed, comp_kbps, saturation_pct))
-        assert_greater(saturation_pct, 50)
+        assert_greater(saturation_pct, 40)
         assert_less(saturation_pct, 100)
     print("")
 

@@ -35,6 +35,8 @@ uint32_t sendData[0x14] = {0};
 uint32_t recvData[0x40] = {0};
 
 static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, int recvDataLen) {
+  unsigned int length = 0;
+
   SpiData spiData;
 
   spiData.cmd = 2;
@@ -48,6 +50,9 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   // manual CS pin
   gpio_output_set(0, (1 << 5), 0, 0);
   memset(sendData, 0xCC, 0x14);
+
+  // wait for ST to respond to CS interrupt
+  os_delay_us(50);
 
   // send request
   memcpy(((void*)sendData), dat, len);
@@ -64,32 +69,41 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
   }
 
   // TODO: handle this better
-  if (i == SPI_TIMEOUT) os_printf("ERROR: SPI receive failed\n");
+  if (i == SPI_TIMEOUT) {
+    os_printf("ERROR: SPI receive failed\n");
+    goto fail;
+  }
 
   // blank out recvData
-  memset(recvData, 0xBB, 0x44);
+  memset(recvData, 0x00, 0x44);
 
   // receive the length
   spiData.data = recvData;
   spiData.dataLen = 4;
   if(SPIMasterRecvData(SpiNum_HSPI, &spiData) == -1) {
     // TODO: Handle gracefully. Maybe fail if len read fails?
-    os_printf("SPI Failed to recv length\n");
+    os_printf("SPI: Failed to recv length\n");
+    goto fail;
   }
-  int length = recvData[0];
 
+  length = recvData[0];
   if (length > 0x40) {
     os_printf("SPI: BAD LENGTH RECEIVED\n");
+    length = 0;
+    goto fail;
   }
 
   // got response, 0x40 works, 0x44 does not
   spiData.data = recvData+1;
-  spiData.dataLen = recvDataLen;
+  spiData.dataLen = length; // recvDataLen;
   if(SPIMasterRecvData(SpiNum_HSPI, &spiData) == -1) {
     // TODO: Handle gracefully. Maybe retry if payload failed.
-    os_printf("SPI Failed to recv payload\n");
+    os_printf("SPI: Failed to recv payload\n");
+    length = 0;
+    goto fail;
   }
 
+fail:
   // clear CS
   gpio_output_set((1 << 5), 0, 0, 0);
 
