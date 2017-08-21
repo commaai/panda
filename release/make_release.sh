@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ ! -d "../../pandaextra" ]; then
+  echo "No release cert found, cannot build release."
+  echo "You probably aren't looking to do this anyway."
+  exit
+fi
+
 # make ST
 pushd .
 cd ../board
