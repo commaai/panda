@@ -46,7 +46,7 @@ class PandaWifiStreaming(object):
         if addr == (self.ip, self.port):
           ret += parse_can_buffer(dat)
       except socket.error as e:
-        if e.errno != 35:
+        if e.errno != 35 and e.errno != 11:
           traceback.print_exc()
         break
     return ret
