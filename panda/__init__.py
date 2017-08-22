@@ -155,8 +155,16 @@ class Panda(object):
     except Exception:
       pass
     if not enter_bootloader:
+      self.close()
       time.sleep(1.0)
-      self.connect()
+      try:
+        self.connect()
+      except Exception:
+        # retry after 5 seconds
+        print("connecting to bootstub is taking a while...")
+        time.sleep(5.0)
+        self.connect()
+
 
   def flash(self, fn=None):
     if not self.bootstub:
@@ -171,6 +179,9 @@ class Panda(object):
 
     with open(fn) as f:
       dat = f.read()
+
+    # get version
+    print("flash: version is "+self.get_version())
 
     # confirm flasher is present
     fr = self._handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
@@ -246,6 +257,9 @@ class Panda(object):
     except Exception as e:
       print(e)
       pass
+
+  def get_version(self):
+    return self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40)
 
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
