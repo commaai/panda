@@ -90,6 +90,7 @@ static int honda_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 }
 
 static void honda_init() {
+  controls_allowed = 0;
 }
 
 const safety_hooks honda_hooks = {
