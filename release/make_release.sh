@@ -6,29 +6,34 @@ if [ ! -d "../../pandaextra" ]; then
   exit
 fi
 
-# make ST
+export RELEASE=1
+
+# make ST + bootstub
 pushd .
 cd ../board
 make clean
-RELEASE=1 make obj/panda.bin
+make obj/panda.bin
+make obj/bootstub.panda.bin
 popd
-
 
 # make ESP
 pushd .
 cd ../boardesp
 make clean
-RELEASE=1 make user1.bin
-RELEASE=1 make user2.bin
+make user1.bin
+make user2.bin
 popd
+
+# make release
+mkdir obj
+make -f ../common/version.mk
+make obj/gitversion.h
+RELEASE_NAME=$(python -c "import sys;sys.stdout.write(open('obj/gitversion.h').read().split('\"')[1])")
+rm -rf obj
 
 # make zip file
 pushd .
 cd ..
-cat VERSION > /tmp/version
-echo -en "-" >> /tmp/version
-git rev-parse HEAD >> /tmp/version
-cat /tmp/version
-zip -j release/panda-$(cat /tmp/version).zip ~/one/panda/board/obj/panda.bin ~/one/panda/boardesp/user?.bin /tmp/version
+zip -j release/panda-$RELEASE_NAME.zip ~/one/panda/board/obj/bootstub.panda.bin ~/one/panda/board/obj/panda.bin ~/one/panda/boardesp/user?.bin /tmp/version
 popd
 
