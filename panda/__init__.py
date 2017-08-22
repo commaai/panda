@@ -361,6 +361,10 @@ class Panda(object):
   def set_esp_power(self, on):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xd9, int(on), 0, b'')
 
+  def esp_reset(self, bootmode=0):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xda, int(bootmode), 0, b'')
+    time.sleep(0.2)
+
   def set_safety_mode(self, mode=SAFETY_NOOUTPUT):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, 0, b'')
 
@@ -382,7 +386,7 @@ class Panda(object):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xde, bus, int(speed*10), b'')
 
   def set_uart_baud(self, uart, rate):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe1, uart, rate, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, rate/300, b'')
 
   def set_uart_parity(self, uart, parity):
     # parity, 0=off, 1=even, 2=odd

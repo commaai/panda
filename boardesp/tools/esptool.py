@@ -30,20 +30,14 @@ import sys
 import tempfile
 import time
 import traceback
-
+from panda import Panda
 
 __version__ = "1.2"
 
 import usb1
 class FakePort(object):
-  def __init__(self):
-    context = usb1.USBContext()
-
-    for device in context.getDeviceList(skip_on_error=True):
-      if device.getVendorID() == 0xbbaa and device.getProductID() == 0xddcc:
-        print "found device"
-        self.handle = device.open()
-        self.handle.claimInterface(0)
+  def __init__(self, serial=None):
+    self.panda = Panda(serial)
 
     # will only work on new st, old ones will stay @ 921600
     self.baudrate = 230400
@@ -55,30 +49,29 @@ class FakePort(object):
   @baudrate.setter
   def baudrate(self, x):
     print "set baud to", x
-    self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe4, 1, x/300, '')
+    self.panda.set_uart_baud(1, x)
 
   def write(self, buf):
     SEND_STEP = 0x20
     for i in range(0, len(buf), SEND_STEP):
-      self.handle.bulkWrite(2, "\x01" + buf[i:i+SEND_STEP])
+      self.panda.serial_write(1, buf[i:i+SEND_STEP])
 
   def flushInput(self):
-    while self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, 1, 0, 0x40) != "":
-      pass
+    self.panda.serial_clear(1)
 
   def flushOutput(self):
-    pass
+    self.panda.serial_clear(1)
 
   def read(self, llen):
-    ret = self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, 1, 0, 1)
+    ret = self.panda._handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, 1, 0, 1)
     if ret == '':
+      print "sleep"
       time.sleep(0.1)
-      ret = self.handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, 1, 0, 1)
+      ret = self.panda._handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, 1, 0, 1)
     return str(ret)
 
   def reset(self):
-    self.handle.controlWrite(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xda, 1, 0, '')
-    time.sleep(0.2)
+    self.panda.esp_reset(1)
 
   def inWaiting(self):
     return False
@@ -116,8 +109,8 @@ class ESPROM(object):
     # Flash sector size, minimum unit of erase.
     ESP_FLASH_SECTOR = 0x1000
 
-    def __init__(self, port=0, baud=ESP_ROM_BAUD):
-        self._port = FakePort()
+    def __init__(self, port=None, baud=ESP_ROM_BAUD):
+        self._port = FakePort(port)
         self._slip_reader = slip_reader(self._port)
 
     """ Read a SLIP packet from the serial port """
@@ -1087,7 +1080,7 @@ def main():
     parser.add_argument(
         '--port', '-p',
         help='Serial port device',
-        default=os.environ.get('ESPTOOL_PORT', '/dev/ttyUSB0'))
+        default=os.environ.get('ESPTOOL_PORT', None))
 
     parser.add_argument(
         '--baud', '-b',
