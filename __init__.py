@@ -1,1 +1,1 @@
-from .panda import Panda, PandaWifiStreaming
+from .panda import Panda, PandaWifiStreaming, PandaDFU
