@@ -73,7 +73,10 @@ class PandaDFU(object):
     self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, "\x41" + struct.pack("I", address))
     self.status()
 
-  def program(self, address, dat, block_size):
+  def program(self, address, dat, block_size=None):
+    if block_size == None:
+      block_size = len(dat)
+      
     # Set Address Pointer
     self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, "\x21" + struct.pack("I", address))
     self.status()
@@ -90,8 +93,11 @@ class PandaDFU(object):
     # **** Reset ****
     self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, "\x21" + struct.pack("I", 0x8000000))
     self.status()
-    self._handle.controlWrite(0x21, DFU_DNLOAD, 2, 0, "")
-    stat = str(self._handle.controlRead(0x21, DFU_GETSTATUS, 0, 0, 6))
+    try:
+      self._handle.controlWrite(0x21, DFU_DNLOAD, 2, 0, "")
+      stat = str(self._handle.controlRead(0x21, DFU_GETSTATUS, 0, 0, 6))
+    except Exception:
+      pass
 
 
 # *** wifi mode ***
@@ -316,7 +322,10 @@ class Panda(object):
     ret = []
     for device in context.getDeviceList(skip_on_error=True):
       if device.getVendorID() == 0xbbaa and device.getProductID() in [0xddcc, 0xddee]:
-        ret.append(device.getSerialNumber())
+        try:
+          ret.append(device.getSerialNumber())
+        except Exception:
+          continue
     # TODO: detect if this is real
     #ret += ["WIFI"]
     return ret

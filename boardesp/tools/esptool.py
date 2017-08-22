@@ -188,8 +188,9 @@ class ESPROM(object):
                     self.sync()
                     self._port.timeout = 5
                     return
-                except:
-                    traceback.print_exc()
+                except Exception:
+                    print("Connection timeout.")
+                    #traceback.print_exc()
                     time.sleep(0.05)
         raise FatalError('Failed to connect to ESP8266')
 
