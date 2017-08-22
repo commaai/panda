@@ -21,7 +21,7 @@ int detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode) {
   set_gpio_pullup(GPIO, pin, mode);
   for (volatile int i=0; i<PULL_EFFECTIVE_DELAY; i++);
   int ret = get_gpio_input(GPIO, pin);
-  set_gpio_pullup(GPIOB, pin, PULL_NONE);
+  set_gpio_pullup(GPIO, pin, PULL_NONE);
   return ret;
 }
 
@@ -45,6 +45,11 @@ void detect() {
 
   // check if the ESP is trying to put me in boot mode
   is_entering_bootmode = !detect_with_pull(GPIOB, 0, PULL_UP);
+#else
+  // need to do this for early detect
+  is_giant_panda = 0;
+  revision = PANDA_REV_AB;
+  is_entering_bootmode = 0;
 #endif
 }
 
@@ -417,9 +422,9 @@ void early() {
   GPIOA->ODR = 0; GPIOB->ODR = 0; GPIOC->ODR = 0;
   GPIOA->PUPDR = 0; GPIOB->PUPDR = 0; GPIOC->PUPDR = 0;
 
-  #ifdef PANDA
-    detect();
+  detect();
 
+  #ifdef PANDA
     // enable the ESP, disable ESP boot mode
     // unless we are on a giant panda, then there's no ESP
     if (is_giant_panda) {
