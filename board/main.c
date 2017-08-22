@@ -511,6 +511,7 @@ int main() {
   #ifdef PANDA
     uint64_t marker = 0;
     #define CURRENT_THRESHOLD 0xF00
+    #define CLICKS 8
   #endif
 
   for (cnt=0;;cnt++) {
@@ -521,7 +522,7 @@ int main() {
 
       switch (usb_power_mode) {
         case USB_POWER_CLIENT:
-          if ((cnt-marker) >= 10) {
+          if ((cnt-marker) >= CLICKS) {
             if (!is_enumerated) {
               puts("USBP: didn't enumerate, switching to CDP mode\n");
               // switch to CDP
@@ -535,8 +536,8 @@ int main() {
           }
           break;
         case USB_POWER_CDP:
-          // been 10 clicks since we switched to CDP
-          if ((cnt-marker) >= 10) {
+          // been CLICKS clicks since we switched to CDP
+          if ((cnt-marker) >= CLICKS) {
             // measure current draw, if positive and no enumeration, switch to DCP
             if (!is_enumerated && current < CURRENT_THRESHOLD) {
               puts("USBP: no enumeration with current draw, switching to DCP mode\n");
@@ -550,8 +551,8 @@ int main() {
           }
           break;
         case USB_POWER_DCP:
-          // been at least 10 clicks since we switched to DCP
-          if ((cnt-marker) >= 10) {
+          // been at least CLICKS clicks since we switched to DCP
+          if ((cnt-marker) >= CLICKS) {
             // if no current draw, switch back to CDP
             if (current >= CURRENT_THRESHOLD) {
               puts("USBP: no current draw, switching back to CDP mode\n");
@@ -567,8 +568,8 @@ int main() {
       }
 
       // ~0x9a = 500 ma
-      puth(current);
-      puts("\n");
+      /*puth(current);
+      puts("\n");*/
     #endif
 
     // reset this every 16th pass
@@ -589,10 +590,14 @@ int main() {
     #endif
 
     // blink the red LED
-    set_led(LED_RED, 0);
-    delay(2000000);
-    set_led(LED_RED, 1);
-    delay(2000000);
+    for (int fade = 0; fade < 1024; fade += 8) {
+      for (int i = 0; i < 128; i++) {
+        set_led(LED_RED, 0);
+        if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
+        set_led(LED_RED, 1);
+        if (fade < 512) { delay(fade); } else { delay(1024-fade); }
+      }
+    }
 
     // turn off the green LED, turned on by CAN
     #ifdef PANDA
