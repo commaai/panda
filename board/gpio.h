@@ -339,10 +339,11 @@ void gpio_init() {
 
   #ifdef PANDA
     // K-line enable moved from B4->B7 to make room for GMLAN on CAN3
-    if(revision == PANDA_REV_C)
+    if (revision == PANDA_REV_C) {
       set_gpio_output(GPIOB, 7, 1); // REV C
-    else
+    } else {
       set_gpio_output(GPIOB, 4, 1); // REV AB
+    }
 
     // C12,D2: K-Line setup on UART 5
     set_gpio_alternate(GPIOC, 12, GPIO_AF8_UART5);
@@ -359,7 +360,6 @@ void gpio_init() {
   #endif
 
   if (revision == PANDA_REV_C) {
-    //set_usb_power_mode(USB_POWER_CDP);
     set_usb_power_mode(USB_POWER_CLIENT);
   }
 }
