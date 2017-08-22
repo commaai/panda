@@ -205,9 +205,12 @@ void set_can_mode(int can, int use_gmlan) {
   }
 }
 
-#define USB_POWER_CLIENT 0
-#define USB_POWER_CDP 1
-#define USB_POWER_DCP 2
+#define USB_POWER_NONE 0
+#define USB_POWER_CLIENT 1
+#define USB_POWER_CDP 2
+#define USB_POWER_DCP 3
+
+int usb_power_mode = USB_POWER_NONE;
 
 void set_usb_power_mode(int mode) {
   switch (mode) {
@@ -227,6 +230,7 @@ void set_usb_power_mode(int mode) {
       set_gpio_output(GPIOA, 13, 0);
       break;
   }
+  usb_power_mode = mode;
 }
 
 #define ESP_DISABLED 0

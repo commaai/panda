@@ -143,8 +143,11 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
   }
 }
 
+int is_enumerated = 0;
+
 void usb_cb_enumeration_complete() {
   puts("USB enumeration complete\n");
+  is_enumerated = 1;
 }
 
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
@@ -503,9 +506,70 @@ int main() {
   __enable_irq();
 
   // LED should keep on blinking all the time
-  uint64_t cnt;
+  uint64_t cnt = 0;
+
+  #ifdef PANDA
+    uint64_t marker = 0;
+    #define CURRENT_THRESHOLD 0xF00
+  #endif
+
   for (cnt=0;;cnt++) {
     can_live = pending_can_live;
+
+    #ifdef PANDA
+      int current = adc_get(ADCCHAN_CURRENT);
+
+      switch (usb_power_mode) {
+        case USB_POWER_CLIENT:
+          if ((cnt-marker) >= 10) {
+            if (!is_enumerated) {
+              puts("USBP: didn't enumerate, switching to CDP mode\n");
+              // switch to CDP
+              set_usb_power_mode(USB_POWER_CDP);
+              marker = cnt;
+            }
+          }
+          // keep resetting the timer if it's enumerated
+          if (is_enumerated) {
+            marker = cnt;
+          }
+          break;
+        case USB_POWER_CDP:
+          // been 10 clicks since we switched to CDP
+          if ((cnt-marker) >= 10) {
+            // measure current draw, if positive and no enumeration, switch to DCP
+            if (!is_enumerated && current < CURRENT_THRESHOLD) {
+              puts("USBP: no enumeration with current draw, switching to DCP mode\n");
+              set_usb_power_mode(USB_POWER_DCP);
+              marker = cnt;
+            }
+          }
+          // keep resetting the timer if there's no current draw in CDP
+          if (current >= CURRENT_THRESHOLD) {
+            marker = cnt;
+          }
+          break;
+        case USB_POWER_DCP:
+          // been at least 10 clicks since we switched to DCP
+          if ((cnt-marker) >= 10) {
+            // if no current draw, switch back to CDP
+            if (current >= CURRENT_THRESHOLD) {
+              puts("USBP: no current draw, switching back to CDP mode\n");
+              set_usb_power_mode(USB_POWER_CDP);
+              marker = cnt;
+            }
+          }
+          // keep resetting the timer if there's current draw in DCP
+          if (current < CURRENT_THRESHOLD) {
+            marker = cnt;
+          }
+          break;
+      }
+
+      // ~0x9a = 500 ma
+      puth(current);
+      puts("\n");
+    #endif
 
     // reset this every 16th pass
     if ((cnt&0xF) == 0) pending_can_live = 0;
