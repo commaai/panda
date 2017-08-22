@@ -65,7 +65,6 @@ class FakePort(object):
   def read(self, llen):
     ret = self.panda._handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, 1, 0, 1)
     if ret == '':
-      print "sleep"
       time.sleep(0.1)
       ret = self.panda._handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, 1, 0, 1)
     return str(ret)
