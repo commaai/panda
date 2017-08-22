@@ -95,7 +95,7 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
 
   // got response, 0x40 works, 0x44 does not
   spiData.data = recvData+1;
-  spiData.dataLen = length; // recvDataLen;
+  spiData.dataLen = (length+3)&(~4); // recvDataLen;
   if(SPIMasterRecvData(SpiNum_HSPI, &spiData) == -1) {
     // TODO: Handle gracefully. Maybe retry if payload failed.
     os_printf("SPI: Failed to recv payload\n");

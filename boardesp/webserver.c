@@ -11,8 +11,8 @@
 #include "crypto/rsa.h"
 #include "crypto/sha.h"
 
-#include "gitversion.h"
-#include "cert.h"
+#include "obj/gitversion.h"
+#include "obj/cert.h"
 
 #define max(a,b) ((a) > (b) ? (a) : (b))
 #define min(a,b) ((a) < (b) ? (a) : (b))

@@ -1,5 +1,6 @@
 *.pyc
 .*.swp
+.*.swo
 *.o
 a.out
 *~

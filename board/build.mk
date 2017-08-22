@@ -31,18 +31,7 @@ recover: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
 	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
 	$(DFU_UTIL) -a 0 -s 0x08000000:leave -D obj/bootstub.$(PROJ_NAME).bin
 
-ifneq ($(wildcard ../.git/HEAD),)
-obj/gitversion.h: ../VERSION ../.git/HEAD ../.git/index
-	echo "const uint8_t gitversion[] = \"$(shell cat ../VERSION)-$(shell git rev-parse HEAD)\";" > $@
-else
-ifneq ($(wildcard ../../.git/modules/panda/HEAD),)
-obj/gitversion.h: ../VERSION ../../.git/modules/panda/HEAD ../../.git/modules/panda/index
-	echo "const uint8_t gitversion[] = \"$(shell cat ../VERSION)-$(shell git rev-parse HEAD)\";" > $@
-else
-obj/gitversion.h: ../VERSION
-	echo "const uint8_t gitversion[] = \"$(shell cat ../VERSION)-RELEASE\";" > $@
-endif
-endif
+include ../common/version.mk
 
 obj/cert.h: ../crypto/getcertheader.py
 	../crypto/getcertheader.py ../certs/debug.pub ../certs/release.pub > $@
