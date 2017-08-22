@@ -582,12 +582,8 @@ int main() {
       puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
     #endif
 
-    // set LED to be controls allowed, blue on panda, green on legacy
-    #ifdef PANDA
-      set_led(LED_BLUE, controls_allowed);
-    #else
-      set_led(LED_GREEN, controls_allowed);
-    #endif
+    // set green LED to be controls allowed
+    set_led(LED_GREEN, controls_allowed);
 
     // blink the red LED
     for (int fade = 0; fade < 1024; fade += 8) {
@@ -601,7 +597,7 @@ int main() {
 
     // turn off the green LED, turned on by CAN
     #ifdef PANDA
-      set_led(LED_GREEN, 0);
+      set_led(LED_BLUE, 0);
     #endif
   }
 

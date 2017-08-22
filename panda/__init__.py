@@ -126,7 +126,7 @@ class Panda(object):
             #print(device)
             if device.getVendorID() == 0xbbaa and device.getProductID() in [0xddcc, 0xddee]:
               if self._serial is None or device.getSerialNumber() == self._serial:
-                print("opening device", device.getSerialNumber())
+                print("opening device", device.getSerialNumber(), hex(device.getProductID()))
                 self.bootstub = device.getProductID() == 0xddee
                 self.legacy = (device.getbcdDevice() != 0x2300)
                 self._handle = device.open()
@@ -166,19 +166,20 @@ class Panda(object):
         self.connect()
 
 
-  def flash(self, fn=None):
+  def flash(self, fn=None, code=None):
     if not self.bootstub:
       self.reset(enter_bootstub=True)
     assert(self.bootstub)
 
-    if fn is None:
+    if fn is None and code is None:
       ret = os.system("cd %s && make clean && make -f %s %s" % (os.path.join(BASEDIR, "board"),
                       "Makefile.legacy" if self.legacy else "Makefile",
                       "obj/comma.bin" if self.legacy else "obj/panda.bin"))
       fn = os.path.join(BASEDIR, "board", "obj", "comma.bin" if self.legacy else "panda.bin")
 
-    with open(fn) as f:
-      dat = f.read()
+    if code is None:
+      with open(fn) as f:
+        code = f.read()
 
     # get version
     print("flash: version is "+self.get_version())
@@ -199,8 +200,8 @@ class Panda(object):
     # flash over EP2
     STEP = 0x10
     print("flash: flashing")
-    for i in range(0, len(dat), STEP):
-      self._handle.bulkWrite(2, dat[i:i+STEP])
+    for i in range(0, len(code), STEP):
+      self._handle.bulkWrite(2, code[i:i+STEP])
 
     # reset
     print("flash: resetting")
@@ -229,7 +230,7 @@ class Panda(object):
     context = usb1.USBContext()
     ret = []
     for device in context.getDeviceList(skip_on_error=True):
-      if device.getVendorID() == 0xbbaa and device.getProductID() == 0xddcc:
+      if device.getVendorID() == 0xbbaa and device.getProductID() in [0xddcc, 0xddee]:
         ret.append(device.getSerialNumber())
     # TODO: detect if this is real
     #ret += ["WIFI"]

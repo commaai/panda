@@ -361,7 +361,7 @@ void can_rx(uint8_t can_number) {
     safety_rx_hook(&to_push);
 
     #ifdef PANDA
-      set_led(LED_GREEN, 1);
+      set_led(LED_BLUE, 1);
     #endif
     can_push(&can_rx_q, &to_push);
 
