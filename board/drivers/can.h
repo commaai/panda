@@ -144,7 +144,6 @@ void can_init(uint8_t can_number) {
   while((CAN->MSR & CAN_MSR_INAK) == CAN_MSR_INAK && tmp < CAN_TIMEOUT) tmp++;
 
   if (tmp == CAN_TIMEOUT) {
-    set_led(LED_BLUE, 1);
     puts("CAN init FAILED!!!!!\n");
     puth(can_number); puts(" ");
     puth(BUS_NUM_FROM_CAN_NUM(can_number)); puts("\n");
