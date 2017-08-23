@@ -6,6 +6,9 @@ from panda import Panda
 from nose.tools import timed, assert_equal, assert_less, assert_greater
 from helpers import time_many_sends, connect_wo_esp
 
+SPEED_NORMAL = 500
+SPEED_GMLAN = 33.3
+
 def test_can_loopback():
   p = connect_wo_esp()
 
@@ -129,9 +132,6 @@ def test_gmlan():
   # enable CAN loopback mode
   p.set_can_loopback(True)
 
-  SPEED_NORMAL = 500
-  SPEED_GMLAN = 33.3
-
   p.set_can_speed_kbps(1, SPEED_NORMAL)
   p.set_can_speed_kbps(2, SPEED_NORMAL)
   p.set_can_speed_kbps(3, SPEED_GMLAN)
@@ -149,6 +149,33 @@ def test_gmlan():
     assert_less(comp_kbps_normal, 1.0 * SPEED_NORMAL)
 
     print("%d: %.2f kbps vs %.2f kbps" % (bus, comp_kbps_gmlan, comp_kbps_normal))
+
+def test_gmlan_bad_toggle():
+  p = connect_wo_esp()
+
+  if p.legacy:
+    return
+
+  # enable output mode
+  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+
+  # enable CAN loopback mode
+  p.set_can_loopback(True)
+
+  # GMLAN_CAN2
+  for bus in [Panda.GMLAN_CAN2, Panda.GMLAN_CAN3]:
+    p.set_gmlan(bus)
+    comp_kbps_gmlan = time_many_sends(p, 3)
+    assert_greater(comp_kbps_gmlan, 0.6 * SPEED_GMLAN)
+    assert_less(comp_kbps_gmlan, 1.0 * SPEED_GMLAN)
+
+  # normal
+  for bus in [Panda.GMLAN_CAN2, Panda.GMLAN_CAN3]:
+    p.set_gmlan(None)
+    comp_kbps_normal = time_many_sends(p, bus)
+    assert_greater(comp_kbps_normal, 0.6 * SPEED_NORMAL)
+    assert_less(comp_kbps_normal, 1.0 * SPEED_NORMAL)
+
 
 # this will fail if you have hardware serial connected
 def test_serial_debug():

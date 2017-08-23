@@ -193,7 +193,7 @@ void can_init_all() {
 }
 
 void can_set_gmlan(int bus) {
-  if (bus == -1) {
+  if (bus == -1 || bus != can_num_lookup[3]) {
     // GMLAN OFF
     switch (can_num_lookup[3]) {
       case 1:
@@ -213,7 +213,9 @@ void can_set_gmlan(int bus) {
         can_init(2);
         break;
     }
-  } else if (bus == 1) {
+  }
+
+  if (bus == 1) {
     puts("GMLAN on CAN2\n");
     // GMLAN on CAN2
     set_can_mode(1, 1);
