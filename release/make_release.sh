@@ -29,11 +29,12 @@ mkdir obj
 make -f ../common/version.mk
 make obj/gitversion.h
 RELEASE_NAME=$(python -c "import sys;sys.stdout.write(open('obj/gitversion.h').read().split('\"')[1])")
+echo -en $RELEASE_NAME > /tmp/version
 rm -rf obj
 
 # make zip file
 pushd .
 cd ..
-zip -j release/panda-$RELEASE_NAME.zip ~/one/panda/board/obj/bootstub.panda.bin ~/one/panda/board/obj/panda.bin ~/one/panda/boardesp/user?.bin /tmp/version
+zip -j release/panda-$RELEASE_NAME.zip ~/one/panda/board/obj/bootstub.panda.bin ~/one/panda/board/obj/panda.bin ~/one/panda/boardesp/user?.bin ~/one/panda/boardesp/esp-open-sdk/ESP8266_NONOS_SDK_V1.5.4_16_05_20/bin/boot_v1.5.bin /tmp/version
 popd
 
