@@ -340,12 +340,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     // **** 0xe6: set USB power
     case 0xe6:
-      if (setup->b.wValue.w == 1) {
-        puts("user setting CDP mode\n");
-        set_usb_power_mode(USB_POWER_CDP);
-      } else {
-        puts("user setting CLIENT mode\n");
-        set_usb_power_mode(USB_POWER_CLIENT);
+      if (revision == PANDA_REV_C) {
+        if (setup->b.wValue.w == 1) {
+          puts("user setting CDP mode\n");
+          set_usb_power_mode(USB_POWER_CDP);
+        } else {
+          puts("user setting CLIENT mode\n");
+          set_usb_power_mode(USB_POWER_CLIENT);
+        }
       }
       break;
     // **** 0xf0: do k-line wValue pulse on uart2 for Acura
