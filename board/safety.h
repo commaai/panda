@@ -55,13 +55,14 @@ const safety_hook_config safety_hook_registry[] = {
 
 #define HOOK_CONFIG_COUNT (sizeof(safety_hook_registry)/sizeof(safety_hook_config))
 
-int safety_set_mode(uint16_t mode){
+int safety_set_mode(uint16_t mode) {
   for (int i = 0; i < HOOK_CONFIG_COUNT; i++) {
     if (safety_hook_registry[i].id == mode) {
       current_hooks = safety_hook_registry[i].hooks;
-      if(current_hooks->init) current_hooks->init();
+      if (current_hooks->init) current_hooks->init();
       return 0;
     }
   }
   return -1;
 }
+
