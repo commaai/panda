@@ -26,10 +26,10 @@ bin: obj/$(PROJ_NAME).bin
 
 # this flashes everything
 recover: obj/bootstub.$(PROJ_NAME).bin obj/$(PROJ_NAME).bin
-	PYTHONPATH=../ python -c "from panda import Panda; Panda().reset(enter_bootloader=True)"
+	-PYTHONPATH=../ python -c "from panda import Panda; Panda().reset(enter_bootloader=True)"
 	sleep 1.0
-	$(DFU_UTIL) -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
-	$(DFU_UTIL) -a 0 -s 0x08000000:leave -D obj/bootstub.$(PROJ_NAME).bin
+	$(DFU_UTIL) -d 0483:df11 -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
+	$(DFU_UTIL) -d 0483:df11 -a 0 -s 0x08000000:leave -D obj/bootstub.$(PROJ_NAME).bin
 
 include ../common/version.mk
 
