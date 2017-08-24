@@ -2,8 +2,7 @@
 from __future__ import print_function
 import sys
 import time
-from panda import Panda, PandaDFU
-from panda.boardesp.tools.esptool import ESPROM, CesantaFlasher
+from panda import Panda, PandaDFU, ESPROM, CesantaFlasher
 from zipfile import ZipFile
 
 def status(x):

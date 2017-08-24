@@ -30,13 +30,13 @@ import sys
 import tempfile
 import time
 import traceback
-from panda import Panda
+import usb1
 
 __version__ = "1.2"
 
-import usb1
 class FakePort(object):
   def __init__(self, serial=None):
+    from panda import Panda
     self.panda = Panda(serial)
 
     # will only work on new st, old ones will stay @ 921600

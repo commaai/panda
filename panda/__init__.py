@@ -9,6 +9,7 @@ import os
 import time
 import traceback
 from dfu import PandaDFU
+from esptool import ESPROM, CesantaFlasher
 
 __version__ = '0.0.3'
 
