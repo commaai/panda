@@ -9,6 +9,9 @@ def status(x):
   print("\033[1;32;40m"+x+"\033[00m")
 
 if __name__ == "__main__":
+  if len(sys.argv) == 1:
+    raise Exception("Please pass in release zip file as first argument")
+
   zf = ZipFile(sys.argv[1])
   zf.printdir()
 
@@ -24,7 +27,12 @@ if __name__ == "__main__":
   code_user2 = zf.read("user2.bin")
   
   # look for Panda
-  st_serial = Panda.list()[0]
+  panda_list = Panda.list()
+  if len(panda_list) == 0:
+    raise Exception("panda not found, make sure it's connected and your user can access it")
+  elif len(panda_list) > 1:
+    raise Exception("Please only connect one panda")
+  st_serial = panda_list[0]
 
   # enter DFU mode
   status("1. Entering DFU mode")
