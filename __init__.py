@@ -1,1 +1,1 @@
-from .panda import Panda, PandaWifiStreaming, PandaDFU, ESPROM, CesantaFlasher
+from .panda import Panda, PandaWifiStreaming, PandaDFU, ESPROM, CesantaFlasher, flash_release

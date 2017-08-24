@@ -10,8 +10,9 @@ import time
 import traceback
 from dfu import PandaDFU
 from esptool import ESPROM, CesantaFlasher
+from flash_release import flash_release
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 

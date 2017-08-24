@@ -2,20 +2,40 @@
 from __future__ import print_function
 import sys
 import time
-from panda import Panda, PandaDFU, ESPROM, CesantaFlasher
-from zipfile import ZipFile
+import requests
+import json
+import StringIO
 
-def status(x):
-  print("\033[1;32;40m"+x+"\033[00m")
+def flash_release(path=None, st_serial=None):
+  from panda import Panda, PandaDFU, ESPROM, CesantaFlasher
+  from zipfile import ZipFile
 
-if __name__ == "__main__":
-  if len(sys.argv) == 1:
-    raise Exception("Please pass in release zip file as first argument")
+  def status(x):
+    print("\033[1;32;40m"+x+"\033[00m")
 
-  zf = ZipFile(sys.argv[1])
+  if st_serial == None:
+    # look for Panda
+    panda_list = Panda.list()
+    if len(panda_list) == 0:
+      raise Exception("panda not found, make sure it's connected and your user can access it")
+    elif len(panda_list) > 1:
+      raise Exception("Please only connect one panda")
+    st_serial = panda_list[0]
+    print("Using panda with serial %s" % st_serial)
+
+  if path == None:
+    print("Fetching latest firmware from github.com/commaai/panda-artifacts")
+    r = requests.get("https://raw.githubusercontent.com/commaai/panda-artifacts/master/latest.json")
+    url = json.loads(r.text)['url']
+    r = requests.get(url)
+    print("Fetching firmware from %s" % url)
+    path = StringIO.StringIO(r.content)
+
+  zf = ZipFile(path)
   zf.printdir()
 
   version = zf.read("version")
+  status("0. Preparing to flash "+version)
 
   code_bootstub = zf.read("bootstub.panda.bin")
   code_panda = zf.read("panda.bin")
@@ -25,14 +45,6 @@ if __name__ == "__main__":
 
   code_user1 = zf.read("user1.bin")
   code_user2 = zf.read("user2.bin")
-  
-  # look for Panda
-  panda_list = Panda.list()
-  if len(panda_list) == 0:
-    raise Exception("panda not found, make sure it's connected and your user can access it")
-  elif len(panda_list) > 1:
-    raise Exception("Please only connect one panda")
-  st_serial = panda_list[0]
 
   # enter DFU mode
   status("1. Entering DFU mode")
@@ -82,4 +94,8 @@ if __name__ == "__main__":
   # done!
   status("6. Success!")
   
+if __name__ == "__main__":
+  flash_release(*sys.argv[1:])
+
+
 
