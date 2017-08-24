@@ -88,6 +88,7 @@ def flash_release(path=None, st_serial=None):
   status("5. Verifying version")
   panda = Panda(st_serial)
   my_version = panda.get_version()
+  print("dongle id: %s" % panda.get_serial()[0])
   print(my_version, "should be", version)
   assert(str(version) == str(my_version))
 
