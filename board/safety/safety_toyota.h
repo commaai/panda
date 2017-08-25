@@ -1,18 +1,3 @@
-// board enforces
-//   in-state
-//      accel set/resume
-//   out-state
-//      cancel button
-
-// these are set in the toyota safety hooks...this is the wrong place
-int gas_interceptor_detected = 0;
-
-// all commands: brake and steering
-// if controls_allowed
-//     allow all commands up to limit
-// else
-//     block all commands that produce actuation
-
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // exit controls on ACC off
@@ -20,6 +5,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // 4 bits: 55-52
     if (to_push->RDHR & 0xF00000) {
       controls_allowed = 1;
+    }
     else {
       controls_allowed = 0;
     }
