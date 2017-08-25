@@ -163,14 +163,16 @@ class Panda(object):
       pass
     if not enter_bootloader:
       self.close()
-      time.sleep(1.0)
       # wait up to 15 seconds
       for i in range(0, 15):
         try:
           self.connect()
           break
         except Exception:
-          print("reconnecting is taking %d seconds..." % (i+1))
+          if i > 0:
+            print("reconnecting is taking %d seconds..." % i)
+          if i == 14:
+            raise Exception("reset failed")
           time.sleep(1.0)
 
 
