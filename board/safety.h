@@ -20,6 +20,7 @@ int controls_allowed = 0;
 // Include the actual safety policies.
 #include "safety/safety_defaults.h"
 #include "safety/safety_honda.h"
+#include "safety/safety_toyota.h"
 #include "safety/safety_elm327.h"
 
 const safety_hooks *current_hooks = &nooutput_hooks;
@@ -43,12 +44,14 @@ typedef struct {
 
 #define SAFETY_NOOUTPUT 0
 #define SAFETY_HONDA 1
+#define SAFETY_TOYOTA 2
 #define SAFETY_ALLOUTPUT 0x1337
 #define SAFETY_ELM327 0xE327
 
 const safety_hook_config safety_hook_registry[] = {
   {SAFETY_NOOUTPUT, &nooutput_hooks},
   {SAFETY_HONDA, &honda_hooks},
+  {SAFETY_TOYOTA, &toyota_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
   {SAFETY_ELM327, &elm327_hooks},
 };
