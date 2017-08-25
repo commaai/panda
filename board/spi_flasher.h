@@ -169,7 +169,7 @@ void soft_flasher_start() {
   uint64_t cnt = 0;
 
   for (cnt=0;;cnt++) {
-    if (cnt == 20 && !is_enumerated && usb_power_mode == USB_POWER_CLIENT) {
+    if (cnt == 35 && !is_enumerated && usb_power_mode == USB_POWER_CLIENT) {
       // if you are connected through a hub to the phone
       // you need power to be able to see the device
       puts("USBP: didn't enumerate, switching to CDP mode\n");
