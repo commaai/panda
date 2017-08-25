@@ -164,13 +164,14 @@ class Panda(object):
     if not enter_bootloader:
       self.close()
       time.sleep(1.0)
-      try:
-        self.connect()
-      except Exception:
-        # retry after 5 seconds
-        print("connecting to bootstub is taking a while...")
-        time.sleep(5.0)
-        self.connect()
+      # wait up to 15 seconds
+      for i in range(0, 15):
+        try:
+          self.connect()
+          break
+        except Exception:
+          print("reconnecting is taking %d seconds..." % i)
+          time.sleep(1.0)
 
 
   def flash(self, fn=None, code=None):

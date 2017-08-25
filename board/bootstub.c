@@ -48,6 +48,11 @@ extern void *_app_start[];
 int main() {
   __disable_irq();
   clock_init();
+  detect();
+
+  if (revision == PANDA_REV_C) {
+    set_usb_power_mode(USB_POWER_CLIENT);
+  }
 
   if (enter_bootloader_mode == ENTER_SOFTLOADER_MAGIC) {
     enter_bootloader_mode = 0;
