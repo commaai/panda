@@ -281,9 +281,6 @@ void usb_setup() {
       USBx_OUTEP(2)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
       USBx_OUTEP(3)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
 
-      // TODO: is this the right place for this?
-      usb_cb_enumeration_complete();
-
       USB_WritePacket(0, 0, 0);
       USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
       break;
@@ -294,6 +291,10 @@ void usb_setup() {
       #ifdef DEBUG_USB
         puts(" set address\n");
       #endif
+
+      // TODO: this isn't enumeration complete
+      // moved here to work better on OS X
+      usb_cb_enumeration_complete();
 
       USB_WritePacket(0, 0, 0);
       USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;

@@ -92,7 +92,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
 
 int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) { return 0; }
 void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) { }
-void usb_cb_enumeration_complete() { }
+
+int is_enumerated = 0;
+void usb_cb_enumeration_complete() {
+  puts("USB enumeration complete\n");
+  is_enumerated = 1;
+}
 
 void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
   set_led(LED_RED, 0);
@@ -161,7 +166,16 @@ void soft_flasher_start() {
 
   __enable_irq();
 
-  while (1) {
+  uint64_t cnt = 0;
+
+  for (cnt=0;;cnt++) {
+    if (cnt == 20 && !is_enumerated && usb_power_mode == USB_POWER_CLIENT) {
+      // if you are connected through a hub to the phone
+      // you need power to be able to see the device
+      puts("USBP: didn't enumerate, switching to CDP mode\n");
+      set_usb_power_mode(USB_POWER_CDP);
+      set_led(LED_BLUE, 1);
+    }
     // blink the green LED fast
     set_led(LED_GREEN, 0);
     delay(500000);
