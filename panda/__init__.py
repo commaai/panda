@@ -170,7 +170,7 @@ class Panda(object):
           self.connect()
           break
         except Exception:
-          print("reconnecting is taking %d seconds..." % i)
+          print("reconnecting is taking %d seconds..." % (i+1))
           time.sleep(1.0)
 
 
