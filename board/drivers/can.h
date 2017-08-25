@@ -137,7 +137,7 @@ void can_init(uint8_t can_number) {
   }
 
   // reset
-  CAN->MCR = CAN_MCR_TTCM;
+  CAN->MCR = CAN_MCR_TTCM | CAN_MCR_ABOM;
 
   #define CAN_TIMEOUT 1000000
   int tmp = 0;
@@ -161,10 +161,7 @@ void can_init(uint8_t can_number) {
 
   CAN->FMR &= ~(CAN_FMR_FINIT);
 
-  // enable all CAN interrupts
-  //CAN->IER = 0xFFFFFFFF;
-  //CAN->IER = CAN_IER_TMEIE | CAN_IER_FMPIE0 | CAN_IER_FMPIE1;
-  //CAN->IER = CAN_IER_TMEIE;
+  // enable certain CAN interrupts
   CAN->IER = CAN_IER_TMEIE | CAN_IER_FMPIE0;
 
   switch (can_number) {

@@ -10,11 +10,12 @@ def connect_wo_esp():
 
   # power down the ESP
   p.set_esp_power(False)
-  return p
 
   # clear old junk
   while len(p.can_recv()) > 0:
     pass
+
+  return p
 
 def connect_wifi():
   p = Panda()
