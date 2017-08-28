@@ -79,30 +79,22 @@ int get_health_pkt(void *dat) {
     uint8_t started_signal_detected;
     uint8_t started_alt;
   } *health = dat;
-  #ifdef PANDA
-    int started_signal = (GPIOB->IDR & (1 << 12)) == 0;
-  #else
-    int started_signal = (GPIOC->IDR & (1 << 13)) != 0;
-  #endif
 
   health->voltage = adc_get(ADCCHAN_VOLTAGE);
-#ifdef PANDA
-  health->current = adc_get(ADCCHAN_CURRENT);
-#else
-  health->current = 0;
-#endif
-  health->started = started_signal;
 
 #ifdef PANDA
-  health->started_alt = (GPIOA->IDR & (1 << 1)) == 0;
+  health->current = adc_get(ADCCHAN_CURRENT);
+  health->started = (GPIOA->IDR & (1 << 1)) == 0;
 #else
-  health->started_alt = 0;
+  health->current = 0;
+  health->started = (GPIOC->IDR & (1 << 13)) != 0;
 #endif
 
   health->controls_allowed = controls_allowed;
   health->gas_interceptor_detected = gas_interceptor_detected;
 
   // DEPRECATED
+  health->started_alt = 0;
   health->started_signal_detected = 0;
 
   return sizeof(*health);
