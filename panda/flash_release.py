@@ -55,11 +55,7 @@ def flash_release(path=None, st_serial=None):
   # program bootstub
   status("2. Programming bootstub")
   dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(st_serial))
-  dfu.clear_status()
-  dfu.erase(0x8004000)
-  dfu.erase(0x8000000)
-  dfu.program(0x8000000, code_bootstub, 0x800)
-  dfu.reset()
+  dfu.program_bootstub(code_bootstub)
   time.sleep(1)
 
   # flash main code
@@ -67,7 +63,6 @@ def flash_release(path=None, st_serial=None):
   panda = Panda(st_serial)
   panda.flash(code=code_panda)
   panda.close()
-  time.sleep(1)
 
   # flashing ESP
   status("4. Flashing ESP (slow!)")
@@ -97,6 +92,4 @@ def flash_release(path=None, st_serial=None):
   
 if __name__ == "__main__":
   flash_release(*sys.argv[1:])
-
-
 

@@ -11,12 +11,17 @@ import traceback
 from dfu import PandaDFU
 from esptool import ESPROM, CesantaFlasher
 from flash_release import flash_release
+from update import ensure_st_up_to_date
 
 __version__ = '0.0.4'
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
 # *** wifi mode ***
+
+def build_st(target, mkfile="Makefile"):
+  from panda import BASEDIR
+  assert(os.system('cd %s && make -f %s clean && make -f %s %s >/dev/null' % (os.path.join(BASEDIR, "board"), mkfile, mkfile, target)) == 0)
 
 def parse_can_buffer(dat):
   ret = []
@@ -133,7 +138,8 @@ class Panda(object):
             #print(device)
             if device.getVendorID() == 0xbbaa and device.getProductID() in [0xddcc, 0xddee]:
               if self._serial is None or device.getSerialNumber() == self._serial:
-                print("opening device", device.getSerialNumber(), hex(device.getProductID()))
+                self._serial = device.getSerialNumber()
+                print("opening device", self._serial, hex(device.getProductID()))
                 self.bootstub = device.getProductID() == 0xddee
                 self.legacy = (device.getbcdDevice() != 0x2300)
                 self._handle = device.open()
@@ -175,17 +181,21 @@ class Panda(object):
             raise Exception("reset failed")
           time.sleep(1.0)
 
-
   def flash(self, fn=None, code=None):
     if not self.bootstub:
       self.reset(enter_bootstub=True)
     assert(self.bootstub)
 
     if fn is None and code is None:
-      ret = os.system("cd %s && make clean && make -f %s %s" % (os.path.join(BASEDIR, "board"),
-                      "Makefile.legacy" if self.legacy else "Makefile",
-                      "obj/comma.bin" if self.legacy else "obj/panda.bin"))
-      fn = os.path.join(BASEDIR, "board", "obj", "comma.bin" if self.legacy else "panda.bin")
+      if self.legacy:
+        fn = "obj/comma.bin"
+        print("building legacy st code")
+        build_st(fn, "Makefile.legacy")
+      else:
+        fn = "obj/panda.bin"
+        print("building panda st code")
+        build_st(fn)
+      fn = os.path.join(BASEDIR, "board", fn)
 
     if code is None:
       with open(fn) as f:
@@ -217,6 +227,19 @@ class Panda(object):
     print("flash: resetting")
     self.reset()
 
+  def recover(self):
+    self.reset(enter_bootloader=True)
+    while len(PandaDFU.list()) == 0:
+      print("waiting for DFU...")
+      time.sleep(0.1)
+
+    dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial))
+    dfu.recover()
+
+    # reflash after recover
+    self.connect(True, True)
+    self.flash()
+
   @staticmethod
   def flash_ota_st():
     ret = os.system("cd %s && make clean && make ota" % (os.path.join(BASEDIR, "board")))
@@ -226,12 +249,6 @@ class Panda(object):
   @staticmethod
   def flash_ota_wifi():
     ret = os.system("cd %s && make clean && make ota" % (os.path.join(BASEDIR, "boardesp")))
-    time.sleep(1)
-    return ret==0
-
-  @staticmethod
-  def recover(legacy=False):
-    ret = os.system("cd %s && make clean && make -f %s recover" % (os.path.join(BASEDIR, "board"), "Makefile.legacy" if legacy else "Makefile"))
     time.sleep(1)
     return ret==0
 

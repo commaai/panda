@@ -1,6 +1,8 @@
 from __future__ import print_function
+import os
 import usb1
 import struct
+import time
 
 # *** DFU mode ***
 
@@ -21,6 +23,7 @@ class PandaDFU(object):
           pass
         if this_dfu_serial == dfu_serial:
           self._handle = device.open()
+          self.legacy = "07*128Kg" in self._handle.getASCIIStringDescriptor(4)
           return
     raise Exception("failed to open "+dfu_serial)
 
@@ -77,6 +80,30 @@ class PandaDFU(object):
       print("programming %d with length %d" % (i, len(ldat)))
       self._handle.controlWrite(0x21, DFU_DNLOAD, 2+i, 0, ldat)
       self.status()
+
+  def program_bootstub(self, code_bootstub):
+    self.clear_status()
+    self.erase(0x8004000)
+    self.erase(0x8000000)
+    self.program(0x8000000, code_bootstub, 0x800)
+    self.reset()
+
+  def recover(self):
+    from panda import BASEDIR, build_st
+    if self.legacy:
+      fn = "obj/bootstub.comma.bin"
+      print("building legacy bootstub")
+      build_st(fn, "Makefile.legacy")
+    else:
+      fn = "obj/bootstub.panda.bin"
+      print("building panda bootstub")
+      build_st(fn)
+    fn = os.path.join(BASEDIR, "board", fn)
+
+    with open(fn) as f:
+      code = f.read()
+
+    self.program_bootstub(code)
 
   def reset(self):
     # **** Reset ****
