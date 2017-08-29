@@ -1,11 +1,13 @@
 from __future__ import print_function
 import sys
 import time
-from helpers import time_many_sends
+from helpers import time_many_sends, connect_wifi
 from panda import Panda, PandaWifiStreaming
 from nose.tools import timed, assert_equal, assert_less, assert_greater
 
 def test_udp_doesnt_drop():
+  connect_wifi()
+
   p = Panda()
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   p.set_can_loopback(True)
