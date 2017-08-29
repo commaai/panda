@@ -18,7 +18,8 @@
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define espconn_send_string(conn, x) espconn_send(conn, x, strlen(x))
 
-char resp[0x800];
+#define MAX_RESP 0x800
+char resp[MAX_RESP];
 char staticpage[] = "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
 "<pre>This is your comma.ai panda<br/><br/>"
 "It's open source. Find the code <a href=\"https://github.com/commaai/panda\">here</a><br/>"
@@ -172,6 +173,8 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
 
     // index
     if (memcmp(data, "GET / ", 6) == 0) {
+      memset(resp, 0, MAX_RESP);
+
       strcpy(resp, staticpage);
       ets_strcat(resp, "<br/>ssid: ");
       ets_strcat(resp, ssid);
