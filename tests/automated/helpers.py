@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import random
+import subprocess
 from panda import Panda
 from nose.tools import timed, assert_equal, assert_less, assert_greater
 
@@ -24,15 +25,26 @@ def connect_wifi():
   ssid = ssid.strip("\x00")
   assert(ssid.isalnum())
   assert(pw.isalnum())
-  ssid = "panda-" + ssid
+  ssid = str("panda-" + ssid)
 
   print("WIFI: connecting to %s" % ssid)
 
-  # Mac OS X only
   if sys.platform == "darwin":
     os.system("networksetup -setairportnetwork en0 %s %s" % (ssid, pw))
   else:
+    cnt = 0
+    while 1:
+      os.system("nmcli device wifi rescan")
+      wifi_scan = filter(lambda x: ssid in x, subprocess.check_output(["nmcli","dev", "wifi", "list"]).split("\n"))
+      if len(wifi_scan) != 0:
+        break
+      time.sleep(0.1)
+      # 100 tries, ~10 seconds max
+      cnt += 1
+      assert cnt < 100
     os.system("nmcli d wifi connect %s password %s" % (ssid, pw))
+  
+  # TODO: confirm that it's connected to the right panda
 
 def time_many_sends(p, bus, precv=None, msg_count=100, msg_id=None):
   if precv == None:

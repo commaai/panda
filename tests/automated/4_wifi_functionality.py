@@ -1,10 +1,12 @@
 from __future__ import print_function
 import time
 from panda import Panda
-from helpers import time_many_sends
+from helpers import time_many_sends, connect_wifi
 from nose.tools import timed, assert_equal, assert_less, assert_greater
 
 def test_get_serial_wifi():
+  connect_wifi()
+
   p = Panda("WIFI")
   print(p.get_serial())
 
