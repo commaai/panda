@@ -21,11 +21,14 @@ def connect_wo_esp():
 
 def connect_wifi():
   p = Panda()
-  ssid, pw = p.get_serial()
-  ssid = ssid.strip("\x00")
-  assert(ssid.isalnum())
+  dongle_id, pw = p.get_serial()
+  dongle_id = ssid.strip("\x00")
+  assert(dongle_id.isalnum())
   assert(pw.isalnum())
-  ssid = str("panda-" + ssid)
+  _connect_wifi(dongle_id, pw)
+
+def _connect_wifi(dongle_id, pw):
+  ssid = str("panda-" + dongle_id)
 
   print("WIFI: connecting to %s" % ssid)
 
