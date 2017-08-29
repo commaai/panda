@@ -137,8 +137,12 @@ class Panda(object):
           for device in context.getDeviceList(skip_on_error=True):
             #print(device)
             if device.getVendorID() == 0xbbaa and device.getProductID() in [0xddcc, 0xddee]:
-              if self._serial is None or device.getSerialNumber() == self._serial:
-                self._serial = device.getSerialNumber()
+              try:
+                this_serial = device.getSerialNumber()
+              except Exception:
+                continue
+              if self._serial is None or this_serial == self._serial:
+                self._serial = this_serial
                 print("opening device", self._serial, hex(device.getProductID()))
                 self.bootstub = device.getProductID() == 0xddee
                 self.legacy = (device.getbcdDevice() != 0x2300)
