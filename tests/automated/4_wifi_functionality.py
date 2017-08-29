@@ -4,9 +4,6 @@ from panda import Panda
 from helpers import time_many_sends
 from nose.tools import timed, assert_equal, assert_less, assert_greater
 
-def test_wifi_flash_st():
-  Panda.flash_ota_st()
-
 def test_get_serial_wifi():
   p = Panda("WIFI")
   print(p.get_serial())

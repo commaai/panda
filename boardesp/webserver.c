@@ -249,7 +249,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
     if (content_length <= 0 && real_content_length > 1000) {
       state = NOT_STARTED;
       os_printf("done!\n");
-      espconn_send_string(&web_conn, "HTTP/1.0 200 OK\nContent-Type: text/html\n\nflashing...\n");
+      espconn_send_string(&web_conn, "HTTP/1.0 200 OK\nContent-Type: text/html\n\nsuccess!\n");
       espconn_disconnect(conn);
 
       // reboot

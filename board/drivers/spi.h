@@ -18,8 +18,8 @@ void spi_init() {
   //NVIC_EnableIRQ(SPI1_IRQn);
 
   // reset handshake back to pull up
-  GPIOB->MODER &= ~(GPIO_MODER_MODER0);
-  GPIOB->PUPDR |= GPIO_PUPDR_PUPDR0_0;
+  set_gpio_mode(GPIOB, 0, MODE_INPUT);
+  set_gpio_pullup(GPIOB, 0, PULL_UP);
 
   // setup interrupt on falling edge of SPI enable (on PA4)
   SYSCFG->EXTICR[2] = SYSCFG_EXTICR2_EXTI4_PA;
@@ -46,9 +46,7 @@ void spi_tx_dma(void *addr, int len) {
 
   // signal data is ready by driving low
   // esp must be configured as input by this point
-  GPIOB->MODER &= ~(GPIO_MODER_MODER0);
-  GPIOB->MODER |= GPIO_MODER_MODER0_0;
-  GPIOB->ODR &= ~(GPIO_ODR_ODR_0);
+  set_gpio_output(GPIOB, 0, 0);
 }
 
 void spi_rx_dma(void *addr, int len) {
@@ -100,8 +98,8 @@ void DMA2_Stream3_IRQHandler(void) {
   #endif  
 
   // reset handshake back to pull up
-  GPIOB->MODER &= ~(GPIO_MODER_MODER0);
-  GPIOB->PUPDR |= GPIO_PUPDR_PUPDR0_0;
+  set_gpio_mode(GPIOB, 0, MODE_INPUT);
+  set_gpio_pullup(GPIOB, 0, PULL_UP);
 
   // ack
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;

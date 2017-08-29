@@ -1,8 +1,9 @@
+import os
+import sys
+import time
+import random
 from panda import Panda
 from nose.tools import timed, assert_equal, assert_less, assert_greater
-import time
-import os
-import random
 
 def connect_wo_esp():
   # connect to the panda
@@ -25,9 +26,13 @@ def connect_wifi():
   assert(pw.isalnum())
   ssid = "panda-" + ssid
 
+  print("WIFI: connecting to %s" % ssid)
+
   # Mac OS X only
-  # TODO: Ubuntu
-  os.system("networksetup -setairportnetwork en0 %s %s" % (ssid, pw))
+  if sys.platform == "darwin":
+    os.system("networksetup -setairportnetwork en0 %s %s" % (ssid, pw))
+  else:
+    os.system("nmcli d wifi connect %s password %s" % (ssid, pw))
 
 def time_many_sends(p, bus, precv=None, msg_count=100, msg_id=None):
   if precv == None:

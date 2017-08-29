@@ -22,6 +22,9 @@ def test_flash_wifi():
   Panda.flash_ota_wifi()
   connect_wifi()
 
+def test_wifi_flash_st():
+  Panda.flash_ota_st()
+
 def test_webpage_fetch():
   r = requests.get("http://192.168.0.10/")
   print(r.text)

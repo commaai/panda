@@ -88,7 +88,7 @@ static int ICACHE_FLASH_ATTR __spi_comm(char *dat, int len, uint32_t *recvData, 
 
   length = recvData[0];
   if (length > 0x40) {
-    os_printf("SPI: BAD LENGTH RECEIVED\n");
+    os_printf("SPI: BAD LENGTH RECEIVED %x\n", length);
     length = 0;
     goto fail;
   }
