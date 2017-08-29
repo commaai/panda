@@ -20,7 +20,7 @@ class PandaDFU(object):
         try:
           this_dfu_serial = device._getASCIIStringDescriptor(3)
         except Exception:
-          pass
+          continue
         if this_dfu_serial == dfu_serial:
           self._handle = device.open()
           self.legacy = "07*128Kg" in self._handle.getASCIIStringDescriptor(4)

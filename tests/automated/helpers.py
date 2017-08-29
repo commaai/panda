@@ -24,7 +24,6 @@ def connect_wifi():
   dongle_id, pw = p.get_serial()
   dongle_id = ssid.strip("\x00")
   assert(dongle_id.isalnum())
-  assert(pw.isalnum())
   _connect_wifi(dongle_id, pw)
 
 def _connect_wifi(dongle_id, pw):
