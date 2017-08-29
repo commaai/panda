@@ -19,7 +19,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (controls_allowed) {
       // all messages are fine here
     } else {
-      if ((to_send->RDLR & 0xFFFF00) != to_send->RDLR) return 0;
+      if (to_send->RDLR & 0xFFFF00) return 0;
     }
   }
 
