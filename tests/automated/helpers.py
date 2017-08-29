@@ -35,15 +35,17 @@ def _connect_wifi(dongle_id, pw):
     os.system("networksetup -setairportnetwork en0 %s %s" % (ssid, pw))
   else:
     cnt = 0
-    while 1:
+    MAX_TRIES = 10
+    while cnt < MAX_TRIES:
+      print "WIFI: scanning %d" % cnt
       os.system("nmcli device wifi rescan")
       wifi_scan = filter(lambda x: ssid in x, subprocess.check_output(["nmcli","dev", "wifi", "list"]).split("\n"))
       if len(wifi_scan) != 0:
         break
       time.sleep(0.1)
-      # 100 tries, ~10 seconds max
+      # MAX_TRIES tries, ~10 seconds max
       cnt += 1
-      assert cnt < 100
+    assert cnt < MAX_TRIES
     os.system("nmcli d wifi connect %s password %s" % (ssid, pw))
   
   # TODO: confirm that it's connected to the right panda
