@@ -22,7 +22,7 @@
 //    from this software without specific prior written permission.
 //
 // 4. Redistributions of any form whatsoever must retain the following
-//    acknowledgment: 'This product includes software developed by 
+//    acknowledgment: 'This product includes software developed by
 //    "DashLogic, Inc." (http://www.dashlogic.com/).'
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -63,16 +63,7 @@
 //        functions. Typically, on Windows, PTAPI will be defined
 //        as WINAPI, which enables the __stdcall convention.
 //
-//#ifndef PTAPI
-//#  if defined(_WIN32) || defined(_WIN64)
-#    define PTAPI			__stdcall	//WINAPI
-//#  else
-//#    define PTAPI			
-//#  endif
-//#endif
-
-
-
+#define PTAPI			__stdcall	//WINAPI
 
 //
 // J2534-1 v04.04 ProtocolID Values
@@ -335,7 +326,7 @@
 #define SW_CAN_HV_RX				0x00010000	// SWCAN Channels Only
 #define SW_CAN_HS_RX				0x00020000	// SWCAN Channels Only
 #define SW_CAN_NS_RX				0x00040000	// SWCAN Channels Only
-#define OVERFLOW					0x00010000	// Analog Input Channels Only
+#define OVERFLOW_					0x00010000	// Analog Input Channels Only
 
 
 //

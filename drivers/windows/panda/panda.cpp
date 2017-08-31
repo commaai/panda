@@ -24,33 +24,34 @@ Panda::Panda(
 	WINUSB_INTERFACE_HANDLE WinusbHandle,
 	HANDLE DeviceHandle,
 	tstring devPath_,
-	tstring sn_
+	std::string sn_
 ) : usbh(WinusbHandle), devh(DeviceHandle), devPath(devPath_), sn(sn_) {
-	_tprintf(_T("CREATED A PANDA %s\n"), this->sn.c_str());
+	printf("CREATED A PANDA %s\n", this->sn.c_str());
 }
 
 Panda::~Panda() {
 	WinUsb_Free(this->usbh);
 	CloseHandle(this->devh);
-	_tprintf(_T("Cleanup Panda %s\n"), this->sn.c_str());
+	printf("Cleanup Panda %s\n", this->sn.c_str());
 }
 
-std::vector<tstring> Panda::listAvailablePandas() {
-	std::vector<tstring> ret;
+std::vector<std::string> Panda::listAvailablePandas() {
+	std::vector<std::string> ret;
 	auto map_sn_to_devpath = detect_pandas();
 
 	for (auto kv : map_sn_to_devpath) {
-		ret.push_back(tstring(kv.first));
+		ret.push_back(std::string(kv.first));
 	}
 
 	return ret;
 }
 
-std::unique_ptr<Panda> Panda::openPanda(tstring sn)
+std::unique_ptr<Panda> Panda::openPanda(std::string sn)
 {
 	auto map_sn_to_devpath = detect_pandas();
 
 	if (map_sn_to_devpath.empty()) return nullptr;
+	if (map_sn_to_devpath.find(sn) == map_sn_to_devpath.end() && sn != "") return nullptr;
 
 	tstring devpath;
 	if (sn.empty()) {
@@ -80,8 +81,8 @@ std::unique_ptr<Panda> Panda::openPanda(tstring sn)
 	return std::unique_ptr<Panda>(new Panda(winusbHandle, deviceHandle, map_sn_to_devpath[sn], sn));
 }
 
-tstring Panda::get_usb_sn() {
-	return tstring(this->sn);
+std::string Panda::get_usb_sn() {
+	return std::string(this->sn);
 }
 
 int Panda::control_transfer(

@@ -7,6 +7,8 @@
 
 #include "device.h"
 
+using namespace panda;
+
 //Returns the last Win32 error, in string format. Returns an empty string if there is no error.
 tstring GetLastErrorAsString(){
 	//Get the error message, if any.
@@ -26,14 +28,14 @@ tstring GetLastErrorAsString(){
 	return message;
 }
 
-std::unordered_map<tstring, tstring> __declspec(dllexport) detect_pandas() {
+std::unordered_map<std::string, tstring> panda::detect_pandas() {
 	HDEVINFO                        deviceInfo;
 	HRESULT                         hr;
 	SP_DEVINFO_DATA					deviceInfoData;
 	SP_DEVICE_INTERFACE_DATA		interfaceData;
 	unsigned int					deviceIndex;
 
-	std::unordered_map<tstring, tstring> map_sn_to_devpath;
+	std::unordered_map<std::string, tstring> map_sn_to_devpath;
 
 	deviceInfo = SetupDiGetClassDevs(&GUID_DEVINTERFACE_panda,
 		NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE); //DIGCF_ALLCLASSES
@@ -135,10 +137,21 @@ std::unordered_map<tstring, tstring> __declspec(dllexport) detect_pandas() {
 		//The minus 2 is for the two numbers, not the null term.
 		psnDesc->bString[(psnDesc->bLength - 2) / sizeof(_TCHAR)] = 0;
 
-		_tprintf(_T("    Device found: seriallen: %d; serial: %s\n"),
-			lengthReceived, psnDesc->bString);
+		char w_to_m_buff[256];
+		size_t mbuff_len;
+		if (wcstombs_s(&mbuff_len, w_to_m_buff, sizeof(w_to_m_buff), psnDesc->bString, 24) != 0) {
+			_tprintf(_T("    Error generating mb SN string %d. Msg: '%s'\n"),
+				GetLastError(), GetLastErrorAsString().c_str());
+			LocalFree(psnDesc);
+			WinUsb_Free(winusbHandle);
+			CloseHandle(deviceHandle);
+			LocalFree(detailData);
+			continue;
+		}
+		std::string serialnum(w_to_m_buff, mbuff_len-1);
+		printf("    Device found: seriallen: %d; serial: %s\n", lengthReceived, serialnum.c_str());
 
-		map_sn_to_devpath[tstring(psnDesc->bString)] = tstring(detailData->DevicePath);
+		map_sn_to_devpath[serialnum] = tstring(detailData->DevicePath);
 
 		LocalFree(psnDesc);
 		WinUsb_Free(winusbHandle);
@@ -148,11 +161,6 @@ std::unordered_map<tstring, tstring> __declspec(dllexport) detect_pandas() {
 
 	if(deviceInfo)
 		SetupDiDestroyDeviceInfoList(deviceInfo);
-	//_tprintf(_T("Cleaned up devices\n"));
-
-	//for (auto kv : map_sn_to_devpath) {
-	//	_tprintf(_T("'%s'->'%s'\n"), kv.first.c_str(), kv.second.c_str());
-	//}
 
 	return map_sn_to_devpath;
 }

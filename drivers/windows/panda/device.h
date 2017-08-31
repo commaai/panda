@@ -27,6 +27,7 @@ DEFINE_GUID(GUID_DEVINTERFACE_panda,
 
 tstring GetLastErrorAsString();
 
-std::unordered_map<tstring, tstring> __declspec(dllexport) detect_pandas();
-
+namespace panda {
+	std::unordered_map<std::string, tstring> __declspec(dllexport) detect_pandas();
+}
 #endif

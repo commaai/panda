@@ -32,6 +32,8 @@
 
 #define LIN_MSG_MAX_LEN 10
 
+//template class __declspec(dllexport) std::basic_string<char>;
+
 namespace panda {
 	typedef enum _PANDA_SAFETY_MODE : uint16_t {
 		SAFETY_NOOUTPUT = 0,
@@ -96,12 +98,12 @@ namespace panda {
 	// This class is exported from the panda.dll
 	class PANDA_API Panda {
 	public:
-		static std::vector<tstring> listAvailablePandas();
-		static std::unique_ptr<Panda> openPanda(tstring sn);
+		static std::vector<std::string> listAvailablePandas();
+		static std::unique_ptr<Panda> openPanda(std::string sn);
 
 		~Panda();
 
-		tstring get_usb_sn();
+		std::string get_usb_sn();
 
 		PANDA_HEALTH get_health();
 		bool enter_bootloader();
@@ -133,7 +135,7 @@ namespace panda {
 			WINUSB_INTERFACE_HANDLE WinusbHandle,
 			HANDLE DeviceHandle,
 			tstring devPath_,
-			tstring sn_
+			std::string sn_
 		);
 
 		int control_transfer(
@@ -165,7 +167,7 @@ namespace panda {
 		WINUSB_INTERFACE_HANDLE usbh;
 		HANDLE devh;
 		tstring devPath;
-		tstring sn;
+		std::string sn;
 	};
 
 }

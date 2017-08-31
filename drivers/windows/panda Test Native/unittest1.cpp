@@ -36,14 +36,14 @@ namespace pandaTestNative
 			auto pandas_available = Panda::listAvailablePandas();
 			Assert::IsTrue(pandas_available.size() > 0, _T("No pandas were found."));
 
-			auto p1 = Panda::openPanda(_T(""));
+			auto p1 = Panda::openPanda("");
 			Assert::IsFalse(p1 == nullptr, _T("Could not open panda."));
 			Assert::IsTrue(p1->get_usb_sn() == pandas_available[0], _T("Could not open panda."));
 		}
 
 		TEST_METHOD(OpenDeviceUnavailable)
 		{
-			auto p1 = Panda::openPanda(_T("ZZZZZZZZZZZZZZZZZZZZZZZZ"));
+			auto p1 = Panda::openPanda("ZZZZZZZZZZZZZZZZZZZZZZZZ");
 			Assert::IsTrue(p1 == nullptr, _T("Invalid sn still worked."));
 		}
 
@@ -82,7 +82,7 @@ namespace pandaTestNative
 
 		TEST_METHOD(CANEcho)
 		{
-			auto p0 = Panda::openPanda(_T(""));
+			auto p0 = Panda::openPanda("");
 			Assert::IsFalse(p0 == nullptr, _T("Could not open panda."));
 
 			p0->set_safety_mode(SAFETY_ALLOUTPUT);
@@ -120,7 +120,7 @@ namespace pandaTestNative
 
 		TEST_METHOD(CANClearClears)
 		{
-			auto p0 = Panda::openPanda(_T(""));
+			auto p0 = Panda::openPanda("");
 			Assert::IsFalse(p0 == nullptr, _T("Could not open panda."));
 
 			p0->set_safety_mode(SAFETY_ALLOUTPUT);
@@ -145,7 +145,7 @@ namespace pandaTestNative
 
 		TEST_METHOD(LINEcho)
 		{
-			auto p0 = Panda::openPanda(_T(""));
+			auto p0 = Panda::openPanda("");
 			Assert::IsFalse(p0 == nullptr, _T("Could not open panda."));
 
 			p0->set_safety_mode(SAFETY_ALLOUTPUT);

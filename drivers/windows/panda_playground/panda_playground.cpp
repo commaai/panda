@@ -20,11 +20,12 @@ int _tmain(int Argc, _TCHAR *Argv) {
 	UNREFERENCED_PARAMETER(Argv);
 
 	auto pandas_available = Panda::listAvailablePandas();
+	printf("\nListing off discovered Pandas:\n");
 	for (auto sn : pandas_available) {
-		_tprintf(_T("Panda '%s'\n"), sn.c_str());
+		printf("    Panda '%s'\n", sn.c_str());
 	}
 
-	printf("");
+	printf("\n");
 
 	{
 		/*auto pandas_available = Panda::listAvailablePandas();
@@ -32,13 +33,13 @@ int _tmain(int Argc, _TCHAR *Argv) {
 			_tprintf(_T("Panda '%s'\n"), sn.c_str());
 		}*/
 
-		auto p0 = Panda::openPanda(_T(""));// _T("0e800a000f51363038363036"));
+		auto p0 = Panda::openPanda("02000c000f51363038363036");//"0e800a000f51363038363036");
 		if (p0) {
-			/*PANDA_HEALTH health = p0->get_health();
+			PANDA_HEALTH health = p0->get_health();
 			_tprintf(_T("    Current: %u; Voltage: %u\n"), health.current, health.voltage);
 			printf("    Read SN: %s\n", p0->get_serial().c_str());
 			printf("    Read Secret: %s\n", p0->get_secret().c_str());
-			printf("    Read Version: %s\n", p0->get_version().c_str());*/
+			printf("    Read Version: %s\n", p0->get_version().c_str());
 
 			p0->set_safety_mode(SAFETY_ALLOUTPUT);
 
