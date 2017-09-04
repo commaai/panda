@@ -264,22 +264,17 @@ bool Panda::can_send_many(const std::vector<PANDA_CAN_MSG>& can_msgs) {
 	if (formatted_msgs.size() == 0) return FALSE;
 
 	unsigned int retcount;
-	//uint8_t buff[0x10];
-
-	//std::string dat("\x0\x1\x2\x3\x4\x5\x6\x7\x8\x9\xa\xb\xc\xd\xe\xf", 0x10);
-	//bool res = this->bulk_transfer(2, dat.c_str(), 0x10, (PULONG)&retcount, 0);
-	//bool res2 = this->bulk_transfer(1, dat.c_str(), 0x10, (PULONG)&retcount, 0);
-
 	return this->bulk_write(3, formatted_msgs.data(),
 		sizeof(PANDA_CAN_MSG_INTERNAL)*formatted_msgs.size(), (PULONG)&retcount, 0);
 }
 
-bool Panda::can_send(uint32_t addr, bool addr_29b, const uint8_t dat[8], uint8_t len, PANDA_CAN_PORT bus) {
+bool Panda::can_send(uint32_t addr, bool addr_29b, const uint8_t *dat, uint8_t len, PANDA_CAN_PORT bus) {
 	if (bus == PANDA_CAN_UNK) return FALSE;
+	if (len > 8) return FALSE;
 	PANDA_CAN_MSG msg;
 	msg.addr_29b = addr_29b;
 	msg.addr = addr;
-	msg.len = min(len, 8);
+	msg.len = len;
 	memcpy(msg.dat, dat, msg.len);
 	msg.bus = bus;
 	return this->can_send_many(std::vector<PANDA_CAN_MSG>{msg});

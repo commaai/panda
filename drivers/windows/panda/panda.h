@@ -123,7 +123,7 @@ namespace panda {
 		bool set_uart_parity(PANDA_SERIAL_PORT uart, PANDA_SERIAL_PORT_PARITY parity);
 
 		bool can_send_many(const std::vector<PANDA_CAN_MSG>& can_msgs);
-		bool can_send(uint32_t addr, bool addr_29b, const uint8_t dat[8], uint8_t len, PANDA_CAN_PORT bus);
+		bool can_send(uint32_t addr, bool addr_29b, const uint8_t *dat, uint8_t len, PANDA_CAN_PORT bus);
 		std::vector<PANDA_CAN_MSG> can_recv();
 		bool can_clear(PANDA_CAN_PORT_CLEAR bus);
 
