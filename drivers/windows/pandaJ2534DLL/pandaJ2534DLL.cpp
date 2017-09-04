@@ -1,5 +1,6 @@
 // pandaJ2534DLL.cpp : Defines the exported functions for the DLL application.
-//
+// Protocol derived from the following site (which shall be referred to as The Protocol Reference).
+// https://web.archive.org/web/20130805013326/https://tunertools.com/prodimages/DrewTech/Manuals/PassThru_API-1.pdf
 
 #include "stdafx.h"
 #include "panda/panda.h"
@@ -7,7 +8,35 @@
 #include "J2534_v0404.h"
 #include <string>
 #include <array>
-//#include <std>
+
+#include <ctime>
+#include <chrono>
+
+class timer
+{
+	// alias our types for simplicity
+	using clock = std::chrono::system_clock;
+	using time_point_type = std::chrono::time_point < clock, std::chrono::milliseconds >;
+public:
+	// default constructor that stores the start time
+	timer()
+	{
+		start = std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
+	}
+
+	// gets the time elapsed from construction.
+	long /*milliseconds*/ getTimePassed()
+	{
+		// get the new time
+		auto end = clock::now();
+
+		// return the difference of the times
+		return (end - start).count();
+	}
+
+private:
+	time_point_type start;
+};
 
 //using namespace panda;
 
@@ -45,10 +74,11 @@ private:
 class J2534Connection {
 public:
 	J2534Connection(
+		panda::Panda* panda_dev,
 		unsigned long ProtocolID,
 		unsigned long Flags,
 		unsigned long BaudRate
-	) : ProtocolID(ProtocolID), Flags(Flags), BaudRate(BaudRate){}
+	) : panda_dev(panda_dev), ProtocolID(ProtocolID), Flags(Flags), BaudRate(BaudRate){}
 	virtual long PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) { *pNumMsgs = 0; return STATUS_NOERROR; };
 	virtual long PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) { return STATUS_NOERROR; };
 	virtual long PassThruStartPeriodicMsg(PASSTHRU_MSG *pMsg, unsigned long *pMsgID, unsigned long TimeInterval) { return STATUS_NOERROR; };
@@ -104,23 +134,82 @@ protected:
 	unsigned long Flags;
 	unsigned long BaudRate;
 
+	//Should only be used while the panda device exists, so a pointer should be ok.
+	panda::Panda* panda_dev;
+
 	std::array<std::unique_ptr<J2534_Message_Filter>, 10> filters;
 };
+
+#define val_is_29bit(num) (((num) & CAN_29BIT_ID) == CAN_29BIT_ID)
 
 class CAN_J2534Connection : public J2534Connection {
 public:
 	CAN_J2534Connection(
+		panda::Panda* panda_dev,
 		unsigned long ProtocolID,
 		unsigned long Flags,
 		unsigned long BaudRate
-	) :	J2534Connection(ProtocolID, Flags, BaudRate) {};
+	) :	J2534Connection(panda_dev, ProtocolID, Flags, BaudRate) {};
 	virtual long PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) {
 		//Timeout of 0 means return immediately. Non zero means WAIT for that time then return. Dafuk.
-		*pNumMsgs = 0;
-		return STATUS_NOERROR;
+		long err_code = STATUS_NOERROR;
+		timer t = timer();
+
+		unsigned long msgnum = 0;
+		while (msgnum < *pNumMsgs) {
+			auto msgs = this->panda_dev->can_recv();
+			if (Timeout == 0) {
+				if (msgs.size() == 0) break;
+			} else if (t.getTimePassed() >= Timeout) {
+				err_code = ERR_TIMEOUT;
+				break;
+			}
+			//Should --prob-- ABSOLUTELY save messages to a buffer if they don't fit.
+			for (auto& msg_in : msgs) {
+				//if (this->_is_29bit() != msg_in.addr_29b) {}
+				PASSTHRU_MSG *msg_out = &pMsg[msgnum++];
+				msg_out->ProtocolID = this->ProtocolID;
+				msg_out->DataSize = msg_in.len + 4;
+				msg_out->Data[0] = msg_in.addr >> 24;
+				msg_out->Data[1] = (msg_in.addr >> 16) & 0xFF;
+				msg_out->Data[2] = (msg_in.addr >> 8) & 0xFF;
+				msg_out->Data[3] = msg_in.addr & 0xFF;
+				memcpy(&msg_out->Data[4], msg_in.dat, msg_in.len);
+				msg_out->Timestamp = msg_in.recv_time;
+				msg_out->RxStatus = msg_in.addr_29b ? CAN_29BIT_ID : 0;
+
+				if (msgnum == *pNumMsgs) break;
+			}
+		}
+		if (msgnum == 0)
+			err_code = ERR_BUFFER_EMPTY;
+		*pNumMsgs = msgnum;
+		return err_code;
 	}
 	virtual long PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) {
+		//There doesn't seem to be much reason to implement the timeout here.
+		for (int msgnum = 0; msgnum < *pNumMsgs; msgnum++) {
+			PASSTHRU_MSG* msg = &pMsg[msgnum];
+			if (msg->ProtocolID != this->ProtocolID) {
+				*pNumMsgs = msgnum;
+				return ERR_MSG_PROTOCOL_ID;
+			}
+			if (msg->DataSize < 4 || msg->DataSize > 8 || val_is_29bit(msg->TxFlags) != this->_is_29bit()) {
+				*pNumMsgs = msgnum;
+				return ERR_INVALID_MSG;
+			}
+
+			uint32_t addr = msg->Data[0] << 24 | msg->Data[1] << 16 | msg->Data[2] << 8 | msg->Data[3];
+			if (this->panda_dev->can_send(addr, this->_is_29bit(), &msg->Data[4], msg->DataSize - 4, panda::PANDA_CAN1) == FALSE) {
+				*pNumMsgs = msgnum;
+				return ERR_INVALID_MSG;
+			}
+		}
 		return STATUS_NOERROR;
+	}
+
+	bool _is_29bit() {
+		return (this->Flags & CAN_29BIT_ID) == CAN_29BIT_ID;
 	}
 };
 
@@ -198,6 +287,11 @@ PANDAJ2534DLL_API long PTAPI    PassThruOpen(void *pName, unsigned long *pDevice
 		panda_index = pandas.size()-1;
 	}
 
+	new_panda->set_can_speed_kbps(panda::PANDA_CAN1, 500);
+	new_panda->set_safety_mode(panda::SAFETY_ALLOUTPUT);
+	//new_panda->set_can_loopback(TRUE);
+	new_panda->set_can_loopback(FALSE);
+
 	pandas[panda_index].panda = std::move(new_panda);
 
 	*pDeviceID = panda_index;
@@ -234,7 +328,6 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 	}
 
 	//TODO check if channel can be made
-
 	switch (ProtocolID) {
 	//SW seems to refer to Single Wire. https://www.nxp.com/files-static/training_pdf/20451_BUS_COMM_WBT.pdf
 	//SW_ protocols may be touched on here: https://www.iso.org/obp/ui/#iso:std:iso:22900:-2:ed-1:v1:en
@@ -244,16 +337,16 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 	case J1850PWM_PS:
 	case ISO9141: //This protocol could be implemented if 5 BAUD init support is added to the panda.
 	case ISO9141_PS:
-		panda.connections[channel_index].reset(new J2534Connection(ProtocolID, Flags, BaudRate));
+		panda.connections[channel_index].reset(new J2534Connection(panda.panda.get(), ProtocolID, Flags, BaudRate));
 		break;
 	case ISO14230: //Only supporting Fast init until panda adds support for 5 BAUD init.
 	case ISO14230_PS:
-		panda.connections[channel_index].reset(new J2534Connection(ProtocolID, Flags, BaudRate));
+		panda.connections[channel_index].reset(new J2534Connection(panda.panda.get(), ProtocolID, Flags, BaudRate));
 		break;
 	case CAN:
 	case CAN_PS:
 	//case SW_CAN_PS:
-		panda.connections[channel_index].reset(new CAN_J2534Connection(ProtocolID, Flags, BaudRate));
+		panda.connections[channel_index].reset(new CAN_J2534Connection(panda.panda.get(), ProtocolID, Flags, BaudRate));
 		break;
 	//case ISO15765:
 	//case ISO15765_PS:
