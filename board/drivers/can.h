@@ -1,5 +1,9 @@
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE, CAN2_TX, CAN2_RX0, CAN2_SCE, CAN3_TX, CAN3_RX0, CAN3_SCE
-int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = 0xff;
+#define ALL_CAN_SILENT 0xFF
+#define ALL_CAN_BUT_MAIN_SILENT 0xFE
+#define ALL_CAN_LIVE 0
+
+int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_SILENT;
 
 // ********************* instantiate queues *********************
 
