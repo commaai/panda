@@ -78,6 +78,7 @@ std::unique_ptr<Panda> Panda::openPanda(std::string sn)
 		CloseHandle(deviceHandle);
 		return nullptr;
 	}
+
 	return std::unique_ptr<Panda>(new Panda(winusbHandle, deviceHandle, map_sn_to_devpath[sn], sn));
 }
 
@@ -137,6 +138,36 @@ int Panda::bulk_read(UCHAR endpoint, void * buff, ULONG buff_size, PULONG transf
 		return FALSE;
 	}
 	return TRUE;
+}
+
+bool Panda::set_alt_setting(UCHAR alt_setting) {
+	if (WinUsb_AbortPipe(this->usbh, 0x81) == FALSE) {
+		_tprintf(_T("    Error abobrting pipe before setting altsetting. continue. %d, Msg: '%s'\n"),
+			GetLastError(), GetLastErrorAsString().c_str());
+	}
+	if (WinUsb_SetCurrentAlternateSetting(this->usbh, alt_setting) == FALSE) {
+		_tprintf(_T("    Error setting usb altsetting %d, Msg: '%s'\n"),
+			GetLastError(), GetLastErrorAsString().c_str());
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+void Panda::reset_can_interrupt_pipe() {
+	// Either the panda or the windows usb stack can drop messages
+	// if an odd number of messages are sent before an interrupt IN
+	// message is canceled. There are some other odd behaviors, but
+	// the best solution so far has been to send a few messages
+	// before using the device to clear out the pipe. No, the windows
+	// functions for clearing/resetting/etc the pipe did not work.
+	// This took way too to figure out a workaround.
+	for (int i = 0; i < 2; i++) {
+		if (this->can_send(0x7FF, FALSE, {}, 0, PANDA_CAN1) == FALSE) {
+			auto err = GetLastError();
+			printf("Got err on first send: %d\n", err);
+		}
+	}
 }
 
 PANDA_HEALTH Panda::get_health()
@@ -280,15 +311,8 @@ bool Panda::can_send(uint32_t addr, bool addr_29b, const uint8_t *dat, uint8_t l
 	return this->can_send_many(std::vector<PANDA_CAN_MSG>{msg});
 }
 
-std::vector<PANDA_CAN_MSG> Panda::can_recv() {
-	std::vector<PANDA_CAN_MSG> msg_recv;
-	int retcount;
-	char buff[sizeof(PANDA_CAN_MSG_INTERNAL) * 4];// 256];
-
-	if (this->bulk_read(0x81, buff, sizeof(buff), (PULONG)&retcount, 0) == FALSE)
-		return msg_recv;
-
-	for (int i = 0; i < retcount; i+=sizeof(PANDA_CAN_MSG_INTERNAL)) {
+void parse_can_recv(std::vector<PANDA_CAN_MSG>& msg_recv, char *buff, int retcount) {
+	for (int i = 0; i < retcount; i += sizeof(PANDA_CAN_MSG_INTERNAL)) {
 		PANDA_CAN_MSG_INTERNAL *in_msg_raw = (PANDA_CAN_MSG_INTERNAL *)(buff + i);
 		PANDA_CAN_MSG in_msg;
 
@@ -314,6 +338,65 @@ std::vector<PANDA_CAN_MSG> Panda::can_recv() {
 		}
 		msg_recv.push_back(in_msg);
 	}
+}
+
+bool Panda::can_recv_async(HANDLE kill_event, std::vector<PANDA_CAN_MSG>& msg_buff) {
+	int retcount;
+	char buff[sizeof(PANDA_CAN_MSG_INTERNAL) * 4];
+
+	// Overlapped structure required for async read.
+	HANDLE m_hReadFinishedEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
+	OVERLAPPED m_overlappedData;
+	memset(&m_overlappedData, sizeof(OVERLAPPED), 0);
+	m_overlappedData.hEvent = m_hReadFinishedEvent;
+
+	HANDLE phSignals[2] = { m_hReadFinishedEvent, kill_event };
+
+	if (!WinUsb_ReadPipe(this->usbh, 0x81, (PUCHAR)buff, sizeof(buff), (PULONG)&retcount, &m_overlappedData)) {
+		// An overlapped read will return true if done, or false with an
+		// error of ERROR_IO_PENDING if the transfer is still in process.
+		DWORD dwError = GetLastError();
+		if (dwError == ERROR_IO_PENDING) {
+			dwError = WaitForMultipleObjects(kill_event ? 2 : 1, phSignals, FALSE, INFINITE);
+
+			// Check if packet, timeout (nope), or break
+			if (dwError == WAIT_OBJECT_0) {
+				// Signal came from our usb object. Read the returned data.
+				if (!GetOverlappedResult(this->usbh, &m_overlappedData, (PULONG)&retcount, FALSE)) {
+					// TODO: handle other error cases better.
+					dwError = GetLastError();
+					printf("Got overlap error %d\n", dwError);
+
+					return TRUE;
+				}
+			} else {
+				WinUsb_AbortPipe(this->usbh, 0x81);
+
+				// Return FALSE to show that the optional signal
+				// was set instead of the wait breaking from a
+				// message or recoverable error.
+				if (dwError == (WAIT_OBJECT_0 + 1)) {
+					return FALSE;
+				}
+				return TRUE;
+			}
+		}
+	}
+
+	parse_can_recv(msg_buff, buff, retcount);
+	return TRUE;
+}
+
+std::vector<PANDA_CAN_MSG> Panda::can_recv() {
+	std::vector<PANDA_CAN_MSG> msg_recv;
+	int retcount;
+	char buff[sizeof(PANDA_CAN_MSG_INTERNAL) * 4];
+
+	if (this->bulk_read(0x81, buff, sizeof(buff), (PULONG)&retcount, 0) == FALSE)
+		return msg_recv;
+
+	parse_can_recv(msg_recv, buff, retcount);
+
 	return msg_recv;
 }
 

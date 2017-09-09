@@ -8,9 +8,13 @@
 #include "J2534_v0404.h"
 #include <string>
 #include <array>
+#include <queue>
 
 #include <ctime>
 #include <chrono>
+
+// A quick way to avoid the name mangling that __stdcall liked to do
+#define EXPORT comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
 
 class timer
 {
@@ -38,10 +42,16 @@ private:
 	time_point_type start;
 };
 
-//using namespace panda;
-
-// A quick way to avoid the name mangling that __stdcall liked to do
-#define EXPORT comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
+typedef struct
+{
+	unsigned long	ProtocolID;
+	unsigned long	RxStatus;
+	unsigned long	TxFlags;
+	unsigned long	Timestamp;
+	unsigned long	DataSize;
+	unsigned long	ExtraDataIndex;
+	std::string		Data;
+} PASSTHRU_MSG_INTERNAL;
 
 class J2534_Message_Filter {
 public:
@@ -78,7 +88,12 @@ public:
 		unsigned long ProtocolID,
 		unsigned long Flags,
 		unsigned long BaudRate
-	) : panda_dev(panda_dev), ProtocolID(ProtocolID), Flags(Flags), BaudRate(BaudRate){}
+	) : panda_dev(panda_dev), ProtocolID(ProtocolID), Flags(Flags), BaudRate(BaudRate), port(0) {
+		InitializeCriticalSectionAndSpinCount(&this->message_access_lock, 0x00000400);
+	}
+	~J2534Connection() {
+		DeleteCriticalSection(&this->message_access_lock);
+	}
 	virtual long PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) { *pNumMsgs = 0; return STATUS_NOERROR; };
 	virtual long PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) { return STATUS_NOERROR; };
 	virtual long PassThruStartPeriodicMsg(PASSTHRU_MSG *pMsg, unsigned long *pMsgID, unsigned long TimeInterval) { return STATUS_NOERROR; };
@@ -122,22 +137,45 @@ public:
 	long setBaud(unsigned long baud) {
 		this->BaudRate = baud;
 		return STATUS_NOERROR;
-	};
-	long getBaud() {
+	}
+	unsigned long getBaud() {
 		return this->BaudRate;
-	};
+	}
+
+	unsigned long getProtocol() {
+		return this->ProtocolID;
+	}
+
+	bool isProtoCan() {
+		return this->ProtocolID == CAN || this->ProtocolID == CAN_PS;
+	}
+
+	unsigned long getPort() {
+		return this->port;
+	}
 
 	bool loopback = FALSE;
+
+	void processMessage(const PASSTHRU_MSG_INTERNAL& msg) {
+		EnterCriticalSection(&this->message_access_lock);
+		this->messages.push(msg);
+		LeaveCriticalSection(&this->message_access_lock);
+	}
 
 protected:
 	unsigned long ProtocolID;
 	unsigned long Flags;
 	unsigned long BaudRate;
+	unsigned long port;
 
 	//Should only be used while the panda device exists, so a pointer should be ok.
 	panda::Panda* panda_dev;
 
+	std::queue<PASSTHRU_MSG_INTERNAL> messages;
+
 	std::array<std::unique_ptr<J2534_Message_Filter>, 10> filters;
+
+	CRITICAL_SECTION message_access_lock;
 };
 
 #define val_is_29bit(num) (((num) & CAN_29BIT_ID) == CAN_29BIT_ID)
@@ -149,7 +187,10 @@ public:
 		unsigned long ProtocolID,
 		unsigned long Flags,
 		unsigned long BaudRate
-	) :	J2534Connection(panda_dev, ProtocolID, Flags, BaudRate) {};
+	) : J2534Connection(panda_dev, ProtocolID, Flags, BaudRate) {
+		this->port = 0;
+	};
+
 	virtual long PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) {
 		//Timeout of 0 means return immediately. Non zero means WAIT for that time then return. Dafuk.
 		long err_code = STATUS_NOERROR;
@@ -157,30 +198,31 @@ public:
 
 		unsigned long msgnum = 0;
 		while (msgnum < *pNumMsgs) {
-			auto msgs = this->panda_dev->can_recv();
-			if (Timeout == 0) {
-				if (msgs.size() == 0) break;
-			} else if (t.getTimePassed() >= Timeout) {
+			if (Timeout > 0 && t.getTimePassed() >= Timeout) {
 				err_code = ERR_TIMEOUT;
 				break;
 			}
-			//Should --prob-- ABSOLUTELY save messages to a buffer if they don't fit.
-			for (auto& msg_in : msgs) {
-				//if (this->_is_29bit() != msg_in.addr_29b) {}
-				PASSTHRU_MSG *msg_out = &pMsg[msgnum++];
-				msg_out->ProtocolID = this->ProtocolID;
-				msg_out->DataSize = msg_in.len + 4;
-				msg_out->Data[0] = msg_in.addr >> 24;
-				msg_out->Data[1] = (msg_in.addr >> 16) & 0xFF;
-				msg_out->Data[2] = (msg_in.addr >> 8) & 0xFF;
-				msg_out->Data[3] = msg_in.addr & 0xFF;
-				memcpy(&msg_out->Data[4], msg_in.dat, msg_in.len);
-				msg_out->Timestamp = msg_in.recv_time;
-				msg_out->RxStatus = msg_in.addr_29b ? CAN_29BIT_ID : 0;
 
-				if (msgnum == *pNumMsgs) break;
+			EnterCriticalSection(&this->message_access_lock);
+			if (Timeout == 0 && this->messages.empty()) {
+				LeaveCriticalSection(&this->message_access_lock);
+				break;
 			}
+
+			auto msg_in = this->messages.front();
+			this->messages.pop();
+			LeaveCriticalSection(&this->message_access_lock);
+
+			//if (this->_is_29bit() != msg_in.addr_29b) {}
+			PASSTHRU_MSG *msg_out = &pMsg[msgnum++];
+			msg_out->ProtocolID = this->ProtocolID;
+			msg_out->DataSize = msg_in.DataSize;
+			memcpy(msg_out->Data, msg_in.Data.c_str(), msg_in.DataSize);
+			msg_out->Timestamp = msg_in.Timestamp;
+			msg_out->RxStatus = msg_in.RxStatus ? CAN_29BIT_ID : 0;
+			if (msgnum == *pNumMsgs) break;
 		}
+
 		if (msgnum == 0)
 			err_code = ERR_BUFFER_EMPTY;
 		*pNumMsgs = msgnum;
@@ -194,7 +236,7 @@ public:
 				*pNumMsgs = msgnum;
 				return ERR_MSG_PROTOCOL_ID;
 			}
-			if (msg->DataSize < 4 || msg->DataSize > 8 || val_is_29bit(msg->TxFlags) != this->_is_29bit()) {
+			if (msg->DataSize < 4 || msg->DataSize > (8 + 4) || val_is_29bit(msg->TxFlags) != this->_is_29bit()) {
 				*pNumMsgs = msgnum;
 				return ERR_INVALID_MSG;
 			}
@@ -213,12 +255,109 @@ public:
 	}
 };
 
-typedef struct {
+class PandaJ2534Device {
+public:
+	PandaJ2534Device(std::unique_ptr<panda::Panda> new_panda) {
+		this->panda = std::move(new_panda);
+
+		this->panda->set_can_speed_kbps(panda::PANDA_CAN1, 500);
+		this->panda->set_safety_mode(panda::SAFETY_ALLOUTPUT);
+		this->panda->set_can_loopback(TRUE);
+		//this->panda->set_can_loopback(FALSE);
+		this->panda->set_alt_setting(1);
+		this->panda->reset_can_interrupt_pipe();
+
+		DWORD threadid;
+		this->can_kill_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+		this->can_thread_handle = CreateThread(NULL, 0, _threadBootstrap, (LPVOID)this, 0, &threadid);
+
+		printf("Created PandaDevice\n");
+	};
+
+	~PandaJ2534Device() {
+		SetEvent(this->can_kill_event);
+		DWORD res = WaitForSingleObject(this->can_thread_handle, INFINITE);
+		CloseHandle(this->can_thread_handle);
+	}
+
+	static std::unique_ptr<PandaJ2534Device> openByName(std::string sn) {
+		auto p = panda::Panda::openPanda("");
+		if (p == nullptr)
+			return nullptr;
+		return std::unique_ptr<PandaJ2534Device>(new PandaJ2534Device(std::move(p)));
+	}
+
+	DWORD closeChannel(unsigned long ChannelID) {
+		if (this->connections.size() <= ChannelID) return ERR_INVALID_CHANNEL_ID;
+		if (this->connections[ChannelID] == nullptr) return ERR_DEVICE_NOT_CONNECTED;
+		this->connections[ChannelID] = nullptr;
+		return STATUS_NOERROR;
+	}
+
+	DWORD addChannel(J2534Connection* conn, unsigned long* channel_id) {
+		int channel_index = -1;
+		for (unsigned int i = 0; i < this->connections.size(); i++)
+			if (this->connections[i] == nullptr) {
+				channel_index = i;
+				break;
+			}
+
+		if (channel_index == -1) {
+			if (this->connections.size() == 0xFFFF) //channelid max 16 bits
+				return ERR_FAILED; //Too many channels
+			this->connections.push_back(nullptr);
+			channel_index = this->connections.size() - 1;
+		}
+
+		this->connections[channel_index].reset(conn);
+
+		*channel_id = channel_index;
+		return STATUS_NOERROR;
+	}
+
 	std::unique_ptr<panda::Panda> panda;
 	std::vector<std::unique_ptr<J2534Connection>> connections;
-} ACTIVE_PANDA_ENTRY;
 
-std::vector<ACTIVE_PANDA_ENTRY> pandas;
+private:
+	static DWORD WINAPI _threadBootstrap(LPVOID This) {
+		return ((PandaJ2534Device*)This)->can_recv_thread();
+	}
+
+	DWORD can_recv_thread() {
+		DWORD err = TRUE;
+		while (err) {
+			std::vector<panda::PANDA_CAN_MSG> msg_recv;
+			err = this->panda->can_recv_async(this->can_kill_event, msg_recv);
+			for (auto msg_in : msg_recv) {
+				//if (this->_is_29bit() != msg_in.addr_29b) {}
+				PASSTHRU_MSG_INTERNAL msg_out;
+				msg_out.ProtocolID = CAN;
+				msg_out.DataSize = msg_in.len + 4;
+				msg_out.Data.reserve(msg_out.DataSize);
+				msg_out.Data += msg_in.addr >> 24;
+				msg_out.Data += (msg_in.addr >> 16) & 0xFF;
+				msg_out.Data += (msg_in.addr >> 8) & 0xFF;
+				msg_out.Data += msg_in.addr & 0xFF;
+				std::string tmp = std::string((char*)&msg_in.dat, msg_in.len);
+				msg_out.Data += tmp;
+				msg_out.Timestamp = msg_in.recv_time;
+				msg_out.RxStatus = msg_in.addr_29b ? CAN_29BIT_ID : 0;
+
+				// TODO: Make this more efficient
+				for (auto& conn : this->connections)
+					if(conn->isProtoCan() && conn->getPort() == msg_in.bus)
+						conn->processMessage(msg_out);
+			}
+		}
+
+		return STATUS_NOERROR;
+	}
+
+	HANDLE can_thread_handle;
+	HANDLE can_kill_event;
+};
+
+std::vector<std::unique_ptr<PandaJ2534Device>> pandas;
 
 int J25334LastError = 0;
 
@@ -232,7 +371,7 @@ long ret_code(long code) {
 
 long check_valid_DeviceID(unsigned long DeviceID) {
 	uint16_t dev_id = EXTRACT_DID(DeviceID);
-	if (pandas.size() <= dev_id || pandas[dev_id].panda == nullptr)
+	if (pandas.size() <= dev_id || pandas[dev_id] == nullptr)
 		return ret_code(ERR_INVALID_CHANNEL_ID);
 	return ret_code(STATUS_NOERROR);
 }
@@ -241,19 +380,18 @@ long check_valid_ChannelID(unsigned long ChannelID) {
 	uint16_t dev_id = EXTRACT_DID(ChannelID);;
 	uint16_t con_id = EXTRACT_CID(ChannelID);
 
-	if (pandas.size() <= dev_id || pandas[dev_id].panda == nullptr)
+	if (pandas.size() <= dev_id || pandas[dev_id] == nullptr)
 		return ret_code(ERR_INVALID_CHANNEL_ID);
 
-	ACTIVE_PANDA_ENTRY& panda = pandas[dev_id];
-	if (panda.connections.size() <= con_id) return ret_code(ERR_INVALID_CHANNEL_ID);
-	if (panda.connections[con_id] == nullptr) return ret_code(ERR_DEVICE_NOT_CONNECTED);
+	if (pandas[dev_id]->connections.size() <= con_id) return ret_code(ERR_INVALID_CHANNEL_ID);
+	if (pandas[dev_id]->connections[con_id] == nullptr) return ret_code(ERR_DEVICE_NOT_CONNECTED);
 
 	return ret_code(STATUS_NOERROR);
 }
 
 //Do not call without checking if the device/channel id exists first.
 #define get_device(DeviceID) (pandas[EXTRACT_DID(DeviceID)])
-#define get_channel(ChannelID) (get_device(ChannelID).connections[EXTRACT_CID(ChannelID)])
+#define get_channel(ChannelID) (get_device(ChannelID)->connections[EXTRACT_CID(ChannelID)])
 
 PANDAJ2534DLL_API long PTAPI    PassThruOpen(void *pName, unsigned long *pDeviceID) {
 	#pragma EXPORT
@@ -262,12 +400,12 @@ PANDAJ2534DLL_API long PTAPI    PassThruOpen(void *pName, unsigned long *pDevice
 	if (sn == "J2534-2:")
 		sn = "";
 
-	auto new_panda = panda::Panda::openPanda(sn);
+	auto new_panda = PandaJ2534Device::openByName(sn);
 	if (new_panda == nullptr) {
 		if(sn == "" && pandas.size() == 1)
 			return ret_code(ERR_DEVICE_IN_USE);
 		for (auto& pn : pandas) {
-			if (pn.panda->get_usb_sn() == sn)
+			if (pn->panda->get_usb_sn() == sn)
 				return ret_code(ERR_DEVICE_IN_USE);
 		}
 		return ret_code(ERR_DEVICE_NOT_CONNECTED);
@@ -275,24 +413,18 @@ PANDAJ2534DLL_API long PTAPI    PassThruOpen(void *pName, unsigned long *pDevice
 
 	int panda_index = -1;
 	for (unsigned int i = 0; i < pandas.size(); i++)
-		if (pandas[i].panda == nullptr) {
+		if (pandas[i] == nullptr) {
 			panda_index = i;
+			pandas[panda_index] = std::move(new_panda);
 			break;
 		}
 
 	if (panda_index == -1) {
 		if(pandas.size() == 0xFFFF) //device id will be 16 bit to fit channel next to it.
 			return ret_code(ERR_FAILED); //Too many pandas. Off the endangered species list.
-		pandas.push_back(ACTIVE_PANDA_ENTRY());
+		pandas.push_back(std::move(new_panda));
 		panda_index = pandas.size()-1;
 	}
-
-	new_panda->set_can_speed_kbps(panda::PANDA_CAN1, 500);
-	new_panda->set_safety_mode(panda::SAFETY_ALLOUTPUT);
-	//new_panda->set_can_loopback(TRUE);
-	new_panda->set_can_loopback(FALSE);
-
-	pandas[panda_index].panda = std::move(new_panda);
 
 	*pDeviceID = panda_index;
 	return ret_code(STATUS_NOERROR);
@@ -302,7 +434,7 @@ PANDAJ2534DLL_API long PTAPI	PassThruClose(unsigned long DeviceID) {
 	if (check_valid_DeviceID(DeviceID) != STATUS_NOERROR) return J25334LastError;
 
 	//TODO Check channels are closed.
-	get_device(DeviceID).panda = nullptr;
+	get_device(DeviceID) = nullptr;
 
 	return ret_code(STATUS_NOERROR);
 }
@@ -311,21 +443,9 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 	#pragma EXPORT
 	if (pChannelID == NULL) return ret_code(ERR_NULL_PARAMETER);
 	if (check_valid_DeviceID(DeviceID) != STATUS_NOERROR) return J25334LastError;
-	ACTIVE_PANDA_ENTRY& panda = get_device(DeviceID);
+	auto& panda = get_device(DeviceID);
 
-	int channel_index = -1;
-	for (unsigned int i = 0; i < panda.connections.size(); i++)
-		if (panda.connections[i] == nullptr) {
-			channel_index = i;
-			break;
-		}
-
-	if (channel_index == -1) {
-		if (panda.connections.size() == 0xFFFF) //channelid max 16 bits
-			return ret_code(ERR_FAILED); //Too many channels
-		panda.connections.push_back(nullptr);
-		channel_index = panda.connections.size() - 1;
-	}
+	J2534Connection* conn = NULL;
 
 	//TODO check if channel can be made
 	switch (ProtocolID) {
@@ -337,16 +457,16 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 	case J1850PWM_PS:
 	case ISO9141: //This protocol could be implemented if 5 BAUD init support is added to the panda.
 	case ISO9141_PS:
-		panda.connections[channel_index].reset(new J2534Connection(panda.panda.get(), ProtocolID, Flags, BaudRate));
+		conn = new J2534Connection(panda->panda.get(), ProtocolID, Flags, BaudRate);
 		break;
 	case ISO14230: //Only supporting Fast init until panda adds support for 5 BAUD init.
 	case ISO14230_PS:
-		panda.connections[channel_index].reset(new J2534Connection(panda.panda.get(), ProtocolID, Flags, BaudRate));
+		conn = new J2534Connection(panda->panda.get(), ProtocolID, Flags, BaudRate);
 		break;
 	case CAN:
 	case CAN_PS:
 	//case SW_CAN_PS:
-		panda.connections[channel_index].reset(new CAN_J2534Connection(panda.panda.get(), ProtocolID, Flags, BaudRate));
+		conn = new CAN_J2534Connection(panda->panda.get(), ProtocolID, Flags, BaudRate);
 		break;
 	//case ISO15765:
 	//case ISO15765_PS:
@@ -363,15 +483,17 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 		return ret_code(ERR_INVALID_PROTOCOL_ID);
 	}
 
-	*pChannelID = (channel_index << 16) | DeviceID;
+	unsigned long channel_index;
+	unsigned long err = panda->addChannel(conn, &channel_index);
+	if (err == STATUS_NOERROR)
+		*pChannelID = (channel_index << 16) | DeviceID;
 
-	return ret_code(STATUS_NOERROR);
+	return ret_code(err);
 }
 PANDAJ2534DLL_API long PTAPI	PassThruDisconnect(unsigned long ChannelID) {
 	#pragma EXPORT
-	if (check_valid_ChannelID(ChannelID) != STATUS_NOERROR) return J25334LastError;
-	get_channel(ChannelID) = nullptr;
-	return ret_code(STATUS_NOERROR);
+	if (check_valid_DeviceID(ChannelID) != STATUS_NOERROR) return J25334LastError;
+	return ret_code(get_device(ChannelID)->closeChannel(EXTRACT_CID(ChannelID)));
 }
 PANDAJ2534DLL_API long PTAPI	PassThruReadMsgs(unsigned long ChannelID, PASSTHRU_MSG *pMsg,
 	                                             unsigned long *pNumMsgs, unsigned long Timeout) {
@@ -385,7 +507,7 @@ PANDAJ2534DLL_API long PTAPI	PassThruWriteMsgs(unsigned long ChannelID, PASSTHRU
 	if (pMsg == NULL || pNumMsgs == NULL) return ret_code(ERR_NULL_PARAMETER);
 	if (check_valid_ChannelID(ChannelID) != STATUS_NOERROR) return J25334LastError;
 	return ret_code(get_channel(ChannelID)->PassThruWriteMsgs(pMsg, pNumMsgs, Timeout));
- }
+}
 PANDAJ2534DLL_API long PTAPI	PassThruStartPeriodicMsg(unsigned long ChannelID, PASSTHRU_MSG *pMsg, unsigned long *pMsgID, unsigned long TimeInterval) {
 	#pragma EXPORT
 	if (pMsg == NULL || pMsgID == NULL) return ret_code(ERR_NULL_PARAMETER);
@@ -413,7 +535,7 @@ PANDAJ2534DLL_API long PTAPI	PassThruStopMsgFilter(unsigned long ChannelID, unsi
 PANDAJ2534DLL_API long PTAPI	PassThruSetProgrammingVoltage(unsigned long DeviceID, unsigned long PinNumber, unsigned long Voltage) {
 	#pragma EXPORT
 	if (check_valid_DeviceID(DeviceID) != STATUS_NOERROR) return J25334LastError;
-	ACTIVE_PANDA_ENTRY& panda = get_device(DeviceID);
+	auto& panda = get_device(DeviceID);
 
 	switch (Voltage) {
 	case SHORT_TO_GROUND:
@@ -531,7 +653,7 @@ PANDAJ2534DLL_API long PTAPI	PassThruIoctl(unsigned long ChannelID, unsigned lon
 	                                          void *pInput, void *pOutput) {
 	#pragma EXPORT
 	if (check_valid_ChannelID(ChannelID) != STATUS_NOERROR) return J25334LastError;
-	ACTIVE_PANDA_ENTRY *dev_entry = &get_device(ChannelID);
+	auto& dev_entry = get_device(ChannelID);
 	//get_channel(ChannelID)
 
 	switch (IoctlID) {
