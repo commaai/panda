@@ -1,0 +1,21 @@
+#pragma once
+
+#include "J2534Connection.h"
+#include "panda/panda.h"
+
+class J2534Connection_CAN : public J2534Connection {
+public:
+	J2534Connection_CAN(
+		panda::Panda* panda_dev,
+		unsigned long ProtocolID,
+		unsigned long Flags,
+		unsigned long BaudRate
+	);
+
+	virtual long PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
+	virtual long PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
+
+	bool _is_29bit() {
+		return (this->Flags & CAN_29BIT_ID) == CAN_29BIT_ID;
+	}
+};

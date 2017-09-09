@@ -1,5 +1,4 @@
-#ifndef _PANDA_H_
-#define _PANDA_H_
+#pragma once
 
 // The following ifdef block is the standard way of creating macros which make exporting
 // from a DLL simpler. All files within this DLL are compiled with the PANDA_EXPORTS
@@ -174,4 +173,3 @@ namespace panda {
 	};
 
 }
-#endif

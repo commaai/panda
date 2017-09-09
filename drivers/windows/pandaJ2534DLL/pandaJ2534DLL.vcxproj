@@ -85,10 +85,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="J2534Connection.h" />
+    <ClInclude Include="J2534Connection_CAN.h" />
+    <ClInclude Include="J2534MessageFilter.h" />
     <ClInclude Include="J2534_v0404.h" />
+    <ClInclude Include="PandaJ2534Device.h" />
     <ClInclude Include="pandaJ2534DLL.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -99,16 +104,18 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="J2534Connection.cpp" />
+    <ClCompile Include="J2534Connection_CAN.cpp" />
+    <ClCompile Include="J2534MessageFilter.cpp" />
+    <ClCompile Include="PandaJ2534Device.cpp" />
     <ClCompile Include="pandaJ2534DLL.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\panda Driver Package\panda Driver Package.vcxproj">
-      <Project>{bd34db24-f5dc-4992-a74f-05faf731abed}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\panda\panda.vcxproj">
       <Project>{5528aefb-638d-49af-b9d4-965154e7d531}</Project>
     </ProjectReference>

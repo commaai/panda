@@ -381,6 +381,17 @@ typedef struct
 	unsigned char	Data[4128];
 } PASSTHRU_MSG;
 
+typedef struct
+{
+	unsigned long	ProtocolID;
+	unsigned long	RxStatus;
+	unsigned long	TxFlags;
+	unsigned long	Timestamp;
+	unsigned long	DataSize;
+	unsigned long	ExtraDataIndex;
+	std::string		Data;
+} PASSTHRU_MSG_INTERNAL;
+
 
 //
 // J2534-1 v04.04 Function Prototypes
