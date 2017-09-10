@@ -3,6 +3,8 @@
 #include "J2534_v0404.h"
 #include "J2534MessageFilter.h"
 
+class J2534MessageFilter;
+
 class J2534Connection {
 public:
 	J2534Connection(
@@ -29,9 +31,6 @@ public:
 	long clearRXBuff();
 	long clearPeriodicMsgs();
 	long clearMsgFilters();
-	long clearFunctMsgLookupTable(PASSTHRU_MSG* pInput);
-	long addtoFunctMsgLookupTable(PASSTHRU_MSG* pInput);
-	long deleteFromFunctMsgLookupTable();
 
 	long setBaud(unsigned long baud);
 	unsigned long getBaud();
@@ -43,6 +42,9 @@ public:
 	unsigned long getPort();
 
 	void processMessage(const PASSTHRU_MSG_INTERNAL& msg);
+
+	virtual unsigned long getMinMsgLen();
+	virtual unsigned long getMaxMsgLen();
 
 	bool loopback = FALSE;
 
@@ -57,7 +59,7 @@ protected:
 
 	std::queue<PASSTHRU_MSG_INTERNAL> messages;
 
-	std::array<std::unique_ptr<J2534MessageFilter>, 10> filters;
+	std::array<std::shared_ptr<J2534MessageFilter>, 10> filters;
 
 	CRITICAL_SECTION message_access_lock;
 };

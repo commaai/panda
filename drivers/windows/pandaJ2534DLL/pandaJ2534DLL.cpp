@@ -1,6 +1,7 @@
 // pandaJ2534DLL.cpp : Defines the exported functions for the DLL application.
-// Protocol derived from the following site (which shall be referred to as The Protocol Reference).
+// Protocol derived from the following sites (which shall be referred to as The Protocol Reference #).
 // https://web.archive.org/web/20130805013326/https://tunertools.com/prodimages/DrewTech/Manuals/PassThru_API-1.pdf
+// http://web.archive.org/web/20170910063536/http://www.tiecar.net/downloads/SAE_J2534_2002.pdf
 
 #include "stdafx.h"
 #include "J2534_v0404.h"
@@ -204,9 +205,9 @@ PANDAJ2534DLL_API long PTAPI	PassThruReadVersion(unsigned long DeviceID, char *p
 	#pragma EXPORT
 	if (!pFirmwareVersion || !pDllVersion || !pApiVersion) return ret_code(ERR_NULL_PARAMETER);
 	if (check_valid_DeviceID(DeviceID) != STATUS_NOERROR) return J25334LastError;
-	strcpy_s(pFirmwareVersion, 6, "00.02");
-	strcpy_s(pDllVersion, 6, "00.01");
-	strcpy_s(pApiVersion, sizeof(J2534_APIVER_NOVEMBER_2004), J2534_APIVER_NOVEMBER_2004);
+	strcpy_s(pFirmwareVersion, 80, "00.02");
+	strcpy_s(pDllVersion, 80, "00.01");
+	strcpy_s(pApiVersion, 80, J2534_APIVER_NOVEMBER_2004);
 	return ret_code(STATUS_NOERROR);
 }
 PANDAJ2534DLL_API long PTAPI	PassThruGetLastError(char *pErrorDescription) {
@@ -320,6 +321,12 @@ PANDAJ2534DLL_API long PTAPI	PassThruIoctl(unsigned long ChannelID, unsigned lon
 			case LOOPBACK:
 				inconfig->ConfigPtr[i].Value = get_channel(ChannelID)->loopback;
 				break;
+			case BIT_SAMPLE_POINT:
+				inconfig->ConfigPtr[i].Value = 80;
+				break;
+			case SYNC_JUMP_WIDTH:
+				inconfig->ConfigPtr[i].Value = 15;
+				break;
 			default:
 				// HDS rarely reads off values through ioctl GET_CONFIG, but it often
 				// just wants the call to pass without erroring, so just don't do anything.
@@ -390,14 +397,14 @@ PANDAJ2534DLL_API long PTAPI	PassThruIoctl(unsigned long ChannelID, unsigned lon
 		return ret_code(get_channel(ChannelID)->clearPeriodicMsgs());
 	case CLEAR_MSG_FILTERS:
 		return ret_code(get_channel(ChannelID)->clearMsgFilters());
-	case CLEAR_FUNCT_MSG_LOOKUP_TABLE:
+	case CLEAR_FUNCT_MSG_LOOKUP_TABLE:			// LOOKUP TABLE IS RELATED TO J1850 PWM. Unsupported.
 		if (!pInput) return ret_code(ERR_NULL_PARAMETER);
-		return ret_code(get_channel(ChannelID)->clearFunctMsgLookupTable((PASSTHRU_MSG*)pInput));
-	case ADD_TO_FUNCT_MSG_LOOKUP_TABLE:
+		return ret_code(STATUS_NOERROR);
+	case ADD_TO_FUNCT_MSG_LOOKUP_TABLE:			// LOOKUP TABLE IS RELATED TO J1850 PWM. Unsupported.
 		if (!pInput) return ret_code(ERR_NULL_PARAMETER);
-		return ret_code(get_channel(ChannelID)->addtoFunctMsgLookupTable((PASSTHRU_MSG*)pInput));
-	case DELETE_FROM_FUNCT_MSG_LOOKUP_TABLE:
-		return ret_code(get_channel(ChannelID)->deleteFromFunctMsgLookupTable());
+		return ret_code(STATUS_NOERROR);
+	case DELETE_FROM_FUNCT_MSG_LOOKUP_TABLE:	// LOOKUP TABLE IS RELATED TO J1850 PWM. Unsupported.
+		return ret_code(STATUS_NOERROR);
 	case READ_PROG_VOLTAGE:
 		*(unsigned long*)pOutput = 0;
 		break;

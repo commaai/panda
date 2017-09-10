@@ -41,7 +41,7 @@ long J2534Connection_CAN::PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pN
 		msg_out->DataSize = msg_in.DataSize;
 		memcpy(msg_out->Data, msg_in.Data.c_str(), msg_in.DataSize);
 		msg_out->Timestamp = msg_in.Timestamp;
-		msg_out->RxStatus = msg_in.RxStatus ? CAN_29BIT_ID : 0;
+		msg_out->RxStatus = msg_in.RxStatus;
 		if (msgnum == *pNumMsgs) break;
 	}
 
@@ -59,7 +59,8 @@ long J2534Connection_CAN::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *p
 			*pNumMsgs = msgnum;
 			return ERR_MSG_PROTOCOL_ID;
 		}
-		if (msg->DataSize < 4 || msg->DataSize >(8 + 4) || val_is_29bit(msg->TxFlags) != this->_is_29bit()) {
+		if (msg->DataSize < this->getMinMsgLen() || msg->DataSize > this->getMaxMsgLen() ||
+			(val_is_29bit(msg->TxFlags) != this->_is_29bit() && (this->Flags & CAN_ID_BOTH) != CAN_ID_BOTH)) {
 			*pNumMsgs = msgnum;
 			return ERR_INVALID_MSG;
 		}
@@ -71,4 +72,12 @@ long J2534Connection_CAN::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *p
 		}
 	}
 	return STATUS_NOERROR;
+}
+
+unsigned long J2534Connection_CAN::getMinMsgLen() {
+	return 4;
+}
+
+unsigned long J2534Connection_CAN::getMaxMsgLen() {
+	return 12;
 }

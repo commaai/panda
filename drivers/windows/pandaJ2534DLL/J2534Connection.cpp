@@ -26,9 +26,13 @@ long J2534Connection::PassThruStartMsgFilter(unsigned long FilterType, PASSTHRU_
 	PASSTHRU_MSG *pFlowControlMsg, unsigned long *pFilterID) {
 	for (int i = 0; i < this->filters.size(); i++) {
 		if (filters[i] == nullptr) {
-			filters[i].reset(new J2534MessageFilter(FilterType, pMaskMsg, pPatternMsg, pFlowControlMsg));
-			*pFilterID = i;
-			return STATUS_NOERROR;
+			try {
+				filters[i].reset(new J2534MessageFilter(this, FilterType, pMaskMsg, pPatternMsg, pFlowControlMsg));
+				*pFilterID = i;
+				return STATUS_NOERROR;
+			} catch (int e) {
+				return e;
+			}
 		}
 	}
 	return ERR_EXCEEDED_LIMIT;
@@ -48,15 +52,15 @@ long J2534Connection::PassThruIoctl(unsigned long IoctlID, void *pInput, void *p
 long J2534Connection::init5b(SBYTE_ARRAY* pInput, SBYTE_ARRAY* pOutput) { return STATUS_NOERROR; }
 long J2534Connection::initFast(PASSTHRU_MSG* pInput, PASSTHRU_MSG* pOutput) { return STATUS_NOERROR; }
 long J2534Connection::clearTXBuff() { return STATUS_NOERROR; }
-long J2534Connection::clearRXBuff() { return STATUS_NOERROR; }
+long J2534Connection::clearRXBuff() {
+	this->messages = {};
+	return STATUS_NOERROR;
+}
 long J2534Connection::clearPeriodicMsgs() { return STATUS_NOERROR; }
 long J2534Connection::clearMsgFilters() {
 	for (auto& filter : this->filters) filter = nullptr;
 	return STATUS_NOERROR;
 }
-long J2534Connection::clearFunctMsgLookupTable(PASSTHRU_MSG* pInput) { return STATUS_NOERROR; }
-long J2534Connection::addtoFunctMsgLookupTable(PASSTHRU_MSG* pInput) { return STATUS_NOERROR; }
-long J2534Connection::deleteFromFunctMsgLookupTable() { return STATUS_NOERROR; }
 
 long J2534Connection::setBaud(unsigned long baud) {
 	this->BaudRate = baud;
@@ -80,7 +84,28 @@ unsigned long J2534Connection::getPort() {
 }
 
 void J2534Connection::processMessage(const PASSTHRU_MSG_INTERNAL& msg) {
-	EnterCriticalSection(&this->message_access_lock);
-	this->messages.push(msg);
-	LeaveCriticalSection(&this->message_access_lock);
+	FILTER_RESULT filter_res = FILTER_RESULT_NEUTRAL;
+	for (auto filter : this->filters) {
+		if (filter == nullptr) continue;
+		FILTER_RESULT current_check_res = filter->check(msg);
+		if (current_check_res == FILTER_RESULT_BLOCK) return;
+		if (current_check_res == FILTER_RESULT_PASS) filter_res = FILTER_RESULT_PASS;
+	}
+
+	// Optionally ignore loopbacks
+	if ((msg.RxStatus & TX_MSG_TYPE) == TX_MSG_TYPE && !this->loopback) return;
+
+	if (filter_res == FILTER_RESULT_PASS) {
+		EnterCriticalSection(&this->message_access_lock);
+		this->messages.push(msg);
+		LeaveCriticalSection(&this->message_access_lock);
+	}
+}
+
+unsigned long J2534Connection::getMinMsgLen() {
+	return 1;
+}
+
+unsigned long J2534Connection::getMaxMsgLen() {
+	return 4128;
 }

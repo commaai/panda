@@ -6,16 +6,14 @@ PandaJ2534Device::PandaJ2534Device(std::unique_ptr<panda::Panda> new_panda) {
 
 	this->panda->set_can_speed_kbps(panda::PANDA_CAN1, 500);
 	this->panda->set_safety_mode(panda::SAFETY_ALLOUTPUT);
-	this->panda->set_can_loopback(TRUE);
-	//this->panda->set_can_loopback(FALSE);
+	//this->panda->set_can_loopback(TRUE);
+	this->panda->set_can_loopback(FALSE);
 	this->panda->set_alt_setting(1);
 	this->panda->reset_can_interrupt_pipe();
 
 	DWORD threadid;
 	this->can_kill_event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	this->can_thread_handle = CreateThread(NULL, 0, _threadBootstrap, (LPVOID)this, 0, &threadid);
-
-	printf("Created PandaDevice\n");
 };
 
 PandaJ2534Device::~PandaJ2534Device() {
@@ -73,6 +71,7 @@ DWORD PandaJ2534Device::can_recv_thread() {
 			PASSTHRU_MSG_INTERNAL msg_out;
 			msg_out.ProtocolID = CAN;
 			msg_out.DataSize = msg_in.len + 4;
+			msg_out.ExtraDataIndex = msg_out.DataSize;
 			msg_out.Data.reserve(msg_out.DataSize);
 			msg_out.Data += msg_in.addr >> 24;
 			msg_out.Data += (msg_in.addr >> 16) & 0xFF;
@@ -81,7 +80,8 @@ DWORD PandaJ2534Device::can_recv_thread() {
 			std::string tmp = std::string((char*)&msg_in.dat, msg_in.len);
 			msg_out.Data += tmp;
 			msg_out.Timestamp = msg_in.recv_time;
-			msg_out.RxStatus = msg_in.addr_29b ? CAN_29BIT_ID : 0;
+			msg_out.RxStatus = (msg_in.addr_29b ? CAN_29BIT_ID : 0) |
+				(msg_in.is_receipt ? TX_MSG_TYPE : 0);
 
 			// TODO: Make this more efficient
 			for (auto& conn : this->connections)

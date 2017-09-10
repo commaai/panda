@@ -15,6 +15,9 @@ public:
 	virtual long PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
 	virtual long PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
 
+	virtual unsigned long getMinMsgLen();
+	virtual unsigned long getMaxMsgLen();
+
 	bool _is_29bit() {
 		return (this->Flags & CAN_29BIT_ID) == CAN_29BIT_ID;
 	}
