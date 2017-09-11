@@ -84,16 +84,20 @@ unsigned long J2534Connection::getPort() {
 }
 
 void J2534Connection::processMessage(const PASSTHRU_MSG_INTERNAL& msg) {
-	FILTER_RESULT filter_res = FILTER_RESULT_NEUTRAL;
-	for (auto filter : this->filters) {
-		if (filter == nullptr) continue;
-		FILTER_RESULT current_check_res = filter->check(msg);
-		if (current_check_res == FILTER_RESULT_BLOCK) return;
-		if (current_check_res == FILTER_RESULT_PASS) filter_res = FILTER_RESULT_PASS;
-	}
+	if (msg.ProtocolID != this->getProtocol()) return;
 
-	// Optionally ignore loopbacks
-	if ((msg.RxStatus & TX_MSG_TYPE) == TX_MSG_TYPE && !this->loopback) return;
+	FILTER_RESULT filter_res = FILTER_RESULT_NEUTRAL;
+	if ((msg.RxStatus & TX_MSG_TYPE) == TX_MSG_TYPE) {
+		if (!this->loopback) return;	// Optionally ignore loopbacks
+		filter_res = FILTER_RESULT_PASS;
+	} else {
+		for (auto filter : this->filters) {
+			if (filter == nullptr) continue;
+			FILTER_RESULT current_check_res = filter->check(msg);
+			if (current_check_res == FILTER_RESULT_BLOCK) return;
+			if (current_check_res == FILTER_RESULT_PASS) filter_res = FILTER_RESULT_PASS;
+		}
+	}
 
 	if (filter_res == FILTER_RESULT_PASS) {
 		EnterCriticalSection(&this->message_access_lock);
