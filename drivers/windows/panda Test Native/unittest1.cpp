@@ -102,7 +102,8 @@ namespace pandaTestNative
 				Sleep(10);
 
 				auto can_msgs = p0->can_recv();
-				Assert::IsTrue(can_msgs.size() == 2, _T("Received the wrong number of CAN messages."));
+
+				Assert::AreEqual<size_t>(2, can_msgs.size(), _T("Received the wrong number of CAN messages."), LINE_INFO());
 
 				for (auto msg : can_msgs) {
 					Assert::IsTrue(msg.addr == addr, _T("Wrong addr."));

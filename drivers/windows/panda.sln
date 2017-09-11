@@ -19,6 +19,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "panda Test", "panda Test Na
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "panda Driver Package", "panda Driver Package\panda Driver Package.vcxproj", "{BD34DB24-F5DC-4992-A74F-05FAF731ABED}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pandaJ2534DLL Test", "pandaJ2534DLL Test\pandaJ2534DLL Test.vcxproj", "{7912F978-B48C-4C5D-8BFD-5D1E22158E47}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -65,6 +67,12 @@ Global
 		{BD34DB24-F5DC-4992-A74F-05FAF731ABED}.Release|x86.ActiveCfg = Release|Win32
 		{BD34DB24-F5DC-4992-A74F-05FAF731ABED}.Release|x86.Build.0 = Release|Win32
 		{BD34DB24-F5DC-4992-A74F-05FAF731ABED}.Release|x86.Deploy.0 = Release|Win32
+		{7912F978-B48C-4C5D-8BFD-5D1E22158E47}.Debug|x64.ActiveCfg = Debug|Win32
+		{7912F978-B48C-4C5D-8BFD-5D1E22158E47}.Debug|x86.ActiveCfg = Debug|Win32
+		{7912F978-B48C-4C5D-8BFD-5D1E22158E47}.Debug|x86.Build.0 = Debug|Win32
+		{7912F978-B48C-4C5D-8BFD-5D1E22158E47}.Release|x64.ActiveCfg = Release|Win32
+		{7912F978-B48C-4C5D-8BFD-5D1E22158E47}.Release|x86.ActiveCfg = Release|Win32
+		{7912F978-B48C-4C5D-8BFD-5D1E22158E47}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

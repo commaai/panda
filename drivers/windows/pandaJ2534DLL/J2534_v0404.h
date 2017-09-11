@@ -49,11 +49,14 @@
 // $Date: 2016-03-15 09:32:34 -0600 (Tue, 15 Mar 2016) $
 //
 
+#pragma once
 
-#ifndef __J2534_V0404_H
-#define __J2534_V0404_H
-
-#include "pandaJ2534DLL.h"
+#ifdef PANDAJ2534DLL_EXPORTS
+#define PANDAJ2534DLL_API extern "C" __declspec(dllexport)
+#else
+#define PANDAJ2534DLL_API
+//__declspec(dllimport)
+#endif
 
 //
 // Platform-specific Defines:
@@ -435,6 +438,3 @@ typedef long	(PTAPI *PTSETPROGRAMMINGVOLTAGE)(unsigned long DeviceID, unsigned l
 typedef long	(PTAPI *PTREADVERSION)(unsigned long DeviceID, char *pFirmwareVersion, char *pDllVersion, char *pApiVersion);
 typedef long	(PTAPI *PTGETLASTERROR)(char *pErrorDescription);
 typedef long	(PTAPI *PTIOCTL)(unsigned long ChannelID, unsigned long IoctlID, void *pInput, void *pOutput);
-
-
-#endif // __J2534_V0404_H

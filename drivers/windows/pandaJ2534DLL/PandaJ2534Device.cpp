@@ -9,7 +9,6 @@ PandaJ2534Device::PandaJ2534Device(std::unique_ptr<panda::Panda> new_panda) {
 	//this->panda->set_can_loopback(TRUE);
 	this->panda->set_can_loopback(FALSE);
 	this->panda->set_alt_setting(1);
-	this->panda->reset_can_interrupt_pipe();
 
 	DWORD threadid;
 	this->can_kill_event = CreateEvent(NULL, TRUE, FALSE, NULL);

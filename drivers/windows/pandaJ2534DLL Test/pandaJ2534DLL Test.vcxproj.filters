@@ -21,22 +21,10 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="J2534_v0404.h">
+    <ClInclude Include="Loader4.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="J2534Connection.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PandaJ2534Device.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="J2534Connection_CAN.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Timer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="J2534MessageFilter.h">
+    <ClInclude Include="..\pandaJ2534DLL\J2534_v0404.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,25 +32,10 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pandaJ2534DLL.cpp">
+    <ClCompile Include="j2534_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="J2534Connection.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PandaJ2534Device.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="J2534Connection_CAN.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Timer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="J2534MessageFilter.cpp">
+    <ClCompile Include="Loader4.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

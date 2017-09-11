@@ -104,7 +104,7 @@ namespace panda {
 
 		std::string get_usb_sn();
 		bool set_alt_setting(UCHAR alt_setting);
-		void reset_can_interrupt_pipe();
+		UCHAR get_current_alt_setting();
 
 		PANDA_HEALTH get_health();
 		bool enter_bootloader();
@@ -125,7 +125,7 @@ namespace panda {
 
 		bool can_send_many(const std::vector<PANDA_CAN_MSG>& can_msgs);
 		bool can_send(uint32_t addr, bool addr_29b, const uint8_t *dat, uint8_t len, PANDA_CAN_PORT bus);
-		bool can_recv_async(HANDLE kill_event, std::vector<PANDA_CAN_MSG>& msg_buff);
+		bool can_recv_async(HANDLE kill_event, std::vector<PANDA_CAN_MSG>& msg_buff, DWORD timeoutms = INFINITE);
 		std::vector<PANDA_CAN_MSG> can_recv();
 		bool can_clear(PANDA_CAN_PORT_CLEAR bus);
 
@@ -170,6 +170,7 @@ namespace panda {
 		HANDLE devh;
 		tstring devPath;
 		std::string sn;
+		bool loopback;
 	};
 
 }

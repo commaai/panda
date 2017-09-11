@@ -6,10 +6,12 @@
 #include "stdafx.h"
 #include "J2534_v0404.h"
 #include "panda/panda.h"
-#include "pandaJ2534DLL.h"
 #include "J2534Connection.h"
 #include "J2534Connection_CAN.h"
 #include "PandaJ2534Device.h"
+
+// A quick way to avoid the name mangling that __stdcall liked to do
+#define EXPORT comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
 
 std::vector<std::unique_ptr<PandaJ2534Device>> pandas;
 

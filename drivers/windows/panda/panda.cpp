@@ -27,6 +27,8 @@ Panda::Panda(
 	std::string sn_
 ) : usbh(WinusbHandle), devh(DeviceHandle), devPath(devPath_), sn(sn_) {
 	printf("CREATED A PANDA %s\n", this->sn.c_str());
+	this->set_can_loopback(FALSE);
+	this->set_alt_setting(0);
 }
 
 Panda::~Panda() {
@@ -151,10 +153,6 @@ bool Panda::set_alt_setting(UCHAR alt_setting) {
 		return FALSE;
 	}
 
-	return TRUE;
-}
-
-void Panda::reset_can_interrupt_pipe() {
 	// Either the panda or the windows usb stack can drop messages
 	// if an odd number of messages are sent before an interrupt IN
 	// message is canceled. There are some other odd behaviors, but
@@ -162,12 +160,47 @@ void Panda::reset_can_interrupt_pipe() {
 	// before using the device to clear out the pipe. No, the windows
 	// functions for clearing/resetting/etc the pipe did not work.
 	// This took way too to figure out a workaround.
+	// New info. The most repeatable behavior is losing the first
+	// message sent after setting alt setting to 1 (even without
+	// receiving). Something like this happened on linux sometimes.
+	bool loopback_backup = this->loopback;
+	this->set_can_loopback(TRUE);
+	Sleep(20); // Give time for any sent messages to appear in the RX buffer.
+	this->can_clear(PANDA_CAN_RX);
 	for (int i = 0; i < 2; i++) {
+		printf("Sending PAD %d\n", i);
 		if (this->can_send(0x7FF, FALSE, {}, 0, PANDA_CAN1) == FALSE) {
 			auto err = GetLastError();
 			printf("Got err on first send: %d\n", err);
 		}
 	}
+	Sleep(10);
+	//this->can_clear(PANDA_CAN_RX);
+
+	std::vector<PANDA_CAN_MSG> msg_recv;
+	if (alt_setting == 1) {
+		//Read the messages so they do not contaimnate the real message stream.
+		auto err = this->can_recv_async(NULL, msg_recv, 1000);
+	}
+	else {
+		msg_recv = this->can_recv();
+	}
+
+	//this->set_can_loopback(FALSE);
+	this->set_can_loopback(loopback_backup);
+
+	return TRUE;
+}
+
+UCHAR Panda::get_current_alt_setting() {
+	UCHAR alt_setting;
+	if (WinUsb_GetCurrentAlternateSetting(this->usbh, &alt_setting) == FALSE) {
+		_tprintf(_T("    Error getting usb altsetting %d, Msg: '%s'\n"),
+			GetLastError(), GetLastErrorAsString().c_str());
+		return FALSE;
+	}
+
+	return alt_setting;
 }
 
 PANDA_HEALTH Panda::get_health()
@@ -258,6 +291,7 @@ bool Panda::set_gmlan(PANDA_GMLAN_HOST_PORT bus = PANDA_GMLAN_CAN3) {
 }
 
 bool Panda::set_can_loopback(bool enable) {
+	this->loopback = enable;
 	return this->control_transfer(REQUEST_OUT, 0xe5, enable, 0, NULL, 0, 0) != -1;
 }
 
@@ -340,7 +374,7 @@ void parse_can_recv(std::vector<PANDA_CAN_MSG>& msg_recv, char *buff, int retcou
 	}
 }
 
-bool Panda::can_recv_async(HANDLE kill_event, std::vector<PANDA_CAN_MSG>& msg_buff) {
+bool Panda::can_recv_async(HANDLE kill_event, std::vector<PANDA_CAN_MSG>& msg_buff, DWORD timeoutms) {
 	int retcount;
 	char buff[sizeof(PANDA_CAN_MSG_INTERNAL) * 4];
 
@@ -357,7 +391,7 @@ bool Panda::can_recv_async(HANDLE kill_event, std::vector<PANDA_CAN_MSG>& msg_bu
 		// error of ERROR_IO_PENDING if the transfer is still in process.
 		DWORD dwError = GetLastError();
 		if (dwError == ERROR_IO_PENDING) {
-			dwError = WaitForMultipleObjects(kill_event ? 2 : 1, phSignals, FALSE, INFINITE);
+			dwError = WaitForMultipleObjects(kill_event ? 2 : 1, phSignals, FALSE, timeoutms);
 
 			// Check if packet, timeout (nope), or break
 			if (dwError == WAIT_OBJECT_0) {
