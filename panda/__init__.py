@@ -260,12 +260,15 @@ class Panda(object):
   def list():
     context = usb1.USBContext()
     ret = []
-    for device in context.getDeviceList(skip_on_error=True):
-      if device.getVendorID() == 0xbbaa and device.getProductID() in [0xddcc, 0xddee]:
-        try:
-          ret.append(device.getSerialNumber())
-        except Exception:
-          continue
+    try:
+      for device in context.getDeviceList(skip_on_error=True):
+        if device.getVendorID() == 0xbbaa and device.getProductID() in [0xddcc, 0xddee]:
+          try:
+            ret.append(device.getSerialNumber())
+          except Exception:
+            continue
+    except Exception:
+      continue
     # TODO: detect if this is real
     #ret += ["WIFI"]
     return ret
