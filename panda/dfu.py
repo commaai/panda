@@ -31,12 +31,15 @@ class PandaDFU(object):
   def list():
     context = usb1.USBContext()
     dfu_serials = []
-    for device in context.getDeviceList(skip_on_error=True):
-      if device.getVendorID() == 0x0483 and device.getProductID() == 0xdf11:
-        try:
-          dfu_serials.append(device._getASCIIStringDescriptor(3))
-        except Exception:
-          pass
+    try:
+      for device in context.getDeviceList(skip_on_error=True):
+        if device.getVendorID() == 0x0483 and device.getProductID() == 0xdf11:
+          try:
+            dfu_serials.append(device._getASCIIStringDescriptor(3))
+          except Exception:
+            pass
+    except Exception:
+      pass
     return dfu_serials
 
   @staticmethod
