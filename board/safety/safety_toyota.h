@@ -1,6 +1,6 @@
 uint32_t ego_speed = 0;
 uint32_t max_steer = 0;
-// 3 speed threshold to limit steer torque properly
+// 2 speed thresholds with 2 different steer torque levels allowed
 const uint32_t SPEED_0 = 200;        // 1 kph + 1 kph margin VS controlsd
 const uint32_t SPEED_1 = 4100;       // 40 kph + 1 kph margin VS controlsd
 const uint32_t MAX_STEER_0 = 1500;   // max
