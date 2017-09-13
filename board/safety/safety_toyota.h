@@ -1,9 +1,15 @@
-uint16_t ego_speed = 0;
+uint32_t ego_speed = 0;
+uint32_t max_steer = 0;
+// 3 speed threshold to limit steer torque properly
+const uint32_t SPEED_0 = 200;        // 2 kph - 1 kph margin VS controlsd
+const uint32_t SPEED_1 = 4100;       // 41 kph - 1 kph margin VS controlsd
+const uint32_t MAX_STEER_0 = 1500;   // max
+const uint32_t MAX_STEER_1 = 750;    // max/2
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // get the up to date speed
   if ((to_push->RIR>>21) == 0xb4) {
-    // not sure about the unit of this
+    // unit is 0.01 kph (see dbc file)
     ego_speed = ((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF);
   }
 
@@ -26,11 +32,18 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int16_t desired_torque = (to_send->RDLR & 0xFF00) | ((to_send->RDLR >> 16) & 0xFF);
 
     if (controls_allowed) {
-      // all messages are fine here
-      // TODO: add speed dependant torque limit
-    } else {
-      if (desired_torque != 0) return 0;
-    }
+      // speed dependent limitation
+      if ((ego_speed < SPEED_0) && (desired_torque > MAX_STEER_0)) return 0;
+
+      else if ((ego_speed > SPEED_1) && (desired_torque > MAX_STEER_1)) return 0;
+
+      else {
+        // linear interp
+        max_steer = MAX_STEER_0 - (ego_speed - SPEED_0) * (MAX_STEER_0 - MAX_STEER_1) / (SPEED_1 - SPEED_0);
+        if (desired_torque > max_steer) return 0;
+      }
+
+    } else if (desired_torque != 0) return 0;
   }
 
   // 1 allows the message through
