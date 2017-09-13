@@ -268,7 +268,7 @@ class Panda(object):
           except Exception:
             continue
     except Exception:
-      continue
+      pass
     # TODO: detect if this is real
     #ret += ["WIFI"]
     return ret
