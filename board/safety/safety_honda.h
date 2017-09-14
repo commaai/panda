@@ -64,26 +64,24 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       gas_prev = gas;
     }
   }
-
-  // block actuator commands if gas or brake (with vehicle moving) are pressed
-  if (gas_prev || gas_interceptor_prev || (brake_prev && speed)) {
-    actuators_blocked = 1;
-  } else {
-    actuators_blocked = 0;
-  }
 }
 
 // all commands: gas, brake and steering
-// if controls_allowed and no pedal pressed
+// if controls_allowed and no pedals pressed
 //     allow all commands up to limit
 // else
 //     block all commands that produce actuation
 
 static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
+  // disallow actuator commands if gas or brake (with vehicle moving) are pressed
+  // and the the latching controls_allowed flag is True
+  int pedal_pressed =  gas_prev || gas_interceptor_prev || (brake_prev && speed);
+  int current_controls_allowed = controls_allowed && !(pedal_pressed);
+
   // BRAKE: safety check
   if ((to_send->RIR>>21) == 0x1FA) {
-    if (controls_allowed && !(actuators_blocked)) {
+    if (current_controls_allowed) {
       if ((to_send->RDLR & 0xFFFFFF3F) != to_send->RDLR) return 0;
     } else {
       if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
@@ -92,7 +90,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // STEER: safety check
   if ((to_send->RIR>>21) == 0xE4 || (to_send->RIR>>21) == 0x194) {
-    if (controls_allowed && !(actuators_blocked)) {
+    if (current_controls_allowed) {
       // all messages are fine here
     } else {
       if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
@@ -101,7 +99,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // GAS: safety check
   if ((to_send->RIR>>21) == 0x200) {
-    if (controls_allowed && !(actuators_blocked)) {
+    if (current_controls_allowed) {
       // all messages are fine here
     } else {
       if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;

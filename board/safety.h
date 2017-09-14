@@ -16,7 +16,6 @@ typedef struct {
 
 // This can be set by the safety hooks.
 int controls_allowed = 0;
-int actuators_blocked = 1;
 
 // Include the actual safety policies.
 #include "safety/safety_defaults.h"
