@@ -1,10 +1,10 @@
-uint32_t ego_speed = 0;
-uint32_t max_steer = 0;
+int32_t ego_speed = 0;
+int32_t max_steer = 0;
 // 2 speed thresholds with 2 different steer torque levels allowed
-const uint32_t SPEED_0 = 200;        // 1 kph + 1 kph margin VS controlsd
-const uint32_t SPEED_1 = 4100;       // 40 kph + 1 kph margin VS controlsd
-const uint32_t MAX_STEER_0 = 1500;   // max
-const uint32_t MAX_STEER_1 = 750;    // max/2
+const int32_t SPEED_0 = 200;        // 1 kph + 1 kph margin VS controlsd
+const int32_t SPEED_1 = 4100;       // 40 kph + 1 kph margin VS controlsd
+const int32_t MAX_STEER_0 = 1500;   // max
+const int32_t MAX_STEER_1 = 750;    // max/2
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // get the up to date speed
@@ -31,19 +31,28 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if ((to_send->RIR>>21) == 0x2E4) {
     int16_t desired_torque = (to_send->RDLR & 0xFF00) | ((to_send->RDLR >> 16) & 0xFF);
 
+    // consider absolute value
+    if (desired_torque < 0) {
+      desired_torque *= -1;
+    }
+
     if (controls_allowed) {
       // speed dependent limitation
-      if ((ego_speed < SPEED_0) && (desired_torque > MAX_STEER_0)) return 0;
-
-      else if ((ego_speed > SPEED_1) && (desired_torque > MAX_STEER_1)) return 0;
-
-      else {
+      if ((ego_speed < SPEED_0) && (desired_torque > MAX_STEER_0)) {
+        return 0;
+      } else if ((ego_speed > SPEED_1) && (desired_torque > MAX_STEER_1)) {
+        return 0;
+      } else {
         // linear interp
-        max_steer = MAX_STEER_0 - (ego_speed - SPEED_0) * (MAX_STEER_0 - MAX_STEER_1) / (SPEED_1 - SPEED_0);
-        if (desired_torque > max_steer) return 0;
+        max_steer = MAX_STEER_0 - ((ego_speed - SPEED_0) * (MAX_STEER_0 - MAX_STEER_1)) / (SPEED_1 - SPEED_0);
+        if (desired_torque > max_steer) {
+          return 0;
+        }
       }
 
-    } else if (desired_torque != 0) return 0;
+    } else if (desired_torque != 0) {
+      return 0;
+    }
   }
 
   // 1 allows the message through
