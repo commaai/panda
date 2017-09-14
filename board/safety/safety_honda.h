@@ -26,7 +26,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // sample speed
   if ((to_push->RIR>>21) == 0x158) {
     // first 2 bytes
-    int speed = (to_push->RDLR & 0xFFFF)
+    speed = to_push->RDLR & 0xFFFF;
   }
 
   // state machine to enter and exit controls
@@ -52,9 +52,9 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (brake && !(brake_prev)) {
       controls_allowed = 0;
     }
-    brake_pressed_prev = brake_pressed;
+    brake_prev = brake;
 
-    if (brake and speed) {
+    if (brake && speed) {
       controls_allowed = 0;
     }
   }
@@ -63,10 +63,10 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if ((to_push->RIR>>21) == 0x201) {
     gas_interceptor_detected = 1;
     int gas_interceptor = ((to_push->RDLR & 0xFF) << 8) | ((to_push->RDLR & 0xFF00) >> 8);
-    if ((gas_interceptor > 328) and (gas_interceptor_prev <= 328)) {
+    if ((gas_interceptor > 328) && (gas_interceptor_prev <= 328)) {
       controls_allowed = 0;
     }
-    gas_prev = gas;
+    gas_interceptor_prev = gas_interceptor;
   }
 
   // exit controls on rising edge of gas press if no interceptor
