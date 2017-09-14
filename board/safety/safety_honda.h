@@ -15,12 +15,6 @@ int gas_prev = 0;
 int gas_interceptor_prev = 0;
 int speed = 0;
 
-// all commands: brake and steering
-// if controls_allowed
-//     allow all commands up to limit
-// else
-//     block all commands that produce actuation
-
 static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // sample speed
@@ -49,14 +43,10 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // bit 53
     int brake = to_push->RDHR & 0x200000;
 
-    if (brake && !(brake_prev)) {
+    if (brake && (!(brake_prev) || speed)) {
       controls_allowed = 0;
     }
     brake_prev = brake;
-
-    if (brake && speed) {
-      controls_allowed = 0;
-    }
   }
 
   // exit controls on rising edge of gas press if interceptor
@@ -79,12 +69,26 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       gas_prev = gas;
     }
   }
+
+  // block actuator commands if gas or brake (with vehicle moving) are pressed
+  if (gas_prev || gas_interceptor_prev || (brake_prev && speed)) {
+    actuators_blocked = 1;
+  } else {
+    actuators_blocked = 0;
+  }
 }
 
+// all commands: gas, brake and steering
+// if controls_allowed and no pedal pressed
+//     allow all commands up to limit
+// else
+//     block all commands that produce actuation
+
 static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+
   // BRAKE: safety check
   if ((to_send->RIR>>21) == 0x1FA) {
-    if (controls_allowed) {
+    if (controls_allowed && !(actuators_blocked)) {
       if ((to_send->RDLR & 0xFFFFFF3F) != to_send->RDLR) return 0;
     } else {
       if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
@@ -93,7 +97,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // STEER: safety check
   if ((to_send->RIR>>21) == 0xE4 || (to_send->RIR>>21) == 0x194) {
-    if (controls_allowed) {
+    if (controls_allowed && !(actuators_blocked)) {
       // all messages are fine here
     } else {
       if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
@@ -102,7 +106,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // GAS: safety check
   if ((to_send->RIR>>21) == 0x200) {
-    if (controls_allowed) {
+    if (controls_allowed && !(actuators_blocked)) {
       // all messages are fine here
     } else {
       if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
