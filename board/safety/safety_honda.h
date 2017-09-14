@@ -3,9 +3,17 @@
 //      accel set/resume
 //   out-state
 //      cancel button
+//      accel rising edge
+//      brake rising edge
+//      brake > 0mph
 
 // these are set in the Honda safety hooks...this is the wrong place
 int gas_interceptor_detected = 0;
+
+int brake_prev = 0;
+int gas_prev = 0;
+int gas_interceptor_prev = 0;
+int speed = 0;
 
 // all commands: brake and steering
 // if controls_allowed
@@ -14,10 +22,19 @@ int gas_interceptor_detected = 0;
 //     block all commands that produce actuation
 
 static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+
+  // sample speed
+  if ((to_push->RIR>>21) == 0x158) {
+    // first 2 bytes
+    int speed = (to_push->RDLR & 0xFFFF)
+  }
+
   // state machine to enter and exit controls
   // 0x1A6 for the ILX, 0x296 for the Civic Touring
   if ((to_push->RIR>>21) == 0x1A6 || (to_push->RIR>>21) == 0x296) {
+
     int buttons = (to_push->RDLR & 0xE0) >> 5;
+
     if (buttons == 4 || buttons == 3) {
       controls_allowed = 1;
     } else if (buttons == 2) {
@@ -25,29 +42,41 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
   }
 
-  // exit controls on brake press
+  // exit controls on rising edge of brake press or on brake press when
+  // speed > 0
   if ((to_push->RIR>>21) == 0x17C) {
+
     // bit 53
-    if (to_push->RDHR & 0x200000) {
+    int brake = to_push->RDHR & 0x200000;
+
+    if (brake && !(brake_prev)) {
+      controls_allowed = 0;
+    }
+    brake_pressed_prev = brake_pressed;
+
+    if (brake and speed) {
       controls_allowed = 0;
     }
   }
 
-  // exit controls on gas press if interceptor
+  // exit controls on rising edge of gas press if interceptor
   if ((to_push->RIR>>21) == 0x201) {
     gas_interceptor_detected = 1;
-    int gas = ((to_push->RDLR & 0xFF) << 8) | ((to_push->RDLR & 0xFF00) >> 8);
-    if (gas > 328) {
+    int gas_interceptor = ((to_push->RDLR & 0xFF) << 8) | ((to_push->RDLR & 0xFF00) >> 8);
+    if ((gas_interceptor > 328) and (gas_interceptor_prev <= 328)) {
       controls_allowed = 0;
     }
+    gas_prev = gas;
   }
 
-  // exit controls on gas press if no interceptor
+  // exit controls on rising edge of gas press if no interceptor
   if (!gas_interceptor_detected) {
     if ((to_push->RIR>>21) == 0x17C) {
-      if (to_push->RDLR & 0xFF) {
+      int gas = to_push->RDLR & 0xFF;
+      if (gas && !(gas_prev)) {
         controls_allowed = 0;
       }
+      gas_prev = gas;
     }
   }
 }
