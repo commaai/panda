@@ -9,7 +9,6 @@
 
 // these are set in the Honda safety hooks...this is the wrong place
 int gas_interceptor_detected = 0;
-
 int brake_prev = 0;
 int gas_prev = 0;
 int gas_interceptor_prev = 0;
@@ -26,9 +25,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // state machine to enter and exit controls
   // 0x1A6 for the ILX, 0x296 for the Civic Touring
   if ((to_push->RIR>>21) == 0x1A6 || (to_push->RIR>>21) == 0x296) {
-
     int buttons = (to_push->RDLR & 0xE0) >> 5;
-
     if (buttons == 4 || buttons == 3) {
       controls_allowed = 1;
     } else if (buttons == 2) {
@@ -39,10 +36,8 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // exit controls on rising edge of brake press or on brake press when
   // speed > 0
   if ((to_push->RIR>>21) == 0x17C) {
-
     // bit 53
     int brake = to_push->RDHR & 0x200000;
-
     if (brake && (!(brake_prev) || speed)) {
       controls_allowed = 0;
     }
