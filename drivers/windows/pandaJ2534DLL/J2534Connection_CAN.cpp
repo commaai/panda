@@ -2,7 +2,9 @@
 #include "J2534Connection_CAN.h"
 #include "Timer.h"
 
-#define val_is_29bit(num) (((num) & CAN_29BIT_ID) == CAN_29BIT_ID)
+#define check_bmask(num, mask)(((num) & mask) == mask)
+#define val_is_29bit(num) check_bmask(num, CAN_29BIT_ID)
+
 
 J2534Connection_CAN::J2534Connection_CAN(
 		panda::Panda* panda_dev,
@@ -60,13 +62,13 @@ long J2534Connection_CAN::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *p
 			return ERR_MSG_PROTOCOL_ID;
 		}
 		if (msg->DataSize < this->getMinMsgLen() || msg->DataSize > this->getMaxMsgLen() ||
-			(val_is_29bit(msg->TxFlags) != this->_is_29bit() && (this->Flags & CAN_ID_BOTH) != CAN_ID_BOTH)) {
+			(val_is_29bit(msg->TxFlags) != this->_is_29bit() && !check_bmask(this->Flags, CAN_ID_BOTH))) {
 			*pNumMsgs = msgnum;
 			return ERR_INVALID_MSG;
 		}
 
 		uint32_t addr = msg->Data[0] << 24 | msg->Data[1] << 16 | msg->Data[2] << 8 | msg->Data[3];
-		if (this->panda_dev->can_send(addr, this->_is_29bit(), &msg->Data[4], msg->DataSize - 4, panda::PANDA_CAN1) == FALSE) {
+		if (this->panda_dev->can_send(addr, val_is_29bit(msg->TxFlags), &msg->Data[4], msg->DataSize - 4, panda::PANDA_CAN1) == FALSE) {
 			*pNumMsgs = msgnum;
 			return ERR_INVALID_MSG;
 		}

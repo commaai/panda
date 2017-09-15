@@ -30,7 +30,7 @@ std::unique_ptr<PandaJ2534Device> PandaJ2534Device::openByName(std::string sn) {
 
 DWORD PandaJ2534Device::closeChannel(unsigned long ChannelID) {
 	if (this->connections.size() <= ChannelID) return ERR_INVALID_CHANNEL_ID;
-	if (this->connections[ChannelID] == nullptr) return ERR_DEVICE_NOT_CONNECTED;
+	if (this->connections[ChannelID] == nullptr) return ERR_INVALID_CHANNEL_ID;
 	this->connections[ChannelID] = nullptr;
 	return STATUS_NOERROR;
 }

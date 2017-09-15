@@ -28,7 +28,7 @@ long ret_code(long code) {
 long check_valid_DeviceID(unsigned long DeviceID) {
 	uint16_t dev_id = EXTRACT_DID(DeviceID);
 	if (pandas.size() <= dev_id || pandas[dev_id] == nullptr)
-		return ret_code(ERR_INVALID_CHANNEL_ID);
+		return ret_code(ERR_INVALID_DEVICE_ID);
 	return ret_code(STATUS_NOERROR);
 }
 
@@ -145,7 +145,9 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 }
 PANDAJ2534DLL_API long PTAPI	PassThruDisconnect(unsigned long ChannelID) {
 	#pragma EXPORT
-	if (check_valid_DeviceID(ChannelID) != STATUS_NOERROR) return J25334LastError;
+	unsigned long res = check_valid_DeviceID(ChannelID);
+	if (res == ERR_INVALID_DEVICE_ID) return ret_code(ERR_INVALID_CHANNEL_ID);
+	if (res != STATUS_NOERROR) return J25334LastError;
 	return ret_code(get_device(ChannelID)->closeChannel(EXTRACT_CID(ChannelID)));
 }
 PANDAJ2534DLL_API long PTAPI	PassThruReadMsgs(unsigned long ChannelID, PASSTHRU_MSG *pMsg,
