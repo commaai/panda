@@ -2,8 +2,8 @@
 // until a valid speed measurement is received
 int32_t speed = 30000;
 // 2 speed thresholds with 2 different steer torque levels allowed
-const int32_t SPEED_0 = 200;        // 1 kph + 1 kph margin VS controlsd
-const int32_t SPEED_1 = 4100;       // 40 kph + 1 kph margin VS controlsd
+const int32_t SPEED_0 = 1000;        // 5 kph + 5 kph margin VS controlsd
+const int32_t SPEED_1 = 4500;       // 40 kph + 5 kph margin VS controlsd
 const int32_t MAX_STEER_0 = 1500;   // max
 const int32_t MAX_STEER_1 = 750;    // max/2
 
