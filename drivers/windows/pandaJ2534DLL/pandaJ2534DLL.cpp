@@ -9,6 +9,7 @@
 #include "J2534Connection.h"
 #include "J2534Connection_CAN.h"
 #include "PandaJ2534Device.h"
+#include "dllmain.h"
 
 // A quick way to avoid the name mangling that __stdcall liked to do
 #define EXPORT comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
@@ -16,6 +17,39 @@
 std::vector<std::unique_ptr<PandaJ2534Device>> pandas;
 
 int J25334LastError = 0;
+
+std::string GetProductAndVersion(TCHAR* szFilename)//std::string & strProductName, std::string & strProductVersion)
+{
+	// allocate a block of memory for the version info
+	DWORD dummy;
+	DWORD dwSize = GetFileVersionInfoSize(szFilename, &dummy);
+	if (dwSize == 0) {
+		return "error";
+	}
+	std::vector<BYTE> data(dwSize);
+
+	// load the version info
+	if (!GetFileVersionInfo(szFilename, NULL, dwSize, &data[0])) {
+		return "error";
+	}
+
+	// get the name and version strings
+	LPVOID pvProductName = NULL;
+	unsigned int iProductNameLen = 0;
+	LPVOID pvProductVersion = NULL;
+	unsigned int iProductVersionLen = 0;
+
+	// 040904b0 is a language id.
+	if (!VerQueryValueA(&data[0], "\\StringFileInfo\\040904b0\\ProductName", &pvProductName, &iProductNameLen) ||
+		!VerQueryValueA(&data[0], "\\StringFileInfo\\040904b0\\ProductVersion", &pvProductVersion, &iProductVersionLen)) {
+		return "error";
+	}
+
+	std::string ver_str = std::string((char*)pvProductVersion, iProductVersionLen-1);
+	std::string prod_str = std::string((char*)pvProductName, iProductNameLen-1);
+	std::string full_ver = prod_str + std::string(": ") + ver_str;
+	return full_ver;
+}
 
 long ret_code(long code) {
 	J25334LastError = code;
@@ -189,6 +223,7 @@ PANDAJ2534DLL_API long PTAPI	PassThruStopMsgFilter(unsigned long ChannelID, unsi
 }
 PANDAJ2534DLL_API long PTAPI	PassThruSetProgrammingVoltage(unsigned long DeviceID, unsigned long PinNumber, unsigned long Voltage) {
 	#pragma EXPORT
+	//Unused
 	if (check_valid_DeviceID(DeviceID) != STATUS_NOERROR) return J25334LastError;
 	auto& panda = get_device(DeviceID);
 
@@ -209,8 +244,22 @@ PANDAJ2534DLL_API long PTAPI	PassThruReadVersion(unsigned long DeviceID, char *p
 	#pragma EXPORT
 	if (!pFirmwareVersion || !pDllVersion || !pApiVersion) return ret_code(ERR_NULL_PARAMETER);
 	if (check_valid_DeviceID(DeviceID) != STATUS_NOERROR) return J25334LastError;
-	strcpy_s(pFirmwareVersion, 80, "00.02");
-	strcpy_s(pDllVersion, 80, "00.01");
+
+	auto& panda = get_device(DeviceID);
+	auto fw_version = panda->panda->get_version();
+	strcpy_s(pFirmwareVersion, 80, fw_version.c_str());
+
+	std::string j2534dll_ver;
+	TCHAR pandalib_filename[MAX_PATH + 1] = { 0 };
+	if (GetModuleFileName(thisdll, pandalib_filename, MAX_PATH) == 0) {
+		j2534dll_ver = "error";
+	} else {
+		j2534dll_ver = GetProductAndVersion(pandalib_filename);
+	}
+	std::string pandalib_ver = GetProductAndVersion(_T("panda.dll"));
+	std::string fullver = "(" + j2534dll_ver + "; " + pandalib_ver + ")";
+	strcpy_s(pDllVersion, 80, fullver.c_str());
+
 	strcpy_s(pApiVersion, 80, J2534_APIVER_NOVEMBER_2004);
 	return ret_code(STATUS_NOERROR);
 }
