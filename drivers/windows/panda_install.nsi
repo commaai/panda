@@ -7,7 +7,8 @@
 !include "x64.nsh"
 
 !define MUI_ICON "panda.ico"
-!define MUI_UNICON "panda.ico"
+;NSIS is ignoring the unicon unless it is the same as the normal icon
+;!define MUI_UNICON "panda_remove.ico"
 
 ;Properly display all languages (Installer will not work on Windows 95, 98 or ME!)
 Unicode true
@@ -83,7 +84,7 @@ Section "panda driver (required)"
   
   ; Write the uninstall keys for Windows
   ;WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Install_Name}" "DisplayVersion" ""
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Install_Name}" "DisplayIcon" '"$INSTDIR\uninstall.exe"'
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Install_Name}" "DisplayIcon" '"$INSTDIR\pandaJ2534.dll"'
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Install_Name}" "DisplayName" "panda J2534 Drivers"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Install_Name}" "Publisher" "comma.ai"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Install_Name}" "UninstallString" '"$INSTDIR\uninstall.exe"'
@@ -113,11 +114,11 @@ Section "J2534 Driver"
   
   SetOutPath $INSTDIR
   
-  File Release_x86\pandaJ2534DLL.dll
+  File Release_x86\pandaJ2534.dll
 
   SetRegView 32
   WriteRegDWORD  HKLM "${J2534_Reg_Path}" "CAN"               00000001
-  WriteRegStr    HKLM "${J2534_Reg_Path}" "FunctionLibrary"   "$INSTDIR\pandaJ2534DLL.dll"
+  WriteRegStr    HKLM "${J2534_Reg_Path}" "FunctionLibrary"   "$INSTDIR\pandaJ2534.dll"
   WriteRegDWORD  HKLM "${J2534_Reg_Path}" "ISO15765"          00000001
   WriteRegDWORD  HKLM "${J2534_Reg_Path}" "J1850VPW"          00000000
   WriteRegDWORD  HKLM "${J2534_Reg_Path}" "SCI_A_ENGINE"      00000000
@@ -147,7 +148,7 @@ Section "Uninstall"
   ; These lines just remove the inf backups.
   Delete "$INSTDIR\driver\panda.inf"
   Delete "$INSTDIR\driver\panda.cat"
-  RMDir "$INSTDIR\drivers"
+  RMDir "$INSTDIR\driver"
 
   ; Remove WinUSB driver library
   Delete $SYSDIR\panda.dll
@@ -172,7 +173,7 @@ Section "Uninstall"
   
   ; Remove files and uninstaller
   Delete "$INSTDIR\uninstall.exe"
-  Delete "$INSTDIR\pandaJ2534DLL.dll"
+  Delete "$INSTDIR\pandaJ2534.dll"
 
   ; Remove directories used
   RMDir "$INSTDIR"

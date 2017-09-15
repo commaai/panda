@@ -123,7 +123,7 @@ namespace pandaJ2534DLLTest
 
 		TEST_METHOD(J2534DriverInit)
 		{
-			long err = LoadJ2534Dll("PandaJ2534DLL.dll");
+			long err = LoadJ2534Dll("PandaJ2534.dll");
 			Assert::IsTrue(err == 0, _T("Library failed to load properly. Check the export names and library location."));
 		}
 
@@ -134,7 +134,7 @@ namespace pandaJ2534DLLTest
 	public:
 
 		TEST_METHOD_INITIALIZE(init) {
-			LoadJ2534Dll("PandaJ2534DLL.dll");
+			LoadJ2534Dll("PandaJ2534.dll");
 		}
 
 		TEST_METHOD_CLEANUP(deinit) {
@@ -215,7 +215,7 @@ namespace pandaJ2534DLLTest
 	public:
 
 		TEST_METHOD_INITIALIZE(init) {
-			LoadJ2534Dll("PandaJ2534DLL.dll");
+			LoadJ2534Dll("PandaJ2534.dll");
 		}
 
 		TEST_METHOD_CLEANUP(deinit) {
