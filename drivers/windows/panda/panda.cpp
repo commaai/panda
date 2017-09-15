@@ -296,9 +296,15 @@ bool Panda::set_can_loopback(bool enable) {
 }
 
 //Can not use the full range of 16 bit speed.
-bool Panda::set_can_speed_kbps(PANDA_CAN_PORT bus, uint16_t speed) {
+//cbps means centa bits per second (tento of kbps)
+bool Panda::set_can_speed_cbps(PANDA_CAN_PORT bus, uint16_t speed) {
 	if (bus == PANDA_CAN_UNK) return FALSE;
-	return this->control_transfer(REQUEST_OUT, 0xde, bus, speed * 10, NULL, 0, 0) != -1;
+	return this->control_transfer(REQUEST_OUT, 0xde, bus, speed, NULL, 0, 0) != -1;
+}
+
+//Can not use the full range of 16 bit speed.
+bool Panda::set_can_speed_kbps(PANDA_CAN_PORT bus, uint16_t speed) {
+	return set_can_speed_cbps(bus, speed * 10);
 }
 
 //Can not use full 32 bit range of rate

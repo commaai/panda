@@ -119,6 +119,7 @@ namespace panda {
 		bool set_can_forwarding(PANDA_CAN_PORT from_bus, PANDA_CAN_PORT to_bus);
 		bool set_gmlan(PANDA_GMLAN_HOST_PORT bus);
 		bool set_can_loopback(bool enable);
+		bool set_can_speed_cbps(PANDA_CAN_PORT bus, uint16_t speed);
 		bool set_can_speed_kbps(PANDA_CAN_PORT bus, uint16_t speed);
 		bool set_uart_baud(PANDA_SERIAL_PORT uart, uint32_t rate);
 		bool set_uart_parity(PANDA_SERIAL_PORT uart, PANDA_SERIAL_PORT_PARITY parity);

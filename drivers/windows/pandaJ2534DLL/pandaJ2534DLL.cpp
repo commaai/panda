@@ -135,39 +135,43 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 	J2534Connection* conn = NULL;
 
 	//TODO check if channel can be made
-	switch (ProtocolID) {
-	//SW seems to refer to Single Wire. https://www.nxp.com/files-static/training_pdf/20451_BUS_COMM_WBT.pdf
-	//SW_ protocols may be touched on here: https://www.iso.org/obp/ui/#iso:std:iso:22900:-2:ed-1:v1:en
-	case J1850VPW: //These protocols are outdated and will not be supported. HDS wants them to not fail to open.
-	case J1850PWM:
-	case J1850VPW_PS:
-	case J1850PWM_PS:
-	case ISO9141: //This protocol could be implemented if 5 BAUD init support is added to the panda.
-	case ISO9141_PS:
-		conn = new J2534Connection(panda->panda.get(), ProtocolID, Flags, BaudRate);
-		break;
-	case ISO14230: //Only supporting Fast init until panda adds support for 5 BAUD init.
-	case ISO14230_PS:
-		conn = new J2534Connection(panda->panda.get(), ProtocolID, Flags, BaudRate);
-		break;
-	case CAN:
-	case CAN_PS:
-	//case SW_CAN_PS:
-		conn = new J2534Connection_CAN(panda->panda.get(), ProtocolID, Flags, BaudRate);
-		break;
-	//case ISO15765:
-	//case ISO15765_PS:
-	//case SW_ISO15765_PS:
-	//case GM_UART_PS: //Suspect this is GMLAN
-	//Looks like SCI based protocols may not be compatible with the panda:
-	//http://mdhmotors.com/can-communications-vehicle-network-protocols/3/
-	//case SCI_A_ENGINE:
-	//case SCI_A_TRANS:
-	//case SCI_B_ENGINE:
-	//case SCI_B_TRANS:
-	//case J2610_PS:*/
-	default:
-		return ret_code(ERR_INVALID_PROTOCOL_ID);
+	try {
+		switch (ProtocolID) {
+			//SW seems to refer to Single Wire. https://www.nxp.com/files-static/training_pdf/20451_BUS_COMM_WBT.pdf
+			//SW_ protocols may be touched on here: https://www.iso.org/obp/ui/#iso:std:iso:22900:-2:ed-1:v1:en
+		case J1850VPW: //These protocols are outdated and will not be supported. HDS wants them to not fail to open.
+		case J1850PWM:
+		case J1850VPW_PS:
+		case J1850PWM_PS:
+		case ISO9141: //This protocol could be implemented if 5 BAUD init support is added to the panda.
+		case ISO9141_PS:
+			conn = new J2534Connection(panda->panda.get(), ProtocolID, Flags, BaudRate);
+			break;
+		case ISO14230: //Only supporting Fast init until panda adds support for 5 BAUD init.
+		case ISO14230_PS:
+			conn = new J2534Connection(panda->panda.get(), ProtocolID, Flags, BaudRate);
+			break;
+		case CAN:
+		case CAN_PS:
+			//case SW_CAN_PS:
+			conn = new J2534Connection_CAN(panda->panda.get(), ProtocolID, Flags, BaudRate);
+			break;
+			//case ISO15765:
+			//case ISO15765_PS:
+			//case SW_ISO15765_PS: // SW = Single Wire. GMLAN is a SW CAN protocol
+			//case GM_UART_PS: // PS = Pin Select. Handles different ports.
+			//Looks like SCI based protocols may not be compatible with the panda:
+			//http://mdhmotors.com/can-communications-vehicle-network-protocols/3/
+			//case SCI_A_ENGINE:
+			//case SCI_A_TRANS:
+			//case SCI_B_ENGINE:
+			//case SCI_B_TRANS:
+			//case J2610_PS:*/
+		default:
+			return ret_code(ERR_INVALID_PROTOCOL_ID);
+		}
+	} catch (int e) {
+		return ret_code(e);
 	}
 
 	unsigned long channel_index;

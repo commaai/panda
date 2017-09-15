@@ -463,6 +463,33 @@ namespace pandaJ2534DLLTest
 			return res;
 		}
 
+		TEST_METHOD(J2534_CAN_Baud)
+		{
+			unsigned long chanid;
+			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 250000, &chanid), _T("Failed to open channel."), LINE_INFO());
+
+			auto p = panda::Panda::openPanda("");
+			Assert::IsTrue(p != nullptr, _T("Could not open 2nd device to test communication."), LINE_INFO());
+			p->set_can_speed_kbps(panda::PANDA_CAN1, 250);
+			p->set_safety_mode(panda::SAFETY_ALLOUTPUT);
+			p->can_clear(panda::PANDA_CAN_RX);
+
+			J2534_send_msg_checked(chanid, CAN, 0, 0, 0, 6, 6, "\x0\x0\x3\xAB""HI", LINE_INFO());
+
+			std::vector<panda::PANDA_CAN_MSG> msg_recv = panda_recv_loop(p, 1);
+			check_panda_can_msg(msg_recv[0], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+		}
+
+		TEST_METHOD(J2534_CAN_BaudInvalid)
+		{
+			unsigned long chanid;
+			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
+			Assert::AreEqual<long>(ERR_INVALID_BAUDRATE, PassThruConnect(devid, CAN, 0, 6000000, &chanid), _T("Baudrate should have been invalid."), LINE_INFO());
+			Assert::AreEqual<long>(ERR_INVALID_BAUDRATE, PassThruConnect(devid, CAN, 0, 200, &chanid), _T("Baudrate should have been invalid."), LINE_INFO());
+			Assert::AreEqual<long>(ERR_INVALID_BAUDRATE, PassThruConnect(devid, CAN, 0, 250010, &chanid), _T("Baudrate should have been invalid."), LINE_INFO());
+		}
+
 	};
 
 }

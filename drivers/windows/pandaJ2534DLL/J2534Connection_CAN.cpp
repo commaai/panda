@@ -13,6 +13,11 @@ J2534Connection_CAN::J2534Connection_CAN(
 		unsigned long BaudRate
 	) : J2534Connection(panda_dev, ProtocolID, Flags, BaudRate) {
 	this->port = 0;
+
+	if (BaudRate % 100 || BaudRate < 10000 || BaudRate > 5000000)
+		throw ERR_INVALID_BAUDRATE;
+
+	this->panda_dev->set_can_speed_cbps(panda::PANDA_CAN1, BaudRate/100);
 };
 
 long J2534Connection_CAN::PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) {
