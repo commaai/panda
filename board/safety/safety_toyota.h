@@ -2,10 +2,11 @@
 // until a valid speed measurement is received
 int32_t speed = 30000;
 // 2 speed thresholds with 2 different steer torque levels allowed
-const int32_t SPEED_0 = 1000;        // 5 kph + 5 kph margin VS controlsd
+const int32_t SPEED_0 = 1000;       // 5 kph + 5 kph margin VS controlsd
 const int32_t SPEED_1 = 4500;       // 40 kph + 5 kph margin VS controlsd
 const int32_t MAX_STEER_0 = 1500;   // max
 const int32_t MAX_STEER_1 = 750;    // max/2
+int torque_limits = 1;              // by default steer limits are imposed
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // get the up to date speed
@@ -37,7 +38,8 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       desired_torque *= -1;
     }
 
-    if (controls_allowed) {
+    // only check if controls are allowed and torque_limits are imposed
+    if (controls_allowed && torque_limits) {
       // speed dependent limitation
       if ((speed < SPEED_0) && (desired_torque > MAX_STEER_0)) {
         return 0;
@@ -67,6 +69,7 @@ static int toyota_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 
 static void toyota_init() {
   controls_allowed = 0;
+  torque_limits = 1;
 }
 
 const safety_hooks toyota_hooks = {
@@ -76,3 +79,14 @@ const safety_hooks toyota_hooks = {
   .tx_lin = toyota_tx_lin_hook,
 };
 
+static void toyota_nolimits_init() {
+  controls_allowed = 0;
+  torque_limits = 0;
+}
+
+const safety_hooks toyota_nolimits_hooks = {
+  .init = toyota_nolimits_init,
+  .rx = toyota_rx_hook,
+  .tx = toyota_tx_hook,
+  .tx_lin = toyota_tx_lin_hook,
+};
