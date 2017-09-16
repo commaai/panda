@@ -4,6 +4,7 @@
 PandaJ2534Device::PandaJ2534Device(std::unique_ptr<panda::Panda> new_panda) {
 	this->panda = std::move(new_panda);
 
+	this->panda->set_esp_power(FALSE);
 	this->panda->set_safety_mode(panda::SAFETY_ALLOUTPUT);
 	this->panda->set_can_loopback(FALSE);
 	this->panda->set_alt_setting(1);
