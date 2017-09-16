@@ -2,10 +2,10 @@
 // until a valid speed measurement is received
 int32_t speed = 30000;
 // 2 speed thresholds with 2 different steer torque levels allowed
-const int32_t SPEED_0 = 1000;       // 5 kph + 5 kph margin VS controlsd
-const int32_t SPEED_1 = 4500;       // 40 kph + 5 kph margin VS controlsd
+const int32_t SPEED_0 = 2100;       // 16 kph/10 mph + 5 kph margin VS carcontroller
+const int32_t SPEED_1 = 5000;       // 45 kph/28 mph + 5 kph margin VS carcontroller
 const int32_t MAX_STEER_0 = 1500;   // max
-const int32_t MAX_STEER_1 = 750;    // max/2
+const int32_t MAX_STEER_1 = 1000;   // reduced
 int torque_limits = 1;              // by default steer limits are imposed
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
