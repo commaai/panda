@@ -33,9 +33,11 @@ long J2534Connection_CAN::PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pN
 		}
 
 		EnterCriticalSection(&this->message_access_lock);
-		if (Timeout == 0 && this->messages.empty()) {
+		if (this->messages.empty()) {
 			LeaveCriticalSection(&this->message_access_lock);
-			break;
+			if(Timeout == 0)
+				break;
+			continue;
 		}
 
 		auto msg_in = this->messages.front();

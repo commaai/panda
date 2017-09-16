@@ -454,13 +454,30 @@ namespace pandaJ2534DLLTest
 			check_J2534_can_msg(j2534_msg_recv[2], CAN, 0, 0, 5 + 4, 0, "\x0\x0\x3\xFA""MNOPQ", LINE_INFO());
 		}
 
-		bool didopen = FALSE;
-		unsigned long devid;
+		TEST_METHOD(J2534_CAN_RxWithTimeout)
+		{
+			//Check that the order of the pass and block filter do not matter
+			unsigned long chanid, filterid0;
+			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
 
-		unsigned long open_dev(const char* name, long assert_err = STATUS_NOERROR, TCHAR* failmsg = _T("Failed to open device.")) {
-			unsigned int res = PassThruOpen((void*)name, &devid);
-			if (res == STATUS_NOERROR) didopen = TRUE;
-			return res;
+			PASSTHRU_MSG filter_mask0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
+			PASSTHRU_MSG filter0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStartMsgFilter(chanid, PASS_FILTER, &filter_mask0, &filter0, 0, &filterid0), _T("Failed to create filter."), LINE_INFO());
+
+			auto p = panda::Panda::openPanda("");
+			Assert::IsTrue(p != nullptr, _T("Could not open 2nd device to test communication."), LINE_INFO());
+			p->set_can_speed_kbps(panda::PANDA_CAN1, 500);
+			p->set_safety_mode(panda::SAFETY_ALLOUTPUT);
+			p->can_clear(panda::PANDA_CAN_RX);
+
+			PASSTHRU_MSG recvbuff;
+			unsigned long msgcount = 1;
+			unsigned int res = PassThruReadMsgs(chanid, &recvbuff, &msgcount, 100); // Here is where we test the timeout
+			Assert::AreEqual<long>(ERR_BUFFER_EMPTY, res, _T("No message should be found"), LINE_INFO());
+			Assert::AreEqual<unsigned long>(0, msgcount, _T("Received wrong number of messages."));
+
+			//TODO Test that the timings work right instead of just testing it doesn't crash.
 		}
 
 		TEST_METHOD(J2534_CAN_Baud)
@@ -488,6 +505,15 @@ namespace pandaJ2534DLLTest
 			Assert::AreEqual<long>(ERR_INVALID_BAUDRATE, PassThruConnect(devid, CAN, 0, 6000000, &chanid), _T("Baudrate should have been invalid."), LINE_INFO());
 			Assert::AreEqual<long>(ERR_INVALID_BAUDRATE, PassThruConnect(devid, CAN, 0, 200, &chanid), _T("Baudrate should have been invalid."), LINE_INFO());
 			Assert::AreEqual<long>(ERR_INVALID_BAUDRATE, PassThruConnect(devid, CAN, 0, 250010, &chanid), _T("Baudrate should have been invalid."), LINE_INFO());
+		}
+
+		bool didopen = FALSE;
+		unsigned long devid;
+
+		unsigned long open_dev(const char* name, long assert_err = STATUS_NOERROR, TCHAR* failmsg = _T("Failed to open device.")) {
+			unsigned int res = PassThruOpen((void*)name, &devid);
+			if (res == STATUS_NOERROR) didopen = TRUE;
+			return res;
 		}
 
 	};

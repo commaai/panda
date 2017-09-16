@@ -269,7 +269,7 @@ PANDAJ2534DLL_API long PTAPI	PassThruReadVersion(unsigned long DeviceID, char *p
 }
 PANDAJ2534DLL_API long PTAPI	PassThruGetLastError(char *pErrorDescription) {
 	#pragma EXPORT
-	if (pErrorDescription) return ret_code(ERR_NULL_PARAMETER);
+	if (pErrorDescription == NULL) return ret_code(ERR_NULL_PARAMETER);
 	switch (J25334LastError) {
 	case STATUS_NOERROR:
 		strcpy_s(pErrorDescription, 256, "Function call successful.");
