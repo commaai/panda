@@ -53,7 +53,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         }
       }
 
-    } else if (desired_torque != 0) {
+    } else if (!controls_allowed && (desired_torque != 0)) {
       return 0;
     }
   }
