@@ -87,6 +87,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\panda\panda.h" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="J2534Connection.h" />
     <ClInclude Include="J2534Connection_CAN.h" />
