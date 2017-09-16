@@ -104,6 +104,9 @@
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ECUsim DLL\ECUsim DLL.vcxproj">
+      <Project>{96e0e646-ee76-444d-9a77-a0cd7f781deb}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\pandaJ2534DLL\pandaJ2534DLL.vcxproj">
       <Project>{a2bb18a5-f26b-48d6-bbb5-b83d64473c77}</Project>
     </ProjectReference>
