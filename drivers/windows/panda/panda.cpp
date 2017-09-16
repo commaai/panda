@@ -420,6 +420,8 @@ bool Panda::can_recv_async(HANDLE kill_event, std::vector<PANDA_CAN_MSG>& msg_bu
 				}
 				return TRUE;
 			}
+		} else { // ERROR_BAD_COMMAND happens when device is unplugged.
+			return FALSE;
 		}
 	}
 

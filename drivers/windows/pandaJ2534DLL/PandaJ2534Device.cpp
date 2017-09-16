@@ -18,6 +18,7 @@ PandaJ2534Device::~PandaJ2534Device() {
 	SetEvent(this->can_kill_event);
 	DWORD res = WaitForSingleObject(this->can_thread_handle, INFINITE);
 	CloseHandle(this->can_thread_handle);
+	CloseHandle(this->can_kill_event);
 }
 
 std::unique_ptr<PandaJ2534Device> PandaJ2534Device::openByName(std::string sn) {
