@@ -438,7 +438,7 @@ PANDAJ2534DLL_API long PTAPI	PassThruIoctl(unsigned long ChannelID, unsigned lon
 	}
 	case READ_VBATT:
 		panda::PANDA_HEALTH health = dev_entry->panda->get_health();
-		*(unsigned long*)pOutput = (long)(3.81f*health.voltage);
+		*(unsigned long*)pOutput = health.voltage;
 		break;
 	case FIVE_BAUD_INIT:
 		if (!pInput || !pOutput) return ret_code(ERR_NULL_PARAMETER);
