@@ -80,7 +80,27 @@ int get_health_pkt(void *dat) {
     uint8_t started_alt;
   } *health = dat;
 
-  health->voltage = adc_get(ADCCHAN_VOLTAGE);
+  //Voltage will be measured in mv. 5000 = 5V
+  uint32_t voltage = adc_get(ADCCHAN_VOLTAGE);
+  if (revision == PANDA_REV_AB) {
+    //REVB has a 100, 27 (27/127) voltage divider
+    //Here is the calculation for the scale
+    //ADCV = VIN_S * (27/127) * (4095/3.3)
+    //RETVAL = ADCV * s = VIN_S*1000
+    //s = 1000/((4095/3.3)*(27/127)) = 3.79053046
+
+    //Avoid needing floating point math
+    health->voltage = (voltage * 3791) / 1000;
+  } else {
+    //REVC has a 10, 1 (1/11) voltage divider
+    //Here is the calculation for the scale (s)
+    //ADCV = VIN_S * (1/11) * (4095/3.3)
+    //RETVAL = ADCV * s = VIN_S*1000
+    //s = 1000/((4095/3.3)*(1/11)) = 8.8623046875
+
+    //Avoid needing floating point math
+    health->voltage = (voltage * 8862) / 1000;
+  }
 
 #ifdef PANDA
   health->current = adc_get(ADCCHAN_CURRENT);
