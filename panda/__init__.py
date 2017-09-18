@@ -182,7 +182,11 @@ class Panda(object):
         except Exception:
           print("reconnecting is taking %d seconds..." % (i+1))
           if i == 14:
-            raise Exception("reset failed")
+            try:
+              dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial))
+              dfu.recover()
+            except Exception:
+              raise Exception("reset failed")
           time.sleep(1.0)
 
   def flash(self, fn=None, code=None):
