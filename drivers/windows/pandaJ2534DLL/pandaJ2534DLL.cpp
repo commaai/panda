@@ -272,87 +272,87 @@ PANDAJ2534DLL_API long PTAPI	PassThruGetLastError(char *pErrorDescription) {
 	if (pErrorDescription == NULL) return ret_code(ERR_NULL_PARAMETER);
 	switch (J25334LastError) {
 	case STATUS_NOERROR:
-		strcpy_s(pErrorDescription, 256, "Function call successful.");
+		strcpy_s(pErrorDescription, 80, "Function call successful.");
 		break;
 	case ERR_NOT_SUPPORTED:
-		strcpy_s(pErrorDescription, 256, "Device cannot support requested functionality mandated in J2534. Device is not fully SAE J2534 compliant.");
+		strcpy_s(pErrorDescription, 80, "Device cannot support requested functionality mandated in J2534.");
 		break;
 	case ERR_INVALID_CHANNEL_ID:
-		strcpy_s(pErrorDescription, 256, "Invalid ChannelID value.");
+		strcpy_s(pErrorDescription, 80, "Invalid ChannelID value.");
 		break;
 	case ERR_INVALID_PROTOCOL_ID:
-		strcpy_s(pErrorDescription, 256, "Invalid or unsupported ProtocolID, or there is a resource conflict (i.e. trying to connect to multiple mutually exclusive protocols such as J1850PWM and J1850VPW, or CAN and SCI, etc.).");
+		strcpy_s(pErrorDescription, 80, "Invalid or unsupported ProtocolID, or resource conflict.");
 		break;
 	case ERR_NULL_PARAMETER:
-		strcpy_s(pErrorDescription, 256, "NULL pointer supplied where a valid pointer is required.");
+		strcpy_s(pErrorDescription, 80, "NULL pointer supplied where a valid pointer is required.");
 		break;
 	case ERR_INVALID_IOCTL_VALUE:
-		strcpy_s(pErrorDescription, 256, "Invalid value for Ioctl parameter.");
+		strcpy_s(pErrorDescription, 80, "Invalid value for Ioctl parameter.");
 		break;
 	case ERR_INVALID_FLAGS:
-		strcpy_s(pErrorDescription, 256, "Invalid flag values.");
+		strcpy_s(pErrorDescription, 80, "Invalid flag values.");
 		break;
 	case ERR_FAILED:
-		strcpy_s(pErrorDescription, 256, "Undefined error, use PassThruGetLastError() for text description.");
+		strcpy_s(pErrorDescription, 80, "Undefined error.");
 		break;
 	case ERR_DEVICE_NOT_CONNECTED:
-		strcpy_s(pErrorDescription, 256, "Unable to communicate with device.");
+		strcpy_s(pErrorDescription, 80, "Unable to communicate with device.");
 		break;
 	case ERR_TIMEOUT:
-		strcpy_s(pErrorDescription, 256, "Read or write timeout:");
+		strcpy_s(pErrorDescription, 80, "Read or write timeout:");
 		// PassThruReadMsgs() - No message available to read or could not read the specified number of messages. The actual number of messages read is placed in <NumMsgs>.
 		// PassThruWriteMsgs() - Device could not write the specified number of messages. The actual number of messages sent on the vehicle network is placed in <NumMsgs>.
 		break;
 	case ERR_INVALID_MSG:
-		strcpy_s(pErrorDescription, 256, "Invalid message structure pointed to by pMsg.");
+		strcpy_s(pErrorDescription, 80, "Invalid message structure pointed to by pMsg.");
 		break;
 	case ERR_INVALID_TIME_INTERVAL:
-		strcpy_s(pErrorDescription, 256, "Invalid TimeInterval value.");
+		strcpy_s(pErrorDescription, 80, "Invalid TimeInterval value.");
 		break;
 	case ERR_EXCEEDED_LIMIT:
-		strcpy_s(pErrorDescription, 256, "Exceeded maximum number of message IDs or allocated space.");
+		strcpy_s(pErrorDescription, 80, "Exceeded maximum number of message IDs or allocated space.");
 		break;
 	case ERR_INVALID_MSG_ID:
-		strcpy_s(pErrorDescription, 256, "Invalid MsgID value.");
+		strcpy_s(pErrorDescription, 80, "Invalid MsgID value.");
 		break;
 	case ERR_DEVICE_IN_USE:
-		strcpy_s(pErrorDescription, 256, "Device is currently open.");
+		strcpy_s(pErrorDescription, 80, "Device is currently open.");
 		break;
 	case ERR_INVALID_IOCTL_ID:
-		strcpy_s(pErrorDescription, 256, "Invalid IoctlID value.");
+		strcpy_s(pErrorDescription, 80, "Invalid IoctlID value.");
 		break;
 	case ERR_BUFFER_EMPTY:
-		strcpy_s(pErrorDescription, 256, "Protocol message buffer empty, no messages available to read.");
+		strcpy_s(pErrorDescription, 80, "Protocol message buffer empty.");
 		break;
 	case ERR_BUFFER_FULL:
-		strcpy_s(pErrorDescription, 256, "Protocol message buffer full. All the messages specified may not have been transmitted.");
+		strcpy_s(pErrorDescription, 80, "Protocol message buffer full. Messages may have been lost.");
 		break;
 	case ERR_BUFFER_OVERFLOW:
-		strcpy_s(pErrorDescription, 256, "Indicates a buffer overflow occurred and messages were lost.");
+		strcpy_s(pErrorDescription, 80, "A buffer overflow occurred and messages were lost.");
 		break;
 	case ERR_PIN_INVALID:
-		strcpy_s(pErrorDescription, 256, "Invalid pin number, pin number already in use, or voltage already applied to a different pin.");
+		strcpy_s(pErrorDescription, 80, "Invalid pin number, or pin number already in use.");
 		break;
 	case ERR_CHANNEL_IN_USE:
-		strcpy_s(pErrorDescription, 256, "Channel number is currently connected.");
+		strcpy_s(pErrorDescription, 80, "Channel number is currently connected.");
 		break;
 	case ERR_MSG_PROTOCOL_ID:
-		strcpy_s(pErrorDescription, 256, "Protocol type in the message does not match the protocol associated with the Channel ID");
+		strcpy_s(pErrorDescription, 80, "The Message's Protocol does not match the Channel's protocol.");
 		break;
 	case ERR_INVALID_FILTER_ID:
-		strcpy_s(pErrorDescription, 256, "Invalid Filter ID value.");
+		strcpy_s(pErrorDescription, 80, "Invalid Filter ID value.");
 		break;
 	case ERR_NO_FLOW_CONTROL:
-		strcpy_s(pErrorDescription, 256, "No flow control filter set or matched (for ProtocolID ISO15765 only).");
+		strcpy_s(pErrorDescription, 80, "No flow control filter set or matched.");
 		break;
 	case ERR_NOT_UNIQUE:
-		strcpy_s(pErrorDescription, 256, "A CAN ID in pPatternMsg or pFlowControlMsg matches either ID in an existing FLOW_CONTROL_FILTER");
+		strcpy_s(pErrorDescription, 80, "This filter already exists.");
 		break;
 	case ERR_INVALID_BAUDRATE:
-		strcpy_s(pErrorDescription, 256, "The desired baud rate cannot be achieved within the tolerance specified in SAE J2534-1 Section 6.5");
+		strcpy_s(pErrorDescription, 80, "The desired baud rate cannot be achieved within SAE tolerance.");
 		break;
 	case ERR_INVALID_DEVICE_ID:
-		strcpy_s(pErrorDescription, 256, "Device ID invalid.");
+		strcpy_s(pErrorDescription, 80, "Device ID invalid.");
 		break;
 	}
 	return ret_code(STATUS_NOERROR);
