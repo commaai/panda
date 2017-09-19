@@ -37,11 +37,13 @@ public:
 
 	unsigned long getProtocol();
 
-	bool isProtoCan();
+	virtual bool isProtoCan() {
+		return FALSE;
+	}
 
 	unsigned long getPort();
 
-	void processMessage(const PASSTHRU_MSG_INTERNAL& msg);
+	virtual void processMessage(const PASSTHRU_MSG_INTERNAL& msg);
 
 	virtual unsigned long getMinMsgLen();
 	virtual unsigned long getMaxMsgLen();

@@ -27,8 +27,16 @@ long J2534Connection::PassThruStartMsgFilter(unsigned long FilterType, PASSTHRU_
 	for (int i = 0; i < this->filters.size(); i++) {
 		if (filters[i] == nullptr) {
 			try {
-				filters[i].reset(new J2534MessageFilter(this, FilterType, pMaskMsg, pPatternMsg, pFlowControlMsg));
+				auto newfilter = std::make_shared<J2534MessageFilter>(J2534MessageFilter(this, FilterType, pMaskMsg, pPatternMsg, pFlowControlMsg));
+				for (int check_idx = 0; check_idx < filters.size(); check_idx++) {
+					if (filters[check_idx] == nullptr) continue;
+					if (filters[check_idx] == newfilter) {
+						filters[i] = nullptr;
+						return ERR_NOT_UNIQUE;
+					}
+				}
 				*pFilterID = i;
+				filters[i] = newfilter;
 				return STATUS_NOERROR;
 			} catch (int e) {
 				return e;
@@ -75,14 +83,11 @@ unsigned long J2534Connection::getProtocol() {
 	return this->ProtocolID;
 }
 
-bool J2534Connection::isProtoCan() {
-	return this->ProtocolID == CAN || this->ProtocolID == CAN_PS;
-}
-
 unsigned long J2534Connection::getPort() {
 	return this->port;
 }
 
+//Works well as long as the protocol doesn't support flow control.
 void J2534Connection::processMessage(const PASSTHRU_MSG_INTERNAL& msg) {
 	if (msg.ProtocolID != this->getProtocol()) return;
 

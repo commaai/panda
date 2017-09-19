@@ -6,6 +6,8 @@ typedef enum {
 	FILTER_RESULT_BLOCK,
 	FILTER_RESULT_NEUTRAL,
 	FILTER_RESULT_PASS,
+	FILTER_RESULT_NOMATCH = FILTER_RESULT_BLOCK,
+	FILTER_RESULT_MATCH = FILTER_RESULT_PASS,
 } FILTER_RESULT;
 
 //Forward declare
@@ -21,7 +23,10 @@ public:
 		PASSTHRU_MSG *pFlowControlMsg
 	);
 
+	bool J2534MessageFilter::operator ==(const J2534MessageFilter &b) const;
+
 	FILTER_RESULT check(const PASSTHRU_MSG_INTERNAL& msg);
+	std::string get_flowctrl();
 private:
 	unsigned int filtertype;
 	std::string maskMsg;

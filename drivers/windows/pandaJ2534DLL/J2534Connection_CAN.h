@@ -18,6 +18,10 @@ public:
 	virtual unsigned long getMinMsgLen();
 	virtual unsigned long getMaxMsgLen();
 
+	virtual bool isProtoCan() {
+		return TRUE;
+	}
+
 	bool _is_29bit() {
 		return (this->Flags & CAN_29BIT_ID) == CAN_29BIT_ID;
 	}
