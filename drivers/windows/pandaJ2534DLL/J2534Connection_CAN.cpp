@@ -2,10 +2,6 @@
 #include "J2534Connection_CAN.h"
 #include "Timer.h"
 
-#define check_bmask(num, mask)(((num) & mask) == mask)
-#define val_is_29bit(num) check_bmask(num, CAN_29BIT_ID)
-
-
 J2534Connection_CAN::J2534Connection_CAN(
 		panda::Panda* panda_dev,
 		unsigned long ProtocolID,
@@ -47,8 +43,8 @@ long J2534Connection_CAN::PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pN
 		//if (this->_is_29bit() != msg_in.addr_29b) {}
 		PASSTHRU_MSG *msg_out = &pMsg[msgnum++];
 		msg_out->ProtocolID = this->ProtocolID;
-		msg_out->DataSize = msg_in.DataSize;
-		memcpy(msg_out->Data, msg_in.Data.c_str(), msg_in.DataSize);
+		msg_out->DataSize = msg_in.Data.size();
+		memcpy(msg_out->Data, msg_in.Data.c_str(), msg_in.Data.size());
 		msg_out->Timestamp = msg_in.Timestamp;
 		msg_out->RxStatus = msg_in.RxStatus;
 		if (msgnum == *pNumMsgs) break;

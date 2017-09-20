@@ -3,6 +3,8 @@
 #include "J2534Connection.h"
 #include "panda/panda.h"
 
+#define val_is_29bit(num) check_bmask(num, CAN_29BIT_ID)
+
 class J2534Connection_CAN : public J2534Connection {
 public:
 	J2534Connection_CAN(
@@ -25,4 +27,5 @@ public:
 	bool _is_29bit() {
 		return (this->Flags & CAN_29BIT_ID) == CAN_29BIT_ID;
 	}
+
 };

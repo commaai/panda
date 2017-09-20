@@ -69,9 +69,8 @@ DWORD PandaJ2534Device::can_recv_thread() {
 			//if (this->_is_29bit() != msg_in.addr_29b) {}
 			PASSTHRU_MSG_INTERNAL msg_out;
 			msg_out.ProtocolID = CAN;
-			msg_out.DataSize = msg_in.len + 4;
-			msg_out.ExtraDataIndex = msg_out.DataSize;
-			msg_out.Data.reserve(msg_out.DataSize);
+			msg_out.ExtraDataIndex = msg_in.len + 4;
+			msg_out.Data.reserve(msg_in.len + 4);
 			msg_out.Data += msg_in.addr >> 24;
 			msg_out.Data += (msg_in.addr >> 16) & 0xFF;
 			msg_out.Data += (msg_in.addr >> 8) & 0xFF;

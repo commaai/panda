@@ -5,6 +5,8 @@
 
 class J2534MessageFilter;
 
+#define check_bmask(num, mask)(((num) & mask) == mask)
+
 class J2534Connection {
 public:
 	J2534Connection(

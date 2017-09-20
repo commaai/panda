@@ -390,7 +390,6 @@ typedef struct
 	unsigned long	RxStatus;
 	unsigned long	TxFlags;
 	unsigned long	Timestamp;
-	unsigned long	DataSize;
 	unsigned long	ExtraDataIndex;
 	std::string		Data;
 } PASSTHRU_MSG_INTERNAL;
