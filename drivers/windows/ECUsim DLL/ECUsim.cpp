@@ -30,6 +30,7 @@ DWORD ECUsim::can_recv_thread_function() {
 	while (this->doloop) {
 		auto msgs = this->panda->can_recv();
 		for (auto& msg : msgs) {
+			if (msg.is_receipt) continue;
 			if (msg.bus == 0 && !msg.is_receipt /*&& msg.len == 8*/ && msg.dat[0] >= 2) {
 				if (this->verbose) {
 					printf("Processing message (bus: %d; addr: %X; 29b: %d):\n    ", msg.bus, msg.addr, msg.addr_29b);
@@ -62,12 +63,22 @@ void ECUsim::_CAN_process_msg(panda::PANDA_CAN_MSG& msg) {
 	std::string outmsg;
 	uint32_t outaddr;
 	uint8_t formatted_msg_buff[8];
-	bool doreply;
+	bool doreply = FALSE;
 
 	if (this->_can_addr_matches(msg)) {// && msg.len == 8) {
-		if (memcmp(msg.dat, "\x30\x00\x00", 3) == 0 && this->can_multipart_data.size() > 0) {
-			if (this->verbose) printf("Request for more data");
-			outaddr = (msg.addr == 0x7DF || msg.addr == 0x7E0) ? 0x7E8 : 0x18DAF110;
+		if ((msg.dat[0] & 0xF0) == 0x10) {
+			printf("Got a multiframe write request\n");
+			outaddr = (msg.addr_29b) ? 0x18DAF1EF : 0x7E8;
+			this->panda->can_send(outaddr, msg.addr_29b, (const uint8_t*)"\x30\x00\x00", 3, panda::PANDA_CAN1);
+			return;
+		}
+
+		/////////// Check if Flow Control Msg
+		if ((msg.dat[0] & 0xF0) == 0x30 && msg.len >= 3 && this->can_multipart_data.size() > 0) {
+			if (this->verbose) printf("More data requested\n");
+			uint8_t block_size = msg.dat[1], sep_time_min = msg.dat[2];
+			outaddr = (msg.addr == 0x7DF || msg.addr == 0x7E0) ? 0x7E8 : 0x18DAF1EF;
+
 			unsigned int msgnum = 1;
 			while (this->can_multipart_data.size()) {
 				unsigned int datalen = min(7, this->can_multipart_data.size());
@@ -77,14 +88,24 @@ void ECUsim::_CAN_process_msg(panda::PANDA_CAN_MSG& msg) {
 					formatted_msg_buff[i + 1] = this->can_multipart_data.front();
 					this->can_multipart_data.pop();
 				}
-				this->panda->can_send(outaddr, msg.addr_29b, formatted_msg_buff, datalen, panda::PANDA_CAN1);
+				for (int i = datalen + 1; i < sizeof(formatted_msg_buff); i++)
+					formatted_msg_buff[i] = 0;
+
+				if (this->verbose) {
+					printf("Multipart reply to %X.\n    ", outaddr);
+					for (int i = 0; i < datalen + 1; i++) printf("%02X ", formatted_msg_buff[i]);
+					printf("\n");
+				}
+
+				this->panda->can_send(outaddr, msg.addr_29b, formatted_msg_buff, datalen + 1, panda::PANDA_CAN1);
 				msgnum = (msgnum + 1) % 0x10;
 				Sleep(10);
 			}
-		} else {
-			outmsg = this->process_obd_msg(msg.dat[1], msg.dat[2], doreply);
+			return;
 		}
 
+		/////////// Normal message in
+		outmsg = this->process_obd_msg(msg.dat[1], msg.dat[2], doreply);
 		if (doreply) {
 			outaddr = (msg.addr_29b) ? 0x18DAF1EF : 0x7E8;
 
@@ -112,7 +133,13 @@ void ECUsim::_CAN_process_msg(panda::PANDA_CAN_MSG& msg) {
 				formatted_msg_buff[2] = 0x40 | msg.dat[1];
 				formatted_msg_buff[3] = msg.dat[2]; //PID
 				formatted_msg_buff[4] = 1;
-				memcpy_s(&formatted_msg_buff[3], sizeof(formatted_msg_buff) - 3, outmsg.c_str(), first_msg_len);
+				memcpy_s(&formatted_msg_buff[5], sizeof(formatted_msg_buff) - 3, outmsg.c_str(), first_msg_len);
+
+				if (this->verbose) {
+					printf("Replying FIRST FRAME to %X.\n    ", outaddr);
+					for (int i = 0; i < 8; i++) printf("%02X ", formatted_msg_buff[i]);
+					printf("\n");
+				}
 
 				this->panda->can_send(outaddr, msg.addr_29b, formatted_msg_buff, 8, panda::PANDA_CAN1);
 				for (int i = first_msg_len; i < outmsg.size(); i++)
