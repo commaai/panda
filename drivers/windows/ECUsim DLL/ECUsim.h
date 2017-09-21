@@ -19,15 +19,16 @@
 // This class is exported from the ECUsim DLL.dll
 class ECUSIMDLL_API ECUsim {
 public:
-	ECUsim(std::string sn, unsigned long can_baud);
-	ECUsim(panda::Panda && p, unsigned long can_baud);
-	// TODO: add your methods here.
+	ECUsim(std::string sn, unsigned long can_baud, bool ext_addr = FALSE);
+	ECUsim(panda::Panda && p, unsigned long can_baud, bool ext_addr = FALSE);
+	~ECUsim();
 
 	void stop();
 	void join();
 
 	// Flag determines if verbose output is enabled
 	volatile bool verbose;
+	BOOL ext_addr;
 private:
 	std::unique_ptr<panda::Panda> panda;
 
