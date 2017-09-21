@@ -27,12 +27,18 @@
     <ClInclude Include="..\panda\panda.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\pandaJ2534DLL Test\Loader4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="panda_playground.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pandaJ2534DLL Test\Loader4.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
