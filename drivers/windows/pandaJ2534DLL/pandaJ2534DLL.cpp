@@ -8,6 +8,7 @@
 #include "panda/panda.h"
 #include "J2534Connection.h"
 #include "J2534Connection_CAN.h"
+#include "J2534Connection_ISO15765.h"
 #include "PandaJ2534Device.h"
 #include "dllmain.h"
 
@@ -153,20 +154,22 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 			break;
 		case CAN:
 		case CAN_PS:
-			//case SW_CAN_PS:
+		//case SW_CAN_PS:
 			conn = new J2534Connection_CAN(panda->panda.get(), ProtocolID, Flags, BaudRate);
 			break;
-			//case ISO15765:
-			//case ISO15765_PS:
-			//case SW_ISO15765_PS: // SW = Single Wire. GMLAN is a SW CAN protocol
-			//case GM_UART_PS: // PS = Pin Select. Handles different ports.
-			//Looks like SCI based protocols may not be compatible with the panda:
-			//http://mdhmotors.com/can-communications-vehicle-network-protocols/3/
-			//case SCI_A_ENGINE:
-			//case SCI_A_TRANS:
-			//case SCI_B_ENGINE:
+		case ISO15765:
+		case ISO15765_PS:
+			conn = new J2534Connection_ISO15765(panda->panda.get(), ProtocolID, Flags, BaudRate);
+			break;
+		//case SW_ISO15765_PS: // SW = Single Wire. GMLAN is a SW CAN protocol
+		//case GM_UART_PS: // PS = Pin Select. Handles different ports.
+		//Looks like SCI based protocols may not be compatible with the panda:
+		//http://mdhmotors.com/can-communications-vehicle-network-protocols/3/
+		//case SCI_A_ENGINE:
+		//case SCI_A_TRANS:
+		//case SCI_B_ENGINE:
 			//case SCI_B_TRANS:
-			//case J2610_PS:*/
+		//case J2610_PS:
 		default:
 			return ret_code(ERR_INVALID_PROTOCOL_ID);
 		}

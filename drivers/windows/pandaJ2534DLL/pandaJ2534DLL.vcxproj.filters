@@ -48,6 +48,9 @@
     <ClInclude Include="..\panda\panda.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="J2534Connection_ISO15765.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -72,6 +75,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="J2534MessageFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="J2534Connection_ISO15765.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
