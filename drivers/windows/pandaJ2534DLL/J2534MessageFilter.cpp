@@ -7,7 +7,7 @@ J2534MessageFilter::J2534MessageFilter(
 	PASSTHRU_MSG *pMaskMsg,
 	PASSTHRU_MSG *pPatternMsg,
 	PASSTHRU_MSG *pFlowControlMsg
-) : filtertype(filtertype), flowCtrlTxFlags(0) {
+) : filtertype(filtertype), flags(0) {
 	switch (filtertype) {
 	case PASS_FILTER:
 	case BLOCK_FILTER:
@@ -50,10 +50,17 @@ J2534MessageFilter::J2534MessageFilter(
 			throw ERR_INVALID_MSG;
 		if(pFlowControlMsg->TxFlags & ~(ISO15765_FRAME_PAD | CAN_29BIT_ID | ISO15765_ADDR_TYPE))
 			throw ERR_INVALID_MSG;
+		if ((pFlowControlMsg->TxFlags & ISO15765_ADDR_TYPE) == ISO15765_ADDR_TYPE) {
+			if(pFlowControlMsg->DataSize != 5)
+				throw ERR_INVALID_MSG;
+		} else {
+			if (pFlowControlMsg->DataSize != 4)
+				throw ERR_INVALID_MSG;
+		}
 		this->flowCtrlMsg = std::string((char*)pFlowControlMsg->Data, pFlowControlMsg->DataSize);
 		if (this->flowCtrlMsg.size() != this->patternMsg.size())
 			throw ERR_INVALID_MSG;
-		this->flowCtrlTxFlags = pFlowControlMsg->TxFlags;
+		this->flags = pFlowControlMsg->TxFlags;
 	}
 }
 
@@ -62,7 +69,7 @@ bool J2534MessageFilter::operator ==(const J2534MessageFilter &b) const {
 	if (this->maskMsg != b.maskMsg) return FALSE;
 	if (this->patternMsg != b.patternMsg) return FALSE;
 	if (this->flowCtrlMsg != b.flowCtrlMsg) return FALSE;
-	if (this->flowCtrlTxFlags != b.flowCtrlTxFlags) return FALSE;
+	if (this->flags != b.flags) return FALSE;
 	return TRUE;
 }
 

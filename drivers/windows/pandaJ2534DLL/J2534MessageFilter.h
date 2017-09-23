@@ -27,10 +27,11 @@ public:
 
 	FILTER_RESULT check(const PASSTHRU_MSG_INTERNAL& msg);
 	std::string get_flowctrl();
+
+	unsigned long flags;
 private:
 	unsigned int filtertype;
 	std::string maskMsg;
 	std::string patternMsg;
 	std::string flowCtrlMsg;
-	unsigned long flowCtrlTxFlags;
 };

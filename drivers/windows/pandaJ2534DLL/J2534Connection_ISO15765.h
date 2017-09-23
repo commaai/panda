@@ -38,8 +38,9 @@ public:
 
 	virtual long PassThruStartMsgFilter(unsigned long FilterType, PASSTHRU_MSG * pMaskMsg, PASSTHRU_MSG * pPatternMsg, PASSTHRU_MSG * pFlowControlMsg, unsigned long * pFilterID);
 
-	int get_matching_filter_id_for_outmsg(const PASSTHRU_MSG * msg);
-	int get_matching_filter_id_for_outmsg(const PASSTHRU_MSG_INTERNAL&  msg);
+	int get_matching_out_fc_filter_id(const std::string & msgdata, unsigned long flags, unsigned long flagmask);
+
+	int get_matching_in_fc_filter_id(const PASSTHRU_MSG_INTERNAL & msg, unsigned long flagmask = CAN_29BIT_ID);
 
 	virtual void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg);
 	virtual unsigned long getMinMsgLen();

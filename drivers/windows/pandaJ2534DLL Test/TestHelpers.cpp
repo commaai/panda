@@ -122,9 +122,9 @@ void check_J2534_can_msg(PASSTHRU_MSG& msgin, unsigned long ProtocolID, unsigned
 unsigned long J2534_set_flowctrl_filter(unsigned long chanid, unsigned long tx,
 	unsigned long len, char* mask, char* pattern, char* flow, const __LineInfo* pLineInfo) {
 	unsigned long filterid;
-	PASSTHRU_MSG mask_msg = { ISO15765, 0, tx, 0, 4, 0, 0 };
-	PASSTHRU_MSG pattern_msg = { ISO15765, 0, tx, 0, 4, 0, 0 };
-	PASSTHRU_MSG flow_msg = { ISO15765, 0, tx, 0, 4, 0, 0 };
+	PASSTHRU_MSG mask_msg =    { ISO15765, 0, tx, 0, len, 0, 0 };
+	PASSTHRU_MSG pattern_msg = { ISO15765, 0, tx, 0, len, 0, 0 };
+	PASSTHRU_MSG flow_msg =    { ISO15765, 0, tx, 0, len, 0, 0 };
 	memcpy(mask_msg.Data, mask, len);
 	memcpy(pattern_msg.Data, pattern, len);
 	memcpy(flow_msg.Data, flow, len);
