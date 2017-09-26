@@ -2,15 +2,17 @@
 #include "panda/panda.h"
 #include "J2534_v0404.h"
 #include "J2534MessageFilter.h"
+#include "PandaJ2534Device.h"
 
 class J2534MessageFilter;
+class PandaJ2534Device;
 
 #define check_bmask(num, mask)(((num) & mask) == mask)
 
 class J2534Connection {
 public:
 	J2534Connection(
-		panda::Panda* panda_dev,
+		std::shared_ptr<PandaJ2534Device> panda_dev,
 		unsigned long ProtocolID,
 		unsigned long Flags,
 		unsigned long BaudRate
@@ -58,8 +60,7 @@ protected:
 	unsigned long BaudRate;
 	unsigned long port;
 
-	//Should only be used while the panda device exists, so a pointer should be ok.
-	panda::Panda* panda_dev;
+	std::weak_ptr<PandaJ2534Device> panda_dev;
 
 	std::queue<PASSTHRU_MSG_INTERNAL> messages;
 

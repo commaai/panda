@@ -11,7 +11,7 @@ PandaJ2534Device::PandaJ2534Device(std::unique_ptr<panda::Panda> new_panda) {
 
 	DWORD threadid;
 	this->can_kill_event = CreateEvent(NULL, TRUE, FALSE, NULL);
-	this->can_thread_handle = CreateThread(NULL, 0, _threadBootstrap, (LPVOID)this, 0, &threadid);
+	this->can_thread_handle = CreateThread(NULL, 0, _can_recv_threadBootstrap, (LPVOID)this, 0, &threadid);
 };
 
 PandaJ2534Device::~PandaJ2534Device() {
@@ -19,9 +19,12 @@ PandaJ2534Device::~PandaJ2534Device() {
 	DWORD res = WaitForSingleObject(this->can_thread_handle, INFINITE);
 	CloseHandle(this->can_thread_handle);
 	CloseHandle(this->can_kill_event);
+
+	CloseHandle(this->flow_control_wakeup_event);
+	CloseHandle(this->flow_control_thread_handle);
 }
 
-std::unique_ptr<PandaJ2534Device> PandaJ2534Device::openByName(std::string sn) {
+std::shared_ptr<PandaJ2534Device> PandaJ2534Device::openByName(std::string sn) {
 	auto p = panda::Panda::openPanda("");
 	if (p == nullptr)
 		return nullptr;
@@ -56,7 +59,7 @@ DWORD PandaJ2534Device::addChannel(J2534Connection* conn, unsigned long* channel
 	return STATUS_NOERROR;
 }
 
-DWORD WINAPI PandaJ2534Device::_threadBootstrap(LPVOID This) {
+DWORD WINAPI PandaJ2534Device::_can_recv_threadBootstrap(LPVOID This) {
 	return ((PandaJ2534Device*)This)->can_recv_thread();
 }
 
@@ -89,4 +92,13 @@ DWORD PandaJ2534Device::can_recv_thread() {
 	}
 
 	return STATUS_NOERROR;
+}
+
+DWORD PandaJ2534Device::_flow_control_write_threadBootstrap(LPVOID This) {
+	return ((PandaJ2534Device*)This)->flow_control_write_thread();
+}
+
+DWORD PandaJ2534Device::flow_control_write_thread()
+{
+	return 0;
 }

@@ -4,30 +4,110 @@
 #include <string>
 
 typedef struct ISO15765_FRAMESET {
+	bool active;
 	std::string msg;
 	unsigned long expected_size;
 	unsigned char next_part;
+	bool istx;
+	unsigned long flags;
+
+	CRITICAL_SECTION access_lock;
 
 	//Critical section will be required if accessed outside of processMessage
-	ISO15765_FRAMESET() : msg(""), expected_size(0), next_part(0) {	}
-	~ISO15765_FRAMESET() { }
-
-	void init_first_frame(uint16_t final_size, const std::string& piece) {
-		expected_size = final_size & 0xFFF;
-		msg.reserve(expected_size);
-		msg = piece;
-		next_part = 1;
+	ISO15765_FRAMESET() : active(FALSE), msg(""), expected_size(0), next_part(0), istx(FALSE), flags(0) {
+		InitializeCriticalSectionAndSpinCount(&access_lock, 0x00000400);
 	}
+	~ISO15765_FRAMESET() {
+		DeleteCriticalSection(&access_lock);
+	}
+
+	void init_tx(std::string& payload, unsigned long bytes_already_sent, unsigned long txFlags) {
+		lock();
+		{
+			active = TRUE;
+			expected_size = 1;
+			msg = payload;
+			next_part = 1;
+			flags = txFlags;
+			istx = TRUE;
+		}
+		unlock();
+	}
+
+	void init_rx_first_frame(uint16_t final_size, const std::string& piece, unsigned long rxFlags) {
+		lock();
+		{
+			active = TRUE;
+			expected_size = final_size & 0xFFF;
+			msg.reserve(expected_size);
+			msg = piece;
+			next_part = 1;
+			flags = rxFlags;
+			istx = FALSE;
+		}
+		unlock();
+	}
+
+	/*void rx_add_frame(unsigned long addrlen) {
+		lock();
+		if (expected_size == 0) {
+			unlock();
+			return;
+		}
+		if ((msgin.Data[addrlen] & 0x0F) != next_part) {
+			unlock();
+			return;
+		}
+		next_part = (next_part + 1) % 0x10;
+		unsigned int payload_len = min(expected_size - msg.size(), (is_ext_addr ? 6 : 7));
+		if (msgin.Data.size() < (addrlen + 1 + payload_len)) {
+			//A frame was received that could have held more data.
+			//No examples of this protocol show that happening, so
+			//it will be assumed that it is grounds to reset rx.
+			reset();
+			unlock();
+			return;
+		}
+		msg += msgin.Data.substr(addrlen + 1, payload_len);
+		unlock();
+	}*/
+
 	void reset() {
-		expected_size = 0;
-		msg = "";
+		lock();
+		{
+			active = FALSE;
+			expected_size = 0;
+			msg = "";
+		}
+		unlock();
+	}
+
+	unsigned int bytes_remaining() {
+		unsigned int res;
+		lock();
+		{
+			if(istx)
+				res = this->msg.size() - this->expected_size;
+			else
+				res = this->expected_size - this->msg.size();
+		}
+		unlock();
+		return res;
+	}
+
+	void lock() {
+		EnterCriticalSection(&access_lock);
+	}
+
+	void unlock() {
+		LeaveCriticalSection(&access_lock);
 	}
 } ISO15765_FRAMESET;
 
 class J2534Connection_ISO15765 : public J2534Connection { //J2534Connection_CAN {
 public:
 	J2534Connection_ISO15765(
-		panda::Panda* panda_dev,
+		std::shared_ptr<PandaJ2534Device> panda_dev,
 		unsigned long ProtocolID,
 		unsigned long Flags,
 		unsigned long BaudRate

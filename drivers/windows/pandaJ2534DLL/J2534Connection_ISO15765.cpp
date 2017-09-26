@@ -18,7 +18,7 @@
 #define is_flowctrl(msg, addrlen)    (msg_get_type(msg, addrlen) == FRAME_FLOWCTRL)
 
 J2534Connection_ISO15765::J2534Connection_ISO15765(
-	panda::Panda* panda_dev,
+	std::shared_ptr<PandaJ2534Device> panda_dev,
 	unsigned long ProtocolID,
 	unsigned long Flags,
 	unsigned long BaudRate
@@ -28,7 +28,7 @@ J2534Connection_ISO15765::J2534Connection_ISO15765(
 	if (BaudRate % 100 || BaudRate < 10000 || BaudRate > 5000000)
 		throw ERR_INVALID_BAUDRATE;
 
-	this->panda_dev->set_can_speed_cbps(panda::PANDA_CAN1, BaudRate / 100); //J2534Connection_CAN(panda_dev, ProtocolID, Flags, BaudRate) {};
+	panda_dev->panda->set_can_speed_cbps(panda::PANDA_CAN1, BaudRate / 100); //J2534Connection_CAN(panda_dev, ProtocolID, Flags, BaudRate) {};
 }
 
 long J2534Connection_ISO15765::PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) {
@@ -109,10 +109,12 @@ long J2534Connection_ISO15765::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned lo
 		}
 
 		memcpy_s(&snd_buff[idx], sizeof(snd_buff) - idx, &msg->Data[addrlen], payload_len);
-		if (this->panda_dev->can_send(addr, val_is_29bit(msg->TxFlags), snd_buff,
-			(msg_is_padded(msg) ? sizeof(snd_buff) : (payload_len + idx)), panda::PANDA_CAN1) == FALSE) {
-			*pNumMsgs = msgnum;
-			return ERR_INVALID_MSG;
+		if (auto panda_dev_sp = this->panda_dev.lock()) {
+			if (panda_dev_sp->panda->can_send(addr, val_is_29bit(msg->TxFlags), snd_buff,
+				(msg_is_padded(msg) ? sizeof(snd_buff) : (payload_len + idx)), panda::PANDA_CAN1) == FALSE) {
+				*pNumMsgs = msgnum;
+				return ERR_INVALID_MSG;
+			}
 		}
 	}
 	return STATUS_NOERROR;
@@ -204,7 +206,7 @@ void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) 
 		this->messages.push(outframe);
 		LeaveCriticalSection(&this->message_access_lock);
 
-		convo.init_first_frame(((msg.Data[addrlen] & 0x0F) << 8) | msg.Data[addrlen + 1], msg.Data.substr(addrlen + 2, 12 - (addrlen + 2)));
+		convo.init_rx_first_frame(((msg.Data[addrlen] & 0x0F) << 8) | msg.Data[addrlen + 1], msg.Data.substr(addrlen + 2, 12 - (addrlen + 2)), msg.RxStatus);
 
 		//Doing it this way because the filter can be 5 bytes in ext address mode.
 		std::string flowfilter = filter->get_flowctrl();
@@ -215,41 +217,53 @@ void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) 
 			flowstrlresp += flowfilter[4];
 		flowstrlresp += std::string("\x30\x00\x00", 3);
 
-		this->panda_dev->can_send(flow_addr, val_is_29bit(msg.RxStatus), (const uint8_t *)flowstrlresp.c_str(), flowstrlresp.size(), panda::PANDA_CAN1);
+		if (auto panda_dev_sp = this->panda_dev.lock()) {
+			panda_dev_sp->panda->can_send(flow_addr, val_is_29bit(msg.RxStatus), (const uint8_t *)flowstrlresp.c_str(), flowstrlresp.size(), panda::PANDA_CAN1);
+		}
 		break;
 	}
 	case FRAME_CONSEC:
-	{
-		if (convo.expected_size == 0) return;
-		if ((msg.Data[addrlen] & 0x0F) != convo.next_part) return;
-		convo.next_part = (convo.next_part + 1) % 0x10;
-		unsigned int payload_len = min(convo.expected_size - convo.msg.size(), (is_ext_addr ? 6 : 7));
-		if (msg.Data.size() < (addrlen + 1 + payload_len)) {
-			//A frame was received that could have held more data.
-			//No examples of this protocol show that happening, so
-			//it will be assumed that it is grounds to reset rx.
-			convo.reset();
-			return;
-		}
-		convo.msg += msg.Data.substr(addrlen + 1, payload_len);
-		if (convo.msg.size() == convo.expected_size) {
-			outframe.ProtocolID = ISO15765;
-			outframe.Timestamp = msg.Timestamp;
-			outframe.RxStatus = msg.RxStatus;
-			if (is_ext_addr)
-				outframe.RxStatus |= ISO15765_ADDR_TYPE;
-			outframe.TxFlags = 0;
-			outframe.Data = msg.Data.substr(0, addrlen) + convo.msg;
-			outframe.ExtraDataIndex = outframe.Data.size();
+		convo.lock();
+		{
+			if (convo.active == 0) {
+				convo.unlock();
+				return;
+			}
+			if ((msg.Data[addrlen] & 0x0F) != convo.next_part) {
+				convo.unlock();
+				return;
+			}
+			convo.next_part = (convo.next_part + 1) % 0x10;
+			unsigned int payload_len = min(convo.bytes_remaining(), (is_ext_addr ? 6 : 7));
+			if (msg.Data.size() < (addrlen + 1 + payload_len)) {
+				//A frame was received that could have held more data.
+				//No examples of this protocol show that happening, so
+				//it will be assumed that it is grounds to reset rx.
+				convo.reset();
+				convo.unlock();
+				return;
+			}
+			convo.msg += msg.Data.substr(addrlen + 1, payload_len);
 
-			EnterCriticalSection(&this->message_access_lock);
-			this->messages.push(outframe);
-			LeaveCriticalSection(&this->message_access_lock);
+			if (convo.msg.size() == convo.expected_size) {
+				outframe.ProtocolID = ISO15765;
+				outframe.Timestamp = msg.Timestamp;
+				outframe.RxStatus = msg.RxStatus;
+				if (is_ext_addr)
+					outframe.RxStatus |= ISO15765_ADDR_TYPE;
+				outframe.TxFlags = 0;
+				outframe.Data = msg.Data.substr(0, addrlen) + convo.msg;
+				outframe.ExtraDataIndex = outframe.Data.size();
 
-			convo.reset();
+				EnterCriticalSection(&this->message_access_lock);
+				this->messages.push(outframe);
+				LeaveCriticalSection(&this->message_access_lock);
+
+				convo.reset();
+			}
 		}
+		convo.unlock();
 		break;
-	}
 	}
 }
 

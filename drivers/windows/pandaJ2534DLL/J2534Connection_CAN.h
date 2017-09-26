@@ -8,7 +8,7 @@
 class J2534Connection_CAN : public J2534Connection {
 public:
 	J2534Connection_CAN(
-		panda::Panda* panda_dev,
+		std::shared_ptr<PandaJ2534Device> panda_dev,
 		unsigned long ProtocolID,
 		unsigned long Flags,
 		unsigned long BaudRate

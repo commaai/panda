@@ -15,7 +15,7 @@
 // A quick way to avoid the name mangling that __stdcall liked to do
 #define EXPORT comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
 
-std::vector<std::unique_ptr<PandaJ2534Device>> pandas;
+std::vector<std::shared_ptr<PandaJ2534Device>> pandas;
 
 int J25334LastError = 0;
 
@@ -146,20 +146,20 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 		case J1850PWM_PS:
 		case ISO9141: //This protocol could be implemented if 5 BAUD init support is added to the panda.
 		case ISO9141_PS:
-			conn = new J2534Connection(panda->panda.get(), ProtocolID, Flags, BaudRate);
+			conn = new J2534Connection(panda, ProtocolID, Flags, BaudRate);
 			break;
 		case ISO14230: //Only supporting Fast init until panda adds support for 5 BAUD init.
 		case ISO14230_PS:
-			conn = new J2534Connection(panda->panda.get(), ProtocolID, Flags, BaudRate);
+			conn = new J2534Connection(panda, ProtocolID, Flags, BaudRate);
 			break;
 		case CAN:
 		case CAN_PS:
 		//case SW_CAN_PS:
-			conn = new J2534Connection_CAN(panda->panda.get(), ProtocolID, Flags, BaudRate);
+			conn = new J2534Connection_CAN(panda, ProtocolID, Flags, BaudRate);
 			break;
 		case ISO15765:
 		case ISO15765_PS:
-			conn = new J2534Connection_ISO15765(panda->panda.get(), ProtocolID, Flags, BaudRate);
+			conn = new J2534Connection_ISO15765(panda, ProtocolID, Flags, BaudRate);
 			break;
 		//case SW_ISO15765_PS: // SW = Single Wire. GMLAN is a SW CAN protocol
 		//case GM_UART_PS: // PS = Pin Select. Handles different ports.
