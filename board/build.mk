@@ -36,7 +36,7 @@ include ../common/version.mk
 obj/cert.h: ../crypto/getcertheader.py
 	../crypto/getcertheader.py ../certs/debug.pub ../certs/release.pub > $@
 
-obj/%.$(PROJ_NAME).o: %.c obj/cert.h obj/gitversion.h config.h drivers/*.h gpio.h provision.h safety.h safety/*.h
+obj/%.$(PROJ_NAME).o: %.c obj/cert.h obj/gitversion.h config.h drivers/*.h gpio.h libc.h provision.h safety.h safety/*.h spi_flasher.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 obj/%.$(PROJ_NAME).o: ../crypto/%.c
