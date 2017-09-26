@@ -40,17 +40,18 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // only check if controls are allowed and torque_limits are imposed
     if (controls_allowed && torque_limits) {
+      int32_t max_steer = 0;
       // speed dependent limitation
-      if ((speed < SPEED_0) && (desired_torque > MAX_STEER_0)) {
-        return 0;
-      } else if ((speed > SPEED_1) && (desired_torque > MAX_STEER_1)) {
-        return 0;
+      if (speed < SPEED_0) {
+        max_steer = MAX_STEER_0;
+      } else if (speed > SPEED_1) {
+        max_steer = MAX_STEER_1;
       } else {
         // linear interp
-        int32_t max_steer = MAX_STEER_0 - ((speed - SPEED_0) * (MAX_STEER_0 - MAX_STEER_1)) / (SPEED_1 - SPEED_0);
-        if (desired_torque > max_steer) {
-          return 0;
-        }
+        max_steer = MAX_STEER_0 - ((speed - SPEED_0) * (MAX_STEER_0 - MAX_STEER_1)) / (SPEED_1 - SPEED_0);
+      }
+      if (desired_torque > max_steer) {
+        return 0;
       }
 
     } else if (!controls_allowed && (desired_torque != 0)) {
