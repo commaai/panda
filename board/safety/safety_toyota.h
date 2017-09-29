@@ -6,7 +6,9 @@ const int32_t SPEED_0 = 2100;       // 16 kph/10 mph + 5 kph margin VS carcontro
 const int32_t SPEED_1 = 5000;       // 45 kph/28 mph + 5 kph margin VS carcontroller
 const int32_t MAX_STEER_0 = 1500;   // max
 const int32_t MAX_STEER_1 = 1000;   // reduced
-int torque_limits = 1;              // by default steer limits are imposed
+const int16_t MAX_ACCEL = 1500;     // 1.5 m/s2
+const int16_t MIN_ACCEL = -3000;    // 3.0 m/s2
+int actuation_limits = 1;              // by default steer limits are imposed
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // get the up to date speed
@@ -29,6 +31,18 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
+  // ACCEL: safety check on byte 1-2
+  if ((to_send->RIR>>21) == 0x343) {
+    int16_t desired_accel = ((to_send->RDLR & 0xFF) << 8) | ((to_send->RDLR >> 8) & 0xFF);
+    if (controls_allowed && actuation_limits) {
+      if ((desired_accel > MAX_ACCEL) || (desired_accel < MIN_ACCEL)) {
+        return 0;
+      }
+    } else if (!controls_allowed && (desired_accel != 0)) {
+      return 0;
+    }
+  }
+
   // STEER: safety check on bytes 2-3
   if ((to_send->RIR>>21) == 0x2E4) {
     int16_t desired_torque = (to_send->RDLR & 0xFF00) | ((to_send->RDLR >> 16) & 0xFF);
@@ -38,8 +52,8 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       desired_torque *= -1;
     }
 
-    // only check if controls are allowed and torque_limits are imposed
-    if (controls_allowed && torque_limits) {
+    // only check if controls are allowed and actuation_limits are imposed
+    if (controls_allowed && actuation_limits) {
       int32_t max_steer = 0;
       // speed dependent limitation
       if (speed < SPEED_0) {
@@ -70,7 +84,7 @@ static int toyota_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 
 static void toyota_init() {
   controls_allowed = 0;
-  torque_limits = 1;
+  actuation_limits = 1;
 }
 
 const safety_hooks toyota_hooks = {
@@ -82,7 +96,7 @@ const safety_hooks toyota_hooks = {
 
 static void toyota_nolimits_init() {
   controls_allowed = 0;
-  torque_limits = 0;
+  actuation_limits = 0;
 }
 
 const safety_hooks toyota_nolimits_hooks = {
