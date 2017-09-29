@@ -3,11 +3,15 @@
 
 #include "stdafx.h"
 #include "pandaJ2534DLL Test\Loader4.h"
+#include "ECUsim DLL\ECUsim.h"
+#include <chrono>
 
 
 int _tmain(int Argc, _TCHAR *Argv) {
 	UNREFERENCED_PARAMETER(Argc);
 	UNREFERENCED_PARAMETER(Argv);
+
+	ECUsim sim("", 500000);
 
 	//if (LoadJ2534Dll("C:\\WINDOWS\\SysWOW64\\op20pt32.dll") != 0) {
 	if (LoadJ2534Dll("pandaJ2534.dll") != 0) {
@@ -23,7 +27,7 @@ int _tmain(int Argc, _TCHAR *Argv) {
 	memcpy(mask.Data, "\xff\xff\xff\xff", 4);
 	mask.DataSize = 4;
 	mask.ProtocolID = ISO15765;
-	mask.TxFlags = CAN_29BIT_ID | ISO15765_FRAME_PAD;
+	mask.TxFlags = CAN_29BIT_ID;
 	mask.ExtraDataIndex = 0;
 	mask.RxStatus = 0;
 
@@ -31,14 +35,14 @@ int _tmain(int Argc, _TCHAR *Argv) {
 	memcpy(pattern.Data, "\x18\xda\xf1\xef", 4);
 	pattern.DataSize = 4;
 	pattern.ProtocolID = ISO15765;
-	pattern.TxFlags = CAN_29BIT_ID | ISO15765_FRAME_PAD;
+	pattern.TxFlags = CAN_29BIT_ID;
 	pattern.ExtraDataIndex = 0;
 	pattern.RxStatus = 0;
 
 	memcpy(flow.Data, "\x18\xda\xef\xf1", 4);
 	flow.DataSize = 4;
 	flow.ProtocolID = ISO15765;
-	flow.TxFlags = CAN_29BIT_ID | ISO15765_FRAME_PAD;
+	flow.TxFlags = CAN_29BIT_ID;
 	flow.ExtraDataIndex = 0;
 	flow.RxStatus = 0;
 
@@ -58,8 +62,8 @@ int _tmain(int Argc, _TCHAR *Argv) {
 		return 1;
 
 	PASSTHRU_MSG outmsg;
-	memcpy(outmsg.Data, "\x18\xda\xef\xf1\x01\x00", 6);
-	outmsg.DataSize = 6;
+	memcpy(outmsg.Data, "\x18\xda\xef\xf1""\xAA\xBB\xCC\xDD\xEE\xFF\x11\x22\x33\x44", 4 + 10);
+	outmsg.DataSize = 4 + 10;
 	outmsg.ProtocolID = ISO15765;
 	outmsg.TxFlags = CAN_29BIT_ID;
 	outmsg.ExtraDataIndex = 0;
@@ -72,7 +76,7 @@ int _tmain(int Argc, _TCHAR *Argv) {
 		return 1;
 
 	PASSTHRU_MSG inmsg[8];
-	unsigned long msgincount;
+	unsigned long msgincount = 8;
 
 	res = PassThruReadMsgs(cid, inmsg, &msgincount, 1000);
 	if (res != STATUS_NOERROR)
