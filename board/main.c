@@ -610,12 +610,16 @@ int main() {
     set_led(LED_GREEN, controls_allowed);
 
     // blink the red LED
-    for (int fade = 0; fade < 1024; fade += 8) {
-      for (int i = 0; i < 128; i++) {
-        set_led(LED_RED, 0);
-        if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
-        set_led(LED_RED, 1);
-        if (fade < 512) { delay(fade); } else { delay(1024-fade); }
+    int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
+
+    for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
+      for (int fade = 0; fade < 1024; fade += 8) {
+        for (int i = 0; i < 128/div_mode; i++) {
+          set_led(LED_RED, 0);
+          if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
+          set_led(LED_RED, 1);
+          if (fade < 512) { delay(fade); } else { delay(1024-fade); }
+        }
       }
     }
 
