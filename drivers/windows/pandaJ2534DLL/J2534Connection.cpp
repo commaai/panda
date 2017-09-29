@@ -59,7 +59,7 @@ long J2534Connection::PassThruStartMsgFilter(unsigned long FilterType, PASSTHRU_
 	for (int i = 0; i < this->filters.size(); i++) {
 		if (filters[i] == nullptr) {
 			try {
-				auto newfilter = std::make_shared<J2534MessageFilter>(J2534MessageFilter(this, FilterType, pMaskMsg, pPatternMsg, pFlowControlMsg));
+				auto newfilter = std::make_shared<J2534MessageFilter>(this, FilterType, pMaskMsg, pPatternMsg, pFlowControlMsg);
 				for (int check_idx = 0; check_idx < filters.size(); check_idx++) {
 					if (filters[check_idx] == nullptr) continue;
 					if (filters[check_idx] == newfilter) {
@@ -106,6 +106,8 @@ long J2534Connection::setBaud(unsigned long baud) {
 	this->BaudRate = baud;
 	return STATUS_NOERROR;
 }
+
+void J2534Connection::sendConsecutiveFrame(std::shared_ptr<FrameSet> frame, std::shared_ptr<J2534MessageFilter> filter) { }
 
 void J2534Connection::processMessageReceipt(const PASSTHRU_MSG_INTERNAL& msg) {
 	if (this->loopback) {

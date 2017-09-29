@@ -4,6 +4,7 @@
 #include "synchronize.h"
 #include "PandaJ2534Device.h"
 #include "J2534MessageFilter.h"
+#include "FrameSet.h"
 
 class J2534MessageFilter;
 class PandaJ2534Device;
@@ -56,6 +57,8 @@ public:
 
 	virtual void processMessageReceipt(const PASSTHRU_MSG_INTERNAL& msg);
 	virtual void processMessage(const PASSTHRU_MSG_INTERNAL& msg);
+
+	virtual void sendConsecutiveFrame(std::shared_ptr<FrameSet> frame, std::shared_ptr<J2534MessageFilter> filter);
 
 	virtual unsigned long getMinMsgLen() {
 		return 1;

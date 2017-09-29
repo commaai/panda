@@ -4,6 +4,11 @@
 #include "J2534Connection_CAN.h"
 #include "FrameSet.h"
 
+typedef struct {
+	std::string dispatched_msg;
+	std::string remaining_payload;
+} PRESTAGED_WRITE;
+
 class J2534Connection_ISO15765 : public J2534Connection { //J2534Connection_CAN {
 public:
 	J2534Connection_ISO15765(
@@ -23,6 +28,7 @@ public:
 
 	virtual void processMessageReceipt(const PASSTHRU_MSG_INTERNAL& msg);
 	virtual void processMessage(const PASSTHRU_MSG_INTERNAL& msg);
+	void sendConsecutiveFrame(std::shared_ptr<FrameSet> frame, std::shared_ptr<J2534MessageFilter> filter);
 
 	virtual unsigned long getMinMsgLen() {
 		return 4;
@@ -41,6 +47,7 @@ public:
 	}
 
 private:
+	Mutex staged_writes_lock;
+	std::array<PRESTAGED_WRITE, 10> staged_writes;
 	std::array<std::shared_ptr<FrameSet>, 10> conversations;
 };
-

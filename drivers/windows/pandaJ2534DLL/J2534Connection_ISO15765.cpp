@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "J2534Connection_ISO15765.h"
 #include "Timer.h"
+#include <chrono>
 
 #define msg_is_extaddr(msg) check_bmask(msg->TxFlags, ISO15765_ADDR_TYPE)
 #define msg_is_padded(msg) check_bmask(msg->TxFlags, ISO15765_FRAME_PAD)
@@ -9,6 +10,10 @@
 #define FRAME_FIRST    0x10
 #define FRAME_CONSEC   0x20
 #define FRAME_FLOWCTRL 0x30
+
+#define FLOWCTRL_CONTINUE 0
+#define FLOWCTRL_WAIT     1
+#define FLOWCTRL_ABORT    2
 
 #define msg_get_type(msg, addrlen)   ((msg).Data[addrlen] & 0xF0)
 
@@ -52,24 +57,32 @@ long J2534Connection_ISO15765::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned lo
 		uint8_t snd_buff[8] = { 0 };
 		uint8_t addrlen = msg_is_extaddr(msg) ? 5 : 4;
 		unsigned long payload_len = msg->DataSize - addrlen;
+		unsigned long this_payload_len;
 		unsigned int idx = 0;
 
 		if (msg_is_extaddr(msg))
 			snd_buff[idx++] = msg->Data[4]; //EXT ADDR byte
 
 		if (payload_len <= (msg_is_extaddr(msg) ? 6 : 7)) {
+			this_payload_len = payload_len;
 			snd_buff[idx++] = payload_len;
 		} else {
-			printf("LONG MSG\n");
-			//TODO Make work will full TX sequence. Currently only sends first frame.
 			snd_buff[idx++] = 0x10 | ((payload_len >> 8) & 0xF);
 			snd_buff[idx++] = payload_len & 0xFF;
+			this_payload_len = 8 - idx; // 5 or 6
 		}
 
-		memcpy_s(&snd_buff[idx], sizeof(snd_buff) - idx, &msg->Data[addrlen], payload_len);
+		memcpy_s(&snd_buff[idx], sizeof(snd_buff) - idx, &msg->Data[addrlen], this_payload_len);
 		if (auto panda_dev_sp = this->panda_dev.lock()) {
+
+			synchronized(staged_writes_lock) {
+				this->staged_writes[fid].dispatched_msg = std::string((char*)msg->Data, 4) +
+														std::string((char*)snd_buff, (msg_is_padded(msg) ? sizeof(snd_buff) : (this_payload_len + idx)));
+				this->staged_writes[fid].remaining_payload = std::string((char*)&msg->Data[addrlen + this_payload_len], payload_len - this_payload_len);
+			}
+
 			if (panda_dev_sp->panda->can_send(addr, val_is_29bit(msg->TxFlags), snd_buff,
-				(msg_is_padded(msg) ? sizeof(snd_buff) : (payload_len + idx)), panda::PANDA_CAN1) == FALSE) {
+				(msg_is_padded(msg) ? sizeof(snd_buff) : (this_payload_len + idx)), panda::PANDA_CAN1) == FALSE) {
 				*pNumMsgs = msgnum;
 				return ERR_INVALID_MSG;
 			}
@@ -85,26 +98,59 @@ void J2534Connection_ISO15765::processMessageReceipt(const PASSTHRU_MSG_INTERNAL
 	//TX_MSG_TYPE should be set in RxStatus
 	if (!check_bmask(msg.RxStatus, TX_MSG_TYPE)) return;
 
-	int fid = get_matching_out_fc_filter_id(msg.Data, msg.RxStatus, CAN_29BIT_ID);
-	if (fid == -1) return;
+	synchronized(staged_writes_lock) {
+		uint8_t addrlen;
+		unsigned long filterFlags;
+		bool did_msg_finish_tx = FALSE;
 
-	uint8_t addrlen = check_bmask(this->filters[fid]->flags, ISO15765_ADDR_TYPE) ? 5 : 4;
+		{
+			int fid = get_matching_out_fc_filter_id(msg.Data, msg.RxStatus, CAN_29BIT_ID);
+			if (fid == -1) return;
+			auto filter = this->filters[fid];
+			if (filter == nullptr) return; //Avoid having to lock, shared pointer keeps filter alive for us. Maybe?
+			filterFlags = filter->flags;
 
-	if (msg.Data.size() >= addrlen + 1 && (msg.Data[addrlen] & 0xF0) == FRAME_FLOWCTRL) return;
+			addrlen = check_bmask(filterFlags, ISO15765_ADDR_TYPE) ? 5 : 4;
 
-	this->conversations[fid].reset();
+			if (msg.Data.size() >= addrlen + 1 && (msg.Data[addrlen] & 0xF0) == FRAME_FLOWCTRL) return;
 
-	outframe.ProtocolID = ISO15765;
-	outframe.Timestamp = msg.Timestamp;
-	outframe.RxStatus = msg.RxStatus | TX_MSG_TYPE | TX_INDICATION;
-	if (check_bmask(this->filters[fid]->flags, ISO15765_ADDR_TYPE))
-		outframe.RxStatus |= ISO15765_ADDR_TYPE;
-	outframe.ExtraDataIndex = 0;
-	outframe.TxFlags = 0;
-	outframe.Data = msg.Data.substr(0, addrlen);
+			if (this->conversations[fid] != nullptr &&
+				this->conversations[fid]->lastTxMsg == msg.Data) {
+				/////////////////////////////////////////////////////////////////////////////////////
+				if (this->conversations[fid]->bytes_remaining() == 0) {
+					did_msg_finish_tx = TRUE;
+				} else if (auto panda_dev_sp = this->panda_dev.lock()) {
+					panda_dev_sp->registerMultiPartTx(this->conversations[fid]); //Should this function be used here?
+					return; // Don't send a message to the client for this in message.
+				}
+			} else {
+				this->conversations[fid] = nullptr;
 
-	synchronized(message_access_lock) {
-		this->messages.push(outframe);
+				auto& staged_write = this->staged_writes[fid];
+				if (staged_write.dispatched_msg == msg.Data) {
+					if (this->staged_writes[fid].remaining_payload.size() == 0)
+						did_msg_finish_tx = TRUE;
+					else
+						this->conversations[fid] = FrameSet::init_tx(this->staged_writes[fid].remaining_payload, filter);
+				}
+			}
+
+		}
+
+		outframe.ProtocolID = ISO15765;
+		outframe.Timestamp = msg.Timestamp;
+		outframe.RxStatus = msg.RxStatus | TX_MSG_TYPE;
+		if (did_msg_finish_tx)
+			outframe.RxStatus |= TX_INDICATION;
+		if (check_bmask(filterFlags, ISO15765_ADDR_TYPE))
+			outframe.RxStatus |= ISO15765_ADDR_TYPE;
+		outframe.ExtraDataIndex = 0;
+		outframe.TxFlags = 0;
+		outframe.Data = msg.Data.substr(0, addrlen);
+
+		synchronized(message_access_lock) {
+			this->messages.push(outframe);
+		}
 	}
 }
 
@@ -121,6 +167,33 @@ void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) 
 	uint8_t addrlen = is_ext_addr ? 5 : 4;
 
 	switch (msg_get_type(msg, addrlen)) {
+	case FRAME_FLOWCTRL: {
+		if (msg.Data.size() < addrlen + 3) return;
+		uint8_t flow_status = msg.Data[addrlen] & 0x0F;
+		uint8_t block_size = msg.Data[addrlen + 1];
+		uint8_t st_min = msg.Data[addrlen + 2];
+		switch (flow_status) {
+		case FLOWCTRL_CONTINUE: {
+			if (st_min > 0xF9) break;
+			if (st_min >= 0xf1 && st_min <= 0xf9) {
+				this->conversations[fid]->tx_flowcontrol(block_size, std::chrono::microseconds((st_min & 0x0F) * 100));
+			} else {
+				this->conversations[fid]->tx_flowcontrol(block_size, std::chrono::microseconds(st_min * 1000));
+			}
+			if (auto panda_dev_sp = this->panda_dev.lock()) {
+				panda_dev_sp->registerMultiPartTx(this->conversations[fid]);
+			}
+			break;
+		}
+		case FLOWCTRL_WAIT:
+			this->conversations[fid]->tx_flowcontrol(0, std::chrono::microseconds(0));
+			break;
+		case FLOWCTRL_ABORT:
+			this->conversations[fid] = nullptr;
+			break;
+		}
+		break;
+	}
 	case FRAME_SINGLE:
 		this->conversations[fid] = nullptr; //Reset any current transaction.
 
@@ -163,6 +236,7 @@ void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) 
 			outframe.RxStatus |= ISO15765_ADDR_TYPE;
 		outframe.ExtraDataIndex = 0;
 		outframe.TxFlags = 0;
+
 		synchronized(message_access_lock) {
 			this->messages.push(outframe);
 		}
@@ -242,4 +316,34 @@ int J2534Connection_ISO15765::get_matching_in_fc_filter_id(const PASSTHRU_MSG_IN
 			return i;
 	}
 	return -1;
+}
+
+void J2534Connection_ISO15765::sendConsecutiveFrame(std::shared_ptr<FrameSet> frame, std::shared_ptr<J2534MessageFilter> filter) {
+	auto filter_addr_str = filter->get_flowctrl();
+	uint32_t addr = ((uint8_t)filter_addr_str[0]) << 24 | ((uint8_t)filter_addr_str[1]) << 16 |
+					((uint8_t)filter_addr_str[2]) << 8  | ((uint8_t)filter_addr_str[3]);
+	uint8_t snd_buff[8] = { 0 };
+	unsigned int idx = 0;
+
+	if (check_bmask(filter->flags, ISO15765_ADDR_TYPE))
+		snd_buff[idx++] = filter_addr_str[4]; //EXT ADDR byte
+
+	snd_buff[idx++] = 0x20 | frame->getNextConsecutiveFrameId();
+
+	std::string payload_piece = frame->consumeTxBuff(check_bmask(filter->flags, ISO15765_ADDR_TYPE) ? 6 : 7);
+	memcpy_s(&snd_buff[idx], sizeof(snd_buff) - idx, payload_piece.c_str(), payload_piece.size());
+	if (auto panda_dev_sp = this->panda_dev.lock()) {
+
+		/*synchronized(staged_writes_lock) {
+			this->staged_writes[fid].dispatched_msg = std::string((char*)msg->Data, 4) +
+				std::string((char*)snd_buff, (msg_is_padded(msg) ? sizeof(snd_buff) : (this_payload_len + idx)));
+			this->staged_writes[fid].remaining_payload = std::string((char*)&msg->Data[addrlen + this_payload_len], payload_len - this_payload_len);
+		}*/
+		frame->lastTxMsg = filter_addr_str.substr(0,4) + std::string((char*)snd_buff, (check_bmask(filter->flags, ISO15765_FRAME_PAD) ? sizeof(snd_buff) : (payload_piece.size() + idx)));
+
+		if (panda_dev_sp->panda->can_send(addr, val_is_29bit(filter->flags), snd_buff,
+			(check_bmask(filter->flags, ISO15765_FRAME_PAD) ? sizeof(snd_buff) : (payload_piece.size() + idx)), panda::PANDA_CAN1) == FALSE) {
+			return;
+		}
+	}
 }

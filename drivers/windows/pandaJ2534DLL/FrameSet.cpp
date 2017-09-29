@@ -13,6 +13,11 @@ std::shared_ptr<FrameSet> FrameSet::init_tx(std::string& payload, std::weak_ptr<
 	return res;
 }
 
+void FrameSet::tx_flowcontrol(uint8_t block_size, std::chrono::microseconds separation_time) {
+	this->block_size = block_size;
+	this->separation_time = separation_time;
+}
+
 std::shared_ptr<FrameSet> FrameSet::init_rx_first_frame(uint16_t final_size, const std::string& piece, unsigned long rxFlags) {
 	auto res = std::make_shared<FrameSet>();
 	res->expected_size = final_size & 0xFFF;
@@ -22,6 +27,16 @@ std::shared_ptr<FrameSet> FrameSet::init_rx_first_frame(uint16_t final_size, con
 	res->flags = rxFlags;
 	res->istx = FALSE;
 	return res;
+}
+
+std::string FrameSet::consumeTxBuff(unsigned int numbytes) {
+	synchronized(access_lock) {
+		if (!this->istx) return std::string();
+		auto outstr = this->msg.substr(this->consumed_count, numbytes);
+		this->consumed_count += outstr.size();
+		return outstr;
+	}
+	return std::string(); //Suppress Warning
 }
 
 bool FrameSet::rx_add_frame(uint8_t pcibyte, unsigned int max_packet_size, const std::string piece) {
@@ -62,6 +77,13 @@ unsigned int FrameSet::bytes_remaining() {
 	return 0; //suppress warning
 }
 
+bool FrameSet::is_ready() {
+	synchronized(access_lock) {
+		return this->msg.size() == this->expected_size;
+	}
+	return 0; //suppress warning
+}
+
 bool FrameSet::flush_result(std::string& final_msg) {
 	synchronized(access_lock) {
 		if (this->msg.size() == this->expected_size) {
@@ -70,4 +92,10 @@ bool FrameSet::flush_result(std::string& final_msg) {
 		}
 	}
 	return FALSE;
+}
+
+uint8_t FrameSet::getNextConsecutiveFrameId() {
+	synchronized(access_lock) {
+		return this->next_part++;
+	}
 }
