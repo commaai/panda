@@ -31,48 +31,6 @@ J2534Connection_ISO15765::J2534Connection_ISO15765(
 	panda_dev->panda->set_can_speed_cbps(panda::PANDA_CAN1, BaudRate / 100); //J2534Connection_CAN(panda_dev, ProtocolID, Flags, BaudRate) {};
 }
 
-long J2534Connection_ISO15765::PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) {
-	//Timeout of 0 means return immediately. Non zero means WAIT for that time then return. Dafuk.
-	long err_code = STATUS_NOERROR;
-	Timer t = Timer();
-
-	unsigned long msgnum = 0;
-	while (msgnum < *pNumMsgs) {
-		if (Timeout > 0 && t.getTimePassed() >= Timeout) {
-			err_code = ERR_TIMEOUT;
-			break;
-		}
-
-		EnterCriticalSection(&this->message_access_lock);
-		if (this->messages.empty()) {
-			LeaveCriticalSection(&this->message_access_lock);
-			if (Timeout == 0)
-				break;
-			continue;
-		}
-
-		auto msg_in = this->messages.front();
-		this->messages.pop();
-		LeaveCriticalSection(&this->message_access_lock);
-
-		//if (this->_is_29bit() != msg_in.addr_29b) {}
-		PASSTHRU_MSG *msg_out = &pMsg[msgnum++];
-		msg_out->ProtocolID = this->ProtocolID;
-		msg_out->DataSize = msg_in.Data.size();
-		memcpy(msg_out->Data, msg_in.Data.c_str(), msg_in.Data.size());
-		msg_out->Timestamp = msg_in.Timestamp;
-		msg_out->RxStatus = msg_in.RxStatus;
-		msg_out->ExtraDataIndex = msg_in.ExtraDataIndex;
-		msg_out->TxFlags = 0;
-		if (msgnum == *pNumMsgs) break;
-	}
-
-	if (msgnum == 0)
-		err_code = ERR_BUFFER_EMPTY;
-	*pNumMsgs = msgnum;
-	return err_code;
-}
-
 long J2534Connection_ISO15765::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) {
 	for (int msgnum = 0; msgnum < *pNumMsgs; msgnum++) {
 		PASSTHRU_MSG* msg = &pMsg[msgnum];
@@ -144,9 +102,9 @@ void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) 
 		outframe.TxFlags = 0;
 		outframe.Data = msg.Data.substr(0, addrlen);
 
-		EnterCriticalSection(&this->message_access_lock);
-		this->messages.push(outframe);
-		LeaveCriticalSection(&this->message_access_lock);
+		synchronized(message_access_lock) {
+			this->messages.push(outframe);
+		}
 		return;
 	}
 
@@ -180,9 +138,9 @@ void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) 
 		outframe.Data = msg.Data.substr(0, addrlen) + msg.Data.substr(addrlen + 1, msg.Data[addrlen]);
 		outframe.ExtraDataIndex = outframe.Data.size();
 
-		EnterCriticalSection(&this->message_access_lock);
-		this->messages.push(outframe);
-		LeaveCriticalSection(&this->message_access_lock);
+		synchronized(message_access_lock) {
+			this->messages.push(outframe);
+		}
 		break;
 	case FRAME_FIRST:
 	{
@@ -202,9 +160,9 @@ void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) 
 			outframe.RxStatus |= ISO15765_ADDR_TYPE;
 		outframe.ExtraDataIndex = 0;
 		outframe.TxFlags = 0;
-		EnterCriticalSection(&this->message_access_lock);
-		this->messages.push(outframe);
-		LeaveCriticalSection(&this->message_access_lock);
+		synchronized(message_access_lock) {
+			this->messages.push(outframe);
+		}
 
 		convo.init_rx_first_frame(((msg.Data[addrlen] & 0x0F) << 8) | msg.Data[addrlen + 1], msg.Data.substr(addrlen + 2, 12 - (addrlen + 2)), msg.RxStatus);
 
@@ -255,9 +213,9 @@ void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) 
 				outframe.Data = msg.Data.substr(0, addrlen) + convo.msg;
 				outframe.ExtraDataIndex = outframe.Data.size();
 
-				EnterCriticalSection(&this->message_access_lock);
-				this->messages.push(outframe);
-				LeaveCriticalSection(&this->message_access_lock);
+				synchronized(message_access_lock) {
+					this->messages.push(outframe);
+				}
 
 				convo.reset();
 			}

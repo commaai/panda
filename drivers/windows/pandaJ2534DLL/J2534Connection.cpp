@@ -1,22 +1,54 @@
 #include "stdafx.h"
 #include "J2534Connection.h"
+#include "Timer.h"
 
 J2534Connection::J2534Connection(
 	std::shared_ptr<PandaJ2534Device> panda_dev,
 	unsigned long ProtocolID,
 	unsigned long Flags,
 	unsigned long BaudRate
-) : panda_dev(panda_dev), ProtocolID(ProtocolID), Flags(Flags), BaudRate(BaudRate), port(0) {
-	InitializeCriticalSectionAndSpinCount(&this->message_access_lock, 0x00000400);
-}
-
-J2534Connection::~J2534Connection() {
-	DeleteCriticalSection(&this->message_access_lock);
-}
+) : panda_dev(panda_dev), ProtocolID(ProtocolID), Flags(Flags), BaudRate(BaudRate), port(0) { }
 
 long J2534Connection::PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) {
-	*pNumMsgs = 0;
-	return STATUS_NOERROR;
+	//Timeout of 0 means return immediately. Non zero means WAIT for that time then return. Dafuk.
+	long err_code = STATUS_NOERROR;
+	Timer t = Timer();
+
+	unsigned long msgnum = 0;
+	while (msgnum < *pNumMsgs) {
+		if (Timeout > 0 && t.getTimePassed() >= Timeout) {
+			err_code = ERR_TIMEOUT;
+			break;
+		}
+
+		//Synchronized won't work where we have to break out of a loop
+		message_access_lock.lock();
+		if (this->messages.empty()) {
+			message_access_lock.unlock();
+			if (Timeout == 0)
+				break;
+			continue;
+		}
+
+		auto msg_in = this->messages.front();
+		this->messages.pop();
+		message_access_lock.unlock();
+
+		PASSTHRU_MSG *msg_out = &pMsg[msgnum++];
+		msg_out->ProtocolID = this->ProtocolID;
+		msg_out->DataSize = msg_in.Data.size();
+		memcpy(msg_out->Data, msg_in.Data.c_str(), msg_in.Data.size());
+		msg_out->Timestamp = msg_in.Timestamp;
+		msg_out->RxStatus = msg_in.RxStatus;
+		msg_out->ExtraDataIndex = msg_in.ExtraDataIndex;
+		msg_out->TxFlags = 0;
+		if (msgnum == *pNumMsgs) break;
+	}
+
+	if (msgnum == 0)
+		err_code = ERR_BUFFER_EMPTY;
+	*pNumMsgs = msgnum;
+	return err_code;
 }
 long J2534Connection::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) { return STATUS_NOERROR; }
 long J2534Connection::PassThruStartPeriodicMsg(PASSTHRU_MSG *pMsg, unsigned long *pMsgID, unsigned long TimeInterval) { return STATUS_NOERROR; }
@@ -105,9 +137,9 @@ void J2534Connection::processMessage(const PASSTHRU_MSG_INTERNAL& msg) {
 	}
 
 	if (filter_res == FILTER_RESULT_PASS) {
-		EnterCriticalSection(&this->message_access_lock);
-		this->messages.push(msg);
-		LeaveCriticalSection(&this->message_access_lock);
+		synchronized(message_access_lock) {
+			this->messages.push(msg);
+		}
 	}
 }
 

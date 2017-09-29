@@ -14,7 +14,6 @@ public:
 		unsigned long BaudRate
 	);
 
-	virtual long PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
 	virtual long PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
 
 	virtual unsigned long getMinMsgLen();

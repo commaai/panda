@@ -51,6 +51,9 @@
     <ClInclude Include="J2534Connection_ISO15765.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="synchronize.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

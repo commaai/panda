@@ -1,6 +1,7 @@
 #pragma once
 #include "panda/panda.h"
 #include "J2534_v0404.h"
+#include "synchronize.h"
 #include "J2534MessageFilter.h"
 #include "PandaJ2534Device.h"
 
@@ -17,7 +18,7 @@ public:
 		unsigned long Flags,
 		unsigned long BaudRate
 	);
-	~J2534Connection();
+	~J2534Connection() {};
 	virtual long PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
 	virtual long PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
 	virtual long PassThruStartPeriodicMsg(PASSTHRU_MSG *pMsg, unsigned long *pMsgID, unsigned long TimeInterval);
@@ -66,5 +67,5 @@ protected:
 
 	std::array<std::shared_ptr<J2534MessageFilter>, 10> filters;
 
-	CRITICAL_SECTION message_access_lock;
+	Mutex message_access_lock;
 };
