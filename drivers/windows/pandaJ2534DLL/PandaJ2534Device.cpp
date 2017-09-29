@@ -86,8 +86,13 @@ DWORD PandaJ2534Device::can_recv_thread() {
 
 			// TODO: Make this more efficient
 			for (auto& conn : this->connections)
-				if (conn->isProtoCan() && conn->getPort() == msg_in.bus)
-					conn->processMessage(msg_out);
+				if (conn->isProtoCan() && conn->getPort() == msg_in.bus) {
+					if (msg_in.is_receipt) {
+						conn->processMessageReceipt(msg_out);
+					} else {
+						conn->processMessage(msg_out);
+					}
+				}
 		}
 	}
 

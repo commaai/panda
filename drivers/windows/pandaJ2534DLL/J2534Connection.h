@@ -48,6 +48,7 @@ public:
 
 	unsigned long getPort();
 
+	virtual void processMessageReceipt(const PASSTHRU_MSG_INTERNAL& msg);
 	virtual void processMessage(const PASSTHRU_MSG_INTERNAL& msg);
 
 	virtual unsigned long getMinMsgLen();

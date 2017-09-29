@@ -78,35 +78,40 @@ long J2534Connection_ISO15765::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned lo
 	return STATUS_NOERROR;
 }
 
+void J2534Connection_ISO15765::processMessageReceipt(const PASSTHRU_MSG_INTERNAL& msg) {
+	PASSTHRU_MSG_INTERNAL outframe = {};
+	if (msg.ProtocolID != CAN) return;
+
+	//TX_MSG_TYPE should be set in RxStatus
+	if (!check_bmask(msg.RxStatus, TX_MSG_TYPE)) return;
+
+	int fid = get_matching_out_fc_filter_id(msg.Data, msg.RxStatus, CAN_29BIT_ID);
+	if (fid == -1) return;
+
+	uint8_t addrlen = check_bmask(this->filters[fid]->flags, ISO15765_ADDR_TYPE) ? 5 : 4;
+
+	if (msg.Data.size() >= addrlen + 1 && (msg.Data[addrlen] & 0xF0) == FRAME_FLOWCTRL) return;
+
+	this->conversations[fid].reset();
+
+	outframe.ProtocolID = ISO15765;
+	outframe.Timestamp = msg.Timestamp;
+	outframe.RxStatus = msg.RxStatus | TX_MSG_TYPE | TX_INDICATION;
+	if (check_bmask(this->filters[fid]->flags, ISO15765_ADDR_TYPE))
+		outframe.RxStatus |= ISO15765_ADDR_TYPE;
+	outframe.ExtraDataIndex = 0;
+	outframe.TxFlags = 0;
+	outframe.Data = msg.Data.substr(0, addrlen);
+
+	synchronized(message_access_lock) {
+		this->messages.push(outframe);
+	}
+}
+
 //https://happilyembedded.wordpress.com/2016/02/15/can-multiple-frame-transmission/
 void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) {
 	PASSTHRU_MSG_INTERNAL outframe = {};
 	if (msg.ProtocolID != CAN) return;
-
-	if (check_bmask(msg.RxStatus, TX_MSG_TYPE)) {
-		int fid = get_matching_out_fc_filter_id(msg.Data, msg.RxStatus, CAN_29BIT_ID);
-		if (fid == -1) return;
-
-		uint8_t addrlen = check_bmask(this->filters[fid]->flags, ISO15765_ADDR_TYPE) ? 5 : 4;
-
-		if (msg.Data.size() >= addrlen+1 && (msg.Data[addrlen] & 0xF0) == FRAME_FLOWCTRL) return;
-
-		this->conversations[fid].reset();
-
-		outframe.ProtocolID = ISO15765;
-		outframe.Timestamp = msg.Timestamp;
-		outframe.RxStatus = msg.RxStatus | TX_MSG_TYPE | TX_INDICATION;
-		if (check_bmask(this->filters[fid]->flags, ISO15765_ADDR_TYPE))
-			outframe.RxStatus |= ISO15765_ADDR_TYPE;
-		outframe.ExtraDataIndex = 0;
-		outframe.TxFlags = 0;
-		outframe.Data = msg.Data.substr(0, addrlen);
-
-		synchronized(message_access_lock) {
-			this->messages.push(outframe);
-		}
-		return;
-	}
 
 	int fid = get_matching_in_fc_filter_id(msg);
 	if (fid == -1) return;

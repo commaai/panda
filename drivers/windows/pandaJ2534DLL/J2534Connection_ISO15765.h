@@ -121,6 +121,7 @@ public:
 
 	int get_matching_in_fc_filter_id(const PASSTHRU_MSG_INTERNAL & msg, unsigned long flagmask = CAN_29BIT_ID);
 
+	virtual void processMessageReceipt(const PASSTHRU_MSG_INTERNAL& msg);
 	virtual void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg);
 	virtual unsigned long getMinMsgLen();
 	virtual unsigned long getMaxMsgLen();

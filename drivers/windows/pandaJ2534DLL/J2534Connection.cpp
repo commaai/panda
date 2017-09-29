@@ -119,21 +119,23 @@ unsigned long J2534Connection::getPort() {
 	return this->port;
 }
 
+void J2534Connection::processMessageReceipt(const PASSTHRU_MSG_INTERNAL& msg) {
+	if (this->loopback) {
+		synchronized(message_access_lock) {
+			this->messages.push(msg);
+		}
+	}
+}
+
 //Works well as long as the protocol doesn't support flow control.
 void J2534Connection::processMessage(const PASSTHRU_MSG_INTERNAL& msg) {
-	if (msg.ProtocolID != this->getProtocol()) return;
-
 	FILTER_RESULT filter_res = FILTER_RESULT_NEUTRAL;
-	if ((msg.RxStatus & TX_MSG_TYPE) == TX_MSG_TYPE) {
-		if (!this->loopback) return;	// Optionally ignore loopbacks
-		filter_res = FILTER_RESULT_PASS;
-	} else {
-		for (auto filter : this->filters) {
-			if (filter == nullptr) continue;
-			FILTER_RESULT current_check_res = filter->check(msg);
-			if (current_check_res == FILTER_RESULT_BLOCK) return;
-			if (current_check_res == FILTER_RESULT_PASS) filter_res = FILTER_RESULT_PASS;
-		}
+
+	for (auto filter : this->filters) {
+		if (filter == nullptr) continue;
+		FILTER_RESULT current_check_res = filter->check(msg);
+		if (current_check_res == FILTER_RESULT_BLOCK) return;
+		if (current_check_res == FILTER_RESULT_PASS) filter_res = FILTER_RESULT_PASS;
 	}
 
 	if (filter_res == FILTER_RESULT_PASS) {
