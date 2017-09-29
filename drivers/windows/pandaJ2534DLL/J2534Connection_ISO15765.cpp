@@ -117,18 +117,16 @@ void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) 
 	if (fid == -1) return;
 
 	auto filter = this->filters[fid];
-	auto& convo = this->conversations[fid];
 	bool is_ext_addr = check_bmask(filter->flags, ISO15765_ADDR_TYPE);
 	uint8_t addrlen = is_ext_addr ? 5 : 4;
 
 	switch (msg_get_type(msg, addrlen)) {
 	case FRAME_SINGLE:
-		convo.reset(); //Reset any current transaction.
+		this->conversations[fid] = nullptr; //Reset any current transaction.
 
 		if (is_ext_addr) {
 			if ((msg.Data[5] & 0x0F) > 6) return;
-		}
-		else {
+		} else {
 			if ((msg.Data[4] & 0x0F) > 7) return;
 		}
 
@@ -153,7 +151,7 @@ void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) 
 			//A frame was received that could have held more data.
 			//No examples of this protocol show that happening, so
 			//it will be assumed that it is grounds to reset rx.
-			convo.reset();
+			this->conversations[fid] = nullptr;
 			return;
 		}
 
@@ -169,7 +167,8 @@ void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) 
 			this->messages.push(outframe);
 		}
 
-		convo.init_rx_first_frame(((msg.Data[addrlen] & 0x0F) << 8) | msg.Data[addrlen + 1], msg.Data.substr(addrlen + 2, 12 - (addrlen + 2)), msg.RxStatus);
+		this->conversations[fid] = FrameSet::init_rx_first_frame(((msg.Data[addrlen] & 0x0F) << 8) | msg.Data[addrlen + 1],
+																msg.Data.substr(addrlen + 2, 12 - (addrlen + 2)), msg.RxStatus);
 
 		//Doing it this way because the filter can be 5 bytes in ext address mode.
 		std::string flowfilter = filter->get_flowctrl();
@@ -186,46 +185,33 @@ void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) 
 		break;
 	}
 	case FRAME_CONSEC:
-		convo.lock();
 		{
-			if (convo.active == 0) {
-				convo.unlock();
-				return;
-			}
-			if ((msg.Data[addrlen] & 0x0F) != convo.next_part) {
-				convo.unlock();
-				return;
-			}
-			convo.next_part = (convo.next_part + 1) % 0x10;
-			unsigned int payload_len = min(convo.bytes_remaining(), (is_ext_addr ? 6 : 7));
-			if (msg.Data.size() < (addrlen + 1 + payload_len)) {
-				//A frame was received that could have held more data.
-				//No examples of this protocol show that happening, so
-				//it will be assumed that it is grounds to reset rx.
-				convo.reset();
-				convo.unlock();
-				return;
-			}
-			convo.msg += msg.Data.substr(addrlen + 1, payload_len);
+			auto& convo = this->conversations[fid];
+			if (convo == nullptr) return;
 
-			if (convo.msg.size() == convo.expected_size) {
+			if (!convo->rx_add_frame(msg.Data[addrlen], (is_ext_addr ? 6 : 7), msg.Data.substr(addrlen + 1))) {
+				//Delete this conversation.
+				convo = nullptr;
+				return;
+			}
+
+			std::string final_msg;
+			if (convo->flush_result(final_msg)) {
+				convo = nullptr;
 				outframe.ProtocolID = ISO15765;
 				outframe.Timestamp = msg.Timestamp;
 				outframe.RxStatus = msg.RxStatus;
 				if (is_ext_addr)
 					outframe.RxStatus |= ISO15765_ADDR_TYPE;
 				outframe.TxFlags = 0;
-				outframe.Data = msg.Data.substr(0, addrlen) + convo.msg;
+				outframe.Data = msg.Data.substr(0, addrlen) + final_msg;
 				outframe.ExtraDataIndex = outframe.Data.size();
 
 				synchronized(message_access_lock) {
 					this->messages.push(outframe);
 				}
-
-				convo.reset();
 			}
 		}
-		convo.unlock();
 		break;
 	}
 }

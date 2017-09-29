@@ -51,6 +51,9 @@
     <ClInclude Include="J2534Connection_ISO15765.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FrameSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="synchronize.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -81,6 +84,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="J2534Connection_ISO15765.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameSet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

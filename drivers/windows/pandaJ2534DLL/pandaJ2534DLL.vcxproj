@@ -89,6 +89,7 @@
   <ItemGroup>
     <ClInclude Include="..\panda\panda.h" />
     <ClInclude Include="dllmain.h" />
+    <ClInclude Include="FrameSet.h" />
     <ClInclude Include="J2534Connection.h" />
     <ClInclude Include="J2534Connection_CAN.h" />
     <ClInclude Include="J2534Connection_ISO15765.h" />
@@ -110,6 +111,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="FrameSet.cpp" />
     <ClCompile Include="J2534Connection.cpp" />
     <ClCompile Include="J2534Connection_CAN.cpp" />
     <ClCompile Include="J2534Connection_ISO15765.cpp" />
