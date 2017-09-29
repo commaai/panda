@@ -2,8 +2,8 @@
 #include "panda/panda.h"
 #include "J2534_v0404.h"
 #include "synchronize.h"
-#include "J2534MessageFilter.h"
 #include "PandaJ2534Device.h"
+#include "J2534MessageFilter.h"
 
 class J2534MessageFilter;
 class PandaJ2534Device;
@@ -18,7 +18,7 @@ public:
 		unsigned long Flags,
 		unsigned long BaudRate
 	);
-	~J2534Connection() {};
+	virtual ~J2534Connection() {};
 	virtual long PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
 	virtual long PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
 	virtual long PassThruStartPeriodicMsg(PASSTHRU_MSG *pMsg, unsigned long *pMsgID, unsigned long TimeInterval);
@@ -38,21 +38,32 @@ public:
 	long clearMsgFilters();
 
 	long setBaud(unsigned long baud);
-	unsigned long getBaud();
+	unsigned long getBaud() {
+		return this->BaudRate;
+	}
 
-	unsigned long getProtocol();
+	unsigned long getProtocol() {
+		return this->ProtocolID;
+	};
 
 	virtual bool isProtoCan() {
 		return FALSE;
 	}
 
-	unsigned long getPort();
+	unsigned long getPort() {
+		return this->port;
+	}
 
 	virtual void processMessageReceipt(const PASSTHRU_MSG_INTERNAL& msg);
 	virtual void processMessage(const PASSTHRU_MSG_INTERNAL& msg);
 
-	virtual unsigned long getMinMsgLen();
-	virtual unsigned long getMaxMsgLen();
+	virtual unsigned long getMinMsgLen() {
+		return 1;
+	}
+
+	virtual unsigned long getMaxMsgLen() {
+		return 4128;
+	}
 
 	bool loopback = FALSE;
 

@@ -40,11 +40,3 @@ long J2534Connection_CAN::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *p
 	}
 	return STATUS_NOERROR;
 }
-
-unsigned long J2534Connection_CAN::getMinMsgLen() {
-	return 4;
-}
-
-unsigned long J2534Connection_CAN::getMaxMsgLen() {
-	return 12;
-}

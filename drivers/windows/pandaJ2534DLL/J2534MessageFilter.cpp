@@ -7,7 +7,7 @@ J2534MessageFilter::J2534MessageFilter(
 	PASSTHRU_MSG *pMaskMsg,
 	PASSTHRU_MSG *pPatternMsg,
 	PASSTHRU_MSG *pFlowControlMsg
-) : filtertype(filtertype), flags(0) {
+) : filtertype(filtertype), flags(0), conn(conn) {
 	switch (filtertype) {
 	case PASS_FILTER:
 	case BLOCK_FILTER:

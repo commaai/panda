@@ -21,15 +21,14 @@ public:
 	std::vector<std::unique_ptr<J2534Connection>> connections;
 
 private:
+	HANDLE thread_kill_event;
+
+	HANDLE can_thread_handle;
 	static DWORD WINAPI _can_recv_threadBootstrap(LPVOID This);
 	DWORD can_recv_thread();
 
-	HANDLE can_thread_handle;
-	HANDLE can_kill_event;
-
+	HANDLE flow_control_wakeup_event;
+	HANDLE flow_control_thread_handle;
 	static DWORD WINAPI _flow_control_write_threadBootstrap(LPVOID This);
 	DWORD flow_control_write_thread();
-
-	HANDLE flow_control_thread_handle;
-	HANDLE flow_control_wakeup_event;
 };

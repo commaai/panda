@@ -9,19 +9,20 @@ PandaJ2534Device::PandaJ2534Device(std::unique_ptr<panda::Panda> new_panda) {
 	this->panda->set_can_loopback(FALSE);
 	this->panda->set_alt_setting(1);
 
-	DWORD threadid;
-	this->can_kill_event = CreateEvent(NULL, TRUE, FALSE, NULL);
-	this->can_thread_handle = CreateThread(NULL, 0, _can_recv_threadBootstrap, (LPVOID)this, 0, &threadid);
+	DWORD canListenThreadID;
+	this->thread_kill_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	this->can_thread_handle = CreateThread(NULL, 0, _can_recv_threadBootstrap, (LPVOID)this, 0, &canListenThreadID);
 };
 
 PandaJ2534Device::~PandaJ2534Device() {
-	SetEvent(this->can_kill_event);
+	SetEvent(this->thread_kill_event);
 	DWORD res = WaitForSingleObject(this->can_thread_handle, INFINITE);
 	CloseHandle(this->can_thread_handle);
-	CloseHandle(this->can_kill_event);
+
+	CloseHandle(this->flow_control_thread_handle);
 
 	CloseHandle(this->flow_control_wakeup_event);
-	CloseHandle(this->flow_control_thread_handle);
+	CloseHandle(this->thread_kill_event);
 }
 
 std::shared_ptr<PandaJ2534Device> PandaJ2534Device::openByName(std::string sn) {
@@ -67,7 +68,7 @@ DWORD PandaJ2534Device::can_recv_thread() {
 	DWORD err = TRUE;
 	while (err) {
 		std::vector<panda::PANDA_CAN_MSG> msg_recv;
-		err = this->panda->can_recv_async(this->can_kill_event, msg_recv);
+		err = this->panda->can_recv_async(this->thread_kill_event, msg_recv);
 		for (auto msg_in : msg_recv) {
 			//if (this->_is_29bit() != msg_in.addr_29b) {}
 			PASSTHRU_MSG_INTERNAL msg_out;
@@ -96,14 +97,13 @@ DWORD PandaJ2534Device::can_recv_thread() {
 		}
 	}
 
-	return STATUS_NOERROR;
+	return 0;
 }
 
 DWORD PandaJ2534Device::_flow_control_write_threadBootstrap(LPVOID This) {
 	return ((PandaJ2534Device*)This)->flow_control_write_thread();
 }
 
-DWORD PandaJ2534Device::flow_control_write_thread()
-{
+DWORD PandaJ2534Device::flow_control_write_thread() {
 	return 0;
 }

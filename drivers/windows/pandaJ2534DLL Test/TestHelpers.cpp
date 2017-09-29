@@ -61,7 +61,7 @@ void J2534_send_msg_checked(unsigned long chanid, unsigned long ProtocolID, unsi
 	memcpy_s(msg.Data, 4128, Data, DataSize);
 	unsigned long msgcount = 1;
 	Assert::AreEqual<long>(STATUS_NOERROR, PassThruWriteMsgs(chanid, &msg, &msgcount, 0), _T("Failed to write message."), pLineInfo);
-	Assert::AreEqual<unsigned long>(1, msgcount, _T("Wrong message count after tx."), LINE_INFO());
+	Assert::AreEqual<unsigned long>(1, msgcount, _T("Wrong message count after tx."), pLineInfo);
 }
 
 long J2534_send_msg(unsigned long chanid, unsigned long ProtocolID, unsigned long RxStatus, unsigned long TxFlags,

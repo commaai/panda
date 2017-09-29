@@ -29,6 +29,7 @@ public:
 	std::string get_flowctrl();
 
 	unsigned long flags;
+	J2534Connection *const conn;
 private:
 	unsigned int filtertype;
 	std::string maskMsg;

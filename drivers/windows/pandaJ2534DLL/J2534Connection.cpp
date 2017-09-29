@@ -107,18 +107,6 @@ long J2534Connection::setBaud(unsigned long baud) {
 	return STATUS_NOERROR;
 }
 
-unsigned long J2534Connection::getBaud() {
-	return this->BaudRate;
-}
-
-unsigned long J2534Connection::getProtocol() {
-	return this->ProtocolID;
-}
-
-unsigned long J2534Connection::getPort() {
-	return this->port;
-}
-
 void J2534Connection::processMessageReceipt(const PASSTHRU_MSG_INTERNAL& msg) {
 	if (this->loopback) {
 		synchronized(message_access_lock) {
@@ -143,12 +131,4 @@ void J2534Connection::processMessage(const PASSTHRU_MSG_INTERNAL& msg) {
 			this->messages.push(msg);
 		}
 	}
-}
-
-unsigned long J2534Connection::getMinMsgLen() {
-	return 1;
-}
-
-unsigned long J2534Connection::getMaxMsgLen() {
-	return 4128;
 }

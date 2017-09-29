@@ -16,8 +16,13 @@ public:
 
 	virtual long PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
 
-	virtual unsigned long getMinMsgLen();
-	virtual unsigned long getMaxMsgLen();
+	virtual unsigned long getMinMsgLen() {
+		return 4;
+	}
+
+	virtual unsigned long getMaxMsgLen() {
+		return 12;
+	}
 
 	virtual bool isProtoCan() {
 		return TRUE;

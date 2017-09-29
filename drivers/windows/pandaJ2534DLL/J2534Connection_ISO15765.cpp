@@ -28,7 +28,7 @@ J2534Connection_ISO15765::J2534Connection_ISO15765(
 	if (BaudRate % 100 || BaudRate < 10000 || BaudRate > 5000000)
 		throw ERR_INVALID_BAUDRATE;
 
-	panda_dev->panda->set_can_speed_cbps(panda::PANDA_CAN1, BaudRate / 100); //J2534Connection_CAN(panda_dev, ProtocolID, Flags, BaudRate) {};
+	panda_dev->panda->set_can_speed_cbps(panda::PANDA_CAN1, BaudRate / 100);
 }
 
 long J2534Connection_ISO15765::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) {
@@ -228,14 +228,6 @@ void J2534Connection_ISO15765::processMessage(const PASSTHRU_MSG_INTERNAL& msg) 
 		convo.unlock();
 		break;
 	}
-}
-
-unsigned long J2534Connection_ISO15765::getMinMsgLen() {
-	return 4;
-}
-
-unsigned long J2534Connection_ISO15765::getMaxMsgLen() {
-	return 4099;
 }
 
 long J2534Connection_ISO15765::PassThruStartMsgFilter(unsigned long FilterType, PASSTHRU_MSG *pMaskMsg, PASSTHRU_MSG *pPatternMsg,
