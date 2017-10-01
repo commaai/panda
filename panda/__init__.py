@@ -177,20 +177,23 @@ class Panda(object):
     if not enter_bootloader:
       self.close()
       time.sleep(1.0)
+      success = False
       # wait up to 15 seconds
       for i in range(0, 15):
         try:
           self.connect()
+          success = True
           break
         except Exception:
           print("reconnecting is taking %d seconds..." % (i+1))
-          if i == 13:
-            try:
-              dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial))
-              dfu.recover()
-            except Exception:
-              raise Exception("reset failed")
+          try:
+            dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial))
+            dfu.recover()
+          except Exception:
+            pass
           time.sleep(1.0)
+      if not success:
+        raise Exception("reset failed")
 
   def flash(self, fn=None, code=None):
     if not self.bootstub:
