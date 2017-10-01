@@ -1,6 +1,8 @@
-#!/usr/bin/env python
+DEBUG = False
+
 def msg(x):
-  print "S:",x.encode("hex")
+  if DEBUG:
+    print "S:",x.encode("hex")
   if len(x) <= 7:
     ret = chr(len(x)) + x
   else:
@@ -68,16 +70,8 @@ def isotp_recv(panda, addr, bus=0):
 
   dat = dat[0:tlen]
 
-  print "R:",dat.encode("hex")
+  if DEBUG:
+    print "R:",dat.encode("hex")
 
   return dat
-
-if __name__ == "__main__":
-  from panda import Panda
-  print "getting VIN"
-  panda = Panda()
-  panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-  panda.can_clear(0)
-  ret = isotp_send(panda, "\x09\x02", 0x7df)
-  print "VIN: %s" % isotp_recv(panda, 0x7e8)
 
