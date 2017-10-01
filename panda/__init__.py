@@ -184,7 +184,7 @@ class Panda(object):
           break
         except Exception:
           print("reconnecting is taking %d seconds..." % (i+1))
-          if i == 14:
+          if i == 13:
             try:
               dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial))
               dfu.recover()

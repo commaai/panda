@@ -21,7 +21,7 @@ class PandaDFU(object):
           this_dfu_serial = device._getASCIIStringDescriptor(3)
         except Exception:
           continue
-        if this_dfu_serial == dfu_serial:
+        if this_dfu_serial == dfu_serial or dfu_serial is None:
           self._handle = device.open()
           self.legacy = "07*128Kg" in self._handle.getASCIIStringDescriptor(4)
           return
@@ -44,6 +44,8 @@ class PandaDFU(object):
 
   @staticmethod
   def st_serial_to_dfu_serial(st):
+    if st == None or st == "none":
+      return None
     uid_base = struct.unpack("H"*6, st.decode("hex"))
     return struct.pack("!HHH", uid_base[1] + uid_base[5], uid_base[0] + uid_base[4] + 0xA, uid_base[3]).encode("hex").upper()
 
