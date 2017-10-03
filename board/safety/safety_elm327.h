@@ -28,7 +28,7 @@ static int elm327_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 }
 
 static void elm327_init() {
-  controls_allowed = 0;
+  controls_allowed = 1;
 }
 
 const safety_hooks elm327_hooks = {
