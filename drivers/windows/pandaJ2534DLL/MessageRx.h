@@ -15,23 +15,21 @@ public:
 	};
 
 	bool rx_add_frame(uint8_t pci_byte, unsigned int max_packet_size, const std::string piece) {
-		/*//synchronized(access_lock) {
-			if ((pcibyte & 0x0F) != this->next_part) {
-				//TODO: Maybe this should instantly fail the transaction.
-				return TRUE;
-			}
+		if ((pci_byte & 0x0F) != this->next_part) {
+			//TODO: Maybe this should instantly fail the transaction.
+			return TRUE;
+		}
 
-			this->next_part = (this->next_part + 1) % 0x10;
-			unsigned int payload_len = min(expected_size - msg.size(), max_packet_size);
-			if (piece.size() < payload_len) {
-				//A frame was received that could have held more data.
-				//No examples of this protocol show that happening, so
-				//it will be assumed that it is grounds to reset rx.
-				return FALSE;
-			}
-			msg += piece.substr(0, payload_len);
+		this->next_part = (this->next_part + 1) % 0x10;
+		unsigned int payload_len = min(expected_size - msg.size(), max_packet_size);
+		if (piece.size() < payload_len) {
+			//A frame was received that could have held more data.
+			//No examples of this protocol show that happening, so
+			//it will be assumed that it is grounds to reset rx.
+			return FALSE;
+		}
+		msg += piece.substr(0, payload_len);
 
-		//}*/
 		return TRUE;
 	}
 
@@ -44,12 +42,10 @@ public:
 	}
 
 	bool flush_result(std::string& final_msg) {
-		//synchronized(access_lock) {
-			if (this->msg.size() == this->expected_size) {
-				final_msg = this->msg;
-				return TRUE;
-			}
-		//}
+		if (this->msg.size() == this->expected_size) {
+			final_msg = this->msg;
+			return TRUE;
+		}
 		return FALSE;
 	}
 

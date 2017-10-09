@@ -99,8 +99,7 @@ protected:
 	std::array<std::shared_ptr<J2534MessageFilter>, 10> filters;
 	std::queue<std::shared_ptr<MessageTx>> txbuff;
 
-	Mutex message_access_lock;
-
 private:
+	Mutex message_access_lock;
 	Mutex staged_writes_lock;
 };

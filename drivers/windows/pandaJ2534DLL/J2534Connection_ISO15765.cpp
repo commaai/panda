@@ -125,9 +125,7 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 				outframe.RxStatus |= ISO15765_ADDR_TYPE;
 			outframe.Data = msg.Data.substr(0, addrlen);
 
-			synchronized(message_access_lock) {
-				this->messages.push(outframe);
-			}
+			addMsgToRxQueue(outframe);
 
 			this->rxConversations[fid] = std::make_shared<MessageRx>(
 				((msg.Data[addrlen] & 0x0F) << 8) | msg.Data[addrlen + 1],
@@ -151,7 +149,7 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 		}
 	case FRAME_CONSEC:
 		{
-			/*auto& convo = this->rxConversations[fid];
+			auto& convo = this->rxConversations[fid];
 			if (convo == nullptr) return;
 
 			if (!convo->rx_add_frame(msg.Data[addrlen], (is_ext_addr ? 6 : 7), msg.Data.substr(addrlen + 1))) {
@@ -169,10 +167,8 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 				outframe.Data = msg.Data.substr(0, addrlen) + final_msg;
 				outframe.ExtraDataIndex = outframe.Data.size();
 
-				synchronized(message_access_lock) {
-					this->messages.push(outframe);
-				}
-			}*/
+				addMsgToRxQueue(outframe);
+			}
 			break;
 		}
 	}
