@@ -1,18 +1,17 @@
 #include "stdafx.h"
 #include "PandaJ2534Device.h"
+#include "J2534Frame.h"
 
-FLOW_CONTROL_WRITE::FLOW_CONTROL_WRITE(std::shared_ptr<FrameSet> framein) : frame(framein) {
-	expire = std::chrono::steady_clock::now() + framein->separation_time;
+SCHEDULED_TX_MSG::SCHEDULED_TX_MSG(std::shared_ptr<MessageTx> msgtx) : msgtx(msgtx) {
+	expire = std::chrono::steady_clock::now(); //Should be triggered immediately.
 }
 
-void FLOW_CONTROL_WRITE::refreshExpiration() {
-	if (auto& frameptr = this->frame.lock()) {
-		expire += frameptr->separation_time;
-	}
+void SCHEDULED_TX_MSG::refreshExpiration() {
+	//expire += separation_time;
 }
 
 
-PandaJ2534Device::PandaJ2534Device(std::unique_ptr<panda::Panda> new_panda) {
+PandaJ2534Device::PandaJ2534Device(std::unique_ptr<panda::Panda> new_panda) : txInProgress(FALSE) {
 	this->panda = std::move(new_panda);
 
 	this->panda->set_esp_power(FALSE);
@@ -26,7 +25,7 @@ PandaJ2534Device::PandaJ2534Device(std::unique_ptr<panda::Panda> new_panda) {
 
 	DWORD flowControlSendThreadID;
 	this->flow_control_wakeup_event = CreateEvent(NULL, TRUE, FALSE, NULL);
-	this->flow_control_thread_handle = CreateThread(NULL, 0, _flow_control_write_threadBootstrap, (LPVOID)this, 0, &flowControlSendThreadID);
+	this->flow_control_thread_handle = CreateThread(NULL, 0, _msg_tx_threadBootstrap, (LPVOID)this, 0, &flowControlSendThreadID);
 };
 
 PandaJ2534Device::~PandaJ2534Device() {
@@ -55,7 +54,7 @@ DWORD PandaJ2534Device::closeChannel(unsigned long ChannelID) {
 	return STATUS_NOERROR;
 }
 
-DWORD PandaJ2534Device::addChannel(J2534Connection* conn, unsigned long* channel_id) {
+DWORD PandaJ2534Device::addChannel(std::shared_ptr<J2534Connection>& conn, unsigned long* channel_id) {
 	int channel_index = -1;
 	for (unsigned int i = 0; i < this->connections.size(); i++)
 		if (this->connections[i] == nullptr) {
@@ -70,7 +69,7 @@ DWORD PandaJ2534Device::addChannel(J2534Connection* conn, unsigned long* channel
 		channel_index = this->connections.size() - 1;
 	}
 
-	this->connections[channel_index].reset(conn);
+	this->connections[channel_index] = conn;
 
 	*channel_id = channel_index;
 	return STATUS_NOERROR;
@@ -86,40 +85,41 @@ DWORD PandaJ2534Device::can_recv_thread() {
 		std::vector<panda::PANDA_CAN_MSG> msg_recv;
 		err = this->panda->can_recv_async(this->thread_kill_event, msg_recv);
 		for (auto msg_in : msg_recv) {
-			PASSTHRU_MSG_INTERNAL msg_out;
-			msg_out.ProtocolID = CAN;
-			msg_out.ExtraDataIndex = 0;
-			msg_out.Data.reserve(msg_in.len + 4);
-			msg_out.Data += msg_in.addr >> 24;
-			msg_out.Data += (msg_in.addr >> 16) & 0xFF;
-			msg_out.Data += (msg_in.addr >> 8) & 0xFF;
-			msg_out.Data += msg_in.addr & 0xFF;
-			std::string tmp = std::string((char*)&msg_in.dat, msg_in.len);
-			msg_out.Data += tmp;
-			msg_out.Timestamp = msg_in.recv_time;
-			msg_out.RxStatus = (msg_in.addr_29b ? CAN_29BIT_ID : 0) |
-				(msg_in.is_receipt ? TX_MSG_TYPE : 0);
+			J2534Frame msg_out(msg_in);
 
-			// TODO: Make this more efficient
-			for (auto& conn : this->connections)
-				if (conn->isProtoCan() && conn->getPort() == msg_in.bus) {
-					if (msg_in.is_receipt) {
-						conn->processMessageReceipt(msg_out);
-					} else {
-						conn->processMessage(msg_out);
+			if (msg_in.is_receipt) {
+				synchronized(active_flow_control_txs_lock) {
+					if (txMsgsAwaitingEcho.size() > 0) {
+						auto& msgtx = txMsgsAwaitingEcho.front()->msgtx;
+						if (auto conn = msgtx->connection.lock()) {
+							if (conn->isProtoCan() && conn->getPort() == msg_in.bus) {
+								if (msgtx->checkTxReceipt(msg_out)) {
+									conn->processMessageReceipt(msg_out);
+									txMsgsAwaitingEcho.pop(); //nextWaitingMsg no longer valid
+								}
+							}
+						} else {
+							txMsgsAwaitingEcho.pop(); //nextWaitingMsg no longer valid
+						}
 					}
 				}
+			} else {
+				// TODO: Make this more efficient
+				for (auto& conn : this->connections)
+					if (conn->isProtoCan() && conn->getPort() == msg_in.bus)
+						conn->processMessage(msg_out);
+			}
 		}
 	}
 
 	return 0;
 }
 
-DWORD PandaJ2534Device::_flow_control_write_threadBootstrap(LPVOID This) {
-	return ((PandaJ2534Device*)This)->flow_control_write_thread();
+DWORD PandaJ2534Device::_msg_tx_threadBootstrap(LPVOID This) {
+	return ((PandaJ2534Device*)This)->msg_tx_thread();
 }
 
-DWORD PandaJ2534Device::flow_control_write_thread() {
+DWORD PandaJ2534Device::msg_tx_thread() {
 	const HANDLE subscriptions[] = { this->flow_control_wakeup_event, this->thread_kill_event };
 	DWORD sleepDuration = INFINITE;
 	while (TRUE) {
@@ -137,25 +137,16 @@ DWORD PandaJ2534Device::flow_control_write_thread() {
 					sleepDuration = INFINITE;
 					goto break_flow_ctrl_loop;
 				}
-				auto& fcontrol_write = this->active_flow_control_txs.front();
-				if (auto& frame = fcontrol_write->frame.lock()) {
-					if (std::chrono::steady_clock::now() >= fcontrol_write->expire) {
-						this->active_flow_control_txs.pop_front();
-						if (auto& filter = frame->filter.lock()) {
-							//Write message
-							filter->conn->sendConsecutiveFrame(frame, filter);
-						} else {
-							this->active_flow_control_txs.pop_front();
-						}
-						//fcontrol_write->refreshExpiration();
-						//insertMultiPartTxInQueue(std::move(fcontrol_write));
-					} else { //Ran out of things that need to be sent now. Sleep!
-						auto time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(fcontrol_write->expire - std::chrono::steady_clock::now());
-						sleepDuration = max(1, time_diff.count());
-						goto break_flow_ctrl_loop;// doloop = FALSE;
-					}
-				} else { // This frame has been aborted.
+				if (std::chrono::steady_clock::now() >= this->active_flow_control_txs.front()->expire) {
+					auto fcontrol_write_real = std::move(this->active_flow_control_txs.front());
 					this->active_flow_control_txs.pop_front();
+					if (fcontrol_write_real->msgtx->sendNextFrame())
+						txMsgsAwaitingEcho.push(std::move(fcontrol_write_real));
+				} else { //Ran out of things that need to be sent now. Sleep!
+					auto time_diff = std::chrono::duration_cast<std::chrono::milliseconds>
+						(this->active_flow_control_txs.front()->expire - std::chrono::steady_clock::now());
+					sleepDuration = max(1, time_diff.count());
+					goto break_flow_ctrl_loop;
 				}
 			}
 		}
@@ -165,7 +156,7 @@ DWORD PandaJ2534Device::flow_control_write_thread() {
 	return 0;
 }
 
-void PandaJ2534Device::insertMultiPartTxInQueue(std::unique_ptr<FLOW_CONTROL_WRITE> fcwrite) {
+void PandaJ2534Device::insertMultiPartTxInQueue(std::unique_ptr<SCHEDULED_TX_MSG> fcwrite) {
 	synchronized(active_flow_control_txs_lock) {
 		auto iter = this->active_flow_control_txs.begin();
 		for (; iter != this->active_flow_control_txs.end(); iter++) {
@@ -175,8 +166,15 @@ void PandaJ2534Device::insertMultiPartTxInQueue(std::unique_ptr<FLOW_CONTROL_WRI
 	}
 }
 
-void PandaJ2534Device::registerMultiPartTx(std::shared_ptr<FrameSet> frame) {
-	auto fcwrite = std::make_unique<FLOW_CONTROL_WRITE>(frame);
-	insertMultiPartTxInQueue(std::move(fcwrite));
-	SetEvent(this->flow_control_wakeup_event);
+void PandaJ2534Device::registerConnectionTx(std::shared_ptr<J2534Connection> conn) {
+	synchronized(ConnTxMutex) {
+		auto ret = this->ConnTxSet.insert(conn);
+		if (ret.second == FALSE) return; //Conn already exists.
+		this->ConnTxQueue.push(conn);
+		this->txInProgress = TRUE;
+
+		auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(conn->txbuff.back());
+		this->insertMultiPartTxInQueue(std::move(fcwrite));
+	}
+	SetEvent(flow_control_wakeup_event);
 }

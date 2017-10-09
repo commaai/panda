@@ -107,18 +107,24 @@ long J2534Connection::setBaud(unsigned long baud) {
 	return STATUS_NOERROR;
 }
 
-void J2534Connection::sendConsecutiveFrame(std::shared_ptr<FrameSet> frame, std::shared_ptr<J2534MessageFilter> filter) { }
-
-void J2534Connection::processMessageReceipt(const PASSTHRU_MSG_INTERNAL& msg) {
-	if (this->loopback) {
-		synchronized(message_access_lock) {
-			this->messages.push(msg);
+void J2534Connection::schedultMsgTx(std::shared_ptr<MessageTx> msgout) {
+	if (auto panda_ps = this->panda_dev.lock()) {
+		synchronized(staged_writes_lock) {
+			this->txbuff.push(msgout);
+			panda_ps->registerConnectionTx(shared_from_this());
 		}
 	}
 }
 
+void J2534Connection::processMessageReceipt(const J2534Frame& msg) {
+	//TX_MSG_TYPE should be set in RxStatus
+	if (!check_bmask(msg.RxStatus, TX_MSG_TYPE)) return;
+	if (this->loopback)
+		addMsgToRxQueue(msg);
+}
+
 //Works well as long as the protocol doesn't support flow control.
-void J2534Connection::processMessage(const PASSTHRU_MSG_INTERNAL& msg) {
+void J2534Connection::processMessage(const J2534Frame& msg) {
 	FILTER_RESULT filter_res = FILTER_RESULT_NEUTRAL;
 
 	for (auto filter : this->filters) {
@@ -129,8 +135,6 @@ void J2534Connection::processMessage(const PASSTHRU_MSG_INTERNAL& msg) {
 	}
 
 	if (filter_res == FILTER_RESULT_PASS) {
-		synchronized(message_access_lock) {
-			this->messages.push(msg);
-		}
+		addMsgToRxQueue(msg);
 	}
 }

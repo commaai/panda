@@ -4,14 +4,18 @@
 #include "synchronize.h"
 #include "PandaJ2534Device.h"
 #include "J2534MessageFilter.h"
-#include "FrameSet.h"
+#include "MessageTx.h"
+#include "J2534Frame.h"
 
 class J2534MessageFilter;
 class PandaJ2534Device;
+class MessageTx;
 
 #define check_bmask(num, mask)(((num) & mask) == mask)
 
-class J2534Connection {
+class J2534Connection : public std::enable_shared_from_this<J2534Connection> {
+	friend class PandaJ2534Device;
+
 public:
 	J2534Connection(
 		std::shared_ptr<PandaJ2534Device> panda_dev,
@@ -55,10 +59,8 @@ public:
 		return this->port;
 	}
 
-	virtual void processMessageReceipt(const PASSTHRU_MSG_INTERNAL& msg);
-	virtual void processMessage(const PASSTHRU_MSG_INTERNAL& msg);
-
-	virtual void sendConsecutiveFrame(std::shared_ptr<FrameSet> frame, std::shared_ptr<J2534MessageFilter> filter);
+	virtual void processMessageReceipt(const J2534Frame& msg);
+	virtual void processMessage(const J2534Frame& msg);
 
 	virtual unsigned long getMinMsgLen() {
 		return 1;
@@ -66,6 +68,20 @@ public:
 
 	virtual unsigned long getMaxMsgLen() {
 		return 4128;
+	}
+
+	void schedultMsgTx(std::shared_ptr<MessageTx> msgout);
+
+	std::shared_ptr<PandaJ2534Device> getPandaDev() {
+		if (auto panda_dev_sp = this->panda_dev.lock())
+			return panda_dev_sp;
+		return nullptr;
+	}
+
+	void addMsgToRxQueue(const J2534Frame& frame) {
+		synchronized(message_access_lock) {
+			messages.push(frame);
+		}
 	}
 
 	bool loopback = FALSE;
@@ -78,9 +94,13 @@ protected:
 
 	std::weak_ptr<PandaJ2534Device> panda_dev;
 
-	std::queue<PASSTHRU_MSG_INTERNAL> messages;
+	std::queue<J2534Frame> messages;
 
 	std::array<std::shared_ptr<J2534MessageFilter>, 10> filters;
+	std::queue<std::shared_ptr<MessageTx>> txbuff;
 
 	Mutex message_access_lock;
+
+private:
+	Mutex staged_writes_lock;
 };

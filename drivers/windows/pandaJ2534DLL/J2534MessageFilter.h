@@ -1,6 +1,7 @@
 #pragma once
 #include "J2534_v0404.h"
 #include "J2534Connection.h"
+#include "J2534Frame.h"
 
 typedef enum {
 	FILTER_RESULT_BLOCK,
@@ -25,7 +26,7 @@ public:
 
 	bool J2534MessageFilter::operator ==(const J2534MessageFilter &b) const;
 
-	FILTER_RESULT check(const PASSTHRU_MSG_INTERNAL& msg);
+	FILTER_RESULT check(const J2534Frame& msg);
 	std::string get_flowctrl();
 
 	unsigned long flags;

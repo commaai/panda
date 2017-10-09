@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "J2534MessageFilter.h"
+#include "J2534Frame.h"
 
 J2534MessageFilter::J2534MessageFilter(
 	J2534Connection *const conn,
@@ -73,7 +74,7 @@ bool J2534MessageFilter::operator ==(const J2534MessageFilter &b) const {
 	return TRUE;
 }
 
-FILTER_RESULT J2534MessageFilter::check(const PASSTHRU_MSG_INTERNAL& msg) {
+FILTER_RESULT J2534MessageFilter::check(const J2534Frame& msg) {
 	bool matches = TRUE;
 	if (msg.Data.size() < this->maskMsg.size()) {
 		matches = FALSE;
