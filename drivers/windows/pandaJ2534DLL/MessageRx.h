@@ -3,11 +3,15 @@
 class MessageRx
 {
 public:
-	MessageRx(unsigned long rxFlags) : msg(""), expected_size(0), flags(rxFlags) {
-		//expected_size = final_size & 0xFFF;
-		//msg.reserve(expected_size);
-		//msg = piece;
-		//next_part = 1;
+	MessageRx(
+		unsigned long size,
+		std::string piece,
+		unsigned long rxFlags,
+		std::shared_ptr<J2534MessageFilter> filter
+	) : expected_size(size & 0xFFF), flags(rxFlags) {
+		msg.reserve(expected_size);
+		msg = piece;
+		next_part = 1;
 	};
 
 	bool rx_add_frame(uint8_t pci_byte, unsigned int max_packet_size, const std::string piece) {

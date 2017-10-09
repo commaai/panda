@@ -112,7 +112,7 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 		}
 	case FRAME_FIRST:
 		{
-			/*if (msg.Data.size() < 12) {
+			if (msg.Data.size() < 12) {
 				//A frame was received that could have held more data.
 				//No examples of this protocol show that happening, so
 				//it will be assumed that it is grounds to reset rx.
@@ -129,9 +129,12 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 				this->messages.push(outframe);
 			}
 
-			this->rxConversations[fid] = FrameSet::init_rx_first_frame(((msg.Data[addrlen] & 0x0F) << 8) | msg.Data[addrlen + 1],
-				msg.Data.substr(addrlen + 2, 12 - (addrlen + 2)), msg.RxStatus);
+			this->rxConversations[fid] = std::make_shared<MessageRx>(
+				((msg.Data[addrlen] & 0x0F) << 8) | msg.Data[addrlen + 1],
+				msg.Data.substr(addrlen + 2, 12 - (addrlen + 2)),
+				msg.RxStatus, filter);
 
+			//TODO maybe the flow control should also be scheduled in the TX list.
 			//Doing it this way because the filter can be 5 bytes in ext address mode.
 			std::string flowfilter = filter->get_flowctrl();
 			uint32_t flow_addr = (((uint8_t)flowfilter[0]) << 24) | ((uint8_t)(flowfilter[1]) << 16) | ((uint8_t)(flowfilter[2]) << 8) | ((uint8_t)flowfilter[3]);
@@ -143,7 +146,7 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 
 			if (auto panda_dev_sp = this->panda_dev.lock()) {
 				panda_dev_sp->panda->can_send(flow_addr, val_is_29bit(msg.RxStatus), (const uint8_t *)flowstrlresp.c_str(), (uint8_t)flowstrlresp.size(), panda::PANDA_CAN1);
-			}*/
+			}
 			break;
 		}
 	case FRAME_CONSEC:

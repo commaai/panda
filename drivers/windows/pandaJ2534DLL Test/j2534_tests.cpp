@@ -444,8 +444,8 @@ namespace pandaJ2534DLLTest
 			j2534_recv_loop(chanid, 0);//Check a full message is not accepted.
 		}
 
-		//Check tx and rx FAIL with a MISMATCHED filter. 29 bit. Mismatch Filter. NoPadding. STD address. Single Frame.
-		TEST_METHOD(J2534_ISO15765_FailTxRx_29b_MismatchFilter_NoPad_STD_SF)
+		//Check tx PASSES and rx FAIL with a MISMATCHED filter. 29 bit. Mismatch Filter. NoPadding. STD address. Single Frame.
+		TEST_METHOD(J2534_ISO15765_PassTxFailRx_29b_MismatchFilter_NoPad_STD_SF)
 		{
 			unsigned long chanid;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
@@ -454,11 +454,13 @@ namespace pandaJ2534DLLTest
 			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
-			//TX
-			Assert::AreEqual<long>(ERR_NO_FLOW_CONTROL, J2534_send_msg(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 6, 0, "\x18\xda\xe0\xf1\x01\x00"),
-				_T("mismatched address should fail to tx."), LINE_INFO());
-			j2534_recv_loop(chanid, 0);
-			panda_recv_loop(p, 0);
+			//TX: works because all single frame writes should work (with or without a flow contorl filter)
+			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 6, 0, "\x18\xda\xe0\xf1""\x11\x22", LINE_INFO());
+			auto j2534_msg_recv = j2534_recv_loop(chanid, 1);
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xe0\xf1", LINE_INFO());
+
+			auto panda_msg_recv = panda_recv_loop(p, 1);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAE0F1, TRUE, FALSE, "\x02""\x11\x22", LINE_INFO());
 
 			//RX. Send ISO15765 single frame to device. Address still doesn't match filter, so should not be received.
 			checked_panda_send(p, 0x18DAF1E0, TRUE, "\x06\x41\x00\xff\xff\xff\xfe", 7, 0, LINE_INFO());
