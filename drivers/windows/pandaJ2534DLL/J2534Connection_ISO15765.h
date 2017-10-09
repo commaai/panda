@@ -2,7 +2,10 @@
 #include <string>
 #include "J2534Connection.h"
 #include "J2534Connection_CAN.h"
-#include "FrameSet.h"
+#include "MessageTx_ISO15765.h"
+#include "MessageRx.h"
+
+class MessageTx_ISO15765;
 
 typedef struct {
 	std::string dispatched_msg;
@@ -24,11 +27,10 @@ public:
 
 	int get_matching_out_fc_filter_id(const std::string & msgdata, unsigned long flags, unsigned long flagmask);
 
-	int get_matching_in_fc_filter_id(const PASSTHRU_MSG_INTERNAL & msg, unsigned long flagmask = CAN_29BIT_ID);
+	int get_matching_in_fc_filter_id(const J2534Frame& msg, unsigned long flagmask = CAN_29BIT_ID);
 
-	virtual void processMessageReceipt(const PASSTHRU_MSG_INTERNAL& msg);
-	virtual void processMessage(const PASSTHRU_MSG_INTERNAL& msg);
-	void sendConsecutiveFrame(std::shared_ptr<FrameSet> frame, std::shared_ptr<J2534MessageFilter> filter);
+	virtual void processMessageReceipt(const J2534Frame& msg);
+	virtual void processMessage(const J2534Frame& msg);
 
 	virtual unsigned long getMinMsgLen() {
 		return 4;
@@ -47,7 +49,6 @@ public:
 	}
 
 private:
-	Mutex staged_writes_lock;
 	std::array<PRESTAGED_WRITE, 10> staged_writes;
-	std::array<std::shared_ptr<FrameSet>, 10> conversations;
+	std::array<std::shared_ptr<MessageRx>, 10> rxConversations;
 };
