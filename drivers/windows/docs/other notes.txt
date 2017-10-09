@@ -191,6 +191,41 @@ DLL using the Win32 Registry mechanism described in this section.
 
 
 
+A.1 Flow Control Overview
+ISO 15765-2 was designed to send blocks of up to 4095 bytes on top of the limited 8-byte payload of raw
+CAN frames. If the data is small enough, it can fit in a single frame and be transmitted like a raw CAN
+message with additional headers. Otherwise, the block is broken up into segments and becomes a
+segmented transmission, generating CAN frames in both directions. For flexibility, the receiver of the
+segments can control the rate at which the segments are sent.
+
+Each transmission is actually part of a conversation between two nodes. There is no discovery
+mechanism for conversation partners. Therefore, each desired conversation must be pre-defined on each
+side before the conversation can start. Conversations are symmetric, meaning that either side can send a
+block of data to the other. A conversation can only have one transfer (in one direction) in progress at a
+time. One transfer must complete before the next transfer (in the same or in a different direction) can
+start. The device must support multiple transfers at once, as long as each one is part of a different
+conversation. Raw CAN frames are not allowed when using ISO15765-2.
+
+A key feature of a conversation is that each side has a unique CAN ID, and each side uses their unique
+CAN ID for all transmissions during the conversation. No other CAN IDs are part of the conversation.
+Even though the useful data is only flowing in one direction, both sides are transmitting. One side is
+sending the flow control message to pace the segments of data coming from the other side.
+
+For example, during OBD communication, a pass-thru device and an ECU might have a conversation.
+The pass-thru device will use the "Tester1" physical CAN ID ($241), and the first ECU will use the
+"ECU1" physical CAN ID ($641). During a multi-segment transfer, both sides will be transmitting using
+only their respective IDs. It does not matter if the data is being sent by the ECU or by the Tester, the IDs
+remain the same.
+
+It is important to understand the difference between OBD Requests/Responses and ISO 15765-2
+transfers. The OBD Request is transmitted from the Tester to the ECU using functional addressing.
+Because segmented transfer is not possible on functional addresses, the message must fit in a single
+frame. The OBD Response is a message from the ECU to the Tester using physical addressing. Unlike
+other protocols, the responses are not sequential. In fact, the responses can overlap, as if each ECU
+were having a private conversation with the Tester.  Some of the responses may fit in a single frame,
+while others will require a segmented transfer from the ECU to the tester.
+
+
 A.2 Transmitting a Segmented Message
 When PassThruWrite is called, the API will search the list of flow control filters, looking for a
 pFlowControlMsg that matches the CAN ID (and possible extended address) of the message being sent.
