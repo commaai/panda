@@ -123,11 +123,12 @@ namespace pandaJ2534DLLTest
 			UnloadJ2534Dll();
 		}
 
-		TEST_METHOD(J2534_CAN_Tx)
+		TEST_METHOD(J2534_CAN11b_Tx)
 		{
 			unsigned long chanid;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
 			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
 
 			auto p = getPanda(500);
 
@@ -135,6 +136,8 @@ namespace pandaJ2534DLLTest
 
 			std::vector<panda::PANDA_CAN_MSG> msg_recv = panda_recv_loop(p, 1);
 			check_panda_can_msg(msg_recv[0], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+
+			j2534_recv_loop(chanid, 0, 50); // Check no message is returned (since loopback is off)
 		}
 
 		TEST_METHOD(J2534_CAN29b_Tx)
@@ -142,6 +145,7 @@ namespace pandaJ2534DLLTest
 			unsigned long chanid;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
 			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
 
 			auto p = getPanda(500);
 
@@ -157,6 +161,7 @@ namespace pandaJ2534DLLTest
 			unsigned long chanid;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
 			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, CAN_ID_BOTH, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
 
 			auto p = getPanda(500);
 
@@ -190,7 +195,6 @@ namespace pandaJ2534DLLTest
 			J2534_send_msg_checked(chanid, CAN, 0, 0, 0, 7, 7, "\x0\x0\x3\xAB""SUP", LINE_INFO());
 
 			msg_recv = panda_recv_loop(p, 1);
-
 			check_panda_can_msg(msg_recv[0], 0, 0x3AB, FALSE, FALSE, "SUP", LINE_INFO());
 
 			j2534_msg_recv = j2534_recv_loop(chanid, 1);
@@ -202,6 +206,7 @@ namespace pandaJ2534DLLTest
 			unsigned long chanid, filterid0;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
 			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
 
 			PASSTHRU_MSG filter = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
 			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStartMsgFilter(chanid, PASS_FILTER, &filter, &filter, 0, &filterid0), _T("Failed to create filter."), LINE_INFO());
@@ -221,6 +226,7 @@ namespace pandaJ2534DLLTest
 			unsigned long chanid, filterid0;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
 			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
 
 			PASSTHRU_MSG filter_mask = { CAN, 0, 0, 0, 4, 4, "\xFF\xFF\xFF\xFF" };
 			PASSTHRU_MSG filter = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x02\xAC" };
@@ -240,6 +246,7 @@ namespace pandaJ2534DLLTest
 			unsigned long chanid, filterid0, filterid1;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
 			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
 
 			PASSTHRU_MSG filter_mask0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
 			PASSTHRU_MSG filter0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
@@ -266,6 +273,7 @@ namespace pandaJ2534DLLTest
 			unsigned long chanid, filterid0, filterid1;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
 			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
 
 			PASSTHRU_MSG filter_mask0 = { CAN, 0, 0, 0, 4, 4, "\xFF\xFF\xFF\xFF" };
 			PASSTHRU_MSG filter0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x02\xAC" };
@@ -292,6 +300,7 @@ namespace pandaJ2534DLLTest
 			unsigned long chanid, filterid0, filterid1;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
 			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
 
 			PASSTHRU_MSG filter_mask0 = { CAN, 0, 0, 0, 4, 4, "\xFF\xFF\xFF\xFF" };
 			PASSTHRU_MSG filter0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x02\xAC" };
@@ -321,6 +330,7 @@ namespace pandaJ2534DLLTest
 			unsigned long chanid, filterid0;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
 			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
 
 			PASSTHRU_MSG filter_mask0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
 			PASSTHRU_MSG filter0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
@@ -342,6 +352,7 @@ namespace pandaJ2534DLLTest
 			unsigned long chanid;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
 			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 250000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
 
 			auto p = getPanda(250);
 
@@ -389,8 +400,8 @@ namespace pandaJ2534DLLTest
 
 		///////////////////// Tests checking things don't send/receive /////////////////////
 
-		//Check tx and rx FAIL WITHOUT a filter. 29 bit. Mismatch Filter. NoPadding. STD address. Single Frame.
-		TEST_METHOD(J2534_ISO15765_FailTxRx_29b_NoFilter_NoPad_STD_SF)
+		//Check tx PASSES and rx FAIL WITHOUT a filter. 29 bit. NO Filter. NoPadding. STD address. Single Frame.
+		TEST_METHOD(J2534_ISO15765_PassTxFailRx_29b_NoFilter_NoPad_STD_SF)
 		{
 			unsigned long chanid;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
@@ -398,18 +409,20 @@ namespace pandaJ2534DLLTest
 			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
-			//TX
-			Assert::AreEqual<long>(ERR_NO_FLOW_CONTROL, J2534_send_msg(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 6, 0, "\x18\xda\xef\xf1\x01\x00"),
-				_T("Should fail to tx without a filter."), LINE_INFO());
-			j2534_recv_loop(chanid, 0);
-			panda_recv_loop(p, 0);
+			//TX: works because all single frame writes should work (with or without a flow contorl filter)
+			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 11, 0, "\x18\xda\xef\xf1""TX_TEST", LINE_INFO());
+			auto j2534_msg_recv = j2534_recv_loop(chanid, 1);
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
 
-			//RX
+			auto panda_msg_recv = panda_recv_loop(p, 1);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x07""TX_TEST", LINE_INFO());
+
+			//RX: Reads require a flow control filter, and should fail without one.
 			checked_panda_send(p, 0x18DAF1EF, TRUE, "\x06\x41\x00\xff\xff\xff\xfe", 7, 0, LINE_INFO());
 			j2534_recv_loop(chanid, 0);
 		}
 
-		//Check tx and rx FAIL WITHOUT a filter. 29 bit. Mismatch Filter. NoPadding. STD address. First Frame.
+		//Check tx and rx FAIL WITHOUT a filter. 29 bit. NO Filter. NoPadding. STD address. First Frame.
 		TEST_METHOD(J2534_ISO15765_FailTxRx_29b_NoFilter_NoPad_STD_FF)
 		{
 			unsigned long chanid;
@@ -424,10 +437,8 @@ namespace pandaJ2534DLLTest
 			j2534_recv_loop(chanid, 0);
 			panda_recv_loop(p, 0);
 
-			//RX
+			//RX; Send full response and check didn't receive flow control from J2534 device
 			checked_panda_send(p, 0x18DAF1EF, TRUE, "\x10\x14\x49\x02\x01""1D4", 8, 0, LINE_INFO());
-			panda_recv_loop(p, 0); //Check didn't receive flow control from J2534 device
-
 			checked_panda_send(p, 0x18DAF1EF, TRUE, "\x21""GP00R55", 8, 0, LINE_INFO());
 			checked_panda_send(p, 0x18DAF1EF, TRUE, "\x22""B123456", 8, 0, LINE_INFO());
 			j2534_recv_loop(chanid, 0);//Check a full message is not accepted.
@@ -470,10 +481,8 @@ namespace pandaJ2534DLLTest
 			j2534_recv_loop(chanid, 0);
 			panda_recv_loop(p, 0);
 
-			//RX
+			//RX; Send a full response and check didn't receive flow control from J2534 device
 			checked_panda_send(p, 0x18DAF1E0, TRUE, "\x10\x14\x49\x02\x01""1D4", 8, 0, LINE_INFO());
-			panda_recv_loop(p, 0); //Check didn't receive flow control from J2534 device
-
 			checked_panda_send(p, 0x18DAF1E0, TRUE, "\x21""GP00R55", 8, 0, LINE_INFO());
 			checked_panda_send(p, 0x18DAF1E0, TRUE, "\x22""B123456", 8, 0, LINE_INFO());
 			j2534_recv_loop(chanid, 0);//Check a full message is not accepted.
@@ -530,7 +539,26 @@ namespace pandaJ2534DLLTest
 
 			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 11, 0, "\x18\xda\xef\xf1""TX_TEST", LINE_INFO());
 			auto j2534_msg_recv = j2534_recv_loop(chanid, 1);
-			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
+
+			auto panda_msg_recv = panda_recv_loop(p, 1);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x07""TX_TEST", LINE_INFO());
+		}
+
+		//Check tx passes with filter. 29 bit. Good Filter. NoPadding. STD address. Single Frame. Loopback.
+		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_SF_LOOPBACK)
+		{
+			unsigned long chanid;
+			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO());
+			auto p = getPanda(500);
+
+			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 11, 0, "\x18\xda\xef\xf1""TX_TEST", LINE_INFO());
+			auto j2534_msg_recv = j2534_recv_loop(chanid, 2);
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[1], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 11, 0, "\x18\xda\xef\xf1""TX_TEST", LINE_INFO());
 
 			auto panda_msg_recv = panda_recv_loop(p, 1);
 			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x07""TX_TEST", LINE_INFO());
@@ -574,15 +602,16 @@ namespace pandaJ2534DLLTest
 			auto p = getPanda(500);
 
 			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 14, 0, "\x18\xda\xef\xf1""\xAA\xBB\xCC\xDD\xEE\xFF\x11\x22\x33\x44", LINE_INFO());
-			auto j2534_msg_recv = j2534_recv_loop(chanid, 1);
-			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
+			auto j2534_msg_recv = j2534_recv_loop(chanid, 0); // No TxDone msg until after the final tx frame is sent
 
 			auto panda_msg_recv = panda_recv_loop(p, 1);
 			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x10\x0A""\xAA\xBB\xCC\xDD\xEE\xFF", LINE_INFO());
 
-			checked_panda_send(p, 0x18DAF1EF, TRUE, "\x30\x0\x0", 3, 0, LINE_INFO());
-			panda_msg_recv = panda_recv_loop(p, 1);
+			panda_msg_recv = checked_panda_send(p, 0x18DAF1EF, TRUE, "\x30\x0\x0", 3, 1, LINE_INFO());
 			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x21""\x11\x22\x33\x44", LINE_INFO());
+
+			j2534_msg_recv = j2534_recv_loop(chanid, 1);
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
 		}
 
 		//Check rx passes with filter. 11 bit. Good Filter. NoPadding. STD address. Single Frame.
@@ -613,7 +642,7 @@ namespace pandaJ2534DLLTest
 
 			J2534_send_msg_checked(chanid, ISO15765, 0, 0, 0, 11, 0, "\x0\x0\x1\xcd""TX_TEST", LINE_INFO());
 			auto j2534_msg_recv = j2534_recv_loop(chanid, 1);
-			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, TX_MSG_TYPE | TX_INDICATION, 0, 4, 0, "\x0\x0\x1\xcd", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, TX_INDICATION, 0, 4, 0, "\x0\x0\x1\xcd", LINE_INFO());
 
 			auto panda_msg_recv = panda_recv_loop(p, 1);
 			check_panda_can_msg(panda_msg_recv[0], 0, 0x1CD, FALSE, FALSE, "\x07""TX_TEST", LINE_INFO());
@@ -735,7 +764,7 @@ namespace pandaJ2534DLLTest
 			//Send a NEW single frame message and check the J2534 device gets it (but not the original message it was receiving.
 			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 11, 0, "\x18\xda\xef\xf1""TX_TEST", LINE_INFO());
 			j2534_msg_recv = j2534_recv_loop(chanid, 1);
-			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
 
 			panda_msg_recv = panda_recv_loop(p, 1);
 			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x07""TX_TEST", LINE_INFO());
@@ -854,7 +883,7 @@ namespace pandaJ2534DLLTest
 			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
-			auto panda_msg_recv = checked_panda_send(p, 0x18DAF1EF, TRUE, "\x13""\x06""ABC123", 8, 0, LINE_INFO());
+			checked_panda_send(p, 0x18DAF1EF, TRUE, "\x13""\x06""ABC123", 8, 0, LINE_INFO());
 
 			auto j2534_msg_recv = j2534_recv_loop(chanid, 1);
 			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | ISO15765_ADDR_TYPE, 0, 11, 11, "\x18\xda\xf1\xef\x13""ABC123", LINE_INFO());
@@ -872,7 +901,7 @@ namespace pandaJ2534DLLTest
 
 			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID | ISO15765_ADDR_TYPE, 0, 11, 0, "\x18\xda\xef\xf1\x13""DERP!!", LINE_INFO());
 			auto j2534_msg_recv = j2534_recv_loop(chanid, 1);
-			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE | TX_INDICATION | ISO15765_ADDR_TYPE, 0, 5, 0, "\x18\xda\xef\xf1\x13", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION | ISO15765_ADDR_TYPE, 0, 5, 0, "\x18\xda\xef\xf1\x13", LINE_INFO());
 
 			auto panda_msg_recv = panda_recv_loop(p, 1);
 			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x13""\x06""DERP!!", LINE_INFO());
