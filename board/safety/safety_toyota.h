@@ -32,7 +32,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // ACCEL: safety check on byte 1-2
-  if (((to_send->RIR>>21) == 0x343) && (((to_send->RDTR >> 4) & 0xf) == 0)) {
+  if (((to_send->RIR>>21) == 0x343) && (((to_send->RDTR >> 4) & 0xF) == 0)) {
     int16_t desired_accel = ((to_send->RDLR & 0xFF) << 8) | ((to_send->RDLR >> 8) & 0xFF);
     if (controls_allowed && actuation_limits) {
       if ((desired_accel > MAX_ACCEL) || (desired_accel < MIN_ACCEL)) {
@@ -44,7 +44,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // STEER: safety check on bytes 2-3
-  if (((to_send->RIR>>21) == 0x2E4) && (((to_send->RDTR >> 4) & 0xf) == 0)) {
+  if (((to_send->RIR>>21) == 0x2E4) && (((to_send->RDTR >> 4) & 0xF) == 0)) {
     int16_t desired_torque = (to_send->RDLR & 0xFF00) | ((to_send->RDLR >> 16) & 0xFF);
 
     // consider absolute value
