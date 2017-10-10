@@ -112,19 +112,21 @@ DWORD PandaJ2534Device::can_recv_thread() {
 											this->ConnTxSet.erase(conn);
 										} else {
 											//Add the next scheduled tx from this conn
-											auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(conn->txbuff.back());
+											auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(conn->txbuff.front());
 											this->insertMultiPartTxInQueue(std::move(fcwrite));
-											SetEvent(flow_control_wakeup_event);
+											SetEvent(this->flow_control_wakeup_event);
 										}
 
 									} else {
 										if (msgtx->txReady()) { //Not finished, ready to send next frame.
 											tx_schedule->refreshExpiration();
-											insertMultiPartTxInQueue(std::move(tx_schedule));
+											this->insertMultiPartTxInQueue(std::move(tx_schedule));
+											SetEvent(this->flow_control_wakeup_event);
 										} else {
 											//Not finished, but next frame not ready (maybe waiting for flow control).
 											//Do not schedule more messages from this connection.
-											this->ConnTxSet.erase(conn);
+											//this->ConnTxSet.erase(conn);
+											//Removing this means new messages queued can kickstart the queue and overstep the current message.
 										}
 									}
 								}
@@ -203,7 +205,18 @@ void PandaJ2534Device::registerConnectionTx(std::shared_ptr<J2534Connection> con
 		auto ret = this->ConnTxSet.insert(conn);
 		if (ret.second == FALSE) return; //Conn already exists.
 
-		auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(conn->txbuff.back());
+		auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(conn->txbuff.front());
+		this->insertMultiPartTxInQueue(std::move(fcwrite));
+	}
+	SetEvent(flow_control_wakeup_event);
+}
+
+void PandaJ2534Device::unstallConnectionTx(std::shared_ptr<J2534Connection> conn) {
+	synchronized(ConnTxMutex) {
+		auto ret = this->ConnTxSet.insert(conn);
+		if (ret.second == TRUE) return; //Conn already exists.
+
+		auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(conn->txbuff.front());
 		this->insertMultiPartTxInQueue(std::move(fcwrite));
 	}
 	SetEvent(flow_control_wakeup_event);

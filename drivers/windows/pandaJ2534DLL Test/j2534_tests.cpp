@@ -673,6 +673,37 @@ namespace pandaJ2534DLLTest
 			check_panda_can_msg(panda_msg_recv[1], 0, 0x18DAEFF1, TRUE, FALSE, "\x05""HELLO", LINE_INFO());
 		}
 
+		//Check tx passes with filter multiple times. 29 bit. Good Filter. NoPadding. STD address. Multiple Single Frames.
+		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_MultipleMFSF)
+		{
+			unsigned long chanid;
+			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO());
+			auto p = getPanda(500);
+
+			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 4 + 23, 0, "\x18\xda\xef\xf1""Long data because I can", LINE_INFO());
+			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 9, 0, "\x18\xda\xef\xf1""HELLO", LINE_INFO());
+
+			auto panda_msg_recv = panda_recv_loop(p, 1);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x10\x17""Long d", LINE_INFO());
+
+			panda_msg_recv = checked_panda_send(p, 0x18DAF1EF, TRUE, "\x30\x00\x00", 3, 4, LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x21""ata bec", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[1], 0, 0x18DAEFF1, TRUE, FALSE, "\x22""ause I ", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[2], 0, 0x18DAEFF1, TRUE, FALSE, "\x23""can", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[3], 0, 0x18DAEFF1, TRUE, FALSE, "\x05""HELLO", LINE_INFO());
+
+			auto j2534_msg_recv = j2534_recv_loop(chanid, 4);
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[1], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 23, 0, "\x18\xda\xef\xf1""Long data because I can", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[2], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[3], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 5, 0, "\x18\xda\xef\xf1""HELLO", LINE_INFO());
+
+			//panda_msg_recv = panda_recv_loop(p, 1);
+		}
+
 
 		///////////////////// Tests checking things break or recover during send/receive /////////////////////
 

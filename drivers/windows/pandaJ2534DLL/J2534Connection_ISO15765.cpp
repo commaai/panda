@@ -68,7 +68,7 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 			uint8_t block_size = msg.Data[addrlen + 1];
 			uint8_t st_min = msg.Data[addrlen + 2];
 
-			auto txConvo = std::static_pointer_cast<MessageTx_ISO15765>(this->txbuff.back());
+			auto txConvo = std::static_pointer_cast<MessageTx_ISO15765>(this->txbuff.front());
 			switch (flow_status) {
 			case FLOWCTRL_CONTINUE: {
 				if (st_min > 0xF9) break;

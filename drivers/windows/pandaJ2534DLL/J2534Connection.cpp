@@ -119,7 +119,7 @@ void J2534Connection::schedultMsgTx(std::shared_ptr<MessageTx> msgout) {
 void J2534Connection::rescheduleExistingTxMsgs() {
 	if (auto panda_ps = this->panda_dev.lock()) {
 		synchronized(staged_writes_lock) {
-			panda_ps->registerConnectionTx(shared_from_this());
+			panda_ps->unstallConnectionTx(shared_from_this());
 		}
 	}
 }

@@ -41,6 +41,8 @@ public:
 
 	void registerConnectionTx(std::shared_ptr<J2534Connection> conn);
 
+	void unstallConnectionTx(std::shared_ptr<J2534Connection> conn);
+
 private:
 	HANDLE thread_kill_event;
 

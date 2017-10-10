@@ -19,7 +19,7 @@ std::vector<panda::PANDA_CAN_MSG> panda_recv_loop(std::unique_ptr<panda::Panda>&
 	Timer t = Timer();
 
 	while (t.getTimePassed() < timeout_ms) {
-		Sleep(100);
+		Sleep(10);
 		std::vector<panda::PANDA_CAN_MSG>msg_recv = p->can_recv();
 		if (msg_recv.size() > 0) {
 			ret_messages.insert(std::end(ret_messages), std::begin(msg_recv), std::end(msg_recv));
