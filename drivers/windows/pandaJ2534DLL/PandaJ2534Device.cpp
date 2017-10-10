@@ -114,6 +114,7 @@ DWORD PandaJ2534Device::can_recv_thread() {
 											//Add the next scheduled tx from this conn
 											auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(conn->txbuff.back());
 											this->insertMultiPartTxInQueue(std::move(fcwrite));
+											SetEvent(flow_control_wakeup_event);
 										}
 
 									} else {
