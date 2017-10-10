@@ -1,6 +1,5 @@
 #pragma once
 #include "MessageTx.h"
-#include "MessageTx_ISO15765.h"
 #include "J2534Connection_ISO15765.h"
 
 class J2534Connection_ISO15765;

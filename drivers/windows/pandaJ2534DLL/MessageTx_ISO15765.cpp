@@ -56,8 +56,6 @@ BOOL MessageTx_ISO15765::sendNextFrame() {
 	if (block_size == 0 && !sendAll && this->frames_sent > 0)return FALSE;
 	if (block_size > 0 && !sendAll) block_size--;
 
-	txInFlight = TRUE;
-
 	if (auto conn_sp = this->connection.lock()) {
 		if (auto panda_dev_sp = conn_sp->getPandaDev()) {
 			auto& outFramePayload = this->framePayloads[this->frames_sent];
@@ -65,11 +63,13 @@ BOOL MessageTx_ISO15765::sendNextFrame() {
 				(const uint8_t*)outFramePayload.c_str(), (uint8_t)outFramePayload.size(), panda::PANDA_CAN1) == FALSE) {
 				return FALSE;
 			}
+
+			this->txInFlight = TRUE;
+			this->frames_sent++;
+			return TRUE;
 		}
 	}
-
-	this->frames_sent++;
-	return TRUE;
+	return FALSE;
 }
 
 //Returns TRUE if receipt is consumed by the msg, FALSE otherwise.
@@ -77,7 +77,8 @@ BOOL MessageTx_ISO15765::checkTxReceipt(J2534Frame frame) {
 	if (!txInFlight) return FALSE;
 	if (frame.Data.size() >= addressLength() + 1 && (frame.Data[addressLength()] & 0xF0) == FRAME_FLOWCTRL) return FALSE;
 
-	if (frame.Data == fullmsg.Data.substr(0, 4) + framePayloads[frames_sent - 1]) { //Check receipt is expected
+	if (frame.Data == fullmsg.Data.substr(0, 4) + framePayloads[frames_sent - 1] &&
+		((this->fullmsg.TxFlags & CAN_29BIT_ID) == (frame.RxStatus & CAN_29BIT_ID))) { //Check receipt is expected
 		txInFlight = FALSE; //Received the expected receipt. Allow another msg to be sent.
 
 		if (frames_sent == framePayloads.size()) { //Check message done
