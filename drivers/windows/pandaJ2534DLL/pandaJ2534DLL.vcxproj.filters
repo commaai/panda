@@ -90,6 +90,9 @@
     <ClInclude Include="constants_ISO15765.h">
       <Filter>Header Files\J2534_ISO15765</Filter>
     </ClInclude>
+    <ClInclude Include="MessageTx_CAN.h">
+      <Filter>Header Files\J2534_CAN</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pandaJ2534DLL.cpp">

@@ -98,6 +98,7 @@
     <ClInclude Include="J2534MessageFilter.h" />
     <ClInclude Include="J2534_v0404.h" />
     <ClInclude Include="MessageTx.h" />
+    <ClInclude Include="MessageTx_CAN.h" />
     <ClInclude Include="MessageTx_ISO15765.h" />
     <ClInclude Include="PandaJ2534Device.h" />
     <ClInclude Include="resource.h" />

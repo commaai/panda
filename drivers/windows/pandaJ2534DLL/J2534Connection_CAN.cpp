@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "J2534Connection_CAN.h"
+#include "MessageTx_CAN.h"
 #include "Timer.h"
 
 J2534Connection_CAN::J2534Connection_CAN(
@@ -30,13 +31,8 @@ long J2534Connection_CAN::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *p
 			return ERR_INVALID_MSG;
 		}
 
-		uint32_t addr = msg->Data[0] << 24 | msg->Data[1] << 16 | msg->Data[2] << 8 | msg->Data[3];
-		if (auto panda_dev_sp = this->panda_dev.lock()) {
-			if (panda_dev_sp->panda->can_send(addr, val_is_29bit(msg->TxFlags), &msg->Data[4], msg->DataSize - 4, panda::PANDA_CAN1) == FALSE) {
-				*pNumMsgs = msgnum;
-				return ERR_INVALID_MSG;
-			}
-		}
+		auto msgtx = std::make_shared<MessageTx_CAN>(shared_from_this(), *msg);
+		this->schedultMsgTx(std::dynamic_pointer_cast<MessageTx>(msgtx));
 	}
 	return STATUS_NOERROR;
 }
