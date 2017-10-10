@@ -116,6 +116,14 @@ void J2534Connection::schedultMsgTx(std::shared_ptr<MessageTx> msgout) {
 	}
 }
 
+void J2534Connection::rescheduleExistingTxMsgs() {
+	if (auto panda_ps = this->panda_dev.lock()) {
+		synchronized(staged_writes_lock) {
+			panda_ps->registerConnectionTx(shared_from_this());
+		}
+	}
+}
+
 void J2534Connection::processMessageReceipt(const J2534Frame& msg) {
 	//TX_MSG_TYPE should be set in RxStatus
 	if (!check_bmask(msg.RxStatus, TX_MSG_TYPE)) return;

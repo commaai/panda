@@ -12,7 +12,7 @@ typedef struct {
 	std::string remaining_payload;
 } PRESTAGED_WRITE;
 
-class J2534Connection_ISO15765 : public J2534Connection { //J2534Connection_CAN {
+class J2534Connection_ISO15765 : public J2534Connection {
 public:
 	J2534Connection_ISO15765(
 		std::shared_ptr<PandaJ2534Device> panda_dev,
@@ -49,6 +49,5 @@ public:
 	}
 
 private:
-	std::array<PRESTAGED_WRITE, 10> staged_writes;
 	std::array<std::shared_ptr<MessageRx>, 10> rxConversations;
 };

@@ -7,7 +7,7 @@ SCHEDULED_TX_MSG::SCHEDULED_TX_MSG(std::shared_ptr<MessageTx> msgtx) : msgtx(msg
 }
 
 void SCHEDULED_TX_MSG::refreshExpiration() {
-	//expire += separation_time;
+	expire += this->msgtx->separation_time;
 }
 
 
@@ -90,21 +90,52 @@ DWORD PandaJ2534Device::can_recv_thread() {
 			if (msg_in.is_receipt) {
 				synchronized(active_flow_control_txs_lock) {
 					if (txMsgsAwaitingEcho.size() > 0) {
-						auto& msgtx = txMsgsAwaitingEcho.front()->msgtx;
+						auto msgtx = txMsgsAwaitingEcho.front()->msgtx;
 						if (auto conn = msgtx->connection.lock()) {
 							if (conn->isProtoCan() && conn->getPort() == msg_in.bus) {
 								if (msgtx->checkTxReceipt(msg_out)) {
-									conn->processMessageReceipt(msg_out);
-									txMsgsAwaitingEcho.pop(); //nextWaitingMsg no longer valid
+									//Things to check:
+									//    Frame not for this msg: Drop frame and alert. Error?
+									//    Frame is for this msg, more tx frames required after a FC frame: Wait for FC frame to come and trigger next tx.
+									//    Frame is for this msg, more tx frames required: Schedule next tx frame.
+									//    Frame is for this msg, and is the final frame of the msg: Let conn process full msg, If another msg from this conn is available, register it.
+									auto tx_schedule = std::move(txMsgsAwaitingEcho.front());
+									txMsgsAwaitingEcho.pop(); //Remove the TX object and schedule record.
+
+									if (msgtx->isFinished()) {
+										conn->processMessageReceipt(msg_out); //Alert the connection a tx is done.
+										conn->txbuff.pop(); //Remove the finished TX message from the connection tx queue.
+
+										//Remove the connection from the active list if it has no more scheduled TX msgs.
+										if (conn->txbuff.size() == 0) {
+											//Update records showing the connection no longer has a tx record scheduled.
+											this->ConnTxSet.erase(conn);
+										} else {
+											//Add the next scheduled tx from this conn
+											auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(conn->txbuff.back());
+											this->insertMultiPartTxInQueue(std::move(fcwrite));
+										}
+
+									} else {
+										if (msgtx->txReady()) { //Not finished, ready to send next frame.
+											tx_schedule->refreshExpiration();
+											insertMultiPartTxInQueue(std::move(tx_schedule));
+										} else {
+											//Not finished, but next frame not ready (maybe waiting for flow control).
+											//Do not schedule more messages from this connection.
+											this->ConnTxSet.erase(conn);
+										}
+									}
 								}
 							}
 						} else {
-							txMsgsAwaitingEcho.pop(); //nextWaitingMsg no longer valid
+							//Connection has died. Clear out the tx entry from device records.
+							txMsgsAwaitingEcho.pop();
+							this->ConnTxSet.erase(conn); //connection is already dead, no need to schedule future tx msgs.
 						}
 					}
 				}
 			} else {
-				// TODO: Make this more efficient
 				for (auto& conn : this->connections)
 					if (conn->isProtoCan() && conn->getPort() == msg_in.bus)
 						conn->processMessage(msg_out);
@@ -138,10 +169,10 @@ DWORD PandaJ2534Device::msg_tx_thread() {
 					goto break_flow_ctrl_loop;
 				}
 				if (std::chrono::steady_clock::now() >= this->active_flow_control_txs.front()->expire) {
-					auto fcontrol_write_real = std::move(this->active_flow_control_txs.front());
+					auto scheduled_msg = std::move(this->active_flow_control_txs.front()); //Get the scheduled tx record.
 					this->active_flow_control_txs.pop_front();
-					if (fcontrol_write_real->msgtx->sendNextFrame())
-						txMsgsAwaitingEcho.push(std::move(fcontrol_write_real));
+					if (scheduled_msg->msgtx->sendNextFrame())
+						txMsgsAwaitingEcho.push(std::move(scheduled_msg));
 				} else { //Ran out of things that need to be sent now. Sleep!
 					auto time_diff = std::chrono::duration_cast<std::chrono::milliseconds>
 						(this->active_flow_control_txs.front()->expire - std::chrono::steady_clock::now());
@@ -170,8 +201,6 @@ void PandaJ2534Device::registerConnectionTx(std::shared_ptr<J2534Connection> con
 	synchronized(ConnTxMutex) {
 		auto ret = this->ConnTxSet.insert(conn);
 		if (ret.second == FALSE) return; //Conn already exists.
-		this->ConnTxQueue.push(conn);
-		this->txInProgress = TRUE;
 
 		auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(conn->txbuff.back());
 		this->insertMultiPartTxInQueue(std::move(fcwrite));

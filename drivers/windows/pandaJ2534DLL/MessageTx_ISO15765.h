@@ -22,13 +22,19 @@ public:
 
 	virtual BOOL isFinished();
 
+	virtual BOOL txReady();
+
+	void tx_flowcontrol(uint8_t block_size, std::chrono::microseconds separation_time, BOOL sendAll = FALSE);
+
 	std::shared_ptr<J2534MessageFilter> filter;
 	unsigned long frames_sent;
 	unsigned long consumed_count;
-	//uint8_t block_size;
+	uint8_t block_size;
 	unsigned long CANid;
 	std::string data_prefix;
 	std::string payload;
 	BOOL isMultipart;
 	std::vector<std::string> framePayloads;
+	BOOL txInFlight;
+	BOOL sendAll;
 };

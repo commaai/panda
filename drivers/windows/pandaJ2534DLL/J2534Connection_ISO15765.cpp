@@ -63,30 +63,30 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 	switch (msg_get_type(msg, addrlen)) {
 	case FRAME_FLOWCTRL:
 		{
-			/*if (msg.Data.size() < addrlen + 3) return;
+			if (msg.Data.size() < addrlen + 3) return;
 			uint8_t flow_status = msg.Data[addrlen] & 0x0F;
 			uint8_t block_size = msg.Data[addrlen + 1];
 			uint8_t st_min = msg.Data[addrlen + 2];
+
+			auto txConvo = std::static_pointer_cast<MessageTx_ISO15765>(this->txbuff.back());
 			switch (flow_status) {
 			case FLOWCTRL_CONTINUE: {
 				if (st_min > 0xF9) break;
 				if (st_min >= 0xf1 && st_min <= 0xf9) {
-					this->rxConversations[fid]->tx_flowcontrol(block_size, std::chrono::microseconds((st_min & 0x0F) * 100));
+					txConvo->tx_flowcontrol(block_size, std::chrono::microseconds((st_min & 0x0F) * 100), block_size==0);
 				} else {
-					this->rxConversations[fid]->tx_flowcontrol(block_size, std::chrono::microseconds(st_min * 1000));
+					txConvo->tx_flowcontrol(block_size, std::chrono::microseconds(st_min * 1000), block_size==0);
 				}
-				if (auto panda_dev_sp = this->panda_dev.lock()) {
-					panda_dev_sp->registerMultiPartTx(this->conversations[fid]);
-				}
+				this->rescheduleExistingTxMsgs();
 				break;
 			}
 			case FLOWCTRL_WAIT:
-				this->rxConversations[fid]->tx_flowcontrol(0, std::chrono::microseconds(0));
+				txConvo->tx_flowcontrol(0, std::chrono::microseconds(0));
 				break;
 			case FLOWCTRL_ABORT:
 				this->rxConversations[fid] = nullptr;
 				break;
-			}*/
+			}
 			break;
 		}
 	case FRAME_SINGLE:

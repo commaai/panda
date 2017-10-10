@@ -72,6 +72,8 @@ public:
 
 	void schedultMsgTx(std::shared_ptr<MessageTx> msgout);
 
+	void rescheduleExistingTxMsgs();
+
 	std::shared_ptr<PandaJ2534Device> getPandaDev() {
 		if (auto panda_dev_sp = this->panda_dev.lock())
 			return panda_dev_sp;
