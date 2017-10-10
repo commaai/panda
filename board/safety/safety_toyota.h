@@ -31,45 +31,49 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
-  // ACCEL: safety check on byte 1-2
-  if ((to_send->RIR>>21) == 0x343) {
-    int16_t desired_accel = ((to_send->RDLR & 0xFF) << 8) | ((to_send->RDLR >> 8) & 0xFF);
-    if (controls_allowed && actuation_limits) {
-      if ((desired_accel > MAX_ACCEL) || (desired_accel < MIN_ACCEL)) {
+  // Check if msg is sent on BUS 0
+  if (((to_send->RDTR >> 4) & 0xF) == 0) {
+
+    // ACCEL: safety check on byte 1-2
+    if ((to_send->RIR>>21) == 0x343) {
+      int16_t desired_accel = ((to_send->RDLR & 0xFF) << 8) | ((to_send->RDLR >> 8) & 0xFF);
+      if (controls_allowed && actuation_limits) {
+        if ((desired_accel > MAX_ACCEL) || (desired_accel < MIN_ACCEL)) {
+          return 0;
+        }
+      } else if (!controls_allowed && (desired_accel != 0)) {
         return 0;
       }
-    } else if (!controls_allowed && (desired_accel != 0)) {
-      return 0;
-    }
-  }
-
-  // STEER: safety check on bytes 2-3
-  if ((to_send->RIR>>21) == 0x2E4) {
-    int16_t desired_torque = (to_send->RDLR & 0xFF00) | ((to_send->RDLR >> 16) & 0xFF);
-
-    // consider absolute value
-    if (desired_torque < 0) {
-      desired_torque *= -1;
     }
 
-    // only check if controls are allowed and actuation_limits are imposed
-    if (controls_allowed && actuation_limits) {
-      int32_t max_steer = 0;
-      // speed dependent limitation
-      if (speed < SPEED_0) {
-        max_steer = MAX_STEER_0;
-      } else if (speed > SPEED_1) {
-        max_steer = MAX_STEER_1;
-      } else {
-        // linear interp
-        max_steer = MAX_STEER_0 - ((speed - SPEED_0) * (MAX_STEER_0 - MAX_STEER_1)) / (SPEED_1 - SPEED_0);
+    // STEER: safety check on bytes 2-3
+    if ((to_send->RIR>>21) == 0x2E4) {
+      int16_t desired_torque = (to_send->RDLR & 0xFF00) | ((to_send->RDLR >> 16) & 0xFF);
+
+      // consider absolute value
+      if (desired_torque < 0) {
+        desired_torque *= -1;
       }
-      if (desired_torque > max_steer) {
+
+      // only check if controls are allowed and actuation_limits are imposed
+      if (controls_allowed && actuation_limits) {
+        int32_t max_steer = 0;
+        // speed dependent limitation
+        if (speed < SPEED_0) {
+          max_steer = MAX_STEER_0;
+        } else if (speed > SPEED_1) {
+          max_steer = MAX_STEER_1;
+        } else {
+          // linear interp
+          max_steer = MAX_STEER_0 - ((speed - SPEED_0) * (MAX_STEER_0 - MAX_STEER_1)) / (SPEED_1 - SPEED_0);
+        }
+        if (desired_torque > max_steer) {
+          return 0;
+        }
+
+      } else if (!controls_allowed && (desired_torque != 0)) {
         return 0;
       }
-
-    } else if (!controls_allowed && (desired_torque != 0)) {
-      return 0;
     }
   }
 
