@@ -17,6 +17,7 @@
 #include <unordered_map>
 #include <memory>
 #include <iostream>
+#include <chrono>
 
 #include <windows.h>
 #include <winusb.h>
@@ -86,13 +87,45 @@ namespace panda {
 
 	typedef struct _PANDA_CAN_MSG {
 		uint32_t addr;
-		uint16_t recv_time;
+		unsigned long long recv_time;
 		uint8_t dat[8];
 		uint8_t len;
 		PANDA_CAN_PORT bus;
 		bool is_receipt;
 		bool addr_29b;
 	} PANDA_CAN_MSG;
+
+	//Copied from https://stackoverflow.com/a/31488113
+	class Timer
+	{
+		using clock = std::chrono::steady_clock;
+		using time_point_type = std::chrono::time_point < clock, std::chrono::microseconds >;
+	public:
+		Timer() {
+			start = std::chrono::time_point_cast<std::chrono::microseconds>(clock::now());
+		}
+
+		// gets the time elapsed from construction.
+		unsigned long long /*microseconds*/ Timer::getTimePassedUS() {
+			// get the new time
+			auto end = std::chrono::time_point_cast<std::chrono::microseconds>(clock::now());
+
+			// return the difference of the times
+			return (end - start).count();
+		}
+
+		// gets the time elapsed from construction.
+		unsigned long long /*milliseconds*/ Timer::getTimePassedMS() {
+			// get the new time
+			auto end = std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
+
+			// return the difference of the times
+			auto startms = std::chrono::time_point_cast<std::chrono::milliseconds>(start);
+			return (end - startms).count();
+		}
+	private:
+		time_point_type start;
+	};
 
 	// This class is exported from the panda.dll
 	class PANDA_API Panda {
@@ -126,6 +159,7 @@ namespace panda {
 
 		bool can_send_many(const std::vector<PANDA_CAN_MSG>& can_msgs);
 		bool can_send(uint32_t addr, bool addr_29b, const uint8_t *dat, uint8_t len, PANDA_CAN_PORT bus);
+		void parse_can_recv(std::vector<PANDA_CAN_MSG>& msg_recv, char *buff, int retcount);
 		bool can_recv_async(HANDLE kill_event, std::vector<PANDA_CAN_MSG>& msg_buff, DWORD timeoutms = INFINITE);
 		std::vector<PANDA_CAN_MSG> can_recv();
 		bool can_clear(PANDA_CAN_PORT_CLEAR bus);
@@ -172,6 +206,8 @@ namespace panda {
 		tstring devPath;
 		std::string sn;
 		bool loopback;
+
+		Timer runningTime;
 	};
 
 }

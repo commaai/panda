@@ -8,7 +8,7 @@ Timer::Timer()
 }
 
 // gets the time elapsed from construction.
-long /*milliseconds*/ Timer::getTimePassed(){
+unsigned long long /*milliseconds*/ Timer::getTimePassed(){
 	// get the new time
 	auto end = std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
 

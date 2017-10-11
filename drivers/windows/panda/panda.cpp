@@ -351,14 +351,17 @@ bool Panda::can_send(uint32_t addr, bool addr_29b, const uint8_t *dat, uint8_t l
 	return this->can_send_many(std::vector<PANDA_CAN_MSG>{msg});
 }
 
-void parse_can_recv(std::vector<PANDA_CAN_MSG>& msg_recv, char *buff, int retcount) {
+void Panda::parse_can_recv(std::vector<PANDA_CAN_MSG>& msg_recv, char *buff, int retcount) {
 	for (int i = 0; i < retcount; i += sizeof(PANDA_CAN_MSG_INTERNAL)) {
 		PANDA_CAN_MSG_INTERNAL *in_msg_raw = (PANDA_CAN_MSG_INTERNAL *)(buff + i);
 		PANDA_CAN_MSG in_msg;
 
 		in_msg.addr_29b = (bool)(in_msg_raw->rir & CAN_EXTENDED);
 		in_msg.addr = (in_msg.addr_29b) ? (in_msg_raw->rir >> 3) : (in_msg_raw->rir >> 21);
-		in_msg.recv_time = in_msg_raw->f2 >> 16;
+		in_msg.recv_time = this->runningTime.getTimePassedUS();
+		//The timestamp from the device is (in_msg_raw->f2 >> 16),
+		//but this 16 bit value is a little hard to use. Using a
+		//timer since the initialization of this device.
 		in_msg.len = in_msg_raw->f2 & 0xF;
 		memcpy(in_msg.dat, in_msg_raw->dat, 8);
 
