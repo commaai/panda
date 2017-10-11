@@ -673,6 +673,48 @@ namespace pandaJ2534DLLTest
 			check_panda_can_msg(panda_msg_recv[1], 0, 0x18DAEFF1, TRUE, FALSE, "\x05""HELLO", LINE_INFO());
 		}
 
+		//Check that tx works for messages with more than 16 frames. 29 bit. Good Filter. NoPadding. STD address. Large multiframe message.
+		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_MF_LotsOfFrames)
+		{
+			unsigned long chanid;
+			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO());
+			auto p = getPanda(500);
+
+			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 4 + 125, 0,
+				"\x18\xda\xef\xf1"
+				"AABBCC""DDEEFFG""GHHIIJJ""KKLLMMN""NOOPPQQ""RRSSTTU""UVVWWXX""YYZZ112""2334455""6677889"
+				"900abcd""efghijk""lmnopqr""stuvwxy""z!@#$%^""&*()_+-""=`~ABCD""EFGHIJK", LINE_INFO());
+
+			auto panda_msg_recv = panda_recv_loop(p, 1);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x10\x7D""AABBCC", LINE_INFO());
+
+			// [flow_status, block_size, st_min]
+			panda_msg_recv = checked_panda_send(p, 0x18DAF1EF, TRUE, "\x30\x00\x00", 3, 17, LINE_INFO(), 1000);
+			check_panda_can_msg(panda_msg_recv[0],  0, 0x18DAEFF1, TRUE, FALSE, "\x21""DDEEFFG", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[1],  0, 0x18DAEFF1, TRUE, FALSE, "\x22""GHHIIJJ", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[2],  0, 0x18DAEFF1, TRUE, FALSE, "\x23""KKLLMMN", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[3],  0, 0x18DAEFF1, TRUE, FALSE, "\x24""NOOPPQQ", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[4],  0, 0x18DAEFF1, TRUE, FALSE, "\x25""RRSSTTU", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[5],  0, 0x18DAEFF1, TRUE, FALSE, "\x26""UVVWWXX", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[6],  0, 0x18DAEFF1, TRUE, FALSE, "\x27""YYZZ112", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[7],  0, 0x18DAEFF1, TRUE, FALSE, "\x28""2334455", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[8],  0, 0x18DAEFF1, TRUE, FALSE, "\x29""6677889", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[9],  0, 0x18DAEFF1, TRUE, FALSE, "\x2A""900abcd", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[10], 0, 0x18DAEFF1, TRUE, FALSE, "\x2B""efghijk", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[11], 0, 0x18DAEFF1, TRUE, FALSE, "\x2C""lmnopqr", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[12], 0, 0x18DAEFF1, TRUE, FALSE, "\x2D""stuvwxy", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[13], 0, 0x18DAEFF1, TRUE, FALSE, "\x2E""z!@#$%^", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[14], 0, 0x18DAEFF1, TRUE, FALSE, "\x2F""&*()_+-", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[15], 0, 0x18DAEFF1, TRUE, FALSE, "\x20""=`~ABCD", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[16], 0, 0x18DAEFF1, TRUE, FALSE, "\x21""EFGHIJK", LINE_INFO());
+
+			auto j2534_msg_recv = j2534_recv_loop(chanid, 1);
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
+		}
+
 		//Check tx passes with filter multiple times. 29 bit. Good Filter. NoPadding. STD address. Multiple Single Frames.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_MultipleMFSF)
 		{
@@ -700,10 +742,7 @@ namespace pandaJ2534DLLTest
 			check_J2534_can_msg(j2534_msg_recv[1], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 23, 0, "\x18\xda\xef\xf1""Long data because I can", LINE_INFO());
 			check_J2534_can_msg(j2534_msg_recv[2], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
 			check_J2534_can_msg(j2534_msg_recv[3], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 5, 0, "\x18\xda\xef\xf1""HELLO", LINE_INFO());
-
-			//panda_msg_recv = panda_recv_loop(p, 1);
 		}
-
 
 		///////////////////// Tests checking things break or recover during send/receive /////////////////////
 

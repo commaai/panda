@@ -143,9 +143,9 @@ std::unique_ptr<panda::Panda> getPanda(unsigned long kbaud) {
 }
 
 std::vector<panda::PANDA_CAN_MSG> checked_panda_send(std::unique_ptr<panda::Panda>& p, uint32_t addr, bool is_29b,
-	char* msg, uint8_t len, unsigned int num_expected, const __LineInfo* pLineInfo) {
+	char* msg, uint8_t len, unsigned int num_expected, const __LineInfo* pLineInfo, unsigned long timeout_ms) {
 	Assert::IsTrue(p->can_send(addr, is_29b, (const uint8_t*)msg, len, panda::PANDA_CAN1), _T("Panda send says it failed."), pLineInfo);
-	auto panda_msg_recv = panda_recv_loop(p, 1 + num_expected);
+	auto panda_msg_recv = panda_recv_loop(p, 1 + num_expected, timeout_ms);
 	check_panda_can_msg(panda_msg_recv[0], 0, addr, is_29b, TRUE, std::string(msg, len), pLineInfo);
 	panda_msg_recv.erase(panda_msg_recv.begin());
 	return panda_msg_recv;

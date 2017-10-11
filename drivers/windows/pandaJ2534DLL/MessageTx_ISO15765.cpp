@@ -34,7 +34,7 @@ MessageTx_ISO15765::MessageTx_ISO15765(
 		unsigned int pktnum = 1;
 		uint8_t CFDatSize = 7 - data_prefix.size();
 		while (TRUE) {
-			framepayload = data_prefix + (char)(0x20 | pktnum) +
+			framepayload = data_prefix + (char)(0x20 | (pktnum % 0x10)) +
 				payload.substr(first_payload_len + (CFDatSize * (pktnum-1)), CFDatSize);
 
 			if (check_bmask(this->fullmsg.TxFlags, ISO15765_FRAME_PAD))
