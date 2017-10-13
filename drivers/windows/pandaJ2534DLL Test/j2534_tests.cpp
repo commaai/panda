@@ -804,8 +804,6 @@ namespace pandaJ2534DLLTest
 			stringStream1 << "times1: " << timediff_1_0 << ", " << timediff_2_1 << ", " << timediff_3_2 <<
 				", " << timediff_4_3 << ", " << timediff_5_4 << ", " << timediff_6_5 << std::endl;
 			Logger::WriteMessage(stringStream1.str().c_str());
-			auto b = (stringStream1 << "times1: " << timediff_1_0 << ", " << timediff_2_1 << ", " << timediff_3_2 <<
-				", " << timediff_4_3 << ", " << timediff_5_4 << ", " << timediff_6_5 << std::endl);
 		}
 
 		//Check that tx works for messages with more than 16 frames. 29 bit. Good Filter. NoPadding. STD address. Large multiframe message.
@@ -877,6 +875,85 @@ namespace pandaJ2534DLLTest
 			check_J2534_can_msg(j2534_msg_recv[1], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 23, 0, "\x18\xda\xef\xf1""Long data because I can", LINE_INFO());
 			check_J2534_can_msg(j2534_msg_recv[2], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
 			check_J2534_can_msg(j2534_msg_recv[3], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 5, 0, "\x18\xda\xef\xf1""HELLO", LINE_INFO());
+		}
+
+		//Check tx passes after message timeout. 29 bit. Good Filter. NoPadding. STD address. Multiple Frame timeout then Single Frame.
+		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_MFTimeoutSFSuccess)
+		{
+			unsigned long chanid;
+			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO());
+			auto p = getPanda(500);
+
+			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 4 + 23, 0, "\x18\xda\xef\xf1""Long data because I can", LINE_INFO());
+			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 9, 0, "\x18\xda\xef\xf1""HELLO", LINE_INFO());
+
+			auto panda_msg_recv = panda_recv_loop(p, 2, 1000);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x10\x17""Long d", LINE_INFO()); //First Frame. Not replying so it needs to time out.
+			check_panda_can_msg(panda_msg_recv[1], 0, 0x18DAEFF1, TRUE, FALSE, "\x05""HELLO", LINE_INFO()); //Reply to the next message.
+
+			auto j2534_msg_recv = j2534_recv_loop(chanid, 2);
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[1], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 5, 0, "\x18\xda\xef\xf1""HELLO", LINE_INFO());
+		}
+
+		//Check tx passes after mid-message timeout. 29 bit. Good Filter. NoPadding. STD address. Multiple Frame mid-timeout then Single Frame.
+		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_MFMidTimeoutSFSuccess)
+		{
+			unsigned long chanid;
+			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO());
+			auto p = getPanda(500);
+
+			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 4 + 23, 0, "\x18\xda\xef\xf1""Long data because I can", LINE_INFO());
+			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 9, 0, "\x18\xda\xef\xf1""HELLO", LINE_INFO());
+
+			auto panda_msg_recv = panda_recv_loop(p, 1);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x10\x17""Long d", LINE_INFO()); //First Frame. Not replying so it needs to time out.
+
+			panda_msg_recv = checked_panda_send(p, 0x18DAF1EF, TRUE, "\x30\x01\x00", 3, 2, LINE_INFO(), 1000);//Start a conversation
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x21""ata bec", LINE_INFO());//Check passthru device sent more data, but don't reply to it
+			check_panda_can_msg(panda_msg_recv[1], 0, 0x18DAEFF1, TRUE, FALSE, "\x05""HELLO", LINE_INFO()); //Reply to the next message.
+
+			/*check_panda_can_msg(panda_msg_recv[1], 0, 0x18DAEFF1, TRUE, FALSE, "\x22""ause I ", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[2], 0, 0x18DAEFF1, TRUE, FALSE, "\x23""can", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[3], 0, 0x18DAEFF1, TRUE, FALSE, "\x05""HELLO", LINE_INFO());*/
+
+			auto j2534_msg_recv = j2534_recv_loop(chanid, 2);
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[1], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 5, 0, "\x18\xda\xef\xf1""HELLO", LINE_INFO());
+		}
+
+		//Check slow tx passes without hitting FC timeout. 29 bit. Good Filter. NoPadding. STD address. Long STmin, catches if FC timeout applies before needed.
+		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_SLOWMF)
+		{
+			unsigned long chanid;
+			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO());
+			auto p = getPanda(500);
+
+			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 4 + 48, 0, "\x18\xda\xef\xf1""AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXX", LINE_INFO());
+
+			auto panda_msg_recv = panda_recv_loop(p, 1);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x10\x30""AABBCC", LINE_INFO()); //First Frame. Not replying so it needs to time out.
+
+			panda_msg_recv = checked_panda_send(p, 0x18DAF1EF, TRUE, "\x30\x06\x7F", 3, 6, LINE_INFO(), 3000);//Start a conversation... but slow. FC timeout is 250 ms.
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x21""DDEEFFG", LINE_INFO());//Check this convo doesn't trigger that timeout.
+			check_panda_can_msg(panda_msg_recv[1], 0, 0x18DAEFF1, TRUE, FALSE, "\x22""GHHIIJJ", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[2], 0, 0x18DAEFF1, TRUE, FALSE, "\x23""KKLLMMN", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[3], 0, 0x18DAEFF1, TRUE, FALSE, "\x24""NOOPPQQ", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[4], 0, 0x18DAEFF1, TRUE, FALSE, "\x25""RRSSTTU", LINE_INFO());//Some of these should fail to recv if there is an issue.
+			check_panda_can_msg(panda_msg_recv[5], 0, 0x18DAEFF1, TRUE, FALSE, "\x26""UVVWWXX", LINE_INFO());
+
+			auto j2534_msg_recv = j2534_recv_loop(chanid, 2);
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[1], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 48, 0, "\x18\xda\xef\xf1""AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXX", LINE_INFO());
 		}
 
 		///////////////////// Tests checking things break or recover during send/receive /////////////////////

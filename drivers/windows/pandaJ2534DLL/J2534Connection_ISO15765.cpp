@@ -73,17 +73,20 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 			case FLOWCTRL_CONTINUE: {
 				if (st_min > 0xF9) break;
 				if (st_min >= 0xf1 && st_min <= 0xf9) {
-					txConvo->tx_flowcontrol(block_size, std::chrono::microseconds((st_min & 0x0F) * 100), block_size==0);
+					txConvo->flowControlContinue(block_size, std::chrono::microseconds((st_min & 0x0F) * 100));
+				} else if(st_min <= 0x7f) {
+					txConvo->flowControlContinue(block_size, std::chrono::microseconds(st_min * 1000));
 				} else {
-					txConvo->tx_flowcontrol(block_size, std::chrono::microseconds(st_min * 1000), block_size==0);
+					break;
 				}
 				this->rescheduleExistingTxMsgs();
 				break;
 			}
 			case FLOWCTRL_WAIT:
-				txConvo->tx_flowcontrol(0, std::chrono::microseconds(0));
+				txConvo->flowControlWait();
 				break;
 			case FLOWCTRL_ABORT:
+				txConvo->flowControlAbort();
 				this->rxConversations[fid] = nullptr;
 				break;
 			}

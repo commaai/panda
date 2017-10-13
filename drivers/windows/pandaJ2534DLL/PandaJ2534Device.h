@@ -14,7 +14,7 @@ class J2534Connection;
 class MessageTx;
 
 typedef struct SCHEDULED_TX_MSG {
-	SCHEDULED_TX_MSG(std::shared_ptr<MessageTx> msgtx);
+	SCHEDULED_TX_MSG(std::shared_ptr<MessageTx> msgtx, BOOL startdelayed = FALSE);
 
 	void refreshExpiration();
 	void refreshExpiration(std::chrono::time_point<std::chrono::steady_clock> starttime);
@@ -40,9 +40,13 @@ public:
 
 	void insertMultiPartTxInQueue(std::unique_ptr<SCHEDULED_TX_MSG> fcwrite);
 
+	void registerMessageTx(std::shared_ptr<MessageTx> msg, BOOL startdelayed=FALSE);
+
 	void registerConnectionTx(std::shared_ptr<J2534Connection> conn);
 
 	void unstallConnectionTx(std::shared_ptr<J2534Connection> conn);
+
+	void removeConnectionTopMessage(std::shared_ptr<J2534Connection> conn);
 
 private:
 	HANDLE thread_kill_event;

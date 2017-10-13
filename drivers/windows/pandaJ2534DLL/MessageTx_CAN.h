@@ -11,7 +11,7 @@ public:
 	MessageTx_CAN(
 		std::shared_ptr<J2534Connection> connection_in,
 		PASSTHRU_MSG& to_send
-	) : MessageTx(connection_in, to_send), sentyet(FALSE), txInFlight(FALSE) {};
+	) : MessageTx(connection_in), fullmsg(to_send) , sentyet(FALSE), txInFlight(FALSE) {};
 
 	virtual BOOL sendNextFrame() {
 		uint32_t addr = ((uint8_t)fullmsg.Data[0]) << 24 | ((uint8_t)fullmsg.Data[1]) << 16 |
@@ -53,4 +53,6 @@ public:
 private:
 	BOOL sentyet;
 	BOOL txInFlight;
+
+	J2534Frame fullmsg;
 };

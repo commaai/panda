@@ -2,8 +2,10 @@
 #include "PandaJ2534Device.h"
 #include "J2534Frame.h"
 
-SCHEDULED_TX_MSG::SCHEDULED_TX_MSG(std::shared_ptr<MessageTx> msgtx) : msgtx(msgtx) {
+SCHEDULED_TX_MSG::SCHEDULED_TX_MSG(std::shared_ptr<MessageTx> msgtx, BOOL startdelayed) : msgtx(msgtx) {
 	expire = std::chrono::steady_clock::now(); //Should be triggered immediately.
+	if(startdelayed)
+		expire += this->msgtx->separation_time;
 }
 
 void SCHEDULED_TX_MSG::refreshExpiration() {
@@ -108,24 +110,11 @@ DWORD PandaJ2534Device::can_recv_thread() {
 
 									if (msgtx->isFinished()) {
 										conn->processMessageReceipt(msg_out); //Alert the connection a tx is done.
-										conn->txbuff.pop(); //Remove the finished TX message from the connection tx queue.
-
-										//Remove the connection from the active list if it has no more scheduled TX msgs.
-										if (conn->txbuff.size() == 0) {
-											//Update records showing the connection no longer has a tx record scheduled.
-											this->ConnTxSet.erase(conn);
-										} else {
-											//Add the next scheduled tx from this conn
-											auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(conn->txbuff.front());
-											this->insertMultiPartTxInQueue(std::move(fcwrite));
-											SetEvent(this->flow_control_wakeup_event);
-										}
-
+										this->removeConnectionTopMessage(conn);
 									} else {
 										if (msgtx->txReady()) { //Not finished, ready to send next frame.
 											tx_schedule->refreshExpiration(msg_in.recv_time_point);
 											this->insertMultiPartTxInQueue(std::move(tx_schedule));
-											SetEvent(this->flow_control_wakeup_event);
 										} else {
 											//Not finished, but next frame not ready (maybe waiting for flow control).
 											//Do not schedule more messages from this connection.
@@ -202,17 +191,22 @@ void PandaJ2534Device::insertMultiPartTxInQueue(std::unique_ptr<SCHEDULED_TX_MSG
 		}
 		this->active_flow_control_txs.insert(iter, std::move(fcwrite));
 	}
+	SetEvent(this->flow_control_wakeup_event);
+}
+
+void PandaJ2534Device::registerMessageTx(std::shared_ptr<MessageTx> msg, BOOL startdelayed) {
+	synchronized(ConnTxMutex) {
+		auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(msg, startdelayed);
+		this->insertMultiPartTxInQueue(std::move(fcwrite));
+	}
 }
 
 void PandaJ2534Device::registerConnectionTx(std::shared_ptr<J2534Connection> conn) {
 	synchronized(ConnTxMutex) {
 		auto ret = this->ConnTxSet.insert(conn);
 		if (ret.second == FALSE) return; //Conn already exists.
-
-		auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(conn->txbuff.front());
-		this->insertMultiPartTxInQueue(std::move(fcwrite));
+		registerMessageTx(conn->txbuff.front());
 	}
-	SetEvent(flow_control_wakeup_event);
 }
 
 void PandaJ2534Device::unstallConnectionTx(std::shared_ptr<J2534Connection> conn) {
@@ -224,4 +218,19 @@ void PandaJ2534Device::unstallConnectionTx(std::shared_ptr<J2534Connection> conn
 		this->insertMultiPartTxInQueue(std::move(fcwrite));
 	}
 	SetEvent(flow_control_wakeup_event);
+}
+
+void PandaJ2534Device::removeConnectionTopMessage(std::shared_ptr<J2534Connection> conn) {
+	synchronized(active_flow_control_txs_lock) {
+		conn->txbuff.pop(); //Remove the top TX message from the connection tx queue.
+
+		//Remove the connection from the active connection list if no more messages are scheduled with this connection.
+		if (conn->txbuff.size() == 0) {
+			//Update records showing the connection no longer has a tx record scheduled.
+			this->ConnTxSet.erase(conn);
+		} else {
+			//Add the next scheduled tx from this conn
+			this->registerMessageTx(conn->txbuff.front());
+		}
+	}
 }

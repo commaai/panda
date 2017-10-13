@@ -93,6 +93,9 @@
     <ClInclude Include="MessageTx_CAN.h">
       <Filter>Header Files\J2534_CAN</Filter>
     </ClInclude>
+    <ClInclude Include="MessageTxTimeout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pandaJ2534DLL.cpp">

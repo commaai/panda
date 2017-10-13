@@ -1,10 +1,10 @@
 #pragma once
-#include "MessageTx.h"
+#include "MessageTxTimeout.h"
 #include "J2534Connection_ISO15765.h"
 
 class J2534Connection_ISO15765;
 
-class MessageTx_ISO15765 : public MessageTx
+class MessageTx_ISO15765 : public MessageTxTimeoutable
 {
 public:
 	MessageTx_ISO15765(
@@ -23,7 +23,11 @@ public:
 
 	virtual BOOL txReady();
 
-	void tx_flowcontrol(uint8_t block_size, std::chrono::microseconds separation_time, BOOL sendAll = FALSE);
+	virtual void onTimeout();
+
+	void MessageTx_ISO15765::flowControlContinue(uint8_t block_size, std::chrono::microseconds separation_time);
+	void MessageTx_ISO15765::flowControlWait();
+	void MessageTx_ISO15765::flowControlAbort();
 
 	std::shared_ptr<J2534MessageFilter> filter;
 	unsigned long frames_sent;
@@ -36,4 +40,8 @@ public:
 	std::vector<std::string> framePayloads;
 	BOOL txInFlight;
 	BOOL sendAll;
+	unsigned int numWaitFrames;
+	BOOL didtimeout;
+
+	J2534Frame fullmsg;
 };
