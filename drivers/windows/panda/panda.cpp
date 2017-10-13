@@ -359,6 +359,7 @@ void Panda::parse_can_recv(std::vector<PANDA_CAN_MSG>& msg_recv, char *buff, int
 		in_msg.addr_29b = (bool)(in_msg_raw->rir & CAN_EXTENDED);
 		in_msg.addr = (in_msg.addr_29b) ? (in_msg_raw->rir >> 3) : (in_msg_raw->rir >> 21);
 		in_msg.recv_time = this->runningTime.getTimePassedUS();
+		in_msg.recv_time_point = std::chrono::steady_clock::now();
 		//The timestamp from the device is (in_msg_raw->f2 >> 16),
 		//but this 16 bit value is a little hard to use. Using a
 		//timer since the initialization of this device.

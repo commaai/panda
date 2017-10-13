@@ -7,7 +7,11 @@ SCHEDULED_TX_MSG::SCHEDULED_TX_MSG(std::shared_ptr<MessageTx> msgtx) : msgtx(msg
 }
 
 void SCHEDULED_TX_MSG::refreshExpiration() {
-	expire += this->msgtx->separation_time;
+	expire = std::chrono::steady_clock::now() + this->msgtx->separation_time;
+}
+
+void SCHEDULED_TX_MSG::refreshExpiration(std::chrono::time_point<std::chrono::steady_clock> starttine) {
+	expire = starttine + this->msgtx->separation_time;
 }
 
 
@@ -119,7 +123,7 @@ DWORD PandaJ2534Device::can_recv_thread() {
 
 									} else {
 										if (msgtx->txReady()) { //Not finished, ready to send next frame.
-											tx_schedule->refreshExpiration();
+											tx_schedule->refreshExpiration(msg_in.recv_time_point);
 											this->insertMultiPartTxInQueue(std::move(tx_schedule));
 											SetEvent(this->flow_control_wakeup_event);
 										} else {

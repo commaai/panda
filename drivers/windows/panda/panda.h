@@ -87,7 +87,8 @@ namespace panda {
 
 	typedef struct _PANDA_CAN_MSG {
 		uint32_t addr;
-		unsigned long long recv_time;
+		unsigned long long recv_time; //In microseconds since device initialization
+		std::chrono::time_point<std::chrono::steady_clock> recv_time_point;
 		uint8_t dat[8];
 		uint8_t len;
 		PANDA_CAN_PORT bus;

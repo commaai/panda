@@ -17,6 +17,7 @@ typedef struct SCHEDULED_TX_MSG {
 	SCHEDULED_TX_MSG(std::shared_ptr<MessageTx> msgtx);
 
 	void refreshExpiration();
+	void refreshExpiration(std::chrono::time_point<std::chrono::steady_clock> starttime);
 
 	std::shared_ptr<MessageTx> msgtx;
 	std::chrono::time_point<std::chrono::steady_clock> expire;
