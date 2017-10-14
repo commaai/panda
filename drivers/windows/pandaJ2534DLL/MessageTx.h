@@ -1,25 +1,23 @@
 #pragma once
-#include <memory>
-#include "J2534Connection.h"
+#include "Action.h"
 #include "J2534Frame.h"
 
 class J2534Connection;
 
-class MessageTx
+class MessageTx : public Action, public std::enable_shared_from_this<MessageTx>
 {
 public:
 	MessageTx(
-		std::weak_ptr<J2534Connection> connection
-	) : connection(connection) { };
+		std::weak_ptr<J2534Connection> connection_in,
+		PASSTHRU_MSG& to_send
+	) : Action(connection_in), fullmsg(to_send) { };
 
-	virtual BOOL sendNextFrame() = 0;
+	virtual BOOL checkTxReceipt(J2534Frame frame) = 0;
 
-	virtual BOOL checkTxReceipt(J2534Frame frame) { return FALSE; };
+	virtual BOOL isFinished() = 0;
 
-	virtual BOOL isFinished() { return TRUE; };
+	virtual BOOL txReady() = 0;
 
-	virtual BOOL txReady() { return TRUE; };
-
-	std::weak_ptr<J2534Connection> connection;
-	std::chrono::microseconds separation_time;
+protected:
+	J2534Frame fullmsg;
 };

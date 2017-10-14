@@ -107,7 +107,7 @@ long J2534Connection::setBaud(unsigned long baud) {
 	return STATUS_NOERROR;
 }
 
-void J2534Connection::schedultMsgTx(std::shared_ptr<MessageTx> msgout) {
+void J2534Connection::schedultMsgTx(std::shared_ptr<Action> msgout) {
 	if (auto panda_ps = this->panda_dev.lock()) {
 		synchronized(staged_writes_lock) {
 			this->txbuff.push(msgout);

@@ -75,9 +75,6 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files\boilerplate</Filter>
     </ClInclude>
-    <ClInclude Include="MessageTx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="J2534Frame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -94,6 +91,12 @@
       <Filter>Header Files\J2534_CAN</Filter>
     </ClInclude>
     <ClInclude Include="MessageTxTimeout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Action.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MessageTx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -127,6 +130,12 @@
     </ClCompile>
     <ClCompile Include="MessageTx_ISO15765.cpp">
       <Filter>Source Files\J2534_ISO15765</Filter>
+    </ClCompile>
+    <ClCompile Include="MessageTxTimeout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MessageTx_CAN.cpp">
+      <Filter>Source Files\J2534_CAN</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -405,7 +405,7 @@ PANDAJ2534DLL_API long PTAPI	PassThruIoctl(unsigned long ChannelID, unsigned lon
 			case DATA_RATE:			// 5-500000
 				return ret_code(get_channel(ChannelID)->setBaud(inconfig->ConfigPtr[i].Value));
 			case LOOPBACK:			// 0 (OFF), 1 (ON) [0]
-				get_channel(ChannelID)->loopback = bool(inconfig->ConfigPtr[i].Value);
+				get_channel(ChannelID)->loopback = (inconfig->ConfigPtr[i].Value != 0);
 				break;
 			case NODE_ADDRESS:		// J1850PWM Related (Not supported by panda). HDS requires these to 'work'.
 			case NETWORK_LINE:

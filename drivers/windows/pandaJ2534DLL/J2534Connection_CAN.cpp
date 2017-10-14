@@ -32,7 +32,7 @@ long J2534Connection_CAN::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *p
 		}
 
 		auto msgtx = std::make_shared<MessageTx_CAN>(shared_from_this(), *msg);
-		this->schedultMsgTx(std::dynamic_pointer_cast<MessageTx>(msgtx));
+		this->schedultMsgTx(std::dynamic_pointer_cast<Action>(msgtx));
 	}
 	return STATUS_NOERROR;
 }

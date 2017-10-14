@@ -37,7 +37,7 @@ long J2534Connection_ISO15765::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned lo
 		if (msg->DataSize > 11 && fid == -1) return ERR_NO_FLOW_CONTROL; //11 bytes (4 for CANid, 7 payload) is max length of input frame.
 
 		auto msgtx = std::make_shared<MessageTx_ISO15765>( shared_from_this(), *msg, (fid == -1) ? nullptr : this->filters[fid] );
-		this->schedultMsgTx(std::dynamic_pointer_cast<MessageTx>(msgtx));
+		this->schedultMsgTx(std::dynamic_pointer_cast<Action>(msgtx));
 	}
 	return STATUS_NOERROR;
 }

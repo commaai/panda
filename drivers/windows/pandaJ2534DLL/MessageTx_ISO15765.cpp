@@ -10,7 +10,7 @@ MessageTx_ISO15765::MessageTx_ISO15765(
 	std::shared_ptr<J2534Connection> connection_in,
 	PASSTHRU_MSG& to_send,
 	std::shared_ptr<J2534MessageFilter> filter
-) : MessageTxTimeoutable(connection_in), fullmsg(to_send), filter(filter), frames_sent(0),
+) : MessageTxTimeoutable(connection_in, to_send), filter(filter), frames_sent(0),
 consumed_count(0), txInFlight(FALSE), sendAll(FALSE), block_size(0), numWaitFrames(0), didtimeout(FALSE) {
 
 	CANid = ((uint8_t)fullmsg.Data[0]) << 24 | ((uint8_t)fullmsg.Data[1]) << 16 |
@@ -56,10 +56,10 @@ unsigned int MessageTx_ISO15765::addressLength() {
 	return check_bmask(fullmsg.TxFlags, ISO15765_ADDR_TYPE) ? 5 : 4;
 }
 
-BOOL MessageTx_ISO15765::sendNextFrame() {
-	if (didtimeout) return FALSE;
-	if (this->frames_sent >= this->framePayloads.size()) return FALSE;
-	if (block_size == 0 && !sendAll && this->frames_sent > 0)return FALSE;
+void MessageTx_ISO15765::execute() {
+	if (didtimeout) return;
+	if (this->frames_sent >= this->framePayloads.size()) return;
+	if (block_size == 0 && !sendAll && this->frames_sent > 0) return;
 	if (block_size > 0 && !sendAll) block_size--;
 
 	if (auto conn_sp = this->connection.lock()) {
@@ -67,15 +67,14 @@ BOOL MessageTx_ISO15765::sendNextFrame() {
 			auto& outFramePayload = this->framePayloads[this->frames_sent];
 			if (panda_dev_sp->panda->can_send(this->CANid, check_bmask(this->fullmsg.TxFlags, CAN_29BIT_ID),
 				(const uint8_t*)outFramePayload.c_str(), (uint8_t)outFramePayload.size(), panda::PANDA_CAN1) == FALSE) {
-				return FALSE;
+				return;
 			}
 
 			this->txInFlight = TRUE;
 			this->frames_sent++;
-			return TRUE;
+			panda_dev_sp->txMsgsAwaitingEcho.push(shared_from_this());
 		}
 	}
-	return FALSE;
 }
 
 //Returns TRUE if receipt is consumed by the msg, FALSE otherwise.
@@ -112,11 +111,11 @@ BOOL MessageTx_ISO15765::checkTxReceipt(J2534Frame frame) {
 		} else {
 			//Restart timeout if we are waiting for a flow control frame.
 			//FC frames are required when we are not sending all, the
-			//current block_size batch has been sent, a FC message has
+			//current block_size batch has not been sent, a FC message has
 			//already been received (differentiating from first frame), the
 			//message is not finished, and there is more than one frame in
 			//the message.
-			if(block_size == 0 && recvCount != 0 && !sendAll && !isFinished() && this->isFinished() && this->framePayloads.size() > 1)
+			if(block_size == 0 && recvCount != 0 && !sendAll && !this->isFinished() && this->framePayloads.size() > 1)
 				scheduleTimeout(TIMEOUT_CF);
 		}
 		return TRUE;
@@ -136,14 +135,14 @@ void MessageTx_ISO15765::onTimeout() {
 	didtimeout = TRUE;
 	if (auto conn_sp = std::static_pointer_cast<J2534Connection_ISO15765>(this->connection.lock())) {
 		if (auto panda_dev_sp = conn_sp->getPandaDev()) {
-			panda_dev_sp->removeConnectionTopMessage(conn_sp);
+			panda_dev_sp->removeConnectionTopAction(conn_sp);
 		}
 	}
 }
 
 void MessageTx_ISO15765::flowControlContinue(uint8_t block_size, std::chrono::microseconds separation_time) {
 	this->block_size = block_size;
-	this->separation_time = separation_time;
+	this->delay = separation_time;
 	this->sendAll = block_size == 0;
 	this->recvCount++;
 }

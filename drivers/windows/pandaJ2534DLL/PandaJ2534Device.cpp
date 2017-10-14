@@ -2,21 +2,6 @@
 #include "PandaJ2534Device.h"
 #include "J2534Frame.h"
 
-SCHEDULED_TX_MSG::SCHEDULED_TX_MSG(std::shared_ptr<MessageTx> msgtx, BOOL startdelayed) : msgtx(msgtx) {
-	expire = std::chrono::steady_clock::now(); //Should be triggered immediately.
-	if(startdelayed)
-		expire += this->msgtx->separation_time;
-}
-
-void SCHEDULED_TX_MSG::refreshExpiration() {
-	expire = std::chrono::steady_clock::now() + this->msgtx->separation_time;
-}
-
-void SCHEDULED_TX_MSG::refreshExpiration(std::chrono::time_point<std::chrono::steady_clock> starttine) {
-	expire = starttine + this->msgtx->separation_time;
-}
-
-
 PandaJ2534Device::PandaJ2534Device(std::unique_ptr<panda::Panda> new_panda) : txInProgress(FALSE) {
 	this->panda = std::move(new_panda);
 
@@ -81,10 +66,6 @@ DWORD PandaJ2534Device::addChannel(std::shared_ptr<J2534Connection>& conn, unsig
 	return STATUS_NOERROR;
 }
 
-DWORD WINAPI PandaJ2534Device::_can_recv_threadBootstrap(LPVOID This) {
-	return ((PandaJ2534Device*)This)->can_recv_thread();
-}
-
 DWORD PandaJ2534Device::can_recv_thread() {
 	DWORD err = TRUE;
 	while (err) {
@@ -94,9 +75,9 @@ DWORD PandaJ2534Device::can_recv_thread() {
 			J2534Frame msg_out(msg_in);
 
 			if (msg_in.is_receipt) {
-				synchronized(active_flow_control_txs_lock) {
+				synchronized(activeTXs_mutex) {
 					if (txMsgsAwaitingEcho.size() > 0) {
-						auto msgtx = txMsgsAwaitingEcho.front()->msgtx;
+						auto msgtx = txMsgsAwaitingEcho.front();
 						if (auto conn = msgtx->connection.lock()) {
 							if (conn->isProtoCan() && conn->getPort() == msg_in.bus) {
 								if (msgtx->checkTxReceipt(msg_out)) {
@@ -105,16 +86,15 @@ DWORD PandaJ2534Device::can_recv_thread() {
 									//    Frame is for this msg, more tx frames required after a FC frame: Wait for FC frame to come and trigger next tx.
 									//    Frame is for this msg, more tx frames required: Schedule next tx frame.
 									//    Frame is for this msg, and is the final frame of the msg: Let conn process full msg, If another msg from this conn is available, register it.
-									auto tx_schedule = std::move(txMsgsAwaitingEcho.front());
 									txMsgsAwaitingEcho.pop(); //Remove the TX object and schedule record.
 
 									if (msgtx->isFinished()) {
 										conn->processMessageReceipt(msg_out); //Alert the connection a tx is done.
-										this->removeConnectionTopMessage(conn);
+										this->removeConnectionTopAction(conn);
 									} else {
 										if (msgtx->txReady()) { //Not finished, ready to send next frame.
-											tx_schedule->refreshExpiration(msg_in.recv_time_point);
-											this->insertMultiPartTxInQueue(std::move(tx_schedule));
+											msgtx->schedule(msg_in.recv_time_point, TRUE);
+											this->insertActionIntoTaskList(msgtx);
 										} else {
 											//Not finished, but next frame not ready (maybe waiting for flow control).
 											//Do not schedule more messages from this connection.
@@ -142,10 +122,6 @@ DWORD PandaJ2534Device::can_recv_thread() {
 	return 0;
 }
 
-DWORD PandaJ2534Device::_msg_tx_threadBootstrap(LPVOID This) {
-	return ((PandaJ2534Device*)This)->msg_tx_thread();
-}
-
 DWORD PandaJ2534Device::msg_tx_thread() {
 	const HANDLE subscriptions[] = { this->flow_control_wakeup_event, this->thread_kill_event };
 	DWORD sleepDuration = INFINITE;
@@ -159,19 +135,18 @@ DWORD PandaJ2534Device::msg_tx_thread() {
 		ResetEvent(this->flow_control_wakeup_event);
 
 		while (TRUE) {
-			synchronized(active_flow_control_txs_lock) { //implemented with for loop. Consumes breaks.
-				if (this->active_flow_control_txs.size() == 0) {
+			synchronized(activeTXs_mutex) { //implemented with for loop. Consumes breaks.
+				if (this->task_queue.size() == 0) {
 					sleepDuration = INFINITE;
 					goto break_flow_ctrl_loop;
 				}
-				if (std::chrono::steady_clock::now() >= this->active_flow_control_txs.front()->expire) {
-					auto scheduled_msg = std::move(this->active_flow_control_txs.front()); //Get the scheduled tx record.
-					this->active_flow_control_txs.pop_front();
-					if (scheduled_msg->msgtx->sendNextFrame())
-						txMsgsAwaitingEcho.push(std::move(scheduled_msg));
+				if (std::chrono::steady_clock::now() >= this->task_queue.front()->expire) {
+					auto task = this->task_queue.front(); //Get the scheduled tx record.
+					this->task_queue.pop_front();
+					task->execute();
 				} else { //Ran out of things that need to be sent now. Sleep!
 					auto time_diff = std::chrono::duration_cast<std::chrono::milliseconds>
-						(this->active_flow_control_txs.front()->expire - std::chrono::steady_clock::now());
+						(this->task_queue.front()->expire - std::chrono::steady_clock::now());
 					sleepDuration = max(1, time_diff.count());
 					goto break_flow_ctrl_loop;
 				}
@@ -183,45 +158,44 @@ DWORD PandaJ2534Device::msg_tx_thread() {
 	return 0;
 }
 
-void PandaJ2534Device::insertMultiPartTxInQueue(std::unique_ptr<SCHEDULED_TX_MSG> fcwrite) {
-	synchronized(active_flow_control_txs_lock) {
-		auto iter = this->active_flow_control_txs.begin();
-		for (; iter != this->active_flow_control_txs.end(); iter++) {
-			if (fcwrite->expire < (*iter)->expire) break;
+void PandaJ2534Device::insertActionIntoTaskList(std::shared_ptr<Action> action) {
+	synchronized(activeTXs_mutex) {
+		auto iter = this->task_queue.begin();
+		for (; iter != this->task_queue.end(); iter++) {
+			if (action->expire < (*iter)->expire) break;
 		}
-		this->active_flow_control_txs.insert(iter, std::move(fcwrite));
+		this->task_queue.insert(iter, action);
 	}
 	SetEvent(this->flow_control_wakeup_event);
 }
 
-void PandaJ2534Device::registerMessageTx(std::shared_ptr<MessageTx> msg, BOOL startdelayed) {
-	synchronized(ConnTxMutex) {
-		auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(msg, startdelayed);
-		this->insertMultiPartTxInQueue(std::move(fcwrite));
-	}
+void PandaJ2534Device::scheduleAction(std::shared_ptr<Action> msg, BOOL startdelayed) {
+	if(startdelayed)
+		msg->scheduleImmediateDelay();
+	else
+		msg->scheduleImmediate();
+	this->insertActionIntoTaskList(msg);
 }
 
 void PandaJ2534Device::registerConnectionTx(std::shared_ptr<J2534Connection> conn) {
-	synchronized(ConnTxMutex) {
+	synchronized(connTXSet_mutex) {
 		auto ret = this->ConnTxSet.insert(conn);
 		if (ret.second == FALSE) return; //Conn already exists.
-		registerMessageTx(conn->txbuff.front());
+		this->scheduleAction(conn->txbuff.front());
 	}
 }
 
 void PandaJ2534Device::unstallConnectionTx(std::shared_ptr<J2534Connection> conn) {
-	synchronized(ConnTxMutex) {
+	synchronized(connTXSet_mutex) {
 		auto ret = this->ConnTxSet.insert(conn);
 		if (ret.second == TRUE) return; //Conn already exists.
-
-		auto fcwrite = std::make_unique<SCHEDULED_TX_MSG>(conn->txbuff.front());
-		this->insertMultiPartTxInQueue(std::move(fcwrite));
+		this->insertActionIntoTaskList(conn->txbuff.front());
 	}
 	SetEvent(flow_control_wakeup_event);
 }
 
-void PandaJ2534Device::removeConnectionTopMessage(std::shared_ptr<J2534Connection> conn) {
-	synchronized(active_flow_control_txs_lock) {
+void PandaJ2534Device::removeConnectionTopAction(std::shared_ptr<J2534Connection> conn) {
+	synchronized(activeTXs_mutex) {
 		conn->txbuff.pop(); //Remove the top TX message from the connection tx queue.
 
 		//Remove the connection from the active connection list if no more messages are scheduled with this connection.
@@ -230,7 +204,7 @@ void PandaJ2534Device::removeConnectionTopMessage(std::shared_ptr<J2534Connectio
 			this->ConnTxSet.erase(conn);
 		} else {
 			//Add the next scheduled tx from this conn
-			this->registerMessageTx(conn->txbuff.front());
+			this->scheduleAction(conn->txbuff.front());
 		}
 	}
 }

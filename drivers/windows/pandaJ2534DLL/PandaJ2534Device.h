@@ -7,22 +7,13 @@
 #include "J2534_v0404.h"
 #include "panda/panda.h"
 #include "synchronize.h"
-#include "J2534Connection.h"
+#include "Action.h"
 #include "MessageTx.h"
+#include "J2534Connection.h"
 
 class J2534Connection;
+class Action;
 class MessageTx;
-
-typedef struct SCHEDULED_TX_MSG {
-	SCHEDULED_TX_MSG(std::shared_ptr<MessageTx> msgtx, BOOL startdelayed = FALSE);
-
-	void refreshExpiration();
-	void refreshExpiration(std::chrono::time_point<std::chrono::steady_clock> starttime);
-
-	std::shared_ptr<MessageTx> msgtx;
-	std::chrono::time_point<std::chrono::steady_clock> expire;
-} FLOW_CONTROL_WRITE;
-
 
 class PandaJ2534Device {
 public:
@@ -38,33 +29,38 @@ public:
 	std::unique_ptr<panda::Panda> panda;
 	std::vector<std::shared_ptr<J2534Connection>> connections;
 
-	void insertMultiPartTxInQueue(std::unique_ptr<SCHEDULED_TX_MSG> fcwrite);
+	void insertActionIntoTaskList(std::shared_ptr<Action> action);
 
-	void registerMessageTx(std::shared_ptr<MessageTx> msg, BOOL startdelayed=FALSE);
+	void scheduleAction(std::shared_ptr<Action> msg, BOOL startdelayed=FALSE);
 
 	void registerConnectionTx(std::shared_ptr<J2534Connection> conn);
 
 	void unstallConnectionTx(std::shared_ptr<J2534Connection> conn);
 
-	void removeConnectionTopMessage(std::shared_ptr<J2534Connection> conn);
+	void removeConnectionTopAction(std::shared_ptr<J2534Connection> conn);
+
+	std::queue<std::shared_ptr<MessageTx>> txMsgsAwaitingEcho;
 
 private:
 	HANDLE thread_kill_event;
 
 	HANDLE can_thread_handle;
-	static DWORD WINAPI _can_recv_threadBootstrap(LPVOID This);
+	static DWORD WINAPI _can_recv_threadBootstrap(LPVOID This) {
+		return ((PandaJ2534Device*)This)->can_recv_thread();
+	}
 	DWORD can_recv_thread();
 
 	HANDLE flow_control_wakeup_event;
 	HANDLE flow_control_thread_handle;
-	static DWORD WINAPI _msg_tx_threadBootstrap(LPVOID This);
+	static DWORD WINAPI _msg_tx_threadBootstrap(LPVOID This) {
+		return ((PandaJ2534Device*)This)->msg_tx_thread();
+	}
 	DWORD msg_tx_thread();
-	std::list<std::unique_ptr<SCHEDULED_TX_MSG>> active_flow_control_txs;
-	Mutex active_flow_control_txs_lock;
-	std::queue<std::unique_ptr<SCHEDULED_TX_MSG>> txMsgsAwaitingEcho;
+	std::list<std::shared_ptr<Action>> task_queue;
+	Mutex activeTXs_mutex;
 
 	std::queue<std::shared_ptr<J2534Connection>> ConnTxQueue;
 	std::set<std::shared_ptr<J2534Connection>> ConnTxSet;
-	Mutex ConnTxMutex;
+	Mutex connTXSet_mutex;
 	BOOL txInProgress;
 };

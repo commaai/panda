@@ -15,7 +15,7 @@ public:
 
 	unsigned int addressLength();
 
-	virtual BOOL sendNextFrame();
+	virtual void execute();
 
 	virtual BOOL checkTxReceipt(J2534Frame frame);
 
@@ -42,6 +42,4 @@ public:
 	BOOL sendAll;
 	unsigned int numWaitFrames;
 	BOOL didtimeout;
-
-	J2534Frame fullmsg;
 };

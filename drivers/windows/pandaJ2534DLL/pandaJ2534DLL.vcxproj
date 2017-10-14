@@ -97,6 +97,7 @@
     <ClInclude Include="J2534Frame.h" />
     <ClInclude Include="J2534MessageFilter.h" />
     <ClInclude Include="J2534_v0404.h" />
+    <ClInclude Include="Action.h" />
     <ClInclude Include="MessageTx.h" />
     <ClInclude Include="MessageTxTimeout.h" />
     <ClInclude Include="MessageTx_CAN.h" />
@@ -121,6 +122,8 @@
     <ClCompile Include="J2534Connection_CAN.cpp" />
     <ClCompile Include="J2534Connection_ISO15765.cpp" />
     <ClCompile Include="J2534MessageFilter.cpp" />
+    <ClCompile Include="MessageTxTimeout.cpp" />
+    <ClCompile Include="MessageTx_CAN.cpp" />
     <ClCompile Include="MessageTx_ISO15765.cpp" />
     <ClCompile Include="PandaJ2534Device.cpp" />
     <ClCompile Include="pandaJ2534DLL.cpp" />

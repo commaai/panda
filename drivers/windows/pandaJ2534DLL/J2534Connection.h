@@ -2,14 +2,14 @@
 #include "panda/panda.h"
 #include "J2534_v0404.h"
 #include "synchronize.h"
+#include "J2534Frame.h"
 #include "PandaJ2534Device.h"
 #include "J2534MessageFilter.h"
-#include "MessageTx.h"
-#include "J2534Frame.h"
 
-class J2534MessageFilter;
+class J2534Frame;
+class Action;
 class PandaJ2534Device;
-class MessageTx;
+class J2534MessageFilter;
 
 #define check_bmask(num, mask)(((num) & mask) == mask)
 
@@ -70,7 +70,7 @@ public:
 		return 4128;
 	}
 
-	void schedultMsgTx(std::shared_ptr<MessageTx> msgout);
+	void schedultMsgTx(std::shared_ptr<Action> msgout);
 
 	void rescheduleExistingTxMsgs();
 
@@ -99,7 +99,7 @@ protected:
 	std::queue<J2534Frame> messages;
 
 	std::array<std::shared_ptr<J2534MessageFilter>, 10> filters;
-	std::queue<std::shared_ptr<MessageTx>> txbuff;
+	std::queue<std::shared_ptr<Action>> txbuff;
 
 private:
 	Mutex message_access_lock;

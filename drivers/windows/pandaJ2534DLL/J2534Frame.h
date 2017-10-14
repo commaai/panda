@@ -22,12 +22,20 @@ public:
 	}
 
 	J2534Frame(const PASSTHRU_MSG& msg) {
-		ProtocolID = msg.ProtocolID;
-		RxStatus = msg.RxStatus;
-		TxFlags = msg.TxFlags;
-		Timestamp = msg.Timestamp;
-		ExtraDataIndex = msg.ExtraDataIndex;
-		Data = std::string((const char*)msg.Data, msg.DataSize);
+		this->ProtocolID = msg.ProtocolID;
+		this->RxStatus = msg.RxStatus;
+		this->TxFlags = msg.TxFlags;
+		this->Timestamp = msg.Timestamp;
+		this->ExtraDataIndex = msg.ExtraDataIndex;
+		this->Data = std::string((const char*)msg.Data, msg.DataSize);
+	}
+
+	J2534Frame() {
+		this->ProtocolID = 0;
+		this->RxStatus = 0;
+		this->TxFlags = 0;
+		this->Timestamp = 0;
+		this->ExtraDataIndex = 0;
 	}
 
 	unsigned long	ProtocolID;

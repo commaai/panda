@@ -1,14 +1,16 @@
 #pragma once
+#include "Action.h"
 #include "MessageTx.h"
 
 class MessageTxTimeout;
 
-class MessageTxTimeoutable : public std::enable_shared_from_this<MessageTxTimeoutable>, public MessageTx
+class MessageTxTimeoutable : public MessageTx
 {
 public:
 	MessageTxTimeoutable(
-		std::weak_ptr<J2534Connection> connection
-	) : MessageTx(connection), recvCount(0) { };
+		std::weak_ptr<J2534Connection> connection,
+		PASSTHRU_MSG& to_send
+	);
 
 	unsigned long getRecvCount() {
 		return recvCount;
@@ -19,44 +21,26 @@ public:
 protected:
 	unsigned long recvCount;
 
-	void scheduleTimeout(std::chrono::microseconds timeoutus) {
-		if (auto conn_sp = this->connection.lock()) {
-			if (auto panda_dev_sp = conn_sp->getPandaDev()) {
-				auto timeoutobj = std::make_shared<MessageTxTimeout>(shared_from_this(), timeoutus);
-				panda_dev_sp->registerMessageTx(std::static_pointer_cast<MessageTx>(timeoutobj), TRUE);
-			}
-		}
-	}
+	void scheduleTimeout(std::chrono::microseconds timeoutus);
 
-	void scheduleTimeout(unsigned long timeoutus) {
-		scheduleTimeout(std::chrono::microseconds(timeoutus));
-	}
+	void scheduleTimeout(unsigned long timeoutus);
 };
 
 
-class MessageTxTimeout : public MessageTx
+class MessageTxTimeout : public Action
 {
 public:
 	MessageTxTimeout(
 		std::shared_ptr<MessageTxTimeoutable> msg,
 		std::chrono::microseconds timeout
-	) : MessageTx(msg->connection), msg(msg), lastRecvCount(msg->getRecvCount()) {
-		separation_time = timeout;
-	};
+	);
 
 	MessageTxTimeout(
 		std::shared_ptr<MessageTxTimeoutable> msg,
 		unsigned long timeout
-	) : MessageTxTimeout(msg, std::chrono::microseconds(timeout * 1000)) { };
+	);
 
-	virtual BOOL sendNextFrame() {
-		if (auto msg_sp = this->msg.lock()) {
-			if (msg_sp->getRecvCount() == this->lastRecvCount) {
-				msg_sp->onTimeout();
-			}
-		}
-		return FALSE; //Do not add this to the echo queue.
-	};
+	virtual void execute();
 
 private:
 	std::weak_ptr<MessageTxTimeoutable> msg;
