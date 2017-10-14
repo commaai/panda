@@ -1045,7 +1045,11 @@ namespace pandaJ2534DLLTest
 			j2534_recv_loop(chanid, 0);
 		}
 
-		//Check Single Frame tx RESETS ongoing multiframe rx transmission. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
+		//The documentation says that a s ingle channel can not send and receive messages trhough a
+		//single conversation (flow control filter) at the same time. However, the required behavior
+		//when this is detected is not described. This test was my best understanding of how it was
+		//wanted, but I no longer see the point. For now I am disabling it.
+		/*//Check Single Frame tx RESETS ongoing multiframe rx transmission. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_PassRx_29b_Filter_NoPad_STD_SFTxResetsMFRx)
 		{
 			unsigned long chanid;
@@ -1080,7 +1084,9 @@ namespace pandaJ2534DLLTest
 			//Resume sending the old message, and check th eJ2534 device didn't get a message.
 			checked_panda_send(p, 0x18DAF1EF, TRUE, "\x22""NOPQRS", 7, 0, LINE_INFO());
 			j2534_recv_loop(chanid, 0);
-		}
+		}*/
+
+		//TODO check rx is cleared by tx (multi). Or not.... read above note.
 
 		//Check multiframe rx RESETS ongoing multiframe transmission. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_PassRx_29b_Filter_NoPad_STD_FFCF_MFRxResetsMFRx)
@@ -1126,8 +1132,6 @@ namespace pandaJ2534DLLTest
 			checked_panda_send(p, 0x18DAF1EF, TRUE, "\x22""NOPQRS", 7, 0, LINE_INFO());
 			j2534_recv_loop(chanid, 0);
 		}
-
-		//TODO check rx is cleared by tx (multi)
 
 		//Check rx fails gracefully if final CF of MF rx is too short. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_FailRxFinalCFTooShort_29b_Filter_NoPad_STD_FFCF)
