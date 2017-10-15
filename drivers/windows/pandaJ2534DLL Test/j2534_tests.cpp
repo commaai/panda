@@ -125,11 +125,7 @@ namespace pandaJ2534DLLTest
 
 		TEST_METHOD(J2534_CAN11b_Tx)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
-
+			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
 			auto p = getPanda(500);
 
 			J2534_send_msg_checked(chanid, CAN, 0, 0, 0, 6, 6, "\x0\x0\x3\xAB""HI", LINE_INFO());
@@ -142,11 +138,7 @@ namespace pandaJ2534DLLTest
 
 		TEST_METHOD(J2534_CAN29b_Tx)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
-
+			auto chanid = J2534_open_and_connect("", CAN, CAN_29BIT_ID, 500000, LINE_INFO());
 			auto p = getPanda(500);
 
 			Assert::AreEqual<long>(ERR_INVALID_MSG, J2534_send_msg(chanid, CAN, 0, 0, 0, 6, 6, "\x0\x0\x3\xAB""HI"), _T("11b address should fail to tx."), LINE_INFO());
@@ -158,11 +150,7 @@ namespace pandaJ2534DLLTest
 
 		TEST_METHOD(J2534_CAN11b29b_Tx)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, CAN_ID_BOTH, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
-
+			auto chanid = J2534_open_and_connect("", CAN, CAN_ID_BOTH, 500000, LINE_INFO());
 			auto p = getPanda(500);
 
 			J2534_send_msg_checked(chanid, CAN, 0, 0, 0, 6, 6, "\x0\x0\x3\xAB""HI", LINE_INFO());
@@ -175,11 +163,7 @@ namespace pandaJ2534DLLTest
 
 		TEST_METHOD(J2534_CAN_TxEcho)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
-
+			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
 			auto p = getPanda(500);
 
 			J2534_send_msg_checked(chanid, CAN, 0, 0, 0, 9, 9, "\x0\x0\x3\xAB""HIDOG", LINE_INFO());
@@ -203,14 +187,8 @@ namespace pandaJ2534DLLTest
 
 		TEST_METHOD(J2534_CAN_RxAndPassAllFilters)
 		{
-			unsigned long chanid, filterid0;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
-
-			PASSTHRU_MSG filter = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStartMsgFilter(chanid, PASS_FILTER, &filter, &filter, 0, &filterid0), _T("Failed to create filter."), LINE_INFO());
-
+			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
+			J2534_set_PASS_filter(chanid, CAN, 0, 4, "\x0\x0\x0\x0", "\x0\x0\x0\x0", LINE_INFO());
 			auto p = getPanda(500);
 
 			p->can_send(0x1FA, FALSE, (const uint8_t*)"ABCDE", 5, panda::PANDA_CAN1);
@@ -223,15 +201,8 @@ namespace pandaJ2534DLLTest
 
 		TEST_METHOD(J2534_CAN_RxAndLimitedPassFilter)
 		{
-			unsigned long chanid, filterid0;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
-
-			PASSTHRU_MSG filter_mask = { CAN, 0, 0, 0, 4, 4, "\xFF\xFF\xFF\xFF" };
-			PASSTHRU_MSG filter = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x02\xAC" };
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStartMsgFilter(chanid, PASS_FILTER, &filter_mask, &filter, 0, &filterid0), _T("Failed to create filter."), LINE_INFO());
-
+			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
+			J2534_set_PASS_filter(chanid, CAN, 0, 4, "\xFF\xFF\xFF\xFF", "\x0\x0\x02\xAC", LINE_INFO());
 			auto p = getPanda(500);
 
 			p->can_send(0x1FA, FALSE, (const uint8_t*)"ABCDE", 5, panda::PANDA_CAN1);
@@ -243,19 +214,9 @@ namespace pandaJ2534DLLTest
 
 		TEST_METHOD(J2534_CAN_RxAndPassBlockFilter)
 		{
-			unsigned long chanid, filterid0, filterid1;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
-
-			PASSTHRU_MSG filter_mask0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
-			PASSTHRU_MSG filter0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStartMsgFilter(chanid, PASS_FILTER, &filter_mask0, &filter0, 0, &filterid0), _T("Failed to create filter."), LINE_INFO());
-
-			PASSTHRU_MSG filter_mask1 = { CAN, 0, 0, 0, 4, 4, "\xFF\xFF\xFF\xFF" };
-			PASSTHRU_MSG filter1 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x02\xAC" };
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStartMsgFilter(chanid, BLOCK_FILTER, &filter_mask1, &filter1, 0, &filterid1), _T("Failed to create filter."), LINE_INFO());
-
+			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
+			J2534_set_PASS_filter(chanid, CAN, 0, 4, "\x0\x0\x0\x0", "\x0\x0\x0\x0", LINE_INFO());
+			J2534_set_BLOCK_filter(chanid, CAN, 0, 4, "\xFF\xFF\xFF\xFF", "\x0\x0\x02\xAC", LINE_INFO());
 			auto p = getPanda(500);
 
 			p->can_send(0x1FA, FALSE, (const uint8_t*)"ABCDE", 5, panda::PANDA_CAN1);
@@ -267,22 +228,12 @@ namespace pandaJ2534DLLTest
 			check_J2534_can_msg(j2534_msg_recv[1], CAN, 0, 0, 5 + 4, 0, "\x0\x0\x3\xFA""MNOPQ", LINE_INFO());
 		}
 
+		//Check that the order of the pass and block filter do not matter
 		TEST_METHOD(J2534_CAN_RxAndFilterBlockPass)
 		{
-			//Check that the order of the pass and block filter do not matter
-			unsigned long chanid, filterid0, filterid1;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
-
-			PASSTHRU_MSG filter_mask0 = { CAN, 0, 0, 0, 4, 4, "\xFF\xFF\xFF\xFF" };
-			PASSTHRU_MSG filter0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x02\xAC" };
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStartMsgFilter(chanid, BLOCK_FILTER, &filter_mask0, &filter0, 0, &filterid0), _T("Failed to create filter."), LINE_INFO());
-
-			PASSTHRU_MSG filter_mask1 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
-			PASSTHRU_MSG filter1 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStartMsgFilter(chanid, PASS_FILTER, &filter_mask1, &filter1, 0, &filterid1), _T("Failed to create filter."), LINE_INFO());
-
+			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
+			J2534_set_BLOCK_filter(chanid, CAN, 0, 4, "\xFF\xFF\xFF\xFF", "\x0\x0\x02\xAC", LINE_INFO());
+			J2534_set_PASS_filter(chanid, CAN, 0, 4, "\x0\x0\x0\x0", "\x0\x0\x0\x0", LINE_INFO());
 			auto p = getPanda(500);
 
 			p->can_send(0x1FA, FALSE, (const uint8_t*)"ABCDE", 5, panda::PANDA_CAN1);
@@ -294,21 +245,12 @@ namespace pandaJ2534DLLTest
 			check_J2534_can_msg(j2534_msg_recv[1], CAN, 0, 0, 5 + 4, 0, "\x0\x0\x3\xFA""MNOPQ", LINE_INFO());
 		}
 
+		//Check that the order of the pass and block filter do not matter
 		TEST_METHOD(J2534_CAN_RxAndFilterRemoval)
 		{
-			//Check that the order of the pass and block filter do not matter
-			unsigned long chanid, filterid0, filterid1;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
-
-			PASSTHRU_MSG filter_mask0 = { CAN, 0, 0, 0, 4, 4, "\xFF\xFF\xFF\xFF" };
-			PASSTHRU_MSG filter0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x02\xAC" };
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStartMsgFilter(chanid, BLOCK_FILTER, &filter_mask0, &filter0, 0, &filterid0), _T("Failed to create filter."), LINE_INFO());
-
-			PASSTHRU_MSG filter_mask1 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
-			PASSTHRU_MSG filter1 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStartMsgFilter(chanid, PASS_FILTER, &filter_mask1, &filter1, 0, &filterid1), _T("Failed to create filter."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
+			auto filterid0 = J2534_set_BLOCK_filter(chanid, CAN, 0, 4, "\xFF\xFF\xFF\xFF", "\x0\x0\x02\xAC", LINE_INFO());
+			auto filterid1 = J2534_set_PASS_filter(chanid, CAN, 0, 4, "\x0\x0\x0\x0", "\x0\x0\x0\x0", LINE_INFO());
 
 			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStopMsgFilter(chanid, filterid0), _T("Failed to delete filter."), LINE_INFO());
 
@@ -324,18 +266,11 @@ namespace pandaJ2534DLLTest
 			check_J2534_can_msg(j2534_msg_recv[2], CAN, 0, 0, 5 + 4, 0, "\x0\x0\x3\xFA""MNOPQ", LINE_INFO());
 		}
 
+		//Check that the order of the pass and block filter do not matter
 		TEST_METHOD(J2534_CAN_RxWithTimeout)
 		{
-			//Check that the order of the pass and block filter do not matter
-			unsigned long chanid, filterid0;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
-
-			PASSTHRU_MSG filter_mask0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
-			PASSTHRU_MSG filter0 = { CAN, 0, 0, 0, 4, 4, "\x0\x0\x0\x0" };
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStartMsgFilter(chanid, PASS_FILTER, &filter_mask0, &filter0, 0, &filterid0), _T("Failed to create filter."), LINE_INFO());
-
+			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
+			J2534_set_PASS_filter(chanid, CAN, 0, 4, "\x0\x0\x0\x0", "\x0\x0\x0\x0", LINE_INFO());
 			auto p = getPanda(500);
 
 			PASSTHRU_MSG recvbuff;
@@ -349,11 +284,7 @@ namespace pandaJ2534DLLTest
 
 		TEST_METHOD(J2534_CAN_Baud)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, CAN, 0, 250000, &chanid), _T("Failed to open channel."), LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
-
+			auto chanid = J2534_open_and_connect("", CAN, 0, 250000, LINE_INFO());
 			auto p = getPanda(250);
 
 			J2534_send_msg_checked(chanid, CAN, 0, 0, 0, 6, 6, "\x0\x0\x3\xAB""HI", LINE_INFO());
@@ -380,6 +311,14 @@ namespace pandaJ2534DLLTest
 			return res;
 		}
 
+		unsigned long J2534_open_and_connect(const char* name, unsigned long ProtocolID, unsigned long Flags, unsigned long bps, const __LineInfo* pLineInfo = NULL) {
+			unsigned long chanid;
+			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(name), _T("Failed to open device."), pLineInfo);
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ProtocolID, Flags, bps, &chanid), _T("Failed to open channel."), pLineInfo);
+			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
+			return chanid;
+		}
+
 	};
 
 	TEST_CLASS(J2534DeviceISO15765)
@@ -403,10 +342,7 @@ namespace pandaJ2534DLLTest
 		//Check tx PASSES and rx FAIL WITHOUT a filter. 29 bit. NO Filter. NoPadding. STD address. Single Frame.
 		TEST_METHOD(J2534_ISO15765_PassTxFailRx_29b_NoFilter_NoPad_STD_SF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			auto p = getPanda(500);
 
 			//TX: works because all single frame writes should work (with or without a flow contorl filter)
@@ -425,10 +361,7 @@ namespace pandaJ2534DLLTest
 		//Check tx and rx FAIL WITHOUT a filter. 29 bit. NO Filter. NoPadding. STD address. First Frame.
 		TEST_METHOD(J2534_ISO15765_FailTxRx_29b_NoFilter_NoPad_STD_FF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			auto p = getPanda(500);
 
 			//TX
@@ -447,11 +380,8 @@ namespace pandaJ2534DLLTest
 		//Check tx PASSES and rx FAIL with a MISMATCHED filter. 29 bit. Mismatch Filter. NoPadding. STD address. Single Frame.
 		TEST_METHOD(J2534_ISO15765_PassTxFailRx_29b_MismatchFilter_NoPad_STD_SF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			//TX: works because all single frame writes should work (with or without a flow contorl filter)
@@ -470,11 +400,8 @@ namespace pandaJ2534DLLTest
 		//Check tx and rx FAIL with a MISMATCHED filter. 29 bit. Mismatch Filter. NoPadding. STD address. First Frame.
 		TEST_METHOD(J2534_ISO15765_FailTxRx_29b_MismatchFilter_NoPad_STD_FF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			//TX
@@ -493,11 +420,8 @@ namespace pandaJ2534DLLTest
 		//Check tx FAILS with a MISMATCHED filter 29bit flag. 29 bit. Mismatch Filter. NoPadding. STD address. Single Frame.
 		TEST_METHOD(J2534_ISO15765_FailTxRx_29b_MismatchFilterFlag29b_NoPad_STD_SF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x0\x0\x1\xab", "\x0\x0\x1\xcd", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			//TX
@@ -516,11 +440,8 @@ namespace pandaJ2534DLLTest
 		//Check rx passes with filter. 29 bit. Good Filter. NoPadding. STD address. Single Frame.
 		TEST_METHOD(J2534_ISO15765_SuccessRx_29b_Filter_NoPad_STD_SF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			checked_panda_send(p, 0x18DAF1EF, TRUE, "\x07""ABCD123", 8, 0, LINE_INFO());
@@ -532,11 +453,8 @@ namespace pandaJ2534DLLTest
 		//Check tx passes with filter. 29 bit. Good Filter. NoPadding. STD address. Single Frame.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_SF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 11, 0, "\x18\xda\xef\xf1""TX_TEST", LINE_INFO());
@@ -550,9 +468,7 @@ namespace pandaJ2534DLLTest
 		//Check tx passes with filter. 29 bit. Good Filter. NoPadding. STD address. Single Frame. Loopback.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_SF_LOOPBACK)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
 			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO());
 			auto p = getPanda(500);
@@ -569,11 +485,8 @@ namespace pandaJ2534DLLTest
 		//Check rx passes with filter. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_SuccessRx_29b_Filter_NoPad_STD_FFCF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			//Send first frame, then check we get a flow control frame
@@ -596,11 +509,8 @@ namespace pandaJ2534DLLTest
 		//Check multi frame tx passes with filter. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_FFCF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 14, 0, "\x18\xda\xef\xf1""\xAA\xBB\xCC\xDD\xEE\xFF\x11\x22\x33\x44", LINE_INFO());
@@ -619,11 +529,8 @@ namespace pandaJ2534DLLTest
 		//Check rx passes with filter. 11 bit. Good Filter. NoPadding. STD address. Single Frame.
 		TEST_METHOD(J2534_ISO15765_SuccessRx_11b_Filter_NoPad_STD_SF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, 0, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, 0, 4, "\xff\xff\xff\xff", "\x0\x0\x1\xab", "\x0\x0\x1\xcd", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			checked_panda_send(p, 0x1ab, FALSE, "\x07""ABCD123", 8, 0, LINE_INFO());
@@ -635,11 +542,8 @@ namespace pandaJ2534DLLTest
 		//Check tx passes with filter. 11 bit. Good Filter. NoPadding. STD address. Single Frame.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_11b_Filter_NoPad_STD_SF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, 0, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, 0, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, 0, 4, "\xff\xff\xff\xff", "\x0\x0\x1\xab", "\x0\x0\x1\xcd", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			J2534_send_msg_checked(chanid, ISO15765, 0, 0, 0, 11, 0, "\x0\x0\x1\xcd""TX_TEST", LINE_INFO());
@@ -653,9 +557,7 @@ namespace pandaJ2534DLLTest
 		//Check tx passes with filter multiple times. 29 bit. Good Filter. NoPadding. STD address. Multiple Single Frames.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_MultipleSF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
 			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO());
 			auto p = getPanda(500);
@@ -676,11 +578,8 @@ namespace pandaJ2534DLLTest
 		//Check that receiver's flow control block size requests are respected. 29 bit. Good Filter. NoPadding. STD address. Multiple Frames with multiple flow control.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_MF_FLOWCONTROLBlockSize)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO());
 			auto p = getPanda(500);
 
 			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 4 + 52, 0, "\x18\xda\xef\xf1""AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXXYYZZ", LINE_INFO());
@@ -711,11 +610,8 @@ namespace pandaJ2534DLLTest
 		//Check that receiver's flow control separation time requests are respected. 29 bit. Good Filter. NoPadding. STD address. Multiple Frames with multiple flow control.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_MF_FLOWCONTROLSTMinMultiFc)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO());
 			auto p = getPanda(500);
 
 			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 4 + 52, 0, "\x18\xda\xef\xf1""AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXXYYZZ", LINE_INFO());
@@ -764,11 +660,8 @@ namespace pandaJ2534DLLTest
 		//Check that receiver's flow control separation time requests are respected 2. 29 bit. Good Filter. NoPadding. STD address. Multiple Frames with one flow control.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_MF_FLOWCONTROLSTMinSingleFc)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO());
 			auto p = getPanda(500);
 
 			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 4 + 52, 0, "\x18\xda\xef\xf1""AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXXYYZZ", LINE_INFO());
@@ -809,11 +702,8 @@ namespace pandaJ2534DLLTest
 		//Check that tx works for messages with more than 16 frames. 29 bit. Good Filter. NoPadding. STD address. Large multiframe message.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_MF_LotsOfFrames)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO());
 			auto p = getPanda(500);
 
 			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 4 + 125, 0,
@@ -851,9 +741,7 @@ namespace pandaJ2534DLLTest
 		//Check tx passes with filter multiple times. 29 bit. Good Filter. NoPadding. STD address. Multiple Single Frames.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_MultipleMFSF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
 			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO());
 			auto p = getPanda(500);
@@ -880,9 +768,7 @@ namespace pandaJ2534DLLTest
 		//Check tx passes after message timeout. 29 bit. Good Filter. NoPadding. STD address. Multiple Frame timeout then Single Frame.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_MFTimeoutSFSuccess)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
 			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO());
 			auto p = getPanda(500);
@@ -902,9 +788,7 @@ namespace pandaJ2534DLLTest
 		//Check tx passes after mid-message timeout. 29 bit. Good Filter. NoPadding. STD address. Multiple Frame mid-timeout then Single Frame.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_MFMidTimeoutSFSuccess)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
 			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO());
 			auto p = getPanda(500);
@@ -919,10 +803,6 @@ namespace pandaJ2534DLLTest
 			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x21""ata bec", LINE_INFO());//Check passthru device sent more data, but don't reply to it
 			check_panda_can_msg(panda_msg_recv[1], 0, 0x18DAEFF1, TRUE, FALSE, "\x05""HELLO", LINE_INFO()); //Reply to the next message.
 
-			/*check_panda_can_msg(panda_msg_recv[1], 0, 0x18DAEFF1, TRUE, FALSE, "\x22""ause I ", LINE_INFO());
-			check_panda_can_msg(panda_msg_recv[2], 0, 0x18DAEFF1, TRUE, FALSE, "\x23""can", LINE_INFO());
-			check_panda_can_msg(panda_msg_recv[3], 0, 0x18DAEFF1, TRUE, FALSE, "\x05""HELLO", LINE_INFO());*/
-
 			auto j2534_msg_recv = j2534_recv_loop(chanid, 2);
 			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
 			check_J2534_can_msg(j2534_msg_recv[1], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 5, 0, "\x18\xda\xef\xf1""HELLO", LINE_INFO());
@@ -931,9 +811,7 @@ namespace pandaJ2534DLLTest
 		//Check slow tx passes without hitting FC timeout. 29 bit. Good Filter. NoPadding. STD address. Long STmin, catches if FC timeout applies before needed.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_SLOWMF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
 			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO());
 			auto p = getPanda(500);
@@ -961,11 +839,8 @@ namespace pandaJ2534DLLTest
 		//Check rx FAILS when frame is dropped. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_FailRx_29b_Filter_NoPad_STD_FFCF_DropFrame)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			//Send first frame, then check we get a flow control frame
@@ -987,11 +862,8 @@ namespace pandaJ2534DLLTest
 		//Check rx ignores frames that arrive out of order. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_PassRx_29b_Filter_NoPad_STD_FFCF_FrameNumSkip)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			//Send first frame, then check we get a flow control frame
@@ -1016,11 +888,8 @@ namespace pandaJ2534DLLTest
 		//Check Single Frame rx RESETS ongoing multiframe transmission. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_PassRx_29b_Filter_NoPad_STD_SFRxResetsMFRx)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			//Send first frame, then check we get a flow control frame
@@ -1052,11 +921,8 @@ namespace pandaJ2534DLLTest
 		/*//Check Single Frame tx RESETS ongoing multiframe rx transmission. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_PassRx_29b_Filter_NoPad_STD_SFTxResetsMFRx)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			//Send first frame, then check we get a flow control frame
@@ -1091,11 +957,8 @@ namespace pandaJ2534DLLTest
 		//Check multiframe rx RESETS ongoing multiframe transmission. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_PassRx_29b_Filter_NoPad_STD_FFCF_MFRxResetsMFRx)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			//Send first frame, then check we get a flow control frame
@@ -1136,11 +999,8 @@ namespace pandaJ2534DLLTest
 		//Check rx fails gracefully if final CF of MF rx is too short. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_FailRxFinalCFTooShort_29b_Filter_NoPad_STD_FFCF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			//Send first frame, then check we get a flow control frame
@@ -1163,11 +1023,8 @@ namespace pandaJ2534DLLTest
 		//Check rx fails gracefully if first frame is too short. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_FailRxFFTooShort_29b_Filter_NoPad_STD_FFCF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			//Send first frame, then check we get a flow control frame. The transaction should reset immediately because more data could have been sent in this frame.
@@ -1187,11 +1044,8 @@ namespace pandaJ2534DLLTest
 		//Check rx passes with filter. 29 bit. Good Filter. NoPadding. EXT address. Single Frame.
 		TEST_METHOD(J2534_ISO15765_SuccessRx_29b_Filter_NoPad_EXT_SF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID | ISO15765_ADDR_TYPE, 5, "\xff\xff\xff\xff\xff", "\x18\xda\xf1\xef\x13", "\x18\xda\xef\xf1\x13", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			checked_panda_send(p, 0x18DAF1EF, TRUE, "\x13""\x06""ABC123", 8, 0, LINE_INFO());
@@ -1203,11 +1057,8 @@ namespace pandaJ2534DLLTest
 		//Check tx passes with filter. 29 bit. Good Filter. NoPadding. EXT address. Single Frame.
 		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_EXT_SF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID | ISO15765_ADDR_TYPE, 5, "\xff\xff\xff\xff\xff", "\x18\xda\xf1\xef\x13", "\x18\xda\xef\xf1\x13", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID | ISO15765_ADDR_TYPE, 0, 11, 0, "\x18\xda\xef\xf1\x13""DERP!!", LINE_INFO());
@@ -1221,11 +1072,8 @@ namespace pandaJ2534DLLTest
 		//Check rx passes with filter. 29 bit. Good Filter. NoPadding. EXT address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_SuccessRx_29b_Filter_NoPad_EXT_FFCF)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID | ISO15765_ADDR_TYPE, 5, "\xff\xff\xff\xff\xff", "\x18\xda\xf1\xef\x13", "\x18\xda\xef\xf1\x13", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			//Send first frame, then check we get a flow control frame
@@ -1258,11 +1106,8 @@ namespace pandaJ2534DLLTest
 		//Check rx FAILS when frame is dropped. 29 bit. Good Filter. NoPadding. STD address. Multi Frame.
 		TEST_METHOD(J2534_ISO15765_FailRx_29b_Filter_NoPad_EXT_FFCF_DropFrame)
 		{
-			unsigned long chanid;
-			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
-			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ISO15765, CAN_29BIT_ID, 500000, &chanid), _T("Failed to open channel."), LINE_INFO());
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
 			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID | ISO15765_ADDR_TYPE, 5, "\xff\xff\xff\xff\xff", "\x18\xda\xf1\xef\x13", "\x18\xda\xef\xf1\x13", LINE_INFO());
-			write_ioctl(chanid, LOOPBACK, 0, LINE_INFO());
 			auto p = getPanda(500);
 
 			//Send first frame, then check we get a flow control frame
@@ -1289,6 +1134,14 @@ namespace pandaJ2534DLLTest
 			unsigned int res = PassThruOpen((void*)name, &devid);
 			if (res == STATUS_NOERROR) didopen = TRUE;
 			return res;
+		}
+
+		unsigned long J2534_open_and_connect(const char* name, unsigned long ProtocolID, unsigned long Flags, unsigned long bps, const __LineInfo* pLineInfo = NULL) {
+			unsigned long chanid;
+			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(name), _T("Failed to open device."), pLineInfo);
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruConnect(devid, ProtocolID, Flags, bps, &chanid), _T("Failed to open channel."), pLineInfo);
+			write_ioctl(chanid, LOOPBACK, FALSE, LINE_INFO()); // DISABLE J2534 ECHO/LOOPBACK
+			return chanid;
 		}
 
 	};

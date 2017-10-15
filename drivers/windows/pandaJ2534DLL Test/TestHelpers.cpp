@@ -119,12 +119,36 @@ void check_J2534_can_msg(PASSTHRU_MSG& msgin, unsigned long ProtocolID, unsigned
 	Assert::AreEqual<unsigned long>(ExtraDataIndex, msgin.ExtraDataIndex, _T("Wrong msg ExtraDataIndex"), pLineInfo);
 }
 
+unsigned long J2534_set_PASS_filter(unsigned long chanid, unsigned long ProtocolID, unsigned long tx,
+	unsigned long len, char* mask, char* pattern, const __LineInfo* pLineInfo) {
+	unsigned long filterid;
+	PASSTHRU_MSG mask_msg = { ProtocolID, 0, tx, 0, len, 0, 0 };
+	PASSTHRU_MSG pattern_msg = { ProtocolID, 0, tx, 0, len, 0, 0 };
+	memcpy(mask_msg.Data, mask, len);
+	memcpy(pattern_msg.Data, pattern, len);
+	Assert::AreEqual<long>(STATUS_NOERROR, PassThruStartMsgFilter(chanid, PASS_FILTER, &mask_msg, &pattern_msg, NULL, &filterid),
+		_T("Failed to create filter."), pLineInfo);
+	return filterid;
+}
+
+unsigned long J2534_set_BLOCK_filter(unsigned long chanid, unsigned long ProtocolID, unsigned long tx,
+	unsigned long len, char* mask, char* pattern, const __LineInfo* pLineInfo) {
+	unsigned long filterid;
+	PASSTHRU_MSG mask_msg = { ProtocolID, 0, tx, 0, len, 0, 0 };
+	PASSTHRU_MSG pattern_msg = { ProtocolID, 0, tx, 0, len, 0, 0 };
+	memcpy(mask_msg.Data, mask, len);
+	memcpy(pattern_msg.Data, pattern, len);
+	Assert::AreEqual<long>(STATUS_NOERROR, PassThruStartMsgFilter(chanid, BLOCK_FILTER, &mask_msg, &pattern_msg, NULL, &filterid),
+		_T("Failed to create filter."), pLineInfo);
+	return filterid;
+}
+
 unsigned long J2534_set_flowctrl_filter(unsigned long chanid, unsigned long tx,
 	unsigned long len, char* mask, char* pattern, char* flow, const __LineInfo* pLineInfo) {
 	unsigned long filterid;
-	PASSTHRU_MSG mask_msg =    { ISO15765, 0, tx, 0, len, 0, 0 };
+	PASSTHRU_MSG mask_msg = { ISO15765, 0, tx, 0, len, 0, 0 };
 	PASSTHRU_MSG pattern_msg = { ISO15765, 0, tx, 0, len, 0, 0 };
-	PASSTHRU_MSG flow_msg =    { ISO15765, 0, tx, 0, len, 0, 0 };
+	PASSTHRU_MSG flow_msg = { ISO15765, 0, tx, 0, len, 0, 0 };
 	memcpy(mask_msg.Data, mask, len);
 	memcpy(pattern_msg.Data, pattern, len);
 	memcpy(flow_msg.Data, flow, len);

@@ -23,6 +23,12 @@ extern std::vector<PASSTHRU_MSG> j2534_recv_loop(unsigned int chanid, unsigned i
 extern void check_J2534_can_msg(PASSTHRU_MSG& msgin, unsigned long ProtocolID, unsigned long RxStatus, unsigned long TxFlags,
 	unsigned long DataSize, unsigned long ExtraDataIndex, const char* Data, const __LineInfo* pLineInfo = NULL);
 
+unsigned long J2534_set_PASS_filter(unsigned long chanid, unsigned long ProtocolID, unsigned long tx,
+	unsigned long len, char* mask, char* pattern, const __LineInfo* pLineInfo = NULL);
+
+unsigned long J2534_set_BLOCK_filter(unsigned long chanid, unsigned long ProtocolID, unsigned long tx,
+	unsigned long len, char* mask, char* pattern, const __LineInfo* pLineInfo = NULL);
+
 extern unsigned long J2534_set_flowctrl_filter(unsigned long chanid, unsigned long tx,
 	unsigned long len, char* mask, char* pattern, char* flow, const __LineInfo* pLineInfo = NULL);
 
