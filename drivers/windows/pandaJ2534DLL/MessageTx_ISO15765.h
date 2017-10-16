@@ -4,6 +4,10 @@
 
 class J2534Connection_ISO15765;
 
+/**
+A specialized message type that can handle J2534 single and multi
+frame (with flow control) writes.
+*/
 class MessageTx_ISO15765 : public MessageTxTimeoutable
 {
 public:
@@ -26,6 +30,8 @@ public:
 	virtual void reset();
 
 	virtual void onTimeout();
+
+	//Functions for ISO15765 flow control
 
 	void MessageTx_ISO15765::flowControlContinue(uint8_t block_size, std::chrono::microseconds separation_time);
 	void MessageTx_ISO15765::flowControlWait(unsigned long N_WFTmax);

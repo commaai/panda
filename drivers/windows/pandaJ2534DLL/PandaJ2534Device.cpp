@@ -157,6 +157,8 @@ DWORD PandaJ2534Device::msg_tx_thread() {
 	return 0;
 }
 
+//Place the Action in the task queue based on the Action's expiration time,
+//then signal the thread that processes actions.
 void PandaJ2534Device::insertActionIntoTaskList(std::shared_ptr<Action> action) {
 	synchronized(task_queue_mutex) {
 		auto iter = this->task_queue.begin();

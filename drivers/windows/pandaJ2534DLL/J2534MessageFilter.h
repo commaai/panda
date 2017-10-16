@@ -14,6 +14,14 @@ typedef enum {
 //Forward declare
 class J2534Connection;
 
+/* Represents a J2534 Message Filter created by PassThruStartMsgFilter.
+
+J2534 uses filters to sort out messages in a simple and sane way. Except for
+flow control filters. J2534 v04.04 uses filters to manage 'conversations' in
+protocols that support flow control like ISO15765. The whole solution is a
+hack, and J2534 v05.00 greatly simplifies this concept. But we are using
+v04.04 so, here we are.
+*/
 class J2534MessageFilter {
 public:
 	J2534MessageFilter(

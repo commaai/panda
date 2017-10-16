@@ -4,6 +4,7 @@
 
 class MessageTxTimeout;
 
+/* A special type of MessageTx for multipart messages that supports being canceled with a timeout.*/
 class MessageTxTimeoutable : public MessageTx
 {
 public:
@@ -27,6 +28,9 @@ protected:
 };
 
 
+/* An Action that cancels MessageTxTimeoutableif the Timeout Actoin executes
+before the MessageTxTimeoutableif renews its timeout.
+*/
 class MessageTxTimeout : public Action
 {
 public:

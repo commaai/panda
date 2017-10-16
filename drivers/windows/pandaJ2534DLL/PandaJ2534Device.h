@@ -15,6 +15,11 @@ class J2534Connection;
 class Action;
 class MessageTx;
 
+/**
+Class representing a physical panda adapter. Instances are created by
+PassThruOpen in the J2534 API. A Device can create one or more
+J2534Connections.
+*/
 class PandaJ2534Device {
 public:
 	PandaJ2534Device(std::unique_ptr<panda::Panda> new_panda);
@@ -29,16 +34,22 @@ public:
 	std::unique_ptr<panda::Panda> panda;
 	std::vector<std::shared_ptr<J2534Connection>> connections;
 
+	//Place the Action in the task queue based on the Action's expiration time,
+	//then signal the thread that processes actions.
 	void insertActionIntoTaskList(std::shared_ptr<Action> action);
 
 	void scheduleAction(std::shared_ptr<Action> msg, BOOL startdelayed=FALSE);
 
 	void registerConnectionTx(std::shared_ptr<J2534Connection> conn);
 
+	//Resume sending messages from the provided Connection's TX queue.
 	void unstallConnectionTx(std::shared_ptr<J2534Connection> conn);
 
+	//Cleans up several queues after a message completes, is canceled, or otherwise goes away.
 	void removeConnectionTopAction(std::shared_ptr<J2534Connection> conn, std::shared_ptr<MessageTx> msg);
 
+	//Messages that have been sent on the wire will be echoed by the panda when
+	//transmission is complete. This tracks what is still waiting to hear an echo.
 	std::queue<std::shared_ptr<MessageTx>> txMsgsAwaitingEcho;
 
 private:

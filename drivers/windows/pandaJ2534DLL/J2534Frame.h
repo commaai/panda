@@ -2,6 +2,7 @@
 #include "J2534_v0404.h"
 #include "panda/panda.h"
 
+/*A move convenient container for J2534 Messages than the static buffer provided by default.*/
 class J2534Frame {
 public:
 	J2534Frame(unsigned long ProtocolID, unsigned long RxStatus=0, unsigned long TxFlags=0, unsigned long Timestamp=0) :

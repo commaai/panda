@@ -51,4 +51,6 @@ private:
 	bool locked;
 };
 
+//A useful shorthand for locking and unlocking a mutex over a scope.
+//CAUTION, implemented with a for loop, so break/continue are consumed.
 #define synchronized(M) for(Lock M##_lock = M; M##_lock; M##_lock.setUnlock())

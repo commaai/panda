@@ -4,6 +4,12 @@
 
 class J2534Connection;
 
+/* A message that is resent on a given period. Created with calls to PassThruStartPeriodicMessage.
+
+Instead of making each J2534 protocol implementation have to implement periodic message
+functionality, this class takes a message to be sent, and passes along the execute call
+to the message, then reschedules itself.
+*/
 class MessagePeriodic : public Action, public std::enable_shared_from_this<Action>
 {
 public:
