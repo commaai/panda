@@ -84,7 +84,7 @@ Section "panda driver (required)"
   
   ; Write the uninstall keys for Windows
   ;WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Install_Name}" "DisplayVersion" ""
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Install_Name}" "DisplayIcon" '"$INSTDIR\pandaJ2534.dll"'
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Install_Name}" "DisplayIcon" '"$INSTDIR\pandaJ2534_0404_32.dll"'
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Install_Name}" "DisplayName" "panda J2534 Drivers"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Install_Name}" "Publisher" "comma.ai"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Install_Name}" "UninstallString" '"$INSTDIR\uninstall.exe"'
@@ -114,11 +114,11 @@ Section "J2534 Driver"
   
   SetOutPath $INSTDIR
   
-  File Release_x86\pandaJ2534.dll
+  File Release_x86\pandaJ2534_0404_32.dll
 
   SetRegView 32
   WriteRegDWORD  HKLM "${J2534_Reg_Path}" "CAN"               00000001
-  WriteRegStr    HKLM "${J2534_Reg_Path}" "FunctionLibrary"   "$INSTDIR\pandaJ2534.dll"
+  WriteRegStr    HKLM "${J2534_Reg_Path}" "FunctionLibrary"   "$INSTDIR\pandaJ2534_0404_32.dll"
   WriteRegDWORD  HKLM "${J2534_Reg_Path}" "ISO15765"          00000001
   WriteRegDWORD  HKLM "${J2534_Reg_Path}" "J1850VPW"          00000000
   WriteRegDWORD  HKLM "${J2534_Reg_Path}" "SCI_A_ENGINE"      00000000
@@ -173,7 +173,7 @@ Section "Uninstall"
   
   ; Remove files and uninstaller
   Delete "$INSTDIR\uninstall.exe"
-  Delete "$INSTDIR\pandaJ2534.dll"
+  Delete "$INSTDIR\pandaJ2534_0404_32.dll"
 
   ; Remove directories used
   RMDir "$INSTDIR"
