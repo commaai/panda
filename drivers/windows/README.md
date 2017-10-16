@@ -28,11 +28,11 @@ same data format.
 
 For each PassThru Device that should be used with J2534 (in this case,
 the panda), a 'driver' has to be written that can be loaded by a
-client applcation wanting to send/receive data.
+client application wanting to send/receive data.
 
 A lot of J2534 has good ideas behind it, but the standard has some odd choices:
 
-* Platform Locked: Requires using the Windows Registry to findinstalled J2534 libraries/drivers. Drivers have to be DLLs.
+* Platform Locked: Requires using the Windows Registry to find installed J2534 libraries/drivers. Drivers have to be DLLs.
 * Architecture Locked: So far there is only support for x86.
 * No device autodetect, and poor support for selecting from multiple devices.
 * Constant vague language about important behavior (small differences between vendors).
@@ -52,7 +52,7 @@ features.
 - [X] **CAN**
 - [X] **ISO15765**
 - [ ] **ISO9141** *(This protocol could be implemented if 5 BAUD init support is added to the panda.)*
-- [ ] **ISO14230/KWP2000** *(Could be supported with FAST init, 5baud init if panda adds support for 5bps seral)*
+- [ ] **ISO14230/KWP2000** *(Could be supported with FAST init, 5baud init if panda adds support for 5bps serial)*
 
 # Building the Project:
 
@@ -64,12 +64,20 @@ with the new WDK and Visual Studio when it is available.
 The WDK is only required for creating the signed WinUSB inf file. The
 WDK may also provide the headers for WinUSB.
 
-The installer is generated with NullSoft NSIS. Use NSIS to run
-panda_install.nsi after building all the required projects.
+To build all the projects required for the installer, in Visual
+Studio, select **Build->Batch Build.** In the project list select:
+
+- **"panda"** *Release|x86*
+- **"panda"** *Release|x64*
+- **"panda Driver Package"** Debug|x86 (Note this inf file works with x86/amd64).
+- **"pandaJ2534DLL"** *Release|x86*
+
+The installer is generated with [NullSoft NSIS](http://nsis.sourceforge.net/Main_Page).
+Use NSIS to run panda_install.nsi after building all the required projects.
 
 # Installing
 
-Installation would be straightforwared were it not for the USB Driver
+Installation would be straightforward were it not for the USB Driver
 that needs to be setup. The driver itself is only a WinUSB inf file
 (no actual driver), but it still needs to be signed.
 
@@ -112,17 +120,17 @@ other two options.
 
 - Get official signing key for WinUSB driver inf file.
 - Implement TxClear and RxClear. (Requires reading vague specifications).
-- Apply a styleguide and consistent naming convention for Classes/Functions/Variables.
+- Apply a style-guide and consistent naming convention for Classes/Functions/Variables.
 - Send multiple messages (each with a different address) from a given connection at the same time.
 - Implement ISO14230/KWP2000 FAST (LIN communication is already supported with the raw panda USB driver).
 - Find more documentation about SW_CAN_PS (Single Wire CAN, aka GMLAN).
-- Find example of client using a _PS version of a protocol (PS is pin select, and may support using different CAN busses).
+- Find example of client using a _PS version of a protocol (PS is pin select, and may support using different CAN buses).
 
 
 # Known Issues:
 
-- ISO15765 Multiframe TX: Hardware delays make transmission overshoot
-  STMIN by several miliseconds. This does not violate the requirements
+- ISO15765 Multi-frame TX: Hardware delays make transmission overshoot
+  STMIN by several milliseconds. This does not violate the requirements
   of STMIN, it just means it is a little slower than it could be.
 
 - All Tx messages from a single Connection are serialized. This can be
