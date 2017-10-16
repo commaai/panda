@@ -54,6 +54,23 @@ void check_panda_can_msg(panda::PANDA_CAN_MSG& msgin, uint8_t bus, unsigned long
 	Assert::AreEqual<std::string>(dat, std::string((char*)msgin.dat, msgin.len), _T("Wrong msg payload"), pLineInfo);
 }
 
+unsigned long J2534_start_periodic_msg_checked(unsigned long chanid, unsigned long ProtocolID, unsigned long TxFlags, unsigned long DataSize,
+	unsigned long ExtraDataIndex, const char * Data, unsigned long TimeInterval, const __LineInfo * pLineInfo) {
+	PASSTHRU_MSG msg = { ProtocolID, 0, TxFlags, 0, DataSize, ExtraDataIndex };
+	memcpy_s(msg.Data, 4128, Data, DataSize);
+	unsigned long msgID;
+	Assert::AreEqual<long>(STATUS_NOERROR, J2534_start_periodic_msg(chanid, ProtocolID, TxFlags, DataSize,
+		ExtraDataIndex, Data, TimeInterval, &msgID, pLineInfo), _T("Failed to start Periodic Message."), pLineInfo);
+	return msgID;
+}
+
+unsigned long J2534_start_periodic_msg(unsigned long chanid, unsigned long ProtocolID, unsigned long TxFlags, unsigned long DataSize,
+	unsigned long ExtraDataIndex, const char * Data, unsigned long TimeInterval, unsigned long* msgID, const __LineInfo * pLineInfo) {
+	PASSTHRU_MSG msg = { ProtocolID, 0, TxFlags, 0, DataSize, ExtraDataIndex };
+	memcpy_s(msg.Data, 4128, Data, DataSize);
+	return PassThruStartPeriodicMsg(chanid, &msg, msgID, TimeInterval);
+}
+
 void J2534_send_msg_checked(unsigned long chanid, unsigned long ProtocolID, unsigned long RxStatus, unsigned long TxFlags,
 	unsigned long Timestamp, unsigned long DataSize, unsigned long ExtraDataIndex, const char* Data, const __LineInfo* pLineInfo) {
 

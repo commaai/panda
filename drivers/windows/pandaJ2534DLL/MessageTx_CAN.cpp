@@ -2,8 +2,6 @@
 #include "MessageTx_CAN.h"
 #include "J2534Connection_CAN.h"
 
-//class J2534Connection_CAN;
-
 MessageTx_CAN::MessageTx_CAN(
 	std::shared_ptr<J2534Connection> connection_in,
 	PASSTHRU_MSG& to_send
@@ -32,7 +30,15 @@ BOOL MessageTx_CAN::checkTxReceipt(J2534Frame frame) {
 	if (txReady()) return FALSE;
 	if (frame.Data == fullmsg.Data && ((this->fullmsg.TxFlags & CAN_29BIT_ID) == (frame.RxStatus & CAN_29BIT_ID))) {
 		txInFlight = FALSE;
+		if (auto conn_sp = std::static_pointer_cast<J2534Connection_CAN>(this->connection.lock()))
+			if (conn_sp->loopback)
+				conn_sp->addMsgToRxQueue(frame);
 		return TRUE;
 	}
 	return FALSE;
+}
+
+void MessageTx_CAN::reset() {
+	sentyet = FALSE;
+	txInFlight = FALSE;
 }

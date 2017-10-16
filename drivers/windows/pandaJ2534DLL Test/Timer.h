@@ -13,6 +13,8 @@ public:
 	// gets the time elapsed from construction.
 	unsigned long long /*milliseconds*/ getTimePassed();
 
+	void reset();
+
 private:
 	time_point_type start;
 };

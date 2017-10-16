@@ -9,6 +9,12 @@ J2534Connection::J2534Connection(
 	unsigned long BaudRate
 ) : panda_dev(panda_dev), ProtocolID(ProtocolID), Flags(Flags), BaudRate(BaudRate), port(0) { }
 
+unsigned long J2534Connection::validateTxMsg(PASSTHRU_MSG* msg) {
+	if (msg->DataSize < this->getMinMsgLen() || msg->DataSize > this->getMaxMsgLen())
+		return ERR_INVALID_MSG;
+	return STATUS_NOERROR;
+}
+
 long J2534Connection::PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) {
 	//Timeout of 0 means return immediately. Non zero means WAIT for that time then return. Dafuk.
 	long err_code = STATUS_NOERROR;
@@ -22,17 +28,17 @@ long J2534Connection::PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMs
 		}
 
 		//Synchronized won't work where we have to break out of a loop
-		message_access_lock.lock();
-		if (this->messages.empty()) {
-			message_access_lock.unlock();
+		messageRxBuff_mutex.lock();
+		if (this->messageRxBuff.empty()) {
+			messageRxBuff_mutex.unlock();
 			if (Timeout == 0)
 				break;
 			continue;
 		}
 
-		auto msg_in = this->messages.front();
-		this->messages.pop();
-		message_access_lock.unlock();
+		auto msg_in = this->messageRxBuff.front();
+		this->messageRxBuff.pop();
+		messageRxBuff_mutex.unlock();
 
 		PASSTHRU_MSG *msg_out = &pMsg[msgnum++];
 		msg_out->ProtocolID = this->ProtocolID;
@@ -50,9 +56,60 @@ long J2534Connection::PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMs
 	*pNumMsgs = msgnum;
 	return err_code;
 }
-long J2534Connection::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) { return STATUS_NOERROR; }
-long J2534Connection::PassThruStartPeriodicMsg(PASSTHRU_MSG *pMsg, unsigned long *pMsgID, unsigned long TimeInterval) { return STATUS_NOERROR; }
-long J2534Connection::PassThruStopPeriodicMsg(unsigned long MsgID) { return STATUS_NOERROR; }
+
+long J2534Connection::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) {
+	//There doesn't seem to be much reason to implement the timeout here.
+	for (int msgnum = 0; msgnum < *pNumMsgs; msgnum++) {
+		PASSTHRU_MSG* msg = &pMsg[msgnum];
+		if (msg->ProtocolID != this->ProtocolID) {
+			*pNumMsgs = msgnum;
+			return ERR_MSG_PROTOCOL_ID;
+		}
+
+		auto retcode = this->validateTxMsg(msg);
+		if (retcode != STATUS_NOERROR) {
+			*pNumMsgs = msgnum;
+			return retcode;
+		}
+
+		auto msgtx = this->parseMessageTx(*pMsg);
+		if (msgtx != nullptr) //Nullptr is supported for unimplemented connection types.
+			this->schedultMsgTx(std::dynamic_pointer_cast<Action>(msgtx));
+	}
+	return STATUS_NOERROR;
+}
+
+//The docs say that a device has to support 10 periodic messages, though more is ok.
+//It is easier to store them on the connection, so 10 per connection it is.
+long J2534Connection::PassThruStartPeriodicMsg(PASSTHRU_MSG *pMsg, unsigned long *pMsgID, unsigned long TimeInterval) {
+	if (pMsg->DataSize < getMinMsgLen() || pMsg->DataSize > getMaxMsgSingleFrameLen()) return ERR_INVALID_MSG;
+	if (pMsg->ProtocolID != this->ProtocolID) return ERR_MSG_PROTOCOL_ID;
+	if (TimeInterval < 5 || TimeInterval > 65535) return ERR_INVALID_TIME_INTERVAL;
+
+	for (int i = 0; i < this->periodicMessages.size(); i++) {
+		if (periodicMessages[i] != nullptr) continue;
+
+		*pMsgID = i;
+		auto msgtx = this->parseMessageTx(*pMsg);
+		if (msgtx != nullptr) {
+			periodicMessages[i] = std::make_shared<MessagePeriodic>(std::chrono::microseconds(TimeInterval*1000), msgtx);
+			periodicMessages[i]->scheduleImmediate();
+			if (auto panda_dev = this->getPandaDev()) {
+				panda_dev->insertActionIntoTaskList(periodicMessages[i]);
+			}
+		}
+		return STATUS_NOERROR;
+	}
+	return ERR_EXCEEDED_LIMIT;
+}
+
+long J2534Connection::PassThruStopPeriodicMsg(unsigned long MsgID) {
+	if (MsgID >= this->periodicMessages.size() || this->periodicMessages[MsgID] == nullptr)
+		return ERR_INVALID_MSG_ID;
+	this->periodicMessages[MsgID]->cancel();
+	this->periodicMessages[MsgID] = nullptr;
+	return STATUS_NOERROR;
+}
 
 long J2534Connection::PassThruStartMsgFilter(unsigned long FilterType, PASSTHRU_MSG *pMaskMsg, PASSTHRU_MSG *pPatternMsg,
 	PASSTHRU_MSG *pFlowControlMsg, unsigned long *pFilterID) {
@@ -93,7 +150,9 @@ long J2534Connection::init5b(SBYTE_ARRAY* pInput, SBYTE_ARRAY* pOutput) { return
 long J2534Connection::initFast(PASSTHRU_MSG* pInput, PASSTHRU_MSG* pOutput) { return STATUS_NOERROR; }
 long J2534Connection::clearTXBuff() { return STATUS_NOERROR; }
 long J2534Connection::clearRXBuff() {
-	this->messages = {};
+	synchronized(messageRxBuff_mutex) {
+		this->messageRxBuff = {};
+	}
 	return STATUS_NOERROR;
 }
 long J2534Connection::clearPeriodicMsgs() { return STATUS_NOERROR; }
@@ -122,13 +181,6 @@ void J2534Connection::rescheduleExistingTxMsgs() {
 			panda_ps->unstallConnectionTx(shared_from_this());
 		}
 	}
-}
-
-void J2534Connection::processMessageReceipt(const J2534Frame& msg) {
-	//TX_MSG_TYPE should be set in RxStatus
-	if (!check_bmask(msg.RxStatus, TX_MSG_TYPE)) return;
-	if (this->loopback)
-		addMsgToRxQueue(msg);
 }
 
 //Works well as long as the protocol doesn't support flow control.

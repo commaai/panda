@@ -14,13 +14,19 @@ public:
 		unsigned long BaudRate
 	);
 
-	virtual long PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
+	virtual unsigned long validateTxMsg(PASSTHRU_MSG* msg);
+
+	virtual std::shared_ptr<MessageTx> parseMessageTx(PASSTHRU_MSG& pMsg);
 
 	virtual unsigned long getMinMsgLen() {
 		return 4;
 	}
 
 	virtual unsigned long getMaxMsgLen() {
+		return 12;
+	}
+
+	virtual unsigned long getMaxMsgSingleFrameLen() {
 		return 12;
 	}
 

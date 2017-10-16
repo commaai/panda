@@ -18,35 +18,25 @@ J2534Connection_ISO15765::J2534Connection_ISO15765(
 	panda_dev->panda->set_can_speed_cbps(panda::PANDA_CAN1, (uint16_t)(BaudRate / 100));
 }
 
-long J2534Connection_ISO15765::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) {
-	for (unsigned int msgnum = 0; msgnum < *pNumMsgs; msgnum++) {
-		PASSTHRU_MSG* msg = &pMsg[msgnum];
+unsigned long J2534Connection_ISO15765::validateTxMsg(PASSTHRU_MSG* msg) {
+	if ((msg->DataSize < this->getMinMsgLen() + (msg_is_extaddr(msg) ? 1 : 0) ||
+		msg->DataSize > this->getMaxMsgLen() + (msg_is_extaddr(msg) ? 1 : 0) ||
+		(val_is_29bit(msg->TxFlags) != this->_is_29bit() && !check_bmask(this->Flags, CAN_ID_BOTH))))
+		return ERR_INVALID_MSG;
 
-		if (msg->ProtocolID != this->ProtocolID) {
-			*pNumMsgs = msgnum;
-			return ERR_MSG_PROTOCOL_ID;
-		}
-		if (msg->DataSize < this->getMinMsgLen() + (msg_is_extaddr(msg) ? 1 : 0) ||
-			msg->DataSize > this->getMaxMsgLen() + (msg_is_extaddr(msg) ? 1 : 0) ||
-			(val_is_29bit(msg->TxFlags) != this->_is_29bit() && !check_bmask(this->Flags, CAN_ID_BOTH))) {
-			*pNumMsgs = msgnum;
-			return ERR_INVALID_MSG;
-		}
+	int fid = get_matching_out_fc_filter_id(std::string((const char*)msg->Data, msg->DataSize), msg->TxFlags, 0xFFFFFFFF);
+	if (msg->DataSize > getMaxMsgSingleFrameLen() && fid == -1) return ERR_NO_FLOW_CONTROL; //11 bytes (4 for CANid, 7 payload) is max length of input frame.
 
-		int fid = get_matching_out_fc_filter_id(std::string((const char*)msg->Data, msg->DataSize), msg->TxFlags, 0xFFFFFFFF);
-		if (msg->DataSize > 11 && fid == -1) return ERR_NO_FLOW_CONTROL; //11 bytes (4 for CANid, 7 payload) is max length of input frame.
-
-		auto msgtx = std::make_shared<MessageTx_ISO15765>( shared_from_this(), *msg, (fid == -1) ? nullptr : this->filters[fid] );
-		this->schedultMsgTx(std::dynamic_pointer_cast<Action>(msgtx));
-	}
 	return STATUS_NOERROR;
 }
 
-void J2534Connection_ISO15765::processMessageReceipt(const J2534Frame& msg) {
-	if (msg.ProtocolID != CAN) return;
+std::shared_ptr<MessageTx> J2534Connection_ISO15765::parseMessageTx(PASSTHRU_MSG& msg) {
+	int fid = get_matching_out_fc_filter_id(std::string((const char*)msg.Data, msg.DataSize), msg.TxFlags, 0xFFFFFFFF);
+	if (msg.DataSize > getMaxMsgSingleFrameLen() && fid == -1) 1;
 
-	//TX_MSG_TYPE should be set in RxStatus
-	if (!check_bmask(msg.RxStatus, TX_MSG_TYPE)) return;
+	return std::dynamic_pointer_cast<MessageTx>(
+		std::make_shared<MessageTx_ISO15765>(shared_from_this(), msg, (fid == -1) ? nullptr : this->filters[fid])
+		);
 }
 
 //https://happilyembedded.wordpress.com/2016/02/15/can-multiple-frame-transmission/
@@ -63,6 +53,8 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 	switch (msg_get_type(msg, addrlen)) {
 	case FRAME_FLOWCTRL:
 		{
+			if (this->txbuff.size() == 0)
+				return;
 			if (msg.Data.size() < addrlen + 3) return;
 			uint8_t flow_status = msg.Data[addrlen] & 0x0F;
 			uint8_t block_size = msg.Data[addrlen + 1];
@@ -79,6 +71,7 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 				} else {
 					break;
 				}
+				txConvo->scheduleImmediate();
 				this->rescheduleExistingTxMsgs();
 				break;
 			}

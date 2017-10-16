@@ -131,11 +131,21 @@ BOOL MessageTx_ISO15765::txReady() {
 	return block_size > 0 || sendAll || this->frames_sent == 0;
 }
 
+void MessageTx_ISO15765::reset() {
+	frames_sent = 0;
+	consumed_count = 0;
+	block_size = 0;
+	txInFlight = FALSE;
+	sendAll = FALSE;
+	numWaitFrames = 0;
+	didtimeout = FALSE;
+}
+
 void MessageTx_ISO15765::onTimeout() {
 	didtimeout = TRUE;
 	if (auto conn_sp = std::static_pointer_cast<J2534Connection_ISO15765>(this->connection.lock())) {
 		if (auto panda_dev_sp = conn_sp->getPandaDev()) {
-			panda_dev_sp->removeConnectionTopAction(conn_sp);
+			panda_dev_sp->removeConnectionTopAction(conn_sp, shared_from_this());
 		}
 	}
 }

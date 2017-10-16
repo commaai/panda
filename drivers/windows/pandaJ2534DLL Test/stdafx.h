@@ -10,3 +10,5 @@
 // Headers for CppUnitTest
 #include "CppUnitTest.h"
 #include <iomanip> //Used for formatting in TestHelpers.cpp
+#include <string>
+#include <array>

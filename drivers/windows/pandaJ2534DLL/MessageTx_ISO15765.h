@@ -23,6 +23,8 @@ public:
 
 	virtual BOOL txReady();
 
+	virtual void reset();
+
 	virtual void onTimeout();
 
 	void MessageTx_ISO15765::flowControlContinue(uint8_t block_size, std::chrono::microseconds separation_time);

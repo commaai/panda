@@ -23,6 +23,10 @@ public:
 		expire = std::chrono::steady_clock::now();
 	}
 
+	void scheduleDelay() {
+		expire += this->delay;
+	}
+
 	void scheduleImmediateDelay() {
 		expire = std::chrono::steady_clock::now() + this->delay;
 	}

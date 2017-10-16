@@ -99,6 +99,9 @@
     <ClInclude Include="MessageTx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MessagePeriodic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pandaJ2534DLL.cpp">
@@ -137,10 +140,16 @@
     <ClCompile Include="MessageTx_CAN.cpp">
       <Filter>Source Files\J2534_CAN</Filter>
     </ClCompile>
+    <ClCompile Include="MessagePeriodic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="pandaJ2534DLL.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>

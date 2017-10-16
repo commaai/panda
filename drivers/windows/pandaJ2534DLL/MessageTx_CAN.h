@@ -25,6 +25,8 @@ public:
 		return !sentyet;
 	};
 
+	virtual void reset();
+
 private:
 	BOOL sentyet;
 	BOOL txInFlight;

@@ -12,6 +12,12 @@ extern std::vector<panda::PANDA_CAN_MSG> panda_recv_loop(std::unique_ptr<panda::
 extern void check_panda_can_msg(panda::PANDA_CAN_MSG& msgin, uint8_t bus, unsigned long addr, bool addr_29b,
 	bool is_receipt, std::string dat, const __LineInfo* pLineInfo = NULL);
 
+extern unsigned long J2534_start_periodic_msg_checked(unsigned long chanid, unsigned long ProtocolID, unsigned long TxFlags, unsigned long DataSize,
+	unsigned long ExtraDataIndex, const char * Data, unsigned long TimeInterval, const __LineInfo * pLineInfo);
+
+extern unsigned long J2534_start_periodic_msg(unsigned long chanid, unsigned long ProtocolID, unsigned long TxFlags, unsigned long DataSize,
+	unsigned long ExtraDataIndex, const char* Data, unsigned long TimeInterval, unsigned long* msgID, const __LineInfo* pLineInfo = NULL);
+
 extern void J2534_send_msg_checked(unsigned long chanid, unsigned long ProtocolID, unsigned long RxStatus, unsigned long TxFlags,
 	unsigned long Timestamp, unsigned long DataSize, unsigned long ExtraDataIndex, const char* Data, const __LineInfo* pLineInfo = NULL);
 
@@ -23,10 +29,10 @@ extern std::vector<PASSTHRU_MSG> j2534_recv_loop(unsigned int chanid, unsigned i
 extern void check_J2534_can_msg(PASSTHRU_MSG& msgin, unsigned long ProtocolID, unsigned long RxStatus, unsigned long TxFlags,
 	unsigned long DataSize, unsigned long ExtraDataIndex, const char* Data, const __LineInfo* pLineInfo = NULL);
 
-unsigned long J2534_set_PASS_filter(unsigned long chanid, unsigned long ProtocolID, unsigned long tx,
+extern unsigned long J2534_set_PASS_filter(unsigned long chanid, unsigned long ProtocolID, unsigned long tx,
 	unsigned long len, char* mask, char* pattern, const __LineInfo* pLineInfo = NULL);
 
-unsigned long J2534_set_BLOCK_filter(unsigned long chanid, unsigned long ProtocolID, unsigned long tx,
+extern unsigned long J2534_set_BLOCK_filter(unsigned long chanid, unsigned long ProtocolID, unsigned long tx,
 	unsigned long len, char* mask, char* pattern, const __LineInfo* pLineInfo = NULL);
 
 extern unsigned long J2534_set_flowctrl_filter(unsigned long chanid, unsigned long tx,

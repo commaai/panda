@@ -75,7 +75,7 @@ DWORD PandaJ2534Device::can_recv_thread() {
 			J2534Frame msg_out(msg_in);
 
 			if (msg_in.is_receipt) {
-				synchronized(activeTXs_mutex) {
+				synchronized(task_queue_mutex) {
 					if (txMsgsAwaitingEcho.size() > 0) {
 						auto msgtx = txMsgsAwaitingEcho.front();
 						if (auto conn = msgtx->connection.lock()) {
@@ -89,8 +89,7 @@ DWORD PandaJ2534Device::can_recv_thread() {
 									txMsgsAwaitingEcho.pop(); //Remove the TX object and schedule record.
 
 									if (msgtx->isFinished()) {
-										conn->processMessageReceipt(msg_out); //Alert the connection a tx is done.
-										this->removeConnectionTopAction(conn);
+										this->removeConnectionTopAction(conn, msgtx);
 									} else {
 										if (msgtx->txReady()) { //Not finished, ready to send next frame.
 											msgtx->schedule(msg_in.recv_time_point, TRUE);
@@ -135,7 +134,7 @@ DWORD PandaJ2534Device::msg_tx_thread() {
 		ResetEvent(this->flow_control_wakeup_event);
 
 		while (TRUE) {
-			synchronized(activeTXs_mutex) { //implemented with for loop. Consumes breaks.
+			synchronized(task_queue_mutex) { //implemented with for loop. Consumes breaks.
 				if (this->task_queue.size() == 0) {
 					sleepDuration = INFINITE;
 					goto break_flow_ctrl_loop;
@@ -159,7 +158,7 @@ DWORD PandaJ2534Device::msg_tx_thread() {
 }
 
 void PandaJ2534Device::insertActionIntoTaskList(std::shared_ptr<Action> action) {
-	synchronized(activeTXs_mutex) {
+	synchronized(task_queue_mutex) {
 		auto iter = this->task_queue.begin();
 		for (; iter != this->task_queue.end(); iter++) {
 			if (action->expire < (*iter)->expire) break;
@@ -191,11 +190,14 @@ void PandaJ2534Device::unstallConnectionTx(std::shared_ptr<J2534Connection> conn
 		if (ret.second == TRUE) return; //Conn already exists.
 		this->insertActionIntoTaskList(conn->txbuff.front());
 	}
-	SetEvent(flow_control_wakeup_event);
 }
 
-void PandaJ2534Device::removeConnectionTopAction(std::shared_ptr<J2534Connection> conn) {
-	synchronized(activeTXs_mutex) {
+void PandaJ2534Device::removeConnectionTopAction(std::shared_ptr<J2534Connection> conn, std::shared_ptr<MessageTx> msg) {
+	synchronized(task_queue_mutex) {
+		if (conn->txbuff.size() == 0)
+			return;
+		if (conn->txbuff.front() != msg)
+			return;
 		conn->txbuff.pop(); //Remove the top TX message from the connection tx queue.
 
 		//Remove the connection from the active connection list if no more messages are scheduled with this connection.

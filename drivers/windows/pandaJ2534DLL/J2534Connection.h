@@ -5,6 +5,7 @@
 #include "J2534Frame.h"
 #include "PandaJ2534Device.h"
 #include "J2534MessageFilter.h"
+#include "MessagePeriodic.h"
 
 class J2534Frame;
 class Action;
@@ -25,7 +26,7 @@ public:
 	);
 	virtual ~J2534Connection() {};
 	virtual long PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
-	virtual long PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
+	long PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout);
 	virtual long PassThruStartPeriodicMsg(PASSTHRU_MSG *pMsg, unsigned long *pMsgID, unsigned long TimeInterval);
 	virtual long PassThruStopPeriodicMsg(unsigned long MsgID);
 
@@ -34,6 +35,10 @@ public:
 
 	virtual long PassThruStopMsgFilter(unsigned long FilterID);
 	virtual long PassThruIoctl(unsigned long IoctlID, void *pInput, void *pOutput);
+
+	virtual unsigned long  validateTxMsg(PASSTHRU_MSG* msg);
+
+	virtual std::shared_ptr<MessageTx> parseMessageTx(PASSTHRU_MSG& msg) { return nullptr; };
 
 	long init5b(SBYTE_ARRAY* pInput, SBYTE_ARRAY* pOutput);
 	long initFast(PASSTHRU_MSG* pInput, PASSTHRU_MSG* pOutput);
@@ -59,7 +64,6 @@ public:
 		return this->port;
 	}
 
-	virtual void processMessageReceipt(const J2534Frame& msg);
 	virtual void processMessage(const J2534Frame& msg);
 
 	virtual unsigned long getMinMsgLen() {
@@ -68,6 +72,10 @@ public:
 
 	virtual unsigned long getMaxMsgLen() {
 		return 4128;
+	}
+
+	virtual unsigned long getMaxMsgSingleFrameLen() {
+		return 12;
 	}
 
 	void schedultMsgTx(std::shared_ptr<Action> msgout);
@@ -81,8 +89,8 @@ public:
 	}
 
 	void addMsgToRxQueue(const J2534Frame& frame) {
-		synchronized(message_access_lock) {
-			messages.push(frame);
+		synchronized(messageRxBuff_mutex) {
+			messageRxBuff.push(frame);
 		}
 	}
 
@@ -96,12 +104,14 @@ protected:
 
 	std::weak_ptr<PandaJ2534Device> panda_dev;
 
-	std::queue<J2534Frame> messages;
+	Mutex messageRxBuff_mutex;
+	std::queue<J2534Frame> messageRxBuff;
 
 	std::array<std::shared_ptr<J2534MessageFilter>, 10> filters;
 	std::queue<std::shared_ptr<Action>> txbuff;
 
+	std::array<std::shared_ptr<MessagePeriodic>, 10> periodicMessages;
+
 private:
-	Mutex message_access_lock;
 	Mutex staged_writes_lock;
 };

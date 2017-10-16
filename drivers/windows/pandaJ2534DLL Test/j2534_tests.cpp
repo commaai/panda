@@ -293,6 +293,157 @@ namespace pandaJ2534DLLTest
 			check_panda_can_msg(msg_recv[0], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
 		}
 
+		TEST_METHOD(J2534_CAN_PeriodicMessageStartStop)
+		{
+			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
+			auto p = getPanda(500);
+
+			auto msgid = J2534_start_periodic_msg_checked(chanid, CAN, 0, 6, 0, "\x0\x0\x3\xAB""HI", 100, LINE_INFO());
+
+			std::vector<panda::PANDA_CAN_MSG> msg_recv = panda_recv_loop(p, 3, 250);
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStopPeriodicMsg(chanid, msgid), _T("Failed to delete filter."), LINE_INFO());
+			check_panda_can_msg(msg_recv[0], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+			check_panda_can_msg(msg_recv[1], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+			check_panda_can_msg(msg_recv[2], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+
+			auto timediff_1_0 = msg_recv[1].recv_time - msg_recv[0].recv_time;
+			auto timediff_2_1 = msg_recv[2].recv_time - msg_recv[1].recv_time;
+
+			std::ostringstream stringStream1;
+			stringStream1 << "times1: " << timediff_1_0 << ", " << timediff_2_1 << std::endl;
+			Logger::WriteMessage(stringStream1.str().c_str());
+
+			Assert::IsTrue(timediff_1_0 > 90000);
+			Assert::IsTrue(timediff_1_0 < 110000);
+			Assert::IsTrue(timediff_2_1 > 90000);
+			Assert::IsTrue(timediff_2_1 < 110000);
+
+			msg_recv = panda_recv_loop(p, 0, 300);
+		}
+
+		TEST_METHOD(J2534_CAN_PeriodicMessageMultipleStartStop)
+		{
+			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
+			auto p = getPanda(500);
+
+			auto msgid0 = J2534_start_periodic_msg_checked(chanid, CAN, 0, 6, 0, "\x0\x0\x3\xAB""HI", 100, LINE_INFO());
+			auto msgid1 = J2534_start_periodic_msg_checked(chanid, CAN, 0, 6, 0, "\x0\x0\x1\x23""YO", 80, LINE_INFO());
+
+			std::vector<panda::PANDA_CAN_MSG> msg_recv = panda_recv_loop(p, 9, 370);
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStopPeriodicMsg(chanid, msgid0), _T("Failed to delete filter."), LINE_INFO());
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStopPeriodicMsg(chanid, msgid1), _T("Failed to delete filter."), LINE_INFO());
+			//time diagram. 10 ms per character. * is send event. : is termination of periodic messages.
+			//*---------*---------*---------*-----:----* HI
+			//*-------*-------*-------*-------*---:----* YO
+			check_panda_can_msg(msg_recv[0], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+			check_panda_can_msg(msg_recv[1], 0, 0x123, FALSE, FALSE, "YO", LINE_INFO());
+			check_panda_can_msg(msg_recv[2], 0, 0x123, FALSE, FALSE, "YO", LINE_INFO());
+			check_panda_can_msg(msg_recv[3], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+			check_panda_can_msg(msg_recv[4], 0, 0x123, FALSE, FALSE, "YO", LINE_INFO());
+			check_panda_can_msg(msg_recv[5], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+			check_panda_can_msg(msg_recv[6], 0, 0x123, FALSE, FALSE, "YO", LINE_INFO());
+			check_panda_can_msg(msg_recv[7], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+			check_panda_can_msg(msg_recv[8], 0, 0x123, FALSE, FALSE, "YO", LINE_INFO());
+
+			auto timediff_HI_3_0 = msg_recv[3].recv_time - msg_recv[0].recv_time;
+			auto timediff_HI_5_3 = msg_recv[5].recv_time - msg_recv[3].recv_time;
+			auto timediff_HI_7_5 = msg_recv[7].recv_time - msg_recv[5].recv_time;
+
+			auto timediff_YO_2_1 = msg_recv[2].recv_time - msg_recv[1].recv_time;
+			auto timediff_YO_4_2 = msg_recv[4].recv_time - msg_recv[2].recv_time;
+			auto timediff_YO_6_4 = msg_recv[6].recv_time - msg_recv[4].recv_time;
+			auto timediff_YO_8_6 = msg_recv[8].recv_time - msg_recv[6].recv_time;
+
+			std::ostringstream stringStreamHi;
+			stringStreamHi << "HiTimes: " << timediff_HI_3_0 << ", " << timediff_HI_5_3 << ", " << timediff_HI_7_5 << std::endl;
+			Logger::WriteMessage(stringStreamHi.str().c_str());
+
+			std::ostringstream stringStreamYo;
+			stringStreamYo << "HiTimes: " << timediff_YO_2_1 << ", " << timediff_YO_4_2 << ", " << timediff_YO_6_4 << ", " << timediff_YO_8_6 << std::endl;
+			Logger::WriteMessage(stringStreamYo.str().c_str());
+
+			Assert::IsTrue(timediff_HI_3_0 > 90000);
+			Assert::IsTrue(timediff_HI_3_0 < 110000);
+			Assert::IsTrue(timediff_HI_5_3 > 90000);
+			Assert::IsTrue(timediff_HI_5_3 < 110000);
+			Assert::IsTrue(timediff_HI_7_5 > 90000);
+			Assert::IsTrue(timediff_HI_7_5 < 110000);
+
+			Assert::IsTrue(timediff_YO_2_1 > 80000-10000);
+			Assert::IsTrue(timediff_YO_2_1 < 80000+1000);
+			Assert::IsTrue(timediff_YO_4_2 > 80000 - 10000);
+			Assert::IsTrue(timediff_YO_4_2 < 80000 + 10000);
+			Assert::IsTrue(timediff_YO_6_4 > 80000 - 10000);
+			Assert::IsTrue(timediff_YO_6_4 < 80000 + 10000);
+			Assert::IsTrue(timediff_YO_8_6 > 80000 - 10000);
+			Assert::IsTrue(timediff_YO_8_6 < 80000 + 10000);
+
+			msg_recv = panda_recv_loop(p, 0, 300);
+		}
+
+		TEST_METHOD(J2534_CAN_PeriodicMessageStartStop_Loopback)
+		{
+			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO()); // ENABLE J2534 ECHO/LOOPBACK
+			auto p = getPanda(500);
+			auto msgid = J2534_start_periodic_msg_checked(chanid, CAN, 0, 6, 0, "\x0\x0\x3\xAB""HI", 100, LINE_INFO());
+
+			std::vector<panda::PANDA_CAN_MSG> msg_recv = panda_recv_loop(p, 3, 250);
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStopPeriodicMsg(chanid, msgid), _T("Failed to delete filter."), LINE_INFO());
+			check_panda_can_msg(msg_recv[0], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+			check_panda_can_msg(msg_recv[1], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+			check_panda_can_msg(msg_recv[2], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+
+			auto j2534_msg_recv = j2534_recv_loop(chanid, 3);
+			check_J2534_can_msg(j2534_msg_recv[0], CAN, TX_MSG_TYPE, 0, 6, 0, "\x0\x0\x3\xAB""HI", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[1], CAN, TX_MSG_TYPE, 0, 6, 0, "\x0\x0\x3\xAB""HI", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[2], CAN, TX_MSG_TYPE, 0, 6, 0, "\x0\x0\x3\xAB""HI", LINE_INFO());
+
+			auto timediff_1_0 = j2534_msg_recv[1].Timestamp - j2534_msg_recv[0].Timestamp;
+			auto timediff_2_1 = j2534_msg_recv[2].Timestamp - j2534_msg_recv[1].Timestamp;
+
+			std::ostringstream stringStream1;
+			stringStream1 << "times1: " << timediff_1_0 << ", " << timediff_2_1 << std::endl;
+			Logger::WriteMessage(stringStream1.str().c_str());
+
+			Assert::IsTrue(timediff_1_0 > 90000);
+			Assert::IsTrue(timediff_1_0 < 110000);
+			Assert::IsTrue(timediff_2_1 > 90000);
+			Assert::IsTrue(timediff_2_1 < 110000);
+
+			msg_recv = panda_recv_loop(p, 0, 300);
+		}
+
+		TEST_METHOD(J2534_CAN_PeriodicMessageWithTx)
+		{
+			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
+			auto p = getPanda(500);
+			auto msgid = J2534_start_periodic_msg_checked(chanid, CAN, 0, 6, 0, "\x0\x0\x3\xAB""HI", 100, LINE_INFO());
+
+			J2534_send_msg(chanid, CAN, 0, 0, 0, 7, 0, "\x0\x0\x3\xAB""LOL");
+
+			std::vector<panda::PANDA_CAN_MSG> msg_recv = panda_recv_loop(p, 4, 250);
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStopPeriodicMsg(chanid, msgid), _T("Failed to delete filter."), LINE_INFO());
+			check_panda_can_msg(msg_recv[0], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+			check_panda_can_msg(msg_recv[1], 0, 0x3AB, FALSE, FALSE, "LOL", LINE_INFO());//Staggered write inbetween multiple scheduled TXs
+			check_panda_can_msg(msg_recv[2], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+			check_panda_can_msg(msg_recv[3], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+
+			auto timediff_2_0 = msg_recv[2].recv_time - msg_recv[0].recv_time;
+			auto timediff_3_2 = msg_recv[3].recv_time - msg_recv[2].recv_time;
+
+			std::ostringstream stringStream1;
+			stringStream1 << "times1: " << timediff_2_0 << ", " << timediff_3_2 << std::endl;
+			Logger::WriteMessage(stringStream1.str().c_str());
+
+			Assert::IsTrue(timediff_2_0 > 90000);
+			Assert::IsTrue(timediff_2_0 < 110000);
+			Assert::IsTrue(timediff_3_2 > 90000);
+			Assert::IsTrue(timediff_3_2 < 110000);
+
+			msg_recv = panda_recv_loop(p, 0, 300);
+		}
+
 		TEST_METHOD(J2534_CAN_BaudInvalid)
 		{
 			unsigned long chanid;
@@ -686,17 +837,17 @@ namespace pandaJ2534DLLTest
 			auto timediff_5_4 = panda_msg_recv[5].recv_time - panda_msg_recv[4].recv_time;
 			auto timediff_6_5 = panda_msg_recv[6].recv_time - panda_msg_recv[5].recv_time;
 
+			std::ostringstream stringStream1;
+			stringStream1 << "times1: " << timediff_1_0 << ", " << timediff_2_1 << ", " << timediff_3_2 <<
+				", " << timediff_4_3 << ", " << timediff_5_4 << ", " << timediff_6_5 << std::endl;
+			Logger::WriteMessage(stringStream1.str().c_str());
+
 			Assert::IsTrue(timediff_1_0 > 10000);
 			Assert::IsTrue(timediff_2_1 > 10000);
 			Assert::IsTrue(timediff_3_2 > 10000);
 			Assert::IsTrue(timediff_4_3 > 10000);
 			Assert::IsTrue(timediff_5_4 > 10000);
 			Assert::IsTrue(timediff_6_5 > 10000);
-
-			std::ostringstream stringStream1;
-			stringStream1 << "times1: " << timediff_1_0 << ", " << timediff_2_1 << ", " << timediff_3_2 <<
-				", " << timediff_4_3 << ", " << timediff_5_4 << ", " << timediff_6_5 << std::endl;
-			Logger::WriteMessage(stringStream1.str().c_str());
 		}
 
 		//Check that tx works for messages with more than 16 frames. 29 bit. Good Filter. NoPadding. STD address. Large multiframe message.
@@ -819,7 +970,7 @@ namespace pandaJ2534DLLTest
 			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 4 + 48, 0, "\x18\xda\xef\xf1""AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXX", LINE_INFO());
 
 			auto panda_msg_recv = panda_recv_loop(p, 1);
-			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x10\x30""AABBCC", LINE_INFO()); //First Frame. Not replying so it needs to time out.
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x10\x30""AABBCC", LINE_INFO());
 
 			panda_msg_recv = checked_panda_send(p, 0x18DAF1EF, TRUE, "\x30\x06\x7F", 3, 6, LINE_INFO(), 3000);//Start a conversation... but slow. FC timeout is 250 ms.
 			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x21""DDEEFFG", LINE_INFO());//Check this convo doesn't trigger that timeout.
@@ -832,6 +983,88 @@ namespace pandaJ2534DLLTest
 			auto j2534_msg_recv = j2534_recv_loop(chanid, 2);
 			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
 			check_J2534_can_msg(j2534_msg_recv[1], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 48, 0, "\x18\xda\xef\xf1""AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXX", LINE_INFO());
+		}
+
+		//Check MF tx can be sent along side of a periodic message. 29 bit. Good Filter. NoPadding. STD address. Long STmin, checks that MF tx and periodic TX don't break each other.
+		TEST_METHOD(J2534_ISO15765_SuccessTx_29b_Filter_NoPad_STD_SLOWMF_WithPeriodicMsg)
+		{
+			auto chanid = J2534_open_and_connect("", ISO15765, CAN_29BIT_ID, 500000, LINE_INFO());
+			J2534_set_flowctrl_filter(chanid, CAN_29BIT_ID, 4, "\xff\xff\xff\xff", "\x18\xda\xf1\xef", "\x18\xda\xef\xf1", LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO());
+			auto p = getPanda(500);
+
+			//Timing diagram of this test.
+			//* is a periodic msg transfer; F is first frame, L is Flow control, C is Consecutive Frame.
+			// *~~~~~~~*~~~~~~~*~~~~~~~* (The alignment here is unimportant. The exact order is not checked.
+			//F C----C----C----C----C----C (100 ms between Cs)
+			// L
+
+			auto msgid = J2534_start_periodic_msg_checked(chanid, ISO15765, CAN_29BIT_ID, 6, 0, "\x18\xda\xef\xf1""HI", 130, LINE_INFO());
+			J2534_send_msg_checked(chanid, ISO15765, 0, CAN_29BIT_ID, 0, 4 + 48, 0, "\x18\xda\xef\xf1""AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXX", LINE_INFO());
+
+			auto panda_msg_recv = panda_recv_loop(p, 2);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x18DAEFF1, TRUE, FALSE, "\x02""HI", LINE_INFO());
+			check_panda_can_msg(panda_msg_recv[1], 0, 0x18DAEFF1, TRUE, FALSE, "\x10\x30""AABBCC", LINE_INFO());
+
+			Assert::IsTrue(p->can_send(0x18DAF1EF, TRUE, (const uint8_t*)"\x30\x06\x64", 3, panda::PANDA_CAN1), _T("Panda send says it failed."), LINE_INFO());
+
+			Timer t_permsg = Timer();
+			Timer t_MFmsg = Timer();
+			unsigned int MFframesReceived = 0;
+			unsigned int PeriodicMsgReceived = 0;
+			std::array<std::string, 6> const mfMsgExpectedParts{ "\x21""DDEEFFG", "\x22""GHHIIJJ", "\x23""KKLLMMN", "\x24""NOOPPQQ", "\x25""RRSSTTU", "\x26""UVVWWXX" };
+
+			while (TRUE) {
+				std::vector<panda::PANDA_CAN_MSG>msg_recv = p->can_recv();
+				for (auto msg : msg_recv) {
+					if (msg.is_receipt) continue;
+					if ((msg.dat[0] & 0xf0) == 0x20) {
+						Assert::AreEqual<std::string>(mfMsgExpectedParts[MFframesReceived], std::string((const char*)msg.dat, msg.len), _T("Got wrong part of MF msg."), LINE_INFO());
+						MFframesReceived++;
+						t_MFmsg.reset();
+					} else if (std::string((const char*)msg.dat, msg.len) == "\x02HI") {
+						PeriodicMsgReceived++;
+						t_permsg.reset();
+					} else {
+						Assert::IsTrue(FALSE, _T("Got impossible message. Something is very wrong. Check other tests."), LINE_INFO());
+					}
+				}
+
+				if (MFframesReceived >= 6) break;
+				Assert::IsTrue(300 > t_permsg.getTimePassed(), _T("Timed out waiting for periodic msessage frame."), LINE_INFO());
+				Assert::IsTrue(300 > t_MFmsg.getTimePassed(), _T("Timed out waiting for multiframe msessage frame."), LINE_INFO());
+
+				if (msg_recv.size() == 0)
+					Sleep(10);
+			}
+
+			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStopPeriodicMsg(chanid, msgid), _T("Failed to delete filter."), LINE_INFO());
+
+			Assert::IsTrue(PeriodicMsgReceived > 3, _T("Did not receive enough periodic messages. Likely canceled or delayed."), LINE_INFO());
+
+			std::ostringstream stringStream;
+			stringStream << "PeriodicMsgReceived = " << PeriodicMsgReceived << std::endl;
+			Logger::WriteMessage(stringStream.str().c_str());
+
+			unsigned int periodicTxIndicationCount = 0;
+			unsigned int TxIndicationCount = 0;
+			auto j2534_msg_recv = j2534_recv_loop(chanid, 2 + (PeriodicMsgReceived * 2));
+			for (int i = 0; i < PeriodicMsgReceived + 1; i++) {
+				check_J2534_can_msg(j2534_msg_recv[(i * 2) + 0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
+				switch (j2534_msg_recv[(i * 2) + 1].DataSize) {
+				case 6:
+					check_J2534_can_msg(j2534_msg_recv[(i * 2) + 1], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 2, 0, "\x18\xda\xef\xf1""HI", LINE_INFO());
+					break;
+				case 4 + 48:
+					check_J2534_can_msg(j2534_msg_recv[(i * 2) + 1], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 48, 0, "\x18\xda\xef\xf1""AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXX", LINE_INFO());
+					break;
+				default:
+					Assert::IsTrue(FALSE, _T("Got unexpected data!"), LINE_INFO());
+				}
+			}
+
+			Assert::AreNotEqual<unsigned int>(PeriodicMsgReceived, periodicTxIndicationCount, _T("Wrong number of periodic msgs reported by passthru device."), LINE_INFO());
+			Assert::AreNotEqual<unsigned int>(1, TxIndicationCount, _T("Wrong number of TX msgs reported by passthru device."), LINE_INFO());
 		}
 
 		///////////////////// Tests checking things break or recover during send/receive /////////////////////

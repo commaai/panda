@@ -18,6 +18,8 @@ public:
 
 	virtual BOOL txReady() = 0;
 
+	virtual void reset() = 0;
+
 protected:
 	J2534Frame fullmsg;
 };

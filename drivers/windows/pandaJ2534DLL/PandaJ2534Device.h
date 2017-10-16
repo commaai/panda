@@ -37,7 +37,7 @@ public:
 
 	void unstallConnectionTx(std::shared_ptr<J2534Connection> conn);
 
-	void removeConnectionTopAction(std::shared_ptr<J2534Connection> conn);
+	void removeConnectionTopAction(std::shared_ptr<J2534Connection> conn, std::shared_ptr<MessageTx> msg);
 
 	std::queue<std::shared_ptr<MessageTx>> txMsgsAwaitingEcho;
 
@@ -57,7 +57,7 @@ private:
 	}
 	DWORD msg_tx_thread();
 	std::list<std::shared_ptr<Action>> task_queue;
-	Mutex activeTXs_mutex;
+	Mutex task_queue_mutex;
 
 	std::queue<std::shared_ptr<J2534Connection>> ConnTxQueue;
 	std::set<std::shared_ptr<J2534Connection>> ConnTxSet;
