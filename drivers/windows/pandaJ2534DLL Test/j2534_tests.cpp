@@ -18,7 +18,7 @@ namespace pandaJ2534DLLTest
 			UnloadJ2534Dll();
 		}
 
-		TEST_METHOD(J2534DriverInit)
+		TEST_METHOD(J2534_Driver_Init)
 		{
 			long err = LoadJ2534Dll("pandaJ2534_0404_32.dll");
 			Assert::IsTrue(err == 0, _T("Library failed to load properly. Check the export names and library location."));
@@ -42,17 +42,17 @@ namespace pandaJ2534DLLTest
 			UnloadJ2534Dll();
 		}
 
-		TEST_METHOD(J2534_OpenDevice__Empty)
+		TEST_METHOD(J2534_Device_OpenDevice__Empty)
 		{
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
 		}
 
-		TEST_METHOD(J2534_OpenDevice__J2534_2)
+		TEST_METHOD(J2534_Device_OpenDevice__J2534_2)
 		{
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev("J2534-2:"), _T("Failed to open device."), LINE_INFO());
 		}
 
-		TEST_METHOD(J2534_OpenDevice__SN)
+		TEST_METHOD(J2534_Device_OpenDevice__SN)
 		{
 			auto pandas_available = panda::Panda::listAvailablePandas();
 			Assert::IsTrue(pandas_available.size() > 0, _T("No pandas detected."));
@@ -64,14 +64,14 @@ namespace pandaJ2534DLLTest
 				Assert::AreNotEqual(panda_sn, pandas_available[0]);
 		}
 
-		TEST_METHOD(J2534_CloseDevice)
+		TEST_METHOD(J2534_Device_CloseDevice)
 		{
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
 			Assert::AreEqual<long>(STATUS_NOERROR, close_dev(devid), _T("Failed to close device."), LINE_INFO());
 			Assert::AreEqual<long>(ERR_INVALID_DEVICE_ID, PassThruClose(devid), _T("The 2nd close should have failed with ERR_INVALID_DEVICE_ID."), LINE_INFO());
 		}
 
-		TEST_METHOD(J2534_ConnectDisconnect)
+		TEST_METHOD(J2534_Device_ConnectDisconnect)
 		{
 			unsigned long chanid;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
@@ -81,7 +81,7 @@ namespace pandaJ2534DLLTest
 			Assert::AreEqual<long>(ERR_INVALID_CHANNEL_ID, PassThruDisconnect(chanid), _T("The 2nd disconnect should have failed with ERR_INVALID_CHANNEL_ID."), LINE_INFO());
 		}
 
-		TEST_METHOD(J2534_ConnectInvalidProtocol)
+		TEST_METHOD(J2534_Device_ConnectInvalidProtocol)
 		{
 			unsigned long chanid;
 			Assert::AreEqual<long>(STATUS_NOERROR, open_dev(""), _T("Failed to open device."), LINE_INFO());
@@ -123,7 +123,7 @@ namespace pandaJ2534DLLTest
 			UnloadJ2534Dll();
 		}
 
-		TEST_METHOD(J2534_CAN11b_Tx)
+		TEST_METHOD(J2534_CAN_11b_Tx)
 		{
 			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
 			auto p = getPanda(500);
@@ -136,7 +136,7 @@ namespace pandaJ2534DLLTest
 			j2534_recv_loop(chanid, 0, 50); // Check no message is returned (since loopback is off)
 		}
 
-		TEST_METHOD(J2534_CAN29b_Tx)
+		TEST_METHOD(J2534_CAN_29b_Tx)
 		{
 			auto chanid = J2534_open_and_connect("", CAN, CAN_29BIT_ID, 500000, LINE_INFO());
 			auto p = getPanda(500);
@@ -148,7 +148,7 @@ namespace pandaJ2534DLLTest
 			check_panda_can_msg(msg_recv[0], 0, 0x3AB, TRUE, FALSE, "YO", LINE_INFO());
 		}
 
-		TEST_METHOD(J2534_CAN11b29b_Tx)
+		TEST_METHOD(J2534_CAN_11b29b_Tx)
 		{
 			auto chanid = J2534_open_and_connect("", CAN, CAN_ID_BOTH, 500000, LINE_INFO());
 			auto p = getPanda(500);

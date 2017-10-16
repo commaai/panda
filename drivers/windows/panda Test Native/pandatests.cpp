@@ -13,7 +13,7 @@ namespace pandaTestNative
 	{
 	public:
 
-		TEST_METHOD(ListDevices)
+		TEST_METHOD(Panda_DevDiscover_ListDevices)
 		{
 			auto pandas_available = Panda::listAvailablePandas();
 			Assert::IsTrue(pandas_available.size() > 0, _T("No pandas were found."));
@@ -22,7 +22,7 @@ namespace pandaTestNative
 			}
 		}
 
-		TEST_METHOD(OpenFirstDevice)
+		TEST_METHOD(Panda_DevDiscover_OpenFirstDevice)
 		{
 			auto pandas_available = Panda::listAvailablePandas();
 			Assert::IsTrue(pandas_available.size() > 0, _T("No pandas were found."));
@@ -31,7 +31,7 @@ namespace pandaTestNative
 			Assert::IsFalse(p1 == nullptr, _T("Could not open panda."));
 		}
 
-		TEST_METHOD(OpenDeviceNoName)
+		TEST_METHOD(Panda_DevDiscover_OpenDeviceNoName)
 		{
 			auto pandas_available = Panda::listAvailablePandas();
 			Assert::IsTrue(pandas_available.size() > 0, _T("No pandas were found."));
@@ -41,13 +41,13 @@ namespace pandaTestNative
 			Assert::IsTrue(p1->get_usb_sn() == pandas_available[0], _T("Could not open panda."));
 		}
 
-		TEST_METHOD(OpenDeviceUnavailable)
+		TEST_METHOD(Panda_DevDiscover_OpenDeviceUnavailable)
 		{
 			auto p1 = Panda::openPanda("ZZZZZZZZZZZZZZZZZZZZZZZZ");
 			Assert::IsTrue(p1 == nullptr, _T("Invalid sn still worked."));
 		}
 
-		TEST_METHOD(WillNotOpenAlreadyOpenedDevice)
+		TEST_METHOD(Panda_DevDiscover_WillNotOpenAlreadyOpenedDevice)
 		{
 			auto pandas_available = Panda::listAvailablePandas();
 			Assert::IsTrue(pandas_available.size() > 0, _T("No pandas were found."));
@@ -59,7 +59,7 @@ namespace pandaTestNative
 			Assert::IsTrue(p2 == nullptr, _T("Opened an already open panda."));
 		}
 
-		TEST_METHOD(OpenedDeviceNotListed)
+		TEST_METHOD(Panda_DevDiscover_OpenedDeviceNotListed)
 		{
 			auto pandas_available = Panda::listAvailablePandas();
 			Assert::IsTrue(pandas_available.size() > 0, _T("No pandas were found."));
@@ -80,7 +80,7 @@ namespace pandaTestNative
 	{
 	public:
 
-		TEST_METHOD(CANEcho)
+		TEST_METHOD(Panda_CAN_Echo)
 		{
 			auto p0 = Panda::openPanda("");
 			Assert::IsFalse(p0 == nullptr, _T("Could not open panda."));
@@ -119,7 +119,7 @@ namespace pandaTestNative
 			}
 		}
 
-		TEST_METHOD(CANClearClears)
+		TEST_METHOD(Panda_CAN_ClearClears)
 		{
 			auto p0 = Panda::openPanda("");
 			Assert::IsFalse(p0 == nullptr, _T("Could not open panda."));
@@ -144,7 +144,7 @@ namespace pandaTestNative
 	{
 	public:
 
-		TEST_METHOD(LINEcho)
+		TEST_METHOD(Panda_LIN_Echo)
 		{
 			auto p0 = Panda::openPanda("");
 			Assert::IsFalse(p0 == nullptr, _T("Could not open panda."));
