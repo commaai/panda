@@ -13,7 +13,7 @@ from esptool import ESPROM, CesantaFlasher
 from flash_release import flash_release
 from update import ensure_st_up_to_date
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
