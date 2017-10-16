@@ -33,6 +33,8 @@ public:
 
 	virtual void processMessage(const J2534Frame& msg);
 
+	virtual long setBaud(unsigned long baud);
+
 	virtual unsigned long getMinMsgLen() {
 		return 4;
 	}

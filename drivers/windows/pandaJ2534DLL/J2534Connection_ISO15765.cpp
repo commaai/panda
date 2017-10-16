@@ -170,6 +170,18 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 	}
 }
 
+long J2534Connection_ISO15765::setBaud(unsigned long BaudRate) {
+	if (auto panda_dev = this->getPandaDev()) {
+		if (BaudRate % 100 || BaudRate < 10000 || BaudRate > 5000000)
+			return ERR_NOT_SUPPORTED;
+
+		panda_dev->panda->set_can_speed_cbps(panda::PANDA_CAN1, (uint16_t)(BaudRate / 100));
+		return J2534Connection::setBaud(BaudRate);
+	} else {
+		return ERR_DEVICE_NOT_CONNECTED;
+	}
+}
+
 long J2534Connection_ISO15765::PassThruStartMsgFilter(unsigned long FilterType, PASSTHRU_MSG *pMaskMsg, PASSTHRU_MSG *pPatternMsg,
 	PASSTHRU_MSG *pFlowControlMsg, unsigned long *pFilterID) {
 

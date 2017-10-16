@@ -47,7 +47,8 @@ public:
 	long clearPeriodicMsgs();
 	long clearMsgFilters();
 
-	long setBaud(unsigned long baud);
+	virtual long setBaud(unsigned long baud);
+
 	unsigned long getBaud() {
 		return this->BaudRate;
 	}

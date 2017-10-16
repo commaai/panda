@@ -123,6 +123,25 @@ namespace pandaJ2534DLLTest
 			UnloadJ2534Dll();
 		}
 
+		//Test that the BAUD rate of a CAN connection can be changed.
+		TEST_METHOD(J2534_CAN_SetBaud)
+		{
+			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO()); // ENABLE J2534 ECHO/LOOPBACK
+			auto p = getPanda(250);
+
+			J2534_send_msg_checked(chanid, CAN, 0, 0, 0, 4 + 2, 0, "\x0\x0\x3\xAB""HI", LINE_INFO());
+			j2534_recv_loop(chanid, 0);
+			panda_recv_loop(p, 0);
+
+			write_ioctl(chanid, DATA_RATE, 250000, LINE_INFO());
+
+			auto j2534_msg_recv = j2534_recv_loop(chanid, 1);
+			check_J2534_can_msg(j2534_msg_recv[0], CAN, TX_MSG_TYPE, 0, 4 + 2, 0, "\x0\x0\x3\xAB""HI", LINE_INFO());
+			auto panda_msg_recv = panda_recv_loop(p, 1);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x3AB, FALSE, FALSE, "HI", LINE_INFO());
+		}
+
 		TEST_METHOD(J2534_CAN_11b_Tx)
 		{
 			auto chanid = J2534_open_and_connect("", CAN, 0, 500000, LINE_INFO());
@@ -486,6 +505,26 @@ namespace pandaJ2534DLLTest
 				didopen = FALSE;
 			}
 			UnloadJ2534Dll();
+		}
+
+		//Test that the BAUD rate of a ISO15765 connection can be changed.
+		TEST_METHOD(J2534_ISO15765_SetBaud)
+		{
+			auto chanid = J2534_open_and_connect("", ISO15765, 0, 500000, LINE_INFO());
+			write_ioctl(chanid, LOOPBACK, TRUE, LINE_INFO()); // ENABLE J2534 ECHO/LOOPBACK
+			auto p = getPanda(250);
+
+			J2534_send_msg_checked(chanid, ISO15765, 0, 0, 0, 4 + 2, 0, "\x0\x0\x3\xAB""HI", LINE_INFO());
+			j2534_recv_loop(chanid, 0);
+			panda_recv_loop(p, 0);
+
+			write_ioctl(chanid, DATA_RATE, 250000, LINE_INFO());
+
+			auto j2534_msg_recv = j2534_recv_loop(chanid, 2);
+			check_J2534_can_msg(j2534_msg_recv[0], ISO15765, TX_INDICATION, 0, 4, 0, "\x0\x0\x3\xAB", LINE_INFO());
+			check_J2534_can_msg(j2534_msg_recv[1], ISO15765, TX_MSG_TYPE, 0, 4 + 2, 0, "\x0\x0\x3\xAB""HI", LINE_INFO());
+			auto panda_msg_recv = panda_recv_loop(p, 1);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0x3AB, FALSE, FALSE, "\x2""HI", LINE_INFO());
 		}
 
 		///////////////////// Tests checking things don't send/receive /////////////////////

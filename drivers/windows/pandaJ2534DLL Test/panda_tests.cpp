@@ -113,6 +113,37 @@ namespace pandaTestNative
 			}
 		}
 
+		TEST_METHOD(Panda_CAN_ChangeBaud)
+		{
+			auto p0 = getPanda(250);
+			auto p1 = getPanda(500);
+
+			p0->can_send(0xAA, FALSE, (const uint8_t*)"\x1\x2\x3\x4\x5\x6\x7\x8", 8, panda::PANDA_CAN1);
+			panda_recv_loop(p0, 0);
+			panda_recv_loop(p1, 0);
+
+			p0->set_can_speed_kbps(panda::PANDA_CAN1, 500);
+
+			auto panda_msg_recv = panda_recv_loop(p0, 1);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0xAA, FALSE, TRUE, "\x1\x2\x3\x4\x5\x6\x7\x8", LINE_INFO());
+			panda_msg_recv = panda_recv_loop(p1, 1);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0xAA, FALSE, FALSE, "\x1\x2\x3\x4\x5\x6\x7\x8", LINE_INFO());
+
+			//////////////////
+
+			p0->set_can_speed_kbps(panda::PANDA_CAN1, 250);
+			p0->can_send(0xC4, FALSE, (const uint8_t*)"\xA\B\xC\xD\xE\xF\x10\x11", 8, panda::PANDA_CAN1);
+			panda_recv_loop(p0, 0);
+			panda_recv_loop(p1, 0);
+
+			p1->set_can_speed_kbps(panda::PANDA_CAN1, 250);
+
+			panda_msg_recv = panda_recv_loop(p0, 1);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0xC4, FALSE, TRUE, "\xA\B\xC\xD\xE\xF\x10\x11", LINE_INFO());
+			panda_msg_recv = panda_recv_loop(p1, 1);
+			check_panda_can_msg(panda_msg_recv[0], 0, 0xC4, FALSE, FALSE, "\xA\B\xC\xD\xE\xF\x10\x11", LINE_INFO());
+		}
+
 		TEST_METHOD(Panda_CAN_ClearClears)
 		{
 			auto p0 = getPanda(500, TRUE);
