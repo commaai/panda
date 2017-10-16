@@ -14,6 +14,22 @@ void write_ioctl(unsigned int chanid, unsigned int param, unsigned int val, cons
 	Assert::AreEqual<long>(STATUS_NOERROR, PassThruIoctl(chanid, SET_CONFIG, &inconfig, NULL), _T("Failed to set IOCTL."), pLineInfo);
 }
 
+std::vector<panda::PANDA_CAN_MSG> panda_recv_loop_loose(std::unique_ptr<panda::Panda>& p, unsigned int min_num, unsigned long timeout_ms) {
+	std::vector<panda::PANDA_CAN_MSG> ret_messages;
+	Timer t = Timer();
+
+	while (t.getTimePassed() < timeout_ms) {
+		Sleep(10);
+		std::vector<panda::PANDA_CAN_MSG>msg_recv = p->can_recv();
+		if (msg_recv.size() > 0) {
+			ret_messages.insert(std::end(ret_messages), std::begin(msg_recv), std::end(msg_recv));
+		}
+	}
+
+	Assert::IsTrue(min_num <= ret_messages.size(), _T("Received too few messages."));
+	return ret_messages;
+}
+
 std::vector<panda::PANDA_CAN_MSG> panda_recv_loop(std::unique_ptr<panda::Panda>& p, unsigned int num_expected, unsigned long timeout_ms) {
 	std::vector<panda::PANDA_CAN_MSG> ret_messages;
 	Timer t = Timer();
@@ -90,6 +106,29 @@ long J2534_send_msg(unsigned long chanid, unsigned long ProtocolID, unsigned lon
 	return PassThruWriteMsgs(chanid, &msg, &msgcount, 0);
 }
 
+//Allow more messages to come in than the min.
+std::vector<PASSTHRU_MSG> j2534_recv_loop_loose(unsigned int chanid, unsigned int min_num, unsigned long timeout_ms) {
+	std::vector<PASSTHRU_MSG> ret_messages;
+	PASSTHRU_MSG recvbuff[4] = {};
+	Timer t = Timer();
+
+	while (t.getTimePassed() < timeout_ms) {
+		unsigned long msgcount = 4;
+		unsigned int res = PassThruReadMsgs(chanid, recvbuff, &msgcount, 0);
+		if (res == ERR_BUFFER_EMPTY) continue;
+		Assert::IsFalse(msgcount > 4, _T("PassThruReadMsgs returned more data than the buffer could hold."));
+		Assert::AreEqual<long>(STATUS_NOERROR, res, _T("Failed to read message."));
+		if (msgcount > 0) {
+			for (unsigned int i = 0; i < msgcount; i++) {
+				ret_messages.push_back(recvbuff[i]);
+			}
+		}
+	}
+
+	Assert::IsTrue(min_num <= ret_messages.size(), _T("Received too few messages."));
+	return ret_messages;
+}
+
 std::vector<PASSTHRU_MSG> j2534_recv_loop(unsigned int chanid, unsigned int num_expected, unsigned long timeout_ms) {
 	std::vector<PASSTHRU_MSG> ret_messages;
 	PASSTHRU_MSG recvbuff[4] = {};
@@ -110,7 +149,17 @@ std::vector<PASSTHRU_MSG> j2534_recv_loop(unsigned int chanid, unsigned int num_
 	}
 
 	std::ostringstream stringStream;
-	stringStream << "j2534_recv_loop Broke at " << t.getTimePassed() << " ms size is " << ret_messages.size();
+	stringStream << "j2534_recv_loop Broke at " << t.getTimePassed() << " ms size is " << ret_messages.size() << std::endl;
+
+	if (num_expected != ret_messages.size()) {
+		stringStream << "Incorrect number of messages received. Displaying the messages:" << std::endl;
+		for (auto msg : ret_messages) {
+			stringStream << "    TS: " << msg.Timestamp << "; Dat: ";
+			for (int i = 0; i < msg.DataSize; i++) stringStream << std::hex << std::setw(2) << std::setfill('0') << int(msg.Data[i] & 0xFF) << " ";
+			stringStream << std::endl;
+		}
+	}
+
 	Logger::WriteMessage(stringStream.str().c_str());
 
 	Assert::AreEqual<unsigned long>(num_expected, ret_messages.size(), _T("Received wrong number of messages."));

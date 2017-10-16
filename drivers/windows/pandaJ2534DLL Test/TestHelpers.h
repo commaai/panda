@@ -7,6 +7,8 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 extern void write_ioctl(unsigned int chanid, unsigned int param, unsigned int val, const __LineInfo* pLineInfo = NULL);
 
+extern std::vector<panda::PANDA_CAN_MSG> panda_recv_loop_loose(std::unique_ptr<panda::Panda>& p, unsigned int min_num, unsigned long timeout_ms = 100);
+
 extern std::vector<panda::PANDA_CAN_MSG> panda_recv_loop(std::unique_ptr<panda::Panda>& p, unsigned int num_expected, unsigned long timeout_ms = 100);
 
 extern void check_panda_can_msg(panda::PANDA_CAN_MSG& msgin, uint8_t bus, unsigned long addr, bool addr_29b,
@@ -23,6 +25,8 @@ extern void J2534_send_msg_checked(unsigned long chanid, unsigned long ProtocolI
 
 extern long J2534_send_msg(unsigned long chanid, unsigned long ProtocolID, unsigned long RxStatus, unsigned long TxFlags,
 	unsigned long Timestamp, unsigned long DataSize, unsigned long ExtraDataIndex, const char* Data);
+
+extern std::vector<PASSTHRU_MSG> j2534_recv_loop_loose(unsigned int chanid, unsigned int min_num, unsigned long timeout_ms = 100);
 
 extern std::vector<PASSTHRU_MSG> j2534_recv_loop(unsigned int chanid, unsigned int num_expected, unsigned long timeout_ms = 100);
 

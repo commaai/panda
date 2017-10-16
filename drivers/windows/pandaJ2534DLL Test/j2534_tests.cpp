@@ -1011,7 +1011,7 @@ namespace pandaJ2534DLLTest
 			Timer t_permsg = Timer();
 			Timer t_MFmsg = Timer();
 			unsigned int MFframesReceived = 0;
-			unsigned int PeriodicMsgReceived = 0;
+			unsigned int PeriodicMsgReceived = 1; //Because of the first panda_recv_loop above.
 			std::array<std::string, 6> const mfMsgExpectedParts{ "\x21""DDEEFFG", "\x22""GHHIIJJ", "\x23""KKLLMMN", "\x24""NOOPPQQ", "\x25""RRSSTTU", "\x26""UVVWWXX" };
 
 			while (TRUE) {
@@ -1038,7 +1038,18 @@ namespace pandaJ2534DLLTest
 					Sleep(10);
 			}
 
+			//Stop the periodic message and grab any data it may have sent since we last checked.
+			//Not sure if this is needed.
 			Assert::AreEqual<long>(STATUS_NOERROR, PassThruStopPeriodicMsg(chanid, msgid), _T("Failed to delete filter."), LINE_INFO());
+			auto extra_panda_msg = panda_recv_loop_loose(p, 0, 200);
+			for (auto msg : extra_panda_msg) {
+				 if (std::string((const char*)msg.dat, msg.len) == "\x02HI") {
+					PeriodicMsgReceived++;
+					Logger::WriteMessage("Received extra periodic message.");
+				} else {
+					Assert::IsTrue(FALSE, _T("Got impossible message. Something is very wrong. Check other tests."), LINE_INFO());
+				}
+			}
 
 			Assert::IsTrue(PeriodicMsgReceived > 3, _T("Did not receive enough periodic messages. Likely canceled or delayed."), LINE_INFO());
 
@@ -1052,7 +1063,7 @@ namespace pandaJ2534DLLTest
 			for (int i = 0; i < PeriodicMsgReceived + 1; i++) {
 				check_J2534_can_msg(j2534_msg_recv[(i * 2) + 0], ISO15765, CAN_29BIT_ID | TX_INDICATION, 0, 4, 0, "\x18\xda\xef\xf1", LINE_INFO());
 				switch (j2534_msg_recv[(i * 2) + 1].DataSize) {
-				case 6:
+				case 4 + 2:
 					check_J2534_can_msg(j2534_msg_recv[(i * 2) + 1], ISO15765, CAN_29BIT_ID | TX_MSG_TYPE, 0, 4 + 2, 0, "\x18\xda\xef\xf1""HI", LINE_INFO());
 					break;
 				case 4 + 48:
