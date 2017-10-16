@@ -161,9 +161,8 @@ long J2534Connection::clearMsgFilters() {
 	return STATUS_NOERROR;
 }
 
-long J2534Connection::setBaud(unsigned long baud) {
+void J2534Connection::setBaud(unsigned long baud) {
 	this->BaudRate = baud;
-	return STATUS_NOERROR;
 }
 
 void J2534Connection::schedultMsgTx(std::shared_ptr<Action> msgout) {
@@ -196,5 +195,63 @@ void J2534Connection::processMessage(const J2534Frame& msg) {
 
 	if (filter_res == FILTER_RESULT_PASS) {
 		addMsgToRxQueue(msg);
+	}
+}
+
+void J2534Connection::processIOCTLSetConfig(unsigned long Parameter, unsigned long Value) {
+	switch (Parameter) {
+	case DATA_RATE:			// 5-500000
+		this->setBaud(Value);
+	case LOOPBACK:			// 0 (OFF), 1 (ON) [0]
+		this->loopback = (Value != 0);
+		break;
+	case ISO15765_WFT_MAX:
+		break;
+	case NODE_ADDRESS:		// J1850PWM Related (Not supported by panda). HDS requires these to 'work'.
+	case NETWORK_LINE:
+	case P1_MIN:			// A bunch of stuff relating to ISO9141 and ISO14230 that the panda
+	case P1_MAX:			// currently doesn't support. Don't let HDS know we can't use these.
+	case P2_MIN:
+	case P2_MAX:
+	case P3_MIN:
+	case P3_MAX:
+	case P4_MIN:
+	case P4_MAX:
+	case W0:
+	case W1:
+	case W2:
+	case W3:
+	case W4:
+	case W5:
+	case TIDLE:
+	case TINIL:
+	case TWUP:
+	case PARITY:
+	case T1_MAX:			// SCI related options. The panda does not appear to support this
+	case T2_MAX:
+	case T3_MAX:
+	case T4_MAX:
+	case T5_MAX:
+		break;				// Just smile and nod.
+	default:
+		printf("Got unknown SET code %X\n", Parameter);
+	}
+}
+
+unsigned long J2534Connection::processIOCTLGetConfig(unsigned long Parameter) {
+	switch (Parameter) {
+	case DATA_RATE:
+		return this->getBaud();
+	case LOOPBACK:
+		return this->loopback;
+		break;
+	case BIT_SAMPLE_POINT:
+		return 80;
+	case SYNC_JUMP_WIDTH:
+		return 15;
+	default:
+		// HDS rarely reads off values through ioctl GET_CONFIG, but it often
+		// just wants the call to pass without erroring, so just don't do anything.
+		printf("Got unknown code %X\n", Parameter);
 	}
 }

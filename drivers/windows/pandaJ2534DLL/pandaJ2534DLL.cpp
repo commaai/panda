@@ -374,23 +374,10 @@ PANDAJ2534DLL_API long PTAPI	PassThruIoctl(unsigned long ChannelID, unsigned lon
 		if (inconfig == NULL)
 			return ret_code(ERR_NULL_PARAMETER);
 		for (unsigned int i = 0; i < inconfig->NumOfParams; i++) {
-			switch (inconfig->ConfigPtr[i].Parameter) {
-			case DATA_RATE:
-				inconfig->ConfigPtr[i].Value = get_channel(ChannelID)->getBaud();
-				break;
-			case LOOPBACK:
-				inconfig->ConfigPtr[i].Value = get_channel(ChannelID)->loopback;
-				break;
-			case BIT_SAMPLE_POINT:
-				inconfig->ConfigPtr[i].Value = 80;
-				break;
-			case SYNC_JUMP_WIDTH:
-				inconfig->ConfigPtr[i].Value = 15;
-				break;
-			default:
-				// HDS rarely reads off values through ioctl GET_CONFIG, but it often
-				// just wants the call to pass without erroring, so just don't do anything.
-				printf("Got unknown code %X\n", inconfig->ConfigPtr[i].Parameter);
+			try {
+				inconfig->ConfigPtr[i].Value = get_channel(ChannelID)->processIOCTLGetConfig(inconfig->ConfigPtr[i].Parameter);
+			} catch (int e) {
+				return ret_code(e);
 			}
 		}
 		break;
@@ -401,40 +388,10 @@ PANDAJ2534DLL_API long PTAPI	PassThruIoctl(unsigned long ChannelID, unsigned lon
 		if (inconfig == NULL)
 			return ret_code(ERR_NULL_PARAMETER);
 		for (unsigned int i = 0; i < inconfig->NumOfParams; i++) {
-			switch (inconfig->ConfigPtr[i].Parameter) {
-			case DATA_RATE:			// 5-500000
-				return ret_code(get_channel(ChannelID)->setBaud(inconfig->ConfigPtr[i].Value));
-			case LOOPBACK:			// 0 (OFF), 1 (ON) [0]
-				get_channel(ChannelID)->loopback = (inconfig->ConfigPtr[i].Value != 0);
-				break;
-			case NODE_ADDRESS:		// J1850PWM Related (Not supported by panda). HDS requires these to 'work'.
-			case NETWORK_LINE:
-			case P1_MIN:			// A bunch of stuff relating to ISO9141 and ISO14230 that the panda
-			case P1_MAX:			// currently doesn't support. Don't let HDS know we can't use these.
-			case P2_MIN:
-			case P2_MAX:
-			case P3_MIN:
-			case P3_MAX:
-			case P4_MIN:
-			case P4_MAX:
-			case W0:
-			case W1:
-			case W2:
-			case W3:
-			case W4:
-			case W5:
-			case TIDLE:
-			case TINIL:
-			case TWUP:
-			case PARITY:
-			case T1_MAX:			// SCI related options. The panda does not appear to support this
-			case T2_MAX:
-			case T3_MAX:
-			case T4_MAX:
-			case T5_MAX:
-				break;				// Just smile and nod.
-			default:
-				printf("Got unknown SET code %X\n", inconfig->ConfigPtr[i].Parameter);
+			try {
+				get_channel(ChannelID)->processIOCTLSetConfig(inconfig->ConfigPtr[i].Parameter, inconfig->ConfigPtr[i].Value);
+			} catch (int e) {
+				return ret_code(e);
 			}
 		}
 		break;

@@ -18,7 +18,7 @@ public:
 
 	virtual std::shared_ptr<MessageTx> parseMessageTx(PASSTHRU_MSG& pMsg);
 
-	virtual long setBaud(unsigned long baud);
+	virtual void setBaud(unsigned long baud);
 
 	virtual unsigned long getMinMsgLen() {
 		return 4;

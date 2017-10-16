@@ -44,7 +44,18 @@ std::vector<panda::PANDA_CAN_MSG> panda_recv_loop(std::unique_ptr<panda::Panda>&
 	}
 
 	std::ostringstream stringStream;
-	stringStream << "j2534_recv_loop Broke at " << t.getTimePassed() << " ms size is " << ret_messages.size();
+
+	stringStream << "j2534_recv_loop Broke at " << t.getTimePassed() << " ms size is " << ret_messages.size() << std::endl;
+
+	if (num_expected != ret_messages.size()) {
+		stringStream << "Incorrect number of messages received. Displaying the messages:" << std::endl;
+		for (auto msg : ret_messages) {
+			stringStream << "    TS: " << msg.recv_time << "; Dat: ";
+			for (int i = 0; i < msg.len; i++) stringStream << std::hex << std::setw(2) << std::setfill('0') << int(msg.dat[i] & 0xFF) << " ";
+			stringStream << std::endl;
+		}
+	}
+
 	Logger::WriteMessage(stringStream.str().c_str());
 
 	Assert::AreEqual<unsigned long>(num_expected, ret_messages.size(), _T("Received wrong number of messages."));

@@ -9,7 +9,7 @@ J2534Connection_ISO15765::J2534Connection_ISO15765(
 	unsigned long ProtocolID,
 	unsigned long Flags,
 	unsigned long BaudRate
-) : J2534Connection(panda_dev, ProtocolID, Flags, BaudRate) {
+) : J2534Connection(panda_dev, ProtocolID, Flags, BaudRate), wftMax(0) {
 	this->port = 0;
 
 	if (BaudRate % 100 || BaudRate < 10000 || BaudRate > 5000000)
@@ -76,11 +76,10 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 				break;
 			}
 			case FLOWCTRL_WAIT:
-				txConvo->flowControlWait();
+				txConvo->flowControlWait(this->wftMax);
 				break;
 			case FLOWCTRL_ABORT:
 				txConvo->flowControlAbort();
-				this->rxConversations[fid] = nullptr;
 				break;
 			}
 			break;
@@ -170,15 +169,15 @@ void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 	}
 }
 
-long J2534Connection_ISO15765::setBaud(unsigned long BaudRate) {
+void J2534Connection_ISO15765::setBaud(unsigned long BaudRate) {
 	if (auto panda_dev = this->getPandaDev()) {
 		if (BaudRate % 100 || BaudRate < 10000 || BaudRate > 5000000)
-			return ERR_NOT_SUPPORTED;
+			throw ERR_NOT_SUPPORTED;
 
 		panda_dev->panda->set_can_speed_cbps(panda::PANDA_CAN1, (uint16_t)(BaudRate / 100));
 		return J2534Connection::setBaud(BaudRate);
 	} else {
-		return ERR_DEVICE_NOT_CONNECTED;
+		throw ERR_DEVICE_NOT_CONNECTED;
 	}
 }
 
@@ -208,4 +207,23 @@ int J2534Connection_ISO15765::get_matching_in_fc_filter_id(const J2534Frame& msg
 			return i;
 	}
 	return -1;
+}
+
+void J2534Connection_ISO15765::processIOCTLSetConfig(unsigned long Parameter, unsigned long Value) {
+	switch (Parameter) {
+	case ISO15765_WFT_MAX:
+		this->wftMax = Value;
+		break;
+	default:
+		J2534Connection::processIOCTLSetConfig(Parameter, Value);
+	}
+}
+
+unsigned long J2534Connection_ISO15765::processIOCTLGetConfig(unsigned long Parameter) {
+	switch (Parameter) {
+	case ISO15765_WFT_MAX:
+		return this->wftMax;
+	default:
+		return J2534Connection::processIOCTLGetConfig(Parameter);
+	}
 }

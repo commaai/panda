@@ -33,7 +33,11 @@ public:
 
 	virtual void processMessage(const J2534Frame& msg);
 
-	virtual long setBaud(unsigned long baud);
+	virtual void setBaud(unsigned long baud);
+
+	virtual void processIOCTLSetConfig(unsigned long Parameter, unsigned long Value);
+
+	virtual unsigned long processIOCTLGetConfig(unsigned long Parameter);
 
 	virtual unsigned long getMinMsgLen() {
 		return 4;
@@ -57,4 +61,5 @@ public:
 
 private:
 	std::array<std::shared_ptr<MessageRx>, 10> rxConversations;
+	unsigned int wftMax;
 };

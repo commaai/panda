@@ -11,7 +11,7 @@ MessageTx_ISO15765::MessageTx_ISO15765(
 	PASSTHRU_MSG& to_send,
 	std::shared_ptr<J2534MessageFilter> filter
 ) : MessageTxTimeoutable(connection_in, to_send), filter(filter), frames_sent(0),
-consumed_count(0), txInFlight(FALSE), sendAll(FALSE), block_size(0), numWaitFrames(0), didtimeout(FALSE) {
+consumed_count(0), txInFlight(FALSE), sendAll(FALSE), block_size(0), numWaitFrames(0), didtimeout(FALSE), issuspended(FALSE){
 
 	CANid = ((uint8_t)fullmsg.Data[0]) << 24 | ((uint8_t)fullmsg.Data[1]) << 16 |
 		((uint8_t)fullmsg.Data[2]) << 8 | ((uint8_t)fullmsg.Data[3]);
@@ -57,7 +57,7 @@ unsigned int MessageTx_ISO15765::addressLength() {
 }
 
 void MessageTx_ISO15765::execute() {
-	if (didtimeout) return;
+	if (didtimeout || issuspended) return;
 	if (this->frames_sent >= this->framePayloads.size()) return;
 	if (block_size == 0 && !sendAll && this->frames_sent > 0) return;
 	if (block_size > 0 && !sendAll) block_size--;
@@ -86,7 +86,7 @@ BOOL MessageTx_ISO15765::checkTxReceipt(J2534Frame frame) {
 		((this->fullmsg.TxFlags & CAN_29BIT_ID) == (frame.RxStatus & CAN_29BIT_ID))) { //Check receipt is expected
 		txInFlight = FALSE; //Received the expected receipt. Allow another msg to be sent.
 
-		if(this->recvCount == 0 && this->framePayloads.size() > 1)
+		if (this->recvCount == 0 && this->framePayloads.size() > 1)
 			scheduleTimeout(TIMEOUT_FC);
 
 		if (frames_sent == framePayloads.size()) { //Check message done
@@ -115,7 +115,7 @@ BOOL MessageTx_ISO15765::checkTxReceipt(J2534Frame frame) {
 			//already been received (differentiating from first frame), the
 			//message is not finished, and there is more than one frame in
 			//the message.
-			if(block_size == 0 && recvCount != 0 && !sendAll && !this->isFinished() && this->framePayloads.size() > 1)
+			if (block_size == 0 && recvCount != 0 && !sendAll && !this->isFinished() && this->framePayloads.size() > 1)
 				scheduleTimeout(TIMEOUT_CF);
 		}
 		return TRUE;
@@ -151,19 +151,30 @@ void MessageTx_ISO15765::onTimeout() {
 }
 
 void MessageTx_ISO15765::flowControlContinue(uint8_t block_size, std::chrono::microseconds separation_time) {
+	this->issuspended = FALSE;
 	this->block_size = block_size;
 	this->delay = separation_time;
 	this->sendAll = block_size == 0;
 	this->recvCount++;
 }
 
-void MessageTx_ISO15765::flowControlWait() {
+void MessageTx_ISO15765::flowControlWait(unsigned long N_WFTmax) {
+	this->issuspended = TRUE;
 	this->recvCount++;
 	this->numWaitFrames++;
 	this->sendAll = FALSE;
-	scheduleTimeout(TIMEOUT_FC);
+	this->block_size = block_size;
+	this->delay = std::chrono::microseconds(0);
+	//Docs are vague on if 0 means NO WAITS ALLOWED or NO LIMIT TO WAITS.
+	//It is less likely to cause issue if NO LIMIT is assumed.
+	if (N_WFTmax > 0 && this->numWaitFrames > N_WFTmax) {
+		this->onTimeout(); //Trigger self destruction of message.
+	} else {
+		scheduleTimeout(TIMEOUT_FC);
+	}
 }
 
 void MessageTx_ISO15765::flowControlAbort() {
-	this->recvCount++;
+	this->recvCount++; //Invalidate future timeout actions.
+	this->onTimeout(); //Trigger self destruction of message.
 }

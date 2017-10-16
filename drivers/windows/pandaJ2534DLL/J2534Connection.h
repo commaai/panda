@@ -47,7 +47,7 @@ public:
 	long clearPeriodicMsgs();
 	long clearMsgFilters();
 
-	virtual long setBaud(unsigned long baud);
+	virtual void setBaud(unsigned long baud);
 
 	unsigned long getBaud() {
 		return this->BaudRate;
@@ -64,6 +64,10 @@ public:
 	unsigned long getPort() {
 		return this->port;
 	}
+
+	virtual void processIOCTLSetConfig(unsigned long Parameter, unsigned long Value);
+
+	virtual unsigned long processIOCTLGetConfig(unsigned long Parameter);
 
 	virtual void processMessage(const J2534Frame& msg);
 

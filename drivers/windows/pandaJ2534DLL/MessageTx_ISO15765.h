@@ -28,7 +28,7 @@ public:
 	virtual void onTimeout();
 
 	void MessageTx_ISO15765::flowControlContinue(uint8_t block_size, std::chrono::microseconds separation_time);
-	void MessageTx_ISO15765::flowControlWait();
+	void MessageTx_ISO15765::flowControlWait(unsigned long N_WFTmax);
 	void MessageTx_ISO15765::flowControlAbort();
 
 	std::shared_ptr<J2534MessageFilter> filter;
@@ -44,4 +44,5 @@ public:
 	BOOL sendAll;
 	unsigned int numWaitFrames;
 	BOOL didtimeout;
+	BOOL issuspended;
 };
