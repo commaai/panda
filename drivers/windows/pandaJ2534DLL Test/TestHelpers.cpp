@@ -223,11 +223,12 @@ unsigned long J2534_set_flowctrl_filter(unsigned long chanid, unsigned long tx,
 	return filterid;
 }
 
-std::unique_ptr<panda::Panda> getPanda(unsigned long kbaud) {
+std::unique_ptr<panda::Panda> getPanda(unsigned long kbaud, BOOL loopback) {
 	auto p = panda::Panda::openPanda("");
 	Assert::IsTrue(p != nullptr, _T("Could not open raw panda device to test communication."));
 	p->set_can_speed_kbps(panda::PANDA_CAN1, kbaud);
 	p->set_safety_mode(panda::SAFETY_ALLOUTPUT);
+	p->set_can_loopback(loopback);
 	p->can_clear(panda::PANDA_CAN_RX);
 	return p;
 }

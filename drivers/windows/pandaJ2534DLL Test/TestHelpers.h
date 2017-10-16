@@ -42,7 +42,7 @@ extern unsigned long J2534_set_BLOCK_filter(unsigned long chanid, unsigned long 
 extern unsigned long J2534_set_flowctrl_filter(unsigned long chanid, unsigned long tx,
 	unsigned long len, char* mask, char* pattern, char* flow, const __LineInfo* pLineInfo = NULL);
 
-extern std::unique_ptr<panda::Panda> getPanda(unsigned long kbaud = 500);
+extern std::unique_ptr<panda::Panda> getPanda(unsigned long kbaud = 500, BOOL loopback = FALSE);
 
 extern std::vector<panda::PANDA_CAN_MSG> checked_panda_send(std::unique_ptr<panda::Panda>& p, uint32_t addr, bool is_29b,
 	char* msg, uint8_t len, unsigned int num_expected=0, const __LineInfo* pLineInfo = NULL, unsigned long timeout_ms = 100);

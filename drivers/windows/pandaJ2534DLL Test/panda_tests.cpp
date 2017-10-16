@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "CppUnitTest.h"
 #include "panda/panda.h"
+#include "TestHelpers.h"
 
 #include <tchar.h>
 
@@ -75,19 +75,13 @@ namespace pandaTestNative
 		}
 	};
 
-
 	TEST_CLASS(CANOperations)
 	{
 	public:
 
 		TEST_METHOD(Panda_CAN_Echo)
 		{
-			auto p0 = Panda::openPanda("");
-			Assert::IsFalse(p0 == nullptr, _T("Could not open panda."));
-
-			p0->set_safety_mode(SAFETY_ALLOUTPUT);
-			p0->set_can_loopback(TRUE);
-			p0->can_clear(PANDA_CAN_RX);
+			auto p0 = getPanda(500, TRUE);
 
 			uint32_t addr = 0xAA;
 			bool is_29b = FALSE;
@@ -110,7 +104,7 @@ namespace pandaTestNative
 					Assert::IsTrue(msg.bus == canbus, _T("Wrong bus."));
 					Assert::IsTrue(msg.len == len, _T("Wrong len."));
 					Assert::AreEqual(memcmp(msg.dat, candata, msg.len), 0, _T("Received CAN data not equal"));
-					for(int i = msg.len; i < 8; i++)
+					for (int i = msg.len; i < 8; i++)
 						Assert::IsTrue(msg.dat[i] == 0, _T("Received CAN data not trailed by 0s"));
 				}
 
@@ -121,21 +115,12 @@ namespace pandaTestNative
 
 		TEST_METHOD(Panda_CAN_ClearClears)
 		{
-			auto p0 = Panda::openPanda("");
-			Assert::IsFalse(p0 == nullptr, _T("Could not open panda."));
-
-			p0->set_safety_mode(SAFETY_ALLOUTPUT);
-			p0->set_can_loopback(TRUE);
-			p0->can_clear(PANDA_CAN_RX);
-
-			uint8_t candata[8] = {'0', '1', '2', '3', '4', '5', '6', '7'};
-			p0->can_send(0xAA, FALSE, candata, 8, PANDA_CAN1);
+			auto p0 = getPanda(500, TRUE);
+			p0->can_send(0xAA, FALSE, (const uint8_t*)"\x0\x1\x2\x3\x4\x5\x6\x7", 8, panda::PANDA_CAN1);
 			Sleep(100);
-
 			p0->can_clear(PANDA_CAN_RX);
 
 			auto can_msgs = p0->can_recv();
-			printf("DERP GOD %d messages\n", can_msgs.size());
 			Assert::IsTrue(can_msgs.size() == 0, _T("Received messages after a clear."));
 		}
 	};
@@ -146,10 +131,7 @@ namespace pandaTestNative
 
 		TEST_METHOD(Panda_LIN_Echo)
 		{
-			auto p0 = Panda::openPanda("");
-			Assert::IsFalse(p0 == nullptr, _T("Could not open panda."));
-
-			p0->set_safety_mode(SAFETY_ALLOUTPUT);
+			auto p0 = getPanda(500);
 
 			for (auto lin_port : { SERIAL_LIN1, SERIAL_LIN2 }) {
 				p0->serial_clear(lin_port);
