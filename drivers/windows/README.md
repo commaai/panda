@@ -75,15 +75,42 @@ Studio, select **Build->Batch Build.** In the project list select:
 The installer is generated with [NullSoft NSIS](http://nsis.sourceforge.net/Main_Page).
 Use NSIS to run panda_install.nsi after building all the required projects.
 
-# Installing
+Before generating the installer, you must go to copy vscruntimeinfo.nsh.sample to
+vscruntimeinfo.nsh and follow the instructions to bundle in the Visual Studio C
+Runtime required by your version of Visual Studio. Without this runtime, the panda
+code will not work, so without this file, the installer will refuse to build.
+
+# Installing:
+
+Either build the software yourself by following the steps in the
+'Developing' section, or get the panda_installer.exe file and run
+it. The wizard should correctly set up the drivers.
+
+Since this driver is still in development, there are some issues
+that may occur. If after you install the driver and then plug in your
+panda (unplug it first if it was already plugged in), Windows says
+the driver is missing, refer to the section below 'Dealing with self
+signed drivers.'
+
+# Using J2534:
+
+After installing the J2534 drivers for the panda, you can do... nothing.
+You first need to get a J2534 client that can load the drivers and talk to
+the panda for you.
+
+A simple tool for testing J2534 drivers is DrewTech's 'J2534-1 Bus Analysis
+Tool' available in the 'Other Support Applications' section of their
+[Download Page](http://www.drewtech.com/downloads/).
+
+# Dealing with self signed drivers:
 
 Installation would be straightforward were it not for the USB Driver
 that needs to be setup. The driver itself is only a WinUSB inf file
 (no actual driver), but it still needs to be signed.
 
-Driver signing is a recent requirement of Windows (64 bit versions
-only for some reason). If your Windows refuses to install the driver
-(It almost certainly will), there are three choices:
+Driver signing is a requirement of Windows starting in 8 (64 bit
+versions only for some reason). If your Windows refuses to install
+the driver, there are three choices:
 
 - Self Sign the Driver.
 - Disable Driver Signature Verification
@@ -111,6 +138,15 @@ other two options.
 **Note that certificate issues apply no matter if you are building
   from source or running an insaller .exe file.**
 
+Some people have reported that the driver installs without needing to
+disable driver signing, or that visual studio correctly sets up a
+temporary signing key for them. I call witchcraft because I have not
+had that happen to me. The signed certificate is still the correct
+thing to do in the end.
+
+Windows 7 will not force driver signing. This software is not tested
+on anything before 7.
+
 # Developing:
 
 - Edit and merge pandaJ2534DLL\J2534register_x64.reg to register your development J2534 DLL.
@@ -136,6 +172,6 @@ other two options.
 - All Tx messages from a single Connection are serialized. This can be
   relaxed to allow serialization of messages based on their address
   (making multiple queues, effectively one queue per address).
-  
+
 # Other:
 Panda head ASCII art by dcau
