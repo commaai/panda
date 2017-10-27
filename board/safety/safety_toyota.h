@@ -97,16 +97,15 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
         // *** steer rate limit check ***
 
-        // get min and max torque_meas among the latest samples
-        int16_t torque_meas_min = 0;
-        int16_t torque_meas_max = 0;
         int16_t rate_down = 0;
         int16_t rate_up = 0;
         int16_t lim_min = 0;
         int16_t lim_max = 0;
          
+        // get min and max torque_meas among the latest samples
+        int16_t torque_meas_min = 0;
+        int16_t torque_meas_max = 0;
         int8_t len = sizeof(torque_meas)/sizeof(torque_meas[0]);
-
         for (int i = 0; i < len; i++) {
           if (torque_meas[i] < torque_meas_min) {
             torque_meas_min = torque_meas[i];
