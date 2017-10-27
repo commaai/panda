@@ -510,6 +510,14 @@ int main() {
   USART3->CR2 |= USART_CR2_LINEN;
 #endif
 
+  // init microsecond system timer
+  // increments 1000000 times per second
+  // generate an update to set the prescaler
+  TIM2->PSC = 48-1;
+  TIM2->CR1 = TIM_CR1_CEN;
+  TIM2->EGR = TIM_EGR_UG;
+  // use TIM2->CNT to read
+
   // enable USB
   usb_init();
 
