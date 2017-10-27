@@ -126,19 +126,18 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
           // give the rate limits only, these are the boundaries
           rate_up = desired_torque_last + MAX_RATE_UP;
           rate_down = desired_torque_last - MAX_RATE_DOWN;
-
           // create final limits, considering the measured motor torque
-          lim_min = rate_down;
-          lim_max =  torque_meas_max > lim_min ? torque_meas_max : lim_min;
+          lim_min = - MAX_RATE_UP;
+          lim_max =  torque_meas_max > rate_down ? torque_meas_max : rate_down;
           lim_max = lim_max < rate_up ? lim_max : rate_up;
+
         } else {
           // give the rate limits only, these are the boundaries
           rate_up = desired_torque_last + MAX_RATE_DOWN;
           rate_down = desired_torque_last - MAX_RATE_UP;
-
           // create final limits, considering the measured motor torque
-          lim_max = rate_up;
-          lim_min =  torque_meas_min < lim_max ? torque_meas_min : lim_max;
+          lim_max = MAX_RATE_UP;
+          lim_min =  torque_meas_min < rate_up ? torque_meas_min : rate_up;
           lim_min = lim_min > rate_down ? lim_min : rate_down;
         }
         
