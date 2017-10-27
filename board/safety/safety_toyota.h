@@ -148,12 +148,14 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         }
 
         // *** steer real time rate limit check ***
+
         int16_t max_rt_torque = 0;
         int16_t min_rt_torque = 0;
         // check every RT_INTERVAL if steer torque increased by more than MAX_RT_DELTA units in the positive directions
         if (ts > ts_last) {
           uint32_t ts_elapsed = ts > ts_last ? ts - ts_last : (0xFFFFFFFF - ts_last) + ts;
           if (ts_elapsed > RT_INTERVAL) {
+            ts_last = ts;
             if (rt_torque_last > 0) {
               max_rt_torque = rt_torque_last + MAX_RT_DELTA;
               min_rt_torque = - MAX_RT_DELTA;
@@ -164,8 +166,6 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
             if ((desired_torque < min_rt_torque) || (desired_torque > max_rt_torque)) {
               violation = 1;
             }
-            ts_last = ts;
-            rt_torque_last = desired_torque;
           }
         }
 
@@ -174,10 +174,13 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         violation = 1;
       }
 
-      desired_torque_last = desired_torque;
-
       if (violation) {
+        desired_torque_last = 0;  // start back from 0
+        rt_torque_last = 0;       // start back from 0
         return 0;
+      } else {
+        desired_torque_last = desired_torque;
+        rt_torque_last = desired_torque;
       }
     }
   }
