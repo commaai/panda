@@ -6,12 +6,14 @@ int16_t torque_meas_min = 0, torque_meas_max = 0;
 const int32_t MAX_TORQUE = 1500;       // max torque cmd allowed ever
 
 // rate based torque limit + stay within actually applied
+// packet is sent at 100hz, so this limit is 800/sec
 const int32_t MAX_RATE_UP = 8;         // ramp up slow
 const int32_t MAX_RATE_DOWN = 45;      // ramp down fast
 const int32_t MAX_TORQUE_ERROR = 300;  // max torque cmd in excess of torque motor
 
 // real time torque limit to prevent controls spamming
-const int32_t MAX_RT_DELTA = 500;      // max delta torque allowed for real time checks
+// the real time limit is 1500/sec
+const int32_t MAX_RT_DELTA = 375;      // max delta torque allowed for real time checks
 const int32_t RT_INTERVAL = 250000;    // 250ms between real time checks
 
 // longitudinal limits
@@ -85,14 +87,11 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       if (controls_allowed && actuation_limits) {
 
         // *** global torque limit check ***
-
         if (desired_torque < -MAX_TORQUE) violation = 1;
         if (desired_torque > MAX_TORQUE) violation = 1;
 
 
         // *** torque rate limit check ***
-
-        // torque is constrained to move by MAX_RATE_UP, 0 is always allowed
         int16_t highest_allowed_torque = max(desired_torque_last, 0) + MAX_RATE_UP;
         int16_t lowest_allowed_torque = min(desired_torque_last, 0) - MAX_RATE_UP;
 
