@@ -104,6 +104,9 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
           violation = 1;
         }
 
+        // used next time
+        desired_torque_last = desired_torque;
+
 
         // *** torque real time rate limit check ***
         int16_t highest_rt_torque = max(rt_torque_last, 0) + MAX_RT_DELTA;
@@ -121,9 +124,6 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
           rt_torque_last = desired_torque;
           ts_last = ts;
         }
-
-        // used next time
-        desired_torque_last = desired_torque;
       }
       
       // no torque if controls is not allowed
