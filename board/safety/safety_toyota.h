@@ -37,14 +37,14 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     torque_meas_new = (torque_meas_new / 3 + (torque_meas_new > 0 ? 1 : -1)) * 2;
 
     // shift the array
-    for (int i = sizeof(torque_meas)/sizeof(torque_meas[0] - 1; i > 0; i--) {
+    for (int i = sizeof(torque_meas)/sizeof(torque_meas[0]) - 1; i > 0; i--) {
       torque_meas[i] = torque_meas[i-1];
     }
     torque_meas[0] = torque_meas_new;
 
     // get the minimum and maximum measured torque over the last 3 frames
     torque_meas_min = torque_meas_max = torque_meas[0];
-    for (int i = 1; i < sizeof(torque_meas)/sizeof(torque_meas[0]; i++) {
+    for (int i = 1; i < sizeof(torque_meas)/sizeof(torque_meas[0]); i++) {
       if (torque_meas[i] < torque_meas_min) torque_meas_min = torque_meas[i];
       if (torque_meas[i] > torque_meas_max) torque_meas_max = torque_meas[i];
     }
