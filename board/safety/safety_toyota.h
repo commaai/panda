@@ -83,6 +83,8 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       int16_t desired_torque = (to_send->RDLR & 0xFF00) | ((to_send->RDLR >> 16) & 0xFF);
       int16_t violation = 0;
 
+      uint32_t ts = TIM2->CNT;
+
       // only check if controls are allowed and actuation_limits are imposed
       if (controls_allowed && actuation_limits) {
 
@@ -118,7 +120,6 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         }
 
         // every RT_INTERVAL set the new limits
-        uint32_t ts = TIM2->CNT;
         uint32_t ts_elapsed = ts > ts_last ? ts - ts_last : (0xFFFFFFFF - ts_last) + 1 + ts;
         if (ts_elapsed > RT_INTERVAL) {
           rt_torque_last = desired_torque;
@@ -135,6 +136,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       if (violation || !controls_allowed) {
         desired_torque_last = 0;
         rt_torque_last = 0;
+        ts_last = ts;
       }
 
       if (violation) {
