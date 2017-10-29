@@ -19,7 +19,7 @@ flashall: user1.bin user2.bin
 proxy-0x00000.bin: proxy
 	../panda/esptool.py elf2image $^
 
-proxy: proxy.o
+proxy: proxy.o elm327.o webserver.o sha.o
 
 obj/proxy.o: proxy.c
 	$(CC) $(CFLAGS) -c $^ -o $@
