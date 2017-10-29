@@ -99,7 +99,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
         // if we've exceeded the applied torque, we must start moving toward 0
         highest_allowed_torque = min(highest_allowed_torque, max(desired_torque_last - MAX_RATE_DOWN, max(torque_meas_max, 0) + MAX_TORQUE_ERROR));
-        lowest_allowed_torque = max(lowest_allowed_torque, min(desired_torque_last + MAX_RATE_DOWN, min(torque_meas_min, 0 - MAX_TORQUE_ERROR));
+        lowest_allowed_torque = max(lowest_allowed_torque, min(desired_torque_last + MAX_RATE_DOWN, min(torque_meas_min, 0) - MAX_TORQUE_ERROR));
 
         // check for violation
         if ((desired_torque < lowest_allowed_torque) || (desired_torque > highest_allowed_torque)) {
