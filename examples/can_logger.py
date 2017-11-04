@@ -12,7 +12,7 @@ def can_logger():
     p = Panda()
     
   except AssertionError:
-    print("USB connection failed. Tryining WiFi...")
+    print("USB connection failed. Trying WiFi...")
     
     try:
       p = Panda("WIFI")
@@ -35,7 +35,7 @@ def can_logger():
       can_recv = p.can_recv()
 
       for address, _, dat, src  in can_recv:
-        csvwriter.writerow([str(src), str(hex(address)), binascii.hexlify(dat), len(dat)])
+        csvwriter.writerow([str(src), str(hex(address)), "0x" + binascii.hexlify(dat), len(dat)])
         
         if src == 0:
           bus0_msg_cnt += 1
