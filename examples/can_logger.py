@@ -24,7 +24,7 @@ def can_logger():
     outputfile = open('output.csv', 'wb')
     csvwriter = csv.writer(outputfile)
     #Write Header
-    csvwriter.writerow(['Bus', 'MessageID', 'Message'])
+    csvwriter.writerow(['Bus', 'MessageID', 'Message', 'MessageLength'])
     print("Writing csv file output.csv. Press Ctrl-C to exit...\n")
   
     bus0_msg_cnt = 0
@@ -35,7 +35,7 @@ def can_logger():
       can_recv = p.can_recv()
 
       for address, _, dat, src  in can_recv:
-        csvwriter.writerow([str(src), str(hex(address)), binascii.hexlify(dat)])
+        csvwriter.writerow([str(src), str(hex(address)), binascii.hexlify(dat), len(dat)])
         
         if src == 0:
           bus0_msg_cnt += 1
