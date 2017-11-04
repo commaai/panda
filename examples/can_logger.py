@@ -35,7 +35,7 @@ def can_logger():
       can_recv = p.can_recv()
 
       for address, _, dat, src  in can_recv:
-        csvwriter.writerow([str(src), str(address), binascii.hexlify(dat)])
+        csvwriter.writerow([str(src), str(hex(address)), binascii.hexlify(dat)])
         
         if src == 0:
           bus0_msg_cnt += 1
