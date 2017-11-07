@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+import binascii
 from panda import Panda
 
 def tesla_tester():
@@ -17,9 +18,9 @@ def tesla_tester():
       print("WiFi connection timed out. Please make sure your Panda is connected and try again.")
       sys.exit(0)
 
-  bus_speed = 125 # Tesla Body busses (B, BF) are 125kbps, rest are 500kbps
-  bus_num = 1 # My TDC to OBD adapter has PT on bus0 BDY on bus1 and CH on bus2
-  p.set_can_speed_kbps(bus_num, bus_speed)
+  body_bus_speed = 125 # Tesla Body busses (B, BF) are 125kbps, rest are 500kbps
+  body_bus_num = 1 # My TDC to OBD adapter has PT on bus0 BDY on bus1 and CH on bus2
+  p.set_can_speed_kbps(body_bus_num, body_bus_speed)
   
   # Now set the panda from its default of SAFETY_NOOUTPUT (read only) to SAFETY_ALLOUTPUT
   # Careful, as this will let us send any CAN messages we want (which could be very bad!)
@@ -38,5 +39,25 @@ def tesla_tester():
   print("Disabling output on Panda...")
   p.set_safety_mode(Panda.SAFETY_NOOUTPUT)
   
+  print("Reading VIN from 0x568. This is painfully slow and can take up to 3 minutes (1 minute per message; 3 messages needed for full VIN)...")
+  
+  cnt = 0
+  vin = {}
+  while True:
+    #Read the VIN
+    can_recv = p.can_recv()
+    for address, _, dat, src  in can_recv:
+      if src == body_bus_num:
+        if address == 1384: #0x568 is VIN
+          vin_index = int(binascii.hexlify(dat)[:2]) #first byte is the index, 00, 01, 02
+          vin_string = binascii.hexlify(dat)[2:] #rest of the string is the actual VIN data
+          vin[vin_index] = vin_string.decode("hex")
+          print("Got VIN index " + str(vin_index) + " data " + vin[vin_index])
+          cnt += 1
+    #if we have all 3 parts of the VIN, print it and break out of our while loop
+    if cnt == 3:
+      print("VIN: " + vin[0] + vin[1] + vin[2][:3])
+      break
+
 if __name__ == "__main__":
   tesla_tester()
