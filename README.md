@@ -57,20 +57,10 @@ Directory structure
 Programming (over USB)
 ------
 
-Programming the STM32
-```
-cd board
-./get_sdk.sh
-make recover   # initially
-make           # future
-```
+[Programming the Board (STM32)](board/README.md)
 
-Programming the ESP
-```
-cd boardesp
-./get_sdk.sh
-make
-```
+[Programming the ESP](boardesp/README.md)
+
 
 Debugging
 ------
