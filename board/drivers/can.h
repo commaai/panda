@@ -338,26 +338,28 @@ void can_rx(uint8_t can_number) {
     // can is live
     pending_can_live = 1;
 
-    // add to my fifo
-    CAN_FIFOMailBox_TypeDef to_push;
-    to_push.RIR = CAN->sFIFOMailBox[0].RIR;
-    to_push.RDTR = CAN->sFIFOMailBox[0].RDTR;
-    to_push.RDLR = CAN->sFIFOMailBox[0].RDLR;
-    to_push.RDHR = CAN->sFIFOMailBox[0].RDHR;
+    // Bosch, remove 0x33D and 0xE4 (Move into its own file)
+    if (to_push.RIR>>21 != 0xE4 || to_push.RIR>>21 != 0x33D) {
+    
+      // add to my fifo
+      CAN_FIFOMailBox_TypeDef to_push;
+      to_push.RIR = CAN->sFIFOMailBox[0].RIR;
+      to_push.RDTR = CAN->sFIFOMailBox[0].RDTR;
+      to_push.RDLR = CAN->sFIFOMailBox[0].RDLR;
+      to_push.RDHR = CAN->sFIFOMailBox[0].RDHR;
+    }
 
     // forwarding (panda only)
     #ifdef PANDA
       if (can_forwarding[bus_number] != -1) {
         CAN_FIFOMailBox_TypeDef to_send;
 
-        // Bosch, remove 0x33D and 0xE4 (Move into its own file)
-        if (to_push.RIR>>21 != 0xE4 || to_push.RIR>>21 != 0x33D) {
-          to_send.RIR = to_push.RIR | 1; // TXRQ
-          to_send.RDTR = to_push.RDTR;
-          to_send.RDLR = to_push.RDLR;
-          to_send.RDHR = to_push.RDHR;
-          can_send(&to_send, can_forwarding[bus_number]);
-        }
+        to_send.RIR = to_push.RIR | 1; // TXRQ
+        to_send.RDTR = to_push.RDTR;
+        to_send.RDLR = to_push.RDLR;
+        to_send.RDHR = to_push.RDHR;
+        can_send(&to_send, can_forwarding[bus_number]);
+
       }
     #endif
 
