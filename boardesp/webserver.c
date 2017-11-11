@@ -27,9 +27,9 @@ char pageheader[] = "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
 "<title>Panda</title>\n"
 "</head>\n"
 "<body>\n"
-"<pre>This is your comma.ai panda<br/><br/>\n"
-"It's open source. Find the code <a href=\"https://github.com/commaai/panda\">here</a><br/>\n"
-"Designed to work with our dashcam, <a href=\"http://chffr.comma.ai\">chffr</a><br/>\n";
+"<pre>This is your comma.ai panda\n\n"
+"It's open source. Find the code <a href=\"https://github.com/commaai/panda\">here</a>\n"
+"Designed to work with our dashcam, <a href=\"http://chffr.comma.ai\">chffr</a>\n";
 
 char pagefooter[] = "</pre>\n"
 "</body>\n"
@@ -186,28 +186,28 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
       memset(resp, 0, MAX_RESP);
 
       strcpy(resp, pageheader);
-      ets_strcat(resp, "<br/>ssid: ");
+      ets_strcat(resp, "\nssid: ");
       ets_strcat(resp, ssid);
-      ets_strcat(resp, "<br/>");
+      ets_strcat(resp, "\n");
 
-      ets_strcat(resp, "<br/>st version:     ");
+      ets_strcat(resp, "\nst version:     ");
       uint32_t recvData[0x11];
       int len = spi_comm("\x00\x00\x00\x00\x40\xD6\x00\x00\x00\x00\x40\x00", 0xC, recvData, 0x40);
       ets_memcpy(resp+strlen(resp), recvData+1, len);
 
-      ets_strcat(resp, "<br/>esp version:    ");
+      ets_strcat(resp, "\nesp version:    ");
       ets_strcat(resp, gitversion);
       uint8_t current = system_upgrade_userbin_check();
       if (current == UPGRADE_FW_BIN1) {
-        ets_strcat(resp, "<br/>esp flash file: user2.bin");
+        ets_strcat(resp, "\nesp flash file: user2.bin");
       } else {
-        ets_strcat(resp, "<br/>esp flash file: user1.bin");
+        ets_strcat(resp, "\nesp flash file: user1.bin");
       }
       
-      ets_strcat(resp,"<br/>Set USB Mode:"
+      ets_strcat(resp,"\nSet USB Mode:"
         "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'client'); xhr.send()\" type='button'>Client</button>"
         "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'cdp'); xhr.send()\" type='button'>CDP</button>"
-        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'dcp'); xhr.send()\" type='button'>DCP</button>");
+        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'dcp'); xhr.send()\" type='button'>DCP</button>\n");
       ets_strcat(resp, pagefooter);
       
       espconn_send_string(&web_conn, resp);
