@@ -193,8 +193,35 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
       } else {
         ets_strcat(resp, "<br/>esp flash file: user1.bin");
       }
+      
+      ets_strcat(resp,"<br/>Set USB Mode:"
+        "<button onclick=\"location.href='/dcp'\" type='button'>"
+        "DCP</button>"
+        "<button onclick=\"location.href='/cdp'\" type='button'>"
+        "CDP</button>"
+        "<button onclick=\"location.href='/client'\" type='button'>"
+        "Client</button>");
+      
       espconn_send_string(&web_conn, resp);
       espconn_disconnect(conn);
+    } else if (memcmp(data, "GET /client ", 12) == 0) {
+        uint32_t recvData[0x11];
+        spi_comm("\x00\x00\x00\x00\x40\xE6\x00\x00\x00\x00\x40\x00", 0xC, recvData, 0x40);
+        espconn_send_string(&web_conn, "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
+"client mode request sent over SPI");
+        espconn_disconnect(conn);
+    } else if (memcmp(data, "GET /cdp ", 9) == 0) {
+        uint32_t recvData[0x11];
+        spi_comm("\x00\x00\x00\x00\x40\xE6\x01\x00\x00\x00\x40\x00", 0xC, recvData, 0x40);
+        espconn_send_string(&web_conn, "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
+"CDP mode request sent over SPI");
+        espconn_disconnect(conn);
+    } else if (memcmp(data, "GET /dcp ", 9) == 0) {
+        uint32_t recvData[0x11];
+        spi_comm("\x00\x00\x00\x00\x40\xE6\x02\x00\x00\x00\x40\x00", 0xC, recvData, 0x40);  
+        espconn_send_string(&web_conn, "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
+"DCP mode request sent over SPI");
+        espconn_disconnect(conn);    
     } else if (memcmp(data, "PUT /stupdate ", 14) == 0) {
       os_printf("init st firmware\n");
       char *cl = strstr(data, "Content-Length: ");
@@ -210,6 +237,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
         memset(st_firmware, 0, real_content_length);
         state = RECEIVING_ST_FIRMWARE;
       }
+      
     } else if ((memcmp(data, "PUT /espupdate1 ", 16) == 0) ||
                (memcmp(data, "PUT /espupdate2 ", 16) == 0)) {
       // 0x1000   = user1.bin
