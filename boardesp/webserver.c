@@ -195,12 +195,9 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
       }
       
       ets_strcat(resp,"<br/>Set USB Mode:"
-        "<button onclick=\"location.href='/dcp'\" type='button'>"
-        "DCP</button>"
-        "<button onclick=\"location.href='/cdp'\" type='button'>"
-        "CDP</button>"
-        "<button onclick=\"location.href='/client'\" type='button'>"
-        "Client</button>");
+        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'client'); xhr.send()\" type='button'>Client</button>"
+        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'cdp'); xhr.send()\" type='button'>CDP</button>"
+        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'dcp'); xhr.send()\" type='button'>DCP</button>";
       
       espconn_send_string(&web_conn, resp);
       espconn_disconnect(conn);
