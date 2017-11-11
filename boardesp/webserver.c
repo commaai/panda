@@ -20,10 +20,20 @@
 
 #define MAX_RESP 0x800
 char resp[MAX_RESP];
-char staticpage[] = "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
-"<pre>This is your comma.ai panda<br/><br/>"
-"It's open source. Find the code <a href=\"https://github.com/commaai/panda\">here</a><br/>"
-"Designed to work with our dashcam, <a href=\"http://chffr.comma.ai\">chffr</a><br/>";
+char pageheader[] = "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
+"<!DOCTYPE html>\n"
+"<html>\n"
+"<head>\n"
+"<title>Panda</title>\n"
+"</head>\n"
+"<body>\n"
+"<pre>This is your comma.ai panda<br/><br/>\n"
+"It's open source. Find the code <a href=\"https://github.com/commaai/panda\">here</a><br/>\n"
+"Designed to work with our dashcam, <a href=\"http://chffr.comma.ai\">chffr</a><br/>\n";
+
+char pagefooter[] = "</pre>\n"
+"</body>\n"
+"</html>\n";
 
 static struct espconn web_conn;
 static esp_tcp web_proto;
@@ -175,7 +185,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
     if (memcmp(data, "GET / ", 6) == 0) {
       memset(resp, 0, MAX_RESP);
 
-      strcpy(resp, staticpage);
+      strcpy(resp, pageheader);
       ets_strcat(resp, "<br/>ssid: ");
       ets_strcat(resp, ssid);
       ets_strcat(resp, "<br/>");
@@ -198,6 +208,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
         "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'client'); xhr.send()\" type='button'>Client</button>"
         "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'cdp'); xhr.send()\" type='button'>CDP</button>"
         "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'dcp'); xhr.send()\" type='button'>DCP</button>");
+      ets_strcat(resp, pagefooter);
       
       espconn_send_string(&web_conn, resp);
       espconn_disconnect(conn);
