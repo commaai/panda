@@ -206,7 +206,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
         ets_strcat(resp, "\nesp flash file: user1.bin");
       }
       
-      ets_strcat(resp,"\nSet USB Mode Function:"
+      ets_strcat(resp,"\nSet USB Mode:"
         "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'set_property?usb_mode=0'); xhr.send()\" type='button'>Client</button>"
         "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'set_property?usb_mode=1'); xhr.send()\" type='button'>CDP</button>"
         "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'set_property?usb_mode=2'); xhr.send()\" type='button'>DCP</button>\n");
