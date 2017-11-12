@@ -35,6 +35,8 @@ char pagefooter[] = "</pre>\n"
 "</body>\n"
 "</html>\n";
 
+char OK_header[] = "HTTP/1.0 200 OK\nContent-Type: text/html\n\n";
+
 static struct espconn web_conn;
 static esp_tcp web_proto;
 extern char ssid[];
@@ -204,32 +206,28 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
         ets_strcat(resp, "\nesp flash file: user1.bin");
       }
       
-      ets_strcat(resp,"\nSet USB Mode:"
-        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'client'); xhr.send()\" type='button'>Client</button>"
-        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'cdp'); xhr.send()\" type='button'>CDP</button>"
-        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'dcp'); xhr.send()\" type='button'>DCP</button>\n");
+      ets_strcat(resp,"\nSet USB Mode Function:"
+        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'set_property?usb_mode=0'); xhr.send()\" type='button'>Client</button>"
+        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'set_property?usb_mode=1'); xhr.send()\" type='button'>CDP</button>"
+        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'set_property?usb_mode=2'); xhr.send()\" type='button'>DCP</button>\n");
+
       ets_strcat(resp, pagefooter);
       
       espconn_send_string(&web_conn, resp);
       espconn_disconnect(conn);
-    } else if (memcmp(data, "GET /client ", 12) == 0) {
-        uint32_t recvData[1];
-        spi_comm("\x00\x00\x00\x00\x40\xE6\x00\x00\x00\x00\x40\x00", 0xC, recvData, 0);
-        espconn_send_string(&web_conn, "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
-"client mode request sent over SPI");
-        espconn_disconnect(conn);
-    } else if (memcmp(data, "GET /cdp ", 9) == 0) {
-        uint32_t recvData[1];
-        spi_comm("\x00\x00\x00\x00\x40\xE6\x01\x00\x00\x00\x40\x00", 0xC, recvData, 0);
-        espconn_send_string(&web_conn, "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
-"CDP mode request sent over SPI");
-        espconn_disconnect(conn);
-    } else if (memcmp(data, "GET /dcp ", 9) == 0) {
-        uint32_t recvData[1];
-        spi_comm("\x00\x00\x00\x00\x40\xE6\x02\x00\x00\x00\x40\x00", 0xC, recvData, 0);  
-        espconn_send_string(&web_conn, "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
-"DCP mode request sent over SPI");
-        espconn_disconnect(conn);    
+      
+    } else if (memcmp(data, "GET /set_property?usb_mode=", 27) == 0) {
+      char mode_value = data[27] - '0';
+        if (mode_value >= '\x00' && mode_value <= '\x02') {
+          memset(resp, 0, MAX_RESP);
+          char set_usb_mode_packet[] = "\x00\x00\x00\x00\x40\xE6\x00\x00\x00\x00\x40\x00";
+          set_usb_mode_packet[6] = mode_value;
+          uint32_t recvData[1];
+          spi_comm(set_usb_mode_packet, 0xC, recvData, 0);
+          os_sprintf(resp, "%sUSB Mode set to %02x\n\n", OK_header, mode_value);
+          espconn_send_string(&web_conn, resp);
+          espconn_disconnect(conn);
+        }  
     } else if (memcmp(data, "PUT /stupdate ", 14) == 0) {
       os_printf("init st firmware\n");
       char *cl = strstr(data, "Content-Length: ");
@@ -277,6 +275,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
         start_address = esp_address;
       }
     } else {
+      espconn_send_string(&web_conn, "HTTP/1.0 404 Not Found\nContent-Type: text/html\n\n404 Not Found!\n");
       espconn_disconnect(conn);
     }
   } else if (state == RECEIVING_ST_FIRMWARE) {
