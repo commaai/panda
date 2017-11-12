@@ -13,6 +13,8 @@ It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?
 
 It is 2nd gen hardware, reusing code and parts from the [NEO](https://github.com/commaai/neo) interface board.
 
+[![Build Status](https://travis-ci.org/commaai/panda.svg?branch=master)](https://travis-ci.org/commaai/panda)
+
 Usage
 ------
 
