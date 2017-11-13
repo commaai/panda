@@ -1,5 +1,9 @@
 language: python
 
+cache:
+  directories:
+    - build/commaai/panda/boardesp/esp-open-sdk/crosstool-NG
+
 addons:
   apt:
     packages:
