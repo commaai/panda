@@ -20,10 +20,22 @@
 
 #define MAX_RESP 0x800
 char resp[MAX_RESP];
-char staticpage[] = "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
-"<pre>This is your comma.ai panda<br/><br/>"
-"It's open source. Find the code <a href=\"https://github.com/commaai/panda\">here</a><br/>"
-"Designed to work with our dashcam, <a href=\"http://chffr.comma.ai\">chffr</a><br/>";
+char pageheader[] = "HTTP/1.0 200 OK\nContent-Type: text/html\n\n"
+"<!DOCTYPE html>\n"
+"<html>\n"
+"<head>\n"
+"<title>Panda</title>\n"
+"</head>\n"
+"<body>\n"
+"<pre>This is your comma.ai panda\n\n"
+"It's open source. Find the code <a href=\"https://github.com/commaai/panda\">here</a>\n"
+"Designed to work with our dashcam, <a href=\"http://chffr.comma.ai\">chffr</a>\n";
+
+char pagefooter[] = "</pre>\n"
+"</body>\n"
+"</html>\n";
+
+char OK_header[] = "HTTP/1.0 200 OK\nContent-Type: text/html\n\n";
 
 static struct espconn web_conn;
 static esp_tcp web_proto;
@@ -175,26 +187,47 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
     if (memcmp(data, "GET / ", 6) == 0) {
       memset(resp, 0, MAX_RESP);
 
-      strcpy(resp, staticpage);
-      ets_strcat(resp, "<br/>ssid: ");
+      strcpy(resp, pageheader);
+      ets_strcat(resp, "\nssid: ");
       ets_strcat(resp, ssid);
-      ets_strcat(resp, "<br/>");
+      ets_strcat(resp, "\n");
 
-      ets_strcat(resp, "<br/>st version:     ");
+      ets_strcat(resp, "\nst version:     ");
       uint32_t recvData[0x11];
       int len = spi_comm("\x00\x00\x00\x00\x40\xD6\x00\x00\x00\x00\x40\x00", 0xC, recvData, 0x40);
       ets_memcpy(resp+strlen(resp), recvData+1, len);
 
-      ets_strcat(resp, "<br/>esp version:    ");
+      ets_strcat(resp, "\nesp version:    ");
       ets_strcat(resp, gitversion);
       uint8_t current = system_upgrade_userbin_check();
       if (current == UPGRADE_FW_BIN1) {
-        ets_strcat(resp, "<br/>esp flash file: user2.bin");
+        ets_strcat(resp, "\nesp flash file: user2.bin");
       } else {
-        ets_strcat(resp, "<br/>esp flash file: user1.bin");
+        ets_strcat(resp, "\nesp flash file: user1.bin");
       }
+      
+      ets_strcat(resp,"\nSet USB Mode:"
+        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'set_property?usb_mode=0'); xhr.send()\" type='button'>Client</button>"
+        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'set_property?usb_mode=1'); xhr.send()\" type='button'>CDP</button>"
+        "<button onclick=\"var xhr = new XMLHttpRequest(); xhr.open('GET', 'set_property?usb_mode=2'); xhr.send()\" type='button'>DCP</button>\n");
+
+      ets_strcat(resp, pagefooter);
+      
       espconn_send_string(&web_conn, resp);
       espconn_disconnect(conn);
+      
+    } else if (memcmp(data, "GET /set_property?usb_mode=", 27) == 0) {
+      char mode_value = data[27] - '0';
+        if (mode_value >= '\x00' && mode_value <= '\x02') {
+          memset(resp, 0, MAX_RESP);
+          char set_usb_mode_packet[] = "\x00\x00\x00\x00\x40\xE6\x00\x00\x00\x00\x40\x00";
+          set_usb_mode_packet[6] = mode_value;
+          uint32_t recvData[1];
+          spi_comm(set_usb_mode_packet, 0xC, recvData, 0);
+          os_sprintf(resp, "%sUSB Mode set to %02x\n\n", OK_header, mode_value);
+          espconn_send_string(&web_conn, resp);
+          espconn_disconnect(conn);
+        }  
     } else if (memcmp(data, "PUT /stupdate ", 14) == 0) {
       os_printf("init st firmware\n");
       char *cl = strstr(data, "Content-Length: ");
@@ -210,6 +243,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
         memset(st_firmware, 0, real_content_length);
         state = RECEIVING_ST_FIRMWARE;
       }
+      
     } else if ((memcmp(data, "PUT /espupdate1 ", 16) == 0) ||
                (memcmp(data, "PUT /espupdate2 ", 16) == 0)) {
       // 0x1000   = user1.bin
@@ -241,6 +275,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
         start_address = esp_address;
       }
     } else {
+      espconn_send_string(&web_conn, "HTTP/1.0 404 Not Found\nContent-Type: text/html\n\n404 Not Found!\n");
       espconn_disconnect(conn);
     }
   } else if (state == RECEIVING_ST_FIRMWARE) {
