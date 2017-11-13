@@ -5,13 +5,13 @@ Dependencies
 **Mac**
 
 ```
-./get_sdk.sh
+./get_mac_sdk.sh
 ```
 
 **Debian / Ubuntu**
 
 ```
-./get_mac_sdk.sh
+./get_sdk.sh
 ```
 
 Programming
