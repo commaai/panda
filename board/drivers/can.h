@@ -351,7 +351,7 @@ void can_rx(uint8_t can_number) {
         CAN_FIFOMailBox_TypeDef to_send;
         int can_id = (to_push.RIR>>21) & 0x7FF;
         // Bosch, remove 0x33D and 0xE4 (Move into its own file)
-        if (can_id != 0xE4 && can_id != 0x33D) {
+        if (can_id != 0xE4 && can_id != 0x33D && can_id < 750) {
           to_send.RIR = to_push.RIR | 1; // TXRQ
           to_send.RDTR = to_push.RDTR;
           to_send.RDLR = to_push.RDLR;
