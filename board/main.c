@@ -104,7 +104,7 @@ int get_health_pkt(void *dat) {
 
 #ifdef PANDA
   health->current = adc_get(ADCCHAN_CURRENT);
-  health->started = (GPIOA->IDR & (1 << 1)) == 0;
+  health->started = can_live;
 #else
   health->current = 0;
   health->started = (GPIOC->IDR & (1 << 13)) != 0;
