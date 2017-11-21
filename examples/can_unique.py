@@ -5,8 +5,13 @@
 # in the background files.
 
 # Expects the CSV file to be in the format from can_logger.py
+# Bus,MessageID,Message,MessageLength
+# 0,0x292,0x040000001068,6
+
+# The old can_logger.py format is also supported:
 # Bus,MessageID,Message
 # 0,344,c000c00000000000
+
 
 import binascii
 import csv
@@ -32,7 +37,7 @@ class Message():
       if new_zeros:
         print 'id %s new zero at byte %d bitmask %d' % (
             self.message_id, i, new_zeros)
-      
+
 
 class Info():
   """A collection of Messages."""
@@ -46,8 +51,14 @@ class Info():
       reader = csv.reader(input)
       next(reader, None)  # skip the CSV header
       for row in reader:
-        message_id = row[1]
-        data = row[2]
+        if row[1].startswith('0x'):
+          message_id = row[1][2:]  # remove leading '0x'
+        else:
+          message_id = hex(int(row[1]))[2:]  # old message IDs are in decimal
+        if row[1].startswith('0x'):
+          data = row[2][2:]  # remove leading '0x'
+        else:
+          data = row[2]
         if message_id not in self.messages:
           self.messages[message_id] = Message(message_id)
         message = self.messages[message_id]
@@ -71,8 +82,8 @@ def PrintUnique(interesting_file, background_files):
     else:
       interesting.messages[message_id].printBitDiff(
           background.messages[message_id])
-      
-  
+
+
 if __name__ == "__main__":
   if len(sys.argv) < 3:
     print 'Usage:\n%s interesting.csv background*.csv' % sys.argv[0]
