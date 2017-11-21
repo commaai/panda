@@ -4,7 +4,7 @@ Dependencies
 **Mac**
 
 ```
-./get_mac_sdk.sh
+./get_sdk_mac.sh
 ```
 
 **Debian / Ubuntu**
@@ -27,6 +27,14 @@ make
 
 ```
 make -f Makefile.legacy
+```
+
+Troubleshooting
+----
+
+If your panda will not flash and is quickly blinking a single Green LED, use:
+```
+make recover
 ```
 
 

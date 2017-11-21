@@ -11,7 +11,7 @@ Dependencies
 **Debian / Ubuntu**
 
 ```
-./get_mac_sdk.sh
+./get_sdk_mac.sh
 ```
 
 Programming
