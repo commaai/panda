@@ -53,7 +53,7 @@ Directory structure
 - board      -- Code that runs on the STM32
 - boardesp   -- Code that runs on the ESP8266
 - drivers    -- Drivers (not needed for use with python)
-- panda      -- Python userspace library for interfacing with the panda
+- python     -- Python userspace library for interfacing with the panda
 - tests      -- Tests and helper programs for panda
 
 Programming (over USB)
