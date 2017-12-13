@@ -23,7 +23,7 @@ To install the library:
 # pip install pandacan
 ```
 
-See [this class](https://github.com/commaai/panda/blob/master/panda/__init__.py#L80) for how to interact with the panda.
+See [this class](https://github.com/commaai/panda/blob/master/python/__init__.py#L80) for how to interact with the panda.
 
 For example, to receive CAN messages:
 ```
@@ -42,10 +42,10 @@ Software interface support
 
 As a universal car interface, it should support every reasonable software interface.
 
-- User space (done)
-- socketcan in kernel (alpha)
-- ELM327 (planned)
-- Windows J2534 (planned)
+- User space ([done](https://github.com/commaai/panda/tree/master/python))
+- socketcan in kernel ([alpha](https://github.com/commaai/panda/tree/master/drivers/linux))
+- ELM327 ([done](https://github.com/commaai/panda/blob/master/boardesp/elm327.c))
+- Windows J2534 ([alpha](https://github.com/commaai/panda/tree/master/drivers/windows))
 
 Directory structure
 ------
