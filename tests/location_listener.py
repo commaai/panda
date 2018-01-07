@@ -20,20 +20,24 @@ if __name__ == "__main__":
   # power cycle by toggling reset
   print "resetting"
   panda.set_esp_power(0)
-  time.sleep(0.1)
+  time.sleep(0.5)
   panda.set_esp_power(1)
   time.sleep(0.5)
   print "done"
   print ser.read(1024)
 
   # upping baud rate
-  print "upping baud rate (broken)"
-  msg = add_nmea_checksum("$PUBX,41,1,0007,0003,9600,0")+"\r\n"
+  # 460800 has issues
+  baudrate = 230400
+
+  print "upping baud rate"
+  msg = add_nmea_checksum("$PUBX,41,1,0007,0003,%d,0" % baudrate)+"\r\n"
   print msg
   ser.write(msg)
+  time.sleep(0.1)   # needs a wait for it to actually send
 
   # new panda serial
-  ser = PandaSerial(panda, 1, 9600)
+  ser = PandaSerial(panda, 1, baudrate)
 
   while True:
     ret = ser.read(1024)
