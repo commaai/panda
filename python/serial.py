@@ -18,6 +18,7 @@ class PandaSerial(object):
 
   def write(self, dat):
     #print "W: ", dat.encode("hex")
+    #print '  pigeon_send("' + ''.join(map(lambda x: "\\x%02X" % ord(x), dat)) + '");'
     return self.panda.serial_write(self.port, dat)
 
   def close(self):

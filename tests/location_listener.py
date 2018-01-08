@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
   # upping baud rate
   # 460800 has issues
-  baudrate = 230400
+  baudrate = 460800
 
   print "upping baud rate"
   msg = add_nmea_checksum("$PUBX,41,1,0007,0003,%d,0" % baudrate)+"\r\n"
