@@ -251,7 +251,7 @@ void ICACHE_FLASH_ATTR wifi_init() {
   config.ssid_len = strlen(ssid);
   config.authmode = AUTH_WPA2_PSK;
   config.beacon_interval = 100;
-  config.max_connection = 10;
+  config.max_connection = 4;
   wifi_softap_set_config(&config);
 
   //set IP
