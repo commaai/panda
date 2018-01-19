@@ -425,7 +425,10 @@ class Panda(object):
     return b''.join(ret)
 
   def serial_write(self, port_number, ln):
-    return self._handle.bulkWrite(2, struct.pack("B", port_number) + ln)
+    ret = 0
+    for i in range(0, len(ln), 0x20):
+      ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + ln[i:i+0x20])
+    return ret
 
   def serial_clear(self, port_number):
     """Clears all messages (tx and rx) from the specified internal uart
