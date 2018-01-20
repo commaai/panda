@@ -229,6 +229,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xd9:
       if (setup->b.wValue.w == 1) {
         set_esp_mode(ESP_ENABLED);
+      } else if (setup->b.wValue.w == 2) {
+        set_esp_mode(ESP_BOOTMODE);
       } else {
         set_esp_mode(ESP_DISABLED);
       }
