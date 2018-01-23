@@ -9,7 +9,10 @@ def msg(x):
     assert False
   return ret.ljust(8, "\x00")
 
-def isotp_send(panda, x, addr, bus=0):
+def isotp_send(panda, x, addr, bus=0, recvaddr=None):
+  if recvaddr is None:
+    recvaddr = addr+8
+
   if len(x) <= 7:
     panda.can_send(addr, msg(x), bus)
   else:
@@ -24,7 +27,7 @@ def isotp_send(panda, x, addr, bus=0):
 
     # actually send
     panda.can_send(addr, ss, bus)
-    rr = recv(panda, 1, addr+8, bus)[0]
+    rr = recv(panda, 1, recvaddr, bus)[0]
     panda.can_send_many([(addr, None, s, 0) for s in sends])
 
 kmsgs = []
