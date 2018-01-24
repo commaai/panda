@@ -175,6 +175,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       puts(" err: "); puth(can_err_cnt);
       puts("\n");
       break;
+    // **** 0xc1: is grey panda
+    case 0xc1:
+      resp[0] = is_grey_panda;
+      resp_len = 1;
+      break;
     // **** 0xd0: fetch serial number
     case 0xd0:
       #ifdef PANDA
