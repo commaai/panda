@@ -18,6 +18,8 @@ __version__ = '0.0.6'
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
+DEBUG = os.getenv("PANDADEBUG") is not None
+
 # *** wifi mode ***
 
 def build_st(target, mkfile="Makefile"):
@@ -34,7 +36,10 @@ def parse_can_buffer(dat):
       address = f1 >> 3
     else:
       address = f1 >> 21
-    ret.append((address, f2>>16, ddat[8:8+(f2&0xF)], (f2>>4)&0xFF))
+    dddat = ddat[8:8+(f2&0xF)]
+    if DEBUG:
+      print("  R %x: %s" % (address, str(dddat).encode("hex")))
+    ret.append((address, f2>>16, dddat, (f2>>4)&0xFF))
   return ret
 
 class PandaWifiStreaming(object):
@@ -369,6 +374,8 @@ class Panda(object):
     extended = 4
     for addr, _, dat, bus in arr:
       assert len(dat) <= 8
+      if DEBUG:
+        print("  W %x: %s" % (addr, dat.encode("hex")))
       if addr >= 0x800:
         rir = (addr << 3) | transmit | extended
       else:
