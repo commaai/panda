@@ -154,7 +154,7 @@ static int toyota_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   return true;
 }
 
-static void toyota_init() {
+static void toyota_init(int16_t param) {
   controls_allowed = 0;
   actuation_limits = 1;
 }
@@ -166,7 +166,7 @@ const safety_hooks toyota_hooks = {
   .tx_lin = toyota_tx_lin_hook,
 };
 
-static void toyota_nolimits_init() {
+static void toyota_nolimits_init(int16_t param) {
   controls_allowed = 0;
   actuation_limits = 0;
 }

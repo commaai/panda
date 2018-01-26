@@ -274,7 +274,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       // and it's blocked over WiFi
       // Allow ELM security mode to be set over wifi.
       if (hardwired || setup->b.wValue.w == SAFETY_NOOUTPUT || setup->b.wValue.w == SAFETY_ELM327) {
-        safety_set_mode(setup->b.wValue.w);
+        safety_set_mode(setup->b.wValue.w, (int16_t)setup->b.wIndex.w);
         switch (setup->b.wValue.w) {
           case SAFETY_NOOUTPUT:
             can_silent = ALL_CAN_SILENT;
@@ -530,7 +530,7 @@ int main() {
   usb_init();
 
   // default to silent mode to prevent issues with Ford
-  safety_set_mode(SAFETY_NOOUTPUT);
+  safety_set_mode(SAFETY_NOOUTPUT, 0);
   can_silent = ALL_CAN_SILENT;
   can_init_all();
 
