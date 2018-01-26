@@ -9,7 +9,7 @@ const int32_t MAX_TORQUE = 1500;       // max torque cmd allowed ever
 // packet is sent at 100hz, so this limit is 1000/sec
 const int32_t MAX_RATE_UP = 10;        // ramp up slow
 const int32_t MAX_RATE_DOWN = 25;      // ramp down fast
-const int32_t MAX_TORQUE_ERROR = 500;  // max torque cmd in excess of torque motor
+const int32_t MAX_TORQUE_ERROR = 350;  // max torque cmd in excess of torque motor
 
 // real time torque limit to prevent controls spamming
 // the real time limit is 1500/sec
@@ -23,6 +23,8 @@ const int16_t MIN_ACCEL = -3000;       // 3.0 m/s2
 // global actuation limit state
 int actuation_limits = 1;              // by default steer limits are imposed
 
+int dbc_torque_eps_factor = 100;       // same as factor for STEER_TORQUE_EPS in the dbc file (unit is %)
+
 // state of torque limits
 int16_t desired_torque_last = 0;       // last desired steer torque
 int16_t rt_torque_last = 0;            // last desired torque for real time check
@@ -34,7 +36,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int16_t torque_meas_new = (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF));
 
     // increase torque_meas by 1 to be conservative on rounding
-    torque_meas_new = (torque_meas_new / 3 + (torque_meas_new > 0 ? 1 : -1)) * 2;
+    torque_meas_new = (torque_meas_new * dbc_torque_eps_factor / 100) + (torque_meas_new > 0 ? 1 : -1);
 
     // shift the array
     for (int i = sizeof(torque_meas)/sizeof(torque_meas[0]) - 1; i > 0; i--) {
@@ -154,13 +156,40 @@ static int toyota_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   return true;
 }
 
-static void toyota_init() {
+static void toyota_prius_init() {
   controls_allowed = 0;
   actuation_limits = 1;
+  dbc_torque_eps_factor = 66;
 }
 
-const safety_hooks toyota_hooks = {
-  .init = toyota_init,
+const safety_hooks toyota_prius_hooks = {
+  .init = toyota_prius_init,
+  .rx = toyota_rx_hook,
+  .tx = toyota_tx_hook,
+  .tx_lin = toyota_tx_lin_hook,
+};
+
+static void toyota_rav4_init() {
+  controls_allowed = 0;
+  actuation_limits = 1;
+  dbc_torque_eps_factor = 100;
+}
+
+const safety_hooks toyota_rav4_hooks = {
+  .init = toyota_rav4_init,
+  .rx = toyota_rx_hook,
+  .tx = toyota_tx_hook,
+  .tx_lin = toyota_tx_lin_hook,
+};
+
+static void toyota_corolla_init() {
+  controls_allowed = 0;
+  actuation_limits = 1;
+  dbc_torque_eps_factor = 73;
+}
+
+const safety_hooks toyota_corolla_hooks = {
+  .init = toyota_corolla_init,
   .rx = toyota_rx_hook,
   .tx = toyota_tx_hook,
   .tx_lin = toyota_tx_lin_hook,
@@ -169,6 +198,7 @@ const safety_hooks toyota_hooks = {
 static void toyota_nolimits_init() {
   controls_allowed = 0;
   actuation_limits = 0;
+  dbc_torque_eps_factor = 100;
 }
 
 const safety_hooks toyota_nolimits_hooks = {
