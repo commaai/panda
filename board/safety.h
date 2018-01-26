@@ -44,7 +44,9 @@ typedef struct {
 
 #define SAFETY_NOOUTPUT 0
 #define SAFETY_HONDA 1
-#define SAFETY_TOYOTA 2
+#define SAFETY_TOYOTA_PRIUS 2
+#define SAFETY_TOYOTA_RAV4 3
+#define SAFETY_TOYOTA_COROLLA 4
 #define SAFETY_TOYOTA_NOLIMITS 0x1336
 #define SAFETY_ALLOUTPUT 0x1337
 #define SAFETY_ELM327 0xE327
@@ -52,7 +54,9 @@ typedef struct {
 const safety_hook_config safety_hook_registry[] = {
   {SAFETY_NOOUTPUT, &nooutput_hooks},
   {SAFETY_HONDA, &honda_hooks},
-  {SAFETY_TOYOTA, &toyota_hooks},
+  {SAFETY_TOYOTA_PRIUS, &toyota_prius_hooks},
+  {SAFETY_TOYOTA_RAV4, &toyota_rav4_hooks},
+  {SAFETY_TOYOTA_COROLLA, &toyota_corolla_hooks},
   {SAFETY_TOYOTA_NOLIMITS, &toyota_nolimits_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
   {SAFETY_ELM327, &elm327_hooks},
