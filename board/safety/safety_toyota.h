@@ -155,9 +155,10 @@ static int toyota_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   return true;
 }
 
-static void toyota_init(int16_t dbc_eps_torque_factor) {
+static void toyota_init(int16_t param) {
   controls_allowed = 0;
   actuation_limits = 1;
+  dbc_eps_torque_factor = param;
 }
 
 const safety_hooks toyota_hooks = {
@@ -167,9 +168,10 @@ const safety_hooks toyota_hooks = {
   .tx_lin = toyota_tx_lin_hook,
 };
 
-static void toyota_nolimits_init(int16_t dbc_eps_torque_factor) {
+static void toyota_nolimits_init(int16_t param) {
   controls_allowed = 0;
   actuation_limits = 0;
+  dbc_eps_torque_factor = param;
 }
 
 const safety_hooks toyota_nolimits_hooks = {
