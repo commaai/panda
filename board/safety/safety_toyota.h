@@ -22,6 +22,7 @@ const int16_t MIN_ACCEL = -3000;       // 3.0 m/s2
 
 // global actuation limit state
 int actuation_limits = 1;              // by default steer limits are imposed
+int16_t dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
 // state of torque limits
 int16_t desired_torque_last = 0;       // last desired steer torque
@@ -31,10 +32,10 @@ uint32_t ts_last = 0;
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // get eps motor torque (0.66 factor in dbc)
   if ((to_push->RIR>>21) == 0x260) {
-    int16_t torque_meas_new = (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF));
+    int torque_meas_new = (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF));
 
     // increase torque_meas by 1 to be conservative on rounding
-    torque_meas_new = (torque_meas_new / 3 + (torque_meas_new > 0 ? 1 : -1)) * 2;
+    torque_meas_new = (torque_meas_new * dbc_eps_torque_factor / 100) + (torque_meas_new > 0 ? 1 : -1);
 
     // shift the array
     for (int i = sizeof(torque_meas)/sizeof(torque_meas[0]) - 1; i > 0; i--) {
@@ -154,7 +155,7 @@ static int toyota_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   return true;
 }
 
-static void toyota_init(int16_t param) {
+static void toyota_init(int16_t dbc_eps_torque_factor) {
   controls_allowed = 0;
   actuation_limits = 1;
 }
@@ -166,7 +167,7 @@ const safety_hooks toyota_hooks = {
   .tx_lin = toyota_tx_lin_hook,
 };
 
-static void toyota_nolimits_init(int16_t param) {
+static void toyota_nolimits_init(int16_t dbc_eps_torque_factor) {
   controls_allowed = 0;
   actuation_limits = 0;
 }
