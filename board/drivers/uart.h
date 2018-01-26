@@ -159,6 +159,36 @@ void uart_set_baud(USART_TypeDef *u, int baud) {
   }
 }
 
+#define USART1_DMA_LEN 0x40
+char usart1_dma[USART1_DMA_LEN];
+
+void DMA2_Stream5_IRQHandler(void) {
+  set_led(LED_BLUE, 1);
+
+  DMA2_Stream5->CR &= DMA_SxCR_EN;
+
+  uart_ring *q = &esp_ring;
+
+  int i;
+  for (i = 0; i < USART1_DMA_LEN; i++) {
+    char c = usart1_dma[i];
+    uint8_t next_w_ptr = q->w_ptr_rx + 1;
+    if (next_w_ptr != q->r_ptr_rx) {
+      q->elems_rx[q->w_ptr_rx] = c;
+      q->w_ptr_rx = next_w_ptr;
+      if (q->callback) q->callback(q);
+    }
+  }
+
+  DMA2_Stream5->M0AR = (uint32_t)usart1_dma;
+  DMA2_Stream5->NDTR = USART1_DMA_LEN;
+
+  DMA2_Stream5->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_MINC | DMA_SxCR_EN;
+  DMA2_Stream5->CR |= DMA_SxCR_TCIE;
+
+  DMA2->HIFCR = DMA_HIFCR_CTCIF5;
+}
+
 void uart_init(USART_TypeDef *u, int baud) {
   // enable uart and tx+rx mode
   u->CR1 = USART_CR1_UE;
@@ -173,7 +203,20 @@ void uart_init(USART_TypeDef *u, int baud) {
   u->CR1 |= USART_CR1_RXNEIE;
 
   if (u == USART1) {
-    NVIC_EnableIRQ(USART1_IRQn);
+    // DMA2, stream 2, channel 3
+    DMA2_Stream5->M0AR = (uint32_t)usart1_dma;
+    DMA2_Stream5->NDTR = USART1_DMA_LEN;
+    DMA2_Stream5->PAR = (uint32_t)&(USART1->DR);
+
+    // channel4, increment memory, periph -> memory, enable
+    DMA2_Stream5->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_MINC | DMA_SxCR_EN;
+    DMA2_Stream5->CR |= DMA_SxCR_TCIE;
+
+    // this one uses DMA receiver
+    u->CR3 = USART_CR3_DMAR;
+
+    NVIC_EnableIRQ(DMA2_Stream5_IRQn);
+    //NVIC_EnableIRQ(USART1_IRQn);
   } else if (u == USART2) {
     NVIC_EnableIRQ(USART2_IRQn);
   } else if (u == USART3) {

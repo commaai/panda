@@ -508,9 +508,12 @@ int main() {
   }
 
 #ifdef PANDA
-  // enable ESP uart
-  uart_init(USART1, 115200);
-
+  if (is_grey_panda) {
+    uart_init(USART1, 9600);
+  } else {
+    // enable ESP uart
+    uart_init(USART1, 115200);
+  }
   // enable LIN
   uart_init(UART5, 10400);
   UART5->CR2 |= USART_CR2_LINEN;
@@ -559,6 +562,8 @@ int main() {
 
   for (cnt=0;;cnt++) {
     can_live = pending_can_live;
+
+    puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
 
     #ifdef PANDA
       int current = adc_get(ADCCHAN_CURRENT);
