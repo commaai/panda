@@ -64,11 +64,13 @@ void uart_ring_process(uart_ring *q) {
 
   if (sr & USART_SR_RXNE || sr & USART_SR_ORE) {
     uint8_t c = q->uart->DR;  // TODO: can drop packets
-    uint16_t next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
-    if (next_w_ptr != q->r_ptr_rx) {
-      q->elems_rx[q->w_ptr_rx] = c;
-      q->w_ptr_rx = next_w_ptr;
-      if (q->callback) q->callback(q);
+    if (q != &esp_ring) {
+      uint16_t next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
+      if (next_w_ptr != q->r_ptr_rx) {
+        q->elems_rx[q->w_ptr_rx] = c;
+        q->w_ptr_rx = next_w_ptr;
+        if (q->callback) q->callback(q);
+      }
     }
   }
 
