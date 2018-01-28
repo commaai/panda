@@ -27,8 +27,7 @@ if __name__ == "__main__":
   print ser.read(1024)
 
   # upping baud rate
-  # 460800 has issues
-  baudrate = 115200
+  baudrate = 460800
 
   print "upping baud rate"
   msg = add_nmea_checksum("$PUBX,41,1,0007,0003,%d,0" % baudrate)+"\r\n"

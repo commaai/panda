@@ -311,6 +311,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xe0:
       ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) break;
+      if (ur == &esp_ring) uart_dma_drain();
       // read
       while ((resp_len < min(setup->b.wLength.w, MAX_RESP_LEN)) &&
                          getc(ur, (char*)&resp[resp_len])) {

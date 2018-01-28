@@ -162,31 +162,45 @@ void uart_set_baud(USART_TypeDef *u, int baud) {
 #define USART1_DMA_LEN 0x40
 char usart1_dma[USART1_DMA_LEN];
 
-void DMA2_Stream5_IRQHandler(void) {
-  set_led(LED_BLUE, 1);
+void uart_dma_drain() {
+  if (DMA2_Stream5->NDTR == USART1_DMA_LEN) return;
 
-  DMA2_Stream5->CR &= DMA_SxCR_EN;
+  enter_critical_section();
 
   uart_ring *q = &esp_ring;
 
+  // disable DMA
+  q->uart->CR3 &= ~USART_CR3_DMAR;
+  DMA2_Stream5->CR &= ~DMA_SxCR_EN;
+
+  //puth(DMA2_Stream5->NDTR); puts("\n");
+
   int i;
-  for (i = 0; i < USART1_DMA_LEN; i++) {
+  for (i = 0; i < USART1_DMA_LEN - DMA2_Stream5->NDTR; i++) {
     char c = usart1_dma[i];
     uint8_t next_w_ptr = q->w_ptr_rx + 1;
     if (next_w_ptr != q->r_ptr_rx) {
       q->elems_rx[q->w_ptr_rx] = c;
       q->w_ptr_rx = next_w_ptr;
-      if (q->callback) q->callback(q);
     }
   }
 
   DMA2_Stream5->M0AR = (uint32_t)usart1_dma;
   DMA2_Stream5->NDTR = USART1_DMA_LEN;
 
-  DMA2_Stream5->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_MINC | DMA_SxCR_EN;
-  DMA2_Stream5->CR |= DMA_SxCR_TCIE;
+  // clear interrupts
+  DMA2->HIFCR = DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5;
 
-  DMA2->HIFCR = DMA_HIFCR_CTCIF5;
+  // enable DMA
+  DMA2_Stream5->CR |= DMA_SxCR_EN;
+  q->uart->CR3 |= USART_CR3_DMAR;
+
+  exit_critical_section();
+}
+
+void DMA2_Stream5_IRQHandler(void) {
+  //set_led(LED_BLUE, 1);
+  uart_dma_drain();
 }
 
 void uart_init(USART_TypeDef *u, int baud) {
@@ -200,7 +214,9 @@ void uart_init(USART_TypeDef *u, int baud) {
   // ** UART is ready to work **
 
   // enable interrupts
-  u->CR1 |= USART_CR1_RXNEIE;
+  if (u != USART1) {
+    u->CR1 |= USART_CR1_RXNEIE;
+  }
 
   if (u == USART1) {
     // DMA2, stream 2, channel 3
@@ -210,13 +226,13 @@ void uart_init(USART_TypeDef *u, int baud) {
 
     // channel4, increment memory, periph -> memory, enable
     DMA2_Stream5->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_MINC | DMA_SxCR_EN;
-    DMA2_Stream5->CR |= DMA_SxCR_TCIE;
+    DMA2_Stream5->CR |= DMA_SxCR_TCIE | DMA_SxCR_HTIE;
 
     // this one uses DMA receiver
     u->CR3 = USART_CR3_DMAR;
 
     NVIC_EnableIRQ(DMA2_Stream5_IRQn);
-    //NVIC_EnableIRQ(USART1_IRQn);
+    NVIC_EnableIRQ(USART1_IRQn);
   } else if (u == USART2) {
     NVIC_EnableIRQ(USART2_IRQn);
   } else if (u == USART3) {
