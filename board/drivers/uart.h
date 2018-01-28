@@ -52,7 +52,7 @@ void uart_ring_process(uart_ring *q) {
   if (q->w_ptr_tx != q->r_ptr_tx) {
     if (sr & USART_SR_TXE) {
       q->uart->DR = q->elems_tx[q->r_ptr_tx];
-      q->r_ptr_tx += 1;
+      q->r_ptr_tx = (q->r_ptr_tx + 1) % FIFO_SIZE;
     } else {
       // push on interrupt later
       q->uart->CR1 |= USART_CR1_TXEIE;
@@ -64,7 +64,7 @@ void uart_ring_process(uart_ring *q) {
 
   if (sr & USART_SR_RXNE || sr & USART_SR_ORE) {
     uint8_t c = q->uart->DR;  // TODO: can drop packets
-    uint8_t next_w_ptr = q->w_ptr_rx + 1;
+    uint16_t next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
     if (next_w_ptr != q->r_ptr_rx) {
       q->elems_rx[q->w_ptr_rx] = c;
       q->w_ptr_rx = next_w_ptr;
@@ -92,7 +92,7 @@ int getc(uart_ring *q, char *elem) {
   enter_critical_section();
   if (q->w_ptr_rx != q->r_ptr_rx) {
     *elem = q->elems_rx[q->r_ptr_rx];
-    q->r_ptr_rx += 1;
+    q->r_ptr_rx = (q->r_ptr_rx + 1) % FIFO_SIZE;
     ret = 1;
   }
   exit_critical_section();
@@ -102,10 +102,10 @@ int getc(uart_ring *q, char *elem) {
 
 int injectc(uart_ring *q, char elem) {
   int ret = 0;
-  uint8_t next_w_ptr;
+  uint16_t next_w_ptr;
 
   enter_critical_section();
-  next_w_ptr = q->w_ptr_rx + 1;
+  next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
   if (next_w_ptr != q->r_ptr_rx) {
     q->elems_rx[q->w_ptr_rx] = elem;
     q->w_ptr_rx = next_w_ptr;
@@ -118,10 +118,10 @@ int injectc(uart_ring *q, char elem) {
 
 int putc(uart_ring *q, char elem) {
   int ret = 0;
-  uint8_t next_w_ptr;
+  uint16_t next_w_ptr;
 
   enter_critical_section();
-  next_w_ptr = q->w_ptr_tx + 1;
+  next_w_ptr = (q->w_ptr_tx + 1) % FIFO_SIZE;
   if (next_w_ptr != q->r_ptr_tx) {
     q->elems_tx[q->w_ptr_tx] = elem;
     q->w_ptr_tx = next_w_ptr;
@@ -174,7 +174,7 @@ void uart_dma_drain() {
   int i;
   for (i = 0; i < USART1_DMA_LEN - DMA2_Stream5->NDTR; i++) {
     char c = usart1_dma[i];
-    uint8_t next_w_ptr = q->w_ptr_rx + 1;
+    uint16_t next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
     if (next_w_ptr != q->r_ptr_rx) {
       q->elems_rx[q->w_ptr_rx] = c;
       q->w_ptr_rx = next_w_ptr;
