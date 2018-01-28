@@ -564,7 +564,7 @@ int main() {
   for (cnt=0;;cnt++) {
     can_live = pending_can_live;
 
-    puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
+    //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
 
     #ifdef PANDA
       int current = adc_get(ADCCHAN_CURRENT);
