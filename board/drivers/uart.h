@@ -172,6 +172,7 @@ void uart_dma_drain() {
   // disable DMA
   q->uart->CR3 &= ~USART_CR3_DMAR;
   DMA2_Stream5->CR &= ~DMA_SxCR_EN;
+  while (DMA2_Stream5->CR & DMA_SxCR_EN);
 
   int i;
   for (i = 0; i < USART1_DMA_LEN - DMA2_Stream5->NDTR; i++) {
@@ -188,6 +189,7 @@ void uart_dma_drain() {
 
   // clear interrupts
   DMA2->HIFCR = DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5;
+  //DMA2->HIFCR = DMA_HIFCR_CTEIF5 | DMA_HIFCR_CDMEIF5 | DMA_HIFCR_CFEIF5;
 
   // enable DMA
   DMA2_Stream5->CR |= DMA_SxCR_EN;
@@ -199,6 +201,7 @@ void uart_dma_drain() {
 void DMA2_Stream5_IRQHandler(void) {
   //set_led(LED_BLUE, 1);
   uart_dma_drain();
+  //set_led(LED_BLUE, 0);
 }
 
 void uart_init(USART_TypeDef *u, int baud) {
@@ -224,7 +227,7 @@ void uart_init(USART_TypeDef *u, int baud) {
 
     // channel4, increment memory, periph -> memory, enable
     DMA2_Stream5->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_MINC | DMA_SxCR_EN;
-    DMA2_Stream5->CR |= DMA_SxCR_TCIE | DMA_SxCR_HTIE;
+    DMA2_Stream5->CR |= DMA_SxCR_HTIE;
 
     // this one uses DMA receiver
     u->CR3 = USART_CR3_DMAR;
