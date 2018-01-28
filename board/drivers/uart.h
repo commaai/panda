@@ -163,29 +163,31 @@ void uart_set_baud(USART_TypeDef *u, int baud) {
 char usart1_dma[USART1_DMA_LEN];
 
 void uart_dma_drain() {
-  if (DMA2_Stream5->NDTR == USART1_DMA_LEN) return;
-
-  enter_critical_section();
-
   uart_ring *q = &esp_ring;
 
   // disable DMA
   q->uart->CR3 &= ~USART_CR3_DMAR;
   DMA2_Stream5->CR &= ~DMA_SxCR_EN;
 
-  //puth(DMA2_Stream5->NDTR); puts("\n");
+  if (DMA2_Stream5->NDTR != USART1_DMA_LEN) {
+    enter_critical_section();
 
-  int i;
-  for (i = 0; i < USART1_DMA_LEN - DMA2_Stream5->NDTR; i++) {
-    char c = usart1_dma[i];
-    uint8_t next_w_ptr = q->w_ptr_rx + 1;
-    if (next_w_ptr != q->r_ptr_rx) {
-      q->elems_rx[q->w_ptr_rx] = c;
-      q->w_ptr_rx = next_w_ptr;
+    //puth(DMA2_Stream5->NDTR); puts("\n");
+
+    int i;
+    for (i = 0; i < USART1_DMA_LEN - DMA2_Stream5->NDTR; i++) {
+      char c = usart1_dma[i];
+      uint8_t next_w_ptr = q->w_ptr_rx + 1;
+      if (next_w_ptr != q->r_ptr_rx) {
+        q->elems_rx[q->w_ptr_rx] = c;
+        q->w_ptr_rx = next_w_ptr;
+      }
     }
+
+    exit_critical_section();
   }
 
-  DMA2_Stream5->M0AR = (uint32_t)usart1_dma;
+  // reset DMA len
   DMA2_Stream5->NDTR = USART1_DMA_LEN;
 
   // clear interrupts
@@ -194,8 +196,6 @@ void uart_dma_drain() {
   // enable DMA
   DMA2_Stream5->CR |= DMA_SxCR_EN;
   q->uart->CR3 |= USART_CR3_DMAR;
-
-  exit_critical_section();
 }
 
 void DMA2_Stream5_IRQHandler(void) {
