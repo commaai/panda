@@ -170,7 +170,7 @@ void uart_dma_drain() {
   enter_critical_section();
 
   // disable DMA
-  q->uart->CR3 &= ~USART_CR3_DMAR;
+  //q->uart->CR3 &= ~USART_CR3_DMAR;
   DMA2_Stream5->CR &= ~DMA_SxCR_EN;
   while (DMA2_Stream5->CR & DMA_SxCR_EN);
 
@@ -193,7 +193,7 @@ void uart_dma_drain() {
 
   // enable DMA
   DMA2_Stream5->CR |= DMA_SxCR_EN;
-  q->uart->CR3 |= USART_CR3_DMAR;
+  //q->uart->CR3 |= USART_CR3_DMAR;
 
   exit_critical_section();
 }
@@ -226,8 +226,7 @@ void uart_init(USART_TypeDef *u, int baud) {
     DMA2_Stream5->PAR = (uint32_t)&(USART1->DR);
 
     // channel4, increment memory, periph -> memory, enable
-    DMA2_Stream5->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_MINC | DMA_SxCR_EN;
-    DMA2_Stream5->CR |= DMA_SxCR_HTIE;
+    DMA2_Stream5->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_MINC | DMA_SxCR_HTIE | DMA_SxCR_EN;
 
     // this one uses DMA receiver
     u->CR3 = USART_CR3_DMAR;
