@@ -161,7 +161,7 @@ void uart_set_baud(USART_TypeDef *u, int baud) {
   }
 }
 
-#define USART1_DMA_LEN 0x40
+#define USART1_DMA_LEN 0x20
 char usart1_dma[USART1_DMA_LEN];
 
 void uart_dma_drain() {
