@@ -169,31 +169,33 @@ void uart_dma_drain() {
 
   enter_critical_section();
 
-  // disable DMA
-  //q->uart->CR3 &= ~USART_CR3_DMAR;
-  DMA2_Stream5->CR &= ~DMA_SxCR_EN;
-  while (DMA2_Stream5->CR & DMA_SxCR_EN);
+  if (DMA2_Stream5->NDTR != USART1_DMA_LEN) {
+    // disable DMA
+    //q->uart->CR3 &= ~USART_CR3_DMAR;
+    DMA2_Stream5->CR &= ~DMA_SxCR_EN;
+    while (DMA2_Stream5->CR & DMA_SxCR_EN);
 
-  int i;
-  for (i = 0; i < USART1_DMA_LEN - DMA2_Stream5->NDTR; i++) {
-    char c = usart1_dma[i];
-    uint16_t next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
-    if (next_w_ptr != q->r_ptr_rx) {
-      q->elems_rx[q->w_ptr_rx] = c;
-      q->w_ptr_rx = next_w_ptr;
+    int i;
+    for (i = 0; i < USART1_DMA_LEN - DMA2_Stream5->NDTR; i++) {
+      char c = usart1_dma[i];
+      uint16_t next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
+      if (next_w_ptr != q->r_ptr_rx) {
+        q->elems_rx[q->w_ptr_rx] = c;
+        q->w_ptr_rx = next_w_ptr;
+      }
     }
+
+    // reset DMA len
+    DMA2_Stream5->NDTR = USART1_DMA_LEN;
+
+    // clear interrupts
+    DMA2->HIFCR = DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5;
+    //DMA2->HIFCR = DMA_HIFCR_CTEIF5 | DMA_HIFCR_CDMEIF5 | DMA_HIFCR_CFEIF5;
+
+    // enable DMA
+    DMA2_Stream5->CR |= DMA_SxCR_EN;
+    //q->uart->CR3 |= USART_CR3_DMAR;
   }
-
-  // reset DMA len
-  DMA2_Stream5->NDTR = USART1_DMA_LEN;
-
-  // clear interrupts
-  DMA2->HIFCR = DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5;
-  //DMA2->HIFCR = DMA_HIFCR_CTEIF5 | DMA_HIFCR_CDMEIF5 | DMA_HIFCR_CFEIF5;
-
-  // enable DMA
-  DMA2_Stream5->CR |= DMA_SxCR_EN;
-  //q->uart->CR3 |= USART_CR3_DMAR;
 
   exit_critical_section();
 }
@@ -226,7 +228,7 @@ void uart_init(USART_TypeDef *u, int baud) {
     DMA2_Stream5->PAR = (uint32_t)&(USART1->DR);
 
     // channel4, increment memory, periph -> memory, enable
-    DMA2_Stream5->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_MINC | DMA_SxCR_HTIE | DMA_SxCR_EN;
+    DMA2_Stream5->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_MINC | DMA_SxCR_HTIE | DMA_SxCR_TCIE | DMA_SxCR_EN;
 
     // this one uses DMA receiver
     u->CR3 = USART_CR3_DMAR;
