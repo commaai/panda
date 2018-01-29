@@ -169,7 +169,7 @@ void uart_dma_drain() {
 
   enter_critical_section();
 
-  if (DMA2_Stream5->NDTR != USART1_DMA_LEN) {
+  if (DMA2->HISR & DMA_HISR_TCIF5 || DMA2->HISR & DMA_HISR_HTIF5 || DMA2_Stream5->NDTR != USART1_DMA_LEN) {
     // disable DMA
     //q->uart->CR3 &= ~USART_CR3_DMAR;
     DMA2_Stream5->CR &= ~DMA_SxCR_EN;
