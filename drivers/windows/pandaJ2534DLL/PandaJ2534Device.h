@@ -55,11 +55,17 @@ public:
 private:
 	HANDLE thread_kill_event;
 
-	HANDLE can_thread_handle;
+	HANDLE can_recv_handle;
 	static DWORD WINAPI _can_recv_threadBootstrap(LPVOID This) {
 		return ((PandaJ2534Device*)This)->can_recv_thread();
 	}
 	DWORD can_recv_thread();
+
+	HANDLE can_process_handle;
+	static DWORD WINAPI _can_process_threadBootstrap(LPVOID This) {
+		return ((PandaJ2534Device*)This)->can_process_thread();
+	}
+	DWORD can_process_thread();
 
 	HANDLE flow_control_wakeup_event;
 	HANDLE flow_control_thread_handle;

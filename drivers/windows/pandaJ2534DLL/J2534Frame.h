@@ -10,7 +10,7 @@ public:
 
 	J2534Frame(const panda::PANDA_CAN_MSG& msg_in) {
 		ProtocolID = CAN;
-		ExtraDataIndex = 0;
+		ExtraDataIndex = msg_in.len + 4;
 		Data.reserve(msg_in.len + 4);
 		Data += msg_in.addr >> 24;
 		Data += (msg_in.addr >> 16) & 0xFF;

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pandaJ2534DLL", "pandaJ2534DLL\pandaJ2534DLL.vcxproj", "{A2BB18A5-F26B-48D6-BBB5-B83D64473C77}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -24,6 +24,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ECUsim CLI", "ECUsim CLI\ECUsim CLI.vcxproj", "{D99E2FCD-21A4-4065-949A-31E34E0E69D1}"
 EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
@@ -86,5 +89,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8AF3826E-406A-4F1C-BA80-B4D7FD4B52E1}
 	EndGlobalSection
 EndGlobal
