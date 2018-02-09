@@ -57,7 +57,7 @@ long ret_code(long code) {
 	return code;
 }
 
-#define EXTRACT_DID(CID) (CID & 0xFFFF)
+#define EXTRACT_DID(CID) ((CID & 0xFFFF) - 1)
 #define EXTRACT_CID(CID) ((CID >> 16) & 0xFFFF)
 
 long check_valid_DeviceID(unsigned long DeviceID) {
@@ -68,7 +68,7 @@ long check_valid_DeviceID(unsigned long DeviceID) {
 }
 
 long check_valid_ChannelID(unsigned long ChannelID) {
-	uint16_t dev_id = EXTRACT_DID(ChannelID);;
+	uint16_t dev_id = EXTRACT_DID(ChannelID);
 	uint16_t con_id = EXTRACT_CID(ChannelID);
 
 	if (pandas.size() <= dev_id || pandas[dev_id] == nullptr)
@@ -117,7 +117,7 @@ PANDAJ2534DLL_API long PTAPI    PassThruOpen(void *pName, unsigned long *pDevice
 		panda_index = pandas.size()-1;
 	}
 
-	*pDeviceID = panda_index;
+	*pDeviceID = panda_index + 1; // TIS doesn't like it when ID == 0
 	return ret_code(STATUS_NOERROR);
 }
 PANDAJ2534DLL_API long PTAPI	PassThruClose(unsigned long DeviceID) {
