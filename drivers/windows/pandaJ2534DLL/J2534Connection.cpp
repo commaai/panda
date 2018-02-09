@@ -256,6 +256,11 @@ void J2534Connection::processIOCTLSetConfig(unsigned long Parameter, unsigned lo
 	default:
 		printf("Got unknown SET code %X\n", Parameter);
 	}
+
+	// reserved parameters usually mean special equiptment is required
+	if (Parameter >= 0x20) {
+		throw ERR_NOT_SUPPORTED;
+	}
 }
 
 unsigned long J2534Connection::processIOCTLGetConfig(unsigned long Parameter) {
