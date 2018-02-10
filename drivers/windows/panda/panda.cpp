@@ -392,6 +392,7 @@ bool Panda::can_rx_q_push(HANDLE kill_event, DWORD timeoutms) {
 		// Pause if there is not a slot available in the queue
 		if (n_ptr == this->r_ptr) {
 			printf("RX queue full!\n");
+			Sleep(1);
 			continue;
 		}
 
@@ -455,6 +456,7 @@ void Panda::can_rx_q_pop(PANDA_CAN_MSG msg_out[], int &count) {
 
 	// No data left in queue
 	if (this->r_ptr == this->w_ptr) {
+		Sleep(1);
 		return;
 	}
 
