@@ -140,14 +140,12 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 		switch (ProtocolID) {
 			//SW seems to refer to Single Wire. https://www.nxp.com/files-static/training_pdf/20451_BUS_COMM_WBT.pdf
 			//SW_ protocols may be touched on here: https://www.iso.org/obp/ui/#iso:std:iso:22900:-2:ed-1:v1:en
-		case J1850VPW: //These protocols are outdated and will not be supported. HDS wants them to not fail to open.
-		case J1850PWM:
-		case J1850VPW_PS:
-		case J1850PWM_PS:
+		//case J1850VPW: // These protocols are outdated and will not be supported. HDS wants them to not fail to open.
+		//case J1850PWM: // ^-- it appears HDS no longer needs this, and TIS needs it disabled --^
+		//case J1850VPW_PS:
+		//case J1850PWM_PS:
 		case ISO9141: //This protocol could be implemented if 5 BAUD init support is added to the panda.
 		case ISO9141_PS:
-			conn = std::make_shared<J2534Connection>(panda, ProtocolID, Flags, BaudRate);
-			break;
 		case ISO14230: //Only supporting Fast init until panda adds support for 5 BAUD init.
 		case ISO14230_PS:
 			conn = std::make_shared<J2534Connection>(panda, ProtocolID, Flags, BaudRate);
