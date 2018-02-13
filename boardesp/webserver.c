@@ -40,6 +40,7 @@ char OK_header[] = "HTTP/1.0 200 OK\nContent-Type: text/html\n\n";
 static struct espconn web_conn;
 static esp_tcp web_proto;
 extern char ssid[];
+extern int wifi_secure_mode;
 
 char *st_firmware;
 int real_content_length, content_length = 0;
@@ -215,8 +216,9 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
       
       espconn_send_string(&web_conn, resp);
       espconn_disconnect(conn);
-      
-    } else if (memcmp(data, "GET /set_property?usb_mode=", 27) == 0) {
+    } else if (memcmp(data, "GET /secure", 11) == 0 && !wifi_secure_mode) {
+      wifi_configure(1);
+    } else if (memcmp(data, "GET /set_property?usb_mode=", 27) == 0 && wifi_secure_mode) {
       char mode_value = data[27] - '0';
         if (mode_value >= '\x00' && mode_value <= '\x02') {
           memset(resp, 0, MAX_RESP);
@@ -228,7 +230,7 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
           espconn_send_string(&web_conn, resp);
           espconn_disconnect(conn);
         }  
-    } else if (memcmp(data, "PUT /stupdate ", 14) == 0) {
+    } else if (memcmp(data, "PUT /stupdate ", 14) == 0 && wifi_secure_mode) {
       os_printf("init st firmware\n");
       char *cl = strstr(data, "Content-Length: ");
       if (cl != NULL) {
@@ -244,8 +246,8 @@ static void ICACHE_FLASH_ATTR web_rx_cb(void *arg, char *data, uint16_t len) {
         state = RECEIVING_ST_FIRMWARE;
       }
       
-    } else if ((memcmp(data, "PUT /espupdate1 ", 16) == 0) ||
-               (memcmp(data, "PUT /espupdate2 ", 16) == 0)) {
+    } else if (((memcmp(data, "PUT /espupdate1 ", 16) == 0) ||
+                (memcmp(data, "PUT /espupdate2 ", 16) == 0)) && wifi_secure_mode) {
       // 0x1000   = user1.bin
       // 0x81000  = user2.bin
       // 0x3FE000 = blank.bin
