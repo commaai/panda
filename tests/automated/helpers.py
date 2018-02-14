@@ -26,7 +26,7 @@ def connect_wifi():
   assert(dongle_id.isalnum())
   _connect_wifi(dongle_id, pw)
 
-def _connect_wifi(dongle_id, pw):
+def _connect_wifi(dongle_id, pw, insecure_okay=False):
   ssid = str("panda-" + dongle_id)
 
   print("WIFI: connecting to %s" % ssid)
@@ -49,6 +49,8 @@ def _connect_wifi(dongle_id, pw):
       assert cnt < MAX_TRIES
       if "-pair" in wifi_scan[0]:
         os.system("nmcli d wifi connect %s-pair" % (ssid))
+        if insecure_okay:
+          break
         # fetch webpage
         print "connecting to insecure network to secure"
         r = requests.get("http://192.168.0.10/")
