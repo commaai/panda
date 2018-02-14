@@ -49,7 +49,12 @@ def _connect_wifi(dongle_id, pw):
       assert cnt < MAX_TRIES
       if "-pair" in wifi_scan[0]:
         os.system("nmcli d wifi connect %s-pair" % (ssid))
+        # fetch webpage
         print "connecting to insecure network to secure"
+        r = requests.get("http://192.168.0.10/")
+        assert r.status_code==200
+
+        print "securing"
         try:
           r = requests.get("http://192.168.0.10/secure", timeout=0.01)
         except requests.exceptions.Timeout:
