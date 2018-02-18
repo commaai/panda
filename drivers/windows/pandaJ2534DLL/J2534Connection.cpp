@@ -222,6 +222,7 @@ void J2534Connection::processIOCTLSetConfig(unsigned long Parameter, unsigned lo
 	switch (Parameter) {
 	case DATA_RATE:			// 5-500000
 		this->setBaud(Value);
+		break;
 	case LOOPBACK:			// 0 (OFF), 1 (ON) [0]
 		this->loopback = (Value != 0);
 		break;
