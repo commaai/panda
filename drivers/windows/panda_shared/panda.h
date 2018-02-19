@@ -9,7 +9,7 @@
 #ifdef PANDA_EXPORTS
 #define PANDA_API __declspec(dllexport)
 #else
-#define PANDA_API __declspec(dllimport)
+#define PANDA_API
 #endif
 
 #include <vector>

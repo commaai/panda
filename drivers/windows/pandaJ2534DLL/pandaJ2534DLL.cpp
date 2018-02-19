@@ -5,7 +5,7 @@
 
 #include "stdafx.h"
 #include "J2534_v0404.h"
-#include "panda/panda.h"
+#include "panda_shared/panda.h"
 #include "J2534Connection.h"
 #include "J2534Connection_CAN.h"
 #include "J2534Connection_ISO15765.h"
@@ -261,8 +261,7 @@ PANDAJ2534DLL_API long PTAPI	PassThruReadVersion(unsigned long DeviceID, char *p
 	} else {
 		j2534dll_ver = GetProductAndVersion(pandalib_filename);
 	}
-	std::string pandalib_ver = GetProductAndVersion(_T("panda.dll"));
-	std::string fullver = "(" + j2534dll_ver + "; " + pandalib_ver + ")";
+	std::string fullver = "(" + j2534dll_ver + ")";
 	strcpy_s(pDllVersion, 80, fullver.c_str());
 
 	strcpy_s(pApiVersion, 80, J2534_APIVER_NOVEMBER_2004);

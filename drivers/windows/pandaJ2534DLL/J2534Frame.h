@@ -1,6 +1,6 @@
 #pragma once
 #include "J2534_v0404.h"
-#include "panda/panda.h"
+#include "panda_shared/panda.h"
 
 /*A move convenient container for J2534 Messages than the static buffer provided by default.*/
 class J2534Frame {
