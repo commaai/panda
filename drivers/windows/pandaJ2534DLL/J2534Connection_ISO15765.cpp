@@ -43,7 +43,7 @@ std::shared_ptr<MessageTx> J2534Connection_ISO15765::parseMessageTx(PASSTHRU_MSG
 void J2534Connection_ISO15765::processMessage(const J2534Frame& msg) {
 	if (msg.ProtocolID != CAN) return;
 
-	int fid = get_matching_in_fc_filter_id(msg);
+	int fid = get_matching_in_fc_filter_id(msg, this->Flags);
 	if (fid == -1) return;
 
 	auto filter = this->filters[fid];
