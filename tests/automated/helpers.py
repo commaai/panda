@@ -39,6 +39,8 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
       MAX_TRIES = 10
       while cnt < MAX_TRIES:
         print "WIFI: scanning %d" % cnt
+        if os.system("ifconfig | grep wlp3s0") == 0:
+          os.system("sudo iwlist wlp3s0 scanning > /dev/null")
         os.system("nmcli device wifi rescan")
         wifi_scan = filter(lambda x: ssid in x, subprocess.check_output(["nmcli","dev", "wifi", "list"]).split("\n"))
         if len(wifi_scan) != 0:
