@@ -292,6 +292,14 @@ void gpio_init() {
   set_gpio_mode(GPIOC, 2, MODE_ANALOG);
   set_gpio_mode(GPIOC, 3, MODE_ANALOG);
 
+#ifdef PEDAL
+  // comma pedal has inputs on C0 and C1
+  set_gpio_mode(GPIOC, 0, MODE_ANALOG);
+  set_gpio_mode(GPIOC, 1, MODE_ANALOG);
+  // DAC outputs on A4 and A5
+  //   apparently they don't need GPIO setup
+#endif
+
   // C8: FAN aka TIM3_CH4
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
 
