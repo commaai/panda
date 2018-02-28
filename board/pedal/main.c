@@ -145,7 +145,7 @@ void CAN1_SCE_IRQHandler() {
   can_sce(CAN);
 }
 
-int pdl0, pdl1;
+int pdl0 = 0, pdl1 = 0;
 int pkt_idx = 0;
 
 int led_value = 0;
