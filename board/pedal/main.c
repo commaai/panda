@@ -7,7 +7,6 @@
 #include "../config.h"
 
 #include "drivers/drivers.h"
-
 #include "drivers/llgpio.h"
 #include "gpio.h"
 
@@ -207,9 +206,17 @@ void pedal() {
 }
 
 int main() {
+  __disable_irq();
+
   // init devices
   clock_init();
+  periph_init();
   gpio_init();
+
+#ifdef PEDAL_USB
+  // enable USB
+  usb_init();
+#endif
 
   // pedal stuff
   dac_init();
@@ -219,14 +226,14 @@ int main() {
   // 48mhz / 65536 ~= 732
   timer_init(TIM3, 15);
 
-  puts("**** INTERRUPTS ON ****\n");
-  __disable_irq();
-
+  // needed?
   NVIC_EnableIRQ(CAN1_TX_IRQn);
   NVIC_EnableIRQ(CAN1_RX0_IRQn);
   NVIC_EnableIRQ(CAN1_SCE_IRQn);
 
   NVIC_EnableIRQ(TIM3_IRQn);
+
+  puts("**** INTERRUPTS ON ****\n");
   __enable_irq();
 
   // main pedal loop
