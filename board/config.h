@@ -14,10 +14,14 @@
 
 #define USB_VID 0xbbaa
 
+#ifdef PEDAL
+#define USB_PID 0xdd00
+#else
 #ifdef BOOTSTUB
 #define USB_PID 0xddee
 #else
 #define USB_PID 0xddcc
+#endif
 #endif
 
 #include <stdbool.h>
