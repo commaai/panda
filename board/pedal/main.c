@@ -148,6 +148,8 @@ void CAN1_SCE_IRQHandler() {
 int pdl0, pdl1;
 int pkt_idx = 0;
 
+int led_value = 0;
+
 void TIM3_IRQHandler() {
   #ifdef DEBUG
     puth(TIM3->CNT);
@@ -179,8 +181,9 @@ void TIM3_IRQHandler() {
   }
 
 
-  // blink the other LED
-  GPIOB->ODR |= (1 << 11);
+  // blink the LED
+  set_led(LED_GREEN, led_value);
+  led_value = !led_value;
 
   TIM3->SR = 0;
 
@@ -237,10 +240,8 @@ int main() {
   __enable_irq();
 
   // main pedal loop
-  uint64_t cnt = 0;
-  for (cnt=0;;cnt++) {
+  while (1) {
     pedal();
-		set_led(LED_GREEN, (cnt&0xFFFF) < 0x8000);
   }
 
   return 0;
