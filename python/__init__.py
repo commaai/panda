@@ -468,6 +468,8 @@ class Panda(object):
       ret = self._handle.controlRead(Panda.REQUEST_IN, 0xe0, bus, 0, 0x40)
       if len(ret) == 0:
         break
+      elif DEBUG:
+        print("kline drain: "+str(ret).encode("hex"))
       bret += ret
     return bytes(bret)
 
@@ -484,6 +486,7 @@ class Panda(object):
     def get_checksum(dat):
       result = 0
       result += sum(map(ord, dat)) if isinstance(b'dat', str) else sum(dat)
+      result = -result
       return struct.pack("B", result % 0x100)
 
     self.kline_drain(bus=bus)
