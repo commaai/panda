@@ -455,7 +455,11 @@ class Panda(object):
 
   # pulse low for wakeup
   def kline_wakeup(self):
+    if DEBUG:
+      print("kline wakeup...")
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 0, 0, b'')
+    if DEBUG:
+      print("kline wakeup done")
 
   def kline_drain(self, bus=2):
     # drain buffer
@@ -470,7 +474,10 @@ class Panda(object):
   def kline_ll_recv(self, cnt, bus=2):
     echo = bytearray()
     while len(echo) != cnt:
-      echo += self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, cnt-len(echo))
+      ret = str(self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, cnt-len(echo)))
+      if DEBUG and len(ret) > 0:
+        print("kline recv: "+ret.encode("hex"))
+      echo += ret
     return echo
 
   def kline_send(self, x, bus=2, checksum=True):
@@ -484,6 +491,8 @@ class Panda(object):
       x += get_checksum(x)
     for i in range(0, len(x), 0xf):
       ts = x[i:i+0xf]
+      if DEBUG:
+        print("kline send: "+ts.encode("hex"))
       self._handle.bulkWrite(2, chr(bus).encode()+ts)
       echo = self.kline_ll_recv(len(ts), bus=bus)
       if echo != ts:
