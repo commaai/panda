@@ -139,8 +139,13 @@ void set_can_enable(CAN_TypeDef *CAN, int enabled) {
       // CAN1_EN
       set_gpio_output(GPIOC, 1, !enabled);
     #else
-      // CAN1_EN
-      set_gpio_output(GPIOB, 3, enabled);
+      #ifdef PEDAL
+        // CAN1_EN (not flipped)
+        set_gpio_output(GPIOB, 3, !enabled);
+      #else
+        // CAN1_EN
+        set_gpio_output(GPIOB, 3, enabled);
+      #endif
     #endif
   } else if (CAN == CAN2) {
     #ifdef PANDA

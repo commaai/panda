@@ -223,8 +223,11 @@ int main() {
 
   // pedal stuff
   dac_init();
-  can_init(1);
   adc_init();
+
+  // init can
+  can_silent = ALL_CAN_LIVE;
+  can_init_all();
 
   // 48mhz / 65536 ~= 732
   timer_init(TIM3, 15);
