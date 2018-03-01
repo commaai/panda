@@ -480,7 +480,7 @@ class Panda(object):
       if DEBUG and len(ret) > 0:
         print("kline recv: "+ret.encode("hex"))
       echo += ret
-    return echo
+    return str(echo)
 
   def kline_send(self, x, bus=2, checksum=True):
     def get_checksum(dat):
