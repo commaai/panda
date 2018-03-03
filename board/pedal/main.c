@@ -107,9 +107,16 @@ void CAN1_TX_IRQHandler() {
   CAN->TSR |= CAN_TSR_RQCP0;
 }
 
-uint16_t gas_set = 0;
+
+// two independent values
+uint16_t gas_set_0 = 0;
+uint16_t gas_set_1 = 0;
+
+#define MAX_TIMEOUT 10
 uint32_t timeout = 0;
 uint32_t current_index = 0;
+
+uint8_t fault = 0;
 
 void CAN1_RX0_IRQHandler() {
   while (CAN->RF0R & CAN_RF0R_FMP0) {
@@ -119,21 +126,28 @@ void CAN1_RX0_IRQHandler() {
     uint32_t address = CAN->sFIFOMailBox[0].RIR>>21;
     if (address == CAN_GAS_INPUT) {
       uint8_t *dat = (uint8_t *)&CAN->sFIFOMailBox[0].RDLR;
-      uint16_t value = (dat[0] << 8) | dat[1];
-      uint8_t index = (dat[2] >> 4) & 3;
-      if (can_cksum(dat, 2, CAN_GAS_INPUT, index) == (dat[2] & 0xF)) {
+      uint8_t *dat2 = (uint8_t *)&CAN->sFIFOMailBox[0].RDHR;
+      uint16_t value_0 = (dat[0] << 8) | dat[1];
+      uint16_t value_1 = (dat[2] << 8) | dat[3];
+      uint8_t index = (dat2[0] >> 4) & 3;
+      if (can_cksum(dat, 4, CAN_GAS_INPUT, index) == (dat2[0] & 0xF)) {
         if (((current_index+1)&3) == index) {
-          // TODO: set and start timeout 
           #ifdef DEBUG
             puts("setting gas ");
             puth(value);
             puts("\n");
           #endif
-          gas_set = value;
+          gas_set_0 = value_0;
+          gas_set_1 = value_1;
+          // clear the timeout and fault
           timeout = 0;
+          fault = 0;
         }
         // TODO: better lockout? prevents same spam
         current_index = index;
+      } else {
+        // wrong checksum = fault
+        fault = 1;
       }
     }
     // next
@@ -142,6 +156,7 @@ void CAN1_RX0_IRQHandler() {
 }
 
 void CAN1_SCE_IRQHandler() {
+  fault = 1;
   can_sce(CAN);
 }
 
@@ -162,24 +177,27 @@ void TIM3_IRQHandler() {
 
   // check timer for sending the user pedal and clearing the CAN
   if ((CAN->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
-    uint8_t *dat = (uint8_t *)&CAN->sTxMailBox[0].TDLR;
-    CAN->sTxMailBox[0].TDLR = (((pdl0>>8)&0xFF)<<0) |
-                              (((pdl0>>0)&0xFF)<<8) |
-                              (((pdl1>>8)&0xFF)<<16) |
-                              (((pdl1>>0)&0xFF)<<24);
-    CAN->sTxMailBox[0].TDHR = can_cksum(dat, 4, CAN_GAS_OUTPUT, pkt_idx) | (pkt_idx << 4);
-    CAN->sTxMailBox[0].TDTR = 5;  // len of packet is 4
+    uint8_t dat[8];
+    dat[0] = (pdl0>>8)&0xFF;
+    dat[1] = (pdl0>>0)&0xFF;
+    dat[2] = (pdl1>>8)&0xFF;
+    dat[3] = (pdl1>>0)&0xFF;
+    dat[4] = fault;
+    dat[5] = can_cksum(dat, 5, CAN_GAS_OUTPUT, pkt_idx);
+    dat[6] = dat[7] = 0;
+    CAN->sTxMailBox[0].TDLR = ((uint32_t*)dat)[0];
+    CAN->sTxMailBox[0].TDHR = ((uint32_t*)dat)[1];
+    CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 5
     CAN->sTxMailBox[0].TIR = (CAN_GAS_OUTPUT << 21) | 1;
     ++pkt_idx;
     pkt_idx &= 3;
   } else {
     // old can packet hasn't sent!
-    // TODO: do something?
+    fault = 1;
     #ifdef DEBUG
       puts("CAN MISS\n");
     #endif
   }
-
 
   // blink the LED
   set_led(LED_GREEN, led_value);
@@ -188,7 +206,7 @@ void TIM3_IRQHandler() {
   TIM3->SR = 0;
 
   // up timeout for gas set
-  timeout++;
+  timeout = min(timeout+1, MAX_TIMEOUT);
 }
 
 // ***************************** main code *****************************
@@ -199,9 +217,9 @@ void pedal() {
   pdl1 = adc_get(ADCCHAN_ACCEL1);
 
   // write the pedal to the DAC
-  if (timeout < 10) {
-    dac_set(0, max(gas_set, pdl0));
-    dac_set(1, max(gas_set*2, pdl1));
+  if (timeout < MAX_TIMEOUT && !fault) {
+    dac_set(0, max(gas_set_0, pdl0));
+    dac_set(1, max(gas_set_1, pdl1));
   } else {
     dac_set(0, pdl0);
     dac_set(1, pdl1);
