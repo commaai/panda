@@ -121,6 +121,7 @@ uint32_t current_index = 0;
 #define STATE_FAULT_SEND 2
 #define STATE_FAULT_SCE 3
 #define STATE_FAULT_STARTUP 4
+#define STATE_FAULT_TIMEOUT 5
 uint8_t state = STATE_FAULT_STARTUP;
 
 void CAN1_RX0_IRQHandler() {
@@ -146,15 +147,14 @@ void CAN1_RX0_IRQHandler() {
           if (enable) {
             gas_set_0 = value_0;
             gas_set_1 = value_1;
-            // clear the timeout
-            timeout = 0;
           } else {
+            // clear the fault state if values are 0
+            if (value_0 == 0 && value_1 == 0) state = STATE_GOOD;
             gas_set_0 = gas_set_1 = 0;
-            // clear the fault state
-            state = STATE_GOOD;
           }
+          // clear the timeout
+          timeout = 0;
         }
-        // TODO: better lockout? prevents same spam
         current_index = index;
       } else {
         // wrong checksum = fault
@@ -195,9 +195,8 @@ void TIM3_IRQHandler() {
     dat[3] = (pdl1>>0)&0xFF;
     dat[4] = state;
     dat[5] = can_cksum(dat, 5, CAN_GAS_OUTPUT, pkt_idx);
-    dat[6] = dat[7] = 0;
-    CAN->sTxMailBox[0].TDLR = ((uint32_t*)dat)[0];
-    CAN->sTxMailBox[0].TDHR = ((uint32_t*)dat)[1];
+    CAN->sTxMailBox[0].TDLR = dat[0] | (dat[1]<<8) | (dat[2]<<16) | (dat[3]<<24);
+    CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5]<<8);
     CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 5
     CAN->sTxMailBox[0].TIR = (CAN_GAS_OUTPUT << 21) | 1;
     ++pkt_idx;
@@ -217,7 +216,11 @@ void TIM3_IRQHandler() {
   TIM3->SR = 0;
 
   // up timeout for gas set
-  timeout = min(timeout+1, MAX_TIMEOUT);
+  if (timeout == MAX_TIMEOUT) {
+    state = STATE_FAULT_TIMEOUT;
+  } else {
+    timeout += 1;
+  }
 }
 
 // ***************************** main code *****************************
