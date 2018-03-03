@@ -117,10 +117,11 @@ uint32_t timeout = 0;
 uint32_t current_index = 0;
 
 #define STATE_GOOD 0
-#define STATE_FAULT_CHECKSUM 1
+#define STATE_FAULT_BAD_CHECKSUM 1
 #define STATE_FAULT_SEND 2
 #define STATE_FAULT_SCE 3
-uint8_t state = STATE_NONE;
+#define STATE_FAULT_STARTUP 4
+uint8_t state = STATE_FAULT_STARTUP;
 
 void CAN1_RX0_IRQHandler() {
   while (CAN->RF0R & CAN_RF0R_FMP0) {
@@ -157,7 +158,7 @@ void CAN1_RX0_IRQHandler() {
         current_index = index;
       } else {
         // wrong checksum = fault
-        state = STATE_FAULT_CHECKSUM;
+        state = STATE_FAULT_BAD_CHECKSUM;
       }
     }
     // next
@@ -234,6 +235,9 @@ void pedal() {
     dac_set(0, pdl0);
     dac_set(1, pdl1);
   }
+
+  // feed the watchdog
+  IWDG->KR = 0xAAAA;
 }
 
 int main() {
@@ -266,6 +270,13 @@ int main() {
   NVIC_EnableIRQ(CAN1_SCE_IRQn);
 
   NVIC_EnableIRQ(TIM3_IRQn);
+
+  // setup watchdog
+  IWDG->KR = 0x5555;
+  IWDG->PR = 0;          // divider /4
+  // 0 = 0.125 ms, let's have a 50ms watchdog
+  IWDG->RLR = 400 - 1;
+  IWDG->KR = 0xCCCC;
 
   puts("**** INTERRUPTS ON ****\n");
   __enable_irq();
