@@ -107,7 +107,6 @@ void CAN1_TX_IRQHandler() {
   CAN->TSR |= CAN_TSR_RQCP0;
 }
 
-
 // two independent values
 uint16_t gas_set_0 = 0;
 uint16_t gas_set_1 = 0;
@@ -116,13 +115,13 @@ uint16_t gas_set_1 = 0;
 uint32_t timeout = 0;
 uint32_t current_index = 0;
 
-#define STATE_GOOD 0
-#define STATE_FAULT_BAD_CHECKSUM 1
-#define STATE_FAULT_SEND 2
-#define STATE_FAULT_SCE 3
-#define STATE_FAULT_STARTUP 4
-#define STATE_FAULT_TIMEOUT 5
-uint8_t state = STATE_FAULT_STARTUP;
+#define NO_FAULT 0
+#define FAULT_BAD_CHECKSUM 1
+#define FAULT_SEND 2
+#define FAULT_SCE 3
+#define FAULT_STARTUP 4
+#define FAULT_TIMEOUT 5
+uint8_t state = FAULT_STARTUP;
 
 void CAN1_RX0_IRQHandler() {
   while (CAN->RF0R & CAN_RF0R_FMP0) {
@@ -149,7 +148,7 @@ void CAN1_RX0_IRQHandler() {
             gas_set_1 = value_1;
           } else {
             // clear the fault state if values are 0
-            if (value_0 == 0 && value_1 == 0) state = STATE_GOOD;
+            if (value_0 == 0 && value_1 == 0) state = NO_FAULT;
             gas_set_0 = gas_set_1 = 0;
           }
           // clear the timeout
@@ -158,7 +157,7 @@ void CAN1_RX0_IRQHandler() {
         current_index = index;
       } else {
         // wrong checksum = fault
-        state = STATE_FAULT_BAD_CHECKSUM;
+        state = FAULT_BAD_CHECKSUM;
       }
     }
     // next
@@ -167,7 +166,7 @@ void CAN1_RX0_IRQHandler() {
 }
 
 void CAN1_SCE_IRQHandler() {
-  state = STATE_FAULT_SCE;
+  state = FAULT_SCE;
   can_sce(CAN);
 }
 
@@ -203,7 +202,7 @@ void TIM3_IRQHandler() {
     pkt_idx &= 3;
   } else {
     // old can packet hasn't sent!
-    state = STATE_FAULT_SEND;
+    state = FAULT_SEND;
     #ifdef DEBUG
       puts("CAN MISS\n");
     #endif
@@ -217,7 +216,7 @@ void TIM3_IRQHandler() {
 
   // up timeout for gas set
   if (timeout == MAX_TIMEOUT) {
-    state = STATE_FAULT_TIMEOUT;
+    state = FAULT_TIMEOUT;
   } else {
     timeout += 1;
   }
@@ -231,7 +230,7 @@ void pedal() {
   pdl1 = adc_get(ADCCHAN_ACCEL1);
 
   // write the pedal to the DAC
-  if (timeout < MAX_TIMEOUT && state == STATE_GOOD) {
+  if (timeout < MAX_TIMEOUT && state == NO_FAULT) {
     dac_set(0, max(gas_set_0, pdl0));
     dac_set(1, max(gas_set_1, pdl1));
   } else {
