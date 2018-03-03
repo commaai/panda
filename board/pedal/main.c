@@ -116,7 +116,11 @@ uint16_t gas_set_1 = 0;
 uint32_t timeout = 0;
 uint32_t current_index = 0;
 
-uint8_t fault = 0;
+#define STATE_GOOD 0
+#define STATE_FAULT_CHECKSUM 1
+#define STATE_FAULT_SEND 2
+#define STATE_FAULT_SCE 3
+uint8_t state = STATE_NONE;
 
 void CAN1_RX0_IRQHandler() {
   while (CAN->RF0R & CAN_RF0R_FMP0) {
@@ -129,6 +133,7 @@ void CAN1_RX0_IRQHandler() {
       uint8_t *dat2 = (uint8_t *)&CAN->sFIFOMailBox[0].RDHR;
       uint16_t value_0 = (dat[0] << 8) | dat[1];
       uint16_t value_1 = (dat[2] << 8) | dat[3];
+      uint8_t enable = (dat2[0] >> 7) & 1;
       uint8_t index = (dat2[0] >> 4) & 3;
       if (can_cksum(dat, 4, CAN_GAS_INPUT, index) == (dat2[0] & 0xF)) {
         if (((current_index+1)&3) == index) {
@@ -137,17 +142,22 @@ void CAN1_RX0_IRQHandler() {
             puth(value);
             puts("\n");
           #endif
-          gas_set_0 = value_0;
-          gas_set_1 = value_1;
-          // clear the timeout and fault
-          timeout = 0;
-          fault = 0;
+          if (enable) {
+            gas_set_0 = value_0;
+            gas_set_1 = value_1;
+            // clear the timeout
+            timeout = 0;
+          } else {
+            gas_set_0 = gas_set_1 = 0;
+            // clear the fault state
+            state = STATE_GOOD;
+          }
         }
         // TODO: better lockout? prevents same spam
         current_index = index;
       } else {
         // wrong checksum = fault
-        fault = 1;
+        state = STATE_FAULT_CHECKSUM;
       }
     }
     // next
@@ -156,7 +166,7 @@ void CAN1_RX0_IRQHandler() {
 }
 
 void CAN1_SCE_IRQHandler() {
-  fault = 1;
+  state = STATE_FAULT_SCE;
   can_sce(CAN);
 }
 
@@ -182,7 +192,7 @@ void TIM3_IRQHandler() {
     dat[1] = (pdl0>>0)&0xFF;
     dat[2] = (pdl1>>8)&0xFF;
     dat[3] = (pdl1>>0)&0xFF;
-    dat[4] = fault;
+    dat[4] = state;
     dat[5] = can_cksum(dat, 5, CAN_GAS_OUTPUT, pkt_idx);
     dat[6] = dat[7] = 0;
     CAN->sTxMailBox[0].TDLR = ((uint32_t*)dat)[0];
@@ -193,7 +203,7 @@ void TIM3_IRQHandler() {
     pkt_idx &= 3;
   } else {
     // old can packet hasn't sent!
-    fault = 1;
+    state = STATE_FAULT_SEND;
     #ifdef DEBUG
       puts("CAN MISS\n");
     #endif
@@ -217,7 +227,7 @@ void pedal() {
   pdl1 = adc_get(ADCCHAN_ACCEL1);
 
   // write the pedal to the DAC
-  if (timeout < MAX_TIMEOUT && !fault) {
+  if (timeout < MAX_TIMEOUT && state == STATE_GOOD) {
     dac_set(0, max(gas_set_0, pdl0));
     dac_set(1, max(gas_set_1, pdl1));
   } else {
