@@ -2,7 +2,7 @@ This is the firmware for the comma pedal. It borrows a lot from panda.
 
 The comma pedal is a gas pedal interceptor for Honda/Acura. It allows you to "virtually" press the pedal.
 
-This is the open source software. Open source hardware coming soon.
+This is the open source software. Note that it is not ready to use yet.
 
 == Test Plan ==
 
