@@ -58,7 +58,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // exit controls on rising edge of gas press if no interceptor
-  if (!bosch_hardware && !gas_interceptor_detected) {
+  if (!gas_interceptor_detected) {
     if ((to_push->RIR>>21) == 0x17C) {
       int gas = to_push->RDLR & 0xFF;
       if (gas && !(gas_prev)) {
@@ -83,7 +83,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int current_controls_allowed = controls_allowed && !(pedal_pressed);
 
   // BRAKE: safety check
-  if (!bosch_hardware && (to_send->RIR>>21) == 0x1FA) {
+  if ((to_send->RIR>>21) == 0x1FA) {
     if (current_controls_allowed) {
       if ((to_send->RDLR & 0xFFFFFF3F) != to_send->RDLR) return 0;
     } else {
@@ -92,7 +92,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // STEER: safety check
-  if ((to_send->RIR>>21) == 0xE4 || (!bosch_hardware && (to_send->RIR>>21) == 0x194)) {
+  if ((to_send->RIR>>21) == 0xE4 || (to_send->RIR>>21) == 0x194) {
     if (current_controls_allowed) {
       // all messages are fine here
     } else {
@@ -101,7 +101,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // GAS: safety check
-  if (!bosch_hardware && (to_send->RIR>>21) == 0x200) {
+  if ((to_send->RIR>>21) == 0x200) {
     if (current_controls_allowed) {
       // all messages are fine here
     } else {
@@ -120,15 +120,11 @@ static int honda_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 
 static void honda_init(int16_t param) {
   controls_allowed = 0;
+  bosch_hardware = false;
 }
 
 static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
-  int bus_fwd_num = -1;
-  if (bosch_hardware && (bus_num == 1 || bus_num == 2)) {
-    int addr = to_fwd->RIR>>21;
-    bus_fwd_num = addr != 0xE4 && addr != 0x33D ? (uint8_t)(~bus_num & 0x3) : -1;
-  }
-  return bus_fwd_num;
+  return -1;
 }
 
 const safety_hooks honda_hooks = {
@@ -144,10 +140,18 @@ static void honda_bosch_init(int16_t param) {
   bosch_hardware = true;
 }
 
+static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+  if (bus_num == 1 || bus_num == 2) {
+    int addr = to_fwd->RIR>>21;
+    return addr != 0xE4 && addr != 0x33D ? (uint8_t)(~bus_num & 0x3) : -1;
+  }
+  return -1;
+}
+
 const safety_hooks honda_bosch_hooks = {
   .init = honda_bosch_init,
   .rx = honda_rx_hook,
   .tx = honda_tx_hook,
   .tx_lin = honda_tx_lin_hook,
-  .fwd = honda_fwd_hook,
+  .fwd = honda_bosch_fwd_hook,
 };
