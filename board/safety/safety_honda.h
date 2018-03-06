@@ -50,8 +50,9 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     brake_prev = brake;
   }
 
-  // exit controls on rising edge of gas press if interceptor
-  if (!bosch_hardware && (to_push->RIR>>21) == 0x201) {
+  // exit controls on rising edge of gas press if interceptor (0x201 w/ len = 6)
+  // length check because bosch hardware also uses this id (0x201 w/ len = 8)
+  if ((to_push->RIR>>21) == 0x201 && (to_push->RDTR & 0xf) == 6) {
     gas_interceptor_detected = 1;
     int gas_interceptor = ((to_push->RDLR & 0xFF) << 8) | ((to_push->RDLR & 0xFF00) >> 8);
     if ((gas_interceptor > 328) && (gas_interceptor_prev <= 328)) {
