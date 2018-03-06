@@ -13,7 +13,6 @@ int brake_prev = 0;
 int gas_prev = 0;
 int gas_interceptor_prev = 0;
 int ego_speed = 0;
-
 // TODO: auto-detect bosch hardware based on CAN messages?
 bool bosch_hardware = false;
 
@@ -36,11 +35,15 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
   }
 
+  // user brake signal is different for nidec vs bosch hardware
+  // nidec hardware: 0x17C bit 53
+  // bosch hardware: 0x1BE bit 4
+  #define IS_USER_BRAKE_MSG(to_push) (!bosch_hardware ? to_push->RIR>>21 == 0x17C : to_push->RIR>>21 == 0x1BE)
+  #define USER_BRAKE_VALUE(to_push)  (!bosch_hardware ? to_push->RDHR & 0x200000  : to_push->RDLR & 0x10)
   // exit controls on rising edge of brake press or on brake press when
   // speed > 0
-  if (!bosch_hardware && (to_push->RIR>>21) == 0x17C) {
-    // bit 53
-    int brake = to_push->RDHR & 0x200000;
+  if (IS_USER_BRAKE_MSG(to_push)) {
+    int brake = USER_BRAKE_VALUE(to_push);
     if (brake && (!(brake_prev) || ego_speed)) {
       controls_allowed = 0;
     }
