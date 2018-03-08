@@ -172,10 +172,15 @@ static void gm_init(int16_t param) {
   controls_allowed = 0;
 }
 
+static int gm_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+  return -1;
+}
+
 const safety_hooks gm_hooks = {
   .init = gm_init,
   .rx = gm_rx_hook,
   .tx = gm_tx_hook,
   .tx_lin = gm_tx_lin_hook,
+  .fwd = gm_fwd_hook,
 };
 
