@@ -59,7 +59,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int brake = (to_push->RDLR & 0xFF00) >> 8;
     // Brake pedal's potentiometer returns near-zero reading
     // even when pedal is not pressed
-    if (brake <= 5) {
+    if (brake < 10) {
       brake = 0;
     }
     if (brake && (!gm_brake_prev || gm_speed)) {
@@ -71,7 +71,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // exit controls on rising edge of gas press
   if (addr == 417) {
     int gas = to_push->RDHR & 0xFF0000;
-    if (gas && !(gm_gas_prev)) {
+    if (gas && !gm_gas_prev) {
       controls_allowed = 0;
     }
     gm_gas_prev = gas;
@@ -102,7 +102,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
   int pedal_pressed = gm_gas_prev || (gm_brake_prev && gm_speed);
-  int current_controls_allowed = controls_allowed && !(pedal_pressed);
+  int current_controls_allowed = controls_allowed && !pedal_pressed;
 
   uint32_t addr;
   if (to_send->RIR & 4) {
