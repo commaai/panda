@@ -55,7 +55,13 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None):
     # actually send
     panda.can_send(addr, ss, bus)
     rr = recv(panda, 1, recvaddr, bus)[0]
-    panda.can_send_many([(addr, None, s, 0) for s in sends])
+    if rr.find("\x30\x01"):
+      for s in sends[:-1]:
+        panda.can_send(addr, s, 0)
+        rr = recv(panda, 1, recvaddr, bus)[0]
+      panda.can_send(addr, sends[-1], 0)
+    else:
+      panda.can_send_many([(addr, None, s, 0) for s in sends])
 
 def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
   msg = recv(panda, 1, addr, bus)[0]
@@ -83,6 +89,7 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
     tlen = ord(msg[1]) & 0xf
     dat = msg[2:]
   else:
+    print msg.encode("hex")
     assert False
 
   return dat[0:tlen]
