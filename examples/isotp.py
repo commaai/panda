@@ -61,7 +61,7 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
   msg = recv(panda, 1, addr, bus)[0]
 
   # TODO: handle other subaddr also communicating 
-  assert ord(msg[0]) == chr(subaddr)
+  assert ord(msg[0]) == subaddr
 
   if ord(msg[1])&0xf0 == 0x10:
     # first
@@ -74,7 +74,7 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
 
     idx = 1
     for mm in recv(panda, (tlen-len(dat) + 5)/6, addr, bus):
-      assert ord(mm[0]) == chr(subaddr)
+      assert ord(mm[0]) == subaddr
       assert ord(mm[1]) == (0x20 | idx)
       dat += mm[2:]
       idx += 1
