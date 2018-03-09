@@ -121,6 +121,13 @@ void CAN1_RX0_IRQHandler() {
     #endif
     uint32_t address = CAN->sFIFOMailBox[0].RIR>>21;
     if (address == CAN_GAS_INPUT) {
+      // softloader entry
+      if (CAN->sFIFOMailBox[0].RDLR == 0xdeadface && CAN->sFIFOMailBox[0].RDHR == 0x0ab00b1e) {
+        enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
+        NVIC_SystemReset();
+      }
+
+      // normal packet
       uint8_t *dat = (uint8_t *)&CAN->sFIFOMailBox[0].RDLR;
       uint8_t *dat2 = (uint8_t *)&CAN->sFIFOMailBox[0].RDHR;
       uint16_t value_0 = (dat[0] << 8) | dat[1];
