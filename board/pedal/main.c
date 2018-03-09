@@ -230,7 +230,7 @@ void pedal() {
   pdl1 = adc_get(ADCCHAN_ACCEL1);
 
   // write the pedal to the DAC
-  if (timeout < MAX_TIMEOUT && state == NO_FAULT) {
+  if (state == NO_FAULT) {
     dac_set(0, max(gas_set_0, pdl0));
     dac_set(1, max(gas_set_1, pdl1));
   } else {
