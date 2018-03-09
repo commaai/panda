@@ -55,7 +55,7 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None):
     # actually send
     panda.can_send(addr, ss, bus)
     rr = recv(panda, 1, recvaddr, bus)[0]
-    if rr.find("\x30\x01"):
+    if rr.find("\x30\x01") != -1:
       for s in sends[:-1]:
         panda.can_send(addr, s, 0)
         rr = recv(panda, 1, recvaddr, bus)[0]
