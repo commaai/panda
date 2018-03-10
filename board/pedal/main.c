@@ -122,9 +122,14 @@ void CAN1_RX0_IRQHandler() {
     uint32_t address = CAN->sFIFOMailBox[0].RIR>>21;
     if (address == CAN_GAS_INPUT) {
       // softloader entry
-      if (CAN->sFIFOMailBox[0].RDLR == 0xdeadface && CAN->sFIFOMailBox[0].RDHR == 0x0ab00b1e) {
-        enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
-        NVIC_SystemReset();
+      if (CAN->sFIFOMailBox[0].RDLR == 0xdeadface) {
+        if (CAN->sFIFOMailBox[0].RDHR == 0x0ab00b1e) {
+          enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
+          NVIC_SystemReset();
+        } else if (CAN->sFIFOMailBox[0].RDHR == 0x02b00b1e) {
+          enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+          NVIC_SystemReset();
+        }
       }
 
       // normal packet
