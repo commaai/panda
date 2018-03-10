@@ -1,19 +1,31 @@
 #!/usr/bin/env python
 import sys
+import time
 import struct
 import argparse
+import signal
 from panda import Panda
-import time
 
 class CanHandle(object):
   def __init__(self, p):
     self.p = p
 
   def transact(self, dat):
-    print "W:",dat.encode("hex")
+    #print "W:",dat.encode("hex")
     self.p.isotp_send(1, dat, 0, recvaddr=2)
-    ret = self.p.isotp_recv(2, 0, sendaddr=1)
-    print "R:",ret.encode("hex")
+
+    def _handle_timeout(signum, frame):
+      # will happen on reset
+      raise Exception("timeout")
+
+    signal.signal(signal.SIGALRM, _handle_timeout)
+    signal.alarm(1)
+    try:
+      ret = self.p.isotp_recv(2, 0, sendaddr=1)
+    finally:
+      signal.alarm(0)
+
+    #print "R:",ret.encode("hex")
     return ret
 
   def controlWrite(self, request_type, request, value, index, data, timeout=0):
@@ -57,5 +69,7 @@ if __name__ == "__main__":
     print "flashing", args.fn
     code = open(args.fn).read()
     Panda.flash_static(CanHandle(p), code)
+
+  print "can flash done"
 
 
