@@ -26,6 +26,39 @@ def recv(panda, cnt, addr, nbus):
     kmsgs = nmsgs[-256:]
   return map(str, ret)
 
+def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
+  msg = recv(panda, 1, addr, bus)[0]
+
+  # TODO: handle other subaddr also communicating 
+  assert ord(msg[0]) == subaddr
+
+  if ord(msg[1])&0xf0 == 0x10:
+    # first
+    tlen = ((ord(msg[1]) & 0xf) << 8) | ord(msg[2])
+    dat = msg[3:]
+
+    # 0 block size?
+    CONTINUE = chr(subaddr) + "\x30" + "\x00"*6
+    panda.can_send(sendaddr, CONTINUE, bus)
+
+    idx = 1
+    for mm in recv(panda, (tlen-len(dat) + 5)/6, addr, bus):
+      assert ord(mm[0]) == subaddr
+      assert ord(mm[1]) == (0x20 | idx)
+      dat += mm[2:]
+      idx += 1
+  elif ord(msg[1])&0xf0 == 0x00:
+    # single
+    tlen = ord(msg[1]) & 0xf
+    dat = msg[2:]
+  else:
+    print msg.encode("hex")
+    assert False
+
+  return dat[0:tlen]
+
+# **** import below this line ****
+
 def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None):
   if recvaddr is None:
     recvaddr = addr+8
@@ -62,38 +95,6 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None):
       panda.can_send(addr, sends[-1], 0)
     else:
       panda.can_send_many([(addr, None, s, 0) for s in sends])
-
-def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
-  msg = recv(panda, 1, addr, bus)[0]
-
-  # TODO: handle other subaddr also communicating 
-  assert ord(msg[0]) == subaddr
-
-  if ord(msg[1])&0xf0 == 0x10:
-    # first
-    tlen = ((ord(msg[1]) & 0xf) << 8) | ord(msg[2])
-    dat = msg[3:]
-
-    # 0 block size?
-    CONTINUE = chr(subaddr) + "\x30" + "\x00"*6
-    panda.can_send(sendaddr, CONTINUE, bus)
-
-    idx = 1
-    for mm in recv(panda, (tlen-len(dat) + 5)/6, addr, bus):
-      assert ord(mm[0]) == subaddr
-      assert ord(mm[1]) == (0x20 | idx)
-      dat += mm[2:]
-      idx += 1
-  elif ord(msg[1])&0xf0 == 0x00:
-    # single
-    tlen = ord(msg[1]) & 0xf
-    dat = msg[2:]
-  else:
-    print msg.encode("hex")
-    assert False
-
-  return dat[0:tlen]
-  
 
 def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
   if sendaddr is None:
