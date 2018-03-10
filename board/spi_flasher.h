@@ -188,7 +188,7 @@ void CAN1_RX0_IRQHandler() {
         }
       } else if (type == 0x20) {
         if (isotp_buf_remain > 0) {
-          memcpy(isotp_buf_ptr, dat, 7);
+          memcpy(isotp_buf_ptr, dat+1, 7);
           isotp_buf_ptr += 7;
           isotp_buf_remain -= 7;
         }
