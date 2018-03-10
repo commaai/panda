@@ -426,6 +426,14 @@ class Panda(object):
     """
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf1, bus, 0, b'')
 
+  # ******************* isotp *******************
+
+  def isotp_send(addr, dat, bus, recvaddr=None, subaddr=None):
+    return isotp_send(self, dat, addr, bus, recvaddr, subaddr)
+
+  def isotp_recv(addr, bus=0, sendaddr=None, subaddr=None):
+    return isotp_recv(self, addr, bus, recvaddr, subaddr)
+
   # ******************* serial *******************
 
   def serial_read(self, port_number):
