@@ -170,7 +170,7 @@ class Panda(object):
     assert(self._handle != None)
     print("connected")
 
-  def reset(self, enter_bootstub=False, enter_bootloader=False, reconnect=True):
+  def reset(self, enter_bootstub=False, enter_bootloader=False):
     # reset
     try:
       if enter_bootloader:
@@ -183,27 +183,56 @@ class Panda(object):
     except Exception:
       pass
     if not enter_bootloader:
-      self.close()
-      if reconnect == False:
-        return
-      time.sleep(1.0)
-      success = False
-      # wait up to 15 seconds
-      for i in range(0, 15):
+      self.reconnect()
+
+  def reconnect(self):
+    self.close()
+    time.sleep(1.0)
+    success = False
+    # wait up to 15 seconds
+    for i in range(0, 15):
+      try:
+        self.connect()
+        success = True
+        break
+      except Exception:
+        print("reconnecting is taking %d seconds..." % (i+1))
         try:
-          self.connect()
-          success = True
-          break
+          dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial))
+          dfu.recover()
         except Exception:
-          print("reconnecting is taking %d seconds..." % (i+1))
-          try:
-            dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial))
-            dfu.recover()
-          except Exception:
-            pass
-          time.sleep(1.0)
-      if not success:
-        raise Exception("reset failed")
+          pass
+        time.sleep(1.0)
+    if not success:
+      raise Exception("reconnect failed")
+
+  @staticmethod
+  def flash_static(handle, code):
+    # confirm flasher is present
+    fr = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
+    assert fr[4:8] == "\xde\xad\xd0\x0d"
+
+    # unlock flash
+    print("flash: unlocking")
+    handle.controlWrite(Panda.REQUEST_IN, 0xb1, 0, 0, b'')
+
+    # erase sectors 1 and 2
+    print("flash: erasing")
+    handle.controlWrite(Panda.REQUEST_IN, 0xb2, 1, 0, b'')
+    handle.controlWrite(Panda.REQUEST_IN, 0xb2, 2, 0, b'')
+
+    # flash over EP2
+    STEP = 0x10
+    print("flash: flashing")
+    for i in range(0, len(code), STEP):
+      handle.bulkWrite(2, code[i:i+STEP])
+
+    # reset
+    print("flash: resetting")
+    try:
+      handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'')
+    except Exception:
+      pass
 
   def flash(self, fn=None, code=None, reconnect=True):
     if not self.bootstub:
@@ -228,28 +257,12 @@ class Panda(object):
     # get version
     print("flash: version is "+self.get_version())
 
-    # confirm flasher is present
-    fr = self._handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
-    assert fr[4:8] == "\xde\xad\xd0\x0d"
+    # do flash
+    Panda.flash_static(self._handle, code)
 
-    # unlock flash
-    print("flash: unlocking")
-    self._handle.controlWrite(Panda.REQUEST_IN, 0xb1, 0, 0, b'')
-
-    # erase sectors 1 and 2
-    print("flash: erasing")
-    self._handle.controlWrite(Panda.REQUEST_IN, 0xb2, 1, 0, b'')
-    self._handle.controlWrite(Panda.REQUEST_IN, 0xb2, 2, 0, b'')
-
-    # flash over EP2
-    STEP = 0x10
-    print("flash: flashing")
-    for i in range(0, len(code), STEP):
-      self._handle.bulkWrite(2, code[i:i+STEP])
-
-    # reset
-    print("flash: resetting")
-    self.reset(reconnect=reconnect)
+    # reconnect
+    if reconnect:
+      self.reconnect()
 
   def recover(self):
     self.reset(enter_bootloader=True)

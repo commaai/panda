@@ -204,11 +204,11 @@ void CAN1_RX0_IRQHandler() {
           // send initial
           if (isotp_buf_out_remain <= 7) {
             odat[0] = isotp_buf_out_remain;
-            //memcpy(odat+1, isotp_buf_out_ptr, isotp_buf_out_remain);
+            memcpy(odat+1, isotp_buf_out_ptr, isotp_buf_out_remain);
           } else {
             odat[0] = 0x10 | (isotp_buf_out_remain>>8);
             odat[1] = isotp_buf_out_remain & 0xFF;
-            //memcpy(odat+2, isotp_buf_out_ptr, 6);
+            memcpy(odat+2, isotp_buf_out_ptr, 6);
             isotp_buf_out_remain -= 6;
             isotp_buf_out_ptr += 6;
             isotp_buf_out_idx++;
