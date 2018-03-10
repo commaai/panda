@@ -264,7 +264,7 @@ int main() {
 
   // init can
   can_silent = ALL_CAN_LIVE;
-  can_init_all();
+  can_init(0);
 
   // 48mhz / 65536 ~= 732
   timer_init(TIM3, 15);

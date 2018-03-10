@@ -130,6 +130,35 @@ int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
   return resp_len;
 }
 
+#ifdef PEDAL
+
+#define CAN CAN1
+
+#define CAN_BL_INPUT 0x1
+#define CAN_BL_OUTPUT 0x2
+
+void CAN1_TX_IRQHandler() {
+  // clear interrupt
+  CAN->TSR |= CAN_TSR_RQCP0;
+}
+
+void CAN1_RX0_IRQHandler() {
+  while (CAN->RF0R & CAN_RF0R_FMP0) {
+    if ((CAN->sFIFOMailBox[0].RIR>>21) == CAN_BL_INPUT) {
+      CAN->sTxMailBox[0].TDLR = 0xAABBCCDD;
+      CAN->sTxMailBox[0].TDHR = 0xAABBCCDD;
+      CAN->sTxMailBox[0].TDTR = 8;
+      CAN->sTxMailBox[0].TIR = (CAN_BL_OUTPUT << 21) | 1;
+    }
+  }
+}
+
+void CAN1_SCE_IRQHandler() {
+  can_sce(CAN);
+}
+
+#endif
+
 void soft_flasher_start() {
   puts("\n\n\n************************ FLASHER START ************************\n");
 
@@ -139,6 +168,25 @@ void soft_flasher_start() {
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
   RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
   RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+
+// pedal has the canloader
+#ifdef PEDAL
+  RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
+
+  // B8,B9: CAN 1
+  set_gpio_alternate(GPIOB, 8, GPIO_AF9_CAN1);
+  set_gpio_alternate(GPIOB, 9, GPIO_AF9_CAN1);
+  set_can_enable(CAN1, 1);
+
+  // init can
+  can_silent = ALL_CAN_LIVE;
+  can_init(0);
+
+  // needed?
+  NVIC_EnableIRQ(CAN1_TX_IRQn);
+  NVIC_EnableIRQ(CAN1_RX0_IRQn);
+  NVIC_EnableIRQ(CAN1_SCE_IRQn);
+#endif
 
   // A4,A5,A6,A7: setup SPI
   set_gpio_alternate(GPIOA, 4, GPIO_AF5_SPI1);
