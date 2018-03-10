@@ -20,7 +20,8 @@ CFLAGS += "-DALLOW_DEBUG"
 
 usbflash: obj/$(PROJ_NAME).bin
 	../../tests/pedal/enter_canloader.py
-	PYTHONPATH=../../ python -c "from python import Panda; p = Panda(); assert(p.bootstub); p.flash('obj/$(PROJ_NAME).bin', reconnect=False)"
+	sleep 0.5
+	PYTHONPATH=../../ python -c "from python import Panda; p = [x for x in [Panda(x) for x in Panda.list()] if x.bootstub]; assert(len(p)==1); p[0].flash('obj/$(PROJ_NAME).bin', reconnect=False)"
 
 recover: obj/bootstub.bin obj/$(PROJ_NAME).bin
 	$(DFU_UTIL) -d 0483:df11 -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
