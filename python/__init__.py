@@ -434,7 +434,7 @@ class Panda(object):
     return isotp_send(self, dat, addr, bus, recvaddr, subaddr)
 
   def isotp_recv(self, addr, bus=0, sendaddr=None, subaddr=None):
-    return isotp_recv(self, addr, bus, recvaddr, subaddr)
+    return isotp_recv(self, addr, bus, sendaddr, subaddr)
 
   # ******************* serial *******************
 
