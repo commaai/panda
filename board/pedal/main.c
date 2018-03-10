@@ -268,12 +268,6 @@ int main() {
 
   // 48mhz / 65536 ~= 732
   timer_init(TIM3, 15);
-
-  // needed?
-  NVIC_EnableIRQ(CAN1_TX_IRQn);
-  NVIC_EnableIRQ(CAN1_RX0_IRQn);
-  NVIC_EnableIRQ(CAN1_SCE_IRQn);
-
   NVIC_EnableIRQ(TIM3_IRQn);
 
   // setup watchdog
