@@ -170,7 +170,7 @@ class Panda(object):
     assert(self._handle != None)
     print("connected")
 
-  def reset(self, enter_bootstub=False, enter_bootloader=False):
+  def reset(self, enter_bootstub=False, enter_bootloader=False, reconnect=True):
     # reset
     try:
       if enter_bootloader:
@@ -184,6 +184,8 @@ class Panda(object):
       pass
     if not enter_bootloader:
       self.close()
+      if reconnect == False:
+        return
       time.sleep(1.0)
       success = False
       # wait up to 15 seconds
@@ -203,7 +205,7 @@ class Panda(object):
       if not success:
         raise Exception("reset failed")
 
-  def flash(self, fn=None, code=None):
+  def flash(self, fn=None, code=None, reconnect=True):
     if not self.bootstub:
       self.reset(enter_bootstub=True)
     assert(self.bootstub)
@@ -247,7 +249,7 @@ class Panda(object):
 
     # reset
     print("flash: resetting")
-    self.reset()
+    self.reset(reconnect=reconnect)
 
   def recover(self):
     self.reset(enter_bootloader=True)
