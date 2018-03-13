@@ -66,6 +66,7 @@ if __name__ == "__main__":
     p.can_send(0x200, "\xce\xfa\xad\xde\x1e\x0b\xb0\x0a", 0)
 
   if args.fn:
+    time.sleep(0.1)
     print "flashing", args.fn
     code = open(args.fn).read()
     Panda.flash_static(CanHandle(p), code)
