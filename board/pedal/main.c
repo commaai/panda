@@ -112,6 +112,7 @@ uint32_t current_index = 0;
 #define FAULT_SCE 3
 #define FAULT_STARTUP 4
 #define FAULT_TIMEOUT 5
+#define FAULT_INVALID 6
 uint8_t state = FAULT_STARTUP;
 
 void CAN1_RX0_IRQHandler() {
@@ -151,7 +152,11 @@ void CAN1_RX0_IRQHandler() {
             gas_set_1 = value_1;
           } else {
             // clear the fault state if values are 0
-            if (value_0 == 0 && value_1 == 0) state = NO_FAULT;
+            if (value_0 == 0 && value_1 == 0) {
+              state = NO_FAULT;
+            } else {
+              state = FAULT_INVALID;
+            }
             gas_set_0 = gas_set_1 = 0;
           }
           // clear the timeout
