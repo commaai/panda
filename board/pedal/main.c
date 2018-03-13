@@ -196,7 +196,7 @@ void TIM3_IRQHandler() {
     dat[2] = (pdl1>>8)&0xFF;
     dat[3] = (pdl1>>0)&0xFF;
     dat[4] = state;
-    dat[5] = can_cksum(dat, 5, CAN_GAS_OUTPUT, pkt_idx);
+    dat[5] = can_cksum(dat, 5, CAN_GAS_OUTPUT, pkt_idx) | (pkt_idx<<4);
     CAN->sTxMailBox[0].TDLR = dat[0] | (dat[1]<<8) | (dat[2]<<16) | (dat[3]<<24);
     CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5]<<8);
     CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 5
