@@ -32,10 +32,10 @@ uint32_t ts_last = 0;
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // get eps motor torque (0.66 factor in dbc)
   if ((to_push->RIR>>21) == 0x260) {
-    int torque_meas_new = (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF));
+    int16_t torque_meas_new_16 = (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF));
 
     // increase torque_meas by 1 to be conservative on rounding
-    torque_meas_new = (torque_meas_new * dbc_eps_torque_factor / 100) + (torque_meas_new > 0 ? 1 : -1);
+    int torque_meas_new = ((int)(torque_meas_new_16) * dbc_eps_torque_factor / 100) + (torque_meas_new_16 > 0 ? 1 : -1);
 
     // shift the array
     for (int i = sizeof(torque_meas)/sizeof(torque_meas[0]) - 1; i > 0; i--) {
