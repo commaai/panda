@@ -58,7 +58,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if ((gas_interceptor > 328) && (gas_interceptor_prev <= 328)) {
       controls_allowed = 0;
     }
-    gas_interceptor_prev = gas_interceptor;
+    gas_interceptor_prev = gas_interceptor > 328;
   }
 
   // exit controls on rising edge of gas press if no interceptor
