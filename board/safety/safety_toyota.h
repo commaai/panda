@@ -1,6 +1,8 @@
 // track the torque measured for limiting
 int16_t torque_meas[3] = {0, 0, 0};    // last 3 motor torques produced by the eps
 int16_t torque_meas_min = 0, torque_meas_max = 0;
+int16_t angle_meas[3] = {0, 0, 0};     // last 3 steer angles
+int16_t angle_meas_min = 0, angle_meas_max = 0;
 
 // global torque limit
 const int32_t MAX_TORQUE = 1500;       // max torque cmd allowed ever
@@ -48,6 +50,28 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     for (int i = 1; i < sizeof(torque_meas)/sizeof(torque_meas[0]); i++) {
       if (torque_meas[i] < torque_meas_min) torque_meas_min = torque_meas[i];
       if (torque_meas[i] > torque_meas_max) torque_meas_max = torque_meas[i];
+    }
+  }
+
+  // get steer angle
+  if ((to_push->RIR>>21) == 0x25) {
+    int angle_meas_new = ((to_push->RDLR & 0xf) << 8) + ((to_push->RDLR & 0xff00) >> 8);
+
+    if (angle_meas_new > 0x800) {
+      angle_meas_new -= 0x1000;
+    }
+
+    // shift the array
+    for (int i = sizeof(angle_meas)/sizeof(angle_meas[0]) - 1; i > 0; i--) {
+      angle_meas[i] = angle_meas[i-1];
+    }
+    angle_meas[0] = angle_meas_new;
+
+    // get the minimum and maximum measured angle over the last 3 frames
+    angle_meas_min = angle_meas_max = angle_meas[0];
+    for (int i = 1; i < sizeof(angle_meas)/sizeof(angle_meas[0]); i++) {
+      if (angle_meas[i] < angle_meas_min) angle_meas_min = angle_meas[i];
+      if (angle_meas[i] > angle_meas_max) angle_meas_max = angle_meas[i];
     }
   }
 
@@ -138,6 +162,27 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         desired_torque_last = 0;
         rt_torque_last = 0;
         ts_last = ts;
+      }
+
+      if (violation) {
+        return false;
+      }
+    }
+    // STEER ANGLE:
+    if ((to_send->RIR>>21) == 0x266) {
+      //int angle_enable = ((to_send->RDLR & 0xff) >> 4) == 3;
+      int desired_angle = ((to_send->RDLR & 0xf) << 8) + ((to_send->RDLR & 0xff00) >> 8);
+      int16_t violation = 0;
+
+      if (desired_angle > 0x800) {
+        desired_angle -= 0x1000;
+      }
+
+      // desired steer angle should be the same as steer angle measured when controls is off
+      if (!controls_allowed) {
+        if ((desired_angle < (angle_meas_min - 1)) || (desired_angle > (angle_meas_max + 1))) {
+          violation = 1;
+        }
       }
 
       if (violation) {
