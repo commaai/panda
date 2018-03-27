@@ -31,6 +31,8 @@ int16_t desired_torque_last = 0;       // last desired steer torque
 int16_t rt_torque_last = 0;            // last desired torque for real time check
 uint32_t ts_last = 0;
 
+int ipas_state = 1;                    // 1 disabled, 3 executing angle control
+
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // get eps motor torque (0.66 factor in dbc)
   if ((to_push->RIR>>21) == 0x260) {
@@ -73,6 +75,11 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       if (angle_meas[i] < angle_meas_min) angle_meas_min = angle_meas[i];
       if (angle_meas[i] > angle_meas_max) angle_meas_max = angle_meas[i];
     }
+  }
+
+  // get ipas state
+  if ((to_push->RIR>>21) == 0x262) {
+    ipas_state = (to_push->RDLR & 0xf);
   }
 
   // exit controls on ACC off
@@ -179,7 +186,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       }
 
       // desired steer angle should be the same as steer angle measured when controls is off
-      if (!controls_allowed) {
+      if ((!controls_allowed) || (ipas_state != 3)) {
         if ((desired_angle < (angle_meas_min - 1)) || (desired_angle > (angle_meas_max + 1))) {
           violation = 1;
         }
