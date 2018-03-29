@@ -46,3 +46,28 @@ void set_controls_allowed(int c){
 int get_controls_allowed(void){
   return controls_allowed;
 }
+
+void set_timer(int t){
+  timer.CNT = t;
+}
+
+void set_torque_meas(int min, int max){
+  torque_meas_min = min;
+  torque_meas_max = max;
+}
+
+void set_rt_torque_last(int t){
+  rt_torque_last = t;
+}
+
+void set_desired_torque_last(int t){
+  desired_torque_last = t;
+}
+
+void init_tests_toyota(void){
+  torque_meas_min = 0;
+  torque_meas_max = 0;
+  desired_torque_last = 0;
+  rt_torque_last = 0;
+  ts_last = 0;
+}
