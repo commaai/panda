@@ -61,6 +61,15 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.toyota_rx_hook(to_push)
     self.assertTrue(self.safety.get_controls_allowed())
 
+  def test_disable_control_allowed_from_cruise(self):
+    to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_push[0].RIR = 0x1D2 << 21
+    to_push[0].RDHR = 0
+
+    self.safety.set_controls_allowed(1)
+    self.safety.toyota_rx_hook(to_push)
+    self.assertFalse(self.safety.get_controls_allowed())
+
   def test_accel_actuation_limits(self):
     for accel in np.arange(-4000, 4000, 100):
       for controls_allowed in [True, False]:
