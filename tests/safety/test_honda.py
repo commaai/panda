@@ -25,6 +25,13 @@ class TestHondaSafety(unittest.TestCase):
 
     return to_send
 
+  def _brake_msg(self, brake):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 0x17C << 21
+    to_send[0].RDHR = 0x200000 if brake else 0
+
+    return to_send
+
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
@@ -48,6 +55,33 @@ class TestHondaSafety(unittest.TestCase):
     self.assertEqual(0, self.safety.get_ego_speed())
     self.safety.honda_rx_hook(self._speed_msg(100))
     self.assertEqual(100, self.safety.get_ego_speed())
+
+  def test_prev_brake(self):
+    self.assertFalse(self.safety.get_brake_prev())
+    self.safety.honda_rx_hook(self._brake_msg(1))
+    self.assertTrue(self.safety.get_brake_prev())
+
+  def test_disengage_on_brake(self):
+    self.safety.set_controls_allowed(1)
+    self.safety.honda_rx_hook(self._brake_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_allow_brake_at_zero_speed(self):
+    # Brake was already pressed
+    self.safety.honda_rx_hook(self._brake_msg(1))
+    self.safety.set_controls_allowed(1)
+
+    self.safety.honda_rx_hook(self._brake_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_not_allow_brake_when_moving(self):
+    # Brake was already pressed
+    self.safety.honda_rx_hook(self._brake_msg(1))
+    self.safety.honda_rx_hook(self._speed_msg(100))
+    self.safety.set_controls_allowed(1)
+
+    self.safety.honda_rx_hook(self._brake_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
 
 
 if __name__ == "__main__":

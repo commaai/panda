@@ -76,6 +76,10 @@ int get_ego_speed(void){
   return ego_speed;
 }
 
+int get_brake_prev(void){
+  return brake_prev;
+}
+
 void init_tests_toyota(void){
   torque_meas_min = 0;
   torque_meas_max = 0;

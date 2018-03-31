@@ -48,6 +48,7 @@ int get_ego_speed(void);
 void honda_init(int16_t param);
 void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
+int get_brake_prev(void);
 
 """)
 
