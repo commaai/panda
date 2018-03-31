@@ -23,7 +23,7 @@ def twos_comp(val, bits):
 
 class TestToyotaSafety(unittest.TestCase):
   @classmethod
-  def setUpClass(cls):
+  def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.toyota_init(100)
     cls.safety.init_tests_toyota()
