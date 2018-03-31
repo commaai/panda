@@ -10,6 +10,9 @@ MAX_TORQUE = 1500
 MAX_ACCEL = 1500
 MIN_ACCEL = -3000
 
+MAX_RT_DELTA = 375
+RT_INTERVAL = 250000
+
 
 def twos_comp(val, bits):
   if val >= 0:
@@ -118,6 +121,40 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.set_torque_meas(500, 500)
     self.safety.set_desired_torque_last(1000)
     self.assertFalse(self.safety.toyota_tx_hook(self._torque_msg(1000 - MAX_RATE_DOWN + 1)))
+
+  def test_exceed_torque_sensor(self):
+    self.safety.set_controls_allowed(True)
+
+    self._set_prev_torque(0)
+    for t in np.arange(0, 360, 10):
+      self.assertTrue(self.safety.toyota_tx_hook(self._torque_msg(t)))
+
+    self.assertFalse(self.safety.toyota_tx_hook(self._torque_msg(360)))
+
+    self._set_prev_torque(0)
+    for t in np.arange(0, -360, 10):
+      self.assertTrue(self.safety.toyota_tx_hook(self._torque_msg(t)))
+
+    self.assertFalse(self.safety.toyota_tx_hook(self._torque_msg(-60)))
+
+  def test_realtime_limit_up(self):
+    self.safety.set_controls_allowed(True)
+
+    self._set_prev_torque(0)
+    for t in np.arange(0, 380, 10):
+      self.safety.set_torque_meas(t, t)
+      self.assertTrue(self.safety.toyota_tx_hook(self._torque_msg(t)))
+    self.assertFalse(self.safety.toyota_tx_hook(self._torque_msg(380)))
+
+    self._set_prev_torque(0)
+    for t in np.arange(0, 370, 10):
+      self.safety.set_torque_meas(t, t)
+      self.assertTrue(self.safety.toyota_tx_hook(self._torque_msg(t)))
+
+    # Increase timer to update rt_torque_last
+    self.safety.set_timer(RT_INTERVAL + 1)
+    self.assertTrue(self.safety.toyota_tx_hook(self._torque_msg(370)))
+    self.assertTrue(self.safety.toyota_tx_hook(self._torque_msg(380)))
 
 
 if __name__ == "__main__":
