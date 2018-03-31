@@ -72,6 +72,10 @@ void set_desired_torque_last(int t){
   desired_torque_last = t;
 }
 
+int get_ego_speed(void){
+  return ego_speed;
+}
+
 void init_tests_toyota(void){
   torque_meas_min = 0;
   torque_meas_max = 0;
@@ -79,4 +83,11 @@ void init_tests_toyota(void){
   rt_torque_last = 0;
   ts_last = 0;
   set_timer(0);
+}
+
+void init_tests_honda(void){
+  ego_speed = 0;
+  gas_interceptor_detected = 0;
+  brake_prev = 0;
+  gas_prev = 0;
 }

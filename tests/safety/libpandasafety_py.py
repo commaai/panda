@@ -43,6 +43,12 @@ void set_desired_torque_last(int t);
 int get_torque_meas_min(void);
 int get_torque_meas_max(void);
 
+void init_tests_honda(void);
+int get_ego_speed(void);
+void honda_init(int16_t param);
+void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
+int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
+
 """)
 
 libpandasafety = ffi.dlopen(libpandasafety_fn)
