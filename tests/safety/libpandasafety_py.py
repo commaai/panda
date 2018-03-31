@@ -40,6 +40,8 @@ void set_timer(int t);
 void set_torque_meas(int min, int max);
 void set_rt_torque_last(int t);
 void set_desired_torque_last(int t);
+int get_torque_meas_min(void);
+int get_torque_meas_max(void);
 
 """)
 

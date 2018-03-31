@@ -56,6 +56,14 @@ void set_torque_meas(int min, int max){
   torque_meas_max = max;
 }
 
+int get_torque_meas_min(void){
+  return torque_meas_min;
+}
+
+int get_torque_meas_max(void){
+  return torque_meas_max;
+}
+
 void set_rt_torque_last(int t){
   rt_torque_last = t;
 }
@@ -70,4 +78,5 @@ void init_tests_toyota(void){
   desired_torque_last = 0;
   rt_torque_last = 0;
   ts_last = 0;
+  set_timer(0);
 }
