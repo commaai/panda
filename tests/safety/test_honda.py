@@ -32,6 +32,13 @@ class TestHondaSafety(unittest.TestCase):
 
     return to_send
 
+  def _gas_msg(self, gas):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 0x17C << 21
+    to_send[0].RDLR = 1 if gas else 0
+
+    return to_send
+
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
@@ -58,7 +65,7 @@ class TestHondaSafety(unittest.TestCase):
 
   def test_prev_brake(self):
     self.assertFalse(self.safety.get_brake_prev())
-    self.safety.honda_rx_hook(self._brake_msg(1))
+    self.safety.honda_rx_hook(self._brake_msg(True))
     self.assertTrue(self.safety.get_brake_prev())
 
   def test_disengage_on_brake(self):
@@ -68,20 +75,36 @@ class TestHondaSafety(unittest.TestCase):
 
   def test_allow_brake_at_zero_speed(self):
     # Brake was already pressed
-    self.safety.honda_rx_hook(self._brake_msg(1))
+    self.safety.honda_rx_hook(self._brake_msg(True))
     self.safety.set_controls_allowed(1)
 
-    self.safety.honda_rx_hook(self._brake_msg(1))
+    self.safety.honda_rx_hook(self._brake_msg(True))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_not_allow_brake_when_moving(self):
     # Brake was already pressed
-    self.safety.honda_rx_hook(self._brake_msg(1))
+    self.safety.honda_rx_hook(self._brake_msg(True))
     self.safety.honda_rx_hook(self._speed_msg(100))
     self.safety.set_controls_allowed(1)
 
-    self.safety.honda_rx_hook(self._brake_msg(1))
+    self.safety.honda_rx_hook(self._brake_msg(True))
     self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_prev_gas(self):
+    self.assertFalse(self.safety.get_gas_prev())
+    self.safety.honda_rx_hook(self._gas_msg(True))
+    self.assertTrue(self.safety.get_gas_prev())
+
+  def test_disengage_on_gas(self):
+    self.safety.set_controls_allowed(1)
+    self.safety.honda_rx_hook(self._gas_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_allow_engage_with_gas_pressed(self):
+    self.safety.honda_rx_hook(self._gas_msg(1))
+    self.safety.set_controls_allowed(1)
+    self.safety.honda_rx_hook(self._gas_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
 
 
 if __name__ == "__main__":

@@ -80,6 +80,10 @@ int get_brake_prev(void){
   return brake_prev;
 }
 
+int get_gas_prev(void){
+  return gas_prev;
+}
+
 void init_tests_toyota(void){
   torque_meas_min = 0;
   torque_meas_max = 0;
