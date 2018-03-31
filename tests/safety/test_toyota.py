@@ -109,11 +109,16 @@ class TestToyotaSafety(unittest.TestCase):
   def test_non_realtime_limit_down(self):
     self.safety.set_controls_allowed(True)
 
-    self._set_prev_torque(100)
-    self.assertTrue(self.safety.toyota_tx_hook(self._torque_msg(100 - MAX_RATE_DOWN)))
+    self.safety.set_rt_torque_last(1000)
+    self.safety.set_torque_meas(500, 500)
+    self.safety.set_desired_torque_last(1000)
+    self.assertTrue(self.safety.toyota_tx_hook(self._torque_msg(1000 - MAX_RATE_DOWN)))
 
-    self._set_prev_torque(100)
-    self.assertFalse(self.safety.toyota_tx_hook(self._torque_msg(100 - MAX_RATE_DOWN - 1)))
+    self.safety.set_rt_torque_last(1000)
+    self.safety.set_torque_meas(500, 500)
+    self.safety.set_desired_torque_last(1000)
+    self.assertFalse(self.safety.toyota_tx_hook(self._torque_msg(1000 - MAX_RATE_DOWN + 1)))
+
 
 if __name__ == "__main__":
   unittest.main()
