@@ -13,6 +13,7 @@ MIN_ACCEL = -3000
 MAX_RT_DELTA = 375
 RT_INTERVAL = 250000
 
+MAX_TORQUE_ERROR = 350
 
 def twos_comp(val, bits):
   if val >= 0:
@@ -82,7 +83,7 @@ class TestToyotaSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_accel_actuation_limits(self):
-    for accel in np.arange(-4000, 4000, 100):
+    for accel in np.arange(MIN_ACCEL - 1000, MAX_ACCEL + 1000, 100):
       for controls_allowed in [True, False]:
         self.safety.set_controls_allowed(controls_allowed)
 
@@ -94,7 +95,7 @@ class TestToyotaSafety(unittest.TestCase):
 
   def test_torque_absolute_limits(self):
     for controls_allowed in [True, False]:
-      for torque in np.arange(2000, 2000, MAX_RATE_UP):
+      for torque in np.arange(-MAX_TORQUE - 1000, MAX_TORQUE + 1000, MAX_RATE_UP):
           self.safety.set_controls_allowed(controls_allowed)
           self.safety.set_rt_torque_last(torque)
           self.safety.set_torque_meas(torque, torque)
@@ -105,7 +106,6 @@ class TestToyotaSafety(unittest.TestCase):
           else:
             send = torque == 0
 
-          print controls_allowed, torque
           self.assertEqual(send, self.safety.toyota_tx_hook(self._torque_msg(torque)))
 
   def test_non_realtime_limit_up(self):
@@ -135,11 +135,11 @@ class TestToyotaSafety(unittest.TestCase):
 
     for sign in [-1, 1]:
       self._set_prev_torque(0)
-      for t in np.arange(0, 360, 10):
+      for t in np.arange(0, MAX_TORQUE_ERROR + 10, 10):
         t *= sign
         self.assertTrue(self.safety.toyota_tx_hook(self._torque_msg(t)))
 
-      self.assertFalse(self.safety.toyota_tx_hook(self._torque_msg(sign * 360)))
+      self.assertFalse(self.safety.toyota_tx_hook(self._torque_msg(sign * (MAX_TORQUE_ERROR + 10))))
 
   def test_realtime_limit_up(self):
     self.safety.set_controls_allowed(True)
