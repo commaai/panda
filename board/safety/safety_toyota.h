@@ -1,5 +1,4 @@
 int cruise_engaged_last = 0;           // cruise state
-int ipas_override = 0;
 int ipas_state = 0;
 
 // track the torque measured for limiting
@@ -71,19 +70,11 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
     torque_driver[0] = torque_driver_new;
 
-    // get the minimum and maximum driverured torque over the last 3 frames
+    // get the minimum and maximum driver torque over the last 3 frames
     torque_driver_min = torque_driver_max = torque_driver[0];
     for (int i = 1; i < sizeof(torque_driver)/sizeof(torque_driver[0]); i++) {
       if (torque_driver[i] < torque_driver_min) torque_driver_min = torque_driver[i];
       if (torque_driver[i] > torque_driver_max) torque_driver_max = torque_driver[i];
-    }
-
-    // see if the driver torque exceeds IPAS_OVERRIDE_THRESHOLD over the last 3 frames
-    if ((torque_driver_min > IPAS_OVERRIDE_THRESHOLD) ||
-        (torque_driver_max < -IPAS_OVERRIDE_THRESHOLD)) {
-      ipas_override = 1;
-    } else {
-      ipas_override = 0;
     }
   }
 
@@ -105,7 +96,9 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // exit controls on high steering override
-  if (angle_control && (ipas_override || (ipas_state==5))) {
+  if (angle_control && ((torque_driver_min > IPAS_OVERRIDE_THRESHOLD) ||
+                        (torque_driver_max < -IPAS_OVERRIDE_THRESHOLD) ||
+                        (ipas_state==5))) {
     controls_allowed = 0;
   }
 }
