@@ -1,5 +1,5 @@
 int cruise_engaged_last = 0;           // cruise state
-int ipas_state = 0;
+int ipas_state = 1;                    // 1 disabled, 3 executing angle control, 5 override
 
 // track the torque measured for limiting
 int16_t torque_meas[3] = {0, 0, 0};    // last 3 motor torques produced by the eps
@@ -40,7 +40,6 @@ int16_t desired_torque_last = 0;       // last desired steer torque
 int16_t rt_torque_last = 0;            // last desired torque for real time check
 uint32_t ts_last = 0;
 
-int ipas_state = 1;                    // 1 disabled, 3 executing angle control
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
@@ -102,11 +101,6 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       if (angle_meas[i] < angle_meas_min) angle_meas_min = angle_meas[i];
       if (angle_meas[i] > angle_meas_max) angle_meas_max = angle_meas[i];
     }
-  }
-
-  // get ipas state
-  if ((to_push->RIR>>21) == 0x262) {
-    ipas_state = (to_push->RDLR & 0xf);
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
