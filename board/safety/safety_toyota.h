@@ -6,6 +6,7 @@ int ipas_state = 0;
 int16_t torque_meas[3] = {0, 0, 0};    // last 3 motor torques produced by the eps
 int16_t torque_meas_min = 0, torque_meas_max = 0;
 int16_t torque_driver[3] = {0, 0, 0};    // last 3 driver steering torque
+int16_t torque_driver_min = 0, torque_driver_max = 0;
 
 // IPAS override
 const int32_t IPAS_OVERRIDE_THRESHOLD = 200;  // disallow controls when user torque exceeds this value
@@ -70,14 +71,19 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
     torque_driver[0] = torque_driver_new;
 
+    // get the minimum and maximum driverured torque over the last 3 frames
+    torque_driver_min = torque_driver_max = torque_driver[0];
+    for (int i = 1; i < sizeof(torque_driver)/sizeof(torque_driver[0]); i++) {
+      if (torque_driver[i] < torque_driver_min) torque_driver_min = torque_driver[i];
+      if (torque_driver[i] > torque_driver_max) torque_driver_max = torque_driver[i];
+    }
+
     // see if the driver torque exceeds IPAS_OVERRIDE_THRESHOLD over the last 3 frames
-    for (int i = 0; i < sizeof(torque_driver)/sizeof(torque_driver[0]); i++) {
-      if ((torque_driver[i] < - IPAS_OVERRIDE_THRESHOLD) ||
-          (torque_driver[i] > IPAS_OVERRIDE_THRESHOLD)) {
-       ipas_override = 1;
-      } else {
-       ipas_override = 0;
-      }
+    if ((torque_driver_min > IPAS_OVERRIDE_THRESHOLD) ||
+        (torque_driver_max < -IPAS_OVERRIDE_THRESHOLD)) {
+      ipas_override = 1;
+    } else {
+      ipas_override = 0;
     }
   }
 
