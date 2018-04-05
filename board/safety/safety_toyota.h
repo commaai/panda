@@ -156,8 +156,8 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         desired_angle -= 0x1000;
       }
 
-      // desired steer angle should be the same as steer angle measured when controls is off
-      if ((!controls_allowed) || (ipas_state != 3)) {
+      // desired steer angle should be the same as steer angle measured when controls are off
+      if (!controls_allowed) {
         if ((desired_angle < (angle_meas_min - 1)) || (desired_angle > (angle_meas_max + 1))) {
           violation = 1;
         }
