@@ -215,6 +215,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         return false;
       }
     }
+
     // STEER ANGLE:
     if ((to_send->RIR>>21) == 0x266) {
       //int angle_enable = ((to_send->RDLR & 0xff) >> 4) == 3;
