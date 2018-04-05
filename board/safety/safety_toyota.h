@@ -8,7 +8,7 @@ int16_t torque_meas_min = 0, torque_meas_max = 0;
 int16_t torque_driver[3] = {0, 0, 0};    // last 3 driver steering torque
 
 // IPAS override
-const int32_t IPAS_OVERRIDE_THRESHOLD = 205;  // disallow controls when user torque exceeds this value
+const int32_t IPAS_OVERRIDE_THRESHOLD = 200;  // disallow controls when user torque exceeds this value
 int angle_control = 0;                 // 1 if direct angle control packets are seen
 
 // global torque limit
