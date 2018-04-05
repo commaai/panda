@@ -1,6 +1,15 @@
+int cruise_engaged_last = 0;           // cruise state
+int ipas_override = 0;
+int ipas_state = 0;
+
 // track the torque measured for limiting
 int16_t torque_meas[3] = {0, 0, 0};    // last 3 motor torques produced by the eps
 int16_t torque_meas_min = 0, torque_meas_max = 0;
+int16_t torque_driver[3] = {0, 0, 0};    // last 3 driver steering torque
+
+// IPAS override
+const int32_t IPAS_OVERRIDE_THRESHOLD = 205;  // disallow controls when user torque exceeds this value
+int angle_control = 0;                 // 1 if direct angle control packets are seen
 
 // global torque limit
 const int32_t MAX_TORQUE = 1500;       // max torque cmd allowed ever
@@ -30,8 +39,10 @@ int16_t rt_torque_last = 0;            // last desired torque for real time chec
 uint32_t ts_last = 0;
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  // get eps motor torque (0.66 factor in dbc)
+
+  // EPS torque sensor
   if ((to_push->RIR>>21) == 0x260) {
+    // get eps motor torque (see dbc_eps_torque_factor in dbc)
     int16_t torque_meas_new_16 = (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF));
 
     // increase torque_meas by 1 to be conservative on rounding
@@ -49,16 +60,47 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       if (torque_meas[i] < torque_meas_min) torque_meas_min = torque_meas[i];
       if (torque_meas[i] > torque_meas_max) torque_meas_max = torque_meas[i];
     }
+
+    // get driver steering torque
+    int16_t torque_driver_new = (((to_push->RDLR) & 0xFF00) | ((to_push->RDLR >> 16) & 0xFF));
+
+    // shift the array
+    for (int i = sizeof(torque_driver)/sizeof(torque_driver[0]) - 1; i > 0; i--) {
+      torque_driver[i] = torque_driver[i-1];
+    }
+    torque_driver[0] = torque_driver_new;
+
+    // see if the driver torque exceeds IPAS_OVERRIDE_THRESHOLD over the last 3 frames
+    for (int i = 0; i < sizeof(torque_driver)/sizeof(torque_driver[0]); i++) {
+      if ((torque_driver[i] < - IPAS_OVERRIDE_THRESHOLD) ||
+          (torque_driver[i] > IPAS_OVERRIDE_THRESHOLD)) {
+       ipas_override = 1;
+      } else {
+       ipas_override = 0;
+      }
+    }
   }
 
-  // exit controls on ACC off
+  // enter controls on rising edge of ACC, exit controls on ACC off
   if ((to_push->RIR>>21) == 0x1D2) {
     // 4 bits: 55-52
-    if (to_push->RDHR & 0xF00000) {
+    int cruise_engaged = to_push->RDHR & 0xF00000;
+    if (cruise_engaged && (!cruise_engaged_last)) {
       controls_allowed = 1;
-    } else {
+    } else if (!cruise_engaged) {
       controls_allowed = 0;
     }
+    cruise_engaged_last = cruise_engaged;
+  }
+
+  // get ipas state
+  if ((to_push->RIR>>21) == 0x262) {
+    ipas_state = (to_push->RDLR & 0xf);
+  }
+
+  // exit controls on high steering override
+  if (angle_control && (ipas_override || (ipas_state==5))) {
+    controls_allowed = 0;
   }
 }
 
@@ -79,7 +121,12 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       }
     }
 
-    // STEER: safety check on bytes 2-3
+    // STEER ANGLE
+    if ((to_send->RIR>>21) == 0x266) {
+      angle_control = 1;
+    }
+
+    // STEER TORQUE: safety check on bytes 2-3
     if ((to_send->RIR>>21) == 0x2E4) {
       int16_t desired_torque = (to_send->RDLR & 0xFF00) | ((to_send->RDLR >> 16) & 0xFF);
       int16_t violation = 0;
