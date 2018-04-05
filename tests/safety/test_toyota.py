@@ -52,12 +52,23 @@ class TestToyotaSafety(unittest.TestCase):
     to_send[0].RDLR = t | ((t & 0xFF) << 16)
     return to_send
 
+  def _torque_driver_msg_array(self, torque):
+    for i in range(3):
+      self.safety.toyota_rx_hook(self._torque_driver_msg(torque))
+
   def _torque_msg(self, torque):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x2E4 << 21
 
     t = twos_comp(torque, 16)
     to_send[0].RDLR = t | ((t & 0xFF) << 16)
+    return to_send
+
+  def _ipas_state_msg(self, state):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 0x262 << 21
+
+    to_send[0].RDLR = state & 0xF
     return to_send
 
   def _ipas_control_msg(self):
@@ -197,47 +208,51 @@ class TestToyotaSafety(unittest.TestCase):
     self.assertEqual(-1, self.safety.get_torque_meas_min())
 
   def test_ipas_override(self):
-    print "ipas test"
+
+    ## angle control is not active
     self.safety.set_controls_allowed(1)
 
     # 3 consecutive msgs where driver exceeds threshold but angle_control isn't active
     self.safety.set_controls_allowed(1)
-    self.safety.toyota_rx_hook(self._torque_driver_msg(IPAS_OVERRIDE_THRESHOLD + 1))
-    self.safety.toyota_rx_hook(self._torque_driver_msg(IPAS_OVERRIDE_THRESHOLD + 1))
-    self.safety.toyota_rx_hook(self._torque_driver_msg(IPAS_OVERRIDE_THRESHOLD + 1))
+    self._torque_driver_msg_array(IPAS_OVERRIDE_THRESHOLD + 1)
     self.assertTrue(self.safety.get_controls_allowed())
 
-    self.safety.toyota_rx_hook(self._torque_driver_msg(IPAS_OVERRIDE_THRESHOLD - 1))
-    self.safety.toyota_rx_hook(self._torque_driver_msg(IPAS_OVERRIDE_THRESHOLD - 1))
-    self.safety.toyota_rx_hook(self._torque_driver_msg(IPAS_OVERRIDE_THRESHOLD - 1))
+    self._torque_driver_msg_array(-IPAS_OVERRIDE_THRESHOLD - 1)
     self.assertTrue(self.safety.get_controls_allowed())
 
-    # now angle control is active
+    # ipas state is override
+    self.safety.toyota_rx_hook(self._ipas_state_msg(5))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+    ## now angle control is active
     self.safety.toyota_tx_hook(self._ipas_control_msg())
+    self.safety.toyota_rx_hook(self._ipas_state_msg(0))
 
     # 3 consecutive msgs where driver does exceed threshold
     self.safety.set_controls_allowed(1)
-    self.safety.toyota_rx_hook(self._torque_driver_msg(IPAS_OVERRIDE_THRESHOLD + 1))
-    self.safety.toyota_rx_hook(self._torque_driver_msg(IPAS_OVERRIDE_THRESHOLD + 1))
-    self.safety.toyota_rx_hook(self._torque_driver_msg(IPAS_OVERRIDE_THRESHOLD + 1))
+    self._torque_driver_msg_array(IPAS_OVERRIDE_THRESHOLD + 1)
     self.assertFalse(self.safety.get_controls_allowed())
 
     self.safety.set_controls_allowed(1)
-    self.safety.toyota_rx_hook(self._torque_driver_msg(-IPAS_OVERRIDE_THRESHOLD -1))
-    self.safety.toyota_rx_hook(self._torque_driver_msg(-IPAS_OVERRIDE_THRESHOLD -1))
-    self.safety.toyota_rx_hook(self._torque_driver_msg(-IPAS_OVERRIDE_THRESHOLD -1))
+    self._torque_driver_msg_array(-IPAS_OVERRIDE_THRESHOLD - 1)
     self.assertFalse(self.safety.get_controls_allowed())
 
-    # 3 consecutive msgs where driver does not exceed threshold
+    # ipas state is override and torque isn't overriding any more
     self.safety.set_controls_allowed(1)
-    self.safety.toyota_rx_hook(self._torque_driver_msg(IPAS_OVERRIDE_THRESHOLD))
-    self.safety.toyota_rx_hook(self._torque_driver_msg(IPAS_OVERRIDE_THRESHOLD))
-    self.safety.toyota_rx_hook(self._torque_driver_msg(IPAS_OVERRIDE_THRESHOLD))
+    self._torque_driver_msg_array(0)
+    self.safety.toyota_rx_hook(self._ipas_state_msg(5))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+    # 3 consecutive msgs where driver does not exceed threshold and
+    # ipas state is not override
+    self.safety.set_controls_allowed(1)
+    self.safety.toyota_rx_hook(self._ipas_state_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
 
-    self.safety.toyota_rx_hook(self._torque_driver_msg(-IPAS_OVERRIDE_THRESHOLD))
-    self.safety.toyota_rx_hook(self._torque_driver_msg(-IPAS_OVERRIDE_THRESHOLD))
-    self.safety.toyota_rx_hook(self._torque_driver_msg(-IPAS_OVERRIDE_THRESHOLD))
+    self._torque_driver_msg_array(IPAS_OVERRIDE_THRESHOLD)
+    self.assertTrue(self.safety.get_controls_allowed())
+
+    self._torque_driver_msg_array(-IPAS_OVERRIDE_THRESHOLD)
     self.assertTrue(self.safety.get_controls_allowed())
 
 
