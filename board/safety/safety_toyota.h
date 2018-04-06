@@ -1,17 +1,5 @@
-int cruise_engaged_last = 0;           // cruise state
-int ipas_state = 1;                    // 1 disabled, 3 executing angle control, 5 override
-
-// track the torque measured for limiting
-int16_t torque_meas[3] = {0, 0, 0};    // last 3 motor torques produced by the eps
-int16_t torque_meas_min = 0, torque_meas_max = 0;
-int16_t angle_meas[3] = {0, 0, 0};     // last 3 steer angles
-int16_t angle_meas_min = 0, angle_meas_max = 0;
-int16_t torque_driver[3] = {0, 0, 0};    // last 3 driver steering torque
-int16_t torque_driver_min = 0, torque_driver_max = 0;
-
 // IPAS override
 const int32_t IPAS_OVERRIDE_THRESHOLD = 200;  // disallow controls when user torque exceeds this value
-int angle_control = 0;                 // 1 if direct angle control packets are seen
 
 // global torque limit
 const int32_t MAX_TORQUE = 1500;       // max torque cmd allowed ever
@@ -22,6 +10,20 @@ const int32_t MAX_RATE_UP = 10;        // ramp up slow
 const int32_t MAX_RATE_DOWN = 25;      // ramp down fast
 const int32_t MAX_TORQUE_ERROR = 350;  // max torque cmd in excess of torque motor
 
+typedef struct {double bp[3]; double v[3];} lookup;  // breakpoint, value
+
+const double MAX_ANGLE_RATE_V[] = {0., 5., 15};
+const double MAX_ANGLE_RATE_UP[] = {5., .8, .15};
+const double MAX_ANGLE_RATE_DOWN[] = {5., 3.5, .4};
+
+const lookup LOOKUP_ANGLE_RATE_UP = {
+  MAX_ANGLE_RATE_V,
+  MAX_ANGLE_RATE_UP};
+
+const lookup LOOKUP_ANGLE_RATE_DOWN = {
+  MAX_ANGLE_RATE_V,
+  MAX_ANGLE_RATE_DOWN};
+
 // real time torque limit to prevent controls spamming
 // the real time limit is 1500/sec
 const int32_t MAX_RT_DELTA = 375;      // max delta torque allowed for real time checks
@@ -30,6 +32,18 @@ const int32_t RT_INTERVAL = 250000;    // 250ms between real time checks
 // longitudinal limits
 const int16_t MAX_ACCEL = 1500;        // 1.5 m/s2
 const int16_t MIN_ACCEL = -3000;       // 3.0 m/s2
+
+int cruise_engaged_last = 0;           // cruise state
+int ipas_state = 1;                    // 1 disabled, 3 executing angle control, 5 override
+int angle_control = 0;                 // 1 if direct angle control packets are seen
+
+// track the torque measured for limiting
+int16_t torque_meas[3] = {0, 0, 0};    // last 3 motor torques produced by the eps
+int16_t torque_meas_min = 0, torque_meas_max = 0;
+int16_t angle_meas[3] = {0, 0, 0};     // last 3 steer angles
+int16_t angle_meas_min = 0, angle_meas_max = 0;
+int16_t torque_driver[3] = {0, 0, 0};    // last 3 driver steering torque
+int16_t torque_driver_min = 0, torque_driver_max = 0;
 
 // global actuation limit state
 int actuation_limits = 1;              // by default steer limits are imposed
@@ -44,6 +58,34 @@ void to_signed(int *d, int bits) {
   if (*d >= (1 << (bits - 1))) {
     *d -= (1 << bits);
   }
+}
+
+// Returns interpolated value at x from parallel arrays ( xData, yData )
+//   Assumes that xData has at least two elements, is sorted and is strictly monotonic increasing
+//   boolean argument extrapolate determines behaviour beyond ends of array (if needed)
+
+double interpolate(double &xData, double &yData, double x, bool extrapolate ) {
+  int size = xData.size();
+ 
+  int i = 0;                                                                  // find left end of interval for interpolation
+  if ( x >= xData[size - 2] )                                                 // special case: beyond right end
+  {
+     i = size - 2;
+  }
+  else
+  {
+     while ( x > xData[i+1] ) i++;
+  }
+  double xL = xData[i], yL = yData[i], xR = xData[i+1], yR = yData[i+1];      // points on either side (unless beyond ends)
+  if ( !extrapolate )                                                         // if beyond ends of array and not extrapolating
+  {
+     if ( x < xL ) yR = yL;
+     if ( x > xR ) yL = yR;
+  }
+ 
+  double dydx = ( yR - yL ) / ( xR - xL );                                    // gradient
+ 
+  return yL + dydx * ( x - xL );                                              // linear interpolation
 }
 
 
