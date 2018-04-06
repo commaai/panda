@@ -40,6 +40,12 @@ int16_t desired_torque_last = 0;       // last desired steer torque
 int16_t rt_torque_last = 0;            // last desired torque for real time check
 uint32_t ts_last = 0;
 
+void to_signed(int *d, int bits) {
+  if (*d >= (1 << (bits - 1))) {
+    *d -= (1 << bits);
+  }
+}
+
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
@@ -85,9 +91,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if ((to_push->RIR>>21) == 0x25) {
     int angle_meas_new = ((to_push->RDLR & 0xf) << 8) + ((to_push->RDLR & 0xff00) >> 8);
 
-    if (angle_meas_new > 0x800) {
-      angle_meas_new -= 0x1000;
-    }
+    to_signed(&angle_meas_new, 12);
 
     // shift the array
     for (int i = sizeof(angle_meas)/sizeof(angle_meas[0]) - 1; i > 0; i--) {
@@ -154,9 +158,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
       int16_t violation = 0;
 
-      if (desired_angle > 0x800) {
-        desired_angle -= 0x1000;
-      }
+      to_signed(&desired_angle, 12);
 
       // desired steer angle should be the same as steer angle measured when controls are off
       if (!controls_allowed) {

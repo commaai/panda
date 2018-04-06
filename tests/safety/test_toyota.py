@@ -274,7 +274,6 @@ class TestToyotaSafety(unittest.TestCase):
     # reset no angle control at the end of the test
     self.safety.reset_angle_control()
 
-
   def test_angle_cmd_when_disabled(self):
 
     self.safety.set_controls_allowed(0)
@@ -296,7 +295,7 @@ class TestToyotaSafety(unittest.TestCase):
     # reset no angle control at the end of the test
     self.safety.reset_angle_control()
 
-  def test_angle_cmd_when_disabled(self):
+  def test_angle_cmd_when_enabled(self):
 
     # ipas angle cmd should pass through when controls are enabled
     # TODO: this will fail when rate limits are implemented
@@ -311,6 +310,7 @@ class TestToyotaSafety(unittest.TestCase):
 
     # reset no angle control at the end of the test
     self.safety.reset_angle_control()
+
 
 
 if __name__ == "__main__":
