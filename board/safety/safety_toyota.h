@@ -10,19 +10,22 @@ const int32_t MAX_RATE_UP = 10;        // ramp up slow
 const int32_t MAX_RATE_DOWN = 25;      // ramp down fast
 const int32_t MAX_TORQUE_ERROR = 350;  // max torque cmd in excess of torque motor
 
-typedef struct {double bp[3]; double v[3];} lookup;  // breakpoint, value
+//double MAX_ANGLE_RATE_V[3] = {0., 5., 15};
+//double MAX_ANGLE_RATE_UP[] = {5., .8, .15};
+//double MAX_ANGLE_RATE_DOWN[] = {5., 3.5, .4};
 
-const double MAX_ANGLE_RATE_V[] = {0., 5., 15};
-const double MAX_ANGLE_RATE_UP[] = {5., .8, .15};
-const double MAX_ANGLE_RATE_DOWN[] = {5., 3.5, .4};
+struct Lookup {
+  double x[3];
+  double y[3];
+};
 
-const lookup LOOKUP_ANGLE_RATE_UP = {
-  MAX_ANGLE_RATE_V,
-  MAX_ANGLE_RATE_UP};
+const struct Lookup LOOKUP_ANGLE_RATE_UP = {
+  {0., 5., 15.},
+  {5., .8, .15}};
 
-const lookup LOOKUP_ANGLE_RATE_DOWN = {
-  MAX_ANGLE_RATE_V,
-  MAX_ANGLE_RATE_DOWN};
+const struct Lookup LOOKUP_ANGLE_RATE_DOWN = {
+  {0., 5., 15.},
+  {5., 3.5, .4}};
 
 // real time torque limit to prevent controls spamming
 // the real time limit is 1500/sec
@@ -65,28 +68,23 @@ int to_signed(int d, int bits) {
 //   Assumes that xData has at least two elements, is sorted and is strictly monotonic increasing
 //   boolean argument extrapolate determines behaviour beyond ends of array (if needed)
 
-double interpolate(double &xData, double &yData, double x, bool extrapolate ) {
-  int size = xData.size();
- 
-  int i = 0;                                                                  // find left end of interval for interpolation
-  if ( x >= xData[size - 2] )                                                 // special case: beyond right end
-  {
-     i = size - 2;
+double interpolate(struct Lookup xy, double x) {
+  int size = sizeof(xy.x) / sizeof(xy.x[0]);
+  if (x <= xy.x[0]) {
+    return xy.y[0];
   }
-  else
-  {
-     while ( x > xData[i+1] ) i++;
+
+  else if (x > xy.x[size - 1]){
+    return xy.y[size - 1];
+
+  } else {
+    for (int i=0; i < size-1; i++) {
+      if (x > xy.x[i]) {
+        return (xy.y[i+1] - xy.y[i]) / (xy.x[i+1] - xy.x[i]);
+      }
+    }   
   }
-  double xL = xData[i], yL = yData[i], xR = xData[i+1], yR = yData[i+1];      // points on either side (unless beyond ends)
-  if ( !extrapolate )                                                         // if beyond ends of array and not extrapolating
-  {
-     if ( x < xL ) yR = yL;
-     if ( x > xR ) yL = yR;
-  }
- 
-  double dydx = ( yR - yL ) / ( xR - xL );                                    // gradient
- 
-  return yL + dydx * ( x - xL );                                              // linear interpolation
+  return 0;
 }
 
 
