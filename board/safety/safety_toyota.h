@@ -150,6 +150,8 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
       angle_control = 1;   // we are in angle control mode
       int desired_angle = ((to_send->RDLR & 0xf) << 8) + ((to_send->RDLR & 0xff00) >> 8);
+      int ipas_state_cmd = ((to_send->RDLR & 0xff) >> 4);
+
       int16_t violation = 0;
 
       if (desired_angle > 0x800) {
@@ -158,7 +160,9 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
       // desired steer angle should be the same as steer angle measured when controls are off
       if (!controls_allowed) {
-        if ((desired_angle < (angle_meas_min - 1)) || (desired_angle > (angle_meas_max + 1))) {
+        if ((desired_angle < (angle_meas_min - 1)) ||
+            (desired_angle > (angle_meas_max + 1)) ||
+            (ipas_state_cmd != 1)) {
           violation = 1;
         }
       }
