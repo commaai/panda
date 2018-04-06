@@ -56,6 +56,18 @@ class TestToyotaSafety(unittest.TestCase):
     for i in range(3):
       self.safety.toyota_rx_hook(self._torque_driver_msg(torque))
 
+  def _angle_meas_msg(self, angle):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 0x25 << 21
+
+    t = twos_comp(angle, 12)
+    to_send[0].RDLR = ((t & 0xF00) >> 8) | ((t & 0xFF) << 8)
+    return to_send
+
+  def _angle_meas_msg_array(self, angle):
+    for i in range(3):
+      self.safety.toyota_rx_hook(self._angle_meas_msg(angle))
+
   def _torque_msg(self, torque):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x2E4 << 21
@@ -71,9 +83,13 @@ class TestToyotaSafety(unittest.TestCase):
     to_send[0].RDLR = state & 0xF
     return to_send
 
-  def _ipas_control_msg(self):
+  def _ipas_control_msg(self, angle, state):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x266 << 21
+
+    t = twos_comp(angle, 12)
+    to_send[0].RDLR = ((t & 0xF00) >> 8) | ((t & 0xFF) << 8)
+    to_send[0].RDLR |= ((state & 0xf) << 4)
 
     return to_send
 
@@ -225,7 +241,7 @@ class TestToyotaSafety(unittest.TestCase):
     self.assertTrue(self.safety.get_controls_allowed())
 
     ## now angle control is active
-    self.safety.toyota_tx_hook(self._ipas_control_msg())
+    self.safety.toyota_tx_hook(self._ipas_control_msg(0, 0))
     self.safety.toyota_rx_hook(self._ipas_state_msg(0))
 
     # 3 consecutive msgs where driver does exceed threshold
@@ -254,6 +270,47 @@ class TestToyotaSafety(unittest.TestCase):
 
     self._torque_driver_msg_array(-IPAS_OVERRIDE_THRESHOLD)
     self.assertTrue(self.safety.get_controls_allowed())
+
+    # reset no angle control at the end of the test
+    self.safety.reset_angle_control()
+
+
+  def test_angle_cmd_when_disabled(self):
+
+    self.safety.set_controls_allowed(0)
+
+    # test angle cmd too far from actual
+    angle_refs = [-10, 10]
+    deltas = range(-2, 3)
+    expected_results = [False, True, True, True, False]
+
+    for a in angle_refs:
+      self._angle_meas_msg_array(a)
+      for i, d in enumerate(deltas):
+        self.assertEqual(expected_results[i], self.safety.toyota_tx_hook(self._ipas_control_msg(a + d, 1)))
+
+    # test ipas state cmd enabled
+    self._angle_meas_msg_array(0)
+    self.assertEqual(0, self.safety.toyota_tx_hook(self._ipas_control_msg(0, 3)))
+
+    # reset no angle control at the end of the test
+    self.safety.reset_angle_control()
+
+  def test_angle_cmd_when_disabled(self):
+
+    # ipas angle cmd should pass through when controls are enabled
+    # TODO: this will fail when rate limits are implemented
+
+    self.safety.set_controls_allowed(1)
+    self._angle_meas_msg_array(0)
+
+    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(100, 1)))
+    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(-100, 1)))
+    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(100, 3)))
+    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(-100, 3)))
+
+    # reset no angle control at the end of the test
+    self.safety.reset_angle_control()
 
 
 if __name__ == "__main__":
