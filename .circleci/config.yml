@@ -24,6 +24,10 @@ jobs:
           name: Test python package installer
           command: |
             docker run panda_build /bin/bash -c "cd /panda; python setup.py install"
+      - run:
+          name: Build STM image
+          command: |
+            docker run panda_build /bin/bash -c "cd /panda/board; make bin"
 
 workflows:
   version: 2

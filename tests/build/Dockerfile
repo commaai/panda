@@ -1,8 +1,7 @@
 FROM ubuntu:16.04
 
 RUN apt-get update && apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi gperf texinfo help2man python python-pip
-RUN pip install setuptools
-
+RUN pip install pycrypto==2.6.1
 COPY . /panda
 
 WORKDIR /panda
