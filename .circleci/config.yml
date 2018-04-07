@@ -7,7 +7,7 @@ jobs:
       - checkout
       - run:
           name: Build image
-          command: "docker build -t panda -f tests/Dockerfile ."
+          command: "docker build -t panda -f tests/safety/Dockerfile ."
       - run:
           name: Run safety test
           command: |
