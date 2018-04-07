@@ -1,0 +1,14 @@
+version: 2
+jobs:
+  build:
+    machine:
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - run:
+          name: Build image
+          command: "docker build -t panda -f tests/Dockerfile ."
+      - run:
+          name: Run safety test
+          command: |
+            docker run panda /bin/bash -c "cd /panda/tests/safety; ./test.sh"
