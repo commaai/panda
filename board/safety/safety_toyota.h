@@ -39,6 +39,7 @@ const int16_t MIN_ACCEL = -3000;       // 3.0 m/s2
 int cruise_engaged_last = 0;           // cruise state
 int ipas_state = 1;                    // 1 disabled, 3 executing angle control, 5 override
 int angle_control = 0;                 // 1 if direct angle control packets are seen
+double speed = 0.;
 
 // track the torque measured for limiting
 int16_t torque_meas[3] = {0, 0, 0};    // last 3 motor torques produced by the eps
@@ -64,10 +65,7 @@ int to_signed(int d, int bits) {
   return d;
 }
 
-// Returns interpolated value at x from parallel arrays ( xData, yData )
-//   Assumes that xData has at least two elements, is sorted and is strictly monotonic increasing
-//   boolean argument extrapolate determines behaviour beyond ends of array (if needed)
-
+// interp function that holds extreme values
 double interpolate(struct Lookup xy, double x) {
   int size = sizeof(xy.x) / sizeof(xy.x[0]);
   if (x <= xy.x[0]) {
@@ -87,6 +85,14 @@ double interpolate(struct Lookup xy, double x) {
   return 0;
 }
 
+double get_speed(CAN_FIFOMailBox_TypeDef *to_push) {
+    int32_t wheel1 = (((to_push->RDLR & 0xFF00) >> 8) | ((to_push->RDLR & 0xFF)) << 8);
+    int32_t wheel2 = (((to_push->RDLR & 0xFF000000) >> 24) | ((to_push->RDLR & 0xFF0000)) >> 8);
+    int32_t wheel3 = (((to_push->RDHR & 0xFF00) >> 8) | ((to_push->RDHR & 0xFF)) << 8);
+    int32_t wheel4 = (((to_push->RDHR & 0xFF000000) >> 24) | ((to_push->RDHR & 0xFF0000)) >> 8);
+    // units are 0.01 kph
+    return ((double)(wheel1 + wheel2 + wheel3 + wheel4)) * (100. / 4. / 3.6);
+}
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
@@ -146,6 +152,12 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       if (angle_meas[i] < angle_meas_min) angle_meas_min = angle_meas[i];
       if (angle_meas[i] > angle_meas_max) angle_meas_max = angle_meas[i];
     }
+  }
+
+  // get speed
+  if ((to_push->RIR>>21) == 0xaa) {
+    speed = get_speed(to_push);
+    printf("speed %f\n", speed);
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
