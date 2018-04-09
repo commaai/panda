@@ -30,14 +30,22 @@ USB_OTG_GlobalTypeDef *USBx = USB_OTG_FS;
 #define  USB_REQ_SET_INTERFACE                          0x0B
 #define  USB_REQ_SYNCH_FRAME                            0x0C
 
-#define  USB_DESC_TYPE_DEVICE                              1
-#define  USB_DESC_TYPE_CONFIGURATION                       2
-#define  USB_DESC_TYPE_STRING                              3
-#define  USB_DESC_TYPE_INTERFACE                           4
-#define  USB_DESC_TYPE_ENDPOINT                            5
-#define  USB_DESC_TYPE_DEVICE_QUALIFIER                    6
-#define  USB_DESC_TYPE_OTHER_SPEED_CONFIGURATION           7
-#define  USB_DESC_TYPE_BINARY_OBJECT_STORE                 15
+#define  USB_DESC_TYPE_DEVICE                           0x01
+#define  USB_DESC_TYPE_CONFIGURATION                    0x02
+#define  USB_DESC_TYPE_STRING                           0x03
+#define  USB_DESC_TYPE_INTERFACE                        0x04
+#define  USB_DESC_TYPE_ENDPOINT                         0x05
+#define  USB_DESC_TYPE_DEVICE_QUALIFIER                 0x06
+#define  USB_DESC_TYPE_OTHER_SPEED_CONFIGURATION        0x07
+#define  USB_DESC_TYPE_BINARY_OBJECT_STORE              0x0f
+
+// offsets for configuration strings
+#define  STRING_OFFSET_LANGID                           0x00
+#define  STRING_OFFSET_IMANUFACTURER                    0x01
+#define  STRING_OFFSET_IPRODUCT                         0x02
+#define  STRING_OFFSET_ISERIAL                          0x03
+#define  STRING_OFFSET_ICONFIGURATION                   0x04
+#define  STRING_OFFSET_IINTERFACE                       0x05
 
 // WebUSB requests
 #define  WEBUSB_REQ_GET_URL                             0x02
@@ -64,15 +72,6 @@ USB_OTG_GlobalTypeDef *USBx = USB_OTG_FS;
 
 uint8_t resp[MAX_RESP_LEN];
 
-// descriptor types
-// same as setupdat.h
-#define DSCR_DEVICE_TYPE 1
-#define DSCR_CONFIG_TYPE 2
-#define DSCR_STRING_TYPE 3
-#define DSCR_INTERFACE_TYPE 4
-#define DSCR_ENDPOINT_TYPE 5
-#define DSCR_DEVQUAL_TYPE 6
-
 // for the repeating interfaces
 #define DSCR_INTERFACE_LEN 9
 #define DSCR_ENDPOINT_LEN 7
@@ -95,12 +94,17 @@ uint8_t resp[MAX_RESP_LEN];
 #define WEBUSB_PLATFORM_DESCRIPTOR_LENGTH       0x18
 #define WINUSB_PLATFORM_DESCRIPTOR_LENGTH       0x9E
 
-//Convert machine byte order to USB byte order
+// Convert machine byte order to USB byte order
 #define TOUSBORDER(num)\
   (num&0xFF), ((num>>8)&0xFF)
 
+// take in string length and return the first 2 bytes of a string descriptor
+#define STRING_DESCRIPTOR_HEADER(size)\
+  (((size * 2 + 2)&0xFF) | 0x0300)
+
 uint8_t device_desc[] = {
-  DSCR_DEVICE_LEN, DSCR_DEVICE_TYPE, 0x00, 0x02, //Length, Type, bcdUSB
+  DSCR_DEVICE_LEN, USB_DESC_TYPE_DEVICE, //Length, Type
+  0x10, 0x02, // max version of USB supported (2.1)
   0xFF, 0xFF, 0xFF, 0x40, // Class, Subclass, Protocol, Max Packet Size
   TOUSBORDER(USB_VID), // idVendor
   TOUSBORDER(USB_PID), // idProduct
@@ -117,76 +121,85 @@ uint8_t device_desc[] = {
 #define ENDPOINT_SND 0x00
 
 uint8_t configuration_desc[] = {
-  DSCR_CONFIG_LEN, DSCR_CONFIG_TYPE, // Length, Type,
+  DSCR_CONFIG_LEN, USB_DESC_TYPE_CONFIGURATION, // Length, Type,
   TOUSBORDER(0x0045), // Total Len (uint16)
-  0x01, 0x01, 0x00, // Num Interface, Config Value, Configuration
+  0x01, 0x01, STRING_OFFSET_ICONFIGURATION, // Num Interface, Config Value, Configuration
   0xc0, 0x32, // Attributes, Max Power
   // interface 0 ALT 0
-  DSCR_INTERFACE_LEN, DSCR_INTERFACE_TYPE, // Length, Type
+  DSCR_INTERFACE_LEN, USB_DESC_TYPE_INTERFACE, // Length, Type
   0x00, 0x00, 0x03, // Index, Alt Index idx, Endpoint count
   0XFF, 0xFF, 0xFF, // Class, Subclass, Protocol
   0x00, // Interface
     // endpoint 1, read CAN
-    DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+    DSCR_ENDPOINT_LEN, USB_DESC_TYPE_ENDPOINT, // Length, Type
     ENDPOINT_RCV | 1, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
     TOUSBORDER(0x0040), // Max Packet (0x0040)
     0x00, // Polling Interval (NA)
     // endpoint 2, send serial
-    DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+    DSCR_ENDPOINT_LEN, USB_DESC_TYPE_ENDPOINT, // Length, Type
     ENDPOINT_SND | 2, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
     TOUSBORDER(0x0040), // Max Packet (0x0040)
     0x00, // Polling Interval
     // endpoint 3, send CAN
-    DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+    DSCR_ENDPOINT_LEN, USB_DESC_TYPE_ENDPOINT, // Length, Type
     ENDPOINT_SND | 3, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
     TOUSBORDER(0x0040), // Max Packet (0x0040)
     0x00, // Polling Interval
   // interface 0 ALT 1
-  DSCR_INTERFACE_LEN, DSCR_INTERFACE_TYPE, // Length, Type
+  DSCR_INTERFACE_LEN, USB_DESC_TYPE_INTERFACE, // Length, Type
   0x00, 0x01, 0x03, // Index, Alt Index idx, Endpoint count
   0XFF, 0xFF, 0xFF, // Class, Subclass, Protocol
   0x00, // Interface
     // endpoint 1, read CAN
-    DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+    DSCR_ENDPOINT_LEN, USB_DESC_TYPE_ENDPOINT, // Length, Type
     ENDPOINT_RCV | 1, ENDPOINT_TYPE_INT, // Endpoint Num/Direction, Type
     TOUSBORDER(0x0040), // Max Packet (0x0040)
     0x05, // Polling Interval (5 frames)
     // endpoint 2, send serial
-    DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+    DSCR_ENDPOINT_LEN, USB_DESC_TYPE_ENDPOINT, // Length, Type
     ENDPOINT_SND | 2, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
     TOUSBORDER(0x0040), // Max Packet (0x0040)
     0x00, // Polling Interval
     // endpoint 3, send CAN
-    DSCR_ENDPOINT_LEN, DSCR_ENDPOINT_TYPE, // Length, Type
+    DSCR_ENDPOINT_LEN, USB_DESC_TYPE_ENDPOINT, // Length, Type
     ENDPOINT_SND | 3, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
     TOUSBORDER(0x0040), // Max Packet (0x0040)
     0x00, // Polling Interval
 };
 
-uint8_t string_0_desc[] = {
-  0x04, DSCR_STRING_TYPE, 0x09, 0x04
+uint16_t string_language_desc[] = {
+  STRING_DESCRIPTOR_HEADER(1),
+  0x0409 // american english
 };
 
-uint16_t string_1_desc[] = {
-  0x0312,
+// these strings are all uint16's so that we don't need to spam ,0 after every character
+uint16_t string_manufacturer_desc[] = {
+  STRING_DESCRIPTOR_HEADER(8),
   'c', 'o', 'm', 'm', 'a', '.', 'a', 'i'
 };
 
 #ifdef PANDA
-uint16_t string_2_desc[] = {
-  0x030c,
-  'p', 'a', 'n', 'd', 'a'
+uint16_t string_product_desc[] = {
+  STRING_DESCRIPTOR_HEADER(5),
+  'P', 'a', 'n', 'd', 'a'
 };
 #else
-uint16_t string_2_desc[] = {
-  0x030c,
+uint16_t string_product_desc[] = {
+  STRING_DESCRIPTOR_HEADER(5),
   'N', 'E', 'O', 'v', '1'
 };
 #endif
 
-uint16_t string_3_desc[] = {
-  0x030a,
+// default serial number when we're not a panda
+uint16_t string_serial_desc[] = {
+  STRING_DESCRIPTOR_HEADER(4),
   'n', 'o', 'n', 'e'
+};
+
+// a string containing the default configuration index
+uint16_t string_configuration_desc[] = {
+  STRING_DESCRIPTOR_HEADER(2),
+  '0', '1' // "01"
 };
 
 #ifdef PANDA
@@ -504,16 +517,16 @@ void usb_setup() {
           break;
         case USB_DESC_TYPE_STRING:
           switch (setup.b.wValue.bw.msb) {
-            case 0:
-              USB_WritePacket((uint8_t*)string_0_desc, min(sizeof(string_0_desc), setup.b.wLength.w), 0);
+            case STRING_OFFSET_LANGID:
+              USB_WritePacket((uint8_t*)string_language_desc, min(sizeof(string_language_desc), setup.b.wLength.w), 0);
               break;
-            case 1:
-              USB_WritePacket((uint8_t*)string_1_desc, min(sizeof(string_1_desc), setup.b.wLength.w), 0);
+            case STRING_OFFSET_IMANUFACTURER:
+              USB_WritePacket((uint8_t*)string_manufacturer_desc, min(sizeof(string_manufacturer_desc), setup.b.wLength.w), 0);
               break;
-            case 2:
-              USB_WritePacket((uint8_t*)string_2_desc, min(sizeof(string_2_desc), setup.b.wLength.w), 0);
+            case STRING_OFFSET_IPRODUCT:
+              USB_WritePacket((uint8_t*)string_product_desc, min(sizeof(string_product_desc), setup.b.wLength.w), 0);
               break;
-            case 3:
+            case STRING_OFFSET_ISERIAL:
               #ifdef PANDA
                 resp[0] = 0x02 + 12*4;
                 resp[1] = 0x03;
@@ -529,10 +542,13 @@ void usb_setup() {
 
                 USB_WritePacket(resp, min(resp[0], setup.b.wLength.w), 0);
               #else
-                USB_WritePacket((const uint8_t *)string_3_desc, min(sizeof(string_3_desc), setup.b.wLength.w), 0);
+                USB_WritePacket((const uint8_t *)string_serial_desc, min(sizeof(string_serial_desc), setup.b.wLength.w), 0);
               #endif
               break;
             #ifdef PANDA
+            case STRING_OFFSET_ICONFIGURATION:
+              USB_WritePacket((uint8_t*)string_configuration_desc, min(sizeof(string_configuration_desc), setup.b.wLength.w), 0);
+              break;
             case 238:
               USB_WritePacket((uint8_t*)string_238_desc, min(sizeof(string_238_desc), setup.b.wLength.w), 0);
               break;
