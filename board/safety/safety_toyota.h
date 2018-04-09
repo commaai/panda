@@ -184,7 +184,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // get speed
   if ((to_push->RIR>>21) == 0xaa) {
     speed = get_speed(to_push);
-    printf("speed %f\n", speed);
+    //printf("speed %f\n", speed);
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
