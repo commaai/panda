@@ -17,12 +17,21 @@ MAX_TORQUE_ERROR = 350
 
 IPAS_OVERRIDE_THRESHOLD = 200
 
+ANGLE_DELTA_BP = [0., 5., 15.]
+ANGLE_DELTA_V = [5., .8, .15]     # windup limit
+ANGLE_DELTA_VU = [5., 3.5, 0.4]   # unwind limit
+
 def twos_comp(val, bits):
   if val >= 0:
     return val
   else:
     return (2**bits) + val
 
+def sign(a):
+  if a > 0:
+    return 1
+  else:
+    return -1
 
 class TestToyotaSafety(unittest.TestCase):
   @classmethod
@@ -84,6 +93,7 @@ class TestToyotaSafety(unittest.TestCase):
     return to_send
 
   def _ipas_control_msg(self, angle, state):
+    # note: we command 2/3 of the angle due to CAN conversion
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x266 << 21
 
@@ -91,6 +101,14 @@ class TestToyotaSafety(unittest.TestCase):
     to_send[0].RDLR = ((t & 0xF00) >> 8) | ((t & 0xFF) << 8)
     to_send[0].RDLR |= ((state & 0xf) << 4)
 
+    return to_send
+
+  def _speed_msg(self, speed):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 0xb4 << 21
+    speed = int(speed * 100 * 3.6)
+
+    to_send[0].RDHR = ((speed & 0xFF) << 16) | (speed & 0xFF00)
     return to_send
 
   def _accel_msg(self, accel):
@@ -298,19 +316,87 @@ class TestToyotaSafety(unittest.TestCase):
   def test_angle_cmd_when_enabled(self):
 
     # ipas angle cmd should pass through when controls are enabled
-    # TODO: this will fail when rate limits are implemented
 
     self.safety.set_controls_allowed(1)
     self._angle_meas_msg_array(0)
+    self.safety.toyota_rx_hook(self._speed_msg(0.1))
 
-    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(100, 1)))
-    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(-100, 1)))
-    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(100, 3)))
-    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(-100, 3)))
+    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(0, 1)))
+    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(4, 1)))
+    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(0, 3)))
+    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(-4, 3)))
+    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(-8, 3)))
 
     # reset no angle control at the end of the test
     self.safety.reset_angle_control()
 
+  #def test_angle_measured_rate(self):
+
+  #  self.safety.set_controls_allowed(1)
+  #  self.safety.toyota_rx_hook(self._angle_meas_msg(0))
+  #  self.safety.toyota_rx_hook(self._angle_meas_msg(100))
+  #  self.assertFalse(self.safety.get_controls_allowed())
+
+  #  self.safety.set_controls_allowed(1)
+  #  self._angle_meas_msg_array(-100)
+  #  self.assertFalse(self.safety.get_controls_allowed())
+
+
+  def test_angle_cmd_rate_when_disabled(self):
+
+    # as long as the command is close to the measured, no rate limit is enforced when
+    # controls are disabled
+    self.safety.set_controls_allowed(0)
+    self.safety.toyota_rx_hook(self._angle_meas_msg(0))
+    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(0, 1)))
+    self.safety.toyota_rx_hook(self._angle_meas_msg(100))
+    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(100, 1)))
+    self.safety.toyota_rx_hook(self._angle_meas_msg(-100))
+    self.assertEqual(1, self.safety.toyota_tx_hook(self._ipas_control_msg(-100, 1)))
+
+    # reset no angle control at the end of the test
+    self.safety.reset_angle_control()
+
+
+  def test_angle_cmd_rate_when_enabled(self):
+
+    # when controls are allowed, angle cmd rate limit is enforced
+    # test 1: no limitations if we stay within limits
+    speeds = [0., 1., 5., 10., 15.]
+    angles = [-100, -10, 0, 10, 100]
+    for a in angles:
+      for s in speeds:
+
+        # first test against false positives
+        self._angle_meas_msg_array(a)
+        self.safety.toyota_tx_hook(self._ipas_control_msg(a, 1))
+        self.safety.set_controls_allowed(1)
+        self.safety.toyota_rx_hook(self._speed_msg(s))
+        max_delta_up = int(np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_V) * 2 / 3. + 1.)
+        max_delta_down = int(np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_VU) * 2 / 3. + 1.)
+        self.assertEqual(True, self.safety.toyota_tx_hook(self._ipas_control_msg(a + sign(a) * max_delta_up, 1)))
+        self.assertTrue(self.safety.get_controls_allowed())
+        self.assertEqual(True, self.safety.toyota_tx_hook(self._ipas_control_msg(a, 1)))
+        self.assertTrue(self.safety.get_controls_allowed())
+        self.assertEqual(True, self.safety.toyota_tx_hook(self._ipas_control_msg(a - sign(a) * max_delta_down, 1)))
+        self.assertTrue(self.safety.get_controls_allowed())
+
+        # now inject too high rates
+        self.assertEqual(False, self.safety.toyota_tx_hook(self._ipas_control_msg(a + sign(a) * 
+                                                                                  (max_delta_up + 1), 1)))
+        self.assertFalse(self.safety.get_controls_allowed())
+        self.safety.set_controls_allowed(1)
+        self.assertEqual(True, self.safety.toyota_tx_hook(self._ipas_control_msg(a + sign(a) * max_delta_up, 1)))
+        self.assertTrue(self.safety.get_controls_allowed())
+        self.assertEqual(True, self.safety.toyota_tx_hook(self._ipas_control_msg(a, 1)))
+        self.assertTrue(self.safety.get_controls_allowed())
+        self.assertEqual(False, self.safety.toyota_tx_hook(self._ipas_control_msg(a - sign(a) * 
+                                                                                  (max_delta_down + 1), 1)))
+        self.assertFalse(self.safety.get_controls_allowed())
+
+
+    # reset no angle control at the end of the test
+    self.safety.reset_angle_control()
 
 
 if __name__ == "__main__":

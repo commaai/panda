@@ -1,5 +1,3 @@
-#include <math.h>
-
 // IPAS override
 const int32_t IPAS_OVERRIDE_THRESHOLD = 200;  // disallow controls when user torque exceeds this value
 
@@ -17,12 +15,13 @@ struct Lookup {
   double y[3];
 };
 
+// 2m/s are added to be less restrictive
 const struct Lookup LOOKUP_ANGLE_RATE_UP = {
-  {0., 5., 15.},
+  {2., 7., 17.},
   {5., .8, .15}};
 
 const struct Lookup LOOKUP_ANGLE_RATE_DOWN = {
-  {0., 5., 15.},
+  {2., 7., 17.},
   {5., 3.5, .4}};
 
 // real time torque limit to prevent controls spamming
@@ -73,26 +72,17 @@ double interpolate(struct Lookup xy, double x) {
     return xy.y[0];
   }
 
-  else if (x > xy.x[size - 1]){
+  else if (x >= xy.x[size - 1]){
     return xy.y[size - 1];
 
   } else {
     for (int i=0; i < size-1; i++) {
-      if (x > xy.x[i]) {
-        return (xy.y[i+1] - xy.y[i]) / (xy.x[i+1] - xy.x[i]);
+      if (x < xy.x[i+1]) {
+        return (xy.y[i+1] - xy.y[i]) * (x - xy.x[i]) / (xy.x[i+1] - xy.x[i]) + xy.y[i];
       }
     }   
   }
   return 0;
-}
-
-double get_speed(CAN_FIFOMailBox_TypeDef *to_push) {
-    int32_t wheel1 = (((to_push->RDLR & 0xFF00) >> 8) | ((to_push->RDLR & 0xFF)) << 8);
-    int32_t wheel2 = (((to_push->RDLR & 0xFF000000) >> 24) | ((to_push->RDLR & 0xFF0000)) >> 8);
-    int32_t wheel3 = (((to_push->RDHR & 0xFF00) >> 8) | ((to_push->RDHR & 0xFF)) << 8);
-    int32_t wheel4 = (((to_push->RDHR & 0xFF000000) >> 24) | ((to_push->RDHR & 0xFF0000)) >> 8);
-    // units are 0.01 kph
-    return ((double)(wheel1 + wheel2 + wheel3 + wheel4)) * (100. / 4. / 3.6);
 }
 
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
@@ -166,8 +156,9 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int16_t lowest_rt_angle = rt_angle_last - (rt_angle_last > 0? rt_delta_angle_down:rt_delta_angle_up);
 
     // check for violation
-    if ((angle_meas_new < lowest_rt_angle) ||
-        (angle_meas_new > highest_rt_angle)) {
+    if (angle_control && 
+        ((angle_meas_new < lowest_rt_angle) ||
+         (angle_meas_new > highest_rt_angle))) {
       controls_allowed = 0;
     }
 
@@ -180,9 +171,8 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // get speed
-  if ((to_push->RIR>>21) == 0xaa) {
-    speed = get_speed(to_push);
-    //printf("speed %f\n", speed);
+  if ((to_push->RIR>>21) == 0xb4) {
+    speed = ((double) (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF))) * 0.01 / 3.6;
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
@@ -239,14 +229,18 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
 
       if (controls_allowed) {
-        int delta_angle_up = (int) ceil(interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 2. / 3.);
-        int delta_angle_down = (int) ceil(interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 2. / 3.);
+        int delta_angle_up = (int) (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 2. / 3. + 1.);
+        int delta_angle_down = (int) (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 2. / 3. + 1.);
+        //printf("debug %f\n", interpolate(LOOKUP_ANGLE_RATE_UP, speed));
         int highest_desired_angle = desired_angle_last + (desired_angle_last > 0? delta_angle_up:delta_angle_down);
         int lowest_desired_angle = desired_angle_last - (desired_angle_last > 0? delta_angle_down:delta_angle_up);
+        //printf("highest %d\n", highest_desired_angle);
+        //printf("lowest %d\n", lowest_desired_angle);
         if ((desired_angle > highest_desired_angle) || 
             (desired_angle < lowest_desired_angle)){
           violation = 1;
           controls_allowed = 0;
+          //printf("Angle cmd FAILED\n");
         }
       }
       
