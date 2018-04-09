@@ -181,7 +181,7 @@ uint16_t string_manufacturer_desc[] = {
 #ifdef PANDA
 uint16_t string_product_desc[] = {
   STRING_DESCRIPTOR_HEADER(5),
-  'P', 'a', 'n', 'd', 'a'
+  'p', 'a', 'n', 'd', 'a'
 };
 #else
 uint16_t string_product_desc[] = {
