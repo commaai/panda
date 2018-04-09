@@ -56,7 +56,9 @@ int16_t dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS
 // state of torque limits
 int16_t desired_torque_last = 0;       // last desired steer torque
 int16_t rt_torque_last = 0;            // last desired torque for real time check
+int16_t rt_angle_last = 0;             // last desired torque for real time check
 uint32_t ts_last = 0;
+uint32_t ts_angle_last = 0;
 
 int to_signed(int d, int bits) {
   if (d >= (1 << (bits - 1))) {
@@ -92,6 +94,10 @@ double get_speed(CAN_FIFOMailBox_TypeDef *to_push) {
     int32_t wheel4 = (((to_push->RDHR & 0xFF000000) >> 24) | ((to_push->RDHR & 0xFF0000)) >> 8);
     // units are 0.01 kph
     return ((double)(wheel1 + wheel2 + wheel3 + wheel4)) * (100. / 4. / 3.6);
+}
+
+uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
+  return ts > ts_last ? ts - ts_last : (0xFFFFFFFF - ts_last) + 1 + ts;
 }
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -137,6 +143,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // get steer angle
   if ((to_push->RIR>>21) == 0x25) {
     int angle_meas_new = ((to_push->RDLR & 0xf) << 8) + ((to_push->RDLR & 0xff00) >> 8);
+    uint32_t ts = TIM2->CNT;
 
     angle_meas_new = to_signed(angle_meas_new, 12);
 
@@ -152,6 +159,26 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       if (angle_meas[i] < angle_meas_min) angle_meas_min = angle_meas[i];
       if (angle_meas[i] > angle_meas_max) angle_meas_max = angle_meas[i];
     }
+
+    // *** angle ral time check
+    double rt_delta_angle_up = interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 25. * 3./2. + 1.;
+    double rt_delta_angle_down = interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 25 * 3. / 2. + 1.;
+    int16_t highest_rt_angle = rt_angle_last + (rt_angle_last > 0? rt_delta_angle_up:rt_delta_angle_down);
+    int16_t lowest_rt_angle = rt_angle_last - (rt_angle_last > 0? rt_delta_angle_down:rt_delta_angle_up);
+
+    // check for violation
+    if ((angle_meas_new < lowest_rt_angle) ||
+        (angle_meas_new > highest_rt_angle)) {
+      controls_allowed = 0;
+    }
+
+    // every RT_INTERVAL set the new limits
+    uint32_t ts_elapsed = get_ts_elapsed(ts, ts_angle_last);
+    if (ts_elapsed > RT_INTERVAL) {
+      rt_angle_last = angle_meas_new;
+      ts_angle_last = ts;
+    }
+
   }
 
   // get speed
@@ -208,18 +235,16 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       angle_control = 1;   // we are in angle control mode
       int desired_angle = ((to_send->RDLR & 0xf) << 8) + ((to_send->RDLR & 0xff00) >> 8);
       int ipas_state_cmd = ((to_send->RDLR & 0xff) >> 4);
-
       int16_t violation = 0;
 
       desired_angle = to_signed(desired_angle, 12);
 
       // desired steer angle should be the same as steer angle measured when controls are off
-      if (!controls_allowed) {
-        if ((desired_angle < (angle_meas_min - 1)) ||
+      if ((!controls_allowed) && 
+           ((desired_angle < (angle_meas_min - 1)) ||
             (desired_angle > (angle_meas_max + 1)) ||
-            (ipas_state_cmd != 1)) {
-          violation = 1;
-        }
+            (ipas_state_cmd != 1))) {
+        violation = 1;
       }
 
       if (violation) {
@@ -269,7 +294,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         }
 
         // every RT_INTERVAL set the new limits
-        uint32_t ts_elapsed = ts > ts_last ? ts - ts_last : (0xFFFFFFFF - ts_last) + 1 + ts;
+        uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
         if (ts_elapsed > RT_INTERVAL) {
           rt_torque_last = desired_torque;
           ts_last = ts;
