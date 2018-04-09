@@ -70,19 +70,15 @@ double interpolate(struct Lookup xy, double x) {
   int size = sizeof(xy.x) / sizeof(xy.x[0]);
   if (x <= xy.x[0]) {
     return xy.y[0];
-  }
-
-  else if (x >= xy.x[size - 1]){
-    return xy.y[size - 1];
 
   } else {
     for (int i=0; i < size-1; i++) {
       if (x < xy.x[i+1]) {
         return (xy.y[i+1] - xy.y[i]) * (x - xy.x[i]) / (xy.x[i+1] - xy.x[i]) + xy.y[i];
       }
-    }   
+    }
+    return xy.y[size - 1];
   }
-  return 0;
 }
 
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
@@ -156,7 +152,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int16_t lowest_rt_angle = rt_angle_last - (rt_angle_last > 0? rt_delta_angle_down:rt_delta_angle_up);
 
     // check for violation
-    if (angle_control && 
+    if (angle_control &&
         ((angle_meas_new < lowest_rt_angle) ||
          (angle_meas_new > highest_rt_angle))) {
       controls_allowed = 0;
