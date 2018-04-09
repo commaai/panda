@@ -1,3 +1,5 @@
+#include <math.h>
+
 // IPAS override
 const int32_t IPAS_OVERRIDE_THRESHOLD = 200;  // disallow controls when user torque exceeds this value
 
@@ -9,10 +11,6 @@ const int32_t MAX_TORQUE = 1500;       // max torque cmd allowed ever
 const int32_t MAX_RATE_UP = 10;        // ramp up slow
 const int32_t MAX_RATE_DOWN = 25;      // ramp down fast
 const int32_t MAX_TORQUE_ERROR = 350;  // max torque cmd in excess of torque motor
-
-//double MAX_ANGLE_RATE_V[3] = {0., 5., 15};
-//double MAX_ANGLE_RATE_UP[] = {5., .8, .15};
-//double MAX_ANGLE_RATE_DOWN[] = {5., 3.5, .4};
 
 struct Lookup {
   double x[3];
@@ -55,6 +53,7 @@ int16_t dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS
 
 // state of torque limits
 int16_t desired_torque_last = 0;       // last desired steer torque
+int16_t desired_angle_last = 0;        // last desired steer angle
 int16_t rt_torque_last = 0;            // last desired torque for real time check
 int16_t rt_angle_last = 0;             // last desired torque for real time check
 uint32_t ts_last = 0;
@@ -161,8 +160,8 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // *** angle ral time check
-    double rt_delta_angle_up = interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 25. * 3./2. + 1.;
-    double rt_delta_angle_down = interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 25 * 3. / 2. + 1.;
+    double rt_delta_angle_up = interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 25. * 2. / 3. + 1.;
+    double rt_delta_angle_down = interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 25 * 2. / 3. + 1.;
     int16_t highest_rt_angle = rt_angle_last + (rt_angle_last > 0? rt_delta_angle_up:rt_delta_angle_down);
     int16_t lowest_rt_angle = rt_angle_last - (rt_angle_last > 0? rt_delta_angle_down:rt_delta_angle_up);
 
@@ -178,7 +177,6 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       rt_angle_last = angle_meas_new;
       ts_angle_last = ts;
     }
-
   }
 
   // get speed
@@ -239,6 +237,19 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
       desired_angle = to_signed(desired_angle, 12);
 
+
+      if (controls_allowed) {
+        int delta_angle_up = (int) ceil(interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 2. / 3.);
+        int delta_angle_down = (int) ceil(interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 2. / 3.);
+        int highest_desired_angle = desired_angle_last + (desired_angle_last > 0? delta_angle_up:delta_angle_down);
+        int lowest_desired_angle = desired_angle_last - (desired_angle_last > 0? delta_angle_down:delta_angle_up);
+        if ((desired_angle > highest_desired_angle) || 
+            (desired_angle < lowest_desired_angle)){
+          violation = 1;
+          controls_allowed = 0;
+        }
+      }
+      
       // desired steer angle should be the same as steer angle measured when controls are off
       if ((!controls_allowed) && 
            ((desired_angle < (angle_meas_min - 1)) ||
@@ -246,6 +257,8 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
             (ipas_state_cmd != 1))) {
         violation = 1;
       }
+
+      desired_angle_last = desired_angle;
 
       if (violation) {
         return false;
