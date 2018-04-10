@@ -168,8 +168,8 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
          (angle_meas_new > highest_rt_angle))) {
       controls_allowed = 0;
     }
-    controls_allowed_last = controls_allowed;
 
+    controls_allowed_last = controls_allowed;
   }
 
   // get speed
