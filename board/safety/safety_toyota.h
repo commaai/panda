@@ -149,7 +149,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       if (angle_meas[i] > angle_meas_max) angle_meas_max = angle_meas[i];
     }
 
-    // *** angle ral time check
+    // *** angle real time check
     double rt_delta_angle_up = RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 25. * 2. / 3. + 1.);
     double rt_delta_angle_down = RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 25 * 2. / 3. + 1.);
     int16_t highest_rt_angle = rt_angle_last + (rt_angle_last > 0? rt_delta_angle_up:rt_delta_angle_down);
