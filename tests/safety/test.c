@@ -22,13 +22,6 @@ typedef struct
   uint32_t CNT;
 } TIM_TypeDef;
 
-
-//struct sample_t {
-//  int values[3];
-//  int min;
-//  int max;
-//} sample_t_default = {{0, 0, 0}, 0, 0};
-
 struct sample_t torque_meas;
 
 TIM_TypeDef timer;
