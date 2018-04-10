@@ -91,7 +91,6 @@ uint8_t resp[MAX_RESP_LEN];
 // BOS constants
 #define BINARY_OBJECT_STORE_DESCRIPTOR_LENGTH   0x05
 #define BINARY_OBJECT_STORE_DESCRIPTOR          0x0F
-#define WEBUSB_PLATFORM_DESCRIPTOR_LENGTH       0x18
 #define WINUSB_PLATFORM_DESCRIPTOR_LENGTH       0x9E
 
 // Convert machine byte order to USB byte order
@@ -104,7 +103,7 @@ uint8_t resp[MAX_RESP_LEN];
 
 uint8_t device_desc[] = {
   DSCR_DEVICE_LEN, USB_DESC_TYPE_DEVICE, //Length, Type
-  0x10, 0x02, // max version of USB supported (2.1)
+  0x10, 0x02, // bcdUSB max version of USB supported (2.1)
   0xFF, 0xFF, 0xFF, 0x40, // Class, Subclass, Protocol, Max Packet Size
   TOUSBORDER(USB_VID), // idVendor
   TOUSBORDER(USB_PID), // idProduct
@@ -115,6 +114,13 @@ uint8_t device_desc[] = {
 #endif
   0x01, 0x02, // Manufacturer, Product
   0x03, 0x01 // Serial Number, Num Configurations
+};
+
+uint8_t device_qualifier[] = {
+  0x0a, USB_DESC_TYPE_DEVICE_QUALIFIER, //Length, Type
+  0x10, 0x02, // bcdUSB max version of USB supported (2.1)
+  0xFF, 0xFF, 0xFF, 0x40, // bDeviceClass, bDeviceSubClass, bDeviceProtocol, bMaxPacketSize0
+  0x01, 0x00 // bNumConfigurations, bReserved
 };
 
 #define ENDPOINT_RCV 0x80
@@ -167,6 +173,8 @@ uint8_t configuration_desc[] = {
     0x00, // Polling Interval
 };
 
+// STRING_DESCRIPTOR_HEADER is for uint16 string descriptors
+// it takes in a string length, which is bytes/2 because unicode
 uint16_t string_language_desc[] = {
   STRING_DESCRIPTOR_HEADER(1),
   0x0409 // american english
@@ -249,15 +257,25 @@ References used:
 */
 uint8_t binary_object_store_desc[] = {
   // BOS header
-  BINARY_OBJECT_STORE_DESCRIPTOR_LENGTH, // bLength
+  BINARY_OBJECT_STORE_DESCRIPTOR_LENGTH, // bLength, this is only the length of the header
   BINARY_OBJECT_STORE_DESCRIPTOR, // bDescriptorType
-  0x39, 0x00, // wTotalLength (LSB, MSB)
-  0x02, // bNumDeviceCaps (WebUSB + WinUSB)
+  0x40, 0x00, // wTotalLength (LSB, MSB)
+  0x03, // bNumDeviceCaps (USB 2.0 + WebUSB + WinUSB)
+
+  // -------------------------------------------------
+  // USB 2.0 extension descriptor
+  0x07, // bLength, Descriptor size
+  0x10, // bDescriptorType, Device Capability Descriptor Type
+  0x02, // bDevCapabilityType, USB 2.0 extension capability type
+  0x00, 0x00, 0x00, 0x00, // bmAttributes, LIBUSB_BM_LPM_SUPPORT = 2 and its the only option
+
+  // -------------------------------------------------
   // WebUSB descriptor
-  WEBUSB_PLATFORM_DESCRIPTOR_LENGTH, // bLength, Size of this descriptor. Must be set to 24.
-  0x10, // bDescriptorType, DEVICE CAPABILITY descriptor
-  0x05, // bDevCapabilityType, PLATFORM capability
-  0x00, // bReserved, This field is reserved and shall be set to zero.
+  // header
+    0x18, // bLength, Size of this descriptor. Must be set to 24.
+    0x10, // bDescriptorType, DEVICE CAPABILITY descriptor
+    0x05, // bDevCapabilityType, PLATFORM capability
+    0x00, // bReserved, This field is reserved and shall be set to zero.
 
   // PlatformCapabilityUUID, Must be set to {3408b638-09a9-47a0-8bfd-a0768815b665}.
     0x38, 0xB6, 0x08, 0x34,
@@ -275,7 +293,8 @@ uint8_t binary_object_store_desc[] = {
   // the spec says we *must* reply to index 0x03 with the url, so we'll hint that that's the right index
   0x03, // iLandingPage, URL descriptor index of the device’s landing page.
 
-  // WinUSB auto-load BOS descriptor
+  // -------------------------------------------------
+  // WinUSB descriptor
   // header
     0x1C, // Descriptor size (28 bytes)
     0x10, // Descriptor type (Device Capability)
@@ -513,6 +532,10 @@ void usb_setup() {
           break;
         case USB_DESC_TYPE_CONFIGURATION:
           USB_WritePacket(configuration_desc, min(sizeof(configuration_desc), setup.b.wLength.w), 0);
+          USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+          break;
+        case USB_DESC_TYPE_DEVICE_QUALIFIER:
+          USB_WritePacket(device_qualifier, min(sizeof(device_qualifier), setup.b.wLength.w), 0);
           USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
           break;
         case USB_DESC_TYPE_STRING:
