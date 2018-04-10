@@ -149,10 +149,10 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // *** angle real time check
     // add 1 to not false trigger the violation and multiply by 25 since the check is done every 250ms
-    double rt_delta_angle_up = RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 25. * CAN_TO_DEG + 1.);
-    double rt_delta_angle_down = RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 25 * CAN_TO_DEG + 1.);
-    int16_t highest_rt_angle = rt_angle_last + (rt_angle_last > 0? rt_delta_angle_up:rt_delta_angle_down);
-    int16_t lowest_rt_angle = rt_angle_last - (rt_angle_last > 0? rt_delta_angle_down:rt_delta_angle_up);
+    int rt_delta_angle_up = ((int)(RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 25. * CAN_TO_DEG + 1.)));
+    int rt_delta_angle_down = ((int)(RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 25 * CAN_TO_DEG + 1.)));
+    int highest_rt_angle = rt_angle_last + (rt_angle_last > 0? rt_delta_angle_up:rt_delta_angle_down);
+    int lowest_rt_angle = rt_angle_last - (rt_angle_last > 0? rt_delta_angle_down:rt_delta_angle_up);
 
     // every RT_INTERVAL or when controls are turned on, set the new limits
     uint32_t ts_elapsed = get_ts_elapsed(ts, ts_angle_last);
@@ -173,7 +173,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // get speed
   if ((to_push->RIR>>21) == 0xb4) {
-    speed = ((double) (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF))) * 0.01 / 3.6;
+    speed = ((float) (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF))) * 0.01 / 3.6;
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
