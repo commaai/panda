@@ -229,7 +229,6 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
       desired_angle = to_signed(desired_angle, 12);
 
-
       if (controls_allowed) {
         int delta_angle_up = (int) (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 2. / 3. + 1.);
         int delta_angle_down = (int) (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 2. / 3. + 1.);
