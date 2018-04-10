@@ -15,6 +15,12 @@ struct lookup_t {
   float y[3];
 };
 
+struct sample_t {
+  int values[3];
+  int min;
+  int max;
+} sample_t_default = {{0, 0, 0}, 0, 0};
+
 // 2m/s are added to be less restrictive
 const struct lookup_t LOOKUP_ANGLE_RATE_UP = {
   {2., 7., 17.},
@@ -40,13 +46,9 @@ int ipas_state = 1;                    // 1 disabled, 3 executing angle control,
 int angle_control = 0;                 // 1 if direct angle control packets are seen
 float speed = 0.;
 
-// track the torque measured for limiting
-int16_t torque_meas[3] = {0, 0, 0};    // last 3 motor torques produced by the eps
-int16_t torque_meas_min = 0, torque_meas_max = 0;
-int16_t angle_meas[3] = {0, 0, 0};     // last 3 steer angles
-int16_t angle_meas_min = 0, angle_meas_max = 0;
-int16_t torque_driver[3] = {0, 0, 0};    // last 3 driver steering torque
-int16_t torque_driver_min = 0, torque_driver_max = 0;
+struct sample_t torque_meas;    // last 3 motor torques produced by the eps
+struct sample_t angle_meas;     // last 3 steer angles
+struct sample_t torque_driver;  // last 3 driver steering torque
 
 // global actuation limit state
 int actuation_limits = 1;              // by default steer limits are imposed
@@ -98,6 +100,21 @@ uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
   return ts > ts_last ? ts - ts_last : (0xFFFFFFFF - ts_last) + 1 + ts;
 }
 
+void update_sample(struct sample_t *sample, int sample_new) {
+  for (int i = sizeof(sample->values)/sizeof(sample->values[0]) - 1; i > 0; i--) {
+    sample->values[i] = sample->values[i-1];
+  }
+  sample->values[0] = sample_new;
+
+  // get the minimum and maximum measured torque over the last 3 frames
+  sample->min = sample->max = sample->values[0];
+  for (int i = 1; i < sizeof(sample->values)/sizeof(sample->values[0]); i++) {
+    if (sample->values[i] < sample->min) sample->min = sample->values[i];
+    if (sample->values[i] > sample->max) sample->max = sample->values[i];
+  }
+}
+
+
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // EPS torque sensor
@@ -108,34 +125,14 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // increase torque_meas by 1 to be conservative on rounding
     int torque_meas_new = ((int)(torque_meas_new_16) * dbc_eps_torque_factor / 100) + (torque_meas_new_16 > 0 ? 1 : -1);
 
-    // shift the array
-    for (int i = sizeof(torque_meas)/sizeof(torque_meas[0]) - 1; i > 0; i--) {
-      torque_meas[i] = torque_meas[i-1];
-    }
-    torque_meas[0] = torque_meas_new;
-
-    // get the minimum and maximum measured torque over the last 3 frames
-    torque_meas_min = torque_meas_max = torque_meas[0];
-    for (int i = 1; i < sizeof(torque_meas)/sizeof(torque_meas[0]); i++) {
-      if (torque_meas[i] < torque_meas_min) torque_meas_min = torque_meas[i];
-      if (torque_meas[i] > torque_meas_max) torque_meas_max = torque_meas[i];
-    }
+    // update array of sample
+    update_sample(&torque_meas, torque_meas_new);
 
     // get driver steering torque
     int16_t torque_driver_new = (((to_push->RDLR) & 0xFF00) | ((to_push->RDLR >> 16) & 0xFF));
 
-    // shift the array
-    for (int i = sizeof(torque_driver)/sizeof(torque_driver[0]) - 1; i > 0; i--) {
-      torque_driver[i] = torque_driver[i-1];
-    }
-    torque_driver[0] = torque_driver_new;
-
-    // get the minimum and maximum driver torque over the last 3 frames
-    torque_driver_min = torque_driver_max = torque_driver[0];
-    for (int i = 1; i < sizeof(torque_driver)/sizeof(torque_driver[0]); i++) {
-      if (torque_driver[i] < torque_driver_min) torque_driver_min = torque_driver[i];
-      if (torque_driver[i] > torque_driver_max) torque_driver_max = torque_driver[i];
-    }
+    // update array of samples
+    update_sample(&torque_driver, torque_driver_new);
   }
 
   // get steer angle
@@ -145,18 +142,8 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     angle_meas_new = to_signed(angle_meas_new, 12);
 
-    // shift the array
-    for (int i = sizeof(angle_meas)/sizeof(angle_meas[0]) - 1; i > 0; i--) {
-      angle_meas[i] = angle_meas[i-1];
-    }
-    angle_meas[0] = angle_meas_new;
-
-    // get the minimum and maximum measured angle over the last 3 frames
-    angle_meas_min = angle_meas_max = angle_meas[0];
-    for (int i = 1; i < sizeof(angle_meas)/sizeof(angle_meas[0]); i++) {
-      if (angle_meas[i] < angle_meas_min) angle_meas_min = angle_meas[i];
-      if (angle_meas[i] > angle_meas_max) angle_meas_max = angle_meas[i];
-    }
+    // update array of samples
+    update_sample(&angle_meas, angle_meas_new);
 
     // *** angle real time check
     // add 1 to not false trigger the violation and multiply by 25 since the check is done every 250ms
@@ -205,8 +192,8 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // exit controls on high steering override
-  if (angle_control && ((torque_driver_min > IPAS_OVERRIDE_THRESHOLD) ||
-                        (torque_driver_max < -IPAS_OVERRIDE_THRESHOLD) ||
+  if (angle_control && ((torque_driver.min > IPAS_OVERRIDE_THRESHOLD) ||
+                        (torque_driver.max < -IPAS_OVERRIDE_THRESHOLD) ||
                         (ipas_state==5))) {
     controls_allowed = 0;
   }
@@ -254,8 +241,8 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       
       // desired steer angle should be the same as steer angle measured when controls are off
       if ((!controls_allowed) && 
-           ((desired_angle < (angle_meas_min - 1)) ||
-            (desired_angle > (angle_meas_max + 1)) ||
+           ((desired_angle < (angle_meas.min - 1)) ||
+            (desired_angle > (angle_meas.max + 1)) ||
             (ipas_state_cmd != 1))) {
         violation = 1;
       }
@@ -287,8 +274,8 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         int16_t lowest_allowed_torque = min(desired_torque_last, 0) - MAX_RATE_UP;
 
         // if we've exceeded the applied torque, we must start moving toward 0
-        highest_allowed_torque = min(highest_allowed_torque, max(desired_torque_last - MAX_RATE_DOWN, max(torque_meas_max, 0) + MAX_TORQUE_ERROR));
-        lowest_allowed_torque = max(lowest_allowed_torque, min(desired_torque_last + MAX_RATE_DOWN, min(torque_meas_min, 0) - MAX_TORQUE_ERROR));
+        highest_allowed_torque = min(highest_allowed_torque, max(desired_torque_last - MAX_RATE_DOWN, max(torque_meas.max, 0) + MAX_TORQUE_ERROR));
+        lowest_allowed_torque = max(lowest_allowed_torque, min(desired_torque_last + MAX_RATE_DOWN, min(torque_meas.min, 0) - MAX_TORQUE_ERROR));
 
         // check for violation
         if ((desired_torque < lowest_allowed_torque) || (desired_torque > highest_allowed_torque)) {

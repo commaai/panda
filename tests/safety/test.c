@@ -22,6 +22,15 @@ typedef struct
   uint32_t CNT;
 } TIM_TypeDef;
 
+
+//struct sample_t {
+//  int values[3];
+//  int min;
+//  int max;
+//} sample_t_default = {{0, 0, 0}, 0, 0};
+
+struct sample_t torque_meas;
+
 TIM_TypeDef timer;
 TIM_TypeDef *TIM2 = &timer;
 
@@ -56,16 +65,16 @@ void set_timer(int t){
 }
 
 void set_torque_meas(int min, int max){
-  torque_meas_min = min;
-  torque_meas_max = max;
+  torque_meas.min = min;
+  torque_meas.max = max;
 }
 
 int get_torque_meas_min(void){
-  return torque_meas_min;
+  return torque_meas.min;
 }
 
 int get_torque_meas_max(void){
-  return torque_meas_max;
+  return torque_meas.max;
 }
 
 void set_rt_torque_last(int t){
@@ -89,8 +98,8 @@ int get_gas_prev(void){
 }
 
 void init_tests_toyota(void){
-  torque_meas_min = 0;
-  torque_meas_max = 0;
+  torque_meas.min = 0;
+  torque_meas.max = 0;
   desired_torque_last = 0;
   rt_torque_last = 0;
   ts_last = 0;
