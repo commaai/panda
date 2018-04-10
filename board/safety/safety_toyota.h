@@ -150,6 +150,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // *** angle real time check
+    // add 1 to not false trigger the violation and multiply by 25 since the check is done every 250ms
     double rt_delta_angle_up = RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 25. * 2. / 3. + 1.);
     double rt_delta_angle_down = RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 25 * 2. / 3. + 1.);
     int16_t highest_rt_angle = rt_angle_last + (rt_angle_last > 0? rt_delta_angle_up:rt_delta_angle_down);
@@ -230,6 +231,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       desired_angle = to_signed(desired_angle, 12);
 
       if (controls_allowed) {
+        // add 1 to not false trigger the violation
         int delta_angle_up = (int) (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 2. / 3. + 1.);
         int delta_angle_down = (int) (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 2. / 3. + 1.);
         int highest_desired_angle = desired_angle_last + (desired_angle_last > 0? delta_angle_up:delta_angle_down);
