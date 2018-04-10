@@ -162,13 +162,6 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       ts_angle_last = ts;
     }
 
-    //printf("FAILED RT \n");
-    //printf("angle %d\n", angle_meas_new);
-    //printf("last %d\n", rt_angle_last);
-    //printf("max %d\n", highest_rt_angle);
-    //printf("min %d\n", lowest_rt_angle);
-    //printf("ctrl %d\n", controls_allowed);
-    //printf("ctrl last %d\n", controls_allowed_last);
     // check for violation
     if (angle_control &&
         ((angle_meas_new < lowest_rt_angle) ||
