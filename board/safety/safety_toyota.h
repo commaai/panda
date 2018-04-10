@@ -10,21 +10,21 @@ const int32_t MAX_RATE_UP = 10;        // ramp up slow
 const int32_t MAX_RATE_DOWN = 25;      // ramp down fast
 const int32_t MAX_TORQUE_ERROR = 350;  // max torque cmd in excess of torque motor
 
-struct Lookup {
-  double x[3];
-  double y[3];
+struct lookup_t {
+  float x[3];
+  float y[3];
 };
 
 // 2m/s are added to be less restrictive
-const struct Lookup LOOKUP_ANGLE_RATE_UP = {
+const struct lookup_t LOOKUP_ANGLE_RATE_UP = {
   {2., 7., 17.},
   {5., .8, .15}};
 
-const struct Lookup LOOKUP_ANGLE_RATE_DOWN = {
+const struct lookup_t LOOKUP_ANGLE_RATE_DOWN = {
   {2., 7., 17.},
   {5., 3.5, .4}};
 
-const double RT_ANGLE_FUDGE = 1.5;     // for RT checks allow 50% more angle change
+const float RT_ANGLE_FUDGE = 1.5;     // for RT checks allow 50% more angle change
 
 // real time torque limit to prevent controls spamming
 // the real time limit is 1500/sec
@@ -38,7 +38,7 @@ const int16_t MIN_ACCEL = -3000;       // 3.0 m/s2
 int cruise_engaged_last = 0;           // cruise state
 int ipas_state = 1;                    // 1 disabled, 3 executing angle control, 5 override
 int angle_control = 0;                 // 1 if direct angle control packets are seen
-double speed = 0.;
+float speed = 0.;
 
 // track the torque measured for limiting
 int16_t torque_meas[3] = {0, 0, 0};    // last 3 motor torques produced by the eps
@@ -70,17 +70,26 @@ int to_signed(int d, int bits) {
 }
 
 // interp function that holds extreme values
-double interpolate(struct Lookup xy, double x) {
+float interpolate(struct lookup_t xy, float x) {
   int size = sizeof(xy.x) / sizeof(xy.x[0]);
+  // x is lower than the first point in the x array. Return the first point
   if (x <= xy.x[0]) {
     return xy.y[0];
 
   } else {
+    // find the index such that (xy.x[i] <= x < xy.x[i+1]) and linearly interp
     for (int i=0; i < size-1; i++) {
       if (x < xy.x[i+1]) {
-        return (xy.y[i+1] - xy.y[i]) * (x - xy.x[i]) / (xy.x[i+1] - xy.x[i]) + xy.y[i];
+        float x0 = xy.x[i];
+        float y0 = xy.y[i];
+        float dx = xy.x[i+1] - x0;
+        float dy = xy.y[i+1] - y0;
+        // dx should not be zero as xy.x is supposed ot be monotonic
+        if (dx <= 0.) dx = 0.0001;
+        return dy * (x - x0) / dx + y0;
       }
     }
+    // if no such point is found, then x > xy.x[size-1]. Return last point
     return xy.y[size - 1];
   }
 }
