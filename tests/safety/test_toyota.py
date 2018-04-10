@@ -330,17 +330,6 @@ class TestToyotaSafety(unittest.TestCase):
     # reset no angle control at the end of the test
     self.safety.reset_angle_control()
 
-  #def test_angle_measured_rate(self):
-
-  #  self.safety.set_controls_allowed(1)
-  #  self.safety.toyota_rx_hook(self._angle_meas_msg(0))
-  #  self.safety.toyota_rx_hook(self._angle_meas_msg(100))
-  #  self.assertFalse(self.safety.get_controls_allowed())
-
-  #  self.safety.set_controls_allowed(1)
-  #  self._angle_meas_msg_array(-100)
-  #  self.assertFalse(self.safety.get_controls_allowed())
-
 
   def test_angle_cmd_rate_when_disabled(self):
 
@@ -357,13 +346,12 @@ class TestToyotaSafety(unittest.TestCase):
     # reset no angle control at the end of the test
     self.safety.reset_angle_control()
 
-
   def test_angle_cmd_rate_when_enabled(self):
 
     # when controls are allowed, angle cmd rate limit is enforced
     # test 1: no limitations if we stay within limits
-    speeds = [0., 1., 5., 10., 15.]
-    angles = [-100, -10, 0, 10, 100]
+    speeds = [0., 1., 5., 10., 15., 100.]
+    angles = [-300, -100, -10, 0, 10, 100, 300]
     for a in angles:
       for s in speeds:
 
@@ -394,6 +382,26 @@ class TestToyotaSafety(unittest.TestCase):
                                                                                   (max_delta_down + 1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
 
+    # reset no angle control at the end of the test
+    self.safety.reset_angle_control()
+
+  def test_angle_measured_rate(self):
+
+    speeds = [0., 1., 5., 10., 15., 100.]
+    angles = [-300, -100, -10, 0, 10, 100, 300]
+    angles = [10]
+    for a in angles:
+      for s in speeds:
+        self._angle_meas_msg_array(a)
+        self.safety.toyota_tx_hook(self._ipas_control_msg(a, 1))
+        self.safety.set_controls_allowed(1)
+        self.safety.toyota_rx_hook(self._speed_msg(s))
+        max_delta_up = int(np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_V) * 2 / 3. + 1.)
+        max_delta_down = int(np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_VU) * 2 / 3. + 1.)
+        self.safety.toyota_rx_hook(self._angle_meas_msg(a))
+        self.assertTrue(self.safety.get_controls_allowed())
+        self.safety.toyota_rx_hook(self._angle_meas_msg(a + 150))
+        self.assertFalse(self.safety.get_controls_allowed())
 
     # reset no angle control at the end of the test
     self.safety.reset_angle_control()

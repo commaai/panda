@@ -24,6 +24,8 @@ const struct Lookup LOOKUP_ANGLE_RATE_DOWN = {
   {2., 7., 17.},
   {5., 3.5, .4}};
 
+const double RT_ANGLE_FUDGE = 1.5;     // for RT checks allow 50% more angle change
+
 // real time torque limit to prevent controls spamming
 // the real time limit is 1500/sec
 const int32_t MAX_RT_DELTA = 375;      // max delta torque allowed for real time checks
@@ -57,6 +59,8 @@ int16_t rt_torque_last = 0;            // last desired torque for real time chec
 int16_t rt_angle_last = 0;             // last desired torque for real time check
 uint32_t ts_last = 0;
 uint32_t ts_angle_last = 0;
+
+int controls_allowed_last = 0;
 
 int to_signed(int d, int bits) {
   if (d >= (1 << (bits - 1))) {
@@ -146,24 +150,33 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // *** angle ral time check
-    double rt_delta_angle_up = interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 25. * 2. / 3. + 1.;
-    double rt_delta_angle_down = interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 25 * 2. / 3. + 1.;
+    double rt_delta_angle_up = RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 25. * 2. / 3. + 1.);
+    double rt_delta_angle_down = RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 25 * 2. / 3. + 1.);
     int16_t highest_rt_angle = rt_angle_last + (rt_angle_last > 0? rt_delta_angle_up:rt_delta_angle_down);
     int16_t lowest_rt_angle = rt_angle_last - (rt_angle_last > 0? rt_delta_angle_down:rt_delta_angle_up);
 
+    // every RT_INTERVAL or when controls are turned on, set the new limits
+    uint32_t ts_elapsed = get_ts_elapsed(ts, ts_angle_last);
+    if ((ts_elapsed > RT_INTERVAL) || (controls_allowed && !controls_allowed_last)) {
+      rt_angle_last = angle_meas_new;
+      ts_angle_last = ts;
+    }
+
+    //printf("FAILED RT \n");
+    //printf("angle %d\n", angle_meas_new);
+    //printf("last %d\n", rt_angle_last);
+    //printf("max %d\n", highest_rt_angle);
+    //printf("min %d\n", lowest_rt_angle);
+    //printf("ctrl %d\n", controls_allowed);
+    //printf("ctrl last %d\n", controls_allowed_last);
     // check for violation
     if (angle_control &&
         ((angle_meas_new < lowest_rt_angle) ||
          (angle_meas_new > highest_rt_angle))) {
       controls_allowed = 0;
     }
+    controls_allowed_last = controls_allowed;
 
-    // every RT_INTERVAL set the new limits
-    uint32_t ts_elapsed = get_ts_elapsed(ts, ts_angle_last);
-    if (ts_elapsed > RT_INTERVAL) {
-      rt_angle_last = angle_meas_new;
-      ts_angle_last = ts;
-    }
   }
 
   // get speed
@@ -227,16 +240,12 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       if (controls_allowed) {
         int delta_angle_up = (int) (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 2. / 3. + 1.);
         int delta_angle_down = (int) (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 2. / 3. + 1.);
-        //printf("debug %f\n", interpolate(LOOKUP_ANGLE_RATE_UP, speed));
         int highest_desired_angle = desired_angle_last + (desired_angle_last > 0? delta_angle_up:delta_angle_down);
         int lowest_desired_angle = desired_angle_last - (desired_angle_last > 0? delta_angle_down:delta_angle_up);
-        //printf("highest %d\n", highest_desired_angle);
-        //printf("lowest %d\n", lowest_desired_angle);
         if ((desired_angle > highest_desired_angle) || 
             (desired_angle < lowest_desired_angle)){
           violation = 1;
           controls_allowed = 0;
-          //printf("Angle cmd FAILED\n");
         }
       }
       
