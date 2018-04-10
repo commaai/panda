@@ -41,14 +41,16 @@ const int32_t RT_INTERVAL = 250000;    // 250ms between real time checks
 const int16_t MAX_ACCEL = 1500;        // 1.5 m/s2
 const int16_t MIN_ACCEL = -3000;       // 3.0 m/s2
 
+const float CAN_TO_DEG = 2. / 3.;      // convert angles from CAN unit to degrees
+
 int cruise_engaged_last = 0;           // cruise state
 int ipas_state = 1;                    // 1 disabled, 3 executing angle control, 5 override
 int angle_control = 0;                 // 1 if direct angle control packets are seen
 float speed = 0.;
 
-struct sample_t torque_meas;    // last 3 motor torques produced by the eps
-struct sample_t angle_meas;     // last 3 steer angles
-struct sample_t torque_driver;  // last 3 driver steering torque
+struct sample_t torque_meas;           // last 3 motor torques produced by the eps
+struct sample_t angle_meas;            // last 3 steer angles
+struct sample_t torque_driver;         // last 3 driver steering torque
 
 // global actuation limit state
 int actuation_limits = 1;              // by default steer limits are imposed
@@ -147,8 +149,8 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // *** angle real time check
     // add 1 to not false trigger the violation and multiply by 25 since the check is done every 250ms
-    double rt_delta_angle_up = RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 25. * 2. / 3. + 1.);
-    double rt_delta_angle_down = RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 25 * 2. / 3. + 1.);
+    double rt_delta_angle_up = RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 25. * CAN_TO_DEG + 1.);
+    double rt_delta_angle_down = RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 25 * CAN_TO_DEG + 1.);
     int16_t highest_rt_angle = rt_angle_last + (rt_angle_last > 0? rt_delta_angle_up:rt_delta_angle_down);
     int16_t lowest_rt_angle = rt_angle_last - (rt_angle_last > 0? rt_delta_angle_down:rt_delta_angle_up);
 
@@ -228,8 +230,8 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
       if (controls_allowed) {
         // add 1 to not false trigger the violation
-        int delta_angle_up = (int) (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 2. / 3. + 1.);
-        int delta_angle_down = (int) (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 2. / 3. + 1.);
+        int delta_angle_up = (int) (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * CAN_TO_DEG + 1.);
+        int delta_angle_down = (int) (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * CAN_TO_DEG + 1.);
         int highest_desired_angle = desired_angle_last + (desired_angle_last > 0? delta_angle_up:delta_angle_down);
         int lowest_desired_angle = desired_angle_last - (desired_angle_last > 0? delta_angle_down:delta_angle_up);
         if ((desired_angle > highest_desired_angle) || 
