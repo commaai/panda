@@ -119,10 +119,15 @@ static void honda_init(int16_t param) {
   controls_allowed = 0;
 }
 
+static int honda_ign_hook() {
+  return -1;
+}
+
 const safety_hooks honda_hooks = {
   .init = honda_init,
   .rx = honda_rx_hook,
   .tx = honda_tx_hook,
   .tx_lin = honda_tx_lin_hook,
+  .ignition = honda_ign_hook
 };
 

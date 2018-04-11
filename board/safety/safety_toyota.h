@@ -161,11 +161,16 @@ static void toyota_init(int16_t param) {
   dbc_eps_torque_factor = param;
 }
 
+static int toyota_ign_hook() {
+  return -1;
+}
+
 const safety_hooks toyota_hooks = {
   .init = toyota_init,
   .rx = toyota_rx_hook,
   .tx = toyota_tx_hook,
   .tx_lin = toyota_tx_lin_hook,
+  .ignition = toyota_ign_hook
 };
 
 static void toyota_nolimits_init(int16_t param) {
@@ -179,4 +184,5 @@ const safety_hooks toyota_nolimits_hooks = {
   .rx = toyota_rx_hook,
   .tx = toyota_tx_hook,
   .tx_lin = toyota_tx_lin_hook,
+  .ignition = toyota_ign_hook
 };

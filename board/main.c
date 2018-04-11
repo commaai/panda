@@ -104,7 +104,14 @@ int get_health_pkt(void *dat) {
 
 #ifdef PANDA
   health->current = adc_get(ADCCHAN_CURRENT);
-  health->started = (GPIOA->IDR & (1 << 1)) == 0;
+  int safety_ignition = safety_ignition_hook();
+  if (safety_ignition < 0) {
+    //Use the GPIO pin to determine ignition
+    health->started = (GPIOA->IDR & (1 << 1)) == 0;
+  } else {
+    //Current safety hooks want to determine ignition (ex: GM)
+    health-> started = safety_ignition;
+  }
 #else
   health->current = 0;
   health->started = (GPIOC->IDR & (1 << 13)) != 0;
@@ -534,8 +541,8 @@ int main() {
   usb_init();
 
   // default to silent mode to prevent issues with Ford
-  safety_set_mode(SAFETY_NOOUTPUT, 0);
-  can_silent = ALL_CAN_SILENT;
+  safety_set_mode(SAFETY_GM, 0);
+  can_silent = ALL_CAN_LIVE;
   can_init_all();
 
   adc_init();
