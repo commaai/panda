@@ -28,6 +28,7 @@ int16_t dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS
 int16_t desired_torque_last = 0;       // last desired steer torque
 int16_t rt_torque_last = 0;            // last desired torque for real time check
 uint32_t ts_last = 0;
+int cruise_engaged_last = 0;           // cruise state
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // get eps motor torque (0.66 factor in dbc)
@@ -54,11 +55,13 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // exit controls on ACC off
   if ((to_push->RIR>>21) == 0x1D2) {
     // 4 bits: 55-52
-    if (to_push->RDHR & 0xF00000) {
+    int cruise_engaged = to_push->RDHR & 0xF00000;
+    if (cruise_engaged && !cruise_engaged_last) {
       controls_allowed = 1;
-    } else {
+    } else if (!cruise_engaged) {
       controls_allowed = 0;
     }
+    cruise_engaged_last = cruise_engaged;
   }
 }
 
