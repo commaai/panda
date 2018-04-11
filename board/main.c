@@ -281,9 +281,15 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
             break;
           case SAFETY_ELM327:
             can_silent = ALL_CAN_BUT_MAIN_SILENT;
+            can_autobaud_enabled[0] = false;
             break;
           default:
             can_silent = ALL_CAN_LIVE;
+            can_autobaud_enabled[0] = false;
+            can_autobaud_enabled[1] = false;
+            #ifdef PANDA
+              can_autobaud_enabled[2] = false;
+            #endif
             break;
         }
         can_init_all();
