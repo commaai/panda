@@ -82,6 +82,10 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // Check if msg is sent on BUS 0
   if (((to_send->RDTR >> 4) & 0xF) == 0) {
 
+    // no IPAS in non IPAS mode
+    if ((to_send->RIR>>21) == 0x266) return false;
+    if ((to_send->RIR>>21) == 0x167) return false;
+
     // ACCEL: safety check on byte 1-2
     if ((to_send->RIR>>21) == 0x343) {
       int16_t desired_accel = ((to_send->RDLR & 0xFF) << 8) | ((to_send->RDLR >> 8) & 0xFF);
