@@ -1,9 +1,11 @@
 int cruise_engaged_last = 0;           // cruise state
-int ipas_state = 0;
+int ipas_state = 1;                    // 1 disabled, 3 executing angle control, 5 override
 
 // track the torque measured for limiting
 int16_t torque_meas[3] = {0, 0, 0};    // last 3 motor torques produced by the eps
 int16_t torque_meas_min = 0, torque_meas_max = 0;
+int16_t angle_meas[3] = {0, 0, 0};     // last 3 steer angles
+int16_t angle_meas_min = 0, angle_meas_max = 0;
 int16_t torque_driver[3] = {0, 0, 0};    // last 3 driver steering torque
 int16_t torque_driver_min = 0, torque_driver_max = 0;
 
@@ -37,6 +39,14 @@ int16_t dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS
 int16_t desired_torque_last = 0;       // last desired steer torque
 int16_t rt_torque_last = 0;            // last desired torque for real time check
 uint32_t ts_last = 0;
+
+int to_signed(int d, int bits) {
+  if (d >= (1 << (bits - 1))) {
+    d -= (1 << bits);
+  }
+  return d;
+}
+
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
@@ -75,6 +85,26 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     for (int i = 1; i < sizeof(torque_driver)/sizeof(torque_driver[0]); i++) {
       if (torque_driver[i] < torque_driver_min) torque_driver_min = torque_driver[i];
       if (torque_driver[i] > torque_driver_max) torque_driver_max = torque_driver[i];
+    }
+  }
+
+  // get steer angle
+  if ((to_push->RIR>>21) == 0x25) {
+    int angle_meas_new = ((to_push->RDLR & 0xf) << 8) + ((to_push->RDLR & 0xff00) >> 8);
+
+    angle_meas_new = to_signed(angle_meas_new, 12);
+
+    // shift the array
+    for (int i = sizeof(angle_meas)/sizeof(angle_meas[0]) - 1; i > 0; i--) {
+      angle_meas[i] = angle_meas[i-1];
+    }
+    angle_meas[0] = angle_meas_new;
+
+    // get the minimum and maximum measured angle over the last 3 frames
+    angle_meas_min = angle_meas_max = angle_meas[0];
+    for (int i = 1; i < sizeof(angle_meas)/sizeof(angle_meas[0]); i++) {
+      if (angle_meas[i] < angle_meas_min) angle_meas_min = angle_meas[i];
+      if (angle_meas[i] > angle_meas_max) angle_meas_max = angle_meas[i];
     }
   }
 
@@ -122,7 +152,27 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // STEER ANGLE
     if ((to_send->RIR>>21) == 0x266) {
-      angle_control = 1;
+
+      angle_control = 1;   // we are in angle control mode
+      int desired_angle = ((to_send->RDLR & 0xf) << 8) + ((to_send->RDLR & 0xff00) >> 8);
+      int ipas_state_cmd = ((to_send->RDLR & 0xff) >> 4);
+
+      int16_t violation = 0;
+
+      desired_angle = to_signed(desired_angle, 12);
+
+      // desired steer angle should be the same as steer angle measured when controls are off
+      if (!controls_allowed) {
+        if ((desired_angle < (angle_meas_min - 1)) ||
+            (desired_angle > (angle_meas_max + 1)) ||
+            (ipas_state_cmd != 1)) {
+          violation = 1;
+        }
+      }
+
+      if (violation) {
+        return false;
+      }
     }
 
     // STEER TORQUE: safety check on bytes 2-3

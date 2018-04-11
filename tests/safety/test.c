@@ -43,6 +43,10 @@ void set_controls_allowed(int c){
   controls_allowed = c;
 }
 
+void reset_angle_control(void){
+  angle_control = 0;
+}
+
 int get_controls_allowed(void){
   return controls_allowed;
 }
