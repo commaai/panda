@@ -137,5 +137,14 @@ More details here:
   relaxed to allow serialization of messages based on their address
   (making multiple queues, effectively one queue per address).
 
+# Troubleshooting:
+troubleshooting:
+1. Install DrewTech J2534-1 Bus Analysis Tool
+http://www.drewtech.com/downloads/tools/Drew%20Technologies%20Tool%20for%20J2534-1%20API%20v1.07.msi
+2. Open DrewTech tool and make sure it shows "panda" as a device listed (this means registry settings are correct)
+3. When DrewTech tool attempts to load the driver it will show an error if it fails
+4. To figure out why the driver fails to load install Process Monitor and filter by the appropriate process name
+https://docs.microsoft.com/en-us/sysinternals/downloads/procmon
+
 # Other:
 Panda head ASCII art by dcau
