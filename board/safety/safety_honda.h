@@ -143,7 +143,7 @@ const safety_hooks honda_hooks = {
   .rx = honda_rx_hook,
   .tx = honda_tx_hook,
   .tx_lin = honda_tx_lin_hook,
-  .ignition = honda_ign_hook
+  .ignition = honda_ign_hook,
   .fwd = honda_fwd_hook,
 };
 
@@ -165,5 +165,6 @@ const safety_hooks honda_bosch_hooks = {
   .rx = honda_rx_hook,
   .tx = honda_tx_hook,
   .tx_lin = honda_tx_lin_hook,
+  .ignition = honda_ign_hook,
   .fwd = honda_bosch_fwd_hook,
 };

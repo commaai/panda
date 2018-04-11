@@ -220,7 +220,7 @@ const safety_hooks toyota_hooks = {
   .rx = toyota_rx_hook,
   .tx = toyota_tx_hook,
   .tx_lin = toyota_tx_lin_hook,
-  .ignition = toyota_ign_hook
+  .ignition = toyota_ign_hook,
   .fwd = toyota_fwd_hook,
 };
 
@@ -235,6 +235,6 @@ const safety_hooks toyota_nolimits_hooks = {
   .rx = toyota_rx_hook,
   .tx = toyota_tx_hook,
   .tx_lin = toyota_tx_lin_hook,
-  .ignition = toyota_ign_hook
+  .ignition = toyota_ign_hook,
   .fwd = toyota_fwd_hook,
 };

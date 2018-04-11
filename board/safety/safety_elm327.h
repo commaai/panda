@@ -44,6 +44,6 @@ const safety_hooks elm327_hooks = {
   .rx = elm327_rx_hook,
   .tx = elm327_tx_hook,
   .tx_lin = elm327_tx_lin_hook,
-  .ignition = elm327_ign_hook
+  .ignition = elm327_ign_hook,
   .fwd = elm327_fwd_hook,
 };

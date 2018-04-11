@@ -193,7 +193,7 @@ const safety_hooks gm_hooks = {
   .rx = gm_rx_hook,
   .tx = gm_tx_hook,
   .tx_lin = gm_tx_lin_hook,
-  .ignition = gm_ign_hook
+  .ignition = gm_ign_hook,
   .fwd = gm_fwd_hook,
 };
 
