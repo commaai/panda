@@ -281,9 +281,15 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
             break;
           case SAFETY_ELM327:
             can_silent = ALL_CAN_BUT_MAIN_SILENT;
+            can_autobaud_enabled[0] = false;
             break;
           default:
             can_silent = ALL_CAN_LIVE;
+            can_autobaud_enabled[0] = false;
+            can_autobaud_enabled[1] = false;
+            #ifdef PANDA
+              can_autobaud_enabled[2] = false;
+            #endif
             break;
         }
         can_init_all();
@@ -303,6 +309,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     // **** 0xde: set can bitrate
     case 0xde:
       if (setup->b.wValue.w < BUS_MAX) {
+        can_autobaud_enabled[setup->b.wValue.w] = false;
         can_speed[setup->b.wValue.w] = setup->b.wIndex.w;
         can_init(CAN_NUM_FROM_BUS_NUM(setup->b.wValue.w));
       }
@@ -551,6 +558,11 @@ int main() {
   puts("**** INTERRUPTS ON ****\n");
 
   __enable_irq();
+
+  // if the error interrupt is enabled to quickly when the CAN bus is active
+  // something bad happens and you can't connect to the device over USB
+  delay(10000000);
+  CAN1->IER |= CAN_IER_ERRIE | CAN_IER_LECIE;
 
   // LED should keep on blinking all the time
   uint64_t cnt = 0;
