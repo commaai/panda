@@ -1,6 +1,10 @@
 // track the torque measured for limiting
-int16_t torque_meas[3] = {0, 0, 0};    // last 3 motor torques produced by the eps
-int16_t torque_meas_min = 0, torque_meas_max = 0;
+struct sample_t {
+  int values[3];
+  int min;
+  int max;
+} sample_t_default = {{0, 0, 0}, 0, 0};
+struct sample_t torque_meas;           // last 3 motor torques produced by the eps
 
 // global torque limit
 const int32_t MAX_TORQUE = 1500;       // max torque cmd allowed ever
@@ -30,6 +34,24 @@ int16_t rt_torque_last = 0;            // last desired torque for real time chec
 uint32_t ts_last = 0;
 int cruise_engaged_last = 0;           // cruise state
 
+uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
+  return ts > ts_last ? ts - ts_last : (0xFFFFFFFF - ts_last) + 1 + ts;
+}
+
+void update_sample(struct sample_t *sample, int sample_new) {
+  for (int i = sizeof(sample->values)/sizeof(sample->values[0]) - 1; i > 0; i--) {
+    sample->values[i] = sample->values[i-1];
+  }
+  sample->values[0] = sample_new;
+
+  // get the minimum and maximum measured torque over the last 3 frames
+  sample->min = sample->max = sample->values[0];
+  for (int i = 1; i < sizeof(sample->values)/sizeof(sample->values[0]); i++) {
+    if (sample->values[i] < sample->min) sample->min = sample->values[i];
+    if (sample->values[i] > sample->max) sample->max = sample->values[i];
+  }
+}
+
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // get eps motor torque (0.66 factor in dbc)
   if ((to_push->RIR>>21) == 0x260) {
@@ -38,18 +60,8 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // increase torque_meas by 1 to be conservative on rounding
     int torque_meas_new = ((int)(torque_meas_new_16) * dbc_eps_torque_factor / 100) + (torque_meas_new_16 > 0 ? 1 : -1);
 
-    // shift the array
-    for (int i = sizeof(torque_meas)/sizeof(torque_meas[0]) - 1; i > 0; i--) {
-      torque_meas[i] = torque_meas[i-1];
-    }
-    torque_meas[0] = torque_meas_new;
-
-    // get the minimum and maximum measured torque over the last 3 frames
-    torque_meas_min = torque_meas_max = torque_meas[0];
-    for (int i = 1; i < sizeof(torque_meas)/sizeof(torque_meas[0]); i++) {
-      if (torque_meas[i] < torque_meas_min) torque_meas_min = torque_meas[i];
-      if (torque_meas[i] > torque_meas_max) torque_meas_max = torque_meas[i];
-    }
+    // update array of sample
+    update_sample(&torque_meas, torque_meas_new);
   }
 
   // exit controls on ACC off
@@ -102,8 +114,8 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         int16_t lowest_allowed_torque = min(desired_torque_last, 0) - MAX_RATE_UP;
 
         // if we've exceeded the applied torque, we must start moving toward 0
-        highest_allowed_torque = min(highest_allowed_torque, max(desired_torque_last - MAX_RATE_DOWN, max(torque_meas_max, 0) + MAX_TORQUE_ERROR));
-        lowest_allowed_torque = max(lowest_allowed_torque, min(desired_torque_last + MAX_RATE_DOWN, min(torque_meas_min, 0) - MAX_TORQUE_ERROR));
+        highest_allowed_torque = min(highest_allowed_torque, max(desired_torque_last - MAX_RATE_DOWN, max(torque_meas.max, 0) + MAX_TORQUE_ERROR));
+        lowest_allowed_torque = max(lowest_allowed_torque, min(desired_torque_last + MAX_RATE_DOWN, min(torque_meas.min, 0) - MAX_TORQUE_ERROR));
 
         // check for violation
         if ((desired_torque < lowest_allowed_torque) || (desired_torque > highest_allowed_torque)) {
@@ -124,7 +136,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         }
 
         // every RT_INTERVAL set the new limits
-        uint32_t ts_elapsed = ts > ts_last ? ts - ts_last : (0xFFFFFFFF - ts_last) + 1 + ts;
+        uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
         if (ts_elapsed > RT_INTERVAL) {
           rt_torque_last = desired_torque;
           ts_last = ts;
