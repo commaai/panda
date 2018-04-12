@@ -182,26 +182,12 @@ static int toyota_ipas_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return toyota_tx_hook(to_send);
 }
 
-static int toyota_ipas_tx_lin_hook(int lin_num, uint8_t *data, int len) {
-  // TODO: add safety if using LIN
-  return true;
-}
-
-static void toyota_ipas_init(int16_t param) {
-  controls_allowed = 0;
-  actuation_limits = 1;
-  dbc_eps_torque_factor = param;
-}
-
-static int toyota_ipas_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
-  return -1;
-}
-
 const safety_hooks toyota_ipas_hooks = {
-  .init = toyota_ipas_init,
+  .init = toyota_init,
   .rx = toyota_ipas_rx_hook,
   .tx = toyota_ipas_tx_hook,
-  .tx_lin = toyota_ipas_tx_lin_hook,
-  .fwd = toyota_ipas_fwd_hook,
+  .tx_lin = toyota_tx_lin_hook,
+  .ignition = toyota_ign_hook,
+  .fwd = toyota_fwd_hook,
 };
 
