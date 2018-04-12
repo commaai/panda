@@ -16,8 +16,9 @@ int gm_speed = 0;
 // silence everything if stock ECUs are still online
 int gm_ascm_detected = 0;
 
-static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+int gm_ignition_started = 0;
 
+static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   uint32_t addr;
   if (to_push->RIR & 4) {
     // Extended
@@ -27,6 +28,12 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   } else {
     // Normal
     addr = to_push->RIR >> 21;
+  }
+
+  if (addr == 0x135) {
+    //Gear selector (used for determining ignition)
+    int gear = to_push->RDLR & 0x7;
+    gm_ignition_started = gear > 0; //Park = 0. If out of park, we're "on."
   }
 
   // sample speed, really only care if car is moving or not
@@ -170,6 +177,11 @@ static int gm_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 
 static void gm_init(int16_t param) {
   controls_allowed = 0;
+  gm_ignition_started = 0;
+}
+
+static int gm_ign_hook() {
+  return gm_ignition_started;
 }
 
 static int gm_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
@@ -181,6 +193,7 @@ const safety_hooks gm_hooks = {
   .rx = gm_rx_hook,
   .tx = gm_tx_hook,
   .tx_lin = gm_tx_lin_hook,
+  .ignition = gm_ign_hook,
   .fwd = gm_fwd_hook,
 };
 
