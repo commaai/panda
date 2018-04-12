@@ -1,5 +1,5 @@
 CC = clang
-CCFLAGS = -O3 -fPIC -I.
+CCFLAGS = -O3 -fPIC -DPANDA -I.
 
 .PHONY: all
 all: libpandasafety.so

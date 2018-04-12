@@ -173,14 +173,13 @@ static int toyota_ipas_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       if (violation) {
         return false;
       }
+
+      return true;
     }
   }
 
   // check standard toyota stuff as well
-  toyota_tx_hook(to_send);
-
-  // 1 allows the message through
-  return true;
+  return toyota_tx_hook(to_send);
 }
 
 static int toyota_ipas_tx_lin_hook(int lin_num, uint8_t *data, int len) {
