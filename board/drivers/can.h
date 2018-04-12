@@ -396,9 +396,11 @@ void can_rx(uint8_t can_number) {
     if (can_autobaud_enabled[bus_number]) {
       can_autobaud_enabled[bus_number] = false;
       puts(CAN_NAME_FROM_CANIF(CAN));
+    #ifdef DEBUG
       puts(" auto-baud ");
       putui(can_speed[bus_number]);
       puts(" cbps\n");
+    #endif
     }
 
     can_rx_cnt += 1;
