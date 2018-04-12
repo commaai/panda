@@ -69,18 +69,10 @@ float interpolate(struct lookup_t xy, float x) {
 
 
 static void toyota_ipas_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+  // check standard toyota stuff as well
+  toyota_rx_hook(to_push);
 
-  // EPS torque sensor
   if ((to_push->RIR>>21) == 0x260) {
-    // get eps motor torque (see dbc_eps_torque_factor in dbc)
-    int16_t torque_meas_new_16 = (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF));
-
-    // increase torque_meas by 1 to be conservative on rounding
-    int torque_meas_new = ((int)(torque_meas_new_16) * dbc_eps_torque_factor / 100) + (torque_meas_new_16 > 0 ? 1 : -1);
-
-    // update array of sample
-    update_sample(&torque_meas, torque_meas_new);
-
     // get driver steering torque
     int16_t torque_driver_new = (((to_push->RDLR) & 0xFF00) | ((to_push->RDLR >> 16) & 0xFF));
 
@@ -127,18 +119,6 @@ static void toyota_ipas_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     speed = ((float) (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF))) * 0.01 / 3.6;
   }
 
-  // enter controls on rising edge of ACC, exit controls on ACC off
-  if ((to_push->RIR>>21) == 0x1D2) {
-    // 4 bits: 55-52
-    int cruise_engaged = to_push->RDHR & 0xF00000;
-    if (cruise_engaged && (!cruise_engaged_last)) {
-      controls_allowed = 1;
-    } else if (!cruise_engaged) {
-      controls_allowed = 0;
-    }
-    cruise_engaged_last = cruise_engaged;
-  }
-
   // get ipas state
   if ((to_push->RIR>>21) == 0x262) {
     ipas_state = (to_push->RDLR & 0xf);
@@ -157,20 +137,8 @@ static int toyota_ipas_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // Check if msg is sent on BUS 0
   if (((to_send->RDTR >> 4) & 0xF) == 0) {
 
-    // ACCEL: safety check on byte 1-2
-    if ((to_send->RIR>>21) == 0x343) {
-      int16_t desired_accel = ((to_send->RDLR & 0xFF) << 8) | ((to_send->RDLR >> 8) & 0xFF);
-      if (controls_allowed && actuation_limits) {
-        if ((desired_accel > MAX_ACCEL) || (desired_accel < MIN_ACCEL)) {
-          return 0;
-        }
-      } else if (!controls_allowed && (desired_accel != 0)) {
-        return 0;
-      }
-    }
-
     // STEER ANGLE
-    if ((to_send->RIR>>21) == 0x266) {
+    if (((to_send->RIR>>21) == 0x266) || ((to_send->RIR>>21) == 0x167)) {
 
       angle_control = 1;   // we are in angle control mode
       int desired_angle = ((to_send->RDLR & 0xf) << 8) + ((to_send->RDLR & 0xff00) >> 8);
@@ -206,73 +174,10 @@ static int toyota_ipas_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         return false;
       }
     }
-
-    // STEER TORQUE: safety check on bytes 2-3
-    if ((to_send->RIR>>21) == 0x2E4) {
-      int16_t desired_torque = (to_send->RDLR & 0xFF00) | ((to_send->RDLR >> 16) & 0xFF);
-      int16_t violation = 0;
-
-      uint32_t ts = TIM2->CNT;
-
-      // only check if controls are allowed and actuation_limits are imposed
-      if (controls_allowed && actuation_limits) {
-
-        // *** global torque limit check ***
-        if (desired_torque < -MAX_TORQUE) violation = 1;
-        if (desired_torque > MAX_TORQUE) violation = 1;
-
-
-        // *** torque rate limit check ***
-        int16_t highest_allowed_torque = max(desired_torque_last, 0) + MAX_RATE_UP;
-        int16_t lowest_allowed_torque = min(desired_torque_last, 0) - MAX_RATE_UP;
-
-        // if we've exceeded the applied torque, we must start moving toward 0
-        highest_allowed_torque = min(highest_allowed_torque, max(desired_torque_last - MAX_RATE_DOWN, max(torque_meas.max, 0) + MAX_TORQUE_ERROR));
-        lowest_allowed_torque = max(lowest_allowed_torque, min(desired_torque_last + MAX_RATE_DOWN, min(torque_meas.min, 0) - MAX_TORQUE_ERROR));
-
-        // check for violation
-        if ((desired_torque < lowest_allowed_torque) || (desired_torque > highest_allowed_torque)) {
-          violation = 1;
-        }
-
-        // used next time
-        desired_torque_last = desired_torque;
-
-
-        // *** torque real time rate limit check ***
-        int16_t highest_rt_torque = max(rt_torque_last, 0) + MAX_RT_DELTA;
-        int16_t lowest_rt_torque = min(rt_torque_last, 0) - MAX_RT_DELTA;
-
-        // check for violation
-        if ((desired_torque < lowest_rt_torque) || (desired_torque > highest_rt_torque)) {
-          violation = 1;
-        }
-
-        // every RT_INTERVAL set the new limits
-        uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
-        if (ts_elapsed > RT_INTERVAL) {
-          rt_torque_last = desired_torque;
-          ts_last = ts;
-        }
-      }
-      
-      // no torque if controls is not allowed
-      if (!controls_allowed && (desired_torque != 0)) {
-        violation = 1;
-      }
-
-      // reset to 0 if either controls is not allowed or there's a violation
-      if (violation || !controls_allowed) {
-        desired_torque_last = 0;
-        rt_torque_last = 0;
-        ts_last = ts;
-      }
-
-      if (violation) {
-        return false;
-      }
-    }
   }
+
+  // check standard toyota stuff as well
+  toyota_tx_hook(to_send);
 
   // 1 allows the message through
   return true;
