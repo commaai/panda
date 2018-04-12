@@ -583,10 +583,12 @@ void usb_setup() {
           }
           USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
           break;
+        #ifdef PANDA
         case USB_DESC_TYPE_BINARY_OBJECT_STORE:
           USB_WritePacket(binary_object_store_desc, min(sizeof(binary_object_store_desc), setup.b.wLength.w), 0);
           USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
           break;
+        #endif
         default:
           // nothing here?
           USB_WritePacket(0, 0, 0);
