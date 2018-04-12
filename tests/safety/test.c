@@ -38,6 +38,7 @@ TIM_TypeDef *TIM2 = &timer;
     _a > _b ? _a : _b; })
 
 
+#define PANDA
 #define static
 #include "safety.h"
 
