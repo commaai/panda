@@ -110,7 +110,7 @@ int get_health_pkt(void *dat) {
     health->started = (GPIOA->IDR & (1 << 1)) == 0;
   } else {
     //Current safety hooks want to determine ignition (ex: GM)
-    health-> started = safety_ignition;
+    health->started = safety_ignition;
   }
 #else
   health->current = 0;
