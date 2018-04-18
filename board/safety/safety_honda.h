@@ -36,7 +36,10 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
   }
 
-  // user brake signal is different for some hondas
+  // user brake signal on 0x17C reports applied brake from computer brake on accord
+  // and crv, which prevents the usual brake safety from working correctly. these
+  // cars have a signal on 0x1BE which only detects user's brake being applied so
+  // in these cases, this is used instead.
   // most hondas: 0x17C bit 53
   // accord, crv: 0x1BE bit 4
   #define IS_USER_BRAKE_MSG(to_push) (!alt_brake_signal ? to_push->RIR>>21 == 0x17C : to_push->RIR>>21 == 0x1BE)
