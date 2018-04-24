@@ -15,6 +15,7 @@ int gas_prev = 0;
 int gas_interceptor_prev = 0;
 int ego_speed = 0;
 // TODO: auto-detect bosch hardware based on CAN messages?
+bool bosch_hardware = false;
 bool alt_brake_signal = false;
 
 static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -118,6 +119,12 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
     }
   }
+  
+  // FORCE CANCEL: safety check only relevant when spamming the cancel button in Bosch HW
+  // ensuring that only the cancel button press is sent (VAL 2)
+  if (((to_send->RIR>>21) == 0x296) && bosch_hardware) {
+    if (((to_send->RDLR >> 5) & 0x7) != 2) return 0;
+  }
 
   // 1 allows the message through
   return true;
@@ -130,6 +137,7 @@ static int honda_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 
 static void honda_init(int16_t param) {
   controls_allowed = 0;
+  bosch_hardware = false;
   alt_brake_signal = false;
 }
 
@@ -152,6 +160,7 @@ const safety_hooks honda_hooks = {
 
 static void honda_bosch_init(int16_t param) {
   controls_allowed = 0;
+  bosch_hardware = true;
   // Checking for alternate brake override from safety parameter
   alt_brake_signal = param ? true : false;
 }
