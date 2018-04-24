@@ -116,6 +116,12 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   }
 
+  // FORCE CANCEL: safety check only relevant when spamming the cancel button in Bosch HW
+  // ensuring that only the cancel button press is sent (VAL 2)
+  if (((to_send->RIR>>21) == 0x296) && bosch_hardware) {
+    if (((to_send->RDLR >> 5) & 0x7) != 2) return 0;
+  }
+
   // 1 allows the message through
   return true;
 }
