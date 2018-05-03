@@ -7,46 +7,52 @@
 //      brake rising edge
 //      brake > 0mph
 
-int brake_prev = 0;
-int gas_prev = 0;
-int ego_speed = 0;
+int brake_prev_ford = 0;
+int gas_prev_ford = 0;
+int ego_speed_ford = 0;
 
 static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // sample speed
-  if ((to_push->RIR>>21) == 0x158) {
-    // first 2 bytes
-    ego_speed = to_push->RDLR & 0xFFFF;
+  int wheel_bits = 0xFCFF;
+  if ((to_push->RIR>>21) == 0x217) {
+    // any of the 14 bits wheel speeds > 0?
+    ego_speed_ford = (to_push->RDLR & wheel_bits) |
+                     (to_push->RDHR & wheel_bits) |
+                     ((to_push->RDLR >> 16) & wheel_bits) |
+                     ((to_push->RDHR >> 16) & wheel_bits);
   }
 
   // state machine to enter and exit controls
   // 0x1A6 for the ILX, 0x296 for the Civic Touring
-  if ((to_push->RIR>>21) == 0x1A6) {
-    int buttons = (to_push->RDLR & 0xE0) >> 5;
-    if (buttons == 4 || buttons == 3) {
-      controls_allowed = 1;
-    } else if (buttons == 2) {
+  if ((to_push->RIR>>21) == 0x83) {
+    int cancel = ((to_push->RDLR >> 8) & 0x1);
+    int set_or_resume = ((to_push->RDLR >> 28) & 0x3);
+    if (cancel) {
       controls_allowed = 0;
+    } else if (set_or_resume) {
+      controls_allowed = 1;
     }
   }
 
   // exit controls on rising edge of brake press or on brake press when
   // speed > 0
-  if ((to_push->RIR>>21) == 0x17D) {
+  // TODO!
+  if ((to_push->RIR>>21) == 0x100) {
     int brake = to_push->RDLR & 0xFF;
-    if (brake && (!(brake_prev) || ego_speed)) {
+    if (brake && (!(brake_prev_ford) || ego_speed_ford)) {
       controls_allowed = 0;
     }
-    brake_prev = brake;
+    brake_prev_ford = brake;
   }
 
   // exit controls on rising edge of gas press
-  if ((to_push->RIR>>21) == 0x17C) {
-    int gas = to_push->RDLR & 0xFF;
-    if (gas && !(gas_prev)) {
+  if ((to_push->RIR>>21) == 0x204) {
+    int gas = to_push->RDLR & 0xFF03;
+    if (gas && !(gas_prev_ford)) {
       controls_allowed = 0;
     }
-    gas_prev = gas;
+    gas_prev_ford = gas;
   }
 }
 
@@ -60,15 +66,16 @@ static int ford_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
-  int pedal_pressed = gas_prev || (brake_prev && ego_speed);
+  int pedal_pressed = gas_prev_ford || (brake_prev_ford && ego_speed_ford);
   int current_controls_allowed = controls_allowed && !(pedal_pressed);
 
   // STEER: safety check
-  if ((to_send->RIR>>21) == 0xE4 || (to_send->RIR>>21) == 0x194) {
+  if ((to_send->RIR>>21) == 0x3CA) {
     if (current_controls_allowed) {
       // all messages are fine here
     } else {
-      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
+      // bits 7-4 need to be 0xF to disallow lkas commands
+      if (((to_send->RDLR >> 4) & 0xF) != 0xF) return 0;
     }
   }
 
@@ -76,6 +83,10 @@ static int ford_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return true;
 }
 
+static int ford_tx_lin_hook(int lin_num, uint8_t *data, int len) {
+  // TODO: add safety if using LIN
+  return true;
+}
 
 static void ford_init(int16_t param) {
   controls_allowed = 0;
