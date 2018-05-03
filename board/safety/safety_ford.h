@@ -27,7 +27,7 @@ static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // 0x1A6 for the ILX, 0x296 for the Civic Touring
   if ((to_push->RIR>>21) == 0x83) {
     int cancel = ((to_push->RDLR >> 8) & 0x1);
-    int set_or_resume = ((to_push->RDLR >> 28) & 0x3);
+    int set_or_resume = (to_push->RDLR >> 28) & 0x3;
     if (cancel) {
       controls_allowed = 0;
     } else if (set_or_resume) {
@@ -77,6 +77,12 @@ static int ford_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       // bits 7-4 need to be 0xF to disallow lkas commands
       if (((to_send->RDLR >> 4) & 0xF) != 0xF) return 0;
     }
+  }
+
+  // FORCE CANCEL: safety check only relevant when spamming the cancel button
+  // ensuring that set and resume aren't sent
+  if ((to_send->RIR>>21) == 0x83) {
+    if ((to_send->RDLR >> 28) & 0x3) return 0;
   }
 
   // 1 allows the message through
