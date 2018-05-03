@@ -37,9 +37,8 @@ static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // exit controls on rising edge of brake press or on brake press when
   // speed > 0
-  // TODO!
-  if ((to_push->RIR>>21) == 0x100) {
-    int brake = to_push->RDLR & 0xFF;
+  if ((to_push->RIR>>21) == 0x165) {
+    int brake = to_push->RDLR & 0x20;
     if (brake && (!(brake_prev_ford) || ego_speed_ford)) {
       controls_allowed = 0;
     }
