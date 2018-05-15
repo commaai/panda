@@ -31,10 +31,11 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     addr = to_push->RIR >> 21;
   }
 
-  if (addr == 0x135 && bus_number == 0) {
-    //Gear selector (used for determining ignition)
-    int gear = to_push->RDLR & 0x7;
-    gm_ignition_started = gear > 0; //Park = 0. If out of park, we're "on."
+  if (addr == 0x1f1 && bus_number == 0) {
+    //Bit 6 should be "on"
+    //Backup plan is Bit 2 (accessory power)
+    uint32_t ign = (to_push->RDLR) >> 19 & 0x1;
+    gm_ignition_started = ign;
   }
 
   // sample speed, really only care if car is moving or not
