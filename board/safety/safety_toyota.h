@@ -34,10 +34,6 @@ int16_t rt_torque_last = 0;            // last desired torque for real time chec
 uint32_t ts_last = 0;
 int cruise_engaged_last = 0;           // cruise state
 
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
-  return ts > ts_last ? ts - ts_last : (0xFFFFFFFF - ts_last) + 1 + ts;
-}
-
 void update_sample(struct sample_t *sample, int sample_new) {
   for (int i = sizeof(sample->values)/sizeof(sample->values[0]) - 1; i > 0; i--) {
     sample->values[i] = sample->values[i-1];
