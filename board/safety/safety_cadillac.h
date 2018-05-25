@@ -1,4 +1,4 @@
-const int CADILLAC_IGNITION_TIMEOUT = 1000000;
+const int CADILLAC_IGNITION_TIMEOUT = 1000000; // 1s
 int cadillac_can_seen = 0;
 uint32_t cadillac_ts_last = 0;
 
@@ -20,6 +20,7 @@ static int cadillac_ign_hook() {
   uint32_t ts = TIM2->CNT;
   uint32_t ts_elapsed = get_ts_elapsed(ts, cadillac_ts_last);
   if ((ts_elapsed > CADILLAC_IGNITION_TIMEOUT) || (!cadillac_can_seen)) {
+    cadillac_can_seen = 0;
     return 0;
   }
   return 1;
