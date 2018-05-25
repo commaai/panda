@@ -14,6 +14,7 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static void cadillac_init(int16_t param) {
   cadillac_can_seen = 0;
+  controls_allowed = 1;
 }
 
 static int cadillac_ign_hook() {
