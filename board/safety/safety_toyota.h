@@ -175,10 +175,6 @@ static void toyota_init(int16_t param) {
   dbc_eps_torque_factor = param;
 }
 
-static int toyota_ign_hook() {
-  return -1;
-}
-
 static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return -1;
 }
@@ -188,7 +184,7 @@ const safety_hooks toyota_hooks = {
   .rx = toyota_rx_hook,
   .tx = toyota_tx_hook,
   .tx_lin = toyota_tx_lin_hook,
-  .ignition = toyota_ign_hook,
+  .ignition = default_ign_hook,
   .fwd = toyota_fwd_hook,
 };
 
@@ -203,6 +199,6 @@ const safety_hooks toyota_nolimits_hooks = {
   .rx = toyota_rx_hook,
   .tx = toyota_tx_hook,
   .tx_lin = toyota_tx_lin_hook,
-  .ignition = toyota_ign_hook,
+  .ignition = default_ign_hook,
   .fwd = toyota_fwd_hook,
 };

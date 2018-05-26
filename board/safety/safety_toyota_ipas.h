@@ -180,7 +180,7 @@ const safety_hooks toyota_ipas_hooks = {
   .rx = toyota_ipas_rx_hook,
   .tx = toyota_ipas_tx_hook,
   .tx_lin = toyota_tx_lin_hook,
-  .ignition = toyota_ign_hook,
+  .ignition = default_ign_hook,
   .fwd = toyota_fwd_hook,
 };
 
