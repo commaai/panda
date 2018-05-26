@@ -35,13 +35,6 @@ uint32_t ts_angle_last = 0;
 
 int controls_allowed_last = 0;
 
-int to_signed(int d, int bits) {
-  if (d >= (1 << (bits - 1))) {
-    d -= (1 << bits);
-  }
-  return d;
-}
-
 // interp function that holds extreme values
 float interpolate(struct lookup_t xy, float x) {
   int size = sizeof(xy.x) / sizeof(xy.x[0]);
