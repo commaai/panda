@@ -9,7 +9,8 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus_number = (to_push->RDTR >> 4) & 0xFF;
   uint32_t addr = to_push->RIR >> 21;
 
-  if ((addr == 0x135) && (bus_number == 0)) {
+  // this message isn't all zeros when car is on
+  if ((addr == 0x160) && (bus_number == 0) && to_push->RDLR) {
     cadillac_can_seen = 1;
     cadillac_ts_last = TIM2->CNT; // reset timer when gear msg is received
   }
