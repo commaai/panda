@@ -162,7 +162,7 @@ static void honda_bosch_init(int16_t param) {
   controls_allowed = 0;
   bosch_hardware = true;
   // Checking for alternate brake override from safety parameter
-  alt_brake_signal = param ? true : false;
+  alt_brake_signal = param == 1 ? true : false;
 }
 
 static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
