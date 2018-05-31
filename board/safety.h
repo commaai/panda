@@ -2,6 +2,8 @@ void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
 int safety_ignition_hook();
+uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
+int to_signed(int d, int bits);
 
 typedef void (*safety_hook_init)(int16_t param);
 typedef void (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);
@@ -32,6 +34,7 @@ int controls_allowed = 0;
 #endif
 #include "safety/safety_gm.h"
 #include "safety/safety_ford.h"
+#include "safety/safety_cadillac.h"
 #include "safety/safety_elm327.h"
 
 const safety_hooks *current_hooks = &nooutput_hooks;
@@ -69,6 +72,7 @@ typedef struct {
 #define SAFETY_GM 3
 #define SAFETY_HONDA_BOSCH 4
 #define SAFETY_FORD 5
+#define SAFETY_CADILLAC 6
 #define SAFETY_GM_ASCM 0x1334
 #define SAFETY_TOYOTA_IPAS 0x1335
 #define SAFETY_TOYOTA_NOLIMITS 0x1336
@@ -82,6 +86,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_TOYOTA, &toyota_hooks},
   {SAFETY_GM, &gm_hooks},
   {SAFETY_FORD, &ford_hooks},
+  {SAFETY_CADILLAC, &cadillac_hooks},
   {SAFETY_TOYOTA_NOLIMITS, &toyota_nolimits_hooks},
 #ifdef PANDA
   {SAFETY_TOYOTA_IPAS, &toyota_ipas_hooks},
@@ -104,3 +109,15 @@ int safety_set_mode(uint16_t mode, int16_t param) {
   return -1;
 }
 
+// compute the time elapsed (in microseconds) from 2 counter samples
+uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
+  return ts > ts_last ? ts - ts_last : (0xFFFFFFFF - ts_last) + 1 + ts;
+}
+
+// convert a trimmed integer to signed 32 bit int
+int to_signed(int d, int bits) {
+  if (d >= (1 << (bits - 1))) {
+    d -= (1 << bits);
+  }
+  return d;
+}
