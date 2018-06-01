@@ -9,10 +9,8 @@ static int gm_ascm_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
     // do not propagate lkas messages from ascm to actuators
     // block 0x152 and 0x154, which are the lkas command from ASCM1 and ASCM2
-    if ((addr == 0x152) || (addr == 0x154)) {
-      return -1;
-    }
-    if ((addr == 0x315)) {
+    // block 0x315 and 0x2cb, which are the brake and accel commands from ASCM1
+    if ((addr == 0x152) || (addr == 0x154) || (addr == 0x315) || (addr == 0x2cb)) {
       return -1;
     }
 
