@@ -1,4 +1,4 @@
-const int STEER_MAX = 150; // 1s
+const int CADILLAC_STEER_MAX = 150; // 1s
 const int CADILLAC_IGNITION_TIMEOUT = 1000000; // 1s
 
 int cadillac_ign = 0;
@@ -36,7 +36,8 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     lkas_cmd = to_signed(lkas_cmd, 14);
     // block message is controls are allowed and lkas command exceeds max, or
     // if controls aren't allowed and lkas cmd isn't 0
-    if (controls_allowed && ((lkas_cmd > STEER_MAX) || (lkas_cmd < -STEER_MAX))) {
+    if (controls_allowed &&
+        ((lkas_cmd > CADILLAC_STEER_MAX) || (lkas_cmd < -CADILLAC_STEER_MAX))) {
       return 0;
     } else if (!controls_allowed && lkas_cmd) return 0;
   }
