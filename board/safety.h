@@ -1,9 +1,17 @@
+// sample struct that keeps 3 samples in memory
+struct sample_t {
+  int values[3];
+  int min;
+  int max;
+} sample_t_default = {{0, 0, 0}, 0, 0};
+
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
 int safety_ignition_hook();
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
+void update_sample(struct sample_t *sample, int sample_new);
 
 typedef void (*safety_hook_init)(int16_t param);
 typedef void (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);
@@ -120,4 +128,19 @@ int to_signed(int d, int bits) {
     d -= (1 << bits);
   }
   return d;
+}
+
+// given a new sample, update the smaple_t struct
+void update_sample(struct sample_t *sample, int sample_new) {
+  for (int i = sizeof(sample->values)/sizeof(sample->values[0]) - 1; i > 0; i--) {
+    sample->values[i] = sample->values[i-1];
+  }
+  sample->values[0] = sample_new;
+
+  // get the minimum and maximum measured samples
+  sample->min = sample->max = sample->values[0];
+  for (int i = 1; i < sizeof(sample->values)/sizeof(sample->values[0]); i++) {
+    if (sample->values[i] < sample->min) sample->min = sample->values[i];
+    if (sample->values[i] > sample->max) sample->max = sample->values[i];
+  }
 }
