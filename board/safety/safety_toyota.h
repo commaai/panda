@@ -32,10 +32,14 @@ int cruise_engaged_last = 0;           // cruise state
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // get eps motor torque (0.66 factor in dbc)
   if ((to_push->RIR>>21) == 0x260) {
-    int16_t torque_meas_new_16 = (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF));
+    int torque_meas_new = (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF));
+    torque_meas_new = to_signed(torque_meas_new, 16);
+
+    // scale by dbc_factor
+    torque_meas_new *= dbc_eps_torque_factor / 100;
 
     // increase torque_meas by 1 to be conservative on rounding
-    int torque_meas_new = ((int)(torque_meas_new_16) * dbc_eps_torque_factor / 100) + (torque_meas_new_16 > 0 ? 1 : -1);
+    torque_meas_new += (torque_meas_new > 0 ? 1 : -1);
 
     // update array of sample
     update_sample(&torque_meas, torque_meas_new);
