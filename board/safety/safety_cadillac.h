@@ -53,6 +53,7 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if (addr == 0x151 || addr == 0x152 || addr == 0x153 || addr == 0x154) {
     int desired_torque = ((to_send->RDLR & 0x3f) << 8) + ((to_send->RDLR & 0xff00) >> 8);
     int violation = 0;
+    uint32_t ts = TIM2->CNT;
     desired_torque = to_signed(desired_torque, 14);
 
     if (controls_allowed) {
@@ -74,7 +75,7 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       // every RT_INTERVAL set the new limits
       uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
       if (ts_elapsed > RT_INTERVAL) {
-        rt_torque_last = desired_torque;
+        cadillac_rt_torque_last = desired_torque;
         ts_last = ts;
       }
     }
@@ -86,7 +87,7 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
    // reset to 0 if either controls is not allowed or there's a violation
    if (violation || !controls_allowed) {
-      rt_torque_last = 0;
+      cadillac_rt_torque_last = 0;
       ts_last = ts;
     }
 
