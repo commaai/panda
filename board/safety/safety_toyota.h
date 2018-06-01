@@ -1,9 +1,3 @@
-// track the torque measured for limiting
-struct sample_t {
-  int values[3];
-  int min;
-  int max;
-} sample_t_default = {{0, 0, 0}, 0, 0};
 struct sample_t torque_meas;           // last 3 motor torques produced by the eps
 
 // global torque limit
@@ -34,19 +28,6 @@ int16_t rt_torque_last = 0;            // last desired torque for real time chec
 uint32_t ts_last = 0;
 int cruise_engaged_last = 0;           // cruise state
 
-void update_sample(struct sample_t *sample, int sample_new) {
-  for (int i = sizeof(sample->values)/sizeof(sample->values[0]) - 1; i > 0; i--) {
-    sample->values[i] = sample->values[i-1];
-  }
-  sample->values[0] = sample_new;
-
-  // get the minimum and maximum measured torque over the last 3 frames
-  sample->min = sample->max = sample->values[0];
-  for (int i = 1; i < sizeof(sample->values)/sizeof(sample->values[0]); i++) {
-    if (sample->values[i] < sample->min) sample->min = sample->values[i];
-    if (sample->values[i] > sample->max) sample->max = sample->values[i];
-  }
-}
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // get eps motor torque (0.66 factor in dbc)
