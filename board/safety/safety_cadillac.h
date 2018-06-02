@@ -2,13 +2,18 @@ const int CADILLAC_STEER_MAX = 150; // 1s
 const int CADILLAC_IGNITION_TIMEOUT = 1000000; // 1s
 // real time torque limit to prevent controls spamming
 // the real time limit is 1500/sec
-const int32_t CADILLAC_MAX_RT_DELTA = 75;       // max delta torque allowed for real time checks
+const int CADILLAC_MAX_RT_DELTA = 75;       // max delta torque allowed for real time checks
 const int32_t CADILLAC_RT_INTERVAL = 250000;    // 250ms between real time checks
+const int CADILLAC_MAX_RATE_UP = 2;
+const int CADILLAC_MAX_RATE_DOWN = 5;
+const int CADILLAC_DRIVER_TORQUE_ALLOWANCE = 50;
+const int CADILLAC_DRIVER_TORQUE_FACTOR = 4;
 
 int cadillac_ign = 0;
 int cadillac_cruise_engaged_last = 0;
 uint32_t cadillac_ts_ign_last = 0;
 int cadillac_rt_torque_last = 0;
+int cadillac_desired_torque_last = 0;
 
 struct sample_t cadillac_torque_driver;         // last 3 driver torques measured
 
@@ -23,7 +28,6 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // update array of sample
     update_sample(&cadillac_torque_driver, torque_driver_new);
   }
-
 
   // this message isn't all zeros when ignition is on
   if ((addr == 0x160) && (bus_number == 0) && to_push->RDLR) {
@@ -41,9 +45,6 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
     cadillac_cruise_engaged_last = cruise_engaged;
   }
-
-  
-
 }
 
 static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
@@ -63,9 +64,36 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         violation = 1;
       }
 
+      // *** torque rate limit check ***
+      int highest_allowed_torque = max(cadillac_desired_torque_last, 0) + CADILLAC_MAX_RATE_UP;
+      int lowest_allowed_torque = min(cadillac_desired_torque_last, 0) - CADILLAC_MAX_RATE_UP;
+
+      int driver_torque_max_limit = CADILLAC_STEER_MAX + 
+                                    (CADILLAC_DRIVER_TORQUE_ALLOWANCE + cadillac_torque_driver.max) * 
+                                    CADILLAC_DRIVER_TORQUE_FACTOR;
+      int driver_torque_min_limit = -CADILLAC_STEER_MAX + 
+                                    (-CADILLAC_DRIVER_TORQUE_ALLOWANCE + cadillac_torque_driver.max) * 
+                                    CADILLAC_DRIVER_TORQUE_FACTOR;
+
+      // if we've exceeded the applied torque, we must start moving toward 0
+      highest_allowed_torque = min(highest_allowed_torque,
+                                   max(cadillac_desired_torque_last - CADILLAC_MAX_RATE_DOWN,
+                                       max(driver_torque_max_limit, 0)));
+      lowest_allowed_torque = max(lowest_allowed_torque,
+                                  min(cadillac_desired_torque_last + CADILLAC_MAX_RATE_DOWN,
+                                      min(driver_torque_min_limit, 0)));
+
+      // check for violation
+      if ((desired_torque < lowest_allowed_torque) || (desired_torque > highest_allowed_torque)) {
+        violation = 1;
+      }
+
+      // used next time
+      cadillac_desired_torque_last = desired_torque;
+
       // *** torque real time rate limit check ***
-      int16_t highest_rt_torque = max(cadillac_rt_torque_last, 0) + CADILLAC_MAX_RT_DELTA;
-      int16_t lowest_rt_torque = min(cadillac_rt_torque_last, 0) - CADILLAC_MAX_RT_DELTA;
+      int highest_rt_torque = max(cadillac_rt_torque_last, 0) + CADILLAC_MAX_RT_DELTA;
+      int lowest_rt_torque = min(cadillac_rt_torque_last, 0) - CADILLAC_MAX_RT_DELTA;
 
       // check for violation
       if ((desired_torque < lowest_rt_torque) || (desired_torque > highest_rt_torque)) {
@@ -87,6 +115,7 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
    // reset to 0 if either controls is not allowed or there's a violation
    if (violation || !controls_allowed) {
+      cadillac_desired_torque_last = 0;
       cadillac_rt_torque_last = 0;
       ts_last = ts;
     }
@@ -112,7 +141,6 @@ static int cadillac_ign_hook() {
   return cadillac_ign;
 }
 
-// Placeholder file, actual safety is TODO.
 const safety_hooks cadillac_hooks = {
   .init = cadillac_init,
   .rx = cadillac_rx_hook,
