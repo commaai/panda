@@ -40,10 +40,10 @@ class TestCadillacSafety(unittest.TestCase):
 
   def _torque_driver_msg(self, torque):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x260 << 21
+    to_send[0].RIR = 0x164 << 21
 
-    t = twos_comp(torque, 16)
-    to_send[0].RDLR = t | ((t & 0xFF) << 16)
+    t = twos_comp(torque, 11)
+    to_send[0].RDLR = ((t >> 8) & 0x3) | ((t & 0xFF) << 8)
     return to_send
 
   def _torque_driver_msg_array(self, torque):
@@ -100,61 +100,82 @@ class TestCadillacSafety(unittest.TestCase):
 
         self.assertEqual(send, self.safety.cadillac_tx_hook(self._torque_msg(torque)))
 
-  #def test_non_realtime_limit_up(self):
-  #  self.safety.set_controls_allowed(True)
+  def test_non_realtime_limit_up(self):
+    self.safety.set_cadillac_torque_driver(0, 0)
+    self.safety.set_controls_allowed(True)
 
-  #  self._set_prev_torque(0)
-  #  self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(MAX_RATE_UP)))
+    self._set_prev_torque(0)
+    self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(MAX_RATE_UP)))
+    self._set_prev_torque(0)
+    self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(-MAX_RATE_UP)))
 
-  #  self._set_prev_torque(0)
-  #  self.assertFalse(self.safety.cadillac_tx_hook(self._torque_msg(MAX_RATE_UP + 1)))
+    self._set_prev_torque(0)
+    self.assertFalse(self.safety.cadillac_tx_hook(self._torque_msg(MAX_RATE_UP + 1)))
+    self.safety.set_controls_allowed(True)
+    self._set_prev_torque(0)
+    self.assertFalse(self.safety.cadillac_tx_hook(self._torque_msg(-MAX_RATE_UP - 1)))
 
-  #def test_non_realtime_limit_down(self):
-  #  self.safety.set_controls_allowed(True)
+  def test_non_realtime_limit_down(self):
+    self.safety.set_cadillac_torque_driver(0, 0)
+    self.safety.set_controls_allowed(True)
 
-  #  self.safety.set_cadillac_rt_torque_last(1000)
-  #  self.safety.set_cadillac_torque_driver(500, 500)
-  #  self.safety.set_cadillac_desired_torque_last(1000)
-  #  self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(1000 - MAX_RATE_DOWN)))
+  def test_exceed_torque_sensor(self):
+    self.safety.set_controls_allowed(True)
 
-  #  self.safety.set_cadillac_rt_torque_last(1000)
-  #  self.safety.set_cadillac_torque_driver(500, 500)
-  #  self.safety.set_cadillac_desired_torque_last(1000)
-  #  self.assertFalse(self.safety.cadillac_tx_hook(self._torque_msg(1000 - MAX_RATE_DOWN + 1)))
+    for sign in [-1, 1]:
+      for t in np.arange(0, DRIVER_TORQUE_ALLOWANCE + 1, 1):
+        t *= -sign
+        self.safety.set_cadillac_torque_driver(t, t)
+        self._set_prev_torque(MAX_TORQUE * sign)
+        self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(MAX_TORQUE * sign)))
 
-  #def test_exceed_torque_sensor(self):
-  #  self.safety.set_controls_allowed(True)
+      self.safety.set_cadillac_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
+      self.assertFalse(self.safety.cadillac_tx_hook(self._torque_msg(-MAX_TORQUE)))
 
-  #  for sign in [-1, 1]:
-  #    self._set_prev_torque(0)
-  #    for t in np.arange(0, MAX_TORQUE_ERROR + 10, 10):
-  #      t *= sign
-  #      self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(t)))
+    # spot check some individual cases
+    for sign in [-1, 1]:
+      driver_torque = (DRIVER_TORQUE_ALLOWANCE + 10) * sign
+      torque_desired = (MAX_TORQUE - 10 * DRIVER_TORQUE_FACTOR) * sign
+      delta = 1 * sign
+      self._set_prev_torque(torque_desired)
+      self.safety.set_cadillac_torque_driver(-driver_torque, -driver_torque)
+      self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(torque_desired)))
+      self._set_prev_torque(torque_desired + delta)
+      self.safety.set_cadillac_torque_driver(-driver_torque, -driver_torque)
+      self.assertFalse(self.safety.cadillac_tx_hook(self._torque_msg(torque_desired + delta)))
 
-  #    self.assertFalse(self.safety.cadillac_tx_hook(self._torque_msg(sign * (MAX_TORQUE_ERROR + 10))))
+      self._set_prev_torque(MAX_TORQUE * sign)
+      self.safety.set_cadillac_torque_driver(-MAX_TORQUE * sign, -MAX_TORQUE * sign)
+      self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg((MAX_TORQUE - MAX_RATE_DOWN) * sign)))
+      self._set_prev_torque(MAX_TORQUE * sign)
+      self.safety.set_cadillac_torque_driver(-MAX_TORQUE * sign, -MAX_TORQUE * sign)
+      self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(0)))
+      self._set_prev_torque(MAX_TORQUE * sign)
+      self.safety.set_cadillac_torque_driver(-MAX_TORQUE * sign, -MAX_TORQUE * sign)
+      self.assertFalse(self.safety.cadillac_tx_hook(self._torque_msg((MAX_TORQUE - MAX_RATE_DOWN + 1) * sign)))
 
-  def test_realtime_limit_up(self):
+
+  def test_realtime_limits(self):
     self.safety.set_controls_allowed(True)
 
     for sign in [-1, 1]:
       self.safety.init_tests_cadillac()
       self._set_prev_torque(0)
-      for t in np.arange(0, MAX_RT_DELTA + 5, 10):
+      self.safety.set_cadillac_torque_driver(0, 0)
+      for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.safety.set_cadillac_torque_driver(0, 0)
         self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(t)))
-      self.assertFalse(self.safety.cadillac_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 5))))
+      self.assertFalse(self.safety.cadillac_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
       self._set_prev_torque(0)
-      for t in np.arange(0, MAX_RT_DELTA - 5, 10):
+      for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.safety.set_cadillac_torque_driver(0, 0)
         self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(t)))
 
       # Increase timer to update rt_torque_last
       self.safety.set_timer(RT_INTERVAL + 1)
-      self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA - 5))))
-      self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 5))))
+      self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
+      self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
   #def test_torque_measurements(self):
   #  self.safety.cadillac_rx_hook(self._torque_meas_msg(50))
