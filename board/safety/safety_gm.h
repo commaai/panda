@@ -136,14 +136,10 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if (addr == 384) {
     int rdlr = to_send->RDLR;
     int steer = ((rdlr & 0x7) << 8) + ((rdlr & 0xFF00) >> 8);
+    steer = to_signed(steer, 11);
     int max_steer = 255;
     if (current_controls_allowed) {
-      // Signed arithmetic
-      if (steer & 0x400) {
-        if (steer < (0x800 - max_steer)) return 0;
-      } else {
-        if (steer > max_steer) return 0;
-      }
+      if ((steer > max_steer) || (steer < -max_steer)) return 0;
     } else {
       if (steer != 0) return 0;
     }
