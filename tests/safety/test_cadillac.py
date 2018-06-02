@@ -177,22 +177,6 @@ class TestCadillacSafety(unittest.TestCase):
       self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
       self.assertTrue(self.safety.cadillac_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
-  #def test_torque_measurements(self):
-  #  self.safety.cadillac_rx_hook(self._torque_meas_msg(50))
-  #  self.safety.cadillac_rx_hook(self._torque_meas_msg(-50))
-  #  self.safety.cadillac_rx_hook(self._torque_meas_msg(0))
-
-  #  self.assertEqual(-51, self.safety.get_torque_meas_min())
-  #  self.assertEqual(51, self.safety.get_torque_meas_max())
-
-  #  self.safety.cadillac_rx_hook(self._torque_meas_msg(0))
-  #  self.assertEqual(-1, self.safety.get_torque_meas_max())
-  #  self.assertEqual(-51, self.safety.get_torque_meas_min())
-
-  #  self.safety.cadillac_rx_hook(self._torque_meas_msg(0))
-  #  self.assertEqual(-1, self.safety.get_torque_meas_max())
-  #  self.assertEqual(-1, self.safety.get_torque_meas_min())
-
 
 if __name__ == "__main__":
   unittest.main()
