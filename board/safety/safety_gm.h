@@ -32,10 +32,10 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   if (addr == 0x1f1 && bus_number == 0) {
-    //Bit 6 should be "on"
+    //Bit 5 should be ignition "on"
     //Backup plan is Bit 2 (accessory power)
-    uint32_t ign = (to_push->RDLR) >> 19 & 0x1;
-    gm_ignition_started = ign;
+    uint32_t ign = (to_push->RDLR) & 0x20;
+    gm_ignition_started = ign > 0;
   }
 
   // sample speed, really only care if car is moving or not
