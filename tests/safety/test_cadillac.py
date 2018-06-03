@@ -43,7 +43,7 @@ class TestCadillacSafety(unittest.TestCase):
     to_send[0].RIR = 0x164 << 21
 
     t = twos_comp(torque, 11)
-    to_send[0].RDLR = ((t >> 8) & 0x3) | ((t & 0xFF) << 8)
+    to_send[0].RDLR = ((t >> 8) & 0x7) | ((t & 0xFF) << 8)
     return to_send
 
   def _torque_driver_msg_array(self, torque):
