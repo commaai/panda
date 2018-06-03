@@ -90,7 +90,7 @@ void set_desired_torque_last(int t){
 }
 
 void set_cadillac_desired_torque_last(int t){
-  cadillac_desired_torque_last = t;
+  for (int i = 0; i < 4; i++) cadillac_desired_torque_last[i] = t;
 }
 
 int get_ego_speed(void){
@@ -117,7 +117,7 @@ void init_tests_toyota(void){
 void init_tests_cadillac(void){
   cadillac_torque_driver.min = 0;
   cadillac_torque_driver.max = 0;
-  cadillac_desired_torque_last = 0;
+  for (int i = 0; i < 4; i++) cadillac_desired_torque_last[i] = 0;
   cadillac_rt_torque_last = 0;
   cadillac_ts_last = 0;
   set_timer(0);
