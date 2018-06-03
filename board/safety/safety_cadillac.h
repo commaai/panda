@@ -67,10 +67,10 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       int lowest_allowed_torque = min(cadillac_desired_torque_last, 0) - CADILLAC_MAX_RATE_UP;
 
       int driver_torque_max_limit = CADILLAC_STEER_MAX + 
-                                    (CADILLAC_DRIVER_TORQUE_ALLOWANCE + cadillac_torque_driver.max) * 
+                                    (CADILLAC_DRIVER_TORQUE_ALLOWANCE + cadillac_torque_driver.max) *
                                     CADILLAC_DRIVER_TORQUE_FACTOR;
       int driver_torque_min_limit = -CADILLAC_STEER_MAX + 
-                                    (-CADILLAC_DRIVER_TORQUE_ALLOWANCE + cadillac_torque_driver.max) * 
+                                    (-CADILLAC_DRIVER_TORQUE_ALLOWANCE + cadillac_torque_driver.min) *
                                     CADILLAC_DRIVER_TORQUE_FACTOR;
 
       // if we've exceeded the applied torque, we must start moving toward 0
