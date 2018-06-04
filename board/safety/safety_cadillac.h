@@ -30,8 +30,7 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if (addr == 356) {
     int torque_driver_new = ((to_push->RDLR & 0x7) << 8) | ((to_push->RDLR >> 8) & 0xFF);
     torque_driver_new = to_signed(torque_driver_new, 11);
-
-    // update array of sample
+    // update array of samples
     update_sample(&cadillac_torque_driver, torque_driver_new);
   }
 

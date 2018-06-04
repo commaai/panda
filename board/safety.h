@@ -1,9 +1,9 @@
 // sample struct that keeps 3 samples in memory
 struct sample_t {
-  int values[3];
+  int values[6];
   int min;
   int max;
-} sample_t_default = {{0, 0, 0}, 0, 0};
+} sample_t_default = {{0}, 0, 0};
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
