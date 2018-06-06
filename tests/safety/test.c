@@ -23,6 +23,7 @@ typedef struct
 } TIM_TypeDef;
 
 struct sample_t torque_meas;
+struct sample_t cadillac_torque_driver;
 
 TIM_TypeDef timer;
 TIM_TypeDef *TIM2 = &timer;
@@ -63,6 +64,11 @@ void set_torque_meas(int min, int max){
   torque_meas.max = max;
 }
 
+void set_cadillac_torque_driver(int min, int max){
+  cadillac_torque_driver.min = min;
+  cadillac_torque_driver.max = max;
+}
+
 int get_torque_meas_min(void){
   return torque_meas.min;
 }
@@ -75,8 +81,16 @@ void set_rt_torque_last(int t){
   rt_torque_last = t;
 }
 
+void set_cadillac_rt_torque_last(int t){
+  cadillac_rt_torque_last = t;
+}
+
 void set_desired_torque_last(int t){
   desired_torque_last = t;
+}
+
+void set_cadillac_desired_torque_last(int t){
+  for (int i = 0; i < 4; i++) cadillac_desired_torque_last[i] = t;
 }
 
 int get_ego_speed(void){
@@ -105,6 +119,15 @@ void init_tests_toyota(void){
   desired_torque_last = 0;
   rt_torque_last = 0;
   ts_last = 0;
+  set_timer(0);
+}
+
+void init_tests_cadillac(void){
+  cadillac_torque_driver.min = 0;
+  cadillac_torque_driver.max = 0;
+  for (int i = 0; i < 4; i++) cadillac_desired_torque_last[i] = 0;
+  cadillac_rt_torque_last = 0;
+  cadillac_ts_last = 0;
   set_timer(0);
 }
 
