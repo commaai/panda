@@ -16,7 +16,7 @@ int gas_interceptor_prev = 0;
 int ego_speed = 0;
 // TODO: auto-detect bosch hardware based on CAN messages?
 bool bosch_hardware = false;
-bool honda_alt_brake_sg = false;
+bool honda_alt_brake_msg = false;
 
 static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
@@ -43,8 +43,8 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // in these cases, this is used instead.
   // most hondas: 0x17C bit 53
   // accord, crv: 0x1BE bit 4
-  #define IS_USER_BRAKE_MSG(to_push) (!honda_alt_brake_sg ? to_push->RIR>>21 == 0x17C : to_push->RIR>>21 == 0x1BE)
-  #define USER_BRAKE_VALUE(to_push)  (!honda_alt_brake_sg ? to_push->RDHR & 0x200000  : to_push->RDLR & 0x10)
+  #define IS_USER_BRAKE_MSG(to_push) (!honda_alt_brake_msg ? to_push->RIR>>21 == 0x17C : to_push->RIR>>21 == 0x1BE)
+  #define USER_BRAKE_VALUE(to_push)  (!honda_alt_brake_msg ? to_push->RDHR & 0x200000  : to_push->RDLR & 0x10)
   // exit controls on rising edge of brake press or on brake press when
   // speed > 0
   if (IS_USER_BRAKE_MSG(to_push)) {
@@ -140,7 +140,7 @@ static int honda_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 static void honda_init(int16_t param) {
   controls_allowed = 0;
   bosch_hardware = false;
-  honda_alt_brake_sg = false;
+  honda_alt_brake_msg = false;
 }
 
 static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
@@ -160,7 +160,7 @@ static void honda_bosch_init(int16_t param) {
   controls_allowed = 0;
   bosch_hardware = true;
   // Checking for alternate brake override from safety parameter
-  honda_alt_brake_sg = param == 1 ? true : false;
+  honda_alt_brake_msg = param == 1 ? true : false;
 }
 
 static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {

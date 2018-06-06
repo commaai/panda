@@ -102,12 +102,12 @@ class TestHondaSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_alt_disengage_on_brake(self):
-    self.safety.set_alt_brake_signal(1)
+    self.safety.set_honda_alt_brake_msg(1)
     self.safety.set_controls_allowed(1)
     self.safety.honda_rx_hook(self._alt_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     
-    self.safety.set_alt_brake_signal(0)
+    self.safety.set_honda_alt_brake_msg(0)
     self.safety.set_controls_allowed(1)
     self.safety.honda_rx_hook(self._alt_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())

@@ -105,8 +105,8 @@ int get_gas_prev(void){
   return gas_prev;
 }
 
-void set_alt_brake_signal(bool c){
-  alt_brake_signal = c;
+void set_honda_alt_brake_msg(bool c){
+  honda_alt_brake_msg = c;
 }
 
 void set_bosch_hardware(bool c){
