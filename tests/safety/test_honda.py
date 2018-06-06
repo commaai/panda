@@ -167,9 +167,13 @@ class TestHondaSafety(unittest.TestCase):
     CANCEL_BTN = 2
     BUTTON_MSG = 0x296
     self.safety.set_bosch_hardware(1)
+    self.safety.set_controls_allowed(0)
     self.assertTrue(self.safety.honda_tx_hook(self._button_msg(CANCEL_BTN, BUTTON_MSG)))
     self.assertFalse(self.safety.honda_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))
     self.assertFalse(self.safety.honda_tx_hook(self._button_msg(SET_BTN, BUTTON_MSG)))
+    # do not block resume if we are engaged already
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self.safety.honda_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))
 
 
 if __name__ == "__main__":
