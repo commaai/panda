@@ -105,6 +105,14 @@ int get_gas_prev(void){
   return gas_prev;
 }
 
+void set_honda_alt_brake_msg(bool c){
+  honda_alt_brake_msg = c;
+}
+
+void set_bosch_hardware(bool c){
+  bosch_hardware = c;
+}
+
 void init_tests_toyota(void){
   torque_meas.min = 0;
   torque_meas.max = 0;

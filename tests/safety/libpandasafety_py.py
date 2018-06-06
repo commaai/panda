@@ -52,6 +52,8 @@ void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
 int get_brake_prev(void);
 int get_gas_prev(void);
+void set_honda_alt_brake_msg(bool);
+void set_bosch_hardware(bool);
 
 void init_tests_cadillac(void);
 void cadillac_init(int16_t param);
