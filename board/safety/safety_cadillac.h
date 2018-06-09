@@ -13,6 +13,7 @@ int cadillac_cruise_engaged_last = 0;
 int cadillac_rt_torque_last = 0;
 int cadillac_desired_torque_last[4] = {0};      // 4 torque messages
 uint32_t cadillac_ts_last = 0;
+int cadillac_supercruise_on = 0;
 
 struct sample_t cadillac_torque_driver;         // last 3 driver torques measured
 
@@ -48,6 +49,11 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       controls_allowed = 0;
     }
     cadillac_cruise_engaged_last = cruise_engaged;
+  }
+
+  // know supercruise mode and block openpilot msgs if on
+  if ((addr == 0x152) || (addr == 0x154)) {
+    cadillac_supercruise_on = (to_push->RDHR>>4) & 0x1;
   }
 }
 
@@ -126,7 +132,7 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       cadillac_ts_last = ts;
     }
 
-    if (violation) {
+    if (violation || cadillac_supercruise_on) {
       return false;
     }
 
