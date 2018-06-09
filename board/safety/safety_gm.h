@@ -31,10 +31,11 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     addr = to_push->RIR >> 21;
   }
 
-  if (addr == 0x135 && bus_number == 0) {
-    //Gear selector (used for determining ignition)
-    int gear = to_push->RDLR & 0x7;
-    gm_ignition_started = gear > 0; //Park = 0. If out of park, we're "on."
+  if (addr == 0x1f1 && bus_number == 0) {
+    //Bit 5 should be ignition "on"
+    //Backup plan is Bit 2 (accessory power)
+    uint32_t ign = (to_push->RDLR) & 0x20;
+    gm_ignition_started = ign > 0;
   }
 
   // sample speed, really only care if car is moving or not
@@ -136,14 +137,10 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if (addr == 384) {
     int rdlr = to_send->RDLR;
     int steer = ((rdlr & 0x7) << 8) + ((rdlr & 0xFF00) >> 8);
+    steer = to_signed(steer, 11);
     int max_steer = 255;
     if (current_controls_allowed) {
-      // Signed arithmetic
-      if (steer & 0x400) {
-        if (steer < (0x800 - max_steer)) return 0;
-      } else {
-        if (steer > max_steer) return 0;
-      }
+      if ((steer > max_steer) || (steer < -max_steer)) return 0;
     } else {
       if (steer != 0) return 0;
     }
