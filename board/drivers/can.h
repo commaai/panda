@@ -488,9 +488,13 @@ void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
      0,0,1,     // 1st byte 2-0
 
      // start CRC
-     0,1,0,0,0,0,1,1,0,0,0,0,0,
+     /*0,1,0,0,0,0,1,1,0,0,0,0,0,
      1, // bitstuff
-     0,0, // CRC field
+     0,0, // CRC field*/
+
+     // CRC from real message
+     1,1,1,0,1,1,1,0,1,0,1,0,0,1,1,1,
+
      1,  // CRC delimiter
 
      1,  // ACK

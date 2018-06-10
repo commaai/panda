@@ -18,7 +18,16 @@ scope.write(":WAV:DATA? CHAN1")[10:]
 rawdata = scope.read_raw()
 data = np.frombuffer(rawdata, 'B')
 print data.shape
-plt.plot(data)
+
+s1 = data[0:600]
+s2 = data[600:]
+s1i = np.argmax(s1 > 100)
+s2i = np.argmax(s2 > 100)
+s1 = s1[s1i:]
+s2 = s2[s2i:]
+
+plt.plot(s1)
+plt.plot(s2)
 plt.show()
 #data = (data - 130.0 - voltoffset/voltscale*25) / 25 * voltscale
 
