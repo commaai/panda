@@ -17,16 +17,11 @@ print(p2.get_version())
 p2.set_gmlan(bus=2)
 
 # send w bitbang then without
-p1.set_gmlan(bus=None)
-p1.can_send(20, "\x01", bus=3)
-p1.set_gmlan(bus=2)
-p1.can_send(20, "\x01", bus=3)
-#time.sleep(0.1)
-#p1.set_gmlan(bus=None)
-#p1.can_send(20, "\x01", bus=3)
-
-# test echo
-# (to send on GMLAN, set bus=3)
-time.sleep(0.1)
-print p2.can_recv()
+while 1:
+  p1.set_gmlan(bus=None)
+  p1.can_send(20, "\x01", bus=3)
+  p1.set_gmlan(bus=2)
+  p1.can_send(20, "\x01", bus=3)
+  time.sleep(0.01)
+  print p2.can_recv()
 
