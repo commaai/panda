@@ -116,15 +116,15 @@ void set_bitbanged_gmlan(int val) {
 }
 
 void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
-  puts("called bitbang_gmlan\n");
-
   char pkt_stuffed[MAX_BITS_CAN_PACKET];
   int len = get_bit_message(pkt_stuffed, to_bang);
+
+  // TODO: interrupts are disabled for a long time...
+  enter_critical_section();
 
   // actual bitbang loop
   set_bitbanged_gmlan(1); // recessive
   set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
-  enter_critical_section();
 
   // 33.3 kbps
   #define SPEEED 30
@@ -132,13 +132,18 @@ void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
   // wait for bus silent for 7 frames
   int silent_count = 0;
   while (silent_count < 7) {
+    if (silent_count > 0) {
+      // bit time delay
+      int lwait = TIM2->CNT;
+      while (get_ts_elapsed(TIM2->CNT, lwait) < SPEEED);
+    }
+
+    // check for silent
     int read = get_gpio_input(GPIOB, 12);
     silent_count++;
     if (read == 0) {
       silent_count = 0;
     }
-    int lwait = TIM2->CNT;
-    while (get_ts_elapsed(TIM2->CNT, lwait) < SPEEED);
   }
 
   // send my message with optional failure
@@ -159,10 +164,8 @@ void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
 
 fail:
   set_bitbanged_gmlan(1); // recessive
-  exit_critical_section();
   set_gpio_mode(GPIOB, 13, MODE_INPUT);
-
-  puts("bitbang done\n");
+  exit_critical_section();
 }
 
 #endif
