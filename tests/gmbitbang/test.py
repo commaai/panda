@@ -19,9 +19,9 @@ p2.set_gmlan(bus=2)
 # send w bitbang then without
 while 1:
   p1.set_gmlan(bus=None)
-  p1.can_send(20, "\x01", bus=3)
+  p1.can_send(123, "\x01\x02\x03\x04\x05\x06\x07\x08", bus=3)
   p1.set_gmlan(bus=2)
-  p1.can_send(20, "\x01", bus=3)
+  p1.can_send(123, "\x01\x02\x03\x04\x05\x06\x07\x08", bus=3)
   time.sleep(0.01)
   print p2.can_recv()
 

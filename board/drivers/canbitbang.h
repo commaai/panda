@@ -42,23 +42,24 @@ int append_crc(char *in, int in_len) {
   return in_len;
 }
 
-int get_bit_message(char *out) {
-  char test_pkt[MAX_BITS_CAN_PACKET];
-  char test_pkt_src[] = {
-    0, // SOF
-    0,0,0,0, // ID10-ID7
-    0,0,1,0,1,0,0,   // ID6-ID0
-    0, // RTR
-    0, // IDE
-    0, // reserved
-    0,0,0,1, // len
-    0,0,0,0,0, // 1st byte 7-3
-    0,0,1,     // 1st byte 2-0
-  };
+int append_bits(char *in, int in_len, char *app, int app_len) {
+  for (int i = 0; i < app_len; i++) {
+    in[in_len++] = app[i];
+  }
+  return in_len;
+}
 
+int append_int(char *in, int in_len, int val, int val_len) {
+  for (int i = val_len-1; i >= 0; i--) {
+    in[in_len++] = (val&(1<<i)) != 0;
+  }
+  return in_len;
+}
+
+int get_bit_message(char *out, CAN_FIFOMailBox_TypeDef *to_bang) {
+  char pkt[MAX_BITS_CAN_PACKET];
   char footer[] = {
     1,  // CRC delimiter
-
     1,  // ACK
     1,  // ACK delimiter
     1,1,1,1,1,1,1, // EOF
@@ -66,19 +67,29 @@ int get_bit_message(char *out) {
   };
   #define SPEEED 30
 
-  // copy packet
-  for (int i = 0; i < sizeof(test_pkt_src); i++) test_pkt[i] = test_pkt_src[i];
+  int len = 0;
+
+  // test packet
+  int dlc_len = to_bang->RDTR & 0xF;
+  len = append_int(pkt, len, 0, 1);    // Start-of-frame
+  len = append_int(pkt, len, to_bang->RIR >> 21, 11);  // Identifier
+  len = append_int(pkt, len, 0, 3);    // RTR+IDE+reserved
+  len = append_int(pkt, len, dlc_len, 4);    // Data length code
+
+  // append data
+  for (int i = 0; i < dlc_len; i++) {
+    unsigned char dat = ((unsigned char *)(&(to_bang->RDLR)))[i];
+    len = append_int(pkt, len, dat, 8);
+  }
 
   // append crc
-  int len = append_crc(test_pkt, sizeof(test_pkt_src));
+  len = append_crc(pkt, len);
 
   // do bitstuffing
-  len = do_bitstuff(out, test_pkt, len);
+  len = do_bitstuff(out, pkt, len);
 
   // append footer
-  for (int i = 0; i < sizeof(footer); i++) {
-    out[len++] = footer[i];
-  }
+  len = append_bits(out, len, footer, sizeof(footer));
   return len;
 }
 
@@ -100,7 +111,7 @@ void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
   puts("\n");
 
   char pkt_stuffed[MAX_BITS_CAN_PACKET];
-  int len = get_bit_message(pkt_stuffed);
+  int len = get_bit_message(pkt_stuffed, to_bang);
 
   // actual bitbang loop
   set_bitbanged_gmlan(1); // recessive
