@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdint.h>
 
-typedef struct {                        
-  uint32_t RIR;  /*!< CAN receive FIFO mailbox identifier register */                                               
-  uint32_t RDTR; /*!< CAN receive FIFO mailbox data length control and time stamp register */                       
-  uint32_t RDLR; /*!< CAN receive FIFO mailbox data low register */                                                 
-  uint32_t RDHR; /*!< CAN receive FIFO mailbox data high register */                                                
-} CAN_FIFOMailBox_TypeDef; 
+typedef struct {
+  uint32_t RIR;  /*!< CAN receive FIFO mailbox identifier register */
+  uint32_t RDTR; /*!< CAN receive FIFO mailbox data length control and time stamp register */
+  uint32_t RDLR; /*!< CAN receive FIFO mailbox data low register */
+  uint32_t RDHR; /*!< CAN receive FIFO mailbox data high register */
+} CAN_FIFOMailBox_TypeDef;
 
 #include "../../board/drivers/canbitbang.h"
 
