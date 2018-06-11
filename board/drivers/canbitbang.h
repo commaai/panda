@@ -1,4 +1,4 @@
-#define MAX_BITS_CAN_PACKET (64+44+25)
+#define MAX_BITS_CAN_PACKET (200)
 
 // returns out_len
 int do_bitstuff(char *out, char *in, int in_len) {
@@ -71,8 +71,19 @@ int get_bit_message(char *out, CAN_FIFOMailBox_TypeDef *to_bang) {
   // test packet
   int dlc_len = to_bang->RDTR & 0xF;
   len = append_int(pkt, len, 0, 1);    // Start-of-frame
-  len = append_int(pkt, len, to_bang->RIR >> 21, 11);  // Identifier
-  len = append_int(pkt, len, 0, 3);    // RTR+IDE+reserved
+  
+  if (to_bang->RIR & 4) {
+    // extended identifier
+    len = append_int(pkt, len, to_bang->RIR >> 21, 11);  // Identifier
+    len = append_int(pkt, len, 3, 2);    // SRR+IDE
+    len = append_int(pkt, len, (to_bang->RIR >> 3) & ((1<<18)-1), 18);  // Identifier
+    len = append_int(pkt, len, 0, 3);    // RTR+r1+r0
+  } else {
+    // standard identifier
+    len = append_int(pkt, len, to_bang->RIR >> 21, 11);  // Identifier
+    len = append_int(pkt, len, 0, 3);    // RTR+IDE+reserved
+  }
+
   len = append_int(pkt, len, dlc_len, 4);    // Data length code
 
   // append data
