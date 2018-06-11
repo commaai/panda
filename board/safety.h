@@ -9,8 +9,6 @@ void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
 int safety_ignition_hook();
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
-int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
 
 typedef void (*safety_hook_init)(int16_t param);
@@ -112,19 +110,6 @@ int safety_set_mode(uint16_t mode, int16_t param) {
     }
   }
   return -1;
-}
-
-// compute the time elapsed (in microseconds) from 2 counter samples
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
-  return ts > ts_last ? ts - ts_last : (0xFFFFFFFF - ts_last) + 1 + ts;
-}
-
-// convert a trimmed integer to signed 32 bit int
-int to_signed(int d, int bits) {
-  if (d >= (1 << (bits - 1))) {
-    d -= (1 << bits);
-  }
-  return d;
 }
 
 // given a new sample, update the smaple_t struct
