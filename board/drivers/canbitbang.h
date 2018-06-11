@@ -65,7 +65,6 @@ int get_bit_message(char *out, CAN_FIFOMailBox_TypeDef *to_bang) {
     1,1,1,1,1,1,1, // EOF
     1,1,1, // IFS
   };
-  #define SPEEED 30
 
   int len = 0;
 
@@ -115,6 +114,9 @@ void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
   set_bitbanged_gmlan(1); // recessive
   set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
   enter_critical_section();
+
+  // 33.3 kbps
+  #define SPEEED 30
 
   // wait for bus silent for 7 frames
   int silent_count = 0;
