@@ -125,14 +125,14 @@ void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
       silent_count = 0;
     }
     int lwait = TIM2->CNT;
-    while (get_ts_elapsed(TIM2->CNT, lwait) < SPEEED);
+    while ((TIM2->CNT - lwait) < SPEEED);
   }
 
   // send my message with optional failure
   int last = 1;
   int init = TIM2->CNT;
   for (int i = 0; i < len; i++) {
-    while (get_ts_elapsed(TIM2->CNT, init) < (SPEEED*i));
+    while ((TIM2->CNT - init) < (SPEEED*i));
     int read = get_gpio_input(GPIOB, 12);
     if ((read == 0 && last == 1) && i != (len-11)) {
       puts("ERR: bus driven at ");

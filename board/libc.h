@@ -49,19 +49,3 @@ void exit_critical_section() {
   }
 }
 
-// ***** generic helpers ******
-
-// compute the time elapsed (in microseconds) from 2 counter samples
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
-  return ts > ts_last ? ts - ts_last : (0xFFFFFFFF - ts_last) + 1 + ts;
-}
-
-// convert a trimmed integer to signed 32 bit int
-int to_signed(int d, int bits) {
-  if (d >= (1 << (bits - 1))) {
-    d -= (1 << bits);
-  }
-  return d;
-}
-
-
