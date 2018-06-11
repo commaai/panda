@@ -24,4 +24,5 @@ while 1:
   p1.can_send(123, "\x01\x02\x03\x04\x05\x06\x07\x08", bus=3)
   time.sleep(0.01)
   print p2.can_recv()
+  exit(0)
 

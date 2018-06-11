@@ -107,8 +107,6 @@ void set_bitbanged_gmlan(int val) {
 
 void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
   puts("called bitbang_gmlan\n");
-  puth(can_num_lookup[3]);
-  puts("\n");
 
   char pkt_stuffed[MAX_BITS_CAN_PACKET];
   int len = get_bit_message(pkt_stuffed, to_bang);
@@ -117,13 +115,37 @@ void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
   set_bitbanged_gmlan(1); // recessive
   set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
   enter_critical_section();
-  int init = TIM2->CNT;
 
-  for (int i = 0; i < len; i++) {
-    while ((TIM2->CNT - init) < (SPEEED*i));
-    set_bitbanged_gmlan(pkt_stuffed[i]);
+  // wait for bus silent for 7 frames
+  int silent_count = 0;
+  while (silent_count < 7) {
+    int read = get_gpio_input(GPIOB, 12);
+    silent_count++;
+    if (read == 0) {
+      silent_count = 0;
+    }
+    int lwait = TIM2->CNT;
+    while ((TIM2->CNT - lwait) < SPEEED);
   }
 
+  // send my message with optional failure
+  int last = 1;
+  int init = TIM2->CNT;
+  for (int i = 0; i < len; i++) {
+    while ((TIM2->CNT - init) < (SPEEED*i));
+    int read = get_gpio_input(GPIOB, 12);
+    if ((read == 0 && last == 1) && i != (len-11)) {
+      puts("ERR: bus driven at ");
+      puth(i);
+      puts("\n");
+      goto fail;
+    }
+    set_bitbanged_gmlan(pkt_stuffed[i]);
+    last = pkt_stuffed[i];
+  }
+
+fail:
+  set_bitbanged_gmlan(1); // recessive
   exit_critical_section();
   set_gpio_mode(GPIOB, 13, MODE_INPUT);
 
