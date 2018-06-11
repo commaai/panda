@@ -19,8 +19,8 @@ rawdata = scope.read_raw()
 data = np.frombuffer(rawdata, 'B')
 print data.shape
 
-s1 = data[0:600]
-s2 = data[600:]
+s1 = data[0:650]
+s2 = data[650:]
 s1i = np.argmax(s1 > 100)
 s2i = np.argmax(s2 > 100)
 s1 = s1[s1i:]

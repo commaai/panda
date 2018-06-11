@@ -461,84 +461,18 @@ void CAN3_SCE_IRQHandler() { can_sce(CAN3); }
 
 #endif
 
-void set_bitbanged_gmlan(int val) {
-  if (val) {
-    GPIOB->ODR |= (1 << 13);
-  } else {
-    GPIOB->ODR &= ~(1 << 13);
-  }
-}
-
-void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
-  puts("called bitbang_gmlan\n");
-  puth(can_num_lookup[3]);
-  puts("\n");
-  char test_pkt[] = \
-    {0, // SOF
-     0,0,0,0, // ID10-ID7
-     1, // bitstuff
-     0,0,1,0,1,0,0,   // ID6-ID0
-     0, // RTR
-     0, // IDE
-     0, // reserved
-     1, // bitstuff
-     0,0,0,1, // len
-     0,0,0,0,0, // 1st byte 7-3
-     1, // bitstuff
-     0,0,1,     // 1st byte 2-0
-
-     // start CRC
-     /*0,1,0,0,0,0,1,1,0,0,0,0,0,
-     1, // bitstuff
-     0,0, // CRC field*/
-
-     // CRC from real message
-     1,1,1,0,1,1,1,0,1,0,1,0,0,1,1,1,
-
-     1,  // CRC delimiter
-
-     1,  // ACK
-     1,  // ACK delimiter
-     1,1,1,1,1,1,1, // EOF
-     1,1,1, // IFS
-     };
-  /*char test_pkt[] = {
-  0,1,0,1, 0,1,0,1, 0,1,0,1,
-  1,1,1,1,
-  0,1,0,1, 0,1,0,1, 0,1,0,1,
-  0,0,0,0,0,0,0,0,
-  0,1,0,1, 0,1,0,1, 0,1,0,1,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,1,0,1, 0,1,0,1, 0,1,0,1,};*/
-
-  #define SPEEED 30
-
-  // bitbang loop
-  set_bitbanged_gmlan(1); // recessive
-  set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
-  enter_critical_section();
-  int init = TIM2->CNT;
-  for (int i = 0; i < sizeof(test_pkt); i++) {
-    while ((TIM2->CNT - init) < (SPEEED*i));
-    set_bitbanged_gmlan(test_pkt[i]);
-  }
-  exit_critical_section();
-  set_gpio_mode(GPIOB, 13, MODE_INPUT);
-
-  puts("bitbang done\n");
-}
+#include "canbitbang.h"
 
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
   if (safety_tx_hook(to_push) && !can_autobaud_enabled[bus_number]) {
-    //if (bus_number == 3) { //&& can_num_lookup[3] == -1) {
-    // TODO: why uint8 bro? only int8?
-    if (bus_number == 3 && can_num_lookup[3] == 0xFF) {
-      bitbang_gmlan(to_push);
-    } else {
-      if (bus_number < BUS_MAX) {
-        // add CAN packet to send queue
-        // bus number isn't passed through
-        to_push->RDTR &= 0xF;
+    if (bus_number < BUS_MAX) {
+      // add CAN packet to send queue
+      // bus number isn't passed through
+      to_push->RDTR &= 0xF;
+      if (bus_number == 3 && can_num_lookup[3] == 0xFF) {
+        // TODO: why uint8 bro? only int8?
+        bitbang_gmlan(to_push);
+      } else {
         can_push(can_queues[bus_number], to_push);
         process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
       }
