@@ -115,57 +115,69 @@ void set_bitbanged_gmlan(int val) {
   }
 }
 
+char pkt_stuffed[MAX_BITS_CAN_PACKET];
+int gmlan_sending = -1;
+int gmlan_sendmax = -1;
+int gmlan_silent_count = -1;
+
+void TIM4_IRQHandler(void) {
+  if (TIM4->SR & TIM_SR_UIF && gmlan_sendmax != -1) {
+    int read = get_gpio_input(GPIOB, 12);
+    if (gmlan_silent_count != -1 && gmlan_silent_count < 7) {
+      if (read == 0) {
+        gmlan_silent_count = 0;
+      } else {
+        gmlan_silent_count++;
+      }
+    } else if (gmlan_silent_count == 7) {
+      // in send loop
+      if (gmlan_sending > 0 &&  // not first bit
+         (read == 0 && pkt_stuffed[gmlan_sending-1] == 1) &&  // bus wrongly dominant
+         gmlan_sending != (gmlan_sendmax-11)) {    //not ack bit
+        puts("ERR: bus driven at ");
+        puth(gmlan_sending);
+        puts("\n");
+        gmlan_sendmax = -1;   // exit
+      } else {
+        set_bitbanged_gmlan(pkt_stuffed[gmlan_sending]);
+        gmlan_sending++;
+      }
+      if (gmlan_sending == gmlan_sendmax || gmlan_sendmax == -1) {
+        set_bitbanged_gmlan(1); // recessive
+        set_gpio_mode(GPIOB, 13, MODE_INPUT);
+        TIM4->DIER = 0;  // no update interrupt
+        TIM4->CR1 = 0;   // disable timer
+        gmlan_sendmax = -1;   // exit
+      }
+    }
+  }
+  TIM4->SR = 0;
+}
+
 void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
-  char pkt_stuffed[MAX_BITS_CAN_PACKET];
+  // TODO: make failure less silent
+  if (gmlan_sendmax != -1) return;
+
   int len = get_bit_message(pkt_stuffed, to_bang);
+  gmlan_silent_count = 0;
+  gmlan_sending = 0;
+  gmlan_sendmax = len;
 
-  // TODO: interrupts are disabled for a long time...
-  enter_critical_section();
-
-  // actual bitbang loop
+  // setup for bitbang loop
   set_bitbanged_gmlan(1); // recessive
   set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
 
-  // 33.3 kbps
-  #define SPEEED 30
+  // setup
+  TIM4->PSC = 48-1;          // tick on 1 us
+  TIM4->CR1 = TIM_CR1_CEN;   // enable
+  TIM4->ARR = 30-1;          // 33.3 kbps
 
-  // wait for bus silent for 7 frames
-  int silent_count = 0;
-  while (silent_count < 7) {
-    if (silent_count > 0) {
-      // bit time delay
-      int lwait = TIM2->CNT;
-      while (get_ts_elapsed(TIM2->CNT, lwait) < SPEEED);
-    }
+  // in case it's disabled
+  NVIC_EnableIRQ(TIM4_IRQn);
 
-    // check for silent
-    int read = get_gpio_input(GPIOB, 12);
-    silent_count++;
-    if (read == 0) {
-      silent_count = 0;
-    }
-  }
-
-  // send my message with optional failure
-  int last = 1;
-  int init = TIM2->CNT;
-  for (int i = 0; i < len; i++) {
-    while (get_ts_elapsed(TIM2->CNT, init) < (SPEEED*i));
-    int read = get_gpio_input(GPIOB, 12);
-    if ((read == 0 && last == 1) && i != (len-11)) {
-      puts("ERR: bus driven at ");
-      puth(i);
-      puts("\n");
-      goto fail;
-    }
-    set_bitbanged_gmlan(pkt_stuffed[i]);
-    last = pkt_stuffed[i];
-  }
-
-fail:
-  set_bitbanged_gmlan(1); // recessive
-  set_gpio_mode(GPIOB, 13, MODE_INPUT);
-  exit_critical_section();
+  // run the interrupt
+  TIM4->DIER = TIM_DIER_UIE; // update interrupt
+  TIM4->SR = 0;
 }
 
 #endif
