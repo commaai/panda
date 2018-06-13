@@ -12,8 +12,10 @@ int safety_ignition_hook();
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
-int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 int max_limit_check(int val, const int MAX);
+int dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
+  const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR);
+int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 
 typedef void (*safety_hook_init)(int16_t param);
 typedef void (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);
@@ -144,6 +146,26 @@ void update_sample(struct sample_t *sample, int sample_new) {
   }
 }
 
+int max_limit_check(int val, const int MAX) {
+  return (val > MAX) | (val < -MAX);
+}
+
+// check that commanded value isn't too far from measured
+int dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
+  const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR) {
+
+  // *** val rate limit check ***
+  int16_t highest_allowed_val = max(val_last, 0) + MAX_RATE_UP;
+  int16_t lowest_allowed_val = min(val_last, 0) - MAX_RATE_UP;
+
+  // if we've exceeded the meas val, we must start moving toward 0
+  highest_allowed_val = min(highest_allowed_val, max(val_last - MAX_RATE_DOWN, max(val_meas->max, 0) + MAX_ERROR));
+  lowest_allowed_val = max(lowest_allowed_val, min(val_last + MAX_RATE_DOWN, min(val_meas->min, 0) - MAX_ERROR));
+
+  // check for violation
+  return (val < lowest_allowed_val) || (val > highest_allowed_val);
+}
+
 // real time check, mainly used for steer torque rate limiter
 int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
 
@@ -151,10 +173,6 @@ int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
   int16_t highest_val = max(val_last, 0) + MAX_RT_DELTA;
   int16_t lowest_val = min(val_last, 0) - MAX_RT_DELTA;
 
-  // return 1 if violation
+  // check for violation
   return (val < lowest_val) || (val > highest_val);
-}
-
-int max_limit_check(int val, const int MAX) {
-  return (val > MAX) | (val < -MAX);
 }
