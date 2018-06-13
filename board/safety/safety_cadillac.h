@@ -74,28 +74,10 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       violation |= max_limit_check(desired_torque, CADILLAC_STEER_MAX);
 
       // *** torque rate limit check ***
-      int highest_allowed_torque = max(cadillac_desired_torque_last[idx], 0) + CADILLAC_MAX_RATE_UP;
-      int lowest_allowed_torque = min(cadillac_desired_torque_last[idx], 0) - CADILLAC_MAX_RATE_UP;
-
-      int driver_torque_max_limit = CADILLAC_STEER_MAX + 
-                                    (CADILLAC_DRIVER_TORQUE_ALLOWANCE + cadillac_torque_driver.max) *
-                                    CADILLAC_DRIVER_TORQUE_FACTOR;
-      int driver_torque_min_limit = -CADILLAC_STEER_MAX + 
-                                    (-CADILLAC_DRIVER_TORQUE_ALLOWANCE + cadillac_torque_driver.min) *
-                                    CADILLAC_DRIVER_TORQUE_FACTOR;
-
-      // if we've exceeded the applied torque, we must start moving toward 0
-      highest_allowed_torque = min(highest_allowed_torque,
-                                   max(cadillac_desired_torque_last[idx] - CADILLAC_MAX_RATE_DOWN,
-                                       max(driver_torque_max_limit, 0)));
-      lowest_allowed_torque = max(lowest_allowed_torque,
-                                  min(cadillac_desired_torque_last[idx] + CADILLAC_MAX_RATE_DOWN,
-                                      min(driver_torque_min_limit, 0)));
-
-      // check for violation
-      if ((desired_torque < lowest_allowed_torque) || (desired_torque > highest_allowed_torque)) {
-        violation = 1;
-      }
+      int desired_torque_last = cadillac_desired_torque_last[idx];
+      violation |= driver_limit_check(desired_torque, desired_torque_last, &cadillac_torque_driver,
+        CADILLAC_STEER_MAX, CADILLAC_MAX_RATE_UP, CADILLAC_MAX_RATE_DOWN,
+        CADILLAC_DRIVER_TORQUE_ALLOWANCE, CADILLAC_DRIVER_TORQUE_FACTOR);
 
       // used next time
       cadillac_desired_torque_last[idx] = desired_torque;

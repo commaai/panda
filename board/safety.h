@@ -15,6 +15,9 @@ void update_sample(struct sample_t *sample, int sample_new);
 int max_limit_check(int val, const int MAX);
 int dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
   const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR);
+int driver_limit_check(int val, int val_last, struct sample_t *val_driver,
+  const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN, 
+  const int MAX_ALLOWANCE, const int DRIVER_FACTOR);
 int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 
 typedef void (*safety_hook_init)(int16_t param);
@@ -165,6 +168,28 @@ int dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
   // check for violation
   return (val < lowest_allowed_val) || (val > highest_allowed_val);
 }
+
+// check that commanded value isn't fighting against driver
+int driver_limit_check(int val, int val_last, struct sample_t *val_driver,
+  const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
+  const int MAX_ALLOWANCE, const int DRIVER_FACTOR) {
+
+  int highest_allowed = max(val_last, 0) + MAX_RATE_UP;
+  int lowest_allowed = min(val_last, 0) - MAX_RATE_UP;
+
+  int driver_max_limit = MAX + (MAX_ALLOWANCE + val_driver->max) * DRIVER_FACTOR;
+  int driver_min_limit = -MAX + (-MAX_ALLOWANCE + val_driver->min) * DRIVER_FACTOR;
+
+  // if we've exceeded the applied torque, we must start moving toward 0
+  highest_allowed = min(highest_allowed, max(val_last - MAX_RATE_DOWN,
+                                             max(driver_max_limit, 0)));
+  lowest_allowed = max(lowest_allowed, min(val_last + MAX_RATE_DOWN,
+                                           min(driver_min_limit, 0)));
+
+  // check for violation
+  return (val < lowest_allowed) || (val > highest_allowed);
+}
+
 
 // real time check, mainly used for steer torque rate limiter
 int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
