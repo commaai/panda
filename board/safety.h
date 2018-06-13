@@ -12,6 +12,7 @@ int safety_ignition_hook();
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
+int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 
 typedef void (*safety_hook_init)(int16_t param);
 typedef void (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);
@@ -140,4 +141,15 @@ void update_sample(struct sample_t *sample, int sample_new) {
     if (sample->values[i] < sample->min) sample->min = sample->values[i];
     if (sample->values[i] > sample->max) sample->max = sample->values[i];
   }
+}
+
+// real time check, mainly used for steer torque rate limiter
+int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
+
+        // *** torque real time rate limit check ***
+        int16_t highest_val = max(val_last, 0) + MAX_RT_DELTA;
+        int16_t lowest_val = min(val_last, 0) - MAX_RT_DELTA;
+
+        // return 1 if violation
+        return (val < lowest_val) || (val > highest_val);
 }

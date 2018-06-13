@@ -108,15 +108,8 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         // used next time
         desired_torque_last = desired_torque;
 
-
         // *** torque real time rate limit check ***
-        int16_t highest_rt_torque = max(rt_torque_last, 0) + MAX_RT_DELTA;
-        int16_t lowest_rt_torque = min(rt_torque_last, 0) - MAX_RT_DELTA;
-
-        // check for violation
-        if ((desired_torque < lowest_rt_torque) || (desired_torque > highest_rt_torque)) {
-          violation = 1;
-        }
+        violation |= rt_rate_limit_check(desired_torque, rt_torque_last, MAX_RT_DELTA);
 
         // every RT_INTERVAL set the new limits
         uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);

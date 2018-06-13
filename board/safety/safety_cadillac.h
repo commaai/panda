@@ -103,14 +103,7 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       cadillac_desired_torque_last[idx] = desired_torque;
 
       // *** torque real time rate limit check ***
-      int highest_rt_torque = max(cadillac_rt_torque_last, 0) + CADILLAC_MAX_RT_DELTA;
-      int lowest_rt_torque = min(cadillac_rt_torque_last, 0) - CADILLAC_MAX_RT_DELTA;
-
-
-      // check for violation
-      if ((desired_torque < lowest_rt_torque) || (desired_torque > highest_rt_torque)) {
-        violation = 1;
-      }
+      violation |= rt_rate_limit_check(desired_torque, cadillac_rt_torque_last, CADILLAC_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
       uint32_t ts_elapsed = get_ts_elapsed(ts, cadillac_ts_last);
