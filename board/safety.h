@@ -146,10 +146,10 @@ void update_sample(struct sample_t *sample, int sample_new) {
 // real time check, mainly used for steer torque rate limiter
 int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
 
-        // *** torque real time rate limit check ***
-        int16_t highest_val = max(val_last, 0) + MAX_RT_DELTA;
-        int16_t lowest_val = min(val_last, 0) - MAX_RT_DELTA;
+  // *** torque real time rate limit check ***
+  int16_t highest_val = max(val_last, 0) + MAX_RT_DELTA;
+  int16_t lowest_val = min(val_last, 0) - MAX_RT_DELTA;
 
-        // return 1 if violation
-        return (val < lowest_val) || (val > highest_val);
+  // return 1 if violation
+  return (val < lowest_val) || (val > highest_val);
 }
