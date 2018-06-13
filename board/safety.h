@@ -13,6 +13,7 @@ uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
 int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
+int max_limit_check(int val, const int MAX);
 
 typedef void (*safety_hook_init)(int16_t param);
 typedef void (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);
@@ -152,4 +153,8 @@ int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
 
   // return 1 if violation
   return (val < lowest_val) || (val > highest_val);
+}
+
+int max_limit_check(int val, const int MAX) {
+  return (val > MAX) | (val < -MAX);
 }

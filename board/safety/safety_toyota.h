@@ -89,8 +89,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       if (controls_allowed && actuation_limits) {
 
         // *** global torque limit check ***
-        if (desired_torque < -MAX_TORQUE) violation = 1;
-        if (desired_torque > MAX_TORQUE) violation = 1;
+        violation |= max_limit_check(desired_torque, MAX_TORQUE);
 
         // *** torque rate limit check ***
         int16_t highest_allowed_torque = max(desired_torque_last, 0) + MAX_RATE_UP;
