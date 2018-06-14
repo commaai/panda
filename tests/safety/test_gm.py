@@ -32,6 +32,43 @@ class TestGmSafety(unittest.TestCase):
     cls.safety.gm_init(0)
     cls.safety.init_tests_gm()
 
+  def _speed_msg(self, speed):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 842 << 21
+    to_send[0].RDLR = speed
+    return to_send
+
+  def _button_msg(self, buttons):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 481 << 21
+    to_send[0].RDHR = buttons << 12
+    return to_send
+
+  def _brake_msg(self, brake):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 241 << 21
+    to_send[0].RDLR = 0xa00 if brake else 0x900
+    return to_send
+
+  def _gas_msg(self, gas):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 417 << 21
+    to_send[0].RDHR = (1 << 16) if gas else 0
+    return to_send
+
+  def _send_brake_msg(self, brake):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 789 << 21
+    brake = (-brake) & 0xfff
+    to_send[0].RDLR = (brake >> 8) | ((brake &0xff) << 8)
+    return to_send
+
+  def _send_gas_msg(self, gas):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 715 << 21
+    to_send[0].RDLR = ((gas & 0x1f) << 27) | ((gas & 0xfe0) << 11)
+    return to_send
+
   def _set_prev_torque(self, t):
     self.safety.set_gm_desired_torque_last(t)
     self.safety.set_gm_rt_torque_last(t)
@@ -59,29 +96,83 @@ class TestGmSafety(unittest.TestCase):
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
+  def test_resume_button(self):
+    RESUME_BTN = 2
+    self.safety.set_controls_allowed(0)
+    self.safety.gm_rx_hook(self._button_msg(RESUME_BTN))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_set_button(self):
+    SET_BTN = 3
+    self.safety.set_controls_allowed(0)
+    self.safety.gm_rx_hook(self._button_msg(SET_BTN))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_cancel_button(self):
+    CANCEL_BTN = 6
+    self.safety.set_controls_allowed(1)
+    self.safety.gm_rx_hook(self._button_msg(CANCEL_BTN))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_disengage_on_brake(self): 
+    self.safety.set_controls_allowed(1)
+    self.safety.gm_rx_hook(self._brake_msg(True))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_allow_brake_at_zero_speed(self):
+    # Brake was already pressed
+    self.safety.gm_rx_hook(self._brake_msg(True))
+    self.safety.set_controls_allowed(1)
+
+    self.safety.gm_rx_hook(self._brake_msg(True))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.gm_rx_hook(self._brake_msg(False))
+
+  def test_not_allow_brake_when_moving(self):
+    # Brake was already pressed
+    self.safety.gm_rx_hook(self._brake_msg(True))
+    self.safety.gm_rx_hook(self._speed_msg(100))
+    self.safety.set_controls_allowed(1)
+
+    self.safety.gm_rx_hook(self._brake_msg(True))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.safety.gm_rx_hook(self._brake_msg(False))
+
+  def test_disengage_on_gas(self):
+    self.safety.set_controls_allowed(1)
+    self.safety.gm_rx_hook(self._gas_msg(True))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.safety.gm_rx_hook(self._gas_msg(False))
+
+  def test_allow_engage_with_gas_pressed(self):
+    self.safety.gm_rx_hook(self._gas_msg(True))
+    self.safety.set_controls_allowed(1)
+    self.safety.gm_rx_hook(self._gas_msg(True))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.gm_rx_hook(self._gas_msg(False))
+
+  def test_brake_safety_check(self):
+    self.safety.set_controls_allowed(0)
+    self.assertTrue(self.safety.gm_tx_hook(self._send_brake_msg(0)))
+    self.assertFalse(self.safety.gm_tx_hook(self._send_brake_msg(1)))
+
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self.safety.gm_tx_hook(self._send_brake_msg(1)))
+
+  def test_gas_safety_check(self):
+    self.safety.set_controls_allowed(0)
+    self.assertTrue(self.safety.gm_tx_hook(self._send_gas_msg(1404)))
+    self.assertFalse(self.safety.gm_tx_hook(self._send_gas_msg(1405)))
+
+  #def test_steer_safety_check(self):
+  #  self.assertTrue(self.safety.gm_tx_hook(self._send_steer_msg(0x0000)))
+  #  self.assertFalse(self.safety.gm_tx_hook(self._send_steer_msg(0x1000)))
+
   def test_manually_enable_controls_allowed(self):
     self.safety.set_controls_allowed(1)
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(0)
-
-  #def test_enable_control_allowed_from_cruise(self):
-  #  to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-  #  to_push[0].RIR = 0x370 << 21
-  #  to_push[0].RDLR = 0x800000
-  #  to_push[0].RDTR = 0
-
-  #  self.safety.gm_rx_hook(to_push)
-  #  self.assertTrue(self.safety.get_controls_allowed())
-
-  #def test_disable_control_allowed_from_cruise(self):
-  #  to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-  #  to_push[0].RIR = 0x370 << 21
-  #  to_push[0].RDLR = 0
-  #  to_push[0].RDTR = 0
-
-  #  self.safety.set_controls_allowed(1)
-  #  self.safety.gm_rx_hook(to_push)
-  #  self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_controls_allowed())
 
   def test_torque_absolute_limits(self):
     for controls_allowed in [True, False]:

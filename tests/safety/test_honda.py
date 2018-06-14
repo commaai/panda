@@ -72,11 +72,13 @@ class TestHondaSafety(unittest.TestCase):
 
   def test_resume_button(self):
     RESUME_BTN = 4
+    self.safety.set_controls_allowed(0)
     self.safety.honda_rx_hook(self._button_msg(RESUME_BTN, 0x1A6))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_set_button(self):
     SET_BTN = 3
+    self.safety.set_controls_allowed(0)
     self.safety.honda_rx_hook(self._button_msg(SET_BTN, 0x1A6))
     self.assertTrue(self.safety.get_controls_allowed())
 
@@ -119,6 +121,7 @@ class TestHondaSafety(unittest.TestCase):
 
     self.safety.honda_rx_hook(self._brake_msg(True))
     self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.honda_rx_hook(self._brake_msg(False))  # reset no brakes
 
   def test_not_allow_brake_when_moving(self):
     # Brake was already pressed
@@ -154,10 +157,12 @@ class TestHondaSafety(unittest.TestCase):
     self.assertFalse(self.safety.honda_tx_hook(self._send_brake_msg(0x00F0)))
 
   def test_gas_safety_check(self):
-    self.assertTrue(self.safety.honda_tx_hook(self._send_brake_msg(0x0000)))
-    self.assertFalse(self.safety.honda_tx_hook(self._send_brake_msg(0x1000)))
+    self.safety.set_controls_allowed(0)
+    self.assertTrue(self.safety.honda_tx_hook(self._send_gas_msg(0x0000)))
+    self.assertFalse(self.safety.honda_tx_hook(self._send_gas_msg(0x1000)))
 
   def test_steer_safety_check(self):
+    self.safety.set_controls_allowed(0)
     self.assertTrue(self.safety.honda_tx_hook(self._send_steer_msg(0x0000)))
     self.assertFalse(self.safety.honda_tx_hook(self._send_steer_msg(0x1000)))
 
