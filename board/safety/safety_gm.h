@@ -15,6 +15,9 @@ const int GM_MAX_RATE_UP = 7;
 const int GM_MAX_RATE_DOWN = 17;
 const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
 const int GM_DRIVER_TORQUE_FACTOR = 4;
+const int GM_MAX_GAS = 3072;
+const int GM_MAX_REGEN = 1404;
+const int GM_MAX_BRAKE = 255;
 
 int gm_brake_prev = 0;
 int gm_gas_prev = 0;
@@ -143,7 +146,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int brake = ((rdlr & 0xF) << 8) + ((rdlr & 0xFF00) >> 8);
     brake = (0x1000 - brake) & 0xFFF;
     if (current_controls_allowed) {
-      if (brake > 255) return 0;
+      if (brake > GM_MAX_BRAKE) return 0;
     } else {
       if (brake != 0) return 0;
     }
@@ -207,11 +210,11 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int gas_regen = ((rdlr & 0x7F0000) >> 11) + ((rdlr & 0xF8000000) >> 27);
     int apply = rdlr & 1;
     if (current_controls_allowed) {
-      if (gas_regen > 3072) return 0;
+      if (gas_regen > GM_MAX_GAS) return 0;
     } else {
       // Disabled message is !engaed with gas
       // value that corresponds to max regen.
-      if (apply || gas_regen != 1404) return 0;
+      if (apply || gas_regen != GM_MAX_REGEN) return 0;
     }
   }
 
