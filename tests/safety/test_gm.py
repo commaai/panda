@@ -188,21 +188,6 @@ class TestGmSafety(unittest.TestCase):
     self.safety.set_controls_allowed(0)
     self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_torque_absolute_limits(self):
-    for controls_allowed in [True, False]:
-      for torque in np.arange(-MAX_STEER - 1000, MAX_STEER + 1000, MAX_RATE_UP):
-        self.safety.set_controls_allowed(controls_allowed)
-        self.safety.set_gm_rt_torque_last(torque)
-        self.safety.set_gm_torque_driver(0, 0)
-        self.safety.set_gm_desired_torque_last(torque - MAX_RATE_UP)
-
-        if controls_allowed:
-          send = (-MAX_STEER <= torque <= MAX_STEER)
-        else:
-          send = torque == 0
-
-        self.assertEqual(send, self.safety.gm_tx_hook(self._torque_msg(torque)))
-
   def test_non_realtime_limit_up(self):
     self.safety.set_gm_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
