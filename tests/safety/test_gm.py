@@ -5,7 +5,10 @@ import libpandasafety_py
 
 MAX_RATE_UP = 7
 MAX_RATE_DOWN = 17
-MAX_TORQUE = 255
+MAX_STEER = 255
+MAX_BRAKE = 255
+MAX_GAS = 3072
+MAX_REGEN = 1404
 
 MAX_RT_DELTA = 128
 RT_INTERVAL = 250000
@@ -152,21 +155,32 @@ class TestGmSafety(unittest.TestCase):
     self.safety.gm_rx_hook(self._gas_msg(False))
 
   def test_brake_safety_check(self):
-    self.safety.set_controls_allowed(0)
-    self.assertTrue(self.safety.gm_tx_hook(self._send_brake_msg(0)))
-    self.assertFalse(self.safety.gm_tx_hook(self._send_brake_msg(1)))
-
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self.safety.gm_tx_hook(self._send_brake_msg(1)))
+    for enabled in [0, 1]:
+      for b in range(0, 500):
+        self.safety.set_controls_allowed(enabled)
+        if abs(b) > MAX_BRAKE or (not enabled and b != 0):
+          self.assertFalse(self.safety.gm_tx_hook(self._send_brake_msg(b)))
+        else:
+          self.assertTrue(self.safety.gm_tx_hook(self._send_brake_msg(b)))
 
   def test_gas_safety_check(self):
-    self.safety.set_controls_allowed(0)
-    self.assertTrue(self.safety.gm_tx_hook(self._send_gas_msg(1404)))
-    self.assertFalse(self.safety.gm_tx_hook(self._send_gas_msg(1405)))
+    for enabled in [0, 1]:
+      for g in range(0, 2**12-1):
+        self.safety.set_controls_allowed(enabled)
+        if abs(g) > MAX_GAS or (not enabled and g != MAX_REGEN):
+          self.assertFalse(self.safety.gm_tx_hook(self._send_gas_msg(g)))
+        else:
+          self.assertTrue(self.safety.gm_tx_hook(self._send_gas_msg(g)))
 
-  #def test_steer_safety_check(self):
-  #  self.assertTrue(self.safety.gm_tx_hook(self._send_steer_msg(0x0000)))
-  #  self.assertFalse(self.safety.gm_tx_hook(self._send_steer_msg(0x1000)))
+  def test_steer_safety_check(self):
+    for enabled in [0, 1]:
+      for t in range(-0x200, 0x200):
+        self.safety.set_controls_allowed(enabled)
+        self._set_prev_torque(t)
+        if abs(t) > MAX_STEER or (not enabled and abs(t) > 0):
+          self.assertFalse(self.safety.gm_tx_hook(self._torque_msg(t)))
+        else:
+          self.assertTrue(self.safety.gm_tx_hook(self._torque_msg(t)))
 
   def test_manually_enable_controls_allowed(self):
     self.safety.set_controls_allowed(1)
@@ -176,14 +190,14 @@ class TestGmSafety(unittest.TestCase):
 
   def test_torque_absolute_limits(self):
     for controls_allowed in [True, False]:
-      for torque in np.arange(-MAX_TORQUE - 1000, MAX_TORQUE + 1000, MAX_RATE_UP):
+      for torque in np.arange(-MAX_STEER - 1000, MAX_STEER + 1000, MAX_RATE_UP):
         self.safety.set_controls_allowed(controls_allowed)
         self.safety.set_gm_rt_torque_last(torque)
         self.safety.set_gm_torque_driver(0, 0)
         self.safety.set_gm_desired_torque_last(torque - MAX_RATE_UP)
 
         if controls_allowed:
-          send = (-MAX_TORQUE <= torque <= MAX_TORQUE)
+          send = (-MAX_STEER <= torque <= MAX_STEER)
         else:
           send = torque == 0
 
@@ -215,18 +229,16 @@ class TestGmSafety(unittest.TestCase):
       for t in np.arange(0, DRIVER_TORQUE_ALLOWANCE + 1, 1):
         t *= -sign
         self.safety.set_gm_torque_driver(t, t)
-        self._set_prev_torque(MAX_TORQUE * sign)
-        if not self.safety.gm_tx_hook(self._torque_msg(MAX_TORQUE * sign)):
-          print t, MAX_TORQUE, sign
-        self.assertTrue(self.safety.gm_tx_hook(self._torque_msg(MAX_TORQUE * sign)))
+        self._set_prev_torque(MAX_STEER * sign)
+        self.assertTrue(self.safety.gm_tx_hook(self._torque_msg(MAX_STEER * sign)))
 
       self.safety.set_gm_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self.safety.gm_tx_hook(self._torque_msg(-MAX_TORQUE)))
+      self.assertFalse(self.safety.gm_tx_hook(self._torque_msg(-MAX_STEER)))
 
     # spot check some individual cases
     for sign in [-1, 1]:
       driver_torque = (DRIVER_TORQUE_ALLOWANCE + 10) * sign
-      torque_desired = (MAX_TORQUE - 10 * DRIVER_TORQUE_FACTOR) * sign
+      torque_desired = (MAX_STEER - 10 * DRIVER_TORQUE_FACTOR) * sign
       delta = 1 * sign
       self._set_prev_torque(torque_desired)
       self.safety.set_gm_torque_driver(-driver_torque, -driver_torque)
@@ -235,15 +247,15 @@ class TestGmSafety(unittest.TestCase):
       self.safety.set_gm_torque_driver(-driver_torque, -driver_torque)
       self.assertFalse(self.safety.gm_tx_hook(self._torque_msg(torque_desired + delta)))
 
-      self._set_prev_torque(MAX_TORQUE * sign)
-      self.safety.set_gm_torque_driver(-MAX_TORQUE * sign, -MAX_TORQUE * sign)
-      self.assertTrue(self.safety.gm_tx_hook(self._torque_msg((MAX_TORQUE - MAX_RATE_DOWN) * sign)))
-      self._set_prev_torque(MAX_TORQUE * sign)
-      self.safety.set_gm_torque_driver(-MAX_TORQUE * sign, -MAX_TORQUE * sign)
+      self._set_prev_torque(MAX_STEER * sign)
+      self.safety.set_gm_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
+      self.assertTrue(self.safety.gm_tx_hook(self._torque_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
+      self._set_prev_torque(MAX_STEER * sign)
+      self.safety.set_gm_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
       self.assertTrue(self.safety.gm_tx_hook(self._torque_msg(0)))
-      self._set_prev_torque(MAX_TORQUE * sign)
-      self.safety.set_gm_torque_driver(-MAX_TORQUE * sign, -MAX_TORQUE * sign)
-      self.assertFalse(self.safety.gm_tx_hook(self._torque_msg((MAX_TORQUE - MAX_RATE_DOWN + 1) * sign)))
+      self._set_prev_torque(MAX_STEER * sign)
+      self.safety.set_gm_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
+      self.assertFalse(self.safety.gm_tx_hook(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
 
 
   def test_realtime_limits(self):
