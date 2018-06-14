@@ -8,15 +8,24 @@
 //      brake rising edge
 //      brake > 0mph
 
-// gm_: poor man's namespacing
+const int GM_MAX_STEER = 255;
+const int GM_MAX_RT_DELTA = 128;          // max delta torque allowed for real time checks
+const int32_t GM_RT_INTERVAL = 250000;    // 250ms between real time checks
+const int GM_MAX_RATE_UP = 7;
+const int GM_MAX_RATE_DOWN = 17;
+const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
+const int GM_DRIVER_TORQUE_FACTOR = 4;
+
 int gm_brake_prev = 0;
 int gm_gas_prev = 0;
 int gm_speed = 0;
-
 // silence everything if stock ECUs are still online
 int gm_ascm_detected = 0;
-
 int gm_ignition_started = 0;
+int gm_rt_torque_last = 0;
+int gm_desired_torque_last = 0;
+uint32_t gm_ts_last = 0;
+struct sample_t gm_torque_driver;         // last few driver torques measured
 
 static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus_number = (to_push->RDTR >> 4) & 0xFF;
@@ -29,6 +38,13 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   } else {
     // Normal
     addr = to_push->RIR >> 21;
+  }
+
+  if (addr == 388) {
+    int torque_driver_new = (((to_push->RDHR >> 16) & 0x7) << 8) | ((to_push->RDHR >> 24) & 0xFF);
+    torque_driver_new = to_signed(torque_driver_new, 11);
+    // update array of samples
+    update_sample(&gm_torque_driver, torque_driver_new);
   }
 
   if (addr == 0x1f1 && bus_number == 0) {
@@ -136,13 +152,49 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // LKA STEER: safety check
   if (addr == 384) {
     int rdlr = to_send->RDLR;
-    int steer = ((rdlr & 0x7) << 8) + ((rdlr & 0xFF00) >> 8);
-    steer = to_signed(steer, 11);
-    int max_steer = 255;
+    int desired_torque = ((rdlr & 0x7) << 8) + ((rdlr & 0xFF00) >> 8);
+    uint32_t ts = TIM2->CNT;
+    int violation = 0;
+    desired_torque = to_signed(desired_torque, 11);
+
     if (current_controls_allowed) {
-      if ((steer > max_steer) || (steer < -max_steer)) return 0;
-    } else {
-      if (steer != 0) return 0;
+
+      // *** global torque limit check ***
+      violation |= max_limit_check(desired_torque, GM_MAX_STEER);
+
+      // *** torque rate limit check ***
+      violation |= driver_limit_check(desired_torque, gm_desired_torque_last, &gm_torque_driver,
+        GM_MAX_STEER, GM_MAX_RATE_UP, GM_MAX_RATE_DOWN,
+        GM_DRIVER_TORQUE_ALLOWANCE, GM_DRIVER_TORQUE_FACTOR);
+
+      // used next time
+      gm_desired_torque_last = desired_torque;
+
+      // *** torque real time rate limit check ***
+      violation |= rt_rate_limit_check(desired_torque, gm_rt_torque_last, GM_MAX_RT_DELTA);
+
+      // every RT_INTERVAL set the new limits
+      uint32_t ts_elapsed = get_ts_elapsed(ts, gm_ts_last);
+      if (ts_elapsed > GM_RT_INTERVAL) {
+        gm_rt_torque_last = desired_torque;
+        gm_ts_last = ts;
+      }
+    }
+
+    // no torque if controls is not allowed
+    if (!current_controls_allowed && (desired_torque != 0)) {
+      violation = 1;
+    }
+
+    // reset to 0 if either controls is not allowed or there's a violation
+    if (violation || !current_controls_allowed) {
+      gm_desired_torque_last = 0;
+      gm_rt_torque_last = 0;
+      gm_ts_last = ts;
+    }
+
+    if (violation) {
+      return false;
     }
   }
 
