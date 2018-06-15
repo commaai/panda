@@ -134,6 +134,7 @@ void TIM4_IRQHandler(void) {
         gmlan_silent_count++;
       }
     } else if (gmlan_silent_count == REQUIRED_SILENT_TIME) {
+      int retry = 0;
       // in send loop
       if (gmlan_sending > 0 &&  // not first bit
          (read == 0 && pkt_stuffed[gmlan_sending-1] == 1) &&  // bus wrongly dominant
@@ -141,6 +142,12 @@ void TIM4_IRQHandler(void) {
         puts("GMLAN ERR: bus driven at ");
         puth(gmlan_sending);
         puts("\n");
+        retry = 1;
+      } else if (read == 1 && gmlan_sending == (gmlan_sendmax-11)) {    // recessive during ACK
+        puts("GMLAN ERR: didn't recv ACK\n");
+        retry = 1;
+      }
+      if (retry) {
         // reset sender (retry after 7 silent)
         set_bitbanged_gmlan(1); // recessive
         gmlan_silent_count = 0;
