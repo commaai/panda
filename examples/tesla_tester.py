@@ -41,7 +41,6 @@ def tesla_tester():
   
   print("Reading VIN from 0x568. This is painfully slow and can take up to 3 minutes (1 minute per message; 3 messages needed for full VIN)...")
   
-  cnt = 0
   vin = {}
   while True:
     #Read the VIN
@@ -53,9 +52,8 @@ def tesla_tester():
           vin_string = binascii.hexlify(dat)[2:] #rest of the string is the actual VIN data
           vin[vin_index] = vin_string.decode("hex")
           print("Got VIN index " + str(vin_index) + " data " + vin[vin_index])
-          cnt += 1
     #if we have all 3 parts of the VIN, print it and break out of our while loop
-    if cnt == 3:
+    if 0 in vin and 1 in vin and 2 in vin:
       print("VIN: " + vin[0] + vin[1] + vin[2][:3])
       break
 
