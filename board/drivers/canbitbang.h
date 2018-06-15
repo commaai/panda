@@ -138,6 +138,7 @@ void TIM4_IRQHandler(void) {
         puth(gmlan_sending);
         puts("\n");
         // reset sender (retry after 7 silent)
+        set_bitbanged_gmlan(1); // recessive
         gmlan_silent_count = 0;
         gmlan_sending = 0;
       } else {
