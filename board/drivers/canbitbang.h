@@ -137,12 +137,14 @@ void TIM4_IRQHandler(void) {
         puts("ERR: bus driven at ");
         puth(gmlan_sending);
         puts("\n");
-        gmlan_sendmax = -1;   // exit
+        // reset sender (retry after 7 silent)
+        gmlan_silent_count = 0;
+        gmlan_sending = 0;
       } else {
         set_bitbanged_gmlan(pkt_stuffed[gmlan_sending]);
         gmlan_sending++;
       }
-      if (gmlan_sending == gmlan_sendmax || gmlan_sendmax == -1) {
+      if (gmlan_sending == gmlan_sendmax) {
         set_bitbanged_gmlan(1); // recessive
         set_gpio_mode(GPIOB, 13, MODE_INPUT);
         TIM4->DIER = 0;  // no update interrupt
