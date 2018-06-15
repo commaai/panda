@@ -119,6 +119,8 @@ char pkt_stuffed[MAX_BITS_CAN_PACKET];
 int gmlan_sending = -1;
 int gmlan_sendmax = -1;
 int gmlan_silent_count = -1;
+int gmlan_fail_count = 0;
+#define MAX_FAIL_COUNT 10
 
 void TIM4_IRQHandler(void) {
   if (TIM4->SR & TIM_SR_UIF && gmlan_sendmax != -1) {
@@ -141,17 +143,21 @@ void TIM4_IRQHandler(void) {
         set_bitbanged_gmlan(1); // recessive
         gmlan_silent_count = 0;
         gmlan_sending = 0;
+        gmlan_fail_count++;
+        if (gmlan_fail_count == MAX_FAIL_COUNT) {
+          puts("giving up GMLAN send\n");
+        }
       } else {
         set_bitbanged_gmlan(pkt_stuffed[gmlan_sending]);
         gmlan_sending++;
       }
-      if (gmlan_sending == gmlan_sendmax) {
-        set_bitbanged_gmlan(1); // recessive
-        set_gpio_mode(GPIOB, 13, MODE_INPUT);
-        TIM4->DIER = 0;  // no update interrupt
-        TIM4->CR1 = 0;   // disable timer
-        gmlan_sendmax = -1;   // exit
-      }
+    }
+    if (gmlan_sending == gmlan_sendmax || gmlan_fail_count == MAX_FAIL_COUNT) {
+      set_bitbanged_gmlan(1); // recessive
+      set_gpio_mode(GPIOB, 13, MODE_INPUT);
+      TIM4->DIER = 0;  // no update interrupt
+      TIM4->CR1 = 0;   // disable timer
+      gmlan_sendmax = -1;   // exit
     }
   }
   TIM4->SR = 0;
@@ -162,6 +168,7 @@ void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
   if (gmlan_sendmax != -1) return;
 
   int len = get_bit_message(pkt_stuffed, to_bang);
+  gmlan_fail_count = 0;
   gmlan_silent_count = 0;
   gmlan_sending = 0;
   gmlan_sendmax = len;
