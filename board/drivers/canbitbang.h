@@ -118,25 +118,27 @@ void set_bitbanged_gmlan(int val) {
 char pkt_stuffed[MAX_BITS_CAN_PACKET];
 int gmlan_sending = -1;
 int gmlan_sendmax = -1;
-int gmlan_silent_count = -1;
+
+int gmlan_silent_count = 0;
 int gmlan_fail_count = 0;
+#define REQUIRED_SILENT_TIME 10
 #define MAX_FAIL_COUNT 10
 
 void TIM4_IRQHandler(void) {
   if (TIM4->SR & TIM_SR_UIF && gmlan_sendmax != -1) {
     int read = get_gpio_input(GPIOB, 12);
-    if (gmlan_silent_count != -1 && gmlan_silent_count < 7) {
+    if (gmlan_silent_count < REQUIRED_SILENT_TIME) {
       if (read == 0) {
         gmlan_silent_count = 0;
       } else {
         gmlan_silent_count++;
       }
-    } else if (gmlan_silent_count == 7) {
+    } else if (gmlan_silent_count == REQUIRED_SILENT_TIME) {
       // in send loop
       if (gmlan_sending > 0 &&  // not first bit
          (read == 0 && pkt_stuffed[gmlan_sending-1] == 1) &&  // bus wrongly dominant
          gmlan_sending != (gmlan_sendmax-11)) {    //not ack bit
-        puts("ERR: bus driven at ");
+        puts("GMLAN ERR: bus driven at ");
         puth(gmlan_sending);
         puts("\n");
         // reset sender (retry after 7 silent)
@@ -145,7 +147,7 @@ void TIM4_IRQHandler(void) {
         gmlan_sending = 0;
         gmlan_fail_count++;
         if (gmlan_fail_count == MAX_FAIL_COUNT) {
-          puts("giving up GMLAN send\n");
+          puts("GMLAN ERR: giving up send\n");
         }
       } else {
         set_bitbanged_gmlan(pkt_stuffed[gmlan_sending]);
