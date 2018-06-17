@@ -36,7 +36,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     torque_meas_new = to_signed(torque_meas_new, 16);
 
     // scale by dbc_factor
-    torque_meas_new *= dbc_eps_torque_factor / 100;
+    torque_meas_new = (torque_meas_new * dbc_eps_torque_factor) / 100;
 
     // increase torque_meas by 1 to be conservative on rounding
     torque_meas_new += (torque_meas_new > 0 ? 1 : -1);
