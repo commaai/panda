@@ -1,30 +1,30 @@
 struct sample_t torque_meas;           // last 3 motor torques produced by the eps
 
 // global torque limit
-const int32_t MAX_TORQUE = 1500;       // max torque cmd allowed ever
+const int MAX_TORQUE = 1500;       // max torque cmd allowed ever
 
 // rate based torque limit + stay within actually applied
 // packet is sent at 100hz, so this limit is 1000/sec
-const int32_t MAX_RATE_UP = 10;        // ramp up slow
-const int32_t MAX_RATE_DOWN = 25;      // ramp down fast
-const int32_t MAX_TORQUE_ERROR = 350;  // max torque cmd in excess of torque motor
+const int MAX_RATE_UP = 10;        // ramp up slow
+const int MAX_RATE_DOWN = 25;      // ramp down fast
+const int MAX_TORQUE_ERROR = 350;  // max torque cmd in excess of torque motor
 
 // real time torque limit to prevent controls spamming
 // the real time limit is 1500/sec
-const int32_t MAX_RT_DELTA = 375;      // max delta torque allowed for real time checks
-const int32_t RT_INTERVAL = 250000;    // 250ms between real time checks
+const int MAX_RT_DELTA = 375;      // max delta torque allowed for real time checks
+const int RT_INTERVAL = 250000;    // 250ms between real time checks
 
 // longitudinal limits
-const int16_t MAX_ACCEL = 1500;        // 1.5 m/s2
-const int16_t MIN_ACCEL = -3000;       // 3.0 m/s2
+const int MAX_ACCEL = 1500;        // 1.5 m/s2
+const int MIN_ACCEL = -3000;       // 3.0 m/s2
 
 // global actuation limit state
 int actuation_limits = 1;              // by default steer limits are imposed
-int16_t dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
+int dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
 // state of torque limits
-int16_t desired_torque_last = 0;       // last desired steer torque
-int16_t rt_torque_last = 0;            // last desired torque for real time check
+int desired_torque_last = 0;       // last desired steer torque
+int rt_torque_last = 0;            // last desired torque for real time check
 uint32_t ts_last = 0;
 int cruise_engaged_last = 0;           // cruise state
 
@@ -68,7 +68,8 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // ACCEL: safety check on byte 1-2
     if ((to_send->RIR>>21) == 0x343) {
-      int16_t desired_accel = ((to_send->RDLR & 0xFF) << 8) | ((to_send->RDLR >> 8) & 0xFF);
+      int desired_accel = ((to_send->RDLR & 0xFF) << 8) | ((to_send->RDLR >> 8) & 0xFF);
+      desired_accel = to_signed(desired_accel, 16);
       if (controls_allowed && actuation_limits) {
         if ((desired_accel > MAX_ACCEL) || (desired_accel < MIN_ACCEL)) {
           return 0;
@@ -80,8 +81,9 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // STEER: safety check on bytes 2-3
     if ((to_send->RIR>>21) == 0x2E4) {
-      int16_t desired_torque = (to_send->RDLR & 0xFF00) | ((to_send->RDLR >> 16) & 0xFF);
-      int16_t violation = 0;
+      int desired_torque = (to_send->RDLR & 0xFF00) | ((to_send->RDLR >> 16) & 0xFF);
+      desired_torque = to_signed(desired_torque, 16);
+      int violation = 0;
 
       uint32_t ts = TIM2->CNT;
 
