@@ -12,7 +12,7 @@ int safety_ignition_hook();
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
-int max_limit_check(int val, const int MAX);
+int max_limit_check(int val, const int MAX, const int MIN);
 int dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
   const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR);
 int driver_limit_check(int val, int val_last, struct sample_t *val_driver,
@@ -149,8 +149,8 @@ void update_sample(struct sample_t *sample, int sample_new) {
   }
 }
 
-int max_limit_check(int val, const int MAX) {
-  return (val > MAX) | (val < -MAX);
+int max_limit_check(int val, const int MAX, const int MIN) {
+  return (val > MAX) || (val < MIN);
 }
 
 // check that commanded value isn't too far from measured
