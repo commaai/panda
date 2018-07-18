@@ -19,7 +19,7 @@ const int TOYOTA_MAX_ACCEL = 1500;        // 1.5 m/s2
 const int TOYOTA_MIN_ACCEL = -3000;       // 3.0 m/s2
 
 // global actuation limit state
-int toyota_actuation_limits = 1;              // by default steer limits are imposed
+int toyota_actuation_limits = 1;          // by default steer limits are imposed
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
 // state of torque limits
@@ -59,8 +59,8 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   int bus = (to_push->RDTR >> 4) & 0xF;
-  // 0x351 is a radar msg only found in dsu-less cars
-  if ((to_push->RIR>>21) == 0x351 && (bus == 1)) {
+  // 0x680 is a radar msg only found in dsu-less cars
+  if ((to_push->RIR>>21) == 0x680 && (bus == 1)) {
     toyota_no_dsu_car = 1;
   }
 
