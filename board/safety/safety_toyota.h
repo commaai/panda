@@ -65,7 +65,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     toyota_no_dsu_car = 1;
   }
 
-  // 0x2E4 is lkas cmd. If it is on bus 0, the giraffe switch 1 is high
+  // 0x2E4 is lkas cmd. If it is on bus 0, then giraffe switch 1 is high
   if ((to_push->RIR>>21) == 0x2E4 && (bus == 0)) {
     toyota_giraffe_switch_1 = 1;
   }
