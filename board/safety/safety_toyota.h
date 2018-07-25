@@ -1,4 +1,5 @@
-struct sample_t toyota_torque_meas;           // last 3 motor torques produced by the eps
+int toyota_no_dsu_car = 0;                // ch-r and camry don't have the DSU
+int toyota_giraffe_switch_1 = 0;          // is giraffe switch 1 high?
 
 // global torque limit
 const int TOYOTA_MAX_TORQUE = 1500;       // max torque cmd allowed ever
@@ -19,14 +20,15 @@ const int TOYOTA_MAX_ACCEL = 1500;        // 1.5 m/s2
 const int TOYOTA_MIN_ACCEL = -3000;       // 3.0 m/s2
 
 // global actuation limit state
-int toyota_actuation_limits = 1;              // by default steer limits are imposed
+int toyota_actuation_limits = 1;          // by default steer limits are imposed
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
 // state of torque limits
 int toyota_desired_torque_last = 0;       // last desired steer torque
 int toyota_rt_torque_last = 0;            // last desired torque for real time check
 uint32_t toyota_ts_last = 0;
-int toyota_cruise_engaged_last = 0;           // cruise state
+int toyota_cruise_engaged_last = 0;       // cruise state
+struct sample_t toyota_torque_meas;       // last 3 motor torques produced by the eps
 
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -56,6 +58,18 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
     toyota_cruise_engaged_last = cruise_engaged;
   }
+
+  int bus = (to_push->RDTR >> 4) & 0xF;
+  // 0x680 is a radar msg only found in dsu-less cars
+  if ((to_push->RIR>>21) == 0x680 && (bus == 1)) {
+    toyota_no_dsu_car = 1;
+  }
+
+  // 0x2E4 is lkas cmd. If it is on bus 0, then giraffe switch 1 is high
+  if ((to_push->RIR>>21) == 0x2E4 && (bus == 0)) {
+    toyota_giraffe_switch_1 = 1;
+  }
+
 }
 
 static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
@@ -140,10 +154,18 @@ static int toyota_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 static void toyota_init(int16_t param) {
   controls_allowed = 0;
   toyota_actuation_limits = 1;
+  toyota_giraffe_switch_1 = 0;
   toyota_dbc_eps_torque_factor = param;
 }
 
 static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+
+  // forward cam to radar and viceversa if car is dsu-less, except lkas cmd and hud
+  if ((bus_num == 0 || bus_num == 2) && toyota_no_dsu_car && !toyota_giraffe_switch_1) {
+    int addr = to_fwd->RIR>>21;
+    bool is_lkas_msg = (addr == 0x2E4 || addr == 0x412) && bus_num == 2;
+    return is_lkas_msg? -1 : (uint8_t)(~bus_num & 0x2);
+  }
   return -1;
 }
 
@@ -159,6 +181,7 @@ const safety_hooks toyota_hooks = {
 static void toyota_nolimits_init(int16_t param) {
   controls_allowed = 0;
   toyota_actuation_limits = 0;
+  toyota_giraffe_switch_1 = 0;
   toyota_dbc_eps_torque_factor = param;
 }
 
