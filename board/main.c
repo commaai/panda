@@ -4,6 +4,7 @@
 // ********************* includes *********************
 
 #include "libc.h"
+#include "safety.h"
 #include "provision.h"
 
 #include "drivers/drivers.h"
@@ -14,12 +15,11 @@
 #include "drivers/uart.h"
 #include "drivers/adc.h"
 #include "drivers/usb.h"
+#include "drivers/gmlan_alt.h"
+#include "drivers/can.h"
 #include "drivers/spi.h"
 #include "drivers/timer.h"
 
-#include "drivers/gmlan_alt.h"
-#include "safety.h"
-#include "drivers/can.h"
 
 // ***************************** fan *****************************
 
