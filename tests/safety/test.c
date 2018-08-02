@@ -161,3 +161,7 @@ void init_tests_honda(void){
   brake_prev = 0;
   gas_prev = 0;
 }
+
+void init_tests_chrysler(void){
+  set_timer(0);
+}
