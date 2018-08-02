@@ -2,9 +2,7 @@
 //   in-state
 //      ACC is active (green)
 //   out-state
-//      ACC cancel button
 //      brake pressed
-//      accel pressed
 //      stock LKAS ECU is online
 
 // chrysler_: namespacing
