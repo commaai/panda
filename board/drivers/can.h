@@ -461,7 +461,7 @@ void CAN3_SCE_IRQHandler() { can_sce(CAN3); }
 
 #endif
 
-#include "canbitbang.h"
+#include "gmlan_alt.h"
 
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
   if (safety_tx_hook(to_push) && !can_autobaud_enabled[bus_number]) {
