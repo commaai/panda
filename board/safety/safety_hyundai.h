@@ -3,7 +3,7 @@
 // Based on GM Safety
 
 const int HYUNDAI_STEER_ZERO = 1024;
-const int HYUNDAI_MAX_STEER = 200; // This may be lifted highter AFTER a valid proof from users deems it necessary
+const int HYUNDAI_MAX_STEER = 225; // This may be lifted highter AFTER a valid proof from users deems it necessary
 const int HYUNDAI_MAX_RATE_UP = 5;
 const int HYUNDAI_MAX_RATE_DOWN = 10;
 const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 100;
@@ -13,6 +13,7 @@ const int32_t HYUNDAI_RT_INTERVAL = 250000;
 
 int hyundai_rt_torque_last = 0;
 int hyundai_desired_torque_last = 0;
+int hyundai_driver_override = 0;
 uint32_t hyundai_ts_last = 0;
 struct sample_t hyundai_torque_driver;         // last few driver torques measured
 
@@ -24,6 +25,8 @@ static void hyundai_init(int16_t param) {
 }
 
 static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+
+  int current_controls_allowed = controls_allowed && !hyundai_driver_override;
 
   uint32_t addr;
   if (to_send->RIR & 4) {
@@ -40,7 +43,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     uint32_t ts = TIM2->CNT;
     int violation = 0;
 
-    if (controls_allowed) {
+    if (current_controls_allowed) {
 
       // *** global torque limit check ***
       violation |= max_limit_check(desired_torque, HYUNDAI_STEER_ZERO + HYUNDAI_MAX_STEER,
@@ -65,6 +68,18 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       }
     }
 
+    // ** Current Controls NOT allowed **
+    if (!current_controls_allowed && desired_torque != 0) {
+      violation = 1;
+    }
+  
+    // reset to 0 if either controls is not allowed or there's a violation
+    if (violation || !current_controls_allowed) {
+      hyundai_desired_torque_last = 1024;
+      hyundai_rt_torque_last = 1024;
+      hyundai_ts_last = ts;
+    }
+
     if (violation) {
       return false;
     }
@@ -83,9 +98,10 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   
   
   // Driver Override - Message 0x394, bits 45 to 46
+  //   This covers off both Accellerator and Brake
   if (addr == 0x394) {
-    int driver_override = ((to_push->RDHR >> 13) & 0x3);
-    if (driver_override > 0) {
+    hyundai_driver_override = ((to_push->RDHR >> 13) & 0x3);
+    if (hyundai_driver_override > 0) {
       controls_allowed = 0;
     } else {
       controls_allowed = 1;
@@ -109,4 +125,3 @@ const safety_hooks hyundai_hooks = {
   .ignition = hyundai_ign_hook,
   .fwd = hyundai_fwd_hook,
 };
-
