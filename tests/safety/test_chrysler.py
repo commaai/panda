@@ -40,6 +40,8 @@ class TestChryslerSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.chrysler_rx_hook(self._acc_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.chrysler_rx_hook(self._acc_msg(0))
+    self.assertFalse(self.safety.get_controls_allowed())
 
   def test_disengage_on_brake(self):
     self.safety.set_controls_allowed(1)

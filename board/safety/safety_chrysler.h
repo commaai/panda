@@ -4,6 +4,7 @@
 //   out-state
 //      brake pressed
 //      stock LKAS ECU is online
+//      ACC is not active (white or disabled)
 
 // chrysler_: namespacing
 int chrysler_speed = 0;
@@ -46,6 +47,8 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if (addr == 0x1f4 && bus_number == 0) {
     if (((to_push->RDLR & 0x380000) >> 19) == 7) {
       controls_allowed = 1;
+    } else {
+      controls_allowed = 0;
     }
   }
 
@@ -57,11 +60,10 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 }
 
-// if controls_allowed and no pedals pressed
+// if controls_allowed
 //     allow steering up to limit
 // else
 //     block all commands that produce actuation
-
 static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // There can be only one! (LKAS)
   if (chrysler_lkas_detected) {
