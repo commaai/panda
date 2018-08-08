@@ -71,7 +71,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
 #endif
 
 // ***************************** honda can checksum *****************************
-
+/*
 int can_cksum(uint8_t *dat, int len, int addr, int idx) {
   int i;
   int s = 0;
@@ -86,12 +86,32 @@ int can_cksum(uint8_t *dat, int len, int addr, int idx) {
   s = 8-s;
   return s&0xF;
 }
+*/
+
+
+// ***************************** toyota can checksum ****************************
+
+int fix(uint64_t msg, uint8_t len, uint16_t addr)
+{
+	uint8_t checksum = 0;
+	checksum =((addr & 0xFF00) >> 8) + (addr & 0x00FF) + len +1;
+	uint16_t temp_msg = msg;
+	
+	for (int ii = 0; ii < 8; ii++)
+	{
+		checksum += (temp_msg & 0x00FF);
+		temp_msg = temp_msg >> 8;
+	}
+	
+	return ((msg & ~0xFF) & (checksum & 0xFF));
+}
 
 // ***************************** can port *****************************
 
 // addresses to be used on CAN
 #define CAN_GAS_INPUT  0x200
 #define CAN_GAS_OUTPUT 0x201
+#define CAN_BRAKE_OUTPUT 0x343
 
 void CAN1_TX_IRQHandler() {
   // clear interrupt
@@ -134,13 +154,15 @@ void CAN1_RX0_IRQHandler() {
       }
 
       // normal packet
-      uint8_t *dat = (uint8_t *)&CAN->sFIFOMailBox[0].RDLR;
-      uint8_t *dat2 = (uint8_t *)&CAN->sFIFOMailBox[0].RDHR;
+      uint64_t *msg = (uint64_t *)&CAN->sFIFOMailBox[0].RDLR;
+      uint64_t *dat2 = (uint8_t *)&CAN->sFIFOMailBox[0].RDHR;
+	  
       uint16_t value_0 = (dat[0] << 8) | dat[1];
       uint16_t value_1 = (dat[2] << 8) | dat[3];
       uint8_t enable = (dat2[0] >> 7) & 1;
       uint8_t index = (dat2[1] >> 4) & 3;
-      if (can_cksum(dat, 5, CAN_GAS_INPUT, index) == (dat2[1] & 0xF)) {
+	  
+      if (can_cksum(msg, 7, CAN_GAS_INPUT) == (dat2[1] & 0xF)) {
         if (((current_index+1)&3) == index) {
           #ifdef DEBUG
             puts("setting gas ");
