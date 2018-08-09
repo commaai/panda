@@ -91,19 +91,20 @@ int can_cksum(uint8_t *dat, int len, int addr, int idx) {
 
 // ***************************** toyota can checksum ****************************
 
-int fix(uint64_t msg, uint8_t len, uint16_t addr)
+int fix(uint8_t *dat, uint8_t len, uint16_t addr)
 {
 	uint8_t checksum = 0;
 	checksum =((addr & 0xFF00) >> 8) + (addr & 0x00FF) + len +1;
-	uint16_t temp_msg = msg;
+	//uint16_t temp_msg = msg;
 	
 	for (int ii = 0; ii < 8; ii++)
 	{
-		checksum += (temp_msg & 0x00FF);
-		temp_msg = temp_msg >> 8;
+		checksum += (dat[ii]);
+		//temp_msg = temp_msg >> 8;
 	}
 	
-	return ((msg & ~0xFF) & (checksum & 0xFF));
+	//return ((msg & ~0xFF) & (checksum & 0xFF));
+	return checksum;
 }
 
 // ***************************** can port *****************************
@@ -154,37 +155,35 @@ void CAN1_RX0_IRQHandler() {
       }
 
       // normal packet
-      uint64_t *msg = (uint64_t *)&CAN->sFIFOMailBox[0].RDLR;
-      uint64_t *dat2 = (uint8_t *)&CAN->sFIFOMailBox[0].RDHR;
+	  //TODO: forward to 343 (for brakes) and send empty msgs with checksums
+      uint8_t *dat = (uint8_t *)&CAN->sFIFOMailBox[0].RDLR;
+      uint8_t *dat2 = (uint8_t *)&CAN->sFIFOMailBox[0].RDHR;
+      int16_t accel_cmd = (dat[0] << 8) | dat[1];
+      uint8_t set_me_x63 = (dat[2]);
+      uint8_t release_standstill = (dat[3] & 0x80) >> 7;
+	  uint8_t set_me_1 = (dat[3] & 0x40) >> 6;
+	  uint8_t cancel_req = (dat[3] & 0xFF); // i guess? it's the first bit on the 4th message of 343
+	  uint8_t cksum = dat2[3];
 	  
-      uint16_t value_0 = (dat[0] << 8) | dat[1];
-      uint16_t value_1 = (dat[2] << 8) | dat[3];
-      uint8_t enable = (dat2[0] >> 7) & 1;
-      uint8_t index = (dat2[1] >> 4) & 3;
-	  
-      if (can_cksum(msg, 7, CAN_GAS_INPUT) == (dat2[1] & 0xF)) {
-        if (((current_index+1)&3) == index) {
+      if (fix(*dat, 7, CAN_GAS_INPUT) == (dat2[7])) {
+        if (set_me_1 == 1) {
           #ifdef DEBUG
             puts("setting gas ");
             puth(value);
             puts("\n");
-          #endif
-          if (enable) {
-            gas_set_0 = value_0;
-            gas_set_1 = value_1;
+            gas_set_0 = (pdl0 + accel_cmd); //default voltage is 1.6V
+            gas_set_1 = (pdl1 + accel_cmd); //default voltage is 0.8V
           } else {
-            // clear the fault state if values are 0
-            if (value_0 == 0 && value_1 == 0) {
+            if (accel_cmd == 0) {
               state = NO_FAULT;
             } else {
-              state = FAULT_INVALID;
+              
             }
             gas_set_0 = gas_set_1 = 0;
           }
           // clear the timeout
           timeout = 0;
         }
-        current_index = index;
       } else {
         // wrong checksum = fault
         state = FAULT_BAD_CHECKSUM;
@@ -223,13 +222,11 @@ void TIM3_IRQHandler() {
     dat[2] = (pdl1>>8)&0xFF;
     dat[3] = (pdl1>>0)&0xFF;
     dat[4] = state;
-    dat[5] = can_cksum(dat, 5, CAN_GAS_OUTPUT, pkt_idx) | (pkt_idx<<4);
+    dat[5] = fix(dat, 5, CAN_GAS_OUTPUT);
     CAN->sTxMailBox[0].TDLR = dat[0] | (dat[1]<<8) | (dat[2]<<16) | (dat[3]<<24);
     CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5]<<8);
     CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 5
     CAN->sTxMailBox[0].TIR = (CAN_GAS_OUTPUT << 21) | 1;
-    ++pkt_idx;
-    pkt_idx &= 3;
   } else {
     // old can packet hasn't sent!
     state = FAULT_SEND;
