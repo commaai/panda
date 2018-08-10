@@ -178,6 +178,8 @@ void CAN1_RX0_IRQHandler() {
             puts("setting gas ");
             puth(value);
             puts("\n");
+		  #endif
+		  if (set_me_1) {
             gas_set_0 = (pdl0 + accel_cmd); //default voltage is 1.6V
             gas_set_1 = (pdl1 + accel_cmd); //default voltage is 0.8V
           } else {
