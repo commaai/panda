@@ -180,15 +180,15 @@ void CAN1_RX0_IRQHandler() {
             puts("\n");
 		  #endif
 		  if (set_me_1) {
-            gas_set_0 = (pdl0 + accel_cmd); //default voltage is 1.6V
-            gas_set_1 = (pdl1 + accel_cmd); //default voltage is 0.8V
+            gas_set_0 = accel_cmd; //default voltage is 1.6V
+            gas_set_1 = accel_cmd; //default voltage is 0.8V
           } else {
             if (accel_cmd == 0) {
               state = NO_FAULT;
             } else {
               state = FAULT_INVALID;
             }
-            gas_set_0 = gas_set_1 = 0;
+            gas_set_0 = gas_set_1 = -1;
           }
           // clear the timeout
           timeout = 0;
@@ -268,8 +268,8 @@ void pedal() {
 
   // write the pedal to the DAC
   if (state == NO_FAULT) {
-    dac_set(0, max(gas_set_0, pdl0));
-    dac_set(1, max(gas_set_1, pdl1));
+    dac_set(0, max((gas_set_0 + pdl0), pdl0));
+    dac_set(1, max((gas_set_1 + pdl1), pdl1));
   } else {
     dac_set(0, pdl0);
     dac_set(1, pdl1);
