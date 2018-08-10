@@ -165,6 +165,13 @@ void CAN1_RX0_IRQHandler() {
 	  uint8_t cancel_req = (dat[3] & 0xFF); // i guess? it's the first bit on the 4th message of 343
 	  uint8_t cksum = dat2[3];
 	  
+	  //forward whole ACC message to 0x343
+	  CAN->sTxMailBox[0].TIR = (CAN_BRAKE_OUTPUT << 21) | 1;
+	  CAN->sTxMailBox[0].TDLR = dat[0] | (dat[1]<<8) | (dat[2]<<16) | (dat[3]<<24);
+      CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5]<<8) | (dat[6]<<16) | (dat[7]<<24);
+      CAN->sTxMailBox[0].TDTR = 7;  // len of packet is 8
+	  
+	  //match calculated checksum to Eon's given checksum
       if (fix(*dat, 7, CAN_GAS_INPUT) == (dat2[7])) {
         if (set_me_1 == 1) {
           #ifdef DEBUG
@@ -177,7 +184,7 @@ void CAN1_RX0_IRQHandler() {
             if (accel_cmd == 0) {
               state = NO_FAULT;
             } else {
-              
+              state = FAULT_INVALID;
             }
             gas_set_0 = gas_set_1 = 0;
           }
@@ -227,6 +234,7 @@ void TIM3_IRQHandler() {
     CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5]<<8);
     CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 5
     CAN->sTxMailBox[0].TIR = (CAN_GAS_OUTPUT << 21) | 1;
+	
   } else {
     // old can packet hasn't sent!
     state = FAULT_SEND;
