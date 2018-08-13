@@ -94,10 +94,10 @@ int can_cksum(uint8_t *dat, int len, int addr, int idx) {
 int fix(uint8_t *dat, uint8_t len, uint16_t addr)
 {
 	uint8_t checksum = 0;
-	checksum =((addr & 0xFF00) >> 8) + (addr & 0x00FF) + len;
+	checksum =((addr & 0xFF00) >> 8) + (addr & 0x00FF) + len + 1;
 	//uint16_t temp_msg = msg;
 	
-	for (int ii = 0; ii < (len - 2); ii++)
+	for (int ii = 0; ii < (len - 1); ii++)
 	{
 		checksum += (dat[ii]);
 		//temp_msg = temp_msg >> 8;
@@ -155,24 +155,24 @@ void CAN1_RX0_IRQHandler() {
       }
 
       // normal packet
-	  //TODO: forward to 343 (for brakes) and send empty msgs with checksums
+	   
       uint8_t *dat = (uint8_t *)&CAN->sFIFOMailBox[0].RDLR;
       uint8_t *dat2 = (uint8_t *)&CAN->sFIFOMailBox[0].RDHR;
       int16_t accel_cmd = (dat[0] << 8) | dat[1];
       uint8_t set_me_x63 = (dat[2]);
       uint8_t release_standstill = (dat[3] & 0x80) >> 7;
-	  uint8_t set_me_1 = (dat[3] & 0x40) >> 6;
-	  uint8_t cancel_req = (dat[3] & 0xFF); // i guess? it's the first bit on the 4th message of 343
-	  uint8_t cksum = dat2[3];
+      uint8_t set_me_1 = (dat[3] & 0x40) >> 6;
+      uint8_t cancel_req = (dat[3] & 0xFF); // i guess? it's the first bit on the 4th message of 343
+      uint8_t cksum = dat2[3];
 	  
 	  //forward whole ACC message to 0x343
-	  CAN->sTxMailBox[0].TIR = (CAN_BRAKE_OUTPUT << 21) | 1;
-	  CAN->sTxMailBox[0].TDLR = dat[0] | (dat[1]<<8) | (dat[2]<<16) | (dat[3]<<24);
+      CAN->sTxMailBox[0].TIR = (CAN_BRAKE_OUTPUT << 21) | 1;
+      CAN->sTxMailBox[0].TDLR = dat[0] | (dat[1]<<8) | (dat[2]<<16) | (dat[3]<<24);
       CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5]<<8) | (dat[6]<<16) | (dat[7]<<24);
       CAN->sTxMailBox[0].TDTR = 7;  // len of packet is 8
 	  
 	  //match calculated checksum to Eon's given checksum
-      if (fix(*dat, 7, CAN_GAS_INPUT) == (dat2[7])) {
+      if (fix(*dat, 7, CAN_GAS_INPUT) == (dat2[3])) {
         if (set_me_1 == 1) {
           #ifdef DEBUG
             puts("setting gas ");
