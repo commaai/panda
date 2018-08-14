@@ -42,37 +42,6 @@ int eac_status = 0;
 
 int tesla_ignition_started = 0;
 
-// interp function that holds extreme values
-float tesla_interpolate(struct lookup_t xy, float x)
-{
-  int size = sizeof(xy.x) / sizeof(xy.x[0]);
-  // x is lower than the first point in the x array. Return the first point
-  if (x <= xy.x[0])
-  {
-    return xy.y[0];
-  }
-  else
-  {
-    // find the index such that (xy.x[i] <= x < xy.x[i+1]) and linearly interp
-    for (int i = 0; i < size - 1; i++)
-    {
-      if (x < xy.x[i + 1])
-      {
-        float x0 = xy.x[i];
-        float y0 = xy.y[i];
-        float dx = xy.x[i + 1] - x0;
-        float dy = xy.y[i + 1] - y0;
-        // dx should not be zero as xy.x is supposed ot be monotonic
-        if (dx <= 0.)
-          dx = 0.0001;
-        return dy * (x - x0) / dx + y0;
-      }
-    }
-    // if no such point is found, then x > xy.x[size-1]. Return last point
-    return xy.y[size - 1];
-  }
-}
-
 static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push)
 {
   set_gmlan_digital_output(GMLAN_HIGH);
@@ -171,8 +140,8 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push)
 
     // *** angle real time check
     // add 1 to not false trigger the violation and multiply by 25 since the check is done every 250 ms and steer angle is updated at     100Hz
-    int rt_delta_angle_up = ((int)((tesla_interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, tesla_speed) * 25. + 1.)));
-    int rt_delta_angle_down = ((int)((tesla_interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, tesla_speed) * 25. + 1.)));
+    int rt_delta_angle_up = ((int)((interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, tesla_speed) * 25. + 1.)));
+    int rt_delta_angle_down = ((int)((interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, tesla_speed) * 25. + 1.)));
     int highest_rt_angle = tesla_rt_angle_last + (tesla_rt_angle_last > 0 ? rt_delta_angle_up : rt_delta_angle_down);
     int lowest_rt_angle = tesla_rt_angle_last - (tesla_rt_angle_last > 0 ? rt_delta_angle_down : rt_delta_angle_up);
 
@@ -238,11 +207,11 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send)
       {
 
         // add 1 to not false trigger the violation
-        int delta_angle_up = (int)(tesla_interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, tesla_speed) * 25. + 1.);
-        int delta_angle_down = (int)(tesla_interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, tesla_speed) * 25. + 1.);
+        int delta_angle_up = (int)(interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, tesla_speed) * 25. + 1.);
+        int delta_angle_down = (int)(interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, tesla_speed) * 25. + 1.);
         int highest_desired_angle = tesla_desired_angle_last + (tesla_desired_angle_last > 0 ? delta_angle_up : delta_angle_down);
         int lowest_desired_angle = tesla_desired_angle_last - (tesla_desired_angle_last > 0 ? delta_angle_down : delta_angle_up);
-        int TESLA_MAX_ANGLE = (int)(tesla_interpolate(TESLA_LOOKUP_MAX_ANGLE, tesla_speed) + 1.);
+        int TESLA_MAX_ANGLE = (int)(interpolate(TESLA_LOOKUP_MAX_ANGLE, tesla_speed) + 1.);
 
         if (max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle))
         {
