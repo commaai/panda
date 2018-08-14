@@ -5,10 +5,13 @@ struct sample_t {
   int max;
 } sample_t_default = {{0}, 0, 0};
 
+// no float support in STM32F2 micros (cortex-m3)
+#ifdef PANDA
 struct lookup_t {
   float x[3];
   float y[3];
 };
+#endif
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
@@ -24,7 +27,9 @@ int driver_limit_check(int val, int val_last, struct sample_t *val_driver,
   const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
   const int MAX_ALLOWANCE, const int DRIVER_FACTOR);
 int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
+#ifdef PANDA
 float interpolate(struct lookup_t xy, float x);
+#endif
 
 typedef void (*safety_hook_init)(int16_t param);
 typedef void (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);
@@ -209,6 +214,7 @@ int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
 }
 
 
+#ifdef PANDA
 // interp function that holds extreme values
 float interpolate(struct lookup_t xy, float x) {
   int size = sizeof(xy.x) / sizeof(xy.x[0]);
@@ -233,3 +239,4 @@ float interpolate(struct lookup_t xy, float x) {
     return xy.y[size - 1];
   }
 }
+#endif
