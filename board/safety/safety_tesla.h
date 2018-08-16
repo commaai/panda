@@ -36,8 +36,6 @@ int steer_allowed = 1;
 int tesla_brake_prev = 0;
 int tesla_gas_prev = 0;
 int tesla_speed = 0;
-int current_car_time = -1;
-int time_at_last_stalk_pull = -1;
 int eac_status = 0;
 
 int tesla_ignition_started = 0;
@@ -62,15 +60,6 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push)
     addr = to_push->RIR >> 21;
   }
 
-  // Record the current car time in current_car_time (for use with double-pulling cruise stalk)
-  if (addr == 0x318)
-  {
-    int hour = (to_push->RDLR & 0x1F000000) >> 24;
-    int minute = (to_push->RDHR & 0x3F00) >> 8;
-    int second = (to_push->RDLR & 0x3F0000) >> 16;
-    current_car_time = (hour * 3600) + (minute * 60) + second;
-  }
-
   if (addr == 0x45)
   {
     // 6 bits starting at position 0
@@ -78,11 +67,8 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push)
     if (lever_position == 2)
     { // pull forward
       // activate openpilot
-      // TODO: uncomment the if to use double pull to activate
-      //if (current_car_time <= time_at_last_stalk_pull + 1 && current_car_time != -1 && time_at_last_stalk_pull != -1) {
       controls_allowed = 1;
       //}
-      time_at_last_stalk_pull = current_car_time;
     }
     else if (lever_position == 1)
     { // push towards the back
@@ -124,7 +110,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push)
     // if EPAS_eacStatus is not 1 or 2, disable control
     eac_status = ((to_push->RDHR >> 21)) & 0x7;
     // For human steering override we must not disable controls when eac_status == 0
-    // Additional safety: we could only allow eac_status == 0 when we have human steerign allowed
+    // Additional safety: we could only allow eac_status == 0 when we have human steering allowed
     if ((controls_allowed == 1) && (eac_status != 0) && (eac_status != 1) && (eac_status != 2))
     {
       controls_allowed = 0;
