@@ -11,7 +11,7 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 }
 
 static void hyundai_init(int16_t param) {
-  controls_allowed = 0;
+  controls_allowed = 1;
   hyundai_giraffe_switch_1 = 0;
 }
 
