@@ -1,5 +1,5 @@
 const int HYUNDAI_MAX_STEER = 250;
-const int HYUNDAI_MAX_RT_DELTA = 128;          // max delta torque allowed for real time checks
+const int HYUNDAI_MAX_RT_DELTA = 112;          // max delta torque allowed for real time checks
 const int32_t HYUNDAI_RT_INTERVAL = 250000;    // 250ms between real time checks
 const int HYUNDAI_MAX_RATE_UP = 3;
 const int HYUNDAI_MAX_RATE_DOWN = 7;
