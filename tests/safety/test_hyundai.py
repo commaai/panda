@@ -67,6 +67,23 @@ class TestHyundaiSafety(unittest.TestCase):
     self.safety.set_controls_allowed(0)
     self.assertFalse(self.safety.get_controls_allowed())
 
+  def test_enable_control_allowed_from_cruise(self):
+    to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_push[0].RIR = 1057 << 21
+    to_push[0].RDLR = 1 << 13
+
+    self.safety.hyundai_rx_hook(to_push)
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_disable_control_allowed_from_cruise(self):
+    to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_push[0].RIR = 1057 << 21
+    to_push[0].RDLR = 0
+
+    self.safety.set_controls_allowed(1)
+    self.safety.hyundai_rx_hook(to_push)
+    self.assertFalse(self.safety.get_controls_allowed())
+
   def test_non_realtime_limit_up(self):
     self.safety.set_hyundai_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
