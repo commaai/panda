@@ -30,7 +30,7 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   if (addr == 897) {
-    int torque_driver_new = ((to_push->RDHR >> 11) & 0x7ff) - 2048;
+    int torque_driver_new = ((to_push->RDLR >> 11) & 0xfff) - 2048;
     // update array of samples
     update_sample(&hyundai_torque_driver, torque_driver_new);
   }
@@ -77,8 +77,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // LKA STEER: safety check
   if (addr == 832) {
-    int rdlr = to_send->RDLR;
-    int desired_torque = ((rdlr >> 16) & 0x7ff) - 1024;
+    int desired_torque = ((to_send->RDLR >> 16) & 0x7ff) - 1024;
     uint32_t ts = TIM2->CNT;
     int violation = 0;
 
