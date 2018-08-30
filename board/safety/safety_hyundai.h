@@ -10,6 +10,7 @@ int hyundai_brake_prev = 0;
 int hyundai_gas_prev = 0;
 int hyundai_speed = 0;
 int hyundai_camera_detected = 0;
+int hyundai_giraffe_switch_2 = 0;          // is giraffe switch 2 high?
 int hyundai_rt_torque_last = 0;
 int hyundai_desired_torque_last = 0;
 int hyundai_cruise_engaged_last = 0;
@@ -17,7 +18,7 @@ uint32_t hyundai_ts_last = 0;
 struct sample_t hyundai_torque_driver;         // last few driver torques measured
 
 static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  int bus_number = (to_push->RDTR >> 4) & 0xFF;
+  int bus = (to_push->RDTR >> 4) & 0xFF;
   uint32_t addr;
   if (to_push->RIR & 4) {
     // Extended
@@ -36,7 +37,7 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // check if stock camera ECU is still online
-  if (bus_number == 0 && addr == 832) {
+  if (bus == 0 && addr == 832) {
     hyundai_camera_detected = 1;
     controls_allowed = 0;
   }
@@ -51,6 +52,11 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       controls_allowed = 0;
     }
     hyundai_cruise_engaged_last = cruise_engaged;
+  }
+
+  // 832 is lkas cmd. If it is on bus 2, then giraffe switch 2 is high
+  if ((to_push->RIR>>21) == 832 && (bus == 2)) {
+    hyundai_giraffe_switch_2 = 1;
   }
 }
 
@@ -126,11 +132,27 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return true;
 }
 
+static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+
+  // forward cam to ccan and viceversa, except lkas cmd
+  if ((bus_num == 0 || bus_num == 2) && hyundai_giraffe_switch_2) {
+    int addr = to_fwd->RIR>>21;
+    bool is_lkas_msg = addr == 832 && bus_num == 2;
+    return is_lkas_msg? -1 : (uint8_t)(~bus_num & 0x2);
+  }
+  return -1;
+}
+
+static void hyundai_init(int16_t param) {
+  controls_allowed = 0;
+  hyundai_giraffe_switch_2 = 0;
+}
+
 const safety_hooks hyundai_hooks = {
-  .init = nooutput_init,
+  .init = hyundai_init,
   .rx = hyundai_rx_hook,
   .tx = hyundai_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
-  .fwd = nooutput_fwd_hook,
+  .fwd = hyundai_fwd_hook,
 };
