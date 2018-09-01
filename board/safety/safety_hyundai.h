@@ -6,9 +6,6 @@ const int HYUNDAI_MAX_RATE_DOWN = 7;
 const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
 const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
 
-int hyundai_brake_prev = 0;
-int hyundai_gas_prev = 0;
-int hyundai_speed = 0;
 int hyundai_camera_detected = 0;
 int hyundai_giraffe_switch_2 = 0;          // is giraffe switch 2 high?
 int hyundai_rt_torque_last = 0;
@@ -67,11 +64,6 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     return 0;
   }
 
-  // disallow actuator commands if gas or brake (with vehicle moving) are pressed
-  // and the the latching controls_allowed flag is True
-  int pedal_pressed = hyundai_gas_prev || (hyundai_brake_prev && hyundai_speed);
-  int current_controls_allowed = controls_allowed && !pedal_pressed;
-
   uint32_t addr;
   if (to_send->RIR & 4) {
     // Extended
@@ -87,7 +79,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     uint32_t ts = TIM2->CNT;
     int violation = 0;
 
-    if (current_controls_allowed) {
+    if (controls_allowed) {
 
       // *** global torque limit check ***
       violation |= max_limit_check(desired_torque, HYUNDAI_MAX_STEER, -HYUNDAI_MAX_STEER);
@@ -112,12 +104,12 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
 
     // no torque if controls is not allowed
-    if (!current_controls_allowed && (desired_torque != 0)) {
+    if (!controls_allowed && (desired_torque != 0)) {
       violation = 1;
     }
 
     // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !current_controls_allowed) {
+    if (violation || !controls_allowed) {
       hyundai_desired_torque_last = 0;
       hyundai_rt_torque_last = 0;
       hyundai_ts_last = ts;
@@ -126,6 +118,13 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (violation) {
       return false;
     }
+  }
+
+  // FORCE CANCEL: safety check only relevant when spamming the cancel button.
+  // ensuring that only the cancel button press is sent (VAL 4) when controls are off.
+  // This avoids unintended engagements while still allowing resume spam
+  if (((to_send->RIR>>21) == 1265) && !controls_allowed && ((to_send->RDTR >> 4) & 0xFF) == 0) {
+    if ((to_send->RDLR & 0x7) != 4) return 0;
   }
 
   // 1 allows the message through

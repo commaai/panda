@@ -32,6 +32,12 @@ class TestHyundaiSafety(unittest.TestCase):
     cls.safety.nooutput_init(0)
     cls.safety.init_tests_hyundai()
 
+  def _button_msg(self, buttons):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 1265 << 21
+    to_send[0].RDLR = buttons
+    return to_send
+
   def _set_prev_torque(self, t):
     self.safety.set_hyundai_desired_torque_last(t)
     self.safety.set_hyundai_rt_torque_last(t)
@@ -160,6 +166,20 @@ class TestHyundaiSafety(unittest.TestCase):
       self.safety.set_timer(RT_INTERVAL + 1)
       self.assertTrue(self.safety.hyundai_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
       self.assertTrue(self.safety.hyundai_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+
+
+  def test_spam_cancel_safety_check(self):
+    RESUME_BTN = 1
+    SET_BTN = 2
+    CANCEL_BTN = 4
+    BUTTON_MSG = 1265
+    self.safety.set_controls_allowed(0)
+    self.assertTrue(self.safety.hyundai_tx_hook(self._button_msg(CANCEL_BTN)))
+    self.assertFalse(self.safety.hyundai_tx_hook(self._button_msg(RESUME_BTN)))
+    self.assertFalse(self.safety.hyundai_tx_hook(self._button_msg(SET_BTN)))
+    # do not block resume if we are engaged already
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self.safety.hyundai_tx_hook(self._button_msg(RESUME_BTN)))
 
 
 if __name__ == "__main__":
