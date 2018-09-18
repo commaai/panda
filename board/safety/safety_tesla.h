@@ -7,28 +7,6 @@
 //      accel rising edge
 //      brake rising edge
 //      brake > 0mph
-
-struct fsample_t {
-  float values[6];
-  float min;
-  float max;
-}  fsample_t_default = {{0.}, 0., 0.};
-
-// given a new sample, update the sample_t struct
-void update_fsample(struct fsample_t *sample, float sample_new) {
-  for (int i = sizeof(sample->values)/sizeof(sample->values[0]) - 1; i > 0; i--) {
-    sample->values[i] = sample->values[i-1];
-  }
-  sample->values[0] = sample_new;
-
-  // get the minimum and maximum measured samples
-  sample->min = sample->max = sample->values[0];
-  for (int i = 1; i < sizeof(sample->values)/sizeof(sample->values[0]); i++) {
-    if (sample->values[i] < sample->min) sample->min = sample->values[i];
-    if (sample->values[i] > sample->max) sample->max = sample->values[i];
-  }
-}
-
 //
 int fmax_limit_check(float val, const float MAX, const float MIN) {
   return (val > MAX) || (val < MIN);
