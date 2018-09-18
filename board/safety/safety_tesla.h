@@ -49,8 +49,6 @@ const struct lookup_t TESLA_LOOKUP_MAX_ANGLE = {
 
 const int TESLA_RT_INTERVAL = 250000; // 250ms between real time checks
 
-struct fsample_t tesla_angle_meas; // last 3 steer angles
-
 // state of angle limits
 float tesla_desired_angle_last = 0; // last desired steer angle
 float tesla_rt_angle_last = 0.; // last real time angle
@@ -162,9 +160,6 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push)
       tesla_ts_angle_last = ts;
     }
 
-    // update array of samples
-    update_fsample(&tesla_angle_meas, angle_meas_now);
-
     // check for violation;
     if (fmax_limit_check(angle_meas_now, highest_rt_angle, lowest_rt_angle))
     {
@@ -215,8 +210,8 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send)
     if (controls_allowed)
     {
       // add 1 to not false trigger the violation
-      float delta_angle_up = interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, tesla_speed) * 25. + 1.;
-      float delta_angle_down = interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, tesla_speed) * 25. + 1.;
+      float delta_angle_up = interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, tesla_speed) + 1.;
+      float delta_angle_down = interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, tesla_speed) + 1.;
       float highest_desired_angle = tesla_desired_angle_last + (tesla_desired_angle_last > 0 ? delta_angle_up : delta_angle_down);
       float lowest_desired_angle = tesla_desired_angle_last - (tesla_desired_angle_last > 0 ? delta_angle_down : delta_angle_up);
       float TESLA_MAX_ANGLE = interpolate(TESLA_LOOKUP_MAX_ANGLE, tesla_speed) + 1.;
