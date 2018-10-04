@@ -41,9 +41,15 @@ int eac_status = 0;
 
 int tesla_ignition_started = 0;
 
+
+void set_gmlan_digital_output(int to_set);
+void reset_gmlan_switch_timeout(void);
+void gmlan_switch_init(int timeout_enable);
+
+
 static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push)
 {
-  set_gmlan_digital_output(GMLAN_HIGH);
+  set_gmlan_digital_output(0); // #define GMLAN_HIGH 0
   reset_gmlan_switch_timeout(); //we're still in tesla safety mode, reset the timeout counter and make sure our output is enabled
 
   //int bus_number = (to_push->RDTR >> 4) & 0xFF;
@@ -115,7 +121,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push)
     if ((controls_allowed == 1) && (eac_status != 0) && (eac_status != 1) && (eac_status != 2))
     {
       controls_allowed = 0;
-      puts("EPAS error! \n");
+      //puts("EPAS error! \n");
     }
   }
   //get latest steering wheel angle
@@ -144,7 +150,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push)
       // We should not be able to STEER under these conditions
       // Other sending is fine (to allow human override)
       controls_allowed = 0;
-      puts("WARN: RT Angle - No steer allowed! \n");
+      //puts("WARN: RT Angle - No steer allowed! \n");
     }
     else
     {
@@ -199,7 +205,7 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send)
 
       //check for angle delta changes
       violation |= fmax_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
-      
+
       if (violation)
       {
         controls_allowed = 0;
