@@ -138,20 +138,19 @@ static void honda_init(int16_t param) {
   honda_alt_brake_msg = false;
 }
 
-const safety_hooks honda_hooks = {
-  .init = honda_init,
-  .rx = honda_rx_hook,
-  .tx = honda_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
-  .ignition = default_ign_hook,
-  .fwd = nooutput_fwd_hook,
-};
-
 static void honda_bosch_init(int16_t param) {
   controls_allowed = 0;
   bosch_hardware = true;
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = param == 1 ? true : false;
+}
+
+static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+  // fwd from car to camera
+  if (bus_num == 0) {
+    return 2;
+  }
+  return -1;
 }
 
 static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
@@ -161,6 +160,15 @@ static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   }
   return -1;
 }
+
+const safety_hooks honda_hooks = {
+  .init = honda_init,
+  .rx = honda_rx_hook,
+  .tx = honda_tx_hook,
+  .tx_lin = nooutput_tx_lin_hook,
+  .ignition = default_ign_hook,
+  .fwd = honda_fwd_hook,
+};
 
 const safety_hooks honda_bosch_hooks = {
   .init = honda_bosch_init,
