@@ -49,8 +49,8 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // enter controls on rising edge of ACC, exit controls on ACC off
   if ((to_push->RIR>>21) == 0x1D2) {
-    // 4 bits: 55-52
-    int cruise_engaged = to_push->RDHR & 0xF00000;
+    // 1 bit: XACCACT
+    int cruise_engaged = to_push->RDLR & 0x20;
     if (cruise_engaged && !toyota_cruise_engaged_last) {
       controls_allowed = 1;
     } else if (!cruise_engaged) {
@@ -107,7 +107,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         violation |= max_limit_check(desired_torque, TOYOTA_MAX_TORQUE, -TOYOTA_MAX_TORQUE);
 
         // *** torque rate limit check ***
-        violation |= dist_to_meas_check(desired_torque, toyota_desired_torque_last, 
+        violation |= dist_to_meas_check(desired_torque, toyota_desired_torque_last,
           &toyota_torque_meas, TOYOTA_MAX_RATE_UP, TOYOTA_MAX_RATE_DOWN, TOYOTA_MAX_TORQUE_ERROR);
 
         // used next time
@@ -123,7 +123,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
           toyota_ts_last = ts;
         }
       }
-      
+
       // no torque if controls is not allowed
       if (!controls_allowed && (desired_torque != 0)) {
         violation = 1;
@@ -143,11 +143,6 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // 1 allows the message through
-  return true;
-}
-
-static int toyota_tx_lin_hook(int lin_num, uint8_t *data, int len) {
-  // TODO: add safety if using LIN
   return true;
 }
 
@@ -173,7 +168,7 @@ const safety_hooks toyota_hooks = {
   .init = toyota_init,
   .rx = toyota_rx_hook,
   .tx = toyota_tx_hook,
-  .tx_lin = toyota_tx_lin_hook,
+  .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = toyota_fwd_hook,
 };
@@ -189,7 +184,7 @@ const safety_hooks toyota_nolimits_hooks = {
   .init = toyota_nolimits_init,
   .rx = toyota_rx_hook,
   .tx = toyota_tx_hook,
-  .tx_lin = toyota_tx_lin_hook,
+  .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = toyota_fwd_hook,
 };
