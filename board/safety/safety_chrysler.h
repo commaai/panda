@@ -11,8 +11,7 @@ int chrysler_speed = 0;
 
 // silence everything if stock ECUs are still online
 int chrysler_lkas_detected = 0;
-
-int chrysler_ignition_started = 0;
+int chrysler_desired_torque_last = 0;
 
 static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus_number = (to_push->RDTR >> 4) & 0xFF;
@@ -25,12 +24,6 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   } else {
     // Normal
     addr = to_push->RIR >> 21;
-  }
-
-  // Gear selector used for determining ignition.
-  if (addr == 0x2ea && bus_number == 0) {
-    int gear = to_push->RDLR & 0x7;
-    chrysler_ignition_started = gear > 0; //Park = 0. If out of park, we're "on."
   }
 
   if (addr == 0x144 && bus_number == 0) {
@@ -79,21 +72,40 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     addr = to_send->RIR >> 21;
   }
 
-  // LKA STEER: Too large of values are ignored by the car, but still filter it out.
+  // LKA STEER: Too large of values cause the steering actuator ECU to silently
+  // fault and no longer actuate the wheel until the car is rebooted.
   if (addr == 0x292) {
     int rdlr = to_send->RDLR;
-    int steer = ((rdlr & 0x7) << 8) + ((rdlr & 0xFF00) >> 8);
     int straight = 1024;
-    int max_steer = 250;
-    if (steer > (straight + max_steer)) {
+    int steer = ((rdlr & 0x7) << 8) + ((rdlr & 0xFF00) >> 8) - straight;
+    int max_steer = 230;
+    int max_rate = 50; // ECU is fine with 100, but 3 is typical.
+    if (steer > max_steer) {
       return false;
     }
-    if (steer < (straight - max_steer)) {
+    if (steer < -max_steer) {
       return false;
     }
-    if (!controls_allowed) {
+    if (!controls_allowed && steer != 0) {
+      // If controls not allowed, only allow steering to move closer to 0.
+      if (chrysler_desired_torque_last == 0) {
+	return false;
+      }
+      if ((chrysler_desired_torque_last > 0) && (steer >= chrysler_desired_torque_last)) {
+	return false;
+      }
+      if ((chrysler_desired_torque_last < 0) && (steer <= chrysler_desired_torque_last)) {
+	return false;
+      }
+    }
+    if (steer < (chrysler_desired_torque_last - max_rate)) {
       return false;
     }
+    if (steer > (chrysler_desired_torque_last + max_rate)) {
+      return false;
+    }
+    
+    chrysler_desired_torque_last = steer;
   }
 
   // 1 allows the message through
@@ -107,11 +119,6 @@ static int chrysler_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 
 static void chrysler_init(int16_t param) {
   controls_allowed = 0;
-  chrysler_ignition_started = 0;
-}
-
-static int chrysler_ign_hook() {
-  return chrysler_ignition_started;
 }
 
 static int chrysler_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
@@ -123,7 +130,7 @@ const safety_hooks chrysler_hooks = {
   .rx = chrysler_rx_hook,
   .tx = chrysler_tx_hook,
   .tx_lin = chrysler_tx_lin_hook,
-  .ignition = chrysler_ign_hook,
+  .ignition = default_ign_hook,
   .fwd = chrysler_fwd_hook,
 };
 

@@ -56,12 +56,33 @@ class TestChryslerSafety(unittest.TestCase):
   def test_steer_tx(self):
     self.safety.set_controls_allowed(1)
     self.assertTrue(self.safety.chrysler_tx_hook(self._steer_msg(0)))
-    self.assertTrue(self.safety.chrysler_tx_hook(self._steer_msg(100)))
-    self.assertTrue(self.safety.chrysler_tx_hook(self._steer_msg(-100)))
-    self.assertFalse(self.safety.chrysler_tx_hook(self._steer_msg(300)))
-    self.assertFalse(self.safety.chrysler_tx_hook(self._steer_msg(-300)))
+    self.safety.set_chrysler_desired_torque_last(227)
+    self.assertTrue(self.safety.chrysler_tx_hook(self._steer_msg(230)))
+    self.assertFalse(self.safety.chrysler_tx_hook(self._steer_msg(231)))
+    self.safety.set_chrysler_desired_torque_last(-227)
+    self.assertFalse(self.safety.chrysler_tx_hook(self._steer_msg(-231)))
+    self.assertTrue(self.safety.chrysler_tx_hook(self._steer_msg(-230)))
+    # verify max change
+    self.safety.set_chrysler_desired_torque_last(0)
+    self.assertFalse(self.safety.chrysler_tx_hook(self._steer_msg(230)))
+    
     self.safety.set_controls_allowed(0)
-    self.assertFalse(self.safety.chrysler_tx_hook(self._steer_msg(100)))
+    self.safety.set_chrysler_desired_torque_last(0)
+    self.assertFalse(self.safety.chrysler_tx_hook(self._steer_msg(3)))
+    self.assertTrue(self.safety.chrysler_tx_hook(self._steer_msg(0)))
+    # verify when controls not allowed we can still go back towards 0
+    self.safety.set_chrysler_desired_torque_last(10)
+    self.assertFalse(self.safety.chrysler_tx_hook(self._steer_msg(10)))
+    self.assertFalse(self.safety.chrysler_tx_hook(self._steer_msg(11)))
+    self.assertTrue(self.safety.chrysler_tx_hook(self._steer_msg(7)))
+    self.assertTrue(self.safety.chrysler_tx_hook(self._steer_msg(4)))
+    self.assertTrue(self.safety.chrysler_tx_hook(self._steer_msg(0)))
+    self.safety.set_chrysler_desired_torque_last(-10)
+    self.assertFalse(self.safety.chrysler_tx_hook(self._steer_msg(-10)))
+    self.assertFalse(self.safety.chrysler_tx_hook(self._steer_msg(-11)))
+    self.assertTrue(self.safety.chrysler_tx_hook(self._steer_msg(-7)))
+    self.assertTrue(self.safety.chrysler_tx_hook(self._steer_msg(-4)))
+    self.assertTrue(self.safety.chrysler_tx_hook(self._steer_msg(0)))
 
 if __name__ == "__main__":
   unittest.main()
