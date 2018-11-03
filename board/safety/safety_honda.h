@@ -146,10 +146,15 @@ static void honda_bosch_init(int16_t param) {
 }
 
 static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
-  // fwd from car to camera
+  // fwd from car to camera. also fwd certain msgs from camera to car
+  int addr = to_fwd->RIR>>21;
   if (bus_num == 0) {
     return 2;
+  } else if (bus_num == 2 && addr != 0xE4 && addr != 0x1FA && addr != 0x30C &&
+              addr != 0x33D && addr != 0x35E && addr != 0x39E) {
+    return 0;
   }
+
   return -1;
 }
 
