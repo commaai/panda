@@ -1,4 +1,5 @@
-int toyota_camera_forwarded = 0;
+int toyota_giraffe_switch_1 = 0;          // is giraffe switch 1 high?
+int toyota_camera_forwarded = 0;          // should we forward the camera bus?
 
 // global torque limit
 const int TOYOTA_MAX_TORQUE = 1500;       // max torque cmd allowed ever
@@ -142,13 +143,16 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 static void toyota_init(int16_t param) {
   controls_allowed = 0;
   toyota_actuation_limits = 1;
+  toyota_giraffe_switch_1 = 0;
+  toyota_camera_forwarded = 0;
   toyota_dbc_eps_torque_factor = param;
 }
 
 static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   // forward cam to radar and viceversa if car, except lkas cmd and hud
-  if ((bus_num == 0 || bus_num == 2) && toyota_camera_forwarded) {
+  // don't forward when switch 1 is high
+  if ((bus_num == 0 || bus_num == 2) && toyota_camera_forwarded && !toyota_giraffe_switch_1) {
     int addr = to_fwd->RIR>>21;
     bool is_lkas_msg = (addr == 0x2E4 || addr == 0x412) && bus_num == 2;
     return is_lkas_msg? -1 : (uint8_t)(~bus_num & 0x2);
@@ -168,6 +172,8 @@ const safety_hooks toyota_hooks = {
 static void toyota_nolimits_init(int16_t param) {
   controls_allowed = 0;
   toyota_actuation_limits = 0;
+  toyota_giraffe_switch_1 = 0;
+  toyota_camera_forwarded = 0;
   toyota_dbc_eps_torque_factor = param;
 }
 
