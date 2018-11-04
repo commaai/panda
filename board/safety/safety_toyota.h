@@ -1,6 +1,4 @@
-int toyota_no_dsu_car = 0;                // ch-r and camry don't have the DSU
 int toyota_camera_forwarded = 0;
-int toyota_giraffe_switch_1 = 0;          // is giraffe switch 1 high?
 
 // global torque limit
 const int TOYOTA_MAX_TORQUE = 1500;       // max torque cmd allowed ever
@@ -65,13 +63,6 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if (bus == 2) {
     toyota_camera_forwarded = 1;
   }
-
-
-  // 0x2E4 is lkas cmd. If it is on bus 0, then giraffe switch 1 is high
-  if ((to_push->RIR>>21) == 0x2E4 && (bus == 0)) {
-    toyota_giraffe_switch_1 = 1;
-  }
-
 }
 
 static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
@@ -151,7 +142,6 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 static void toyota_init(int16_t param) {
   controls_allowed = 0;
   toyota_actuation_limits = 1;
-  toyota_giraffe_switch_1 = 0;
   toyota_dbc_eps_torque_factor = param;
 }
 
@@ -178,7 +168,6 @@ const safety_hooks toyota_hooks = {
 static void toyota_nolimits_init(int16_t param) {
   controls_allowed = 0;
   toyota_actuation_limits = 0;
-  toyota_giraffe_switch_1 = 0;
   toyota_dbc_eps_torque_factor = param;
 }
 
