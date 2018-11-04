@@ -1,4 +1,5 @@
 int toyota_no_dsu_car = 0;                // ch-r and camry don't have the DSU
+int toyota_camera_forwarded = 0;
 int toyota_giraffe_switch_1 = 0;          // is giraffe switch 1 high?
 
 // global torque limit
@@ -60,10 +61,11 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   int bus = (to_push->RDTR >> 4) & 0xF;
-  // 0x680 is a radar msg only found in dsu-less cars
-  if ((to_push->RIR>>21) == 0x680 && (bus == 1)) {
-    toyota_no_dsu_car = 1;
+  // msgs are only on bus 2 if panda is connected to frc
+  if (bus == 2) {
+    toyota_camera_forwarded = 1;
   }
+
 
   // 0x2E4 is lkas cmd. If it is on bus 0, then giraffe switch 1 is high
   if ((to_push->RIR>>21) == 0x2E4 && (bus == 0)) {
@@ -155,8 +157,8 @@ static void toyota_init(int16_t param) {
 
 static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
-  // forward cam to radar and viceversa if car is dsu-less, except lkas cmd and hud
-  if (bus_num == 0 || bus_num == 2) {
+  // forward cam to radar and viceversa if car, except lkas cmd and hud
+  if ((bus_num == 0 || bus_num == 2) && toyota_camera_forwarded) {
     int addr = to_fwd->RIR>>21;
     bool is_lkas_msg = (addr == 0x2E4 || addr == 0x412) && bus_num == 2;
     return is_lkas_msg? -1 : (uint8_t)(~bus_num & 0x2);
