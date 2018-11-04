@@ -64,6 +64,11 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if (bus == 2) {
     toyota_camera_forwarded = 1;
   }
+
+  // 0x2E4 is lkas cmd. If it is on bus 0, then giraffe switch 1 is high
+  if ((to_push->RIR>>21) == 0x2E4 && (bus == 0)) {
+    toyota_giraffe_switch_1 = 1;
+  }
 }
 
 static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
