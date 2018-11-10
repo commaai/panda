@@ -147,12 +147,14 @@ static void honda_bosch_init(int16_t param) {
 
 static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   // fwd from car to camera. also fwd certain msgs from camera to car
-  // 0xE4 is steering on all cars except CRV and RDX. 0x194 for CRV and RDX
+  // 0xE4 is steering on all cars except CRV and RDX, 0x194 for CRV and RDX,
+  // 0x1FA is brake control, 0x30C is acc hud, 0x33D is lkas hud,
+  // 0x39f is radar hud
   int addr = to_fwd->RIR>>21;
   if (bus_num == 0) {
     return 2;
-  } else if (bus_num == 2 && addr != 0xE4 && addr != 0x1FA && addr != 0x30C &&
-              addr != 0x33D && addr != 0x35E && addr != 0x39E && addr != 0x194) {
+  } else if (bus_num == 2 && addr != 0xE4 && addr != 0x194 && addr != 0x1FA &&
+             addr != 0x30C && addr != 0x33D && addr != 0x39F) {
     return 0;
   }
 
