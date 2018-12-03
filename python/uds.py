@@ -2,7 +2,10 @@
 import time
 import struct
 from enum import IntEnum
+from Queue import Queue, Empty
 import threading
+
+DEBUG = True
 
 class SERVICE_TYPE(IntEnum):
   DIAGNOSTIC_SESSION_CONTROL         = 0x10
@@ -75,6 +78,8 @@ _negative_response_codes = {
     '\x93': 'voltage too low',
 }
 
+class MessageTimeoutError(Exception):
+  pass
 class NegativeResponseError(Exception):
   pass
 class InvalidServiceIdError(Exception):
@@ -82,13 +87,72 @@ class InvalidServiceIdError(Exception):
 class InvalidSubFunctioneError(Exception):
   pass
 
-# generic uds request
-def _request(address, service_type, subfunction=None, data=None):
-  # TODO: send request
-  # TODO: wait for response
-  #resp = '\x7f'+chr(service_type)+'\x10'
-  resp = '\x62\xf1\x90' + '\x57\x30\x4c\x30\x30\x30\x30\x34\x33\x4d\x42\x35\x34\x31\x33\x32\x36'
+def _isotp_thread(panda, bus, tx_addr, tx_queue, rx_queue):
+  try:
+    panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+    if tx_addr < 0xFFF8:
+      filter_addr = tx_addr+8
+    elif tx_addr > 0x10000000 and tx_addr < 0xFFFFFFFF:
+      filter_addr = (tx_addr & 0xFFFF0000) + (tx_addr<<8 & 0xFF00) + (tx_addr>>8 & 0xFF)
+    else:
+      raise ValueError("invalid tx_addr: {}".format(tx_addr))
+    rx_frame = {"size": 0, "data": "", "sent": True}
+    
+    panda.can_clear(0)
+    while True:
+      messages = panda.can_recv()
+      for rx_addr, rx_ts, rx_data, rx_bus in messages:
+        if rx_bus != bus or rx_addr != filter_addr or len(data) == 0:
+          continue
 
+        if (DEBUG): print "R:", hex(rx_addr), rx_data.encode('hex')
+        if rx_data[0] >> 4 == 0x0:
+          # single rx_frame
+          rx_frame["size"] = rx_data[0] & 0xFF
+          rx_frame["data"] = rx_data[1:1+rx_frame["size"]]
+          rx_frame["sent"] = True
+          rx_queue.put(rx_frame["data"])
+        elif rx_data[0] >> 4 == 0x1:
+          # first rx_frame
+          rx_frame["size"] = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
+          rx_frame["data"] = rx_data[2:]
+          rx_frame["sent"] = False
+          # send flow control message (send all bytes)
+          flow_ctl = "\x30\x00\x00".ljust(8, "\x00")
+          if (DEBUG): print "S:", hex(tx_addr), flow_ctl.encode("hex")
+          panda.can_send(tx_addr, flow_ctl, bus)
+        elif rx_data[0] >> 4 == 0x2:
+          # consecutive rx_frame
+          assert rx_frame["sent"] == False, "no active frame"
+          rx_size = rx_frame["size"] - len(rx_data)
+          rx_frame["data"] += rx_data[1:1+min(rx_size, 7)]
+          if rx_size <= 7:
+            rx_frame["sent"] = True
+            rx_queue.put(rx_frame["data"])
+
+      if not tx_queue.empty():
+        req = tx_queue.get(block=False)
+        # reset rx rx_frame
+        rx_frame = {"size": 0, "data": "", "sent": True}
+        if (DEBUG): print "S:", hex(tx_addr), req.encode("hex")
+        panda.can_send(tx_addr, req, bus)
+      else:
+        time.sleep(0.001)
+  finally:
+    panda.close()
+
+# generic uds request
+def _uds_request(address, service_type, subfunction=None, data=None):
+  req = chr(service_type)
+  if subfunction is not None:
+    req += chr(subfunction)
+  if data is not None:
+    req += data
+  tx_queue.put(req)
+  try:
+    resp = rx_queue.get(block=True, timeout=10)
+  except Empty:
+    raise MessageTimeoutError("timeout waiting for response")
   resp_sid = ord(resp[0]) if len(resp) > 0 else None
 
   # negative response
@@ -126,7 +190,7 @@ class SESSION_TYPE(IntEnum):
   SAFETY_SYSTEM_DIAGNOSTIC = 4
 
 def diagnostic_session_control(address, session_type):
-  _request(address, SERVICE_TYPE.DIAGNOSTIC_SESSION_CONTROL, subfunction=session_type)
+  _uds_request(address, SERVICE_TYPE.DIAGNOSTIC_SESSION_CONTROL, subfunction=session_type)
 
 class RESET_TYPE(IntEnum):
   HARD = 1
@@ -136,7 +200,7 @@ class RESET_TYPE(IntEnum):
   DISABLE_RAPID_POWER_SHUTDOWN = 5
 
 def ecu_reset(address, reset_type):
-  resp = _request(address, SERVICE_TYPE.ECU_RESET, subfunction=reset_type)
+  resp = _uds_request(address, SERVICE_TYPE.ECU_RESET, subfunction=reset_type)
   power_down_time = None
   if reset_type == RESET_TYPE.ENABLE_RAPID_POWER_SHUTDOWN:
     power_down_time = ord(resp[0])
@@ -152,7 +216,7 @@ def security_access(address, access_type, security_key=None):
     raise ValueError('security_key not allowed')
   if not request_seed and security_key is None:
     raise ValueError('security_key is missing')
-  resp = _request(address, SERVICE_TYPE.SECURITY_ACCESS, subfunction=access_type, data=security_key)
+  resp = _uds_request(address, SERVICE_TYPE.SECURITY_ACCESS, subfunction=access_type, data=security_key)
   if request_seed:
     security_seed = resp
     return security_seed
@@ -170,10 +234,10 @@ class MESSAGE_TYPE(IntEnum):
 
 def communication_control(address, control_type, message_type):
   data = chr(message_type)
-  _request(address, SERVICE_TYPE.COMMUNICATION_CONTROL, subfunction=control_type, data=data)
+  _uds_request(address, SERVICE_TYPE.COMMUNICATION_CONTROL, subfunction=control_type, data=data)
 
 def tester_present(address):
-  _request(address, SERVICE_TYPE.TESTER_PRESENT, subfunction=0x00)
+  _uds_request(address, SERVICE_TYPE.TESTER_PRESENT, subfunction=0x00)
 
 class TIMING_PARAMETER_TYPE(IntEnum):
   READ_EXTENDED_SET = 1
@@ -191,7 +255,7 @@ def access_timing_parameter(address, timing_parameter_type, parameter_values):
     raise ValueError('parameter_values not allowed')
   if write_custom_values and parameter_values is None:
     raise ValueError('parameter_values is missing')
-  resp = _request(address, SERVICE_TYPE.ACCESS_TIMING_PARAMETER, subfunction=timing_parameter_type, data=parameter_values)
+  resp = _uds_request(address, SERVICE_TYPE.ACCESS_TIMING_PARAMETER, subfunction=timing_parameter_type, data=parameter_values)
   if read_values:
     # TODO: parse response into values?
     parameter_values = resp
@@ -199,7 +263,7 @@ def access_timing_parameter(address, timing_parameter_type, parameter_values):
 
 def secured_data_transmission(address, data):
   # TODO: split data into multiple input parameters?
-  resp = _request(address, SERVICE_TYPE.SECURED_DATA_TRANSMISSION, subfunction=None, data=data)
+  resp = _uds_request(address, SERVICE_TYPE.SECURED_DATA_TRANSMISSION, subfunction=None, data=data)
   # TODO: parse response into multiple output values?
   return resp
 
@@ -208,7 +272,7 @@ class DTC_SETTING_TYPE(IntEnum):
   OFF = 2
 
 def control_dtc_setting(address, dtc_setting_type):
-  _request(address, SERVICE_TYPE.CONTROL_DTC_SETTING, subfunction=dtc_setting_type)
+  _uds_request(address, SERVICE_TYPE.CONTROL_DTC_SETTING, subfunction=dtc_setting_type)
 
 class RESPONSE_EVENT_TYPE(IntEnum):
   STOP_RESPONSE_ON_EVENT = 0
@@ -225,7 +289,7 @@ def response_on_event(address, response_event_type, store_event, window_time, ev
     response_event_type |= 0x20
   # TODO: split record parameters into arrays
   data = char(window_time) + event_type_record + service_response_record
-  resp = _request(address, SERVICE_TYPE.RESPONSE_ON_EVENT, subfunction=response_event_type, data=data)
+  resp = _uds_request(address, SERVICE_TYPE.RESPONSE_ON_EVENT, subfunction=response_event_type, data=data)
 
   if response_event_type == REPORT_ACTIVATED_EVENTS:
     return {
@@ -264,7 +328,7 @@ def link_control(address, link_control_type, baud_rate_type=None):
     data = struct.pack('!I', baud_rate_type)[1:]
   else:
     data = None
-  _request(address, SERVICE_TYPE.LINK_CONTROL, subfunction=link_control_type, data=data)
+  _uds_request(address, SERVICE_TYPE.LINK_CONTROL, subfunction=link_control_type, data=data)
 
 class DATA_IDENTIFIER_TYPE(IntEnum):
   BOOT_SOFTWARE_IDENTIFICATION = 0XF180
@@ -302,7 +366,7 @@ class DATA_IDENTIFIER_TYPE(IntEnum):
 def read_data_by_identifier(address, data_identifier_type):
   # TODO: support list of identifiers
   data = struct.pack('!H', data_identifier_type)
-  resp = _request(address, SERVICE_TYPE.READ_DATA_BY_IDENTIFIER, subfunction=None, data=data)
+  resp = _uds_request(address, SERVICE_TYPE.READ_DATA_BY_IDENTIFIER, subfunction=None, data=data)
   resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
   if resp_id != data_identifier_type:
     raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
@@ -322,12 +386,12 @@ def read_memory_by_address(address, memory_address, memory_size, memory_address_
     raise ValueError('invalid memory_size: {}'.format(memory_size))
   data += struct.pack('!I', memory_size)[4-memory_size_bytes:]
 
-  resp = _request(address, SERVICE_TYPE.READ_MEMORY_BY_ADDRESS, subfunction=None, data=data)
+  resp = _uds_request(address, SERVICE_TYPE.READ_MEMORY_BY_ADDRESS, subfunction=None, data=data)
   return resp
 
 def read_scaling_data_by_identifier(address, data_identifier_type):
   data = struct.pack('!H', data_identifier_type)
-  resp = _request(address, SERVICE_TYPE.READ_SCALING_DATA_BY_IDENTIFIER, subfunction=None, data=data)
+  resp = _uds_request(address, SERVICE_TYPE.READ_SCALING_DATA_BY_IDENTIFIER, subfunction=None, data=data)
   resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
   if resp_id != data_identifier_type:
     raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
@@ -342,7 +406,7 @@ class TRANSMISSION_MODE_TYPE(IntEnum):
 def read_data_by_periodic_identifier(address, transmission_mode_type, periodic_data_identifier):
   # TODO: support list of identifiers
   data = chr(transmission_mode_type) + chr(periodic_data_identifier)
-  _request(address, SERVICE_TYPE.READ_DATA_BY_PERIODIC_IDENTIFIER, subfunction=None, data=data)
+  _uds_request(address, SERVICE_TYPE.READ_DATA_BY_PERIODIC_IDENTIFIER, subfunction=None, data=data)
 
 class DYNAMIC_DEFINITION_TYPE(IntEnum):
   DEFINE_BY_IDENTIFIER = 1
@@ -373,11 +437,11 @@ def dynamically_define_data_identifier(address, dynamic_definition_type, dynamic
     pass
   else:
     raise ValueError('invalid dynamic identifier type: {}'.format(hex(dynamic_definition_type)))
-  _request(address, SERVICE_TYPE.DYNAMICALLY_DEFINE_DATA_IDENTIFIER, subfunction=dynamic_definition_type, data=data)
+  _uds_request(address, SERVICE_TYPE.DYNAMICALLY_DEFINE_DATA_IDENTIFIER, subfunction=dynamic_definition_type, data=data)
 
 def write_data_by_identifier(address, data_identifier_type, data_record):
   data = struct.pack('!H', data_identifier_type) + data_record
-  resp = _request(address, SERVICE_TYPE.WRITE_DATA_BY_IDENTIFIER, subfunction=None, data=data)
+  resp = _uds_request(address, SERVICE_TYPE.WRITE_DATA_BY_IDENTIFIER, subfunction=None, data=data)
   resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
   if resp_id != data_identifier_type:
     raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
@@ -397,7 +461,7 @@ def write_memory_by_address(address, memory_address, memory_size, data_record, m
   data += struct.pack('!I', memory_size)[4-memory_size_bytes:]
 
   data += data_record
-  _request(address, SERVICE_TYPE.WRITE_MEMORY_BY_ADDRESS, subfunction=0x00, data=data)
+  _uds_request(address, SERVICE_TYPE.WRITE_MEMORY_BY_ADDRESS, subfunction=0x00, data=data)
 
 class DTC_GROUP_TYPE(IntEnum):
   EMISSIONS = 0x000000
@@ -405,7 +469,7 @@ class DTC_GROUP_TYPE(IntEnum):
 
 def clear_diagnostic_information(address, dtc_group_type):
   data = struct.pack('!I', dtc_group_type)[1:] # 3 bytes
-  _request(address, SERVICE_TYPE.CLEAR_DIAGNOSTIC_INFORMATION, subfunction=None, data=data)
+  _uds_request(address, SERVICE_TYPE.CLEAR_DIAGNOSTIC_INFORMATION, subfunction=None, data=data)
 
 class DTC_REPORT_TYPE(IntEnum):
   NUMBER_OF_DTC_BY_STATUS_MASK = 0x01
@@ -438,7 +502,7 @@ class DTC_STATUS_MASK_TYPE(IntEnum):
   TEST_NOT_COMPLETED_SINCE_LAST_CLEAR = 0x10
   TEST_FAILED_SINCE_LAST_CLEAR = 0x20
   TEST_NOT_COMPLETED_THIS_OPERATION_CYCLE = 0x40
-  WARNING_INDICATOR_REQUESTED = 0x80
+  WARNING_INDICATOR_uds_requestED = 0x80
   ALL = 0xFF
 
 class DTC_SEVERITY_MASK_TYPE(IntEnum):
@@ -478,7 +542,7 @@ def read_dtc_information(address, dtc_report_type, dtc_status_mask_type=DTC_STAT
      dtc_report_type == DTC_REPORT_TYPE.DTC_BY_SEVERITY_MASK_RECORD:
     data += chr(dtc_severity_mask_type) + chr(dtc_status_mask_type)
   
-  resp = _request(address, SERVICE_TYPE.READ_DTC_INFORMATION, subfunction=dtc_report_type, data=data)
+  resp = _uds_request(address, SERVICE_TYPE.READ_DTC_INFORMATION, subfunction=dtc_report_type, data=data)
 
   # TODO: parse response
   return resp
@@ -491,7 +555,7 @@ class CONTROL_OPTION_TYPE(IntEnum):
 
 def input_output_control_by_identifier(address, data_identifier_type, control_option_record, control_enable_mask_record=''):
   data = struct.pack('!H', data_identifier_type) + control_option_record + control_enable_mask_record
-  resp = _request(address, SERVICE_TYPE.INPUT_OUTPUT_CONTROL_BY_IDENTIFIER, subfunction=None, data=data)
+  resp = _uds_request(address, SERVICE_TYPE.INPUT_OUTPUT_CONTROL_BY_IDENTIFIER, subfunction=None, data=data)
   resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
   if resp_id != data_identifier_type:
     raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
@@ -509,7 +573,7 @@ class ROUTINE_IDENTIFIER_TYPE(IntEnum):
 
 def routine_control(address, routine_control_type, routine_identifier_type, routine_option_record=''):
   data = struct.pack('!H', routine_identifier_type) + routine_option_record
-  _request(address, SERVICE_TYPE.ROUTINE_CONTROL, subfunction=routine_control_type, data=data)
+  _uds_request(address, SERVICE_TYPE.ROUTINE_CONTROL, subfunction=routine_control_type, data=data)
   resp = resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
   if resp_id != routine_identifier_type:
     raise ValueError('invalid response routine identifier: {}'.format(hex(resp_id)))
@@ -531,7 +595,7 @@ def request_download(address, memory_address, memory_size, memory_address_bytes=
     raise ValueError('invalid memory_size: {}'.format(memory_size))
   data += struct.pack('!I', memory_size)[4-memory_size_bytes:]
 
-  resp = _request(address, SERVICE_TYPE.REQUEST_DOWNLOAD, subfunction=None, data=data)
+  resp = _uds_request(address, SERVICE_TYPE.REQUEST_DOWNLOAD, subfunction=None, data=data)
   max_num_bytes_len = ord(resp[0]) >> 4 if len(resp) > 0 else None
   if max_num_bytes_len >= 1 and max_num_bytes_len <= 4:
     max_num_bytes = struct.unpack('!I', ('\x00'*(4-max_num_bytes_len))+resp[1:max_num_bytes_len+1])[0]
@@ -556,7 +620,7 @@ def request_upload(address, memory_address, memory_size, memory_address_bytes=4,
     raise ValueError('invalid memory_size: {}'.format(memory_size))
   data += struct.pack('!I', memory_size)[4-memory_size_bytes:]
 
-  resp = _request(address, SERVICE_TYPE.REQUEST_UPLOAD, subfunction=None, data=data)
+  resp = _uds_request(address, SERVICE_TYPE.REQUEST_UPLOAD, subfunction=None, data=data)
   max_num_bytes_len = ord(resp[0]) >> 4 if len(resp) > 0 else None
   if max_num_bytes_len >= 1 and max_num_bytes_len <= 4:
     max_num_bytes = struct.unpack('!I', ('\x00'*(4-max_num_bytes_len))+resp[1:max_num_bytes_len+1])[0]
@@ -566,16 +630,27 @@ def request_upload(address, memory_address, memory_size, memory_address_bytes=4,
   return max_num_bytes # max number of bytes per transfer data request
 
 def transfer_data(address, block_sequence_count, data=''):
-  resp = _request(address, SERVICE_TYPE.TRANSFER_DATA, subfunction=None, data=data)
+  resp = _uds_request(address, SERVICE_TYPE.TRANSFER_DATA, subfunction=None, data=data)
   resp_id = ord(resp[0]) if len(resp) > 0 else None
   if resp_id != block_sequence_count:
     raise ValueError('invalid block_sequence_count: {}'.format(resp_id))
   return resp[1:]
 
 def request_transfer_exit(address):
-  _request(address, SERVICE_TYPE.REQUEST_TRANSFER_EXIT, subfunction=None)
+  _uds_request(address, SERVICE_TYPE.REQUEST_TRANSFER_EXIT, subfunction=None)
 
 if __name__ == "__main__":
+  from python import Panda
+  panda = Panda()
+  bus = 0
+  tx_addr = 0x18daf130 # EPS
+  tx_queue = Queue()
+  rx_queue = Queue()
+  can_reader_t = threading.Thread(target=_isotp_thread, args=(panda, bus, tx_addr, tx_queue, rx_queue))
+  can_reader_t.daemon = True
+  can_reader_t.start()
+
   # examples
-  vin = read_data_by_identifier(0x18da10f1, DATA_IDENTIFIER_TYPE.VIN)
-  print(vin)
+  tester_present(tx_addr)
+  app_id = read_data_by_identifier(tx_addr, DATA_IDENTIFIER_TYPE.APPLICATION_SOFTWARE_IDENTIFICATION)
+  print(app_id)
