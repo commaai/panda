@@ -6,7 +6,7 @@ from Queue import Queue, Empty
 import threading
 from binascii import hexlify
 
-DEBUG = True
+DEBUG = False
 
 class SERVICE_TYPE(IntEnum):
   DIAGNOSTIC_SESSION_CONTROL         = 0x10
@@ -36,55 +36,61 @@ class SERVICE_TYPE(IntEnum):
   REQUEST_TRANSFER_EXIT              = 0x37
 
 _negative_response_codes = {
-    '\x00': 'positive response',
-    '\x10': 'general reject',
-    '\x11': 'service not supported',
-    '\x12': 'sub-function not supported',
-    '\x13': 'incorrect message length or invalid format',
-    '\x14': 'response too long',
-    '\x21': 'busy repeat request',
-    '\x22': 'conditions not correct',
-    '\x24': 'request sequence error',
-    '\x25': 'no response from subnet component',
-    '\x26': 'failure prevents execution of requested action',
-    '\x31': 'request out of range',
-    '\x33': 'security access denied',
-    '\x35': 'invalid key',
-    '\x36': 'exceed numebr of attempts',
-    '\x37': 'required time delay not expired',
-    '\x70': 'upload download not accepted',
-    '\x71': 'transfer data suspended',
-    '\x72': 'general programming failure',
-    '\x73': 'wrong block sequence counter',
-    '\x78': 'request correctly received - response pending',
-    '\x7e': 'sub-function not supported in active session',
-    '\x7f': 'service not supported in active session',
-    '\x81': 'rpm too high',
-    '\x82': 'rpm too low',
-    '\x83': 'engine is running',
-    '\x84': 'engine is not running',
-    '\x85': 'engine run time too low',
-    '\x86': 'temperature too high',
-    '\x87': 'temperature too low',
-    '\x88': 'vehicle speed too high',
-    '\x89': 'vehicle speed too low',
-    '\x8a': 'throttle/pedal too high',
-    '\x8b': 'throttle/pedal too low',
-    '\x8c': 'transmission not in neutral',
-    '\x8d': 'transmission not in gear',
-    '\x8f': 'brake switch(es) not closed',
-    '\x90': 'shifter lever not in park',
-    '\x91': 'torque converter clutch locked',
-    '\x92': 'voltage too high',
-    '\x93': 'voltage too low',
+    0x00: 'positive response',
+    0x10: 'general reject',
+    0x11: 'service not supported',
+    0x12: 'sub-function not supported',
+    0x13: 'incorrect message length or invalid format',
+    0x14: 'response too long',
+    0x21: 'busy repeat request',
+    0x22: 'conditions not correct',
+    0x24: 'request sequence error',
+    0x25: 'no response from subnet component',
+    0x26: 'failure prevents execution of requested action',
+    0x31: 'request out of range',
+    0x33: 'security access denied',
+    0x35: 'invalid key',
+    0x36: 'exceed numebr of attempts',
+    0x37: 'required time delay not expired',
+    0x70: 'upload download not accepted',
+    0x71: 'transfer data suspended',
+    0x72: 'general programming failure',
+    0x73: 'wrong block sequence counter',
+    0x78: 'request correctly received - response pending',
+    0x7e: 'sub-function not supported in active session',
+    0x7f: 'service not supported in active session',
+    0x81: 'rpm too high',
+    0x82: 'rpm too low',
+    0x83: 'engine is running',
+    0x84: 'engine is not running',
+    0x85: 'engine run time too low',
+    0x86: 'temperature too high',
+    0x87: 'temperature too low',
+    0x88: 'vehicle speed too high',
+    0x89: 'vehicle speed too low',
+    0x8a: 'throttle/pedal too high',
+    0x8b: 'throttle/pedal too low',
+    0x8c: 'transmission not in neutral',
+    0x8d: 'transmission not in gear',
+    0x8f: 'brake switch(es) not closed',
+    0x90: 'shifter lever not in park',
+    0x91: 'torque converter clutch locked',
+    0x92: 'voltage too high',
+    0x93: 'voltage too low',
 }
 
 class MessageTimeoutError(Exception):
   pass
+
 class NegativeResponseError(Exception):
-  pass
+  def __init__(self, message, service_id, error_code):
+    super(Exception, self).__init__(message)
+    self.service_id = service_id
+    self.error_code = error_code
+
 class InvalidServiceIdError(Exception):
   pass
+
 class InvalidSubFunctioneError(Exception):
   pass
 
@@ -98,8 +104,12 @@ def _isotp_thread(panda, bus, tx_addr, tx_queue, rx_queue):
     else:
       raise ValueError("invalid tx_addr: {}".format(tx_addr))
     rx_frame = {"size": 0, "data": "", "sent": True}
-    
-    panda.can_clear(0)
+
+    # clear tx buffer
+    panda.can_clear(bus)
+    # clear rx buffer
+    panda.can_clear(0xFFFF)
+    time.sleep(1)
     while True:
       messages = panda.can_recv()
       for rx_addr, rx_ts, rx_data, rx_bus in messages:
@@ -140,7 +150,7 @@ def _isotp_thread(panda, bus, tx_addr, tx_queue, rx_queue):
         if (DEBUG): print("S: {} {}".format(hex(tx_addr), hexlify(req)))
         panda.can_send(tx_addr, req, bus)
       else:
-        time.sleep(0.001)
+        time.sleep(0.01)
   finally:
     panda.close()
 
@@ -160,16 +170,18 @@ def _uds_request(address, service_type, subfunction=None, data=None):
 
   # negative response
   if resp_sid == 0x7F:
+    service_id = 0
     try:
-      error_service = SERVICE_TYPE(ord(resp[1])).name
+      service_id = resp[1]
+      service_desc = SERVICE_TYPE(service_id).name
     except:
-      error_service = 'NON_STANDARD_SERVICE'
-    error_code = hex(ord(resp[2])) if len(resp) > 2 else '0x??'
+      service_desc = 'NON_STANDARD_SERVICE'
+    error_code = resp[2] if len(resp) > 2 else '0x??'
     try:
-      error_desc = _negative_response_codes[resp[2]]
+      error_desc = _negative_response_codes[error_code]
     except:
       error_desc = 'unknown error'
-    raise NegativeResponseError('{} - {} - {}'.format(error_service, error_code, error_desc))
+    raise NegativeResponseError('{} - {}'.format(service_desc, error_desc), service_id, error_code)
 
   # positive response
   if service_type+0x40 != resp_sid:
@@ -644,6 +656,7 @@ def request_transfer_exit(address):
 
 if __name__ == "__main__":
   from python import Panda
+  from string import printable
   panda = Panda()
   bus = 0
   tx_addr = 0x18da30f1 # EPS
@@ -657,3 +670,15 @@ if __name__ == "__main__":
   tester_present(tx_addr)
   app_id = read_data_by_identifier(tx_addr, DATA_IDENTIFIER_TYPE.APPLICATION_SOFTWARE_IDENTIFICATION)
   print(app_id)
+  # for i in range(0xF100, 0xFFFF):
+  #   try:
+  #     dat = read_data_by_identifier(tx_addr, i)
+  #     desc = ""
+  #     try:
+  #       desc = " [" + DATA_IDENTIFIER_TYPE(i).name + "]"
+  #     except ValueError:
+  #       pass
+  #     print("{}:{} {} {}".format(hex(i), desc, hexlify(dat), dat.decode(errors="ignore")))
+  #   except NegativeResponseError as e:
+  #     if e.error_code != 0x31:
+  #       print("{}: {}".format(hex(i), e))
