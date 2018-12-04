@@ -4,6 +4,7 @@ import struct
 from enum import IntEnum
 from Queue import Queue, Empty
 import threading
+from binascii import hexlify
 
 DEBUG = True
 
@@ -102,10 +103,10 @@ def _isotp_thread(panda, bus, tx_addr, tx_queue, rx_queue):
     while True:
       messages = panda.can_recv()
       for rx_addr, rx_ts, rx_data, rx_bus in messages:
-        if rx_bus != bus or rx_addr != filter_addr or len(data) == 0:
+        if rx_bus != bus or rx_addr != filter_addr or len(rx_data) == 0:
           continue
 
-        if (DEBUG): print "R:", hex(rx_addr), rx_data.encode('hex')
+        if (DEBUG): print("R: {} {}".format(hex(rx_addr), hexlify(rx_data)))
         if rx_data[0] >> 4 == 0x0:
           # single rx_frame
           rx_frame["size"] = rx_data[0] & 0xFF
@@ -119,12 +120,12 @@ def _isotp_thread(panda, bus, tx_addr, tx_queue, rx_queue):
           rx_frame["sent"] = False
           # send flow control message (send all bytes)
           flow_ctl = "\x30\x00\x00".ljust(8, "\x00")
-          if (DEBUG): print "S:", hex(tx_addr), flow_ctl.encode("hex")
+          if (DEBUG): print("S: {} {}".format(hex(tx_addr), hexlify(flow_ctl)))
           panda.can_send(tx_addr, flow_ctl, bus)
         elif rx_data[0] >> 4 == 0x2:
           # consecutive rx_frame
           assert rx_frame["sent"] == False, "no active frame"
-          rx_size = rx_frame["size"] - len(rx_data)
+          rx_size = rx_frame["size"] - len(rx_frame["data"])
           rx_frame["data"] += rx_data[1:1+min(rx_size, 7)]
           if rx_size <= 7:
             rx_frame["sent"] = True
@@ -134,8 +135,9 @@ def _isotp_thread(panda, bus, tx_addr, tx_queue, rx_queue):
         req = tx_queue.get(block=False)
         # reset rx rx_frame
         rx_frame = {"size": 0, "data": "", "sent": True}
-        req = req.ljust(8, "\x00")
-        if (DEBUG): print "S:", hex(tx_addr), req.encode("hex")
+        # TODO: support sending more than 7 bytes
+        req = (chr(len(req)) + req).ljust(8, "\x00")
+        if (DEBUG): print("S: {} {}".format(hex(tx_addr), hexlify(req)))
         panda.can_send(tx_addr, req, bus)
       else:
         time.sleep(0.001)
@@ -154,7 +156,7 @@ def _uds_request(address, service_type, subfunction=None, data=None):
     resp = rx_queue.get(block=True, timeout=10)
   except Empty:
     raise MessageTimeoutError("timeout waiting for response")
-  resp_sid = ord(resp[0]) if len(resp) > 0 else None
+  resp_sid = resp[0] if len(resp) > 0 else None
 
   # negative response
   if resp_sid == 0x7F:
@@ -175,7 +177,7 @@ def _uds_request(address, service_type, subfunction=None, data=None):
     raise InvalidServiceIdError('invalid response service id: {}'.format(resp_sid_hex))
 
   if subfunction is not None:
-    resp_sfn = ord(resp[1]) if len(resp) > 1 else None
+    resp_sfn = resp[1] if len(resp) > 1 else None
     if subfunction != resp_sfn:
       resp_sfn_hex = hex(resp_sfn) if resp_sfn is not None else None
       raise InvalidSubFunctioneError('invalid response subfunction: {}'.format(hex(resp_sfn)))
