@@ -134,6 +134,7 @@ def _isotp_thread(panda, bus, tx_addr, tx_queue, rx_queue):
         req = tx_queue.get(block=False)
         # reset rx rx_frame
         rx_frame = {"size": 0, "data": "", "sent": True}
+        req = req.ljust(8, "\x00")
         if (DEBUG): print "S:", hex(tx_addr), req.encode("hex")
         panda.can_send(tx_addr, req, bus)
       else:
@@ -643,7 +644,7 @@ if __name__ == "__main__":
   from python import Panda
   panda = Panda()
   bus = 0
-  tx_addr = 0x18daf130 # EPS
+  tx_addr = 0x18da30f1 # EPS
   tx_queue = Queue()
   rx_queue = Queue()
   can_reader_t = threading.Thread(target=_isotp_thread, args=(panda, bus, tx_addr, tx_queue, rx_queue))
