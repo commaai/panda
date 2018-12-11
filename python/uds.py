@@ -153,7 +153,7 @@ def _isotp_thread(panda, bus, tx_addr, tx_queue, rx_queue):
           assert rx_data[0] == 0x30, "tx: flow-control requires: continue"
           delay_ts = rx_data[2] & 0x7F
           # scale is 1 milliseconds if first bit == 0, 100 micro seconds if first bit == 1
-          delay_div = 1000. if rx_data[2] & 0x80 == 0 else 100000.
+          delay_div = 1000. if rx_data[2] & 0x80 == 0 else 10000.
           # first frame = 6 bytes, each consecutive frame = 7 bytes
           start = 6 + tx_frame["idx"] * 7
           count = rx_data[1]
