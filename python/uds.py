@@ -164,7 +164,7 @@ def _isotp_thread(panda, bus, tx_addr, tx_queue, rx_queue):
             msg = (chr(0x20 | (tx_frame["idx"] & 0xF)) + tx_frame["data"][i:i+7]).ljust(8, "\x00")
             if (DEBUG): print("S: {} {}".format(hex(tx_addr), hexlify(msg)))
             panda.can_send(tx_addr, msg, bus)
-            if delay_ms:
+            if delay_ts:
               time.sleep(delay_ts / delay_div)
           tx_frame["done"] = True
 
