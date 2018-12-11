@@ -149,8 +149,11 @@ def _isotp_thread(panda, bus, tx_addr, tx_queue, rx_queue):
         elif rx_data[0] >> 4 == 0x3:
           # flow control
           assert tx_frame["done"] == False, "tx: no active frame"
-          # TODO: support non-zero block size and separate time
-          assert rx_data[0] == 0x30 and rx_data[2] == 0x00, "tx: flow-control requires: continue, no delay"
+          # TODO: support wait/overflow
+          assert rx_data[0] == 0x30, "tx: flow-control requires: continue"
+          delay_ts = ord(rx_data[2]) & 0x7F
+          # milliseconds if first bit == 0, micro seconds if first bit == 1
+          delay_div = 1000. if ord(rx_data[2]) & 0x80 == 0 else 100000.
           # first frame = 6 bytes, each consecutive frame = 7 bytes
           start = 6 + tx_frame["idx"] * 7
           count = rx_data[1]
@@ -161,6 +164,8 @@ def _isotp_thread(panda, bus, tx_addr, tx_queue, rx_queue):
             msg = (chr(0x20 | (tx_frame["idx"] & 0xF)) + tx_frame["data"][i:i+7]).ljust(8, "\x00")
             if (DEBUG): print("S: {} {}".format(hex(tx_addr), hexlify(msg)))
             panda.can_send(tx_addr, msg, bus)
+            if delay_ms:
+              time.sleep(delay_ts / delay_div)
           tx_frame["done"] = True
 
       if not tx_queue.empty():
