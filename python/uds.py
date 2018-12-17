@@ -277,26 +277,26 @@ class UdsClient():
     self.rx_queue = Queue()
     self.debug = debug
 
-    self.can_reader_t = threading.Thread(target=self._isotp_thread, args=(self.panda, self.bus, self.tx_addr, self.tx_queue, self.rx_queue, self.debug))
+    self.can_reader_t = threading.Thread(target=self._isotp_thread, args=(self.debug,))
     self.can_reader_t.daemon = True
     self.can_reader_t.start()
 
-  def _isotp_thread(self, panda, bus, tx_addr, tx_queue, rx_queue, debug):
+  def _isotp_thread(self, debug):
     try:
       rx_frame = {"size": 0, "data": "", "idx": 0, "done": True}
       tx_frame = {"size": 0, "data": "", "idx": 0, "done": True}
 
       # allow all output
-      panda.set_safety_mode(0x1337)
+      self.panda.set_safety_mode(0x1337)
       # clear tx buffer
-      panda.can_clear(bus)
+      self.panda.can_clear(self.bus)
       # clear rx buffer
-      panda.can_clear(0xFFFF)
+      self.panda.can_clear(0xFFFF)
       time.sleep(1)
       while True:
-        messages = panda.can_recv()
+        messages = self.panda.can_recv()
         for rx_addr, rx_ts, rx_data, rx_bus in messages:
-          if rx_bus != bus or rx_addr != rx_addr or len(rx_data) == 0:
+          if rx_bus != self.bus or rx_addr != self.rx_addr or len(rx_data) == 0:
             continue
 
           if (debug): print("R: {} {}".format(hex(rx_addr), hexlify(rx_data)))
@@ -306,7 +306,7 @@ class UdsClient():
             rx_frame["data"] = rx_data[1:1+rx_frame["size"]]
             rx_frame["idx"] = 0
             rx_frame["done"] = True
-            rx_queue.put(rx_frame["data"])
+            self.rx_queue.put(rx_frame["data"])
           elif rx_data[0] >> 4 == 0x1:
             # first rx_frame
             rx_frame["size"] = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
@@ -315,8 +315,8 @@ class UdsClient():
             rx_frame["done"] = False
             # send flow control message (send all bytes)
             msg = "\x30\x00\x00".ljust(8, "\x00")
-            if (debug): print("S: {} {}".format(hex(tx_addr), hexlify(msg)))
-            panda.can_send(tx_addr, msg, bus)
+            if (debug): print("S: {} {}".format(hex(self.tx_addr), hexlify(msg)))
+            self.panda.can_send(self.tx_addr, msg, self.bus)
           elif rx_data[0] >> 4 == 0x2:
             # consecutive rx frame
             assert rx_frame["done"] == False, "rx: no active frame"
@@ -327,7 +327,7 @@ class UdsClient():
             rx_frame["data"] += rx_data[1:1+min(rx_size, 7)]
             if rx_frame["size"] == len(rx_frame["data"]):
               rx_frame["done"] = True
-              rx_queue.put(rx_frame["data"])
+              self.rx_queue.put(rx_frame["data"])
           elif rx_data[0] >> 4 == 0x3:
             # flow control
             assert tx_frame["done"] == False, "tx: no active frame"
@@ -344,14 +344,14 @@ class UdsClient():
               tx_frame["idx"] += 1
               # consecutive tx frames
               msg = (chr(0x20 | (tx_frame["idx"] & 0xF)) + tx_frame["data"][i:i+7]).ljust(8, "\x00")
-              if (debug): print("S: {} {}".format(hex(tx_addr), hexlify(msg)))
-              panda.can_send(tx_addr, msg, bus)
+              if (debug): print("S: {} {}".format(hex(self.tx_addr), hexlify(msg)))
+              self.panda.can_send(self.tx_addr, msg, self.bus)
               if delay_ts > 0:
                 time.sleep(delay_ts / delay_div)
             tx_frame["done"] = True
 
-        if not tx_queue.empty():
-          req = tx_queue.get(block=False)
+        if not self.tx_queue.empty():
+          req = self.tx_queue.get(block=False)
           # reset rx and tx frames
           rx_frame = {"size": 0, "data": "", "idx": 0, "done": True}
           tx_frame = {"size": len(req), "data": req, "idx": 0, "done": False}
@@ -359,19 +359,19 @@ class UdsClient():
             # single frame
             tx_frame["done"] = True
             msg = (chr(tx_frame["size"]) + tx_frame["data"]).ljust(8, "\x00")
-            if (debug): print("S: {} {}".format(hex(tx_addr), hexlify(msg)))
-            panda.can_send(tx_addr, msg, bus)
+            if (debug): print("S: {} {}".format(hex(self.tx_addr), hexlify(msg)))
+            self.panda.can_send(self.tx_addr, msg, self.bus)
           else:
             # first rx_frame
             tx_frame["done"] = False
             msg = (struct.pack("!H", 0x1000 | tx_frame["size"]) + tx_frame["data"][:6]).ljust(8, "\x00")
-            if (debug): print("S: {} {}".format(hex(tx_addr), hexlify(msg)))
-            panda.can_send(tx_addr, msg, bus)
+            if (debug): print("S: {} {}".format(hex(self.tx_addr), hexlify(msg)))
+            self.panda.can_send(self.tx_addr, msg, self.bus)
         else:
           time.sleep(0.01)
     finally:
-      panda.close()
-      rx_queue.put(None)
+      self.panda.close()
+      self.rx_queue.put(None)
 
   # generic uds request
   def _uds_request(self, service_type, subfunction=None, data=None):
