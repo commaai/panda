@@ -261,7 +261,7 @@ _negative_response_codes = {
 }
 
 class UdsClient():
-  def __init__(self, panda, tx_addr, rx_addr=None, bus=0, debug=False):
+  def __init__(self, panda, tx_addr, rx_addr=None, bus=0, timeout=10, debug=False):
     self.panda = panda
     self.bus = bus
     self.tx_addr = tx_addr
@@ -275,6 +275,7 @@ class UdsClient():
 
     self.tx_queue = Queue()
     self.rx_queue = Queue()
+    self.timeout = timeout
     self.debug = debug
 
     self.can_reader_t = threading.Thread(target=self._isotp_thread, args=(self.debug,))
@@ -384,7 +385,7 @@ class UdsClient():
 
     while True:
       try:
-        resp = self.rx_queue.get(block=True, timeout=10)
+        resp = self.rx_queue.get(block=True, timeout=self.timeout)
       except Empty:
         raise MessageTimeoutError("timeout waiting for response")
       if resp is None:
