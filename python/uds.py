@@ -293,7 +293,7 @@ class UdsClient():
       self.panda.can_clear(self.bus)
       # clear rx buffer
       self.panda.can_clear(0xFFFF)
-      time.sleep(1)
+
       while True:
         messages = self.panda.can_recv()
         for rx_addr, rx_ts, rx_data, rx_bus in messages:
@@ -349,7 +349,8 @@ class UdsClient():
               self.panda.can_send(self.tx_addr, msg, self.bus)
               if delay_ts > 0:
                 time.sleep(delay_ts / delay_div)
-            tx_frame["done"] = True
+            if end >= tx_frame["size"]:
+              tx_frame["done"] = True
 
         if not self.tx_queue.empty():
           req = self.tx_queue.get(block=False)
