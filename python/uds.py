@@ -455,10 +455,10 @@ class UdsClient():
     self._uds_request(SERVICE_TYPE.TESTER_PRESENT, subfunction=0x00)
 
   def access_timing_parameter(self, timing_parameter_type, parameter_values):
-    write_custom_values = timing_parameter_type == ACCESS_TIMING_PARAMETER_TYPE.SET_TO_GIVEN_VALUES
+    write_custom_values = timing_parameter_type == TIMING_PARAMETER_TYPE.SET_TO_GIVEN_VALUES
     read_values = (
-      timing_parameter_type == ACCESS_TIMING_PARAMETER_TYPE.READ_CURRENTLY_ACTIVE or
-      timing_parameter_type == ACCESS_TIMING_PARAMETER_TYPE.READ_EXTENDED_SET
+      timing_parameter_type == TIMING_PARAMETER_TYPE.READ_CURRENTLY_ACTIVE or
+      timing_parameter_type == TIMING_PARAMETER_TYPE.READ_EXTENDED_SET
     )
     if not write_custom_values and parameter_values is not None:
       raise ValueError('parameter_values not allowed')
@@ -486,7 +486,7 @@ class UdsClient():
     data = char(window_time) + event_type_record + service_response_record
     resp = self._uds_request(SERVICE_TYPE.RESPONSE_ON_EVENT, subfunction=response_event_type, data=data)
 
-    if response_event_type == REPORT_ACTIVATED_EVENTS:
+    if response_event_type == RESPONSE_EVENT_TYPE.REPORT_ACTIVATED_EVENTS:
       return {
         "num_of_activated_events": resp[0],
         "data": resp[1:], # TODO: parse the reset of response
@@ -499,10 +499,10 @@ class UdsClient():
     }
 
   def link_control(self, link_control_type, baud_rate_type=None):
-    if LINK_CONTROL_TYPE.VERIFY_BAUDRATE_TRANSITION_WITH_FIXED_BAUDRATE:
+    if link_control_type == LINK_CONTROL_TYPE.VERIFY_BAUDRATE_TRANSITION_WITH_FIXED_BAUDRATE:
       # baud_rate_type = BAUD_RATE_TYPE
       data = chr(baud_rate_type)
-    elif LINK_CONTROL_TYPE.VERIFY_BAUDRATE_TRANSITION_WITH_SPECIFIC_BAUDRATE:
+    elif link_control_type == LINK_CONTROL_TYPE.VERIFY_BAUDRATE_TRANSITION_WITH_SPECIFIC_BAUDRATE:
       # baud_rate_type = custom value (3 bytes big-endian)
       data = struct.pack('!I', baud_rate_type)[1:]
     else:
@@ -553,7 +553,6 @@ class UdsClient():
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
       raise ValueError('invalid memory_size_bytes: {}'.format(memory_size_bytes))
-    data = chr(memory_size_bytes<<4 | memory_address_bytes)
 
     data = struct.pack('!H', dynamic_data_identifier)
     if dynamic_definition_type == DYNAMIC_DEFINITION_TYPE.DEFINE_BY_IDENTIFIER:
