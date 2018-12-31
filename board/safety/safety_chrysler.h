@@ -1,8 +1,8 @@
-const int CHRYSLER_MAX_STEER = 230;
+const int CHRYSLER_MAX_STEER = 261;
 const int CHRYSLER_MAX_RT_DELTA = 112;          // max delta torque allowed for real time checks
 const int32_t CHRYSLER_RT_INTERVAL = 250000;    // 250ms between real time checks
-const int CHRYSLER_MAX_RATE_UP = 3;
-const int CHRYSLER_MAX_RATE_DOWN = 3;
+const int CHRYSLER_MAX_RATE_UP = 4;
+const int CHRYSLER_MAX_RATE_DOWN = 8;
 const int CHRYSLER_DRIVER_TORQUE_ALLOWANCE = 0; // TODO
 const int CHRYSLER_DRIVER_TORQUE_FACTOR = 0;    // TODO
 
