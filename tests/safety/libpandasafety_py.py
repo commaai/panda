@@ -42,11 +42,13 @@ void set_toyota_torque_meas(int min, int max);
 void set_cadillac_torque_driver(int min, int max);
 void set_gm_torque_driver(int min, int max);
 void set_hyundai_torque_driver(int min, int max);
-void set_chrysler_torque_driver(int min, int max);
+void set_chrysler_torque_meas(int min, int max);
 void set_toyota_rt_torque_last(int t);
 void set_toyota_desired_torque_last(int t);
 int get_toyota_torque_meas_min(void);
 int get_toyota_torque_meas_max(void);
+int get_chrysler_torque_meas_min(void);
+int get_chrysler_torque_meas_max(void);
 
 void init_tests_honda(void);
 int get_ego_speed(void);

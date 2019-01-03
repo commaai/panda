@@ -1,17 +1,16 @@
 const int CHRYSLER_MAX_STEER = 261;
-const int CHRYSLER_MAX_RT_DELTA = 112;          // max delta torque allowed for real time checks
-const int32_t CHRYSLER_RT_INTERVAL = 250000;    // 250ms between real time checks
-const int CHRYSLER_MAX_RATE_UP = 4;
-const int CHRYSLER_MAX_RATE_DOWN = 8;
-const int CHRYSLER_DRIVER_TORQUE_ALLOWANCE = 0; // TODO
-const int CHRYSLER_DRIVER_TORQUE_FACTOR = 0;    // TODO
+const int CHRYSLER_MAX_RT_DELTA = 112;        // max delta torque allowed for real time checks
+const int32_t CHRYSLER_RT_INTERVAL = 250000;  // 250ms between real time checks
+const int CHRYSLER_MAX_RATE_UP = 3;
+const int CHRYSLER_MAX_RATE_DOWN = 3;
+const int CHRYSLER_MAX_TORQUE_ERROR = 80;    // max torque cmd in excess of torque motor
 
 int chrysler_camera_detected = 0;
 int chrysler_rt_torque_last = 0;
 int chrysler_desired_torque_last = 0;
 int chrysler_cruise_engaged_last = 0;
 uint32_t chrysler_ts_last = 0;
-struct sample_t chrysler_torque_driver;         // last few driver torques measured
+struct sample_t chrysler_torque_meas;         // last few torques measured
 
 static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = (to_push->RDTR >> 4) & 0xFF;
@@ -26,11 +25,13 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     addr = to_push->RIR >> 21;
   }
 
-  // TODO
+  // Measured eps torque
   if (addr == 544) {
-    int torque_driver_new = 0;
+    int rdhr = to_push->RDHR;
+    int torque_meas_new = ((rdhr & 0x7) << 8) + ((rdhr & 0xFF00) >> 8) - 1024;
+
     // update array of samples
-    update_sample(&chrysler_torque_driver, torque_driver_new);
+    update_sample(&chrysler_torque_meas, torque_meas_new);
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
@@ -67,12 +68,8 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     addr = to_send->RIR >> 21;
   }
 
-  // LKA STEER: safety check
 
-
-
-  // LKA STEER: Too large of values cause the steering actuator ECU to silently
-  // fault and no longer actuate the wheel until the car is rebooted.
+  // LKA STEER
   if (addr == 0x292) {
     int rdlr = to_send->RDLR;
     int desired_torque = ((rdlr & 0x7) << 8) + ((rdlr & 0xFF00) >> 8) - 1024;
@@ -85,9 +82,8 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       violation |= max_limit_check(desired_torque, CHRYSLER_MAX_STEER, -CHRYSLER_MAX_STEER);
 
       // *** torque rate limit check ***
-      violation |= driver_limit_check(desired_torque, chrysler_desired_torque_last, &chrysler_torque_driver,
-        CHRYSLER_MAX_STEER, CHRYSLER_MAX_RATE_UP, CHRYSLER_MAX_RATE_DOWN,
-        CHRYSLER_DRIVER_TORQUE_ALLOWANCE, CHRYSLER_DRIVER_TORQUE_FACTOR);
+      violation |= dist_to_meas_check(desired_torque, chrysler_desired_torque_last,
+        &chrysler_torque_meas, CHRYSLER_MAX_RATE_UP, CHRYSLER_MAX_RATE_DOWN, CHRYSLER_MAX_TORQUE_ERROR);
 
       // used next time
       chrysler_desired_torque_last = desired_torque;

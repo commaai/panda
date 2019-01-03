@@ -82,9 +82,17 @@ void set_hyundai_torque_driver(int min, int max){
   hyundai_torque_driver.max = max;
 }
 
-void set_chrysler_torque_driver(int min, int max){
-  chrysler_torque_driver.min = min;
-  chrysler_torque_driver.max = max;
+void set_chrysler_torque_meas(int min, int max){
+  chrysler_torque_meas.min = min;
+  chrysler_torque_meas.max = max;
+}
+
+int get_chrysler_torque_meas_min(void){
+  return chrysler_torque_meas.min;
+}
+
+int get_chrysler_torque_meas_max(void){
+  return chrysler_torque_meas.max;
 }
 
 int get_toyota_torque_meas_min(void){
