@@ -17,5 +17,5 @@ for line in fileinput.input():
     continue
   if (int(bus) == 128):  # Keep all messages sent by OpenPilot.
     print line
-  if (int(addr) in addr_to_keep):
+  elif (int(addr) in addr_to_keep):
     print line
