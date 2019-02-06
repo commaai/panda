@@ -57,6 +57,7 @@ int controls_allowed = 0;
 #ifdef PANDA
 #include "safety/safety_toyota_ipas.h"
 #include "safety/safety_tesla.h"
+#include "safety/safety_gm_ascm.h"
 #endif
 #include "safety/safety_gm.h"
 #include "safety/safety_ford.h"
@@ -106,6 +107,7 @@ typedef struct {
 #define SAFETY_TESLA 8
 #define SAFETY_CHRYSLER 9
 #define SAFETY_SUBARU 10
+#define SAFETY_GM_ASCM 0x1334
 #define SAFETY_TOYOTA_IPAS 0x1335
 #define SAFETY_TOYOTA_NOLIMITS 0x1336
 #define SAFETY_ALLOUTPUT 0x1337
@@ -125,6 +127,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_TOYOTA_NOLIMITS, &toyota_nolimits_hooks},
 #ifdef PANDA
   {SAFETY_TOYOTA_IPAS, &toyota_ipas_hooks},
+  {SAFETY_GM_ASCM, &gm_ascm_hooks},
   {SAFETY_TESLA, &tesla_hooks},
 #endif
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
