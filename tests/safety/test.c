@@ -82,6 +82,11 @@ void set_hyundai_torque_driver(int min, int max){
   hyundai_torque_driver.max = max;
 }
 
+void set_vw_torque_driver(int min, int max){
+  vw_torque_driver.min = min;
+  vw_torque_driver.max = max;
+}
+
 void set_chrysler_torque_meas(int min, int max){
   chrysler_torque_meas.min = min;
   chrysler_torque_meas.max = max;
@@ -123,6 +128,10 @@ void set_chrysler_rt_torque_last(int t){
   chrysler_rt_torque_last = t;
 }
 
+void set_vw_rt_torque_last(int t){
+  vw_rt_torque_last = t;
+}
+
 void set_toyota_desired_torque_last(int t){
   toyota_desired_torque_last = t;
 }
@@ -141,6 +150,10 @@ void set_hyundai_desired_torque_last(int t){
 
 void set_chrysler_desired_torque_last(int t){
   chrysler_desired_torque_last = t;
+}
+
+void set_vw_desired_torque_last(int t){
+  vw_desired_torque_last = t;
 }
 
 int get_ego_speed(void){
@@ -213,6 +226,15 @@ void init_tests_honda(void){
   gas_interceptor_detected = 0;
   brake_prev = 0;
   gas_prev = 0;
+}
+
+void init_tests_vw(void){
+  vw_torque_driver.min = 0;
+  vw_torque_driver.max = 0;
+  vw_desired_torque_last = 0;
+  vw_rt_torque_last = 0;
+  vw_ts_last = 0;
+  set_timer(0);
 }
 
 void set_gmlan_digital_output(int to_set){

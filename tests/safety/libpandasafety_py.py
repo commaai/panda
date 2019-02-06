@@ -42,6 +42,7 @@ void set_toyota_torque_meas(int min, int max);
 void set_cadillac_torque_driver(int min, int max);
 void set_gm_torque_driver(int min, int max);
 void set_hyundai_torque_driver(int min, int max);
+void set_vw_torque_driver(int min, int max);
 void set_chrysler_torque_meas(int min, int max);
 void set_toyota_rt_torque_last(int t);
 void set_toyota_desired_torque_last(int t);
@@ -90,6 +91,12 @@ int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
 void set_chrysler_desired_torque_last(int t);
 void set_chrysler_rt_torque_last(int t);
 
+void init_tests_vw(void);
+void vw_init(int16_t param);
+void vw_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
+int vw_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
+void set_vw_desired_torque_last(int t);
+void set_vw_rt_torque_last(int t);
 
 """)
 
