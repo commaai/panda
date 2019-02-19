@@ -17,7 +17,7 @@ static int gm_ascm_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     }
 
     // on the chassis bus, the OBDII port is on the module side, so we need to read
-    // the lkas messages sent by openpilot (put on unused 0x151 ane 0x153 addrs) and send it to 
+    // the lkas messages sent by openpilot (put on unused 0x151 ane 0x153 addrs) and send it to
     // the actuator as 0x152 and 0x154
     if (addr == 0x151) {
       to_fwd->RIR = (0x152 << 21) | (to_fwd->RIR & 0x1fffff);
@@ -27,9 +27,9 @@ static int gm_ascm_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     }
 
     // brake
-    //if (addr == 0x314) {
-    //  to_fwd->RIR = (0x315 << 21) | (to_fwd->RIR & 0x1fffff);
-    //}
+    if (addr == 0x314) {
+      to_fwd->RIR = (0x315 << 21) | (to_fwd->RIR & 0x1fffff);
+    }
 
     return 2;
   }
