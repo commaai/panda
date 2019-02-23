@@ -5,8 +5,8 @@ import unittest
 import numpy as np
 import libpandasafety_py
 
-MAX_RATE_UP = 3
-MAX_RATE_DOWN = 3
+MAX_RATE_UP = 3 * 10  # do not want to strictly enforce
+MAX_RATE_DOWN = 3 * 10
 MAX_STEER = 261
 
 MAX_RT_DELTA = 112
@@ -118,7 +118,7 @@ class TestChryslerSafety(unittest.TestCase):
     self.safety.set_chrysler_rt_torque_last(MAX_STEER)
     self.safety.set_chrysler_torque_meas(torque_meas, torque_meas)
     self.safety.set_chrysler_desired_torque_last(MAX_STEER)
-    self.assertFalse(self.safety.chrysler_tx_hook(self._torque_msg(MAX_STEER - MAX_RATE_DOWN + 1)))
+    self.assertFalse(self.safety.chrysler_tx_hook(self._torque_msg(MAX_STEER - MAX_RATE_DOWN - 1)))
 
   def test_exceed_torque_sensor(self):
     self.safety.set_controls_allowed(True)
@@ -129,7 +129,8 @@ class TestChryslerSafety(unittest.TestCase):
         t *= sign
         self.assertTrue(self.safety.chrysler_tx_hook(self._torque_msg(t)))
 
-      self.assertFalse(self.safety.chrysler_tx_hook(self._torque_msg(sign * (MAX_TORQUE_ERROR + 2))))
+      # torque_meas check is currently disabld, so diable the test:
+      # self.assertFalse(self.safety.chrysler_tx_hook(self._torque_msg(sign * (MAX_TORQUE_ERROR + 2))))
 
   def test_realtime_limit_up(self):
     self.safety.set_controls_allowed(True)
@@ -141,7 +142,8 @@ class TestChryslerSafety(unittest.TestCase):
         t *= sign
         self.safety.set_chrysler_torque_meas(t, t)
         self.assertTrue(self.safety.chrysler_tx_hook(self._torque_msg(t)))
-      self.assertFalse(self.safety.chrysler_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+      # MAX_RT_DELTA check is currently disabled, so disable the test:
+      # self.assertFalse(self.safety.chrysler_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
       self._set_prev_torque(0)
       for t in np.arange(0, MAX_RT_DELTA+1, 1):
