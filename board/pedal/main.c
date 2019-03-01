@@ -84,7 +84,7 @@ int can_cksum_honda(uint8_t *dat, int len, int addr, int idx) {
   int i;
   int s = 0;
   for (i = 0; i < len; i++) {
-    s += (dat[i] >> 4); 
+    s += (dat[i] >> 4);
     s += dat[i] & 0xF;
   }
   s += (addr>>0)&0xF;
@@ -100,18 +100,14 @@ int can_cksum_honda(uint8_t *dat, int len, int addr, int idx) {
 // ***************************** toyota can checksum ****************************
 
 #ifdef TOYOTA
-int can_cksum_toyota(uint8_t *dat, uint8_t len, uint16_t addr)
-{
+int can_cksum_toyota(uint8_t *dat, uint8_t len, uint16_t addr) {
   uint8_t checksum = 0;
   checksum =((addr & 0xFF00) >> 8) + (addr & 0x00FF) + len + 1;
-  //uint16_t temp_msg = msg;
-  
+
   for (int ii = 0; ii < len; ii++)
   {
     checksum += (dat[ii]);
-    //temp_msg = temp_msg >> 8;
   }
-  //return ((msg & ~0xFF) & (checksum & 0xFF));
   return checksum;
 }
 #endif
@@ -172,11 +168,10 @@ void CAN1_RX0_IRQHandler() {
       uint8_t index = (dat2[1] >> 4) & 3;
       if (can_cksum_honda(dat, 5, CAN_GAS_INPUT, index) == (dat2[1] & 0xF)) {
         if (((current_index+1)&3) == index) {
-#endif
-#ifdef TOYOTA
-      uint8_t index = 0;
-      if (can_cksum_toyota(dat, 5, CAN_GAS_INPUT) == dat2[1]) {
-        if (index == 0) {
+#elif TOYOTA
+      uint8_t index = dat2[1];
+      if (can_cksum_toyota(dat, 6, CAN_GAS_INPUT) == dat2[2]) {
+        if (((current_index+1)&255) == index) {
 #endif
           #ifdef DEBUG
             puts("setting gas ");
@@ -239,16 +234,25 @@ void TIM3_IRQHandler() {
     dat[4] = state;
 #ifdef HONDA
     dat[5] = can_cksum_honda(dat, 5, CAN_GAS_OUTPUT, pkt_idx) | (pkt_idx<<4);
-#endif
-#ifdef TOYOTA
-    dat[5] = can_cksum_toyota(dat, 5, CAN_GAS_OUTPUT);
+#elif TOYOTA
+    dat[5] = pkt_idx;
+    dat[6] = can_cksum_toyota(dat, 6, CAN_GAS_OUTPUT);
 #endif
     CAN->sTxMailBox[0].TDLR = dat[0] | (dat[1]<<8) | (dat[2]<<16) | (dat[3]<<24);
+#ifdef HONDA
     CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5]<<8);
-    CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 5
+    CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 6
+#elif TOYOTA
+    CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5]<<8) | (dat[6]<<16);
+    CAN->sTxMailBox[0].TDTR = 7;  // len of packet is 6
+#endif
     CAN->sTxMailBox[0].TIR = (CAN_GAS_OUTPUT << 21) | 1;
     ++pkt_idx;
+#ifdef HONDA
     pkt_idx &= 3;
+#elif TOYOTA
+    pkt_idx &= 255;
+#endif
   } else {
     // old can packet hasn't sent!
     state = FAULT_SEND;
