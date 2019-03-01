@@ -1,5 +1,9 @@
 # :set noet
-PROJ_NAME = comma
+ifndef BRAND
+  $(error BRAND is undefined)
+endif
+
+PROJ_NAME = pedal_$(BRAND)
 
 CFLAGS  = -O2 -Wall -std=gnu11 -DPEDAL
 CFLAGS += -mlittle-endian -mthumb -mcpu=cortex-m3
@@ -30,9 +34,9 @@ recover: obj/bootstub.bin obj/$(PROJ_NAME).bin
 	$(DFU_UTIL) -d 0483:df11 -a 0 -s 0x08004000 -D obj/$(PROJ_NAME).bin
 	$(DFU_UTIL) -d 0483:df11 -a 0 -s 0x08000000:leave -D obj/bootstub.bin
 
-obj/main.o: main.c ../*.h
+obj/main_$(BRAND).o: main.c ../*.h
 	mkdir -p obj
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -D$(BRAND) -o $@ -c $<
 
 obj/bootstub.o: ../bootstub.c ../*.h
 	mkdir -p obj
@@ -44,7 +48,7 @@ obj/$(STARTUP_FILE).o: ../$(STARTUP_FILE).s
 obj/%.o: ../../crypto/%.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.o
+obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main_$(BRAND).o
   # hack
 	$(CC) -Wl,--section-start,.isr_vector=0x8004000 $(CFLAGS) -o obj/$(PROJ_NAME).elf $^
 	$(OBJCOPY) -v -O binary obj/$(PROJ_NAME).elf obj/code.bin

@@ -31,11 +31,11 @@ jobs:
       - run:
           name: Build Honda Pedal STM image
           command: |
-            docker run panda_build /bin/bash -c "cd /panda/board/pedal_honda; make obj/comma.bin"
+            docker run panda_build /bin/bash -c "cd /panda/board/pedal; make BRAND=HONDA obj/pedal_HONDA.bin"
       - run:
           name: Build Toyota Pedal STM image
           command: |
-            docker run panda_build /bin/bash -c "cd /panda/board/pedal_toyota; make obj/comma.bin"
+            docker run panda_build /bin/bash -c "cd /panda/board/pedal; make BRAND=TOYOTA obj/pedal_TOYOTA.bin"
       - run:
           name: Build NEO STM image
           command: |

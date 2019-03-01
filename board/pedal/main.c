@@ -2,6 +2,12 @@
 //#define CAN_LOOPBACK_MODE
 //#define USE_INTERNAL_OSC
 
+#ifdef HONDA
+#elif defined TOYOTA
+#else
+#error "only Honda and Toyota brands are supported"
+#endif
+
 #include "../config.h"
 
 #include "drivers/drivers.h"
@@ -70,9 +76,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
 
 #endif
 
+
 // ***************************** honda can checksum *****************************
 
-int can_cksum(uint8_t *dat, int len, int addr, int idx) {
+#ifdef HONDA
+int can_cksum_honda(uint8_t *dat, int len, int addr, int idx) {
   int i;
   int s = 0;
   for (i = 0; i < len; i++) {
@@ -86,6 +94,27 @@ int can_cksum(uint8_t *dat, int len, int addr, int idx) {
   s = 8-s;
   return s&0xF;
 }
+#endif
+
+
+// ***************************** toyota can checksum ****************************
+
+#ifdef TOYOTA
+int can_cksum_toyota(uint8_t *dat, uint8_t len, uint16_t addr)
+{
+  uint8_t checksum = 0;
+  checksum =((addr & 0xFF00) >> 8) + (addr & 0x00FF) + len + 1;
+  //uint16_t temp_msg = msg;
+  
+  for (int ii = 0; ii < len; ii++)
+  {
+    checksum += (dat[ii]);
+    //temp_msg = temp_msg >> 8;
+  }
+  //return ((msg & ~0xFF) & (checksum & 0xFF));
+  return checksum;
+}
+#endif
 
 // ***************************** can port *****************************
 
@@ -139,9 +168,16 @@ void CAN1_RX0_IRQHandler() {
       uint16_t value_0 = (dat[0] << 8) | dat[1];
       uint16_t value_1 = (dat[2] << 8) | dat[3];
       uint8_t enable = (dat2[0] >> 7) & 1;
+#ifdef HONDA
       uint8_t index = (dat2[1] >> 4) & 3;
-      if (can_cksum(dat, 5, CAN_GAS_INPUT, index) == (dat2[1] & 0xF)) {
+      if (can_cksum_honda(dat, 5, CAN_GAS_INPUT, index) == (dat2[1] & 0xF)) {
         if (((current_index+1)&3) == index) {
+#endif
+#ifdef TOYOTA
+      uint8_t index = 0;
+      if (can_cksum_toyota(dat, 5, CAN_GAS_INPUT) == dat2[1]) {
+        if (index == 0) {
+#endif
           #ifdef DEBUG
             puts("setting gas ");
             puth(value);
@@ -201,7 +237,12 @@ void TIM3_IRQHandler() {
     dat[2] = (pdl1>>8)&0xFF;
     dat[3] = (pdl1>>0)&0xFF;
     dat[4] = state;
-    dat[5] = can_cksum(dat, 5, CAN_GAS_OUTPUT, pkt_idx) | (pkt_idx<<4);
+#ifdef HONDA
+    dat[5] = can_cksum_honda(dat, 5, CAN_GAS_OUTPUT, pkt_idx) | (pkt_idx<<4);
+#endif
+#ifdef TOYOTA
+    dat[5] = can_cksum_toyota(dat, 5, CAN_GAS_OUTPUT);
+#endif
     CAN->sTxMailBox[0].TDLR = dat[0] | (dat[1]<<8) | (dat[2]<<16) | (dat[3]<<24);
     CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5]<<8);
     CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 5
