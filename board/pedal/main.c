@@ -77,9 +77,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
 #endif
 
 
+#ifdef HONDA
 // ***************************** honda can checksum *****************************
 
-#ifdef HONDA
 int can_cksum_honda(uint8_t *dat, int len, int addr, int idx) {
   int i;
   int s = 0;
@@ -94,12 +94,9 @@ int can_cksum_honda(uint8_t *dat, int len, int addr, int idx) {
   s = 8-s;
   return s&0xF;
 }
-#endif
-
-
+#elif defined TOYOTA
 // ***************************** toyota can checksum ****************************
 
-#ifdef TOYOTA
 int can_cksum_toyota(uint8_t *dat, uint8_t len, uint16_t addr) {
   uint8_t checksum = 0;
   checksum =((addr & 0xFF00) >> 8) + (addr & 0x00FF) + len + 1;
@@ -171,7 +168,7 @@ void CAN1_RX0_IRQHandler() {
       uint8_t index = (dat[5] >> 4) & 3;
       if (can_cksum_honda(dat, 5, CAN_GAS_INPUT, index) == (dat[5] & 0xF)) {
         if (((current_index+1)&3) == index) {
-#elif TOYOTA
+#elif defined TOYOTA
       uint8_t index = dat[5];
       if (can_cksum_toyota(dat, 6, CAN_GAS_INPUT) == dat[2]) {
         if (((current_index+1)&255) == index) {
@@ -237,7 +234,7 @@ void TIM3_IRQHandler() {
     dat[4] = state;
 #ifdef HONDA
     dat[5] = can_cksum_honda(dat, 5, CAN_GAS_OUTPUT, pkt_idx) | (pkt_idx<<4);
-#elif TOYOTA
+#elif defined TOYOTA
     dat[5] = pkt_idx;
     dat[6] = can_cksum_toyota(dat, 6, CAN_GAS_OUTPUT);
 #endif
@@ -245,7 +242,7 @@ void TIM3_IRQHandler() {
 #ifdef HONDA
     CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5]<<8);
     CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 6
-#elif TOYOTA
+#elif defined TOYOTA
     CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5]<<8) | (dat[6]<<16);
     CAN->sTxMailBox[0].TDTR = 7;  // len of packet is 6
 #endif
@@ -253,7 +250,7 @@ void TIM3_IRQHandler() {
     ++pkt_idx;
 #ifdef HONDA
     pkt_idx &= 3;
-#elif TOYOTA
+#elif defined TOYOTA
     pkt_idx &= 255;
 #endif
   } else {
