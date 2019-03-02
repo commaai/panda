@@ -170,7 +170,7 @@ void CAN1_RX0_IRQHandler() {
         if (((current_index+1)&3) == index) {
 #elif defined TOYOTA
       uint8_t index = dat[5];
-      if (can_cksum_toyota(dat, 6, CAN_GAS_INPUT) == dat[2]) {
+      if (can_cksum_toyota(dat, 6, CAN_GAS_INPUT) == dat[6]) {
         if (((current_index+1)&255) == index) {
 #endif
           #ifdef DEBUG
@@ -244,7 +244,7 @@ void TIM3_IRQHandler() {
     CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 6
 #elif defined TOYOTA
     CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5]<<8) | (dat[6]<<16);
-    CAN->sTxMailBox[0].TDTR = 7;  // len of packet is 6
+    CAN->sTxMailBox[0].TDTR = 7;  // len of packet is 7
 #endif
     CAN->sTxMailBox[0].TIR = (CAN_GAS_OUTPUT << 21) | 1;
     ++pkt_idx;
