@@ -157,9 +157,11 @@ void CAN1_RX0_IRQHandler() {
 
       // normal packet
       uint8_t dat[8];
+      uint8_t *rdlr = (uint8_t *)&CAN->sFIFOMailBox[0].RDLR;
+      uint8_t *rdhr = (uint8_t *)&CAN->sFIFOMailBox[0].RDHR;
       for (int i=0; i<4; i++) {
-        dat[i] = ((uint8_t *)CAN->sFIFOMailBox[0].RDLR)[i];
-        dat[i+4] = ((uint8_t *)CAN->sFIFOMailBox[0].RDHR)[i];
+        dat[i] = rdlr[i];
+        dat[i+4] = rdhr[i];
       }
       uint16_t value_0 = (dat[0] << 8) | dat[1];
       uint16_t value_1 = (dat[2] << 8) | dat[3];
