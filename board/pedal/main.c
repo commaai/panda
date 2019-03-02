@@ -159,18 +159,21 @@ void CAN1_RX0_IRQHandler() {
       }
 
       // normal packet
-      uint8_t *dat = (uint8_t *)&CAN->sFIFOMailBox[0].RDLR;
-      uint8_t *dat2 = (uint8_t *)&CAN->sFIFOMailBox[0].RDHR;
+      uint8_t dat[8];
+      for (int i=0; i<4; i++) {
+        dat[i] = ((uint8_t *)CAN->sFIFOMailBox[0].RDLR)[i];
+        dat[i+4] = ((uint8_t *)CAN->sFIFOMailBox[0].RDHR)[i];
+      }
       uint16_t value_0 = (dat[0] << 8) | dat[1];
       uint16_t value_1 = (dat[2] << 8) | dat[3];
-      uint8_t enable = (dat2[0] >> 7) & 1;
+      uint8_t enable = (dat[4] >> 7) & 1;
 #ifdef HONDA
-      uint8_t index = (dat2[1] >> 4) & 3;
-      if (can_cksum_honda(dat, 5, CAN_GAS_INPUT, index) == (dat2[1] & 0xF)) {
+      uint8_t index = (dat[5] >> 4) & 3;
+      if (can_cksum_honda(dat, 5, CAN_GAS_INPUT, index) == (dat[5] & 0xF)) {
         if (((current_index+1)&3) == index) {
 #elif TOYOTA
-      uint8_t index = dat2[1];
-      if (can_cksum_toyota(dat, 6, CAN_GAS_INPUT) == dat2[2]) {
+      uint8_t index = dat[5];
+      if (can_cksum_toyota(dat, 6, CAN_GAS_INPUT) == dat[2]) {
         if (((current_index+1)&255) == index) {
 #endif
           #ifdef DEBUG
