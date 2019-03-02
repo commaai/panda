@@ -87,25 +87,25 @@ int can_cksum_honda(uint8_t *dat, int len, int addr, int idx) {
     s += (dat[i] >> 4);
     s += dat[i] & 0xF;
   }
-  s += (addr>>0)&0xF;
-  s += (addr>>4)&0xF;
-  s += (addr>>8)&0xF;
+  s += (addr>>0) & 0xF;
+  s += (addr>>4) & 0xF;
+  s += (addr>>8) & 0xF;
   s += idx;
-  s = 8-s;
-  return s&0xF;
+  s = 8 - s;
+  return s & 0xF;
 }
 #elif defined TOYOTA
 // ***************************** toyota can checksum ****************************
 
 int can_cksum_toyota(uint8_t *dat, uint8_t len, uint16_t addr) {
-  uint8_t checksum = 0;
-  checksum =((addr & 0xFF00) >> 8) + (addr & 0x00FF) + len + 1;
+  int checksum = 0;
+  checksum = ((addr & 0xFF00) >> 8) + (addr & 0x00FF) + len + 1;
 
-  for (int ii = 0; ii < len; ii++)
+  for (int i = 0; i < len; i++)
   {
-    checksum += (dat[ii]);
+    checksum += (dat[i]);
   }
-  return checksum;
+  return checksum & 0xFF;
 }
 #endif
 
@@ -169,11 +169,11 @@ void CAN1_RX0_IRQHandler() {
 #ifdef HONDA
       uint8_t index = (dat[5] >> 4) & 3;
       if (can_cksum_honda(dat, 5, CAN_GAS_INPUT, index) == (dat[5] & 0xF)) {
-        if (((current_index+1)&3) == index) {
+        if (((current_index + 1) & 3) == index) {
 #elif defined TOYOTA
       uint8_t index = dat[5];
       if (can_cksum_toyota(dat, 6, CAN_GAS_INPUT) == dat[6]) {
-        if (((current_index+1)&255) == index) {
+        if (((current_index + 1) & 0xFF) == index) {
 #endif
           #ifdef DEBUG
             puts("setting gas ");
@@ -229,10 +229,10 @@ void TIM3_IRQHandler() {
   // check timer for sending the user pedal and clearing the CAN
   if ((CAN->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
     uint8_t dat[8];
-    dat[0] = (pdl0>>8)&0xFF;
-    dat[1] = (pdl0>>0)&0xFF;
-    dat[2] = (pdl1>>8)&0xFF;
-    dat[3] = (pdl1>>0)&0xFF;
+    dat[0] = (pdl0>>8) & 0xFF;
+    dat[1] = (pdl0>>0) & 0xFF;
+    dat[2] = (pdl1>>8) & 0xFF;
+    dat[3] = (pdl1>>0) & 0xFF;
     dat[4] = state;
 #ifdef HONDA
     dat[5] = can_cksum_honda(dat, 5, CAN_GAS_OUTPUT, pkt_idx) | (pkt_idx<<4);
@@ -253,7 +253,7 @@ void TIM3_IRQHandler() {
 #ifdef HONDA
     pkt_idx &= 3;
 #elif defined TOYOTA
-    pkt_idx &= 255;
+    pkt_idx &= 0xFF;
 #endif
   } else {
     // old can packet hasn't sent!
