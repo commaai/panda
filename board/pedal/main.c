@@ -143,7 +143,7 @@ void CAN1_RX0_IRQHandler() {
       uint16_t value_0 = (dat[0] << 8) | dat[1];
       uint16_t value_1 = (dat[2] << 8) | dat[3];
       uint8_t enable = (dat[4] >> 7) & 1;
-      uint8_t index = dat[5] & COUNTER_CYCLE;
+      uint8_t index = dat[4] & COUNTER_CYCLE;
       if (pedal_checksum(dat, CAN_GAS_SIZE, CAN_GAS_INPUT) == dat[5]) {
         if (((current_index + 1) & COUNTER_CYCLE) == index) {
           #ifdef DEBUG
