@@ -74,14 +74,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
 
 // TODO: for now Toyota, then switch to CRC8
 int pedal_checksum(uint8_t *dat, int len, int addr) {
-  uint8_t checksum = 0;
+  int checksum = 0;
   checksum =((addr & 0xFF00) >> 8) + (addr & 0x00FF) + len;
 
   for (int ii = 0; ii < len - 1; ii++)
   {
     checksum += (dat[ii]);
   }
-  return checksum;
+  return checksum & 0xFF;
 }
 
 // ***************************** can port *****************************
