@@ -72,16 +72,21 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
 
 // ***************************** pedal can checksum *****************************
 
-// TODO: for now Toyota, then switch to CRC8
-int pedal_checksum(uint8_t *dat, int len, int addr) {
-  int checksum = 0;
-  checksum =((addr & 0xFF00) >> 8) + (addr & 0x00FF) + len;
-
-  for (int ii = 0; ii < len - 1; ii++)
-  {
-    checksum += (dat[ii]);
+uint8_t pedal_checksum(uint8_t *dat, int len) {
+  uint8_t crc = 0xFF;
+  int i, j;
+  for (i = len - 1; i >= 0; i--) {
+    crc ^= dat[i];
+    for (j = 0; j < 8; j++) {
+      if ((crc & 0x80) != 0) {
+        crc = (uint8_t)((crc << 1) ^ 0xFF);
+      }
+      else {
+        crc <<= 1;
+      }
+    }
   }
-  return checksum & 0xFF;
+  return crc;
 }
 
 // ***************************** can port *****************************
@@ -144,7 +149,7 @@ void CAN1_RX0_IRQHandler() {
       uint16_t value_1 = (dat[2] << 8) | dat[3];
       uint8_t enable = (dat[4] >> 7) & 1;
       uint8_t index = dat[4] & COUNTER_CYCLE;
-      if (pedal_checksum(dat, CAN_GAS_SIZE, CAN_GAS_INPUT) == dat[5]) {
+      if (pedal_checksum(dat, CAN_GAS_SIZE - 1) == dat[5]) {
         if (((current_index + 1) & COUNTER_CYCLE) == index) {
           #ifdef DEBUG
             puts("setting gas ");
@@ -205,7 +210,7 @@ void TIM3_IRQHandler() {
     dat[2] = (pdl1>>8) & 0xFF;
     dat[3] = (pdl1>>0) & 0xFF;
     dat[4] = (state & 0xF) << 4 | pkt_idx;
-    dat[5] = pedal_checksum(dat, CAN_GAS_SIZE, CAN_GAS_OUTPUT);
+    dat[5] = pedal_checksum(dat, CAN_GAS_SIZE - 1);
     CAN->sTxMailBox[0].TDLR = dat[0] | (dat[1]<<8) | (dat[2]<<16) | (dat[3]<<24);
     CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5]<<8);
     CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 5
