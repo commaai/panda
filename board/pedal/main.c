@@ -74,12 +74,13 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
 
 uint8_t pedal_checksum(uint8_t *dat, int len) {
   uint8_t crc = 0xFF;
+  uint8_t poly = 0xD5; // standard crc8
   int i, j;
   for (i = len - 1; i >= 0; i--) {
     crc ^= dat[i];
     for (j = 0; j < 8; j++) {
       if ((crc & 0x80) != 0) {
-        crc = (uint8_t)((crc << 1) ^ 0xFF);
+        crc = (uint8_t)((crc << 1) ^ poly);
       }
       else {
         crc <<= 1;
