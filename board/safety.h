@@ -29,6 +29,10 @@ int driver_limit_check(int val, int val_last, struct sample_t *val_driver,
 int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 #ifdef PANDA
 float interpolate(struct lookup_t xy, float x);
+
+void lline_relay_init (void);
+void lline_relay_release (void);
+void set_lline_output(int to_set);
 #endif
 
 typedef void (*safety_hook_init)(int16_t param);

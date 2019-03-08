@@ -8,8 +8,10 @@ int default_ign_hook() {
 
 static void nooutput_init(int16_t param) {
   controls_allowed = 0;
-  lline_relay_release();
-  set_lline_output(0); //Default to off
+  #ifdef PANDA
+    lline_relay_release();
+    set_lline_output(0); //Default to off
+  #endif
 }
 
 static int nooutput_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
@@ -42,8 +44,10 @@ const safety_hooks nooutput_hooks = {
 
 static void alloutput_init(int16_t param) {
   controls_allowed = 1;
-  set_lline_output(0); //Default to off
-  lline_relay_init();
+  #ifdef PANDA
+    set_lline_output(0); //Default to off
+    lline_relay_init();
+  #endif
 }
 
 static int alloutput_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {

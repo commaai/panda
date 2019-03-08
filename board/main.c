@@ -449,7 +449,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xf3:
       {
         #ifdef PANDA
-          if safety_relay_hook(setup->b.wValue.w == 1) {
+          if (safety_relay_hook(setup->b.wValue.w == 1)) {
             set_lline_output(setup->b.wValue.w == 1);
           }
         #endif
