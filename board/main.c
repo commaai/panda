@@ -573,6 +573,7 @@ int main() {
   usb_init();
 
   // default to silent mode to prevent issues with Ford
+  // hardcode a specific safety mode if you want to force the panda to be in a specific mode
   safety_set_mode(SAFETY_NOOUTPUT, 0);
   can_silent = ALL_CAN_SILENT;
   can_init_all();
@@ -607,6 +608,8 @@ int main() {
     uint64_t marker = 0;
     #define CURRENT_THRESHOLD 0xF00
     #define CLICKS 8
+    // Enough clicks to ensure that enumeration happened. Should be longer than bootup time of the device connected to EON
+    #define CLICKS_BOOTUP 30
   #endif
 
   for (cnt=0;;cnt++) {
@@ -633,8 +636,8 @@ int main() {
           }
           break;
         case USB_POWER_CDP:
-          // been CLICKS clicks since we switched to CDP
-          if ((cnt-marker) >= CLICKS) {
+          // been CLICKS_BOOTUP clicks since we switched to CDP
+          if ((cnt-marker) >= CLICKS_BOOTUP ) {
             // measure current draw, if positive and no enumeration, switch to DCP
             if (!is_enumerated && current < CURRENT_THRESHOLD) {
               puts("USBP: no enumeration with current draw, switching to DCP mode\n");

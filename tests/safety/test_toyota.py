@@ -119,6 +119,13 @@ class TestToyotaSafety(unittest.TestCase):
     to_send[0].RDLR = (a & 0xFF) << 8 | (a >> 8)
     return to_send
 
+  def _gas_msg(self, gas):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 0x200 << 21
+    to_send[0].RDLR = gas
+
+    return to_send
+
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
@@ -129,7 +136,7 @@ class TestToyotaSafety(unittest.TestCase):
   def test_enable_control_allowed_from_cruise(self):
     to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_push[0].RIR = 0x1D2 << 21
-    to_push[0].RDHR = 0xF00000
+    to_push[0].RDLR = 0x20
 
     self.safety.toyota_rx_hook(to_push)
     self.assertTrue(self.safety.get_controls_allowed())
@@ -137,7 +144,7 @@ class TestToyotaSafety(unittest.TestCase):
   def test_disable_control_allowed_from_cruise(self):
     to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_push[0].RIR = 0x1D2 << 21
-    to_push[0].RDHR = 0
+    to_push[0].RDLR = 0
 
     self.safety.set_controls_allowed(1)
     self.safety.toyota_rx_hook(to_push)
@@ -373,7 +380,7 @@ class TestToyotaSafety(unittest.TestCase):
         self.assertTrue(self.safety.get_controls_allowed())
 
         # now inject too high rates
-        self.assertEqual(False, self.safety.toyota_ipas_tx_hook(self._ipas_control_msg(a + sign(a) * 
+        self.assertEqual(False, self.safety.toyota_ipas_tx_hook(self._ipas_control_msg(a + sign(a) *
                                                                                   (max_delta_up + 1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
         self.safety.set_controls_allowed(1)
@@ -381,7 +388,7 @@ class TestToyotaSafety(unittest.TestCase):
         self.assertTrue(self.safety.get_controls_allowed())
         self.assertEqual(True, self.safety.toyota_ipas_tx_hook(self._ipas_control_msg(a, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
-        self.assertEqual(False, self.safety.toyota_ipas_tx_hook(self._ipas_control_msg(a - sign(a) * 
+        self.assertEqual(False, self.safety.toyota_ipas_tx_hook(self._ipas_control_msg(a - sign(a) *
                                                                                   (max_delta_down + 1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
 
@@ -408,6 +415,13 @@ class TestToyotaSafety(unittest.TestCase):
 
     # reset no angle control at the end of the test
     self.safety.reset_angle_control()
+
+  def test_gas_safety_check(self):
+    self.safety.set_controls_allowed(0)
+    self.assertTrue(self.safety.honda_tx_hook(self._gas_msg(0x0000)))
+    self.assertFalse(self.safety.honda_tx_hook(self._gas_msg(0x1000)))
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self.safety.honda_tx_hook(self._gas_msg(0x1000)))
 
 
 if __name__ == "__main__":
