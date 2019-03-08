@@ -44,4 +44,8 @@ void set_lline_output(int to_set) {
   turn_on_relay = to_set;
 }
 
+int get_lline_status() {
+  return turn_on_relay;
+}
+
 #endif

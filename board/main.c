@@ -79,7 +79,7 @@ int get_health_pkt(void *dat) {
     uint8_t controls_allowed;
     uint8_t gas_interceptor_detected;
     uint8_t started_signal_detected;
-    uint8_t started_alt;
+    uint8_t relay_status;
   } *health = dat;
 
   //Voltage will be measured in mv. 5000 = 5V
@@ -114,16 +114,19 @@ int get_health_pkt(void *dat) {
     //Current safety hooks want to determine ignition (ex: GM)
     health->started = safety_ignition;
   }
+  health->relay_status = get_lline_status() != 0;
 #else
   health->current = 0;
   health->started = (GPIOC->IDR & (1 << 13)) != 0;
+  health->relay_status = 0;
 #endif
 
   health->controls_allowed = controls_allowed;
   health->gas_interceptor_detected = gas_interceptor_detected;
 
+
+
   // DEPRECATED
-  health->started_alt = 0;
   health->started_signal_detected = 0;
 
   return sizeof(*health);
@@ -445,7 +448,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     // **** 0xf3: set l-line relay
     case 0xf3:
       {
-        set_lline_output(setup->b.wValue.w == 1);
+        #ifdef PANDA
+          set_lline_output(setup->b.wValue.w == 1);
+        #endif
+        break;
       }
     default:
       puts("NO HANDLER ");
@@ -583,7 +589,9 @@ int main() {
 
   __enable_irq();
 
+#ifdef PANDA
   lline_relay_init();
+#endif
 
   // if the error interrupt is enabled to quickly when the CAN bus is active
   // something bad happens and you can't connect to the device over USB
