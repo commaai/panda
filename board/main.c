@@ -19,6 +19,7 @@
 #include "drivers/can.h"
 #include "drivers/spi.h"
 #include "drivers/timer.h"
+#include "drivers/lline_relay.h"
 
 
 // ***************************** fan *****************************
@@ -441,6 +442,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         }
         break;
       }
+    // **** 0xf3: set l-line relay
+    case 0xf3:
+      {
+        set_lline_output(setup->b.wValue.w == 1);
+      }
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);
@@ -576,6 +582,8 @@ int main() {
   puts("**** INTERRUPTS ON ****\n");
 
   __enable_irq();
+
+  lline_relay_init();
 
   // if the error interrupt is enabled to quickly when the CAN bus is active
   // something bad happens and you can't connect to the device over USB
