@@ -278,6 +278,8 @@ class Panda(object):
     # reconnect
     if reconnect:
       self.reconnect()
+      if self.bootstub:
+        self.recover()
 
   def recover(self):
     self.reset(enter_bootloader=True)
