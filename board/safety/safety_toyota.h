@@ -171,6 +171,7 @@ const safety_hooks toyota_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = toyota_fwd_hook,
+  .relay = alloutput_relay_hook,
 };
 
 static void toyota_nolimits_init(int16_t param) {
@@ -187,4 +188,5 @@ const safety_hooks toyota_nolimits_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = toyota_fwd_hook,
+  .relay = alloutput_relay_hook,
 };

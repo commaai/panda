@@ -284,4 +284,5 @@ const safety_hooks tesla_hooks = {
     .tx_lin = tesla_tx_lin_hook,
     .ignition = tesla_ign_hook,
     .fwd = tesla_fwd_hook,
+    .relay = alloutput_relay_hook,
 };

@@ -145,6 +145,7 @@ const safety_hooks honda_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = nooutput_fwd_hook,
+  .relay = alloutput_relay_hook,
 };
 
 static void honda_bosch_init(int16_t param) {
@@ -169,4 +170,5 @@ const safety_hooks honda_bosch_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = honda_bosch_fwd_hook,
+  .relay = alloutput_relay_hook,
 };

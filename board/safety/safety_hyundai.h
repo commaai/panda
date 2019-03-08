@@ -161,4 +161,5 @@ const safety_hooks hyundai_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = hyundai_fwd_hook,
+  .relay = alloutput_relay_hook,
 };

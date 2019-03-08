@@ -4,7 +4,7 @@
 
 // 100 us high, 5 ms low
 
-volatile int turn_on_relay = 1;
+volatile int turn_on_relay = 0;
 volatile int on_cycles = 90;
 
 void TIM5_IRQHandler(void) {
@@ -38,6 +38,11 @@ void lline_relay_init (void) {
   // run the interrupt
   TIM5->DIER = TIM_DIER_UIE; // update interrupt
   TIM5->SR = 0;
+}
+
+void lline_relay_release (void) {
+  set_gpio_alternate(GPIOC, 10, GPIO_AF7_USART3);
+  NVIC_DisableIRQ(TIM5_IRQn);
 }
 
 void set_lline_output(int to_set) {
