@@ -633,14 +633,12 @@ int main() {
     // blink the red LED
     int div_mode = 1;
 
-    for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
-      for (int fade = 0; fade < 1024; fade += 8) {
-        for (int i = 0; i < 128/div_mode; i++) {
-          set_led(LED_RED, 0);
-          if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
-          set_led(LED_RED, 1);
-          if (fade < 512) { delay(fade); } else { delay(1024-fade); }
-        }
+    for (int fade = 0; fade < 1024; fade += 8) {
+      for (int i = 0; i < 128/div_mode; i++) {
+        set_led(LED_RED, 0);
+        if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
+        set_led(LED_RED, 1);
+        if (fade < 512) { delay(fade); } else { delay(1024-fade); }
       }
     }
 
