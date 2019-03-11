@@ -44,7 +44,7 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // steer cmd checks
   if (addr == 0x122) {
-    int desired_torque = ((to_send->RDLR >> 16) && 0x1FFF);
+    int desired_torque = ((to_send->RDLR >> 16) & 0x1FFF);
     int violation = 0;
     uint32_t ts = TIM2->CNT;
     desired_torque = to_signed(desired_torque, 13);
