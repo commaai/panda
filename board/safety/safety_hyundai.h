@@ -152,6 +152,10 @@ static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 static void hyundai_init(int16_t param) {
   controls_allowed = 0;
   hyundai_giraffe_switch_2 = 0;
+  #ifdef PANDA
+    set_lline_output(0); //Default to off
+    lline_relay_init();
+  #endif
 }
 
 const safety_hooks hyundai_hooks = {

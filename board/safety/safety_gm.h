@@ -241,5 +241,5 @@ const safety_hooks gm_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = gm_ign_hook,
   .fwd = nooutput_fwd_hook,
-  .relay = alloutput_relay_hook,
+  .relay = nooutput_relay_hook,
 };

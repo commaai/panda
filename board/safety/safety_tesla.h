@@ -230,6 +230,10 @@ static void tesla_init(int16_t param)
   controls_allowed = 0;
   tesla_ignition_started = 0;
   gmlan_switch_init(1); //init the gmlan switch with 1s timeout enabled
+  #ifdef PANDA
+    set_lline_output(0); //Default to off
+    lline_relay_init();
+  #endif
 }
 
 static int tesla_ign_hook()

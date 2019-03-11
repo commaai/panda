@@ -5,6 +5,10 @@ void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {}
 
 static void subaru_init(int16_t param) {
   controls_allowed = 1;
+  #ifdef PANDA
+    set_lline_output(0); //Default to off
+    lline_relay_init();
+  #endif
 }
 
 static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
@@ -46,4 +50,5 @@ const safety_hooks subaru_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = subaru_fwd_hook,
+  .relay = alloutput_relay_hook,
 };

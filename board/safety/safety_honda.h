@@ -136,6 +136,10 @@ static void honda_init(int16_t param) {
   controls_allowed = 0;
   bosch_hardware = false;
   honda_alt_brake_msg = false;
+  #ifdef PANDA
+    set_lline_output(0); //Default to off
+    lline_relay_init();
+  #endif
 }
 
 static void honda_bosch_init(int16_t param) {
@@ -143,6 +147,10 @@ static void honda_bosch_init(int16_t param) {
   bosch_hardware = true;
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = param == 1 ? true : false;
+  #ifdef PANDA
+    set_lline_output(0); //Default to off
+    lline_relay_init();
+  #endif
 }
 
 static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
