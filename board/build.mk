@@ -2,14 +2,11 @@ CFLAGS += -I inc -I ../ -nostdlib -fno-builtin -std=gnu11 -Os
 
 CFLAGS += -Tstm32_flash.ld
 
-# True if not on EON
+# True if not on EON. This define is used to turn off fast charge (DCP) when EON is used
 DEFINES =
 ifeq (,$(wildcard /EON))
   DEFINES += -D NOT_EON=1
 endif
-
-#rule:
-#	@echo $(DEFINES)
 
 CC = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
