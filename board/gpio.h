@@ -456,8 +456,14 @@ void early() {
     // unless we are on a giant panda, then there's no ESP
     if (is_giant_panda) {
       set_esp_mode(ESP_DISABLED);
-    } else {
+    } else if (is_grey_panda) {
       set_esp_mode(ESP_ENABLED);
+    } else {
+      #ifdef EON
+        set_esp_mode(ESP_DISABLED);
+      #else
+        set_esp_mode(ESP_ENABLED);
+      #endif
     }
   #endif
 
