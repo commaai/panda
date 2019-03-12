@@ -61,7 +61,7 @@ void debug_ring_callback(uart_ring *ring) {
       puts("switching USB to client mode\n");
       set_usb_power_mode(USB_POWER_CLIENT);
     }
-#ifdef NOT_EON
+#ifndef EON
     if (rcv == 'D') {
       puts("switching USB to DCP mode\n");
       set_usb_power_mode(USB_POWER_DCP);
@@ -381,7 +381,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         if (setup->b.wValue.w == 1) {
           puts("user setting CDP mode\n");
           set_usb_power_mode(USB_POWER_CDP);
-#ifdef NOT_EON
+#ifndef EON
         } else if (setup->b.wValue.w == 2) {
           puts("user setting DCP mode\n");
           set_usb_power_mode(USB_POWER_DCP);
@@ -602,7 +602,7 @@ int main() {
     //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
 
     #ifdef PANDA
-#ifdef NOT_EON
+#ifndef EON
       int current = adc_get(ADCCHAN_CURRENT);
 #endif
 
@@ -622,7 +622,7 @@ int main() {
           }
           break;
         case USB_POWER_CDP:
-#ifdef NOT_EON
+#ifndef EON
           // been CLICKS clicks since we switched to CDP
           if ((cnt-marker) >= CLICKS) {
             // measure current draw, if positive and no enumeration, switch to DCP
@@ -674,7 +674,7 @@ int main() {
     set_led(LED_GREEN, controls_allowed);
 
     // blink the red LED
-#ifdef NOT_EON
+#ifndef EON
     int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
 #else
     int div_mode = 1;

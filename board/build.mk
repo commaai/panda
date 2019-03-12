@@ -2,12 +2,11 @@ CFLAGS += -I inc -I ../ -nostdlib -fno-builtin -std=gnu11 -Os
 
 CFLAGS += -Tstm32_flash.ld
 
-# True if not on EON. This define is used to turn off fast charge (DCP) when EON is used
+# Compile fast charge (DCP) only not on EON
 ifeq (,$(wildcard /EON))
-  DEFINES = -D NOT_EON=1
   BUILDER = DEV
 else
-  DEFINES =
+  CFLAGS += "-DEON"
   BUILDER = EON
 endif
 
@@ -47,7 +46,7 @@ obj/cert.h: ../crypto/getcertheader.py
 	../crypto/getcertheader.py ../certs/debug.pub ../certs/release.pub > $@
 
 obj/%.$(PROJ_NAME).o: %.c obj/cert.h obj/gitversion.h config.h drivers/*.h gpio.h libc.h provision.h safety.h safety/*.h spi_flasher.h
-	$(CC) $(CFLAGS) $(DEFINES) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 obj/%.$(PROJ_NAME).o: ../crypto/%.c
 	$(CC) $(CFLAGS) -o $@ -c $<
