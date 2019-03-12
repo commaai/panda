@@ -24,7 +24,7 @@ def ensure_st_up_to_date():
     if len(panda_dfu) > 0:
       panda_dfu = PandaDFU(panda_dfu[0])
       panda_dfu.recover()
-      
+
     print "waiting for board..."
     time.sleep(1)
 

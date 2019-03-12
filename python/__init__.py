@@ -270,7 +270,10 @@ class Panda(object):
         code = f.read()
 
     # get version
-    print("flash: version is "+self.get_version())
+    print("DEBUG")
+    print(self.get_version())
+    print("flash: version is " + self.get_version())
+    print(self.get_version())
 
     # do flash
     Panda.flash_static(self._handle, code)

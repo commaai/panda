@@ -2,6 +2,15 @@ CFLAGS += -I inc -I ../ -nostdlib -fno-builtin -std=gnu11 -Os
 
 CFLAGS += -Tstm32_flash.ld
 
+# True if not on EON
+DEFINES =
+ifeq (,$(wildcard /EON))
+  DEFINES += -D NOT_EON=1
+endif
+
+#rule:
+#	@echo $(DEFINES)
+
 CC = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
 OBJDUMP = arm-none-eabi-objdump
@@ -38,7 +47,7 @@ obj/cert.h: ../crypto/getcertheader.py
 	../crypto/getcertheader.py ../certs/debug.pub ../certs/release.pub > $@
 
 obj/%.$(PROJ_NAME).o: %.c obj/cert.h obj/gitversion.h config.h drivers/*.h gpio.h libc.h provision.h safety.h safety/*.h spi_flasher.h
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) -o $@ -c $<
 
 obj/%.$(PROJ_NAME).o: ../crypto/%.c
 	$(CC) $(CFLAGS) -o $@ -c $<

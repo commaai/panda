@@ -8,7 +8,6 @@
 
 #define PANDA_REV_AB 0
 #define PANDA_REV_C 1
-
 #define PULL_EFFECTIVE_DELAY 10
 
 int has_external_debug_serial = 0;
@@ -232,6 +231,9 @@ void set_can_mode(int can, int use_gmlan) {
 #define USB_POWER_NONE 0
 #define USB_POWER_CLIENT 1
 #define USB_POWER_CDP 2
+#ifdef NOT_EON
+#define USB_POWER_DCP 3
+#endif
 
 int usb_power_mode = USB_POWER_NONE;
 
@@ -247,6 +249,13 @@ void set_usb_power_mode(int mode) {
       set_gpio_output(GPIOB, 2, 1);
       set_gpio_output(GPIOA, 13, 1);
       break;
+#ifdef NOT_EON
+    case USB_POWER_DCP:
+      // B2,A13: set DCP mode on the charger (breaks USB!)
+      set_gpio_output(GPIOB, 2, 0);
+      set_gpio_output(GPIOA, 13, 0);
+      break;
+#endif
   }
   usb_power_mode = mode;
 }

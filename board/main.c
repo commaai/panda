@@ -61,6 +61,12 @@ void debug_ring_callback(uart_ring *ring) {
       puts("switching USB to client mode\n");
       set_usb_power_mode(USB_POWER_CLIENT);
     }
+#ifdef NOT_EON
+    if (rcv == 'D') {
+      puts("switching USB to DCP mode\n");
+      set_usb_power_mode(USB_POWER_DCP);
+    }
+#endif
   }
 }
 
@@ -375,6 +381,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         if (setup->b.wValue.w == 1) {
           puts("user setting CDP mode\n");
           set_usb_power_mode(USB_POWER_CDP);
+#ifdef NOT_EON
+        } else if (setup->b.wValue.w == 2) {
+          puts("user setting DCP mode\n");
+          set_usb_power_mode(USB_POWER_DCP);
+#endif
         } else {
           puts("user setting CLIENT mode\n");
           set_usb_power_mode(USB_POWER_CLIENT);
@@ -593,6 +604,10 @@ int main() {
     //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
 
     #ifdef PANDA
+      #ifdef NOT_EON
+        int current = adc_get(ADCCHAN_CURRENT);
+      #endif
+
       switch (usb_power_mode) {
         case USB_POWER_CLIENT:
           if ((cnt-marker) >= CLICKS) {
@@ -609,6 +624,36 @@ int main() {
           }
           break;
         case USB_POWER_CDP:
+#ifdef NOT_EON
+          // been CLICKS_BOOTUP clicks since we switched to CDP
+          if ((cnt-marker) >= CLICKS_BOOTUP ) {
+            // measure current draw, if positive and no enumeration, switch to DCP
+            if (!is_enumerated && current < CURRENT_THRESHOLD) {
+              puts("USBP: no enumeration with current draw, switching to DCP mode\n");
+              set_usb_power_mode(USB_POWER_DCP);
+              marker = cnt;
+            }
+          }
+          // keep resetting the timer if there's no current draw in CDP
+          if (current >= CURRENT_THRESHOLD) {
+            marker = cnt;
+          }
+          break;
+        case USB_POWER_DCP:
+          // been at least CLICKS clicks since we switched to DCP
+          if ((cnt-marker) >= CLICKS) {
+            // if no current draw, switch back to CDP
+            if (current >= CURRENT_THRESHOLD) {
+              puts("USBP: no current draw, switching back to CDP mode\n");
+              set_usb_power_mode(USB_POWER_CDP);
+              marker = cnt;
+            }
+          }
+          // keep resetting the timer if there's current draw in DCP
+          if (current < CURRENT_THRESHOLD) {
+            marker = cnt;
+          }
+#endif
           break;
       }
 
@@ -631,17 +676,22 @@ int main() {
     set_led(LED_GREEN, controls_allowed);
 
     // blink the red LED
+#ifdef NOT_EON
+    int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
+#else
     int div_mode = 1;
+#endif
 
-    for (int fade = 0; fade < 1024; fade += 8) {
-      for (int i = 0; i < 128/div_mode; i++) {
-        set_led(LED_RED, 0);
-        if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
-        set_led(LED_RED, 1);
-        if (fade < 512) { delay(fade); } else { delay(1024-fade); }
+    for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
+      for (int fade = 0; fade < 1024; fade += 8) {
+        for (int i = 0; i < 128/div_mode; i++) {
+          set_led(LED_RED, 0);
+          if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
+          set_led(LED_RED, 1);
+          if (fade < 512) { delay(fade); } else { delay(1024-fade); }
+        }
       }
     }
-
     // turn off the blue LED, turned on by CAN
     #ifdef PANDA
       set_led(LED_BLUE, 0);
