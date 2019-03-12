@@ -680,6 +680,7 @@ int main() {
         }
       }
     }
+
     // turn off the blue LED, turned on by CAN
     #ifdef PANDA
       set_led(LED_BLUE, 0);
