@@ -61,12 +61,10 @@ void debug_ring_callback(uart_ring *ring) {
       puts("switching USB to client mode\n");
       set_usb_power_mode(USB_POWER_CLIENT);
     }
-#ifndef EON
     if (rcv == 'D') {
       puts("switching USB to DCP mode\n");
       set_usb_power_mode(USB_POWER_DCP);
     }
-#endif
   }
 }
 
@@ -381,11 +379,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         if (setup->b.wValue.w == 1) {
           puts("user setting CDP mode\n");
           set_usb_power_mode(USB_POWER_CDP);
-#ifndef EON
         } else if (setup->b.wValue.w == 2) {
           puts("user setting DCP mode\n");
           set_usb_power_mode(USB_POWER_DCP);
-#endif
         } else {
           puts("user setting CLIENT mode\n");
           set_usb_power_mode(USB_POWER_CLIENT);
@@ -602,9 +598,7 @@ int main() {
     //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
 
     #ifdef PANDA
-#ifndef EON
       int current = adc_get(ADCCHAN_CURRENT);
-#endif
 
       switch (usb_power_mode) {
         case USB_POWER_CLIENT:
@@ -636,6 +630,7 @@ int main() {
           if (current >= CURRENT_THRESHOLD) {
             marker = cnt;
           }
+#endif
           break;
         case USB_POWER_DCP:
           // been at least CLICKS clicks since we switched to DCP
@@ -651,7 +646,6 @@ int main() {
           if (current < CURRENT_THRESHOLD) {
             marker = cnt;
           }
-#endif
           break;
       }
 
@@ -674,11 +668,7 @@ int main() {
     set_led(LED_GREEN, controls_allowed);
 
     // blink the red LED
-#ifndef EON
     int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
-#else
-    int div_mode = 1;
-#endif
 
     for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
       for (int fade = 0; fade < 1024; fade += 8) {

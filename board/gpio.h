@@ -231,9 +231,7 @@ void set_can_mode(int can, int use_gmlan) {
 #define USB_POWER_NONE 0
 #define USB_POWER_CLIENT 1
 #define USB_POWER_CDP 2
-#ifndef EON
 #define USB_POWER_DCP 3
-#endif
 
 int usb_power_mode = USB_POWER_NONE;
 
@@ -249,13 +247,11 @@ void set_usb_power_mode(int mode) {
       set_gpio_output(GPIOB, 2, 1);
       set_gpio_output(GPIOA, 13, 1);
       break;
-#ifndef EON
     case USB_POWER_DCP:
       // B2,A13: set DCP mode on the charger (breaks USB!)
       set_gpio_output(GPIOB, 2, 0);
       set_gpio_output(GPIOA, 13, 0);
       break;
-#endif
   }
   usb_power_mode = mode;
 }
