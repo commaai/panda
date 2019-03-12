@@ -602,9 +602,9 @@ int main() {
     //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
 
     #ifdef PANDA
-      #ifdef NOT_EON
-        int current = adc_get(ADCCHAN_CURRENT);
-      #endif
+#ifdef NOT_EON
+      int current = adc_get(ADCCHAN_CURRENT);
+#endif
 
       switch (usb_power_mode) {
         case USB_POWER_CLIENT:
