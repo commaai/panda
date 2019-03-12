@@ -8,6 +8,8 @@ def ensure_st_up_to_date():
   with open(os.path.join(BASEDIR, "VERSION")) as f:
     repo_version = f.read()
 
+  repo_version += "-EON" if os.path.isfile('/EON') else "-DEV"
+
   panda = None
   panda_dfu = None
   should_flash_recover = False
