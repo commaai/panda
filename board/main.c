@@ -168,7 +168,9 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
     #ifdef PANDA
       // Enable relay on can message if allowed.
       // Temporary until OP has support for relay
-      set_lline_output(1);
+      if (safety_relay_hook(1)) {
+        set_lline_output(1);
+      }
     #endif
   }
 }
