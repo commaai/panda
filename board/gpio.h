@@ -147,6 +147,10 @@ void set_can_enable(CAN_TypeDef *CAN, int enabled) {
         set_gpio_output(GPIOB, 3, enabled);
       #endif
     #endif
+    if (!enabled) {
+      CAN->MCR |= CAN_MCR_SLEEP;
+      CAN->MCR |= CAN_MCR_AWUM;
+    }
   } else if (CAN == CAN2) {
     #ifdef PANDA
       // CAN2_EN
@@ -155,10 +159,18 @@ void set_can_enable(CAN_TypeDef *CAN, int enabled) {
       // CAN2_EN
       set_gpio_output(GPIOB, 4, enabled);
     #endif
+    if (!enabled) {
+      CAN->MCR |= CAN_MCR_SLEEP;
+      CAN->MCR |= CAN_MCR_AWUM;
+    }
   #ifdef CAN3
   } else if (CAN == CAN3) {
     // CAN3_EN
     set_gpio_output(GPIOA, 0, !enabled);
+    if (!enabled) {
+      CAN->MCR |= CAN_MCR_SLEEP;
+      CAN->MCR |= CAN_MCR_AWUM;
+    }
   #endif
   }
 }
@@ -475,4 +487,3 @@ void early() {
     enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
   }
 }
-

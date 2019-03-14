@@ -441,6 +441,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         }
         break;
       }
+    // **** 0xf4: set can enable
+    case 0xf4:
+      {
+        if (setup->b.wValue.w < BUS_MAX) {
+          set_can_enable(CANIF_FROM_CAN_NUM(setup->b.wValue.w), setup->b.wIndex.w);
+        }
+        break;
+      }
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);

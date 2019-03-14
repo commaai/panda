@@ -213,7 +213,7 @@ void can_init(uint8_t can_number) {
   CAN->FMR &= ~(CAN_FMR_FINIT);
 
   // enable certain CAN interrupts
-  CAN->IER |= CAN_IER_TMEIE | CAN_IER_FMPIE0;
+  CAN->IER |= CAN_IER_TMEIE | CAN_IER_FMPIE0 |  CAN_IER_WKUIE;
 
   switch (can_number) {
     case 0:
@@ -292,8 +292,6 @@ void can_set_gmlan(int bus) {
 // CAN error
 void can_sce(CAN_TypeDef *CAN) {
   enter_critical_section();
-
-  can_err_cnt += 1;
   #ifdef DEBUG
     if (CAN==CAN1) puts("CAN1:  ");
     if (CAN==CAN2) puts("CAN2:  ");
@@ -313,18 +311,30 @@ void can_sce(CAN_TypeDef *CAN) {
     puts("\n");
   #endif
 
-  uint8_t can_number = CAN_NUM_FROM_CANIF(CAN);
-  uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
-  if (can_autobaud_enabled[bus_number] && (CAN->ESR & CAN_ESR_LEC)) {
-    can_autobaud_speed_increment(can_number);
-    can_set_speed(can_number);
+  if (CAN->MSR & CAN_MSR_WKUI) {
+    //Waking from sleep
+    #ifdef DEBUG
+      puts("WAKE\n");
+    #endif
+    set_can_enable(CAN, 1);
+    CAN->MSR &= ~(CAN_MSR_WKUI);
+    CAN->MSR = CAN->MSR;
+  } else {
+    can_err_cnt += 1;
+
+
+    uint8_t can_number = CAN_NUM_FROM_CANIF(CAN);
+    uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
+    if (can_autobaud_enabled[bus_number] && (CAN->ESR & CAN_ESR_LEC)) {
+      can_autobaud_speed_increment(can_number);
+      can_set_speed(can_number);
+    }
+
+    // clear current send
+    CAN->TSR |= CAN_TSR_ABRQ0;
+    CAN->MSR &= ~(CAN_MSR_ERRI);
+    CAN->MSR = CAN->MSR;
   }
-
-  // clear current send
-  CAN->TSR |= CAN_TSR_ABRQ0;
-  CAN->MSR &= ~(CAN_MSR_ERRI);
-  CAN->MSR = CAN->MSR;
-
   exit_critical_section();
 }
 
@@ -375,6 +385,13 @@ void process_can(uint8_t can_number) {
     }
 
     if (can_pop(can_queues[bus_number], &to_send)) {
+      if (CAN->MCR & CAN_MCR_SLEEP) {
+        set_can_enable(CAN, 1);
+        CAN->MCR &= ~(CAN_MCR_SLEEP);
+        CAN->MCR |= CAN_MCR_INRQ;
+        while((CAN->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
+        CAN->MCR &= ~(CAN_MCR_INRQ);
+      }
       can_tx_cnt += 1;
       // only send if we have received a packet
       CAN->sTxMailBox[0].TDLR = to_send.RDLR;
