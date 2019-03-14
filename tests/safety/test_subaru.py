@@ -55,6 +55,23 @@ class TestSubaruSafety(unittest.TestCase):
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
+  def test_enable_control_allowed_from_cruise(self):
+    to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_push[0].RIR = 0x240 << 21
+    to_push[0].RDHR = 1 << 9
+
+    self.safety.subaru_rx_hook(to_push)
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_disable_control_allowed_from_cruise(self):
+    to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_push[0].RIR = 0x240 << 21
+    to_push[0].RDHR = 0
+
+    self.safety.set_controls_allowed(1)
+    self.safety.subaru_rx_hook(to_push)
+    self.assertFalse(self.safety.get_controls_allowed())
+
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
       for t in range(-3000, 3000):
