@@ -561,6 +561,9 @@ int main() {
   } else {
     // enable ESP uart
     uart_init(USART1, 115200);
+    #ifdef EON
+      set_esp_mode(ESP_DISABLED);
+    #endif
   }
   // enable LIN
   uart_init(UART5, 10400);
