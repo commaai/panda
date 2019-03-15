@@ -23,6 +23,9 @@ can_buffer(tx2_q, 0x100)
   can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q};
 #endif
 
+// Forward declare
+void power_save_reset_timer();
+
 // ********************* interrupt safe queue *********************
 
 int can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
@@ -319,6 +322,7 @@ void can_sce(CAN_TypeDef *CAN) {
     set_can_enable(CAN, 1);
     CAN->MSR &= ~(CAN_MSR_WKUI);
     CAN->MSR = CAN->MSR;
+    power_save_reset_timer();
   } else {
     can_err_cnt += 1;
 
@@ -342,6 +346,7 @@ void can_sce(CAN_TypeDef *CAN) {
 
 void process_can(uint8_t can_number) {
   if (can_number == 0xff) return;
+  power_save_reset_timer();
 
   enter_critical_section();
 
@@ -407,6 +412,7 @@ void process_can(uint8_t can_number) {
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number) {
+  power_save_reset_timer();
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
   while (CAN->RF0R & CAN_RF0R_FMP0) {
