@@ -2,13 +2,13 @@
 
 /* Conrol a relay connected to l-line pin */
 
-// 30us cycles, 1 high, 90 low
+// 160us cycles, 1 high, 25 low
 
 volatile int turn_on_relay = 0;
 volatile int on_cycles = 25;
 
-//240 ms timeout
-#define LLINE_TIMEOUT_CYCLES 1250
+//5s timeout
+#define LLINE_TIMEOUT_CYCLES 31250
 volatile int timeout_cycles = LLINE_TIMEOUT_CYCLES;
 
 void TIM5_IRQHandler(void) {
