@@ -322,7 +322,9 @@ void can_sce(CAN_TypeDef *CAN) {
     set_can_enable(CAN, 1);
     CAN->MSR &= ~(CAN_MSR_WKUI);
     CAN->MSR = CAN->MSR;
+#ifdef PANDA
     power_save_reset_timer();
+#endif
   } else {
     can_err_cnt += 1;
 
@@ -346,7 +348,9 @@ void can_sce(CAN_TypeDef *CAN) {
 
 void process_can(uint8_t can_number) {
   if (can_number == 0xff) return;
+#ifdef PANDA
   power_save_reset_timer();
+#endif
 
   enter_critical_section();
 
@@ -412,7 +416,9 @@ void process_can(uint8_t can_number) {
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number) {
+#ifdef PANDA
   power_save_reset_timer();
+#endif
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
   while (CAN->RF0R & CAN_RF0R_FMP0) {
