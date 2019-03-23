@@ -32,12 +32,18 @@ recover: obj/bootstub.bin obj/$(PROJ_NAME).bin
 
 include ../../common/version.mk
 
+obj/cert.h: ../../crypto/getcertheader.py
+	../../crypto/getcertheader.py ../../certs/debug.pub ../../certs/release.pub > $@
+
 obj/main.o: main.c ../*.h
 	mkdir -p obj
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-obj/bootstub.o: ../bootstub.c ../*.h obj/gitversion.h
+obj/bootstub.o: ../bootstub.c ../*.h obj/gitversion.h obj/cert.h
 	mkdir -p obj
+	mkdir -p ../obj
+	cp obj/gitversion.h ../obj/gitversion.h
+	cp obj/cert.h  ../obj/cert.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 obj/$(STARTUP_FILE).o: ../$(STARTUP_FILE).s
