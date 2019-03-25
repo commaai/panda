@@ -387,6 +387,8 @@ void process_can(uint8_t can_number) {
   exit_critical_section();
 }
 
+int get_lline_status(); //Forward declare
+
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number) {

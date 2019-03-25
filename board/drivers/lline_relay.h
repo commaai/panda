@@ -34,7 +34,7 @@ void TIM5_IRQHandler(void) {
 
 void lline_relay_init (void) {
   puts("INIT LLINE\n");
-  set_gpio_mode(GPIOC, 10, MODE_OUTPUT);
+  set_gpio_output(GPIOC, 10, 1);
 
   // setup
   TIM5->PSC = 48-1; // tick on 1 us

@@ -392,7 +392,9 @@ void gpio_init() {
     set_gpio_output(GPIOA, 14, 1);
 
     // C10,C11: L-Line setup on USART 3
-    set_gpio_alternate(GPIOC, 10, GPIO_AF7_USART3);
+    // LLine now used for relay output
+    set_gpio_output(GPIOC, 10, 1);
+    //set_gpio_alternate(GPIOC, 10, GPIO_AF7_USART3);
     set_gpio_alternate(GPIOC, 11, GPIO_AF7_USART3);
     set_gpio_pullup(GPIOC, 11, PULL_UP);
   #endif
