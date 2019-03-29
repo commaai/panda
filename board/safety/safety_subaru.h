@@ -12,7 +12,6 @@ int subaru_cruise_engaged_last = 0;
 int subaru_rt_torque_last = 0;
 int subaru_desired_torque_last = 0;
 uint32_t subaru_ts_last = 0;
-int subaru_supercruise_on = 0;
 struct sample_t subaru_torque_driver;         // last few driver torques measured
 
 static void subaru_init(int16_t param) {
@@ -92,7 +91,7 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       subaru_ts_last = ts;
     }
 
-    if (violation || subaru_supercruise_on) {
+    if (violation) {
       return false;
     }
 

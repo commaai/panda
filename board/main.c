@@ -21,6 +21,8 @@
 #include "drivers/timer.h"
 #include "drivers/lline_relay.h"
 
+#include "power_saving.h"
+
 
 // ***************************** fan *****************************
 
@@ -145,6 +147,9 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
   uart_ring *ur = get_ring_by_number(usbdata[0]);
   if (!ur) return;
   if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1)) {
+#ifdef EON
+    if (ur == &esp_ring) power_save_reset_timer();
+#endif
     for (int i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
   }
 }
@@ -594,6 +599,9 @@ int main() {
 #ifdef PANDA
   spi_init();
 #endif
+#ifdef DEBUG
+  puts("DEBUG ENABLED\n");
+#endif
 
   // set PWM
   fan_init();
@@ -606,6 +614,7 @@ int main() {
 #ifdef PANDA
   lline_relay_init();
 #endif
+  power_save_init();
 
   // if the error interrupt is enabled to quickly when the CAN bus is active
   // something bad happens and you can't connect to the device over USB
