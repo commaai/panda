@@ -601,6 +601,7 @@ int main() {
     uint64_t marker = 0;
     #define CURRENT_THRESHOLD 0xF00
     #define CLICKS 8
+    #define CHARGING_CUTOUT_VOLTAGE = 11800
   #endif
 
   for (cnt=0;;cnt++) {
@@ -613,7 +614,7 @@ int main() {
 
       switch (usb_power_mode) {
         case USB_POWER_CLIENT:
-          if ((cnt-marker) >= CLICKS) {
+          if ((cnt-marker) >= CLICKS && power_save_status != POWER_SAVE_STATUS_ENABLED) {
             if (!is_enumerated) {
               puts("USBP: didn't enumerate, switching to CDP mode\n");
               // switch to CDP
@@ -627,7 +628,20 @@ int main() {
           }
           break;
         case USB_POWER_CDP:
-#ifndef EON
+#ifdef EON
+          if (power_save_status == POWER_SAVE_STATUS_ENABLED) {
+            // see notes about in get_health_pkt
+            uint32_t voltage = adc_get(ADCCHAN_VOLTAGE);
+            if (revision == PANDA_REV_AB) {
+              voltage = (voltage * 3791) / 1000;
+            } else {
+              voltage = (voltage * 8862) / 1000;
+            }
+            if (voltage < CHARGING_CUTOUT_VOLTAGE) {
+              set_usb_power_mode(USB_POWER_CLIENT);
+            }
+          }
+#else //not EON
           // been CLICKS clicks since we switched to CDP
           if ((cnt-marker) >= CLICKS) {
             // measure current draw, if positive and no enumeration, switch to DCP
