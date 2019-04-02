@@ -23,8 +23,10 @@ can_buffer(tx2_q, 0x100)
   can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q};
 #endif
 
+#ifdef PANDA
 // Forward declare
 void power_save_reset_timer();
+#endif
 
 // ********************* interrupt safe queue *********************
 
@@ -295,6 +297,7 @@ void can_set_gmlan(int bus) {
 // CAN error
 void can_sce(CAN_TypeDef *CAN) {
   enter_critical_section();
+
   #ifdef DEBUG
     if (CAN==CAN1) puts("CAN1:  ");
     if (CAN==CAN2) puts("CAN2:  ");
@@ -314,6 +317,9 @@ void can_sce(CAN_TypeDef *CAN) {
     puts("\n");
   #endif
 
+  uint8_t can_number = CAN_NUM_FROM_CANIF(CAN);
+  uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
+
   if (CAN->MSR & CAN_MSR_WKUI) {
     //Waking from sleep
     #ifdef DEBUG
@@ -329,8 +335,6 @@ void can_sce(CAN_TypeDef *CAN) {
     can_err_cnt += 1;
 
 
-    uint8_t can_number = CAN_NUM_FROM_CANIF(CAN);
-    uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
     if (can_autobaud_enabled[bus_number] && (CAN->ESR & CAN_ESR_LEC)) {
       can_autobaud_speed_increment(can_number);
       can_set_speed(can_number);
@@ -416,9 +420,6 @@ void process_can(uint8_t can_number) {
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number) {
-#ifdef PANDA
-  power_save_reset_timer();
-#endif
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
   while (CAN->RF0R & CAN_RF0R_FMP0) {

@@ -18,8 +18,6 @@
 #include "drivers/can.h"
 #include "drivers/timer.h"
 
-#include "power_saving.h"
-
 #define CAN CAN1
 
 //#define PEDAL_USB
@@ -296,8 +294,6 @@ int main() {
 
   puts("**** INTERRUPTS ON ****\n");
   __enable_irq();
-
-  power_save_init();
 
 
   // main pedal loop
