@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+import os
+import sys
+
+from panda import Panda
+
+PANDA_DIR = '/data/openpilot/panda'
+
+
+if __name__ == "__main__":
+
+  if not os.path.exists(PANDA_DIR):
+    print('Unable to find panda dir: {0}'.format(PANDA_DIR))
+    sys.exit(-1)
+
+  os.chdir(PANDA_DIR)
+  os.system('pkill -f bboard')
+
+  try:
+    Panda().flash()
+  except AssertionError:
+    print('Connection failed, make sure Panda is connected to USB!')
+    sys.exit(-1)
+
+  sys.exit(0)
