@@ -1,3 +1,2 @@
 #!/bin/bash
-PYTHONPATH="." nosetests -x -s tests/automated/$1*.py
-
+PYTHONPATH="." nosetests -v -x -s tests/automated/$1*.py
