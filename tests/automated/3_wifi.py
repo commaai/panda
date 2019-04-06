@@ -37,7 +37,7 @@ def test_flash_wifi(serial=None):
 def test_wifi_flash_st(serial=None):
   connect_wifi(serial)
   assert Panda.flash_ota_st(), "OTA ST Flash Failed"
-  time.sleep(2) #need time for st to reboot
+  time.sleep(4) #need time for st to reboot
 
 @test_white
 @panda_color_to_serial
