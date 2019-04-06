@@ -281,11 +281,14 @@ class Panda(object):
     if reconnect:
       self.reconnect()
 
-  def recover(self):
+  def recover(self, timeout=None):
     self.reset(enter_bootloader=True)
+    t_start = time.time()
     while len(PandaDFU.list()) == 0:
       print("waiting for DFU...")
       time.sleep(0.1)
+      if timeout is not None and (time.time() - t_start) > timeout:
+        return False
 
     dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial))
     dfu.recover()
@@ -293,6 +296,7 @@ class Panda(object):
     # reflash after recover
     self.connect(True, True)
     self.flash()
+    return True
 
   @staticmethod
   def flash_ota_st():

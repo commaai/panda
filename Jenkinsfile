@@ -29,4 +29,11 @@ pipeline {
       }
     }
   }
+  post {
+    always {
+      script {
+        dockerImage.stop()
+      }
+    }
+  }
 }
