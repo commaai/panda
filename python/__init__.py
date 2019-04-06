@@ -301,8 +301,9 @@ class Panda(object):
     return ret==0
 
   @staticmethod
-  def flash_ota_wifi():
-    ret = os.system("cd %s && make clean && make ota" % (os.path.join(BASEDIR, "boardesp")))
+  def flash_ota_wifi(release=False):
+    release_str = "RELEASE=1" if release else ""
+    ret = os.system("cd {} && make clean && {} make ota".format(os.path.join(BASEDIR, "boardesp"),release_str))
     time.sleep(1)
     return ret==0
 
