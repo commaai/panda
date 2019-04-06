@@ -59,4 +59,6 @@ USER pandauser
 RUN cd /tmp/panda/boardesp && ./get_sdk_ci.sh
 USER root
 
+COPY ./xx/pandaextra /tmp/pandaextra
+
 ADD ./panda.tar.gz /tmp/panda
