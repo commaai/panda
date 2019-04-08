@@ -54,6 +54,3 @@ def test_udp_doesnt_drop(serial=None):
   et = time.time() - st
   print("waited {} for panda to recv can on usb".format(et))
   assert usb_ok, "Unable to recv can on USB after UDP"
-
-
-  time.sleep(30)
