@@ -89,6 +89,7 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
         connect_cnt = 0
         MAX_TRIES = 20
         while connect_cnt < MAX_TRIES:
+          connect_cnt += 1
           r = subprocess.call(["ping", "-W", "4", "-c", "1", "192.168.0.10"], stdout=FNULL, stderr=subprocess.STDOUT)
           if r:
             print("Waiting for panda to ping...")
@@ -116,7 +117,10 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
         if os.WEXITSTATUS(ret) == 0:
           #check ping too
           ping_ok = False
+          connect_cnt = 0
+          MAX_TRIES = 10
           while connect_cnt < MAX_TRIES:
+            connect_cnt += 1
             r = subprocess.call(["ping", "-W", "4", "-c", "1", "192.168.0.10"], stdout=FNULL, stderr=subprocess.STDOUT)
             if r:
               print("Waiting for panda to ping...")
