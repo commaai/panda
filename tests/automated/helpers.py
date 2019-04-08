@@ -114,7 +114,18 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
       else:
         ret = os.system("nmcli d wifi connect %s password %s" % (ssid, pw))
         if os.WEXITSTATUS(ret) == 0:
-          break
+          #check ping too
+          ping_ok = False
+          while connect_cnt < MAX_TRIES:
+            r = subprocess.call(["ping", "-W", "4", "-c", "1", "192.168.0.10"], stdout=FNULL, stderr=subprocess.STDOUT)
+            if r:
+              print("Waiting for panda to ping...")
+              time.sleep(0.1)
+            else:
+              ping_ok = True
+              break
+          if ping_ok:
+            break
 
   # TODO: confirm that it's connected to the right panda
 
