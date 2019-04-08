@@ -18,6 +18,11 @@ def test_send_recv(serial_sender=None, serial_reciever=None):
   assert not p_send.legacy
   assert not p_recv.legacy
 
+  p_send.can_send_many([(0x1ba, 0, "message", 0)]*2)
+  time.sleep(0.05)
+  p_recv.can_recv()
+  p_send.can_recv()
+
   busses = [0,1,2]
 
   for bus in busses:
@@ -47,6 +52,15 @@ def test_latency(serial_sender=None, serial_reciever=None):
 
   assert not p_send.legacy
   assert not p_recv.legacy
+
+  p_send.set_can_speed_kbps(0, 100)
+  p_recv.set_can_speed_kbps(0, 100)
+  time.sleep(0.05)
+
+  p_send.can_send_many([(0x1ba, 0, "testmsg", 0)]*10)
+  time.sleep(0.05)
+  p_recv.can_recv()
+  p_send.can_recv()
 
   busses = [0,1,2]
 
@@ -80,6 +94,9 @@ def test_latency(serial_sender=None, serial_reciever=None):
         r_echo = []
         while len(r_echo) < 1 and (time.time() - st) < 10:
           r_echo = p_send.can_recv()
+
+        if len(r) == 0 or len(r_echo) == 0:
+          print("r: {}, r_echo: {}".format(r, r_echo))
 
         assert_equal(len(r),1)
         assert_equal(len(r_echo),1)

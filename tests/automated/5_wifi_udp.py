@@ -40,17 +40,27 @@ def test_udp_doesnt_drop(serial=None):
     if len(saturation_pcts) > 0:
       assert_greater(sum(saturation_pcts)/len(saturation_pcts), 60)
 
-  usb_ok = False
+  time.sleep(5)
+  usb_ok_cnt = 0
+  REQ_USB_OK_CNT = 500
   st = time.time()
   msg_id = 0x1bb
   bus = 0
-  while not usb_ok and (time.time() - st) < 20:
+  last_missing_msg = 0
+  while usb_ok_cnt < REQ_USB_OK_CNT and (time.time() - st) < 40:
     p.can_send(msg_id, "message", bus)
-    time.sleep(0.1)
-    r = p.can_recv()
-    r = filter(lambda x: x[3] == bus and x[0] == msg_id, r)
-    if len(r) > 0:
-      usb_ok = True
+    time.sleep(0.01)
+    r = [1]
+    missing = True
+    while len(r) > 0:
+      r = p.can_recv()
+      r = filter(lambda x: x[3] == bus and x[0] == msg_id, r)
+      if len(r) > 0:
+        missing = False
+        usb_ok_cnt += len(r)
+      if missing:
+        last_missing_msg = time.time()
   et = time.time() - st
-  print("waited {} for panda to recv can on usb".format(et))
-  assert usb_ok, "Unable to recv can on USB after UDP"
+  last_missing_msg = last_missing_msg - st
+  print("waited {} for panda to recv can on usb, {} msgs, last missing at {}".format(et, usb_ok_cnt, last_missing_msg))
+  assert usb_ok_cnt >= REQ_USB_OK_CNT, "Unable to recv can on USB after UDP"
