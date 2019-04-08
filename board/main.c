@@ -601,7 +601,17 @@ int main() {
     uint64_t marker = 0;
     #define CURRENT_THRESHOLD 0xF00
     #define CLICKS 8
+  #endif
+  #ifdef EON
     #define CHARGING_CUTOUT_VOLTAGE = 11800
+    #define VOLTAGE_FILTER_DIVISOR = 5 // 1/2^n = 0.03125 change per second
+    int voltage_filtered = adc_get(ADCCHAN_VOLTAGE);
+    if (revision == PANDA_REV_AB) {
+      voltage_filtered = (voltage_filtered * 3791) / 1000;
+    } else {
+      voltage_filtered = (voltage_filtered * 8862) / 1000;
+    }
+    voltage_filtered = voltage_filtered << VOLTAGE_FILTER_DIVISOR;
   #endif
 
   for (cnt=0;;cnt++) {
@@ -611,7 +621,12 @@ int main() {
 
     #ifdef PANDA
       int current = adc_get(ADCCHAN_CURRENT);
-
+      int voltage = adc_get(ADCCHAN_VOLTAGE);
+      if (revision == PANDA_REV_AB) {
+        voltage = (voltage * 3791) / 1000;
+      } else {
+        voltage = (voltage * 8862) / 1000;
+      }
       switch (usb_power_mode) {
         case USB_POWER_CLIENT:
           if ((cnt-marker) >= CLICKS && power_save_status != POWER_SAVE_STATUS_ENABLED) {
@@ -631,13 +646,8 @@ int main() {
 #ifdef EON
           if (power_save_status == POWER_SAVE_STATUS_ENABLED) {
             // see notes about in get_health_pkt
-            uint32_t voltage = adc_get(ADCCHAN_VOLTAGE);
-            if (revision == PANDA_REV_AB) {
-              voltage = (voltage * 3791) / 1000;
-            } else {
-              voltage = (voltage * 8862) / 1000;
-            }
-            if (voltage < CHARGING_CUTOUT_VOLTAGE) {
+            voltage_filtered = voltage_filtered - voltage_filtered>>VOLTAGE_FILTER_DIVISOR + voltage;
+            if (voltage_filtered < CHARGING_CUTOUT_VOLTAGE) {
               set_usb_power_mode(USB_POWER_CLIENT);
             }
           }
