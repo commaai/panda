@@ -41,8 +41,8 @@ def test_latency(serial_sender=None, serial_reciever=None):
 
   p_send.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   p_send.set_can_loopback(False)
-
   p_recv.set_can_loopback(False)
+
   assert not p_send.legacy
   assert not p_recv.legacy
 
@@ -53,8 +53,12 @@ def test_latency(serial_sender=None, serial_reciever=None):
       p_send.set_can_speed_kbps(bus, speed)
       p_recv.set_can_speed_kbps(bus, speed)
       #clear can buffers
-      p_send.can_recv()
-      p_recv.can_recv()
+      r = [1]
+      while len(r) > 0:
+        r = p_send.can_recv()
+      r = [1]
+      while len(r) > 0:
+        r = p_recv.can_recv()
       time.sleep(0.05)
 
       latencies = []
@@ -65,7 +69,7 @@ def test_latency(serial_sender=None, serial_reciever=None):
 
       for i in range(num_messages):
         st = time.time()
-        p_send.can_send(0x1aa, "message", bus)
+        p_send.can_send(0x1ab, "message", bus)
         r = []
         while len(r) < 1 and (time.time() - st) < 5:
           r = p_recv.can_recv()
