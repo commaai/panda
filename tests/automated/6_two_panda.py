@@ -42,6 +42,7 @@ def test_latency(serial_sender=None, serial_reciever=None):
   p_send.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   p_send.set_can_loopback(False)
   p_recv.set_can_loopback(False)
+  time.sleep(1)
 
   assert not p_send.legacy
   assert not p_recv.legacy
