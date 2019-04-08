@@ -25,7 +25,7 @@ pipeline {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity:1){
           timeout(time: 60, unit: 'MINUTES') {
-            sh "docker run --name panda --rm --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; ./run_automated_tests.sh'"
+            sh "docker run --name panda-test --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; ./run_automated_tests.sh'"
           }
         }
       }
@@ -34,8 +34,10 @@ pipeline {
   post {
     always {
       script {
-        dockerImage.stop()
+        sh "docker cp panda-test:/tmp/panda/nosetests.xml test_results.xml"
+        sh "docker rm panda-test"
       }
+      junit "test_results.xml"
     }
   }
 }
