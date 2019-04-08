@@ -23,8 +23,6 @@
 
 #include "power_saving.h"
 
-#include "power_saving.h"
-
 
 // ***************************** fan *****************************
 
