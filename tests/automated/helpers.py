@@ -13,8 +13,8 @@ test_white_and_grey = parameterized([param(panda_color="White"),
                                      param(panda_color="Grey")])
 test_white = parameterized([param(panda_color="White")])
 test_grey = parameterized([param(panda_color="Grey")])
-test_two_panda = parameterized([param(panda_color=["White", "Grey"]),
-                                param(panda_color=["Grey", "White"])])
+test_two_panda = parameterized([param(panda_color=["Grey", "White"]),
+                                param(panda_color=["White", "Grey"])])
 
 _serials = {}
 def get_panda_serial(is_grey=None):
