@@ -48,6 +48,8 @@ void power_save_enable(void) {
 }
 
 void power_save_enable_can_wake(void) {
+  // CAN Automatic Wake must be done a little while after the sleep
+  // On some cars turning off the can transciver can trigger the wakeup
   power_save_status = POWER_SAVE_STATUS_ENABLED;
   puts("Turning can off\n");
   CAN1->MCR |= CAN_MCR_SLEEP;
@@ -118,11 +120,9 @@ void power_save_disable(void) {
 // Reset timer when activity
 void power_save_reset_timer() {
   TIM6->CNT = 0;
-#ifdef EON
   if (power_save_status != POWER_SAVE_STATUS_DISABLED){
     power_save_disable();
   }
-#endif
 }
 
 void power_save_init(void) {

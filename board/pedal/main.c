@@ -299,7 +299,6 @@ int main() {
 
   power_save_init();
 
-
   // main pedal loop
   while (1) {
     pedal();

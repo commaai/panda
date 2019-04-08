@@ -23,6 +23,8 @@
 
 #include "power_saving.h"
 
+#include "power_saving.h"
+
 
 // ***************************** fan *****************************
 
@@ -147,9 +149,7 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
   uart_ring *ur = get_ring_by_number(usbdata[0]);
   if (!ur) return;
   if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1)) {
-#ifdef EON
     if (ur == &esp_ring) power_save_reset_timer();
-#endif
     for (int i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
   }
 }
