@@ -39,4 +39,16 @@ def test_udp_doesnt_drop(serial=None):
         saturation_pcts.append(saturation_pct)
     if len(saturation_pcts) > 0:
       assert_greater(sum(saturation_pcts)/len(saturation_pcts), 60)
-    print("")
+
+  usb_ok = False
+  st = time.time()
+  msg_id = 0x1bb
+  bus = 0
+  while not usb_ok and (time.time() - st) < 20:
+    p.can_send(msg_id, "message", bus)
+    time.sleep(0.1)
+    r = p.can_recv()
+    r = filter(lambda x: x[3] == bus and x[0] == msg_id, r)
+    if len(r) > 0:
+      usb_ok = True
+  assert usb_ok, "Unable to recv can on USB after UDP"
