@@ -37,7 +37,18 @@ def test_flash_wifi(serial=None):
 def test_wifi_flash_st(serial=None):
   connect_wifi(serial)
   assert Panda.flash_ota_st(), "OTA ST Flash Failed"
-  time.sleep(4) #need time for st to reboot
+  connected = False
+  st = time.time()
+  while not connected and (time.time() - st) < 20:
+    try:
+      p = Panda(serial=serial)
+      p.get_serial()
+      connected = True
+    except:
+      time.sleep(1)
+
+  if not connected:
+    assert False, "Panda failed to connect on USB after flashing"
 
 @test_white
 @panda_color_to_serial
