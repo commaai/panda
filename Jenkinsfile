@@ -21,11 +21,20 @@ pipeline {
         }
       }
     }
-    stage('Test') {
+    stage('Test Dev Build') {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity:1){
           timeout(time: 60, unit: 'MINUTES') {
-            sh "docker run --name panda-test --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; ./run_automated_tests.sh '"
+            sh "docker run --name panda-test --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c '[ -e /EON ] && rm /EON; cd /tmp/panda; ./run_automated_tests.sh '"
+          }
+        }
+      }
+    }
+    stage('Test EON Build') {
+      steps {
+        lock(resource: "Pandas", inversePrecedence: true, quantity:1){
+          timeout(time: 60, unit: 'MINUTES') {
+            sh "docker run --name panda-test --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'touch /EON; cd /tmp/panda; ./run_automated_tests.sh '"
           }
         }
       }
