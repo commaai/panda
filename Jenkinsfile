@@ -25,7 +25,8 @@ pipeline {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity:1){
           timeout(time: 60, unit: 'MINUTES') {
-            sh "docker run --name panda-test --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c '[ -e /EON ] && rm /EON; cd /tmp/panda; ./run_automated_tests.sh '"
+            sh "docker stop panda-test || true && docker rm panda-test || true"
+            sh "docker run --name panda-test --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; ./run_automated_tests.sh '"
           }
         }
       }
@@ -34,7 +35,9 @@ pipeline {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity:1){
           timeout(time: 60, unit: 'MINUTES') {
-            sh "docker run --name panda-test --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'touch /EON; cd /tmp/panda; ./run_automated_tests.sh '"
+            sh "docker cp panda-test:/tmp/panda/nosetests.xml test_results_dev.xml"
+            sh "touch EON && docker cp EON panda-test:/EON"
+            sh "docker start -a panda-test"
           }
         }
       }
@@ -43,10 +46,10 @@ pipeline {
   post {
     always {
       script {
-        sh "docker cp panda-test:/tmp/panda/nosetests.xml test_results.xml"
+        sh "docker cp panda-test:/tmp/panda/nosetests.xml test_results_EON.xml"
         sh "docker rm panda-test"
       }
-      junit "test_results.xml"
+      junit "test_results*.xml"
     }
   }
 }
