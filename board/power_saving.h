@@ -141,9 +141,6 @@ void power_save_init(void) {
 }
 
 void TIM6_DAC_IRQHandler(void) {
-  puts("TIM6 ");
-  putui(TIM6->SR);
-  puts("\n");
   //Timeout switch to power saving mode.
   if (TIM6->SR & TIM_SR_UIF) {
     TIM6->SR = 0;
