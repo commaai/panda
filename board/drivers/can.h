@@ -422,9 +422,9 @@ int get_lline_status(); //Forward declare
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number) {
-#ifdef PANDA
-  power_save_reset_timer();
-#endif
+  #ifdef PANDA
+    power_save_reset_timer();
+  #endif
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
   while (CAN->RF0R & CAN_RF0R_FMP0) {
