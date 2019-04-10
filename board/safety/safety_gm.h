@@ -228,6 +228,10 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 static void gm_init(int16_t param) {
   controls_allowed = 0;
   gm_ignition_started = 0;
+  #ifdef PANDA
+    lline_relay_release();
+    set_lline_output(0); //Default to off
+  #endif
 }
 
 static int gm_ign_hook() {

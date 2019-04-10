@@ -137,8 +137,8 @@ static void honda_init(int16_t param) {
   bosch_hardware = false;
   honda_alt_brake_msg = false;
   #ifdef PANDA
+    lline_relay_release();
     set_lline_output(0); //Default to off
-    lline_relay_init();
   #endif
 }
 
@@ -148,8 +148,8 @@ static void honda_bosch_init(int16_t param) {
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = param == 1 ? true : false;
   #ifdef PANDA
+    lline_relay_release();
     set_lline_output(0); //Default to off
-    lline_relay_init();
   #endif
 }
 
@@ -184,7 +184,7 @@ const safety_hooks honda_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = honda_fwd_hook,
-  .relay = alloutput_relay_hook,
+  .relay = nooutput_relay_hook,
 };
 
 const safety_hooks honda_bosch_hooks = {
@@ -194,5 +194,5 @@ const safety_hooks honda_bosch_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = honda_bosch_fwd_hook,
-  .relay = alloutput_relay_hook,
+  .relay = nooutput_relay_hook,
 };
