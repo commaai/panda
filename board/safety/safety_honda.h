@@ -136,10 +136,6 @@ static void honda_init(int16_t param) {
   controls_allowed = 0;
   bosch_hardware = false;
   honda_alt_brake_msg = false;
-  #ifdef PANDA
-    set_lline_output(0); //Default to off
-    lline_relay_init();
-  #endif
 }
 
 static void honda_bosch_init(int16_t param) {
@@ -194,5 +190,5 @@ const safety_hooks honda_bosch_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = honda_bosch_fwd_hook,
-  .relay = alloutput_relay_hook,
+  .relay = nooutput_relay_hook,
 };

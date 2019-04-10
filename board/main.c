@@ -117,6 +117,10 @@ int get_health_pkt(void *dat) {
     health->started = safety_ignition;
   }
   health->relay_status = get_lline_status() != 0;
+  #ifdef EON
+    set_lline_output(0); //Default to off
+    lline_relay_init();
+  #endif
 #else
   health->current = 0;
   health->started = (GPIOC->IDR & (1 << 13)) != 0;
