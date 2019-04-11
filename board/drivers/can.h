@@ -4,6 +4,7 @@
 #define ALL_CAN_LIVE 0
 
 int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_SILENT;
+int relay_control = 0;
 
 // ********************* instantiate queues *********************
 
@@ -455,7 +456,7 @@ void can_rx(uint8_t can_number) {
 
     // forwarding (panda only)
     #ifdef PANDA
-      if (get_lline_status() != 0) { //Relay engaged, allow fwd
+      if ((get_lline_status() != 0) || !relay_control) { //Relay engaged or relay isn't controlled, allow fwd
         int bus_fwd_num = can_forwarding[bus_number] != -1 ? can_forwarding[bus_number] : safety_fwd_hook(bus_number, &to_push);
         if (bus_fwd_num != -1) {
           CAN_FIFOMailBox_TypeDef to_send;

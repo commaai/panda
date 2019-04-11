@@ -33,7 +33,7 @@ void TIM5_IRQHandler(void) {
 }
 
 void lline_relay_init (void) {
-  puts("INIT LLINE\n");
+  relay_control = 1;
   set_gpio_output(GPIOC, 10, 1);
 
   // setup
@@ -46,6 +46,7 @@ void lline_relay_init (void) {
   NVIC_EnableIRQ(TIM5_IRQn);
 
 #ifdef DEBUG
+  puts("INIT LLINE\n");
   puts(" SR ");
   putui(TIM5->SR);
   puts(" PSC ");
@@ -65,6 +66,7 @@ void lline_relay_init (void) {
 }
 
 void lline_relay_release (void) {
+  relay_control = 0;
   puts("RELEASE LLINE\n");
   set_gpio_alternate(GPIOC, 10, GPIO_AF7_USART3);
   NVIC_DisableIRQ(TIM5_IRQn);
