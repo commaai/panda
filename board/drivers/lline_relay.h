@@ -1,5 +1,7 @@
 #ifdef PANDA
 
+int relay_control = 0;  // True if relay is controlled through l-line
+
 /* Conrol a relay connected to l-line pin */
 
 // 160us cycles, 1 high, 25 low
