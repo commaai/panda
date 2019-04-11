@@ -41,7 +41,7 @@ typedef int (*tx_hook)(CAN_FIFOMailBox_TypeDef *to_send);
 typedef int (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
 typedef int (*ign_hook)();
 typedef int (*fwd_hook)(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd);
-typedef int (*relay_hook)(int to_set);
+typedef int (*relay_hook)();
 
 typedef struct {
   safety_hook_init init;
@@ -97,8 +97,8 @@ int safety_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return current_hooks->fwd(bus_num, to_fwd);
 }
 
-int safety_relay_hook(int to_set) {
-  return current_hooks->relay(to_set);
+int safety_relay_hook(void) {
+  return current_hooks->relay();
 }
 
 typedef struct {
