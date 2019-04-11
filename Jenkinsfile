@@ -26,7 +26,6 @@ pipeline {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity:1){
           timeout(time: 60, unit: 'MINUTES') {
-            sh "docker stop panda-test || true && docker rm panda-test || true"
             sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; ./run_automated_tests.sh '"
           }
         }
