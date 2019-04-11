@@ -3,6 +3,8 @@
 #define ALL_CAN_BUT_MAIN_SILENT 0xFE
 #define ALL_CAN_LIVE 0
 
+#include "lline_relay.h"
+
 int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_SILENT;
 
 // ********************* instantiate queues *********************
@@ -416,9 +418,6 @@ void process_can(uint8_t can_number) {
 
   exit_critical_section();
 }
-
-int get_lline_status(); //Forward declare
-extern int relay_control;
 
 // CAN receive handlers
 // blink blue when we are receiving CAN messages

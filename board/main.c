@@ -19,7 +19,6 @@
 #include "drivers/can.h"
 #include "drivers/spi.h"
 #include "drivers/timer.h"
-#include "drivers/lline_relay.h"
 
 #include "power_saving.h"
 
