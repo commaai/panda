@@ -81,7 +81,7 @@ int get_health_pkt(void *dat) {
     uint8_t controls_allowed;
     uint8_t gas_interceptor_detected;
     uint8_t started_signal_detected;
-    uint8_t relay_status;
+    uint8_t started_alt;
   } *health = dat;
 
   //Voltage will be measured in mv. 5000 = 5V
@@ -116,19 +116,16 @@ int get_health_pkt(void *dat) {
     //Current safety hooks want to determine ignition (ex: GM)
     health->started = safety_ignition;
   }
-  health->relay_status = get_lline_status() != 0;
 #else
   health->current = 0;
   health->started = (GPIOC->IDR & (1 << 13)) != 0;
-  health->relay_status = 0;
 #endif
 
   health->controls_allowed = controls_allowed;
   health->gas_interceptor_detected = gas_interceptor_detected;
 
-
-
   // DEPRECATED
+  health->started_alt = 0;
   health->started_signal_detected = 0;
 
   return sizeof(*health);

@@ -18,7 +18,6 @@ int get_gpio_output(GPIO_TypeDef *GPIO, int pin) {
   return GPIO->ODR & (1 << pin);
 }
 
-
 void set_gpio_alternate(GPIO_TypeDef *GPIO, int pin, int mode) {
   uint32_t tmp = GPIO->AFR[pin>>3];
   tmp &= ~(0xF << ((pin&7)*4));
