@@ -7,6 +7,7 @@ pipeline {
              ).trim()}"""
 
     DOCKER_IMAGE_TAG = "panda:build-${env.BUILD_ID}"
+    DOCKER_NAME = "panda-test-${env.BUILD_ID}"
   }
   stages {
     stage('Build Docker Image') {
@@ -26,7 +27,7 @@ pipeline {
         lock(resource: "Pandas", inversePrecedence: true, quantity:1){
           timeout(time: 60, unit: 'MINUTES') {
             sh "docker stop panda-test || true && docker rm panda-test || true"
-            sh "docker run --name panda-test --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; ./run_automated_tests.sh '"
+            sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; ./run_automated_tests.sh '"
           }
         }
       }
@@ -35,9 +36,9 @@ pipeline {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity:1){
           timeout(time: 60, unit: 'MINUTES') {
-            sh "docker cp panda-test:/tmp/panda/nosetests.xml test_results_dev.xml"
-            sh "touch EON && docker cp EON panda-test:/EON"
-            sh "docker start -a panda-test"
+            sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_dev.xml"
+            sh "touch EON && docker cp EON ${env.DOCKER_NAME}:/EON"
+            sh "docker start -a ${env.DOCKER_NAME}"
           }
         }
       }
@@ -46,8 +47,8 @@ pipeline {
   post {
     always {
       script {
-        sh "docker cp panda-test:/tmp/panda/nosetests.xml test_results_EON.xml"
-        sh "docker rm panda-test"
+        sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_EON.xml"
+        sh "docker rm ${env.DOCKER_NAME}"
       }
       junit "test_results*.xml"
     }
