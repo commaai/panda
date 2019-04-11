@@ -10,7 +10,6 @@ static void nooutput_init(int16_t param) {
   controls_allowed = 0;
   #ifdef PANDA
     lline_relay_release();
-    set_lline_output(0); //Default to off
   #endif
 }
 
@@ -46,7 +45,6 @@ static void alloutput_init(int16_t param) {
   controls_allowed = 1;
   #ifdef PANDA
     lline_relay_release();
-    set_lline_output(0); //Default to off
   #endif
 }
 

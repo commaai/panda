@@ -162,7 +162,6 @@ static void toyota_init(int16_t param) {
   toyota_dbc_eps_torque_factor = param;
   #ifdef PANDA
     lline_relay_release();
-    set_lline_output(0); //Default to off
   #endif
 }
 
@@ -196,7 +195,6 @@ static void toyota_nolimits_init(int16_t param) {
   toyota_dbc_eps_torque_factor = param;
   #ifdef PANDA
     lline_relay_release();
-    set_lline_output(0); //Default to off
   #endif
 }
 

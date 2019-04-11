@@ -35,6 +35,7 @@ void TIM5_IRQHandler(void) {
 }
 
 void lline_relay_init (void) {
+  set_lline_output(0);
   relay_control = 1;
   set_gpio_output(GPIOC, 10, 1);
 
@@ -68,6 +69,7 @@ void lline_relay_init (void) {
 }
 
 void lline_relay_release (void) {
+  set_lline_output(0);
   relay_control = 0;
   puts("RELEASE LLINE\n");
   set_gpio_alternate(GPIOC, 10, GPIO_AF7_USART3);

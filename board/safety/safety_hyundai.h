@@ -154,7 +154,6 @@ static void hyundai_init(int16_t param) {
   hyundai_giraffe_switch_2 = 0;
   #ifdef PANDA
     lline_relay_release();
-    set_lline_output(0); //Default to off
   #endif
 }
 

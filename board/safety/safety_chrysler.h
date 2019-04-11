@@ -129,7 +129,6 @@ static void chrysler_init(int16_t param) {
   chrysler_camera_detected = 0;
   #ifdef PANDA
     lline_relay_release();
-    set_lline_output(0); //Default to off
   #endif
 }
 

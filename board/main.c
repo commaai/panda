@@ -605,9 +605,6 @@ int main() {
 
   __enable_irq();
 
-#ifdef PANDA
-  lline_relay_init();
-#endif
   power_save_init();
 
   // if the error interrupt is enabled to quickly when the CAN bus is active

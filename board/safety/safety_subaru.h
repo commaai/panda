@@ -16,7 +16,6 @@ struct sample_t subaru_torque_driver;         // last few driver torques measure
 
 static void subaru_init(int16_t param) {
   #ifdef PANDA
-    set_lline_output(0); //Default to off
     lline_relay_init();
   #endif
 }

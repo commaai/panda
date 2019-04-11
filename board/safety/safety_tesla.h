@@ -232,7 +232,6 @@ static void tesla_init(int16_t param)
   gmlan_switch_init(1); //init the gmlan switch with 1s timeout enabled
   #ifdef PANDA
     lline_relay_release();
-    set_lline_output(0); //Default to off
   #endif
 }
 

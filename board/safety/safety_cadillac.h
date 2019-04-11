@@ -117,7 +117,6 @@ static void cadillac_init(int16_t param) {
   cadillac_ign = 0;
   #ifdef PANDA
     lline_relay_release();
-    set_lline_output(0); //Default to off
   #endif
 }
 

@@ -138,7 +138,6 @@ static void honda_init(int16_t param) {
   honda_alt_brake_msg = false;
   #ifdef PANDA
     lline_relay_release();
-    set_lline_output(0); //Default to off
   #endif
 }
 
@@ -149,7 +148,6 @@ static void honda_bosch_init(int16_t param) {
   honda_alt_brake_msg = param == 1 ? true : false;
   #ifdef PANDA
     lline_relay_release();
-    set_lline_output(0); //Default to off
   #endif
 }
 
