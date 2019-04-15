@@ -105,6 +105,7 @@ static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   // forward CAN 0 > 1
   if (bus_num == 0) {
+
     return 2; // ES CAN
   }
   // forward CAN 1 > 0, except ES_LKAS
@@ -116,6 +117,10 @@ static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     }
     // global platform
     if (addr == 0x122) {
+      return -1;
+    }
+    // ES Distance
+    if (addr == 545) {
       return -1;
     }
 
