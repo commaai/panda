@@ -50,7 +50,6 @@ include ../common/version.mk
 obj/cert.h: ../crypto/getcertheader.py
 	../crypto/getcertheader.py ../certs/debug.pub ../certs/release.pub > $@
 
-
 obj/%.$(PROJ_NAME).o: %.c obj/gitversion.h obj/cert.h $(DEPDIR)/%.d
 	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
 	$(POSTCOMPILE)
@@ -68,7 +67,6 @@ obj/$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/main.$(PROJ_NAME).o
 	SETLEN=1 ../crypto/sign.py obj/code.bin $@ $(CERT)
 	@BINSIZE=$$(du -b "obj/$(PROJ_NAME).bin" | cut -f 1) ; \
 	if [ $$BINSIZE -ge 32768 ]; then echo "ERROR obj/$(PROJ_NAME).bin is too big!"; exit 1; fi;
-
 
 obj/bootstub.$(PROJ_NAME).bin: obj/$(STARTUP_FILE).o obj/bootstub.$(PROJ_NAME).o obj/sha.$(PROJ_NAME).o obj/rsa.$(PROJ_NAME).o
 	$(CC) $(CFLAGS) -o obj/bootstub.$(PROJ_NAME).elf $^
