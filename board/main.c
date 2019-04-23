@@ -610,7 +610,7 @@ int main() {
     //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
 
     #ifdef PANDA
-      int current = adc_get(ADCCHAN_CURRENT);
+      uint32_t current = adc_get(ADCCHAN_CURRENT);
       uint32_t voltage = get_voltage(revision);
 
       switch (usb_power_mode) {
