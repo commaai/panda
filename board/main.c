@@ -83,27 +83,7 @@ int get_health_pkt(void *dat) {
     uint8_t started_alt;
   } *health = dat;
 
-  //Voltage will be measured in mv. 5000 = 5V
-  uint32_t voltage = adc_get(ADCCHAN_VOLTAGE);
-  if (revision == PANDA_REV_AB) {
-    //REVB has a 100, 27 (27/127) voltage divider
-    //Here is the calculation for the scale
-    //ADCV = VIN_S * (27/127) * (4095/3.3)
-    //RETVAL = ADCV * s = VIN_S*1000
-    //s = 1000/((4095/3.3)*(27/127)) = 3.79053046
-
-    //Avoid needing floating point math
-    health->voltage = (voltage * 3791) / 1000;
-  } else {
-    //REVC has a 10, 1 (1/11) voltage divider
-    //Here is the calculation for the scale (s)
-    //ADCV = VIN_S * (1/11) * (4095/3.3)
-    //RETVAL = ADCV * s = VIN_S*1000
-    //s = 1000/((4095/3.3)*(1/11)) = 8.8623046875
-
-    //Avoid needing floating point math
-    health->voltage = (voltage * 8862) / 1000;
-  }
+  health->voltage = get_voltage(revision);
 
 #ifdef PANDA
   health->current = adc_get(ADCCHAN_CURRENT);
@@ -601,16 +581,10 @@ int main() {
     uint64_t marker = 0;
     #define CURRENT_THRESHOLD 0xF00
     #define CLICKS 8
+    #define CHARGING_CUTOUT_VOLTAGE 11800
+    #define VOLTAGE_FILTER_DIVISOR 5  // 1/2^n = 0.03125 change per second
+    uint32_t voltage_filtered = get_voltage(revision);
   #endif
-  #define CHARGING_CUTOUT_VOLTAGE 11800
-  #define VOLTAGE_FILTER_DIVISOR 5  // 1/2^n = 0.03125 change per second
-  int voltage_filtered = adc_get(ADCCHAN_VOLTAGE);
-  if (revision == PANDA_REV_AB) {
-    voltage_filtered = (voltage_filtered * 3791) / 1000;
-  } else {
-    voltage_filtered = (voltage_filtered * 8862) / 1000;
-  }
-  voltage_filtered = voltage_filtered << VOLTAGE_FILTER_DIVISOR;
 
   for (cnt=0;;cnt++) {
     can_live = pending_can_live;
@@ -619,12 +593,7 @@ int main() {
 
     #ifdef PANDA
       int current = adc_get(ADCCHAN_CURRENT);
-      int voltage = adc_get(ADCCHAN_VOLTAGE);
-      if (revision == PANDA_REV_AB) {
-        voltage = (voltage * 3791) / 1000;
-      } else {
-        voltage = (voltage * 8862) / 1000;
-      }
+      uint32_t voltage = get_voltage(revision);
       switch (usb_power_mode) {
         case USB_POWER_CLIENT:
           if ((cnt-marker) >= CLICKS && power_save_status != POWER_SAVE_STATUS_ENABLED) {
@@ -643,7 +612,8 @@ int main() {
         case USB_POWER_CDP:
           if (power_save_status == POWER_SAVE_STATUS_ENABLED) {
             // see notes about in get_health_pkt
-            voltage_filtered = voltage_filtered - voltage_filtered>>VOLTAGE_FILTER_DIVISOR + voltage;
+            //vf = (1 - k)* vf  + k * v
+            voltage_filtered = ((voltage_filtered << VOLTAGE_FILTER_DIVISOR) + voltage - voltage_filtered) >> VOLTAGE_FILTER_DIVISOR;
             if (voltage_filtered < CHARGING_CUTOUT_VOLTAGE) {
               set_usb_power_mode(USB_POWER_CLIENT);
             }
