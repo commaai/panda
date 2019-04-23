@@ -594,6 +594,7 @@ int main() {
     #ifdef PANDA
       int current = adc_get(ADCCHAN_CURRENT);
       uint32_t voltage = get_voltage(revision);
+
       switch (usb_power_mode) {
         case USB_POWER_CLIENT:
           if ((cnt-marker) >= CLICKS && power_save_status != POWER_SAVE_STATUS_ENABLED) {
