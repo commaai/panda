@@ -602,17 +602,15 @@ int main() {
     #define CURRENT_THRESHOLD 0xF00
     #define CLICKS 8
   #endif
-  #ifdef EON
-    #define CHARGING_CUTOUT_VOLTAGE = 11800
-    #define VOLTAGE_FILTER_DIVISOR = 5 // 1/2^n = 0.03125 change per second
-    int voltage_filtered = adc_get(ADCCHAN_VOLTAGE);
-    if (revision == PANDA_REV_AB) {
-      voltage_filtered = (voltage_filtered * 3791) / 1000;
-    } else {
-      voltage_filtered = (voltage_filtered * 8862) / 1000;
-    }
-    voltage_filtered = voltage_filtered << VOLTAGE_FILTER_DIVISOR;
-  #endif
+  #define CHARGING_CUTOUT_VOLTAGE 11800
+  #define VOLTAGE_FILTER_DIVISOR 5  // 1/2^n = 0.03125 change per second
+  int voltage_filtered = adc_get(ADCCHAN_VOLTAGE);
+  if (revision == PANDA_REV_AB) {
+    voltage_filtered = (voltage_filtered * 3791) / 1000;
+  } else {
+    voltage_filtered = (voltage_filtered * 8862) / 1000;
+  }
+  voltage_filtered = voltage_filtered << VOLTAGE_FILTER_DIVISOR;
 
   for (cnt=0;;cnt++) {
     can_live = pending_can_live;
@@ -643,7 +641,6 @@ int main() {
           }
           break;
         case USB_POWER_CDP:
-#ifdef EON
           if (power_save_status == POWER_SAVE_STATUS_ENABLED) {
             // see notes about in get_health_pkt
             voltage_filtered = voltage_filtered - voltage_filtered>>VOLTAGE_FILTER_DIVISOR + voltage;
@@ -651,7 +648,7 @@ int main() {
               set_usb_power_mode(USB_POWER_CLIENT);
             }
           }
-#else //not EON
+#ifndef EON
           // been CLICKS clicks since we switched to CDP
           if ((cnt-marker) >= CLICKS) {
             // measure current draw, if positive and no enumeration, switch to DCP
