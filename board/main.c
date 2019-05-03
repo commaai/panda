@@ -602,6 +602,7 @@ int main() {
     #define CHARGING_CUTOUT_VOLTAGE 11800
     #define VOLTAGE_FILTER_DIVISOR 5  // 1/2^n = 0.03125 change per second
     uint32_t voltage_filtered = get_voltage(revision);
+    int power_save_status_prev = POWER_SAVE_STATUS_DISABLED;
   #endif
 
   for (cnt=0;;cnt++) {
@@ -612,10 +613,16 @@ int main() {
     #ifdef PANDA
       uint32_t current = adc_get(ADCCHAN_CURRENT);
       uint32_t voltage = get_voltage(revision);
+      // see notes about in get_health_pkt
+      //vf = (1 - k)* vf  + k * v
+      voltage_filtered = (voltage_filtered << VOLTAGE_FILTER_DIVISOR) + voltage - voltage_filtered;
+      voltage_filtered >>= VOLTAGE_FILTER_DIVISOR;
 
       switch (usb_power_mode) {
         case USB_POWER_CLIENT:
-          if ((cnt-marker) >= CLICKS && power_save_status != POWER_SAVE_STATUS_ENABLED) {
+          // exit client mode when transitioning into POWER_SAVE_STATUS_DISABLED
+          if (((cnt-marker) >= CLICKS && power_save_status != POWER_SAVE_STATUS_ENABLED) ||
+             (power_save_status_prev != POWER_SAVE_STATUS_DISABLED && power_save_status == POWER_SAVE_STATUS_DISABLED)) {
             if (!is_enumerated) {
               puts("USBP: didn't enumerate, switching to CDP mode\n");
               // switch to CDP
@@ -630,9 +637,6 @@ int main() {
           break;
         case USB_POWER_CDP:
           if (power_save_status == POWER_SAVE_STATUS_ENABLED) {
-            // see notes about in get_health_pkt
-            //vf = (1 - k)* vf  + k * v
-            voltage_filtered = ((voltage_filtered << VOLTAGE_FILTER_DIVISOR) + voltage - voltage_filtered) >> VOLTAGE_FILTER_DIVISOR;
             if (voltage_filtered < CHARGING_CUTOUT_VOLTAGE) {
               set_usb_power_mode(USB_POWER_CLIENT);
             }
@@ -705,7 +709,9 @@ int main() {
     // turn off the blue LED, turned on by CAN
     #ifdef PANDA
       set_led(LED_BLUE, 0);
+      power_save_status_prev = power_save_status;
     #endif
+
   }
 
   return 0;
