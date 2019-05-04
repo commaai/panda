@@ -632,9 +632,15 @@ int main() {
           }
           break;
 
+        case USB_POWER_CLIENT_TEMP:
+          if (power_save_status != POWER_SAVE_STATUS_ENABLED || voltage_filtered > CHARGING_CUTOUT_VOLTAGE) {
+            set_usb_power_mode(USB_POWER_CDP);
+          }
+          break;
+
         case USB_POWER_CDP:
           if (power_save_status == POWER_SAVE_STATUS_ENABLED && voltage_filtered < CHARGING_CUTOUT_VOLTAGE) {
-            set_usb_power_mode(USB_POWER_CLIENT);
+            set_usb_power_mode(USB_POWER_CLIENT_TEMP);
           }
 #ifndef EON
           // measure current draw, if positive and no enumeration, switch to DCP

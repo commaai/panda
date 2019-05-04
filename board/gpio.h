@@ -233,14 +233,16 @@ void set_can_mode(int can, int use_gmlan) {
 
 #define USB_POWER_NONE 0
 #define USB_POWER_CLIENT 1
-#define USB_POWER_CDP 2
-#define USB_POWER_DCP 3
+#define USB_POWER_CLIENT_TEMP 2
+#define USB_POWER_CDP 3
+#define USB_POWER_DCP 4
 
 int usb_power_mode = USB_POWER_NONE;
 
 void set_usb_power_mode(int mode) {
   switch (mode) {
     case USB_POWER_CLIENT:
+    case USB_POWER_CLIENT_TEMP:
       // B2,A13: set client mode
       set_gpio_output(GPIOB, 2, 0);
       set_gpio_output(GPIOA, 13, 1);
