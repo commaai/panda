@@ -612,40 +612,36 @@ int main() {
     #ifdef PANDA
       uint32_t current = adc_get(ADCCHAN_CURRENT);
       uint32_t voltage = get_voltage(revision);
+      //vf = (1 - k)* vf  + k * v
+      voltage_filtered = (voltage_filtered << VOLTAGE_FILTER_DIVISOR) + voltage - voltage_filtered;
+      voltage_filtered >>= VOLTAGE_FILTER_DIVISOR;
+      int check_time = (cnt - marker) >= CLICKS;
 
       switch (usb_power_mode) {
+
         case USB_POWER_CLIENT:
-          if ((cnt-marker) >= CLICKS && power_save_status != POWER_SAVE_STATUS_ENABLED) {
-            if (!is_enumerated) {
-              puts("USBP: didn't enumerate, switching to CDP mode\n");
-              // switch to CDP
-              set_usb_power_mode(USB_POWER_CDP);
-              marker = cnt;
-            }
+          if (check_time && !is_enumerated) {
+            puts("USBP: didn't enumerate, switching to CDP mode\n");
+            // switch to CDP
+            set_usb_power_mode(USB_POWER_CDP);
+            marker = cnt;
           }
           // keep resetting the timer if it's enumerated
           if (is_enumerated) {
             marker = cnt;
           }
           break;
+
         case USB_POWER_CDP:
-          if (power_save_status == POWER_SAVE_STATUS_ENABLED) {
-            // see notes about in get_health_pkt
-            //vf = (1 - k)* vf  + k * v
-            voltage_filtered = ((voltage_filtered << VOLTAGE_FILTER_DIVISOR) + voltage - voltage_filtered) >> VOLTAGE_FILTER_DIVISOR;
-            if (voltage_filtered < CHARGING_CUTOUT_VOLTAGE) {
-              set_usb_power_mode(USB_POWER_CLIENT);
-            }
+          if (power_save_status == POWER_SAVE_STATUS_ENABLED && voltage_filtered < CHARGING_CUTOUT_VOLTAGE) {
+            set_usb_power_mode(USB_POWER_CLIENT);
           }
 #ifndef EON
-          // been CLICKS clicks since we switched to CDP
-          if ((cnt-marker) >= CLICKS) {
-            // measure current draw, if positive and no enumeration, switch to DCP
-            if (!is_enumerated && current < CURRENT_THRESHOLD) {
-              puts("USBP: no enumeration with current draw, switching to DCP mode\n");
-              set_usb_power_mode(USB_POWER_DCP);
-              marker = cnt;
-            }
+          // measure current draw, if positive and no enumeration, switch to DCP
+          if (check_time && !is_enumerated && current < CURRENT_THRESHOLD) {
+            puts("USBP: no enumeration with current draw, switching to DCP mode\n");
+            set_usb_power_mode(USB_POWER_DCP);
+            marker = cnt;
           }
           // keep resetting the timer if there's no current draw in CDP
           if (current >= CURRENT_THRESHOLD) {
@@ -653,15 +649,13 @@ int main() {
           }
 #endif
           break;
+
         case USB_POWER_DCP:
-          // been at least CLICKS clicks since we switched to DCP
-          if ((cnt-marker) >= CLICKS) {
-            // if no current draw, switch back to CDP
-            if (current >= CURRENT_THRESHOLD) {
-              puts("USBP: no current draw, switching back to CDP mode\n");
-              set_usb_power_mode(USB_POWER_CDP);
-              marker = cnt;
-            }
+          // if no current draw, switch back to CDP
+          if (check_time && current >= CURRENT_THRESHOLD) {
+            puts("USBP: no current draw, switching back to CDP mode\n");
+            set_usb_power_mode(USB_POWER_CDP);
+            marker = cnt;
           }
           // keep resetting the timer if there's current draw in DCP
           if (current < CURRENT_THRESHOLD) {
