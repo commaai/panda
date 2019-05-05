@@ -599,7 +599,8 @@ int main() {
     uint64_t marker = 0;
     #define CURRENT_THRESHOLD 0xF00
     #define CLICKS 8
-    #define CHARGING_CUTOUT_VOLTAGE 11800
+    #define CHARGING_OFF_VOLTAGE 11800
+    #define CHARGING_ON_VOLTAGE 12000  // 0.2V hysteresis
     #define VOLTAGE_FILTER_DIVISOR 5  // 1/2^n = 0.03125 change per second
     uint32_t voltage_filtered = get_voltage(revision);
   #endif
@@ -633,13 +634,15 @@ int main() {
           break;
 
         case USB_POWER_CLIENT_TEMP:
-          if (power_save_status != POWER_SAVE_STATUS_ENABLED || voltage_filtered > CHARGING_CUTOUT_VOLTAGE) {
+          // turn on EON charging if car battery voltage is sufficiently high or we are not in power saving mode
+          if (power_save_status != POWER_SAVE_STATUS_ENABLED || voltage_filtered > CHARGING_ON_VOLTAGE) {
             set_usb_power_mode(USB_POWER_CDP);
           }
           break;
 
         case USB_POWER_CDP:
-          if (power_save_status == POWER_SAVE_STATUS_ENABLED && voltage_filtered < CHARGING_CUTOUT_VOLTAGE) {
+          // turn on EON charging if car battery voltage is low and we are in power saving mode
+          if (power_save_status == POWER_SAVE_STATUS_ENABLED && voltage_filtered < CHARGING_OFF_VOLTAGE) {
             set_usb_power_mode(USB_POWER_CLIENT_TEMP);
           }
 #ifndef EON
