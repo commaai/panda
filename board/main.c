@@ -635,6 +635,7 @@ int main() {
         case USB_POWER_CLIENT_POWER_SAVE:
           // turn on EON charging if car battery voltage is sufficiently high or we are not in power saving mode
           if (power_save_status != POWER_SAVE_STATUS_ENABLED || voltage_filtered > CHARGING_ON_VOLTAGE) {
+            puts("USBP: Power saving off or batter voltage high, switching to CDP");
             set_usb_power_mode(USB_POWER_CDP);
           }
           break;
@@ -642,6 +643,7 @@ int main() {
         case USB_POWER_CDP:
           // turn off EON charging if car battery voltage is low and we are in power saving mode
           if (power_save_status == POWER_SAVE_STATUS_ENABLED && voltage_filtered < CHARGING_OFF_VOLTAGE) {
+            puts("USBP: Power saving and batter voltage low, switching to client");
             set_usb_power_mode(USB_POWER_CLIENT_POWER_SAVE);
           }
 #ifndef EON
