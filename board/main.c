@@ -633,7 +633,7 @@ int main() {
           }
           break;
 
-        case USB_POWER_CLIENT_TEMP:
+        case USB_POWER_CLIENT_POWER_SAVE:
           // turn on EON charging if car battery voltage is sufficiently high or we are not in power saving mode
           if (power_save_status != POWER_SAVE_STATUS_ENABLED || voltage_filtered > CHARGING_ON_VOLTAGE) {
             set_usb_power_mode(USB_POWER_CDP);
@@ -641,9 +641,9 @@ int main() {
           break;
 
         case USB_POWER_CDP:
-          // turn on EON charging if car battery voltage is low and we are in power saving mode
+          // turn off EON charging if car battery voltage is low and we are in power saving mode
           if (power_save_status == POWER_SAVE_STATUS_ENABLED && voltage_filtered < CHARGING_OFF_VOLTAGE) {
-            set_usb_power_mode(USB_POWER_CLIENT_TEMP);
+            set_usb_power_mode(USB_POWER_CLIENT_POWER_SAVE);
           }
 #ifndef EON
           // measure current draw, if positive and no enumeration, switch to DCP
