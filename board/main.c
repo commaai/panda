@@ -619,7 +619,6 @@ int main() {
       int check_time = (cnt - marker) >= CLICKS;
 
       switch (usb_power_mode) {
-
         case USB_POWER_CLIENT:
           if (check_time && !is_enumerated) {
             puts("USBP: didn't enumerate, switching to CDP mode\n");
