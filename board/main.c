@@ -368,8 +368,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xe6:
       if (revision == PANDA_REV_C) {
         if (setup->b.wValue.w == 1) {
-          puts("user setting CDP mode\n");
-          set_usb_power_mode(USB_POWER_CDP);
+          if (usb_power_mode != USB_POWER_CLIENT_POWER_SAVE) {
+            puts("user setting CDP mode\n");
+            set_usb_power_mode(USB_POWER_CDP);
+          } else {
+            puts("not setting CDP mode b/c power save\n");
+          }
         } else if (setup->b.wValue.w == 2) {
           puts("user setting DCP mode\n");
           set_usb_power_mode(USB_POWER_DCP);
