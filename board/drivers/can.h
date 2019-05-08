@@ -64,6 +64,14 @@ int can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   return ret;
 }
 
+bool can_is_empty(can_ring *q) {
+  int ret = 0;
+  enter_critical_section();
+  ret = q->w_ptr == q->r_ptr;
+  exit_critical_section();
+  return ret;
+}
+
 void can_clear(can_ring *q) {
   enter_critical_section();
   q->w_ptr = 0;
@@ -354,14 +362,18 @@ void can_sce(CAN_TypeDef *CAN) {
 
 void process_can(uint8_t can_number) {
   if (can_number == 0xff) return;
-#ifdef PANDA
-  power_save_reset_timer();
-#endif
 
   enter_critical_section();
 
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
+
+#ifdef PANDA
+  if (!can_is_empty(can_queues[bus_number])) {
+    power_save_reset_timer();
+  }
+#endif
+
   #ifdef DEBUG
     puts("process CAN TX\n");
   #endif
