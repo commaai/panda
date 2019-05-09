@@ -64,15 +64,14 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int desired_torque = 0;
     if (addr == 0x122) {
     desired_torque = ((to_send->RDLR >> 16) & 0x1FFF);
-    desired_torque = to_signed(desired_torque, 13);
     } else if (addr == 0x164) {
     desired_torque = ((to_send->RDLR >> 8) & 0x1FFF);
-    desired_torque = to_signed(desired_torque, 13);
     }
     
     int violation = 0;
     uint32_t ts = TIM2->CNT;
-    
+    desired_torque = to_signed(desired_torque, 13);
+
     if (controls_allowed) {
 
       // *** global torque limit check ***
