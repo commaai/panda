@@ -29,11 +29,24 @@ static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     torque_driver_new = to_signed(torque_driver_new, 11);
     // update array of samples
     update_sample(&subaru_torque_driver, torque_driver_new);
+  } else if ((addr == 0x371) && (bus_number == 0)){
+    int torque_driver_new = ((to_push->RDLR >> 29) & 0x7FF);
+    torque_driver_new = to_signed(torque_driver_new, 10);
+    // update array of samples
+    update_sample(&subaru_torque_driver, torque_driver_new);
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
   if ((addr == 0x240) && (bus_number == 0)) {
     int cruise_engaged = (to_push->RDHR >> 9) & 1;
+    if (cruise_engaged && !subaru_cruise_engaged_last) {
+      controls_allowed = 1;
+    } else if (!cruise_engaged) {
+      controls_allowed = 0;
+    }
+    subaru_cruise_engaged_last = cruise_engaged;
+  } else if ((addr == 0x144) && (bus_number == 0)) {
+    int cruise_engaged = (to_push->RDHR >> 17) & 1;
     if (cruise_engaged && !subaru_cruise_engaged_last) {
       controls_allowed = 1;
     } else if (!cruise_engaged) {
@@ -47,12 +60,19 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   uint32_t addr = to_send->RIR >> 21;
 
   // steer cmd checks
-  if (addr == 0x122) {
-    int desired_torque = ((to_send->RDLR >> 16) & 0x1FFF);
+  if (addr == 0x122 || addr == 0x164) {
+    int desired_torque = 0;
+    if (addr == 0x122) {
+    desired_torque = ((to_send->RDLR >> 16) & 0x1FFF);
+    desired_torque = to_signed(desired_torque, 13);
+    } else if (addr == 0x164) {
+    desired_torque = ((to_send->RDLR >> 8) & 0x1FFF);
+    desired_torque = to_signed(desired_torque, 13);
+    }
+    
     int violation = 0;
     uint32_t ts = TIM2->CNT;
-    desired_torque = to_signed(desired_torque, 13);
-
+    
     if (controls_allowed) {
 
       // *** global torque limit check ***
@@ -103,7 +123,7 @@ static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   // shifts bits 29 > 11
   int32_t addr = to_fwd->RIR >> 21;
 
-  // forward CAN 0 > 1
+  // forward CAN 0 > 2
   if (bus_num == 0) {
 
     return 2; // ES CAN
