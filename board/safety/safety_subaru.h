@@ -24,16 +24,18 @@ static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus_number = (to_push->RDTR >> 4) & 0xFF;
   uint32_t addr = to_push->RIR >> 21;
 
-  if ((addr == 0x119) && (bus_number == 0)){
-    int torque_driver_new = ((to_push->RDLR >> 16) & 0x7FF);
+  if ((addr == 0x119 || addr == 0x371) && (bus_number == 0)){
+    int bit_shift = (addr == 119) ? 16 : 29;
+    int torque_driver_new = ((to_push->RDLR >> bit_shift) & 0x7FF);
     torque_driver_new = to_signed(torque_driver_new, 11);
     // update array of samples
     update_sample(&subaru_torque_driver, torque_driver_new);
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if ((addr == 0x240) && (bus_number == 0)) {
-    int cruise_engaged = (to_push->RDHR >> 9) & 1;
+  if ((addr == 0x240 || addr == 0x144) && (bus_number == 0)) {
+    int bit_shift = (addr == 240) ? 9 : 17;
+    int cruise_engaged = (to_push->RDHR >> bit_shift) & 1;
     if (cruise_engaged && !subaru_cruise_engaged_last) {
       controls_allowed = 1;
     } else if (!cruise_engaged) {
@@ -47,8 +49,9 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   uint32_t addr = to_send->RIR >> 21;
 
   // steer cmd checks
-  if (addr == 0x122) {
-    int desired_torque = ((to_send->RDLR >> 16) & 0x1FFF);
+  if (addr == 0x122 || addr == 0x164) {
+    int bit_shift = (addr == 0x122) ? 16 : 8;
+    int desired_torque = ((to_send->RDLR >> bit_shift) & 0x1FFF);
     int violation = 0;
     uint32_t ts = TIM2->CNT;
     desired_torque = to_signed(desired_torque, 13);
@@ -103,7 +106,7 @@ static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   // shifts bits 29 > 11
   int32_t addr = to_fwd->RIR >> 21;
 
-  // forward CAN 0 > 1
+  // forward CAN 0 > 2
   if (bus_num == 0) {
 
     return 2; // ES CAN
