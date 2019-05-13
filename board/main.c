@@ -70,6 +70,8 @@ void debug_ring_callback(uart_ring *ring) {
   }
 }
 
+uint8_t last_health_started = 0;
+
 // ***************************** USB port *****************************
 
 int get_health_pkt(void *dat) {
@@ -115,6 +117,10 @@ int get_health_pkt(void *dat) {
     //Current safety hooks want to determine ignition (ex: GM)
     health->started = safety_ignition;
   }
+  if (health->started && health->started != last_health_started) {
+    power_save_reset_timer();
+  }
+  last_health_started = health->started;
 #else
   health->current = 0;
   health->started = (GPIOC->IDR & (1 << 13)) != 0;
