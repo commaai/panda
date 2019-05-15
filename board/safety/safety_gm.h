@@ -18,12 +18,15 @@ const int GM_DRIVER_TORQUE_FACTOR = 4;
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
+// Go silent for 1 minute on car controls from stock ECUs
+const int GM_SILENT_INTERVAL = 60 * 1000 * 1000;
 
 int gm_brake_prev = 0;
 int gm_gas_prev = 0;
 int gm_speed = 0;
-// silence everything if stock car control ECUs are still online
-int gm_ascm_detected = 0;
+int gm_go_passive = 0;
+int gm_stock_control_ts = 0;
+
 int gm_ignition_started = 0;
 int gm_rt_torque_last = 0;
 int gm_desired_torque_last = 0;
@@ -32,6 +35,10 @@ struct sample_t gm_torque_driver;         // last few driver torques measured
 
 static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus_number = (to_push->RDTR >> 4) & 0xFF;
+  if (bus_number != 0) {
+    // Only monitor powertrain bus
+    return;
+  }
   uint32_t addr;
   if (to_push->RIR & 4) {
     // Extended
@@ -50,9 +57,8 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     update_sample(&gm_torque_driver, torque_driver_new);
   }
 
-  if (addr == 0x1f1 && bus_number == 0) {
-    //Bit 5 should be ignition "on"
-    //Backup plan is Bit 2 (accessory power)
+  if (addr == 0x1f1) {
+    // Bit 5 is "ignition on"
     uint32_t ign = (to_push->RDLR) & 0x20;
     gm_ignition_started = ign > 0;
   }
@@ -67,9 +73,20 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // on powertrain bus.
   // 384 = ASCMLKASteeringCmd
   // 715 = ASCMGasRegenCmd
-  if (bus_number == 0 && (addr == 384 || addr == 715)) {
-    gm_ascm_detected = 1;
+  if (addr == 384 || addr == 715) {
+    gm_go_passive = 1;
+    gm_stock_control_ts = TIM2->CNT;
     controls_allowed = 0;
+  }
+
+  // Eventually go back to active without
+  // requiring Panda reboot.
+  if (gm_go_passive) {
+    uint32_t ts_elapsed = get_ts_elapsed(TIM2->CNT, gm_stock_control_ts);
+    if (ts_elapsed > GM_SILENT_INTERVAL) {
+      gm_go_passive = 0;
+      controls_allowed = 0;
+    }
   }
 
   // ACC steering wheel buttons
@@ -125,7 +142,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // There can be only one! (ASCM)
-  if (gm_ascm_detected) {
+  if (gm_go_passive) {
     return 0;
   }
 
