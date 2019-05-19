@@ -284,7 +284,7 @@ void can_set_gmlan(int bus) {
     can_num_lookup[1] = -1;
     can_num_lookup[3] = 1;
     can_init(1);
-  } else if (bus == 2 && revision == PANDA_REV_C) {
+  } else if (bus == 2) {
     puts("GMLAN on CAN3\n");
     // GMLAN on CAN3
     set_can_mode(2, 1);
