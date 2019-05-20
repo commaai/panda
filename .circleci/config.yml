@@ -68,4 +68,5 @@ workflows:
   main:
     jobs:
       - safety
+      - misra-c2012
       - build
