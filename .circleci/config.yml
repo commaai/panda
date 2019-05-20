@@ -12,6 +12,20 @@ jobs:
           name: Run safety test
           command: |
             docker run panda_safety /bin/bash -c "cd /panda/tests/safety; ./test.sh"
+
+  misra-c2012:
+    machine:
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - run:
+          name: Build image
+          command: "docker build -t panda_safety -f tests/misra/Dockerfile ."
+      - run:
+          name: Run Misra C 2012 test
+          command: |
+            docker run panda_safety /bin/bash -c "cd /panda/tests/misra; ./test_misra.sh"
+
   build:
     machine:
       docker_layer_caching: true
