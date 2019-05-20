@@ -4,7 +4,6 @@ import time
 from panda import Panda
 from helpers import connect_wifi, test_white, test_white_and_grey, panda_color_to_serial
 import requests
-import unittest
 
 @test_white_and_grey
 @panda_color_to_serial
@@ -26,7 +25,6 @@ def test_get_serial_in_flash_mode(serial=None):
 def test_connect_wifi(serial=None):
   connect_wifi(serial)
 
-@unittest.skip
 @test_white
 @panda_color_to_serial
 def test_flash_wifi(serial=None):
@@ -34,8 +32,6 @@ def test_flash_wifi(serial=None):
   assert Panda.flash_ota_wifi(release=True), "OTA Wifi Flash Failed"
   connect_wifi(serial)
 
-
-@unittest.skip
 @test_white
 @panda_color_to_serial
 def test_wifi_flash_st(serial=None):
