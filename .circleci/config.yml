@@ -24,7 +24,11 @@ jobs:
       - run:
           name: Run Misra C 2012 test
           command: |
-            docker run panda_misra /bin/bash -c "cd /panda/tests/misra; ./test_misra.sh"
+            mkdir /tmp/misra
+            docker run -v /tmp/misra:/tmp/misra panda_misra /bin/bash -c "cd /panda/tests/misra; ./test_misra.sh"
+      - store_artifacts:
+          name: Store misra test output
+          path: /tmp/misra/output.txt
 
   build:
     machine:
