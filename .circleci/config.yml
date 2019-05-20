@@ -20,11 +20,11 @@ jobs:
       - checkout
       - run:
           name: Build image
-          command: "docker build -t panda_safety -f tests/misra/Dockerfile ."
+          command: "docker build -t panda_misra -f tests/misra/Dockerfile ."
       - run:
           name: Run Misra C 2012 test
           command: |
-            docker run panda_safety /bin/bash -c "cd /panda/tests/misra; ./test_misra.sh"
+            docker run panda_misra /bin/bash -c "cd /panda/tests/misra; ./test_misra.sh"
 
   build:
     machine:
