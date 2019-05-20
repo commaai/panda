@@ -85,25 +85,15 @@ int get_health_pkt(void *dat) {
 
   //Voltage will be measured in mv. 5000 = 5V
   uint32_t voltage = adc_get(ADCCHAN_VOLTAGE);
-  if (revision == PANDA_REV_AB) {
-    //REVB has a 100, 27 (27/127) voltage divider
-    //Here is the calculation for the scale
-    //ADCV = VIN_S * (27/127) * (4095/3.3)
-    //RETVAL = ADCV * s = VIN_S*1000
-    //s = 1000/((4095/3.3)*(27/127)) = 3.79053046
 
-    //Avoid needing floating point math
-    health->voltage = (voltage * 3791) / 1000;
-  } else {
-    //REVC has a 10, 1 (1/11) voltage divider
-    //Here is the calculation for the scale (s)
-    //ADCV = VIN_S * (1/11) * (4095/3.3)
-    //RETVAL = ADCV * s = VIN_S*1000
-    //s = 1000/((4095/3.3)*(1/11)) = 8.8623046875
+  // REVC has a 10, 1 (1/11) voltage divider
+  // Here is the calculation for the scale (s)
+  // ADCV = VIN_S * (1/11) * (4095/3.3)
+  // RETVAL = ADCV * s = VIN_S*1000
+  // s = 1000/((4095/3.3)*(1/11)) = 8.8623046875
 
-    //Avoid needing floating point math
-    health->voltage = (voltage * 8862) / 1000;
-  }
+  // Avoid needing floating point math
+  health->voltage = (voltage * 8862) / 1000;
 
 #ifdef PANDA
   health->current = adc_get(ADCCHAN_CURRENT);
@@ -386,17 +376,15 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     // **** 0xe6: set USB power
     case 0xe6:
-      if (revision == PANDA_REV_C) {
-        if (setup->b.wValue.w == 1) {
-          puts("user setting CDP mode\n");
-          set_usb_power_mode(USB_POWER_CDP);
-        } else if (setup->b.wValue.w == 2) {
-          puts("user setting DCP mode\n");
-          set_usb_power_mode(USB_POWER_DCP);
-        } else {
-          puts("user setting CLIENT mode\n");
-          set_usb_power_mode(USB_POWER_CLIENT);
-        }
+      if (setup->b.wValue.w == 1) {
+        puts("user setting CDP mode\n");
+        set_usb_power_mode(USB_POWER_CDP);
+      } else if (setup->b.wValue.w == 2) {
+        puts("user setting DCP mode\n");
+        set_usb_power_mode(USB_POWER_DCP);
+      } else {
+        puts("user setting CLIENT mode\n");
+        set_usb_power_mode(USB_POWER_CLIENT);
       }
       break;
     // **** 0xf0: do k-line wValue pulse on uart2 for Acura
@@ -540,6 +528,10 @@ int main() {
   puts(is_giant_panda ? "  GIANTpanda detected\n" : "  not GIANTpanda\n");
   puts(is_grey_panda ? "  gray panda detected!\n" : "  white panda\n");
   puts(is_entering_bootmode ? "  ESP wants bootmode\n" : "  no bootmode\n");
+
+  // non rev c panda are no longer supported
+  while (revision != PANDA_REV_C);
+
   gpio_init();
 
 #ifdef PANDA

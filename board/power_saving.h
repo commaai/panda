@@ -21,11 +21,8 @@ void power_save_enable(void) {
 
 #ifdef PANDA
   //Turn off LIN K
-  if (revision == PANDA_REV_C) {
-    set_gpio_output(GPIOB, 7, 0); // REV C
-  } else {
-    set_gpio_output(GPIOB, 4, 0); // REV AB
-  }
+  set_gpio_output(GPIOB, 7, 0); // REV C
+
   // LIN L
   set_gpio_output(GPIOA, 14, 0);
 #endif
@@ -90,11 +87,8 @@ void power_save_disable(void) {
 
 #ifdef PANDA
   //Turn on LIN K
-  if (revision == PANDA_REV_C) {
-    set_gpio_output(GPIOB, 7, 1); // REV C
-  } else {
-    set_gpio_output(GPIOB, 4, 1); // REV AB
-  }
+  set_gpio_output(GPIOB, 7, 1); // REV C
+
   // LIN L
   set_gpio_output(GPIOA, 14, 1);
 #endif

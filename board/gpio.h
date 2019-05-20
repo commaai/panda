@@ -197,7 +197,7 @@ void set_can_mode(int can, int use_gmlan) {
       set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
       set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
 #ifdef CAN3
-    } else if (revision == PANDA_REV_C && can == 2) {
+    } else if (can == 2) {
       // A8,A15: disable normal mode
       set_gpio_mode(GPIOA, 8, MODE_INPUT);
       set_gpio_mode(GPIOA, 15, MODE_INPUT);
@@ -218,11 +218,9 @@ void set_can_mode(int can, int use_gmlan) {
       set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
 #ifdef CAN3
     } else if (can == 2) {
-      if(revision == PANDA_REV_C){
-        // B3,B4: disable gmlan mode
-        set_gpio_mode(GPIOB, 3, MODE_INPUT);
-        set_gpio_mode(GPIOB, 4, MODE_INPUT);
-      }
+      // B3,B4: disable gmlan mode
+      set_gpio_mode(GPIOB, 3, MODE_INPUT);
+      set_gpio_mode(GPIOB, 4, MODE_INPUT);
       // A8,A15: normal mode
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
@@ -377,11 +375,7 @@ void gpio_init() {
 
   #ifdef PANDA
     // K-line enable moved from B4->B7 to make room for GMLAN on CAN3
-    if (revision == PANDA_REV_C) {
-      set_gpio_output(GPIOB, 7, 1); // REV C
-    } else {
-      set_gpio_output(GPIOB, 4, 1); // REV AB
-    }
+    set_gpio_output(GPIOB, 7, 1); // REV C
 
     // C12,D2: K-Line setup on UART 5
     set_gpio_alternate(GPIOC, 12, GPIO_AF8_UART5);
@@ -399,9 +393,7 @@ void gpio_init() {
     set_gpio_pullup(GPIOC, 11, PULL_UP);
   #endif
 
-  if (revision == PANDA_REV_C) {
-    set_usb_power_mode(USB_POWER_CLIENT);
-  }
+  set_usb_power_mode(USB_POWER_CLIENT);
 }
 
 // ********************* early bringup *********************
