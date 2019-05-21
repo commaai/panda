@@ -17,6 +17,7 @@
 
 #include "drivers/drivers.h"
 
+#include "drivers/clock.h"
 #include "drivers/llgpio.h"
 #include "gpio.h"
 
