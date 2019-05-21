@@ -83,7 +83,6 @@ int get_health_pkt(void *dat) {
   // Avoid needing floating point math
   health->voltage = (voltage * 8862) / 1000;
 
-#ifdef PANDA
   health->current = adc_get(ADCCHAN_CURRENT);
   int safety_ignition = safety_ignition_hook();
   if (safety_ignition < 0) {
@@ -93,10 +92,6 @@ int get_health_pkt(void *dat) {
     //Current safety hooks want to determine ignition (ex: GM)
     health->started = safety_ignition;
   }
-#else
-  health->current = 0;
-  health->started = (GPIOC->IDR & (1 << 13)) != 0;
-#endif
 
   health->controls_allowed = controls_allowed;
   health->gas_interceptor_detected = gas_interceptor_detected;
@@ -142,13 +137,12 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
     uint8_t bus_number = (to_push.RDTR >> 4) & CAN_BUS_NUM_MASK;
     can_send(&to_push, bus_number);
 
-    #ifdef PANDA
-      // Enable relay on can message if allowed.
-      // Temporary until OP has support for relay
-      if (safety_relay_hook()) {
-        set_lline_output(1);
-      }
-    #endif
+    // TODO: wtf, why is this here?
+    // Enable relay on can message if allowed.
+    // Temporary until OP has support for relay
+    if (safety_relay_hook()) {
+      set_lline_output(1);
+    }
   }
 }
 
@@ -179,16 +173,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     // **** 0xd0: fetch serial number
     case 0xd0:
-      #ifdef PANDA
-        // addresses are OTP
-        if (setup->b.wValue.w == 1) {
-          memcpy(resp, (void *)0x1fff79c0, 0x10);
-          resp_len = 0x10;
-        } else {
-          get_provision_chunk(resp);
-          resp_len = PROVISION_CHUNK_LEN;
-        }
-      #endif
+      // addresses are OTP
+      if (setup->b.wValue.w == 1) {
+        memcpy(resp, (void *)0x1fff79c0, 0x10);
+        resp_len = 0x10;
+      } else {
+        get_provision_chunk(resp);
+        resp_len = PROVISION_CHUNK_LEN;
+      }
       break;
     // **** 0xd1: enter bootloader mode
     case 0xd1:
@@ -247,19 +239,16 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     // **** 0xdb: set GMLAN multiplexing mode
     case 0xdb:
-      #ifdef PANDA
-        if (setup->b.wValue.w == 1) {
-          // GMLAN ON
-          if (setup->b.wIndex.w == 1) {
-            can_set_gmlan(1);
-          } else if (setup->b.wIndex.w == 2) {
-            // might be ignored on rev b panda
-            can_set_gmlan(2);
-          }
-        } else {
-          can_set_gmlan(-1);
+      if (setup->b.wValue.w == 1) {
+        // GMLAN ON
+        if (setup->b.wIndex.w == 1) {
+          can_set_gmlan(1);
+        } else if (setup->b.wIndex.w == 2) {
+          can_set_gmlan(2);
         }
-      #endif
+      } else {
+        can_set_gmlan(-1);
+      }
       break;
     // **** 0xdc: set safety mode
     case 0xdc:
@@ -280,9 +269,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
             can_silent = ALL_CAN_LIVE;
             can_autobaud_enabled[0] = false;
             can_autobaud_enabled[1] = false;
-            #ifdef PANDA
-              can_autobaud_enabled[2] = false;
-            #endif
+            can_autobaud_enabled[2] = false;
             break;
         }
         can_init_all();
@@ -427,11 +414,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     // **** 0xf3: set l-line relay
     case 0xf3:
       {
-        #ifdef PANDA
-          if (safety_relay_hook()) {
-            set_lline_output(setup->b.wValue.w == 1);
-          }
-        #endif
+        if (safety_relay_hook()) {
+          set_lline_output(setup->b.wValue.w == 1);
+        }
         break;
       }
     default:
@@ -443,7 +428,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
   return resp_len;
 }
 
-#ifdef PANDA
 int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
   // data[0]  = endpoint
   // data[2]  = length
@@ -471,12 +455,6 @@ int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
   return resp_len;
 }
 
-#else
-
-int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) { return 0; };
-
-#endif
-
 
 // ***************************** main code *****************************
 
@@ -503,11 +481,15 @@ int main() {
 
   // detect the revision and init the GPIOs
   puts("config:\n");
+<<<<<<< a11333413b5ac41cc84723647a6864258f4b5b80
   #ifdef PANDA
     puts((revision == PANDA_REV_C) ? "  panda rev c\n" : "  panda rev a or b\n");
   #else
     puts("  legacy\n");
   #endif
+=======
+  puts(revision == PANDA_REV_C ? "  panda rev c\n" : "  panda rev a or b\n");
+>>>>>>> remove ifdef PANDA from main
   puts(has_external_debug_serial ? "  real serial\n" : "  USB serial\n");
   puts(is_giant_panda ? "  GIANTpanda detected\n" : "  not GIANTpanda\n");
   puts(is_grey_panda ? "  gray panda detected!\n" : "  white panda\n");
@@ -518,10 +500,8 @@ int main() {
 
   gpio_init();
 
-#ifdef PANDA
   // panda has an FPU, let's use it!
   enable_fpu();
-#endif
 
   // enable main uart if it's connected
   if (has_external_debug_serial) {
@@ -530,7 +510,6 @@ int main() {
     uart_init(USART2, 115200);
   }
 
-#ifdef PANDA
   if (is_grey_panda) {
     uart_init(USART1, 9600);
   } else {
@@ -540,12 +519,12 @@ int main() {
       set_esp_mode(ESP_DISABLED);
     #endif
   }
+
   // enable LIN
   uart_init(UART5, 10400);
   UART5->CR2 |= USART_CR2_LINEN;
   uart_init(USART3, 10400);
   USART3->CR2 |= USART_CR2_LINEN;
-#endif
 
   // init microsecond system timer
   // increments 1000000 times per second
@@ -565,10 +544,8 @@ int main() {
   can_init_all();
 
   adc_init();
-
-#ifdef PANDA
   spi_init();
-#endif
+
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");
 #endif
@@ -587,73 +564,69 @@ int main() {
   // LED should keep on blinking all the time
   uint64_t cnt = 0;
 
-  #ifdef PANDA
-    uint64_t marker = 0;
-    #define CURRENT_THRESHOLD 0xF00
-    #define CLICKS 8
-  #endif
+  uint64_t marker = 0;
+  #define CURRENT_THRESHOLD 0xF00
+  #define CLICKS 8
 
   for (cnt=0;;cnt++) {
     can_live = pending_can_live;
 
     //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
 
-    #ifdef PANDA
-      uint32_t current = adc_get(ADCCHAN_CURRENT);
+    uint32_t current = adc_get(ADCCHAN_CURRENT);
 
-      switch (usb_power_mode) {
-        case USB_POWER_CLIENT:
-          if ((cnt-marker) >= CLICKS) {
-            if (!is_enumerated) {
-              puts("USBP: didn't enumerate, switching to CDP mode\n");
-              // switch to CDP
-              set_usb_power_mode(USB_POWER_CDP);
-              marker = cnt;
-            }
-          }
-          // keep resetting the timer if it's enumerated
-          if (is_enumerated) {
+    switch (usb_power_mode) {
+      case USB_POWER_CLIENT:
+        if ((cnt-marker) >= CLICKS) {
+          if (!is_enumerated) {
+            puts("USBP: didn't enumerate, switching to CDP mode\n");
+            // switch to CDP
+            set_usb_power_mode(USB_POWER_CDP);
             marker = cnt;
           }
-          break;
-        case USB_POWER_CDP:
+        }
+        // keep resetting the timer if it's enumerated
+        if (is_enumerated) {
+          marker = cnt;
+        }
+        break;
+      case USB_POWER_CDP:
 #ifndef EON
-          // been CLICKS clicks since we switched to CDP
-          if ((cnt-marker) >= CLICKS) {
-            // measure current draw, if positive and no enumeration, switch to DCP
-            if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
-              puts("USBP: no enumeration with current draw, switching to DCP mode\n");
-              set_usb_power_mode(USB_POWER_DCP);
-              marker = cnt;
-            }
-          }
-          // keep resetting the timer if there's no current draw in CDP
-          if (current >= CURRENT_THRESHOLD) {
+        // been CLICKS clicks since we switched to CDP
+        if ((cnt-marker) >= CLICKS) {
+          // measure current draw, if positive and no enumeration, switch to DCP
+          if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
+            puts("USBP: no enumeration with current draw, switching to DCP mode\n");
+            set_usb_power_mode(USB_POWER_DCP);
             marker = cnt;
           }
+        }
+        // keep resetting the timer if there's no current draw in CDP
+        if (current >= CURRENT_THRESHOLD) {
+          marker = cnt;
+        }
 #endif
-          break;
-        case USB_POWER_DCP:
-          // been at least CLICKS clicks since we switched to DCP
-          if ((cnt-marker) >= CLICKS) {
-            // if no current draw, switch back to CDP
-            if (current >= CURRENT_THRESHOLD) {
-              puts("USBP: no current draw, switching back to CDP mode\n");
-              set_usb_power_mode(USB_POWER_CDP);
-              marker = cnt;
-            }
-          }
-          // keep resetting the timer if there's current draw in DCP
-          if (current < CURRENT_THRESHOLD) {
+        break;
+      case USB_POWER_DCP:
+        // been at least CLICKS clicks since we switched to DCP
+        if ((cnt-marker) >= CLICKS) {
+          // if no current draw, switch back to CDP
+          if (current >= CURRENT_THRESHOLD) {
+            puts("USBP: no current draw, switching back to CDP mode\n");
+            set_usb_power_mode(USB_POWER_CDP);
             marker = cnt;
           }
-          break;
-      }
+        }
+        // keep resetting the timer if there's current draw in DCP
+        if (current < CURRENT_THRESHOLD) {
+          marker = cnt;
+        }
+        break;
+    }
 
-      // ~0x9a = 500 ma
-      /*puth(current);
-      puts("\n");*/
-    #endif
+    // ~0x9a = 500 ma
+    /*puth(current);
+    puts("\n");*/
 
     // reset this every 16th pass
     if ((cnt&0xF) == 0) pending_can_live = 0;
@@ -683,9 +656,7 @@ int main() {
     }
 
     // turn off the blue LED, turned on by CAN
-    #ifdef PANDA
-      set_led(LED_BLUE, 0);
-    #endif
+    set_led(LED_BLUE, 0);
   }
 
   return 0;
