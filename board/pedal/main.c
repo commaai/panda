@@ -4,18 +4,15 @@
 
 #include "../config.h"
 
-#include "drivers/drivers.h"
+#include "drivers/llcan.h"
 #include "drivers/llgpio.h"
 #include "drivers/clock.h"
-#include "gpio.h"
-
-#define CUSTOM_CAN_INTERRUPTS
-
-#include "libc.h"
-#include "drivers/llcan.h"
 #include "drivers/adc.h"
 #include "drivers/dac.h"
 #include "drivers/timer.h"
+
+#include "gpio.h"
+#include "libc.h"
 
 #define CAN CAN1
 
