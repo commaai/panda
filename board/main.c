@@ -479,15 +479,7 @@ int main() {
 
   // detect the revision and init the GPIOs
   puts("config:\n");
-<<<<<<< a11333413b5ac41cc84723647a6864258f4b5b80
-  #ifdef PANDA
-    puts((revision == PANDA_REV_C) ? "  panda rev c\n" : "  panda rev a or b\n");
-  #else
-    puts("  legacy\n");
-  #endif
-=======
-  puts(revision == PANDA_REV_C ? "  panda rev c\n" : "  panda rev a or b\n");
->>>>>>> remove ifdef PANDA from main
+  puts((revision == PANDA_REV_C) ? "  panda rev c\n" : "  panda rev a or b\n");
   puts(has_external_debug_serial ? "  real serial\n" : "  USB serial\n");
   puts(is_giant_panda ? "  GIANTpanda detected\n" : "  not GIANTpanda\n");
   puts(is_grey_panda ? "  gray panda detected!\n" : "  white panda\n");
