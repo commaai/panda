@@ -189,11 +189,7 @@ void CAN1_RX0_IRQHandler() {
 
 void CAN1_SCE_IRQHandler() {
   state = FAULT_SCE;
-
-  // clear current send
-  CAN->TSR |= CAN_TSR_ABRQ0;
-  CAN->MSR &= ~(CAN_MSR_ERRI);
-  CAN->MSR = CAN->MSR;
+  llcan_clear_send(CAN);
 }
 
 int pdl0 = 0, pdl1 = 0;

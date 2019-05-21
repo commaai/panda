@@ -271,16 +271,12 @@ void can_sce(CAN_TypeDef *CAN) {
   } else {
     can_err_cnt += 1;
 
-
     if (can_autobaud_enabled[bus_number] && (CAN->ESR & CAN_ESR_LEC)) {
       can_autobaud_speed_increment(can_number);
       can_set_speed(can_number);
     }
 
-    // clear current send
-    CAN->TSR |= CAN_TSR_ABRQ0;
-    CAN->MSR &= ~(CAN_MSR_ERRI);
-    CAN->MSR = CAN->MSR;
+    llcan_clear_send(CAN);
   }
   exit_critical_section();
 }

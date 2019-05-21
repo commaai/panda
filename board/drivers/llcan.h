@@ -72,3 +72,9 @@ void llcan_init(CAN_TypeDef *CAN) {
   }
 }
 
+void llcan_clear_send(CAN_TypeDef *CAN) {
+  CAN->TSR |= CAN_TSR_ABRQ0;
+  CAN->MSR &= ~(CAN_MSR_ERRI);
+  CAN->MSR = CAN->MSR;
+}
+
