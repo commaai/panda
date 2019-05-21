@@ -30,6 +30,19 @@ jobs:
           name: Store misra test output
           path: /tmp/misra/output.txt
 
+  strict-compiler:
+    machine:
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - run:
+          name: Build image
+          command: "docker build -t panda_strict_compiler -f tests/build_strict/Dockerfile ."
+      - run:
+          name: Build Panda with strict compiler rules
+          command: |
+            docker run panda_strict_compiler /bin/bash -c "cd /panda/board; make -f Makefile.strict"
+
   build:
     machine:
       docker_layer_caching: true
@@ -73,4 +86,5 @@ workflows:
     jobs:
       - safety
       - misra-c2012
+      - strict-compiler
       - build
