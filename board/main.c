@@ -282,7 +282,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       // this is the only way to leave silent mode
       // and it's blocked over WiFi
       // Allow ELM security mode to be set over wifi.
-      if (hardwired || setup->b.wValue.w == SAFETY_NOOUTPUT || setup->b.wValue.w == SAFETY_ELM327) {
+      if (hardwired || (setup->b.wValue.w == SAFETY_NOOUTPUT) || (setup->b.wValue.w == SAFETY_ELM327)) {
         safety_set_mode(setup->b.wValue.w, (int16_t)setup->b.wIndex.w);
         switch (setup->b.wValue.w) {
           case SAFETY_NOOUTPUT:
@@ -308,10 +308,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xdd:
       // wValue = Can Bus Num to forward from
       // wIndex = Can Bus Num to forward to
-      if (setup->b.wValue.w < BUS_MAX && setup->b.wIndex.w < BUS_MAX &&
-          setup->b.wValue.w != setup->b.wIndex.w) { // set forwarding
+      if ((setup->b.wValue.w < BUS_MAX) && (setup->b.wIndex.w < BUS_MAX) &&
+          (setup->b.wValue.w != setup->b.wIndex.w)) { // set forwarding
         can_set_forwarding(setup->b.wValue.w, setup->b.wIndex.w & CAN_BUS_NUM_MASK);
-      } else if(setup->b.wValue.w < BUS_MAX && setup->b.wIndex.w == 0xFF){ //Clear Forwarding
+      } else if((setup->b.wValue.w < BUS_MAX) && (setup->b.wIndex.w == 0xFF)){ //Clear Forwarding
         can_set_forwarding(setup->b.wValue.w, -1);
       }
       break;
@@ -502,7 +502,7 @@ void __initialize_hardware_early() {
 
 void __attribute__ ((noinline)) enable_fpu() {
   // enable the FPU
-  SCB->CPACR |= ((3UL << 10*2) | (3UL << 11*2));
+  SCB->CPACR |= ((3UL << (10 * 2)) | (3UL << (11 * 2)));
 }
 
 int main() {
@@ -520,7 +520,7 @@ int main() {
   // detect the revision and init the GPIOs
   puts("config:\n");
   #ifdef PANDA
-    puts(revision == PANDA_REV_C ? "  panda rev c\n" : "  panda rev a or b\n");
+    puts((revision == PANDA_REV_C) ? "  panda rev c\n" : "  panda rev a or b\n");
   #else
     puts("  legacy\n");
   #endif
@@ -641,7 +641,7 @@ int main() {
           // been CLICKS clicks since we switched to CDP
           if ((cnt-marker) >= CLICKS) {
             // measure current draw, if positive and no enumeration, switch to DCP
-            if (!is_enumerated && current < CURRENT_THRESHOLD) {
+            if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
               puts("USBP: no enumeration with current draw, switching to DCP mode\n");
               set_usb_power_mode(USB_POWER_DCP);
               marker = cnt;
@@ -693,7 +693,7 @@ int main() {
 
     for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
       for (int fade = 0; fade < 1024; fade += 8) {
-        for (int i = 0; i < 128/div_mode; i++) {
+        for (int i = 0; i < (128/div_mode); i++) {
           set_led(LED_RED, 0);
           if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
           set_led(LED_RED, 1);
