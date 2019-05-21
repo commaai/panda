@@ -7,8 +7,6 @@
 #include "safety.h"
 #include "provision.h"
 
-#include "drivers/drivers.h"
-
 #include "drivers/llgpio.h"
 #include "gpio.h"
 

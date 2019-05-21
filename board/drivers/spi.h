@@ -1,4 +1,12 @@
+#ifndef PANDA_SPI_H
+#define PANDA_SPI_H
+
 // IRQs: DMA2_Stream2, DMA2_Stream3, EXTI4
+
+void spi_init();
+int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out);
+
+// end API
 
 #define SPI_BUF_SIZE 256
 uint8_t spi_buf[SPI_BUF_SIZE];
@@ -119,4 +127,6 @@ void EXTI4_IRQHandler(void) {
   }
   EXTI->PR = pr;
 }
+
+#endif
 

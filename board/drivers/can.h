@@ -1,4 +1,41 @@
-// IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE, CAN2_TX, CAN2_RX0, CAN2_SCE, CAN3_TX, CAN3_RX0, CAN3_SCE
+#ifndef PANDA_CAN_H
+#define PANDA_CAN_H
+
+// IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE
+//       CAN2_TX, CAN2_RX0, CAN2_SCE
+//       CAN3_TX, CAN3_RX0, CAN3_SCE
+
+typedef struct {
+  uint32_t w_ptr;
+  uint32_t r_ptr;
+  uint32_t fifo_size;
+  CAN_FIFOMailBox_TypeDef *elems;
+} can_ring;
+
+#define CAN_BUS_RET_FLAG 0x80
+#define CAN_BUS_NUM_MASK 0x7F
+
+#ifdef PANDA
+  #define BUS_MAX 4
+#else
+  #define BUS_MAX 2
+#endif
+
+extern int can_live, pending_can_live;
+
+// must reinit after changing these
+extern int can_loopback, can_silent;
+extern uint32_t can_speed[];
+
+void can_set_forwarding(int from, int to);
+
+void can_init(uint8_t can_number);
+void can_init_all();
+void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
+int can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
+
+// end API
+
 #define ALL_CAN_SILENT 0xFF
 #define ALL_CAN_BUT_MAIN_SILENT 0xFE
 #define ALL_CAN_LIVE 0
@@ -453,4 +490,6 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
 void can_set_forwarding(int from, int to) {
   can_forwarding[from] = to;
 }
+
+#endif
 

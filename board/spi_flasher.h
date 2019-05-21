@@ -2,7 +2,9 @@
 uint32_t *prog_ptr = NULL;
 int unlocked = 0;
 
+#ifdef uart_ring
 void debug_ring_callback(uart_ring *ring) {}
+#endif
 
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
   int resp_len = 0;

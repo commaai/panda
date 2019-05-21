@@ -12,10 +12,12 @@
   #include "stm32f2xx_hal_gpio_ex.h"
 #endif
 
+// default since there's no serial
+int puts(const char *a) { return 0; }
+void puth(unsigned int i) {}
+
 #include "libc.h"
 #include "provision.h"
-
-#include "drivers/drivers.h"
 
 #include "drivers/clock.h"
 #include "drivers/llgpio.h"
@@ -30,9 +32,6 @@
 #include "safety.h"
 #include "drivers/can.h"
 #endif
-
-int puts(const char *a) { return 0; }
-void puth(unsigned int i) {}
 
 #include "crypto/rsa.h"
 #include "crypto/sha.h"

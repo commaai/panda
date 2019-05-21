@@ -1,4 +1,37 @@
+#ifndef PANDA_USB_H
+#define PANDA_USB_H
+
 // IRQs: OTG_FS
+
+typedef union {
+  uint16_t w;
+  struct BW {
+    uint8_t msb;
+    uint8_t lsb;
+  }
+  bw;
+}
+uint16_t_uint8_t;
+
+typedef union _USB_Setup {
+  uint32_t d8[2];
+  struct _SetupPkt_Struc
+  {
+    uint8_t           bmRequestType;
+    uint8_t           bRequest;
+    uint16_t_uint8_t  wValue;
+    uint16_t_uint8_t  wIndex;
+    uint16_t_uint8_t  wLength;
+  } b;
+}
+USB_Setup_TypeDef;
+
+void usb_init();
+int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired);
+int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired);
+void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired);
+void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired);
+void usb_cb_enumeration_complete();
 
 // **** supporting defines ****
 
@@ -990,4 +1023,7 @@ void OTG_FS_IRQHandler(void) {
   //__enable_irq();
   NVIC_EnableIRQ(OTG_FS_IRQn);
 }
+
+#endif
+
 
