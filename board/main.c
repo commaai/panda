@@ -19,6 +19,7 @@
 #include "drivers/can.h"
 #include "drivers/spi.h"
 #include "drivers/timer.h"
+#include "drivers/clock.h"
 
 #include "power_saving.h"
 

@@ -3,6 +3,7 @@
 #define ALL_CAN_BUT_MAIN_SILENT 0xFE
 #define ALL_CAN_LIVE 0
 
+#include "llcan.h"
 #include "lline_relay.h"
 
 int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_SILENT;
@@ -124,16 +125,6 @@ uint32_t can_autobaud_speeds[] = {5000, 2500, 1250, 1000, 10000};
 #define CAN_SEQ1 13
 #define CAN_SEQ2 2*/
 
-// this is needed for 1 mbps support
-#define CAN_QUANTA 8
-#define CAN_SEQ1 6 // roundf(quanta * 0.875f) - 1;
-#define CAN_SEQ2 1 // roundf(quanta * 0.125f);
-
-#define CAN_PCLK 24000
-// 333 = 33.3 kbps
-// 5000 = 500 kbps
-#define can_speed_to_prescaler(x) (CAN_PCLK / CAN_QUANTA * 10 / (x))
-
 void can_autobaud_speed_increment(uint8_t can_number) {
   uint32_t autobaud_speed = can_autobaud_speeds[0];
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
@@ -162,30 +153,7 @@ void can_set_speed(uint8_t can_number) {
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
 
   while (true) {
-    // initialization mode
-    CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
-    while((CAN->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
-
-    // set time quanta from defines
-    CAN->BTR = (CAN_BTR_TS1_0 * (CAN_SEQ1-1)) |
-              (CAN_BTR_TS2_0 * (CAN_SEQ2-1)) |
-              (can_speed_to_prescaler(can_speed[bus_number]) - 1);
-
-    // silent loopback mode for debugging
-    if (can_loopback) {
-      CAN->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
-    }
-    if (can_silent & (1 << can_number)) {
-      CAN->BTR |= CAN_BTR_SILM;
-    }
-
-    // reset
-    CAN->MCR = CAN_MCR_TTCM | CAN_MCR_ABOM;
-
-    #define CAN_TIMEOUT 1000000
-    int tmp = 0;
-    while((CAN->MSR & CAN_MSR_INAK) == CAN_MSR_INAK && tmp < CAN_TIMEOUT) tmp++;
-    if (tmp < CAN_TIMEOUT) {
+    if (llcan_set_speed(CAN, can_speed[bus_number], can_loopback, can_silent & (1 << can_number))) {
       return;
     }
 
@@ -207,40 +175,7 @@ void can_init(uint8_t can_number) {
   set_can_enable(CAN, 1);
   can_set_speed(can_number);
 
-  // accept all filter
-  CAN->FMR |= CAN_FMR_FINIT;
-
-  // no mask
-  CAN->sFilterRegister[0].FR1 = 0;
-  CAN->sFilterRegister[0].FR2 = 0;
-  CAN->sFilterRegister[14].FR1 = 0;
-  CAN->sFilterRegister[14].FR2 = 0;
-  CAN->FA1R |= 1 | (1 << 14);
-
-  CAN->FMR &= ~(CAN_FMR_FINIT);
-
-  // enable certain CAN interrupts
-  CAN->IER |= CAN_IER_TMEIE | CAN_IER_FMPIE0 |  CAN_IER_WKUIE;
-
-  switch (can_number) {
-    case 0:
-      NVIC_EnableIRQ(CAN1_TX_IRQn);
-      NVIC_EnableIRQ(CAN1_RX0_IRQn);
-      NVIC_EnableIRQ(CAN1_SCE_IRQn);
-      break;
-    case 1:
-      NVIC_EnableIRQ(CAN2_TX_IRQn);
-      NVIC_EnableIRQ(CAN2_RX0_IRQn);
-      NVIC_EnableIRQ(CAN2_SCE_IRQn);
-      break;
-#ifdef CAN3
-    case 2:
-      NVIC_EnableIRQ(CAN3_TX_IRQn);
-      NVIC_EnableIRQ(CAN3_RX0_IRQn);
-      NVIC_EnableIRQ(CAN3_SCE_IRQn);
-      break;
-#endif
-  }
+  llcan_init(CAN);
 
   // in case there are queued up messages
   process_can(can_number);
@@ -522,3 +457,4 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
 void can_set_forwarding(int from, int to) {
   can_forwarding[from] = to;
 }
+
