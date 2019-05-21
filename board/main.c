@@ -1,3 +1,5 @@
+//#define EON
+
 #include "config.h"
 #include "obj/gitversion.h"
 
@@ -505,9 +507,6 @@ int main() {
   } else {
     // enable ESP uart
     uart_init(USART1, 115200);
-    #ifdef EON
-      set_esp_mode(ESP_DISABLED);
-    #endif
   }
 
   // enable LIN
@@ -544,7 +543,11 @@ int main() {
 
   __enable_irq();
 
+#ifdef EON
+  // have to save power
   power_save_init();
+  set_esp_mode(ESP_DISABLED);
+#endif
 
   // if the error interrupt is enabled to quickly when the CAN bus is active
   // something bad happens and you can't connect to the device over USB
@@ -581,21 +584,22 @@ int main() {
         }
         break;
       case USB_POWER_CDP:
-#ifndef EON
-        // been CLICKS clicks since we switched to CDP
-        if ((cnt-marker) >= CLICKS) {
-          // measure current draw, if positive and no enumeration, switch to DCP
-          if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
-            puts("USBP: no enumeration with current draw, switching to DCP mode\n");
-            set_usb_power_mode(USB_POWER_DCP);
+        // On the EON, if we get into CDP mode we stay here. No need to go to DCP.
+        #ifndef EON
+          // been CLICKS clicks since we switched to CDP
+          if ((cnt-marker) >= CLICKS) {
+            // measure current draw, if positive and no enumeration, switch to DCP
+            if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
+              puts("USBP: no enumeration with current draw, switching to DCP mode\n");
+              set_usb_power_mode(USB_POWER_DCP);
+              marker = cnt;
+            }
+          }
+          // keep resetting the timer if there's no current draw in CDP
+          if (current >= CURRENT_THRESHOLD) {
             marker = cnt;
           }
-        }
-        // keep resetting the timer if there's no current draw in CDP
-        if (current >= CURRENT_THRESHOLD) {
-          marker = cnt;
-        }
-#endif
+        #endif
         break;
       case USB_POWER_DCP:
         // been at least CLICKS clicks since we switched to DCP
