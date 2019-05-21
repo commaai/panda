@@ -1,7 +1,3 @@
-//#define DEBUG
-//#define CAN_LOOPBACK_MODE
-//#define USE_INTERNAL_OSC
-
 #include "../config.h"
 
 #include "drivers/llcan.h"

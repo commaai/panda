@@ -24,19 +24,6 @@
 #include "power_saving.h"
 
 
-// ***************************** fan *****************************
-
-void fan_init() {
-  // timer for fan PWM
-  TIM3->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1;
-  TIM3->CCER = TIM_CCER_CC3E;
-  timer_init(TIM3, 10);
-}
-
-void fan_set_speed(int fan_speed) {
-  TIM3->CCR3 = fan_speed;
-}
-
 // ********************* serial debugging *********************
 
 void debug_ring_callback(uart_ring *ring) {
@@ -225,10 +212,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     // **** 0xd2: get health packet
     case 0xd2:
       resp_len = get_health_pkt(resp);
-      break;
-    // **** 0xd3: set fan speed
-    case 0xd3:
-      fan_set_speed(setup->b.wValue.w);
       break;
     // **** 0xd6: get version
     case 0xd6:
@@ -589,10 +572,6 @@ int main() {
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");
 #endif
-
-  // set PWM
-  fan_init();
-  fan_set_speed(0);
 
   puts("**** INTERRUPTS ON ****\n");
 
