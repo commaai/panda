@@ -1,4 +1,4 @@
-#define EON
+//#define EON
 
 #include "config.h"
 #include "obj/gitversion.h"

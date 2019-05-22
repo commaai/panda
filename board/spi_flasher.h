@@ -48,16 +48,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     // **** 0xd0: fetch serial number
     case 0xd0:
-      #ifdef PANDA
-        // addresses are OTP
-        if (setup->b.wValue.w == 1) {
-          memcpy(resp, (void *)0x1fff79c0, 0x10);
-          resp_len = 0x10;
-        } else {
-          get_provision_chunk(resp);
-          resp_len = PROVISION_CHUNK_LEN;
-        }
-      #endif
+      // addresses are OTP
+      if (setup->b.wValue.w == 1) {
+        memcpy(resp, (void *)0x1fff79c0, 0x10);
+        resp_len = 0x10;
+      } else {
+        get_provision_chunk(resp);
+        resp_len = PROVISION_CHUNK_LEN;
+      }
       break;
     // **** 0xd1: enter bootloader mode
     case 0xd1:

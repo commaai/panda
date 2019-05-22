@@ -1,3 +1,5 @@
+// this is last place with ifdef PANDA
+
 #ifdef STM32F4
   #include "stm32f4xx_hal_gpio_ex.h"
 #else

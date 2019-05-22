@@ -50,11 +50,9 @@ int controls_allowed = 0;
 #include "safety/safety_defaults.h"
 #include "safety/safety_honda.h"
 #include "safety/safety_toyota.h"
-#ifdef PANDA
 #include "safety/safety_toyota_ipas.h"
 #include "safety/safety_tesla.h"
 #include "safety/safety_gm_ascm.h"
-#endif
 #include "safety/safety_gm.h"
 #include "safety/safety_ford.h"
 #include "safety/safety_cadillac.h"
@@ -121,11 +119,9 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_CHRYSLER, &chrysler_hooks},
   {SAFETY_SUBARU, &subaru_hooks},
   {SAFETY_TOYOTA_NOLIMITS, &toyota_nolimits_hooks},
-#ifdef PANDA
   {SAFETY_TOYOTA_IPAS, &toyota_ipas_hooks},
   {SAFETY_GM_ASCM, &gm_ascm_hooks},
   {SAFETY_TESLA, &tesla_hooks},
-#endif
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
   {SAFETY_ELM327, &elm327_hooks},
 };
@@ -225,7 +221,6 @@ int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
 }
 
 
-#ifdef PANDA
 // interp function that holds extreme values
 float interpolate(struct lookup_t xy, float x) {
   int size = sizeof(xy.x) / sizeof(xy.x[0]);
@@ -250,4 +245,3 @@ float interpolate(struct lookup_t xy, float x) {
     return xy.y[size - 1];
   }
 }
-#endif
