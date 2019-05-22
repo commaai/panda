@@ -5,6 +5,7 @@ int power_save_status = POWER_SAVE_STATUS_DISABLED;
 
 void power_save_enable(void) {
   if (power_save_status == POWER_SAVE_STATUS_ENABLED) return;
+  puts("enable power savings\n");
 
   // turn off can
   set_can_enable(CAN1, 0);
@@ -30,6 +31,7 @@ void power_save_enable(void) {
 
 void power_save_disable(void) {
   if (power_save_status == POWER_SAVE_STATUS_DISABLED) return;
+  puts("disable power savings\n");
 
   // turn on can
   set_can_enable(CAN1, 1);

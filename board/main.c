@@ -1,4 +1,4 @@
-//#define EON
+#define EON
 
 #include "config.h"
 #include "obj/gitversion.h"
@@ -7,7 +7,6 @@
 
 
 #include "libc.h"
-#include "safety.h"
 #include "provision.h"
 
 #include "drivers/llcan.h"
@@ -18,13 +17,13 @@
 #include "drivers/adc.h"
 #include "drivers/usb.h"
 #include "drivers/gmlan_alt.h"
-#include "drivers/can.h"
 #include "drivers/spi.h"
 #include "drivers/timer.h"
 #include "drivers/clock.h"
 
 #include "power_saving.h"
-
+#include "safety.h"
+#include "drivers/can.h"
 
 // ********************* serial debugging *********************
 
@@ -60,11 +59,42 @@ void debug_ring_callback(uart_ring *ring) {
   }
 }
 
-// ***************************** USB port *****************************
+// ***************************** started logic *****************************
 
 int is_gpio_started() {
+  // ignition is on PA1
   return (GPIOA->IDR & (1 << 1)) == 0;
 }
+
+void EXTI1_IRQHandler() {
+  volatile int pr = EXTI->PR & (1 << 1);
+  if (pr & (1 << 1)) {
+    #ifdef DEBUG
+      puts("got started interrupt\n");
+    #endif
+
+    // jenky debounce
+    delay(100000);
+
+    // set power savings mode here
+    if (is_gpio_started() == 1) {
+      power_save_disable();
+    } else {
+      power_save_enable();
+    }
+    EXTI->PR = (1 << 1);
+  }
+}
+
+void started_interrupt_init() {
+  SYSCFG->EXTICR[1] = SYSCFG_EXTICR1_EXTI1_PA;
+  EXTI->IMR |= (1 << 1);
+  EXTI->RTSR |= (1 << 1);
+  EXTI->FTSR |= (1 << 1);
+  NVIC_EnableIRQ(EXTI1_IRQn);
+}
+
+// ***************************** USB port *****************************
 
 int get_health_pkt(void *dat) {
   struct __attribute__((packed)) {
@@ -525,6 +555,16 @@ int main() {
   adc_init();
   spi_init();
 
+#ifdef EON
+  // have to save power
+  set_esp_mode(ESP_DISABLED);
+  if (is_gpio_started() == 0) {
+    power_save_enable();
+  }
+  // interrupt on started line
+  started_interrupt_init();
+#endif
+
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");
 #endif
@@ -532,12 +572,6 @@ int main() {
   puts("**** INTERRUPTS ON ****\n");
 
   __enable_irq();
-
-#ifdef EON
-  // have to save power
-  power_save_enable();
-  set_esp_mode(ESP_DISABLED);
-#endif
 
   // if the error interrupt is enabled to quickly when the CAN bus is active
   // something bad happens and you can't connect to the device over USB
@@ -628,29 +662,19 @@ int main() {
     // blink the red LED
     int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
 
+    // TODO: refactor this elsewhere
     for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
       for (int fade = 0; fade < 1024; fade += 8) {
         for (int i = 0; i < (128/div_mode); i++) {
-          set_led(LED_RED, 1);
+          if (power_save_status == POWER_SAVE_STATUS_DISABLED) {
+            set_led(LED_RED, 1);
+          }
           if (fade < 512) { delay(fade); } else { delay(1024-fade); }
           set_led(LED_RED, 0);
           if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
         }
       }
     }
-
-    #ifdef EON
-      // save power if the car isn't on
-      if (safety_ignition_hook() == -1) {
-        if (is_gpio_started() == 1) {
-          power_save_disable();
-        } else {
-          power_save_enable();
-        }
-      } else {
-        power_save_disable();
-      }
-    #endif
 
     // turn off the blue LED, turned on by CAN
     set_led(LED_BLUE, 0);

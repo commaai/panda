@@ -133,6 +133,11 @@ int safety_set_mode(uint16_t mode, int16_t param) {
     if (safety_hook_registry[i].id == mode) {
       current_hooks = safety_hook_registry[i].hooks;
       if (current_hooks->init) current_hooks->init(param);
+      if (safety_ignition_hook() != -1) {
+        // if the ignition hook depends on something other than the started GPIO
+        // we have to disable power savings (fix for GM and Tesla)
+        power_save_disable();
+      }
       return 0;
     }
   }
