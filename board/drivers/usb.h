@@ -1,6 +1,3 @@
-#ifndef PANDA_USB_H
-#define PANDA_USB_H
-
 // IRQs: OTG_FS
 
 typedef union {
@@ -1023,7 +1020,4 @@ void OTG_FS_IRQHandler(void) {
   //__enable_irq();
   NVIC_EnableIRQ(OTG_FS_IRQn);
 }
-
-#endif
-
 

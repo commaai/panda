@@ -5,10 +5,12 @@
 
 // ********************* includes *********************
 
+
 #include "libc.h"
 #include "safety.h"
 #include "provision.h"
 
+#include "drivers/llcan.h"
 #include "drivers/llgpio.h"
 #include "gpio.h"
 

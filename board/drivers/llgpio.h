@@ -1,6 +1,3 @@
-#ifndef PANDA_LLGPIO_H
-#define PANDA_LLGPIO_H
-
 #define MODE_INPUT 0
 #define MODE_OUTPUT 1
 #define MODE_ALTERNATE 2
@@ -44,6 +41,4 @@ void set_gpio_pullup(GPIO_TypeDef *GPIO, int pin, int mode) {
 int get_gpio_input(GPIO_TypeDef *GPIO, int pin) {
   return (GPIO->IDR & (1 << pin)) == (1 << pin);
 }
-
-#endif
 
