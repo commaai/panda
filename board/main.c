@@ -656,9 +656,9 @@ int main() {
       // save power if the car isn't on
       if (safety_ignition_hook() == -1) {
         if (is_gpio_started() == 1) {
-          power_save_enable();
-        } else {
           power_save_disable();
+        } else {
+          power_save_enable();
         }
       } else {
         power_save_disable();
