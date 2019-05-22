@@ -33,7 +33,7 @@ if __name__ == "__main__":
   panda.can_clear(0)
 
   # 09 02 = Get VIN
-  isotp_send(panda, "\x09\x02", 0x7e0)
+  isotp_send(panda, "\x09\x02", 0x7df)
   ret = isotp_recv(panda, 0x7e8)
   hexdump(ret)
   print "VIN: %s" % ret[2:]
