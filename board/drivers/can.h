@@ -404,8 +404,6 @@ void can_rx(uint8_t can_number) {
   }
 }
 
-#ifndef CUSTOM_CAN_INTERRUPTS
-
 void CAN1_TX_IRQHandler() { process_can(0); }
 void CAN1_RX0_IRQHandler() { can_rx(0); }
 void CAN1_SCE_IRQHandler() { can_sce(CAN1); }
@@ -414,13 +412,9 @@ void CAN2_TX_IRQHandler() { process_can(1); }
 void CAN2_RX0_IRQHandler() { can_rx(1); }
 void CAN2_SCE_IRQHandler() { can_sce(CAN2); }
 
-#ifdef CAN3
 void CAN3_TX_IRQHandler() { process_can(2); }
 void CAN3_RX0_IRQHandler() { can_rx(2); }
 void CAN3_SCE_IRQHandler() { can_sce(CAN3); }
-#endif
-
-#endif
 
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
   if (safety_tx_hook(to_push) && !can_autobaud_enabled[bus_number]) {
