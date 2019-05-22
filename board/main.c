@@ -285,6 +285,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       // Allow ELM security mode to be set over wifi.
       if (hardwired || (setup->b.wValue.w == SAFETY_NOOUTPUT) || (setup->b.wValue.w == SAFETY_ELM327)) {
         safety_set_mode(setup->b.wValue.w, (int16_t)setup->b.wIndex.w);
+        if (safety_ignition_hook() != -1) {
+          // if the ignition hook depends on something other than the started GPIO
+          // we have to disable power savings (fix for GM and Tesla)
+          power_save_disable();
+        }
         switch (setup->b.wValue.w) {
           case SAFETY_NOOUTPUT:
             can_silent = ALL_CAN_SILENT;
