@@ -256,24 +256,14 @@ void can_sce(CAN_TypeDef *CAN) {
   uint8_t can_number = CAN_NUM_FROM_CANIF(CAN);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
 
-  if (CAN->MSR & CAN_MSR_WKUI) {
-    //Waking from sleep
-    #ifdef DEBUG
-      puts("WAKE\n");
-    #endif
-    set_can_enable(CAN, 1);
-    CAN->MSR &= ~(CAN_MSR_WKUI);
-    CAN->MSR = CAN->MSR;
-  } else {
-    can_err_cnt += 1;
+  can_err_cnt += 1;
 
-    if (can_autobaud_enabled[bus_number] && (CAN->ESR & CAN_ESR_LEC)) {
-      can_autobaud_speed_increment(can_number);
-      can_set_speed(can_number);
-    }
-
-    llcan_clear_send(CAN);
+  if (can_autobaud_enabled[bus_number] && (CAN->ESR & CAN_ESR_LEC)) {
+    can_autobaud_speed_increment(can_number);
+    can_set_speed(can_number);
   }
+
+  llcan_clear_send(CAN);
   exit_critical_section();
 }
 
