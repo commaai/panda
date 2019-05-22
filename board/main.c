@@ -139,13 +139,6 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
 
     uint8_t bus_number = (to_push.RDTR >> 4) & CAN_BUS_NUM_MASK;
     can_send(&to_push, bus_number);
-
-    // TODO: wtf, why is this here?
-    // Enable relay on can message if allowed.
-    // Temporary until OP has support for relay
-    if (safety_relay_hook()) {
-      set_lline_output(1);
-    }
   }
 }
 
@@ -411,14 +404,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
         if (rb) {
           puts("Clearing UART queue.\n");
           clear_uart_buff(rb);
-        }
-        break;
-      }
-    // **** 0xf3: set l-line relay
-    case 0xf3:
-      {
-        if (safety_relay_hook()) {
-          set_lline_output(setup->b.wValue.w == 1);
         }
         break;
       }

@@ -37,7 +37,6 @@ int can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 #define ALL_CAN_LIVE 0
 
 #include "llcan.h"
-#include "lline_relay.h"
 
 int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_SILENT;
 
@@ -381,17 +380,14 @@ void can_rx(uint8_t can_number) {
     to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (bus_number << 4);
 
     // forwarding (panda only)
-    // relay engaged or relay isn't controlled, allow fwd
-    if ((get_lline_status() != 0) || !relay_control) {
-      int bus_fwd_num = can_forwarding[bus_number] != -1 ? can_forwarding[bus_number] : safety_fwd_hook(bus_number, &to_push);
-      if (bus_fwd_num != -1) {
-        CAN_FIFOMailBox_TypeDef to_send;
-        to_send.RIR = to_push.RIR | 1; // TXRQ
-        to_send.RDTR = to_push.RDTR;
-        to_send.RDLR = to_push.RDLR;
-        to_send.RDHR = to_push.RDHR;
-        can_send(&to_send, bus_fwd_num);
-      }
+    int bus_fwd_num = can_forwarding[bus_number] != -1 ? can_forwarding[bus_number] : safety_fwd_hook(bus_number, &to_push);
+    if (bus_fwd_num != -1) {
+      CAN_FIFOMailBox_TypeDef to_send;
+      to_send.RIR = to_push.RIR | 1; // TXRQ
+      to_send.RDTR = to_push.RDTR;
+      to_send.RDLR = to_push.RDLR;
+      to_send.RDHR = to_push.RDHR;
+      can_send(&to_send, bus_fwd_num);
     }
 
     safety_rx_hook(&to_push);
