@@ -27,12 +27,6 @@ void puth(unsigned int i) {}
 #include "drivers/usb.h"
 //#include "drivers/uart.h"
 
-#ifdef PEDAL
-#define CUSTOM_CAN_INTERRUPTS
-#include "safety.h"
-#include "drivers/can.h"
-#endif
-
 #include "crypto/rsa.h"
 #include "crypto/sha.h"
 

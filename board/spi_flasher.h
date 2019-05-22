@@ -134,6 +134,7 @@ int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
 
 #ifdef PEDAL
 
+#include "drivers/llcan.h"
 #define CAN CAN1
 
 #define CAN_BL_INPUT 0x1
@@ -241,7 +242,7 @@ void CAN1_RX0_IRQHandler() {
 }
 
 void CAN1_SCE_IRQHandler() {
-  can_sce(CAN);
+  llcan_clear_send(CAN);
 }
 
 #endif
@@ -266,8 +267,8 @@ void soft_flasher_start() {
   set_can_enable(CAN1, 1);
 
   // init can
-  can_silent = ALL_CAN_LIVE;
-  can_init(0);
+  llcan_set_speed(CAN1, 5000, false, false);
+  llcan_init(CAN1);
 #endif
 
   // A4,A5,A6,A7: setup SPI
