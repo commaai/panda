@@ -15,11 +15,7 @@ typedef struct {
 #define CAN_BUS_RET_FLAG 0x80
 #define CAN_BUS_NUM_MASK 0x7F
 
-#ifdef PANDA
-  #define BUS_MAX 4
-#else
-  #define BUS_MAX 2
-#endif
+#define BUS_MAX 4
 
 extern int can_live, pending_can_live;
 
@@ -54,19 +50,9 @@ int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_S
 can_buffer(rx_q, 0x1000)
 can_buffer(tx1_q, 0x100)
 can_buffer(tx2_q, 0x100)
-
-#ifdef PANDA
-  can_buffer(tx3_q, 0x100)
-  can_buffer(txgmlan_q, 0x100)
-  can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
-#else
-  can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q};
-#endif
-
-#ifdef PANDA
-// Forward declare
-void power_save_reset_timer();
-#endif
+can_buffer(tx3_q, 0x100)
+can_buffer(txgmlan_q, 0x100)
+can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
 
 // ********************* interrupt safe queue *********************
 
@@ -123,37 +109,21 @@ int can_tx_cnt = 0;
 int can_txd_cnt = 0;
 int can_err_cnt = 0;
 
-// NEO:         Bus 1=CAN1   Bus 2=CAN2
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
-#ifdef PANDA
-  CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
-  uint8_t bus_lookup[] = {0,1,2};
-  uint8_t can_num_lookup[] = {0,1,2,-1};
-  int8_t can_forwarding[] = {-1,-1,-1,-1};
-  uint32_t can_speed[] = {5000, 5000, 5000, 333};
-  bool can_autobaud_enabled[] = {false, false, false, false};
-  #define CAN_MAX 3
-#else
-  CAN_TypeDef *cans[] = {CAN1, CAN2};
-  uint8_t bus_lookup[] = {1,0};
-  uint8_t can_num_lookup[] = {1,0};
-  int8_t can_forwarding[] = {-1,-1};
-  uint32_t can_speed[] = {5000, 5000};
-  bool can_autobaud_enabled[] = {false, false};
-  #define CAN_MAX 2
-#endif
+CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
+uint8_t bus_lookup[] = {0,1,2};
+uint8_t can_num_lookup[] = {0,1,2,-1};
+int8_t can_forwarding[] = {-1,-1,-1,-1};
+uint32_t can_speed[] = {5000, 5000, 5000, 333};
+bool can_autobaud_enabled[] = {false, false, false, false};
+#define CAN_MAX 3
 
 uint32_t can_autobaud_speeds[] = {5000, 2500, 1250, 1000, 10000};
 #define AUTOBAUD_SPEEDS_LEN (sizeof(can_autobaud_speeds) / sizeof(can_autobaud_speeds[0]))
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
-#ifdef PANDA
 #define CAN_NUM_FROM_CANIF(CAN) (CAN==CAN1 ? 0 : (CAN==CAN2 ? 1 : 2))
 #define CAN_NAME_FROM_CANIF(CAN) (CAN==CAN1 ? "CAN1" : (CAN==CAN2 ? "CAN2" : "CAN3"))
-#else
-#define CAN_NUM_FROM_CANIF(CAN) (CAN==CAN1 ? 0 : 1)
-#define CAN_NAME_FROM_CANIF(CAN) (CAN==CAN1 ? "CAN1" : "CAN2")
-#endif
 #define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
 #define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
 
@@ -225,7 +195,6 @@ void can_init_all() {
 }
 
 void can_set_gmlan(int bus) {
-  #ifdef PANDA
   if (bus == -1 || bus != can_num_lookup[3]) {
     // GMLAN OFF
     switch (can_num_lookup[3]) {
@@ -265,7 +234,6 @@ void can_set_gmlan(int bus) {
     can_num_lookup[3] = 2;
     can_init(2);
   }
-  #endif
 }
 
 // CAN error
@@ -302,9 +270,6 @@ void can_sce(CAN_TypeDef *CAN) {
     set_can_enable(CAN, 1);
     CAN->MSR &= ~(CAN_MSR_WKUI);
     CAN->MSR = CAN->MSR;
-#ifdef PANDA
-    power_save_reset_timer();
-#endif
   } else {
     can_err_cnt += 1;
 
@@ -322,9 +287,6 @@ void can_sce(CAN_TypeDef *CAN) {
 
 void process_can(uint8_t can_number) {
   if (can_number == 0xff) return;
-#ifdef PANDA
-  power_save_reset_timer();
-#endif
 
   enter_critical_section();
 
@@ -390,9 +352,6 @@ void process_can(uint8_t can_number) {
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number) {
-  #ifdef PANDA
-    power_save_reset_timer();
-  #endif
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
   while (CAN->RF0R & CAN_RF0R_FMP0) {
@@ -422,25 +381,22 @@ void can_rx(uint8_t can_number) {
     to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (bus_number << 4);
 
     // forwarding (panda only)
-    #ifdef PANDA
-      if ((get_lline_status() != 0) || !relay_control) { //Relay engaged or relay isn't controlled, allow fwd
-        int bus_fwd_num = can_forwarding[bus_number] != -1 ? can_forwarding[bus_number] : safety_fwd_hook(bus_number, &to_push);
-        if (bus_fwd_num != -1) {
-          CAN_FIFOMailBox_TypeDef to_send;
-          to_send.RIR = to_push.RIR | 1; // TXRQ
-          to_send.RDTR = to_push.RDTR;
-          to_send.RDLR = to_push.RDLR;
-          to_send.RDHR = to_push.RDHR;
-          can_send(&to_send, bus_fwd_num);
-        }
+    // relay engaged or relay isn't controlled, allow fwd
+    if ((get_lline_status() != 0) || !relay_control) {
+      int bus_fwd_num = can_forwarding[bus_number] != -1 ? can_forwarding[bus_number] : safety_fwd_hook(bus_number, &to_push);
+      if (bus_fwd_num != -1) {
+        CAN_FIFOMailBox_TypeDef to_send;
+        to_send.RIR = to_push.RIR | 1; // TXRQ
+        to_send.RDTR = to_push.RDTR;
+        to_send.RDLR = to_push.RDLR;
+        to_send.RDHR = to_push.RDHR;
+        can_send(&to_send, bus_fwd_num);
       }
-    #endif
+    }
 
     safety_rx_hook(&to_push);
 
-    #ifdef PANDA
-      set_led(LED_BLUE, 1);
-    #endif
+    set_led(LED_BLUE, 1);
     can_push(&can_rx_q, &to_push);
 
     // next
@@ -472,17 +428,13 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
       // add CAN packet to send queue
       // bus number isn't passed through
       to_push->RDTR &= 0xF;
-      #ifdef PANDA
       if (bus_number == 3 && can_num_lookup[3] == 0xFF) {
         // TODO: why uint8 bro? only int8?
         bitbang_gmlan(to_push);
       } else {
-      #endif
         can_push(can_queues[bus_number], to_push);
         process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
-      #ifdef PANDA
       }
-      #endif
     }
   }
 }

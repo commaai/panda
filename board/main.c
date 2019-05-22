@@ -1,4 +1,4 @@
-//#define EON
+#define EON
 
 #include "config.h"
 #include "obj/gitversion.h"
@@ -60,6 +60,10 @@ void debug_ring_callback(uart_ring *ring) {
 
 // ***************************** USB port *****************************
 
+int is_gpio_started() {
+  return (GPIOA->IDR & (1 << 1)) == 0;
+}
+
 int get_health_pkt(void *dat) {
   struct __attribute__((packed)) {
     uint32_t voltage;
@@ -87,7 +91,7 @@ int get_health_pkt(void *dat) {
   int safety_ignition = safety_ignition_hook();
   if (safety_ignition < 0) {
     //Use the GPIO pin to determine ignition
-    health->started = (GPIOA->IDR & (1 << 1)) == 0;
+    health->started = is_gpio_started();
   } else {
     //Current safety hooks want to determine ignition (ex: GM)
     health->started = safety_ignition;
@@ -116,7 +120,6 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
   uart_ring *ur = get_ring_by_number(usbdata[0]);
   if (!ur) return;
   if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1)) {
-    if (ur == &esp_ring) power_save_reset_timer();
     for (int i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
   }
 }
@@ -545,7 +548,7 @@ int main() {
 
 #ifdef EON
   // have to save power
-  power_save_init();
+  power_save_enable();
   set_esp_mode(ESP_DISABLED);
 #endif
 
@@ -641,13 +644,26 @@ int main() {
     for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
       for (int fade = 0; fade < 1024; fade += 8) {
         for (int i = 0; i < (128/div_mode); i++) {
-          set_led(LED_RED, 0);
-          if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
           set_led(LED_RED, 1);
           if (fade < 512) { delay(fade); } else { delay(1024-fade); }
+          set_led(LED_RED, 0);
+          if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
         }
       }
     }
+
+    #ifdef EON
+      // save power if the car isn't on
+      if (safety_ignition_hook() == -1) {
+        if (is_gpio_started() == 1) {
+          power_save_enable();
+        } else {
+          power_save_disable();
+        }
+      } else {
+        power_save_disable();
+      }
+    #endif
 
     // turn off the blue LED, turned on by CAN
     set_led(LED_BLUE, 0);
