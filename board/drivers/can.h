@@ -109,43 +109,13 @@ uint8_t bus_lookup[] = {0,1,2};
 uint8_t can_num_lookup[] = {0,1,2,-1};
 int8_t can_forwarding[] = {-1,-1,-1,-1};
 uint32_t can_speed[] = {5000, 5000, 5000, 333};
-bool can_autobaud_enabled[] = {false, false, false, false};
 #define CAN_MAX 3
-
-uint32_t can_autobaud_speeds[] = {5000, 2500, 1250, 1000, 10000};
-#define AUTOBAUD_SPEEDS_LEN (sizeof(can_autobaud_speeds) / sizeof(can_autobaud_speeds[0]))
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
 #define CAN_NUM_FROM_CANIF(CAN) (CAN==CAN1 ? 0 : (CAN==CAN2 ? 1 : 2))
 #define CAN_NAME_FROM_CANIF(CAN) (CAN==CAN1 ? "CAN1" : (CAN==CAN2 ? "CAN2" : "CAN3"))
 #define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
 #define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
-
-// other option
-/*#define CAN_QUANTA 16
-#define CAN_SEQ1 13
-#define CAN_SEQ2 2*/
-
-void can_autobaud_speed_increment(uint8_t can_number) {
-  uint32_t autobaud_speed = can_autobaud_speeds[0];
-  uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
-  for (int i = 0; i < AUTOBAUD_SPEEDS_LEN; i++) {
-    if (can_speed[bus_number] == can_autobaud_speeds[i]) {
-      if (i+1 < AUTOBAUD_SPEEDS_LEN) {
-        autobaud_speed = can_autobaud_speeds[i+1];
-      }
-      break;
-    }
-  }
-  can_speed[bus_number] = autobaud_speed;
-#ifdef DEBUG
-  CAN_TypeDef* CAN = CANIF_FROM_CAN_NUM(can_number);
-  puts(CAN_NAME_FROM_CANIF(CAN));
-  puts(" auto-baud test ");
-  putui(can_speed[bus_number]);
-  puts(" cbps\n");
-#endif
-}
 
 void process_can(uint8_t can_number);
 
@@ -158,14 +128,10 @@ void can_set_speed(uint8_t can_number) {
       return;
     }
 
-    if (can_autobaud_enabled[bus_number]) {
-      can_autobaud_speed_increment(can_number);
-    } else {
-      puts("CAN init FAILED!!!!!\n");
-      puth(can_number); puts(" ");
-      puth(BUS_NUM_FROM_CAN_NUM(can_number)); puts("\n");
-      return;
-    }
+    puts("CAN init FAILED!!!!!\n");
+    puth(can_number); puts(" ");
+    puth(BUS_NUM_FROM_CAN_NUM(can_number)); puts("\n");
+    return;
   }
 }
 
@@ -253,16 +219,7 @@ void can_sce(CAN_TypeDef *CAN) {
     puts("\n");
   #endif
 
-  uint8_t can_number = CAN_NUM_FROM_CANIF(CAN);
-  uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
-
   can_err_cnt += 1;
-
-  if (can_autobaud_enabled[bus_number] && (CAN->ESR & CAN_ESR_LEC)) {
-    can_autobaud_speed_increment(can_number);
-    can_set_speed(can_number);
-  }
-
   llcan_clear_send(CAN);
   exit_critical_section();
 }
@@ -339,16 +296,6 @@ void can_rx(uint8_t can_number) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
   while (CAN->RF0R & CAN_RF0R_FMP0) {
-    if (can_autobaud_enabled[bus_number]) {
-      can_autobaud_enabled[bus_number] = false;
-      puts(CAN_NAME_FROM_CANIF(CAN));
-    #ifdef DEBUG
-      puts(" auto-baud ");
-      putui(can_speed[bus_number]);
-      puts(" cbps\n");
-    #endif
-    }
-
     can_rx_cnt += 1;
 
     // can is live
@@ -398,7 +345,7 @@ void CAN3_RX0_IRQHandler() { can_rx(2); }
 void CAN3_SCE_IRQHandler() { can_sce(CAN3); }
 
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
-  if (safety_tx_hook(to_push) && !can_autobaud_enabled[bus_number]) {
+  if (safety_tx_hook(to_push)) {
     if (bus_number < BUS_MAX) {
       // add CAN packet to send queue
       // bus number isn't passed through

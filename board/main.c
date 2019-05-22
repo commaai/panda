@@ -291,13 +291,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
             break;
           case SAFETY_ELM327:
             can_silent = ALL_CAN_BUT_MAIN_SILENT;
-            can_autobaud_enabled[0] = false;
             break;
           default:
             can_silent = ALL_CAN_LIVE;
-            can_autobaud_enabled[0] = false;
-            can_autobaud_enabled[1] = false;
-            can_autobaud_enabled[2] = false;
             break;
         }
         can_init_all();
@@ -317,7 +313,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     // **** 0xde: set can bitrate
     case 0xde:
       if (setup->b.wValue.w < BUS_MAX) {
-        can_autobaud_enabled[setup->b.wValue.w] = false;
         can_speed[setup->b.wValue.w] = setup->b.wIndex.w;
         can_init(CAN_NUM_FROM_BUS_NUM(setup->b.wValue.w));
       }
@@ -557,7 +552,9 @@ int main() {
 
 #ifdef EON
   // have to save power
-  set_esp_mode(ESP_DISABLED);
+  if (!is_grey_panda) {
+    set_esp_mode(ESP_DISABLED);
+  }
   if (is_gpio_started() == 0) {
     power_save_enable();
   }
