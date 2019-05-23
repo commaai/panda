@@ -641,7 +641,12 @@ int main() {
   // default to silent mode to prevent issues with Ford
   // hardcode a specific safety mode if you want to force the panda to be in a specific mode
   safety_set_mode(SAFETY_NOOUTPUT, 0);
+#ifdef EON
+  // if we're on an EON, it's fine for CAN to be live for fingerprinting
+  can_silent = ALL_CAN_LIVE;
+#else
   can_silent = ALL_CAN_SILENT;
+#endif
   can_init_all();
 
   adc_init();
