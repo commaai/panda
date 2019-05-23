@@ -487,6 +487,98 @@ void __attribute__ ((noinline)) enable_fpu() {
   SCB->CPACR |= ((3UL << (10 * 2)) | (3UL << (11 * 2)));
 }
 
+uint64_t tcnt = 0;
+uint64_t marker = 0;
+
+// called once per second
+void TIM3_IRQHandler() {
+  #define CURRENT_THRESHOLD 0xF00
+  #define CLICKS 5 // 5 seconds to switch modes
+
+  if (TIM3->SR != 0) {
+    can_live = pending_can_live;
+
+    //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
+
+    uint32_t current = adc_get(ADCCHAN_CURRENT);
+
+    switch (usb_power_mode) {
+      case USB_POWER_CLIENT:
+        if ((tcnt-marker) >= CLICKS) {
+          if (!is_enumerated) {
+            puts("USBP: didn't enumerate, switching to CDP mode\n");
+            // switch to CDP
+            set_usb_power_mode(USB_POWER_CDP);
+            marker = tcnt;
+          }
+        }
+        // keep resetting the timer if it's enumerated
+        if (is_enumerated) {
+          marker = tcnt;
+        }
+        break;
+      case USB_POWER_CDP:
+        // On the EON, if we get into CDP mode we stay here. No need to go to DCP.
+        #ifndef EON
+          // been CLICKS clicks since we switched to CDP
+          if ((tcnt-marker) >= CLICKS) {
+            // measure current draw, if positive and no enumeration, switch to DCP
+            if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
+              puts("USBP: no enumeration with current draw, switching to DCP mode\n");
+              set_usb_power_mode(USB_POWER_DCP);
+              marker = tcnt;
+            }
+          }
+          // keep resetting the timer if there's no current draw in CDP
+          if (current >= CURRENT_THRESHOLD) {
+            marker = tcnt;
+          }
+        #endif
+        break;
+      case USB_POWER_DCP:
+        // been at least CLICKS clicks since we switched to DCP
+        if ((tcnt-marker) >= CLICKS) {
+          // if no current draw, switch back to CDP
+          if (current >= CURRENT_THRESHOLD) {
+            puts("USBP: no current draw, switching back to CDP mode\n");
+            set_usb_power_mode(USB_POWER_CDP);
+            marker = tcnt;
+          }
+        }
+        // keep resetting the timer if there's current draw in DCP
+        if (current < CURRENT_THRESHOLD) {
+          marker = tcnt;
+        }
+        break;
+    }
+
+    // ~0x9a = 500 ma
+    /*puth(current);
+    puts("\n");*/
+
+    // reset this every 16th pass
+    if ((tcnt&0xF) == 0) pending_can_live = 0;
+
+    #ifdef DEBUG
+      puts("** blink ");
+      puth(can_rx_q.r_ptr); puts(" "); puth(can_rx_q.w_ptr); puts("  ");
+      puth(can_tx1_q.r_ptr); puts(" "); puth(can_tx1_q.w_ptr); puts("  ");
+      puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
+    #endif
+
+    // set green LED to be controls allowed
+    set_led(LED_GREEN, controls_allowed);
+
+    // turn off the blue LED, turned on by CAN
+    // unless we are in power saving mode
+    set_led(LED_BLUE, (tcnt&1) && power_save_status == POWER_SAVE_STATUS_ENABLED);
+
+    // on to the next one
+    tcnt += 1;
+  }
+  TIM3->SR = 0;
+}
+
 int main() {
   // shouldn't have interrupts here, but just in case
   __disable_irq();
@@ -560,12 +652,17 @@ int main() {
   if (!is_grey_panda) {
     set_esp_mode(ESP_DISABLED);
   }
-  if (is_gpio_started() == 0) {
+  // only enter power save after the first cycle
+  /*if (is_gpio_started() == 0) {
     power_save_enable();
-  }
+  }*/
   // interrupt on started line
   started_interrupt_init();
 #endif
+
+  // 48mhz / 65536 ~= 732 / 732 = 1
+  timer_init(TIM3, 732);
+  NVIC_EnableIRQ(TIM3_IRQn);
 
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");
@@ -575,111 +672,29 @@ int main() {
 
   __enable_irq();
 
-  // if the error interrupt is enabled to quickly when the CAN bus is active
-  // something bad happens and you can't connect to the device over USB
-  delay(10000000);
-  CAN1->IER |= CAN_IER_ERRIE | CAN_IER_LECIE;
-
   // LED should keep on blinking all the time
   uint64_t cnt = 0;
 
-  uint64_t marker = 0;
-  #define CURRENT_THRESHOLD 0xF00
-  #define CLICKS 8
-
   for (cnt=0;;cnt++) {
-    can_live = pending_can_live;
+    if (power_save_status == POWER_SAVE_STATUS_DISABLED) {
+      int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
 
-    //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
-
-    uint32_t current = adc_get(ADCCHAN_CURRENT);
-
-    switch (usb_power_mode) {
-      case USB_POWER_CLIENT:
-        if ((cnt-marker) >= CLICKS) {
-          if (!is_enumerated) {
-            puts("USBP: didn't enumerate, switching to CDP mode\n");
-            // switch to CDP
-            set_usb_power_mode(USB_POWER_CDP);
-            marker = cnt;
+      // useful for debugging, fade breaks = panda is overloaded
+      for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
+        for (int fade = 0; fade < 1024; fade += 8) {
+          for (int i = 0; i < (128/div_mode); i++) {
+            set_led(LED_RED, 1);
+            if (fade < 512) { delay(fade); } else { delay(1024-fade); }
+            set_led(LED_RED, 0);
+            if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
           }
-        }
-        // keep resetting the timer if it's enumerated
-        if (is_enumerated) {
-          marker = cnt;
-        }
-        break;
-      case USB_POWER_CDP:
-        // On the EON, if we get into CDP mode we stay here. No need to go to DCP.
-        #ifndef EON
-          // been CLICKS clicks since we switched to CDP
-          if ((cnt-marker) >= CLICKS) {
-            // measure current draw, if positive and no enumeration, switch to DCP
-            if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
-              puts("USBP: no enumeration with current draw, switching to DCP mode\n");
-              set_usb_power_mode(USB_POWER_DCP);
-              marker = cnt;
-            }
-          }
-          // keep resetting the timer if there's no current draw in CDP
-          if (current >= CURRENT_THRESHOLD) {
-            marker = cnt;
-          }
-        #endif
-        break;
-      case USB_POWER_DCP:
-        // been at least CLICKS clicks since we switched to DCP
-        if ((cnt-marker) >= CLICKS) {
-          // if no current draw, switch back to CDP
-          if (current >= CURRENT_THRESHOLD) {
-            puts("USBP: no current draw, switching back to CDP mode\n");
-            set_usb_power_mode(USB_POWER_CDP);
-            marker = cnt;
-          }
-        }
-        // keep resetting the timer if there's current draw in DCP
-        if (current < CURRENT_THRESHOLD) {
-          marker = cnt;
-        }
-        break;
-    }
-
-    // ~0x9a = 500 ma
-    /*puth(current);
-    puts("\n");*/
-
-    // reset this every 16th pass
-    if ((cnt&0xF) == 0) pending_can_live = 0;
-
-    #ifdef DEBUG
-      puts("** blink ");
-      puth(can_rx_q.r_ptr); puts(" "); puth(can_rx_q.w_ptr); puts("  ");
-      puth(can_tx1_q.r_ptr); puts(" "); puth(can_tx1_q.w_ptr); puts("  ");
-      puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
-    #endif
-
-    // set green LED to be controls allowed
-    set_led(LED_GREEN, controls_allowed);
-
-    // blink the red LED
-    int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
-
-    // TODO: refactor this elsewhere
-    int led_choice = (power_save_status == POWER_SAVE_STATUS_DISABLED) ? LED_RED : LED_BLUE;
-    for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
-      for (int fade = 0; fade < 1024; fade += 8) {
-        for (int i = 0; i < (128/div_mode); i++) {
-          set_led(led_choice, 1);
-          if (fade < 512) { delay(fade); } else { delay(1024-fade); }
-          set_led(led_choice, 0);
-          if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
         }
       }
+    } else {
+      __WFI();
     }
-
-    // turn off the blue LED, turned on by CAN
-    set_led(LED_BLUE, 0);
   }
 
   return 0;
 }
+
