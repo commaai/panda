@@ -290,17 +290,20 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
           // we have to disable power savings (fix for GM and Tesla)
           power_save_disable();
         }
-        switch (setup->b.wValue.w) {
-          case SAFETY_NOOUTPUT:
-            can_silent = ALL_CAN_SILENT;
-            break;
-          case SAFETY_ELM327:
-            can_silent = ALL_CAN_BUT_MAIN_SILENT;
-            break;
-          default:
-            can_silent = ALL_CAN_LIVE;
-            break;
-        }
+        #ifndef EON
+          // always LIVE on EON
+          switch (setup->b.wValue.w) {
+            case SAFETY_NOOUTPUT:
+              can_silent = ALL_CAN_SILENT;
+              break;
+            case SAFETY_ELM327:
+              can_silent = ALL_CAN_BUT_MAIN_SILENT;
+              break;
+            default:
+              can_silent = ALL_CAN_LIVE;
+              break;
+          }
+        #endif
         can_init_all();
       }
       break;
