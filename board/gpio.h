@@ -1,3 +1,5 @@
+// this is last place with ifdef PANDA
+
 #ifdef STM32F4
   #include "stm32f4xx_hal_gpio_ex.h"
 #else
@@ -61,43 +63,6 @@ void detect() {
 
 // ********************* bringup *********************
 
-void clock_init() {
-  // enable external oscillator
-  RCC->CR |= RCC_CR_HSEON;
-  while ((RCC->CR & RCC_CR_HSERDY) == 0);
-
-  // divide shit
-  RCC->CFGR = RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_PPRE1_DIV4;
-  #ifdef PANDA
-    RCC->PLLCFGR = RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLM_3 |
-                   RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLN_5 | RCC_PLLCFGR_PLLSRC_HSE;
-  #else
-    #ifdef PEDAL
-      // comma pedal has a 16mhz crystal
-      RCC->PLLCFGR = RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLM_3 |
-                     RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLN_5 | RCC_PLLCFGR_PLLSRC_HSE;
-    #else
-      // NEO board has a 8mhz crystal
-      RCC->PLLCFGR = RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLM_3 |
-                     RCC_PLLCFGR_PLLN_7 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLSRC_HSE;
-    #endif
-  #endif
-
-  // start PLL
-  RCC->CR |= RCC_CR_PLLON;
-  while ((RCC->CR & RCC_CR_PLLRDY) == 0);
-
-  // Configure Flash prefetch, Instruction cache, Data cache and wait state
-  // *** without this, it breaks ***
-  FLASH->ACR = FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_5WS;
-
-  // switch to PLL
-  RCC->CFGR |= RCC_CFGR_SW_PLL;
-  while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
-
-  // *** running on PLL ***
-}
-
 void periph_init() {
   // enable GPIOB, UART2, CAN, USB clock
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
@@ -117,18 +82,16 @@ void periph_init() {
     RCC->APB1ENR |= RCC_APB1ENR_CAN3EN;
   #endif
   RCC->APB1ENR |= RCC_APB1ENR_DACEN;
-  RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
-  RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
-  RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
-  RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;
-  RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
+  RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;  // main counter
+  RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;  // slow loop and pedal
+  RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;  // gmlan_alt
+  //RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;
+  //RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
   RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
   RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
-  RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
+  //RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
   RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
-
-  // needed?
   RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 }
 
@@ -386,9 +349,7 @@ void gpio_init() {
     set_gpio_output(GPIOA, 14, 1);
 
     // C10,C11: L-Line setup on USART 3
-    // LLine now used for relay output
-    set_gpio_output(GPIOC, 10, 1);
-    //set_gpio_alternate(GPIOC, 10, GPIO_AF7_USART3);
+    set_gpio_alternate(GPIOC, 10, GPIO_AF7_USART3);
     set_gpio_alternate(GPIOC, 11, GPIO_AF7_USART3);
     set_gpio_pullup(GPIOC, 11, PULL_UP);
   #endif

@@ -72,10 +72,6 @@ jobs:
           command: |
             docker run panda_build /bin/bash -c "cd /panda/board/pedal; make obj/bootstub.bin"
       - run:
-          name: Build NEO STM image
-          command: |
-            docker run panda_build /bin/bash -c "cd /panda/board; make clean; make -f Makefile.legacy obj/comma.bin"
-      - run:
           name: Build ESP image
           command: |
             docker run panda_build /bin/bash -c "cd /panda/boardesp; make user1.bin"
