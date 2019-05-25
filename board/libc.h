@@ -18,20 +18,17 @@ void *memcpy(void *pDest, const void *pSrc, unsigned int len) {
     unsigned int numLongs = len / 4;
     unsigned int trailBytes = len & 0x03;
 
-    // convert byte addressing to long addressing
     const uint32_t *pLongSrc = (const uint32_t*) pSrc;
     uint32_t *pLongDest = (uint32_t*) pDest;
 
-    // copy long values, disregarding any 32-bit alignment issues
+    // let processor handle any 32-bit alignment issues
     while (numLongs-- > 0) {
         *pLongDest++ = *pLongSrc++;
     }
 
-    // convert to byte addressing
     const uint8_t *pCharSrc = (const uint8_t*) pLongSrc;
     uint8_t *pCharDest = (uint8_t*) pLongDest;
 
-    // copy trailing bytes, byte-by-byte
     while (trailBytes-- > 0) {
         *pCharDest++ = *pCharSrc++;
     }
