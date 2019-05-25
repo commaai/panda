@@ -488,12 +488,9 @@ void usb_reset() {
   USBx_OUTEP(0)->DOEPTSIZ = USB_OTG_DOEPTSIZ_STUPCNT | (USB_OTG_DOEPTSIZ_PKTCNT & (1 << 19)) | (3 * 8);
 }
 
-char to_hex_char(int a) {
-  if (a < 10) {
-    return '0' + a;
-  } else {
-    return 'a' + (a-10);
-  }
+char to_hex_char (int ival, int ishift) {
+  ival = (ival >> ishift) & 0xF;
+  return (ival < 10) ? ('0' + ival) : ('a' + ival - 10);
 }
 
 void usb_setup() {
@@ -577,9 +574,9 @@ void usb_setup() {
                 // 96 bits = 12 bytes
                 for (int i = 0; i < 12; i++){
                   uint8_t cc = ((uint8_t *)UID_BASE)[i];
-                  resp[2 + i*4 + 0] = to_hex_char((cc>>4)&0xF);
+                  resp[2 + i*4 + 0] = to_hex_char(cc, 4);
                   resp[2 + i*4 + 1] = '\0';
-                  resp[2 + i*4 + 2] = to_hex_char((cc>>0)&0xF);
+                  resp[2 + i*4 + 2] = to_hex_char(cc, 0);
                   resp[2 + i*4 + 3] = '\0';
                 }
 
