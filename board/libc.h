@@ -14,14 +14,28 @@ void *memset(void *str, int c, unsigned int n) {
   return str;
 }
 
-void *memcpy(void *dest, const void *src, unsigned int n) {
-  int i;
-  // TODO: make not slow
-  for (i = 0; i < n; i++) {
-    ((uint8_t*)dest)[i] = *(uint8_t*)src;
-    ++src;
-  }
-  return dest;
+void *memcpy(void *pDest, const void *pSrc, unsigned int len) {
+    unsigned int numLongs = len / 4;
+    unsigned int trailBytes = len & 0x03;
+
+    // convert byte addressing to long addressing
+    const uint32_t *pLongSrc = (const uint32_t*) pSrc;
+    uint32_t *pLongDest = (uint32_t*) pDest;
+
+    // copy long values, disregarding any 32-bit alignment issues
+    while (numLongs-- > 0) {
+        *pLongDest++ = *pLongSrc++;
+    }
+
+    // convert to byte addressing
+    const uint8_t *pCharSrc = (const uint8_t*) pLongSrc;
+    uint8_t *pCharDest = (uint8_t*) pLongDest;
+
+    // copy trailing bytes, byte-by-byte
+    while (trailBytes-- > 0) {
+        *pCharDest++ = *pCharSrc++;
+    }
+    return pDest;
 }
 
 int memcmp(const void * ptr1, const void * ptr2, unsigned int num) {
