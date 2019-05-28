@@ -113,7 +113,11 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
         // *** global torque limit check ***
         violation |= max_limit_check(desired_torque, TOYOTA_MAX_TORQUE, -TOYOTA_MAX_TORQUE);
-
+        
+        // *** apply toyota torque limits***
+        desired_torque = apply_std_steer_torque_limits(desired_torque, toyota_desired_torque_last,
+          &toyota_torque_meas, TOYOTA_MAX_RATE_UP, TOYOTA_MAX_RATE_DOWN, TOYOTA_MAX_TORQUE_ERROR);
+        
         // *** torque rate limit check ***
         violation |= dist_to_meas_check(desired_torque, toyota_desired_torque_last,
           &toyota_torque_meas, TOYOTA_MAX_RATE_UP, TOYOTA_MAX_RATE_DOWN, TOYOTA_MAX_TORQUE_ERROR);
