@@ -40,11 +40,13 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // scale by dbc_factor
     torque_meas_new = (torque_meas_new * toyota_dbc_eps_torque_factor) / 100;
 
-    // increase torque_meas by 1 to be conservative on rounding
-    torque_meas_new += (torque_meas_new > 0 ? 1 : -1);
-
     // update array of sample
     update_sample(&toyota_torque_meas, torque_meas_new);
+
+    // increase torque_meas by 1 to be conservative on rounding
+    toyota_torque_meas.min--;
+    toyota_torque_meas.max++;
+
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
