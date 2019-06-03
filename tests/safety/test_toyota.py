@@ -244,11 +244,11 @@ class TestToyotaSafety(unittest.TestCase):
     self.assertEqual(51, self.safety.get_toyota_torque_meas_max())
 
     self.safety.toyota_rx_hook(self._torque_meas_msg(0))
-    self.assertEqual(-1, self.safety.get_toyota_torque_meas_max())
+    self.assertEqual(1, self.safety.get_toyota_torque_meas_max())
     self.assertEqual(-51, self.safety.get_toyota_torque_meas_min())
 
     self.safety.toyota_rx_hook(self._torque_meas_msg(0))
-    self.assertEqual(-1, self.safety.get_toyota_torque_meas_max())
+    self.assertEqual(1, self.safety.get_toyota_torque_meas_max())
     self.assertEqual(-1, self.safety.get_toyota_torque_meas_min())
 
   def test_ipas_override(self):
