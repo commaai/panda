@@ -64,6 +64,7 @@ class TestHondaSafety(unittest.TestCase):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x201 << 21
     to_send[0].RDLR = gas
+    to_send[0].RDTR = 6
 
     return to_send
 
@@ -140,9 +141,17 @@ class TestHondaSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_prev_gas(self):
+    self.safety.honda_rx_hook(self._gas_msg(False))
     self.assertFalse(self.safety.get_honda_gas_prev())
     self.safety.honda_rx_hook(self._gas_msg(True))
     self.assertTrue(self.safety.get_honda_gas_prev())
+
+  def test_prev_gas_interceptor(self):
+    self.safety.honda_rx_hook(self._recv_interceptor_msg(0x0))
+    self.assertFalse(self.safety.get_honda_gas_interceptor_prev())
+    self.safety.honda_rx_hook(self._recv_interceptor_msg(0x1000))
+    self.assertTrue(self.safety.get_honda_gas_interceptor_prev())
+    self.safety.set_gas_interceptor_detected(False)
 
   def test_disengage_on_gas(self):
     self.safety.set_controls_allowed(1)
@@ -154,6 +163,20 @@ class TestHondaSafety(unittest.TestCase):
     self.safety.set_controls_allowed(1)
     self.safety.honda_rx_hook(self._gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
+
+  #def test_disengage_on_gas_interceptor(self):
+  #  self.safety.honda_rx_hook(self._recv_interceptor_msg(0))
+  #  self.safety.set_controls_allowed(1)
+  #  self.safety.honda_rx_hook(self._recv_interceptor_msg(0x1000))
+  #  self.assertFalse(self.safety.get_controls_allowed())
+  #  self.safety.set_gas_interceptor_detected(False)
+
+  def test_allow_engage_with_gas_interceptor_pressed(self):
+    self.safety.honda_rx_hook(self._recv_interceptor_msg(0x1000))
+    self.safety.set_controls_allowed(1)
+    self.safety.honda_rx_hook(self._recv_interceptor_msg(0x1000))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.set_gas_interceptor_detected(False)
 
   def test_brake_safety_check(self):
     self.assertTrue(self.safety.honda_tx_hook(self._send_brake_msg(0x0000)))
