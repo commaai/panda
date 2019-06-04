@@ -11,6 +11,8 @@
 const int GM_MAX_STEER = 300;
 const int GM_MAX_RT_DELTA = 128;          // max delta torque allowed for real time checks
 const int32_t GM_RT_INTERVAL = 250000;    // 250ms between real time checks
+// allow op long control after not seeing stock long controls msgs for 1s
+const int32_t GM_LONG_CONTROLS_INTERVAL = 1000000;
 const int GM_MAX_RATE_UP = 7;
 const int GM_MAX_RATE_DOWN = 17;
 const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
@@ -27,16 +29,19 @@ int gm_ascm_detected = 0;
 int gm_ignition_started = 0;
 int gm_rt_torque_last = 0;
 int gm_desired_torque_last = 0;
+int gm_long_controls_allowed = 0;
 uint32_t gm_ts_last = 0;
+uint32_t gm_ts_long_last = 0;
 struct sample_t gm_torque_driver;         // last few driver torques measured
 
 static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  int bus_number = (to_push->RDTR >> 4) & 0xFF;
+  int bus = (to_push->RDTR >> 4) & 0xFF;
   uint32_t addr;
+  uint32_t ts = TIM2->CNT;
+
   if (to_push->RIR & 4) {
     // Extended
-    // Not looked at, but have to be separated
-    // to avoid address collision
+    // Not looked at, but have to be separated to avoid address collision
     addr = to_push->RIR >> 3;
   } else {
     // Normal
@@ -50,7 +55,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     update_sample(&gm_torque_driver, torque_driver_new);
   }
 
-  if (addr == 0x1f1 && bus_number == 0) {
+  if (addr == 0x1f1 && bus == 0) {
     //Bit 5 should be ignition "on"
     //Backup plan is Bit 2 (accessory power)
     uint32_t ign = (to_push->RDLR) & 0x20;
@@ -67,7 +72,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // on powertrain bus.
   // 384 = ASCMLKASteeringCmd
   // 715 = ASCMGasRegenCmd
-  if (bus_number == 0 && (addr == 384 || addr == 715)) {
+  if (bus == 0 && (addr == 384 || addr == 715)) {
     gm_ascm_detected = 1;
     controls_allowed = 0;
   }
@@ -98,10 +103,10 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     gm_brake_prev = brake;
   }
 
-  // exit controls on rising edge of gas press
+  // exit controls on rising edge of gas press only if long controls is allowed
   if (addr == 417) {
     int gas = to_push->RDHR & 0xFF0000;
-    if (gas && !gm_gas_prev) {
+    if (gas && !gm_gas_prev && gm_long_controls_allowed) {
       controls_allowed = 0;
     }
     gm_gas_prev = gas;
@@ -112,6 +117,19 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int regen = to_push->RDLR & 0x20;
     if (regen) {
       controls_allowed = 0;
+    }
+  }
+
+  // if stock is doing long control
+  if (((addr == 715) || (addr == 789)) && bus == 0){
+    gm_long_controls_allowed = 0;
+    gm_ts_long_last = ts;
+  }
+  else {
+    // op long controls is allowed after GM_LONG_CONTROLS_INTERVAL of no stock cmds
+    uint32_t ts_elapsed = get_ts_elapsed(ts, gm_ts_long_last);
+    if (ts_elapsed > GM_LONG_CONTROLS_INTERVAL) {
+      gm_long_controls_allowed = 1;
     }
   }
 }
@@ -148,7 +166,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int rdlr = to_send->RDLR;
     int brake = ((rdlr & 0xF) << 8) + ((rdlr & 0xFF00) >> 8);
     brake = (0x1000 - brake) & 0xFFF;
-    if (current_controls_allowed) {
+    if (current_controls_allowed && gm_long_controls_allowed) {
       if (brake > GM_MAX_BRAKE) return 0;
     } else {
       if (brake != 0) return 0;
@@ -212,7 +230,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int rdlr = to_send->RDLR;
     int gas_regen = ((rdlr & 0x7F0000) >> 11) + ((rdlr & 0xF8000000) >> 27);
     int apply = rdlr & 1;
-    if (current_controls_allowed) {
+    if (current_controls_allowed && gm_long_controls_allowed) {
       if (gas_regen > GM_MAX_GAS) return 0;
     } else {
       // Disabled message is !engaed with gas
