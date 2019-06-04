@@ -133,9 +133,9 @@ class TestHondaSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_prev_gas(self):
-    self.assertFalse(self.safety.get_gas_prev())
+    self.assertFalse(self.safety.get_honda_gas_prev())
     self.safety.honda_rx_hook(self._gas_msg(True))
-    self.assertTrue(self.safety.get_gas_prev())
+    self.assertTrue(self.safety.get_honda_gas_prev())
 
   def test_disengage_on_gas(self):
     self.safety.set_controls_allowed(1)

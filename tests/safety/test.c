@@ -165,8 +165,8 @@ int get_brake_prev(void){
   return brake_prev;
 }
 
-int get_gas_prev(void){
-  return gas_prev;
+int get_honda_gas_prev(void){
+  return honda_gas_prev;
 }
 
 void set_honda_alt_brake_msg(bool c){
@@ -235,7 +235,7 @@ void init_tests_honda(void){
   ego_speed = 0;
   gas_interceptor_detected = 0;
   brake_prev = 0;
-  gas_prev = 0;
+  honda_gas_prev = 0;
 }
 
 void set_gmlan_digital_output(int to_set){

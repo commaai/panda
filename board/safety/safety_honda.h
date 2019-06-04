@@ -8,11 +8,11 @@
 //      brake > 0mph
 
 // these are set in the Honda safety hooks...this is the wrong place
-const int gas_interceptor_threshold = 328;
+const int HONDA_GAS_INTERCEPTOR_THRESHOLD = 328;
 int gas_interceptor_detected = 0;
 int brake_prev = 0;
-int gas_prev = 0;
-int gas_interceptor_prev = 0;
+int honda_gas_prev = 0;
+int honda_gas_interceptor_prev = 0;
 int ego_speed = 0;
 // TODO: auto-detect bosch hardware based on CAN messages?
 bool bosch_hardware = false;
@@ -60,21 +60,21 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if ((to_push->RIR>>21) == 0x201 && (to_push->RDTR & 0xf) == 6) {
     gas_interceptor_detected = 1;
     int gas_interceptor = ((to_push->RDLR & 0xFF) << 8) | ((to_push->RDLR & 0xFF00) >> 8);
-    if ((gas_interceptor > gas_interceptor_threshold) &&
-        (gas_interceptor_prev <= gas_interceptor_threshold)) {
+    if ((gas_interceptor > HONDA_GAS_INTERCEPTOR_THRESHOLD) &&
+        (honda_gas_interceptor_prev <= HONDA_GAS_INTERCEPTOR_THRESHOLD)) {
       controls_allowed = 0;
     }
-    gas_interceptor_prev = gas_interceptor;
+    honda_gas_interceptor_prev = gas_interceptor;
   }
 
   // exit controls on rising edge of gas press if no interceptor
   if (!gas_interceptor_detected) {
     if ((to_push->RIR>>21) == 0x17C) {
       int gas = to_push->RDLR & 0xFF;
-      if (gas && !(gas_prev)) {
+      if (gas && !(honda_gas_prev)) {
         controls_allowed = 0;
       }
-      gas_prev = gas;
+      honda_gas_prev = gas;
     }
   }
 }
@@ -89,7 +89,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
-  int pedal_pressed = gas_prev || (gas_interceptor_prev > gas_interceptor_threshold) ||
+  int pedal_pressed = honda_gas_prev || (honda_gas_interceptor_prev > HONDA_GAS_INTERCEPTOR_THRESHOLD) ||
                       (brake_prev && ego_speed);
   int current_controls_allowed = controls_allowed && !(pedal_pressed);
 
