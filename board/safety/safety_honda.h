@@ -7,12 +7,11 @@
 //      brake rising edge
 //      brake > 0mph
 
-const int HONDA_GAS_INTERCEPTOR_THRESHOLD = 328;
+const int HONDA_GAS_INTERCEPTOR_THRESHOLD = 328;  // ratio between offset and gain from dbc file
 int honda_brake_prev = 0;
 int honda_gas_prev = 0;
 int honda_gas_interceptor_prev = 0;
 int honda_ego_speed = 0;
-// TODO: auto-detect bosch hardware based on CAN messages?
 bool honda_bosch_hardware = false;
 bool honda_alt_brake_msg = false;
 
