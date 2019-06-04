@@ -47,6 +47,9 @@ typedef struct {
 int controls_allowed = 0;
 int gas_interceptor_detected = 0;
 
+// This is set by USB command 0xdf
+int long_controls_allowed = 0;
+
 // Include the actual safety policies.
 #include "safety/safety_defaults.h"
 #include "safety/safety_honda.h"
