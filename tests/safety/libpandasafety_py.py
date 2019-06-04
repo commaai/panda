@@ -46,14 +46,14 @@ void set_toyota_desired_torque_last(int t);
 void set_toyota_rt_torque_last(int t);
 
 void init_tests_honda(void);
-int get_ego_speed(void);
+int get_honda_ego_speed(void);
 void honda_init(int16_t param);
 void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
-int get_brake_prev(void);
+int get_honda_brake_prev(void);
 int get_honda_gas_prev(void);
 void set_honda_alt_brake_msg(bool);
-void set_bosch_hardware(bool);
+void set_honda_bosch_hardware(bool);
 
 void init_tests_cadillac(void);
 void cadillac_init(int16_t param);

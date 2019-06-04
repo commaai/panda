@@ -89,14 +89,14 @@ class TestHondaSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_sample_speed(self):
-    self.assertEqual(0, self.safety.get_ego_speed())
+    self.assertEqual(0, self.safety.get_honda_ego_speed())
     self.safety.honda_rx_hook(self._speed_msg(100))
-    self.assertEqual(100, self.safety.get_ego_speed())
+    self.assertEqual(100, self.safety.get_honda_ego_speed())
 
   def test_prev_brake(self):
-    self.assertFalse(self.safety.get_brake_prev())
+    self.assertFalse(self.safety.get_honda_brake_prev())
     self.safety.honda_rx_hook(self._brake_msg(True))
-    self.assertTrue(self.safety.get_brake_prev())
+    self.assertTrue(self.safety.get_honda_brake_prev())
 
   def test_disengage_on_brake(self):
     self.safety.set_controls_allowed(1)
@@ -171,7 +171,7 @@ class TestHondaSafety(unittest.TestCase):
     SET_BTN = 3
     CANCEL_BTN = 2
     BUTTON_MSG = 0x296
-    self.safety.set_bosch_hardware(1)
+    self.safety.set_honda_bosch_hardware(1)
     self.safety.set_controls_allowed(0)
     self.assertTrue(self.safety.honda_tx_hook(self._button_msg(CANCEL_BTN, BUTTON_MSG)))
     self.assertFalse(self.safety.honda_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))

@@ -157,12 +157,12 @@ void set_subaru_desired_torque_last(int t){
   subaru_desired_torque_last = t;
 }
 
-int get_ego_speed(void){
-  return ego_speed;
+int get_honda_ego_speed(void){
+  return honda_ego_speed;
 }
 
-int get_brake_prev(void){
-  return brake_prev;
+int get_honda_brake_prev(void){
+  return honda_brake_prev;
 }
 
 int get_honda_gas_prev(void){
@@ -173,8 +173,8 @@ void set_honda_alt_brake_msg(bool c){
   honda_alt_brake_msg = c;
 }
 
-void set_bosch_hardware(bool c){
-  bosch_hardware = c;
+void set_honda_bosch_hardware(bool c){
+  honda_bosch_hardware = c;
 }
 
 void init_tests_toyota(void){
@@ -232,9 +232,9 @@ void init_tests_subaru(void){
 }
 
 void init_tests_honda(void){
-  ego_speed = 0;
-  gas_interceptor_detected = 0;
-  brake_prev = 0;
+  honda_ego_speed = 0;
+  honda_gas_interceptor_detected = 0;
+  honda_brake_prev = 0;
   honda_gas_prev = 0;
 }
 
