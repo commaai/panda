@@ -51,12 +51,20 @@ void set_controls_allowed(int c){
   controls_allowed = c;
 }
 
+void set_gas_interceptor_detected(int c){
+  gas_interceptor_detected = c;
+}
+
 void reset_angle_control(void){
   angle_control = 0;
 }
 
 int get_controls_allowed(void){
   return controls_allowed;
+}
+
+int get_gas_interceptor_detected(void){
+  return gas_interceptor_detected;
 }
 
 void set_timer(int t){
@@ -99,6 +107,14 @@ int get_chrysler_torque_meas_min(void){
 
 int get_chrysler_torque_meas_max(void){
   return chrysler_torque_meas.max;
+}
+
+int get_toyota_gas_prev(void){
+  return toyota_gas_prev;
+}
+
+int get_toyota_gas_interceptor_prev(void){
+  return toyota_gas_interceptor_prev;
 }
 
 int get_toyota_torque_meas_min(void){
@@ -169,6 +185,10 @@ int get_honda_gas_prev(void){
   return honda_gas_prev;
 }
 
+int get_honda_gas_interceptor_prev(void){
+  return honda_gas_interceptor_prev;
+}
+
 void set_honda_alt_brake_msg(bool c){
   honda_alt_brake_msg = c;
 }
@@ -183,6 +203,7 @@ void init_tests_toyota(void){
   toyota_desired_torque_last = 0;
   toyota_rt_torque_last = 0;
   toyota_ts_last = 0;
+  gas_interceptor_detected = 0;
   set_timer(0);
 }
 

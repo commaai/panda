@@ -53,9 +53,16 @@ class TestHondaSafety(unittest.TestCase):
 
     return to_send
 
-  def _send_gas_msg(self, gas):
+  def _send_interceptor_msg(self, gas):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x200 << 21
+    to_send[0].RDLR = gas
+
+    return to_send
+
+  def _recv_interceptor_msg(self, gas):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 0x201 << 21
     to_send[0].RDLR = gas
 
     return to_send
@@ -158,8 +165,10 @@ class TestHondaSafety(unittest.TestCase):
 
   def test_gas_safety_check(self):
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self.safety.honda_tx_hook(self._send_gas_msg(0x0000)))
-    self.assertFalse(self.safety.honda_tx_hook(self._send_gas_msg(0x1000)))
+    self.assertTrue(self.safety.honda_tx_hook(self._send_interceptor_msg(0x0000)))
+    self.assertFalse(self.safety.honda_tx_hook(self._send_interceptor_msg(0x1000)))
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self.safety.honda_tx_hook(self._send_interceptor_msg(0x1000)))
 
   def test_steer_safety_check(self):
     self.safety.set_controls_allowed(0)
