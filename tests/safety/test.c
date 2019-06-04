@@ -233,7 +233,7 @@ void init_tests_subaru(void){
 
 void init_tests_honda(void){
   honda_ego_speed = 0;
-  honda_gas_interceptor_detected = 0;
+  gas_interceptor_detected = 0;
   honda_brake_prev = 0;
   honda_gas_prev = 0;
 }

@@ -45,6 +45,7 @@ typedef struct {
 
 // This can be set by the safety hooks.
 int controls_allowed = 0;
+int gas_interceptor_detected = 0;
 
 // Include the actual safety policies.
 #include "safety/safety_defaults.h"

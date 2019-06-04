@@ -7,9 +7,7 @@
 //      brake rising edge
 //      brake > 0mph
 
-// these are set in the Honda safety hooks...this is the wrong place
 const int HONDA_GAS_INTERCEPTOR_THRESHOLD = 328;
-int honda_gas_interceptor_detected = 0;
 int honda_brake_prev = 0;
 int honda_gas_prev = 0;
 int honda_gas_interceptor_prev = 0;
@@ -58,7 +56,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // exit controls on rising edge of gas press if interceptor (0x201 w/ len = 6)
   // length check because bosch hardware also uses this id (0x201 w/ len = 8)
   if ((to_push->RIR>>21) == 0x201 && (to_push->RDTR & 0xf) == 6) {
-    honda_gas_interceptor_detected = 1;
+    gas_interceptor_detected = 1;
     int gas_interceptor = ((to_push->RDLR & 0xFF) << 8) | ((to_push->RDLR & 0xFF00) >> 8);
     if ((gas_interceptor > HONDA_GAS_INTERCEPTOR_THRESHOLD) &&
         (honda_gas_interceptor_prev <= HONDA_GAS_INTERCEPTOR_THRESHOLD)) {
@@ -68,7 +66,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // exit controls on rising edge of gas press if no interceptor
-  if (!honda_gas_interceptor_detected) {
+  if (!gas_interceptor_detected) {
     if ((to_push->RIR>>21) == 0x17C) {
       int gas = to_push->RDLR & 0xFF;
       if (gas && !(honda_gas_prev)) {
