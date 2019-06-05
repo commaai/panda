@@ -32,6 +32,9 @@ typedef struct
 
 void set_controls_allowed(int c);
 int get_controls_allowed(void);
+void set_gas_interceptor_detected(int c);
+int get_gas_interceptor_detetcted(void);
+int get_gas_interceptor_prev(void);
 void set_timer(int t);
 void reset_angle_control(void);
 
@@ -41,6 +44,7 @@ int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
 void toyota_init(int16_t param);
 int get_toyota_torque_meas_min(void);
 int get_toyota_torque_meas_max(void);
+int get_toyota_gas_prev(void);
 void set_toyota_torque_meas(int min, int max);
 void set_toyota_desired_torque_last(int t);
 void set_toyota_rt_torque_last(int t);

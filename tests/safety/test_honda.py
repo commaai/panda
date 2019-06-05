@@ -53,10 +53,11 @@ class TestHondaSafety(unittest.TestCase):
 
     return to_send
 
-  def _send_gas_msg(self, gas):
+  def _send_interceptor_msg(self, gas, addr):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x200 << 21
-    to_send[0].RDLR = gas
+    to_send[0].RIR = addr << 21
+    to_send[0].RDTR = 6
+    to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8)
 
     return to_send
 
@@ -133,9 +134,18 @@ class TestHondaSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_prev_gas(self):
+    self.safety.honda_rx_hook(self._gas_msg(False))
     self.assertFalse(self.safety.get_honda_gas_prev())
     self.safety.honda_rx_hook(self._gas_msg(True))
     self.assertTrue(self.safety.get_honda_gas_prev())
+
+  def test_prev_gas_interceptor(self):
+    self.safety.honda_rx_hook(self._send_interceptor_msg(0x0, 0x201))
+    self.assertFalse(self.safety.get_gas_interceptor_prev())
+    self.safety.honda_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
+    self.assertTrue(self.safety.get_gas_interceptor_prev())
+    self.safety.honda_rx_hook(self._send_interceptor_msg(0x0, 0x201))
+    self.safety.set_gas_interceptor_detected(False)
 
   def test_disengage_on_gas(self):
     self.safety.set_controls_allowed(1)
@@ -148,18 +158,35 @@ class TestHondaSafety(unittest.TestCase):
     self.safety.honda_rx_hook(self._gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
 
-  def test_brake_safety_check(self):
-    self.assertTrue(self.safety.honda_tx_hook(self._send_brake_msg(0x0000)))
-    self.assertFalse(self.safety.honda_tx_hook(self._send_brake_msg(0x1000)))
+  def test_disengage_on_gas_interceptor(self):
+    self.safety.honda_rx_hook(self._send_interceptor_msg(0, 0x201))
+    self.safety.set_controls_allowed(1)
+    self.safety.honda_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.safety.honda_rx_hook(self._send_interceptor_msg(0, 0x201))
+    self.safety.set_gas_interceptor_detected(False)
 
+  def test_allow_engage_with_gas_interceptor_pressed(self):
+    self.safety.honda_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
+    self.safety.set_controls_allowed(1)
+    self.safety.honda_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.honda_rx_hook(self._send_interceptor_msg(0, 0x201))
+    self.safety.set_gas_interceptor_detected(False)
+
+  def test_brake_safety_check(self):
+    self.assertTrue(self.safety.honda_tx_hook(self._send_brake_msg(0)))
+    self.assertFalse(self.safety.honda_tx_hook(self._send_brake_msg(0x1000)))
     self.safety.set_controls_allowed(1)
     self.assertTrue(self.safety.honda_tx_hook(self._send_brake_msg(0x1000)))
     self.assertFalse(self.safety.honda_tx_hook(self._send_brake_msg(0x00F0)))
 
-  def test_gas_safety_check(self):
+  def test_gas_interceptor_safety_check(self):
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self.safety.honda_tx_hook(self._send_gas_msg(0x0000)))
-    self.assertFalse(self.safety.honda_tx_hook(self._send_gas_msg(0x1000)))
+    self.assertTrue(self.safety.honda_tx_hook(self._send_interceptor_msg(0, 0x200)))
+    self.assertFalse(self.safety.honda_tx_hook(self._send_interceptor_msg(0x1000, 0x200)))
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self.safety.honda_tx_hook(self._send_interceptor_msg(0x1000, 0x200)))
 
   def test_steer_safety_check(self):
     self.safety.set_controls_allowed(0)
