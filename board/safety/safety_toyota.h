@@ -180,14 +180,20 @@ static void toyota_init(int16_t param) {
 
 static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
-  // forward cam to radar and viceversa if car, except lkas cmd and hud
-  // don't forward when switch 1 is high
-  if ((bus_num == 0 || bus_num == 2) && toyota_camera_forwarded && !toyota_giraffe_switch_1) {
+  if (toyota_camera_forwarded && !toyota_giraffe_switch_1) {
     int addr = to_fwd->RIR>>21;
-    bool is_lkas_msg = (addr == 0x2E4 || addr == 0x412) && bus_num == 2;
-    // in TSSP 2.0 the camera does ACC as well, so filter 0x343
-    bool is_acc_msg = (addr == 0x343 && bus_num  == 2 && long_controls_allowed);
-    return (is_lkas_msg || is_acc_msg)? -1 : (uint8_t)(~bus_num & 0x2);
+    if (bus_num == 0) {
+      return 2;
+    } else if (bus_num == 2) {
+      // block stock lkas messages and stock acc messages (if OP is doing ACC)
+      int is_lkas_msg = (addr == 0x2E4 || addr == 0x412);
+      // in TSSP 2.0 the camera does ACC as well, so filter 0x343
+      int is_acc_msg = (addr == 0x343);
+      if (is_lkas_msg || (is_acc_msg && long_controls_allowed)) {
+        return -1;
+      }
+      return 0;
+    }
   }
   return -1;
 }
