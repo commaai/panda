@@ -32,14 +32,14 @@ struct sample_t subaru_torque_driver;
 TIM_TypeDef timer;
 TIM_TypeDef *TIM2 = &timer;
 
-#define min(a,b)                                \
-  ({ __typeof__ (a) _a = (a);                   \
-    __typeof__ (b) _b = (b);                    \
+#define min(a,b) \
+ ({ __auto_type _a = (a); \
+     __auto_type _b = (b); \
     _a < _b ? _a : _b; })
 
-#define max(a,b)                                \
-  ({ __typeof__ (a) _a = (a);                   \
-    __typeof__ (b) _b = (b);                    \
+#define max(a,b) \
+ ({ __auto_type _a = (a); \
+     __auto_type _b = (b); \
     _a > _b ? _a : _b; })
 
 

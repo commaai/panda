@@ -25,13 +25,13 @@
 #define COMPILE_TIME_ASSERT(pred) switch(0){case 0:case pred:;}
 
 #define min(a,b) \
- ({ __typeof__ (a) _a = (a); \
-     __typeof__ (b) _b = (b); \
+ ({ __auto_type _a = (a); \
+     __auto_type _b = (b); \
    _a < _b ? _a : _b; })
 
 #define max(a,b) \
- ({ __typeof__ (a) _a = (a); \
-     __typeof__ (b) _b = (b); \
+ ({ __auto_type _a = (a); \
+     __auto_type _b = (b); \
    _a > _b ? _a : _b; })
 
 #define MAX_RESP_LEN 0x40
