@@ -203,7 +203,6 @@ void init_tests_toyota(void){
   toyota_desired_torque_last = 0;
   toyota_rt_torque_last = 0;
   toyota_ts_last = 0;
-  gas_interceptor_detected = 0;
   set_timer(0);
 }
 
@@ -254,7 +253,6 @@ void init_tests_subaru(void){
 
 void init_tests_honda(void){
   honda_ego_speed = 0;
-  gas_interceptor_detected = 0;
   honda_brake_prev = 0;
   honda_gas_prev = 0;
 }

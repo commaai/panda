@@ -199,19 +199,3 @@ const safety_hooks toyota_hooks = {
   .ignition = default_ign_hook,
   .fwd = toyota_fwd_hook,
 };
-
-static void toyota_nolimits_init(int16_t param) {
-  controls_allowed = 0;
-  toyota_giraffe_switch_1 = 0;
-  toyota_camera_forwarded = 0;
-  toyota_dbc_eps_torque_factor = param;
-}
-
-const safety_hooks toyota_nolimits_hooks = {
-  .init = toyota_nolimits_init,
-  .rx = toyota_rx_hook,
-  .tx = toyota_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
-  .ignition = default_ign_hook,
-  .fwd = toyota_fwd_hook,
-};
