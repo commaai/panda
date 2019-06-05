@@ -76,6 +76,23 @@ jobs:
           command: |
             docker run panda_build /bin/bash -c "cd /panda/boardesp; make user1.bin"
 
+  replay:
+    machine:
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - run:
+          name: Build image
+          command: "docker build -t panda_replay -f tests/replay/Dockerfile ."
+      - run:
+          name: Replay drives
+          command: |
+            mkdir /tmp/replay
+            docker run -v /tmp/replay:/tmp/replay panda_replay /bin/bash -c "cd /panda/tests/replay; python test_all_drives.py"
+      - store_artifacts:
+          name: Store replay test output
+          path: /tmp/replay/output.txt
+
 workflows:
   version: 2
   main:
@@ -84,3 +101,4 @@ workflows:
       - misra-c2012
       - strict-compiler
       - build
+      - replay
