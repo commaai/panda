@@ -113,7 +113,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       if (controls_allowed && long_controls_allowed) {
         int violation = max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
         if (violation) return 0;
-      } else if (!controls_allowed && (desired_accel != 0)) {
+      } else if (desired_accel != 0) {
         return 0;
       }
     }
