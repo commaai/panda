@@ -167,9 +167,9 @@ class TestToyotaSafety(unittest.TestCase):
 
   def test_prev_gas_interceptor(self):
     self.safety.toyota_rx_hook(self._send_interceptor_msg(0x0, 0x201))
-    self.assertFalse(self.safety.get_toyota_gas_interceptor_prev())
+    self.assertFalse(self.safety.get_gas_interceptor_prev())
     self.safety.toyota_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
-    self.assertTrue(self.safety.get_toyota_gas_interceptor_prev())
+    self.assertTrue(self.safety.get_gas_interceptor_prev())
     self.safety.toyota_rx_hook(self._send_interceptor_msg(0x0, 0x201))
     self.safety.set_gas_interceptor_detected(False)
 

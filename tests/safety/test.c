@@ -67,6 +67,10 @@ int get_gas_interceptor_detected(void){
   return gas_interceptor_detected;
 }
 
+int get_gas_interceptor_prev(void){
+  return gas_interceptor_prev;
+}
+
 void set_timer(int t){
   timer.CNT = t;
 }
@@ -111,10 +115,6 @@ int get_chrysler_torque_meas_max(void){
 
 int get_toyota_gas_prev(void){
   return toyota_gas_prev;
-}
-
-int get_toyota_gas_interceptor_prev(void){
-  return toyota_gas_interceptor_prev;
 }
 
 int get_toyota_torque_meas_min(void){
@@ -183,10 +183,6 @@ int get_honda_brake_prev(void){
 
 int get_honda_gas_prev(void){
   return honda_gas_prev;
-}
-
-int get_honda_gas_interceptor_prev(void){
-  return honda_gas_interceptor_prev;
 }
 
 void set_honda_alt_brake_msg(bool c){

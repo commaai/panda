@@ -29,7 +29,6 @@ int toyota_rt_torque_last = 0;            // last desired torque for real time c
 uint32_t toyota_ts_last = 0;
 int toyota_cruise_engaged_last = 0;       // cruise state
 int toyota_gas_prev = 0;
-int toyota_gas_interceptor_prev = 0;
 struct sample_t toyota_torque_meas;       // last 3 motor torques produced by the eps
 
 
@@ -70,10 +69,10 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     gas_interceptor_detected = 1;
     int gas_interceptor = ((to_push->RDLR & 0xFF) << 8) | ((to_push->RDLR & 0xFF00) >> 8);
     if ((gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRESHOLD) &&
-        (toyota_gas_interceptor_prev <= TOYOTA_GAS_INTERCEPTOR_THRESHOLD)) {
+        (gas_interceptor_prev <= TOYOTA_GAS_INTERCEPTOR_THRESHOLD)) {
       controls_allowed = 0;
     }
-    toyota_gas_interceptor_prev = gas_interceptor;
+    gas_interceptor_prev = gas_interceptor;
   }
 
   int bus = (to_push->RDTR >> 4) & 0xF;
