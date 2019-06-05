@@ -77,11 +77,7 @@ void EXTI1_IRQHandler() {
     delay(100000);
 
     // set power savings mode here
-    if (is_gpio_started() == true) {
-      power_save_mode(true);
-    } else {
-      power_save_mode(false);
-    }
+    power_save_mode(is_gpio_started() == false);
     EXTI->PR = (1 << 1);
   }
 }
