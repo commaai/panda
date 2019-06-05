@@ -55,7 +55,8 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int cruise_engaged = to_push->RDLR & 0x20;
     // 4th bit is GAS_RELEASED
     int gas = !(to_push->RDLR & 0x10);
-    if (!cruise_engaged || (gas && !toyota_gas_prev && !gas_interceptor_detected)) {
+    if (!cruise_engaged ||
+        (gas && !toyota_gas_prev && !gas_interceptor_detected && long_controls_allowed)) {
       controls_allowed = 0;
     } else if (cruise_engaged && !toyota_cruise_engaged_last) {
       controls_allowed = 1;
@@ -69,7 +70,8 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     gas_interceptor_detected = 1;
     int gas_interceptor = ((to_push->RDLR & 0xFF) << 8) | ((to_push->RDLR & 0xFF00) >> 8);
     if ((gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRESHOLD) &&
-        (gas_interceptor_prev <= TOYOTA_GAS_INTERCEPTOR_THRESHOLD)) {
+        (gas_interceptor_prev <= TOYOTA_GAS_INTERCEPTOR_THRESHOLD) &&
+        long_controls_allowed) {
       controls_allowed = 0;
     }
     gas_interceptor_prev = gas_interceptor;
@@ -97,7 +99,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // GAS PEDAL: safety check
     if ((to_send->RIR>>21) == 0x200) {
-      if (controls_allowed) {
+      if (controls_allowed && long_controls_allowed) {
         // all messages are fine here
       } else {
         if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
@@ -108,7 +110,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if ((to_send->RIR>>21) == 0x343) {
       int desired_accel = ((to_send->RDLR & 0xFF) << 8) | ((to_send->RDLR >> 8) & 0xFF);
       desired_accel = to_signed(desired_accel, 16);
-      if (controls_allowed) {
+      if (controls_allowed && long_controls_allowed) {
         int violation = max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
         if (violation) return 0;
       } else if (!controls_allowed && (desired_accel != 0)) {
@@ -178,14 +180,20 @@ static void toyota_init(int16_t param) {
 
 static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
-  // forward cam to radar and viceversa if car, except lkas cmd and hud
-  // don't forward when switch 1 is high
-  if ((bus_num == 0 || bus_num == 2) && toyota_camera_forwarded && !toyota_giraffe_switch_1) {
+  if (toyota_camera_forwarded && !toyota_giraffe_switch_1) {
     int addr = to_fwd->RIR>>21;
-    bool is_lkas_msg = (addr == 0x2E4 || addr == 0x412) && bus_num == 2;
-    // in TSSP 2.0 the camera does ACC as well, so filter 0x343
-    bool is_acc_msg = (addr == 0x343 && bus_num  == 2);
-    return (is_lkas_msg || is_acc_msg)? -1 : (uint8_t)(~bus_num & 0x2);
+    if (bus_num == 0) {
+      return 2;
+    } else if (bus_num == 2) {
+      // block stock lkas messages and stock acc messages (if OP is doing ACC)
+      int is_lkas_msg = (addr == 0x2E4 || addr == 0x412);
+      // in TSSP 2.0 the camera does ACC as well, so filter 0x343
+      int is_acc_msg = (addr == 0x343);
+      if (is_lkas_msg || (is_acc_msg && long_controls_allowed)) {
+        return -1;
+      }
+      return 0;
+    }
   }
   return -1;
 }

@@ -57,7 +57,8 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     gas_interceptor_detected = 1;
     int gas_interceptor = ((to_push->RDLR & 0xFF) << 8) | ((to_push->RDLR & 0xFF00) >> 8);
     if ((gas_interceptor > HONDA_GAS_INTERCEPTOR_THRESHOLD) &&
-        (gas_interceptor_prev <= HONDA_GAS_INTERCEPTOR_THRESHOLD)) {
+        (gas_interceptor_prev <= HONDA_GAS_INTERCEPTOR_THRESHOLD) &&
+        long_controls_allowed) {
       controls_allowed = 0;
     }
     gas_interceptor_prev = gas_interceptor;
@@ -67,7 +68,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if (!gas_interceptor_detected) {
     if ((to_push->RIR>>21) == 0x17C) {
       int gas = to_push->RDLR & 0xFF;
-      if (gas && !(honda_gas_prev)) {
+      if (gas && !(honda_gas_prev) && long_controls_allowed) {
         controls_allowed = 0;
       }
       honda_gas_prev = gas;
@@ -91,7 +92,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // BRAKE: safety check
   if ((to_send->RIR>>21) == 0x1FA) {
-    if (current_controls_allowed) {
+    if (current_controls_allowed && long_controls_allowed) {
       if ((to_send->RDLR & 0xFFFFFF3F) != to_send->RDLR) return 0;
     } else {
       if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
@@ -109,7 +110,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // GAS: safety check
   if ((to_send->RIR>>21) == 0x200) {
-    if (current_controls_allowed) {
+    if (current_controls_allowed && long_controls_allowed) {
       // all messages are fine here
     } else {
       if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
@@ -149,11 +150,15 @@ static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int addr = to_fwd->RIR>>21;
   if (bus_num == 0) {
     return 2;
-  } else if (bus_num == 2 && addr != 0xE4 && addr != 0x194 && addr != 0x1FA &&
-             addr != 0x30C && addr != 0x33D && addr != 0x39F) {
+  } else if (bus_num == 2) {
+    // block stock lkas messages and stock acc messages (if OP is doing ACC)
+    int is_lkas_msg = (addr == 0xE4 || addr == 0x194 || addr == 0x33D);
+    int is_acc_msg = (addr == 0x1FA || addr == 0x30C || addr == 0x39F);
+    if (is_lkas_msg || (is_acc_msg && long_controls_allowed)) {
+      return -1;
+    }
     return 0;
   }
-
   return -1;
 }
 
