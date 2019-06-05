@@ -66,6 +66,7 @@ bool is_gpio_started() {
   return (GPIOA->IDR & (1 << 1)) == 0;
 }
 
+bool power_save_enabled = false;
 void EXTI1_IRQHandler() {
   volatile int pr = EXTI->PR & (1 << 1);
   if (pr & (1 << 1)) {
