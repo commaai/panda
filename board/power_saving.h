@@ -27,12 +27,11 @@ void power_save_mode(bool enable) {
   set_gpio_output(GPIOA, 14, set_state);
 
   if (is_grey_panda) {
+    // wake
+    char* UBLOX_POWER_STATE_MSG = "\xb5\x62\x06\x04\x04\x00\x01\x00\x09\x00\x18\x7a";
     if (enable) {
       // sleep
-      char UBLOX_POWER_STATE_MSG[] = "\xb5\x62\x06\x04\x04\x00\x01\x00\x08\x00\x17\x78";
-    } else {
-      // wake
-      char UBLOX_POWER_STATE_MSG[] = "\xb5\x62\x06\x04\x04\x00\x01\x00\x09\x00\x18\x7a";
+      UBLOX_POWER_STATE_MSG = "\xb5\x62\x06\x04\x04\x00\x01\x00\x08\x00\x17\x78";
     }
     uart_ring *ur = get_ring_by_number(1);
     for (int i = 0; i < sizeof(UBLOX_POWER_STATE_MSG)-1; i++) while (!putc(ur, UBLOX_POWER_STATE_MSG[i]));
