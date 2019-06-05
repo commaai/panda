@@ -61,7 +61,7 @@ void debug_ring_callback(uart_ring *ring) {
 
 // ***************************** started logic *****************************
 
-int is_gpio_started() {
+bool is_gpio_started() {
   // ignition is on PA1
   return (GPIOA->IDR & (1 << 1)) == 0;
 }
@@ -77,7 +77,11 @@ void EXTI1_IRQHandler() {
     delay(100000);
 
     // set power savings mode here
-    power_save_mode(is_gpio_started());
+    if (is_gpio_started() == true) {
+      power_save_mode(true);
+    } else {
+      power_save_mode(false);
+    }
     EXTI->PR = (1 << 1);
   }
 }
@@ -657,9 +661,9 @@ int main() {
     set_esp_mode(ESP_DISABLED);
   }
   // only enter power save after the first cycle
-
-/*  power_save_mode(!is_gpio_started());*/
-
+  /*if (is_gpio_started() == 0) {
+    power_save_mode(true);
+  }*/
   // interrupt on started line
   started_interrupt_init();
 #endif
