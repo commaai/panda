@@ -469,7 +469,7 @@ class TestToyotaSafety(unittest.TestCase):
     # reset no angle control at the end of the test
     self.safety.reset_angle_control()
 
-  def test_gas_safety_check(self):
+  def test_gas_interceptor_safety_check(self):
 
     self.safety.set_controls_allowed(0)
     self.assertTrue(self.safety.toyota_tx_hook(self._send_interceptor_msg(0, 0x200)))

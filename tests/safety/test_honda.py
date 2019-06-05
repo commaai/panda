@@ -181,7 +181,7 @@ class TestHondaSafety(unittest.TestCase):
     self.assertTrue(self.safety.honda_tx_hook(self._send_brake_msg(0x1000)))
     self.assertFalse(self.safety.honda_tx_hook(self._send_brake_msg(0x00F0)))
 
-  def test_gas_safety_check(self):
+  def test_gas_interceptor_safety_check(self):
     self.safety.set_controls_allowed(0)
     self.assertTrue(self.safety.honda_tx_hook(self._send_interceptor_msg(0, 0x200)))
     self.assertFalse(self.safety.honda_tx_hook(self._send_interceptor_msg(0x1000, 0x200)))
