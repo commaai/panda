@@ -151,16 +151,13 @@ static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   if (bus_num == 0) {
     return 2;
   } else if (bus_num == 2) {
-    // lateral only forwarding
-    if (addr != 0xE4 && addr != 0x194 && addr != 0x33D) {
-      return 0;
+    // block stock lkas messages
+    int is_lkas_msg = (addr == 0xE4 || addr == 0x194 || addr == 0x33D);
+    int is_acc_msg = (addr == 0x1FA || addr == 0x30C || addr == 0x39F);
+    if (is_lkas_msg || (is_acc_msg && long_controls_allowed)) {
+      return -1;
     }
-    if (!long_controls_allowed) {
-      // long forwarding
-      if (addr != 0x1FA && addr != 0x30C && addr != 0x39F) {
-        return 0;
-      }
-    }
+    return 0;
   }
   return -1;
 }
