@@ -23,7 +23,7 @@ void switch_power_mode(bool enable) {
     char UBLOX_POWER_STATE_MSG[] = "\xb5\x62\x06\x04\x04\x00\x01\x00\x09\x00\x18\x7a";
     if (enable) {
       // sleep
-      memcpy(UBLOX_POWER_STATE_MSG, "\xb5\x62\x06\x04\x04\x00\x01\x00\x08\x00\x17\x78", sizeof(UBLOX_POWER_STATE_MSG);
+      memcpy(UBLOX_POWER_STATE_MSG, "\xb5\x62\x06\x04\x04\x00\x01\x00\x08\x00\x17\x78", sizeof(UBLOX_POWER_STATE_MSG));
     }
     uart_ring *ur = get_ring_by_number(1);
     for (int i = 0; i < (int)(sizeof(UBLOX_POWER_STATE_MSG))-1; i++) while (!putc(ur, UBLOX_POWER_STATE_MSG[i]));
