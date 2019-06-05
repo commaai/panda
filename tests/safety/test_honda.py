@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 import libpandasafety_py
 
+MAX_BRAKE = 255
 
 class TestHondaSafety(unittest.TestCase):
   @classmethod
@@ -49,7 +50,7 @@ class TestHondaSafety(unittest.TestCase):
   def _send_brake_msg(self, brake):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x1FA << 21
-    to_send[0].RDLR = brake
+    to_send[0].RDLR = ((brake & 0x3) << 8) | ((brake & 0x3FF) >> 2)
 
     return to_send
 
@@ -148,9 +149,16 @@ class TestHondaSafety(unittest.TestCase):
     self.safety.set_gas_interceptor_detected(False)
 
   def test_disengage_on_gas(self):
-    self.safety.set_controls_allowed(1)
-    self.safety.honda_rx_hook(self._gas_msg(1))
-    self.assertFalse(self.safety.get_controls_allowed())
+    for long_controls_allowed in [0, 1]:
+      self.safety.set_long_controls_allowed(long_controls_allowed)
+      self.safety.honda_rx_hook(self._gas_msg(0))
+      self.safety.set_controls_allowed(1)
+      self.safety.honda_rx_hook(self._gas_msg(1))
+      if long_controls_allowed:
+        self.assertFalse(self.safety.get_controls_allowed())
+      else:
+        self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.set_long_controls_allowed(True)
 
   def test_allow_engage_with_gas_pressed(self):
     self.safety.honda_rx_hook(self._gas_msg(1))
@@ -159,12 +167,18 @@ class TestHondaSafety(unittest.TestCase):
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas_interceptor(self):
-    self.safety.honda_rx_hook(self._send_interceptor_msg(0, 0x201))
-    self.safety.set_controls_allowed(1)
-    self.safety.honda_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.safety.honda_rx_hook(self._send_interceptor_msg(0, 0x201))
-    self.safety.set_gas_interceptor_detected(False)
+    for long_controls_allowed in [0, 1]:
+      self.safety.set_long_controls_allowed(long_controls_allowed)
+      self.safety.honda_rx_hook(self._send_interceptor_msg(0, 0x201))
+      self.safety.set_controls_allowed(1)
+      self.safety.honda_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
+      if long_controls_allowed:
+        self.assertFalse(self.safety.get_controls_allowed())
+      else:
+        self.assertTrue(self.safety.get_controls_allowed())
+      self.safety.honda_rx_hook(self._send_interceptor_msg(0, 0x201))
+      self.safety.set_gas_interceptor_detected(False)
+    self.safety.set_long_controls_allowed(True)
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
     self.safety.honda_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
@@ -175,18 +189,30 @@ class TestHondaSafety(unittest.TestCase):
     self.safety.set_gas_interceptor_detected(False)
 
   def test_brake_safety_check(self):
-    self.assertTrue(self.safety.honda_tx_hook(self._send_brake_msg(0)))
-    self.assertFalse(self.safety.honda_tx_hook(self._send_brake_msg(0x1000)))
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self.safety.honda_tx_hook(self._send_brake_msg(0x1000)))
-    self.assertFalse(self.safety.honda_tx_hook(self._send_brake_msg(0x00F0)))
+    for long_controls_allowed in [0, 1]:
+      self.safety.set_long_controls_allowed(long_controls_allowed)
+      for brake in np.arange(0, MAX_BRAKE + 10, 1):
+        for controls_allowed in [True, False]:
+          self.safety.set_controls_allowed(controls_allowed)
+          if controls_allowed and long_controls_allowed:
+            send = MAX_BRAKE >= brake >= 0
+          else:
+            send = brake == 0
+          self.assertEqual(send, self.safety.honda_tx_hook(self._send_brake_msg(brake)))
+    self.safety.set_long_controls_allowed(True)
 
   def test_gas_interceptor_safety_check(self):
-    self.safety.set_controls_allowed(0)
-    self.assertTrue(self.safety.honda_tx_hook(self._send_interceptor_msg(0, 0x200)))
-    self.assertFalse(self.safety.honda_tx_hook(self._send_interceptor_msg(0x1000, 0x200)))
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self.safety.honda_tx_hook(self._send_interceptor_msg(0x1000, 0x200)))
+    for long_controls_allowed in [0, 1]:
+      self.safety.set_long_controls_allowed(long_controls_allowed)
+      for gas in np.arange(0, 4000, 100):
+        for controls_allowed in [True, False]:
+          self.safety.set_controls_allowed(controls_allowed)
+          if controls_allowed and long_controls_allowed:
+            send = True
+          else:
+            send = gas == 0
+          self.assertEqual(send, self.safety.honda_tx_hook(self._send_interceptor_msg(gas, 0x200)))
+    self.safety.set_long_controls_allowed(True)
 
   def test_steer_safety_check(self):
     self.safety.set_controls_allowed(0)
