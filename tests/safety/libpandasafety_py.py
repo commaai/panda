@@ -32,6 +32,8 @@ typedef struct
 
 void set_controls_allowed(int c);
 int get_controls_allowed(void);
+void set_long_controls_allowed(int c);
+int get_long_controls_allowed(void);
 void set_gas_interceptor_detected(int c);
 int get_gas_interceptor_detetcted(void);
 int get_gas_interceptor_prev(void);

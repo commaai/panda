@@ -51,6 +51,10 @@ void set_controls_allowed(int c){
   controls_allowed = c;
 }
 
+void set_long_controls_allowed(int c){
+  long_controls_allowed = c;
+}
+
 void set_gas_interceptor_detected(int c){
   gas_interceptor_detected = c;
 }
@@ -61,6 +65,10 @@ void reset_angle_control(void){
 
 int get_controls_allowed(void){
   return controls_allowed;
+}
+
+int get_long_controls_allowed(void){
+  return long_controls_allowed;
 }
 
 int get_gas_interceptor_detected(void){
