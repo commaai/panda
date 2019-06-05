@@ -77,11 +77,7 @@ void EXTI1_IRQHandler() {
     delay(100000);
 
     // set power savings mode here
-    if (is_gpio_started() == 1) {
-      power_save_disable();
-    } else {
-      power_save_enable();
-    }
+    power_save_mode(is_gpio_started());
     EXTI->PR = (1 << 1);
   }
 }
@@ -285,11 +281,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       // Allow ELM security mode to be set over wifi.
       if (hardwired || (setup->b.wValue.w == SAFETY_NOOUTPUT) || (setup->b.wValue.w == SAFETY_ELM327)) {
         safety_set_mode(setup->b.wValue.w, (int16_t)setup->b.wIndex.w);
-        if (safety_ignition_hook() != -1) {
-          // if the ignition hook depends on something other than the started GPIO
-          // we have to disable power savings (fix for GM and Tesla)
-          power_save_disable();
-        }
+
+        // if the ignition hook depends on something other than the started GPIO
+        // we have to disable power savings (fix for GM and Tesla)
+        power_save_mode(safety_ignition_hook() == -1);
+
         #ifndef EON
           // always LIVE on EON
           switch (setup->b.wValue.w) {
@@ -574,7 +570,7 @@ void TIM3_IRQHandler() {
 
     // turn off the blue LED, turned on by CAN
     // unless we are in power saving mode
-    set_led(LED_BLUE, (tcnt&1) && power_save_status == POWER_SAVE_STATUS_ENABLED);
+    set_led(LED_BLUE, (tcnt&1) && power_save_enabled);
 
     // on to the next one
     tcnt += 1;
@@ -661,9 +657,9 @@ int main() {
     set_esp_mode(ESP_DISABLED);
   }
   // only enter power save after the first cycle
-  /*if (is_gpio_started() == 0) {
-    power_save_enable();
-  }*/
+
+/*  power_save_mode(!is_gpio_started());*/
+
   // interrupt on started line
   started_interrupt_init();
 #endif
@@ -684,7 +680,7 @@ int main() {
   uint64_t cnt = 0;
 
   for (cnt=0;;cnt++) {
-    if (power_save_status == POWER_SAVE_STATUS_DISABLED) {
+    if (!power_save_enabled) {
       int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
 
       // useful for debugging, fade breaks = panda is overloaded
