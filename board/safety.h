@@ -46,6 +46,7 @@ typedef struct {
 // This can be set by the safety hooks.
 int controls_allowed = 0;
 int gas_interceptor_detected = 0;
+int gas_interceptor_prev = 0;
 
 // This is set by USB command 0xdf
 int long_controls_allowed = 0;
@@ -107,7 +108,6 @@ typedef struct {
 #define SAFETY_SUBARU 10
 #define SAFETY_GM_ASCM 0x1334
 #define SAFETY_TOYOTA_IPAS 0x1335
-#define SAFETY_TOYOTA_NOLIMITS 0x1336
 #define SAFETY_ALLOUTPUT 0x1337
 #define SAFETY_ELM327 0xE327
 
@@ -122,7 +122,6 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_HYUNDAI, &hyundai_hooks},
   {SAFETY_CHRYSLER, &chrysler_hooks},
   {SAFETY_SUBARU, &subaru_hooks},
-  {SAFETY_TOYOTA_NOLIMITS, &toyota_nolimits_hooks},
   {SAFETY_TOYOTA_IPAS, &toyota_ipas_hooks},
   {SAFETY_GM_ASCM, &gm_ascm_hooks},
   {SAFETY_TESLA, &tesla_hooks},
