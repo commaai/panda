@@ -1,4 +1,4 @@
-//#define EON
+#define EON
 
 #include "config.h"
 #include "obj/gitversion.h"
@@ -20,8 +20,13 @@
 #include "drivers/timer.h"
 #include "drivers/clock.h"
 
-#ifndef EON
-#include "drivers/spi.h"
+#ifdef EON
+  // used in Car Harness
+  #include "drivers/lin.h"
+  #include "drivers/uja1023.h"
+#else
+  // used in white panda
+  #include "drivers/spi.h"
 #endif
 
 #include "power_saving.h"
@@ -687,6 +692,9 @@ int main(void) {
   }*/
   // interrupt on started line
   started_interrupt_init();
+
+  // on car harness, detect first
+  uja1023_init();
 #endif
 
   // 48mhz / 65536 ~= 732 / 732 = 1
@@ -708,6 +716,20 @@ int main(void) {
       int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
 
       // useful for debugging, fade breaks = panda is overloaded
+      set_uja1023_output_bits(1 << 0);
+      set_uja1023_output_bits(1 << 1);
+      for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
+        for (int fade = 0; fade < 1024; fade += 8) {
+          for (int i = 0; i < (128/div_mode); i++) {
+            set_led(LED_RED, 1);
+            if (fade < 512) { delay(fade); } else { delay(1024-fade); }
+            set_led(LED_RED, 0);
+            if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
+          }
+        }
+      }
+      clear_uja1023_output_bits(1 << 0);
+      clear_uja1023_output_bits(1 << 1);
       for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
         for (int fade = 0; fade < 1024; fade += 8) {
           for (int i = 0; i < (128/div_mode); i++) {
