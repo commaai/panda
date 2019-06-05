@@ -88,7 +88,7 @@ jobs:
           name: Replay drives
           command: |
             mkdir /tmp/replay
-            docker run -v /tmp/replay:/tmp/replay panda_replay /bin/bash -c "cd /panda/tests/replay; python test_replay.py"
+            docker run -v /tmp/replay:/tmp/replay panda_replay /bin/bash -c "cd /openpilot/panda/tests/replay; PYTHONPATH=/openpilot ./test_replay.py"
       - store_artifacts:
           name: Store replay test output
           path: /tmp/replay/output.txt

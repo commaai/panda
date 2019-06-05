@@ -1,10 +1,12 @@
 FROM ubuntu:16.04
 
-RUN apt-get update && apt-get install -y make python python-pip git
-COPY tests/safety/requirements.txt /panda/tests/safety/requirements.txt
-RUN pip install -r /panda/tests/safety/requirements.txt
-COPY . /panda
+RUN apt-get update && apt-get install -y make python python-pip git libarchive-dev libusb-1.0-0 
 
-WORKDIR /panda/tests/replay
-RUN git clone https://github.com/commaai/openpilot-tools.git openpilot_tools 
+RUN git clone --depth 1 https://github.com/commaai/openpilot.git || true
+RUN rm -rf /openpilot/panda
+COPY . /openpilot/panda
 
+RUN pip install -r /openpilot/panda/tests/replay/requirements.txt
+
+WORKDIR /openpilot/panda/tests/replay
+RUN git clone https://github.com/commaai/openpilot-tools.git openpilot_tools || true
