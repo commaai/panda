@@ -12,7 +12,8 @@ typedef enum {
   LIN_OK  = 0,   // no error
   LIN_WRONG_LEN, // wrong number of data
   LIN_RX_EMPTY,  // no frame received
-  LIN_WRONG_CRC  // Checksum wrong
+  LIN_WRONG_CRC, // Checksum wrong
+  LIN_TX_FAIL,   // Didn't transmit serial bits
 } LIN_ERR_t;
 
 //--------------------------------------------------------------
@@ -109,7 +110,7 @@ LIN_ERR_t LIN_SendReceiveFrame(uart_ring *LIN_UART, LIN_FRAME_t *frame)
   // dump those three
   for (int i = 0; i < 3; i++) {
     if (_recv_sync(LIN_UART, NULL) == 0) {
-      return LIN_RX_EMPTY;
+      return LIN_TX_FAIL;
     }
   }
 

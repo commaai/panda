@@ -34,13 +34,17 @@ int uja1023_txrx(LIN_FRAME_t *tx_frame, LIN_FRAME_t *rx_frame) {
   }
   int ret = LIN_SendReceiveFrame(&LIN_RING, rx_frame);
 
-  puts("received LIN frame: ");
-  puth(ret);
-  puts(" ");
-  for(int n=0; n < rx_frame->data_len; n++) {
-    puth2(rx_frame->data[n]);
+  if (ret == 0) {
+    puts("received LIN frame: ");
+    for(int n=0; n < rx_frame->data_len; n++) {
+      puth2(rx_frame->data[n]);
+    }
+    puts("\n");
+  } else {
+    puts("LIN error: ");
+    puth2(ret);
+    puts("\n");
   }
-  puts("\n");
   return ret;
 }
 
@@ -101,7 +105,7 @@ int uja1023_init(int addr) {
   if (frame_to_receive.data[0] != addr) return 0;
   if (frame_to_receive.data[7] != 0) return 0;
 
-  //make frame for io_cfg_3; set LH value, classic checksum, and LIN speeds up to 20kbps
+  // make frame for io_cfg_3; set LH value, classic checksum, and LIN speeds up to 20kbps
   LIN_FRAME_t io_cfg_3_frame;
   io_cfg_3_frame.data_len = 8;
   io_cfg_3_frame.frame_id = 0x3C; //0x3C is for diagnostic frames
@@ -121,6 +125,8 @@ int uja1023_init(int addr) {
   if (ret != LIN_OK) return 0;
   if (frame_to_receive.data[0] != addr) return 0;
   if (frame_to_receive.data[7] != 0xff) return 0;
+
+  // now, what's the orientation?
 
   // init okay
   return 1;
