@@ -694,7 +694,7 @@ int main(void) {
   started_interrupt_init();
 
   // on car harness, detect first
-  uja1023_init();
+  uja1023_init(0x61);
 #endif
 
   // 48mhz / 65536 ~= 732 / 732 = 1
@@ -713,11 +713,11 @@ int main(void) {
 
   for (cnt=0;;cnt++) {
     if (power_save_status == POWER_SAVE_STATUS_DISABLED) {
-      int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
+      //int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
+      int div_mode = 8;
 
       // useful for debugging, fade breaks = panda is overloaded
-      set_uja1023_output_bits(1 << 0);
-      set_uja1023_output_bits(1 << 1);
+      set_uja1023_output_buffer(0xff);
       for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
         for (int fade = 0; fade < 1024; fade += 8) {
           for (int i = 0; i < (128/div_mode); i++) {
@@ -728,8 +728,7 @@ int main(void) {
           }
         }
       }
-      clear_uja1023_output_bits(1 << 0);
-      clear_uja1023_output_bits(1 << 1);
+      set_uja1023_output_buffer(1);
       for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
         for (int fade = 0; fade < 1024; fade += 8) {
           for (int i = 0; i < (128/div_mode); i++) {

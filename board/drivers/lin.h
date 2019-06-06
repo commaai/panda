@@ -79,6 +79,10 @@ LIN_ERR_t LIN_SendData(uart_ring *LIN_UART, LIN_FRAME_t *frame)
   //------------------------
   putc(LIN_UART, checksum);
 
+  // sync?
+  //uart_flush(LIN_UART);
+  //delay(1000000);
+
   return(LIN_OK);    
 }
 
