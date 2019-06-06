@@ -5,7 +5,6 @@ import struct
 import panda.tests.safety.libpandasafety_py as libpandasafety_py
 from openpilot_tools.lib.logreader import LogReader
 
-
 safety_modes = {
   "NOOUTPUT": 0,
   "HONDA": 1,
@@ -25,7 +24,6 @@ safety_modes = {
   "ELM327": 0xE327
 }
 
-
 # replay a drive to check for safety violations
 def replay_drive(lr, safety_mode, param):
   safety = libpandasafety_py.libpandasafety
@@ -34,6 +32,7 @@ def replay_drive(lr, safety_mode, param):
   assert err == 0, "invalid safety mode: %d" % safety_mode
 
   tx_tot, tx_blocked, tx_controls, tx_controls_blocked = 0, 0, 0, 0
+  blocked_addrs = set()
   start_t = None
 
   for msg in lr:
@@ -53,12 +52,17 @@ def replay_drive(lr, safety_mode, param):
         safety.set_timer(int(t/1000.))
 
         blocked = not safety.tx(to_send)
-        tx_blocked += blocked
+        if blocked:
+          tx_blocked += 1
+          tx_controls_blocked += safety.get_controls_allowed()
+          blocked_addrs.add(canmsg.address)
         tx_controls += safety.get_controls_allowed()
-        tx_controls_blocked += blocked and safety.get_controls_allowed()
         tx_tot += 1
     elif msg.which() == 'can':
       for canmsg in msg.can:
+        # ignore extended can addresses
+        if canmsg.address << 21 > 0xFFFFFFFF:
+          continue
         to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
         to_push[0].RIR = canmsg.address << 21
         to_push[0].RDTR = (canmsg.src & 0xF) << 4
@@ -70,9 +74,9 @@ def replay_drive(lr, safety_mode, param):
   print "total msgs with controls allowed:", tx_controls
   print "blocked msgs:", tx_blocked
   print "blocked with controls allowed:", tx_controls_blocked
+  print "blocked addrs:", blocked_addrs
 
   return tx_controls_blocked == 0
-
 
 if __name__ == "__main__":
   if sys.argv[2] in safety_modes:
