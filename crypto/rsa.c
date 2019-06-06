@@ -124,7 +124,7 @@ static void modpow(const RSAPublicKey* key,
         montMul(key, aR, a, key->rr);  /* aR = a * RR / R mod M   */
         montMul(key, aaR, aR, aR);     /* aaR = aR * aR / R mod M */
         montMul(key, aaa, aaR, a);     /* aaa = aaR * a / R mod M */
-    }
+    } else ;  // pass
 
     // Make sure aaa < mod; aaa is at most 1x mod too large.
     if (geM(key, aaa)) {

@@ -9,7 +9,7 @@
 
 #define MAX_BITS_CAN_PACKET (200)
 
-int gmlan_alt_mode = DISABLED; 
+int gmlan_alt_mode = DISABLED;
 
 // returns out_len
 int do_bitstuff(char *out, char *in, int in_len) {
@@ -82,7 +82,7 @@ int get_bit_message(char *out, CAN_FIFOMailBox_TypeDef *to_bang) {
   // test packet
   int dlc_len = to_bang->RDTR & 0xF;
   len = append_int(pkt, len, 0, 1);    // Start-of-frame
-  
+
   if (to_bang->RIR & 4) {
     // extended identifier
     len = append_int(pkt, len, to_bang->RIR >> 21, 11);  // Identifier
@@ -131,7 +131,7 @@ void setup_timer4() {
 int gmlan_timeout_counter = GMLAN_TICKS_PER_TIMEOUT_TICKLE; //GMLAN transceiver times out every 17ms held high; tickle every 15ms
 int can_timeout_counter = GMLAN_TICKS_PER_SECOND; //1 second
 
-int inverted_bit_to_send = GMLAN_HIGH; 
+int inverted_bit_to_send = GMLAN_HIGH;
 int gmlan_switch_below_timeout = -1;
 int gmlan_switch_timeout_enable = 0;
 
@@ -140,9 +140,9 @@ void gmlan_switch_init(int timeout_enable) {
   gmlan_alt_mode = GPIO_SWITCH;
   gmlan_switch_below_timeout = 1;
   set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
-  
+
   setup_timer4();
-  
+
   inverted_bit_to_send = GMLAN_LOW; //We got initialized, set the output low
 }
 
@@ -179,6 +179,7 @@ int gmlan_fail_count = 0;
 #define MAX_FAIL_COUNT 10
 
 void TIM4_IRQHandler(void) {
+  //bit bang mode
   if (gmlan_alt_mode == BITBANG) {
     if (TIM4->SR & TIM_SR_UIF && gmlan_sendmax != -1) {
       int read = get_gpio_input(GPIOB, 12);
@@ -198,10 +199,10 @@ void TIM4_IRQHandler(void) {
           puth(gmlan_sending);
           puts("\n");
           retry = 1;
-        } else if (read == 1 && gmlan_sending == (gmlan_sendmax-11)) {    // recessive during ACK
+        } else if (read == 1 && gmlan_sending == (gmlan_sendmax - 11)) {  // recessive during ACK
           puts("GMLAN ERR: didn't recv ACK\n");
           retry = 1;
-        }
+        } else ;  // not relevant
         if (retry) {
           // reset sender (retry after 7 silent)
           set_bitbanged_gmlan(1); // recessive
@@ -215,7 +216,7 @@ void TIM4_IRQHandler(void) {
           set_bitbanged_gmlan(pkt_stuffed[gmlan_sending]);
           gmlan_sending++;
         }
-      }
+      } else ;  // not relevant
       if (gmlan_sending == gmlan_sendmax || gmlan_fail_count == MAX_FAIL_COUNT) {
         set_bitbanged_gmlan(1); // recessive
         set_gpio_mode(GPIOB, 13, MODE_INPUT);
@@ -225,8 +226,8 @@ void TIM4_IRQHandler(void) {
       }
     }
     TIM4->SR = 0;
-  } //bit bang mode
-
+  }
+  //gmlan switch mode
   else if (gmlan_alt_mode == GPIO_SWITCH) {
     if (TIM4->SR & TIM_SR_UIF && gmlan_switch_below_timeout != -1) {
       if (can_timeout_counter == 0 && gmlan_switch_timeout_enable) {
@@ -250,7 +251,7 @@ void TIM4_IRQHandler(void) {
       }
     }
     TIM4->SR = 0;
-  } //gmlan switch mode
+  } else ;  // disabled mode
 }
 
 void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {

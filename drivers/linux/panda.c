@@ -335,8 +335,9 @@ static void panda_usb_read_int_callback(struct urb *urb)
     for(inf_num = 0; inf_num < PANDA_NUM_CAN_INTERFACES; inf_num++)
       if(priv_dev->interfaces[inf_num])
 	netif_device_detach(priv_dev->interfaces[inf_num]->netdev);
-  }else if (retval)
+  } else if (retval) {
     dev_err(priv_dev->dev, "failed resubmitting read bulk urb: %d\n", retval);
+  } else ;  // pass
 }
 
 

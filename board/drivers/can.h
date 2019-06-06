@@ -193,7 +193,7 @@ void can_set_gmlan(int bus) {
     can_num_lookup[2] = -1;
     can_num_lookup[3] = 2;
     can_init(2);
-  }
+  } else ;  // GMLAN can only be CAN2 or CAN3
 }
 
 // CAN error

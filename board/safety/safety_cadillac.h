@@ -46,7 +46,7 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       controls_allowed = 1;
     } else if (!cruise_engaged) {
       controls_allowed = 0;
-    }
+    } else ;  // leave controls_allowed unchanged
     cadillac_cruise_engaged_last = cruise_engaged;
   }
 

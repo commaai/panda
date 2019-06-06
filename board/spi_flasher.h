@@ -234,7 +234,7 @@ void CAN1_RX0_IRQHandler() {
         memset(odat, 0, 8);
         odat[0] = 0x30;
         bl_can_send(odat);
-      }
+      } else ;  // pass
     }
     // next
     CAN->RF0R |= CAN_RF0R_RFOM0;

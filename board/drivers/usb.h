@@ -825,7 +825,7 @@ void usb_irqhandler(void) {
         hexdump(&setup, 8);
         puts("\n");
       #endif
-    }
+    } else ;  // pass
   }
 
   /*if (gintsts & USB_OTG_GINTSTS_HPRTINT) {
@@ -899,7 +899,7 @@ void usb_irqhandler(void) {
       puts("OUTEP3 error ");
       puth(USBx_OUTEP(3)->DOEPINT);
       puts("\n");
-    }
+    } else ;  // pass
 
     if (USBx_OUTEP(0)->DOEPINT & USB_OTG_DIEPINT_XFRC) {
       // ready for next packet

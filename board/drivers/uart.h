@@ -263,7 +263,7 @@ void uart_init(USART_TypeDef *u, int baud) {
     NVIC_EnableIRQ(USART3_IRQn);
   } else if (u == UART5) {
     NVIC_EnableIRQ(UART5_IRQn);
-  }
+  } else ;  // pass
 }
 
 void putch(const char a) {

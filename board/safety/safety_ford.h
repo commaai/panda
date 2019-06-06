@@ -27,7 +27,7 @@ static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       controls_allowed = 0;
     } else if (set_or_resume) {
       controls_allowed = 1;
-    }
+    } else ;  // leave controls_allowed unchanged
   }
 
   // exit controls on rising edge of brake press or on brake press when
@@ -67,10 +67,10 @@ static int ford_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if ((to_send->RIR>>21) == 0x3CA) {
     if (current_controls_allowed) {
       // all messages are fine here
-    } else {
+    } else if (((to_send->RDLR >> 4) & 0xF) != 0xF) {
       // bits 7-4 need to be 0xF to disallow lkas commands
-      if (((to_send->RDLR >> 4) & 0xF) != 0xF) return 0;
-    }
+      return 0;
+    } else ;  // no violation
   }
 
   // FORCE CANCEL: safety check only relevant when spamming the cancel button

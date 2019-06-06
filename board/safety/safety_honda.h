@@ -30,7 +30,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       controls_allowed = 1;
     } else if (buttons == 2) {
       controls_allowed = 0;
-    }
+    } else ;  // no other button is relevant
   }
 
   // user brake signal on 0x17C reports applied brake from computer brake on accord
@@ -94,27 +94,27 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if ((to_send->RIR>>21) == 0x1FA) {
     if (current_controls_allowed && long_controls_allowed) {
       if ((to_send->RDLR & 0xFFFFFF3F) != to_send->RDLR) return 0;
-    } else {
-      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
-    }
+    } else if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
+      return 0;
+    } else ;  // no violation
   }
 
   // STEER: safety check
   if ((to_send->RIR>>21) == 0xE4 || (to_send->RIR>>21) == 0x194) {
     if (current_controls_allowed) {
       // all messages are fine here
-    } else {
-      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
-    }
+    } else if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
+      return 0;
+    } else ;  // no violation
   }
 
   // GAS: safety check
   if ((to_send->RIR>>21) == 0x200) {
     if (current_controls_allowed && long_controls_allowed) {
       // all messages are fine here
-    } else {
-      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
-    }
+    } else if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
+      return 0;
+    } else ;  // no violation
   }
 
   // FORCE CANCEL: safety check only relevant when spamming the cancel button in Bosch HW
@@ -158,7 +158,7 @@ static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
       return -1;
     }
     return 0;
-  }
+  } else ;  // do not fwd bus 1
   return -1;
 }
 

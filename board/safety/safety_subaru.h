@@ -35,7 +35,7 @@ static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       controls_allowed = 1;
     } else if (!cruise_engaged) {
       controls_allowed = 0;
-    }
+    } else ;  // leave controls_allowed unchanged
     subaru_cruise_engaged_last = cruise_engaged;
   }
 }
@@ -126,7 +126,7 @@ static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     }
 
     return 0; // Main CAN
-  }
+  } else ;  // do not forward bus 1
 
   // fallback to do not forward
   return -1;

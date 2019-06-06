@@ -132,7 +132,7 @@ void CAN1_RX0_IRQHandler() {
         } else if (CAN->sFIFOMailBox[0].RDHR == 0x02b00b1e) {
           enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
           NVIC_SystemReset();
-        }
+        } else ;  // not entered in softloader, pass
       }
 
       // normal packet

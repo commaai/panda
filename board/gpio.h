@@ -125,7 +125,7 @@ void set_can_enable(CAN_TypeDef *CAN, int enabled) {
     // CAN3_EN
     set_gpio_output(GPIOA, 0, !enabled);
   #endif
-  }
+  } else ;  // 3 CAN
 }
 
 #ifdef PANDA
@@ -169,7 +169,7 @@ void set_can_mode(int can, int use_gmlan) {
       set_gpio_alternate(GPIOB, 3, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOB, 4, GPIO_AF11_CAN3);
 #endif
-    }
+    } else ;  // GMLAN can only be on CAN2 or CAN3
   } else {
     if (can == 1) {
       // B12,B13: disable gmlan mode
@@ -188,7 +188,7 @@ void set_can_mode(int can, int use_gmlan) {
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
 #endif
-    }
+    } else ;  // GMLAN can only be on CAN2 or CAN3
   }
 }
 

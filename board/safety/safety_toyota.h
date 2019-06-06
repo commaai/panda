@@ -60,7 +60,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       controls_allowed = 0;
     } else if (cruise_engaged && !toyota_cruise_engaged_last) {
       controls_allowed = 1;
-    }
+    } else ;  // leave controls_allowed unchanged
     toyota_cruise_engaged_last = cruise_engaged;
     toyota_gas_prev = gas;
   }
@@ -101,9 +101,9 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if ((to_send->RIR>>21) == 0x200) {
       if (controls_allowed && long_controls_allowed) {
         // all messages are fine here
-      } else {
-        if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
-      }
+      } else  if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
+        return 0;
+      } else ;  // no violation
     }
 
     // ACCEL: safety check on byte 1-2
@@ -115,7 +115,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         if (violation) return 0;
       } else if (desired_accel != 0) {
         return 0;
-      }
+      } else ;  // no violation
     }
 
     // STEER: safety check on bytes 2-3
@@ -193,7 +193,7 @@ static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
         return -1;
       }
       return 0;
-    }
+    } else ; // do not forward bus 1
   }
   return -1;
 }

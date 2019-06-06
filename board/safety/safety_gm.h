@@ -80,7 +80,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       controls_allowed = 1;
     } else if (buttons == 6) {
       controls_allowed = 0;
-    }
+    } else ;  // leave controls_allowed unchanged
   }
 
   // exit controls on rising edge of brake press or on brake press when
@@ -150,9 +150,9 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     brake = (0x1000 - brake) & 0xFFF;
     if (current_controls_allowed && long_controls_allowed) {
       if (brake > GM_MAX_BRAKE) return 0;
-    } else {
-      if (brake != 0) return 0;
-    }
+    } else if (brake != 0) {
+      return 0;
+    } else ;  // no violation
   }
 
   // LKA STEER: safety check
@@ -214,11 +214,11 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int apply = rdlr & 1;
     if (current_controls_allowed && long_controls_allowed) {
       if (gas_regen > GM_MAX_GAS) return 0;
-    } else {
+    } else if (apply || gas_regen != GM_MAX_REGEN) {
       // Disabled message is !engaed with gas
       // value that corresponds to max regen.
-      if (apply || gas_regen != GM_MAX_REGEN) return 0;
-    }
+      return 0;
+    } else ;  // no violation
   }
 
   // 1 allows the message through

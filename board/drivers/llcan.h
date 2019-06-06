@@ -69,7 +69,7 @@ void llcan_init(CAN_TypeDef *CAN) {
     NVIC_EnableIRQ(CAN3_RX0_IRQn);
     NVIC_EnableIRQ(CAN3_SCE_IRQn);
 #endif
-  }
+  } else ;  // 3 CAN max
 }
 
 void llcan_clear_send(CAN_TypeDef *CAN) {

@@ -81,7 +81,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push)
     { // push towards the back
       // deactivate openpilot
       controls_allowed = 0;
-    }
+    } else ;  // no other lever position is relevant
   }
 
   // Detect drive rail on (ignition) (start recording)
