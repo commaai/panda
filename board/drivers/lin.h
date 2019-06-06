@@ -69,6 +69,12 @@ LIN_ERR_t LIN_SendData(uart_ring *LIN_UART, LIN_FRAME_t *frame)
   return LIN_OK;
 }
 
+int _recv_sync(uart_ring *LIN_UART, char *dat) {
+  for (volatile int i = 0; i < 10000; i++) {
+    if (getc(LIN_UART, dat)) return 1;
+  }
+  return 0;
+}
 
 // --------------------------------------------------------------
 // receives data via LIN interface
@@ -102,22 +108,27 @@ LIN_ERR_t LIN_SendReceiveFrame(uart_ring *LIN_UART, LIN_FRAME_t *frame)
 
   // dump those three
   for (int i = 0; i < 3; i++) {
-    while (getc(LIN_UART, NULL) == 0);
+    if (_recv_sync(LIN_UART, NULL) == 0) {
+      return LIN_RX_EMPTY;
+    }
   }
 
   // now wait for the slave device to respond with the data
   // TODO: implement LIN_RX_EMPTY
   int resp_len = 0;
   while (resp_len < frame->data_len) {
-    while (getc(LIN_UART, (char *)&frame->data[resp_len]) == 0);
+    if (_recv_sync(LIN_UART, (char *)&frame->data[resp_len]) == 0) {
+      return LIN_RX_EMPTY;
+    }
     ++resp_len;
   }
 
   // confirm checksum
   uint8_t checksum, calc_checksum;
   calc_checksum = p_LIN_makeChecksum(frame);
-  while (getc(LIN_UART, (char *)&checksum) == 0);
-  if (checksum != calc_checksum) return LIN_WRONG_CRC;
+  if (_recv_sync(LIN_UART, (char *)&checksum) == 0 || checksum != calc_checksum) {
+    return LIN_WRONG_CRC;
+  }
 
   return LIN_OK;
 }

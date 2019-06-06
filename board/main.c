@@ -624,6 +624,9 @@ int main(void) {
   puts(is_giant_panda ? "  GIANTpanda detected\n" : "  not GIANTpanda\n");
   puts(is_grey_panda ? "  gray panda detected!\n" : "  white panda\n");
   puts(is_entering_bootmode ? "  ESP wants bootmode\n" : "  no bootmode\n");
+  #ifdef EON
+    puts("  compiled with EON flag\n");
+  #endif
 
   // non rev c panda are no longer supported
   while (revision != PANDA_REV_C);
@@ -714,8 +717,7 @@ int main(void) {
 
   for (cnt=0;;cnt++) {
     if (power_save_status == POWER_SAVE_STATUS_DISABLED) {
-      //int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
-      int div_mode = 8;
+      int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
 
       // useful for debugging, fade breaks = panda is overloaded
       set_uja1023_output_buffer(0xff);
