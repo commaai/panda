@@ -26,6 +26,7 @@ set_uja1023_output_buffer(0x00); //turn all output pins off
 
 int uja1023_txrx(LIN_FRAME_t *tx_frame, LIN_FRAME_t *rx_frame) {
   clear_uart_buff(&LIN_RING);
+
   LIN_SendData(&LIN_RING, tx_frame);
   uart_flush(&LIN_RING);
   for (int i =0; i < 1+1+1+8+1; i++) {
@@ -64,6 +65,7 @@ int uja1023_init(int addr) {
   ret = uja1023_txrx(&assign_id_frame, &frame_to_receive);
   if (ret != LIN_OK) return 0;
   if (frame_to_receive.data[0] != addr) return 0;
+  if (frame_to_receive.data[7] != 0xFF) return 0;
 
   // make frame for io_cfg_1; configure Px pins for push pull level output
   LIN_FRAME_t io_cfg_1_frame;
@@ -73,13 +75,14 @@ int uja1023_init(int addr) {
   io_cfg_1_frame.data[1]  = 0x06; //D1, protocol control info (PCI); should be 0x06
   io_cfg_1_frame.data[2]  = 0xB4; //D2, service id (SID); should be 0xB4
   io_cfg_1_frame.data[3]  = 0x00; //D3, bits 7-6 are 00 for first cfg block. Bits 5-0 are for IM/INH, RxDL, ADCIN cfg. D3 default is 0x00
-  io_cfg_1_frame.data[4]  = 0x0d; //D4, High side enable (HSE). Set to 0xFF for High side driver or push pull
+  io_cfg_1_frame.data[4]  = 0x0c; //D4, High side enable (HSE). Set to 0xFF for High side driver or push pull
   io_cfg_1_frame.data[5]  = 0x01; //D4, Low side enable (LSE). Set to 0xFF for Low side driver or push pull
   io_cfg_1_frame.data[6]  = 0x00; //D6, Output mode (low byte) (OM0). Set to 0x00 for level output
   io_cfg_1_frame.data[7]  = 0x00; //D7, Output mode (high byte) (OM1). Set to 0x00 for level output
   ret = uja1023_txrx(&io_cfg_1_frame, &frame_to_receive);
   if (ret != LIN_OK) return 0;
   if (frame_to_receive.data[0] != addr) return 0;
+  if (frame_to_receive.data[7] != 0) return 0;
 
   // make frame for io_cfg_2; defaults
   LIN_FRAME_t io_cfg_2_frame;
@@ -96,6 +99,7 @@ int uja1023_init(int addr) {
   ret = uja1023_txrx(&io_cfg_2_frame, &frame_to_receive);
   if (ret != LIN_OK) return 0;
   if (frame_to_receive.data[0] != addr) return 0;
+  if (frame_to_receive.data[7] != 0) return 0;
 
   //make frame for io_cfg_3; set LH value, classic checksum, and LIN speeds up to 20kbps
   LIN_FRAME_t io_cfg_3_frame;
@@ -116,6 +120,7 @@ int uja1023_init(int addr) {
   ret = uja1023_txrx(&io_cfg_3_frame, &frame_to_receive);
   if (ret != LIN_OK) return 0;
   if (frame_to_receive.data[0] != addr) return 0;
+  if (frame_to_receive.data[7] != 0xff) return 0;
 
   // init okay
   return 1;
