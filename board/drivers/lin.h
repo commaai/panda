@@ -13,21 +13,18 @@ typedef enum {
   LIN_WRONG_LEN, // wrong number of data
   LIN_RX_EMPTY,  // no frame received
   LIN_WRONG_CRC  // Checksum wrong
-}LIN_ERR_t;
+} LIN_ERR_t;
 
 //--------------------------------------------------------------
 // LIN frame Struct
 //--------------------------------------------------------------
 typedef struct {
-  uint8_t has_response;          // set to 1 if message expects a response; else set to 0
   uint8_t frame_id;              // ID number of the frame
   uint8_t data_len;              // number of data bytes
   uint8_t data[LIN_MAX_DATA];    // data
-}LIN_FRAME_t;
+} LIN_FRAME_t;
 
 uint8_t p_LIN_makeChecksum(LIN_FRAME_t *frame);
-void USART_SendBreak(uart_ring *u);
-
 
 // --------------------------------------------------------------
 // sends data via LIN interface
@@ -50,40 +47,26 @@ LIN_ERR_t LIN_SendData(uart_ring *LIN_UART, LIN_FRAME_t *frame)
   }   
 
   // calculate checksum
-  checksum=p_LIN_makeChecksum(frame);
+  checksum = p_LIN_makeChecksum(frame);
 
-  //------------------------
   // Break-Field
-  //------------------------
-  USART_SendBreak(LIN_UART);
+  uart_send_break(LIN_UART);
 
-  //------------------------
   // Sync-Field
-  //------------------------
   putc(LIN_UART, LIN_SYNC_DATA);
 
-  //------------------------
   // ID-Field
-  //------------------------
   putc(LIN_UART, frame->frame_id);
   
-  //------------------------
   // Data-Field [1...n]
-  //------------------------  
   for(n=0; n < frame -> data_len; n++) {
     putc(LIN_UART, frame -> data[n]);
   }
 
-  //------------------------
   // CRC-Field
-  //------------------------
   putc(LIN_UART, checksum);
 
-  // sync?
-  //uart_flush(LIN_UART);
-  //delay(1000000);
-
-  return(LIN_OK);    
+  return LIN_OK;
 }
 
 
@@ -105,51 +88,38 @@ LIN_ERR_t LIN_SendReceiveFrame(uart_ring *LIN_UART, LIN_FRAME_t *frame)
 {
   // check the length
   if((frame -> data_len < 1) || (frame -> data_len > LIN_MAX_DATA)) {
-    return(LIN_WRONG_LEN);
+    return LIN_WRONG_LEN;
   }
   
-  //-------------------------------
   // Break-Field
-  //-------------------------------
-  USART_SendBreak(LIN_UART);
+  uart_send_break(LIN_UART);
 
-  //-------------------------------
   // Sync-Field
-  //-------------------------------
   putc(LIN_UART, LIN_SYNC_DATA);
 
-  //-------------------------------
   // ID-Field
-  //-------------------------------
   putc(LIN_UART, frame->frame_id);
 
-  //now wait for the slave device to respond with the data
-
-  return(LIN_OK);
-}
-
-LIN_ERR_t LIN_ReceiveData(uart_ring *LIN_UART, LIN_FRAME_t *frame)
-{
-  //-------------------------------
-  // copy received data
-  //-------------------------------
-  
-  //TODO: Get receive working. Do I need to add a small delay here?
-  
-  uint8_t *resp = 0;
-  int resp_len = 0;
-  
-  while ((resp_len < frame -> data_len) && getc(LIN_UART, (char*)&resp[resp_len])) {
-    ++resp_len;
-    frame->data[resp_len]=resp;
+  // dump those three
+  for (int i = 0; i < 3; i++) {
+    while (getc(LIN_UART, NULL) == 0);
   }
-  
-  return(LIN_OK);
-}
 
-void USART_SendBreak(uart_ring *u)
-{
-    SET_BIT(u -> uart -> CR1, USART_CR1_SBK);
+  // now wait for the slave device to respond with the data
+  // TODO: implement LIN_RX_EMPTY
+  int resp_len = 0;
+  while (resp_len < frame->data_len) {
+    while (getc(LIN_UART, (char *)&frame->data[resp_len]) == 0);
+    ++resp_len;
+  }
+
+  // confirm checksum
+  uint8_t checksum, calc_checksum;
+  calc_checksum = p_LIN_makeChecksum(frame);
+  while (getc(LIN_UART, (char *)&checksum) == 0);
+  if (checksum != calc_checksum) return LIN_WRONG_CRC;
+
+  return LIN_OK;
 }
 
 // --------------------------------------------------------------
@@ -177,3 +147,4 @@ uint8_t p_LIN_makeChecksum(LIN_FRAME_t *frame)
   
   return(ret_value);
 }
+

@@ -681,6 +681,10 @@ int main(void) {
   spi_init();
 #endif
 
+  // 48mhz / 65536 ~= 732 / 732 = 1
+  timer_init(TIM3, 732);
+  NVIC_EnableIRQ(TIM3_IRQn);
+
 #ifdef EON
   // have to save power
   if (!is_grey_panda) {
@@ -694,12 +698,7 @@ int main(void) {
   started_interrupt_init();
 
   // on car harness, detect first
-  uja1023_init(0x61);
 #endif
-
-  // 48mhz / 65536 ~= 732 / 732 = 1
-  timer_init(TIM3, 732);
-  NVIC_EnableIRQ(TIM3_IRQn);
 
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");
@@ -707,6 +706,8 @@ int main(void) {
 
   puts("**** INTERRUPTS ON ****\n");
   enable_interrupts();
+
+  uja1023_init(0x61);
 
   // LED should keep on blinking all the time
   uint64_t cnt = 0;
