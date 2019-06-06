@@ -259,4 +259,3 @@ void reset_gmlan_switch_timeout(void){
 void gmlan_switch_init(int timeout_enable){
 }
 
-

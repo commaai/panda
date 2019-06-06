@@ -9,17 +9,18 @@ from openpilot_tools.lib.logreader import LogReader
 BASE_URL = "https://commadataci.blob.core.windows.net/openpilotci/"
 
 # (route, safety mode, param)
-drives = [
+logs = [
   ("2e07163a1ba9a780|2019-06-06--09-36-50.bz2", "TOYOTA", 100)
 ]
 
 
 if __name__ == "__main__":
-  for route, _, _ in drives:
+  for route, _, _ in logs:
     if not os.path.isfile(route):
-      requests.get(BASE_URL + route)
+      with open(route, "w") as f:
+        f.write(requests.get(BASE_URL + route).content)
 
-  for route, mode, param in drives:
+  for route, mode, param in logs:
     lr = LogReader(route)
     m = safety_modes.get(mode, mode)
 
