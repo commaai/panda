@@ -28,6 +28,7 @@
   // used in white panda
   #include "drivers/spi.h"
 #endif
+int car_harness_detected = 0;
 
 #include "power_saving.h"
 #include "safety.h"
@@ -108,7 +109,7 @@ int get_health_pkt(void *dat) {
     uint8_t started;
     uint8_t controls_allowed;
     uint8_t gas_interceptor_detected;
-    uint8_t started_signal_detected;
+    uint8_t car_harness_detected;
     uint8_t started_alt;
   } *health = dat;
 
@@ -136,10 +137,10 @@ int get_health_pkt(void *dat) {
 
   health->controls_allowed = controls_allowed;
   health->gas_interceptor_detected = gas_interceptor_detected;
+  health->car_harness_detected = car_harness_detected;
 
   // DEPRECATED
   health->started_alt = 0;
-  health->started_signal_detected = 0;
 
   return sizeof(*health);
 }
@@ -710,7 +711,16 @@ int main(void) {
   puts("**** INTERRUPTS ON ****\n");
   enable_interrupts();
 
-  uja1023_init(0x61);
+  for (int tries = 0; tries < 3; tries++) {
+    if (uja1023_init(0x61)) {
+      puts("detected car harness on try ");
+      puth2(tries);
+      puts("\n");
+      car_harness_detected = 1;
+      break;
+    }
+    delay(100000);
+  }
 
   // LED should keep on blinking all the time
   uint64_t cnt = 0;

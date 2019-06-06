@@ -33,9 +33,9 @@ int uja1023_txrx(LIN_FRAME_t *tx_frame, LIN_FRAME_t *rx_frame) {
   }
   int ret = LIN_SendReceiveFrame(&LIN_RING, rx_frame);
 
-  puts("Received Lin frame: ");
+  puts("received LIN frame: ");
   puth(ret);
-  puts("  ");
+  puts(" ");
   for(int n=0; n < rx_frame->data_len; n++) {
     puth2(rx_frame->data[n]);
   }
@@ -43,7 +43,8 @@ int uja1023_txrx(LIN_FRAME_t *tx_frame, LIN_FRAME_t *rx_frame) {
   return ret;
 }
 
-void uja1023_init(int addr) {
+int uja1023_init(int addr) {
+  int ret;
   LIN_FRAME_t frame_to_receive;
   frame_to_receive.data_len = 8;
   frame_to_receive.frame_id = 0x7D; //Response PID, 0x7D = 2 bit parity + 0x3C raw ID
@@ -60,7 +61,9 @@ void uja1023_init(int addr) {
   assign_id_frame.data[5]  = 0x00; //D5, function id low byte; should be 0x00
   assign_id_frame.data[6]  = 0x00; //D6, function id high byte; should be 0x00
   assign_id_frame.data[7]  = 0x04; //D7, slave node address (NAD). 0x04 means ID(PxReq) = 04, ID(PxResp) = 05
-  uja1023_txrx(&assign_id_frame, &frame_to_receive);
+  ret = uja1023_txrx(&assign_id_frame, &frame_to_receive);
+  if (ret != LIN_OK) return 0;
+  if (frame_to_receive.data[0] != addr) return 0;
 
   // make frame for io_cfg_1; configure Px pins for push pull level output
   LIN_FRAME_t io_cfg_1_frame;
@@ -74,7 +77,9 @@ void uja1023_init(int addr) {
   io_cfg_1_frame.data[5]  = 0x01; //D4, Low side enable (LSE). Set to 0xFF for Low side driver or push pull
   io_cfg_1_frame.data[6]  = 0x00; //D6, Output mode (low byte) (OM0). Set to 0x00 for level output
   io_cfg_1_frame.data[7]  = 0x00; //D7, Output mode (high byte) (OM1). Set to 0x00 for level output
-  uja1023_txrx(&io_cfg_1_frame, &frame_to_receive);
+  ret = uja1023_txrx(&io_cfg_1_frame, &frame_to_receive);
+  if (ret != LIN_OK) return 0;
+  if (frame_to_receive.data[0] != addr) return 0;
 
   // make frame for io_cfg_2; defaults
   LIN_FRAME_t io_cfg_2_frame;
@@ -88,7 +93,9 @@ void uja1023_init(int addr) {
   io_cfg_2_frame.data[5]  = 0x00; //D5, Capture Mode (high byte) CM1. Set to 0x00 for no capture
   io_cfg_2_frame.data[6]  = 0x00; //D6, Threshold select TH2 TH1. Default 0x00
   io_cfg_2_frame.data[7]  = 0x00; //D7, Local Wake up pin mask LWM. Default 0x00
-  uja1023_txrx(&io_cfg_2_frame, &frame_to_receive);
+  ret = uja1023_txrx(&io_cfg_2_frame, &frame_to_receive);
+  if (ret != LIN_OK) return 0;
+  if (frame_to_receive.data[0] != addr) return 0;
 
   //make frame for io_cfg_3; set LH value, classic checksum, and LIN speeds up to 20kbps
   LIN_FRAME_t io_cfg_3_frame;
@@ -106,7 +113,12 @@ void uja1023_init(int addr) {
   io_cfg_3_frame.data[5]  = 0xFF; //D5, Not used, set to 0xFF
   io_cfg_3_frame.data[6]  = 0xFF; //D6, Not used, set to 0xFF
   io_cfg_3_frame.data[7]  = 0xFF; //D7, Not used, set to 0xFF
-  uja1023_txrx(&io_cfg_3_frame, &frame_to_receive);
+  ret = uja1023_txrx(&io_cfg_3_frame, &frame_to_receive);
+  if (ret != LIN_OK) return 0;
+  if (frame_to_receive.data[0] != addr) return 0;
+
+  // init okay
+  return 1;
 }
 
 //turn on any pins that = 1, leave all other pins alone

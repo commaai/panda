@@ -156,6 +156,6 @@ uint8_t p_LIN_makeChecksum(LIN_FRAME_t *frame)
   ret_value = (uint8_t)(dummy);
   ret_value ^= 0xFF;
   
-  return(ret_value);
+  return ret_value;
 }
 
