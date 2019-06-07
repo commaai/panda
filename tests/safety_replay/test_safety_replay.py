@@ -10,7 +10,14 @@ BASE_URL = "https://commadataci.blob.core.windows.net/openpilotci/"
 
 # (route, safety mode, param)
 logs = [
-  ("2e07163a1ba9a780|2019-06-06--09-36-50.bz2", "TOYOTA", 100)
+  ("", "HONDA", 100),
+  ("", "TOYOTA", 100),
+  ("", "GM", 100),
+  ("", "HONDA_BOSCH", 100),
+  ("", "HYUNDAI", 100),
+  ("", "CHRYSLER", 100),
+  ("", "SUBARU", 100),
+
 ]
 
 
