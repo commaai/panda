@@ -29,6 +29,8 @@
   #include "drivers/spi.h"
 #endif
 int car_harness_detected = 0;
+#define HARNESS_ORIENTATION_NORMAL 1
+#define HARNESS_ORIENTATION_FLIPPED 2
 
 #include "power_saving.h"
 #include "safety.h"
@@ -724,7 +726,7 @@ int main(void) {
       puts(" with orientation ");
       puth2(ret);
       puts("\n");
-      car_harness_detected = 1;
+      car_harness_detected = ret;
       break;
     }
     delay(500000);
@@ -740,7 +742,11 @@ int main(void) {
       int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
 
       // useful for debugging, fade breaks = panda is overloaded
-      if (car_harness_detected) set_uja1023_output_buffer(0xff);
+      if (car_harness_detected == HARNESS_ORIENTATION_FLIPPED) {
+        set_uja1023_output_buffer(8);
+      } else if (car_harness_detected == HARNESS_ORIENTATION_NORMAL) {
+        set_uja1023_output_buffer(4);
+      }
       for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
         for (int fade = 0; fade < 1024; fade += 8) {
           for (int i = 0; i < (128/div_mode); i++) {

@@ -29,7 +29,7 @@ void uja1023_tx(LIN_FRAME_t *tx_frame) {
 
   LIN_SendData(&LIN_RING, tx_frame);
   uart_flush(&LIN_RING);
-  for (int i =0; i < 1+1+1+8+1; i++) {
+  for (int i =0; i < 1+1+1+tx_frame->data_len+1; i++) {
     while (getc(&LIN_RING, NULL) == 0);
   }
 }
@@ -134,6 +134,14 @@ int uja1023_init(int addr) {
   if (frame_to_receive.data[0] != addr) return 0;
   if (frame_to_receive.data[7] != 0xff) return 0;
 
+  // first, set things low
+  LIN_FRAME_t px_req_frame;
+  px_req_frame.data_len = 2;
+  px_req_frame.frame_id = 0xC4; //PID, 0xC4 = 2 bit parity + 0x04 raw ID
+  px_req_frame.data[0] = 0x0;
+  px_req_frame.data[1] = 0x80;
+  uja1023_tx(&px_req_frame);
+
   // now, what's the orientation?
   LIN_FRAME_t read_inputs_frame;
   read_inputs_frame.data_len = 2;
@@ -144,16 +152,43 @@ int uja1023_init(int addr) {
   int cc1 = read_inputs_frame.data[0] & 4;
   int cc2 = read_inputs_frame.data[0] & 8;
 
+  if (!cc1 && cc2) {
+    // orientation normal
+    return 1;
+  } else if (cc1 && !cc2) {
+    // orientation flipped
+    return 2;
+  }
+
+  // detect failed (so far, test for active cable)
+
+  // quickly, set things high
+  px_req_frame.data[0] = 0xc;
+  uja1023_tx(&px_req_frame);
+
+  // read inputs
+  ret = uja1023_rx(&read_inputs_frame);
+
+  // reset, set things low
+  px_req_frame.data[0] = 0x0;
+  uja1023_tx(&px_req_frame);
+
+  // did we fail?
+  if (ret != LIN_OK) return 0;
+
+  cc1 = read_inputs_frame.data[0] & 4;
+  cc2 = read_inputs_frame.data[0] & 8;
+
   if (cc1 && !cc2) {
     // orientation normal
     return 1;
   } else if (!cc1 && cc2) {
     // orientation flipped
     return 2;
-  } else {
-    // init failed
-    return 0;
   }
+
+  // failed
+  return 0;
 }
 
 // set the whole Px output buffer at once:
