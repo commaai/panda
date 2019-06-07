@@ -15,9 +15,6 @@ uint32_t subaru_ts_last = 0;
 struct sample_t subaru_torque_driver;         // last few driver torques measured
 
 static void subaru_init(int16_t param) {
-  #ifdef PANDA
-    lline_relay_init();
-  #endif
 }
 
 static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -123,6 +120,10 @@ static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     if (addr == 545) {
       return -1;
     }
+    // ES LKAS
+    if (addr == 802) {
+      return -1;
+    }
 
     return 0; // Main CAN
   }
@@ -138,5 +139,4 @@ const safety_hooks subaru_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = subaru_fwd_hook,
-  .relay = alloutput_relay_hook,
 };
