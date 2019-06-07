@@ -938,33 +938,30 @@ void usb_irqhandler(void) {
     // restructured for smaller code footprint. Keeping split out for
     // now for clarity.
 
-    //TODO add default case. Should it NAK?
-    switch (current_int0_alt_setting) {
-      case 0: ////// Bulk config
-        // *** IN token received when TxFIFO is empty
-        if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
-          #ifdef DEBUG_USB
-          puts("  IN PACKET QUEUE\n");
-          #endif
-          // TODO: always assuming max len, can we get the length?
-          USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
-        }
-        break;
 
-      case 1: ////// Interrupt config
-        // *** IN token received when TxFIFO is empty
-        if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
-          #ifdef DEBUG_USB
-          puts("  IN PACKET QUEUE\n");
-          #endif
-          // TODO: always assuming max len, can we get the length?
-          int len = usb_cb_ep1_in(resp, 0x40, 1);
-          if (len > 0) {
-            USB_WritePacket((void *)resp, len, 1);
-          }
+    // Bulk config
+    if (current_int0_alt_setting == 0) {
+      // *** IN token received when TxFIFO is empty
+      if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
+        #ifdef DEBUG_USB
+        puts("  IN PACKET QUEUE\n");
+        #endif
+        // TODO: always assuming max len, can we get the length?
+        USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40, 1), 1);
+      }
+    } else if (current_int0_alt_setting == 1) {
+      // *** IN token received when TxFIFO is empty
+      if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
+        #ifdef DEBUG_USB
+        puts("  IN PACKET QUEUE\n");
+        #endif
+        // TODO: always assuming max len, can we get the length?
+        int len = usb_cb_ep1_in(resp, 0x40, 1);
+        if (len > 0) {
+          USB_WritePacket((void *)resp, len, 1);
         }
-        break;
-    }
+      }
+    } else ; //TODO Should it NAK?
 
     if (USBx_INEP(0)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
       #ifdef DEBUG_USB

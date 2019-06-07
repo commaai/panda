@@ -63,30 +63,30 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xd1:
       // this allows reflashing of the bootstub
       // so it's blocked over wifi
-      switch (setup->b.wValue.w) {
-        case 0:
-          if (hardwired) {
-            puts("-> entering bootloader\n");
-            enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-            NVIC_SystemReset();
-          }
-          break;
-        case 1:
+      if (setup->b.wValue.w == 0) {
+        if (hardwired) {
+          puts("-> entering bootloader\n");
+          enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+          NVIC_SystemReset();
+        }
+      } else if (setup->b.wValue.w == 1) {
           puts("-> entering softloader\n");
           enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
           NVIC_SystemReset();
-          break;
-      }
+      } else ; // do nothing
       break;
     // **** 0xd6: get version
-    case 0xd6:
-      COMPILE_TIME_ASSERT(sizeof(gitversion) <= MAX_RESP_LEN)
+    case 0xd6: {
+      _Static_assert(sizeof(gitversion) <= MAX_RESP_LEN, "GIT VERSION TOO BIG");
       memcpy(resp, gitversion, sizeof(gitversion));
       resp_len = sizeof(gitversion);
       break;
+    }
     // **** 0xd8: reset ST
     case 0xd8:
       NVIC_SystemReset();
+      break;
+    default:
       break;
   }
   return resp_len;

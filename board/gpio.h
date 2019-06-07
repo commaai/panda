@@ -216,6 +216,8 @@ void set_usb_power_mode(int mode) {
       set_gpio_output(GPIOB, 2, 0);
       set_gpio_output(GPIOA, 13, 0);
       break;
+    default:
+      break;
   }
   usb_power_mode = mode;
 }
@@ -239,6 +241,8 @@ void set_esp_mode(int mode) {
     case ESP_BOOTMODE:
       set_gpio_output(GPIOC, 14, 1);
       set_gpio_output(GPIOC, 5, 0);
+      break;
+    default:
       break;
   }
 }
