@@ -63,18 +63,6 @@ void set_timer(int t){
   timer.CNT = t;
 }
 
-void rx(CAN_FIFOMailBox_TypeDef *to_send) {
-  safety_rx_hook(to_send);
-}
-
-int tx(CAN_FIFOMailBox_TypeDef *to_push) {
-  return safety_tx_hook(to_push);
-}
-
-int set_mode(uint16_t  mode, int16_t param) {
-  return safety_set_mode(mode, param);
-}
-
 void set_toyota_torque_meas(int min, int max){
   toyota_torque_meas.min = min;
   toyota_torque_meas.max = max;

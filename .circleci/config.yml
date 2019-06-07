@@ -87,8 +87,7 @@ jobs:
       - run:
           name: Replay drives
           command: |
-            mkdir /tmp/safety_replay
-            docker run -v /tmp/safety_replay:/tmp/safety_replay panda_safety_replay /bin/bash -c "cd /openpilot/panda/tests/safety_replay; PYTHONPATH=/openpilot ./test_safety_replay.py"
+            docker run panda_safety_replay /bin/bash -c "cd /openpilot/panda/tests/safety_replay; PYTHONPATH=/openpilot ./test_safety_replay.py"
 
 workflows:
   version: 2
