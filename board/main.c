@@ -717,9 +717,12 @@ int main(void) {
   // on car harness, detect first
   for (int tries = 0; tries < 3; tries++) {
     puts("attempting to detect car harness...\n");
-    if (uja1023_init(0x61)) {
+    int ret = uja1023_init(0x61);
+    if (ret) {
       puts("detected car harness on try ");
       puth2(tries);
+      puts(" with orientation ");
+      puth2(ret);
       puts("\n");
       car_harness_detected = 1;
       break;

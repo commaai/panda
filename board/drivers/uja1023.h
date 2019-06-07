@@ -24,7 +24,7 @@ set_uja1023_output_buffer(0x00); //turn all output pins off
 
 #define LIN_RING lin2_ring
 
-int uja1023_txrx(LIN_FRAME_t *tx_frame, LIN_FRAME_t *rx_frame) {
+void uja1023_tx(LIN_FRAME_t *tx_frame) {
   clear_uart_buff(&LIN_RING);
 
   LIN_SendData(&LIN_RING, tx_frame);
@@ -32,6 +32,10 @@ int uja1023_txrx(LIN_FRAME_t *tx_frame, LIN_FRAME_t *rx_frame) {
   for (int i =0; i < 1+1+1+8+1; i++) {
     while (getc(&LIN_RING, NULL) == 0);
   }
+}
+
+
+int uja1023_rx(LIN_FRAME_t *rx_frame) {
   int ret = LIN_SendReceiveFrame(&LIN_RING, rx_frame);
 
   if (ret == 0) {
@@ -66,7 +70,8 @@ int uja1023_init(int addr) {
   assign_id_frame.data[5]  = 0x00; //D5, function id low byte; should be 0x00
   assign_id_frame.data[6]  = 0x00; //D6, function id high byte; should be 0x00
   assign_id_frame.data[7]  = 0x04; //D7, slave node address (NAD). 0x04 means ID(PxReq) = 04, ID(PxResp) = 05
-  ret = uja1023_txrx(&assign_id_frame, &frame_to_receive);
+  uja1023_tx(&assign_id_frame);
+  ret = uja1023_rx(&frame_to_receive);
   if (ret != LIN_OK) return 0;
   if (frame_to_receive.data[0] != addr) return 0;
   if (frame_to_receive.data[7] != 0xFF) return 0;
@@ -83,7 +88,8 @@ int uja1023_init(int addr) {
   io_cfg_1_frame.data[5]  = 0x01; //D4, Low side enable (LSE). Set to 0xFF for Low side driver or push pull
   io_cfg_1_frame.data[6]  = 0x00; //D6, Output mode (low byte) (OM0). Set to 0x00 for level output
   io_cfg_1_frame.data[7]  = 0x00; //D7, Output mode (high byte) (OM1). Set to 0x00 for level output
-  ret = uja1023_txrx(&io_cfg_1_frame, &frame_to_receive);
+  uja1023_tx(&io_cfg_1_frame);
+  ret = uja1023_rx(&frame_to_receive);
   if (ret != LIN_OK) return 0;
   if (frame_to_receive.data[0] != addr) return 0;
   if (frame_to_receive.data[7] != 0) return 0;
@@ -100,7 +106,8 @@ int uja1023_init(int addr) {
   io_cfg_2_frame.data[5]  = 0x00; //D5, Capture Mode (high byte) CM1. Set to 0x00 for no capture
   io_cfg_2_frame.data[6]  = 0x00; //D6, Threshold select TH2 TH1. Default 0x00
   io_cfg_2_frame.data[7]  = 0x00; //D7, Local Wake up pin mask LWM. Default 0x00
-  ret = uja1023_txrx(&io_cfg_2_frame, &frame_to_receive);
+  uja1023_tx(&io_cfg_2_frame);
+  ret = uja1023_rx(&frame_to_receive);
   if (ret != LIN_OK) return 0;
   if (frame_to_receive.data[0] != addr) return 0;
   if (frame_to_receive.data[7] != 0) return 0;
@@ -121,28 +128,35 @@ int uja1023_init(int addr) {
   io_cfg_3_frame.data[5]  = 0xFF; //D5, Not used, set to 0xFF
   io_cfg_3_frame.data[6]  = 0xFF; //D6, Not used, set to 0xFF
   io_cfg_3_frame.data[7]  = 0xFF; //D7, Not used, set to 0xFF
-  ret = uja1023_txrx(&io_cfg_3_frame, &frame_to_receive);
+  uja1023_tx(&io_cfg_3_frame);
+  ret = uja1023_rx(&frame_to_receive);
   if (ret != LIN_OK) return 0;
   if (frame_to_receive.data[0] != addr) return 0;
   if (frame_to_receive.data[7] != 0xff) return 0;
 
   // now, what's the orientation?
+  LIN_FRAME_t read_inputs_frame;
+  read_inputs_frame.data_len = 2;
+  read_inputs_frame.frame_id = 0x85; // read inputs
+  ret = uja1023_rx(&read_inputs_frame);
+  if (ret != LIN_OK) return 0;
 
-  // init okay
-  return 1;
+  int cc1 = read_inputs_frame.data[0] & 4;
+  int cc2 = read_inputs_frame.data[0] & 8;
+
+  if (cc1 && !cc2) {
+    // orientation normal
+    return 1;
+  } else if (!cc1 && cc2) {
+    // orientation flipped
+    return 2;
+  } else {
+    // init failed
+    return 0;
+  }
 }
 
-//turn on any pins that = 1, leave all other pins alone
-void set_uja1023_output_bits(uint8_t to_set) {
-  //px_req_frame.data[0] |= to_set;
-}
-
-//turn off any pins that = 1, leave all other pins alone
-void clear_uja1023_output_bits(uint8_t to_clear) {
-  //px_req_frame.data[0] &= ~to_clear;
-}
-
-//Set the whole Px output buffer at once:
+// set the whole Px output buffer at once:
 void set_uja1023_output_buffer(uint8_t to_set) {
   // make frame for PxReq frame (this is what sets the UJA1023's output pins)
   LIN_FRAME_t px_req_frame;
@@ -152,4 +166,5 @@ void set_uja1023_output_buffer(uint8_t to_set) {
   px_req_frame.data[1]  = 0x80; //D1, PWM Value; shouldn't matter but is 0x80 per datasheet example
   LIN_SendData(&LIN_RING, &px_req_frame);
 }
+
 
