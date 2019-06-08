@@ -80,6 +80,19 @@ jobs:
           command: |
             docker run panda_build /bin/bash -c "cd /panda/boardesp; make user1.bin"
 
+  safety_replay:
+    machine:
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - run:
+          name: Build image
+          command: "docker build -t panda_safety_replay -f tests/safety_replay/Dockerfile ."
+      - run:
+          name: Replay drives
+          command: |
+            docker run panda_safety_replay /bin/bash -c "cd /openpilot/panda/tests/safety_replay; PYTHONPATH=/openpilot ./test_safety_replay.py"
+
 workflows:
   version: 2
   main:
@@ -88,3 +101,4 @@ workflows:
       - misra-c2012
       - strict-compiler
       - build
+      - safety_replay
