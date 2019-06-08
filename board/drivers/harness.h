@@ -124,7 +124,7 @@ void harness_init() {
       set_relay_and_can1_obd(0, 0);
 
       // flip CAN0 and CAN2 if we are flipped
-      if (car_harness_detected == HARNESS_ORIENTATION_NORMAL) {
+      if (car_harness_detected == HARNESS_ORIENTATION_FLIPPED) {
         // flip CAN bus 0 and 2
         // CAN bus 1 is dealt with by the relay
         bus_lookup[0] = 2;
