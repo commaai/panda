@@ -36,6 +36,8 @@ int car_harness_detected = 0;
 #include "safety.h"
 #include "drivers/can.h"
 
+#include "drivers/harness.h"
+
 // ********************* serial debugging *********************
 
 void debug_ring_callback(uart_ring *ring) {
@@ -727,6 +729,14 @@ int main(void) {
 
 #ifdef EON
   harness_init();
+
+  // testing
+  for (int i = 0; i < 5; i++) {
+    set_relay_and_can1_obd(1, 0);
+    delay(1000000);
+    set_relay_and_can1_obd(0, 0);
+    delay(1000000);
+  }
 #endif
 
   // LED should keep on blinking all the time
@@ -737,22 +747,6 @@ int main(void) {
       int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
 
       // useful for debugging, fade breaks = panda is overloaded
-      if (car_harness_detected == HARNESS_ORIENTATION_FLIPPED) {
-        set_uja1023_output_buffer(8);
-      } else if (car_harness_detected == HARNESS_ORIENTATION_NORMAL) {
-        set_uja1023_output_buffer(4);
-      }
-      for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
-        for (int fade = 0; fade < 1024; fade += 8) {
-          for (int i = 0; i < (128/div_mode); i++) {
-            set_led(LED_RED, 1);
-            if (fade < 512) { delay(fade); } else { delay(1024-fade); }
-            set_led(LED_RED, 0);
-            if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
-          }
-        }
-      }
-      if (car_harness_detected) set_uja1023_output_buffer(0);
       for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
         for (int fade = 0; fade < 1024; fade += 8) {
           for (int i = 0; i < (128/div_mode); i++) {

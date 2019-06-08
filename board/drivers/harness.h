@@ -107,8 +107,18 @@ void harness_init() {
       puth2(ret);
       puts("\n");
       car_harness_detected = ret;
+
       // now we have orientation, behave like giraffe
       set_relay_and_can1_obd(0, 0);
+
+      // flip CAN0 and CAN2 if we are flipped
+      if (car_harness_detected == HARNESS_ORIENTATION_FLIPPED) {
+        // flip CAN bus 0 and 2
+        // CAN bus 1 is dealt with by the relay
+        bus_lookup[0] = 2;
+        bus_lookup[2] = 0;
+      }
+
       break;
     }
     delay(500000);
