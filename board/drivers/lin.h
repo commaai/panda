@@ -115,7 +115,6 @@ LIN_ERR_t LIN_SendReceiveFrame(uart_ring *LIN_UART, LIN_FRAME_t *frame)
   }
 
   // now wait for the slave device to respond with the data
-  // TODO: implement LIN_RX_EMPTY
   int resp_len = 0;
   while (resp_len < frame->data_len) {
     if (_recv_sync(LIN_UART, (char *)&frame->data[resp_len]) == 0) {

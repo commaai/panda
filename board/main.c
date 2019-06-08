@@ -537,6 +537,10 @@ void TIM3_IRQHandler(void) {
   #define CURRENT_THRESHOLD 0xF00
   #define CLICKS 5 // 5 seconds to switch modes
 
+  #ifdef EON
+    harness_watchdog();
+  #endif
+
   if (TIM3->SR != 0) {
     can_live = pending_can_live;
 
@@ -703,10 +707,6 @@ int main(void) {
   spi_init();
 #endif
 
-  // 48mhz / 65536 ~= 732 / 732 = 1
-  timer_init(TIM3, 732);
-  NVIC_EnableIRQ(TIM3_IRQn);
-
 #ifdef EON
   // have to save power
   if (!is_grey_panda) {
@@ -738,6 +738,10 @@ int main(void) {
     delay(1000000);
   }
 #endif
+
+  // 48mhz / 65536 ~= 732 / 732 = 1
+  timer_init(TIM3, 732);
+  NVIC_EnableIRQ(TIM3_IRQn);
 
   // LED should keep on blinking all the time
   uint64_t cnt = 0;

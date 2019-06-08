@@ -10,6 +10,17 @@ int car_harness_detected = 0;
 #define CONTROLS_RELAY_NORMAL 4
 #define CONTROLS_RELAY_FLIPPED 8
 
+int _output_buffer = 0;
+
+void harness_watchdog() {
+  if (car_harness_detected == 0);
+
+  // don't let it go into sleep mode
+  enter_critical_section();
+  set_uja1023_output_buffer(_output_buffer);
+  exit_critical_section();
+}
+
 // this function will be the API for tici
 bool set_relay_and_can1_obd(int relay, int obd) {
   if (car_harness_detected == 0) return false;
@@ -26,7 +37,8 @@ bool set_relay_and_can1_obd(int relay, int obd) {
     // can1
     if (!obd) uja_output_buffer |= CAN1_RELAY;
   }
-  set_uja1023_output_buffer(uja_output_buffer);
+  _output_buffer = uja_output_buffer;
+  harness_watchdog();
   return true;
 }
 

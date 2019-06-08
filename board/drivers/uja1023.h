@@ -58,6 +58,26 @@ int uja1023_init(int addr) {
   frame_to_receive.data_len = 8;
   frame_to_receive.frame_id = 0x7D; //Response PID, 0x7D = 2 bit parity + 0x3C raw ID
 
+  // bedtime
+  /*LIN_FRAME_t sleep_frame;
+  sleep_frame.data_len = 1;
+  sleep_frame.frame_id = 0x3C; //0x3C is for diagnostic frames
+  sleep_frame.data[0]  = 0;
+  uja1023_tx(&sleep_frame);*/
+
+  // pulse for wake-up
+  /*GPIOC->MODER &= ~GPIO_MODER_MODER10_1;
+  GPIOC->MODER |= GPIO_MODER_MODER10_0;
+  GPIOC->ODR &= ~(1 << 10);
+  for (int i = 0; i < 100; i++) {
+    delay(8000);
+    GPIOC->ODR |= (1 << 10);
+    GPIOC->ODR &= ~(1 << 10);
+  }
+  GPIOC->MODER &= ~GPIO_MODER_MODER10_0;
+  GPIOC->MODER |= GPIO_MODER_MODER10_1;
+  delay(140 * 9000);*/
+
   // make frame for Assign frame ID
   LIN_FRAME_t assign_id_frame;
   assign_id_frame.data_len = 8;
