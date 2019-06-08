@@ -2,13 +2,13 @@ int car_harness_detected = 0;
 #define HARNESS_ORIENTATION_NORMAL 1
 #define HARNESS_ORIENTATION_FLIPPED 2
 
-#define CAN1_RELAY 1
-#define CONTROLS_RELAY_NORMAL 4
-#define CONTROLS_RELAY_FLIPPED 8
-
 #ifdef EON
 #include "lin.h"
 #include "uja1023.h"
+
+#define CAN1_RELAY 1
+#define CONTROLS_RELAY_NORMAL 4
+#define CONTROLS_RELAY_FLIPPED 8
 
 // this function will be the API for tici
 bool set_relay_and_can1_obd(int relay, int obd) {
@@ -117,3 +117,4 @@ void harness_init() {
 }
 
 #endif
+
