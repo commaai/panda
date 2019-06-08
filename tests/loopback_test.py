@@ -12,6 +12,11 @@ from itertools import permutations
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda
 
+TEST_LIN = TEST_GMLAN = True
+
+if os.getenv("ONLYCAN", None) is not None:
+  TEST_LIN = TEST_GMLAN = False
+
 def get_test_string():
   return b"test"+os.urandom(10)
 
@@ -48,29 +53,34 @@ def run_test_w_pandas(pandas, sleep_duration):
     # **** test health packet ****
     print("health", ho[0], h[ho[0]].health())
 
-    # **** test K/L line loopback ****
-    for bus in [2,3]:
-      # flush the output
-      h[ho[1]].kline_drain(bus=bus)
+    if TEST_LIN:
+      # **** test K/L line loopback ****
+      for bus in [2,3]:
+        # flush the output
+        h[ho[1]].kline_drain(bus=bus)
 
-      # send the characters
-      st = get_test_string()
-      st = b"\xaa"+chr(len(st)+3).encode()+st
-      h[ho[0]].kline_send(st, bus=bus, checksum=False)
+        # send the characters
+        st = get_test_string()
+        st = b"\xaa"+chr(len(st)+3).encode()+st
+        h[ho[0]].kline_send(st, bus=bus, checksum=False)
 
-      # check for receive
-      ret = h[ho[1]].kline_drain(bus=bus)
+        # check for receive
+        ret = h[ho[1]].kline_drain(bus=bus)
 
-      print("ST Data:")
-      hexdump(st)
-      print("RET Data:")
-      hexdump(ret)
-      assert st == ret
-      print("K/L pass", bus, ho, "\n")
-      time.sleep(sleep_duration)
+        print("ST Data:")
+        hexdump(st)
+        print("RET Data:")
+        hexdump(ret)
+        assert st == ret
+        print("K/L pass", bus, ho, "\n")
+        time.sleep(sleep_duration)
 
     # **** test can line loopback ****
-    for bus, gmlan in [(0, False), (1, False), (2, False), (1, True), (2, True)]:
+    test_plan = [(0, False), (1, False), (2, False)]
+    if TEST_GMLAN:
+      test_plan += [(1, True), (2, True)]
+
+    for bus, gmlan in test_plan:
       print("\ntest can", bus)
       # flush
       cans_echo = panda0.can_recv()
