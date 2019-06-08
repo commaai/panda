@@ -126,6 +126,7 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 }
 
 static void chrysler_init(int16_t param) {
+  controls_allowed = 0;
   chrysler_camera_detected = 0;
 }
 
