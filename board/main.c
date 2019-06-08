@@ -20,17 +20,17 @@
 #include "drivers/timer.h"
 #include "drivers/clock.h"
 
-#ifdef EON
-  // used in Car Harness
-  #include "drivers/lin.h"
-  #include "drivers/uja1023.h"
-#else
+#ifndef EON
   // used in white panda
   #include "drivers/spi.h"
 #endif
+
 int car_harness_detected = 0;
 #define HARNESS_ORIENTATION_NORMAL 1
 #define HARNESS_ORIENTATION_FLIPPED 2
+
+// used in Car Harness
+#include "drivers/harness.h"
 
 #include "power_saving.h"
 #include "safety.h"
@@ -317,6 +317,20 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
               can_silent = ALL_CAN_LIVE;
               break;
           }
+        #else
+          switch (setup->b.wValue.w) {
+            case SAFETY_NOOUTPUT:
+              set_relay_and_can1_obd(0, 0);
+              break;
+            case SAFETY_ELM327:
+              // can1 is the OBD port in this mode
+              set_relay_and_can1_obd(0, 1);
+              break;
+            default:
+              // controls relay is on, you better be sending!
+              set_relay_and_can1_obd(1, 0);
+              break;
+           }
         #endif
         can_init_all();
       }
@@ -712,26 +726,7 @@ int main(void) {
   enable_interrupts();
 
 #ifdef EON
-  // chilling for power to be stable (we have interrupts)
-  set_led(LED_RED, 1);
-  delay(5000000);
-
-  // on car harness, detect first
-  for (int tries = 0; tries < 3; tries++) {
-    puts("attempting to detect car harness...\n");
-    int ret = uja1023_init(0x61);
-    if (ret) {
-      puts("detected car harness on try ");
-      puth2(tries);
-      puts(" with orientation ");
-      puth2(ret);
-      puts("\n");
-      car_harness_detected = ret;
-      break;
-    }
-    delay(500000);
-  }
-  set_led(LED_RED, 0);
+  harness_init();
 #endif
 
   // LED should keep on blinking all the time
