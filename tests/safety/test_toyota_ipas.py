@@ -3,18 +3,6 @@ import unittest
 import numpy as np
 import libpandasafety_py
 
-MAX_RATE_UP = 10
-MAX_RATE_DOWN = 25
-MAX_TORQUE = 1500
-
-MAX_ACCEL = 1500
-MIN_ACCEL = -3000
-
-MAX_RT_DELTA = 375
-RT_INTERVAL = 250000
-
-MAX_TORQUE_ERROR = 350
-
 IPAS_OVERRIDE_THRESHOLD = 200
 
 ANGLE_DELTA_BP = [0., 5., 15.]
@@ -178,7 +166,6 @@ class TestToyotaSafety(unittest.TestCase):
 
     # reset no angle control at the end of the test
     self.safety.reset_angle_control()
-
 
   def test_angle_cmd_rate_when_disabled(self):
 
