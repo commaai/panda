@@ -15,22 +15,26 @@ void *memset(void *str, int c, unsigned int n) {
 }
 
 void *memcpy(void *pDest, const void *pSrc, unsigned int len) {
-    unsigned int numLongs = len / 4;
-    unsigned int trailBytes = len & 0x03;
+    unsigned int numLongs = len / 4U;
+    unsigned int trailBytes = len & 0x03U;
 
     const uint32_t *pLongSrc = (const uint32_t*) pSrc;
     uint32_t *pLongDest = (uint32_t*) pDest;
 
     // let processor handle any 32-bit alignment issues
     while (numLongs-- > 0) {
-        *pLongDest++ = *pLongSrc++;
+        *pLongDest = *pLongSrc;
+        pLongDest++;
+        pLongSrc++;
     }
 
     const uint8_t *pCharSrc = (const uint8_t*) pLongSrc;
     uint8_t *pCharDest = (uint8_t*) pLongDest;
 
     while (trailBytes-- > 0) {
-        *pCharDest++ = *pCharSrc++;
+        *pCharDest = *pCharSrc;
+        pCharDest++;
+        pCharSrc++;
     }
     return pDest;
 }
