@@ -45,7 +45,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   #define USER_BRAKE_VALUE(to_push)  (!honda_alt_brake_msg ? (to_push->RDHR & 0x200000)  : (to_push->RDLR & 0x10))
   // exit controls on rising edge of brake press or on brake press when
   // speed > 0
-  if (IS_USER_BRAKE_MSG(to_push)) {
+  if (IS_USER_BRAKE_MSG(addr)) {
     int brake = USER_BRAKE_VALUE(to_push);
     if (brake && (!(honda_brake_prev) || honda_ego_speed)) {
       controls_allowed = 0;
@@ -170,7 +170,7 @@ static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   int addr = to_fwd->RIR >> 21;
   int is_lkas_msg = (addr == 0xE4) || (addr == 0x33D);
-  if (bus_num == 2) &&  {
+  if (bus_num == 2) {
     return 1;
   } else if ((bus_num == 1) && !is_lkas_msg)  {
     return 2;
