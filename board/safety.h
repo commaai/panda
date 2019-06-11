@@ -145,8 +145,9 @@ int safety_set_mode(uint16_t mode, int16_t param) {
 }
 
 // compute the time elapsed (in microseconds) from 2 counter samples
+// case where ts < ts_last is ok: overflow is properly re-casted into uint32_t
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
-  return ts > ts_last ? ts - ts_last : (0xFFFFFFFF - ts_last) + 1 + ts;
+  return ts - ts_last;
 }
 
 // convert a trimmed integer to signed 32 bit int
