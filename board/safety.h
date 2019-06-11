@@ -135,7 +135,9 @@ int safety_set_mode(uint16_t mode, int16_t param) {
   for (int i = 0; i < HOOK_CONFIG_COUNT; i++) {
     if (safety_hook_registry[i].id == mode) {
       current_hooks = safety_hook_registry[i].hooks;
-      if (current_hooks->init) current_hooks->init(param);
+      if (current_hooks->init) {
+        current_hooks->init(param);
+      }
       return 0;
     }
   }
@@ -166,8 +168,12 @@ void update_sample(struct sample_t *sample, int sample_new) {
   // get the minimum and maximum measured samples
   sample->min = sample->max = sample->values[0];
   for (int i = 1; i < sizeof(sample->values)/sizeof(sample->values[0]); i++) {
-    if (sample->values[i] < sample->min) sample->min = sample->values[i];
-    if (sample->values[i] > sample->max) sample->max = sample->values[i];
+    if (sample->values[i] < sample->min) {
+      sample->min = sample->values[i];
+    }
+    if (sample->values[i] > sample->max) {
+      sample->max = sample->values[i];
+    }
   }
 }
 
@@ -241,7 +247,9 @@ float interpolate(struct lookup_t xy, float x) {
         float dx = xy.x[i+1] - x0;
         float dy = xy.y[i+1] - y0;
         // dx should not be zero as xy.x is supposed ot be monotonic
-        if (dx <= 0.) dx = 0.0001;
+        if (dx <= 0.) {
+          dx = 0.0001;
+        }
         return dy * (x - x0) / dx + y0;
       }
     }
