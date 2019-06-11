@@ -55,10 +55,10 @@ static void toyota_ipas_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // *** angle real time check
     // add 1 to not false trigger the violation and multiply by 20 since the check is done every 250ms and steer angle is updated at 80Hz
-    int rt_delta_angle_up = ((int)(RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 20. * CAN_TO_DEG + 1.)));
-    int rt_delta_angle_down = ((int)(RT_ANGLE_FUDGE * (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 20. * CAN_TO_DEG + 1.)));
-    int highest_rt_angle = rt_angle_last + (rt_angle_last > 0? rt_delta_angle_up:rt_delta_angle_down);
-    int lowest_rt_angle = rt_angle_last - (rt_angle_last > 0? rt_delta_angle_down:rt_delta_angle_up);
+    int rt_delta_angle_up = ((int)(RT_ANGLE_FUDGE * ((interpolate(LOOKUP_ANGLE_RATE_UP, speed) * 20. * CAN_TO_DEG) + 1.)));
+    int rt_delta_angle_down = ((int)(RT_ANGLE_FUDGE * ((interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * 20. * CAN_TO_DEG) + 1.)));
+    int highest_rt_angle = rt_angle_last + ((rt_angle_last > 0) ? rt_delta_angle_up : rt_delta_angle_down);
+    int lowest_rt_angle = rt_angle_last - ((rt_angle_last > 0) ? rt_delta_angle_down : rt_delta_angle_up);
 
     // every RT_INTERVAL or when controls are turned on, set the new limits
     uint32_t ts_elapsed = get_ts_elapsed(ts, ts_angle_last);
@@ -112,10 +112,10 @@ static int toyota_ipas_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
       if (controls_allowed) {
         // add 1 to not false trigger the violation
-        int delta_angle_up = (int) (interpolate(LOOKUP_ANGLE_RATE_UP, speed) * CAN_TO_DEG + 1.);
-        int delta_angle_down = (int) (interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * CAN_TO_DEG + 1.);
-        int highest_desired_angle = desired_angle_last + (desired_angle_last > 0? delta_angle_up:delta_angle_down);
-        int lowest_desired_angle = desired_angle_last - (desired_angle_last > 0? delta_angle_down:delta_angle_up);
+        int delta_angle_up = (int) ((interpolate(LOOKUP_ANGLE_RATE_UP, speed) * CAN_TO_DEG) + 1.);
+        int delta_angle_down = (int) ((interpolate(LOOKUP_ANGLE_RATE_DOWN, speed) * CAN_TO_DEG) + 1.);
+        int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
+        int lowest_desired_angle = desired_angle_last - ((desired_angle_last > 0) ? delta_angle_down : delta_angle_up);
         if ((desired_angle > highest_desired_angle) ||
             (desired_angle < lowest_desired_angle)){
           violation = 1;

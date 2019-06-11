@@ -35,7 +35,7 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // check if stock camera ECU is still online
-  if (bus == 0 && addr == 832) {
+  if ((bus == 0) && (addr == 832)) {
     hyundai_camera_detected = 1;
     controls_allowed = 0;
   }
@@ -46,7 +46,7 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if ((to_push->RIR>>21) == 1057) {
+  if (addr == 1057) {
     // 2 bits: 13-14
     int cruise_engaged = (to_push->RDLR >> 13) & 0x3;
     if (cruise_engaged && !hyundai_cruise_engaged_last) {
@@ -58,7 +58,7 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // 832 is lkas cmd. If it is on camera bus, then giraffe switch 2 is high
-  if ((to_push->RIR>>21) == 832 && (bus == hyundai_camera_bus) && (hyundai_camera_bus != 0)) {
+  if ((addr == 832) && (bus == hyundai_camera_bus) && (hyundai_camera_bus != 0)) {
     hyundai_giraffe_switch_2 = 1;
   }
 }
@@ -140,9 +140,8 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
 static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   // forward cam to ccan and viceversa, except lkas cmd
-  if ((bus_num == 0 || bus_num == hyundai_camera_bus) && hyundai_giraffe_switch_2) {
-
-    if ((to_fwd->RIR>>21) == 832 && bus_num == hyundai_camera_bus) return -1;
+  if (((bus_num == 0) || (bus_num == hyundai_camera_bus)) && hyundai_giraffe_switch_2) {
+    if ((to_fwd->RIR>>21) == 832 && (bus_num == hyundai_camera_bus)) return -1;
     if (bus_num == 0) return hyundai_camera_bus;
     if (bus_num == hyundai_camera_bus) return 0;
   }

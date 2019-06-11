@@ -35,7 +35,7 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // this message isn't all zeros when ignition is on
-  if (addr == 0x160 && bus_number == 0) {
+  if ((addr == 0x160) && (bus_number == 0)) {
     cadillac_ign = to_push->RDLR > 0;
   }
 
@@ -60,7 +60,7 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   uint32_t addr = to_send->RIR >> 21;
 
   // steer cmd checks
-  if (addr == 0x151 || addr == 0x152 || addr == 0x153 || addr == 0x154) {
+  if ((addr == 0x151) || (addr == 0x152) || (addr == 0x153) || (addr == 0x154)) {
     int desired_torque = ((to_send->RDLR & 0x3f) << 8) + ((to_send->RDLR & 0xff00) >> 8);
     int violation = 0;
     uint32_t ts = TIM2->CNT;

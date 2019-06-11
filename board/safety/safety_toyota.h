@@ -33,8 +33,11 @@ struct sample_t toyota_torque_meas;       // last 3 motor torques produced by th
 
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+
+  int addr = to_push->RIR >> 21;
+
   // get eps motor torque (0.66 factor in dbc)
-  if ((to_push->RIR>>21) == 0x260) {
+  if (addr == 0x260) {
     int torque_meas_new = (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF));
     torque_meas_new = to_signed(torque_meas_new, 16);
 
@@ -50,7 +53,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if ((to_push->RIR>>21) == 0x1D2) {
+  if (addr == 0x1D2) {
     // 5th bit is CRUISE_ACTIVE
     int cruise_engaged = to_push->RDLR & 0x20;
     // 4th bit is GAS_RELEASED
@@ -66,7 +69,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // exit controls on rising edge of gas press if interceptor (0x201)
-  if ((to_push->RIR>>21) == 0x201) {
+  if (addr == 0x201) {
     gas_interceptor_detected = 1;
     int gas_interceptor = ((to_push->RDLR & 0xFF) << 8) | ((to_push->RDLR & 0xFF00) >> 8);
     if ((gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRESHOLD) &&
@@ -84,21 +87,23 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // 0x2E4 is lkas cmd. If it is on bus 0, then giraffe switch 1 is high
-  if ((to_push->RIR>>21) == 0x2E4 && (bus == 0)) {
+  if ((addr == 0x2E4) && (bus == 0)) {
     toyota_giraffe_switch_1 = 1;
   }
 }
 
 static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
+  int addr = to_send->RIR >> 21;
+
   // Check if msg is sent on BUS 0
   if (((to_send->RDTR >> 4) & 0xF) == 0) {
 
     // no IPAS in non IPAS mode
-    if (((to_send->RIR>>21) == 0x266) || ((to_send->RIR>>21) == 0x167)) return false;
+    if ((addr == 0x266) || (addr == 0x167)) return false;
 
     // GAS PEDAL: safety check
-    if ((to_send->RIR>>21) == 0x200) {
+    if (addr == 0x200) {
       if (controls_allowed && long_controls_allowed) {
         // all messages are fine here
       } else {
@@ -107,7 +112,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
 
     // ACCEL: safety check on byte 1-2
-    if ((to_send->RIR>>21) == 0x343) {
+    if (addr == 0x343) {
       int desired_accel = ((to_send->RDLR & 0xFF) << 8) | ((to_send->RDLR >> 8) & 0xFF);
       desired_accel = to_signed(desired_accel, 16);
       if (controls_allowed && long_controls_allowed) {
@@ -119,7 +124,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
 
     // STEER: safety check on bytes 2-3
-    if ((to_send->RIR>>21) == 0x2E4) {
+    if (addr == 0x2E4) {
       int desired_torque = (to_send->RDLR & 0xFF00) | ((to_send->RDLR >> 16) & 0xFF);
       desired_torque = to_signed(desired_torque, 16);
       int violation = 0;
@@ -186,7 +191,7 @@ static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
       return 2;
     } else if (bus_num == 2) {
       // block stock lkas messages and stock acc messages (if OP is doing ACC)
-      int is_lkas_msg = (addr == 0x2E4 || addr == 0x412);
+      int is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412));
       // in TSSP 2.0 the camera does ACC as well, so filter 0x343
       int is_acc_msg = (addr == 0x343);
       if (is_lkas_msg || (is_acc_msg && long_controls_allowed)) {
