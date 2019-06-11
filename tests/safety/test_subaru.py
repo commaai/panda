@@ -29,7 +29,7 @@ class TestSubaruSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.nooutput_init(0)
+    cls.safety.safety_set_mode(10, 0)
     cls.safety.init_tests_subaru()
 
   def _set_prev_torque(self, t):
@@ -60,7 +60,7 @@ class TestSubaruSafety(unittest.TestCase):
     to_push[0].RIR = 0x240 << 21
     to_push[0].RDHR = 1 << 9
 
-    self.safety.subaru_rx_hook(to_push)
+    self.safety.safety_rx_hook(to_push)
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disable_control_allowed_from_cruise(self):
@@ -69,7 +69,7 @@ class TestSubaruSafety(unittest.TestCase):
     to_push[0].RDHR = 0
 
     self.safety.set_controls_allowed(1)
-    self.safety.subaru_rx_hook(to_push)
+    self.safety.safety_rx_hook(to_push)
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_steer_safety_check(self):
@@ -78,9 +78,9 @@ class TestSubaruSafety(unittest.TestCase):
         self.safety.set_controls_allowed(enabled)
         self._set_prev_torque(t)
         if abs(t) > MAX_STEER or (not enabled and abs(t) > 0):
-          self.assertFalse(self.safety.subaru_tx_hook(self._torque_msg(t)))
+          self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(t)))
         else:
-          self.assertTrue(self.safety.subaru_tx_hook(self._torque_msg(t)))
+          self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
 
   def test_manually_enable_controls_allowed(self):
     self.safety.set_controls_allowed(1)
@@ -93,15 +93,15 @@ class TestSubaruSafety(unittest.TestCase):
     self.safety.set_controls_allowed(True)
 
     self._set_prev_torque(0)
-    self.assertTrue(self.safety.subaru_tx_hook(self._torque_msg(MAX_RATE_UP)))
+    self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(MAX_RATE_UP)))
     self._set_prev_torque(0)
-    self.assertTrue(self.safety.subaru_tx_hook(self._torque_msg(-MAX_RATE_UP)))
+    self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(-MAX_RATE_UP)))
 
     self._set_prev_torque(0)
-    self.assertFalse(self.safety.subaru_tx_hook(self._torque_msg(MAX_RATE_UP + 1)))
+    self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(MAX_RATE_UP + 1)))
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(0)
-    self.assertFalse(self.safety.subaru_tx_hook(self._torque_msg(-MAX_RATE_UP - 1)))
+    self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(-MAX_RATE_UP - 1)))
 
   def test_non_realtime_limit_down(self):
     self.safety.set_subaru_torque_driver(0, 0)
@@ -115,10 +115,10 @@ class TestSubaruSafety(unittest.TestCase):
         t *= -sign
         self.safety.set_subaru_torque_driver(t, t)
         self._set_prev_torque(MAX_STEER * sign)
-        self.assertTrue(self.safety.subaru_tx_hook(self._torque_msg(MAX_STEER * sign)))
+        self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(MAX_STEER * sign)))
 
       self.safety.set_subaru_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self.safety.subaru_tx_hook(self._torque_msg(-MAX_STEER)))
+      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(-MAX_STEER)))
 
     # spot check some individual cases
     for sign in [-1, 1]:
@@ -127,20 +127,20 @@ class TestSubaruSafety(unittest.TestCase):
       delta = 1 * sign
       self._set_prev_torque(torque_desired)
       self.safety.set_subaru_torque_driver(-driver_torque, -driver_torque)
-      self.assertTrue(self.safety.subaru_tx_hook(self._torque_msg(torque_desired)))
+      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(torque_desired)))
       self._set_prev_torque(torque_desired + delta)
       self.safety.set_subaru_torque_driver(-driver_torque, -driver_torque)
-      self.assertFalse(self.safety.subaru_tx_hook(self._torque_msg(torque_desired + delta)))
+      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(torque_desired + delta)))
 
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_subaru_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self.safety.subaru_tx_hook(self._torque_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
+      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_subaru_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self.safety.subaru_tx_hook(self._torque_msg(0)))
+      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(0)))
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_subaru_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertFalse(self.safety.subaru_tx_hook(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
+      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
 
 
   def test_realtime_limits(self):
@@ -152,18 +152,18 @@ class TestSubaruSafety(unittest.TestCase):
       self.safety.set_subaru_torque_driver(0, 0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.assertTrue(self.safety.subaru_tx_hook(self._torque_msg(t)))
-      self.assertFalse(self.safety.subaru_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+        self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
+      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
       self._set_prev_torque(0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.assertTrue(self.safety.subaru_tx_hook(self._torque_msg(t)))
+        self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
 
       # Increase timer to update rt_torque_last
       self.safety.set_timer(RT_INTERVAL + 1)
-      self.assertTrue(self.safety.subaru_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
-      self.assertTrue(self.safety.subaru_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
+      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
 
 if __name__ == "__main__":

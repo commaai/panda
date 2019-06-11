@@ -145,9 +145,8 @@ int safety_set_mode(uint16_t mode, int16_t param) {
 }
 
 // compute the time elapsed (in microseconds) from 2 counter samples
+// case where ts < ts_last is ok: overflow is properly re-casted into uint32_t
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
-  // if ts < ts_last, then it means the timer looped around,
-  // therefore casting the difference back to uint32_t is what we want
   return ts - ts_last;
 }
 
