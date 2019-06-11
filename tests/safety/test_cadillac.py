@@ -46,10 +46,6 @@ class TestCadillacSafety(unittest.TestCase):
     to_send[0].RDLR = ((t >> 8) & 0x7) | ((t & 0xFF) << 8)
     return to_send
 
-  def _torque_driver_msg_array(self, torque):
-    for i in range(3):
-      self.safety.cadillac_ipas_rx_hook(self._torque_driver_msg(torque))
-
   def _torque_msg(self, torque):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x151 << 21
