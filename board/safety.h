@@ -144,7 +144,13 @@ int safety_set_mode(uint16_t mode, int16_t param) {
 
 // compute the time elapsed (in microseconds) from 2 counter samples
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
-  return ts > ts_last ? ts - ts_last : (0xFFFFFFFF - ts_last) + 1 + ts;
+  int t_elapsed;
+  if (ts > ts_last) {
+    t_elapsed = ts - ts_last;
+  } else {
+    t_elapsed = (0xFFFFFFFF - ts_last) + 1 + ts;
+  }
+  return t_elapsed;
 }
 
 // convert a trimmed integer to signed 32 bit int
@@ -233,7 +239,7 @@ float interpolate(struct lookup_t xy, float x) {
 
   } else {
     // find the index such that (xy.x[i] <= x < xy.x[i+1]) and linearly interp
-    for (int i=0; i < size-1; i++) {
+    for (int i=0; i < (size - 1); i++) {
       if (x < xy.x[i+1]) {
         float x0 = xy.x[i];
         float y0 = xy.y[i];
@@ -241,7 +247,7 @@ float interpolate(struct lookup_t xy, float x) {
         float dy = xy.y[i+1] - y0;
         // dx should not be zero as xy.x is supposed ot be monotonic
         if (dx <= 0.) dx = 0.0001;
-        return dy * (x - x0) / dx + y0;
+        return (dy * (x - x0) / dx) + y0;
       }
     }
     // if no such point is found, then x > xy.x[size-1]. Return last point
