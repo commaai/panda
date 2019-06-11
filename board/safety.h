@@ -149,10 +149,11 @@ uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
 
 // convert a trimmed integer to signed 32 bit int
 int to_signed(int d, int bits) {
+  int d_signed = d;
   if (d >= (1 << (bits - 1))) {
-    d -= (1 << bits);
+    d_signed = d - (1 << bits);
   }
-  return d;
+  return d_signed;
 }
 
 // given a new sample, update the smaple_t struct
