@@ -46,7 +46,7 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // check if stock camera ECU is still online
-  if (bus == 0 && addr == 0x292) {
+  if ((bus == 0) && (addr == 0x292)) {
     chrysler_camera_detected = 1;
     controls_allowed = 0;
   }
@@ -133,11 +133,11 @@ static void chrysler_init(int16_t param) {
 static int chrysler_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int32_t addr = to_fwd->RIR >> 21;
   // forward CAN 0 -> 2 so stock LKAS camera sees messages
-  if (bus_num == 0 && !chrysler_camera_detected) {
+  if ((bus_num == 0) && !chrysler_camera_detected) {
     return 2;
   }
   // forward all messages from camera except LKAS_COMMAND and LKAS_HUD
-  if (bus_num == 2 && !chrysler_camera_detected && addr != 658 && addr != 678) {
+  if ((bus_num == 2) && !chrysler_camera_detected && (addr != 658) && (addr != 678)) {
     return 0;
   }
   return -1;  // do not forward

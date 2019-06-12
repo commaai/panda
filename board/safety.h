@@ -242,7 +242,7 @@ float interpolate(struct lookup_t xy, float x) {
 
   } else {
     // find the index such that (xy.x[i] <= x < xy.x[i+1]) and linearly interp
-    for (int i=0; i < size-1; i++) {
+    for (int i=0; i < (size - 1); i++) {
       if (x < xy.x[i+1]) {
         float x0 = xy.x[i];
         float y0 = xy.y[i];
@@ -252,7 +252,7 @@ float interpolate(struct lookup_t xy, float x) {
         if (dx <= 0.) {
           dx = 0.0001;
         }
-        return dy * (x - x0) / dx + y0;
+        return (dy * (x - x0) / dx) + y0;
       }
     }
     // if no such point is found, then x > xy.x[size-1]. Return last point

@@ -50,7 +50,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     update_sample(&gm_torque_driver, torque_driver_new);
   }
 
-  if (addr == 0x1f1 && bus_number == 0) {
+  if ((addr == 0x1f1) && (bus_number == 0)) {
     //Bit 5 should be ignition "on"
     //Backup plan is Bit 2 (accessory power)
     uint32_t ign = (to_push->RDLR) & 0x20;
@@ -67,7 +67,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // on powertrain bus.
   // 384 = ASCMLKASteeringCmd
   // 715 = ASCMGasRegenCmd
-  if (bus_number == 0 && (addr == 384 || addr == 715)) {
+  if ((bus_number == 0) && ((addr == 384) || (addr == 715))) {
     gm_ascm_detected = 1;
     controls_allowed = 0;
   }
@@ -76,7 +76,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if (addr == 481) {
     int buttons = (to_push->RDHR >> 12) & 0x7;
     // res/set - enable, cancel button - disable
-    if (buttons == 2 || buttons == 3) {
+    if ((buttons == 2) || (buttons == 3)) {
       controls_allowed = 1;
     } else if (buttons == 6) {
       controls_allowed = 0;
@@ -217,7 +217,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     } else {
       // Disabled message is !engaed with gas
       // value that corresponds to max regen.
-      if (apply || gas_regen != GM_MAX_REGEN) return 0;
+      if (apply || (gas_regen != GM_MAX_REGEN)) return 0;
     }
   }
 

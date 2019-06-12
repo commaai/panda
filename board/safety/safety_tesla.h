@@ -97,13 +97,13 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push)
   if (addr == 0x118)
   {
     // 1 bit at position 16
-    if (((to_push->RDLR & 0x8000)) >> 15 == 1)
+    if ((((to_push->RDLR & 0x8000)) >> 15) == 1)
     {
       //disable break cancel by commenting line below
       controls_allowed = 0;
     }
     //get vehicle speed in m/s. Tesla gives MPH
-    tesla_speed = ((((((to_push->RDLR >> 24) & 0x0F) << 8) + ((to_push->RDLR >> 16) & 0xFF)) * 0.05 - 25) * 1.609 / 3.6);
+    tesla_speed = ((((((to_push->RDLR >> 24) & 0xF) << 8) + ((to_push->RDLR >> 16) & 0xFF)) * 0.05) - 25) * 1.609 / 3.6;
     if (tesla_speed < 0)
     {
       tesla_speed = 0;
@@ -127,16 +127,16 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push)
   //get latest steering wheel angle
   if (addr == 0x00E)
   {
-    float angle_meas_now = (int)((((to_push->RDLR & 0x3F) << 8) + ((to_push->RDLR >> 8) & 0xFF)) * 0.1 - 819.2);
+    float angle_meas_now = (int)(((((to_push->RDLR & 0x3F) << 8) + ((to_push->RDLR >> 8) & 0xFF)) * 0.1) - 819.2);
     uint32_t ts = TIM2->CNT;
     uint32_t ts_elapsed = get_ts_elapsed(ts, tesla_ts_angle_last);
 
     // *** angle real time check
     // add 1 to not false trigger the violation and multiply by 25 since the check is done every 250 ms and steer angle is updated at     100Hz
-    float rt_delta_angle_up = interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, tesla_speed) * 25. + 1.;
-    float rt_delta_angle_down = interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, tesla_speed) * 25. + 1.;
-    float highest_rt_angle = tesla_rt_angle_last + (tesla_rt_angle_last > 0 ? rt_delta_angle_up : rt_delta_angle_down);
-    float lowest_rt_angle = tesla_rt_angle_last - (tesla_rt_angle_last > 0 ? rt_delta_angle_down : rt_delta_angle_up);
+    float rt_delta_angle_up = (interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, tesla_speed) * 25.) + 1.;
+    float rt_delta_angle_down = (interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, tesla_speed) * 25.) + 1.;
+    float highest_rt_angle = tesla_rt_angle_last + ((tesla_rt_angle_last > 0) ? rt_delta_angle_up : rt_delta_angle_down);
+    float lowest_rt_angle = tesla_rt_angle_last - ((tesla_rt_angle_last > 0) ? rt_delta_angle_down : rt_delta_angle_up);
 
     if ((ts_elapsed > TESLA_RT_INTERVAL) || (controls_allowed && !tesla_controls_allowed_last))
     {
@@ -181,7 +181,7 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send)
   if (addr == 0x488)
   {
     angle_raw = ((to_send->RDLR & 0x7F) << 8) + ((to_send->RDLR & 0xFF00) >> 8);
-    desired_angle = angle_raw * 0.1 - 1638.35;
+    desired_angle = (angle_raw * 0.1) - 1638.35;
     int16_t violation = 0;
     int st_enabled = (to_send->RDLR & 0x400000) >> 22;
 
@@ -196,8 +196,8 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send)
       // add 1 to not false trigger the violation
       float delta_angle_up = interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, tesla_speed) + 1.;
       float delta_angle_down = interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, tesla_speed) + 1.;
-      float highest_desired_angle = tesla_desired_angle_last + (tesla_desired_angle_last > 0 ? delta_angle_up : delta_angle_down);
-      float lowest_desired_angle = tesla_desired_angle_last - (tesla_desired_angle_last > 0 ? delta_angle_down : delta_angle_up);
+      float highest_desired_angle = tesla_desired_angle_last + ((tesla_desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
+      float lowest_desired_angle = tesla_desired_angle_last - ((tesla_desired_angle_last > 0) ? delta_angle_down : delta_angle_up);
       float TESLA_MAX_ANGLE = interpolate(TESLA_LOOKUP_MAX_ANGLE, tesla_speed) + 1.;
 
       //check for max angles
