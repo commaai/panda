@@ -17,10 +17,7 @@ int cadillac_supercruise_on = 0;
 struct sample_t cadillac_torque_driver;         // last few driver torques measured
 
 int cadillac_get_torque_idx(uint32_t addr) {
-  if (addr==0x151) return 0;
-  else if (addr==0x152) return 1;
-  else if (addr==0x153) return 2;
-  else return 3;
+  return addr - 0x151;  // 0x151 is id 0, 0x152 is id 1 and so on...
 }
 
 static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
