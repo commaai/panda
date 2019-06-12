@@ -186,10 +186,13 @@ int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
 
 // interp function that holds extreme values
 float interpolate(struct lookup_t xy, float x) {
+
   int size = sizeof(xy.x) / sizeof(xy.x[0]);
+  float ret = xy.y[size - 1];  // default output is last point
+
   // x is lower than the first point in the x array. Return the first point
   if (x <= xy.x[0]) {
-    return xy.y[0];
+    ret = xy.y[0];
 
   } else {
     // find the index such that (xy.x[i] <= x < xy.x[i+1]) and linearly interp
@@ -203,10 +206,10 @@ float interpolate(struct lookup_t xy, float x) {
         if (dx <= 0.) {
           dx = 0.0001;
         }
-        return (dy * (x - x0) / dx) + y0;
+        ret = (dy * (x - x0) / dx) + y0;
+        break;
       }
     }
-    // if no such point is found, then x > xy.x[size-1]. Return last point
-    return xy.y[size - 1];
   }
+  return ret;
 }
