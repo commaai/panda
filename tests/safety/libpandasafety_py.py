@@ -42,6 +42,7 @@ void reset_angle_control(void);
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_send);
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_push);
+int safety_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd);
 int safety_set_mode(uint16_t  mode, int16_t param);
 
 void init_tests_toyota(void);
