@@ -106,23 +106,13 @@ static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   // forward CAN 1 > 0, except ES_LKAS
   else if (bus_num == 2) {
 
-    // outback 2015
-    if (addr == 0x164) {
+    // 356 is LKAS for outback 2015
+    // 356 is LKAS for Global Platform
+    // 545 is ES_Distance
+    // 802 is ES_LKAS
+    if ((addr == 290) || (addr == 356) || (addr == 545) || (addr == 802)){
       return -1;
     }
-    // global platform
-    if (addr == 0x122) {
-      return -1;
-    }
-    // ES Distance
-    if (addr == 545) {
-      return -1;
-    }
-    // ES LKAS
-    if (addr == 802) {
-      return -1;
-    }
-
     return 0; // Main CAN
   }
 
