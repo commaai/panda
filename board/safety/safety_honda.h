@@ -87,6 +87,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   int addr = to_send->RIR >> 21;
+  int tx = 1;
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
@@ -97,9 +98,13 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // BRAKE: safety check
   if (addr == 0x1FA) {
     if (current_controls_allowed && long_controls_allowed) {
-      if ((to_send->RDLR & 0xFFFFFF3F) != to_send->RDLR) return 0;
+      if ((to_send->RDLR & 0xFFFFFF3F) != to_send->RDLR) {
+        tx = 0;
+      }
     } else {
-      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
+      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
+        tx = 0;
+      }
     }
   }
 
@@ -108,7 +113,9 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (current_controls_allowed) {
       // all messages are fine here
     } else {
-      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
+      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
+        tx = 0;
+      }
     }
   }
 
@@ -117,7 +124,9 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (current_controls_allowed && long_controls_allowed) {
       // all messages are fine here
     } else {
-      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
+      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
+        tx = 0;
+      }
     }
   }
 
@@ -126,11 +135,13 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == 0x296) && honda_bosch_hardware &&
       !current_controls_allowed && ((to_send->RDTR >> 4) & 0xFF) == 0) {
-    if (((to_send->RDLR >> 5) & 0x7) != 2) return 0;
+    if (((to_send->RDLR >> 5) & 0x7) != 2) {
+      tx = 0;
+    }
   }
 
   // 1 allows the message through
-  return true;
+  return tx;
 }
 
 static void honda_init(int16_t param) {
@@ -151,31 +162,36 @@ static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   // 0xE4 is steering on all cars except CRV and RDX, 0x194 for CRV and RDX,
   // 0x1FA is brake control, 0x30C is acc hud, 0x33D is lkas hud,
   // 0x39f is radar hud
-  int addr = to_fwd->RIR>>21;
+  int bus_fwd = -1;
+
   if (bus_num == 0) {
-    return 2;
+    bus_fwd = 2;
   } else if (bus_num == 2) {
     // block stock lkas messages and stock acc messages (if OP is doing ACC)
+    int addr = to_fwd->RIR>>21;
     int is_lkas_msg = (addr == 0xE4) || (addr == 0x194) || (addr == 0x33D);
     int is_acc_msg = (addr == 0x1FA) || (addr == 0x30C) || (addr == 0x39F);
-    if (is_lkas_msg || (is_acc_msg && long_controls_allowed)) {
-      return -1;
+    int block_fwd = is_lkas_msg || (is_acc_msg && long_controls_allowed);
+    if (!block_fwd) {
+      bus_fwd = 0;
     }
-    return 0;
   }
-  return -1;
+  return bus_fwd;
 }
 
 static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+  int bus_fwd = -1;
 
-  int addr = to_fwd->RIR >> 21;
-  int is_lkas_msg = (addr == 0xE4) || (addr == 0x33D);
   if (bus_num == 2) {
-    return 1;
-  } else if ((bus_num == 1) && !is_lkas_msg)  {
-    return 2;
+    bus_fwd = 1;
+  } else if (bus_num == 1)  {
+    int addr = to_fwd->RIR >> 21;
+    int is_lkas_msg = (addr == 0xE4) || (addr == 0x33D);
+    if (!is_lkas_msg) {
+      bus_fwd = 2;
+    }
   }
-  return -1;
+  return bus_fwd;
 }
 
 const safety_hooks honda_hooks = {
