@@ -32,7 +32,7 @@ class TestHondaSafety(unittest.TestCase):
         elif b == 1:
           fwd_bus = -1 if m in blocked_msgs else 2
         elif b == 2:
-          fwd_bus = -1 if m in blocked_msgs else 1
+          fwd_bus = 1
 
         # assume len 8
         self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
