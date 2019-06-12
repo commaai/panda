@@ -87,7 +87,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if (addr == 0x118) {
     // 1 bit at position 16
     if ((((to_push->RDLR & 0x8000)) >> 15) == 1) {
-      //disable break cancel by commenting line below
+      // disable break cancel by commenting line below
       controls_allowed = 0;
     }
     //get vehicle speed in m/s. Tesla gives MPH
