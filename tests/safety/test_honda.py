@@ -12,6 +12,14 @@ class TestHondaSafety(unittest.TestCase):
     cls.safety.safety_set_mode(1, 0)
     cls.safety.init_tests_honda()
 
+  def _send_msg(self, bus, addr, length):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = addr << 21
+    to_send[0].RDTR = length
+    to_send[0].RDTR = bus << 4
+
+    return to_send
+
   def _speed_msg(self, speed):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x158 << 21
@@ -232,6 +240,33 @@ class TestHondaSafety(unittest.TestCase):
     # do not block resume if we are engaged already
     self.safety.set_controls_allowed(1)
     self.assertTrue(self.safety.safety_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))
+
+  def test_fwd_hook(self):
+    buss = range(0x0, 0x3)
+    msgs = range(0x1, 0x800)
+    long_controls_allowed = [0, 1]
+
+    self.safety.set_honda_bosch_hardware(0)
+
+    for l in long_controls_allowed:
+      self.safety.set_long_controls_allowed(l)
+      blocked_msgs = [0xE4, 0x194, 0x33D]
+      if l:
+        blocked_msgs += [0x1FA ,0x30C, 0x39F]
+      for b in buss:
+        for m in msgs:
+          if b == 0:
+            fwd_bus = 2
+          elif b == 1:
+            fwd_bus = -1
+          elif b == 2:
+            fwd_bus = -1 if m in blocked_msgs else 0
+
+          # assume len 8
+          self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
+
+    self.safety.set_long_controls_allowed(True)
+
 
 
 if __name__ == "__main__":
