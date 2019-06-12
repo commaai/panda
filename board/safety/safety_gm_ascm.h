@@ -14,7 +14,7 @@ static int gm_ascm_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     //if ((addr == 0x152) || (addr == 0x154) || (addr == 0x315) || (addr == 0x2cb)) {
     if ((addr == 0x152) || (addr == 0x154)) {
       int supercruise_on = (to_fwd->RDHR>>4) & 0x1;  // bit 36
-      if (supercruise_on) {
+      if (!supercruise_on) {
         bus_fwd = -1;
       }
     } else if ((addr == 0x151) || (addr == 0x153) || (addr == 0x314)) {
