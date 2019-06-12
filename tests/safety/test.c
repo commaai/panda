@@ -83,6 +83,10 @@ void set_timer(int t){
   timer.CNT = t;
 }
 
+void set_toyota_camera_forwarded(int t){
+  toyota_camera_forwarded = t;
+}
+
 void set_toyota_torque_meas(int min, int max){
   toyota_torque_meas.min = min;
   toyota_torque_meas.max = max;
@@ -101,6 +105,18 @@ void set_gm_torque_driver(int min, int max){
 void set_hyundai_torque_driver(int min, int max){
   hyundai_torque_driver.min = min;
   hyundai_torque_driver.max = max;
+}
+
+void set_hyundai_camera_bus(int t){
+  hyundai_camera_bus = t;
+}
+
+void set_hyundai_giraffe_switch_2(int t){
+  hyundai_giraffe_switch_2 = t;
+}
+
+void set_chrysler_camera_detected(int t){
+  chrysler_camera_detected = t;
 }
 
 void set_chrysler_torque_meas(int min, int max){

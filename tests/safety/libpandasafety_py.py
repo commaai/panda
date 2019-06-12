@@ -51,6 +51,7 @@ int get_toyota_torque_meas_max(void);
 int get_toyota_gas_prev(void);
 void set_toyota_torque_meas(int min, int max);
 void set_toyota_desired_torque_last(int t);
+void set_toyota_camera_forwarded(int t);
 void set_toyota_rt_torque_last(int t);
 
 void init_tests_honda(void);
@@ -74,10 +75,13 @@ void init_tests_hyundai(void);
 void set_hyundai_desired_torque_last(int t);
 void set_hyundai_rt_torque_last(int t);
 void set_hyundai_torque_driver(int min, int max);
+void set_hyundai_giraffe_switch_2(int t);
+void set_hyundai_camera_bus(int t);
 
 void init_tests_chrysler(void);
 void set_chrysler_desired_torque_last(int t);
 void set_chrysler_rt_torque_last(int t);
+void set_chrysler_camera_detected(int t);
 int get_chrysler_torque_meas_min(void);
 int get_chrysler_torque_meas_max(void);
 void set_chrysler_torque_meas(int min, int max);
