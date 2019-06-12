@@ -34,6 +34,13 @@ class TestToyotaSafety(unittest.TestCase):
     cls.safety.safety_set_mode(2, 100)
     cls.safety.init_tests_toyota()
 
+  def _send_msg(self, bus, addr, length):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = addr << 21
+    to_send[0].RDTR = length
+    to_send[0].RDTR = bus << 4
+    return to_send
+
   def _set_prev_torque(self, t):
     self.safety.set_toyota_desired_torque_last(t)
     self.safety.set_toyota_rt_torque_last(t)
@@ -269,6 +276,37 @@ class TestToyotaSafety(unittest.TestCase):
     self.assertFalse(self.safety.safety_tx_hook(self._send_interceptor_msg(0x1000, 0x200)))
     self.safety.set_controls_allowed(1)
     self.assertTrue(self.safety.safety_tx_hook(self._send_interceptor_msg(0x1000, 0x200)))
+
+  def test_fwd_hook(self):
+
+    buss = range(0x0, 0x3)
+    msgs = range(0x1, 0x800)
+    long_controls_allowed = [0, 1]
+    toyota_camera_forwarded = [0, 1]
+
+    for tcf in toyota_camera_forwarded:
+      self.safety.set_toyota_camera_forwarded(tcf)
+      for lca in long_controls_allowed:
+        self.safety.set_long_controls_allowed(lca)
+        blocked_msgs = [0x2E4, 0x412]
+        if lca:
+          blocked_msgs += [0x343]
+        for b in buss:
+          for m in msgs:
+            if tcf:
+              if b == 0:
+                fwd_bus = 2
+              elif b == 1:
+                fwd_bus = -1
+              elif b == 2:
+                fwd_bus = -1 if m in blocked_msgs else 0
+            else:
+              fwd_bus = -1
+
+            # assume len 8
+            self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
+
+    self.safety.set_long_controls_allowed(True)
 
 
 if __name__ == "__main__":

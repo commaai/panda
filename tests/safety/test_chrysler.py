@@ -38,6 +38,13 @@ class TestChryslerSafety(unittest.TestCase):
     cls.safety.safety_set_mode(9, 0)
     cls.safety.init_tests_chrysler()
 
+  def _send_msg(self, bus, addr, length):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = addr << 21
+    to_send[0].RDTR = length
+    to_send[0].RDTR = bus << 4
+    return to_send
+
   def _button_msg(self, buttons):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 1265 << 21
@@ -173,32 +180,28 @@ class TestChryslerSafety(unittest.TestCase):
     self.assertEqual(0, self.safety.get_chrysler_torque_meas_max())
     self.assertEqual(0, self.safety.get_chrysler_torque_meas_min())
 
-  def _replay_drive(self, csv_reader):
-    for row in csv_reader:
-      if len(row) != 4:  # sometimes truncated at end of the file
-        continue
-      if row[0] == 'time':  # skip CSV header
-        continue
-      addr = int(row[1])
-      bus = int(row[2])
-      data_str = row[3]  # Example '081407ff0806e06f'
-      to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-      to_send[0].RIR = addr << 21
-      to_send[0].RDHR = swap_bytes(data_str[8:])
-      to_send[0].RDLR = swap_bytes(data_str[:8])
-      if (bus == 128):
-        self.assertTrue(self.safety.safety_tx_hook(to_send), msg=row)
-      else:
-        self.safety.safety_rx_hook(to_send)
+  def test_fwd_hook(self):
+    buss = range(0x0, 0x3)
+    msgs = range(0x1, 0x800)
+    chrysler_camera_detected = [0, 1]
 
-  def test_replay_drive(self):
-    # In Cabana, click "Save Log" and then put the downloaded CSV in this directory.
-    test_files = glob.glob('chrysler_*.csv')
-    for filename in test_files:
-      print 'testing %s' % filename
-      with open(filename) as csvfile:
-        reader = csv.reader(csvfile)
-        self._replay_drive(reader)
+    for ccd in chrysler_camera_detected:
+      self.safety.set_chrysler_camera_detected(ccd)
+      blocked_msgs = [658, 678]
+      for b in buss:
+        for m in msgs:
+          if not ccd:
+            if b == 0:
+              fwd_bus = 2
+            elif b == 1:
+              fwd_bus = -1
+            elif b == 2:
+              fwd_bus = -1 if m in blocked_msgs else 0
+          else:
+            fwd_bus = -1
+
+          # assume len 8
+          self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
 
 
 if __name__ == "__main__":
