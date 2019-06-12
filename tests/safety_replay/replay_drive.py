@@ -34,18 +34,18 @@ def replay_drive(lr, safety_mode, param):
   blocked_addrs = set()
 
   for msg in lr:
-    safety.set_timer((msg.logMonoTime & 0xFFFFFFFF)/1000)
+    safety.set_timer(((msg.logMonoTime / 1000))  % 0xFFFFFFFF)
 
     if msg.which() == 'sendcan':
-      for canmsg in msg.sendcan:
-        # handle extended addresses
-        addr_shift = 3 if canmsg.address << 21 > 0xFFFFFFFF else 21
+     for canmsg in msg.sendcan:
+        addr_shift = 3 if canmsg.address >= 0x800 else 21
+        rdlr, rdhr = struct.unpack('II', canmsg.dat.ljust(8, b'\x00'))
 
         to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
         to_send[0].RIR = canmsg.address << addr_shift
-        to_send[0].RDTR = (canmsg.src & 0xF) << 4
-        to_send[0].RDHR = struct.unpack('<I', canmsg.dat.ljust(8, '\x00')[4:])[0]
-        to_send[0].RDLR = struct.unpack('<I', canmsg.dat.ljust(8, '\x00')[:4])[0]
+        to_send[0].RDTR = len(canmsg.dat) | ((canmsg.src & 0xF) << 4)
+        to_send[0].RDHR = rdhr
+        to_send[0].RDLR = rdlr
 
         sent = safety.safety_tx_hook(to_send)
         if not sent:
@@ -55,19 +55,19 @@ def replay_drive(lr, safety_mode, param):
         tx_controls += safety.get_controls_allowed()
         tx_tot += 1
     elif msg.which() == 'can':
-      for canmsg in msg.can:
+     for canmsg in msg.can:
         # ignore msgs we sent
         if canmsg.src >= 128:
           continue
 
-        # handle extended addresses
-        addr_shift = 3 if canmsg.address << 21 > 0xFFFFFFFF else 21
+        addr_shift = 3 if canmsg.address >= 0x800 else 21
+        rdlr, rdhr = struct.unpack('II', canmsg.dat.ljust(8, b'\x00'))
 
         to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
         to_push[0].RIR = canmsg.address << addr_shift
-        to_push[0].RDTR = (canmsg.src & 0xF) << 4
-        to_push[0].RDHR = struct.unpack('<I', canmsg.dat.ljust(8, '\x00')[4:])[0]
-        to_push[0].RDLR = struct.unpack('<I', canmsg.dat.ljust(8, '\x00')[:4])[0]
+        to_push[0].RDTR = len(canmsg.dat) | ((canmsg.src & 0xF) << 4)
+        to_push[0].RDHR = rdhr
+        to_push[0].RDLR = rdlr
         safety.safety_rx_hook(to_push)
 
   print "total openpilot msgs:", tx_tot

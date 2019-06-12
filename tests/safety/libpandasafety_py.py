@@ -37,7 +37,7 @@ int get_long_controls_allowed(void);
 void set_gas_interceptor_detected(int c);
 int get_gas_interceptor_detetcted(void);
 int get_gas_interceptor_prev(void);
-void set_timer(int t);
+void set_timer(uint32_t t);
 void reset_angle_control(void);
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_send);
