@@ -44,6 +44,7 @@ TIM_TypeDef *TIM2 = &timer;
 
 
 #define PANDA
+#define NULL ((void*)0)
 #define static
 #include "safety.h"
 

@@ -81,18 +81,18 @@ const safety_hook_config safety_hook_registry[] = {
 #define HOOK_CONFIG_COUNT (sizeof(safety_hook_registry)/sizeof(safety_hook_config))
 
 int safety_set_mode(uint16_t mode, int16_t param) {
-  int out = -1;
+  int safety_mode_set = -1;   // not set
   for (int i = 0; i < HOOK_CONFIG_COUNT; i++) {
     if (safety_hook_registry[i].id == mode) {
       current_hooks = safety_hook_registry[i].hooks;
-      if (current_hooks->init) {
-        current_hooks->init(param);
-      }
-      out = 0;
+      safety_mode_set = 0;    // set
       break;
     }
   }
-  return out;
+  if (current_hooks->init != NULL) {
+    current_hooks->init(param);
+  }
+  return safety_mode_set;
 }
 
 // compute the time elapsed (in microseconds) from 2 counter samples
@@ -120,7 +120,7 @@ void update_sample(struct sample_t *sample, int sample_new) {
   // get the minimum and maximum measured samples
   sample->min = sample->values[0];
   sample->max = sample->values[0];
-  for (int i = 1; i < sizeof(sample->values)/sizeof(sample->values[0]); i++) {
+  for (int i = 1; i < sizeof(sample->values) / sizeof(sample->values[0]); i++) {
     if (sample->values[i] < sample->min) {
       sample->min = sample->values[i];
     }
