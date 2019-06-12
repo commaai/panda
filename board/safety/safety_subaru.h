@@ -39,6 +39,7 @@ static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 }
 
 static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+  int tx = 1;
   uint32_t addr = to_send->RIR >> 21;
 
   // steer cmd checks
@@ -86,31 +87,32 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
 
     if (violation) {
-      return false;
+      tx = 0;
     }
 
   }
-  return true;
+  return tx;
 }
 
 static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
-  int32_t addr = to_fwd->RIR >> 21;
 
+  int bus_fwd = -1;
   if (bus_num == 0) {
-    return 2; // Camera CAN
+    bus_fwd = 2;  // Camera CAN
   } else if (bus_num == 2) {
     // 356 is LKAS for outback 2015
     // 356 is LKAS for Global Platform
     // 545 is ES_Distance
     // 802 is ES_LKAS
-    if ((addr == 290) || (addr == 356) || (addr == 545) || (addr == 802)){
-      return -1;
+    int32_t addr = to_fwd->RIR >> 21;
+    int block_msg = (addr == 290) || (addr == 356) || (addr == 545) || (addr == 802);
+    if (!block_msg) {
+      bus_fwd = 0;  // Main CAN
     }
-    return 0; // Main CAN
   }
 
   // fallback to do not forward
-  return -1;
+  return bus_fwd;
 }
 
 const safety_hooks subaru_hooks = {

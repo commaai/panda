@@ -17,10 +17,17 @@ int cadillac_supercruise_on = 0;
 struct sample_t cadillac_torque_driver;         // last few driver torques measured
 
 int cadillac_get_torque_idx(uint32_t addr) {
-  if (addr==0x151) return 0;
-  else if (addr==0x152) return 1;
-  else if (addr==0x153) return 2;
-  else return 3;
+  int id = 0;
+  if (addr == 0x151) {
+    id = 0;
+  } else if (addr == 0x152) {
+    id = 1;
+  } else if (addr == 0x153) {
+    id = 2;
+  } else {
+    id = 3;
+  }
+  return id;
 }
 
 static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -57,6 +64,7 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 }
 
 static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+  int tx = 1;
   uint32_t addr = to_send->RIR >> 21;
 
   // steer cmd checks
@@ -105,11 +113,11 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
 
     if (violation || cadillac_supercruise_on) {
-      return false;
+      tx = 0;
     }
 
   }
-  return true;
+  return tx;
 }
 
 static void cadillac_init(int16_t param) {

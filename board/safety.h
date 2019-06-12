@@ -81,16 +81,18 @@ const safety_hook_config safety_hook_registry[] = {
 #define HOOK_CONFIG_COUNT (sizeof(safety_hook_registry)/sizeof(safety_hook_config))
 
 int safety_set_mode(uint16_t mode, int16_t param) {
+  int out = -1;
   for (int i = 0; i < HOOK_CONFIG_COUNT; i++) {
     if (safety_hook_registry[i].id == mode) {
       current_hooks = safety_hook_registry[i].hooks;
       if (current_hooks->init) {
         current_hooks->init(param);
       }
-      return 0;
+      out = 0;
+      break;
     }
   }
-  return -1;
+  return out;
 }
 
 // compute the time elapsed (in microseconds) from 2 counter samples
