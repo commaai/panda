@@ -35,6 +35,13 @@ class TestGmSafety(unittest.TestCase):
     cls.safety.safety_set_mode(3, 0)
     cls.safety.init_tests_gm()
 
+  def _send_msg(self, bus, addr, length):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = addr << 21
+    to_send[0].RDTR = length
+    to_send[0].RDTR = bus << 4
+    return to_send
+
   def _speed_msg(self, speed):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 842 << 21
@@ -271,6 +278,17 @@ class TestGmSafety(unittest.TestCase):
       self.safety.set_timer(RT_INTERVAL + 1)
       self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
       self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+
+
+  def test_fwd_hook(self):
+    # nothing allowed
+    buss = range(0x0, 0x3)
+    msgs = range(0x1, 0x800)
+
+    for b in buss:
+      for m in msgs:
+        # assume len 8
+        self.assertEqual(-1, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
 
 
 if __name__ == "__main__":
