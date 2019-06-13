@@ -1,8 +1,11 @@
 #!/usr/bin/env python2
 
+import os
 import sys
-import struct
 import panda.tests.safety.libpandasafety_py as libpandasafety_py
+from panda.tests.safety_replay.replay_helpers import is_steering_msg, get_torque, \
+                                                    set_desired_torque_last, package_can_msg
+
 from openpilot_tools.lib.logreader import LogReader
 
 safety_modes = {
@@ -23,12 +26,28 @@ safety_modes = {
   "ELM327": 0xE327
 }
 
+
 # replay a drive to check for safety violations
 def replay_drive(lr, safety_mode, param):
   safety = libpandasafety_py.libpandasafety
 
   err = safety.safety_set_mode(safety_mode, param)
   assert err == 0, "invalid safety mode: %d" % safety_mode
+
+  if "SEGMENT" in os.environ:
+    print "ignoring start"
+    cnt = 0
+    for msg in lr:
+      if msg.which() != 'sendcan':
+        continue
+      for canmsg in msg.sendcan:
+        if is_steering_msg(mode, canmsg.address):
+          to_send = package_can_msg(canmsg)
+          torque = get_steer_torque(mode, to_send)
+          if torque != 0:
+            safety.set_controls_allowed(1)
+            set_desired_torque_last(safety, mode, torque)
+      break
 
   tx_tot, tx_blocked, tx_controls, tx_controls_blocked = 0, 0, 0, 0
   blocked_addrs = set()
@@ -38,15 +57,7 @@ def replay_drive(lr, safety_mode, param):
 
     if msg.which() == 'sendcan':
      for canmsg in msg.sendcan:
-        addr_shift = 3 if canmsg.address >= 0x800 else 21
-        rdlr, rdhr = struct.unpack('II', canmsg.dat.ljust(8, b'\x00'))
-
-        to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-        to_send[0].RIR = canmsg.address << addr_shift
-        to_send[0].RDTR = len(canmsg.dat) | ((canmsg.src & 0xF) << 4)
-        to_send[0].RDHR = rdhr
-        to_send[0].RDLR = rdlr
-
+        to_send = package_can_msg(canmsg)
         sent = safety.safety_tx_hook(to_send)
         if not sent:
           tx_blocked += 1
@@ -59,15 +70,7 @@ def replay_drive(lr, safety_mode, param):
         # ignore msgs we sent
         if canmsg.src >= 128:
           continue
-
-        addr_shift = 3 if canmsg.address >= 0x800 else 21
-        rdlr, rdhr = struct.unpack('II', canmsg.dat.ljust(8, b'\x00'))
-
-        to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-        to_push[0].RIR = canmsg.address << addr_shift
-        to_push[0].RDTR = len(canmsg.dat) | ((canmsg.src & 0xF) << 4)
-        to_push[0].RDHR = rdhr
-        to_push[0].RDLR = rdlr
+        to_push = package_can_msg(canmsg)
         safety.safety_rx_hook(to_push)
 
   print "total openpilot msgs:", tx_tot
@@ -89,3 +92,4 @@ if __name__ == "__main__":
   print "replaying drive %s with safety mode %d and param %d" % (sys.argv[1], mode, param)
 
   replay_drive(lr, mode, param)
+
