@@ -20,8 +20,11 @@ def replay_drive(lr, safety_mode, param):
 
   tx_tot, tx_blocked, tx_controls, tx_controls_blocked = 0, 0, 0, 0
   blocked_addrs = set()
+  start_t = None
 
   for msg in lr:
+    if start_t is None:
+      start_t = msg.logMonoTime
     safety.set_timer(((msg.logMonoTime / 1000))  % 0xFFFFFFFF)
 
     if msg.which() == 'sendcan':
@@ -32,6 +35,9 @@ def replay_drive(lr, safety_mode, param):
           tx_blocked += 1
           tx_controls_blocked += safety.get_controls_allowed()
           blocked_addrs.add(canmsg.address)
+
+          if "DEBUG" in os.environ:
+            print "blocked %d at %f" % (canmsg.address, (msg.logMonoTime - start_t)/(1e9))
         tx_controls += safety.get_controls_allowed()
         tx_tot += 1
     elif msg.which() == 'can':
