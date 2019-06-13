@@ -22,8 +22,6 @@ const int GM_MAX_BRAKE = 350;
 int gm_brake_prev = 0;
 int gm_gas_prev = 0;
 int gm_speed = 0;
-// silence everything if stock car control ECUs are still online
-int gm_ascm_detected = 0;
 int gm_ignition_started = 0;
 int gm_rt_torque_last = 0;
 int gm_desired_torque_last = 0;
@@ -66,9 +64,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // Check if ASCM or LKA camera are online
   // on powertrain bus.
   // 384 = ASCMLKASteeringCmd
-  // 715 = ASCMGasRegenCmd
-  if (bus_number == 0 && (addr == 384 || addr == 715)) {
-    gm_ascm_detected = 1;
+  if (bus_number == 0 && addr == 384) {
     controls_allowed = 0;
   }
 
@@ -123,12 +119,6 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 //     block all commands that produce actuation
 
 static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
-
-  // There can be only one! (ASCM)
-  if (gm_ascm_detected) {
-    return 0;
-  }
-
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
   int pedal_pressed = gm_gas_prev || (gm_brake_prev && gm_speed);
