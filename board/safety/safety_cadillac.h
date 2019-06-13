@@ -1,3 +1,5 @@
+#define CADILLAC_TORQUE_MSG_N 4      // 4 torque messages: 0x151, 0x152, 0x153, 0x154
+
 const int CADILLAC_MAX_STEER = 150; // 1s
 // real time torque limit to prevent controls spamming
 // the real time limit is 1500/sec
@@ -11,13 +13,14 @@ const int CADILLAC_DRIVER_TORQUE_FACTOR = 4;
 int cadillac_ign = 0;
 int cadillac_cruise_engaged_last = 0;
 int cadillac_rt_torque_last = 0;
-int cadillac_desired_torque_last[4] = {0};      // 4 torque messages
+const int cadillac_torque_msgs_n = 4;
+int cadillac_desired_torque_last[CADILLAC_TORQUE_MSG_N] = {0};
 uint32_t cadillac_ts_last = 0;
 int cadillac_supercruise_on = 0;
 struct sample_t cadillac_torque_driver;         // last few driver torques measured
 
-int cadillac_get_torque_idx(uint32_t addr) {
-  return addr - 0x151;  // 0x151 is id 0, 0x152 is id 1 and so on...
+int cadillac_get_torque_idx(uint32_t addr, int array_size) {
+  return min(max(addr - 0x151, 0), array_size);  // 0x151 is id 0, 0x152 is id 1 and so on...
 }
 
 static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -62,7 +65,7 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int desired_torque = ((to_send->RDLR & 0x3f) << 8) + ((to_send->RDLR & 0xff00) >> 8);
     int violation = 0;
     uint32_t ts = TIM2->CNT;
-    int idx = cadillac_get_torque_idx(addr);
+    int idx = cadillac_get_torque_idx(addr, CADILLAC_TORQUE_MSG_N);
     desired_torque = to_signed(desired_torque, 14);
 
     if (controls_allowed) {
