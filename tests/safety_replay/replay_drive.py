@@ -41,7 +41,7 @@ def replay_drive(lr, safety_mode, param):
         tx_controls += safety.get_controls_allowed()
         tx_tot += 1
     elif msg.which() == 'can':
-     for canmsg in msg.can:
+      for canmsg in msg.can:
         # ignore msgs we sent
         if canmsg.src >= 128:
           continue
