@@ -78,11 +78,10 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_ELM327, &elm327_hooks},
 };
 
-#define HOOK_CONFIG_COUNT (sizeof(safety_hook_registry)/sizeof(safety_hook_config))
-
 int safety_set_mode(uint16_t mode, int16_t param) {
   int set_status = -1;   // not set
-  for (int i = 0; i < HOOK_CONFIG_COUNT; i++) {
+  int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);
+  for (int i = 0; i < hook_config_count; i++) {
     if (safety_hook_registry[i].id == mode) {
       current_hooks = safety_hook_registry[i].hooks;
       set_status = 0;    // set
@@ -112,7 +111,8 @@ int to_signed(int d, int bits) {
 
 // given a new sample, update the smaple_t struct
 void update_sample(struct sample_t *sample, int sample_new) {
-  for (int i = sizeof(sample->values)/sizeof(sample->values[0]) - 1; i > 0; i--) {
+  int sample_size = sizeof(sample->values) / sizeof(sample->values[0]);
+  for (int i = sample_size - 1; i > 0; i--) {
     sample->values[i] = sample->values[i-1];
   }
   sample->values[0] = sample_new;
@@ -120,7 +120,7 @@ void update_sample(struct sample_t *sample, int sample_new) {
   // get the minimum and maximum measured samples
   sample->min = sample->values[0];
   sample->max = sample->values[0];
-  for (int i = 1; i < sizeof(sample->values) / sizeof(sample->values[0]); i++) {
+  for (int i = 1; i < sample_size; i++) {
     if (sample->values[i] < sample->min) {
       sample->min = sample->values[i];
     }

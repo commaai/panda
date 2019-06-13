@@ -1,6 +1,6 @@
 const int CHRYSLER_MAX_STEER = 261;
 const int CHRYSLER_MAX_RT_DELTA = 112;        // max delta torque allowed for real time checks
-const int32_t CHRYSLER_RT_INTERVAL = 250000;  // 250ms between real time checks
+const uint32_t CHRYSLER_RT_INTERVAL = 250000;  // 250ms between real time checks
 const int CHRYSLER_MAX_RATE_UP = 3;
 const int CHRYSLER_MAX_RATE_DOWN = 3;
 const int CHRYSLER_MAX_TORQUE_ERROR = 80;    // max torque cmd in excess of torque motor
@@ -26,7 +26,7 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // Measured eps torque
-  if (addr == 544) {
+  if (addr == 544U) {
     int rdhr = to_push->RDHR;
     int torque_meas_new = ((rdhr & 0x7) << 8) + ((rdhr & 0xFF00) >> 8) - 1024;
 
@@ -35,7 +35,7 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if (addr == 0x1f4) {
+  if (addr == 0x1F4U) {
     int cruise_engaged = ((to_push->RDLR & 0x380000) >> 19) == 7;
     if (cruise_engaged && !chrysler_cruise_engaged_last) {
       controls_allowed = 1;
@@ -46,7 +46,7 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // check if stock camera ECU is still online
-  if ((bus == 0) && (addr == 0x292)) {
+  if ((bus == 0) && (addr == 0x292U)) {
     chrysler_camera_detected = 1;
     controls_allowed = 0;
   }
@@ -72,7 +72,7 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
 
   // LKA STEER
-  if (addr == 0x292) {
+  if (addr == 0x292U) {
     int rdlr = to_send->RDLR;
     int desired_torque = ((rdlr & 0x7) << 8) + ((rdlr & 0xFF00) >> 8) - 1024;
     uint32_t ts = TIM2->CNT;

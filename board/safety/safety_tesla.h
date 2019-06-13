@@ -25,7 +25,7 @@ const struct lookup_t TESLA_LOOKUP_MAX_ANGLE = {
     {2., 29., 38.},
     {410., 92., 36.}};
 
-const int TESLA_RT_INTERVAL = 250000; // 250ms between real time checks
+const uint32_t TESLA_RT_INTERVAL = 250000; // 250ms between real time checks
 
 // state of angle limits
 float tesla_desired_angle_last = 0; // last desired steer angle
@@ -63,7 +63,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     addr = to_push->RIR >> 21;
   }
 
-  if (addr == 0x45) {
+  if (addr == 0x45U) {
     // 6 bits starting at position 0
     int lever_position = (to_push->RDLR & 0x3F);
     if (lever_position == 2) { // pull forward
@@ -76,7 +76,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // Detect drive rail on (ignition) (start recording)
-  if (addr == 0x348) {
+  if (addr == 0x348U) {
     // GTW_status
     int drive_rail_on = (to_push->RDLR & 0x0001);
     tesla_ignition_started = drive_rail_on == 1;
@@ -84,7 +84,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // exit controls on brake press
   // DI_torque2::DI_brakePedal 0x118
-  if (addr == 0x118) {
+  if (addr == 0x118U) {
     // 1 bit at position 16
     if ((((to_push->RDLR & 0x8000)) >> 15) == 1) {
       // disable break cancel by commenting line below
@@ -99,18 +99,18 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // exit controls on EPAS error
   // EPAS_sysStatus::EPAS_eacStatus 0x370
-  if (addr == 0x370) {
+  if (addr == 0x370U) {
     // if EPAS_eacStatus is not 1 or 2, disable control
     eac_status = ((to_push->RDHR >> 21)) & 0x7;
     // For human steering override we must not disable controls when eac_status == 0
     // Additional safety: we could only allow eac_status == 0 when we have human steering allowed
-    if ((controls_allowed == 1) && (eac_status != 0) && (eac_status != 1) && (eac_status != 2)) {
+    if (controls_allowed && (eac_status != 0) && (eac_status != 1) && (eac_status != 2)) {
       controls_allowed = 0;
       //puts("EPAS error! \n");
     }
   }
   //get latest steering wheel angle
-  if (addr == 0x00E) {
+  if (addr == 0x00EU) {
     float angle_meas_now = (int)(((((to_push->RDLR & 0x3F) << 8) + ((to_push->RDLR >> 8) & 0xFF)) * 0.1) - 819.2);
     uint32_t ts = TIM2->CNT;
     uint32_t ts_elapsed = get_ts_elapsed(ts, tesla_ts_angle_last);
@@ -119,8 +119,8 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // add 1 to not false trigger the violation and multiply by 25 since the check is done every 250 ms and steer angle is updated at     100Hz
     float rt_delta_angle_up = (interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, tesla_speed) * 25.) + 1.;
     float rt_delta_angle_down = (interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, tesla_speed) * 25.) + 1.;
-    float highest_rt_angle = tesla_rt_angle_last + ((tesla_rt_angle_last > 0) ? rt_delta_angle_up : rt_delta_angle_down);
-    float lowest_rt_angle = tesla_rt_angle_last - ((tesla_rt_angle_last > 0) ? rt_delta_angle_down : rt_delta_angle_up);
+    float highest_rt_angle = tesla_rt_angle_last + ((tesla_rt_angle_last > 0.) ? rt_delta_angle_up : rt_delta_angle_down);
+    float lowest_rt_angle = tesla_rt_angle_last - ((tesla_rt_angle_last > 0.) ? rt_delta_angle_down : rt_delta_angle_up);
 
     if ((ts_elapsed > TESLA_RT_INTERVAL) || (controls_allowed && !tesla_controls_allowed_last)) {
       tesla_rt_angle_last = angle_meas_now;
@@ -158,7 +158,7 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // do not transmit CAN message if steering angle too high
   // DAS_steeringControl::DAS_steeringAngleRequest
-  if (addr == 0x488) {
+  if (addr == 0x488U) {
     angle_raw = ((to_send->RDLR & 0x7F) << 8) + ((to_send->RDLR & 0xFF00) >> 8);
     desired_angle = (angle_raw * 0.1) - 1638.35;
     bool violation = 0;
@@ -171,8 +171,8 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       // add 1 to not false trigger the violation
       float delta_angle_up = interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, tesla_speed) + 1.;
       float delta_angle_down = interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, tesla_speed) + 1.;
-      float highest_desired_angle = tesla_desired_angle_last + ((tesla_desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
-      float lowest_desired_angle = tesla_desired_angle_last - ((tesla_desired_angle_last > 0) ? delta_angle_down : delta_angle_up);
+      float highest_desired_angle = tesla_desired_angle_last + ((tesla_desired_angle_last > 0.) ? delta_angle_up : delta_angle_down);
+      float lowest_desired_angle = tesla_desired_angle_last - ((tesla_desired_angle_last > 0.) ? delta_angle_down : delta_angle_up);
       float TESLA_MAX_ANGLE = interpolate(TESLA_LOOKUP_MAX_ANGLE, tesla_speed) + 1.;
 
       //check for max angles
