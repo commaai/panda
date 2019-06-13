@@ -112,7 +112,7 @@ static int toyota_ipas_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       angle_control = 1;   // we are in angle control mode
       int desired_angle = ((to_send->RDLR & 0xf) << 8) + ((to_send->RDLR & 0xff00) >> 8);
       int ipas_state_cmd = ((to_send->RDLR & 0xff) >> 4);
-      int16_t violation = 0;
+      bool violation = 0;
 
       desired_angle = to_signed(desired_angle, 12);
 

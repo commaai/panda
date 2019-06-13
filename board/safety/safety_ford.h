@@ -21,8 +21,8 @@ static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // state machine to enter and exit controls
   if ((to_push->RIR>>21) == 0x83) {
-    int cancel = ((to_push->RDLR >> 8) & 0x1);
-    int set_or_resume = (to_push->RDLR >> 28) & 0x3;
+    bool cancel = (to_push->RDLR >> 8) & 0x1;
+    bool set_or_resume = (to_push->RDLR >> 28) & 0x3;
     if (cancel) {
       controls_allowed = 0;
     } else if (set_or_resume) {
@@ -62,7 +62,7 @@ static int ford_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
   int pedal_pressed = ford_gas_prev || (ford_brake_prev && ford_is_moving);
-  int current_controls_allowed = controls_allowed && !(pedal_pressed);
+  bool current_controls_allowed = controls_allowed && !(pedal_pressed);
   int addr = to_send->RIR >> 21;
 
   // STEER: safety check
@@ -80,7 +80,7 @@ static int ford_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // FORCE CANCEL: safety check only relevant when spamming the cancel button
   // ensuring that set and resume aren't sent
   if (addr == 0x83) {
-    if ((to_send->RDLR >> 28) & 0x3) {
+    if (((to_send->RDLR >> 28) & 0x3) != 0) {
       tx = 0;
     }
   }

@@ -8,7 +8,7 @@
 //      brake rising edge
 //      brake > 0mph
 //
-int fmax_limit_check(float val, const float MAX, const float MIN) {
+bool fmax_limit_check(float val, const float MAX, const float MIN) {
   return (val > MAX) || (val < MIN);
 }
 
@@ -53,7 +53,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   //int bus_number = (to_push->RDTR >> 4) & 0xFF;
   uint32_t addr;
-  if (to_push->RIR & 4) {
+  if ((to_push->RIR & 4) != 0) {
     // Extended
     // Not looked at, but have to be separated
     // to avoid address collision
@@ -161,7 +161,7 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if (addr == 0x488) {
     angle_raw = ((to_send->RDLR & 0x7F) << 8) + ((to_send->RDLR & 0xFF00) >> 8);
     desired_angle = (angle_raw * 0.1) - 1638.35;
-    int16_t violation = 0;
+    bool violation = 0;
     int st_enabled = (to_send->RDLR & 0x400000) >> 22;
 
     if (st_enabled == 0) {

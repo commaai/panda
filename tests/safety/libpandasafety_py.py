@@ -30,12 +30,12 @@ typedef struct
   uint32_t CNT;
 } TIM_TypeDef;
 
-void set_controls_allowed(int c);
-int get_controls_allowed(void);
-void set_long_controls_allowed(int c);
-int get_long_controls_allowed(void);
-void set_gas_interceptor_detected(int c);
-int get_gas_interceptor_detetcted(void);
+void set_controls_allowed(bool c);
+bool get_controls_allowed(void);
+void set_long_controls_allowed(bool c);
+bool get_long_controls_allowed(void);
+void set_gas_interceptor_detected(bool c);
+bool get_gas_interceptor_detetcted(void);
 int get_gas_interceptor_prev(void);
 void set_timer(int t);
 void reset_angle_control(void);
