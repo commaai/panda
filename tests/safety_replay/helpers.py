@@ -88,12 +88,12 @@ def init_segment(safety, lr, mode):
   sendcan = (msg for msg in lr if msg.which() == 'sendcan')
   steering_msgs = (can for msg in sendcan for can in msg.sendcan if is_steering_msg(mode, can.address))
 
-  try:
-    to_send = package_can_msg(steering_msgs.next())
-  except:
+  msg = next(steering_msgs, None)
+  if msg is None:
     # no steering msgs
     return
 
+  to_send = package_can_msg(msg)
   torque = get_steer_torque(mode, to_send)
   if torque != 0:
     safety.set_controls_allowed(1)
