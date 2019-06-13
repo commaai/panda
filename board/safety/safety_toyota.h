@@ -99,20 +99,26 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
+  int tx = 1;
   int addr = to_send->RIR >> 21;
+  int bus = (to_send->RDTR >> 4) & 0xF;
 
   // Check if msg is sent on BUS 0
-  if (((to_send->RDTR >> 4) & 0xF) == 0) {
+  if (bus == 0) {
 
     // no IPAS in non IPAS mode
-    if ((addr == 0x266) || (addr == 0x167)) return false;
+    if ((addr == 0x266) || (addr == 0x167)) {
+      tx = 0;
+    }
 
     // GAS PEDAL: safety check
     if (addr == 0x200) {
       if (controls_allowed && long_controls_allowed) {
         // all messages are fine here
       } else {
-        if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) return 0;
+        if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
+          tx = 0;
+        }
       }
     }
 
@@ -122,9 +128,11 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       desired_accel = to_signed(desired_accel, 16);
       if (controls_allowed && long_controls_allowed) {
         int violation = max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
-        if (violation) return 0;
+        if (violation) {
+          tx = 0;
+        }
       } else if (desired_accel != 0) {
-        return 0;
+        tx = 0;
       }
     }
 
@@ -172,13 +180,13 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       }
 
       if (violation) {
-        return false;
+        tx = 0;
       }
     }
   }
 
   // 1 allows the message through
-  return true;
+  return tx;
 }
 
 static void toyota_init(int16_t param) {
@@ -190,22 +198,23 @@ static void toyota_init(int16_t param) {
 
 static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
+  int bus_fwd = -1;
   if (toyota_camera_forwarded && !toyota_giraffe_switch_1) {
-    int addr = to_fwd->RIR>>21;
     if (bus_num == 0) {
-      return 2;
+      bus_fwd = 2;
     } else if (bus_num == 2) {
+      int addr = to_fwd->RIR>>21;
       // block stock lkas messages and stock acc messages (if OP is doing ACC)
       int is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412));
       // in TSSP 2.0 the camera does ACC as well, so filter 0x343
       int is_acc_msg = (addr == 0x343);
-      if (is_lkas_msg || (is_acc_msg && long_controls_allowed)) {
-        return -1;
+      int block_msg = is_lkas_msg || (is_acc_msg && long_controls_allowed);
+      if (!block_msg) {
+        bus_fwd = 0;
       }
-      return 0;
     }
   }
-  return -1;
+  return bus_fwd;
 }
 
 const safety_hooks toyota_hooks = {

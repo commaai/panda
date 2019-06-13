@@ -124,9 +124,11 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
+  int tx = 1;
+
   // There can be only one! (ASCM)
   if (gm_ascm_detected) {
-    return 0;
+    tx = 0;
   }
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
@@ -149,9 +151,13 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int brake = ((rdlr & 0xF) << 8) + ((rdlr & 0xFF00) >> 8);
     brake = (0x1000 - brake) & 0xFFF;
     if (current_controls_allowed && long_controls_allowed) {
-      if (brake > GM_MAX_BRAKE) return 0;
+      if (brake > GM_MAX_BRAKE) {
+        tx = 0;
+      }
     } else {
-      if (brake != 0) return 0;
+      if (brake != 0) {
+        tx = 0;
+      }
     }
   }
 
@@ -200,12 +206,14 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
 
     if (violation) {
-      return false;
+      tx = 0;
     }
   }
 
   // PARK ASSIST STEER: unlimited torque, no thanks
-  if (addr == 823) return 0;
+  if (addr == 823) {
+    tx = 0;
+  }
 
   // GAS/REGEN: safety check
   if (addr == 715) {
@@ -213,16 +221,20 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int gas_regen = ((rdlr & 0x7F0000) >> 11) + ((rdlr & 0xF8000000) >> 27);
     int apply = rdlr & 1;
     if (current_controls_allowed && long_controls_allowed) {
-      if (gas_regen > GM_MAX_GAS) return 0;
+      if (gas_regen > GM_MAX_GAS) {
+        tx = 0;
+      }
     } else {
       // Disabled message is !engaed with gas
       // value that corresponds to max regen.
-      if (apply || (gas_regen != GM_MAX_REGEN)) return 0;
+      if (apply || (gas_regen != GM_MAX_REGEN)) {
+        tx = 0;
+      }
     }
   }
 
   // 1 allows the message through
-  return true;
+  return tx;
 }
 
 static void gm_init(int16_t param) {

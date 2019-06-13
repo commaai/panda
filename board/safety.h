@@ -81,16 +81,18 @@ const safety_hook_config safety_hook_registry[] = {
 #define HOOK_CONFIG_COUNT (sizeof(safety_hook_registry)/sizeof(safety_hook_config))
 
 int safety_set_mode(uint16_t mode, int16_t param) {
+  int set_status = -1;   // not set
   for (int i = 0; i < HOOK_CONFIG_COUNT; i++) {
     if (safety_hook_registry[i].id == mode) {
       current_hooks = safety_hook_registry[i].hooks;
-      if (current_hooks->init) {
-        current_hooks->init(param);
-      }
-      return 0;
+      set_status = 0;    // set
+      break;
     }
   }
-  return -1;
+  if ((set_status == 0) && (current_hooks->init != NULL)) {
+    current_hooks->init(param);
+  }
+  return set_status;
 }
 
 // compute the time elapsed (in microseconds) from 2 counter samples
@@ -118,7 +120,7 @@ void update_sample(struct sample_t *sample, int sample_new) {
   // get the minimum and maximum measured samples
   sample->min = sample->values[0];
   sample->max = sample->values[0];
-  for (int i = 1; i < sizeof(sample->values)/sizeof(sample->values[0]); i++) {
+  for (int i = 1; i < sizeof(sample->values) / sizeof(sample->values[0]); i++) {
     if (sample->values[i] < sample->min) {
       sample->min = sample->values[i];
     }
@@ -184,10 +186,13 @@ int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
 
 // interp function that holds extreme values
 float interpolate(struct lookup_t xy, float x) {
+
   int size = sizeof(xy.x) / sizeof(xy.x[0]);
+  float ret = xy.y[size - 1];  // default output is last point
+
   // x is lower than the first point in the x array. Return the first point
   if (x <= xy.x[0]) {
-    return xy.y[0];
+    ret = xy.y[0];
 
   } else {
     // find the index such that (xy.x[i] <= x < xy.x[i+1]) and linearly interp
@@ -201,10 +206,10 @@ float interpolate(struct lookup_t xy, float x) {
         if (dx <= 0.) {
           dx = 0.0001;
         }
-        return (dy * (x - x0) / dx) + y0;
+        ret = (dy * (x - x0) / dx) + y0;
+        break;
       }
     }
-    // if no such point is found, then x > xy.x[size-1]. Return last point
-    return xy.y[size - 1];
   }
+  return ret;
 }

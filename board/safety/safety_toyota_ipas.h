@@ -35,7 +35,9 @@ static void toyota_ipas_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // check standard toyota stuff as well
   toyota_rx_hook(to_push);
 
-  if ((to_push->RIR>>21) == 0x260) {
+  int addr = to_push->RIR >> 21;
+
+  if (addr == 0x260) {
     // get driver steering torque
     int16_t torque_driver_new = (((to_push->RDLR) & 0xFF00) | ((to_push->RDLR >> 16) & 0xFF));
 
@@ -44,7 +46,7 @@ static void toyota_ipas_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // get steer angle
-  if ((to_push->RIR>>21) == 0x25) {
+  if (addr == 0x25) {
     int angle_meas_new = ((to_push->RDLR & 0xf) << 8) + ((to_push->RDLR & 0xff00) >> 8);
     uint32_t ts = TIM2->CNT;
 
@@ -78,12 +80,12 @@ static void toyota_ipas_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // get speed
-  if ((to_push->RIR>>21) == 0xb4) {
+  if (addr == 0xb4) {
     speed = ((float) (((to_push->RDHR) & 0xFF00) | ((to_push->RDHR >> 16) & 0xFF))) * 0.01 / 3.6;
   }
 
   // get ipas state
-  if ((to_push->RIR>>21) == 0x262) {
+  if (addr == 0x262) {
     ipas_state = (to_push->RDLR & 0xf);
   }
 
@@ -97,11 +99,15 @@ static void toyota_ipas_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int toyota_ipas_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
+  int tx = 1;
+  int bypass_standard_tx_hook = 0;
+  int addr = to_send->RIR >> 21;
+
   // Check if msg is sent on BUS 0
   if (((to_send->RDTR >> 4) & 0xF) == 0) {
 
     // STEER ANGLE
-    if (((to_send->RIR>>21) == 0x266) || ((to_send->RIR>>21) == 0x167)) {
+    if ((addr == 0x266) || (addr == 0x167)) {
 
       angle_control = 1;   // we are in angle control mode
       int desired_angle = ((to_send->RDLR & 0xf) << 8) + ((to_send->RDLR & 0xff00) >> 8);
@@ -138,15 +144,18 @@ static int toyota_ipas_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       desired_angle_last = desired_angle;
 
       if (violation) {
-        return false;
+        tx = 0;
       }
-
-      return true;
+      bypass_standard_tx_hook = 1;
     }
   }
 
-  // check standard toyota stuff as well
-  return toyota_tx_hook(to_send);
+  // check standard toyota stuff as well if addr isn't IPAS related
+  if (!bypass_standard_tx_hook) {
+    tx &= toyota_tx_hook(to_send);
+  }
+
+  return tx;
 }
 
 const safety_hooks toyota_ipas_hooks = {

@@ -65,9 +65,11 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
+  int tx = 1;
+
   // There can be only one! (camera)
   if (hyundai_camera_detected) {
-    return 0;
+    tx = 0;
   }
 
   uint32_t addr;
@@ -122,7 +124,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
 
     if (violation) {
-      return false;
+      tx = 0;
     }
   }
 
@@ -131,21 +133,29 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // This avoids unintended engagements while still allowing resume spam
   // TODO: fix bug preventing the button msg to be fwd'd on bus 2
   //if (((to_send->RIR>>21) == 1265) && !controls_allowed && ((to_send->RDTR >> 4) & 0xFF) == 0) {
-  //  if ((to_send->RDLR & 0x7) != 4) return 0;
+  //  if ((to_send->RDLR & 0x7) != 4) {
+  //    tx = 0;
+  //  }
   //}
 
   // 1 allows the message through
-  return true;
+  return tx;
 }
 
 static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+
+  int bus_fwd = -1;
   // forward cam to ccan and viceversa, except lkas cmd
-  if (((bus_num == 0) || (bus_num == hyundai_camera_bus)) && hyundai_giraffe_switch_2) {
-    if (((to_fwd->RIR>>21) == 832) && (bus_num == hyundai_camera_bus)) return -1;
-    if (bus_num == 0) return hyundai_camera_bus;
-    if (bus_num == hyundai_camera_bus) return 0;
+  if (hyundai_giraffe_switch_2) {
+    if (bus_num == 0) {
+      bus_fwd = hyundai_camera_bus;
+    } else if (bus_num == hyundai_camera_bus) {
+      if ((to_fwd->RIR>>21) != 832) {
+        bus_fwd = 0;
+      }
+    }
   }
-  return -1;
+  return bus_fwd;
 }
 
 static void hyundai_init(int16_t param) {

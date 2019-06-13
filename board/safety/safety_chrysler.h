@@ -54,9 +54,11 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
-  // There can be only one! (camera)
+  int tx = 1;
+
+  // If camera is on bus 0, then nothing can be sent
   if (chrysler_camera_detected) {
-    return 0;
+    tx = 0;
   }
 
   uint32_t addr;
@@ -112,7 +114,7 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
 
     if (violation) {
-      return false;
+      tx = 0;
     }
   }
 
@@ -122,7 +124,7 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // TODO: fix bug preventing the button msg to be fwd'd on bus 2
 
   // 1 allows the message through
-  return true;
+  return tx;
 }
 
 static void chrysler_init(int16_t param) {
@@ -131,16 +133,18 @@ static void chrysler_init(int16_t param) {
 }
 
 static int chrysler_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+
+  int bus_fwd = -1;
   int32_t addr = to_fwd->RIR >> 21;
   // forward CAN 0 -> 2 so stock LKAS camera sees messages
   if ((bus_num == 0) && !chrysler_camera_detected) {
-    return 2;
+    bus_fwd = 2;
   }
   // forward all messages from camera except LKAS_COMMAND and LKAS_HUD
   if ((bus_num == 2) && !chrysler_camera_detected && (addr != 658) && (addr != 678)) {
-    return 0;
+    bus_fwd = 0;
   }
-  return -1;  // do not forward
+  return bus_fwd;
 }
 
 

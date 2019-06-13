@@ -69,7 +69,6 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (lever_position == 2) { // pull forward
       // activate openpilot
       controls_allowed = 1;
-      //}
     } else if (lever_position == 1) { // push towards the back
       // deactivate openpilot
       controls_allowed = 0;
@@ -150,6 +149,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
+  int tx = 1;
   uint32_t addr;
   float angle_raw;
   float desired_angle;
@@ -167,10 +167,7 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (st_enabled == 0) {
       //steering is not enabled, do not check angles and do send
       tesla_desired_angle_last = desired_angle;
-      return true;
-    }
-
-    if (controls_allowed) {
+    } else if (controls_allowed) {
       // add 1 to not false trigger the violation
       float delta_angle_up = interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, tesla_speed) + 1.;
       float delta_angle_down = interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, tesla_speed) + 1.;
@@ -186,14 +183,14 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
       if (violation) {
         controls_allowed = 0;
-        return false;
+        tx = 0;
       }
       tesla_desired_angle_last = desired_angle;
-      return true;
+    } else {
+      tx = 0;
     }
-    return false;
   }
-  return true;
+  return tx;
 }
 
 static void tesla_init(int16_t param) {
@@ -208,36 +205,30 @@ static int tesla_ign_hook() {
 
 static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
+  int bus_fwd = -1;
   int32_t addr = to_fwd->RIR >> 21;
 
   if (bus_num == 0) {
-
     // change inhibit of GTW_epasControl
+
+    if (addr != 0x214) {
+      // remove EPB_epasControl
+      bus_fwd = 2; // Custom EPAS bus
+    }
     if (addr == 0x101) {
       to_fwd->RDLR = to_fwd->RDLR | 0x4000; // 0x4000: WITH_ANGLE, 0xC000: WITH_BOTH (angle and torque)
       int checksum = (((to_fwd->RDLR & 0xFF00) >> 8) + (to_fwd->RDLR & 0xFF) + 2) & 0xFF;
       to_fwd->RDLR = to_fwd->RDLR & 0xFFFF;
       to_fwd->RDLR = to_fwd->RDLR + (checksum << 16);
-      return 2;
     }
-
-    // remove EPB_epasControl
-    if (addr == 0x214) {
-      return -1;
-    }
-
-    return 2; // Custom EPAS bus
   }
   if (bus_num == 2) {
-
     // remove GTW_epasControl in forwards
-    if (addr == 0x101) {
-      return -1;
+    if (addr != 0x101) {
+      bus_fwd = 0;  // Chassis CAN
     }
-
-    return 0; // Chassis CAN
   }
-  return -1;
+  return bus_fwd;
 }
 
 const safety_hooks tesla_hooks = {

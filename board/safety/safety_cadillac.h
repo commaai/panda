@@ -54,6 +54,7 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 }
 
 static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+  int tx = 1;
   uint32_t addr = to_send->RIR >> 21;
 
   // steer cmd checks
@@ -102,11 +103,11 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
 
     if (violation || cadillac_supercruise_on) {
-      return false;
+      tx = 0;
     }
 
   }
-  return true;
+  return tx;
 }
 
 static void cadillac_init(int16_t param) {

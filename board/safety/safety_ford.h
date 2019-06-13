@@ -58,29 +58,35 @@ static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int ford_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
+  int tx = 1;
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
   int pedal_pressed = ford_gas_prev || (ford_brake_prev && ford_is_moving);
   int current_controls_allowed = controls_allowed && !(pedal_pressed);
+  int addr = to_send->RIR >> 21;
 
   // STEER: safety check
-  if ((to_send->RIR>>21) == 0x3CA) {
+  if (addr == 0x3CA) {
     if (current_controls_allowed) {
       // all messages are fine here
     } else {
       // bits 7-4 need to be 0xF to disallow lkas commands
-      if (((to_send->RDLR >> 4) & 0xF) != 0xF) return 0;
+      if (((to_send->RDLR >> 4) & 0xF) != 0xF) {
+        tx = 0;
+      }
     }
   }
 
   // FORCE CANCEL: safety check only relevant when spamming the cancel button
   // ensuring that set and resume aren't sent
-  if ((to_send->RIR>>21) == 0x83) {
-    if ((to_send->RDLR >> 28) & 0x3) return 0;
+  if (addr == 0x83) {
+    if ((to_send->RDLR >> 28) & 0x3) {
+      tx = 0;
+    }
   }
 
   // 1 allows the message through
-  return true;
+  return tx;
 }
 
 const safety_hooks ford_hooks = {
