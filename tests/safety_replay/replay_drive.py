@@ -3,29 +3,10 @@
 import os
 import sys
 import panda.tests.safety.libpandasafety_py as libpandasafety_py
-from panda.tests.safety_replay.replay_helpers import is_steering_msg, get_torque, \
-                                                    set_desired_torque_last, package_can_msg
-
+from panda.tests.safety_replay.helpers import is_steering_msg, get_steer_torque, \
+                                              set_desired_torque_last, package_can_msg, \
+                                              init_segment, safety_modes
 from openpilot_tools.lib.logreader import LogReader
-
-safety_modes = {
-  "NOOUTPUT": 0,
-  "HONDA": 1,
-  "TOYOTA": 2,
-  "GM": 3,
-  "HONDA_BOSCH": 4,
-  "FORD": 5,
-  "CADILLAC": 6,
-  "HYUNDAI": 7,
-  "TESLA": 8,
-  "CHRYSLER": 9,
-  "SUBARU": 10,
-  "GM_ASCM": 0x1334,
-  "TOYOTA_IPAS": 0x1335,
-  "ALLOUTPUT": 0x1337,
-  "ELM327": 0xE327
-}
-
 
 # replay a drive to check for safety violations
 def replay_drive(lr, safety_mode, param):
@@ -35,19 +16,7 @@ def replay_drive(lr, safety_mode, param):
   assert err == 0, "invalid safety mode: %d" % safety_mode
 
   if "SEGMENT" in os.environ:
-    print "ignoring start"
-    cnt = 0
-    for msg in lr:
-      if msg.which() != 'sendcan':
-        continue
-      for canmsg in msg.sendcan:
-        if is_steering_msg(mode, canmsg.address):
-          to_send = package_can_msg(canmsg)
-          torque = get_steer_torque(mode, to_send)
-          if torque != 0:
-            safety.set_controls_allowed(1)
-            set_desired_torque_last(safety, mode, torque)
-      break
+    init_segment(safety, lr, mode)
 
   tx_tot, tx_blocked, tx_controls, tx_controls_blocked = 0, 0, 0, 0
   blocked_addrs = set()
