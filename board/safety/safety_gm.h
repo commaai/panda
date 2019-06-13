@@ -23,8 +23,8 @@ int gm_brake_prev = 0;
 int gm_gas_prev = 0;
 int gm_speed = 0;
 // silence everything if stock car control ECUs are still online
-int gm_ascm_detected = 0;
-int gm_ignition_started = 0;
+bool gm_ascm_detected = 0;
+bool gm_ignition_started = 0;
 int gm_rt_torque_last = 0;
 int gm_desired_torque_last = 0;
 uint32_t gm_ts_last = 0;
@@ -33,7 +33,7 @@ struct sample_t gm_torque_driver;         // last few driver torques measured
 static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus_number = (to_push->RDTR >> 4) & 0xFF;
   uint32_t addr;
-  if (to_push->RIR & 4) {
+  if ((to_push->RIR & 4) != 0) {
     // Extended
     // Not looked at, but have to be separated
     // to avoid address collision
@@ -109,7 +109,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // exit controls on regen paddle
   if (addr == 189) {
-    int regen = to_push->RDLR & 0x20;
+    bool regen = to_push->RDLR & 0x20;
     if (regen) {
       controls_allowed = 0;
     }
@@ -134,10 +134,10 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
   int pedal_pressed = gm_gas_prev || (gm_brake_prev && gm_speed);
-  int current_controls_allowed = controls_allowed && !pedal_pressed;
+  bool current_controls_allowed = controls_allowed && !pedal_pressed;
 
   uint32_t addr;
-  if (to_send->RIR & 4) {
+  if ((to_send->RIR & 4) != 0) {
     // Extended
     addr = to_send->RIR >> 3;
   } else {
@@ -166,7 +166,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int rdlr = to_send->RDLR;
     int desired_torque = ((rdlr & 0x7) << 8) + ((rdlr & 0xFF00) >> 8);
     uint32_t ts = TIM2->CNT;
-    int violation = 0;
+    bool violation = 0;
     desired_torque = to_signed(desired_torque, 11);
 
     if (current_controls_allowed) {

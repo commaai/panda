@@ -130,12 +130,12 @@ void update_sample(struct sample_t *sample, int sample_new) {
   }
 }
 
-int max_limit_check(int val, const int MAX, const int MIN) {
+bool max_limit_check(int val, const int MAX, const int MIN) {
   return (val > MAX) || (val < MIN);
 }
 
 // check that commanded value isn't too far from measured
-int dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
+bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
   const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR) {
 
   // *** val rate limit check ***
@@ -151,7 +151,7 @@ int dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
 }
 
 // check that commanded value isn't fighting against driver
-int driver_limit_check(int val, int val_last, struct sample_t *val_driver,
+bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
   const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
   const int MAX_ALLOWANCE, const int DRIVER_FACTOR) {
 
@@ -173,7 +173,7 @@ int driver_limit_check(int val, int val_last, struct sample_t *val_driver,
 
 
 // real time check, mainly used for steer torque rate limiter
-int rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
+bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
 
   // *** torque real time rate limit check ***
   int highest_val = max(val_last, 0) + MAX_RT_DELTA;

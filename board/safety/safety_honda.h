@@ -45,7 +45,8 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   #define USER_BRAKE_VALUE(to_push)  (!honda_alt_brake_msg ? ((to_push)->RDHR & 0x200000)  : ((to_push)->RDLR & 0x10))
   // exit controls on rising edge of brake press or on brake press when
   // speed > 0
-  if (IS_USER_BRAKE_MSG(addr)) {
+  bool is_user_brake_msg = IS_USER_BRAKE_MSG(addr);  // needed to enforce type
+  if (is_user_brake_msg) {
     int brake = USER_BRAKE_VALUE(to_push);
     if (brake && (!(honda_brake_prev) || honda_ego_speed)) {
       controls_allowed = 0;
@@ -93,7 +94,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // and the the latching controls_allowed flag is True
   int pedal_pressed = honda_gas_prev || (gas_interceptor_prev > HONDA_GAS_INTERCEPTOR_THRESHOLD) ||
                       (honda_brake_prev && honda_ego_speed);
-  int current_controls_allowed = controls_allowed && !(pedal_pressed);
+  bool current_controls_allowed = controls_allowed && !(pedal_pressed);
 
   // BRAKE: safety check
   if (addr == 0x1FA) {

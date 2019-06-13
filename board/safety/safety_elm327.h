@@ -12,7 +12,7 @@ static int elm327_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
-  if (to_send->RIR & 4) {
+  if ((to_send->RIR & 4) != 0) {
     uint32_t addr = to_send->RIR >> 3;
     //Check valid 29 bit send addresses for ISO 15765-4
     if (!((addr == 0x18DB33F1) || ((addr & 0x1FFF00FF) == 0x18DA00F1))) {

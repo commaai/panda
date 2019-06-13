@@ -6,9 +6,9 @@ const int HYUNDAI_MAX_RATE_DOWN = 7;
 const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
 const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
 
-int hyundai_camera_detected = 0;
+bool hyundai_camera_detected = 0;
+bool hyundai_giraffe_switch_2 = 0;          // is giraffe switch 2 high?
 int hyundai_camera_bus = 0;
-int hyundai_giraffe_switch_2 = 0;          // is giraffe switch 2 high?
 int hyundai_rt_torque_last = 0;
 int hyundai_desired_torque_last = 0;
 int hyundai_cruise_engaged_last = 0;
@@ -18,7 +18,7 @@ struct sample_t hyundai_torque_driver;         // last few driver torques measur
 static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = (to_push->RDTR >> 4) & 0xFF;
   uint32_t addr;
-  if (to_push->RIR & 4) {
+  if ((to_push->RIR & 4) != 0) {
     // Extended
     // Not looked at, but have to be separated
     // to avoid address collision
@@ -73,7 +73,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   uint32_t addr;
-  if (to_send->RIR & 4) {
+  if ((to_send->RIR & 4) != 0) {
     // Extended
     addr = to_send->RIR >> 3;
   } else {
@@ -85,7 +85,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if (addr == 832) {
     int desired_torque = ((to_send->RDLR >> 16) & 0x7ff) - 1024;
     uint32_t ts = TIM2->CNT;
-    int violation = 0;
+    bool violation = 0;
 
     if (controls_allowed) {
 

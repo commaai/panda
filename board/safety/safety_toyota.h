@@ -127,7 +127,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       int desired_accel = ((to_send->RDLR & 0xFF) << 8) | ((to_send->RDLR >> 8) & 0xFF);
       desired_accel = to_signed(desired_accel, 16);
       if (controls_allowed && long_controls_allowed) {
-        int violation = max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
+        bool violation = max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
         if (violation) {
           tx = 0;
         }
@@ -140,7 +140,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (addr == 0x2E4) {
       int desired_torque = (to_send->RDLR & 0xFF00) | ((to_send->RDLR >> 16) & 0xFF);
       desired_torque = to_signed(desired_torque, 16);
-      int violation = 0;
+      bool violation = 0;
 
       uint32_t ts = TIM2->CNT;
 

@@ -48,15 +48,15 @@ TIM_TypeDef *TIM2 = &timer;
 #define static
 #include "safety.h"
 
-void set_controls_allowed(int c){
+void set_controls_allowed(bool c){
   controls_allowed = c;
 }
 
-void set_long_controls_allowed(int c){
+void set_long_controls_allowed(bool c){
   long_controls_allowed = c;
 }
 
-void set_gas_interceptor_detected(int c){
+void set_gas_interceptor_detected(bool c){
   gas_interceptor_detected = c;
 }
 
@@ -64,15 +64,15 @@ void reset_angle_control(void){
   angle_control = 0;
 }
 
-int get_controls_allowed(void){
+bool get_controls_allowed(void){
   return controls_allowed;
 }
 
-int get_long_controls_allowed(void){
+bool get_long_controls_allowed(void){
   return long_controls_allowed;
 }
 
-int get_gas_interceptor_detected(void){
+bool get_gas_interceptor_detected(void){
   return gas_interceptor_detected;
 }
 
