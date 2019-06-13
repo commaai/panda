@@ -72,8 +72,8 @@ class TestToyotaSafety(unittest.TestCase):
 
   def _send_gas_msg(self, gas):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x200 << 21
-    to_send[0].RDLR = gas
+    to_send[0].RIR = 0x2C1 << 21
+    to_send[0].RDHR = (gas & 0xFF) << 16
 
     return to_send
 
@@ -85,10 +85,10 @@ class TestToyotaSafety(unittest.TestCase):
 
     return to_send
 
-  def _pcm_cruise_msg(self, cruise_on, gas_pressed):
+  def _pcm_cruise_msg(self, cruise_on):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x1D2 << 21
-    to_send[0].RDLR = (cruise_on << 5) | ((not gas_pressed) << 4 )
+    to_send[0].RDLR = cruise_on << 5
 
     return to_send
 
@@ -100,21 +100,20 @@ class TestToyotaSafety(unittest.TestCase):
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_enable_control_allowed_from_cruise(self):
-    self.safety.safety_rx_hook(self._pcm_cruise_msg(False, False))
+    self.safety.safety_rx_hook(self._pcm_cruise_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
-    self.safety.safety_rx_hook(self._pcm_cruise_msg(True, False))
+    self.safety.safety_rx_hook(self._pcm_cruise_msg(True))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disable_control_allowed_from_cruise(self):
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._pcm_cruise_msg(False, False))
+    self.safety.safety_rx_hook(self._pcm_cruise_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_prev_gas(self):
-    self.safety.safety_rx_hook(self._pcm_cruise_msg(False, False))
-    self.assertFalse(self.safety.get_toyota_gas_prev())
-    self.safety.safety_rx_hook(self._pcm_cruise_msg(False, True))
-    self.assertTrue(self.safety.get_toyota_gas_prev())
+    for g in range(0, 256):
+      self.safety.safety_rx_hook(self._send_gas_msg(g))
+      self.assertEqual(g, self.safety.get_toyota_gas_prev())
 
   def test_prev_gas_interceptor(self):
     self.safety.safety_rx_hook(self._send_interceptor_msg(0x0, 0x201))
@@ -127,10 +126,9 @@ class TestToyotaSafety(unittest.TestCase):
   def test_disengage_on_gas(self):
     for long_controls_allowed in [0, 1]:
       self.safety.set_long_controls_allowed(long_controls_allowed)
-      self.safety.safety_rx_hook(self._pcm_cruise_msg(False, False))
-      self.safety.safety_rx_hook(self._pcm_cruise_msg(True, False))
-      self.assertTrue(self.safety.get_controls_allowed())
-      self.safety.safety_rx_hook(self._pcm_cruise_msg(True, True))
+      self.safety.safety_rx_hook(self._send_gas_msg(0))
+      self.safety.set_controls_allowed(True)
+      self.safety.safety_rx_hook(self._send_gas_msg(1))
       if long_controls_allowed:
         self.assertFalse(self.safety.get_controls_allowed())
       else:
@@ -138,17 +136,18 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.set_long_controls_allowed(True)
 
   def test_allow_engage_with_gas_pressed(self):
-    self.safety.safety_rx_hook(self._pcm_cruise_msg(False, True))
-    self.safety.safety_rx_hook(self._pcm_cruise_msg(True, True))
+    self.safety.safety_rx_hook(self._send_gas_msg(1))
+    self.safety.set_controls_allowed(True)
+    self.safety.safety_rx_hook(self._send_gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_rx_hook(self._pcm_cruise_msg(True, True))
+    self.safety.safety_rx_hook(self._send_gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas_interceptor(self):
     for long_controls_allowed in [0, 1]:
       self.safety.set_long_controls_allowed(long_controls_allowed)
       self.safety.safety_rx_hook(self._send_interceptor_msg(0, 0x201))
-      self.safety.set_controls_allowed(1)
+      self.safety.set_controls_allowed(True)
       self.safety.safety_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
       if long_controls_allowed:
         self.assertFalse(self.safety.get_controls_allowed())
