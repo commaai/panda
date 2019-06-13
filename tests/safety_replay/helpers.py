@@ -33,7 +33,7 @@ def is_steering_msg(mode, addr):
   if mode == safety_modes["GM"]:
     return addr == 384
   if mode == safety_modes["HYUNDAI"]:
-    return addr == 897
+    return addr == 832
   if mode == safety_modes["CHRYSLER"]:
     return addr == 0x292
   if mode == safety_modes["SUBARU"]:
@@ -41,7 +41,7 @@ def is_steering_msg(mode, addr):
 
 def get_steer_torque(mode, to_send):
   ret = 0
-  if mode == safety_modes["HONDA"]:
+  if mode == safety_modes["HONDA"] or mode == safety_modes["HONDA_BOSCH"]:
     ret = to_send.RDLR & 0xFFFF0000
   if mode == safety_modes["TOYOTA"]:
     ret = (to_send.RDLR & 0xFF00) | ((to_send.RDLR >> 16) & 0xFF)
@@ -59,7 +59,7 @@ def get_steer_torque(mode, to_send):
   return ret
 
 def set_desired_torque_last(safety, mode, torque):
-  if mode == safety_modes["HONDA"]:
+  if mode == safety_modes["HONDA"] or mode == safety_modes["HONDA_BOSCH"]:
     pass # HONDA doesn't enforce a rate on steering msgs
   if mode == safety_modes["TOYOTA"]:
     safety.set_toyota_desired_torque_last(torque)
@@ -88,7 +88,12 @@ def init_segment(safety, lr, mode):
   sendcan = (msg for msg in lr if msg.which() == 'sendcan')
   steering_msgs = (can for msg in sendcan for can in msg.sendcan if is_steering_msg(mode, can.address))
 
-  to_send = package_can_msg(steering_msgs.next())
+  try:
+    to_send = package_can_msg(steering_msgs.next())
+  except:
+    # no steering msgs
+    return
+
   torque = get_steer_torque(mode, to_send)
   if torque != 0:
     safety.set_controls_allowed(1)
