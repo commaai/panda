@@ -271,13 +271,6 @@ void process_can(uint8_t can_number) {
     }
 
     if (can_pop(can_queues[bus_number], &to_send)) {
-      if (CAN->MCR & CAN_MCR_SLEEP) {
-        set_can_enable(CAN, 1);
-        CAN->MCR &= ~(CAN_MCR_SLEEP);
-        CAN->MCR |= CAN_MCR_INRQ;
-        while((CAN->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
-        CAN->MCR &= ~(CAN_MCR_INRQ);
-      }
       can_tx_cnt += 1;
       // only send if we have received a packet
       CAN->sTxMailBox[0].TDLR = to_send.RDLR;
