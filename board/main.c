@@ -683,8 +683,7 @@ int main() {
 #endif
 
   puts("**** INTERRUPTS ON ****\n");
-
-  __enable_irq();
+  enable_interrupts();
 
   // LED should keep on blinking all the time
   uint64_t cnt = 0;
