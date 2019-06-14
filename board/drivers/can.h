@@ -3,8 +3,8 @@
 //       CAN3_TX, CAN3_RX0, CAN3_SCE
 
 typedef struct {
-  uint32_t w_ptr;
-  uint32_t r_ptr;
+  volatile uint32_t w_ptr;
+  volatile uint32_t r_ptr;
   uint32_t fifo_size;
   CAN_FIFOMailBox_TypeDef *elems;
 } can_ring;
