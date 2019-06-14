@@ -147,8 +147,8 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // BRAKE: safety check
   if (addr == 789U) {
-    int rdlr = to_send->RDLR;
-    int brake = ((rdlr & 0xF) << 8) + ((rdlr & 0xFF00) >> 8);
+    uint32_t rdlr = to_send->RDLR;
+    int brake = ((rdlr & 0xFU) << 8) + ((rdlr & 0xFF00U) >> 8);
     brake = (0x1000 - brake) & 0xFFF;
     if (current_controls_allowed && long_controls_allowed) {
       if (brake > GM_MAX_BRAKE) {
@@ -163,8 +163,8 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // LKA STEER: safety check
   if (addr == 384U) {
-    int rdlr = to_send->RDLR;
-    int desired_torque = ((rdlr & 0x7) << 8) + ((rdlr & 0xFF00) >> 8);
+    uint32_t rdlr = to_send->RDLR;
+    int desired_torque = ((rdlr & 0x7U) << 8) + ((rdlr & 0xFF00U) >> 8);
     uint32_t ts = TIM2->CNT;
     bool violation = 0;
     desired_torque = to_signed(desired_torque, 11);

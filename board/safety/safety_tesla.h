@@ -217,7 +217,7 @@ static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     }
     if (addr == 0x101) {
       to_fwd->RDLR = to_fwd->RDLR | 0x4000; // 0x4000: WITH_ANGLE, 0xC000: WITH_BOTH (angle and torque)
-      int checksum = (((to_fwd->RDLR & 0xFF00) >> 8) + (to_fwd->RDLR & 0xFF) + 2) & 0xFF;
+      uint32_t checksum = (((to_fwd->RDLR & 0xFF00) >> 8) + (to_fwd->RDLR & 0xFF) + 2) & 0xFF;
       to_fwd->RDLR = to_fwd->RDLR & 0xFFFF;
       to_fwd->RDLR = to_fwd->RDLR + (checksum << 16);
     }

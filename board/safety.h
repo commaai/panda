@@ -103,8 +103,8 @@ uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
 // convert a trimmed integer to signed 32 bit int
 int to_signed(int d, int bits) {
   int d_signed = d;
-  if (d >= (1 << (bits - 1))) {
-    d_signed = d - (1 << bits);
+  if (d >= (1 << max((bits - 1), 0))) {
+    d_signed = d - (1 << max(bits, 0));
   }
   return d_signed;
 }
