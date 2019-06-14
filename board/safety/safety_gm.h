@@ -10,7 +10,7 @@
 
 const int GM_MAX_STEER = 300;
 const int GM_MAX_RT_DELTA = 128;          // max delta torque allowed for real time checks
-const int32_t GM_RT_INTERVAL = 250000;    // 250ms between real time checks
+const uint32_t GM_RT_INTERVAL = 250000;    // 250ms between real time checks
 const int GM_MAX_RATE_UP = 7;
 const int GM_MAX_RATE_DOWN = 17;
 const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
@@ -43,23 +43,23 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     addr = to_push->RIR >> 21;
   }
 
-  if (addr == 388) {
+  if (addr == 388U) {
     int torque_driver_new = (((to_push->RDHR >> 16) & 0x7) << 8) | ((to_push->RDHR >> 24) & 0xFF);
     torque_driver_new = to_signed(torque_driver_new, 11);
     // update array of samples
     update_sample(&gm_torque_driver, torque_driver_new);
   }
 
-  if ((addr == 0x1f1) && (bus_number == 0)) {
+  if ((addr == 0x1F1U) && (bus_number == 0)) {
     //Bit 5 should be ignition "on"
     //Backup plan is Bit 2 (accessory power)
-    uint32_t ign = (to_push->RDLR) & 0x20;
-    gm_ignition_started = ign > 0;
+    bool ign = ((to_push->RDLR) & 0x20) != 0;
+    gm_ignition_started = ign;
   }
 
   // sample speed, really only care if car is moving or not
   // rear left wheel speed
-  if (addr == 842) {
+  if (addr == 842U) {
     gm_speed = to_push->RDLR & 0xFFFF;
   }
 
@@ -67,13 +67,13 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // on powertrain bus.
   // 384 = ASCMLKASteeringCmd
   // 715 = ASCMGasRegenCmd
-  if ((bus_number == 0) && ((addr == 384) || (addr == 715))) {
+  if ((bus_number == 0) && ((addr == 384U) || (addr == 715U))) {
     gm_ascm_detected = 1;
     controls_allowed = 0;
   }
 
   // ACC steering wheel buttons
-  if (addr == 481) {
+  if (addr == 481U) {
     int buttons = (to_push->RDHR >> 12) & 0x7;
     // res/set - enable, cancel button - disable
     if ((buttons == 2) || (buttons == 3)) {
@@ -85,7 +85,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // exit controls on rising edge of brake press or on brake press when
   // speed > 0
-  if (addr == 241) {
+  if (addr == 241U) {
     int brake = (to_push->RDLR & 0xFF00) >> 8;
     // Brake pedal's potentiometer returns near-zero reading
     // even when pedal is not pressed
@@ -99,7 +99,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // exit controls on rising edge of gas press
-  if (addr == 417) {
+  if (addr == 417U) {
     int gas = to_push->RDHR & 0xFF0000;
     if (gas && !gm_gas_prev && long_controls_allowed) {
       controls_allowed = 0;
@@ -108,7 +108,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // exit controls on regen paddle
-  if (addr == 189) {
+  if (addr == 189U) {
     bool regen = to_push->RDLR & 0x20;
     if (regen) {
       controls_allowed = 0;
@@ -146,7 +146,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // BRAKE: safety check
-  if (addr == 789) {
+  if (addr == 789U) {
     int rdlr = to_send->RDLR;
     int brake = ((rdlr & 0xF) << 8) + ((rdlr & 0xFF00) >> 8);
     brake = (0x1000 - brake) & 0xFFF;
@@ -162,7 +162,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // LKA STEER: safety check
-  if (addr == 384) {
+  if (addr == 384U) {
     int rdlr = to_send->RDLR;
     int desired_torque = ((rdlr & 0x7) << 8) + ((rdlr & 0xFF00) >> 8);
     uint32_t ts = TIM2->CNT;
@@ -211,15 +211,15 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // PARK ASSIST STEER: unlimited torque, no thanks
-  if (addr == 823) {
+  if (addr == 823U) {
     tx = 0;
   }
 
   // GAS/REGEN: safety check
-  if (addr == 715) {
-    int rdlr = to_send->RDLR;
-    int gas_regen = ((rdlr & 0x7F0000) >> 11) + ((rdlr & 0xF8000000) >> 27);
-    int apply = rdlr & 1;
+  if (addr == 715U) {
+    uint32_t rdlr = to_send->RDLR;
+    int gas_regen = ((rdlr & 0x7F0000U) >> 11) + ((rdlr & 0xF8000000U) >> 27);
+    bool apply = (rdlr & 1U) != 0U;
     if (current_controls_allowed && long_controls_allowed) {
       if (gas_regen > GM_MAX_GAS) {
         tx = 0;

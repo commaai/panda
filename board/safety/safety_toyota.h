@@ -10,7 +10,7 @@ const int TOYOTA_MAX_TORQUE_ERROR = 350;  // max torque cmd in excess of torque 
 // real time torque limit to prevent controls spamming
 // the real time limit is 1500/sec
 const int TOYOTA_MAX_RT_DELTA = 375;      // max delta torque allowed for real time checks
-const int TOYOTA_RT_INTERVAL = 250000;    // 250ms between real time checks
+const uint32_t TOYOTA_RT_INTERVAL = 250000;    // 250ms between real time checks
 
 // longitudinal limits
 const int TOYOTA_MAX_ACCEL = 1500;        // 1.5 m/s2

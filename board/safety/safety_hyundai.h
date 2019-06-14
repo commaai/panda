@@ -1,6 +1,6 @@
 const int HYUNDAI_MAX_STEER = 255;             // like stock
 const int HYUNDAI_MAX_RT_DELTA = 112;          // max delta torque allowed for real time checks
-const int32_t HYUNDAI_RT_INTERVAL = 250000;    // 250ms between real time checks
+const uint32_t HYUNDAI_RT_INTERVAL = 250000;    // 250ms between real time checks
 const int HYUNDAI_MAX_RATE_UP = 3;
 const int HYUNDAI_MAX_RATE_DOWN = 7;
 const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
@@ -28,25 +28,25 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     addr = to_push->RIR >> 21;
   }
 
-  if (addr == 897) {
+  if (addr == 897U) {
     int torque_driver_new = ((to_push->RDLR >> 11) & 0xfff) - 2048;
     // update array of samples
     update_sample(&hyundai_torque_driver, torque_driver_new);
   }
 
   // check if stock camera ECU is still online
-  if ((bus == 0) && (addr == 832)) {
+  if ((bus == 0) && (addr == 832U)) {
     hyundai_camera_detected = 1;
     controls_allowed = 0;
   }
 
   // Find out which bus the camera is on
-  if (addr == 832) {
+  if (addr == 832U) {
     hyundai_camera_bus = bus;
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if (addr == 1057) {
+  if (addr == 1057U) {
     // 2 bits: 13-14
     int cruise_engaged = (to_push->RDLR >> 13) & 0x3;
     if (cruise_engaged && !hyundai_cruise_engaged_last) {
@@ -58,7 +58,7 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // 832 is lkas cmd. If it is on camera bus, then giraffe switch 2 is high
-  if ((addr == 832) && (bus == hyundai_camera_bus) && (hyundai_camera_bus != 0)) {
+  if ((addr == 832U) && (bus == hyundai_camera_bus) && (hyundai_camera_bus != 0)) {
     hyundai_giraffe_switch_2 = 1;
   }
 }
@@ -82,7 +82,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // LKA STEER: safety check
-  if (addr == 832) {
+  if (addr == 832U) {
     int desired_torque = ((to_send->RDLR >> 16) & 0x7ff) - 1024;
     uint32_t ts = TIM2->CNT;
     bool violation = 0;
