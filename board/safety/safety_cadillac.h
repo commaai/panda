@@ -19,15 +19,15 @@ uint32_t cadillac_ts_last = 0;
 int cadillac_supercruise_on = 0;
 struct sample_t cadillac_torque_driver;         // last few driver torques measured
 
-int cadillac_get_torque_idx(uint32_t addr, int array_size) {
-  return min(max(addr - 0x151U, 0), array_size);  // 0x151 is id 0, 0x152 is id 1 and so on...
+int cadillac_get_torque_idx(int addr, int array_size) {
+  return min(max(addr - 0x151, 0), array_size);  // 0x151 is id 0, 0x152 is id 1 and so on...
 }
 
 static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
-  uint32_t addr = GET_ADDR(to_push);
+  int addr = GET_ADDR(to_push);
 
-  if (addr == 356U) {
+  if (addr == 356) {
     int torque_driver_new = ((to_push->RDLR & 0x7) << 8) | ((to_push->RDLR >> 8) & 0xFF);
     torque_driver_new = to_signed(torque_driver_new, 11);
     // update array of samples
@@ -35,12 +35,12 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // this message isn't all zeros when ignition is on
-  if ((addr == 0x160U) && (bus == 0)) {
+  if ((addr == 0x160) && (bus == 0)) {
     cadillac_ign = to_push->RDLR > 0;
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if ((addr == 0x370U) && (bus == 0)) {
+  if ((addr == 0x370) && (bus == 0)) {
     int cruise_engaged = to_push->RDLR & 0x800000;  // bit 23
     if (cruise_engaged && !cadillac_cruise_engaged_last) {
       controls_allowed = 1;
@@ -51,17 +51,17 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // know supercruise mode and block openpilot msgs if on
-  if ((addr == 0x152U) || (addr == 0x154U)) {
+  if ((addr == 0x152) || (addr == 0x154)) {
     cadillac_supercruise_on = (to_push->RDHR>>4) & 0x1;
   }
 }
 
 static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
-  uint32_t addr = GET_ADDR(to_send);
+  int addr = GET_ADDR(to_send);
 
   // steer cmd checks
-  if ((addr == 0x151U) || (addr == 0x152U) || (addr == 0x153U) || (addr == 0x154U)) {
+  if ((addr == 0x151) || (addr == 0x152) || (addr == 0x153) || (addr == 0x154)) {
     int desired_torque = ((to_send->RDLR & 0x3f) << 8) + ((to_send->RDLR & 0xff00) >> 8);
     int violation = 0;
     uint32_t ts = TIM2->CNT;

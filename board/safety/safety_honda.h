@@ -17,6 +17,7 @@ bool honda_alt_brake_msg = false;
 static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   int addr = GET_ADDR(to_push);
+  int len = GET_LEN(to_push);
 
   // sample speed
   if (addr == 0x158) {
@@ -56,7 +57,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // exit controls on rising edge of gas press if interceptor (0x201 w/ len = 6)
   // length check because bosch hardware also uses this id (0x201 w/ len = 8)
-  if ((addr == 0x201) && ((to_push->RDTR & 0xf) == 6)) {
+  if ((addr == 0x201) && (len == 6)) {
     gas_interceptor_detected = 1;
     int gas_interceptor = ((to_push->RDLR & 0xFF) << 8) | ((to_push->RDLR & 0xFF00) >> 8);
     if ((gas_interceptor > HONDA_GAS_INTERCEPTOR_THRESHOLD) &&
@@ -87,8 +88,9 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
-  int addr = GET_ADDR(to_send);
   int tx = 1;
+  int addr = GET_ADDR(to_send);
+  int bus = GET_BUS(to_send);
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
@@ -135,7 +137,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // ensuring that only the cancel button press is sent (VAL 2) when controls are off.
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == 0x296) && honda_bosch_hardware &&
-      !current_controls_allowed && ((to_send->RDTR >> 4) & 0xFF) == 0) {
+      !current_controls_allowed && (bus == 0)) {
     if (((to_send->RDLR >> 5) & 0x7) != 2) {
       tx = 0;
     }

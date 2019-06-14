@@ -17,27 +17,27 @@ struct sample_t hyundai_torque_driver;         // last few driver torques measur
 
 static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
-  uint32_t addr = GET_ADDR(to_push);
+  int addr = GET_ADDR(to_push);
 
-  if (addr == 897U) {
+  if (addr == 897) {
     int torque_driver_new = ((to_push->RDLR >> 11) & 0xfff) - 2048;
     // update array of samples
     update_sample(&hyundai_torque_driver, torque_driver_new);
   }
 
   // check if stock camera ECU is still online
-  if ((bus == 0) && (addr == 832U)) {
+  if ((bus == 0) && (addr == 832)) {
     hyundai_camera_detected = 1;
     controls_allowed = 0;
   }
 
   // Find out which bus the camera is on
-  if (addr == 832U) {
+  if (addr == 832) {
     hyundai_camera_bus = bus;
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if (addr == 1057U) {
+  if (addr == 1057) {
     // 2 bits: 13-14
     int cruise_engaged = (to_push->RDLR >> 13) & 0x3;
     if (cruise_engaged && !hyundai_cruise_engaged_last) {
@@ -49,7 +49,7 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // 832 is lkas cmd. If it is on camera bus, then giraffe switch 2 is high
-  if ((addr == 832U) && (bus == hyundai_camera_bus) && (hyundai_camera_bus != 0)) {
+  if ((addr == 832) && (bus == hyundai_camera_bus) && (hyundai_camera_bus != 0)) {
     hyundai_giraffe_switch_2 = 1;
   }
 }
@@ -57,16 +57,15 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   int tx = 1;
+  int addr = GET_ADDR(to_send);
 
   // There can be only one! (camera)
   if (hyundai_camera_detected) {
     tx = 0;
   }
 
-  uint32_t addr = GET_ADDR(to_send);
-
   // LKA STEER: safety check
-  if (addr == 832U) {
+  if (addr == 832) {
     int desired_torque = ((to_send->RDLR >> 16) & 0x7ff) - 1024;
     uint32_t ts = TIM2->CNT;
     bool violation = 0;
@@ -116,7 +115,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // ensuring that only the cancel button press is sent (VAL 4) when controls are off.
   // This avoids unintended engagements while still allowing resume spam
   // TODO: fix bug preventing the button msg to be fwd'd on bus 2
-  //if (((to_send->RIR>>21) == 1265) && !controls_allowed && ((to_send->RDTR >> 4) & 0xFF) == 0) {
+  //if ((addr == 1265) && !controls_allowed && (bus == 0) {
   //  if ((to_send->RDLR & 0x7) != 4) {
   //    tx = 0;
   //  }
@@ -134,8 +133,8 @@ static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     if (bus_num == 0) {
       bus_fwd = hyundai_camera_bus;
     } else if (bus_num == hyundai_camera_bus) {
-      uint32_t addr = GET_ADDR(to_fwd);
-      if (addr != 832U) {
+      int addr = GET_ADDR(to_fwd);
+      if (addr != 832) {
         bus_fwd = 0;
       }
     }

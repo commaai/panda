@@ -6,22 +6,23 @@ static int gm_ascm_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int bus_fwd = -1;
 
   if (bus_num == 0) {
-    uint32_t addr = GET_ADDR(to_fwd);
+    int addr = GET_ADDR(to_fwd);
     bus_fwd = 2;
     // do not propagate lkas messages from ascm to actuators, unless supercruise is on
     // block 0x152 and 0x154, which are the lkas command from ASCM1 and ASCM2
     // block 0x315 and 0x2cb, which are the brake and accel commands from ASCM1
     //if ((addr == 0x152) || (addr == 0x154) || (addr == 0x315) || (addr == 0x2cb)) {
-    if ((addr == 0x152U) || (addr == 0x154U)) {
-      int supercruise_on = (to_fwd->RDHR>>4) & 0x1;  // bit 36
+    if ((addr == 0x152) || (addr == 0x154)) {
+      int supercruise_on = (to_fwd->RDHR >> 4) & 0x1;  // bit 36
       if (!supercruise_on) {
         bus_fwd = -1;
       }
-    } else if ((addr == 0x151U) || (addr == 0x153U) || (addr == 0x314U)) {
+    } else if ((addr == 0x151) || (addr == 0x153) || (addr == 0x314)) {
       // on the chassis bus, the OBDII port is on the module side, so we need to read
       // the lkas messages sent by openpilot (put on unused 0x151 ane 0x153 addrs) and send it to
       // the actuator as 0x152 and 0x154
-      to_fwd->RIR = ((addr + 1U) << 21) | (to_fwd->RIR & 0x1fffff);
+      uint32_t fwd_addr = addr + 1;
+      to_fwd->RIR = (fwd_addr << 21) | (to_fwd->RIR & 0x1fffff);
     }
   }
 

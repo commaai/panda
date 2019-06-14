@@ -101,7 +101,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
-  int bus = (to_send->RDTR >> 4) & 0xF;
+  int bus = GET_BUS(to_send);
 
   // Check if msg is sent on BUS 0
   if (bus == 0) {
