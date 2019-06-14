@@ -12,18 +12,14 @@ static int elm327_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
-  if ((to_send->RIR & 4) != 0) {
-    uint32_t addr = to_send->RIR >> 3;
-    //Check valid 29 bit send addresses for ISO 15765-4
-    if (!((addr == 0x18DB33F1U) || ((addr & 0x1FFF00FFU) == 0x18DA00F1U))) {
-      tx = 0;
-    }
-  } else {
-    uint32_t addr = to_send->RIR >> 21;
-    //Check valid 11 bit send addresses for ISO 15765-4
-    if (!((addr == 0x7DFU) || ((addr & 0x7F8U) == 0x7E0U))) {
-      tx = 0;
-    }
+  uint32_t addr = GET_ADDR(to_send);
+
+
+  //Check valid 29 bit send addresses for ISO 15765-4
+  //Check valid 11 bit send addresses for ISO 15765-4
+  if ((addr != 0x18DB33F1U) && ((addr & 0x1FFF00FFU) != 0x18DA00F1U) &&
+      ((addr != 0x7DFU) && ((addr & 0x7F8U) != 0x7E0U))) {
+    tx = 0;
   }
   return tx;
 }

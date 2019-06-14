@@ -16,17 +16,8 @@ uint32_t hyundai_ts_last = 0;
 struct sample_t hyundai_torque_driver;         // last few driver torques measured
 
 static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  int bus = (to_push->RDTR >> 4) & 0xFF;
-  uint32_t addr;
-  if ((to_push->RIR & 4) != 0) {
-    // Extended
-    // Not looked at, but have to be separated
-    // to avoid address collision
-    addr = to_push->RIR >> 3;
-  } else {
-    // Normal
-    addr = to_push->RIR >> 21;
-  }
+  int bus = GET_BUS(to_push);
+  uint32_t addr = GET_ADDR(to_push);
 
   if (addr == 897U) {
     int torque_driver_new = ((to_push->RDLR >> 11) & 0xfff) - 2048;
@@ -72,14 +63,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
-  uint32_t addr;
-  if ((to_send->RIR & 4) != 0) {
-    // Extended
-    addr = to_send->RIR >> 3;
-  } else {
-    // Normal
-    addr = to_send->RIR >> 21;
-  }
+  uint32_t addr = GET_ADDR(to_send);
 
   // LKA STEER: safety check
   if (addr == 832U) {
@@ -150,7 +134,8 @@ static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     if (bus_num == 0) {
       bus_fwd = hyundai_camera_bus;
     } else if (bus_num == hyundai_camera_bus) {
-      if ((to_fwd->RIR>>21) != 832) {
+      uint32_t addr = GET_ADDR(to_fwd);
+      if (addr != 832U) {
         bus_fwd = 0;
       }
     }

@@ -16,7 +16,7 @@ bool honda_alt_brake_msg = false;
 
 static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
-  int addr = to_push->RIR >> 21;
+  int addr = GET_ADDR(to_push);
 
   // sample speed
   if (addr == 0x158) {
@@ -87,7 +87,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
-  int addr = to_send->RIR >> 21;
+  int addr = GET_ADDR(to_send);
   int tx = 1;
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
@@ -169,7 +169,7 @@ static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     bus_fwd = 2;
   } else if (bus_num == 2) {
     // block stock lkas messages and stock acc messages (if OP is doing ACC)
-    int addr = to_fwd->RIR>>21;
+    int addr = GET_ADDR(to_fwd);
     int is_lkas_msg = (addr == 0xE4) || (addr == 0x194) || (addr == 0x33D);
     int is_acc_msg = (addr == 0x1FA) || (addr == 0x30C) || (addr == 0x39F);
     int block_fwd = is_lkas_msg || (is_acc_msg && long_controls_allowed);
@@ -186,7 +186,7 @@ static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   if (bus_num == 2) {
     bus_fwd = 1;
   } else if (bus_num == 1)  {
-    int addr = to_fwd->RIR >> 21;
+    int addr = GET_ADDR(to_fwd);
     int is_lkas_msg = (addr == 0xE4) || (addr == 0x33D);
     if (!is_lkas_msg) {
       bus_fwd = 2;

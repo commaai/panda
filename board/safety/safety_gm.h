@@ -31,17 +31,8 @@ uint32_t gm_ts_last = 0;
 struct sample_t gm_torque_driver;         // last few driver torques measured
 
 static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  int bus_number = (to_push->RDTR >> 4) & 0xFF;
-  uint32_t addr;
-  if ((to_push->RIR & 4) != 0) {
-    // Extended
-    // Not looked at, but have to be separated
-    // to avoid address collision
-    addr = to_push->RIR >> 3;
-  } else {
-    // Normal
-    addr = to_push->RIR >> 21;
-  }
+  int bus_number = GET_BUS(to_push);
+  uint32_t addr = GET_ADDR(to_push);
 
   if (addr == 388U) {
     int torque_driver_new = (((to_push->RDHR >> 16) & 0x7) << 8) | ((to_push->RDHR >> 24) & 0xFF);
@@ -136,14 +127,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int pedal_pressed = gm_gas_prev || (gm_brake_prev && gm_speed);
   bool current_controls_allowed = controls_allowed && !pedal_pressed;
 
-  uint32_t addr;
-  if ((to_send->RIR & 4) != 0) {
-    // Extended
-    addr = to_send->RIR >> 3;
-  } else {
-    // Normal
-    addr = to_send->RIR >> 21;
-  }
+  uint32_t addr = GET_ADDR(to_send);
 
   // BRAKE: safety check
   if (addr == 789U) {

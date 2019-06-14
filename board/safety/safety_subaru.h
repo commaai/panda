@@ -16,10 +16,10 @@ struct sample_t subaru_torque_driver;         // last few driver torques measure
 
 
 static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  int bus_number = (to_push->RDTR >> 4) & 0xFF;
-  uint32_t addr = to_push->RIR >> 21;
+  int bus = GET_BUS(to_push);
+  uint32_t addr = GET_ADDR(to_push);
 
-  if ((addr == 0x119U) && (bus_number == 0)){
+  if ((addr == 0x119U) && (bus == 0)){
     int torque_driver_new = ((to_push->RDLR >> 16) & 0x7FF);
     torque_driver_new = to_signed(torque_driver_new, 11);
     // update array of samples
@@ -27,7 +27,7 @@ static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if ((addr == 0x240U) && (bus_number == 0)) {
+  if ((addr == 0x240U) && (bus == 0)) {
     int cruise_engaged = (to_push->RDHR >> 9) & 1;
     if (cruise_engaged && !subaru_cruise_engaged_last) {
       controls_allowed = 1;
@@ -40,7 +40,7 @@ static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
-  uint32_t addr = to_send->RIR >> 21;
+  uint32_t addr = GET_ADDR(to_send);
 
   // steer cmd checks
   if (addr == 0x122U) {
@@ -104,7 +104,7 @@ static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     // 356 is LKAS for Global Platform
     // 545 is ES_Distance
     // 802 is ES_LKAS
-    int32_t addr = to_fwd->RIR >> 21;
+    int32_t addr = GET_ADDR(to_fwd);
     int block_msg = (addr == 290) || (addr == 356) || (addr == 545) || (addr == 802);
     if (!block_msg) {
       bus_fwd = 0;  // Main CAN

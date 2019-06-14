@@ -24,8 +24,8 @@ int cadillac_get_torque_idx(uint32_t addr, int array_size) {
 }
 
 static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  int bus_number = (to_push->RDTR >> 4) & 0xFF;
-  uint32_t addr = to_push->RIR >> 21;
+  int bus = GET_BUS(to_push);
+  uint32_t addr = GET_ADDR(to_push);
 
   if (addr == 356U) {
     int torque_driver_new = ((to_push->RDLR & 0x7) << 8) | ((to_push->RDLR >> 8) & 0xFF);
@@ -35,12 +35,12 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // this message isn't all zeros when ignition is on
-  if ((addr == 0x160U) && (bus_number == 0)) {
+  if ((addr == 0x160U) && (bus == 0)) {
     cadillac_ign = to_push->RDLR > 0;
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if ((addr == 0x370U) && (bus_number == 0)) {
+  if ((addr == 0x370U) && (bus == 0)) {
     int cruise_engaged = to_push->RDLR & 0x800000;  // bit 23
     if (cruise_engaged && !cadillac_cruise_engaged_last) {
       controls_allowed = 1;
@@ -58,7 +58,7 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
-  uint32_t addr = to_send->RIR >> 21;
+  uint32_t addr = GET_ADDR(to_send);
 
   // steer cmd checks
   if ((addr == 0x151U) || (addr == 0x152U) || (addr == 0x153U) || (addr == 0x154U)) {

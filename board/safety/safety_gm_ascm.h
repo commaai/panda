@@ -6,7 +6,7 @@ static int gm_ascm_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int bus_fwd = -1;
 
   if (bus_num == 0) {
-    uint32_t addr = to_fwd->RIR >> 21;
+    uint32_t addr = GET_ADDR(to_fwd);
     bus_fwd = 2;
     // do not propagate lkas messages from ascm to actuators, unless supercruise is on
     // block 0x152 and 0x154, which are the lkas command from ASCM1 and ASCM2

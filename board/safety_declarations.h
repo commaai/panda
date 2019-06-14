@@ -1,3 +1,6 @@
+#define GET_BUS(msg) (((msg)->RDTR >> 4) & 0xFF)
+#define GET_ADDR(msg) ((((msg)->RIR & 4) != 0) ? ((msg)->RIR >> 3) : ((msg)->RIR >> 21))
+
 // sample struct that keeps 3 samples in memory
 struct sample_t {
   int values[6];

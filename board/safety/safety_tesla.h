@@ -52,16 +52,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   reset_gmlan_switch_timeout(); //we're still in tesla safety mode, reset the timeout counter and make sure our output is enabled
 
   //int bus_number = (to_push->RDTR >> 4) & 0xFF;
-  uint32_t addr;
-  if ((to_push->RIR & 4) != 0) {
-    // Extended
-    // Not looked at, but have to be separated
-    // to avoid address collision
-    addr = to_push->RIR >> 3;
-  } else {
-    // Normal
-    addr = to_push->RIR >> 21;
-  }
+  uint32_t addr = GET_ADDR(to_push);
 
   if (addr == 0x45U) {
     // 6 bits starting at position 0
@@ -150,7 +141,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   int tx = 1;
-  uint32_t addr = to_send->RIR >> 21;
+  uint32_t addr = GET_ADDR(to_send);
 
   // do not transmit CAN message if steering angle too high
   // DAS_steeringControl::DAS_steeringAngleRequest
@@ -202,16 +193,16 @@ static int tesla_ign_hook() {
 static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   int bus_fwd = -1;
-  int32_t addr = to_fwd->RIR >> 21;
+  uint32_t addr = GET_ADDR(to_fwd);
 
   if (bus_num == 0) {
     // change inhibit of GTW_epasControl
 
-    if (addr != 0x214) {
+    if (addr != 0x214U) {
       // remove EPB_epasControl
       bus_fwd = 2; // Custom EPAS bus
     }
-    if (addr == 0x101) {
+    if (addr == 0x101U) {
       to_fwd->RDLR = to_fwd->RDLR | 0x4000; // 0x4000: WITH_ANGLE, 0xC000: WITH_BOTH (angle and torque)
       uint32_t checksum = (((to_fwd->RDLR & 0xFF00) >> 8) + (to_fwd->RDLR & 0xFF) + 2) & 0xFF;
       to_fwd->RDLR = to_fwd->RDLR & 0xFFFF;
@@ -220,7 +211,7 @@ static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   }
   if (bus_num == 2) {
     // remove GTW_epasControl in forwards
-    if (addr != 0x101) {
+    if (addr != 0x101U) {
       bus_fwd = 0;  // Chassis CAN
     }
   }

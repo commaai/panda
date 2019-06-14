@@ -13,17 +13,8 @@ uint32_t chrysler_ts_last = 0;
 struct sample_t chrysler_torque_meas;         // last few torques measured
 
 static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  int bus = (to_push->RDTR >> 4) & 0xFF;
-  uint32_t addr;
-  if ((to_push->RIR & 4) != 0) {
-    // Extended
-    // Not looked at, but have to be separated
-    // to avoid address collision
-    addr = to_push->RIR >> 3;
-  } else {
-    // Normal
-    addr = to_push->RIR >> 21;
-  }
+  int bus = GET_BUS(to_push);
+  uint32_t addr = GET_ADDR(to_push);
 
   // Measured eps torque
   if (addr == 544U) {
@@ -61,15 +52,7 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
-  uint32_t addr;
-  if ((to_send->RIR & 4) != 0) {
-    // Extended
-    addr = to_send->RIR >> 3;
-  } else {
-    // Normal
-    addr = to_send->RIR >> 21;
-  }
-
+  uint32_t addr = GET_ADDR(to_send);
 
   // LKA STEER
   if (addr == 0x292U) {
@@ -135,7 +118,7 @@ static void chrysler_init(int16_t param) {
 static int chrysler_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   int bus_fwd = -1;
-  int32_t addr = to_fwd->RIR >> 21;
+  int32_t addr = GET_ADDR(to_fwd);
   // forward CAN 0 -> 2 so stock LKAS camera sees messages
   if ((bus_num == 0) && !chrysler_camera_detected) {
     bus_fwd = 2;

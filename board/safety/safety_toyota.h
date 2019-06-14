@@ -34,7 +34,8 @@ struct sample_t toyota_torque_meas;       // last 3 motor torques produced by th
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
-  int addr = to_push->RIR >> 21;
+  int bus = GET_BUS(to_push);
+  int addr = GET_ADDR(to_push);
 
   // get eps motor torque (0.66 factor in dbc)
   if (addr == 0x260) {
@@ -85,7 +86,6 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     toyota_gas_prev = gas;
   }
 
-  int bus = (to_push->RDTR >> 4) & 0xF;
   // msgs are only on bus 2 if panda is connected to frc
   if (bus == 2) {
     toyota_camera_forwarded = 1;
@@ -100,7 +100,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   int tx = 1;
-  int addr = to_send->RIR >> 21;
+  int addr = GET_ADDR(to_send);
   int bus = (to_send->RDTR >> 4) & 0xF;
 
   // Check if msg is sent on BUS 0
@@ -203,7 +203,7 @@ static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     if (bus_num == 0) {
       bus_fwd = 2;
     } else if (bus_num == 2) {
-      int addr = to_fwd->RIR>>21;
+      int addr = GET_ADDR(to_fwd);
       // block stock lkas messages and stock acc messages (if OP is doing ACC)
       int is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412));
       // in TSSP 2.0 the camera does ACC as well, so filter 0x343
