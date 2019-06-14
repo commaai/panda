@@ -48,6 +48,13 @@ can_buffer(tx3_q, 0x100)
 can_buffer(txgmlan_q, 0x100)
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
 
+// global CAN stats
+int can_rx_cnt = 0;
+int can_tx_cnt = 0;
+int can_txd_cnt = 0;
+int can_err_cnt = 0;
+int can_overflow_cnt = 0;
+
 // ********************* interrupt safe queue *********************
 
 int can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
@@ -78,9 +85,12 @@ int can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
     ret = 1;
   }
   exit_critical_section();
-  #ifdef DEBUG
-    if (ret == 0) puts("can_push failed!\n");
-  #endif
+  if (ret == 0) {
+    can_overflow_cnt++;
+    #ifdef DEBUG
+      puts("can_push failed!\n");
+    #endif
+  }
   return ret;
 }
 
@@ -99,11 +109,6 @@ void can_clear(can_ring *q) {
 // bus_lookup: Translates from 'can number' to 'bus number'.
 // can_num_lookup: Translates from 'bus number' to 'can number'.
 // can_forwarding: Given a bus num, lookup bus num to forward to. -1 means no forward.
-
-int can_rx_cnt = 0;
-int can_tx_cnt = 0;
-int can_txd_cnt = 0;
-int can_err_cnt = 0;
 
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
 CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
