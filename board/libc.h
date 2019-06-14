@@ -34,6 +34,12 @@ int memcmp(const void * ptr1, const void * ptr2, unsigned int num) {
 
 // ********************* IRQ helpers *********************
 
+int interrupts_enabled = 0;
+void enable_interrupts() {
+  interrupts_enabled = 1;
+  __enable_irq();
+}
+
 int critical_depth = 0;
 void enter_critical_section() {
   __disable_irq();
@@ -44,7 +50,7 @@ void enter_critical_section() {
 void exit_critical_section() {
   // this is safe because interrupts are disabled
   critical_depth -= 1;
-  if (critical_depth == 0) {
+  if (critical_depth == 0 && interrupts_enabled) {
     __enable_irq();
   }
 }
