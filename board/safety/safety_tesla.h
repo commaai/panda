@@ -150,17 +150,13 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   int tx = 1;
-  uint32_t addr;
-  float angle_raw;
-  float desired_angle;
-
-  addr = to_send->RIR >> 21;
+  uint32_t addr = to_send->RIR >> 21;
 
   // do not transmit CAN message if steering angle too high
   // DAS_steeringControl::DAS_steeringAngleRequest
   if (addr == 0x488U) {
-    angle_raw = ((to_send->RDLR & 0x7F) << 8) + ((to_send->RDLR & 0xFF00) >> 8);
-    desired_angle = (angle_raw * 0.1) - 1638.35;
+    float angle_raw = ((to_send->RDLR & 0x7F) << 8) + ((to_send->RDLR & 0xFF00) >> 8);
+    float desired_angle = (angle_raw * 0.1) - 1638.35;
     bool violation = 0;
     int st_enabled = (to_send->RDLR & 0x400000) >> 22;
 
