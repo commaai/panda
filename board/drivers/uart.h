@@ -75,10 +75,9 @@ void uart_ring_process(uart_ring *q) {
     if (sr & USART_SR_TXE) {
       q->uart->DR = q->elems_tx[q->r_ptr_tx];
       q->r_ptr_tx = (q->r_ptr_tx + 1) % FIFO_SIZE;
-    } else {
-      // push on interrupt later
-      q->uart->CR1 |= USART_CR1_TXEIE;
     }
+    // there could be more to send
+    q->uart->CR1 |= USART_CR1_TXEIE;
   } else {
     // nothing to send
     q->uart->CR1 &= ~USART_CR1_TXEIE;
@@ -115,7 +114,7 @@ int getc(uart_ring *q, char *elem) {
 
   enter_critical_section();
   if (q->w_ptr_rx != q->r_ptr_rx) {
-    *elem = q->elems_rx[q->r_ptr_rx];
+    if (elem != NULL) *elem = q->elems_rx[q->r_ptr_rx];
     q->r_ptr_rx = (q->r_ptr_rx + 1) % FIFO_SIZE;
     ret = 1;
   }
@@ -156,6 +155,24 @@ int putc(uart_ring *q, char elem) {
   uart_ring_process(q);
 
   return ret;
+}
+
+void uart_flush(uart_ring *q) {
+  while (q->w_ptr_tx != q->r_ptr_tx) {
+    __WFI();
+  }
+}
+
+void uart_flush_sync(uart_ring *q) {
+  // empty the TX buffer
+  while (q->w_ptr_tx != q->r_ptr_tx) {
+    uart_ring_process(q);
+  }
+}
+
+void uart_send_break(uart_ring *u) {
+  while (u->uart->CR1 & USART_CR1_SBK);
+  u->uart->CR1 |= USART_CR1_SBK;
 }
 
 void clear_uart_buff(uart_ring *q) {
