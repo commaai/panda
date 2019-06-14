@@ -78,7 +78,9 @@ int can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
     ret = 1;
   }
   exit_critical_section();
-  if (ret == 0) puts("can_push failed!\n");
+  #ifdef DEBUG
+    if (ret == 0) puts("can_push failed!\n");
+  #endif
   return ret;
 }
 
@@ -233,9 +235,6 @@ void process_can(uint8_t can_number) {
 
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
-  #ifdef DEBUG
-    puts("process CAN TX\n");
-  #endif
 
   // check for empty mailbox
   CAN_FIFOMailBox_TypeDef to_send;
