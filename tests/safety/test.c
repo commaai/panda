@@ -80,7 +80,7 @@ int get_gas_interceptor_prev(void){
   return gas_interceptor_prev;
 }
 
-void set_timer(int t){
+void set_timer(uint32_t t){
   timer.CNT = t;
 }
 
