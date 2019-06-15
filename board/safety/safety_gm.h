@@ -31,26 +31,17 @@ uint32_t gm_ts_last = 0;
 struct sample_t gm_torque_driver;         // last few driver torques measured
 
 static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  int bus_number = (to_push->RDTR >> 4) & 0xFF;
-  uint32_t addr;
-  if ((to_push->RIR & 4) != 0) {
-    // Extended
-    // Not looked at, but have to be separated
-    // to avoid address collision
-    addr = to_push->RIR >> 3;
-  } else {
-    // Normal
-    addr = to_push->RIR >> 21;
-  }
+  int bus_number = GET_BUS(to_push);
+  int addr = GET_ADDR(to_push);
 
-  if (addr == 388U) {
+  if (addr == 388) {
     int torque_driver_new = (((to_push->RDHR >> 16) & 0x7) << 8) | ((to_push->RDHR >> 24) & 0xFF);
     torque_driver_new = to_signed(torque_driver_new, 11);
     // update array of samples
     update_sample(&gm_torque_driver, torque_driver_new);
   }
 
-  if ((addr == 0x1F1U) && (bus_number == 0)) {
+  if ((addr == 0x1F1) && (bus_number == 0)) {
     //Bit 5 should be ignition "on"
     //Backup plan is Bit 2 (accessory power)
     bool ign = ((to_push->RDLR) & 0x20) != 0;
@@ -59,7 +50,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // sample speed, really only care if car is moving or not
   // rear left wheel speed
-  if (addr == 842U) {
+  if (addr == 842) {
     gm_speed = to_push->RDLR & 0xFFFF;
   }
 
@@ -67,13 +58,13 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // on powertrain bus.
   // 384 = ASCMLKASteeringCmd
   // 715 = ASCMGasRegenCmd
-  if ((bus_number == 0) && ((addr == 384U) || (addr == 715U))) {
+  if ((bus_number == 0) && ((addr == 384) || (addr == 715))) {
     gm_ascm_detected = 1;
     controls_allowed = 0;
   }
 
   // ACC steering wheel buttons
-  if (addr == 481U) {
+  if (addr == 481) {
     int buttons = (to_push->RDHR >> 12) & 0x7;
     // res/set - enable, cancel button - disable
     if ((buttons == 2) || (buttons == 3)) {
@@ -85,7 +76,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // exit controls on rising edge of brake press or on brake press when
   // speed > 0
-  if (addr == 241U) {
+  if (addr == 241) {
     int brake = (to_push->RDLR & 0xFF00) >> 8;
     // Brake pedal's potentiometer returns near-zero reading
     // even when pedal is not pressed
@@ -99,7 +90,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // exit controls on rising edge of gas press
-  if (addr == 417U) {
+  if (addr == 417) {
     int gas = to_push->RDHR & 0xFF0000;
     if (gas && !gm_gas_prev && long_controls_allowed) {
       controls_allowed = 0;
@@ -108,7 +99,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // exit controls on regen paddle
-  if (addr == 189U) {
+  if (addr == 189) {
     bool regen = to_push->RDLR & 0x20;
     if (regen) {
       controls_allowed = 0;
@@ -136,17 +127,10 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int pedal_pressed = gm_gas_prev || (gm_brake_prev && gm_speed);
   bool current_controls_allowed = controls_allowed && !pedal_pressed;
 
-  uint32_t addr;
-  if ((to_send->RIR & 4) != 0) {
-    // Extended
-    addr = to_send->RIR >> 3;
-  } else {
-    // Normal
-    addr = to_send->RIR >> 21;
-  }
+  int addr = GET_ADDR(to_send);
 
   // BRAKE: safety check
-  if (addr == 789U) {
+  if (addr == 789) {
     uint32_t rdlr = to_send->RDLR;
     int brake = ((rdlr & 0xFU) << 8) + ((rdlr & 0xFF00U) >> 8);
     brake = (0x1000 - brake) & 0xFFF;
@@ -162,7 +146,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // LKA STEER: safety check
-  if (addr == 384U) {
+  if (addr == 384) {
     uint32_t rdlr = to_send->RDLR;
     int desired_torque = ((rdlr & 0x7U) << 8) + ((rdlr & 0xFF00U) >> 8);
     uint32_t ts = TIM2->CNT;
@@ -211,12 +195,12 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // PARK ASSIST STEER: unlimited torque, no thanks
-  if (addr == 823U) {
+  if (addr == 823) {
     tx = 0;
   }
 
   // GAS/REGEN: safety check
-  if (addr == 715U) {
+  if (addr == 715) {
     uint32_t rdlr = to_send->RDLR;
     int gas_regen = ((rdlr & 0x7F0000U) >> 11) + ((rdlr & 0xF8000000U) >> 27);
     bool apply = (rdlr & 1U) != 0U;

@@ -13,20 +13,11 @@ uint32_t chrysler_ts_last = 0;
 struct sample_t chrysler_torque_meas;         // last few torques measured
 
 static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  int bus = (to_push->RDTR >> 4) & 0xFF;
-  uint32_t addr;
-  if ((to_push->RIR & 4) != 0) {
-    // Extended
-    // Not looked at, but have to be separated
-    // to avoid address collision
-    addr = to_push->RIR >> 3;
-  } else {
-    // Normal
-    addr = to_push->RIR >> 21;
-  }
+  int bus = GET_BUS(to_push);
+  int addr = GET_ADDR(to_push);
 
   // Measured eps torque
-  if (addr == 544U) {
+  if (addr == 544) {
     uint32_t rdhr = to_push->RDHR;
     int torque_meas_new = ((rdhr & 0x7U) << 8) + ((rdhr & 0xFF00U) >> 8) - 1024U;
 
@@ -35,7 +26,7 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if (addr == 0x1F4U) {
+  if (addr == 0x1F4) {
     int cruise_engaged = ((to_push->RDLR & 0x380000) >> 19) == 7;
     if (cruise_engaged && !chrysler_cruise_engaged_last) {
       controls_allowed = 1;
@@ -46,7 +37,7 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // check if stock camera ECU is still online
-  if ((bus == 0) && (addr == 0x292U)) {
+  if ((bus == 0) && (addr == 0x292)) {
     chrysler_camera_detected = 1;
     controls_allowed = 0;
   }
@@ -61,18 +52,10 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
-  uint32_t addr;
-  if ((to_send->RIR & 4) != 0) {
-    // Extended
-    addr = to_send->RIR >> 3;
-  } else {
-    // Normal
-    addr = to_send->RIR >> 21;
-  }
-
+  int addr = GET_ADDR(to_send);
 
   // LKA STEER
-  if (addr == 0x292U) {
+  if (addr == 0x292) {
     uint32_t rdlr = to_send->RDLR;
     int desired_torque = ((rdlr & 0x7U) << 8) + ((rdlr & 0xFF00U) >> 8) - 1024U;
     uint32_t ts = TIM2->CNT;
@@ -135,7 +118,7 @@ static void chrysler_init(int16_t param) {
 static int chrysler_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   int bus_fwd = -1;
-  int32_t addr = to_fwd->RIR >> 21;
+  int addr = GET_ADDR(to_fwd);
   // forward CAN 0 -> 2 so stock LKAS camera sees messages
   if ((bus_num == 0) && !chrysler_camera_detected) {
     bus_fwd = 2;

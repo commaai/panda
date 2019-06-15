@@ -51,19 +51,9 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   set_gmlan_digital_output(0); // #define GMLAN_HIGH 0
   reset_gmlan_switch_timeout(); //we're still in tesla safety mode, reset the timeout counter and make sure our output is enabled
 
-  //int bus_number = (to_push->RDTR >> 4) & 0xFF;
-  uint32_t addr;
-  if ((to_push->RIR & 4) != 0) {
-    // Extended
-    // Not looked at, but have to be separated
-    // to avoid address collision
-    addr = to_push->RIR >> 3;
-  } else {
-    // Normal
-    addr = to_push->RIR >> 21;
-  }
+  int addr = GET_ADDR(to_push);
 
-  if (addr == 0x45U) {
+  if (addr == 0x45) {
     // 6 bits starting at position 0
     int lever_position = (to_push->RDLR & 0x3F);
     if (lever_position == 2) { // pull forward
@@ -76,7 +66,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // Detect drive rail on (ignition) (start recording)
-  if (addr == 0x348U) {
+  if (addr == 0x348) {
     // GTW_status
     int drive_rail_on = (to_push->RDLR & 0x0001);
     tesla_ignition_started = drive_rail_on == 1;
@@ -84,7 +74,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // exit controls on brake press
   // DI_torque2::DI_brakePedal 0x118
-  if (addr == 0x118U) {
+  if (addr == 0x118) {
     // 1 bit at position 16
     if ((((to_push->RDLR & 0x8000)) >> 15) == 1) {
       // disable break cancel by commenting line below
@@ -99,7 +89,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // exit controls on EPAS error
   // EPAS_sysStatus::EPAS_eacStatus 0x370
-  if (addr == 0x370U) {
+  if (addr == 0x370) {
     // if EPAS_eacStatus is not 1 or 2, disable control
     eac_status = ((to_push->RDHR >> 21)) & 0x7;
     // For human steering override we must not disable controls when eac_status == 0
@@ -110,7 +100,7 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
   }
   //get latest steering wheel angle
-  if (addr == 0x00EU) {
+  if (addr == 0x00E) {
     float angle_meas_now = (int)(((((to_push->RDLR & 0x3F) << 8) + ((to_push->RDLR >> 8) & 0xFF)) * 0.1) - 819.2);
     uint32_t ts = TIM2->CNT;
     uint32_t ts_elapsed = get_ts_elapsed(ts, tesla_ts_angle_last);
@@ -150,11 +140,11 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   int tx = 1;
-  uint32_t addr = to_send->RIR >> 21;
+  int addr = GET_ADDR(to_send);
 
   // do not transmit CAN message if steering angle too high
   // DAS_steeringControl::DAS_steeringAngleRequest
-  if (addr == 0x488U) {
+  if (addr == 0x488) {
     float angle_raw = ((to_send->RDLR & 0x7F) << 8) + ((to_send->RDLR & 0xFF00) >> 8);
     float desired_angle = (angle_raw * 0.1) - 1638.35;
     bool violation = 0;
@@ -202,7 +192,7 @@ static int tesla_ign_hook() {
 static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   int bus_fwd = -1;
-  int32_t addr = to_fwd->RIR >> 21;
+  int addr = GET_ADDR(to_fwd);
 
   if (bus_num == 0) {
     // change inhibit of GTW_epasControl

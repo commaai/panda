@@ -35,7 +35,7 @@ static void toyota_ipas_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // check standard toyota stuff as well
   toyota_rx_hook(to_push);
 
-  int addr = to_push->RIR >> 21;
+  int addr = GET_ADDR(to_push);
 
   if (addr == 0x260) {
     // get driver steering torque
@@ -101,10 +101,11 @@ static int toyota_ipas_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   int tx = 1;
   int bypass_standard_tx_hook = 0;
-  int addr = to_send->RIR >> 21;
+  int bus = GET_BUS(to_send);
+  int addr = GET_ADDR(to_send);
 
   // Check if msg is sent on BUS 0
-  if (((to_send->RDTR >> 4) & 0xF) == 0) {
+  if (bus == 0) {
 
     // STEER ANGLE
     if ((addr == 0x266) || (addr == 0x167)) {
