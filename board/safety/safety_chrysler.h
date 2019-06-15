@@ -118,7 +118,7 @@ static void chrysler_init(int16_t param) {
 static int chrysler_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   int bus_fwd = -1;
-  int32_t addr = GET_ADDR(to_fwd);
+  int addr = GET_ADDR(to_fwd);
   // forward CAN 0 -> 2 so stock LKAS camera sees messages
   if ((bus_num == 0) && !chrysler_camera_detected) {
     bus_fwd = 2;
