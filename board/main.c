@@ -142,7 +142,7 @@ int get_health_pkt(void *dat) {
 int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) {
   CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;
   int ilen = 0;
-  while (ilen < min(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) ilen++;
+  while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) ilen++;
   return ilen*0x10;
 }
 
@@ -337,7 +337,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       if (!ur) break;
       if (ur == &esp_ring) uart_dma_drain();
       // read
-      while ((resp_len < min(setup->b.wLength.w, MAX_RESP_LEN)) &&
+      while ((resp_len < MIN(setup->b.wLength.w, MAX_RESP_LEN)) &&
                          getc(ur, (char*)&resp[resp_len])) {
         ++resp_len;
       }

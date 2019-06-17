@@ -56,7 +56,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       if (!ur) break;
       if (ur == &esp_ring) uart_dma_drain();
       // read
-      while ((resp_len < min(setup->b.wLength.w, MAX_RESP_LEN)) &&
+      while ((resp_len < MIN(setup->b.wLength.w, MAX_RESP_LEN)) &&
                          getc(ur, (char*)&resp[resp_len])) {
         ++resp_len;
       }
@@ -246,8 +246,8 @@ void pedal() {
 
   // write the pedal to the DAC
   if (state == NO_FAULT) {
-    dac_set(0, max(gas_set_0, pdl0));
-    dac_set(1, max(gas_set_1, pdl1));
+    dac_set(0, MAX(gas_set_0, pdl0));
+    dac_set(1, MAX(gas_set_1, pdl1));
   } else {
     dac_set(0, pdl0);
     dac_set(1, pdl1);
