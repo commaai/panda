@@ -75,7 +75,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         controls_allowed = 0;
         break;
       default:
-        break;
+        break;  // any other button is irrelevant
     }
   }
 
