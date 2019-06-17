@@ -69,7 +69,8 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // res/set - enable, cancel button - disable
     if ((buttons == 2) || (buttons == 3)) {
       controls_allowed = 1;
-    } else if (buttons == 6) {
+    }
+    if (buttons == 6) {
       controls_allowed = 0;
     }
   }
@@ -134,14 +135,13 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     uint32_t rdlr = to_send->RDLR;
     int brake = ((rdlr & 0xFU) << 8) + ((rdlr & 0xFF00U) >> 8);
     brake = (0x1000 - brake) & 0xFFF;
-    if (current_controls_allowed && long_controls_allowed) {
-      if (brake > GM_MAX_BRAKE) {
-        tx = 0;
-      }
-    } else {
+    if (!current_controls_allowed || !long_controls_allowed) {
       if (brake != 0) {
         tx = 0;
       }
+    }
+    if (brake > GM_MAX_BRAKE) {
+      tx = 0;
     }
   }
 
@@ -203,17 +203,16 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if (addr == 715) {
     uint32_t rdlr = to_send->RDLR;
     int gas_regen = ((rdlr & 0x7F0000U) >> 11) + ((rdlr & 0xF8000000U) >> 27);
-    bool apply = (rdlr & 1U) != 0U;
-    if (current_controls_allowed && long_controls_allowed) {
-      if (gas_regen > GM_MAX_GAS) {
-        tx = 0;
-      }
-    } else {
-      // Disabled message is !engaed with gas
-      // value that corresponds to max regen.
+    // Disabled message is !engaed with gas
+    // value that corresponds to max regen.
+    if (!current_controls_allowed || !long_controls_allowed) {
+      bool apply = (rdlr & 1U) != 0U;
       if (apply || (gas_regen != GM_MAX_REGEN)) {
         tx = 0;
       }
+    }
+    if (gas_regen > GM_MAX_GAS) {
+      tx = 0;
     }
   }
 

@@ -59,7 +59,8 @@ static void tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (lever_position == 2) { // pull forward
       // activate openpilot
       controls_allowed = 1;
-    } else if (lever_position == 1) { // push towards the back
+    }
+    if (lever_position == 1) { // push towards the back
       // deactivate openpilot
       controls_allowed = 0;
     }

@@ -44,7 +44,8 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int cruise_engaged = to_push->RDLR & 0x800000;  // bit 23
     if (cruise_engaged && !cadillac_cruise_engaged_last) {
       controls_allowed = 1;
-    } else if (!cruise_engaged) {
+    }
+    if (!cruise_engaged) {
       controls_allowed = 0;
     }
     cadillac_cruise_engaged_last = cruise_engaged;

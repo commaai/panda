@@ -42,7 +42,8 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int cruise_engaged = (to_push->RDLR >> 13) & 0x3;
     if (cruise_engaged && !hyundai_cruise_engaged_last) {
       controls_allowed = 1;
-    } else if (!cruise_engaged) {
+    }
+    if (!cruise_engaged) {
       controls_allowed = 0;
     }
     hyundai_cruise_engaged_last = cruise_engaged;
@@ -132,7 +133,8 @@ static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   if (hyundai_giraffe_switch_2) {
     if (bus_num == 0) {
       bus_fwd = hyundai_camera_bus;
-    } else if (bus_num == hyundai_camera_bus) {
+    }
+    if (bus_num == hyundai_camera_bus) {
       int addr = GET_ADDR(to_fwd);
       if (addr != 832) {
         bus_fwd = 0;
