@@ -103,8 +103,8 @@ uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
 // convert a trimmed integer to signed 32 bit int
 int to_signed(int d, int bits) {
   int d_signed = d;
-  if (d >= (1 << max((bits - 1), 0))) {
-    d_signed = d - (1 << max(bits, 0));
+  if (d >= (1 << MAX((bits - 1), 0))) {
+    d_signed = d - (1 << MAX(bits, 0));
   }
   return d_signed;
 }
@@ -139,12 +139,12 @@ bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
   const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR) {
 
   // *** val rate limit check ***
-  int highest_allowed_val = max(val_last, 0) + MAX_RATE_UP;
-  int lowest_allowed_val = min(val_last, 0) - MAX_RATE_UP;
+  int highest_allowed_val = MAX(val_last, 0) + MAX_RATE_UP;
+  int lowest_allowed_val = MIN(val_last, 0) - MAX_RATE_UP;
 
   // if we've exceeded the meas val, we must start moving toward 0
-  highest_allowed_val = min(highest_allowed_val, max(val_last - MAX_RATE_DOWN, max(val_meas->max, 0) + MAX_ERROR));
-  lowest_allowed_val = max(lowest_allowed_val, min(val_last + MAX_RATE_DOWN, min(val_meas->min, 0) - MAX_ERROR));
+  highest_allowed_val = MIN(highest_allowed_val, MAX(val_last - MAX_RATE_DOWN, MAX(val_meas->max, 0) + MAX_ERROR));
+  lowest_allowed_val = MAX(lowest_allowed_val, MIN(val_last + MAX_RATE_DOWN, MIN(val_meas->min, 0) - MAX_ERROR));
 
   // check for violation
   return (val < lowest_allowed_val) || (val > highest_allowed_val);
@@ -155,17 +155,17 @@ bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
   const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
   const int MAX_ALLOWANCE, const int DRIVER_FACTOR) {
 
-  int highest_allowed = max(val_last, 0) + MAX_RATE_UP;
-  int lowest_allowed = min(val_last, 0) - MAX_RATE_UP;
+  int highest_allowed = MAX(val_last, 0) + MAX_RATE_UP;
+  int lowest_allowed = MIN(val_last, 0) - MAX_RATE_UP;
 
   int driver_max_limit = MAX + (MAX_ALLOWANCE + val_driver->max) * DRIVER_FACTOR;
   int driver_min_limit = -MAX + (-MAX_ALLOWANCE + val_driver->min) * DRIVER_FACTOR;
 
   // if we've exceeded the applied torque, we must start moving toward 0
-  highest_allowed = min(highest_allowed, max(val_last - MAX_RATE_DOWN,
-                                             max(driver_max_limit, 0)));
-  lowest_allowed = max(lowest_allowed, min(val_last + MAX_RATE_DOWN,
-                                           min(driver_min_limit, 0)));
+  highest_allowed = MIN(highest_allowed, MAX(val_last - MAX_RATE_DOWN,
+                                             MAX(driver_max_limit, 0)));
+  lowest_allowed = MAX(lowest_allowed, MIN(val_last + MAX_RATE_DOWN,
+                                           MIN(driver_min_limit, 0)));
 
   // check for violation
   return (val < lowest_allowed) || (val > highest_allowed);
@@ -176,8 +176,8 @@ bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
 bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
 
   // *** torque real time rate limit check ***
-  int highest_val = max(val_last, 0) + MAX_RT_DELTA;
-  int lowest_val = min(val_last, 0) - MAX_RT_DELTA;
+  int highest_val = MAX(val_last, 0) + MAX_RT_DELTA;
+  int lowest_val = MIN(val_last, 0) - MAX_RT_DELTA;
 
   // check for violation
   return (val < lowest_val) || (val > highest_val);
