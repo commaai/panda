@@ -28,12 +28,17 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // state machine to enter and exit controls
   // 0x1A6 for the ILX, 0x296 for the Civic Touring
   if ((addr == 0x1A6) || (addr == 0x296)) {
-    int buttons = (to_push->RDLR & 0xE0) >> 5;
-    if ((buttons == 4) || (buttons == 3)) {
-      controls_allowed = 1;
-    }
-    if (buttons == 2) {
-      controls_allowed = 0;
+    int button = (to_push->RDLR & 0xE0) >> 5;
+    switch (button) {
+      case 2:  // cancel
+        controls_allowed = 0;
+        break;
+      case 3:  // set
+      case 4:  // resume
+        controls_allowed = 1;
+        break;
+      default:
+        break; // any other button is irrelevant
     }
   }
 

@@ -65,13 +65,17 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // ACC steering wheel buttons
   if (addr == 481) {
-    int buttons = (to_push->RDHR >> 12) & 0x7;
-    // res/set - enable, cancel button - disable
-    if ((buttons == 2) || (buttons == 3)) {
-      controls_allowed = 1;
-    }
-    if (buttons == 6) {
-      controls_allowed = 0;
+    int button = (to_push->RDHR >> 12) & 0x7;
+    switch (button) {
+      case 2:  // resume
+      case 3:  // set
+        controls_allowed = 1;
+        break;
+      case 6:  // cancel
+        controls_allowed = 0;
+        break;
+      default:
+        break;
     }
   }
 
