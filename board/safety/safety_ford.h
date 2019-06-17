@@ -27,7 +27,8 @@ static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     bool set_or_resume = (to_push->RDLR >> 28) & 0x3;
     if (cancel) {
       controls_allowed = 0;
-    } else if (set_or_resume) {
+    }
+    if (set_or_resume) {
       controls_allowed = 1;
     }
   }
@@ -69,9 +70,7 @@ static int ford_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // STEER: safety check
   if (addr == 0x3CA) {
-    if (current_controls_allowed) {
-      // all messages are fine here
-    } else {
+    if (!current_controls_allowed) {
       // bits 7-4 need to be 0xF to disallow lkas commands
       if (((to_send->RDLR >> 4) & 0xF) != 0xF) {
         tx = 0;

@@ -28,11 +28,17 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // state machine to enter and exit controls
   // 0x1A6 for the ILX, 0x296 for the Civic Touring
   if ((addr == 0x1A6) || (addr == 0x296)) {
-    int buttons = (to_push->RDLR & 0xE0) >> 5;
-    if ((buttons == 4) || (buttons == 3)) {
-      controls_allowed = 1;
-    } else if (buttons == 2) {
-      controls_allowed = 0;
+    int button = (to_push->RDLR & 0xE0) >> 5;
+    switch (button) {
+      case 2:  // cancel
+        controls_allowed = 0;
+        break;
+      case 3:  // set
+      case 4:  // resume
+        controls_allowed = 1;
+        break;
+      default:
+        break; // any other button is irrelevant
     }
   }
 
@@ -100,22 +106,19 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // BRAKE: safety check
   if (addr == 0x1FA) {
-    if (current_controls_allowed && long_controls_allowed) {
-      if ((to_send->RDLR & 0xFFFFFF3F) != to_send->RDLR) {
-        tx = 0;
-      }
-    } else {
+    if (!current_controls_allowed || !long_controls_allowed) {
       if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
         tx = 0;
       }
+    }
+    if ((to_send->RDLR & 0xFFFFFF3F) != to_send->RDLR) {
+      tx = 0;
     }
   }
 
   // STEER: safety check
   if ((addr == 0xE4) || (addr == 0x194)) {
-    if (current_controls_allowed) {
-      // all messages are fine here
-    } else {
+    if (!current_controls_allowed) {
       if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
         tx = 0;
       }
@@ -124,9 +127,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // GAS: safety check
   if (addr == 0x200) {
-    if (current_controls_allowed && long_controls_allowed) {
-      // all messages are fine here
-    } else {
+    if (!current_controls_allowed || !long_controls_allowed) {
       if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
         tx = 0;
       }
@@ -169,7 +170,8 @@ static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   if (bus_num == 0) {
     bus_fwd = 2;
-  } else if (bus_num == 2) {
+  }
+  if (bus_num == 2) {
     // block stock lkas messages and stock acc messages (if OP is doing ACC)
     int addr = GET_ADDR(to_fwd);
     int is_lkas_msg = (addr == 0xE4) || (addr == 0x194) || (addr == 0x33D);
@@ -187,7 +189,8 @@ static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   if (bus_num == 2) {
     bus_fwd = 1;
-  } else if (bus_num == 1)  {
+  }
+  if (bus_num == 1)  {
     int addr = GET_ADDR(to_fwd);
     int is_lkas_msg = (addr == 0xE4) || (addr == 0x33D);
     if (!is_lkas_msg) {

@@ -59,7 +59,8 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int cruise_engaged = to_push->RDLR & 0x20;
     if (!cruise_engaged) {
       controls_allowed = 0;
-    } else if (cruise_engaged && !toyota_cruise_engaged_last) {
+    }
+    if (cruise_engaged && !toyota_cruise_engaged_last) {
       controls_allowed = 1;
     }
     toyota_cruise_engaged_last = cruise_engaged;
@@ -113,9 +114,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // GAS PEDAL: safety check
     if (addr == 0x200) {
-      if (controls_allowed && long_controls_allowed) {
-        // all messages are fine here
-      } else {
+      if (!controls_allowed || !long_controls_allowed) {
         if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
           tx = 0;
         }
@@ -126,12 +125,13 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (addr == 0x343) {
       int desired_accel = ((to_send->RDLR & 0xFF) << 8) | ((to_send->RDLR >> 8) & 0xFF);
       desired_accel = to_signed(desired_accel, 16);
-      if (controls_allowed && long_controls_allowed) {
-        bool violation = max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
-        if (violation) {
+      if (!controls_allowed || !long_controls_allowed) {
+        if (desired_accel != 0) {
           tx = 0;
         }
-      } else if (desired_accel != 0) {
+      }
+      bool violation = max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
+      if (violation) {
         tx = 0;
       }
     }
@@ -202,7 +202,8 @@ static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   if (toyota_camera_forwarded && !toyota_giraffe_switch_1) {
     if (bus_num == 0) {
       bus_fwd = 2;
-    } else if (bus_num == 2) {
+    }
+    if (bus_num == 2) {
       int addr = GET_ADDR(to_fwd);
       // block stock lkas messages and stock acc messages (if OP is doing ACC)
       int is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412));

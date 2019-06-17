@@ -31,7 +31,8 @@ static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int cruise_engaged = (to_push->RDHR >> 9) & 1;
     if (cruise_engaged && !subaru_cruise_engaged_last) {
       controls_allowed = 1;
-    } else if (!cruise_engaged) {
+    }
+    if (!cruise_engaged) {
       controls_allowed = 0;
     }
     subaru_cruise_engaged_last = cruise_engaged;
@@ -99,7 +100,8 @@ static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int bus_fwd = -1;
   if (bus_num == 0) {
     bus_fwd = 2;  // Camera CAN
-  } else if (bus_num == 2) {
+  }
+  if (bus_num == 2) {
     // 356 is LKAS for outback 2015
     // 356 is LKAS for Global Platform
     // 545 is ES_Distance
