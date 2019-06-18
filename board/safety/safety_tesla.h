@@ -8,8 +8,8 @@
 //      brake rising edge
 //      brake > 0mph
 //
-bool fmax_limit_check(float val, const float MAX, const float MIN) {
-  return (val > MAX) || (val < MIN);
+bool fmax_limit_check(float val, const float MAX_VAL, const float MIN_VAL) {
+  return (val > MAX_VAL) || (val < MIN_VAL);
 }
 
 // 2m/s are added to be less restrictive

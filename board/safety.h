@@ -130,8 +130,8 @@ void update_sample(struct sample_t *sample, int sample_new) {
   }
 }
 
-bool max_limit_check(int val, const int MAX, const int MIN) {
-  return (val > MAX) || (val < MIN);
+bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
+  return (val > MAX_VAL) || (val < MIN_VAL);
 }
 
 // check that commanded value isn't too far from measured
@@ -152,14 +152,14 @@ bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
 
 // check that commanded value isn't fighting against driver
 bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
-  const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
+  const int MAX_VAL, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
   const int MAX_ALLOWANCE, const int DRIVER_FACTOR) {
 
   int highest_allowed_rl = MAX(val_last, 0) + MAX_RATE_UP;
   int lowest_allowed_rl = MIN(val_last, 0) - MAX_RATE_UP;
 
-  int driver_max_limit = MAX + (MAX_ALLOWANCE + val_driver->max) * DRIVER_FACTOR;
-  int driver_min_limit = -MAX + (-MAX_ALLOWANCE + val_driver->min) * DRIVER_FACTOR;
+  int driver_max_limit = MAX_VAL + (MAX_ALLOWANCE + val_driver->max) * DRIVER_FACTOR;
+  int driver_min_limit = -MAX_VAL + (-MAX_ALLOWANCE + val_driver->min) * DRIVER_FACTOR;
 
   // if we've exceeded the applied torque, we must start moving toward 0
   int highest_allowed = MIN(highest_allowed_rl, MAX(val_last - MAX_RATE_DOWN,
