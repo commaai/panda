@@ -17,7 +17,7 @@ python tests/misra/cppcheck/addons/misra.py board/main.c.dump 2>/tmp/misra/misra
 
 if [[ -s "/tmp/misra/misra_safety_output.txt" ]] || [[ -s "/tmp/misra/cppcheck_safety_output.txt" ]]
 then
-	echo "Found Misra violations in the safety code:"
+  echo "Found Misra violations in the safety code:"
   cat /tmp/misra/misra_safety_output.txt
   cat /tmp/misra/cppcheck_safety_output.txt
   exit 1
