@@ -104,8 +104,8 @@ int uja1023_init(int addr) {
   io_cfg_1_frame.data[1]  = 0x06; //D1, protocol control info (PCI); should be 0x06
   io_cfg_1_frame.data[2]  = 0xB4; //D2, service id (SID); should be 0xB4
   io_cfg_1_frame.data[3]  = 0x00; //D3, bits 7-6 are 00 for first cfg block. Bits 5-0 are for IM/INH, RxDL, ADCIN cfg. D3 default is 0x00
-  io_cfg_1_frame.data[4]  = 0x0c; //D4, High side enable (HSE). Set to 0xFF for High side driver or push pull
-  io_cfg_1_frame.data[5]  = 0x01; //D4, Low side enable (LSE). Set to 0xFF for Low side driver or push pull
+  io_cfg_1_frame.data[4]  = 0x0d; //D4, High side enable (HSE). Set to 0xFF for High side driver or push pull
+  io_cfg_1_frame.data[5]  = 0x00; //D4, Low side enable (LSE). Set to 0xFF for Low side driver or push pull
   io_cfg_1_frame.data[6]  = 0x00; //D6, Output mode (low byte) (OM0). Set to 0x00 for level output
   io_cfg_1_frame.data[7]  = 0x00; //D7, Output mode (high byte) (OM1). Set to 0x00 for level output
   uja1023_tx(&io_cfg_1_frame);

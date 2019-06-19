@@ -63,6 +63,9 @@ int harness_detect_orientation() {
   int cc1 = read_inputs_frame.data[0] & 4;
   int cc2 = read_inputs_frame.data[0] & 8;
 
+  int cc1_cmp = read_inputs_frame.data[0] & 0x10;
+  int cc2_cmp = read_inputs_frame.data[0] & 0x20;
+
   if (!cc1 && cc2) {
     // orientation normal
     return 1;
@@ -71,34 +74,14 @@ int harness_detect_orientation() {
     return 2;
   }
 
-  // detect failed (so far, test for active cable)
-
-  // quickly, set things high
-  px_req_frame.data[0] = 0xc;
-  uja1023_tx(&px_req_frame);
-
-  // read inputs
-  ret = uja1023_rx(&read_inputs_frame);
-
-  // reset, set things low
-  px_req_frame.data[0] = 0x0;
-  uja1023_tx(&px_req_frame);
-
-  // did we fail?
-  if (ret != LIN_OK) return 0;
-
-  cc1 = read_inputs_frame.data[0] & 4;
-  cc2 = read_inputs_frame.data[0] & 8;
-
-  if (cc1 && !cc2) {
+  if (!cc1_cmp && cc2_cmp) {
     // orientation normal
     return 1;
-  } else if (!cc1 && cc2) {
+  } else if (cc1_cmp && !cc2_cmp) {
     // orientation flipped
     return 2;
   }
 
-  // failed
   return 0;
 }
 
