@@ -40,6 +40,9 @@ def run_test_w_pandas(pandas, sleep_duration):
   for hh in h:
     hh.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
+  # relay flip
+  time.sleep(0.1)
+
   # test both directions
   for ho in permutations(range(len(h)), r=2):
     print("***************** TESTING", ho)
