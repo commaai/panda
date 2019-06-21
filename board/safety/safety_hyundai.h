@@ -145,6 +145,7 @@ static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 }
 
 static void hyundai_init(int16_t param) {
+  UNUSED(param);
   controls_allowed = 0;
   hyundai_giraffe_switch_2 = 0;
 }

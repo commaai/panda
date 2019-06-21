@@ -225,11 +225,12 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 }
 
 static void gm_init(int16_t param) {
+  UNUSED(param);
   controls_allowed = 0;
   gm_ignition_started = 0;
 }
 
-static int gm_ign_hook() {
+static int gm_ign_hook(void) {
   return gm_ignition_started;
 }
 

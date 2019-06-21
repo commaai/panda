@@ -181,12 +181,13 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 }
 
 static void tesla_init(int16_t param) {
+  UNUSED(param);
   controls_allowed = 0;
   tesla_ignition_started = 0;
   gmlan_switch_init(1); //init the gmlan switch with 1s timeout enabled
 }
 
-static int tesla_ign_hook() {
+static int tesla_ign_hook(void) {
   return tesla_ignition_started;
 }
 

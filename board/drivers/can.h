@@ -23,7 +23,7 @@ extern uint32_t can_speed[];
 void can_set_forwarding(int from, int to);
 
 void can_init(uint8_t can_number);
-void can_init_all();
+void can_init_all(void);
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
 int can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 
@@ -155,7 +155,7 @@ void can_init(uint8_t can_number) {
   process_can(can_number);
 }
 
-void can_init_all() {
+void can_init_all(void) {
   for (int i=0; i < CAN_MAX; i++) {
     can_init(i);
   }
@@ -329,17 +329,17 @@ void can_rx(uint8_t can_number) {
   }
 }
 
-void CAN1_TX_IRQHandler() { process_can(0); }
-void CAN1_RX0_IRQHandler() { can_rx(0); }
-void CAN1_SCE_IRQHandler() { can_sce(CAN1); }
+void CAN1_TX_IRQHandler(void) { process_can(0); }
+void CAN1_RX0_IRQHandler(void) { can_rx(0); }
+void CAN1_SCE_IRQHandler(void) { can_sce(CAN1); }
 
-void CAN2_TX_IRQHandler() { process_can(1); }
-void CAN2_RX0_IRQHandler() { can_rx(1); }
-void CAN2_SCE_IRQHandler() { can_sce(CAN2); }
+void CAN2_TX_IRQHandler(void) { process_can(1); }
+void CAN2_RX0_IRQHandler(void) { can_rx(1); }
+void CAN2_SCE_IRQHandler(void) { can_sce(CAN2); }
 
-void CAN3_TX_IRQHandler() { process_can(2); }
-void CAN3_RX0_IRQHandler() { can_rx(2); }
-void CAN3_SCE_IRQHandler() { can_sce(CAN3); }
+void CAN3_TX_IRQHandler(void) { process_can(2); }
+void CAN3_RX0_IRQHandler(void) { can_rx(2); }
+void CAN3_SCE_IRQHandler(void) { can_sce(CAN3); }
 
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
   if (safety_tx_hook(to_push)) {

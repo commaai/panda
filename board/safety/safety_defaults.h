@@ -14,14 +14,20 @@ static void nooutput_init(int16_t param) {
 }
 
 static int nooutput_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+  UNUSED(to_send);
   return false;
 }
 
 static int nooutput_tx_lin_hook(int lin_num, uint8_t *data, int len) {
+  UNUSED(lin_num);
+  UNUSED(data);
+  UNUSED(len);
   return false;
 }
 
 static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+  UNUSED(bus_num);
+  UNUSED(to_fwd);
   return -1;
 }
 
@@ -37,14 +43,19 @@ const safety_hooks nooutput_hooks = {
 // *** all output safety mode ***
 
 static void alloutput_init(int16_t param) {
+  UNUSED(param);
   controls_allowed = 1;
 }
 
 static int alloutput_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+  UNUSED(to_send);
   return true;
 }
 
 static int alloutput_tx_lin_hook(int lin_num, uint8_t *data, int len) {
+  UNUSED(lin_num);
+  UNUSED(data);
+  UNUSED(len);
   return true;
 }
 

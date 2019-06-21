@@ -149,6 +149,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 }
 
 static void honda_init(int16_t param) {
+  UNUSED(param);
   controls_allowed = 0;
   honda_bosch_hardware = false;
   honda_alt_brake_msg = false;
