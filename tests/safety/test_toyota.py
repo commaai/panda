@@ -287,7 +287,7 @@ class TestToyotaSafety(unittest.TestCase):
       self.safety.set_toyota_camera_forwarded(tcf)
       for lca in long_controls_allowed:
         self.safety.set_long_controls_allowed(lca)
-        blocked_msgs = [0x2E4, 0x412]
+        blocked_msgs = [0x2E4, 0x412, 0x191]
         if lca:
           blocked_msgs += [0x343]
         for b in buss:
