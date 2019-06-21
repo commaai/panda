@@ -203,7 +203,7 @@ void uart_set_baud(USART_TypeDef *u, int baud) {
 #define USART1_DMA_LEN 0x20
 char usart1_dma[USART1_DMA_LEN];
 
-void uart_dma_drain() {
+void uart_dma_drain(void) {
   uart_ring *q = &esp_ring;
 
   enter_critical_section();
@@ -214,8 +214,8 @@ void uart_dma_drain() {
     DMA2_Stream5->CR &= ~DMA_SxCR_EN;
     while (DMA2_Stream5->CR & DMA_SxCR_EN);
 
-    int i;
-    for (i = 0; i < USART1_DMA_LEN - DMA2_Stream5->NDTR; i++) {
+    unsigned int i;
+    for (i = 0; i < (USART1_DMA_LEN - DMA2_Stream5->NDTR); i++) {
       char c = usart1_dma[i];
       uint16_t next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
       if (next_w_ptr != q->r_ptr_rx) {

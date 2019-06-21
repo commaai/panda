@@ -23,12 +23,12 @@ typedef union _USB_Setup {
 }
 USB_Setup_TypeDef;
 
-void usb_init();
+void usb_init(void);
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired);
 int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired);
 void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired);
 void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired);
-void usb_cb_enumeration_complete();
+void usb_cb_enumeration_complete(void);
 
 // **** supporting defines ****
 
@@ -445,7 +445,7 @@ void USB_WritePacket_EP0(uint8_t *src, uint16_t len) {
   }
 }
 
-void usb_reset() {
+void usb_reset(void) {
   // unmask endpoint interrupts, so many sets
   USBx_DEVICE->DAINT = 0xFFFFFFFF;
   USBx_DEVICE->DAINTMSK = 0xFFFFFFFF;
@@ -496,7 +496,7 @@ char to_hex_char(int a) {
   }
 }
 
-void usb_setup() {
+void usb_setup(void) {
   int resp_len;
   // setup packet is ready
   switch (setup.b.bRequest) {
@@ -663,7 +663,7 @@ void usb_setup() {
   }
 }
 
-void usb_init() {
+void usb_init(void) {
   // full speed PHY, do reset and remove power down
   /*puth(USBx->GRSTCTL);
   puts(" resetting PHY\n");*/

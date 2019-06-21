@@ -1,12 +1,15 @@
-void default_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {}
+void default_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+  UNUSED(to_push);
+}
 
-int default_ign_hook() {
+int default_ign_hook(void) {
   return -1; // use GPIO to determine ignition
 }
 
 // *** no output safety mode ***
 
 static void nooutput_init(int16_t param) {
+  UNUSED(param)
   controls_allowed = 0;
 }
 
