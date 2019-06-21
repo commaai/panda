@@ -61,7 +61,7 @@ void debug_ring_callback(uart_ring *ring) {
 
 // ***************************** started logic *****************************
 
-int is_gpio_started() {
+int is_gpio_started(void) {
   // ignition is on PA1
   return (GPIOA->IDR & (1 << 1)) == 0;
 }
