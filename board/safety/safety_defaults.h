@@ -9,7 +9,7 @@ int default_ign_hook(void) {
 // *** no output safety mode ***
 
 static void nooutput_init(int16_t param) {
-  UNUSED(param)
+  UNUSED(param);
   controls_allowed = 0;
 }
 
