@@ -63,12 +63,12 @@ void debug_ring_callback(uart_ring *ring) {
 
 int is_gpio_started(void) {
   // ignition is on PA1
-  return (GPIOA->IDR & (1 << 1)) == 0;
+  return (GPIOA->IDR & (1U << 1)) == 0;
 }
 
 void EXTI1_IRQHandler(void) {
-  volatile int pr = EXTI->PR & (1 << 1);
-  if (pr & (1 << 1)) {
+  volatile int pr = EXTI->PR & (1U << 1);
+  if (pr & (1U << 1)) {
     #ifdef DEBUG
       puts("got started interrupt\n");
     #endif
@@ -82,15 +82,15 @@ void EXTI1_IRQHandler(void) {
     } else {
       power_save_enable();
     }
-    EXTI->PR = (1 << 1);
+    EXTI->PR = (1U << 1);
   }
 }
 
 void started_interrupt_init(void) {
   SYSCFG->EXTICR[1] = SYSCFG_EXTICR1_EXTI1_PA;
-  EXTI->IMR |= (1 << 1);
-  EXTI->RTSR |= (1 << 1);
-  EXTI->FTSR |= (1 << 1);
+  EXTI->IMR |= (1U << 1);
+  EXTI->RTSR |= (1U << 1);
+  EXTI->FTSR |= (1U << 1);
   NVIC_EnableIRQ(EXTI1_IRQn);
 }
 
@@ -401,11 +401,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     // **** 0xf0: do k-line wValue pulse on uart2 for Acura
     case 0xf0:
       if (setup->b.wValue.w == 1) {
-        GPIOC->ODR &= ~(1 << 10);
+        GPIOC->ODR &= ~(1U << 10);
         GPIOC->MODER &= ~GPIO_MODER_MODER10_1;
         GPIOC->MODER |= GPIO_MODER_MODER10_0;
       } else {
-        GPIOC->ODR &= ~(1 << 12);
+        GPIOC->ODR &= ~(1U << 12);
         GPIOC->MODER &= ~GPIO_MODER_MODER12_1;
         GPIOC->MODER |= GPIO_MODER_MODER12_0;
       }
@@ -413,11 +413,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       for (i = 0; i < 80; i++) {
         delay(8000);
         if (setup->b.wValue.w == 1) {
-          GPIOC->ODR |= (1 << 10);
-          GPIOC->ODR &= ~(1 << 10);
+          GPIOC->ODR |= (1U << 10);
+          GPIOC->ODR &= ~(1U << 10);
         } else {
-          GPIOC->ODR |= (1 << 12);
-          GPIOC->ODR &= ~(1 << 12);
+          GPIOC->ODR |= (1U << 12);
+          GPIOC->ODR &= ~(1U << 12);
         }
       }
 
@@ -496,7 +496,7 @@ void __initialize_hardware_early(void) {
 
 void __attribute__ ((noinline)) enable_fpu(void) {
   // enable the FPU
-  SCB->CPACR |= ((3UL << (10 * 2)) | (3UL << (11 * 2)));
+  SCB->CPACR |= ((3UL << (10U * 2)) | (3UL << (11U * 2)));
 }
 
 uint64_t tcnt = 0;
