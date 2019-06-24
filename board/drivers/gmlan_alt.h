@@ -9,7 +9,7 @@
 
 #define MAX_BITS_CAN_PACKET (200)
 
-int gmlan_alt_mode = DISABLED; 
+int gmlan_alt_mode = DISABLED;
 
 // returns out_len
 int do_bitstuff(char *out, char *in, int in_len) {
@@ -82,7 +82,7 @@ int get_bit_message(char *out, CAN_FIFOMailBox_TypeDef *to_bang) {
   // test packet
   int dlc_len = to_bang->RDTR & 0xF;
   len = append_int(pkt, len, 0, 1);    // Start-of-frame
-  
+
   if (to_bang->RIR & 4) {
     // extended identifier
     len = append_int(pkt, len, to_bang->RIR >> 21, 11);  // Identifier
@@ -114,7 +114,7 @@ int get_bit_message(char *out, CAN_FIFOMailBox_TypeDef *to_bang) {
   return len;
 }
 
-void setup_timer4() {
+void setup_timer4(void) {
   // setup
   TIM4->PSC = 48-1;          // tick on 1 us
   TIM4->CR1 = TIM_CR1_CEN;   // enable
@@ -131,7 +131,7 @@ void setup_timer4() {
 int gmlan_timeout_counter = GMLAN_TICKS_PER_TIMEOUT_TICKLE; //GMLAN transceiver times out every 17ms held high; tickle every 15ms
 int can_timeout_counter = GMLAN_TICKS_PER_SECOND; //1 second
 
-int inverted_bit_to_send = GMLAN_HIGH; 
+int inverted_bit_to_send = GMLAN_HIGH;
 int gmlan_switch_below_timeout = -1;
 int gmlan_switch_timeout_enable = 0;
 
@@ -140,9 +140,9 @@ void gmlan_switch_init(int timeout_enable) {
   gmlan_alt_mode = GPIO_SWITCH;
   gmlan_switch_below_timeout = 1;
   set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
-  
+
   setup_timer4();
-  
+
   inverted_bit_to_send = GMLAN_LOW; //We got initialized, set the output low
 }
 

@@ -42,6 +42,7 @@ TIM_TypeDef *TIM2 = &timer;
     __typeof__ (b) _b = (b);                    \
     _a > _b ? _a : _b; })
 
+#define UNUSED(x) (void)(x)
 
 #define PANDA
 #define NULL ((void*)0)

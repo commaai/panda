@@ -115,11 +115,12 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 }
 
 static void cadillac_init(int16_t param) {
+  UNUSED(param);
   controls_allowed = 0;
   cadillac_ign = 0;
 }
 
-static int cadillac_ign_hook() {
+static int cadillac_ign_hook(void) {
   return cadillac_ign;
 }
 

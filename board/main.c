@@ -61,12 +61,12 @@ void debug_ring_callback(uart_ring *ring) {
 
 // ***************************** started logic *****************************
 
-int is_gpio_started() {
+int is_gpio_started(void) {
   // ignition is on PA1
   return (GPIOA->IDR & (1 << 1)) == 0;
 }
 
-void EXTI1_IRQHandler() {
+void EXTI1_IRQHandler(void) {
   volatile int pr = EXTI->PR & (1 << 1);
   if (pr & (1 << 1)) {
     #ifdef DEBUG
@@ -86,7 +86,7 @@ void EXTI1_IRQHandler() {
   }
 }
 
-void started_interrupt_init() {
+void started_interrupt_init(void) {
   SYSCFG->EXTICR[1] = SYSCFG_EXTICR1_EXTI1_PA;
   EXTI->IMR |= (1 << 1);
   EXTI->RTSR |= (1 << 1);
@@ -140,6 +140,7 @@ int get_health_pkt(void *dat) {
 }
 
 int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) {
+  UNUSED(hardwired);
   CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;
   int ilen = 0;
   while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) ilen++;
@@ -148,6 +149,7 @@ int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) {
 
 // send on serial, first byte to select the ring
 void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
+  UNUSED(hardwired);
   if (len == 0) return;
   uart_ring *ur = get_ring_by_number(usbdata[0]);
   if (!ur) return;
@@ -158,6 +160,7 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
 
 // send on CAN
 void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
+  UNUSED(hardwired);
   int dpkt = 0;
   for (dpkt = 0; dpkt < len; dpkt += 0x10) {
     uint32_t *tf = (uint32_t*)(&usbdata[dpkt]);
@@ -461,7 +464,7 @@ int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
   // data[0]  = endpoint
   // data[2]  = length
   // data[4:] = data
-
+  UNUSED(len);
   int resp_len = 0;
   switch (data[0]) {
     case 0:
@@ -487,11 +490,11 @@ int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
 
 // ***************************** main code *****************************
 
-void __initialize_hardware_early() {
+void __initialize_hardware_early(void) {
   early();
 }
 
-void __attribute__ ((noinline)) enable_fpu() {
+void __attribute__ ((noinline)) enable_fpu(void) {
   // enable the FPU
   SCB->CPACR |= ((3UL << (10 * 2)) | (3UL << (11 * 2)));
 }
@@ -500,7 +503,7 @@ uint64_t tcnt = 0;
 uint64_t marker = 0;
 
 // called once per second
-void TIM3_IRQHandler() {
+void TIM3_IRQHandler(void) {
   #define CURRENT_THRESHOLD 0xF00
   #define CLICKS 5 // 5 seconds to switch modes
 
@@ -588,7 +591,7 @@ void TIM3_IRQHandler() {
   TIM3->SR = 0;
 }
 
-int main() {
+int main(void) {
   // shouldn't have interrupts here, but just in case
   __disable_irq();
 

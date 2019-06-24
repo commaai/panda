@@ -51,7 +51,7 @@ jobs:
       - run:
           name: Build Panda with strict compiler rules
           command: |
-            docker run panda_strict_compiler /bin/bash -c "cd /panda/board; make -f Makefile.strict clean; make -f Makefile.strict bin"
+            docker run panda_strict_compiler /bin/bash -c "cd /panda/tests/build_strict; ./test_build_strict.sh"
 
   build:
     machine:

@@ -29,7 +29,7 @@ int detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode) {
 }
 
 // must call again from main because BSS is zeroed
-void detect() {
+void detect(void) {
   // detect has_external_debug_serial
   has_external_debug_serial = detect_with_pull(GPIOA, 3, PULL_DOWN);
 
@@ -63,7 +63,7 @@ void detect() {
 
 // ********************* bringup *********************
 
-void periph_init() {
+void periph_init(void) {
   // enable GPIOB, UART2, CAN, USB clock
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
@@ -246,7 +246,7 @@ void set_esp_mode(int mode) {
 // ********************* big init function *********************
 
 // board specific
-void gpio_init() {
+void gpio_init(void) {
   // pull low to hold ESP in reset??
   // enable OTG out tied to ground
   GPIOA->ODR = 0;
@@ -366,7 +366,7 @@ void gpio_init() {
 extern void *g_pfnVectors;
 extern uint32_t enter_bootloader_mode;
 
-void jump_to_bootloader() {
+void jump_to_bootloader(void) {
   // do enter bootloader
   enter_bootloader_mode = 0;
   void (*bootloader)(void) = (void (*)(void)) (*((uint32_t *)0x1fff0004));
@@ -379,7 +379,7 @@ void jump_to_bootloader() {
   NVIC_SystemReset();
 }
 
-void early() {
+void early(void) {
   // after it's been in the bootloader, things are initted differently, so we reset
   if (enter_bootloader_mode != BOOT_NORMAL &&
       enter_bootloader_mode != ENTER_BOOTLOADER_MAGIC &&
