@@ -26,13 +26,15 @@ DEBUG = os.getenv("PANDADEBUG") is not None
 
 def build_st(target, mkfile="Makefile"):
   from panda import BASEDIR
-  cmd = 'cd %s && make -f %s clean && make -f %s %s >/dev/null' % (os.path.join(BASEDIR, "board"), mkfile, mkfile, target)
+  CWD = os.path.join(BASEDIR, "board")
+  cmd = 'make -f %s clean && make -f %s %s >/dev/null' % (mkfile, mkfile, target)
   try:
-    output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+    output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,shell=True, cwd=CWD)
   except subprocess.CalledProcessError as exception:
+    # do housekeeping
+    subprocess.call('make -f %s clean' % (mkfile), stderr=subprocess.STDOUT, shell=True, cwd=CWD)
     output = exception.output
-    returncode = exception.returncode
-    raise
+  return output
 
 def parse_can_buffer(dat):
   ret = []
@@ -257,29 +259,35 @@ class Panda(object):
     assert(self.bootstub)
 
     if fn is None and code is None:
-      if self.legacy:
-        fn = "obj/comma.bin"
-        print("building legacy st code")
-        build_st(fn, "Makefile.legacy")
-      else:
-        fn = "obj/panda.bin"
-        print("building panda st code")
-        build_st(fn)
+      fn = "obj/panda.bin"
+      print("building panda st code")
+      build_error = build_st(fn)
+
+      # retry if build fails
+      if build_error:
+        print("flash: build failed, retrying")
+        build_error = build_st(fn)
+
       fn = os.path.join(BASEDIR, "board", fn)
 
     if code is None:
-      with open(fn) as f:
-        code = f.read()
+      try:
+        with open(fn) as f:
+          code = f.read()
+      except Exception:
+        pass
 
     # get version
     print("flash: bootstub version is " + self.get_version())
 
     # do flash
-    Panda.flash_static(self._handle, code)
-
-    # reconnect
-    if reconnect:
-      self.reconnect()
+    if not build_error or code is not None:
+      Panda.flash_static(self._handle, code)
+      if reconnect:
+        self.reconnect()
+    else:
+      print("flash: failed, resetting")
+      self.reset()
 
   def recover(self, timeout=None):
     self.reset(enter_bootloader=True)
