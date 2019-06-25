@@ -18,7 +18,7 @@ extern int can_live, pending_can_live;
 
 // must reinit after changing these
 extern int can_loopback, can_silent;
-extern uint32_t can_speed[];
+extern uint32_t can_speed[4];
 
 void can_set_forwarding(int from, int to);
 
