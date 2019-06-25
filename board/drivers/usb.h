@@ -397,7 +397,8 @@ void *USB_ReadPacket(void *dest, uint16_t len) {
   uint32_t i=0;
   uint32_t count32b = (len + 3) / 4;
 
-  for ( i = 0; i < count32b; i++, dest += 4 ) {
+  for ( i = 0; i < count32b; i++) {
+    dest += 4;
     // packed?
     *(__attribute__((__packed__)) uint32_t *)dest = USBx_DFIFO(0);
   }
@@ -420,7 +421,8 @@ void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
   USBx_INEP(ep)->DIEPCTL |= (USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA);
 
   // load the FIFO
-  for (i = 0; i < count32b; i++, src += 4) {
+  for (i = 0; i < count32b; i++) {
+    src += 4;
     USBx_DFIFO(ep) = *((__attribute__((__packed__)) uint32_t *)src);
   }
 }
