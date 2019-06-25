@@ -14,8 +14,8 @@
 #define PULL_EFFECTIVE_DELAY 10
 
 int has_external_debug_serial = 0;
-int is_giant_panda = 0;
-int is_entering_bootmode = 0;
+bool is_giant_panda = 0;
+bool is_entering_bootmode = 0;
 int revision = PANDA_REV_AB;
 int is_grey_panda = 0;
 
@@ -148,7 +148,7 @@ void set_led(int led_num, int on) {
   #endif
 }
 
-void set_can_mode(int can, int use_gmlan) {
+void set_can_mode(int can, bool use_gmlan) {
   // connects to CAN2 xcvr or GMLAN xcvr
   if (use_gmlan) {
     if (can == 1) {

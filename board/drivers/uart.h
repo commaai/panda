@@ -14,7 +14,7 @@ typedef struct uart_ring {
 
 void uart_init(USART_TypeDef *u, int baud);
 
-int getc(uart_ring *q, char *elem);
+bool getc(uart_ring *q, char *elem);
 int putc(uart_ring *q, char elem);
 
 int puts(const char *a);
@@ -72,7 +72,7 @@ void uart_ring_process(uart_ring *q) {
   int sr = q->uart->SR;
 
   if (q->w_ptr_tx != q->r_ptr_tx) {
-    if (sr & USART_SR_TXE) {
+    if ((sr & USART_SR_TXE) != 0) {
       q->uart->DR = q->elems_tx[q->r_ptr_tx];
       q->r_ptr_tx = (q->r_ptr_tx + 1) % FIFO_SIZE;
     }
@@ -90,7 +90,9 @@ void uart_ring_process(uart_ring *q) {
       if (next_w_ptr != q->r_ptr_rx) {
         q->elems_rx[q->w_ptr_rx] = c;
         q->w_ptr_rx = next_w_ptr;
-        if (q->callback) q->callback(q);
+        if (q->callback != NULL) {
+          q->callback(q);
+        }
       }
     }
   }
@@ -109,8 +111,8 @@ void USART2_IRQHandler(void) { uart_ring_process(&debug_ring); }
 void USART3_IRQHandler(void) { uart_ring_process(&lin2_ring); }
 void UART5_IRQHandler(void) { uart_ring_process(&lin1_ring); }
 
-int getc(uart_ring *q, char *elem) {
-  int ret = 0;
+bool getc(uart_ring *q, char *elem) {
+  bool ret = 0;
 
   enter_critical_section();
   if (q->w_ptr_rx != q->r_ptr_rx) {
