@@ -118,7 +118,7 @@ void EXTI4_IRQHandler(void) {
     puts("exti4\n");
   #endif
   // SPI CS falling
-  if (pr & (1 << 4)) {
+  if ((pr & (1 << 4)) != 0) {
     spi_total_count = 0;
     spi_rx_dma(spi_buf, 0x14);
   }

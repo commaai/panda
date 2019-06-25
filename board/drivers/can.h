@@ -25,7 +25,7 @@ void can_set_forwarding(int from, int to);
 void can_init(uint8_t can_number);
 void can_init_all(void);
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
-int can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
+bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 
 // end API
 
@@ -57,8 +57,8 @@ int can_overflow_cnt = 0;
 
 // ********************* interrupt safe queue *********************
 
-int can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
-  int ret = 0;
+bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
+  bool ret = 0;
 
   enter_critical_section();
   if (q->w_ptr != q->r_ptr) {
@@ -292,7 +292,7 @@ void process_can(uint8_t can_number) {
 void can_rx(uint8_t can_number) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
-  while (CAN->RF0R & CAN_RF0R_FMP0) {
+  while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
     can_rx_cnt += 1;
 
     // can is live
@@ -342,7 +342,7 @@ void CAN3_RX0_IRQHandler(void) { can_rx(2); }
 void CAN3_SCE_IRQHandler(void) { can_sce(CAN3); }
 
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
-  if (safety_tx_hook(to_push)) {
+  if (safety_tx_hook(to_push) != 0) {
     if (bus_number < BUS_MAX) {
       // add CAN packet to send queue
       // bus number isn't passed through

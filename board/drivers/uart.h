@@ -97,7 +97,7 @@ void uart_ring_process(uart_ring *q) {
     }
   }
 
-  if (sr & USART_SR_ORE) {
+  if ((sr & USART_SR_ORE) != 0) {
     // set dropped packet flag?
   }
 
@@ -173,7 +173,7 @@ void uart_flush_sync(uart_ring *q) {
 }
 
 void uart_send_break(uart_ring *u) {
-  while (u->uart->CR1 & USART_CR1_SBK);
+  while ((u->uart->CR1 & USART_CR1_SBK) != 0);
   u->uart->CR1 |= USART_CR1_SBK;
 }
 
@@ -214,7 +214,7 @@ void uart_dma_drain(void) {
     // disable DMA
     q->uart->CR3 &= ~USART_CR3_DMAR;
     DMA2_Stream5->CR &= ~DMA_SxCR_EN;
-    while (DMA2_Stream5->CR & DMA_SxCR_EN);
+    while ((DMA2_Stream5->CR & DMA_SxCR_EN) != 0);
 
     unsigned int i;
     for (i = 0; i < (USART1_DMA_LEN - DMA2_Stream5->NDTR); i++) {
@@ -314,7 +314,7 @@ void putui(uint32_t i) {
   do {
     str[idx--] = (i % 10) + 0x30;
     i /= 10;
-  } while (i);
+  } while (i != 0);
   puts(str + idx + 1);
 }
 

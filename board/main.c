@@ -68,7 +68,7 @@ int is_gpio_started(void) {
 
 void EXTI1_IRQHandler(void) {
   volatile int pr = EXTI->PR & (1U << 1);
-  if (pr & (1U << 1)) {
+  if ((pr & (1U << 1)) != 0) {
     #ifdef DEBUG
       puts("got started interrupt\n");
     #endif
@@ -177,7 +177,7 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
   }
 }
 
-int is_enumerated = 0;
+bool is_enumerated = 0;
 
 void usb_cb_enumeration_complete() {
   puts("USB enumeration complete\n");
@@ -219,7 +219,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       // so it's blocked over wifi
       switch (setup->b.wValue.w) {
         case 0:
-          if (hardwired) {
+          if (hardwired != 0) {
             puts("-> entering bootloader\n");
             enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
             NVIC_SystemReset();
@@ -330,7 +330,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
       break;
     // **** 0xdf: set long controls allowed
     case 0xdf:
-      if (hardwired) {
+      if (hardwired != 0) {
         long_controls_allowed = setup->b.wValue.w & 1;
       }
       break;
@@ -445,7 +445,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
     case 0xf2:
       {
         uart_ring * rb = get_ring_by_number(setup->b.wValue.w);
-        if (rb) {
+        if (rb != NULL) {
           puts("Clearing UART queue.\n");
           clear_uart_buff(rb);
         }

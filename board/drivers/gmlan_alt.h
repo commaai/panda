@@ -42,7 +42,7 @@ int append_crc(char *in, int in_len) {
   int crc = 0;
   for (int i = 0; i < in_len; i++) {
     crc <<= 1;
-    if (in[i] ^ ((crc>>15)&1)) {
+    if ((in[i] ^ ((crc >> 15) & 1)) != 0) {
       crc = crc ^ 0x4599;
     }
     crc &= 0x7fff;
@@ -83,7 +83,7 @@ int get_bit_message(char *out, CAN_FIFOMailBox_TypeDef *to_bang) {
   int dlc_len = to_bang->RDTR & 0xF;
   len = append_int(pkt, len, 0, 1);    // Start-of-frame
 
-  if (to_bang->RIR & 4) {
+  if ((to_bang->RIR & 4) != 0) {
     // extended identifier
     len = append_int(pkt, len, to_bang->RIR >> 21, 11);  // Identifier
     len = append_int(pkt, len, 3, 2);    // SRR+IDE
@@ -162,7 +162,7 @@ void reset_gmlan_switch_timeout(void) {
 }
 
 void set_bitbanged_gmlan(int val) {
-  if (val) {
+  if (val != 0) {
     GPIOB->ODR |= (1 << 13);
   } else {
     GPIOB->ODR &= ~(1 << 13);
@@ -189,7 +189,7 @@ void TIM4_IRQHandler(void) {
           gmlan_silent_count++;
         }
       } else if (gmlan_silent_count == REQUIRED_SILENT_TIME) {
-        int retry = 0;
+        bool retry = 0;
         // in send loop
         if (gmlan_sending > 0 &&  // not first bit
            (read == 0 && pkt_stuffed[gmlan_sending-1] == 1) &&  // bus wrongly dominant
