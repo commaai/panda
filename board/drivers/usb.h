@@ -125,11 +125,11 @@ uint8_t resp[MAX_RESP_LEN];
 
 // Convert machine byte order to USB byte order
 #define TOUSBORDER(num)\
-  (num&0xFF), ((num>>8)&0xFF)
+  ((num) & 0xFF), (((num) >> 8) & 0xFF)
 
 // take in string length and return the first 2 bytes of a string descriptor
 #define STRING_DESCRIPTOR_HEADER(size)\
-  (((size * 2 + 2)&0xFF) | 0x0300)
+  ((((size) * 2 + 2) & 0xFF) | 0x0300)
 
 uint8_t device_desc[] = {
   DSCR_DEVICE_LEN, USB_DESC_TYPE_DEVICE, //Length, Type
