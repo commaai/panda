@@ -39,6 +39,6 @@ void set_gpio_pullup(GPIO_TypeDef *GPIO, int pin, int mode) {
 }
 
 int get_gpio_input(GPIO_TypeDef *GPIO, int pin) {
-  return (GPIO->IDR & (1 << pin)) == (1 << pin);
+  return (GPIO->IDR & (1U << pin)) == (1U << pin);
 }
 

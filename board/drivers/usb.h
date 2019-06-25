@@ -23,12 +23,12 @@ typedef union _USB_Setup {
 }
 USB_Setup_TypeDef;
 
-void usb_init();
+void usb_init(void);
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired);
 int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired);
 void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired);
 void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired);
-void usb_cb_enumeration_complete();
+void usb_cb_enumeration_complete(void);
 
 // **** supporting defines ****
 
@@ -125,11 +125,11 @@ uint8_t resp[MAX_RESP_LEN];
 
 // Convert machine byte order to USB byte order
 #define TOUSBORDER(num)\
-  (num&0xFF), ((num>>8)&0xFF)
+  ((num) & 0xFF), (((num) >> 8) & 0xFF)
 
 // take in string length and return the first 2 bytes of a string descriptor
 #define STRING_DESCRIPTOR_HEADER(size)\
-  (((size * 2 + 2)&0xFF) | 0x0300)
+  ((((size) * 2 + 2) & 0xFF) | 0x0300)
 
 uint8_t device_desc[] = {
   DSCR_DEVICE_LEN, USB_DESC_TYPE_DEVICE, //Length, Type
@@ -433,7 +433,7 @@ void USB_WritePacket_EP0(uint8_t *src, uint16_t len) {
   hexdump(src, len);
   #endif
 
-  uint16_t wplen = min(len, 0x40);
+  uint16_t wplen = MIN(len, 0x40);
   USB_WritePacket(src, wplen, 0);
 
   if (wplen < len) {
@@ -445,7 +445,7 @@ void USB_WritePacket_EP0(uint8_t *src, uint16_t len) {
   }
 }
 
-void usb_reset() {
+void usb_reset(void) {
   // unmask endpoint interrupts, so many sets
   USBx_DEVICE->DAINT = 0xFFFFFFFF;
   USBx_DEVICE->DAINTMSK = 0xFFFFFFFF;
@@ -496,7 +496,7 @@ char to_hex_char(int a) {
   }
 }
 
-void usb_setup() {
+void usb_setup(void) {
   int resp_len;
   // setup packet is ready
   switch (setup.b.bRequest) {
@@ -545,29 +545,29 @@ void usb_setup() {
           //puts("    writing device descriptor\n");
 
           // setup transfer
-          USB_WritePacket(device_desc, min(sizeof(device_desc), setup.b.wLength.w), 0);
+          USB_WritePacket(device_desc, MIN(sizeof(device_desc), setup.b.wLength.w), 0);
           USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
 
           //puts("D");
           break;
         case USB_DESC_TYPE_CONFIGURATION:
-          USB_WritePacket(configuration_desc, min(sizeof(configuration_desc), setup.b.wLength.w), 0);
+          USB_WritePacket(configuration_desc, MIN(sizeof(configuration_desc), setup.b.wLength.w), 0);
           USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
           break;
         case USB_DESC_TYPE_DEVICE_QUALIFIER:
-          USB_WritePacket(device_qualifier, min(sizeof(device_qualifier), setup.b.wLength.w), 0);
+          USB_WritePacket(device_qualifier, MIN(sizeof(device_qualifier), setup.b.wLength.w), 0);
           USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
           break;
         case USB_DESC_TYPE_STRING:
           switch (setup.b.wValue.bw.msb) {
             case STRING_OFFSET_LANGID:
-              USB_WritePacket((uint8_t*)string_language_desc, min(sizeof(string_language_desc), setup.b.wLength.w), 0);
+              USB_WritePacket((uint8_t*)string_language_desc, MIN(sizeof(string_language_desc), setup.b.wLength.w), 0);
               break;
             case STRING_OFFSET_IMANUFACTURER:
-              USB_WritePacket((uint8_t*)string_manufacturer_desc, min(sizeof(string_manufacturer_desc), setup.b.wLength.w), 0);
+              USB_WritePacket((uint8_t*)string_manufacturer_desc, MIN(sizeof(string_manufacturer_desc), setup.b.wLength.w), 0);
               break;
             case STRING_OFFSET_IPRODUCT:
-              USB_WritePacket((uint8_t*)string_product_desc, min(sizeof(string_product_desc), setup.b.wLength.w), 0);
+              USB_WritePacket((uint8_t*)string_product_desc, MIN(sizeof(string_product_desc), setup.b.wLength.w), 0);
               break;
             case STRING_OFFSET_ISERIAL:
               #ifdef UID_BASE
@@ -583,16 +583,16 @@ void usb_setup() {
                   resp[2 + i*4 + 3] = '\0';
                 }
 
-                USB_WritePacket(resp, min(resp[0], setup.b.wLength.w), 0);
+                USB_WritePacket(resp, MIN(resp[0], setup.b.wLength.w), 0);
               #else
-                USB_WritePacket((const uint8_t *)string_serial_desc, min(sizeof(string_serial_desc), setup.b.wLength.w), 0);
+                USB_WritePacket((const uint8_t *)string_serial_desc, MIN(sizeof(string_serial_desc), setup.b.wLength.w), 0);
               #endif
               break;
             case STRING_OFFSET_ICONFIGURATION:
-              USB_WritePacket((uint8_t*)string_configuration_desc, min(sizeof(string_configuration_desc), setup.b.wLength.w), 0);
+              USB_WritePacket((uint8_t*)string_configuration_desc, MIN(sizeof(string_configuration_desc), setup.b.wLength.w), 0);
               break;
             case 238:
-              USB_WritePacket((uint8_t*)string_238_desc, min(sizeof(string_238_desc), setup.b.wLength.w), 0);
+              USB_WritePacket((uint8_t*)string_238_desc, MIN(sizeof(string_238_desc), setup.b.wLength.w), 0);
               break;
             default:
               // nothing
@@ -602,7 +602,7 @@ void usb_setup() {
           USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
           break;
         case USB_DESC_TYPE_BINARY_OBJECT_STORE:
-          USB_WritePacket(binary_object_store_desc, min(sizeof(binary_object_store_desc), setup.b.wLength.w), 0);
+          USB_WritePacket(binary_object_store_desc, MIN(sizeof(binary_object_store_desc), setup.b.wLength.w), 0);
           USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
           break;
         default:
@@ -628,7 +628,7 @@ void usb_setup() {
     case WEBUSB_VENDOR_CODE:
       switch (setup.b.wIndex.w) {
         case WEBUSB_REQ_GET_URL:
-          USB_WritePacket(webusb_url_descriptor, min(sizeof(webusb_url_descriptor), setup.b.wLength.w), 0);
+          USB_WritePacket(webusb_url_descriptor, MIN(sizeof(webusb_url_descriptor), setup.b.wLength.w), 0);
           USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
           break;
         default:
@@ -642,15 +642,15 @@ void usb_setup() {
       switch (setup.b.wIndex.w) {
         // winusb 2.0 descriptor from BOS
         case WINUSB_REQ_GET_DESCRIPTOR:
-          USB_WritePacket_EP0((uint8_t*)winusb_20_desc, min(sizeof(winusb_20_desc), setup.b.wLength.w));
+          USB_WritePacket_EP0((uint8_t*)winusb_20_desc, MIN(sizeof(winusb_20_desc), setup.b.wLength.w));
           break;
         // Extended Compat ID OS Descriptor
         case WINUSB_REQ_GET_COMPATID_DESCRIPTOR:
-          USB_WritePacket_EP0((uint8_t*)winusb_ext_compatid_os_desc, min(sizeof(winusb_ext_compatid_os_desc), setup.b.wLength.w));
+          USB_WritePacket_EP0((uint8_t*)winusb_ext_compatid_os_desc, MIN(sizeof(winusb_ext_compatid_os_desc), setup.b.wLength.w));
           break;
         // Extended Properties OS Descriptor
         case WINUSB_REQ_GET_EXT_PROPS_OS:
-          USB_WritePacket_EP0((uint8_t*)winusb_ext_prop_os_desc, min(sizeof(winusb_ext_prop_os_desc), setup.b.wLength.w));
+          USB_WritePacket_EP0((uint8_t*)winusb_ext_prop_os_desc, MIN(sizeof(winusb_ext_prop_os_desc), setup.b.wLength.w));
           break;
         default:
           USB_WritePacket_EP0(0, 0);
@@ -658,12 +658,12 @@ void usb_setup() {
       break;
     default:
       resp_len = usb_cb_control_msg(&setup, resp, 1);
-      USB_WritePacket(resp, min(resp_len, setup.b.wLength.w), 0);
+      USB_WritePacket(resp, MIN(resp_len, setup.b.wLength.w), 0);
       USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
   }
 }
 
-void usb_init() {
+void usb_init(void) {
   // full speed PHY, do reset and remove power down
   /*puth(USBx->GRSTCTL);
   puts(" resetting PHY\n");*/
@@ -972,7 +972,7 @@ void usb_irqhandler(void) {
       #endif
 
       if (ep0_txlen != 0 && (USBx_INEP(0)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) >= 0x40) {
-        uint16_t len = min(ep0_txlen, 0x40);
+        uint16_t len = MIN(ep0_txlen, 0x40);
         USB_WritePacket(ep0_txdata, len, 0);
         ep0_txdata += len;
         ep0_txlen -= len;

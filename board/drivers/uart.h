@@ -2,11 +2,11 @@
 
 #define FIFO_SIZE 0x400
 typedef struct uart_ring {
-  uint16_t w_ptr_tx;
-  uint16_t r_ptr_tx;
+  volatile uint16_t w_ptr_tx;
+  volatile uint16_t r_ptr_tx;
   uint8_t elems_tx[FIFO_SIZE];
-  uint16_t w_ptr_rx;
-  uint16_t r_ptr_rx;
+  volatile uint16_t w_ptr_rx;
+  volatile uint16_t r_ptr_rx;
   uint8_t elems_rx[FIFO_SIZE];
   USART_TypeDef *uart;
   void (*callback)(struct uart_ring*);
@@ -75,10 +75,9 @@ void uart_ring_process(uart_ring *q) {
     if (sr & USART_SR_TXE) {
       q->uart->DR = q->elems_tx[q->r_ptr_tx];
       q->r_ptr_tx = (q->r_ptr_tx + 1) % FIFO_SIZE;
-    } else {
-      // push on interrupt later
-      q->uart->CR1 |= USART_CR1_TXEIE;
     }
+    // there could be more to send
+    q->uart->CR1 |= USART_CR1_TXEIE;
   } else {
     // nothing to send
     q->uart->CR1 &= ~USART_CR1_TXEIE;
@@ -115,7 +114,7 @@ int getc(uart_ring *q, char *elem) {
 
   enter_critical_section();
   if (q->w_ptr_rx != q->r_ptr_rx) {
-    *elem = q->elems_rx[q->r_ptr_rx];
+    if (elem != NULL) *elem = q->elems_rx[q->r_ptr_rx];
     q->r_ptr_rx = (q->r_ptr_rx + 1) % FIFO_SIZE;
     ret = 1;
   }
@@ -158,6 +157,24 @@ int putc(uart_ring *q, char elem) {
   return ret;
 }
 
+void uart_flush(uart_ring *q) {
+  while (q->w_ptr_tx != q->r_ptr_tx) {
+    __WFI();
+  }
+}
+
+void uart_flush_sync(uart_ring *q) {
+  // empty the TX buffer
+  while (q->w_ptr_tx != q->r_ptr_tx) {
+    uart_ring_process(q);
+  }
+}
+
+void uart_send_break(uart_ring *u) {
+  while (u->uart->CR1 & USART_CR1_SBK);
+  u->uart->CR1 |= USART_CR1_SBK;
+}
+
 void clear_uart_buff(uart_ring *q) {
   enter_critical_section();
   q->w_ptr_tx = 0;
@@ -186,7 +203,7 @@ void uart_set_baud(USART_TypeDef *u, int baud) {
 #define USART1_DMA_LEN 0x20
 char usart1_dma[USART1_DMA_LEN];
 
-void uart_dma_drain() {
+void uart_dma_drain(void) {
   uart_ring *q = &esp_ring;
 
   enter_critical_section();
@@ -197,8 +214,8 @@ void uart_dma_drain() {
     DMA2_Stream5->CR &= ~DMA_SxCR_EN;
     while (DMA2_Stream5->CR & DMA_SxCR_EN);
 
-    int i;
-    for (i = 0; i < USART1_DMA_LEN - DMA2_Stream5->NDTR; i++) {
+    unsigned int i;
+    for (i = 0; i < (USART1_DMA_LEN - DMA2_Stream5->NDTR); i++) {
       char c = usart1_dma[i];
       uint16_t next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
       if (next_w_ptr != q->r_ptr_rx) {

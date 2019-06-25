@@ -48,7 +48,7 @@ void llcan_init(CAN_TypeDef *CAN) {
   CAN->sFilterRegister[0].FR2 = 0;
   CAN->sFilterRegister[14].FR1 = 0;
   CAN->sFilterRegister[14].FR2 = 0;
-  CAN->FA1R |= 1 | (1 << 14);
+  CAN->FA1R |= 1 | (1U << 14);
 
   CAN->FMR &= ~(CAN_FMR_FINIT);
 

@@ -3,8 +3,8 @@
 //       CAN3_TX, CAN3_RX0, CAN3_SCE
 
 typedef struct {
-  uint32_t w_ptr;
-  uint32_t r_ptr;
+  volatile uint32_t w_ptr;
+  volatile uint32_t r_ptr;
   uint32_t fifo_size;
   CAN_FIFOMailBox_TypeDef *elems;
 } can_ring;
@@ -18,12 +18,12 @@ extern int can_live, pending_can_live;
 
 // must reinit after changing these
 extern int can_loopback, can_silent;
-extern uint32_t can_speed[];
+extern uint32_t can_speed[4];
 
 void can_set_forwarding(int from, int to);
 
 void can_init(uint8_t can_number);
-void can_init_all();
+void can_init_all(void);
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
 int can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 
@@ -47,6 +47,13 @@ can_buffer(tx2_q, 0x100)
 can_buffer(tx3_q, 0x100)
 can_buffer(txgmlan_q, 0x100)
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
+
+// global CAN stats
+int can_rx_cnt = 0;
+int can_tx_cnt = 0;
+int can_txd_cnt = 0;
+int can_err_cnt = 0;
+int can_overflow_cnt = 0;
 
 // ********************* interrupt safe queue *********************
 
@@ -78,7 +85,12 @@ int can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
     ret = 1;
   }
   exit_critical_section();
-  if (ret == 0) puts("can_push failed!\n");
+  if (ret == 0) {
+    can_overflow_cnt++;
+    #ifdef DEBUG
+      puts("can_push failed!\n");
+    #endif
+  }
   return ret;
 }
 
@@ -98,11 +110,6 @@ void can_clear(can_ring *q) {
 // can_num_lookup: Translates from 'bus number' to 'can number'.
 // can_forwarding: Given a bus num, lookup bus num to forward to. -1 means no forward.
 
-int can_rx_cnt = 0;
-int can_tx_cnt = 0;
-int can_txd_cnt = 0;
-int can_err_cnt = 0;
-
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
 CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
 uint8_t bus_lookup[] = {0,1,2};
@@ -112,8 +119,8 @@ uint32_t can_speed[] = {5000, 5000, 5000, 333};
 #define CAN_MAX 3
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
-#define CAN_NUM_FROM_CANIF(CAN) (CAN==CAN1 ? 0 : (CAN==CAN2 ? 1 : 2))
-#define CAN_NAME_FROM_CANIF(CAN) (CAN==CAN1 ? "CAN1" : (CAN==CAN2 ? "CAN2" : "CAN3"))
+#define CAN_NUM_FROM_CANIF(CAN) ((CAN)==CAN1 ? 0 : ((CAN) == CAN2 ? 1 : 2))
+#define CAN_NAME_FROM_CANIF(CAN) ((CAN)==CAN1 ? "CAN1" : ((CAN) == CAN2 ? "CAN2" : "CAN3"))
 #define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
 #define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
 
@@ -148,7 +155,7 @@ void can_init(uint8_t can_number) {
   process_can(can_number);
 }
 
-void can_init_all() {
+void can_init_all(void) {
   for (int i=0; i < CAN_MAX; i++) {
     can_init(i);
   }
@@ -233,9 +240,6 @@ void process_can(uint8_t can_number) {
 
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
-  #ifdef DEBUG
-    puts("process CAN TX\n");
-  #endif
 
   // check for empty mailbox
   CAN_FIFOMailBox_TypeDef to_send;
@@ -271,13 +275,6 @@ void process_can(uint8_t can_number) {
     }
 
     if (can_pop(can_queues[bus_number], &to_send)) {
-      if (CAN->MCR & CAN_MCR_SLEEP) {
-        set_can_enable(CAN, 1);
-        CAN->MCR &= ~(CAN_MCR_SLEEP);
-        CAN->MCR |= CAN_MCR_INRQ;
-        while((CAN->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
-        CAN->MCR &= ~(CAN_MCR_INRQ);
-      }
       can_tx_cnt += 1;
       // only send if we have received a packet
       CAN->sTxMailBox[0].TDLR = to_send.RDLR;
@@ -332,17 +329,17 @@ void can_rx(uint8_t can_number) {
   }
 }
 
-void CAN1_TX_IRQHandler() { process_can(0); }
-void CAN1_RX0_IRQHandler() { can_rx(0); }
-void CAN1_SCE_IRQHandler() { can_sce(CAN1); }
+void CAN1_TX_IRQHandler(void) { process_can(0); }
+void CAN1_RX0_IRQHandler(void) { can_rx(0); }
+void CAN1_SCE_IRQHandler(void) { can_sce(CAN1); }
 
-void CAN2_TX_IRQHandler() { process_can(1); }
-void CAN2_RX0_IRQHandler() { can_rx(1); }
-void CAN2_SCE_IRQHandler() { can_sce(CAN2); }
+void CAN2_TX_IRQHandler(void) { process_can(1); }
+void CAN2_RX0_IRQHandler(void) { can_rx(1); }
+void CAN2_SCE_IRQHandler(void) { can_sce(CAN2); }
 
-void CAN3_TX_IRQHandler() { process_can(2); }
-void CAN3_RX0_IRQHandler() { can_rx(2); }
-void CAN3_SCE_IRQHandler() { can_sce(CAN3); }
+void CAN3_TX_IRQHandler(void) { process_can(2); }
+void CAN3_RX0_IRQHandler(void) { can_rx(2); }
+void CAN3_SCE_IRQHandler(void) { can_sce(CAN3); }
 
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
   if (safety_tx_hook(to_push)) {
