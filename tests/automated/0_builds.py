@@ -2,8 +2,11 @@ import os
 from panda import build_st
 
 def test_build_panda():
-  build_st("obj/panda.bin")
+  build_error = build_st("obj/panda.bin")
+  if build_error:
+    raise Exception(build_error)
 
 def test_build_bootstub_panda():
-  build_st("obj/bootstub.panda.bin")
-
+  build_error = build_st("obj/bootstub.panda.bin")
+  if build_error:
+    raise Exception(build_error)
