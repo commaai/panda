@@ -381,9 +381,9 @@ void jump_to_bootloader(void) {
 
 void early(void) {
   // after it's been in the bootloader, things are initted differently, so we reset
-  if (enter_bootloader_mode != BOOT_NORMAL &&
-      enter_bootloader_mode != ENTER_BOOTLOADER_MAGIC &&
-      enter_bootloader_mode != ENTER_SOFTLOADER_MAGIC) {
+  if ((enter_bootloader_mode != BOOT_NORMAL) &&
+      (enter_bootloader_mode != ENTER_BOOTLOADER_MAGIC) &&
+      (enter_bootloader_mode != ENTER_SOFTLOADER_MAGIC)) {
     enter_bootloader_mode = BOOT_NORMAL;
     NVIC_SystemReset();
   }

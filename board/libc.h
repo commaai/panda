@@ -50,7 +50,7 @@ void enter_critical_section(void) {
 void exit_critical_section(void) {
   // this is safe because interrupts are disabled
   critical_depth -= 1;
-  if (critical_depth == 0 && interrupts_enabled) {
+  if ((critical_depth == 0) && interrupts_enabled) {
     __enable_irq();
   }
 }
