@@ -71,7 +71,7 @@ int is_gpio_started(void) {
 
 void EXTI1_IRQHandler(void) {
   volatile int pr = EXTI->PR & (1U << 1);
-  if (pr & (1U << 1)) {
+  if ((pr & (1U << 1)) != 0) {
     #ifdef DEBUG
       puts("got started interrupt\n");
     #endif
@@ -180,7 +180,7 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len, bool hardwired) {
   }
 }
 
-int is_enumerated = 0;
+bool is_enumerated = 0;
 
 void usb_cb_enumeration_complete() {
   puts("USB enumeration complete\n");
@@ -448,7 +448,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xf2:
       {
         uart_ring * rb = get_ring_by_number(setup->b.wValue.w);
-        if (rb) {
+        if (rb != NULL) {
           puts("Clearing UART queue.\n");
           clear_uart_buff(rb);
         }
