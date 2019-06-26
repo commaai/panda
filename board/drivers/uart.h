@@ -15,7 +15,7 @@ typedef struct uart_ring {
 void uart_init(USART_TypeDef *u, int baud);
 
 bool getc(uart_ring *q, char *elem);
-int putc(uart_ring *q, char elem);
+bool putc(uart_ring *q, char elem);
 
 int puts(const char *a);
 void puth(unsigned int i);
@@ -141,8 +141,8 @@ int injectc(uart_ring *q, char elem) {
   return ret;
 }
 
-int putc(uart_ring *q, char elem) {
-  int ret = 0;
+bool putc(uart_ring *q, char elem) {
+  bool ret = 0;
   uint16_t next_w_ptr;
 
   enter_critical_section();
