@@ -261,18 +261,19 @@ void TIM4_IRQHandler(void) {
 void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
   gmlan_alt_mode = BITBANG;
   // TODO: make failure less silent
-  if (gmlan_sendmax != -1) return;
+  if (gmlan_sendmax == -1) {
 
-  int len = get_bit_message(pkt_stuffed, to_bang);
-  gmlan_fail_count = 0;
-  gmlan_silent_count = 0;
-  gmlan_sending = 0;
-  gmlan_sendmax = len;
+    int len = get_bit_message(pkt_stuffed, to_bang);
+    gmlan_fail_count = 0;
+    gmlan_silent_count = 0;
+    gmlan_sending = 0;
+    gmlan_sendmax = len;
 
-  // setup for bitbang loop
-  set_bitbanged_gmlan(1); // recessive
-  set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
+    // setup for bitbang loop
+    set_bitbanged_gmlan(1); // recessive
+    set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
 
-  setup_timer4();
+    setup_timer4();
+  }
 }
 
