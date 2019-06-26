@@ -17,9 +17,12 @@
 #include "drivers/adc.h"
 #include "drivers/usb.h"
 #include "drivers/gmlan_alt.h"
-#include "drivers/spi.h"
 #include "drivers/timer.h"
 #include "drivers/clock.h"
+
+#ifndef EON
+#include "drivers/spi.h"
+#endif
 
 #include "power_saving.h"
 #include "safety.h"
@@ -662,7 +665,10 @@ int main(void) {
   can_init_all();
 
   adc_init();
+
+#ifndef EON
   spi_init();
+#endif
 
 #ifdef EON
   // have to save power
