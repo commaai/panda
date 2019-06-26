@@ -22,7 +22,7 @@
 
 #include <stdbool.h>
 #define NULL ((void*)0)
-#define COMPILE_TIME_ASSERT(pred) switch(0){case 0:case pred:;}
+#define COMPILE_TIME_ASSERT(pred) ((void)sizeof(char[1 - 2*!(pred)]))
 
 #define MIN(a,b) \
  ({ __typeof__ (a) _a = (a); \

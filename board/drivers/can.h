@@ -18,7 +18,7 @@ extern int can_live, pending_can_live;
 
 // must reinit after changing these
 extern int can_loopback, can_silent;
-extern uint32_t can_speed[];
+extern uint32_t can_speed[4];
 
 void can_set_forwarding(int from, int to);
 
@@ -119,8 +119,8 @@ uint32_t can_speed[] = {5000, 5000, 5000, 333};
 #define CAN_MAX 3
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
-#define CAN_NUM_FROM_CANIF(CAN) (CAN==CAN1 ? 0 : (CAN==CAN2 ? 1 : 2))
-#define CAN_NAME_FROM_CANIF(CAN) (CAN==CAN1 ? "CAN1" : (CAN==CAN2 ? "CAN2" : "CAN3"))
+#define CAN_NUM_FROM_CANIF(CAN) ((CAN)==CAN1 ? 0 : ((CAN) == CAN2 ? 1 : 2))
+#define CAN_NAME_FROM_CANIF(CAN) ((CAN)==CAN1 ? "CAN1" : ((CAN) == CAN2 ? "CAN2" : "CAN3"))
 #define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
 #define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
 

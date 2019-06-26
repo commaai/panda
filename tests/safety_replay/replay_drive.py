@@ -6,7 +6,7 @@ import panda.tests.safety.libpandasafety_py as libpandasafety_py
 from panda.tests.safety_replay.helpers import is_steering_msg, get_steer_torque, \
                                               set_desired_torque_last, package_can_msg, \
                                               init_segment, safety_modes
-from openpilot_tools.lib.logreader import LogReader
+from tools.lib.logreader import LogReader
 
 # replay a drive to check for safety violations
 def replay_drive(lr, safety_mode, param):

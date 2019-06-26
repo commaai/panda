@@ -5,7 +5,7 @@ import requests
 
 from helpers import safety_modes
 from replay_drive import replay_drive
-from openpilot_tools.lib.logreader import LogReader
+from tools.lib.logreader import LogReader
 
 BASE_URL = "https://commadataci.blob.core.windows.net/openpilotci/"
 
