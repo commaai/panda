@@ -973,7 +973,7 @@ void usb_irqhandler(void) {
       puts("  IN PACKET QUEUE\n");
       #endif
 
-      if (ep0_txlen != 0 && (USBx_INEP(0)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) >= 0x40) {
+      if ((ep0_txlen != 0) && ((USBx_INEP(0)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) >= 0x40)) {
         uint16_t len = MIN(ep0_txlen, 0x40);
         USB_WritePacket(ep0_txdata, len, 0);
         ep0_txdata += len;

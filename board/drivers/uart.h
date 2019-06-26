@@ -83,7 +83,7 @@ void uart_ring_process(uart_ring *q) {
     q->uart->CR1 &= ~USART_CR1_TXEIE;
   }
 
-  if (sr & USART_SR_RXNE || sr & USART_SR_ORE) {
+  if ((sr & USART_SR_RXNE) || (sr & USART_SR_ORE)) {
     uint8_t c = q->uart->DR;  // TODO: can drop packets
     if (q != &esp_ring) {
       uint16_t next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
@@ -188,10 +188,10 @@ void clear_uart_buff(uart_ring *q) {
 
 // ***************************** start UART code *****************************
 
-#define __DIV(_PCLK_, _BAUD_)                        (((_PCLK_)*25)/(4*(_BAUD_)))
-#define __DIVMANT(_PCLK_, _BAUD_)                    (__DIV((_PCLK_), (_BAUD_))/100)
-#define __DIVFRAQ(_PCLK_, _BAUD_)                    (((__DIV((_PCLK_), (_BAUD_)) - (__DIVMANT((_PCLK_), (_BAUD_)) * 100)) * 16 + 50) / 100)
-#define __USART_BRR(_PCLK_, _BAUD_)              ((__DIVMANT((_PCLK_), (_BAUD_)) << 4)|(__DIVFRAQ((_PCLK_), (_BAUD_)) & 0x0F))
+#define __DIV(_PCLK_, _BAUD_)                        (((_PCLK_) * 25) / (4 * (_BAUD_)))
+#define __DIVMANT(_PCLK_, _BAUD_)                    (__DIV((_PCLK_), (_BAUD_)) / 100)
+#define __DIVFRAQ(_PCLK_, _BAUD_)                    ((((__DIV((_PCLK_), (_BAUD_)) - (__DIVMANT((_PCLK_), (_BAUD_)) * 100)) * 16) + 50) / 100)
+#define __USART_BRR(_PCLK_, _BAUD_)              ((__DIVMANT((_PCLK_), (_BAUD_)) << 4) | (__DIVFRAQ((_PCLK_), (_BAUD_)) & 0x0F))
 
 void uart_set_baud(USART_TypeDef *u, int baud) {
   if (u == USART1) {
@@ -210,7 +210,7 @@ void uart_dma_drain(void) {
 
   enter_critical_section();
 
-  if (DMA2->HISR & DMA_HISR_TCIF5 || DMA2->HISR & DMA_HISR_HTIF5 || DMA2_Stream5->NDTR != USART1_DMA_LEN) {
+  if ((DMA2->HISR & DMA_HISR_TCIF5) || (DMA2->HISR & DMA_HISR_HTIF5) || (DMA2_Stream5->NDTR != USART1_DMA_LEN)) {
     // disable DMA
     q->uart->CR3 &= ~USART_CR3_DMAR;
     DMA2_Stream5->CR &= ~DMA_SxCR_EN;
@@ -338,7 +338,7 @@ void puth2(unsigned int i) {
 void hexdump(const void *a, int l) {
   int i;
   for (i=0;i<l;i++) {
-    if (i != 0 && (i&0xf) == 0) puts("\n");
+    if ((i != 0) && ((i & 0xf) == 0)) puts("\n");
     puth2(((const unsigned char*)a)[i]);
     puts(" ");
   }

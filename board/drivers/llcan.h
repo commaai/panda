@@ -31,7 +31,7 @@ bool llcan_set_speed(CAN_TypeDef *CAN, uint32_t speed, bool loopback, bool silen
 
   #define CAN_TIMEOUT 1000000
   int tmp = 0;
-  while((CAN->MSR & CAN_MSR_INAK) == CAN_MSR_INAK && tmp < CAN_TIMEOUT) tmp++;
+  while(((CAN->MSR & CAN_MSR_INAK) == CAN_MSR_INAK) && (tmp < CAN_TIMEOUT)) tmp++;
   if (tmp < CAN_TIMEOUT) {
     return true;
   }
