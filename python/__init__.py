@@ -29,11 +29,12 @@ def build_st(target, mkfile="Makefile"):
   CWD = os.path.join(BASEDIR, "board")
   cmd = 'make -f %s clean && make -f %s %s >/dev/null' % (mkfile, mkfile, target)
   try:
-    output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,shell=True, cwd=CWD)
+    output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True, cwd=CWD)
   except subprocess.CalledProcessError as exception:
     # do housekeeping
     subprocess.call('make -f %s clean' % (mkfile), stderr=subprocess.STDOUT, shell=True, cwd=CWD)
     output = exception.output
+    print(output)
   return output
 
 def parse_can_buffer(dat):
@@ -216,8 +217,7 @@ class Panda(object):
       except Exception:
         print("reconnecting is taking %d seconds..." % (i+1))
         try:
-          dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial))
-          dfu.recover()
+          self.recover()
         except Exception:
           pass
         time.sleep(1.0)
@@ -258,13 +258,14 @@ class Panda(object):
       self.reset(enter_bootstub=True)
     assert(self.bootstub)
 
+    build_error = False
     if fn is None and code is None:
       fn = "obj/panda.bin"
       print("building panda st code")
       build_error = build_st(fn)
 
       # retry if build fails
-      if build_error:
+      if bool(build_error):
         print("flash: build failed, retrying")
         build_error = build_st(fn)
 
@@ -281,7 +282,7 @@ class Panda(object):
     print("flash: bootstub version is " + self.get_version())
 
     # do flash
-    if not build_error or code is not None:
+    if not bool(build_error) and code is not None:
       Panda.flash_static(self._handle, code)
       if reconnect:
         self.reconnect()

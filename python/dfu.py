@@ -95,20 +95,20 @@ class PandaDFU(object):
 
   def recover(self):
     from panda import BASEDIR, build_st
-    if self.legacy:
-      fn = "obj/bootstub.comma.bin"
-      print("building legacy bootstub")
-      build_st(fn, "Makefile.legacy")
-    else:
-      fn = "obj/bootstub.panda.bin"
-      print("building panda bootstub")
-      build_st(fn)
+    fn = "obj/bootstub.panda.bin"
+    print("building panda bootstub")
+    build_error = build_st(fn)
     fn = os.path.join(BASEDIR, "board", fn)
+    try:
+      with open(fn) as f:
+        code = f.read()
+    except Exception:
+      pass
 
-    with open(fn) as f:
-      code = f.read()
-
-    self.program_bootstub(code)
+    if not bool(build_error):
+      self.program_bootstub(code)
+    else:
+      print("build failed")
 
   def reset(self):
     # **** Reset ****
