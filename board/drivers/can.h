@@ -162,7 +162,7 @@ void can_init_all(void) {
 }
 
 void can_set_gmlan(int bus) {
-  if (bus == -1 || bus != can_num_lookup[3]) {
+  if ((bus == -1) || (bus != can_num_lookup[3])) {
     // GMLAN OFF
     switch (can_num_lookup[3]) {
       case 1:
@@ -309,7 +309,7 @@ void can_rx(uint8_t can_number) {
     to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (bus_number << 4);
 
     // forwarding (panda only)
-    int bus_fwd_num = can_forwarding[bus_number] != -1 ? can_forwarding[bus_number] : safety_fwd_hook(bus_number, &to_push);
+    int bus_fwd_num = (can_forwarding[bus_number] != -1) ? can_forwarding[bus_number] : safety_fwd_hook(bus_number, &to_push);
     if (bus_fwd_num != -1) {
       CAN_FIFOMailBox_TypeDef to_send;
       to_send.RIR = to_push.RIR | 1; // TXRQ
@@ -347,7 +347,7 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
       // add CAN packet to send queue
       // bus number isn't passed through
       to_push->RDTR &= 0xF;
-      if (bus_number == 3 && can_num_lookup[3] == 0xFF) {
+      if ((bus_number == 3) && (can_num_lookup[3] == 0xFF)) {
         // TODO: why uint8 bro? only int8?
         bitbang_gmlan(to_push);
       } else {

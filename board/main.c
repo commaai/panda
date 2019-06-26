@@ -586,7 +586,7 @@ void TIM3_IRQHandler(void) {
 
     // turn off the blue LED, turned on by CAN
     // unless we are in power saving mode
-    set_led(LED_BLUE, (tcnt&1) && power_save_status == POWER_SAVE_STATUS_ENABLED);
+    set_led(LED_BLUE, (tcnt & 1) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
 
     // on to the next one
     tcnt += 1;
