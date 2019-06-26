@@ -17,7 +17,7 @@ void uart_init(USART_TypeDef *u, int baud);
 bool getc(uart_ring *q, char *elem);
 bool putc(uart_ring *q, char elem);
 
-int puts(const char *a);
+void puts(const char *a);
 void puth(unsigned int i);
 void hexdump(const void *a, int l);
 
@@ -299,12 +299,11 @@ void putch(const char a) {
   }
 }
 
-int puts(const char *a) {
+void puts(const char *a) {
   for (;*a;a++) {
     if (*a == '\n') putch('\r');
     putch(*a);
   }
-  return 0;
 }
 
 void putui(uint32_t i) {
