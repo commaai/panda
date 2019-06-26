@@ -112,21 +112,21 @@ void USART3_IRQHandler(void) { uart_ring_process(&lin2_ring); }
 void UART5_IRQHandler(void) { uart_ring_process(&lin1_ring); }
 
 bool getc(uart_ring *q, char *elem) {
-  bool ret = 0;
+  bool ret = false;
 
   enter_critical_section();
   if (q->w_ptr_rx != q->r_ptr_rx) {
     if (elem != NULL) *elem = q->elems_rx[q->r_ptr_rx];
     q->r_ptr_rx = (q->r_ptr_rx + 1) % FIFO_SIZE;
-    ret = 1;
+    ret = true;
   }
   exit_critical_section();
 
   return ret;
 }
 
-int injectc(uart_ring *q, char elem) {
-  int ret = 0;
+bool injectc(uart_ring *q, char elem) {
+  int ret = false;
   uint16_t next_w_ptr;
 
   enter_critical_section();
@@ -134,7 +134,7 @@ int injectc(uart_ring *q, char elem) {
   if (next_w_ptr != q->r_ptr_rx) {
     q->elems_rx[q->w_ptr_rx] = elem;
     q->w_ptr_rx = next_w_ptr;
-    ret = 1;
+    ret = true;
   }
   exit_critical_section();
 
@@ -142,7 +142,7 @@ int injectc(uart_ring *q, char elem) {
 }
 
 bool putc(uart_ring *q, char elem) {
-  bool ret = 0;
+  bool ret = false;
   uint16_t next_w_ptr;
 
   enter_critical_section();
@@ -150,7 +150,7 @@ bool putc(uart_ring *q, char elem) {
   if (next_w_ptr != q->r_ptr_tx) {
     q->elems_tx[q->w_ptr_tx] = elem;
     q->w_ptr_tx = next_w_ptr;
-    ret = 1;
+    ret = true;
   }
   exit_critical_section();
 
