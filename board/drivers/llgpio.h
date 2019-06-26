@@ -15,7 +15,7 @@ void set_gpio_mode(GPIO_TypeDef *GPIO, int pin, int mode) {
 }
 
 void set_gpio_output(GPIO_TypeDef *GPIO, int pin, int val) {
-  if (val) {
+  if (val != 0) {
     GPIO->ODR |= (1 << pin);
   } else {
     GPIO->ODR &= ~(1 << pin);

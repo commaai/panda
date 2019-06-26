@@ -758,27 +758,27 @@ void usb_irqhandler(void) {
     puts(" USB interrupt!\n");
   #endif
 
-  if (gintsts & USB_OTG_GINTSTS_CIDSCHG) {
+  if ((gintsts & USB_OTG_GINTSTS_CIDSCHG) != 0) {
     puts("connector ID status change\n");
   }
 
-  if (gintsts & USB_OTG_GINTSTS_ESUSP) {
+  if ((gintsts & USB_OTG_GINTSTS_ESUSP) != 0) {
     puts("ESUSP detected\n");
   }
 
-  if (gintsts & USB_OTG_GINTSTS_USBRST) {
+  if ((gintsts & USB_OTG_GINTSTS_USBRST) != 0) {
     puts("USB reset\n");
     usb_reset();
   }
 
-  if (gintsts & USB_OTG_GINTSTS_ENUMDNE) {
+  if ((gintsts & USB_OTG_GINTSTS_ENUMDNE) != 0) {
     puts("enumeration done");
     // Full speed, ENUMSPD
     //puth(USBx_DEVICE->DSTS);
     puts("\n");
   }
 
-  if (gintsts & USB_OTG_GINTSTS_OTGINT) {
+  if ((gintsts & USB_OTG_GINTSTS_OTGINT) != 0) {
     puts("OTG int:");
     puth(USBx->GOTGINT);
     puts("\n");
@@ -788,7 +788,7 @@ void usb_irqhandler(void) {
   }
 
   // RX FIFO first
-  if (gintsts & USB_OTG_GINTSTS_RXFLVL) {
+  if ((gintsts & USB_OTG_GINTSTS_RXFLVL) != 0) {
     // 1. Read the Receive status pop register
     volatile unsigned int rxst = USBx->GRXSTSP;
 
@@ -850,7 +850,7 @@ void usb_irqhandler(void) {
     USBx_DEVICE->DCTL |= USB_OTG_DCTL_CGONAK | USB_OTG_DCTL_CGINAK;
   }
 
-  if (gintsts & USB_OTG_GINTSTS_SRQINT) {
+  if ((gintsts & USB_OTG_GINTSTS_SRQINT) != 0) {
     // we want to do "A-device host negotiation protocol" since we are the A-device
     /*puts("start request\n");
     puth(USBx->GOTGCTL);
@@ -861,7 +861,7 @@ void usb_irqhandler(void) {
   }
 
   // out endpoint hit
-  if (gintsts & USB_OTG_GINTSTS_OEPINT) {
+  if ((gintsts & USB_OTG_GINTSTS_OEPINT) != 0) {
     #ifdef DEBUG_USB
       puts("  0:");
       puth(USBx_OUTEP(0)->DOEPINT);
@@ -876,7 +876,7 @@ void usb_irqhandler(void) {
       puts(" OUT ENDPOINT\n");
     #endif
 
-    if (USBx_OUTEP(2)->DOEPINT & USB_OTG_DOEPINT_XFRC) {
+    if ((USBx_OUTEP(2)->DOEPINT & USB_OTG_DOEPINT_XFRC) != 0) {
       #ifdef DEBUG_USB
         puts("  OUT2 PACKET XFRC\n");
       #endif
@@ -884,32 +884,32 @@ void usb_irqhandler(void) {
       USBx_OUTEP(2)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
     }
 
-    if (USBx_OUTEP(3)->DOEPINT & USB_OTG_DOEPINT_XFRC) {
+    if ((USBx_OUTEP(3)->DOEPINT & USB_OTG_DOEPINT_XFRC) != 0) {
       #ifdef DEBUG_USB
         puts("  OUT3 PACKET XFRC\n");
       #endif
       USBx_OUTEP(3)->DOEPTSIZ = (1 << 19) | 0x40;
       USBx_OUTEP(3)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
-    } else if (USBx_OUTEP(3)->DOEPINT & 0x2000) {
+    } else if ((USBx_OUTEP(3)->DOEPINT & 0x2000) != 0) {
       #ifdef DEBUG_USB
         puts("  OUT3 PACKET WTF\n");
       #endif
       // if NAK was set trigger this, unknown interrupt
       USBx_OUTEP(3)->DOEPTSIZ = (1 << 19) | 0x40;
       USBx_OUTEP(3)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
-    } else if (USBx_OUTEP(3)->DOEPINT) {
+    } else if ((USBx_OUTEP(3)->DOEPINT) != 0) {
       puts("OUTEP3 error ");
       puth(USBx_OUTEP(3)->DOEPINT);
       puts("\n");
     }
 
-    if (USBx_OUTEP(0)->DOEPINT & USB_OTG_DIEPINT_XFRC) {
+    if ((USBx_OUTEP(0)->DOEPINT & USB_OTG_DIEPINT_XFRC) != 0) {
       // ready for next packet
       USBx_OUTEP(0)->DOEPTSIZ = USB_OTG_DOEPTSIZ_STUPCNT | (USB_OTG_DOEPTSIZ_PKTCNT & (1 << 19)) | (1 * 8);
     }
 
     // respond to setup packets
-    if (USBx_OUTEP(0)->DOEPINT & USB_OTG_DOEPINT_STUP) {
+    if ((USBx_OUTEP(0)->DOEPINT & USB_OTG_DOEPINT_STUP) != 0) {
       usb_setup();
     }
 
@@ -919,7 +919,7 @@ void usb_irqhandler(void) {
   }
 
   // interrupt endpoint hit (Page 1221)
-  if (gintsts & USB_OTG_GINTSTS_IEPINT) {
+  if ((gintsts & USB_OTG_GINTSTS_IEPINT) != 0) {
     #ifdef DEBUG_USB
       puts("  ");
       puth(USBx_INEP(0)->DIEPINT);
@@ -944,7 +944,7 @@ void usb_irqhandler(void) {
     switch (current_int0_alt_setting) {
       case 0: ////// Bulk config
         // *** IN token received when TxFIFO is empty
-        if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
+        if ((USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) != 0) {
           #ifdef DEBUG_USB
           puts("  IN PACKET QUEUE\n");
           #endif
@@ -955,7 +955,7 @@ void usb_irqhandler(void) {
 
       case 1: ////// Interrupt config
         // *** IN token received when TxFIFO is empty
-        if (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
+        if ((USBx_INEP(1)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) != 0) {
           #ifdef DEBUG_USB
           puts("  IN PACKET QUEUE\n");
           #endif
@@ -968,7 +968,7 @@ void usb_irqhandler(void) {
         break;
     }
 
-    if (USBx_INEP(0)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) {
+    if ((USBx_INEP(0)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) != 0) {
       #ifdef DEBUG_USB
       puts("  IN PACKET QUEUE\n");
       #endif
