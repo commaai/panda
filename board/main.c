@@ -222,7 +222,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       // so it's blocked over wifi
       switch (setup->b.wValue.w) {
         case 0:
-          if (hardwired != 0) {
+          if (hardwired) {
             puts("-> entering bootloader\n");
             enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
             NVIC_SystemReset();
@@ -333,7 +333,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xdf: set long controls allowed
     case 0xdf:
-      if (hardwired != 0) {
+      if (hardwired) {
         long_controls_allowed = setup->b.wValue.w & 1;
       }
       break;
