@@ -185,7 +185,7 @@ int gmlan_fail_count = 0;
 
 void TIM4_IRQHandler(void) {
   if (gmlan_alt_mode == BITBANG) {
-    if (TIM4->SR & TIM_SR_UIF && gmlan_sendmax != -1) {
+    if ((TIM4->SR & TIM_SR_UIF) && (gmlan_sendmax != -1)) {
       int read = get_gpio_input(GPIOB, 12);
       if (gmlan_silent_count < REQUIRED_SILENT_TIME) {
         if (read == 0) {
@@ -196,14 +196,14 @@ void TIM4_IRQHandler(void) {
       } else if (gmlan_silent_count == REQUIRED_SILENT_TIME) {
         bool retry = 0;
         // in send loop
-        if (gmlan_sending > 0 &&  // not first bit
-           (read == 0 && pkt_stuffed[gmlan_sending-1] == 1) &&  // bus wrongly dominant
-           gmlan_sending != (gmlan_sendmax-11)) {    //not ack bit
+        if ((gmlan_sending > 0) &&  // not first bit
+           ((read == 0) && (pkt_stuffed[gmlan_sending-1] == 1)) &&  // bus wrongly dominant
+           (gmlan_sending != (gmlan_sendmax - 11))) {    //not ack bit
           puts("GMLAN ERR: bus driven at ");
           puth(gmlan_sending);
           puts("\n");
           retry = 1;
-        } else if (read == 1 && gmlan_sending == (gmlan_sendmax-11)) {    // recessive during ACK
+        } else if ((read == 1) && (gmlan_sending == (gmlan_sendmax - 11))) {    // recessive during ACK
           puts("GMLAN ERR: didn't recv ACK\n");
           retry = 1;
         }
@@ -221,7 +221,7 @@ void TIM4_IRQHandler(void) {
           gmlan_sending++;
         }
       }
-      if (gmlan_sending == gmlan_sendmax || gmlan_fail_count == MAX_FAIL_COUNT) {
+      if ((gmlan_sending == gmlan_sendmax) || (gmlan_fail_count == MAX_FAIL_COUNT)) {
         set_bitbanged_gmlan(1); // recessive
         set_gpio_mode(GPIOB, 13, MODE_INPUT);
         TIM4->DIER = 0;  // no update interrupt
@@ -233,8 +233,8 @@ void TIM4_IRQHandler(void) {
   } //bit bang mode
 
   else if (gmlan_alt_mode == GPIO_SWITCH) {
-    if (TIM4->SR & TIM_SR_UIF && gmlan_switch_below_timeout != -1) {
-      if (can_timeout_counter == 0 && gmlan_switch_timeout_enable) {
+    if ((TIM4->SR & TIM_SR_UIF) && (gmlan_switch_below_timeout != -1)) {
+      if ((can_timeout_counter == 0) && gmlan_switch_timeout_enable) {
         //it has been more than 1 second since timeout was reset; disable timer and restore the GMLAN output
         set_gpio_output(GPIOB, 13, GMLAN_LOW);
         gmlan_switch_below_timeout = -1;
