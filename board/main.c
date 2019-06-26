@@ -142,7 +142,7 @@ int get_health_pkt(void *dat) {
   return sizeof(*health);
 }
 
-int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) {
+int usb_cb_ep1_in(uint8_t *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;
   int ilen = 0;
@@ -151,7 +151,7 @@ int usb_cb_ep1_in(uint8_t *usbdata, int len, int hardwired) {
 }
 
 // send on serial, first byte to select the ring
-void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
+void usb_cb_ep2_out(uint8_t *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   if (len == 0) return;
   uart_ring *ur = get_ring_by_number(usbdata[0]);
@@ -162,7 +162,7 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, int hardwired) {
 }
 
 // send on CAN
-void usb_cb_ep3_out(uint8_t *usbdata, int len, int hardwired) {
+void usb_cb_ep3_out(uint8_t *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   int dpkt = 0;
   for (dpkt = 0; dpkt < len; dpkt += 0x10) {
@@ -187,7 +187,7 @@ void usb_cb_enumeration_complete() {
   is_enumerated = 1;
 }
 
-int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, int hardwired) {
+int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) {
   int resp_len = 0;
   uart_ring *ur = NULL;
   int i;
