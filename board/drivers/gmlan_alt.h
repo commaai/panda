@@ -18,7 +18,8 @@ int do_bitstuff(char *out, char *in, int in_len) {
   int j = 0;
   for (int i = 0; i < in_len; i++) {
     char bit = in[i];
-    out[j++] = bit;
+    out[j] = bit;
+    j++;
 
     // do the stuffing
     if (bit == last_bit) {
@@ -26,7 +27,8 @@ int do_bitstuff(char *out, char *in, int in_len) {
       if (bit_cnt == 5) {
         // 5 in a row the same, do stuff
         last_bit = !bit;
-        out[j++] = last_bit;
+        out[j] = last_bit;
+        j++;
         bit_cnt = 1;
       }
     } else {
@@ -48,21 +50,24 @@ int append_crc(char *in, int in_len) {
     crc &= 0x7fff;
   }
   for (int i = 14; i >= 0; i--) {
-    in[in_len++] = (crc>>i)&1;
+    in[in_len] = (crc>>i)&1;
+    in_len++;
   }
   return in_len;
 }
 
 int append_bits(char *in, int in_len, char *app, int app_len) {
   for (int i = 0; i < app_len; i++) {
-    in[in_len++] = app[i];
+    in[in_len] = app[i];
+    in_len++;
   }
   return in_len;
 }
 
 int append_int(char *in, int in_len, int val, int val_len) {
   for (int i = val_len-1; i >= 0; i--) {
-    in[in_len++] = (val&(1<<i)) != 0;
+    in[in_len] = (val&(1<<i)) != 0;
+    in_len++;
   }
   return in_len;
 }

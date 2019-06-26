@@ -310,9 +310,11 @@ int puts(const char *a) {
 void putui(uint32_t i) {
   char str[11];
   uint8_t idx = 10;
-  str[idx--] = '\0';
+  str[idx] = '\0';
+  idx--;
   do {
-    str[idx--] = (i % 10) + 0x30;
+    str[idx] = (i % 10) + 0x30;
+    idx--;
     i /= 10;
   } while (i != 0);
   puts(str + idx + 1);
