@@ -97,7 +97,7 @@ void periph_init(void) {
 
 // ********************* setters *********************
 
-void set_can_enable(CAN_TypeDef *CAN, int enabled) {
+void set_can_enable(CAN_TypeDef *CAN, bool enabled) {
   // enable CAN busses
   if (CAN == CAN1) {
     #ifdef PANDA

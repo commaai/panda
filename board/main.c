@@ -64,7 +64,7 @@ void debug_ring_callback(uart_ring *ring) {
 
 // ***************************** started logic *****************************
 
-int is_gpio_started(void) {
+bool is_gpio_started(void) {
   // ignition is on PA1
   return (GPIOA->IDR & (1U << 1)) == 0;
 }
@@ -80,11 +80,8 @@ void EXTI1_IRQHandler(void) {
     delay(100000);
 
     // set power savings mode here
-    if (is_gpio_started() == 1) {
-      power_save_disable();
-    } else {
-      power_save_enable();
-    }
+    int power_save_state = is_gpio_started() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
+    set_power_save_state(power_save_state);
     EXTI->PR = (1U << 1);
   }
 }
@@ -153,12 +150,10 @@ int usb_cb_ep1_in(uint8_t *usbdata, int len, bool hardwired) {
 // send on serial, first byte to select the ring
 void usb_cb_ep2_out(uint8_t *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
-  if (len != 0) {
-    uart_ring *ur = get_ring_by_number(usbdata[0]);
-    if (ur != NULL) {
-      if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1)) {
-        for (int i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
-      }
+  uart_ring *ur = get_ring_by_number(usbdata[0]);
+  if ((len != 0) && (ur != NULL)) {
+    if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1)) {
+      for (int i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
     }
   }
 }
@@ -296,7 +291,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         if (safety_ignition_hook() != -1) {
           // if the ignition hook depends on something other than the started GPIO
           // we have to disable power savings (fix for GM and Tesla)
-          power_save_disable();
+          set_power_save_state(POWER_SAVE_STATUS_DISABLED);
         }
         #ifndef EON
           // always LIVE on EON
@@ -678,8 +673,8 @@ int main(void) {
     set_esp_mode(ESP_DISABLED);
   }
   // only enter power save after the first cycle
-  /*if (is_gpio_started() == 0) {
-    power_save_enable();
+  /*if (is_gpio_started()) {
+    set_power_save_state(POWER_SAVE_STATUS_ENABLED);
   }*/
   // interrupt on started line
   started_interrupt_init();
