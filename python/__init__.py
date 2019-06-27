@@ -27,7 +27,7 @@ DEBUG = os.getenv("PANDADEBUG") is not None
 def build_st(target, mkfile="Makefile"):
   from panda import BASEDIR
   CWD = os.path.join(BASEDIR, "board")
-  cmd = 'make -f %s clean && make -f %s %s >/dev/null' % (mkfile, mkfile, target)
+  cmd = 'make -f %s clean >/dev/null && make -f %s %s >/dev/null' % (mkfile, mkfile, target)
   try:
     output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True, cwd=CWD)
   except subprocess.CalledProcessError as exception:
@@ -258,9 +258,11 @@ class Panda(object):
       self.reset(enter_bootstub=True)
     assert(self.bootstub)
 
-    build_error = False
-    if fn is None and code is None:
+    if fn is None:
       fn = "obj/panda.bin"
+
+    build_error = False
+    if code is None:
       print("building panda st code")
       build_error = build_st(fn)
 
@@ -271,7 +273,6 @@ class Panda(object):
 
       fn = os.path.join(BASEDIR, "board", fn)
 
-    if code is None:
       try:
         with open(fn) as f:
           code = f.read()
