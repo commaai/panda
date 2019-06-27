@@ -6,13 +6,12 @@ def ensure_st_up_to_date():
   from panda import Panda, PandaDFU, BASEDIR
 
   with open(os.path.join(BASEDIR, "VERSION")) as f:
-    repo_version = f.read()
+    repo_version = f.read().strip()
 
   repo_version += "-EON" if os.path.isfile('/EON') else "-DEV"
 
   panda = None
   panda_dfu = None
-  should_flash_recover = False
 
   while 1:
     # break on normal mode Panda
@@ -30,10 +29,12 @@ def ensure_st_up_to_date():
     print "waiting for board..."
     time.sleep(1)
 
-  if panda.bootstub or not panda.get_version().startswith(repo_version):
+  # entered from bootloader, dfu already flashed
+  if panda.bootstub and (panda_dfu is not None):
     panda.flash()
 
-  if panda.bootstub:
+  # flash everything
+  if panda.bootstub or not panda.get_version().startswith(repo_version):
     panda.recover()
 
   assert(not panda.bootstub)

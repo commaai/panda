@@ -304,7 +304,7 @@ class Panda(object):
     dfu.recover()
 
     # reflash after recover
-    self.connect(True, True)
+    self.connect(wait=True)
     self.flash()
     return True
 
