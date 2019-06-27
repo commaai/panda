@@ -33,7 +33,7 @@ POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
 
 # this no longer pushes the bootstub
 flash: obj/$(PROJ_NAME).bin
-	PYTHONPATH=../ python -c "from python import Panda; Panda().flash('obj/$(PROJ_NAME).bin')"
+	PYTHONPATH=../ python -c "from python import Panda; Panda().flash(fn='obj/$(PROJ_NAME).bin')"
 
 ota: obj/$(PROJ_NAME).bin
 	curl http://192.168.0.10/stupdate --upload-file $<
