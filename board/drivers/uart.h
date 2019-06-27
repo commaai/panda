@@ -50,18 +50,25 @@ uart_ring debug_ring = { .w_ptr_tx = 0, .r_ptr_tx = 0,
 
 
 uart_ring *get_ring_by_number(int a) {
+  uart_ring *ring = NULL;
   switch(a) {
     case 0:
-      return &debug_ring;
+      ring = &debug_ring;
+      break;
     case 1:
-      return &esp_ring;
+      ring = &esp_ring;
+      break;
     case 2:
-      return &lin1_ring;
+      ring = &lin1_ring;
+      break;
     case 3:
-      return &lin2_ring;
+      ring = &lin2_ring;
+      break;
     default:
-      return NULL;
+      ring = NULL;
+      break;
   }
+  return ring;
 }
 
 // ***************************** serial port *****************************

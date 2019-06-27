@@ -97,7 +97,7 @@ void periph_init(void) {
 
 // ********************* setters *********************
 
-void set_can_enable(CAN_TypeDef *CAN, int enabled) {
+void set_can_enable(CAN_TypeDef *CAN, bool enabled) {
   // enable CAN busses
   if (CAN == CAN1) {
     #ifdef PANDA
@@ -139,13 +139,13 @@ void set_can_enable(CAN_TypeDef *CAN, int enabled) {
 #endif
 
 void set_led(int led_num, int on) {
-  if (led_num == -1) return;
-
+  if (led_num != -1) {
   #ifdef PANDA
     set_gpio_output(GPIOC, led_num, !on);
   #else
     set_gpio_output(GPIOB, led_num, !on);
   #endif
+  }
 }
 
 void set_can_mode(int can, bool use_gmlan) {

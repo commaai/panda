@@ -26,10 +26,14 @@ void *memcpy(void *dest, const void *src, unsigned int n) {
 
 int memcmp(const void * ptr1, const void * ptr2, unsigned int num) {
   unsigned int i;
+  int ret = 0;
   for (i = 0; i < num; i++) {
-    if ( ((uint8_t*)ptr1)[i] != ((uint8_t*)ptr2)[i] ) return -1;
+    if ( ((uint8_t*)ptr1)[i] != ((uint8_t*)ptr2)[i] ) {
+      ret = -1;
+      break;
+    }
   }
-  return 0;
+  return ret;
 }
 
 // ********************* IRQ helpers *********************
