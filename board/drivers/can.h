@@ -176,6 +176,9 @@ void can_set_gmlan(int bus) {
         can_num_lookup[3] = -1;
         can_init(2);
         break;
+      default:
+        puts("GMLAN bus value invalid\n");
+        break;
     }
   }
 

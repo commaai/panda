@@ -13,6 +13,8 @@
 
 #define PULL_EFFECTIVE_DELAY 10
 
+void puts(const char *a);
+
 bool has_external_debug_serial = 0;
 bool is_giant_panda = 0;
 bool is_entering_bootmode = 0;
@@ -200,6 +202,7 @@ void set_can_mode(int can, bool use_gmlan) {
 int usb_power_mode = USB_POWER_NONE;
 
 void set_usb_power_mode(int mode) {
+  bool valid_mode = true;
   switch (mode) {
     case USB_POWER_CLIENT:
       // B2,A13: set client mode
@@ -216,8 +219,15 @@ void set_usb_power_mode(int mode) {
       set_gpio_output(GPIOB, 2, 0);
       set_gpio_output(GPIOA, 13, 0);
       break;
+    default:
+      valid_mode = false;
+      puts("Invalid usb power mode\n");
+      break;
   }
-  usb_power_mode = mode;
+
+  if (valid_mode) {
+    usb_power_mode = mode;
+  }
 }
 
 #define ESP_DISABLED 0
@@ -239,6 +249,9 @@ void set_esp_mode(int mode) {
     case ESP_BOOTMODE:
       set_gpio_output(GPIOC, 14, 1);
       set_gpio_output(GPIOC, 5, 0);
+      break;
+    default:
+      puts("Invalid esp mode\n");
       break;
   }
 }

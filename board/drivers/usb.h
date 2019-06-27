@@ -936,8 +936,8 @@ void usb_irqhandler(void) {
     // No need to set NAK in OTG_DIEPCTL0 when nothing to send,
     // Appears USB core automatically sets NAK. WritePacket clears it.
 
-    // Handle the two interface alternate settings. Setting 0 is has
-    // EP1 as bulk. Setting 1 has EP1 as interrupt. The code to handle
+    // Handle the two interface alternate settings. Setting 0 has EP1
+    // as bulk. Setting 1 has EP1 as interrupt. The code to handle
     // these two EP variations are very similar and can be
     // restructured for smaller code footprint. Keeping split out for
     // now for clarity.
@@ -967,6 +967,9 @@ void usb_irqhandler(void) {
             USB_WritePacket((void *)resp, len, 1);
           }
         }
+        break;
+      default:
+        puts("current_int0_alt_setting value invalid\n");
         break;
     }
 
