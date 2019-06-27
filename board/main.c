@@ -230,6 +230,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
           enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
           NVIC_SystemReset();
           break;
+        default:
+          puts("Bootloader mode invalid\n");
+          break;
       }
       break;
     // **** 0xd2: get health packet
@@ -483,6 +486,9 @@ int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
       // ep 3, send CAN
       usb_cb_ep3_out(data+4, data[2], 0);
       break;
+    default:
+      puts("SPI data invalid");
+      break;
   }
   return resp_len;
 }
@@ -561,6 +567,9 @@ void TIM3_IRQHandler(void) {
         if (current < CURRENT_THRESHOLD) {
           marker = tcnt;
         }
+        break;
+      default:
+        puts("USB power mode invalid\n");  // set_usb_power_mode prevents assigning invalid values
         break;
     }
 

@@ -19,7 +19,7 @@
   #include "drivers/usb.h"
 #else
   // no serial either
-  int puts(const char *a) { return 0; }
+  void puts(const char *a) {}
   void puth(unsigned int i) {}
 #endif
 
