@@ -279,6 +279,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
           can_set_gmlan(1);
         } else if (setup->b.wIndex.w == 2) {
           can_set_gmlan(2);
+        } else {
+          puts("Invalid bus num for GMLAN CAN set\n");
         }
       } else {
         can_set_gmlan(-1);
@@ -322,6 +324,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         can_set_forwarding(setup->b.wValue.w, setup->b.wIndex.w & CAN_BUS_NUM_MASK);
       } else if((setup->b.wValue.w < BUS_MAX) && (setup->b.wIndex.w == 0xFF)){ //Clear Forwarding
         can_set_forwarding(setup->b.wValue.w, -1);
+      } else {
+        puts("Invalid CAN bus forwarding\n");
       }
       break;
     // **** 0xde: set can bitrate
@@ -442,6 +446,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       } else if (setup->b.wValue.w < BUS_MAX) {
         puts("Clearing CAN Tx queue\n");
         can_clear(can_queues[setup->b.wValue.w]);
+      } else {
+        puts("Clearing CAN CAN ring buffer failed: wrong bus number\n");
       }
       break;
     // **** 0xf2: Clear UART ring buffer.
