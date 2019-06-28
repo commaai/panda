@@ -177,7 +177,7 @@ void can_set_gmlan(int bus) {
         can_init(2);
         break;
       default:
-        puts("GMLAN bus value invalid\n");
+        // GMLAN is already disabled on either CAN1 or CAN2, skip
         break;
     }
   }
@@ -198,6 +198,8 @@ void can_set_gmlan(int bus) {
     can_num_lookup[2] = -1;
     can_num_lookup[3] = 2;
     can_init(2);
+  } else {
+    // GMLAN
   }
 }
 
