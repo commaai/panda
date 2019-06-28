@@ -12,37 +12,37 @@ int car_harness_detected = 0;
 
 int _output_buffer = 0;
 
-void harness_watchdog() {
-  if (car_harness_detected == 0);
-
-  // don't let it go into sleep mode
-  enter_critical_section();
-  set_uja1023_output_buffer(_output_buffer);
-  exit_critical_section();
+void harness_watchdog(void) {
+  if (car_harness_detected != 0) {
+    // don't let it go into sleep mode
+    enter_critical_section();
+    set_uja1023_output_buffer(_output_buffer);
+    exit_critical_section();
+  }
 }
 
 // this function will be the API for tici
 bool set_relay_and_can1_obd(int relay, int obd) {
-  if (car_harness_detected == 0) return false;
-
-  int uja_output_buffer = 0;
-  if (car_harness_detected == HARNESS_ORIENTATION_NORMAL) {
-    // relay
-    if (relay) uja_output_buffer |= CONTROLS_RELAY_NORMAL;
-    // can1
-    if (obd) uja_output_buffer |= CAN1_RELAY;
-  } else if (car_harness_detected == HARNESS_ORIENTATION_FLIPPED) {
-    // relay
-    if (relay) uja_output_buffer |= CONTROLS_RELAY_FLIPPED;
-    // can1
-    if (!obd) uja_output_buffer |= CAN1_RELAY;
+  if (car_harness_detected != 0) {
+    int uja_output_buffer = 0;
+    if (car_harness_detected == HARNESS_ORIENTATION_NORMAL) {
+      // relay
+      if (relay) uja_output_buffer |= CONTROLS_RELAY_NORMAL;
+      // can1
+      if (obd) uja_output_buffer |= CAN1_RELAY;
+    } else if (car_harness_detected == HARNESS_ORIENTATION_FLIPPED) {
+      // relay
+      if (relay) uja_output_buffer |= CONTROLS_RELAY_FLIPPED;
+      // can1
+      if (!obd) uja_output_buffer |= CAN1_RELAY;
+    }
+    _output_buffer = uja_output_buffer;
+    harness_watchdog();
   }
-  _output_buffer = uja_output_buffer;
-  harness_watchdog();
   return true;
 }
 
-int harness_detect_orientation() {
+int harness_detect_orientation(void) {
   int ret;
 
   // first, set things low
@@ -85,7 +85,7 @@ int harness_detect_orientation() {
   return 0;
 }
 
-void harness_init() {
+void harness_init(void) {
   // chilling for power to be stable (we have interrupts)
   set_led(LED_RED, 1);
   delay(5000000);
