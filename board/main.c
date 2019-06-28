@@ -25,13 +25,6 @@
   #include "drivers/spi.h"
 #endif
 
-int car_harness_detected = 0;
-#define HARNESS_ORIENTATION_NORMAL 1
-#define HARNESS_ORIENTATION_FLIPPED 2
-
-// used in Car Harness
-#include "drivers/harness.h"
-
 #include "power_saving.h"
 #include "safety.h"
 #include "drivers/can.h"
