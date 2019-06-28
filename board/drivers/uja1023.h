@@ -77,7 +77,7 @@ int uja1023_init(int addr) {
   GPIOC->MODER &= ~GPIO_MODER_MODER10_0;
   GPIOC->MODER |= GPIO_MODER_MODER10_1;
   delay(140 * 9000);*/
-
+  
   // make frame for Assign frame ID
   LIN_FRAME_t assign_id_frame;
   assign_id_frame.data_len = 8;
@@ -96,6 +96,7 @@ int uja1023_init(int addr) {
   if (frame_to_receive.data[0] != addr) return 0;
   if (frame_to_receive.data[7] != 0xFF) return 0;
 
+
   // make frame for io_cfg_1; configure Px pins for push pull level output
   LIN_FRAME_t io_cfg_1_frame;
   io_cfg_1_frame.data_len = 8;
@@ -104,7 +105,7 @@ int uja1023_init(int addr) {
   io_cfg_1_frame.data[1]  = 0x06; //D1, protocol control info (PCI); should be 0x06
   io_cfg_1_frame.data[2]  = 0xB4; //D2, service id (SID); should be 0xB4
   io_cfg_1_frame.data[3]  = 0x00; //D3, bits 7-6 are 00 for first cfg block. Bits 5-0 are for IM/INH, RxDL, ADCIN cfg. D3 default is 0x00
-  io_cfg_1_frame.data[4]  = 0x0d; //D4, High side enable (HSE). Set to 0xFF for High side driver or push pull
+  io_cfg_1_frame.data[4]  = 0xf1; //D4, High side enable (HSE). Set to 0xFF for High side driver or push pull
   io_cfg_1_frame.data[5]  = 0x00; //D4, Low side enable (LSE). Set to 0xFF for Low side driver or push pull
   io_cfg_1_frame.data[6]  = 0x00; //D6, Output mode (low byte) (OM0). Set to 0x00 for level output
   io_cfg_1_frame.data[7]  = 0x00; //D7, Output mode (high byte) (OM1). Set to 0x00 for level output
@@ -141,8 +142,8 @@ int uja1023_init(int addr) {
   io_cfg_3_frame.data[1]  = 0x02; //D1, protocol control info (PCI); should be 0x02
   io_cfg_3_frame.data[2]  = 0xB4; //D2, service id (SID); should be 0xB4
   io_cfg_3_frame.data[3]  = 0x80; //D3, bits 7-6 are 10 for third cfg block. Bits 5-0 are for LSC and ECC (classic vs enhanced checksum). D3 default is 0x80 (every bit 0 except for 7-6)
-  io_cfg_3_frame.data[4]  = 0x00; //D4, Limp home mode output value. This is the value the output pins will go to if the bus times out or another error occurs
-  io_cfg_3_frame.data[5]  = 0x10; //D5, PWM initial value; shouldn't matter but is 0x10 per datasheet example
+  io_cfg_3_frame.data[4]  = 0xC1; //D4, Limp home mode output value. This is the value the output pins will go to if the bus times out or another error occurs
+  io_cfg_3_frame.data[5]  = 0xC1; //D5, PWM initial value; shouldn't matter but is 0x10 per datasheet example
   io_cfg_3_frame.data[3]  = 0xC0; //D3, bits 7-6 are 11 for fourth cfg block. Bits 5-0 are unused and should be set to 0; should be 0xC0
   io_cfg_3_frame.data[4]  = 0xFF; //D4, Not used, set to 0xFF
   io_cfg_3_frame.data[5]  = 0xFF; //D5, Not used, set to 0xFF
@@ -153,6 +154,32 @@ int uja1023_init(int addr) {
   if (ret != LIN_OK) return 0;
   if (frame_to_receive.data[0] != addr) return 0;
   if (frame_to_receive.data[7] != 0xff) return 0;
+
+  // all outputs "high"
+  // set IGN_SBU1 and IGN_SBU2 high
+  // SBU1_RELAY, SBU2_RELAY, CAN1_OR_3 are off
+  LIN_FRAME_t px_req_frame;
+  px_req_frame.data_len = 2;
+  px_req_frame.frame_id = 0xC4; //PID, 0xC4 = 2 bit parity + 0x04 raw ID
+  px_req_frame.data[0] = 0xff;
+  px_req_frame.data[1] = 0x80;
+  uja1023_tx(&px_req_frame);
+
+  // still disabled
+  io_cfg_1_frame.data[5] = 0x00;
+  uja1023_tx(&io_cfg_1_frame);
+  ret = uja1023_rx(&frame_to_receive);
+  if (ret != LIN_OK) return 0;
+  if (frame_to_receive.data[0] != addr) return 0;
+  if (frame_to_receive.data[7] != 0) return 0;
+
+  // now enable low side drive
+  io_cfg_1_frame.data[5] = 0xc1;
+  uja1023_tx(&io_cfg_1_frame);
+  ret = uja1023_rx(&frame_to_receive);
+  if (ret != LIN_OK) return 0;
+  if (frame_to_receive.data[0] != addr) return 0;
+  if (frame_to_receive.data[7] != 0) return 0;
 
   return 1;
 }

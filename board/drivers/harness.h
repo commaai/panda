@@ -7,13 +7,14 @@ int car_harness_detected = 0;
 #include "uja1023.h"
 
 #define CAN1_RELAY 1
-#define CONTROLS_RELAY_NORMAL 4
-#define CONTROLS_RELAY_FLIPPED 8
+#define CONTROLS_RELAY_NORMAL 0x40
+#define CONTROLS_RELAY_FLIPPED 0x80
 
-int _output_buffer = 0;
+int _output_buffer = 0xc1;
 
 void harness_watchdog(void) {
   if (car_harness_detected != 0) {
+    //puts("harness watchdog\n");
     // don't let it go into sleep mode
     enter_critical_section();
     set_uja1023_output_buffer(_output_buffer);
@@ -24,17 +25,17 @@ void harness_watchdog(void) {
 // this function will be the API for tici
 bool set_relay_and_can1_obd(int relay, int obd) {
   if (car_harness_detected != 0) {
-    int uja_output_buffer = 0;
+    int uja_output_buffer = 0xc1;   // both relays off
     if (car_harness_detected == HARNESS_ORIENTATION_NORMAL) {
       // relay
-      if (relay) uja_output_buffer |= CONTROLS_RELAY_NORMAL;
+      if (relay) uja_output_buffer &= ~CONTROLS_RELAY_NORMAL;
       // can1
-      if (obd) uja_output_buffer |= CAN1_RELAY;
+      if (obd) uja_output_buffer &= ~CAN1_RELAY;
     } else if (car_harness_detected == HARNESS_ORIENTATION_FLIPPED) {
       // relay
-      if (relay) uja_output_buffer |= CONTROLS_RELAY_FLIPPED;
+      if (relay) uja_output_buffer &= ~CONTROLS_RELAY_FLIPPED;
       // can1
-      if (!obd) uja_output_buffer |= CAN1_RELAY;
+      if (!obd) uja_output_buffer &= ~CAN1_RELAY;
     }
     _output_buffer = uja_output_buffer;
     harness_watchdog();
@@ -42,16 +43,17 @@ bool set_relay_and_can1_obd(int relay, int obd) {
   return true;
 }
 
-int harness_detect_orientation(void) {
-  int ret;
-
-  // first, set things low
+void harness_set_outputs_sync(int outputs) {
   LIN_FRAME_t px_req_frame;
   px_req_frame.data_len = 2;
   px_req_frame.frame_id = 0xC4; //PID, 0xC4 = 2 bit parity + 0x04 raw ID
-  px_req_frame.data[0] = 0x0;
+  px_req_frame.data[0] = outputs;
   px_req_frame.data[1] = 0x80;
   uja1023_tx(&px_req_frame);
+}
+
+int harness_detect_orientation(void) {
+  int ret;
 
   // now, what's the orientation?
   LIN_FRAME_t read_inputs_frame;
@@ -63,26 +65,17 @@ int harness_detect_orientation(void) {
   int cc1 = read_inputs_frame.data[0] & 4;
   int cc2 = read_inputs_frame.data[0] & 8;
 
-  int cc1_cmp = read_inputs_frame.data[0] & 0x10;
-  int cc2_cmp = read_inputs_frame.data[0] & 0x20;
+  int orient = 0;
 
   if (!cc1 && cc2) {
     // orientation normal
-    return 1;
+    orient = 1;
   } else if (cc1 && !cc2) {
     // orientation flipped
-    return 2;
+    orient = 2;
   }
 
-  if (!cc1_cmp && cc2_cmp) {
-    // orientation normal
-    return 1;
-  } else if (cc1_cmp && !cc2_cmp) {
-    // orientation flipped
-    return 2;
-  }
-
-  return 0;
+  return orient;
 }
 
 void harness_init(void) {

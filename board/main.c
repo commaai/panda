@@ -695,21 +695,13 @@ int main(void) {
 
   adc_init();
 
+// WiFi chip only not on EON
 #ifndef EON
   spi_init();
-#endif
-
-#ifdef EON
-  // have to save power
+#else
   if (!is_grey_panda) {
     set_esp_mode(ESP_DISABLED);
   }
-  // only enter power save after the first cycle
-  /*if (is_gpio_started()) {
-    set_power_save_state(POWER_SAVE_STATUS_ENABLED);
-  }*/
-  // interrupt on started line
-  started_interrupt_init();
 #endif
 
 #ifdef DEBUG
@@ -729,6 +721,9 @@ int main(void) {
     set_relay_and_can1_obd(0, 0);
     delay(1000000);
   }
+
+  // interrupt on started line (after harness bringup
+  started_interrupt_init();
 #endif
 
   // 48mhz / 65536 ~= 732 / 732 = 1
