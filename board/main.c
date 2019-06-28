@@ -143,7 +143,9 @@ int usb_cb_ep1_in(uint8_t *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;
   int ilen = 0;
-  while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) ilen++;
+  while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) {
+    ilen++;
+  }
   return ilen*0x10;
 }
 
@@ -153,7 +155,11 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, bool hardwired) {
   uart_ring *ur = get_ring_by_number(usbdata[0]);
   if ((len != 0) && (ur != NULL)) {
     if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1)) {
-      for (int i = 1; i < len; i++) while (!putc(ur, usbdata[i]));
+      for (int i = 1; i < len; i++) {
+        while (!putc(ur, usbdata[i])) {
+          // wait
+        }
+      }
     }
   }
 }
@@ -340,8 +346,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xe0: uart read
     case 0xe0:
       ur = get_ring_by_number(setup->b.wValue.w);
-      if (!ur) break;
-      if (ur == &esp_ring) uart_dma_drain();
+      if (!ur) {
+        break;
+      }
+      if (ur == &esp_ring) {
+        uart_dma_drain();
+      }
       // read
       while ((resp_len < MIN(setup->b.wLength.w, MAX_RESP_LEN)) &&
                          getc(ur, (char*)&resp[resp_len])) {
@@ -351,13 +361,17 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xe1: uart set baud rate
     case 0xe1:
       ur = get_ring_by_number(setup->b.wValue.w);
-      if (!ur) break;
+      if (!ur) {
+        break;
+      }
       uart_set_baud(ur->uart, setup->b.wIndex.w);
       break;
     // **** 0xe2: uart set parity
     case 0xe2:
       ur = get_ring_by_number(setup->b.wValue.w);
-      if (!ur) break;
+      if (!ur) {
+        break;
+      }
       switch (setup->b.wIndex.w) {
         case 0:
           // disable parity, 8-bit
@@ -380,7 +394,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xe4: uart set baud rate extended
     case 0xe4:
       ur = get_ring_by_number(setup->b.wValue.w);
-      if (!ur) break;
+      if (!ur) {
+        break;
+      }
       uart_set_baud(ur->uart, (int)setup->b.wIndex.w*300);
       break;
     // **** 0xe5: set CAN loopback (for testing)
@@ -578,8 +594,9 @@ void TIM3_IRQHandler(void) {
     puts("\n");*/
 
     // reset this every 16th pass
-    if ((tcnt&0xF) == 0) pending_can_live = 0;
-
+    if ((tcnt&0xF) == 0) {
+      pending_can_live = 0;
+    }
     #ifdef DEBUG
       puts("** blink ");
       puth(can_rx_q.r_ptr); puts(" "); puth(can_rx_q.w_ptr); puts("  ");
@@ -621,7 +638,9 @@ int main(void) {
   puts(is_entering_bootmode ? "  ESP wants bootmode\n" : "  no bootmode\n");
 
   // non rev c panda are no longer supported
-  while (revision != PANDA_REV_C);
+  while (revision != PANDA_REV_C) {
+    // hang
+  }
 
   gpio_init();
 
