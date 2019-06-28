@@ -161,7 +161,6 @@ void can_set_gmlan(uint8_t bus) {
   // first, disable GMLAN if set on existing bus
   uint8_t prev_bus = can_num_lookup[3];
   if (bus != prev_bus) {
-    // GMLAN OFF
     switch (prev_bus) {
       case 1:
       case 2:
