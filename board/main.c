@@ -714,12 +714,14 @@ int main(void) {
 #ifdef EON
   harness_init();
 
-  // testing
-  for (int i = 0; i < 5; i++) {
-    set_relay_and_can1_obd(1, 0);
-    delay(1000000);
-    set_relay_and_can1_obd(0, 0);
-    delay(1000000);
+  if (car_harness_detected != 0) {
+    // testing
+    for (int i = 0; i < 5; i++) {
+      set_relay_and_can1_obd(0, 1);
+      delay(1000000);
+      set_relay_and_can1_obd(0, 0);
+      delay(1000000);
+    }
   }
 
   // interrupt on started line (after harness bringup

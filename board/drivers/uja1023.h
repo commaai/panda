@@ -125,7 +125,7 @@ int uja1023_init(int addr) {
   io_cfg_2_frame.data[3]  = 0x40; //D3, bits 7-6 are 01 for second cfg block. Bits 5-0 are for LSLP, TxDL, SMC, SMW, SM. D3 default is 0x40 (every bit 0 except for 7-6)
   io_cfg_2_frame.data[4]  = 0x00; //D4, Capture Mode (low byte) CM0. Set to 0x00 for no capture
   io_cfg_2_frame.data[5]  = 0x00; //D5, Capture Mode (high byte) CM1. Set to 0x00 for no capture
-  io_cfg_2_frame.data[6]  = 0x00; //D6, Threshold select TH2 TH1. Default 0x00
+  io_cfg_2_frame.data[6]  = 0xFF; //D6, Threshold select TH2 TH1. Default 0x00
   io_cfg_2_frame.data[7]  = 0x00; //D7, Local Wake up pin mask LWM. Default 0x00
   uja1023_tx(&io_cfg_2_frame);
   ret = uja1023_rx(&frame_to_receive);
