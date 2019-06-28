@@ -7,16 +7,17 @@ int car_harness_detected = 0;
 #include "uja1023.h"
 
 #define CAN1_RELAY 1
-#define CONTROLS_RELAY_NORMAL 0x40
-#define CONTROLS_RELAY_FLIPPED 0x80
+#define CONTROLS_RELAY_NORMAL 0x80
+#define CONTROLS_RELAY_FLIPPED 0x40
+#define IGNITION_NORMAL 0x10
+#define IGNITION_FLIPPED 0x20
 
 int _output_buffer = 0xc1;
 
 void harness_watchdog(void) {
   if (car_harness_detected != 0) {
-    //puts("harness watchdog\n");
-    // don't let it go into sleep mode
     enter_critical_section();
+    set_gpio_output(GPIOA, 14, 1);   // L-line enable
     set_uja1023_output_buffer(_output_buffer);
     exit_critical_section();
   }
@@ -31,11 +32,13 @@ bool set_relay_and_can1_obd(int relay, int obd) {
       if (relay) uja_output_buffer &= ~CONTROLS_RELAY_NORMAL;
       // can1
       if (obd) uja_output_buffer &= ~CAN1_RELAY;
+      uja_output_buffer |= IGNITION_NORMAL;
     } else if (car_harness_detected == HARNESS_ORIENTATION_FLIPPED) {
       // relay
       if (relay) uja_output_buffer &= ~CONTROLS_RELAY_FLIPPED;
       // can1
       if (!obd) uja_output_buffer &= ~CAN1_RELAY;
+      uja_output_buffer |= IGNITION_FLIPPED;
     }
     _output_buffer = uja_output_buffer;
     harness_watchdog();
@@ -68,11 +71,11 @@ int harness_detect_orientation(void) {
   int orient = 0;
 
   if (!cc1 && cc2) {
-    // orientation normal
-    orient = 1;
-  } else if (cc1 && !cc2) {
     // orientation flipped
-    orient = 2;
+    orient = HARNESS_ORIENTATION_FLIPPED;
+  } else if (cc1 && !cc2) {
+    // orientation normal
+    orient = HARNESS_ORIENTATION_NORMAL;
   }
 
   return orient;
