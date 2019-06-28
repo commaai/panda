@@ -21,8 +21,7 @@
 #include "drivers/clock.h"
 
 #ifndef EON
-  // used in white panda
-  #include "drivers/spi.h"
+#include "drivers/spi.h"
 #endif
 
 #include "power_saving.h"
