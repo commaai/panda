@@ -156,50 +156,46 @@ void can_init_all(void) {
   }
 }
 
-void can_set_gmlan(int bus) {
-  if ((bus == -1) || (bus != can_num_lookup[3])) {
+void can_set_gmlan(uint8_t bus) {
+
+  // first, disable GMLAN if set on existing bus
+  uint8_t prev_bus = can_num_lookup[3];
+  if (bus != prev_bus) {
     // GMLAN OFF
-    switch (can_num_lookup[3]) {
+    switch (prev_bus) {
       case 1:
-        puts("disable GMLAN on CAN2\n");
-        set_can_mode(1, 0);
-        bus_lookup[1] = 1;
-        can_num_lookup[1] = 1;
-        can_num_lookup[3] = -1;
-        can_init(1);
-        break;
       case 2:
-        puts("disable GMLAN on CAN3\n");
-        set_can_mode(2, 0);
-        bus_lookup[2] = 2;
-        can_num_lookup[2] = 2;
+        puts("Disable GMLAN on CAN");
+        puth(prev_bus + 1U);
+        puts("\n");
+        set_can_mode(prev_bus, 0);
+        bus_lookup[prev_bus] = prev_bus;
+        can_num_lookup[prev_bus] = prev_bus;
         can_num_lookup[3] = -1;
-        can_init(2);
+        can_init(prev_bus);
         break;
       default:
-        // GMLAN is already disabled on either CAN1 or CAN2, skip
+        // GMLAN was not set on either BUS 1 or 2
         break;
     }
   }
 
-  if (bus == 1) {
-    puts("GMLAN on CAN2\n");
-    // GMLAN on CAN2
-    set_can_mode(1, 1);
-    bus_lookup[1] = 3;
-    can_num_lookup[1] = -1;
-    can_num_lookup[3] = 1;
-    can_init(1);
-  } else if (bus == 2) {
-    puts("GMLAN on CAN3\n");
-    // GMLAN on CAN3
-    set_can_mode(2, 1);
-    bus_lookup[2] = 3;
-    can_num_lookup[2] = -1;
-    can_num_lookup[3] = 2;
-    can_init(2);
-  } else {
-    // GMLAN
+  // now enable GMLAN on a new bus
+  switch (bus) {
+    case 1:
+    case 2:
+      puts("Enable GMLAN on CAN");
+      puth(bus + 1U);
+      puts("\n");
+      set_can_mode(bus, 1);
+      bus_lookup[bus] = 3;
+      can_num_lookup[bus] = -1;
+      can_num_lookup[3] = bus;
+      can_init(bus);
+      break;
+    default:
+      puts("GMLAN can only be set on CAN2 or CAN3");
+      break;
   }
 }
 
