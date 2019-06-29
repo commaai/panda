@@ -200,12 +200,12 @@ void clear_uart_buff(uart_ring *q) {
 #define __DIVFRAQ(_PCLK_, _BAUD_)                    ((((__DIV((_PCLK_), (_BAUD_)) - (__DIVMANT((_PCLK_), (_BAUD_)) * 100)) * 16) + 50) / 100)
 #define __USART_BRR(_PCLK_, _BAUD_)              ((__DIVMANT((_PCLK_), (_BAUD_)) << 4) | (__DIVFRAQ((_PCLK_), (_BAUD_)) & 0x0F))
 
-void uart_set_baud(USART_TypeDef *u, int baud) {
+void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
   if (u == USART1) {
     // USART1 is on APB2
-    u->BRR = __USART_BRR(48000000, baud);
+    u->BRR = __USART_BRR(48000000U, baud);
   } else {
-    u->BRR = __USART_BRR(24000000, baud);
+    u->BRR = __USART_BRR(24000000U, baud);
   }
 }
 
@@ -327,18 +327,18 @@ void putui(uint32_t i) {
 }
 
 void puth(unsigned int i) {
-  int pos;
+  unsigned int pos;
   char c[] = "0123456789abcdef";
   for (pos = 28; pos != -4; pos -= 4) {
-    putch(c[(i >> pos) & 0xF]);
+    putch(c[(i >> pos) & 0xFU]);
   }
 }
 
 void puth2(unsigned int i) {
-  int pos;
+  unsigned int pos;
   char c[] = "0123456789abcdef";
   for (pos = 4; pos != -4; pos -= 4) {
-    putch(c[(i >> pos) & 0xF]);
+    putch(c[(i >> pos) & 0xFU]);
   }
 }
 

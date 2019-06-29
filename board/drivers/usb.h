@@ -529,7 +529,7 @@ void usb_setup(void) {
       break;
     case USB_REQ_SET_ADDRESS:
       // set now?
-      USBx_DEVICE->DCFG |= ((setup.b.wValue.w & 0x7f) << 4);
+      USBx_DEVICE->DCFG |= ((setup.b.wValue.w & 0x7fU) << 4);
 
       #ifdef DEBUG_USB
         puts(" set address\n");
