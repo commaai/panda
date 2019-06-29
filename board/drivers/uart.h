@@ -330,7 +330,7 @@ void puth(unsigned int i) {
   unsigned int pos;
   char c[] = "0123456789abcdef";
   for (pos = 28; pos != -4; pos -= 4) {
-    putch(c[(i >> pos) & 0xFU]);
+    putch(c[(i >> (unsigned int)(pos)) & 0xFU]);
   }
 }
 
@@ -338,7 +338,7 @@ void puth2(unsigned int i) {
   unsigned int pos;
   char c[] = "0123456789abcdef";
   for (pos = 4; pos != -4; pos -= 4) {
-    putch(c[(i >> pos) & 0xFU]);
+    putch(c[(i >> (unsigned int)(pos)) & 0xFU]);
   }
 }
 
