@@ -41,16 +41,16 @@ int do_bitstuff(char *out, char *in, int in_len) {
 }
 
 int append_crc(char *in, int in_len) {
-  unsigned int crc = 0;
+  int crc = 0;
   for (int i = 0; i < in_len; i++) {
     crc <<= 1;
-    if ((in[i] ^ ((crc >> 15) & 1U)) != 0) {
-      crc = crc ^ 0x4599U;
+    if ((in[i] ^ ((crc >> 15) & 1)) != 0) {
+      crc = crc ^ 0x4599;
     }
-    crc &= 0x7fffU;
+    crc &= 0x7fff;
   }
   for (int i = 14; i >= 0; i--) {
-    in[in_len] = (crc >> (unsigned int)(i)) & 1U;
+    in[in_len] = (crc>>i)&1;
     in_len++;
   }
   return in_len;
@@ -66,7 +66,7 @@ int append_bits(char *in, int in_len, char *app, int app_len) {
 
 int append_int(char *in, int in_len, int val, int val_len) {
   for (int i = val_len-1; i >= 0; i--) {
-    in[in_len] = ((unsigned int)(val) & (1U << (unsigned int)(i))) != 0;
+    in[in_len] = (val&(1<<i)) != 0;
     in_len++;
   }
   return in_len;
@@ -92,7 +92,7 @@ int get_bit_message(char *out, CAN_FIFOMailBox_TypeDef *to_bang) {
     // extended identifier
     len = append_int(pkt, len, to_bang->RIR >> 21, 11);  // Identifier
     len = append_int(pkt, len, 3, 2);    // SRR+IDE
-    len = append_int(pkt, len, (to_bang->RIR >> 3) & ((1U << 18) - 1), 18);  // Identifier
+    len = append_int(pkt, len, (to_bang->RIR >> 3) & ((1<<18)-1), 18);  // Identifier
     len = append_int(pkt, len, 0, 3);    // RTR+r1+r0
   } else {
     // standard identifier
@@ -168,9 +168,9 @@ void reset_gmlan_switch_timeout(void) {
 
 void set_bitbanged_gmlan(int val) {
   if (val != 0) {
-    GPIOB->ODR |= (1U << 13);
+    GPIOB->ODR |= (1 << 13);
   } else {
-    GPIOB->ODR &= ~(1U << 13);
+    GPIOB->ODR &= ~(1 << 13);
   }
 }
 
