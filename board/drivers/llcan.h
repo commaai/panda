@@ -1,12 +1,12 @@
 // this is needed for 1 mbps support
-#define CAN_QUANTA 8
+#define CAN_QUANTA 8U
 #define CAN_SEQ1 6 // roundf(quanta * 0.875f) - 1;
 #define CAN_SEQ2 1 // roundf(quanta * 0.125f);
 
-#define CAN_PCLK 24000
+#define CAN_PCLK 24000U
 // 333 = 33.3 kbps
 // 5000 = 500 kbps
-#define can_speed_to_prescaler(x) (CAN_PCLK / CAN_QUANTA * 10 / (x))
+#define can_speed_to_prescaler(x) (CAN_PCLK / CAN_QUANTA * 10U / (x))
 
 bool llcan_set_speed(CAN_TypeDef *CAN, uint32_t speed, bool loopback, bool silent) {
   // initialization mode
@@ -16,7 +16,7 @@ bool llcan_set_speed(CAN_TypeDef *CAN, uint32_t speed, bool loopback, bool silen
   // set time quanta from defines
   CAN->BTR = (CAN_BTR_TS1_0 * (CAN_SEQ1-1)) |
             (CAN_BTR_TS2_0 * (CAN_SEQ2-1)) |
-            (can_speed_to_prescaler(speed) - 1);
+            (can_speed_to_prescaler(speed) - 1U);
 
   // silent loopback mode for debugging
   if (loopback) {
@@ -49,7 +49,7 @@ void llcan_init(CAN_TypeDef *CAN) {
   CAN->sFilterRegister[0].FR2 = 0;
   CAN->sFilterRegister[14].FR1 = 0;
   CAN->sFilterRegister[14].FR2 = 0;
-  CAN->FA1R |= 1 | (1U << 14);
+  CAN->FA1R |= 1U | (1U << 14);
 
   CAN->FMR &= ~(CAN_FMR_FINIT);
 
