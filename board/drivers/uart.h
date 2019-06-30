@@ -153,7 +153,7 @@ bool putc(uart_ring *q, char elem) {
   uint16_t next_w_ptr;
 
   enter_critical_section();
-  next_w_ptr = (q->w_ptr_tx + 1) % FIFO_SIZE;
+  next_w_ptr = (q->w_ptr_tx + 1U) % FIFO_SIZE;
   if (next_w_ptr != q->r_ptr_tx) {
     q->elems_tx[q->w_ptr_tx] = elem;
     q->w_ptr_tx = next_w_ptr;
@@ -226,7 +226,7 @@ void uart_dma_drain(void) {
     unsigned int i;
     for (i = 0; i < (USART1_DMA_LEN - DMA2_Stream5->NDTR); i++) {
       char c = usart1_dma[i];
-      uint16_t next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
+      uint16_t next_w_ptr = (q->w_ptr_rx + 1U) % FIFO_SIZE;
       if (next_w_ptr != q->r_ptr_rx) {
         q->elems_rx[q->w_ptr_rx] = c;
         q->w_ptr_rx = next_w_ptr;

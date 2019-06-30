@@ -34,7 +34,7 @@
      __typeof__ (b) _b = (b); \
    (_a > _b) ? _a : _b; })
 
-#define MAX_RESP_LEN 0x40
+#define MAX_RESP_LEN 0x40U
 
 #endif
 
