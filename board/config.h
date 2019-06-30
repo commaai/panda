@@ -12,12 +12,12 @@
   #include "stm32f2xx.h"
 #endif
 
-#define USB_VID 0xbbaa
+#define USB_VID 0xbbaaU
 
 #ifdef BOOTSTUB
-#define USB_PID 0xddee
+#define USB_PID 0xddeeU
 #else
-#define USB_PID 0xddcc
+#define USB_PID 0xddccU
 #endif
 
 #include <stdbool.h>
