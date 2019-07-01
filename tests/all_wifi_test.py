@@ -5,6 +5,8 @@ from automated.helpers import _connect_wifi
 from panda import Panda
 from nose.tools import assert_equal
 
+#TEST
+
 if __name__ == "__main__":
   print("Fetching latest firmware from github.com/commaai/panda-artifacts")
   r = requests.get("https://raw.githubusercontent.com/commaai/panda-artifacts/master/latest.json")
