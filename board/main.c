@@ -98,13 +98,13 @@ void started_interrupt_init(void) {
 
 int get_health_pkt(void *dat) {
   struct __attribute__((packed)) {
-    uint32_t voltage;
-    uint32_t current;
-    uint8_t started;
-    uint8_t controls_allowed;
-    uint8_t gas_interceptor_detected;
-    uint8_t started_signal_detected;
-    uint8_t started_alt;
+    uint32_t voltage_pkt;
+    uint32_t current_pkt;
+    uint8_t started_pkt;
+    uint8_t controls_allowed_pkt;
+    uint8_t gas_interceptor_detected_pkt;
+    uint8_t started_signal_detected_pkt;
+    uint8_t started_alt_pkt;
   } *health = dat;
 
   //Voltage will be measured in mv. 5000 = 5V
@@ -117,24 +117,24 @@ int get_health_pkt(void *dat) {
   // s = 1000/((4095/3.3)*(1/11)) = 8.8623046875
 
   // Avoid needing floating point math
-  health->voltage = (voltage * 8862) / 1000;
+  health->voltage_pkt = (voltage * 8862) / 1000;
 
-  health->current = adc_get(ADCCHAN_CURRENT);
+  health->current_pkt = adc_get(ADCCHAN_CURRENT);
   int safety_ignition = safety_ignition_hook();
   if (safety_ignition < 0) {
     //Use the GPIO pin to determine ignition
-    health->started = is_gpio_started();
+    health->started_pkt = is_gpio_started();
   } else {
     //Current safety hooks want to determine ignition (ex: GM)
-    health->started = safety_ignition;
+    health->started_pkt = safety_ignition;
   }
 
-  health->controls_allowed = controls_allowed;
-  health->gas_interceptor_detected = gas_interceptor_detected;
+  health->controls_allowed_pkt = controls_allowed;
+  health->gas_interceptor_detected_pkt = gas_interceptor_detected;
 
   // DEPRECATED
-  health->started_alt = 0;
-  health->started_signal_detected = 0;
+  health->started_alt_pkt = 0;
+  health->started_signal_detected_pkt = 0;
 
   return sizeof(*health);
 }
