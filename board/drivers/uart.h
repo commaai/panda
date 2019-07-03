@@ -307,22 +307,23 @@ void putch(const char a) {
 }
 
 void puts(const char *a) {
-  for (;*a;a++) {
-    if (*a == '\n') putch('\r');
-    putch(*a);
+  for (const char *in = a; *in; in++) {
+    if (*in == '\n') putch('\r');
+    putch(*in);
   }
 }
 
 void putui(uint32_t i) {
+  uint32_t i_copy = i;
   char str[11];
   uint8_t idx = 10;
   str[idx] = '\0';
   idx--;
   do {
-    str[idx] = (i % 10) + 0x30;
+    str[idx] = (i_copy % 10) + 0x30;
     idx--;
-    i /= 10;
-  } while (i != 0);
+    i_copy /= 10;
+  } while (i_copy / 10 != 0);
   puts(str + idx + 1);
 }
 
