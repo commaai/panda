@@ -85,7 +85,7 @@ uint8_t spi_tx_buf[0x44];
 // SPI RX
 void DMA2_Stream2_IRQHandler(void) {
   int *resp_len = (int*)spi_tx_buf;
-  memset(spi_tx_buf, 0xaa, 0x44);
+  (void)memset(spi_tx_buf, 0xaa, 0x44);
   *resp_len = spi_cb_rx(spi_buf, 0x14, spi_tx_buf+4);
   #ifdef DEBUG_SPI
     puts("SPI write: ");

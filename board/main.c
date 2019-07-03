@@ -33,7 +33,7 @@
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
   while (getc(ring, &rcv)) {
-    putc(ring, rcv);
+    (void)putc(ring, rcv);
 
     // jump to DFU flash
     if (rcv == 'z') {
@@ -212,7 +212,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xd0:
       // addresses are OTP
       if (setup->b.wValue.w == 1) {
-        memcpy(resp, (void *)0x1fff79c0, 0x10);
+        (void)memcpy(resp, (void *)0x1fff79c0, 0x10);
         resp_len = 0x10;
       } else {
         get_provision_chunk(resp);
@@ -248,7 +248,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xd6: get version
     case 0xd6:
       COMPILE_TIME_ASSERT(sizeof(gitversion) <= MAX_RESP_LEN);
-      memcpy(resp, gitversion, sizeof(gitversion));
+      (void)memcpy(resp, gitversion, sizeof(gitversion));
       resp_len = sizeof(gitversion)-1;
       break;
     // **** 0xd8: reset ST
@@ -296,7 +296,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       // and it's blocked over WiFi
       // Allow ELM security mode to be set over wifi.
       if (hardwired || (setup->b.wValue.w == SAFETY_NOOUTPUT) || (setup->b.wValue.w == SAFETY_ELM327)) {
-        safety_set_mode(setup->b.wValue.w, (int16_t)setup->b.wIndex.w);
+        int err = safety_set_mode(setup->b.wValue.w, (int16_t)setup->b.wIndex.w);
+        if (err == -1) {
+          puts("Error: safety set mode failed\n");
+        }
         if (safety_ignition_hook() != -1) {
           // if the ignition hook depends on something other than the started GPIO
           // we have to disable power savings (fix for GM and Tesla)
@@ -680,7 +683,7 @@ int main(void) {
 
   // default to silent mode to prevent issues with Ford
   // hardcode a specific safety mode if you want to force the panda to be in a specific mode
-  safety_set_mode(SAFETY_NOOUTPUT, 0);
+  (void)safety_set_mode(SAFETY_NOOUTPUT, 0);
 #ifdef EON
   // if we're on an EON, it's fine for CAN to be live for fingerprinting
   can_silent = ALL_CAN_LIVE;
