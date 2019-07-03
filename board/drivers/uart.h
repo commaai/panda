@@ -302,7 +302,7 @@ void putch(const char a) {
 
     //putc(&debug_ring, a);
   } else {
-    (void)injectc(&debug_ring, a);
+    injectc(&debug_ring, a);
   }
 }
 

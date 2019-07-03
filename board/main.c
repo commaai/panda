@@ -299,27 +299,28 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         int err = safety_set_mode(setup->b.wValue.w, (int16_t)setup->b.wIndex.w);
         if (err == -1) {
           puts("Error: safety set mode failed\n");
-        }
-        if (safety_ignition_hook() != -1) {
-          // if the ignition hook depends on something other than the started GPIO
-          // we have to disable power savings (fix for GM and Tesla)
-          set_power_save_state(POWER_SAVE_STATUS_DISABLED);
-        }
-        #ifndef EON
-          // always LIVE on EON
-          switch (setup->b.wValue.w) {
-            case SAFETY_NOOUTPUT:
-              can_silent = ALL_CAN_SILENT;
-              break;
-            case SAFETY_ELM327:
-              can_silent = ALL_CAN_BUT_MAIN_SILENT;
-              break;
-            default:
-              can_silent = ALL_CAN_LIVE;
-              break;
+        } else {
+          #ifndef EON
+            // always LIVE on EON
+            switch (setup->b.wValue.w) {
+              case SAFETY_NOOUTPUT:
+                can_silent = ALL_CAN_SILENT;
+                break;
+              case SAFETY_ELM327:
+                can_silent = ALL_CAN_BUT_MAIN_SILENT;
+                break;
+              default:
+                can_silent = ALL_CAN_LIVE;
+                break;
+            }
+          #endif
+          if (safety_ignition_hook() != -1) {
+            // if the ignition hook depends on something other than the started GPIO
+            // we have to disable power savings (fix for GM and Tesla)
+            set_power_save_state(POWER_SAVE_STATUS_DISABLED);
           }
-        #endif
-        can_init_all();
+          can_init_all();
+        }
       }
       break;
     // **** 0xdd: enable can forwarding
@@ -683,7 +684,7 @@ int main(void) {
 
   // default to silent mode to prevent issues with Ford
   // hardcode a specific safety mode if you want to force the panda to be in a specific mode
-  (void)safety_set_mode(SAFETY_NOOUTPUT, 0);
+  safety_set_mode(SAFETY_NOOUTPUT, 0);
 #ifdef EON
   // if we're on an EON, it's fine for CAN to be live for fingerprinting
   can_silent = ALL_CAN_LIVE;
