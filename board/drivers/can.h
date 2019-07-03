@@ -72,8 +72,8 @@ bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   return ret;
 }
 
-int can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
-  int ret = 0;
+bool can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
+  bool ret = false;
   uint32_t next_w_ptr;
 
   enter_critical_section();
@@ -82,10 +82,10 @@ int can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   if (next_w_ptr != q->r_ptr) {
     q->elems[q->w_ptr] = *elem;
     q->w_ptr = next_w_ptr;
-    ret = 1;
+    ret = true;
   }
   exit_critical_section();
-  if (ret == 0) {
+  if (!ret) {
     can_overflow_cnt++;
     #ifdef DEBUG
       puts("can_push failed!\n");

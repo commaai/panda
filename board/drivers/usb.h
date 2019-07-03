@@ -807,7 +807,7 @@ void usb_irqhandler(void) {
     if (((rxst & USB_OTG_GRXSTSP_PKTSTS) >> 17) == STS_DATA_UPDT) {
       int endpoint = (rxst & USB_OTG_GRXSTSP_EPNUM);
       int len = (rxst & USB_OTG_GRXSTSP_BCNT) >> 4;
-      USB_ReadPacket(&usbdata, len);
+      (void)USB_ReadPacket(&usbdata, len);
       #ifdef DEBUG_USB
         puts("  data ");
         puth(len);
@@ -823,7 +823,7 @@ void usb_irqhandler(void) {
         usb_cb_ep3_out(usbdata, len, 1);
       }
     } else if (((rxst & USB_OTG_GRXSTSP_PKTSTS) >> 17) == STS_SETUP_UPDT) {
-      USB_ReadPacket(&setup, 8);
+      (void)USB_ReadPacket(&setup, 8);
       #ifdef DEBUG_USB
         puts("  setup ");
         hexdump(&setup, 8);
