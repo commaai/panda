@@ -323,7 +323,7 @@ void putui(uint32_t i) {
     str[idx] = (i_copy % 10) + 0x30;
     idx--;
     i_copy /= 10;
-  } while (i_copy / 10 != 0);
+  } while ((i / 10) != 0);
   puts(str + idx + 1);
 }
 
