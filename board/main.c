@@ -33,7 +33,7 @@
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
   while (getc(ring, &rcv)) {
-    (void)putc(ring, rcv);
+    (void)putc(ring, rcv);  // misra-c2012-17.7: cast to void is ok: debug function
 
     // jump to DFU flash
     if (rcv == 'z') {
