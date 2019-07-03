@@ -20,15 +20,6 @@ pipeline {
         }
       }
     }
-    stage('Test Dev Build') {
-      steps {
-        lock(resource: "Pandas", inversePrecedence: true, quantity:1){
-          timeout(time: 60, unit: 'MINUTES') {
-            sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; ./run_automated_tests.sh '"
-          }
-        }
-      }
-    }
     stage('Test EON Build') {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity:1){
@@ -36,6 +27,15 @@ pipeline {
             sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_dev.xml"
             sh "touch EON && docker cp EON ${env.DOCKER_NAME}:/EON"
             sh "docker start -a ${env.DOCKER_NAME}"
+          }
+        }
+      }
+    }
+    stage('Test Dev Build') {
+      steps {
+        lock(resource: "Pandas", inversePrecedence: true, quantity:1){
+          timeout(time: 60, unit: 'MINUTES') {
+            sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; ./run_automated_tests.sh '"
           }
         }
       }
