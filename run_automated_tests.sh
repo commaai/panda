@@ -1,6 +1,6 @@
 #!/bin/bash
 TEST_FILENAME=${TEST_FILENAME:-nosetests.xml}
-if [ ! -f "/EON" ]; then
+if [ -f "/EON" ]; then
   TESTSUITE_NAME="Panda_Test-EON"
   TEST_SCRIPTS=$(ls tests/automated/$1*.py | grep -v "wifi")
 else
