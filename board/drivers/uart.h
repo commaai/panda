@@ -327,24 +327,21 @@ void putui(uint32_t i) {
 }
 
 void puth(unsigned int i) {
-  int pos;
   char c[] = "0123456789abcdef";
-  for (pos = 28; pos != -4; pos -= 4) {
+  for (int pos = 28; pos != -4; pos -= 4) {
     putch(c[(i >> (unsigned int)(pos)) & 0xFU]);
   }
 }
 
 void puth2(unsigned int i) {
-  int pos;
   char c[] = "0123456789abcdef";
-  for (pos = 4; pos != -4; pos -= 4) {
+  for (int pos = 4; pos != -4; pos -= 4) {
     putch(c[(i >> (unsigned int)(pos)) & 0xFU]);
   }
 }
 
 void hexdump(const void *a, int l) {
-  int i;
-  for (i=0;i<l;i++) {
+  for (int i=0; i < l; i++) {
     if ((i != 0) && ((i & 0xf) == 0)) puts("\n");
     puth2(((const unsigned char*)a)[i]);
     puts(" ");
