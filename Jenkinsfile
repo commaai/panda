@@ -37,7 +37,7 @@ pipeline {
             sh "touch EON && docker cp EON ${env.DOCKER_NAME}:/EON"
             sh "docker start -a ${env.DOCKER_NAME}"
             sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_EON.xml"
-            sh "docker rm ${env.DOCKER_NAME}:/EON"
+            sh "docker exec ${env.DOCKER_NAME} rm /EON"
           }
         }
       }
