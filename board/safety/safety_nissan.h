@@ -105,7 +105,7 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       }
 
       // check for violation;
-      violation |= max_limit_check(nissan_angle_meas_new, highest_rt_angle, lowest_rt_angle);
+      violation |= max_limit_check(desired_angle, highest_rt_angle, lowest_rt_angle);
 
       nissan_controls_allowed_last = controls_allowed;
     }
