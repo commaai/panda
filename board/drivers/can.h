@@ -158,7 +158,7 @@ void can_init_all(void) {
 
 void can_set_gmlan(uint8_t bus) {
 
-  // first, disable GMLAN if set on existing bus
+  // first, disable GMLAN on prev bus
   uint8_t prev_bus = can_num_lookup[3];
   if (bus != prev_bus) {
     switch (prev_bus) {
@@ -179,7 +179,7 @@ void can_set_gmlan(uint8_t bus) {
     }
   }
 
-  // now enable GMLAN on a new bus
+  // now enable GMLAN on the new bus
   switch (bus) {
     case 1:
     case 2:
