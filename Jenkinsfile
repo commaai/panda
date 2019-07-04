@@ -26,6 +26,7 @@ pipeline {
           timeout(time: 60, unit: 'MINUTES') {
             sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; SKIPWIFI=1 ./run_automated_tests.sh'"
             sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_dev_nowifi.xml"
+            sh "docker rm ${env.DOCKER_NAME}"
           }
         }
       }
@@ -34,10 +35,9 @@ pipeline {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity: 1){
           timeout(time: 60, unit: 'MINUTES') {
-            sh "touch EON && docker cp EON ${env.DOCKER_NAME}:/EON"
-            sh "docker start -a ${env.DOCKER_NAME}"
-            sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_EON.xml"
-            sh "docker exec ${env.DOCKER_NAME} rm /EON"
+            sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'touch /EON; cd /tmp/panda; ./run_automated_tests.sh'"
+            sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_eon.xml"
+            sh "docker rm ${env.DOCKER_NAME}"
           }
         }
       }
@@ -46,8 +46,9 @@ pipeline {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity: 1){
           timeout(time: 60, unit: 'MINUTES') {
-            sh "docker exec --privileged ${env.DOCKER_NAME} bash -c 'cd /tmp/panda; ./run_automated_tests.sh'"
+            sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; /run_automated_tests.sh'"
             sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_dev.xml"
+            sh "docker rm ${env.DOCKER_NAME}"
           }
         }
       }
@@ -55,9 +56,6 @@ pipeline {
   }
   post {
     always {
-      script {
-        sh "docker rm ${env.DOCKER_NAME}"
-      }
       junit "test_results*.xml"
     }
   }
