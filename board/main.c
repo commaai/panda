@@ -33,7 +33,7 @@
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
   while (getc(ring, &rcv)) {
-    putc(ring, rcv);
+    (void)putc(ring, rcv);  // misra-c2012-17.7: cast to void is ok: debug function
 
     // jump to DFU flash
     if (rcv == 'z') {
@@ -98,13 +98,13 @@ void started_interrupt_init(void) {
 
 int get_health_pkt(void *dat) {
   struct __attribute__((packed)) {
-    uint32_t voltage;
-    uint32_t current;
-    uint8_t started;
-    uint8_t controls_allowed;
-    uint8_t gas_interceptor_detected;
-    uint8_t started_signal_detected;
-    uint8_t started_alt;
+    uint32_t voltage_pkt;
+    uint32_t current_pkt;
+    uint8_t started_pkt;
+    uint8_t controls_allowed_pkt;
+    uint8_t gas_interceptor_detected_pkt;
+    uint8_t started_signal_detected_pkt;
+    uint8_t started_alt_pkt;
   } *health = dat;
 
   //Voltage will be measured in mv. 5000 = 5V
@@ -117,24 +117,24 @@ int get_health_pkt(void *dat) {
   // s = 1000/((4095/3.3)*(1/11)) = 8.8623046875
 
   // Avoid needing floating point math
-  health->voltage = (voltage * 8862) / 1000;
+  health->voltage_pkt = (voltage * 8862) / 1000;
 
-  health->current = adc_get(ADCCHAN_CURRENT);
+  health->current_pkt = adc_get(ADCCHAN_CURRENT);
   int safety_ignition = safety_ignition_hook();
   if (safety_ignition < 0) {
     //Use the GPIO pin to determine ignition
-    health->started = is_gpio_started();
+    health->started_pkt = is_gpio_started();
   } else {
     //Current safety hooks want to determine ignition (ex: GM)
-    health->started = safety_ignition;
+    health->started_pkt = safety_ignition;
   }
 
-  health->controls_allowed = controls_allowed;
-  health->gas_interceptor_detected = gas_interceptor_detected;
+  health->controls_allowed_pkt = controls_allowed;
+  health->gas_interceptor_detected_pkt = gas_interceptor_detected;
 
   // DEPRECATED
-  health->started_alt = 0;
-  health->started_signal_detected = 0;
+  health->started_alt_pkt = 0;
+  health->started_signal_detected_pkt = 0;
 
   return sizeof(*health);
 }
@@ -212,7 +212,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xd0:
       // addresses are OTP
       if (setup->b.wValue.w == 1) {
-        memcpy(resp, (void *)0x1fff79c0, 0x10);
+        (void)memcpy(resp, (void *)0x1fff79c0, 0x10);
         resp_len = 0x10;
       } else {
         get_provision_chunk(resp);
@@ -248,7 +248,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xd6: get version
     case 0xd6:
       COMPILE_TIME_ASSERT(sizeof(gitversion) <= MAX_RESP_LEN);
-      memcpy(resp, gitversion, sizeof(gitversion));
+      (void)memcpy(resp, gitversion, sizeof(gitversion));
       resp_len = sizeof(gitversion)-1;
       break;
     // **** 0xd8: reset ST
@@ -298,27 +298,31 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       // and it's blocked over WiFi
       // Allow ELM security mode to be set over wifi.
       if (hardwired || (setup->b.wValue.w == SAFETY_NOOUTPUT) || (setup->b.wValue.w == SAFETY_ELM327)) {
-        safety_set_mode(setup->b.wValue.w, (int16_t)setup->b.wIndex.w);
-        if (safety_ignition_hook() != -1) {
-          // if the ignition hook depends on something other than the started GPIO
-          // we have to disable power savings (fix for GM and Tesla)
-          set_power_save_state(POWER_SAVE_STATUS_DISABLED);
-        }
-        #ifndef EON
-          // always LIVE on EON
-          switch (setup->b.wValue.w) {
-            case SAFETY_NOOUTPUT:
-              can_silent = ALL_CAN_SILENT;
-              break;
-            case SAFETY_ELM327:
-              can_silent = ALL_CAN_BUT_MAIN_SILENT;
-              break;
-            default:
-              can_silent = ALL_CAN_LIVE;
-              break;
+        int err = safety_set_mode(setup->b.wValue.w, (int16_t)setup->b.wIndex.w);
+        if (err == -1) {
+          puts("Error: safety set mode failed\n");
+        } else {
+          #ifndef EON
+            // always LIVE on EON
+            switch (setup->b.wValue.w) {
+              case SAFETY_NOOUTPUT:
+                can_silent = ALL_CAN_SILENT;
+                break;
+              case SAFETY_ELM327:
+                can_silent = ALL_CAN_BUT_MAIN_SILENT;
+                break;
+              default:
+                can_silent = ALL_CAN_LIVE;
+                break;
+            }
+          #endif
+          if (safety_ignition_hook() != -1) {
+            // if the ignition hook depends on something other than the started GPIO
+            // we have to disable power savings (fix for GM and Tesla)
+            set_power_save_state(POWER_SAVE_STATUS_DISABLED);
           }
-        #endif
-        can_init_all();
+          can_init_all();
+        }
       }
       break;
     // **** 0xdd: enable can forwarding

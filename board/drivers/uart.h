@@ -200,12 +200,12 @@ void clear_uart_buff(uart_ring *q) {
 #define __DIVFRAQ(_PCLK_, _BAUD_)                    ((((__DIV((_PCLK_), (_BAUD_)) - (__DIVMANT((_PCLK_), (_BAUD_)) * 100)) * 16) + 50) / 100)
 #define __USART_BRR(_PCLK_, _BAUD_)              ((__DIVMANT((_PCLK_), (_BAUD_)) << 4) | (__DIVFRAQ((_PCLK_), (_BAUD_)) & 0x0F))
 
-void uart_set_baud(USART_TypeDef *u, int baud) {
+void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
   if (u == USART1) {
     // USART1 is on APB2
-    u->BRR = __USART_BRR(48000000, baud);
+    u->BRR = __USART_BRR(48000000U, baud);
   } else {
-    u->BRR = __USART_BRR(24000000, baud);
+    u->BRR = __USART_BRR(24000000U, baud);
   }
 }
 
@@ -309,44 +309,42 @@ void putch(const char a) {
 }
 
 void puts(const char *a) {
-  for (;*a;a++) {
-    if (*a == '\n') putch('\r');
-    putch(*a);
+  for (const char *in = a; *in; in++) {
+    if (*in == '\n') putch('\r');
+    putch(*in);
   }
 }
 
 void putui(uint32_t i) {
+  uint32_t i_copy = i;
   char str[11];
   uint8_t idx = 10;
   str[idx] = '\0';
   idx--;
   do {
-    str[idx] = (i % 10) + 0x30;
+    str[idx] = (i_copy % 10) + 0x30;
     idx--;
-    i /= 10;
-  } while (i != 0);
+    i_copy /= 10;
+  } while (i_copy != 0);
   puts(str + idx + 1);
 }
 
 void puth(unsigned int i) {
-  int pos;
   char c[] = "0123456789abcdef";
-  for (pos = 28; pos != -4; pos -= 4) {
-    putch(c[(i >> pos) & 0xF]);
+  for (int pos = 28; pos != -4; pos -= 4) {
+    putch(c[(i >> (unsigned int)(pos)) & 0xFU]);
   }
 }
 
 void puth2(unsigned int i) {
-  int pos;
   char c[] = "0123456789abcdef";
-  for (pos = 4; pos != -4; pos -= 4) {
-    putch(c[(i >> pos) & 0xF]);
+  for (int pos = 4; pos != -4; pos -= 4) {
+    putch(c[(i >> (unsigned int)(pos)) & 0xFU]);
   }
 }
 
 void hexdump(const void *a, int l) {
-  int i;
-  for (i=0;i<l;i++) {
+  for (int i=0; i < l; i++) {
     if ((i != 0) && ((i & 0xf) == 0)) puts("\n");
     puth2(((const unsigned char*)a)[i]);
     puts(" ");
