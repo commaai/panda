@@ -290,7 +290,7 @@ void uart_init(USART_TypeDef *u, int baud) {
   } else if (u == UART5) {
     NVIC_EnableIRQ(UART5_IRQn);
   } else {
-      // in this case, should we still execute what comes before the switch?
+    // USART type undefined, skip
   }
 }
 
