@@ -1,15 +1,19 @@
-#!/bin/bash
+#!/bin/bash -e
 TEST_FILENAME=${TEST_FILENAME:-nosetests.xml}
 if [ -f "/EON" ]; then
   TESTSUITE_NAME="Panda_Test-EON"
-  TEST_SCRIPTS=$(ls tests/automated/$1*.py | grep -v "wifi")
 else
   TESTSUITE_NAME="Panda_Test-DEV"
+fi
+
+if [ ! -z "${SKIPWIFI}" ] || [ -f "/EON" ]; then
+  TEST_SCRIPTS=$(ls tests/automated/$1*.py | grep -v wifi)
+else
   TEST_SCRIPTS=$(ls tests/automated/$1*.py)
 fi
 
 cd boardesp
-make flashall
+env PYTHONPATH="${PWD%/*/*}" make flashall
 cd ..
 
 IFS=$'\n'
