@@ -196,7 +196,7 @@ void TIM4_IRQHandler(void) {
         } else {
           gmlan_silent_count++;
         }
-      } else if (gmlan_silent_count == REQUIRED_SILENT_TIME) {
+      } else {
         bool retry = 0;
         // in send loop
         if ((gmlan_sending > 0) &&  // not first bit
@@ -209,6 +209,8 @@ void TIM4_IRQHandler(void) {
         } else if ((read == 1) && (gmlan_sending == (gmlan_sendmax - 11))) {    // recessive during ACK
           puts("GMLAN ERR: didn't recv ACK\n");
           retry = 1;
+        } else {
+          // do not retry
         }
         if (retry) {
           // reset sender (retry after 7 silent)
@@ -233,9 +235,7 @@ void TIM4_IRQHandler(void) {
       }
     }
     TIM4->SR = 0;
-  } //bit bang mode
-
-  else if (gmlan_alt_mode == GPIO_SWITCH) {
+  } else if (gmlan_alt_mode == GPIO_SWITCH) {
     if ((TIM4->SR & TIM_SR_UIF) && (gmlan_switch_below_timeout != -1)) {
       if ((can_timeout_counter == 0) && gmlan_switch_timeout_enable) {
         //it has been more than 1 second since timeout was reset; disable timer and restore the GMLAN output
@@ -258,7 +258,9 @@ void TIM4_IRQHandler(void) {
       }
     }
     TIM4->SR = 0;
-  } //gmlan switch mode
+  } else {
+    puts("invalid gmlan_alt_mode\n");
+  }
 }
 
 void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
