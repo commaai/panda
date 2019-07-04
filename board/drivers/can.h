@@ -63,8 +63,11 @@ bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   enter_critical_section();
   if (q->w_ptr != q->r_ptr) {
     *elem = q->elems[q->r_ptr];
-    if ((q->r_ptr + 1) == q->fifo_size) q->r_ptr = 0;
-    else q->r_ptr += 1;
+    if ((q->r_ptr + 1U) == q->fifo_size) {
+      q->r_ptr = 0;
+    } else {
+      q->r_ptr += 1U;
+    }
     ret = 1;
   }
   exit_critical_section();
@@ -77,8 +80,11 @@ bool can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   uint32_t next_w_ptr;
 
   enter_critical_section();
-  if ((q->w_ptr + 1) == q->fifo_size) next_w_ptr = 0;
-  else next_w_ptr = q->w_ptr + 1;
+  if ((q->w_ptr + 1U) == q->fifo_size) {
+    next_w_ptr = 0;
+  } else {
+    next_w_ptr = q->w_ptr + 1U;
+  }
   if (next_w_ptr != q->r_ptr) {
     q->elems[q->w_ptr] = *elem;
     q->w_ptr = next_w_ptr;

@@ -322,11 +322,11 @@ void putui(uint32_t i) {
   str[idx] = '\0';
   idx--;
   do {
-    str[idx] = (i_copy % 10) + 0x30;
+    str[idx] = (i_copy % 10U) + 0x30U;
     idx--;
     i_copy /= 10;
-  } while (i_copy != 0);
-  puts(str + idx + 1);
+  } while (i_copy != 0U);
+  puts(str + idx + 1U);
 }
 
 void puth(unsigned int i) {
