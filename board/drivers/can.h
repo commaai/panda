@@ -12,7 +12,7 @@ typedef struct {
 #define CAN_BUS_RET_FLAG 0x80U
 #define CAN_BUS_NUM_MASK 0x7FU
 
-#define BUS_MAX 4
+#define BUS_MAX 4U
 
 extern int can_live, pending_can_live;
 
@@ -136,7 +136,7 @@ void can_set_speed(uint8_t can_number) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
 
-  if (!llcan_set_speed(CAN, can_speed[bus_number], can_loopback, can_silent & (1U << can_number))) {
+  if (!llcan_set_speed(CAN, can_speed[bus_number], can_loopback, (unsigned int)(can_silent) & (1U << can_number))) {
     puts("CAN init FAILED!!!!!\n");
     puth(can_number); puts(" ");
     puth(BUS_NUM_FROM_CAN_NUM(can_number)); puts("\n");
@@ -144,7 +144,7 @@ void can_set_speed(uint8_t can_number) {
 }
 
 void can_init(uint8_t can_number) {
-  if (can_number != 0xff) {
+  if (can_number != 0xffU) {
     CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
     set_can_enable(CAN, 1);
     can_set_speed(can_number);
@@ -235,7 +235,7 @@ void can_sce(CAN_TypeDef *CAN) {
 // ***************************** CAN *****************************
 
 void process_can(uint8_t can_number) {
-  if (can_number != 0xff) {
+  if (can_number != 0xffU) {
 
     enter_critical_section();
 
@@ -349,7 +349,7 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
       // add CAN packet to send queue
       // bus number isn't passed through
       to_push->RDTR &= 0xF;
-      if ((bus_number == 3) && (can_num_lookup[3] == 0xFF)) {
+      if ((bus_number == 3U) && (can_num_lookup[3] == 0xFFU)) {
         // TODO: why uint8 bro? only int8?
         bitbang_gmlan(to_push);
       } else {

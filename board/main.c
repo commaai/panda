@@ -70,8 +70,8 @@ bool is_gpio_started(void) {
 }
 
 void EXTI1_IRQHandler(void) {
-  volatile int pr = EXTI->PR & (1U << 1);
-  if ((pr & (1U << 1)) != 0) {
+  volatile unsigned int pr = EXTI->PR & (1U << 1);
+  if ((pr & (1U << 1)) != 0U) {
     #ifdef DEBUG
       puts("got started interrupt\n");
     #endif
@@ -117,7 +117,7 @@ int get_health_pkt(void *dat) {
   // s = 1000/((4095/3.3)*(1/11)) = 8.8623046875
 
   // Avoid needing floating point math
-  health->voltage_pkt = (voltage * 8862) / 1000;
+  health->voltage_pkt = (voltage * 8862U) / 1000U;
 
   health->current_pkt = adc_get(ADCCHAN_CURRENT);
   int safety_ignition = safety_ignition_hook();
@@ -154,7 +154,7 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   uart_ring *ur = get_ring_by_number(usbdata[0]);
   if ((len != 0) && (ur != NULL)) {
-    if ((usbdata[0] < 2) || safety_tx_lin_hook(usbdata[0]-2, usbdata+1, len-1)) {
+    if ((usbdata[0] < 2U) || safety_tx_lin_hook(usbdata[0] - 2U, usbdata + 1, len - 1)) {
       for (int i = 1; i < len; i++) {
         while (!putc(ur, usbdata[i])) {
           // wait
@@ -211,7 +211,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xd0: fetch serial number
     case 0xd0:
       // addresses are OTP
-      if (setup->b.wValue.w == 1) {
+      if (setup->b.wValue.w == 1U) {
         (void)memcpy(resp, (void *)0x1fff79c0, 0x10);
         resp_len = 0x10;
       } else {
@@ -249,7 +249,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xd6:
       COMPILE_TIME_ASSERT(sizeof(gitversion) <= MAX_RESP_LEN);
       (void)memcpy(resp, gitversion, sizeof(gitversion));
-      resp_len = sizeof(gitversion)-1;
+      resp_len = sizeof(gitversion) - 1U;
       break;
     // **** 0xd8: reset ST
     case 0xd8:
@@ -257,9 +257,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xd9: set ESP power
     case 0xd9:
-      if (setup->b.wValue.w == 1) {
+      if (setup->b.wValue.w == 1U) {
         set_esp_mode(ESP_ENABLED);
-      } else if (setup->b.wValue.w == 2) {
+      } else if (setup->b.wValue.w == 2U) {
         set_esp_mode(ESP_BOOTMODE);
       } else {
         set_esp_mode(ESP_DISABLED);
@@ -269,7 +269,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xda:
       set_esp_mode(ESP_DISABLED);
       delay(1000000);
-      if (setup->b.wValue.w == 1) {
+      if (setup->b.wValue.w == 1U) {
         set_esp_mode(ESP_BOOTMODE);
       } else {
         set_esp_mode(ESP_ENABLED);
@@ -279,11 +279,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xdb: set GMLAN multiplexing mode
     case 0xdb:
-      if (setup->b.wValue.w == 1) {
+      if (setup->b.wValue.w == 1U) {
         // GMLAN ON
-        if (setup->b.wIndex.w == 1) {
+        if (setup->b.wIndex.w == 1U) {
           can_set_gmlan(1);
-        } else if (setup->b.wIndex.w == 2) {
+        } else if (setup->b.wIndex.w == 2U) {
           can_set_gmlan(2);
         } else {
           puts("Invalid bus num for GMLAN CAN set\n");
@@ -334,7 +334,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       if ((setup->b.wValue.w < BUS_MAX) && (setup->b.wIndex.w < BUS_MAX) &&
           (setup->b.wValue.w != setup->b.wIndex.w)) { // set forwarding
         can_set_forwarding(setup->b.wValue.w, setup->b.wIndex.w & CAN_BUS_NUM_MASK);
-      } else if((setup->b.wValue.w < BUS_MAX) && (setup->b.wIndex.w == 0xFF)){ //Clear Forwarding
+      } else if((setup->b.wValue.w < BUS_MAX) && (setup->b.wIndex.w == 0xFFU)){ //Clear Forwarding
         can_set_forwarding(setup->b.wValue.w, -1);
       } else {
         puts("Invalid CAN bus forwarding\n");
@@ -350,7 +350,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xdf: set long controls allowed
     case 0xdf:
       if (hardwired) {
-        long_controls_allowed = setup->b.wValue.w & 1;
+        long_controls_allowed = setup->b.wValue.w & 1U;
       }
       break;
     // **** 0xe0: uart read
@@ -411,15 +411,15 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xe5: set CAN loopback (for testing)
     case 0xe5:
-      can_loopback = (setup->b.wValue.w > 0);
+      can_loopback = (setup->b.wValue.w > 0U);
       can_init_all();
       break;
     // **** 0xe6: set USB power
     case 0xe6:
-      if (setup->b.wValue.w == 1) {
+      if (setup->b.wValue.w == 1U) {
         puts("user setting CDP mode\n");
         set_usb_power_mode(USB_POWER_CDP);
-      } else if (setup->b.wValue.w == 2) {
+      } else if (setup->b.wValue.w == 2U) {
         puts("user setting DCP mode\n");
         set_usb_power_mode(USB_POWER_DCP);
       } else {
@@ -429,7 +429,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xf0: do k-line wValue pulse on uart2 for Acura
     case 0xf0:
-      if (setup->b.wValue.w == 1) {
+      if (setup->b.wValue.w == 1U) {
         GPIOC->ODR &= ~(1U << 10);
         GPIOC->MODER &= ~GPIO_MODER_MODER10_1;
         GPIOC->MODER |= GPIO_MODER_MODER10_0;
@@ -441,7 +441,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
 
       for (i = 0; i < 80; i++) {
         delay(8000);
-        if (setup->b.wValue.w == 1) {
+        if (setup->b.wValue.w == 1U) {
           GPIOC->ODR |= (1U << 10);
           GPIOC->ODR &= ~(1U << 10);
         } else {
@@ -450,7 +450,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         }
       }
 
-      if (setup->b.wValue.w == 1) {
+      if (setup->b.wValue.w == 1U) {
         GPIOC->MODER &= ~GPIO_MODER_MODER10_0;
         GPIOC->MODER |= GPIO_MODER_MODER10_1;
       } else {
@@ -462,7 +462,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
-      if (setup->b.wValue.w == 0xFFFF) {
+      if (setup->b.wValue.w == 0xFFFFU) {
         puts("Clearing CAN Rx queue\n");
         can_clear(&can_rx_q);
       } else if (setup->b.wValue.w < BUS_MAX) {
@@ -530,7 +530,7 @@ void __initialize_hardware_early(void) {
 
 void __attribute__ ((noinline)) enable_fpu(void) {
   // enable the FPU
-  SCB->CPACR |= ((3UL << (10U * 2)) | (3UL << (11U * 2)));
+  SCB->CPACR |= ((3UL << (10U * 2U)) | (3UL << (11U * 2U)));
 }
 
 uint64_t tcnt = 0;
@@ -538,8 +538,8 @@ uint64_t marker = 0;
 
 // called once per second
 void TIM3_IRQHandler(void) {
-  #define CURRENT_THRESHOLD 0xF00
-  #define CLICKS 5 // 5 seconds to switch modes
+  #define CURRENT_THRESHOLD 0xF00U
+  #define CLICKS 5U // 5 seconds to switch modes
 
   if (TIM3->SR != 0) {
     can_live = pending_can_live;
@@ -550,7 +550,7 @@ void TIM3_IRQHandler(void) {
 
     switch (usb_power_mode) {
       case USB_POWER_CLIENT:
-        if ((tcnt-marker) >= CLICKS) {
+        if ((tcnt - marker) >= CLICKS) {
           if (!is_enumerated) {
             puts("USBP: didn't enumerate, switching to CDP mode\n");
             // switch to CDP
@@ -606,7 +606,7 @@ void TIM3_IRQHandler(void) {
     puts("\n");*/
 
     // reset this every 16th pass
-    if ((tcnt&0xF) == 0) {
+    if ((tcnt & 0xFU) == 0U) {
       pending_can_live = 0;
     }
     #ifdef DEBUG
@@ -621,10 +621,10 @@ void TIM3_IRQHandler(void) {
 
     // turn off the blue LED, turned on by CAN
     // unless we are in power saving mode
-    set_led(LED_BLUE, (tcnt & 1) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
+    set_led(LED_BLUE, (tcnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
 
     // on to the next one
-    tcnt += 1;
+    tcnt += 1U;
   }
   TIM3->SR = 0;
 }
