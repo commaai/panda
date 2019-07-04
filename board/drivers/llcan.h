@@ -12,7 +12,6 @@ void puts(const char *a);
 
 bool llcan_set_speed(CAN_TypeDef *CAN, uint32_t speed, bool loopback, bool silent) {
   // initialization mode
-  CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
   while((CAN->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
 
   // set time quanta from defines
@@ -80,6 +79,5 @@ void llcan_init(CAN_TypeDef *CAN) {
 void llcan_clear_send(CAN_TypeDef *CAN) {
   CAN->TSR |= CAN_TSR_ABRQ0;
   CAN->MSR &= ~(CAN_MSR_ERRI);
-  CAN->MSR = CAN->MSR;
 }
 
