@@ -320,6 +320,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
             // if the ignition hook depends on something other than the started GPIO
             // we have to disable power savings (fix for GM and Tesla)
             set_power_save_state(POWER_SAVE_STATUS_DISABLED);
+          } else {
+            // power mode is already POWER_SAVE_STATUS_DISABLED and CAN TXs are active
           }
           can_init_all();
         }
