@@ -13,6 +13,7 @@
 #include "safety/safety_hyundai.h"
 #include "safety/safety_chrysler.h"
 #include "safety/safety_subaru.h"
+#include "safety/safety_nissan.h"
 #include "safety/safety_elm327.h"
 
 const safety_hooks *current_hooks = &nooutput_hooks;
@@ -55,6 +56,7 @@ typedef struct {
 #define SAFETY_TESLA 8U
 #define SAFETY_CHRYSLER 9U
 #define SAFETY_SUBARU 10U
+#define SAFETY_NISSAN 11U
 #define SAFETY_GM_ASCM 0x1334U
 #define SAFETY_TOYOTA_IPAS 0x1335U
 #define SAFETY_ALLOUTPUT 0x1337U
@@ -74,6 +76,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_TOYOTA_IPAS, &toyota_ipas_hooks},
   {SAFETY_GM_ASCM, &gm_ascm_hooks},
   {SAFETY_TESLA, &tesla_hooks},
+  {SAFETY_NISSAN, &nissan_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
   {SAFETY_ELM327, &elm327_hooks},
 };
