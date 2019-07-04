@@ -191,7 +191,7 @@ void usb_cb_enumeration_complete() {
 }
 
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) {
-  int resp_len = 0;
+  unsigned int resp_len = 0;
   uart_ring *ur = NULL;
   int i;
   switch (setup->b.bRequest) {
