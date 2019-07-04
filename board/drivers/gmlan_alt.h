@@ -44,7 +44,7 @@ int append_crc(char *in, int in_len) {
   unsigned int crc = 0;
   for (int i = 0; i < in_len; i++) {
     crc <<= 1;
-    if ((in[i] ^ ((crc >> 15) & 1U)) != 0U) {
+    if (((unsigned int)(in[i]) ^ ((crc >> 15) & 1U)) != 0U) {
       crc = crc ^ 0x4599U;
     }
     crc &= 0x7fffU;
@@ -68,8 +68,8 @@ int append_bits(char *in, int in_len, char *app, int app_len) {
 
 int append_int(char *in, int in_len, int val, int val_len) {
   int in_len_copy = in_len;
-  for (int i = val_len-1; i >= 0; i--) {
-    in[in_len_copy] = ((unsigned int)(val) & (1U << (unsigned int)(i))) != 0;
+  for (int i = val_len - 1; i >= 0; i--) {
+    in[in_len_copy] = ((unsigned int)(val) & (1U << (unsigned int)(i))) != 0U;
     in_len_copy++;
   }
   return in_len_copy;
