@@ -49,27 +49,30 @@ int append_crc(char *in, int in_len) {
     }
     crc &= 0x7fffU;
   }
+  int in_len_copy = in_len;
   for (int i = 14; i >= 0; i--) {
-    in[in_len] = (crc >> (unsigned int)(i)) & 1U;
-    in_len++;
+    in[in_len_copy] = (crc >> (unsigned int)(i)) & 1U;
+    in_len_copy++;
   }
-  return in_len;
+  return in_len_copy;
 }
 
 int append_bits(char *in, int in_len, char *app, int app_len) {
+  int in_len_copy = in_len;
   for (int i = 0; i < app_len; i++) {
-    in[in_len] = app[i];
-    in_len++;
+    in[in_len_copy] = app[i];
+    in_len_copy++;
   }
-  return in_len;
+  return in_len_copy;
 }
 
 int append_int(char *in, int in_len, int val, int val_len) {
+  int in_len_copy = in_len;
   for (int i = val_len-1; i >= 0; i--) {
-    in[in_len] = ((unsigned int)(val) & (1U << (unsigned int)(i))) != 0;
-    in_len++;
+    in[in_len_copy] = ((unsigned int)(val) & (1U << (unsigned int)(i))) != 0;
+    in_len_copy++;
   }
-  return in_len;
+  return in_len_copy;
 }
 
 int get_bit_message(char *out, CAN_FIFOMailBox_TypeDef *to_bang) {
@@ -193,7 +196,7 @@ void TIM4_IRQHandler(void) {
         } else {
           gmlan_silent_count++;
         }
-      } else if (gmlan_silent_count == REQUIRED_SILENT_TIME) {
+      } else {
         bool retry = 0;
         // in send loop
         if ((gmlan_sending > 0) &&  // not first bit
@@ -206,6 +209,8 @@ void TIM4_IRQHandler(void) {
         } else if ((read == 1) && (gmlan_sending == (gmlan_sendmax - 11))) {    // recessive during ACK
           puts("GMLAN ERR: didn't recv ACK\n");
           retry = 1;
+        } else {
+          // do not retry
         }
         if (retry) {
           // reset sender (retry after 7 silent)
@@ -230,9 +235,7 @@ void TIM4_IRQHandler(void) {
       }
     }
     TIM4->SR = 0;
-  } //bit bang mode
-
-  else if (gmlan_alt_mode == GPIO_SWITCH) {
+  } else if (gmlan_alt_mode == GPIO_SWITCH) {
     if ((TIM4->SR & TIM_SR_UIF) && (gmlan_switch_below_timeout != -1)) {
       if ((can_timeout_counter == 0) && gmlan_switch_timeout_enable) {
         //it has been more than 1 second since timeout was reset; disable timer and restore the GMLAN output
@@ -255,7 +258,9 @@ void TIM4_IRQHandler(void) {
       }
     }
     TIM4->SR = 0;
-  } //gmlan switch mode
+  } else {
+    puts("invalid gmlan_alt_mode\n");
+  }
 }
 
 void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {

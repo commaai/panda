@@ -127,6 +127,8 @@ void set_can_enable(CAN_TypeDef *CAN, bool enabled) {
     // CAN3_EN
     set_gpio_output(GPIOA, 0, !enabled);
   #endif
+  } else {
+    puts("Invalid CAN: enabling failed\n");
   }
 }
 
@@ -171,6 +173,8 @@ void set_can_mode(int can, bool use_gmlan) {
       set_gpio_alternate(GPIOB, 3, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOB, 4, GPIO_AF11_CAN3);
 #endif
+    } else {
+      puts("Invalid CAN: mode setting failed\n");
     }
   } else {
     if (can == 1) {
@@ -190,6 +194,8 @@ void set_can_mode(int can, bool use_gmlan) {
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
 #endif
+    } else {
+      puts("Invalid CAN: mode setting failed\n");
     }
   }
 }

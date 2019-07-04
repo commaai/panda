@@ -8,6 +8,8 @@
 // 5000 = 500 kbps
 #define can_speed_to_prescaler(x) (CAN_PCLK / CAN_QUANTA * 10U / (x))
 
+void puts(const char *a);
+
 bool llcan_set_speed(CAN_TypeDef *CAN, uint32_t speed, bool loopback, bool silent) {
   // initialization mode
   CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
@@ -70,6 +72,8 @@ void llcan_init(CAN_TypeDef *CAN) {
     NVIC_EnableIRQ(CAN3_RX0_IRQn);
     NVIC_EnableIRQ(CAN3_SCE_IRQn);
 #endif
+  } else {
+    puts("Invalid CAN: initialization failed\n");
   }
 }
 

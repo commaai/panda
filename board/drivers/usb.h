@@ -793,21 +793,22 @@ void usb_irqhandler(void) {
   if ((gintsts & USB_OTG_GINTSTS_RXFLVL) != 0) {
     // 1. Read the Receive status pop register
     volatile unsigned int rxst = USBx->GRXSTSP;
+    int status = (rxst & USB_OTG_GRXSTSP_PKTSTS) >> 17;
 
     #ifdef DEBUG_USB
       puts(" RX FIFO:");
       puth(rxst);
       puts(" status: ");
-      puth((rxst & USB_OTG_GRXSTSP_PKTSTS) >> 17);
+      puth(status);
       puts(" len: ");
       puth((rxst & USB_OTG_GRXSTSP_BCNT) >> 4);
       puts("\n");
     #endif
 
-    if (((rxst & USB_OTG_GRXSTSP_PKTSTS) >> 17) == STS_DATA_UPDT) {
+    if (status == STS_DATA_UPDT) {
       int endpoint = (rxst & USB_OTG_GRXSTSP_EPNUM);
       int len = (rxst & USB_OTG_GRXSTSP_BCNT) >> 4;
-      USB_ReadPacket(&usbdata, len);
+      (void)USB_ReadPacket(&usbdata, len);
       #ifdef DEBUG_USB
         puts("  data ");
         puth(len);
@@ -822,13 +823,15 @@ void usb_irqhandler(void) {
       if (endpoint == 3) {
         usb_cb_ep3_out(usbdata, len, 1);
       }
-    } else if (((rxst & USB_OTG_GRXSTSP_PKTSTS) >> 17) == STS_SETUP_UPDT) {
-      USB_ReadPacket(&setup, 8);
+    } else if (status == STS_SETUP_UPDT) {
+      (void)USB_ReadPacket(&setup, 8);
       #ifdef DEBUG_USB
         puts("  setup ");
         hexdump(&setup, 8);
         puts("\n");
       #endif
+    } else {
+      // status is neither STS_DATA_UPDT or STS_SETUP_UPDT, skip
     }
   }
 
@@ -903,6 +906,8 @@ void usb_irqhandler(void) {
       puts("OUTEP3 error ");
       puth(USBx_OUTEP(3)->DOEPINT);
       puts("\n");
+    } else {
+      // USBx_OUTEP(3)->DOEPINT is 0, ok to skip
     }
 
     if ((USBx_OUTEP(0)->DOEPINT & USB_OTG_DIEPINT_XFRC) != 0) {
