@@ -24,9 +24,11 @@ pipeline {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity: 1){
           timeout(time: 60, unit: 'MINUTES') {
-            sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; SKIPWIFI=1 ./run_automated_tests.sh'"
-            sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_dev_nowifi.xml"
-            sh "docker rm ${env.DOCKER_NAME}"
+            script {
+              sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; SKIPWIFI=1 ./run_automated_tests.sh'"
+              sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_dev_nowifi.xml"
+              sh "docker rm ${env.DOCKER_NAME}"
+            } 
           }
         }
       }
@@ -35,9 +37,11 @@ pipeline {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity: 1){
           timeout(time: 60, unit: 'MINUTES') {
-            sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'touch /EON; cd /tmp/panda; ./run_automated_tests.sh'"
-            sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_eon.xml"
-            sh "docker rm ${env.DOCKER_NAME}"
+            script {
+              sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'touch /EON; cd /tmp/panda; ./run_automated_tests.sh'"
+              sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_eon.xml"
+              sh "docker rm ${env.DOCKER_NAME}"
+            }
           }
         }
       }
@@ -46,12 +50,14 @@ pipeline {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity: 1){
           timeout(time: 60, unit: 'MINUTES') {
-            try {
-              sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; ./run_automated_tests.sh'"
-              sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_dev.xml"
-              sh "docker rm ${env.DOCKER_NAME}"
-            } catch (e) {
-              echo "WIFI tests failed"
+            script {
+              try {
+                sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; ./run_automated_tests.sh'"
+                sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_dev.xml"
+                sh "docker rm ${env.DOCKER_NAME}"
+              } catch (e) {
+                echo "WIFI tests failed"
+              }
             }
           }
         }
