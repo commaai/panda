@@ -46,7 +46,7 @@ pipeline {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity: 1){
           timeout(time: 60, unit: 'MINUTES') {
-            sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; /run_automated_tests.sh'"
+            sh "docker run --name ${env.DOCKER_NAME} --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host ${env.DOCKER_IMAGE_TAG} bash -c 'cd /tmp/panda; ./run_automated_tests.sh'"
             sh "docker cp ${env.DOCKER_NAME}:/tmp/panda/nosetests.xml test_results_dev.xml"
             sh "docker rm ${env.DOCKER_NAME}"
           }
