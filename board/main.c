@@ -69,6 +69,7 @@ bool is_gpio_started(void) {
   return (GPIOA->IDR & (1U << 1)) == 0;
 }
 
+// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void EXTI1_IRQHandler(void) {
   volatile unsigned int pr = EXTI->PR & (1U << 1);
   if ((pr & (1U << 1)) != 0U) {
@@ -524,6 +525,7 @@ int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
 
 // ***************************** main code *****************************
 
+// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
   early();
 }
@@ -537,6 +539,7 @@ uint64_t tcnt = 0;
 uint64_t marker = 0;
 
 // called once per second
+// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void TIM3_IRQHandler(void) {
   #define CURRENT_THRESHOLD 0xF00U
   #define CLICKS 5U // 5 seconds to switch modes
