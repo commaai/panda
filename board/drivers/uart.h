@@ -1,6 +1,6 @@
 // IRQs: USART1, USART2, USART3, UART5
 
-#define FIFO_SIZE 0x400
+#define FIFO_SIZE 0x400U
 typedef struct uart_ring {
   volatile uint16_t w_ptr_tx;
   volatile uint16_t r_ptr_tx;
@@ -81,7 +81,7 @@ void uart_ring_process(uart_ring *q) {
   if (q->w_ptr_tx != q->r_ptr_tx) {
     if ((sr & USART_SR_TXE) != 0) {
       q->uart->DR = q->elems_tx[q->r_ptr_tx];
-      q->r_ptr_tx = (q->r_ptr_tx + 1) % FIFO_SIZE;
+      q->r_ptr_tx = (q->r_ptr_tx + 1U) % FIFO_SIZE;
     }
     // there could be more to send
     q->uart->CR1 |= USART_CR1_TXEIE;
@@ -93,7 +93,7 @@ void uart_ring_process(uart_ring *q) {
   if ((sr & USART_SR_RXNE) || (sr & USART_SR_ORE)) {
     uint8_t c = q->uart->DR;  // TODO: can drop packets
     if (q != &esp_ring) {
-      uint16_t next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
+      uint16_t next_w_ptr = (q->w_ptr_rx + 1U) % FIFO_SIZE;
       if (next_w_ptr != q->r_ptr_rx) {
         q->elems_rx[q->w_ptr_rx] = c;
         q->w_ptr_rx = next_w_ptr;
@@ -124,7 +124,7 @@ bool getc(uart_ring *q, char *elem) {
   enter_critical_section();
   if (q->w_ptr_rx != q->r_ptr_rx) {
     if (elem != NULL) *elem = q->elems_rx[q->r_ptr_rx];
-    q->r_ptr_rx = (q->r_ptr_rx + 1) % FIFO_SIZE;
+    q->r_ptr_rx = (q->r_ptr_rx + 1U) % FIFO_SIZE;
     ret = true;
   }
   exit_critical_section();
@@ -137,7 +137,7 @@ bool injectc(uart_ring *q, char elem) {
   uint16_t next_w_ptr;
 
   enter_critical_section();
-  next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
+  next_w_ptr = (q->w_ptr_rx + 1U) % FIFO_SIZE;
   if (next_w_ptr != q->r_ptr_rx) {
     q->elems_rx[q->w_ptr_rx] = elem;
     q->w_ptr_rx = next_w_ptr;
@@ -153,7 +153,7 @@ bool putc(uart_ring *q, char elem) {
   uint16_t next_w_ptr;
 
   enter_critical_section();
-  next_w_ptr = (q->w_ptr_tx + 1) % FIFO_SIZE;
+  next_w_ptr = (q->w_ptr_tx + 1U) % FIFO_SIZE;
   if (next_w_ptr != q->r_ptr_tx) {
     q->elems_tx[q->w_ptr_tx] = elem;
     q->w_ptr_tx = next_w_ptr;
@@ -195,10 +195,10 @@ void clear_uart_buff(uart_ring *q) {
 
 // ***************************** start UART code *****************************
 
-#define __DIV(_PCLK_, _BAUD_)                        (((_PCLK_) * 25) / (4 * (_BAUD_)))
-#define __DIVMANT(_PCLK_, _BAUD_)                    (__DIV((_PCLK_), (_BAUD_)) / 100)
-#define __DIVFRAQ(_PCLK_, _BAUD_)                    ((((__DIV((_PCLK_), (_BAUD_)) - (__DIVMANT((_PCLK_), (_BAUD_)) * 100)) * 16) + 50) / 100)
-#define __USART_BRR(_PCLK_, _BAUD_)              ((__DIVMANT((_PCLK_), (_BAUD_)) << 4) | (__DIVFRAQ((_PCLK_), (_BAUD_)) & 0x0F))
+#define __DIV(_PCLK_, _BAUD_)                        (((_PCLK_) * 25U) / (4U * (_BAUD_)))
+#define __DIVMANT(_PCLK_, _BAUD_)                    (__DIV((_PCLK_), (_BAUD_)) / 100U)
+#define __DIVFRAQ(_PCLK_, _BAUD_)                    ((((__DIV((_PCLK_), (_BAUD_)) - (__DIVMANT((_PCLK_), (_BAUD_)) * 100U)) * 16U) + 50U) / 100U)
+#define __USART_BRR(_PCLK_, _BAUD_)              ((__DIVMANT((_PCLK_), (_BAUD_)) << 4) | (__DIVFRAQ((_PCLK_), (_BAUD_)) & 0x0FU))
 
 void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
   if (u == USART1) {
@@ -226,7 +226,7 @@ void uart_dma_drain(void) {
     unsigned int i;
     for (i = 0; i < (USART1_DMA_LEN - DMA2_Stream5->NDTR); i++) {
       char c = usart1_dma[i];
-      uint16_t next_w_ptr = (q->w_ptr_rx + 1) % FIFO_SIZE;
+      uint16_t next_w_ptr = (q->w_ptr_rx + 1U) % FIFO_SIZE;
       if (next_w_ptr != q->r_ptr_rx) {
         q->elems_rx[q->w_ptr_rx] = c;
         q->w_ptr_rx = next_w_ptr;
@@ -322,11 +322,11 @@ void putui(uint32_t i) {
   str[idx] = '\0';
   idx--;
   do {
-    str[idx] = (i_copy % 10) + 0x30;
+    str[idx] = (i_copy % 10U) + 0x30U;
     idx--;
     i_copy /= 10;
-  } while (i_copy != 0);
-  puts(str + idx + 1);
+  } while (i_copy != 0U);
+  puts(str + idx + 1U);
 }
 
 void puth(unsigned int i) {

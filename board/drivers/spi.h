@@ -113,12 +113,12 @@ void DMA2_Stream3_IRQHandler(void) {
 }
 
 void EXTI4_IRQHandler(void) {
-  volatile int pr = EXTI->PR & (1U << 4);
+  volatile unsigned int pr = EXTI->PR & (1U << 4);
   #ifdef DEBUG_SPI
     puts("exti4\n");
   #endif
   // SPI CS falling
-  if ((pr & (1U << 4)) != 0) {
+  if ((pr & (1U << 4)) != 0U) {
     spi_total_count = 0;
     spi_rx_dma(spi_buf, 0x14);
   }

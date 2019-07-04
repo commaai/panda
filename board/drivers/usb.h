@@ -394,8 +394,8 @@ int current_int0_alt_setting = 0;
 // packet read and write
 
 void *USB_ReadPacket(void *dest, uint16_t len) {
-  uint32_t i=0;
-  uint32_t count32b = (len + 3) / 4;
+  uint32_t i = 0;
+  uint32_t count32b = (len + 3U) / 4U;
 
   for ( i = 0; i < count32b; i++) {
     // packed?
@@ -411,9 +411,9 @@ void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
   hexdump(src, len);
   #endif
 
-  uint8_t numpacket = (len+(MAX_RESP_LEN-1))/MAX_RESP_LEN;
+  uint8_t numpacket = (len + (MAX_RESP_LEN - 1U)) / MAX_RESP_LEN;
   uint32_t count32b = 0, i = 0;
-  count32b = (len + 3) / 4;
+  count32b = (len + 3U) / 4U;
 
   // bullshit
   USBx_INEP(ep)->DIEPTSIZ = ((numpacket << 19) & USB_OTG_DIEPTSIZ_PKTCNT) |
@@ -983,12 +983,12 @@ void usb_irqhandler(void) {
       puts("  IN PACKET QUEUE\n");
       #endif
 
-      if ((ep0_txlen != 0) && ((USBx_INEP(0)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) >= 0x40)) {
+      if ((ep0_txlen != 0U) && ((USBx_INEP(0)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) >= 0x40U)) {
         uint16_t len = MIN(ep0_txlen, 0x40);
         USB_WritePacket(ep0_txdata, len, 0);
         ep0_txdata += len;
         ep0_txlen -= len;
-        if (ep0_txlen == 0) {
+        if (ep0_txlen == 0U) {
           ep0_txdata = NULL;
           USBx_DEVICE->DIEPEMPMSK &= ~1;
           USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
