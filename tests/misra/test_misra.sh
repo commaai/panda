@@ -24,5 +24,5 @@ then
 fi
 
 # pedal code
-tests/misra/cppcheck/cppcheck --suppressions-list=test/misra/suppressions.txt -I board/ --dump --enable=all --inline-suppr board/pedal/main.c 2>/tmp/misra/cppcheck_pedal_output.txt || true
+tests/misra/cppcheck/cppcheck --suppressions-list=tests/misra/suppressions.txt -I board/ --dump --enable=all --inline-suppr board/pedal/main.c 2>/tmp/misra/cppcheck_pedal_output.txt || true
 python tests/misra/cppcheck/addons/misra.py board/pedal/main.c.dump 2>/tmp/misra/misra_pedal_output.txt || true
