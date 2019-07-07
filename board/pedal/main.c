@@ -19,8 +19,12 @@
   #include "drivers/usb.h"
 #else
   // no serial either
-  void puts(const char *a) {}
-  void puth(unsigned int i) {}
+  void puts(const char *a) {
+    UNUSED(a);
+  }
+  void puth(unsigned int i) {
+    UNUSED(i);
+  }
 #endif
 
 #define ENTER_BOOTLOADER_MAGIC 0xdeadbeef
@@ -41,13 +45,27 @@ void debug_ring_callback(uart_ring *ring) {
   }
 }
 
-int usb_cb_ep1_in(uint8_t *usbdata, int len, bool hardwired) { return 0; }
-void usb_cb_ep2_out(uint8_t *usbdata, int len, bool hardwired) {}
-void usb_cb_ep3_out(uint8_t *usbdata, int len, bool hardwired) {}
+int usb_cb_ep1_in(uint8_t *usbdata, int len, bool hardwired) {
+  UNUSED(usbdata);
+  UNUSED(len);
+  UNUSED(hardwired);
+  return 0;
+}
+void usb_cb_ep2_out(uint8_t *usbdata, int len, bool hardwired) {
+  UNUSED(usbdata);
+  UNUSED(len);
+  UNUSED(hardwired);
+}
+void usb_cb_ep3_out(uint8_t *usbdata, int len, bool hardwired) {
+  UNUSED(usbdata);
+  UNUSED(len);
+  UNUSED(hardwired);
+}
 void usb_cb_enumeration_complete(void) {}
 
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) {
-  int resp_len = 0;
+  UNUSED(hardwired);
+  unsigned int resp_len = 0;
   uart_ring *ur = NULL;
   switch (setup->b.bRequest) {
     // **** 0xe0: uart read

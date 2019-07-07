@@ -1,4 +1,4 @@
-void dac_init() {
+void dac_init(void) {
   // no buffers required since we have an opamp
   //DAC->CR = DAC_CR_EN1 | DAC_CR_BOFF1 | DAC_CR_EN2 | DAC_CR_BOFF2;
   DAC->DHR12R1 = 0;
