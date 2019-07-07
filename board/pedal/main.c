@@ -287,7 +287,11 @@ int main(void) {
   adc_init();
 
   // init can
-  llcan_set_speed(CAN1, 5000, false, false);
+  bool llcan_speed_set = llcan_set_speed(CAN1, 5000, false, false);
+  if (!llcan_speed_set) {
+    puts("Failed to set llcan speed");
+  }
+
   llcan_init(CAN1);
 
   // 48mhz / 65536 ~= 732
