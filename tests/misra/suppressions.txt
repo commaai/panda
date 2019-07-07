@@ -1,0 +1,2 @@
+# Advisory: union types can be used
+misra.19.2
