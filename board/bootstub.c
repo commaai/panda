@@ -14,11 +14,11 @@
 
 // default since there's no serial
 void puts(const char *a) {
- UNUSED(a);
+  UNUSED(a);
 }
 
 void puth(unsigned int i) {
-UNUSED(i);
+  UNUSED(i);
 }
 
 #include "libc.h"
