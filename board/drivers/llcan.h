@@ -10,31 +10,31 @@
 
 void puts(const char *a);
 
-bool llcan_set_speed(CAN_TypeDef *CAN, uint32_t speed, bool loopback, bool silent) {
+bool llcan_set_speed(CAN_TypeDef *CAN_obj, uint32_t speed, bool loopback, bool silent) {
   // initialization mode
-  CAN->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
-  while((CAN->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
+  CAN_obj->MCR = CAN_MCR_TTCM | CAN_MCR_INRQ;
+  while((CAN_obj->MSR & CAN_MSR_INAK) != CAN_MSR_INAK);
 
   // set time quanta from defines
-  CAN->BTR = (CAN_BTR_TS1_0 * (CAN_SEQ1-1)) |
+  CAN_obj->BTR = (CAN_BTR_TS1_0 * (CAN_SEQ1-1)) |
             (CAN_BTR_TS2_0 * (CAN_SEQ2-1)) |
             (can_speed_to_prescaler(speed) - 1U);
 
   // silent loopback mode for debugging
   if (loopback) {
-    CAN->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
+    CAN_obj->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
   }
   if (silent) {
-    CAN->BTR |= CAN_BTR_SILM;
+    CAN_obj->BTR |= CAN_BTR_SILM;
   }
 
   // reset
-  CAN->MCR = CAN_MCR_TTCM | CAN_MCR_ABOM;
+  CAN_obj->MCR = CAN_MCR_TTCM | CAN_MCR_ABOM;
 
   #define CAN_TIMEOUT 1000000
   int tmp = 0;
   bool ret = false;
-  while(((CAN->MSR & CAN_MSR_INAK) == CAN_MSR_INAK) && (tmp < CAN_TIMEOUT)) tmp++;
+  while(((CAN_obj->MSR & CAN_MSR_INAK) == CAN_MSR_INAK) && (tmp < CAN_TIMEOUT)) tmp++;
   if (tmp < CAN_TIMEOUT) {
     ret = true;
   }
@@ -42,21 +42,21 @@ bool llcan_set_speed(CAN_TypeDef *CAN, uint32_t speed, bool loopback, bool silen
   return ret;
 }
 
-void llcan_init(CAN_TypeDef *CAN) {
+void llcan_init(CAN_TypeDef *CAN_obj) {
   // accept all filter
-  CAN->FMR |= CAN_FMR_FINIT;
+  CAN_obj->FMR |= CAN_FMR_FINIT;
 
   // no mask
-  CAN->sFilterRegister[0].FR1 = 0;
-  CAN->sFilterRegister[0].FR2 = 0;
-  CAN->sFilterRegister[14].FR1 = 0;
-  CAN->sFilterRegister[14].FR2 = 0;
-  CAN->FA1R |= 1U | (1U << 14);
+  CAN_obj->sFilterRegister[0].FR1 = 0;
+  CAN_obj->sFilterRegister[0].FR2 = 0;
+  CAN_obj->sFilterRegister[14].FR1 = 0;
+  CAN_obj->sFilterRegister[14].FR2 = 0;
+  CAN_obj->FA1R |= 1U | (1U << 14);
 
-  CAN->FMR &= ~(CAN_FMR_FINIT);
+  CAN_obj->FMR &= ~(CAN_FMR_FINIT);
 
   // enable certain CAN interrupts
-  CAN->IER |= CAN_IER_TMEIE | CAN_IER_FMPIE0 |  CAN_IER_WKUIE;
+  CAN_obj->IER |= CAN_IER_TMEIE | CAN_IER_FMPIE0 |  CAN_IER_WKUIE;
 
   if (CAN == CAN1) {
     NVIC_EnableIRQ(CAN1_TX_IRQn);
@@ -77,9 +77,9 @@ void llcan_init(CAN_TypeDef *CAN) {
   }
 }
 
-void llcan_clear_send(CAN_TypeDef *CAN) {
-  CAN->TSR |= CAN_TSR_ABRQ0;
-  CAN->MSR &= ~(CAN_MSR_ERRI);
-  CAN->MSR = CAN->MSR;
+void llcan_clear_send(CAN_TypeDef *CAN_obj) {
+  CAN_obj->TSR |= CAN_TSR_ABRQ0;
+  CAN_obj->MSR &= ~(CAN_MSR_ERRI);
+  CAN_obj->MSR = CAN_obj->MSR;
 }
 
