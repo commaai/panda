@@ -76,15 +76,8 @@ void llcan_init(CAN_TypeDef *CAN_obj) {
   }
 }
 
-<<<<<<< HEAD
-void llcan_clear_send(CAN_TypeDef *CAN) {
-  CAN->TSR |= CAN_TSR_ABRQ0;
-  CAN->MSR &= ~(CAN_MSR_ERRI);
-=======
 void llcan_clear_send(CAN_TypeDef *CAN_obj) {
   CAN_obj->TSR |= CAN_TSR_ABRQ0;
   CAN_obj->MSR &= ~(CAN_MSR_ERRI);
-  CAN_obj->MSR = CAN_obj->MSR;
->>>>>>> c97d60be6434a93cfa05ee8ee19c550123680a90
 }
 
