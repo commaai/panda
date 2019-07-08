@@ -304,7 +304,8 @@ void putch(const char a) {
 
     //putc(&debug_ring, a);
   } else {
-    injectc(&debug_ring, a);
+    // misra-c2012-17.7: serial debug function, ok to ignore output
+    (void)injectc(&debug_ring, a);
   }
 }
 
