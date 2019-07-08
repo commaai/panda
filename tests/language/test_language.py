@@ -10,19 +10,19 @@ if __name__ == "__main__":
 
     suffix_cmd = " "
     for i in checked_ext:
-      suffix_cmd +=  "-- '*." + i + "' "
+      suffix_cmd +=  "--include \*." + i + " "
 
-    found_profanity = False
+    found_bad_language = False
     for line in handle:
       line = line.rstrip('\n').rstrip(" ")
       try:
-        cmd = "cd ../../; git grep --ignore-case -w '" + line + "'" + suffix_cmd
+        cmd = "cd ../../; grep -R -i -w " + suffix_cmd + " '" + line + "'"
         res = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
         print res
-        found_profanity = True
+        found_bad_language = True
       except subprocess.CalledProcessError as e:
         pass
-  if found_profanity:
-    sys.exit("Failed: Found profanities")
+  if found_bad_language:
+    sys.exit("Failed: found bad language")
   else:
     print "Success"

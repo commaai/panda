@@ -86,6 +86,19 @@ jobs:
           command: |
             docker run panda_safety_replay /bin/bash -c "cd /openpilot/panda/tests/safety_replay; PYTHONPATH=/openpilot ./test_safety_replay.py"
 
+  language_check:
+    machine:
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - run:
+          name: Build image
+          command: "docker build -t language_check -f tests/language/Dockerfile ."
+      - run:
+          name: Check code for bad language
+          command: |
+            docker run language_check /bin/bash -c "cd /panda/tests/language; ./test_language.py"
+
 workflows:
   version: 2
   main:
@@ -94,3 +107,4 @@ workflows:
       - misra-c2012
       - build
       - safety_replay
+      - language_check
