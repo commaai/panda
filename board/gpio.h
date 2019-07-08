@@ -99,9 +99,9 @@ void periph_init(void) {
 
 // ********************* setters *********************
 
-void set_can_enable(CAN_TypeDef *CAN, bool enabled) {
+void set_can_enable(CAN_TypeDef *CAN_obj, bool enabled) {
   // enable CAN busses
-  if (CAN == CAN1) {
+  if (CAN_obj == CAN1) {
     #ifdef PANDA
       // CAN1_EN
       set_gpio_output(GPIOC, 1, !enabled);
@@ -114,7 +114,7 @@ void set_can_enable(CAN_TypeDef *CAN, bool enabled) {
         set_gpio_output(GPIOB, 3, enabled);
       #endif
     #endif
-  } else if (CAN == CAN2) {
+  } else if (CAN_obj == CAN2) {
     #ifdef PANDA
       // CAN2_EN
       set_gpio_output(GPIOC, 13, !enabled);
@@ -123,7 +123,7 @@ void set_can_enable(CAN_TypeDef *CAN, bool enabled) {
       set_gpio_output(GPIOB, 4, enabled);
     #endif
   #ifdef CAN3
-  } else if (CAN == CAN3) {
+  } else if (CAN_obj == CAN3) {
     // CAN3_EN
     set_gpio_output(GPIOA, 0, !enabled);
   #endif
