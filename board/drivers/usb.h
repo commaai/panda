@@ -577,16 +577,16 @@ void usb_setup(void) {
               break;
             case STRING_OFFSET_ISERIAL:
               #ifdef UID_BASE
-                resp[0] = 0x02 + 12*4;
+                resp[0] = 0x02 + (12 * 4);
                 resp[1] = 0x03;
 
                 // 96 bits = 12 bytes
                 for (int i = 0; i < 12; i++){
                   uint8_t cc = ((uint8_t *)UID_BASE)[i];
-                  resp[2 + i*4 + 0] = to_hex_char((cc>>4)&0xF);
-                  resp[2 + i*4 + 1] = '\0';
-                  resp[2 + i*4 + 2] = to_hex_char((cc>>0)&0xF);
-                  resp[2 + i*4 + 3] = '\0';
+                  resp[2 + (i * 4) + 0] = to_hex_char((cc >> 4) & 0xFU);
+                  resp[2 + (i * 4) + 1] = '\0';
+                  resp[2 + (i * 4) + 2] = to_hex_char((cc >> 0) & 0xFU);
+                  resp[2 + (i * 4) + 3] = '\0';
                 }
 
                 USB_WritePacket(resp, MIN(resp[0], setup.b.wLength.w), 0);
