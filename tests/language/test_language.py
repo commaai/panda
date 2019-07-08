@@ -3,14 +3,14 @@
 import subprocess
 import sys
 
-ignored_ext = [".pdf", ".jpg", ".png", "profanities.txt"]
+checked_ext = ["h", "c", "py", "pyx", "cpp", "hpp", "md", "mk"]
 
 if __name__ == "__main__":
   with open("list.txt", 'r') as handle:
 
     suffix_cmd = " "
-    for i in ignored_ext:
-      suffix_cmd +=  "-- './*' ':(exclude)*" + i + "' "
+    for i in checked_ext:
+      suffix_cmd +=  "-- '*." + i + "' "
 
     found_profanity = False
     for line in handle:
@@ -23,4 +23,6 @@ if __name__ == "__main__":
       except subprocess.CalledProcessError as e:
         pass
   if found_profanity:
-    sys.exit("Found profanities")
+    sys.exit("Failed: Found profanities")
+  else:
+    print "Success"
