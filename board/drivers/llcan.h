@@ -58,16 +58,16 @@ void llcan_init(CAN_TypeDef *CAN_obj) {
   // enable certain CAN interrupts
   CAN_obj->IER |= CAN_IER_TMEIE | CAN_IER_FMPIE0 |  CAN_IER_WKUIE;
 
-  if (CAN == CAN1) {
+  if (CAN_obj == CAN1) {
     NVIC_EnableIRQ(CAN1_TX_IRQn);
     NVIC_EnableIRQ(CAN1_RX0_IRQn);
     NVIC_EnableIRQ(CAN1_SCE_IRQn);
-  } else if (CAN == CAN2) {
+  } else if (CAN_obj == CAN2) {
     NVIC_EnableIRQ(CAN2_TX_IRQn);
     NVIC_EnableIRQ(CAN2_RX0_IRQn);
     NVIC_EnableIRQ(CAN2_SCE_IRQn);
 #ifdef CAN3
-  } else if (CAN == CAN3) {
+  } else if (CAN_obj == CAN3) {
     NVIC_EnableIRQ(CAN3_TX_IRQn);
     NVIC_EnableIRQ(CAN3_RX0_IRQn);
     NVIC_EnableIRQ(CAN3_SCE_IRQn);
