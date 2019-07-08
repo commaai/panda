@@ -4,7 +4,7 @@ PROJ_NAME = comma
 CFLAGS  = -O2 -Wall -Wextra -Wstrict-prototypes -std=gnu11 -DPEDAL
 CFLAGS += -mlittle-endian -mthumb -mcpu=cortex-m3
 CFLAGS += -msoft-float -DSTM32F2 -DSTM32F205xx
-CFLAGS += -I ../inc -I ../ -I ../../ -nostdlib
+CFLAGS += -I ../inc -I ../ -I ../../ -nostdlib -fno-builtin
 CFLAGS += -T../stm32_flash.ld
 
 STARTUP_FILE = startup_stm32f205xx
