@@ -416,7 +416,7 @@ void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
   uint32_t count32b = 0;
   count32b = (len + 3U) / 4U;
 
-  // bullshit
+  // TODO: revisit this
   USBx_INEP(ep)->DIEPTSIZ = ((numpacket << 19) & USB_OTG_DIEPTSIZ_PKTCNT) |
                             (len               & USB_OTG_DIEPTSIZ_XFRSIZ);
   USBx_INEP(ep)->DIEPCTL |= (USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA);
@@ -734,7 +734,6 @@ void usb_init(void) {
   USBx->GAHBCFG = USB_OTG_GAHBCFG_GINT;
 
   // DCTL startup value is 2 on new chip, 0 on old chip
-  // THIS IS FUCKING BULLSHIT
   USBx_DEVICE->DCTL = 0;
 
   // enable the IRQ
