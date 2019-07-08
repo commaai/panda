@@ -12,10 +12,6 @@ else
   TEST_SCRIPTS=$(ls tests/automated/$1*.py)
 fi
 
-cd boardesp
-env PYTHONPATH="${PWD%/*/*}" make flashall
-cd ..
-
 IFS=$'\n'
 for NAME in $(nmcli --fields NAME con show | grep panda | awk '{$1=$1};1')
 do
