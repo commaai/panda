@@ -7,8 +7,8 @@ git checkout 44d6066c6fad32e2b0332b3f2b24bd340febaef8
 make -j4
 cd ../../../
 
-# whole panda code
-tests/misra/cppcheck/cppcheck --dump --enable=all --inline-suppr board/main.c 2>/tmp/misra/cppcheck_output.txt || true
+# panda code
+tests/misra/cppcheck/cppcheck --suppressions-list=tests/misra/suppressions.txt --dump --enable=all --inline-suppr board/main.c 2>/tmp/misra/cppcheck_output.txt || true
 python tests/misra/cppcheck/addons/misra.py board/main.c.dump 2>/tmp/misra/misra_output.txt || true
 
 # violations in safety files
@@ -22,3 +22,7 @@ then
   cat /tmp/misra/cppcheck_safety_output.txt
   exit 1
 fi
+
+# pedal code
+tests/misra/cppcheck/cppcheck --suppressions-list=tests/misra/suppressions.txt -I board/ --dump --enable=all --inline-suppr board/pedal/main.c 2>/tmp/misra/cppcheck_pedal_output.txt || true
+python tests/misra/cppcheck/addons/misra.py board/pedal/main.c.dump 2>/tmp/misra/misra_pedal_output.txt || true
