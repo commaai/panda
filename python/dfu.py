@@ -88,7 +88,6 @@ class PandaDFU(object):
 
   def program_bootstub(self, code_bootstub):
     self.clear_status()
-    self.erase(0x8004000)
     self.erase(0x8000000)
     self.program(0x8000000, code_bootstub, 0x800)
     self.reset()
