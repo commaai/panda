@@ -9,10 +9,10 @@ cd ../../../
 
 
 printf "\nPANDA CODE\n"
-#tests/misra/cppcheck/cppcheck -DPANDA -UPEDAL -DCAN3 -DUID_BASE \
-#                              --suppressions-list=tests/misra/suppressions.txt \
-#                              --dump --enable=all --inline-suppr --force \
-#                              board/main.c 2>/tmp/misra/cppcheck_output.txt
+tests/misra/cppcheck/cppcheck -DPANDA -UPEDAL -DCAN3 -DUID_BASE \
+                              --suppressions-list=tests/misra/suppressions.txt \
+                              --dump --enable=all --inline-suppr --force \
+                              board/main.c 2>/tmp/misra/cppcheck_output.txt
 
 python tests/misra/cppcheck/addons/misra.py board/main.c.dump 2>/tmp/misra/misra_output.txt
 
