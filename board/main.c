@@ -646,17 +646,13 @@ int main(void) {
 
   // detect the revision and init the GPIOs
   puts("config:\n");
-  puts((revision == PANDA_REV_C) ? "  panda rev c\n" : "  panda rev a or b\n");
+  puts((revision == PANDA_REV_C) ? "  panda rev c\n" : "  panda black\n");
   puts(has_external_debug_serial ? "  real serial\n" : "  USB serial\n");
   puts(is_giant_panda ? "  GIANTpanda detected\n" : "  not GIANTpanda\n");
   puts(is_grey_panda ? "  gray panda detected!\n" : "  white panda\n");
   puts(is_entering_bootmode ? "  ESP wants bootmode\n" : "  no bootmode\n");
 
-  // non rev c panda are no longer supported
-  while (revision != PANDA_REV_C) {
-    // hang
-  }
-
+  // init gpio
   gpio_init();
 
   // panda has an FPU, let's use it!
@@ -676,11 +672,13 @@ int main(void) {
     uart_init(USART1, 115200);
   }
 
-  // enable LIN
-  uart_init(UART5, 10400);
-  UART5->CR2 |= USART_CR2_LINEN;
-  uart_init(USART3, 10400);
-  USART3->CR2 |= USART_CR2_LINEN;
+  if (revision != PANDA_BLACK) {
+    // enable LIN
+    uart_init(UART5, 10400);
+    UART5->CR2 |= USART_CR2_LINEN;
+    uart_init(USART3, 10400);
+    USART3->CR2 |= USART_CR2_LINEN;
+  }
 
   // init microsecond system timer
   // increments 1000000 times per second
@@ -689,9 +687,6 @@ int main(void) {
   TIM2->CR1 = TIM_CR1_CEN;
   TIM2->EGR = TIM_EGR_UG;
   // use TIM2->CNT to read
-
-  // enable USB
-  usb_init();
 
   // default to silent mode to prevent issues with Ford
   // hardcode a specific safety mode if you want to force the panda to be in a specific mode
@@ -736,6 +731,9 @@ int main(void) {
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");
 #endif
+
+  // enable USB (right before interrupts or enum can fail!)
+  usb_init();
 
   puts("**** INTERRUPTS ON ****\n");
   enable_interrupts();

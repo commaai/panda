@@ -10,6 +10,7 @@
 
 #define PANDA_REV_AB 0
 #define PANDA_REV_C 1
+#define PANDA_BLACK 2
 
 #define PULL_EFFECTIVE_DELAY 10
 
@@ -46,7 +47,8 @@ void detect(void) {
   // will produce a voltage divider that results in a high logic
   // level. Checking if this pin reads high with a pull down should
   // differentiate REV AB from C.
-  revision = detect_with_pull(GPIOA, 13, PULL_DOWN) ? PANDA_REV_C : PANDA_REV_AB;
+  // rev ab is deprecated, now A13 detects BLACK
+  revision = detect_with_pull(GPIOA, 13, PULL_DOWN) ? PANDA_REV_C : PANDA_BLACK;
 
   // check if the ESP is trying to put me in boot mode
   is_entering_bootmode = !detect_with_pull(GPIOB, 0, PULL_UP);
