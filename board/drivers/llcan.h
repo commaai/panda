@@ -29,6 +29,7 @@ bool llcan_set_speed(CAN_TypeDef *CAN_obj, uint32_t speed, bool loopback, bool s
   }
 
   // reset
+  // cppcheck-suppress redundantAssignment ; it's a register
   CAN_obj->MCR = CAN_MCR_TTCM | CAN_MCR_ABOM;
 
   #define CAN_TIMEOUT 1000000
@@ -80,6 +81,7 @@ void llcan_init(CAN_TypeDef *CAN_obj) {
 void llcan_clear_send(CAN_TypeDef *CAN_obj) {
   CAN_obj->TSR |= CAN_TSR_ABRQ0;
   CAN_obj->MSR &= ~(CAN_MSR_ERRI);
+  // cppcheck-suppress selfAssignment ; needed to clear the register
   CAN_obj->MSR = CAN_obj->MSR;
 }
 
