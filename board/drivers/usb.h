@@ -394,14 +394,12 @@ int current_int0_alt_setting = 0;
 // packet read and write
 
 void *USB_ReadPacket(void *dest, uint16_t len) {
-
-  void *dest_copy = dest;
+  uint32_t *dest_copy = (uint32_t *)dest;
   uint32_t count32b = (len + 3U) / 4U;
 
   for (uint32_t i = 0; i < count32b; i++) {
-    // packed?
-    *(__attribute__((__packed__)) uint32_t *)dest_copy = USBx_DFIFO(0);
-    dest_copy += 4;
+    *dest_copy = USBx_DFIFO(0);
+    dest_copy++;
   }
   return ((void *)dest_copy);
 }
