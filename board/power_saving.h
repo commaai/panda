@@ -30,13 +30,15 @@ void set_power_save_state(int state) {
     set_can_enable(CAN2, enable);
     set_can_enable(CAN3, enable);
 
-    // turn on GMLAN
-    set_gpio_output(GPIOB, 14, enable);
-    set_gpio_output(GPIOB, 15, enable);
+    if(panda_type != PANDA_TYPE_BLACK){
+      // turn on GMLAN
+      set_gpio_output(GPIOB, 14, enable);
+      set_gpio_output(GPIOB, 15, enable);
 
-    // turn on LIN
-    set_gpio_output(GPIOB, 7, enable);
-    set_gpio_output(GPIOA, 14, enable);
+      // turn on LIN    
+      set_gpio_output(GPIOB, 7, enable);
+      set_gpio_output(GPIOA, 14, enable);
+    }
 
     power_save_status = state;
   }

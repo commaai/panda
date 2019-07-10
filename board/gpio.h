@@ -296,6 +296,16 @@ void gpio_init(void) {
   // C3: (BLACK_PANDA ? OBD_SBU2 : current sense)
   set_gpio_mode(GPIOC, 3, MODE_ANALOG);
 
+  // set OBD_SBU1_RELAY and OBD_SBU2_RELAY as output
+  if(panda_type == PANDA_TYPE_BLACK){
+    set_gpio_mode(GPIOC, 10, MODE_OUTPUT);
+    set_gpio_mode(GPIOC, 11, MODE_OUTPUT);
+    set_gpio_output_type(GPIOC, 10, OUTPUT_TYPE_OPEN_DRAIN);
+    set_gpio_output_type(GPIOC, 11, OUTPUT_TYPE_OPEN_DRAIN);
+    set_gpio_output(GPIOC, 10, 1);
+    set_gpio_output(GPIOC, 11, 1);
+  }
+
 #ifdef PEDAL
   // comma pedal has inputs on C0 and C1
   set_gpio_mode(GPIOC, 0, MODE_ANALOG);
@@ -385,9 +395,11 @@ void gpio_init(void) {
     set_gpio_output(GPIOA, 14, 1);
 
     // C10,C11: L-Line setup on USART 3
-    set_gpio_alternate(GPIOC, 10, GPIO_AF7_USART3);
-    set_gpio_alternate(GPIOC, 11, GPIO_AF7_USART3);
-    set_gpio_pullup(GPIOC, 11, PULL_UP);
+    if(panda_type != PANDA_TYPE_BLACK){
+      set_gpio_alternate(GPIOC, 10, GPIO_AF7_USART3);
+      set_gpio_alternate(GPIOC, 11, GPIO_AF7_USART3);
+      set_gpio_pullup(GPIOC, 11, PULL_UP);
+    }
   #endif
 
   set_usb_power_mode(USB_POWER_CLIENT);
