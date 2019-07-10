@@ -17,10 +17,10 @@ static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   if (addr == 0x217) {
     // wheel speeds are 14 bits every 16
-    ford_is_moving= false;
-    for (int i = 0; i < 4; i++) {
-      ford_is_moving |= GET_BYTE(to_push, 2 * i) | (GET_BYTE(to_push, (2 * i) + 1) & 0xFC);
-    }
+    ford_is_moving = GET_BYTE(to_push, 0) | (GET_BYTE(to_push, 1) & 0xFCU);
+    ford_is_moving |= GET_BYTE(to_push, 2) | (GET_BYTE(to_push, 3) & 0xFCU);
+    ford_is_moving |= GET_BYTE(to_push, 4) | (GET_BYTE(to_push, 5) & 0xFCU);
+    ford_is_moving |= GET_BYTE(to_push, 6) | (GET_BYTE(to_push, 7) & 0xFCU);
   }
 
   // state machine to enter and exit controls
