@@ -214,7 +214,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xd0:
       // addresses are OTP
       if (setup->b.wValue.w == 1U) {
-        (void)memcpy(resp, (void *)0x1fff79c0, 0x10);
+        (void)memcpy(resp, (uint8_t *)0x1fff79c0, 0x10);
         resp_len = 0x10;
       } else {
         get_provision_chunk(resp);
