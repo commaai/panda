@@ -170,15 +170,13 @@ void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
 void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   int dpkt = 0;
-  for (dpkt = 0; dpkt < len; dpkt += 0x10) {
-    uint32_t *tf = (uint32_t*)(&usbdata[dpkt]);
-
-    // make a copy
+  uint32_t *d32 = (uint32_t *)usbdata;
+  for (dpkt = 0; dpkt < (len / 4); dpkt += 4) {
     CAN_FIFOMailBox_TypeDef to_push;
-    to_push.RDHR = tf[3];
-    to_push.RDLR = tf[2];
-    to_push.RDTR = tf[1];
-    to_push.RIR = tf[0];
+    to_push.RDHR = d32[dpkt + 3];
+    to_push.RDLR = d32[dpkt + 2];
+    to_push.RDTR = d32[dpkt + 1];
+    to_push.RIR = d32[dpkt];
 
     uint8_t bus_number = (to_push.RDTR >> 4) & CAN_BUS_NUM_MASK;
     can_send(&to_push, bus_number);
