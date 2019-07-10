@@ -61,6 +61,11 @@ pipeline {
     }
   }
   post {
+    failure {
+      script {
+        sh "docker rm ${env.DOCKER_NAME} || true"
+      }
+    }
     always {
       junit "test_results*.xml"
     }
