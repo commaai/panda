@@ -404,7 +404,7 @@ void *USB_ReadPacket(void *dest, uint16_t len) {
   return ((void *)dest_copy);
 }
 
-void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
+void USB_WritePacket(uint8_t *src, uint16_t len, uint32_t ep) {
   #ifdef DEBUG_USB
   puts("writing ");
   hexdump(src, len);
@@ -420,7 +420,7 @@ void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
   USBx_INEP(ep)->DIEPCTL |= (USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA);
 
   // load the FIFO
-  const uint8_t *src_copy = src;
+  uint8_t *src_copy = src;
   for (uint32_t i = 0; i < count32b; i++) {
     USBx_DFIFO(ep) = *((__attribute__((__packed__)) uint32_t *)src_copy);
     src_copy += 4;
@@ -589,7 +589,7 @@ void usb_setup(void) {
 
                 USB_WritePacket(resp, MIN(resp[0], setup.b.wLength.w), 0);
               #else
-                USB_WritePacket((const uint8_t *)string_serial_desc, MIN(sizeof(string_serial_desc), setup.b.wLength.w), 0);
+                USB_WritePacket((uint8_t *)string_serial_desc, MIN(sizeof(string_serial_desc), setup.b.wLength.w), 0);
               #endif
               break;
             case STRING_OFFSET_ICONFIGURATION:
