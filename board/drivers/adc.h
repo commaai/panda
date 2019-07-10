@@ -2,11 +2,16 @@
 // ACCEL2 = ADC11
 // VOLT_S = ADC12
 // CURR_S = ADC13
+// black panda:
+//    SBU1 = ADC10
+//    SBU2 = ADC13
 
 #define ADCCHAN_ACCEL0 10
 #define ADCCHAN_ACCEL1 11
 #define ADCCHAN_VOLTAGE 12
 #define ADCCHAN_CURRENT 13
+#define ADCCHAN_SBU1 10
+#define ADCCHAN_SBU2 13
 
 void adc_init(void) {
   // global setup

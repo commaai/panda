@@ -29,6 +29,8 @@
 #include "safety.h"
 #include "drivers/can.h"
 
+#include "drivers/harness.h"
+
 // ********************* serial debugging *********************
 
 void debug_ring_callback(uart_ring *ring) {
@@ -107,6 +109,7 @@ int get_health_pkt(void *dat) {
     uint8_t gas_interceptor_detected_pkt;
     uint8_t started_signal_detected_pkt;
     uint8_t started_alt_pkt;
+    uint8_t car_harness_detected_pkt;
   } *health = dat;
 
   //Voltage will be measured in mv. 5000 = 5V
@@ -121,7 +124,11 @@ int get_health_pkt(void *dat) {
   // Avoid needing floating point math
   health->voltage_pkt = (voltage * 8862U) / 1000U;
 
-  health->current_pkt = adc_get(ADCCHAN_CURRENT);
+  // No current sense on panda black
+  if(panda_type != PANDA_TYPE_BLACK){
+    health->current_pkt = adc_get(ADCCHAN_CURRENT);
+  }
+
   int safety_ignition = safety_ignition_hook();
   if (safety_ignition < 0) {
     //Use the GPIO pin to determine ignition
@@ -133,6 +140,7 @@ int get_health_pkt(void *dat) {
 
   health->controls_allowed_pkt = controls_allowed;
   health->gas_interceptor_detected_pkt = gas_interceptor_detected;
+  health->car_harness_detected_pkt = car_harness_detected;
 
   // DEPRECATED
   health->started_alt_pkt = 0;
@@ -652,13 +660,13 @@ int main(void) {
   puts(is_giant_panda ? "  GIANTpanda detected\n" : "  not GIANTpanda\n");
   switch (panda_type){
     case PANDA_TYPE_WHITE:
-      puts("  white panda");
+      puts("  white panda\n");
       break;
     case PANDA_TYPE_GREY:
-      puts("  grey panda");
+      puts("  grey panda\n");
       break;
     case PANDA_TYPE_BLACK:
-      puts("  black panda");
+      puts("  black panda\n");
       break;
   }
   puts(is_entering_bootmode ? "  ESP wants bootmode\n" : "  no bootmode\n");
@@ -753,6 +761,14 @@ int main(void) {
 
   puts("**** INTERRUPTS ON ****\n");
   enable_interrupts();
+
+
+  if(panda_type == PANDA_TYPE_BLACK){
+    harness_init();
+    if(car_harness_detected != 0){
+      puts("Detected harness");
+    }
+  }
 
   // LED should keep on blinking all the time
   uint64_t cnt = 0;

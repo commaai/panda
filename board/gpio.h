@@ -288,8 +288,12 @@ void gpio_init(void) {
   GPIOB->AFR[0] = 0;
   GPIOB->AFR[1] = 0;
 
-  // C2,C3: analog mode, voltage and current sense
+  // C0: OBD_SBU1 for black panda
+  if(panda_type == PANDA_TYPE_BLACK)
+    set_gpio_mode(GPIOC, 0, MODE_ANALOG);
+  // C2: analog mode, voltage sense
   set_gpio_mode(GPIOC, 2, MODE_ANALOG);
+  // C3: (BLACK_PANDA ? OBD_SBU2 : current sense)
   set_gpio_mode(GPIOC, 3, MODE_ANALOG);
 
 #ifdef PEDAL
