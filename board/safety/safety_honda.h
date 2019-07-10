@@ -10,7 +10,7 @@
 const int HONDA_GAS_INTERCEPTOR_THRESHOLD = 328;  // ratio between offset and gain from dbc file
 int honda_brake_prev = 0;
 int honda_gas_prev = 0;
-bool honda_ego_speed = 0;
+bool honda_moving = false;
 bool honda_bosch_hardware = false;
 bool honda_alt_brake_msg = false;
 
@@ -22,7 +22,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // sample speed
   if (addr == 0x158) {
     // first 2 bytes
-    honda_ego_speed = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
+    honda_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
   }
 
   // state machine to enter and exit controls
@@ -55,7 +55,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   bool is_user_brake_msg = IS_USER_BRAKE_MSG(addr);  // needed to enforce type
   if (is_user_brake_msg) {
     int brake = USER_BRAKE_VALUE(to_push);
-    if (brake && (!(honda_brake_prev) || honda_ego_speed)) {
+    if (brake && (!(honda_brake_prev) || honda_moving)) {
       controls_allowed = 0;
     }
     honda_brake_prev = brake;
@@ -101,7 +101,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
   int pedal_pressed = honda_gas_prev || (gas_interceptor_prev > HONDA_GAS_INTERCEPTOR_THRESHOLD) ||
-                      (honda_brake_prev && honda_ego_speed);
+                      (honda_brake_prev && honda_moving);
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
 
   // BRAKE: safety check
