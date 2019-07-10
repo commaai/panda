@@ -1,4 +1,5 @@
-//#define EON
+//#define EON   //TODO: Remove
+#define PANDA //TODO: Remove
 
 #include "config.h"
 #include "obj/gitversion.h"
@@ -204,9 +205,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       puts(" err: "); puth(can_err_cnt);
       puts("\n");
       break;
-    // **** 0xc1: is grey panda
+    // **** 0xc1: get panda type
     case 0xc1:
-      resp[0] = is_grey_panda;
+      resp[0] = panda_type;
       resp_len = 1;
       break;
     // **** 0xd0: fetch serial number
@@ -649,11 +650,21 @@ int main(void) {
   puts((revision == PANDA_REV_C) ? "  panda rev c\n" : "  panda rev a or b\n");
   puts(has_external_debug_serial ? "  real serial\n" : "  USB serial\n");
   puts(is_giant_panda ? "  GIANTpanda detected\n" : "  not GIANTpanda\n");
-  puts(is_grey_panda ? "  gray panda detected!\n" : "  white panda\n");
+  switch (panda_type){
+    case PANDA_TYPE_WHITE:
+      puts("  white panda");
+      break;
+    case PANDA_TYPE_GREY:
+      puts("  grey panda");
+      break;
+    case PANDA_TYPE_BLACK:
+      puts("  black panda");
+      break;
+  }
   puts(is_entering_bootmode ? "  ESP wants bootmode\n" : "  no bootmode\n");
 
-  // non rev c panda are no longer supported
-  while (revision != PANDA_REV_C) {
+  // non rev c panda are no longer supported. panda black is though
+  while (revision != PANDA_REV_C && panda_type != PANDA_TYPE_BLACK) {
     // hang
   }
 
@@ -669,18 +680,21 @@ int main(void) {
     uart_init(USART2, 115200);
   }
 
-  if (is_grey_panda) {
+  if (panda_type == PANDA_TYPE_GREY || panda_type == PANDA_TYPE_BLACK) {
     uart_init(USART1, 9600);
   } else {
     // enable ESP uart
     uart_init(USART1, 115200);
   }
 
-  // enable LIN
-  uart_init(UART5, 10400);
-  UART5->CR2 |= USART_CR2_LINEN;
-  uart_init(USART3, 10400);
-  USART3->CR2 |= USART_CR2_LINEN;
+  // there is no LIN on panda black
+  if(panda_type != PANDA_TYPE_BLACK){
+    // enable LIN
+    uart_init(UART5, 10400);
+    UART5->CR2 |= USART_CR2_LINEN;
+    uart_init(USART3, 10400);
+    USART3->CR2 |= USART_CR2_LINEN;
+  }
 
   // init microsecond system timer
   // increments 1000000 times per second
@@ -718,7 +732,7 @@ int main(void) {
 
 #ifdef EON
   // have to save power
-  if (!is_grey_panda) {
+  if (panda_type != PANDA_TYPE_GREY && panda_type != PANDA_TYPE_BLACK) {
     set_esp_mode(ESP_DISABLED);
   }
   // only enter power save after the first cycle

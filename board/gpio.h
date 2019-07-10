@@ -11,6 +11,10 @@
 #define PANDA_REV_AB 0
 #define PANDA_REV_C 1
 
+#define PANDA_TYPE_WHITE 0
+#define PANDA_TYPE_GREY 1
+#define PANDA_TYPE_BLACK 2
+
 #define PULL_EFFECTIVE_DELAY 10
 
 void puts(const char *a);
@@ -19,7 +23,7 @@ bool has_external_debug_serial = 0;
 bool is_giant_panda = 0;
 bool is_entering_bootmode = 0;
 int revision = PANDA_REV_AB;
-bool is_grey_panda = 0;
+int panda_type = PANDA_TYPE_WHITE;
 
 bool detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode) {
   set_gpio_mode(GPIO, pin, MODE_INPUT);
@@ -46,18 +50,27 @@ void detect(void) {
   // will produce a voltage divider that results in a high logic
   // level. Checking if this pin reads high with a pull down should
   // differentiate REV AB from C.
-  revision = detect_with_pull(GPIOA, 13, PULL_DOWN) ? PANDA_REV_C : PANDA_REV_AB;
+  
+  // revision = detect_with_pull(GPIOA, 13, PULL_DOWN) ? PANDA_REV_C : PANDA_REV_AB;
+  revision = PANDA_REV_C;
 
   // check if the ESP is trying to put me in boot mode
   is_entering_bootmode = !detect_with_pull(GPIOB, 0, PULL_UP);
 
-  // check if it's a grey panda by seeing if the SPI lines are floating
-  // TODO: is this reliable?
-  is_grey_panda = !(detect_with_pull(GPIOA, 4, PULL_DOWN) | detect_with_pull(GPIOA, 5, PULL_DOWN) | detect_with_pull(GPIOA, 6, PULL_DOWN) | detect_with_pull(GPIOA, 7, PULL_DOWN));
+  // check panda type:
+  // SPI lines floating: white (TODO: is this reliable?)
+  // TODO: Find check between grey and black. For now: AB deprecated, so no pullup means black
+  if((detect_with_pull(GPIOA, 4, PULL_DOWN) | detect_with_pull(GPIOA, 5, PULL_DOWN) | detect_with_pull(GPIOA, 6, PULL_DOWN) | detect_with_pull(GPIOA, 7, PULL_DOWN))){
+    panda_type = PANDA_TYPE_WHITE;
+  } else if(detect_with_pull(GPIOA, 13, PULL_DOWN)) { // TODO: Find distinction to check between grey and black. (add resistor like with REV check?)
+    panda_type = PANDA_TYPE_GREY;
+  } else {
+    panda_type = PANDA_TYPE_BLACK;
+  }
 #else
   // need to do this for early detect
   is_giant_panda = 0;
-  is_grey_panda = 0;
+  panda_type = PANDA_TYPE_WHITE;
   revision = PANDA_REV_AB;
   is_entering_bootmode = 0;
 #endif
