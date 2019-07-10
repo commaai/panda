@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 typedef struct
 {
   uint32_t TIR;  /*!< CAN TX mailbox identifier register */
