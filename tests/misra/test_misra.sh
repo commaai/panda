@@ -9,7 +9,7 @@ cd ../../../
 
 
 printf "\nPANDA CODE\n"
-tests/misra/cppcheck/cppcheck -DPANDA -UPEDAL -DCAN3 -DUID_BASE \
+tests/misra/cppcheck/cppcheck -DPANDA -UPEDAL -DCAN3 -DUID_BASE -DEON \
                               --suppressions-list=tests/misra/suppressions.txt \
                               --dump --enable=all --inline-suppr --force \
                               board/main.c 2>/tmp/misra/cppcheck_output.txt
