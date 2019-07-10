@@ -181,7 +181,6 @@ void bl_can_send(uint8_t *odat) {
 void CAN1_RX0_IRQHandler(void) {
   while (CAN->RF0R & CAN_RF0R_FMP0) {
     if ((CAN->sFIFOMailBox[0].RIR>>21) == CAN_BL_INPUT) {
-      //uint8_t dat[8];
       uint32_t dat[2];
       dat[0] = GET_BYTES_04(&CAN->sFIFOMailBox[0]);
       dat[1] = GET_BYTES_48(&CAN->sFIFOMailBox[0]);
