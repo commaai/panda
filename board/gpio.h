@@ -13,17 +13,19 @@
 
 #define PULL_EFFECTIVE_DELAY 10
 
-int has_external_debug_serial = 0;
-int is_giant_panda = 0;
-int is_entering_bootmode = 0;
-int revision = PANDA_REV_AB;
-int is_grey_panda = 0;
+void puts(const char *a);
 
-int detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode) {
+bool has_external_debug_serial = 0;
+bool is_giant_panda = 0;
+bool is_entering_bootmode = 0;
+int revision = PANDA_REV_AB;
+bool is_grey_panda = 0;
+
+bool detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode) {
   set_gpio_mode(GPIO, pin, MODE_INPUT);
   set_gpio_pullup(GPIO, pin, mode);
   for (volatile int i=0; i<PULL_EFFECTIVE_DELAY; i++);
-  int ret = get_gpio_input(GPIO, pin);
+  bool ret = get_gpio_input(GPIO, pin);
   set_gpio_pullup(GPIO, pin, PULL_NONE);
   return ret;
 }
@@ -97,9 +99,9 @@ void periph_init(void) {
 
 // ********************* setters *********************
 
-void set_can_enable(CAN_TypeDef *CAN, int enabled) {
+void set_can_enable(CAN_TypeDef *CAN_obj, bool enabled) {
   // enable CAN busses
-  if (CAN == CAN1) {
+  if (CAN_obj == CAN1) {
     #ifdef PANDA
       // CAN1_EN
       set_gpio_output(GPIOC, 1, !enabled);
@@ -112,7 +114,7 @@ void set_can_enable(CAN_TypeDef *CAN, int enabled) {
         set_gpio_output(GPIOB, 3, enabled);
       #endif
     #endif
-  } else if (CAN == CAN2) {
+  } else if (CAN_obj == CAN2) {
     #ifdef PANDA
       // CAN2_EN
       set_gpio_output(GPIOC, 13, !enabled);
@@ -121,10 +123,12 @@ void set_can_enable(CAN_TypeDef *CAN, int enabled) {
       set_gpio_output(GPIOB, 4, enabled);
     #endif
   #ifdef CAN3
-  } else if (CAN == CAN3) {
+  } else if (CAN_obj == CAN3) {
     // CAN3_EN
     set_gpio_output(GPIOA, 0, !enabled);
   #endif
+  } else {
+    puts("Invalid CAN: enabling failed\n");
   }
 }
 
@@ -139,16 +143,16 @@ void set_can_enable(CAN_TypeDef *CAN, int enabled) {
 #endif
 
 void set_led(int led_num, int on) {
-  if (led_num == -1) return;
-
+  if (led_num != -1) {
   #ifdef PANDA
     set_gpio_output(GPIOC, led_num, !on);
   #else
     set_gpio_output(GPIOB, led_num, !on);
   #endif
+  }
 }
 
-void set_can_mode(int can, int use_gmlan) {
+void set_can_mode(int can, bool use_gmlan) {
   // connects to CAN2 xcvr or GMLAN xcvr
   if (use_gmlan) {
     if (can == 1) {
@@ -169,6 +173,8 @@ void set_can_mode(int can, int use_gmlan) {
       set_gpio_alternate(GPIOB, 3, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOB, 4, GPIO_AF11_CAN3);
 #endif
+    } else {
+      puts("Invalid CAN: mode setting failed\n");
     }
   } else {
     if (can == 1) {
@@ -188,6 +194,8 @@ void set_can_mode(int can, int use_gmlan) {
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
 #endif
+    } else {
+      puts("Invalid CAN: mode setting failed\n");
     }
   }
 }
@@ -200,6 +208,7 @@ void set_can_mode(int can, int use_gmlan) {
 int usb_power_mode = USB_POWER_NONE;
 
 void set_usb_power_mode(int mode) {
+  bool valid_mode = true;
   switch (mode) {
     case USB_POWER_CLIENT:
       // B2,A13: set client mode
@@ -216,8 +225,15 @@ void set_usb_power_mode(int mode) {
       set_gpio_output(GPIOB, 2, 0);
       set_gpio_output(GPIOA, 13, 0);
       break;
+    default:
+      valid_mode = false;
+      puts("Invalid usb power mode\n");
+      break;
   }
-  usb_power_mode = mode;
+
+  if (valid_mode) {
+    usb_power_mode = mode;
+  }
 }
 
 #define ESP_DISABLED 0
@@ -239,6 +255,9 @@ void set_esp_mode(int mode) {
     case ESP_BOOTMODE:
       set_gpio_output(GPIOC, 14, 1);
       set_gpio_output(GPIOC, 5, 0);
+      break;
+    default:
+      puts("Invalid esp mode\n");
       break;
   }
 }
@@ -381,9 +400,9 @@ void jump_to_bootloader(void) {
 
 void early(void) {
   // after it's been in the bootloader, things are initted differently, so we reset
-  if (enter_bootloader_mode != BOOT_NORMAL &&
-      enter_bootloader_mode != ENTER_BOOTLOADER_MAGIC &&
-      enter_bootloader_mode != ENTER_SOFTLOADER_MAGIC) {
+  if ((enter_bootloader_mode != BOOT_NORMAL) &&
+      (enter_bootloader_mode != ENTER_BOOTLOADER_MAGIC) &&
+      (enter_bootloader_mode != ENTER_SOFTLOADER_MAGIC)) {
     enter_bootloader_mode = BOOT_NORMAL;
     NVIC_SystemReset();
   }
@@ -391,9 +410,13 @@ void early(void) {
   // if wrong chip, reboot
   volatile unsigned int id = DBGMCU->IDCODE;
   #ifdef STM32F4
-    if ((id&0xFFF) != 0x463) enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+    if ((id & 0xFFFU) != 0x463U) {
+      enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+    }
   #else
-    if ((id&0xFFF) != 0x411) enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+    if ((id & 0xFFFU) != 0x411U) {
+      enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+    }
   #endif
 
   // setup interrupt table
