@@ -9,7 +9,7 @@
 
 int ford_brake_prev = 0;
 int ford_gas_prev = 0;
-bool ford_is_moving = false;
+bool ford_moving = false;
 
 static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
@@ -17,10 +17,11 @@ static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   if (addr == 0x217) {
     // wheel speeds are 14 bits every 16
-    ford_is_moving = GET_BYTE(to_push, 0) | (GET_BYTE(to_push, 1) & 0xFCU);
-    ford_is_moving |= GET_BYTE(to_push, 2) | (GET_BYTE(to_push, 3) & 0xFCU);
-    ford_is_moving |= GET_BYTE(to_push, 4) | (GET_BYTE(to_push, 5) & 0xFCU);
-    ford_is_moving |= GET_BYTE(to_push, 6) | (GET_BYTE(to_push, 7) & 0xFCU);
+    ford_moving = false;
+    for (int i = 0; i < 8; i += 2) {
+      int j = i + 1;  // Misra 10.8: can't cast (i+1) directly in uint
+      ford_moving |= GET_BYTE(to_push, i) | (GET_BYTE(to_push, j) & 0xFCU);
+    }
   }
 
   // state machine to enter and exit controls
@@ -39,7 +40,7 @@ static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // speed > 0
   if (addr == 0x165) {
     int brake = GET_BYTE(to_push, 0) & 0x20;
-    if (brake && (!(ford_brake_prev) || ford_is_moving)) {
+    if (brake && (!(ford_brake_prev) || ford_moving)) {
       controls_allowed = 0;
     }
     ford_brake_prev = brake;
@@ -66,7 +67,7 @@ static int ford_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
-  int pedal_pressed = ford_gas_prev || (ford_brake_prev && ford_is_moving);
+  int pedal_pressed = ford_gas_prev || (ford_brake_prev && ford_moving);
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
   int addr = GET_ADDR(to_send);
 
