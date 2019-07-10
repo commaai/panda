@@ -1,5 +1,5 @@
-//#define EON   //TODO: Remove
-#define PANDA //TODO: Remove
+//#define EON 
+//#define PANDA
 
 #include "config.h"
 #include "obj/gitversion.h"
@@ -676,6 +676,7 @@ int main(void) {
     // hang
   }
 
+  // init gpio
   gpio_init();
 
   // panda has an FPU, let's use it!
@@ -711,9 +712,6 @@ int main(void) {
   TIM2->CR1 = TIM_CR1_CEN;
   TIM2->EGR = TIM_EGR_UG;
   // use TIM2->CNT to read
-
-  // enable USB
-  usb_init();
 
   // default to silent mode to prevent issues with Ford
   // hardcode a specific safety mode if you want to force the panda to be in a specific mode
@@ -758,6 +756,9 @@ int main(void) {
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");
 #endif
+
+  // enable USB (right before interrupts or enum can fail!)
+  usb_init();
 
   puts("**** INTERRUPTS ON ****\n");
   enable_interrupts();
