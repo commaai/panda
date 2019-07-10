@@ -44,7 +44,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if ((addr == 0x1F1) && (bus_number == 0)) {
     //Bit 5 should be ignition "on"
     //Backup plan is Bit 2 (accessory power)
-    bool ign = ((to_push->RDLR) & 0x20) != 0;
+    bool ign = (GET_BYTE(to_push, 0) & 0x20) != 0;
     gm_ignition_started = ign;
   }
 
@@ -203,8 +203,6 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // GAS/REGEN: safety check
   if (addr == 715) {
-    //int32_t rdlr = to_send->RDLR;
-    //int gas_regen = ((rdlr & 0x7F0000U) >> 11) + ((rdlr & 0xF8000000U) >> 27);
     int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
     // Disabled message is !engaed with gas
     // value that corresponds to max regen.

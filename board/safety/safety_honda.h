@@ -106,16 +106,13 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // BRAKE: safety check
   if (addr == 0x1FA) {
-    int brake = ((GET_BYTE(to_send, 0) & 0x3) << 8) + GET_BYTE(to_send, 1);
-    printf("%d\n\n", brake);
+    int brake = (GET_BYTE(to_send, 0) << 2) + (GET_BYTE(to_send, 1) & 0x3);
     if (!current_controls_allowed || !long_controls_allowed) {
-      //if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
       if (brake != 0) {
         tx = 0;
       }
     }
-    if ((to_send->RDLR & 0xFFFFFF3F) != to_send->RDLR) {
-    //if (brake > 0x3FF) {
+    if (brake > 255) {
       tx = 0;
     }
   }
@@ -133,7 +130,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // GAS: safety check
   if (addr == 0x200) {
     if (!current_controls_allowed || !long_controls_allowed) {
-      if ((to_send->RDLR & 0xFFFF0000) != to_send->RDLR) {
+      if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
         tx = 0;
       }
     }
@@ -144,7 +141,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == 0x296) && honda_bosch_hardware &&
       !current_controls_allowed && (bus == 0)) {
-    if (((to_send->RDLR >> 5) & 0x7) != 2) {
+    if (((GET_BYTE(to_send, 0) >> 5) & 0x7) != 2) {
       tx = 0;
     }
   }

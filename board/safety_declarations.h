@@ -1,8 +1,9 @@
 #define GET_BUS(msg) (((msg)->RDTR >> 4) & 0xFF)
 #define GET_LEN(msg) ((msg)->RDTR & 0xf)
 #define GET_ADDR(msg) ((((msg)->RIR & 4) != 0) ? ((msg)->RIR >> 3) : ((msg)->RIR >> 21))
-//#define GET_BYTE(msg, b) ((b) > 3U) ? (((msg)->RDHR >> (8 * ((b) - 4U))) & 0XFFU) : (((msg)->RDLR >> (8 * (b))) & 0xFFU)
 #define GET_BYTE(msg, b) (((b) > 3U) ? (((msg)->RDHR >> (8U * ((b) % 4))) & 0XFFU) : (((msg)->RDLR >> (8U * (b))) & 0xFFU))
+#define GET_BYTES_04(msg) ((msg)->RDLR)
+#define GET_BYTES_48(msg) ((msg)->RDHR)
 
 // sample struct that keeps 3 samples in memory
 struct sample_t {

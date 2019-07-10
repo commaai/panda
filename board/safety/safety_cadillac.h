@@ -37,7 +37,7 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // this message isn't all zeros when ignition is on
   if ((addr == 0x160) && (bus == 0)) {
-    cadillac_ign = to_push->RDLR > 0;
+    cadillac_ign = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1) | GET_BYTE(to_push, 2) | GET_BYTE(to_push, 3);
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
