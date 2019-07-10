@@ -209,8 +209,8 @@ void set_subaru_desired_torque_last(int t){
   subaru_desired_torque_last = t;
 }
 
-int get_honda_ego_speed(void){
-  return honda_ego_speed;
+bool get_honda_moving(void){
+  return honda_moving;
 }
 
 int get_honda_brake_prev(void){
@@ -284,7 +284,7 @@ void init_tests_subaru(void){
 }
 
 void init_tests_honda(void){
-  honda_ego_speed = 0;
+  honda_moving = false;
   honda_brake_prev = 0;
   honda_gas_prev = 0;
 }
