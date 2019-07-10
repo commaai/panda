@@ -46,11 +46,10 @@ then
   exit 1
 fi
 
-# TODO: enable pedal check when the whole pedal code is Misra compliant
-#if [[ ! -z "$misra_pedal_output" ]] || [[ ! -z "$cppcheck_pedal_output" ]]
-#then
-#  echo "Found Misra violations in the pedal code:"
-#  echo "$misra_pedal_output"
-#  echo "$cppcheck_pedal_output"
-#  exit 1
-#fi
+if [[ -n "$misra_pedal_output" ]] || [[ -n "$cppcheck_pedal_output" ]]
+then
+  echo "Found Misra violations in the pedal code:"
+  echo "$misra_pedal_output"
+  echo "$cppcheck_pedal_output"
+  exit 1
+fi
