@@ -99,9 +99,9 @@ class TestHondaSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_sample_speed(self):
-    self.assertEqual(0, self.safety.get_honda_ego_speed())
+    self.assertEqual(0, self.safety.get_honda_moving())
     self.safety.safety_rx_hook(self._speed_msg(100))
-    self.assertEqual(100, self.safety.get_honda_ego_speed())
+    self.assertEqual(1, self.safety.get_honda_moving())
 
   def test_prev_brake(self):
     self.assertFalse(self.safety.get_honda_brake_prev())
