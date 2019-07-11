@@ -68,14 +68,17 @@ void debug_ring_callback(uart_ring *ring) {
 // ***************************** started logic *****************************
 
 bool is_gpio_started(void) {
+  if(panda_type == PANDA_TYPE_BLACK){
+    // ignition is detected through harness
+    return harness_check_ignition();
+  }
   // ignition is on PA1
-  return (GPIOA->IDR & (1U << 1)) == 0;
+  return !get_gpio_input(GPIOA, 1);
 }
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void EXTI1_IRQHandler(void) {
-  volatile unsigned int pr = EXTI->PR & (1U << 1);
-  if ((pr & (1U << 1)) != 0U) {
+void started_interrupt_handler(uint8_t interrupt_line){
+  volatile unsigned int pr = EXTI->PR & (1U << interrupt_line);
+  if ((pr & (1U << interrupt_line)) != 0U) {
     #ifdef DEBUG
       puts("got started interrupt\n");
     #endif
@@ -86,8 +89,23 @@ void EXTI1_IRQHandler(void) {
     // set power savings mode here
     int power_save_state = is_gpio_started() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
     set_power_save_state(power_save_state);
-    EXTI->PR = (1U << 1);
   }
+  EXTI->PR = (1U << interrupt_line);
+}
+
+// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
+void EXTI0_IRQHandler(void) {
+  started_interrupt_handler(0);
+}
+
+// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
+void EXTI1_IRQHandler(void) {
+  started_interrupt_handler(1);
+}
+
+// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
+void EXTI3_IRQHandler(void) {
+  started_interrupt_handler(3);
 }
 
 void started_interrupt_init(void) {
@@ -127,6 +145,8 @@ int get_health_pkt(void *dat) {
   // No current sense on panda black
   if(panda_type != PANDA_TYPE_BLACK){
     health->current_pkt = adc_get(ADCCHAN_CURRENT);
+  } else {
+    health->current_pkt = 0;
   }
 
   int safety_ignition = safety_ignition_hook();
@@ -745,15 +765,18 @@ int main(void) {
 
 #ifdef EON
   // have to save power
-  if (panda_type != PANDA_TYPE_GREY && panda_type != PANDA_TYPE_BLACK) {
+  if (panda_type == PANDA_TYPE_WHITE) {
     set_esp_mode(ESP_DISABLED);
   }
   // only enter power save after the first cycle
   /*if (is_gpio_started()) {
     set_power_save_state(POWER_SAVE_STATUS_ENABLED);
   }*/
-  // interrupt on started line
-  started_interrupt_init();
+
+  if(panda_type != PANDA_TYPE_BLACK){
+    // interrupt on started line
+    started_interrupt_init();
+  }
 #endif
 
   // 48mhz / 65536 ~= 732 / 732 = 1

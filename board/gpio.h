@@ -339,8 +339,10 @@ void gpio_init(void) {
   set_gpio_alternate(GPIOA, 9, GPIO_AF7_USART1);
   set_gpio_alternate(GPIOA, 10, GPIO_AF7_USART1);
 
-  // B12: GMLAN, ignition sense, pull up
-  set_gpio_pullup(GPIOB, 12, PULL_UP);
+  if(panda_type != PANDA_TYPE_BLACK){
+    // B12: GMLAN, ignition sense, pull up
+    set_gpio_pullup(GPIOB, 12, PULL_UP);
+  }
 
   // A4,A5,A6,A7: setup SPI
   set_gpio_alternate(GPIOA, 4, GPIO_AF5_SPI1);
@@ -383,19 +385,19 @@ void gpio_init(void) {
   set_gpio_output(GPIOB, 15, 1);
 
   #ifdef PANDA
-    // K-line enable moved from B4->B7 to make room for GMLAN on CAN3
-    set_gpio_output(GPIOB, 7, 1); // REV C
-
-    // C12,D2: K-Line setup on UART 5
-    set_gpio_alternate(GPIOC, 12, GPIO_AF8_UART5);
-    set_gpio_alternate(GPIOD, 2, GPIO_AF8_UART5);
-    set_gpio_pullup(GPIOD, 2, PULL_UP);
-
-    // L-line enable
-    set_gpio_output(GPIOA, 14, 1);
-
-    // C10,C11: L-Line setup on USART 3
     if(panda_type != PANDA_TYPE_BLACK){
+      // K-line enable moved from B4->B7 to make room for GMLAN on CAN3
+      set_gpio_output(GPIOB, 7, 1); // REV C
+
+      // C12,D2: K-Line setup on UART 5
+      set_gpio_alternate(GPIOC, 12, GPIO_AF8_UART5);
+      set_gpio_alternate(GPIOD, 2, GPIO_AF8_UART5);
+      set_gpio_pullup(GPIOD, 2, PULL_UP);
+
+      // L-line enable
+      set_gpio_output(GPIOA, 14, 1);
+
+      // C10,C11: L-Line setup on USART 3
       set_gpio_alternate(GPIOC, 10, GPIO_AF7_USART3);
       set_gpio_alternate(GPIOC, 11, GPIO_AF7_USART3);
       set_gpio_pullup(GPIOC, 11, PULL_UP);
@@ -403,6 +405,12 @@ void gpio_init(void) {
   #endif
 
   set_usb_power_mode(USB_POWER_CLIENT);
+
+  // GPS load switch (black panda). Turn on permanently for now
+  if(panda_type == PANDA_TYPE_BLACK){
+    set_gpio_mode(GPIOC, 12, MODE_OUTPUT);
+    set_gpio_output(GPIOC, 12, 1);
+  }
 }
 
 // ********************* early bringup *********************

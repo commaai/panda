@@ -2,11 +2,14 @@ int car_harness_detected = 0;
 #define HARNESS_ORIENTATION_NORMAL 1
 #define HARNESS_ORIENTATION_FLIPPED 2
 
-// Based on SBU1 and SBU2 lines
+#define SBU1_PIN 0
+#define SBU2_PIN 3
+
+#define HARNESS_IGNITION_PIN_NORMAL (SBU2_PIN)
+#define HARNESS_IGNITION_PIN_FLIPPED (SBU1_PIN)
+
 #define HARNESS_RELAY_PIN_NORMAL 10    
 #define HARNESS_RELAY_PIN_FLIPPED 11
-#define HARNESS_IGNITION_PIN_NORMAL 3 
-#define HARNESS_IGNITION_PIN_FLIPPED 0
 
 // Threshold voltage (mV) for either of the SBUs to be below before deciding harness is connected
 #define HARNESS_CONNECTED_THRESHOLD 2500
@@ -22,6 +25,34 @@ bool set_intercept_relay(bool intercept) {
     set_gpio_output(GPIOC, (car_harness_detected == HARNESS_ORIENTATION_NORMAL) ? HARNESS_RELAY_PIN_NORMAL : HARNESS_RELAY_PIN_FLIPPED, !intercept);
   }
   return true;
+}
+
+bool harness_check_ignition(void) {
+  if (car_harness_detected != 0) {
+    return !get_gpio_input(GPIOC, (car_harness_detected == HARNESS_ORIENTATION_NORMAL) ? HARNESS_IGNITION_PIN_NORMAL : HARNESS_IGNITION_PIN_FLIPPED);
+  }
+  return false;
+}
+
+void harness_setup_ignition_interrupts(void){
+  if(car_harness_detected == HARNESS_ORIENTATION_NORMAL){
+    SYSCFG->EXTICR[0] = SYSCFG_EXTICR1_EXTI3_PC;
+    EXTI->IMR |= (1U << 3);
+    EXTI->RTSR |= (1U << 3);
+    EXTI->FTSR |= (1U << 3);
+    puts("setup interrupts: normal\n");
+  } else if(car_harness_detected == HARNESS_ORIENTATION_FLIPPED) {
+    SYSCFG->EXTICR[0] = SYSCFG_EXTICR1_EXTI0_PC;
+    EXTI->IMR |= (1U << 0);
+    EXTI->RTSR |= (1U << 0);
+    EXTI->FTSR |= (1U << 0);
+    NVIC_EnableIRQ(EXTI1_IRQn);
+    puts("setup interrupts: flipped\n");
+  } else {
+    puts("tried to setup ignition interrupts without harness connected\n");
+  }
+  NVIC_EnableIRQ(EXTI0_IRQn);
+  NVIC_EnableIRQ(EXTI3_IRQn);
 }
 
 int harness_detect_orientation(void) {
@@ -62,6 +93,10 @@ void harness_init(void) {
       puts("\n");
       car_harness_detected = ret;
 
+      // set the SBU lines to be inputs before using the relay. The lines are not 5V tolerant in ADC mode!
+      set_gpio_mode(GPIOC, SBU1_PIN, MODE_INPUT);
+      set_gpio_mode(GPIOC, SBU2_PIN, MODE_INPUT);
+
       // now we have orientation, set pin ignition detection
       set_gpio_mode(GPIOC, (car_harness_detected == HARNESS_ORIENTATION_NORMAL) ? HARNESS_IGNITION_PIN_NORMAL : HARNESS_IGNITION_PIN_FLIPPED, MODE_INPUT);
 
@@ -77,6 +112,9 @@ void harness_init(void) {
         can_num_lookup[0] = 2;
         can_num_lookup[2] = 0;
       }
+
+      // setup ignition interrupts
+      harness_setup_ignition_interrupts();
 
       break;
     }
