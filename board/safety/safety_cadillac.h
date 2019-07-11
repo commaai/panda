@@ -10,13 +10,13 @@ const int CADILLAC_MAX_RATE_DOWN = 5;
 const int CADILLAC_DRIVER_TORQUE_ALLOWANCE = 50;
 const int CADILLAC_DRIVER_TORQUE_FACTOR = 4;
 
-int cadillac_ign = 0;
+bool cadillac_ign = 0;
 int cadillac_cruise_engaged_last = 0;
 int cadillac_rt_torque_last = 0;
 const int cadillac_torque_msgs_n = 4;
 int cadillac_desired_torque_last[CADILLAC_TORQUE_MSG_N] = {0};
 uint32_t cadillac_ts_last = 0;
-int cadillac_supercruise_on = 0;
+bool cadillac_supercruise_on = 0;
 struct sample_t cadillac_torque_driver;         // last few driver torques measured
 
 int cadillac_get_torque_idx(int addr, int array_size) {
@@ -37,7 +37,7 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // this message isn't all zeros when ignition is on
   if ((addr == 0x160) && (bus == 0)) {
-    cadillac_ign = GET_BYTES_04(to_push);
+    cadillac_ign = GET_BYTES_04(to_push) != 0;
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
@@ -54,7 +54,7 @@ static void cadillac_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // know supercruise mode and block openpilot msgs if on
   if ((addr == 0x152) || (addr == 0x154)) {
-    cadillac_supercruise_on = GET_BYTE(to_push, 4) & 0x10;
+    cadillac_supercruise_on = (GET_BYTE(to_push, 4) & 0x10) != 0;
   }
 }
 

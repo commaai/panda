@@ -48,13 +48,10 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // in these cases, this is used instead.
   // most hondas: 0x17C bit 53
   // accord, crv: 0x1BE bit 4
-  #define IS_USER_BRAKE_MSG(addr) (!honda_alt_brake_msg ? ((addr) == 0x17C) : ((addr) == 0x1BE))
-  #define USER_BRAKE_VALUE(to_push)  (!honda_alt_brake_msg ? (GET_BYTE((to_push), 6) & 0x20)  : (GET_BYTE((to_push), 0) & 0x10))
-  // exit controls on rising edge of brake press or on brake press when
-  // speed > 0
-  bool is_user_brake_msg = IS_USER_BRAKE_MSG(addr);  // needed to enforce type
+  // exit controls on rising edge of brake press or on brake press when speed > 0
+  bool is_user_brake_msg = honda_alt_brake_msg ? ((addr) == 0x1BE) : ((addr) == 0x17C);
   if (is_user_brake_msg) {
-    int brake = USER_BRAKE_VALUE(to_push);
+    int brake = honda_alt_brake_msg ? (GET_BYTE((to_push), 0) & 0x10) : (GET_BYTE((to_push), 6) & 0x20);
     if (brake && (!(honda_brake_prev) || honda_moving)) {
       controls_allowed = 0;
     }

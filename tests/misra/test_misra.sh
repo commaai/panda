@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/bin/bash -e
 
+mkdir /tmp/misra || true
 git clone https://github.com/danmar/cppcheck.git || true
 cd cppcheck
 git fetch
@@ -14,16 +15,11 @@ tests/misra/cppcheck/cppcheck -DPANDA -UPEDAL -DCAN3 -DUID_BASE -DEON \
                               --dump --enable=all --inline-suppr --force \
                               board/main.c 2>/tmp/misra/cppcheck_output.txt
 
-python tests/misra/cppcheck/addons/misra.py board/main.c.dump 2>/tmp/misra/misra_output.txt
+python tests/misra/cppcheck/addons/misra.py board/main.c.dump 2> /tmp/misra/misra_output.txt
 
-# violations in safety files
-misra_output=$( cat /tmp/misra/misra_output.txt | grep safety);
-cppcheck_output=$( cat /tmp/misra/cppcheck_output.txt | grep safety);
-# TODO: remove safety only check when the whole panda code is MISRA compatible and replace with below
 # strip (information) lines
-#misra_output=$(cat /tmp/misra/misra_output.txt | grep -v "(information) " || true)
-#cppcheck_output=$(cat /tmp/misra/cppcheck_output.txt | grep -v "(information) " || true)
-
+cppcheck_output=$( cat /tmp/misra/cppcheck_output.txt | grep -v "(information) " ) || true
+misra_output=$( cat /tmp/misra/misra_output.txt | grep -v "(information) " ) || true
 
 
 printf "\nPEDAL CODE\n"
@@ -32,15 +28,15 @@ tests/misra/cppcheck/cppcheck -UPANDA -DPEDAL -UCAN3 \
                               -I board/ --dump --enable=all --inline-suppr --force \
                               board/pedal/main.c 2>/tmp/misra/cppcheck_pedal_output.txt
 
-python tests/misra/cppcheck/addons/misra.py board/pedal/main.c.dump 2>/tmp/misra/misra_pedal_output.txt
+python tests/misra/cppcheck/addons/misra.py board/pedal/main.c.dump 2> /tmp/misra/misra_pedal_output.txt || true
 
 # strip (information) lines
-misra_pedal_output=$( cat /tmp/misra/misra_pedal_output.txt | grep -v "(information) ")
-cppcheck_pedal_output=$( cat /tmp/misra/cppcheck_pedal_output.txt | grep -v "(information) ")
+cppcheck_pedal_output=$( cat /tmp/misra/cppcheck_pedal_output.txt | grep -v "(information) " ) || true
+misra_pedal_output=$( cat /tmp/misra/misra_pedal_output.txt | grep -v "(information) " ) || true
 
 if [[ -n "$misra_output" ]] || [[ -n "$cppcheck_output" ]]
 then
-  echo "Found Misra violations in the safety code:"
+  echo "Failed! found Misra violations in panda code:"
   echo "$misra_output"
   echo "$cppcheck_output"
   exit 1
@@ -48,8 +44,10 @@ fi
 
 if [[ -n "$misra_pedal_output" ]] || [[ -n "$cppcheck_pedal_output" ]]
 then
-  echo "Found Misra violations in the pedal code:"
+  echo "Failed! found Misra violations in pedal code:"
   echo "$misra_pedal_output"
   echo "$cppcheck_pedal_output"
   exit 1
 fi
+
+echo "Success"

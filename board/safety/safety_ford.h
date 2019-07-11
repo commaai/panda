@@ -19,8 +19,7 @@ static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // wheel speeds are 14 bits every 16
     ford_moving = false;
     for (int i = 0; i < 8; i += 2) {
-      int j = i + 1;  // Misra 10.8: can't cast (i+1) directly in uint
-      ford_moving |= GET_BYTE(to_push, i) | (GET_BYTE(to_push, j) & 0xFCU);
+      ford_moving |= GET_BYTE(to_push, i) | (GET_BYTE(to_push, (int)(i + 1)) & 0xFCU);
     }
   }
 
