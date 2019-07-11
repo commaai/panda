@@ -14,6 +14,9 @@ typedef struct {
 
 #define BUS_MAX 4U
 
+uint32_t can_send_errs = 0;
+uint32_t can_fwd_errs = 0;
+uint32_t gmlan_send_errs = 0;
 extern int can_live, pending_can_live;
 
 // must reinit after changing these
@@ -255,7 +258,7 @@ void process_can(uint8_t can_number) {
           to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
           to_push.RDLR = CAN->sTxMailBox[0].TDLR;
           to_push.RDHR = CAN->sTxMailBox[0].TDHR;
-          can_push(&can_rx_q, &to_push);
+          can_send_errs += !can_push(&can_rx_q, &to_push);
         }
 
         if ((CAN->TSR & CAN_TSR_TERR0) == CAN_TSR_TERR0) {
@@ -324,7 +327,7 @@ void can_rx(uint8_t can_number) {
     safety_rx_hook(&to_push);
 
     set_led(LED_BLUE, 1);
-    can_push(&can_rx_q, &to_push);
+    can_send_errs += !can_push(&can_rx_q, &to_push);
 
     // next
     CAN->RF0R |= CAN_RF0R_RFOM0;
@@ -351,9 +354,9 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
       to_push->RDTR &= 0xF;
       if ((bus_number == 3U) && (can_num_lookup[3] == 0xFFU)) {
         // TODO: why uint8 bro? only int8?
-        bitbang_gmlan(to_push);
+        gmlan_send_errs += !bitbang_gmlan(to_push);
       } else {
-        can_push(can_queues[bus_number], to_push);
+        can_fwd_errs += !can_push(can_queues[bus_number], to_push);
         process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
       }
     }

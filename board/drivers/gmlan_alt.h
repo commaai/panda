@@ -180,6 +180,7 @@ void set_bitbanged_gmlan(int val) {
 char pkt_stuffed[MAX_BITS_CAN_PACKET];
 int gmlan_sending = -1;
 int gmlan_sendmax = -1;
+bool gmlan_send_ok = true;
 
 int gmlan_silent_count = 0;
 int gmlan_fail_count = 0;
@@ -220,6 +221,7 @@ void TIM4_IRQHandler(void) {
           gmlan_fail_count++;
           if (gmlan_fail_count == MAX_FAIL_COUNT) {
             puts("GMLAN ERR: giving up send\n");
+            gmlan_send_ok = false;
           }
         } else {
           set_bitbanged_gmlan(pkt_stuffed[gmlan_sending]);
@@ -263,22 +265,22 @@ void TIM4_IRQHandler(void) {
   }
 }
 
-void bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
+bool bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
+  gmlan_send_ok = true;
   gmlan_alt_mode = BITBANG;
-  // TODO: make failure less silent
-  if (gmlan_sendmax == -1) {
 
+  if (gmlan_sendmax == -1) {
     int len = get_bit_message(pkt_stuffed, to_bang);
     gmlan_fail_count = 0;
     gmlan_silent_count = 0;
     gmlan_sending = 0;
     gmlan_sendmax = len;
-
     // setup for bitbang loop
     set_bitbanged_gmlan(1); // recessive
     set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
 
     setup_timer4();
   }
+  return gmlan_send_ok;
 }
 
