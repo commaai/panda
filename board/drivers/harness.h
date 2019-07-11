@@ -12,14 +12,14 @@ int car_harness_detected = 0;
 #define HARNESS_CONNECTED_THRESHOLD 2500
 
 // this function will be the API for tici
-bool set_can1_obd_relay(bool obd) {
+bool set_intercept_relay(bool intercept) {
   if (car_harness_detected != 0) {
-    if(obd)
-      puts("switching harness to OBD (relay on)\n");
+    if(intercept)
+      puts("switching harness to intercept (relay on)\n");
     else
-      puts("switching harness to radar (relay off)\n");
+      puts("switching harness to passthrough (relay off)\n");
 
-    set_gpio_output(GPIOC, (car_harness_detected == HARNESS_ORIENTATION_NORMAL) ? HARNESS_RELAY_PIN_NORMAL : HARNESS_RELAY_PIN_FLIPPED, !obd);
+    set_gpio_output(GPIOC, (car_harness_detected == HARNESS_ORIENTATION_NORMAL) ? HARNESS_RELAY_PIN_NORMAL : HARNESS_RELAY_PIN_FLIPPED, !intercept);
   }
   return true;
 }
@@ -65,11 +65,11 @@ void harness_init(void) {
       // now we have orientation, set pin ignition detection
       set_gpio_mode(GPIOC, (car_harness_detected == HARNESS_ORIENTATION_NORMAL) ? HARNESS_IGNITION_PIN_NORMAL : HARNESS_IGNITION_PIN_FLIPPED, MODE_INPUT);
 
-      // disconnect obd with harness can1 relay
-      set_can1_obd_relay(false);
+      // keep busses connected by default
+      set_intercept_relay(false);
 
       // flip CAN0 and CAN2 if we are flipped
-      if (car_harness_detected == HARNESS_ORIENTATION_FLIPPED) {
+      if (car_harness_detected == HARNESS_ORIENTATION_NORMAL) {
         // flip CAN bus 0 and 2
         // CAN bus 1 is dealt with by the relay
         bus_lookup[0] = 2;

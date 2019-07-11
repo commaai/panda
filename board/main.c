@@ -302,6 +302,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         can_set_gmlan(-1);
       }
       break;
+      
     // **** 0xdc: set safety mode
     case 0xdc:
       // this is the only way to leave silent mode
@@ -490,6 +491,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
           puts("Clearing UART queue.\n");
           clear_uart_buff(rb);
         }
+        break;
+      }
+    // **** 0xf3: Set harness relay to (not) intercept (black panda only).
+    case 0xf3:
+      {
+        set_intercept_relay((setup->b.wValue.w == 1U));
         break;
       }
     default:
