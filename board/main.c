@@ -104,8 +104,9 @@ int get_health_pkt(void *dat) {
     uint8_t started_pkt;
     uint8_t controls_allowed_pkt;
     uint8_t gas_interceptor_detected_pkt;
-    uint8_t started_signal_detected_pkt;
-    uint8_t started_alt_pkt;
+    uint32_t can_send_errs_pkt;
+    uint32_t can_fwd_errs_pkt;
+    uint32_t gmlan_send_errs_pkt;
   } *health = dat;
 
   //Voltage will be measured in mv. 5000 = 5V
@@ -132,10 +133,9 @@ int get_health_pkt(void *dat) {
 
   health->controls_allowed_pkt = controls_allowed;
   health->gas_interceptor_detected_pkt = gas_interceptor_detected;
-
-  // DEPRECATED
-  health->started_alt_pkt = 0;
-  health->started_signal_detected_pkt = 0;
+  health->can_send_errs_pkt = can_send_errs;
+  health->can_fwd_errs_pkt = can_fwd_errs;
+  health->gmlan_send_errs_pkt = gmlan_send_errs;
 
   return sizeof(*health);
 }
