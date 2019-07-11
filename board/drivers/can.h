@@ -356,7 +356,7 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
         // TODO: why uint8 bro? only int8?
         gmlan_send_errs += !bitbang_gmlan(to_push);
       } else {
-        can_fwd_errs += can_push(can_queues[bus_number], to_push);
+        can_fwd_errs += !can_push(can_queues[bus_number], to_push);
         process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
       }
     }
