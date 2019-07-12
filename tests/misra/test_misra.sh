@@ -15,7 +15,7 @@ tests/misra/cppcheck/cppcheck -DPANDA -UPEDAL -DCAN3 -DUID_BASE -DEON \
                               --dump --enable=all --inline-suppr --force \
                               board/main.c 2>/tmp/misra/cppcheck_output.txt
 
-python tests/misra/cppcheck/addons/misra.py board/main.c.dump 2> /tmp/misra/misra_output.txt
+python tests/misra/cppcheck/addons/misra.py board/main.c.dump 2> /tmp/misra/misra_output.txt || true
 
 # strip (information) lines
 cppcheck_output=$( cat /tmp/misra/cppcheck_output.txt | grep -v "(information) " ) || true
