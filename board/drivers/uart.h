@@ -327,7 +327,7 @@ void putui(uint32_t i) {
     idx--;
     i_copy /= 10;
   } while (i_copy != 0U);
-  puts(str + idx + 1U);
+  puts(&str[idx + 1U]);
 }
 
 void puth(unsigned int i) {
