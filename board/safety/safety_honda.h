@@ -62,7 +62,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // length check because bosch hardware also uses this id (0x201 w/ len = 8)
   if ((addr == 0x201) && (len == 6)) {
     gas_interceptor_detected = 1;
-    int gas_interceptor = (GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1);
+    int gas_interceptor = GET_INTERCEPTOR(to_push);
     if ((gas_interceptor > HONDA_GAS_INTERCEPTOR_THRESHOLD) &&
         (gas_interceptor_prev <= HONDA_GAS_INTERCEPTOR_THRESHOLD) &&
         long_controls_allowed) {
