@@ -5,6 +5,7 @@
 // Most hardware functionality is similar to white panda
 const board board_grey = {
   .board_type = "Grey",
+  .harness_config = &white_harness_config,
   .init = white_init,
   .enable_can_transciever = white_enable_can_transciever,
   .enable_can_transcievers = white_enable_can_transcievers,

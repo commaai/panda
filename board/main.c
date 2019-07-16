@@ -7,6 +7,13 @@
 // ******************** Prototypes ********************
 void puts(const char *a);
 void puth(unsigned int i);
+void puth2(unsigned int i);
+typedef struct board board;
+typedef struct harness_configuration harness_configuration;
+
+// ********************* Globals **********************
+int hw_type = 0;
+const board *current_board;
 
 // ********************* Includes *********************
 #include "libc.h"
@@ -14,11 +21,11 @@ void puth(unsigned int i);
 
 #include "drivers/llcan.h"
 #include "drivers/llgpio.h"
+#include "drivers/adc.h"
 
 #include "board.h"
 
 #include "drivers/uart.h"
-#include "drivers/adc.h"
 #include "drivers/usb.h"
 #include "drivers/gmlan_alt.h"
 #include "drivers/timer.h"
@@ -34,7 +41,6 @@ void puth(unsigned int i);
 #include "safety.h"
 
 #include "drivers/can.h"
-#include "drivers/harness.h"
 
 // ********************* Serial debugging *********************
 
@@ -72,8 +78,9 @@ void debug_ring_callback(uart_ring *ring) {
 
 // ***************************** started logic *****************************
 
+// TODO; put in board
 bool is_gpio_started(void) {
-  if(panda_type == PANDA_TYPE_BLACK){
+  if(hw_type == HW_TYPE_BLACK_PANDA){
     // ignition is detected through harness
     return harness_check_ignition();
   }
@@ -148,7 +155,7 @@ int get_health_pkt(void *dat) {
   health->voltage_pkt = (voltage * 8862U) / 1000U;
 
   // No current sense on panda black
-  if(panda_type != PANDA_TYPE_BLACK){
+  if(hw_type != HW_TYPE_BLACK_PANDA){
     health->current_pkt = adc_get(ADCCHAN_CURRENT);
   } else {
     health->current_pkt = 0;
@@ -165,7 +172,7 @@ int get_health_pkt(void *dat) {
 
   health->controls_allowed_pkt = controls_allowed;
   health->gas_interceptor_detected_pkt = gas_interceptor_detected;
-  health->car_harness_detected_pkt = car_harness_detected;
+  health->car_harness_detected_pkt = car_harness_status;
 
   // DEPRECATED
   health->started_alt_pkt = 0;
@@ -238,9 +245,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       puts(" err: "); puth(can_err_cnt);
       puts("\n");
       break;
-    // **** 0xc1: get panda type
+    // **** 0xc1: get hardware type
     case 0xc1:
-      resp[0] = panda_type;
+      resp[0] = hw_type;
       resp_len = 1;
       break;
     // **** 0xd0: fetch serial number
@@ -314,7 +321,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
     case 0xdb:
-      if(panda_type != PANDA_TYPE_BLACK){
+      if(hw_type != HW_TYPE_BLACK_PANDA){
         if (setup->b.wValue.w == 1U) {
           // GMLAN ON
           if (setup->b.wIndex.w == 1U) {
@@ -330,10 +337,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       } else {
         if (setup->b.wValue.w == 1U) {
           // Enable OBD CAN
-          can_set_obd(car_harness_detected, true);
+          can_set_obd(car_harness_status, true);
         } else {
           // Disable OBD CAN
-          can_set_obd(car_harness_detected, false);
+          can_set_obd(car_harness_status, false);
         }
       }
       break;
@@ -693,12 +700,13 @@ int main(void) {
   peripherals_init();
   detect_configuration();
   detect_board_type();
-
+  adc_init();
+  
   // print hello
   puts("\n\n\n************************ MAIN START ************************\n");
 
   // check for non-supported board types
-  if(panda_type == PANDA_TYPE_UNSUPPORTED){
+  if(hw_type == HW_TYPE_UNKNOWN){
     puts("Unsupported board type\n");
     while (1) { /* hang */ }
   }
@@ -721,7 +729,7 @@ int main(void) {
     uart_init(USART2, 115200);
   }
 
-  if (panda_type == PANDA_TYPE_GREY || panda_type == PANDA_TYPE_BLACK) {
+  if (hw_type == HW_TYPE_GREY_PANDA || hw_type == HW_TYPE_BLACK_PANDA) {
     uart_init(USART1, 9600);
   } else {
     // enable ESP uart
@@ -729,7 +737,7 @@ int main(void) {
   }
 
   // there is no LIN on panda black
-  if(panda_type != PANDA_TYPE_BLACK){
+  if(hw_type != HW_TYPE_BLACK_PANDA){
     // enable LIN
     uart_init(UART5, 10400);
     UART5->CR2 |= USART_CR2_LINEN;
@@ -762,15 +770,13 @@ int main(void) {
 #endif
   can_init_all();
 
-  adc_init();
-
 #ifndef EON
   spi_init();
 #endif
 
 #ifdef EON
   // have to save power
-  if (panda_type == PANDA_TYPE_WHITE) {
+  if (hw_type == HW_TYPE_WHITE_PANDA) {
     current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
   }
   // only enter power save after the first cycle
@@ -778,7 +784,7 @@ int main(void) {
     set_power_save_state(POWER_SAVE_STATUS_ENABLED);
   }*/
 
-  if(panda_type != PANDA_TYPE_BLACK){
+  if(hw_type != HW_TYPE_BLACK_PANDA){
     // interrupt on started line
     started_interrupt_init();
   }
@@ -791,20 +797,11 @@ int main(void) {
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");
 #endif
-
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
 
   puts("**** INTERRUPTS ON ****\n");
   enable_interrupts();
-
-
-  if(panda_type == PANDA_TYPE_BLACK){
-    harness_init();
-    if(car_harness_detected != 0){
-      puts("detected harness\n");
-    }
-  }
 
   // LED should keep on blinking all the time
   uint64_t cnt = 0;

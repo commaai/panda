@@ -32,7 +32,7 @@ void pedal_set_led(uint8_t color, bool enabled) {
 }
 
 void pedal_set_usb_power_mode(uint8_t mode){
-  UNUSED(mode);
+  usb_power_mode = mode;
   puts("Trying to set USB power mode on pedal. This is not supported.\n");
 }
 
@@ -68,8 +68,13 @@ void pedal_init(void) {
   pedal_set_led(LED_GREEN, false);
 }
 
+const harness_configuration pedal_harness_config = {
+  .has_harness = false
+};
+
 const board board_pedal = {
   .board_type = "Pedal",
+  .harness_config = &pedal_harness_config,
   .init = pedal_init,
   .enable_can_transciever = pedal_enable_can_transciever,
   .enable_can_transcievers = pedal_enable_can_transcievers,

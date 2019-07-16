@@ -163,7 +163,7 @@ void can_init_all(void) {
 
 // TODO: Cleanup with new abstraction
 void can_set_gmlan(uint8_t bus) {
-  if(panda_type != PANDA_TYPE_BLACK){
+  if(hw_type != HW_TYPE_BLACK_PANDA){
     // first, disable GMLAN on prev bus
     uint8_t prev_bus = can_num_lookup[3];
     if (bus != prev_bus) {
@@ -214,7 +214,7 @@ void can_set_obd(int harness_orientation, bool obd){
   } else {
     puts("setting CAN2 to be normal\n");
   }
-  if(panda_type == PANDA_TYPE_BLACK){
+  if(hw_type == HW_TYPE_BLACK_PANDA){
     if(obd ^ (harness_orientation != 1U)){
         // B5,B6: disable normal mode
         set_gpio_mode(GPIOB, 5, MODE_INPUT);

@@ -12,15 +12,18 @@
   #include "stm32f2xx_hal_gpio_ex.h"
 #endif
 
-// default since there's no serial
-void puts(const char *a) {
-  UNUSED(a);
-}
+// ******************** Prototypes ********************
+void puts(const char *a){ UNUSED(a); }
+void puth(unsigned int i){ UNUSED(i); }
+void puth2(unsigned int i){ UNUSED(i); }
+typedef struct board board;
+typedef struct harness_configuration harness_configuration;
 
-void puth(unsigned int i) {
-  UNUSED(i);
-}
+// ********************* Globals **********************
+int hw_type = 0;
+const board *current_board;
 
+// ********************* Includes *********************
 #include "libc.h"
 #include "provision.h"
 

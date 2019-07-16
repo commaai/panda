@@ -214,8 +214,13 @@ void white_init(void) {
   white_set_can_mode(CAN_MODE_NORMAL);
 }
 
+const harness_configuration white_harness_config = {
+  .has_harness = false
+};
+
 const board board_white = {
   .board_type = "White",
+  .harness_config = &white_harness_config,
   .init = white_init,
   .enable_can_transciever = white_enable_can_transciever,
   .enable_can_transcievers = white_enable_can_transcievers,

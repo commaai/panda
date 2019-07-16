@@ -1,6 +1,6 @@
-// /////////// //
-// Black Panda //
-// /////////// //
+// ///////////////////// //
+// Black Panda + Harness //
+// ///////////////////// //
 
 void black_enable_can_transciever(uint8_t transciever, bool enabled) {
   switch (transciever){
@@ -44,7 +44,7 @@ void black_set_led(uint8_t color, bool enabled) {
 }
 
 void black_set_usb_power_mode(uint8_t mode){
-  UNUSED(mode);
+  usb_power_mode = mode;
   puts("Trying to set USB power mode on black panda. This is not supported.\n");
 }
 
@@ -108,6 +108,9 @@ void black_init(void) {
   //set_gpio_output(GPIOC, 12, true);
   set_gpio_output(GPIOC, 12, false); //TODO: stupid inverted switch on prototype
 
+  // Initialize harness
+  harness_init();
+
   // Enable CAN transcievers
   black_enable_can_transcievers(true);
 
@@ -118,10 +121,34 @@ void black_init(void) {
 
   // Set normal CAN mode
   black_set_can_mode(CAN_MODE_NORMAL);
+
+  // flip CAN0 and CAN2 if we are flipped
+  // TODO: implement
+  /*if (car_harness_status == HARNESS_STATUS_NORMAL) {
+    // flip CAN bus 0 and 2
+    bus_lookup[0] = 2;
+    bus_lookup[2] = 0;
+    can_num_lookup[0] = 2;
+    can_num_lookup[2] = 0;
+
+    // init multiplexer
+    can_set_obd(car_harness_status, false);
+  }*/
 }
+
+const harness_configuration black_harness_config = {
+  .has_harness = true,
+  .pin_SBU1 = 0,
+  .pin_SBU2 = 3,
+  .pin_relay_normal = 10,
+  .pin_relay_flipped = 11,
+  .adc_channel_SBU1 = 10,
+  .adc_channel_SBU2 = 13
+};
 
 const board board_black = {
   .board_type = "Black",
+  .harness_config = &black_harness_config,
   .init = black_init,
   .enable_can_transciever = black_enable_can_transciever,
   .enable_can_transcievers = black_enable_can_transcievers,

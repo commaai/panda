@@ -13,9 +13,9 @@ typedef void (*board_set_usb_power_mode)(uint8_t mode);
 typedef void (*board_set_esp_gps_mode)(uint8_t mode);
 typedef void (*board_set_can_mode)(uint8_t mode);
 
-typedef struct {
+struct board {
   const char *board_type;
-  const uint8_t num_transcievers;
+  const harness_configuration *harness_config;
   board_init init;
   board_enable_can_transciever enable_can_transciever;
   board_enable_can_transcievers enable_can_transcievers;
@@ -23,9 +23,17 @@ typedef struct {
   board_set_usb_power_mode set_usb_power_mode;
   board_set_esp_gps_mode set_esp_gps_mode;
   board_set_can_mode set_can_mode;
-} board;
+};
 
-// ///// Board definition ///// //
+// ///// Board definition and detection ///// //
+// These should match the enum in cereal/log.capnp
+#define HW_TYPE_UNKNOWN 0
+#define HW_TYPE_WHITE_PANDA 1
+#define HW_TYPE_GREY_PANDA 2
+#define HW_TYPE_BLACK_PANDA 3
+#define HW_TYPE_PEDAL 4
+
+#include "drivers/harness.h"
 #ifdef PANDA
   #include "boards/white.h"
   #include "boards/grey.h"
@@ -34,36 +42,26 @@ typedef struct {
   #include "boards/pedal.h"
 #endif
 
-// ///// Board detection ///// //
-#define PANDA_TYPE_UNSUPPORTED 0
-#define PANDA_TYPE_WHITE 1
-#define PANDA_TYPE_GREY 2
-#define PANDA_TYPE_BLACK 3
-#define PANDA_TYPE_PEDAL 4
-
-int panda_type = PANDA_TYPE_UNSUPPORTED;
-const board *current_board;
-
 void detect_board_type(void){
   #ifdef PANDA
     // SPI lines floating: white (TODO: is this reliable?)
     if((detect_with_pull(GPIOA, 4, PULL_DOWN) | detect_with_pull(GPIOA, 5, PULL_DOWN) | detect_with_pull(GPIOA, 6, PULL_DOWN) | detect_with_pull(GPIOA, 7, PULL_DOWN))){
-      panda_type = PANDA_TYPE_WHITE;
+      hw_type = HW_TYPE_WHITE_PANDA;
       current_board = &board_white;
     } else if(detect_with_pull(GPIOA, 13, PULL_DOWN)) { // Rev AB deprecated, so no pullup means black. In REV C, A13 is pulled up to 5V with a 10K
-      panda_type = PANDA_TYPE_GREY;
+      hw_type = HW_TYPE_GREY_PANDA;
       current_board = &board_grey;
     } else {
-      panda_type = PANDA_TYPE_BLACK;
+      hw_type = HW_TYPE_BLACK_PANDA;
       current_board = &board_black;
     }
   #else
     #ifdef PEDAL
-      panda_type = PANDA_TYPE_PEDAL;
+      hw_type = HW_TYPE_PEDAL;
       current_board = &board_pedal;
     #else 
-      panda_type = PANDA_TYPE_UNSUPPORTED;
-      puts("Panda is UNSUPPORTED!\n");
+      hw_type = HW_TYPE_UNKNOWN;
+      puts("Hardware type is UNKNOWN!\n");
     #endif
   #endif
 }
