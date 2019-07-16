@@ -1,5 +1,10 @@
 #include "../config.h"
 
+// ******************** Prototypes ********************
+void puts(const char *a);
+void puth(unsigned int i);
+
+// ********************* Includes *********************
 #include "drivers/llcan.h"
 #include "drivers/llgpio.h"
 
@@ -186,7 +191,7 @@ void CAN1_RX0_IRQHandler(void) {
         if (((current_index + 1U) & COUNTER_CYCLE) == index) {
           #ifdef DEBUG
             puts("setting gas ");
-            puth(value);
+            puth(value_0);
             puts("\n");
           #endif
           if (enable) {
@@ -300,8 +305,9 @@ int main(void) {
 
   // init devices
   clock_init();
-  peripheral_init();
-  gpio_init();
+  peripherals_init();
+  detect_configuration();
+  detect_board_type();
 
 #ifdef PEDAL_USB
   // enable USB

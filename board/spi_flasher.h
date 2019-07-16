@@ -315,7 +315,7 @@ void soft_flasher_start(void) {
       // if you are connected through a hub to the phone
       // you need power to be able to see the device
       puts("USBP: didn't enumerate, switching to CDP mode\n");
-      set_usb_power_mode(USB_POWER_CDP);
+      current_board->set_usb_power_mode(USB_POWER_CDP);
       current_board->set_led(LED_BLUE, 1);
     }
     // blink the green LED fast

@@ -26,6 +26,9 @@ void puth(unsigned int i) {
 
 #include "drivers/clock.h"
 #include "drivers/llgpio.h"
+
+#include "board.h"
+
 #include "gpio.h"
 
 #include "drivers/spi.h"
@@ -53,16 +56,13 @@ extern void *_app_start[];
 // FIXME: sometimes your panda will fail flashing and will quickly blink a single Green LED
 // BOUNTY: $200 coupon on shop.comma.ai or $100 check.
 
-// TODO: refactor this code with new board abstractions
-
 int main(void) {
   __disable_irq();
   clock_init();
-  detect();
+  detect_configuration();
+  detect_board_type();
 
-  if (revision == PANDA_REV_C) {
-    set_usb_power_mode(USB_POWER_CLIENT);
-  }
+  current_board->set_usb_power_mode(USB_POWER_CLIENT);
 
   if (enter_bootloader_mode == ENTER_SOFTLOADER_MAGIC) {
     enter_bootloader_mode = 0;
