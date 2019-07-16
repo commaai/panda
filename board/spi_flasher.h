@@ -31,7 +31,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         FLASH->KEYR = 0xCDEF89AB;
         resp[1] = 0xff;
       }
-      set_led(LED_GREEN, 1);
+      current_board->set_led(LED_GREEN, 1);
       unlocked = 1;
       prog_ptr = (uint32_t *)0x8004000;
       break;
@@ -112,7 +112,7 @@ void usb_cb_enumeration_complete(void) {
 
 void usb_cb_ep2_out(uint8_t *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
-  set_led(LED_RED, 0);
+  current_board->set_led(LED_RED, 0);
   for (int i = 0; i < len/4; i++) {
     // program byte 1
     FLASH->CR = FLASH_CR_PSIZE_1 | FLASH_CR_PG;
@@ -123,7 +123,7 @@ void usb_cb_ep2_out(uint8_t *usbdata, int len, bool hardwired) {
     //*(uint64_t*)(&spi_tx_buf[0x30+(i*4)]) = *prog_ptr;
     prog_ptr++;
   }
-  set_led(LED_RED, 1);
+  current_board->set_led(LED_RED, 1);
 }
 
 
@@ -304,7 +304,7 @@ void soft_flasher_start(void) {
   usb_init();
 
   // green LED on for flashing
-  set_led(LED_GREEN, 1);
+  current_board->set_led(LED_GREEN, 1);
 
   __enable_irq();
 
@@ -316,12 +316,12 @@ void soft_flasher_start(void) {
       // you need power to be able to see the device
       puts("USBP: didn't enumerate, switching to CDP mode\n");
       set_usb_power_mode(USB_POWER_CDP);
-      set_led(LED_BLUE, 1);
+      current_board->set_led(LED_BLUE, 1);
     }
     // blink the green LED fast
-    set_led(LED_GREEN, 0);
+    current_board->set_led(LED_GREEN, 0);
     delay(500000);
-    set_led(LED_GREEN, 1);
+    current_board->set_led(LED_GREEN, 1);
     delay(500000);
   }
 }

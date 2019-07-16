@@ -25,10 +25,8 @@ void set_power_save_state(int state) {
       enable = true;
     }
 
-    // turn on can
-    set_can_enable(CAN1, enable);
-    set_can_enable(CAN2, enable);
-    set_can_enable(CAN3, enable);
+    // Switch CAN transcievers
+    current_board->enable_can_transcievers(enable);
 
     if(panda_type != PANDA_TYPE_BLACK){
       // turn on GMLAN

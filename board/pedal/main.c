@@ -2,6 +2,9 @@
 
 #include "drivers/llcan.h"
 #include "drivers/llgpio.h"
+
+#include "board.h"
+
 #include "drivers/clock.h"
 #include "drivers/adc.h"
 #include "drivers/dac.h"
@@ -260,7 +263,7 @@ void TIM3_IRQHandler(void) {
   }
 
   // blink the LED
-  set_led(LED_GREEN, led_value);
+  current_board->set_led(LED_GREEN, led_value);
   led_value = !led_value;
 
   TIM3->SR = 0;
@@ -297,7 +300,7 @@ int main(void) {
 
   // init devices
   clock_init();
-  periph_init();
+  peripheral_init();
   gpio_init();
 
 #ifdef PEDAL_USB

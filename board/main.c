@@ -4,15 +4,18 @@
 #include "config.h"
 #include "obj/gitversion.h"
 
-// ********************* includes *********************
+// ******************** Prototypes ********************
+void puts(const char *a);
+void puth(unsigned int i);
 
-
+// ********************* Includes *********************
 #include "libc.h"
 #include "provision.h"
 
 #include "drivers/llcan.h"
 #include "drivers/llgpio.h"
-#include "gpio.h"
+
+#include "board.h"
 
 #include "drivers/uart.h"
 #include "drivers/adc.h"
@@ -21,17 +24,19 @@
 #include "drivers/timer.h"
 #include "drivers/clock.h"
 
+#include "gpio.h"
+
 #ifndef EON
 #include "drivers/spi.h"
 #endif
 
 #include "power_saving.h"
 #include "safety.h"
-#include "drivers/can.h"
 
+#include "drivers/can.h"
 #include "drivers/harness.h"
 
-// ********************* serial debugging *********************
+// ********************* Serial debugging *********************
 
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
@@ -52,15 +57,15 @@ void debug_ring_callback(uart_ring *ring) {
     // enable CDP mode
     if (rcv == 'C') {
       puts("switching USB to CDP mode\n");
-      set_usb_power_mode(USB_POWER_CDP);
+      current_board->set_usb_power_mode(USB_POWER_CDP);
     }
     if (rcv == 'c') {
       puts("switching USB to client mode\n");
-      set_usb_power_mode(USB_POWER_CLIENT);
+      current_board->set_usb_power_mode(USB_POWER_CLIENT);
     }
     if (rcv == 'D') {
       puts("switching USB to DCP mode\n");
-      set_usb_power_mode(USB_POWER_DCP);
+      current_board->set_usb_power_mode(USB_POWER_DCP);
     }
   }
 }
@@ -288,38 +293,48 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xd9: set ESP power
     case 0xd9:
       if (setup->b.wValue.w == 1U) {
-        set_esp_mode(ESP_ENABLED);
+        current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
       } else if (setup->b.wValue.w == 2U) {
-        set_esp_mode(ESP_BOOTMODE);
+        current_board->set_esp_gps_mode(ESP_GPS_BOOTMODE);
       } else {
-        set_esp_mode(ESP_DISABLED);
+        current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
       }
       break;
     // **** 0xda: reset ESP, with optional boot mode
     case 0xda:
-      set_esp_mode(ESP_DISABLED);
+      current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
       delay(1000000);
       if (setup->b.wValue.w == 1U) {
-        set_esp_mode(ESP_BOOTMODE);
+        current_board->set_esp_gps_mode(ESP_GPS_BOOTMODE);
       } else {
-        set_esp_mode(ESP_ENABLED);
+        current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
       }
       delay(1000000);
-      set_esp_mode(ESP_ENABLED);
+      current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
       break;
-    // **** 0xdb: set GMLAN multiplexing mode
+    // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
     case 0xdb:
-      if (setup->b.wValue.w == 1U) {
-        // GMLAN ON
-        if (setup->b.wIndex.w == 1U) {
-          can_set_gmlan(1);
-        } else if (setup->b.wIndex.w == 2U) {
-          can_set_gmlan(2);
+      if(panda_type != PANDA_TYPE_BLACK){
+        if (setup->b.wValue.w == 1U) {
+          // GMLAN ON
+          if (setup->b.wIndex.w == 1U) {
+            can_set_gmlan(1);
+          } else if (setup->b.wIndex.w == 2U) {
+            can_set_gmlan(2);
+          } else {
+            puts("Invalid bus num for GMLAN CAN set\n");
+          }
         } else {
-          puts("Invalid bus num for GMLAN CAN set\n");
+          can_set_gmlan(-1);
         }
       } else {
-        can_set_gmlan(-1);
+        if (setup->b.wValue.w == 1U) {
+          // Enable OBD CAN
+          can_set_obd(car_harness_detected, true);
+        } else {
+          // Disable OBD CAN
+          can_set_obd(car_harness_detected, false);
+        }
       }
       break;
       
@@ -449,13 +464,13 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xe6:
       if (setup->b.wValue.w == 1U) {
         puts("user setting CDP mode\n");
-        set_usb_power_mode(USB_POWER_CDP);
+        current_board->set_usb_power_mode(USB_POWER_CDP);
       } else if (setup->b.wValue.w == 2U) {
         puts("user setting DCP mode\n");
-        set_usb_power_mode(USB_POWER_DCP);
+        current_board->set_usb_power_mode(USB_POWER_DCP);
       } else {
         puts("user setting CLIENT mode\n");
-        set_usb_power_mode(USB_POWER_CLIENT);
+        current_board->set_usb_power_mode(USB_POWER_CLIENT);
       }
       break;
     // **** 0xf0: do k-line wValue pulse on uart2 for Acura
@@ -593,7 +608,7 @@ void TIM3_IRQHandler(void) {
           if (!is_enumerated) {
             puts("USBP: didn't enumerate, switching to CDP mode\n");
             // switch to CDP
-            set_usb_power_mode(USB_POWER_CDP);
+            current_board->set_usb_power_mode(USB_POWER_CDP);
             marker = tcnt;
           }
         }
@@ -610,7 +625,7 @@ void TIM3_IRQHandler(void) {
             // measure current draw, if positive and no enumeration, switch to DCP
             if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
               puts("USBP: no enumeration with current draw, switching to DCP mode\n");
-              set_usb_power_mode(USB_POWER_DCP);
+              current_board->set_usb_power_mode(USB_POWER_DCP);
               marker = tcnt;
             }
           }
@@ -626,7 +641,7 @@ void TIM3_IRQHandler(void) {
           // if no current draw, switch back to CDP
           if (current >= CURRENT_THRESHOLD) {
             puts("USBP: no current draw, switching back to CDP mode\n");
-            set_usb_power_mode(USB_POWER_CDP);
+            current_board->set_usb_power_mode(USB_POWER_CDP);
             marker = tcnt;
           }
         }
@@ -649,18 +664,19 @@ void TIM3_IRQHandler(void) {
       pending_can_live = 0;
     }
     #ifdef DEBUG
-      puts("** blink ");
-      puth(can_rx_q.r_ptr); puts(" "); puth(can_rx_q.w_ptr); puts("  ");
-      puth(can_tx1_q.r_ptr); puts(" "); puth(can_tx1_q.w_ptr); puts("  ");
-      puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
+      //TODO: re-enable
+      //puts("** blink ");
+      //puth(can_rx_q.r_ptr); puts(" "); puth(can_rx_q.w_ptr); puts("  ");
+      //puth(can_tx1_q.r_ptr); puts(" "); puth(can_tx1_q.w_ptr); puts("  ");
+      //puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
     #endif
 
     // set green LED to be controls allowed
-    set_led(LED_GREEN, controls_allowed);
+    current_board->set_led(LED_GREEN, controls_allowed);
 
     // turn off the blue LED, turned on by CAN
     // unless we are in power saving mode
-    set_led(LED_BLUE, (tcnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
+    current_board->set_led(LED_BLUE, (tcnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
 
     // on to the next one
     tcnt += 1U;
@@ -674,37 +690,26 @@ int main(void) {
 
   // init early devices
   clock_init();
-  periph_init();
-  detect();
+  peripherals_init();
+  detect_configuration();
+  detect_board_type();
 
   // print hello
   puts("\n\n\n************************ MAIN START ************************\n");
 
-  // detect the revision and init the GPIOs
-  puts("config:\n");
-  puts((revision == PANDA_REV_C) ? "  panda rev c\n" : "  panda rev a or b\n");
-  puts(has_external_debug_serial ? "  real serial\n" : "  USB serial\n");
-  puts(is_giant_panda ? "  GIANTpanda detected\n" : "  not GIANTpanda\n");
-  switch (panda_type){
-    case PANDA_TYPE_WHITE:
-      puts("  white panda\n");
-      break;
-    case PANDA_TYPE_GREY:
-      puts("  grey panda\n");
-      break;
-    case PANDA_TYPE_BLACK:
-      puts("  black panda\n");
-      break;
-  }
-  puts(is_entering_bootmode ? "  ESP wants bootmode\n" : "  no bootmode\n");
-
-  // non rev c panda are no longer supported. panda black is though
-  while (revision != PANDA_REV_C && panda_type != PANDA_TYPE_BLACK) {
-    // hang
+  // check for non-supported board types
+  if(panda_type == PANDA_TYPE_UNSUPPORTED){
+    puts("Unsupported board type\n");
+    while (1) { /* hang */ }
   }
 
-  // init gpio
-  gpio_init();
+  puts("Config:\n");
+  puts("  Board type: "); puts(current_board->board_type); puts("\n");
+  puts(has_external_debug_serial ? "  Real serial\n" : "  USB serial\n");
+  puts(is_entering_bootmode ? "  ESP wants bootmode\n" : "  No bootmode\n");
+
+  // init board
+  current_board->init();
 
   // panda has an FPU, let's use it!
   enable_fpu();
@@ -766,7 +771,7 @@ int main(void) {
 #ifdef EON
   // have to save power
   if (panda_type == PANDA_TYPE_WHITE) {
-    set_esp_mode(ESP_DISABLED);
+    current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
   }
   // only enter power save after the first cycle
   /*if (is_gpio_started()) {
@@ -797,7 +802,7 @@ int main(void) {
   if(panda_type == PANDA_TYPE_BLACK){
     harness_init();
     if(car_harness_detected != 0){
-      puts("Detected harness");
+      puts("detected harness\n");
     }
   }
 
@@ -812,9 +817,9 @@ int main(void) {
       for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
         for (int fade = 0; fade < 1024; fade += 8) {
           for (int i = 0; i < (128/div_mode); i++) {
-            set_led(LED_RED, 1);
+            current_board->set_led(LED_RED, 1);
             if (fade < 512) { delay(fade); } else { delay(1024-fade); }
-            set_led(LED_RED, 0);
+            current_board->set_led(LED_RED, 0);
             if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
           }
         }
@@ -826,4 +831,3 @@ int main(void) {
 
   return 0;
 }
-

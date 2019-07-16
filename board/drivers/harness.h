@@ -77,7 +77,7 @@ int harness_detect_orientation(void) {
 
 void harness_init(void) {
   // chilling for power to be stable (we have interrupts)
-  set_led(LED_RED, 1);
+  current_board->set_led(LED_RED, 1);
   delay(5000000);
 
   // on car harness, detect first
@@ -101,16 +101,19 @@ void harness_init(void) {
       set_gpio_mode(GPIOC, (car_harness_detected == HARNESS_ORIENTATION_NORMAL) ? HARNESS_IGNITION_PIN_NORMAL : HARNESS_IGNITION_PIN_FLIPPED, MODE_INPUT);
 
       // keep busses connected by default
-      set_intercept_relay(false);
+      //set_intercept_relay(false);
+      set_intercept_relay(true); // Disconnect to be backwards compatible with normal panda for testing
 
       // flip CAN0 and CAN2 if we are flipped
       if (car_harness_detected == HARNESS_ORIENTATION_NORMAL) {
         // flip CAN bus 0 and 2
-        // CAN bus 1 is dealt with by the relay
         bus_lookup[0] = 2;
         bus_lookup[2] = 0;
         can_num_lookup[0] = 2;
         can_num_lookup[2] = 0;
+
+        // init multiplexer
+        can_set_obd(car_harness_detected, false);
       }
 
       // setup ignition interrupts
@@ -122,5 +125,5 @@ void harness_init(void) {
   }
   
   if(!car_harness_detected) puts("failed to detect car harness!\n");
-  set_led(LED_RED, 0);
+  current_board->set_led(LED_RED, 0);
 }
