@@ -25,9 +25,9 @@ USB_Setup_TypeDef;
 
 void usb_init(void);
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired);
-int usb_cb_ep1_in(uint8_t *usbdata, int len, bool hardwired);
-void usb_cb_ep2_out(uint8_t *usbdata, int len, bool hardwired);
-void usb_cb_ep3_out(uint8_t *usbdata, int len, bool hardwired);
+int usb_cb_ep1_in(void *usbdata, int len, bool hardwired);
+void usb_cb_ep2_out(void *usbdata, int len, bool hardwired);
+void usb_cb_ep3_out(void *usbdata, int len, bool hardwired);
 void usb_cb_enumeration_complete(void);
 
 // **** supporting defines ****
@@ -394,19 +394,17 @@ int current_int0_alt_setting = 0;
 // packet read and write
 
 void *USB_ReadPacket(void *dest, uint16_t len) {
-
-  void *dest_copy = dest;
+  uint32_t *dest_copy = (uint32_t *)dest;
   uint32_t count32b = (len + 3U) / 4U;
 
   for (uint32_t i = 0; i < count32b; i++) {
-    // packed?
-    *(__attribute__((__packed__)) uint32_t *)dest_copy = USBx_DFIFO(0);
-    dest_copy += 4;
+    *dest_copy = USBx_DFIFO(0);
+    dest_copy++;
   }
   return ((void *)dest_copy);
 }
 
-void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
+void USB_WritePacket(const void *src, uint16_t len, uint32_t ep) {
   #ifdef DEBUG_USB
   puts("writing ");
   hexdump(src, len);
@@ -422,10 +420,10 @@ void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
   USBx_INEP(ep)->DIEPCTL |= (USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA);
 
   // load the FIFO
-  const uint8_t *src_copy = src;
+  const uint32_t *src_copy = (const uint32_t *)src;
   for (uint32_t i = 0; i < count32b; i++) {
-    USBx_DFIFO(ep) = *((__attribute__((__packed__)) uint32_t *)src_copy);
-    src_copy += 4;
+    USBx_DFIFO(ep) = *src_copy;
+    src_copy++;
   }
 }
 

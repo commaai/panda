@@ -174,11 +174,11 @@ void CAN1_RX0_IRQHandler(void) {
     int address = CAN->sFIFOMailBox[0].RIR >> 21;
     if (address == CAN_GAS_INPUT) {
       // softloader entry
-      if (CAN->sFIFOMailBox[0].RDLR == 0xdeadface) {
-        if (CAN->sFIFOMailBox[0].RDHR == 0x0ab00b1e) {
+      if (GET_BYTES_04(&CAN->sFIFOMailBox[0]) == 0xdeadface) {
+        if (GET_BYTES_48(&CAN->sFIFOMailBox[0]) == 0x0ab00b1e) {
           enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
           NVIC_SystemReset();
-        } else if (CAN->sFIFOMailBox[0].RDHR == 0x02b00b1e) {
+        } else if (GET_BYTES_48(&CAN->sFIFOMailBox[0]) == 0x02b00b1e) {
           enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
           NVIC_SystemReset();
         } else {
@@ -188,11 +188,8 @@ void CAN1_RX0_IRQHandler(void) {
 
       // normal packet
       uint8_t dat[8];
-      uint8_t *rdlr = (uint8_t *)&CAN->sFIFOMailBox[0].RDLR;
-      uint8_t *rdhr = (uint8_t *)&CAN->sFIFOMailBox[0].RDHR;
-      for (int i=0; i<4; i++) {
-        dat[i] = rdlr[i];
-        dat[i+4] = rdhr[i];
+      for (int i=0; i<8; i++) {
+        dat[i] = GET_BYTE(&CAN->sFIFOMailBox[0], i);
       }
       uint16_t value_0 = (dat[0] << 8) | dat[1];
       uint16_t value_1 = (dat[2] << 8) | dat[3];
