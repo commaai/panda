@@ -4,28 +4,6 @@
   #include "stm32f2xx_hal_gpio_ex.h"
 #endif
 
-// LED colors
-#define LED_RED 0U
-#define LED_GREEN 1U
-#define LED_BLUE 2U
-
-// USB power modes
-#define USB_POWER_NONE 0U
-#define USB_POWER_CLIENT 1U
-#define USB_POWER_CDP 2U
-#define USB_POWER_DCP 3U
-
-// ESP modes
-#define ESP_GPS_DISABLED 0U
-#define ESP_GPS_ENABLED 1U
-#define ESP_GPS_BOOTMODE 2U
-
-// CAN modes
-#define CAN_MODE_NORMAL 0U
-#define CAN_MODE_GMLAN_CAN2 1U
-#define CAN_MODE_GMLAN_CAN3 2U
-#define CAN_MODE_OBD_CAN2 3U
-
 // Common GPIO initialization
 void common_init_gpio(void){
   // TODO: Is this block actually doing something???

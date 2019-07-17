@@ -7,8 +7,8 @@
 #define PULL_UP 1
 #define PULL_DOWN 2
 
-#define OUTPUT_TYPE_PUSH_PULL 0
-#define OUTPUT_TYPE_OPEN_DRAIN 1
+#define OUTPUT_TYPE_PUSH_PULL 0U
+#define OUTPUT_TYPE_OPEN_DRAIN 1U
 
 void set_gpio_mode(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   uint32_t tmp = GPIO->MODER;

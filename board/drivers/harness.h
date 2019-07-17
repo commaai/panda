@@ -1,10 +1,10 @@
-int car_harness_status = 0;
-#define HARNESS_STATUS_NC 0
-#define HARNESS_STATUS_NORMAL 1
-#define HARNESS_STATUS_FLIPPED 2
+uint8_t car_harness_status = 0U;
+#define HARNESS_STATUS_NC 0U
+#define HARNESS_STATUS_NORMAL 1U
+#define HARNESS_STATUS_FLIPPED 2U
 
 // Threshold voltage (mV) for either of the SBUs to be below before deciding harness is connected
-#define HARNESS_CONNECTED_THRESHOLD 2500
+#define HARNESS_CONNECTED_THRESHOLD 2500U
 
 struct harness_configuration {
   const bool has_harness;
@@ -21,7 +21,7 @@ struct harness_configuration {
 };
 
 // this function will be the API for tici
-bool set_intercept_relay(bool intercept) {
+void set_intercept_relay(bool intercept) {
   if (car_harness_status != HARNESS_STATUS_NC) {
     if(intercept)
       puts("switching harness to intercept (relay on)\n");
@@ -34,20 +34,21 @@ bool set_intercept_relay(bool intercept) {
       set_gpio_output(current_board->harness_config->GPIO_relay_flipped, current_board->harness_config->pin_relay_flipped, !intercept);
     }
   }
-  return true;
 }
 
 bool harness_check_ignition(void) {
+  bool ret = false;
   switch(car_harness_status){
     case HARNESS_STATUS_NORMAL:
-      return !get_gpio_input(current_board->harness_config->GPIO_SBU2, current_board->harness_config->pin_SBU2);
+      ret = !get_gpio_input(current_board->harness_config->GPIO_SBU2, current_board->harness_config->pin_SBU2);
       break;
     case HARNESS_STATUS_FLIPPED:
-      return !get_gpio_input(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1);
+      ret = !get_gpio_input(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1);
       break;
     default:
-      return false;
+      break;
   }
+  return ret;
 }
 
 // TODO: refactor to use harness config
@@ -72,15 +73,15 @@ void harness_setup_ignition_interrupts(void){
   NVIC_EnableIRQ(EXTI3_IRQn);
 }
 
-int harness_detect_orientation(void) {
-  int ret = HARNESS_STATUS_NC;
+uint8_t harness_detect_orientation(void) {
+  uint8_t ret = HARNESS_STATUS_NC;
 
   #ifndef BOOTSTUB
   uint32_t sbu1_voltage = adc_get(current_board->harness_config->adc_channel_SBU1);
   uint32_t sbu2_voltage = adc_get(current_board->harness_config->adc_channel_SBU2);
 
   // Detect connection and orientation
-  if(sbu1_voltage < HARNESS_CONNECTED_THRESHOLD || sbu2_voltage < HARNESS_CONNECTED_THRESHOLD){
+  if((sbu1_voltage < HARNESS_CONNECTED_THRESHOLD) || (sbu2_voltage < HARNESS_CONNECTED_THRESHOLD)){
     if (sbu1_voltage < sbu2_voltage) {
       // orientation normal
       ret = HARNESS_STATUS_NORMAL;
@@ -103,7 +104,7 @@ void harness_init(void) {
   for (int tries = 0; tries < 3; tries++) {
     puts("attempting to detect car harness...\n");
     
-    int ret = harness_detect_orientation();
+    uint8_t ret = harness_detect_orientation();
     if (ret != HARNESS_STATUS_NC) {
       puts("detected car harness on try ");
       puth2(tries);

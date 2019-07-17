@@ -1,24 +1,11 @@
 //#define EON 
 //#define PANDA
 
+// ********************* Includes *********************
+#include "main_declarations.h"
 #include "config.h"
 #include "obj/gitversion.h"
 
-// ******************** Prototypes ********************
-void puts(const char *a);
-void puth(unsigned int i);
-void puth2(unsigned int i);
-typedef struct board board;
-typedef struct harness_configuration harness_configuration;
-void can_flip_buses(uint8_t bus1, uint8_t bus2);
-void can_set_obd(int harness_orientation, bool obd);
-
-// ********************* Globals **********************
-int hw_type = 0;
-const board *current_board;
-bool is_enumerated = 0;
-
-// ********************* Includes *********************
 #include "libc.h"
 #include "provision.h"
 
@@ -83,12 +70,15 @@ void debug_ring_callback(uart_ring *ring) {
 
 // TODO; put in board
 bool is_gpio_started(void) {
+  bool ret = false;
   if(hw_type == HW_TYPE_BLACK_PANDA){
     // ignition is detected through harness
-    return harness_check_ignition();
+    ret = harness_check_ignition();
+  } else {
+    // ignition is on PA1
+    ret = !get_gpio_input(GPIOA, 1);
   }
-  // ignition is on PA1
-  return !get_gpio_input(GPIOA, 1);
+  return ret;
 }
 
 void started_interrupt_handler(uint8_t interrupt_line){
@@ -669,7 +659,7 @@ int main(void) {
     uart_init(USART2, 115200);
   }
 
-  if (hw_type == HW_TYPE_GREY_PANDA || hw_type == HW_TYPE_BLACK_PANDA) {
+  if ((hw_type == HW_TYPE_GREY_PANDA) || (hw_type == HW_TYPE_BLACK_PANDA)) {
     uart_init(USART1, 9600);
   } else {
     // enable ESP uart

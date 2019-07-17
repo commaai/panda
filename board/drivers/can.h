@@ -202,7 +202,7 @@ void can_set_gmlan(uint8_t bus) {
         puts("Enable GMLAN on CAN");
         puth(bus + 1U);
         puts("\n");
-        current_board->set_can_mode((bus == 1) ? CAN_MODE_GMLAN_CAN2 : CAN_MODE_GMLAN_CAN3);
+        current_board->set_can_mode((bus == 1U) ? CAN_MODE_GMLAN_CAN2 : CAN_MODE_GMLAN_CAN3);
         bus_lookup[bus] = 3;
         can_num_lookup[bus] = -1;
         can_num_lookup[3] = bus;
@@ -220,14 +220,14 @@ void can_set_gmlan(uint8_t bus) {
 }
 
 // TODO: remove
-void can_set_obd(int harness_orientation, bool obd){
+void can_set_obd(uint8_t harness_orientation, bool obd){
   if(obd){
     puts("setting CAN2 to be OBD\n");
   } else {
     puts("setting CAN2 to be normal\n");
   }
   if(hw_type == HW_TYPE_BLACK_PANDA){
-    if(obd ^ (harness_orientation == HARNESS_STATUS_NORMAL)){
+    if(obd != (bool)(harness_orientation == HARNESS_STATUS_NORMAL)){
         // B5,B6: disable normal mode
         set_gpio_mode(GPIOB, 5, MODE_INPUT);
         set_gpio_mode(GPIOB, 6, MODE_INPUT);

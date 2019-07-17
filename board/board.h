@@ -1,40 +1,10 @@
 // ///////////////////////////////////////////////////////////// //
 // Hardware abstraction layer for all different supported boards //
 // ///////////////////////////////////////////////////////////// //
+#include "board_declarations.h"
 #include "boards/common.h"
-int usb_power_mode = USB_POWER_NONE;
-
-// ///// Function definitions ///// //
-typedef void (*board_init)(void);
-typedef void (*board_enable_can_transciever)(uint8_t transciever, bool enabled);
-typedef void (*board_enable_can_transcievers)(bool enabled);
-typedef void (*board_set_led)(uint8_t color, bool enabled);
-typedef void (*board_set_usb_power_mode)(uint8_t mode);
-typedef void (*board_set_esp_gps_mode)(uint8_t mode);
-typedef void (*board_set_can_mode)(uint8_t mode);
-typedef void (*board_usb_power_mode_tick)(uint64_t tcnt);
-
-struct board {
-  const char *board_type;
-  const harness_configuration *harness_config;
-  board_init init;
-  board_enable_can_transciever enable_can_transciever;
-  board_enable_can_transcievers enable_can_transcievers;
-  board_set_led set_led;
-  board_set_usb_power_mode set_usb_power_mode;
-  board_set_esp_gps_mode set_esp_gps_mode;
-  board_set_can_mode set_can_mode;
-  board_usb_power_mode_tick usb_power_mode_tick;
-};
 
 // ///// Board definition and detection ///// //
-// These should match the enum in cereal/log.capnp
-#define HW_TYPE_UNKNOWN 0
-#define HW_TYPE_WHITE_PANDA 1
-#define HW_TYPE_GREY_PANDA 2
-#define HW_TYPE_BLACK_PANDA 3
-#define HW_TYPE_PEDAL 4
-
 #include "drivers/harness.h"
 #ifdef PANDA
   #include "boards/white.h"
@@ -47,7 +17,7 @@ struct board {
 void detect_board_type(void){
   #ifdef PANDA
     // SPI lines floating: white (TODO: is this reliable?)
-    if((detect_with_pull(GPIOA, 4, PULL_DOWN) | detect_with_pull(GPIOA, 5, PULL_DOWN) | detect_with_pull(GPIOA, 6, PULL_DOWN) | detect_with_pull(GPIOA, 7, PULL_DOWN))){
+    if((detect_with_pull(GPIOA, 4, PULL_DOWN)) || (detect_with_pull(GPIOA, 5, PULL_DOWN)) || (detect_with_pull(GPIOA, 6, PULL_DOWN)) || (detect_with_pull(GPIOA, 7, PULL_DOWN))){
       hw_type = HW_TYPE_WHITE_PANDA;
       current_board = &board_white;
     } else if(detect_with_pull(GPIOA, 13, PULL_DOWN)) { // Rev AB deprecated, so no pullup means black. In REV C, A13 is pulled up to 5V with a 10K
