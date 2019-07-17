@@ -143,7 +143,7 @@ int get_health_pkt(void *dat) {
     uint32_t can_send_errs_pkt;
     uint32_t can_fwd_errs_pkt;
     uint32_t gmlan_send_errs_pkt;
-    uint8_t car_harness_detected_pkt;
+    uint8_t car_harness_status_pkt;
   } *health = dat;
 
   //Voltage will be measured in mv. 5000 = 5V
@@ -179,7 +179,7 @@ int get_health_pkt(void *dat) {
   health->can_send_errs_pkt = can_send_errs;
   health->can_fwd_errs_pkt = can_fwd_errs;
   health->gmlan_send_errs_pkt = gmlan_send_errs;
-  health->car_harness_detected_pkt = car_harness_status;
+  health->car_harness_status_pkt = car_harness_status;
   
   return sizeof(*health);
 }

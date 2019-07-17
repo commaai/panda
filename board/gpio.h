@@ -1,5 +1,3 @@
-
-
 // Early bringup
 #define ENTER_BOOTLOADER_MAGIC 0xdeadbeef
 #define ENTER_SOFTLOADER_MAGIC 0xdeadc0de
