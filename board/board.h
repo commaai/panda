@@ -12,6 +12,7 @@ typedef void (*board_set_led)(uint8_t color, bool enabled);
 typedef void (*board_set_usb_power_mode)(uint8_t mode);
 typedef void (*board_set_esp_gps_mode)(uint8_t mode);
 typedef void (*board_set_can_mode)(uint8_t mode);
+typedef void (*board_usb_power_mode_tick)(uint64_t tcnt);
 
 struct board {
   const char *board_type;
@@ -23,6 +24,7 @@ struct board {
   board_set_usb_power_mode set_usb_power_mode;
   board_set_esp_gps_mode set_esp_gps_mode;
   board_set_can_mode set_can_mode;
+  board_usb_power_mode_tick usb_power_mode_tick;
 };
 
 // ///// Board definition and detection ///// //

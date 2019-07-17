@@ -6,10 +6,12 @@ int car_harness_status = 0;
 // Threshold voltage (mV) for either of the SBUs to be below before deciding harness is connected
 #define HARNESS_CONNECTED_THRESHOLD 2500
 
-#define HARNESS_GPIO GPIOC
-
 struct harness_configuration {
   const bool has_harness;
+  GPIO_TypeDef *GPIO_SBU1;  
+  GPIO_TypeDef *GPIO_SBU2;
+  GPIO_TypeDef *GPIO_relay_normal;
+  GPIO_TypeDef *GPIO_relay_flipped;
   uint8_t pin_SBU1;
   uint8_t pin_SBU2;
   uint8_t pin_relay_normal;
@@ -27,9 +29,9 @@ bool set_intercept_relay(bool intercept) {
       puts("switching harness to passthrough (relay off)\n");
 
     if(car_harness_status == HARNESS_STATUS_NORMAL){
-      set_gpio_output(HARNESS_GPIO, current_board->harness_config->pin_relay_normal, !intercept);
+      set_gpio_output(current_board->harness_config->GPIO_relay_normal, current_board->harness_config->pin_relay_normal, !intercept);
     } else {
-      set_gpio_output(HARNESS_GPIO, current_board->harness_config->pin_relay_flipped, !intercept);
+      set_gpio_output(current_board->harness_config->GPIO_relay_flipped, current_board->harness_config->pin_relay_flipped, !intercept);
     }
   }
   return true;
@@ -38,10 +40,10 @@ bool set_intercept_relay(bool intercept) {
 bool harness_check_ignition(void) {
   switch(car_harness_status){
     case HARNESS_STATUS_NORMAL:
-      return !get_gpio_input(HARNESS_GPIO, current_board->harness_config->pin_SBU2);
+      return !get_gpio_input(current_board->harness_config->GPIO_SBU2, current_board->harness_config->pin_SBU2);
       break;
     case HARNESS_STATUS_FLIPPED:
-      return !get_gpio_input(HARNESS_GPIO, current_board->harness_config->pin_SBU1);
+      return !get_gpio_input(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1);
       break;
     default:
       return false;
@@ -111,14 +113,14 @@ void harness_init(void) {
       car_harness_status = ret;
 
       // set the SBU lines to be inputs before using the relay. The lines are not 5V tolerant in ADC mode!
-      set_gpio_mode(HARNESS_GPIO, current_board->harness_config->pin_SBU1, MODE_INPUT);
-      set_gpio_mode(HARNESS_GPIO, current_board->harness_config->pin_SBU2, MODE_INPUT);
+      set_gpio_mode(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1, MODE_INPUT);
+      set_gpio_mode(current_board->harness_config->GPIO_SBU2, current_board->harness_config->pin_SBU2, MODE_INPUT);
 
       // now we have orientation, set pin ignition detection
       if(car_harness_status == HARNESS_STATUS_NORMAL){
-        set_gpio_mode(HARNESS_GPIO, current_board->harness_config->pin_SBU2, MODE_INPUT);
+        set_gpio_mode(current_board->harness_config->GPIO_SBU2, current_board->harness_config->pin_SBU2, MODE_INPUT);
       } else {
-        set_gpio_mode(HARNESS_GPIO, current_board->harness_config->pin_SBU1, MODE_INPUT);
+        set_gpio_mode(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1, MODE_INPUT);
       }      
 
       // keep busses connected by default

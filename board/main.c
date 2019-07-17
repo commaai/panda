@@ -14,6 +14,7 @@ typedef struct harness_configuration harness_configuration;
 // ********************* Globals **********************
 int hw_type = 0;
 const board *current_board;
+bool is_enumerated = 0;
 
 // ********************* Includes *********************
 #include "libc.h"
@@ -224,8 +225,6 @@ void usb_cb_ep3_out(uint8_t *usbdata, int len, bool hardwired) {
     can_send(&to_push, bus_number);
   }
 }
-
-bool is_enumerated = 0;
 
 void usb_cb_enumeration_complete() {
   puts("USB enumeration complete\n");
@@ -594,77 +593,16 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 }
 
 uint64_t tcnt = 0;
-uint64_t marker = 0;
 
 // called once per second
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void TIM3_IRQHandler(void) {
-  #define CURRENT_THRESHOLD 0xF00U
-  #define CLICKS 5U // 5 seconds to switch modes
-
   if (TIM3->SR != 0) {
     can_live = pending_can_live;
 
+    current_board->usb_power_mode_tick(tcnt);
+
     //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
-
-    uint32_t current = adc_get(ADCCHAN_CURRENT);
-
-    switch (usb_power_mode) {
-      case USB_POWER_CLIENT:
-        if ((tcnt - marker) >= CLICKS) {
-          if (!is_enumerated) {
-            puts("USBP: didn't enumerate, switching to CDP mode\n");
-            // switch to CDP
-            current_board->set_usb_power_mode(USB_POWER_CDP);
-            marker = tcnt;
-          }
-        }
-        // keep resetting the timer if it's enumerated
-        if (is_enumerated) {
-          marker = tcnt;
-        }
-        break;
-      case USB_POWER_CDP:
-        // On the EON, if we get into CDP mode we stay here. No need to go to DCP.
-        #ifndef EON
-          // been CLICKS clicks since we switched to CDP
-          if ((tcnt-marker) >= CLICKS) {
-            // measure current draw, if positive and no enumeration, switch to DCP
-            if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
-              puts("USBP: no enumeration with current draw, switching to DCP mode\n");
-              current_board->set_usb_power_mode(USB_POWER_DCP);
-              marker = tcnt;
-            }
-          }
-          // keep resetting the timer if there's no current draw in CDP
-          if (current >= CURRENT_THRESHOLD) {
-            marker = tcnt;
-          }
-        #endif
-        break;
-      case USB_POWER_DCP:
-        // been at least CLICKS clicks since we switched to DCP
-        if ((tcnt-marker) >= CLICKS) {
-          // if no current draw, switch back to CDP
-          if (current >= CURRENT_THRESHOLD) {
-            puts("USBP: no current draw, switching back to CDP mode\n");
-            current_board->set_usb_power_mode(USB_POWER_CDP);
-            marker = tcnt;
-          }
-        }
-        // keep resetting the timer if there's current draw in DCP
-        if (current < CURRENT_THRESHOLD) {
-          marker = tcnt;
-        }
-        break;
-      default:
-        puts("USB power mode invalid\n");  // set_usb_power_mode prevents assigning invalid values
-        break;
-    }
-
-    // ~0x9a = 500 ma
-    /*puth(current);
-    puts("\n");*/
 
     // reset this every 16th pass
     if ((tcnt & 0xFU) == 0U) {

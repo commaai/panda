@@ -73,10 +73,22 @@ void black_set_esp_gps_mode(uint8_t mode) {
 void black_set_can_mode(uint8_t mode){
   switch (mode) {
     case CAN_MODE_NORMAL:
-      // TODO: Implement with harness orientation
+      // B12,B13: disable OBD mode
+      set_gpio_mode(GPIOB, 12, MODE_INPUT);
+      set_gpio_mode(GPIOB, 13, MODE_INPUT);
+
+      // B5,B6: normal CAN2 mode
+      set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
+      set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
       break;
     case CAN_MODE_OBD_CAN2:
-      // TODO: Implement with harness orientation
+      // B5,B6: disable normal CAN2 mode
+      set_gpio_alternate(GPIOB, 5, MODE_INPUT);
+      set_gpio_alternate(GPIOB, 6, MODE_INPUT);
+
+      // B12,B13: OBD mode
+      set_gpio_mode(GPIOB, 12, GPIO_AF9_CAN2);
+      set_gpio_mode(GPIOB, 13, GPIO_AF9_CAN2);
       break;
     default:
       puts("Tried to set unsupported CAN mode: "); puth(mode); puts("\n");
@@ -84,8 +96,17 @@ void black_set_can_mode(uint8_t mode){
   }
 }
 
+void black_usb_power_mode_tick(uint64_t tcnt){
+  UNUSED(tcnt);
+  // Not applicable
+}
+
 void black_init(void) {
   common_init_gpio();
+
+  // A8,A15: normal CAN3 mode
+  set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
+  set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
 
   // C0: OBD_SBU1 (orientation detection)
   // C3: OBD_SBU2 (orientation detection)
@@ -138,6 +159,10 @@ void black_init(void) {
 
 const harness_configuration black_harness_config = {
   .has_harness = true,
+  .GPIO_SBU1 = GPIOC,
+  .GPIO_SBU2 = GPIOC,
+  .GPIO_relay_normal = GPIOC,
+  .GPIO_relay_flipped = GPIOC,
   .pin_SBU1 = 0,
   .pin_SBU2 = 3,
   .pin_relay_normal = 10,
@@ -154,5 +179,6 @@ const board board_black = {
   .enable_can_transcievers = black_enable_can_transcievers,
   .set_led = black_set_led,
   .set_usb_power_mode = black_set_usb_power_mode,
-  .set_esp_gps_mode = black_set_esp_gps_mode
+  .set_esp_gps_mode = black_set_esp_gps_mode,
+  .usb_power_mode_tick = black_usb_power_mode_tick
 };

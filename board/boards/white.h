@@ -112,16 +112,16 @@ void white_set_can_mode(uint8_t mode){
       break;
     case CAN_MODE_GMLAN_CAN2:
       // B5,B6: disable CAN2 mode
-      set_gpio_alternate(GPIOB, 5, MODE_INPUT);
-      set_gpio_alternate(GPIOB, 6, MODE_INPUT);
+      set_gpio_mode(GPIOB, 5, MODE_INPUT);
+      set_gpio_mode(GPIOB, 6, MODE_INPUT);
 
       // B3,B4: disable GMLAN mode
       set_gpio_mode(GPIOB, 3, MODE_INPUT);
       set_gpio_mode(GPIOB, 4, MODE_INPUT);
 
       // B12,B13: GMLAN mode
-      set_gpio_mode(GPIOB, 12, GPIO_AF9_CAN2);
-      set_gpio_mode(GPIOB, 13, GPIO_AF9_CAN2);
+      set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
+      set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
 
       // A8,A15: normal CAN3 mode
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
@@ -129,16 +129,16 @@ void white_set_can_mode(uint8_t mode){
       break;
     case CAN_MODE_GMLAN_CAN3:
       // A8,A15: disable CAN3 mode
-      set_gpio_alternate(GPIOA, 8, MODE_INPUT);
-      set_gpio_alternate(GPIOA, 15, MODE_INPUT);
+      set_gpio_mode(GPIOA, 8, MODE_INPUT);
+      set_gpio_mode(GPIOA, 15, MODE_INPUT);
 
       // B12,B13: disable GMLAN mode
       set_gpio_mode(GPIOB, 12, MODE_INPUT);
       set_gpio_mode(GPIOB, 13, MODE_INPUT);
 
       // B3,B4: GMLAN mode
-      set_gpio_mode(GPIOB, 3, GPIO_AF11_CAN3);
-      set_gpio_mode(GPIOB, 4, GPIO_AF11_CAN3);
+      set_gpio_alternate(GPIOB, 3, GPIO_AF11_CAN3);
+      set_gpio_alternate(GPIOB, 4, GPIO_AF11_CAN3);
 
       // B5,B6: normal CAN2 mode
       set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
@@ -148,6 +148,74 @@ void white_set_can_mode(uint8_t mode){
       puts("Tried to set unsupported CAN mode: "); puth(mode); puts("\n");
       break;
   }
+}
+
+uint64_t marker = 0;
+void white_usb_power_mode_tick(uint64_t tcnt){
+  #ifndef BOOTSTUB
+  #define CURRENT_THRESHOLD 0xF00U
+  #define CLICKS 5U // 5 seconds to switch modes
+
+  uint32_t current = adc_get(ADCCHAN_CURRENT);
+
+  // ~0x9a = 500 ma
+  // puth(current); puts("\n");
+
+  switch (usb_power_mode) {
+    case USB_POWER_CLIENT:
+      if ((tcnt - marker) >= CLICKS) {
+        if (!is_enumerated) {
+          puts("USBP: didn't enumerate, switching to CDP mode\n");
+          // switch to CDP
+          white_set_usb_power_mode(USB_POWER_CDP);
+          marker = tcnt;
+        }
+      }
+      // keep resetting the timer if it's enumerated
+      if (is_enumerated) {
+        marker = tcnt;
+      }
+      break;
+    case USB_POWER_CDP:
+      // On the EON, if we get into CDP mode we stay here. No need to go to DCP.
+      #ifndef EON
+        // been CLICKS clicks since we switched to CDP
+        if ((tcnt-marker) >= CLICKS) {
+          // measure current draw, if positive and no enumeration, switch to DCP
+          if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
+            puts("USBP: no enumeration with current draw, switching to DCP mode\n");
+            white_set_usb_power_mode(USB_POWER_DCP);
+            marker = tcnt;
+          }
+        }
+        // keep resetting the timer if there's no current draw in CDP
+        if (current >= CURRENT_THRESHOLD) {
+          marker = tcnt;
+        }
+      #endif
+      break;
+    case USB_POWER_DCP:
+      // been at least CLICKS clicks since we switched to DCP
+      if ((tcnt-marker) >= CLICKS) {
+        // if no current draw, switch back to CDP
+        if (current >= CURRENT_THRESHOLD) {
+          puts("USBP: no current draw, switching back to CDP mode\n");
+          white_set_usb_power_mode(USB_POWER_CDP);
+          marker = tcnt;
+        }
+      }
+      // keep resetting the timer if there's current draw in DCP
+      if (current < CURRENT_THRESHOLD) {
+        marker = tcnt;
+      }
+      break;
+    default:
+      puts("USB power mode invalid\n");  // set_usb_power_mode prevents assigning invalid values
+      break;
+  }
+  #else
+  UNUSED(tcnt);
+  #endif
 }
 
 void white_init(void) {
@@ -227,5 +295,6 @@ const board board_white = {
   .set_led = white_set_led,
   .set_usb_power_mode = white_set_usb_power_mode,
   .set_esp_gps_mode = white_set_esp_gps_mode,
-  .set_can_mode = white_set_can_mode
+  .set_can_mode = white_set_can_mode,
+  .usb_power_mode_tick = white_usb_power_mode_tick
 };

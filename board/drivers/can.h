@@ -192,11 +192,13 @@ void can_set_gmlan(uint8_t bus) {
         puts("Enable GMLAN on CAN");
         puth(bus + 1U);
         puts("\n");
-        current_board->set_can_mode(CAN_MODE_GMLAN_CAN3);
+        current_board->set_can_mode((bus == 1) ? CAN_MODE_GMLAN_CAN2 : CAN_MODE_GMLAN_CAN3);
         bus_lookup[bus] = 3;
         can_num_lookup[bus] = -1;
         can_num_lookup[3] = bus;
         can_init(bus);
+        break;
+      case 0xFF:  //-1 unsigned
         break;
       default:
         puts("GMLAN can only be set on CAN2 or CAN3\n");
