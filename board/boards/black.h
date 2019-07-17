@@ -101,6 +101,11 @@ void black_usb_power_mode_tick(uint64_t tcnt){
   // Not applicable
 }
 
+bool black_check_ignition(void){
+  // ignition is checked through harness
+  return harness_check_ignition();
+}
+
 void black_init(void) {
   common_init_gpio();
 
@@ -175,5 +180,6 @@ const board board_black = {
   .set_led = black_set_led,
   .set_usb_power_mode = black_set_usb_power_mode,
   .set_esp_gps_mode = black_set_esp_gps_mode,
-  .usb_power_mode_tick = black_usb_power_mode_tick
+  .usb_power_mode_tick = black_usb_power_mode_tick,
+  .check_ignition = black_check_ignition
 };

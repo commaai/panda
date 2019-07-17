@@ -13,5 +13,6 @@ const board board_grey = {
   .set_usb_power_mode = white_set_usb_power_mode,
   .set_esp_gps_mode = white_set_esp_gps_mode,
   .set_can_mode = white_set_can_mode,
-  .usb_power_mode_tick = white_usb_power_mode_tick
+  .usb_power_mode_tick = white_usb_power_mode_tick,
+  .check_ignition = white_check_ignition
 };

@@ -55,6 +55,11 @@ void pedal_usb_power_mode_tick(uint64_t tcnt){
   // Not applicable
 }
 
+bool pedal_check_ignition(void){
+  // not supported on pedal
+  return false;
+}
+
 void pedal_init(void) {
   common_init_gpio();
 
@@ -86,5 +91,6 @@ const board board_pedal = {
   .set_usb_power_mode = pedal_set_usb_power_mode,
   .set_esp_gps_mode = pedal_set_esp_gps_mode,
   .set_can_mode = pedal_set_can_mode,
-  .usb_power_mode_tick = pedal_usb_power_mode_tick
+  .usb_power_mode_tick = pedal_usb_power_mode_tick,
+  .check_ignition = pedal_check_ignition,
 };

@@ -2,12 +2,13 @@
 //#define PANDA
 
 // ********************* Includes *********************
-#include "main_declarations.h"
 #include "config.h"
 #include "obj/gitversion.h"
 
 #include "libc.h"
 #include "provision.h"
+
+#include "main_declarations.h"
 
 #include "drivers/llcan.h"
 #include "drivers/llgpio.h"
@@ -67,20 +68,6 @@ void debug_ring_callback(uart_ring *ring) {
 }
 
 // ***************************** started logic *****************************
-
-// TODO; put in board
-bool is_gpio_started(void) {
-  bool ret = false;
-  if(hw_type == HW_TYPE_BLACK_PANDA){
-    // ignition is detected through harness
-    ret = harness_check_ignition();
-  } else {
-    // ignition is on PA1
-    ret = !get_gpio_input(GPIOA, 1);
-  }
-  return ret;
-}
-
 void started_interrupt_handler(uint8_t interrupt_line){
   volatile unsigned int pr = EXTI->PR & (1U << interrupt_line);
   if ((pr & (1U << interrupt_line)) != 0U) {
@@ -92,7 +79,7 @@ void started_interrupt_handler(uint8_t interrupt_line){
     delay(100000);
 
     // set power savings mode here
-    int power_save_state = is_gpio_started() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
+    int power_save_state = current_board->check_ignition() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
     set_power_save_state(power_save_state);
   }
   EXTI->PR = (1U << interrupt_line);
@@ -158,7 +145,7 @@ int get_health_pkt(void *dat) {
   int safety_ignition = safety_ignition_hook();
   if (safety_ignition < 0) {
     //Use the GPIO pin to determine ignition
-    health->started_pkt = is_gpio_started();
+    health->started_pkt = (uint8_t)(current_board->check_ignition());
   } else {
     //Current safety hooks want to determine ignition (ex: GM)
     health->started_pkt = safety_ignition;
@@ -710,7 +697,7 @@ int main(void) {
     current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
   }
   // only enter power save after the first cycle
-  /*if (is_gpio_started()) {
+  /*if (current_board->check_ignition()) {
     set_power_save_state(POWER_SAVE_STATUS_ENABLED);
   }*/
 

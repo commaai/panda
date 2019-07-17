@@ -1,7 +1,9 @@
 // ********************* Includes *********************
-#include "main_declarations.h"
 #include "../config.h"
 #include "libc.h"
+
+#include "main_declarations.h"
+
 #include "drivers/llcan.h"
 #include "drivers/llgpio.h"
 #include "drivers/adc.h"

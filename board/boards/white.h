@@ -218,6 +218,11 @@ void white_usb_power_mode_tick(uint64_t tcnt){
   #endif
 }
 
+bool white_check_ignition(void){
+  // ignition is on PA1
+  return !get_gpio_input(GPIOA, 1);
+}
+
 void white_init(void) {
   common_init_gpio();
 
@@ -296,5 +301,6 @@ const board board_white = {
   .set_usb_power_mode = white_set_usb_power_mode,
   .set_esp_gps_mode = white_set_esp_gps_mode,
   .set_can_mode = white_set_can_mode,
-  .usb_power_mode_tick = white_usb_power_mode_tick
+  .usb_power_mode_tick = white_usb_power_mode_tick,
+  .check_ignition = white_check_ignition
 };
