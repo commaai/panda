@@ -364,10 +364,10 @@ class Panda(object):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
 
   def is_grey(self):
-    return get_type(self) == "\x02"
+    return self.get_type() == "\x02"
 
   def is_black(self):
-    return get_type(self) == "\x03"
+    return self.get_type() == "\x03"
 
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
