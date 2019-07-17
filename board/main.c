@@ -10,6 +10,8 @@ void puth(unsigned int i);
 void puth2(unsigned int i);
 typedef struct board board;
 typedef struct harness_configuration harness_configuration;
+void can_flip_buses(uint8_t bus1, uint8_t bus2);
+void can_set_obd(int harness_orientation, bool obd);
 
 // ********************* Globals **********************
 int hw_type = 0;

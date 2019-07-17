@@ -144,17 +144,12 @@ void black_init(void) {
   black_set_can_mode(CAN_MODE_NORMAL);
 
   // flip CAN0 and CAN2 if we are flipped
-  // TODO: implement
-  /*if (car_harness_status == HARNESS_STATUS_NORMAL) {
-    // flip CAN bus 0 and 2
-    bus_lookup[0] = 2;
-    bus_lookup[2] = 0;
-    can_num_lookup[0] = 2;
-    can_num_lookup[2] = 0;
+  if (car_harness_status == HARNESS_STATUS_NORMAL) {
+    can_flip_buses(0, 2);
+  }
 
-    // init multiplexer
-    can_set_obd(car_harness_status, false);
-  }*/
+  // init multiplexer
+  can_set_obd(car_harness_status, false);
 }
 
 const harness_configuration black_harness_config = {

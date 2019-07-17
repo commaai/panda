@@ -161,6 +161,13 @@ void can_init_all(void) {
   }
 }
 
+void can_flip_buses(uint8_t bus1, uint8_t bus2){
+  bus_lookup[bus1] = bus2;
+  bus_lookup[bus2] = bus1;
+  can_num_lookup[bus1] = bus2;
+  can_num_lookup[bus2] = bus1;
+}
+
 // TODO: Cleanup with new abstraction
 void can_set_gmlan(uint8_t bus) {
   if(hw_type != HW_TYPE_BLACK_PANDA){
@@ -217,7 +224,7 @@ void can_set_obd(int harness_orientation, bool obd){
     puts("setting CAN2 to be normal\n");
   }
   if(hw_type == HW_TYPE_BLACK_PANDA){
-    if(obd ^ (harness_orientation != 1U)){
+    if(obd ^ (harness_orientation == HARNESS_STATUS_NORMAL)){
         // B5,B6: disable normal mode
         set_gpio_mode(GPIOB, 5, MODE_INPUT);
         set_gpio_mode(GPIOB, 6, MODE_INPUT);
@@ -226,11 +233,11 @@ void can_set_obd(int harness_orientation, bool obd){
         set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
     } else {
         // B5,B6: CAN2 mode
-        set_gpio_mode(GPIOB, 5, GPIO_AF9_CAN2);
-        set_gpio_mode(GPIOB, 6, GPIO_AF9_CAN2);
+        set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
+        set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
         // B12,B13: disable normal mode
-        set_gpio_alternate(GPIOB, 12, MODE_INPUT);
-        set_gpio_alternate(GPIOB, 13, MODE_INPUT);
+        set_gpio_mode(GPIOB, 12, MODE_INPUT);
+        set_gpio_mode(GPIOB, 13, MODE_INPUT);
     }
   } else {
     puts("OBD CAN not available on non-black panda\n");
