@@ -317,7 +317,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
             puts("Invalid bus num for GMLAN CAN set\n");
           }
         } else {
-          current_board->set_can_mode(-1);
+          can_set_gmlan(-1);
         }
       }
       break;
