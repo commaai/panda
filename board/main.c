@@ -114,12 +114,12 @@ int get_health_pkt(void *dat) {
   struct __attribute__((packed)) {
     uint32_t voltage_pkt;
     uint32_t current_pkt;
-    uint8_t started_pkt;
-    uint8_t controls_allowed_pkt;
-    uint8_t gas_interceptor_detected_pkt;
     uint32_t can_send_errs_pkt;
     uint32_t can_fwd_errs_pkt;
     uint32_t gmlan_send_errs_pkt;
+    uint8_t started_pkt;
+    uint8_t controls_allowed_pkt;
+    uint8_t gas_interceptor_detected_pkt;
     uint8_t car_harness_status_pkt;
   } *health = dat;
 
