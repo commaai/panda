@@ -429,10 +429,6 @@ class Panda(object):
   def set_uart_callback(self, uart, install):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe3, uart, int(install), b'')
 
-  def set_harness_intercept(self, intercept):
-    # TODO: check panda type
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf3, int(intercept), 0, b'')
-
   # ******************* can *******************
 
   def can_send_many(self, arr):

@@ -125,7 +125,7 @@ void white_set_can_mode(uint8_t mode){
 
       // A8,A15: normal CAN3 mode
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
-      set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);    
+      set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);   
       break;
     case CAN_MODE_GMLAN_CAN3:
       // A8,A15: disable CAN3 mode

@@ -131,8 +131,8 @@ void black_init(void) {
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
 
   // C12: GPS load switch. Turn on permanently for now
-  //set_gpio_output(GPIOC, 12, true);
-  set_gpio_output(GPIOC, 12, false); //TODO: stupid inverted switch on prototype
+  set_gpio_output(GPIOC, 12, true);
+  //set_gpio_output(GPIOC, 12, false); //TODO: stupid inverted switch on prototype
 
   // Initialize harness
   harness_init();
@@ -180,6 +180,7 @@ const board board_black = {
   .set_led = black_set_led,
   .set_usb_power_mode = black_set_usb_power_mode,
   .set_esp_gps_mode = black_set_esp_gps_mode,
+  .set_can_mode = black_set_can_mode,
   .usb_power_mode_tick = black_usb_power_mode_tick,
   .check_ignition = black_check_ignition
 };

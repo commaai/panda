@@ -309,15 +309,15 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
             puts("Invalid bus num for GMLAN CAN set\n");
           }
         } else {
-          can_set_gmlan(-1);
+          current_board->set_can_mode(-1);
         }
       } else {
         if (setup->b.wValue.w == 1U) {
           // Enable OBD CAN
-          can_set_obd(car_harness_status, true);
+          current_board->set_can_mode(CAN_MODE_OBD_CAN2);
         } else {
           // Disable OBD CAN
-          can_set_obd(car_harness_status, false);
+          current_board->set_can_mode(CAN_MODE_NORMAL);
         }
       }
       break;
@@ -337,12 +337,21 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
             switch (setup->b.wValue.w) {
               case SAFETY_NOOUTPUT:
                 can_silent = ALL_CAN_SILENT;
+                set_intercept_relay(false);
                 break;
               case SAFETY_ELM327:
                 can_silent = ALL_CAN_BUT_MAIN_SILENT;
+                set_intercept_relay(false);
+                if(hw_type == HW_TYPE_BLACK_PANDA){
+                  current_board->set_can_mode(CAN_MODE_OBD_CAN2);
+                }
                 break;
               default:
                 can_silent = ALL_CAN_LIVE;
+                set_intercept_relay(true);
+                if(hw_type == HW_TYPE_BLACK_PANDA){
+                  current_board->set_can_mode(CAN_MODE_NORMAL);
+                }
                 break;
             }
           #endif
@@ -510,12 +519,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
           puts("Clearing UART queue.\n");
           clear_uart_buff(rb);
         }
-        break;
-      }
-    // **** 0xf3: Set harness relay to (not) intercept (black panda only).
-    case 0xf3:
-      {
-        set_intercept_relay((setup->b.wValue.w == 1U));
         break;
       }
     default:
