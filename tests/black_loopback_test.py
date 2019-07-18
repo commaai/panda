@@ -17,12 +17,6 @@ from itertools import permutations
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda
 
-def set_intercept(p, intercept):
-  p._handle.controlWrite(Panda.REQUEST_OUT, 0xf3, int(intercept), 0, b'')
-
-def get_type(p):
-  return p._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
-
 def get_test_string():
   return b"test"+os.urandom(10)
 
@@ -40,8 +34,8 @@ def run_test(sleep_duration):
   pandas[1] = Panda(pandas[1])
 
   # find out which one is black
-  type0 = get_type(pandas[0])
-  type1 = get_type(pandas[1])
+  type0 = pandas[0].get_type()
+  type1 = pandas[1].get_type()
 
   black_panda = None
   other_panda = None
@@ -63,9 +57,6 @@ def run_test(sleep_duration):
   # test health packet
   print("black panda health", black_panda.health())
   print("other panda health", other_panda.health())
-
-  # set intercept on to separate two buses in harness
-  set_intercept(black_panda, True)
 
   # test black -> other
   test_buses(black_panda, other_panda, True, [(0, False, [0]), (1, False, [1]), (2, False, [2]), (1, True, [0])], sleep_duration)

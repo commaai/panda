@@ -23,10 +23,11 @@ struct harness_configuration {
 // this function will be the API for tici
 void set_intercept_relay(bool intercept) {
   if (car_harness_status != HARNESS_STATUS_NC) {
-    if(intercept)
+    if (intercept) {
       puts("switching harness to intercept (relay on)\n");
-    else
+    } else {
       puts("switching harness to passthrough (relay off)\n");
+    }
 
     if(car_harness_status == HARNESS_STATUS_NORMAL){
       set_gpio_output(current_board->harness_config->GPIO_relay_normal, current_board->harness_config->pin_relay_normal, !intercept);
@@ -96,46 +97,34 @@ uint8_t harness_detect_orientation(void) {
 }
 
 void harness_init(void) {
-  // chilling for power to be stable (we have interrupts)
-  current_board->set_led(LED_RED, 1);
-  delay(5000000);
+  // delay such that the connection is fully made before trying orientation detection
+  current_board->set_led(LED_BLUE, true);
+  delay(10000000);
+  current_board->set_led(LED_BLUE, false);
 
-  // on car harness, detect first
-  for (int tries = 0; tries < 3; tries++) {
-    puts("attempting to detect car harness...\n");
-    
-    uint8_t ret = harness_detect_orientation();
-    if (ret != HARNESS_STATUS_NC) {
-      puts("detected car harness on try ");
-      puth2(tries);
-      puts(" with orientation ");
-      puth2(ret);
-      puts("\n");
-      car_harness_status = ret;
+  // try to detect orientation
+  uint8_t ret = harness_detect_orientation();
+  if (ret != HARNESS_STATUS_NC) {
+    puts("detected car harness with orientation "); puth2(ret); puts("\n");
+    car_harness_status = ret;
 
-      // set the SBU lines to be inputs before using the relay. The lines are not 5V tolerant in ADC mode!
-      set_gpio_mode(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1, MODE_INPUT);
+    // set the SBU lines to be inputs before using the relay. The lines are not 5V tolerant in ADC mode!
+    set_gpio_mode(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1, MODE_INPUT);
+    set_gpio_mode(current_board->harness_config->GPIO_SBU2, current_board->harness_config->pin_SBU2, MODE_INPUT);
+
+    // now we have orientation, set pin ignition detection
+    if(car_harness_status == HARNESS_STATUS_NORMAL){
       set_gpio_mode(current_board->harness_config->GPIO_SBU2, current_board->harness_config->pin_SBU2, MODE_INPUT);
+    } else {
+      set_gpio_mode(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1, MODE_INPUT);
+    }      
 
-      // now we have orientation, set pin ignition detection
-      if(car_harness_status == HARNESS_STATUS_NORMAL){
-        set_gpio_mode(current_board->harness_config->GPIO_SBU2, current_board->harness_config->pin_SBU2, MODE_INPUT);
-      } else {
-        set_gpio_mode(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1, MODE_INPUT);
-      }      
+    // keep busses connected by default
+    set_intercept_relay(false);
 
-      // keep busses connected by default
-      //set_intercept_relay(false);
-      set_intercept_relay(true); // Disconnect to be backwards compatible with normal panda for testing
-
-      // setup ignition interrupts
-      harness_setup_ignition_interrupts();
-
-      break;
-    }
-    delay(500000);
+    // setup ignition interrupts
+    harness_setup_ignition_interrupts();
+  } else {
+    puts("failed to detect car harness!\n");
   }
-  
-  if(car_harness_status == HARNESS_STATUS_NC) puts("failed to detect car harness!\n");
-  current_board->set_led(LED_RED, 0);
 }

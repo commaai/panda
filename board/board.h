@@ -14,7 +14,7 @@
   #include "boards/pedal.h"
 #endif
 
-void detect_board_type(void){
+void detect_board_type(void) {
   #ifdef PANDA
     // SPI lines floating: white (TODO: is this reliable?)
     if((detect_with_pull(GPIOA, 4, PULL_DOWN)) || (detect_with_pull(GPIOA, 5, PULL_DOWN)) || (detect_with_pull(GPIOA, 6, PULL_DOWN)) || (detect_with_pull(GPIOA, 7, PULL_DOWN))){
@@ -43,7 +43,7 @@ void detect_board_type(void){
 bool has_external_debug_serial = 0;
 bool is_entering_bootmode = 0;
 
-void detect_configuration(void){
+void detect_configuration(void) {
   // detect if external serial debugging is present
   has_external_debug_serial = detect_with_pull(GPIOA, 3, PULL_DOWN);
 
@@ -55,3 +55,7 @@ void detect_configuration(void){
   #endif
 }
 
+// ///// Board functions ///// //
+bool board_has_gps(void) {
+  return ((hw_type == HW_TYPE_GREY_PANDA) || (hw_type == HW_TYPE_BLACK_PANDA));
+}

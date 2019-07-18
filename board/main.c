@@ -68,7 +68,7 @@ void debug_ring_callback(uart_ring *ring) {
 }
 
 // ***************************** started logic *****************************
-void started_interrupt_handler(uint8_t interrupt_line){
+void started_interrupt_handler(uint8_t interrupt_line) {
   volatile unsigned int pr = EXTI->PR & (1U << interrupt_line);
   if ((pr & (1U << interrupt_line)) != 0U) {
     #ifdef DEBUG
@@ -298,7 +298,15 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
     case 0xdb:
-      if(hw_type != HW_TYPE_BLACK_PANDA){
+      if(hw_type == HW_TYPE_BLACK_PANDA){
+        if (setup->b.wValue.w == 1U) {
+          // Enable OBD CAN
+          current_board->set_can_mode(CAN_MODE_OBD_CAN2);
+        } else {
+          // Disable OBD CAN
+          current_board->set_can_mode(CAN_MODE_NORMAL);
+        }        
+      } else {
         if (setup->b.wValue.w == 1U) {
           // GMLAN ON
           if (setup->b.wIndex.w == 1U) {
@@ -310,14 +318,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
           }
         } else {
           current_board->set_can_mode(-1);
-        }
-      } else {
-        if (setup->b.wValue.w == 1U) {
-          // Enable OBD CAN
-          current_board->set_can_mode(CAN_MODE_OBD_CAN2);
-        } else {
-          // Disable OBD CAN
-          current_board->set_can_mode(CAN_MODE_NORMAL);
         }
       }
       break;
@@ -649,7 +649,7 @@ int main(void) {
     uart_init(USART2, 115200);
   }
 
-  if ((hw_type == HW_TYPE_GREY_PANDA) || (hw_type == HW_TYPE_BLACK_PANDA)) {
+  if (board_has_gps()) {
     uart_init(USART1, 9600);
   } else {
     // enable ESP uart
@@ -704,7 +704,7 @@ int main(void) {
     set_power_save_state(POWER_SAVE_STATUS_ENABLED);
   }*/
 
-  if(hw_type != HW_TYPE_BLACK_PANDA){
+  if (hw_type != HW_TYPE_BLACK_PANDA) {
     // interrupt on started line
     started_interrupt_init();
   }
