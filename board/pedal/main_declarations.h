@@ -6,6 +6,6 @@ typedef struct board board;
 typedef struct harness_configuration harness_configuration;
 
 // ********************* Globals **********************
-int hw_type = 0;
+uint8_t hw_type = 0;
 const board *current_board;
 bool is_enumerated = 0;
