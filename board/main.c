@@ -108,6 +108,53 @@ void started_interrupt_init(void) {
   NVIC_EnableIRQ(EXTI1_IRQn);
 }
 
+// ****************************** safety mode ******************************
+
+// this is the only way to leave silent mode
+void set_safety_mode(uint16_t mode, int16_t param) {
+  int err = safety_set_mode(mode, param);
+  if (err == -1) {
+    puts("Error: safety set mode failed\n");
+  } else {
+    #ifndef EON
+      // always LIVE on EON
+      switch (mode) {
+        case SAFETY_NOOUTPUT:
+          can_silent = ALL_CAN_SILENT;
+          break;
+        default:
+          can_silent = ALL_CAN_LIVE;
+          break;
+      }          
+    #endif
+    switch (mode) {
+        case SAFETY_NOOUTPUT:
+          set_intercept_relay(false);
+          break;
+        case SAFETY_ELM327:
+          set_intercept_relay(false);
+          if(hw_type == HW_TYPE_BLACK_PANDA){
+            current_board->set_can_mode(CAN_MODE_OBD_CAN2);
+          }
+          break;
+        default:
+          set_intercept_relay(true);
+          if(hw_type == HW_TYPE_BLACK_PANDA){
+            current_board->set_can_mode(CAN_MODE_NORMAL);
+          }
+          break;
+      }          
+    if (safety_ignition_hook() != -1) {
+      // if the ignition hook depends on something other than the started GPIO
+      // we have to disable power savings (fix for GM and Tesla)
+      set_power_save_state(POWER_SAVE_STATUS_DISABLED);
+    } else {
+      // power mode is already POWER_SAVE_STATUS_DISABLED and CAN TXs are active
+    }
+    can_init_all();
+  }
+}
+
 // ***************************** USB port *****************************
 
 int get_health_pkt(void *dat) {
@@ -324,51 +371,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       
     // **** 0xdc: set safety mode
     case 0xdc:
-      // this is the only way to leave silent mode
-      // and it's blocked over WiFi
-      // Allow ELM security mode to be set over wifi.
+      // Blocked over WiFi.
+      // Allow NOOUTPUT and ELM security mode to be set over wifi.
       if (hardwired || (setup->b.wValue.w == SAFETY_NOOUTPUT) || (setup->b.wValue.w == SAFETY_ELM327)) {
-        int err = safety_set_mode(setup->b.wValue.w, (int16_t)setup->b.wIndex.w);
-        if (err == -1) {
-          puts("Error: safety set mode failed\n");
-        } else {
-          #ifndef EON
-            // always LIVE on EON
-            switch (setup->b.wValue.w) {
-              case SAFETY_NOOUTPUT:
-                can_silent = ALL_CAN_SILENT;
-                break;
-              default:
-                can_silent = ALL_CAN_LIVE;
-                break;
-            }          
-          #endif
-          switch (setup->b.wValue.w) {
-              case SAFETY_NOOUTPUT:
-                set_intercept_relay(false);
-                break;
-              case SAFETY_ELM327:
-                set_intercept_relay(false);
-                if(hw_type == HW_TYPE_BLACK_PANDA){
-                  current_board->set_can_mode(CAN_MODE_OBD_CAN2);
-                }
-                break;
-              default:
-                set_intercept_relay(true);
-                if(hw_type == HW_TYPE_BLACK_PANDA){
-                  current_board->set_can_mode(CAN_MODE_NORMAL);
-                }
-                break;
-            }          
-          if (safety_ignition_hook() != -1) {
-            // if the ignition hook depends on something other than the started GPIO
-            // we have to disable power savings (fix for GM and Tesla)
-            set_power_save_state(POWER_SAVE_STATUS_DISABLED);
-          } else {
-            // power mode is already POWER_SAVE_STATUS_DISABLED and CAN TXs are active
-          }
-          can_init_all();
-        }
+        set_safety_mode(setup->b.wValue.w, (uint16_t) setup->b.wIndex.w);
       }
       break;
     // **** 0xdd: enable can forwarding
@@ -526,6 +532,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         }
         break;
       }
+    // **** 0xf3: Heartbeat. Resets heartbeat counter.
+    case 0xf3:
+      {
+        heartbeat_counter = 0U;
+        break;
+      }
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);
@@ -581,6 +593,9 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 
 uint64_t tcnt = 0;
 
+// go into NOOUTPUT when the EON does not send a heartbeat for this amount of seconds.
+#define EON_HEARTBEAT_THRESHOLD 5U
+
 // called once per second
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void TIM3_IRQHandler(void) {
@@ -609,6 +624,19 @@ void TIM3_IRQHandler(void) {
     // turn off the blue LED, turned on by CAN
     // unless we are in power saving mode
     current_board->set_led(LED_BLUE, (tcnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
+
+    // increase heartbeat counter and cap it at the uint32 limit
+    if (heartbeat_counter < __UINT32_MAX__) {
+      heartbeat_counter += 1U;
+    }
+
+    // check heartbeat counter if we are running EON code. If the heartbeat has been gone for a while, go to NOOUTPUT safety mode.
+    #ifdef EON
+    if (heartbeat_counter >= EON_HEARTBEAT_THRESHOLD) {
+      puts("EON hasn't sent a heartbeat for 0x"); puth(heartbeat_counter); puts(" seconds. Safety is set to NOOUTPUT mode.\n");
+      set_safety_mode(SAFETY_NOOUTPUT, 0U);
+    }
+    #endif
 
     // on to the next one
     tcnt += 1U;
