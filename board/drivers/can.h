@@ -33,7 +33,6 @@ bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 // end API
 
 #define ALL_CAN_SILENT 0xFF
-#define ALL_CAN_BUT_MAIN_SILENT 0xFE
 #define ALL_CAN_LIVE 0
 
 int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_SILENT;
@@ -368,7 +367,7 @@ void can_rx(uint8_t can_number) {
 
     current_board->set_led(LED_BLUE, true);
     can_send_errs += !can_push(&can_rx_q, &to_push);
-    
+
     // next
     CAN->RF0R |= CAN_RF0R_RFOM0;
   }
