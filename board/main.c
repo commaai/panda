@@ -116,12 +116,12 @@ void set_safety_mode(uint16_t mode, int16_t param) {
   if (err == -1) {
     puts("Error: safety set mode failed\n");
   } else {
-    if(mode == SAFETY_NOOUTPUT){
+    if (mode == SAFETY_NOOUTPUT) {
       can_silent = ALL_CAN_SILENT;
     } else {
       can_silent = ALL_CAN_LIVE;
     }
-    
+
     switch (mode) {
         case SAFETY_NOOUTPUT:
           set_intercept_relay(false);
