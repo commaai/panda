@@ -337,24 +337,32 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
             switch (setup->b.wValue.w) {
               case SAFETY_NOOUTPUT:
                 can_silent = ALL_CAN_SILENT;
-                set_intercept_relay(false);
                 break;
               case SAFETY_ELM327:
                 can_silent = ALL_CAN_BUT_MAIN_SILENT;
+                break;
+              default:
+                can_silent = ALL_CAN_LIVE;
+                break;
+            }          
+          #endif
+          switch (setup->b.wValue.w) {
+              case SAFETY_NOOUTPUT:
+                set_intercept_relay(false);
+                break;
+              case SAFETY_ELM327:
                 set_intercept_relay(false);
                 if(hw_type == HW_TYPE_BLACK_PANDA){
                   current_board->set_can_mode(CAN_MODE_OBD_CAN2);
                 }
                 break;
               default:
-                can_silent = ALL_CAN_LIVE;
                 set_intercept_relay(true);
                 if(hw_type == HW_TYPE_BLACK_PANDA){
                   current_board->set_can_mode(CAN_MODE_NORMAL);
                 }
                 break;
-            }
-          #endif
+            }          
           if (safety_ignition_hook() != -1) {
             // if the ignition hook depends on something other than the started GPIO
             // we have to disable power savings (fix for GM and Tesla)
