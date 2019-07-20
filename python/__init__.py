@@ -575,3 +575,6 @@ class Panda(object):
     msg = self.kline_ll_recv(2, bus=bus)
     msg += self.kline_ll_recv(ord(msg[1])-2, bus=bus)
     return msg
+
+  def send_heartbeat(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf3, 0, 0, b'')
