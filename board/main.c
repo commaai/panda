@@ -125,6 +125,9 @@ void set_safety_mode(uint16_t mode, int16_t param) {
     switch (mode) {
         case SAFETY_NOOUTPUT:
           set_intercept_relay(false);
+          if(hw_type == HW_TYPE_BLACK_PANDA){
+            current_board->set_can_mode(CAN_MODE_NORMAL);
+          }
           break;
         case SAFETY_ELM327:
           set_intercept_relay(false);
