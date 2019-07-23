@@ -101,6 +101,10 @@ int get_gas_interceptor_prev(void){
   return gas_interceptor_prev;
 }
 
+int get_hw_type(void){
+  return hw_type;
+}
+
 void set_timer(uint32_t t){
   timer.CNT = t;
 }
@@ -237,6 +241,10 @@ void set_honda_alt_brake_msg(bool c){
 
 void set_honda_bosch_hardware(bool c){
   honda_bosch_hardware = c;
+}
+
+int get_honda_bosch_hardware(void) {
+  return honda_bosch_hardware;
 }
 
 void init_tests(void){
