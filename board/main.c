@@ -592,7 +592,8 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 uint64_t tcnt = 0;
 
 // go into NOOUTPUT when the EON does not send a heartbeat for this amount of seconds.
-#define EON_HEARTBEAT_THRESHOLD 5U
+#define EON_HEARTBEAT_THRESHOLD_IGNITION_ON 5U
+#define EON_HEARTBEAT_THRESHOLD_IGNITION_OFF 2U
 
 // called once per second
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
@@ -630,7 +631,7 @@ void TIM3_IRQHandler(void) {
 
     // check heartbeat counter if we are running EON code. If the heartbeat has been gone for a while, go to NOOUTPUT safety mode.
     #ifdef EON
-    if (heartbeat_counter >= EON_HEARTBEAT_THRESHOLD) {
+    if (heartbeat_counter >= (current_board->check_ignition() ? EON_HEARTBEAT_THRESHOLD_IGNITION_ON : EON_HEARTBEAT_THRESHOLD_IGNITION_OFF)) {
       puts("EON hasn't sent a heartbeat for 0x"); puth(heartbeat_counter); puts(" seconds. Safety is set to NOOUTPUT mode.\n");
       set_safety_mode(SAFETY_NOOUTPUT, 0U);
     }
