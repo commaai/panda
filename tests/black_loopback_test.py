@@ -70,6 +70,8 @@ def test_buses(black_panda, other_panda, direction, test_array, sleep_duration):
     print("***************** TESTING (OTHER --> BLACK) *****************")
 
   for send_bus, obd, recv_buses in test_array:
+    black_panda.send_heartbeat()
+    other_panda.send_heartbeat()
     print("\ntest can: ", send_bus, " OBD: ", obd)
     
     # set OBD on black panda
