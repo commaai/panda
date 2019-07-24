@@ -20,19 +20,17 @@ int nissan_desired_angle_last = 0;
 uint32_t nissan_ts_last = 0;
 struct sample_t nissan_torque_driver; // last few driver torques measured
 
-
 const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_UP = {
-  {2., 7., 17.},
-  {5., .8, .15}};
+  {1., 8., 22.},
+  {2.5, 1.25, .35}};
 
 const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_DOWN = {
-  {2., 7., 17.},
-  {5., 3.5, .4}};
+  {1., 8., 22.},
+  {3.05, 1.55, .45}};
 
-// TODO: Need to work out the max angle at certain speeds
 const struct lookup_t NISSAN_LOOKUP_MAX_ANGLE = {
-    {2., 29., 38.},
-    {500., 500., 500.}};
+    {1.3, 4.4, 14.2},
+    {540., 104., 23.}};
 
 
 static void nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -45,14 +43,14 @@ static void nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       // Factor -0.1, little endian
       nissan_angle_meas_new = to_signed(to_push->RDLR & 0xFFFF, 16) * -0.1;
     }
-    
+
     if (addr == 0x29a) {
       // Get current speed
       // Factor 0.00555
       nissan_speed = (((to_push->RDLR >> 8) & 0xFF00) | ((to_push->RDLR >> 24) & 0xFF)) * 0.00555 / 3.6;
     }
   }
-  
+
   if (bus == 1) {
     if (addr == 0x1b6) {
       int cruise_engaged = (to_push->RDHR >> 6) & 1;
@@ -66,6 +64,7 @@ static void nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
   }
 }
+
 
 static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
@@ -84,17 +83,18 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
       // *** angle real time check
       // add 1 to not false trigger the violation and multiply by 25 since the check is done every 250ms and steer angle is updated at 100Hz
-      int rt_delta_angle_up = ((int)(((interpolate(NISSAN_LOOKUP_ANGLE_RATE_UP, speed) * 25. * CAN_TO_DEG) + 1.)));
-      int rt_delta_angle_down = ((int)(((interpolate(NISSAN_LOOKUP_ANGLE_RATE_DOWN, speed) * 25. * CAN_TO_DEG) + 1.)));
+      int rt_delta_angle_up = ((int)(((interpolate(NISSAN_LOOKUP_ANGLE_RATE_UP, speed) * 25.) + 1.)));
+      int rt_delta_angle_down = ((int)(((interpolate(NISSAN_LOOKUP_ANGLE_RATE_DOWN, speed) * 25.) + 1.)));
       int highest_rt_angle = nissan_rt_angle_last + ((nissan_rt_angle_last > 0) ? rt_delta_angle_up : rt_delta_angle_down);
       int lowest_rt_angle = nissan_rt_angle_last - ((nissan_rt_angle_last > 0) ? rt_delta_angle_down : rt_delta_angle_up);
 
       // Limit maximum steering angle at current speed
-      float maximum_angle = interpolate(NISSAN_LOOKUP_MAX_ANGLE, nissan_speed);
+      int maximum_angle = ((int)interpolate(NISSAN_LOOKUP_MAX_ANGLE, nissan_speed));
 
       if (highest_rt_angle > maximum_angle) {
         highest_rt_angle = maximum_angle;
-      } else if (lowest_rt_angle < -maximum_angle) {
+      }
+      if (lowest_rt_angle < -maximum_angle) {
         lowest_rt_angle = -maximum_angle;
       }
 
