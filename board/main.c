@@ -131,12 +131,14 @@ void set_safety_mode(uint16_t mode, int16_t param) {
           break;
         case SAFETY_ELM327:
           set_intercept_relay(false);
+          heartbeat_counter = 0U;
           if(hw_type == HW_TYPE_BLACK_PANDA){
             current_board->set_can_mode(CAN_MODE_OBD_CAN2);
           }
           break;
         default:
           set_intercept_relay(true);
+          heartbeat_counter = 0U;
           if(hw_type == HW_TYPE_BLACK_PANDA){
             current_board->set_can_mode(CAN_MODE_NORMAL);
           }
