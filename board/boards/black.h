@@ -136,6 +136,9 @@ void black_init(void) {
   set_gpio_output(GPIOC, 12, true);
   //set_gpio_output(GPIOC, 12, false); //TODO: stupid inverted switch on prototype
 
+  // B1: USB load switch. Turn on permanently for now
+  set_gpio_output(GPIOB, 1, false);
+
   // Initialize harness
   harness_init();
 

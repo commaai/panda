@@ -78,9 +78,11 @@ void started_interrupt_handler(uint8_t interrupt_line) {
     // jenky debounce
     delay(100000);
 
-    // set power savings mode here
-    int power_save_state = current_board->check_ignition() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
-    set_power_save_state(power_save_state);
+    // set power savings mode here if on EON build
+    #ifdef EON
+      int power_save_state = current_board->check_ignition() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
+      set_power_save_state(power_save_state);
+    #endif
   }
   EXTI->PR = (1U << interrupt_line);
 }
@@ -98,14 +100,6 @@ void EXTI1_IRQHandler(void) {
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void EXTI3_IRQHandler(void) {
   started_interrupt_handler(3);
-}
-
-void started_interrupt_init(void) {
-  SYSCFG->EXTICR[1] = SYSCFG_EXTICR1_EXTI1_PA;
-  EXTI->IMR |= (1U << 1);
-  EXTI->RTSR |= (1U << 1);
-  EXTI->FTSR |= (1U << 1);
-  NVIC_EnableIRQ(EXTI1_IRQn);
 }
 
 // ****************************** safety mode ******************************
@@ -732,11 +726,6 @@ int main(void) {
   /*if (current_board->check_ignition()) {
     set_power_save_state(POWER_SAVE_STATUS_ENABLED);
   }*/
-
-  if (hw_type != HW_TYPE_BLACK_PANDA) {
-    // interrupt on started line
-    started_interrupt_init();
-  }
 #endif
 
   // 48mhz / 65536 ~= 732 / 732 = 1
