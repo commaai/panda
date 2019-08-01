@@ -460,7 +460,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xe6: set USB power
     case 0xe6:
-      if (setup->b.wValue.w == 1U) {
+      if (setup->b.wValue.w == 0U) {
+        puts("user setting NONE mode\n");
+        current_board->set_usb_power_mode(USB_POWER_NONE);
+      } else if (setup->b.wValue.w == 1U) {
         puts("user setting CDP mode\n");
         current_board->set_usb_power_mode(USB_POWER_CDP);
       } else if (setup->b.wValue.w == 2U) {
