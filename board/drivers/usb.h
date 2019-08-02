@@ -25,9 +25,9 @@ USB_Setup_TypeDef;
 
 void usb_init(void);
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired);
-int usb_cb_ep1_in(uint8_t *usbdata, int len, bool hardwired);
-void usb_cb_ep2_out(uint8_t *usbdata, int len, bool hardwired);
-void usb_cb_ep3_out(uint8_t *usbdata, int len, bool hardwired);
+int usb_cb_ep1_in(void *usbdata, int len, bool hardwired);
+void usb_cb_ep2_out(void *usbdata, int len, bool hardwired);
+void usb_cb_ep3_out(void *usbdata, int len, bool hardwired);
 void usb_cb_enumeration_complete(void);
 
 // **** supporting defines ****
@@ -394,19 +394,17 @@ int current_int0_alt_setting = 0;
 // packet read and write
 
 void *USB_ReadPacket(void *dest, uint16_t len) {
-
-  void *dest_copy = dest;
+  uint32_t *dest_copy = (uint32_t *)dest;
   uint32_t count32b = (len + 3U) / 4U;
 
   for (uint32_t i = 0; i < count32b; i++) {
-    // packed?
-    *(__attribute__((__packed__)) uint32_t *)dest_copy = USBx_DFIFO(0);
-    dest_copy += 4;
+    *dest_copy = USBx_DFIFO(0);
+    dest_copy++;
   }
   return ((void *)dest_copy);
 }
 
-void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
+void USB_WritePacket(const void *src, uint16_t len, uint32_t ep) {
   #ifdef DEBUG_USB
   puts("writing ");
   hexdump(src, len);
@@ -416,16 +414,16 @@ void USB_WritePacket(const uint8_t *src, uint16_t len, uint32_t ep) {
   uint32_t count32b = 0;
   count32b = (len + 3U) / 4U;
 
-  // bullshit
+  // TODO: revisit this
   USBx_INEP(ep)->DIEPTSIZ = ((numpacket << 19) & USB_OTG_DIEPTSIZ_PKTCNT) |
                             (len               & USB_OTG_DIEPTSIZ_XFRSIZ);
   USBx_INEP(ep)->DIEPCTL |= (USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA);
 
   // load the FIFO
-  const uint8_t *src_copy = src;
+  const uint32_t *src_copy = (const uint32_t *)src;
   for (uint32_t i = 0; i < count32b; i++) {
-    USBx_DFIFO(ep) = *((__attribute__((__packed__)) uint32_t *)src_copy);
-    src_copy += 4;
+    USBx_DFIFO(ep) = *src_copy;
+    src_copy++;
   }
 }
 
@@ -577,16 +575,16 @@ void usb_setup(void) {
               break;
             case STRING_OFFSET_ISERIAL:
               #ifdef UID_BASE
-                resp[0] = 0x02 + 12*4;
+                resp[0] = 0x02 + (12 * 4);
                 resp[1] = 0x03;
 
                 // 96 bits = 12 bytes
                 for (int i = 0; i < 12; i++){
                   uint8_t cc = ((uint8_t *)UID_BASE)[i];
-                  resp[2 + i*4 + 0] = to_hex_char((cc>>4)&0xF);
-                  resp[2 + i*4 + 1] = '\0';
-                  resp[2 + i*4 + 2] = to_hex_char((cc>>0)&0xF);
-                  resp[2 + i*4 + 3] = '\0';
+                  resp[2 + (i * 4) + 0] = to_hex_char((cc >> 4) & 0xFU);
+                  resp[2 + (i * 4) + 1] = '\0';
+                  resp[2 + (i * 4) + 2] = to_hex_char((cc >> 0) & 0xFU);
+                  resp[2 + (i * 4) + 3] = '\0';
                 }
 
                 USB_WritePacket(resp, MIN(resp[0], setup.b.wLength.w), 0);
@@ -734,7 +732,6 @@ void usb_init(void) {
   USBx->GAHBCFG = USB_OTG_GAHBCFG_GINT;
 
   // DCTL startup value is 2 on new chip, 0 on old chip
-  // THIS IS FUCKING BULLSHIT
   USBx_DEVICE->DCTL = 0;
 
   // enable the IRQ
