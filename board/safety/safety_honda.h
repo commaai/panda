@@ -13,11 +13,15 @@ int honda_gas_prev = 0;
 bool honda_moving = false;
 bool honda_bosch_hardware = false;
 bool honda_alt_brake_msg = false;
+bool honda_stock_aeb = false;
+bool honda_fwd_brake = false;
+int honda_stock_brake = 0;
 
 static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
+  int bus = GET_BUS(to_push);
 
   // sample speed
   if (addr == 0x158) {
@@ -81,6 +85,10 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       honda_gas_prev = gas;
     }
   }
+  if ((bus == 2) && (addr == 0x1FA)) {
+    honda_stock_aeb = GET_BYTE(to_push, 1) & 0x8;
+    honda_stock_brake = (GET_BYTE(to_push, 0) << 2) + (GET_BYTE(to_push, 1) & 0x3);
+  }
 }
 
 // all commands: gas, brake and steering
@@ -108,6 +116,10 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       if (brake != 0) {
         tx = 0;
       }
+    }
+    honda_fwd_brake = (honda_stock_aeb && (brake < honda_stock_brake));
+    if (honda_fwd_brake) {
+      tx = 0;
     }
     if (brake > 255) {
       tx = 0;
@@ -175,9 +187,10 @@ static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   if (bus_num == 2) {
     // block stock lkas messages and stock acc messages (if OP is doing ACC)
     int addr = GET_ADDR(to_fwd);
-    int is_lkas_msg = (addr == 0xE4) || (addr == 0x194) || (addr == 0x33D);
-    int is_acc_msg = (addr == 0x1FA) || (addr == 0x30C) || (addr == 0x39F);
-    int block_fwd = is_lkas_msg || (is_acc_msg && long_controls_allowed);
+    bool is_lkas_msg = (addr == 0xE4) || (addr == 0x194) || (addr == 0x33D);
+    bool is_acc_hud_msg = (addr == 0x1FA) || (addr == 0x30C) || (addr == 0x39F);
+    bool is_brake_msg = addr == 0x1FA;
+    bool block_fwd = is_lkas_msg || (is_acc_hud_msg && long_controls_allowed) || (is_brake_msg && !honda_fwd_brake && long_controls_allowed);
     if (!block_fwd) {
       bus_fwd = 0;
     }
