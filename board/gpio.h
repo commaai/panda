@@ -20,6 +20,9 @@ void jump_to_bootloader(void) {
 }
 
 void early(void) {
+  // reset critical depth of interrupts after reboot
+  reset_critical_depth();
+
   // after it's been in the bootloader, things are initted differently, so we reset
   if ((enter_bootloader_mode != BOOT_NORMAL) &&
       (enter_bootloader_mode != ENTER_BOOTLOADER_MAGIC) &&
