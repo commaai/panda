@@ -188,7 +188,7 @@ static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     // block stock lkas messages and stock acc messages (if OP is doing ACC)
     int addr = GET_ADDR(to_fwd);
     bool is_lkas_msg = (addr == 0xE4) || (addr == 0x194) || (addr == 0x33D);
-    bool is_acc_hud_msg = (addr == 0x1FA) || (addr == 0x30C) || (addr == 0x39F);
+    bool is_acc_hud_msg = (addr == 0x30C) || (addr == 0x39F);
     bool is_brake_msg = addr == 0x1FA;
     bool block_fwd = is_lkas_msg || (is_acc_hud_msg && long_controls_allowed) || (is_brake_msg && !honda_fwd_brake && long_controls_allowed);
     if (!block_fwd) {
