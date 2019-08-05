@@ -48,6 +48,11 @@ void enable_interrupts(void) {
   __enable_irq();
 }
 
+void disable_interrupts(void) {
+  interrupts_enabled = 0;
+  __disable_irq();
+}
+
 int critical_depth = 0;
 void enter_critical_section(void) {
   __disable_irq();

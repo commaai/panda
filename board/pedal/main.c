@@ -299,7 +299,7 @@ void pedal(void) {
 }
 
 int main(void) {
-  __disable_irq();
+  disable_interrupts();
 
   // init devices
   clock_init();
@@ -334,7 +334,7 @@ int main(void) {
   watchdog_init();
 
   puts("**** INTERRUPTS ON ****\n");
-  __enable_irq();
+  enable_interrupts();
 
   // main pedal loop
   while (1) {
