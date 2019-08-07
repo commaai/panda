@@ -61,8 +61,8 @@ int can_overflow_cnt = 0;
 
 bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   bool ret = 0;
-
-  enter_critical_section();
+  
+  ENTER_CRITICAL();
   if (q->w_ptr != q->r_ptr) {
     *elem = q->elems[q->r_ptr];
     if ((q->r_ptr + 1U) == q->fifo_size) {
@@ -72,7 +72,7 @@ bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
     }
     ret = 1;
   }
-  exit_critical_section();
+  EXIT_CRITICAL();
 
   return ret;
 }
@@ -81,7 +81,7 @@ bool can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   bool ret = false;
   uint32_t next_w_ptr;
 
-  enter_critical_section();
+  ENTER_CRITICAL();
   if ((q->w_ptr + 1U) == q->fifo_size) {
     next_w_ptr = 0;
   } else {
@@ -92,7 +92,7 @@ bool can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
     q->w_ptr = next_w_ptr;
     ret = true;
   }
-  exit_critical_section();
+  EXIT_CRITICAL();
   if (!ret) {
     can_overflow_cnt++;
     #ifdef DEBUG
@@ -103,10 +103,10 @@ bool can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
 }
 
 void can_clear(can_ring *q) {
-  enter_critical_section();
+  ENTER_CRITICAL();
   q->w_ptr = 0;
   q->r_ptr = 0;
-  exit_critical_section();
+  EXIT_CRITICAL();
 }
 
 // assign CAN numbering
@@ -248,7 +248,7 @@ void can_set_obd(uint8_t harness_orientation, bool obd){
 
 // CAN error
 void can_sce(CAN_TypeDef *CAN) {
-  enter_critical_section();
+  ENTER_CRITICAL();
 
   #ifdef DEBUG
     if (CAN==CAN1) puts("CAN1:  ");
@@ -271,7 +271,7 @@ void can_sce(CAN_TypeDef *CAN) {
 
   can_err_cnt += 1;
   llcan_clear_send(CAN);
-  exit_critical_section();
+  EXIT_CRITICAL();
 }
 
 // ***************************** CAN *****************************
@@ -279,7 +279,7 @@ void can_sce(CAN_TypeDef *CAN) {
 void process_can(uint8_t can_number) {
   if (can_number != 0xffU) {
 
-    enter_critical_section();
+    ENTER_CRITICAL();
 
     CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
     uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
@@ -327,7 +327,7 @@ void process_can(uint8_t can_number) {
       }
     }
 
-    exit_critical_section();
+    EXIT_CRITICAL();
   }
 }
 
