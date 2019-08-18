@@ -354,6 +354,9 @@ class Panda(object):
   def enter_bootloader(self):
     try:
       self._handle.controlWrite(Panda.REQUEST_OUT, 0xd1, 0, 0, b'')
+    except (usb1.USBErrorNoDevice):
+      # Device will disconnect and reconnect, so this error is expected
+      pass
     except Exception as e:
       print(e)
       pass
