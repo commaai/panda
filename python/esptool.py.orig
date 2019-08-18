@@ -25,61 +25,17 @@ import hashlib
 import inspect
 import json
 import os
-#import serial
+import serial
 import struct
 import subprocess
 import sys
 import tempfile
 import time
-import traceback
-import usb1
 
 
 __version__ = "1.3"
 
 PYTHON2 = sys.version_info[0] < 3  # True if on pre-Python 3
-
-
-class FakePort(object):
-  def __init__(self, serial=None):
-    from panda import Panda
-    self.panda = Panda(serial)
-
-    # will only work on new st, old ones will stay @ 921600
-    self.baudrate = 230400
-
-  @property
-  def baudrate(self):
-    return self._baudrate
-
-  @baudrate.setter
-  def baudrate(self, x):
-    print("set baud to", x)
-    self.panda.set_uart_baud(1, x)
-
-  def write(self, buf):
-    SEND_STEP = 0x20
-    for i in range(0, len(buf), SEND_STEP):
-      self.panda.serial_write(1, buf[i:i+SEND_STEP])
-
-  def flushInput(self):
-    self.panda.serial_clear(1)
-
-  def flushOutput(self):
-    self.panda.serial_clear(1)
-
-  def read(self, llen):
-    ret = self.panda._handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, 1, 0, 1)
-    if ret == '':
-      time.sleep(0.1)
-      ret = self.panda._handle.controlRead(usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE, 0xe0, 1, 0, 1)
-    return str(ret)
-
-  def reset(self):
-    self.panda.esp_reset(1)
-
-  def inWaiting(self):
-    return False
 
 
 class ESPROM(object):
@@ -115,8 +71,8 @@ class ESPROM(object):
     # Flash sector size, minimum unit of erase.
     ESP_FLASH_SECTOR = 0x1000
 
-    def __init__(self, port=None, baud=ESP_ROM_BAUD):
-        self._port = FakePort(port)
+    def __init__(self, port=0, baud=ESP_ROM_BAUD):
+        self._port = serial.serial_for_url(port)
         self._slip_reader = slip_reader(self._port)
         # setting baud rate in a separate step is a workaround for
         # CH341 driver on some Linux versions (this opens at 9600 then
@@ -186,7 +142,6 @@ class ESPROM(object):
                 # issue reset-to-bootloader:
                 # RTS = either CH_PD or nRESET (both active low = chip in reset)
                 # DTR = GPIO0 (active low = boot to flasher)
-                """
                 self._port.setDTR(False)
                 self._port.setRTS(True)
                 time.sleep(0.05)
@@ -194,8 +149,6 @@ class ESPROM(object):
                 self._port.setRTS(False)
                 time.sleep(0.05)
                 self._port.setDTR(False)
-                """
-                self._port.reset()
 
                 # worst-case latency timer should be 255ms (probably <20ms)
                 self._port.timeout = 0.3
@@ -1138,7 +1091,7 @@ def main():
     parser.add_argument(
         '--port', '-p',
         help='Serial port device',
-        default=os.environ.get('ESPTOOL_PORT', None))
+        default=os.environ.get('ESPTOOL_PORT', '/dev/ttyUSB0'))
 
     parser.add_argument(
         '--baud', '-b',
