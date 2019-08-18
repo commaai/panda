@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import os
 import time
 
@@ -27,7 +28,7 @@ def ensure_st_up_to_date():
       panda_dfu = PandaDFU(panda_dfu[0])
       panda_dfu.recover()
 
-    print "waiting for board..."
+    print("waiting for board...")
     time.sleep(1)
 
   if panda.bootstub or not panda.get_version().startswith(repo_version):
