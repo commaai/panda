@@ -4,7 +4,7 @@ import sys
 import time
 import requests
 import json
-import StringIO
+from io import BytesIO
 
 def flash_release(path=None, st_serial=None):
   from panda import Panda, PandaDFU, ESPROM, CesantaFlasher
@@ -29,7 +29,7 @@ def flash_release(path=None, st_serial=None):
     url = json.loads(r.text)['url']
     r = requests.get(url)
     print("Fetching firmware from %s" % url)
-    path = StringIO.StringIO(r.content)
+    path = BytesIO(r.content)
 
   zf = ZipFile(path)
   zf.printdir()
