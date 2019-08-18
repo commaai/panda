@@ -9,7 +9,7 @@ def msg(x):
     ret = chr(len(x)) + x
   else:
     assert False
-  return ret.ljust(8, "\x00")
+  return ret.ljust(8, b'\x00')
 
 kmsgs = []
 def recv(panda, cnt, addr, nbus):
@@ -40,7 +40,7 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
     dat = msg[3:]
 
     # 0 block size?
-    CONTINUE = chr(subaddr) + "\x30" + "\x00"*6
+    CONTINUE = chr(subaddr) + b'\x30' + b'\x00'*6
     panda.can_send(sendaddr, CONTINUE, bus)
 
     idx = 1
@@ -80,17 +80,17 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None):
     sends = []
     while len(x) > 0:
       if subaddr:
-        sends.append(((chr(subaddr) + chr(0x20 + (idx&0xF)) + x[0:6]).ljust(8, "\x00")))
+        sends.append(((chr(subaddr) + chr(0x20 + (idx&0xF)) + x[0:6]).ljust(8, b'\x00')))
         x = x[6:]
       else:
-        sends.append(((chr(0x20 + (idx&0xF)) + x[0:7]).ljust(8, "\x00")))
+        sends.append(((chr(0x20 + (idx&0xF)) + x[0:7]).ljust(8, b'\x00')))
         x = x[7:]
       idx += 1
 
     # actually send
     panda.can_send(addr, ss, bus)
     rr = recv(panda, 1, recvaddr, bus)[0]
-    if rr.find("\x30\x01") != -1:
+    if rr.find(b'\x30\x01') != -1:
       for s in sends[:-1]:
         panda.can_send(addr, s, 0)
         rr = recv(panda, 1, recvaddr, bus)[0]
@@ -113,7 +113,7 @@ def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
       dat = msg[2:]
 
       # 0 block size?
-      CONTINUE = "\x30" + "\x00"*7
+      CONTINUE = b'\x30' + b'\x00'*7
 
       panda.can_send(sendaddr, CONTINUE, bus)
 

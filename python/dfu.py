@@ -53,21 +53,21 @@ class PandaDFU(object):
   def status(self):
     while 1:
       dat = str(self._handle.controlRead(0x21, DFU_GETSTATUS, 0, 0, 6))
-      if dat[1] == "\x00":
+      if dat[1] == b'\x00':
         break
 
   def clear_status(self):
     # Clear status
     stat = str(self._handle.controlRead(0x21, DFU_GETSTATUS, 0, 0, 6))
-    if stat[4] == "\x0a":
+    if stat[4] == b'\x0a':
       self._handle.controlRead(0x21, DFU_CLRSTATUS, 0, 0, 0)
-    elif stat[4] == "\x09":
+    elif stat[4] == b'\x09':
       self._handle.controlWrite(0x21, DFU_ABORT, 0, 0, "")
       self.status()
     stat = str(self._handle.controlRead(0x21, DFU_GETSTATUS, 0, 0, 6))
 
   def erase(self, address):
-    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, "\x41" + struct.pack("I", address))
+    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b'\x41' + struct.pack("I", address))
     self.status()
 
   def program(self, address, dat, block_size=None):
@@ -75,11 +75,11 @@ class PandaDFU(object):
       block_size = len(dat)
 
     # Set Address Pointer
-    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, "\x21" + struct.pack("I", address))
+    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b'\x21' + struct.pack("I", address))
     self.status()
 
     # Program
-    dat += "\xFF"*((block_size-len(dat)) % block_size)
+    dat += b'\xFF'*((block_size-len(dat)) % block_size)
     for i in range(0, len(dat)/block_size):
       ldat = dat[i*block_size:(i+1)*block_size]
       print("programming %d with length %d" % (i, len(ldat)))
@@ -112,7 +112,7 @@ class PandaDFU(object):
 
   def reset(self):
     # **** Reset ****
-    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, "\x21" + struct.pack("I", 0x8000000))
+    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b'\x21' + struct.pack("I", 0x8000000))
     self.status()
     try:
       self._handle.controlWrite(0x21, DFU_DNLOAD, 2, 0, "")

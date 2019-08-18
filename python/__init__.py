@@ -226,7 +226,7 @@ class Panda(object):
   def flash_static(handle, code):
     # confirm flasher is present
     fr = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
-    assert fr[4:8] == "\xde\xad\xd0\x0d"
+    assert fr[4:8] == b'\xde\xad\xd0\x0d'
 
     # unlock flash
     print("flash: unlocking")
@@ -364,10 +364,10 @@ class Panda(object):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
 
   def is_grey(self):
-    return self.get_type() == "\x02"
+    return self.get_type() == b'\x02'
 
   def is_black(self):
-    return self.get_type() == "\x03"
+    return self.get_type() == b'\x03'
 
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
