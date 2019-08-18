@@ -3,6 +3,7 @@ import os
 import usb1
 import struct
 import time
+import codecs
 
 # *** DFU mode ***
 
@@ -46,9 +47,8 @@ class PandaDFU(object):
   def st_serial_to_dfu_serial(st):
     if st == None or st == "none":
       return None
-    uid_base = struct.unpack("H"*6, st.decode("hex"))
-    return struct.pack("!HHH", uid_base[1] + uid_base[5], uid_base[0] + uid_base[4] + 0xA, uid_base[3]).encode("hex").upper()
-
+    uid_base = struct.unpack("H"*6, codecs.decode(st, "hex"))
+    return codecs.encode(struct.pack("!HHH", uid_base[1] + uid_base[5], uid_base[0] + uid_base[4] + 0xA, uid_base[3]), "hex").decode("utf-8").upper()
 
   def status(self):
     while 1:

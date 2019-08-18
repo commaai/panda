@@ -34,7 +34,7 @@ def flash_release(path=None, st_serial=None):
   zf = ZipFile(path)
   zf.printdir()
 
-  version = zf.read("version")
+  version = zf.read("version").decode("utf-8")
   status("0. Preparing to flash "+version)
 
   code_bootstub = zf.read("bootstub.panda.bin")

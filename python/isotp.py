@@ -1,10 +1,11 @@
 from __future__ import print_function
+import codecs
 
 DEBUG = False
 
 def msg(x):
   if DEBUG:
-    print("S:",x.encode("hex"))
+    print("S:",codecs.encode(x, "hex"))
   if len(x) <= 7:
     ret = chr(len(x)) + x
   else:
@@ -54,7 +55,7 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
     tlen = ord(msg[1]) & 0xf
     dat = msg[2:]
   else:
-    print(msg.encode("hex"))
+    print(codecs.encode(msg, "hex"))
     assert False
 
   return dat[0:tlen]
@@ -131,7 +132,7 @@ def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
     dat = dat[0:tlen]
 
   if DEBUG:
-    print("R:",dat.encode("hex"))
+    print("R:",codecs.encode(dat, "hex"))
 
   return dat
 
