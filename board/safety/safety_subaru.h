@@ -18,7 +18,7 @@ static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
-  if ((addr == 0x119 || addr == 0x371) && (bus == 0)){
+  if (((addr == 0x119) || (addr == 0x371)) && (bus == 0)){
     int bit_shift = (addr == 0x119) ? 16 : 29;
     int torque_driver_new = ((GET_BYTES_04(to_push) >> bit_shift) & 0x7FF);
     torque_driver_new = to_signed(torque_driver_new, 11);
@@ -27,7 +27,7 @@ static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if ((addr == 0x240 || addr == 0x144) && (bus == 0)) {
+  if (((addr == 0x240) || (addr == 0x144)) && (bus == 0)) {
     int bit_shift = (addr == 0x240) ? 9 : 17;
     int cruise_engaged = ((GET_BYTES_48(to_push) >> bit_shift) & 1);
     if (cruise_engaged && !subaru_cruise_engaged_last) {
@@ -45,7 +45,7 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
 
   // steer cmd checks
-  if (addr == 0x122 || addr == 0x164) {
+  if ((addr == 0x122) || (addr == 0x164)) {
     int bit_shift = (addr == 0x122) ? 16 : 8;
     int desired_torque = ((GET_BYTES_04(to_send) >> bit_shift) & 0x1FFF);
     int violation = 0;
@@ -89,7 +89,7 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       subaru_ts_last = ts;
     }
 
-    if (violation) {
+    if (violation != 0) {
       tx = 0;
     }
 
