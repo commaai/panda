@@ -55,13 +55,13 @@ void disable_interrupts(void) {
 }
 
 #define ENTER_CRITICAL()                              \
-  uint8_t critical_depth = 0;                         \
+  uint8_t critical_depth = 0U;                        \
   __disable_irq();                                    \
-  critical_depth += 1;
+  critical_depth += 1U;
 
 #define EXIT_CRITICAL()                               \
-  critical_depth -= 1;                                \
-  if ((critical_depth == 0) && interrupts_enabled) {  \
+  critical_depth -= 1U;                               \
+  if ((critical_depth == 0U) && interrupts_enabled) { \
     __enable_irq();                                   \
   }
 
