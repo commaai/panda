@@ -86,7 +86,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
   }
   if ((bus == 2) && (addr == 0x1FA)) {
-    honda_stock_aeb = GET_BYTE(to_push, 4) & 0x20;
+    honda_stock_aeb = GET_BYTE(to_push, 3) & 0x20;
     honda_stock_brake = (GET_BYTE(to_push, 0) << 2) + (GET_BYTE(to_push, 1) & 0x3);
   }
 }
