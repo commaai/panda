@@ -4,6 +4,7 @@ import time
 import random
 import subprocess
 import requests
+import thread
 from functools import wraps
 from panda import Panda
 from nose.tools import timed, assert_equal, assert_less, assert_greater
@@ -200,6 +201,14 @@ def panda_type_to_serial(fn):
     return fn(serials, **kwargs)
   return wrapper
 
+def heartbeat_thread(p):
+  while True:
+    try:
+      p.send_heartbeat()
+      time.sleep(1)
+    except:
+      break
+
 def panda_connect_and_init(fn):
   @wraps(fn)
   def wrapper(panda_serials=None, **kwargs):
@@ -221,6 +230,7 @@ def panda_connect_and_init(fn):
       for bus, speed in [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL), (3, SPEED_GMLAN)]:
         panda.set_can_speed_kbps(bus, speed)
       clear_can_buffers(panda)
+      thread.start_new_thread(heartbeat_thread, (panda,))
 
     # Run test function
     ret = fn(*pandas, **kwargs)

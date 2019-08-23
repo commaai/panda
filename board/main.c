@@ -110,18 +110,13 @@ void set_safety_mode(uint16_t mode, int16_t param) {
   if (err == -1) {
     puts("Error: safety set mode failed\n");
   } else {
-    if (mode == SAFETY_NOOUTPUT) {
-      can_silent = ALL_CAN_SILENT;
-    } else {
-      can_silent = ALL_CAN_LIVE;
-    }
-
     switch (mode) {
         case SAFETY_NOOUTPUT:
           set_intercept_relay(false);
           if(hw_type == HW_TYPE_BLACK_PANDA){
             current_board->set_can_mode(CAN_MODE_NORMAL);
           }
+          can_silent = ALL_CAN_SILENT;
           break;
         case SAFETY_ELM327:
           set_intercept_relay(false);
@@ -129,6 +124,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
           if(hw_type == HW_TYPE_BLACK_PANDA){
             current_board->set_can_mode(CAN_MODE_OBD_CAN2);
           }
+          can_silent = ALL_CAN_BUT_MAIN_SILENT;
           break;
         default:
           set_intercept_relay(true);
@@ -136,6 +132,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
           if(hw_type == HW_TYPE_BLACK_PANDA){
             current_board->set_can_mode(CAN_MODE_NORMAL);
           }
+          can_silent = ALL_CAN_LIVE;
           break;
       }          
     if (safety_ignition_hook() != -1) {
@@ -609,11 +606,10 @@ void TIM3_IRQHandler(void) {
       pending_can_live = 0;
     }
     #ifdef DEBUG
-      //TODO: re-enable
-      //puts("** blink ");
-      //puth(can_rx_q.r_ptr); puts(" "); puth(can_rx_q.w_ptr); puts("  ");
-      //puth(can_tx1_q.r_ptr); puts(" "); puth(can_tx1_q.w_ptr); puts("  ");
-      //puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
+      puts("** blink ");
+      puth(can_rx_q.r_ptr); puts(" "); puth(can_rx_q.w_ptr); puts("  ");
+      puth(can_tx1_q.r_ptr); puts(" "); puth(can_tx1_q.w_ptr); puts("  ");
+      puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
     #endif
 
     // set green LED to be controls allowed

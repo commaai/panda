@@ -33,6 +33,7 @@ bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 // end API
 
 #define ALL_CAN_SILENT 0xFF
+#define ALL_CAN_BUT_MAIN_SILENT 0xFE
 #define ALL_CAN_LIVE 0
 
 int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_SILENT;
@@ -124,7 +125,7 @@ uint8_t bus_lookup[] = {0,1,2};
 uint8_t can_num_lookup[] = {0,1,2,-1};
 int8_t can_forwarding[] = {-1,-1,-1,-1};
 uint32_t can_speed[] = {5000, 5000, 5000, 333};
-#define CAN_MAX 3
+#define CAN_MAX 3U
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
 #define CAN_NUM_FROM_CANIF(CAN) ((CAN)==CAN1 ? 0 : ((CAN) == CAN2 ? 1 : 2))
@@ -158,9 +159,10 @@ void can_init(uint8_t can_number) {
 }
 
 void can_init_all(void) {
-  for (int i=0; i < CAN_MAX; i++) {
+  for (uint8_t i=0U; i < CAN_MAX; i++) {
     can_init(i);
   }
+  current_board->enable_can_transcievers(true);
 }
 
 void can_flip_buses(uint8_t bus1, uint8_t bus2){

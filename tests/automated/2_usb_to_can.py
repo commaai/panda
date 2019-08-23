@@ -21,9 +21,6 @@ def test_can_loopback(p):
     busses = [0,1,2]
 
   for bus in busses:
-    # send heartbeat
-    p.send_heartbeat()
-
     # set bus 0 speed to 250
     p.set_can_speed_kbps(bus, 250)
 
@@ -48,9 +45,6 @@ def test_safety_nooutput(p):
   # enable output mode
   p.set_safety_mode(Panda.SAFETY_NOOUTPUT)
 
-  # send heartbeat
-  p.send_heartbeat()
-
   # enable CAN loopback mode
   p.set_can_loopback(True)
 
@@ -73,17 +67,11 @@ def test_reliability(p):
   p.set_can_loopback(True)
   p.set_can_speed_kbps(0, 1000)
 
-  # send heartbeat
-  p.send_heartbeat()
-
   addrs = range(100, 100+MSG_COUNT)
   ts = [(j, 0, "\xaa"*8, 0) for j in addrs]
 
   # 100 loops
   for i in range(LOOP_COUNT):
-    # send heartbeat
-    p.send_heartbeat()
-
     st = time.time()
 
     p.can_send_many(ts)
@@ -112,9 +100,6 @@ def test_throughput(p):
   # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
-  # send heartbeat
-  p.send_heartbeat()
-
   # enable CAN loopback mode
   p.set_can_loopback(True)
 
@@ -122,9 +107,6 @@ def test_throughput(p):
     # set bus 0 speed to speed
     p.set_can_speed_kbps(0, speed)
     time.sleep(0.05)
-
-    # send heartbeat
-    p.send_heartbeat()
 
     comp_kbps = time_many_sends(p, 0)
 
@@ -145,9 +127,6 @@ def test_gmlan(p):
   # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
-  # send heartbeat
-  p.send_heartbeat()
-
   # enable CAN loopback mode
   p.set_can_loopback(True)
 
@@ -157,9 +136,6 @@ def test_gmlan(p):
 
   # set gmlan on CAN2
   for bus in [Panda.GMLAN_CAN2, Panda.GMLAN_CAN3, Panda.GMLAN_CAN2, Panda.GMLAN_CAN3]:
-    # send heartbeat
-    p.send_heartbeat()
-
     p.set_gmlan(bus)
     comp_kbps_gmlan = time_many_sends(p, 3)
     assert_greater(comp_kbps_gmlan, 0.8 * SPEED_GMLAN)
@@ -182,17 +158,11 @@ def test_gmlan_bad_toggle(p):
   # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
-  # send heartbeat
-  p.send_heartbeat()
-
   # enable CAN loopback mode
   p.set_can_loopback(True)
 
   # GMLAN_CAN2
   for bus in [Panda.GMLAN_CAN2, Panda.GMLAN_CAN3]:
-    # send heartbeat
-    p.send_heartbeat()
-
     p.set_gmlan(bus)
     comp_kbps_gmlan = time_many_sends(p, 3)
     assert_greater(comp_kbps_gmlan, 0.6 * SPEED_GMLAN)
@@ -200,9 +170,6 @@ def test_gmlan_bad_toggle(p):
 
   # normal
   for bus in [Panda.GMLAN_CAN2, Panda.GMLAN_CAN3]:
-    # send heartbeat
-    p.send_heartbeat()
-
     p.set_gmlan(None)
     comp_kbps_normal = time_many_sends(p, bus)
     assert_greater(comp_kbps_normal, 0.6 * SPEED_NORMAL)

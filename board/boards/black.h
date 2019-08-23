@@ -23,8 +23,9 @@ void black_enable_can_transciever(uint8_t transciever, bool enabled) {
 }
 
 void black_enable_can_transcievers(bool enabled) {
-  for(uint8_t i=1; i<=4U; i++)
+  for(uint8_t i=1U; i<=4U; i++){
     black_enable_can_transciever(i, enabled);
+  }
 }
 
 void black_set_led(uint8_t color, bool enabled) {

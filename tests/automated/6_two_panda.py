@@ -11,11 +11,9 @@ from helpers import time_many_sends, test_two_panda, test_two_black_panda, panda
 @panda_connect_and_init
 def test_send_recv(p_send, p_recv):
   p_send.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  p_recv.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   p_send.set_can_loopback(False)
   p_recv.set_can_loopback(False)
-
-  # send heartbeat
-  p_send.send_heartbeat()
 
   assert not p_send.legacy
   assert not p_recv.legacy
@@ -29,9 +27,6 @@ def test_send_recv(p_send, p_recv):
 
   for bus in busses:
     for speed in [100, 250, 500, 750, 1000]:
-      # send heartbeat
-      p_send.send_heartbeat()
-
       p_send.set_can_speed_kbps(bus, speed)
       p_recv.set_can_speed_kbps(bus, speed)
       time.sleep(0.05)
@@ -48,11 +43,8 @@ def test_send_recv(p_send, p_recv):
 @panda_type_to_serial
 @panda_connect_and_init
 def test_latency(p_send, p_recv):
-  # send heartbeat
-  p_send.send_heartbeat()
-  p_recv.send_heartbeat()
-
   p_send.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  p_recv.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   p_send.set_can_loopback(False)
   p_recv.set_can_loopback(False)
 
@@ -68,18 +60,10 @@ def test_latency(p_send, p_recv):
   p_recv.can_recv()
   p_send.can_recv()
 
-  # send heartbeat
-  p_send.send_heartbeat()  
-  p_recv.send_heartbeat()
-
   busses = [0,1,2]
 
   for bus in busses:
     for speed in [100, 250, 500, 750, 1000]:
-      # send heartbeat
-      p_send.send_heartbeat() 
-      p_recv.send_heartbeat()
-
       p_send.set_can_speed_kbps(bus, speed)
       p_recv.set_can_speed_kbps(bus, speed)
       time.sleep(0.1)
@@ -170,8 +154,6 @@ def test_black_loopback(panda0, panda1):
 
   def _test_buses(send_panda, recv_panda, _test_array):
     for send_bus, send_obd, recv_obd, recv_buses in _test_array:
-      send_panda.send_heartbeat()
-      recv_panda.send_heartbeat()
       print("\nSend bus:", send_bus, " Send OBD:", send_obd, " Recv OBD:", recv_obd)
       
       # set OBD on pandas

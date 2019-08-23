@@ -7,6 +7,9 @@ if __name__ == "__main__":
   pandas = []
   for ps in panda_serials:
     pandas.append(Panda(serial=ps))
+  if len(pandas) == 0:
+    print("No pandas connected")
+    assert False
 
   while True:
     for panda in pandas:

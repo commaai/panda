@@ -370,13 +370,13 @@ class Panda(object):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
 
   def is_white(self):
-    return self.get_type() == HW_TYPE_WHITE_PANDA
+    return self.get_type() == Panda.HW_TYPE_WHITE_PANDA
 
   def is_grey(self):
-    return self.get_type() == HW_TYPE_GREY_PANDA
+    return self.get_type() == Panda.HW_TYPE_GREY_PANDA
 
   def is_black(self):
-    return self.get_type() == HW_TYPE_BLACK_PANDA
+    return self.get_type() == Panda.HW_TYPE_BLACK_PANDA
 
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
