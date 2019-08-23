@@ -20,6 +20,9 @@ void jump_to_bootloader(void) {
 }
 
 void early(void) {
+  // Reset global critical depth
+  global_critical_depth = 0;
+
   // neccesary for DFU flashing on a non-power cycled white panda
   enable_interrupts();
 
