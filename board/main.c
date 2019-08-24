@@ -124,7 +124,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
           if(hw_type == HW_TYPE_BLACK_PANDA){
             current_board->set_can_mode(CAN_MODE_OBD_CAN2);
           }
-          can_silent = ALL_CAN_BUT_MAIN_SILENT;
+          can_silent = ALL_CAN_LIVE;
           break;
         default:
           set_intercept_relay(true);
