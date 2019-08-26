@@ -87,7 +87,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
   if ((bus == 2) && (addr == 0x1FA)) {
     honda_stock_aeb = GET_BYTE(to_push, 3) & 0x20;
-    honda_stock_brake = (GET_BYTE(to_push, 0) << 2) + (GET_BYTE(to_push, 1) & 0x3);
+    honda_stock_brake = (GET_BYTE(to_push, 0) << 2) + ((GET_BYTE(to_push, 1) >> 6) & 0x3);
   }
 }
 
@@ -117,11 +117,11 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         tx = 0;
       }
     }
-    honda_fwd_brake = (honda_stock_aeb && (brake < honda_stock_brake));
-    if (honda_fwd_brake) {
+    if (brake > 255) {
       tx = 0;
     }
-    if (brake > 255) {
+    honda_fwd_brake = (honda_stock_aeb && (brake < honda_stock_brake));
+    if (honda_fwd_brake) {
       tx = 0;
     }
   }
