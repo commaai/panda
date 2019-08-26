@@ -64,7 +64,7 @@ class TestHondaSafety(unittest.TestCase):
   def _send_brake_msg(self, brake):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x1FA << 21
-    to_send[0].RDLR = ((brake & 0x3) << 8) | ((brake & 0x3FF) >> 2)
+    to_send[0].RDLR = ((brake & 0x3) << 14) | ((brake & 0x3FF) >> 2)
 
     return to_send
 
