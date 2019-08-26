@@ -28,6 +28,7 @@ void can_set_forwarding(int from, int to);
 void can_init(uint8_t can_number);
 void can_init_all(void);
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
+void can_fwd(CAN_FIFOMailBox_TypeDef *to_fwd, uint8_t bus_number);
 bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 
 // end API
@@ -360,7 +361,7 @@ void can_rx(uint8_t can_number) {
       to_send.RDTR = to_push.RDTR;
       to_send.RDLR = to_push.RDLR;
       to_send.RDHR = to_push.RDHR;
-      can_send(&to_send, bus_fwd_num);
+      can_fwd(&to_send, bus_fwd_num);
     }
 
     safety_rx_hook(&to_push);
@@ -395,10 +396,20 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
         // TODO: why uint8 bro? only int8?
         gmlan_send_errs += !bitbang_gmlan(to_push);
       } else {
-        can_fwd_errs += !can_push(can_queues[bus_number], to_push);
+        can_send_errs += !can_push(can_queues[bus_number], to_push);
         process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
       }
     }
+  }
+}
+
+void can_fwd(CAN_FIFOMailBox_TypeDef *to_fwd, uint8_t bus_number) {
+  if ((bus_number < BUS_MAX) || ((bus_number == 3U) && (can_num_lookup[3] != 0xFFU))) {
+    // add CAN packet to send queue
+    // bus number isn't passed through
+    to_fwd->RDTR &= 0xF;
+    can_fwd_errs += !can_push(can_queues[bus_number], to_fwd);
+    process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
   }
 }
 
