@@ -110,7 +110,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
 
   // BRAKE: safety check
-  if (addr == 0x1FA) {
+  if ((addr == 0x1FA) || (bus == 0)) {
     int brake = (GET_BYTE(to_send, 0) << 2) + ((GET_BYTE(to_send, 1) >> 6) & 0x3);
     if (!current_controls_allowed || !long_controls_allowed) {
       if (brake != 0) {
