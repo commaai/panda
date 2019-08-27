@@ -645,7 +645,7 @@ void TIM3_IRQHandler(void) {
 
 int main(void) {
   // shouldn't have interrupts here, but just in case
-  __disable_irq();
+  disable_interrupts();
 
   // init early devices
   clock_init();
