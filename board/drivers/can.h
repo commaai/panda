@@ -33,7 +33,6 @@ bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 // end API
 
 #define ALL_CAN_SILENT 0xFF
-#define ALL_CAN_BUT_MAIN_SILENT 0xFE
 #define ALL_CAN_LIVE 0
 
 int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_SILENT;
@@ -62,7 +61,7 @@ int can_overflow_cnt = 0;
 
 bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   bool ret = 0;
-  
+
   ENTER_CRITICAL();
   if (q->w_ptr != q->r_ptr) {
     *elem = q->elems[q->r_ptr];
