@@ -307,6 +307,9 @@ int main(void) {
   detect_configuration();
   detect_board_type();
 
+  // init board
+  current_board->init();
+
 #ifdef PEDAL_USB
   // enable USB
   usb_init();
