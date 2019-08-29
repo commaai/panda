@@ -120,7 +120,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (brake > 255) {
       tx = 0;
     }
-    honda_fwd_brake = (honda_stock_aeb && (brake < honda_stock_brake));
+    honda_fwd_brake = (honda_stock_aeb && (honda_stock_brake >= brake));
     if (honda_fwd_brake) {
       tx = 0;
     }
@@ -190,7 +190,9 @@ static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     bool is_lkas_msg = (addr == 0xE4) || (addr == 0x194) || (addr == 0x33D);
     bool is_acc_hud_msg = (addr == 0x30C) || (addr == 0x39F);
     bool is_brake_msg = addr == 0x1FA;
-    bool block_fwd = is_lkas_msg || (is_acc_hud_msg && long_controls_allowed) || (is_brake_msg && !honda_fwd_brake && long_controls_allowed);
+    bool block_fwd = is_lkas_msg ||
+                     (is_acc_hud_msg && long_controls_allowed) ||
+                     (is_brake_msg && !honda_fwd_brake && long_controls_allowed);
     if (!block_fwd) {
       bus_fwd = 0;
     }
