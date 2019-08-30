@@ -307,7 +307,7 @@ void soft_flasher_start(void) {
   // green LED on for flashing
   current_board->set_led(LED_GREEN, 1);
 
-  __enable_irq();
+  enable_interrupts();
 
   uint64_t cnt = 0;
 
