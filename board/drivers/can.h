@@ -14,6 +14,7 @@ typedef struct {
 
 #define BUS_MAX 4U
 
+uint32_t can_lost_rx_errs = 0;
 uint32_t can_send_errs = 0;
 uint32_t can_fwd_errs = 0;
 uint32_t gmlan_send_errs = 0;
@@ -131,6 +132,7 @@ uint32_t can_speed[] = {5000, 5000, 5000, 333};
 #define CAN_NAME_FROM_CANIF(CAN) ((CAN)==CAN1 ? "CAN1" : ((CAN) == CAN2 ? "CAN2" : "CAN3"))
 #define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
 #define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
+#define ID_FROM_IR(rir) (rir & 0x4 ? rir >> 3 : rir >> 21)
 
 void process_can(uint8_t can_number);
 
@@ -298,20 +300,35 @@ void process_can(uint8_t can_number) {
           to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
           to_push.RDLR = CAN->sTxMailBox[0].TDLR;
           to_push.RDHR = CAN->sTxMailBox[0].TDHR;
-          can_send_errs += !can_push(&can_rx_q, &to_push);
+
+          // so if rx buffer is full, we count that as tx error... ?
+          if (bus_number==3)
+            gmlan_send_errs += !can_push(&can_rx_q, &to_push);
+          else
+            can_send_errs += !can_push(&can_rx_q, &to_push);
         }
 
-        if ((CAN->TSR & CAN_TSR_TERR0) == CAN_TSR_TERR0) {
-          #ifdef DEBUG
-            puts("CAN TX ERROR!\n");
-          #endif
-        }
-
-        if ((CAN->TSR & CAN_TSR_ALST0) == CAN_TSR_ALST0) {
-          #ifdef DEBUG
-            puts("CAN TX ARBITRATION LOST!\n");
-          #endif
-        }
+        /*
+        #ifdef DEBUG
+          puts("CAN TX success. Id: ");
+          puth(ID_FROM_IR(CAN->sTxMailBox[0].TIR));
+          puts(" ESR: ");
+          puth(CAN->ESR);
+          puts(" LEC: ");
+          puth((CAN->ESR & CAN_ESR_LEC_Msk)>>CAN_ESR_LEC_Pos);
+          puts(" TEC: ");
+          puth((CAN->ESR & CAN_ESR_TEC_Msk)>>CAN_ESR_TEC_Pos);
+          puts(" REC: ");
+          puth((CAN->ESR & CAN_ESR_REC_Msk)>>CAN_ESR_REC_Pos);
+          if (CAN->ESR & CAN_ESR_EWGF_Msk)
+            puts(" ERR_WARN");
+          if (CAN->ESR & CAN_ESR_EPVF_Msk)
+            puts(" ERR_PASSV");
+          if (CAN->ESR & CAN_ESR_BOFF_Msk)
+            puts(" BUS_OFF");
+          puts("\n");
+        #endif
+        */
 
         // clear interrupt
         // careful, this can also be cleared by requesting a transmission
@@ -325,6 +342,61 @@ void process_can(uint8_t can_number) {
         CAN->sTxMailBox[0].TDHR = to_send.RDHR;
         CAN->sTxMailBox[0].TDTR = to_send.RDTR;
         CAN->sTxMailBox[0].TIR = to_send.RIR;
+      }
+    } else
+    {
+      if ((CAN->TSR & CAN_TSR_TERR0) == CAN_TSR_TERR0) {
+        #ifdef DEBUG
+          puts("CAN TX ERROR! Bus #");
+          puth2(bus_number);
+          puts(" Id: ");
+          puth(ID_FROM_IR(CAN->sTxMailBox[0].TIR));
+          puts(" ESR: ");
+          puth(CAN->ESR);
+          puts(" LEC: ");
+          puth((CAN->ESR & CAN_ESR_LEC_Msk)>>CAN_ESR_LEC_Pos);
+          puts(" TEC: ");
+          puth((CAN->ESR & CAN_ESR_TEC_Msk)>>CAN_ESR_TEC_Pos);
+          puts(" REC: ");
+          puth((CAN->ESR & CAN_ESR_REC_Msk)>>CAN_ESR_REC_Pos);
+          if (CAN->ESR & CAN_ESR_EWGF_Msk)
+            puts(" ERR_WARN");
+          if (CAN->ESR & CAN_ESR_EPVF_Msk)
+            puts(" ERR_PASSV");
+          if (CAN->ESR & CAN_ESR_BOFF_Msk)
+            puts(" BUS_OFF");
+          puts("\n");
+        #endif
+        if (bus_number==3)
+          gmlan_send_errs++;
+        else
+          can_send_errs++;
+        CAN->TSR |= CAN_TSR_TERR0;
+      }
+
+      if ((CAN->TSR & CAN_TSR_ALST0) == CAN_TSR_ALST0) {
+        #ifdef DEBUG
+          puts("CAN TX ARBITRATION LOST! Bus #");
+          puth2(bus_number);
+          puts(" Id: ");
+          puth(ID_FROM_IR(CAN->sTxMailBox[0].TIR));
+          puts(" ESR: ");
+          puth(CAN->ESR);
+          puts(" LEC: ");
+          puth((CAN->ESR & CAN_ESR_LEC_Msk)>>CAN_ESR_LEC_Pos);
+          puts(" TEC: ");
+          puth((CAN->ESR & CAN_ESR_TEC_Msk)>>CAN_ESR_TEC_Pos);
+          puts(" REC: ");
+          puth((CAN->ESR & CAN_ESR_REC_Msk)>>CAN_ESR_REC_Pos);
+          if (CAN->ESR & CAN_ESR_EWGF_Msk)
+            puts(" ERR_WARN");
+          if (CAN->ESR & CAN_ESR_EPVF_Msk)
+            puts(" ERR_PASSV");
+          if (CAN->ESR & CAN_ESR_BOFF_Msk)
+            puts(" BUS_OFF");
+          puts("\n");
+        #endif
+        CAN->TSR |= CAN_TSR_ALST0;
       }
     }
 
@@ -367,7 +439,7 @@ void can_rx(uint8_t can_number) {
     safety_rx_hook(&to_push);
 
     current_board->set_led(LED_BLUE, true);
-    can_send_errs += !can_push(&can_rx_q, &to_push);
+    can_lost_rx_errs += !can_push(&can_rx_q, &to_push);
 
     // next
     CAN->RF0R |= CAN_RF0R_RFOM0;

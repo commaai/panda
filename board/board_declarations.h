@@ -8,6 +8,7 @@ typedef void (*board_set_esp_gps_mode)(uint8_t mode);
 typedef void (*board_set_can_mode)(uint8_t mode);
 typedef void (*board_usb_power_mode_tick)(uint64_t tcnt);
 typedef bool (*board_check_ignition)(void);
+typedef void (*board_set_gmlan_op_mode)(uint8_t mode);
 
 struct board {
   const char *board_type;
@@ -21,6 +22,7 @@ struct board {
   board_set_can_mode set_can_mode;
   board_usb_power_mode_tick usb_power_mode_tick;
   board_check_ignition check_ignition;
+  board_set_gmlan_op_mode set_gmlan_op_mode;
 };
 
 // ******************* Definitions ********************
@@ -52,6 +54,12 @@ struct board {
 #define CAN_MODE_GMLAN_CAN2 1U
 #define CAN_MODE_GMLAN_CAN3 2U
 #define CAN_MODE_OBD_CAN2 3U
+
+// GMLAN transceiver operation modes
+#define GMLAN_MODE_SLEEP 0U
+#define GMLAN_MODE_HIGHSPEED 1U // 100 KBps
+#define GMLAN_MODE_WAKEUP 2U // High-Voltage Wake up
+#define GMLAN_MODE_NORMAL 3U
 
 // ********************* Globals **********************
 uint8_t usb_power_mode = USB_POWER_NONE;

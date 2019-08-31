@@ -36,11 +36,10 @@ void set_power_save_state(int state) {
     }
     
     if(hw_type != HW_TYPE_BLACK_PANDA){
-      // turn on GMLAN
-      set_gpio_output(GPIOB, 14, enable);
-      set_gpio_output(GPIOB, 15, enable);
+      // Set GMLAN transceiver power save state
+      current_board->set_gmlan_op_mode(enable ? GMLAN_MODE_NORMAL : GMLAN_MODE_SLEEP);
 
-      // turn on LIN    
+      // Set LIN power save state
       set_gpio_output(GPIOB, 7, enable);
       set_gpio_output(GPIOA, 14, enable);
     }

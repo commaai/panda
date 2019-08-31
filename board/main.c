@@ -532,6 +532,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         heartbeat_counter = 0U;
         break;
       }
+    // **** 0xf4: Change GMLAN transceiver operation mode.
+    case 0xf4:
+      {
+        if(hw_type != HW_TYPE_BLACK_PANDA) {
+          current_board->set_gmlan_op_mode(setup->b.wValue.w);
+        }
+        break;
+      }
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);

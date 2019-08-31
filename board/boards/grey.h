@@ -14,5 +14,6 @@ const board board_grey = {
   .set_esp_gps_mode = white_set_esp_gps_mode,
   .set_can_mode = white_set_can_mode,
   .usb_power_mode_tick = white_usb_power_mode_tick,
-  .check_ignition = white_check_ignition
+  .check_ignition = white_check_ignition,
+  .set_gmlan_op_mode = white_set_gmlan_op_mode
 };

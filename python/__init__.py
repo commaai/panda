@@ -132,6 +132,11 @@ class Panda(object):
   GMLAN_CAN2 = 1
   GMLAN_CAN3 = 2
 
+  GMLAN_MODE_SLEEP = 0
+  GMLAN_MODE_HIGHSPEED = 1
+  GMLAN_MODE_WAKEUP = 2
+  GMLAN_MODE_NORMAL = 3
+
   REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
   REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
 
@@ -413,6 +418,10 @@ class Panda(object):
     elif bus in [Panda.GMLAN_CAN2, Panda.GMLAN_CAN3]:
       self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, 1, bus, b'')
 
+  def set_gmlan_op_mode(self, mode):
+    # TODO: check panda type
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf4, mode, 0, b'')
+
   def set_obd(self, obd):
     # TODO: check panda type
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, int(obd), 0, b'')
@@ -470,6 +479,14 @@ class Panda(object):
 
   def can_send(self, addr, dat, bus):
     self.can_send_many([[addr, None, dat, bus]])
+
+  def can_recv_non_blocking(self):
+    dat = bytearray()
+    try:
+      dat = self._handle.bulkRead(1, 0x10*256)
+    except (usb1.USBErrorIO, usb1.USBErrorOverflow):
+      print("CAN: BAD RECV")
+    return parse_can_buffer(dat)
 
   def can_recv(self):
     dat = bytearray()

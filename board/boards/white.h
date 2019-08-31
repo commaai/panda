@@ -150,6 +150,38 @@ void white_set_can_mode(uint8_t mode){
   }
 }
 
+void white_set_gmlan_op_mode(uint8_t mode){
+  switch (mode) {
+    /* GMLAN mode pins:
+        M0(B15)  M1(B14)  mode
+        =======================
+        0        0        sleep
+        1        0        100kbit
+        0        1        high voltage wakeup
+        1        1        33kbit (normal)
+    */
+    case GMLAN_MODE_SLEEP:
+      set_gpio_output(GPIOB, 14, 0);
+      set_gpio_output(GPIOB, 15, 0);
+      break;
+    case GMLAN_MODE_HIGHSPEED:
+      set_gpio_output(GPIOB, 14, 0);
+      set_gpio_output(GPIOB, 15, 1);
+      break;
+    case GMLAN_MODE_WAKEUP:
+      set_gpio_output(GPIOB, 14, 1);
+      set_gpio_output(GPIOB, 15, 0);
+      break;
+    case GMLAN_MODE_NORMAL:
+      set_gpio_output(GPIOB, 14, 1);
+      set_gpio_output(GPIOB, 15, 1);
+      break;
+    default:
+      puts("Invalid GMLAN transceiver operation mode!\n");  // set_usb_power_mode prevents assigning invalid values
+      break;
+  }
+}
+
 uint64_t marker = 0;
 void white_usb_power_mode_tick(uint64_t tcnt){
   #ifndef BOOTSTUB
@@ -248,16 +280,8 @@ void white_init(void) {
   // B12: GMLAN, ignition sense, pull up
   set_gpio_pullup(GPIOB, 12, PULL_UP);
 
-  /* GMLAN mode pins:
-      M0(B15)  M1(B14)  mode
-      =======================
-      0        0        sleep
-      1        0        100kbit
-      0        1        high voltage wakeup
-      1        1        33kbit (normal)
-  */
-  set_gpio_output(GPIOB, 14, 1);
-  set_gpio_output(GPIOB, 15, 1);
+  // GMLAN transceiver op mode
+  white_set_gmlan_op_mode(GMLAN_MODE_NORMAL);
 
   // B7: K-line enable
   set_gpio_output(GPIOB, 7, 1);
@@ -309,5 +333,6 @@ const board board_white = {
   .set_esp_gps_mode = white_set_esp_gps_mode,
   .set_can_mode = white_set_can_mode,
   .usb_power_mode_tick = white_usb_power_mode_tick,
-  .check_ignition = white_check_ignition
+  .check_ignition = white_check_ignition,
+  .set_gmlan_op_mode = white_set_gmlan_op_mode
 };
