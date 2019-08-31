@@ -200,7 +200,7 @@ static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     bool is_brake_msg = addr == 0x1FA;
     bool block_fwd = is_lkas_msg ||
                      (is_acc_hud_msg && long_controls_allowed) ||
-                     (is_brake_msg && !honda_fwd_brake && long_controls_allowed);
+                     (is_brake_msg && long_controls_allowed && !honda_fwd_brake);
     if (!block_fwd) {
       bus_fwd = 0;
     }
