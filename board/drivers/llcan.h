@@ -27,7 +27,7 @@ bool llcan_set_speed(CAN_TypeDef *CAN_obj, uint32_t speed, bool loopback, bool s
             (CAN_BTR_TS2_0 * (CAN_SEQ2-1)) |
             (can_speed_to_prescaler(speed) - 1U);
 
-  if (speed == 333) {
+  if (speed == 333U) {
     // Sync Jump Width = 2 tQ recommended for GMLAN Single Wire CAN bus according to specs (GMW3089)
     CAN_obj->BTR |= CAN_BTR_SJW_0;
   }

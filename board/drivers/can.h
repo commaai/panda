@@ -132,7 +132,7 @@ uint32_t can_speed[] = {5000, 5000, 5000, 333};
 #define CAN_NAME_FROM_CANIF(CAN) ((CAN)==CAN1 ? "CAN1" : ((CAN) == CAN2 ? "CAN2" : "CAN3"))
 #define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
 #define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
-#define ID_FROM_IR(rir) (rir & 0x4 ? rir >> 3 : rir >> 21)
+#define ID_FROM_IR(rir) ((rir) & 0x4U ? (rir) >> 3U : (rir) >> 21U)
 
 void process_can(uint8_t can_number);
 
@@ -302,7 +302,7 @@ void process_can(uint8_t can_number) {
           to_push.RDHR = CAN->sTxMailBox[0].TDHR;
 
           // so if rx buffer is full, we count that as tx error... ?
-          if (bus_number==3)
+          if (bus_number == 3U)
             gmlan_send_errs += !can_push(&can_rx_q, &to_push);
           else
             can_send_errs += !can_push(&can_rx_q, &to_push);
@@ -359,15 +359,15 @@ void process_can(uint8_t can_number) {
           puth((CAN->ESR & CAN_ESR_TEC_Msk)>>CAN_ESR_TEC_Pos);
           puts(" REC: ");
           puth((CAN->ESR & CAN_ESR_REC_Msk)>>CAN_ESR_REC_Pos);
-          if (CAN->ESR & CAN_ESR_EWGF_Msk)
+          if (CAN->ESR & CAN_ESR_EWGF_Msk != 0)
             puts(" ERR_WARN");
-          if (CAN->ESR & CAN_ESR_EPVF_Msk)
+          if (CAN->ESR & CAN_ESR_EPVF_Msk != 0)
             puts(" ERR_PASSV");
-          if (CAN->ESR & CAN_ESR_BOFF_Msk)
+          if (CAN->ESR & CAN_ESR_BOFF_Msk != 0)
             puts(" BUS_OFF");
           puts("\n");
         #endif
-        if (bus_number==3)
+        if (bus_number == 3U)
           gmlan_send_errs++;
         else
           can_send_errs++;
@@ -388,11 +388,11 @@ void process_can(uint8_t can_number) {
           puth((CAN->ESR & CAN_ESR_TEC_Msk)>>CAN_ESR_TEC_Pos);
           puts(" REC: ");
           puth((CAN->ESR & CAN_ESR_REC_Msk)>>CAN_ESR_REC_Pos);
-          if (CAN->ESR & CAN_ESR_EWGF_Msk)
+          if (CAN->ESR & CAN_ESR_EWGF_Msk != 0)
             puts(" ERR_WARN");
-          if (CAN->ESR & CAN_ESR_EPVF_Msk)
+          if (CAN->ESR & CAN_ESR_EPVF_Msk != 0)
             puts(" ERR_PASSV");
-          if (CAN->ESR & CAN_ESR_BOFF_Msk)
+          if (CAN->ESR & CAN_ESR_BOFF_Msk != 0)
             puts(" BUS_OFF");
           puts("\n");
         #endif
