@@ -247,6 +247,10 @@ int get_honda_bosch_hardware(void) {
   return honda_bosch_hardware;
 }
 
+void set_honda_fwd_brake(bool c){
+  honda_fwd_brake = c;
+}
+
 void init_tests(void){
   // get HW_TYPE from env variable set in test.sh
   hw_type = atoi(getenv("HW_TYPE"));
@@ -317,6 +321,7 @@ void init_tests_honda(void){
   honda_moving = false;
   honda_brake_pressed_prev = false;
   honda_gas_prev = 0;
+  honda_fwd_brake = false;
 }
 
 void set_gmlan_digital_output(int to_set){
