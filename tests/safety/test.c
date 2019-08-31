@@ -227,8 +227,8 @@ bool get_honda_moving(void){
   return honda_moving;
 }
 
-int get_honda_brake_prev(void){
-  return honda_brake_prev;
+bool get_honda_brake_pressed_prev(void){
+  return honda_brake_pressed_prev;
 }
 
 int get_honda_gas_prev(void){
@@ -315,7 +315,7 @@ void init_tests_subaru(void){
 void init_tests_honda(void){
   init_tests();
   honda_moving = false;
-  honda_brake_prev = 0;
+  honda_brake_pressed_prev = false;
   honda_gas_prev = 0;
 }
 

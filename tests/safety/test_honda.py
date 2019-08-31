@@ -112,9 +112,9 @@ class TestHondaSafety(unittest.TestCase):
     self.assertEqual(1, self.safety.get_honda_moving())
 
   def test_prev_brake(self):
-    self.assertFalse(self.safety.get_honda_brake_prev())
+    self.assertFalse(self.safety.get_honda_brake_pressed_prev())
     self.safety.safety_rx_hook(self._brake_msg(True))
-    self.assertTrue(self.safety.get_honda_brake_prev())
+    self.assertTrue(self.safety.get_honda_brake_pressed_prev())
 
   def test_disengage_on_brake(self):
     self.safety.set_controls_allowed(1)
