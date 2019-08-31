@@ -132,7 +132,7 @@ uint32_t can_speed[] = {5000, 5000, 5000, 333};
 #define CAN_NAME_FROM_CANIF(CAN) ((CAN)==CAN1 ? "CAN1" : ((CAN) == CAN2 ? "CAN2" : "CAN3"))
 #define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
 #define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
-#define ID_FROM_IR(rir) ((rir) & 0x4U ? (rir) >> 3U : (rir) >> 21U)
+#define ID_FROM_IR(rir) (((rir) & 0x4U) ? ((rir) >> 3U) : ((rir) >> 21U))
 
 void process_can(uint8_t can_number);
 
@@ -302,10 +302,13 @@ void process_can(uint8_t can_number) {
           to_push.RDHR = CAN->sTxMailBox[0].TDHR;
 
           // so if rx buffer is full, we count that as tx error... ?
-          if (bus_number == 3U)
-            gmlan_send_errs += !can_push(&can_rx_q, &to_push);
-          else
-            can_send_errs += !can_push(&can_rx_q, &to_push);
+          bool res = can_push(&can_rx_q, &to_push);
+          if (!res) {
+            if (bus_number == 3U)
+              gmlan_send_errs++;
+            else
+              can_send_errs++;
+          }
         }
 
         /*
@@ -343,8 +346,7 @@ void process_can(uint8_t can_number) {
         CAN->sTxMailBox[0].TDTR = to_send.RDTR;
         CAN->sTxMailBox[0].TIR = to_send.RIR;
       }
-    } else
-    {
+    } else {
       if ((CAN->TSR & CAN_TSR_TERR0) == CAN_TSR_TERR0) {
         #ifdef DEBUG
           puts("CAN TX ERROR! Bus #");
@@ -359,11 +361,11 @@ void process_can(uint8_t can_number) {
           puth((CAN->ESR & CAN_ESR_TEC_Msk)>>CAN_ESR_TEC_Pos);
           puts(" REC: ");
           puth((CAN->ESR & CAN_ESR_REC_Msk)>>CAN_ESR_REC_Pos);
-          if (CAN->ESR & CAN_ESR_EWGF_Msk != 0)
+          if ((CAN->ESR & CAN_ESR_EWGF_Msk) != 0)
             puts(" ERR_WARN");
-          if (CAN->ESR & CAN_ESR_EPVF_Msk != 0)
+          if ((CAN->ESR & CAN_ESR_EPVF_Msk) != 0)
             puts(" ERR_PASSV");
-          if (CAN->ESR & CAN_ESR_BOFF_Msk != 0)
+          if ((CAN->ESR & CAN_ESR_BOFF_Msk) != 0)
             puts(" BUS_OFF");
           puts("\n");
         #endif
@@ -388,11 +390,11 @@ void process_can(uint8_t can_number) {
           puth((CAN->ESR & CAN_ESR_TEC_Msk)>>CAN_ESR_TEC_Pos);
           puts(" REC: ");
           puth((CAN->ESR & CAN_ESR_REC_Msk)>>CAN_ESR_REC_Pos);
-          if (CAN->ESR & CAN_ESR_EWGF_Msk != 0)
+          if ((CAN->ESR & CAN_ESR_EWGF_Msk) != 0)
             puts(" ERR_WARN");
-          if (CAN->ESR & CAN_ESR_EPVF_Msk != 0)
+          if ((CAN->ESR & CAN_ESR_EPVF_Msk) != 0)
             puts(" ERR_PASSV");
-          if (CAN->ESR & CAN_ESR_BOFF_Msk != 0)
+          if ((CAN->ESR & CAN_ESR_BOFF_Msk) != 0)
             puts(" BUS_OFF");
           puts("\n");
         #endif
@@ -439,7 +441,9 @@ void can_rx(uint8_t can_number) {
     safety_rx_hook(&to_push);
 
     current_board->set_led(LED_BLUE, true);
-    can_lost_rx_errs += !can_push(&can_rx_q, &to_push);
+    bool res = can_push(&can_rx_q, &to_push);
+    if (!res)
+      can_lost_rx_errs ++;
 
     // next
     CAN->RF0R |= CAN_RF0R_RFOM0;
@@ -459,6 +463,7 @@ void CAN3_RX0_IRQHandler(void) { can_rx(2); }
 void CAN3_SCE_IRQHandler(void) { can_sce(CAN3); }
 
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
+  bool res;
   if (safety_tx_hook(to_push) != 0) {
     if (bus_number < BUS_MAX) {
       // add CAN packet to send queue
@@ -466,9 +471,13 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {
       to_push->RDTR &= 0xF;
       if ((bus_number == 3U) && (can_num_lookup[3] == 0xFFU)) {
         // TODO: why uint8 bro? only int8?
-        gmlan_send_errs += !bitbang_gmlan(to_push);
+        res = bitbang_gmlan(to_push);
+        if (!res)
+          gmlan_send_errs++;
       } else {
-        can_fwd_errs += !can_push(can_queues[bus_number], to_push);
+        res = can_push(can_queues[bus_number], to_push);
+        if (!res)
+          can_fwd_errs++;
         process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
       }
     }
