@@ -48,7 +48,7 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if ((addr == 0x122) || (addr == 0x164)) {
     int bit_shift = (addr == 0x122) ? 16 : 8;
     int desired_torque = ((GET_BYTES_04(to_send) >> bit_shift) & 0x1FFF);
-    int violation = 0;
+    bool violation = 0;
     uint32_t ts = TIM2->CNT;
     desired_torque = to_signed(desired_torque, 13);
 
@@ -89,7 +89,7 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       subaru_ts_last = ts;
     }
 
-    if (violation != 0) {
+    if (violation) {
       tx = 0;
     }
 
@@ -102,7 +102,7 @@ static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int bus_fwd = -1;
   if (bus_num == 0) {
     bus_fwd = 2;  // Camera CAN
-  } 
+  }
   if (bus_num == 2) {
     // 290 is LKAS for Global Platform
     // 356 is LKAS for outback 2015
