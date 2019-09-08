@@ -8,6 +8,7 @@
 #include "safety/safety_tesla.h"
 #include "safety/safety_gm_ascm.h"
 #include "safety/safety_gm.h"
+#include "safety/safety_gm_passive.h"
 #include "safety/safety_ford.h"
 #include "safety/safety_cadillac.h"
 #include "safety/safety_hyundai.h"
@@ -55,6 +56,7 @@ typedef struct {
 #define SAFETY_TESLA 8U
 #define SAFETY_CHRYSLER 9U
 #define SAFETY_SUBARU 10U
+#define SAFETY_GM_PASSIVE 11U
 #define SAFETY_GM_ASCM 0x1334U
 #define SAFETY_TOYOTA_IPAS 0x1335U
 #define SAFETY_ALLOUTPUT 0x1337U
@@ -72,6 +74,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_CHRYSLER, &chrysler_hooks},
   {SAFETY_SUBARU, &subaru_hooks},
   {SAFETY_TOYOTA_IPAS, &toyota_ipas_hooks},
+  {SAFETY_GM_PASSIVE, &gm_passive_hooks},
   {SAFETY_GM_ASCM, &gm_ascm_hooks},
   {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
