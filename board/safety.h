@@ -8,7 +8,6 @@
 #include "safety/safety_tesla.h"
 #include "safety/safety_gm_ascm.h"
 #include "safety/safety_gm.h"
-#include "safety/safety_gm_passive.h"
 #include "safety/safety_ford.h"
 #include "safety/safety_cadillac.h"
 #include "safety/safety_hyundai.h"
