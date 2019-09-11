@@ -13,7 +13,7 @@ const int TOYOTA_MAX_RT_DELTA = 375;      // max delta torque allowed for real t
 const uint32_t TOYOTA_RT_INTERVAL = 250000;    // 250ms between real time checks
 
 // longitudinal limits
-const int TOYOTA_MAX_ACCEL = 1500;        // 1.5 m/s2
+const int TOYOTA_MAX_ACCEL = 3000;        // 3.0 m/s2
 const int TOYOTA_MIN_ACCEL = -3000;       // 3.0 m/s2
 
 const int TOYOTA_GAS_INTERCEPTOR_THRESHOLD = 475;  // ratio between offset and gain from dbc file
