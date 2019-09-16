@@ -10,6 +10,7 @@
   #include "boards/white.h"
   #include "boards/grey.h"
   #include "boards/black.h"
+  #include "boards/uno.h"
 #else
   #include "boards/pedal.h"
 #endif
@@ -25,7 +26,9 @@ void detect_board_type(void) {
       current_board = &board_grey;
     } else {
       hw_type = HW_TYPE_BLACK_PANDA;
-      current_board = &board_black;
+      // TODO: Add it the proper way
+      //current_board = &board_black;
+      current_board = &board_uno;
     }
   #else
     #ifdef PEDAL
