@@ -13,6 +13,7 @@
 #include "drivers/llcan.h"
 #include "drivers/llgpio.h"
 #include "drivers/adc.h"
+#include "drivers/pwm.h"
 
 #include "board.h"
 

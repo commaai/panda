@@ -128,6 +128,10 @@ void uno_set_usb_switch(bool phone){
   set_gpio_output(GPIOB, 3, phone);
 }
 
+void uno_set_ir_power(uint8_t percentage){
+  pwm_set(TIM4, 2, percentage);
+}
+
 void uno_init(void) {
   common_init_gpio();
 
@@ -160,6 +164,11 @@ void uno_init(void) {
 
   // Turn on phone regulator
   set_gpio_output(GPIOB, 4, 1);
+
+  // Initialize IR PWM and set to 0
+  set_gpio_alternate(GPIOB, 7, GPIO_AF2_TIM4);
+  pwm_init(TIM4, 2);
+  uno_set_ir_power(0);
 
   // Initialize harness
   harness_init();
