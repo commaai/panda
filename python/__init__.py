@@ -140,6 +140,7 @@ class Panda(object):
   HW_TYPE_GREY_PANDA = '\x02'
   HW_TYPE_BLACK_PANDA = '\x03'
   HW_TYPE_PEDAL = '\x04'
+  HW_TYPE_UNO = '\x05'
 
   def __init__(self, serial=None, claim=True):
     self._serial = serial
@@ -377,6 +378,9 @@ class Panda(object):
 
   def is_black(self):
     return self.get_type() == Panda.HW_TYPE_BLACK_PANDA
+
+  def is_uno(self):
+    return self.get_type() == Panda.HW_TYPE_UNO
 
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)

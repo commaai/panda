@@ -137,6 +137,11 @@ void uno_set_ir_power(uint8_t percentage){
   pwm_set(TIM4, 2, percentage);
 }
 
+uint32_t uno_read_current(void){
+  // No current sense on Uno
+  return 0U;
+}
+
 void uno_init(void) {
   common_init_gpio();
 
@@ -234,5 +239,6 @@ const board board_uno = {
   .set_esp_gps_mode = uno_set_esp_gps_mode,
   .set_can_mode = uno_set_can_mode,
   .usb_power_mode_tick = uno_usb_power_mode_tick,
-  .check_ignition = uno_check_ignition
+  .check_ignition = uno_check_ignition,
+  .read_current = uno_read_current
 };

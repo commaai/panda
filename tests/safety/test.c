@@ -58,6 +58,7 @@ TIM_TypeDef *TIM2 = &timer;
 #define HW_TYPE_GREY_PANDA 2U
 #define HW_TYPE_BLACK_PANDA 3U
 #define HW_TYPE_PEDAL 4U
+#define HW_TYPE_UNO 5U
 
 // from main_declarations.h
 uint8_t hw_type = 0U;

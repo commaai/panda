@@ -60,6 +60,11 @@ bool pedal_check_ignition(void){
   return false;
 }
 
+uint32_t pedal_read_current(void){
+  // No current sense on pedal
+  return 0U;
+}
+
 void pedal_init(void) {
   common_init_gpio();
 
@@ -93,4 +98,5 @@ const board board_pedal = {
   .set_can_mode = pedal_set_can_mode,
   .usb_power_mode_tick = pedal_usb_power_mode_tick,
   .check_ignition = pedal_check_ignition,
+  .read_current = pedal_read_current
 };

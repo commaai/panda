@@ -35,11 +35,13 @@ void set_power_save_state(int state) {
       current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
     }
     
-    if(hw_type != HW_TYPE_BLACK_PANDA){
+    if(board_has_gmlan()){
       // turn on GMLAN
       set_gpio_output(GPIOB, 14, enable);
       set_gpio_output(GPIOB, 15, enable);
+    }
 
+    if(board_has_lin()){
       // turn on LIN    
       set_gpio_output(GPIOB, 7, enable);
       set_gpio_output(GPIOA, 14, enable);

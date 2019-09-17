@@ -24,11 +24,12 @@ void detect_board_type(void) {
     } else if(detect_with_pull(GPIOA, 13, PULL_DOWN)) { // Rev AB deprecated, so no pullup means black. In REV C, A13 is pulled up to 5V with a 10K
       hw_type = HW_TYPE_GREY_PANDA;
       current_board = &board_grey;
+    } else if(!detect_with_pull(GPIOB, 15, PULL_UP)) {
+      hw_type = HW_TYPE_UNO;
+      current_board = &board_uno;
     } else {
       hw_type = HW_TYPE_BLACK_PANDA;
-      // TODO: Add it the proper way
-      //current_board = &board_black;
-      current_board = &board_uno;
+      current_board = &board_black;
     }
   #else
     #ifdef PEDAL
@@ -64,5 +65,17 @@ void detect_configuration(void) {
 
 // ///// Board functions ///// //
 bool board_has_gps(void) {
-  return ((hw_type == HW_TYPE_GREY_PANDA) || (hw_type == HW_TYPE_BLACK_PANDA));
+  return ((hw_type == HW_TYPE_GREY_PANDA) || (hw_type == HW_TYPE_BLACK_PANDA) || (hw_type == HW_TYPE_UNO));
+}
+
+bool board_has_gmlan(void) {
+  return ((hw_type == HW_TYPE_WHITE_PANDA) || (hw_type == HW_TYPE_GREY_PANDA));
+}
+
+bool board_has_obd(void) {
+  return ((hw_type == HW_TYPE_BLACK_PANDA) || (hw_type == HW_TYPE_UNO));
+}
+
+bool board_has_lin(void) {
+  return ((hw_type == HW_TYPE_WHITE_PANDA) || (hw_type == HW_TYPE_GREY_PANDA));
 }

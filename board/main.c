@@ -114,7 +114,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
     switch (mode) {
         case SAFETY_NOOUTPUT:
           set_intercept_relay(false);
-          if(hw_type == HW_TYPE_BLACK_PANDA){
+          if(board_has_obd()){
             current_board->set_can_mode(CAN_MODE_NORMAL);
           }
           can_silent = ALL_CAN_SILENT;
@@ -122,7 +122,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
         case SAFETY_ELM327:
           set_intercept_relay(false);
           heartbeat_counter = 0U;
-          if(hw_type == HW_TYPE_BLACK_PANDA){
+          if(board_has_obd()){
             current_board->set_can_mode(CAN_MODE_OBD_CAN2);
           }
           can_silent = ALL_CAN_LIVE;
@@ -130,7 +130,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
         default:
           set_intercept_relay(true);
           heartbeat_counter = 0U;
-          if(hw_type == HW_TYPE_BLACK_PANDA){
+          if(board_has_obd()){
             current_board->set_can_mode(CAN_MODE_NORMAL);
           }
           can_silent = ALL_CAN_LIVE;
@@ -173,13 +173,8 @@ int get_health_pkt(void *dat) {
 
   // Avoid needing floating point math
   health->voltage_pkt = (voltage * 8862U) / 1000U;
-
-  // No current sense on panda black
-  if(hw_type != HW_TYPE_BLACK_PANDA){
-    health->current_pkt = adc_get(ADCCHAN_CURRENT);
-  } else {
-    health->current_pkt = 0;
-  }
+  
+  health->current_pkt = current_board->read_current();
 
   int safety_ignition = safety_ignition_hook();
   if (safety_ignition < 0) {
@@ -340,7 +335,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
     case 0xdb:
-      if(hw_type == HW_TYPE_BLACK_PANDA){
+      if(board_has_obd()){
         if (setup->b.wValue.w == 1U) {
           // Enable OBD CAN
           current_board->set_can_mode(CAN_MODE_OBD_CAN2);
@@ -687,8 +682,7 @@ int main(void) {
     uart_init(USART1, 115200);
   }
 
-  // there is no LIN on panda black
-  if(hw_type != HW_TYPE_BLACK_PANDA){
+  if(board_has_lin()){
     // enable LIN
     uart_init(UART5, 10400);
     UART5->CR2 |= USART_CR2_LINEN;

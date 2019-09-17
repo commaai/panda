@@ -124,6 +124,11 @@ bool black_check_ignition(void){
   return harness_check_ignition();
 }
 
+uint32_t black_read_current(void){
+  // No current sense on black panda
+  return 0U;
+}
+
 void black_init(void) {
   common_init_gpio();
 
@@ -202,5 +207,6 @@ const board board_black = {
   .set_esp_gps_mode = black_set_esp_gps_mode,
   .set_can_mode = black_set_can_mode,
   .usb_power_mode_tick = black_usb_power_mode_tick,
-  .check_ignition = black_check_ignition
+  .check_ignition = black_check_ignition,
+  .read_current = black_read_current
 };

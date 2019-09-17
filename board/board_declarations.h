@@ -8,6 +8,7 @@ typedef void (*board_set_esp_gps_mode)(uint8_t mode);
 typedef void (*board_set_can_mode)(uint8_t mode);
 typedef void (*board_usb_power_mode_tick)(uint64_t tcnt);
 typedef bool (*board_check_ignition)(void);
+typedef uint32_t (*board_read_current)(void);
 
 struct board {
   const char *board_type;
@@ -21,6 +22,7 @@ struct board {
   board_set_can_mode set_can_mode;
   board_usb_power_mode_tick usb_power_mode_tick;
   board_check_ignition check_ignition;
+  board_read_current read_current;
 };
 
 // ******************* Definitions ********************
@@ -30,6 +32,7 @@ struct board {
 #define HW_TYPE_GREY_PANDA 2U
 #define HW_TYPE_BLACK_PANDA 3U
 #define HW_TYPE_PEDAL 4U
+#define HW_TYPE_UNO 5U
 
 // LED colors
 #define LED_RED 0U
