@@ -163,7 +163,7 @@ void uno_init(void) {
   set_gpio_output(GPIOC, 10, 1);
   set_gpio_output(GPIOC, 11, 1);
 
-  // C8: FAN aka TIM3_CH3
+  // C8: FAN PWM aka TIM3_CH3
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
 
   // Turn on GPS load switch.
@@ -179,6 +179,10 @@ void uno_init(void) {
   set_gpio_alternate(GPIOB, 7, GPIO_AF2_TIM4);
   pwm_init(TIM4, 2);
   uno_set_ir_power(0);
+
+  // Initialize fan and set to 0
+  fan_init();
+  fan_set_power(0);
 
   // Initialize harness
   harness_init();

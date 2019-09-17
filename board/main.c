@@ -592,8 +592,8 @@ uint64_t tcnt = 0;
 
 // called once per second
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void TIM3_IRQHandler(void) {
-  if (TIM3->SR != 0) {
+void TIM1_BRK_TIM9_IRQHandler(void) {
+  if (TIM9->SR != 0) {
     can_live = pending_can_live;
 
     current_board->usb_power_mode_tick(tcnt);
@@ -610,6 +610,10 @@ void TIM3_IRQHandler(void) {
       puth(can_tx1_q.r_ptr); puts(" "); puth(can_tx1_q.w_ptr); puts("  ");
       puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
     #endif
+
+    // Tick fan driver
+    fan_tick();
+    //puts("Fan speed: "); puth((unsigned int) fan_rpm); puts("rpm\n");
 
     // set green LED to be controls allowed
     current_board->set_led(LED_GREEN, controls_allowed);
@@ -634,7 +638,7 @@ void TIM3_IRQHandler(void) {
     // on to the next one
     tcnt += 1U;
   }
-  TIM3->SR = 0;
+  TIM9->SR = 0;
 }
 
 int main(void) {
@@ -724,10 +728,9 @@ int main(void) {
     set_power_save_state(POWER_SAVE_STATUS_ENABLED);
   }*/
 #endif
-
-  // 48mhz / 65536 ~= 732 / 732 = 1
-  timer_init(TIM3, 732);
-  NVIC_EnableIRQ(TIM3_IRQn);
+  // 1hz
+  timer_init(TIM9, 1464);
+  NVIC_EnableIRQ(TIM1_BRK_TIM9_IRQn);
 
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");

@@ -1,3 +1,5 @@
+#define PWM_COUNTER_OVERFLOW 3744 // To get ~25kHz
+
 void pwm_init(TIM_TypeDef *TIM, uint8_t channel){
     // Enable timer and auto-reload
     TIM->CR1 = TIM_CR1_CEN | TIM_CR1_ARPE;
@@ -24,13 +26,16 @@ void pwm_init(TIM_TypeDef *TIM, uint8_t channel){
             break;
     }
 
+    // Set max counter value
+    TIM->ARR = PWM_COUNTER_OVERFLOW;
+
     // Update registers and clear counter
     TIM->EGR |= TIM_EGR_UG;
 }
 
 // TODO: Implement for 32-bit timers
 void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage){
-    uint16_t comp_value = (((uint16_t) percentage) * 655U);
+    uint16_t comp_value = (((uint16_t) percentage * PWM_COUNTER_OVERFLOW) / 100U);
     switch(channel){
         case 1U:
             TIM->CCR1 = comp_value;
