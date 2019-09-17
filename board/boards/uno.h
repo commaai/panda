@@ -124,6 +124,10 @@ bool uno_check_ignition(void){
   return harness_check_ignition();
 }
 
+void uno_set_usb_switch(bool phone){
+  set_gpio_output(GPIOB, 3, phone);
+}
+
 void uno_init(void) {
   common_init_gpio();
 
@@ -178,6 +182,14 @@ void uno_init(void) {
 
   // init multiplexer
   can_set_obd(car_harness_status, false);
+
+  // Switch to phone usb mode if harness connection is powered by less than 7V
+  uint32_t harness_voltage = (adc_get(ADCCHAN_VOLTAGE) * 8862U) / 1000U;
+  if(harness_voltage < 7000U){
+    uno_set_usb_switch(true);
+  } else {
+    uno_set_usb_switch(false);
+  }
 }
 
 const harness_configuration uno_harness_config = {
