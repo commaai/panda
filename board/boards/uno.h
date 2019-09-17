@@ -114,9 +114,14 @@ void uno_set_can_mode(uint8_t mode){
   }
 }
 
-void uno_usb_power_mode_tick(uint64_t tcnt){
-  UNUSED(tcnt);
-  // Not applicable
+void uno_set_bootkick(bool enabled){
+  set_gpio_output(GPIOB, 14, !enabled);
+}
+
+void uno_usb_power_mode_tick(uint64_t tcnt){  
+  if(tcnt == 3){
+    uno_set_bootkick(false);
+  }
 }
 
 bool uno_check_ignition(void){
@@ -199,6 +204,9 @@ void uno_init(void) {
   } else {
     uno_set_usb_switch(false);
   }
+
+  // Bootkick phone
+  uno_set_bootkick(true);
 }
 
 const harness_configuration uno_harness_config = {
