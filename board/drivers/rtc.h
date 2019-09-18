@@ -14,7 +14,7 @@ typedef struct __attribute__((packed)) timestamp_t {
 } timestamp_t;
 
 uint8_t to_bcd(uint16_t value){
-    return (((value / 10U) & 0x0F) << 4U) & ((value % 10U) & 0x0F);
+    return (((value / 10U) & 0x0F) << 4U) | ((value % 10U) & 0x0F);
 }
 
 uint16_t from_bcd(uint8_t value){
@@ -24,6 +24,7 @@ uint16_t from_bcd(uint8_t value){
 void rtc_init(void){
     // Initialize RTC module and clock if not done already.
     if((RCC->BDCR & RCC_BDCR_MASK) != RCC_BDCR_OPTIONS){
+        puts("Initializing RTC\n");
         // Reset backup domain
         RCC->BDCR |= RCC_BDCR_BDRST;
 
@@ -34,7 +35,7 @@ void rtc_init(void){
         RCC->BDCR &= ~(RCC_BDCR_BDRST);
 
         // Set RTC options
-        RCC->BDCR = RCC_BDCR_OPTIONS & (RCC->BDCR & (~RCC_BDCR_MASK));
+        RCC->BDCR = RCC_BDCR_OPTIONS | (RCC->BDCR & (~RCC_BDCR_MASK));
 
         // Enable write protection
         PWR->CR &= ~(PWR_CR_DBP);
@@ -42,7 +43,10 @@ void rtc_init(void){
 }
 
 void rtc_set_time(timestamp_t time){
+    puts("Setting RTC time\n");
+
     // Disable write protection
+    PWR->CR |= PWR_CR_DBP;
     RTC->WPR = 0xCA;
     RTC->WPR = 0x53;
 
@@ -65,6 +69,7 @@ void rtc_set_time(timestamp_t time){
 
     // Re-enable write protection
     RTC->WPR = 0x00;
+    PWR->CR &= ~(PWR_CR_DBP);
 }
 
 timestamp_t rtc_get_time(void){
