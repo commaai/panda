@@ -1,5 +1,6 @@
 # python library to interface with panda
 from __future__ import print_function
+import datetime
 import binascii
 import struct
 import hashlib
@@ -592,3 +593,19 @@ class Panda(object):
 
   def send_heartbeat(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf3, 0, 0, b'')
+
+  # ******************* RTC *******************
+  def set_datetime(self, dt):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa1, dt.year, 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa2, dt.month, 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa3, dt.day, 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa4, dt.isoweekday(), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa5, dt.hour, 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa6, dt.minute, 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa7, dt.second, 0, b'')
+
+  def get_datetime(self):
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xa0, 0, 0, 8)
+    a = struct.unpack("HBBBBBB", dat)
+    return datetime.datetime(a[0], a[1], a[2], a[4], a[5], a[6])
+

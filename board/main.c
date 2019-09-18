@@ -195,6 +195,12 @@ int get_health_pkt(void *dat) {
   return sizeof(*health);
 }
 
+int get_rtc_pkt(void *dat) {
+  timestamp_t t = rtc_get_time();
+  memcpy(dat, &t, sizeof(t));
+  return sizeof(t);
+}
+
 int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;
@@ -247,7 +253,54 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
   int i;
+  timestamp_t t;
   switch (setup->b.bRequest) {
+    // **** 0xa0: get rtc time
+    case 0xa0:
+      resp_len = get_rtc_pkt(resp);
+      break;
+    // **** 0xa1: set rtc year
+    case 0xa1:
+      t = rtc_get_time();
+      t.year = setup->b.wValue.w;
+      rtc_set_time(t);
+      break;
+    // **** 0xa2: set rtc month
+    case 0xa2:
+      t = rtc_get_time();
+      t.month = setup->b.wValue.w;
+      rtc_set_time(t);
+      break;
+    // **** 0xa3: set rtc day
+    case 0xa3:
+      t = rtc_get_time();
+      t.day = setup->b.wValue.w;
+      rtc_set_time(t);
+      break;
+    // **** 0xa4: set rtc weekday
+    case 0xa4:
+      t = rtc_get_time();
+      t.weekday = setup->b.wValue.w;
+      rtc_set_time(t);
+      break;
+    // **** 0xa5: set rtc hour
+    case 0xa5:
+      t = rtc_get_time();
+      t.hour = setup->b.wValue.w;
+      rtc_set_time(t);
+      break;
+    // **** 0xa6: set rtc minute
+    case 0xa6:
+      t = rtc_get_time();
+      t.minute = setup->b.wValue.w;
+      rtc_set_time(t);
+      break;
+    // **** 0xa7: set rtc second
+    case 0xa7:
+      t = rtc_get_time();
+      t.second = setup->b.wValue.w;
+      rtc_set_time(t);
+      break;
     // **** 0xc0: get CAN debug info
     case 0xc0:
       puts("can tx: "); puth(can_tx_cnt);

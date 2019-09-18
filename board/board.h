@@ -7,6 +7,7 @@
 // ///// Board definition and detection ///// //
 #include "drivers/harness.h"
 #include "drivers/fan.h"
+#include "drivers/rtc.h"
 #ifdef PANDA
   #include "boards/white.h"
   #include "boards/grey.h"
@@ -65,6 +66,7 @@ void detect_configuration(void) {
 }
 
 // ///// Board functions ///// //
+// TODO: Make these config options in the board struct
 bool board_has_gps(void) {
   return ((hw_type == HW_TYPE_GREY_PANDA) || (hw_type == HW_TYPE_BLACK_PANDA) || (hw_type == HW_TYPE_UNO));
 }
@@ -79,4 +81,8 @@ bool board_has_obd(void) {
 
 bool board_has_lin(void) {
   return ((hw_type == HW_TYPE_WHITE_PANDA) || (hw_type == HW_TYPE_GREY_PANDA));
+}
+
+bool board_has_rtc(void) {
+  return (hw_type == HW_TYPE_UNO);
 }
