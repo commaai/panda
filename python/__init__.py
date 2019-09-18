@@ -607,7 +607,5 @@ class Panda(object):
   def get_datetime(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xa0, 0, 0, 8)
     a = struct.unpack("HBBBBBB", dat)
-    print(str(a))
-    #return datetime.datetime(a[0], a[1], a[2], a[4], a[5], a[6])
-    return 0
+    return datetime.datetime(a[0], a[1], a[2], a[4], a[5], a[6])
 

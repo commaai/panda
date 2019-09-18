@@ -9,4 +9,4 @@ from python import Panda
 if __name__ == "__main__":
   p = Panda()
   p.set_datetime(datetime.datetime.now())
-  p.get_datetime()
+  print(p.get_datetime())
