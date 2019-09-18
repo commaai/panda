@@ -197,7 +197,7 @@ int get_health_pkt(void *dat) {
 
 int get_rtc_pkt(void *dat) {
   timestamp_t t = rtc_get_time();
-  memcpy(dat, &t, sizeof(t));
+  (void)memcpy(dat, &t, sizeof(t));
   return sizeof(t);
 }
 

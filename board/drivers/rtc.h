@@ -1,7 +1,7 @@
 #define RCC_BDCR_OPTIONS (RCC_BDCR_RTCEN | RCC_BDCR_RTCSEL_0 | RCC_BDCR_LSEON)
 #define RCC_BDCR_MASK (RCC_BDCR_RTCEN | RCC_BDCR_RTCSEL | RCC_BDCR_LSEMOD | RCC_BDCR_LSEBYP | RCC_BDCR_LSEON)
 
-#define YEAR_OFFSET 2000
+#define YEAR_OFFSET 2000U
 
 typedef struct __attribute__((packed)) timestamp_t {
   uint16_t year;
@@ -14,11 +14,11 @@ typedef struct __attribute__((packed)) timestamp_t {
 } timestamp_t;
 
 uint8_t to_bcd(uint16_t value){
-    return (((value / 10U) & 0x0F) << 4U) | ((value % 10U) & 0x0F);
+    return (((value / 10U) & 0x0FU) << 4U) | ((value % 10U) & 0x0FU);
 }
 
 uint16_t from_bcd(uint8_t value){
-    return (((value & 0xF0) >> 4U) * 10U) + (value & 0x0F);
+    return (((value & 0xF0U) >> 4U) * 10U) + (value & 0x0FU);
 }
 
 void rtc_init(void){
@@ -85,7 +85,7 @@ timestamp_t rtc_get_time(void){
     result.year = from_bcd((date & (RTC_DR_YT | RTC_DR_YU)) >> RTC_DR_YU_Pos) + YEAR_OFFSET;
     result.month = from_bcd((date & (RTC_DR_MT | RTC_DR_MU)) >> RTC_DR_MU_Pos);
     result.day = from_bcd((date & (RTC_DR_DT | RTC_DR_DU)) >> RTC_DR_DU_Pos);
-    result.weekday = ((date & RTC_DR_WDU >> RTC_DR_WDU_Pos));
+    result.weekday = ((date & RTC_DR_WDU) >> RTC_DR_WDU_Pos);
     result.hour = from_bcd((time & (RTC_TR_HT | RTC_TR_HU)) >> RTC_TR_HU_Pos);
     result.minute = from_bcd((time & (RTC_TR_MNT | RTC_TR_MNU)) >> RTC_TR_MNU_Pos);
     result.second = from_bcd((time & (RTC_TR_ST | RTC_TR_SU)) >> RTC_TR_SU_Pos);

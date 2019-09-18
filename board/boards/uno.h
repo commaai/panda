@@ -119,7 +119,7 @@ void uno_set_bootkick(bool enabled){
 }
 
 void uno_usb_power_mode_tick(uint64_t tcnt){  
-  if(tcnt == 3){
+  if(tcnt == 3U){
     uno_set_bootkick(false);
   }
 }
