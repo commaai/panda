@@ -47,6 +47,11 @@ void set_power_save_state(int state) {
       set_gpio_output(GPIOA, 14, enable);
     }
 
+    // Switch IR and fan
+    // TODO: Remove powering these back up. Should be done on device
+    current_board->set_ir_power(enable ? 100U : 0U);
+    current_board->set_fan_power(enable ? 50U : 0U);
+
     power_save_status = state;
   }
 }
