@@ -309,6 +309,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xb1:
       current_board->set_fan_power(setup->b.wValue.w);
       break;
+    // **** 0xb2: get fan rpm
+    case 0xb2:
+      resp[0] = (fan_rpm & 0x00FFU);
+      resp[1] = ((fan_rpm & 0xFF00U) >> 8U);
+      resp_len = 2;
+      break;
     // **** 0xc0: get CAN debug info
     case 0xc0:
       puts("can tx: "); puth(can_tx_cnt);

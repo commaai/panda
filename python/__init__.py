@@ -609,3 +609,15 @@ class Panda(object):
     a = struct.unpack("HBBBBBB", dat)
     return datetime.datetime(a[0], a[1], a[2], a[4], a[5], a[6])
 
+  # ******************* IR *******************
+  def set_ir_power(self, percentage):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb0, int(percentage), 0, b'')
+
+  # ******************* Fan ******************
+  def set_fan_power(self, percentage):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb1, int(percentage), 0, b'')
+
+  def get_fan_rpm(self):
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xb2, 0, 0, 2)
+    a = struct.unpack("H", dat)
+    return a[0]

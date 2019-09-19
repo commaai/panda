@@ -6,9 +6,9 @@
 
 // ///// Board definition and detection ///// //
 #include "drivers/harness.h"
-#include "drivers/fan.h"
-#include "drivers/rtc.h"
 #ifdef PANDA
+  #include "drivers/fan.h"
+  #include "drivers/rtc.h"
   #include "boards/white.h"
   #include "boards/grey.h"
   #include "boards/black.h"
