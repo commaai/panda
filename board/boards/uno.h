@@ -38,7 +38,7 @@ void uno_set_led(uint8_t color, bool enabled) {
       break;
     case LED_BLUE:
       set_gpio_output(GPIOC, 6, !enabled);
-      break;  
+      break;
     default:
       break;
   }
@@ -106,7 +106,7 @@ void uno_set_can_mode(uint8_t mode){
         // B12,B13: OBD mode
         set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
         set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
-      }      
+      }
       break;
     default:
       puts("Tried to set unsupported CAN mode: "); puth(mode); puts("\n");
@@ -118,7 +118,7 @@ void uno_set_bootkick(bool enabled){
   set_gpio_output(GPIOB, 14, !enabled);
 }
 
-void uno_usb_power_mode_tick(uint64_t tcnt){  
+void uno_usb_power_mode_tick(uint64_t tcnt){
   if(tcnt == 3U){
     uno_set_bootkick(false);
   }
@@ -187,9 +187,9 @@ void uno_init(void) {
   pwm_init(TIM4, 2);
   uno_set_ir_power(100U);
 
-  // Initialize fan and set to 0
+  // Initialize fan and set to 50%
   fan_init();
-  uno_set_fan_power(0U);
+  uno_set_fan_power(50U);
 
   // Initialize harness
   harness_init();
