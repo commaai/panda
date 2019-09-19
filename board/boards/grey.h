@@ -15,5 +15,7 @@ const board board_grey = {
   .set_can_mode = white_set_can_mode,
   .usb_power_mode_tick = white_usb_power_mode_tick,
   .check_ignition = white_check_ignition,
-  .read_current = white_read_current
+  .read_current = white_read_current,
+  .set_fan_power = white_set_fan_power,
+  .set_ir_power = white_set_ir_power
 };

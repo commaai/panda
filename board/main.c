@@ -301,6 +301,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       t.second = setup->b.wValue.w;
       rtc_set_time(t);
       break;
+    // **** 0xb0: set IR power
+    case 0xb0:
+      current_board->set_ir_power(setup->b.wValue.w);
+      break;
+    // **** 0xb1: set fan power
+    case 0xb1:
+      current_board->set_fan_power(setup->b.wValue.w);
+      break;
     // **** 0xc0: get CAN debug info
     case 0xc0:
       puts("can tx: "); puth(can_tx_cnt);

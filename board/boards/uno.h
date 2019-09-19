@@ -137,6 +137,10 @@ void uno_set_ir_power(uint8_t percentage){
   pwm_set(TIM4, 2, percentage);
 }
 
+void uno_set_fan_power(uint8_t percentage){
+  fan_set_power(percentage);
+}
+
 uint32_t uno_read_current(void){
   // No current sense on Uno
   return 0U;
@@ -178,14 +182,14 @@ void uno_init(void) {
   // Turn on phone regulator
   set_gpio_output(GPIOB, 4, 1);
 
-  // Initialize IR PWM and set to 0
+  // Initialize IR PWM and set to 100% for now
   set_gpio_alternate(GPIOB, 7, GPIO_AF2_TIM4);
   pwm_init(TIM4, 2);
-  uno_set_ir_power(0);
+  uno_set_ir_power(100U);
 
   // Initialize fan and set to 0
   fan_init();
-  fan_set_power(0);
+  uno_set_fan_power(0U);
 
   // Initialize harness
   harness_init();
@@ -247,5 +251,7 @@ const board board_uno = {
   .set_can_mode = uno_set_can_mode,
   .usb_power_mode_tick = uno_usb_power_mode_tick,
   .check_ignition = uno_check_ignition,
-  .read_current = uno_read_current
+  .read_current = uno_read_current,
+  .set_fan_power = uno_set_fan_power,
+  .set_ir_power = uno_set_ir_power
 };

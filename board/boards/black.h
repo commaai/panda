@@ -129,6 +129,14 @@ uint32_t black_read_current(void){
   return 0U;
 }
 
+void black_set_ir_power(uint8_t percentage){
+  UNUSED(percentage);
+}
+
+void black_set_fan_power(uint8_t percentage){
+  UNUSED(percentage);
+}
+
 void black_init(void) {
   common_init_gpio();
 
@@ -205,5 +213,7 @@ const board board_black = {
   .set_can_mode = black_set_can_mode,
   .usb_power_mode_tick = black_usb_power_mode_tick,
   .check_ignition = black_check_ignition,
-  .read_current = black_read_current
+  .read_current = black_read_current,
+  .set_fan_power = black_set_fan_power,
+  .set_ir_power = black_set_ir_power
 };
