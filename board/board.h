@@ -37,7 +37,7 @@ void detect_board_type(void) {
     #ifdef PEDAL
       hw_type = HW_TYPE_PEDAL;
       current_board = &board_pedal;
-    #else 
+    #else
       hw_type = HW_TYPE_UNKNOWN;
       puts("Hardware type is UNKNOWN!\n");
     #endif
@@ -85,4 +85,8 @@ bool board_has_lin(void) {
 
 bool board_has_rtc(void) {
   return (hw_type == HW_TYPE_UNO);
+}
+
+bool board_has_relay(void) {
+  return ((hw_type == HW_TYPE_BLACK_PANDA) || (hw_type == HW_TYPE_UNO));
 }
