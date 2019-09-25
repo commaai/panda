@@ -190,8 +190,8 @@ class TestHyundaiSafety(unittest.TestCase):
 
   def test_fwd_hook(self):
 
-    buss = range(0x0, 0x3)
-    msgs = range(0x1, 0x800)
+    buss = list(range(0x0, 0x3))
+    msgs = list(range(0x1, 0x800))
     hyundai_giraffe_switch_2 = [0, 1]
 
     self.safety.set_hyundai_camera_bus(2)

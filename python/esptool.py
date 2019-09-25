@@ -114,7 +114,7 @@ class ESPROM(object):
 
     """ Read a SLIP packet from the serial port """
     def read(self):
-        return self._slip_reader.next()
+        return next(self._slip_reader)
 
     """ Write bytes to the serial port while performing SLIP escaping """
     def write(self, packet):
@@ -991,7 +991,7 @@ def elf2image(args):
 
 def read_mac(esp, args):
     mac = esp.read_mac()
-    print('MAC: %s' % ':'.join(map(lambda x: '%02x' % x, mac)))
+    print('MAC: %s' % ':'.join(['%02x' % x for x in mac]))
 
 
 def chip_id(esp, args):
@@ -1203,7 +1203,7 @@ def main():
         'version', help='Print esptool version')
 
     # internal sanity check - every operation matches a module function of the same name
-    for operation in subparsers.choices.keys():
+    for operation in list(subparsers.choices.keys()):
         assert operation in globals(), "%s should be a module function" % operation
 
     args = parser.parse_args()

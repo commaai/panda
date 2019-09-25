@@ -4,7 +4,7 @@
 # Tests all buses, including OBD CAN, which is on the same bus as CAN0 in this test.
 # To be sure, the test should be run with both harness orientations
 
-from __future__ import print_function
+
 import os
 import sys
 import time

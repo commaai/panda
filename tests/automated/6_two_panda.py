@@ -1,10 +1,10 @@
-from __future__ import print_function
+
 import os
 import time
 import random
 from panda import Panda
 from nose.tools import assert_equal, assert_less, assert_greater
-from helpers import time_many_sends, test_two_panda, test_two_black_panda, panda_type_to_serial, clear_can_buffers, panda_connect_and_init
+from .helpers import time_many_sends, test_two_panda, test_two_black_panda, panda_type_to_serial, clear_can_buffers, panda_connect_and_init
 
 @test_two_panda
 @panda_type_to_serial

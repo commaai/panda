@@ -4,7 +4,7 @@ import time
 import random
 import subprocess
 import requests
-import thread
+import _thread
 from functools import wraps
 from panda import Panda
 from nose.tools import timed, assert_equal, assert_less, assert_greater
@@ -75,7 +75,7 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
         print("WIFI: scanning %d" % cnt)
         os.system("iwlist %s scanning > /dev/null" % wlan_interface)
         os.system("nmcli device wifi rescan")
-        wifi_scan = filter(lambda x: ssid in x, subprocess.check_output(["nmcli","dev", "wifi", "list"]).split("\n"))
+        wifi_scan = [x for x in subprocess.check_output(["nmcli","dev", "wifi", "list"]).split("\n") if ssid in x]
         if len(wifi_scan) != 0:
           break
         time.sleep(0.1)
@@ -153,11 +153,11 @@ def time_many_sends(p, bus, precv=None, msg_count=100, msg_id=None, two_pandas=F
     while len(r_echo) < r_echo_len_exected and (time.time() - st) < 10:
       r_echo.extend(p.can_recv())
 
-  sent_echo = filter(lambda x: x[3] == 0x80 | bus and x[0] == msg_id, r)
-  sent_echo.extend(filter(lambda x: x[3] == 0x80 | bus and x[0] == msg_id, r_echo))
-  resp = filter(lambda x: x[3] == bus and x[0] == msg_id, r)
+  sent_echo = [x for x in r if x[3] == 0x80 | bus and x[0] == msg_id]
+  sent_echo.extend([x for x in r_echo if x[3] == 0x80 | bus and x[0] == msg_id])
+  resp = [x for x in r if x[3] == bus and x[0] == msg_id]
 
-  leftovers = filter(lambda x: (x[3] != 0x80 | bus and x[3] != bus) or x[0] != msg_id, r)
+  leftovers = [x for x in r if (x[3] != 0x80 | bus and x[3] != bus) or x[0] != msg_id]
   assert_equal(len(leftovers), 0)
 
   assert_equal(len(resp), msg_count)
@@ -230,7 +230,7 @@ def panda_connect_and_init(fn):
       for bus, speed in [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL), (3, SPEED_GMLAN)]:
         panda.set_can_speed_kbps(bus, speed)
       clear_can_buffers(panda)
-      thread.start_new_thread(heartbeat_thread, (panda,))
+      _thread.start_new_thread(heartbeat_thread, (panda,))
 
     # Run test function
     ret = fn(*pandas, **kwargs)

@@ -65,11 +65,11 @@ class Info():
 
 def PrintUnique(log_file, low_range, high_range):
   # find messages with bits that are always low
-  start, end = map(float, low_range.split('-'))
+  start, end = list(map(float, low_range.split('-')))
   low = Info()
   low.load(log_file, start, end)
   # find messages with bits that are always high
-  start, end = map(float, high_range.split('-'))
+  start, end = list(map(float, high_range.split('-')))
   high = Info()
   high.load(log_file, start, end)
   # print messages that go from low to high

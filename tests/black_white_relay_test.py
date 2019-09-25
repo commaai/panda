@@ -3,7 +3,7 @@
 # Relay test with loopback between black panda (+ harness and power) and white/grey panda
 # Tests the relay switching multiple times / second by looking at the buses on which loop occurs.
 
-from __future__ import print_function
+
 import os
 import sys
 import time

@@ -24,7 +24,7 @@ def recv(panda, cnt, addr, nbus):
         # leave around
         nmsgs.append((ids, ts, dat, bus))
     kmsgs = nmsgs[-256:]
-  return map(str, ret)
+  return list(map(str, ret))
 
 def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
   msg = recv(panda, 1, addr, bus)[0]

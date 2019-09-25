@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import requests
 import json
-from automated.helpers import _connect_wifi
+from .automated.helpers import _connect_wifi
 from panda import Panda
 from nose.tools import assert_equal
 

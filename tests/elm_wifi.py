@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import os
 import sys
 import time
@@ -8,7 +8,7 @@ import pytest
 import struct
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-import elm_car_simulator
+from . import elm_car_simulator
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
 from panda import Panda
 
