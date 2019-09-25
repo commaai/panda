@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 import requests
 import json
 from automated.helpers import _connect_wifi
