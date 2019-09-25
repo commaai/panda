@@ -7,7 +7,7 @@ from Crypto.PublicKey import RSA
 
 rsa = RSA.importKey(open(sys.argv[3]).read())
 
-with open(sys.argv[1]) as f:
+with open(sys.argv[1], "rb") as f:
   dat = f.read()
 
 print("signing", len(dat), "bytes")

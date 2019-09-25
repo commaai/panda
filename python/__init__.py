@@ -479,7 +479,7 @@ class Panda(object):
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD RECV, RETRYING")
-	time.sleep(0.1)
+        time.sleep(0.1)
     return parse_can_buffer(dat)
 
   def can_clear(self, bus):
