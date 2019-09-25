@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Used to Reverse/Test ELM protocol auto detect and OBD message response without a car."""
 from __future__ import print_function
 import sys

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Loopback test between black panda (+ harness and power) and white/grey panda
 # Tests all buses, including OBD CAN, which is on the same bus as CAN0 in this test.

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Given an interesting CSV file of CAN messages and a list of background CAN
 # messages, print which bits in the interesting file have never appeared

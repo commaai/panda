@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Relay test with loopback between black panda (+ harness and power) and white/grey panda
 # Tests the relay switching multiple times / second by looking at the buses on which loop occurs.
