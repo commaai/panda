@@ -232,7 +232,7 @@ class Panda(object):
   def flash_static(handle, code):
     # confirm flasher is present
     fr = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
-    assert fr[4:8] == "\xde\xad\xd0\x0d"
+    assert fr[4:8] == b"\xde\xad\xd0\x0d"
 
     # unlock flash
     print("flash: unlocking")
@@ -274,7 +274,7 @@ class Panda(object):
       fn = os.path.join(BASEDIR, "board", fn)
 
     if code is None:
-      with open(fn) as f:
+      with open(fn, "rb") as f:
         code = f.read()
 
     # get version
@@ -364,7 +364,7 @@ class Panda(object):
       pass
 
   def get_version(self):
-    return self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40)
+    return bytes(self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40)).decode('utf8')
 
   def get_type(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)

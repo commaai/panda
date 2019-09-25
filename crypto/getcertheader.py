@@ -26,7 +26,7 @@ def to_c_uint32(x):
   nums = []
   for i in range(0x20):
     nums.append(x%(2**32))
-    x /= (2**32)
+    x //= (2**32)
   return "{"+'U,'.join(map(str, nums))+"U}"
 
 for fn in sys.argv[1:]:
