@@ -27,7 +27,7 @@ def ensure_st_up_to_date():
       panda_dfu = PandaDFU(panda_dfu[0])
       panda_dfu.recover()
 
-    print "waiting for board..."
+    print("waiting for board...")
     time.sleep(1)
 
   if panda.bootstub or not panda.get_version().startswith(repo_version):
@@ -38,7 +38,7 @@ def ensure_st_up_to_date():
 
   assert(not panda.bootstub)
   version = str(panda.get_version())
-  print("%s should be %s" % (version, repo_version))
+  print(("%s should be %s" % (version, repo_version)))
   assert(version.startswith(repo_version))
 
 if __name__ == "__main__":

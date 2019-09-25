@@ -16,10 +16,10 @@ class Message():
     for i in range(len(self.ones)):
       zero_to_one = other.zeros[i] & self.ones[i]
       if zero_to_one:
-        print 'id %s 0 -> 1 at byte %d bitmask %d' % (self.message_id, i, zero_to_one)
+        print('id %s 0 -> 1 at byte %d bitmask %d' % (self.message_id, i, zero_to_one))
       one_to_zero = other.ones[i] & self.zeros[i]
       if one_to_zero:
-        print 'id %s 1 -> 0 at byte %d bitmask %d' % (self.message_id, i, one_to_zero)
+        print('id %s 1 -> 0 at byte %d bitmask %d' % (self.message_id, i, one_to_zero))
 
 
 class Info():
@@ -78,10 +78,10 @@ def PrintUnique(log_file, low_range, high_range):
     if message_id in low.messages:
       high.messages[message_id].printBitDiff(low.messages[message_id])
       found = True
-  if not found: print 'No messages that transition from always low to always high found!'
+  if not found: print('No messages that transition from always low to always high found!')
 
 if __name__ == "__main__":
   if len(sys.argv) < 4:
-    print 'Usage:\n%s log.csv <low-start>-<low-end> <high-start>-<high-end>' % sys.argv[0]
+    print('Usage:\n%s log.csv <low-start>-<low-end> <high-start>-<high-end>' % sys.argv[0])
     sys.exit(0)
   PrintUnique(sys.argv[1], sys.argv[2], sys.argv[3])

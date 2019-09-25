@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
   while True:
     for panda in pandas:
-      print(panda.health())
+      print((panda.health()))
     print("\n")
     time.sleep(0.5)
 

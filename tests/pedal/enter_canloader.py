@@ -67,10 +67,10 @@ if __name__ == "__main__":
 
   if args.fn:
     time.sleep(0.1)
-    print "flashing", args.fn
+    print("flashing", args.fn)
     code = open(args.fn).read()
     Panda.flash_static(CanHandle(p), code)
 
-  print "can flash done"
+  print("can flash done")
 
 

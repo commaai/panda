@@ -36,11 +36,11 @@ for fn in sys.argv[1:]:
 
   cname = fn.split("/")[-1].split(".")[0] + "_rsa_key"
 
-  print 'RSAPublicKey '+cname+' = {.len = 0x20,'
-  print '  .n0inv = %dU,' % n0inv
-  print '  .n = %s,' % to_c_uint32(rsa.n)
-  print '  .rr = %s,' % to_c_uint32(rr)
-  print '  .exponent = %d,' % rsa.e
-  print '};'
+  print('RSAPublicKey '+cname+' = {.len = 0x20,')
+  print('  .n0inv = %dU,' % n0inv)
+  print('  .n = %s,' % to_c_uint32(rsa.n))
+  print('  .rr = %s,' % to_c_uint32(rr))
+  print('  .exponent = %d,' % rsa.e)
+  print('};')
 
 

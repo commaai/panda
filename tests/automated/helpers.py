@@ -62,7 +62,7 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
     except:
       pass
 
-  print("WIFI: connecting to %s" % ssid)
+  print(("WIFI: connecting to %s" % ssid))
 
   while 1:
     if sys.platform == "darwin":
@@ -72,7 +72,7 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
       cnt = 0
       MAX_TRIES = 10
       while cnt < MAX_TRIES:
-        print("WIFI: scanning %d" % cnt)
+        print(("WIFI: scanning %d" % cnt))
         os.system("iwlist %s scanning > /dev/null" % wlan_interface)
         os.system("nmcli device wifi rescan")
         wifi_scan = filter(lambda x: ssid in x, subprocess.check_output(["nmcli","dev", "wifi", "list"]).split("\n"))
@@ -256,5 +256,5 @@ def clear_can_buffers(panda):
     r = panda.can_recv()
     time.sleep(0.05)
     if (time.time() - st) > 10:
-      print("Unable to clear can buffers for panda ", panda.get_serial())
+      print(("Unable to clear can buffers for panda ", panda.get_serial()))
       assert False

@@ -37,7 +37,7 @@ def replay_drive(lr, safety_mode, param):
           blocked_addrs.add(canmsg.address)
 
           if "DEBUG" in os.environ:
-            print "blocked %d at %f" % (canmsg.address, (msg.logMonoTime - start_t)/(1e9))
+            print("blocked %d at %f" % (canmsg.address, (msg.logMonoTime - start_t)/(1e9)))
         tx_controls += safety.get_controls_allowed()
         tx_tot += 1
     elif msg.which() == 'can':
@@ -48,11 +48,11 @@ def replay_drive(lr, safety_mode, param):
         to_push = package_can_msg(canmsg)
         safety.safety_rx_hook(to_push)
 
-  print "total openpilot msgs:", tx_tot
-  print "total msgs with controls allowed:", tx_controls
-  print "blocked msgs:", tx_blocked
-  print "blocked with controls allowed:", tx_controls_blocked
-  print "blocked addrs:", blocked_addrs
+  print("total openpilot msgs:", tx_tot)
+  print("total msgs with controls allowed:", tx_controls)
+  print("blocked msgs:", tx_blocked)
+  print("blocked with controls allowed:", tx_controls_blocked)
+  print("blocked addrs:", blocked_addrs)
 
   return tx_controls_blocked == 0
 
@@ -64,7 +64,7 @@ if __name__ == "__main__":
   param = 0 if len(sys.argv) < 4 else int(sys.argv[3])
   lr = LogReader(sys.argv[1])
 
-  print "replaying drive %s with safety mode %d and param %d" % (sys.argv[1], mode, param)
+  print("replaying drive %s with safety mode %d and param %d" % (sys.argv[1], mode, param))
 
   replay_drive(lr, mode, param)
 

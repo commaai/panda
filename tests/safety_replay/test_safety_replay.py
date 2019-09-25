@@ -31,11 +31,11 @@ if __name__ == "__main__":
     lr = LogReader(route)
     m = safety_modes.get(mode, mode)
 
-    print "\nreplaying %s with safety mode %d and param %s" % (route, m, param)
+    print("\nreplaying %s with safety mode %d and param %s" % (route, m, param))
     if not replay_drive(lr, m, int(param)):
       failed.append(route)
 
     for f in failed:
-      print "\n**** failed on %s ****" % f
+      print("\n**** failed on %s ****" % f)
     assert len(failed) == 0, "\nfailed on %d logs" % len(failed)
 

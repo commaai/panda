@@ -51,10 +51,10 @@ def tesla_tester():
           vin_index = int(binascii.hexlify(dat)[:2]) #first byte is the index, 00, 01, 02
           vin_string = binascii.hexlify(dat)[2:] #rest of the string is the actual VIN data
           vin[vin_index] = vin_string.decode("hex")
-          print("Got VIN index " + str(vin_index) + " data " + vin[vin_index])
+          print(("Got VIN index " + str(vin_index) + " data " + vin[vin_index]))
     #if we have all 3 parts of the VIN, print it and break out of our while loop
     if 0 in vin and 1 in vin and 2 in vin:
-      print("VIN: " + vin[0] + vin[1] + vin[2][:3])
+      print(("VIN: " + vin[0] + vin[1] + vin[2][:3]))
       break
 
 if __name__ == "__main__":
