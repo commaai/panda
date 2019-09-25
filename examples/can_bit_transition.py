@@ -13,7 +13,7 @@ class Message():
 
   def printBitDiff(self, other):
     """Prints bits that transition from always zero to always 1 and vice versa."""
-    for i in xrange(len(self.ones)):
+    for i in range(len(self.ones)):
       zero_to_one = other.zeros[i] & self.ones[i]
       if zero_to_one:
         print 'id %s 0 -> 1 at byte %d bitmask %d' % (self.message_id, i, zero_to_one)
@@ -56,7 +56,7 @@ class Info():
           new_message = True
         message = self.messages[message_id]
         bytes = bytearray.fromhex(data)
-        for i in xrange(len(bytes)):
+        for i in range(len(bytes)):
           ones = int(bytes[i])
           message.ones[i] = ones if new_message else message.ones[i] & ones
           # Inverts the data and masks it to a byte to get the zeros as ones.

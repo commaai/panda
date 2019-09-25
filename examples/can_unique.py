@@ -28,7 +28,7 @@ class Message():
 
   def printBitDiff(self, other):
     """Prints bits that are set or cleared compared to other background."""
-    for i in xrange(len(self.ones)):
+    for i in range(len(self.ones)):
       new_ones = ((~other.ones[i]) & 0xff) & self.ones[i]
       if new_ones:
         print 'id %s new one  at byte %d bitmask %d' % (
@@ -67,7 +67,7 @@ class Info():
         if data not in self.messages[message_id].data:
           message.data[data] = True
         bytes = bytearray.fromhex(data)
-        for i in xrange(len(bytes)):
+        for i in range(len(bytes)):
           message.ones[i] = message.ones[i] | int(bytes[i])
           # Inverts the data and masks it to a byte to get the zeros as ones.
           message.zeros[i] = message.zeros[i] | ( (~int(bytes[i])) & 0xff)

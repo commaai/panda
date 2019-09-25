@@ -140,7 +140,7 @@ class ESPROM(object):
         # same operation as the request or a retries limit has
         # exceeded. This is needed for some esp8266s that
         # reply with more sync responses than expected.
-        for retry in xrange(100):
+        for retry in range(100):
             p = self.read()
             if len(p) < 8:
                 continue
@@ -156,14 +156,14 @@ class ESPROM(object):
     """ Perform a connection test """
     def sync(self):
         self.command(ESPROM.ESP_SYNC, '\x07\x07\x12\x20' + 32 * '\x55')
-        for i in xrange(7):
+        for i in range(7):
             self.command()
 
     """ Try connecting repeatedly until successful, or giving up """
     def connect(self):
         print 'Connecting...'
 
-        for _ in xrange(4):
+        for _ in range(4):
             # issue reset-to-bootloader:
             # RTS = either CH_PD or nRESET (both active low = chip in reset)
             # DTR = GPIO0 (active low = boot to flasher)
@@ -180,7 +180,7 @@ class ESPROM(object):
 
             # worst-case latency timer should be 255ms (probably <20ms)
             self._port.timeout = 0.3
-            for _ in xrange(4):
+            for _ in range(4):
                 try:
                     self._port.flushInput()
                     self._slip_reader = slip_reader(self._port)
@@ -452,7 +452,7 @@ class ESPFirmwareImage(BaseFirmwareImage):
             if magic != ESPROM.ESP_IMAGE_MAGIC or segments > 16:
                 raise FatalError('Invalid firmware image magic=%d segments=%d' % (magic, segments))
 
-            for i in xrange(segments):
+            for i in range(segments):
                 self.load_segment(load_file)
             self.checksum = self.read_checksum(load_file)
 
@@ -501,7 +501,7 @@ class OTAFirmwareImage(BaseFirmwareImage):
                 raise FatalError('Invalid V2 second header magic=%d segments=%d' % (magic, segments))
 
             # load all the usual segments
-            for _ in xrange(segments):
+            for _ in range(segments):
                 self.load_segment(load_file)
             self.checksum = self.read_checksum(load_file)
 
@@ -865,7 +865,7 @@ def write_mem(esp, args):
 
 def dump_mem(esp, args):
     f = file(args.filename, 'wb')
-    for i in xrange(args.size / 4):
+    for i in range(args.size / 4):
         d = esp.read_reg(args.address + (i * 4))
         f.write(struct.pack('<I', d))
         if f.tell() % 1024 == 0:
@@ -1053,7 +1053,7 @@ def _verify_flash(flasher, args, flash_params=None):
 
         flash = flasher.flash_read(address, image_size)
         assert flash != image
-        diff = [i for i in xrange(image_size) if flash[i] != image[i]]
+        diff = [i for i in range(image_size) if flash[i] != image[i]]
         print '-- verify FAILED: %d differences, first @ 0x%08x' % (len(diff), address + diff[0])
         for d in diff:
             print '   %08x %02x %02x' % (address + d, ord(flash[d]), ord(image[d]))
