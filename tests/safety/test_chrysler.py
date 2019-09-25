@@ -3,7 +3,7 @@ import csv
 import glob
 import unittest
 import numpy as np
-import libpandasafety_py
+from . import libpandasafety_py
 
 MAX_RATE_UP = 3
 MAX_RATE_DOWN = 3
