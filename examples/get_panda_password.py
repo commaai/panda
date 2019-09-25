@@ -13,8 +13,8 @@ def get_panda_password():
 
   wifi = p.get_serial()
   #print('[%s]' % ', '.join(map(str, wifi)))
-  print(("SSID: " + wifi[0]))
-  print(("Password: " + wifi[1]))
+  print("SSID: " + wifi[0])
+  print("Password: " + wifi[1])
 
 if __name__ == "__main__":
   get_panda_password()

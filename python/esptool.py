@@ -488,14 +488,14 @@ class OTAFirmwareImage(BaseFirmwareImage):
             (magic, segments, self.flash_mode, self.flash_size_freq, self.entrypoint) = struct.unpack('<BBBBI', load_file.read(8))
 
             if first_flash_mode != self.flash_mode:
-                print(('WARNING: Flash mode value in first header (0x%02x) disagrees with second (0x%02x). Using second value.'
-                      % (first_flash_mode, self.flash_mode)))
+                print('WARNING: Flash mode value in first header (0x%02x) disagrees with second (0x%02x). Using second value.'
+                      % (first_flash_mode, self.flash_mode))
             if first_flash_size_freq != self.flash_size_freq:
-                print(('WARNING: Flash size/freq value in first header (0x%02x) disagrees with second (0x%02x). Using second value.'
-                      % (first_flash_size_freq, self.flash_size_freq)))
+                print('WARNING: Flash size/freq value in first header (0x%02x) disagrees with second (0x%02x). Using second value.'
+                      % (first_flash_size_freq, self.flash_size_freq))
             if first_entrypoint != self.entrypoint:
-                print(('WARNING: Enterypoint address in first header (0x%08x) disagrees with second header (0x%08x). Using second value.'
-                      % (first_entrypoint, self.entrypoint)))
+                print('WARNING: Enterypoint address in first header (0x%08x) disagrees with second header (0x%08x). Using second value.'
+                      % (first_entrypoint, self.entrypoint))
 
             if magic != ESPROM.ESP_IMAGE_MAGIC or segments > 16:
                 raise FatalError('Invalid V2 second header magic=%d segments=%d' % (magic, segments))
@@ -911,8 +911,8 @@ def write_flash(esp, args):
         t = time.time()
         flasher.flash_write(address, image, not args.no_progress)
         t = time.time() - t
-        print(('\rWrote %d bytes at 0x%x in %.1f seconds (%.1f kbit/s)...'
-               % (len(image), address, t, len(image) / t * 8 / 1000)))
+        print('\rWrote %d bytes at 0x%x in %.1f seconds (%.1f kbit/s)...'
+               % (len(image), address, t, len(image) / t * 8 / 1000))
     print('Leaving...')
     if args.verify:
         print('Verifying just-written flash...')
@@ -922,7 +922,7 @@ def write_flash(esp, args):
 
 def image_info(args):
     image = LoadFirmwareImage(args.filename)
-    print(('Image version: %d' % image.version))
+    print('Image version: %d' % image.version)
     print(('Entry point: %08x' % image.entrypoint) if image.entrypoint != 0 else 'Entry point not set')
     print('%d segments' % len(image.segments))
     print()
@@ -1024,8 +1024,8 @@ def read_flash(esp, args):
     t = time.time()
     data = flasher.flash_read(args.address, args.size, not args.no_progress)
     t = time.time() - t
-    print(('\rRead %d bytes at 0x%x in %.1f seconds (%.1f kbit/s)...'
-           % (len(data), args.address, t, len(data) / t * 8 / 1000)))
+    print('\rRead %d bytes at 0x%x in %.1f seconds (%.1f kbit/s)...'
+           % (len(data), args.address, t, len(data) / t * 8 / 1000))
     file(args.filename, 'wb').write(data)
 
 

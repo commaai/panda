@@ -7,7 +7,7 @@ resources = visa.ResourceManager()
 print(resources.list_resources())
 
 scope = resources.open_resource('USB0::0x1AB1::0x04CE::DS1ZA184652242::INSTR', timeout=2000, chunk_size=1024000)
-print((scope.query('*IDN?').strip()))
+print(scope.query('*IDN?').strip())
 
 #voltscale = scope.ask_for_values(':CHAN1:SCAL?')[0]
 #voltoffset = scope.ask_for_values(":CHAN1:OFFS?")[0]

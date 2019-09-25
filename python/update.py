@@ -38,7 +38,7 @@ def ensure_st_up_to_date():
 
   assert(not panda.bootstub)
   version = str(panda.get_version())
-  print(("%s should be %s" % (version, repo_version)))
+  print("%s should be %s" % (version, repo_version))
   assert(version.startswith(repo_version))
 
 if __name__ == "__main__":

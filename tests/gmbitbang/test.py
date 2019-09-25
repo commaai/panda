@@ -10,8 +10,8 @@ p1.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 p2.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
 # get versions
-print((p1.get_version()))
-print((p2.get_version()))
+print(p1.get_version())
+print(p2.get_version())
 
 # this sets bus 2 to actually be GMLAN
 p2.set_gmlan(bus=2)

@@ -62,7 +62,7 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
     except:
       pass
 
-  print(("WIFI: connecting to %s" % ssid))
+  print("WIFI: connecting to %s" % ssid)
 
   while 1:
     if sys.platform == "darwin":
@@ -72,7 +72,7 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
       cnt = 0
       MAX_TRIES = 10
       while cnt < MAX_TRIES:
-        print(("WIFI: scanning %d" % cnt))
+        print("WIFI: scanning %d" % cnt)
         os.system("iwlist %s scanning > /dev/null" % wlan_interface)
         os.system("nmcli device wifi rescan")
         wifi_scan = filter(lambda x: ssid in x, subprocess.check_output(["nmcli","dev", "wifi", "list"]).split("\n"))
@@ -176,7 +176,7 @@ def panda_type_to_serial(fn):
     if panda_type is not None:
       if not isinstance(panda_type, list):
         panda_type = [panda_type]
-    
+
     # If not done already, get panda serials and their type
     global _panda_serials
     if _panda_serials == None:
@@ -185,7 +185,7 @@ def panda_type_to_serial(fn):
         p = Panda(serial=serial)
         _panda_serials.append((serial, p.get_type()))
         p.close()
-    
+
     # Find a panda with the correct types and add the corresponding serial
     serials = []
     for p_type in panda_type:
@@ -216,7 +216,7 @@ def panda_connect_and_init(fn):
     if panda_serials is not None:
       if not isinstance(panda_serials, list):
         panda_serials = [panda_serials]
-    
+
     # Connect to pandas
     pandas = []
     for panda_serial in panda_serials:
@@ -247,7 +247,7 @@ def clear_can_buffers(panda):
   # clear tx buffers
   for i in range(4):
     panda.can_clear(i)
-  
+
   # clear rx buffers
   panda.can_clear(0xFFFF)
   r = [1]
@@ -256,5 +256,5 @@ def clear_can_buffers(panda):
     r = panda.can_recv()
     time.sleep(0.05)
     if (time.time() - st) > 10:
-      print(("Unable to clear can buffers for panda ", panda.get_serial()))
+      print("Unable to clear can buffers for panda ", panda.get_serial())
       assert False

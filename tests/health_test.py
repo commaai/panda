@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import time
 from panda import Panda
-	
+
 if __name__ == "__main__":
   panda_serials = Panda.list()
   pandas = []
@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
   while True:
     for panda in pandas:
-      print((panda.health()))
+      print(panda.health())
     print("\n")
     time.sleep(0.5)
 
