@@ -364,7 +364,7 @@ class Panda(object):
       pass
 
   def get_version(self):
-    return bytes(self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40)).decode('utf8')
+    return self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40).decode('utf8')
 
   def get_type(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
