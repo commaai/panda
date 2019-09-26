@@ -17,7 +17,10 @@ RUN apt-get update && apt-get install -y \
     gperf \
     help2man \
     iputils-ping \
+    libbz2-dev \
     libexpat-dev \
+    libffi-dev \
+    libssl-dev \
     libstdc++-arm-none-eabi-newlib \
     libtool \
     libtool-bin \
