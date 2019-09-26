@@ -9,7 +9,8 @@ RUN mkdir -p /panda/boardesp
 WORKDIR /panda/boardesp
 RUN git clone --recursive https://github.com/pfalcon/esp-open-sdk.git
 WORKDIR /panda/boardesp/esp-open-sdk
-RUN git checkout 03f5e898a059451ec5f3de30e7feff30455f7ce
+RUN git checkout c70543e57fb18e5be0315aa217bca27d0e26d23d
+RUN git submodule update --recursive
 RUN CT_ALLOW_BUILD_AS_ROOT_SURE=1 make STANDALONE=y
 
 COPY . /panda
