@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import unittest
 import numpy as np
-from . import libpandasafety_py
+import libpandasafety_py
 
 IPAS_OVERRIDE_THRESHOLD = 200
 
