@@ -1,5 +1,6 @@
 #!/bin/bash
 git clone --recursive https://github.com/pfalcon/esp-open-sdk.git
 cd esp-open-sdk
-git checkout 03f5e898a059451ec5f3de30e7feff30455f7cec
+git checkout c70543e57fb18e5be0315aa217bca27d0e26d23d
+git submodule update --recursive
 LD_LIBRARY_PATH="" make STANDALONE=y
