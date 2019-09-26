@@ -25,7 +25,7 @@ def replay_drive(lr, safety_mode, param):
   for msg in lr:
     if start_t is None:
       start_t = msg.logMonoTime
-    safety.set_timer(((msg.logMonoTime / 1000))  % 0xFFFFFFFF)
+    safety.set_timer(((msg.logMonoTime // 1000))  % 0xFFFFFFFF)
 
     if msg.which() == 'sendcan':
      for canmsg in msg.sendcan:

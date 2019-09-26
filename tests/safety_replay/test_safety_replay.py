@@ -3,8 +3,8 @@
 import os
 import requests
 
-from .helpers import safety_modes
-from .replay_drive import replay_drive
+from helpers import safety_modes
+from replay_drive import replay_drive
 from tools.lib.logreader import LogReader
 
 BASE_URL = "https://commadataci.blob.core.windows.net/openpilotci/"
@@ -23,7 +23,7 @@ logs = [
 if __name__ == "__main__":
   for route, _, _ in logs:
     if not os.path.isfile(route):
-      with open(route, "w") as f:
+      with open(route, "wb") as f:
         f.write(requests.get(BASE_URL + route).content)
 
   failed = []
