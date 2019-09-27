@@ -67,18 +67,15 @@ void black_set_esp_gps_mode(uint8_t mode) {
       // GPS OFF
       set_gpio_output(GPIOC, 14, 0);
       set_gpio_output(GPIOC, 5, 0);
-      black_set_gps_load_switch(false);
       break;
     case ESP_GPS_ENABLED:
       // GPS ON
       set_gpio_output(GPIOC, 14, 1);
       set_gpio_output(GPIOC, 5, 1);
-      black_set_gps_load_switch(true);
       break;
     case ESP_GPS_BOOTMODE:
       set_gpio_output(GPIOC, 14, 1);
       set_gpio_output(GPIOC, 5, 0);
-      black_set_gps_load_switch(true);
       break;
     default:
       puts("Invalid ESP/GPS mode\n");
@@ -106,7 +103,7 @@ void black_set_can_mode(uint8_t mode){
         // B12,B13: OBD mode
         set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
         set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
-      }      
+      }
       break;
     default:
       puts("Tried to set unsupported CAN mode: "); puth(mode); puts("\n");
