@@ -215,7 +215,7 @@ void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
   uint8_t *usbdata8 = (uint8_t *)usbdata;
   uart_ring *ur = get_ring_by_number(usbdata8[0]);
   if ((len != 0) && (ur != NULL)) {
-    if ((usbdata8[0] < 2U) || safety_tx_lin_hook(usbdata8[0] - 2U, usbdata8 + 1, len - 1)) {
+    if ((usbdata8[0] < 2U) || safety_tx_lin_hook(usbdata8[0] - 2U, &usbdata8[1], len - 1)) {
       for (int i = 1; i < len; i++) {
         while (!putc(ur, usbdata8[i])) {
           // wait
