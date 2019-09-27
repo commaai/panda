@@ -1,4 +1,4 @@
-//#define EON 
+//#define EON
 //#define PANDA
 
 // ********************* Includes *********************
@@ -134,7 +134,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
           }
           can_silent = ALL_CAN_LIVE;
           break;
-      }          
+      }
     if (safety_ignition_hook() != -1) {
       // if the ignition hook depends on something other than the started GPIO
       // we have to disable power savings (fix for GM and Tesla)
@@ -195,7 +195,7 @@ int get_health_pkt(void *dat) {
   health->can_fwd_errs_pkt = can_fwd_errs;
   health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = car_harness_status;
-  
+
   return sizeof(*health);
 }
 
@@ -346,7 +346,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         } else {
           // Disable OBD CAN
           current_board->set_can_mode(CAN_MODE_NORMAL);
-        }        
+        }
       } else {
         if (setup->b.wValue.w == 1U) {
           // GMLAN ON
@@ -362,7 +362,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         }
       }
       break;
-      
+
     // **** 0xdc: set safety mode
     case 0xdc:
       // Blocked over WiFi.
@@ -591,8 +591,8 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 uint64_t tcnt = 0;
 
 // go into NOOUTPUT when the EON does not send a heartbeat for this amount of seconds.
-#define EON_HEARTBEAT_THRESHOLD_IGNITION_ON 5U
-#define EON_HEARTBEAT_THRESHOLD_IGNITION_OFF 2U
+#define EON_HEARTBEAT_IGNITION_CNT_ON 5U
+#define EON_HEARTBEAT_IGNITION_CNT_OFF 2U
 
 // called once per second
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
@@ -629,7 +629,7 @@ void TIM3_IRQHandler(void) {
 
     // check heartbeat counter if we are running EON code. If the heartbeat has been gone for a while, go to NOOUTPUT safety mode.
     #ifdef EON
-    if (heartbeat_counter >= (current_board->check_ignition() ? EON_HEARTBEAT_THRESHOLD_IGNITION_ON : EON_HEARTBEAT_THRESHOLD_IGNITION_OFF)) {
+    if (heartbeat_counter >= (current_board->check_ignition() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
       puts("EON hasn't sent a heartbeat for 0x"); puth(heartbeat_counter); puts(" seconds. Safety is set to NOOUTPUT mode.\n");
       set_safety_mode(SAFETY_NOOUTPUT, 0U);
     }
@@ -651,7 +651,7 @@ int main(void) {
   detect_configuration();
   detect_board_type();
   adc_init();
-  
+
   // print hello
   puts("\n\n\n************************ MAIN START ************************\n");
 
