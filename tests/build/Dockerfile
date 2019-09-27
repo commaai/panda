@@ -10,6 +10,7 @@ ENV LC_ALL en_US.UTF-8
 RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
 
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
+RUN pyenv install 2.7.12
 RUN pyenv install 3.7.3
 RUN pyenv global 3.7.3
 RUN pyenv rehash
@@ -22,7 +23,8 @@ WORKDIR /panda/boardesp
 RUN git clone --recursive https://github.com/pfalcon/esp-open-sdk.git
 WORKDIR /panda/boardesp/esp-open-sdk
 RUN git checkout 03f5e898a059451ec5f3de30e7feff30455f7ce
-RUN CT_ALLOW_BUILD_AS_ROOT_SURE=1 make STANDALONE=y
+COPY ./boardesp/python2_make.py /panda/boardesp/esp-open-sdk
+RUN python2 python2_make.py "CT_ALLOW_BUILD_AS_ROOT_SURE=1 make STANDALONE=y"
 
 COPY . /panda
 
