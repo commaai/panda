@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import unittest
 import numpy as np
 import libpandasafety_py
@@ -254,8 +254,8 @@ class TestHondaSafety(unittest.TestCase):
     self.assertTrue(self.safety.safety_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))
 
   def test_fwd_hook(self):
-    buss = range(0x0, 0x3)
-    msgs = range(0x1, 0x800)
+    buss = list(range(0x0, 0x3))
+    msgs = list(range(0x1, 0x800))
     long_controls_allowed = [0, 1]
     fwd_brake = [False, True]
 

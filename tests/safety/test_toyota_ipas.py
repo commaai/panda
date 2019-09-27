@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import unittest
 import numpy as np
 import libpandasafety_py
@@ -135,7 +135,7 @@ class TestToyotaSafety(unittest.TestCase):
 
     # test angle cmd too far from actual
     angle_refs = [-10, 10]
-    deltas = range(-2, 3)
+    deltas = list(range(-2, 3))
     expected_results = [False, True, True, True, False]
 
     for a in angle_refs:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import csv
 import glob
 import unittest
@@ -181,8 +181,8 @@ class TestChryslerSafety(unittest.TestCase):
     self.assertEqual(0, self.safety.get_chrysler_torque_meas_min())
 
   def test_fwd_hook(self):
-    buss = range(0x0, 0x3)
-    msgs = range(0x1, 0x800)
+    buss = list(range(0x0, 0x3))
+    msgs = list(range(0x1, 0x800))
     chrysler_camera_detected = [0, 1]
 
     for ccd in chrysler_camera_detected:

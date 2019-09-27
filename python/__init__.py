@@ -1,5 +1,5 @@
 # python library to interface with panda
-from __future__ import print_function
+
 import binascii
 import struct
 import hashlib
@@ -9,12 +9,12 @@ import os
 import time
 import traceback
 import subprocess
-from dfu import PandaDFU
-from esptool import ESPROM, CesantaFlasher
-from flash_release import flash_release
-from update import ensure_st_up_to_date
-from serial import PandaSerial
-from isotp import isotp_send, isotp_recv
+from .dfu import PandaDFU
+from .esptool import ESPROM, CesantaFlasher
+from .flash_release import flash_release
+from .update import ensure_st_up_to_date
+from .serial import PandaSerial
+from .isotp import isotp_send, isotp_recv
 
 __version__ = '0.0.9'
 
@@ -232,7 +232,7 @@ class Panda(object):
   def flash_static(handle, code):
     # confirm flasher is present
     fr = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
-    assert fr[4:8] == "\xde\xad\xd0\x0d"
+    assert fr[4:8] == b"\xde\xad\xd0\x0d"
 
     # unlock flash
     print("flash: unlocking")
@@ -274,7 +274,7 @@ class Panda(object):
       fn = os.path.join(BASEDIR, "board", fn)
 
     if code is None:
-      with open(fn) as f:
+      with open(fn, "rb") as f:
         code = f.read()
 
     # get version
@@ -364,7 +364,7 @@ class Panda(object):
       pass
 
   def get_version(self):
-    return self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40)
+    return self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40).decode('utf8')
 
   def get_type(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
@@ -479,7 +479,7 @@ class Panda(object):
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD RECV, RETRYING")
-	time.sleep(0.1)
+        time.sleep(0.1)
     return parse_can_buffer(dat)
 
   def can_clear(self, bus):

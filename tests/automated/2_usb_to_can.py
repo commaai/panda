@@ -1,10 +1,10 @@
-from __future__ import print_function
+
 import os
 import sys
 import time
 from panda import Panda
 from nose.tools import assert_equal, assert_less, assert_greater
-from helpers import SPEED_NORMAL, SPEED_GMLAN, time_many_sends, test_white_and_grey, panda_type_to_serial, test_all_pandas, panda_connect_and_init
+from .helpers import SPEED_NORMAL, SPEED_GMLAN, time_many_sends, test_white_and_grey, panda_type_to_serial, test_all_pandas, panda_connect_and_init
 
 @test_all_pandas
 @panda_connect_and_init
@@ -30,8 +30,8 @@ def test_can_loopback(p):
     # confirm receive both on loopback and send receipt
     time.sleep(0.05)
     r = p.can_recv()
-    sr = filter(lambda x: x[3] == 0x80 | bus, r)
-    lb = filter(lambda x: x[3] == bus, r)
+    sr = [x for x in r if x[3] == 0x80 | bus]
+    lb = [x for x in r if x[3] == bus]
     assert len(sr) == 1
     assert len(lb) == 1
 
@@ -67,7 +67,7 @@ def test_reliability(p):
   p.set_can_loopback(True)
   p.set_can_speed_kbps(0, 1000)
 
-  addrs = range(100, 100+MSG_COUNT)
+  addrs = list(range(100, 100+MSG_COUNT))
   ts = [(j, 0, "\xaa"*8, 0) for j in addrs]
 
   # 100 loops
@@ -80,11 +80,11 @@ def test_reliability(p):
     while len(r) < 200 and (time.time() - st) < 0.5:
       r.extend(p.can_recv())
 
-    sent_echo = filter(lambda x: x[3] == 0x80, r)
-    loopback_resp = filter(lambda x: x[3] == 0, r)
+    sent_echo = [x for x in r if x[3] == 0x80]
+    loopback_resp = [x for x in r if x[3] == 0]
 
-    assert_equal(sorted(map(lambda x: x[0], loopback_resp)), addrs)
-    assert_equal(sorted(map(lambda x: x[0], sent_echo)), addrs)
+    assert_equal(sorted([x[0] for x in loopback_resp]), addrs)
+    assert_equal(sorted([x[0] for x in sent_echo]), addrs)
     assert_equal(len(r), 200)
 
     # take sub 20ms

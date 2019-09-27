@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import struct
 import panda.tests.safety.libpandasafety_py as libpandasafety_py
 

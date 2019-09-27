@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import unittest
 import numpy as np
 import libpandasafety_py
@@ -282,8 +282,8 @@ class TestGmSafety(unittest.TestCase):
 
   def test_fwd_hook(self):
     # nothing allowed
-    buss = range(0x0, 0x3)
-    msgs = range(0x1, 0x800)
+    buss = list(range(0x0, 0x3))
+    msgs = list(range(0x1, 0x800))
 
     for b in buss:
       for m in msgs:

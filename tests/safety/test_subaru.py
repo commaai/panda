@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import unittest
 import numpy as np
 import libpandasafety_py
@@ -174,8 +174,8 @@ class TestSubaruSafety(unittest.TestCase):
 
 
   def test_fwd_hook(self):
-    buss = range(0x0, 0x3)
-    msgs = range(0x1, 0x800)
+    buss = list(range(0x0, 0x3))
+    msgs = list(range(0x1, 0x800))
     blocked_msgs = [290, 356, 545, 802]
     for b in buss:
       for m in msgs:

@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
+
 import os
 import sys
 import time
@@ -19,9 +19,9 @@ if __name__ == "__main__":
 
       serials = Panda.list()
       if os.getenv("SERIAL"):
-        serials = filter(lambda x: x==os.getenv("SERIAL"), serials)
+        serials = [x for x in serials if x==os.getenv("SERIAL")]
 
-      pandas = list(map(lambda x: Panda(x, claim=claim), serials))
+      pandas = list([Panda(x, claim=claim) for x in serials])
 
       if not len(pandas):
         sys.exit("no pandas found")
