@@ -8,6 +8,8 @@ git checkout 862c4ef87b109ae86c2d5f12769b7c8d199f35c5
 make -j4
 cd ../../../
 
+# generate coverage matrix
+python tests/misra/cppcheck/addons/misra.py -generate-table > tests/misra/coverage_table
 
 printf "\nPANDA CODE\n"
 tests/misra/cppcheck/cppcheck -DPANDA -UPEDAL -DCAN3 -DUID_BASE -DEON \
