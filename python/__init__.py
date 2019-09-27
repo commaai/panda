@@ -135,11 +135,11 @@ class Panda(object):
   REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
   REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
 
-  HW_TYPE_UNKNOWN = '\x00'
-  HW_TYPE_WHITE_PANDA = '\x01'
-  HW_TYPE_GREY_PANDA = '\x02'
-  HW_TYPE_BLACK_PANDA = '\x03'
-  HW_TYPE_PEDAL = '\x04'
+  HW_TYPE_UNKNOWN = b'\x00'
+  HW_TYPE_WHITE_PANDA = b'\x01'
+  HW_TYPE_GREY_PANDA = b'\x02'
+  HW_TYPE_BLACK_PANDA = b'\x03'
+  HW_TYPE_PEDAL = b'\x04'
 
   def __init__(self, serial=None, claim=True):
     self._serial = serial
@@ -429,7 +429,7 @@ class Panda(object):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xde, bus, int(speed*10), b'')
 
   def set_uart_baud(self, uart, rate):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, rate/300, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, int(rate/300), b'')
 
   def set_uart_parity(self, uart, parity):
     # parity, 0=off, 1=even, 2=odd

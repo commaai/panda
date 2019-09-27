@@ -41,7 +41,7 @@ if __name__ == "__main__":
   while True:
     ret = ser.read(1024)
     if len(ret) > 0:
-      sys.stdout.write(ret)
+      sys.stdout.write(ret.decode('ascii', 'ignore'))
       sys.stdout.flush()
       #print str(ret).encode("hex")
 

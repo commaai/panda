@@ -33,11 +33,8 @@ def run_test(sleep_duration):
   pandas[0] = Panda(pandas[0])
   pandas[1] = Panda(pandas[1])
 
-  # find out the hardware types
-  type0 = pandas[0].get_type()
-  type1 = pandas[1].get_type()
-  
-  if type0 != "\x03" or type1 != "\x03":
+  # find out the hardware types  
+  if not pandas[0].is_black() or not pandas[1].is_black():
     print("Connect two black pandas to run this test!")
     assert False
 

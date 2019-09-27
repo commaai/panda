@@ -33,16 +33,16 @@ if __name__ == "__main__":
       while True:
         for i, panda in enumerate(pandas):
           while True:
-      	    ret = panda.serial_read(port_number)
-  	    if len(ret) > 0:
-	      sys.stdout.write(setcolor[i] + str(ret) + unsetcolor)
-	      sys.stdout.flush()
-	    else:
-	      break
+            ret = panda.serial_read(port_number)
+            if len(ret) > 0:
+              sys.stdout.write(setcolor[i] + ret.decode('ascii') + unsetcolor)
+              sys.stdout.flush()
+            else:
+              break
           if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
-	    ln = sys.stdin.readline()
-	    if claim:
-	      panda.serial_write(port_number, ln)
+            ln = sys.stdin.readline()
+            if claim:
+              panda.serial_write(port_number, ln)
           time.sleep(0.01)
     except:
       print("panda disconnected!")
