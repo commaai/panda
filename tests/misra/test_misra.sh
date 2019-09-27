@@ -20,8 +20,8 @@ tests/misra/cppcheck/cppcheck -DPANDA -UPEDAL -DCAN3 -DUID_BASE -DEON \
 python tests/misra/cppcheck/addons/misra.py board/main.c.dump 2> /tmp/misra/misra_output.txt || true
 
 # strip (information) lines
-cppcheck_output=$( cat /tmp/misra/cppcheck_output.txt | grep -v "(information) " ) || true
-misra_output=$( cat /tmp/misra/misra_output.txt | grep -v "(information) " ) || true
+cppcheck_output=$( cat /tmp/misra/cppcheck_output.txt | grep -v ": information: " ) || true
+misra_output=$( cat /tmp/misra/misra_output.txt | grep -v ": information: " ) || true
 
 
 printf "\nPEDAL CODE\n"
@@ -33,8 +33,8 @@ tests/misra/cppcheck/cppcheck -UPANDA -DPEDAL -UCAN3 \
 python tests/misra/cppcheck/addons/misra.py board/pedal/main.c.dump 2> /tmp/misra/misra_pedal_output.txt || true
 
 # strip (information) lines
-cppcheck_pedal_output=$( cat /tmp/misra/cppcheck_pedal_output.txt | grep -v "(information) " ) || true
-misra_pedal_output=$( cat /tmp/misra/misra_pedal_output.txt | grep -v "(information) " ) || true
+cppcheck_pedal_output=$( cat /tmp/misra/cppcheck_pedal_output.txt | grep -v ": information: " ) || true
+misra_pedal_output=$( cat /tmp/misra/misra_pedal_output.txt | grep -v ": information: " ) || true
 
 if [[ -n "$misra_output" ]] || [[ -n "$cppcheck_output" ]]
 then
