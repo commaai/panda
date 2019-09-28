@@ -91,22 +91,22 @@ When a panda powers up, by default it's in `SAFETY_NOOUTPUT` mode. While in no o
 
 Safety modes optionally supports `controls_allowed`, which allows or blocks a subset of messages based on a customizable state in the board.
 
-Code Quality
+Code Rigor
 ------
 When compiled from an [EON Dev Kit](https://comma.ai/shop/products/eon-gold-dashcam-devkit), the panda FW is configured and optimized (at compile time) for its use in
 conjuction with [openpilot](https://github.com/commaai/openpilot). The panda FW, through its safety model, provides and enforces the
 [openpilot Safety](https://github.com/commaai/openpilot/blob/devel/SAFETY.md). Due to its critical function, it's important that the application code rigor within the `board` folder is held to high standards.
 
 These are the [CI regression tests](https://circleci.com/gh/commaai/panda) we have in place:
-- A generic static code analysis is performed by [Cppcheck](https://github.com/danmar/cppcheck/).
-- In addition, [Cppcheck](https://github.com/danmar/cppcheck/) has a specific addon to check for [MISRA C:2012](https://www.misra.org.uk/MISRAHome/MISRAC2012/tabid/196/Default.aspx) violations. See [current coverage](https://github.com/commaai/panda/blob/master/tests/misra/coverage_table).
-- Compiler options are relatively strict: the flags `-Wall -Wextra -Wstrict-prototypes -Werror` are enforced on board and pedal makefiles.
-- The [safety logic](https://github.com/commaai/panda/tree/master/board/safety) is tested and verified by [unit tests](https://github.com/commaai/panda/tree/master/tests/safety) for each supported car variant.
-- A recorded drive for each supported car variant is [replayed through the safety logic](https://github.com/commaai/panda/tree/master/tests/safety_replay)
+* A generic static code analysis is performed by [Cppcheck](https://github.com/danmar/cppcheck/).
+* In addition, [Cppcheck](https://github.com/danmar/cppcheck/) has a specific addon to check for [MISRA C:2012](https://www.misra.org.uk/MISRAHome/MISRAC2012/tabid/196/Default.aspx) violations. See [current coverage](https://github.com/commaai/panda/blob/master/tests/misra/coverage_table).
+* Compiler options are relatively strict: the flags `-Wall -Wextra -Wstrict-prototypes -Werror` are enforced on board and pedal makefiles.
+* The [safety logic](https://github.com/commaai/panda/tree/master/board/safety) is tested and verified by [unit tests](https://github.com/commaai/panda/tree/master/tests/safety) for each supported car variant.
+* A recorded drive for each supported car variant is [replayed through the safety logic](https://github.com/commaai/panda/tree/master/tests/safety_replay)
 to ensure that the behavior remains unchanged.
-- An internal Hardware-in-the-loop test, which currently only runs on pull requests opened by comma.ai's organization members, verifies the following functionalities:
- - compiling the code in various configuration and flashing it both through USB and WiFi.
- - Receiving, sending and forwarding CAN messages on all buses, over USB and WiFi.
+* An internal Hardware-in-the-loop test, which currently only runs on pull requests opened by comma.ai's organization members, verifies the following functionalities:
+    * compiling the code in various configuration and flashing it both through USB and WiFi.
+    * Receiving, sending and forwarding CAN messages on all buses, over USB and WiFi.
 
 Hardware
 ------
