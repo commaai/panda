@@ -34,7 +34,7 @@ void white_set_led(uint8_t color, bool enabled) {
       break;
     case LED_BLUE:
       set_gpio_output(GPIOC, 6, !enabled);
-      break;
+      break;  
     default:
       break;
   }
@@ -43,7 +43,6 @@ void white_set_led(uint8_t color, bool enabled) {
 void white_set_usb_power_mode(uint8_t mode){
   bool valid_mode = true;
   switch (mode) {
-    case USB_POWER_NONE:
     case USB_POWER_CLIENT:
       // B2,A13: set client mode
       set_gpio_output(GPIOB, 2, 0);
@@ -126,7 +125,7 @@ void white_set_can_mode(uint8_t mode){
 
       // A8,A15: normal CAN3 mode
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
-      set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
+      set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);   
       break;
     case CAN_MODE_GMLAN_CAN3:
       // A8,A15: disable CAN3 mode
@@ -144,7 +143,7 @@ void white_set_can_mode(uint8_t mode){
       // B5,B6: normal CAN2 mode
       set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
       set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
-      break;
+      break;  
     default:
       puts("Tried to set unsupported CAN mode: "); puth(mode); puts("\n");
       break;
