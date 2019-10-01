@@ -73,50 +73,68 @@ uart_ring *get_ring_by_number(int a) {
 
 // ***************************** serial port *****************************
 
-void uart_ring_process(uart_ring *q) {
+void uart_tx_ring(uart_ring *q){
   ENTER_CRITICAL();
-  // TODO: check if external serial is connected
-  int sr = q->uart->SR;
-
+  // Send out next byte of TX buffer
   if (q->w_ptr_tx != q->r_ptr_tx) {
-    if ((sr & USART_SR_TXE) != 0) {
-      q->uart->DR = q->elems_tx[q->r_ptr_tx];
+    // Only send if transmit register is empty (aka last byte has been sent)
+    if ((q->uart->SR & USART_SR_TXE) != 0) {
+      q->uart->DR = q->elems_tx[q->r_ptr_tx];   // This clears TXE
       q->r_ptr_tx = (q->r_ptr_tx + 1U) % FIFO_SIZE;
     }
-    // there could be more to send
-    q->uart->CR1 |= USART_CR1_TXEIE;
-  } else {
-    // nothing to send
-    q->uart->CR1 &= ~USART_CR1_TXEIE;
   }
-
-  if ((sr & USART_SR_RXNE) || (sr & USART_SR_ORE)) {
-    uint8_t c = q->uart->DR;  // TODO: can drop packets
-    if (q != &esp_ring) {
-      uint16_t next_w_ptr = (q->w_ptr_rx + 1U) % FIFO_SIZE;
-      if (next_w_ptr != q->r_ptr_rx) {
-        q->elems_rx[q->w_ptr_rx] = c;
-        q->w_ptr_rx = next_w_ptr;
-        if (q->callback != NULL) {
-          q->callback(q);
-        }
-      }
-    }
-  }
-
-  if ((sr & USART_SR_ORE) != 0) {
-    // set dropped packet flag?
-  }
-
   EXIT_CRITICAL();
 }
 
+void uart_rx_ring(uart_ring *q){
+  ENTER_CRITICAL();
+  // Read out RX buffer
+  uint8_t c = q->uart->DR;  // This read after reading SR clears a bunch of interrupts
+
+  // Do not read out directly if DMA enabled
+  if (q != &esp_ring) {
+    uint16_t next_w_ptr = (q->w_ptr_rx + 1U) % FIFO_SIZE;
+    if (next_w_ptr != q->r_ptr_rx) {
+      q->elems_rx[q->w_ptr_rx] = c;
+      q->w_ptr_rx = next_w_ptr;
+      if (q->callback != NULL) {
+        q->callback(q);
+      }
+    }
+  }
+  EXIT_CRITICAL();
+}
+
+void uart_interrupt_handler(uart_ring *q) {
+  // Read UART status. This is also the first step necessary in clearing most interrupts
+  uint32_t status = q->uart->SR;
+
+  // If RXNE is set, perform a read. This clears RXNE, ORE, IDLE, NF and FE
+  if((status & USART_SR_RXNE) != 0U){
+    uart_rx_ring(q);
+  }
+
+  // Detect errors and clear them
+  uint32_t err = (status & USART_SR_ORE) | (status & USART_SR_NE) | (status & USART_SR_FE) | (status & USART_SR_PE);
+  if(err != 0U){
+    #ifdef DEBUG_UART
+      puts("Encountered UART error: "); puth(err); puts("\n");
+    #endif
+    volatile uint8_t t = q->uart->DR;  // This read after reading SR clears all error interrupts
+    UNUSED(t); // We don't want compiler warnings, nor optimizations
+  }
+
+  // Send if necessary
+  uart_tx_ring(q);
+}
+
+
 // interrupt boilerplate
 
-void USART1_IRQHandler(void) { uart_ring_process(&esp_ring); }
-void USART2_IRQHandler(void) { uart_ring_process(&debug_ring); }
-void USART3_IRQHandler(void) { uart_ring_process(&lin2_ring); }
-void UART5_IRQHandler(void) { uart_ring_process(&lin1_ring); }
+void USART1_IRQHandler(void) { uart_interrupt_handler(&esp_ring); }
+void USART2_IRQHandler(void) { uart_interrupt_handler(&debug_ring); }
+void USART3_IRQHandler(void) { uart_interrupt_handler(&lin2_ring); }
+void UART5_IRQHandler(void) { uart_interrupt_handler(&lin1_ring); }
 
 bool getc(uart_ring *q, char *elem) {
   bool ret = false;
@@ -161,7 +179,7 @@ bool putc(uart_ring *q, char elem) {
   }
   EXIT_CRITICAL();
 
-  uart_ring_process(q);
+  uart_tx_ring(q);
 
   return ret;
 }
@@ -175,7 +193,7 @@ void uart_flush(uart_ring *q) {
 void uart_flush_sync(uart_ring *q) {
   // empty the TX buffer
   while (q->w_ptr_tx != q->r_ptr_tx) {
-    uart_ring_process(q);
+    uart_tx_ring(q);
   }
 }
 
@@ -217,6 +235,7 @@ void uart_dma_drain(void) {
 
   ENTER_CRITICAL();
 
+  // Only run on full or half transfer complete
   if ((DMA2->HISR & DMA_HISR_TCIF5) || (DMA2->HISR & DMA_HISR_HTIF5) || (DMA2_Stream5->NDTR != USART1_DMA_LEN)) {
     // disable DMA
     q->uart->CR3 &= ~USART_CR3_DMAR;
@@ -238,7 +257,6 @@ void uart_dma_drain(void) {
 
     // clear interrupts
     DMA2->HIFCR = DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5;
-    //DMA2->HIFCR = DMA_HIFCR_CTEIF5 | DMA_HIFCR_CDMEIF5 | DMA_HIFCR_CFEIF5;
 
     // enable DMA
     DMA2_Stream5->CR |= DMA_SxCR_EN;
@@ -249,9 +267,21 @@ void uart_dma_drain(void) {
 }
 
 void DMA2_Stream5_IRQHandler(void) {
-  //set_led(LED_BLUE, 1);
+  // Handle errors
+  if((DMA2->HISR & DMA_HISR_TEIF5) || (DMA2->HISR & DMA_HISR_DMEIF5) || (DMA2->HISR & DMA_HISR_FEIF5)){
+    #ifdef DEBUG_UART
+      puts("Encountered UART DMA error. Resetting DMA...\n");
+    #endif
+
+    // Clear flags
+    DMA2->HIFCR = DMA_HIFCR_CTEIF5 | DMA_HIFCR_CDMEIF5 | DMA_HIFCR_CFEIF5;
+
+    // Re-enable the DMA if necessary
+    DMA2_Stream5->CR |= DMA_SxCR_EN;
+  }
+
+  // Drain DMA buffer into the ring buffer
   uart_dma_drain();
-  //set_led(LED_BLUE, 0);
 }
 
 void uart_init(USART_TypeDef *u, int baud) {
@@ -259,24 +289,26 @@ void uart_init(USART_TypeDef *u, int baud) {
   u->CR1 = USART_CR1_UE;
   uart_set_baud(u, baud);
 
-  u->CR1 |= USART_CR1_TE | USART_CR1_RE;
+  u->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_TXEIE;
   //u->CR2 = USART_CR2_STOP_0 | USART_CR2_STOP_1;
   //u->CR2 = USART_CR2_STOP_0;
   // ** UART is ready to work **
 
-  // enable interrupts
+  // Enable interrupts
   if (u != USART1) {
     u->CR1 |= USART_CR1_RXNEIE;
   }
 
+  // Enable DMA
   if (u == USART1) {
-    // DMA2, stream 2, channel 3
-    DMA2_Stream5->M0AR = (uint32_t)usart1_dma;
-    DMA2_Stream5->NDTR = USART1_DMA_LEN;
-    DMA2_Stream5->PAR = (uint32_t)&(USART1->DR);
+    // DMA2, stream 5, channel 4
+    DMA2_Stream5->M0AR = (uint32_t)usart1_dma;      // Destination
+    DMA2_Stream5->NDTR = USART1_DMA_LEN;            // Number of bytes to copy
+    DMA2_Stream5->PAR = (uint32_t)&(USART1->DR);    // Source
 
-    // channel4, increment memory, periph -> memory, enable
-    DMA2_Stream5->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_MINC | DMA_SxCR_HTIE | DMA_SxCR_TCIE | DMA_SxCR_EN;
+    // Channel 4, increment memory, byte size, periph -> memory, enable
+    // transfer complete, half transfer, transfer error and direct mode error interrupt enable
+    DMA2_Stream5->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_MINC | DMA_SxCR_HTIE | DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | DMA_SxCR_EN;
 
     // this one uses DMA receiver
     u->CR3 = USART_CR3_DMAR;

@@ -2,6 +2,7 @@
 #define PANDA_CONFIG_H
 
 //#define DEBUG
+//#define DEBUG_UART
 //#define DEBUG_USB
 //#define DEBUG_SPI
 
