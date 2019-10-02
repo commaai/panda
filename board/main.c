@@ -78,10 +78,14 @@ void started_interrupt_handler(uint8_t interrupt_line) {
     // jenky debounce
     delay(100000);
 
-    // set power savings mode here if on EON build
     #ifdef EON
+      // set power savings mode here if on EON build
       int power_save_state = current_board->check_ignition() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
       set_power_save_state(power_save_state);
+      // set CDP usb power mode everytime that the car starts to make sure EON is charging
+      if (current_board->check_ignition()) {
+        current_board->set_usb_power_mode(USB_POWER_CDP);
+      }
     #endif
   }
   EXTI->PR = (1U << interrupt_line);
@@ -159,6 +163,7 @@ int get_health_pkt(void *dat) {
     uint8_t controls_allowed_pkt;
     uint8_t gas_interceptor_detected_pkt;
     uint8_t car_harness_status_pkt;
+    uint8_t usb_power_mode_pkt;
   } *health = dat;
 
   //Voltage will be measured in mv. 5000 = 5V
@@ -195,6 +200,7 @@ int get_health_pkt(void *dat) {
   health->can_fwd_errs_pkt = can_fwd_errs;
   health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = car_harness_status;
+  health->usb_power_mode_pkt = usb_power_mode;
 
   return sizeof(*health);
 }
@@ -460,19 +466,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xe6: set USB power
     case 0xe6:
-      if (setup->b.wValue.w == 0U) {
-        puts("user setting NONE mode\n");
-        current_board->set_usb_power_mode(USB_POWER_NONE);
-      } else if (setup->b.wValue.w == 1U) {
-        puts("user setting CDP mode\n");
-        current_board->set_usb_power_mode(USB_POWER_CDP);
-      } else if (setup->b.wValue.w == 2U) {
-        puts("user setting DCP mode\n");
-        current_board->set_usb_power_mode(USB_POWER_DCP);
-      } else {
-        puts("user setting CLIENT mode\n");
-        current_board->set_usb_power_mode(USB_POWER_CLIENT);
-      }
+      current_board->set_usb_power_mode(setup->b.wValue.w);
       break;
     // **** 0xf0: do k-line wValue pulse on uart2 for Acura
     case 0xf0:
