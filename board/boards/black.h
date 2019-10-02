@@ -38,7 +38,7 @@ void black_set_led(uint8_t color, bool enabled) {
       break;
     case LED_BLUE:
       set_gpio_output(GPIOC, 6, !enabled);
-      break;  
+      break;
     default:
       break;
   }
@@ -54,11 +54,16 @@ void black_set_usb_load_switch(bool enabled) {
 
 void black_set_usb_power_mode(uint8_t mode) {
   usb_power_mode = mode;
-  if (mode == USB_POWER_NONE) {
-    black_set_usb_load_switch(false);
-  } else {
-    black_set_usb_load_switch(true);
-  }
+  switch (mode) {
+    case USB_POWER_CLIENT:
+      black_set_usb_load_switch(false);
+      break;
+    case USB_POWER_CDP:
+      black_set_usb_load_switch(true);
+      break;
+    default:
+      puts("Invalid USB power mode\n");
+      break;
 }
 
 void black_set_esp_gps_mode(uint8_t mode) {
