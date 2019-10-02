@@ -36,10 +36,10 @@ struct board {
 #define LED_GREEN 1U
 #define LED_BLUE 2U
 
-// USB power modes
-#define USB_POWER_CDP 1U
-#define USB_POWER_DCP 2U
-#define USB_POWER_CLIENT 3U
+// USB power modes (from cereal.log.health)
+#define USB_POWER_CDP 0U
+#define USB_POWER_DCP 1U
+#define USB_POWER_CLIENT 2U
 
 // ESP modes
 #define ESP_GPS_DISABLED 0U
