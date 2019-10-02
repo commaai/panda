@@ -53,17 +53,22 @@ void black_set_usb_load_switch(bool enabled) {
 }
 
 void black_set_usb_power_mode(uint8_t mode) {
-  usb_power_mode = mode;
+  bool valid = false;
   switch (mode) {
     case USB_POWER_CLIENT:
       black_set_usb_load_switch(false);
+      valid = true;
       break;
     case USB_POWER_CDP:
       black_set_usb_load_switch(true);
+      valid = true;
       break;
     default:
       puts("Invalid USB power mode\n");
       break;
+  }
+  if (valid) {
+    usb_power_mode = mode;
   }
 }
 
