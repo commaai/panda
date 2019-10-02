@@ -34,7 +34,7 @@ void white_set_led(uint8_t color, bool enabled) {
       break;
     case LED_BLUE:
       set_gpio_output(GPIOC, 6, !enabled);
-      break;  
+      break;
     default:
       break;
   }
@@ -125,7 +125,7 @@ void white_set_can_mode(uint8_t mode){
 
       // A8,A15: normal CAN3 mode
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
-      set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);   
+      set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
       break;
     case CAN_MODE_GMLAN_CAN3:
       // A8,A15: disable CAN3 mode
@@ -143,7 +143,7 @@ void white_set_can_mode(uint8_t mode){
       // B5,B6: normal CAN2 mode
       set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
       set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
-      break;  
+      break;
     default:
       puts("Tried to set unsupported CAN mode: "); puth(mode); puts("\n");
       break;
@@ -152,7 +152,7 @@ void white_set_can_mode(uint8_t mode){
 
 uint64_t marker = 0;
 void white_usb_power_mode_tick(uint64_t tcnt){
-  #ifndef BOOTSTUB
+  #if !defined(BOOTSTUB) && !defined(EON)
   #define CURRENT_THRESHOLD 0xF00U
   #define CLICKS 5U // 5 seconds to switch modes
 
@@ -243,7 +243,11 @@ void white_init(void) {
   set_gpio_alternate(GPIOA, 7, GPIO_AF5_SPI1);
 
   // Set USB power mode
+#ifdef EON
+  white_set_usb_power_mode(USB_POWER_CDP);
+#else
   white_set_usb_power_mode(USB_POWER_CLIENT);
+#endif
 
   // B12: GMLAN, ignition sense, pull up
   set_gpio_pullup(GPIOB, 12, PULL_UP);
