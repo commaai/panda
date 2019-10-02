@@ -78,10 +78,14 @@ void started_interrupt_handler(uint8_t interrupt_line) {
     // jenky debounce
     delay(100000);
 
-    // set power savings mode here if on EON build
     #ifdef EON
+      // set power savings mode here if on EON build
       int power_save_state = current_board->check_ignition() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
       set_power_save_state(power_save_state);
+      // set CDP usb power mode everytime that the car starts to make sure EON is charging
+      if (current_board->check_ignition()) {
+        current_board->set_usb_power_mode(USB_POWER_CDP);
+      }
     #endif
   }
   EXTI->PR = (1U << interrupt_line);
@@ -710,7 +714,6 @@ int main(void) {
 #endif
 
 #ifdef EON
-  bool ignition_prev = false;
   // have to save power
   if (hw_type == HW_TYPE_WHITE_PANDA) {
     current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
@@ -738,13 +741,6 @@ int main(void) {
   uint64_t cnt = 0;
 
   for (cnt=0;;cnt++) {
-    #ifdef EON
-    // set CDP mode on rising edge of ignition to start charging EON again in case we turned charging off
-    if (current_board->check_ignition() && !ignition_prev) {
-      current_board->set_usb_power_mode(USB_POWER_CDP);
-    }
-    ignition_prev = current_board->check_ignition();
-    #endif
     if (power_save_status == POWER_SAVE_STATUS_DISABLED) {
       int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
 
