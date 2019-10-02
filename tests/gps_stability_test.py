@@ -108,23 +108,26 @@ def init_gps(panda):
   print("Initialized GPS")
 
 received_messages = 0
-
+received_bytes = 0
 send_something = False
 def gps_read_thread(panda):
-  global received_messages, send_something
+  global received_messages, received_bytes, send_something
   ser = PandaSerial(panda, 1, GPS_BAUD)
   while True:
     ret = ser.read(1024)
-    if len(ret) > 0:
+    time.sleep(0.001)
+    l = len(ret)
+    if l > 0:
       received_messages+=1
+      received_bytes+=l
     if send_something:
       ser.write("test")
       send_something = False
 
 
 CHECK_PERIOD = 5
-MIN_MESSAGES = 50
-MAX_MESSAGES = 150
+MIN_BYTES = 10000
+MAX_BYTES = 25000
 
 min_failures = 0
 max_failures = 0
@@ -143,22 +146,23 @@ if __name__ == "__main__":
   read_thread.start()
   while True:
     time.sleep(CHECK_PERIOD)
-    if(received_messages < MIN_MESSAGES):
-      print("Panda is not sending out enough messages! Got " + str(received_messages) + " in the last " + str(CHECK_PERIOD) + " seconds")
+    if(received_bytes < MIN_BYTES):
+      print("Panda is not sending out enough data! Got " + str(received_messages) + " (" + str(received_bytes) + "B) in the last " + str(CHECK_PERIOD) + " seconds")
       send_something = True
       min_failures+=1
-    elif(received_messages > MAX_MESSAGES):
-      print("Panda is not sending out too many messages! Got " + str(received_messages) + " in the last " + str(CHECK_PERIOD) + " seconds.")
+    elif(received_bytes > MAX_BYTES):
+      print("Panda is not sending out too much data! Got " + str(received_messages) + " (" + str(received_bytes) + "B) in the last " + str(CHECK_PERIOD) + " seconds")
       print("Probably not on the right baud rate, got reset somehow? Resetting...")
       max_failures+=1
       init_gps(gps_panda)
     else:
-      print("Got " + str(received_messages) + " messages in the last " + str(CHECK_PERIOD) + " seconds.")
+      print("Got " + str(received_messages) + " (" + str(received_bytes) + "B) messages in the last " + str(CHECK_PERIOD) + " seconds.")
       if(min_failures > 0):
         print("Total min failures: ", min_failures)
       if(max_failures > 0):
         print("Total max failures: ", max_failures)
     received_messages = 0
+    received_bytes = 0
 
 
 
