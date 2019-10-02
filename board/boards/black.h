@@ -64,6 +64,7 @@ void black_set_usb_power_mode(uint8_t mode) {
     default:
       puts("Invalid USB power mode\n");
       break;
+  }
 }
 
 void black_set_esp_gps_mode(uint8_t mode) {
