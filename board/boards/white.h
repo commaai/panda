@@ -241,10 +241,8 @@ void white_init(void) {
   set_gpio_alternate(GPIOA, 6, GPIO_AF5_SPI1);
   set_gpio_alternate(GPIOA, 7, GPIO_AF5_SPI1);
 
-  // Set USB power mode
-#ifdef EON
-  white_set_usb_power_mode(USB_POWER_CDP);
-#else
+  // on PC, set USB power mode to CLIENT
+#ifndef EON
   white_set_usb_power_mode(USB_POWER_CLIENT);
 #endif
 
