@@ -2,6 +2,7 @@
 import unittest
 import numpy as np
 import libpandasafety_py
+from panda import Panda
 
 MAX_RATE_UP = 2
 MAX_RATE_DOWN = 5
@@ -31,7 +32,7 @@ class TestCadillacSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.safety_set_mode(6, 0)
+    cls.safety.safety_set_mode(Panda.SAFETY_CADILLAC, 0)
     cls.safety.init_tests_cadillac()
 
   def _send_msg(self, bus, addr, length):

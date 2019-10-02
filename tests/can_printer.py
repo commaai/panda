@@ -15,7 +15,7 @@ def sec_since_boot():
 
 def can_printer():
   p = Panda()
-  p.set_safety_mode(0x1337)
+  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
   start = sec_since_boot()
   lp = sec_since_boot()

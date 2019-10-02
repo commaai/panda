@@ -2,6 +2,7 @@
 import unittest
 import numpy as np
 import libpandasafety_py
+from panda import Panda
 
 MAX_RATE_UP = 7
 MAX_RATE_DOWN = 17
@@ -32,7 +33,7 @@ class TestGmSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.safety_set_mode(3, 0)
+    cls.safety.safety_set_mode(Panda.SAFETY_GM, 0)
     cls.safety.init_tests_gm()
 
   def _send_msg(self, bus, addr, length):
