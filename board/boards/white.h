@@ -152,7 +152,9 @@ void white_set_can_mode(uint8_t mode){
 
 uint64_t marker = 0;
 void white_usb_power_mode_tick(uint64_t tcnt){
-  #if !defined(BOOTSTUB) && !defined(EON)
+
+  // on EON or BOOTSTUB, no state machine
+#if !defined(BOOTSTUB) && !defined(EON)
   #define CURRENT_THRESHOLD 0xF00U
   #define CLICKS 5U // 5 seconds to switch modes
 
@@ -177,22 +179,19 @@ void white_usb_power_mode_tick(uint64_t tcnt){
       }
       break;
     case USB_POWER_CDP:
-      // On the EON, if we get into CDP mode we stay here. No need to go to DCP.
-      #ifndef EON
-        // been CLICKS clicks since we switched to CDP
-        if ((tcnt-marker) >= CLICKS) {
-          // measure current draw, if positive and no enumeration, switch to DCP
-          if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
-            puts("USBP: no enumeration with current draw, switching to DCP mode\n");
-            white_set_usb_power_mode(USB_POWER_DCP);
-            marker = tcnt;
-          }
-        }
-        // keep resetting the timer if there's no current draw in CDP
-        if (current >= CURRENT_THRESHOLD) {
+      // been CLICKS clicks since we switched to CDP
+      if ((tcnt-marker) >= CLICKS) {
+        // measure current draw, if positive and no enumeration, switch to DCP
+        if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
+          puts("USBP: no enumeration with current draw, switching to DCP mode\n");
+          white_set_usb_power_mode(USB_POWER_DCP);
           marker = tcnt;
         }
-      #endif
+      }
+      // keep resetting the timer if there's no current draw in CDP
+      if (current >= CURRENT_THRESHOLD) {
+        marker = tcnt;
+      }
       break;
     case USB_POWER_DCP:
       // been at least CLICKS clicks since we switched to DCP
@@ -213,9 +212,9 @@ void white_usb_power_mode_tick(uint64_t tcnt){
       puts("USB power mode invalid\n");  // set_usb_power_mode prevents assigning invalid values
       break;
   }
-  #else
+#else
   UNUSED(tcnt);
-  #endif
+#endif
 }
 
 bool white_check_ignition(void){
