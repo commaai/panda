@@ -403,9 +403,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       if (!ur) {
         break;
       }
-      if (ur == &esp_ring) {
-        uart_dma_drain();
-      }
       // read
       while ((resp_len < MIN(setup->b.wLength.w, MAX_RESP_LEN)) &&
                          getc(ur, (char*)&resp[resp_len])) {
@@ -676,22 +673,22 @@ int main(void) {
   if (has_external_debug_serial) {
     // WEIRDNESS: without this gate around the UART, it would "crash", but only if the ESP is enabled
     // assuming it's because the lines were left floating and spurious noise was on them
-    uart_init(USART2, 115200);
+    uart_init(&uart_ring_debug, 115200);
   }
 
   if (board_has_gps()) {
-    uart_init(USART1, 9600);
+    uart_init(&uart_ring_esp_gps, 9600);
   } else {
     // enable ESP uart
-    uart_init(USART1, 115200);
+    uart_init(&uart_ring_esp_gps, 115200);
   }
 
   // there is no LIN on panda black
   if(hw_type != HW_TYPE_BLACK_PANDA){
     // enable LIN
-    uart_init(UART5, 10400);
+    uart_init(&uart_ring_lin1, 10400);
     UART5->CR2 |= USART_CR2_LINEN;
-    uart_init(USART3, 10400);
+    uart_init(&uart_ring_lin2, 10400);
     USART3->CR2 |= USART_CR2_LINEN;
   }
 
