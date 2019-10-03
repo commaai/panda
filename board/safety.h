@@ -16,7 +16,7 @@
 #include "safety/safety_mazda.h"
 #include "safety/safety_elm327.h"
 
-const uint16_t current_safety_mode = 0U;
+uint16_t current_safety_mode = 0U;
 const safety_hooks *current_hooks = &nooutput_hooks;
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push){
