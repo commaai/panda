@@ -140,12 +140,15 @@ void dma_pointer_handler(uart_ring *q, uint32_t dma_ndtr) {
   if (w_index != prev_w_index){
     // Check for overflow
     if (
-      ((prev_w_index < q->r_ptr_rx) && (q->r_ptr_rx <= w_index)) ||                                 // No rollover
+      ((prev_w_index < q->r_ptr_rx) && (q->r_ptr_rx <= w_index)) ||                               // No rollover
       ((w_index < prev_w_index) && ((q->r_ptr_rx <= w_index) || (prev_w_index < q->r_ptr_rx)))    // Rollover
     ){   
       // We lost data. Set the new read pointer to the oldest byte still available
       q->r_ptr_rx = (w_index + 1U) % q->rx_fifo_size;
     }
+
+    // Set write pointer
+    q->w_ptr_rx = w_index;
   }
 
   prev_w_index = w_index;
