@@ -127,7 +127,7 @@ def gps_read_thread(panda):
 
 CHECK_PERIOD = 5
 MIN_BYTES = 10000
-MAX_BYTES = 30000
+MAX_BYTES = 50000
 
 min_failures = 0
 max_failures = 0
