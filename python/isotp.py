@@ -2,7 +2,7 @@ DEBUG = False
 
 def msg(x):
   if DEBUG:
-    print "S:",x.encode("hex")
+    print("S:",x.encode("hex"))
   if len(x) <= 7:
     ret = chr(len(x)) + x
   else:
@@ -24,7 +24,7 @@ def recv(panda, cnt, addr, nbus):
         # leave around
         nmsgs.append((ids, ts, dat, bus))
     kmsgs = nmsgs[-256:]
-  return map(str, ret)
+  return list(map(str, ret))
 
 def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
   msg = recv(panda, 1, addr, bus)[0]
@@ -52,7 +52,7 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
     tlen = ord(msg[1]) & 0xf
     dat = msg[2:]
   else:
-    print msg.encode("hex")
+    print(msg.encode("hex"))
     assert False
 
   return dat[0:tlen]
@@ -129,7 +129,7 @@ def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
     dat = dat[0:tlen]
 
   if DEBUG:
-    print "R:",dat.encode("hex")
+    print("R:",dat.encode("hex"))
 
   return dat
 

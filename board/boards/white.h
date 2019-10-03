@@ -34,7 +34,7 @@ void white_set_led(uint8_t color, bool enabled) {
       break;
     case LED_BLUE:
       set_gpio_output(GPIOC, 6, !enabled);
-      break;  
+      break;
     default:
       break;
   }
@@ -125,7 +125,7 @@ void white_set_can_mode(uint8_t mode){
 
       // A8,A15: normal CAN3 mode
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
-      set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);   
+      set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
       break;
     case CAN_MODE_GMLAN_CAN3:
       // A8,A15: disable CAN3 mode
@@ -143,7 +143,7 @@ void white_set_can_mode(uint8_t mode){
       // B5,B6: normal CAN2 mode
       set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
       set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
-      break;  
+      break;
     default:
       puts("Tried to set unsupported CAN mode: "); puth(mode); puts("\n");
       break;
@@ -156,7 +156,9 @@ uint32_t white_read_current(void){
 
 uint64_t marker = 0;
 void white_usb_power_mode_tick(uint64_t tcnt){
-  #ifndef BOOTSTUB
+
+  // on EON or BOOTSTUB, no state machine
+#if !defined(BOOTSTUB) && !defined(EON)
   #define CURRENT_THRESHOLD 0xF00U
   #define CLICKS 5U // 5 seconds to switch modes
 
@@ -181,22 +183,19 @@ void white_usb_power_mode_tick(uint64_t tcnt){
       }
       break;
     case USB_POWER_CDP:
-      // On the EON, if we get into CDP mode we stay here. No need to go to DCP.
-      #ifndef EON
-        // been CLICKS clicks since we switched to CDP
-        if ((tcnt-marker) >= CLICKS) {
-          // measure current draw, if positive and no enumeration, switch to DCP
-          if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
-            puts("USBP: no enumeration with current draw, switching to DCP mode\n");
-            white_set_usb_power_mode(USB_POWER_DCP);
-            marker = tcnt;
-          }
-        }
-        // keep resetting the timer if there's no current draw in CDP
-        if (current >= CURRENT_THRESHOLD) {
+      // been CLICKS clicks since we switched to CDP
+      if ((tcnt-marker) >= CLICKS) {
+        // measure current draw, if positive and no enumeration, switch to DCP
+        if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
+          puts("USBP: no enumeration with current draw, switching to DCP mode\n");
+          white_set_usb_power_mode(USB_POWER_DCP);
           marker = tcnt;
         }
-      #endif
+      }
+      // keep resetting the timer if there's no current draw in CDP
+      if (current >= CURRENT_THRESHOLD) {
+        marker = tcnt;
+      }
       break;
     case USB_POWER_DCP:
       // been at least CLICKS clicks since we switched to DCP
@@ -217,9 +216,9 @@ void white_usb_power_mode_tick(uint64_t tcnt){
       puts("USB power mode invalid\n");  // set_usb_power_mode prevents assigning invalid values
       break;
   }
-  #else
+#else
   UNUSED(tcnt);
-  #endif
+#endif
 }
 
 void white_set_ir_power(uint8_t percentage){
@@ -254,8 +253,10 @@ void white_init(void) {
   set_gpio_alternate(GPIOA, 6, GPIO_AF5_SPI1);
   set_gpio_alternate(GPIOA, 7, GPIO_AF5_SPI1);
 
-  // Set USB power mode
+  // on PC, set USB power mode to CLIENT
+#ifndef EON
   white_set_usb_power_mode(USB_POWER_CLIENT);
+#endif
 
   // B12: GMLAN, ignition sense, pull up
   set_gpio_pullup(GPIOB, 12, PULL_UP);

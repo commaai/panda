@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import os
 import usb1
 import struct

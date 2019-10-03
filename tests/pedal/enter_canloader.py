@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 import time
 import struct
@@ -53,7 +53,7 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   p = Panda()
-  p.set_safety_mode(0x1337)
+  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
   while 1:
     if len(p.can_recv()) == 0:
@@ -67,10 +67,10 @@ if __name__ == "__main__":
 
   if args.fn:
     time.sleep(0.1)
-    print "flashing", args.fn
+    print("flashing", args.fn)
     code = open(args.fn).read()
     Panda.flash_static(CanHandle(p), code)
 
-  print "can flash done"
+  print("can flash done")
 
 
