@@ -54,6 +54,7 @@ RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-instal
 
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
 RUN pyenv install 3.7.3
+RUN pyenv install 2.7.12
 RUN pyenv global 3.7.3
 RUN pyenv rehash
 
@@ -68,6 +69,7 @@ ENV HOME /home/batman
 ENV PYTHONPATH /tmp:$PYTHONPATH
 
 COPY ./boardesp/get_sdk_ci.sh /tmp/panda/boardesp/
+COPY ./boardesp/python2_make.py /tmp/panda/boardesp/
 
 RUN useradd --system -s /sbin/nologin pandauser
 RUN mkdir -p /tmp/panda/boardesp/esp-open-sdk
