@@ -53,7 +53,7 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   p = Panda()
-  p.set_safety_mode(0x1337)
+  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
   while 1:
     if len(p.can_recv()) == 0:
