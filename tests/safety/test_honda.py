@@ -2,6 +2,7 @@
 import unittest
 import numpy as np
 import libpandasafety_py
+from panda import Panda
 
 MAX_BRAKE = 255
 
@@ -11,7 +12,7 @@ class TestHondaSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.safety_set_mode(1, 0)
+    cls.safety.safety_set_mode(Panda.SAFETY_HONDA, 0)
     cls.safety.init_tests_honda()
 
   def _send_msg(self, bus, addr, length):
