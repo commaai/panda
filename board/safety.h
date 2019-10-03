@@ -16,6 +16,7 @@
 #include "safety/safety_mazda.h"
 #include "safety/safety_elm327.h"
 
+const uint16_t current_safety_mode = 0U;
 const safety_hooks *current_hooks = &nooutput_hooks;
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push){
@@ -89,6 +90,7 @@ int safety_set_mode(uint16_t mode, int16_t param) {
   for (int i = 0; i < hook_config_count; i++) {
     if (safety_hook_registry[i].id == mode) {
       current_hooks = safety_hook_registry[i].hooks;
+      current_safety_mode = safety_hook_registry[i].id;
       set_status = 0;    // set
       break;
     }
