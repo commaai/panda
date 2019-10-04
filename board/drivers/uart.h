@@ -404,7 +404,7 @@ void putui(uint32_t i) {
     idx--;
     i_copy /= 10;
   } while (i_copy != 0U);
-  puts(str + idx + 1U);
+  puts(&str[idx + 1U]);
 }
 
 void puth(unsigned int i) {
@@ -422,10 +422,12 @@ void puth2(unsigned int i) {
 }
 
 void hexdump(const void *a, int l) {
-  for (int i=0; i < l; i++) {
-    if ((i != 0) && ((i & 0xf) == 0)) puts("\n");
-    puth2(((const unsigned char*)a)[i]);
-    puts(" ");
+  if (a != NULL) {
+    for (int i=0; i < l; i++) {
+      if ((i != 0) && ((i & 0xf) == 0)) puts("\n");
+      puth2(((const unsigned char*)a)[i]);
+      puts(" ");
+    }
   }
   puts("\n");
 }
