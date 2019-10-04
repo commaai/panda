@@ -166,17 +166,7 @@ int get_health_pkt(void *dat) {
     uint8_t usb_power_mode_pkt;
   } *health = dat;
 
-  //Voltage will be measured in mv. 5000 = 5V
-  uint32_t voltage = adc_get(ADCCHAN_VOLTAGE);
-
-  // REVC has a 10, 1 (1/11) voltage divider
-  // Here is the calculation for the scale (s)
-  // ADCV = VIN_S * (1/11) * (4095/3.3)
-  // RETVAL = ADCV * s = VIN_S*1000
-  // s = 1000/((4095/3.3)*(1/11)) = 8.8623046875
-
-  // Avoid needing floating point math
-  health->voltage_pkt = (voltage * 8862U) / 1000U;
+  health->voltage_pkt = adc_get_voltage();
 
   // No current sense on panda black
   if(hw_type != HW_TYPE_BLACK_PANDA){
@@ -664,10 +654,10 @@ int main(void) {
   current_board->init();
 
   // init usb power mode
-  uint32_t voltage = adc_get(ADCCHAN_VOLTAGE);
+  uint32_t voltage = adc_get_voltage();
   // init in CDP mode only if panda is powered by 12V.
-  // Otherwise a PC would not be able to flash a panda with EON build
-  if (voltage > 10000U) {
+  // Otherwise a PC would not be able to flash a standalone panda with EON build
+  if (voltage > 5000U) {  // 5V threshold
     current_board->set_usb_power_mode(USB_POWER_CDP);
   } else {
     current_board->set_usb_power_mode(USB_POWER_CLIENT);
