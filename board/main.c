@@ -622,7 +622,9 @@ void TIM3_IRQHandler(void) {
     #ifdef EON
     if (heartbeat_counter >= (current_board->check_ignition() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
       puts("EON hasn't sent a heartbeat for 0x"); puth(heartbeat_counter); puts(" seconds. Safety is set to NOOUTPUT mode.\n");
-      set_safety_mode(SAFETY_NOOUTPUT, 0U);
+      if(current_safety_mode != SAFETY_NOOUTPUT){
+        set_safety_mode(SAFETY_NOOUTPUT, 0U);
+      }
     }
     #endif
 
