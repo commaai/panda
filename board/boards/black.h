@@ -183,6 +183,9 @@ void black_init(void) {
 
   // init multiplexer
   can_set_obd(car_harness_status, false);
+
+  // init usb power mdoe
+  black_set_usb_power_mode(usb_power_mode);
 }
 
 const harness_configuration black_harness_config = {
