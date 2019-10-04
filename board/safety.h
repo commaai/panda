@@ -16,7 +16,26 @@
 #include "safety/safety_mazda.h"
 #include "safety/safety_elm327.h"
 
-uint16_t current_safety_mode = 0U;
+// from cereal.car.CarParams.SafetyModel
+#define SAFETY_NOOUTPUT 0U
+#define SAFETY_HONDA 1U
+#define SAFETY_TOYOTA 2U
+#define SAFETY_ELM327 3U
+#define SAFETY_GM 4U
+#define SAFETY_HONDA_BOSCH 5U
+#define SAFETY_FORD 6U
+#define SAFETY_CADILLAC 7U
+#define SAFETY_HYUNDAI 8U
+#define SAFETY_CHRYSLER 9U
+#define SAFETY_TESLA 10U
+#define SAFETY_SUBARU 11U
+#define SAFETY_GM_PASSIVE 12U
+#define SAFETY_MAZDA 13U
+#define SAFETY_TOYOTA_IPAS 16U
+#define SAFETY_ALLOUTPUT 17U
+#define SAFETY_GM_ASCM 18U
+
+uint16_t current_safety_mode = SAFETY_NOOUTPUT;
 const safety_hooks *current_hooks = &nooutput_hooks;
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push){
@@ -45,25 +64,6 @@ typedef struct {
   uint16_t id;
   const safety_hooks *hooks;
 } safety_hook_config;
-
-// from cereal.car.CarParams.SafetyModel
-#define SAFETY_NOOUTPUT 0U
-#define SAFETY_HONDA 1U
-#define SAFETY_TOYOTA 2U
-#define SAFETY_ELM327 3U
-#define SAFETY_GM 4U
-#define SAFETY_HONDA_BOSCH 5U
-#define SAFETY_FORD 6U
-#define SAFETY_CADILLAC 7U
-#define SAFETY_HYUNDAI 8U
-#define SAFETY_CHRYSLER 9U
-#define SAFETY_TESLA 10U
-#define SAFETY_SUBARU 11U
-#define SAFETY_GM_PASSIVE 12U
-#define SAFETY_MAZDA 13U
-#define SAFETY_TOYOTA_IPAS 16U
-#define SAFETY_ALLOUTPUT 17U
-#define SAFETY_GM_ASCM 18U
 
 const safety_hook_config safety_hook_registry[] = {
   {SAFETY_NOOUTPUT, &nooutput_hooks},
