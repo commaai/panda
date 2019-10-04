@@ -37,9 +37,10 @@ struct board {
 #define LED_BLUE 2U
 
 // USB power modes (from cereal.log.health)
-#define USB_POWER_CLIENT 0U
-#define USB_POWER_CDP 1U
-#define USB_POWER_DCP 2U
+#define USB_POWER_NONE 0U
+#define USB_POWER_CLIENT 1U
+#define USB_POWER_CDP 2U
+#define USB_POWER_DCP 3U
 
 // ESP modes
 #define ESP_GPS_DISABLED 0U
@@ -53,4 +54,4 @@ struct board {
 #define CAN_MODE_OBD_CAN2 3U
 
 // ********************* Globals **********************
-uint8_t usb_power_mode = USB_POWER_CDP;
+uint8_t usb_power_mode = USB_POWER_NONE;
