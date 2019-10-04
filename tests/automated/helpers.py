@@ -140,7 +140,7 @@ def time_many_sends(p, bus, precv=None, msg_count=100, msg_id=None, two_pandas=F
     raise ValueError("Cannot have two pandas that are the same panda")
 
   st = time.time()
-  p.can_send_many([(msg_id, 0, "\xaa"*8, bus)]*msg_count)
+  p.can_send_many([(msg_id, 0, b"\xaa"*8, bus)]*msg_count)
   r = []
   r_echo = []
   r_len_expected = msg_count if two_pandas else msg_count*2

@@ -25,7 +25,7 @@ def test_can_loopback(p):
     p.set_can_speed_kbps(bus, 250)
 
     # send a message on bus 0
-    p.can_send(0x1aa, "message", bus)
+    p.can_send(0x1aa, b"message", bus)
 
     # confirm receive both on loopback and send receipt
     time.sleep(0.05)
@@ -37,7 +37,7 @@ def test_can_loopback(p):
 
     # confirm data is correct
     assert 0x1aa == sr[0][0] == lb[0][0]
-    assert "message" == sr[0][2] == lb[0][2]
+    assert b"message" == sr[0][2] == lb[0][2]
 
 @test_all_pandas
 @panda_connect_and_init
@@ -49,7 +49,7 @@ def test_safety_nooutput(p):
   p.set_can_loopback(True)
 
   # send a message on bus 0
-  p.can_send(0x1aa, "message", 0)
+  p.can_send(0x1aa, b"message", 0)
 
   # confirm receive nothing
   time.sleep(0.05)
@@ -68,7 +68,7 @@ def test_reliability(p):
   p.set_can_speed_kbps(0, 1000)
 
   addrs = list(range(100, 100+MSG_COUNT))
-  ts = [(j, 0, "\xaa"*8, 0) for j in addrs]
+  ts = [(j, 0, b"\xaa"*8, 0) for j in addrs]
 
   # 100 loops
   for i in range(LOOP_COUNT):
@@ -182,4 +182,4 @@ def test_gmlan_bad_toggle(p):
 def test_serial_debug(p):
   junk = p.serial_read(Panda.SERIAL_DEBUG)
   p.call_control_api(0xc0)
-  assert(p.serial_read(Panda.SERIAL_DEBUG).startswith("can "))
+  assert(p.serial_read(Panda.SERIAL_DEBUG).startswith(b"can "))
