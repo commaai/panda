@@ -663,6 +663,16 @@ int main(void) {
   // init board
   current_board->init();
 
+  // init usb power mode
+  uint32_t voltage = adc_get(ADCCHAN_VOLTAGE);
+  // init in CDP mode only if panda is powered by 12V.
+  // Otherwise a PC would not be able to flash a panda with EON build
+  if (voltage > 10000U) {
+    current_board->set_usb_power_mode(USB_POWER_CDP);
+  } else {
+    current_board->set_usb_power_mode(USB_POWER_CLIENT);
+  }
+
   // panda has an FPU, let's use it!
   enable_fpu();
 
