@@ -2,6 +2,7 @@
 import unittest
 import numpy as np
 import libpandasafety_py
+from panda import Panda
 
 IPAS_OVERRIDE_THRESHOLD = 200
 
@@ -25,7 +26,7 @@ class TestToyotaSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.safety_set_mode(0x1335, 66)
+    cls.safety.safety_set_mode(Panda.SAFETY_TOYOTA_IPAS, 66)
     cls.safety.init_tests_toyota()
 
   def _torque_driver_msg(self, torque):

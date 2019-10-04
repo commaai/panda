@@ -23,7 +23,6 @@ BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 DEBUG = os.getenv("PANDADEBUG") is not None
 
 # *** wifi mode ***
-
 def build_st(target, mkfile="Makefile"):
   from panda import BASEDIR
   cmd = 'cd %s && make -f %s clean && make -f %s %s >/dev/null' % (os.path.join(BASEDIR, "board"), mkfile, mkfile, target)
@@ -109,20 +108,25 @@ class WifiHandle(object):
 # *** normal mode ***
 
 class Panda(object):
+
+  # matches cereal.car.CarParams.SafetyModel
   SAFETY_NOOUTPUT = 0
   SAFETY_HONDA = 1
   SAFETY_TOYOTA = 2
-  SAFETY_GM = 3
-  SAFETY_HONDA_BOSCH = 4
-  SAFETY_FORD = 5
-  SAFETY_CADILLAC = 6
-  SAFETY_HYUNDAI = 7
-  SAFETY_TESLA = 8
+  SAFETY_ELM327 = 3
+  SAFETY_GM = 4
+  SAFETY_HONDA_BOSCH = 5
+  SAFETY_FORD = 6
+  SAFETY_CADILLAC = 7
+  SAFETY_HYUNDAI = 8
   SAFETY_CHRYSLER = 9
-  SAFETY_TOYOTA_IPAS = 0x1335
-  SAFETY_TOYOTA_NOLIMITS = 0x1336
-  SAFETY_ALLOUTPUT = 0x1337
-  SAFETY_ELM327 = 0xE327
+  SAFETY_TESLA = 10
+  SAFETY_SUBARU = 11
+  SAFETY_GM_PASSIVE = 12
+  SAFETY_MAZDA = 13
+  SAFETY_TOYOTA_IPAS = 16
+  SAFETY_ALLOUTPUT = 17
+  SAFETY_GM_ASCM = 18
 
   SERIAL_DEBUG = 0
   SERIAL_ESP = 1
