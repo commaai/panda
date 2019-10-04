@@ -243,7 +243,14 @@ void white_init(void) {
 
   // on PC, set USB power mode to CLIENT
 #ifdef EON
-  white_set_usb_power_mode(USB_POWER_CDP);
+  uint32_t voltage = adc_get(ADCCHAN_VOLTAGE);
+  // go in CDP mode only if panda can be powered by 12V.
+  // Otherwise a PC would not be able to flash a panda with EON build
+  if (voltage > 10000U) {
+    white_set_usb_power_mode(USB_POWER_CDP);
+  } else {
+    white_set_usb_power_mode(USB_POWER_CLIENT);
+  }
 #else
   white_set_usb_power_mode(USB_POWER_CLIENT);
 #endif
