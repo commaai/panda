@@ -185,7 +185,7 @@ void black_init(void) {
   can_set_obd(car_harness_status, false);
 
   // init usb power mode
-  black_set_usb_power_mode(usb_power_mode);
+  black_set_usb_power_mode(USB_POWER_CDP);
 }
 
 const harness_configuration black_harness_config = {

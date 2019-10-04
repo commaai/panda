@@ -242,10 +242,11 @@ void white_init(void) {
   set_gpio_alternate(GPIOA, 7, GPIO_AF5_SPI1);
 
   // on PC, set USB power mode to CLIENT
-#ifndef EON
-  usb_power_mode = USB_POWER_CLIENT;
+#ifdef EON
+  white_set_usb_power_mode(USB_POWER_CDP);
+#else
+  white_set_usb_power_mode(USB_POWER_CLIENT);
 #endif
-  white_set_usb_power_mode(usb_power_mode);
 
   // B12: GMLAN, ignition sense, pull up
   set_gpio_pullup(GPIOB, 12, PULL_UP);
