@@ -24,32 +24,32 @@ def recv(panda, cnt, addr, nbus):
         # leave around
         nmsgs.append((ids, ts, dat, bus))
     kmsgs = nmsgs[-256:]
-  return list(map(str, ret))
+  return ret
 
 def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
   msg = recv(panda, 1, addr, bus)[0]
 
   # TODO: handle other subaddr also communicating
-  assert ord(msg[0]) == subaddr
+  assert msg[0] == subaddr
 
-  if ord(msg[1])&0xf0 == 0x10:
+  if msg[1]&0xf0 == 0x10:
     # first
-    tlen = ((ord(msg[1]) & 0xf) << 8) | ord(msg[2])
+    tlen = ((msg[1] & 0xf) << 8) | msg[2]
     dat = msg[3:]
 
     # 0 block size?
-    CONTINUE = chr(subaddr) + b"\x30" + b"\x00"*6
+    CONTINUE = chr(subaddr).encode("utf8") + b"\x30" + b"\x00"*6
     panda.can_send(sendaddr, CONTINUE, bus)
 
     idx = 1
     for mm in recv(panda, (tlen-len(dat) + 5)/6, addr, bus):
-      assert ord(mm[0]) == subaddr
-      assert ord(mm[1]) == (0x20 | (idx&0xF))
+      assert mm[0] == subaddr
+      assert mm[1] == (0x20 | (idx&0xF))
       dat += mm[2:]
       idx += 1
-  elif ord(msg[1])&0xf0 == 0x00:
+  elif msg[1]&0xf0 == 0x00:
     # single
-    tlen = ord(msg[1]) & 0xf
+    tlen = msg[1] & 0xf
     dat = msg[2:]
   else:
     print(msg.encode("hex"))
@@ -88,7 +88,7 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None):
     # actually send
     panda.can_send(addr, ss, bus)
     rr = recv(panda, 1, recvaddr, bus)[0]
-    if rr.find("\x30\x01") != -1:
+    if rr.find(b"\x30\x01") != -1:
       for s in sends[:-1]:
         panda.can_send(addr, s, 0)
         rr = recv(panda, 1, recvaddr, bus)[0]
@@ -105,9 +105,9 @@ def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
   else:
     msg = recv(panda, 1, addr, bus)[0]
 
-    if ord(msg[0])&0xf0 == 0x10:
+    if msg[0]&0xf0 == 0x10:
       # first
-      tlen = ((ord(msg[0]) & 0xf) << 8) | ord(msg[1])
+      tlen = ((msg[0] & 0xf) << 8) | msg[1]
       dat = msg[2:]
 
       # 0 block size?
@@ -117,12 +117,12 @@ def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
 
       idx = 1
       for mm in recv(panda, (tlen-len(dat) + 6)/7, addr, bus):
-        assert ord(mm[0]) == (0x20 | (idx&0xF))
+        assert mm[0] == (0x20 | (idx&0xF))
         dat += mm[1:]
         idx += 1
-    elif ord(msg[0])&0xf0 == 0x00:
+    elif msg[0]&0xf0 == 0x00:
       # single
-      tlen = ord(msg[0]) & 0xf
+      tlen = msg[0] & 0xf
       dat = msg[1:]
     else:
       assert False
