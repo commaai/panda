@@ -29,6 +29,7 @@ struct sample_t gm_torque_driver;
 struct sample_t hyundai_torque_driver;
 struct sample_t chrysler_torque_meas;
 struct sample_t subaru_torque_driver;
+struct sample_t volkswagen_torque_driver;
 
 TIM_TypeDef timer;
 TIM_TypeDef *TIM2 = &timer;
@@ -155,6 +156,11 @@ void set_subaru_torque_driver(int min, int max){
   subaru_torque_driver.max = max;
 }
 
+void set_volkswagen_torque_driver(int min, int max){
+  vw_torque_driver.min = min;
+  vw_torque_driver.max = max;
+}
+
 int get_chrysler_torque_meas_min(void){
   return chrysler_torque_meas.min;
 }
@@ -199,6 +205,10 @@ void set_subaru_rt_torque_last(int t){
   subaru_rt_torque_last = t;
 }
 
+void set_volkswagen_rt_torque_last(int t){
+  vw_rt_torque_last = t;
+}
+
 void set_toyota_desired_torque_last(int t){
   toyota_desired_torque_last = t;
 }
@@ -221,6 +231,10 @@ void set_chrysler_desired_torque_last(int t){
 
 void set_subaru_desired_torque_last(int t){
   subaru_desired_torque_last = t;
+}
+
+void set_volkswagen_desired_torque_last(int t){
+  vw_desired_torque_last = t;
 }
 
 bool get_honda_moving(void){
@@ -313,6 +327,16 @@ void init_tests_subaru(void){
   subaru_desired_torque_last = 0;
   subaru_rt_torque_last = 0;
   subaru_ts_last = 0;
+  set_timer(0);
+}
+
+void init_tests_volkswagen(void){
+  init_tests();
+  vw_torque_driver.min = 0;
+  vw_torque_driver.max = 0;
+  vw_desired_torque_last = 0;
+  vw_rt_torque_last = 0;
+  vw_ts_last = 0;
   set_timer(0);
 }
 
