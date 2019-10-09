@@ -71,6 +71,8 @@ static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // Safety check for HCA_01 Heading Control Assist torque.
   if (addr == MSG_HCA_01) {
+    bool violation = false;
+
     int desired_torque = GET_BYTE(to_send, 2) | ((GET_BYTE(to_send, 3) & 0x3F) << 8);
     int sign = (GET_BYTE(to_send, 3) & 0x80) >> 7;
     if (sign == 1) {
@@ -80,7 +82,6 @@ static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     uint32_t ts = TIM2->CNT;
 
     if (controls_allowed) {
-      bool violation = false;
 
       // *** global torque limit check ***
       violation |= max_limit_check(desired_torque, VW_MAX_STEER, -VW_MAX_STEER);
