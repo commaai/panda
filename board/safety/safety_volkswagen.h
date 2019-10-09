@@ -60,7 +60,7 @@ static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // allowed state is directly driven by stock ACC engagement. Permit the ACC message to come from either bus, in
   // order to accommodate future camera-side integrations if needed.
   if (addr == MSG_ACC_06) {
-    uint8_t acc_status = (GET_BYTE(to_push,7) & 0x70) >> 4;
+    int acc_status = (GET_BYTE(to_push,7) & 0x70) >> 4;
     controls_allowed = ((acc_status == 3) || (acc_status == 4) || (acc_status == 5)) ? 1 : 0;
   }
 }
