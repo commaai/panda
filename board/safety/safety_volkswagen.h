@@ -40,16 +40,19 @@ static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int addr = GET_ADDR(to_push);
 
   // Monitor Klemmen_Status_01.ZAS_Kl_15 for Terminal 15 (ignition-on) status, but we make no use of it at the moment.
-  if (bus == 0 && addr == MSG_KLEMMEN_STATUS_01) {
+  if ((bus == 0) && (addr == MSG_KLEMMEN_STATUS_01)) {
     vw_ignition_started = (GET_BYTE(to_push, 2) & 0x2) >> 1;
   }
 
   // Update driver input torque samples from EPS_01.Driver_Strain for absolute torque, and EPS_01.Driver_Strain_VZ
   // for the direction.
-  if (bus == 0 && addr == MSG_EPS_01) {
+  if ((bus == 0) && (addr == MSG_EPS_01)) {
     int torque_driver_new = GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0x1F) << 8);
-    uint8_t sign = (GET_BYTE(to_push, 6) & 0x80) >> 7;
-    if (sign == 1) torque_driver_new *= -1;
+    int sign = (GET_BYTE(to_push, 6) & 0x80) >> 7;
+    if (sign == 1) {
+      torque_driver_new *= -1;
+    }
+
     update_sample(&vw_torque_driver, torque_driver_new);
   }
 
@@ -58,19 +61,22 @@ static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // order to accommodate future camera-side integrations if needed.
   if (addr == MSG_ACC_06) {
     uint8_t acc_status = (GET_BYTE(to_push,7) & 0x70) >> 4;
-    controls_allowed = (acc_status == 3 || acc_status == 4 || acc_status == 5) ? true : false;
+    controls_allowed = ((acc_status == 3) || (acc_status == 4) || (acc_status == 5)) ? true : false;
   }
 }
 
 static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
   int violation = 0;
+  int tx = 1;
 
   // Safety check for HCA_01 Heading Control Assist torque.
   if (addr == MSG_HCA_01) {
     int desired_torque = GET_BYTE(to_send, 2) | ((GET_BYTE(to_send, 3) & 0x3F) << 8);
-    uint8_t sign = (GET_BYTE(to_send, 3) & 0x80) >> 7;
-    if (sign == 1) desired_torque *= -1;
+    int sign = (GET_BYTE(to_send, 3) & 0x80) >> 7;
+    if (sign == 1) {
+      desired_torque *= -1;
+    }
 
     uint32_t ts = TIM2->CNT;
 
@@ -107,13 +113,14 @@ static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       vw_ts_last = ts;
     }
 
+    if (violation) {
+      tx = 0;
+    }
+
   }
 
-  if (violation) {
-    return false;
-  } else {
-    return true;
-  }
+  // 1 allows the message through
+  return tx;
 }
 
 static int volkswagen_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
@@ -133,7 +140,7 @@ static int volkswagen_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
       }
       break;
     case 2:
-      if(addr == MSG_HCA_01 || addr == MSG_LDW_02) {
+      if((addr == MSG_HCA_01) || (addr == MSG_LDW_02)) {
         // OP takes control of the Heading Control Assist and Lane Departure Warning messages from the camera.
         bus_fwd = -1;
       } else {
