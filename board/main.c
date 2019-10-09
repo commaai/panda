@@ -167,18 +167,7 @@ int get_health_pkt(void *dat) {
     uint8_t usb_power_mode_pkt;
   } *health = dat;
 
-  //Voltage will be measured in mv. 5000 = 5V
-  uint32_t voltage = adc_get(ADCCHAN_VOLTAGE);
-
-  // REVC has a 10, 1 (1/11) voltage divider
-  // Here is the calculation for the scale (s)
-  // ADCV = VIN_S * (1/11) * (4095/3.3)
-  // RETVAL = ADCV * s = VIN_S*1000
-  // s = 1000/((4095/3.3)*(1/11)) = 8.8623046875
-
-  // Avoid needing floating point math
-  health->voltage_pkt = (voltage * 8862U) / 1000U;
-  
+  health->voltage_pkt = adc_get_voltage();
   health->current_pkt = current_board->read_current();
 
   int safety_ignition = safety_ignition_hook();
@@ -472,9 +461,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       if (!ur) {
         break;
       }
-      if (ur == &esp_ring) {
-        uart_dma_drain();
+
+      // TODO: Remove this again and fix boardd code to hande the message bursts instead of single chars
+      if (ur == &uart_ring_esp_gps) {
+        dma_pointer_handler(ur, DMA2_Stream5->NDTR);
       }
+
       // read
       while ((resp_len < MIN(setup->b.wLength.w, MAX_RESP_LEN)) &&
                          getc(ur, (char*)&resp[resp_len])) {
@@ -692,7 +684,9 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
     #ifdef EON
     if (heartbeat_counter >= (current_board->check_ignition() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
       puts("EON hasn't sent a heartbeat for 0x"); puth(heartbeat_counter); puts(" seconds. Safety is set to NOOUTPUT mode.\n");
-      set_safety_mode(SAFETY_NOOUTPUT, 0U);
+      if(current_safety_mode != SAFETY_NOOUTPUT){
+        set_safety_mode(SAFETY_NOOUTPUT, 0U);
+      }
     }
     #endif
 
@@ -737,21 +731,21 @@ int main(void) {
   if (has_external_debug_serial) {
     // WEIRDNESS: without this gate around the UART, it would "crash", but only if the ESP is enabled
     // assuming it's because the lines were left floating and spurious noise was on them
-    uart_init(USART2, 115200);
+    uart_init(&uart_ring_debug, 115200);
   }
 
   if (board_has_gps()) {
-    uart_init(USART1, 9600);
+    uart_init(&uart_ring_esp_gps, 9600);
   } else {
     // enable ESP uart
-    uart_init(USART1, 115200);
+    uart_init(&uart_ring_esp_gps, 115200);
   }
 
   if(board_has_lin()){
     // enable LIN
-    uart_init(UART5, 10400);
+    uart_init(&uart_ring_lin1, 10400);
     UART5->CR2 |= USART_CR2_LINEN;
-    uart_init(USART3, 10400);
+    uart_init(&uart_ring_lin2, 10400);
     USART3->CR2 |= USART_CR2_LINEN;
   }
 

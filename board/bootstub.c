@@ -70,8 +70,6 @@ int main(void) {
   detect_configuration();
   detect_board_type();
 
-  current_board->set_usb_power_mode(USB_POWER_CLIENT);
-
   if (enter_bootloader_mode == ENTER_SOFTLOADER_MAGIC) {
     enter_bootloader_mode = 0;
     soft_flasher_start();

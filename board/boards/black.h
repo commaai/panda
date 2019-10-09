@@ -172,6 +172,9 @@ void black_init(void) {
   // Turn on USB load switch.
   black_set_usb_load_switch(true);
 
+  // Set right power mode
+  black_set_usb_power_mode(USB_POWER_CDP);
+
   // Initialize harness
   harness_init();
 

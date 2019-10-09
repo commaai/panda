@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import random
+import binascii
 import subprocess
 import requests
 import _thread
@@ -49,7 +50,7 @@ def connect_wifi(serial=None):
 
 FNULL = open(os.devnull, 'w')
 def _connect_wifi(dongle_id, pw, insecure_okay=False):
-  ssid = str("panda-" + dongle_id)
+  ssid = "panda-" + dongle_id.decode("utf8")
 
   r = subprocess.call(["ping", "-W", "4", "-c", "1", "192.168.0.10"], stdout=FNULL, stderr=subprocess.STDOUT)
   if not r:
@@ -75,7 +76,8 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
         print("WIFI: scanning %d" % cnt)
         os.system("iwlist %s scanning > /dev/null" % wlan_interface)
         os.system("nmcli device wifi rescan")
-        wifi_scan = [x for x in subprocess.check_output(["nmcli","dev", "wifi", "list"]).split("\n") if ssid in x]
+        wifi_networks = [x.decode("utf8") for x in subprocess.check_output(["nmcli","dev", "wifi", "list"]).split(b"\n")]
+        wifi_scan = [x for x in wifi_networks if ssid in x]
         if len(wifi_scan) != 0:
           break
         time.sleep(0.1)
@@ -140,7 +142,7 @@ def time_many_sends(p, bus, precv=None, msg_count=100, msg_id=None, two_pandas=F
     raise ValueError("Cannot have two pandas that are the same panda")
 
   st = time.time()
-  p.can_send_many([(msg_id, 0, "\xaa"*8, bus)]*msg_count)
+  p.can_send_many([(msg_id, 0, b"\xaa"*8, bus)]*msg_count)
   r = []
   r_echo = []
   r_len_expected = msg_count if two_pandas else msg_count*2

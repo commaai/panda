@@ -253,11 +253,6 @@ void white_init(void) {
   set_gpio_alternate(GPIOA, 6, GPIO_AF5_SPI1);
   set_gpio_alternate(GPIOA, 7, GPIO_AF5_SPI1);
 
-  // on PC, set USB power mode to CLIENT
-#ifndef EON
-  white_set_usb_power_mode(USB_POWER_CLIENT);
-#endif
-
   // B12: GMLAN, ignition sense, pull up
   set_gpio_pullup(GPIOB, 12, PULL_UP);
 
@@ -305,6 +300,16 @@ void white_init(void) {
   EXTI->RTSR |= (1U << 1);
   EXTI->FTSR |= (1U << 1);
   NVIC_EnableIRQ(EXTI1_IRQn);
+
+  // Init usb power mode
+  uint32_t voltage = adc_get_voltage();
+  // Init in CDP mode only if panda is powered by 12V.
+  // Otherwise a PC would not be able to flash a standalone panda with EON build
+  if (voltage > 8000U) {  // 8V threshold
+    white_set_usb_power_mode(USB_POWER_CDP);
+  } else {
+    white_set_usb_power_mode(USB_POWER_CLIENT);
+  }
 }
 
 const harness_configuration white_harness_config = {
