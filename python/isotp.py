@@ -42,7 +42,7 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
     panda.can_send(sendaddr, CONTINUE, bus)
 
     idx = 1
-    for mm in recv(panda, (tlen-len(dat) + 5)/6, addr, bus):
+    for mm in recv(panda, (tlen-len(dat) + 5)//6, addr, bus):
       assert mm[0] == subaddr
       assert mm[1] == (0x20 | (idx&0xF))
       dat += mm[2:]
@@ -116,7 +116,7 @@ def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
       panda.can_send(sendaddr, CONTINUE, bus)
 
       idx = 1
-      for mm in recv(panda, (tlen-len(dat) + 6)/7, addr, bus):
+      for mm in recv(panda, (tlen-len(dat) + 6)//7, addr, bus):
         assert mm[0] == (0x20 | (idx&0xF))
         dat += mm[1:]
         idx += 1
