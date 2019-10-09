@@ -45,7 +45,7 @@ def parse_can_buffer(dat):
       address = f1 >> 21
     dddat = ddat[8:8+(f2&0xF)]
     if DEBUG:
-      print("  R %x: %s" % (address, str(dddat).encode("hex")))
+      print("  R %x: %s" % (address, binascii.hexlify(dddat)))
     ret.append((address, f2>>16, dddat, (f2>>4)&0xFF))
   return ret
 
@@ -451,7 +451,7 @@ class Panda(object):
     for addr, _, dat, bus in arr:
       assert len(dat) <= 8
       if DEBUG:
-        print("  W %x: %s" % (addr, dat.encode("hex")))
+        print("  W %x: %s" % (addr, binascii.hexlify(dat)))
       if addr >= 0x800:
         rir = (addr << 3) | transmit | extended
       else:
@@ -550,7 +550,7 @@ class Panda(object):
       if len(ret) == 0:
         break
       elif DEBUG:
-        print("kline drain: "+str(ret).encode("hex"))
+        print("kline drain: " + binascii.hexlify(ret))
       bret += ret
     return bytes(bret)
 
@@ -559,7 +559,7 @@ class Panda(object):
     while len(echo) != cnt:
       ret = str(self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, cnt-len(echo)))
       if DEBUG and len(ret) > 0:
-        print("kline recv: "+ret.encode("hex"))
+        print("kline recv: " + binascii.hexlify(ret))
       echo += ret
     return str(echo)
 
@@ -576,7 +576,7 @@ class Panda(object):
     for i in range(0, len(x), 0xf):
       ts = x[i:i+0xf]
       if DEBUG:
-        print("kline send: "+ts.encode("hex"))
+        print("kline send: " + binascii.hexlify(ts))
       self._handle.bulkWrite(2, chr(bus).encode()+ts)
       echo = self.kline_ll_recv(len(ts), bus=bus)
       if echo != ts:

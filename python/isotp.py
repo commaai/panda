@@ -1,8 +1,10 @@
+import binascii
+
 DEBUG = False
 
 def msg(x):
   if DEBUG:
-    print("S:",x.encode("hex"))
+    print("S:", binascii.hexlify(x))
   if len(x) <= 7:
     ret = chr(len(x)) + x
   else:
@@ -52,7 +54,7 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
     tlen = msg[1] & 0xf
     dat = msg[2:]
   else:
-    print(msg.encode("hex"))
+    print(binascii.hexlify(msg))
     assert False
 
   return dat[0:tlen]
@@ -129,7 +131,7 @@ def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
     dat = dat[0:tlen]
 
   if DEBUG:
-    print("R:",dat.encode("hex"))
+    print("R:", binascii.hexlify(dat))
 
   return dat
 
