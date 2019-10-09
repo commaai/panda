@@ -50,7 +50,7 @@ def connect_wifi(serial=None):
 
 FNULL = open(os.devnull, 'w')
 def _connect_wifi(dongle_id, pw, insecure_okay=False):
-  ssid = "panda-" + dongle_id.decode("utf8")
+  ssid = "panda-" + dongle_id
 
   r = subprocess.call(["ping", "-W", "4", "-c", "1", "192.168.0.10"], stdout=FNULL, stderr=subprocess.STDOUT)
   if not r:
