@@ -182,14 +182,14 @@ void uno_init(void) {
   // Turn on phone regulator
   set_gpio_output(GPIOB, 4, 1);
 
-  // Initialize IR PWM and set to 100% for now
+  // Initialize IR PWM and set to 50% for now
   set_gpio_alternate(GPIOB, 7, GPIO_AF2_TIM4);
   pwm_init(TIM4, 2);
-  uno_set_ir_power(100U);
+  uno_set_ir_power(50U);
 
-  // Initialize fan and set to 50%
+  // Initialize fan and set to 10%
   fan_init();
-  uno_set_fan_power(50U);
+  uno_set_fan_power(10U);
 
   // Initialize harness
   harness_init();

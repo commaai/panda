@@ -1,4 +1,4 @@
-#define PWM_COUNTER_OVERFLOW 3744U // To get ~25kHz
+#define PWM_COUNTER_OVERFLOW 2000U // To get ~50kHz
 
 void pwm_init(TIM_TypeDef *TIM, uint8_t channel){
     // Enable timer and auto-reload
