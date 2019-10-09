@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import random
+import binascii
 import subprocess
 import requests
 import _thread
@@ -49,7 +50,7 @@ def connect_wifi(serial=None):
 
 FNULL = open(os.devnull, 'w')
 def _connect_wifi(dongle_id, pw, insecure_okay=False):
-  ssid = str("panda-" + str(dongle_id))
+  ssid = "panda-" + dongle_id.decode("utf8")
 
   r = subprocess.call(["ping", "-W", "4", "-c", "1", "192.168.0.10"], stdout=FNULL, stderr=subprocess.STDOUT)
   if not r:
@@ -75,7 +76,8 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
         print("WIFI: scanning %d" % cnt)
         os.system("iwlist %s scanning > /dev/null" % wlan_interface)
         os.system("nmcli device wifi rescan")
-        wifi_scan = [x for x in subprocess.check_output(["nmcli","dev", "wifi", "list"]).split("\n") if ssid in x]
+        wifi_networks = [x.decode("utf8") for x in subprocess.check_output(["nmcli","dev", "wifi", "list"]).split(b"\n")]
+        wifi_scan = [x for x in wifi_networks if ssid in x]
         if len(wifi_scan) != 0:
           break
         time.sleep(0.1)
