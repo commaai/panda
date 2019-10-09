@@ -1,5 +1,5 @@
 const int VW_MAX_STEER = 300;               // 3.0 nm
-const int VW_MAX_RT_DELTA = 130;            // max delta torque allowed for real time checks
+const int VW_MAX_RT_DELTA = 190;            // max delta torque allowed for real time checks
 const uint32_t VW_RT_INTERVAL = 250000;     // 250ms between real time checks
 const int VW_MAX_RATE_UP = 10;
 const int VW_MAX_RATE_DOWN = 10;
