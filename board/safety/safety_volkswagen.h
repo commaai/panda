@@ -61,13 +61,12 @@ static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // order to accommodate future camera-side integrations if needed.
   if (addr == MSG_ACC_06) {
     uint8_t acc_status = (GET_BYTE(to_push,7) & 0x70) >> 4;
-    controls_allowed = ((acc_status == 3) || (acc_status == 4) || (acc_status == 5)) ? true : false;
+    controls_allowed = ((acc_status == 3) || (acc_status == 4) || (acc_status == 5)) ? 1 : 0;
   }
 }
 
 static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
-  int violation = 0;
   int tx = 1;
 
   // Safety check for HCA_01 Heading Control Assist torque.
@@ -81,6 +80,8 @@ static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     uint32_t ts = TIM2->CNT;
 
     if (controls_allowed) {
+      bool violation = false;
+
       // *** global torque limit check ***
       violation |= max_limit_check(desired_torque, VW_MAX_STEER, -VW_MAX_STEER);
 
@@ -103,7 +104,7 @@ static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // no torque if controls is not allowed
     if (!controls_allowed && (desired_torque != 0)) {
-      violation = 1;
+      violation = true;
     }
 
     // reset to 0 if either controls is not allowed or there's a violation
