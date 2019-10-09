@@ -1,8 +1,8 @@
 const int VW_MAX_STEER = 300;               // 3.0 nm
-const int VW_MAX_RT_DELTA = 190;            // max delta torque allowed for real time checks
+const int VW_MAX_RT_DELTA = 188;            // 10 max rate * 50Hz send rate * 250000 RT interval / 1000000 = 125 ; 125 * 1.5 for safety pad = 187.5
 const uint32_t VW_RT_INTERVAL = 250000;     // 250ms between real time checks
-const int VW_MAX_RATE_UP = 10;
-const int VW_MAX_RATE_DOWN = 10;
+const int VW_MAX_RATE_UP = 10;              // 5.0 nm/s available rate of change from the steering rack
+const int VW_MAX_RATE_DOWN = 10;            // 5.0 nm/s available rate of change from the steering rack
 const int VW_DRIVER_TORQUE_ALLOWANCE = 100;
 const int VW_DRIVER_TORQUE_FACTOR = 4;
 
