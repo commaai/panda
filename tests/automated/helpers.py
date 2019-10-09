@@ -69,7 +69,7 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
     if sys.platform == "darwin":
       os.system("networksetup -setairportnetwork en0 %s %s" % (ssid, pw))
     else:
-      wlan_interface = subprocess.check_output(["sh", "-c", "iw dev | awk '/Interface/ {print $2}'"]).strip()
+      wlan_interface = subprocess.check_output(["sh", "-c", "iw dev | awk '/Interface/ {print $2}'"]).strip().decode('utf8')
       cnt = 0
       MAX_TRIES = 10
       while cnt < MAX_TRIES:
