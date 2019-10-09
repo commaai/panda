@@ -25,16 +25,6 @@ static void volkswagen_init(int16_t param) {
   controls_allowed = 0;
   vw_ignition_started = 0;
 }
-
-static int volkswagen_ign_hook(void) {
-  // While we do monitor VW Terminal 15 (ignition-on) state, we are not currently acting on it. We may do so in the
-  // future for harness integrations at the camera (where we only have T30 unswitched power) instead of the gateway
-  // (where we have both T30 and T15 ignition-switched power). For now, use the default GPIO pin behavior.
-
-  // return vw_ignition_started;
-  return -1;
-}
-
 static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
@@ -158,11 +148,15 @@ static int volkswagen_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return bus_fwd;
 }
 
+// While we do monitor VW Terminal 15 (ignition-on) state, we are not currently acting on it. Instead we use the
+// default GPIO ignition hook. We may do so in the future for harness integrations at the camera (where we only have
+// T30 unswitched power) instead of the gateway (where we have both T30 and T15 ignition-switched power).
+
 const safety_hooks volkswagen_hooks = {
   .init = volkswagen_init,
   .rx = volkswagen_rx_hook,
   .tx = volkswagen_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
-  .ignition = volkswagen_ign_hook,
+  .ignition = default_ign_hook,
   .fwd = volkswagen_fwd_hook,
 };
