@@ -399,6 +399,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       if (!ur) {
         break;
       }
+
+      // TODO: Remove this again and fix boardd code to hande the message bursts instead of single chars
+      if (ur == &uart_ring_esp_gps) {
+        dma_pointer_handler(ur, DMA2_Stream5->NDTR);
+      }
+
       // read
       while ((resp_len < MIN(setup->b.wLength.w, MAX_RESP_LEN)) &&
                          getc(ur, (char*)&resp[resp_len])) {
