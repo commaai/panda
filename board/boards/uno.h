@@ -189,7 +189,7 @@ void uno_init(void) {
 
   // Initialize fan and set to 10%
   fan_init();
-  uno_set_fan_power(10U);
+  uno_set_fan_power(5U);
 
   // Initialize harness
   harness_init();
