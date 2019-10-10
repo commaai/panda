@@ -48,17 +48,9 @@ void uno_set_gps_load_switch(bool enabled) {
   set_gpio_output(GPIOC, 12, enabled);
 }
 
-void uno_set_usb_load_switch(bool enabled) {
-  set_gpio_output(GPIOB, 1, !enabled);
-}
-
 void uno_set_usb_power_mode(uint8_t mode) {
-  usb_power_mode = mode;
-  if (mode == USB_POWER_NONE) {
-    uno_set_usb_load_switch(false);
-  } else {
-    uno_set_usb_load_switch(true);
-  }
+  UNUSED(mode);
+  puts("Setting USB mode makes no sense on UNO\n");
 }
 
 void uno_set_esp_gps_mode(uint8_t mode) {
@@ -176,9 +168,6 @@ void uno_init(void) {
   // Turn on GPS load switch.
   uno_set_gps_load_switch(true);
 
-  // Turn on USB load switch.
-  uno_set_usb_load_switch(true);
-
   // Turn on phone regulator
   set_gpio_output(GPIOB, 4, 1);
 
@@ -214,8 +203,7 @@ void uno_init(void) {
   can_set_obd(car_harness_status, false);
 
   // Switch to phone usb mode if harness connection is powered by less than 7V
-  uint32_t harness_voltage = (adc_get(ADCCHAN_VOLTAGE) * 8862U) / 1000U;
-  if(harness_voltage < 7000U){
+  if(adc_get_voltage() < 7000U){
     uno_set_usb_switch(true);
   } else {
     uno_set_usb_switch(false);
