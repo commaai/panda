@@ -2,6 +2,7 @@
 import unittest
 import numpy as np
 import libpandasafety_py
+from panda import Panda
 
 MAX_RATE_UP = 10
 MAX_RATE_DOWN = 10
@@ -23,7 +24,7 @@ class TestVolkswagenSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.safety_set_mode(15, 0)
+    cls.safety.safety_set_mode(Panda.SAFETY_VOLKSWAGEN, 0)
     cls.safety.init_tests_volkswagen()
 
   def _send_msg(self, bus, addr, length):
