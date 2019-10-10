@@ -6,7 +6,7 @@ def msg(x):
   if DEBUG:
     print("S:", binascii.hexlify(x))
   if len(x) <= 7:
-    ret = chr(len(x)) + x
+    ret = chr(len(x)).encode("utf8") + x
   else:
     assert False
   return ret.ljust(8, b"\x00")
@@ -68,7 +68,7 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None):
   if len(x) <= 7 and subaddr is None:
     panda.can_send(addr, msg(x), bus)
   elif len(x) <= 6 and subaddr is not None:
-    panda.can_send(addr, chr(subaddr)+msg(x)[0:7], bus)
+    panda.can_send(addr, chr(subaddr).encode("utf8") + msg(x)[0:7], bus)
   else:
     if subaddr:
       ss = (chr(subaddr) + chr(0x10 + (len(x)>>8)) + chr(len(x)&0xFF)).encode("utf8") + x[0:5]
@@ -122,7 +122,7 @@ def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
         assert mm[0] == (0x20 | (idx&0xF))
         dat += mm[1:]
         idx += 1
-    elif msg[0]&0xf0 == 0x00:
+    elif msg[0] & 0xf0 == 0x00:
       # single
       tlen = msg[0] & 0xf
       dat = msg[1:]
