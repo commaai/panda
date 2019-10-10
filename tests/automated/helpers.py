@@ -87,13 +87,13 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
       if "-pair" in wifi_scan[0]:
         os.system("nmcli d wifi connect %s-pair" % (ssid))
         connect_cnt = 0
-        MAX_TRIES = 20
+        MAX_TRIES = 100
         while connect_cnt < MAX_TRIES:
           connect_cnt += 1
           r = subprocess.call(["ping", "-W", "4", "-c", "1", "192.168.0.10"], stdout=FNULL, stderr=subprocess.STDOUT)
           if r:
             print("Waiting for panda to ping...")
-            time.sleep(0.1)
+            time.sleep(0.5)
           else:
             break
         if insecure_okay:
