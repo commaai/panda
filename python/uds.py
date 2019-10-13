@@ -286,8 +286,8 @@ class UdsClient():
 
   def _isotp_thread(self, debug):
     try:
-      rx_frame = {"size": 0, "data": "", "idx": 0, "done": True}
-      tx_frame = {"size": 0, "data": "", "idx": 0, "done": True}
+      rx_frame = {"size": 0, "data": b"", "idx": 0, "done": True}
+      tx_frame = {"size": 0, "data": b"", "idx": 0, "done": True}
 
       # allow all output
       self.panda.set_safety_mode(0x1337)
@@ -333,9 +333,16 @@ class UdsClient():
               self.rx_queue.put(rx_frame["data"])
           elif rx_data[0] >> 4 == 0x3:
             # flow control
-            assert tx_frame["done"] == False, "tx: no active frame"
-            # TODO: support wait/overflow
-            assert rx_data[0] == 0x30, "tx: flow-control requires: continue"
+            if tx_frame["done"] != False:
+              tx_frame["done"] = True
+              self.rx_queue.put(b"\x7F\xFF\xFFtx: no active frame")
+            # TODO: support wait
+            if rx_data[0] == 0x31:
+              tx_frame["done"] = True
+              self.rx_queue.put(b"\x7F\xFF\xFFtx: flow-control error - wait not supported")
+            if rx_data[0] == 0x32:
+              tx_frame["done"] = True
+              self.rx_queue.put(b"\x7F\xFF\xFFtx: flow-control error - overflow/abort")
             delay_ts = rx_data[2] & 0x7F
             # scale is 1 milliseconds if first bit == 0, 100 micro seconds if first bit == 1
             delay_div = 1000. if rx_data[2] & 0x80 == 0 else 10000.
@@ -346,7 +353,7 @@ class UdsClient():
             for i in range(start, end, 7):
               tx_frame["idx"] += 1
               # consecutive tx frames
-              msg = (chr(0x20 | (tx_frame["idx"] & 0xF)).encode("utf8") + tx_frame["data"][i:i+7]).ljust(8, b"\x00")
+              msg = (chr(0x20 | (tx_frame["idx"] & 0xF)).encode() + tx_frame["data"][i:i+7]).ljust(8, b"\x00")
               if (debug): print("S: {} {}".format(hex(self.tx_addr), hexlify(msg)))
               self.panda.can_send(self.tx_addr, msg, self.bus)
               if delay_ts > 0:
@@ -357,12 +364,12 @@ class UdsClient():
         if not self.tx_queue.empty():
           req = self.tx_queue.get(block=False)
           # reset rx and tx frames
-          rx_frame = {"size": 0, "data": "", "idx": 0, "done": True}
+          rx_frame = {"size": 0, "data": b"", "idx": 0, "done": True}
           tx_frame = {"size": len(req), "data": req, "idx": 0, "done": False}
           if tx_frame["size"] < 8:
             # single frame
             tx_frame["done"] = True
-            msg = (chr(tx_frame["size"]).encode("utf8") + tx_frame["data"]).ljust(8, b"\x00")
+            msg = (chr(tx_frame["size"]).encode() + tx_frame["data"]).ljust(8, b"\x00")
             if (debug): print("S: {} {}".format(hex(self.tx_addr), hexlify(msg)))
             self.panda.can_send(self.tx_addr, msg, self.bus)
           else:
@@ -379,9 +386,9 @@ class UdsClient():
 
   # generic uds request
   def _uds_request(self, service_type, subfunction=None, data=None):
-    req = chr(service_type).encode("utf8")
+    req = chr(service_type).encode()
     if subfunction is not None:
-      req += chr(subfunction).encode("utf8")
+      req += chr(subfunction).encode()
     if data is not None:
       req += data
     self.tx_queue.put(req)
@@ -407,7 +414,7 @@ class UdsClient():
         try:
           error_desc = _negative_response_codes[error_code]
         except Exception:
-          error_desc = 'unknown error'
+          error_desc = resp[3:]
         # wait for another message if response pending
         if error_code == 0x78:
           time.sleep(0.1)
@@ -452,7 +459,7 @@ class UdsClient():
       return security_seed
 
   def communication_control(self, control_type, message_type):
-    data = chr(message_type).encode("utf8")
+    data = chr(message_type).encode()
     self._uds_request(SERVICE_TYPE.COMMUNICATION_CONTROL, subfunction=control_type, data=data)
 
   def tester_present(self, ):
@@ -505,7 +512,7 @@ class UdsClient():
   def link_control(self, link_control_type, baud_rate_type=None):
     if link_control_type == LINK_CONTROL_TYPE.VERIFY_BAUDRATE_TRANSITION_WITH_FIXED_BAUDRATE:
       # baud_rate_type = BAUD_RATE_TYPE
-      data = chr(baud_rate_type).encode("utf8")
+      data = chr(baud_rate_type).encode()
     elif link_control_type == LINK_CONTROL_TYPE.VERIFY_BAUDRATE_TRANSITION_WITH_SPECIFIC_BAUDRATE:
       # baud_rate_type = custom value (3 bytes big-endian)
       data = struct.pack('!I', baud_rate_type)[1:]
@@ -527,7 +534,7 @@ class UdsClient():
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
       raise ValueError('invalid memory_size_bytes: {}'.format(memory_size_bytes))
-    data = chr(memory_size_bytes<<4 | memory_address_bytes).encode("utf8")
+    data = chr(memory_size_bytes<<4 | memory_address_bytes).encode()
 
     if memory_address >= 1<<(memory_address_bytes*8):
       raise ValueError('invalid memory_address: {}'.format(memory_address))
@@ -549,7 +556,7 @@ class UdsClient():
 
   def read_data_by_periodic_identifier(self, transmission_mode_type, periodic_data_identifier):
     # TODO: support list of identifiers
-    data = chr(transmission_mode_type).encode("utf8") + chr(periodic_data_identifier).encode("utf8")
+    data = chr(transmission_mode_type).encode() + chr(periodic_data_identifier).encode()
     self._uds_request(SERVICE_TYPE.READ_DATA_BY_PERIODIC_IDENTIFIER, subfunction=None, data=data)
 
   def dynamically_define_data_identifier(self, dynamic_definition_type, dynamic_data_identifier, source_definitions, memory_address_bytes=4, memory_size_bytes=1):
@@ -561,9 +568,9 @@ class UdsClient():
     data = struct.pack('!H', dynamic_data_identifier)
     if dynamic_definition_type == DYNAMIC_DEFINITION_TYPE.DEFINE_BY_IDENTIFIER:
       for s in source_definitions:
-        data += struct.pack('!H', s["data_identifier"]) + chr(s["position"]).encode("utf8") + chr(s["memory_size"]).encode("utf8")
+        data += struct.pack('!H', s["data_identifier"]) + chr(s["position"]).encode() + chr(s["memory_size"]).encode()
     elif dynamic_definition_type == DYNAMIC_DEFINITION_TYPE.DEFINE_BY_MEMORY_ADDRESS:
-      data += chr(memory_size_bytes<<4 | memory_address_bytes).encode("utf8")
+      data += chr(memory_size_bytes<<4 | memory_address_bytes).encode()
       for s in source_definitions:
         if s["memory_address"] >= 1<<(memory_address_bytes*8):
           raise ValueError('invalid memory_address: {}'.format(s["memory_address"]))
@@ -589,7 +596,7 @@ class UdsClient():
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
       raise ValueError('invalid memory_size_bytes: {}'.format(memory_size_bytes))
-    data = chr(memory_size_bytes<<4 | memory_address_bytes).encode("utf8")
+    data = chr(memory_size_bytes<<4 | memory_address_bytes).encode()
 
     if memory_address >= 1<<(memory_address_bytes*8):
       raise ValueError('invalid memory_address: {}'.format(memory_address))
@@ -606,7 +613,7 @@ class UdsClient():
     self._uds_request(SERVICE_TYPE.CLEAR_DIAGNOSTIC_INFORMATION, subfunction=None, data=data)
 
   def read_dtc_information(self, dtc_report_type, dtc_status_mask_type=DTC_STATUS_MASK_TYPE.ALL, dtc_severity_mask_type=DTC_SEVERITY_MASK_TYPE.ALL, dtc_mask_record=0xFFFFFF, dtc_snapshot_record_num=0xFF, dtc_extended_record_num=0xFF):
-    data = ''
+    data = b''
     # dtc_status_mask_type
     if dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_DTC_BY_STATUS_MASK or \
       dtc_report_type == DTC_REPORT_TYPE.DTC_BY_STATUS_MASK or \
@@ -614,7 +621,7 @@ class UdsClient():
       dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_MIRROR_MEMORY_DTC_BY_STATUS_MASK or \
       dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_EMISSIONS_RELATED_OBD_DTC_BY_STATUS_MASK or \
       dtc_report_type == DTC_REPORT_TYPE.EMISSIONS_RELATED_OBD_DTC_BY_STATUS_MASK:
-      data += chr(dtc_status_mask_type).encode("utf8")
+      data += chr(dtc_status_mask_type).encode()
     # dtc_mask_record
     if dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_IDENTIFICATION or \
       dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_DTC_NUMBER or \
@@ -630,18 +637,18 @@ class UdsClient():
     # dtc_extended_record_num
     if dtc_report_type == DTC_REPORT_TYPE.DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER or \
       dtc_report_type == DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER:
-      data += chr(dtc_extended_record_num).encode("utf8")
+      data += chr(dtc_extended_record_num).encode()
     # dtc_severity_mask_type
     if dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_DTC_BY_SEVERITY_MASK_RECORD or \
       dtc_report_type == DTC_REPORT_TYPE.DTC_BY_SEVERITY_MASK_RECORD:
-      data += chr(dtc_severity_mask_type).encode("utf8") + chr(dtc_status_mask_type).encode("utf8")
+      data += chr(dtc_severity_mask_type).encode() + chr(dtc_status_mask_type).encode()
     
     resp = self._uds_request(SERVICE_TYPE.READ_DTC_INFORMATION, subfunction=dtc_report_type, data=data)
 
     # TODO: parse response
     return resp
 
-  def input_output_control_by_identifier(self, data_identifier_type, control_option_record, control_enable_mask_record=''):
+  def input_output_control_by_identifier(self, data_identifier_type, control_option_record, control_enable_mask_record=b''):
     data = struct.pack('!H', data_identifier_type) + control_option_record + control_enable_mask_record
     resp = self._uds_request(SERVICE_TYPE.INPUT_OUTPUT_CONTROL_BY_IDENTIFIER, subfunction=None, data=data)
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
@@ -649,7 +656,7 @@ class UdsClient():
       raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
     return resp[2:]
 
-  def routine_control(self, routine_control_type, routine_identifier_type, routine_option_record=''):
+  def routine_control(self, routine_control_type, routine_identifier_type, routine_option_record=b''):
     data = struct.pack('!H', routine_identifier_type) + routine_option_record
     resp = self._uds_request(SERVICE_TYPE.ROUTINE_CONTROL, subfunction=routine_control_type, data=data)
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
@@ -658,13 +665,13 @@ class UdsClient():
     return resp[2:]
 
   def request_download(self, memory_address, memory_size, memory_address_bytes=4, memory_size_bytes=4, data_format=0x00):
-    data = chr(data_format).encode("utf8")
+    data = chr(data_format).encode()
 
     if memory_address_bytes < 1 or memory_address_bytes > 4:
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
       raise ValueError('invalid memory_size_bytes: {}'.format(memory_size_bytes))
-    data += chr(memory_size_bytes<<4 | memory_address_bytes).encode("utf8")
+    data += chr(memory_size_bytes<<4 | memory_address_bytes).encode()
 
     if memory_address >= 1<<(memory_address_bytes*8):
       raise ValueError('invalid memory_address: {}'.format(memory_address))
@@ -683,13 +690,13 @@ class UdsClient():
     return max_num_bytes # max number of bytes per transfer data request
 
   def request_upload(self, memory_address, memory_size, memory_address_bytes=4, memory_size_bytes=4, data_format=0x00):
-    data = chr(data_format).encode("utf8")
+    data = chr(data_format).encode()
 
     if memory_address_bytes < 1 or memory_address_bytes > 4:
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
       raise ValueError('invalid memory_size_bytes: {}'.format(memory_size_bytes))
-    data += chr(memory_size_bytes<<4 | memory_address_bytes).encode("utf8")
+    data += chr(memory_size_bytes<<4 | memory_address_bytes).encode()
 
     if memory_address >= 1<<(memory_address_bytes*8):
       raise ValueError('invalid memory_address: {}'.format(memory_address))
@@ -707,8 +714,8 @@ class UdsClient():
 
     return max_num_bytes # max number of bytes per transfer data request
 
-  def transfer_data(self, block_sequence_count, data=''):
-    data = chr(block_sequence_count).encode("utf8") + data
+  def transfer_data(self, block_sequence_count, data=b''):
+    data = chr(block_sequence_count).encode() + data
     resp = self._uds_request(SERVICE_TYPE.TRANSFER_DATA, subfunction=None, data=data)
     resp_id = resp[0] if len(resp) > 0 else None
     if resp_id != block_sequence_count:
