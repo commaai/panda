@@ -676,7 +676,7 @@ class UdsClient():
     resp = self._uds_request(SERVICE_TYPE.REQUEST_DOWNLOAD, subfunction=None, data=data)
     max_num_bytes_len = resp[0] >> 4 if len(resp) > 0 else None
     if max_num_bytes_len >= 1 and max_num_bytes_len <= 4:
-      max_num_bytes = struct.unpack('!I', ('\x00'*(4-max_num_bytes_len))+resp[1:max_num_bytes_len+1])[0]
+      max_num_bytes = struct.unpack('!I', (b"\x00"*(4-max_num_bytes_len))+resp[1:max_num_bytes_len+1])[0]
     else:
       raise ValueError('invalid max_num_bytes_len: {}'.format(max_num_bytes_len))
 
@@ -701,7 +701,7 @@ class UdsClient():
     resp = self._uds_request(SERVICE_TYPE.REQUEST_UPLOAD, subfunction=None, data=data)
     max_num_bytes_len = resp[0] >> 4 if len(resp) > 0 else None
     if max_num_bytes_len >= 1 and max_num_bytes_len <= 4:
-      max_num_bytes = struct.unpack('!I', ('\x00'*(4-max_num_bytes_len))+resp[1:max_num_bytes_len+1])[0]
+      max_num_bytes = struct.unpack('!I', (b"\x00"*(4-max_num_bytes_len))+resp[1:max_num_bytes_len+1])[0]
     else:
       raise ValueError('invalid max_num_bytes_len: {}'.format(max_num_bytes_len))
 
