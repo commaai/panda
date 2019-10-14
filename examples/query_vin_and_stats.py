@@ -12,7 +12,7 @@ from panda.python.isotp import isotp_send, isotp_recv
 
 def get_current_data_for_pid(pid):
   # 01 xx = Show current data
-  isotp_send(panda, b"\x01"+ (chr(pid)).encode("utf8"), 0x7e0)
+  isotp_send(panda, b"\x01"+ bytes([pid]), 0x7e0)
   return isotp_recv(panda, 0x7e8)
 
 def get_supported_pids():
