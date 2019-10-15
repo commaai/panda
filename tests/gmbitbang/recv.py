@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import time
 from panda import Panda
 
 p = Panda()

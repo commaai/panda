@@ -2,13 +2,12 @@ import os
 import sys
 import time
 import random
-import binascii
 import subprocess
 import requests
 import _thread
 from functools import wraps
 from panda import Panda
-from nose.tools import timed, assert_equal, assert_less, assert_greater
+from nose.tools import assert_equal
 from parameterized import parameterized, param
 
 SPEED_NORMAL = 500

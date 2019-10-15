@@ -10,10 +10,6 @@ import time
 import traceback
 import subprocess
 from .dfu import PandaDFU
-from .esptool import ESPROM, CesantaFlasher
-from .flash_release import flash_release
-from .update import ensure_st_up_to_date
-from .serial import PandaSerial
 from .isotp import isotp_send, isotp_recv
 
 __version__ = '0.0.9'
@@ -27,10 +23,10 @@ def build_st(target, mkfile="Makefile"):
   from panda import BASEDIR
   cmd = 'cd %s && make -f %s clean && make -f %s %s >/dev/null' % (os.path.join(BASEDIR, "board"), mkfile, mkfile, target)
   try:
-    output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-  except subprocess.CalledProcessError as exception:
-    output = exception.output
-    returncode = exception.returncode
+    _ = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+  except subprocess.CalledProcessError:
+    #output = exception.output
+    #returncode = exception.returncode
     raise
 
 def parse_can_buffer(dat):

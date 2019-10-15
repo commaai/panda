@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import unittest
-import numpy as np
 import libpandasafety_py
 from panda import Panda
 

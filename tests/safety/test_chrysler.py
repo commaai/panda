@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import csv
-import glob
 import unittest
 import numpy as np
 import libpandasafety_py
