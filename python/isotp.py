@@ -71,16 +71,16 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None):
     panda.can_send(addr, bytes([subaddr]) + msg(x)[0:7], bus)
   else:
     if subaddr:
-      ss = bytes([subaddr]) + bytes([0x10 + (len(x) >> 8)]) + bytes([len(x) & 0xFF]) + x[0:5]
+      ss = bytes([subaddr, 0x10 + (len(x) >> 8), len(x) & 0xFF]) + x[0:5]
       x = x[5:]
     else:
-      ss = bytes([0x10 + (len(x) >> 8)]) + bytes([len(x) & 0xFF]) + x[0:6]
+      ss = bytes([0x10 + (len(x) >> 8), len(x) & 0xFF]) + x[0:6]
       x = x[6:]
     idx = 1
     sends = []
     while len(x) > 0:
       if subaddr:
-        sends.append(((bytes([subaddr]) + bytes([0x20 + (idx & 0xF)]) + x[0:6]).ljust(8, b"\x00")))
+        sends.append(((bytes([subaddr, 0x20 + (idx & 0xF)]) + x[0:6]).ljust(8, b"\x00")))
         x = x[6:]
       else:
         sends.append(((bytes([0x20 + (idx & 0xF)]) + x[0:7]).ljust(8, b"\x00")))
