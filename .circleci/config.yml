@@ -103,7 +103,6 @@ jobs:
       - run:
           name: Run linter python test
           command: |
-            docker run linter_python /bin/bash -c "cd /panda/tests/linter_python; PYTHONPATH=/ ./pyflakes_panda.sh"
             docker run linter_python /bin/bash -c "cd /panda/tests/linter_python; PYTHONPATH=/ ./pylint_panda.sh"
 
 workflows:
