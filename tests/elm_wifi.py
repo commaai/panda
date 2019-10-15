@@ -322,7 +322,7 @@ def test_elm_panda_safety_mode_KWPFast():
 
     def kline_send(p, x, bus=2):
         p.kline_drain(bus=bus)
-        p._handle.bulkWrite(2, chr(bus).encode()+x)
+        p._handle.bulkWrite(2, bytes([bus]) + x)
         return timed_recv_check(p, bus, x)
 
     def did_send(priority, toaddr, fromaddr, dat, bus=2, checkbyte=None):
