@@ -44,7 +44,7 @@ class FakePort(object):
 
   @property
   def baudrate(self):
-    return self._baudrate
+    return self.baudrate
 
   @baudrate.setter
   def baudrate(self, x):
@@ -434,7 +434,7 @@ class BaseFirmwareImage(object):
 
     def write_v1_header(self, f, segments):
         f.write(struct.pack('<BBBBI', ESPROM.ESP_IMAGE_MAGIC, len(segments),
-                            self.flash_mode, self.flash_size_freq, self.entrypoint))
+                            self.flash_mode, self.flash_size_freq, self.entrypoint))  # pylint: disable=no-member
 
 
 class ESPFirmwareImage(BaseFirmwareImage):
