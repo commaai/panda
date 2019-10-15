@@ -459,6 +459,7 @@ class UdsClient():
           error_desc = resp[3:]
         # wait for another message if response pending
         if error_code == 0x78:
+          if self.debug: print("UDS-RX: response pending")
           continue
         raise NegativeResponseError('{} - {}'.format(service_desc, error_desc), service_id, error_code)
 
