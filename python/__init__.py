@@ -578,7 +578,7 @@ class Panda(object):
       ts = x[i:i+0xf]
       if DEBUG:
         print("kline send: " + binascii.hexlify(ts))
-      self._handle.bulkWrite(2, chr(bus).encode()+ts)
+      self._handle.bulkWrite(2, bytes([bus]) + ts)
       echo = self.kline_ll_recv(len(ts), bus=bus)
       if echo != ts:
         print("**** ECHO ERROR %d ****" % i)
