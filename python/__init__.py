@@ -10,10 +10,10 @@ import time
 import traceback
 import subprocess
 from .dfu import PandaDFU
-from .esptool import ESPROM, CesantaFlasher
-from .flash_release import flash_release
-from .update import ensure_st_up_to_date
-from .serial import PandaSerial
+from .esptool import ESPROM, CesantaFlasher  # noqa: F401
+from .flash_release import flash_release  # noqa: F401
+from .update import ensure_st_up_to_date  # noqa: F401
+from .serial import PandaSerial  # noqa: F401
 from .isotp import isotp_send, isotp_recv
 
 __version__ = '0.0.9'
@@ -27,10 +27,10 @@ def build_st(target, mkfile="Makefile"):
   from panda import BASEDIR
   cmd = 'cd %s && make -f %s clean && make -f %s %s >/dev/null' % (os.path.join(BASEDIR, "board"), mkfile, mkfile, target)
   try:
-    output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-  except subprocess.CalledProcessError as exception:
-    output = exception.output
-    returncode = exception.returncode
+    _ = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+  except subprocess.CalledProcessError:
+    #output = exception.output
+    #returncode = exception.returncode
     raise
 
 def parse_can_buffer(dat):
@@ -558,7 +558,7 @@ class Panda(object):
   def kline_ll_recv(self, cnt, bus=2):
     echo = bytearray()
     while len(echo) != cnt:
-      ret = str(self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, cnt-len(echo)))
+      ret = self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, cnt-len(echo))
       if DEBUG and len(ret) > 0:
         print("kline recv: " + binascii.hexlify(ret))
       echo += ret
