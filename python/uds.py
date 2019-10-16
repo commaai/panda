@@ -472,7 +472,7 @@ class UdsClient():
         resp_sfn = resp[1] if len(resp) > 1 else None
         if subfunction != resp_sfn:
           resp_sfn_hex = hex(resp_sfn) if resp_sfn is not None else None
-          raise InvalidSubFunctioneError('invalid response subfunction: {}'.format(hex(resp_sfn)))
+          raise InvalidSubFunctioneError('invalid response subfunction: {}'.format(hex(resp_sfn_hex)))
 
       # return data (exclude service id and sub-function id)
       return resp[(1 if subfunction is None else 2):]
@@ -615,7 +615,7 @@ class UdsClient():
       for s in source_definitions:
         if s["memory_address"] >= 1<<(memory_address_bytes*8):
           raise ValueError('invalid memory_address: {}'.format(s["memory_address"]))
-        data += struct.pack('!I', memory_address)[4-memory_address_bytes:]
+        data += struct.pack('!I', s["memory_address"])[4-memory_address_bytes:]
         if s["memory_size"] >= 1<<(memory_size_bytes*8):
           raise ValueError('invalid memory_size: {}'.format(s["memory_size"]))
         data += struct.pack('!I', s["memory_size"])[4-memory_size_bytes:]
