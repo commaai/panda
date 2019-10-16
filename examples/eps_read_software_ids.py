@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from python import Panda
-from python.uds import UdsClient, NegativeResponseError, DATA_IDENTIFIER_TYPE
+from panda import Panda
+from panda.python.uds import UdsClient, NegativeResponseError, DATA_IDENTIFIER_TYPE
 
 if __name__ == "__main__":
   address = 0x18da30f1 # Honda EPS
