@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import sys
-import os
 from panda import Panda
 from panda.python.uds import UdsClient, NegativeResponseError, DATA_IDENTIFIER_TYPE
 
