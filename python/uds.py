@@ -379,7 +379,7 @@ class IsoTpMessage():
         if self.debug: print("ISO-TP: TX - flow control wait")
 
 class UdsClient():
-  def __init__(self, panda, tx_addr: int, rx_addr: int=None, bus: int=0, timeout: int=10, debug: bool=False):
+  def __init__(self, panda, tx_addr: int, rx_addr: int=None, bus: int=0, timeout: float=10, debug: bool=False):
     self.panda = panda
     self.bus = bus
     self.tx_addr = tx_addr
