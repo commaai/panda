@@ -213,9 +213,12 @@ class MessageTimeoutError(Exception):
 
 class NegativeResponseError(Exception):
   def __init__(self, message, service_id, error_code):
-    super(Exception, self).__init__(message)
+    self.message = message
     self.service_id = service_id
     self.error_code = error_code
+
+  def __str__(self):
+    return self.message
 
 class InvalidServiceIdError(Exception):
   pass
