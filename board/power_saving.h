@@ -25,8 +25,9 @@ void set_power_save_state(int state) {
       enable = true;
     }
 
-    // Switch CAN transcievers
-    current_board->enable_can_transcievers(enable);
+    // Switch CAN transcievers except for BUS 1, which must remain on to detect CAN based ignition
+    current_board->enable_can_transciever(2U, enable);
+    current_board->enable_can_transciever(3U, enable);
 
     // Switch EPS/GPS
     if (enable) {
@@ -34,13 +35,13 @@ void set_power_save_state(int state) {
     } else {
       current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
     }
-    
+
     if(hw_type != HW_TYPE_BLACK_PANDA){
       // turn on GMLAN
       set_gpio_output(GPIOB, 14, enable);
       set_gpio_output(GPIOB, 15, enable);
 
-      // turn on LIN    
+      // turn on LIN
       set_gpio_output(GPIOB, 7, enable);
       set_gpio_output(GPIOA, 14, enable);
     }

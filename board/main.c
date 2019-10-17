@@ -139,13 +139,6 @@ void set_safety_mode(uint16_t mode, int16_t param) {
           can_silent = ALL_CAN_LIVE;
           break;
       }
-    if (safety_ignition_hook() != -1) {
-      // if the ignition hook depends on something other than the started GPIO
-      // we have to disable power savings (fix for GM and Tesla)
-      set_power_save_state(POWER_SAVE_STATUS_DISABLED);
-    } else {
-      // power mode is already POWER_SAVE_STATUS_DISABLED and CAN TXs are active
-    }
     can_init_all();
   }
 }
@@ -175,14 +168,9 @@ int get_health_pkt(void *dat) {
     health->current_pkt = 0;
   }
 
-  int safety_ignition = safety_ignition_hook();
-  if (safety_ignition < 0) {
-    //Use the GPIO pin to determine ignition
-    health->started_pkt = (uint8_t)(current_board->check_ignition());
-  } else {
-    //Current safety hooks want to determine ignition (ex: GM)
-    health->started_pkt = safety_ignition;
-  }
+  //Use the GPIO pin to determine ignition or use a CAN based logic
+  bool ignition = current_board->check_ignition() || ignition_can;
+  health->started_pkt = (uint8_t)(ignition);
 
   health->controls_allowed_pkt = controls_allowed;
   health->gas_interceptor_detected_pkt = gas_interceptor_detected;

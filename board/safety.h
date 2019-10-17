@@ -30,7 +30,6 @@
 #define SAFETY_CHRYSLER 9U
 #define SAFETY_TESLA 10U
 #define SAFETY_SUBARU 11U
-#define SAFETY_GM_PASSIVE 12U
 #define SAFETY_MAZDA 13U
 #define SAFETY_VOLKSWAGEN 15U
 #define SAFETY_TOYOTA_IPAS 16U
@@ -52,12 +51,6 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len){
   return current_hooks->tx_lin(lin_num, data, len);
 }
 
-// -1 = Disabled (Use GPIO to determine ignition)
-// 0 = Off (not started)
-// 1 = On (started)
-int safety_ignition_hook() {
-  return current_hooks->ignition();
-}
 int safety_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return current_hooks->fwd(bus_num, to_fwd);
 }
@@ -80,7 +73,6 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_CHRYSLER, &chrysler_hooks},
   {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_SUBARU, &subaru_hooks},
-  {SAFETY_GM_PASSIVE, &gm_passive_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
   {SAFETY_VOLKSWAGEN, &volkswagen_hooks},
   {SAFETY_TOYOTA_IPAS, &toyota_ipas_hooks},
