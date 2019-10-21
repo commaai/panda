@@ -30,6 +30,9 @@ void can_init_all(void);
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
 bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 
+// Ignition detected from CAN meessages
+bool ignition_can = false;
+
 // end API
 
 #define ALL_CAN_SILENT 0xFF
@@ -338,8 +341,8 @@ void ignition_can_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
 
-  // GM exception
   if (bus == 0) {
+    // GM exception
     if ((addr == 0x1F1) && (len == 8)) {
       //Bit 5 is ignition "on"
       ignition_can = (GET_BYTE(to_push, 0) & 0x20) != 0;
