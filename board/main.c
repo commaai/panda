@@ -35,7 +35,7 @@
 
 // ********************* Serial debugging *********************
 
-bool check_ignition(void) {
+bool check_started(void) {
   return current_board->check_ignition() || ignition_can;
 }
 
@@ -84,10 +84,10 @@ void started_interrupt_handler(uint8_t interrupt_line) {
 
     #ifdef EON
       // set power savings mode here if on EON build
-      int power_save_state = check_ignition() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
+      int power_save_state = check_started() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
       set_power_save_state(power_save_state);
       // set CDP usb power mode everytime that the car starts to make sure EON is charging
-      if (check_ignition()) {
+      if (check_started()) {
         current_board->set_usb_power_mode(USB_POWER_CDP);
       }
     #endif
@@ -609,7 +609,7 @@ void TIM3_IRQHandler(void) {
 
     // check heartbeat counter if we are running EON code. If the heartbeat has been gone for a while, go to NOOUTPUT safety mode.
     #ifdef EON
-    if (heartbeat_counter >= (check_ignition() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
+    if (heartbeat_counter >= (check_started() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
       puts("EON hasn't sent a heartbeat for 0x"); puth(heartbeat_counter); puts(" seconds. Safety is set to NOOUTPUT mode.\n");
       if(current_safety_mode != SAFETY_NOOUTPUT){
         set_safety_mode(SAFETY_NOOUTPUT, 0U);
@@ -707,7 +707,7 @@ int main(void) {
     current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
   }
   // only enter power save after the first cycle
-  /*if (check_ignition()) {
+  /*if (check_started()) {
     set_power_save_state(POWER_SAVE_STATUS_ENABLED);
   }*/
 #endif
