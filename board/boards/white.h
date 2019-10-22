@@ -20,8 +20,10 @@ void white_enable_can_transciever(uint8_t transciever, bool enabled) {
 }
 
 void white_enable_can_transcievers(bool enabled) {
-  for(uint8_t i=1; i<=3U; i++)
+  uint8_t t1 = enabled ? 1U : 2U;  // leave transciever 1 enabled to detect CAN ignition
+  for(uint8_t i=t1; i<=3U; i++) {
     white_enable_can_transciever(i, enabled);
+  }
 }
 
 void white_set_led(uint8_t color, bool enabled) {

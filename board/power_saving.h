@@ -25,9 +25,7 @@ void set_power_save_state(int state) {
       enable = true;
     }
 
-    // Switch CAN transcievers except for BUS 1, which must remain on to detect CAN based ignition
-    current_board->enable_can_transciever(2U, enable);
-    current_board->enable_can_transciever(3U, enable);
+    current_board->enable_can_transcievers(enable);
 
     // Switch EPS/GPS
     if (enable) {
