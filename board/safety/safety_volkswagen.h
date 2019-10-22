@@ -6,7 +6,6 @@ const int VW_MAX_RATE_DOWN = 10;            // 5.0 nm/s available rate of change
 const int VW_DRIVER_TORQUE_ALLOWANCE = 100;
 const int VW_DRIVER_TORQUE_FACTOR = 4;
 
-int vw_ignition_started = 0;
 struct sample_t vw_torque_driver;           // last few driver torques measured
 int vw_rt_torque_last = 0;
 int vw_desired_torque_last = 0;
@@ -23,16 +22,10 @@ uint32_t vw_ts_last = 0;
 static void volkswagen_init(int16_t param) {
   UNUSED(param); // May use param in the future to indicate MQB vs PQ35/PQ46/NMS vs MLB, or wiring configuration.
   controls_allowed = 0;
-  vw_ignition_started = 0;
 }
 static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
-
-  // Monitor Klemmen_Status_01.ZAS_Kl_15 for Terminal 15 (ignition-on) status, but we make no use of it at the moment.
-  if ((bus == 0) && (addr == MSG_KLEMMEN_STATUS_01)) {
-    vw_ignition_started = (GET_BYTE(to_push, 2) & 0x2) >> 1;
-  }
 
   // Update driver input torque samples from EPS_01.Driver_Strain for absolute torque, and EPS_01.Driver_Strain_VZ
   // for the direction.
@@ -148,15 +141,10 @@ static int volkswagen_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return bus_fwd;
 }
 
-// While we do monitor VW Terminal 15 (ignition-on) state, we are not currently acting on it. Instead we use the
-// default GPIO ignition hook. We may do so in the future for harness integrations at the camera (where we only have
-// T30 unswitched power) instead of the gateway (where we have both T30 and T15 ignition-switched power).
-
 const safety_hooks volkswagen_hooks = {
   .init = volkswagen_init,
   .rx = volkswagen_rx_hook,
   .tx = volkswagen_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
-  .ignition = default_ign_hook,
   .fwd = volkswagen_fwd_hook,
 };
