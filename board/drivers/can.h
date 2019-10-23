@@ -357,13 +357,11 @@ void ignition_can_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       // this message isn't all zeros when ignition is on
       ignition_can = GET_BYTES_04(to_push) != 0;
     }
-    // VW exception (not used yet)
-    // While we do monitor VW Terminal 15 (ignition-on) state, we are not currently acting on it. Instead we use the
-    // default GPIO ignition hook. We may do so in the future for harness integrations at the camera (where we only have
-    // T30 unswitched power) instead of the gateway (where we have both T30 and T15 ignition-switched power).
-    //if ((bus == 0) && (addr == 0x3C0)) {
-    //  vw_ignition_started = (GET_BYTE(to_push, 2) & 0x2) >> 1;
-    //}
+    // VW exception
+    if ((addr == 0x3C0) && (len == 4)) {
+     // VW Terminal 15 (ignition-on) state
+     ignition_can  = (GET_BYTE(to_push, 2) & 0x2) != 0;
+    }
   }
 }
 
