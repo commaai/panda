@@ -162,6 +162,7 @@ int get_health_pkt(void *dat) {
     uint8_t gas_interceptor_detected_pkt;
     uint8_t car_harness_status_pkt;
     uint8_t usb_power_mode_pkt;
+    uint8_t safety_mode_pkt;
   } *health = dat;
 
   health->voltage_pkt = adc_get_voltage();
@@ -184,6 +185,7 @@ int get_health_pkt(void *dat) {
   health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = car_harness_status;
   health->usb_power_mode_pkt = usb_power_mode;
+  health->safety_mode_pkt = (uint8_t)(current_safety_mode);
 
   return sizeof(*health);
 }
