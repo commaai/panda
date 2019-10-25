@@ -36,6 +36,10 @@
 
 // ********************* Serial debugging *********************
 
+bool check_started(void) {
+  return current_board->check_ignition() || ignition_can;
+}
+
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
   while (getc(ring, &rcv)) {
@@ -81,10 +85,10 @@ void started_interrupt_handler(uint8_t interrupt_line) {
 
     #ifdef EON
       // set power savings mode here if on EON build
-      int power_save_state = current_board->check_ignition() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
+      int power_save_state = check_started() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
       set_power_save_state(power_save_state);
       // set CDP usb power mode everytime that the car starts to make sure EON is charging
-      if (current_board->check_ignition()) {
+      if (check_started()) {
         current_board->set_usb_power_mode(USB_POWER_CDP);
       }
     #endif
@@ -140,13 +144,6 @@ void set_safety_mode(uint16_t mode, int16_t param) {
           can_silent = ALL_CAN_LIVE;
           break;
       }
-    if (safety_ignition_hook() != -1) {
-      // if the ignition hook depends on something other than the started GPIO
-      // we have to disable power savings (fix for GM and Tesla)
-      set_power_save_state(POWER_SAVE_STATUS_DISABLED);
-    } else {
-      // power mode is already POWER_SAVE_STATUS_DISABLED and CAN TXs are active
-    }
     can_init_all();
   }
 }
@@ -160,24 +157,21 @@ int get_health_pkt(void *dat) {
     uint32_t can_send_errs_pkt;
     uint32_t can_fwd_errs_pkt;
     uint32_t gmlan_send_errs_pkt;
-    uint8_t started_pkt;
+    uint8_t ignition_line_pkt;
+    uint8_t ignition_can_pkt;
     uint8_t controls_allowed_pkt;
     uint8_t gas_interceptor_detected_pkt;
     uint8_t car_harness_status_pkt;
     uint8_t usb_power_mode_pkt;
+    uint8_t safety_mode_pkt;
   } *health = dat;
 
   health->voltage_pkt = adc_get_voltage();
   health->current_pkt = current_board->read_current();
 
-  int safety_ignition = safety_ignition_hook();
-  if (safety_ignition < 0) {
-    //Use the GPIO pin to determine ignition
-    health->started_pkt = (uint8_t)(current_board->check_ignition());
-  } else {
-    //Current safety hooks want to determine ignition (ex: GM)
-    health->started_pkt = safety_ignition;
-  }
+  //Use the GPIO pin to determine ignition or use a CAN based logic
+  health->ignition_line_pkt = (uint8_t)(current_board->check_ignition());
+  health->ignition_can_pkt = (uint8_t)(ignition_can);
 
   health->controls_allowed_pkt = controls_allowed;
   health->gas_interceptor_detected_pkt = gas_interceptor_detected;
@@ -186,6 +180,7 @@ int get_health_pkt(void *dat) {
   health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = car_harness_status;
   health->usb_power_mode_pkt = usb_power_mode;
+  health->safety_mode_pkt = (uint8_t)(current_safety_mode);
 
   return sizeof(*health);
 }
@@ -682,7 +677,7 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
 
     // check heartbeat counter if we are running EON code. If the heartbeat has been gone for a while, go to NOOUTPUT safety mode.
     #ifdef EON
-    if (heartbeat_counter >= (current_board->check_ignition() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
+    if (heartbeat_counter >= (check_started() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
       puts("EON hasn't sent a heartbeat for 0x"); puth(heartbeat_counter); puts(" seconds. Safety is set to NOOUTPUT mode.\n");
       if(current_safety_mode != SAFETY_NOOUTPUT){
         set_safety_mode(SAFETY_NOOUTPUT, 0U);
@@ -779,7 +774,7 @@ int main(void) {
     current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
   }
   // only enter power save after the first cycle
-  /*if (current_board->check_ignition()) {
+  /*if (check_started()) {
     set_power_save_state(POWER_SAVE_STATUS_ENABLED);
   }*/
 #endif
