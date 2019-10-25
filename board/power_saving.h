@@ -25,7 +25,6 @@ void set_power_save_state(int state) {
       enable = true;
     }
 
-    // Switch CAN transcievers
     current_board->enable_can_transcievers(enable);
 
     // Switch EPS/GPS
@@ -34,7 +33,7 @@ void set_power_save_state(int state) {
     } else {
       current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
     }
-    
+
     if(board_has_gmlan()){
       // turn on GMLAN
       set_gpio_output(GPIOB, 14, enable);
@@ -42,7 +41,7 @@ void set_power_save_state(int state) {
     }
 
     if(board_has_lin()){
-      // turn on LIN    
+      // turn on LIN
       set_gpio_output(GPIOB, 7, enable);
       set_gpio_output(GPIOA, 14, enable);
     }

@@ -30,6 +30,9 @@ void can_init_all(void);
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number);
 bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 
+// Ignition detected from CAN meessages
+bool ignition_can = false;
+
 // end API
 
 #define ALL_CAN_SILENT 0xFF
@@ -332,6 +335,36 @@ void process_can(uint8_t can_number) {
   }
 }
 
+void ignition_can_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+
+  int bus = GET_BUS(to_push);
+  int addr = GET_ADDR(to_push);
+  int len = GET_LEN(to_push);
+
+  if (bus == 0) {
+    // GM exception
+    if ((addr == 0x1F1) && (len == 8)) {
+      //Bit 5 is ignition "on"
+      ignition_can = (GET_BYTE(to_push, 0) & 0x20) != 0;
+    }
+    // Tesla exception
+    if ((addr == 0x348) && (len == 8)) {
+      // GTW_status
+      ignition_can = (GET_BYTE(to_push, 0) & 0x1) != 0;
+    }
+    // Cadillac exception
+    if ((addr == 0x160) && (len == 5)) {
+      // this message isn't all zeros when ignition is on
+      ignition_can = GET_BYTES_04(to_push) != 0;
+    }
+    // VW exception
+    if ((addr == 0x3C0) && (len == 4)) {
+     // VW Terminal 15 (ignition-on) state
+     ignition_can  = (GET_BYTE(to_push, 2) & 0x2) != 0;
+    }
+  }
+}
+
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number) {
@@ -365,6 +398,7 @@ void can_rx(uint8_t can_number) {
     }
 
     safety_rx_hook(&to_push);
+    ignition_can_hook(&to_push);
 
     current_board->set_led(LED_BLUE, true);
     can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;

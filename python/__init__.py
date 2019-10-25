@@ -10,10 +10,10 @@ import time
 import traceback
 import subprocess
 from .dfu import PandaDFU
-from .esptool import ESPROM, CesantaFlasher
-from .flash_release import flash_release
-from .update import ensure_st_up_to_date
-from .serial import PandaSerial
+from .esptool import ESPROM, CesantaFlasher  # noqa: F401
+from .flash_release import flash_release  # noqa: F401
+from .update import ensure_st_up_to_date  # noqa: F401
+from .serial import PandaSerial  # noqa: F401
 from .isotp import isotp_send, isotp_recv
 
 __version__ = '0.0.9'
@@ -27,10 +27,10 @@ def build_st(target, mkfile="Makefile"):
   from panda import BASEDIR
   cmd = 'cd %s && make -f %s clean && make -f %s %s >/dev/null' % (os.path.join(BASEDIR, "board"), mkfile, mkfile, target)
   try:
-    output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-  except subprocess.CalledProcessError as exception:
-    output = exception.output
-    returncode = exception.returncode
+    _ = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+  except subprocess.CalledProcessError:
+    #output = exception.output
+    #returncode = exception.returncode
     raise
 
 def parse_can_buffer(dat):
@@ -122,7 +122,6 @@ class Panda(object):
   SAFETY_CHRYSLER = 9
   SAFETY_TESLA = 10
   SAFETY_SUBARU = 11
-  SAFETY_GM_PASSIVE = 12
   SAFETY_MAZDA = 13
   SAFETY_VOLKSWAGEN = 15
   SAFETY_TOYOTA_IPAS = 16
@@ -391,7 +390,7 @@ class Panda(object):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
     hashsig, calc_hash = dat[0x1c:], hashlib.sha1(dat[0:0x1c]).digest()[0:4]
     assert(hashsig == calc_hash)
-    return [dat[0:0x10], dat[0x10:0x10+10]]
+    return [dat[0:0x10].decode("utf8"), dat[0x10:0x10+10].decode("utf8")]
 
   def get_secret(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 1, 0, 0x10)
@@ -562,7 +561,7 @@ class Panda(object):
   def kline_ll_recv(self, cnt, bus=2):
     echo = bytearray()
     while len(echo) != cnt:
-      ret = str(self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, cnt-len(echo)))
+      ret = self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, cnt-len(echo))
       if DEBUG and len(ret) > 0:
         print("kline recv: " + binascii.hexlify(ret))
       echo += ret
@@ -582,7 +581,7 @@ class Panda(object):
       ts = x[i:i+0xf]
       if DEBUG:
         print("kline send: " + binascii.hexlify(ts))
-      self._handle.bulkWrite(2, chr(bus).encode()+ts)
+      self._handle.bulkWrite(2, bytes([bus]) + ts)
       echo = self.kline_ll_recv(len(ts), bus=bus)
       if echo != ts:
         print("**** ECHO ERROR %d ****" % i)
