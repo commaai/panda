@@ -1,5 +1,5 @@
 # python library to interface with panda
-
+import datetime
 import binascii
 import struct
 import hashlib
@@ -144,6 +144,7 @@ class Panda(object):
   HW_TYPE_GREY_PANDA = b'\x02'
   HW_TYPE_BLACK_PANDA = b'\x03'
   HW_TYPE_PEDAL = b'\x04'
+  HW_TYPE_UNO = b'\x05'
 
   def __init__(self, serial=None, claim=True):
     self._serial = serial
@@ -382,6 +383,9 @@ class Panda(object):
   def is_black(self):
     return self.get_type() == Panda.HW_TYPE_BLACK_PANDA
 
+  def is_uno(self):
+    return self.get_type() == Panda.HW_TYPE_UNO
+
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
     hashsig, calc_hash = dat[0x1c:], hashlib.sha1(dat[0:0x1c]).digest()[0:4]
@@ -592,3 +596,31 @@ class Panda(object):
 
   def send_heartbeat(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf3, 0, 0, b'')
+
+  # ******************* RTC *******************
+  def set_datetime(self, dt):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa1, int(dt.year), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa2, int(dt.month), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa3, int(dt.day), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa4, int(dt.isoweekday()), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa5, int(dt.hour), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa6, int(dt.minute), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa7, int(dt.second), 0, b'')
+
+  def get_datetime(self):
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xa0, 0, 0, 8)
+    a = struct.unpack("HBBBBBB", dat)
+    return datetime.datetime(a[0], a[1], a[2], a[4], a[5], a[6])
+
+  # ******************* IR *******************
+  def set_ir_power(self, percentage):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb0, int(percentage), 0, b'')
+
+  # ******************* Fan ******************
+  def set_fan_power(self, percentage):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb1, int(percentage), 0, b'')
+
+  def get_fan_rpm(self):
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xb2, 0, 0, 2)
+    a = struct.unpack("H", dat)
+    return a[0]

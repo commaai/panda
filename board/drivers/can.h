@@ -176,7 +176,7 @@ void can_flip_buses(uint8_t bus1, uint8_t bus2){
 
 // TODO: Cleanup with new abstraction
 void can_set_gmlan(uint8_t bus) {
-  if(hw_type != HW_TYPE_BLACK_PANDA){
+  if(board_has_gmlan()){
     // first, disable GMLAN on prev bus
     uint8_t prev_bus = can_num_lookup[3];
     if (bus != prev_bus) {
@@ -229,7 +229,7 @@ void can_set_obd(uint8_t harness_orientation, bool obd){
   } else {
     puts("setting CAN2 to be normal\n");
   }
-  if(hw_type == HW_TYPE_BLACK_PANDA){
+  if(board_has_obd()){
     if(obd != (bool)(harness_orientation == HARNESS_STATUS_NORMAL)){
         // B5,B6: disable normal mode
         set_gpio_mode(GPIOB, 5, MODE_INPUT);
@@ -246,7 +246,7 @@ void can_set_obd(uint8_t harness_orientation, bool obd){
         set_gpio_mode(GPIOB, 13, MODE_INPUT);
     }
   } else {
-    puts("OBD CAN not available on non-black panda\n");
+    puts("OBD CAN not available on this board\n");
   }
 }
 

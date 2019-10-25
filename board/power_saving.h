@@ -34,15 +34,22 @@ void set_power_save_state(int state) {
       current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
     }
 
-    if(hw_type != HW_TYPE_BLACK_PANDA){
+    if(board_has_gmlan()){
       // turn on GMLAN
       set_gpio_output(GPIOB, 14, enable);
       set_gpio_output(GPIOB, 15, enable);
+    }
 
+    if(board_has_lin()){
       // turn on LIN
       set_gpio_output(GPIOB, 7, enable);
       set_gpio_output(GPIOA, 14, enable);
     }
+
+    // Switch IR and fan
+    // TODO: Remove powering these back up. Should be done on device
+    //current_board->set_ir_power(enable ? 50U : 0U);
+    current_board->set_fan_power(enable ? 5U : 0U);
 
     power_save_status = state;
   }
