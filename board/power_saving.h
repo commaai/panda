@@ -48,8 +48,8 @@ void set_power_save_state(int state) {
 
     // Switch IR and fan
     // TODO: Remove powering these back up. Should be done on device
-    //current_board->set_ir_power(enable ? 50U : 0U);
-    current_board->set_fan_power(enable ? 5U : 0U);
+    current_board->set_ir_power(enable ? 50U : 0U);
+    current_board->set_fan_power(enable ? 20U : 0U);
 
     power_save_status = state;
   }
