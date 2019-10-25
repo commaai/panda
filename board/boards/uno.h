@@ -130,6 +130,8 @@ void uno_set_ir_power(uint8_t percentage){
 }
 
 void uno_set_fan_power(uint8_t percentage){
+  // Enable fan power only if percentage is non-zero.
+  set_gpio_output(GPIOA, 1, (percentage != 0U));
   fan_set_power(percentage);
 }
 
