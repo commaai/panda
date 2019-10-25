@@ -4,7 +4,7 @@ import sys
 import time
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from python import Panda
+from panda import Panda
 
 power = 0
 if __name__ == "__main__":
