@@ -58,6 +58,13 @@ class TestVolkswagenSafety(unittest.TestCase):
       to_send[0].RDLR |= 0x1 << 31
     return to_send
 
+  def _button_msg(self, bit):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 0x12B << 21
+    to_send[0].RDLR = 1 << bit
+
+    return to_send
+
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
@@ -93,6 +100,18 @@ class TestVolkswagenSafety(unittest.TestCase):
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(0)
     self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_spam_cancel_safety_check(self):
+    BIT_CANCEL = 13
+    BIT_RESUME = 19
+    BIT_SET = 16
+    self.safety.set_controls_allowed(0)
+    self.assertTrue(self.safety.safety_tx_hook(self._button_msg(BIT_CANCEL)))
+    self.assertFalse(self.safety.safety_tx_hook(self._button_msg(BIT_RESUME)))
+    self.assertFalse(self.safety.safety_tx_hook(self._button_msg(BIT_SET)))
+    # do not block resume if we are engaged already
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self.safety.safety_tx_hook(self._button_msg(BIT_RESUME)))
 
   def test_non_realtime_limit_up(self):
     self.safety.set_volkswagen_torque_driver(0, 0)
@@ -175,7 +194,7 @@ class TestVolkswagenSafety(unittest.TestCase):
   def test_fwd_hook(self):
     buss = list(range(0x0, 0x2))
     msgs = list(range(0x1, 0x800))
-    blocked_msgs_0to2 = [0x12B]
+    blocked_msgs_0to2 = []
     blocked_msgs_2to0 = [0x122, 0x397]
     for b in buss:
       for m in msgs:

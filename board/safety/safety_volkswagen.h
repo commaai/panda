@@ -43,13 +43,14 @@ static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // allowed state is directly driven by stock ACC engagement. Permit the ACC message to come from either bus, in
   // order to accommodate future camera-side integrations if needed.
   if (addr == MSG_ACC_06) {
-    int acc_status = (GET_BYTE(to_push,7) & 0x70) >> 4;
+    int acc_status = (GET_BYTE(to_push, 7) & 0x70) >> 4;
     controls_allowed = ((acc_status == 3) || (acc_status == 4) || (acc_status == 5)) ? 1 : 0;
   }
 }
 
 static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
+  int bus = GET_BUS(to_send);
   int tx = 1;
 
   // Safety check for HCA_01 Heading Control Assist torque.
@@ -103,6 +104,15 @@ static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   }
 
+  // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
+  // This avoids unintended engagements while still allowing resume spam
+  if ((addr == MSG_GRA_ACC_01) && !controls_allowed && (bus == 0)) {
+    // disallow resume and set: bits 16 and 19
+    if ((GET_BYTE(to_send, 2) & 0x9) != 0) {
+      tx = 0;
+    }
+  }
+
   // 1 allows the message through
   return tx;
 }
@@ -115,13 +125,8 @@ static int volkswagen_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   switch(bus_num) {
     case 0:
-      if(addr == MSG_GRA_ACC_01) {
-        // OP intercepts, filters, and updates the cruise-control button messages before they reach the ACC radar.
-        bus_fwd = -1;
-      } else {
-        // Forward all remaining traffic from J533 gateway to Extended CAN devices.
-        bus_fwd = 2;
-      }
+      // Forward all traffic from J533 gateway to Extended CAN devices.
+      bus_fwd = 2;
       break;
     case 2:
       if((addr == MSG_HCA_01) || (addr == MSG_LDW_02)) {
