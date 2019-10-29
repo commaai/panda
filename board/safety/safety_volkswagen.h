@@ -10,9 +10,11 @@ struct sample_t vw_torque_driver;           // last few driver torques measured
 int vw_rt_torque_last = 0;
 int vw_desired_torque_last = 0;
 uint32_t vw_ts_last = 0;
+int vw_gas_prev = 0;
 
 // Safety-relevant CAN messages for the Volkswagen MQB platform.
 #define MSG_EPS_01              0x09F
+#define MSG_MOTOR_20            0x121
 #define MSG_ACC_06              0x122
 #define MSG_HCA_01              0x126
 #define MSG_GRA_ACC_01          0x12B
@@ -45,6 +47,15 @@ static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if (addr == MSG_ACC_06) {
     int acc_status = (GET_BYTE(to_push, 7) & 0x70) >> 4;
     controls_allowed = ((acc_status == 3) || (acc_status == 4) || (acc_status == 5)) ? 1 : 0;
+  }
+
+  // exit controls on rising edge of gas press. Bits [12-20)
+  if (addr == MSG_MOTOR_20) {
+    int gas = (GET_BYTES_04(to_push) >> 12) & 0xFF;
+    if ((gas > 0) && (vw_gas_prev == 0) && long_controls_allowed) {
+      controls_allowed = 0;
+    }
+    vw_gas_prev = gas;
   }
 }
 
@@ -123,13 +134,13 @@ static int volkswagen_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   // NOTE: Will need refactoring for other bus layouts, such as no-forwarding at camera or J533 running-gear CAN
 
-  switch(bus_num) {
+  switch (bus_num) {
     case 0:
       // Forward all traffic from J533 gateway to Extended CAN devices.
       bus_fwd = 2;
       break;
     case 2:
-      if((addr == MSG_HCA_01) || (addr == MSG_LDW_02)) {
+      if ((addr == MSG_HCA_01) || (addr == MSG_LDW_02)) {
         // OP takes control of the Heading Control Assist and Lane Departure Warning messages from the camera.
         bus_fwd = -1;
       } else {

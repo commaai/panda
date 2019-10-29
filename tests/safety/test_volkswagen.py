@@ -62,6 +62,7 @@ class TestVolkswagenSafety(unittest.TestCase):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x12B << 21
     to_send[0].RDLR = 1 << bit
+    to_send[0].RDTR = 2 << 4
 
     return to_send
 
