@@ -1,8 +1,8 @@
-const int VOLKSWAGEN_MAX_STEER = 250;               // 2.5 nm
-const int VOLKSWAGEN_MAX_RT_DELTA = 75;             // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 125 ; 125 * 1.5 for safety pad = 75
+const int VOLKSWAGEN_MAX_STEER = 250;               // 2.5 Nm (EPS side max of 3.0Nm with fault if violated)
+const int VOLKSWAGEN_MAX_RT_DELTA = 75;             // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
 const uint32_t VOLKSWAGEN_RT_INTERVAL = 250000;     // 250ms between real time checks
-const int VOLKSWAGEN_MAX_RATE_UP = 4;               // 5.0 nm/s available rate of change from the steering rack
-const int VOLKSWAGEN_MAX_RATE_DOWN = 10;            // 5.0 nm/s available rate of change from the steering rack
+const int VOLKSWAGEN_MAX_RATE_UP = 4;               // 2.0 Nm/s available rate of change from the steering rack (EPS side delta-limit of 5.0 Nm/s)
+const int VOLKSWAGEN_MAX_RATE_DOWN = 10;            // 5.0 Nm/s available rate of change from the steering rack (EPS side delta-limit of 5.0 Nm/s)
 const int VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE = 80;
 const int VOLKSWAGEN_DRIVER_TORQUE_FACTOR = 3;
 
@@ -25,6 +25,7 @@ static void volkswagen_init(int16_t param) {
   UNUSED(param); // May use param in the future to indicate MQB vs PQ35/PQ46/NMS vs MLB, or wiring configuration.
   controls_allowed = 0;
 }
+
 static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
@@ -117,7 +118,7 @@ static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
   // This avoids unintended engagements while still allowing resume spam
-  if ((addr == MSG_GRA_ACC_01) && !controls_allowed && (bus == 2)) {
+  if ((bus == 2) && (addr == MSG_GRA_ACC_01) && !controls_allowed) {
     // disallow resume and set: bits 16 and 19
     if ((GET_BYTE(to_send, 2) & 0x9) != 0) {
       tx = 0;
