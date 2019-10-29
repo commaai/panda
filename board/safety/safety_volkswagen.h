@@ -1,18 +1,20 @@
-const int VW_MAX_STEER = 250;               // 2.5 nm
-const int VW_MAX_RT_DELTA = 75;             // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 125 ; 125 * 1.5 for safety pad = 75
-const uint32_t VW_RT_INTERVAL = 250000;     // 250ms between real time checks
-const int VW_MAX_RATE_UP = 4;               // 5.0 nm/s available rate of change from the steering rack
-const int VW_MAX_RATE_DOWN = 10;            // 5.0 nm/s available rate of change from the steering rack
-const int VW_DRIVER_TORQUE_ALLOWANCE = 80;
-const int VW_DRIVER_TORQUE_FACTOR = 3;
+const int VOLKSWAGEN_MAX_STEER = 250;               // 2.5 Nm (EPS side max of 3.0Nm with fault if violated)
+const int VOLKSWAGEN_MAX_RT_DELTA = 75;             // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
+const uint32_t VOLKSWAGEN_RT_INTERVAL = 250000;     // 250ms between real time checks
+const int VOLKSWAGEN_MAX_RATE_UP = 4;               // 2.0 Nm/s available rate of change from the steering rack (EPS side delta-limit of 5.0 Nm/s)
+const int VOLKSWAGEN_MAX_RATE_DOWN = 10;            // 5.0 Nm/s available rate of change from the steering rack (EPS side delta-limit of 5.0 Nm/s)
+const int VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE = 80;
+const int VOLKSWAGEN_DRIVER_TORQUE_FACTOR = 3;
 
-struct sample_t vw_torque_driver;           // last few driver torques measured
-int vw_rt_torque_last = 0;
-int vw_desired_torque_last = 0;
-uint32_t vw_ts_last = 0;
+struct sample_t volkswagen_torque_driver;           // last few driver torques measured
+int volkswagen_rt_torque_last = 0;
+int volkswagen_desired_torque_last = 0;
+uint32_t volkswagen_ts_last = 0;
+int volkswagen_gas_prev = 0;
 
 // Safety-relevant CAN messages for the Volkswagen MQB platform.
 #define MSG_EPS_01              0x09F
+#define MSG_MOTOR_20            0x121
 #define MSG_ACC_06              0x122
 #define MSG_HCA_01              0x126
 #define MSG_GRA_ACC_01          0x12B
@@ -23,6 +25,7 @@ static void volkswagen_init(int16_t param) {
   UNUSED(param); // May use param in the future to indicate MQB vs PQ35/PQ46/NMS vs MLB, or wiring configuration.
   controls_allowed = 0;
 }
+
 static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
@@ -36,20 +39,30 @@ static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       torque_driver_new *= -1;
     }
 
-    update_sample(&vw_torque_driver, torque_driver_new);
+    update_sample(&volkswagen_torque_driver, torque_driver_new);
   }
 
   // Monitor ACC_06.ACC_Status_ACC for stock ACC status. Because the current MQB port is lateral-only, OP's control
   // allowed state is directly driven by stock ACC engagement. Permit the ACC message to come from either bus, in
   // order to accommodate future camera-side integrations if needed.
   if (addr == MSG_ACC_06) {
-    int acc_status = (GET_BYTE(to_push,7) & 0x70) >> 4;
+    int acc_status = (GET_BYTE(to_push, 7) & 0x70) >> 4;
     controls_allowed = ((acc_status == 3) || (acc_status == 4) || (acc_status == 5)) ? 1 : 0;
+  }
+
+  // exit controls on rising edge of gas press. Bits [12-20)
+  if (addr == MSG_MOTOR_20) {
+    int gas = (GET_BYTES_04(to_push) >> 12) & 0xFF;
+    if ((gas > 0) && (volkswagen_gas_prev == 0) && long_controls_allowed) {
+      controls_allowed = 0;
+    }
+    volkswagen_gas_prev = gas;
   }
 }
 
 static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
+  int bus = GET_BUS(to_send);
   int tx = 1;
 
   // Safety check for HCA_01 Heading Control Assist torque.
@@ -67,22 +80,22 @@ static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (controls_allowed) {
 
       // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, VW_MAX_STEER, -VW_MAX_STEER);
+      violation |= max_limit_check(desired_torque, VOLKSWAGEN_MAX_STEER, -VOLKSWAGEN_MAX_STEER);
 
       // *** torque rate limit check ***
-      violation |= driver_limit_check(desired_torque, vw_desired_torque_last, &vw_torque_driver,
-        VW_MAX_STEER, VW_MAX_RATE_UP, VW_MAX_RATE_DOWN,
-        VW_DRIVER_TORQUE_ALLOWANCE, VW_DRIVER_TORQUE_FACTOR);
-      vw_desired_torque_last = desired_torque;
+      violation |= driver_limit_check(desired_torque, volkswagen_desired_torque_last, &volkswagen_torque_driver,
+        VOLKSWAGEN_MAX_STEER, VOLKSWAGEN_MAX_RATE_UP, VOLKSWAGEN_MAX_RATE_DOWN,
+        VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE, VOLKSWAGEN_DRIVER_TORQUE_FACTOR);
+      volkswagen_desired_torque_last = desired_torque;
 
       // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, vw_rt_torque_last, VW_MAX_RT_DELTA);
+      violation |= rt_rate_limit_check(desired_torque, volkswagen_rt_torque_last, VOLKSWAGEN_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, vw_ts_last);
-      if (ts_elapsed > VW_RT_INTERVAL) {
-        vw_rt_torque_last = desired_torque;
-        vw_ts_last = ts;
+      uint32_t ts_elapsed = get_ts_elapsed(ts, volkswagen_ts_last);
+      if (ts_elapsed > VOLKSWAGEN_RT_INTERVAL) {
+        volkswagen_rt_torque_last = desired_torque;
+        volkswagen_ts_last = ts;
       }
     }
 
@@ -93,12 +106,21 @@ static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // reset to 0 if either controls is not allowed or there's a violation
     if (violation || !controls_allowed) {
-      vw_desired_torque_last = 0;
-      vw_rt_torque_last = 0;
-      vw_ts_last = ts;
+      volkswagen_desired_torque_last = 0;
+      volkswagen_rt_torque_last = 0;
+      volkswagen_ts_last = ts;
     }
 
     if (violation) {
+      tx = 0;
+    }
+  }
+
+  // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
+  // This avoids unintended engagements while still allowing resume spam
+  if ((bus == 2) && (addr == MSG_GRA_ACC_01) && !controls_allowed) {
+    // disallow resume and set: bits 16 and 19
+    if ((GET_BYTE(to_send, 2) & 0x9) != 0) {
       tx = 0;
     }
   }
@@ -113,18 +135,13 @@ static int volkswagen_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   // NOTE: Will need refactoring for other bus layouts, such as no-forwarding at camera or J533 running-gear CAN
 
-  switch(bus_num) {
+  switch (bus_num) {
     case 0:
-      if(addr == MSG_GRA_ACC_01) {
-        // OP intercepts, filters, and updates the cruise-control button messages before they reach the ACC radar.
-        bus_fwd = -1;
-      } else {
-        // Forward all remaining traffic from J533 gateway to Extended CAN devices.
-        bus_fwd = 2;
-      }
+      // Forward all traffic from J533 gateway to Extended CAN devices.
+      bus_fwd = 2;
       break;
     case 2:
-      if((addr == MSG_HCA_01) || (addr == MSG_LDW_02)) {
+      if ((addr == MSG_HCA_01) || (addr == MSG_LDW_02)) {
         // OP takes control of the Heading Control Assist and Lane Departure Warning messages from the camera.
         bus_fwd = -1;
       } else {
