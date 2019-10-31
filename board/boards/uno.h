@@ -164,9 +164,6 @@ void uno_init(void) {
   // C8: FAN PWM aka TIM3_CH3
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
 
-  // Initialize RTC
-  rtc_init();
-
   // Turn on GPS load switch.
   uno_set_gps_load_switch(true);
 
