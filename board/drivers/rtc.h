@@ -78,6 +78,15 @@ void rtc_set_time(timestamp_t time){
 
 timestamp_t rtc_get_time(void){
     timestamp_t result;
+    // Init with zero values in case there is no RTC running
+    result.year = 0U;
+    result.month = 0U;
+    result.day = 0U;
+    result.weekday = 0U;
+    result.hour = 0U;
+    result.minute = 0U;
+    result.second = 0U;
+
     if(board_has_rtc()){
         // Wait until the register sync flag is set
         while((RTC->ISR & RTC_ISR_RSF) == 0){}
