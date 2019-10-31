@@ -62,3 +62,11 @@ struct board {
 
 // ********************* Globals **********************
 uint8_t usb_power_mode = USB_POWER_NONE;
+
+// ************ Board function prototypes *************
+bool board_has_gps(void);
+bool board_has_gmlan(void);
+bool board_has_obd(void);
+bool board_has_lin(void);
+bool board_has_rtc(void);
+bool board_has_relay(void);

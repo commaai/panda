@@ -727,9 +727,6 @@ int main(void) {
   // init board
   current_board->init();
 
-  // Initialize RTC
-  rtc_init();
-
   // panda has an FPU, let's use it!
   enable_fpu();
 
