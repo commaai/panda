@@ -247,5 +247,6 @@ const board board_uno = {
   .check_ignition = uno_check_ignition,
   .read_current = uno_read_current,
   .set_fan_power = uno_set_fan_power,
-  .set_ir_power = uno_set_ir_power
+  .set_ir_power = uno_set_ir_power,
+  .set_phone_power = uno_set_phone_power
 };
