@@ -627,3 +627,7 @@ class Panda(object):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xb2, 0, 0, 2)
     a = struct.unpack("H", dat)
     return a[0]
+
+# ****************** Phone *****************
+  def set_phone_power(self, enabled):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, int(enabled), 0, b'')
