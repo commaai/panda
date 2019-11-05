@@ -236,6 +236,10 @@ bool white_check_ignition(void){
   return !get_gpio_input(GPIOA, 1);
 }
 
+void white_set_phone_power(bool enabled){
+  UNUSED(enabled);
+}
+
 void white_init(void) {
   common_init_gpio();
 
@@ -332,5 +336,6 @@ const board board_white = {
   .check_ignition = white_check_ignition,
   .read_current = white_read_current,
   .set_fan_power = white_set_fan_power,
-  .set_ir_power = white_set_ir_power
+  .set_ir_power = white_set_ir_power,
+  .set_phone_power = white_set_phone_power
 };

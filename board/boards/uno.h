@@ -140,6 +140,10 @@ uint32_t uno_read_current(void){
   return 0U;
 }
 
+void uno_set_phone_power(bool enabled){
+  set_gpio_output(GPIOB, 4, enabled);
+}
+
 void uno_init(void) {
   common_init_gpio();
 
@@ -168,7 +172,7 @@ void uno_init(void) {
   uno_set_gps_load_switch(true);
 
   // Turn on phone regulator
-  set_gpio_output(GPIOB, 4, 1);
+  uno_set_phone_power(true);
 
   // Initialize IR PWM and set to 0%
   set_gpio_alternate(GPIOB, 7, GPIO_AF2_TIM4);
@@ -243,5 +247,6 @@ const board board_uno = {
   .check_ignition = uno_check_ignition,
   .read_current = uno_read_current,
   .set_fan_power = uno_set_fan_power,
-  .set_ir_power = uno_set_ir_power
+  .set_ir_power = uno_set_ir_power,
+  .set_phone_power = uno_set_phone_power
 };

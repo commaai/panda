@@ -313,6 +313,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       resp[1] = ((fan_rpm & 0xFF00U) >> 8U);
       resp_len = 2;
       break;
+    // **** 0xb3: set phone power
+    case 0xb3:
+      current_board->set_phone_power(setup->b.wValue.w > 0U);
+      break;
     // **** 0xc0: get CAN debug info
     case 0xc0:
       puts("can tx: "); puth(can_tx_cnt);

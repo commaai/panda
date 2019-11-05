@@ -73,6 +73,10 @@ void pedal_set_fan_power(uint8_t percentage){
   UNUSED(percentage);
 }
 
+void pedal_set_phone_power(bool enabled){
+  UNUSED(enabled);
+}
+
 void pedal_init(void) {
   common_init_gpio();
 
@@ -108,5 +112,6 @@ const board board_pedal = {
   .check_ignition = pedal_check_ignition,
   .read_current = pedal_read_current,
   .set_fan_power = pedal_set_fan_power,
-  .set_ir_power = pedal_set_ir_power
+  .set_ir_power = pedal_set_ir_power,
+  .set_phone_power = pedal_set_phone_power
 };
