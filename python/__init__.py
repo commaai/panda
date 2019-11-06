@@ -389,6 +389,9 @@ class Panda(object):
   def is_uno(self):
     return self.get_type() == Panda.HW_TYPE_UNO
 
+  def has_obd(self):
+    return (self.is_uno() or self.is_black())
+
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
     hashsig, calc_hash = dat[0x1c:], hashlib.sha1(dat[0:0x1c]).digest()[0:4]
