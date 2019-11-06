@@ -5,7 +5,8 @@ from panda.python.uds import UdsClient, NegativeResponseError, DATA_IDENTIFIER_T
 if __name__ == "__main__":
   address = 0x18da30f1 # Honda EPS
   panda = Panda()
-  uds_client = UdsClient(panda, address, debug=False)
+  panda.set_safety_mode(Panda.SAFETY_ELM327)
+  uds_client = UdsClient(panda, address, bus=1 if panda.has_obd() else 0, debug=False)
 
   print("tester present ...")
   uds_client.tester_present()
