@@ -410,21 +410,28 @@ class UdsClient():
     try:
       while True:
         # send
-        while not self.can_tx_queue.empty():
-          msg = self.can_tx_queue.get(block=False)
-          if debug: print("CAN-TX: {} - {}".format(hex(self.tx_addr), hexlify(msg)))
-          self.panda.can_send(self.tx_addr, msg, self.bus)
+        tx_cnt = 0
+        while tx_cnt < 256 and not self.can_tx_queue.empty():
+          try:
+            msg = self.can_tx_queue.get(block=False)
+            tx_cnt += 1
+            if debug: print("CAN-TX: {} - {}".format(hex(self.tx_addr), hexlify(msg)))
+            self.panda.can_send(self.tx_addr, msg, self.bus)
+          except Empty:
+            pass
 
         # receive
-        msgs = self.panda.can_recv()
-        for rx_addr, rx_ts, rx_data, rx_bus in msgs:
-          if rx_bus != self.bus or rx_addr != self.rx_addr or len(rx_data) == 0:
-            continue
-          if debug: print("CAN-RX: {} - {}".format(hex(self.rx_addr), hexlify(rx_data)))
-          self.can_rx_queue.put(rx_data)
-
-        if len(msgs) == 0:
-          time.sleep(0.01)
+        rx_cnt = 0
+        while rx_cnt < 4096:
+          msgs = self.panda.can_recv()
+          if not msgs:
+            break
+          rx_cnt += len(msgs)
+          for rx_addr, rx_ts, rx_data, rx_bus in msgs:
+            if rx_bus != self.bus or rx_addr != self.rx_addr or len(rx_data) == 0:
+              continue
+            if debug: print("CAN-RX: {} - {}".format(hex(self.rx_addr), hexlify(rx_data)))
+            self.can_rx_queue.put(rx_data)
     finally:
       self.panda.close()
 
@@ -434,7 +441,7 @@ class UdsClient():
     while not self.can_rx_queue.empty():
       try:
         self.can_rx_queue.get(block=False)
-      except BaseException:
+      except Empty:
         pass
 
     req = bytes([service_type])
