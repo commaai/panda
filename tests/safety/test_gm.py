@@ -33,7 +33,7 @@ class TestGmSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.safety_set_mode(Panda.SAFETY_GM, 0)
+    cls.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
     cls.safety.init_tests_gm()
 
   def _send_msg(self, bus, addr, length):

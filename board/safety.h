@@ -80,7 +80,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_GM_ASCM, &gm_ascm_hooks},
 };
 
-int safety_set_mode(uint16_t mode, int16_t param) {
+int set_safety_hooks(uint16_t mode, int16_t param) {
   int set_status = -1;   // not set
   int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);
   for (int i = 0; i < hook_config_count; i++) {

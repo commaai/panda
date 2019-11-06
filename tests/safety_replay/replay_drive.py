@@ -10,7 +10,7 @@ from tools.lib.logreader import LogReader  # pylint: disable=import-error
 def replay_drive(lr, safety_mode, param):
   safety = libpandasafety_py.libpandasafety
 
-  err = safety.safety_set_mode(safety_mode, param)
+  err = safety.set_safety_hooks(safety_mode, param)
   assert err == 0, "invalid safety mode: %d" % safety_mode
 
   if "SEGMENT" in os.environ:

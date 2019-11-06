@@ -26,7 +26,7 @@ class TestToyotaSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.safety_set_mode(Panda.SAFETY_TOYOTA_IPAS, 66)
+    cls.safety.set_safety_hooks(Panda.SAFETY_TOYOTA_IPAS, 66)
     cls.safety.init_tests_toyota()
 
   def _torque_driver_msg(self, torque):

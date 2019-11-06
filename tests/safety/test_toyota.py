@@ -34,7 +34,7 @@ class TestToyotaSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.safety_set_mode(Panda.SAFETY_TOYOTA, 100)
+    cls.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 100)
     cls.safety.init_tests_toyota()
 
   def _send_msg(self, bus, addr, length):

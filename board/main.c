@@ -115,7 +115,7 @@ void EXTI3_IRQHandler(void) {
 
 // this is the only way to leave silent mode
 void set_safety_mode(uint16_t mode, int16_t param) {
-  int err = safety_set_mode(mode, param);
+  int err = set_safety_hooks(mode, param);
   if (err == -1) {
     puts("Error: safety set mode failed\n");
   } else {
@@ -766,7 +766,7 @@ int main(void) {
 
   // default to silent mode to prevent issues with Ford
   // hardcode a specific safety mode if you want to force the panda to be in a specific mode
-  int err = safety_set_mode(SAFETY_NOOUTPUT, 0);
+  int err = set_safety_hooks(SAFETY_NOOUTPUT, 0);
   if (err == -1) {
     puts("Failed to set safety mode\n");
     while (true) {
