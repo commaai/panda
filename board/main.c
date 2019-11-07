@@ -765,8 +765,7 @@ int main(void) {
   TIM2->EGR = TIM_EGR_UG;
   // use TIM2->CNT to read
 
-  // default to silent mode to prevent issues with Ford
-  // hardcode a specific safety mode if you want to force the panda to be in a specific mode
+  // init to NOOUTPUT and can silent
   set_safety_mode(SAFETY_NOOUTPUT, 0);
 
 #ifndef EON
@@ -778,10 +777,6 @@ int main(void) {
   if (hw_type == HW_TYPE_WHITE_PANDA) {
     current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
   }
-  // only enter power save after the first cycle
-  /*if (check_started()) {
-    set_power_save_state(POWER_SAVE_STATUS_ENABLED);
-  }*/
 #endif
   // 1hz
   timer_init(TIM9, 1464);
