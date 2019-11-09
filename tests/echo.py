@@ -2,7 +2,6 @@
 
 import os
 import sys
-import time
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda
