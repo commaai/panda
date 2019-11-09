@@ -118,7 +118,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
   int err = set_safety_hooks(mode, param);
   if (err == -1) {
     puts("Error: safety set mode failed\n");
-    while (true);  // ERROR: we can't continue if safety mode isn't succesfully set
+    while (true) {}  // ERROR: we can't continue if safety mode isn't succesfully set
   } else {
     switch (mode) {
         case SAFETY_NOOUTPUT:
