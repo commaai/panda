@@ -28,7 +28,7 @@ void unused_interrupt_handler(void) {
   puts("Unused interrupt handler called!");
 }
 
-#define NUM_INTERRUPTS 102                // There are 102 external interrupt sources (see stm32f413.h)
+#define NUM_INTERRUPTS 102U                // There are 102 external interrupt sources (see stm32f413.h)
 void (*interrupt_handlers[NUM_INTERRUPTS])(void);
 
 #define REGISTER_INTERRUPT(irq_type, func_ptr) interrupt_handlers[irq_type] = func_ptr;
@@ -39,7 +39,7 @@ void handle_interrupt(IRQn_Type irq_type){
 }
 
 void init_interrupts(void){
-  for(uint16_t i=0; i<NUM_INTERRUPTS; i++){
+  for(uint16_t i=0U; i<NUM_INTERRUPTS; i++){
     interrupt_handlers[i] = unused_interrupt_handler;
   }
 }

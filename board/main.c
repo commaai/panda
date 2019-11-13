@@ -641,7 +641,6 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 #define EON_HEARTBEAT_IGNITION_CNT_OFF 2U
 
 // called once per second
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void TIM1_BRK_TIM9_IRQ_Handler(void) {
   if (TIM9->SR != 0) {
     can_live = pending_can_live;

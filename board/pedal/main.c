@@ -131,7 +131,6 @@ uint8_t pedal_checksum(uint8_t *dat, int len) {
 #define CAN_GAS_SIZE 6
 #define COUNTER_CYCLE 0xFU
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void CAN1_TX_IRQ_Handler(void) {
   // clear interrupt
   CAN->TSR |= CAN_TSR_RQCP0;
@@ -154,7 +153,6 @@ uint32_t current_index = 0;
 #define FAULT_INVALID 6U
 uint8_t state = FAULT_STARTUP;
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void CAN1_RX0_IRQ_Handler(void) {
   while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
     #ifdef DEBUG
@@ -218,7 +216,6 @@ void CAN1_RX0_IRQ_Handler(void) {
   }
 }
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void CAN1_SCE_IRQ_Handler(void) {
   state = FAULT_SCE;
   llcan_clear_send(CAN);
@@ -230,7 +227,6 @@ unsigned int pkt_idx = 0;
 
 int led_value = 0;
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void TIM3_IRQ_Handler(void) {
   #ifdef DEBUG
     puth(TIM3->CNT);
