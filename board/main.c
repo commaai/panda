@@ -5,10 +5,11 @@
 #include "config.h"
 #include "obj/gitversion.h"
 
+#include "main_declarations.h"
+
 #include "libc.h"
 #include "provision.h"
-
-#include "main_declarations.h"
+#include "drivers/interrupts.h"
 
 #include "drivers/llcan.h"
 #include "drivers/llgpio.h"
@@ -641,7 +642,7 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called once per second
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void TIM1_BRK_TIM9_IRQHandler(void) {
+void TIM1_BRK_TIM9_IRQ_Handler(void) {
   if (TIM9->SR != 0) {
     can_live = pending_can_live;
 
@@ -704,6 +705,12 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
 }
 
 int main(void) {
+  init_interrupts();
+  REGISTER_INTERRUPT(EXTI0_IRQn, EXTI0_IRQ_Handler)
+  REGISTER_INTERRUPT(EXTI1_IRQn, EXTI1_IRQ_Handler)
+  REGISTER_INTERRUPT(EXTI3_IRQn, EXTI3_IRQ_Handler)
+  REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler)
+
   // shouldn't have interrupts here, but just in case
   disable_interrupts();
 
