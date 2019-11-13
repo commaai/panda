@@ -3,8 +3,6 @@ import time
 import struct
 from typing import Callable, NamedTuple, Tuple, List
 from enum import IntEnum
-from binascii import hexlify
-
 class SERVICE_TYPE(IntEnum):
   DIAGNOSTIC_SESSION_CONTROL         = 0x10
   ECU_RESET                          = 0x11
@@ -287,7 +285,8 @@ class CanClient():
       else:
         for rx_addr, rx_ts, rx_data, rx_bus in msgs or []:
           if rx_bus == self.bus and rx_addr in self.rx_addrs and len(rx_data) > 0:
-            if self.debug: print("CAN-RX: {} - {}".format(hex(rx_addr), hexlify(rx_data)))
+            rx_data = bytes(rx_data) # convert bytearray to bytes
+            if self.debug: print(f"CAN-RX: {hex(rx_addr)} - 0x{bytes.hex(rx_data)}")
             msg_array.append(rx_data)
       # break when non-full buffer is processed
       if len(msgs) < 254:
@@ -299,7 +298,7 @@ class CanClient():
       if not first and delay:
         if self.debug: print(f"CAN-TX: delay - {delay}")
         time.sleep(delay)
-      if self.debug: print("CAN-TX: {} - {}".format(hex(self.tx_addr), hexlify(msg)))
+      if self.debug: print(f"CAN-TX: {hex(self.tx_addr)} - 0x{bytes.hex(msg)}")
       self.tx(self.tx_addr, msg, self.bus)
       first = False
 
@@ -318,7 +317,7 @@ class IsoTpMessage():
     self.tx_idx = 0
     self.tx_done = False
 
-    if self.debug: print(f"ISO-TP: REQUEST - {hexlify(self.tx_dat)}")
+    if self.debug: print(f"ISO-TP: REQUEST - 0x{bytes.hex(self.tx_dat)}")
     self._tx_first_frame()
 
   def _tx_first_frame(self) -> None:
@@ -349,7 +348,7 @@ class IsoTpMessage():
         if time.time() - start_time > self.timeout:
           raise MessageTimeoutError("timeout waiting for response")
     finally:
-      if self.debug: print(f"ISO-TP: RESPONSE - {hexlify(self.rx_dat)}")
+      if self.debug: print(f"ISO-TP: RESPONSE - 0x{bytes.hex(self.rx_dat)}")
 
   def _isotp_rx_next(self, rx_data: bytes) -> None:
     # single rx_frame
