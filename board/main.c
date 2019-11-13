@@ -704,11 +704,11 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
 }
 
 int main(void) {
-  init_interrupts();
-  REGISTER_INTERRUPT(EXTI0_IRQn, EXTI0_IRQ_Handler)
-  REGISTER_INTERRUPT(EXTI1_IRQn, EXTI1_IRQ_Handler)
-  REGISTER_INTERRUPT(EXTI3_IRQn, EXTI3_IRQ_Handler)
-  REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler)
+  init_interrupts(true);
+  REGISTER_INTERRUPT(EXTI0_IRQn, EXTI0_IRQ_Handler, 10U)
+  REGISTER_INTERRUPT(EXTI1_IRQn, EXTI1_IRQ_Handler, 10U)
+  REGISTER_INTERRUPT(EXTI3_IRQn, EXTI3_IRQ_Handler, 10U)
+  REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler, 2U)
 
   // shouldn't have interrupts here, but just in case
   disable_interrupts();

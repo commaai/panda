@@ -66,7 +66,7 @@ extern void *_app_start[];
 // BOUNTY: $200 coupon on shop.comma.ai or $100 check.
 
 int main(void) {
-  init_interrupts();
+  init_interrupts(false);
 
   disable_interrupts();
   clock_init();

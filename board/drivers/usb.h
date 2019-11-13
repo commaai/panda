@@ -950,7 +950,7 @@ void OTG_FS_IRQ_Handler(void) {
 // ***************************** USB init *****************************
 
 void usb_init(void) {
-  REGISTER_INTERRUPT(OTG_FS_IRQn, OTG_FS_IRQ_Handler)
+  REGISTER_INTERRUPT(OTG_FS_IRQn, OTG_FS_IRQ_Handler, 1500000U) //TODO: Find out a better rate limit for USB. Now it's the 1.5MB/s rate
 
   // full speed PHY, do reset and remove power down
   /*puth(USBx->GRSTCTL);

@@ -261,9 +261,9 @@ void CAN1_SCE_IRQ_Handler(void) {
 
 void soft_flasher_start(void) {
   #ifdef PEDAL
-    REGISTER_INTERRUPT(CAN1_TX_IRQn, CAN1_TX_IRQ_Handler)
-    REGISTER_INTERRUPT(CAN1_RX0_IRQn, CAN1_RX0_IRQ_Handler)
-    REGISTER_INTERRUPT(CAN1_SCE_IRQn, CAN1_SCE_IRQ_Handler)
+    REGISTER_INTERRUPT(CAN1_TX_IRQn, CAN1_TX_IRQ_Handler, 5000U)
+    REGISTER_INTERRUPT(CAN1_RX0_IRQn, CAN1_RX0_IRQ_Handler, 5000U)
+    REGISTER_INTERRUPT(CAN1_SCE_IRQn, CAN1_SCE_IRQ_Handler, 5000U)
   #endif
 
   puts("\n\n\n************************ FLASHER START ************************\n");

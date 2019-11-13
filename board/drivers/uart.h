@@ -272,12 +272,12 @@ void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
 }
 
 void uart_init(uart_ring *q, int baud) {
-  // Register interrupts
-  REGISTER_INTERRUPT(USART1_IRQn, USART1_IRQ_Handler)
-  REGISTER_INTERRUPT(USART2_IRQn, USART2_IRQ_Handler)
-  REGISTER_INTERRUPT(USART3_IRQn, USART3_IRQ_Handler)
-  REGISTER_INTERRUPT(UART5_IRQn, UART5_IRQ_Handler)
-  REGISTER_INTERRUPT(DMA2_Stream5_IRQn, DMA2_Stream5_IRQ_Handler)
+  // Register interrupts (max data rate: 115200 baud)
+  REGISTER_INTERRUPT(USART1_IRQn, USART1_IRQ_Handler, 150000U)
+  REGISTER_INTERRUPT(USART2_IRQn, USART2_IRQ_Handler, 150000U)
+  REGISTER_INTERRUPT(USART3_IRQn, USART3_IRQ_Handler, 150000U)
+  REGISTER_INTERRUPT(UART5_IRQn, UART5_IRQ_Handler, 150000U)
+  REGISTER_INTERRUPT(DMA2_Stream5_IRQn, DMA2_Stream5_IRQ_Handler, 100U)   // Called twice per buffer
 
   // Set baud and enable peripheral with TX and RX mode
   uart_set_baud(q->uart, baud);

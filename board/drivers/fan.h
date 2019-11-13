@@ -24,7 +24,7 @@ void EXTI2_IRQ_Handler(void) {
 }
 
 void fan_init(void){
-    REGISTER_INTERRUPT(EXTI2_IRQn, EXTI2_IRQ_Handler)
+    REGISTER_INTERRUPT(EXTI2_IRQn, EXTI2_IRQ_Handler, 700U)
 
     // Init PWM speed control
     pwm_init(TIM3, 3);
