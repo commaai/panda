@@ -165,6 +165,7 @@ int get_health_pkt(void *dat) {
     uint8_t car_harness_status_pkt;
     uint8_t usb_power_mode_pkt;
     uint8_t safety_mode_pkt;
+    uint8_t fault_pkt;
   } *health = dat;
 
   health->voltage_pkt = adc_get_voltage();
@@ -182,6 +183,7 @@ int get_health_pkt(void *dat) {
   health->car_harness_status_pkt = car_harness_status;
   health->usb_power_mode_pkt = usb_power_mode;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
+  health->fault_pkt = 0U;  // TODO: populate this field
 
   return sizeof(*health);
 }
