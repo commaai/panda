@@ -9,6 +9,8 @@
 
 #include "libc.h"
 #include "provision.h"
+#include "faults.h"
+
 #include "drivers/interrupts.h"
 
 #include "drivers/llcan.h"
@@ -165,7 +167,7 @@ int get_health_pkt(void *dat) {
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->power_save_enabled_pkt = (uint8_t)(power_save_status == POWER_SAVE_STATUS_ENABLED);
 
-  health->fault_status_pkt = 0U;  // TODO: populate this field
+  health->fault_status_pkt = fault_status;
   health->faults_pkt = 0U;  // TODO: populate this field
 
   return sizeof(*health);
@@ -798,19 +800,30 @@ int main(void) {
 
   for (cnt=0;;cnt++) {
     if (power_save_status == POWER_SAVE_STATUS_DISABLED) {
-      int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
+      #ifdef DEBUG_FAULTS
+      if(fault_status == FAULT_STATUS_NONE){
+      #endif
+        int div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4 : 1);
 
-      // useful for debugging, fade breaks = panda is overloaded
-      for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
-        for (int fade = 0; fade < 1024; fade += 8) {
-          for (int i = 0; i < (128/div_mode); i++) {
-            current_board->set_led(LED_RED, 1);
-            if (fade < 512) { delay(fade); } else { delay(1024-fade); }
-            current_board->set_led(LED_RED, 0);
-            if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
+        // useful for debugging, fade breaks = panda is overloaded
+        for (int div_mode_loop = 0; div_mode_loop < div_mode; div_mode_loop++) {
+          for (int fade = 0; fade < 1024; fade += 8) {
+            for (int i = 0; i < (128/div_mode); i++) {
+              current_board->set_led(LED_RED, 1);
+              if (fade < 512) { delay(fade); } else { delay(1024-fade); }
+              current_board->set_led(LED_RED, 0);
+              if (fade < 512) { delay(512-fade); } else { delay(fade-512); }
+            }
           }
         }
-      }
+      #ifdef DEBUG_FAULTS
+      } else {
+          current_board->set_led(LED_RED, 1);
+          delay(512000U);
+          current_board->set_led(LED_RED, 0);
+          delay(512000U);
+        }
+      #endif
     } else {
       __WFI();
     }

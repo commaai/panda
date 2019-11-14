@@ -33,8 +33,8 @@ typedef struct interrupt {
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!
-  // TODO: Implement some sort of error handler
   puts("Unused interrupt handler called!\n");
+  fault_occurred();
 }
 
 #define NUM_INTERRUPTS 102U                // There are 102 external interrupt sources (see stm32f413.h)
@@ -55,7 +55,7 @@ void handle_interrupt(IRQn_Type irq_type){
   // Check that the interrupts don't fire too often
   if(check_interrupt_rate && (interrupts[irq_type].call_counter > interrupts[irq_type].max_call_rate)){
     puts("Interrupt 0x"); puth(irq_type); puts(" fired too often (0x"); puth(interrupts[irq_type].call_counter); puts("/s)!\n");
-    // TODO: Implement error handling
+    fault_occurred();
   }
 }
 

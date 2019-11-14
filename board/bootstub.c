@@ -29,8 +29,9 @@ const board *current_board;
 // ********************* Includes *********************
 #include "libc.h"
 #include "provision.h"
-#include "drivers/interrupts.h"
+#include "faults.h"
 
+#include "drivers/interrupts.h"
 #include "drivers/clock.h"
 #include "drivers/llgpio.h"
 #include "drivers/adc.h"
