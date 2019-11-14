@@ -7,6 +7,7 @@
 //      brake rising edge
 //      brake > 0mph
 
+const int HONDA_TX_MSGS[] = {0xE4, 0x194, 0x1FA, 0x200, 0x296, 0x30C, 0x33D, 0x39F};
 const int HONDA_GAS_INTERCEPTOR_THRESHOLD = 328;  // ratio between offset and gain from dbc file
 int honda_brake = 0;
 int honda_gas_prev = 0;
@@ -95,7 +96,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     } else if (honda_stock_brake >= honda_brake) {
       honda_fwd_brake = true;
     } else {
-      // Leave honda forward brake as is
+      // Leave Honda forward brake as is
     }
   }
 }
@@ -117,6 +118,10 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int pedal_pressed = honda_gas_prev || (gas_interceptor_prev > HONDA_GAS_INTERCEPTOR_THRESHOLD) ||
                       (honda_brake_pressed_prev && honda_moving);
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
+
+  if (!addr_in_array(addr, HONDA_TX_MSGS, sizeof(HONDA_TX_MSGS) / sizeof(HONDA_TX_MSGS[0]))) {
+    tx = 0;
+  };
 
   // BRAKE: safety check
   if ((addr == 0x1FA) && (bus == 0)) {

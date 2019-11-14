@@ -7,6 +7,7 @@ from panda import Panda
 MAX_BRAKE = 255
 
 INTERCEPTOR_THRESHOLD = 328
+TX_MSGS = [0xE4, 0x194, 0x1FA, 0x200, 0x296, 0x30C, 0x33D, 0x39F]
 
 class TestHondaSafety(unittest.TestCase):
   @classmethod
@@ -85,6 +86,11 @@ class TestHondaSafety(unittest.TestCase):
     to_send[0].RDLR = steer
 
     return to_send
+
+  def test_spam_can_bus(self):
+    for addr in range(1, 0x800):
+      if addr not in TX_MSGS:
+        self.assertFalse(self.safety.safety_tx_hook(self._send_msg(0, addr, 8)))
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())

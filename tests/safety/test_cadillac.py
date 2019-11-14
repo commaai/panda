@@ -16,6 +16,8 @@ DRIVER_TORQUE_FACTOR = 4;
 
 IPAS_OVERRIDE_THRESHOLD = 200
 
+TX_MSGS = [0x151, 0x152, 0x153, 0x154]
+
 def twos_comp(val, bits):
   if val >= 0:
     return val
@@ -61,6 +63,11 @@ class TestCadillacSafety(unittest.TestCase):
     t = twos_comp(torque, 14)
     to_send[0].RDLR = ((t >> 8) & 0x3F) | ((t & 0xFF) << 8)
     return to_send
+
+  def test_spam_can_bus(self):
+    for addr in range(1, 0x800):
+      if addr not in TX_MSGS:
+        self.assertFalse(self.safety.safety_tx_hook(self._send_msg(0, addr, 8)))
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
