@@ -268,11 +268,11 @@ _negative_response_codes = {
 }
 
 class CanClient():
-  def __init__(self, can_send: Callable[[Tuple[int, bytes, int]], None], can_recv: Callable[[], List[Tuple[int, int, bytes, int]]], tx_addr: int, rx_addrs: int, bus: int, debug: bool=False):
+  def __init__(self, can_send: Callable[[Tuple[int, bytes, int]], None], can_recv: Callable[[], List[Tuple[int, int, bytes, int]]], tx_addr: int, rx_addr: int, bus: int, debug: bool=False):
     self.tx = can_send
     self.rx = can_recv
     self.tx_addr = tx_addr
-    self.rx_addrs = rx_addrs
+    self.rx_addr = rx_addr
     self.bus = bus
     self.debug = debug
 
@@ -284,7 +284,7 @@ class CanClient():
         if self.debug: print("CAN-RX: drain - {}".format(len(msgs)))
       else:
         for rx_addr, rx_ts, rx_data, rx_bus in msgs or []:
-          if rx_bus == self.bus and rx_addr in self.rx_addrs and len(rx_data) > 0:
+          if rx_bus == self.bus and rx_addr == self.rx_addr and len(rx_data) > 0:
             rx_data = bytes(rx_data) # convert bytearray to bytes
             if self.debug: print(f"CAN-RX: {hex(rx_addr)} - 0x{bytes.hex(rx_data)}")
             msg_array.append(rx_data)
@@ -430,7 +430,7 @@ class UdsClient():
         raise ValueError("invalid tx_addr: {}".format(tx_addr))
     self.timeout = timeout
     self.debug = debug
-    self._can_client = CanClient(panda.can_send, panda.can_recv, self.tx_addr, [self.rx_addr], self.bus, debug=self.debug)
+    self._can_client = CanClient(panda.can_send, panda.can_recv, self.tx_addr, self.rx_addr, self.bus, debug=self.debug)
 
   # generic uds request
   def _uds_request(self, service_type: SERVICE_TYPE, subfunction: int=None, data: bytes=None) -> bytes:
