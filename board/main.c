@@ -233,7 +233,7 @@ void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
     to_push.RIR = d32[dpkt];
 
     uint8_t bus_number = (to_push.RDTR >> 4) & CAN_BUS_NUM_MASK;
-    can_send(&to_push, bus_number);
+    can_send(&to_push, bus_number, false);
   }
 }
 
