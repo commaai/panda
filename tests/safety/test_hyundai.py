@@ -180,7 +180,6 @@ class TestHyundaiSafety(unittest.TestCase):
     RESUME_BTN = 1
     SET_BTN = 2
     CANCEL_BTN = 4
-    BUTTON_MSG = 1265
     self.safety.set_controls_allowed(0)
     self.assertTrue(self.safety.safety_tx_hook(self._button_msg(CANCEL_BTN)))
     self.assertFalse(self.safety.safety_tx_hook(self._button_msg(RESUME_BTN)))
