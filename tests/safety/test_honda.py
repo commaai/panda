@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 import libpandasafety_py  # pylint: disable=import-error
 from panda import Panda
+from panda.tests.safety.common import test_relay_malfunction
 
 MAX_BRAKE = 255
 
@@ -85,6 +86,9 @@ class TestHondaSafety(unittest.TestCase):
     to_send[0].RDLR = steer
 
     return to_send
+
+  def test_relay_malfunction(self):
+    test_relay_malfunction(self, 0xE4)
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())

@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 import libpandasafety_py  # pylint: disable=import-error
 from panda import Panda
+from panda.tests.safety.common import test_relay_malfunction
 
 MAX_RATE_UP = 3
 MAX_RATE_DOWN = 7
@@ -61,6 +62,9 @@ class TestHyundaiSafety(unittest.TestCase):
     to_send[0].RIR = 832 << 21
     to_send[0].RDLR = (torque + 1024) << 16
     return to_send
+
+  def test_relay_malfunction(self):
+    test_relay_malfunction(self, 832)
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
