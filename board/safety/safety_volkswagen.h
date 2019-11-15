@@ -138,7 +138,7 @@ static int volkswagen_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   // NOTE: Will need refactoring for other bus layouts, such as no-forwarding at camera or J533 running-gear CAN
 
-  if (relay_malfunction) {
+  if (!relay_malfunction) {
     switch (bus_num) {
       case 0:
         // Forward all traffic from J533 gateway to Extended CAN devices.

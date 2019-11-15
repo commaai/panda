@@ -28,19 +28,25 @@ class TestHondaSafety(unittest.TestCase):
     bus_rdr_cam = 2 if has_relay else 1
     bus_rdr_car = 0 if has_relay else 2
     bus_pt = 1 if has_relay else 0
+    relay_malfunction = [0, 1]
 
     blocked_msgs = [0xE4, 0x33D]
-    for b in buss:
-      for m in msgs:
-        if b == bus_pt:
-          fwd_bus = -1
-        elif b == bus_rdr_cam:
-          fwd_bus = -1 if m in blocked_msgs else bus_rdr_car
-        elif b == bus_rdr_car:
-          fwd_bus = bus_rdr_cam
+    for rm in relay_malfunction:
+      self.safety.set_relay_malfunction(rm)
+      for b in buss:
+        for m in msgs:
+          if not rm:
+            if b == bus_pt:
+              fwd_bus = -1
+            elif b == bus_rdr_cam:
+              fwd_bus = -1 if m in blocked_msgs else bus_rdr_car
+            elif b == bus_rdr_car:
+              fwd_bus = bus_rdr_cam
+          else:
+            fwd_bus = -1
 
-        # assume len 8
-        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
+          # assume len 8
+          self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
 
 
 if __name__ == "__main__":
