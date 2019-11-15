@@ -99,7 +99,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
   }
 
-  if ((bus == 0) && ((addr == 0xE4) || (addr == 0x194))) {
+  if (!honda_bosch_hardware && (bus == 0) && (addr == 0xE4)) {
     relay_malfunction = true;
   }
 }
