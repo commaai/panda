@@ -45,14 +45,13 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
+  int addr = GET_ADDR(to_send);
   int tx = 1;
 
   // If camera is on bus 0, then nothing can be sent
   if (chrysler_camera_detected) {
     tx = 0;
   }
-
-  int addr = GET_ADDR(to_send);
 
   // LKA STEER
   if (addr == 0x292) {
@@ -103,7 +102,7 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // FORCE CANCEL: safety check only relevant when spamming the cancel button.
   // ensuring that only the cancel button press is sent when controls are off.
   // This avoids unintended engagements while still allowing resume spam
-  // TODO: fix bug preventing the button msg to be fwd'd on bus 2
+  // TODO!
 
   // 1 allows the message through
   return tx;
