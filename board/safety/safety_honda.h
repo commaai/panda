@@ -99,9 +99,14 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
   }
 
-  // TODO: handle Honda Bosch as well
-  if (!honda_bosch_hardware && (bus == 0) && ((addr == 0xE4) || (addr == 0x194))) {
-    relay_malfunction = true;
+  // if steering controls messages are received on the destination bus, it's an indication
+  // that the relay might be malfucntioning
+  int bus_rdr_car = (board_has_relay()) ? 0 : 2;  // radar bus, car side
+  if ((addr == 0xE4) || (addr == 0x194)) {
+    if ((honda_bosch_hardware && (bus == bus_rdr_car)) ||
+      (!honda_bosch_hardware && (bus == 0))) {
+      relay_malfunction = true;
+    }
   }
 }
 
