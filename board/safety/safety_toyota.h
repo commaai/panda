@@ -18,6 +18,12 @@ const int TOYOTA_MIN_ACCEL = -3000;       // 3.0 m/s2
 
 const int TOYOTA_GAS_INTERCEPTOR_THRESHOLD = 475;  // ratio between offset and gain from dbc file
 
+// allowed DSU messages on bus 0 and 1
+const int TOYOTA_DSU_MSGS_0[] = {0x283, 0x2E6, 0x2E7, 0x33E, 0x344, 0x365, 0x366, 0x4CB};
+const int TOYOTA_DSU_MSGS_1[] = {0x128, 0x141, 0x160, 0x161, 0x470};  // allowed messages on bus 1
+// Camera ALC and ACC messages
+const int TOYOTA_TX_MSGS_0[] = {0x2E4, 0x412, 0x191, 0x343};
+
 // global actuation limit states
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
@@ -104,13 +110,17 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
+  if ((bus == 0) && !addr_in_array(addr, TOYOTA_DSU_MSGS_0, sizeof(TOYOTA_DSU_MSGS_0)/sizeof(TOYOTA_DSU_MSGS_0[0])) &&
+      !addr_in_array(addr, TOYOTA_TX_MSGS_0, sizeof(TOYOTA_TX_MSGS_0)/sizeof(TOYOTA_TX_MSGS_0[0]))) {
+    tx = 0;
+  } else if ((bus == 1) && !addr_in_array(addr, TOYOTA_DSU_MSGS_1, sizeof(TOYOTA_DSU_MSGS_1)/sizeof(TOYOTA_DSU_MSGS_1[0]))) {
+    tx = 0;
+  } else {
+    tx = 0;
+  }
+
   // Check if msg is sent on BUS 0
   if (bus == 0) {
-
-    // no IPAS in non IPAS mode
-    if ((addr == 0x266) || (addr == 0x167)) {
-      tx = 0;
-    }
 
     // GAS PEDAL: safety check
     if (addr == 0x200) {
@@ -185,7 +195,6 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   }
 
-  // 1 allows the message through
   return tx;
 }
 

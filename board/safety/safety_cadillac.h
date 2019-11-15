@@ -57,7 +57,7 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
-  if (!addr_in_array(addr, CADILLAC_TX_MSGS, sizeof(CADILLAC_TX_MSGS) / sizeof(CADILLAC_TX_MSGS))) {
+  if (!addr_in_array(addr, CADILLAC_TX_MSGS, sizeof(CADILLAC_TX_MSGS) / sizeof(CADILLAC_TX_MSGS[0]))) {
     tx = 0;
   }
 
