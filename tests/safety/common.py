@@ -25,3 +25,9 @@ def test_manually_enable_controls_allowed(test):
   test.assertTrue(test.safety.get_controls_allowed())
   test.safety.set_controls_allowed(0)
   test.assertFalse(test.safety.get_controls_allowed())
+
+def test_spam_can_buses(test, TX_MSGS):
+  for addr in range(1, 0x800):
+    for bus in range(0, 4):
+      if all(addr != m[0] or bus != m[1] for m in TX_MSGS):
+        test.assertFalse(test.safety.safety_tx_hook(make_msg(bus, addr, 8)))

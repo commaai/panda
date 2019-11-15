@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import make_msg, test_manually_enable_controls_allowed
+from panda.tests.safety.common import make_msg, test_manually_enable_controls_allowed, test_spam_can_buses
 
 
 MAX_RATE_UP = 2
@@ -18,7 +18,7 @@ DRIVER_TORQUE_FACTOR = 4;
 
 IPAS_OVERRIDE_THRESHOLD = 200
 
-TX_MSGS = [0x151, 0x152, 0x153, 0x154]
+TX_MSGS = [[0x151, 2], [0x152, 0], [0x153, 2], [0x154, 0]]
 
 def twos_comp(val, bits):
   if val >= 0:
@@ -54,15 +54,14 @@ class TestCadillacSafety(unittest.TestCase):
   def _torque_msg(self, torque):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x151 << 21
+    to_send[0].RDTR = 2 << 4
 
     t = twos_comp(torque, 14)
     to_send[0].RDLR = ((t >> 8) & 0x3F) | ((t & 0xFF) << 8)
     return to_send
 
-  def test_spam_can_bus(self):
-    for addr in range(1, 0x800):
-      if addr not in TX_MSGS:
-        self.assertFalse(self.safety.safety_tx_hook(self._send_msg(0, addr, 8)))
+  def test_spam_can_buses(self):
+    test_spam_can_buses(self, TX_MSGS)
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())

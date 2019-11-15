@@ -7,7 +7,7 @@
 //      brake rising edge
 //      brake > 0mph
 
-const int HONDA_TX_MSGS[] = {0xE4, 0x194, 0x1FA, 0x200, 0x296, 0x30C, 0x33D, 0x39F};
+//const struct AddrBus HONDA_TX_MSGS[] = {{0xE4, 0}, {0x194, 0}, {0x1FA, 0}, {0x200, 0}, {0x296, 0}, {0x30C, 0}, {0x33D, 0}, {0x39F, 0}};
 const int HONDA_GAS_INTERCEPTOR_THRESHOLD = 328;  // ratio between offset and gain from dbc file
 int honda_brake = 0;
 int honda_gas_prev = 0;
@@ -123,6 +123,10 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
+  //if (!addr_allowed(addr, bus, HONDA_TX_MSGS, sizeof(HONDA_TX_MSGS) / sizeof(HONDA_TX_MSGS[0]))) {
+  //  tx = 0;
+  //}
+
   if (relay_malfunction) {
     tx = 0;
   }
@@ -132,10 +136,6 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int pedal_pressed = honda_gas_prev || (gas_interceptor_prev > HONDA_GAS_INTERCEPTOR_THRESHOLD) ||
                       (honda_brake_pressed_prev && honda_moving);
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
-
-  if (!addr_in_array(addr, HONDA_TX_MSGS, sizeof(HONDA_TX_MSGS) / sizeof(HONDA_TX_MSGS[0]))) {
-    tx = 0;
-  };
 
   // BRAKE: safety check
   if ((addr == 0x1FA) && (bus == 0)) {
