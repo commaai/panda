@@ -189,25 +189,19 @@ class TestHyundaiSafety(unittest.TestCase):
 
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
-    relay_malfunction = [0, 1]
 
-    for rm in relay_malfunction:
-      self.safety.set_relay_malfunction(rm)
-      blocked_msgs = [832]
-      for b in buss:
-        for m in msgs:
-          if not rm:
-            if b == 0:
-              fwd_bus = 2
-            elif b == 1:
-              fwd_bus = -1
-            elif b == 2:
-              fwd_bus = -1 if m in blocked_msgs else 0
-          else:
-            fwd_bus = -1
+    blocked_msgs = [832]
+    for b in buss:
+      for m in msgs:
+        if b == 0:
+          fwd_bus = 2
+        elif b == 1:
+          fwd_bus = -1
+        elif b == 2:
+          fwd_bus = -1 if m in blocked_msgs else 0
 
-          # assume len 8
-          self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
+        # assume len 8
+        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
 
 if __name__ == "__main__":

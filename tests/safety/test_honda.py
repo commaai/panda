@@ -254,36 +254,30 @@ class TestHondaSafety(unittest.TestCase):
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
     long_controls_allowed = [0, 1]
-    relay_malfunction = [0, 1]
     fwd_brake = [False, True]
 
     self.safety.set_honda_bosch_hardware(0)
 
-    for rm in relay_malfunction:
-      self.safety.set_relay_malfunction(rm)
-      for f in fwd_brake:
-        self.safety.set_honda_fwd_brake(f)
-        for l in long_controls_allowed:
-          self.safety.set_long_controls_allowed(l)
-          blocked_msgs = [0xE4, 0x194, 0x33D]
-          if l:
-            blocked_msgs += [0x30C, 0x39F]
-            if not f:
-              blocked_msgs += [0x1FA]
-          for b in buss:
-            for m in msgs:
-              if not rm:
-                if b == 0:
-                  fwd_bus = 2
-                elif b == 1:
-                  fwd_bus = -1
-                elif b == 2:
-                  fwd_bus = -1 if m in blocked_msgs else 0
-              else:
-                fwd_bus = -1
+    for f in fwd_brake:
+      self.safety.set_honda_fwd_brake(f)
+      for l in long_controls_allowed:
+        self.safety.set_long_controls_allowed(l)
+        blocked_msgs = [0xE4, 0x194, 0x33D]
+        if l:
+          blocked_msgs += [0x30C, 0x39F]
+          if not f:
+            blocked_msgs += [0x1FA]
+        for b in buss:
+          for m in msgs:
+            if b == 0:
+              fwd_bus = 2
+            elif b == 1:
+              fwd_bus = -1
+            elif b == 2:
+              fwd_bus = -1 if m in blocked_msgs else 0
 
-              # assume len 8
-              self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
+            # assume len 8
+            self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
     self.safety.set_long_controls_allowed(True)
     self.safety.set_honda_fwd_brake(False)
