@@ -2,9 +2,6 @@
 //       CAN2_TX, CAN2_RX0, CAN2_SCE
 //       CAN3_TX, CAN3_RX0, CAN3_SCE
 
-// Around (500kbps / 8 bits/byte / 12 bytes per message)
-#define CAN_INTERRUPT_RATE 6000U
-
 typedef struct {
   volatile uint32_t w_ptr;
   volatile uint32_t r_ptr;
