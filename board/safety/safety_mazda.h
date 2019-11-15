@@ -54,13 +54,9 @@ void mazda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     mazda_cruise_engaged_last = cruise_engaged;
   }
 
-  // we have msgs on bus MAZDA_CAM
-  if (bus == MAZDA_CAM) {
-    // if we see wheel speed msgs on MAZDA_CAM bus then relay is closed
-    // (hardware passthru)
-    if (addr == MAZDA_WHEEL_SPEED) {
-      relay_malfunction = true;
-    }
+  // if we see wheel speed msgs on MAZDA_CAM bus then relay is closed
+  if ((bus == MAZDA_CAM) && (addr == MAZDA_WHEEL_SPEED)) {
+    relay_malfunction = true;
   }
 }
 
@@ -68,6 +64,10 @@ static int mazda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
+
+  if (relay_malfunction) {
+    tx = 0;
+  }
 
   // Check if msg is sent on the main BUS
   if (bus == MAZDA_MAIN) {
