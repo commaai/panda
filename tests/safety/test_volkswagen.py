@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 import libpandasafety_py  # pylint: disable=import-error
 from panda import Panda
+from panda.tests.safety.common import test_relay_malfunction
 
 MAX_RATE_UP = 4
 MAX_RATE_DOWN = 10
@@ -72,6 +73,9 @@ class TestVolkswagenSafety(unittest.TestCase):
     to_send[0].RDTR = 2 << 4
 
     return to_send
+
+  def test_relay_malfunction(self):
+    test_relay_malfunction(self, 0x126)
 
   def test_prev_gas(self):
     for g in range(0, 256):
@@ -226,21 +230,29 @@ class TestVolkswagenSafety(unittest.TestCase):
 
 
   def test_fwd_hook(self):
-    buss = list(range(0x0, 0x2))
+    buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
     blocked_msgs_0to2 = []
-    blocked_msgs_2to0 = [0x122, 0x397]
-    for b in buss:
-      for m in msgs:
-        if b == 0:
-          fwd_bus = -1 if m in blocked_msgs_0to2 else 2
-        elif b == 1:
-          fwd_bus = -1
-        elif b == 2:
-          fwd_bus = -1 if m in blocked_msgs_2to0 else 0
+    blocked_msgs_2to0 = [0x126, 0x397]
+    relay_malfunction = [0, 1]
+    for rm in relay_malfunction:
+      self.safety.set_relay_malfunction(rm)
+      for b in buss:
+        for m in msgs:
+          if not rm:
+            if b == 0:
+              fwd_bus = -1 if m in blocked_msgs_0to2 else 2
+            elif b == 1:
+              fwd_bus = -1
+            elif b == 2:
+              fwd_bus = -1 if m in blocked_msgs_2to0 else 0
+          else:
+            fwd_bus = -1
 
-        # assume len 8
-        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
+          # assume len 8
+          if fwd_bus != self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)):
+            print(b, hex(m), fwd_bus)
+          self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
 
 
 if __name__ == "__main__":

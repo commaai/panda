@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 import libpandasafety_py  # pylint: disable=import-error
 from panda import Panda
+from panda.tests.safety.common import test_relay_malfunction
 
 MAX_RATE_UP = 3
 MAX_RATE_DOWN = 3
@@ -66,6 +67,9 @@ class TestChryslerSafety(unittest.TestCase):
     to_send[0].RIR = 0x292 << 21
     to_send[0].RDLR = ((torque + 1024) >> 8) + (((torque + 1024) & 0xff) << 8)
     return to_send
+
+  def test_relay_malfunction(self):
+    test_relay_malfunction(self, 0x292)
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
@@ -182,14 +186,14 @@ class TestChryslerSafety(unittest.TestCase):
   def test_fwd_hook(self):
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
-    chrysler_camera_detected = [0, 1]
+    relay_malfunction = [0, 1]
 
-    for ccd in chrysler_camera_detected:
-      self.safety.set_chrysler_camera_detected(ccd)
+    for rm in relay_malfunction:
+      self.safety.set_relay_malfunction(rm)
       blocked_msgs = [658, 678]
       for b in buss:
         for m in msgs:
-          if not ccd:
+          if not rm:
             if b == 0:
               fwd_bus = 2
             elif b == 1:

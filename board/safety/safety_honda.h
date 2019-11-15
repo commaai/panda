@@ -98,6 +98,16 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       // Leave honda forward brake as is
     }
   }
+
+  // if steering controls messages are received on the destination bus, it's an indication
+  // that the relay might be malfucntioning
+  int bus_rdr_car = (board_has_relay()) ? 0 : 2;  // radar bus, car side
+  if ((addr == 0xE4) || (addr == 0x194)) {
+    if ((honda_bosch_hardware && (bus == bus_rdr_car)) ||
+      (!honda_bosch_hardware && (bus == 0))) {
+      relay_malfunction = true;
+    }
+  }
 }
 
 // all commands: gas, brake and steering
@@ -111,6 +121,10 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
+
+  if (relay_malfunction) {
+    tx = 0;
+  }
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
@@ -170,13 +184,15 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
 static void honda_init(int16_t param) {
   UNUSED(param);
-  controls_allowed = 0;
+  controls_allowed = false;
+  relay_malfunction = false;
   honda_bosch_hardware = false;
   honda_alt_brake_msg = false;
 }
 
 static void honda_bosch_init(int16_t param) {
-  controls_allowed = 0;
+  controls_allowed = false;
+  relay_malfunction = false;
   honda_bosch_hardware = true;
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = (param == 1) ? true : false;
@@ -189,20 +205,22 @@ static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   // 0x39f is radar hud
   int bus_fwd = -1;
 
-  if (bus_num == 0) {
-    bus_fwd = 2;
-  }
-  if (bus_num == 2) {
-    // block stock lkas messages and stock acc messages (if OP is doing ACC)
-    int addr = GET_ADDR(to_fwd);
-    bool is_lkas_msg = (addr == 0xE4) || (addr == 0x194) || (addr == 0x33D);
-    bool is_acc_hud_msg = (addr == 0x30C) || (addr == 0x39F);
-    bool is_brake_msg = addr == 0x1FA;
-    bool block_fwd = is_lkas_msg ||
-                     (is_acc_hud_msg && long_controls_allowed) ||
-                     (is_brake_msg && long_controls_allowed && !honda_fwd_brake);
-    if (!block_fwd) {
-      bus_fwd = 0;
+  if (!relay_malfunction) {
+    if (bus_num == 0) {
+      bus_fwd = 2;
+    }
+    if (bus_num == 2) {
+      // block stock lkas messages and stock acc messages (if OP is doing ACC)
+      int addr = GET_ADDR(to_fwd);
+      bool is_lkas_msg = (addr == 0xE4) || (addr == 0x194) || (addr == 0x33D);
+      bool is_acc_hud_msg = (addr == 0x30C) || (addr == 0x39F);
+      bool is_brake_msg = addr == 0x1FA;
+      bool block_fwd = is_lkas_msg ||
+                       (is_acc_hud_msg && long_controls_allowed) ||
+                       (is_brake_msg && long_controls_allowed && !honda_fwd_brake);
+      if (!block_fwd) {
+        bus_fwd = 0;
+      }
     }
   }
   return bus_fwd;
@@ -213,14 +231,16 @@ static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int bus_rdr_cam = (board_has_relay()) ? 2 : 1;  // radar bus, camera side
   int bus_rdr_car = (board_has_relay()) ? 0 : 2;  // radar bus, car side
 
-  if (bus_num == bus_rdr_car) {
-    bus_fwd = bus_rdr_cam;
-  }
-  if (bus_num == bus_rdr_cam)  {
-    int addr = GET_ADDR(to_fwd);
-    int is_lkas_msg = (addr == 0xE4) || (addr == 0x33D);
-    if (!is_lkas_msg) {
-      bus_fwd = bus_rdr_car;
+  if (!relay_malfunction) {
+    if (bus_num == bus_rdr_car) {
+      bus_fwd = bus_rdr_cam;
+    }
+    if (bus_num == bus_rdr_cam)  {
+      int addr = GET_ADDR(to_fwd);
+      int is_lkas_msg = (addr == 0xE4) || (addr == 0x33D);
+      if (!is_lkas_msg) {
+        bus_fwd = bus_rdr_car;
+      }
     }
   }
   return bus_fwd;

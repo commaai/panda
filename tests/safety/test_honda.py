@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 import libpandasafety_py  # pylint: disable=import-error
 from panda import Panda
+from panda.tests.safety.common import test_relay_malfunction
 
 MAX_BRAKE = 255
 
@@ -85,6 +86,9 @@ class TestHondaSafety(unittest.TestCase):
     to_send[0].RDLR = steer
 
     return to_send
+
+  def test_relay_malfunction(self):
+    test_relay_malfunction(self, 0xE4)
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
@@ -258,30 +262,36 @@ class TestHondaSafety(unittest.TestCase):
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
     long_controls_allowed = [0, 1]
+    relay_malfunction = [0, 1]
     fwd_brake = [False, True]
 
     self.safety.set_honda_bosch_hardware(0)
 
-    for f in fwd_brake:
-      self.safety.set_honda_fwd_brake(f)
-      for l in long_controls_allowed:
-        self.safety.set_long_controls_allowed(l)
-        blocked_msgs = [0xE4, 0x194, 0x33D]
-        if l:
-          blocked_msgs += [0x30C, 0x39F]
-          if not f:
-            blocked_msgs += [0x1FA]
-        for b in buss:
-          for m in msgs:
-            if b == 0:
-              fwd_bus = 2
-            elif b == 1:
-              fwd_bus = -1
-            elif b == 2:
-              fwd_bus = -1 if m in blocked_msgs else 0
+    for rm in relay_malfunction:
+      self.safety.set_relay_malfunction(rm)
+      for f in fwd_brake:
+        self.safety.set_honda_fwd_brake(f)
+        for l in long_controls_allowed:
+          self.safety.set_long_controls_allowed(l)
+          blocked_msgs = [0xE4, 0x194, 0x33D]
+          if l:
+            blocked_msgs += [0x30C, 0x39F]
+            if not f:
+              blocked_msgs += [0x1FA]
+          for b in buss:
+            for m in msgs:
+              if not rm:
+                if b == 0:
+                  fwd_bus = 2
+                elif b == 1:
+                  fwd_bus = -1
+                elif b == 2:
+                  fwd_bus = -1 if m in blocked_msgs else 0
+              else:
+                fwd_bus = -1
 
-            # assume len 8
-            self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
+              # assume len 8
+              self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
 
     self.safety.set_long_controls_allowed(True)
     self.safety.set_honda_fwd_brake(False)

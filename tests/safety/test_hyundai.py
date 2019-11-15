@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 import libpandasafety_py  # pylint: disable=import-error
 from panda import Panda
+from panda.tests.safety.common import test_relay_malfunction
 
 MAX_RATE_UP = 3
 MAX_RATE_DOWN = 7
@@ -61,6 +62,9 @@ class TestHyundaiSafety(unittest.TestCase):
     to_send[0].RIR = 832 << 21
     to_send[0].RDLR = (torque + 1024) << 16
     return to_send
+
+  def test_relay_malfunction(self):
+    test_relay_malfunction(self, 832)
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
@@ -180,7 +184,6 @@ class TestHyundaiSafety(unittest.TestCase):
     RESUME_BTN = 1
     SET_BTN = 2
     CANCEL_BTN = 4
-    BUTTON_MSG = 1265
     self.safety.set_controls_allowed(0)
     self.assertTrue(self.safety.safety_tx_hook(self._button_msg(CANCEL_BTN)))
     self.assertFalse(self.safety.safety_tx_hook(self._button_msg(RESUME_BTN)))
@@ -193,15 +196,14 @@ class TestHyundaiSafety(unittest.TestCase):
 
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
-    hyundai_giraffe_switch_2 = [0, 1]
+    relay_malfunction = [0, 1]
 
-    self.safety.set_hyundai_camera_bus(2)
-    for hgs in hyundai_giraffe_switch_2:
-      self.safety.set_hyundai_giraffe_switch_2(hgs)
+    for rm in relay_malfunction:
+      self.safety.set_relay_malfunction(rm)
       blocked_msgs = [832]
       for b in buss:
         for m in msgs:
-          if hgs:
+          if not rm:
             if b == 0:
               fwd_bus = 2
             elif b == 1:
