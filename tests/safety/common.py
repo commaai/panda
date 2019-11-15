@@ -19,3 +19,9 @@ def test_relay_malfunction(test, addr):
     for b in range(0, 3):
       test.assertFalse(test.safety.safety_tx_hook(make_msg(b, a, 8)))
       test.assertEqual(-1, test.safety.safety_fwd_hook(b, make_msg(b, a, 8)))
+
+def test_manually_enable_controls_allowed(test):
+  test.safety.set_controls_allowed(1)
+  test.assertTrue(test.safety.get_controls_allowed())
+  test.safety.set_controls_allowed(0)
+  test.assertFalse(test.safety.get_controls_allowed())

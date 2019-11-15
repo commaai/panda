@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import test_relay_malfunction, make_msg
+from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed
 
 MAX_RATE_UP = 4
 MAX_RATE_DOWN = 10
@@ -127,10 +127,7 @@ class TestVolkswagenSafety(unittest.TestCase):
           self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
 
   def test_manually_enable_controls_allowed(self):
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(0)
-    self.assertFalse(self.safety.get_controls_allowed())
+    test_manually_enable_controls_allowed(self)
 
   def test_spam_cancel_safety_check(self):
     BIT_CANCEL = 13

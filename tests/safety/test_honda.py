@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import test_relay_malfunction, make_msg
+from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed
 
 MAX_BRAKE = 255
 
@@ -84,6 +84,9 @@ class TestHondaSafety(unittest.TestCase):
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_manually_enable_controls_allowed(self):
+    test_manually_enable_controls_allowed(self)
 
   def test_resume_button(self):
     RESUME_BTN = 4
