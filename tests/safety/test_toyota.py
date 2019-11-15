@@ -285,10 +285,10 @@ class TestToyotaSafety(unittest.TestCase):
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
     long_controls_allowed = [0, 1]
-    toyota_camera_forwarded = [0, 1]
+    relay_malfunction = [0, 1]
 
-    for tcf in toyota_camera_forwarded:
-      self.safety.set_toyota_camera_forwarded(tcf)
+    for rm in relay_malfunction:
+      self.safety.set_relay_malfunction(rm)
       for lca in long_controls_allowed:
         self.safety.set_long_controls_allowed(lca)
         blocked_msgs = [0x2E4, 0x412, 0x191]
@@ -296,7 +296,7 @@ class TestToyotaSafety(unittest.TestCase):
           blocked_msgs += [0x343]
         for b in buss:
           for m in msgs:
-            if tcf:
+            if not rm:
               if b == 0:
                 fwd_bus = 2
               elif b == 1:

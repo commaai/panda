@@ -182,14 +182,14 @@ class TestChryslerSafety(unittest.TestCase):
   def test_fwd_hook(self):
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
-    chrysler_camera_detected = [0, 1]
+    relay_malfunction = [0, 1]
 
-    for ccd in chrysler_camera_detected:
-      self.safety.set_chrysler_camera_detected(ccd)
+    for rm in relay_malfunction:
+      self.safety.set_relay_malfunction(rm)
       blocked_msgs = [658, 678]
       for b in buss:
         for m in msgs:
-          if not ccd:
+          if not rm:
             if b == 0:
               fwd_bus = 2
             elif b == 1:

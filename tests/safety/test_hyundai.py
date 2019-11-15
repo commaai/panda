@@ -193,15 +193,14 @@ class TestHyundaiSafety(unittest.TestCase):
 
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
-    hyundai_giraffe_switch_2 = [0, 1]
+    relay_malfunction = [0, 1]
 
-    self.safety.set_hyundai_camera_bus(2)
-    for hgs in hyundai_giraffe_switch_2:
-      self.safety.set_hyundai_giraffe_switch_2(hgs)
+    for rm in relay_malfunction:
+      self.safety.set_relay_malfunction(rm)
       blocked_msgs = [832]
       for b in buss:
         for m in msgs:
-          if hgs:
+          if not rm:
             if b == 0:
               fwd_bus = 2
             elif b == 1:
