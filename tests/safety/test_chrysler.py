@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import unittest
 import numpy as np
-import libpandasafety_py  # pylint: disable=import-error
 from panda import Panda
+from panda.tests.safety import libpandasafety_py
+from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed
 
 MAX_RATE_UP = 3
 MAX_RATE_DOWN = 3
@@ -37,13 +38,6 @@ class TestChryslerSafety(unittest.TestCase):
     cls.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, 0)
     cls.safety.init_tests_chrysler()
 
-  def _send_msg(self, bus, addr, length):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = addr << 21
-    to_send[0].RDTR = length
-    to_send[0].RDTR = bus << 4
-    return to_send
-
   def _button_msg(self, buttons):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 1265 << 21
@@ -67,6 +61,9 @@ class TestChryslerSafety(unittest.TestCase):
     to_send[0].RDLR = ((torque + 1024) >> 8) + (((torque + 1024) & 0xff) << 8)
     return to_send
 
+  def test_relay_malfunction(self):
+    test_relay_malfunction(self, 0x292)
+
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
@@ -81,10 +78,7 @@ class TestChryslerSafety(unittest.TestCase):
           self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
 
   def test_manually_enable_controls_allowed(self):
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(0)
-    self.assertFalse(self.safety.get_controls_allowed())
+    test_manually_enable_controls_allowed(self)
 
   def test_enable_control_allowed_from_cruise(self):
     to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
@@ -182,25 +176,19 @@ class TestChryslerSafety(unittest.TestCase):
   def test_fwd_hook(self):
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
-    chrysler_camera_detected = [0, 1]
 
-    for ccd in chrysler_camera_detected:
-      self.safety.set_chrysler_camera_detected(ccd)
-      blocked_msgs = [658, 678]
-      for b in buss:
-        for m in msgs:
-          if not ccd:
-            if b == 0:
-              fwd_bus = 2
-            elif b == 1:
-              fwd_bus = -1
-            elif b == 2:
-              fwd_bus = -1 if m in blocked_msgs else 0
-          else:
-            fwd_bus = -1
+    blocked_msgs = [658, 678]
+    for b in buss:
+      for m in msgs:
+        if b == 0:
+          fwd_bus = 2
+        elif b == 1:
+          fwd_bus = -1
+        elif b == 2:
+          fwd_bus = -1 if m in blocked_msgs else 0
 
-          # assume len 8
-          self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
+        # assume len 8
+        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
 
 if __name__ == "__main__":

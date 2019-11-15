@@ -41,13 +41,14 @@ typedef struct {
   fwd_hook fwd;
 } safety_hooks;
 
-// This can be set by the safety hooks.
-bool controls_allowed = 0;
-bool gas_interceptor_detected = 0;
+// This can be set by the safety hooks
+bool controls_allowed = false;
+bool relay_malfunction = false;
+bool gas_interceptor_detected = false;
 int gas_interceptor_prev = 0;
 
 // This is set by USB command 0xdf
-bool long_controls_allowed = 1;
+bool long_controls_allowed = true;
 
 // avg between 2 tracks
 #define GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + ((GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2 ) / 2)

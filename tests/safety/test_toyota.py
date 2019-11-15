@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import unittest
 import numpy as np
-import libpandasafety_py  # pylint: disable=import-error
 from panda import Panda
+from panda.tests.safety import libpandasafety_py
+from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed
 
 MAX_RATE_UP = 10
 MAX_RATE_DOWN = 25
@@ -36,13 +37,6 @@ class TestToyotaSafety(unittest.TestCase):
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 100)
     cls.safety.init_tests_toyota()
-
-  def _send_msg(self, bus, addr, length):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = addr << 21
-    to_send[0].RDTR = length
-    to_send[0].RDTR = bus << 4
-    return to_send
 
   def _set_prev_torque(self, t):
     self.safety.set_toyota_desired_torque_last(t)
@@ -97,12 +91,14 @@ class TestToyotaSafety(unittest.TestCase):
 
     return to_send
 
+  def test_relay_malfunction(self):
+    test_relay_malfunction(self, 0x2E4)
+
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_manually_enable_controls_allowed(self):
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self.safety.get_controls_allowed())
+    test_manually_enable_controls_allowed(self)
 
   def test_enable_control_allowed_from_cruise(self):
     self.safety.safety_rx_hook(self._pcm_cruise_msg(False))
@@ -285,29 +281,23 @@ class TestToyotaSafety(unittest.TestCase):
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
     long_controls_allowed = [0, 1]
-    toyota_camera_forwarded = [0, 1]
 
-    for tcf in toyota_camera_forwarded:
-      self.safety.set_toyota_camera_forwarded(tcf)
-      for lca in long_controls_allowed:
-        self.safety.set_long_controls_allowed(lca)
-        blocked_msgs = [0x2E4, 0x412, 0x191]
-        if lca:
-          blocked_msgs += [0x343]
-        for b in buss:
-          for m in msgs:
-            if tcf:
-              if b == 0:
-                fwd_bus = 2
-              elif b == 1:
-                fwd_bus = -1
-              elif b == 2:
-                fwd_bus = -1 if m in blocked_msgs else 0
-            else:
-              fwd_bus = -1
+    for lca in long_controls_allowed:
+      self.safety.set_long_controls_allowed(lca)
+      blocked_msgs = [0x2E4, 0x412, 0x191]
+      if lca:
+        blocked_msgs += [0x343]
+      for b in buss:
+        for m in msgs:
+          if b == 0:
+            fwd_bus = 2
+          elif b == 1:
+            fwd_bus = -1
+          elif b == 2:
+            fwd_bus = -1 if m in blocked_msgs else 0
 
-            # assume len 8
-            self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
+          # assume len 8
+          self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
     self.safety.set_long_controls_allowed(True)
 

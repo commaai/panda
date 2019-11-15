@@ -78,17 +78,19 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_ELM327, &elm327_hooks},
   {SAFETY_GM, &gm_hooks},
   {SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
-  {SAFETY_FORD, &ford_hooks},
-  {SAFETY_CADILLAC, &cadillac_hooks},
   {SAFETY_HYUNDAI, &hyundai_hooks},
   {SAFETY_CHRYSLER, &chrysler_hooks},
-  {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_SUBARU, &subaru_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
   {SAFETY_VOLKSWAGEN, &volkswagen_hooks},
+#ifdef ALLOW_DEBUG
+  {SAFETY_CADILLAC, &cadillac_hooks},
   {SAFETY_TOYOTA_IPAS, &toyota_ipas_hooks},
+  {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
   {SAFETY_GM_ASCM, &gm_ascm_hooks},
+  {SAFETY_FORD, &ford_hooks},
+#endif
 };
 
 int set_safety_hooks(uint16_t mode, int16_t param) {

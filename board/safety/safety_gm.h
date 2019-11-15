@@ -22,8 +22,6 @@ const int GM_MAX_BRAKE = 350;
 int gm_brake_prev = 0;
 int gm_gas_prev = 0;
 bool gm_moving = false;
-// silence everything if stock car control ECUs are still online
-bool gm_ascm_detected = 0;
 int gm_rt_torque_last = 0;
 int gm_desired_torque_last = 0;
 uint32_t gm_ts_last = 0;
@@ -51,8 +49,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // 384 = ASCMLKASteeringCmd
   // 715 = ASCMGasRegenCmd
   if ((bus_number == 0) && ((addr == 384) || (addr == 715))) {
-    gm_ascm_detected = 1;
-    controls_allowed = 0;
+    relay_malfunction = true;
   }
 
   // ACC steering wheel buttons
@@ -114,8 +111,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   int tx = 1;
 
-  // There can be only one! (ASCM)
-  if (gm_ascm_detected) {
+  if (relay_malfunction) {
     tx = 0;
   }
 
@@ -213,14 +209,9 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return tx;
 }
 
-static void gm_init(int16_t param) {
-  UNUSED(param);
-  controls_allowed = 0;
-}
-
 
 const safety_hooks gm_hooks = {
-  .init = gm_init,
+  .init = nooutput_init,
   .rx = gm_rx_hook,
   .tx = gm_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
