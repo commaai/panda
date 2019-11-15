@@ -42,6 +42,8 @@ TIM_TypeDef *TIM2 = &timer;
 #define HW_TYPE_PEDAL 4U
 #define HW_TYPE_UNO 5U
 
+#define ALLOW_DEBUG
+
 // from main_declarations.h
 uint8_t hw_type = HW_TYPE_UNKNOWN;
 
