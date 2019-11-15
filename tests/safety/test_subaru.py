@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import unittest
 import numpy as np
-import libpandasafety_py  # pylint: disable=import-error
 from panda import Panda
-from panda.tests.safety.common import test_relay_malfunction
+from panda.tests.safety import libpandasafety_py
+from panda.tests.safety.common import test_relay_malfunction, make_msg
 
 MAX_RATE_UP = 50
 MAX_RATE_DOWN = 70
@@ -33,13 +33,6 @@ class TestSubaruSafety(unittest.TestCase):
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_SUBARU, 0)
     cls.safety.init_tests_subaru()
-
-  def _send_msg(self, bus, addr, length):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = addr << 21
-    to_send[0].RDTR = length
-    to_send[0].RDTR = bus << 4
-    return to_send
 
   def _set_prev_torque(self, t):
     self.safety.set_subaru_desired_torque_last(t)
@@ -198,7 +191,7 @@ class TestSubaruSafety(unittest.TestCase):
             fwd_bus = -1
 
           # assume len 8
-          self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, self._send_msg(b, m, 8)))
+          self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
 
 if __name__ == "__main__":

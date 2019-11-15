@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import unittest
 import numpy as np
-import libpandasafety_py  # pylint: disable=import-error
 from panda import Panda
+from panda.tests.safety import libpandasafety_py
 
 IPAS_OVERRIDE_THRESHOLD = 200
 
