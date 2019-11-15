@@ -279,6 +279,7 @@ bool bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
     set_bitbanged_gmlan(1); // recessive
     set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
 
+    // 33kbps
     REGISTER_INTERRUPT(TIM4_IRQn, TIM4_IRQ_Handler, 40000U)
     setup_timer4();
   }

@@ -707,9 +707,11 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
 
 int main(void) {
   init_interrupts(true);
+  // These get called each time the started line switches state. Rate limit should be more than high enough
   REGISTER_INTERRUPT(EXTI0_IRQn, EXTI0_IRQ_Handler, 10U)
   REGISTER_INTERRUPT(EXTI1_IRQn, EXTI1_IRQ_Handler, 10U)
   REGISTER_INTERRUPT(EXTI3_IRQn, EXTI3_IRQ_Handler, 10U)
+  // 1s timer
   REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler, 2U)
 
   // shouldn't have interrupts here, but just in case
