@@ -345,6 +345,9 @@ class IsoTpMessage():
           self._isotp_rx_next(msg)
           if self.tx_done and self.rx_done:
             return self.rx_dat
+        # no timeout indicates non-blocking
+        if self.timeout == 0:
+          return None
         if time.time() - start_time > self.timeout:
           raise MessageTimeoutError("timeout waiting for response")
     finally:
@@ -415,19 +418,22 @@ class IsoTpMessage():
         # wait (do nothing until next flow control message)
         if self.debug: print("ISO-TP: TX - flow control wait")
 
+def get_rx_addr_for_tx_addr(tx_addr):
+  if tx_addr < 0xFFF8:
+    # standard 11 bit response addr (add 8)
+    return tx_addr + 8
+  
+  if tx_addr > 0x10000000 and tx_addr < 0xFFFFFFFF:
+    # standard 29 bit response addr (flip last two bytes)
+    return (tx_addr & 0xFFFF0000) + (tx_addr<<8 & 0xFF00) + (tx_addr>>8 & 0xFF)
+
+  raise ValueError("invalid tx_addr: {}".format(tx_addr))
+
 class UdsClient():
   def __init__(self, panda, tx_addr: int, rx_addr: int=None, bus: int=0, timeout: float=1, debug: bool=False):
     self.bus = bus
     self.tx_addr = tx_addr
-    if rx_addr is None:
-      if tx_addr < 0xFFF8:
-        # standard 11 bit response addr (add 8)
-        self.rx_addr = tx_addr+8
-      elif tx_addr > 0x10000000 and tx_addr < 0xFFFFFFFF:
-        # standard 29 bit response addr (flip last two bytes)
-        self.rx_addr = (tx_addr & 0xFFFF0000) + (tx_addr<<8 & 0xFF00) + (tx_addr>>8 & 0xFF)
-      else:
-        raise ValueError("invalid tx_addr: {}".format(tx_addr))
+    self.rx_addr = rx_addr if rx_addr is not None else get_rx_addr_for_tx_addr(tx_addr)
     self.timeout = timeout
     self.debug = debug
     self._can_client = CanClient(panda.can_send, panda.can_recv, self.tx_addr, self.rx_addr, self.bus, debug=self.debug)
