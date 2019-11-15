@@ -30,12 +30,6 @@ uint32_t mazda_ts_last = 0;
 struct sample_t mazda_torque_driver;         // last few driver torques measured
 
 // track msgs coming from OP so that we know what CAM msgs to drop and what to forward
-int mazda_op_lkas_detected = 0;
-int mazda_op_laneinfo_detected = 0;
-
-int mazda_forward_cam = 0;
-int mazda_giraffe_switch_2_on = 0;
-
 void mazda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
@@ -62,14 +56,10 @@ void mazda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // we have msgs on bus MAZDA_CAM
   if (bus == MAZDA_CAM) {
-    // the stock CAM is connected
-    if (addr == MAZDA_LKAS) {
-      mazda_forward_cam = 1;
-    }
-    // if we see wheel speed msgs on MAZDA_CAM bus then giraffe switch 2 is high
+    // if we see wheel speed msgs on MAZDA_CAM bus then relay is closed
     // (hardware passthru)
     if (addr == MAZDA_WHEEL_SPEED) {
-      mazda_giraffe_switch_2_on = 1;
+      relay_malfunction = true;
     }
   }
 }
@@ -81,13 +71,6 @@ static int mazda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // Check if msg is sent on the main BUS
   if (bus == MAZDA_MAIN) {
-    if ((addr == MAZDA_LKAS) && !mazda_op_lkas_detected){
-      mazda_op_lkas_detected = 1;
-    }
-    if ((addr == MAZDA_LANEINFO) && !mazda_op_laneinfo_detected){
-      mazda_op_laneinfo_detected = 1;
-    }
-
     // steer cmd checks
     if (addr == MAZDA_LKAS) {
       int desired_torque = (((GET_BYTE(to_send, 0) & 0x0f) << 8) | GET_BYTE(to_send, 1)) - MAZDA_MAX_STEER;
@@ -140,15 +123,13 @@ static int mazda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
 static int mazda_fwd_hook(int bus, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int bus_fwd = -1;
-  if (mazda_forward_cam && !mazda_giraffe_switch_2_on) {
+  if (!relay_malfunction) {
     int addr = GET_ADDR(to_fwd);
     if (bus == MAZDA_MAIN) {
       bus_fwd = MAZDA_CAM;
     }
     else if (bus == MAZDA_CAM) {
-      // drop stock CAM_LKAS and CAM_LANEINFI if OP is sending them
-      if (!((addr == MAZDA_LKAS) && mazda_op_lkas_detected) &&
-          !((addr == MAZDA_LANEINFO) && mazda_op_laneinfo_detected)) {
+      if (!addr == MAZDA_LKAS) {
         bus_fwd = MAZDA_MAIN;
       }
     }

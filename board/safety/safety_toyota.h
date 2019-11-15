@@ -22,8 +22,6 @@ const int TOYOTA_GAS_INTERCEPTOR_THRESHOLD = 475;  // ratio between offset and g
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
 // states
-int toyota_giraffe_switch_1 = 0;          // is giraffe switch 1 high?
-int toyota_camera_forwarded = 0;          // should we forward the camera bus?
 int toyota_desired_torque_last = 0;       // last desired steer torque
 int toyota_rt_torque_last = 0;            // last desired torque for real time check
 uint32_t toyota_ts_last = 0;
@@ -87,14 +85,9 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     toyota_gas_prev = gas;
   }
 
-  // msgs are only on bus 2 if panda is connected to frc
-  if (bus == 2) {
-    toyota_camera_forwarded = 1;
-  }
-
-  // 0x2E4 is lkas cmd. If it is on bus 0, then giraffe switch 1 is high
+  // 0x2E4 is lkas cmd. If it is on bus 0, then relay is unexpectedly closed
   if ((addr == 0x2E4) && (bus == 0)) {
-    toyota_giraffe_switch_1 = 1;
+    relay_malfunction = 1;
   }
 }
 
@@ -103,6 +96,10 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
+
+  if (relay_malfunction) {
+    tx = 0;
+  }
 
   // Check if msg is sent on BUS 0
   if (bus == 0) {
@@ -191,15 +188,14 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
 static void toyota_init(int16_t param) {
   controls_allowed = 0;
-  toyota_giraffe_switch_1 = 0;
-  toyota_camera_forwarded = 0;
+  relay_malfunction = 0;
   toyota_dbc_eps_torque_factor = param;
 }
 
 static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   int bus_fwd = -1;
-  if (toyota_camera_forwarded && !toyota_giraffe_switch_1) {
+  if (!relay_malfunction) {
     if (bus_num == 0) {
       bus_fwd = 2;
     }
