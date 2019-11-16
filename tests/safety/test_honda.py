@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed, test_spam_can_buses
+from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed
 
 MAX_BRAKE = 255
 
