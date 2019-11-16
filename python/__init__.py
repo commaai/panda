@@ -345,8 +345,8 @@ class Panda(object):
   # ******************* health *******************
 
   def health(self):
-    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 27)
-    a = struct.unpack("IIIIIBBBBBBB", dat)
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 28)
+    a = struct.unpack("IIIIIBBBBBBBB", dat)
     return {
       "voltage": a[0],
       "current": a[1],
@@ -359,7 +359,8 @@ class Panda(object):
       "gas_interceptor_detected": a[8],
       "car_harness_status": a[9],
       "usb_power_mode": a[10],
-      "safety_mode": a[11]
+      "safety_mode": a[11],
+      "fault_status": a[12]
     }
 
   # ******************* control *******************
