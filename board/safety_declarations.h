@@ -11,10 +11,10 @@ struct lookup_t {
   float y[3];
 };
 
-struct AddrBus {
+typedef struct {
   int addr;
   int bus;
-};
+} AddrBus;
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
@@ -30,7 +30,7 @@ bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
   const int MAX_ALLOWANCE, const int DRIVER_FACTOR);
 bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 float interpolate(struct lookup_t xy, float x);
-bool addr_allowed(int addr, int bus, const struct AddrBus addr_list[], int len);
+bool addr_allowed(int addr, int bus, const AddrBus addr_list[], int len);
 
 typedef void (*safety_hook_init)(int16_t param);
 typedef void (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);

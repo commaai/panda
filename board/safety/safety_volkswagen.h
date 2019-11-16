@@ -15,7 +15,7 @@ const int VOLKSWAGEN_MAX_RATE_DOWN = 10;            // 5.0 Nm/s available rate o
 const int VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE = 80;
 const int VOLKSWAGEN_DRIVER_TORQUE_FACTOR = 3;
 
-const struct AddrBus VOLKSWAGEN_TX_MSGS[] = {{MSG_HCA_01, 0}, {MSG_GRA_ACC_01, 2}, {MSG_LDW_02, 0}};
+const AddrBus VOLKSWAGEN_TX_MSGS[] = {{MSG_HCA_01, 0}, {MSG_GRA_ACC_01, 2}, {MSG_LDW_02, 0}};
 
 struct sample_t volkswagen_torque_driver;           // last few driver torques measured
 int volkswagen_rt_torque_last = 0;

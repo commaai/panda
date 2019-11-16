@@ -6,7 +6,7 @@ const int HYUNDAI_MAX_RATE_DOWN = 7;
 const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
 const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
 
-const struct AddrBus HYUNDAI_TX_MSGS[] = {{832, 0}, {1265, 0}};
+const AddrBus HYUNDAI_TX_MSGS[] = {{832, 0}, {1265, 0}};
 
 int hyundai_rt_torque_last = 0;
 int hyundai_desired_torque_last = 0;

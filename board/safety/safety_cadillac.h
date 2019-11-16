@@ -1,6 +1,6 @@
 #define CADILLAC_TORQUE_MSG_N 4      // 4 torque messages: 0x151, 0x152, 0x153, 0x154
 
-const struct AddrBus CADILLAC_TX_MSGS[] = {{0x151, 2}, {0x152, 0}, {0x153, 2}, {0x154, 0}};
+const AddrBus CADILLAC_TX_MSGS[] = {{0x151, 2}, {0x152, 0}, {0x153, 2}, {0x154, 0}};
 const int CADILLAC_MAX_STEER = 150; // 1s
 // real time torque limit to prevent controls spamming
 // the real time limit is 1500/sec
