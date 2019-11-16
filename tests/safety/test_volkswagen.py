@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed
+from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed, test_spam_can_buses
 
 MAX_RATE_UP = 4
 MAX_RATE_DOWN = 10
@@ -14,6 +14,8 @@ RT_INTERVAL = 250000
 
 DRIVER_TORQUE_ALLOWANCE = 80
 DRIVER_TORQUE_FACTOR = 3
+
+TX_MSGS = [[0x126, 0], [0x12B, 2], [0x397, 0]]
 
 def sign(a):
   if a > 0:
@@ -66,6 +68,9 @@ class TestVolkswagenSafety(unittest.TestCase):
     to_send[0].RDTR = 2 << 4
 
     return to_send
+
+  def test_spam_can_buses(self):
+    test_spam_can_buses(self, TX_MSGS)
 
   def test_relay_malfunction(self):
     test_relay_malfunction(self, 0x126)

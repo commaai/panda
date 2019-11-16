@@ -1,17 +1,3 @@
-const int VOLKSWAGEN_MAX_STEER = 250;               // 2.5 Nm (EPS side max of 3.0Nm with fault if violated)
-const int VOLKSWAGEN_MAX_RT_DELTA = 75;             // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
-const uint32_t VOLKSWAGEN_RT_INTERVAL = 250000;     // 250ms between real time checks
-const int VOLKSWAGEN_MAX_RATE_UP = 4;               // 2.0 Nm/s available rate of change from the steering rack (EPS side delta-limit of 5.0 Nm/s)
-const int VOLKSWAGEN_MAX_RATE_DOWN = 10;            // 5.0 Nm/s available rate of change from the steering rack (EPS side delta-limit of 5.0 Nm/s)
-const int VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE = 80;
-const int VOLKSWAGEN_DRIVER_TORQUE_FACTOR = 3;
-
-struct sample_t volkswagen_torque_driver;           // last few driver torques measured
-int volkswagen_rt_torque_last = 0;
-int volkswagen_desired_torque_last = 0;
-uint32_t volkswagen_ts_last = 0;
-int volkswagen_gas_prev = 0;
-
 // Safety-relevant CAN messages for the Volkswagen MQB platform.
 #define MSG_EPS_01              0x09F
 #define MSG_MOTOR_20            0x121
@@ -20,6 +6,22 @@ int volkswagen_gas_prev = 0;
 #define MSG_GRA_ACC_01          0x12B
 #define MSG_LDW_02              0x397
 #define MSG_KLEMMEN_STATUS_01   0x3C0
+
+const int VOLKSWAGEN_MAX_STEER = 250;               // 2.5 Nm (EPS side max of 3.0Nm with fault if violated)
+const int VOLKSWAGEN_MAX_RT_DELTA = 75;             // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
+const uint32_t VOLKSWAGEN_RT_INTERVAL = 250000;     // 250ms between real time checks
+const int VOLKSWAGEN_MAX_RATE_UP = 4;               // 2.0 Nm/s available rate of change from the steering rack (EPS side delta-limit of 5.0 Nm/s)
+const int VOLKSWAGEN_MAX_RATE_DOWN = 10;            // 5.0 Nm/s available rate of change from the steering rack (EPS side delta-limit of 5.0 Nm/s)
+const int VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE = 80;
+const int VOLKSWAGEN_DRIVER_TORQUE_FACTOR = 3;
+
+const struct AddrBus VOLKSWAGEN_TX_MSGS[] = {{MSG_HCA_01, 0}, {MSG_GRA_ACC_01, 2}, {MSG_LDW_02, 0}};
+
+struct sample_t volkswagen_torque_driver;           // last few driver torques measured
+int volkswagen_rt_torque_last = 0;
+int volkswagen_desired_torque_last = 0;
+uint32_t volkswagen_ts_last = 0;
+int volkswagen_gas_prev = 0;
 
 static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
@@ -63,6 +65,10 @@ static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
   int tx = 1;
+
+  if (!addr_allowed(addr, bus, VOLKSWAGEN_TX_MSGS, sizeof(VOLKSWAGEN_TX_MSGS)/sizeof(VOLKSWAGEN_TX_MSGS[0]))) {
+    tx = 0;
+  }
 
   if (relay_malfunction) {
     tx = 0;
