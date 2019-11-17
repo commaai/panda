@@ -436,7 +436,12 @@ class IsoTpMessage():
         # wait (do nothing until next flow control message)
         if self.debug: print("ISO-TP: TX - flow control wait")
 
+FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
+
 def get_rx_addr_for_tx_addr(tx_addr):
+  if tx_addr in FUNCTIONAL_ADDRS:
+    return None
+
   if tx_addr < 0xFFF8:
     # standard 11 bit response addr (add 8)
     return tx_addr + 8
