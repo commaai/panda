@@ -70,7 +70,7 @@ if __name__ == "__main__":
     print("results:")
     if len(results.items()):
       for addr, resp in results.items():
-        for id, dat in resp.items():
-          print(hex(addr), hex(id), dat.decode())
+        for rid, dat in resp.items():
+          print(hex(addr), hex(rid), dat.decode())
     else:
-      "no fw versions found!"
+      print("no fw versions found!")
