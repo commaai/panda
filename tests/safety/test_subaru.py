@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed
+from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed, test_spam_can_buses
 
 MAX_RATE_UP = 50
 MAX_RATE_DOWN = 70
@@ -14,6 +14,8 @@ RT_INTERVAL = 250000
 
 DRIVER_TORQUE_ALLOWANCE = 60;
 DRIVER_TORQUE_FACTOR = 10;
+
+TX_MSGS = [[0x122, 0], [0x164, 0], [0x221, 0], [0x322, 0]]
 
 def twos_comp(val, bits):
   if val >= 0:
@@ -53,6 +55,9 @@ class TestSubaruSafety(unittest.TestCase):
     t = twos_comp(torque, 13)
     to_send[0].RDLR = (t << 16)
     return to_send
+
+  def test_spam_can_buses(self):
+    test_spam_can_buses(self, TX_MSGS)
 
   def test_relay_malfunction(self):
     test_relay_malfunction(self, 0x122)

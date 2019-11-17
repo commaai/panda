@@ -4,6 +4,7 @@ const uint32_t CHRYSLER_RT_INTERVAL = 250000;  // 250ms between real time checks
 const int CHRYSLER_MAX_RATE_UP = 3;
 const int CHRYSLER_MAX_RATE_DOWN = 3;
 const int CHRYSLER_MAX_TORQUE_ERROR = 80;    // max torque cmd in excess of torque motor
+const AddrBus CHRYSLER_TX_MSGS[] = {{571, 0}, {658, 0}, {678, 0}};
 
 int chrysler_rt_torque_last = 0;
 int chrysler_desired_torque_last = 0;
@@ -43,8 +44,13 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
-  int addr = GET_ADDR(to_send);
   int tx = 1;
+  int addr = GET_ADDR(to_send);
+  int bus = GET_BUS(to_send);
+
+  if (!addr_allowed(addr, bus, CHRYSLER_TX_MSGS, sizeof(CHRYSLER_TX_MSGS) / sizeof(CHRYSLER_TX_MSGS[0]))) {
+    tx = 0;
+  }
 
   if (relay_malfunction) {
     tx = 0;

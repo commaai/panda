@@ -3,11 +3,12 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed
+from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed, test_spam_can_buses
 
 MAX_BRAKE = 255
 
 INTERCEPTOR_THRESHOLD = 328
+TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x200, 0], [0x30C, 0], [0x33D, 0], [0x39F, 0]]
 
 class TestHondaSafety(unittest.TestCase):
   @classmethod
@@ -78,6 +79,9 @@ class TestHondaSafety(unittest.TestCase):
     to_send[0].RDLR = steer
 
     return to_send
+
+  def test_spam_can_buses(self):
+    test_spam_can_buses(self, TX_MSGS)
 
   def test_relay_malfunction(self):
     test_relay_malfunction(self, 0xE4)

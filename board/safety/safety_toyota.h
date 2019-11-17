@@ -18,6 +18,12 @@ const int TOYOTA_MIN_ACCEL = -3000;       // 3.0 m/s2
 
 const int TOYOTA_GAS_INTERCEPTOR_THRESHOLD = 475;  // ratio between offset and gain from dbc file
 
+// allowed DSU messages on bus 0 and 1
+const AddrBus TOYOTA_TX_MSGS[] = {{0x283, 0}, {0x2E6, 0}, {0x2E7, 0}, {0x33E, 0}, {0x344, 0}, {0x365, 0}, {0x366, 0}, {0x4CB, 0},  // DSU bus 0
+                                         {0x128, 1}, {0x141, 1}, {0x160, 1}, {0x161, 1}, {0x470, 1},  // DSU bus 1
+                                         {0x2E4, 0}, {0x412, 0}, {0x191, 0}, {0x343, 0},  // LKAS + ACC
+                                         {0x200, 0}};  // interceptor
+
 // global actuation limit states
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
@@ -97,17 +103,16 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
+  if (!addr_allowed(addr, bus, TOYOTA_TX_MSGS, sizeof(TOYOTA_TX_MSGS)/sizeof(TOYOTA_TX_MSGS[0]))) {
+    tx = 0;
+  }
+
   if (relay_malfunction) {
     tx = 0;
   }
 
   // Check if msg is sent on BUS 0
   if (bus == 0) {
-
-    // no IPAS in non IPAS mode
-    if ((addr == 0x266) || (addr == 0x167)) {
-      tx = 0;
-    }
 
     // GAS PEDAL: safety check
     if (addr == 0x200) {
@@ -182,7 +187,6 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   }
 
-  // 1 allows the message through
   return tx;
 }
 

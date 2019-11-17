@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed
+from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed, test_spam_can_buses
 
 MAX_RATE_UP = 10
 MAX_RATE_DOWN = 25
@@ -16,8 +16,13 @@ MAX_RT_DELTA = 375
 RT_INTERVAL = 250000
 
 MAX_TORQUE_ERROR = 350
-
 INTERCEPTOR_THRESHOLD = 475
+
+TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
+           [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
+           [0x2E4, 0], [0x412, 0], [0x191, 0], [0x343, 0],  # LKAS + ACC
+           [0x200, 0]];  # interceptor
+
 
 def twos_comp(val, bits):
   if val >= 0:
@@ -90,6 +95,9 @@ class TestToyotaSafety(unittest.TestCase):
     to_send[0].RDLR = cruise_on << 5
 
     return to_send
+
+  def test_spam_can_buses(self):
+    test_spam_can_buses(self, TX_MSGS)
 
   def test_relay_malfunction(self):
     test_relay_malfunction(self, 0x2E4)

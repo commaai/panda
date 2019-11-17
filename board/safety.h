@@ -55,6 +55,17 @@ int safety_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return current_hooks->fwd(bus_num, to_fwd);
 }
 
+bool addr_allowed(int addr, int bus, const AddrBus addr_list[], int len) {
+  bool allowed = false;
+  for (int i = 0; i < len; i++) {
+    if ((addr == addr_list[i].addr) && (bus == addr_list[i].bus)) {
+      allowed = true;
+      break;
+    }
+  }
+  return allowed;
+}
+
 typedef struct {
   uint16_t id;
   const safety_hooks *hooks;

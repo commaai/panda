@@ -2,7 +2,10 @@ from panda.tests.safety import libpandasafety_py
 
 def make_msg(bus, addr, length):
   to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-  to_send[0].RIR = addr << 21
+  if addr >= 0x800:
+    to_send[0].RIR = (addr << 3) | 5
+  else:
+    to_send[0].RIR = (addr << 21) | 1
   to_send[0].RDTR = length
   to_send[0].RDTR = bus << 4
 
@@ -25,3 +28,9 @@ def test_manually_enable_controls_allowed(test):
   test.assertTrue(test.safety.get_controls_allowed())
   test.safety.set_controls_allowed(0)
   test.assertFalse(test.safety.get_controls_allowed())
+
+def test_spam_can_buses(test, TX_MSGS):
+  for addr in range(1, 0x800):
+    for bus in range(0, 4):
+      if all(addr != m[0] or bus != m[1] for m in TX_MSGS):
+        test.assertFalse(test.safety.safety_tx_hook(make_msg(bus, addr, 8)))
