@@ -19,7 +19,7 @@ const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
 const AddrBus GM_TX_MSGS[] = {{384, 0}, {1033, 0}, {715, 0}, {880, 0},  // pt bus
-                              {161, 1}, {774, 1}, {776, 1}, {778, 1},   // obs bus
+                              {161, 1}, {774, 1}, {776, 1}, {784, 1},   // obs bus
                               {789, 2},  // ch bus
                               {0x104c006c, 3}};  // gmlan
 
