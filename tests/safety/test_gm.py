@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed
+from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed, test_spam_can_buses
 
 MAX_RATE_UP = 7
 MAX_RATE_DOWN = 17
@@ -17,6 +17,11 @@ RT_INTERVAL = 250000
 
 DRIVER_TORQUE_ALLOWANCE = 50;
 DRIVER_TORQUE_FACTOR = 4;
+
+TX_MSGS = [[384, 0], [1033, 0], [715, 0], [880, 0],  # pt bus
+           [161, 1], [774, 1], [776, 1], [778, 1],  # obs bus
+           [789, 2],  # ch bus
+           [0x104c006c, 3]]  # gmlan
 
 def twos_comp(val, bits):
   if val >= 0:
@@ -64,6 +69,7 @@ class TestGmSafety(unittest.TestCase):
   def _send_brake_msg(self, brake):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 789 << 21
+    to_send[0].RDTR = 2 << 4
     brake = (-brake) & 0xfff
     to_send[0].RDLR = (brake >> 8) | ((brake &0xff) << 8)
     return to_send
@@ -93,6 +99,9 @@ class TestGmSafety(unittest.TestCase):
     t = twos_comp(torque, 11)
     to_send[0].RDLR = ((t >> 8) & 0x7) | ((t & 0xFF) << 8)
     return to_send
+
+  def test_spam_can_buses(self):
+    test_spam_can_buses(self, TX_MSGS)
 
   def test_relay_malfunction(self):
     test_relay_malfunction(self, 384)

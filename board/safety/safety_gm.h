@@ -18,6 +18,10 @@ const int GM_DRIVER_TORQUE_FACTOR = 4;
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
+const AddrBus GM_TX_MSGS[] = {{384, 0}, {1033, 0}, {715, 0}, {880, 0},  // pt bus
+                              {161, 1}, {774, 1}, {776, 1}, {778, 1},   // obs bus
+                              {789, 2},  // ch bus
+                              {0x104c006c, 3}};  // gmlan
 
 int gm_brake_prev = 0;
 int gm_gas_prev = 0;
@@ -28,7 +32,7 @@ uint32_t gm_ts_last = 0;
 struct sample_t gm_torque_driver;         // last few driver torques measured
 
 static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  int bus_number = GET_BUS(to_push);
+  int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
   if (addr == 388) {
@@ -42,14 +46,6 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // rear left wheel speed
   if (addr == 842) {
     gm_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
-  }
-
-  // Check if ASCM or LKA camera are online
-  // on powertrain bus.
-  // 384 = ASCMLKASteeringCmd
-  // 715 = ASCMGasRegenCmd
-  if ((bus_number == 0) && ((addr == 384) || (addr == 715))) {
-    relay_malfunction = true;
   }
 
   // ACC steering wheel buttons
@@ -99,6 +95,14 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       controls_allowed = 0;
     }
   }
+
+  // Check if ASCM or LKA camera are online
+  // on powertrain bus.
+  // 384 = ASCMLKASteeringCmd
+  // 715 = ASCMGasRegenCmd
+  if ((bus == 0) && ((addr == 384) || (addr == 715))) {
+    relay_malfunction = true;
+  }
 }
 
 // all commands: gas/regen, friction brake and steering
@@ -110,6 +114,12 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   int tx = 1;
+  int addr = GET_ADDR(to_send);
+  int bus = GET_BUS(to_send);
+
+  if (!addr_allowed(addr, bus, GM_TX_MSGS, sizeof(GM_TX_MSGS)/sizeof(GM_TX_MSGS[0]))) {
+    tx = 0;
+  }
 
   if (relay_malfunction) {
     tx = 0;
@@ -119,8 +129,6 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // and the the latching controls_allowed flag is True
   int pedal_pressed = gm_gas_prev || (gm_brake_prev && gm_moving);
   bool current_controls_allowed = controls_allowed && !pedal_pressed;
-
-  int addr = GET_ADDR(to_send);
 
   // BRAKE: safety check
   if (addr == 789) {
@@ -182,11 +190,6 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (violation) {
       tx = 0;
     }
-  }
-
-  // PARK ASSIST STEER: unlimited torque, no thanks
-  if (addr == 823) {
-    tx = 0;
   }
 
   // GAS/REGEN: safety check
