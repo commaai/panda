@@ -2,7 +2,10 @@ from panda.tests.safety import libpandasafety_py
 
 def make_msg(bus, addr, length):
   to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-  to_send[0].RIR = addr << 21
+  if addr >= 0x800:
+    to_send[0].RIR = (addr << 3) | 5
+  else:
+    to_send[0].RIR = (addr << 21) | 1
   to_send[0].RDTR = length
   to_send[0].RDTR = bus << 4
 
