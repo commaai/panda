@@ -102,12 +102,13 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   }
 
-  // FORCE CANCEL: safety check only relevant when spamming the cancel button.
-  // ensuring that only the cancel button press is sent when controls are off.
-  // This avoids unintended engagements while still allowing resume spam
-  // TODO!
+  // FORCE CANCEL: only the cancel button press is allowed
+  if (addr == 571) {
+    if (GET_BYTE(to_send, 0) != 1) {
+      tx = 0;
+    }
+  }
 
-  // 1 allows the message through
   return tx;
 }
 

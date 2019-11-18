@@ -16,23 +16,6 @@ MAX_TORQUE_ERROR = 80
 
 TX_MSGS = [[571, 0], [658, 0], [678, 0]]
 
-def twos_comp(val, bits):
-  if val >= 0:
-    return val
-  else:
-    return (2**bits) + val
-
-def sign(a):
-  if a > 0:
-    return 1
-  else:
-    return -1
-
-def swap_bytes(data_str):
-  """Accepts string with hex, returns integer with order swapped for CAN."""
-  a = int(data_str, 16)
-  return ((a & 0xff) << 24) + ((a & 0xff00) << 8) + ((a & 0x00ff0000) >> 8) + ((a & 0xff000000) >> 24)
-
 class TestChryslerSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
@@ -42,7 +25,7 @@ class TestChryslerSafety(unittest.TestCase):
 
   def _button_msg(self, buttons):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 1265 << 21
+    to_send[0].RIR = 571 << 21
     to_send[0].RDLR = buttons
     return to_send
 
@@ -177,6 +160,14 @@ class TestChryslerSafety(unittest.TestCase):
     self.safety.safety_rx_hook(self._torque_meas_msg(0))
     self.assertEqual(0, self.safety.get_chrysler_torque_meas_max())
     self.assertEqual(0, self.safety.get_chrysler_torque_meas_min())
+
+  def test_cancel_button(self):
+    CANCEL = 1
+    for b in range(0, 0xff):
+      if b == CANCEL:
+        self.assertTrue(self.safety.safety_tx_hook(self._button_msg(b)))
+      else:
+        self.assertFalse(self.safety.safety_tx_hook(self._button_msg(b)))
 
   def test_fwd_hook(self):
     buss = list(range(0x0, 0x3))
