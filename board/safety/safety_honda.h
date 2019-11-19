@@ -102,7 +102,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // if steering controls messages are received on the destination bus, it's an indication
-  // that the relay might be malfucntioning
+  // that the relay might be malfunctioning
   int bus_rdr_car = (board_has_relay()) ? 0 : 2;  // radar bus, car side
   if ((addr == 0xE4) || (addr == 0x194)) {
     if ((honda_bosch_hardware && (bus == bus_rdr_car)) ||
