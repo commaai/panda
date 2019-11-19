@@ -44,18 +44,13 @@ class TestCadillacSafety(unittest.TestCase):
     self.safety.set_cadillac_rt_torque_last(t)
 
   def _torque_driver_msg(self, torque):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x164 << 21
-
     t = twos_comp(torque, 11)
+    to_send = make_msg(0, 0x164)
     to_send[0].RDLR = ((t >> 8) & 0x7) | ((t & 0xFF) << 8)
     return to_send
 
   def _torque_msg(self, torque):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x151 << 21
-    to_send[0].RDTR = 2 << 4
-
+    to_send = make_msg(2, 0x151)
     t = twos_comp(torque, 14)
     to_send[0].RDLR = ((t >> 8) & 0x3F) | ((t & 0xFF) << 8)
     return to_send
@@ -70,20 +65,13 @@ class TestCadillacSafety(unittest.TestCase):
     test_manually_enable_controls_allowed(self)
 
   def test_enable_control_allowed_from_cruise(self):
-    to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_push[0].RIR = 0x370 << 21
+    to_push = make_msg(0, 0x370)
     to_push[0].RDLR = 0x800000
-    to_push[0].RDTR = 0
-
     self.safety.safety_rx_hook(to_push)
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disable_control_allowed_from_cruise(self):
-    to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_push[0].RIR = 0x370 << 21
-    to_push[0].RDLR = 0
-    to_push[0].RDTR = 0
-
+    to_push = make_msg(0, 0x370)
     self.safety.set_controls_allowed(1)
     self.safety.safety_rx_hook(to_push)
     self.assertFalse(self.safety.get_controls_allowed())

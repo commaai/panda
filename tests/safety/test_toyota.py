@@ -49,51 +49,38 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.set_toyota_torque_meas(t, t)
 
   def _torque_meas_msg(self, torque):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x260 << 21
-
     t = twos_comp(torque, 16)
+    to_send = make_msg(0, 0x260)
     to_send[0].RDHR = t | ((t & 0xFF) << 16)
     return to_send
 
   def _torque_msg(self, torque):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x2E4 << 21
-
     t = twos_comp(torque, 16)
+    to_send = make_msg(0, 0x2E4)
     to_send[0].RDLR = t | ((t & 0xFF) << 16)
     return to_send
 
   def _accel_msg(self, accel):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x343 << 21
-
+    to_send = make_msg(0, 0x343)
     a = twos_comp(accel, 16)
     to_send[0].RDLR = (a & 0xFF) << 8 | (a >> 8)
     return to_send
 
   def _send_gas_msg(self, gas):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x2C1 << 21
+    to_send = make_msg(0, 0x2C1)
     to_send[0].RDHR = (gas & 0xFF) << 16
-
     return to_send
 
   def _send_interceptor_msg(self, gas, addr):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = addr << 21
-    to_send[0].RDTR = 6
     gas2 = gas * 2
+    to_send = make_msg(0, addr, 6)
     to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
                       ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
-
     return to_send
 
   def _pcm_cruise_msg(self, cruise_on):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x1D2 << 21
+    to_send = make_msg(0, 0x1D2)
     to_send[0].RDLR = cruise_on << 5
-
     return to_send
 
   def test_spam_can_buses(self):

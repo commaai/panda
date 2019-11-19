@@ -18,66 +18,48 @@ class TestHondaSafety(unittest.TestCase):
     cls.safety.init_tests_honda()
 
   def _speed_msg(self, speed):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x158 << 21
+    to_send = make_msg(0, 0x158)
     to_send[0].RDLR = speed
-
     return to_send
 
   def _button_msg(self, buttons, msg):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = msg << 21
-    to_send[0].RDLR = buttons << 5
     has_relay = self.safety.board_has_relay()
     honda_bosch_hardware = self.safety.get_honda_bosch_hardware()
     bus = 1 if has_relay and honda_bosch_hardware else 0
-    to_send[0].RDTR = bus << 4
-
+    to_send = make_msg(bus, msg)
+    to_send[0].RDLR = buttons << 5
     return to_send
 
   def _brake_msg(self, brake):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x17C << 21
+    to_send = make_msg(0, 0x17C)
     to_send[0].RDHR = 0x200000 if brake else 0
-
     return to_send
 
   def _alt_brake_msg(self, brake):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x1BE << 21
+    to_send = make_msg(0, 0x1BE)
     to_send[0].RDLR = 0x10 if brake else 0
-
     return to_send
 
   def _gas_msg(self, gas):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x17C << 21
+    to_send = make_msg(0, 0x17C)
     to_send[0].RDLR = 1 if gas else 0
-
     return to_send
 
   def _send_brake_msg(self, brake):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x1FA << 21
+    to_send = make_msg(0, 0x1FA)
     to_send[0].RDLR = ((brake & 0x3) << 14) | ((brake & 0x3FF) >> 2)
-
     return to_send
 
   def _send_interceptor_msg(self, gas, addr):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = addr << 21
-    to_send[0].RDTR = 6
+    to_send = make_msg(0, addr, 6)
     gas2 = gas * 2
     to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
                       ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
-
     return to_send
 
   def _send_steer_msg(self, steer):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0xE4 << 21
+    to_send = make_msg(0, 0xE4, 6)
     to_send[0].RDLR = steer
-
     return to_send
 
   def test_spam_can_buses(self):

@@ -24,8 +24,7 @@ class TestChryslerSafety(unittest.TestCase):
     cls.safety.init_tests_chrysler()
 
   def _button_msg(self, buttons):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 571 << 21
+    to_send = make_msg(0, 571)
     to_send[0].RDLR = buttons
     return to_send
 
@@ -35,14 +34,12 @@ class TestChryslerSafety(unittest.TestCase):
     self.safety.set_chrysler_torque_meas(t, t)
 
   def _torque_meas_msg(self, torque):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 544 << 21
+    to_send = make_msg(0, 544)
     to_send[0].RDHR = ((torque + 1024) >> 8) + (((torque + 1024) & 0xff) << 8)
     return to_send
 
   def _torque_msg(self, torque):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x292 << 21
+    to_send = make_msg(0, 0x292)
     to_send[0].RDLR = ((torque + 1024) >> 8) + (((torque + 1024) & 0xff) << 8)
     return to_send
 
@@ -69,16 +66,14 @@ class TestChryslerSafety(unittest.TestCase):
     test_manually_enable_controls_allowed(self)
 
   def test_enable_control_allowed_from_cruise(self):
-    to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_push[0].RIR = 0x1f4 << 21
+    to_push = make_msg(0, 0x1F4)
     to_push[0].RDLR = 0x380000
 
     self.safety.safety_rx_hook(to_push)
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disable_control_allowed_from_cruise(self):
-    to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_push[0].RIR = 0x1f4 << 21
+    to_push = make_msg(0, 0x1F4)
     to_push[0].RDLR = 0
 
     self.safety.set_controls_allowed(1)

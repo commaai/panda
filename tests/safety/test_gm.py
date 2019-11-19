@@ -43,40 +43,33 @@ class TestGmSafety(unittest.TestCase):
     cls.safety.init_tests_gm()
 
   def _speed_msg(self, speed):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 842 << 21
+    to_send = make_msg(0, 842)
     to_send[0].RDLR = speed
     return to_send
 
   def _button_msg(self, buttons):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 481 << 21
+    to_send = make_msg(0, 481)
     to_send[0].RDHR = buttons << 12
     return to_send
 
   def _brake_msg(self, brake):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 241 << 21
+    to_send = make_msg(0, 241)
     to_send[0].RDLR = 0xa00 if brake else 0x900
     return to_send
 
   def _gas_msg(self, gas):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 417 << 21
+    to_send = make_msg(0, 417)
     to_send[0].RDHR = (1 << 16) if gas else 0
     return to_send
 
   def _send_brake_msg(self, brake):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 789 << 21
-    to_send[0].RDTR = 2 << 4
+    to_send = make_msg(2, 789)
     brake = (-brake) & 0xfff
     to_send[0].RDLR = (brake >> 8) | ((brake &0xff) << 8)
     return to_send
 
   def _send_gas_msg(self, gas):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 715 << 21
+    to_send = make_msg(0, 715)
     to_send[0].RDLR = ((gas & 0x1f) << 27) | ((gas & 0xfe0) << 11)
     return to_send
 
@@ -85,18 +78,14 @@ class TestGmSafety(unittest.TestCase):
     self.safety.set_gm_rt_torque_last(t)
 
   def _torque_driver_msg(self, torque):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 388 << 21
-
     t = twos_comp(torque, 11)
+    to_send = make_msg(0, 388)
     to_send[0].RDHR = (((t >> 8) & 0x7) << 16) | ((t & 0xFF) << 24)
     return to_send
 
   def _torque_msg(self, torque):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 384 << 21
-
     t = twos_comp(torque, 11)
+    to_send = make_msg(0, 384)
     to_send[0].RDLR = ((t >> 8) & 0x7) | ((t & 0xFF) << 8)
     return to_send
 

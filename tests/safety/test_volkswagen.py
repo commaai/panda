@@ -35,9 +35,7 @@ class TestVolkswagenSafety(unittest.TestCase):
     self.safety.set_volkswagen_rt_torque_last(t)
 
   def _torque_driver_msg(self, torque):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x9F << 21
-
+    to_send = make_msg(0, 0x9F)
     t = abs(torque)
     to_send[0].RDHR = ((t & 0x1FFF) << 8)
     if torque < 0:
@@ -45,9 +43,7 @@ class TestVolkswagenSafety(unittest.TestCase):
     return to_send
 
   def _torque_msg(self, torque):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x126 << 21
-
+    to_send = make_msg(0, 0x126)
     t = abs(torque)
     to_send[0].RDLR = (t & 0xFFF) << 16
     if torque < 0:
@@ -55,18 +51,13 @@ class TestVolkswagenSafety(unittest.TestCase):
     return to_send
 
   def _gas_msg(self, gas):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x121 << 21
+    to_send = make_msg(0, 0x121)
     to_send[0].RDLR = (gas & 0xFF) << 12
-
     return to_send
 
   def _button_msg(self, bit):
-    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_send[0].RIR = 0x12B << 21
+    to_send = make_msg(2, 0x12B)
     to_send[0].RDLR = 1 << bit
-    to_send[0].RDTR = 2 << 4
-
     return to_send
 
   def test_spam_can_buses(self):
@@ -84,18 +75,13 @@ class TestVolkswagenSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_enable_control_allowed_from_cruise(self):
-    to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_push[0].RIR = 0x122 << 21
+    to_push = make_msg(0, 0x122)
     to_push[0].RDHR = 0x30000000
-
     self.safety.safety_rx_hook(to_push)
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disable_control_allowed_from_cruise(self):
-    to_push = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-    to_push[0].RIR = 0x122 << 21
-    to_push[0].RDHR = 0
-
+    to_push = make_msg(0, 0x122)
     self.safety.set_controls_allowed(1)
     self.safety.safety_rx_hook(to_push)
     self.assertFalse(self.safety.get_controls_allowed())
