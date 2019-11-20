@@ -110,7 +110,7 @@ class WifiHandle(object):
 class Panda(object):
 
   # matches cereal.car.CarParams.SafetyModel
-  SAFETY_NOOUTPUT = 0
+  SAFETY_SILENT = 0
   SAFETY_HONDA = 1
   SAFETY_TOYOTA = 2
   SAFETY_ELM327 = 3
@@ -127,6 +127,7 @@ class Panda(object):
   SAFETY_TOYOTA_IPAS = 16
   SAFETY_ALLOUTPUT = 17
   SAFETY_GM_ASCM = 18
+  SAFETY_NOOUTPUT = 19
 
   SERIAL_DEBUG = 0
   SERIAL_ESP = 1
@@ -354,7 +355,7 @@ class Panda(object):
       "can_fwd_errs": a[3],
       "gmlan_send_errs": a[4],
       "ignition_line": a[5],
-      "ignition_can": a[6],      
+      "ignition_can": a[6],
       "controls_allowed": a[7],
       "gas_interceptor_detected": a[8],
       "car_harness_status": a[9],
@@ -414,7 +415,7 @@ class Panda(object):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xda, int(bootmode), 0, b'')
     time.sleep(0.2)
 
-  def set_safety_mode(self, mode=SAFETY_NOOUTPUT):
+  def set_safety_mode(self, mode=SAFETY_SILENT):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, 0, b'')
 
   def set_can_forwarding(self, from_bus, to_bus):

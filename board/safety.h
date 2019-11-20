@@ -18,7 +18,7 @@
 #include "safety/safety_elm327.h"
 
 // from cereal.car.CarParams.SafetyModel
-#define SAFETY_NOOUTPUT 0U
+#define SAFETY_SILENT 0U
 #define SAFETY_HONDA 1U
 #define SAFETY_TOYOTA 2U
 #define SAFETY_ELM327 3U
@@ -35,8 +35,9 @@
 #define SAFETY_TOYOTA_IPAS 16U
 #define SAFETY_ALLOUTPUT 17U
 #define SAFETY_GM_ASCM 18U
+#define SAFETY_NOOUTPUT 19U
 
-uint16_t current_safety_mode = SAFETY_NOOUTPUT;
+uint16_t current_safety_mode = SAFETY_SILENT;
 const safety_hooks *current_hooks = &nooutput_hooks;
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push){
@@ -72,7 +73,7 @@ typedef struct {
 } safety_hook_config;
 
 const safety_hook_config safety_hook_registry[] = {
-  {SAFETY_NOOUTPUT, &nooutput_hooks},
+  {SAFETY_SILENT, &nooutput_hooks},
   {SAFETY_HONDA, &honda_hooks},
   {SAFETY_TOYOTA, &toyota_hooks},
   {SAFETY_ELM327, &elm327_hooks},
@@ -83,6 +84,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_SUBARU, &subaru_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
   {SAFETY_VOLKSWAGEN, &volkswagen_hooks},
+  {SAFETY_NOOUTPUT, &nooutput_hooks},
 #ifdef ALLOW_DEBUG
   {SAFETY_CADILLAC, &cadillac_hooks},
   {SAFETY_TOYOTA_IPAS, &toyota_ipas_hooks},
