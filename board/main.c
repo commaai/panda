@@ -774,12 +774,6 @@ int main(void) {
   spi_init();
 #endif
 
-#ifdef EON
-  // have to save power
-  if (hw_type == HW_TYPE_WHITE_PANDA) {
-    current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
-  }
-#endif
   // 1hz
   timer_init(TIM9, 1464);
   NVIC_EnableIRQ(TIM1_BRK_TIM9_IRQn);

@@ -242,7 +242,7 @@ void white_set_phone_power(bool enabled){
   UNUSED(enabled);
 }
 
-void white_init(void) {
+void white_grey_common_init(void) {
   common_init_gpio();
 
   // C3: current sense
@@ -318,6 +318,17 @@ void white_init(void) {
   } else {
     white_set_usb_power_mode(USB_POWER_CLIENT);
   }
+}
+
+void white_init(void) {
+  white_grey_common_init();
+
+  // Set default state of ESP
+  #ifdef EON
+    current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
+  #else
+    current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
+  #endif
 }
 
 const harness_configuration white_harness_config = {

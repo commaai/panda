@@ -162,6 +162,9 @@ void black_init(void) {
   set_gpio_mode(GPIOC, 0, MODE_ANALOG);
   set_gpio_mode(GPIOC, 3, MODE_ANALOG);
 
+  // Set default state of GPS
+  current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
+
   // C10: OBD_SBU1_RELAY (harness relay driving output)
   // C11: OBD_SBU2_RELAY (harness relay driving output)
   set_gpio_mode(GPIOC, 10, MODE_OUTPUT);
