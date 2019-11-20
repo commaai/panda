@@ -117,43 +117,49 @@ void EXTI3_IRQHandler(void) {
 void set_safety_mode(uint16_t mode, int16_t param) {
   int err = set_safety_hooks(mode, param);
   if (err == -1) {
-    puts("Error: safety set mode failed\n");
-    while (true) {}  // ERROR: we can't continue if safety mode isn't succesfully set
-  } else {
-    switch (mode) {
-        case SAFETY_SILENT:
-          set_intercept_relay(false);
-          if(board_has_obd()){
-            current_board->set_can_mode(CAN_MODE_NORMAL);
-          }
-          can_silent = ALL_CAN_SILENT;
-          break;
-        case SAFETY_NOOUTPUT:
-          set_intercept_relay(false);
-          if(board_has_obd()){
-            current_board->set_can_mode(CAN_MODE_NORMAL);
-          }
-          can_silent = ALL_CAN_LIVE;
-          break;
-        case SAFETY_ELM327:
-          set_intercept_relay(false);
-          heartbeat_counter = 0U;
-          if(board_has_obd()){
-            current_board->set_can_mode(CAN_MODE_OBD_CAN2);
-          }
-          can_silent = ALL_CAN_LIVE;
-          break;
-        default:
-          set_intercept_relay(true);
-          heartbeat_counter = 0U;
-          if(board_has_obd()){
-            current_board->set_can_mode(CAN_MODE_NORMAL);
-          }
-          can_silent = ALL_CAN_LIVE;
-          break;
+    puts("Error: safety set mode failed. Falling back to SILENT\n");
+    mode = SAFETY_SILENT;
+    err = set_safety_hooks(mode, 0);
+    if (err == -1) {
+      puts("Error: Failed setting SILENT mode. Hanging\n");
+      while (true) {
+        // TERMINAL ERROR: we can't continue if SILENT safety mode isn't succesfully set
       }
-    can_init_all();
+    }
   }
+  switch (mode) {
+    case SAFETY_SILENT:
+      set_intercept_relay(false);
+      if (board_has_obd()) {
+        current_board->set_can_mode(CAN_MODE_NORMAL);
+      }
+      can_silent = ALL_CAN_SILENT;
+      break;
+    case SAFETY_NOOUTPUT:
+      set_intercept_relay(false);
+      if (board_has_obd()) {
+        current_board->set_can_mode(CAN_MODE_NORMAL);
+      }
+      can_silent = ALL_CAN_LIVE;
+      break;
+    case SAFETY_ELM327:
+      set_intercept_relay(false);
+      heartbeat_counter = 0U;
+      if (board_has_obd()) {
+        current_board->set_can_mode(CAN_MODE_OBD_CAN2);
+      }
+      can_silent = ALL_CAN_LIVE;
+      break;
+    default:
+      set_intercept_relay(true);
+      heartbeat_counter = 0U;
+      if (board_has_obd()) {
+        current_board->set_can_mode(CAN_MODE_NORMAL);
+      }
+      can_silent = ALL_CAN_LIVE;
+      break;
+    }
+  can_init_all();
 }
 
 // ***************************** USB port *****************************
