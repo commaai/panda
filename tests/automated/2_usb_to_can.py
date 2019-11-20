@@ -41,7 +41,7 @@ def test_can_loopback(p):
 @panda_connect_and_init
 def test_safety_nooutput(p):
   # enable output mode
-  p.set_safety_mode(Panda.SAFETY_NOOUTPUT)
+  p.set_safety_mode(Panda.SAFETY_SILENT)
 
   # enable CAN loopback mode
   p.set_can_loopback(True)

@@ -121,12 +121,19 @@ void set_safety_mode(uint16_t mode, int16_t param) {
     while (true) {}  // ERROR: we can't continue if safety mode isn't succesfully set
   } else {
     switch (mode) {
-        case SAFETY_NOOUTPUT:
+        case SAFETY_SILENT:
           set_intercept_relay(false);
           if(board_has_obd()){
             current_board->set_can_mode(CAN_MODE_NORMAL);
           }
           can_silent = ALL_CAN_SILENT;
+          break;
+        case SAFETY_NOOUTPUT:
+          set_intercept_relay(false);
+          if(board_has_obd()){
+            current_board->set_can_mode(CAN_MODE_NORMAL);
+          }
+          can_silent = ALL_CAN_LIVE;
           break;
         case SAFETY_ELM327:
           set_intercept_relay(false);
@@ -434,8 +441,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xdc: set safety mode
     case 0xdc:
       // Blocked over WiFi.
-      // Allow NOOUTPUT and ELM security mode to be set over wifi.
-      if (hardwired || (setup->b.wValue.w == SAFETY_NOOUTPUT) || (setup->b.wValue.w == SAFETY_ELM327)) {
+      // Allow SILENT, NOOUTPUT and ELM security mode to be set over wifi.
+      if (hardwired || (setup->b.wValue.w == SAFETY_SILENT) ||
+                       (setup->b.wValue.w == SAFETY_NOOUTPUT) ||
+                       (setup->b.wValue.w == SAFETY_ELM327)) {
         set_safety_mode(setup->b.wValue.w, (uint16_t) setup->b.wIndex.w);
       }
       break;
@@ -649,7 +658,7 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 
 uint64_t tcnt = 0;
 
-// go into NOOUTPUT when the EON does not send a heartbeat for this amount of seconds.
+// go into SILENT when the EON does not send a heartbeat for this amount of seconds.
 #define EON_HEARTBEAT_IGNITION_CNT_ON 5U
 #define EON_HEARTBEAT_IGNITION_CNT_OFF 2U
 
@@ -690,12 +699,12 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
       heartbeat_counter += 1U;
     }
 
-    // check heartbeat counter if we are running EON code. If the heartbeat has been gone for a while, go to NOOUTPUT safety mode.
+    // check heartbeat counter if we are running EON code. If the heartbeat has been gone for a while, go to SILENT safety mode.
     #ifdef EON
     if (heartbeat_counter >= (check_started() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
-      puts("EON hasn't sent a heartbeat for 0x"); puth(heartbeat_counter); puts(" seconds. Safety is set to NOOUTPUT mode.\n");
-      if(current_safety_mode != SAFETY_NOOUTPUT){
-        set_safety_mode(SAFETY_NOOUTPUT, 0U);
+      puts("EON hasn't sent a heartbeat for 0x"); puth(heartbeat_counter); puts(" seconds. Safety is set to SILENT mode.\n");
+      if(current_safety_mode != SAFETY_SILENT){
+        set_safety_mode(SAFETY_SILENT, 0U);
       }
     }
     #endif
@@ -767,8 +776,8 @@ int main(void) {
   TIM2->EGR = TIM_EGR_UG;
   // use TIM2->CNT to read
 
-  // init to NOOUTPUT and can silent
-  set_safety_mode(SAFETY_NOOUTPUT, 0);
+  // init to SILENT and can silent
+  set_safety_mode(SAFETY_SILENT, 0);
 
 #ifndef EON
   spi_init();
