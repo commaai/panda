@@ -746,11 +746,9 @@ int main(void) {
 
   if (board_has_gps()) {
     uart_init(&uart_ring_esp_gps, 9600);
-#ifndef EON
   } else {
     // enable ESP uart
     uart_init(&uart_ring_esp_gps, 115200);
-#endif
   }
 
   if(board_has_lin()){
