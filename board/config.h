@@ -38,8 +38,8 @@
 
 #define MAX_RESP_LEN 0x40U
 
-// Around (500kbps / 8 bits/byte / 12 bytes per message)
-#define CAN_INTERRUPT_RATE 6000U
+// Around (1Mbps / 8 bits/byte / 12 bytes per message)
+#define CAN_INTERRUPT_RATE 12000U
 
 #endif
 
