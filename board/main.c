@@ -115,11 +115,12 @@ void EXTI3_IRQHandler(void) {
 
 // this is the only way to leave silent mode
 void set_safety_mode(uint16_t mode, int16_t param) {
-  int err = set_safety_hooks(mode, param);
+  uint16_t mode_copy = mode;
+  int err = set_safety_hooks(mode_copy, param);
   if (err == -1) {
     puts("Error: safety set mode failed. Falling back to SILENT\n");
-    mode = SAFETY_SILENT;
-    err = set_safety_hooks(mode, 0);
+    mode_copy = SAFETY_SILENT;
+    err = set_safety_hooks(mode_copy, 0);
     if (err == -1) {
       puts("Error: Failed setting SILENT mode. Hanging\n");
       while (true) {
@@ -127,7 +128,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
       }
     }
   }
-  switch (mode) {
+  switch (mode_copy) {
     case SAFETY_SILENT:
       set_intercept_relay(false);
       if (board_has_obd()) {
