@@ -59,13 +59,6 @@ void early(void) {
   detect_configuration();
   detect_board_type();
 
-  #ifdef PANDA
-    // enable the ESP, disable ESP boot mode
-    // dont disable on grey panda
-    current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
-  #endif
-
-
   if (enter_bootloader_mode == ENTER_BOOTLOADER_MAGIC) {
   #ifdef PANDA
     current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
