@@ -158,8 +158,8 @@ uint32_t white_read_current(void){
   return adc_get(ADCCHAN_CURRENT);
 }
 
-uint64_t marker = 0;
-void white_usb_power_mode_tick(uint64_t tcnt){
+uint32_t marker = 0;
+void white_usb_power_mode_tick(uint32_t uptime){
 
   // on EON or BOOTSTUB, no state machine
 #if !defined(BOOTSTUB) && !defined(EON)
@@ -173,47 +173,47 @@ void white_usb_power_mode_tick(uint64_t tcnt){
 
   switch (usb_power_mode) {
     case USB_POWER_CLIENT:
-      if ((tcnt - marker) >= CLICKS) {
+      if ((uptime - marker) >= CLICKS) {
         if (!is_enumerated) {
           puts("USBP: didn't enumerate, switching to CDP mode\n");
           // switch to CDP
           white_set_usb_power_mode(USB_POWER_CDP);
-          marker = tcnt;
+          marker = uptime;
         }
       }
       // keep resetting the timer if it's enumerated
       if (is_enumerated) {
-        marker = tcnt;
+        marker = uptime;
       }
       break;
     case USB_POWER_CDP:
       // been CLICKS clicks since we switched to CDP
-      if ((tcnt-marker) >= CLICKS) {
+      if ((uptime - marker) >= CLICKS) {
         // measure current draw, if positive and no enumeration, switch to DCP
         if (!is_enumerated && (current < CURRENT_THRESHOLD)) {
           puts("USBP: no enumeration with current draw, switching to DCP mode\n");
           white_set_usb_power_mode(USB_POWER_DCP);
-          marker = tcnt;
+          marker = uptime;
         }
       }
       // keep resetting the timer if there's no current draw in CDP
       if (current >= CURRENT_THRESHOLD) {
-        marker = tcnt;
+        marker = uptime;
       }
       break;
     case USB_POWER_DCP:
       // been at least CLICKS clicks since we switched to DCP
-      if ((tcnt-marker) >= CLICKS) {
+      if ((uptime - marker) >= CLICKS) {
         // if no current draw, switch back to CDP
         if (current >= CURRENT_THRESHOLD) {
           puts("USBP: no current draw, switching back to CDP mode\n");
           white_set_usb_power_mode(USB_POWER_CDP);
-          marker = tcnt;
+          marker = uptime;
         }
       }
       // keep resetting the timer if there's current draw in DCP
       if (current < CURRENT_THRESHOLD) {
-        marker = tcnt;
+        marker = uptime;
       }
       break;
     default:
@@ -221,7 +221,7 @@ void white_usb_power_mode_tick(uint64_t tcnt){
       break;
   }
 #else
-  UNUSED(tcnt);
+  UNUSED(uptime);
 #endif
 }
 

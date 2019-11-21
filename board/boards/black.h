@@ -123,8 +123,8 @@ void black_set_can_mode(uint8_t mode){
   }
 }
 
-void black_usb_power_mode_tick(uint64_t tcnt){
-  UNUSED(tcnt);
+void black_usb_power_mode_tick(uint32_t uptime){
+  UNUSED(uptime);
   // Not applicable
 }
 

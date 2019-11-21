@@ -110,8 +110,8 @@ void uno_set_bootkick(bool enabled){
   set_gpio_output(GPIOB, 14, !enabled);
 }
 
-void uno_usb_power_mode_tick(uint64_t tcnt){
-  if(tcnt == 3U){
+void uno_usb_power_mode_tick(uint32_t uptime){
+  if(uptime == 3U){
     uno_set_bootkick(false);
   }
 }

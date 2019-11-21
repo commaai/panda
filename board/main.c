@@ -128,6 +128,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
 
 int get_health_pkt(void *dat) {
   struct __attribute__((packed)) {
+    uint32_t uptime_pkt;
     uint32_t voltage_pkt;
     uint32_t current_pkt;
     uint32_t can_send_errs_pkt;
@@ -144,6 +145,7 @@ int get_health_pkt(void *dat) {
     uint8_t power_save_enabled_pkt;
   } *health = dat;
 
+  health->uptime_pkt = uptime_cnt;
   health->voltage_pkt = adc_get_voltage();
   health->current_pkt = current_board->read_current();
 
@@ -630,8 +632,6 @@ void __attribute__ ((noinline)) enable_fpu(void) {
   SCB->CPACR |= ((3UL << (10U * 2U)) | (3UL << (11U * 2U)));
 }
 
-uint64_t tcnt = 0;
-
 // go into SILENT when the EON does not send a heartbeat for this amount of seconds.
 #define EON_HEARTBEAT_IGNITION_CNT_ON 5U
 #define EON_HEARTBEAT_IGNITION_CNT_OFF 2U
@@ -642,12 +642,12 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
   if (TIM9->SR != 0) {
     can_live = pending_can_live;
 
-    current_board->usb_power_mode_tick(tcnt);
+    current_board->usb_power_mode_tick(uptime_cnt);
 
     //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
 
     // reset this every 16th pass
-    if ((tcnt & 0xFU) == 0U) {
+    if ((uptime_cnt & 0xFU) == 0U) {
       pending_can_live = 0;
     }
     #ifdef DEBUG
@@ -666,7 +666,7 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
 
     // turn off the blue LED, turned on by CAN
     // unless we are in power saving mode
-    current_board->set_led(LED_BLUE, (tcnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
+    current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
 
     // increase heartbeat counter and cap it at the uint32 limit
     if (heartbeat_counter < __UINT32_MAX__) {
@@ -695,7 +695,7 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
     #endif
 
     // on to the next one
-    tcnt += 1U;
+    uptime_cnt += 1U;
   }
   TIM9->SR = 0;
 }
