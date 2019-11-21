@@ -667,8 +667,8 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
       heartbeat_counter += 1U;
     }
 
-    // check heartbeat counter if we are running EON code. If the heartbeat has been gone for a while, go to SILENT safety mode.
     #ifdef EON
+    // check heartbeat counter if we are running EON code. If the heartbeat has been gone for a while, go to SILENT safety mode.
     if (heartbeat_counter >= (check_started() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
       puts("EON hasn't sent a heartbeat for 0x"); puth(heartbeat_counter); puts(" seconds. Safety is set to SILENT mode.\n");
       if(current_safety_mode != SAFETY_SILENT){
