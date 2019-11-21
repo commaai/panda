@@ -72,45 +72,6 @@ void debug_ring_callback(uart_ring *ring) {
   }
 }
 
-// ***************************** started logic *****************************
-void started_interrupt_handler(uint8_t interrupt_line) {
-  volatile unsigned int pr = EXTI->PR & (1U << interrupt_line);
-  if ((pr & (1U << interrupt_line)) != 0U) {
-    #ifdef DEBUG
-      puts("got started interrupt\n");
-    #endif
-
-    // jenky debounce
-    delay(100000);
-
-    #ifdef EON
-      // set power savings mode here if on EON build
-      int power_save_state = check_started() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
-      set_power_save_state(power_save_state);
-      // set CDP usb power mode everytime that the car starts to make sure EON is charging
-      if (check_started()) {
-        current_board->set_usb_power_mode(USB_POWER_CDP);
-      }
-    #endif
-  }
-  EXTI->PR = (1U << interrupt_line);
-}
-
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void EXTI0_IRQHandler(void) {
-  started_interrupt_handler(0);
-}
-
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void EXTI1_IRQHandler(void) {
-  started_interrupt_handler(1);
-}
-
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void EXTI3_IRQHandler(void) {
-  started_interrupt_handler(3);
-}
-
 // ****************************** safety mode ******************************
 
 // this is the only way to leave silent mode
@@ -180,6 +141,7 @@ int get_health_pkt(void *dat) {
     uint8_t usb_power_mode_pkt;
     uint8_t safety_mode_pkt;
     uint8_t fault_status_pkt;
+    uint8_t power_save_enabled_pkt;
   } *health = dat;
 
   health->voltage_pkt = adc_get_voltage();
@@ -198,6 +160,7 @@ int get_health_pkt(void *dat) {
   health->usb_power_mode_pkt = usb_power_mode;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->fault_status_pkt = 0U;  // TODO: populate this field
+  health->power_save_enabled_pkt = (uint8_t)(power_save_status == POWER_SAVE_STATUS_ENABLED);
 
   return sizeof(*health);
 }
@@ -549,6 +512,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xe6:
       current_board->set_usb_power_mode(setup->b.wValue.w);
       break;
+    // **** 0xe7: set power save state
+    case 0xe7:
+      set_power_save_state(setup->b.wValue.w);
+      break;
     // **** 0xf0: do k-line wValue pulse on uart2 for Acura
     case 0xf0:
       if (setup->b.wValue.w == 1U) {
@@ -706,13 +673,24 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
       heartbeat_counter += 1U;
     }
 
-    // check heartbeat counter if we are running EON code. If the heartbeat has been gone for a while, go to SILENT safety mode.
     #ifdef EON
+    // check heartbeat counter if we are running EON code.
+    // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
     if (heartbeat_counter >= (check_started() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
-      puts("EON hasn't sent a heartbeat for 0x"); puth(heartbeat_counter); puts(" seconds. Safety is set to SILENT mode.\n");
-      if(current_safety_mode != SAFETY_SILENT){
+      puts("EON hasn't sent a heartbeat for 0x");
+      puth(heartbeat_counter);
+      puts(" seconds. Safety is set to SILENT mode.\n");
+      if (current_safety_mode != SAFETY_SILENT) {
         set_safety_mode(SAFETY_SILENT, 0U);
       }
+      if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
+        set_power_save_state(POWER_SAVE_STATUS_ENABLED);
+      }
+    }
+
+    // enter CDP mode when car starts to ensure we are charging a turned off EON
+    if (check_started() && (usb_power_mode != USB_POWER_CDP)) {
+      current_board->set_usb_power_mode(USB_POWER_CDP);
     }
     #endif
 
