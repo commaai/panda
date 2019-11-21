@@ -510,6 +510,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xe6:
       current_board->set_usb_power_mode(setup->b.wValue.w);
       break;
+    // **** 0xe7: set power save state
+    case 0xe7:
+      set_power_save_state(setup->b.wValue.w);
+      break;
     // **** 0xf0: do k-line wValue pulse on uart2 for Acura
     case 0xf0:
       if (setup->b.wValue.w == 1U) {
