@@ -72,45 +72,6 @@ void debug_ring_callback(uart_ring *ring) {
   }
 }
 
-// ***************************** started logic *****************************
-void started_interrupt_handler(uint8_t interrupt_line) {
-  volatile unsigned int pr = EXTI->PR & (1U << interrupt_line);
-  if ((pr & (1U << interrupt_line)) != 0U) {
-    #ifdef DEBUG
-      puts("got started interrupt\n");
-    #endif
-
-    // jenky debounce
-    delay(100000);
-
-    #ifdef EON
-      // set power savings mode here if on EON build
-      int power_save_state = check_started() ? POWER_SAVE_STATUS_DISABLED : POWER_SAVE_STATUS_ENABLED;
-      set_power_save_state(power_save_state);
-      // set CDP usb power mode everytime that the car starts to make sure EON is charging
-      if (check_started()) {
-        current_board->set_usb_power_mode(USB_POWER_CDP);
-      }
-    #endif
-  }
-  EXTI->PR = (1U << interrupt_line);
-}
-
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void EXTI0_IRQHandler(void) {
-  started_interrupt_handler(0);
-}
-
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void EXTI1_IRQHandler(void) {
-  started_interrupt_handler(1);
-}
-
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void EXTI3_IRQHandler(void) {
-  started_interrupt_handler(3);
-}
-
 // ****************************** safety mode ******************************
 
 // this is the only way to leave silent mode
@@ -714,6 +675,13 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
         set_safety_mode(SAFETY_SILENT, 0U);
       }
     }
+
+    // Power saving state machine: go in power save mode when car is off
+    if (power_save_status == POWER_SAVE_STATUS_DISABLED && check_started()) {
+       set_power_save_state(POWER_SAVE_STATUS_ENABLED);
+    else if(power_save_status == POWER_SAVE_STATUS_ENABLED && !check_started()) {
+       set_power_save_state(POWER_SAVE_STATUS_ENABLED);
+    } else {}  // keep same power_save_status
     #endif
 
     // on to the next one
