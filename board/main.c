@@ -677,7 +677,7 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
     }
 
     // Power saving state machine: go in power save mode when car is off
-    if ((power_save_status == POWER_SAVE_STATUS_ENABLE) && check_started()) {
+    if ((power_save_status == POWER_SAVE_STATUS_ENABLED) && check_started()) {
       set_power_save_state(POWER_SAVE_STATUS_DISABLED);
       // ensure CDP usb power mode everytime that the car starts to make sure EON is charging
       if (usb_power_mode != USB_POWER_CDP) {
