@@ -668,24 +668,24 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
     }
 
     #ifdef EON
-    // check heartbeat counter if we are running EON code. If the heartbeat has been gone for a while, go to SILENT safety mode.
+    // check heartbeat counter if we are running EON code.
+    // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
     if (heartbeat_counter >= (check_started() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
-      puts("EON hasn't sent a heartbeat for 0x"); puth(heartbeat_counter); puts(" seconds. Safety is set to SILENT mode.\n");
-      if(current_safety_mode != SAFETY_SILENT){
+      puts("EON hasn't sent a heartbeat for 0x");
+      puth(heartbeat_counter);
+      puts(" seconds. Safety is set to SILENT mode.\n");
+      if (current_safety_mode != SAFETY_SILENT) {
         set_safety_mode(SAFETY_SILENT, 0U);
+      }
+      if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
+        set_power_save_state(POWER_SAVE_STATUS_ENABLED);
       }
     }
 
-    // Power saving state machine: go in power save mode when car is off
-    if ((power_save_status == POWER_SAVE_STATUS_ENABLED) && check_started()) {
-      set_power_save_state(POWER_SAVE_STATUS_DISABLED);
-      // ensure CDP usb power mode everytime that the car starts to make sure EON is charging
-      if (usb_power_mode != USB_POWER_CDP) {
-        current_board->set_usb_power_mode(USB_POWER_CDP);
-      }
-    } else if ((power_save_status == POWER_SAVE_STATUS_DISABLED) && !check_started()) {
-       set_power_save_state(POWER_SAVE_STATUS_ENABLED);
-    } else {}  // keep same power_save_status
+    // enter CDP mode when car starts to ensure we are charging a turned off EON
+    if (check_started() && (usb_power_mode != USB_POWER_CDP)) {
+      set_usb_power_mode(USB_POWER_CDP);
+    }
     #endif
 
     // on to the next one
