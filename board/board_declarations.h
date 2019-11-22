@@ -6,7 +6,7 @@ typedef void (*board_set_led)(uint8_t color, bool enabled);
 typedef void (*board_set_usb_power_mode)(uint8_t mode);
 typedef void (*board_set_esp_gps_mode)(uint8_t mode);
 typedef void (*board_set_can_mode)(uint8_t mode);
-typedef void (*board_usb_power_mode_tick)(uint64_t tcnt);
+typedef void (*board_usb_power_mode_tick)(uint32_t uptime);
 typedef bool (*board_check_ignition)(void);
 typedef uint32_t (*board_read_current)(void);
 typedef void (*board_set_ir_power)(uint8_t percentage);

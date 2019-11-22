@@ -347,22 +347,23 @@ class Panda(object):
 
   def health(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 28)
-    a = struct.unpack("IIIIIBBBBBBBBB", dat)
+    a = struct.unpack("IIIIIIBBBBBBBBB", dat)
     return {
-      "voltage": a[0],
-      "current": a[1],
-      "can_send_errs": a[2],
-      "can_fwd_errs": a[3],
-      "gmlan_send_errs": a[4],
-      "ignition_line": a[5],
-      "ignition_can": a[6],
-      "controls_allowed": a[7],
-      "gas_interceptor_detected": a[8],
-      "car_harness_status": a[9],
-      "usb_power_mode": a[10],
-      "safety_mode": a[11],
-      "fault_status": a[12],
-      "power_save_enabled": a[13]
+      "uptime": a[0],
+      "voltage": a[1],
+      "current": a[2],
+      "can_send_errs": a[3],
+      "can_fwd_errs": a[4],
+      "gmlan_send_errs": a[5],
+      "ignition_line": a[6],
+      "ignition_can": a[7],
+      "controls_allowed": a[8],
+      "gas_interceptor_detected": a[9],
+      "car_harness_status": a[10],
+      "usb_power_mode": a[11],
+      "safety_mode": a[12],
+      "fault_status": a[13],
+      "power_save_enabled": a[14]
     }
 
   # ******************* control *******************
@@ -408,6 +409,9 @@ class Panda(object):
 
   def set_usb_power(self, on):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe6, int(on), 0, b'')
+
+  def set_power_save(self, power_save_enabled=0):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe7, int(power_save_enabled), 0, b'')
 
   def set_esp_power(self, on):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xd9, int(on), 0, b'')

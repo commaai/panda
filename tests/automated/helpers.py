@@ -232,6 +232,7 @@ def panda_connect_and_init(fn):
         panda.set_can_speed_kbps(bus, speed)
       clear_can_buffers(panda)
       _thread.start_new_thread(heartbeat_thread, (panda,))
+      panda.set_power_save(False)
 
     # Run test function
     ret = fn(*pandas, **kwargs)
