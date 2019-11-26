@@ -282,15 +282,7 @@ uint8_t binary_object_store_desc[] = {
   BINARY_OBJECT_STORE_DESCRIPTOR_LENGTH, // bLength, this is only the length of the header
   BINARY_OBJECT_STORE_DESCRIPTOR, // bDescriptorType
   0x39, 0x00, // wTotalLength (LSB, MSB)
-  0x02, // bNumDeviceCaps (WebUSB + WinUSB *** removed USB 2.0 Extension for now ***)
-
-  // -------------------------------------------------
-  // USB 2.0 extension descriptor
-  // *** Removed because its presence was breaking Win8.1/Win10 USB enumeration for reasons not fully explored ***
-  // 0x07, // bLength, Descriptor size
-  // 0x10, // bDescriptorType, Device Capability Descriptor Type
-  // 0x02, // bDevCapabilityType, USB 2.0 extension capability type
-  // 0x00, 0x00, 0x00, 0x00, // bmAttributes, LIBUSB_BM_LPM_SUPPORT = 2 and its the only option
+  0x02, // bNumDeviceCaps (WebUSB + WinUSB)
 
   // -------------------------------------------------
   // WebUSB descriptor
