@@ -8,7 +8,7 @@ import _thread
 import faulthandler
 from functools import wraps
 from panda import Panda
-from panda_jungle import PandaJungle
+from panda_jungle import PandaJungle  # pylint: disable=import-error
 from nose.tools import assert_equal
 from parameterized import parameterized, param
 from .timeout import run_with_timeout
