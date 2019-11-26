@@ -1,6 +1,5 @@
 import time
 from multiprocessing import Process
-import _thread
 
 # Note: this does not return any return values of the function, just the exit status
 INTERVAL = 0.1
