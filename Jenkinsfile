@@ -14,7 +14,11 @@ pipeline {
       steps {
         timeout(time: 60, unit: 'MINUTES') {
           script {
-            sh 'cp -R /home/batman/panda_jungle .'
+            try {
+              sh 'cp -R /home/batman/panda_jungle .'
+            } catch {
+              echo "Folder already exists"
+            }
             sh 'git archive -v -o panda.tar.gz --format=tar.gz HEAD'
             dockerImage = docker.build("${env.DOCKER_IMAGE_TAG}")
           }
