@@ -92,7 +92,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // 0x2E4 is lkas cmd. If it is on bus 0, then relay is unexpectedly closed
-  if ((addr == 0x2E4) && (bus == 0)) {
+  if ((safety_mode_cnt > 1) && (addr == 0x2E4) && (bus == 0)) {
     relay_malfunction = true;
   }
 }

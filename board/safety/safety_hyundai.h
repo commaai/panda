@@ -25,7 +25,7 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // check if stock camera ECU is on bus 0
-  if ((bus == 0) && (addr == 832)) {
+  if ((safety_mode_cnt > 1) && (bus == 0) && (addr == 832)) {
     relay_malfunction = true;
   }
 

@@ -272,6 +272,7 @@ void set_honda_fwd_brake(bool c){
 void init_tests(void){
   // get HW_TYPE from env variable set in test.sh
   hw_type = atoi(getenv("HW_TYPE"));
+  safety_mode_cnt = 2U;  // avoid ignoring relay_malfunction logic
 }
 
 void init_tests_toyota(void){

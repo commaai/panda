@@ -41,7 +41,7 @@ static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     subaru_cruise_engaged_last = cruise_engaged;
   }
 
-  if ((bus == 0) && ((addr == 0x122) || (addr == 0x164))) {
+  if ((safety_mode_cnt > 1) && (bus == 0) && ((addr == 0x122) || (addr == 0x164))) {
     relay_malfunction = true;
   }
 }

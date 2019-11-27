@@ -55,7 +55,7 @@ void mazda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // if we see wheel speed msgs on MAZDA_CAM bus then relay is closed
-  if ((bus == MAZDA_CAM) && (addr == MAZDA_WHEEL_SPEED)) {
+  if ((safety_mode_cnt > 1) && (bus == MAZDA_CAM) && (addr == MAZDA_WHEEL_SPEED)) {
     relay_malfunction = true;
   }
 }
