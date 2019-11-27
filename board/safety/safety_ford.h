@@ -55,7 +55,7 @@ static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     ford_gas_prev = gas;
   }
 
-  if ((safety_mode_cnt > 1) && (bus == 0) && (addr == 0x3CA)) {
+  if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && (addr == 0x3CA)) {
     relay_malfunction = true;
   }
 }

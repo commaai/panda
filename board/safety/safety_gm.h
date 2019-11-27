@@ -100,7 +100,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // on powertrain bus.
   // 384 = ASCMLKASteeringCmd
   // 715 = ASCMGasRegenCmd
-  if ((safety_mode_cnt > 1) && (bus == 0) && ((addr == 384) || (addr == 715))) {
+  if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && ((addr == 384) || (addr == 715))) {
     relay_malfunction = true;
   }
 }

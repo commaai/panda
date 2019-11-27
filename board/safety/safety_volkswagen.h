@@ -56,7 +56,7 @@ static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     volkswagen_gas_prev = gas;
   }
 
-  if ((safety_mode_cnt > 1) && (bus == 0) && (addr == MSG_HCA_01)) {
+  if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && (addr == MSG_HCA_01)) {
     relay_malfunction = true;
   }
 }
