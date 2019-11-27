@@ -346,8 +346,8 @@ class Panda(object):
   # ******************* health *******************
 
   def health(self):
-    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 33)
-    a = struct.unpack("IIIIIIBBBBBBBBB", dat)
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 37)
+    a = struct.unpack("IIIIIIIBBBBBBBBB", dat)
     return {
       "uptime": a[0],
       "voltage": a[1],
@@ -355,15 +355,16 @@ class Panda(object):
       "can_send_errs": a[3],
       "can_fwd_errs": a[4],
       "gmlan_send_errs": a[5],
-      "ignition_line": a[6],
-      "ignition_can": a[7],
-      "controls_allowed": a[8],
-      "gas_interceptor_detected": a[9],
-      "car_harness_status": a[10],
-      "usb_power_mode": a[11],
-      "safety_mode": a[12],
-      "fault_status": a[13],
-      "power_save_enabled": a[14]
+      "faults": a[6],
+      "ignition_line": a[7],
+      "ignition_can": a[8],
+      "controls_allowed": a[9],
+      "gas_interceptor_detected": a[10],
+      "car_harness_status": a[11],
+      "usb_power_mode": a[12],
+      "safety_mode": a[13],
+      "fault_status": a[14],
+      "power_save_enabled": a[15]
     }
 
   # ******************* control *******************

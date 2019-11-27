@@ -134,6 +134,7 @@ int get_health_pkt(void *dat) {
     uint32_t can_send_errs_pkt;
     uint32_t can_fwd_errs_pkt;
     uint32_t gmlan_send_errs_pkt;
+    uint32_t faults_pkt;
     uint8_t ignition_line_pkt;
     uint8_t ignition_can_pkt;
     uint8_t controls_allowed_pkt;
@@ -161,8 +162,10 @@ int get_health_pkt(void *dat) {
   health->car_harness_status_pkt = car_harness_status;
   health->usb_power_mode_pkt = usb_power_mode;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
-  health->fault_status_pkt = 0U;  // TODO: populate this field
   health->power_save_enabled_pkt = (uint8_t)(power_save_status == POWER_SAVE_STATUS_ENABLED);
+
+  health->fault_status_pkt = 0U;  // TODO: populate this field
+  health->faults_pkt = 0U;  // TODO: populate this field
 
   return sizeof(*health);
 }
