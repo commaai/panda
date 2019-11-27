@@ -96,13 +96,14 @@ const safety_hook_config safety_hook_registry[] = {
 };
 
 int set_safety_hooks(uint16_t mode, int16_t param) {
-  int set_status = -1;   // not set
+  safety_mode_cnt = 0U;  // reset safety mode timer
+  int set_status = -1;  // not set
   int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);
   for (int i = 0; i < hook_config_count; i++) {
     if (safety_hook_registry[i].id == mode) {
       current_hooks = safety_hook_registry[i].hooks;
       current_safety_mode = safety_hook_registry[i].id;
-      set_status = 0;    // set
+      set_status = 0;  // set
       break;
     }
   }

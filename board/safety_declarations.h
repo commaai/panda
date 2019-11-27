@@ -55,5 +55,8 @@ int gas_interceptor_prev = 0;
 // This is set by USB command 0xdf
 bool long_controls_allowed = true;
 
+// time since safety mode has been changed
+uint32_t safety_mode_cnt = 0U;
+
 // avg between 2 tracks
 #define GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + ((GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2 ) / 2)

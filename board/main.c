@@ -699,6 +699,7 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
 
     // on to the next one
     uptime_cnt += 1U;
+    safety_mode_cnt += 1U;
   }
   TIM9->SR = 0;
 }
