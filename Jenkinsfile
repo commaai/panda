@@ -16,7 +16,7 @@ pipeline {
           script {
             try {
               sh 'cp -R /home/batman/panda_jungle .'
-            } catch {
+            } catch (err) {
               echo "Folder already exists"
             }
             sh 'git archive -v -o panda.tar.gz --format=tar.gz HEAD'
