@@ -48,9 +48,28 @@ void uno_set_gps_load_switch(bool enabled) {
   set_gpio_output(GPIOC, 12, enabled);
 }
 
+void uno_set_phone_power(bool enabled){
+  set_gpio_output(GPIOB, 4, enabled);
+}
+
 void uno_set_usb_power_mode(uint8_t mode) {
-  UNUSED(mode);
-  puts("Setting USB mode makes no sense on UNO\n");
+  bool valid = false;
+  switch (mode) {
+    case USB_POWER_CLIENT:
+      uno_set_phone_power(false);
+      valid = true;
+      break;
+    case USB_POWER_CDP:
+      uno_set_phone_power(true);
+      valid = true;
+      break;
+    default:
+      puts("Invalid USB power mode\n");
+      break;
+  }
+  if (valid) {
+    usb_power_mode = mode;
+  }
 }
 
 void uno_set_esp_gps_mode(uint8_t mode) {
@@ -138,10 +157,6 @@ void uno_set_fan_power(uint8_t percentage){
 uint32_t uno_read_current(void){
   // No current sense on Uno
   return 0U;
-}
-
-void uno_set_phone_power(bool enabled){
-  set_gpio_output(GPIOB, 4, enabled);
 }
 
 void uno_init(void) {
