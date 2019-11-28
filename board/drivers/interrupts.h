@@ -29,22 +29,24 @@ typedef struct interrupt {
   void (*handler)(void);
   uint32_t call_counter;
   uint32_t max_call_rate;   // Call rate is defined as the amount of calls each second
+  uint32_t call_rate_fault;
 } interrupt;
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!
   puts("Unused interrupt handler called!\n");
-  fault_occurred();
+  fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
 }
 
 #define NUM_INTERRUPTS 102U                // There are 102 external interrupt sources (see stm32f413.h)
 interrupt interrupts[NUM_INTERRUPTS];
 
-#define REGISTER_INTERRUPT(irq_num, func_ptr, call_rate) \
+#define REGISTER_INTERRUPT(irq_num, func_ptr, call_rate, rate_fault) \
   interrupts[irq_num].irq_type = irq_num; \
   interrupts[irq_num].handler = func_ptr;  \
   interrupts[irq_num].call_counter = 0U;   \
   interrupts[irq_num].max_call_rate = call_rate; \
+  interrupts[irq_num].call_rate_fault = rate_fault;
 
 bool check_interrupt_rate = false;
 
@@ -55,7 +57,7 @@ void handle_interrupt(IRQn_Type irq_type){
   // Check that the interrupts don't fire too often
   if(check_interrupt_rate && (interrupts[irq_type].call_counter > interrupts[irq_type].max_call_rate)){
     puts("Interrupt 0x"); puth(irq_type); puts(" fired too often (0x"); puth(interrupts[irq_type].call_counter); puts("/s)!\n");
-    fault_occurred();
+    fault_occurred(interrupts[irq_type].call_rate_fault);
   }
 }
 
@@ -78,7 +80,7 @@ void init_interrupts(bool check_rate_limit){
 
   // Init timer 10 for a 1s interval
   RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;  // enable interrupt timer peripheral
-  REGISTER_INTERRUPT(TIM6_DAC_IRQn, TIM6_DAC_IRQ_Handler, 1)
+  REGISTER_INTERRUPT(TIM6_DAC_IRQn, TIM6_DAC_IRQ_Handler, 1, FAULT_INTERRUPT_RATE_INTERRUPTS)
   TIM6->PSC = 732-1;
   TIM6->DIER = TIM_DIER_UIE;
   TIM6->CR1 = TIM_CR1_CEN;

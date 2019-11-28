@@ -104,9 +104,9 @@ void EXTI4_IRQ_Handler(void) {
 // ***************************** SPI init *****************************
 void spi_init(void) {
   // Max SPI clock the ESP can produce is 80MHz. At buffer size of 256 bytes, that's a max of about 40k buffers per second
-  REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, 50000U)
-  REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, 50000U)
-  REGISTER_INTERRUPT(EXTI4_IRQn, EXTI4_IRQ_Handler, 50000U) // TODO: Figure out if this is a reasonable limit
+  REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, 50000U, FAULT_INTERRUPT_RATE_SPI_DMA)
+  REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, 50000U, FAULT_INTERRUPT_RATE_SPI_DMA)
+  REGISTER_INTERRUPT(EXTI4_IRQn, EXTI4_IRQ_Handler, 50000U, FAULT_INTERRUPT_RATE_SPI_CS) // TODO: Figure out if this is a reasonable limit
 
   //puts("SPI init\n");
   SPI1->CR1 = SPI_CR1_SPE;
