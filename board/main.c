@@ -168,7 +168,7 @@ int get_health_pkt(void *dat) {
   health->power_save_enabled_pkt = (uint8_t)(power_save_status == POWER_SAVE_STATUS_ENABLED);
 
   health->fault_status_pkt = fault_status;
-  health->faults_pkt = 0U;  // TODO: populate this field
+  health->faults_pkt = faults;
 
   return sizeof(*health);
 }
