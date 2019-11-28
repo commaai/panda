@@ -187,7 +187,7 @@ int gmlan_fail_count = 0;
 #define REQUIRED_SILENT_TIME 10
 #define MAX_FAIL_COUNT 10
 
-void TIM4_IRQHandler(void) {
+void TIM4_IRQ_Handler(void) {
   if (gmlan_alt_mode == BITBANG) {
     if ((TIM4->SR & TIM_SR_UIF) && (gmlan_sendmax != -1)) {
       int read = get_gpio_input(GPIOB, 12);
@@ -279,6 +279,8 @@ bool bitbang_gmlan(CAN_FIFOMailBox_TypeDef *to_bang) {
     set_bitbanged_gmlan(1); // recessive
     set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
 
+    // 33kbps
+    REGISTER_INTERRUPT(TIM4_IRQn, TIM4_IRQ_Handler, 40000U, FAULT_INTERRUPT_RATE_GMLAN)
     setup_timer4();
   }
   return gmlan_send_ok;

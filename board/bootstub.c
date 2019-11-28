@@ -29,7 +29,9 @@ const board *current_board;
 // ********************* Includes *********************
 #include "libc.h"
 #include "provision.h"
+#include "faults.h"
 
+#include "drivers/interrupts.h"
 #include "drivers/clock.h"
 #include "drivers/llgpio.h"
 #include "drivers/adc.h"
@@ -65,6 +67,8 @@ extern void *_app_start[];
 // BOUNTY: $200 coupon on shop.comma.ai or $100 check.
 
 int main(void) {
+  init_interrupts(false);
+
   disable_interrupts();
   clock_init();
   detect_configuration();
