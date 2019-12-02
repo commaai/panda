@@ -62,7 +62,7 @@ void llcan_init(CAN_TypeDef *CAN_obj) {
   register_set(&(CAN_obj->sFilterRegister[14].FR1), 0, 0x7FFF);
   register_set(&(CAN_obj->sFilterRegister[14].FR2), 0, 0x7FFF);
   // For some weird reason this register does not want to set properly on CAN2 and CAN3. Probably something to do with the single/dual mode and their different filters.
-  CAN_obj->FA1R = 1U | (1U << 14);
+  CAN_obj->FA1R |= 1U | (1U << 14);
 
   // Exit init mode, do not wait
   register_clear_bits(&(CAN_obj->FMR), CAN_FMR_FINIT);
