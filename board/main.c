@@ -12,6 +12,7 @@
 #include "faults.h"
 
 #include "drivers/interrupts.h"
+#include "drivers/registers.h"
 
 #include "drivers/llcan.h"
 #include "drivers/llgpio.h"
@@ -699,6 +700,9 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
     }
     #endif
 
+    // check registers
+    check_registers();
+
     // on to the next one
     uptime_cnt += 1U;
     safety_mode_cnt += 1U;
@@ -708,6 +712,7 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
 
 int main(void) {
   init_interrupts(true);
+  init_registers();
   // 1s timer
   REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler, 2U, FAULT_INTERRUPT_RATE_TIM1)
 

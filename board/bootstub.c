@@ -32,6 +32,7 @@ const board *current_board;
 #include "faults.h"
 
 #include "drivers/interrupts.h"
+#include "drivers/registers.h"
 #include "drivers/clock.h"
 #include "drivers/llgpio.h"
 #include "drivers/adc.h"
@@ -68,6 +69,7 @@ extern void *_app_start[];
 
 int main(void) {
   init_interrupts(false);
+  init_registers();
 
   disable_interrupts();
   clock_init();
