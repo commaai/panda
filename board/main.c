@@ -11,8 +11,8 @@
 #include "provision.h"
 #include "faults.h"
 
-#include "drivers/interrupts.h"
 #include "drivers/registers.h"
+#include "drivers/interrupts.h"
 
 #include "drivers/llcan.h"
 #include "drivers/llgpio.h"

@@ -31,8 +31,8 @@ const board *current_board;
 #include "provision.h"
 #include "faults.h"
 
-#include "drivers/interrupts.h"
 #include "drivers/registers.h"
+#include "drivers/interrupts.h"
 #include "drivers/clock.h"
 #include "drivers/llgpio.h"
 #include "drivers/adc.h"
