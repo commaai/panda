@@ -7,5 +7,5 @@ nose
 parameterized
 requests
 flake8==3.7.8
-pylint==2.4.2
+pylint==2.4.3
 cffi==1.11.4
