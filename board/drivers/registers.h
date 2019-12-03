@@ -22,7 +22,7 @@ uint16_t hash_addr(uint32_t input){
 // Do not put bits in the check mask that get changed by the hardware
 void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask){
   ENTER_CRITICAL()
-  // Set bits in register that are also in the mask  
+  // Set bits in register that are also in the mask
   (*addr) = ((*addr) & (~mask)) | (val & mask);
 
   // Add these values to the map
@@ -47,7 +47,7 @@ void register_set_bits(volatile uint32_t *addr, uint32_t val) {
   return register_set(addr, val, val);
 }
 
-// Clear individual bits. Also add them to the check_mask
+// Clear individual bits. Also add them to the check_mask.
 // Do not use this to clear bits that get set by the hardware
 void register_clear_bits(volatile uint32_t *addr, uint32_t val) {
   return register_set(addr, (~val), val);
