@@ -6,6 +6,7 @@
 #include "obj/gitversion.h"
 
 #include "main_declarations.h"
+#include "critical.h"
 
 #include "libc.h"
 #include "provision.h"

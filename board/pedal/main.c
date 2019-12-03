@@ -3,6 +3,7 @@
 #include "libc.h"
 
 #include "main_declarations.h"
+#include "critical.h"
 #include "faults.h"
 
 #include "drivers/registers.h"

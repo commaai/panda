@@ -29,6 +29,7 @@ const board *current_board;
 // ********************* Includes *********************
 #include "libc.h"
 #include "provision.h"
+#include "critical.h"
 #include "faults.h"
 
 #include "drivers/registers.h"
