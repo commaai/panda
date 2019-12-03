@@ -8,7 +8,7 @@ typedef struct reg {
 // 10 bit hash with 23 as a prime
 #define REGISTER_MAP_SIZE 0x3FFU
 #define HASHING_PRIME 23U
-#define CHECK_COLLISION(hash, addr) ((register_map[hash].address != 0U) && (register_map[hash].address != addr))
+#define CHECK_COLLISION(hash, addr) (((uint32_t) register_map[hash].address != 0U) && (register_map[hash].address != addr))
 
 reg register_map[REGISTER_MAP_SIZE];
 
@@ -16,7 +16,7 @@ reg register_map[REGISTER_MAP_SIZE];
 // See: tests/development/register_hashmap_spread.py
 // Also, check the collision warnings in the debug output, and minimize those.
 uint16_t hash16(uint32_t input){
-  return (((input >> 16) ^ ((((input + 1) & 0xFFFFU) * HASHING_PRIME) & 0xFFFFU)) & REGISTER_MAP_SIZE);
+  return (((input >> 16U) ^ ((((input + 1U) & 0xFFFFU) * HASHING_PRIME) & 0xFFFFU)) & REGISTER_MAP_SIZE);
 }
 
 // Do not put bits in the check mask that get changed by the hardware
@@ -28,7 +28,7 @@ void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask){
   // Add these values to the map
   uint16_t hash = hash16((uint32_t) addr);
   uint8_t tries = 255U;
-  while(CHECK_COLLISION(hash, addr) && (tries > 0)) { hash = hash16((uint32_t) hash); tries--;}
+  while(CHECK_COLLISION(hash, addr) && (tries > 0U)) { hash = hash16((uint32_t) hash); tries--;}
   if (tries != 0U){
     register_map[hash].address = addr;
     register_map[hash].value = (register_map[hash].value & (~mask)) | (val & mask);
@@ -56,7 +56,7 @@ void register_clear_bits(volatile uint32_t *addr, uint32_t val) {
 // To be called periodically
 void check_registers(void){
   for(uint16_t i=0U; i<REGISTER_MAP_SIZE; i++){
-    if(register_map[i].address != 0U){
+    if((uint32_t) register_map[i].address != 0U){
       ENTER_CRITICAL()
       if((*(register_map[i].address) & register_map[i].check_mask) != (register_map[i].value & register_map[i].check_mask)){
         #ifdef DEBUG_FAULTS
@@ -75,7 +75,7 @@ void check_registers(void){
 
 void init_registers(void) {
   for(uint16_t i=0U; i<REGISTER_MAP_SIZE; i++){
-    register_map[i].address = 0U;
+    register_map[i].address = (volatile uint32_t *) 0U;
     register_map[i].check_mask = 0U;
   }
 }
