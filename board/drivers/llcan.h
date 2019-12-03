@@ -57,11 +57,11 @@ void llcan_init(CAN_TypeDef *CAN_obj) {
   while(((CAN_obj->MSR & CAN_MSR_INAK) == CAN_MSR_INAK)) {}
 
   // no mask
-  register_set(&(CAN_obj->sFilterRegister[0].FR1), 0U, 0x7FFFU);
-  register_set(&(CAN_obj->sFilterRegister[0].FR2), 0U, 0x7FFFU);
-  register_set(&(CAN_obj->sFilterRegister[14].FR1), 0U, 0x7FFFU);
-  register_set(&(CAN_obj->sFilterRegister[14].FR2), 0U, 0x7FFFU);
-  // For some weird reason this register does not want to set properly on CAN2 and CAN3. Probably something to do with the single/dual mode and their different filters.
+  // For some weird reason some of these registers do not want to set properly on CAN2 and CAN3. Probably something to do with the single/dual mode and their different filters.
+  CAN_obj->sFilterRegister[0].FR1 = 0U;
+  CAN_obj->sFilterRegister[0].FR2 = 0U;
+  CAN_obj->sFilterRegister[14].FR1 = 0U;
+  CAN_obj->sFilterRegister[14].FR2 = 0U;
   CAN_obj->FA1R |= 1U | (1U << 14);
 
   // Exit init mode, do not wait
