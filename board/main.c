@@ -712,8 +712,9 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
 }
 
 int main(void) {
+  // Init interrupt table
   init_interrupts(true);
-  init_registers();
+
   // 1s timer
   REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler, 2U, FAULT_INTERRUPT_RATE_TIM1)
 

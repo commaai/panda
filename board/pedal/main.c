@@ -296,8 +296,8 @@ void pedal(void) {
 }
 
 int main(void) {
+  // Init interrupt table
   init_interrupts(true);
-  init_registers();
 
   REGISTER_INTERRUPT(CAN1_TX_IRQn, CAN1_TX_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
   REGISTER_INTERRUPT(CAN1_RX0_IRQn, CAN1_RX0_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)

@@ -27,7 +27,7 @@ void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask){
 
   // Add these values to the map
   uint16_t hash = hash_addr((uint32_t) addr);
-  uint8_t tries = 255U;
+  uint16_t tries = REGISTER_MAP_SIZE;
   while(CHECK_COLLISION(hash, addr) && (tries > 0U)) { hash = hash_addr((uint32_t) hash); tries--;}
   if (tries != 0U){
     register_map[hash].address = addr;
@@ -35,7 +35,7 @@ void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask){
     register_map[hash].check_mask |= mask;
   } else {
     #ifdef DEBUG_FAULTS
-      puts("Got hash collision for address 0x"); puth((uint32_t) addr); puts("!\n");
+      puts("Hash collision: address 0x"); puth((uint32_t) addr); puts("!\n");
     #endif
   }
   EXIT_CRITICAL()
