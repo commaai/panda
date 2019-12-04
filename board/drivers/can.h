@@ -344,11 +344,6 @@ void ignition_can_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       // this message isn't all zeros when ignition is on
       ignition_can = GET_BYTES_04(to_push) != 0;
     }
-    // VW exception
-    if ((addr == 0x3C0) && (len == 4)) {
-     // VW Terminal 15 (ignition-on) state
-     ignition_can  = (GET_BYTE(to_push, 2) & 0x2) != 0;
-    }
   }
 }
 

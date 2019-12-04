@@ -5,7 +5,6 @@
 #define MSG_HCA_01              0x126
 #define MSG_GRA_ACC_01          0x12B
 #define MSG_LDW_02              0x397
-#define MSG_KLEMMEN_STATUS_01   0x3C0
 
 const int VOLKSWAGEN_MAX_STEER = 250;               // 2.5 Nm (EPS side max of 3.0Nm with fault if violated)
 const int VOLKSWAGEN_MAX_RT_DELTA = 75;             // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
