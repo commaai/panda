@@ -15,7 +15,7 @@ RT_INTERVAL = 250000
 DRIVER_TORQUE_ALLOWANCE = 80
 DRIVER_TORQUE_FACTOR = 3
 
-TX_MSGS = [[0x126, 0], [0x12B, 2], [0x397, 0]]
+TX_MSGS = [[0x126, 0], [0x12B, 0], [0x12B, 2], [0x397, 0]]
 
 def sign(a):
   if a > 0:
