@@ -32,6 +32,7 @@ bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 
 // Ignition detected from CAN meessages
 bool ignition_can = false;
+uint32_t ignition_can_cnt = 0U;
 
 // end API
 
@@ -323,10 +324,11 @@ void process_can(uint8_t can_number) {
 }
 
 void ignition_can_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
+
+  ignition_can_cnt = 0U;  // reset counter
 
   if (bus == 0) {
     // GM exception
