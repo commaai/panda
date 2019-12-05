@@ -31,9 +31,9 @@ void fan_init(void){
     pwm_init(TIM3, 3);
 
     // Init TACH interrupt
-    register_set(&(SYSCFG->EXTICR[0]), SYSCFG_EXTICR1_EXTI2_PD, 0xF00U);
-    register_set_bits(&(EXTI->IMR), (1U << 2));
-    register_set_bits(&(EXTI->RTSR), (1U << 2));
-    register_set_bits(&(EXTI->FTSR), (1U << 2));
+    SYSCFG->EXTICR[0] = SYSCFG_EXTICR1_EXTI2_PD;
+    EXTI->IMR |= (1U << 2);
+    EXTI->RTSR |= (1U << 2);
+    EXTI->FTSR |= (1U << 2);
     NVIC_EnableIRQ(EXTI2_IRQn);
 }

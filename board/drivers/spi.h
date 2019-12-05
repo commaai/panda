@@ -12,20 +12,20 @@ int spi_total_count = 0;
 
 void spi_tx_dma(void *addr, int len) {
   // disable DMA
-  register_clear_bits(&(SPI1->CR2), SPI_CR2_TXDMAEN);
-  register_clear_bits(&(DMA2_Stream3->CR), DMA_SxCR_EN);
+  SPI1->CR2 &= ~SPI_CR2_TXDMAEN;
+  DMA2_Stream3->CR &= ~DMA_SxCR_EN;
 
   // DMA2, stream 3, channel 3
-  register_set(&(DMA2_Stream3->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
+  DMA2_Stream3->M0AR = (uint32_t)addr;
   DMA2_Stream3->NDTR = len;
-  register_set(&(DMA2_Stream3->PAR), (uint32_t)&(SPI1->DR), 0xFFFFFFFFU);
+  DMA2_Stream3->PAR = (uint32_t)&(SPI1->DR);
 
   // channel3, increment memory, memory -> periph, enable
-  register_set(&(DMA2_Stream3->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_EN), 0x1E077EFEU);
+  DMA2_Stream3->CR = DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_EN;
   delay(0);
-  register_set_bits(&(DMA2_Stream3->CR), DMA_SxCR_TCIE);
+  DMA2_Stream3->CR |= DMA_SxCR_TCIE;
 
-  register_set_bits(&(SPI1->CR2), SPI_CR2_TXDMAEN);
+  SPI1->CR2 |= SPI_CR2_TXDMAEN;
 
   // signal data is ready by driving low
   // esp must be configured as input by this point
@@ -34,24 +34,24 @@ void spi_tx_dma(void *addr, int len) {
 
 void spi_rx_dma(void *addr, int len) {
   // disable DMA
-  register_clear_bits(&(SPI1->CR2), SPI_CR2_RXDMAEN);
-  register_clear_bits(&(DMA2_Stream2->CR), DMA_SxCR_EN);
+  SPI1->CR2 &= ~SPI_CR2_RXDMAEN;
+  DMA2_Stream2->CR &= ~DMA_SxCR_EN;
 
   // drain the bus
   volatile uint8_t dat = SPI1->DR;
   (void)dat;
 
   // DMA2, stream 2, channel 3
-  register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
+  DMA2_Stream2->M0AR = (uint32_t)addr;
   DMA2_Stream2->NDTR = len;
-  register_set(&(DMA2_Stream2->PAR), (uint32_t)&(SPI1->DR), 0xFFFFFFFFU);
+  DMA2_Stream2->PAR = (uint32_t)&(SPI1->DR);
 
   // channel3, increment memory, periph -> memory, enable
-  register_set(&(DMA2_Stream2->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_EN), 0x1E077EFEU);
+  DMA2_Stream2->CR = DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_EN;
   delay(0);
-  register_set_bits(&(DMA2_Stream2->CR), DMA_SxCR_TCIE);
+  DMA2_Stream2->CR |= DMA_SxCR_TCIE;
 
-  register_set_bits(&(SPI1->CR2), SPI_CR2_RXDMAEN);
+  SPI1->CR2 |= SPI_CR2_RXDMAEN;
 }
 
 // ***************************** SPI IRQs *****************************
@@ -109,11 +109,11 @@ void spi_init(void) {
   REGISTER_INTERRUPT(EXTI4_IRQn, EXTI4_IRQ_Handler, 50000U, FAULT_INTERRUPT_RATE_SPI_CS) // TODO: Figure out if this is a reasonable limit
 
   //puts("SPI init\n");
-  register_set(&(SPI1->CR1), SPI_CR1_SPE, 0xFFFFU);
+  SPI1->CR1 = SPI_CR1_SPE;
 
   // enable SPI interrupts
   //SPI1->CR2 = SPI_CR2_RXNEIE | SPI_CR2_ERRIE | SPI_CR2_TXEIE;
-  register_set(&(SPI1->CR2), SPI_CR2_RXNEIE, 0xF7U);
+  SPI1->CR2 = SPI_CR2_RXNEIE;
 
   NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);
@@ -124,8 +124,8 @@ void spi_init(void) {
   set_gpio_pullup(GPIOB, 0, PULL_UP);
 
   // setup interrupt on falling edge of SPI enable (on PA4)
-  register_set(&(SYSCFG->EXTICR[2]), SYSCFG_EXTICR2_EXTI4_PA, 0xFFFFU);
-  register_set_bits(&(EXTI->IMR), (1U << 4));
-  register_set_bits(&(EXTI->FTSR), (1U << 4));
+  SYSCFG->EXTICR[2] = SYSCFG_EXTICR2_EXTI4_PA;
+  EXTI->IMR |= (1U << 4);
+  EXTI->FTSR |= (1U << 4);
   NVIC_EnableIRQ(EXTI4_IRQn);
 }

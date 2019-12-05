@@ -21,7 +21,6 @@
 #define FAULT_INTERRUPT_RATE_USB        (1U << 15)
 #define FAULT_INTERRUPT_RATE_TIM1       (1U << 16)
 #define FAULT_INTERRUPT_RATE_TIM3       (1U << 17)
-#define FAULT_REGISTER_DIVERGENT        (1U << 18)
 
 // Permanent faults
 #define PERMANENT_FAULTS 0U

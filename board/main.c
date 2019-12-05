@@ -6,13 +6,11 @@
 #include "obj/gitversion.h"
 
 #include "main_declarations.h"
-#include "critical.h"
 
 #include "libc.h"
 #include "provision.h"
 #include "faults.h"
 
-#include "drivers/registers.h"
 #include "drivers/interrupts.h"
 
 #include "drivers/llcan.h"
@@ -701,9 +699,6 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
     }
     #endif
 
-    // check registers
-    check_registers();
-    
     // set ignition_can to false after 2s of no CAN seen
     if (ignition_can_cnt > 2U) {
       ignition_can = false;
@@ -718,9 +713,7 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
 }
 
 int main(void) {
-  // Init interrupt table
   init_interrupts(true);
-
   // 1s timer
   REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler, 2U, FAULT_INTERRUPT_RATE_TIM1)
 

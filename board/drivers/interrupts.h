@@ -1,3 +1,29 @@
+// ********************* Interrupt helpers *********************
+volatile bool interrupts_enabled = false;
+
+void enable_interrupts(void) {
+  interrupts_enabled = true;
+  __enable_irq();
+}
+
+void disable_interrupts(void) {
+  interrupts_enabled = false;
+  __disable_irq();
+}
+
+uint8_t global_critical_depth = 0U;
+#define ENTER_CRITICAL()                                      \
+  __disable_irq();                                            \
+  global_critical_depth += 1U;
+
+#define EXIT_CRITICAL()                                       \
+  global_critical_depth -= 1U;                                \
+  if ((global_critical_depth == 0U) && interrupts_enabled) {  \
+    __enable_irq();                                           \
+  }
+
+// ********************* Interrupt handling *********************
+
 typedef struct interrupt {
   IRQn_Type irq_type;
   void (*handler)(void);
@@ -53,11 +79,11 @@ void init_interrupts(bool check_rate_limit){
   }
 
   // Init timer 10 for a 1s interval
-  register_set_bits(&(RCC->APB1ENR), RCC_APB1ENR_TIM6EN);  // Enable interrupt timer peripheral
+  RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;  // enable interrupt timer peripheral
   REGISTER_INTERRUPT(TIM6_DAC_IRQn, TIM6_DAC_IRQ_Handler, 1, FAULT_INTERRUPT_RATE_INTERRUPTS)
-  register_set(&(TIM6->PSC), (732-1), 0xFFFFU);
-  register_set(&(TIM6->DIER), TIM_DIER_UIE, 0x5F5FU);
-  register_set(&(TIM6->CR1), TIM_CR1_CEN, 0x3FU);
+  TIM6->PSC = 732-1;
+  TIM6->DIER = TIM_DIER_UIE;
+  TIM6->CR1 = TIM_CR1_CEN;
   TIM6->SR = 0;
   NVIC_EnableIRQ(TIM6_DAC_IRQn);
 }
