@@ -703,10 +703,16 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
 
     // check registers
     check_registers();
+    
+    // set ignition_can to false after 2s of no CAN seen
+    if (ignition_can_cnt > 2U) {
+      ignition_can = false;
+    };
 
     // on to the next one
     uptime_cnt += 1U;
     safety_mode_cnt += 1U;
+    ignition_can_cnt += 1U;
   }
   TIM9->SR = 0;
 }

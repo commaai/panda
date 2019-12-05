@@ -5,7 +5,6 @@
 #define MSG_HCA_01              0x126
 #define MSG_GRA_ACC_01          0x12B
 #define MSG_LDW_02              0x397
-#define MSG_KLEMMEN_STATUS_01   0x3C0
 
 const int VOLKSWAGEN_MAX_STEER = 250;               // 2.5 Nm (EPS side max of 3.0Nm with fault if violated)
 const int VOLKSWAGEN_MAX_RT_DELTA = 75;             // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
@@ -15,7 +14,8 @@ const int VOLKSWAGEN_MAX_RATE_DOWN = 10;            // 5.0 Nm/s available rate o
 const int VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE = 80;
 const int VOLKSWAGEN_DRIVER_TORQUE_FACTOR = 3;
 
-const AddrBus VOLKSWAGEN_TX_MSGS[] = {{MSG_HCA_01, 0}, {MSG_GRA_ACC_01, 2}, {MSG_LDW_02, 0}};
+// MSG_GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
+const AddrBus VOLKSWAGEN_TX_MSGS[] = {{MSG_HCA_01, 0}, {MSG_GRA_ACC_01, 0}, {MSG_GRA_ACC_01, 2}, {MSG_LDW_02, 0}};
 
 struct sample_t volkswagen_torque_driver;           // last few driver torques measured
 int volkswagen_rt_torque_last = 0;
@@ -127,7 +127,7 @@ static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
   // This avoids unintended engagements while still allowing resume spam
-  if ((bus == 2) && (addr == MSG_GRA_ACC_01) && !controls_allowed) {
+  if ((addr == MSG_GRA_ACC_01) && !controls_allowed) {
     // disallow resume and set: bits 16 and 19
     if ((GET_BYTE(to_send, 2) & 0x9) != 0) {
       tx = 0;
