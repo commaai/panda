@@ -17,11 +17,11 @@ void spi_tx_dma(void *addr, int len) {
 
   // DMA2, stream 3, channel 3
   register_set(&(DMA2_Stream3->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
-  register_set(&(DMA2_Stream3->NDTR), len, 0xFFFFFFFFU);
+  DMA2_Stream3->NDTR = len;
   register_set(&(DMA2_Stream3->PAR), (uint32_t)&(SPI1->DR), 0xFFFFFFFFU);
 
   // channel3, increment memory, memory -> periph, enable
-  register_set(&(DMA2_Stream3->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_EN), 0x1FEFFFFFU);
+  register_set(&(DMA2_Stream3->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_EN), 0x1E077EFEU);
   delay(0);
   register_set_bits(&(DMA2_Stream3->CR), DMA_SxCR_TCIE);
 
@@ -43,11 +43,11 @@ void spi_rx_dma(void *addr, int len) {
 
   // DMA2, stream 2, channel 3
   register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
-  register_set(&(DMA2_Stream2->NDTR), len, 0xFFFFFFFFU);
+  DMA2_Stream2->NDTR = len;
   register_set(&(DMA2_Stream2->PAR), (uint32_t)&(SPI1->DR), 0xFFFFFFFFU);
 
   // channel3, increment memory, periph -> memory, enable
-  register_set(&(DMA2_Stream2->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_EN), 0x1FEFFFFFU);
+  register_set(&(DMA2_Stream2->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_EN), 0x1E077EFEU);
   delay(0);
   register_set_bits(&(DMA2_Stream2->CR), DMA_SxCR_TCIE);
 
