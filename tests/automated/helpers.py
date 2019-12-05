@@ -272,6 +272,11 @@ def panda_connect_and_init(fn):
 
     try:
       run_with_timeout(TIMEOUT, fn, *pandas, **kwargs)
+
+      # Check if the pandas did not throw any faults while running test
+      for panda in pandas:
+        panda.reconnect()
+        assert panda.health()['fault_status'] == 0
     except Exception as e:
       raise e
     finally:

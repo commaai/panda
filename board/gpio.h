@@ -23,6 +23,9 @@ void early(void) {
   // Reset global critical depth
   global_critical_depth = 0;
 
+  // Init register and interrupt tables
+  init_registers();
+
   // neccesary for DFU flashing on a non-power cycled white panda
   enable_interrupts();
 
