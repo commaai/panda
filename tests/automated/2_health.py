@@ -35,3 +35,10 @@ def test_orientation_detection(p):
     if (i == 0 and detected_harness_orientation != 0) or detected_harness_orientation in seen_orientations:
       assert False
     seen_orientations.append(detected_harness_orientation)
+
+
+@test_all_pandas
+@panda_connect_and_init
+def test_voltage(p):
+  voltage = p.health()['voltage']
+  assert ((voltage > 10000) and (voltage < 14000))
