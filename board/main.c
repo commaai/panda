@@ -39,6 +39,26 @@
 
 #include "drivers/can.h"
 
+struct __attribute__((packed)) health_t {
+  uint32_t uptime_pkt;
+  uint32_t voltage_pkt;
+  uint32_t current_pkt;
+  uint32_t can_send_errs_pkt;
+  uint32_t can_fwd_errs_pkt;
+  uint32_t gmlan_send_errs_pkt;
+  uint32_t faults_pkt;
+  uint8_t ignition_line_pkt;
+  uint8_t ignition_can_pkt;
+  uint8_t controls_allowed_pkt;
+  uint8_t gas_interceptor_detected_pkt;
+  uint8_t car_harness_status_pkt;
+  uint8_t usb_power_mode_pkt;
+  uint8_t safety_mode_pkt;
+  uint8_t fault_status_pkt;
+  uint8_t power_save_enabled_pkt;
+};
+
+
 // ********************* Serial debugging *********************
 
 bool check_started(void) {
@@ -132,24 +152,8 @@ void set_safety_mode(uint16_t mode, int16_t param) {
 // ***************************** USB port *****************************
 
 int get_health_pkt(void *dat) {
-  struct __attribute__((packed)) {
-    uint32_t uptime_pkt;
-    uint32_t voltage_pkt;
-    uint32_t current_pkt;
-    uint32_t can_send_errs_pkt;
-    uint32_t can_fwd_errs_pkt;
-    uint32_t gmlan_send_errs_pkt;
-    uint32_t faults_pkt;
-    uint8_t ignition_line_pkt;
-    uint8_t ignition_can_pkt;
-    uint8_t controls_allowed_pkt;
-    uint8_t gas_interceptor_detected_pkt;
-    uint8_t car_harness_status_pkt;
-    uint8_t usb_power_mode_pkt;
-    uint8_t safety_mode_pkt;
-    uint8_t fault_status_pkt;
-    uint8_t power_save_enabled_pkt;
-  } *health = dat;
+  COMPILE_TIME_ASSERT(sizeof(struct health_t) <= MAX_RESP_LEN);
+  struct health_t * health = (struct health_t*)dat;
 
   health->uptime_pkt = uptime_cnt;
   health->voltage_pkt = adc_get_voltage();
@@ -703,7 +707,7 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
 
     // check registers
     check_registers();
-    
+
     // set ignition_can to false after 2s of no CAN seen
     if (ignition_can_cnt > 2U) {
       ignition_can = false;
