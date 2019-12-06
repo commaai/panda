@@ -39,7 +39,7 @@
 
 #include "drivers/can.h"
 
-extern void *_app_start[];
+extern char _app_start;
 
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
@@ -370,18 +370,18 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xd3:
       {
         resp_len = 64;
-        int code_len = (int)_app_start[0];
-        void * signature_start = ((void*)&_app_start[0]) + code_len;
-        (void)memcpy(resp, signature_start, resp_len);
+        char * code = &_app_start;
+        int code_len = ((int*)code)[0];
+        (void)memcpy(resp, &code[code_len], resp_len);
       }
       break;
     // **** 0xd4: get second 64 bytes of signature
     case 0xd4:
       {
         resp_len = 64;
-        int code_len = (int)_app_start[0];
-        void * signature_start = ((void*)&_app_start[0]) + code_len;
-        (void)memcpy(resp, signature_start + 64, resp_len);
+        char * code = &_app_start;
+        int code_len = ((int*)code)[0];
+        (void)memcpy(resp, &code[code_len + 64], resp_len);
       }
       break;
     // **** 0xd6: get version
