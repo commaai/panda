@@ -39,7 +39,7 @@
 
 #include "drivers/can.h"
 
-extern char _app_start;
+extern int _app_start[0xc000];
 
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
@@ -370,20 +370,21 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xd3:
       {
         resp_len = 64;
-        char * code = &_app_start;
-        int code_len_bytes;
-        (void)memcpy(&code_len_bytes, code, sizeof(int)); // Misra doesn't allow recasting to an int, so we have to memcpy
-        (void)memcpy(resp, &code[code_len_bytes], resp_len);
+        char * code = (char*)_app_start;
+        int code_len = _app_start[0];
+        (void)memcpy(resp, &code[code_len], resp_len);
       }
       break;
     // **** 0xd4: get second 64 bytes of signature
     case 0xd4:
       {
         resp_len = 64;
-        char * code = &_app_start;
-        int code_len_bytes;
-        (void)memcpy(&code_len_bytes, code, sizeof(int)); // Misra doesn't allow recasting to an int, so we have to memcpy
-        (void)memcpy(resp, &code[code_len_bytes + 64], resp_len);
+        char * code = (char*)_app_start;
+        int code_len = _app_start[0];
+        (void)memcpy(resp, &code[code_len + 64], resp_len);
+        /* char * code = (char*)&_app_start[0]; */
+        /* int code_len = _app_start[0]; */
+        /* (void)memcpy(resp, &code[code_len + 64], resp_len); */
       }
       break;
     // **** 0xd6: get version
