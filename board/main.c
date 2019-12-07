@@ -371,8 +371,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       {
         resp_len = 64;
         char * code = &_app_start;
-        int code_len = ((int*)code)[0];
-        (void)memcpy(resp, &code[code_len], resp_len);
+        int code_len_bytes;
+        (void)memcpy(&code_len_bytes, code, sizeof(int)); // Misra doesn't allow recasting to an int, so we have to memcpy
+        (void)memcpy(resp, &code[code_len_bytes], resp_len);
       }
       break;
     // **** 0xd4: get second 64 bytes of signature
@@ -380,8 +381,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       {
         resp_len = 64;
         char * code = &_app_start;
-        int code_len = ((int*)code)[0];
-        (void)memcpy(resp, &code[code_len + 64], resp_len);
+        int code_len_bytes;
+        (void)memcpy(&code_len_bytes, code, sizeof(int)); // Misra doesn't allow recasting to an int, so we have to memcpy
+        (void)memcpy(resp, &code[code_len_bytes + 64], resp_len);
       }
       break;
     // **** 0xd6: get version
