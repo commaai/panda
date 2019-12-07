@@ -382,9 +382,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         char * code = (char*)_app_start;
         int code_len = _app_start[0];
         (void)memcpy(resp, &code[code_len + 64], resp_len);
-        /* char * code = (char*)&_app_start[0]; */
-        /* int code_len = _app_start[0]; */
-        /* (void)memcpy(resp, &code[code_len + 64], resp_len); */
       }
       break;
     // **** 0xd6: get version
