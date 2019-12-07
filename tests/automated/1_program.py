@@ -1,6 +1,9 @@
-from .helpers import reset_pandas, test_all_pandas, panda_connect_and_init
+import os
+
 from nose.tools import assert_equal
-from panda import Panda
+
+from panda import Panda, BASEDIR
+from .helpers import reset_pandas, test_all_pandas, panda_connect_and_init
 
 
 # Reset the pandas before flashing them
@@ -23,6 +26,9 @@ def test_flash(p):
 @test_all_pandas
 @panda_connect_and_init
 def test_get_signature(p):
-  firmware_sig = Panda.get_signature_from_firmware("obj/panda.bin")
+  fn = os.path.join(BASEDIR, "board/obj/panda.bin")
+
+  firmware_sig = Panda.get_signature_from_firmware(fn)
   panda_sig = p.get_signature()
+
   assert_equal(panda_sig, firmware_sig)
