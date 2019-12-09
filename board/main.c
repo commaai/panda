@@ -39,6 +39,8 @@
 
 #include "drivers/can.h"
 
+extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
+
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
   uint32_t voltage_pkt;
@@ -363,6 +365,24 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xd2: get health packet
     case 0xd2:
       resp_len = get_health_pkt(resp);
+      break;
+    // **** 0xd3: get first 64 bytes of signature
+    case 0xd3:
+      {
+        resp_len = 64;
+        char * code = (char*)_app_start;
+        int code_len = _app_start[0];
+        (void)memcpy(resp, &code[code_len], resp_len);
+      }
+      break;
+    // **** 0xd4: get second 64 bytes of signature
+    case 0xd4:
+      {
+        resp_len = 64;
+        char * code = (char*)_app_start;
+        int code_len = _app_start[0];
+        (void)memcpy(resp, &code[code_len + 64], resp_len);
+      }
       break;
     // **** 0xd6: get version
     case 0xd6:
