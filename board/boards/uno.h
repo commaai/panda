@@ -1,6 +1,8 @@
 // ///////////// //
 // Uno + Harness //
 // ///////////// //
+#define BOOTKICK_TIME 3U
+uint8_t bootkick_timer = 0U;
 
 void uno_enable_can_transciever(uint8_t transciever, bool enabled) {
   switch (transciever){
@@ -48,6 +50,15 @@ void uno_set_gps_load_switch(bool enabled) {
   set_gpio_output(GPIOC, 12, enabled);
 }
 
+void uno_set_bootkick(bool enabled){
+  set_gpio_output(GPIOB, 14, !enabled);
+}
+
+void uno_bootkick(void) {
+  bootkick_timer = BOOTKICK_TIME;
+  uno_set_bootkick(true);
+}
+
 void uno_set_phone_power(bool enabled){
   set_gpio_output(GPIOB, 4, enabled);
 }
@@ -61,6 +72,7 @@ void uno_set_usb_power_mode(uint8_t mode) {
       break;
     case USB_POWER_CDP:
       uno_set_phone_power(true);
+      uno_bootkick();
       valid = true;
       break;
     default:
@@ -125,12 +137,11 @@ void uno_set_can_mode(uint8_t mode){
   }
 }
 
-void uno_set_bootkick(bool enabled){
-  set_gpio_output(GPIOB, 14, !enabled);
-}
-
 void uno_usb_power_mode_tick(uint32_t uptime){
-  if(uptime == 3U){
+  UNUSED(uptime);
+  if(bootkick_timer != 0U){
+    bootkick_timer--;
+  } else {
     uno_set_bootkick(false);
   }
 }
@@ -234,7 +245,7 @@ void uno_init(void) {
   }
 
   // Bootkick phone
-  uno_set_bootkick(true);
+  uno_bootkick();
 }
 
 const harness_configuration uno_harness_config = {
