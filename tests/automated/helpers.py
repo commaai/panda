@@ -1,9 +1,5 @@
-import os
-import sys
 import time
 import random
-import subprocess
-import requests
 import _thread
 import faulthandler
 from functools import wraps
