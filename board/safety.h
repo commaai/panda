@@ -221,7 +221,7 @@ float interpolate(struct lookup_t xy, float x) {
         float y0 = xy.y[i];
         float dx = xy.x[i+1] - x0;
         float dy = xy.y[i+1] - y0;
-        // dx should not be zero as xy.x is supposed ot be monotonic
+        // dx should not be zero as xy.x is supposed to be monotonic
         if (dx <= 0.) {
           dx = 0.0001;
         }
