@@ -1,3 +1,4 @@
+import os
 FNULL = open(os.devnull, 'w')
 def _connect_wifi(dongle_id, pw, insecure_okay=False):
   ssid = "panda-" + dongle_id
