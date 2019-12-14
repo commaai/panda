@@ -67,6 +67,31 @@ bool addr_allowed(int addr, int bus, const AddrBus addr_list[], int len) {
   return allowed;
 }
 
+int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_list[], int len) {
+  int bus = GET_BUS(to_push);
+  int addr = GET_ADDR(to_push);
+
+  int index = -1;
+  for (int i = 0; i < len; i++) {
+    if ((addr == addr_list[i].addr) && (bus == addr_list[i].bus)) {
+      index = i;
+      break;
+    }
+  }
+  return index;
+}
+
+// TODO: also check counter and frequency validity
+bool is_addr_valid(AddrCheckStruct addr_list[], int index) {
+  bool valid = true;
+  if (index != -1) {
+    if ((!addr_list[index].valid_checksum)) {
+      valid = false;
+    }
+  }
+  return valid;
+}
+
 typedef struct {
   uint16_t id;
   const safety_hooks *hooks;

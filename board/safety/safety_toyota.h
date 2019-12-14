@@ -18,11 +18,12 @@ const int TOYOTA_MIN_ACCEL = -3000;       // 3.0 m/s2
 
 const int TOYOTA_GAS_INTERCEPTOR_THRESHOLD = 475;  // ratio between offset and gain from dbc file
 
-// allowed DSU messages on bus 0 and 1
+AddrCheckStruct TOYOTA_RX_CHECKS[] = {{0x260, 0, true, true},
+                                      {0x1D2, 0, true, true}};
 const AddrBus TOYOTA_TX_MSGS[] = {{0x283, 0}, {0x2E6, 0}, {0x2E7, 0}, {0x33E, 0}, {0x344, 0}, {0x365, 0}, {0x366, 0}, {0x4CB, 0},  // DSU bus 0
-                                         {0x128, 1}, {0x141, 1}, {0x160, 1}, {0x161, 1}, {0x470, 1},  // DSU bus 1
-                                         {0x2E4, 0}, {0x411, 0}, {0x412, 0}, {0x343, 0}, {0x1D2, 0}, // LKAS + ACC
-                                         {0x200, 0}};  // interceptor
+                                  {0x128, 1}, {0x141, 1}, {0x160, 1}, {0x161, 1}, {0x470, 1},  // DSU bus 1
+                                  {0x2E4, 0}, {0x411, 0}, {0x412, 0}, {0x343, 0}, {0x1D2, 0}, // LKAS + ACC
+                                  {0x200, 0}};  // interceptor
 
 // global actuation limit states
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
@@ -36,59 +37,84 @@ int toyota_gas_prev = 0;
 struct sample_t toyota_torque_meas;       // last 3 motor torques produced by the eps
 
 
+static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_list[], int len) {
+
+  int index = get_addr_check_index(to_push, addr_list, len);
+
+  // checksum check
+  if (index != -1) {
+    if (addr_list[index].check_checksum) {
+      int checksum_byte_pos = GET_LEN(to_push) - 1;
+      int addr = GET_ADDR(to_push);
+      uint8_t checksum = (uint8_t)(GET_BYTE(to_push, checksum_byte_pos));
+      uint8_t checksum_comp = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U) + (uint8_t)(checksum_byte_pos);
+      for (int j = 0; j < checksum_byte_pos; j++) {
+        checksum_comp += GET_BYTE(to_push, j);
+      }
+      addr_list[index].valid_checksum = checksum_comp == checksum;
+    }
+  }
+
+  return is_addr_valid(addr_list, index);
+}
+
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
+  bool valid = toyota_addr_check(to_push, TOYOTA_RX_CHECKS, sizeof(TOYOTA_RX_CHECKS)/sizeof(TOYOTA_RX_CHECKS[0]));
+
   // get eps motor torque (0.66 factor in dbc)
-  if (addr == 0x260) {
-    int torque_meas_new = (GET_BYTE(to_push, 5) << 8) | GET_BYTE(to_push, 6);
-    torque_meas_new = to_signed(torque_meas_new, 16);
+  if (valid) {
+    if (addr == 0x260) {
+      int torque_meas_new = (GET_BYTE(to_push, 5) << 8) | GET_BYTE(to_push, 6);
+      torque_meas_new = to_signed(torque_meas_new, 16);
 
-    // scale by dbc_factor
-    torque_meas_new = (torque_meas_new * toyota_dbc_eps_torque_factor) / 100;
+      // scale by dbc_factor
+      torque_meas_new = (torque_meas_new * toyota_dbc_eps_torque_factor) / 100;
 
-    // update array of sample
-    update_sample(&toyota_torque_meas, torque_meas_new);
+      // update array of sample
+      update_sample(&toyota_torque_meas, torque_meas_new);
 
-    // increase torque_meas by 1 to be conservative on rounding
-    toyota_torque_meas.min--;
-    toyota_torque_meas.max++;
-  }
-
-  // enter controls on rising edge of ACC, exit controls on ACC off
-  if (addr == 0x1D2) {
-    // 5th bit is CRUISE_ACTIVE
-    int cruise_engaged = GET_BYTE(to_push, 0) & 0x20;
-    if (!cruise_engaged) {
-      controls_allowed = 0;
+      // increase torque_meas by 1 to be conservative on rounding
+      toyota_torque_meas.min--;
+      toyota_torque_meas.max++;
     }
-    if (cruise_engaged && !toyota_cruise_engaged_last) {
-      controls_allowed = 1;
-    }
-    toyota_cruise_engaged_last = cruise_engaged;
-  }
 
-  // exit controls on rising edge of interceptor gas press
-  if (addr == 0x201) {
-    gas_interceptor_detected = 1;
-    int gas_interceptor = GET_INTERCEPTOR(to_push);
-    if ((gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRESHOLD) &&
-        (gas_interceptor_prev <= TOYOTA_GAS_INTERCEPTOR_THRESHOLD) &&
-        long_controls_allowed) {
-      controls_allowed = 0;
+    // enter controls on rising edge of ACC, exit controls on ACC off
+    if (addr == 0x1D2) {
+      // 5th bit is CRUISE_ACTIVE
+      int cruise_engaged = GET_BYTE(to_push, 0) & 0x20;
+      if (!cruise_engaged) {
+        controls_allowed = 0;
+      }
+      if (cruise_engaged && !toyota_cruise_engaged_last) {
+        controls_allowed = 1;
+      }
+      toyota_cruise_engaged_last = cruise_engaged;
     }
-    gas_interceptor_prev = gas_interceptor;
-  }
 
-  // exit controls on rising edge of gas press
-  if (addr == 0x2C1) {
-    int gas = GET_BYTE(to_push, 6) & 0xFF;
-    if ((gas > 0) && (toyota_gas_prev == 0) && !gas_interceptor_detected && long_controls_allowed) {
-      controls_allowed = 0;
+    // exit controls on rising edge of interceptor gas press
+    if (addr == 0x201) {
+      gas_interceptor_detected = 1;
+      int gas_interceptor = GET_INTERCEPTOR(to_push);
+      if ((gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRESHOLD) &&
+          (gas_interceptor_prev <= TOYOTA_GAS_INTERCEPTOR_THRESHOLD) &&
+          long_controls_allowed) {
+        controls_allowed = 0;
+      }
+      gas_interceptor_prev = gas_interceptor;
     }
-    toyota_gas_prev = gas;
+
+    // exit controls on rising edge of gas press
+    if (addr == 0x2C1) {
+      int gas = GET_BYTE(to_push, 6) & 0xFF;
+      if ((gas > 0) && (toyota_gas_prev == 0) && !gas_interceptor_detected && long_controls_allowed) {
+        controls_allowed = 0;
+      }
+      toyota_gas_prev = gas;
+    }
   }
 
   // 0x2E4 is lkas cmd. If it is on bus 0, then relay is unexpectedly closed

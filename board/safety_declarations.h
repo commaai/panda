@@ -1,3 +1,6 @@
+const uint8_t MAX_BAD_COUNTERS = 5U;
+const uint8_t MAX_MISSED_MSGS = 10U;
+
 // sample struct that keeps 3 samples in memory
 struct sample_t {
   int values[6];
@@ -16,6 +19,14 @@ typedef struct {
   int bus;
 } AddrBus;
 
+// TODO: add fields for counter and frequency checks
+typedef struct {
+  const int addr;
+  const int bus;
+  const bool check_checksum;
+  bool valid_checksum;
+} AddrCheckStruct;
+
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
@@ -31,6 +42,8 @@ bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
 bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 float interpolate(struct lookup_t xy, float x);
 bool addr_allowed(int addr, int bus, const AddrBus addr_list[], int len);
+int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_list[], int len);
+bool is_addr_valid(AddrCheckStruct addr_list[], int index);
 
 typedef void (*safety_hook_init)(int16_t param);
 typedef void (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);
