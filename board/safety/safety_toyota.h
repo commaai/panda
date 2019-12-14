@@ -39,6 +39,7 @@ struct sample_t toyota_torque_meas;       // last 3 motor torques produced by th
 
 static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_list[], int len) {
   int index = get_addr_check_index(to_push, addr_list, len);
+
   // checksum check
   if (index != -1) {
     if (addr_list[index].check_checksum) {
@@ -52,7 +53,6 @@ static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct 
       addr_list[index].valid_checksum = checksum_comp == checksum;
     }
   }
-
   return is_addr_valid(addr_list, index);
 }
 

@@ -23,6 +23,16 @@ def sign(a):
   else:
     return -1
 
+def toyota_checksum(msg, addr, len_msg):
+  checksum = (len_msg + addr + (addr >> 8))
+  for i in range(len_msg):
+    if i < 4:
+      checksum += (msg.RDLR >> (8 * i))
+    else:
+      checksum += (msg.RDHR >> (8 * (i - 4)))
+  return checksum & 0xff
+
+
 class TestToyotaSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
@@ -34,6 +44,7 @@ class TestToyotaSafety(unittest.TestCase):
     to_send = make_msg(0, 0x260)
     t = twos_comp(torque, 16)
     to_send[0].RDLR = t | ((t & 0xFF) << 16)
+    to_send[0].RDHR = to_send[0].RDHR | (toyota_checksum(to_send[0], 0x260, 8) << 24)
     return to_send
 
   def _torque_driver_msg_array(self, torque):
