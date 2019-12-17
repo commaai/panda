@@ -11,7 +11,9 @@ void get_provision_chunk(uint8_t *resp) {
   }
 }
 
+uint8_t chunk[PROVISION_CHUNK_LEN];
 bool is_provisioned(void) {
-  return (memcmp((uint8_t *)0x1fff7a00, "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff", 0x16U) != 0);
+  (void)memcpy(chunk, (uint8_t *)0x1fff79e0, PROVISION_CHUNK_LEN);
+  return (memcmp(chunk, "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff", 0x20) != 0);
 }
 
