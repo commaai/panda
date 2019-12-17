@@ -477,9 +477,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xdf: set long controls allowed
     case 0xdf:
-      if (hardwired) {
-        long_controls_allowed = setup->b.wValue.w & 1U;
-      }
+      #ifdef ALLOW_DEBUG
+        if (hardwired) {
+          long_controls_allowed = setup->b.wValue.w & 1U;
+        }
+      #endif
       break;
     // **** 0xe0: uart read
     case 0xe0:

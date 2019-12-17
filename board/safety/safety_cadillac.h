@@ -115,13 +115,8 @@ static int cadillac_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return tx;
 }
 
-static void cadillac_init(int16_t param) {
-  UNUSED(param);
-  controls_allowed = 0;
-}
-
 const safety_hooks cadillac_hooks = {
-  .init = cadillac_init,
+  .init = nooutput_init,
   .rx = cadillac_rx_hook,
   .tx = cadillac_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,

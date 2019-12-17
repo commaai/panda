@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from tqdm import tqdm
 from panda import Panda
-from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseError, DATA_IDENTIFIER_TYPE
+from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseError, SESSION_TYPE, DATA_IDENTIFIER_TYPE
 
 if __name__ == "__main__":
   addrs = [0x700 + i for i in range(256)]
@@ -21,6 +21,7 @@ if __name__ == "__main__":
       uds_client = UdsClient(panda, addr, bus=1 if panda.has_obd() else 0, timeout=0.1, debug=False)
       try:
         uds_client.tester_present()
+        uds_client.diagnostic_session_control(SESSION_TYPE.EXTENDED_DIAGNOSTIC)
       except NegativeResponseError:
         pass
       except MessageTimeoutError:
