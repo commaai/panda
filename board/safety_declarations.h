@@ -1,4 +1,4 @@
-const uint8_t MAX_BAD_COUNTERS = 5U;
+const uint8_t MAX_BAD_COUNTERS = 5;
 const uint8_t MAX_MISSED_MSGS = 10U;
 
 // sample struct that keeps 3 samples in memory
@@ -28,6 +28,10 @@ typedef struct {
   const int bus;
   const bool check_checksum;
   bool valid_checksum;
+  const bool check_counter;
+  const uint8_t max_counter;
+  uint8_t last_counter;
+  int bad_counters;
 } AddrCheckStruct;
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
