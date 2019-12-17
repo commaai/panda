@@ -37,12 +37,12 @@ int toyota_gas_prev = 0;
 struct sample_t toyota_torque_meas;       // last 3 motor torques produced by the eps
 
 
-static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_list[], int len) {
-  int index = get_addr_check_index(to_push, addr_list, len);
+static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
+  int index = get_addr_check_index(to_push, TOYOTA_RX_CHECKS, sizeof(TOYOTA_RX_CHECKS)/sizeof(TOYOTA_RX_CHECKS[0]));
 
   // checksum check
   if (index != -1) {
-    if (addr_list[index].check_checksum) {
+    if (TOYOTA_RX_CHECKS[index].check_checksum) {
       int checksum_byte_pos = GET_LEN(to_push) - 1;
       int addr = GET_ADDR(to_push);
       uint8_t checksum = (uint8_t)(GET_BYTE(to_push, checksum_byte_pos));
@@ -50,10 +50,10 @@ static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct 
       for (int j = 0; j < checksum_byte_pos; j++) {
         checksum_comp += (uint8_t)GET_BYTE(to_push, j);
       }
-      addr_list[index].valid_checksum = checksum_comp == checksum;
+      TOYOTA_RX_CHECKS[index].valid_checksum = checksum_comp == checksum;
     }
   }
-  return is_addr_valid(addr_list, index);
+  return is_addr_valid(TOYOTA_RX_CHECKS, index);
 }
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -61,7 +61,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
-  bool valid = toyota_addr_check(to_push, TOYOTA_RX_CHECKS, sizeof(TOYOTA_RX_CHECKS)/sizeof(TOYOTA_RX_CHECKS[0]));
+  bool valid = toyota_addr_check(to_push);
 
   // get eps motor torque (0.66 factor in dbc)
   if ((addr == 0x260) && valid) {
