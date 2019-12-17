@@ -11,3 +11,7 @@ void get_provision_chunk(uint8_t *resp) {
   }
 }
 
+bool is_provisioned(void) {
+  return (memcmp((uint8_t *)0x1fff7a00, "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff", 0x16U) != 0U);
+}
+
