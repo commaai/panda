@@ -1,4 +1,4 @@
-const uint8_t MAX_BAD_COUNTERS = 5;
+const int MAX_BAD_COUNTERS = 5;
 const uint8_t MAX_MISSED_MSGS = 10U;
 
 // sample struct that keeps 3 samples in memory
