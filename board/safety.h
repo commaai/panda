@@ -73,9 +73,12 @@ int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_
 
   int index = -1;
   for (int i = 0; i < len; i++) {
-    if ((addr == addr_list[i].addr) && (bus == addr_list[i].bus)) {
-      index = i;
-      break;
+    for (uint8_t j = 0U; j < addr_list[i].addr_len; j++) {
+      if ((addr == addr_list[i].addr[j]) && (bus == addr_list[i].bus)) {
+        index = i;
+        i = len;  // break also second loop
+        break;
+      }
     }
   }
   return index;

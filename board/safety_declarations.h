@@ -21,7 +21,10 @@ typedef struct {
 
 // TODO: add fields for counter and frequency checks
 typedef struct {
-  const int addr;
+  // addr is array because some cars have mutually exclusive addresses for the same function
+  // 2 is currently the max number of mutually exclusive messages. Make it larger if needed
+  const int addr[2];
+  const uint8_t addr_len;
   const int bus;
   const bool check_checksum;
   bool valid_checksum;

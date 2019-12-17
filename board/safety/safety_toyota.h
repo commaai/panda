@@ -18,8 +18,8 @@ const int TOYOTA_MIN_ACCEL = -3000;       // 3.0 m/s2
 
 const int TOYOTA_GAS_INTERCEPTOR_THRESHOLD = 475;  // ratio between offset and gain from dbc file
 
-AddrCheckStruct TOYOTA_RX_CHECKS[] = {{0x260, 0, true, true},
-                                      {0x1D2, 0, true, true}};
+AddrCheckStruct TOYOTA_RX_CHECKS[] = {{{0x260}, 1U, 0, true, true},
+                                      {{0x1D2}, 1U, 0, true, true}};
 const AddrBus TOYOTA_TX_MSGS[] = {{0x283, 0}, {0x2E6, 0}, {0x2E7, 0}, {0x33E, 0}, {0x344, 0}, {0x365, 0}, {0x366, 0}, {0x4CB, 0},  // DSU bus 0
                                   {0x128, 1}, {0x141, 1}, {0x160, 1}, {0x161, 1}, {0x470, 1},  // DSU bus 1
                                   {0x2E4, 0}, {0x411, 0}, {0x412, 0}, {0x343, 0}, {0x1D2, 0}, // LKAS + ACC
@@ -46,7 +46,7 @@ static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
       int checksum_byte_pos = GET_LEN(to_push) - 1;
       int addr = GET_ADDR(to_push);
       uint8_t checksum = (uint8_t)(GET_BYTE(to_push, checksum_byte_pos));
-      uint8_t checksum_comp = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U) + (uint8_t)(checksum_byte_pos + 1);
+      uint8_t checksum_comp = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U) + (uint8_t)(checksum_byte_pos) + 1U;
       for (int j = 0; j < checksum_byte_pos; j++) {
         checksum_comp += (uint8_t)GET_BYTE(to_push, j);
       }
