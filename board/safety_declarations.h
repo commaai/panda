@@ -19,7 +19,8 @@ typedef struct {
   int bus;
 } AddrBus;
 
-// TODO: add fields for frequency checks
+// struct that contains params and validity flags about checksum, counter and frequency checks
+// for relevant addresses
 typedef struct {
   // addr is array because some cars have mutually exclusive addresses for the same function
   // 2 is currently the max number of mutually exclusive messages; make it larger if needed
