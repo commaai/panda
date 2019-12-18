@@ -6,6 +6,11 @@
 //      accel rising edge
 //      brake rising edge
 //      brake > 0mph
+AddrCheckStruct HONDA_RX_CHECKS[] = {{{0x1A6, 0x296}, 1U, 0, true, true, 4U, 20000U, true, 0, 0U, 0U, true},
+                                     {{       0x158}, 1U, 0, true, true, 4U, 30000U, true, 0, 0U, 0U, true},
+                                     {{       0x17C}, 1U, 0, true, true, 4U, 30000U, true, 0, 0U, 0U, true}};
+const int HONDA_RX_CHECKS_LEN = sizeof(HONDA_RX_CHECKS) / sizeof(HONDA_RX_CHECKS[0]);
+
 const AddrBus HONDA_N_TX_MSGS[] = {{0xE4, 0}, {0x194, 0}, {0x1FA, 0}, {0x200, 0}, {0x30C, 0}, {0x33D, 0}, {0x39F, 0}};
 const AddrBus HONDA_BH_TX_MSGS[] = {{0xE4, 0}, {0x296, 1}, {0x33D, 0}};  // Bosch Harness
 const AddrBus HONDA_BG_TX_MSGS[] = {{0xE4, 2}, {0x296, 0}, {0x33D, 2}};  // Bosch Giraffe
@@ -18,21 +23,57 @@ bool honda_bosch_hardware = false;
 bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
 
+static bool honda_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
+  int index = get_addr_check_index(to_push, HONDA_RX_CHECKS, HONDA_RX_CHECKS_LEN);
+  update_addr_timestamp(HONDA_RX_CHECKS, index);
+
+  if (index != -1) {
+    // checksum check
+    if (HONDA_RX_CHECKS[index].check_checksum) {
+      int checksum_byte = GET_LEN(to_push) - 1;
+      uint8_t checksum = (uint8_t)(GET_BYTE(to_push, checksum_byte) & 0xF);
+      uint8_t checksum_comp = 0U;
+      unsigned int addr = GET_ADDR(to_push);
+      while (addr > 0U) {
+        checksum_comp += (addr & 0xFU); addr >>= 4;
+      }
+      for (int j = 0; j < checksum_byte; j++) {
+        uint8_t byte = GET_BYTE(to_push, j);
+        checksum_comp += (byte & 0xFU) + (byte >> 4U);
+      }
+      checksum_comp -= checksum;  // remove checksum in message
+      checksum_comp = 8U - checksum_comp;
+      HONDA_RX_CHECKS[index].valid_checksum = checksum_comp == checksum;
+    }
+
+    // get counter
+    if (HONDA_RX_CHECKS[index].check_counter) {
+      int counter_byte = GET_LEN(to_push) - 1;
+      uint8_t counter = ((uint8_t)(GET_BYTE(to_push, counter_byte)) >> 4U) & 0x3U;
+      update_counter(HONDA_RX_CHECKS, index, counter);
+    }
+  }
+
+  return is_addr_valid(HONDA_RX_CHECKS, index);
+}
+
 static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   int bus = GET_BUS(to_push);
 
+  bool valid = honda_addr_check(to_push);
+
   // sample speed
-  if (addr == 0x158) {
+  if ((addr == 0x158) && valid) {
     // first 2 bytes
     honda_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
   }
 
   // state machine to enter and exit controls
   // 0x1A6 for the ILX, 0x296 for the Civic Touring
-  if ((addr == 0x1A6) || (addr == 0x296)) {
+  if (((addr == 0x1A6) || (addr == 0x296)) && valid) {
     int button = (GET_BYTE(to_push, 0) & 0xE0) >> 5;
     switch (button) {
       case 2:  // cancel
@@ -55,7 +96,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // accord, crv: 0x1BE bit 4
   // exit controls on rising edge of brake press or on brake press when speed > 0
   bool is_user_brake_msg = honda_alt_brake_msg ? ((addr) == 0x1BE) : ((addr) == 0x17C);
-  if (is_user_brake_msg) {
+  if (is_user_brake_msg && valid) {
     bool brake_pressed = honda_alt_brake_msg ? (GET_BYTE((to_push), 0) & 0x10) : (GET_BYTE((to_push), 6) & 0x20);
     if (brake_pressed && (!(honda_brake_pressed_prev) || honda_moving)) {
       controls_allowed = 0;
@@ -78,7 +119,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // exit controls on rising edge of gas press if no interceptor
   if (!gas_interceptor_detected) {
-    if (addr == 0x17C) {
+    if ((addr == 0x17C) && valid) {
       int gas = GET_BYTE(to_push, 0);
       if (gas && !(honda_gas_prev) && long_controls_allowed) {
         controls_allowed = 0;
