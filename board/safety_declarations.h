@@ -1,4 +1,4 @@
-const int MAX_BAD_COUNTERS = 5;
+const int MAX_WRONG_COUNTERS = 5;
 const uint8_t MAX_MISSED_MSGS = 10U;
 
 // sample struct that keeps 3 samples in memory
@@ -32,7 +32,7 @@ typedef struct {
   const bool check_counter;
   const uint8_t max_counter;
   uint8_t last_counter;
-  int bad_counters;
+  int wrong_counters;
   const uint32_t expected_timestep;  // us
   uint32_t last_timestamp;  // us
   bool lagging;

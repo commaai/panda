@@ -106,8 +106,8 @@ void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
   if (index != -1) {
     if (addr_list[index].check_counter) {
       uint8_t expected_counter = (addr_list[index].last_counter + 1U) % addr_list[index].max_counter;
-      addr_list[index].bad_counters += (expected_counter == counter) ? -1 : 1;
-      addr_list[index].bad_counters = MAX(MIN(addr_list[index].bad_counters, MAX_BAD_COUNTERS), 0);
+      addr_list[index].wrong_counters += (expected_counter == counter) ? -1 : 1;
+      addr_list[index].wrong_counters = MAX(MIN(addr_list[index].wrong_counters, MAX_WRONG_COUNTERS), 0);
       addr_list[index].last_counter = counter;
     }
   }
@@ -116,7 +116,7 @@ void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
 bool is_addr_valid(AddrCheckStruct addr_list[], int index) {
   bool valid = true;
   if (index != -1) {
-    if ((!addr_list[index].valid_checksum) || (addr_list[index].bad_counters >= MAX_BAD_COUNTERS)) {
+    if ((!addr_list[index].valid_checksum) || (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {
       valid = false;
       controls_allowed = 0;
     }
