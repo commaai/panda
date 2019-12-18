@@ -94,7 +94,11 @@ void check_lagging_addrs(const safety_hooks *hooks) {
   uint32_t ts = TIM2->CNT;
   for (int i=0; i < hooks->addr_check_len; i++) {
     uint32_t elapsed_time = get_ts_elapsed(ts, hooks->addr_check[i].last_timestamp);
-    hooks->addr_check[i].lagging = elapsed_time > (hooks->addr_check[i].expected_timestep * 10U);
+    bool lagging = elapsed_time > (hooks->addr_check[i].expected_timestep * 10U);
+    hooks->addr_check[i].lagging = lagging;
+    if (lagging) {
+      controls_allowed = 0;
+    }
   }
 }
 
@@ -114,6 +118,7 @@ bool is_addr_valid(AddrCheckStruct addr_list[], int index) {
   if (index != -1) {
     if ((!addr_list[index].valid_checksum) || (addr_list[index].bad_counters >= MAX_BAD_COUNTERS)) {
       valid = false;
+      controls_allowed = 0;
     }
   }
   return valid;
