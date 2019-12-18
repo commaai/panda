@@ -10,6 +10,18 @@ MAX_BRAKE = 255
 INTERCEPTOR_THRESHOLD = 328
 TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x200, 0], [0x30C, 0], [0x33D, 0], [0x39F, 0]]
 
+def honda_checksum(msg, addr, len_msg):
+  while addr > 0:
+    checksum += addr
+    addr >>= 4
+  for i in range (0, 2*len_msg):
+    if i < 8:
+      checksum += (msg.RDLR >> (4 * i))
+    else:
+      checksum += (msg.RDHR >> (4 * (i - 8)))
+  return (8 - checksum) & 0xF
+
+
 class TestHondaSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
