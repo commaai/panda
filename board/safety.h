@@ -67,7 +67,7 @@ bool addr_allowed(int addr, int bus, const AddrBus addr_list[], int len) {
   return allowed;
 }
 
-int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_list[], int len) {
+int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_list[], const int len) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
@@ -103,6 +103,13 @@ bool is_addr_valid(AddrCheckStruct addr_list[], int index) {
     }
   }
   return valid;
+}
+
+void update_addr_timestamp(AddrCheckStruct addr_list[], int index) {
+  if (index != -1) {
+    uint32_t ts = TIM2->CNT;
+    addr_list[index].last_timestamp = ts;
+  }
 }
 
 typedef struct {

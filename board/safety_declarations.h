@@ -52,7 +52,9 @@ bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
 bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 float interpolate(struct lookup_t xy, float x);
 bool addr_allowed(int addr, int bus, const AddrBus addr_list[], int len);
-int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_list[], int len);
+int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_list[], const int len);
+void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter);
+void update_addr_timestamp(AddrCheckStruct addr_list[], int index);
 bool is_addr_valid(AddrCheckStruct addr_list[], int index);
 
 typedef void (*safety_hook_init)(int16_t param);
@@ -68,7 +70,7 @@ typedef struct {
   tx_lin_hook tx_lin;
   fwd_hook fwd;
   AddrCheckStruct *addr_check;
-  uint8_t addr_check_len;
+  const int addr_check_len;
 } safety_hooks;
 
 // This can be set by the safety hooks

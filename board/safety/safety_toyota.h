@@ -24,6 +24,7 @@ const AddrBus TOYOTA_TX_MSGS[] = {{0x283, 0}, {0x2E6, 0}, {0x2E7, 0}, {0x33E, 0}
                                   {0x128, 1}, {0x141, 1}, {0x160, 1}, {0x161, 1}, {0x470, 1},  // DSU bus 1
                                   {0x2E4, 0}, {0x411, 0}, {0x412, 0}, {0x343, 0}, {0x1D2, 0}, // LKAS + ACC
                                   {0x200, 0}};  // interceptor
+const int TOYOTA_RX_CHECKS_LEN = sizeof(TOYOTA_RX_CHECKS) / sizeof(TOYOTA_RX_CHECKS[0]);
 
 // global actuation limit states
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
@@ -38,7 +39,8 @@ struct sample_t toyota_torque_meas;       // last 3 motor torques produced by th
 
 
 static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
-  int index = get_addr_check_index(to_push, TOYOTA_RX_CHECKS, sizeof(TOYOTA_RX_CHECKS)/sizeof(TOYOTA_RX_CHECKS[0]));
+  int index = get_addr_check_index(to_push, TOYOTA_RX_CHECKS, TOYOTA_RX_CHECKS_LEN);
+  update_addr_timestamp(TOYOTA_RX_CHECKS, index);
 
   // checksum check
   if (index != -1) {
@@ -53,6 +55,7 @@ static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
       TOYOTA_RX_CHECKS[index].valid_checksum = checksum_comp == checksum;
     }
   }
+
   return is_addr_valid(TOYOTA_RX_CHECKS, index);
 }
 
@@ -248,5 +251,5 @@ const safety_hooks toyota_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = toyota_fwd_hook,
   .addr_check = TOYOTA_RX_CHECKS,
-  .addr_check_len = sizeof(TOYOTA_TX_MSGS)/sizeof(TOYOTA_TX_MSGS[0]),
+  .addr_check_len = sizeof(TOYOTA_RX_CHECKS)/sizeof(TOYOTA_RX_CHECKS[0]),
 };
