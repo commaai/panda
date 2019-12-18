@@ -40,7 +40,7 @@ const safety_hooks gm_ascm_hooks = {
   .tx = alloutput_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = gm_ascm_fwd_hook,
-  .addr_check = &default_addr_check,
+  .addr_check = default_addr_check,
   .addr_check_len = 0U,
 };
 

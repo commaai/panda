@@ -266,7 +266,7 @@ const safety_hooks honda_hooks = {
   .tx = honda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = honda_fwd_hook,
-  .addr_check = &default_addr_check,
+  .addr_check = default_addr_check,
   .addr_check_len = 0U,
 };
 
@@ -276,6 +276,6 @@ const safety_hooks honda_bosch_hooks = {
   .tx = honda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = honda_bosch_fwd_hook,
-  .addr_check = &default_addr_check,
+  .addr_check = default_addr_check,
   .addr_check_len = 0U,
 };

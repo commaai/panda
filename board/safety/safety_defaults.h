@@ -36,7 +36,7 @@ const safety_hooks nooutput_hooks = {
   .tx = nooutput_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = default_fwd_hook,
-  .addr_check = &default_addr_check,
+  .addr_check = default_addr_check,
   .addr_check_len = 0U,
 };
 
@@ -66,6 +66,6 @@ const safety_hooks alloutput_hooks = {
   .tx = alloutput_tx_hook,
   .tx_lin = alloutput_tx_lin_hook,
   .fwd = default_fwd_hook,
-  .addr_check = &default_addr_check,
+  .addr_check = default_addr_check,
   .addr_check_len = 0U,
 };

@@ -67,7 +67,7 @@ typedef struct {
   tx_hook tx;
   tx_lin_hook tx_lin;
   fwd_hook fwd;
-  AddrCheckStruct (*addr_check)[];
+  AddrCheckStruct *addr_check;
   uint8_t addr_check_len;
 } safety_hooks;
 

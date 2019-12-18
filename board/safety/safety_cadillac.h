@@ -121,6 +121,6 @@ const safety_hooks cadillac_hooks = {
   .tx = cadillac_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = default_fwd_hook,
-  .addr_check = &default_addr_check,
+  .addr_check = default_addr_check,
   .addr_check_len = 0U,
 };
