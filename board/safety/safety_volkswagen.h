@@ -66,7 +66,7 @@ static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int bus = GET_BUS(to_send);
   int tx = 1;
 
-  if (!addr_allowed(addr, bus, VOLKSWAGEN_TX_MSGS, sizeof(VOLKSWAGEN_TX_MSGS)/sizeof(VOLKSWAGEN_TX_MSGS[0]))) {
+  if (!msg_allowed(addr, bus, VOLKSWAGEN_TX_MSGS, sizeof(VOLKSWAGEN_TX_MSGS)/sizeof(VOLKSWAGEN_TX_MSGS[0]))) {
     tx = 0;
   }
 
