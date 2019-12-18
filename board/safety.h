@@ -67,6 +67,12 @@ bool addr_allowed(int addr, int bus, const AddrBus addr_list[], int len) {
   return allowed;
 }
 
+// compute the time elapsed (in microseconds) from 2 counter samples
+// case where ts < ts_last is ok: overflow is properly re-casted into uint32_t
+uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
+  return ts - ts_last;
+}
+
 int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_list[], const int len) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
@@ -82,6 +88,14 @@ int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_
     }
   }
   return index;
+}
+
+void check_lagging_addrs(const safety_hooks *hooks) {
+  uint32_t ts = TIM2->CNT;
+  for (int i=0; i < hooks->addr_check_len; i++) {
+    uint32_t elapsed_time = get_ts_elapsed(ts, hooks->addr_check[i].last_timestamp);
+    hooks->addr_check[i].lagging = elapsed_time > (hooks->addr_check[i].expected_timestep * 10U);
+  }
 }
 
 void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
@@ -156,12 +170,6 @@ int set_safety_hooks(uint16_t mode, int16_t param) {
     current_hooks->init(param);
   }
   return set_status;
-}
-
-// compute the time elapsed (in microseconds) from 2 counter samples
-// case where ts < ts_last is ok: overflow is properly re-casted into uint32_t
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
-  return ts - ts_last;
 }
 
 // convert a trimmed integer to signed 32 bit int

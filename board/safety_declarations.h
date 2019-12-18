@@ -73,6 +73,8 @@ typedef struct {
   const int addr_check_len;
 } safety_hooks;
 
+void check_lagging_addrs(const safety_hooks *hooks);
+
 // This can be set by the safety hooks
 bool controls_allowed = false;
 bool relay_malfunction = false;
