@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests. safety.common import make_msg
+from panda.tests.safety.common import make_msg
+from panda.tests.safety.test_toyota import toyota_checksum
 
 IPAS_OVERRIDE_THRESHOLD = 200
 
@@ -22,15 +23,6 @@ def sign(a):
     return 1
   else:
     return -1
-
-def toyota_checksum(msg, addr, len_msg):
-  checksum = (len_msg + addr + (addr >> 8))
-  for i in range(len_msg):
-    if i < 4:
-      checksum += (msg.RDLR >> (8 * i))
-    else:
-      checksum += (msg.RDHR >> (8 * (i - 4)))
-  return checksum & 0xff
 
 
 class TestToyotaSafety(unittest.TestCase):
