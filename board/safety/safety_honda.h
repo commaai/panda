@@ -6,7 +6,7 @@
 //      accel rising edge
 //      brake rising edge
 //      brake > 0mph
-AddrCheckStruct HONDA_RX_CHECKS[] = {{{0x1A6, 0x296}, 1U, 0, true, true, 4U, 40000U, true, 0, 0U, 0U, true},
+AddrCheckStruct HONDA_RX_CHECKS[] = {{{0x1A6, 0x296}, 2U, 0, true, true, 4U, 40000U, true, 0, 0U, 0U, true},
                                      {{       0x158}, 1U, 0, true, true, 4U, 10000U, true, 0, 0U, 0U, true},
                                      {{       0x17C}, 1U, 0, true, true, 4U, 10000U, true, 0, 0U, 0U, true}};
 const int HONDA_RX_CHECKS_LEN = sizeof(HONDA_RX_CHECKS) / sizeof(HONDA_RX_CHECKS[0]);
@@ -306,8 +306,8 @@ const safety_hooks honda_hooks = {
   .tx = honda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = honda_fwd_hook,
-  .addr_check = default_addr_check,
-  .addr_check_len = 0U,
+  .addr_check = HONDA_RX_CHECKS,
+  .addr_check_len = sizeof(HONDA_RX_CHECKS) / sizeof(HONDA_RX_CHECKS[0]),
 };
 
 const safety_hooks honda_bosch_hooks = {
@@ -316,6 +316,6 @@ const safety_hooks honda_bosch_hooks = {
   .tx = honda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = honda_bosch_fwd_hook,
-  .addr_check = default_addr_check,
-  .addr_check_len = 0U,
+  .addr_check = HONDA_RX_CHECKS,
+  .addr_check_len = sizeof(HONDA_RX_CHECKS) / sizeof(HONDA_RX_CHECKS[0]),
 };
