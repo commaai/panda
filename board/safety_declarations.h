@@ -19,10 +19,10 @@ typedef struct {
   int bus;
 } AddrBus;
 
-// TODO: add fields for counter and frequency checks
+// TODO: add fields for frequency checks
 typedef struct {
   // addr is array because some cars have mutually exclusive addresses for the same function
-  // 2 is currently the max number of mutually exclusive messages. Make it larger if needed
+  // 2 is currently the max number of mutually exclusive messages; make it larger if needed
   const int addr[2];
   const uint8_t addr_len;
   const int bus;
@@ -32,6 +32,9 @@ typedef struct {
   const uint8_t max_counter;
   uint8_t last_counter;
   int bad_counters;
+  const uint32_t expected_timestep;  // us
+  uint32_t last_timestamp;  // us
+  bool lagging;
 } AddrCheckStruct;
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
@@ -64,6 +67,8 @@ typedef struct {
   tx_hook tx;
   tx_lin_hook tx_lin;
   fwd_hook fwd;
+  AddrCheckStruct (*addr_check)[];
+  uint8_t addr_check_len;
 } safety_hooks;
 
 // This can be set by the safety hooks

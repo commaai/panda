@@ -210,4 +210,6 @@ const safety_hooks tesla_hooks = {
   .tx = tesla_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = tesla_fwd_hook,
+  .addr_check = &default_addr_check,
+  .addr_check_len = 0U,
 };

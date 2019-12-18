@@ -18,8 +18,8 @@ const int TOYOTA_MIN_ACCEL = -3000;       // 3.0 m/s2
 
 const int TOYOTA_GAS_INTERCEPTOR_THRESHOLD = 475;  // ratio between offset and gain from dbc file
 
-AddrCheckStruct TOYOTA_RX_CHECKS[] = {{{0x260}, 1U, 0, true, true, false, 0u, 0U, true},
-                                      {{0x1D2}, 1U, 0, true, true, false, 0U, 0U, true}};
+AddrCheckStruct TOYOTA_RX_CHECKS[] = {{{0x260}, 1U, 0, true, true, false, 0u, 0U, true, 0U, 0U, true},
+                                      {{0x1D2}, 1U, 0, true, true, false, 0U, 0U, true, 0U, 0U, true}};
 const AddrBus TOYOTA_TX_MSGS[] = {{0x283, 0}, {0x2E6, 0}, {0x2E7, 0}, {0x33E, 0}, {0x344, 0}, {0x365, 0}, {0x366, 0}, {0x4CB, 0},  // DSU bus 0
                                   {0x128, 1}, {0x141, 1}, {0x160, 1}, {0x161, 1}, {0x470, 1},  // DSU bus 1
                                   {0x2E4, 0}, {0x411, 0}, {0x412, 0}, {0x343, 0}, {0x1D2, 0}, // LKAS + ACC
@@ -247,4 +247,6 @@ const safety_hooks toyota_hooks = {
   .tx = toyota_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = toyota_fwd_hook,
+  .addr_check = &TOYOTA_RX_CHECKS,
+  .addr_check_len = sizeof(TOYOTA_TX_MSGS)/sizeof(TOYOTA_TX_MSGS[0]),
 };
