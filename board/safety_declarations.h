@@ -21,20 +21,22 @@ typedef struct {
 
 // struct that contains params and validity flags about checksum, counter and frequency checks
 // for relevant addresses
+// addr is array because some cars have mutually exclusive addresses for the same function
+// 2 is currently the max number of mutually exclusive messages seen in cars; make it larger if needed
 typedef struct {
-  // addr is array because some cars have mutually exclusive addresses for the same function
-  // 2 is currently the max number of mutually exclusive messages; make it larger if needed
+  // const params
   const int addr[2];
   const uint8_t addr_len;
   const int bus;
   const bool check_checksum;
-  bool valid_checksum;
   const bool check_counter;
   const uint8_t max_counter;
-  uint8_t last_counter;
+  const uint32_t expected_timestep;  // micro-s
+  // dynamic flags
+  bool valid_checksum;
   int wrong_counters;
-  const uint32_t expected_timestep;  // us
-  uint32_t last_timestamp;  // us
+  uint8_t last_counter;
+  uint32_t last_timestamp;  // micro-s
   bool lagging;
 } AddrCheckStruct;
 
