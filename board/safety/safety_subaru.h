@@ -51,7 +51,7 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
-  if (!addr_allowed(addr, bus, SUBARU_TX_MSGS, sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))) {
+  if (!msg_allowed(addr, bus, SUBARU_TX_MSGS, sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))) {
     tx = 0;
   }
 
