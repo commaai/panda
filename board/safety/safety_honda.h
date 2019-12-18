@@ -6,9 +6,9 @@
 //      accel rising edge
 //      brake rising edge
 //      brake > 0mph
-AddrCheckStruct HONDA_RX_CHECKS[] = {{{0x1A6, 0x296}, 1U, 0, true, true, 4U, 20000U, true, 0, 0U, 0U, true},
-                                     {{       0x158}, 1U, 0, true, true, 4U, 30000U, true, 0, 0U, 0U, true},
-                                     {{       0x17C}, 1U, 0, true, true, 4U, 30000U, true, 0, 0U, 0U, true}};
+AddrCheckStruct HONDA_RX_CHECKS[] = {{{0x1A6, 0x296}, 1U, 0, true, true, 4U, 40000U, true, 0, 0U, 0U, true},
+                                     {{       0x158}, 1U, 0, true, true, 4U, 10000U, true, 0, 0U, 0U, true},
+                                     {{       0x17C}, 1U, 0, true, true, 4U, 10000U, true, 0, 0U, 0U, true}};
 const int HONDA_RX_CHECKS_LEN = sizeof(HONDA_RX_CHECKS) / sizeof(HONDA_RX_CHECKS[0]);
 
 const AddrBus HONDA_N_TX_MSGS[] = {{0xE4, 0}, {0x194, 0}, {0x1FA, 0}, {0x200, 0}, {0x30C, 0}, {0x33D, 0}, {0x39F, 0}};
@@ -37,12 +37,12 @@ static bool honda_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
       while (addr > 0U) {
         checksum_comp += (addr & 0xFU); addr >>= 4;
       }
-      for (int j = 0; j < checksum_byte; j++) {
+      for (int j = 0; j <= checksum_byte; j++) {
         uint8_t byte = GET_BYTE(to_push, j);
         checksum_comp += (byte & 0xFU) + (byte >> 4U);
       }
       checksum_comp -= checksum;  // remove checksum in message
-      checksum_comp = 8U - checksum_comp;
+      checksum_comp = (8U - checksum_comp) & 0xF;
       HONDA_RX_CHECKS[index].valid_checksum = checksum_comp == checksum;
     }
 
@@ -53,7 +53,6 @@ static bool honda_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
       update_counter(HONDA_RX_CHECKS, index, counter);
     }
   }
-
   return is_addr_valid(HONDA_RX_CHECKS, index);
 }
 
