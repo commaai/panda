@@ -55,7 +55,7 @@ static bool honda_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
       update_counter(HONDA_RX_CHECKS, index, counter);
     }
   }
-  return is_addr_valid(HONDA_RX_CHECKS, index);
+  return is_msg_valid(HONDA_RX_CHECKS, index);
 }
 
 static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {

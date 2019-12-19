@@ -95,8 +95,9 @@ void check_lagging_addrs(const safety_hooks *hooks) {
   uint32_t ts = TIM2->CNT;
   for (int i=0; i < hooks->addr_check_len; i++) {
     uint32_t elapsed_time = get_ts_elapsed(ts, hooks->addr_check[i].last_timestamp);
-    // greater of 1s and 10x expected timestep. Quite conservative to not risk false triggers
-    bool lagging = elapsed_time > MAX(hooks->addr_check[i].expected_timestep * 10U, 1e6);
+    // lag threshold is max of: 1s and MAX_MISSED_MSGS * expected timestep.
+    // Quite conservative to not risk false triggers
+    bool lagging = elapsed_time > MAX(hooks->addr_check[i].expected_timestep * MAX_MISSED_MSGS, 1e6);
     hooks->addr_check[i].lagging = lagging;
     if (lagging) {
       controls_allowed = 0;
@@ -113,7 +114,7 @@ void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
   }
 }
 
-bool is_addr_valid(AddrCheckStruct addr_list[], int index) {
+bool is_msg_valid(AddrCheckStruct addr_list[], int index) {
   bool valid = true;
   if (index != -1) {
     if ((!addr_list[index].valid_checksum) || (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {

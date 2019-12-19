@@ -54,7 +54,7 @@ bool msg_allowed(int addr, int bus, const AddrBus addr_list[], int len);
 int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_list[], const int len);
 void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter);
 void update_addr_timestamp(AddrCheckStruct addr_list[], int index);
-bool is_addr_valid(AddrCheckStruct addr_list[], int index);
+bool is_msg_valid(AddrCheckStruct addr_list[], int index);
 
 typedef void (*safety_hook_init)(int16_t param);
 typedef void (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);

@@ -56,7 +56,7 @@ static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
     }
   }
 
-  return is_addr_valid(TOYOTA_RX_CHECKS, index);
+  return is_msg_valid(TOYOTA_RX_CHECKS, index);
 }
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
