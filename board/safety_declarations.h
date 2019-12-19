@@ -19,25 +19,21 @@ typedef struct {
   int bus;
 } AddrBus;
 
-// struct that contains params and validity flags about checksum, counter and frequency checks
-// for relevant addresses
-// addr is array because some cars have mutually exclusive addresses for the same function
-// 2 is currently the max number of mutually exclusive messages seen in cars; make it larger if needed
+// params and flags about checksum, counter and frequency checks for each monitored address
 typedef struct {
   // const params
-  const int addr[2];
-  const uint8_t addr_len;
-  const int bus;
-  const bool check_checksum;
-  const bool check_counter;
-  const uint8_t max_counter;
-  const uint32_t expected_timestep;  // micro-s
+  const int addr[2];                 // mutually exclusive addresses for the same function (e.g. honda steer)
+  const uint8_t addr_len;            // num of messages in the array above. 2 is max. increase if needed.
+  const int bus;                     // bus where to expect the addr. Temp hack: -1 means skip the bus check
+  const bool check_checksum;         // true is checksum check is performed
+  const uint8_t max_counter;         // maximum value of the counter. 0 means that the counter check is skipped
+  const uint32_t expected_timestep;  // expected time between message updates [us]
   // dynamic flags
-  bool valid_checksum;
-  int wrong_counters;
-  uint8_t last_counter;
-  uint32_t last_timestamp;  // micro-s
-  bool lagging;
+  bool valid_checksum;               // true if and only if checksum check is passed
+  int wrong_counters;                // counter of wrong counters, saturated between 0 and MAX_WRONG_COUNTERS
+  uint8_t last_counter;              // last counter value
+  uint32_t last_timestamp;           // micro-s
+  bool lagging;                      // true if and only if the time between updates is excessive
 } AddrCheckStruct;
 
 void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);

@@ -8,9 +8,9 @@
 //      brake > 0mph
 
 // TODO: -1 bus check to indicate that bus check is skipped. Temp solution
-AddrCheckStruct HONDA_RX_CHECKS[] = {{{0x1A6, 0x296}, 2U, -1, true, true, 4U, 40000U, true, 0, 0U, 0U, true},
-                                     {{       0x158}, 1U, -1, true, true, 4U, 10000U, true, 0, 0U, 0U, true},
-                                     {{       0x17C}, 1U, -1, true, true, 4U, 10000U, true, 0, 0U, 0U, true}};
+AddrCheckStruct HONDA_RX_CHECKS[] = {{{0x1A6, 0x296}, 2U, -1, true, 3U, 40000U, true, 0, 0U, 0U, true},
+                                     {{       0x158}, 1U, -1, true, 3U, 10000U, true, 0, 0U, 0U, true},
+                                     {{       0x17C}, 1U, -1, true, 3U, 10000U, true, 0, 0U, 0U, true}};
 const int HONDA_RX_CHECKS_LEN = sizeof(HONDA_RX_CHECKS) / sizeof(HONDA_RX_CHECKS[0]);
 
 const AddrBus HONDA_N_TX_MSGS[] = {{0xE4, 0}, {0x194, 0}, {0x1FA, 0}, {0x200, 0}, {0x30C, 0}, {0x33D, 0}, {0x39F, 0}};
@@ -49,7 +49,7 @@ static bool honda_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // get counter
-    if (HONDA_RX_CHECKS[index].check_counter) {
+    if (HONDA_RX_CHECKS[index].max_counter > 0U) {
       int counter_byte = GET_LEN(to_push) - 1;
       uint8_t counter = ((uint8_t)(GET_BYTE(to_push, counter_byte)) >> 4U) & 0x3U;
       update_counter(HONDA_RX_CHECKS, index, counter);
