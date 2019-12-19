@@ -8,17 +8,18 @@
 //      brake > 0mph
 
 // TODO: -1 bus check to indicate that bus check is skipped. Temp solution
-AddrCheckStruct HONDA_RX_CHECKS[] = {
-  {.addr = {0x1A6, 0x296}, .bus = -1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
-  {.addr = {       0x158}, .bus = -1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-  {.addr = {       0x17C}, .bus = -1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-};
-const int HONDA_RX_CHECKS_LEN = sizeof(HONDA_RX_CHECKS) / sizeof(HONDA_RX_CHECKS[0]);
-
 const AddrBus HONDA_N_TX_MSGS[] = {{0xE4, 0}, {0x194, 0}, {0x1FA, 0}, {0x200, 0}, {0x30C, 0}, {0x33D, 0}, {0x39F, 0}};
 const AddrBus HONDA_BH_TX_MSGS[] = {{0xE4, 0}, {0x296, 1}, {0x33D, 0}};  // Bosch Harness
 const AddrBus HONDA_BG_TX_MSGS[] = {{0xE4, 2}, {0x296, 0}, {0x33D, 2}};  // Bosch Giraffe
 const int HONDA_GAS_INTERCEPTOR_THRESHOLD = 328;  // ratio between offset and gain from dbc file
+
+AddrCheckStruct honda_rx_checks[] = {
+  {.addr = {0x1A6, 0x296}, .bus = -1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
+  {.addr = {       0x158}, .bus = -1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+  {.addr = {       0x17C}, .bus = -1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+};
+const int HONDA_RX_CHECKS_LEN = sizeof(honda_rx_checks) / sizeof(honda_rx_checks[0]);
+
 int honda_brake = 0;
 int honda_gas_prev = 0;
 bool honda_brake_pressed_prev = false;
@@ -28,12 +29,12 @@ bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
 
 static bool honda_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
-  int index = get_addr_check_index(to_push, HONDA_RX_CHECKS, HONDA_RX_CHECKS_LEN);
-  update_addr_timestamp(HONDA_RX_CHECKS, index);
+  int index = get_addr_check_index(to_push, honda_rx_checks, HONDA_RX_CHECKS_LEN);
+  update_addr_timestamp(honda_rx_checks, index);
 
   if (index != -1) {
     // checksum check
-    if (HONDA_RX_CHECKS[index].check_checksum) {
+    if (honda_rx_checks[index].check_checksum) {
       int checksum_byte = GET_LEN(to_push) - 1;
       uint8_t checksum = (uint8_t)(GET_BYTE(to_push, checksum_byte) & 0xF);
       uint8_t checksum_comp = 0U;
@@ -47,17 +48,17 @@ static bool honda_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
       }
       checksum_comp -= checksum;  // remove checksum in message
       checksum_comp = (8U - checksum_comp) & 0xFU;
-      HONDA_RX_CHECKS[index].valid_checksum = checksum_comp == checksum;
+      honda_rx_checks[index].valid_checksum = checksum_comp == checksum;
     }
 
     // get counter
-    if (HONDA_RX_CHECKS[index].max_counter > 0U) {
+    if (honda_rx_checks[index].max_counter > 0U) {
       int counter_byte = GET_LEN(to_push) - 1;
       uint8_t counter = ((uint8_t)(GET_BYTE(to_push, counter_byte)) >> 4U) & 0x3U;
-      update_counter(HONDA_RX_CHECKS, index, counter);
+      update_counter(honda_rx_checks, index, counter);
     }
   }
-  return is_msg_valid(HONDA_RX_CHECKS, index);
+  return is_msg_valid(honda_rx_checks, index);
 }
 
 static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -312,8 +313,8 @@ const safety_hooks honda_hooks = {
   .tx = honda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = honda_fwd_hook,
-  .addr_check = HONDA_RX_CHECKS,
-  .addr_check_len = sizeof(HONDA_RX_CHECKS) / sizeof(HONDA_RX_CHECKS[0]),
+  .addr_check = honda_rx_checks,
+  .addr_check_len = sizeof(honda_rx_checks) / sizeof(honda_rx_checks[0]),
 };
 
 const safety_hooks honda_bosch_hooks = {
@@ -322,6 +323,6 @@ const safety_hooks honda_bosch_hooks = {
   .tx = honda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = honda_bosch_fwd_hook,
-  .addr_check = HONDA_RX_CHECKS,
-  .addr_check_len = sizeof(HONDA_RX_CHECKS) / sizeof(HONDA_RX_CHECKS[0]),
+  .addr_check = honda_rx_checks,
+  .addr_check_len = sizeof(honda_rx_checks) / sizeof(honda_rx_checks[0]),
 };

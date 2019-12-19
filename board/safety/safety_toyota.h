@@ -18,15 +18,16 @@ const int TOYOTA_MIN_ACCEL = -3000;       // 3.0 m/s2
 
 const int TOYOTA_GAS_INTERCEPTOR_THRESHOLD = 475;  // ratio between offset and gain from dbc file
 
-AddrCheckStruct TOYOTA_RX_CHECKS[] = {
-  {.addr = {0x260}, .bus = 0, .check_checksum = true, .max_counter = 0U, .expected_timestep = 20000U},
-  {.addr = {0x1D2}, .bus = 0, .check_checksum = true, .max_counter = 0U, .expected_timestep = 30000U},
-};
 const AddrBus TOYOTA_TX_MSGS[] = {{0x283, 0}, {0x2E6, 0}, {0x2E7, 0}, {0x33E, 0}, {0x344, 0}, {0x365, 0}, {0x366, 0}, {0x4CB, 0},  // DSU bus 0
                                   {0x128, 1}, {0x141, 1}, {0x160, 1}, {0x161, 1}, {0x470, 1},  // DSU bus 1
                                   {0x2E4, 0}, {0x411, 0}, {0x412, 0}, {0x343, 0}, {0x1D2, 0}, // LKAS + ACC
                                   {0x200, 0}};  // interceptor
-const int TOYOTA_RX_CHECKS_LEN = sizeof(TOYOTA_RX_CHECKS) / sizeof(TOYOTA_RX_CHECKS[0]);
+
+AddrCheckStruct toyota_rx_checks[] = {
+  {.addr = {0x260}, .bus = 0, .check_checksum = true, .max_counter = 0U, .expected_timestep = 20000U},
+  {.addr = {0x1D2}, .bus = 0, .check_checksum = true, .max_counter = 0U, .expected_timestep = 30000U},
+};
+const int TOYOTA_RX_CHECKS_LEN = sizeof(toyota_rx_checks) / sizeof(toyota_rx_checks[0]);
 
 // global actuation limit states
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
@@ -41,12 +42,12 @@ struct sample_t toyota_torque_meas;       // last 3 motor torques produced by th
 
 
 static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
-  int index = get_addr_check_index(to_push, TOYOTA_RX_CHECKS, TOYOTA_RX_CHECKS_LEN);
-  update_addr_timestamp(TOYOTA_RX_CHECKS, index);
+  int index = get_addr_check_index(to_push, toyota_rx_checks, TOYOTA_RX_CHECKS_LEN);
+  update_addr_timestamp(toyota_rx_checks, index);
 
   // checksum check
   if (index != -1) {
-    if (TOYOTA_RX_CHECKS[index].check_checksum) {
+    if (toyota_rx_checks[index].check_checksum) {
       int checksum_byte_pos = GET_LEN(to_push) - 1;
       int addr = GET_ADDR(to_push);
       uint8_t checksum = (uint8_t)(GET_BYTE(to_push, checksum_byte_pos));
@@ -54,11 +55,11 @@ static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
       for (int j = 0; j < checksum_byte_pos; j++) {
         checksum_comp += (uint8_t)GET_BYTE(to_push, j);
       }
-      TOYOTA_RX_CHECKS[index].valid_checksum = checksum_comp == checksum;
+      toyota_rx_checks[index].valid_checksum = checksum_comp == checksum;
     }
   }
 
-  return is_msg_valid(TOYOTA_RX_CHECKS, index);
+  return is_msg_valid(toyota_rx_checks, index);
 }
 
 static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -254,6 +255,6 @@ const safety_hooks toyota_hooks = {
   .tx = toyota_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = toyota_fwd_hook,
-  .addr_check = TOYOTA_RX_CHECKS,
-  .addr_check_len = sizeof(TOYOTA_RX_CHECKS)/sizeof(TOYOTA_RX_CHECKS[0]),
+  .addr_check = toyota_rx_checks,
+  .addr_check_len = sizeof(toyota_rx_checks)/sizeof(toyota_rx_checks[0]),
 };
