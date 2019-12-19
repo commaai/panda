@@ -44,7 +44,7 @@ static bool honda_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
         checksum_comp += (byte & 0xFU) + (byte >> 4U);
       }
       checksum_comp -= checksum;  // remove checksum in message
-      checksum_comp = (8U - checksum_comp) & 0xF;
+      checksum_comp = (8U - checksum_comp) & 0xFU;
       HONDA_RX_CHECKS[index].valid_checksum = checksum_comp == checksum;
     }
 
