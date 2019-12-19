@@ -283,6 +283,20 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.set_controls_allowed(1)
     self.assertTrue(self.safety.safety_tx_hook(self._send_interceptor_msg(0x1000, 0x200)))
 
+  def test_rx_hook(self):
+    # checksum torque_meas
+    to_push = self._torque_meas_msg(0)
+    self.assertTrue(self.safety.safety_rx_hook(to_push))
+    to_push[0].RDHR = 0
+    self.assertFalse(self.safety.safety_rx_hook(to_push))
+
+    # checksum pcm_cruise
+    to_push = self._pcm_cruise_msg(0)
+    self.assertTrue(self.safety.safety_rx_hook(to_push))
+    to_push[0].RDHR = 0
+    self.assertFalse(self.safety.safety_rx_hook(to_push))
+
+
   def test_fwd_hook(self):
 
     buss = list(range(0x0, 0x3))
