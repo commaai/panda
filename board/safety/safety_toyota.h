@@ -18,8 +18,10 @@ const int TOYOTA_MIN_ACCEL = -3000;       // 3.0 m/s2
 
 const int TOYOTA_GAS_INTERCEPTOR_THRESHOLD = 475;  // ratio between offset and gain from dbc file
 
-AddrCheckStruct TOYOTA_RX_CHECKS[] = {{{0x260}, 1U, 0, true, 0U, 20000U, true, 0, 0U, 0U, true},
-                                      {{0x1D2}, 1U, 0, true, 0U, 30000U, true, 0, 0U, 0U, true}};
+AddrCheckStruct TOYOTA_RX_CHECKS[] = {
+  {.addr = {0x260}, .addr_len = 1U, .bus = 0, .check_checksum = true, .max_counter = 0U, .expected_timestep = 20000U},
+  {.addr = {0x1D2}, .addr_len = 1U, .bus = 0, .check_checksum = true, .max_counter = 0U, .expected_timestep = 30000U},
+};
 const AddrBus TOYOTA_TX_MSGS[] = {{0x283, 0}, {0x2E6, 0}, {0x2E7, 0}, {0x33E, 0}, {0x344, 0}, {0x365, 0}, {0x366, 0}, {0x4CB, 0},  // DSU bus 0
                                   {0x128, 1}, {0x141, 1}, {0x160, 1}, {0x161, 1}, {0x470, 1},  // DSU bus 1
                                   {0x2E4, 0}, {0x411, 0}, {0x412, 0}, {0x343, 0}, {0x1D2, 0}, // LKAS + ACC

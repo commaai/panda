@@ -8,9 +8,11 @@
 //      brake > 0mph
 
 // TODO: -1 bus check to indicate that bus check is skipped. Temp solution
-AddrCheckStruct HONDA_RX_CHECKS[] = {{{0x1A6, 0x296}, 2U, -1, true, 3U, 40000U, true, 0, 0U, 0U, true},
-                                     {{       0x158}, 1U, -1, true, 3U, 10000U, true, 0, 0U, 0U, true},
-                                     {{       0x17C}, 1U, -1, true, 3U, 10000U, true, 0, 0U, 0U, true}};
+AddrCheckStruct HONDA_RX_CHECKS[] = {
+  {.addr = {0x1A6, 0x296}, .addr_len = 2U, .bus = -1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
+  {.addr = {       0x158}, .addr_len = 1U, .bus = -1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+  {.addr = {       0x17C}, .addr_len = 1U, .bus = -1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+};
 const int HONDA_RX_CHECKS_LEN = sizeof(HONDA_RX_CHECKS) / sizeof(HONDA_RX_CHECKS[0]);
 
 const AddrBus HONDA_N_TX_MSGS[] = {{0xE4, 0}, {0x194, 0}, {0x1FA, 0}, {0x200, 0}, {0x30C, 0}, {0x33D, 0}, {0x39F, 0}};
