@@ -388,7 +388,7 @@ class Panda(object):
   def get_signature(self):
     part_1 = self._handle.controlRead(Panda.REQUEST_IN, 0xd3, 0, 0, 0x40)
     part_2 = self._handle.controlRead(Panda.REQUEST_IN, 0xd4, 0, 0, 0x40)
-    return part_1 + part_2
+    return bytes(part_1 + part_2)
 
   def get_type(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
