@@ -11,6 +11,7 @@ INTERCEPTOR_THRESHOLD = 328
 TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x200, 0], [0x30C, 0], [0x33D, 0], [0x39F, 0]]
 
 def honda_checksum(msg, addr, len_msg):
+  checksum = 0
   while addr > 0:
     checksum += addr
     addr >>= 4
@@ -28,23 +29,35 @@ class TestHondaSafety(unittest.TestCase):
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_HONDA, 0)
     cls.safety.init_tests_honda()
+    cls.cnt_0x158 = 0
+    cls.cnt_0x17C = 0
+    cls.cnt_button = 0
 
   def _speed_msg(self, speed):
     to_send = make_msg(0, 0x158)
     to_send[0].RDLR = speed
+    self.cnt_0x158 += 1
+    to_send[0].RDHR |= (self.cnt_0x158 % 4) << 28
+    to_send[0].RDHR |= honda_checksum(to_send[0], 0x158, 8) << 24
     return to_send
 
-  def _button_msg(self, buttons, msg):
+  def _button_msg(self, buttons, addr):
     has_relay = self.safety.board_has_relay()
     honda_bosch_hardware = self.safety.get_honda_bosch_hardware()
     bus = 1 if has_relay and honda_bosch_hardware else 0
-    to_send = make_msg(bus, msg)
+    to_send = make_msg(bus, addr)
     to_send[0].RDLR = buttons << 5
+    self.cnt_button += 1
+    to_send[0].RDHR |= (self.cnt_button % 4) << 28
+    to_send[0].RDHR |= honda_checksum(to_send[0], addr, 8) << 24
     return to_send
 
   def _brake_msg(self, brake):
     to_send = make_msg(0, 0x17C)
     to_send[0].RDHR = 0x200000 if brake else 0
+    self.cnt_0x17C += 1
+    to_send[0].RDHR |= (self.cnt_0x17C % 4) << 28
+    to_send[0].RDHR |= honda_checksum(to_send[0], 0x17C, 8) << 24
     return to_send
 
   def _alt_brake_msg(self, brake):
@@ -55,6 +68,9 @@ class TestHondaSafety(unittest.TestCase):
   def _gas_msg(self, gas):
     to_send = make_msg(0, 0x17C)
     to_send[0].RDLR = 1 if gas else 0
+    self.cnt_0x17C += 1
+    to_send[0].RDHR |= (self.cnt_0x17C % 4) << 28
+    to_send[0].RDHR |= honda_checksum(to_send[0], 0x17C, 8) << 24
     return to_send
 
   def _send_brake_msg(self, brake):
