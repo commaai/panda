@@ -12,7 +12,7 @@ int chrysler_cruise_engaged_last = 0;
 uint32_t chrysler_ts_last = 0;
 struct sample_t chrysler_torque_meas;         // last few torques measured
 
-static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+static int chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
@@ -40,6 +40,7 @@ static void chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && (addr == 0x292)) {
     relay_malfunction = true;
   }
+  return 1;
 }
 
 static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {

@@ -23,7 +23,7 @@ int volkswagen_desired_torque_last = 0;
 uint32_t volkswagen_ts_last = 0;
 int volkswagen_gas_prev = 0;
 
-static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+static int volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
@@ -59,6 +59,7 @@ static void volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && (addr == MSG_HCA_01)) {
     relay_malfunction = true;
   }
+  return 1;
 }
 
 static int volkswagen_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {

@@ -31,7 +31,7 @@ int gm_desired_torque_last = 0;
 uint32_t gm_ts_last = 0;
 struct sample_t gm_torque_driver;         // last few driver torques measured
 
-static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
@@ -103,6 +103,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && ((addr == 384) || (addr == 715))) {
     relay_malfunction = true;
   }
+  return 1;
 }
 
 // all commands: gas/regen, friction brake and steering

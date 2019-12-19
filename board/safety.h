@@ -40,8 +40,8 @@
 uint16_t current_safety_mode = SAFETY_SILENT;
 const safety_hooks *current_hooks = &nooutput_hooks;
 
-void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push){
-  current_hooks->rx(to_push);
+int safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push){
+  return current_hooks->rx(to_push);
 }
 
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {

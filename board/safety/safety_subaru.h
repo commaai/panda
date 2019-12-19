@@ -16,7 +16,7 @@ int subaru_desired_torque_last = 0;
 uint32_t subaru_ts_last = 0;
 struct sample_t subaru_torque_driver;         // last few driver torques measured
 
-static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
@@ -44,6 +44,7 @@ static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && ((addr == 0x122) || (addr == 0x164))) {
     relay_malfunction = true;
   }
+  return 1;
 }
 
 static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {

@@ -35,7 +35,7 @@ typedef struct {
   bool lagging;                      // true if and only if the time between updates is excessive
 } AddrCheckStruct;
 
-void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
+int safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
@@ -56,7 +56,7 @@ void update_addr_timestamp(AddrCheckStruct addr_list[], int index);
 bool is_msg_valid(AddrCheckStruct addr_list[], int index);
 
 typedef void (*safety_hook_init)(int16_t param);
-typedef void (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);
+typedef int (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);
 typedef int (*tx_hook)(CAN_FIFOMailBox_TypeDef *to_send);
 typedef int (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
 typedef int (*fwd_hook)(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd);
