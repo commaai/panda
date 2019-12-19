@@ -743,8 +743,8 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
     safety_mode_cnt += 1U;
     ignition_can_cnt += 1U;
 
-    // check for lagging safety messages
-    check_lagging_addrs(current_hooks);
+    // synchronous safety check
+    safety_tick(current_hooks);
   }
   TIM9->SR = 0;
 }

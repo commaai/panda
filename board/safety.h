@@ -91,13 +91,15 @@ Return:
   return index;
 }
 
-void check_lagging_addrs(const safety_hooks *hooks) {
+// 1Hz safety function called by main. Now just a check for lagging safety messages
+void safety_tick(const safety_hooks *hooks) {
   uint32_t ts = TIM2->CNT;
   if (hooks->addr_check != NULL) {
     for (int i=0; i < hooks->addr_check_len; i++) {
       uint32_t elapsed_time = get_ts_elapsed(ts, hooks->addr_check[i].last_timestamp);
       // lag threshold is max of: 1s and MAX_MISSED_MSGS * expected timestep.
-      // Quite conservative to not risk false triggers
+      // Quite conservative to not risk false triggers.
+      // 2s of lag is worse case, since the function is called at 1Hz
       bool lagging = elapsed_time > MAX(hooks->addr_check[i].expected_timestep * MAX_MISSED_MSGS, 1e6);
       hooks->addr_check[i].lagging = lagging;
       if (lagging) {
