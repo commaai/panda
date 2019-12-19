@@ -83,11 +83,11 @@ int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_
       // TODO: remove rule to skip bus check if expected bus is negative. See safety_honda.h
       if ((addr == addr_list[i].addr[j]) && ((bus == addr_list[i].bus) || (addr_list[i].bus < 0))) {
         index = i;
-        i = len;  // break also second loop
-        break;
+        goto Return;
       }
     }
   }
+Return:
   return index;
 }
 

@@ -61,13 +61,15 @@ static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
+  if (!toyota_addr_check(to_push)) {
+    goto Invalid;
+  }
+
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
-  bool valid = toyota_addr_check(to_push);
-
   // get eps motor torque (0.66 factor in dbc)
-  if ((addr == 0x260) && valid) {
+  if (addr == 0x260) {
     int torque_meas_new = (GET_BYTE(to_push, 5) << 8) | GET_BYTE(to_push, 6);
     torque_meas_new = to_signed(torque_meas_new, 16);
 
@@ -83,7 +85,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if ((addr == 0x1D2) && valid) {
+  if (addr == 0x1D2) {
     // 5th bit is CRUISE_ACTIVE
     int cruise_engaged = GET_BYTE(to_push, 0) & 0x20;
     if (!cruise_engaged) {
@@ -120,6 +122,7 @@ static void toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == 0x2E4) && (bus == 0)) {
     relay_malfunction = true;
   }
+Invalid: ;  // invalid message
 }
 
 static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {

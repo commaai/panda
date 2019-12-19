@@ -60,21 +60,23 @@ static bool honda_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
+  if (!honda_addr_check(to_push)) {
+    goto Invalid;
+  }
+
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   int bus = GET_BUS(to_push);
 
-  bool valid = honda_addr_check(to_push);
-
   // sample speed
-  if ((addr == 0x158) && valid) {
+  if (addr == 0x158) {
     // first 2 bytes
     honda_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
   }
 
   // state machine to enter and exit controls
   // 0x1A6 for the ILX, 0x296 for the Civic Touring
-  if (((addr == 0x1A6) || (addr == 0x296)) && valid) {
+  if ((addr == 0x1A6) || (addr == 0x296)) {
     int button = (GET_BYTE(to_push, 0) & 0xE0) >> 5;
     switch (button) {
       case 2:  // cancel
@@ -97,7 +99,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // accord, crv: 0x1BE bit 4
   // exit controls on rising edge of brake press or on brake press when speed > 0
   bool is_user_brake_msg = honda_alt_brake_msg ? ((addr) == 0x1BE) : ((addr) == 0x17C);
-  if (is_user_brake_msg && valid) {
+  if (is_user_brake_msg) {
     bool brake_pressed = honda_alt_brake_msg ? (GET_BYTE((to_push), 0) & 0x10) : (GET_BYTE((to_push), 6) & 0x20);
     if (brake_pressed && (!(honda_brake_pressed_prev) || honda_moving)) {
       controls_allowed = 0;
@@ -120,7 +122,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   // exit controls on rising edge of gas press if no interceptor
   if (!gas_interceptor_detected) {
-    if ((addr == 0x17C) && valid) {
+    if (addr == 0x17C) {
       int gas = GET_BYTE(to_push, 0);
       if (gas && !(honda_gas_prev) && long_controls_allowed) {
         controls_allowed = 0;
@@ -152,6 +154,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       relay_malfunction = true;
     }
   }
+Invalid: ;  // invalid message
 }
 
 // all commands: gas, brake and steering
