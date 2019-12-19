@@ -165,6 +165,4 @@ const safety_hooks toyota_ipas_hooks = {
   .tx = toyota_ipas_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = toyota_fwd_hook,
-  .addr_check = default_addr_check,
-  .addr_check_len = 0U,
 };

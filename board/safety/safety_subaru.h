@@ -141,6 +141,4 @@ const safety_hooks subaru_hooks = {
   .tx = subaru_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = subaru_fwd_hook,
-  .addr_check = default_addr_check,
-  .addr_check_len = 0U,
 };

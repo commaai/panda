@@ -93,14 +93,16 @@ int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_
 
 void check_lagging_addrs(const safety_hooks *hooks) {
   uint32_t ts = TIM2->CNT;
-  for (int i=0; i < hooks->addr_check_len; i++) {
-    uint32_t elapsed_time = get_ts_elapsed(ts, hooks->addr_check[i].last_timestamp);
-    // lag threshold is max of: 1s and MAX_MISSED_MSGS * expected timestep.
-    // Quite conservative to not risk false triggers
-    bool lagging = elapsed_time > MAX(hooks->addr_check[i].expected_timestep * MAX_MISSED_MSGS, 1e6);
-    hooks->addr_check[i].lagging = lagging;
-    if (lagging) {
-      controls_allowed = 0;
+  if (hooks->addr_check != NULL) {
+    for (int i=0; i < hooks->addr_check_len; i++) {
+      uint32_t elapsed_time = get_ts_elapsed(ts, hooks->addr_check[i].last_timestamp);
+      // lag threshold is max of: 1s and MAX_MISSED_MSGS * expected timestep.
+      // Quite conservative to not risk false triggers
+      bool lagging = elapsed_time > MAX(hooks->addr_check[i].expected_timestep * MAX_MISSED_MSGS, 1e6);
+      hooks->addr_check[i].lagging = lagging;
+      if (lagging) {
+        controls_allowed = 0;
+      }
     }
   }
 }
