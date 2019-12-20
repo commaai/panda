@@ -14,6 +14,7 @@ typedef struct {
 
 #define BUS_MAX 4U
 
+uint32_t can_rx_errs = 0;
 uint32_t can_send_errs = 0;
 uint32_t can_fwd_errs = 0;
 uint32_t gmlan_send_errs = 0;
