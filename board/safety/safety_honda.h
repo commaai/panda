@@ -196,7 +196,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return tx;
 }
 
-static void honda_init(int16_t param) {
+static void honda_nidec_init(int16_t param) {
   UNUSED(param);
   controls_allowed = false;
   relay_malfunction = false;
@@ -212,7 +212,7 @@ static void honda_bosch_init(int16_t param) {
   honda_alt_brake_msg = (param == 1) ? true : false;
 }
 
-static int honda_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+static int honda_nidec_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   // fwd from car to camera. also fwd certain msgs from camera to car
   // 0xE4 is steering on all cars except CRV and RDX, 0x194 for CRV and RDX,
   // 0x1FA is brake control, 0x30C is acc hud, 0x33D is lkas hud,
@@ -260,12 +260,12 @@ static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return bus_fwd;
 }
 
-const safety_hooks honda_hooks = {
-  .init = honda_init,
+const safety_hooks honda_nidec_hooks = {
+  .init = honda_nidec_init,
   .rx = honda_rx_hook,
   .tx = honda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
-  .fwd = honda_fwd_hook,
+  .fwd = honda_nidec_fwd_hook,
 };
 
 const safety_hooks honda_bosch_hooks = {

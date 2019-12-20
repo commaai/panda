@@ -14,7 +14,7 @@ class TestHondaSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.set_safety_hooks(Panda.SAFETY_HONDA, 0)
+    cls.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
     cls.safety.init_tests_honda()
 
   def _speed_msg(self, speed):

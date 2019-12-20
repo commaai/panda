@@ -39,7 +39,7 @@
 namespace panda {
 	typedef enum _PANDA_SAFETY_MODE : uint16_t {
 		SAFETY_SILENT = 0,
-		SAFETY_HONDA = 1,
+		SAFETY_HONDA_NIDEC = 1,
 		SAFETY_ALLOUTPUT = 17,
 	} PANDA_SAFETY_MODE;
 

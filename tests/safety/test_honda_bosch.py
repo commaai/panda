@@ -14,7 +14,7 @@ class TestHondaSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, 0)
+    cls.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH_GIRAFFE, 0)
     cls.safety.init_tests_honda()
 
   def test_spam_can_buses(self):
