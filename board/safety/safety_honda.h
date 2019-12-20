@@ -28,6 +28,22 @@ bool honda_bosch_hardware = false;
 bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
 
+static uint8_t honda_checksum(CAN_FIFOMailBox_TypeDef *to_push, int len) {
+  uint8_t checksum = 0U;
+  unsigned int addr = GET_ADDR(to_push);
+  while (addr > 0U) {
+    checksum += (addr & 0xFU); addr >>= 4;
+  }
+  for (int j = 0; (j < len); j++) {
+    uint8_t byte = GET_BYTE(to_push, j);
+    checksum += (byte & 0xFU) + (byte >> 4U);
+    if (j == (len - 1)) {
+      checksum -= (byte & 0xFU);  // remove checksum in message
+    }
+  }
+  return (8U - checksum) & 0xFU;
+}
+
 static bool honda_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
   int index = get_addr_check_index(to_push, honda_rx_checks, HONDA_RX_CHECKS_LEN);
   update_addr_timestamp(honda_rx_checks, index);
@@ -35,19 +51,9 @@ static bool honda_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
   if (index != -1) {
     // checksum check
     if (honda_rx_checks[index].check_checksum) {
-      int checksum_byte = GET_LEN(to_push) - 1;
-      uint8_t checksum = (uint8_t)(GET_BYTE(to_push, checksum_byte) & 0xF);
-      uint8_t checksum_comp = 0U;
-      unsigned int addr = GET_ADDR(to_push);
-      while (addr > 0U) {
-        checksum_comp += (addr & 0xFU); addr >>= 4;
-      }
-      for (int j = 0; j <= checksum_byte; j++) {
-        uint8_t byte = GET_BYTE(to_push, j);
-        checksum_comp += (byte & 0xFU) + (byte >> 4U);
-      }
-      checksum_comp -= checksum;  // remove checksum in message
-      checksum_comp = (8U - checksum_comp) & 0xFU;
+      int len = GET_LEN(to_push);
+      uint8_t checksum = (uint8_t)(GET_BYTE(to_push, len - 1) & 0xF);
+      uint8_t checksum_comp = honda_checksum(to_push, len);
       honda_rx_checks[index].valid_checksum = checksum_comp == checksum;
     }
 

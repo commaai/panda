@@ -41,6 +41,15 @@ int toyota_gas_prev = 0;
 struct sample_t toyota_torque_meas;       // last 3 motor torques produced by the eps
 
 
+static uint8_t toyota_checksum(CAN_FIFOMailBox_TypeDef *to_push, int len) {
+  int addr = GET_ADDR(to_push);
+  uint8_t checksum = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U) + (uint8_t)(len);
+  for (int i = 0; i < (len - 1); i++) {
+    checksum += (uint8_t)GET_BYTE(to_push, i);
+  }
+  return checksum;
+}
+
 static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
   int index = get_addr_check_index(to_push, toyota_rx_checks, TOYOTA_RX_CHECKS_LEN);
   update_addr_timestamp(toyota_rx_checks, index);
@@ -48,13 +57,9 @@ static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
   // checksum check
   if (index != -1) {
     if (toyota_rx_checks[index].check_checksum) {
-      int checksum_byte_pos = GET_LEN(to_push) - 1;
-      int addr = GET_ADDR(to_push);
-      uint8_t checksum = (uint8_t)(GET_BYTE(to_push, checksum_byte_pos));
-      uint8_t checksum_comp = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U) + (uint8_t)(checksum_byte_pos) + 1U;
-      for (int j = 0; j < checksum_byte_pos; j++) {
-        checksum_comp += (uint8_t)GET_BYTE(to_push, j);
-      }
+      int len = GET_LEN(to_push);
+      uint8_t checksum = (uint8_t)(GET_BYTE(to_push, len - 1));
+      uint8_t checksum_comp = toyota_checksum(to_push, len);
       toyota_rx_checks[index].valid_checksum = checksum_comp == checksum;
     }
   }
