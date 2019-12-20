@@ -14,7 +14,7 @@ typedef struct {
 
 #define BUS_MAX 4U
 
-uint32_t can_recv_errs = 0;
+uint32_t can_rx_errs = 0;
 uint32_t can_send_errs = 0;
 uint32_t can_fwd_errs = 0;
 uint32_t gmlan_send_errs = 0;
@@ -382,7 +382,7 @@ void can_rx(uint8_t can_number) {
       can_send(&to_send, bus_fwd_num, true);
     }
 
-    can_recv_errs += safety_rx_hook(&to_push) ? 0U : 1U;
+    can_rx_errs += safety_rx_hook(&to_push) ? 0U : 1U;
     ignition_can_hook(&to_push);
 
     current_board->set_led(LED_BLUE, true);

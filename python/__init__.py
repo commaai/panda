@@ -347,24 +347,25 @@ class Panda(object):
 
   def health(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 37)
-    a = struct.unpack("IIIIIIIBBBBBBBBB", dat)
+    a = struct.unpack("IIIIIIIIBBBBBBBBB", dat)
     return {
       "uptime": a[0],
       "voltage": a[1],
       "current": a[2],
-      "can_send_errs": a[3],
-      "can_fwd_errs": a[4],
-      "gmlan_send_errs": a[5],
-      "faults": a[6],
-      "ignition_line": a[7],
-      "ignition_can": a[8],
-      "controls_allowed": a[9],
-      "gas_interceptor_detected": a[10],
-      "car_harness_status": a[11],
-      "usb_power_mode": a[12],
-      "safety_mode": a[13],
-      "fault_status": a[14],
-      "power_save_enabled": a[15]
+      "can_rx_errs": a[3],
+      "can_send_errs": a[4],
+      "can_fwd_errs": a[5],
+      "gmlan_send_errs": a[6],
+      "faults": a[7],
+      "ignition_line": a[8],
+      "ignition_can": a[9],
+      "controls_allowed": a[10],
+      "gas_interceptor_detected": a[11],
+      "car_harness_status": a[12],
+      "usb_power_mode": a[13],
+      "safety_mode": a[14],
+      "fault_status": a[15],
+      "power_save_enabled": a[16]
     }
 
   # ******************* control *******************
@@ -388,7 +389,7 @@ class Panda(object):
   def get_signature(self):
     part_1 = self._handle.controlRead(Panda.REQUEST_IN, 0xd3, 0, 0, 0x40)
     part_2 = self._handle.controlRead(Panda.REQUEST_IN, 0xd4, 0, 0, 0x40)
-    return part_1 + part_2
+    return bytes(part_1 + part_2)
 
   def get_type(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
