@@ -20,7 +20,7 @@ const int TOYOTA_GAS_INTERCEPTOR_THRESHOLD = 475;  // ratio between offset and g
 
 const AddrBus TOYOTA_TX_MSGS[] = {{0x283, 0}, {0x2E6, 0}, {0x2E7, 0}, {0x33E, 0}, {0x344, 0}, {0x365, 0}, {0x366, 0}, {0x4CB, 0},  // DSU bus 0
                                   {0x128, 1}, {0x141, 1}, {0x160, 1}, {0x161, 1}, {0x470, 1},  // DSU bus 1
-                                  {0x2E4, 0}, {0x411, 0}, {0x412, 0}, {0x343, 0}, {0x1D2, 0}, // LKAS + ACC
+                                  {0x2E4, 0}, {0x411, 0}, {0x412, 0}, {0x343, 0}, {0x1D2, 0},  // LKAS + ACC
                                   {0x200, 0}};  // interceptor
 
 AddrCheckStruct toyota_rx_checks[] = {
@@ -41,8 +41,9 @@ int toyota_gas_prev = 0;
 struct sample_t toyota_torque_meas;       // last 3 motor torques produced by the eps
 
 
-static uint8_t toyota_checksum(CAN_FIFOMailBox_TypeDef *to_push, int len) {
+static uint8_t toyota_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   int addr = GET_ADDR(to_push);
+  int len = GET_LEN(to_push);
   uint8_t checksum = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U) + (uint8_t)(len);
   for (int i = 0; i < (len - 1); i++) {
     checksum += (uint8_t)GET_BYTE(to_push, i);
@@ -50,26 +51,15 @@ static uint8_t toyota_checksum(CAN_FIFOMailBox_TypeDef *to_push, int len) {
   return checksum;
 }
 
-static bool toyota_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
-  int index = get_addr_check_index(to_push, toyota_rx_checks, TOYOTA_RX_CHECKS_LEN);
-  update_addr_timestamp(toyota_rx_checks, index);
-
-  // checksum check
-  if (index != -1) {
-    if (toyota_rx_checks[index].check_checksum) {
-      int len = GET_LEN(to_push);
-      uint8_t checksum = (uint8_t)(GET_BYTE(to_push, len - 1));
-      uint8_t checksum_comp = toyota_checksum(to_push, len);
-      toyota_rx_checks[index].valid_checksum = checksum_comp == checksum;
-    }
-  }
-
-  return is_msg_valid(toyota_rx_checks, index);
+static uint8_t toyota_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+  int checksum_byte = GET_LEN(to_push) - 1;
+  return (uint8_t)(GET_BYTE(to_push, checksum_byte));
 }
 
 static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
-  bool valid = toyota_addr_check(to_push);
+  bool valid = addr_safety_check(to_push, toyota_rx_checks, TOYOTA_RX_CHECKS_LEN,
+                                 toyota_get_checksum, toyota_compute_checksum, NULL);
   if (valid) {
     int bus = GET_BUS(to_push);
     int addr = GET_ADDR(to_push);

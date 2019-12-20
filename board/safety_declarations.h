@@ -54,6 +54,12 @@ int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_
 void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter);
 void update_addr_timestamp(AddrCheckStruct addr_list[], int index);
 bool is_msg_valid(AddrCheckStruct addr_list[], int index);
+bool addr_safety_check(CAN_FIFOMailBox_TypeDef *to_push,
+                       AddrCheckStruct *addr_check,
+                       const int addr_check_len,
+                       uint8_t (*get_checksum)(CAN_FIFOMailBox_TypeDef *to_push),
+                       uint8_t (*compute_checksum)(CAN_FIFOMailBox_TypeDef *to_push),
+                       uint8_t (*get_counter)(CAN_FIFOMailBox_TypeDef *to_push));
 
 typedef void (*safety_hook_init)(int16_t param);
 typedef int (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);

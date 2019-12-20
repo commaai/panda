@@ -136,6 +136,38 @@ void update_addr_timestamp(AddrCheckStruct addr_list[], int index) {
   }
 }
 
+bool addr_safety_check(CAN_FIFOMailBox_TypeDef *to_push,
+                       AddrCheckStruct *rx_checks,
+                       const int rx_checks_len,
+                       uint8_t (*get_checksum)(CAN_FIFOMailBox_TypeDef *to_push),
+                       uint8_t (*compute_checksum)(CAN_FIFOMailBox_TypeDef *to_push),
+                       uint8_t (*get_counter)(CAN_FIFOMailBox_TypeDef *to_push)) {
+
+  int index = get_addr_check_index(to_push, rx_checks, rx_checks_len);
+  update_addr_timestamp(rx_checks, index);
+
+  if (index != -1) {
+    // checksum check
+    if ((get_checksum != NULL) && (compute_checksum != NULL)) {
+      if (rx_checks[index].check_checksum) {
+        uint8_t checksum = get_checksum(to_push);
+        uint8_t checksum_comp = compute_checksum(to_push);
+        rx_checks[index].valid_checksum = checksum_comp == checksum;
+      }
+    }
+
+    // counter check
+    if (get_counter != NULL) {
+      if (rx_checks[index].max_counter > 0U) {
+        uint8_t counter = get_counter(to_push);
+        update_counter(rx_checks, index, counter);
+      }
+    }
+  }
+  return is_msg_valid(rx_checks, index);
+}
+
+
 typedef struct {
   uint16_t id;
   const safety_hooks *hooks;

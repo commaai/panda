@@ -28,7 +28,13 @@ bool honda_bosch_hardware = false;
 bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
 
-static uint8_t honda_checksum(CAN_FIFOMailBox_TypeDef *to_push, int len) {
+static uint8_t honda_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+  int checksum_byte = GET_LEN(to_push) - 1;
+  return (uint8_t)(GET_BYTE(to_push, checksum_byte)) & 0xFU;
+}
+
+static uint8_t honda_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+  int len = GET_LEN(to_push);
   uint8_t checksum = 0U;
   unsigned int addr = GET_ADDR(to_push);
   while (addr > 0U) {
@@ -44,32 +50,15 @@ static uint8_t honda_checksum(CAN_FIFOMailBox_TypeDef *to_push, int len) {
   return (8U - checksum) & 0xFU;
 }
 
-static bool honda_addr_check(CAN_FIFOMailBox_TypeDef *to_push) {
-  int index = get_addr_check_index(to_push, honda_rx_checks, HONDA_RX_CHECKS_LEN);
-  update_addr_timestamp(honda_rx_checks, index);
-
-  if (index != -1) {
-    // checksum check
-    if (honda_rx_checks[index].check_checksum) {
-      int len = GET_LEN(to_push);
-      uint8_t checksum = (uint8_t)(GET_BYTE(to_push, len - 1) & 0xF);
-      uint8_t checksum_comp = honda_checksum(to_push, len);
-      honda_rx_checks[index].valid_checksum = checksum_comp == checksum;
-    }
-
-    // get counter
-    if (honda_rx_checks[index].max_counter > 0U) {
-      int counter_byte = GET_LEN(to_push) - 1;
-      uint8_t counter = ((uint8_t)(GET_BYTE(to_push, counter_byte)) >> 4U) & 0x3U;
-      update_counter(honda_rx_checks, index, counter);
-    }
-  }
-  return is_msg_valid(honda_rx_checks, index);
+static uint8_t honda_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
+  int counter_byte = GET_LEN(to_push) - 1;
+  return ((uint8_t)(GET_BYTE(to_push, counter_byte)) >> 4U) & 0x3U;
 }
 
 static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
-  bool valid = honda_addr_check(to_push);
+  bool valid = addr_safety_check(to_push, honda_rx_checks, HONDA_RX_CHECKS_LEN,
+                                 honda_get_checksum, honda_compute_checksum, honda_get_counter);
   if (valid) {
     int addr = GET_ADDR(to_push);
     int len = GET_LEN(to_push);
