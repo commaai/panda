@@ -285,8 +285,6 @@ class TestToyotaSafety(unittest.TestCase):
 
   def test_rx_hook(self):
     # checksum checks
-    CANCEL_BTN = 2
-    SET_BTN = 3
     for msg in ["trq", "pcm"]:
       self.safety.set_controls_allowed(1)
       if msg == "trq":
