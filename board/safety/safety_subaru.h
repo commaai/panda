@@ -10,6 +10,14 @@ const int SUBARU_DRIVER_TORQUE_FACTOR = 10;
 
 const AddrBus SUBARU_TX_MSGS[] = {{0x122, 0}, {0x164, 0}, {0x221, 0}, {0x322, 0}};
 
+// TODO: do checksum and counter checks after adding the signals to the outback dbc file
+AddrCheckStruct subaru_rx_checks[] = {
+  {.addr = {0x119, 0x371}, .expected_timestep = 50000U},
+  {.addr = {0x240, 0x144}, .expected_timestep = 50000U},
+};
+
+const int SUBARU_RX_CHECK_LEN = sizeof(subaru_rx_checks) / sizeof(subaru_rx_checks[0]);
+
 int subaru_cruise_engaged_last = 0;
 int subaru_rt_torque_last = 0;
 int subaru_desired_torque_last = 0;
@@ -142,4 +150,6 @@ const safety_hooks subaru_hooks = {
   .tx = subaru_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = subaru_fwd_hook,
+  .addr_check = subaru_rx_checks,
+  .addr_check_len = sizeof(subaru_rx_checks) / sizeof(subaru_rx_checks[0]),
 };
