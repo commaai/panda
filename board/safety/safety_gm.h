@@ -30,7 +30,6 @@ AddrCheckStruct gm_rx_checks[] = {
   {.addr = {481}, .bus = 0, .expected_timestep = 100000U},
   {.addr = {241}, .bus = 0, .expected_timestep = 100000U},
   {.addr = {417}, .bus = 0, .expected_timestep = 100000U},
-  {.addr = {189}, .bus = 0, .expected_timestep = 100000U},
 };
 const int GM_RX_CHECK_LEN = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]);
 
