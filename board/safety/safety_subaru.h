@@ -12,10 +12,9 @@ const AddrBus SUBARU_TX_MSGS[] = {{0x122, 0}, {0x164, 0}, {0x221, 0}, {0x322, 0}
 
 // TODO: do checksum and counter checks after adding the signals to the outback dbc file
 AddrCheckStruct subaru_rx_checks[] = {
-  {.addr = {0x119, 0x371}, .expected_timestep = 20000U},
-  {.addr = {0x240, 0x144}, .expected_timestep = 50000U},
+  {.addr = {0x119, 0x371}, .bus = 0, .expected_timestep = 20000U},
+  {.addr = {0x240, 0x144}, .bus = 0, .expected_timestep = 50000U},
 };
-
 const int SUBARU_RX_CHECK_LEN = sizeof(subaru_rx_checks) / sizeof(subaru_rx_checks[0]);
 
 int subaru_cruise_engaged_last = 0;

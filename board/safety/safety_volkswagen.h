@@ -17,7 +17,16 @@ const int VOLKSWAGEN_DRIVER_TORQUE_FACTOR = 3;
 // MSG_GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
 const AddrBus VOLKSWAGEN_TX_MSGS[] = {{MSG_HCA_01, 0}, {MSG_GRA_ACC_01, 0}, {MSG_GRA_ACC_01, 2}, {MSG_LDW_02, 0}};
 
-struct sample_t volkswagen_torque_driver;           // last few driver torques measured
+// TODO: do checksum and counter checks
+AddrCheckStruct volkswagen_rx_checks[] = {
+  {.addr = {MSG_EPS_01}, .bus = 0, .expected_timestep = 10000U},
+  {.addr = {MSG_ACC_06}, .bus = 0, .expected_timestep = 20000U},
+  {.addr = {MSG_MOTOR_20}, .bus = 0, .expected_timestep = 20000U},
+};
+
+const int VOLKSWAGEN_RX_CHECK_LEN = sizeof(volkswagen_rx_checks) / sizeof(volkswagen_rx_checks[0]);
+
+struct sample_t volkswagen_torque_driver;  // last few driver torques measured
 int volkswagen_rt_torque_last = 0;
 int volkswagen_desired_torque_last = 0;
 uint32_t volkswagen_ts_last = 0;
@@ -175,4 +184,6 @@ const safety_hooks volkswagen_hooks = {
   .tx = volkswagen_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = volkswagen_fwd_hook,
+  .addr_check = volkswagen_rx_checks,
+  .addr_check_len = sizeof(volkswagen_rx_checks) / sizeof(volkswagen_rx_checks[0]),
 };
