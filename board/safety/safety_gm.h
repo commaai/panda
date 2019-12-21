@@ -23,6 +23,16 @@ const AddrBus GM_TX_MSGS[] = {{384, 0}, {1033, 0}, {1034, 0}, {715, 0}, {880, 0}
                               {789, 2},  // ch bus
                               {0x104c006c, 3}, {0x10400060, 3}};  // gmlan
 
+// TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
+AddrCheckStruct gm_rx_checks[] = {
+  {.addr = {388}, .bus = 0, .expected_timestep = 100000U},
+  {.addr = {842}, .bus = 0, .expected_timestep = 100000U},
+  {.addr = {481}, .bus = 0, .expected_timestep = 100000U},
+  {.addr = {241}, .bus = 0, .expected_timestep = 100000U},
+  {.addr = {417}, .bus = 0, .expected_timestep = 100000U},
+};
+const int GM_RX_CHECK_LEN = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]);
+
 int gm_brake_prev = 0;
 int gm_gas_prev = 0;
 bool gm_moving = false;
@@ -31,7 +41,7 @@ int gm_desired_torque_last = 0;
 uint32_t gm_ts_last = 0;
 struct sample_t gm_torque_driver;         // last few driver torques measured
 
-static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
@@ -103,6 +113,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && ((addr == 384) || (addr == 715))) {
     relay_malfunction = true;
   }
+  return 1;
 }
 
 // all commands: gas/regen, friction brake and steering
@@ -219,4 +230,6 @@ const safety_hooks gm_hooks = {
   .tx = gm_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = default_fwd_hook,
+  .addr_check = gm_rx_checks,
+  .addr_check_len = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]),
 };

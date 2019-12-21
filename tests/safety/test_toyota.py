@@ -36,6 +36,16 @@ def sign(a):
   else:
     return -1
 
+def toyota_checksum(msg, addr, len_msg):
+  checksum = (len_msg + addr + (addr >> 8))
+  for i in range(len_msg):
+    if i < 4:
+      checksum += (msg.RDLR >> (8 * i))
+    else:
+      checksum += (msg.RDHR >> (8 * (i - 4)))
+  return checksum & 0xff
+
+
 class TestToyotaSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
@@ -51,7 +61,8 @@ class TestToyotaSafety(unittest.TestCase):
   def _torque_meas_msg(self, torque):
     t = twos_comp(torque, 16)
     to_send = make_msg(0, 0x260)
-    to_send[0].RDHR = t | ((t & 0xFF) << 16)
+    to_send[0].RDHR = (t & 0xff00) | ((t & 0xFF) << 16)
+    to_send[0].RDHR = to_send[0].RDHR | (toyota_checksum(to_send[0], 0x260, 8) << 24)
     return to_send
 
   def _torque_msg(self, torque):
@@ -81,6 +92,7 @@ class TestToyotaSafety(unittest.TestCase):
   def _pcm_cruise_msg(self, cruise_on):
     to_send = make_msg(0, 0x1D2)
     to_send[0].RDLR = cruise_on << 5
+    to_send[0].RDHR = to_send[0].RDHR | (toyota_checksum(to_send[0], 0x1D2, 8) << 24)
     return to_send
 
   def test_spam_can_buses(self):
@@ -258,6 +270,19 @@ class TestToyotaSafety(unittest.TestCase):
     self.assertFalse(self.safety.safety_tx_hook(self._send_interceptor_msg(0x1000, 0x200)))
     self.safety.set_controls_allowed(1)
     self.assertTrue(self.safety.safety_tx_hook(self._send_interceptor_msg(0x1000, 0x200)))
+
+  def test_rx_hook(self):
+    # checksum checks
+    for msg in ["trq", "pcm"]:
+      self.safety.set_controls_allowed(1)
+      if msg == "trq":
+        to_push = self._torque_meas_msg(0)
+      if msg == "pcm":
+        to_push = self._pcm_cruise_msg(1)
+      self.assertTrue(self.safety.safety_rx_hook(to_push))
+      to_push[0].RDHR = 0
+      self.assertFalse(self.safety.safety_rx_hook(to_push))
+      self.assertFalse(self.safety.get_controls_allowed())
 
   def test_fwd_hook(self):
 

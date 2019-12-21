@@ -382,7 +382,7 @@ void can_rx(uint8_t can_number) {
       can_send(&to_send, bus_fwd_num, true);
     }
 
-    safety_rx_hook(&to_push);
+    can_rx_errs += safety_rx_hook(&to_push) ? 0U : 1U;
     ignition_can_hook(&to_push);
 
     current_board->set_led(LED_BLUE, true);

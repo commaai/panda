@@ -3,7 +3,9 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed, test_spam_can_buses
+from panda.tests.safety.common import test_relay_malfunction, make_msg, \
+                                      test_manually_enable_controls_allowed, \
+                                      test_spam_can_buses, MAX_WRONG_COUNTERS
 
 MAX_BRAKE = 255
 
@@ -14,28 +16,53 @@ HONDA_N_HW = 0
 HONDA_BG_HW = 1
 HONDA_BH_HW = 2
 
+def honda_checksum(msg, addr, len_msg):
+  checksum = 0
+  while addr > 0:
+    checksum += addr
+    addr >>= 4
+  for i in range (0, 2*len_msg):
+    if i < 8:
+      checksum += (msg.RDLR >> (4 * i))
+    else:
+      checksum += (msg.RDHR >> (4 * (i - 8)))
+  return (8 - checksum) & 0xF
+
+
 class TestHondaSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
     cls.safety.init_tests_honda()
+    cls.cnt_speed = 0
+    cls.cnt_gas = 0
+    cls.cnt_button = 0
 
   def _speed_msg(self, speed):
     to_send = make_msg(0, 0x158)
     to_send[0].RDLR = speed
+    to_send[0].RDHR |= (self.cnt_speed % 4) << 28
+    to_send[0].RDHR |= honda_checksum(to_send[0], 0x158, 8) << 24
+    self.cnt_speed += 1
     return to_send
 
-  def _button_msg(self, buttons, msg):
+  def _button_msg(self, buttons, addr):
     honda_hw = self.safety.get_honda_hw()
     bus = 1 if honda_hw == HONDA_BH_HW else 0
-    to_send = make_msg(bus, msg)
+    to_send = make_msg(bus, addr)
     to_send[0].RDLR = buttons << 5
+    to_send[0].RDHR |= (self.cnt_button % 4) << 28
+    to_send[0].RDHR |= honda_checksum(to_send[0], addr, 8) << 24
+    self.cnt_button += 1
     return to_send
 
   def _brake_msg(self, brake):
     to_send = make_msg(0, 0x17C)
     to_send[0].RDHR = 0x200000 if brake else 0
+    to_send[0].RDHR |= (self.cnt_gas % 4) << 28
+    to_send[0].RDHR |= honda_checksum(to_send[0], 0x17C, 8) << 24
+    self.cnt_gas += 1
     return to_send
 
   def _alt_brake_msg(self, brake):
@@ -46,6 +73,9 @@ class TestHondaSafety(unittest.TestCase):
   def _gas_msg(self, gas):
     to_send = make_msg(0, 0x17C)
     to_send[0].RDLR = 1 if gas else 0
+    to_send[0].RDHR |= (self.cnt_gas % 4) << 28
+    to_send[0].RDHR |= honda_checksum(to_send[0], 0x17C, 8) << 24
+    self.cnt_gas += 1
     return to_send
 
   def _send_brake_msg(self, brake):
@@ -228,6 +258,51 @@ class TestHondaSafety(unittest.TestCase):
       # do not block resume if we are engaged already
       self.safety.set_controls_allowed(1)
       self.assertTrue(self.safety.safety_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))
+
+  def test_rx_hook(self):
+    # checksum checks
+    SET_BTN = 3
+    for msg in ["btn1", "btn2", "gas", "speed"]:
+      self.safety.set_controls_allowed(1)
+      if msg == "btn1":
+        to_push = self._button_msg(SET_BTN, 0x1A6)
+      if msg == "btn2":
+        to_push = self._button_msg(SET_BTN, 0x296)
+      if msg == "gas":
+        to_push = self._gas_msg(0)
+      if msg == "speed":
+        to_push = self._speed_msg(0)
+      self.assertTrue(self.safety.safety_rx_hook(to_push))
+      to_push[0].RDHR = 0
+      self.assertFalse(self.safety.safety_rx_hook(to_push))
+      self.assertFalse(self.safety.get_controls_allowed())
+
+    # counter
+    # reset wrong_counters to zero by sending valid messages
+    for i in range(MAX_WRONG_COUNTERS + 1):
+      self.cnt_speed = 0
+      self.cnt_gas = 0
+      self.cnt_button = 0
+      if i < MAX_WRONG_COUNTERS:
+        self.safety.set_controls_allowed(1)
+        self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x1A6))
+        self.safety.safety_rx_hook(self._speed_msg(0))
+        self.safety.safety_rx_hook(self._gas_msg(0))
+      else:
+        self.assertFalse(self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x1A6)))
+        self.assertFalse(self.safety.safety_rx_hook(self._speed_msg(0)))
+        self.assertFalse(self.safety.safety_rx_hook(self._gas_msg(0)))
+        self.assertFalse(self.safety.get_controls_allowed())
+
+    # restore counters for future tests with a couple of good messages
+    for i in range(2):
+      self.safety.set_controls_allowed(1)
+      self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x1A6))
+      self.safety.safety_rx_hook(self._speed_msg(0))
+      self.safety.safety_rx_hook(self._gas_msg(0))
+    self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x1A6))
+    self.assertTrue(self.safety.get_controls_allowed())
+
 
   def test_fwd_hook(self):
     buss = list(range(0x0, 0x3))

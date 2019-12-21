@@ -667,7 +667,7 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 #define EON_HEARTBEAT_IGNITION_CNT_ON 5U
 #define EON_HEARTBEAT_IGNITION_CNT_OFF 2U
 
-// called once per second
+// called at 1Hz
 void TIM1_BRK_TIM9_IRQ_Handler(void) {
   if (TIM9->SR != 0) {
     can_live = pending_can_live;
@@ -736,6 +736,9 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
     uptime_cnt += 1U;
     safety_mode_cnt += 1U;
     ignition_can_cnt += 1U;
+
+    // synchronous safety check
+    safety_tick(current_hooks);
   }
   TIM9->SR = 0;
 }
