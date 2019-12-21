@@ -12,7 +12,7 @@ const AddrBus SUBARU_TX_MSGS[] = {{0x122, 0}, {0x164, 0}, {0x221, 0}, {0x322, 0}
 
 // TODO: do checksum and counter checks after adding the signals to the outback dbc file
 AddrCheckStruct subaru_rx_checks[] = {
-  {.addr = {0x119, 0x371}, .expected_timestep = 50000U},
+  {.addr = {0x119, 0x371}, .expected_timestep = 20000U},
   {.addr = {0x240, 0x144}, .expected_timestep = 50000U},
 };
 
@@ -48,6 +48,8 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
     subaru_cruise_engaged_last = cruise_engaged;
   }
+
+  // TODO: enforce cancellation on gas pressed
 
   if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && ((addr == 0x122) || (addr == 0x164))) {
     relay_malfunction = true;
