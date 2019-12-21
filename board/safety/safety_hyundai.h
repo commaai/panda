@@ -5,8 +5,14 @@ const int HYUNDAI_MAX_RATE_UP = 3;
 const int HYUNDAI_MAX_RATE_DOWN = 7;
 const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
 const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
-
 const AddrBus HYUNDAI_TX_MSGS[] = {{832, 0}, {1265, 0}};
+
+// TODO: do checksum and counter checks
+AddrCheckStruct hyundai_rx_checks[] = {
+  {.addr = {897}, .bus = 0, .expected_timestep = 10000U},
+  {.addr = {1057}, .bus = 0, .expected_timestep = 20000U},
+};
+const int HYUNDAI_RX_CHECK_LEN = sizeof(hyundai_rx_checks) / sizeof(hyundai_rx_checks[0]);
 
 int hyundai_rt_torque_last = 0;
 int hyundai_desired_torque_last = 0;
@@ -141,4 +147,6 @@ const safety_hooks hyundai_hooks = {
   .tx = hyundai_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = hyundai_fwd_hook,
+  .addr_check = hyundai_rx_checks,
+  .addr_check_len = sizeof(hyundai_rx_checks) / sizeof(hyundai_rx_checks[0]),
 };

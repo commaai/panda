@@ -22,7 +22,6 @@
 #define MAZDA_DRIVER_TORQUE_ALLOWANCE 15
 #define MAZDA_DRIVER_TORQUE_FACTOR 1
 
-
 int mazda_cruise_engaged_last = 0;
 int mazda_rt_torque_last = 0;
 int mazda_desired_torque_last = 0;
@@ -147,4 +146,5 @@ const safety_hooks mazda_hooks = {
   .tx = mazda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = mazda_fwd_hook,
+  // TODO: add addr safety checks
 };
