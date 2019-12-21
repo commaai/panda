@@ -120,16 +120,10 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.set_gas_interceptor_detected(False)
 
   def test_disengage_on_gas(self):
-    for long_controls_allowed in [0, 1]:
-      self.safety.set_long_controls_allowed(long_controls_allowed)
-      self.safety.safety_rx_hook(self._send_gas_msg(0))
-      self.safety.set_controls_allowed(True)
-      self.safety.safety_rx_hook(self._send_gas_msg(1))
-      if long_controls_allowed:
-        self.assertFalse(self.safety.get_controls_allowed())
-      else:
-        self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.set_long_controls_allowed(True)
+    self.safety.safety_rx_hook(self._send_gas_msg(0))
+    self.safety.set_controls_allowed(True)
+    self.safety.safety_rx_hook(self._send_gas_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
 
   def test_allow_engage_with_gas_pressed(self):
     self.safety.safety_rx_hook(self._send_gas_msg(1))
@@ -140,17 +134,14 @@ class TestToyotaSafety(unittest.TestCase):
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas_interceptor(self):
-    for long_controls_allowed in [0, 1]:
-      for g in range(0, 0x1000):
-        self.safety.set_long_controls_allowed(long_controls_allowed)
-        self.safety.safety_rx_hook(self._send_interceptor_msg(0, 0x201))
-        self.safety.set_controls_allowed(True)
-        self.safety.safety_rx_hook(self._send_interceptor_msg(g, 0x201))
-        remain_enabled = (not long_controls_allowed or g <= INTERCEPTOR_THRESHOLD)
-        self.assertEqual(remain_enabled, self.safety.get_controls_allowed())
-        self.safety.safety_rx_hook(self._send_interceptor_msg(0, 0x201))
-        self.safety.set_gas_interceptor_detected(False)
-    self.safety.set_long_controls_allowed(True)
+    for g in range(0, 0x1000):
+      self.safety.safety_rx_hook(self._send_interceptor_msg(0, 0x201))
+      self.safety.set_controls_allowed(True)
+      self.safety.safety_rx_hook(self._send_interceptor_msg(g, 0x201))
+      remain_enabled = g <= INTERCEPTOR_THRESHOLD
+      self.assertEqual(remain_enabled, self.safety.get_controls_allowed())
+      self.safety.safety_rx_hook(self._send_interceptor_msg(0, 0x201))
+      self.safety.set_gas_interceptor_detected(False)
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
     self.safety.safety_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
@@ -161,17 +152,14 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.set_gas_interceptor_detected(False)
 
   def test_accel_actuation_limits(self):
-    for long_controls_allowed in [0, 1]:
-      self.safety.set_long_controls_allowed(long_controls_allowed)
-      for accel in np.arange(MIN_ACCEL - 1000, MAX_ACCEL + 1000, 100):
-        for controls_allowed in [True, False]:
-          self.safety.set_controls_allowed(controls_allowed)
-          if controls_allowed and long_controls_allowed:
-            send = MIN_ACCEL <= accel <= MAX_ACCEL
-          else:
-            send = accel == 0
-          self.assertEqual(send, self.safety.safety_tx_hook(self._accel_msg(accel)))
-    self.safety.set_long_controls_allowed(True)
+    for accel in np.arange(MIN_ACCEL - 1000, MAX_ACCEL + 1000, 100):
+      for controls_allowed in [True, False]:
+        self.safety.set_controls_allowed(controls_allowed)
+        if controls_allowed:
+          send = MIN_ACCEL <= accel <= MAX_ACCEL
+        else:
+          send = accel == 0
+        self.assertEqual(send, self.safety.safety_tx_hook(self._accel_msg(accel)))
 
   def test_torque_absolute_limits(self):
     for controls_allowed in [True, False]:
@@ -275,26 +263,21 @@ class TestToyotaSafety(unittest.TestCase):
 
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
-    long_controls_allowed = [0, 1]
 
-    for lca in long_controls_allowed:
-      self.safety.set_long_controls_allowed(lca)
-      blocked_msgs = [0x2E4, 0x412, 0x191]
-      if lca:
-        blocked_msgs += [0x343]
-      for b in buss:
-        for m in msgs:
-          if b == 0:
-            fwd_bus = 2
-          elif b == 1:
-            fwd_bus = -1
-          elif b == 2:
-            fwd_bus = -1 if m in blocked_msgs else 0
+    blocked_msgs = [0x2E4, 0x412, 0x191]
+    blocked_msgs += [0x343]
+    for b in buss:
+      for m in msgs:
+        if b == 0:
+          fwd_bus = 2
+        elif b == 1:
+          fwd_bus = -1
+        elif b == 2:
+          fwd_bus = -1 if m in blocked_msgs else 0
 
-          # assume len 8
-          self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
+        # assume len 8
+        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
-    self.safety.set_long_controls_allowed(True)
 
 
 if __name__ == "__main__":

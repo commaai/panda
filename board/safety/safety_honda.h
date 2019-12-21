@@ -69,8 +69,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     gas_interceptor_detected = 1;
     int gas_interceptor = GET_INTERCEPTOR(to_push);
     if ((gas_interceptor > HONDA_GAS_INTERCEPTOR_THRESHOLD) &&
-        (gas_interceptor_prev <= HONDA_GAS_INTERCEPTOR_THRESHOLD) &&
-        long_controls_allowed) {
+        (gas_interceptor_prev <= HONDA_GAS_INTERCEPTOR_THRESHOLD)) {
       controls_allowed = 0;
     }
     gas_interceptor_prev = gas_interceptor;
@@ -80,7 +79,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if (!gas_interceptor_detected) {
     if (addr == 0x17C) {
       int gas = GET_BYTE(to_push, 0);
-      if (gas && !(honda_gas_prev) && long_controls_allowed) {
+      if (gas && !honda_gas_prev) {
         controls_allowed = 0;
       }
       honda_gas_prev = gas;
@@ -149,7 +148,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // BRAKE: safety check
   if ((addr == 0x1FA) && (bus == 0)) {
     honda_brake = (GET_BYTE(to_send, 0) << 2) + ((GET_BYTE(to_send, 1) >> 6) & 0x3);
-    if (!current_controls_allowed || !long_controls_allowed) {
+    if (!current_controls_allowed) {
       if (honda_brake != 0) {
         tx = 0;
       }
@@ -174,7 +173,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // GAS: safety check
   if (addr == 0x200) {
-    if (!current_controls_allowed || !long_controls_allowed) {
+    if (!current_controls_allowed) {
       if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
         tx = 0;
       }
@@ -229,9 +228,7 @@ static int honda_nidec_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
       bool is_lkas_msg = (addr == 0xE4) || (addr == 0x194) || (addr == 0x33D);
       bool is_acc_hud_msg = (addr == 0x30C) || (addr == 0x39F);
       bool is_brake_msg = addr == 0x1FA;
-      bool block_fwd = is_lkas_msg ||
-                       (is_acc_hud_msg && long_controls_allowed) ||
-                       (is_brake_msg && long_controls_allowed && !honda_fwd_brake);
+      bool block_fwd = is_lkas_msg || is_acc_hud_msg || (is_brake_msg && !honda_fwd_brake);
       if (!block_fwd) {
         bus_fwd = 0;
       }
