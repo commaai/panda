@@ -24,9 +24,10 @@ int honda_brake = 0;
 int honda_gas_prev = 0;
 bool honda_brake_pressed_prev = false;
 bool honda_moving = false;
-bool honda_bosch_hardware = false;
 bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
+enum {HONDA_N_HW, HONDA_BG_HW, HONDA_BH_HW} honda_hw = HONDA_N_HW;
+
 
 static uint8_t honda_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1;
@@ -142,10 +143,10 @@ static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // if steering controls messages are received on the destination bus, it's an indication
     // that the relay might be malfunctioning
-    int bus_rdr_car = (board_has_relay()) ? 0 : 2;  // radar bus, car side
+    int bus_rdr_car = (honda_hw == HONDA_BH_HW) ? 0 : 2;  // radar bus, car side
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && ((addr == 0xE4) || (addr == 0x194))) {
-      if ((honda_bosch_hardware && (bus == bus_rdr_car)) ||
-        (!honda_bosch_hardware && (bus == 0))) {
+      if (((honda_hw != HONDA_N_HW) && (bus == bus_rdr_car)) ||
+        ((honda_hw == HONDA_N_HW) && (bus == 0))) {
         relay_malfunction = true;
       }
     }
@@ -165,16 +166,16 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
-  if (honda_bosch_hardware) {
-    if (board_has_relay() && !msg_allowed(addr, bus, HONDA_BH_TX_MSGS, sizeof(HONDA_BH_TX_MSGS)/sizeof(HONDA_BH_TX_MSGS[0]))) {
-      tx = 0;
-    }
-    if (!board_has_relay() && !msg_allowed(addr, bus, HONDA_BG_TX_MSGS, sizeof(HONDA_BG_TX_MSGS)/sizeof(HONDA_BG_TX_MSGS[0]))) {
-      tx = 0;
-    }
-  }
-  if (!honda_bosch_hardware && !msg_allowed(addr, bus, HONDA_N_TX_MSGS, sizeof(HONDA_N_TX_MSGS)/sizeof(HONDA_N_TX_MSGS[0]))) {
-    tx = 0;
+  switch (honda_hw) {
+    case HONDA_BG_HW:
+      tx = msg_allowed(addr, bus, HONDA_BG_TX_MSGS, sizeof(HONDA_BG_TX_MSGS)/sizeof(HONDA_BG_TX_MSGS[0]));
+      break;
+    case HONDA_BH_HW:
+      tx = msg_allowed(addr, bus, HONDA_BH_TX_MSGS, sizeof(HONDA_BH_TX_MSGS)/sizeof(HONDA_BH_TX_MSGS[0]));
+      break;
+    default:  // nidec
+      tx = msg_allowed(addr, bus, HONDA_N_TX_MSGS, sizeof(HONDA_N_TX_MSGS)/sizeof(HONDA_N_TX_MSGS[0]));
+      break;
   }
 
   if (relay_malfunction) {
@@ -225,9 +226,8 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // FORCE CANCEL: safety check only relevant when spamming the cancel button in Bosch HW
   // ensuring that only the cancel button press is sent (VAL 2) when controls are off.
   // This avoids unintended engagements while still allowing resume spam
-  int bus_pt = ((board_has_relay()) && honda_bosch_hardware)? 1 : 0;
-  if ((addr == 0x296) && honda_bosch_hardware &&
-      !current_controls_allowed && (bus == bus_pt)) {
+  int bus_pt = (honda_hw == HONDA_BH_HW)? 1 : 0;
+  if ((addr == 0x296) && !current_controls_allowed && (bus == bus_pt)) {
     if (((GET_BYTE(to_send, 0) >> 5) & 0x7) != 2) {
       tx = 0;
     }
@@ -241,14 +241,22 @@ static void honda_nidec_init(int16_t param) {
   UNUSED(param);
   controls_allowed = false;
   relay_malfunction = false;
-  honda_bosch_hardware = false;
+  honda_hw = HONDA_N_HW;
   honda_alt_brake_msg = false;
 }
 
-static void honda_bosch_init(int16_t param) {
+static void honda_bosch_giraffe_init(int16_t param) {
   controls_allowed = false;
   relay_malfunction = false;
-  honda_bosch_hardware = true;
+  honda_hw = HONDA_BG_HW;
+  // Checking for alternate brake override from safety parameter
+  honda_alt_brake_msg = (param == 1) ? true : false;
+}
+
+static void honda_bosch_harness_init(int16_t param) {
+  controls_allowed = false;
+  relay_malfunction = false;
+  honda_hw = HONDA_BH_HW;
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = (param == 1) ? true : false;
 }
@@ -281,8 +289,8 @@ static int honda_nidec_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
 static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int bus_fwd = -1;
-  int bus_rdr_cam = (board_has_relay()) ? 2 : 1;  // radar bus, camera side
-  int bus_rdr_car = (board_has_relay()) ? 0 : 2;  // radar bus, car side
+  int bus_rdr_cam = (honda_hw == HONDA_BH_HW) ? 2 : 1;  // radar bus, camera side
+  int bus_rdr_car = (honda_hw == HONDA_BH_HW) ? 0 : 2;  // radar bus, car side
 
   if (!relay_malfunction) {
     if (bus_num == bus_rdr_car) {
@@ -309,8 +317,16 @@ const safety_hooks honda_nidec_hooks = {
   .addr_check_len = sizeof(honda_rx_checks) / sizeof(honda_rx_checks[0]),
 };
 
-const safety_hooks honda_bosch_hooks = {
-  .init = honda_bosch_init,
+const safety_hooks honda_bosch_giraffe_hooks = {
+  .init = honda_bosch_giraffe_init,
+  .rx = honda_rx_hook,
+  .tx = honda_tx_hook,
+  .tx_lin = nooutput_tx_lin_hook,
+  .fwd = honda_bosch_fwd_hook,
+};
+
+const safety_hooks honda_bosch_harness_hooks = {
+  .init = honda_bosch_harness_init,
   .rx = honda_rx_hook,
   .tx = honda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,

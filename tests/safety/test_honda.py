@@ -12,6 +12,10 @@ MAX_BRAKE = 255
 INTERCEPTOR_THRESHOLD = 328
 TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x200, 0], [0x30C, 0], [0x33D, 0], [0x39F, 0]]
 
+HONDA_N_HW = 0
+HONDA_BG_HW = 1
+HONDA_BH_HW = 2
+
 def honda_checksum(msg, addr, len_msg):
   checksum = 0
   while addr > 0:
@@ -44,9 +48,8 @@ class TestHondaSafety(unittest.TestCase):
     return to_send
 
   def _button_msg(self, buttons, addr):
-    has_relay = self.safety.board_has_relay()
-    honda_bosch_hardware = self.safety.get_honda_bosch_hardware()
-    bus = 1 if has_relay and honda_bosch_hardware else 0
+    honda_hw = self.safety.get_honda_hw()
+    bus = 1 if honda_hw == HONDA_BH_HW else 0
     to_send = make_msg(bus, addr)
     to_send[0].RDLR = buttons << 5
     to_send[0].RDHR |= (self.cnt_button % 4) << 28
@@ -93,6 +96,7 @@ class TestHondaSafety(unittest.TestCase):
     return to_send
 
   def test_spam_can_buses(self):
+    self.safety.set_honda_hw(HONDA_N_HW)
     test_spam_can_buses(self, TX_MSGS)
 
   def test_relay_malfunction(self):
@@ -245,14 +249,15 @@ class TestHondaSafety(unittest.TestCase):
     SET_BTN = 3
     CANCEL_BTN = 2
     BUTTON_MSG = 0x296
-    self.safety.set_honda_bosch_hardware(1)
-    self.safety.set_controls_allowed(0)
-    self.assertTrue(self.safety.safety_tx_hook(self._button_msg(CANCEL_BTN, BUTTON_MSG)))
-    self.assertFalse(self.safety.safety_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))
-    self.assertFalse(self.safety.safety_tx_hook(self._button_msg(SET_BTN, BUTTON_MSG)))
-    # do not block resume if we are engaged already
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self.safety.safety_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))
+    for hw in [HONDA_BG_HW, HONDA_BH_HW]:
+      self.safety.set_honda_hw(hw)
+      self.safety.set_controls_allowed(0)
+      self.assertTrue(self.safety.safety_tx_hook(self._button_msg(CANCEL_BTN, BUTTON_MSG)))
+      self.assertFalse(self.safety.safety_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))
+      self.assertFalse(self.safety.safety_tx_hook(self._button_msg(SET_BTN, BUTTON_MSG)))
+      # do not block resume if we are engaged already
+      self.safety.set_controls_allowed(1)
+      self.assertTrue(self.safety.safety_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))
 
   def test_rx_hook(self):
     # checksum checks
@@ -304,7 +309,7 @@ class TestHondaSafety(unittest.TestCase):
     msgs = list(range(0x1, 0x800))
     fwd_brake = [False, True]
 
-    self.safety.set_honda_bosch_hardware(0)
+    self.safety.set_honda_hw(HONDA_N_HW)
 
     for f in fwd_brake:
       self.safety.set_honda_fwd_brake(f)
