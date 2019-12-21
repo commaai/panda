@@ -30,11 +30,6 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     update_sample(&hyundai_torque_driver, torque_driver_new);
   }
 
-  // check if stock camera ECU is on bus 0
-  if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && (addr == 832)) {
-    relay_malfunction = true;
-  }
-
   // enter controls on rising edge of ACC, exit controls on ACC off
   if (addr == 1057) {
     // 2 bits: 13-14
@@ -46,6 +41,13 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       controls_allowed = 0;
     }
     hyundai_cruise_engaged_last = cruise_engaged;
+  }
+
+  // TODO: check gas pressed
+
+  // check if stock camera ECU is on bus 0
+  if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && (addr == 832)) {
+    relay_malfunction = true;
   }
   return 1;
 }
