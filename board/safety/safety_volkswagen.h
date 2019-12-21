@@ -50,7 +50,7 @@ static int volkswagen_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // exit controls on rising edge of gas press. Bits [12-20)
   if (addr == MSG_MOTOR_20) {
     int gas = (GET_BYTES_04(to_push) >> 12) & 0xFF;
-    if ((gas > 0) && (volkswagen_gas_prev == 0) && long_controls_allowed) {
+    if ((gas > 0) && (volkswagen_gas_prev == 0)) {
       controls_allowed = 0;
     }
     volkswagen_gas_prev = gas;

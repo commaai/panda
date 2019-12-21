@@ -82,7 +82,7 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // exit controls on rising edge of gas press
   if (addr == 417) {
     int gas = GET_BYTE(to_push, 6);
-    if (gas && !gm_gas_prev && long_controls_allowed) {
+    if (gas && !gm_gas_prev) {
       controls_allowed = 0;
     }
     gm_gas_prev = gas;
@@ -135,7 +135,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if (addr == 789) {
     int brake = ((GET_BYTE(to_send, 0) & 0xFU) << 8) + GET_BYTE(to_send, 1);
     brake = (0x1000 - brake) & 0xFFF;
-    if (!current_controls_allowed || !long_controls_allowed) {
+    if (!current_controls_allowed) {
       if (brake != 0) {
         tx = 0;
       }
@@ -198,7 +198,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
     // Disabled message is !engaged with gas
     // value that corresponds to max regen.
-    if (!current_controls_allowed || !long_controls_allowed) {
+    if (!current_controls_allowed) {
       bool apply = GET_BYTE(to_send, 0) & 1U;
       if (apply || (gas_regen != GM_MAX_REGEN)) {
         tx = 0;

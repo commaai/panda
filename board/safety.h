@@ -19,11 +19,11 @@
 
 // from cereal.car.CarParams.SafetyModel
 #define SAFETY_SILENT 0U
-#define SAFETY_HONDA 1U
+#define SAFETY_HONDA_NIDEC 1U
 #define SAFETY_TOYOTA 2U
 #define SAFETY_ELM327 3U
 #define SAFETY_GM 4U
-#define SAFETY_HONDA_BOSCH 5U
+#define SAFETY_HONDA_BOSCH_GIRAFFE 5U
 #define SAFETY_FORD 6U
 #define SAFETY_CADILLAC 7U
 #define SAFETY_HYUNDAI 8U
@@ -36,6 +36,7 @@
 #define SAFETY_ALLOUTPUT 17U
 #define SAFETY_GM_ASCM 18U
 #define SAFETY_NOOUTPUT 19U
+#define SAFETY_HONDA_BOSCH_HARNESS 20U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
 const safety_hooks *current_hooks = &nooutput_hooks;
@@ -175,11 +176,12 @@ typedef struct {
 
 const safety_hook_config safety_hook_registry[] = {
   {SAFETY_SILENT, &nooutput_hooks},
-  {SAFETY_HONDA, &honda_hooks},
+  {SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
   {SAFETY_TOYOTA, &toyota_hooks},
   {SAFETY_ELM327, &elm327_hooks},
   {SAFETY_GM, &gm_hooks},
-  {SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
+  {SAFETY_HONDA_BOSCH_GIRAFFE, &honda_bosch_hooks},
+  {SAFETY_HONDA_BOSCH_HARNESS, &honda_bosch_hooks},  // TODO: distinguish from above
   {SAFETY_HYUNDAI, &hyundai_hooks},
   {SAFETY_CHRYSLER, &chrysler_hooks},
   {SAFETY_SUBARU, &subaru_hooks},

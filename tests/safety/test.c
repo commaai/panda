@@ -86,10 +86,6 @@ void set_relay_malfunction(bool c){
   relay_malfunction = c;
 }
 
-void set_long_controls_allowed(bool c){
-  long_controls_allowed = c;
-}
-
 void set_gas_interceptor_detected(bool c){
   gas_interceptor_detected = c;
 }
@@ -104,10 +100,6 @@ bool get_controls_allowed(void){
 
 bool get_relay_malfunction(void){
   return relay_malfunction;
-}
-
-bool get_long_controls_allowed(void){
-  return long_controls_allowed;
 }
 
 bool get_gas_interceptor_detected(void){

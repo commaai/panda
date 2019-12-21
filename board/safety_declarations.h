@@ -85,9 +85,6 @@ bool relay_malfunction = false;
 bool gas_interceptor_detected = false;
 int gas_interceptor_prev = 0;
 
-// This is set by USB command 0xdf
-bool long_controls_allowed = true;
-
 // time since safety mode has been changed
 uint32_t safety_mode_cnt = 0U;
 // allow 1s of transition timeout after relay changes state before assessing malfunctioning

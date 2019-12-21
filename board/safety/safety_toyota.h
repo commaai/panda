@@ -98,8 +98,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       gas_interceptor_detected = 1;
       int gas_interceptor = GET_INTERCEPTOR(to_push);
       if ((gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRESHOLD) &&
-          (gas_interceptor_prev <= TOYOTA_GAS_INTERCEPTOR_THRESHOLD) &&
-          long_controls_allowed) {
+          (gas_interceptor_prev <= TOYOTA_GAS_INTERCEPTOR_THRESHOLD)) {
         controls_allowed = 0;
       }
       gas_interceptor_prev = gas_interceptor;
@@ -108,7 +107,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // exit controls on rising edge of gas press
     if (addr == 0x2C1) {
       int gas = GET_BYTE(to_push, 6) & 0xFF;
-      if ((gas > 0) && (toyota_gas_prev == 0) && !gas_interceptor_detected && long_controls_allowed) {
+      if ((gas > 0) && (toyota_gas_prev == 0) && !gas_interceptor_detected) {
         controls_allowed = 0;
       }
       toyota_gas_prev = gas;
@@ -141,7 +140,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // GAS PEDAL: safety check
     if (addr == 0x200) {
-      if (!controls_allowed || !long_controls_allowed) {
+      if (!controls_allowed) {
         if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
           tx = 0;
         }
@@ -152,7 +151,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (addr == 0x343) {
       int desired_accel = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
       desired_accel = to_signed(desired_accel, 16);
-      if (!controls_allowed || !long_controls_allowed) {
+      if (!controls_allowed) {
         if (desired_accel != 0) {
           tx = 0;
         }
@@ -235,7 +234,7 @@ static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
       int is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191));
       // in TSS2 the camera does ACC as well, so filter 0x343
       int is_acc_msg = (addr == 0x343);
-      int block_msg = is_lkas_msg || (is_acc_msg && long_controls_allowed);
+      int block_msg = is_lkas_msg || is_acc_msg;
       if (!block_msg) {
         bus_fwd = 0;
       }
