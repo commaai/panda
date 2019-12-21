@@ -7,18 +7,26 @@
 //      brake rising edge
 //      brake > 0mph
 
-// TODO: -1 bus check to indicate that bus check is skipped. Temp solution
 const AddrBus HONDA_N_TX_MSGS[] = {{0xE4, 0}, {0x194, 0}, {0x1FA, 0}, {0x200, 0}, {0x30C, 0}, {0x33D, 0}, {0x39F, 0}};
-const AddrBus HONDA_BH_TX_MSGS[] = {{0xE4, 0}, {0x296, 1}, {0x33D, 0}};  // Bosch Harness
 const AddrBus HONDA_BG_TX_MSGS[] = {{0xE4, 2}, {0x296, 0}, {0x33D, 2}};  // Bosch Giraffe
+const AddrBus HONDA_BH_TX_MSGS[] = {{0xE4, 0}, {0x296, 1}, {0x33D, 0}};  // Bosch Harness
 const int HONDA_GAS_INTERCEPTOR_THRESHOLD = 328;  // ratio between offset and gain from dbc file
 
+// Nidec and Bosch giraffe have pt on bus 0
 AddrCheckStruct honda_rx_checks[] = {
-  {.addr = {0x1A6, 0x296}, .bus = -1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
-  {.addr = {       0x158}, .bus = -1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-  {.addr = {       0x17C}, .bus = -1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+  {.addr = {0x1A6, 0x296}, .bus = 0, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
+  {.addr = {       0x158}, .bus = 0, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+  {.addr = {       0x17C}, .bus = 0, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
 };
 const int HONDA_RX_CHECKS_LEN = sizeof(honda_rx_checks) / sizeof(honda_rx_checks[0]);
+
+// Bosch harness has pt on bus 1
+AddrCheckStruct honda_bh_rx_checks[] = {
+  {.addr = {0x296}, .bus = 1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
+  {.addr = {0x158}, .bus = 1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+  {.addr = {0x17C}, .bus = 1, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+};
+const int HONDA_BH_RX_CHECKS_LEN = sizeof(honda_bh_rx_checks) / sizeof(honda_bh_rx_checks[0]);
 
 int honda_brake = 0;
 int honda_gas_prev = 0;
@@ -58,8 +66,15 @@ static uint8_t honda_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
-  bool valid = addr_safety_check(to_push, honda_rx_checks, HONDA_RX_CHECKS_LEN,
-                                 honda_get_checksum, honda_compute_checksum, honda_get_counter);
+  bool valid;
+  if (honda_hw == HONDA_BH_HW) {
+    valid = addr_safety_check(to_push, honda_bh_rx_checks, HONDA_BH_RX_CHECKS_LEN,
+                              honda_get_checksum, honda_compute_checksum, honda_get_counter);
+  } else {
+    valid = addr_safety_check(to_push, honda_rx_checks, HONDA_RX_CHECKS_LEN,
+                              honda_get_checksum, honda_compute_checksum, honda_get_counter);
+  }
+
   if (valid) {
     int addr = GET_ADDR(to_push);
     int len = GET_LEN(to_push);
@@ -166,16 +181,12 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
-  switch (honda_hw) {
-    case HONDA_BG_HW:
-      tx = msg_allowed(addr, bus, HONDA_BG_TX_MSGS, sizeof(HONDA_BG_TX_MSGS)/sizeof(HONDA_BG_TX_MSGS[0]));
-      break;
-    case HONDA_BH_HW:
-      tx = msg_allowed(addr, bus, HONDA_BH_TX_MSGS, sizeof(HONDA_BH_TX_MSGS)/sizeof(HONDA_BH_TX_MSGS[0]));
-      break;
-    default:  // nidec
-      tx = msg_allowed(addr, bus, HONDA_N_TX_MSGS, sizeof(HONDA_N_TX_MSGS)/sizeof(HONDA_N_TX_MSGS[0]));
-      break;
+  if (honda_hw == HONDA_BG_HW) {
+    tx = msg_allowed(addr, bus, HONDA_BG_TX_MSGS, sizeof(HONDA_BG_TX_MSGS)/sizeof(HONDA_BG_TX_MSGS[0]));
+  } else if (honda_hw == HONDA_BH_HW) {
+    tx = msg_allowed(addr, bus, HONDA_BH_TX_MSGS, sizeof(HONDA_BH_TX_MSGS)/sizeof(HONDA_BH_TX_MSGS[0]));
+  } else {
+    tx = msg_allowed(addr, bus, HONDA_N_TX_MSGS, sizeof(HONDA_N_TX_MSGS)/sizeof(HONDA_N_TX_MSGS[0]));
   }
 
   if (relay_malfunction) {
@@ -323,6 +334,8 @@ const safety_hooks honda_bosch_giraffe_hooks = {
   .tx = honda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = honda_bosch_fwd_hook,
+  .addr_check = honda_rx_checks,
+  .addr_check_len = sizeof(honda_rx_checks) / sizeof(honda_rx_checks[0]),
 };
 
 const safety_hooks honda_bosch_harness_hooks = {
@@ -331,6 +344,6 @@ const safety_hooks honda_bosch_harness_hooks = {
   .tx = honda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = honda_bosch_fwd_hook,
-  .addr_check = honda_rx_checks,
-  .addr_check_len = sizeof(honda_rx_checks) / sizeof(honda_rx_checks[0]),
+  .addr_check = honda_bh_rx_checks,
+  .addr_check_len = sizeof(honda_bh_rx_checks) / sizeof(honda_bh_rx_checks[0]),
 };
