@@ -23,14 +23,14 @@ BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 DEBUG = os.getenv("PANDADEBUG") is not None
 
 # *** wifi mode ***
-def build_st(target, mkfile="Makefile"):
+def build_st(target, mkfile="Makefile", clean=True):
   from panda import BASEDIR
-  cmd = 'cd %s && make -f %s clean && make -f %s %s >/dev/null' % (os.path.join(BASEDIR, "board"), mkfile, mkfile, target)
+
+  clean_cmd = "make -f %s clean" % mkfile if clean else ":"
+  cmd = 'cd %s && %s && make -f %s %s' % (os.path.join(BASEDIR, "board"), clean_cmd, mkfile, target)
   try:
     _ = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
   except subprocess.CalledProcessError:
-    #output = exception.output
-    #returncode = exception.returncode
     raise
 
 def parse_can_buffer(dat):
