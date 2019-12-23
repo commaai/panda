@@ -10,7 +10,7 @@ from panda.tests.safety.common import test_relay_malfunction, make_msg, \
 MAX_BRAKE = 255
 
 INTERCEPTOR_THRESHOLD = 328
-TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x200, 0], [0x30C, 0], [0x33D, 0], [0x39F, 0]]
+TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x200, 0], [0x30C, 0], [0x33D, 0]]
 
 HONDA_N_HW = 0
 HONDA_BG_HW = 1
@@ -314,7 +314,7 @@ class TestHondaSafety(unittest.TestCase):
     for f in fwd_brake:
       self.safety.set_honda_fwd_brake(f)
       blocked_msgs = [0xE4, 0x194, 0x33D]
-      blocked_msgs += [0x30C, 0x39F]
+      blocked_msgs += [0x30C]
       if not f:
         blocked_msgs += [0x1FA]
       for b in buss:
