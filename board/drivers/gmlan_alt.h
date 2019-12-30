@@ -143,12 +143,15 @@ int inverted_bit_to_send = GMLAN_HIGH;
 int gmlan_switch_below_timeout = -1;
 int gmlan_switch_timeout_enable = 0;
 
+void TIM4_IRQ_Handler(void);
+
 void gmlan_switch_init(int timeout_enable) {
   gmlan_switch_timeout_enable = timeout_enable;
   gmlan_alt_mode = GPIO_SWITCH;
   gmlan_switch_below_timeout = 1;
   set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
-
+  
+  REGISTER_INTERRUPT(TIM4_IRQn, TIM4_IRQ_Handler, 40000U, FAULT_INTERRUPT_RATE_GMLAN)  
   setup_timer4();
 
   inverted_bit_to_send = GMLAN_LOW; //We got initialized, set the output low
