@@ -78,13 +78,23 @@ namespace panda {
 
 	#pragma pack(1)
 	typedef struct _PANDA_HEALTH {
+		uint32_t uptime;
 		uint32_t voltage;
 		uint32_t current;
-		uint8_t started;
+		uint32_t can_rx_errs;
+		uint32_t can_send_errs;
+		uint32_t can_fwd_errs;
+		uint32_t gmlan_send_errs;
+		uint32_t faults;
+		uint8_t ignition_line;
+		uint8_t ignition_can;
 		uint8_t controls_allowed;
 		uint8_t gas_interceptor_detected;
-		uint8_t started_signal_detected;
-		uint8_t started_alt;
+		uint8_t car_harness_status;
+		uint8_t usb_power_mode;
+		uint8_t safety_mode;
+		uint8_t fault_status;
+		uint8_t power_save_enabled;
 	} PANDA_HEALTH, *PPANDA_HEALTH;
 
 	typedef struct _PANDA_CAN_MSG {
