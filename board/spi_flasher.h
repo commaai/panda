@@ -65,7 +65,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       // so it's blocked over wifi
       switch (setup->b.wValue.w) {
         case 0:
-          #ifdef ALLOW_DEBUG
+          // TODO: put this back when it's no longer a "devkit"
+          //#ifdef ALLOW_DEBUG
+          #if 1
           if (hardwired) {
           #else
           // no more bootstub on UNO once OTP block is flashed
