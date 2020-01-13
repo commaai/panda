@@ -1,7 +1,6 @@
 import time
-from panda_jungle import PandaJungle  # pylint: disable=import-error
 from panda import PandaSerial
-from .helpers import panda_jungle, reset_pandas, test_all_gps_pandas, panda_connect_and_init
+from .helpers import reset_pandas, test_all_gps_pandas, panda_connect_and_init
 
 # Reset the pandas before running tests
 def aaaa_reset_before_tests():
