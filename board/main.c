@@ -677,7 +677,7 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
     //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
 
     // reset this every 16th pass
-    if ((uptime_cnt & 0xFU) == 0U) {
+    if ((uptime_cnt % 0xFU) == 0U) {
       pending_can_live = 0;
     }
     #ifdef DEBUG
