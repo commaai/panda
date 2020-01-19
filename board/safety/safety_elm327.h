@@ -12,7 +12,7 @@ static int elm327_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   //Check valid 29 bit send addresses for ISO 15765-4
   //Check valid 11 bit send addresses for ISO 15765-4
   if ((addr != 0x18DB33F1) && ((addr & 0x1FFF00FF) != 0x18DA00F1) &&
-      ((addr != 0x7DF) && ((addr & 0x7F8) != 0x7E0))) {
+      ((addr & 0x1FFFFF00) != 0x700)) {
     tx = 0;
   }
   return tx;
@@ -38,6 +38,5 @@ const safety_hooks elm327_hooks = {
   .rx = default_rx_hook,
   .tx = elm327_tx_hook,
   .tx_lin = elm327_tx_lin_hook,
-  .ignition = default_ign_hook,
   .fwd = default_fwd_hook,
 };

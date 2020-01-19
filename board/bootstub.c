@@ -1,5 +1,8 @@
 #define BOOTSTUB
 
+#define VERS_TAG 0x53524556
+#define MIN_VERSION 2
+
 #include "config.h"
 #include "obj/gitversion.h"
 
@@ -29,9 +32,15 @@ const board *current_board;
 // ********************* Includes *********************
 #include "libc.h"
 #include "provision.h"
+#include "critical.h"
+#include "faults.h"
 
+#include "drivers/registers.h"
+#include "drivers/interrupts.h"
 #include "drivers/clock.h"
 #include "drivers/llgpio.h"
+#include "drivers/adc.h"
+#include "drivers/pwm.h"
 
 #include "board.h"
 
@@ -63,12 +72,13 @@ extern void *_app_start[];
 // BOUNTY: $200 coupon on shop.comma.ai or $100 check.
 
 int main(void) {
+  // Init interrupt table
+  init_interrupts(true);
+
   disable_interrupts();
   clock_init();
   detect_configuration();
   detect_board_type();
-
-  current_board->set_usb_power_mode(USB_POWER_CLIENT);
 
   if (enter_bootloader_mode == ENTER_SOFTLOADER_MAGIC) {
     enter_bootloader_mode = 0;
@@ -82,6 +92,13 @@ int main(void) {
   // compute SHA hash
   uint8_t digest[SHA_DIGEST_SIZE];
   SHA_hash(&_app_start[1], len-4, digest);
+
+  // verify version, last bytes in the signed area
+  uint32_t vers[2] = {0};
+  memcpy(&vers, ((void*)&_app_start[0]) + len - sizeof(vers), sizeof(vers));
+  if (vers[0] != VERS_TAG || vers[1] < MIN_VERSION) {
+    goto fail;
+  }
 
   // verify RSA signature
   if (RSA_verify(&release_rsa_key, ((void*)&_app_start[0]) + len, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {

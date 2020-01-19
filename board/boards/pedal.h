@@ -50,14 +50,31 @@ void pedal_set_can_mode(uint8_t mode){
   }
 }
 
-void pedal_usb_power_mode_tick(uint64_t tcnt){
-  UNUSED(tcnt);
+void pedal_usb_power_mode_tick(uint32_t uptime){
+  UNUSED(uptime);
   // Not applicable
 }
 
 bool pedal_check_ignition(void){
   // not supported on pedal
   return false;
+}
+
+uint32_t pedal_read_current(void){
+  // No current sense on pedal
+  return 0U;
+}
+
+void pedal_set_ir_power(uint8_t percentage){
+  UNUSED(percentage);
+}
+
+void pedal_set_fan_power(uint8_t percentage){
+  UNUSED(percentage);
+}
+
+void pedal_set_phone_power(bool enabled){
+  UNUSED(enabled);
 }
 
 void pedal_init(void) {
@@ -93,4 +110,8 @@ const board board_pedal = {
   .set_can_mode = pedal_set_can_mode,
   .usb_power_mode_tick = pedal_usb_power_mode_tick,
   .check_ignition = pedal_check_ignition,
+  .read_current = pedal_read_current,
+  .set_fan_power = pedal_set_fan_power,
+  .set_ir_power = pedal_set_ir_power,
+  .set_phone_power = pedal_set_phone_power
 };

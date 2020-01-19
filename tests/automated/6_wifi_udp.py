@@ -1,9 +1,12 @@
-from __future__ import print_function
 import sys
 import time
-from helpers import time_many_sends, connect_wifi, test_white, panda_type_to_serial
+from .helpers import start_heartbeat_thread, reset_pandas, time_many_sends, connect_wifi, test_white, panda_type_to_serial
 from panda import Panda, PandaWifiStreaming
-from nose.tools import timed, assert_equal, assert_less, assert_greater
+from nose.tools import assert_less, assert_greater
+
+# Reset the pandas before running tests
+def aaaa_reset_before_tests():
+  reset_pandas()
 
 @test_white
 @panda_type_to_serial
@@ -11,6 +14,10 @@ def test_udp_doesnt_drop(serials=None):
   connect_wifi(serials[0])
 
   p = Panda(serials[0])
+
+  # Start heartbeat
+  start_heartbeat_thread(p)
+
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   p.set_can_loopback(True)
 
@@ -54,7 +61,7 @@ def test_udp_doesnt_drop(serials=None):
     missing = True
     while len(r) > 0:
       r = p.can_recv()
-      r = filter(lambda x: x[3] == bus and x[0] == msg_id, r)
+      r = [x for x in r if x[3] == bus and x[0] == msg_id]
       if len(r) > 0:
         missing = False
         usb_ok_cnt += len(r)

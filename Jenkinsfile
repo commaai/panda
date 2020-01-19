@@ -14,6 +14,11 @@ pipeline {
       steps {
         timeout(time: 60, unit: 'MINUTES') {
           script {
+            try {
+              sh 'cp -R /home/batman/panda_jungle .'
+            } catch (err) {
+              echo "Folder already exists"
+            }
             sh 'git archive -v -o panda.tar.gz --format=tar.gz HEAD'
             dockerImage = docker.build("${env.DOCKER_IMAGE_TAG}")
           }
@@ -46,6 +51,7 @@ pipeline {
         }
       }
     }
+/*
     stage('Test Dev Build (WIFI)') {
       steps {
         lock(resource: "Pandas", inversePrecedence: true, quantity: 1){
@@ -59,6 +65,7 @@ pipeline {
         }
       }
     }
+*/
   }
   post {
     failure {

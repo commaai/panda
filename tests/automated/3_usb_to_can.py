@@ -1,14 +1,19 @@
-from __future__ import print_function
-import os
 import sys
 import time
 from panda import Panda
 from nose.tools import assert_equal, assert_less, assert_greater
-from helpers import SPEED_NORMAL, SPEED_GMLAN, time_many_sends, test_white_and_grey, panda_type_to_serial, test_all_pandas, panda_connect_and_init
+from .helpers import start_heartbeat_thread, reset_pandas, SPEED_NORMAL, SPEED_GMLAN, time_many_sends, test_white_and_grey, panda_type_to_serial, test_all_pandas, panda_connect_and_init
+
+# Reset the pandas before running tests
+def aaaa_reset_before_tests():
+  reset_pandas()
 
 @test_all_pandas
 @panda_connect_and_init
 def test_can_loopback(p):
+  # Start heartbeat
+  start_heartbeat_thread(p)
+
   # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
@@ -25,31 +30,34 @@ def test_can_loopback(p):
     p.set_can_speed_kbps(bus, 250)
 
     # send a message on bus 0
-    p.can_send(0x1aa, "message", bus)
+    p.can_send(0x1aa, b"message", bus)
 
     # confirm receive both on loopback and send receipt
     time.sleep(0.05)
     r = p.can_recv()
-    sr = filter(lambda x: x[3] == 0x80 | bus, r)
-    lb = filter(lambda x: x[3] == bus, r)
+    sr = [x for x in r if x[3] == 0x80 | bus]
+    lb = [x for x in r if x[3] == bus]
     assert len(sr) == 1
     assert len(lb) == 1
 
     # confirm data is correct
     assert 0x1aa == sr[0][0] == lb[0][0]
-    assert "message" == sr[0][2] == lb[0][2]
+    assert b"message" == sr[0][2] == lb[0][2]
 
 @test_all_pandas
 @panda_connect_and_init
 def test_safety_nooutput(p):
+  # Start heartbeat
+  start_heartbeat_thread(p)
+
   # enable output mode
-  p.set_safety_mode(Panda.SAFETY_NOOUTPUT)
+  p.set_safety_mode(Panda.SAFETY_SILENT)
 
   # enable CAN loopback mode
   p.set_can_loopback(True)
 
   # send a message on bus 0
-  p.can_send(0x1aa, "message", 0)
+  p.can_send(0x1aa, b"message", 0)
 
   # confirm receive nothing
   time.sleep(0.05)
@@ -62,13 +70,16 @@ def test_reliability(p):
   LOOP_COUNT = 100
   MSG_COUNT = 100
 
+  # Start heartbeat
+  start_heartbeat_thread(p)
+
   # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   p.set_can_loopback(True)
   p.set_can_speed_kbps(0, 1000)
 
-  addrs = range(100, 100+MSG_COUNT)
-  ts = [(j, 0, "\xaa"*8, 0) for j in addrs]
+  addrs = list(range(100, 100+MSG_COUNT))
+  ts = [(j, 0, b"\xaa"*8, 0) for j in addrs]
 
   # 100 loops
   for i in range(LOOP_COUNT):
@@ -80,11 +91,11 @@ def test_reliability(p):
     while len(r) < 200 and (time.time() - st) < 0.5:
       r.extend(p.can_recv())
 
-    sent_echo = filter(lambda x: x[3] == 0x80, r)
-    loopback_resp = filter(lambda x: x[3] == 0, r)
+    sent_echo = [x for x in r if x[3] == 0x80]
+    loopback_resp = [x for x in r if x[3] == 0]
 
-    assert_equal(sorted(map(lambda x: x[0], loopback_resp)), addrs)
-    assert_equal(sorted(map(lambda x: x[0], sent_echo)), addrs)
+    assert_equal(sorted([x[0] for x in loopback_resp]), addrs)
+    assert_equal(sorted([x[0] for x in sent_echo]), addrs)
     assert_equal(len(r), 200)
 
     # take sub 20ms
@@ -97,6 +108,9 @@ def test_reliability(p):
 @test_all_pandas
 @panda_connect_and_init
 def test_throughput(p):
+  # Start heartbeat
+  start_heartbeat_thread(p)
+
   # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
@@ -123,6 +137,9 @@ def test_throughput(p):
 def test_gmlan(p):
   if p.legacy:
     return
+
+  # Start heartbeat
+  start_heartbeat_thread(p)
 
   # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
@@ -155,6 +172,9 @@ def test_gmlan_bad_toggle(p):
   if p.legacy:
     return
 
+  # Start heartbeat
+  start_heartbeat_thread(p)
+
   # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
@@ -180,6 +200,6 @@ def test_gmlan_bad_toggle(p):
 @test_all_pandas
 @panda_connect_and_init
 def test_serial_debug(p):
-  junk = p.serial_read(Panda.SERIAL_DEBUG)
+  _ = p.serial_read(Panda.SERIAL_DEBUG)  # junk
   p.call_control_api(0xc0)
-  assert(p.serial_read(Panda.SERIAL_DEBUG).startswith("can "))
+  assert(p.serial_read(Panda.SERIAL_DEBUG).startswith(b"can "))

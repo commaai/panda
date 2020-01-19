@@ -8,44 +8,77 @@ const int SUBARU_MAX_RATE_DOWN = 70;
 const int SUBARU_DRIVER_TORQUE_ALLOWANCE = 60;
 const int SUBARU_DRIVER_TORQUE_FACTOR = 10;
 
+const AddrBus SUBARU_TX_MSGS[] = {{0x122, 0}, {0x164, 0}, {0x221, 0}, {0x322, 0}};
+
+// TODO: do checksum and counter checks after adding the signals to the outback dbc file
+AddrCheckStruct subaru_rx_checks[] = {
+  {.addr = {0x119, 0x371}, .bus = 0, .expected_timestep = 20000U},
+  {.addr = {0x240, 0x144}, .bus = 0, .expected_timestep = 50000U},
+};
+const int SUBARU_RX_CHECK_LEN = sizeof(subaru_rx_checks) / sizeof(subaru_rx_checks[0]);
+
 int subaru_cruise_engaged_last = 0;
 int subaru_rt_torque_last = 0;
 int subaru_desired_torque_last = 0;
 uint32_t subaru_ts_last = 0;
 struct sample_t subaru_torque_driver;         // last few driver torques measured
 
+static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
-static void subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  int bus = GET_BUS(to_push);
-  int addr = GET_ADDR(to_push);
+  bool valid = addr_safety_check(to_push, subaru_rx_checks, SUBARU_RX_CHECK_LEN,
+                                 NULL, NULL, NULL);
 
-  if ((addr == 0x119) && (bus == 0)){
-    int torque_driver_new = ((GET_BYTES_04(to_push) >> 16) & 0x7FF);
-    torque_driver_new = to_signed(torque_driver_new, 11);
-    // update array of samples
-    update_sample(&subaru_torque_driver, torque_driver_new);
-  }
+  if (valid) {
+    int bus = GET_BUS(to_push);
+    int addr = GET_ADDR(to_push);
 
-  // enter controls on rising edge of ACC, exit controls on ACC off
-  if ((addr == 0x240) && (bus == 0)) {
-    int cruise_engaged = GET_BYTE(to_push, 5) & 2;
-    if (cruise_engaged && !subaru_cruise_engaged_last) {
-      controls_allowed = 1;
+    if (((addr == 0x119) || (addr == 0x371)) && (bus == 0)){
+      int bit_shift = (addr == 0x119) ? 16 : 29;
+      int torque_driver_new = ((GET_BYTES_04(to_push) >> bit_shift) & 0x7FF);
+      torque_driver_new = to_signed(torque_driver_new, 11);
+      // update array of samples
+      update_sample(&subaru_torque_driver, torque_driver_new);
     }
-    if (!cruise_engaged) {
-      controls_allowed = 0;
+
+    // enter controls on rising edge of ACC, exit controls on ACC off
+    if (((addr == 0x240) || (addr == 0x144)) && (bus == 0)) {
+      int bit_shift = (addr == 0x240) ? 9 : 17;
+      int cruise_engaged = ((GET_BYTES_48(to_push) >> bit_shift) & 1);
+      if (cruise_engaged && !subaru_cruise_engaged_last) {
+        controls_allowed = 1;
+      }
+      if (!cruise_engaged) {
+        controls_allowed = 0;
+      }
+      subaru_cruise_engaged_last = cruise_engaged;
     }
-    subaru_cruise_engaged_last = cruise_engaged;
+
+    // TODO: enforce cancellation on gas pressed
+
+    if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && ((addr == 0x122) || (addr == 0x164))) {
+      relay_malfunction = true;
+    }
   }
+  return valid;
 }
 
 static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
+  int bus = GET_BUS(to_send);
+
+  if (!msg_allowed(addr, bus, SUBARU_TX_MSGS, sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))) {
+    tx = 0;
+  }
+
+  if (relay_malfunction) {
+    tx = 0;
+  }
 
   // steer cmd checks
-  if (addr == 0x122) {
-    int desired_torque = ((GET_BYTES_04(to_send) >> 16) & 0x1FFF);
+  if ((addr == 0x122) || (addr == 0x164)) {
+    int bit_shift = (addr == 0x122) ? 16 : 8;
+    int desired_torque = ((GET_BYTES_04(to_send) >> bit_shift) & 0x1FFF);
     bool violation = 0;
     uint32_t ts = TIM2->CNT;
     desired_torque = to_signed(desired_torque, 13);
@@ -96,23 +129,24 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 }
 
 static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
-
   int bus_fwd = -1;
-  if (bus_num == 0) {
-    bus_fwd = 2;  // Camera CAN
-  }
-  if (bus_num == 2) {
-    // 356 is LKAS for outback 2015
-    // 356 is LKAS for Global Platform
-    // 545 is ES_Distance
-    // 802 is ES_LKAS
-    int addr = GET_ADDR(to_fwd);
-    int block_msg = (addr == 290) || (addr == 356) || (addr == 545) || (addr == 802);
-    if (!block_msg) {
-      bus_fwd = 0;  // Main CAN
+
+  if (!relay_malfunction) {
+    if (bus_num == 0) {
+      bus_fwd = 2;  // Camera CAN
+    }
+    if (bus_num == 2) {
+      // 290 is LKAS for Global Platform
+      // 356 is LKAS for outback 2015
+      // 545 is ES_Distance
+      // 802 is ES_LKAS
+      int addr = GET_ADDR(to_fwd);
+      int block_msg = (addr == 290) || (addr == 356) || (addr == 545) || (addr == 802);
+      if (!block_msg) {
+        bus_fwd = 0;  // Main CAN
+      }
     }
   }
-
   // fallback to do not forward
   return bus_fwd;
 }
@@ -122,6 +156,7 @@ const safety_hooks subaru_hooks = {
   .rx = subaru_rx_hook,
   .tx = subaru_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
-  .ignition = default_ign_hook,
   .fwd = subaru_fwd_hook,
+  .addr_check = subaru_rx_checks,
+  .addr_check_len = sizeof(subaru_rx_checks) / sizeof(subaru_rx_checks[0]),
 };
