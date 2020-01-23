@@ -9,7 +9,7 @@ from panda import Panda
 # The TX buffers on pandas is 0x100 in length.
 NUM_MESSAGES_PER_BUS = 10000
 
-def flood_tx(panda, sleep=0):
+def flood_tx(panda):
   print('Sending!')
   msg = b"\xaa"*4
   packet = [[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]] * NUM_MESSAGES_PER_BUS
@@ -29,7 +29,6 @@ if __name__ == "__main__":
   
   # Start transmisson
   threading.Thread(target=flood_tx, args=(sender,)).start()
-  #threading.Thread(target=flood_tx, args=(receiver,0.05)).start()
 
   # Receive as much as we can in a few second time period
   rx = []
