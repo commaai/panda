@@ -208,7 +208,7 @@ def test_bulk_write(p):
   # The TX buffers on pandas is 0x100 in length.
   NUM_MESSAGES_PER_BUS = 10000
 
-  def flood_tx(panda)
+  def flood_tx(panda):
     print('Sending!')
     msg = b"\xaa"*4
     packet = [[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]] * NUM_MESSAGES_PER_BUS
