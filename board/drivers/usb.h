@@ -23,7 +23,7 @@ typedef union _USB_Setup {
 }
 USB_Setup_TypeDef;
 
-#define MAX_CAN_MSGS_PER_BULK_TRANSFER 4
+#define MAX_CAN_MSGS_PER_BULK_TRANSFER 4U
 
 void usb_init(void);
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired);

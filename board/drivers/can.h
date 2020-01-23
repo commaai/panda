@@ -28,7 +28,7 @@ void can_set_forwarding(int from, int to);
 
 void can_init(uint8_t can_number);
 void can_init_all(void);
-bool can_tx_check_min_slots_free(int min);
+bool can_tx_check_min_slots_free(uint32_t min);
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx_hook);
 bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 
@@ -108,8 +108,8 @@ bool can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   return ret;
 }
 
-int can_slots_empty(can_ring *q) {
-  int ret = 0;
+uint32_t can_slots_empty(can_ring *q) {
+  uint32_t ret = 0;
 
   ENTER_CRITICAL();
   if (q->w_ptr >= q->r_ptr) {
@@ -338,7 +338,7 @@ void process_can(uint8_t can_number) {
         }
       }
     }
-    
+
     EXIT_CRITICAL();
   }
 }
@@ -424,7 +424,7 @@ void CAN3_TX_IRQ_Handler(void) { process_can(2); }
 void CAN3_RX0_IRQ_Handler(void) { can_rx(2); }
 void CAN3_SCE_IRQ_Handler(void) { can_sce(CAN3); }
 
-bool can_tx_check_min_slots_free(int min) {
+bool can_tx_check_min_slots_free(uint32_t min) {
   return
     (can_slots_empty(&can_tx1_q) >= min) &&
     (can_slots_empty(&can_tx2_q) >= min) &&
