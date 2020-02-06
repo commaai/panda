@@ -303,6 +303,7 @@ class CanClient():
       msgs = self.rx()
       if drain:
         if self.debug: print("CAN-RX: drain - {}".format(len(msgs)))
+        self.rx_buff.clear()
       else:
         for rx_addr, rx_ts, rx_data, rx_bus in msgs or []:
           if self._recv_filter(rx_bus, rx_addr) and len(rx_data) > 0:
