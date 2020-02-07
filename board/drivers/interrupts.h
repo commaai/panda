@@ -120,7 +120,7 @@ void SPI3_IRQHandler(void) {handle_interrupt(SPI3_IRQn);}
 void UART4_IRQHandler(void) {handle_interrupt(UART4_IRQn);}
 void UART5_IRQHandler(void) {handle_interrupt(UART5_IRQn);}
 void TIM6_DAC_IRQHandler(void) {handle_interrupt(TIM6_DAC_IRQn);}
-void TIM7_IRQHandler(void) {handle_interrupt(TIM7_IRQn);}
+//void TIM7_IRQHandler(void) {handle_interrupt(TIM7_IRQn);} currently defined in main
 void DMA2_Stream0_IRQHandler(void) {handle_interrupt(DMA2_Stream0_IRQn);}
 void DMA2_Stream1_IRQHandler(void) {handle_interrupt(DMA2_Stream1_IRQn);}
 void DMA2_Stream2_IRQHandler(void) {handle_interrupt(DMA2_Stream2_IRQn);}
