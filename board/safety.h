@@ -57,6 +57,29 @@ int safety_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return current_hooks->fwd(bus_num, to_fwd);
 }
 
+pump_hook message_pump_hook;
+
+void enable_message_pump(uint32_t divider, pump_hook hook) {
+  //Timer for LKAS pump
+  //todo: some kind of locking?
+  message_pump_active = true;
+  message_pump_hook = hook;
+  timer_init(TIM7, divider);
+  NVIC_EnableIRQ(TIM7_IRQn);
+}
+
+void update_message_pump_rate(uint32_t divider) {
+  //TODO: test if this works
+  TIM7->PSC = divider-1;
+}
+
+void disable_message_pump() {
+  NVIC_DisableIRQ(TIM7_IRQn);
+  message_pump_hook = NULL;
+  message_pump_active = false;
+}
+
+
 bool msg_allowed(int addr, int bus, const AddrBus addr_list[], int len) {
   bool allowed = false;
   for (int i = 0; i < len; i++) {
@@ -211,6 +234,11 @@ int set_safety_hooks(uint16_t mode, int16_t param) {
   }
   if ((set_status == 0) && (current_hooks->init != NULL)) {
     current_hooks->init(param);
+  }
+  //TODO: maybe this belongs in main?
+  if (mode == SAFETY_NOOUTPUT) {
+    //puts("Disabling message pump due to SAFETY_NOOUTPUT");
+    disable_message_pump();
   }
   return set_status;
 }

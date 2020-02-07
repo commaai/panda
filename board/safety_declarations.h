@@ -66,6 +66,11 @@ typedef int (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);
 typedef int (*tx_hook)(CAN_FIFOMailBox_TypeDef *to_send);
 typedef int (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
 typedef int (*fwd_hook)(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd);
+typedef CAN_FIFOMailBox_TypeDef * (*pump_hook)(void);
+
+void enable_message_pump(uint32_t divider, pump_hook hook);
+void update_message_pump_rate(uint32_t divider);
+void disable_message_pump(void);
 
 typedef struct {
   safety_hook_init init;
@@ -84,6 +89,8 @@ bool controls_allowed = false;
 bool relay_malfunction = false;
 bool gas_interceptor_detected = false;
 int gas_interceptor_prev = 0;
+
+bool message_pump_active = false;
 
 // time since safety mode has been changed
 uint32_t safety_mode_cnt = 0U;
