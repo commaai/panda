@@ -2,6 +2,12 @@ uint8_t car_harness_status = 0U;
 #define HARNESS_STATUS_NC 0U
 #define HARNESS_STATUS_NORMAL 1U
 #define HARNESS_STATUS_FLIPPED 2U
+// NOTE: Because of an inconsistency in the OBD-C pinouts of panda and harness:
+// HARNESS_STATUS_NORMAL means the USB-C cable is actually flipped and PANDA_SBU1->HARNESS_SBU2, PANDA_SBU2->HARNESS_SBU1
+//   but PANDA_CAN0->HARNESS_CAN0, PANDA_CAN1->HARNESS_CAN1, PANDA_CAN2->HARNESS_CAN2, PANDA_CAN3->HARNESS_CAN3
+// HARNESS_STATUS_FLIPPED means the USB-C cable is actually normal and PANDA_SBU1->HARNESS_SBU1, PANDA_SBU2->HARNESS_SBU2
+//   but PANDA_CAN0->HARNESS_CAN3, PANDA_CAN1->HARNESS_CAN2, PANDA_CAN2->HARNESS_CAN1, PANDA_CAN3->HARNESS_CAN0
+// So NORMAL and FLIPPED describes whether the CAN connections are flipped, not the cable
 
 // Threshold voltage (mV) for either of the SBUs to be below before deciding harness is connected
 #define HARNESS_CONNECTED_THRESHOLD 2500U
@@ -62,10 +68,10 @@ uint8_t harness_detect_orientation(void) {
   // Detect connection and orientation
   if((sbu1_voltage < HARNESS_CONNECTED_THRESHOLD) || (sbu2_voltage < HARNESS_CONNECTED_THRESHOLD)){
     if (sbu1_voltage < sbu2_voltage) {
-      // orientation normal
+      // orientation normal (see note above)
       ret = HARNESS_STATUS_NORMAL;
     } else {
-      // orientation flipped
+      // orientation flipped (see note above)
       ret = HARNESS_STATUS_FLIPPED;
     }
   }
