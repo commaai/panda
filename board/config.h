@@ -2,8 +2,10 @@
 #define PANDA_CONFIG_H
 
 //#define DEBUG
+//#define DEBUG_UART
 //#define DEBUG_USB
 //#define DEBUG_SPI
+//#define DEBUG_FAULTS
 
 #ifdef STM32F4
   #define PANDA
@@ -22,7 +24,7 @@
 
 #include <stdbool.h>
 #define NULL ((void*)0)
-#define COMPILE_TIME_ASSERT(pred) ((void)sizeof(char[1 - (2 * (!(pred)))]))
+#define COMPILE_TIME_ASSERT(pred) ((void)sizeof(char[1 - (2 * ((int)(!(pred))))]))
 
 #define MIN(a,b) \
  ({ __typeof__ (a) _a = (a); \
@@ -35,6 +37,9 @@
    (_a > _b) ? _a : _b; })
 
 #define MAX_RESP_LEN 0x40U
+
+// Around (1Mbps / 8 bits/byte / 12 bytes per message)
+#define CAN_INTERRUPT_RATE 12000U
 
 #endif
 

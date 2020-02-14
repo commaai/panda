@@ -3,7 +3,11 @@
 #include "libc.h"
 
 #include "main_declarations.h"
+#include "critical.h"
+#include "faults.h"
 
+#include "drivers/registers.h"
+#include "drivers/interrupts.h"
 #include "drivers/llcan.h"
 #include "drivers/llgpio.h"
 #include "drivers/adc.h"
@@ -55,18 +59,18 @@ void debug_ring_callback(uart_ring *ring) {
   }
 }
 
-int usb_cb_ep1_in(uint8_t *usbdata, int len, bool hardwired) {
+int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   UNUSED(usbdata);
   UNUSED(len);
   UNUSED(hardwired);
   return 0;
 }
-void usb_cb_ep2_out(uint8_t *usbdata, int len, bool hardwired) {
+void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
   UNUSED(usbdata);
   UNUSED(len);
   UNUSED(hardwired);
 }
-void usb_cb_ep3_out(uint8_t *usbdata, int len, bool hardwired) {
+void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   UNUSED(usbdata);
   UNUSED(len);
   UNUSED(hardwired);
@@ -83,9 +87,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       ur = get_ring_by_number(setup->b.wValue.w);
       if (!ur) {
         break;
-      }
-      if (ur == &esp_ring) {
-        uart_dma_drain();
       }
       // read
       while ((resp_len < MIN(setup->b.wLength.w, MAX_RESP_LEN)) &&
@@ -132,8 +133,7 @@ uint8_t pedal_checksum(uint8_t *dat, int len) {
 #define CAN_GAS_SIZE 6
 #define COUNTER_CYCLE 0xFU
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void CAN1_TX_IRQHandler(void) {
+void CAN1_TX_IRQ_Handler(void) {
   // clear interrupt
   CAN->TSR |= CAN_TSR_RQCP0;
 }
@@ -155,8 +155,7 @@ uint32_t current_index = 0;
 #define FAULT_INVALID 6U
 uint8_t state = FAULT_STARTUP;
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void CAN1_RX0_IRQHandler(void) {
+void CAN1_RX0_IRQ_Handler(void) {
   while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
     #ifdef DEBUG
       puts("CAN RX\n");
@@ -219,8 +218,7 @@ void CAN1_RX0_IRQHandler(void) {
   }
 }
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void CAN1_SCE_IRQHandler(void) {
+void CAN1_SCE_IRQ_Handler(void) {
   state = FAULT_SCE;
   llcan_clear_send(CAN);
 }
@@ -231,8 +229,7 @@ unsigned int pkt_idx = 0;
 
 int led_value = 0;
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void TIM3_IRQHandler(void) {
+void TIM3_IRQ_Handler(void) {
   #ifdef DEBUG
     puth(TIM3->CNT);
     puts(" ");
@@ -299,13 +296,26 @@ void pedal(void) {
 }
 
 int main(void) {
-  __disable_irq();
+  // Init interrupt table
+  init_interrupts(true);
+
+  REGISTER_INTERRUPT(CAN1_TX_IRQn, CAN1_TX_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
+  REGISTER_INTERRUPT(CAN1_RX0_IRQn, CAN1_RX0_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
+  REGISTER_INTERRUPT(CAN1_SCE_IRQn, CAN1_SCE_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
+
+  // Should run at around 732Hz (see init below)
+  REGISTER_INTERRUPT(TIM3_IRQn, TIM3_IRQ_Handler, 1000U, FAULT_INTERRUPT_RATE_TIM3)
+
+  disable_interrupts();
 
   // init devices
   clock_init();
   peripherals_init();
   detect_configuration();
   detect_board_type();
+
+  // init board
+  current_board->init();
 
 #ifdef PEDAL_USB
   // enable USB
@@ -331,7 +341,7 @@ int main(void) {
   watchdog_init();
 
   puts("**** INTERRUPTS ON ****\n");
-  __enable_irq();
+  enable_interrupts();
 
   // main pedal loop
   while (1) {

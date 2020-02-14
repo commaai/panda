@@ -20,6 +20,15 @@ void jump_to_bootloader(void) {
 }
 
 void early(void) {
+  // Reset global critical depth
+  global_critical_depth = 0;
+
+  // Init register and interrupt tables
+  init_registers();
+
+  // neccesary for DFU flashing on a non-power cycled white panda
+  enable_interrupts();
+
   // after it's been in the bootloader, things are initted differently, so we reset
   if ((enter_bootloader_mode != BOOT_NORMAL) &&
       (enter_bootloader_mode != ENTER_BOOTLOADER_MAGIC) &&
@@ -52,13 +61,6 @@ void early(void) {
 
   detect_configuration();
   detect_board_type();
-
-  #ifdef PANDA
-    // enable the ESP, disable ESP boot mode
-    // dont disable on grey panda
-    current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
-  #endif
-
 
   if (enter_bootloader_mode == ENTER_BOOTLOADER_MAGIC) {
   #ifdef PANDA

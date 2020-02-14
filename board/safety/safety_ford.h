@@ -11,9 +11,10 @@ int ford_brake_prev = 0;
 int ford_gas_prev = 0;
 bool ford_moving = false;
 
-static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+static int ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   int addr = GET_ADDR(to_push);
+  int bus = GET_BUS(to_push);
 
   if (addr == 0x217) {
     // wheel speeds are 14 bits every 16
@@ -53,6 +54,11 @@ static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
     ford_gas_prev = gas;
   }
+
+  if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && (addr == 0x3CA)) {
+    relay_malfunction = true;
+  }
+  return 1;
 }
 
 // all commands: just steering
@@ -64,11 +70,16 @@ static void ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int ford_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   int tx = 1;
+  int addr = GET_ADDR(to_send);
+
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
   int pedal_pressed = ford_gas_prev || (ford_brake_prev && ford_moving);
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
-  int addr = GET_ADDR(to_send);
+
+  if (relay_malfunction) {
+    tx = 0;
+  }
 
   // STEER: safety check
   if (addr == 0x3CA) {
@@ -92,11 +103,12 @@ static int ford_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return tx;
 }
 
+// TODO: keep camera on bus 2 and make a fwd_hook
+
 const safety_hooks ford_hooks = {
   .init = nooutput_init,
   .rx = ford_rx_hook,
   .tx = ford_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
-  .ignition = default_ign_hook,
   .fwd = default_fwd_hook,
 };
