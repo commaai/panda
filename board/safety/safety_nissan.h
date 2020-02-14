@@ -1,14 +1,27 @@
 
-
-const int NISSAN_MAX_STEER = 2047; // 1s
-// real time torque limit to prevent controls spamming
-// the real time limit is 1500/sec
-const int NISSAN_MAX_RT_DELTA = 940;          // max delta torque allowed for real time checks
 const uint32_t NISSAN_RT_INTERVAL = 250000;    // 250ms between real time checks
-const int NISSAN_MAX_RATE_UP = 50;
-const int NISSAN_MAX_RATE_DOWN = 70;
-const int NISSAN_DRIVER_TORQUE_ALLOWANCE = 60;
-const int NISSAN_DRIVER_TORQUE_FACTOR = 10;
+
+const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_UP = {
+  {0., 5., 15.},
+  {5., .8, .15}};
+
+const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_DOWN = {
+  {0., 5., 15.},
+  {5., 3.5, .4}};
+
+const struct lookup_t NISSAN_LOOKUP_MAX_ANGLE = {
+    {1.3, 10, 30},
+    {540., 120., 23.}};
+
+const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x20b, 2}};
+
+AddrCheckStruct nissan_rx_checks[] = {
+  {.addr = {0x2}, .bus = 0, .expected_timestep = 100000U},
+  {.addr = {0x29a}, .bus = 0, .expected_timestep = 50000U},
+  {.addr = {0x20b}, .bus = 0, .expected_timestep = 50000U},
+  {.addr = {0x1b6}, .bus = 1, .expected_timestep = 100000U},
+};
+const int NISSAN_RX_CHECK_LEN = sizeof(nissan_rx_checks) / sizeof(nissan_rx_checks[0]);
 
 float nissan_speed = 0;
 int nissan_controls_allowed_last = 0;
@@ -20,55 +33,59 @@ int nissan_desired_angle_last = 0;
 uint32_t nissan_ts_last = 0;
 struct sample_t nissan_torque_driver; // last few driver torques measured
 
-const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_UP = {
-  {1., 8., 22.},
-  {2.5, 1.25, .35}};
 
-const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_DOWN = {
-  {1., 8., 22.},
-  {3.05, 1.55, .45}};
+static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
-const struct lookup_t NISSAN_LOOKUP_MAX_ANGLE = {
-    {1.3, 4.4, 14.2},
-    {540., 104., 23.}};
+  bool valid = addr_safety_check(to_push, nissan_rx_checks, NISSAN_RX_CHECK_LEN,
+                                 NULL, NULL, NULL);
 
+  if (valid) {
+    int bus = GET_BUS(to_push);
+    int addr = GET_ADDR(to_push);
 
-static void nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  int bus = GET_BUS(to_push);
-  int addr = GET_ADDR(to_push);
-
-  if (bus == 0) {
-    if (addr == 0x2) {
-      // Current steering angle
-      // Factor -0.1, little endian
-      nissan_angle_meas_new = to_signed(to_push->RDLR & 0xFFFF, 16) * -0.1;
-    }
-
-    if (addr == 0x29a) {
-      // Get current speed
-      // Factor 0.00555
-      nissan_speed = (((to_push->RDLR >> 8) & 0xFF00) | ((to_push->RDLR >> 24) & 0xFF)) * 0.00555 / 3.6;
-    }
-  }
-
-  if (bus == 1) {
-    if (addr == 0x1b6) {
-      int cruise_engaged = (to_push->RDHR >> 6) & 1;
-      if (cruise_engaged && !nissan_cruise_engaged_last) {
-        controls_allowed = 1;
-      } else if (!cruise_engaged) {
-        controls_allowed = 0;
+    if (bus == 0) {
+      if (addr == 0x2) {
+        // Current steering angle
+        // Factor -0.1, little endian
+        nissan_angle_meas_new = to_signed(to_push->RDLR & 0xFFFF, 16) * -0.1;
       }
-      nissan_cruise_engaged_last = cruise_engaged;
 
+      if (addr == 0x29a) {
+        // Get current speed
+        // Factor 0.00555
+        nissan_speed = (((to_push->RDLR >> 8) & 0xFF00) | ((to_push->RDLR >> 24) & 0xFF)) * 0.00555 / 3.6;
+      }
+    }
+
+    if (bus == 1) {
+      if (addr == 0x1b6) {
+        int cruise_engaged = (to_push->RDHR >> 6) & 1;
+        if (cruise_engaged && !nissan_cruise_engaged_last) {
+          controls_allowed = 1;
+        }
+        if (!cruise_engaged) {
+          controls_allowed = 0;
+        }
+        nissan_cruise_engaged_last = cruise_engaged;
+      }
     }
   }
+  return valid;
 }
 
 
 static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
+  int bus = GET_BUS(to_send);
+
+  if (!msg_allowed(addr, bus, NISSAN_TX_MSGS, sizeof(NISSAN_TX_MSGS) / sizeof(NISSAN_TX_MSGS[0]))) {
+    tx = 0;
+  }
+
+  if (relay_malfunction) {
+    tx = 0;
+  }
 
   // steer cmd checks
   if (addr == 0x169) { // Factor -0.01, offeset 1310
@@ -88,8 +105,8 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       int highest_rt_angle = nissan_rt_angle_last + ((nissan_rt_angle_last > 0) ? rt_delta_angle_up : rt_delta_angle_down);
       int lowest_rt_angle = nissan_rt_angle_last - ((nissan_rt_angle_last > 0) ? rt_delta_angle_down : rt_delta_angle_up);
 
-      // Limit maximum steering angle at current speed
-      int maximum_angle = ((int)interpolate(NISSAN_LOOKUP_MAX_ANGLE, nissan_speed));
+      // Limit maximum steering angle at current speed (add 1 to not trigger false violation)
+      int maximum_angle = ((int)interpolate(NISSAN_LOOKUP_MAX_ANGLE, nissan_speed) + 1);
 
       if (highest_rt_angle > maximum_angle) {
         highest_rt_angle = maximum_angle;
@@ -131,14 +148,18 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
 
 static int nissan_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
-
   int bus_fwd = -1;
+  int addr = GET_ADDR(to_fwd);
+
   if (bus_num == 0) {
+    // 0x20b is CruiseThrottle
+    int block_msg = (addr == 0x20b);
+    if (!block_msg) {
       bus_fwd = 2;  // ADAS
+    }
   }
   if (bus_num == 2) {
     // 0x169 is LKAS
-    int addr = GET_ADDR(to_fwd);
     int block_msg = (addr == 0x169);
     if (!block_msg) {
       bus_fwd = 0;  // V-CAN
@@ -150,10 +171,11 @@ static int nissan_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 }
 
 const safety_hooks nissan_hooks = {
-  .init = nooutput_init,
-  .rx = nissan_rx_hook,
-  .tx = nissan_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
-  .ignition = default_ign_hook,
-  .fwd = nissan_fwd_hook,
+    .init = nooutput_init,
+    .rx = nissan_rx_hook,
+    .tx = nissan_tx_hook,
+    .tx_lin = nooutput_tx_lin_hook,
+    .fwd = nissan_fwd_hook,
+    .addr_check = nissan_rx_checks,
+    .addr_check_len = sizeof(nissan_rx_checks) / sizeof(nissan_rx_checks[0]),
 };

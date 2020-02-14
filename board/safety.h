@@ -14,6 +14,7 @@
 #include "safety/safety_chrysler.h"
 #include "safety/safety_subaru.h"
 #include "safety/safety_mazda.h"
+#include "safety/safety_nissan.h"
 #include "safety/safety_volkswagen.h"
 #include "safety/safety_elm327.h"
 
@@ -31,6 +32,7 @@
 #define SAFETY_TESLA 10U
 #define SAFETY_SUBARU 11U
 #define SAFETY_MAZDA 13U
+#define SAFETY_NISSAN 14U
 #define SAFETY_VOLKSWAGEN 15U
 #define SAFETY_TOYOTA_IPAS 16U
 #define SAFETY_ALLOUTPUT 17U
