@@ -2,15 +2,15 @@
 const uint32_t NISSAN_RT_INTERVAL = 250000;    // 250ms between real time checks
 
 const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_UP = {
-  {0., 5., 15.},
+  {2., 7., 17.},
   {5., .8, .15}};
 
 const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_DOWN = {
-  {0., 5., 15.},
+  {2., 7., 17.},
   {5., 3.5, .4}};
 
 const struct lookup_t NISSAN_LOOKUP_MAX_ANGLE = {
-  {1.3, 10, 30},
+  {3.3, 12, 32},
   {540., 120., 23.}};
 
 const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x20b, 2}};
@@ -27,7 +27,9 @@ float nissan_speed = 0;
 int nissan_controls_allowed_last = 0;
 uint32_t nissan_ts_angle_last = 0;
 int nissan_cruise_engaged_last = 0;
-int nissan_rt_angle_last = 0;
+int nissan_desired_angle_last = 0;
+
+struct sample_t angle_meas;            // last 3 steer angles
 
 
 static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -40,6 +42,16 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int addr = GET_ADDR(to_push);
 
     if (bus == 0) {
+      if (addr == 0x2) {
+        // Current steering angle
+        // Factor -0.1, little endian
+        int angle_meas_new = (GET_BYTES_04(to_push) & 0xFFFF);
+        angle_meas_new = to_signed(angle_meas_new, 16) * -0.1;
+
+        // update array of samples
+        update_sample(&angle_meas, angle_meas_new);
+      }
+
       if (addr == 0x29a) {
         // Get current speed
         // Factor 0.00555
@@ -92,29 +104,36 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       // add 1 to not false trigger the violation and multiply by 25 since the check is done every 250ms and steer angle is updated at 100Hz
       int rt_delta_angle_up = ((int)(((interpolate(NISSAN_LOOKUP_ANGLE_RATE_UP, speed) * 25.) + 1.)));
       int rt_delta_angle_down = ((int)(((interpolate(NISSAN_LOOKUP_ANGLE_RATE_DOWN, speed) * 25.) + 1.)));
-      int highest_rt_angle = nissan_rt_angle_last + ((nissan_rt_angle_last > 0) ? rt_delta_angle_up : rt_delta_angle_down);
-      int lowest_rt_angle = nissan_rt_angle_last - ((nissan_rt_angle_last > 0) ? rt_delta_angle_down : rt_delta_angle_up);
+      int highest_desired_angle = nissan_desired_angle_last + ((nissan_desired_angle_last > 0) ? rt_delta_angle_up : rt_delta_angle_down);
+      int lowest_desired_angle = nissan_desired_angle_last - ((nissan_desired_angle_last > 0) ? rt_delta_angle_down : rt_delta_angle_up);
 
-      // Limit maximum steering angle at current speed (add 1 to not trigger false violation)
-      int maximum_angle = ((int)interpolate(NISSAN_LOOKUP_MAX_ANGLE, nissan_speed) + 1);
+      // Limit maximum steering angle at current speed 
+      int maximum_angle = ((int)interpolate(NISSAN_LOOKUP_MAX_ANGLE, nissan_speed));
 
-      if (highest_rt_angle > maximum_angle) {
-        highest_rt_angle = maximum_angle;
+      if (highest_desired_angle > maximum_angle) {
+        highest_desired_angle = maximum_angle;
       }
-      if (lowest_rt_angle < -maximum_angle) {
-        lowest_rt_angle = -maximum_angle;
+      if (lowest_desired_angle < -maximum_angle) {
+        lowest_desired_angle = -maximum_angle;
       }
 
       if ((ts_elapsed > NISSAN_RT_INTERVAL) || (controls_allowed && !nissan_controls_allowed_last))
       {
-        nissan_rt_angle_last = desired_angle;
+        nissan_desired_angle_last = desired_angle;
         nissan_ts_angle_last = ts;
       }
 
       // check for violation;
-      violation |= max_limit_check(desired_angle, highest_rt_angle, lowest_rt_angle);
+      violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
 
       nissan_controls_allowed_last = controls_allowed;
+    }
+
+    // desired steer angle should be the same as steer angle measured when controls are off
+    if ((!controls_allowed) &&
+          ((desired_angle < (angle_meas.min - 1)) ||
+          (desired_angle > (angle_meas.max + 1)))) {
+      violation = 1;
     }
 
     // no lka_enabled bit if controls not allowed
@@ -124,7 +143,7 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // reset to 0 if either controls is not allowed or there's a violation
     if (violation || !controls_allowed) {
-      nissan_rt_angle_last = 0;
+      nissan_desired_angle_last = 0;
     }
 
     if (violation) {
