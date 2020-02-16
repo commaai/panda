@@ -90,9 +90,13 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // steer cmd checks
-  if (addr == 0x169) { // Factor -0.01, offeset 1310
-    float desired_angle = ((GET_BYTE(to_send, 0) << 10) | (GET_BYTE(to_send, 1) << 2) | (GET_BYTE(to_send, 2) & 0x3)) * -0.01 + 1310;
+  if (addr == 0x169) {
+    float desired_angle = ((GET_BYTE(to_send, 0) << 10) | (GET_BYTE(to_send, 1) << 2) | (GET_BYTE(to_send, 2) & 0x3));
     desired_angle = to_signed(desired_angle, 18);
+
+    // //scale by dbc factor -0.01, offeset 1310
+    // desired_angle =  (desired_angle * -0.01) + 1310;
+
     bool violation = 0;
     uint32_t ts = TIM2->CNT;
     bool lka_active = (GET_BYTE(to_send, 6) >> 4) & 1;
@@ -102,8 +106,8 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
       // *** angle real time check
       // add 1 to not false trigger the violation and multiply by 25 since the check is done every 250ms and steer angle is updated at 100Hz
-      int rt_delta_angle_up = ((int)(((interpolate(NISSAN_LOOKUP_ANGLE_RATE_UP, speed) * 25.) + 1.)));
-      int rt_delta_angle_down = ((int)(((interpolate(NISSAN_LOOKUP_ANGLE_RATE_DOWN, speed) * 25.) + 1.)));
+      int rt_delta_angle_up = ((((interpolate(NISSAN_LOOKUP_ANGLE_RATE_UP, speed) * 25.) + 1.)));
+      int rt_delta_angle_down = ((((interpolate(NISSAN_LOOKUP_ANGLE_RATE_DOWN, speed) * 25.) + 1.)));
       int highest_desired_angle = nissan_desired_angle_last + ((nissan_desired_angle_last > 0) ? rt_delta_angle_up : rt_delta_angle_down);
       int lowest_desired_angle = nissan_desired_angle_last - ((nissan_desired_angle_last > 0) ? rt_delta_angle_down : rt_delta_angle_up);
 
@@ -131,8 +135,8 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // desired steer angle should be the same as steer angle measured when controls are off
     if ((!controls_allowed) &&
-          ((desired_angle < (angle_meas.min - 1)) ||
-          (desired_angle > (angle_meas.max + 1)))) {
+          ((desired_angle < ((float)angle_meas.min - 1)) ||
+          (desired_angle > ((float)angle_meas.max + 1)))) {
       violation = 1;
     }
 
