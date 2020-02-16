@@ -28,6 +28,8 @@ int nissan_controls_allowed_last = 0;
 uint32_t nissan_ts_angle_last = 0;
 int nissan_cruise_engaged_last = 0;
 int nissan_desired_angle_last = 0;
+int nissan_gas_prev = 0;
+int nissan_brake_prev = 0;
 
 struct sample_t angle_meas;            // last 3 steer angles
 
@@ -56,6 +58,24 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         // Get current speed
         // Factor 0.00555
         nissan_speed = ((GET_BYTE(to_push, 2) << 8) | (GET_BYTE(to_push, 3))) * 0.00555 / 3.6;
+      }
+
+      // exit controls on rising edge of gas press
+      if (addr == 0x15c) {
+        int gas = ((GET_BYTE(to_push, 5) << 2) | ((GET_BYTE(to_push, 6) >> 6) & 0x3));
+        if ((gas > 0) && (nissan_gas_prev == 0)) {
+          controls_allowed = 0;
+        }
+        nissan_gas_prev = gas;
+      }
+
+      // exit controls on rising edge of brake press if speed > 0
+      if (addr == 0x454) {
+        int brake = (GET_BYTE(to_push, 2) & 0x80);
+        if ((brake > 0) && (nissan_brake_prev == 0) && (nissan_speed > 0.)) {
+          controls_allowed = 0;
+        }
+        nissan_brake_prev = brake;
       }
     }
 
@@ -91,11 +111,12 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // steer cmd checks
   if (addr == 0x169) {
-    float desired_angle = ((GET_BYTE(to_send, 0) << 10) | (GET_BYTE(to_send, 1) << 2) | (GET_BYTE(to_send, 2) & 0x3));
-    desired_angle = to_signed(desired_angle, 18);
+    float desired_angle = ((GET_BYTE(to_send, 0) << 10) | (GET_BYTE(to_send, 1) << 2) | ((GET_BYTE(to_send, 2) >> 6) & 0x3));
 
-    // //scale by dbc factor -0.01, offeset 1310
-    // desired_angle =  (desired_angle * -0.01) + 1310;
+    //scale by dbc factor -0.01, offeset 1310
+    desired_angle =  (desired_angle * -0.01) + 1310;
+
+    desired_angle = to_signed(desired_angle, 18);
 
     bool violation = 0;
     uint32_t ts = TIM2->CNT;
