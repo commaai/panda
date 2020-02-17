@@ -29,14 +29,14 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int bus = GET_BUS(to_push);
     int addr = GET_ADDR(to_push);
 
-    if (addr == 593) {
+    if (addr == 593 && bus == 0) {
       int torque_driver_new = ((GET_BYTES_04(to_push) & 0x7ff) * 0.79) - 808; // scale down new driver torque signal to match previous one
       // update array of samples
       update_sample(&hyundai_torque_driver, torque_driver_new);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if (addr == 1057) {
+    if (addr == 1057 && bus == 0) {
       // 2 bits: 13-14
       int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3;
       if (cruise_engaged && !hyundai_cruise_engaged_last) {
