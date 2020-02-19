@@ -68,7 +68,7 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       update_sample(&volkswagen_torque_driver, torque_driver_new);
     }
 
-    // Update ACC status from drivetrain coordinator for controls-allowed state
+    // Update ACC status from radar for controls-allowed state
     // Signal: ACC_06.ACC_Status_ACC
     if ((bus == 0) && (addr == MSG_ACC_06)) {
       int acc_status = (GET_BYTE(to_push, 7) & 0x70) >> 4;
