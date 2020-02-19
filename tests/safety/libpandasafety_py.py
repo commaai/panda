@@ -99,7 +99,6 @@ int get_volkswagen_gas_prev(void);
 void set_volkswagen_desired_torque_last(int t);
 void set_volkswagen_rt_torque_last(int t);
 void set_volkswagen_torque_driver(int min, int max);
-int get_volkswagen_gas_prev(void);
 
 """)
 
