@@ -148,6 +148,14 @@ void set_volkswagen_torque_driver(int min, int max){
   volkswagen_torque_driver.max = max;
 }
 
+int get_volkswagen_torque_driver_min(void){
+  return volkswagen_torque_driver.min;
+}
+
+int get_volkswagen_torque_driver_max(void){
+  return volkswagen_torque_driver.max;
+}
+
 int get_chrysler_torque_meas_min(void){
   return chrysler_torque_meas.min;
 }
