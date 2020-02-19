@@ -181,7 +181,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
 
   def test_disengage_on_brake(self):
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._esp_05_msg(1))
+    self.safety.safety_rx_hook(self._esp_05_msg(True))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_allow_brake_at_zero_speed(self):
@@ -346,7 +346,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
       if msg == MSG_EPS_01:
         to_push = self._eps_01_msg(0)
       if msg == MSG_ESP_05:
-        to_push = self._esp_05_msg(0)
+        to_push = self._esp_05_msg(False)
       if msg == MSG_MOTOR_20:
         to_push = self._motor_20_msg(0)
       if msg == MSG_ACC_06:
@@ -366,12 +366,12 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
       if i < MAX_WRONG_COUNTERS:
         self.safety.set_controls_allowed(1)
         self.safety.safety_rx_hook(self._eps_01_msg(0))
-        self.safety.safety_rx_hook(self._esp_05_msg(0))
+        self.safety.safety_rx_hook(self._esp_05_msg(False))
         self.safety.safety_rx_hook(self._motor_20_msg(0))
         self.safety.safety_rx_hook(self._acc_06_msg(3))
       else:
         self.assertFalse(self.safety.safety_rx_hook(self._eps_01_msg(0)))
-        self.assertFalse(self.safety.safety_rx_hook(self._esp_05_msg(0)))
+        self.assertFalse(self.safety.safety_rx_hook(self._esp_05_msg(False)))
         self.assertFalse(self.safety.safety_rx_hook(self._motor_20_msg(0)))
         self.assertFalse(self.safety.safety_rx_hook(self._acc_06_msg(3)))
         self.assertFalse(self.safety.get_controls_allowed())
@@ -380,7 +380,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     for i in range(2):
       self.safety.set_controls_allowed(1)
       self.safety.safety_rx_hook(self._eps_01_msg(0))
-      self.safety.safety_rx_hook(self._esp_05_msg(0))
+      self.safety.safety_rx_hook(self._esp_05_msg(False))
       self.safety.safety_rx_hook(self._motor_20_msg(0))
       self.safety.safety_rx_hook(self._acc_06_msg(3))
     self.assertTrue(self.safety.get_controls_allowed())
