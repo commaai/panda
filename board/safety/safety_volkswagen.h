@@ -36,6 +36,17 @@ int volkswagen_gas_prev = 0;
 int volkswagen_torque_msg = 0;
 int volkswagen_lane_msg = 0;
 
+static void volkswagen_mqb_init(int16_t param) {
+  UNUSED(param);
+
+  controls_allowed = false;
+  relay_malfunction = false;
+  volkswagen_torque_msg = MSG_HCA_01;
+  volkswagen_lane_msg = MSG_LDW_02;
+
+  return;
+}
+
 static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   bool valid = addr_safety_check(to_push, volkswagen_mqb_rx_checks, VOLKSWAGEN_MQB_RX_CHECKS_LEN,
