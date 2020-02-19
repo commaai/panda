@@ -63,7 +63,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
   # ACC engagement status
   def _acc_06_msg(self, status):
     to_send = make_msg(0, MSG_ACC_06)
-    to_send[0].RDHR = 0x30000000
+    to_send[0].RDHR = (status & 0x7) << 28
     return to_send
 
   # Driver throttle input
