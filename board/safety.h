@@ -65,7 +65,7 @@ void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]) {
   for (i = 0; i < 256; i++) {
     uint8_t crc = i;
     for (j = 0; j < 8; j++) {
-      if ((crc & (uint8_t)0x80) != 0)
+      if ((crc & 0x80U) != 0U)
         crc = (uint8_t)((crc << 1) ^ poly);
       else
         crc <<= 1;
