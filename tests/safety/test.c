@@ -232,6 +232,14 @@ void set_volkswagen_desired_torque_last(int t){
   volkswagen_desired_torque_last = t;
 }
 
+int get_volkswagen_moving(void){
+  return volkswagen_moving;
+}
+
+int get_volkswagen_brake_pressed_prev(void){
+  return volkswagen_brake_pressed_prev;
+}
+
 int get_volkswagen_gas_prev(void){
   return volkswagen_gas_prev;
 }
