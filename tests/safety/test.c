@@ -332,6 +332,9 @@ void init_tests_subaru(void){
 
 void init_tests_volkswagen(void){
   init_tests();
+  volkswagen_moving = false;
+  volkswagen_brake_pressed_prev = false;
+  volkswagen_gas_prev = 0;
   volkswagen_torque_driver.min = 0;
   volkswagen_torque_driver.max = 0;
   volkswagen_desired_torque_last = 0;
