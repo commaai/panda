@@ -28,6 +28,18 @@ class TestChryslerSafety(unittest.TestCase):
     to_send[0].RDLR = buttons
     return to_send
 
+  def _speed_msg(self, speed):
+    speed = int(speed / 0.071028)
+    to_send = make_msg(0, 514, 4)
+    to_send[0].RDLR = ((speed & 0xFF0) >> 4) + ((speed & 0xF) << 12) + \
+                      ((speed & 0xFF0) << 12) + ((speed & 0xF) << 28)
+    return to_send
+
+  def _gas_msg(self, gas):
+    to_send = make_msg(0, 308)
+    to_send[0].RDHR = (gas & 0x7F) << 8
+    return to_send
+
   def _set_prev_torque(self, t):
     self.safety.set_chrysler_desired_torque_last(t)
     self.safety.set_chrysler_rt_torque_last(t)
@@ -78,6 +90,16 @@ class TestChryslerSafety(unittest.TestCase):
 
     self.safety.set_controls_allowed(1)
     self.safety.safety_rx_hook(to_push)
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_gas_disable(self):
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._speed_msg(2.2))
+    self.safety.safety_rx_hook(self._gas_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.safety_rx_hook(self._gas_msg(0))
+    self.safety.safety_rx_hook(self._speed_msg(2.3))
+    self.safety.safety_rx_hook(self._gas_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_non_realtime_limit_up(self):
