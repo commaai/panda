@@ -60,11 +60,9 @@ int safety_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 // Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8
 // algorithm. Called at init time for safety modes using CRC-8.
 void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]) {
-  int i, j;
-
-  for (i = 0; i < 256; i++) {
+  for (int i = 0; i < 256; i++) {
     uint8_t crc = i;
-    for (j = 0; j < 8; j++) {
+    for (int j = 0; j < 8; j++) {
       if ((crc & 0x80U) != 0U)
         crc = (uint8_t)((crc << 1) ^ poly);
       else
