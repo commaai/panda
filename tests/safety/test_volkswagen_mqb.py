@@ -122,7 +122,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
   def _acc_06_msg(self, status):
     to_send = make_msg(0, MSG_ACC_06)
     to_send[0].RDHR = (status & 0x7) << 28
-    to_send[0].RDLR |= (self.cnt_tsk_06 % 16) << 8
+    to_send[0].RDLR |= (self.cnt_acc_06 % 16) << 8
     to_send[0].RDLR |= volkswagen_mqb_crc(to_send[0], MSG_ACC_06, 8)
     self.cnt_acc_06 += 1
     return to_send
