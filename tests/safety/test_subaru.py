@@ -52,6 +52,11 @@ class TestSubaruSafety(unittest.TestCase):
     to_send[0].RDLR = (t << 16)
     return to_send
 
+  def _gas_msg(self, gas):
+    to_send = make_msg(0, 0x40)
+    to_send[0].RDHR = gas & 0xFF
+    return to_send
+
   def test_spam_can_buses(self):
     test_spam_can_buses(self, TX_MSGS)
 
@@ -72,6 +77,13 @@ class TestSubaruSafety(unittest.TestCase):
     to_push[0].RDHR = 0
     self.safety.set_controls_allowed(1)
     self.safety.safety_rx_hook(to_push)
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_disengage_on_gas(self):
+    self.safety.set_controls_allowed(True)
+    self.safety.safety_rx_hook(self._gas_msg(0))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.safety_rx_hook(self._gas_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_steer_safety_check(self):
