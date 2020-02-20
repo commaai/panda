@@ -106,7 +106,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // exit controls on rising edge of gas press
     if (addr == 0x2C1) {
-      int gas = GET_BYTE(to_push, 6) & 0xFF;
+      int gas = GET_BYTE(to_push, 6);
       if ((gas > 0) && (toyota_gas_prev == 0) && !gas_interceptor_detected) {
         controls_allowed = 0;
       }
