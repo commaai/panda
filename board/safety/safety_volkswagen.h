@@ -8,7 +8,9 @@ const int VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE = 80;
 const int VOLKSWAGEN_DRIVER_TORQUE_FACTOR = 3;
 
 // Safety-relevant CAN messages for the Volkswagen MQB platform
+#define MSG_ESP_19      0x0B2   // RX from ABS, for wheel speeds
 #define MSG_EPS_01      0x09F   // RX from EPS, for driver steering torque
+#define MSG_ESP_05      0x106   // RX from ABS, for brake switch state
 #define MSG_MOTOR_20    0x121   // RX from ECU, for driver throttle input
 #define MSG_ACC_06      0x122   // RX from ACC radar, for status and engagement
 #define MSG_HCA_01      0x126   // TX by OP, Heading Control Assist steering torque
@@ -19,11 +21,12 @@ const int VOLKSWAGEN_DRIVER_TORQUE_FACTOR = 3;
 const AddrBus VOLKSWAGEN_MQB_TX_MSGS[] = {{MSG_HCA_01, 0}, {MSG_GRA_ACC_01, 0}, {MSG_GRA_ACC_01, 2}, {MSG_LDW_02, 0}};
 const int VOLKSWAGEN_MQB_TX_MSGS_LEN = sizeof(VOLKSWAGEN_MQB_TX_MSGS) / sizeof(VOLKSWAGEN_MQB_TX_MSGS[0]);
 
-// TODO: do checksum and counter checks
 AddrCheckStruct volkswagen_mqb_rx_checks[] = {
-  {.addr = {MSG_EPS_01}, .bus = 0, .expected_timestep = 10000U},
-  {.addr = {MSG_ACC_06}, .bus = 0, .expected_timestep = 20000U},
-  {.addr = {MSG_MOTOR_20}, .bus = 0, .expected_timestep = 20000U},
+  {.addr = {MSG_ESP_19},   .bus = 0, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U},
+  {.addr = {MSG_EPS_01},   .bus = 0, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 10000U},
+  {.addr = {MSG_ESP_05},   .bus = 0, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 20000U},
+  {.addr = {MSG_MOTOR_20}, .bus = 0, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 20000U},
+  {.addr = {MSG_ACC_06},   .bus = 0, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 20000U},
 };
 const int VOLKSWAGEN_MQB_RX_CHECKS_LEN = sizeof(volkswagen_mqb_rx_checks) / sizeof(volkswagen_mqb_rx_checks[0]);
 
@@ -32,9 +35,56 @@ struct sample_t volkswagen_torque_driver; // Last few driver torques measured
 int volkswagen_rt_torque_last = 0;
 int volkswagen_desired_torque_last = 0;
 uint32_t volkswagen_ts_last = 0;
+bool volkswagen_moving = false;
+bool volkswagen_brake_pressed_prev = false;
 int volkswagen_gas_prev = 0;
 int volkswagen_torque_msg = 0;
 int volkswagen_lane_msg = 0;
+uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
+
+
+static uint8_t volkswagen_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+  return (uint8_t)GET_BYTE(to_push, 0);
+}
+
+static uint8_t volkswagen_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
+  return (uint8_t)GET_BYTE(to_push, 1) & 0xFU;
+}
+
+static uint8_t volkswagen_mqb_compute_crc(CAN_FIFOMailBox_TypeDef *to_push) {
+  int addr = GET_ADDR(to_push);
+  int len = GET_LEN(to_push);
+
+  // This is CRC-8H2F/AUTOSAR with a twist. See the OpenDBC implementation
+  // of this algorithm for a version with explanatory comments.
+
+  uint8_t crc = 0xFFU;
+  for (int i = 1; i < len; i++) {
+    crc ^= (uint8_t)GET_BYTE(to_push, i);
+    crc = volkswagen_crc8_lut_8h2f[crc];
+  }
+
+  uint8_t counter = volkswagen_get_counter(to_push);
+  switch(addr) {
+    case MSG_EPS_01:
+      crc ^= (uint8_t[]){0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5}[counter];
+      break;
+    case MSG_ESP_05:
+      crc ^= (uint8_t[]){0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07}[counter];
+      break;
+    case MSG_MOTOR_20:
+      crc ^= (uint8_t[]){0xE9,0x65,0xAE,0x6B,0x7B,0x35,0xE5,0x5F,0x4E,0xC7,0x86,0xA2,0xBB,0xDD,0xEB,0xB4}[counter];
+      break;
+    case MSG_ACC_06:
+      crc ^= (uint8_t[]){0x37,0x7D,0xF3,0xA9,0x18,0x46,0x6D,0x4D,0x3D,0x71,0x92,0x9C,0xE5,0x32,0x10,0xB9}[counter];
+      break;
+    default: // Undefined CAN message, CRC check expected to fail
+      break;
+  }
+  crc = volkswagen_crc8_lut_8h2f[crc];
+
+  return crc ^ 0xFFU;
+}
 
 static void volkswagen_mqb_init(int16_t param) {
   UNUSED(param);
@@ -43,16 +93,28 @@ static void volkswagen_mqb_init(int16_t param) {
   relay_malfunction = false;
   volkswagen_torque_msg = MSG_HCA_01;
   volkswagen_lane_msg = MSG_LDW_02;
+  gen_crc_lookup_table(0x2F, volkswagen_crc8_lut_8h2f);
 }
 
 static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   bool valid = addr_safety_check(to_push, volkswagen_mqb_rx_checks, VOLKSWAGEN_MQB_RX_CHECKS_LEN,
-                                 NULL, NULL, NULL);
+                                 volkswagen_get_checksum, volkswagen_mqb_compute_crc, volkswagen_get_counter);
 
   if (valid) {
     int bus = GET_BUS(to_push);
     int addr = GET_ADDR(to_push);
+
+    // Update in-motion state by sampling front wheel speeds
+    // Signal: ESP_19.ESP_VL_Radgeschw_02 (front left) in scaled km/h
+    // Signal: ESP_19.ESP_VR_Radgeschw_02 (front right) in scaled km/h
+    if ((bus == 0) && (addr == MSG_ESP_19)) {
+      int wheel_speed_fl = GET_BYTE(to_push, 4) | (GET_BYTE(to_push, 5) << 8);
+      int wheel_speed_fr = GET_BYTE(to_push, 6) | (GET_BYTE(to_push, 7) << 8);
+      // Check for average front speed in excess of 0.3m/s, 1.08km/h
+      // DBC speed scale 0.0075: 0.3m/s = 144, sum both wheels to compare
+      volkswagen_moving = (wheel_speed_fl + wheel_speed_fr) > 288;
+    }
 
     // Update driver input torque samples
     // Signal: EPS_01.Driver_Strain (absolute torque)
@@ -81,6 +143,16 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         controls_allowed = 0;
       }
       volkswagen_gas_prev = gas;
+    }
+
+    // Exit controls on rising edge of brake press
+    // Signal: ESP_05.ESP_Fahrer_bremst
+    if ((bus == 0) && (addr == MSG_ESP_05)) {
+      bool brake_pressed = (GET_BYTE(to_push, 3) & 0x4) >> 2;
+      if (brake_pressed && (!(volkswagen_brake_pressed_prev) || volkswagen_moving)) {
+        controls_allowed = 0;
+      }
+      volkswagen_brake_pressed_prev = brake_pressed;
     }
 
     // If there are HCA messages on bus 0 not sent by OP, there's a relay problem
