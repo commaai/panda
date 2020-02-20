@@ -21,6 +21,7 @@ int subaru_cruise_engaged_last = 0;
 int subaru_rt_torque_last = 0;
 int subaru_desired_torque_last = 0;
 uint32_t subaru_ts_last = 0;
+bool subaru_gas_last = false;
 struct sample_t subaru_torque_driver;         // last few driver torques measured
 
 static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -53,7 +54,14 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       subaru_cruise_engaged_last = cruise_engaged;
     }
 
-    // TODO: enforce cancellation on gas pressed
+    // exit controls on rising edge of gas press
+    if ((addr == 0x40) && (bus == 0)) {
+      bool gas = GET_BYTE(to_push, 4) != 0;
+      if (gas && !subaru_gas_last) {
+        controls_allowed = 0;
+      }
+      subaru_gas_last = gas;
+    }
 
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && ((addr == 0x122) || (addr == 0x164))) {
       relay_malfunction = true;
