@@ -12,7 +12,7 @@ const AddrBus SUBARU_TX_MSGS[] = {{0x122, 0}, {0x164, 0}, {0x221, 0}, {0x322, 0}
 
 // TODO: do checksum and counter checks after adding the signals to the outback dbc file
 AddrCheckStruct subaru_rx_checks[] = {
-  {.addr = {0x40}, .bus = 0, .expected_timestep = 10000U},
+  {.addr = { 0x40, 0x140}, .bus = 0, .expected_timestep = 10000U},
   {.addr = {0x119, 0x371}, .bus = 0, .expected_timestep = 20000U},
   {.addr = {0x240, 0x144}, .bus = 0, .expected_timestep = 50000U},
 };
@@ -56,8 +56,9 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // exit controls on rising edge of gas press
-    if ((addr == 0x40) && (bus == 0)) {
-      bool gas = GET_BYTE(to_push, 4) != 0;
+    if (((addr == 0x40) || (addr == 0x140)) && (bus == 0)) {
+      int byte = (addr == 0x40) ? 4 : 0;
+      bool gas = GET_BYTE(to_push, byte) != 0;
       if (gas && !subaru_gas_last) {
         controls_allowed = 0;
       }
