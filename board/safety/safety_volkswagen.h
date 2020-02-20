@@ -113,7 +113,7 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       int wheel_speed_fr = GET_BYTE(to_push, 6) | (GET_BYTE(to_push, 7) << 8);
       // Check for average front speed in excess of 0.3m/s, 1.08km/h
       // DBC speed scale 0.0075: 0.3m/s = 144, sum both wheels to compare
-      volkswagen_moving = wheel_speed_fl + wheel_speed_fr > 288;
+      volkswagen_moving = (wheel_speed_fl + wheel_speed_fr) > 288;
     }
 
     // Update driver input torque samples
