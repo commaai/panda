@@ -61,7 +61,7 @@ static int chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // exit controls on rising edge of gas press
-    if ((addr == 308) && (bus == 0) {
+    if ((addr == 308) && (bus == 0)) {
       bool gas = (GET_BYTE(to_push, 5) & 0x7F) != 0;
       if (gas && !chrysler_gas_prev && (chrysler_speed > CHRYSLER_GAS_THRSLD)) {
         controls_allowed = 0;
