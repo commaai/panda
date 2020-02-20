@@ -170,8 +170,17 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_sample_speed(self):
+    # Stationary
+    self.safety.safety_rx_hook(self._esp_19_msg(0))
     self.assertEqual(0, self.safety.get_volkswagen_moving())
-    self.safety.safety_rx_hook(self._esp_19_msg(100))
+    # 1 km/h, just under 0.3 m/s safety grace threshold
+    self.safety.safety_rx_hook(self._esp_19_msg(1))
+    self.assertEqual(0, self.safety.get_volkswagen_moving())
+    # 2 km/h, just over 0.3 m/s safety grace threshold
+    self.safety.safety_rx_hook(self._esp_19_msg(2))
+    self.assertEqual(1, self.safety.get_volkswagen_moving())
+    # 144 km/h, openpilot V_CRUISE_MAX
+    self.safety.safety_rx_hook(self._esp_19_msg(144))
     self.assertEqual(1, self.safety.get_volkswagen_moving())
 
   def test_prev_brake(self):

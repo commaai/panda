@@ -106,12 +106,14 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int addr = GET_ADDR(to_push);
 
     // Update in-motion state by sampling front wheel speeds
-    // Signal: ESP_19.ESP_VL_Radgeschw_02 (front left)
-    // Signal: ESP_19.ESP_VR_Radgeschw_02 (front right)
+    // Signal: ESP_19.ESP_VL_Radgeschw_02 (front left) in scaled km/h
+    // Signal: ESP_19.ESP_VR_Radgeschw_02 (front right) in scaled km/h
     if ((bus == 0) && (addr == MSG_ESP_19)) {
       int wheel_speed_fl = GET_BYTE(to_push, 4) | (GET_BYTE(to_push, 5) << 8);
       int wheel_speed_fr = GET_BYTE(to_push, 6) | (GET_BYTE(to_push, 7) << 8);
-      volkswagen_moving = (wheel_speed_fl > 0) || (wheel_speed_fr > 0);
+      // Check for average front speed in excess of 0.3m/s, 1.08km/h
+      // DBC speed scale 0.0075: 0.3m/s = 144, sum both wheels to compare
+      volkswagen_moving = wheel_speed_fl + wheel_speed_fr > 288;
     }
 
     // Update driver input torque samples
