@@ -312,6 +312,8 @@ void init_tests_hyundai(void){
 
 void init_tests_chrysler(void){
   init_tests();
+  chrysler_gas_prev = false;
+  chrysler_speed = 0;
   chrysler_torque_meas.min = 0;
   chrysler_torque_meas.max = 0;
   chrysler_desired_torque_last = 0;
