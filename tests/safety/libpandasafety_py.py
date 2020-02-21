@@ -91,10 +91,14 @@ void set_subaru_rt_torque_last(int t);
 void set_subaru_torque_driver(int min, int max);
 
 void init_tests_volkswagen(void);
+int get_volkswagen_gas_prev(void);
+int get_volkswagen_torque_driver_min(void);
+int get_volkswagen_torque_driver_max(void);
+bool get_volkswagen_moving(void);
+bool get_volkswagen_brake_pressed_prev(void);
 void set_volkswagen_desired_torque_last(int t);
 void set_volkswagen_rt_torque_last(int t);
 void set_volkswagen_torque_driver(int min, int max);
-int get_volkswagen_gas_prev(void);
 
 void init_tests_nissan(void);
 void set_nissan_desired_angle_last(int t);

@@ -33,7 +33,7 @@
 #define SAFETY_SUBARU 11U
 #define SAFETY_MAZDA 13U
 #define SAFETY_NISSAN 14U
-#define SAFETY_VOLKSWAGEN 15U
+#define SAFETY_VOLKSWAGEN_MQB 15U
 #define SAFETY_TOYOTA_IPAS 16U
 #define SAFETY_ALLOUTPUT 17U
 #define SAFETY_GM_ASCM 18U
@@ -57,6 +57,21 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len){
 
 int safety_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return current_hooks->fwd(bus_num, to_fwd);
+}
+
+// Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8
+// algorithm. Called at init time for safety modes using CRC-8.
+void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]) {
+  for (int i = 0; i < 256; i++) {
+    uint8_t crc = i;
+    for (int j = 0; j < 8; j++) {
+      if ((crc & 0x80U) != 0U)
+        crc = (uint8_t)((crc << 1) ^ poly);
+      else
+        crc <<= 1;
+    }
+    crc_lut[i] = crc;
+  }
 }
 
 bool msg_allowed(int addr, int bus, const AddrBus addr_list[], int len) {
@@ -187,7 +202,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_CHRYSLER, &chrysler_hooks},
   {SAFETY_SUBARU, &subaru_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
-  {SAFETY_VOLKSWAGEN, &volkswagen_hooks},
+  {SAFETY_VOLKSWAGEN_MQB, &volkswagen_mqb_hooks},
   {SAFETY_NOOUTPUT, &nooutput_hooks},
 #ifdef ALLOW_DEBUG
   {SAFETY_CADILLAC, &cadillac_hooks},

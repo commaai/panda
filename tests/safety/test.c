@@ -148,6 +148,14 @@ void set_volkswagen_torque_driver(int min, int max){
   volkswagen_torque_driver.max = max;
 }
 
+int get_volkswagen_torque_driver_min(void){
+  return volkswagen_torque_driver.min;
+}
+
+int get_volkswagen_torque_driver_max(void){
+  return volkswagen_torque_driver.max;
+}
+
 int get_chrysler_torque_meas_min(void){
   return chrysler_torque_meas.min;
 }
@@ -222,6 +230,14 @@ void set_subaru_desired_torque_last(int t){
 
 void set_volkswagen_desired_torque_last(int t){
   volkswagen_desired_torque_last = t;
+}
+
+int get_volkswagen_moving(void){
+  return volkswagen_moving;
+}
+
+int get_volkswagen_brake_pressed_prev(void){
+  return volkswagen_brake_pressed_prev;
 }
 
 int get_volkswagen_gas_prev(void){
@@ -308,6 +324,8 @@ void init_tests_hyundai(void){
 
 void init_tests_chrysler(void){
   init_tests();
+  chrysler_gas_prev = false;
+  chrysler_speed = 0;
   chrysler_torque_meas.min = 0;
   chrysler_torque_meas.max = 0;
   chrysler_desired_torque_last = 0;
@@ -328,6 +346,9 @@ void init_tests_subaru(void){
 
 void init_tests_volkswagen(void){
   init_tests();
+  volkswagen_moving = false;
+  volkswagen_brake_pressed_prev = false;
+  volkswagen_gas_prev = 0;
   volkswagen_torque_driver.min = 0;
   volkswagen_torque_driver.max = 0;
   volkswagen_desired_torque_last = 0;
