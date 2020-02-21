@@ -3,10 +3,12 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import make_msg
+from panda.tests.safety.common import make_msg, test_relay_malfunction
 
 IPAS_OVERRIDE_THRESHOLD = 200
 
+ANGLE_MAX_BP = [1.3, 10., 30.]
+ANGLE_MAX_V = [540., 120., 23.]
 ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
 ANGLE_DELTA_VU = [5., 3.5, 0.4]   # unwind limit
@@ -31,22 +33,17 @@ class TestNissanSafety(unittest.TestCase):
     cls.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
     cls.safety.init_tests_nissan()
 
-#   def _torque_driver_msg(self, torque):
-#     to_send = make_msg(0, 0x260)
-#     t = twos_comp(torque, 16)
-#     to_send[0].RDLR = t | ((t & 0xFF) << 16)
-#     to_send[0].RDHR = to_send[0].RDHR | (toyota_checksum(to_send[0], 0x260, 8) << 24)
-#     return to_send
-
-#   def _torque_driver_msg_array(self, torque):
-#     for i in range(6):
-#       self.safety.safety_rx_hook(self._torque_driver_msg(torque))
-
   def _angle_meas_msg(self, angle):
     to_send = make_msg(0, 0x2)
-    t = twos_comp(angle, 16) / -0.1
+    angle = int(angle * -10)
+    t = twos_comp(angle, 16)
     to_send[0].RDLR = t & 0xFFFF
+
     return to_send
+
+  def _set_prev_angle(self, t):
+    t = int(t * -100)
+    self.safety.set_nissan_desired_angle_last(t)
 
   def _angle_meas_msg_array(self, angle):
     for i in range(6):
@@ -55,187 +52,104 @@ class TestNissanSafety(unittest.TestCase):
   def _lkas_state_msg(self, state):
     to_send = make_msg(0, 0x1b6)
     to_send[0].RDHR = (state & 0x1) << 6
+
     return to_send
 
   def _lkas_control_msg(self, angle, state):
     to_send = make_msg(0, 0x169)
-    t = twos_comp(angle, 18) * -10 - 1310
-    to_send[0].RDLR = ((t & 0x3FC00) >> 10) | ((t & 0x3FC) << 6) | ((t & 0x3) << 16)
-    to_send[0].RDLR = ((state & 0x1) << 20)
+    angle = int((angle - 1310) * -100)
+    to_send[0].RDLR = ((angle & 0x3FC00) >> 10) | ((angle & 0x3FC) << 6) | ((angle & 0x3) << 16)
+    to_send[0].RDHR = ((state & 0x1) << 20)
 
     return to_send
 
   def _speed_msg(self, speed):
     to_send = make_msg(0, 0x29a)
     speed = int(speed / 0.00555 * 3.6)
-
     to_send[0].RDLR = ((speed & 0xFF) << 24) | ((speed & 0xFF00) << 8)
+
     return to_send
 
-#   def test_ipas_override(self):
+  def _send_brake_cmd(self, brake):
+    to_send = make_msg(1, 0x454)
+    to_send[0].RDLR = ((brake & 0x1) << 23)
 
-#     ## angle control is not active
-#     self.safety.set_controls_allowed(1)
+    return to_send
 
-#     # 3 consecutive msgs where driver exceeds threshold but angle_control isn't active
-#     self.safety.set_controls_allowed(1)
-#     self._torque_driver_msg_array(IPAS_OVERRIDE_THRESHOLD + 1)
-#     self.assertTrue(self.safety.get_controls_allowed())
+  def _send_gas_cmd(self, gas):
+    to_send = make_msg(0, 0x15c)
+    to_send[0].RDHR = ((gas & 0x3fc) << 6) | ((gas & 0x3) << 22)
 
-#     self._torque_driver_msg_array(-IPAS_OVERRIDE_THRESHOLD - 1)
-#     self.assertTrue(self.safety.get_controls_allowed())
+    return to_send
 
-#     # ipas state is override
-#     self.safety.safety_rx_hook(self._ipas_state_msg(5))
-#     self.assertTrue(self.safety.get_controls_allowed())
 
-#     ## now angle control is active
-#     self.safety.safety_tx_hook(self._ipas_control_msg(0, 0))
-#     self.safety.safety_rx_hook(self._ipas_state_msg(0))
+  def test_angle_cmd_when_enabled(self):
 
-#     # 3 consecutive msgs where driver does exceed threshold
-#     self.safety.set_controls_allowed(1)
-#     self._torque_driver_msg_array(IPAS_OVERRIDE_THRESHOLD + 1)
-#     self.assertFalse(self.safety.get_controls_allowed())
+    # when controls are allowed, angle cmd rate limit is enforced
+    # test 1: no limitations if we stay within limits
+    speeds = [0., 1., 5., 10., 15., 100.]
+    angles = [-300, -100, -10, 0, 10, 100, 300]
+    for a in angles:
+      for s in speeds:
+        max_delta_up = np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_V)
+        max_delta_down = np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_VU)
+        angle_lim = np.interp(s, ANGLE_MAX_BP, ANGLE_MAX_V)
 
-#     self.safety.set_controls_allowed(1)
-#     self._torque_driver_msg_array(-IPAS_OVERRIDE_THRESHOLD - 1)
-#     self.assertFalse(self.safety.get_controls_allowed())
+        # first test against false positives
+        self._angle_meas_msg_array(a)
+        self.safety.safety_rx_hook(self._speed_msg(s))
 
-#     # ipas state is override and torque isn't overriding any more
-#     self.safety.set_controls_allowed(1)
-#     self._torque_driver_msg_array(0)
-#     self.safety.safety_rx_hook(self._ipas_state_msg(5))
-#     self.assertFalse(self.safety.get_controls_allowed())
+        self._set_prev_angle(np.clip(a, -angle_lim, angle_lim))
+        self.safety.set_controls_allowed(1)
 
-#     # 3 consecutive msgs where driver does not exceed threshold and
-#     # ipas state is not override
-#     self.safety.set_controls_allowed(1)
-#     self.safety.safety_rx_hook(self._ipas_state_msg(0))
-#     self.assertTrue(self.safety.get_controls_allowed())
+        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(
+            np.clip(a + sign(a) * max_delta_up, -angle_lim, angle_lim), 1)))
+        self.assertTrue(self.safety.get_controls_allowed())
+        self.assertEqual(True, self.safety.safety_tx_hook(
+            self._lkas_control_msg(np.clip(a, -angle_lim, angle_lim), 1)))
+        self.assertTrue(self.safety.get_controls_allowed())
+        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(
+            np.clip(a - sign(a) * max_delta_down, -angle_lim, angle_lim), 1)))
+        self.assertTrue(self.safety.get_controls_allowed())
 
-#     self._torque_driver_msg_array(IPAS_OVERRIDE_THRESHOLD)
-#     self.assertTrue(self.safety.get_controls_allowed())
+        # now inject too high rates
+        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a + sign(a) *
+                                                                                  (max_delta_up + 1), 1)))
+        self.assertFalse(self.safety.get_controls_allowed())
+        self.safety.set_controls_allowed(1)
+        self._set_prev_angle(np.clip(a, -angle_lim, angle_lim))
+        self.assertTrue(self.safety.get_controls_allowed())
+        self.assertEqual(True, self.safety.safety_tx_hook(
+            self._lkas_control_msg(np.clip(a, -angle_lim, angle_lim), 1)))
+        self.assertTrue(self.safety.get_controls_allowed())
+        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a - sign(a) *
+                                                                                  (max_delta_down + 1), 1)))
+        self.assertFalse(self.safety.get_controls_allowed())
 
-#     self._torque_driver_msg_array(-IPAS_OVERRIDE_THRESHOLD)
-#     self.assertTrue(self.safety.get_controls_allowed())
+        # Check desired steer should be the same as steer angle when controls are off
+        self.safety.set_controls_allowed(0)
+        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a, 0)))
 
-#     # reset no angle control at the end of the test
-#     self.safety.reset_angle_control()
+  def test_angle_cmd_when_disabled(self):
+    self.safety.set_controls_allowed(0)
 
-#   def test_angle_cmd_when_disabled(self):
+    self._set_prev_angle(0)
+    self.assertFalse(self.safety.safety_tx_hook(self._lkas_control_msg(0, 1)))
+    self.assertFalse(self.safety.get_controls_allowed())
 
-#     self.safety.set_controls_allowed(0)
+  def test_brake_rising_edge(self):
+    self.safety.safety_rx_hook(self._speed_msg(10))
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._send_brake_cmd(True))
+    self.assertFalse(self.safety.get_controls_allowed())
 
-#     # test angle cmd too far from actual
-#     angle_refs = [-10, 10]
-#     deltas = list(range(-2, 3))
-#     expected_results = [False, True, True, True, False]
+  def test_gas_rising_edge(self):
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._send_gas_cmd(100))
+    self.assertFalse(self.safety.get_controls_allowed())
 
-#     for a in angle_refs:
-#       self._angle_meas_msg_array(a)
-#       for i, d in enumerate(deltas):
-#         self.assertEqual(expected_results[i], self.safety.safety_tx_hook(self._ipas_control_msg(a + d, 1)))
-
-#     # test ipas state cmd enabled
-#     self._angle_meas_msg_array(0)
-#     self.assertEqual(0, self.safety.safety_tx_hook(self._ipas_control_msg(0, 3)))
-
-#     # reset no angle control at the end of the test
-#     self.safety.reset_angle_control()
-
-#   def test_angle_cmd_when_enabled(self):
-
-#     # ipas angle cmd should pass through when controls are enabled
-
-#     self.safety.set_controls_allowed(1)
-#     self._angle_meas_msg_array(0)
-#     self.safety.safety_rx_hook(self._speed_msg(0.1))
-
-#     self.assertEqual(1, self.safety.safety_tx_hook(self._ipas_control_msg(0, 1)))
-#     self.assertEqual(1, self.safety.safety_tx_hook(self._ipas_control_msg(4, 1)))
-#     self.assertEqual(1, self.safety.safety_tx_hook(self._ipas_control_msg(0, 3)))
-#     self.assertEqual(1, self.safety.safety_tx_hook(self._ipas_control_msg(-4, 3)))
-#     self.assertEqual(1, self.safety.safety_tx_hook(self._ipas_control_msg(-8, 3)))
-
-#     # reset no angle control at the end of the test
-#     self.safety.reset_angle_control()
-
-#   def test_angle_cmd_rate_when_disabled(self):
-
-#     # as long as the command is close to the measured, no rate limit is enforced when
-#     # controls are disabled
-#     self.safety.set_controls_allowed(0)
-#     self.safety.safety_rx_hook(self._angle_meas_msg(0))
-#     self.assertEqual(1, self.safety.safety_tx_hook(self._ipas_control_msg(0, 1)))
-#     self.safety.safety_rx_hook(self._angle_meas_msg(100))
-#     self.assertEqual(1, self.safety.safety_tx_hook(self._ipas_control_msg(100, 1)))
-#     self.safety.safety_rx_hook(self._angle_meas_msg(-100))
-#     self.assertEqual(1, self.safety.safety_tx_hook(self._ipas_control_msg(-100, 1)))
-
-#     # reset no angle control at the end of the test
-#     self.safety.reset_angle_control()
-
-#   def test_angle_cmd_rate_when_enabled(self):
-
-#     # when controls are allowed, angle cmd rate limit is enforced
-#     # test 1: no limitations if we stay within limits
-#     speeds = [0., 1., 5., 10., 15., 100.]
-#     angles = [-300, -100, -10, 0, 10, 100, 300]
-#     for a in angles:
-#       for s in speeds:
-
-#         # first test against false positives
-#         self._angle_meas_msg_array(a)
-#         self.safety.safety_tx_hook(self._ipas_control_msg(a, 1))
-#         self.safety.set_controls_allowed(1)
-#         self.safety.safety_rx_hook(self._speed_msg(s))
-#         max_delta_up = int(np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_V) * 2 / 3. + 1.)
-#         max_delta_down = int(np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_VU) * 2 / 3. + 1.)
-#         self.assertEqual(True, self.safety.safety_tx_hook(self._ipas_control_msg(a + sign(a) * max_delta_up, 1)))
-#         self.assertTrue(self.safety.get_controls_allowed())
-#         self.assertEqual(True, self.safety.safety_tx_hook(self._ipas_control_msg(a, 1)))
-#         self.assertTrue(self.safety.get_controls_allowed())
-#         self.assertEqual(True, self.safety.safety_tx_hook(self._ipas_control_msg(a - sign(a) * max_delta_down, 1)))
-#         self.assertTrue(self.safety.get_controls_allowed())
-
-#         # now inject too high rates
-#         self.assertEqual(False, self.safety.safety_tx_hook(self._ipas_control_msg(a + sign(a) *
-#                                                                                   (max_delta_up + 1), 1)))
-#         self.assertFalse(self.safety.get_controls_allowed())
-#         self.safety.set_controls_allowed(1)
-#         self.assertEqual(True, self.safety.safety_tx_hook(self._ipas_control_msg(a + sign(a) * max_delta_up, 1)))
-#         self.assertTrue(self.safety.get_controls_allowed())
-#         self.assertEqual(True, self.safety.safety_tx_hook(self._ipas_control_msg(a, 1)))
-#         self.assertTrue(self.safety.get_controls_allowed())
-#         self.assertEqual(False, self.safety.safety_tx_hook(self._ipas_control_msg(a - sign(a) *
-#                                                                                   (max_delta_down + 1), 1)))
-#         self.assertFalse(self.safety.get_controls_allowed())
-
-#     # reset no angle control at the end of the test
-#     self.safety.reset_angle_control()
-
-#   def test_angle_measured_rate(self):
-
-#     speeds = [0., 1., 5., 10., 15., 100.]
-#     angles = [-300, -100, -10, 0, 10, 100, 300]
-#     angles = [10]
-#     for a in angles:
-#       for s in speeds:
-#         self._angle_meas_msg_array(a)
-#         self.safety.safety_tx_hook(self._ipas_control_msg(a, 1))
-#         self.safety.set_controls_allowed(1)
-#         self.safety.safety_rx_hook(self._speed_msg(s))
-#         #max_delta_up = int(np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_V) * 2 / 3. + 1.)
-#         #max_delta_down = int(np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_VU) * 2 / 3. + 1.)
-#         self.safety.safety_rx_hook(self._angle_meas_msg(a))
-#         self.assertTrue(self.safety.get_controls_allowed())
-#         self.safety.safety_rx_hook(self._angle_meas_msg(a + 150))
-#         self.assertFalse(self.safety.get_controls_allowed())
-
-#     # reset no angle control at the end of the test
-#     self.safety.reset_angle_control()
-
+  def test_relay_malfunction(self):
+    test_relay_malfunction(self, 0x169)
 
 if __name__ == "__main__":
   unittest.main()

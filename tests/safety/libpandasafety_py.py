@@ -96,6 +96,9 @@ void set_volkswagen_rt_torque_last(int t);
 void set_volkswagen_torque_driver(int min, int max);
 int get_volkswagen_gas_prev(void);
 
+void init_tests_nissan(void);
+void set_nissan_desired_angle_last(int t);
+
 """)
 
 libpandasafety = ffi.dlopen(libpandasafety_fn)
