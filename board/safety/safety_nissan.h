@@ -13,7 +13,7 @@ const struct lookup_t NISSAN_LOOKUP_MAX_ANGLE = {
   {3.3, 12, 32},
   {540., 120., 23.}};
 
-const float NISSAN_CAN_TO_DEG = 0.01; 
+const int NISSAN_DEG_TO_CAN = 100; 
 
 const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x20b, 2}};
 
@@ -122,16 +122,16 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int desired_angle = ((GET_BYTE(to_send, 0) << 10) | (GET_BYTE(to_send, 1) << 2) | ((GET_BYTE(to_send, 2) >> 6) & 0x3));
     bool lka_active = (GET_BYTE(to_send, 6) >> 4) & 1;
 
-    // offeset 1310 / NISSAN_CAN_TO_DEG
+    // offeset 1310 * NISSAN_DEG_TO_CAN
     desired_angle =  desired_angle - 131000;
     bool violation = 0;
 
     if (controls_allowed && lka_active) {
       // add 1 to not false trigger the violation
       float delta_angle_float;
-      delta_angle_float = (interpolate(NISSAN_LOOKUP_ANGLE_RATE_UP, nissan_speed) / NISSAN_CAN_TO_DEG) + 1.;
+      delta_angle_float = (interpolate(NISSAN_LOOKUP_ANGLE_RATE_UP, nissan_speed) * NISSAN_DEG_TO_CAN) + 1.;
       int delta_angle_up = (int)(delta_angle_float);
-      delta_angle_float =  (interpolate(NISSAN_LOOKUP_ANGLE_RATE_DOWN, nissan_speed) / NISSAN_CAN_TO_DEG) + 1.;
+      delta_angle_float =  (interpolate(NISSAN_LOOKUP_ANGLE_RATE_DOWN, nissan_speed) * NISSAN_DEG_TO_CAN) + 1.;
       int delta_angle_down = (int)(delta_angle_float);
       int highest_desired_angle = nissan_desired_angle_last + ((nissan_desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
       int lowest_desired_angle = nissan_desired_angle_last - ((nissan_desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
@@ -139,11 +139,11 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       // Limit maximum steering angle at current speed 
       int maximum_angle = ((int)interpolate(NISSAN_LOOKUP_MAX_ANGLE, nissan_speed));
 
-      if (highest_desired_angle > (maximum_angle / NISSAN_CAN_TO_DEG)) {
-        highest_desired_angle = (maximum_angle / NISSAN_CAN_TO_DEG);
+      if (highest_desired_angle > (maximum_angle * NISSAN_DEG_TO_CAN)) {
+        highest_desired_angle = (maximum_angle * NISSAN_DEG_TO_CAN);
       }
-      if (lowest_desired_angle < (-maximum_angle / NISSAN_CAN_TO_DEG)) {
-        lowest_desired_angle = (-maximum_angle / NISSAN_CAN_TO_DEG);
+      if (lowest_desired_angle < (-maximum_angle * NISSAN_DEG_TO_CAN)) {
+        lowest_desired_angle = (-maximum_angle * NISSAN_DEG_TO_CAN);
       }
 
       // check for violation;
