@@ -41,6 +41,11 @@ class TestHyundaiSafety(unittest.TestCase):
     to_send[0].RDLR = buttons
     return to_send
 
+  def _gas_msg(self, val):
+    to_send = make_msg(0, 608)
+    to_send[0].RDHR = (val & 0x3) << 30;
+    return to_send
+
   def _set_prev_torque(self, t):
     self.safety.set_hyundai_desired_torque_last(t)
     self.safety.set_hyundai_rt_torque_last(t)
@@ -87,6 +92,13 @@ class TestHyundaiSafety(unittest.TestCase):
     to_push = make_msg(0, 1057)
     self.safety.set_controls_allowed(1)
     self.safety.safety_rx_hook(to_push)
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_disengage_on_gas(self):
+    self.safety.set_controls_allowed(True)
+    self.safety.safety_rx_hook(self._gas_msg(0))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.safety_rx_hook(self._gas_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_non_realtime_limit_up(self):
