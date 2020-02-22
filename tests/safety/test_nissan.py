@@ -5,8 +5,6 @@ from panda import Panda
 from panda.tests.safety import libpandasafety_py
 from panda.tests.safety.common import make_msg, test_relay_malfunction
 
-IPAS_OVERRIDE_THRESHOLD = 200
-
 ANGLE_MAX_BP = [1.3, 10., 30.]
 ANGLE_MAX_V = [540., 120., 23.]
 ANGLE_DELTA_BP = [0., 5., 15.]
