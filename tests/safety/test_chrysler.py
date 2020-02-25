@@ -16,16 +16,52 @@ MAX_TORQUE_ERROR = 80
 
 TX_MSGS = [[571, 0], [658, 0], [678, 0]]
 
+def chrysler_checksum(msg, len_msg):
+  checksum = 0xFF
+  for idx in range(0, len_msg-1):
+    curr = (msg.RDLR >> (8*idx)) if idx < 4 else (msg.RDHR >> (8*(idx - 4)))
+    curr &= 0xFF
+    shift = 0x80
+    for i in range(0, 8):
+      bit_sum = curr & shift
+      temp_chk = checksum & 0x80
+      if (bit_sum != 0):
+        bit_sum = 0x1C
+        if (temp_chk != 0):
+          bit_sum = 1
+        checksum = checksum << 1
+        temp_chk = checksum | 1
+        bit_sum ^= temp_chk
+      else:
+        if (temp_chk != 0):
+          bit_sum = 0x1D
+        checksum = checksum << 1
+        bit_sum ^= checksum
+      checksum = bit_sum
+      shift = shift >> 1
+  return ~checksum & 0xFF
+
 class TestChryslerSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, 0)
     cls.safety.init_tests_chrysler()
+    cls.cnt_torque_meas = 0
+    cls.cnt_gas = 0
+    cls.cnt_cruise = 0
 
   def _button_msg(self, buttons):
     to_send = make_msg(0, 571)
     to_send[0].RDLR = buttons
+    return to_send
+
+  def _cruise_msg(self, active):
+    to_send = make_msg(0, 500)
+    to_send[0].RDLR = 0x380000 if active else 0
+    to_send[0].RDHR |= (self.cnt_cruise % 16) << 20
+    to_send[0].RDHR |= chrysler_checksum(to_send[0], 8) << 24
+    self.cnt_cruise += 1
     return to_send
 
   def _speed_msg(self, speed):
@@ -38,6 +74,8 @@ class TestChryslerSafety(unittest.TestCase):
   def _gas_msg(self, gas):
     to_send = make_msg(0, 308)
     to_send[0].RDHR = (gas & 0x7F) << 8
+    to_send[0].RDHR |= (self.cnt_gas % 16) << 20
+    self.cnt_gas += 1
     return to_send
 
   def _set_prev_torque(self, t):
@@ -48,6 +86,9 @@ class TestChryslerSafety(unittest.TestCase):
   def _torque_meas_msg(self, torque):
     to_send = make_msg(0, 544)
     to_send[0].RDHR = ((torque + 1024) >> 8) + (((torque + 1024) & 0xff) << 8)
+    to_send[0].RDHR |= (self.cnt_torque_meas % 16) << 20
+    to_send[0].RDHR |= chrysler_checksum(to_send[0], 8) << 24
+    self.cnt_torque_meas += 1
     return to_send
 
   def _torque_msg(self, torque):
@@ -78,16 +119,12 @@ class TestChryslerSafety(unittest.TestCase):
     test_manually_enable_controls_allowed(self)
 
   def test_enable_control_allowed_from_cruise(self):
-    to_push = make_msg(0, 0x1F4)
-    to_push[0].RDLR = 0x380000
-
+    to_push = self._cruise_msg(True)
     self.safety.safety_rx_hook(to_push)
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disable_control_allowed_from_cruise(self):
-    to_push = make_msg(0, 0x1F4)
-    to_push[0].RDLR = 0
-
+    to_push = self._cruise_msg(False)
     self.safety.set_controls_allowed(1)
     self.safety.safety_rx_hook(to_push)
     self.assertFalse(self.safety.get_controls_allowed())
