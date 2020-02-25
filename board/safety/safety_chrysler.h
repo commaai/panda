@@ -9,10 +9,10 @@ const AddrBus CHRYSLER_TX_MSGS[] = {{571, 0}, {658, 0}, {678, 0}};
 
 // TODO: do checksum and counter checks
 AddrCheckStruct chrysler_rx_checks[] = {
-  {.addr = {544}, .bus = 0, .expected_timestep = 10000U},
-  {.addr = {514}, .bus = 0, .expected_timestep = 10000U},
-  {.addr = {500}, .bus = 0, .expected_timestep = 20000U},
-  {.addr = {308}, .bus = 0, .expected_timestep = 20000U},  // verify ts
+  {.addr = {544}, .bus = 0, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U},
+  {.addr = {514}, .bus = 0, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U},
+  {.addr = {500}, .bus = 0, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
+  {.addr = {308}, .bus = 0, .check_checksum = false, .max_counter = 15U,  .expected_timestep = 20000U},
 };
 const int CHRYSLER_RX_CHECK_LEN = sizeof(chrysler_rx_checks) / sizeof(chrysler_rx_checks[0]);
 
@@ -24,10 +24,54 @@ int chrysler_speed = 0;
 uint32_t chrysler_ts_last = 0;
 struct sample_t chrysler_torque_meas;         // last few torques measured
 
+static uint8_t chrysler_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+  int checksum_byte = GET_LEN(to_push) - 1;
+  return (uint8_t)(GET_BYTE(to_push, checksum_byte));
+}
+
+static uint8_t chrysler_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+  /* This function does not want the checksum byte in the input data.
+  jeep chrysler canbus checksum from http://illmatics.com/Remote%20Car%20Hacking.pdf */
+  uint8_t checksum = 0xFF;
+  int len = GET_LEN(to_push);
+  for (int j = 0; j < (len - 1); j++) {
+    uint8_t shift = 0x80;
+    uint8_t curr = (uint8_t)GET_BYTE(to_push, j);
+    for (int i=0; i<8; i++) {
+      uint8_t bit_sum = curr & shift;
+      uint8_t temp_chk = checksum & 0x80U;
+      if (bit_sum != 0U) {
+        bit_sum = 0x1C;
+        if (temp_chk != 0U) {
+          bit_sum = 1;
+        }
+        checksum = checksum << 1;
+        temp_chk = checksum | 1U;
+        bit_sum ^= temp_chk;
+      } else {
+        if (temp_chk != 0U) {
+          bit_sum = 0x1D;
+        }
+        checksum = checksum << 1;
+        bit_sum ^= checksum;
+      }
+      checksum = bit_sum;
+      shift = shift >> 1;
+    }
+  }
+  return ~checksum;
+}
+
+static uint8_t chrysler_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
+  // Well defined counter only for 8 bytes messages
+  return (uint8_t)(GET_BYTE(to_push, 6) >> 4);
+}
+
 static int chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   bool valid = addr_safety_check(to_push, chrysler_rx_checks, CHRYSLER_RX_CHECK_LEN,
-                                 NULL, NULL, NULL);
+                                 chrysler_get_checksum, chrysler_compute_checksum,
+                                 chrysler_get_counter);
 
   if (valid) {
     int bus = GET_BUS(to_push);
