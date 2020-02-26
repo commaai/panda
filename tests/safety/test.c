@@ -272,6 +272,14 @@ void set_honda_fwd_brake(bool c){
   honda_fwd_brake = c;
 }
 
+void set_nissan_brake_prev(bool c){
+  nissan_brake_prev = c;
+}
+
+void set_nissan_desired_angle_last(int t){
+  nissan_desired_angle_last = t;
+}
+
 void init_tests(void){
   // get HW_TYPE from env variable set in test.sh
   hw_type = atoi(getenv("HW_TYPE"));
@@ -359,6 +367,16 @@ void init_tests_honda(void){
   honda_brake_pressed_prev = false;
   honda_gas_prev = 0;
   honda_fwd_brake = false;
+}
+
+void init_tests_nissan(void){
+  init_tests();
+  nissan_angle_meas.min = 0;
+  nissan_angle_meas.max = 0;
+  nissan_desired_angle_last = 0;
+  nissan_gas_prev = 0;
+  nissan_brake_prev = 0;
+  set_timer(0);
 }
 
 void set_gmlan_digital_output(int to_set){

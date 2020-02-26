@@ -14,6 +14,7 @@
 #include "safety/safety_chrysler.h"
 #include "safety/safety_subaru.h"
 #include "safety/safety_mazda.h"
+#include "safety/safety_nissan.h"
 #include "safety/safety_volkswagen.h"
 #include "safety/safety_elm327.h"
 
@@ -31,6 +32,7 @@
 #define SAFETY_TESLA 10U
 #define SAFETY_SUBARU 11U
 #define SAFETY_MAZDA 13U
+#define SAFETY_NISSAN 14U
 #define SAFETY_VOLKSWAGEN_MQB 15U
 #define SAFETY_TOYOTA_IPAS 16U
 #define SAFETY_ALLOUTPUT 17U
@@ -206,6 +208,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_CADILLAC, &cadillac_hooks},
   {SAFETY_TOYOTA_IPAS, &toyota_ipas_hooks},
   {SAFETY_TESLA, &tesla_hooks},
+  {SAFETY_NISSAN, &nissan_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
   {SAFETY_GM_ASCM, &gm_ascm_hooks},
   {SAFETY_FORD, &ford_hooks},

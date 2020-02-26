@@ -100,6 +100,10 @@ void set_volkswagen_desired_torque_last(int t);
 void set_volkswagen_rt_torque_last(int t);
 void set_volkswagen_torque_driver(int min, int max);
 
+void init_tests_nissan(void);
+void set_nissan_desired_angle_last(int t);
+void set_nissan_brake_prev(int t);
+
 """)
 
 libpandasafety = ffi.dlopen(libpandasafety_fn)
