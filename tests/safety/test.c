@@ -272,6 +272,10 @@ void set_honda_fwd_brake(bool c){
   honda_fwd_brake = c;
 }
 
+void set_nissan_brake_prev(bool c){
+  nissan_brake_prev = c;
+}
+
 void set_nissan_desired_angle_last(int t){
   nissan_desired_angle_last = t;
 }

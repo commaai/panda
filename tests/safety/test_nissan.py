@@ -43,6 +43,10 @@ class TestNissanSafety(unittest.TestCase):
     t = int(t * -100)
     self.safety.set_nissan_desired_angle_last(t)
 
+  def _set_brake_prev(self, state):
+    state = bool(state)
+    self.safety.set_nissan_brake_prev(state)
+
   def _angle_meas_msg_array(self, angle):
     for i in range(6):
       self.safety.safety_rx_hook(self._angle_meas_msg(angle))
@@ -80,6 +84,11 @@ class TestNissanSafety(unittest.TestCase):
 
     return to_send
 
+  def _acc_button_cmd(self, buttons):
+    to_send = make_msg(2, 0x20b)
+    to_send[0].RDLR = (buttons << 8)
+
+    return to_send
 
   def test_angle_cmd_when_enabled(self):
 
@@ -136,14 +145,51 @@ class TestNissanSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_brake_rising_edge(self):
-    self.safety.safety_rx_hook(self._speed_msg(10))
     self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._speed_msg(0))
+    self._set_brake_prev(True)
+    self.safety.safety_rx_hook(self._send_brake_cmd(True))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+    self.safety.set_controls_allowed(1)
+    self._set_brake_prev(False)
+    self.safety.safety_rx_hook(self._send_brake_cmd(True))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._speed_msg(1))
+    self._set_brake_prev(True)
+    self.safety.safety_rx_hook(self._send_brake_cmd(True))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._speed_msg(1))
+    self._set_brake_prev(False)
     self.safety.safety_rx_hook(self._send_brake_cmd(True))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_gas_rising_edge(self):
     self.safety.set_controls_allowed(1)
     self.safety.safety_rx_hook(self._send_gas_cmd(100))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_acc_buttons(self):
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_tx_hook(self._acc_button_cmd(0x2)) # Cancel button
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.safety_tx_hook(self._acc_button_cmd(0x1)) # ProPilot button
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_tx_hook(self._acc_button_cmd(0x4)) # Follow Distance button
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_tx_hook(self._acc_button_cmd(0x8)) # Set button
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_tx_hook(self._acc_button_cmd(0x10)) # Res button
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_tx_hook(self._acc_button_cmd(0x20)) # No button pressed
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_relay_malfunction(self):

@@ -20,7 +20,6 @@ const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x20b, 2}};
 AddrCheckStruct nissan_rx_checks[] = {
   {.addr = {0x2}, .bus = 0, .expected_timestep = 100000U},
   {.addr = {0x29a}, .bus = 0, .expected_timestep = 50000U},
-  {.addr = {0x20b}, .bus = 0, .expected_timestep = 50000U},
   {.addr = {0x1b6}, .bus = 1, .expected_timestep = 100000U},
 };
 const int NISSAN_RX_CHECK_LEN = sizeof(nissan_rx_checks) / sizeof(nissan_rx_checks[0]);
@@ -90,10 +89,10 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         nissan_cruise_engaged_last = cruise_engaged;
       }
 
-      // exit controls on rising edge of brake press if speed > 0
+      // exit controls on rising edge of brake press, or if speed > 0 and brake
       if (addr == 0x454) {
         int brake = (GET_BYTE(to_push, 2) & 0x80);
-        if ((brake > 0) && (nissan_brake_prev == 0) && (nissan_speed > 0.)) {
+        if ((brake > 0) && ((nissan_brake_prev == 0) || (nissan_speed > 0.))) {
           controls_allowed = 0;
         }
         nissan_brake_prev = brake;
@@ -108,6 +107,7 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
+  bool violation = 0;
 
   if (!msg_allowed(addr, bus, NISSAN_TX_MSGS, sizeof(NISSAN_TX_MSGS) / sizeof(NISSAN_TX_MSGS[0]))) {
     tx = 0;
@@ -124,7 +124,6 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // offeset 1310 * NISSAN_DEG_TO_CAN
     desired_angle =  desired_angle - 131000;
-    bool violation = 0;
 
     if (controls_allowed && lka_active) {
       // add 1 to not false trigger the violation
@@ -164,12 +163,19 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (!controls_allowed && lka_active) {
       violation = 1;
     }
-
-    if (violation) {
-      controls_allowed = 0;
-      tx = 0;
-    }
   }
+
+  // acc button check, only allow cancel button to be sent
+  if (addr == 0x20b) {
+    // Violation of any button other than cancel is pressed
+    violation |= ((GET_BYTE(to_send, 1) & 0x3d) > 0);
+  }
+
+  if (violation) {
+    controls_allowed = 0;
+    tx = 0;
+  }
+
   return tx;
 }
 
@@ -179,12 +185,9 @@ static int nissan_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int addr = GET_ADDR(to_fwd);
 
   if (bus_num == 0) {
-    // 0x20b is CruiseThrottle
-    int block_msg = (addr == 0x20b);
-    if (!block_msg) {
-      bus_fwd = 2;  // ADAS
-    }
+    bus_fwd = 2;  // ADAS
   }
+
   if (bus_num == 2) {
     // 0x169 is LKAS
     int block_msg = (addr == 0x169);
