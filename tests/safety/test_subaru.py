@@ -15,7 +15,8 @@ RT_INTERVAL = 250000
 DRIVER_TORQUE_ALLOWANCE = 60;
 DRIVER_TORQUE_FACTOR = 10;
 
-TX_MSGS = [[0x122, 0], [0x164, 0], [0x221, 0], [0x322, 0]]
+TX_MSGS = [[0x122, 0], [0x221, 0], [0x322, 0]]
+TX_L_MSGS = [[0x164, 0], [0x221, 0], [0x322, 0]]
 
 def twos_comp(val, bits):
   if val >= 0:
@@ -42,41 +43,58 @@ class TestSubaruSafety(unittest.TestCase):
 
   def _torque_driver_msg(self, torque):
     t = twos_comp(torque, 11)
-    to_send = make_msg(0, 0x119)
-    to_send[0].RDLR = ((t & 0x7FF) << 16)
+    if self.safety.get_subaru_global():
+      to_send = make_msg(0, 0x119)
+      to_send[0].RDLR = ((t & 0x7FF) << 16)
+    else:
+      to_send = make_msg(0, 0x371)
+      to_send[0].RDLR = ((t & 0x7FF) << 29)
     return to_send
 
   def _torque_msg(self, torque):
-    to_send = make_msg(0, 0x122)
     t = twos_comp(torque, 13)
-    to_send[0].RDLR = (t << 16)
+    if self.safety.get_subaru_global():
+      to_send = make_msg(0, 0x122)
+      to_send[0].RDLR = (t << 16)
+    else:
+      to_send = make_msg(0, 0x164)
+      to_send[0].RDLR = (t << 8)
     return to_send
 
   def _gas_msg(self, gas):
-    to_send = make_msg(0, 0x40)
-    to_send[0].RDHR = gas & 0xFF
+    if self.safety.get_subaru_global():
+      to_send = make_msg(0, 0x40)
+      to_send[0].RDHR = gas & 0xFF
+    else:
+      to_send = make_msg(0, 0x140)
+      to_send[0].RDLR = gas & 0xFF
+    return to_send
+
+  def _cruise_msg(self, cruise):
+    if self.safety.get_subaru_global():
+      to_send = make_msg(0, 0x240)
+      to_send[0].RDHR = cruise << 9
+    else:
+      to_send = make_msg(0, 0x144)
+      to_send[0].RDHR = cruise << 17
     return to_send
 
   def test_spam_can_buses(self):
-    test_spam_can_buses(self, TX_MSGS)
+    test_spam_can_buses(self, TX_MSGS if self.safety.get_subaru_global() else TX_L_MSGS)
 
   def test_relay_malfunction(self):
-    test_relay_malfunction(self, 0x122)
+    test_relay_malfunction(self, 0x122 if self.safety.get_subaru_global() else 0x164)
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_enable_control_allowed_from_cruise(self):
-    to_push = make_msg(0, 0x240)
-    to_push[0].RDHR = 1 << 9
-    self.safety.safety_rx_hook(to_push)
+    self.safety.safety_rx_hook(self._cruise_msg(True))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disable_control_allowed_from_cruise(self):
-    to_push = make_msg(0, 0x240)
-    to_push[0].RDHR = 0
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(to_push)
+    self.safety.safety_rx_hook(self._cruise_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas(self):
@@ -180,7 +198,7 @@ class TestSubaruSafety(unittest.TestCase):
   def test_fwd_hook(self):
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
-    blocked_msgs = [290, 356, 545, 802]
+    blocked_msgs = [290, 545, 802] if self.safety.get_subaru_global() else [356, 545, 802]
     for b in buss:
       for m in msgs:
         if b == 0:
@@ -193,6 +211,12 @@ class TestSubaruSafety(unittest.TestCase):
         # assume len 8
         self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
+class TestSubaruLegacySafety(TestSubaruSafety):
+  @classmethod
+  def setUp(cls):
+    cls.safety = libpandasafety_py.libpandasafety
+    cls.safety.set_safety_hooks(Panda.SAFETY_SUBARU_LEGACY, 0)
+    cls.safety.init_tests_subaru()
 
 if __name__ == "__main__":
   unittest.main()

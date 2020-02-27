@@ -37,8 +37,14 @@ struct sample_t subaru_torque_driver;         // last few driver torques measure
 
 static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
-  bool valid = addr_safety_check(to_push, subaru_rx_checks, SUBARU_RX_CHECK_LEN,
-                                 NULL, NULL, NULL);
+  bool valid = false;
+  if (subaru_global) {
+    valid = addr_safety_check(to_push, subaru_rx_checks, SUBARU_RX_CHECK_LEN,
+                              NULL, NULL, NULL);
+  } else {
+    valid = addr_safety_check(to_push, subaru_l_rx_checks, SUBARU_L_RX_CHECK_LEN,
+                              NULL, NULL, NULL);
+  }
 
   if (valid) {
     int bus = GET_BUS(to_push);

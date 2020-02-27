@@ -88,6 +88,7 @@ void set_chrysler_torque_meas(int min, int max);
 void init_tests_subaru(void);
 void set_subaru_desired_torque_last(int t);
 void set_subaru_rt_torque_last(int t);
+bool get_subaru_global(void);
 void set_subaru_torque_driver(int min, int max);
 
 void init_tests_volkswagen(void);
