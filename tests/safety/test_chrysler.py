@@ -50,6 +50,7 @@ class TestChryslerSafety(unittest.TestCase):
     cls.cnt_torque_meas = 0
     cls.cnt_gas = 0
     cls.cnt_cruise = 0
+    cls.cnt_brake = 0
 
   def _button_msg(self, buttons):
     to_send = make_msg(0, 571)
@@ -76,6 +77,14 @@ class TestChryslerSafety(unittest.TestCase):
     to_send[0].RDHR = (gas & 0x7F) << 8
     to_send[0].RDHR |= (self.cnt_gas % 16) << 20
     self.cnt_gas += 1
+    return to_send
+
+  def _brake_msg(self, brake):
+    to_send = make_msg(0, 320)
+    to_send[0].RDLR = 5 if brake else 0
+    to_send[0].RDHR |= (self.cnt_brake % 16) << 20
+    to_send[0].RDHR |= chrysler_checksum(to_send[0], 8) << 24
+    self.cnt_brake += 1
     return to_send
 
   def _set_prev_torque(self, t):
@@ -137,6 +146,30 @@ class TestChryslerSafety(unittest.TestCase):
     self.safety.safety_rx_hook(self._gas_msg(0))
     self.safety.safety_rx_hook(self._speed_msg(2.3))
     self.safety.safety_rx_hook(self._gas_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_brake_disable(self):
+    self.safety.safety_rx_hook(self._brake_msg(True))
+    self.safety.safety_rx_hook(self._speed_msg(0))
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._brake_msg(True))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+    self.safety.safety_rx_hook(self._brake_msg(False))
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._brake_msg(True))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+    self.safety.safety_rx_hook(self._brake_msg(True))
+    self.safety.safety_rx_hook(self._speed_msg(1))
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._brake_msg(True))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+    self.safety.safety_rx_hook(self._speed_msg(1))
+    self.safety.safety_rx_hook(self._brake_msg(False))
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._brake_msg(True))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_non_realtime_limit_up(self):
