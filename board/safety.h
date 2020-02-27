@@ -39,6 +39,7 @@
 #define SAFETY_GM_ASCM 18U
 #define SAFETY_NOOUTPUT 19U
 #define SAFETY_HONDA_BOSCH_HARNESS 20U
+#define SAFETY_SUBARU_LEGACY 22U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
 const safety_hooks *current_hooks = &nooutput_hooks;
