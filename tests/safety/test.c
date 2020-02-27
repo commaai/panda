@@ -109,6 +109,10 @@ int get_hw_type(void){
   return hw_type;
 }
 
+bool get_subaru_global(void){
+  return subaru_global;
+}
+
 void set_timer(uint32_t t){
   timer.CNT = t;
 }
