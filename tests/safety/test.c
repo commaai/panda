@@ -142,11 +142,6 @@ void set_chrysler_torque_meas(int min, int max){
   chrysler_torque_meas.max = max;
 }
 
-void set_subaru_torque_driver(int min, int max){
-  subaru_torque_driver.min = min;
-  subaru_torque_driver.max = max;
-}
-
 void set_volkswagen_torque_driver(int min, int max){
   volkswagen_torque_driver.min = min;
   volkswagen_torque_driver.max = max;
