@@ -30,12 +30,25 @@ def sign(a):
   else:
     return -1
 
+def subaru_checksum(msg, addr, len_msg):
+  checksum = addr + (addr >> 8)
+  for i in range(len_msg):
+    if i < 4:
+      checksum += (msg.RDLR >> (8 * i))
+    else:
+      checksum += (msg.RDHR >> (8 * (i - 4)))
+  return checksum & 0xff
+
+
 class TestSubaruSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_SUBARU, 0)
     cls.safety.init_tests_subaru()
+    cls.cnt_gas = 0
+    cls.cnt_torque_driver = 0
+    cls.cnt_cruise = 0
 
   def _set_prev_torque(self, t):
     self.safety.set_subaru_desired_torque_last(t)
@@ -46,6 +59,9 @@ class TestSubaruSafety(unittest.TestCase):
     if self.safety.get_subaru_global():
       to_send = make_msg(0, 0x119)
       to_send[0].RDLR = ((t & 0x7FF) << 16)
+      to_send[0].RDLR |= (self.cnt_torque_driver & 0xF) << 8
+      to_send[0].RDLR |= subaru_checksum(to_send, 0x119, 8)
+      self.cnt_torque_driver += 1
     else:
       to_send = make_msg(0, 0x371)
       to_send[0].RDLR = (t & 0x7) << 29
@@ -66,6 +82,9 @@ class TestSubaruSafety(unittest.TestCase):
     if self.safety.get_subaru_global():
       to_send = make_msg(0, 0x40)
       to_send[0].RDHR = gas & 0xFF
+      to_send[0].RDLR |= (self.cnt_gas & 0xF) << 8
+      to_send[0].RDLR |= subaru_checksum(to_send, 0x40, 8)
+      self.cnt_gas += 1
     else:
       to_send = make_msg(0, 0x140)
       to_send[0].RDLR = gas & 0xFF
@@ -75,6 +94,9 @@ class TestSubaruSafety(unittest.TestCase):
     if self.safety.get_subaru_global():
       to_send = make_msg(0, 0x240)
       to_send[0].RDHR = cruise << 9
+      to_send[0].RDLR |= (self.cnt_cruise & 0xF) << 8
+      to_send[0].RDLR |= subaru_checksum(to_send, 0x240, 8)
+      self.cnt_cruise += 1
     else:
       to_send = make_msg(0, 0x144)
       to_send[0].RDHR = cruise << 17

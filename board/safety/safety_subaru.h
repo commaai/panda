@@ -13,12 +13,12 @@ const AddrBus SUBARU_L_TX_MSGS[] = {{0x164, 0}, {0x221, 0}, {0x322, 0}};
 const int SUBARU_TX_MSGS_LEN = sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]);
 const int SUBARU_L_TX_MSGS_LEN = sizeof(SUBARU_L_TX_MSGS) / sizeof(SUBARU_L_TX_MSGS[0]);
 
-// TODO: do checksum and counter checks after adding the signals to the outback dbc file
 AddrCheckStruct subaru_rx_checks[] = {
-  {.addr = { 0x40}, .bus = 0, .expected_timestep = 10000U},
-  {.addr = {0x119}, .bus = 0, .expected_timestep = 20000U},
-  {.addr = {0x240}, .bus = 0, .expected_timestep = 50000U},
+  {.addr = { 0x40}, .bus = 0, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U},
+  {.addr = {0x119}, .bus = 0, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
+  {.addr = {0x240}, .bus = 0, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U},
 };
+// TODO: do checksum and counter checks after adding the signals to the outback dbc file
 AddrCheckStruct subaru_l_rx_checks[] = {
   {.addr = {0x140}, .bus = 0, .expected_timestep = 10000U},
   {.addr = {0x371}, .bus = 0, .expected_timestep = 20000U},
@@ -35,12 +35,30 @@ bool subaru_gas_last = false;
 bool subaru_global = false;
 struct sample_t subaru_torque_driver;         // last few driver torques measured
 
+static uint8_t subaru_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+  return (uint8_t)GET_BYTE(to_push, 0);
+}
+
+static uint8_t subaru_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
+  return (uint8_t)(GET_BYTE(to_push, 1) & 0xF);
+}
+
+static uint8_t subaru_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+  int addr = GET_ADDR(to_push);
+  int len = GET_LEN(to_push);
+  uint8_t checksum = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U);
+  for (int i = 1; i < len; i++) {
+    checksum += (uint8_t)GET_BYTE(to_push, i);
+  }
+  return checksum;
+}
+
 static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   bool valid = false;
   if (subaru_global) {
     valid = addr_safety_check(to_push, subaru_rx_checks, SUBARU_RX_CHECK_LEN,
-                              NULL, NULL, NULL);
+                              subaru_get_checksum, subaru_compute_checksum, subaru_get_counter);
   } else {
     valid = addr_safety_check(to_push, subaru_l_rx_checks, SUBARU_L_RX_CHECK_LEN,
                               NULL, NULL, NULL);
