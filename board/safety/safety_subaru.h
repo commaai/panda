@@ -52,8 +52,12 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (bus == 0) {
       if (((addr == 0x119) && subaru_global) ||
           ((addr == 0x371) && !subaru_global)) {
-        int bit_shift = subaru_global ? 16 : 29;
-        int torque_driver_new = ((GET_BYTES_04(to_push) >> bit_shift) & 0x7FF);
+        int torque_driver_new;
+        if (subaru_global) {
+          torque_driver_new = ((GET_BYTES_04(to_push) >> 16) & 0x7FF);
+        } else {
+          torque_driver_new = (GET_BYTE(to_push, 3) >> 5) + (GET_BYTE(to_push, 4) << 3);
+        }
         torque_driver_new = to_signed(torque_driver_new, 11);
         update_sample(&subaru_torque_driver, torque_driver_new);
       }
