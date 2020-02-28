@@ -155,6 +155,7 @@ class TestSubaruSafety(unittest.TestCase):
       self._set_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
       self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(-MAX_STEER)))
 
+    # arbitrary high driver torque to ensure max steer torque is allowed
     max_driver_torque = int(MAX_STEER / DRIVER_TORQUE_FACTOR + DRIVER_TORQUE_ALLOWANCE + 1)
 
     # spot check some individual cases
