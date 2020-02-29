@@ -109,6 +109,10 @@ int get_hw_type(void){
   return hw_type;
 }
 
+bool get_subaru_global(void){
+  return subaru_global;
+}
+
 void set_timer(uint32_t t){
   timer.CNT = t;
 }
@@ -138,14 +142,17 @@ void set_chrysler_torque_meas(int min, int max){
   chrysler_torque_meas.max = max;
 }
 
-void set_subaru_torque_driver(int min, int max){
-  subaru_torque_driver.min = min;
-  subaru_torque_driver.max = max;
-}
-
 void set_volkswagen_torque_driver(int min, int max){
   volkswagen_torque_driver.min = min;
   volkswagen_torque_driver.max = max;
+}
+
+int get_volkswagen_torque_driver_min(void){
+  return volkswagen_torque_driver.min;
+}
+
+int get_volkswagen_torque_driver_max(void){
+  return volkswagen_torque_driver.max;
 }
 
 int get_chrysler_torque_meas_min(void){
@@ -224,6 +231,14 @@ void set_volkswagen_desired_torque_last(int t){
   volkswagen_desired_torque_last = t;
 }
 
+int get_volkswagen_moving(void){
+  return volkswagen_moving;
+}
+
+int get_volkswagen_brake_pressed_prev(void){
+  return volkswagen_brake_pressed_prev;
+}
+
 int get_volkswagen_gas_prev(void){
   return volkswagen_gas_prev;
 }
@@ -244,16 +259,20 @@ void set_honda_alt_brake_msg(bool c){
   honda_alt_brake_msg = c;
 }
 
-void set_honda_hw(int c){
-  honda_hw = c;
-}
-
 int get_honda_hw(void) {
   return honda_hw;
 }
 
 void set_honda_fwd_brake(bool c){
   honda_fwd_brake = c;
+}
+
+void set_nissan_brake_prev(bool c){
+  nissan_brake_prev = c;
+}
+
+void set_nissan_desired_angle_last(int t){
+  nissan_desired_angle_last = t;
 }
 
 void init_tests(void){
@@ -304,6 +323,8 @@ void init_tests_hyundai(void){
 
 void init_tests_chrysler(void){
   init_tests();
+  chrysler_gas_prev = false;
+  chrysler_speed = 0;
   chrysler_torque_meas.min = 0;
   chrysler_torque_meas.max = 0;
   chrysler_desired_torque_last = 0;
@@ -324,6 +345,9 @@ void init_tests_subaru(void){
 
 void init_tests_volkswagen(void){
   init_tests();
+  volkswagen_moving = false;
+  volkswagen_brake_pressed_prev = false;
+  volkswagen_gas_prev = 0;
   volkswagen_torque_driver.min = 0;
   volkswagen_torque_driver.max = 0;
   volkswagen_desired_torque_last = 0;
@@ -338,6 +362,16 @@ void init_tests_honda(void){
   honda_brake_pressed_prev = false;
   honda_gas_prev = 0;
   honda_fwd_brake = false;
+}
+
+void init_tests_nissan(void){
+  init_tests();
+  nissan_angle_meas.min = 0;
+  nissan_angle_meas.max = 0;
+  nissan_desired_angle_last = 0;
+  nissan_gas_prev = 0;
+  nissan_brake_prev = 0;
+  set_timer(0);
 }
 
 void set_gmlan_digital_output(int to_set){

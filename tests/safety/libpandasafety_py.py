@@ -60,7 +60,6 @@ bool get_honda_brake_pressed_prev(void);
 int get_honda_gas_prev(void);
 void set_honda_fwd_brake(bool);
 void set_honda_alt_brake_msg(bool);
-void set_honda_hw(int);
 int get_honda_hw(void);
 
 void init_tests_cadillac(void);
@@ -88,13 +87,21 @@ void set_chrysler_torque_meas(int min, int max);
 void init_tests_subaru(void);
 void set_subaru_desired_torque_last(int t);
 void set_subaru_rt_torque_last(int t);
-void set_subaru_torque_driver(int min, int max);
+bool get_subaru_global(void);
 
 void init_tests_volkswagen(void);
+int get_volkswagen_gas_prev(void);
+int get_volkswagen_torque_driver_min(void);
+int get_volkswagen_torque_driver_max(void);
+bool get_volkswagen_moving(void);
+bool get_volkswagen_brake_pressed_prev(void);
 void set_volkswagen_desired_torque_last(int t);
 void set_volkswagen_rt_torque_last(int t);
 void set_volkswagen_torque_driver(int min, int max);
-int get_volkswagen_gas_prev(void);
+
+void init_tests_nissan(void);
+void set_nissan_desired_angle_last(int t);
+void set_nissan_brake_prev(int t);
 
 """)
 

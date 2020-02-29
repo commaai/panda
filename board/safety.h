@@ -14,6 +14,7 @@
 #include "safety/safety_chrysler.h"
 #include "safety/safety_subaru.h"
 #include "safety/safety_mazda.h"
+#include "safety/safety_nissan.h"
 #include "safety/safety_volkswagen.h"
 #include "safety/safety_elm327.h"
 
@@ -31,12 +32,14 @@
 #define SAFETY_TESLA 10U
 #define SAFETY_SUBARU 11U
 #define SAFETY_MAZDA 13U
-#define SAFETY_VOLKSWAGEN 15U
+#define SAFETY_NISSAN 14U
+#define SAFETY_VOLKSWAGEN_MQB 15U
 #define SAFETY_TOYOTA_IPAS 16U
 #define SAFETY_ALLOUTPUT 17U
 #define SAFETY_GM_ASCM 18U
 #define SAFETY_NOOUTPUT 19U
 #define SAFETY_HONDA_BOSCH_HARNESS 20U
+#define SAFETY_SUBARU_LEGACY 22U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
 const safety_hooks *current_hooks = &nooutput_hooks;
@@ -79,6 +82,21 @@ void disable_message_pump() {
   message_pump_active = false;
 }
 
+
+// Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8
+// algorithm. Called at init time for safety modes using CRC-8.
+void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]) {
+  for (int i = 0; i < 256; i++) {
+    uint8_t crc = i;
+    for (int j = 0; j < 8; j++) {
+      if ((crc & 0x80U) != 0U)
+        crc = (uint8_t)((crc << 1) ^ poly);
+      else
+        crc <<= 1;
+    }
+    crc_lut[i] = crc;
+  }
+}
 
 bool msg_allowed(int addr, int bus, const AddrBus addr_list[], int len) {
   bool allowed = false;
@@ -207,13 +225,15 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_HYUNDAI, &hyundai_hooks},
   {SAFETY_CHRYSLER, &chrysler_hooks},
   {SAFETY_SUBARU, &subaru_hooks},
+  {SAFETY_SUBARU_LEGACY, &subaru_legacy_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
-  {SAFETY_VOLKSWAGEN, &volkswagen_hooks},
+  {SAFETY_VOLKSWAGEN_MQB, &volkswagen_mqb_hooks},
   {SAFETY_NOOUTPUT, &nooutput_hooks},
 #ifdef ALLOW_DEBUG
   {SAFETY_CADILLAC, &cadillac_hooks},
   {SAFETY_TOYOTA_IPAS, &toyota_ipas_hooks},
   {SAFETY_TESLA, &tesla_hooks},
+  {SAFETY_NISSAN, &nissan_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
   {SAFETY_GM_ASCM, &gm_ascm_hooks},
   {SAFETY_FORD, &ford_hooks},

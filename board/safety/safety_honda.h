@@ -48,7 +48,7 @@ static uint8_t honda_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   while (addr > 0U) {
     checksum += (addr & 0xFU); addr >>= 4;
   }
-  for (int j = 0; (j < len); j++) {
+  for (int j = 0; j < len; j++) {
     uint8_t byte = GET_BYTE(to_push, j);
     checksum += (byte & 0xFU) + (byte >> 4U);
     if (j == (len - 1)) {

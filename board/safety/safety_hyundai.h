@@ -9,6 +9,7 @@ const AddrBus HYUNDAI_TX_MSGS[] = {{832, 0}, {1265, 0}};
 
 // TODO: do checksum and counter checks
 AddrCheckStruct hyundai_rx_checks[] = {
+  {.addr = {608}, .bus = 0, .expected_timestep = 10000U},
   {.addr = {897}, .bus = 0, .expected_timestep = 10000U},
   {.addr = {1057}, .bus = 0, .expected_timestep = 20000U},
 };
@@ -17,6 +18,7 @@ const int HYUNDAI_RX_CHECK_LEN = sizeof(hyundai_rx_checks) / sizeof(hyundai_rx_c
 int hyundai_rt_torque_last = 0;
 int hyundai_desired_torque_last = 0;
 int hyundai_cruise_engaged_last = 0;
+bool hyundai_gas_last = false;
 uint32_t hyundai_ts_last = 0;
 struct sample_t hyundai_torque_driver;         // last few driver torques measured
 
@@ -48,7 +50,14 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       hyundai_cruise_engaged_last = cruise_engaged;
     }
 
-    // TODO: check gas pressed
+    // exit controls on rising edge of gas press
+    if ((addr == 608) && (bus == 0)) {
+      bool gas = (GET_BYTE(to_push, 7) >> 6) != 0;
+      if (gas && ! hyundai_gas_last) {
+        controls_allowed = 0;
+      }
+      hyundai_gas_last = gas;
+    }
 
     // check if stock camera ECU is on bus 0
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && (addr == 832)) {
