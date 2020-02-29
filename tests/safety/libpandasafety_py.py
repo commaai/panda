@@ -60,7 +60,6 @@ bool get_honda_brake_pressed_prev(void);
 int get_honda_gas_prev(void);
 void set_honda_fwd_brake(bool);
 void set_honda_alt_brake_msg(bool);
-void set_honda_hw(int);
 int get_honda_hw(void);
 
 void init_tests_cadillac(void);

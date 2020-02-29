@@ -364,7 +364,6 @@ class TestHondaBoschGiraffeSafety(TestHondaSafety):
     buss = range(0x0, 0x3)
     msgs = range(0x1, 0x800)
     hw = self.safety.get_honda_hw()
-    self.safety.set_honda_hw(hw)
     bus_rdr_cam = 2 if hw == HONDA_BH_HW else 1
     bus_rdr_car = 0 if hw == HONDA_BH_HW else 2
     bus_pt = 1 if hw == HONDA_BH_HW else 0
