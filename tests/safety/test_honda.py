@@ -301,7 +301,7 @@ class TestHondaSafety(unittest.TestCase):
 
     # counter
     # reset wrong_counters to zero by sending valid messages
-    for i in range(MAX_WRONG_COUNTERS):
+    for i in range(MAX_WRONG_COUNTERS + 1):
       self.__class__.cnt_speed += 1
       self.__class__.cnt_gas += 1
       self.__class__.cnt_button += 1
