@@ -61,17 +61,18 @@ def volkswagen_mqb_crc(msg, addr, len_msg):
   return volkswagen_crc_8h2f(msg_bytes[1:len_msg] + magic_pad.to_bytes(1, 'little'))
 
 class TestVolkswagenMqbSafety(unittest.TestCase):
+  cnt_eps_01 = 0
+  cnt_esp_05 = 0
+  cnt_motor_20 = 0
+  cnt_acc_06 = 0
+  cnt_hca_01 = 0
+  cnt_gra_acc_01 = 0
+
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
     cls.safety.init_tests_volkswagen()
-    cls.cnt_eps_01 = 0
-    cls.cnt_esp_05 = 0
-    cls.cnt_motor_20 = 0
-    cls.cnt_acc_06 = 0
-    cls.cnt_hca_01 = 0
-    cls.cnt_gra_acc_01 = 0
 
   def _set_prev_torque(self, t):
     self.safety.set_volkswagen_desired_torque_last(t)
@@ -91,7 +92,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     to_send[0].RDLR = (0x1 << 26) if brake else 0
     to_send[0].RDLR |= (self.cnt_esp_05 % 16) << 8
     to_send[0].RDLR |= volkswagen_mqb_crc(to_send[0], MSG_ESP_05, 8)
-    self.cnt_esp_05 += 1
+    self.__class__.cnt_esp_05 += 1
     return to_send
 
   # Driver steering input torque
@@ -103,7 +104,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
       to_send[0].RDHR |= 0x1 << 23
     to_send[0].RDLR |= (self.cnt_eps_01 % 16) << 8
     to_send[0].RDLR |= volkswagen_mqb_crc(to_send[0], MSG_EPS_01, 8)
-    self.cnt_eps_01 += 1
+    self.__class__.cnt_eps_01 += 1
     return to_send
 
   # openpilot steering output torque
@@ -115,7 +116,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
       to_send[0].RDLR |= 0x1 << 31
     to_send[0].RDLR |= (self.cnt_hca_01 % 16) << 8
     to_send[0].RDLR |= volkswagen_mqb_crc(to_send[0], MSG_HCA_01, 8)
-    self.cnt_hca_01 += 1
+    self.__class__.cnt_hca_01 += 1
     return to_send
 
   # ACC engagement status
@@ -124,7 +125,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     to_send[0].RDHR = (status & 0x7) << 28
     to_send[0].RDLR |= (self.cnt_acc_06 % 16) << 8
     to_send[0].RDLR |= volkswagen_mqb_crc(to_send[0], MSG_ACC_06, 8)
-    self.cnt_acc_06 += 1
+    self.__class__.cnt_acc_06 += 1
     return to_send
 
   # Driver throttle input
@@ -133,7 +134,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     to_send[0].RDLR = (gas & 0xFF) << 12
     to_send[0].RDLR |= (self.cnt_motor_20 % 16) << 8
     to_send[0].RDLR |= volkswagen_mqb_crc(to_send[0], MSG_MOTOR_20, 8)
-    self.cnt_motor_20 += 1
+    self.__class__.cnt_motor_20 += 1
     return to_send
 
   # Cruise control buttons
@@ -142,7 +143,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     to_send[0].RDLR = 1 << bit
     to_send[0].RDLR |= (self.cnt_gra_acc_01 % 16) << 8
     to_send[0].RDLR |= volkswagen_mqb_crc(to_send[0], MSG_GRA_ACC_01, 8)
-    self.cnt_gra_acc_01 += 1
+    self.__class__.cnt_gra_acc_01 += 1
     return to_send
 
   def test_spam_can_buses(self):
@@ -368,10 +369,10 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     # counter
     # reset wrong_counters to zero by sending valid messages
     for i in range(MAX_WRONG_COUNTERS + 1):
-      self.cnt_eps_01 = 0
-      self.cnt_esp_05 = 0
-      self.cnt_motor_20 = 0
-      self.cnt_acc_06 = 0
+      self.__class__.cnt_eps_01 += 1
+      self.__class__.cnt_esp_05 += 1
+      self.__class__.cnt_motor_20 += 1
+      self.__class__.cnt_acc_06 += 1
       if i < MAX_WRONG_COUNTERS:
         self.safety.set_controls_allowed(1)
         self.safety.safety_rx_hook(self._eps_01_msg(0))
