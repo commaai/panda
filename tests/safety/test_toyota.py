@@ -15,6 +15,8 @@ MIN_ACCEL = -3000
 MAX_RT_DELTA = 375
 RT_INTERVAL = 250000
 
+STANDSTILL_THRESHOLD = 100  # 1kph
+
 MAX_TORQUE_ERROR = 350
 INTERCEPTOR_THRESHOLD = 475
 
@@ -182,7 +184,7 @@ class TestToyotaSafety(unittest.TestCase):
   def test_not_allow_brake_when_moving(self):
     # Brake was already pressed
     self.safety.safety_rx_hook(self._brake_msg(True))
-    self.safety.safety_rx_hook(self._speed_msg(101))
+    self.safety.safety_rx_hook(self._speed_msg(STANDSTILL_THRESHOLD + 1))
     self.safety.set_controls_allowed(1)
 
     self.safety.safety_rx_hook(self._brake_msg(True))

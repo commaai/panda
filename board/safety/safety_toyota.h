@@ -16,7 +16,8 @@ const uint32_t TOYOTA_RT_INTERVAL = 250000;    // 250ms between real time checks
 const int TOYOTA_MAX_ACCEL = 1500;        // 1.5 m/s2
 const int TOYOTA_MIN_ACCEL = -3000;       // 3.0 m/s2
 
-const int TOYOTA_GAS_INTERCEPTOR_THRESHOLD = 475;  // ratio between offset and gain from dbc file
+const int TOYOTA_STANDSTILL_THRSLD = 100;  // 1kph
+const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 475;  // ratio between offset and gain from dbc file
 
 const AddrBus TOYOTA_TX_MSGS[] = {{0x283, 0}, {0x2E6, 0}, {0x2E7, 0}, {0x33E, 0}, {0x344, 0}, {0x365, 0}, {0x366, 0}, {0x4CB, 0},  // DSU bus 0
                                   {0x128, 1}, {0x141, 1}, {0x160, 1}, {0x161, 1}, {0x470, 1},  // DSU bus 1
@@ -106,7 +107,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         int byte_next = byte + 1;
         speed += (GET_BYTE(to_push, byte) << 8) + GET_BYTE(to_push, byte_next);
       }
-      toyota_moving = (speed / 4) > 100;  // 1kph
+      toyota_moving = (speed / 4) > TOYOTA_STANDSTILL_THRSLD;
     }
 
     // exit controls on rising edge of brake pedal
@@ -124,8 +125,8 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (addr == 0x201) {
       gas_interceptor_detected = 1;
       int gas_interceptor = GET_INTERCEPTOR(to_push);
-      if ((gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRESHOLD) &&
-          (gas_interceptor_prev <= TOYOTA_GAS_INTERCEPTOR_THRESHOLD)) {
+      if ((gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRSLD) &&
+          (gas_interceptor_prev <= TOYOTA_GAS_INTERCEPTOR_THRSLD)) {
         controls_allowed = 0;
       }
       gas_interceptor_prev = gas_interceptor;
