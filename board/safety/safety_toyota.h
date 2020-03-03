@@ -97,13 +97,14 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       toyota_cruise_engaged_last = cruise_engaged;
     }
 
+    // sample speed
     if (addr == 0xaa) {
       int speed = 0;
       // sum 4 wheel speeds
       for (int i=0; i<4; i++) {
         int byte = 2*i;  // useless declaration, but to make misra 10.8 happy
         int byte_next = byte + 1;
-        speed = speed + (GET_BYTE(to_push, byte) << 8) + GET_BYTE(to_push, byte_next);
+        speed += (GET_BYTE(to_push, byte) << 8) + GET_BYTE(to_push, byte_next);
       }
       toyota_moving = (speed / 4) > 100;  // 1kph
     }
@@ -113,7 +114,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if ((addr == 0x224) || (addr == 0x226)) {
       int byte = (addr == 0x224) ? 0 : 4;
       bool brake = ((GET_BYTE(to_push, byte) >> 5) & 1) != 0;
-      if (brake && (!(toyota_brake_prev) || toyota_moving)) {
+      if (brake && (!toyota_brake_prev || toyota_moving)) {
         controls_allowed = 0;
       }
       toyota_brake_prev = brake;
