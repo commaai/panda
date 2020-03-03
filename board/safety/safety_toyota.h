@@ -24,8 +24,10 @@ const AddrBus TOYOTA_TX_MSGS[] = {{0x283, 0}, {0x2E6, 0}, {0x2E7, 0}, {0x33E, 0}
                                   {0x200, 0}, {0x750, 0}};  // interceptor + Blindspot monitor
 
 AddrCheckStruct toyota_rx_checks[] = {
+  {.addr = { 0xaa}, .bus = 0, .check_checksum = false, .max_counter = 0U, .expected_timestep = 12000U},
   {.addr = {0x260}, .bus = 0, .check_checksum = true, .max_counter = 0U, .expected_timestep = 20000U},
   {.addr = {0x1D2}, .bus = 0, .check_checksum = true, .max_counter = 0U, .expected_timestep = 30000U},
+  {.addr = {0x224, 0x226}, .bus = 0, .check_checksum = true, .max_counter = 0U, .expected_timestep = 25000U},
 };
 const int TOYOTA_RX_CHECKS_LEN = sizeof(toyota_rx_checks) / sizeof(toyota_rx_checks[0]);
 
@@ -37,7 +39,9 @@ int toyota_desired_torque_last = 0;       // last desired steer torque
 int toyota_rt_torque_last = 0;            // last desired torque for real time check
 uint32_t toyota_ts_last = 0;
 int toyota_cruise_engaged_last = 0;       // cruise state
-int toyota_gas_prev = 0;
+bool toyota_gas_prev = false;
+bool toyota_brake_prev = false;
+bool toyota_moving = false;
 struct sample_t toyota_torque_meas;       // last 3 motor torques produced by the eps
 
 
@@ -93,6 +97,28 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       toyota_cruise_engaged_last = cruise_engaged;
     }
 
+    if (addr == 0xaa) {
+      int speed = 0;
+      // sum 4 wheel speeds
+      for (int i=0; i<4; i++) {
+        int byte = 2*i;  // useless declaration, but to make misra 10.8 happy
+        int byte_next = byte + 1;
+        speed = speed + (GET_BYTE(to_push, byte) << 8) + GET_BYTE(to_push, byte_next);
+      }
+      toyota_moving = (speed / 4) > 100;  // 1kph
+    }
+
+    // exit controls on rising edge of brake pedal
+    // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224
+    if ((addr == 0x224) || (addr == 0x226)) {
+      int byte = (addr == 0x224) ? 0 : 4;
+      bool brake = ((GET_BYTE(to_push, byte) >> 5) & 1) != 0;
+      if (brake && (!(toyota_brake_prev) || toyota_moving)) {
+        controls_allowed = 0;
+      }
+      toyota_brake_prev = brake;
+    }
+
     // exit controls on rising edge of interceptor gas press
     if (addr == 0x201) {
       gas_interceptor_detected = 1;
@@ -106,8 +132,8 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // exit controls on rising edge of gas press
     if (addr == 0x2C1) {
-      int gas = GET_BYTE(to_push, 6);
-      if ((gas > 0) && (toyota_gas_prev == 0) && !gas_interceptor_detected) {
+      bool gas = GET_BYTE(to_push, 6) != 0;
+      if (gas && !toyota_gas_prev && !gas_interceptor_detected) {
         controls_allowed = 0;
       }
       toyota_gas_prev = gas;
