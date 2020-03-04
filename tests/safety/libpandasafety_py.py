@@ -39,7 +39,6 @@ bool get_gas_interceptor_detetcted(void);
 int get_gas_interceptor_prev(void);
 int get_hw_type(void);
 void set_timer(uint32_t t);
-void reset_angle_control(void);
 
 int safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_send);
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_push);
