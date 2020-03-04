@@ -85,10 +85,6 @@ void set_gas_interceptor_detected(bool c){
   gas_interceptor_detected = c;
 }
 
-void reset_angle_control(void){
-  angle_control = 0;
-}
-
 bool get_controls_allowed(void){
   return controls_allowed;
 }
