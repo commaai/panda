@@ -53,7 +53,6 @@ static uint8_t toyota_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   for (int i = 0; i < (len - 1); i++) {
     checksum += (uint8_t)GET_BYTE(to_push, i);
   }
-  //printf("COM %d %d\n", checksum, addr);
   return checksum;
 }
 
