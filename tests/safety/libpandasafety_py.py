@@ -48,7 +48,7 @@ int set_safety_hooks(uint16_t  mode, int16_t param);
 void init_tests_toyota(void);
 int get_toyota_torque_meas_min(void);
 int get_toyota_torque_meas_max(void);
-int get_toyota_gas_prev(void);
+bool get_toyota_gas_prev(void);
 void set_toyota_torque_meas(int min, int max);
 void set_toyota_desired_torque_last(int t);
 void set_toyota_rt_torque_last(int t);

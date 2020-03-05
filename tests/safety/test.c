@@ -159,7 +159,7 @@ int get_chrysler_torque_meas_max(void){
   return chrysler_torque_meas.max;
 }
 
-int get_toyota_gas_prev(void){
+bool get_toyota_gas_prev(void){
   return toyota_gas_prev;
 }
 

@@ -15,6 +15,8 @@ MIN_ACCEL = -3000
 MAX_RT_DELTA = 375
 RT_INTERVAL = 250000
 
+STANDSTILL_THRESHOLD = 100  # 1kph
+
 MAX_TORQUE_ERROR = 350
 INTERCEPTOR_THRESHOLD = 475
 
@@ -62,7 +64,7 @@ class TestToyotaSafety(unittest.TestCase):
     t = twos_comp(torque, 16)
     to_send = make_msg(0, 0x260)
     to_send[0].RDHR = (t & 0xff00) | ((t & 0xFF) << 16)
-    to_send[0].RDHR = to_send[0].RDHR | (toyota_checksum(to_send[0], 0x260, 8) << 24)
+    to_send[0].RDHR |= toyota_checksum(to_send[0], 0x260, 8) << 24
     return to_send
 
   def _torque_msg(self, torque):
@@ -75,6 +77,20 @@ class TestToyotaSafety(unittest.TestCase):
     to_send = make_msg(0, 0x343)
     a = twos_comp(accel, 16)
     to_send[0].RDLR = (a & 0xFF) << 8 | (a >> 8)
+    return to_send
+
+  def _speed_msg(self, s):
+    to_send = make_msg(0, 0xaa)
+    to_send[0].RDLR = (s & 0xFF) << 8 | (s >> 8)
+    to_send[0].RDLR += (s & 0xFF) << 24 | ((s >> 8) << 16)
+    to_send[0].RDHR = (s & 0xFF) << 8 | (s >> 8)
+    to_send[0].RDHR += (s & 0xFF) << 24 | ((s >> 8) << 16)
+    return to_send
+
+  def _brake_msg(self, brake):
+    to_send = make_msg(0, 0x226)
+    to_send[0].RDHR = brake << 5
+    to_send[0].RDHR |= toyota_checksum(to_send[0], 0x226, 8) << 24
     return to_send
 
   def _send_gas_msg(self, gas):
@@ -121,7 +137,7 @@ class TestToyotaSafety(unittest.TestCase):
   def test_prev_gas(self):
     for g in range(0, 256):
       self.safety.safety_rx_hook(self._send_gas_msg(g))
-      self.assertEqual(g, self.safety.get_toyota_gas_prev())
+      self.assertEqual(True if g > 0 else False, self.safety.get_toyota_gas_prev())
 
   def test_prev_gas_interceptor(self):
     self.safety.safety_rx_hook(self._send_interceptor_msg(0x0, 0x201))
@@ -154,6 +170,25 @@ class TestToyotaSafety(unittest.TestCase):
       self.assertEqual(remain_enabled, self.safety.get_controls_allowed())
       self.safety.safety_rx_hook(self._send_interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
+
+  def test_allow_brake_at_zero_speed(self):
+    # Brake was already pressed
+    self.safety.safety_rx_hook(self._speed_msg(0))
+    self.safety.safety_rx_hook(self._brake_msg(True))
+    self.safety.set_controls_allowed(1)
+
+    self.safety.safety_rx_hook(self._brake_msg(True))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.safety_rx_hook(self._brake_msg(False))  # reset no brakes
+
+  def test_not_allow_brake_when_moving(self):
+    # Brake was already pressed
+    self.safety.safety_rx_hook(self._brake_msg(True))
+    self.safety.safety_rx_hook(self._speed_msg(STANDSTILL_THRESHOLD + 1))
+    self.safety.set_controls_allowed(1)
+
+    self.safety.safety_rx_hook(self._brake_msg(True))
+    self.assertFalse(self.safety.get_controls_allowed())
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
     self.safety.safety_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
