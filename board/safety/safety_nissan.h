@@ -13,7 +13,7 @@ const struct lookup_t NISSAN_LOOKUP_MAX_ANGLE = {
   {3.3, 12, 32},
   {540., 120., 23.}};
 
-const int NISSAN_DEG_TO_CAN = 100; 
+const int NISSAN_DEG_TO_CAN = 100;
 
 const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x20b, 2}};
 
@@ -32,8 +32,6 @@ int nissan_desired_angle_last = 0;
 int nissan_gas_prev = 0;
 int nissan_brake_prev = 0;
 
-struct sample_t nissan_angle_meas;            // last 3 steer angles
-
 
 static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
@@ -45,17 +43,6 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int addr = GET_ADDR(to_push);
 
     if (bus == 0) {
-      if (addr == 0x2) {
-        // Current steering angle
-        // Factor -0.1, little endian
-        int angle_meas_new = (GET_BYTES_04(to_push) & 0xFFFF);
-        // Need to multiply by 10 here as LKAS and Steering wheel are different base unit
-        angle_meas_new = to_signed(angle_meas_new, 16) * 10;
-
-        // update array of samples
-        update_sample(&nissan_angle_meas, angle_meas_new);
-      }
-
       if (addr == 0x29a) {
         // Get current speed
         // Factor 0.00555
@@ -135,7 +122,7 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       int highest_desired_angle = nissan_desired_angle_last + ((nissan_desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
       int lowest_desired_angle = nissan_desired_angle_last - ((nissan_desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
 
-      // Limit maximum steering angle at current speed 
+      // Limit maximum steering angle at current speed
       int maximum_angle = ((int)interpolate(NISSAN_LOOKUP_MAX_ANGLE, nissan_speed));
 
       if (highest_desired_angle > (maximum_angle * NISSAN_DEG_TO_CAN)) {
@@ -151,13 +138,6 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       //nissan_controls_allowed_last = controls_allowed;
     }
     nissan_desired_angle_last = desired_angle;
-
-    // desired steer angle should be the same as steer angle measured when controls are off
-    if ((!controls_allowed) &&
-          ((desired_angle < (nissan_angle_meas.min - 1)) ||
-          (desired_angle > (nissan_angle_meas.max + 1)))) {
-      violation = 1;
-    }
 
     // no lka_enabled bit if controls not allowed
     if (!controls_allowed && lka_active) {

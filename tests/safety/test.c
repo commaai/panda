@@ -362,8 +362,6 @@ void init_tests_honda(void){
 
 void init_tests_nissan(void){
   init_tests();
-  nissan_angle_meas.min = 0;
-  nissan_angle_meas.max = 0;
   nissan_desired_angle_last = 0;
   nissan_gas_prev = 0;
   nissan_brake_prev = 0;

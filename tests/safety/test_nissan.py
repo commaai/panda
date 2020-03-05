@@ -31,14 +31,6 @@ class TestNissanSafety(unittest.TestCase):
     cls.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
     cls.safety.init_tests_nissan()
 
-  def _angle_meas_msg(self, angle):
-    to_send = make_msg(0, 0x2)
-    angle = int(angle * -10)
-    t = twos_comp(angle, 16)
-    to_send[0].RDLR = t & 0xFFFF
-
-    return to_send
-
   def _set_prev_angle(self, t):
     t = int(t * -100)
     self.safety.set_nissan_desired_angle_last(t)
@@ -46,10 +38,6 @@ class TestNissanSafety(unittest.TestCase):
   def _set_brake_prev(self, state):
     state = bool(state)
     self.safety.set_nissan_brake_prev(state)
-
-  def _angle_meas_msg_array(self, angle):
-    for i in range(6):
-      self.safety.safety_rx_hook(self._angle_meas_msg(angle))
 
   def _lkas_state_msg(self, state):
     to_send = make_msg(0, 0x1b6)
@@ -103,7 +91,6 @@ class TestNissanSafety(unittest.TestCase):
         angle_lim = np.interp(s, ANGLE_MAX_BP, ANGLE_MAX_V)
 
         # first test against false positives
-        self._angle_meas_msg_array(a)
         self.safety.safety_rx_hook(self._speed_msg(s))
 
         self._set_prev_angle(np.clip(a, -angle_lim, angle_lim))
