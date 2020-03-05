@@ -102,10 +102,9 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if ((addr == 0xaa) && (bus == 0)) {
       int speed = 0;
       // sum 4 wheel speeds
-      for (int i=0; i<4; i++) {
-        int byte = 2*i;  // useless declaration, but to make misra 10.8 happy
-        int byte_next = byte + 1;
-        speed += (GET_BYTE(to_push, byte) << 8) + GET_BYTE(to_push, byte_next);
+      for (int i=0; i<8; i+=2) {
+        int next_byte = i + 1;  // hack to deal with misra 10.8
+        speed += (GET_BYTE(to_push, i) << 8) + GET_BYTE(to_push, next_byte);
       }
       toyota_moving = (speed / 4) > TOYOTA_STANDSTILL_THRSLD;
     }
