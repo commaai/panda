@@ -25,6 +25,7 @@ RUN mkdir /openpilot
 WORKDIR /openpilot
 RUN git clone https://github.com/commaai/cereal.git || true
 WORKDIR /openpilot/cereal
+RUN git pull
 RUN git checkout bb2cc7572de99becce1bfbae63f3b38d5464e162
 COPY . /openpilot/panda
 
