@@ -7,7 +7,7 @@ const int SUBARU_MAX_RATE_UP = 50;
 const int SUBARU_MAX_RATE_DOWN = 70;
 const int SUBARU_DRIVER_TORQUE_ALLOWANCE = 60;
 const int SUBARU_DRIVER_TORQUE_FACTOR = 10;
-const int SUBARU_STANDSTILL_THRSLD = 100;
+const int SUBARU_STANDSTILL_THRSLD = 20;  // about 1kph
 
 const AddrBus SUBARU_TX_MSGS[] = {{0x122, 0}, {0x221, 0}, {0x322, 0}};
 const AddrBus SUBARU_L_TX_MSGS[] = {{0x164, 0}, {0x221, 0}, {0x322, 0}};
@@ -18,6 +18,7 @@ AddrCheckStruct subaru_rx_checks[] = {
   {.addr = { 0x40}, .bus = 0, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U},
   {.addr = {0x119}, .bus = 0, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
   {.addr = {0x139}, .bus = 0, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
+  {.addr = {0x13a}, .bus = 0, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
   {.addr = {0x240}, .bus = 0, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U},
 };
 // TODO: do checksum and counter checks after adding the signals to the outback dbc file
@@ -96,8 +97,15 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       subaru_cruise_engaged_last = cruise_engaged;
     }
 
+    // sample subaru wheel speed, averaging opposite corners
+    if ((addr == 0x13a) && subaru_global) {
+      subaru_speed = (GET_BYTES_04(to_push) >> 12) & 0x1FFF;  // FR
+      subaru_speed += (GET_BYTES_48(to_push) >> 6) & 0x1FFF;  // RL
+      subaru_speed /= 2;
+    }
+
     // exit controls on rising edge of brake press (TODO: missing check for unsupported legacy models)
-    if (addr == 0x139) {
+    if ((addr == 0x139) && subaru_global) {
       bool brake = (GET_BYTES_48(to_push) & 0xFFF0) > 0;
       if (brake && (!subaru_brake_last || (subaru_speed > SUBARU_STANDSTILL_THRSLD))) {
         controls_allowed = 0;
