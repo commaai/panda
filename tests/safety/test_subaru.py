@@ -15,6 +15,8 @@ RT_INTERVAL = 250000
 DRIVER_TORQUE_ALLOWANCE = 60;
 DRIVER_TORQUE_FACTOR = 10;
 
+SPEED_THRESHOLD = 20  # 1kph (see dbc file)
+
 TX_MSGS = [[0x122, 0], [0x221, 0], [0x322, 0]]
 TX_L_MSGS = [[0x164, 0], [0x221, 0], [0x322, 0]]
 
@@ -44,6 +46,8 @@ class TestSubaruSafety(unittest.TestCase):
   cnt_gas = 0
   cnt_torque_driver = 0
   cnt_cruise = 0
+  cnt_speed = 0
+  cnt_brake = 0
 
   @classmethod
   def setUp(cls):
@@ -67,6 +71,24 @@ class TestSubaruSafety(unittest.TestCase):
       to_send = make_msg(0, 0x371)
       to_send[0].RDLR = (t & 0x7) << 29
       to_send[0].RDHR = (t >> 3) & 0xFF
+    return to_send
+
+  def _speed_msg(self, speed):
+    speed &= 0x1FFF
+    to_send = make_msg(0, 0x13a)
+    to_send[0].RDLR = speed << 12
+    to_send[0].RDHR = speed << 6
+    to_send[0].RDLR |= (self.cnt_speed & 0xF) << 8
+    to_send[0].RDLR |= subaru_checksum(to_send, 0x13a, 8)
+    self.__class__.cnt_speed += 1
+    return to_send
+
+  def _brake_msg(self, brake):
+    to_send = make_msg(0, 0x139)
+    to_send[0].RDHR = (brake << 4) & 0xFFF
+    to_send[0].RDLR |= (self.cnt_brake & 0xF) << 8
+    to_send[0].RDLR |= subaru_checksum(to_send, 0x139, 8)
+    self.__class__.cnt_brake += 1
     return to_send
 
   def _torque_msg(self, torque):
@@ -132,6 +154,33 @@ class TestSubaruSafety(unittest.TestCase):
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.safety_rx_hook(self._gas_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_allow_brake_at_zero_speed(self):
+    # Brake was already pressed
+    if (self.safety.get_subaru_global()):
+      self.safety.safety_rx_hook(self._brake_msg(1))
+      self.safety.set_controls_allowed(1)
+      self.safety.safety_rx_hook(self._brake_msg(1))
+      self.assertTrue(self.safety.get_controls_allowed())
+      self.safety.safety_rx_hook(self._brake_msg(0))
+      self.assertTrue(self.safety.get_controls_allowed())
+      # rising edge of brake should disengage
+      self.safety.safety_rx_hook(self._brake_msg(1))
+      self.assertFalse(self.safety.get_controls_allowed())
+      self.safety.safety_rx_hook(self._brake_msg(0))  # reset no brakes
+
+  def test_not_allow_brake_when_moving(self):
+    # Brake was already pressed
+    if (self.safety.get_subaru_global()):
+      self.safety.safety_rx_hook(self._brake_msg(1))
+      self.safety.set_controls_allowed(1)
+      self.safety.safety_rx_hook(self._speed_msg(SPEED_THRESHOLD))
+      self.safety.safety_rx_hook(self._brake_msg(1))
+      self.assertTrue(self.safety.get_controls_allowed())
+      self.safety.safety_rx_hook(self._speed_msg(SPEED_THRESHOLD + 1))
+      self.safety.safety_rx_hook(self._brake_msg(1))
+      self.assertFalse(self.safety.get_controls_allowed())
+      self.safety.safety_rx_hook(self._speed_msg(0))
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
