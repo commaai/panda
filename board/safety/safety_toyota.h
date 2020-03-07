@@ -65,12 +65,11 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   bool valid = addr_safety_check(to_push, toyota_rx_checks, TOYOTA_RX_CHECKS_LEN,
                                  toyota_get_checksum, toyota_compute_checksum, NULL);
-  if (valid) {
-    int bus = GET_BUS(to_push);
+  if (valid && (GET_BUS(to_push) == 0)) {
     int addr = GET_ADDR(to_push);
 
     // get eps motor torque (0.66 factor in dbc)
-    if ((addr == 0x260) && (bus == 0)) {
+    if (addr == 0x260) {
       int torque_meas_new = (GET_BYTE(to_push, 5) << 8) | GET_BYTE(to_push, 6);
       torque_meas_new = to_signed(torque_meas_new, 16);
 
@@ -86,7 +85,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if ((addr == 0x1D2) && (bus == 0)) {
+    if (addr == 0x1D2) {
       // 5th bit is CRUISE_ACTIVE
       int cruise_engaged = GET_BYTE(to_push, 0) & 0x20;
       if (!cruise_engaged) {
@@ -99,7 +98,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // sample speed
-    if ((addr == 0xaa) && (bus == 0)) {
+    if (addr == 0xaa) {
       int speed = 0;
       // sum 4 wheel speeds
       for (int i=0; i<8; i+=2) {
@@ -111,7 +110,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // exit controls on rising edge of brake pedal
     // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224
-    if (((addr == 0x224) || (addr == 0x226)) && (bus == 0)) {
+    if ((addr == 0x224) || (addr == 0x226)) {
       int byte = (addr == 0x224) ? 0 : 4;
       bool brake = ((GET_BYTE(to_push, byte) >> 5) & 1) != 0;
       if (brake && (!toyota_brake_prev || toyota_moving)) {
@@ -121,7 +120,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // exit controls on rising edge of interceptor gas press
-    if ((addr == 0x201)  && (bus == 0)) {
+    if (addr == 0x201) {
       gas_interceptor_detected = 1;
       int gas_interceptor = GET_INTERCEPTOR(to_push);
       if ((gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRSLD) &&
@@ -132,7 +131,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // exit controls on rising edge of gas press
-    if ((addr == 0x2C1) && (bus == 0)) {
+    if (addr == 0x2C1) {
       bool gas = GET_BYTE(to_push, 6) != 0;
       if (gas && !toyota_gas_prev && !gas_interceptor_detected) {
         controls_allowed = 0;
@@ -141,7 +140,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // 0x2E4 is lkas cmd. If it is on bus 0, then relay is unexpectedly closed
-    if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == 0x2E4) && (bus == 0)) {
+    if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == 0x2E4)) {
       relay_malfunction = true;
     }
   }

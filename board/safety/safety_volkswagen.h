@@ -101,14 +101,13 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   bool valid = addr_safety_check(to_push, volkswagen_mqb_rx_checks, VOLKSWAGEN_MQB_RX_CHECKS_LEN,
                                  volkswagen_get_checksum, volkswagen_mqb_compute_crc, volkswagen_get_counter);
 
-  if (valid) {
-    int bus = GET_BUS(to_push);
+  if (valid && (GET_BUS(to_push) == 0)) {
     int addr = GET_ADDR(to_push);
 
     // Update in-motion state by sampling front wheel speeds
     // Signal: ESP_19.ESP_VL_Radgeschw_02 (front left) in scaled km/h
     // Signal: ESP_19.ESP_VR_Radgeschw_02 (front right) in scaled km/h
-    if ((bus == 0) && (addr == MSG_ESP_19)) {
+    if (addr == MSG_ESP_19) {
       int wheel_speed_fl = GET_BYTE(to_push, 4) | (GET_BYTE(to_push, 5) << 8);
       int wheel_speed_fr = GET_BYTE(to_push, 6) | (GET_BYTE(to_push, 7) << 8);
       // Check for average front speed in excess of 0.3m/s, 1.08km/h
@@ -119,7 +118,7 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // Update driver input torque samples
     // Signal: EPS_01.Driver_Strain (absolute torque)
     // Signal: EPS_01.Driver_Strain_VZ (direction)
-    if ((bus == 0) && (addr == MSG_EPS_01)) {
+    if (addr == MSG_EPS_01) {
       int torque_driver_new = GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0x1F) << 8);
       int sign = (GET_BYTE(to_push, 6) & 0x80) >> 7;
       if (sign == 1) {
@@ -130,14 +129,14 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // Update ACC status from drivetrain coordinator for controls-allowed state
     // Signal: TSK_06.TSK_Status
-    if ((bus == 0) && (addr == MSG_TSK_06)) {
+    if (addr == MSG_TSK_06) {
       int acc_status = (GET_BYTE(to_push, 3) & 0x7);
       controls_allowed = ((acc_status == 3) || (acc_status == 4) || (acc_status == 5)) ? 1 : 0;
     }
 
     // Exit controls on rising edge of gas press
     // Signal: Motor_20.MO_Fahrpedalrohwert_01
-    if ((bus == 0) && (addr == MSG_MOTOR_20)) {
+    if (addr == MSG_MOTOR_20) {
       int gas = (GET_BYTES_04(to_push) >> 12) & 0xFF;
       if ((gas > 0) && (volkswagen_gas_prev == 0)) {
         controls_allowed = 0;
@@ -147,7 +146,7 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // Exit controls on rising edge of brake press
     // Signal: ESP_05.ESP_Fahrer_bremst
-    if ((bus == 0) && (addr == MSG_ESP_05)) {
+    if (addr == MSG_ESP_05) {
       bool brake_pressed = (GET_BYTE(to_push, 3) & 0x4) >> 2;
       if (brake_pressed && (!(volkswagen_brake_pressed_prev) || volkswagen_moving)) {
         controls_allowed = 0;
@@ -156,7 +155,7 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // If there are HCA messages on bus 0 not sent by OP, there's a relay problem
-    if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && (addr == MSG_HCA_01)) {
+    if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == MSG_HCA_01)) {
       relay_malfunction = true;
     }
   }

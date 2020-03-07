@@ -64,51 +64,48 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
                               NULL, NULL, NULL);
   }
 
-  if (valid) {
-    int bus = GET_BUS(to_push);
+  if (valid && (GET_BUS(to_push) == 0)) {
     int addr = GET_ADDR(to_push);
-    if (bus == 0) {
-      if (((addr == 0x119) && subaru_global) ||
-          ((addr == 0x371) && !subaru_global)) {
-        int torque_driver_new;
-        if (subaru_global) {
-          torque_driver_new = ((GET_BYTES_04(to_push) >> 16) & 0x7FF);
-        } else {
-          torque_driver_new = (GET_BYTE(to_push, 3) >> 5) + (GET_BYTE(to_push, 4) << 3);
-        }
-        torque_driver_new = to_signed(torque_driver_new, 11);
-        update_sample(&subaru_torque_driver, torque_driver_new);
+    if (((addr == 0x119) && subaru_global) ||
+        ((addr == 0x371) && !subaru_global)) {
+      int torque_driver_new;
+      if (subaru_global) {
+        torque_driver_new = ((GET_BYTES_04(to_push) >> 16) & 0x7FF);
+      } else {
+        torque_driver_new = (GET_BYTE(to_push, 3) >> 5) + (GET_BYTE(to_push, 4) << 3);
       }
+      torque_driver_new = to_signed(torque_driver_new, 11);
+      update_sample(&subaru_torque_driver, torque_driver_new);
+    }
 
-      // enter controls on rising edge of ACC, exit controls on ACC off
-      if (((addr == 0x240) && subaru_global) ||
-          ((addr == 0x144) && !subaru_global)) {
-        int bit_shift = subaru_global ? 9 : 17;
-        int cruise_engaged = ((GET_BYTES_48(to_push) >> bit_shift) & 1);
-        if (cruise_engaged && !subaru_cruise_engaged_last) {
-          controls_allowed = 1;
-        }
-        if (!cruise_engaged) {
-          controls_allowed = 0;
-        }
-        subaru_cruise_engaged_last = cruise_engaged;
+    // enter controls on rising edge of ACC, exit controls on ACC off
+    if (((addr == 0x240) && subaru_global) ||
+        ((addr == 0x144) && !subaru_global)) {
+      int bit_shift = subaru_global ? 9 : 17;
+      int cruise_engaged = ((GET_BYTES_48(to_push) >> bit_shift) & 1);
+      if (cruise_engaged && !subaru_cruise_engaged_last) {
+        controls_allowed = 1;
       }
+      if (!cruise_engaged) {
+        controls_allowed = 0;
+      }
+      subaru_cruise_engaged_last = cruise_engaged;
+    }
 
-      // exit controls on rising edge of gas press
-      if (((addr == 0x40) && subaru_global) ||
-          ((addr == 0x140) && !subaru_global)) {
-        int byte = subaru_global ? 4 : 0;
-        bool gas = GET_BYTE(to_push, byte) != 0;
-        if (gas && !subaru_gas_last) {
-          controls_allowed = 0;
-        }
-        subaru_gas_last = gas;
+    // exit controls on rising edge of gas press
+    if (((addr == 0x40) && subaru_global) ||
+        ((addr == 0x140) && !subaru_global)) {
+      int byte = subaru_global ? 4 : 0;
+      bool gas = GET_BYTE(to_push, byte) != 0;
+      if (gas && !subaru_gas_last) {
+        controls_allowed = 0;
       }
+      subaru_gas_last = gas;
+    }
 
-      if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) &&
-          (((addr == 0x122) && subaru_global) || ((addr == 0x164) && !subaru_global))) {
-        relay_malfunction = true;
-      }
+    if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) &&
+        (((addr == 0x122) && subaru_global) || ((addr == 0x164) && !subaru_global))) {
+      relay_malfunction = true;
     }
   }
   return valid;
