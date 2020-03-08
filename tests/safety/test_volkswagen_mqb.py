@@ -4,8 +4,7 @@ import numpy as np
 import crcmod
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import test_relay_malfunction, make_msg, \
-  test_manually_enable_controls_allowed, test_spam_can_buses, MAX_WRONG_COUNTERS
+from panda.tests.safety.common import StdTest, make_msg, MAX_WRONG_COUNTERS
 
 MAX_RATE_UP = 4
 MAX_RATE_DOWN = 10
@@ -78,16 +77,16 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     self.safety.set_volkswagen_desired_torque_last(t)
     self.safety.set_volkswagen_rt_torque_last(t)
 
-  # Wheel speeds
-  def _esp_19_msg(self, speed):
+  # Wheel speeds _esp_19_msg
+  def _speed_msg(self, speed):
     wheel_speed_scaled = int(speed / 0.0075)
     to_send = make_msg(0, MSG_ESP_19)
     to_send[0].RDLR = wheel_speed_scaled | (wheel_speed_scaled << 16)
     to_send[0].RDHR = wheel_speed_scaled | (wheel_speed_scaled << 16)
     return to_send
 
-  # Brake light switch
-  def _esp_05_msg(self, brake):
+  # Brake light switch _esp_05_msg
+  def _brake_msg(self, brake):
     to_send = make_msg(0, MSG_ESP_05)
     to_send[0].RDLR = (0x1 << 26) if brake else 0
     to_send[0].RDLR |= (self.cnt_esp_05 % 16) << 8
@@ -147,10 +146,10 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     return to_send
 
   def test_spam_can_buses(self):
-    test_spam_can_buses(self, TX_MSGS)
+    StdTest.test_spam_can_buses(self, TX_MSGS)
 
   def test_relay_malfunction(self):
-    test_relay_malfunction(self, MSG_HCA_01)
+    StdTest.test_relay_malfunction(self, MSG_HCA_01)
 
   def test_prev_gas(self):
     for g in range(0, 256):
@@ -172,45 +171,26 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
 
   def test_sample_speed(self):
     # Stationary
-    self.safety.safety_rx_hook(self._esp_19_msg(0))
+    self.safety.safety_rx_hook(self._speed_msg(0))
     self.assertEqual(0, self.safety.get_volkswagen_moving())
     # 1 km/h, just under 0.3 m/s safety grace threshold
-    self.safety.safety_rx_hook(self._esp_19_msg(1))
+    self.safety.safety_rx_hook(self._speed_msg(1))
     self.assertEqual(0, self.safety.get_volkswagen_moving())
     # 2 km/h, just over 0.3 m/s safety grace threshold
-    self.safety.safety_rx_hook(self._esp_19_msg(2))
+    self.safety.safety_rx_hook(self._speed_msg(2))
     self.assertEqual(1, self.safety.get_volkswagen_moving())
     # 144 km/h, openpilot V_CRUISE_MAX
-    self.safety.safety_rx_hook(self._esp_19_msg(144))
+    self.safety.safety_rx_hook(self._speed_msg(144))
     self.assertEqual(1, self.safety.get_volkswagen_moving())
 
   def test_prev_brake(self):
     self.assertFalse(self.safety.get_volkswagen_brake_pressed_prev())
-    self.safety.safety_rx_hook(self._esp_05_msg(True))
+    self.safety.safety_rx_hook(self._brake_msg(True))
     self.assertTrue(self.safety.get_volkswagen_brake_pressed_prev())
 
-  def test_disengage_on_brake(self):
-    self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._esp_05_msg(True))
-    self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_allow_brake_at_zero_speed(self):
-    # Brake was already pressed
-    self.safety.safety_rx_hook(self._esp_05_msg(True))
-    self.safety.set_controls_allowed(1)
-
-    self.safety.safety_rx_hook(self._esp_05_msg(True))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_rx_hook(self._esp_05_msg(False))  # reset no brakes
-
-  def test_not_allow_brake_when_moving(self):
-    # Brake was already pressed
-    self.safety.safety_rx_hook(self._esp_05_msg(True))
-    self.safety.safety_rx_hook(self._esp_19_msg(100))
-    self.safety.set_controls_allowed(1)
-
-    self.safety.safety_rx_hook(self._esp_05_msg(True))
-    self.assertFalse(self.safety.get_controls_allowed())
+  def test_brake_disengage(self):
+    StdTest.test_allow_brake_at_zero_speed(self)
+    StdTest.test_not_allow_brake_when_moving(self, 1)
 
   def test_disengage_on_gas(self):
     self.safety.safety_rx_hook(self._motor_20_msg(0))
@@ -237,7 +217,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
           self.assertTrue(self.safety.safety_tx_hook(self._hca_01_msg(t)))
 
   def test_manually_enable_controls_allowed(self):
-    test_manually_enable_controls_allowed(self)
+    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_spam_cancel_safety_check(self):
     BIT_CANCEL = 13
@@ -356,7 +336,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
       if msg == MSG_EPS_01:
         to_push = self._eps_01_msg(0)
       if msg == MSG_ESP_05:
-        to_push = self._esp_05_msg(False)
+        to_push = self._brake_msg(False)
       if msg == MSG_TSK_06:
         to_push = self._tsk_06_msg(3)
       if msg == MSG_MOTOR_20:
@@ -376,12 +356,12 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
       if i < MAX_WRONG_COUNTERS:
         self.safety.set_controls_allowed(1)
         self.safety.safety_rx_hook(self._eps_01_msg(0))
-        self.safety.safety_rx_hook(self._esp_05_msg(False))
+        self.safety.safety_rx_hook(self._brake_msg(False))
         self.safety.safety_rx_hook(self._tsk_06_msg(3))
         self.safety.safety_rx_hook(self._motor_20_msg(0))
       else:
         self.assertFalse(self.safety.safety_rx_hook(self._eps_01_msg(0)))
-        self.assertFalse(self.safety.safety_rx_hook(self._esp_05_msg(False)))
+        self.assertFalse(self.safety.safety_rx_hook(self._brake_msg(False)))
         self.assertFalse(self.safety.safety_rx_hook(self._tsk_06_msg(3)))
         self.assertFalse(self.safety.safety_rx_hook(self._motor_20_msg(0)))
         self.assertFalse(self.safety.get_controls_allowed())
@@ -390,7 +370,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     for i in range(2):
       self.safety.set_controls_allowed(1)
       self.safety.safety_rx_hook(self._eps_01_msg(0))
-      self.safety.safety_rx_hook(self._esp_05_msg(False))
+      self.safety.safety_rx_hook(self._brake_msg(False))
       self.safety.safety_rx_hook(self._tsk_06_msg(3))
       self.safety.safety_rx_hook(self._motor_20_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())

@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import make_msg, test_relay_malfunction
+from panda.tests.safety.common import StdTest, make_msg
 
 ANGLE_MAX_BP = [1.3, 10., 30.]
 ANGLE_MAX_V = [540., 120., 23.]
@@ -72,7 +72,7 @@ class TestNissanSafety(unittest.TestCase):
 
     return to_send
 
-  def _send_brake_cmd(self, brake):
+  def _brake_msg(self, brake):
     to_send = make_msg(1, 0x454)
     to_send[0].RDLR = ((brake & 0x1) << 23)
 
@@ -144,29 +144,9 @@ class TestNissanSafety(unittest.TestCase):
     self.assertFalse(self.safety.safety_tx_hook(self._lkas_control_msg(0, 1)))
     self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_brake_rising_edge(self):
-    self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._speed_msg(0))
-    self._set_brake_prev(True)
-    self.safety.safety_rx_hook(self._send_brake_cmd(True))
-    self.assertTrue(self.safety.get_controls_allowed())
-
-    self.safety.set_controls_allowed(1)
-    self._set_brake_prev(False)
-    self.safety.safety_rx_hook(self._send_brake_cmd(True))
-    self.assertFalse(self.safety.get_controls_allowed())
-
-    self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._speed_msg(1))
-    self._set_brake_prev(True)
-    self.safety.safety_rx_hook(self._send_brake_cmd(True))
-    self.assertFalse(self.safety.get_controls_allowed())
-
-    self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._speed_msg(1))
-    self._set_brake_prev(False)
-    self.safety.safety_rx_hook(self._send_brake_cmd(True))
-    self.assertFalse(self.safety.get_controls_allowed())
+  def test_brake_disengage(self):
+    StdTest.test_allow_brake_at_zero_speed(self)
+    StdTest.test_not_allow_brake_when_moving(self, 0)
 
   def test_gas_rising_edge(self):
     self.safety.set_controls_allowed(1)
@@ -193,7 +173,7 @@ class TestNissanSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_relay_malfunction(self):
-    test_relay_malfunction(self, 0x169)
+    StdTest.test_relay_malfunction(self, 0x169)
 
 if __name__ == "__main__":
   unittest.main()

@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed, test_spam_can_buses
+from panda.tests.safety.common import StdTest, make_msg
 
 MAX_RATE_UP = 10
 MAX_RATE_DOWN = 25
@@ -112,16 +112,16 @@ class TestToyotaSafety(unittest.TestCase):
     return to_send
 
   def test_spam_can_buses(self):
-    test_spam_can_buses(self, TX_MSGS)
+    StdTest.test_spam_can_buses(self, TX_MSGS)
 
   def test_relay_malfunction(self):
-    test_relay_malfunction(self, 0x2E4)
+    StdTest.test_relay_malfunction(self, 0x2E4)
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_manually_enable_controls_allowed(self):
-    test_manually_enable_controls_allowed(self)
+    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_enable_control_allowed_from_cruise(self):
     self.safety.safety_rx_hook(self._pcm_cruise_msg(False))
@@ -171,24 +171,9 @@ class TestToyotaSafety(unittest.TestCase):
       self.safety.safety_rx_hook(self._send_interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
 
-  def test_allow_brake_at_zero_speed(self):
-    # Brake was already pressed
-    self.safety.safety_rx_hook(self._speed_msg(0))
-    self.safety.safety_rx_hook(self._brake_msg(True))
-    self.safety.set_controls_allowed(1)
-
-    self.safety.safety_rx_hook(self._brake_msg(True))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_rx_hook(self._brake_msg(False))  # reset no brakes
-
-  def test_not_allow_brake_when_moving(self):
-    # Brake was already pressed
-    self.safety.safety_rx_hook(self._brake_msg(True))
-    self.safety.safety_rx_hook(self._speed_msg(STANDSTILL_THRESHOLD + 1))
-    self.safety.set_controls_allowed(1)
-
-    self.safety.safety_rx_hook(self._brake_msg(True))
-    self.assertFalse(self.safety.get_controls_allowed())
+  def test_brake_disengage(self):
+    StdTest.test_allow_brake_at_zero_speed(self)
+    StdTest.test_not_allow_brake_when_moving(self, STANDSTILL_THRESHOLD)
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
     self.safety.safety_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
@@ -337,7 +322,6 @@ class TestToyotaSafety(unittest.TestCase):
 
         # assume len 8
         self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
-
 
 
 if __name__ == "__main__":
