@@ -1,16 +1,19 @@
 const int HYUNDAI_MAX_STEER = 255;             // like stock
 const int HYUNDAI_MAX_RT_DELTA = 112;          // max delta torque allowed for real time checks
-const uint32_t HYUNDAI_RT_INTERVAL = 250000;    // 250ms between real time checks
+const uint32_t HYUNDAI_RT_INTERVAL = 250000;   // 250ms between real time checks
 const int HYUNDAI_MAX_RATE_UP = 3;
 const int HYUNDAI_MAX_RATE_DOWN = 7;
 const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
 const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
+const int HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
 const AddrBus HYUNDAI_TX_MSGS[] = {{832, 0}, {1265, 0}};
 
 // TODO: do checksum and counter checks
 AddrCheckStruct hyundai_rx_checks[] = {
   {.addr = {608}, .bus = 0, .expected_timestep = 10000U},
   {.addr = {897}, .bus = 0, .expected_timestep = 10000U},
+  {.addr = {902}, .bus = 0, .expected_timestep = 10000U},
+  {.addr = {916}, .bus = 0, .expected_timestep = 10000U},
   {.addr = {1057}, .bus = 0, .expected_timestep = 20000U},
 };
 const int HYUNDAI_RX_CHECK_LEN = sizeof(hyundai_rx_checks) / sizeof(hyundai_rx_checks[0]);
@@ -18,7 +21,9 @@ const int HYUNDAI_RX_CHECK_LEN = sizeof(hyundai_rx_checks) / sizeof(hyundai_rx_c
 int hyundai_rt_torque_last = 0;
 int hyundai_desired_torque_last = 0;
 int hyundai_cruise_engaged_last = 0;
+int hyundai_speed = 0;
 bool hyundai_gas_last = false;
+bool hyundai_brake_last = false;
 uint32_t hyundai_ts_last = 0;
 struct sample_t hyundai_torque_driver;         // last few driver torques measured
 
@@ -56,6 +61,22 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         controls_allowed = 0;
       }
       hyundai_gas_last = gas;
+    }
+
+    // sample subaru wheel speed, averaging opposite corners
+    if (addr == 902) {
+      hyundai_speed = GET_BYTES_04(to_push) & 0x3FFF;  // FL
+      hyundai_speed += (GET_BYTES_48(to_push) >> 16) & 0x3FFF;  // RL
+      hyundai_speed /= 2;
+    }
+
+    // exit controls on rising edge of brake press
+    if (addr == 916) {
+      bool brake = (GET_BYTE(to_push, 6) >> 7) != 0;
+      if (brake && (!hyundai_brake_last || (hyundai_speed > HYUNDAI_STANDSTILL_THRSLD))) {
+        controls_allowed = 0;
+      }
+      hyundai_brake_last = brake;
     }
 
     // check if stock camera ECU is on bus 0
