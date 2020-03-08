@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import test_relay_malfunction, make_msg, test_manually_enable_controls_allowed, test_spam_can_buses
+from panda.tests.safety.common import StdTest, make_msg
 
 MAX_RATE_UP = 50
 MAX_RATE_DOWN = 70
@@ -131,10 +131,10 @@ class TestSubaruSafety(unittest.TestCase):
     self.safety.safety_rx_hook(self._torque_driver_msg(max_t))
 
   def test_spam_can_buses(self):
-    test_spam_can_buses(self, TX_MSGS if self.safety.get_subaru_global() else TX_L_MSGS)
+    StdTest.test_spam_can_buses(self, TX_MSGS if self.safety.get_subaru_global() else TX_L_MSGS)
 
   def test_relay_malfunction(self):
-    test_relay_malfunction(self, 0x122 if self.safety.get_subaru_global() else 0x164)
+    StdTest.test_relay_malfunction(self, 0x122 if self.safety.get_subaru_global() else 0x164)
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
@@ -155,32 +155,10 @@ class TestSubaruSafety(unittest.TestCase):
     self.safety.safety_rx_hook(self._gas_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_allow_brake_at_zero_speed(self):
-    # Brake was already pressed
+  def test_brake_disengage(self):
     if (self.safety.get_subaru_global()):
-      self.safety.safety_rx_hook(self._brake_msg(1))
-      self.safety.set_controls_allowed(1)
-      self.safety.safety_rx_hook(self._brake_msg(1))
-      self.assertTrue(self.safety.get_controls_allowed())
-      self.safety.safety_rx_hook(self._brake_msg(0))
-      self.assertTrue(self.safety.get_controls_allowed())
-      # rising edge of brake should disengage
-      self.safety.safety_rx_hook(self._brake_msg(1))
-      self.assertFalse(self.safety.get_controls_allowed())
-      self.safety.safety_rx_hook(self._brake_msg(0))  # reset no brakes
-
-  def test_not_allow_brake_when_moving(self):
-    # Brake was already pressed
-    if (self.safety.get_subaru_global()):
-      self.safety.safety_rx_hook(self._brake_msg(1))
-      self.safety.set_controls_allowed(1)
-      self.safety.safety_rx_hook(self._speed_msg(SPEED_THRESHOLD))
-      self.safety.safety_rx_hook(self._brake_msg(1))
-      self.assertTrue(self.safety.get_controls_allowed())
-      self.safety.safety_rx_hook(self._speed_msg(SPEED_THRESHOLD + 1))
-      self.safety.safety_rx_hook(self._brake_msg(1))
-      self.assertFalse(self.safety.get_controls_allowed())
-      self.safety.safety_rx_hook(self._speed_msg(0))
+      StdTest.test_allow_brake_at_zero_speed(self)
+      StdTest.test_not_allow_brake_when_moving(self, SPEED_THRESHOLD)
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
@@ -193,7 +171,7 @@ class TestSubaruSafety(unittest.TestCase):
           self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
 
   def test_manually_enable_controls_allowed(self):
-    test_manually_enable_controls_allowed(self)
+    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_non_realtime_limit_up(self):
     self._set_torque_driver(0, 0)

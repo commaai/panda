@@ -3,9 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import test_relay_malfunction, make_msg, \
-                                      test_manually_enable_controls_allowed, \
-                                      test_spam_can_buses, MAX_WRONG_COUNTERS
+from panda.tests.safety.common import StdTest, make_msg, MAX_WRONG_COUNTERS
 
 MAX_BRAKE = 255
 
@@ -110,18 +108,18 @@ class TestHondaSafety(unittest.TestCase):
       tx_msgs = BH_TX_MSGS
     elif hw_type == HONDA_BG_HW:
       tx_msgs = BG_TX_MSGS
-    test_spam_can_buses(self, tx_msgs)
+    StdTest.test_spam_can_buses(self, tx_msgs)
 
   def test_relay_malfunction(self):
     hw = self.safety.get_honda_hw()
     bus = 2 if hw == HONDA_BG_HW else 0
-    test_relay_malfunction(self, 0xE4, bus=bus)
+    StdTest.test_relay_malfunction(self, 0xE4, bus=bus)
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_manually_enable_controls_allowed(self):
-    test_manually_enable_controls_allowed(self)
+    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_resume_button(self):
     RESUME_BTN = 4
@@ -167,23 +165,9 @@ class TestHondaSafety(unittest.TestCase):
     self.safety.safety_rx_hook(self._alt_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
 
-  def test_allow_brake_at_zero_speed(self):
-    # Brake was already pressed
-    self.safety.safety_rx_hook(self._brake_msg(True))
-    self.safety.set_controls_allowed(1)
-
-    self.safety.safety_rx_hook(self._brake_msg(True))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_rx_hook(self._brake_msg(False))  # reset no brakes
-
-  def test_not_allow_brake_when_moving(self):
-    # Brake was already pressed
-    self.safety.safety_rx_hook(self._brake_msg(True))
-    self.safety.safety_rx_hook(self._speed_msg(100))
-    self.safety.set_controls_allowed(1)
-
-    self.safety.safety_rx_hook(self._brake_msg(True))
-    self.assertFalse(self.safety.get_controls_allowed())
+  def test_brake_disengage(self):
+    StdTest.test_allow_brake_at_zero_speed(self)
+    StdTest.test_not_allow_brake_when_moving(self, 0)
 
   def test_prev_gas(self):
     self.safety.safety_rx_hook(self._gas_msg(False))
