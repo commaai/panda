@@ -15,6 +15,8 @@ RT_INTERVAL = 250000
 DRIVER_TORQUE_ALLOWANCE = 50;
 DRIVER_TORQUE_FACTOR = 2;
 
+SPEED_THRESHOLD = 30  # ~1kph
+
 TX_MSGS = [[832, 0], [1265, 0]]
 
 def twos_comp(val, bits):
@@ -44,6 +46,17 @@ class TestHyundaiSafety(unittest.TestCase):
   def _gas_msg(self, val):
     to_send = make_msg(0, 608)
     to_send[0].RDHR = (val & 0x3) << 30;
+    return to_send
+
+  def _brake_msg(self, brake):
+    to_send = make_msg(0, 916)
+    to_send[0].RDHR = brake << 23;
+    return to_send
+
+  def _speed_msg(self, speed):
+    to_send = make_msg(0, 902)
+    to_send[0].RDLR = speed & 0x3FFF;
+    to_send[0].RDHR = (speed & 0x3FFF) << 16;
     return to_send
 
   def _set_prev_torque(self, t):
@@ -100,6 +113,31 @@ class TestHyundaiSafety(unittest.TestCase):
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.safety_rx_hook(self._gas_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_allow_brake_at_zero_speed(self):
+    # Brake was already pressed
+    self.safety.safety_rx_hook(self._brake_msg(1))
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._brake_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.safety_rx_hook(self._brake_msg(0))
+    self.assertTrue(self.safety.get_controls_allowed())
+    # rising edge of brake should disengage
+    self.safety.safety_rx_hook(self._brake_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.safety.safety_rx_hook(self._brake_msg(0))  # reset no brakes
+
+  def test_not_allow_brake_when_moving(self):
+    # Brake was already pressed
+    self.safety.safety_rx_hook(self._brake_msg(1))
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._speed_msg(SPEED_THRESHOLD))
+    self.safety.safety_rx_hook(self._brake_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.safety_rx_hook(self._speed_msg(SPEED_THRESHOLD + 1))
+    self.safety.safety_rx_hook(self._brake_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.safety.safety_rx_hook(self._speed_msg(0))
 
   def test_non_realtime_limit_up(self):
     self.safety.set_hyundai_torque_driver(0, 0)
