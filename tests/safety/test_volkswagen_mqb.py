@@ -190,7 +190,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
 
   def test_brake_disengage(self):
     StdTest.test_allow_brake_at_zero_speed(self)
-    StdTest.test_not_allow_brake_when_moving(self, 0)
+    StdTest.test_not_allow_brake_when_moving(self, 1)
 
   def test_disengage_on_gas(self):
     self.safety.safety_rx_hook(self._motor_20_msg(0))

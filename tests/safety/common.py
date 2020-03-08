@@ -44,6 +44,7 @@ class StdTest:
   @staticmethod
   def test_allow_brake_at_zero_speed(test):
     # Brake was already pressed
+    test.safety.safety_rx_hook(test._speed_msg(0))
     test.safety.safety_rx_hook(test._brake_msg(1))
     test.safety.set_controls_allowed(1)
     test.safety.safety_rx_hook(test._brake_msg(1))
