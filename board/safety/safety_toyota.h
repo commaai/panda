@@ -40,8 +40,6 @@ int toyota_desired_torque_last = 0;       // last desired steer torque
 int toyota_rt_torque_last = 0;            // last desired torque for real time check
 uint32_t toyota_ts_last = 0;
 int toyota_cruise_engaged_last = 0;       // cruise state
-bool toyota_gas_prev = false;
-bool toyota_brake_prev = false;
 bool toyota_moving = false;
 struct sample_t toyota_torque_meas;       // last 3 motor torques produced by the eps
 
@@ -112,11 +110,11 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224
     if ((addr == 0x224) || (addr == 0x226)) {
       int byte = (addr == 0x224) ? 0 : 4;
-      bool brake = ((GET_BYTE(to_push, byte) >> 5) & 1) != 0;
-      if (brake && (!toyota_brake_prev || toyota_moving)) {
+      bool brake_pressed = ((GET_BYTE(to_push, byte) >> 5) & 1) != 0;
+      if (brake_pressed && (!brake_pressed_prev || toyota_moving)) {
         controls_allowed = 0;
       }
-      toyota_brake_prev = brake;
+      brake_pressed_prev = brake_pressed;
     }
 
     // exit controls on rising edge of interceptor gas press
@@ -132,11 +130,11 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // exit controls on rising edge of gas press
     if (addr == 0x2C1) {
-      bool gas = GET_BYTE(to_push, 6) != 0;
-      if (gas && !toyota_gas_prev && !gas_interceptor_detected) {
+      bool gas_pressed = GET_BYTE(to_push, 6) != 0;
+      if (gas_pressed && !gas_pressed_prev && !gas_interceptor_detected) {
         controls_allowed = 0;
       }
-      toyota_gas_prev = gas;
+      gas_pressed_prev = gas_pressed;
     }
 
     // 0x2E4 is lkas cmd. If it is on bus 0, then relay is unexpectedly closed

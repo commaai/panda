@@ -22,8 +22,6 @@ int hyundai_rt_torque_last = 0;
 int hyundai_desired_torque_last = 0;
 int hyundai_cruise_engaged_last = 0;
 int hyundai_speed = 0;
-bool hyundai_gas_last = false;
-bool hyundai_brake_last = false;
 uint32_t hyundai_ts_last = 0;
 struct sample_t hyundai_torque_driver;         // last few driver torques measured
 
@@ -56,11 +54,11 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // exit controls on rising edge of gas press
     if (addr == 608) {
-      bool gas = (GET_BYTE(to_push, 7) >> 6) != 0;
-      if (gas && ! hyundai_gas_last) {
+      bool gas_pressed = (GET_BYTE(to_push, 7) >> 6) != 0;
+      if (gas_pressed && !gas_pressed_prev) {
         controls_allowed = 0;
       }
-      hyundai_gas_last = gas;
+      gas_pressed_prev = gas_pressed;
     }
 
     // sample subaru wheel speed, averaging opposite corners
@@ -72,11 +70,11 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // exit controls on rising edge of brake press
     if (addr == 916) {
-      bool brake = (GET_BYTE(to_push, 6) >> 7) != 0;
-      if (brake && (!hyundai_brake_last || (hyundai_speed > HYUNDAI_STANDSTILL_THRSLD))) {
+      bool brake_pressed = (GET_BYTE(to_push, 6) >> 7) != 0;
+      if (brake_pressed && (!brake_pressed_prev || (hyundai_speed > HYUNDAI_STANDSTILL_THRSLD))) {
         controls_allowed = 0;
       }
-      hyundai_brake_last = brake;
+      brake_pressed_prev = brake_pressed;
     }
 
     // check if stock camera ECU is on bus 0
