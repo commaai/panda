@@ -33,8 +33,6 @@ AddrCheckStruct gm_rx_checks[] = {
 };
 const int GM_RX_CHECK_LEN = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]);
 
-int gm_brake_prev = 0;
-int gm_gas_prev = 0;
 bool gm_moving = false;
 int gm_rt_torque_last = 0;
 int gm_desired_torque_last = 0;
@@ -81,25 +79,22 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // exit controls on rising edge of brake press or on brake press when
     // speed > 0
     if (addr == 241) {
-      int brake = GET_BYTE(to_push, 1);
       // Brake pedal's potentiometer returns near-zero reading
       // even when pedal is not pressed
-      if (brake < 10) {
-        brake = 0;
-      }
-      if (brake && (!gm_brake_prev || gm_moving)) {
+      bool brake_pressed = GET_BYTE(to_push, 1) >= 10;
+      if (brake_pressed && (!brake_pressed_prev || gm_moving)) {
          controls_allowed = 0;
       }
-      gm_brake_prev = brake;
+      brake_pressed_prev = brake_pressed;
     }
 
     // exit controls on rising edge of gas press
     if (addr == 417) {
-      int gas = GET_BYTE(to_push, 6);
-      if (gas && !gm_gas_prev) {
+      bool gas_pressed = GET_BYTE(to_push, 6) != 0;
+      if (gas_pressed && !gas_pressed_prev) {
         controls_allowed = 0;
       }
-      gm_gas_prev = gas;
+      gas_pressed_prev = gas_pressed;
     }
 
     // exit controls on regen paddle
@@ -143,7 +138,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
-  int pedal_pressed = gm_gas_prev || (gm_brake_prev && gm_moving);
+  int pedal_pressed = gas_pressed_prev || (brake_pressed_prev && gm_moving);
   bool current_controls_allowed = controls_allowed && !pedal_pressed;
 
   // BRAKE: safety check

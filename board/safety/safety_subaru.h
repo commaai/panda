@@ -35,8 +35,6 @@ int subaru_rt_torque_last = 0;
 int subaru_desired_torque_last = 0;
 int subaru_speed = 0;
 uint32_t subaru_ts_last = 0;
-bool subaru_gas_last = false;
-bool subaru_brake_last = false;
 bool subaru_global = false;
 struct sample_t subaru_torque_driver;         // last few driver torques measured
 
@@ -106,22 +104,22 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // exit controls on rising edge of brake press (TODO: missing check for unsupported legacy models)
     if ((addr == 0x139) && subaru_global) {
-      bool brake = (GET_BYTES_48(to_push) & 0xFFF0) > 0;
-      if (brake && (!subaru_brake_last || (subaru_speed > SUBARU_STANDSTILL_THRSLD))) {
+      bool brake_pressed = (GET_BYTES_48(to_push) & 0xFFF0) > 0;
+      if (brake_pressed && (!brake_pressed_prev || (subaru_speed > SUBARU_STANDSTILL_THRSLD))) {
         controls_allowed = 0;
       }
-      subaru_brake_last = brake;
+      brake_pressed_prev = brake_pressed;
     }
 
     // exit controls on rising edge of gas press
     if (((addr == 0x40) && subaru_global) ||
         ((addr == 0x140) && !subaru_global)) {
       int byte = subaru_global ? 4 : 0;
-      bool gas = GET_BYTE(to_push, byte) != 0;
-      if (gas && !subaru_gas_last) {
+      bool gas_pressed = GET_BYTE(to_push, byte) != 0;
+      if (gas_pressed && !gas_pressed_prev) {
         controls_allowed = 0;
       }
-      subaru_gas_last = gas;
+      gas_pressed_prev = gas_pressed;
     }
 
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) &&

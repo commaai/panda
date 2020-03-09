@@ -37,6 +37,8 @@ bool get_relay_malfunction(void);
 void set_gas_interceptor_detected(bool c);
 bool get_gas_interceptor_detetcted(void);
 int get_gas_interceptor_prev(void);
+bool get_gas_pressed_prev(void);
+bool get_brake_pressed_prev(void);
 int get_hw_type(void);
 void set_timer(uint32_t t);
 
@@ -48,15 +50,12 @@ int set_safety_hooks(uint16_t  mode, int16_t param);
 void init_tests_toyota(void);
 int get_toyota_torque_meas_min(void);
 int get_toyota_torque_meas_max(void);
-bool get_toyota_gas_prev(void);
 void set_toyota_torque_meas(int min, int max);
 void set_toyota_desired_torque_last(int t);
 void set_toyota_rt_torque_last(int t);
 
 void init_tests_honda(void);
 bool get_honda_moving(void);
-bool get_honda_brake_pressed_prev(void);
-int get_honda_gas_prev(void);
 void set_honda_fwd_brake(bool);
 void set_honda_alt_brake_msg(bool);
 int get_honda_hw(void);
@@ -89,18 +88,15 @@ void set_subaru_rt_torque_last(int t);
 bool get_subaru_global(void);
 
 void init_tests_volkswagen(void);
-int get_volkswagen_gas_prev(void);
 int get_volkswagen_torque_driver_min(void);
 int get_volkswagen_torque_driver_max(void);
 bool get_volkswagen_moving(void);
-bool get_volkswagen_brake_pressed_prev(void);
 void set_volkswagen_desired_torque_last(int t);
 void set_volkswagen_rt_torque_last(int t);
 void set_volkswagen_torque_driver(int min, int max);
 
 void init_tests_nissan(void);
 void set_nissan_desired_angle_last(int t);
-void set_nissan_brake_prev(int t);
 
 """)
 

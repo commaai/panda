@@ -21,8 +21,6 @@ const int CHRYSLER_RX_CHECK_LEN = sizeof(chrysler_rx_checks) / sizeof(chrysler_r
 int chrysler_rt_torque_last = 0;
 int chrysler_desired_torque_last = 0;
 int chrysler_cruise_engaged_last = 0;
-bool chrysler_gas_prev = false;
-bool chrysler_brake_prev = false;
 int chrysler_speed = 0;
 uint32_t chrysler_ts_last = 0;
 struct sample_t chrysler_torque_meas;         // last few torques measured
@@ -108,20 +106,20 @@ static int chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // exit controls on rising edge of gas press
     if (addr == 308) {
-      bool gas = (GET_BYTE(to_push, 5) & 0x7F) != 0;
-      if (gas && !chrysler_gas_prev && (chrysler_speed > CHRYSLER_GAS_THRSLD)) {
+      bool gas_pressed = (GET_BYTE(to_push, 5) & 0x7F) != 0;
+      if (gas_pressed && !gas_pressed_prev && (chrysler_speed > CHRYSLER_GAS_THRSLD)) {
         controls_allowed = 0;
       }
-      chrysler_gas_prev = gas;
+      gas_pressed_prev = gas_pressed;
     }
 
     // exit controls on rising edge of brake press
     if (addr == 320) {
-      bool brake = (GET_BYTE(to_push, 0) & 0x7) == 5;
-      if (brake && (!chrysler_brake_prev || (chrysler_speed > CHRYSLER_STANDSTILL_THRSLD))) {
+      bool brake_pressed = (GET_BYTE(to_push, 0) & 0x7) == 5;
+      if (brake_pressed && (!brake_pressed_prev || (chrysler_speed > CHRYSLER_STANDSTILL_THRSLD))) {
         controls_allowed = 0;
       }
-      chrysler_brake_prev = brake;
+      brake_pressed_prev = brake_pressed;
     }
 
     // check if stock camera ECU is on bus 0

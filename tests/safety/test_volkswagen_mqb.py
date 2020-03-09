@@ -154,7 +154,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
   def test_prev_gas(self):
     for g in range(0, 256):
       self.safety.safety_rx_hook(self._motor_20_msg(g))
-      self.assertEqual(g, self.safety.get_volkswagen_gas_prev())
+      self.assertEqual(True if g > 0 else False, self.safety.get_gas_pressed_prev())
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
@@ -184,9 +184,9 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     self.assertEqual(1, self.safety.get_volkswagen_moving())
 
   def test_prev_brake(self):
-    self.assertFalse(self.safety.get_volkswagen_brake_pressed_prev())
+    self.assertFalse(self.safety.get_brake_pressed_prev())
     self.safety.safety_rx_hook(self._brake_msg(True))
-    self.assertTrue(self.safety.get_volkswagen_brake_pressed_prev())
+    self.assertTrue(self.safety.get_brake_pressed_prev())
 
   def test_brake_disengage(self):
     StdTest.test_allow_brake_at_zero_speed(self)

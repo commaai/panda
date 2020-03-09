@@ -137,7 +137,7 @@ class TestToyotaSafety(unittest.TestCase):
   def test_prev_gas(self):
     for g in range(0, 256):
       self.safety.safety_rx_hook(self._send_gas_msg(g))
-      self.assertEqual(True if g > 0 else False, self.safety.get_toyota_gas_prev())
+      self.assertEqual(True if g > 0 else False, self.safety.get_gas_pressed_prev())
 
   def test_prev_gas_interceptor(self):
     self.safety.safety_rx_hook(self._send_interceptor_msg(0x0, 0x201))

@@ -36,8 +36,6 @@ int volkswagen_rt_torque_last = 0;
 int volkswagen_desired_torque_last = 0;
 uint32_t volkswagen_ts_last = 0;
 bool volkswagen_moving = false;
-bool volkswagen_brake_pressed_prev = false;
-int volkswagen_gas_prev = 0;
 int volkswagen_torque_msg = 0;
 int volkswagen_lane_msg = 0;
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
@@ -137,21 +135,21 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // Exit controls on rising edge of gas press
     // Signal: Motor_20.MO_Fahrpedalrohwert_01
     if (addr == MSG_MOTOR_20) {
-      int gas = (GET_BYTES_04(to_push) >> 12) & 0xFF;
-      if ((gas > 0) && (volkswagen_gas_prev == 0)) {
+      bool gas_pressed = ((GET_BYTES_04(to_push) >> 12) & 0xFF) != 0;
+      if (gas_pressed && !gas_pressed_prev) {
         controls_allowed = 0;
       }
-      volkswagen_gas_prev = gas;
+      gas_pressed_prev = gas_pressed;
     }
 
     // Exit controls on rising edge of brake press
     // Signal: ESP_05.ESP_Fahrer_bremst
     if (addr == MSG_ESP_05) {
       bool brake_pressed = (GET_BYTE(to_push, 3) & 0x4) >> 2;
-      if (brake_pressed && (!(volkswagen_brake_pressed_prev) || volkswagen_moving)) {
+      if (brake_pressed && (!brake_pressed_prev || volkswagen_moving)) {
         controls_allowed = 0;
       }
-      volkswagen_brake_pressed_prev = brake_pressed;
+      brake_pressed_prev = brake_pressed;
     }
 
     // If there are HCA messages on bus 0 not sent by OP, there's a relay problem
