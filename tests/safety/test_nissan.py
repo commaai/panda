@@ -43,10 +43,6 @@ class TestNissanSafety(unittest.TestCase):
     t = int(t * -100)
     self.safety.set_nissan_desired_angle_last(t)
 
-  def _set_brake_prev(self, state):
-    state = bool(state)
-    self.safety.set_nissan_brake_prev(state)
-
   def _angle_meas_msg_array(self, angle):
     for i in range(6):
       self.safety.safety_rx_hook(self._angle_meas_msg(angle))

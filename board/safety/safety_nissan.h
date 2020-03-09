@@ -62,11 +62,11 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
       // exit controls on rising edge of gas press
       if (addr == 0x15c) {
-        int gas = ((GET_BYTE(to_push, 5) << 2) | ((GET_BYTE(to_push, 6) >> 6) & 0x3));
-        if ((gas > 0) && (nissan_gas_prev == 0)) {
+        bool gas_pressed = ((GET_BYTE(to_push, 5) << 2) | ((GET_BYTE(to_push, 6) >> 6) & 0x3));
+        if (gas_pressed && !gas_pressed_prev) {
           controls_allowed = 0;
         }
-        nissan_gas_prev = gas;
+        gas_pressed_prev = gas_pressed;
       }
 
       // 0x169 is lkas cmd. If it is on bus 0, then relay is unexpectedly closed

@@ -138,7 +138,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
-  int pedal_pressed = gm_gas_prev || (gm_brake_prev && gm_moving);
+  int pedal_pressed = gas_pressed_prev || (brake_pressed_prev && gm_moving);
   bool current_controls_allowed = controls_allowed && !pedal_pressed;
 
   // BRAKE: safety check
