@@ -80,11 +80,12 @@ class TestToyotaSafety(unittest.TestCase):
     return to_send
 
   def _speed_msg(self, s):
+    offset = (0x6f << 8) + 0x1a  # there is a 0x1a6f offset in the signal
     to_send = make_msg(0, 0xaa)
-    to_send[0].RDLR = (s & 0xFF) << 8 | (s >> 8)
-    to_send[0].RDLR += (s & 0xFF) << 24 | ((s >> 8) << 16)
-    to_send[0].RDHR = (s & 0xFF) << 8 | (s >> 8)
-    to_send[0].RDHR += (s & 0xFF) << 24 | ((s >> 8) << 16)
+    to_send[0].RDLR = ((s & 0xFF) << 8 | (s >> 8)) + offset
+    to_send[0].RDLR += ((s & 0xFF) << 24 | ((s >> 8) << 16)) + (offset << 16)
+    to_send[0].RDHR = ((s & 0xFF) << 8 | (s >> 8)) + offset
+    to_send[0].RDHR += ((s & 0xFF) << 24 | ((s >> 8) << 16)) + (offset << 16)
     return to_send
 
   def _brake_msg(self, brake):
