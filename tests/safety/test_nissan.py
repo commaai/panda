@@ -171,5 +171,23 @@ class TestNissanSafety(unittest.TestCase):
   def test_relay_malfunction(self):
     StdTest.test_relay_malfunction(self, 0x169)
 
+  def test_fwd_hook(self):
+
+    buss = list(range(0x0, 0x3))
+    msgs = list(range(0x1, 0x800))
+
+    blocked_msgs = [0x169,0x2b1,0x4cc]
+    for b in buss:
+      for m in msgs:
+        if b == 0:
+          fwd_bus = 2
+        elif b == 1:
+          fwd_bus = -1
+        elif b == 2:
+          fwd_bus = -1 if m in blocked_msgs else 0
+
+        # assume len 8
+        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
+
 if __name__ == "__main__":
   unittest.main()
