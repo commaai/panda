@@ -11,6 +11,8 @@ ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
 ANGLE_DELTA_VU = [5., 3.5, 0.4]   # unwind limit
 
+TX_MSGS = [[0x169, 0], [0x20b, 2]]
+
 def twos_comp(val, bits):
   if val >= 0:
     return val
@@ -85,6 +87,9 @@ class TestNissanSafety(unittest.TestCase):
     to_send[0].RDLR = (buttons << 8)
 
     return to_send
+
+  def test_spam_can_buses(self):
+    StdTest.test_spam_can_buses(self, TX_MSGS)
 
   def test_angle_cmd_when_enabled(self):
 
