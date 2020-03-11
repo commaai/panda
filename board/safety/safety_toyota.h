@@ -103,7 +103,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         int next_byte = i + 1;  // hack to deal with misra 10.8
         speed += (GET_BYTE(to_push, i) << 8) + GET_BYTE(to_push, next_byte) - 0x1a6f;
       }
-      toyota_moving = (speed / 4) > TOYOTA_STANDSTILL_THRSLD;
+      toyota_moving = ABS(speed / 4) > TOYOTA_STANDSTILL_THRSLD;
     }
 
     // exit controls on rising edge of brake pedal
