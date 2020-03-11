@@ -11,7 +11,7 @@ ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
 ANGLE_DELTA_VU = [5., 3.5, 0.4]   # unwind limit
 
-TX_MSGS = [[0x169, 0], [0x20b, 2]]
+TX_MSGS = [[0x169, 0], [0x2b1, 0], [0x4cc, 0], [0x20b, 2]]
 
 def twos_comp(val, bits):
   if val >= 0:
@@ -175,6 +175,24 @@ class TestNissanSafety(unittest.TestCase):
 
   def test_relay_malfunction(self):
     StdTest.test_relay_malfunction(self, 0x169)
+
+  def test_fwd_hook(self):
+
+    buss = list(range(0x0, 0x3))
+    msgs = list(range(0x1, 0x800))
+
+    blocked_msgs = [0x169,0x2b1,0x4cc]
+    for b in buss:
+      for m in msgs:
+        if b == 0:
+          fwd_bus = 2
+        elif b == 1:
+          fwd_bus = -1
+        elif b == 2:
+          fwd_bus = -1 if m in blocked_msgs else 0
+
+        # assume len 8
+        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
 if __name__ == "__main__":
   unittest.main()
