@@ -58,6 +58,10 @@ uint8_t hw_type = HW_TYPE_UNKNOWN;
     __typeof__ (b) _b = (b);                    \
     _a > _b ? _a : _b; })
 
+#define ABS(a)                                  \
+ ({ __typeof__ (a) _a = (a);                    \
+   (_a > 0) ? _a : (-_a); })
+
 // from llcan.h
 #define GET_BUS(msg) (((msg)->RDTR >> 4) & 0xFF)
 #define GET_LEN(msg) ((msg)->RDTR & 0xf)
