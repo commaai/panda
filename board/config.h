@@ -38,7 +38,7 @@
 
 #define ABS(a) \
  ({ __typeof__ (a) _a = (a); \
-   (_a > 0) ? _a : (-a); })
+   (_a > 0) ? _a : (-_a); })
 
 #define MAX_RESP_LEN 0x40U
 
