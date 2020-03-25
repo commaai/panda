@@ -97,7 +97,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
       // exit controls on rising edge of brake press, or if speed > 0 and brake
       // X-trail 0x454, Leaf  0x1d5
-      if (addr == 0x454 || addr = 0x1d5) {
+      if (addr == 0x454 || addr == 0x1d5) {
         bool brake_pressed = true;
         if (addr == 0x454){
           (GET_BYTE(to_push, 2) & 0x80) != 0;
