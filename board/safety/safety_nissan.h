@@ -22,7 +22,7 @@ AddrCheckStruct nissan_rx_checks[] = {
   {.addr = {0x285}, .bus = 0, .expected_timestep = 20000U}, // WHEEL_SPEEDS_REAR
   // {.addr = {0x1b6}, .bus = 1, .expected_timestep = 10000U}, // PRO_PILOT
   // TODO: Add brake pedal message to rx checks
-  // TODO: Put back check for PRO_PILOT message OR CRUISE_STATE message
+  // TODO: Add check for CRUISE_STATE message
 };
 const int NISSAN_RX_CHECK_LEN = sizeof(nissan_rx_checks) / sizeof(nissan_rx_checks[0]);
 
@@ -64,7 +64,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
       // exit controls on rising edge of gas press
       // X-Trail 0x15c, Leaf 0x239
-      if (addr == 0x15c || addr == 0x239) {
+      if ((addr == 0x15c) || (addr == 0x239)) {
         bool gas_pressed = true;
         if (addr == 0x15c){
           gas_pressed = ((GET_BYTE(to_push, 5) << 2) | ((GET_BYTE(to_push, 6) >> 6) & 0x3)) > 1;
@@ -86,7 +86,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // exit controls on rising edge of brake press, or if speed > 0 and brake
     // X-trail 0x454, Leaf  0x1cc
-    if (addr == 0x454 || addr == 0x1cc) {
+    if ((addr == 0x454) || (addr == 0x1cc)) {
       bool brake_pressed = true;
       if (addr == 0x454){
         brake_pressed = (GET_BYTE(to_push, 2) & 0x80) != 0;
@@ -102,15 +102,8 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 
     // Handle cruise enabled
-    // X-trail 0x1b6 bus 1, Leaf 0x30f bus 0
-    if ((bus == 1 && addr == 0x1b6) || (bus == 2 && addr == 0x30f)) {
-      bool cruise_engaged = false;
-
-      if (bus == 1 && addr == 0x1b6){
-        cruise_engaged = (GET_BYTE(to_push, 4) >> 6) & 1;
-      } else {
-        cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1;
-      }
+    if ((bus == 2) && (addr == 0x30f)) {
+      bool cruise_engaged = cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1;
 
       if (cruise_engaged && !nissan_cruise_engaged_last) {
         controls_allowed = 1;
