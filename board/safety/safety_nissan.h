@@ -54,7 +54,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         update_sample(&nissan_angle_meas, angle_meas_new);
       }
 
-      if (addr == 0x29a) {
+      if (addr == 0x285) {
         // Get current speed
         // Factor 0.00555
         nissan_speed = ((GET_BYTE(to_push, 2) << 8) | (GET_BYTE(to_push, 3))) * 0.00555 / 3.6;
