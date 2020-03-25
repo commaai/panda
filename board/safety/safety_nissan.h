@@ -20,8 +20,9 @@ const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x2b1, 0}, {0x4cc, 0}, {0x20b, 2}
 AddrCheckStruct nissan_rx_checks[] = {
   {.addr = {0x2}, .bus = 0, .expected_timestep = 10000U},  // STEER_ANGLE_SENSOR
   {.addr = {0x285}, .bus = 0, .expected_timestep = 20000U}, // WHEEL_SPEEDS_REAR
-  {.addr = {0x1b6}, .bus = 1, .expected_timestep = 10000U}, // PRO_PILOT
+  // {.addr = {0x1b6}, .bus = 1, .expected_timestep = 10000U}, // PRO_PILOT
   // TODO: Add brake pedal message to rx checks
+  // TODO: Put back check for PRO_PILOT message OR CRUISE_STATE message
 };
 const int NISSAN_RX_CHECK_LEN = sizeof(nissan_rx_checks) / sizeof(nissan_rx_checks[0]);
 
@@ -66,9 +67,9 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       if (addr == 0x15c || addr == 0x239) {
         bool gas_pressed = true;
         if (addr == 0x15c){
-          gas_pressed = ((GET_BYTE(to_push, 5) << 2) | ((GET_BYTE(to_push, 6) >> 6) & 0x3));
+          gas_pressed = ((GET_BYTE(to_push, 5) << 2) | ((GET_BYTE(to_push, 6) >> 6) & 0x3)) > 1;
         } else {
-          gas_pressed = GET_BYTE(to_push, 0);
+          gas_pressed = GET_BYTE(to_push, 0) > 3;
         }
 
         if (gas_pressed && !gas_pressed_prev) {
@@ -83,33 +84,41 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       }
     }
 
-    if (bus == 1) {
-      if (addr == 0x1b6) {
-        int cruise_engaged = (GET_BYTE(to_push, 4) >> 6) & 1;
-        if (cruise_engaged && !nissan_cruise_engaged_last) {
-          controls_allowed = 1;
-        }
-        if (!cruise_engaged) {
-          controls_allowed = 0;
-        }
-        nissan_cruise_engaged_last = cruise_engaged;
+    // exit controls on rising edge of brake press, or if speed > 0 and brake
+    // X-trail 0x454, Leaf  0x1cc
+    if (addr == 0x454 || addr == 0x1cc) {
+      bool brake_pressed = true;
+      if (addr == 0x454){
+        (GET_BYTE(to_push, 2) & 0x80) != 0;
+      } else {
+        brake_pressed = GET_BYTE(to_push, 0) > 3;
       }
 
-      // exit controls on rising edge of brake press, or if speed > 0 and brake
-      // X-trail 0x454, Leaf  0x1d5
-      if (addr == 0x454 || addr == 0x1d5) {
-        bool brake_pressed = true;
-        if (addr == 0x454){
-          (GET_BYTE(to_push, 2) & 0x80) != 0;
-        } else {
-          brake_pressed = GET_BYTE(to_push, 0);
-        }
-
-        if (brake_pressed && (!brake_pressed_prev || (nissan_speed > 0.))) {
-          controls_allowed = 0;
-        }
-        brake_pressed_prev = brake_pressed;
+      if (brake_pressed && (!brake_pressed_prev || (nissan_speed > 0.))) {
+        controls_allowed = 0;
       }
+      brake_pressed_prev = brake_pressed;
+    }
+
+
+    // Handle cruise enabled
+    // X-trail 0x1b6 bus 1, Leaf 0x30f bus 0
+    if ((bus == 1 && addr == 0x1b6) || (bus == 2 && addr == 0x30f)) {
+      bool cruise_engaged = false;
+
+      if (bus == 1 && addr == 0x1b6){
+        cruise_engaged = (GET_BYTE(to_push, 4) >> 6) & 1;
+      } else {
+        cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1;
+      }
+
+      if (cruise_engaged && !nissan_cruise_engaged_last) {
+        controls_allowed = 1;
+      }
+      if (!cruise_engaged) {
+        controls_allowed = 0;
+      }
+      nissan_cruise_engaged_last = cruise_engaged;
     }
   }
   return valid;
