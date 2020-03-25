@@ -28,7 +28,10 @@ void set_power_save_state(int state) {
       enable = true;
     }
 
-    current_board->enable_can_transcievers(enable);
+    // Volkswagen community port:
+    // If this is a White or Grey Panda, always keep the CAN transceivers
+    // powered up so that transparent forwarding is maintained.
+    current_board->enable_can_transcievers(board_has_obd() ? enable : true);
 
     // Switch EPS/GPS
     if (enable) {
@@ -52,7 +55,7 @@ void set_power_save_state(int state) {
     // Switch off IR when in power saving
     if(!enable){
       current_board->set_ir_power(0U);
-    }   
+    }
 
     power_save_status = state;
   }

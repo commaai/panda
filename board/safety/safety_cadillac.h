@@ -121,5 +121,5 @@ const safety_hooks cadillac_hooks = {
   .rx = cadillac_rx_hook,
   .tx = cadillac_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
-  .fwd = default_fwd_hook,
+  .fwd = no_fwd_hook,
 };
