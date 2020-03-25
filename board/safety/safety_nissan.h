@@ -18,9 +18,10 @@ const int NISSAN_DEG_TO_CAN = 100;
 const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x2b1, 0}, {0x4cc, 0}, {0x20b, 2}};
 
 AddrCheckStruct nissan_rx_checks[] = {
-  {.addr = {0x2}, .bus = 0, .expected_timestep = 10000U},
-  {.addr = {0x29a}, .bus = 0, .expected_timestep = 20000U},
-  {.addr = {0x1b6}, .bus = 1, .expected_timestep = 10000U},
+  {.addr = {0x2}, .bus = 0, .expected_timestep = 10000U},  // STEER_ANGLE_SENSOR
+  {.addr = {0x285}, .bus = 0, .expected_timestep = 20000U}, // WHEEL_SPEEDS_REAR
+  {.addr = {0x1b6}, .bus = 1, .expected_timestep = 10000U}, // PRO_PILOT
+  // TODO: Add brake pedal message to rx checks
 };
 const int NISSAN_RX_CHECK_LEN = sizeof(nissan_rx_checks) / sizeof(nissan_rx_checks[0]);
 
@@ -61,15 +62,15 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       }
 
       // exit controls on rising edge of gas press
-      if (addr == 0x15c) { // X-Trail
-        bool gas_pressed = ((GET_BYTE(to_push, 5) << 2) | ((GET_BYTE(to_push, 6) >> 6) & 0x3));
-        if (gas_pressed && !gas_pressed_prev) {
-          controls_allowed = 0;
+      // X-Trail 0x15c, Leaf 0x239
+      if (addr == 0x15c || addr == 0x239) {
+        bool gas_pressed = true;
+        if (addr == 0x15c){
+          gas_pressed = ((GET_BYTE(to_push, 5) << 2) | ((GET_BYTE(to_push, 6) >> 6) & 0x3));
+        } else {
+          gas_pressed = GET_BYTE(to_push, 0);
         }
-        gas_pressed_prev = gas_pressed;
-      }
-      if (addr == 0x239) { // Leaf
-        bool gas_pressed = GET_BYTE(to_push, 0);
+
         if (gas_pressed && !gas_pressed_prev) {
           controls_allowed = 0;
         }
@@ -95,8 +96,15 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       }
 
       // exit controls on rising edge of brake press, or if speed > 0 and brake
-      if (addr == 0x454) {
-        bool brake_pressed = (GET_BYTE(to_push, 2) & 0x80) != 0;
+      // X-trail 0x454, Leaf  0x1d5
+      if (addr == 0x454 || addr = 0x1d5) {
+        bool brake_pressed = true;
+        if (addr == 0x454){
+          (GET_BYTE(to_push, 2) & 0x80) != 0;
+        } else {
+          brake_pressed = GET_BYTE(to_push, 0);
+        }
+
         if (brake_pressed && (!brake_pressed_prev || (nissan_speed > 0.))) {
           controls_allowed = 0;
         }
