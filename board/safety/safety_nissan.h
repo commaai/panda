@@ -89,7 +89,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (addr == 0x454 || addr == 0x1cc) {
       bool brake_pressed = true;
       if (addr == 0x454){
-        (GET_BYTE(to_push, 2) & 0x80) != 0;
+        brake_pressed = (GET_BYTE(to_push, 2) & 0x80) != 0;
       } else {
         brake_pressed = GET_BYTE(to_push, 0) > 3;
       }
