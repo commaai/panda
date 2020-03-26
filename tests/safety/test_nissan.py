@@ -50,8 +50,8 @@ class TestNissanSafety(unittest.TestCase):
       self.safety.safety_rx_hook(self._angle_meas_msg(angle))
 
   def _lkas_state_msg(self, state):
-    to_send = make_msg(0, 0x1b6)
-    to_send[0].RDHR = (state & 0x1) << 6
+    to_send = make_msg(1, 0x30f)
+    to_send[0].RDHR = (state & 0x1) << 3
 
     return to_send
 
@@ -64,7 +64,7 @@ class TestNissanSafety(unittest.TestCase):
     return to_send
 
   def _speed_msg(self, speed):
-    to_send = make_msg(0, 0x29a)
+    to_send = make_msg(0, 0x285)
     speed = int(speed / 0.00555 * 3.6)
     to_send[0].RDLR = ((speed & 0xFF) << 24) | ((speed & 0xFF00) << 8)
 
