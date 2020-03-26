@@ -103,7 +103,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // Handle cruise enabled
     if ((bus == 2) && (addr == 0x30f)) {
-      bool cruise_engaged = cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1;
+      bool cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1;
 
       if (cruise_engaged && !nissan_cruise_engaged_last) {
         controls_allowed = 1;
