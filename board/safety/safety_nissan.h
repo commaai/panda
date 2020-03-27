@@ -11,7 +11,7 @@ const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_DOWN = {
 
 const int NISSAN_DEG_TO_CAN = 100;
 
-const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x2b1, 0}, {0x4cc, 0}, {0x20b, 2}, {0x2a, 2}};
+const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x2b1, 0}, {0x4cc, 0}, {0x20b, 2}, {0x280, 2}};
 
 AddrCheckStruct nissan_rx_checks[] = {
   {.addr = {0x2}, .bus = 0, .expected_timestep = 10000U},  // STEER_ANGLE_SENSOR (100Hz)
@@ -186,7 +186,7 @@ static int nissan_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int addr = GET_ADDR(to_fwd);
 
   if (bus_num == 0) {
-    int block_msg = (addr == 0x2a); // Seatbelt message
+    int block_msg = (addr == 0x280); // CANCEL_MSG
     if (!block_msg) {
       bus_fwd = 2;  // ADAS
     }
