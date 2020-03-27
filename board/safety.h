@@ -37,6 +37,7 @@
 #define SAFETY_GM_ASCM 18U
 #define SAFETY_NOOUTPUT 19U
 #define SAFETY_HONDA_BOSCH_HARNESS 20U
+#define SAFETY_VOLKSWAGEN_PQ 21U
 #define SAFETY_SUBARU_LEGACY 22U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
@@ -203,6 +204,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_SUBARU_LEGACY, &subaru_legacy_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
   {SAFETY_VOLKSWAGEN_MQB, &volkswagen_mqb_hooks},
+  {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
   {SAFETY_NOOUTPUT, &nooutput_hooks},
 #ifdef ALLOW_DEBUG
   {SAFETY_CADILLAC, &cadillac_hooks},
