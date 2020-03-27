@@ -65,7 +65,7 @@ class TestNissanSafety(unittest.TestCase):
 
   def _speed_msg(self, speed):
     to_send = make_msg(0, 0x285)
-    speed = int(speed / 0.00555 * 3.6)
+    speed = int(speed / 0.005 * 3.6)
     to_send[0].RDLR = ((speed & 0xFF) << 24) | ((speed & 0xFF00) << 8)
 
     return to_send
