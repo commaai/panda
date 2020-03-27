@@ -90,10 +90,8 @@ class TestNissanSafety(unittest.TestCase):
     StdTest.test_spam_can_buses(self, TX_MSGS)
 
   def test_angle_cmd_when_enabled(self):
-
     # when controls are allowed, angle cmd rate limit is enforced
-    # test 1: no limitations if we stay within limits
-    speeds = [0., 1., 5., 10., 15., 100.]
+    speeds = [0., 1., 5., 10., 15., 50.]
     angles = [-300, -100, -10, 0, 10, 100, 300]
     for a in angles:
       for s in speeds:
@@ -104,28 +102,25 @@ class TestNissanSafety(unittest.TestCase):
         self._angle_meas_msg_array(a)
         self.safety.safety_rx_hook(self._speed_msg(s))
 
+        self._set_prev_angle(a)
         self.safety.set_controls_allowed(1)
 
         # Stay within limits
         # Up
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(
-            a + sign(a) * max_delta_up, 1)))
+        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a + sign(a) * max_delta_up, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Don't change
-        self.assertEqual(True, self.safety.safety_tx_hook(
-            self._lkas_control_msg(a, 1)))
+        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(
-            a - sign(a) * max_delta_down, 1)))
+        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a - sign(a) * max_delta_down, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
-        # now inject too high rates
+        # Inject too high rates
         # Up
-        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a + sign(a) *
-                                                                                  (max_delta_up + 1), 1)))
+        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a + sign(a) * (max_delta_up + 1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
 
         # Don't change
