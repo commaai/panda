@@ -181,7 +181,7 @@ class TestNissanSafety(unittest.TestCase):
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
 
-    blocked_msgs = [0x169,0x2b1,0x4cc]
+    blocked_msgs = [(2, 0x169), (2, 0x2b1), (2, 0x4cc), (0, 0x280)]
     for b in buss:
       for m in msgs:
         if b == 0:
@@ -189,7 +189,10 @@ class TestNissanSafety(unittest.TestCase):
         elif b == 1:
           fwd_bus = -1
         elif b == 2:
-          fwd_bus = -1 if m in blocked_msgs else 0
+          fwd_bus = 0
+
+        if (b, m) in blocked_msgs:
+          fwd_bus = -1
 
         # assume len 8
         self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
