@@ -9,10 +9,6 @@ const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_DOWN = {
   {2., 7., 17.},
   {5., 3.5, .5}};
 
-const struct lookup_t NISSAN_LOOKUP_MAX_ANGLE = {
-  {3.3, 12, 32},
-  {540., 120., 23.}};
-
 const int NISSAN_DEG_TO_CAN = 100;
 
 const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x2b1, 0}, {0x4cc, 0}, {0x20b, 2}, {0x239, 2}};
@@ -149,16 +145,6 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       int delta_angle_down = (int)(delta_angle_float);
       int highest_desired_angle = nissan_desired_angle_last + ((nissan_desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
       int lowest_desired_angle = nissan_desired_angle_last - ((nissan_desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
-
-      // Limit maximum steering angle at current speed
-      int maximum_angle = ((int)interpolate(NISSAN_LOOKUP_MAX_ANGLE, nissan_speed));
-
-      if (highest_desired_angle > (maximum_angle * NISSAN_DEG_TO_CAN)) {
-        highest_desired_angle = (maximum_angle * NISSAN_DEG_TO_CAN);
-      }
-      if (lowest_desired_angle < (-maximum_angle * NISSAN_DEG_TO_CAN)) {
-        lowest_desired_angle = (-maximum_angle * NISSAN_DEG_TO_CAN);
-      }
 
       // check for violation;
       violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
