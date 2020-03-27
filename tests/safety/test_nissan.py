@@ -5,8 +5,6 @@ from panda import Panda
 from panda.tests.safety import libpandasafety_py
 from panda.tests.safety.common import StdTest, make_msg
 
-ANGLE_MAX_BP = [1.3, 10., 30.]
-ANGLE_MAX_V = [540., 120., 23.]
 ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
 ANGLE_DELTA_VU = [5., 3.5, 0.4]   # unwind limit
@@ -101,37 +99,44 @@ class TestNissanSafety(unittest.TestCase):
       for s in speeds:
         max_delta_up = np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_V)
         max_delta_down = np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_VU)
-        angle_lim = np.interp(s, ANGLE_MAX_BP, ANGLE_MAX_V)
 
         # first test against false positives
         self._angle_meas_msg_array(a)
         self.safety.safety_rx_hook(self._speed_msg(s))
 
-        self._set_prev_angle(np.clip(a, -angle_lim, angle_lim))
         self.safety.set_controls_allowed(1)
 
+        # Stay within limits
+        # Up
         self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(
-            np.clip(a + sign(a) * max_delta_up, -angle_lim, angle_lim), 1)))
+            a + sign(a) * max_delta_up, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
+
+        # Don't change
         self.assertEqual(True, self.safety.safety_tx_hook(
-            self._lkas_control_msg(np.clip(a, -angle_lim, angle_lim), 1)))
+            self._lkas_control_msg(a, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
+
+        # Down
         self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(
-            np.clip(a - sign(a) * max_delta_down, -angle_lim, angle_lim), 1)))
+            a - sign(a) * max_delta_down, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # now inject too high rates
+        # Up
         self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a + sign(a) *
                                                                                   (max_delta_up + 1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
+
+        # Don't change
         self.safety.set_controls_allowed(1)
-        self._set_prev_angle(np.clip(a, -angle_lim, angle_lim))
+        self._set_prev_angle(a)
         self.assertTrue(self.safety.get_controls_allowed())
-        self.assertEqual(True, self.safety.safety_tx_hook(
-            self._lkas_control_msg(np.clip(a, -angle_lim, angle_lim), 1)))
+        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
-        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a - sign(a) *
-                                                                                  (max_delta_down + 1), 1)))
+
+        # Down
+        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a - sign(a) * (max_delta_down + 1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
 
         # Check desired steer should be the same as steer angle when controls are off
