@@ -15,7 +15,7 @@ const struct lookup_t NISSAN_LOOKUP_MAX_ANGLE = {
 
 const int NISSAN_DEG_TO_CAN = 100;
 
-const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x2b1, 0}, {0x4cc, 0}, {0x20b, 2}};
+const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x2b1, 0}, {0x4cc, 0}, {0x20b, 2}, {0x239, 2}};
 
 AddrCheckStruct nissan_rx_checks[] = {
   {.addr = {0x2}, .bus = 0, .expected_timestep = 10000U},  // STEER_ANGLE_SENSOR (100Hz)
@@ -184,6 +184,10 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if (addr == 0x20b) {
     // Violation of any button other than cancel is pressed
     violation |= ((GET_BYTE(to_send, 1) & 0x3d) > 0);
+  }
+  if (addr == 0x239) {
+    // Violation of any button other than cancel is pressed
+    violation |= ((GET_BYTE(to_send, 3) & 0x3d) > 0);
   }
 
   if (violation) {
