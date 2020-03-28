@@ -166,7 +166,7 @@ class TestVolkswagenPqSafety(unittest.TestCase):
     self.safety.safety_rx_hook(self._brake_msg(False))
 
   def test_brake_disengage(self):
-    self.__class__.cruise_engaged = True  # FIXME: ugly hack due to brake and ACC being in the same message
+    self.__class__.cruise_engaged = True  # Hack due to brake and ACC signals being in the same message
     StdTest.test_allow_brake_at_zero_speed(self)
     StdTest.test_not_allow_brake_when_moving(self, 1)
 
