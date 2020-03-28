@@ -5,13 +5,11 @@ from panda import Panda
 from panda.tests.safety import libpandasafety_py
 from panda.tests.safety.common import StdTest, make_msg
 
-ANGLE_MAX_BP = [1.3, 10., 30.]
-ANGLE_MAX_V = [540., 120., 23.]
 ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
 ANGLE_DELTA_VU = [5., 3.5, 0.4]   # unwind limit
 
-TX_MSGS = [[0x169, 0], [0x2b1, 0], [0x4cc, 0], [0x20b, 2]]
+TX_MSGS = [[0x169, 0], [0x2b1, 0], [0x4cc, 0], [0x20b, 2], [0x280, 2]]
 
 def twos_comp(val, bits):
   if val >= 0:
@@ -50,8 +48,8 @@ class TestNissanSafety(unittest.TestCase):
       self.safety.safety_rx_hook(self._angle_meas_msg(angle))
 
   def _lkas_state_msg(self, state):
-    to_send = make_msg(0, 0x1b6)
-    to_send[0].RDHR = (state & 0x1) << 6
+    to_send = make_msg(1, 0x30f)
+    to_send[0].RDHR = (state & 0x1) << 3
 
     return to_send
 
@@ -64,8 +62,8 @@ class TestNissanSafety(unittest.TestCase):
     return to_send
 
   def _speed_msg(self, speed):
-    to_send = make_msg(0, 0x29a)
-    speed = int(speed / 0.00555 * 3.6)
+    to_send = make_msg(0, 0x285)
+    speed = int(speed / 0.005 * 3.6)
     to_send[0].RDLR = ((speed & 0xFF) << 24) | ((speed & 0xFF00) << 8)
 
     return to_send
@@ -92,46 +90,48 @@ class TestNissanSafety(unittest.TestCase):
     StdTest.test_spam_can_buses(self, TX_MSGS)
 
   def test_angle_cmd_when_enabled(self):
-
     # when controls are allowed, angle cmd rate limit is enforced
-    # test 1: no limitations if we stay within limits
-    speeds = [0., 1., 5., 10., 15., 100.]
+    speeds = [0., 1., 5., 10., 15., 50.]
     angles = [-300, -100, -10, 0, 10, 100, 300]
     for a in angles:
       for s in speeds:
         max_delta_up = np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_V)
         max_delta_down = np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_VU)
-        angle_lim = np.interp(s, ANGLE_MAX_BP, ANGLE_MAX_V)
 
         # first test against false positives
         self._angle_meas_msg_array(a)
         self.safety.safety_rx_hook(self._speed_msg(s))
 
-        self._set_prev_angle(np.clip(a, -angle_lim, angle_lim))
+        self._set_prev_angle(a)
         self.safety.set_controls_allowed(1)
 
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(
-            np.clip(a + sign(a) * max_delta_up, -angle_lim, angle_lim), 1)))
-        self.assertTrue(self.safety.get_controls_allowed())
-        self.assertEqual(True, self.safety.safety_tx_hook(
-            self._lkas_control_msg(np.clip(a, -angle_lim, angle_lim), 1)))
-        self.assertTrue(self.safety.get_controls_allowed())
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(
-            np.clip(a - sign(a) * max_delta_down, -angle_lim, angle_lim), 1)))
+        # Stay within limits
+        # Up
+        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a + sign(a) * max_delta_up, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
-        # now inject too high rates
-        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a + sign(a) *
-                                                                                  (max_delta_up + 1), 1)))
+        # Don't change
+        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a, 1)))
+        self.assertTrue(self.safety.get_controls_allowed())
+
+        # Down
+        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a - sign(a) * max_delta_down, 1)))
+        self.assertTrue(self.safety.get_controls_allowed())
+
+        # Inject too high rates
+        # Up
+        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a + sign(a) * (max_delta_up + 1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
+
+        # Don't change
         self.safety.set_controls_allowed(1)
-        self._set_prev_angle(np.clip(a, -angle_lim, angle_lim))
+        self._set_prev_angle(a)
         self.assertTrue(self.safety.get_controls_allowed())
-        self.assertEqual(True, self.safety.safety_tx_hook(
-            self._lkas_control_msg(np.clip(a, -angle_lim, angle_lim), 1)))
+        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
-        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a - sign(a) *
-                                                                                  (max_delta_down + 1), 1)))
+
+        # Down
+        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a - sign(a) * (max_delta_down + 1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
 
         # Check desired steer should be the same as steer angle when controls are off
@@ -181,7 +181,7 @@ class TestNissanSafety(unittest.TestCase):
     buss = list(range(0x0, 0x3))
     msgs = list(range(0x1, 0x800))
 
-    blocked_msgs = [0x169,0x2b1,0x4cc]
+    blocked_msgs = [(2, 0x169), (2, 0x2b1), (2, 0x4cc), (0, 0x280)]
     for b in buss:
       for m in msgs:
         if b == 0:
@@ -189,7 +189,10 @@ class TestNissanSafety(unittest.TestCase):
         elif b == 1:
           fwd_bus = -1
         elif b == 2:
-          fwd_bus = -1 if m in blocked_msgs else 0
+          fwd_bus = 0
+
+        if (b, m) in blocked_msgs:
+          fwd_bus = -1
 
         # assume len 8
         self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
