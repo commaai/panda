@@ -88,6 +88,12 @@ int gas_interceptor_prev = 0;
 bool gas_pressed_prev = false;
 bool brake_pressed_prev = false;
 
+// This can be set with a USB command
+// It enables features we consider to be unsafe, but understand others may have different opinions
+// One example of such a feature is gas disengage
+// It is always off on mainline comma.ai openpilot
+bool unsafe_mode = false;
+
 // time since safety mode has been changed
 uint32_t safety_mode_cnt = 0U;
 // allow 1s of transition timeout after relay changes state before assessing malfunctioning

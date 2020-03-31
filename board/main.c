@@ -469,6 +469,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         can_init(CAN_NUM_FROM_BUS_NUM(setup->b.wValue.w));
       }
       break;
+    // **** 0xdf: set unsafe mode
+    case 0xdf:
+      unsafe_mode = setup->b.wValue.w;
+      break;
     // **** 0xe0: uart read
     case 0xe0:
       ur = get_ring_by_number(setup->b.wValue.w);
