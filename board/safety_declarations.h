@@ -90,9 +90,10 @@ bool brake_pressed_prev = false;
 
 // This can be set with a USB command
 // It enables features we consider to be unsafe, but understand others may have different opinions
-// Examples of such features include no gas disengage and disabling stock AEB
-// It is always off on mainline comma.ai openpilot
-bool unsafe_mode = false;
+// It is always 0 on mainline comma.ai openpilot
+#define UNSAFE_DISABLE_DISENGAGE_ON_GAS 1
+#define UNSAFE_DISABLE_STOCK_AEB 2
+int unsafe_mode = 0;
 
 // time since safety mode has been changed
 uint32_t safety_mode_cnt = 0U;
