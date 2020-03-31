@@ -472,7 +472,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xdf: set unsafe mode
     case 0xdf:
       // you can only set this if you are in a non car safety mode
-      if (safety_mode == SAFETY_SILENT || safety_mode == SAFETY_NOOUTPUT || safety_mode == SAFETY_ELM327) {
+      if (current_safety_mode == SAFETY_SILENT ||
+          current_safety_mode == SAFETY_NOOUTPUT ||
+          current_safety_mode == SAFETY_ELM327) {
         unsafe_mode = setup->b.wValue.w;
       }
       break;
