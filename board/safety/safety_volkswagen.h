@@ -183,7 +183,7 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // Signal: Motor_20.MO_Fahrpedalrohwert_01
     if (addr == MSG_MOTOR_20) {
       bool gas_pressed = ((GET_BYTES_04(to_push) >> 12) & 0xFF) != 0;
-      if (gas_pressed && !gas_pressed_prev) {
+      if (gas_pressed && !gas_pressed_prev && !(unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS)) {
         controls_allowed = 0;
       }
       gas_pressed_prev = gas_pressed;
@@ -250,7 +250,7 @@ static int volkswagen_pq_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // Signal: Motor_3.Fahrpedal_Rohsignal
     if ((bus == 0) && (addr == MSG_MOTOR_3)) {
       int gas_pressed = (GET_BYTE(to_push, 2));
-      if (gas_pressed && !gas_pressed_prev) {
+      if (gas_pressed && !gas_pressed_prev && !(unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS)) {
         controls_allowed = 0;
       }
       gas_pressed_prev = gas_pressed;
