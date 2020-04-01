@@ -72,7 +72,9 @@ uint8_t hw_type = HW_TYPE_UNKNOWN;
 
 #define UNUSED(x) (void)(x)
 
+#ifndef PANDA
 #define PANDA
+#endif
 #define NULL ((void*)0)
 #define static
 #include "safety.h"

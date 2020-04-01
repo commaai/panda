@@ -4,7 +4,7 @@ import numpy as np
 import crcmod
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg, MAX_WRONG_COUNTERS
+from panda.tests.safety.common import StdTest, make_msg, MAX_WRONG_COUNTERS, UNSAFE_MODE
 
 MAX_RATE_UP = 4
 MAX_RATE_DOWN = 10
@@ -197,6 +197,14 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     self.safety.set_controls_allowed(True)
     self.safety.safety_rx_hook(self._motor_20_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_unsafe_mode_no_disengage_on_gas(self):
+    self.safety.safety_rx_hook(self._motor_20_msg(0))
+    self.safety.set_controls_allowed(True)
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
+    self.safety.safety_rx_hook(self._motor_20_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
   def test_allow_engage_with_gas_pressed(self):
     self.safety.safety_rx_hook(self._motor_20_msg(1))
