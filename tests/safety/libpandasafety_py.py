@@ -32,6 +32,8 @@ typedef struct
 
 void set_controls_allowed(bool c);
 bool get_controls_allowed(void);
+void set_unsafe_mode(int mode);
+int get_unsafe_mode(void);
 void set_relay_malfunction(bool c);
 bool get_relay_malfunction(void);
 void set_gas_interceptor_detected(bool c);

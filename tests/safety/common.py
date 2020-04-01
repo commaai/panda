@@ -2,6 +2,13 @@ from panda.tests.safety import libpandasafety_py
 
 MAX_WRONG_COUNTERS = 5
 
+class UNSAFE_MODE:
+  DEFAULT = 0
+  DISABLE_DISENGAGE_ON_GAS = 1
+  DISABLE_STOCK_AEB = 2
+  ENABLE_WEAK_STEERING_WHILE_NOT_ENGAGED = 4
+  RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
+
 def make_msg(bus, addr, length=8):
   to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
   if addr >= 0x800:
