@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg
+from panda.tests.safety.common import StdTest, make_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 10
 MAX_RATE_DOWN = 25
@@ -11,6 +11,9 @@ MAX_TORQUE = 1500
 
 MAX_ACCEL = 1500
 MIN_ACCEL = -3000
+
+ISO_MAX_ACCEL = 2000
+ISO_MIN_ACCEL = -3500
 
 MAX_RT_DELTA = 375
 RT_INTERVAL = 250000
@@ -154,6 +157,14 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.safety_rx_hook(self._send_gas_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
+  def test_unsafe_mode_no_disengage_on_gas(self):
+    self.safety.safety_rx_hook(self._send_gas_msg(0))
+    self.safety.set_controls_allowed(True)
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
+    self.safety.safety_rx_hook(self._send_gas_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
+
   def test_allow_engage_with_gas_pressed(self):
     self.safety.safety_rx_hook(self._send_gas_msg(1))
     self.safety.set_controls_allowed(True)
@@ -171,6 +182,17 @@ class TestToyotaSafety(unittest.TestCase):
       self.assertEqual(remain_enabled, self.safety.get_controls_allowed())
       self.safety.safety_rx_hook(self._send_interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
+
+  def test_unsafe_mode_no_disengage_on_gas_interceptor(self):
+    self.safety.set_controls_allowed(True)
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
+    for g in range(0, 0x1000):
+      self.safety.safety_rx_hook(self._send_interceptor_msg(g, 0x201))
+      self.assertTrue(self.safety.get_controls_allowed())
+      self.safety.safety_rx_hook(self._send_interceptor_msg(0, 0x201))
+      self.safety.set_gas_interceptor_detected(False)
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
+    self.safety.set_controls_allowed(False)
 
   def test_brake_disengage(self):
     StdTest.test_allow_brake_at_zero_speed(self)
@@ -193,6 +215,18 @@ class TestToyotaSafety(unittest.TestCase):
         else:
           send = accel == 0
         self.assertEqual(send, self.safety.safety_tx_hook(self._accel_msg(accel)))
+
+  def test_unsafe_iso_accel_actuation_limits(self):
+    for accel in np.arange(ISO_MIN_ACCEL - 1000, ISO_MAX_ACCEL + 1000, 100):
+      for controls_allowed in [True, False]:
+        self.safety.set_controls_allowed(controls_allowed)
+        self.safety.set_unsafe_mode(UNSAFE_MODE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX)
+        if controls_allowed:
+          send = ISO_MIN_ACCEL <= accel <= ISO_MAX_ACCEL
+        else:
+          send = accel == 0
+        self.assertEqual(send, self.safety.safety_tx_hook(self._accel_msg(accel)))
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
   def test_torque_absolute_limits(self):
     for controls_allowed in [True, False]:
