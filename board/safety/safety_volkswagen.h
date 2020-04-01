@@ -139,8 +139,6 @@ static void volkswagen_pq_init(int16_t param) {
   relay_malfunction = false;
   volkswagen_torque_msg = MSG_HCA_1;
   volkswagen_lane_msg = MSG_LDW_1;
-
-  return;
 }
 
 static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
