@@ -81,6 +81,10 @@ void set_controls_allowed(bool c){
   controls_allowed = c;
 }
 
+void set_unsafe_mode(int mode){
+  unsafe_mode = mode;
+}
+
 void set_relay_malfunction(bool c){
   relay_malfunction = c;
 }
@@ -91,6 +95,10 @@ void set_gas_interceptor_detected(bool c){
 
 bool get_controls_allowed(void){
   return controls_allowed;
+}
+
+int get_unsafe_mode(void){
+  return unsafe_mode;
 }
 
 bool get_relay_malfunction(void){
