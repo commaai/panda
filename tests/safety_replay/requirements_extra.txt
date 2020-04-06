@@ -2,3 +2,4 @@ aenum
 subprocess32
 libarchive
 pycapnp
+pycurl
