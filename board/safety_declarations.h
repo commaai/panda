@@ -93,7 +93,6 @@ bool brake_pressed_prev = false;
 // It is always 0 on mainline comma.ai openpilot
 #define UNSAFE_DISABLE_DISENGAGE_ON_GAS 1
 #define UNSAFE_DISABLE_STOCK_AEB 2
-#define UNSAFE_ENABLE_WEAK_STEERING_WHILE_NOT_ENGAGED 4
 #define UNSAFE_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX 8
 int unsafe_mode = 0;
 
