@@ -21,14 +21,13 @@ RUN pip install -r requirements_extra.txt
 COPY tests/safety_replay/install_capnp.sh install_capnp.sh
 RUN ./install_capnp.sh
 
-RUN mkdir /openpilot
+RUN git clone https://github.com/commaai/openpilot.git || true
 WORKDIR /openpilot
+RUN git pull && git checkout f9257fc75f68c673f9e433985fbe739f23310bb4
+
 RUN git clone https://github.com/commaai/cereal.git || true
 WORKDIR /openpilot/cereal
 RUN git pull && git checkout 35040fe6bb9ebc31d38e98faa64d5ec4093ce3d5
 COPY . /openpilot/panda
 
 WORKDIR /openpilot/panda/tests/safety_replay
-RUN git clone https://github.com/commaai/openpilot-tools.git tools || true
-WORKDIR tools
-RUN git checkout d69c6bc85f221766305ec53956e9a1d3bf283160
