@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg
+from panda.tests.safety.common import StdTest, make_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 7
 MAX_RATE_DOWN = 17
@@ -125,6 +125,14 @@ class TestGmSafety(unittest.TestCase):
     self.safety.safety_rx_hook(self._gas_msg(True))
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.safety_rx_hook(self._gas_msg(False))
+
+  def test_unsafe_mode_no_disengage_on_gas(self):
+    self.safety.safety_rx_hook(self._gas_msg(False))
+    self.safety.set_controls_allowed(1)
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
+    self.safety.safety_rx_hook(self._gas_msg(True))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
   def test_allow_engage_with_gas_pressed(self):
     self.safety.safety_rx_hook(self._gas_msg(True))
@@ -252,6 +260,59 @@ class TestGmSafety(unittest.TestCase):
         # assume len 8
         self.assertEqual(-1, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
+  def test_tx_hook_on_pedal_pressed(self):
+    for pedal in ['brake', 'gas']:
+      if pedal == 'brake':
+        # brake_pressed_prev and honda_moving
+        self.safety.safety_rx_hook(self._speed_msg(100))
+        self.safety.safety_rx_hook(self._brake_msg(MAX_BRAKE))
+      elif pedal == 'gas':
+        # gas_pressed_prev
+        self.safety.safety_rx_hook(self._gas_msg(MAX_GAS))
+
+      self.safety.set_controls_allowed(1)
+      self.assertFalse(self.safety.safety_tx_hook(self._send_brake_msg(MAX_BRAKE)))
+      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(MAX_RATE_UP)))
+      self.assertFalse(self.safety.safety_tx_hook(self._send_gas_msg(MAX_GAS)))
+
+      # reset status
+      self.safety.set_controls_allowed(0)
+      self.safety.safety_tx_hook(self._send_brake_msg(0))
+      self.safety.safety_tx_hook(self._torque_msg(0))
+      if pedal == 'brake':
+        self.safety.safety_rx_hook(self._speed_msg(0))
+        self.safety.safety_rx_hook(self._brake_msg(0))
+      elif pedal == 'gas':
+        self.safety.safety_rx_hook(self._gas_msg(0))
+
+  def test_tx_hook_on_pedal_pressed_on_unsafe_gas_mode(self):
+    for pedal in ['brake', 'gas']:
+      self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
+      if pedal == 'brake':
+        # brake_pressed_prev and honda_moving
+        self.safety.safety_rx_hook(self._speed_msg(100))
+        self.safety.safety_rx_hook(self._brake_msg(MAX_BRAKE))
+        allow_ctrl = False
+      elif pedal == 'gas':
+        # gas_pressed_prev
+        self.safety.safety_rx_hook(self._gas_msg(MAX_GAS))
+        allow_ctrl = True
+
+      self.safety.set_controls_allowed(1)
+      self.assertEqual(allow_ctrl, self.safety.safety_tx_hook(self._send_brake_msg(MAX_BRAKE)))
+      self.assertEqual(allow_ctrl, self.safety.safety_tx_hook(self._torque_msg(MAX_RATE_UP)))
+      self.assertEqual(allow_ctrl, self.safety.safety_tx_hook(self._send_gas_msg(MAX_GAS)))
+
+      # reset status
+      self.safety.set_controls_allowed(0)
+      self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
+      self.safety.safety_tx_hook(self._send_brake_msg(0))
+      self.safety.safety_tx_hook(self._torque_msg(0))
+      if pedal == 'brake':
+        self.safety.safety_rx_hook(self._speed_msg(0))
+        self.safety.safety_rx_hook(self._brake_msg(0))
+      elif pedal == 'gas':
+        self.safety.safety_rx_hook(self._gas_msg(0))
 
 if __name__ == "__main__":
   unittest.main()

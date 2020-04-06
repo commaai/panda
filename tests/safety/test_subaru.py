@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg
+from panda.tests.safety.common import StdTest, make_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 50
 MAX_RATE_DOWN = 70
@@ -154,6 +154,14 @@ class TestSubaruSafety(unittest.TestCase):
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.safety_rx_hook(self._gas_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_unsafe_mode_no_disengage_on_gas(self):
+    self.safety.safety_rx_hook(self._gas_msg(0))
+    self.safety.set_controls_allowed(True)
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
+    self.safety.safety_rx_hook(self._gas_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
   def test_brake_disengage(self):
     if (self.safety.get_subaru_global()):

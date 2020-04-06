@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg
+from panda.tests.safety.common import StdTest, make_msg, UNSAFE_MODE
 
 ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
@@ -153,6 +153,14 @@ class TestNissanSafety(unittest.TestCase):
     self.safety.set_controls_allowed(1)
     self.safety.safety_rx_hook(self._send_gas_cmd(100))
     self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_unsafe_mode_no_disengage_on_gas(self):
+    self.safety.safety_rx_hook(self._send_gas_cmd(0))
+    self.safety.set_controls_allowed(True)
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
+    self.safety.safety_rx_hook(self._send_gas_cmd(100))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
   def test_acc_buttons(self):
     self.safety.set_controls_allowed(1)

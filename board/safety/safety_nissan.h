@@ -36,6 +36,8 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   bool valid = addr_safety_check(to_push, nissan_rx_checks, NISSAN_RX_CHECK_LEN,
                                  NULL, NULL, NULL);
 
+  bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
+
   if (valid) {
     int bus = GET_BUS(to_push);
     int addr = GET_ADDR(to_push);
@@ -68,7 +70,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
           gas_pressed = GET_BYTE(to_push, 0) > 3;
         }
 
-        if (gas_pressed && !gas_pressed_prev) {
+        if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev) {
           controls_allowed = 0;
         }
         gas_pressed_prev = gas_pressed;

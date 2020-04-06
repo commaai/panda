@@ -14,7 +14,10 @@ const uint32_t TOYOTA_RT_INTERVAL = 250000;    // 250ms between real time checks
 
 // longitudinal limits
 const int TOYOTA_MAX_ACCEL = 1500;        // 1.5 m/s2
-const int TOYOTA_MIN_ACCEL = -3000;       // 3.0 m/s2
+const int TOYOTA_MIN_ACCEL = -3000;       // -3.0 m/s2
+
+const int TOYOTA_ISO_MAX_ACCEL = 2000;        // 2.0 m/s2
+const int TOYOTA_ISO_MIN_ACCEL = -3500;       // -3.5 m/s2
 
 const int TOYOTA_STANDSTILL_THRSLD = 100;  // 1kph
 const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 475;  // ratio between offset and gain from dbc file
@@ -63,6 +66,8 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   bool valid = addr_safety_check(to_push, toyota_rx_checks, TOYOTA_RX_CHECKS_LEN,
                                  toyota_get_checksum, toyota_compute_checksum, NULL);
+  bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
+
   if (valid && (GET_BUS(to_push) == 0)) {
     int addr = GET_ADDR(to_push);
 
@@ -121,7 +126,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (addr == 0x201) {
       gas_interceptor_detected = 1;
       int gas_interceptor = GET_INTERCEPTOR(to_push);
-      if ((gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRSLD) &&
+      if (!unsafe_allow_gas && (gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRSLD) &&
           (gas_interceptor_prev <= TOYOTA_GAS_INTERCEPTOR_THRSLD)) {
         controls_allowed = 0;
       }
@@ -131,7 +136,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // exit controls on rising edge of gas press
     if (addr == 0x2C1) {
       bool gas_pressed = GET_BYTE(to_push, 6) != 0;
-      if (gas_pressed && !gas_pressed_prev && !gas_interceptor_detected) {
+      if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev && !gas_interceptor_detected) {
         controls_allowed = 0;
       }
       gas_pressed_prev = gas_pressed;
@@ -180,7 +185,10 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
           tx = 0;
         }
       }
-      bool violation = max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
+      bool violation = (unsafe_mode & UNSAFE_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX)?
+        max_limit_check(desired_accel, TOYOTA_ISO_MAX_ACCEL, TOYOTA_ISO_MIN_ACCEL) :
+        max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
+        
       if (violation) {
         tx = 0;
       }

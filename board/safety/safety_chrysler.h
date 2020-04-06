@@ -74,6 +74,8 @@ static int chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
                                  chrysler_get_checksum, chrysler_compute_checksum,
                                  chrysler_get_counter);
 
+  bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
+
   if (valid && (GET_BUS(to_push) == 0)) {
     int addr = GET_ADDR(to_push);
 
@@ -107,7 +109,7 @@ static int chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // exit controls on rising edge of gas press
     if (addr == 308) {
       bool gas_pressed = (GET_BYTE(to_push, 5) & 0x7F) != 0;
-      if (gas_pressed && !gas_pressed_prev && (chrysler_speed > CHRYSLER_GAS_THRSLD)) {
+      if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev && (chrysler_speed > CHRYSLER_GAS_THRSLD)) {
         controls_allowed = 0;
       }
       gas_pressed_prev = gas_pressed;

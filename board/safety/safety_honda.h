@@ -72,6 +72,8 @@ static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
                               honda_get_checksum, honda_compute_checksum, honda_get_counter);
   }
 
+  bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
+
   if (valid) {
     int addr = GET_ADDR(to_push);
     int len = GET_LEN(to_push);
@@ -121,7 +123,7 @@ static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if ((addr == 0x201) && (len == 6)) {
       gas_interceptor_detected = 1;
       int gas_interceptor = GET_INTERCEPTOR(to_push);
-      if ((gas_interceptor > HONDA_GAS_INTERCEPTOR_THRESHOLD) &&
+      if (!unsafe_allow_gas && (gas_interceptor > HONDA_GAS_INTERCEPTOR_THRESHOLD) &&
           (gas_interceptor_prev <= HONDA_GAS_INTERCEPTOR_THRESHOLD)) {
         controls_allowed = 0;
       }
@@ -132,13 +134,13 @@ static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (!gas_interceptor_detected) {
       if (addr == 0x17C) {
         bool gas_pressed = GET_BYTE(to_push, 0) != 0;
-        if (gas_pressed && !gas_pressed_prev) {
+        if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev) {
           controls_allowed = 0;
         }
         gas_pressed_prev = gas_pressed;
       }
     }
-    
+
     // disable stock Honda AEB in unsafe mode
     if ( !(unsafe_mode & UNSAFE_DISABLE_STOCK_AEB) ) {
       if ((bus == 2) && (addr == 0x1FA)) {
@@ -196,8 +198,11 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
-  int pedal_pressed = gas_pressed_prev || (gas_interceptor_prev > HONDA_GAS_INTERCEPTOR_THRESHOLD) ||
-                      (brake_pressed_prev && honda_moving);
+  int pedal_pressed = brake_pressed_prev && honda_moving;
+  bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
+  if (!unsafe_allow_gas) {
+    pedal_pressed = pedal_pressed || gas_pressed_prev || (gas_interceptor_prev > HONDA_GAS_INTERCEPTOR_THRESHOLD);
+  }
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
 
   // BRAKE: safety check
