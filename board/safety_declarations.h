@@ -91,9 +91,18 @@ bool brake_pressed_prev = false;
 // This can be set with a USB command
 // It enables features we consider to be unsafe, but understand others may have different opinions
 // It is always 0 on mainline comma.ai openpilot
+
+// If using this flag, be very careful about what happens if your fork
+//   wants to brake while the user is pressing the gas. Tesla is careful with this.
 #define UNSAFE_DISABLE_DISENGAGE_ON_GAS 1
+
+// If using this flag, make sure to communicate to your users that a stock safety feature is now disabled
 #define UNSAFE_DISABLE_STOCK_AEB 2
+
+// If using this flag, be aware that harder braking is more likely to lead to rear endings, and that alone
+//   this flag doesn't make braking ISO26262 compliant because there's also an unaccounted for time element.
 #define UNSAFE_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX 8
+
 int unsafe_mode = 0;
 
 // time since safety mode has been changed
