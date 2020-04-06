@@ -478,7 +478,12 @@ class Panda(object):
 
   # ******************* can *******************
 
-  def can_send_many(self, arr):
+  # The panda will NAK CAN writes when there is CAN congestion. 
+  # libusb will try to send it again, with a max timeout.
+  # Timeout is in ms. If set to 0, the timeout is infinite.
+  CAN_SEND_TIMEOUT_MS = 10
+
+  def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
     snds = []
     transmit = 1
     extended = 4
@@ -501,13 +506,13 @@ class Panda(object):
           for s in snds:
             self._handle.bulkWrite(3, s)
         else:
-          self._handle.bulkWrite(3, b''.join(snds))
+          self._handle.bulkWrite(3, b''.join(snds), timeout=timeout)
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD SEND MANY, RETRYING")
 
-  def can_send(self, addr, dat, bus):
-    self.can_send_many([[addr, None, dat, bus]])
+  def can_send(self, addr, dat, bus, timeout=CAN_SEND_TIMEOUT_MS):
+    self.can_send_many([[addr, None, dat, bus]], timeout=timeout)
 
   def can_recv(self):
     dat = bytearray()

@@ -76,6 +76,7 @@ void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   UNUSED(len);
   UNUSED(hardwired);
 }
+void usb_cb_ep3_out_complete(void) {}
 void usb_cb_enumeration_complete(void) {}
 
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) {

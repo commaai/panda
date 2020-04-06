@@ -28,6 +28,7 @@ void can_set_forwarding(int from, int to);
 
 void can_init(uint8_t can_number);
 void can_init_all(void);
+bool can_tx_check_min_slots_free(uint32_t min);
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx_hook);
 bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
 
@@ -104,6 +105,20 @@ bool can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
       puts("can_push failed!\n");
     #endif
   }
+  return ret;
+}
+
+uint32_t can_slots_empty(can_ring *q) {
+  uint32_t ret = 0;
+
+  ENTER_CRITICAL();
+  if (q->w_ptr >= q->r_ptr) {
+    ret = q->fifo_size - 1U - q->w_ptr + q->r_ptr;
+  } else {
+    ret = q->r_ptr - q->w_ptr - 1U;
+  }
+  EXIT_CRITICAL();
+
   return ret;
 }
 
@@ -317,6 +332,10 @@ void process_can(uint8_t can_number) {
         CAN->sTxMailBox[0].TDHR = to_send.RDHR;
         CAN->sTxMailBox[0].TDTR = to_send.RDTR;
         CAN->sTxMailBox[0].TIR = to_send.RIR;
+
+        if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER)) {
+          usb_outep3_resume_if_paused();
+        }
       }
     }
 
@@ -404,6 +423,14 @@ void CAN2_SCE_IRQ_Handler(void) { can_sce(CAN2); }
 void CAN3_TX_IRQ_Handler(void) { process_can(2); }
 void CAN3_RX0_IRQ_Handler(void) { can_rx(2); }
 void CAN3_SCE_IRQ_Handler(void) { can_sce(CAN3); }
+
+bool can_tx_check_min_slots_free(uint32_t min) {
+  return
+    (can_slots_empty(&can_tx1_q) >= min) &&
+    (can_slots_empty(&can_tx2_q) >= min) &&
+    (can_slots_empty(&can_tx3_q) >= min) &&
+    (can_slots_empty(&can_txgmlan_q) >= min);
+}
 
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx_hook) {
   if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
