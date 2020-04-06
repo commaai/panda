@@ -212,7 +212,9 @@ def test_bulk_write(p):
     print('Sending!')
     msg = b"\xaa"*4
     packet = [[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]] * NUM_MESSAGES_PER_BUS
-    panda.can_send_many(packet)
+
+    # Disable timeout
+    panda.can_send_many(packet, timeout=0)
     print(f"Done sending {3*NUM_MESSAGES_PER_BUS} messages!")
   
   # Start heartbeat
