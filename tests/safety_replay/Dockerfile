@@ -39,10 +39,8 @@ RUN ./install_capnp.sh
 RUN git clone https://github.com/commaai/openpilot.git || true
 WORKDIR /openpilot
 RUN git pull && git checkout f9257fc75f68c673f9e433985fbe739f23310bb4
+RUN git submodule update --init cereal
 
-RUN git clone https://github.com/commaai/cereal.git || true
-WORKDIR /openpilot/cereal
-RUN git pull && git checkout 35040fe6bb9ebc31d38e98faa64d5ec4093ce3d5
 COPY . /openpilot/panda
 
 WORKDIR /openpilot/panda/tests/safety_replay
