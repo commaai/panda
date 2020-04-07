@@ -941,10 +941,12 @@ void usb_irqhandler(void) {
 }
 
 void usb_outep3_resume_if_paused() {
+  ENTER_CRITICAL();
   if (!outep3_processing && (USBx_OUTEP(3)->DOEPCTL & USB_OTG_DOEPCTL_NAKSTS) != 0) {
     USBx_OUTEP(3)->DOEPTSIZ = (1U << 19) | 0x40U;
     USBx_OUTEP(3)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
   }
+  EXIT_CRITICAL();
 }
 
 void OTG_FS_IRQ_Handler(void) {
