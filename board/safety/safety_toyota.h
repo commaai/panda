@@ -146,6 +146,18 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == 0x2E4)) {
       relay_malfunction = true;
     }
+
+    // ensure driver seatbelt is buckled and all doors are closed
+    if (addr == 0x620) {
+      // middle 4 bits are door statuses
+      if ((GET_BYTE(to_push, 5) >> 2) & 0xF) {
+        controls_allowed = 0;
+      }
+
+      if ((GET_BYTE(to_push, 7) >> 6) & 1) {
+        controls_allowed = 0;
+      }
+    }
   }
   return valid;
 }
