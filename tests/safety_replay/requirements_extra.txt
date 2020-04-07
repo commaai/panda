@@ -4,3 +4,4 @@ libarchive
 pycapnp
 pycurl
 tenacity
+atomicwrites
