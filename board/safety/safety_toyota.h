@@ -150,11 +150,9 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // ensure driver seatbelt is buckled and all doors are closed
     if (addr == 0x620) {
       // middle 4 bits are door statuses
-      if ((GET_BYTE(to_push, 5) >> 2) & 0xF) {
-        controls_allowed = 0;
-      }
-
-      if ((GET_BYTE(to_push, 7) >> 6) & 1) {
+      bool doors_open = ((GET_BYTE(to_push, 5) >> 2) & 0xF) != 0;
+      bool seatbelt_unbuckled = ((GET_BYTE(to_push, 7) >> 6) & 1) != 0;
+      if (doors_open || seatbelt_unbuckled) {
         controls_allowed = 0;
       }
     }
