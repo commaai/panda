@@ -128,6 +128,16 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         (((addr == 0x122) && subaru_global) || ((addr == 0x164) && !subaru_global))) {
       relay_malfunction = true;
     }
+
+    // ensure all doors are closed
+    if ((addr == 0x3ac) && ((GET_BYTE(to_push, 4) & 0xF) != 0)) {
+      controls_allowed = 0;
+    }
+
+    // check if seatbelt is unlatched
+    if ((addr == 0x390) && (((GET_BYTE(to_push, 6) >> 2) & 1) == 1)) {
+      controls_allowed = 0;
+    }
   }
   return valid;
 }
