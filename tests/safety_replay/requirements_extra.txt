@@ -3,3 +3,4 @@ subprocess32
 libarchive
 pycapnp
 pycurl
+tenacity
