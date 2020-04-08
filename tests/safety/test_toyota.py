@@ -43,9 +43,9 @@ class TestToyotaSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 100)
+    cls.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 66)
     cls.safety.init_tests_toyota()
-    cls.packer = CANPackerPanda("toyota_corolla_2017_pt_generated")
+    cls.packer = CANPackerPanda("toyota_prius_2017_pt_generated")
 
   def _set_prev_torque(self, t):
     self.safety.set_toyota_desired_torque_last(t)
@@ -76,8 +76,9 @@ class TestToyotaSafety(unittest.TestCase):
     return to_send
 
   def _send_gas_msg(self, gas):
-    values = {"GAS_PEDAL": gas}
-    return self.packer.make_can_msg_panda("GAS_PEDAL", 0, values)
+    to_send = make_msg(0, 0x2C1)
+    to_send[0].RDHR = (gas & 0xFF) << 16
+    return to_send
 
   def _send_interceptor_msg(self, gas, addr):
     gas2 = gas * 2
@@ -86,16 +87,16 @@ class TestToyotaSafety(unittest.TestCase):
                       ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
     return to_send
 
-    # TODO: why doesn't this work?
-    # seems like there's an offset to the signal that isn't accounted for in safety
-  #def _send_interceptor_msg(self, gas, command=True):
-    #sig_name = "GAS_COMMAND" if command else "GAS_SENSOR"
-    #if command:
-    #  values = {"GAS_COMMAND": gas, "GAS_COMMAND2": gas*2}
-    #else:
-    #   values = {"INTERCEPTOR_GAS": gas, "INTERCEPTOR_GAS2": gas*2}
-    #print(self.packer.make_can_msg(sig_name, 0, values))
-    #return self.packer.make_can_msg_panda(sig_name, 0, values)
+  # TODO: use packer or not?
+  # panda only uses the raw val, not the scaled/offset val
+  #def _send_interceptor_msg(self, gas, addr, command=True):
+  #  command = addr == 0x200
+  #  sig_name = "GAS_COMMAND" if command else "GAS_SENSOR"
+  #  if command:
+  #    values = {"GAS_COMMAND": gas, "GAS_COMMAND2": gas*2}
+  #  else:
+  #     values = {"INTERCEPTOR_GAS": gas, "INTERCEPTOR_GAS2": gas*2}
+  #  return self.packer.make_can_msg_panda(sig_name, 0, values)
 
   def _pcm_cruise_msg(self, cruise_on):
     values = {"CRUISE_ACTIVE": cruise_on}
@@ -126,7 +127,7 @@ class TestToyotaSafety(unittest.TestCase):
 
   def test_prev_gas(self):
     for g in range(0, 256):
-      self.safety.safety_rx_hook(self._send_gas_msg(g*0.005))
+      self.safety.safety_rx_hook(self._send_gas_msg(g))
       self.assertEqual(True if g > 0 else False, self.safety.get_gas_pressed_prev())
 
   def test_prev_gas_interceptor(self):
@@ -283,6 +284,7 @@ class TestToyotaSafety(unittest.TestCase):
     for trq in [50, -50, 0, 0, 0, 0]:
       self.safety.safety_rx_hook(self._torque_meas_msg(trq))
 
+    # toyota safety adds one to be conservative on rounding
     self.assertEqual(-51, self.safety.get_toyota_torque_meas_min())
     self.assertEqual(51, self.safety.get_toyota_torque_meas_max())
 
@@ -295,7 +297,6 @@ class TestToyotaSafety(unittest.TestCase):
     self.assertEqual(-1, self.safety.get_toyota_torque_meas_min())
 
   def test_gas_interceptor_safety_check(self):
-
     self.safety.set_controls_allowed(0)
     self.assertTrue(self.safety.safety_tx_hook(self._send_interceptor_msg(0, 0x200)))
     self.assertFalse(self.safety.safety_tx_hook(self._send_interceptor_msg(0x1000, 0x200)))
