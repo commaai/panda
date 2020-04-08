@@ -29,16 +29,6 @@ TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0
            [0x200, 0], [0x750, 0]];  # interceptor + blindspot monitor
 
 
-def toyota_checksum(msg, addr, len_msg):
-  checksum = (len_msg + addr + (addr >> 8))
-  for i in range(len_msg):
-    if i < 4:
-      checksum += (msg.RDLR >> (8 * i))
-    else:
-      checksum += (msg.RDHR >> (8 * (i - 4)))
-  return checksum & 0xff
-
-
 class TestToyotaSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
@@ -68,12 +58,9 @@ class TestToyotaSafety(unittest.TestCase):
     values = {("WHEEL_SPEED_%s"%n): s for n in ["FR", "FL", "RR", "RL"]}
     return self.packer.make_can_msg_panda("WHEEL_SPEEDS", 0, values)
 
-  def _brake_msg(self, brake):
-    # TODO: not all toyotas have this msg. probably need to update panda safety
-    to_send = make_msg(0, 0x226)
-    to_send[0].RDHR = brake << 5
-    to_send[0].RDHR |= toyota_checksum(to_send[0], 0x226, 8) << 24
-    return to_send
+  def _brake_msg(self, pressed):
+    values = {"BRAKE_PRESSED": pressed}
+    return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
 
   def _send_gas_msg(self, gas):
     to_send = make_msg(0, 0x2C1)
