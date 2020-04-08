@@ -69,11 +69,11 @@ class StdTest:
     # the relay_malfunction protection logic: both tx_hook and fwd_hook are
     # expected to return failure
     test.assertFalse(test.safety.get_relay_malfunction())
-    test.safety.safety_rx_hook(make_msg(bus, addr, 8))
+    test._rx(make_msg(bus, addr, 8))
     test.assertTrue(test.safety.get_relay_malfunction())
     for a in range(1, 0x800):
       for b in range(0, 3):
-        test.assertFalse(test.safety.safety_tx_hook(make_msg(b, a, 8)))
+        test.assertFalse(test._tx(make_msg(b, a, 8)))
         test.assertEqual(-1, test.safety.safety_fwd_hook(b, make_msg(b, a, 8)))
 
   @staticmethod
@@ -88,32 +88,32 @@ class StdTest:
     for addr in range(1, 0x800):
       for bus in range(0, 4):
         if all(addr != m[0] or bus != m[1] for m in TX_MSGS):
-          test.assertFalse(test.safety.safety_tx_hook(make_msg(bus, addr, 8)))
+          test.assertFalse(test._tx(make_msg(bus, addr, 8)))
 
   @staticmethod
   def test_allow_brake_at_zero_speed(test):
     # Brake was already pressed
-    test.safety.safety_rx_hook(test._speed_msg(0))
-    test.safety.safety_rx_hook(test._brake_msg(1))
+    test._rx(test._speed_msg(0))
+    test._rx(test._brake_msg(1))
     test.safety.set_controls_allowed(1)
-    test.safety.safety_rx_hook(test._brake_msg(1))
+    test._rx(test._brake_msg(1))
     test.assertTrue(test.safety.get_controls_allowed())
-    test.safety.safety_rx_hook(test._brake_msg(0))
+    test._rx(test._brake_msg(0))
     test.assertTrue(test.safety.get_controls_allowed())
     # rising edge of brake should disengage
-    test.safety.safety_rx_hook(test._brake_msg(1))
+    test._rx(test._brake_msg(1))
     test.assertFalse(test.safety.get_controls_allowed())
-    test.safety.safety_rx_hook(test._brake_msg(0))  # reset no brakes
+    test._rx(test._brake_msg(0))  # reset no brakes
 
   @staticmethod
   def test_not_allow_brake_when_moving(test, standstill_threshold):
     # Brake was already pressed
-    test.safety.safety_rx_hook(test._brake_msg(1))
+    test._rx(test._brake_msg(1))
     test.safety.set_controls_allowed(1)
-    test.safety.safety_rx_hook(test._speed_msg(standstill_threshold))
-    test.safety.safety_rx_hook(test._brake_msg(1))
+    test._rx(test._speed_msg(standstill_threshold))
+    test._rx(test._brake_msg(1))
     test.assertTrue(test.safety.get_controls_allowed())
-    test.safety.safety_rx_hook(test._speed_msg(standstill_threshold + 1))
-    test.safety.safety_rx_hook(test._brake_msg(1))
+    test._rx(test._speed_msg(standstill_threshold + 1))
+    test._rx(test._brake_msg(1))
     test.assertFalse(test.safety.get_controls_allowed())
-    test.safety.safety_rx_hook(test._speed_msg(0))
+    test._rx(test._speed_msg(0))

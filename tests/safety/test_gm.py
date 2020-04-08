@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import StdTest, PandaSafetyTest, make_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 7
 MAX_RATE_DOWN = 17
@@ -35,7 +35,7 @@ def sign(a):
   else:
     return -1
 
-class TestGmSafety(unittest.TestCase):
+class TestGmSafety(PandaSafetyTest):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
@@ -101,19 +101,19 @@ class TestGmSafety(unittest.TestCase):
   def test_resume_button(self):
     RESUME_BTN = 2
     self.safety.set_controls_allowed(0)
-    self.safety.safety_rx_hook(self._button_msg(RESUME_BTN))
+    self._rx(self._button_msg(RESUME_BTN))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_set_button(self):
     SET_BTN = 3
     self.safety.set_controls_allowed(0)
-    self.safety.safety_rx_hook(self._button_msg(SET_BTN))
+    self._rx(self._button_msg(SET_BTN))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_cancel_button(self):
     CANCEL_BTN = 6
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._button_msg(CANCEL_BTN))
+    self._rx(self._button_msg(CANCEL_BTN))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_brake_disengage(self):
@@ -122,42 +122,42 @@ class TestGmSafety(unittest.TestCase):
 
   def test_disengage_on_gas(self):
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._gas_msg(True))
+    self._rx(self._gas_msg(True))
     self.assertFalse(self.safety.get_controls_allowed())
-    self.safety.safety_rx_hook(self._gas_msg(False))
+    self._rx(self._gas_msg(False))
 
   def test_unsafe_mode_no_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._gas_msg(False))
+    self._rx(self._gas_msg(False))
     self.safety.set_controls_allowed(1)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    self.safety.safety_rx_hook(self._gas_msg(True))
+    self._rx(self._gas_msg(True))
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
   def test_allow_engage_with_gas_pressed(self):
-    self.safety.safety_rx_hook(self._gas_msg(True))
+    self._rx(self._gas_msg(True))
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._gas_msg(True))
+    self._rx(self._gas_msg(True))
     self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_rx_hook(self._gas_msg(False))
+    self._rx(self._gas_msg(False))
 
   def test_brake_safety_check(self):
     for enabled in [0, 1]:
       for b in range(0, 500):
         self.safety.set_controls_allowed(enabled)
         if abs(b) > MAX_BRAKE or (not enabled and b != 0):
-          self.assertFalse(self.safety.safety_tx_hook(self._send_brake_msg(b)))
+          self.assertFalse(self._tx(self._send_brake_msg(b)))
         else:
-          self.assertTrue(self.safety.safety_tx_hook(self._send_brake_msg(b)))
+          self.assertTrue(self._tx(self._send_brake_msg(b)))
 
   def test_gas_safety_check(self):
     for enabled in [0, 1]:
       for g in range(0, 2**12-1):
         self.safety.set_controls_allowed(enabled)
         if abs(g) > MAX_GAS or (not enabled and g != MAX_REGEN):
-          self.assertFalse(self.safety.safety_tx_hook(self._send_gas_msg(g)))
+          self.assertFalse(self._tx(self._send_gas_msg(g)))
         else:
-          self.assertTrue(self.safety.safety_tx_hook(self._send_gas_msg(g)))
+          self.assertTrue(self._tx(self._send_gas_msg(g)))
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
@@ -165,9 +165,9 @@ class TestGmSafety(unittest.TestCase):
         self.safety.set_controls_allowed(enabled)
         self._set_prev_torque(t)
         if abs(t) > MAX_STEER or (not enabled and abs(t) > 0):
-          self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(t)))
+          self.assertFalse(self._tx(self._torque_msg(t)))
         else:
-          self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
+          self.assertTrue(self._tx(self._torque_msg(t)))
 
   def test_manually_enable_controls_allowed(self):
     StdTest.test_manually_enable_controls_allowed(self)
@@ -177,15 +177,15 @@ class TestGmSafety(unittest.TestCase):
     self.safety.set_controls_allowed(True)
 
     self._set_prev_torque(0)
-    self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(MAX_RATE_UP)))
+    self.assertTrue(self._tx(self._torque_msg(MAX_RATE_UP)))
     self._set_prev_torque(0)
-    self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(-MAX_RATE_UP)))
+    self.assertTrue(self._tx(self._torque_msg(-MAX_RATE_UP)))
 
     self._set_prev_torque(0)
-    self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(MAX_RATE_UP + 1)))
+    self.assertFalse(self._tx(self._torque_msg(MAX_RATE_UP + 1)))
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(0)
-    self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(-MAX_RATE_UP - 1)))
+    self.assertFalse(self._tx(self._torque_msg(-MAX_RATE_UP - 1)))
 
   def test_non_realtime_limit_down(self):
     self.safety.set_gm_torque_driver(0, 0)
@@ -199,10 +199,10 @@ class TestGmSafety(unittest.TestCase):
         t *= -sign
         self.safety.set_gm_torque_driver(t, t)
         self._set_prev_torque(MAX_STEER * sign)
-        self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(MAX_STEER * sign)))
+        self.assertTrue(self._tx(self._torque_msg(MAX_STEER * sign)))
 
       self.safety.set_gm_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(-MAX_STEER)))
+      self.assertFalse(self._tx(self._torque_msg(-MAX_STEER)))
 
     # spot check some individual cases
     for sign in [-1, 1]:
@@ -211,20 +211,20 @@ class TestGmSafety(unittest.TestCase):
       delta = 1 * sign
       self._set_prev_torque(torque_desired)
       self.safety.set_gm_torque_driver(-driver_torque, -driver_torque)
-      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(torque_desired)))
+      self.assertTrue(self._tx(self._torque_msg(torque_desired)))
       self._set_prev_torque(torque_desired + delta)
       self.safety.set_gm_torque_driver(-driver_torque, -driver_torque)
-      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(torque_desired + delta)))
+      self.assertFalse(self._tx(self._torque_msg(torque_desired + delta)))
 
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_gm_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
+      self.assertTrue(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_gm_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(0)))
+      self.assertTrue(self._tx(self._torque_msg(0)))
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_gm_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
+      self.assertFalse(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
 
 
   def test_realtime_limits(self):
@@ -236,18 +236,18 @@ class TestGmSafety(unittest.TestCase):
       self.safety.set_gm_torque_driver(0, 0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
-      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+        self.assertTrue(self._tx(self._torque_msg(t)))
+      self.assertFalse(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
       self._set_prev_torque(0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
+        self.assertTrue(self._tx(self._torque_msg(t)))
 
       # Increase timer to update rt_torque_last
       self.safety.set_timer(RT_INTERVAL + 1)
-      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
-      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+      self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
+      self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
 
   def test_fwd_hook(self):
@@ -264,55 +264,55 @@ class TestGmSafety(unittest.TestCase):
     for pedal in ['brake', 'gas']:
       if pedal == 'brake':
         # brake_pressed_prev and honda_moving
-        self.safety.safety_rx_hook(self._speed_msg(100))
-        self.safety.safety_rx_hook(self._brake_msg(MAX_BRAKE))
+        self._rx(self._speed_msg(100))
+        self._rx(self._brake_msg(MAX_BRAKE))
       elif pedal == 'gas':
         # gas_pressed_prev
-        self.safety.safety_rx_hook(self._gas_msg(MAX_GAS))
+        self._rx(self._gas_msg(MAX_GAS))
 
       self.safety.set_controls_allowed(1)
-      self.assertFalse(self.safety.safety_tx_hook(self._send_brake_msg(MAX_BRAKE)))
-      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(MAX_RATE_UP)))
-      self.assertFalse(self.safety.safety_tx_hook(self._send_gas_msg(MAX_GAS)))
+      self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
+      self.assertFalse(self._tx(self._torque_msg(MAX_RATE_UP)))
+      self.assertFalse(self._tx(self._send_gas_msg(MAX_GAS)))
 
       # reset status
       self.safety.set_controls_allowed(0)
-      self.safety.safety_tx_hook(self._send_brake_msg(0))
-      self.safety.safety_tx_hook(self._torque_msg(0))
+      self._tx(self._send_brake_msg(0))
+      self._tx(self._torque_msg(0))
       if pedal == 'brake':
-        self.safety.safety_rx_hook(self._speed_msg(0))
-        self.safety.safety_rx_hook(self._brake_msg(0))
+        self._rx(self._speed_msg(0))
+        self._rx(self._brake_msg(0))
       elif pedal == 'gas':
-        self.safety.safety_rx_hook(self._gas_msg(0))
+        self._rx(self._gas_msg(0))
 
   def test_tx_hook_on_pedal_pressed_on_unsafe_gas_mode(self):
     for pedal in ['brake', 'gas']:
       self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
       if pedal == 'brake':
         # brake_pressed_prev and honda_moving
-        self.safety.safety_rx_hook(self._speed_msg(100))
-        self.safety.safety_rx_hook(self._brake_msg(MAX_BRAKE))
+        self._rx(self._speed_msg(100))
+        self._rx(self._brake_msg(MAX_BRAKE))
         allow_ctrl = False
       elif pedal == 'gas':
         # gas_pressed_prev
-        self.safety.safety_rx_hook(self._gas_msg(MAX_GAS))
+        self._rx(self._gas_msg(MAX_GAS))
         allow_ctrl = True
 
       self.safety.set_controls_allowed(1)
-      self.assertEqual(allow_ctrl, self.safety.safety_tx_hook(self._send_brake_msg(MAX_BRAKE)))
-      self.assertEqual(allow_ctrl, self.safety.safety_tx_hook(self._torque_msg(MAX_RATE_UP)))
-      self.assertEqual(allow_ctrl, self.safety.safety_tx_hook(self._send_gas_msg(MAX_GAS)))
+      self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(MAX_BRAKE)))
+      self.assertEqual(allow_ctrl, self._tx(self._torque_msg(MAX_RATE_UP)))
+      self.assertEqual(allow_ctrl, self._tx(self._send_gas_msg(MAX_GAS)))
 
       # reset status
       self.safety.set_controls_allowed(0)
       self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
-      self.safety.safety_tx_hook(self._send_brake_msg(0))
-      self.safety.safety_tx_hook(self._torque_msg(0))
+      self._tx(self._send_brake_msg(0))
+      self._tx(self._torque_msg(0))
       if pedal == 'brake':
-        self.safety.safety_rx_hook(self._speed_msg(0))
-        self.safety.safety_rx_hook(self._brake_msg(0))
+        self._rx(self._speed_msg(0))
+        self._rx(self._brake_msg(0))
       elif pedal == 'gas':
-        self.safety.safety_rx_hook(self._gas_msg(0))
+        self._rx(self._gas_msg(0))
 
 if __name__ == "__main__":
   unittest.main()

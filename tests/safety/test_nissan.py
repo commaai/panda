@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import StdTest, PandaSafetyTest, make_msg, UNSAFE_MODE
 
 ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
@@ -24,7 +24,7 @@ def sign(a):
     return -1
 
 
-class TestNissanSafety(unittest.TestCase):
+class TestNissanSafety(PandaSafetyTest):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
@@ -45,7 +45,7 @@ class TestNissanSafety(unittest.TestCase):
 
   def _angle_meas_msg_array(self, angle):
     for i in range(6):
-      self.safety.safety_rx_hook(self._angle_meas_msg(angle))
+      self._rx(self._angle_meas_msg(angle))
 
   def _lkas_state_msg(self, state):
     to_send = make_msg(1, 0x30f)
@@ -100,49 +100,49 @@ class TestNissanSafety(unittest.TestCase):
 
         # first test against false positives
         self._angle_meas_msg_array(a)
-        self.safety.safety_rx_hook(self._speed_msg(s))
+        self._rx(self._speed_msg(s))
 
         self._set_prev_angle(a)
         self.safety.set_controls_allowed(1)
 
         # Stay within limits
         # Up
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a + sign(a) * max_delta_up, 1)))
+        self.assertEqual(True, self._tx(self._lkas_control_msg(a + sign(a) * max_delta_up, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Don't change
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a, 1)))
+        self.assertEqual(True, self._tx(self._lkas_control_msg(a, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a - sign(a) * max_delta_down, 1)))
+        self.assertEqual(True, self._tx(self._lkas_control_msg(a - sign(a) * max_delta_down, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Inject too high rates
         # Up
-        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a + sign(a) * (max_delta_up + 1), 1)))
+        self.assertEqual(False, self._tx(self._lkas_control_msg(a + sign(a) * (max_delta_up + 1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
 
         # Don't change
         self.safety.set_controls_allowed(1)
         self._set_prev_angle(a)
         self.assertTrue(self.safety.get_controls_allowed())
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a, 1)))
+        self.assertEqual(True, self._tx(self._lkas_control_msg(a, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a - sign(a) * (max_delta_down + 1), 1)))
+        self.assertEqual(False, self._tx(self._lkas_control_msg(a - sign(a) * (max_delta_down + 1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
 
         # Check desired steer should be the same as steer angle when controls are off
         self.safety.set_controls_allowed(0)
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a, 0)))
+        self.assertEqual(True, self._tx(self._lkas_control_msg(a, 0)))
 
   def test_angle_cmd_when_disabled(self):
     self.safety.set_controls_allowed(0)
 
     self._set_prev_angle(0)
-    self.assertFalse(self.safety.safety_tx_hook(self._lkas_control_msg(0, 1)))
+    self.assertFalse(self._tx(self._lkas_control_msg(0, 1)))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_brake_disengage(self):
@@ -151,34 +151,34 @@ class TestNissanSafety(unittest.TestCase):
 
   def test_gas_rising_edge(self):
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._send_gas_cmd(100))
+    self._rx(self._send_gas_cmd(100))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_unsafe_mode_no_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._send_gas_cmd(0))
+    self._rx(self._send_gas_cmd(0))
     self.safety.set_controls_allowed(True)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    self.safety.safety_rx_hook(self._send_gas_cmd(100))
+    self._rx(self._send_gas_cmd(100))
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
   def test_acc_buttons(self):
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(0x2)) # Cancel button
+    self._tx(self._acc_button_cmd(0x2)) # Cancel button
     self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_tx_hook(self._acc_button_cmd(0x1)) # ProPilot button
+    self._tx(self._acc_button_cmd(0x1)) # ProPilot button
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(0x4)) # Follow Distance button
+    self._tx(self._acc_button_cmd(0x4)) # Follow Distance button
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(0x8)) # Set button
+    self._tx(self._acc_button_cmd(0x8)) # Set button
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(0x10)) # Res button
+    self._tx(self._acc_button_cmd(0x10)) # Res button
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(0x20)) # No button pressed
+    self._tx(self._acc_button_cmd(0x20)) # No button pressed
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_relay_malfunction(self):

@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import StdTest, PandaSafetyTest, make_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 50
 MAX_RATE_DOWN = 70
@@ -42,7 +42,7 @@ def subaru_checksum(msg, addr, len_msg):
   return checksum & 0xff
 
 
-class TestSubaruSafety(unittest.TestCase):
+class TestSubaruSafety(PandaSafetyTest):
   cnt_gas = 0
   cnt_torque_driver = 0
   cnt_cruise = 0
@@ -127,8 +127,8 @@ class TestSubaruSafety(unittest.TestCase):
 
   def _set_torque_driver(self, min_t, max_t):
     for i in range(0, 5):
-      self.safety.safety_rx_hook(self._torque_driver_msg(min_t))
-    self.safety.safety_rx_hook(self._torque_driver_msg(max_t))
+      self._rx(self._torque_driver_msg(min_t))
+    self._rx(self._torque_driver_msg(max_t))
 
   def test_spam_can_buses(self):
     StdTest.test_spam_can_buses(self, TX_MSGS if self.safety.get_subaru_global() else TX_L_MSGS)
@@ -140,26 +140,26 @@ class TestSubaruSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_enable_control_allowed_from_cruise(self):
-    self.safety.safety_rx_hook(self._cruise_msg(True))
+    self._rx(self._cruise_msg(True))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disable_control_allowed_from_cruise(self):
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._cruise_msg(False))
+    self._rx(self._cruise_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas(self):
     self.safety.set_controls_allowed(True)
-    self.safety.safety_rx_hook(self._gas_msg(0))
+    self._rx(self._gas_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_rx_hook(self._gas_msg(1))
+    self._rx(self._gas_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_unsafe_mode_no_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._gas_msg(0))
+    self._rx(self._gas_msg(0))
     self.safety.set_controls_allowed(True)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    self.safety.safety_rx_hook(self._gas_msg(1))
+    self._rx(self._gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
@@ -174,9 +174,9 @@ class TestSubaruSafety(unittest.TestCase):
         self.safety.set_controls_allowed(enabled)
         self._set_prev_torque(t)
         if abs(t) > MAX_STEER or (not enabled and abs(t) > 0):
-          self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(t)))
+          self.assertFalse(self._tx(self._torque_msg(t)))
         else:
-          self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
+          self.assertTrue(self._tx(self._torque_msg(t)))
 
   def test_manually_enable_controls_allowed(self):
     StdTest.test_manually_enable_controls_allowed(self)
@@ -186,15 +186,15 @@ class TestSubaruSafety(unittest.TestCase):
     self.safety.set_controls_allowed(True)
 
     self._set_prev_torque(0)
-    self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(MAX_RATE_UP)))
+    self.assertTrue(self._tx(self._torque_msg(MAX_RATE_UP)))
     self._set_prev_torque(0)
-    self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(-MAX_RATE_UP)))
+    self.assertTrue(self._tx(self._torque_msg(-MAX_RATE_UP)))
 
     self._set_prev_torque(0)
-    self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(MAX_RATE_UP + 1)))
+    self.assertFalse(self._tx(self._torque_msg(MAX_RATE_UP + 1)))
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(0)
-    self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(-MAX_RATE_UP - 1)))
+    self.assertFalse(self._tx(self._torque_msg(-MAX_RATE_UP - 1)))
 
   def test_non_realtime_limit_down(self):
     self._set_torque_driver(0, 0)
@@ -208,10 +208,10 @@ class TestSubaruSafety(unittest.TestCase):
         t *= -sign
         self._set_torque_driver(t, t)
         self._set_prev_torque(MAX_STEER * sign)
-        self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(MAX_STEER * sign)))
+        self.assertTrue(self._tx(self._torque_msg(MAX_STEER * sign)))
 
       self._set_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(-MAX_STEER)))
+      self.assertFalse(self._tx(self._torque_msg(-MAX_STEER)))
 
     # arbitrary high driver torque to ensure max steer torque is allowed
     max_driver_torque = int(MAX_STEER / DRIVER_TORQUE_FACTOR + DRIVER_TORQUE_ALLOWANCE + 1)
@@ -223,20 +223,20 @@ class TestSubaruSafety(unittest.TestCase):
       delta = 1 * sign
       self._set_prev_torque(torque_desired)
       self._set_torque_driver(-driver_torque, -driver_torque)
-      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(torque_desired)))
+      self.assertTrue(self._tx(self._torque_msg(torque_desired)))
       self._set_prev_torque(torque_desired + delta)
       self._set_torque_driver(-driver_torque, -driver_torque)
-      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(torque_desired + delta)))
+      self.assertFalse(self._tx(self._torque_msg(torque_desired + delta)))
 
       self._set_prev_torque(MAX_STEER * sign)
       self._set_torque_driver(-max_driver_torque * sign, -max_driver_torque * sign)
-      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
+      self.assertTrue(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
       self._set_prev_torque(MAX_STEER * sign)
       self._set_torque_driver(-max_driver_torque * sign, -max_driver_torque * sign)
-      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(0)))
+      self.assertTrue(self._tx(self._torque_msg(0)))
       self._set_prev_torque(MAX_STEER * sign)
       self._set_torque_driver(-max_driver_torque * sign, -max_driver_torque * sign)
-      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
+      self.assertFalse(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
 
 
   def test_realtime_limits(self):
@@ -248,18 +248,18 @@ class TestSubaruSafety(unittest.TestCase):
       self._set_torque_driver(0, 0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
-      self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+        self.assertTrue(self._tx(self._torque_msg(t)))
+      self.assertFalse(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
       self._set_prev_torque(0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
+        self.assertTrue(self._tx(self._torque_msg(t)))
 
       # Increase timer to update rt_torque_last
       self.safety.set_timer(RT_INTERVAL + 1)
-      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
-      self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+      self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
+      self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
 
   def test_fwd_hook(self):

@@ -4,7 +4,8 @@ import numpy as np
 import crcmod
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg, MAX_WRONG_COUNTERS, UNSAFE_MODE
+from panda.tests.safety.common import StdTest, PandaSafetyTest, make_msg, \
+                                      MAX_WRONG_COUNTERS, UNSAFE_MODE
 
 MAX_RATE_UP = 4
 MAX_RATE_DOWN = 10
@@ -59,7 +60,7 @@ def volkswagen_mqb_crc(msg, addr, len_msg):
     magic_pad = None
   return volkswagen_crc_8h2f(msg_bytes[1:len_msg] + magic_pad.to_bytes(1, 'little'))
 
-class TestVolkswagenMqbSafety(unittest.TestCase):
+class TestVolkswagenMqbSafety(PandaSafetyTest):
   cnt_eps_01 = 0
   cnt_esp_05 = 0
   cnt_tsk_06 = 0
@@ -153,7 +154,7 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
 
   def test_prev_gas(self):
     for g in range(0, 256):
-      self.safety.safety_rx_hook(self._motor_20_msg(g))
+      self._rx(self._motor_20_msg(g))
       self.assertEqual(True if g > 0 else False, self.safety.get_gas_pressed_prev())
 
   def test_default_controls_not_allowed(self):
@@ -161,31 +162,31 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
 
   def test_enable_control_allowed_from_cruise(self):
     self.safety.set_controls_allowed(0)
-    self.safety.safety_rx_hook(self._tsk_06_msg(3))
+    self._rx(self._tsk_06_msg(3))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disable_control_allowed_from_cruise(self):
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._tsk_06_msg(1))
+    self._rx(self._tsk_06_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_sample_speed(self):
     # Stationary
-    self.safety.safety_rx_hook(self._speed_msg(0))
+    self._rx(self._speed_msg(0))
     self.assertEqual(0, self.safety.get_volkswagen_moving())
     # 1 km/h, just under 0.3 m/s safety grace threshold
-    self.safety.safety_rx_hook(self._speed_msg(1))
+    self._rx(self._speed_msg(1))
     self.assertEqual(0, self.safety.get_volkswagen_moving())
     # 2 km/h, just over 0.3 m/s safety grace threshold
-    self.safety.safety_rx_hook(self._speed_msg(2))
+    self._rx(self._speed_msg(2))
     self.assertEqual(1, self.safety.get_volkswagen_moving())
     # 144 km/h, openpilot V_CRUISE_MAX
-    self.safety.safety_rx_hook(self._speed_msg(144))
+    self._rx(self._speed_msg(144))
     self.assertEqual(1, self.safety.get_volkswagen_moving())
 
   def test_prev_brake(self):
     self.assertFalse(self.safety.get_brake_pressed_prev())
-    self.safety.safety_rx_hook(self._brake_msg(True))
+    self._rx(self._brake_msg(True))
     self.assertTrue(self.safety.get_brake_pressed_prev())
 
   def test_brake_disengage(self):
@@ -193,25 +194,25 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     StdTest.test_not_allow_brake_when_moving(self, 1)
 
   def test_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._motor_20_msg(0))
+    self._rx(self._motor_20_msg(0))
     self.safety.set_controls_allowed(True)
-    self.safety.safety_rx_hook(self._motor_20_msg(1))
+    self._rx(self._motor_20_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_unsafe_mode_no_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._motor_20_msg(0))
+    self._rx(self._motor_20_msg(0))
     self.safety.set_controls_allowed(True)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    self.safety.safety_rx_hook(self._motor_20_msg(1))
+    self._rx(self._motor_20_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
   def test_allow_engage_with_gas_pressed(self):
-    self.safety.safety_rx_hook(self._motor_20_msg(1))
+    self._rx(self._motor_20_msg(1))
     self.safety.set_controls_allowed(True)
-    self.safety.safety_rx_hook(self._motor_20_msg(1))
+    self._rx(self._motor_20_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_rx_hook(self._motor_20_msg(1))
+    self._rx(self._motor_20_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_steer_safety_check(self):
@@ -220,9 +221,9 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
         self.safety.set_controls_allowed(enabled)
         self._set_prev_torque(t)
         if abs(t) > MAX_STEER or (not enabled and abs(t) > 0):
-          self.assertFalse(self.safety.safety_tx_hook(self._hca_01_msg(t)))
+          self.assertFalse(self._tx(self._hca_01_msg(t)))
         else:
-          self.assertTrue(self.safety.safety_tx_hook(self._hca_01_msg(t)))
+          self.assertTrue(self._tx(self._hca_01_msg(t)))
 
   def test_manually_enable_controls_allowed(self):
     StdTest.test_manually_enable_controls_allowed(self)
@@ -232,27 +233,27 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
     BIT_RESUME = 19
     BIT_SET = 16
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self.safety.safety_tx_hook(self._gra_acc_01_msg(BIT_CANCEL)))
-    self.assertFalse(self.safety.safety_tx_hook(self._gra_acc_01_msg(BIT_RESUME)))
-    self.assertFalse(self.safety.safety_tx_hook(self._gra_acc_01_msg(BIT_SET)))
+    self.assertTrue(self._tx(self._gra_acc_01_msg(BIT_CANCEL)))
+    self.assertFalse(self._tx(self._gra_acc_01_msg(BIT_RESUME)))
+    self.assertFalse(self._tx(self._gra_acc_01_msg(BIT_SET)))
     # do not block resume if we are engaged already
     self.safety.set_controls_allowed(1)
-    self.assertTrue(self.safety.safety_tx_hook(self._gra_acc_01_msg(BIT_RESUME)))
+    self.assertTrue(self._tx(self._gra_acc_01_msg(BIT_RESUME)))
 
   def test_non_realtime_limit_up(self):
     self.safety.set_volkswagen_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
 
     self._set_prev_torque(0)
-    self.assertTrue(self.safety.safety_tx_hook(self._hca_01_msg(MAX_RATE_UP)))
+    self.assertTrue(self._tx(self._hca_01_msg(MAX_RATE_UP)))
     self._set_prev_torque(0)
-    self.assertTrue(self.safety.safety_tx_hook(self._hca_01_msg(-MAX_RATE_UP)))
+    self.assertTrue(self._tx(self._hca_01_msg(-MAX_RATE_UP)))
 
     self._set_prev_torque(0)
-    self.assertFalse(self.safety.safety_tx_hook(self._hca_01_msg(MAX_RATE_UP + 1)))
+    self.assertFalse(self._tx(self._hca_01_msg(MAX_RATE_UP + 1)))
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(0)
-    self.assertFalse(self.safety.safety_tx_hook(self._hca_01_msg(-MAX_RATE_UP - 1)))
+    self.assertFalse(self._tx(self._hca_01_msg(-MAX_RATE_UP - 1)))
 
   def test_non_realtime_limit_down(self):
     self.safety.set_volkswagen_torque_driver(0, 0)
@@ -266,10 +267,10 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
         t *= -sign
         self.safety.set_volkswagen_torque_driver(t, t)
         self._set_prev_torque(MAX_STEER * sign)
-        self.assertTrue(self.safety.safety_tx_hook(self._hca_01_msg(MAX_STEER * sign)))
+        self.assertTrue(self._tx(self._hca_01_msg(MAX_STEER * sign)))
 
       self.safety.set_volkswagen_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self.safety.safety_tx_hook(self._hca_01_msg(-MAX_STEER)))
+      self.assertFalse(self._tx(self._hca_01_msg(-MAX_STEER)))
 
     # spot check some individual cases
     for sign in [-1, 1]:
@@ -278,20 +279,20 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
       delta = 1 * sign
       self._set_prev_torque(torque_desired)
       self.safety.set_volkswagen_torque_driver(-driver_torque, -driver_torque)
-      self.assertTrue(self.safety.safety_tx_hook(self._hca_01_msg(torque_desired)))
+      self.assertTrue(self._tx(self._hca_01_msg(torque_desired)))
       self._set_prev_torque(torque_desired + delta)
       self.safety.set_volkswagen_torque_driver(-driver_torque, -driver_torque)
-      self.assertFalse(self.safety.safety_tx_hook(self._hca_01_msg(torque_desired + delta)))
+      self.assertFalse(self._tx(self._hca_01_msg(torque_desired + delta)))
 
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_volkswagen_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self.safety.safety_tx_hook(self._hca_01_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
+      self.assertTrue(self._tx(self._hca_01_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_volkswagen_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self.safety.safety_tx_hook(self._hca_01_msg(0)))
+      self.assertTrue(self._tx(self._hca_01_msg(0)))
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_volkswagen_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertFalse(self.safety.safety_tx_hook(self._hca_01_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
+      self.assertFalse(self._tx(self._hca_01_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
 
   def test_realtime_limits(self):
     self.safety.set_controls_allowed(True)
@@ -302,35 +303,35 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
       self.safety.set_volkswagen_torque_driver(0, 0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.assertTrue(self.safety.safety_tx_hook(self._hca_01_msg(t)))
-      self.assertFalse(self.safety.safety_tx_hook(self._hca_01_msg(sign * (MAX_RT_DELTA + 1))))
+        self.assertTrue(self._tx(self._hca_01_msg(t)))
+      self.assertFalse(self._tx(self._hca_01_msg(sign * (MAX_RT_DELTA + 1))))
 
       self._set_prev_torque(0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.assertTrue(self.safety.safety_tx_hook(self._hca_01_msg(t)))
+        self.assertTrue(self._tx(self._hca_01_msg(t)))
 
       # Increase timer to update rt_torque_last
       self.safety.set_timer(RT_INTERVAL + 1)
-      self.assertTrue(self.safety.safety_tx_hook(self._hca_01_msg(sign * (MAX_RT_DELTA - 1))))
-      self.assertTrue(self.safety.safety_tx_hook(self._hca_01_msg(sign * (MAX_RT_DELTA + 1))))
+      self.assertTrue(self._tx(self._hca_01_msg(sign * (MAX_RT_DELTA - 1))))
+      self.assertTrue(self._tx(self._hca_01_msg(sign * (MAX_RT_DELTA + 1))))
 
   def test_torque_measurements(self):
-    self.safety.safety_rx_hook(self._eps_01_msg(50))
-    self.safety.safety_rx_hook(self._eps_01_msg(-50))
-    self.safety.safety_rx_hook(self._eps_01_msg(0))
-    self.safety.safety_rx_hook(self._eps_01_msg(0))
-    self.safety.safety_rx_hook(self._eps_01_msg(0))
-    self.safety.safety_rx_hook(self._eps_01_msg(0))
+    self._rx(self._eps_01_msg(50))
+    self._rx(self._eps_01_msg(-50))
+    self._rx(self._eps_01_msg(0))
+    self._rx(self._eps_01_msg(0))
+    self._rx(self._eps_01_msg(0))
+    self._rx(self._eps_01_msg(0))
 
     self.assertEqual(-50, self.safety.get_volkswagen_torque_driver_min())
     self.assertEqual(50, self.safety.get_volkswagen_torque_driver_max())
 
-    self.safety.safety_rx_hook(self._eps_01_msg(0))
+    self._rx(self._eps_01_msg(0))
     self.assertEqual(0, self.safety.get_volkswagen_torque_driver_max())
     self.assertEqual(-50, self.safety.get_volkswagen_torque_driver_min())
 
-    self.safety.safety_rx_hook(self._eps_01_msg(0))
+    self._rx(self._eps_01_msg(0))
     self.assertEqual(0, self.safety.get_volkswagen_torque_driver_max())
     self.assertEqual(0, self.safety.get_volkswagen_torque_driver_min())
 
@@ -349,9 +350,9 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
         to_push = self._tsk_06_msg(3)
       if msg == MSG_MOTOR_20:
         to_push = self._motor_20_msg(0)
-      self.assertTrue(self.safety.safety_rx_hook(to_push))
+      self.assertTrue(self._rx(to_push))
       to_push[0].RDHR ^= 0xFF
-      self.assertFalse(self.safety.safety_rx_hook(to_push))
+      self.assertFalse(self._rx(to_push))
       self.assertFalse(self.safety.get_controls_allowed())
 
     # counter
@@ -363,24 +364,24 @@ class TestVolkswagenMqbSafety(unittest.TestCase):
       self.__class__.cnt_motor_20 += 1
       if i < MAX_WRONG_COUNTERS:
         self.safety.set_controls_allowed(1)
-        self.safety.safety_rx_hook(self._eps_01_msg(0))
-        self.safety.safety_rx_hook(self._brake_msg(False))
-        self.safety.safety_rx_hook(self._tsk_06_msg(3))
-        self.safety.safety_rx_hook(self._motor_20_msg(0))
+        self._rx(self._eps_01_msg(0))
+        self._rx(self._brake_msg(False))
+        self._rx(self._tsk_06_msg(3))
+        self._rx(self._motor_20_msg(0))
       else:
-        self.assertFalse(self.safety.safety_rx_hook(self._eps_01_msg(0)))
-        self.assertFalse(self.safety.safety_rx_hook(self._brake_msg(False)))
-        self.assertFalse(self.safety.safety_rx_hook(self._tsk_06_msg(3)))
-        self.assertFalse(self.safety.safety_rx_hook(self._motor_20_msg(0)))
+        self.assertFalse(self._rx(self._eps_01_msg(0)))
+        self.assertFalse(self._rx(self._brake_msg(False)))
+        self.assertFalse(self._rx(self._tsk_06_msg(3)))
+        self.assertFalse(self._rx(self._motor_20_msg(0)))
         self.assertFalse(self.safety.get_controls_allowed())
 
     # restore counters for future tests with a couple of good messages
     for i in range(2):
       self.safety.set_controls_allowed(1)
-      self.safety.safety_rx_hook(self._eps_01_msg(0))
-      self.safety.safety_rx_hook(self._brake_msg(False))
-      self.safety.safety_rx_hook(self._tsk_06_msg(3))
-      self.safety.safety_rx_hook(self._motor_20_msg(0))
+      self._rx(self._eps_01_msg(0))
+      self._rx(self._brake_msg(False))
+      self._rx(self._tsk_06_msg(3))
+      self._rx(self._motor_20_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_fwd_hook(self):
