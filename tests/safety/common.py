@@ -1,3 +1,6 @@
+import struct
+
+from opendbc.can.packer import CANPacker
 from panda.tests.safety import libpandasafety_py
 
 MAX_WRONG_COUNTERS = 5
@@ -18,6 +21,26 @@ def make_msg(bus, addr, length=8):
   to_send[0].RDTR |= bus << 4
 
   return to_send
+
+def package_can_msg(msg):
+  addr, _, dat, bus = msg
+  rdlr, rdhr = struct.unpack('II', dat.ljust(8, b'\x00'))
+
+  ret = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+  if addr >= 0x800:
+    ret[0].RIR = (addr << 3) | 5
+  else:
+    ret[0].RIR = (addr << 21) | 1
+  ret[0].RDTR = len(dat) | ((bus & 0xF) << 4)
+  ret[0].RDHR = rdhr
+  ret[0].RDLR = rdlr
+
+  return ret
+
+class CANPackerPanda(CANPacker):
+  def make_can_msg_panda(self, name_or_addr, bus, values, counter=-1):
+    msg = self.make_can_msg(name_or_addr, bus, values, counter=-1)
+    return package_can_msg(msg)
 
 class StdTest:
   @staticmethod

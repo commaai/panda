@@ -3,22 +3,22 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import StdTest, CANPackerPanda, make_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 10
 MAX_RATE_DOWN = 25
 MAX_TORQUE = 1500
 
-MAX_ACCEL = 1500
-MIN_ACCEL = -3000
+MAX_ACCEL = 1.5
+MIN_ACCEL = -3.0
 
-ISO_MAX_ACCEL = 2000
-ISO_MIN_ACCEL = -3500
+ISO_MAX_ACCEL = 2.0
+ISO_MIN_ACCEL = -3.5
 
 MAX_RT_DELTA = 375
 RT_INTERVAL = 250000
 
-STANDSTILL_THRESHOLD = 100  # 1kph
+STANDSTILL_THRESHOLD = 1  # 1kph
 
 MAX_TORQUE_ERROR = 350
 INTERCEPTOR_THRESHOLD = 475
@@ -28,18 +28,6 @@ TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0
            [0x2E4, 0], [0x411, 0], [0x412, 0], [0x343, 0], [0x1D2, 0],  # LKAS + ACC
            [0x200, 0], [0x750, 0]];  # interceptor + blindspot monitor
 
-
-def twos_comp(val, bits):
-  if val >= 0:
-    return val
-  else:
-    return (2**bits) + val
-
-def sign(a):
-  if a > 0:
-    return 1
-  else:
-    return -1
 
 def toyota_checksum(msg, addr, len_msg):
   checksum = (len_msg + addr + (addr >> 8))
@@ -57,6 +45,7 @@ class TestToyotaSafety(unittest.TestCase):
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 100)
     cls.safety.init_tests_toyota()
+    cls.packer = CANPackerPanda("toyota_corolla_2017_pt_generated")
 
   def _set_prev_torque(self, t):
     self.safety.set_toyota_desired_torque_last(t)
@@ -64,43 +53,31 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.set_toyota_torque_meas(t, t)
 
   def _torque_meas_msg(self, torque):
-    t = twos_comp(torque, 16)
-    to_send = make_msg(0, 0x260)
-    to_send[0].RDHR = (t & 0xff00) | ((t & 0xFF) << 16)
-    to_send[0].RDHR |= toyota_checksum(to_send[0], 0x260, 8) << 24
-    return to_send
+    values = {"STEER_TORQUE_EPS": torque}
+    return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
 
   def _torque_msg(self, torque):
-    t = twos_comp(torque, 16)
-    to_send = make_msg(0, 0x2E4)
-    to_send[0].RDLR = t | ((t & 0xFF) << 16)
-    return to_send
+    values = {"STEER_TORQUE_CMD": torque}
+    return self.packer.make_can_msg_panda("STEERING_LKA", 0, values)
 
   def _accel_msg(self, accel):
-    to_send = make_msg(0, 0x343)
-    a = twos_comp(accel, 16)
-    to_send[0].RDLR = (a & 0xFF) << 8 | (a >> 8)
-    return to_send
+    values = {"ACCEL_CMD": accel}
+    return self.packer.make_can_msg_panda("ACC_CONTROL", 0, values)
 
   def _speed_msg(self, s):
-    offset = (0x6f << 8) + 0x1a  # there is a 0x1a6f offset in the signal
-    to_send = make_msg(0, 0xaa)
-    to_send[0].RDLR = ((s & 0xFF) << 8 | (s >> 8)) + offset
-    to_send[0].RDLR += ((s & 0xFF) << 24 | ((s >> 8) << 16)) + (offset << 16)
-    to_send[0].RDHR = ((s & 0xFF) << 8 | (s >> 8)) + offset
-    to_send[0].RDHR += ((s & 0xFF) << 24 | ((s >> 8) << 16)) + (offset << 16)
-    return to_send
+    values = {("WHEEL_SPEED_%s"%n): s for n in ["FR", "FL", "RR", "RL"]}
+    return self.packer.make_can_msg_panda("WHEEL_SPEEDS", 0, values)
 
   def _brake_msg(self, brake):
+    # TODO: not all toyotas have this msg. probably need to update panda safety
     to_send = make_msg(0, 0x226)
     to_send[0].RDHR = brake << 5
     to_send[0].RDHR |= toyota_checksum(to_send[0], 0x226, 8) << 24
     return to_send
 
   def _send_gas_msg(self, gas):
-    to_send = make_msg(0, 0x2C1)
-    to_send[0].RDHR = (gas & 0xFF) << 16
-    return to_send
+    values = {"GAS_PEDAL": gas}
+    return self.packer.make_can_msg_panda("GAS_PEDAL", 0, values)
 
   def _send_interceptor_msg(self, gas, addr):
     gas2 = gas * 2
@@ -109,11 +86,20 @@ class TestToyotaSafety(unittest.TestCase):
                       ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
     return to_send
 
+    # TODO: why doesn't this work?
+    # seems like there's an offset to the signal that isn't accounted for in safety
+  #def _send_interceptor_msg(self, gas, command=True):
+    #sig_name = "GAS_COMMAND" if command else "GAS_SENSOR"
+    #if command:
+    #  values = {"GAS_COMMAND": gas, "GAS_COMMAND2": gas*2}
+    #else:
+    #   values = {"INTERCEPTOR_GAS": gas, "INTERCEPTOR_GAS2": gas*2}
+    #print(self.packer.make_can_msg(sig_name, 0, values))
+    #return self.packer.make_can_msg_panda(sig_name, 0, values)
+
   def _pcm_cruise_msg(self, cruise_on):
-    to_send = make_msg(0, 0x1D2)
-    to_send[0].RDLR = cruise_on << 5
-    to_send[0].RDHR = to_send[0].RDHR | (toyota_checksum(to_send[0], 0x1D2, 8) << 24)
-    return to_send
+    values = {"CRUISE_ACTIVE": cruise_on}
+    return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
   def test_spam_can_buses(self):
     StdTest.test_spam_can_buses(self, TX_MSGS)
@@ -140,7 +126,7 @@ class TestToyotaSafety(unittest.TestCase):
 
   def test_prev_gas(self):
     for g in range(0, 256):
-      self.safety.safety_rx_hook(self._send_gas_msg(g))
+      self.safety.safety_rx_hook(self._send_gas_msg(g*0.005))
       self.assertEqual(True if g > 0 else False, self.safety.get_gas_pressed_prev())
 
   def test_prev_gas_interceptor(self):
@@ -207,26 +193,20 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.set_gas_interceptor_detected(False)
 
   def test_accel_actuation_limits(self):
-    for accel in np.arange(MIN_ACCEL - 1000, MAX_ACCEL + 1000, 100):
-      for controls_allowed in [True, False]:
-        self.safety.set_controls_allowed(controls_allowed)
-        if controls_allowed:
-          send = MIN_ACCEL <= accel <= MAX_ACCEL
-        else:
-          send = accel == 0
-        self.assertEqual(send, self.safety.safety_tx_hook(self._accel_msg(accel)))
+    limits = ((MIN_ACCEL, MAX_ACCEL, UNSAFE_MODE.DEFAULT),
+              (ISO_MIN_ACCEL, ISO_MAX_ACCEL, UNSAFE_MODE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
 
-  def test_unsafe_iso_accel_actuation_limits(self):
-    for accel in np.arange(ISO_MIN_ACCEL - 1000, ISO_MAX_ACCEL + 1000, 100):
-      for controls_allowed in [True, False]:
-        self.safety.set_controls_allowed(controls_allowed)
-        self.safety.set_unsafe_mode(UNSAFE_MODE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX)
-        if controls_allowed:
-          send = ISO_MIN_ACCEL <= accel <= ISO_MAX_ACCEL
-        else:
-          send = accel == 0
-        self.assertEqual(send, self.safety.safety_tx_hook(self._accel_msg(accel)))
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
+    for min_accel, max_accel, unsafe_mode in limits:
+      for accel in np.arange(min_accel - 1, max_accel + 1, 0.1):
+        for controls_allowed in [True, False]:
+          self.safety.set_controls_allowed(controls_allowed)
+          self.safety.set_unsafe_mode(unsafe_mode)
+          if controls_allowed:
+            # TODO: fix this hack
+            should_tx = int(min_accel*1000) <= int(accel*1000) <= int(max_accel*1000)
+          else:
+            should_tx = np.isclose(accel, 0, atol=0.0001)
+          self.assertEqual(should_tx, self.safety.safety_tx_hook(self._accel_msg(accel)))
 
   def test_torque_absolute_limits(self):
     for controls_allowed in [True, False]:
@@ -300,12 +280,8 @@ class TestToyotaSafety(unittest.TestCase):
       self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(sign * 380)))
 
   def test_torque_measurements(self):
-    self.safety.safety_rx_hook(self._torque_meas_msg(50))
-    self.safety.safety_rx_hook(self._torque_meas_msg(-50))
-    self.safety.safety_rx_hook(self._torque_meas_msg(0))
-    self.safety.safety_rx_hook(self._torque_meas_msg(0))
-    self.safety.safety_rx_hook(self._torque_meas_msg(0))
-    self.safety.safety_rx_hook(self._torque_meas_msg(0))
+    for trq in [50, -50, 0, 0, 0, 0]:
+      self.safety.safety_rx_hook(self._torque_meas_msg(trq))
 
     self.assertEqual(-51, self.safety.get_toyota_torque_meas_min())
     self.assertEqual(51, self.safety.get_toyota_torque_meas_max())
