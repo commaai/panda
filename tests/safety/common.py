@@ -22,6 +22,13 @@ def make_msg(bus, addr, length=8):
 
   return to_send
 
+def interceptor_msg(gas, addr):
+  to_send = make_msg(0, addr, 6)
+  gas2 = gas * 2
+  to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
+                    ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
+  return to_send
+
 def package_can_msg(msg):
   addr, _, dat, bus = msg
   rdlr, rdhr = struct.unpack('II', dat.ljust(8, b'\x00'))
