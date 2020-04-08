@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg, MAX_WRONG_COUNTERS, UNSAFE_MODE
+from panda.tests.safety.common import StdTest, CANPackerPanda, make_msg, MAX_WRONG_COUNTERS, UNSAFE_MODE
 
 MAX_BRAKE = 255
 
@@ -11,7 +11,6 @@ INTERCEPTOR_THRESHOLD = 328
 N_TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x200, 0], [0x30C, 0], [0x33D, 0]]
 BH_TX_MSGS = [[0xE4, 0], [0x296, 1], [0x33D, 0]]  # Bosch Harness
 BG_TX_MSGS = [[0xE4, 2], [0x296, 0], [0x33D, 2]]  # Bosch Giraffe
-
 
 HONDA_N_HW = 0
 HONDA_BG_HW = 1
@@ -37,18 +36,17 @@ class TestHondaSafety(unittest.TestCase):
 
   @classmethod
   def setUp(cls):
+    cls.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
+    cls.packer_bosch = CANPackerPanda("honda_accord_s2t_2018_can_generated")
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
     cls.safety.init_tests_honda()
 
   def _speed_msg(self, speed):
     bus = 1 if self.safety.get_honda_hw() == HONDA_BH_HW else 0
-    to_send = make_msg(bus, 0x158)
-    to_send[0].RDLR = speed
-    to_send[0].RDHR |= (self.cnt_speed % 4) << 28
-    to_send[0].RDHR |= honda_checksum(to_send[0], 0x158, 8) << 24
     self.__class__.cnt_speed += 1
-    return to_send
+    values = {"XMISSION_SPEED": speed, "COUNTER": self.cnt_speed % 4}
+    return self.packer.make_can_msg_panda("ENGINE_DATA", bus, values)
 
   def _button_msg(self, buttons, addr):
     bus = 1 if self.safety.get_honda_hw() == HONDA_BH_HW else 0
@@ -61,31 +59,23 @@ class TestHondaSafety(unittest.TestCase):
 
   def _brake_msg(self, brake):
     bus = 1 if self.safety.get_honda_hw() == HONDA_BH_HW else 0
-    to_send = make_msg(bus, 0x17C)
-    to_send[0].RDHR = 0x200000 if brake else 0
-    to_send[0].RDHR |= (self.cnt_gas % 4) << 28
-    to_send[0].RDHR |= honda_checksum(to_send[0], 0x17C, 8) << 24
     self.__class__.cnt_gas += 1
-    return to_send
+    values = {"BRAKE_PRESSED": brake, "COUNTER": self.cnt_gas % 4}
+    return self.packer.make_can_msg_panda("POWERTRAIN_DATA", bus, values)
 
   def _alt_brake_msg(self, brake):
-    to_send = make_msg(0, 0x1BE)
-    to_send[0].RDLR = 0x10 if brake else 0
-    return to_send
+    values = {"BRAKE_PRESSED": brake}
+    return self.packer_bosch.make_can_msg_panda("BRAKE_MODULE", 0, values)
 
   def _gas_msg(self, gas):
     bus = 1 if self.safety.get_honda_hw() == HONDA_BH_HW else 0
-    to_send = make_msg(bus, 0x17C)
-    to_send[0].RDLR = 1 if gas else 0
-    to_send[0].RDHR |= (self.cnt_gas % 4) << 28
-    to_send[0].RDHR |= honda_checksum(to_send[0], 0x17C, 8) << 24
     self.__class__.cnt_gas += 1
-    return to_send
+    values = {"PEDAL_GAS": gas, "COUNTER": self.cnt_gas % 4}
+    return self.packer.make_can_msg_panda("POWERTRAIN_DATA", bus, values)
 
   def _send_brake_msg(self, brake):
-    to_send = make_msg(0, 0x1FA)
-    to_send[0].RDLR = ((brake & 0x3) << 14) | ((brake & 0x3FF) >> 2)
-    return to_send
+    values = {"COMPUTER_BRAKE": brake}
+    return self.packer.make_can_msg_panda("BRAKE_COMMAND", 0, values)
 
   def _send_interceptor_msg(self, gas, addr):
     to_send = make_msg(0, addr, 6)
@@ -96,9 +86,8 @@ class TestHondaSafety(unittest.TestCase):
 
   def _send_steer_msg(self, steer):
     bus = 2 if self.safety.get_honda_hw() == HONDA_BG_HW else 0
-    to_send = make_msg(bus, 0xE4, 6)
-    to_send[0].RDLR = steer
-    return to_send
+    values = {"STEER_TORQUE": steer}
+    return self.packer.make_can_msg_panda("STEERING_CONTROL", bus, values)
 
   def test_spam_can_buses(self):
     hw_type = self.safety.get_honda_hw()
