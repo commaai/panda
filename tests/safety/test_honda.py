@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, CANPackerPanda, make_msg, \
+from panda.tests.safety.common import StdTest, CANPackerPanda, PandaSafetyTest, make_msg, \
                                       interceptor_msg, MAX_WRONG_COUNTERS, UNSAFE_MODE
 
 MAX_BRAKE = 255
@@ -30,7 +29,7 @@ def honda_checksum(msg, addr, len_msg):
   return (8 - checksum) & 0xF
 
 
-class TestHondaSafety(unittest.TestCase):
+class TestHondaSafety(PandaSafetyTest):
   cnt_speed = 0
   cnt_gas = 0
   cnt_button = 0
@@ -107,45 +106,45 @@ class TestHondaSafety(unittest.TestCase):
   def test_resume_button(self):
     RESUME_BTN = 4
     self.safety.set_controls_allowed(0)
-    self.safety.safety_rx_hook(self._button_msg(RESUME_BTN, 0x296))
+    self._rx(self._button_msg(RESUME_BTN, 0x296))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_set_button(self):
     SET_BTN = 3
     self.safety.set_controls_allowed(0)
-    self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x296))
+    self._rx(self._button_msg(SET_BTN, 0x296))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_cancel_button(self):
     CANCEL_BTN = 2
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._button_msg(CANCEL_BTN, 0x296))
+    self._rx(self._button_msg(CANCEL_BTN, 0x296))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_sample_speed(self):
     self.assertEqual(0, self.safety.get_honda_moving())
-    self.safety.safety_rx_hook(self._speed_msg(100))
+    self._rx(self._speed_msg(100))
     self.assertEqual(1, self.safety.get_honda_moving())
 
   def test_prev_brake(self):
     self.assertFalse(self.safety.get_brake_pressed_prev())
-    self.safety.safety_rx_hook(self._brake_msg(True))
+    self._rx(self._brake_msg(True))
     self.assertTrue(self.safety.get_brake_pressed_prev())
 
   def test_disengage_on_brake(self):
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._brake_msg(1))
+    self._rx(self._brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_alt_disengage_on_brake(self):
     self.safety.set_honda_alt_brake_msg(1)
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._alt_brake_msg(1))
+    self._rx(self._alt_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
     self.safety.set_honda_alt_brake_msg(0)
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._alt_brake_msg(1))
+    self._rx(self._alt_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_brake_disengage(self):
@@ -153,66 +152,66 @@ class TestHondaSafety(unittest.TestCase):
     StdTest.test_not_allow_brake_when_moving(self, 0)
 
   def test_prev_gas(self):
-    self.safety.safety_rx_hook(self._gas_msg(False))
+    self._rx(self._gas_msg(False))
     self.assertFalse(self.safety.get_gas_pressed_prev())
-    self.safety.safety_rx_hook(self._gas_msg(True))
+    self._rx(self._gas_msg(True))
     self.assertTrue(self.safety.get_gas_pressed_prev())
 
   def test_prev_gas_interceptor(self):
-    self.safety.safety_rx_hook(interceptor_msg(0x0, 0x201))
+    self._rx(interceptor_msg(0x0, 0x201))
     self.assertFalse(self.safety.get_gas_interceptor_prev())
-    self.safety.safety_rx_hook(interceptor_msg(0x1000, 0x201))
+    self._rx(interceptor_msg(0x1000, 0x201))
     self.assertTrue(self.safety.get_gas_interceptor_prev())
-    self.safety.safety_rx_hook(interceptor_msg(0x0, 0x201))
+    self._rx(interceptor_msg(0x0, 0x201))
     self.safety.set_gas_interceptor_detected(False)
 
   def test_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._gas_msg(0))
+    self._rx(self._gas_msg(0))
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._gas_msg(1))
+    self._rx(self._gas_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_unsafe_mode_no_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._gas_msg(0))
+    self._rx(self._gas_msg(0))
     self.safety.set_controls_allowed(1)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    self.safety.safety_rx_hook(self._gas_msg(1))
+    self._rx(self._gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
   def test_allow_engage_with_gas_pressed(self):
-    self.safety.safety_rx_hook(self._gas_msg(1))
+    self._rx(self._gas_msg(1))
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._gas_msg(1))
+    self._rx(self._gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas_interceptor(self):
     for g in range(0, 0x1000):
-      self.safety.safety_rx_hook(interceptor_msg(0, 0x201))
+      self._rx(interceptor_msg(0, 0x201))
       self.safety.set_controls_allowed(True)
-      self.safety.safety_rx_hook(interceptor_msg(g, 0x201))
+      self._rx(interceptor_msg(g, 0x201))
       remain_enabled = g <= INTERCEPTOR_THRESHOLD
       self.assertEqual(remain_enabled, self.safety.get_controls_allowed())
-      self.safety.safety_rx_hook(interceptor_msg(0, 0x201))
+      self._rx(interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
 
   def test_unsafe_mode_no_disengage_on_gas_interceptor(self):
     self.safety.set_controls_allowed(True)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
     for g in range(0, 0x1000):
-      self.safety.safety_rx_hook(interceptor_msg(g, 0x201))
+      self._rx(interceptor_msg(g, 0x201))
       self.assertTrue(self.safety.get_controls_allowed())
-      self.safety.safety_rx_hook(interceptor_msg(0, 0x201))
+      self._rx(interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
     self.safety.set_controls_allowed(False)
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
-    self.safety.safety_rx_hook(interceptor_msg(0x1000, 0x201))
+    self._rx(interceptor_msg(0x1000, 0x201))
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(interceptor_msg(0x1000, 0x201))
+    self._rx(interceptor_msg(0x1000, 0x201))
     self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_rx_hook(interceptor_msg(0, 0x201))
+    self._rx(interceptor_msg(0, 0x201))
     self.safety.set_gas_interceptor_detected(False)
 
   def test_brake_safety_check(self):
@@ -229,7 +228,7 @@ class TestHondaSafety(unittest.TestCase):
               send = MAX_BRAKE >= brake >= 0
             else:
               send = brake == 0
-            self.assertEqual(send, self.safety.safety_tx_hook(self._send_brake_msg(brake)))
+            self.assertEqual(send, self._tx(self._send_brake_msg(brake)))
       self.safety.set_honda_fwd_brake(False)
 
   def test_gas_interceptor_safety_check(self):
@@ -241,12 +240,12 @@ class TestHondaSafety(unittest.TestCase):
             send = True
           else:
             send = gas == 0
-          self.assertEqual(send, self.safety.safety_tx_hook(interceptor_msg(gas, 0x200)))
+          self.assertEqual(send, self._tx(interceptor_msg(gas, 0x200)))
 
   def test_steer_safety_check(self):
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self.safety.safety_tx_hook(self._send_steer_msg(0x0000)))
-    self.assertFalse(self.safety.safety_tx_hook(self._send_steer_msg(0x1000)))
+    self.assertTrue(self._tx(self._send_steer_msg(0x0000)))
+    self.assertFalse(self._tx(self._send_steer_msg(0x1000)))
 
   def test_spam_cancel_safety_check(self):
     hw = self.safety.get_honda_hw()
@@ -256,12 +255,12 @@ class TestHondaSafety(unittest.TestCase):
       CANCEL_BTN = 2
       BUTTON_MSG = 0x296
       self.safety.set_controls_allowed(0)
-      self.assertTrue(self.safety.safety_tx_hook(self._button_msg(CANCEL_BTN, BUTTON_MSG)))
-      self.assertFalse(self.safety.safety_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))
-      self.assertFalse(self.safety.safety_tx_hook(self._button_msg(SET_BTN, BUTTON_MSG)))
+      self.assertTrue(self._tx(self._button_msg(CANCEL_BTN, BUTTON_MSG)))
+      self.assertFalse(self._tx(self._button_msg(RESUME_BTN, BUTTON_MSG)))
+      self.assertFalse(self._tx(self._button_msg(SET_BTN, BUTTON_MSG)))
       # do not block resume if we are engaged already
       self.safety.set_controls_allowed(1)
-      self.assertTrue(self.safety.safety_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))
+      self.assertTrue(self._tx(self._button_msg(RESUME_BTN, BUTTON_MSG)))
 
   def test_rx_hook(self):
 
@@ -280,9 +279,9 @@ class TestHondaSafety(unittest.TestCase):
         to_push = self._gas_msg(0)
       if msg == "speed":
         to_push = self._speed_msg(0)
-      self.assertTrue(self.safety.safety_rx_hook(to_push))
+      self.assertTrue(self._rx(to_push))
       to_push[0].RDHR = 0  # invalidate checksum
-      self.assertFalse(self.safety.safety_rx_hook(to_push))
+      self.assertFalse(self._rx(to_push))
       self.assertFalse(self.safety.get_controls_allowed())
 
     # counter
@@ -293,22 +292,22 @@ class TestHondaSafety(unittest.TestCase):
       self.__class__.cnt_button += 1
       if i < MAX_WRONG_COUNTERS:
         self.safety.set_controls_allowed(1)
-        self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x296))
-        self.safety.safety_rx_hook(self._speed_msg(0))
-        self.safety.safety_rx_hook(self._gas_msg(0))
+        self._rx(self._button_msg(SET_BTN, 0x296))
+        self._rx(self._speed_msg(0))
+        self._rx(self._gas_msg(0))
       else:
-        self.assertFalse(self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x296)))
-        self.assertFalse(self.safety.safety_rx_hook(self._speed_msg(0)))
-        self.assertFalse(self.safety.safety_rx_hook(self._gas_msg(0)))
+        self.assertFalse(self._rx(self._button_msg(SET_BTN, 0x296)))
+        self.assertFalse(self._rx(self._speed_msg(0)))
+        self.assertFalse(self._rx(self._gas_msg(0)))
         self.assertFalse(self.safety.get_controls_allowed())
 
     # restore counters for future tests with a couple of good messages
     for i in range(2):
       self.safety.set_controls_allowed(1)
-      self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x296))
-      self.safety.safety_rx_hook(self._speed_msg(0))
-      self.safety.safety_rx_hook(self._gas_msg(0))
-    self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x296))
+      self._rx(self._button_msg(SET_BTN, 0x296))
+      self._rx(self._speed_msg(0))
+      self._rx(self._gas_msg(0))
+    self._rx(self._button_msg(SET_BTN, 0x296))
     self.assertTrue(self.safety.get_controls_allowed())
 
 
@@ -341,34 +340,34 @@ class TestHondaSafety(unittest.TestCase):
     for pedal in ['brake', 'gas', 'interceptor']:
       if pedal == 'brake':
         # brake_pressed_prev and honda_moving
-        self.safety.safety_rx_hook(self._speed_msg(100))
-        self.safety.safety_rx_hook(self._brake_msg(1))
+        self._rx(self._speed_msg(100))
+        self._rx(self._brake_msg(1))
       elif pedal == 'gas':
         # gas_pressed_prev
-        self.safety.safety_rx_hook(self._gas_msg(1))
+        self._rx(self._gas_msg(1))
       elif pedal == 'interceptor':
         # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
-        self.safety.safety_rx_hook(interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
-        self.safety.safety_rx_hook(interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
+        self._rx(interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
+        self._rx(interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
 
       self.safety.set_controls_allowed(1)
       hw = self.safety.get_honda_hw()
       if hw == HONDA_N_HW:
         self.safety.set_honda_fwd_brake(False)
-        self.assertFalse(self.safety.safety_tx_hook(self._send_brake_msg(MAX_BRAKE)))
-        self.assertFalse(self.safety.safety_tx_hook(interceptor_msg(INTERCEPTOR_THRESHOLD, 0x200)))
-      self.assertFalse(self.safety.safety_tx_hook(self._send_steer_msg(0x1000)))
+        self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
+        self.assertFalse(self._tx(interceptor_msg(INTERCEPTOR_THRESHOLD, 0x200)))
+      self.assertFalse(self._tx(self._send_steer_msg(0x1000)))
 
       # reset status
       self.safety.set_controls_allowed(0)
-      self.safety.safety_tx_hook(self._send_brake_msg(0))
-      self.safety.safety_tx_hook(self._send_steer_msg(0))
-      self.safety.safety_tx_hook(interceptor_msg(0, 0x200))
+      self._tx(self._send_brake_msg(0))
+      self._tx(self._send_steer_msg(0))
+      self._tx(interceptor_msg(0, 0x200))
       if pedal == 'brake':
-        self.safety.safety_rx_hook(self._speed_msg(0))
-        self.safety.safety_rx_hook(self._brake_msg(0))
+        self._rx(self._speed_msg(0))
+        self._rx(self._brake_msg(0))
       elif pedal == 'gas':
-        self.safety.safety_rx_hook(self._gas_msg(0))
+        self._rx(self._gas_msg(0))
       elif pedal == 'interceptor':
         self.safety.set_gas_interceptor_detected(False)
 
@@ -377,37 +376,37 @@ class TestHondaSafety(unittest.TestCase):
       self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
       if pedal == 'brake':
         # brake_pressed_prev and honda_moving
-        self.safety.safety_rx_hook(self._speed_msg(100))
-        self.safety.safety_rx_hook(self._brake_msg(1))
+        self._rx(self._speed_msg(100))
+        self._rx(self._brake_msg(1))
         allow_ctrl = False
       elif pedal == 'gas':
         # gas_pressed_prev
-        self.safety.safety_rx_hook(self._gas_msg(1))
+        self._rx(self._gas_msg(1))
         allow_ctrl = True
       elif pedal == 'interceptor':
         # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
-        self.safety.safety_rx_hook(interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
-        self.safety.safety_rx_hook(interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
+        self._rx(interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
+        self._rx(interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
         allow_ctrl = True
 
       self.safety.set_controls_allowed(1)
       hw = self.safety.get_honda_hw()
       if hw == HONDA_N_HW:
         self.safety.set_honda_fwd_brake(False)
-        self.assertEqual(allow_ctrl, self.safety.safety_tx_hook(self._send_brake_msg(MAX_BRAKE)))
-        self.assertEqual(allow_ctrl, self.safety.safety_tx_hook(interceptor_msg(INTERCEPTOR_THRESHOLD, 0x200)))
-      self.assertEqual(allow_ctrl, self.safety.safety_tx_hook(self._send_steer_msg(0x1000)))
+        self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(MAX_BRAKE)))
+        self.assertEqual(allow_ctrl, self._tx(interceptor_msg(INTERCEPTOR_THRESHOLD, 0x200)))
+      self.assertEqual(allow_ctrl, self._tx(self._send_steer_msg(0x1000)))
       # reset status
       self.safety.set_controls_allowed(0)
       self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
-      self.safety.safety_tx_hook(self._send_brake_msg(0))
-      self.safety.safety_tx_hook(self._send_steer_msg(0))
-      self.safety.safety_tx_hook(interceptor_msg(0, 0x200))
+      self._tx(self._send_brake_msg(0))
+      self._tx(self._send_steer_msg(0))
+      self._tx(interceptor_msg(0, 0x200))
       if pedal == 'brake':
-        self.safety.safety_rx_hook(self._speed_msg(0))
-        self.safety.safety_rx_hook(self._brake_msg(0))
+        self._rx(self._speed_msg(0))
+        self._rx(self._brake_msg(0))
       elif pedal == 'gas':
-        self.safety.safety_rx_hook(self._gas_msg(0))
+        self._rx(self._gas_msg(0))
       elif pedal == 'interceptor':
         self.safety.set_gas_interceptor_detected(False)
 

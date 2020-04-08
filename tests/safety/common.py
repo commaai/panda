@@ -1,4 +1,5 @@
 import struct
+import unittest
 
 from opendbc.can.packer import CANPacker
 from panda.tests.safety import libpandasafety_py
@@ -48,6 +49,18 @@ class CANPackerPanda(CANPacker):
   def make_can_msg_panda(self, name_or_addr, bus, values, counter=-1):
     msg = self.make_can_msg(name_or_addr, bus, values, counter=-1)
     return package_can_msg(msg)
+
+class PandaSafetyTest(unittest.TestCase):
+  @classmethod
+  def setUp(cls):
+    cls.safety = libpandasafety_py.libpandasafety
+    cls.safety.set_safety_hooks(Panda.SAFETY_NOOUTPUT, 0)
+
+  def _rx(self, msg):
+    return self.safety.safety_rx_hook(msg)
+
+  def _tx(self, msg):
+    return self.safety.safety_tx_hook(msg)
 
 class StdTest:
   @staticmethod
