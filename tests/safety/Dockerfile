@@ -1,6 +1,23 @@
 FROM ubuntu:16.04
 
-RUN apt-get update && apt-get install -y clang make python python-pip git curl locales zlib1g-dev libffi-dev bzip2 libssl-dev libbz2-dev libusb-1.0-0
+#RUN apt-get update && apt-get install -y clang make python python-pip git curl locales zlib1g-dev libffi-dev bzip2 libssl-dev libbz2-dev libusb-1.0-0
+
+RUN apt-get update && apt-get install -y \
+    bzip2 \
+    clang \
+    curl \
+    git \
+    libarchive-dev \
+    libbz2-dev \
+    libcurl4-openssl-dev \
+    libffi-dev \
+    libssl-dev \
+    libusb-1.0-0 \
+    locales \
+    make \
+    python \
+    python-pip \
+    zlib1g-dev
 
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8
@@ -17,4 +34,9 @@ RUN pyenv rehash
 COPY requirements.txt /tmp/
 RUN pip install -r /tmp/requirements.txt
 
-COPY . /panda
+RUN git clone https://github.com/commaai/openpilot.git || true
+WORKDIR /openpilot
+RUN git pull && git checkout f9257fc75f68c673f9e433985fbe739f23310bb4
+RUN git submodule update --init cereal opendbc
+
+COPY . /openpilot/panda
