@@ -32,10 +32,10 @@ TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0
 class TestToyotaSafety(unittest.TestCase):
   @classmethod
   def setUp(cls):
+    cls.packer = CANPackerPanda("toyota_prius_2017_pt_generated")
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 66)
     cls.safety.init_tests_toyota()
-    cls.packer = CANPackerPanda("toyota_prius_2017_pt_generated")
 
   def _set_prev_torque(self, t):
     self.safety.set_toyota_desired_torque_last(t)
@@ -123,7 +123,6 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.safety_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
     self.assertTrue(self.safety.get_gas_interceptor_prev())
     self.safety.safety_rx_hook(self._send_interceptor_msg(0x0, 0x201))
-    self.safety.set_gas_interceptor_detected(False)
 
   def test_disengage_on_gas(self):
     self.safety.safety_rx_hook(self._send_gas_msg(0))
@@ -137,7 +136,6 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
     self.safety.safety_rx_hook(self._send_gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
   def test_allow_engage_with_gas_pressed(self):
     self.safety.safety_rx_hook(self._send_gas_msg(1))
@@ -166,7 +164,6 @@ class TestToyotaSafety(unittest.TestCase):
       self.safety.safety_rx_hook(self._send_interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
-    self.safety.set_controls_allowed(False)
 
   def test_brake_disengage(self):
     StdTest.test_allow_brake_at_zero_speed(self)
@@ -178,7 +175,6 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.safety_rx_hook(self._send_interceptor_msg(0x1000, 0x201))
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.safety_rx_hook(self._send_interceptor_msg(0, 0x201))
-    self.safety.set_gas_interceptor_detected(False)
 
   def test_accel_actuation_limits(self):
     limits = ((MIN_ACCEL, MAX_ACCEL, UNSAFE_MODE.DEFAULT),
