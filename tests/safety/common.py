@@ -83,9 +83,9 @@ class PandaSafetyTest(unittest.TestCase):
   # ***** standard tests for all safety modes *****
 
   def test_relay_malfunction(self):
-    # input is a test class and the address that, if seen on specified bus, triggers
-    # the relay_malfunction protection logic: both tx_hook and fwd_hook are
-    # expected to return failure
+    # each car has an addr that is used to detect relay malfunction
+    # if that addr is seen on specified bus, triggers the relay malfunction
+    # protection logic: both tx_hook and fwd_hook are expected to return failure
     self.assertFalse(self.safety.get_relay_malfunction())
     self._rx(make_msg(self.RELAY_MALFUNCTION_BUS, self.RELAY_MALFUNCTION_ADDR, 8))
     self.assertTrue(self.safety.get_relay_malfunction())
