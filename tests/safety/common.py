@@ -1,4 +1,6 @@
+import abc
 import struct
+import unittest
 from opendbc.can.packer import CANPacker # pylint: disable=import-error
 from panda.tests.safety import libpandasafety_py
 
@@ -46,7 +48,7 @@ class CANPackerPanda(CANPacker):
     msg = self.make_can_msg(name_or_addr, bus, values, counter=-1)
     return package_can_msg(msg)
 
-class PandaSafetyTest:
+class PandaSafetyTest(unittest.TestCase):
   TX_MSGS = None
   STANDSTILL_THRESHOLD = None
   RELAY_MALFUNCTION_ADDR = None
@@ -54,22 +56,29 @@ class PandaSafetyTest:
   FWD_BLACKLISTED_ADDRS = {} # {bus: [addr]}
   FWD_BUS_LOOKUP = {}
 
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "PandaSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
   def _rx(self, msg):
     return self.safety.safety_rx_hook(msg)
 
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
 
-  def _brake_msg(self, brake): raise NotImplementedError
-  def _speed_msg(self, speed): raise NotImplementedError
-  def _gas_msg(self, speed): raise NotImplementedError
+  @abc.abstractmethod
+  def _brake_msg(self, brake):
+    pass
 
-  # TODO: is there a better way to do this?
-  # make linter happy
-  def assertTrue(self, c): raise Exception
-  def assertFalse(self, c): raise Exception
-  def assertEqual(self, c, d): raise Exception
-  safety = None
+  @abc.abstractmethod
+  def _speed_msg(self, speed):
+    pass
+
+  @abc.abstractmethod
+  def _gas_msg(self, speed):
+    pass
 
   # ***** standard tests for all safety modes *****
 
