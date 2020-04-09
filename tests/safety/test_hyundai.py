@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import PandaSafetyTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import PandaSafetyTest, CANPackerPanda, \
+                                      make_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 3
 MAX_RATE_DOWN = 7
@@ -12,8 +13,8 @@ MAX_STEER = 255
 MAX_RT_DELTA = 112
 RT_INTERVAL = 250000
 
-DRIVER_TORQUE_ALLOWANCE = 50;
-DRIVER_TORQUE_FACTOR = 2;
+DRIVER_TORQUE_ALLOWANCE = 50
+DRIVER_TORQUE_FACTOR = 2
 
 
 class TestHyundaiSafety(PandaSafetyTest, unittest.TestCase):
@@ -24,44 +25,47 @@ class TestHyundaiSafety(PandaSafetyTest, unittest.TestCase):
 
   @classmethod
   def setUp(cls):
+    cls.packer = CANPackerPanda("hyundai_kia_generic")
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, 0)
     cls.safety.init_tests_hyundai()
 
   def _button_msg(self, buttons):
-    to_send = make_msg(0, 1265)
-    to_send[0].RDLR = buttons
-    return to_send
+    values = {"CF_Clu_CruiseSwState": buttons}
+    return self.packer.make_can_msg_panda("CLU11", 0, values)
 
   def _gas_msg(self, val):
-    to_send = make_msg(0, 608)
-    to_send[0].RDHR = (val & 0x3) << 30;
-    return to_send
+    values = {"CF_Ems_AclAct": val}
+    return self.packer.make_can_msg_panda("EMS16", 0, values)
 
   def _brake_msg(self, brake):
-    to_send = make_msg(0, 916)
-    to_send[0].RDHR = brake << 23;
-    return to_send
+    values = {"DriverBraking": brake}
+    return self.packer.make_can_msg_panda("TCS13", 0, values)
 
   def _speed_msg(self, speed):
     to_send = make_msg(0, 902)
-    to_send[0].RDLR = speed & 0x3FFF;
-    to_send[0].RDHR = (speed & 0x3FFF) << 16;
+    to_send[0].RDLR = speed & 0x3FFF
+    to_send[0].RDHR = (speed & 0x3FFF) << 16
     return to_send
+    # TODO: fix this one. panda not scaling?
+    #values = {"WHL_SPD_%s"%s: speed for s in ["FL", "FR", "RL", "RR"]}
+    #return self.packer.make_can_msg_panda("WHL_SPD11", 0, values)
 
   def _set_prev_torque(self, t):
     self.safety.set_hyundai_desired_torque_last(t)
     self.safety.set_hyundai_rt_torque_last(t)
 
   def _torque_driver_msg(self, torque):
-    to_send = make_msg(0, 897)
-    to_send[0].RDLR = (torque + 2048) << 11
-    return to_send
+    values = {"CR_Mdps_DrvTq": torque}
+    return self.packer_make_can_msg_panda("MDPS11", 0, values)
 
   def _torque_msg(self, torque):
-    to_send = make_msg(0, 832)
-    to_send[0].RDLR = (torque + 1024) << 16
-    return to_send
+    values = {"CR_Lkas_StrToqReq": torque}
+    return self.packer.make_can_msg_panda("LKAS11", 0, values)
+
+  def _cruise_msg(self, enable):
+    values = {"ACCMode": enable}
+    return self.packer.make_can_msg_panda("SCC12", 0, values)
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
@@ -77,15 +81,12 @@ class TestHyundaiSafety(PandaSafetyTest, unittest.TestCase):
           self.assertTrue(self._tx(self._torque_msg(t)))
 
   def test_enable_control_allowed_from_cruise(self):
-    to_push = make_msg(0, 1057)
-    to_push[0].RDLR = 1 << 13
-    self._rx(to_push)
+    self._rx(self._cruise_msg(True))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disable_control_allowed_from_cruise(self):
-    to_push = make_msg(0, 1057)
     self.safety.set_controls_allowed(1)
-    self._rx(to_push)
+    self._rx(self._cruise_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas(self):
