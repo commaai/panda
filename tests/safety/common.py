@@ -85,7 +85,7 @@ class PandaSafetyTest:
       for addr in range(0x1, 0x800):
         # assume len 8
         msg = make_msg(bus, addr, 8)
-        self.assertEqual(-1, self.safety.safety_fwd_hook(msg))
+        self.assertEqual(-1, self.safety.safety_fwd_hook(bus, msg))
 
   def test_manually_enable_controls_allowed(self):
     self.safety.set_controls_allowed(1)
