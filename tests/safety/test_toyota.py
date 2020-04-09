@@ -4,7 +4,7 @@ import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 from panda.tests.safety.common import CANPackerPanda, PandaSafetyTest, \
-                                      make_msg, interceptor_msg, UNSAFE_MODE
+                                      interceptor_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 10
 MAX_RATE_DOWN = 25
