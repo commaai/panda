@@ -88,6 +88,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
+    // exit controls on rising edge of gas press
     if (addr == 0x1D2) {
       // 5th bit is CRUISE_ACTIVE
       int cruise_engaged = GET_BYTE(to_push, 0) & 0x20;
@@ -98,6 +99,13 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         controls_allowed = 1;
       }
       toyota_cruise_engaged_last = cruise_engaged;
+
+      // handle gas_pressed
+      bool gas_pressed = ((GET_BYTE(to_push, 0) >> 4) & 1) == 0;
+      if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev && !gas_interceptor_detected) {
+        controls_allowed = 0;
+      }
+      gas_pressed_prev = gas_pressed;
     }
 
     // sample speed
@@ -131,15 +139,6 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         controls_allowed = 0;
       }
       gas_interceptor_prev = gas_interceptor;
-    }
-
-    // exit controls on rising edge of gas press
-    if (addr == 0x2C1) {
-      bool gas_pressed = GET_BYTE(to_push, 6) != 0;
-      if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev && !gas_interceptor_detected) {
-        controls_allowed = 0;
-      }
-      gas_pressed_prev = gas_pressed;
     }
 
     // 0x2E4 is lkas cmd. If it is on bus 0, then relay is unexpectedly closed

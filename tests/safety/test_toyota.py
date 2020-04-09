@@ -97,9 +97,10 @@ class TestToyotaSafety(unittest.TestCase):
     to_send[0].RDHR |= toyota_checksum(to_send[0], 0x226, 8) << 24
     return to_send
 
-  def _send_gas_msg(self, gas):
-    to_send = make_msg(0, 0x2C1)
-    to_send[0].RDHR = (gas & 0xFF) << 16
+  def _gas_pressed_msg(self, pressed, enable_cruise=False):
+    to_send = make_msg(0, 0x1D2)
+    to_send[0].RDLR = ((1*(not pressed)) << 4) | (1*enable_cruise << 5)
+    to_send[0].RDHR = (toyota_checksum(to_send[0], 0x1D2, 8) << 24)
     return to_send
 
   def _send_interceptor_msg(self, gas, addr):
@@ -139,9 +140,9 @@ class TestToyotaSafety(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_prev_gas(self):
-    for g in range(0, 256):
-      self.safety.safety_rx_hook(self._send_gas_msg(g))
-      self.assertEqual(True if g > 0 else False, self.safety.get_gas_pressed_prev())
+    for pressed in [True, False]:
+      self.safety.safety_rx_hook(self._gas_pressed_msg(pressed))
+      self.assertEqual(pressed, self.safety.get_gas_pressed_prev())
 
   def test_prev_gas_interceptor(self):
     self.safety.safety_rx_hook(self._send_interceptor_msg(0x0, 0x201))
@@ -152,26 +153,27 @@ class TestToyotaSafety(unittest.TestCase):
     self.safety.set_gas_interceptor_detected(False)
 
   def test_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._send_gas_msg(0))
+    self.safety.safety_rx_hook(self._gas_pressed_msg(False))
     self.safety.set_controls_allowed(True)
-    self.safety.safety_rx_hook(self._send_gas_msg(1))
+    self.safety.safety_rx_hook(self._gas_pressed_msg(True, enable_cruise=True))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_unsafe_mode_no_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._send_gas_msg(0))
+    self.safety.safety_rx_hook(self._gas_pressed_msg(False))
     self.safety.set_controls_allowed(True)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    self.safety.safety_rx_hook(self._send_gas_msg(1))
+    self.safety.safety_rx_hook(self._gas_pressed_msg(True, enable_cruise=True))
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
   def test_allow_engage_with_gas_pressed(self):
-    self.safety.safety_rx_hook(self._send_gas_msg(1))
+    self.safety.safety_rx_hook(self._gas_pressed_msg(True))
     self.safety.set_controls_allowed(True)
-    self.safety.safety_rx_hook(self._send_gas_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_rx_hook(self._send_gas_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
+    for _ in range(2):
+      # since cruise msg is used for gas pedal state, cruise bit must
+      # also be set for this test or else it will set controls_allowed
+      self.safety.safety_rx_hook(self._gas_pressed_msg(True, enable_cruise=True))
+      self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas_interceptor(self):
     for g in range(0, 0x1000):
