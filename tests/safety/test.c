@@ -66,6 +66,8 @@ uint8_t hw_type = HW_TYPE_UNKNOWN;
 #define FAULT_RELAY_MALFUNCTION         (1U << 0)
 void fault_occurred(uint32_t fault) {
 }
+void fault_recovered(uint32_t fault) {
+}
 
 // from llcan.h
 #define GET_BUS(msg) (((msg)->RDTR >> 4) & 0xFF)
