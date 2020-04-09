@@ -62,6 +62,7 @@ class PandaSafetyTest:
 
   def _brake_msg(self, brake): raise NotImplementedError
   def _speed_msg(self, speed): raise NotImplementedError
+  def _gas_msg(self, speed): raise NotImplementedError
 
   # TODO: is there a better way to do this?
   # make linter happy
@@ -71,9 +72,6 @@ class PandaSafetyTest:
   safety = None
 
   # ***** standard tests for all safety modes *****
-
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_controls_allowed())
 
   def test_relay_malfunction(self):
     # input is a test class and the address that, if seen on specified bus, triggers
@@ -98,17 +96,46 @@ class PandaSafetyTest:
           fwd_bus = -1
         self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg))
 
-  def test_manually_enable_controls_allowed(self):
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(0)
-    self.assertFalse(self.safety.get_controls_allowed())
-
   def test_spam_can_buses(self):
     for addr in range(1, 0x800):
       for bus in range(0, 4):
         if all(addr != m[0] or bus != m[1] for m in self.TX_MSGS):
           self.assertFalse(self._tx(make_msg(bus, addr, 8)))
+
+  def test_default_controls_not_allowed(self):
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_manually_enable_controls_allowed(self):
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.set_controls_allowed(0)
+    self.assertFalse(self.safety.get_controls_allowed())
+  
+  def test_prev_gas(self):
+    for g in [True, False]:
+      self._rx(self._gas_msg(g))
+      self.assertEqual(g, self.safety.get_gas_pressed_prev())
+
+  def test_allow_engage_with_gas_pressed(self):
+    self._rx(self._gas_msg(1))
+    self.safety.set_controls_allowed(True)
+    self._rx(self._gas_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self._rx(self._gas_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_disengage_on_gas(self):
+    self._rx(self._gas_msg(0))
+    self.safety.set_controls_allowed(True)
+    self._rx(self._gas_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_unsafe_mode_no_disengage_on_gas(self):
+    self._rx(self._gas_msg(0))
+    self.safety.set_controls_allowed(True)
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
+    self._rx(self._gas_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
 
   def test_allow_brake_at_zero_speed(self):
     # Brake was already pressed

@@ -66,24 +66,15 @@ class TestToyotaSafety(unittest.TestCase, PandaSafetyTest):
     values = {"BRAKE_PRESSED": pressed}
     return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
 
-  def _send_gas_msg(self, gas):
+  def _gas_msg(self, gas):
+    # TODO: use packer once the PR that uses the universal bit is merged
     to_send = make_msg(0, 0x2C1)
     to_send[0].RDHR = (gas & 0xFF) << 16
     return to_send
 
-  # TODO: use packer or not?
-  # panda only uses the raw val, not the scaled/offset val
-  #def _send_interceptor_msg(self, gas, addr, command=True):
-  #  command = addr == 0x200
-  #  sig_name = "GAS_COMMAND" if command else "GAS_SENSOR"
-  #  if command:
-  #    values = {"GAS_COMMAND": gas, "GAS_COMMAND2": gas*2}
-  #  else:
-  #     values = {"INTERCEPTOR_GAS": gas, "INTERCEPTOR_GAS2": gas*2}
-  #  return self.packer.make_can_msg_panda(sig_name, 0, values)
-
   def _pcm_cruise_msg(self, cruise_on):
     values = {"CRUISE_ACTIVE": cruise_on}
+    values["CHECKSUM"] = 1
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
   def test_enable_control_allowed_from_cruise(self):
@@ -97,38 +88,12 @@ class TestToyotaSafety(unittest.TestCase, PandaSafetyTest):
     self._rx(self._pcm_cruise_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_prev_gas(self):
-    for g in range(0, 256):
-      self._rx(self._send_gas_msg(g))
-      self.assertEqual(True if g > 0 else False, self.safety.get_gas_pressed_prev())
-
   def test_prev_gas_interceptor(self):
     self._rx(interceptor_msg(0x0, 0x201))
     self.assertFalse(self.safety.get_gas_interceptor_prev())
     self._rx(interceptor_msg(0x1000, 0x201))
     self.assertTrue(self.safety.get_gas_interceptor_prev())
     self._rx(interceptor_msg(0x0, 0x201))
-
-  def test_disengage_on_gas(self):
-    self._rx(self._send_gas_msg(0))
-    self.safety.set_controls_allowed(True)
-    self._rx(self._send_gas_msg(1))
-    self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_unsafe_mode_no_disengage_on_gas(self):
-    self._rx(self._send_gas_msg(0))
-    self.safety.set_controls_allowed(True)
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    self._rx(self._send_gas_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_allow_engage_with_gas_pressed(self):
-    self._rx(self._send_gas_msg(1))
-    self.safety.set_controls_allowed(True)
-    self._rx(self._send_gas_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self._rx(self._send_gas_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas_interceptor(self):
     for g in range(0, 0x1000):
