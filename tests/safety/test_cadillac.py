@@ -16,8 +16,6 @@ RT_INTERVAL = 250000
 DRIVER_TORQUE_ALLOWANCE = 50
 DRIVER_TORQUE_FACTOR = 4
 
-IPAS_OVERRIDE_THRESHOLD = 200
-
 
 class TestCadillacSafety(PandaSafetyTest, unittest.TestCase):
 

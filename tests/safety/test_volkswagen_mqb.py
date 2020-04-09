@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 import unittest
 import numpy as np
-import crcmod
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import PandaSafetyTest, make_msg, \
+from panda.tests.safety.common import PandaSafetyTest, CANPackerPanda, make_msg, \
                                       MAX_WRONG_COUNTERS, UNSAFE_MODE
 
 MAX_RATE_UP = 4
@@ -25,32 +24,6 @@ MSG_HCA_01 = 0x126      # TX by OP, Heading Control Assist steering torque
 MSG_GRA_ACC_01 = 0x12B  # TX by OP, ACC control buttons for cancel/resume
 MSG_LDW_02 = 0x397      # TX by OP, Lane line recognition and text alerts
 
-# Python crcmod works differently somehow from every other CRC calculator. The
-# implied leading 1 on the polynomial isn't a problem, but to get the right
-# result for CRC-8H2F/AUTOSAR, we have to feed it initCrc 0x00 instead of 0xFF.
-volkswagen_crc_8h2f = crcmod.mkCrcFun(0x12F, initCrc=0x00, rev=False, xorOut=0xFF)
-
-def volkswagen_mqb_crc(msg, addr, len_msg):
-  # This is CRC-8H2F/AUTOSAR with a twist. See the OpenDBC implementation of
-  # this algorithm for a version with explanatory comments.
-  msg_bytes = msg.RDLR.to_bytes(4, 'little') + msg.RDHR.to_bytes(4, 'little')
-  counter = (msg.RDLR & 0xF00) >> 8
-  if addr == MSG_EPS_01:
-    magic_pad = b'\xF5\xF5\xF5\xF5\xF5\xF5\xF5\xF5\xF5\xF5\xF5\xF5\xF5\xF5\xF5\xF5'[counter]
-  elif addr == MSG_ESP_05:
-    magic_pad = b'\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07'[counter]
-  elif addr == MSG_TSK_06:
-    magic_pad = b'\xC4\xE2\x4F\xE4\xF8\x2F\x56\x81\x9F\xE5\x83\x44\x05\x3F\x97\xDF'[counter]
-  elif addr == MSG_MOTOR_20:
-    magic_pad = b'\xE9\x65\xAE\x6B\x7B\x35\xE5\x5F\x4E\xC7\x86\xA2\xBB\xDD\xEB\xB4'[counter]
-  elif addr == MSG_HCA_01:
-    magic_pad = b'\xDA\xDA\xDA\xDA\xDA\xDA\xDA\xDA\xDA\xDA\xDA\xDA\xDA\xDA\xDA\xDA'[counter]
-  elif addr == MSG_GRA_ACC_01:
-    magic_pad = b'\x6A\x38\xB4\x27\x22\xEF\xE1\xBB\xF8\x80\x84\x49\xC7\x9E\x1E\x2B'[counter]
-  else:
-    magic_pad = None
-  return volkswagen_crc_8h2f(msg_bytes[1:len_msg] + magic_pad.to_bytes(1, 'little'))
-
 class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
   cnt_eps_01 = 0
   cnt_esp_05 = 0
@@ -59,7 +32,8 @@ class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
   cnt_hca_01 = 0
   cnt_gra_acc_01 = 0
 
-  # Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
+  # Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep
+  # compatibility with gateway and camera integration
   TX_MSGS = [[MSG_HCA_01, 0], [MSG_GRA_ACC_01, 0], [MSG_GRA_ACC_01, 2], [MSG_LDW_02, 0]]
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_HCA_01
@@ -67,6 +41,7 @@ class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
 
   @classmethod
   def setUp(cls):
+    cls.packer = CANPackerPanda("vw_mqb_2010")
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
     cls.safety.init_tests_volkswagen()
@@ -77,71 +52,47 @@ class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
 
   # Wheel speeds _esp_19_msg
   def _speed_msg(self, speed):
-    wheel_speed_scaled = int(speed / 0.0075)
-    to_send = make_msg(0, MSG_ESP_19)
-    to_send[0].RDLR = wheel_speed_scaled | (wheel_speed_scaled << 16)
-    to_send[0].RDHR = wheel_speed_scaled | (wheel_speed_scaled << 16)
-    return to_send
+    values = {"ESP_%s_Radgeschw_02"%s: speed for s in ["HL", "HR", "VL", "VR"]}
+    return self.packer.make_can_msg_panda("ESP_19", 0, values)
 
   # Brake light switch _esp_05_msg
   def _brake_msg(self, brake):
-    to_send = make_msg(0, MSG_ESP_05)
-    to_send[0].RDLR = (0x1 << 26) if brake else 0
-    to_send[0].RDLR |= (self.cnt_esp_05 % 16) << 8
-    to_send[0].RDLR |= volkswagen_mqb_crc(to_send[0], MSG_ESP_05, 8)
+    values = {"ESP_Fahrer_bremst": brake, "COUNTER": self.cnt_esp_05 % 16}
     self.__class__.cnt_esp_05 += 1
-    return to_send
+    return self.packer.make_can_msg_panda("ESP_05", 0, values)
 
   # Driver steering input torque
   def _eps_01_msg(self, torque):
-    to_send = make_msg(0, MSG_EPS_01)
-    t = abs(torque)
-    to_send[0].RDHR = ((t & 0x1FFF) << 8)
-    if torque < 0:
-      to_send[0].RDHR |= 0x1 << 23
-    to_send[0].RDLR |= (self.cnt_eps_01 % 16) << 8
-    to_send[0].RDLR |= volkswagen_mqb_crc(to_send[0], MSG_EPS_01, 8)
+    values = {"Driver_Strain": abs(torque), "Driver_Strain_VZ": torque < 0,
+                "COUNTER": self.cnt_eps_01 % 16}
     self.__class__.cnt_eps_01 += 1
-    return to_send
+    return self.packer.make_can_msg_panda("EPS_01", 0, values)
 
   # openpilot steering output torque
   def _hca_01_msg(self, torque):
-    to_send = make_msg(0, MSG_HCA_01)
-    t = abs(torque)
-    to_send[0].RDLR = (t & 0xFFF) << 16
-    if torque < 0:
-      to_send[0].RDLR |= 0x1 << 31
-    to_send[0].RDLR |= (self.cnt_hca_01 % 16) << 8
-    to_send[0].RDLR |= volkswagen_mqb_crc(to_send[0], MSG_HCA_01, 8)
+    values = {"Assist_Torque": abs(torque), "Assist_VZ": torque < 0,
+                "COUNTER": self.cnt_hca_01 % 16}
     self.__class__.cnt_hca_01 += 1
-    return to_send
+    return self.packer.make_can_msg_panda("HCA_01", 0, values)
 
   # ACC engagement status
   def _tsk_06_msg(self, status):
-    to_send = make_msg(0, MSG_TSK_06)
-    to_send[0].RDLR = (status & 0x7) << 24
-    to_send[0].RDLR |= (self.cnt_tsk_06 % 16) << 8
-    to_send[0].RDLR |= volkswagen_mqb_crc(to_send[0], MSG_TSK_06, 8)
+    values = {"TSK_Status": status, "COUNTER": self.cnt_tsk_06 % 16}
     self.__class__.cnt_tsk_06 += 1
-    return to_send
+    return self.packer.make_can_msg_panda("TSK_06", 0, values)
 
   # Driver throttle input
   def _motor_20_msg(self, gas):
-    to_send = make_msg(0, MSG_MOTOR_20)
-    to_send[0].RDLR = (gas & 0xFF) << 12
-    to_send[0].RDLR |= (self.cnt_motor_20 % 16) << 8
-    to_send[0].RDLR |= volkswagen_mqb_crc(to_send[0], MSG_MOTOR_20, 8)
+    values = {"MO_Fahrpedalrohwert_01": gas, "COUNTER": self.cnt_motor_20 % 16}
     self.__class__.cnt_motor_20 += 1
-    return to_send
+    return self.packer.make_can_msg_panda("Motor_20", 0, values)
 
   # Cruise control buttons
-  def _gra_acc_01_msg(self, bit):
-    to_send = make_msg(2, MSG_GRA_ACC_01)
-    to_send[0].RDLR = 1 << bit
-    to_send[0].RDLR |= (self.cnt_gra_acc_01 % 16) << 8
-    to_send[0].RDLR |= volkswagen_mqb_crc(to_send[0], MSG_GRA_ACC_01, 8)
+  def _gra_acc_01_msg(self, cancel=0, resume=0, _set=0):
+    values = {"GRA_Abbrechen": cancel, "GRA_Tip_Setzen": _set,
+                "GRA_Tip_Wiederaufnahme": resume, "COUNTER": self.cnt_gra_acc_01 % 16}
     self.__class__.cnt_gra_acc_01 += 1
-    return to_send
+    return self.packer.make_can_msg_panda("GRA_ACC_01", 0, values)
 
   def test_prev_gas(self):
     for g in range(0, 256):
@@ -213,16 +164,13 @@ class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
           self.assertTrue(self._tx(self._hca_01_msg(t)))
 
   def test_spam_cancel_safety_check(self):
-    BIT_CANCEL = 13
-    BIT_RESUME = 19
-    BIT_SET = 16
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._gra_acc_01_msg(BIT_CANCEL)))
-    self.assertFalse(self._tx(self._gra_acc_01_msg(BIT_RESUME)))
-    self.assertFalse(self._tx(self._gra_acc_01_msg(BIT_SET)))
+    self.assertTrue(self._tx(self._gra_acc_01_msg(cancel=1)))
+    self.assertFalse(self._tx(self._gra_acc_01_msg(resume=1)))
+    self.assertFalse(self._tx(self._gra_acc_01_msg(_set=1)))
     # do not block resume if we are engaged already
     self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._gra_acc_01_msg(BIT_RESUME)))
+    self.assertTrue(self._tx(self._gra_acc_01_msg(resume=1)))
 
   def test_non_realtime_limit_up(self):
     self.safety.set_volkswagen_torque_driver(0, 0)
