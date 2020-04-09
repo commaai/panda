@@ -61,6 +61,8 @@ bool addr_safety_check(CAN_FIFOMailBox_TypeDef *to_push,
                        uint8_t (*get_checksum)(CAN_FIFOMailBox_TypeDef *to_push),
                        uint8_t (*compute_checksum)(CAN_FIFOMailBox_TypeDef *to_push),
                        uint8_t (*get_counter)(CAN_FIFOMailBox_TypeDef *to_push));
+void relay_malfunction_set(void);
+void relay_malfunction_reset(void);
 
 typedef void (*safety_hook_init)(int16_t param);
 typedef int (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);

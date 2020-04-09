@@ -126,8 +126,7 @@ static int chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // check if stock camera ECU is on bus 0
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == 0x292)) {
-      relay_malfunction = true;
-      fault_occurred(FAULT_RELAY_MALFUNCTION);
+      relay_malfunction_set();
     }
   }
   return valid;

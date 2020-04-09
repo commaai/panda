@@ -184,6 +184,15 @@ bool addr_safety_check(CAN_FIFOMailBox_TypeDef *to_push,
   return is_msg_valid(rx_checks, index);
 }
 
+void relay_malfunction_set(void) {
+  relay_malfunction = true;
+  fault_occurred(FAULT_RELAY_MALFUNCTION);
+}
+
+void relay_malfunction_reset(void) {
+  relay_malfunction = false;
+  fault_recovered(FAULT_RELAY_MALFUNCTION);
+}
 
 typedef struct {
   uint16_t id;
