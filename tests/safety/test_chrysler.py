@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import PandaSafetyTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import PandaSafetyTest, CANPackerPanda, make_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 3
 MAX_RATE_DOWN = 3
@@ -55,44 +55,50 @@ class TestChryslerSafety(PandaSafetyTest, unittest.TestCase):
 
   @classmethod
   def setUp(cls):
+    # TODO: add chrysler checksum to can packer
+    cls.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid")
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, 0)
     cls.safety.init_tests_chrysler()
 
-  def _button_msg(self, buttons):
-    to_send = make_msg(0, 571)
-    to_send[0].RDLR = buttons
-    return to_send
+  def _button_msg(self, cancel=0, flw_dec=0, flw_inc=0, spd_dec=0, spd_inc=0, resume=0):
+    values = {"ACC_CANCEL": cancel, "ACC_FOLLOW_DEC": flw_dec,
+                "ACC_FOLLOW_INC": flw_inc, "ACC_SPEED_DEC": spd_dec,
+                "ACC_SPEED_INC": spd_inc, "ACC_RESUME": resume}
+    return self.packer.make_can_msg_panda("WHEEL_BUTTONS", 0, values)
 
   def _cruise_msg(self, active):
-    to_send = make_msg(0, 500)
-    to_send[0].RDLR = 0x380000 if active else 0
-    to_send[0].RDHR |= (self.cnt_cruise % 16) << 20
-    to_send[0].RDHR |= chrysler_checksum(to_send[0], 8) << 24
+    values = {"ACC_STATUS_2": 0x7 if active else 0, "COUNTER": self.cnt_cruise % 16}
+    msg = self.packer.make_can_msg_panda("ACC_2", 0, values)
+    values["CHECKSUM"] = chrysler_checksum(msg[0], 8)
     self.__class__.cnt_cruise += 1
-    return to_send
+    return self.packer.make_can_msg_panda("ACC_2", 0, values)
 
   def _speed_msg(self, speed):
+    # TODO: fix this
+    values = {"SPEED_LEFT": speed, "SPEED_RIGHT": speed}
     speed = int(speed / 0.071028)
     to_send = make_msg(0, 514, 4)
     to_send[0].RDLR = ((speed & 0xFF0) >> 4) + ((speed & 0xF) << 12) + \
                       ((speed & 0xFF0) << 12) + ((speed & 0xF) << 28)
     return to_send
+    msg = self.packer.make_can_msg_panda("SPEED_1", 0, values)
+    print()
+    print("rdlr", hex(to_send[0].RDLR), hex(msg[0].RDLR))
+    print()
+    return self.packer.make_can_msg_panda("SPEED_1", 0, values)
 
   def _gas_msg(self, gas):
-    to_send = make_msg(0, 308)
-    to_send[0].RDHR = (gas & 0x7F) << 8
-    to_send[0].RDHR |= (self.cnt_gas % 16) << 20
+    values = {"ACCEL_134": gas, "COUNTER": self.cnt_gas % 16}
     self.__class__.cnt_gas += 1
-    return to_send
+    return self.packer.make_can_msg_panda("ACCEL_GAS_134", 0, values)
 
   def _brake_msg(self, brake):
-    to_send = make_msg(0, 320)
-    to_send[0].RDLR = 5 if brake else 0
-    to_send[0].RDHR |= (self.cnt_brake % 16) << 20
-    to_send[0].RDHR |= chrysler_checksum(to_send[0], 8) << 24
+    values = {"BRAKE_PRESSED_2": 5 if brake else 0, "COUNTER": self.cnt_brake % 16}
+    msg = self.packer.make_can_msg_panda("BRAKE_2", 0, values)
+    values["CHECKSUM"] = chrysler_checksum(msg[0], 8)
     self.__class__.cnt_brake += 1
-    return to_send
+    return self.packer.make_can_msg_panda("BRAKE_2", 0, values)
 
   def _set_prev_torque(self, t):
     self.safety.set_chrysler_desired_torque_last(t)
@@ -100,17 +106,15 @@ class TestChryslerSafety(PandaSafetyTest, unittest.TestCase):
     self.safety.set_chrysler_torque_meas(t, t)
 
   def _torque_meas_msg(self, torque):
-    to_send = make_msg(0, 544)
-    to_send[0].RDHR = ((torque + 1024) >> 8) + (((torque + 1024) & 0xff) << 8)
-    to_send[0].RDHR |= (self.cnt_torque_meas % 16) << 20
-    to_send[0].RDHR |= chrysler_checksum(to_send[0], 8) << 24
+    values = {"TORQUE_MOTOR": torque, "COUNTER": self.cnt_torque_meas % 16}
+    msg = self.packer.make_can_msg_panda("EPS_STATUS", 0, values)
+    values["CHECKSUM"] = chrysler_checksum(msg[0], 8)
     self.__class__.cnt_torque_meas += 1
-    return to_send
+    return self.packer.make_can_msg_panda("EPS_STATUS", 0, values)
 
   def _torque_msg(self, torque):
-    to_send = make_msg(0, 0x292)
-    to_send[0].RDLR = ((torque + 1024) >> 8) + (((torque + 1024) & 0xff) << 8)
-    return to_send
+    values = {"LKAS_STEERING_TORQUE": torque}
+    return self.packer.make_can_msg_panda("LKAS_COMMAND", 0, values)
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
@@ -227,13 +231,15 @@ class TestChryslerSafety(PandaSafetyTest, unittest.TestCase):
     self.assertEqual(0, self.safety.get_chrysler_torque_meas_max())
     self.assertEqual(0, self.safety.get_chrysler_torque_meas_min())
 
-  def test_cancel_button(self):
-    CANCEL = 1
-    for b in range(0, 0xff):
-      if b == CANCEL:
-        self.assertTrue(self._tx(self._button_msg(b)))
-      else:
-        self.assertFalse(self._tx(self._button_msg(b)))
+  # only allow cancel button press to be spoofed
+  def test_button_spoof(self):
+    n_btns = 6
+    for b in range(0, 2**n_btns + 1):
+      btns = [(b >> i) & 1 for i in range(n_btns)]
+      btns[2] = 0 # TODO: delete this line. fix is in separate PR
+      # cancel is first arg in _button_msg
+      should_tx = btns[0] and not any(btns[1:])
+      self.assertEqual(should_tx, self._tx(self._button_msg(*btns)))
 
 
 if __name__ == "__main__":

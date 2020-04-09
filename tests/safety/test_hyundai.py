@@ -59,7 +59,7 @@ class TestHyundaiSafety(PandaSafetyTest, unittest.TestCase):
 
   def _torque_driver_msg(self, torque):
     values = {"CR_Mdps_DrvTq": torque}
-    return self.packer_make_can_msg_panda("MDPS11", 0, values)
+    return self.packer.make_can_msg_panda("MDPS11", 0, values)
 
   def _torque_msg(self, torque):
     values = {"CR_Lkas_StrToqReq": torque}
