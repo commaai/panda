@@ -119,9 +119,6 @@ class TestSubaruSafety(PandaSafetyTest, unittest.TestCase):
       self._rx(self._torque_driver_msg(min_t))
     self._rx(self._torque_driver_msg(max_t))
 
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_controls_allowed())
-
   def test_enable_control_allowed_from_cruise(self):
     self._rx(self._cruise_msg(True))
     self.assertTrue(self.safety.get_controls_allowed())

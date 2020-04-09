@@ -84,9 +84,6 @@ class TestToyotaSafety(PandaSafetyTest, unittest.TestCase):
     values = {"CRUISE_ACTIVE": cruise_on}
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_controls_allowed())
-
   def test_enable_control_allowed_from_cruise(self):
     self._rx(self._pcm_cruise_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())

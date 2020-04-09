@@ -48,9 +48,6 @@ class TestCadillacSafety(PandaSafetyTest, unittest.TestCase):
     to_send[0].RDLR = ((t >> 8) & 0x3F) | ((t & 0xFF) << 8)
     return to_send
 
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_controls_allowed())
-
   def test_enable_control_allowed_from_cruise(self):
     to_push = make_msg(0, 0x370)
     to_push[0].RDLR = 0x800000
@@ -154,17 +151,6 @@ class TestCadillacSafety(PandaSafetyTest, unittest.TestCase):
       self.safety.set_timer(RT_INTERVAL + 1)
       self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
       self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
-
-
-  def test_fwd_hook(self):
-    # nothing allowed
-    buss = list(range(0x0, 0x3))
-    msgs = list(range(0x1, 0x800))
-
-    for b in buss:
-      for m in msgs:
-        # assume len 8
-        self.assertEqual(-1, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
 
 if __name__ == "__main__":

@@ -99,9 +99,6 @@ class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
       self._rx(self._motor_20_msg(g))
       self.assertEqual(True if g > 0 else False, self.safety.get_gas_pressed_prev())
 
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_controls_allowed())
-
   def test_enable_control_allowed_from_cruise(self):
     self.safety.set_controls_allowed(0)
     self._rx(self._tsk_06_msg(3))

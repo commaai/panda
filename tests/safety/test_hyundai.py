@@ -67,9 +67,6 @@ class TestHyundaiSafety(PandaSafetyTest, unittest.TestCase):
     values = {"ACCMode": enable}
     return self.packer.make_can_msg_panda("SCC12", 0, values)
 
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_controls_allowed())
-
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
       for t in range(-0x200, 0x200):

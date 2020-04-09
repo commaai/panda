@@ -63,6 +63,9 @@ class PandaSafetyTest:
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
 
+  def test_default_controls_not_allowed(self):
+    self.assertFalse(self.safety.get_controls_allowed())
+
   def test_relay_malfunction(self):
     # input is a test class and the address that, if seen on specified bus, triggers
     # the relay_malfunction protection logic: both tx_hook and fwd_hook are
@@ -74,6 +77,15 @@ class PandaSafetyTest:
       for b in range(0, 3):
         self.assertFalse(self._tx(make_msg(b, a, 8)))
         self.assertEqual(-1, self.safety.safety_fwd_hook(b, make_msg(b, a, 8)))
+
+  def test_fwd_hook(self):
+    # nothing allowed
+    # TODO: use class var for safety modes that blacklist msgs, instead of overriding
+    for bus in range(0x0, 0x3):
+      for addr in range(0x1, 0x800):
+        # assume len 8
+        msg = make_msg(bus, addr, 8)
+        self.assertEqual(-1, self.safety.safety_fwd_hook(msg))
 
   def test_manually_enable_controls_allowed(self):
     self.safety.set_controls_allowed(1)

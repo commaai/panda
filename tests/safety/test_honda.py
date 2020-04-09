@@ -88,9 +88,6 @@ class TestHondaSafety(PandaSafetyTest, unittest.TestCase):
     values = {"STEER_TORQUE": steer}
     return self.packer.make_can_msg_panda("STEERING_CONTROL", bus, values)
 
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_controls_allowed())
-
   def test_resume_button(self):
     RESUME_BTN = 4
     self.safety.set_controls_allowed(0)

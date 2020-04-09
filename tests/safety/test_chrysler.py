@@ -110,9 +110,6 @@ class TestChryslerSafety(PandaSafetyTest, unittest.TestCase):
     to_send[0].RDLR = ((torque + 1024) >> 8) + (((torque + 1024) & 0xff) << 8)
     return to_send
 
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_controls_allowed())
-
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
       for t in range(-MAX_STEER*2, MAX_STEER*2):
