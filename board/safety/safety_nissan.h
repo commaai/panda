@@ -78,7 +78,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
       // 0x169 is lkas cmd. If it is on bus 0, then relay is unexpectedly closed
       if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == 0x169)) {
-        relay_malfunction = true;
+        relay_malfunction_set();
       }
     }
 

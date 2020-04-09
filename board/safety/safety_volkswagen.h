@@ -126,7 +126,7 @@ static void volkswagen_mqb_init(int16_t param) {
   UNUSED(param);
 
   controls_allowed = false;
-  relay_malfunction = false;
+  relay_malfunction_reset();
   volkswagen_torque_msg = MSG_HCA_01;
   volkswagen_lane_msg = MSG_LDW_02;
   gen_crc_lookup_table(0x2F, volkswagen_crc8_lut_8h2f);
@@ -136,7 +136,7 @@ static void volkswagen_pq_init(int16_t param) {
   UNUSED(param);
 
   controls_allowed = false;
-  relay_malfunction = false;
+  relay_malfunction_reset();
   volkswagen_torque_msg = MSG_HCA_1;
   volkswagen_lane_msg = MSG_LDW_1;
 }
@@ -201,7 +201,7 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // If there are HCA messages on bus 0 not sent by OP, there's a relay problem
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == MSG_HCA_01)) {
-      relay_malfunction = true;
+      relay_malfunction_set();
     }
   }
   return valid;
@@ -268,7 +268,7 @@ static int volkswagen_pq_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // If there are HCA messages on bus 0 not sent by OP, there's a relay problem
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && (addr == MSG_HCA_1)) {
-      relay_malfunction = true;
+      relay_malfunction_set();
     }
   }
   return valid;

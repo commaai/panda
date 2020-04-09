@@ -165,7 +165,7 @@ static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && ((addr == 0xE4) || (addr == 0x194))) {
       if (((honda_hw != HONDA_N_HW) && (bus == bus_rdr_car)) ||
         ((honda_hw == HONDA_N_HW) && (bus == 0))) {
-        relay_malfunction = true;
+        relay_malfunction_set();
       }
     }
   }
@@ -257,14 +257,14 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 static void honda_nidec_init(int16_t param) {
   UNUSED(param);
   controls_allowed = false;
-  relay_malfunction = false;
+  relay_malfunction_reset();
   honda_hw = HONDA_N_HW;
   honda_alt_brake_msg = false;
 }
 
 static void honda_bosch_giraffe_init(int16_t param) {
   controls_allowed = false;
-  relay_malfunction = false;
+  relay_malfunction_reset();
   honda_hw = HONDA_BG_HW;
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = (param == 1) ? true : false;
@@ -272,7 +272,7 @@ static void honda_bosch_giraffe_init(int16_t param) {
 
 static void honda_bosch_harness_init(int16_t param) {
   controls_allowed = false;
-  relay_malfunction = false;
+  relay_malfunction_reset();
   honda_hw = HONDA_BH_HW;
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = (param == 1) ? true : false;
