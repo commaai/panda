@@ -144,6 +144,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // 0x2E4 is lkas cmd. If it is on bus 0, then relay is unexpectedly closed
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == 0x2E4)) {
       relay_malfunction = true;
+      fault_occurred(FAULT_RELAY_MALFUNCTION);
     }
   }
   return valid;
@@ -247,7 +248,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
 static void toyota_init(int16_t param) {
   controls_allowed = 0;
-  relay_malfunction = 0;
+  relay_malfunction = false;
   toyota_dbc_eps_torque_factor = param;
 }
 

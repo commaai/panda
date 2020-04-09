@@ -127,6 +127,7 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) &&
         (((addr == 0x122) && subaru_global) || ((addr == 0x164) && !subaru_global))) {
       relay_malfunction = true;
+      fault_occurred(FAULT_RELAY_MALFUNCTION);
     }
   }
   return valid;

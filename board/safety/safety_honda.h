@@ -166,6 +166,7 @@ static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       if (((honda_hw != HONDA_N_HW) && (bus == bus_rdr_car)) ||
         ((honda_hw == HONDA_N_HW) && (bus == 0))) {
         relay_malfunction = true;
+        fault_occurred(FAULT_RELAY_MALFUNCTION);
       }
     }
   }

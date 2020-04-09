@@ -113,6 +113,7 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // 715 = ASCMGasRegenCmd
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && ((addr == 384) || (addr == 715))) {
       relay_malfunction = true;
+      fault_occurred(FAULT_RELAY_MALFUNCTION);
     }
   }
   return valid;

@@ -202,6 +202,7 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // If there are HCA messages on bus 0 not sent by OP, there's a relay problem
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == MSG_HCA_01)) {
       relay_malfunction = true;
+      fault_occurred(FAULT_RELAY_MALFUNCTION);
     }
   }
   return valid;
@@ -269,6 +270,7 @@ static int volkswagen_pq_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // If there are HCA messages on bus 0 not sent by OP, there's a relay problem
     if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && (addr == MSG_HCA_1)) {
       relay_malfunction = true;
+      fault_occurred(FAULT_RELAY_MALFUNCTION);
     }
   }
   return valid;
