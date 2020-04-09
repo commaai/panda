@@ -57,6 +57,10 @@ class CANPackerPanda(CANPacker):
     return package_can_msg(msg)
 
 class PandaSafetyTest:
+
+  FWD_BLACKLISTED_ADDRS = {} # {bus: [addr]}
+  FWD_BUS_LOOKUP = {}
+
   def _rx(self, msg):
     return self.safety.safety_rx_hook(msg)
 
@@ -79,13 +83,15 @@ class PandaSafetyTest:
         self.assertEqual(-1, self.safety.safety_fwd_hook(b, make_msg(b, a, 8)))
 
   def test_fwd_hook(self):
-    # nothing allowed
-    # TODO: use class var for safety modes that blacklist msgs, instead of overriding
+    # some safety modes don't forward anything, while others blacklist msgs
     for bus in range(0x0, 0x3):
       for addr in range(0x1, 0x800):
         # assume len 8
         msg = make_msg(bus, addr, 8)
-        self.assertEqual(-1, self.safety.safety_fwd_hook(bus, msg))
+        fwd_bus = self.FWD_BUS_LOOKUP.get(bus, -1)
+        if bus in self.FWD_BLACKLISTED_ADDRS and addr in self.FWD_BLACKLISTED_ADDRS[bus]:
+          fwd_bus = -1
+        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg))
 
   def test_manually_enable_controls_allowed(self):
     self.safety.set_controls_allowed(1)

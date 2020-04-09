@@ -37,6 +37,8 @@ class TestSubaruSafety(PandaSafetyTest, unittest.TestCase):
   STANDSTILL_THRESHOLD = 20  # 1kph (see dbc file)
   RELAY_MALFUNCTION_ADDR = 0x122
   RELAY_MALFUNCTION_BUS = 0
+  FWD_BLACKLISTED_ADDRS = {2: [290, 545, 802]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   @classmethod
   def setUp(cls):
@@ -242,25 +244,11 @@ class TestSubaruSafety(PandaSafetyTest, unittest.TestCase):
       self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
 
-  def test_fwd_hook(self):
-    buss = list(range(0x0, 0x3))
-    msgs = list(range(0x1, 0x800))
-    blocked_msgs = [290, 545, 802] if self.safety.get_subaru_global() else [356, 545, 802]
-    for b in buss:
-      for m in msgs:
-        if b == 0:
-          fwd_bus = 2
-        elif b == 1:
-          fwd_bus = -1
-        elif b == 2:
-          fwd_bus = -1 if m in blocked_msgs else 0
-
-        # assume len 8
-        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
-
 class TestSubaruLegacySafety(TestSubaruSafety):
   TX_MSGS = [[0x164, 0], [0x221, 0], [0x322, 0]]
   RELAY_MALFUNCTION_ADDR = 0x164
+  FWD_BLACKLISTED_ADDRS = {2: [356, 545, 802]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   @classmethod
   def setUp(cls):

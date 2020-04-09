@@ -38,6 +38,8 @@ class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_HCA_01
   RELAY_MALFUNCTION_BUS = 0
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   @classmethod
   def setUp(cls):
@@ -312,23 +314,6 @@ class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
       self._rx(self._tsk_06_msg(3))
       self._rx(self._motor_20_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_fwd_hook(self):
-    buss = list(range(0x0, 0x3))
-    msgs = list(range(0x1, 0x800))
-    blocked_msgs_0to2 = []
-    blocked_msgs_2to0 = [MSG_HCA_01, MSG_LDW_02]
-    for b in buss:
-      for m in msgs:
-        if b == 0:
-          fwd_bus = -1 if m in blocked_msgs_0to2 else 2
-        elif b == 1:
-          fwd_bus = -1
-        elif b == 2:
-          fwd_bus = -1 if m in blocked_msgs_2to0 else 0
-
-        # assume len 8
-        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
 
 if __name__ == "__main__":
