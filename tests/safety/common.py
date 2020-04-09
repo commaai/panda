@@ -1,5 +1,5 @@
 import struct
-from opendbc.can.packer import CANPacker
+from opendbc.can.packer import CANPacker # pylint: disable=import-error
 from panda.tests.safety import libpandasafety_py
 
 MAX_WRONG_COUNTERS = 5
@@ -47,7 +47,10 @@ class CANPackerPanda(CANPacker):
     return package_can_msg(msg)
 
 class PandaSafetyTest:
-
+  TX_MSGS = None
+  STANDSTILL_THRESHOLD = None
+  RELAY_MALFUNCTION_ADDR = None
+  RELAY_MALFUNCTION_BUS = None
   FWD_BLACKLISTED_ADDRS = {} # {bus: [addr]}
   FWD_BUS_LOOKUP = {}
 
@@ -56,6 +59,18 @@ class PandaSafetyTest:
 
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
+
+  def _brake_msg(self, brake): raise NotImplementedError
+  def _speed_msg(self, speed): raise NotImplementedError
+
+  # TODO: is there a better way to do this?
+  # make linter happy
+  def assertTrue(self, c): raise Exception
+  def assertFalse(self, c): raise Exception
+  def assertEqual(self, c, d): raise Exception
+  safety = None
+
+  # ***** standard tests for all safety modes *****
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
