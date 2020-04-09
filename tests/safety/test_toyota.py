@@ -167,7 +167,6 @@ class TestToyotaSafety(PandaSafetyTest, unittest.TestCase):
           self.safety.set_controls_allowed(controls_allowed)
           self.safety.set_unsafe_mode(unsafe_mode)
           if controls_allowed:
-            # TODO: fix this hack
             should_tx = int(min_accel*1000) <= int(accel*1000) <= int(max_accel*1000)
           else:
             should_tx = np.isclose(accel, 0, atol=0.0001)
