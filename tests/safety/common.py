@@ -121,9 +121,9 @@ class PandaSafetyTest(unittest.TestCase):
     self.assertFalse(self.safety.get_controls_allowed())
   
   def test_prev_gas(self):
-    for g in [True, False]:
-      self._rx(self._gas_msg(g))
-      self.assertEqual(g, self.safety.get_gas_pressed_prev())
+    for pressed in [True, False]:
+      self._rx(self._gas_msg(pressed))
+      self.assertEqual(pressed, self.safety.get_gas_pressed_prev())
 
   def test_allow_engage_with_gas_pressed(self):
     self._rx(self._gas_msg(1))

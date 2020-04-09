@@ -66,11 +66,10 @@ class TestToyotaSafety(PandaSafetyTest):
     values = {"BRAKE_PRESSED": pressed}
     return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
 
-  def _gas_msg(self, gas):
-    # TODO: use packer once the PR that uses the universal bit is merged
-    to_send = make_msg(0, 0x2C1)
-    to_send[0].RDHR = (gas & 0xFF) << 16
-    return to_send
+  def _gas_msg(self, pressed):
+    cruise_active = self.safety.get_controls_allowed()
+    values = {"GAS_RELEASED": not pressed, "CRUISE_ACTIVE": cruise_active}
+    return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
   def _pcm_cruise_msg(self, cruise_on):
     values = {"CRUISE_ACTIVE": cruise_on}
