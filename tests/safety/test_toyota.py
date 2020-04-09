@@ -31,6 +31,8 @@ class TestToyotaSafety(PandaSafetyTest, unittest.TestCase):
   STANDSTILL_THRESHOLD = 1  # 1kph
   RELAY_MALFUNCTION_ADDR = 0x2E4
   RELAY_MALFUNCTION_BUS = 0
+  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343 ]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   @classmethod
   def setUp(cls):
@@ -277,25 +279,6 @@ class TestToyotaSafety(PandaSafetyTest, unittest.TestCase):
       to_push[0].RDHR = 0
       self.assertFalse(self._rx(to_push))
       self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_fwd_hook(self):
-
-    buss = list(range(0x0, 0x3))
-    msgs = list(range(0x1, 0x800))
-
-    blocked_msgs = [0x2E4, 0x412, 0x191]
-    blocked_msgs += [0x343]
-    for b in buss:
-      for m in msgs:
-        if b == 0:
-          fwd_bus = 2
-        elif b == 1:
-          fwd_bus = -1
-        elif b == 2:
-          fwd_bus = -1 if m in blocked_msgs else 0
-
-        # assume len 8
-        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
 
 if __name__ == "__main__":
