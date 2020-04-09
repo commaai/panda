@@ -50,12 +50,8 @@ class TestNissanSafety(PandaSafetyTest, unittest.TestCase):
     return self.packer.make_can_msg_panda("LKAS", 0, values)
 
   def _speed_msg(self, speed):
-    to_send = make_msg(0, 0x285)
-    speed = int(speed / 0.005 * 3.6)
-    to_send[0].RDLR = ((speed & 0xFF) << 24) | ((speed & 0xFF00) << 8)
-
-    return to_send
-    # TODO: fix this
+    # TODO: why is this extra scale factor in panda safety but not in the dbc?
+    speed = int(speed * 3.6)
     values = {"WHEEL_SPEED_%s"%s: speed for s in ["RR", "RL"]}
     return self.packer.make_can_msg_panda("WHEEL_SPEEDS_REAR", 0, values)
 
