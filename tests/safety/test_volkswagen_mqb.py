@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import PandaSafetyTest, CANPackerPanda, make_msg, \
+from panda.tests.safety.common import PandaSafetyTest, CANPackerPanda, \
                                       MAX_WRONG_COUNTERS, UNSAFE_MODE
 
 MAX_RATE_UP = 4

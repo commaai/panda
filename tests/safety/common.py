@@ -1,6 +1,4 @@
 import struct
-import unittest
-
 from opendbc.can.packer import CANPacker
 from panda.tests.safety import libpandasafety_py
 

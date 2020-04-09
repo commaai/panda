@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import PandaSafetyTest, CANPackerPanda, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import PandaSafetyTest, CANPackerPanda, UNSAFE_MODE
 
 ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
