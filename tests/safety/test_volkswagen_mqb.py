@@ -4,7 +4,7 @@ import numpy as np
 import crcmod
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, PandaSafetyTest, make_msg, \
+from panda.tests.safety.common import PandaSafetyTest, make_msg, \
                                       MAX_WRONG_COUNTERS, UNSAFE_MODE
 
 MAX_RATE_UP = 4
@@ -24,15 +24,6 @@ MSG_MOTOR_20 = 0x121    # RX from ECU, for driver throttle input
 MSG_HCA_01 = 0x126      # TX by OP, Heading Control Assist steering torque
 MSG_GRA_ACC_01 = 0x12B  # TX by OP, ACC control buttons for cancel/resume
 MSG_LDW_02 = 0x397      # TX by OP, Lane line recognition and text alerts
-
-# Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-TX_MSGS = [[MSG_HCA_01, 0], [MSG_GRA_ACC_01, 0], [MSG_GRA_ACC_01, 2], [MSG_LDW_02, 0]]
-
-def sign(a):
-  if a > 0:
-    return 1
-  else:
-    return -1
 
 # Python crcmod works differently somehow from every other CRC calculator. The
 # implied leading 1 on the polynomial isn't a problem, but to get the right
@@ -60,13 +51,19 @@ def volkswagen_mqb_crc(msg, addr, len_msg):
     magic_pad = None
   return volkswagen_crc_8h2f(msg_bytes[1:len_msg] + magic_pad.to_bytes(1, 'little'))
 
-class TestVolkswagenMqbSafety(PandaSafetyTest):
+class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
   cnt_eps_01 = 0
   cnt_esp_05 = 0
   cnt_tsk_06 = 0
   cnt_motor_20 = 0
   cnt_hca_01 = 0
   cnt_gra_acc_01 = 0
+
+  # Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
+  TX_MSGS = [[MSG_HCA_01, 0], [MSG_GRA_ACC_01, 0], [MSG_GRA_ACC_01, 2], [MSG_LDW_02, 0]]
+  STANDSTILL_THRESHOLD = 1
+  RELAY_MALFUNCTION_ADDR = MSG_HCA_01
+  RELAY_MALFUNCTION_BUS = 0
 
   @classmethod
   def setUp(cls):
@@ -146,12 +143,6 @@ class TestVolkswagenMqbSafety(PandaSafetyTest):
     self.__class__.cnt_gra_acc_01 += 1
     return to_send
 
-  def test_spam_can_buses(self):
-    StdTest.test_spam_can_buses(self, TX_MSGS)
-
-  def test_relay_malfunction(self):
-    StdTest.test_relay_malfunction(self, MSG_HCA_01)
-
   def test_prev_gas(self):
     for g in range(0, 256):
       self._rx(self._motor_20_msg(g))
@@ -189,10 +180,6 @@ class TestVolkswagenMqbSafety(PandaSafetyTest):
     self._rx(self._brake_msg(True))
     self.assertTrue(self.safety.get_brake_pressed_prev())
 
-  def test_brake_disengage(self):
-    StdTest.test_allow_brake_at_zero_speed(self)
-    StdTest.test_not_allow_brake_when_moving(self, 1)
-
   def test_disengage_on_gas(self):
     self._rx(self._motor_20_msg(0))
     self.safety.set_controls_allowed(True)
@@ -224,9 +211,6 @@ class TestVolkswagenMqbSafety(PandaSafetyTest):
           self.assertFalse(self._tx(self._hca_01_msg(t)))
         else:
           self.assertTrue(self._tx(self._hca_01_msg(t)))
-
-  def test_manually_enable_controls_allowed(self):
-    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_spam_cancel_safety_check(self):
     BIT_CANCEL = 13

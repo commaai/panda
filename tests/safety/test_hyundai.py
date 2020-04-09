@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, PandaSafetyTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import PandaSafetyTest, make_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 3
 MAX_RATE_DOWN = 7
@@ -15,23 +15,13 @@ RT_INTERVAL = 250000
 DRIVER_TORQUE_ALLOWANCE = 50;
 DRIVER_TORQUE_FACTOR = 2;
 
-SPEED_THRESHOLD = 30  # ~1kph
 
-TX_MSGS = [[832, 0], [1265, 0]]
+class TestHyundaiSafety(PandaSafetyTest, unittest.TestCase):
+  TX_MSGS = [[832, 0], [1265, 0]]
+  STANDSTILL_THRESHOLD = 30  # ~1kph
+  RELAY_MALFUNCTION_ADDR = 832
+  RELAY_MALFUNCTION_BUS = 0
 
-def twos_comp(val, bits):
-  if val >= 0:
-    return val
-  else:
-    return (2**bits) + val
-
-def sign(a):
-  if a > 0:
-    return 1
-  else:
-    return -1
-
-class TestHyundaiSafety(PandaSafetyTest):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
@@ -73,12 +63,6 @@ class TestHyundaiSafety(PandaSafetyTest):
     to_send[0].RDLR = (torque + 1024) << 16
     return to_send
 
-  def test_spam_can_buses(self):
-    StdTest.test_spam_can_buses(self, TX_MSGS)
-
-  def test_relay_malfunction(self):
-    StdTest.test_relay_malfunction(self, 832)
-
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
@@ -91,9 +75,6 @@ class TestHyundaiSafety(PandaSafetyTest):
           self.assertFalse(self._tx(self._torque_msg(t)))
         else:
           self.assertTrue(self._tx(self._torque_msg(t)))
-
-  def test_manually_enable_controls_allowed(self):
-    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_enable_control_allowed_from_cruise(self):
     to_push = make_msg(0, 1057)
@@ -121,10 +102,6 @@ class TestHyundaiSafety(PandaSafetyTest):
     self._rx(self._gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
-
-  def test_brake_disengage(self):
-    StdTest.test_allow_brake_at_zero_speed(self)
-    StdTest.test_not_allow_brake_when_moving(self, SPEED_THRESHOLD)
 
   def test_non_realtime_limit_up(self):
     self.safety.set_hyundai_torque_driver(0, 0)

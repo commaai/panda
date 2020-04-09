@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, PandaSafetyTest, make_msg, \
+from panda.tests.safety.common import PandaSafetyTest, make_msg, \
                                       MAX_WRONG_COUNTERS, UNSAFE_MODE
 
 MAX_RATE_UP = 4
@@ -23,15 +23,6 @@ MSG_GRA_NEU = 0x38A      # TX by OP, ACC control buttons for cancel/resume
 MSG_BREMSE_3 = 0x4A0     # RX from ABS, for wheel speeds
 MSG_LDW_1 = 0x5BE        # TX by OP, Lane line recognition and text alerts
 
-# Transmit of GRA_Neu is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-TX_MSGS = [[MSG_HCA_1, 0], [MSG_GRA_NEU, 0], [MSG_GRA_NEU, 2], [MSG_LDW_1, 0]]
-
-def sign(a):
-  if a > 0:
-    return 1
-  else:
-    return -1
-
 def volkswagen_pq_checksum(msg, addr, len_msg):
   msg_bytes = msg.RDLR.to_bytes(4, 'little') + msg.RDHR.to_bytes(4, 'little')
   msg_bytes = msg_bytes[1:len_msg]
@@ -41,11 +32,17 @@ def volkswagen_pq_checksum(msg, addr, len_msg):
     checksum ^= i
   return checksum
 
-class TestVolkswagenPqSafety(PandaSafetyTest):
+class TestVolkswagenPqSafety(PandaSafetyTest, unittest.TestCase):
   cruise_engaged = False
   brake_pressed = False
   cnt_lenkhilfe_3 = 0
   cnt_hca_1 = 0
+
+  # Transmit of GRA_Neu is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
+  TX_MSGS = [[MSG_HCA_1, 0], [MSG_GRA_NEU, 0], [MSG_GRA_NEU, 2], [MSG_LDW_1, 0]]
+  STANDSTILL_THRESHOLD = 1
+  RELAY_MALFUNCTION_ADDR = MSG_HCA_1
+  RELAY_MALFUNCTION_BUS = 0
 
   @classmethod
   def setUp(cls):
@@ -120,11 +117,6 @@ class TestVolkswagenPqSafety(PandaSafetyTest):
     to_send[0].RDLR |= volkswagen_pq_checksum(to_send[0], MSG_GRA_NEU, 8)
     return to_send
 
-  def test_spam_can_buses(self):
-    StdTest.test_spam_can_buses(self, TX_MSGS)
-
-  def test_relay_malfunction(self):
-    StdTest.test_relay_malfunction(self, MSG_HCA_1)
 
   def test_prev_gas(self):
     for g in range(0, 256):
@@ -166,10 +158,13 @@ class TestVolkswagenPqSafety(PandaSafetyTest):
     self.assertTrue(self.safety.get_brake_pressed_prev())
     self._rx(self._brake_msg(False))
 
-  def test_brake_disengage(self):
+  def test_allow_brake_at_zero_speed(self):
     self.__class__.cruise_engaged = True  # Hack due to brake and ACC signals being in the same message
-    StdTest.test_allow_brake_at_zero_speed(self)
-    StdTest.test_not_allow_brake_when_moving(self, 1)
+    super().test_allow_brake_at_zero_speed()
+
+  def test_not_allow_brake_when_moving(self):
+    self.__class__.cruise_engaged = True  # Hack due to brake and ACC signals being in the same message
+    super().test_not_allow_brake_when_moving()
 
   def test_disengage_on_gas(self):
     self._rx(self._motor_3_msg(0))
@@ -202,9 +197,6 @@ class TestVolkswagenPqSafety(PandaSafetyTest):
           self.assertFalse(self._tx(self._hca_1_msg(t)))
         else:
           self.assertTrue(self._tx(self._hca_1_msg(t)))
-
-  def test_manually_enable_controls_allowed(self):
-    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_spam_cancel_safety_check(self):
     BIT_CANCEL = 9

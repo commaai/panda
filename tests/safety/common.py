@@ -50,70 +50,60 @@ class CANPackerPanda(CANPacker):
     msg = self.make_can_msg(name_or_addr, bus, values, counter=-1)
     return package_can_msg(msg)
 
-class PandaSafetyTest(unittest.TestCase):
-  @classmethod
-  def setUp(cls):
-    cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.set_safety_hooks(Panda.SAFETY_NOOUTPUT, 0)
-
+class PandaSafetyTest:
   def _rx(self, msg):
     return self.safety.safety_rx_hook(msg)
 
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
 
-class StdTest:
-  @staticmethod
-  def test_relay_malfunction(test, addr, bus=0):
+  def test_relay_malfunction(self):
     # input is a test class and the address that, if seen on specified bus, triggers
     # the relay_malfunction protection logic: both tx_hook and fwd_hook are
     # expected to return failure
-    test.assertFalse(test.safety.get_relay_malfunction())
-    test._rx(make_msg(bus, addr, 8))
-    test.assertTrue(test.safety.get_relay_malfunction())
+    self.assertFalse(self.safety.get_relay_malfunction())
+    self._rx(make_msg(self.RELAY_MALFUNCTION_BUS, self.RELAY_MALFUNCTION_ADDR, 8))
+    self.assertTrue(self.safety.get_relay_malfunction())
     for a in range(1, 0x800):
       for b in range(0, 3):
-        test.assertFalse(test._tx(make_msg(b, a, 8)))
-        test.assertEqual(-1, test.safety.safety_fwd_hook(b, make_msg(b, a, 8)))
+        self.assertFalse(self._tx(make_msg(b, a, 8)))
+        self.assertEqual(-1, self.safety.safety_fwd_hook(b, make_msg(b, a, 8)))
 
-  @staticmethod
-  def test_manually_enable_controls_allowed(test):
-    test.safety.set_controls_allowed(1)
-    test.assertTrue(test.safety.get_controls_allowed())
-    test.safety.set_controls_allowed(0)
-    test.assertFalse(test.safety.get_controls_allowed())
+  def test_manually_enable_controls_allowed(self):
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.set_controls_allowed(0)
+    self.assertFalse(self.safety.get_controls_allowed())
 
-  @staticmethod
-  def test_spam_can_buses(test, TX_MSGS):
+  def test_spam_can_buses(self):
     for addr in range(1, 0x800):
       for bus in range(0, 4):
-        if all(addr != m[0] or bus != m[1] for m in TX_MSGS):
-          test.assertFalse(test._tx(make_msg(bus, addr, 8)))
+        if all(addr != m[0] or bus != m[1] for m in self.TX_MSGS):
+          self.assertFalse(self._tx(make_msg(bus, addr, 8)))
 
-  @staticmethod
-  def test_allow_brake_at_zero_speed(test):
+  def test_allow_brake_at_zero_speed(self):
     # Brake was already pressed
-    test._rx(test._speed_msg(0))
-    test._rx(test._brake_msg(1))
-    test.safety.set_controls_allowed(1)
-    test._rx(test._brake_msg(1))
-    test.assertTrue(test.safety.get_controls_allowed())
-    test._rx(test._brake_msg(0))
-    test.assertTrue(test.safety.get_controls_allowed())
+    self._rx(self._speed_msg(0))
+    self._rx(self._brake_msg(1))
+    self.safety.set_controls_allowed(1)
+    self._rx(self._brake_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self._rx(self._brake_msg(0))
+    self.assertTrue(self.safety.get_controls_allowed())
     # rising edge of brake should disengage
-    test._rx(test._brake_msg(1))
-    test.assertFalse(test.safety.get_controls_allowed())
-    test._rx(test._brake_msg(0))  # reset no brakes
+    self._rx(self._brake_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self._rx(self._brake_msg(0))  # reset no brakes
 
-  @staticmethod
-  def test_not_allow_brake_when_moving(test, standstill_threshold):
+  def test_not_allow_brake_when_moving(self):
     # Brake was already pressed
-    test._rx(test._brake_msg(1))
-    test.safety.set_controls_allowed(1)
-    test._rx(test._speed_msg(standstill_threshold))
-    test._rx(test._brake_msg(1))
-    test.assertTrue(test.safety.get_controls_allowed())
-    test._rx(test._speed_msg(standstill_threshold + 1))
-    test._rx(test._brake_msg(1))
-    test.assertFalse(test.safety.get_controls_allowed())
-    test._rx(test._speed_msg(0))
+    self._rx(self._brake_msg(1))
+    self.safety.set_controls_allowed(1)
+    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
+    self._rx(self._brake_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
+    self._rx(self._brake_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self._rx(self._speed_msg(0))
+

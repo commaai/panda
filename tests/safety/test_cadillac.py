@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import PandaSafetyTest, make_msg, StdTest
+from panda.tests.safety.common import PandaSafetyTest, make_msg
 
 
 MAX_RATE_UP = 2
@@ -18,7 +18,6 @@ DRIVER_TORQUE_FACTOR = 4;
 
 IPAS_OVERRIDE_THRESHOLD = 200
 
-TX_MSGS = [[0x151, 2], [0x152, 0], [0x153, 2], [0x154, 0]]
 
 def twos_comp(val, bits):
   if val >= 0:
@@ -26,18 +25,20 @@ def twos_comp(val, bits):
   else:
     return (2**bits) + val
 
-def sign(a):
-  if a > 0:
-    return 1
-  else:
-    return -1
+class TestCadillacSafety(PandaSafetyTest, unittest.TestCase):
 
-class TestCadillacSafety(PandaSafetyTest):
+  TX_MSGS = [[0x151, 2], [0x152, 0], [0x153, 2], [0x154, 0]]
+
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_CADILLAC, 0)
     cls.safety.init_tests_cadillac()
+
+  # override these inherited tests from PandaSafetyTest
+  def test_relay_malfunction(self): pass
+  def test_allow_brake_at_zero_speed(self): pass
+  def test_not_allow_brake_when_moving(self): pass
 
   def _set_prev_torque(self, t):
     self.safety.set_cadillac_desired_torque_last(t)
@@ -55,14 +56,8 @@ class TestCadillacSafety(PandaSafetyTest):
     to_send[0].RDLR = ((t >> 8) & 0x3F) | ((t & 0xFF) << 8)
     return to_send
 
-  def test_spam_can_buses(self):
-    StdTest.test_spam_can_buses(self, TX_MSGS)
-
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_manually_enable_controls_allowed(self):
-    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_enable_control_allowed_from_cruise(self):
     to_push = make_msg(0, 0x370)

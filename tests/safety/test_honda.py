@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, CANPackerPanda, PandaSafetyTest, make_msg, \
+from panda.tests.safety.common import CANPackerPanda, PandaSafetyTest, make_msg, \
                                       interceptor_msg, MAX_WRONG_COUNTERS, UNSAFE_MODE
 
 MAX_BRAKE = 255
@@ -30,10 +30,15 @@ def honda_checksum(msg, addr, len_msg):
   return (8 - checksum) & 0xF
 
 
-class TestHondaSafety(PandaSafetyTest):
+class TestHondaSafety(PandaSafetyTest, unittest.TestCase):
   cnt_speed = 0
   cnt_gas = 0
   cnt_button = 0
+
+  TX_MSGS = N_TX_MSGS
+  STANDSTILL_THRESHOLD = 0
+  RELAY_MALFUNCTION_ADDR = 0xE4
+  RELAY_MALFUNCTION_BUS = 0
 
   @classmethod
   def setUp(cls):
@@ -83,26 +88,8 @@ class TestHondaSafety(PandaSafetyTest):
     values = {"STEER_TORQUE": steer}
     return self.packer.make_can_msg_panda("STEERING_CONTROL", bus, values)
 
-  def test_spam_can_buses(self):
-    hw_type = self.safety.get_honda_hw()
-    if hw_type == HONDA_N_HW:
-      tx_msgs = N_TX_MSGS
-    elif hw_type == HONDA_BH_HW:
-      tx_msgs = BH_TX_MSGS
-    elif hw_type == HONDA_BG_HW:
-      tx_msgs = BG_TX_MSGS
-    StdTest.test_spam_can_buses(self, tx_msgs)
-
-  def test_relay_malfunction(self):
-    hw = self.safety.get_honda_hw()
-    bus = 2 if hw == HONDA_BG_HW else 0
-    StdTest.test_relay_malfunction(self, 0xE4, bus=bus)
-
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_manually_enable_controls_allowed(self):
-    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_resume_button(self):
     RESUME_BTN = 4
@@ -147,10 +134,6 @@ class TestHondaSafety(PandaSafetyTest):
     self.safety.set_controls_allowed(1)
     self._rx(self._alt_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_brake_disengage(self):
-    StdTest.test_allow_brake_at_zero_speed(self)
-    StdTest.test_not_allow_brake_when_moving(self, 0)
 
   def test_prev_gas(self):
     self._rx(self._gas_msg(False))
@@ -412,6 +395,14 @@ class TestHondaSafety(PandaSafetyTest):
         self.safety.set_gas_interceptor_detected(False)
 
 class TestHondaBoschGiraffeSafety(TestHondaSafety):
+
+  TX_MSGS = BG_TX_MSGS
+  STANDSTILL_THRESHOLD = 0
+
+  # TODO: why is this tested for a giraffe?
+  RELAY_MALFUNCTION_ADDR = 0xE4
+  RELAY_MALFUNCTION_BUS = 2
+
   @classmethod
   def setUp(cls):
     TestHondaSafety.setUp()
@@ -442,6 +433,11 @@ class TestHondaBoschGiraffeSafety(TestHondaSafety):
 
 
 class TestHondaBoschHarnessSafety(TestHondaBoschGiraffeSafety):
+  TX_MSGS = BH_TX_MSGS
+  STANDSTILL_THRESHOLD = 0
+  RELAY_MALFUNCTION_ADDR = 0xE4
+  RELAY_MALFUNCTION_BUS = 0
+
   @classmethod
   def setUp(cls):
     TestHondaBoschGiraffeSafety.setUp()

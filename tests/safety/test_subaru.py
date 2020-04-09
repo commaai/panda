@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, PandaSafetyTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import PandaSafetyTest, make_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 50
 MAX_RATE_DOWN = 70
@@ -15,22 +15,12 @@ RT_INTERVAL = 250000
 DRIVER_TORQUE_ALLOWANCE = 60;
 DRIVER_TORQUE_FACTOR = 10;
 
-SPEED_THRESHOLD = 20  # 1kph (see dbc file)
-
-TX_MSGS = [[0x122, 0], [0x221, 0], [0x322, 0]]
-TX_L_MSGS = [[0x164, 0], [0x221, 0], [0x322, 0]]
 
 def twos_comp(val, bits):
   if val >= 0:
     return val
   else:
     return (2**bits) + val
-
-def sign(a):
-  if a > 0:
-    return 1
-  else:
-    return -1
 
 def subaru_checksum(msg, addr, len_msg):
   checksum = addr + (addr >> 8)
@@ -42,12 +32,17 @@ def subaru_checksum(msg, addr, len_msg):
   return checksum & 0xff
 
 
-class TestSubaruSafety(PandaSafetyTest):
+class TestSubaruSafety(PandaSafetyTest, unittest.TestCase):
   cnt_gas = 0
   cnt_torque_driver = 0
   cnt_cruise = 0
   cnt_speed = 0
   cnt_brake = 0
+
+  TX_MSGS = [[0x122, 0], [0x221, 0], [0x322, 0]]
+  STANDSTILL_THRESHOLD = 20  # 1kph (see dbc file)
+  RELAY_MALFUNCTION_ADDR = 0x122
+  RELAY_MALFUNCTION_BUS = 0
 
   @classmethod
   def setUp(cls):
@@ -130,12 +125,6 @@ class TestSubaruSafety(PandaSafetyTest):
       self._rx(self._torque_driver_msg(min_t))
     self._rx(self._torque_driver_msg(max_t))
 
-  def test_spam_can_buses(self):
-    StdTest.test_spam_can_buses(self, TX_MSGS if self.safety.get_subaru_global() else TX_L_MSGS)
-
-  def test_relay_malfunction(self):
-    StdTest.test_relay_malfunction(self, 0x122 if self.safety.get_subaru_global() else 0x164)
-
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
@@ -163,10 +152,13 @@ class TestSubaruSafety(PandaSafetyTest):
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
-  def test_brake_disengage(self):
-    if (self.safety.get_subaru_global()):
-      StdTest.test_allow_brake_at_zero_speed(self)
-      StdTest.test_not_allow_brake_when_moving(self, SPEED_THRESHOLD)
+  def test_allow_brake_at_zero_speed(self):
+    if self.safety.get_subaru_global():
+      super().test_allow_brake_at_zero_speed()
+
+  def test_not_allow_brake_when_moving(self):
+    if self.safety.get_subaru_global():
+      super().test_not_allow_brake_when_moving()
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
@@ -177,9 +169,6 @@ class TestSubaruSafety(PandaSafetyTest):
           self.assertFalse(self._tx(self._torque_msg(t)))
         else:
           self.assertTrue(self._tx(self._torque_msg(t)))
-
-  def test_manually_enable_controls_allowed(self):
-    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_non_realtime_limit_up(self):
     self._set_torque_driver(0, 0)
@@ -279,6 +268,9 @@ class TestSubaruSafety(PandaSafetyTest):
         self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
 class TestSubaruLegacySafety(TestSubaruSafety):
+  TX_MSGS = [[0x164, 0], [0x221, 0], [0x322, 0]]
+  RELAY_MALFUNCTION_ADDR = 0x164
+
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety

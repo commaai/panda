@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, PandaSafetyTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import PandaSafetyTest, make_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 3
 MAX_RATE_DOWN = 3
@@ -14,7 +14,6 @@ RT_INTERVAL = 250000
 
 MAX_TORQUE_ERROR = 80
 
-TX_MSGS = [[571, 0], [658, 0], [678, 0]]
 
 def chrysler_checksum(msg, len_msg):
   checksum = 0xFF
@@ -41,11 +40,16 @@ def chrysler_checksum(msg, len_msg):
       shift = shift >> 1
   return ~checksum & 0xFF
 
-class TestChryslerSafety(PandaSafetyTest):
+class TestChryslerSafety(PandaSafetyTest, unittest.TestCase):
   cnt_torque_meas = 0
   cnt_gas = 0
   cnt_cruise = 0
   cnt_brake = 0
+
+  TX_MSGS = [[571, 0], [658, 0], [678, 0]]
+  STANDSTILL_THRESHOLD = 0
+  RELAY_MALFUNCTION_ADDR = 0x292
+  RELAY_MALFUNCTION_BUS = 0
 
   @classmethod
   def setUp(cls):
@@ -106,12 +110,6 @@ class TestChryslerSafety(PandaSafetyTest):
     to_send[0].RDLR = ((torque + 1024) >> 8) + (((torque + 1024) & 0xff) << 8)
     return to_send
 
-  def test_spam_can_buses(self):
-    StdTest.test_spam_can_buses(self, TX_MSGS)
-
-  def test_relay_malfunction(self):
-    StdTest.test_relay_malfunction(self, 0x292)
-
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
@@ -124,9 +122,6 @@ class TestChryslerSafety(PandaSafetyTest):
           self.assertFalse(self._tx(self._torque_msg(t)))
         else:
           self.assertTrue(self._tx(self._torque_msg(t)))
-
-  def test_manually_enable_controls_allowed(self):
-    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_enable_control_allowed_from_cruise(self):
     to_push = self._cruise_msg(True)
@@ -156,10 +151,6 @@ class TestChryslerSafety(PandaSafetyTest):
     self._rx(self._gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
-
-  def test_brake_disengage(self):
-    StdTest.test_allow_brake_at_zero_speed(self)
-    StdTest.test_not_allow_brake_when_moving(self, 0)
 
   def test_non_realtime_limit_up(self):
     self.safety.set_controls_allowed(True)

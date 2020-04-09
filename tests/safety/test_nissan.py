@@ -3,13 +3,11 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, PandaSafetyTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import PandaSafetyTest, make_msg, UNSAFE_MODE
 
 ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
 ANGLE_DELTA_VU = [5., 3.5, 0.4]   # unwind limit
-
-TX_MSGS = [[0x169, 0], [0x2b1, 0], [0x4cc, 0], [0x20b, 2], [0x280, 2]]
 
 def twos_comp(val, bits):
   if val >= 0:
@@ -24,7 +22,12 @@ def sign(a):
     return -1
 
 
-class TestNissanSafety(PandaSafetyTest):
+class TestNissanSafety(PandaSafetyTest, unittest.TestCase):
+  TX_MSGS = [[0x169, 0], [0x2b1, 0], [0x4cc, 0], [0x20b, 2], [0x280, 2]]
+  STANDSTILL_THRESHOLD = 0
+  RELAY_MALFUNCTION_ADDR = 0x169
+  RELAY_MALFUNCTION_BUS = 0
+
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
@@ -86,9 +89,6 @@ class TestNissanSafety(PandaSafetyTest):
 
     return to_send
 
-  def test_spam_can_buses(self):
-    StdTest.test_spam_can_buses(self, TX_MSGS)
-
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
     speeds = [0., 1., 5., 10., 15., 50.]
@@ -145,10 +145,6 @@ class TestNissanSafety(PandaSafetyTest):
     self.assertFalse(self._tx(self._lkas_control_msg(0, 1)))
     self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_brake_disengage(self):
-    StdTest.test_allow_brake_at_zero_speed(self)
-    StdTest.test_not_allow_brake_when_moving(self, 0)
-
   def test_gas_rising_edge(self):
     self.safety.set_controls_allowed(1)
     self._rx(self._send_gas_cmd(100))
@@ -180,9 +176,6 @@ class TestNissanSafety(PandaSafetyTest):
     self.safety.set_controls_allowed(1)
     self._tx(self._acc_button_cmd(0x20)) # No button pressed
     self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_relay_malfunction(self):
-    StdTest.test_relay_malfunction(self, 0x169)
 
   def test_fwd_hook(self):
 

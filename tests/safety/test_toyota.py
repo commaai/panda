@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, CANPackerPanda, PandaSafetyTest, \
+from panda.tests.safety.common import CANPackerPanda, PandaSafetyTest, \
                                       make_msg, interceptor_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 10
@@ -19,18 +19,21 @@ ISO_MIN_ACCEL = -3.5
 MAX_RT_DELTA = 375
 RT_INTERVAL = 250000
 
-STANDSTILL_THRESHOLD = 1  # 1kph
-
 MAX_TORQUE_ERROR = 350
 INTERCEPTOR_THRESHOLD = 475
 
-TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
+class TestToyotaSafety(PandaSafetyTest, unittest.TestCase):
+
+  TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
            [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
            [0x2E4, 0], [0x411, 0], [0x412, 0], [0x343, 0], [0x1D2, 0],  # LKAS + ACC
            [0x200, 0], [0x750, 0]];  # interceptor + blindspot monitor
 
+  STANDSTILL_THRESHOLD = 1  # 1kph
+  
+  RELAY_MALFUNCTION_ADDR = 0x2E4
+  RELAY_MALFUNCTION_BUS = 0
 
-class TestToyotaSafety(PandaSafetyTest):
   @classmethod
   def setUp(cls):
     cls.packer = CANPackerPanda("toyota_prius_2017_pt_generated")
@@ -83,17 +86,8 @@ class TestToyotaSafety(PandaSafetyTest):
     values = {"CRUISE_ACTIVE": cruise_on}
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
-  def test_spam_can_buses(self):
-    StdTest.test_spam_can_buses(self, TX_MSGS)
-
-  def test_relay_malfunction(self):
-    StdTest.test_relay_malfunction(self, 0x2E4)
-
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_manually_enable_controls_allowed(self):
-    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_enable_control_allowed_from_cruise(self):
     self._rx(self._pcm_cruise_msg(False))
@@ -158,10 +152,6 @@ class TestToyotaSafety(PandaSafetyTest):
       self._rx(interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
-
-  def test_brake_disengage(self):
-    StdTest.test_allow_brake_at_zero_speed(self)
-    StdTest.test_not_allow_brake_when_moving(self, STANDSTILL_THRESHOLD)
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
     self._rx(interceptor_msg(0x1000, 0x201))

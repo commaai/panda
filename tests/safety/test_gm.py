@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, PandaSafetyTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import PandaSafetyTest, make_msg, UNSAFE_MODE
 
 MAX_RATE_UP = 7
 MAX_RATE_DOWN = 17
@@ -18,24 +18,21 @@ RT_INTERVAL = 250000
 DRIVER_TORQUE_ALLOWANCE = 50;
 DRIVER_TORQUE_FACTOR = 4;
 
-TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
-           [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
-           [789, 2],  # ch bus
-           [0x104c006c, 3], [0x10400060]]  # gmlan
-
 def twos_comp(val, bits):
   if val >= 0:
     return val
   else:
     return (2**bits) + val
 
-def sign(a):
-  if a > 0:
-    return 1
-  else:
-    return -1
+class TestGmSafety(PandaSafetyTest, unittest.TestCase):
+  TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
+             [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
+             [789, 2],  # ch bus
+             [0x104c006c, 3], [0x10400060]]  # gmlan
+  STANDSTILL_THRESHOLD = 0
+  RELAY_MALFUNCTION_ADDR = 384
+  RELAY_MALFUNCTION_BUS = 0
 
-class TestGmSafety(PandaSafetyTest):
   @classmethod
   def setUp(cls):
     cls.safety = libpandasafety_py.libpandasafety
@@ -89,12 +86,6 @@ class TestGmSafety(PandaSafetyTest):
     to_send[0].RDLR = ((t >> 8) & 0x7) | ((t & 0xFF) << 8)
     return to_send
 
-  def test_spam_can_buses(self):
-    StdTest.test_spam_can_buses(self, TX_MSGS)
-
-  def test_relay_malfunction(self):
-    StdTest.test_relay_malfunction(self, 384)
-
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
@@ -115,10 +106,6 @@ class TestGmSafety(PandaSafetyTest):
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(CANCEL_BTN))
     self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_brake_disengage(self):
-    StdTest.test_allow_brake_at_zero_speed(self)
-    StdTest.test_not_allow_brake_when_moving(self, 0)
 
   def test_disengage_on_gas(self):
     self.safety.set_controls_allowed(1)
@@ -168,9 +155,6 @@ class TestGmSafety(PandaSafetyTest):
           self.assertFalse(self._tx(self._torque_msg(t)))
         else:
           self.assertTrue(self._tx(self._torque_msg(t)))
-
-  def test_manually_enable_controls_allowed(self):
-    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_non_realtime_limit_up(self):
     self.safety.set_gm_torque_driver(0, 0)
