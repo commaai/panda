@@ -18,24 +18,6 @@ def twos_comp(val, bits):
   else:
     return (2**bits) + val
 
-def make_msg(bus, addr, length=8):
-  to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-  if addr >= 0x800:
-    to_send[0].RIR = (addr << 3) | 5
-  else:
-    to_send[0].RIR = (addr << 21) | 1
-  to_send[0].RDTR = length
-  to_send[0].RDTR |= bus << 4
-
-  return to_send
-
-def interceptor_msg(gas, addr):
-  to_send = make_msg(0, addr, 6)
-  gas2 = gas * 2
-  to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
-                    ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
-  return to_send
-
 def package_can_msg(msg):
   addr, _, dat, bus = msg
   rdlr, rdhr = struct.unpack('II', dat.ljust(8, b'\x00'))
@@ -50,6 +32,16 @@ def package_can_msg(msg):
   ret[0].RDLR = rdlr
 
   return ret
+
+def make_msg(bus, addr, length=8):
+  return package_can_msg([addr, 0, b'\x00'*length, bus])
+
+def interceptor_msg(gas, addr):
+  to_send = make_msg(0, addr, 6)
+  gas2 = gas * 2
+  to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
+                    ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
+  return to_send
 
 class CANPackerPanda(CANPacker):
   def make_can_msg_panda(self, name_or_addr, bus, values, counter=-1):
