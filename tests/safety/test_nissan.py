@@ -3,17 +3,11 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import PandaSafetyTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import PandaSafetyTest, make_msg, twos_comp, UNSAFE_MODE
 
 ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
 ANGLE_DELTA_VU = [5., 3.5, 0.4]   # unwind limit
-
-def twos_comp(val, bits):
-  if val >= 0:
-    return val
-  else:
-    return (2**bits) + val
 
 def sign(a):
   if a > 0:

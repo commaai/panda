@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import PandaSafetyTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import PandaSafetyTest, make_msg, twos_comp, UNSAFE_MODE
 
 MAX_RATE_UP = 7
 MAX_RATE_DOWN = 17
@@ -17,12 +17,6 @@ RT_INTERVAL = 250000
 
 DRIVER_TORQUE_ALLOWANCE = 50;
 DRIVER_TORQUE_FACTOR = 4;
-
-def twos_comp(val, bits):
-  if val >= 0:
-    return val
-  else:
-    return (2**bits) + val
 
 class TestGmSafety(PandaSafetyTest, unittest.TestCase):
   TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus

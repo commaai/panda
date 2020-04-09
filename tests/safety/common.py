@@ -12,6 +12,12 @@ class UNSAFE_MODE:
   DISABLE_STOCK_AEB = 2
   RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
 
+def twos_comp(val, bits):
+  if val >= 0:
+    return val
+  else:
+    return (2**bits) + val
+
 def make_msg(bus, addr, length=8):
   to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
   if addr >= 0x800:

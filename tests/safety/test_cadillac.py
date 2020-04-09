@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import PandaSafetyTest, make_msg
+from panda.tests.safety.common import PandaSafetyTest, make_msg, twos_comp
 
 
 MAX_RATE_UP = 2
@@ -18,12 +18,6 @@ DRIVER_TORQUE_FACTOR = 4;
 
 IPAS_OVERRIDE_THRESHOLD = 200
 
-
-def twos_comp(val, bits):
-  if val >= 0:
-    return val
-  else:
-    return (2**bits) + val
 
 class TestCadillacSafety(PandaSafetyTest, unittest.TestCase):
 

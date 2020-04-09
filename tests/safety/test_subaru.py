@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import PandaSafetyTest, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import PandaSafetyTest, make_msg, twos_comp, UNSAFE_MODE
 
 MAX_RATE_UP = 50
 MAX_RATE_DOWN = 70
@@ -15,12 +15,6 @@ RT_INTERVAL = 250000
 DRIVER_TORQUE_ALLOWANCE = 60;
 DRIVER_TORQUE_FACTOR = 10;
 
-
-def twos_comp(val, bits):
-  if val >= 0:
-    return val
-  else:
-    return (2**bits) + val
 
 def subaru_checksum(msg, addr, len_msg):
   checksum = addr + (addr >> 8)
