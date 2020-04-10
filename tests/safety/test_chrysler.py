@@ -239,7 +239,7 @@ class TestChryslerSafety(unittest.TestCase):
 
   def test_cancel_button(self):
     CANCEL = 1
-    for b in range(0, 0xff):
+    for b in range(0, 0x1ff):
       if b == CANCEL:
         self.assertTrue(self.safety.safety_tx_hook(self._button_msg(b)))
       else:
