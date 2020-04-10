@@ -55,7 +55,7 @@ static int ford_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && (addr == 0x3CA)) {
-    relay_malfunction = true;
+    relay_malfunction_set();
   }
   return 1;
 }
