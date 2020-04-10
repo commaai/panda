@@ -248,6 +248,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 static void toyota_init(int16_t param) {
   controls_allowed = 0;
   relay_malfunction_reset();
+  gas_interceptor_detected = 0;
   toyota_dbc_eps_torque_factor = param;
 }
 

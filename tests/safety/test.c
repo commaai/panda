@@ -282,6 +282,7 @@ void init_tests(void){
   safety_mode_cnt = 2U;  // avoid ignoring relay_malfunction logic
   gas_pressed_prev = false;
   brake_pressed_prev = false;
+  unsafe_mode = 0;
 }
 
 void init_tests_toyota(void){
