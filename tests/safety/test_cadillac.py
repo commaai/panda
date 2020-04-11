@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import PandaSafetyTest, make_msg, twos_comp
+from panda.tests.safety.common import PandaSafetyTest, CANPackerPanda, make_msg, twos_comp
 
 
 MAX_RATE_UP = 2
@@ -17,18 +17,27 @@ DRIVER_TORQUE_ALLOWANCE = 50
 DRIVER_TORQUE_FACTOR = 4
 
 
-class TestCadillacSafety(PandaSafetyTest, unittest.TestCase):
+class TestCadillacSafety(PandaSafetyTest):
 
   TX_MSGS = [[0x151, 2], [0x152, 0], [0x153, 2], [0x154, 0]]
 
   @classmethod
   def setUp(cls):
+    cls.packer = CANPackerPanda("cadillac_ct6_powertrain")
     cls.safety = libpandasafety_py.libpandasafety
     cls.safety.set_safety_hooks(Panda.SAFETY_CADILLAC, 0)
     cls.safety.init_tests_cadillac()
 
   # override these inherited tests from PandaSafetyTest
   def test_relay_malfunction(self): pass
+  # cadillac safety doesn't have any gas or brake pedal detection
+  def test_prev_gas(self): pass
+  def test_allow_engage_with_gas_pressed(self): pass
+  def test_disengage_on_gas(self): pass
+  def test_unsafe_mode_no_disengage_on_gas(self): pass
+  def test_prev_brake(self): pass
+  def test_enable_control_allowed_from_cruise(self): pass
+  def test_disable_control_allowed_from_cruise(self): pass
   def test_allow_brake_at_zero_speed(self): pass
   def test_not_allow_brake_when_moving(self): pass
 
@@ -37,28 +46,15 @@ class TestCadillacSafety(PandaSafetyTest, unittest.TestCase):
     self.safety.set_cadillac_rt_torque_last(t)
 
   def _torque_driver_msg(self, torque):
-    t = twos_comp(torque, 11)
-    to_send = make_msg(0, 0x164)
-    to_send[0].RDLR = ((t >> 8) & 0x7) | ((t & 0xFF) << 8)
-    return to_send
+    values = {"LKADriverAppldTrq": torque}
+    return self.packer.make_can_msg_panda("PSCMStatus", 0, values)
 
   def _torque_msg(self, torque):
+    # TODO: why isn't this in the dbc?
     to_send = make_msg(2, 0x151)
     t = twos_comp(torque, 14)
     to_send[0].RDLR = ((t >> 8) & 0x3F) | ((t & 0xFF) << 8)
     return to_send
-
-  def test_enable_control_allowed_from_cruise(self):
-    to_push = make_msg(0, 0x370)
-    to_push[0].RDLR = 0x800000
-    self._rx(to_push)
-    self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_disable_control_allowed_from_cruise(self):
-    to_push = make_msg(0, 0x370)
-    self.safety.set_controls_allowed(1)
-    self._rx(to_push)
-    self.assertFalse(self.safety.get_controls_allowed())
 
   def test_torque_absolute_limits(self):
     for controls_allowed in [True, False]:
