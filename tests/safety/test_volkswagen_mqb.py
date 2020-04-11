@@ -68,6 +68,12 @@ class TestVolkswagenMqbSafety(PandaSafetyTest):
     self.__class__.cnt_motor_20 += 1
     return self.packer.make_can_msg_panda("Motor_20", 0, values)
 
+  # ACC engagement status
+  def _pcm_status_msg(self, enable):
+    values = {"TSK_Status": 3 if enable else 1, "COUNTER": self.cnt_tsk_06 % 16}
+    self.__class__.cnt_tsk_06 += 1
+    return self.packer.make_can_msg_panda("TSK_06", 0, values)
+
   # Driver steering input torque
   def _eps_01_msg(self, torque):
     values = {"Driver_Strain": abs(torque), "Driver_Strain_VZ": torque < 0,
@@ -81,12 +87,6 @@ class TestVolkswagenMqbSafety(PandaSafetyTest):
                 "COUNTER": self.cnt_hca_01 % 16}
     self.__class__.cnt_hca_01 += 1
     return self.packer.make_can_msg_panda("HCA_01", 0, values)
-
-  # ACC engagement status
-  def _pcm_status_msg(self, enable):
-    values = {"TSK_Status": 3 if enable else 1, "COUNTER": self.cnt_tsk_06 % 16}
-    self.__class__.cnt_tsk_06 += 1
-    return self.packer.make_can_msg_panda("TSK_06", 0, values)
 
   # Cruise control buttons
   def _gra_acc_01_msg(self, cancel=0, resume=0, _set=0):
