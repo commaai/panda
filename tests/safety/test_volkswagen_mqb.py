@@ -24,7 +24,7 @@ MSG_HCA_01 = 0x126      # TX by OP, Heading Control Assist steering torque
 MSG_GRA_ACC_01 = 0x12B  # TX by OP, ACC control buttons for cancel/resume
 MSG_LDW_02 = 0x397      # TX by OP, Lane line recognition and text alerts
 
-class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
+class TestVolkswagenMqbSafety(PandaSafetyTest):
   cnt_eps_01 = 0
   cnt_esp_05 = 0
   cnt_tsk_06 = 0
@@ -63,6 +63,12 @@ class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
     self.__class__.cnt_esp_05 += 1
     return self.packer.make_can_msg_panda("ESP_05", 0, values)
 
+  # Driver throttle input
+  def _gas_msg(self, gas):
+    values = {"MO_Fahrpedalrohwert_01": gas, "COUNTER": self.cnt_motor_20 % 16}
+    self.__class__.cnt_motor_20 += 1
+    return self.packer.make_can_msg_panda("Motor_20", 0, values)
+
   # Driver steering input torque
   def _eps_01_msg(self, torque):
     values = {"Driver_Strain": abs(torque), "Driver_Strain_VZ": torque < 0,
@@ -83,23 +89,12 @@ class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
     self.__class__.cnt_tsk_06 += 1
     return self.packer.make_can_msg_panda("TSK_06", 0, values)
 
-  # Driver throttle input
-  def _motor_20_msg(self, gas):
-    values = {"MO_Fahrpedalrohwert_01": gas, "COUNTER": self.cnt_motor_20 % 16}
-    self.__class__.cnt_motor_20 += 1
-    return self.packer.make_can_msg_panda("Motor_20", 0, values)
-
   # Cruise control buttons
   def _gra_acc_01_msg(self, cancel=0, resume=0, _set=0):
     values = {"GRA_Abbrechen": cancel, "GRA_Tip_Setzen": _set,
                 "GRA_Tip_Wiederaufnahme": resume, "COUNTER": self.cnt_gra_acc_01 % 16}
     self.__class__.cnt_gra_acc_01 += 1
     return self.packer.make_can_msg_panda("GRA_ACC_01", 0, values)
-
-  def test_prev_gas(self):
-    for g in range(0, 256):
-      self._rx(self._motor_20_msg(g))
-      self.assertEqual(True if g > 0 else False, self.safety.get_gas_pressed_prev())
 
   def test_enable_control_allowed_from_cruise(self):
     self.safety.set_controls_allowed(0)
@@ -124,33 +119,6 @@ class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
     # 144 km/h, openpilot V_CRUISE_MAX
     self._rx(self._speed_msg(144))
     self.assertEqual(1, self.safety.get_volkswagen_moving())
-
-  def test_prev_brake(self):
-    self.assertFalse(self.safety.get_brake_pressed_prev())
-    self._rx(self._brake_msg(True))
-    self.assertTrue(self.safety.get_brake_pressed_prev())
-
-  def test_disengage_on_gas(self):
-    self._rx(self._motor_20_msg(0))
-    self.safety.set_controls_allowed(True)
-    self._rx(self._motor_20_msg(1))
-    self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_unsafe_mode_no_disengage_on_gas(self):
-    self._rx(self._motor_20_msg(0))
-    self.safety.set_controls_allowed(True)
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    self._rx(self._motor_20_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
-
-  def test_allow_engage_with_gas_pressed(self):
-    self._rx(self._motor_20_msg(1))
-    self.safety.set_controls_allowed(True)
-    self._rx(self._motor_20_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self._rx(self._motor_20_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
@@ -280,7 +248,7 @@ class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
       if msg == MSG_TSK_06:
         to_push = self._tsk_06_msg(3)
       if msg == MSG_MOTOR_20:
-        to_push = self._motor_20_msg(0)
+        to_push = self._gas_msg(0)
       self.assertTrue(self._rx(to_push))
       to_push[0].RDHR ^= 0xFF
       self.assertFalse(self._rx(to_push))
@@ -298,12 +266,12 @@ class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
         self._rx(self._eps_01_msg(0))
         self._rx(self._brake_msg(False))
         self._rx(self._tsk_06_msg(3))
-        self._rx(self._motor_20_msg(0))
+        self._rx(self._gas_msg(0))
       else:
         self.assertFalse(self._rx(self._eps_01_msg(0)))
         self.assertFalse(self._rx(self._brake_msg(False)))
         self.assertFalse(self._rx(self._tsk_06_msg(3)))
-        self.assertFalse(self._rx(self._motor_20_msg(0)))
+        self.assertFalse(self._rx(self._gas_msg(0)))
         self.assertFalse(self.safety.get_controls_allowed())
 
     # restore counters for future tests with a couple of good messages
@@ -312,7 +280,7 @@ class TestVolkswagenMqbSafety(PandaSafetyTest, unittest.TestCase):
       self._rx(self._eps_01_msg(0))
       self._rx(self._brake_msg(False))
       self._rx(self._tsk_06_msg(3))
-      self._rx(self._motor_20_msg(0))
+      self._rx(self._gas_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
 
 

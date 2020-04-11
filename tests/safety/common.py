@@ -119,9 +119,12 @@ class PandaSafetyTest(unittest.TestCase):
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(0)
     self.assertFalse(self.safety.get_controls_allowed())
-  
+
   def test_prev_gas(self):
+    self.assertFalse(self.safety.get_gas_pressed_prev())
     for pressed in [True, False]:
+      self._rx(self._gas_msg(not pressed))
+      self.assertEqual(not pressed, self.safety.get_gas_pressed_prev())
       self._rx(self._gas_msg(pressed))
       self.assertEqual(pressed, self.safety.get_gas_pressed_prev())
 
@@ -145,6 +148,14 @@ class PandaSafetyTest(unittest.TestCase):
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
     self._rx(self._gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_prev_brake(self):
+    self.assertFalse(self.safety.get_brake_pressed_prev())
+    for pressed in [True, False]:
+      self._rx(self._brake_msg(not pressed))
+      self.assertEqual(not pressed, self.safety.get_brake_pressed_prev())
+      self._rx(self._brake_msg(pressed))
+      self.assertEqual(pressed, self.safety.get_brake_pressed_prev())
 
   def test_allow_brake_at_zero_speed(self):
     # Brake was already pressed
