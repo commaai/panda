@@ -71,21 +71,10 @@ class TestToyotaSafety(PandaSafetyTest):
     values = {"GAS_RELEASED": not pressed, "CRUISE_ACTIVE": cruise_active}
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
-  def _pcm_cruise_msg(self, cruise_on):
+  def _pcm_status_msg(self, cruise_on):
     values = {"CRUISE_ACTIVE": cruise_on}
     values["CHECKSUM"] = 1
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
-
-  def test_enable_control_allowed_from_cruise(self):
-    self._rx(self._pcm_cruise_msg(False))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self._rx(self._pcm_cruise_msg(True))
-    self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_disable_control_allowed_from_cruise(self):
-    self.safety.set_controls_allowed(1)
-    self._rx(self._pcm_cruise_msg(False))
-    self.assertFalse(self.safety.get_controls_allowed())
 
   def test_prev_gas_interceptor(self):
     self._rx(interceptor_msg(0x0, 0x201))
@@ -237,7 +226,7 @@ class TestToyotaSafety(PandaSafetyTest):
       if msg == "trq":
         to_push = self._torque_meas_msg(0)
       if msg == "pcm":
-        to_push = self._pcm_cruise_msg(1)
+        to_push = self._pcm_status_msg(True)
       self.assertTrue(self._rx(to_push))
       to_push[0].RDHR = 0
       self.assertFalse(self._rx(to_push))

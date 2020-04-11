@@ -84,8 +84,8 @@ class TestVolkswagenMqbSafety(PandaSafetyTest):
     return self.packer.make_can_msg_panda("HCA_01", 0, values)
 
   # ACC engagement status
-  def _tsk_06_msg(self, status):
-    values = {"TSK_Status": status, "COUNTER": self.cnt_tsk_06 % 16}
+  def _pcm_status_msg(self, enable):
+    values = {"TSK_Status": 3 if enable else 1, "COUNTER": self.cnt_tsk_06 % 16}
     self.__class__.cnt_tsk_06 += 1
     return self.packer.make_can_msg_panda("TSK_06", 0, values)
 
@@ -98,12 +98,12 @@ class TestVolkswagenMqbSafety(PandaSafetyTest):
 
   def test_enable_control_allowed_from_cruise(self):
     self.safety.set_controls_allowed(0)
-    self._rx(self._tsk_06_msg(3))
+    self._rx(self._pcm_status_msg(True))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disable_control_allowed_from_cruise(self):
     self.safety.set_controls_allowed(1)
-    self._rx(self._tsk_06_msg(1))
+    self._rx(self._pcm_status_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_sample_speed(self):
@@ -246,7 +246,7 @@ class TestVolkswagenMqbSafety(PandaSafetyTest):
       if msg == MSG_ESP_05:
         to_push = self._brake_msg(False)
       if msg == MSG_TSK_06:
-        to_push = self._tsk_06_msg(3)
+        to_push = self._pcm_status_msg(True)
       if msg == MSG_MOTOR_20:
         to_push = self._gas_msg(0)
       self.assertTrue(self._rx(to_push))
@@ -265,12 +265,12 @@ class TestVolkswagenMqbSafety(PandaSafetyTest):
         self.safety.set_controls_allowed(1)
         self._rx(self._eps_01_msg(0))
         self._rx(self._brake_msg(False))
-        self._rx(self._tsk_06_msg(3))
+        self._rx(self._pcm_status_msg(True))
         self._rx(self._gas_msg(0))
       else:
         self.assertFalse(self._rx(self._eps_01_msg(0)))
         self.assertFalse(self._rx(self._brake_msg(False)))
-        self.assertFalse(self._rx(self._tsk_06_msg(3)))
+        self.assertFalse(self._rx(self._pcm_status_msg(True)))
         self.assertFalse(self._rx(self._gas_msg(0)))
         self.assertFalse(self.safety.get_controls_allowed())
 
@@ -279,7 +279,7 @@ class TestVolkswagenMqbSafety(PandaSafetyTest):
       self.safety.set_controls_allowed(1)
       self._rx(self._eps_01_msg(0))
       self._rx(self._brake_msg(False))
-      self._rx(self._tsk_06_msg(3))
+      self._rx(self._pcm_status_msg(True))
       self._rx(self._gas_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
 
