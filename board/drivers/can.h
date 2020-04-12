@@ -361,11 +361,6 @@ void ignition_can_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       // GTW_status
       ignition_can = (GET_BYTE(to_push, 0) & 0x1) != 0;
     }
-    // Cadillac exception
-    if ((addr == 0x160) && (len == 5)) {
-      // this message isn't all zeros when ignition is on
-      ignition_can = GET_BYTES_04(to_push) != 0;
-    }
   }
 }
 
