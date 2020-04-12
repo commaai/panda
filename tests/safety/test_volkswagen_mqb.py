@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import PandaSafetyTest, CANPackerPanda, MAX_WRONG_COUNTERS
+import panda.tests.safety.common as common
+from panda.tests.safety.common import CANPackerPanda, MAX_WRONG_COUNTERS
 
 MAX_RATE_UP = 4
 MAX_RATE_DOWN = 10
@@ -23,7 +24,7 @@ MSG_HCA_01 = 0x126      # TX by OP, Heading Control Assist steering torque
 MSG_GRA_ACC_01 = 0x12B  # TX by OP, ACC control buttons for cancel/resume
 MSG_LDW_02 = 0x397      # TX by OP, Lane line recognition and text alerts
 
-class TestVolkswagenMqbSafety(PandaSafetyTest):
+class TestVolkswagenMqbSafety(common.PandaSafetyTest):
   cnt_eps_01 = 0
   cnt_esp_05 = 0
   cnt_tsk_06 = 0
