@@ -297,6 +297,7 @@ class Panda(object):
       self.reconnect()
 
   def recover(self, timeout=None):
+    self.reset(enter_bootstub=True)
     self.reset(enter_bootloader=True)
     t_start = time.time()
     while len(PandaDFU.list()) == 0:
@@ -477,7 +478,7 @@ class Panda(object):
 
   # ******************* can *******************
 
-  # The panda will NAK CAN writes when there is CAN congestion. 
+  # The panda will NAK CAN writes when there is CAN congestion.
   # libusb will try to send it again, with a max timeout.
   # Timeout is in ms. If set to 0, the timeout is infinite.
   CAN_SEND_TIMEOUT_MS = 10
