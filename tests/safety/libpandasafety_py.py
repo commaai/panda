@@ -62,11 +62,6 @@ void set_honda_fwd_brake(bool);
 void set_honda_alt_brake_msg(bool);
 int get_honda_hw(void);
 
-void init_tests_cadillac(void);
-void set_cadillac_desired_torque_last(int t);
-void set_cadillac_rt_torque_last(int t);
-void set_cadillac_torque_driver(int min, int max);
-
 void init_tests_gm(void);
 void set_gm_desired_torque_last(int t);
 void set_gm_rt_torque_last(int t);

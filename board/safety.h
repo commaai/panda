@@ -8,7 +8,6 @@
 #include "safety/safety_gm_ascm.h"
 #include "safety/safety_gm.h"
 #include "safety/safety_ford.h"
-#include "safety/safety_cadillac.h"
 #include "safety/safety_hyundai.h"
 #include "safety/safety_chrysler.h"
 #include "safety/safety_subaru.h"
@@ -25,7 +24,6 @@
 #define SAFETY_GM 4U
 #define SAFETY_HONDA_BOSCH_GIRAFFE 5U
 #define SAFETY_FORD 6U
-#define SAFETY_CADILLAC 7U
 #define SAFETY_HYUNDAI 8U
 #define SAFETY_CHRYSLER 9U
 #define SAFETY_TESLA 10U
@@ -216,7 +214,6 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
   {SAFETY_NOOUTPUT, &nooutput_hooks},
 #ifdef ALLOW_DEBUG
-  {SAFETY_CADILLAC, &cadillac_hooks},
   {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_NISSAN, &nissan_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
