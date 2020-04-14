@@ -316,7 +316,8 @@ int main(void) {
     puts("Failed to set llcan speed");
   }
 
-  llcan_init(CAN1);
+  bool ret = llcan_init(CAN1);
+  UNUSED(ret);
 
   // 48mhz / 65536 ~= 732
   timer_init(TIM3, 15);
