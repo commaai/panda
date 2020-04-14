@@ -98,8 +98,9 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
     self.assertEqual(0, self.safety.get_gas_interceptor_prev())
 
   def test_gas_interceptor_detected(self):
-    # TODO: implement this
-    pass
+    self.assertFalse(self.safety.get_gas_interceptor_detected())
+    self._rx(self._interceptor_msg(0x0, 0x201))
+    self.assertTrue(self.safety.get_gas_interceptor_detected())
 
   def test_prev_gas_interceptor(self):
     self._rx(self._interceptor_msg(0x0, 0x201))
