@@ -127,6 +127,8 @@ static void volkswagen_mqb_init(int16_t param) {
 
   controls_allowed = false;
   relay_malfunction_reset();
+  gas_pressed_prev = false;
+  brake_pressed_prev = false;
   volkswagen_torque_msg = MSG_HCA_01;
   volkswagen_lane_msg = MSG_LDW_02;
   gen_crc_lookup_table(0x2F, volkswagen_crc8_lut_8h2f);

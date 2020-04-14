@@ -3,6 +3,7 @@ import struct
 import unittest
 import numpy as np
 from opendbc.can.packer import CANPacker # pylint: disable=import-error
+from panda import Panda
 from panda.tests.safety import libpandasafety_py
 
 MAX_WRONG_COUNTERS = 5
@@ -49,9 +50,10 @@ class CANPackerPanda(CANPacker):
     msg = self.make_can_msg(name_or_addr, bus, values, counter=-1)
     return package_can_msg(msg)
 
-class InterceptorSafetyTest(unittest.TestCase):
+class PandaSafetyTestBase(unittest.TestCase):
 
-  INTERCEPTOR_THRESHOLD = 0
+  SAFETY_MODE = Panda.SAFETY_NOOUTPUT
+  SAFETY_PARAM = 0
 
   @classmethod
   def setUpClass(cls):
@@ -65,6 +67,17 @@ class InterceptorSafetyTest(unittest.TestCase):
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
 
+
+class InterceptorSafetyTest(PandaSafetyTestBase):
+
+  INTERCEPTOR_THRESHOLD = 0
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "InterceptorSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
   # TODO: use the can packer
   def _interceptor_msg(self, gas, addr):
     to_send = make_msg(0, addr, 6)
@@ -72,6 +85,17 @@ class InterceptorSafetyTest(unittest.TestCase):
     to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
                       ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
     return to_send
+
+  def test_gas_interceptor_defaults(self):
+    self.assertFalse(self.safety.get_gas_interceptor_detected())
+    self.assertEqual(0, self.safety.get_gas_interceptor_prev())
+
+    self.safety.set_gas_interceptor_detected(1)
+    self.safety.set_gas_interceptor_prev(1)
+
+    self.safety.set_safety_hooks(self.SAFETY_MODE, self.SAFETY_PARAM)
+    self.assertFalse(self.safety.get_gas_interceptor_detected())
+    self.assertEqual(0, self.safety.get_gas_interceptor_prev())
 
   def test_gas_interceptor_detected(self):
     # TODO: implement this
@@ -122,25 +146,20 @@ class InterceptorSafetyTest(unittest.TestCase):
         self.assertEqual(should_tx, self._tx(self._interceptor_msg(gas, 0x200)))
 
 
-class PandaSafetyTest(unittest.TestCase):
+class PandaSafetyTest(PandaSafetyTestBase):
   TX_MSGS = None
   STANDSTILL_THRESHOLD = None
   RELAY_MALFUNCTION_ADDR = None
   RELAY_MALFUNCTION_BUS = None
   FWD_BLACKLISTED_ADDRS = {} # {bus: [addr]}
   FWD_BUS_LOOKUP = {}
+  SAFETY_MODE = Panda.SAFETY_NOOUTPUT
 
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "PandaSafetyTest":
       cls.safety = None
       raise unittest.SkipTest
-
-  def _rx(self, msg):
-    return self.safety.safety_rx_hook(msg)
-
-  def _tx(self, msg):
-    return self.safety.safety_tx_hook(msg)
 
   @abc.abstractmethod
   def _brake_msg(self, brake):
@@ -189,19 +208,21 @@ class PandaSafetyTest(unittest.TestCase):
         if all(addr != m[0] or bus != m[1] for m in self.TX_MSGS):
           self.assertFalse(self._tx(make_msg(bus, addr, 8)))
 
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_controls_allowed())
-
   def test_defaults(self):
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_relay_malfunction())
-    #self.assertFalse(self.safety.get_gas_interceptor_detected())
     self.assertFalse(self.safety.get_gas_pressed_prev())
     self.assertFalse(self.safety.get_brake_pressed_prev())
-    self.assertEqual(0, self.safety.get_gas_interceptor_prev())
-    # re-init
 
-    pass
+  def test_defaults_after_set_safety_hooks(self):
+    self.safety.set_controls_allowed(1)
+    self.safety.set_relay_malfunction(1)
+    self.safety.set_gas_pressed_prev(1)
+    self.safety.set_brake_pressed_prev(1)
+
+    self.safety.set_safety_hooks(self.SAFETY_MODE, self.SAFETY_PARAM)
+
+    self.test_defaults()
 
   def test_manually_enable_controls_allowed(self):
     self.safety.set_controls_allowed(1)

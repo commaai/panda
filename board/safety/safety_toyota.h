@@ -187,7 +187,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       bool violation = (unsafe_mode & UNSAFE_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX)?
         max_limit_check(desired_accel, TOYOTA_ISO_MAX_ACCEL, TOYOTA_ISO_MIN_ACCEL) :
         max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
-        
+
       if (violation) {
         tx = 0;
       }
@@ -248,6 +248,9 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 static void toyota_init(int16_t param) {
   controls_allowed = 0;
   relay_malfunction_reset();
+  gas_pressed_prev = false;
+  brake_pressed_prev = false;
+  gas_interceptor_prev = 0;
   gas_interceptor_detected = 0;
   toyota_dbc_eps_torque_factor = param;
 }

@@ -97,8 +97,20 @@ void set_relay_malfunction(bool c){
   relay_malfunction = c;
 }
 
+void set_gas_pressed_prev(bool c){
+  gas_pressed_prev = c;
+}
+
+void set_brake_pressed_prev(bool c){
+  brake_pressed_prev = c;
+}
+
 void set_gas_interceptor_detected(bool c){
   gas_interceptor_detected = c;
+}
+
+void set_gas_interceptor_prev(int c){
+  gas_interceptor_prev = c;
 }
 
 bool get_controls_allowed(void){

@@ -32,6 +32,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest):
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
+  SAFETY_MODE = Panda.SAFETY_TOYOTA
   INTERCEPTOR_THRESHOLD = 475
 
   @classmethod

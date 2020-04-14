@@ -40,6 +40,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
+  SAFETY_MODE = Panda.SAFETY_VOLKSWAGEN_MQB
 
   @classmethod
   def setUp(cls):
