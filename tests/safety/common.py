@@ -283,6 +283,11 @@ class PandaSafetyTest(PandaSafetyTestBase):
       self._rx(self._brake_msg(pressed))
       self.assertEqual(pressed, self.safety.get_brake_pressed_prev())
 
+  def test_disengage_on_brake(self):
+    self.safety.set_controls_allowed(1)
+    self._rx(self._brake_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+
   def test_allow_brake_at_zero_speed(self):
     # Brake was already pressed
     self._rx(self._speed_msg(0))

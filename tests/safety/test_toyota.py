@@ -35,12 +35,11 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest):
   SAFETY_MODE = Panda.SAFETY_TOYOTA
   INTERCEPTOR_THRESHOLD = 475
 
-  @classmethod
-  def setUp(cls):
-    cls.packer = CANPackerPanda("toyota_prius_2017_pt_generated")
-    cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 66)
-    cls.safety.init_tests_toyota()
+  def setUp(self):
+    self.packer = CANPackerPanda("toyota_prius_2017_pt_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 66)
+    self.safety.init_tests_toyota()
 
   def _set_prev_torque(self, t):
     self.safety.set_toyota_desired_torque_last(t)
