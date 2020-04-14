@@ -60,14 +60,15 @@ class TestSubaruSafety(unittest.TestCase):
     self.safety.set_subaru_rt_torque_last(t)
 
   def _torque_driver_msg(self, torque):
-    t = twos_comp(torque, 11)
     if self.safety.get_subaru_global():
+      t = twos_comp(-torque, 11)
       to_send = make_msg(0, 0x119)
       to_send[0].RDLR = ((t & 0x7FF) << 16)
       to_send[0].RDLR |= (self.cnt_torque_driver & 0xF) << 8
       to_send[0].RDLR |= subaru_checksum(to_send, 0x119, 8)
       self.__class__.cnt_torque_driver += 1
     else:
+      t = twos_comp(torque, 11)
       to_send = make_msg(0, 0x371)
       to_send[0].RDLR = (t & 0x7) << 29
       to_send[0].RDHR = (t >> 3) & 0xFF
@@ -92,7 +93,7 @@ class TestSubaruSafety(unittest.TestCase):
     return to_send
 
   def _torque_msg(self, torque):
-    t = twos_comp(torque, 13)
+    t = twos_comp(-torque, 13)
     if self.safety.get_subaru_global():
       to_send = make_msg(0, 0x122)
       to_send[0].RDLR = (t << 16)
