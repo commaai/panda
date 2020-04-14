@@ -1,6 +1,7 @@
 import abc
 import struct
 import unittest
+import numpy as np
 from opendbc.can.packer import CANPacker # pylint: disable=import-error
 from panda.tests.safety import libpandasafety_py
 
@@ -47,6 +48,79 @@ class CANPackerPanda(CANPacker):
   def make_can_msg_panda(self, name_or_addr, bus, values, counter=-1):
     msg = self.make_can_msg(name_or_addr, bus, values, counter=-1)
     return package_can_msg(msg)
+
+class InterceptorSafetyTest(unittest.TestCase):
+
+  INTERCEPTOR_THRESHOLD = 0
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "InterceptorSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  def _rx(self, msg):
+    return self.safety.safety_rx_hook(msg)
+
+  def _tx(self, msg):
+    return self.safety.safety_tx_hook(msg)
+
+  # TODO: use the can packer
+  def _interceptor_msg(self, gas, addr):
+    to_send = make_msg(0, addr, 6)
+    gas2 = gas * 2
+    to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
+                      ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
+    return to_send
+
+  def test_gas_interceptor_detected(self):
+    # TODO: implement this
+    pass
+
+  def test_prev_gas_interceptor(self):
+    self._rx(self._interceptor_msg(0x0, 0x201))
+    self.assertFalse(self.safety.get_gas_interceptor_prev())
+    self._rx(self._interceptor_msg(0x1000, 0x201))
+    self.assertTrue(self.safety.get_gas_interceptor_prev())
+    self._rx(self._interceptor_msg(0x0, 0x201))
+
+  def test_disengage_on_gas_interceptor(self):
+    for g in range(0, 0x1000):
+      self._rx(self._interceptor_msg(0, 0x201))
+      self.safety.set_controls_allowed(True)
+      self._rx(self._interceptor_msg(g, 0x201))
+      remain_enabled = g <= self.INTERCEPTOR_THRESHOLD
+      self.assertEqual(remain_enabled, self.safety.get_controls_allowed())
+      self._rx(self._interceptor_msg(0, 0x201))
+      self.safety.set_gas_interceptor_detected(False)
+
+  def test_unsafe_mode_no_disengage_on_gas_interceptor(self):
+    self.safety.set_controls_allowed(True)
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
+    for g in range(0, 0x1000):
+      self._rx(self._interceptor_msg(g, 0x201))
+      self.assertTrue(self.safety.get_controls_allowed())
+      self._rx(self._interceptor_msg(0, 0x201))
+      self.safety.set_gas_interceptor_detected(False)
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
+
+  def test_allow_engage_with_gas_interceptor_pressed(self):
+    self._rx(self._interceptor_msg(0x1000, 0x201))
+    self.safety.set_controls_allowed(1)
+    self._rx(self._interceptor_msg(0x1000, 0x201))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self._rx(self._interceptor_msg(0, 0x201))
+
+  def test_gas_interceptor_safety_check(self):
+    for gas in np.arange(0, 4000, 100):
+      for controls_allowed in [True, False]:
+        self.safety.set_controls_allowed(controls_allowed)
+        if controls_allowed:
+          should_tx = True
+        else:
+          should_tx = gas == 0
+        self.assertEqual(should_tx, self._tx(self._interceptor_msg(gas, 0x200)))
+
 
 class PandaSafetyTest(unittest.TestCase):
   TX_MSGS = None
@@ -118,11 +192,35 @@ class PandaSafetyTest(unittest.TestCase):
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
 
+  def test_defaults(self):
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_relay_malfunction())
+    #self.assertFalse(self.safety.get_gas_interceptor_detected())
+    self.assertFalse(self.safety.get_gas_pressed_prev())
+    self.assertFalse(self.safety.get_brake_pressed_prev())
+    self.assertEqual(0, self.safety.get_gas_interceptor_prev())
+    # re-init
+
+    pass
+
   def test_manually_enable_controls_allowed(self):
     self.safety.set_controls_allowed(1)
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(0)
     self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_enable_control_allowed_from_cruise(self):
+    self._rx(self._pcm_status_msg(False))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self._rx(self._pcm_status_msg(True))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_disable_control_allowed_from_cruise(self):
+    self.safety.set_controls_allowed(1)
+    self._rx(self._pcm_status_msg(False))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  # ***** gas tests *****
 
   def test_prev_gas(self):
     self.assertFalse(self.safety.get_gas_pressed_prev())
@@ -153,6 +251,8 @@ class PandaSafetyTest(unittest.TestCase):
     self._rx(self._gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
 
+  # ***** brake tests *****
+
   def test_prev_brake(self):
     self.assertFalse(self.safety.get_brake_pressed_prev())
     for pressed in [True, False]:
@@ -160,17 +260,6 @@ class PandaSafetyTest(unittest.TestCase):
       self.assertEqual(not pressed, self.safety.get_brake_pressed_prev())
       self._rx(self._brake_msg(pressed))
       self.assertEqual(pressed, self.safety.get_brake_pressed_prev())
-
-  def test_enable_control_allowed_from_cruise(self):
-    self._rx(self._pcm_status_msg(False))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self._rx(self._pcm_status_msg(True))
-    self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_disable_control_allowed_from_cruise(self):
-    self.safety.set_controls_allowed(1)
-    self._rx(self._pcm_status_msg(False))
-    self.assertFalse(self.safety.get_controls_allowed())
 
   def test_allow_brake_at_zero_speed(self):
     # Brake was already pressed
