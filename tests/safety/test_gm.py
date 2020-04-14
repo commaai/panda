@@ -4,7 +4,7 @@ import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import make_msg, CANPackerPanda, UNSAFE_MODE, twos_comp
+from panda.tests.safety.common import CANPackerPanda, UNSAFE_MODE
 
 MAX_RATE_UP = 7
 MAX_RATE_DOWN = 17
@@ -32,6 +32,7 @@ class TestGmSafety(common.PandaSafetyTest):
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain")
+    self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
     self.safety.init_tests_gm()
@@ -41,51 +42,41 @@ class TestGmSafety(common.PandaSafetyTest):
   def test_enable_control_allowed_from_cruise(self): pass
 
   def _speed_msg(self, speed):
-    to_send = make_msg(0, 842)
-    to_send[0].RDLR = speed
-    return to_send
+    values = {"%sWheelSpd"%s: speed for s in ["RL", "RR"]}
+    return self.packer.make_can_msg_panda("EBCMWheelSpdRear", 0, values)
 
   def _button_msg(self, buttons):
-    to_send = make_msg(0, 481)
-    to_send[0].RDHR = buttons << 12
-    return to_send
+    values = {"ACCButtons": buttons}
+    return self.packer.make_can_msg_panda("ASCMSteeringButton", 0, values)
 
   def _brake_msg(self, brake):
-    to_send = make_msg(0, 241)
-    to_send[0].RDLR = 0xa00 if brake else 0x900
-    return to_send
+    # GM safety has a brake threshold of 10
+    values = {"BrakePedalPosition": 10 if brake else 0}
+    return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
 
   def _gas_msg(self, gas):
-    to_send = make_msg(0, 417)
-    to_send[0].RDHR = (1 << 16) if gas else 0
-    return to_send
+    values = {"AcceleratorPedal": 1 if gas else 0}
+    return self.packer.make_can_msg_panda("AcceleratorPedal", 0, values)
 
   def _send_brake_msg(self, brake):
-    to_send = make_msg(2, 789)
-    brake = (-brake) & 0xfff
-    to_send[0].RDLR = (brake >> 8) | ((brake &0xff) << 8)
-    return to_send
+    values = {"FrictionBrakeCmd": -brake}
+    return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", 2, values)
 
   def _send_gas_msg(self, gas):
-    to_send = make_msg(0, 715)
-    to_send[0].RDLR = ((gas & 0x1f) << 27) | ((gas & 0xfe0) << 11)
-    return to_send
+    values = {"GasRegenCmd": gas}
+    return self.packer.make_can_msg_panda("ASCMGasRegenCmd", 0, values)
 
   def _set_prev_torque(self, t):
     self.safety.set_gm_desired_torque_last(t)
     self.safety.set_gm_rt_torque_last(t)
 
   def _torque_driver_msg(self, torque):
-    t = twos_comp(torque, 11)
-    to_send = make_msg(0, 388)
-    to_send[0].RDHR = (((t >> 8) & 0x7) << 16) | ((t & 0xFF) << 24)
-    return to_send
+    values = {"LKADriverAppldTrq": torque}
+    return self.packer.make_can_msg_panda("PSCMStatus", 0, values)
 
   def _torque_msg(self, torque):
-    t = twos_comp(torque, 11)
-    to_send = make_msg(0, 384)
-    to_send[0].RDLR = ((t >> 8) & 0x7) | ((t & 0xFF) << 8)
-    return to_send
+    values = {"LKASteeringCmd": torque}
+    return self.packer.make_can_msg_panda("ASCMLKASteeringCmd", 0, values)
 
   def test_resume_button(self):
     RESUME_BTN = 2
