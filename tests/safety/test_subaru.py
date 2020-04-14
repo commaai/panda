@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg, UNSAFE_MODE
+import panda.tests.safety.common as common
+from panda.tests.safety.common import make_msg, twos_comp, UNSAFE_MODE
 
 MAX_RATE_UP = 50
 MAX_RATE_DOWN = 70
@@ -12,25 +13,9 @@ MAX_STEER = 2047
 MAX_RT_DELTA = 940
 RT_INTERVAL = 250000
 
-DRIVER_TORQUE_ALLOWANCE = 60;
-DRIVER_TORQUE_FACTOR = 10;
+DRIVER_TORQUE_ALLOWANCE = 60
+DRIVER_TORQUE_FACTOR = 10
 
-SPEED_THRESHOLD = 20  # 1kph (see dbc file)
-
-TX_MSGS = [[0x122, 0], [0x221, 0], [0x322, 0]]
-TX_L_MSGS = [[0x164, 0], [0x221, 0], [0x322, 0]]
-
-def twos_comp(val, bits):
-  if val >= 0:
-    return val
-  else:
-    return (2**bits) + val
-
-def sign(a):
-  if a > 0:
-    return 1
-  else:
-    return -1
 
 def subaru_checksum(msg, addr, len_msg):
   checksum = addr + (addr >> 8)
@@ -42,18 +27,24 @@ def subaru_checksum(msg, addr, len_msg):
   return checksum & 0xff
 
 
-class TestSubaruSafety(unittest.TestCase):
+class TestSubaruSafety(common.PandaSafetyTest):
   cnt_gas = 0
   cnt_torque_driver = 0
   cnt_cruise = 0
   cnt_speed = 0
   cnt_brake = 0
 
-  @classmethod
-  def setUp(cls):
-    cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.set_safety_hooks(Panda.SAFETY_SUBARU, 0)
-    cls.safety.init_tests_subaru()
+  TX_MSGS = [[0x122, 0], [0x221, 0], [0x322, 0]]
+  STANDSTILL_THRESHOLD = 20  # 1kph (see dbc file)
+  RELAY_MALFUNCTION_ADDR = 0x122
+  RELAY_MALFUNCTION_BUS = 0
+  FWD_BLACKLISTED_ADDRS = {2: [290, 545, 802]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  def setUp(self):
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, 0)
+    self.safety.init_tests_subaru()
 
   def _set_prev_torque(self, t):
     self.safety.set_subaru_desired_torque_last(t)
@@ -113,7 +104,7 @@ class TestSubaruSafety(unittest.TestCase):
       to_send[0].RDLR = gas & 0xFF
     return to_send
 
-  def _cruise_msg(self, cruise):
+  def _pcm_status_msg(self, cruise):
     if self.safety.get_subaru_global():
       to_send = make_msg(0, 0x240)
       to_send[0].RDHR = cruise << 9
@@ -130,44 +121,6 @@ class TestSubaruSafety(unittest.TestCase):
       self.safety.safety_rx_hook(self._torque_driver_msg(min_t))
     self.safety.safety_rx_hook(self._torque_driver_msg(max_t))
 
-  def test_spam_can_buses(self):
-    StdTest.test_spam_can_buses(self, TX_MSGS if self.safety.get_subaru_global() else TX_L_MSGS)
-
-  def test_relay_malfunction(self):
-    StdTest.test_relay_malfunction(self, 0x122 if self.safety.get_subaru_global() else 0x164)
-
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_enable_control_allowed_from_cruise(self):
-    self.safety.safety_rx_hook(self._cruise_msg(True))
-    self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_disable_control_allowed_from_cruise(self):
-    self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._cruise_msg(False))
-    self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_disengage_on_gas(self):
-    self.safety.set_controls_allowed(True)
-    self.safety.safety_rx_hook(self._gas_msg(0))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_rx_hook(self._gas_msg(1))
-    self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_unsafe_mode_no_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._gas_msg(0))
-    self.safety.set_controls_allowed(True)
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    self.safety.safety_rx_hook(self._gas_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
-
-  def test_brake_disengage(self):
-    if (self.safety.get_subaru_global()):
-      StdTest.test_allow_brake_at_zero_speed(self)
-      StdTest.test_not_allow_brake_when_moving(self, SPEED_THRESHOLD)
-
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
       for t in range(-3000, 3000):
@@ -177,9 +130,6 @@ class TestSubaruSafety(unittest.TestCase):
           self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(t)))
         else:
           self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
-
-  def test_manually_enable_controls_allowed(self):
-    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_non_realtime_limit_up(self):
     self._set_torque_driver(0, 0)
@@ -262,28 +212,42 @@ class TestSubaruSafety(unittest.TestCase):
       self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
 
-  def test_fwd_hook(self):
-    buss = list(range(0x0, 0x3))
-    msgs = list(range(0x1, 0x800))
-    blocked_msgs = [290, 545, 802] if self.safety.get_subaru_global() else [356, 545, 802]
-    for b in buss:
-      for m in msgs:
-        if b == 0:
-          fwd_bus = 2
-        elif b == 1:
-          fwd_bus = -1
-        elif b == 2:
-          fwd_bus = -1 if m in blocked_msgs else 0
-
-        # assume len 8
-        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
-
 class TestSubaruLegacySafety(TestSubaruSafety):
-  @classmethod
-  def setUp(cls):
-    cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.set_safety_hooks(Panda.SAFETY_SUBARU_LEGACY, 0)
-    cls.safety.init_tests_subaru()
+
+  TX_MSGS = [[0x164, 0], [0x221, 0], [0x322, 0]]
+  RELAY_MALFUNCTION_ADDR = 0x164
+  RELAY_MALFUNCTION_BUS = 0
+  FWD_BLACKLISTED_ADDRS = {2: [356, 545, 802]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  def setUp(self):
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_SUBARU_LEGACY, 0)
+    self.safety.init_tests_subaru()
+
+  def _torque_driver_msg(self, torque):
+    t = twos_comp(torque, 11)
+    to_send = make_msg(0, 0x371)
+    to_send[0].RDLR = (t & 0x7) << 29
+    to_send[0].RDHR = (t >> 3) & 0xFF
+    return to_send
+
+  def _torque_msg(self, torque):
+    t = twos_comp(torque, 13)
+    to_send = make_msg(0, 0x164)
+    to_send[0].RDLR = (t << 8)
+    return to_send
+
+  def _gas_msg(self, gas):
+    to_send = make_msg(0, 0x140)
+    to_send[0].RDLR = gas & 0xFF
+    return to_send
+
+  def _pcm_status_msg(self, cruise):
+    to_send = make_msg(0, 0x144)
+    to_send[0].RDHR = cruise << 17
+    return to_send
+
 
 if __name__ == "__main__":
   unittest.main()
