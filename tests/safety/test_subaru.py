@@ -4,7 +4,7 @@ import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import make_msg, twos_comp, UNSAFE_MODE
+from panda.tests.safety.common import CANPackerPanda, make_msg, twos_comp, UNSAFE_MODE
 
 MAX_RATE_UP = 50
 MAX_RATE_DOWN = 70
@@ -42,6 +42,7 @@ class TestSubaruSafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
+    self.packer = CANPackerPanda("subaru_global_2017")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, 0)
     self.safety.init_tests_subaru()
@@ -51,70 +52,35 @@ class TestSubaruSafety(common.PandaSafetyTest):
     self.safety.set_subaru_rt_torque_last(t)
 
   def _torque_driver_msg(self, torque):
-    t = twos_comp(torque, 11)
-    if self.safety.get_subaru_global():
-      to_send = make_msg(0, 0x119)
-      to_send[0].RDLR = ((t & 0x7FF) << 16)
-      to_send[0].RDLR |= (self.cnt_torque_driver & 0xF) << 8
-      to_send[0].RDLR |= subaru_checksum(to_send, 0x119, 8)
-      self.__class__.cnt_torque_driver += 1
-    else:
-      to_send = make_msg(0, 0x371)
-      to_send[0].RDLR = (t & 0x7) << 29
-      to_send[0].RDHR = (t >> 3) & 0xFF
-    return to_send
+    values = {"Steer_Torque_Sensor": -torque, "counter": self.cnt_torque_driver % 4}
+    self.__class__.cnt_torque_driver += 1
+    return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
 
   def _speed_msg(self, speed):
-    speed &= 0x1FFF
-    to_send = make_msg(0, 0x13a)
-    to_send[0].RDLR = speed << 12
-    to_send[0].RDHR = speed << 6
-    to_send[0].RDLR |= (self.cnt_speed & 0xF) << 8
-    to_send[0].RDLR |= subaru_checksum(to_send, 0x13a, 8)
+    # subaru safety doesn't use the scaled value, so undo the scaling
+    values = {s: speed*0.057 for s in ["FR", "FL", "RR", "RL"]}
+    values["Counter"] = self.cnt_speed % 4
     self.__class__.cnt_speed += 1
-    return to_send
+    return self.packer.make_can_msg_panda("Wheel_Speeds", 0, values)
 
   def _brake_msg(self, brake):
-    to_send = make_msg(0, 0x139)
-    to_send[0].RDHR = (brake << 4) & 0xFFF
-    to_send[0].RDLR |= (self.cnt_brake & 0xF) << 8
-    to_send[0].RDLR |= subaru_checksum(to_send, 0x139, 8)
+    values = {"Brake_Pedal": brake, "Counter": self.cnt_brake % 4}
     self.__class__.cnt_brake += 1
-    return to_send
+    return self.packer.make_can_msg_panda("Brake_Pedal", 0, values)
 
   def _torque_msg(self, torque):
-    t = twos_comp(torque, 13)
-    if self.safety.get_subaru_global():
-      to_send = make_msg(0, 0x122)
-      to_send[0].RDLR = (t << 16)
-    else:
-      to_send = make_msg(0, 0x164)
-      to_send[0].RDLR = (t << 8)
-    return to_send
+    values = {"LKAS_Output": -torque}
+    return self.packer.make_can_msg_panda("ES_LKAS", 0, values)
 
   def _gas_msg(self, gas):
-    if self.safety.get_subaru_global():
-      to_send = make_msg(0, 0x40)
-      to_send[0].RDHR = gas & 0xFF
-      to_send[0].RDLR |= (self.cnt_gas & 0xF) << 8
-      to_send[0].RDLR |= subaru_checksum(to_send, 0x40, 8)
-      self.__class__.cnt_gas += 1
-    else:
-      to_send = make_msg(0, 0x140)
-      to_send[0].RDLR = gas & 0xFF
-    return to_send
+    values = {"Throttle_Pedal": gas, "Counter": self.cnt_gas % 4}
+    self.__class__.cnt_gas += 1
+    return self.packer.make_can_msg_panda("Throttle", 0, values)
 
   def _pcm_status_msg(self, cruise):
-    if self.safety.get_subaru_global():
-      to_send = make_msg(0, 0x240)
-      to_send[0].RDHR = cruise << 9
-      to_send[0].RDLR |= (self.cnt_cruise & 0xF) << 8
-      to_send[0].RDLR |= subaru_checksum(to_send, 0x240, 8)
-      self.__class__.cnt_cruise += 1
-    else:
-      to_send = make_msg(0, 0x144)
-      to_send[0].RDHR = cruise << 17
-    return to_send
+    values = {"Cruise_Activated": cruise, "Counter": self.cnt_cruise % 4}
+    self.__class__.cnt_cruise += 1
+    return self.packer.make_can_msg_panda("CruiseControl", 0, values)
 
   def _set_torque_driver(self, min_t, max_t):
     for i in range(0, 5):
@@ -126,10 +92,8 @@ class TestSubaruSafety(common.PandaSafetyTest):
       for t in range(-3000, 3000):
         self.safety.set_controls_allowed(enabled)
         self._set_prev_torque(t)
-        if abs(t) > MAX_STEER or (not enabled and abs(t) > 0):
-          self.assertFalse(self.safety.safety_tx_hook(self._torque_msg(t)))
-        else:
-          self.assertTrue(self.safety.safety_tx_hook(self._torque_msg(t)))
+        block = abs(t) > MAX_STEER or (not enabled and abs(t) > 0)
+        self.assertEqual(not block, self.safety.safety_tx_hook(self._torque_msg(t)))
 
   def test_non_realtime_limit_up(self):
     self._set_torque_driver(0, 0)
