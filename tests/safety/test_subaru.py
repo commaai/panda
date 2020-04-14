@@ -4,7 +4,7 @@ import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg, twos_comp, UNSAFE_MODE
+from panda.tests.safety.common import CANPackerPanda
 
 MAX_RATE_UP = 50
 MAX_RATE_DOWN = 70
@@ -15,16 +15,6 @@ RT_INTERVAL = 250000
 
 DRIVER_TORQUE_ALLOWANCE = 60
 DRIVER_TORQUE_FACTOR = 10
-
-
-def subaru_checksum(msg, addr, len_msg):
-  checksum = addr + (addr >> 8)
-  for i in range(len_msg):
-    if i < 4:
-      checksum += (msg.RDLR >> (8 * i))
-    else:
-      checksum += (msg.RDHR >> (8 * (i - 4)))
-  return checksum & 0xff
 
 
 class TestSubaruSafety(common.PandaSafetyTest):
@@ -185,6 +175,7 @@ class TestSubaruLegacySafety(TestSubaruSafety):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
+    self.packer = CANPackerPanda("subaru_outback_2015_eyesight")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU_LEGACY, 0)
     self.safety.init_tests_subaru()
@@ -195,27 +186,22 @@ class TestSubaruLegacySafety(TestSubaruSafety):
   def test_allow_brake_at_zero_speed(self): pass
 
   def _torque_driver_msg(self, torque):
-    t = twos_comp(torque, 11)
-    to_send = make_msg(0, 0x371)
-    to_send[0].RDLR = (t & 0x7) << 29
-    to_send[0].RDHR = (t >> 3) & 0xFF
-    return to_send
+    # TODO: figure out if this scaling factor from the DBC is right.
+    # if it is, remove the scaling from here and put it in the safety code
+    values = {"Steer_Torque_Sensor": torque*8}
+    return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
 
   def _torque_msg(self, torque):
-    t = twos_comp(torque, 13)
-    to_send = make_msg(0, 0x164)
-    to_send[0].RDLR = (t << 8)
-    return to_send
+    values = {"LKAS_Command": -torque}
+    return self.packer.make_can_msg_panda("ES_LKAS", 0, values)
 
   def _gas_msg(self, gas):
-    to_send = make_msg(0, 0x140)
-    to_send[0].RDLR = gas & 0xFF
-    return to_send
+    values = {"Throttle_Pedal": gas}
+    return self.packer.make_can_msg_panda("Throttle", 0, values)
 
   def _pcm_status_msg(self, cruise):
-    to_send = make_msg(0, 0x144)
-    to_send[0].RDHR = cruise << 17
-    return to_send
+    values = {"Cruise_Activated": cruise}
+    return self.packer.make_can_msg_panda("CruiseControl", 0, values)
 
 
 if __name__ == "__main__":
