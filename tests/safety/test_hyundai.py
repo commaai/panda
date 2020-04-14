@@ -4,7 +4,7 @@ import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import make_msg, UNSAFE_MODE
+from panda.tests.safety.common import CANPackerPanda
 
 MAX_RATE_UP = 3
 MAX_RATE_DOWN = 7
@@ -27,49 +27,43 @@ class TestHyundaiSafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
+    self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, 0)
     self.safety.init_tests_hyundai()
 
   def _button_msg(self, buttons):
-    to_send = make_msg(0, 1265)
-    to_send[0].RDLR = buttons
-    return to_send
+    values = {"CF_Clu_CruiseSwState": buttons}
+    return self.packer.make_can_msg_panda("CLU11", 0, values)
 
   def _gas_msg(self, val):
-    to_send = make_msg(0, 608)
-    to_send[0].RDHR = (val & 0x3) << 30;
-    return to_send
+    values = {"CF_Ems_AclAct": val}
+    return self.packer.make_can_msg_panda("EMS16", 0, values)
 
   def _brake_msg(self, brake):
-    to_send = make_msg(0, 916)
-    to_send[0].RDHR = brake << 23;
-    return to_send
+    values = {"DriverBraking": brake}
+    return self.packer.make_can_msg_panda("TCS13", 0, values)
 
   def _speed_msg(self, speed):
-    to_send = make_msg(0, 902)
-    to_send[0].RDLR = speed & 0x3FFF;
-    to_send[0].RDHR = (speed & 0x3FFF) << 16;
-    return to_send
+    # panda safety doesn't scale, so undo the scaling
+    values = {"WHL_SPD_%s"%s: speed*0.03125 for s in ["FL", "FR", "RL", "RR"]}
+    return self.packer.make_can_msg_panda("WHL_SPD11", 0, values)
 
   def _pcm_status_msg(self, enabled):
-    to_send = make_msg(0, 1057)
-    to_send[0].RDLR = (1 << 13) if enabled else 0
-    return to_send
+    values = {"ACCMode": enabled}
+    return self.packer.make_can_msg_panda("SCC12", 0, values)
 
   def _set_prev_torque(self, t):
     self.safety.set_hyundai_desired_torque_last(t)
     self.safety.set_hyundai_rt_torque_last(t)
 
   def _torque_driver_msg(self, torque):
-    to_send = make_msg(0, 897)
-    to_send[0].RDLR = (torque + 2048) << 11
-    return to_send
+    values = {"CR_Mdps_DrvTq": torque}
+    return self.packer.make_can_msg_panda("MDPS11", 0, values)
 
   def _torque_msg(self, torque):
-    to_send = make_msg(0, 832)
-    to_send[0].RDLR = (torque + 1024) << 16
-    return to_send
+    values = {"CR_Lkas_StrToqReq": torque}
+    return self.packer.make_can_msg_panda("LKAS11", 0, values)
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
