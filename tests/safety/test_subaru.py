@@ -189,6 +189,11 @@ class TestSubaruLegacySafety(TestSubaruSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU_LEGACY, 0)
     self.safety.init_tests_subaru()
 
+  # subaru legacy safety doesn't have brake checks
+  def test_prev_brake(self): pass
+  def test_not_allow_brake_when_moving(self): pass
+  def test_allow_brake_at_zero_speed(self): pass
+
   def _torque_driver_msg(self, torque):
     t = twos_comp(torque, 11)
     to_send = make_msg(0, 0x371)
