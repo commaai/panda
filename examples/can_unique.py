@@ -54,32 +54,20 @@ class Info():
     with open(filename, 'r') as input:
       reader = csv.reader(input)
       header = next(reader, None)
-      print(header)
       if header[0] == 'time':
         self.cabana(reader)
       else:
         self.loger(reader)
 
   def cabana(self, reader):
-    # next(reader, None)  # skip the CSV header
     for row in reader:
       bus = row[2]
-      message_id = hex(int(row[1]))[2:]  # old message IDs are in decimal
+      message_id = hex(int(row[1]))[2:]
       message_id = '%s:%s' % (bus, message_id)
       data = row[3]
-      if message_id not in self.messages:
-        self.messages[message_id] = Message(message_id)
-      message = self.messages[message_id]
-      if data not in self.messages[message_id].data:
-        message.data[data] = True
-      bytes = bytearray.fromhex(data)
-      for i in range(len(bytes)):
-        message.ones[i] = message.ones[i] | int(bytes[i])
-        # Inverts the data and masks it to a byte to get the zeros as ones.
-        message.zeros[i] = message.zeros[i] | ( (~int(bytes[i])) & 0xff)
+      self.store(message_id, data)
 
   def logger(self, reader):
-    # next(reader, None)  # skip the CSV header
     for row in reader:
       bus = row[0]
       if row[1].startswith('0x'):
@@ -91,6 +79,9 @@ class Info():
         data = row[2][2:]  # remove leading '0x'
       else:
         data = row[2]
+      self.store(message_id, data)
+
+  def store(self, message_id, data):
       if message_id not in self.messages:
         self.messages[message_id] = Message(message_id)
       message = self.messages[message_id]
