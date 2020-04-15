@@ -3,8 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg, interceptor_msg, \
-                                      MAX_WRONG_COUNTERS, UNSAFE_MODE
+from panda.tests.safety.common import StdTest, make_msg, MAX_WRONG_COUNTERS, UNSAFE_MODE
 
 MAX_BRAKE = 255
 
