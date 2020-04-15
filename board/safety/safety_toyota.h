@@ -20,7 +20,14 @@ const int TOYOTA_ISO_MAX_ACCEL = 2000;        // 2.0 m/s2
 const int TOYOTA_ISO_MIN_ACCEL = -3500;       // -3.5 m/s2
 
 const int TOYOTA_STANDSTILL_THRSLD = 100;  // 1kph
-const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 475;  // ratio between offset and gain from dbc file
+
+// Roughly calculated using the offsets in openpilot +5%:
+// In openpilot: ((gas1_norm + gas2_norm)/2) > 15
+// gas_norm1 = ((gain_dbc*gas1) + offset1_dbc)
+// gas_norm2 = ((gain_dbc*gas2) + offset2_dbc)
+// In this safety: ((gas1 + gas2)/2) > THRESHOLD
+const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 845;
+#define TOYOTA_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + (GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2) // avg between 2 tracks
 
 const AddrBus TOYOTA_TX_MSGS[] = {{0x283, 0}, {0x2E6, 0}, {0x2E7, 0}, {0x33E, 0}, {0x344, 0}, {0x365, 0}, {0x366, 0}, {0x4CB, 0},  // DSU bus 0
                                   {0x128, 1}, {0x141, 1}, {0x160, 1}, {0x161, 1}, {0x470, 1},  // DSU bus 1
@@ -133,7 +140,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // exit controls on rising edge of interceptor gas press
     if (addr == 0x201) {
       gas_interceptor_detected = 1;
-      int gas_interceptor = GET_INTERCEPTOR(to_push);
+      int gas_interceptor = TOYOTA_GET_INTERCEPTOR(to_push);
       if (!unsafe_allow_gas && (gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRSLD) &&
           (gas_interceptor_prev <= TOYOTA_GAS_INTERCEPTOR_THRSLD)) {
         controls_allowed = 0;
