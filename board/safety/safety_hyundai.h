@@ -6,7 +6,7 @@ const int HYUNDAI_MAX_RATE_DOWN = 7;
 const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
 const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
 const int HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
-const AddrBus HYUNDAI_TX_MSGS[] = {{832, 0}, {1265, 0}};
+const AddrBus HYUNDAI_TX_MSGS[] = {{832, 0}, {1265, 0}, {1157, 0}};
 
 // TODO: do checksum and counter checks
 AddrCheckStruct hyundai_rx_checks[] = {
@@ -172,7 +172,7 @@ static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     if (bus_num == 0) {
       bus_fwd = 2;
     }
-    if ((bus_num == 2) && (addr != 832)) {
+    if ((bus_num == 2) && (addr != 832) && (addr != 1157)) {
       bus_fwd = 0;
     }
   }

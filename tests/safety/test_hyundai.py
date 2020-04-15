@@ -18,8 +18,7 @@ DRIVER_TORQUE_FACTOR = 2
 
 
 class TestHyundaiSafety(common.PandaSafetyTest):
-
-  TX_MSGS = [[832, 0], [1265, 0]]
+  TX_MSGS = [[832, 0], [1265, 0], [1157, 0]]
   STANDSTILL_THRESHOLD = 30  # ~1kph
   RELAY_MALFUNCTION_ADDR = 832
   RELAY_MALFUNCTION_BUS = 0
