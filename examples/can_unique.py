@@ -57,7 +57,7 @@ class Info():
       if header[0] == 'time':
         self.cabana(reader)
       else:
-        self.loger(reader)
+        self.logger(reader)
 
   def cabana(self, reader):
     for row in reader:
