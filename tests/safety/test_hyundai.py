@@ -22,7 +22,7 @@ class TestHyundaiSafety(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 30  # ~1kph
   RELAY_MALFUNCTION_ADDR = 832
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [832]}
+  FWD_BLACKLISTED_ADDRS = {2: [832, 1157]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
