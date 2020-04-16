@@ -56,9 +56,10 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     self.safety.set_hyundai_desired_torque_last(t)
     self.safety.set_hyundai_rt_torque_last(t)
 
+  # TODO: this is unused
   def _torque_driver_msg(self, torque):
-    values = {"CR_Mdps_DrvTq": torque}
-    return self.packer.make_can_msg_panda("MDPS11", 0, values)
+    values = {"CR_Mdps_StrColTq": torque}
+    return self.packer.make_can_msg_panda("MDPS12", 0, values)
 
   def _torque_msg(self, torque):
     values = {"CR_Lkas_StrToqReq": torque}
