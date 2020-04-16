@@ -6,7 +6,7 @@ const int HYUNDAI_MAX_RATE_DOWN = 7;
 const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
 const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
 const int HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
-const AddrBus HYUNDAI_TX_MSGS[] = {{832, 0}, {1265, 0}};
+const AddrBus HYUNDAI_TX_MSGS[] = {{832, 0}, {1265, 0}, {1157, 0}};
 
 // TODO: do checksum and counter checks
 AddrCheckStruct hyundai_rx_checks[] = {
@@ -32,11 +32,12 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
 
-  if (valid && GET_BUS(to_push) == 0) {
-    int addr = GET_ADDR(to_push);
+  int addr = GET_ADDR(to_push);
+  int bus = GET_BUS(to_push);
 
-    if (addr == 897) {
-      int torque_driver_new = ((GET_BYTES_04(to_push) >> 11) & 0xfff) - 2048;
+  if (valid && (bus == 0)) {
+    if (addr == 593) {
+      int torque_driver_new = ((GET_BYTES_04(to_push) & 0x7ff) * 0.79) - 808; // scale down new driver torque signal to match previous one
       // update array of samples
       update_sample(&hyundai_torque_driver, torque_driver_new);
     }
@@ -170,7 +171,7 @@ static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     if (bus_num == 0) {
       bus_fwd = 2;
     }
-    if ((bus_num == 2) && (addr != 832)) {
+    if ((bus_num == 2) && (addr != 832) && (addr != 1157)) {
       bus_fwd = 0;
     }
   }

@@ -18,12 +18,11 @@ DRIVER_TORQUE_FACTOR = 2
 
 
 class TestHyundaiSafety(common.PandaSafetyTest):
-
-  TX_MSGS = [[832, 0], [1265, 0]]
+  TX_MSGS = [[832, 0], [1265, 0], [1157, 0]]
   STANDSTILL_THRESHOLD = 30  # ~1kph
   RELAY_MALFUNCTION_ADDR = 832
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [832]}
+  FWD_BLACKLISTED_ADDRS = {2: [832, 1157]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
@@ -57,9 +56,10 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     self.safety.set_hyundai_desired_torque_last(t)
     self.safety.set_hyundai_rt_torque_last(t)
 
+  # TODO: this is unused
   def _torque_driver_msg(self, torque):
-    values = {"CR_Mdps_DrvTq": torque}
-    return self.packer.make_can_msg_panda("MDPS11", 0, values)
+    values = {"CR_Mdps_StrColTq": torque}
+    return self.packer.make_can_msg_panda("MDPS12", 0, values)
 
   def _torque_msg(self, torque):
     values = {"CR_Lkas_StrToqReq": torque}
