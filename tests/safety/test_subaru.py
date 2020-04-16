@@ -192,7 +192,7 @@ class TestSubaruLegacySafety(TestSubaruSafety):
     return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
 
   def _torque_msg(self, torque):
-    values = {"LKAS_Command": -torque}
+    values = {"LKAS_Command": torque}
     return self.packer.make_can_msg_panda("ES_LKAS", 0, values)
 
   def _gas_msg(self, gas):
