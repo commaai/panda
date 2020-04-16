@@ -36,13 +36,6 @@ def package_can_msg(msg):
 def make_msg(bus, addr, length=8):
   return package_can_msg([addr, 0, b'\x00'*length, bus])
 
-def interceptor_msg(gas, addr):
-  to_send = make_msg(0, addr, 6)
-  gas2 = gas * 2
-  to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
-                    ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
-  return to_send
-
 class CANPackerPanda(CANPacker):
   def make_can_msg_panda(self, name_or_addr, bus, values, counter=-1):
     msg = self.make_can_msg(name_or_addr, bus, values, counter=-1)

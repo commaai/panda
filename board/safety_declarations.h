@@ -112,6 +112,3 @@ int unsafe_mode = 0;
 uint32_t safety_mode_cnt = 0U;
 // allow 1s of transition timeout after relay changes state before assessing malfunctioning
 const uint32_t RELAY_TRNS_TIMEOUT = 1U;
-
-// avg between 2 tracks
-#define GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + ((GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2 ) / 2)
