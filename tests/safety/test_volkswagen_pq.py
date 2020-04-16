@@ -4,7 +4,7 @@ import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import make_msg, MAX_WRONG_COUNTERS, UNSAFE_MODE
+from panda.tests.safety.common import make_msg, MAX_WRONG_COUNTERS
 
 MAX_RATE_UP = 4
 MAX_RATE_DOWN = 10
