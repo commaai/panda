@@ -44,6 +44,7 @@ class CANPackerPanda(CANPacker):
 class PandaSafetyTest(unittest.TestCase):
   TX_MSGS = None
   STANDSTILL_THRESHOLD = None
+  GAS_PRESSED_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = None
   RELAY_MALFUNCTION_BUS = None
   FWD_BLACKLISTED_ADDRS = {} # {bus: [addr]}
@@ -119,11 +120,9 @@ class PandaSafetyTest(unittest.TestCase):
 
   def test_prev_gas(self):
     self.assertFalse(self.safety.get_gas_pressed_prev())
-    for pressed in [True, False]:
-      self._rx(self._gas_msg(not pressed))
-      self.assertEqual(not pressed, self.safety.get_gas_pressed_prev())
+    for pressed in [self.GAS_PRESSED_THRESHOLD+1, 0]:
       self._rx(self._gas_msg(pressed))
-      self.assertEqual(pressed, self.safety.get_gas_pressed_prev())
+      self.assertEqual(bool(pressed), self.safety.get_gas_pressed_prev())
 
   def test_allow_engage_with_gas_pressed(self):
     self._rx(self._gas_msg(1))
@@ -136,14 +135,14 @@ class PandaSafetyTest(unittest.TestCase):
   def test_disengage_on_gas(self):
     self._rx(self._gas_msg(0))
     self.safety.set_controls_allowed(True)
-    self._rx(self._gas_msg(1))
+    self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD+1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_unsafe_mode_no_disengage_on_gas(self):
     self._rx(self._gas_msg(0))
     self.safety.set_controls_allowed(True)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    self._rx(self._gas_msg(1))
+    self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD+1))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_prev_brake(self):
