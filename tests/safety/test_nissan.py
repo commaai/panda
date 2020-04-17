@@ -4,24 +4,15 @@ import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg
+from panda.tests.safety.common import CANPackerPanda
 
 ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
 ANGLE_DELTA_VU = [5., 3.5, 0.4]   # unwind limit
 
 
-def twos_comp(val, bits):
-  if val >= 0:
-    return val
-  else:
-    return (2**bits) + val
-
 def sign(a):
-  if a > 0:
-    return 1
-  else:
-    return -1
+  return 1 if a > 0 else -1
 
 
 class TestNissanSafety(common.PandaSafetyTest):
@@ -41,11 +32,8 @@ class TestNissanSafety(common.PandaSafetyTest):
     self.safety.init_tests_nissan()
 
   def _angle_meas_msg(self, angle):
-    to_send = make_msg(0, 0x2)
-    angle = int(angle * -10)
-    t = twos_comp(angle, 16)
-    to_send[0].RDLR = t & 0xFFFF
-    return to_send
+    values = {"STEER_ANGLE": angle}
+    return self.packer.make_can_msg_panda("STEER_ANGLE_SENSOR", 0, values)
 
   def _set_prev_angle(self, t):
     t = int(t * -100)
@@ -56,37 +44,32 @@ class TestNissanSafety(common.PandaSafetyTest):
       self.safety.safety_rx_hook(self._angle_meas_msg(angle))
 
   def _pcm_status_msg(self, enabled):
-    to_send = make_msg(2, 0x30f)
-    to_send[0].RDLR = (1 if enabled else 0) << 3
-    return to_send
+    values = {"CRUISE_ENABLED": enabled}
+    return self.packer.make_can_msg_panda("CRUISE_STATE", 2, values)
 
   def _lkas_control_msg(self, angle, state):
-    to_send = make_msg(0, 0x169)
-    angle = int((angle - 1310) * -100)
-    to_send[0].RDLR = ((angle & 0x3FC00) >> 10) | ((angle & 0x3FC) << 6) | ((angle & 0x3) << 16)
-    to_send[0].RDHR = ((state & 0x1) << 20)
-    return to_send
+    values = {"DESIRED_ANGLE": angle, "LKA_ACTIVE": state}
+    return self.packer.make_can_msg_panda("LKAS", 0, values)
 
   def _speed_msg(self, speed):
-    to_send = make_msg(0, 0x285)
-    speed = int(speed / 0.005 * 3.6)
-    to_send[0].RDLR = ((speed & 0xFF) << 24) | ((speed & 0xFF00) << 8)
-    return to_send
+    # TODO: why the 3.6? m/s to kph? not in dbc
+    values = {"WHEEL_SPEED_%s"%s: speed*3.6 for s in ["RR", "RL"]}
+    return self.packer.make_can_msg_panda("WHEEL_SPEEDS_REAR", 0, values)
 
   def _brake_msg(self, brake):
-    to_send = make_msg(1, 0x454)
-    to_send[0].RDLR = ((brake & 0x1) << 23)
-    return to_send
+    values = {"USER_BRAKE_PRESSED": brake}
+    return self.packer.make_can_msg_panda("DOORS_LIGHTS", 1, values)
 
   def _gas_msg(self, gas):
-    to_send = make_msg(0, 0x15c)
-    to_send[0].RDHR = ((gas & 0x3fc) << 6) | ((gas & 0x3) << 22)
-    return to_send
+    values = {"GAS_PEDAL": gas}
+    return self.packer.make_can_msg_panda("GAS_PEDAL", 0, values)
 
-  def _acc_button_cmd(self, buttons):
-    to_send = make_msg(2, 0x20b)
-    to_send[0].RDLR = (buttons << 8)
-    return to_send
+  def _acc_button_cmd(self, cancel=0, propilot=0, flw_dist=0, _set=0, res=0):
+    no_button = not any([cancel, propilot, flw_dist, _set, res])
+    values = {"CANCEL_BUTTON": cancel, "PROPILOT_BUTTON": propilot, \
+              "FOLLOW_DISTANCE_BUTTON": flw_dist, "SET_BUTTON": _set, \
+              "RES_BUTTON": res, "NO_BUTTON_PRESSED": no_button}
+    return self.packer.make_can_msg_panda("CRUISE_THROTTLE", 2, values)
 
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
@@ -146,21 +129,21 @@ class TestNissanSafety(common.PandaSafetyTest):
 
   def test_acc_buttons(self):
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(0x2)) # Cancel button
+    self.safety.safety_tx_hook(self._acc_button_cmd(cancel=1))
     self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_tx_hook(self._acc_button_cmd(0x1)) # ProPilot button
+    self.safety.safety_tx_hook(self._acc_button_cmd(propilot=1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(0x4)) # Follow Distance button
+    self.safety.safety_tx_hook(self._acc_button_cmd(flw_dist=1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(0x8)) # Set button
+    self.safety.safety_tx_hook(self._acc_button_cmd(_set=1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(0x10)) # Res button
+    self.safety.safety_tx_hook(self._acc_button_cmd(res=1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(0x20)) # No button pressed
+    self.safety.safety_tx_hook(self._acc_button_cmd())
     self.assertFalse(self.safety.get_controls_allowed())
 
 
