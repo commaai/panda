@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import StdTest, make_msg, MAX_WRONG_COUNTERS, UNSAFE_MODE
+import panda.tests.safety.common as common
+from panda.tests.safety.common import make_msg, MAX_WRONG_COUNTERS
 
 MAX_RATE_UP = 4
 MAX_RATE_DOWN = 10
@@ -22,14 +23,6 @@ MSG_GRA_NEU = 0x38A      # TX by OP, ACC control buttons for cancel/resume
 MSG_BREMSE_3 = 0x4A0     # RX from ABS, for wheel speeds
 MSG_LDW_1 = 0x5BE        # TX by OP, Lane line recognition and text alerts
 
-# Transmit of GRA_Neu is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-TX_MSGS = [[MSG_HCA_1, 0], [MSG_GRA_NEU, 0], [MSG_GRA_NEU, 2], [MSG_LDW_1, 0]]
-
-def sign(a):
-  if a > 0:
-    return 1
-  else:
-    return -1
 
 def volkswagen_pq_checksum(msg, addr, len_msg):
   msg_bytes = msg.RDLR.to_bytes(4, 'little') + msg.RDHR.to_bytes(4, 'little')
@@ -40,17 +33,24 @@ def volkswagen_pq_checksum(msg, addr, len_msg):
     checksum ^= i
   return checksum
 
-class TestVolkswagenPqSafety(unittest.TestCase):
+class TestVolkswagenPqSafety(common.PandaSafetyTest):
   cruise_engaged = False
   brake_pressed = False
   cnt_lenkhilfe_3 = 0
   cnt_hca_1 = 0
 
-  @classmethod
-  def setUp(cls):
-    cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_PQ, 0)
-    cls.safety.init_tests_volkswagen()
+  # Transmit of GRA_Neu is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
+  TX_MSGS = [[MSG_HCA_1, 0], [MSG_GRA_NEU, 0], [MSG_GRA_NEU, 2], [MSG_LDW_1, 0]]
+  STANDSTILL_THRESHOLD = 1
+  RELAY_MALFUNCTION_ADDR = MSG_HCA_1
+  RELAY_MALFUNCTION_BUS = 0
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_1, MSG_LDW_1]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  def setUp(self):
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_PQ, 0)
+    self.safety.init_tests_volkswagen()
 
   def _set_prev_torque(self, t):
     self.safety.set_volkswagen_desired_torque_last(t)
@@ -66,11 +66,14 @@ class TestVolkswagenPqSafety(unittest.TestCase):
 
   # Brake light switch (shared message Motor_2)
   def _brake_msg(self, brake):
-    self.__class__.brake_pressed = brake
-    return self._motor_2_msg()
+    to_send = make_msg(0, MSG_MOTOR_2)
+    to_send[0].RDLR = (0x1 << 16) if brake else 0
+    # since this siganl's used for engagement status, preserve current state
+    to_send[0].RDLR |= (self.safety.get_controls_allowed() & 0x3) << 22
+    return to_send
 
   # ACC engaged status (shared message Motor_2)
-  def _cruise_msg(self, cruise):
+  def _pcm_status_msg(self, cruise):
     self.__class__.cruise_engaged = cruise
     return self._motor_2_msg()
 
@@ -106,8 +109,8 @@ class TestVolkswagenPqSafety(unittest.TestCase):
     to_send[0].RDLR |= (self.__class__.cruise_engaged & 0x3) << 22
     return to_send
 
-  # Driver throttle input
-  def _motor_3_msg(self, gas):
+  # Driver throttle input (motor_3)
+  def _gas_msg(self, gas):
     to_send = make_msg(0, MSG_MOTOR_3)
     to_send[0].RDLR = (gas & 0xFF) << 16
     return to_send
@@ -118,32 +121,6 @@ class TestVolkswagenPqSafety(unittest.TestCase):
     to_send[0].RDLR = 1 << bit
     to_send[0].RDLR |= volkswagen_pq_checksum(to_send[0], MSG_GRA_NEU, 8)
     return to_send
-
-  def test_spam_can_buses(self):
-    StdTest.test_spam_can_buses(self, TX_MSGS)
-
-  def test_relay_malfunction(self):
-    StdTest.test_relay_malfunction(self, MSG_HCA_1)
-
-  def test_prev_gas(self):
-    for g in range(0, 256):
-      self.safety.safety_rx_hook(self._motor_3_msg(g))
-      self.assertEqual(True if g > 0 else False, self.safety.get_gas_pressed_prev())
-
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_enable_control_allowed_from_cruise(self):
-    self.safety.safety_rx_hook(self._brake_msg(False))
-    self.safety.set_controls_allowed(0)
-    self.safety.safety_rx_hook(self._cruise_msg(True))
-    self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_disable_control_allowed_from_cruise(self):
-    self.safety.safety_rx_hook(self._brake_msg(False))
-    self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._cruise_msg(False))
-    self.assertFalse(self.safety.get_controls_allowed())
 
   def test_sample_speed(self):
     # Stationary
@@ -159,39 +136,6 @@ class TestVolkswagenPqSafety(unittest.TestCase):
     self.safety.safety_rx_hook(self._speed_msg(144))
     self.assertEqual(1, self.safety.get_volkswagen_moving())
 
-  def test_prev_brake(self):
-    self.assertFalse(self.safety.get_brake_pressed_prev())
-    self.safety.safety_rx_hook(self._brake_msg(True))
-    self.assertTrue(self.safety.get_brake_pressed_prev())
-    self.safety.safety_rx_hook(self._brake_msg(False))
-
-  def test_brake_disengage(self):
-    self.__class__.cruise_engaged = True  # Hack due to brake and ACC signals being in the same message
-    StdTest.test_allow_brake_at_zero_speed(self)
-    StdTest.test_not_allow_brake_when_moving(self, 1)
-
-  def test_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._motor_3_msg(0))
-    self.safety.set_controls_allowed(True)
-    self.safety.safety_rx_hook(self._motor_3_msg(1))
-    self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_unsafe_mode_no_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._motor_3_msg(0))
-    self.safety.set_controls_allowed(True)
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    self.safety.safety_rx_hook(self._motor_3_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
-
-  def test_allow_engage_with_gas_pressed(self):
-    self.safety.safety_rx_hook(self._motor_3_msg(1))
-    self.safety.set_controls_allowed(True)
-    self.safety.safety_rx_hook(self._motor_3_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_rx_hook(self._motor_3_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
       for t in range(-500, 500):
@@ -201,9 +145,6 @@ class TestVolkswagenPqSafety(unittest.TestCase):
           self.assertFalse(self.safety.safety_tx_hook(self._hca_1_msg(t)))
         else:
           self.assertTrue(self.safety.safety_tx_hook(self._hca_1_msg(t)))
-
-  def test_manually_enable_controls_allowed(self):
-    StdTest.test_manually_enable_controls_allowed(self)
 
   def test_spam_cancel_safety_check(self):
     BIT_CANCEL = 9
@@ -342,23 +283,6 @@ class TestVolkswagenPqSafety(unittest.TestCase):
       self.safety.set_controls_allowed(1)
       self.safety.safety_rx_hook(self._lenkhilfe_3_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_fwd_hook(self):
-    buss = list(range(0x0, 0x3))
-    msgs = list(range(0x1, 0x800))
-    blocked_msgs_0to2 = []
-    blocked_msgs_2to0 = [MSG_HCA_1, MSG_LDW_1]
-    for b in buss:
-      for m in msgs:
-        if b == 0:
-          fwd_bus = -1 if m in blocked_msgs_0to2 else 2
-        elif b == 1:
-          fwd_bus = -1
-        elif b == 2:
-          fwd_bus = -1 if m in blocked_msgs_2to0 else 0
-
-        # assume len 8
-        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(b, make_msg(b, m, 8)))
 
 
 if __name__ == "__main__":
