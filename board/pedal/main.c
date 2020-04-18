@@ -147,11 +147,11 @@ void CAN1_RX0_IRQ_Handler(void) {
     int address = CAN->sFIFOMailBox[0].RIR >> 21;
     if (address == CAN_GAS_INPUT) {
       // softloader entry
-      if (GET_BYTES_04(&CAN->sFIFOMailBox[0]) == 0xdeadface) {
-        if (GET_BYTES_48(&CAN->sFIFOMailBox[0]) == 0x0ab00b1e) {
+      if (GET_BYTES_03(&CAN->sFIFOMailBox[0]) == 0xdeadface) {
+        if (GET_BYTES_47(&CAN->sFIFOMailBox[0]) == 0x0ab00b1e) {
           enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
           NVIC_SystemReset();
-        } else if (GET_BYTES_48(&CAN->sFIFOMailBox[0]) == 0x02b00b1e) {
+        } else if (GET_BYTES_47(&CAN->sFIFOMailBox[0]) == 0x02b00b1e) {
           enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
           NVIC_SystemReset();
         } else {

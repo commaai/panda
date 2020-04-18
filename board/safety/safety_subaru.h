@@ -75,7 +75,7 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         ((addr == 0x371) && !subaru_global)) {
       int torque_driver_new;
       if (subaru_global) {
-        torque_driver_new = ((GET_BYTES_04(to_push) >> 16) & 0x7FF);
+        torque_driver_new = ((GET_BYTES_03(to_push) >> 16) & 0x7FF);
       } else {
         torque_driver_new = (GET_BYTE(to_push, 3) >> 5) + (GET_BYTE(to_push, 4) << 3);
       }
@@ -87,7 +87,7 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (((addr == 0x240) && subaru_global) ||
         ((addr == 0x144) && !subaru_global)) {
       int bit_shift = subaru_global ? 9 : 17;
-      int cruise_engaged = ((GET_BYTES_48(to_push) >> bit_shift) & 1);
+      int cruise_engaged = ((GET_BYTES_47(to_push) >> bit_shift) & 1);
       if (cruise_engaged && !subaru_cruise_engaged_last) {
         controls_allowed = 1;
       }
@@ -99,14 +99,14 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // sample subaru wheel speed, averaging opposite corners
     if ((addr == 0x13a) && subaru_global) {
-      subaru_speed = (GET_BYTES_04(to_push) >> 12) & 0x1FFF;  // FR
-      subaru_speed += (GET_BYTES_48(to_push) >> 6) & 0x1FFF;  // RL
+      subaru_speed = (GET_BYTES_03(to_push) >> 12) & 0x1FFF;  // FR
+      subaru_speed += (GET_BYTES_47(to_push) >> 6) & 0x1FFF;  // RL
       subaru_speed /= 2;
     }
 
     // exit controls on rising edge of brake press (TODO: missing check for unsupported legacy models)
     if ((addr == 0x139) && subaru_global) {
-      bool brake_pressed = (GET_BYTES_48(to_push) & 0xFFF0) > 0;
+      bool brake_pressed = (GET_BYTES_47(to_push) & 0xFFF0) > 0;
       if (brake_pressed && (!brake_pressed_prev || (subaru_speed > SUBARU_STANDSTILL_THRSLD))) {
         controls_allowed = 0;
       }
@@ -150,7 +150,7 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if (((addr == 0x122) && subaru_global) ||
       ((addr == 0x164) && !subaru_global)) {
     int bit_shift = subaru_global ? 16 : 8;
-    int desired_torque = ((GET_BYTES_04(to_send) >> bit_shift) & 0x1FFF);
+    int desired_torque = ((GET_BYTES_03(to_send) >> bit_shift) & 0x1FFF);
     bool violation = 0;
     uint32_t ts = TIM2->CNT;
     desired_torque = to_signed(desired_torque, 13);

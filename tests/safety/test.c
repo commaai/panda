@@ -73,8 +73,8 @@ void fault_recovered(uint32_t fault) {
 #define GET_LEN(msg) ((msg)->RDTR & 0xf)
 #define GET_ADDR(msg) ((((msg)->RIR & 4) != 0) ? ((msg)->RIR >> 3) : ((msg)->RIR >> 21))
 #define GET_BYTE(msg, b) (((int)(b) > 3) ? (((msg)->RDHR >> (8U * ((unsigned int)(b) % 4U))) & 0XFFU) : (((msg)->RDLR >> (8U * (unsigned int)(b))) & 0xFFU))
-#define GET_BYTES_04(msg) ((msg)->RDLR)
-#define GET_BYTES_48(msg) ((msg)->RDHR)
+#define GET_BYTES_03(msg) ((msg)->RDLR)
+#define GET_BYTES_47(msg) ((msg)->RDHR)
 
 #define UNUSED(x) (void)(x)
 

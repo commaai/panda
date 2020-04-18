@@ -37,7 +37,7 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   if (valid && (bus == 0)) {
     if (addr == 593) {
-      int torque_driver_new = ((GET_BYTES_04(to_push) & 0x7ff) * 0.79) - 808; // scale down new driver torque signal to match previous one
+      int torque_driver_new = ((GET_BYTES_03(to_push) & 0x7ff) * 0.79) - 808; // scale down new driver torque signal to match previous one
       // update array of samples
       update_sample(&hyundai_torque_driver, torque_driver_new);
     }
@@ -45,7 +45,7 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // enter controls on rising edge of ACC, exit controls on ACC off
     if (addr == 1057) {
       // 2 bits: 13-14
-      int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3;
+      int cruise_engaged = (GET_BYTES_03(to_push) >> 13) & 0x3;
       if (cruise_engaged && !hyundai_cruise_engaged_last) {
         controls_allowed = 1;
       }
@@ -66,8 +66,8 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // sample subaru wheel speed, averaging opposite corners
     if (addr == 902) {
-      hyundai_speed = GET_BYTES_04(to_push) & 0x3FFF;  // FL
-      hyundai_speed += (GET_BYTES_48(to_push) >> 16) & 0x3FFF;  // RL
+      hyundai_speed = GET_BYTES_03(to_push) & 0x3FFF;  // FL
+      hyundai_speed += (GET_BYTES_47(to_push) >> 16) & 0x3FFF;  // RL
       hyundai_speed /= 2;
     }
 
@@ -104,7 +104,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // LKA STEER: safety check
   if (addr == 832) {
-    int desired_torque = ((GET_BYTES_04(to_send) >> 16) & 0x7ff) - 1024;
+    int desired_torque = ((GET_BYTES_03(to_send) >> 16) & 0x7ff) - 1024;
     uint32_t ts = TIM2->CNT;
     bool violation = 0;
 
@@ -153,7 +153,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // ensuring that only the cancel button press is sent (VAL 4) when controls are off.
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == 1265) && !controls_allowed) {
-    if ((GET_BYTES_04(to_send) & 0x7) != 4) {
+    if ((GET_BYTES_03(to_send) & 0x7) != 4) {
       tx = 0;
     }
   }
