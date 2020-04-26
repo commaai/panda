@@ -4,7 +4,8 @@ import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import make_msg, MAX_WRONG_COUNTERS, UNSAFE_MODE
+from panda.tests.safety.common import CANPackerPanda, make_msg, \
+                                      MAX_WRONG_COUNTERS, UNSAFE_MODE
 
 MAX_BRAKE = 255
 
@@ -128,11 +129,6 @@ class TestHondaSafety(common.PandaSafetyTest):
     self.safety.safety_rx_hook(self._speed_msg(100))
     self.assertEqual(1, self.safety.get_honda_moving())
 
-  def test_prev_brake(self):
-    self.assertFalse(self.safety.get_brake_pressed_prev())
-    self.safety.safety_rx_hook(self._brake_msg(True))
-    self.assertTrue(self.safety.get_brake_pressed_prev())
-
   def test_disengage_on_brake(self):
     self.safety.set_controls_allowed(1)
     self.safety.safety_rx_hook(self._brake_msg(1))
@@ -149,12 +145,6 @@ class TestHondaSafety(common.PandaSafetyTest):
     self.safety.safety_rx_hook(self._alt_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
 
-  def test_prev_gas(self):
-    self.safety.safety_rx_hook(self._gas_msg(False))
-    self.assertFalse(self.safety.get_gas_pressed_prev())
-    self.safety.safety_rx_hook(self._gas_msg(True))
-    self.assertTrue(self.safety.get_gas_pressed_prev())
-
   def test_prev_gas_interceptor(self):
     self.safety.safety_rx_hook(honda_interceptor_msg(0x0, 0x201))
     self.assertFalse(self.safety.get_gas_interceptor_prev())
@@ -162,26 +152,6 @@ class TestHondaSafety(common.PandaSafetyTest):
     self.assertTrue(self.safety.get_gas_interceptor_prev())
     self.safety.safety_rx_hook(honda_interceptor_msg(0x0, 0x201))
     self.safety.set_gas_interceptor_detected(False)
-
-  def test_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._gas_msg(0))
-    self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._gas_msg(1))
-    self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_unsafe_mode_no_disengage_on_gas(self):
-    self.safety.safety_rx_hook(self._gas_msg(0))
-    self.safety.set_controls_allowed(1)
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    self.safety.safety_rx_hook(self._gas_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
-
-  def test_allow_engage_with_gas_pressed(self):
-    self.safety.safety_rx_hook(self._gas_msg(1))
-    self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._gas_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas_interceptor(self):
     for g in range(0, 0x1000):
