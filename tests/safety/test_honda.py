@@ -10,6 +10,11 @@ MAX_BRAKE = 255
 
 INTERCEPTOR_THRESHOLD = 344
 
+class Btn:
+  CANCEL = 2
+  SET = 3
+  RESUME = 4
+
 HONDA_N_HW = 0
 HONDA_BG_HW = 1
 HONDA_BH_HW = 2
@@ -50,7 +55,6 @@ class TestHondaSafety(common.PandaSafetyTest):
   # override these inherited tests. honda doesn't use pcm enable
   def test_disable_control_allowed_from_cruise(self): pass
   def test_enable_control_allowed_from_cruise(self): pass
-
 
   def _speed_msg(self, speed):
     bus = 1 if self.safety.get_honda_hw() == HONDA_BH_HW else 0
@@ -104,25 +108,19 @@ class TestHondaSafety(common.PandaSafetyTest):
     to_send[0].RDLR = steer
     return to_send
 
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_controls_allowed())
-
   def test_resume_button(self):
-    RESUME_BTN = 4
     self.safety.set_controls_allowed(0)
-    self.safety.safety_rx_hook(self._button_msg(RESUME_BTN, 0x296))
+    self.safety.safety_rx_hook(self._button_msg(Btn.RESUME, 0x296))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_set_button(self):
-    SET_BTN = 3
     self.safety.set_controls_allowed(0)
-    self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x296))
+    self.safety.safety_rx_hook(self._button_msg(Btn.SET, 0x296))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_cancel_button(self):
-    CANCEL_BTN = 2
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._button_msg(CANCEL_BTN, 0x296))
+    self.safety.safety_rx_hook(self._button_msg(Btn.CANCEL, 0x296))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_sample_speed(self):
@@ -250,31 +248,27 @@ class TestHondaSafety(common.PandaSafetyTest):
   def test_spam_cancel_safety_check(self):
     hw = self.safety.get_honda_hw()
     if hw != HONDA_N_HW:
-      RESUME_BTN = 4
-      SET_BTN = 3
-      CANCEL_BTN = 2
       BUTTON_MSG = 0x296
       self.safety.set_controls_allowed(0)
-      self.assertTrue(self.safety.safety_tx_hook(self._button_msg(CANCEL_BTN, BUTTON_MSG)))
-      self.assertFalse(self.safety.safety_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))
-      self.assertFalse(self.safety.safety_tx_hook(self._button_msg(SET_BTN, BUTTON_MSG)))
+      self.assertTrue(self.safety.safety_tx_hook(self._button_msg(Btn.CANCEL, BUTTON_MSG)))
+      self.assertFalse(self.safety.safety_tx_hook(self._button_msg(Btn.RESUME, BUTTON_MSG)))
+      self.assertFalse(self.safety.safety_tx_hook(self._button_msg(Btn.SET, BUTTON_MSG)))
       # do not block resume if we are engaged already
       self.safety.set_controls_allowed(1)
-      self.assertTrue(self.safety.safety_tx_hook(self._button_msg(RESUME_BTN, BUTTON_MSG)))
+      self.assertTrue(self.safety.safety_tx_hook(self._button_msg(Btn.RESUME, BUTTON_MSG)))
 
   def test_rx_hook(self):
 
     # checksum checks
-    SET_BTN = 3
     for msg in ["btn1", "btn2", "gas", "speed"]:
       self.safety.set_controls_allowed(1)
       if msg == "btn1":
         if self.safety.get_honda_hw() == HONDA_N_HW:
-          to_push = self._button_msg(SET_BTN, 0x1A6)  # only in Honda_NIDEC
+          to_push = self._button_msg(Btn.SET, 0x1A6)  # only in Honda_NIDEC
         else:
           continue
       if msg == "btn2":
-        to_push = self._button_msg(SET_BTN, 0x296)
+        to_push = self._button_msg(Btn.SET, 0x296)
       if msg == "gas":
         to_push = self._gas_msg(0)
       if msg == "speed":
@@ -292,11 +286,11 @@ class TestHondaSafety(common.PandaSafetyTest):
       self.__class__.cnt_button += 1
       if i < MAX_WRONG_COUNTERS:
         self.safety.set_controls_allowed(1)
-        self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x296))
+        self.safety.safety_rx_hook(self._button_msg(Btn.SET, 0x296))
         self.safety.safety_rx_hook(self._speed_msg(0))
         self.safety.safety_rx_hook(self._gas_msg(0))
       else:
-        self.assertFalse(self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x296)))
+        self.assertFalse(self.safety.safety_rx_hook(self._button_msg(Btn.SET, 0x296)))
         self.assertFalse(self.safety.safety_rx_hook(self._speed_msg(0)))
         self.assertFalse(self.safety.safety_rx_hook(self._gas_msg(0)))
         self.assertFalse(self.safety.get_controls_allowed())
@@ -304,10 +298,10 @@ class TestHondaSafety(common.PandaSafetyTest):
     # restore counters for future tests with a couple of good messages
     for i in range(2):
       self.safety.set_controls_allowed(1)
-      self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x296))
+      self.safety.safety_rx_hook(self._button_msg(Btn.SET, 0x296))
       self.safety.safety_rx_hook(self._speed_msg(0))
       self.safety.safety_rx_hook(self._gas_msg(0))
-    self.safety.safety_rx_hook(self._button_msg(SET_BTN, 0x296))
+    self.safety.safety_rx_hook(self._button_msg(Btn.SET, 0x296))
     self.assertTrue(self.safety.get_controls_allowed())
 
 
