@@ -192,78 +192,46 @@ class TestHondaSafety(common.PandaSafetyTest):
 
 
   def test_tx_hook_on_pedal_pressed(self):
-    for pedal in ['brake', 'gas', 'interceptor']:
-      if pedal == 'brake':
-        # brake_pressed_prev and honda_moving
-        self._rx(self._speed_msg(100))
-        self._rx(self._brake_msg(1))
-      elif pedal == 'gas':
-        # gas_pressed_prev
-        self._rx(self._gas_msg(1))
-      elif pedal == 'interceptor':
-        # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
-        self._rx(honda_interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
-        self._rx(honda_interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
-
-      self.safety.set_controls_allowed(1)
-      hw = self.safety.get_honda_hw()
-      if hw == HONDA_N_HW:
-        self.safety.set_honda_fwd_brake(False)
-        self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
-        self.assertFalse(self._tx(honda_interceptor_msg(INTERCEPTOR_THRESHOLD, 0x200)))
-      self.assertFalse(self._tx(self._send_steer_msg(0x1000)))
-
-      # reset status
-      self.safety.set_controls_allowed(0)
-      self._tx(self._send_brake_msg(0))
-      self._tx(self._send_steer_msg(0))
-      self._tx(honda_interceptor_msg(0, 0x200))
-      if pedal == 'brake':
-        self._rx(self._speed_msg(0))
-        self._rx(self._brake_msg(0))
-      elif pedal == 'gas':
-        self._rx(self._gas_msg(0))
-      elif pedal == 'interceptor':
-        self.safety.set_gas_interceptor_detected(False)
-
-  def test_tx_hook_on_pedal_pressed_on_unsafe_gas_mode(self):
-    for pedal in ['brake', 'gas', 'interceptor']:
-      self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-      if pedal == 'brake':
-        # brake_pressed_prev and honda_moving
-        self._rx(self._speed_msg(100))
-        self._rx(self._brake_msg(1))
+    for mode in [UNSAFE_MODE.DEFAULT, UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS]:
+      for pedal in ['brake', 'gas', 'interceptor']:
+        self.safety.set_unsafe_mode(mode)
         allow_ctrl = False
-      elif pedal == 'gas':
-        # gas_pressed_prev
-        self._rx(self._gas_msg(1))
-        allow_ctrl = True
-      elif pedal == 'interceptor':
-        # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
-        self._rx(honda_interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
-        self._rx(honda_interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
-        allow_ctrl = True
+        if pedal == 'brake':
+          # brake_pressed_prev and honda_moving
+          self._rx(self._speed_msg(100))
+          self._rx(self._brake_msg(1))
+        elif pedal == 'gas':
+          # gas_pressed_prev
+          self._rx(self._gas_msg(1))
+          allow_ctrl = mode == UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS
+        elif pedal == 'interceptor':
+          # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
+          self._rx(honda_interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
+          self._rx(honda_interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
+          allow_ctrl = mode == UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS
 
-      self.safety.set_controls_allowed(1)
-      hw = self.safety.get_honda_hw()
-      if hw == HONDA_N_HW:
-        self.safety.set_honda_fwd_brake(False)
-        self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(MAX_BRAKE)))
-        self.assertEqual(allow_ctrl, self._tx(honda_interceptor_msg(INTERCEPTOR_THRESHOLD, 0x200)))
-      self.assertEqual(allow_ctrl, self._tx(self._send_steer_msg(0x1000)))
-      # reset status
-      self.safety.set_controls_allowed(0)
-      self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
-      self._tx(self._send_brake_msg(0))
-      self._tx(self._send_steer_msg(0))
-      self._tx(honda_interceptor_msg(0, 0x200))
-      if pedal == 'brake':
-        self._rx(self._speed_msg(0))
-        self._rx(self._brake_msg(0))
-      elif pedal == 'gas':
-        self._rx(self._gas_msg(0))
-      elif pedal == 'interceptor':
-        self.safety.set_gas_interceptor_detected(False)
+        self.safety.set_controls_allowed(1)
+        hw = self.safety.get_honda_hw()
+        if hw == HONDA_N_HW:
+          self.safety.set_honda_fwd_brake(False)
+          self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(MAX_BRAKE)))
+          self.assertEqual(allow_ctrl, self._tx(honda_interceptor_msg(INTERCEPTOR_THRESHOLD, 0x200)))
+        self.assertEqual(allow_ctrl, self._tx(self._send_steer_msg(0x1000)))
+
+        # reset status
+        self.safety.set_controls_allowed(0)
+        self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
+        self._tx(self._send_brake_msg(0))
+        self._tx(self._send_steer_msg(0))
+        self._tx(honda_interceptor_msg(0, 0x200))
+        if pedal == 'brake':
+          self._rx(self._speed_msg(0))
+          self._rx(self._brake_msg(0))
+        elif pedal == 'gas':
+          self._rx(self._gas_msg(0))
+        elif pedal == 'interceptor':
+          self.safety.set_gas_interceptor_detected(False)
+
 
 class TestHondaNidecSafety(TestHondaSafety):
 
