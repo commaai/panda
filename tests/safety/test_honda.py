@@ -151,11 +151,7 @@ class TestHondaSafety(common.PandaSafetyTest):
     for msg in ["btn", "gas", "speed"]:
       self.safety.set_controls_allowed(1)
       # TODO: add this coverage back by re-running all tests with the acura dbc
-      #if msg == "btn1":
-      #  if self.safety.get_honda_hw() == HONDA_N_HW:
-      #    to_push = self._button_msg(Btn.SET, 0x1A6)  # only in Honda_NIDEC
-      #  else:
-      #    continue
+      # to_push = self._button_msg(Btn.SET, 0x1A6)  # only in Honda_NIDEC
       if msg == "btn":
         to_push = self._button_msg(Btn.SET)
       if msg == "gas":
