@@ -62,26 +62,20 @@ class TestHondaSafety(common.PandaSafetyTest):
     self.__class__.cnt_gas += 1
     return self.packer.make_can_msg_panda("POWERTRAIN_DATA", self.PT_BUS, values)
 
-  def _alt_brake_msg(self, brake):
-    to_send = make_msg(0, 0x1BE)
-    to_send[0].RDLR = 0x10 if brake else 0
-    return to_send
-
   def _gas_msg(self, gas):
     values = {"PEDAL_GAS": gas, "COUNTER": self.cnt_gas % 4}
     self.__class__.cnt_gas += 1
     return self.packer.make_can_msg_panda("POWERTRAIN_DATA", self.PT_BUS, values)
 
   def _send_brake_msg(self, brake):
-    to_send = make_msg(0, 0x1FA)
-    to_send[0].RDLR = ((brake & 0x3) << 14) | ((brake & 0x3FF) >> 2)
-    return to_send
+    values = {}
+    if self.safety.get_honda_hw() == HONDA_N_HW:
+      values = {"COMPUTER_BRAKE": brake}
+    return self.packer.make_can_msg_panda("BRAKE_COMMAND", 0, values)
 
   def _send_steer_msg(self, steer):
-    bus = 2 if self.safety.get_honda_hw() == HONDA_BG_HW else 0
-    to_send = make_msg(bus, 0xE4, 6)
-    to_send[0].RDLR = steer
-    return to_send
+    values = {"STEER_TORQUE": steer}
+    return self.packer.make_can_msg_panda("STEERING_CONTROL", 0, values)
 
   def test_resume_button(self):
     self.safety.set_controls_allowed(0)
@@ -107,17 +101,6 @@ class TestHondaSafety(common.PandaSafetyTest):
     self.safety.set_controls_allowed(1)
     self.safety.safety_rx_hook(self._brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_alt_disengage_on_brake(self):
-    self.safety.set_honda_alt_brake_msg(1)
-    self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._alt_brake_msg(1))
-    self.assertFalse(self.safety.get_controls_allowed())
-
-    self.safety.set_honda_alt_brake_msg(0)
-    self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._alt_brake_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
 
   def test_prev_gas_interceptor(self):
     self.safety.safety_rx_hook(honda_interceptor_msg(0x0, 0x201))
@@ -155,34 +138,6 @@ class TestHondaSafety(common.PandaSafetyTest):
     self.assertTrue(self.safety.get_controls_allowed())
     self.safety.safety_rx_hook(honda_interceptor_msg(0, 0x201))
     self.safety.set_gas_interceptor_detected(False)
-
-  def test_brake_safety_check(self):
-    hw = self.safety.get_honda_hw()
-    if hw == HONDA_N_HW:
-      for fwd_brake in [False, True]:
-        self.safety.set_honda_fwd_brake(fwd_brake)
-        for brake in np.arange(0, MAX_BRAKE + 10, 1):
-          for controls_allowed in [True, False]:
-            self.safety.set_controls_allowed(controls_allowed)
-            if fwd_brake:
-              send = False  # block openpilot brake msg when fwd'ing stock msg
-            elif controls_allowed:
-              send = MAX_BRAKE >= brake >= 0
-            else:
-              send = brake == 0
-            self.assertEqual(send, self.safety.safety_tx_hook(self._send_brake_msg(brake)))
-      self.safety.set_honda_fwd_brake(False)
-
-  def test_gas_interceptor_safety_check(self):
-    if self.safety.get_honda_hw() == HONDA_N_HW:
-      for gas in np.arange(0, 4000, 100):
-        for controls_allowed in [True, False]:
-          self.safety.set_controls_allowed(controls_allowed)
-          if controls_allowed:
-            send = True
-          else:
-            send = gas == 0
-          self.assertEqual(send, self.safety.safety_tx_hook(honda_interceptor_msg(gas, 0x200)))
 
   def test_steer_safety_check(self):
     self.safety.set_controls_allowed(0)
@@ -341,6 +296,31 @@ class TestHondaNidecSafety(TestHondaSafety):
     self.safety.set_honda_fwd_brake(True)
     super().test_fwd_hook()
 
+  def test_brake_safety_check(self):
+    for fwd_brake in [False, True]:
+      self.safety.set_honda_fwd_brake(fwd_brake)
+      for brake in np.arange(0, MAX_BRAKE + 10, 1):
+        for controls_allowed in [True, False]:
+          self.safety.set_controls_allowed(controls_allowed)
+          if fwd_brake:
+            send = False  # block openpilot brake msg when fwd'ing stock msg
+          elif controls_allowed:
+            send = MAX_BRAKE >= brake >= 0
+          else:
+            send = brake == 0
+          self.assertEqual(send, self.safety.safety_tx_hook(self._send_brake_msg(brake)))
+    self.safety.set_honda_fwd_brake(False)
+
+  def test_gas_interceptor_safety_check(self):
+    for gas in np.arange(0, 4000, 100):
+      for controls_allowed in [True, False]:
+        self.safety.set_controls_allowed(controls_allowed)
+        if controls_allowed:
+          send = True
+        else:
+          send = gas == 0
+        self.assertEqual(send, self.safety.safety_tx_hook(honda_interceptor_msg(gas, 0x200)))
+
 
 class TestHondaBoschHarnessSafety(TestHondaSafety):
   TX_MSGS = [[0xE4, 0], [0x296, 1], [0x33D, 0]]  # Bosch Harness
@@ -358,6 +338,11 @@ class TestHondaBoschHarnessSafety(TestHondaSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH_HARNESS, 0)
     self.safety.init_tests_honda()
 
+  def _alt_brake_msg(self, brake):
+    to_send = make_msg(0, 0x1BE)
+    to_send[0].RDLR = 0x10 if brake else 0
+    return to_send
+
   def test_spam_cancel_safety_check(self):
     self.safety.set_controls_allowed(0)
     self.assertTrue(self.safety.safety_tx_hook(self._button_msg(Btn.CANCEL)))
@@ -366,6 +351,17 @@ class TestHondaBoschHarnessSafety(TestHondaSafety):
     # do not block resume if we are engaged already
     self.safety.set_controls_allowed(1)
     self.assertTrue(self.safety.safety_tx_hook(self._button_msg(Btn.RESUME)))
+
+  def test_alt_disengage_on_brake(self):
+    self.safety.set_honda_alt_brake_msg(1)
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._alt_brake_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+    self.safety.set_honda_alt_brake_msg(0)
+    self.safety.set_controls_allowed(1)
+    self.safety.safety_rx_hook(self._alt_brake_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
 
 
 class TestHondaBoschGiraffeSafety(TestHondaBoschHarnessSafety):
@@ -383,6 +379,10 @@ class TestHondaBoschGiraffeSafety(TestHondaBoschHarnessSafety):
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH_GIRAFFE, 0)
     self.safety.init_tests_honda()
+
+  def _send_steer_msg(self, steer):
+    values = {"STEER_TORQUE": steer}
+    return self.packer.make_can_msg_panda("STEERING_CONTROL", 2, values)
 
 
 if __name__ == "__main__":
