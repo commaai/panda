@@ -28,23 +28,13 @@ def honda_interceptor_msg(gas, addr):
                     ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
   return to_send
 
-def honda_checksum(msg, addr, len_msg):
-  checksum = 0
-  while addr > 0:
-    checksum += addr
-    addr >>= 4
-  for i in range (0, 2*len_msg):
-    if i < 8:
-      checksum += (msg.RDLR >> (4 * i))
-    else:
-      checksum += (msg.RDHR >> (4 * (i - 8)))
-  return (8 - checksum) & 0xF
-
 
 class TestHondaSafety(common.PandaSafetyTest):
   cnt_speed = 0
   cnt_gas = 0
   cnt_button = 0
+
+  PT_BUS = 0
 
   @classmethod
   def setUpClass(cls):
@@ -58,31 +48,19 @@ class TestHondaSafety(common.PandaSafetyTest):
   def test_enable_control_allowed_from_cruise(self): pass
 
   def _speed_msg(self, speed):
-    bus = 1 if self.safety.get_honda_hw() == HONDA_BH_HW else 0
-    to_send = make_msg(bus, 0x158)
-    to_send[0].RDLR = speed
-    to_send[0].RDHR |= (self.cnt_speed % 4) << 28
-    to_send[0].RDHR |= honda_checksum(to_send[0], 0x158, 8) << 24
+    values = {"XMISSION_SPEED": speed, "COUNTER": self.cnt_speed % 4}
     self.__class__.cnt_speed += 1
-    return to_send
+    return self.packer.make_can_msg_panda("ENGINE_DATA", self.PT_BUS, values)
 
-  def _button_msg(self, buttons, addr):
-    bus = 1 if self.safety.get_honda_hw() == HONDA_BH_HW else 0
-    to_send = make_msg(bus, addr)
-    to_send[0].RDLR = buttons << 5
-    to_send[0].RDHR |= (self.cnt_button % 4) << 28
-    to_send[0].RDHR |= honda_checksum(to_send[0], addr, 8) << 24
+  def _button_msg(self, buttons):
+    values = {"CRUISE_BUTTONS": buttons, "COUNTER": self.cnt_button % 4}
     self.__class__.cnt_button += 1
-    return to_send
+    return self.packer.make_can_msg_panda("SCM_BUTTONS", self.PT_BUS, values)
 
   def _brake_msg(self, brake):
-    bus = 1 if self.safety.get_honda_hw() == HONDA_BH_HW else 0
-    to_send = make_msg(bus, 0x17C)
-    to_send[0].RDHR = 0x200000 if brake else 0
-    to_send[0].RDHR |= (self.cnt_gas % 4) << 28
-    to_send[0].RDHR |= honda_checksum(to_send[0], 0x17C, 8) << 24
+    values = {"BRAKE_PRESSED": brake, "COUNTER": self.cnt_gas % 4}
     self.__class__.cnt_gas += 1
-    return to_send
+    return self.packer.make_can_msg_panda("POWERTRAIN_DATA", self.PT_BUS, values)
 
   def _alt_brake_msg(self, brake):
     to_send = make_msg(0, 0x1BE)
@@ -90,13 +68,9 @@ class TestHondaSafety(common.PandaSafetyTest):
     return to_send
 
   def _gas_msg(self, gas):
-    bus = 1 if self.safety.get_honda_hw() == HONDA_BH_HW else 0
-    to_send = make_msg(bus, 0x17C)
-    to_send[0].RDLR = 1 if gas else 0
-    to_send[0].RDHR |= (self.cnt_gas % 4) << 28
-    to_send[0].RDHR |= honda_checksum(to_send[0], 0x17C, 8) << 24
+    values = {"PEDAL_GAS": gas, "COUNTER": self.cnt_gas % 4}
     self.__class__.cnt_gas += 1
-    return to_send
+    return self.packer.make_can_msg_panda("POWERTRAIN_DATA", self.PT_BUS, values)
 
   def _send_brake_msg(self, brake):
     to_send = make_msg(0, 0x1FA)
@@ -111,17 +85,17 @@ class TestHondaSafety(common.PandaSafetyTest):
 
   def test_resume_button(self):
     self.safety.set_controls_allowed(0)
-    self.safety.safety_rx_hook(self._button_msg(Btn.RESUME, 0x296))
+    self.safety.safety_rx_hook(self._button_msg(Btn.RESUME))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_set_button(self):
     self.safety.set_controls_allowed(0)
-    self.safety.safety_rx_hook(self._button_msg(Btn.SET, 0x296))
+    self.safety.safety_rx_hook(self._button_msg(Btn.SET))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_cancel_button(self):
     self.safety.set_controls_allowed(1)
-    self.safety.safety_rx_hook(self._button_msg(Btn.CANCEL, 0x296))
+    self.safety.safety_rx_hook(self._button_msg(Btn.CANCEL))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_sample_speed(self):
@@ -215,38 +189,29 @@ class TestHondaSafety(common.PandaSafetyTest):
     self.assertTrue(self.safety.safety_tx_hook(self._send_steer_msg(0x0000)))
     self.assertFalse(self.safety.safety_tx_hook(self._send_steer_msg(0x1000)))
 
-  def test_spam_cancel_safety_check(self):
-    hw = self.safety.get_honda_hw()
-    if hw != HONDA_N_HW:
-      BUTTON_MSG = 0x296
-      self.safety.set_controls_allowed(0)
-      self.assertTrue(self.safety.safety_tx_hook(self._button_msg(Btn.CANCEL, BUTTON_MSG)))
-      self.assertFalse(self.safety.safety_tx_hook(self._button_msg(Btn.RESUME, BUTTON_MSG)))
-      self.assertFalse(self.safety.safety_tx_hook(self._button_msg(Btn.SET, BUTTON_MSG)))
-      # do not block resume if we are engaged already
-      self.safety.set_controls_allowed(1)
-      self.assertTrue(self.safety.safety_tx_hook(self._button_msg(Btn.RESUME, BUTTON_MSG)))
-
   def test_rx_hook(self):
 
+    # TODO: move this test to common
     # checksum checks
-    for msg in ["btn1", "btn2", "gas", "speed"]:
+    for msg in ["btn", "gas", "speed"]:
       self.safety.set_controls_allowed(1)
-      if msg == "btn1":
-        if self.safety.get_honda_hw() == HONDA_N_HW:
-          to_push = self._button_msg(Btn.SET, 0x1A6)  # only in Honda_NIDEC
-        else:
-          continue
-      if msg == "btn2":
-        to_push = self._button_msg(Btn.SET, 0x296)
+      # TODO: add this coverage back by re-running all tests with the acura dbc
+      #if msg == "btn1":
+      #  if self.safety.get_honda_hw() == HONDA_N_HW:
+      #    to_push = self._button_msg(Btn.SET, 0x1A6)  # only in Honda_NIDEC
+      #  else:
+      #    continue
+      if msg == "btn":
+        to_push = self._button_msg(Btn.SET)
       if msg == "gas":
         to_push = self._gas_msg(0)
       if msg == "speed":
         to_push = self._speed_msg(0)
       self.assertTrue(self.safety.safety_rx_hook(to_push))
-      to_push[0].RDHR = 0  # invalidate checksum
-      self.assertFalse(self.safety.safety_rx_hook(to_push))
-      self.assertFalse(self.safety.get_controls_allowed())
+      if msg != "btn":
+        to_push[0].RDHR = 0  # invalidate checksum
+        self.assertFalse(self.safety.safety_rx_hook(to_push))
+        self.assertFalse(self.safety.get_controls_allowed())
 
     # counter
     # reset wrong_counters to zero by sending valid messages
@@ -256,11 +221,11 @@ class TestHondaSafety(common.PandaSafetyTest):
       self.__class__.cnt_button += 1
       if i < MAX_WRONG_COUNTERS:
         self.safety.set_controls_allowed(1)
-        self.safety.safety_rx_hook(self._button_msg(Btn.SET, 0x296))
+        self.safety.safety_rx_hook(self._button_msg(Btn.SET))
         self.safety.safety_rx_hook(self._speed_msg(0))
         self.safety.safety_rx_hook(self._gas_msg(0))
       else:
-        self.assertFalse(self.safety.safety_rx_hook(self._button_msg(Btn.SET, 0x296)))
+        self.assertFalse(self.safety.safety_rx_hook(self._button_msg(Btn.SET)))
         self.assertFalse(self.safety.safety_rx_hook(self._speed_msg(0)))
         self.assertFalse(self.safety.safety_rx_hook(self._gas_msg(0)))
         self.assertFalse(self.safety.get_controls_allowed())
@@ -268,10 +233,10 @@ class TestHondaSafety(common.PandaSafetyTest):
     # restore counters for future tests with a couple of good messages
     for i in range(2):
       self.safety.set_controls_allowed(1)
-      self.safety.safety_rx_hook(self._button_msg(Btn.SET, 0x296))
+      self.safety.safety_rx_hook(self._button_msg(Btn.SET))
       self.safety.safety_rx_hook(self._speed_msg(0))
       self.safety.safety_rx_hook(self._gas_msg(0))
-    self.safety.safety_rx_hook(self._button_msg(Btn.SET, 0x296))
+    self.safety.safety_rx_hook(self._button_msg(Btn.SET))
     self.assertTrue(self.safety.get_controls_allowed())
 
 
@@ -359,6 +324,7 @@ class TestHondaNidecSafety(TestHondaSafety):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
+    self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
     self.safety.init_tests_honda()
@@ -384,10 +350,22 @@ class TestHondaBoschHarnessSafety(TestHondaSafety):
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0x33D]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
+  PT_BUS = 1
+
   def setUp(self):
+    self.packer = CANPackerPanda("honda_accord_s2t_2018_can_generated")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH_HARNESS, 0)
     self.safety.init_tests_honda()
+
+  def test_spam_cancel_safety_check(self):
+    self.safety.set_controls_allowed(0)
+    self.assertTrue(self.safety.safety_tx_hook(self._button_msg(Btn.CANCEL)))
+    self.assertFalse(self.safety.safety_tx_hook(self._button_msg(Btn.RESUME)))
+    self.assertFalse(self.safety.safety_tx_hook(self._button_msg(Btn.SET)))
+    # do not block resume if we are engaged already
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self.safety.safety_tx_hook(self._button_msg(Btn.RESUME)))
 
 
 class TestHondaBoschGiraffeSafety(TestHondaBoschHarnessSafety):
@@ -398,7 +376,10 @@ class TestHondaBoschGiraffeSafety(TestHondaBoschHarnessSafety):
   FWD_BLACKLISTED_ADDRS = {1: [0xE4, 0x33D]}
   FWD_BUS_LOOKUP = {1: 2, 2: 1}
 
+  PT_BUS = 0
+
   def setUp(self):
+    super().setUp()
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH_GIRAFFE, 0)
     self.safety.init_tests_honda()
