@@ -89,6 +89,7 @@ bool gas_interceptor_detected = false;
 int gas_interceptor_prev = 0;
 bool gas_pressed_prev = false;
 bool brake_pressed_prev = false;
+bool vehicle_moving = false;
 
 // This can be set with a USB command
 // It enables features we consider to be unsafe, but understand others may have different opinions

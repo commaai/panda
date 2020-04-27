@@ -33,7 +33,6 @@ AddrCheckStruct gm_rx_checks[] = {
 };
 const int GM_RX_CHECK_LEN = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]);
 
-bool gm_moving = false;
 int gm_rt_torque_last = 0;
 int gm_desired_torque_last = 0;
 uint32_t gm_ts_last = 0;
@@ -59,7 +58,7 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // sample speed, really only care if car is moving or not
     // rear left wheel speed
     if (addr == 842) {
-      gm_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
+      vehicle_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
     }
 
     // ACC steering wheel buttons
@@ -84,7 +83,7 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       // Brake pedal's potentiometer returns near-zero reading
       // even when pedal is not pressed
       bool brake_pressed = GET_BYTE(to_push, 1) >= 10;
-      if (brake_pressed && (!brake_pressed_prev || gm_moving)) {
+      if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
          controls_allowed = 0;
       }
       brake_pressed_prev = brake_pressed;
@@ -140,7 +139,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
-  int pedal_pressed = brake_pressed_prev && gm_moving;
+  int pedal_pressed = brake_pressed_prev && vehicle_moving;
   bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
   if (!unsafe_allow_gas) {
     pedal_pressed = pedal_pressed || gas_pressed_prev;

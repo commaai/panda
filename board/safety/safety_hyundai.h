@@ -21,7 +21,6 @@ const int HYUNDAI_RX_CHECK_LEN = sizeof(hyundai_rx_checks) / sizeof(hyundai_rx_c
 int hyundai_rt_torque_last = 0;
 int hyundai_desired_torque_last = 0;
 int hyundai_cruise_engaged_last = 0;
-int hyundai_speed = 0;
 uint32_t hyundai_ts_last = 0;
 struct sample_t hyundai_torque_driver;         // last few driver torques measured
 
@@ -66,15 +65,16 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // sample subaru wheel speed, averaging opposite corners
     if (addr == 902) {
-      hyundai_speed = GET_BYTES_04(to_push) & 0x3FFF;  // FL
+      int hyundai_speed = GET_BYTES_04(to_push) & 0x3FFF;  // FL
       hyundai_speed += (GET_BYTES_48(to_push) >> 16) & 0x3FFF;  // RL
       hyundai_speed /= 2;
+      vehicle_moving = hyundai_speed > HYUNDAI_STANDSTILL_THRSLD;
     }
 
     // exit controls on rising edge of brake press
     if (addr == 916) {
       bool brake_pressed = (GET_BYTE(to_push, 6) >> 7) != 0;
-      if (brake_pressed && (!brake_pressed_prev || (hyundai_speed > HYUNDAI_STANDSTILL_THRSLD))) {
+      if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
         controls_allowed = 0;
       }
       brake_pressed_prev = brake_pressed;

@@ -55,7 +55,6 @@ struct sample_t volkswagen_torque_driver; // Last few driver torques measured
 int volkswagen_rt_torque_last = 0;
 int volkswagen_desired_torque_last = 0;
 uint32_t volkswagen_ts_last = 0;
-bool volkswagen_moving = false;
 int volkswagen_torque_msg = 0;
 int volkswagen_lane_msg = 0;
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
@@ -157,7 +156,7 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       int wheel_speed_fr = GET_BYTE(to_push, 6) | (GET_BYTE(to_push, 7) << 8);
       // Check for average front speed in excess of 0.3m/s, 1.08km/h
       // DBC speed scale 0.0075: 0.3m/s = 144, sum both wheels to compare
-      volkswagen_moving = (wheel_speed_fl + wheel_speed_fr) > 288;
+      vehicle_moving = (wheel_speed_fl + wheel_speed_fr) > 288;
     }
 
     // Update driver input torque samples
@@ -193,7 +192,7 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // Signal: ESP_05.ESP_Fahrer_bremst
     if (addr == MSG_ESP_05) {
       bool brake_pressed = (GET_BYTE(to_push, 3) & 0x4) >> 2;
-      if (brake_pressed && (!brake_pressed_prev || volkswagen_moving)) {
+      if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
         controls_allowed = 0;
       }
       brake_pressed_prev = brake_pressed;
@@ -224,7 +223,7 @@ static int volkswagen_pq_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       int wheel_speed_fr = (GET_BYTE(to_push, 2) | (GET_BYTE(to_push, 3) << 8)) >> 1;
       // Check for average front speed in excess of 0.3m/s, 1.08km/h
       // DBC speed scale 0.01: 0.3m/s = 108, sum both wheels to compare
-      volkswagen_moving = (wheel_speed_fl + wheel_speed_fr) > 216;
+      vehicle_moving = (wheel_speed_fl + wheel_speed_fr) > 216;
     }
 
     // Update driver input torque samples
@@ -260,7 +259,7 @@ static int volkswagen_pq_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // Signal: Motor_2.Bremslichtschalter
     if ((bus == 0) && (addr == MSG_MOTOR_2)) {
       bool brake_pressed = (GET_BYTE(to_push, 2) & 0x1);
-      if (brake_pressed && (!(brake_pressed_prev) || volkswagen_moving)) {
+      if (brake_pressed && (!(brake_pressed_prev) || vehicle_moving)) {
         controls_allowed = 0;
       }
       brake_pressed_prev = brake_pressed;
