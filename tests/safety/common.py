@@ -41,7 +41,20 @@ class CANPackerPanda(CANPacker):
     msg = self.make_can_msg(name_or_addr, bus, values, counter=-1)
     return package_can_msg(msg)
 
-class PandaSafetyTest(unittest.TestCase):
+class PandaSafetyTestBase(unittest.TestCase):
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "PandaSafetyTestBase":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  def _rx(self, msg):
+    return self.safety.safety_rx_hook(msg)
+
+  def _tx(self, msg):
+    return self.safety.safety_tx_hook(msg)
+
+class PandaSafetyTest(PandaSafetyTestBase):
   TX_MSGS = None
   STANDSTILL_THRESHOLD = None
   GAS_PRESSED_THRESHOLD = 0
@@ -55,12 +68,6 @@ class PandaSafetyTest(unittest.TestCase):
     if cls.__name__ == "PandaSafetyTest":
       cls.safety = None
       raise unittest.SkipTest
-
-  def _rx(self, msg):
-    return self.safety.safety_rx_hook(msg)
-
-  def _tx(self, msg):
-    return self.safety.safety_tx_hook(msg)
 
   @abc.abstractmethod
   def _brake_msg(self, brake):
