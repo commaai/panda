@@ -41,7 +41,7 @@ class TestNissanSafety(common.PandaSafetyTest):
 
   def _angle_meas_msg_array(self, angle):
     for i in range(6):
-      self.safety.safety_rx_hook(self._angle_meas_msg(angle))
+      self._rx(self._angle_meas_msg(angle))
 
   def _pcm_status_msg(self, enabled):
     values = {"CRUISE_ENABLED": enabled}
@@ -82,68 +82,68 @@ class TestNissanSafety(common.PandaSafetyTest):
 
         # first test against false positives
         self._angle_meas_msg_array(a)
-        self.safety.safety_rx_hook(self._speed_msg(s))
+        self._rx(self._speed_msg(s))
 
         self._set_prev_angle(a)
         self.safety.set_controls_allowed(1)
 
         # Stay within limits
         # Up
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a + sign(a) * max_delta_up, 1)))
+        self.assertEqual(True, self._tx(self._lkas_control_msg(a + sign(a) * max_delta_up, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Don't change
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a, 1)))
+        self.assertEqual(True, self._tx(self._lkas_control_msg(a, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a - sign(a) * max_delta_down, 1)))
+        self.assertEqual(True, self._tx(self._lkas_control_msg(a - sign(a) * max_delta_down, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Inject too high rates
         # Up
-        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a + sign(a) * (max_delta_up + 1), 1)))
+        self.assertEqual(False, self._tx(self._lkas_control_msg(a + sign(a) * (max_delta_up + 1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
 
         # Don't change
         self.safety.set_controls_allowed(1)
         self._set_prev_angle(a)
         self.assertTrue(self.safety.get_controls_allowed())
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a, 1)))
+        self.assertEqual(True, self._tx(self._lkas_control_msg(a, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        self.assertEqual(False, self.safety.safety_tx_hook(self._lkas_control_msg(a - sign(a) * (max_delta_down + 1), 1)))
+        self.assertEqual(False, self._tx(self._lkas_control_msg(a - sign(a) * (max_delta_down + 1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
 
         # Check desired steer should be the same as steer angle when controls are off
         self.safety.set_controls_allowed(0)
-        self.assertEqual(True, self.safety.safety_tx_hook(self._lkas_control_msg(a, 0)))
+        self.assertEqual(True, self._tx(self._lkas_control_msg(a, 0)))
 
   def test_angle_cmd_when_disabled(self):
     self.safety.set_controls_allowed(0)
 
     self._set_prev_angle(0)
-    self.assertFalse(self.safety.safety_tx_hook(self._lkas_control_msg(0, 1)))
+    self.assertFalse(self._tx(self._lkas_control_msg(0, 1)))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_acc_buttons(self):
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(cancel=1))
+    self._tx(self._acc_button_cmd(cancel=1))
     self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.safety_tx_hook(self._acc_button_cmd(propilot=1))
+    self._tx(self._acc_button_cmd(propilot=1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(flw_dist=1))
+    self._tx(self._acc_button_cmd(flw_dist=1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(_set=1))
+    self._tx(self._acc_button_cmd(_set=1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd(res=1))
+    self._tx(self._acc_button_cmd(res=1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(1)
-    self.safety.safety_tx_hook(self._acc_button_cmd())
+    self._tx(self._acc_button_cmd())
     self.assertFalse(self.safety.get_controls_allowed())
 
 

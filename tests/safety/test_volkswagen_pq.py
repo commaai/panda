@@ -124,16 +124,16 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
 
   def test_sample_speed(self):
     # Stationary
-    self.safety.safety_rx_hook(self._speed_msg(0))
+    self._rx(self._speed_msg(0))
     self.assertEqual(0, self.safety.get_volkswagen_moving())
     # 1 km/h, just under 0.3 m/s safety grace threshold
-    self.safety.safety_rx_hook(self._speed_msg(1))
+    self._rx(self._speed_msg(1))
     self.assertEqual(0, self.safety.get_volkswagen_moving())
     # 2 km/h, just over 0.3 m/s safety grace threshold
-    self.safety.safety_rx_hook(self._speed_msg(2))
+    self._rx(self._speed_msg(2))
     self.assertEqual(1, self.safety.get_volkswagen_moving())
     # 144 km/h, openpilot V_CRUISE_MAX
-    self.safety.safety_rx_hook(self._speed_msg(144))
+    self._rx(self._speed_msg(144))
     self.assertEqual(1, self.safety.get_volkswagen_moving())
 
   def test_steer_safety_check(self):
@@ -142,36 +142,36 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
         self.safety.set_controls_allowed(enabled)
         self._set_prev_torque(t)
         if abs(t) > MAX_STEER or (not enabled and abs(t) > 0):
-          self.assertFalse(self.safety.safety_tx_hook(self._hca_1_msg(t)))
+          self.assertFalse(self._tx(self._hca_1_msg(t)))
         else:
-          self.assertTrue(self.safety.safety_tx_hook(self._hca_1_msg(t)))
+          self.assertTrue(self._tx(self._hca_1_msg(t)))
 
   def test_spam_cancel_safety_check(self):
     BIT_CANCEL = 9
     BIT_SET = 16
     BIT_RESUME = 17
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self.safety.safety_tx_hook(self._gra_neu_msg(BIT_CANCEL)))
-    self.assertFalse(self.safety.safety_tx_hook(self._gra_neu_msg(BIT_RESUME)))
-    self.assertFalse(self.safety.safety_tx_hook(self._gra_neu_msg(BIT_SET)))
+    self.assertTrue(self._tx(self._gra_neu_msg(BIT_CANCEL)))
+    self.assertFalse(self._tx(self._gra_neu_msg(BIT_RESUME)))
+    self.assertFalse(self._tx(self._gra_neu_msg(BIT_SET)))
     # do not block resume if we are engaged already
     self.safety.set_controls_allowed(1)
-    self.assertTrue(self.safety.safety_tx_hook(self._gra_neu_msg(BIT_RESUME)))
+    self.assertTrue(self._tx(self._gra_neu_msg(BIT_RESUME)))
 
   def test_non_realtime_limit_up(self):
     self.safety.set_volkswagen_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
 
     self._set_prev_torque(0)
-    self.assertTrue(self.safety.safety_tx_hook(self._hca_1_msg(MAX_RATE_UP)))
+    self.assertTrue(self._tx(self._hca_1_msg(MAX_RATE_UP)))
     self._set_prev_torque(0)
-    self.assertTrue(self.safety.safety_tx_hook(self._hca_1_msg(-MAX_RATE_UP)))
+    self.assertTrue(self._tx(self._hca_1_msg(-MAX_RATE_UP)))
 
     self._set_prev_torque(0)
-    self.assertFalse(self.safety.safety_tx_hook(self._hca_1_msg(MAX_RATE_UP + 1)))
+    self.assertFalse(self._tx(self._hca_1_msg(MAX_RATE_UP + 1)))
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(0)
-    self.assertFalse(self.safety.safety_tx_hook(self._hca_1_msg(-MAX_RATE_UP - 1)))
+    self.assertFalse(self._tx(self._hca_1_msg(-MAX_RATE_UP - 1)))
 
   def test_non_realtime_limit_down(self):
     self.safety.set_volkswagen_torque_driver(0, 0)
@@ -185,10 +185,10 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
         t *= -sign
         self.safety.set_volkswagen_torque_driver(t, t)
         self._set_prev_torque(MAX_STEER * sign)
-        self.assertTrue(self.safety.safety_tx_hook(self._hca_1_msg(MAX_STEER * sign)))
+        self.assertTrue(self._tx(self._hca_1_msg(MAX_STEER * sign)))
 
       self.safety.set_volkswagen_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self.safety.safety_tx_hook(self._hca_1_msg(-MAX_STEER)))
+      self.assertFalse(self._tx(self._hca_1_msg(-MAX_STEER)))
 
     # spot check some individual cases
     for sign in [-1, 1]:
@@ -197,20 +197,20 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
       delta = 1 * sign
       self._set_prev_torque(torque_desired)
       self.safety.set_volkswagen_torque_driver(-driver_torque, -driver_torque)
-      self.assertTrue(self.safety.safety_tx_hook(self._hca_1_msg(torque_desired)))
+      self.assertTrue(self._tx(self._hca_1_msg(torque_desired)))
       self._set_prev_torque(torque_desired + delta)
       self.safety.set_volkswagen_torque_driver(-driver_torque, -driver_torque)
-      self.assertFalse(self.safety.safety_tx_hook(self._hca_1_msg(torque_desired + delta)))
+      self.assertFalse(self._tx(self._hca_1_msg(torque_desired + delta)))
 
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_volkswagen_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self.safety.safety_tx_hook(self._hca_1_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
+      self.assertTrue(self._tx(self._hca_1_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_volkswagen_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self.safety.safety_tx_hook(self._hca_1_msg(0)))
+      self.assertTrue(self._tx(self._hca_1_msg(0)))
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_volkswagen_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertFalse(self.safety.safety_tx_hook(self._hca_1_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
+      self.assertFalse(self._tx(self._hca_1_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
 
   def test_realtime_limits(self):
     self.safety.set_controls_allowed(True)
@@ -221,35 +221,35 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
       self.safety.set_volkswagen_torque_driver(0, 0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.assertTrue(self.safety.safety_tx_hook(self._hca_1_msg(t)))
-      self.assertFalse(self.safety.safety_tx_hook(self._hca_1_msg(sign * (MAX_RT_DELTA + 1))))
+        self.assertTrue(self._tx(self._hca_1_msg(t)))
+      self.assertFalse(self._tx(self._hca_1_msg(sign * (MAX_RT_DELTA + 1))))
 
       self._set_prev_torque(0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.assertTrue(self.safety.safety_tx_hook(self._hca_1_msg(t)))
+        self.assertTrue(self._tx(self._hca_1_msg(t)))
 
       # Increase timer to update rt_torque_last
       self.safety.set_timer(RT_INTERVAL + 1)
-      self.assertTrue(self.safety.safety_tx_hook(self._hca_1_msg(sign * (MAX_RT_DELTA - 1))))
-      self.assertTrue(self.safety.safety_tx_hook(self._hca_1_msg(sign * (MAX_RT_DELTA + 1))))
+      self.assertTrue(self._tx(self._hca_1_msg(sign * (MAX_RT_DELTA - 1))))
+      self.assertTrue(self._tx(self._hca_1_msg(sign * (MAX_RT_DELTA + 1))))
 
   def test_torque_measurements(self):
-    self.safety.safety_rx_hook(self._lenkhilfe_3_msg(50))
-    self.safety.safety_rx_hook(self._lenkhilfe_3_msg(-50))
-    self.safety.safety_rx_hook(self._lenkhilfe_3_msg(0))
-    self.safety.safety_rx_hook(self._lenkhilfe_3_msg(0))
-    self.safety.safety_rx_hook(self._lenkhilfe_3_msg(0))
-    self.safety.safety_rx_hook(self._lenkhilfe_3_msg(0))
+    self._rx(self._lenkhilfe_3_msg(50))
+    self._rx(self._lenkhilfe_3_msg(-50))
+    self._rx(self._lenkhilfe_3_msg(0))
+    self._rx(self._lenkhilfe_3_msg(0))
+    self._rx(self._lenkhilfe_3_msg(0))
+    self._rx(self._lenkhilfe_3_msg(0))
 
     self.assertEqual(-50, self.safety.get_volkswagen_torque_driver_min())
     self.assertEqual(50, self.safety.get_volkswagen_torque_driver_max())
 
-    self.safety.safety_rx_hook(self._lenkhilfe_3_msg(0))
+    self._rx(self._lenkhilfe_3_msg(0))
     self.assertEqual(0, self.safety.get_volkswagen_torque_driver_max())
     self.assertEqual(-50, self.safety.get_volkswagen_torque_driver_min())
 
-    self.safety.safety_rx_hook(self._lenkhilfe_3_msg(0))
+    self._rx(self._lenkhilfe_3_msg(0))
     self.assertEqual(0, self.safety.get_volkswagen_torque_driver_max())
     self.assertEqual(0, self.safety.get_volkswagen_torque_driver_min())
 
@@ -262,9 +262,9 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
       self.safety.set_controls_allowed(1)
       if msg == MSG_LENKHILFE_3:
         to_push = self._lenkhilfe_3_msg(0)
-      self.assertTrue(self.safety.safety_rx_hook(to_push))
+      self.assertTrue(self._rx(to_push))
       to_push[0].RDHR ^= 0xFF
-      self.assertFalse(self.safety.safety_rx_hook(to_push))
+      self.assertFalse(self._rx(to_push))
       self.assertFalse(self.safety.get_controls_allowed())
 
     # counter
@@ -273,15 +273,15 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
       self.__class__.cnt_lenkhilfe_3 += 1
       if i < MAX_WRONG_COUNTERS:
         self.safety.set_controls_allowed(1)
-        self.safety.safety_rx_hook(self._lenkhilfe_3_msg(0))
+        self._rx(self._lenkhilfe_3_msg(0))
       else:
-        self.assertFalse(self.safety.safety_rx_hook(self._lenkhilfe_3_msg(0)))
+        self.assertFalse(self._rx(self._lenkhilfe_3_msg(0)))
         self.assertFalse(self.safety.get_controls_allowed())
 
     # restore counters for future tests with a couple of good messages
     for i in range(2):
       self.safety.set_controls_allowed(1)
-      self.safety.safety_rx_hook(self._lenkhilfe_3_msg(0))
+      self._rx(self._lenkhilfe_3_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
 
 
