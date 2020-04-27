@@ -42,11 +42,11 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   @classmethod
-  def setUp(cls):
-    cls.packer = CANPackerPanda("vw_mqb_2010")
-    cls.safety = libpandasafety_py.libpandasafety
-    cls.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
-    cls.safety.init_tests_volkswagen()
+  def setUp(self):
+    self.packer = CANPackerPanda("vw_mqb_2010")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
+    self.safety.init_tests_volkswagen()
 
   def _set_prev_torque(self, t):
     self.safety.set_volkswagen_desired_torque_last(t)
