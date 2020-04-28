@@ -248,11 +248,11 @@ class TestHondaNidecSafety(TestHondaSafety, common.InterceptorSafetyTest):
 
 
 class TestHondaBoschHarnessSafety(TestHondaSafety):
-  TX_MSGS = [[0xE4, 0], [0x296, 1], [0x33D, 0]]  # Bosch Harness
+  TX_MSGS = [[0xE4, 0], [0xE5, 0], [0x296, 1], [0x33D, 0]]  # Bosch Harness
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 0xE4
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0x33D]}
+  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   PT_BUS = 1
@@ -290,11 +290,11 @@ class TestHondaBoschHarnessSafety(TestHondaSafety):
 
 
 class TestHondaBoschGiraffeSafety(TestHondaBoschHarnessSafety):
-  TX_MSGS = [[0xE4, 2], [0x296, 0], [0x33D, 2]]  # Bosch Giraffe
+  TX_MSGS = [[0xE4, 2], [0xE5, 2], [0x296, 0], [0x33D, 2]]  # Bosch Giraffe
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 0xE4
   RELAY_MALFUNCTION_BUS = 2
-  FWD_BLACKLISTED_ADDRS = {1: [0xE4, 0x33D]}
+  FWD_BLACKLISTED_ADDRS = {1: [0xE4, 0xE5, 0x33D]}
   FWD_BUS_LOOKUP = {1: 2, 2: 1}
 
   PT_BUS = 0
