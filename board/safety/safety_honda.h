@@ -238,6 +238,13 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   }
 
+    // Bosch supplemental control check
+  if (addr == 0xE5) {
+    if ((GET_BYTES_04(to_send) != 0x10800004) || ((GET_BYTES_48(to_send) & 0x00FFFFFF) != 0x0)) {
+      tx = 0;
+    }
+  }
+
   // GAS: safety check
   if (addr == 0x200) {
     if (!current_controls_allowed) {
