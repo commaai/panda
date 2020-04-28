@@ -1,6 +1,7 @@
 import abc
 import struct
 import unittest
+import numpy as np
 from opendbc.can.packer import CANPacker # pylint: disable=import-error
 from panda.tests.safety import libpandasafety_py
 
@@ -104,11 +105,14 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
     self._rx(self._interceptor_msg(0, 0x201))
 
   def test_gas_interceptor_safety_check(self):
-    self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._interceptor_msg(0, 0x200)))
-    self.assertFalse(self._tx(self._interceptor_msg(0x1000, 0x200)))
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._interceptor_msg(0x1000, 0x200)))
+    for gas in np.arange(0, 4000, 100):
+      for controls_allowed in [True, False]:
+        self.safety.set_controls_allowed(controls_allowed)
+        if controls_allowed:
+          send = True
+        else:
+          send = gas == 0
+        self.assertEqual(send, self._tx(self._interceptor_msg(gas, 0x200)))
 
 
 class PandaSafetyTest(PandaSafetyTestBase):
