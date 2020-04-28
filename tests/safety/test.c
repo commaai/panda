@@ -23,7 +23,7 @@ typedef struct
   uint32_t CNT;
 } TIM_TypeDef;
 
-struct sample_t toyota_torque_meas;
+struct sample_t torque_meas;
 struct sample_t gm_torque_driver;
 struct sample_t hyundai_torque_driver;
 struct sample_t chrysler_torque_meas;
@@ -141,9 +141,9 @@ void set_timer(uint32_t t){
   timer.CNT = t;
 }
 
-void set_toyota_torque_meas(int min, int max){
-  toyota_torque_meas.min = min;
-  toyota_torque_meas.max = max;
+void set_torque_meas(int min, int max){
+  torque_meas.min = min;
+  torque_meas.max = max;
 }
 
 void set_gm_torque_driver(int min, int max){
@@ -182,16 +182,16 @@ int get_chrysler_torque_meas_max(void){
   return chrysler_torque_meas.max;
 }
 
-int get_toyota_torque_meas_min(void){
-  return toyota_torque_meas.min;
+int get_torque_meas_min(void){
+  return torque_meas.min;
 }
 
-int get_toyota_torque_meas_max(void){
-  return toyota_torque_meas.max;
+int get_torque_meas_max(void){
+  return torque_meas.max;
 }
 
-void set_toyota_rt_torque_last(int t){
-  toyota_rt_torque_last = t;
+void set_rt_torque_last(int t){
+  rt_torque_last = t;
 }
 
 void set_gm_rt_torque_last(int t){
@@ -214,8 +214,8 @@ void set_volkswagen_rt_torque_last(int t){
   volkswagen_rt_torque_last = t;
 }
 
-void set_toyota_desired_torque_last(int t){
-  toyota_desired_torque_last = t;
+void set_desired_torque_last(int t){
+  desired_torque_last = t;
 }
 
 void set_gm_desired_torque_last(int t){
@@ -273,11 +273,11 @@ void init_tests(void){
 
 void init_tests_toyota(void){
   init_tests();
-  toyota_torque_meas.min = 0;
-  toyota_torque_meas.max = 0;
-  toyota_desired_torque_last = 0;
-  toyota_rt_torque_last = 0;
-  toyota_ts_last = 0;
+  torque_meas.min = 0;
+  torque_meas.max = 0;
+  desired_torque_last = 0;
+  rt_torque_last = 0;
+  ts_last = 0;
   set_timer(0);
 }
 

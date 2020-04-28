@@ -50,11 +50,11 @@ int safety_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd);
 int set_safety_hooks(uint16_t  mode, int16_t param);
 
 void init_tests_toyota(void);
-int get_toyota_torque_meas_min(void);
-int get_toyota_torque_meas_max(void);
-void set_toyota_torque_meas(int min, int max);
-void set_toyota_desired_torque_last(int t);
-void set_toyota_rt_torque_last(int t);
+int get_torque_meas_min(void);
+int get_torque_meas_max(void);
+void set_torque_meas(int min, int max);
+void set_desired_torque_last(int t);
+void set_rt_torque_last(int t);
 
 void init_tests_honda(void);
 bool get_honda_moving(void);
