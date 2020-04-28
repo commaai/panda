@@ -191,7 +191,7 @@ class TestHondaSafety(common.PandaSafetyTest):
         self.safety.set_unsafe_mode(mode)
         allow_ctrl = False
         if pedal == 'brake':
-          # brake_pressed_prev and honda_moving
+          # brake_pressed_prev and vehicle_moving
           self._rx(self._speed_msg(100))
           self._rx(self._brake_msg(1))
         elif pedal == 'gas':

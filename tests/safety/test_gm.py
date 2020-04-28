@@ -205,7 +205,7 @@ class TestGmSafety(common.PandaSafetyTest):
   def test_tx_hook_on_pedal_pressed(self):
     for pedal in ['brake', 'gas']:
       if pedal == 'brake':
-        # brake_pressed_prev and honda_moving
+        # brake_pressed_prev and vehicle_moving
         self._rx(self._speed_msg(100))
         self._rx(self._brake_msg(MAX_BRAKE))
       elif pedal == 'gas':
@@ -231,7 +231,7 @@ class TestGmSafety(common.PandaSafetyTest):
     for pedal in ['brake', 'gas']:
       self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
       if pedal == 'brake':
-        # brake_pressed_prev and honda_moving
+        # brake_pressed_prev and vehicle_moving
         self._rx(self._speed_msg(100))
         self._rx(self._brake_msg(MAX_BRAKE))
         allow_ctrl = False
