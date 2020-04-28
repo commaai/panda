@@ -95,7 +95,7 @@ int desired_torque_last = 0;       // last desired steer torque
 int rt_torque_last = 0;            // last desired torque for real time check
 uint32_t ts_last = 0;
 struct sample_t torque_meas;       // last 3 motor torques produced by the eps
-struct sample_t torque_driver;  // last 3 driver torques measured
+struct sample_t torque_driver;     // last 3 driver torques measured
 
 // This can be set with a USB command
 // It enables features we consider to be unsafe, but understand others may have different opinions
