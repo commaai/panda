@@ -67,9 +67,6 @@ int get_honda_hw(void);
 
 void init_tests_chrysler(void);
 
-void init_tests_subaru(void);
-void set_subaru_desired_torque_last(int t);
-void set_subaru_rt_torque_last(int t);
 bool get_subaru_global(void);
 
 void init_tests_volkswagen(void);

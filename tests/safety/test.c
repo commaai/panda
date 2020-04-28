@@ -25,7 +25,6 @@ typedef struct
 
 struct sample_t torque_meas;
 struct sample_t torque_driver;
-struct sample_t subaru_torque_driver;
 struct sample_t volkswagen_torque_driver;
 
 TIM_TypeDef timer;
@@ -174,20 +173,12 @@ void set_rt_torque_last(int t){
   rt_torque_last = t;
 }
 
-void set_subaru_rt_torque_last(int t){
-  subaru_rt_torque_last = t;
-}
-
 void set_volkswagen_rt_torque_last(int t){
   volkswagen_rt_torque_last = t;
 }
 
 void set_desired_torque_last(int t){
   desired_torque_last = t;
-}
-
-void set_subaru_desired_torque_last(int t){
-  subaru_desired_torque_last = t;
 }
 
 void set_volkswagen_desired_torque_last(int t){
@@ -238,16 +229,6 @@ void init_tests(void){
 void init_tests_chrysler(void){
   init_tests();
   chrysler_speed = 0;
-}
-
-void init_tests_subaru(void){
-  init_tests();
-  subaru_torque_driver.min = 0;
-  subaru_torque_driver.max = 0;
-  subaru_desired_torque_last = 0;
-  subaru_rt_torque_last = 0;
-  subaru_ts_last = 0;
-  set_timer(0);
 }
 
 void init_tests_volkswagen(void){

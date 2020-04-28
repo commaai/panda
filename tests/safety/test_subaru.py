@@ -35,11 +35,11 @@ class TestSubaruSafety(common.PandaSafetyTest):
     self.packer = CANPackerPanda("subaru_global_2017")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, 0)
-    self.safety.init_tests_subaru()
+    self.safety.init_tests()
 
   def _set_prev_torque(self, t):
-    self.safety.set_subaru_desired_torque_last(t)
-    self.safety.set_subaru_rt_torque_last(t)
+    self.safety.set_desired_torque_last(t)
+    self.safety.set_rt_torque_last(t)
 
   def _torque_driver_msg(self, torque):
     values = {"Steer_Torque_Sensor": -torque, "counter": self.cnt_torque_driver % 4}
@@ -147,7 +147,7 @@ class TestSubaruSafety(common.PandaSafetyTest):
     self.safety.set_controls_allowed(True)
 
     for sign in [-1, 1]:
-      self.safety.init_tests_subaru()
+      self.safety.init_tests()
       self._set_prev_torque(0)
       self._set_torque_driver(0, 0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
@@ -178,7 +178,7 @@ class TestSubaruLegacySafety(TestSubaruSafety):
     self.packer = CANPackerPanda("subaru_outback_2015_eyesight")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU_LEGACY, 0)
-    self.safety.init_tests_subaru()
+    self.safety.init_tests()
 
   # subaru legacy safety doesn't have brake checks
   def test_prev_brake(self): pass
