@@ -89,6 +89,15 @@ bool gas_interceptor_detected = false;
 int gas_interceptor_prev = 0;
 bool gas_pressed_prev = false;
 bool brake_pressed_prev = false;
+bool cruise_engaged_prev = false;
+bool vehicle_moving = false;
+
+// for torque-based safety modes
+int desired_torque_last = 0;       // last desired steer torque
+int rt_torque_last = 0;            // last desired torque for real time check
+struct sample_t torque_meas;       // last 3 motor torques produced by the eps
+struct sample_t torque_driver;     // last 3 driver torques measured
+uint32_t ts_last = 0;
 
 // This can be set with a USB command
 // It enables features we consider to be unsafe, but understand others may have different opinions
@@ -112,6 +121,3 @@ int unsafe_mode = 0;
 uint32_t safety_mode_cnt = 0U;
 // allow 1s of transition timeout after relay changes state before assessing malfunctioning
 const uint32_t RELAY_TRNS_TIMEOUT = 1U;
-
-// avg between 2 tracks
-#define GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + ((GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2 ) / 2)
