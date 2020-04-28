@@ -266,6 +266,7 @@ static void honda_nidec_init(int16_t param) {
   UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();
+  gas_interceptor_detected = 0;
   honda_hw = HONDA_N_HW;
   honda_alt_brake_msg = false;
 }

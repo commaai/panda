@@ -1,6 +1,7 @@
 import abc
 import struct
 import unittest
+import numpy as np
 from opendbc.can.packer import CANPacker # pylint: disable=import-error
 from panda.tests.safety import libpandasafety_py
 
@@ -53,6 +54,66 @@ class PandaSafetyTestBase(unittest.TestCase):
 
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
+
+class InterceptorSafetyTest(PandaSafetyTestBase):
+
+  INTERCEPTOR_THRESHOLD = 0
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "InterceptorSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  @abc.abstractmethod
+  def _interceptor_msg(self, gas, addr):
+    pass
+
+  def test_prev_gas_interceptor(self):
+    self._rx(self._interceptor_msg(0x0, 0x201))
+    self.assertFalse(self.safety.get_gas_interceptor_prev())
+    self._rx(self._interceptor_msg(0x1000, 0x201))
+    self.assertTrue(self.safety.get_gas_interceptor_prev())
+    self._rx(self._interceptor_msg(0x0, 0x201))
+    self.safety.set_gas_interceptor_detected(False)
+
+  def test_disengage_on_gas_interceptor(self):
+    for g in range(0, 0x1000):
+      self._rx(self._interceptor_msg(0, 0x201))
+      self.safety.set_controls_allowed(True)
+      self._rx(self._interceptor_msg(g, 0x201))
+      remain_enabled = g <= self.INTERCEPTOR_THRESHOLD
+      self.assertEqual(remain_enabled, self.safety.get_controls_allowed())
+      self._rx(self._interceptor_msg(0, 0x201))
+      self.safety.set_gas_interceptor_detected(False)
+
+  def test_unsafe_mode_no_disengage_on_gas_interceptor(self):
+    self.safety.set_controls_allowed(True)
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
+    for g in range(0, 0x1000):
+      self._rx(self._interceptor_msg(g, 0x201))
+      self.assertTrue(self.safety.get_controls_allowed())
+      self._rx(self._interceptor_msg(0, 0x201))
+      self.safety.set_gas_interceptor_detected(False)
+    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
+
+  def test_allow_engage_with_gas_interceptor_pressed(self):
+    self._rx(self._interceptor_msg(0x1000, 0x201))
+    self.safety.set_controls_allowed(1)
+    self._rx(self._interceptor_msg(0x1000, 0x201))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self._rx(self._interceptor_msg(0, 0x201))
+
+  def test_gas_interceptor_safety_check(self):
+    for gas in np.arange(0, 4000, 100):
+      for controls_allowed in [True, False]:
+        self.safety.set_controls_allowed(controls_allowed)
+        if controls_allowed:
+          send = True
+        else:
+          send = gas == 0
+        self.assertEqual(send, self._tx(self._interceptor_msg(gas, 0x200)))
+
 
 class PandaSafetyTest(PandaSafetyTestBase):
   TX_MSGS = None

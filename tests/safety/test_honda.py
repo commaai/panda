@@ -9,8 +9,6 @@ from panda.tests.safety.common import CANPackerPanda, make_msg, \
 
 MAX_BRAKE = 255
 
-INTERCEPTOR_THRESHOLD = 344
-
 class Btn:
   CANCEL = 2
   SET = 3
@@ -19,14 +17,6 @@ class Btn:
 HONDA_N_HW = 0
 HONDA_BG_HW = 1
 HONDA_BH_HW = 2
-
-# Honda gas gains are the different
-def honda_interceptor_msg(gas, addr):
-  to_send = make_msg(0, addr, 6)
-  gas2 = gas * 2
-  to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
-                    ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
-  return to_send
 
 
 class TestHondaSafety(common.PandaSafetyTest):
@@ -101,43 +91,6 @@ class TestHondaSafety(common.PandaSafetyTest):
     self.safety.set_controls_allowed(1)
     self._rx(self._brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_prev_gas_interceptor(self):
-    self._rx(honda_interceptor_msg(0x0, 0x201))
-    self.assertFalse(self.safety.get_gas_interceptor_prev())
-    self._rx(honda_interceptor_msg(0x1000, 0x201))
-    self.assertTrue(self.safety.get_gas_interceptor_prev())
-    self._rx(honda_interceptor_msg(0x0, 0x201))
-    self.safety.set_gas_interceptor_detected(False)
-
-  def test_disengage_on_gas_interceptor(self):
-    for g in range(0, 0x1000):
-      self._rx(honda_interceptor_msg(0, 0x201))
-      self.safety.set_controls_allowed(True)
-      self._rx(honda_interceptor_msg(g, 0x201))
-      remain_enabled = g <= INTERCEPTOR_THRESHOLD
-      self.assertEqual(remain_enabled, self.safety.get_controls_allowed())
-      self._rx(honda_interceptor_msg(0, 0x201))
-      self.safety.set_gas_interceptor_detected(False)
-
-  def test_unsafe_mode_no_disengage_on_gas_interceptor(self):
-    self.safety.set_controls_allowed(True)
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    for g in range(0, 0x1000):
-      self._rx(honda_interceptor_msg(g, 0x201))
-      self.assertTrue(self.safety.get_controls_allowed())
-      self._rx(honda_interceptor_msg(0, 0x201))
-      self.safety.set_gas_interceptor_detected(False)
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
-    self.safety.set_controls_allowed(False)
-
-  def test_allow_engage_with_gas_interceptor_pressed(self):
-    self._rx(honda_interceptor_msg(0x1000, 0x201))
-    self.safety.set_controls_allowed(1)
-    self._rx(honda_interceptor_msg(0x1000, 0x201))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self._rx(honda_interceptor_msg(0, 0x201))
-    self.safety.set_gas_interceptor_detected(False)
 
   def test_steer_safety_check(self):
     self.safety.set_controls_allowed(0)
@@ -223,7 +176,7 @@ class TestHondaSafety(common.PandaSafetyTest):
           self._rx(self._gas_msg(0))
 
 
-class TestHondaNidecSafety(TestHondaSafety):
+class TestHondaNidecSafety(TestHondaSafety, common.InterceptorSafetyTest):
 
   TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x200, 0], [0x30C, 0], [0x33D, 0]]
   STANDSTILL_THRESHOLD = 0
@@ -232,11 +185,21 @@ class TestHondaNidecSafety(TestHondaSafety):
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0x194, 0x33D, 0x30C]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
+  INTERCEPTOR_THRESHOLD = 344
+
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
     self.safety.init_tests_honda()
+
+  # Honda gas gains are the different
+  def _interceptor_msg(self, gas, addr):
+    to_send = make_msg(0, addr, 6)
+    gas2 = gas * 2
+    to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
+                    ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
+    return to_send
 
   def test_fwd_hook(self):
     # normal operation, not forwarding AEB
@@ -265,28 +228,18 @@ class TestHondaNidecSafety(TestHondaSafety):
           self.assertEqual(send, self._tx(self._send_brake_msg(brake)))
     self.safety.set_honda_fwd_brake(False)
 
-  def test_gas_interceptor_safety_check(self):
-    for gas in np.arange(0, 4000, 100):
-      for controls_allowed in [True, False]:
-        self.safety.set_controls_allowed(controls_allowed)
-        if controls_allowed:
-          send = True
-        else:
-          send = gas == 0
-        self.assertEqual(send, self._tx(honda_interceptor_msg(gas, 0x200)))
-
   def test_tx_hook_on_interceptor_pressed(self):
     for mode in [UNSAFE_MODE.DEFAULT, UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS]:
       self.safety.set_unsafe_mode(mode)
       # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
-      self._rx(honda_interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
-      self._rx(honda_interceptor_msg(INTERCEPTOR_THRESHOLD+1, 0x201))
+      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD+1, 0x201))
+      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD+1, 0x201))
       allow_ctrl = mode == UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS
 
       self.safety.set_controls_allowed(1)
       self.safety.set_honda_fwd_brake(False)
       self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(MAX_BRAKE)))
-      self.assertEqual(allow_ctrl, self._tx(honda_interceptor_msg(INTERCEPTOR_THRESHOLD, 0x200)))
+      self.assertEqual(allow_ctrl, self._tx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD, 0x200)))
       self.assertEqual(allow_ctrl, self._tx(self._send_steer_msg(0x1000)))
 
       # reset status
@@ -294,7 +247,7 @@ class TestHondaNidecSafety(TestHondaSafety):
       self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
       self._tx(self._send_brake_msg(0))
       self._tx(self._send_steer_msg(0))
-      self._tx(honda_interceptor_msg(0, 0x200))
+      self._tx(self._interceptor_msg(0, 0x200))
       self.safety.set_gas_interceptor_detected(False)
 
 
