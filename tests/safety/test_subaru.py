@@ -42,7 +42,7 @@ class TestSubaruSafety(common.PandaSafetyTest):
     self.safety.set_rt_torque_last(t)
 
   def _torque_driver_msg(self, torque):
-    values = {"Steer_Torque_Sensor": -torque, "counter": self.cnt_torque_driver % 4}
+    values = {"Steer_Torque_Sensor": torque, "counter": self.cnt_torque_driver % 4}
     self.__class__.cnt_torque_driver += 1
     return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
 
@@ -59,7 +59,7 @@ class TestSubaruSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("Brake_Pedal", 0, values)
 
   def _torque_msg(self, torque):
-    values = {"LKAS_Output": -torque}
+    values = {"LKAS_Output": torque}
     return self.packer.make_can_msg_panda("ES_LKAS", 0, values)
 
   def _gas_msg(self, gas):
@@ -194,7 +194,7 @@ class TestSubaruLegacySafety(TestSubaruSafety):
     return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
 
   def _torque_msg(self, torque):
-    values = {"LKAS_Command": -torque}
+    values = {"LKAS_Command": torque}
     return self.packer.make_can_msg_panda("ES_LKAS", 0, values)
 
   def _gas_msg(self, gas):
