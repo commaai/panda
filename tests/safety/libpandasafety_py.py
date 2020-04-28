@@ -59,8 +59,6 @@ int set_safety_hooks(uint16_t  mode, int16_t param);
 
 void init_tests(void);
 
-void init_tests_toyota(void);
-
 void init_tests_honda(void);
 bool get_honda_moving(void);
 void set_honda_fwd_brake(bool);

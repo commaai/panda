@@ -246,12 +246,6 @@ void init_tests(void){
   torque_meas.min = 0;
   torque_meas.max = 0;
   unsafe_mode = 0;
-
-  set_timer(0);
-}
-
-void init_tests_toyota(void){
-  init_tests();
   set_timer(0);
 }
 

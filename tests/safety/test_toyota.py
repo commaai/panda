@@ -46,7 +46,7 @@ class TestToyotaSafety(common.PandaSafetyTest):
     self.packer = CANPackerPanda("toyota_prius_2017_pt_generated")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 66)
-    self.safety.init_tests_toyota()
+    self.safety.init_tests()
 
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)
@@ -184,7 +184,7 @@ class TestToyotaSafety(common.PandaSafetyTest):
     self.safety.set_controls_allowed(True)
 
     for sign in [-1, 1]:
-      self.safety.init_tests_toyota()
+      self.safety.init_tests()
       self._set_prev_torque(0)
       for t in np.arange(0, 380, 10):
         t *= sign
