@@ -18,11 +18,7 @@ AddrCheckStruct chrysler_rx_checks[] = {
 };
 const int CHRYSLER_RX_CHECK_LEN = sizeof(chrysler_rx_checks) / sizeof(chrysler_rx_checks[0]);
 
-int chrysler_rt_torque_last = 0;
-int chrysler_desired_torque_last = 0;
 int chrysler_speed = 0;
-uint32_t chrysler_ts_last = 0;
-struct sample_t chrysler_torque_meas;         // last few torques measured
 
 static uint8_t chrysler_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1;
@@ -83,7 +79,7 @@ static int chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       int torque_meas_new = ((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5) - 1024U;
 
       // update array of samples
-      update_sample(&chrysler_torque_meas, torque_meas_new);
+      update_sample(&torque_meas, torque_meas_new);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -158,20 +154,20 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       violation |= max_limit_check(desired_torque, CHRYSLER_MAX_STEER, -CHRYSLER_MAX_STEER);
 
       // *** torque rate limit check ***
-      violation |= dist_to_meas_check(desired_torque, chrysler_desired_torque_last,
-        &chrysler_torque_meas, CHRYSLER_MAX_RATE_UP, CHRYSLER_MAX_RATE_DOWN, CHRYSLER_MAX_TORQUE_ERROR);
+      violation |= dist_to_meas_check(desired_torque, desired_torque_last,
+        &torque_meas, CHRYSLER_MAX_RATE_UP, CHRYSLER_MAX_RATE_DOWN, CHRYSLER_MAX_TORQUE_ERROR);
 
       // used next time
-      chrysler_desired_torque_last = desired_torque;
+      desired_torque_last = desired_torque;
 
       // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, chrysler_rt_torque_last, CHRYSLER_MAX_RT_DELTA);
+      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, CHRYSLER_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, chrysler_ts_last);
+      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
       if (ts_elapsed > CHRYSLER_RT_INTERVAL) {
-        chrysler_rt_torque_last = desired_torque;
-        chrysler_ts_last = ts;
+        rt_torque_last = desired_torque;
+        ts_last = ts;
       }
     }
 
@@ -182,9 +178,9 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // reset to 0 if either controls is not allowed or there's a violation
     if (violation || !controls_allowed) {
-      chrysler_desired_torque_last = 0;
-      chrysler_rt_torque_last = 0;
-      chrysler_ts_last = ts;
+      desired_torque_last = 0;
+      rt_torque_last = 0;
+      ts_last = ts;
     }
 
     if (violation) {

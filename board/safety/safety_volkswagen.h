@@ -51,10 +51,6 @@ AddrCheckStruct volkswagen_pq_rx_checks[] = {
 };
 const int VOLKSWAGEN_PQ_RX_CHECKS_LEN = sizeof(volkswagen_pq_rx_checks) / sizeof(volkswagen_pq_rx_checks[0]);
 
-struct sample_t volkswagen_torque_driver; // Last few driver torques measured
-int volkswagen_rt_torque_last = 0;
-int volkswagen_desired_torque_last = 0;
-uint32_t volkswagen_ts_last = 0;
 int volkswagen_torque_msg = 0;
 int volkswagen_lane_msg = 0;
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
@@ -168,7 +164,7 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       if (sign == 1) {
         torque_driver_new *= -1;
       }
-      update_sample(&volkswagen_torque_driver, torque_driver_new);
+      update_sample(&torque_driver, torque_driver_new);
     }
 
     // Update ACC status from drivetrain coordinator for controls-allowed state
@@ -235,7 +231,7 @@ static int volkswagen_pq_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       if (sign == 1) {
         torque_driver_new *= -1;
       }
-      update_sample(&volkswagen_torque_driver, torque_driver_new);
+      update_sample(&torque_driver, torque_driver_new);
     }
 
     // Update ACC status from ECU for controls-allowed state
@@ -282,19 +278,19 @@ static bool volkswagen_steering_check(int desired_torque) {
     violation |= max_limit_check(desired_torque, VOLKSWAGEN_MAX_STEER, -VOLKSWAGEN_MAX_STEER);
 
     // *** torque rate limit check ***
-    violation |= driver_limit_check(desired_torque, volkswagen_desired_torque_last, &volkswagen_torque_driver,
+    violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
       VOLKSWAGEN_MAX_STEER, VOLKSWAGEN_MAX_RATE_UP, VOLKSWAGEN_MAX_RATE_DOWN,
       VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE, VOLKSWAGEN_DRIVER_TORQUE_FACTOR);
-    volkswagen_desired_torque_last = desired_torque;
+    desired_torque_last = desired_torque;
 
     // *** torque real time rate limit check ***
-    violation |= rt_rate_limit_check(desired_torque, volkswagen_rt_torque_last, VOLKSWAGEN_MAX_RT_DELTA);
+    violation |= rt_rate_limit_check(desired_torque, rt_torque_last, VOLKSWAGEN_MAX_RT_DELTA);
 
     // every RT_INTERVAL set the new limits
-    uint32_t ts_elapsed = get_ts_elapsed(ts, volkswagen_ts_last);
+    uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
     if (ts_elapsed > VOLKSWAGEN_RT_INTERVAL) {
-      volkswagen_rt_torque_last = desired_torque;
-      volkswagen_ts_last = ts;
+      rt_torque_last = desired_torque;
+      ts_last = ts;
     }
   }
 
@@ -305,9 +301,9 @@ static bool volkswagen_steering_check(int desired_torque) {
 
   // reset to 0 if either controls is not allowed or there's a violation
   if (violation || !controls_allowed) {
-    volkswagen_desired_torque_last = 0;
-    volkswagen_rt_torque_last = 0;
-    volkswagen_ts_last = ts;
+    desired_torque_last = 0;
+    rt_torque_last = 0;
+    ts_last = ts;
   }
 
   return violation;

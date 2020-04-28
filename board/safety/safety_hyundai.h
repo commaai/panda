@@ -18,11 +18,6 @@ AddrCheckStruct hyundai_rx_checks[] = {
 };
 const int HYUNDAI_RX_CHECK_LEN = sizeof(hyundai_rx_checks) / sizeof(hyundai_rx_checks[0]);
 
-int hyundai_rt_torque_last = 0;
-int hyundai_desired_torque_last = 0;
-uint32_t hyundai_ts_last = 0;
-struct sample_t hyundai_torque_driver;         // last few driver torques measured
-
 static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   bool valid = addr_safety_check(to_push, hyundai_rx_checks, HYUNDAI_RX_CHECK_LEN,
@@ -37,7 +32,7 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (addr == 593) {
       int torque_driver_new = ((GET_BYTES_04(to_push) & 0x7ff) * 0.79) - 808; // scale down new driver torque signal to match previous one
       // update array of samples
-      update_sample(&hyundai_torque_driver, torque_driver_new);
+      update_sample(&torque_driver, torque_driver_new);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -113,21 +108,21 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       violation |= max_limit_check(desired_torque, HYUNDAI_MAX_STEER, -HYUNDAI_MAX_STEER);
 
       // *** torque rate limit check ***
-      violation |= driver_limit_check(desired_torque, hyundai_desired_torque_last, &hyundai_torque_driver,
+      violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
         HYUNDAI_MAX_STEER, HYUNDAI_MAX_RATE_UP, HYUNDAI_MAX_RATE_DOWN,
         HYUNDAI_DRIVER_TORQUE_ALLOWANCE, HYUNDAI_DRIVER_TORQUE_FACTOR);
 
       // used next time
-      hyundai_desired_torque_last = desired_torque;
+      desired_torque_last = desired_torque;
 
       // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, hyundai_rt_torque_last, HYUNDAI_MAX_RT_DELTA);
+      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, HYUNDAI_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, hyundai_ts_last);
+      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
       if (ts_elapsed > HYUNDAI_RT_INTERVAL) {
-        hyundai_rt_torque_last = desired_torque;
-        hyundai_ts_last = ts;
+        rt_torque_last = desired_torque;
+        ts_last = ts;
       }
     }
 
@@ -138,9 +133,9 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // reset to 0 if either controls is not allowed or there's a violation
     if (violation || !controls_allowed) {
-      hyundai_desired_torque_last = 0;
-      hyundai_rt_torque_last = 0;
-      hyundai_ts_last = ts;
+      desired_torque_last = 0;
+      rt_torque_last = 0;
+      ts_last = ts;
     }
 
     if (violation) {

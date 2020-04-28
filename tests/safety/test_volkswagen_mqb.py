@@ -46,14 +46,14 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
     self.packer = CANPackerPanda("vw_mqb_2010")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
-    self.safety.init_tests_volkswagen()
+    self.safety.init_tests()
 
   # override these inherited tests from PandaSafetyTest
   def test_cruise_engaged_prev(self): pass
 
   def _set_prev_torque(self, t):
-    self.safety.set_volkswagen_desired_torque_last(t)
-    self.safety.set_volkswagen_rt_torque_last(t)
+    self.safety.set_desired_torque_last(t)
+    self.safety.set_rt_torque_last(t)
 
   # Wheel speeds _esp_19_msg
   def _speed_msg(self, speed):
@@ -129,7 +129,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
     self.assertTrue(self._tx(self._gra_acc_01_msg(resume=1)))
 
   def test_non_realtime_limit_up(self):
-    self.safety.set_volkswagen_torque_driver(0, 0)
+    self.safety.set_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
 
     self._set_prev_torque(0)
@@ -144,7 +144,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
     self.assertFalse(self._tx(self._hca_01_msg(-MAX_RATE_UP - 1)))
 
   def test_non_realtime_limit_down(self):
-    self.safety.set_volkswagen_torque_driver(0, 0)
+    self.safety.set_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
 
   def test_against_torque_driver(self):
@@ -153,11 +153,11 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
     for sign in [-1, 1]:
       for t in np.arange(0, DRIVER_TORQUE_ALLOWANCE + 1, 1):
         t *= -sign
-        self.safety.set_volkswagen_torque_driver(t, t)
+        self.safety.set_torque_driver(t, t)
         self._set_prev_torque(MAX_STEER * sign)
         self.assertTrue(self._tx(self._hca_01_msg(MAX_STEER * sign)))
 
-      self.safety.set_volkswagen_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
+      self.safety.set_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
       self.assertFalse(self._tx(self._hca_01_msg(-MAX_STEER)))
 
     # spot check some individual cases
@@ -166,29 +166,29 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
       torque_desired = (MAX_STEER - 10 * DRIVER_TORQUE_FACTOR) * sign
       delta = 1 * sign
       self._set_prev_torque(torque_desired)
-      self.safety.set_volkswagen_torque_driver(-driver_torque, -driver_torque)
+      self.safety.set_torque_driver(-driver_torque, -driver_torque)
       self.assertTrue(self._tx(self._hca_01_msg(torque_desired)))
       self._set_prev_torque(torque_desired + delta)
-      self.safety.set_volkswagen_torque_driver(-driver_torque, -driver_torque)
+      self.safety.set_torque_driver(-driver_torque, -driver_torque)
       self.assertFalse(self._tx(self._hca_01_msg(torque_desired + delta)))
 
       self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_volkswagen_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
+      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
       self.assertTrue(self._tx(self._hca_01_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
       self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_volkswagen_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
+      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
       self.assertTrue(self._tx(self._hca_01_msg(0)))
       self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_volkswagen_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
+      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
       self.assertFalse(self._tx(self._hca_01_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
 
   def test_realtime_limits(self):
     self.safety.set_controls_allowed(True)
 
     for sign in [-1, 1]:
-      self.safety.init_tests_volkswagen()
+      self.safety.init_tests()
       self._set_prev_torque(0)
-      self.safety.set_volkswagen_torque_driver(0, 0)
+      self.safety.set_torque_driver(0, 0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
         self.assertTrue(self._tx(self._hca_01_msg(t)))
@@ -212,16 +212,16 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
     self._rx(self._eps_01_msg(0))
     self._rx(self._eps_01_msg(0))
 
-    self.assertEqual(-50, self.safety.get_volkswagen_torque_driver_min())
-    self.assertEqual(50, self.safety.get_volkswagen_torque_driver_max())
+    self.assertEqual(-50, self.safety.get_torque_driver_min())
+    self.assertEqual(50, self.safety.get_torque_driver_max())
 
     self._rx(self._eps_01_msg(0))
-    self.assertEqual(0, self.safety.get_volkswagen_torque_driver_max())
-    self.assertEqual(-50, self.safety.get_volkswagen_torque_driver_min())
+    self.assertEqual(0, self.safety.get_torque_driver_max())
+    self.assertEqual(-50, self.safety.get_torque_driver_min())
 
     self._rx(self._eps_01_msg(0))
-    self.assertEqual(0, self.safety.get_volkswagen_torque_driver_max())
-    self.assertEqual(0, self.safety.get_volkswagen_torque_driver_min())
+    self.assertEqual(0, self.safety.get_torque_driver_max())
+    self.assertEqual(0, self.safety.get_torque_driver_min())
 
   def test_rx_hook(self):
     # checksum checks

@@ -30,11 +30,7 @@ AddrCheckStruct subaru_l_rx_checks[] = {
 const int SUBARU_RX_CHECK_LEN = sizeof(subaru_rx_checks) / sizeof(subaru_rx_checks[0]);
 const int SUBARU_L_RX_CHECK_LEN = sizeof(subaru_l_rx_checks) / sizeof(subaru_l_rx_checks[0]);
 
-int subaru_rt_torque_last = 0;
-int subaru_desired_torque_last = 0;
-uint32_t subaru_ts_last = 0;
 bool subaru_global = false;
-struct sample_t subaru_torque_driver;         // last few driver torques measured
 
 static uint8_t subaru_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -78,7 +74,7 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         torque_driver_new = (GET_BYTE(to_push, 3) >> 5) + (GET_BYTE(to_push, 4) << 3);
       }
       torque_driver_new = to_signed(torque_driver_new, 11);
-      update_sample(&subaru_torque_driver, torque_driver_new);
+      update_sample(&torque_driver, torque_driver_new);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -160,22 +156,21 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       violation |= max_limit_check(desired_torque, SUBARU_MAX_STEER, -SUBARU_MAX_STEER);
 
       // *** torque rate limit check ***
-      int desired_torque_last = subaru_desired_torque_last;
-      violation |= driver_limit_check(desired_torque, desired_torque_last, &subaru_torque_driver,
+      violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
         SUBARU_MAX_STEER, SUBARU_MAX_RATE_UP, SUBARU_MAX_RATE_DOWN,
         SUBARU_DRIVER_TORQUE_ALLOWANCE, SUBARU_DRIVER_TORQUE_FACTOR);
 
       // used next time
-      subaru_desired_torque_last = desired_torque;
+      desired_torque_last = desired_torque;
 
       // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, subaru_rt_torque_last, SUBARU_MAX_RT_DELTA);
+      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, SUBARU_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, subaru_ts_last);
+      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
       if (ts_elapsed > SUBARU_RT_INTERVAL) {
-        subaru_rt_torque_last = desired_torque;
-        subaru_ts_last = ts;
+        rt_torque_last = desired_torque;
+        ts_last = ts;
       }
     }
 
@@ -186,9 +181,9 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // reset to 0 if either controls is not allowed or there's a violation
     if (violation || !controls_allowed) {
-      subaru_desired_torque_last = 0;
-      subaru_rt_torque_last = 0;
-      subaru_ts_last = ts;
+      desired_torque_last = 0;
+      rt_torque_last = 0;
+      ts_last = ts;
     }
 
     if (violation) {

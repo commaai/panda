@@ -35,7 +35,7 @@ class TestGmSafety(common.PandaSafetyTest):
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
-    self.safety.init_tests_gm()
+    self.safety.init_tests()
 
   # override these tests from PandaSafetyTest, GM uses button enable
   def test_disable_control_allowed_from_cruise(self): pass
@@ -68,8 +68,8 @@ class TestGmSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("ASCMGasRegenCmd", 0, values)
 
   def _set_prev_torque(self, t):
-    self.safety.set_gm_desired_torque_last(t)
-    self.safety.set_gm_rt_torque_last(t)
+    self.safety.set_desired_torque_last(t)
+    self.safety.set_rt_torque_last(t)
 
   def _torque_driver_msg(self, torque):
     values = {"LKADriverAppldTrq": torque}
@@ -126,7 +126,7 @@ class TestGmSafety(common.PandaSafetyTest):
           self.assertTrue(self._tx(self._torque_msg(t)))
 
   def test_non_realtime_limit_up(self):
-    self.safety.set_gm_torque_driver(0, 0)
+    self.safety.set_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
 
     self._set_prev_torque(0)
@@ -141,7 +141,7 @@ class TestGmSafety(common.PandaSafetyTest):
     self.assertFalse(self._tx(self._torque_msg(-MAX_RATE_UP - 1)))
 
   def test_non_realtime_limit_down(self):
-    self.safety.set_gm_torque_driver(0, 0)
+    self.safety.set_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
 
   def test_against_torque_driver(self):
@@ -150,11 +150,11 @@ class TestGmSafety(common.PandaSafetyTest):
     for sign in [-1, 1]:
       for t in np.arange(0, DRIVER_TORQUE_ALLOWANCE + 1, 1):
         t *= -sign
-        self.safety.set_gm_torque_driver(t, t)
+        self.safety.set_torque_driver(t, t)
         self._set_prev_torque(MAX_STEER * sign)
         self.assertTrue(self._tx(self._torque_msg(MAX_STEER * sign)))
 
-      self.safety.set_gm_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
+      self.safety.set_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
       self.assertFalse(self._tx(self._torque_msg(-MAX_STEER)))
 
     # spot check some individual cases
@@ -163,20 +163,20 @@ class TestGmSafety(common.PandaSafetyTest):
       torque_desired = (MAX_STEER - 10 * DRIVER_TORQUE_FACTOR) * sign
       delta = 1 * sign
       self._set_prev_torque(torque_desired)
-      self.safety.set_gm_torque_driver(-driver_torque, -driver_torque)
+      self.safety.set_torque_driver(-driver_torque, -driver_torque)
       self.assertTrue(self._tx(self._torque_msg(torque_desired)))
       self._set_prev_torque(torque_desired + delta)
-      self.safety.set_gm_torque_driver(-driver_torque, -driver_torque)
+      self.safety.set_torque_driver(-driver_torque, -driver_torque)
       self.assertFalse(self._tx(self._torque_msg(torque_desired + delta)))
 
       self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_gm_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
+      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
       self.assertTrue(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
       self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_gm_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
+      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
       self.assertTrue(self._tx(self._torque_msg(0)))
       self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_gm_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
+      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
       self.assertFalse(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
 
 
@@ -184,9 +184,9 @@ class TestGmSafety(common.PandaSafetyTest):
     self.safety.set_controls_allowed(True)
 
     for sign in [-1, 1]:
-      self.safety.init_tests_gm()
+      self.safety.init_tests()
       self._set_prev_torque(0)
-      self.safety.set_gm_torque_driver(0, 0)
+      self.safety.set_torque_driver(0, 0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
         self.assertTrue(self._tx(self._torque_msg(t)))

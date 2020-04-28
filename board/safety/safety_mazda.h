@@ -83,8 +83,7 @@ static int mazda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         violation |= max_limit_check(desired_torque, MAZDA_MAX_STEER, -MAZDA_MAX_STEER);
 
         // *** torque rate limit check ***
-        int desired_torque_last = mazda_desired_torque_last;
-        violation |= driver_limit_check(desired_torque, desired_torque_last, &mazda_torque_driver,
+        violation |= driver_limit_check(desired_torque, mazda_desired_torque_last, &mazda_torque_driver,
                                         MAZDA_MAX_STEER, MAZDA_MAX_RATE_UP, MAZDA_MAX_RATE_DOWN,
                                         MAZDA_DRIVER_TORQUE_ALLOWANCE, MAZDA_DRIVER_TORQUE_FACTOR);
         // used next time
