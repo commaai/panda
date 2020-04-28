@@ -41,6 +41,7 @@ bool get_gas_interceptor_detetcted(void);
 int get_gas_interceptor_prev(void);
 bool get_gas_pressed_prev(void);
 bool get_brake_pressed_prev(void);
+bool get_cruise_engaged_prev(void);
 bool get_vehicle_moving(void);
 int get_hw_type(void);
 void set_timer(uint32_t t);
