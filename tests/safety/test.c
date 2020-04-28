@@ -129,6 +129,10 @@ bool get_brake_pressed_prev(void){
   return brake_pressed_prev;
 }
 
+bool get_vehicle_moving(void){
+  return vehicle_moving;
+}
+
 int get_hw_type(void){
   return hw_type;
 }
@@ -238,14 +242,6 @@ void set_volkswagen_desired_torque_last(int t){
   volkswagen_desired_torque_last = t;
 }
 
-int get_volkswagen_moving(void){
-  return volkswagen_moving;
-}
-
-bool get_honda_moving(void){
-  return honda_moving;
-}
-
 void set_honda_alt_brake_msg(bool c){
   honda_alt_brake_msg = c;
 }
@@ -268,6 +264,7 @@ void init_tests(void){
   safety_mode_cnt = 2U;  // avoid ignoring relay_malfunction logic
   gas_pressed_prev = false;
   brake_pressed_prev = false;
+  vehicle_moving = false;
   unsafe_mode = 0;
 }
 
@@ -324,7 +321,6 @@ void init_tests_subaru(void){
 
 void init_tests_volkswagen(void){
   init_tests();
-  volkswagen_moving = false;
   volkswagen_torque_driver.min = 0;
   volkswagen_torque_driver.max = 0;
   volkswagen_desired_torque_last = 0;
@@ -335,7 +331,6 @@ void init_tests_volkswagen(void){
 
 void init_tests_honda(void){
   init_tests();
-  honda_moving = false;
   honda_fwd_brake = false;
 }
 

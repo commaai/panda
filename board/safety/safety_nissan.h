@@ -58,6 +58,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         // Get current speed
         // Factor 0.005
         nissan_speed = ((GET_BYTE(to_push, 2) << 8) | (GET_BYTE(to_push, 3))) * 0.005 / 3.6;
+        vehicle_moving = nissan_speed > 0.;
       }
 
       // exit controls on rising edge of gas press
@@ -92,7 +93,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         brake_pressed = GET_BYTE(to_push, 0) > 3;
       }
 
-      if (brake_pressed && (!brake_pressed_prev || (nissan_speed > 0.))) {
+      if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
         controls_allowed = 0;
       }
       brake_pressed_prev = brake_pressed;

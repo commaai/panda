@@ -252,3 +252,17 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertFalse(self.safety.get_controls_allowed())
     self._rx(self._speed_msg(0))
 
+  def test_sample_speed(self):
+    self.assertFalse(self.safety.get_vehicle_moving())
+    
+    # not moving
+    self.safety.safety_rx_hook(self._speed_msg(0))
+    self.assertFalse(self.safety.get_vehicle_moving())
+
+    # speed is at threshold
+    self.safety.safety_rx_hook(self._speed_msg(self.STANDSTILL_THRESHOLD))
+    self.assertFalse(self.safety.get_vehicle_moving())
+
+    # past threshold
+    self.safety.safety_rx_hook(self._speed_msg(self.STANDSTILL_THRESHOLD+1))
+    self.assertTrue(self.safety.get_vehicle_moving())

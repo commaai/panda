@@ -106,20 +106,6 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
     self._rx(self._pcm_status_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_sample_speed(self):
-    # Stationary
-    self._rx(self._speed_msg(0))
-    self.assertEqual(0, self.safety.get_volkswagen_moving())
-    # 1 km/h, just under 0.3 m/s safety grace threshold
-    self._rx(self._speed_msg(1))
-    self.assertEqual(0, self.safety.get_volkswagen_moving())
-    # 2 km/h, just over 0.3 m/s safety grace threshold
-    self._rx(self._speed_msg(2))
-    self.assertEqual(1, self.safety.get_volkswagen_moving())
-    # 144 km/h, openpilot V_CRUISE_MAX
-    self._rx(self._speed_msg(144))
-    self.assertEqual(1, self.safety.get_volkswagen_moving())
-
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
       for t in range(-500, 500):

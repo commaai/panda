@@ -33,7 +33,6 @@ const int SUBARU_L_RX_CHECK_LEN = sizeof(subaru_l_rx_checks) / sizeof(subaru_l_r
 int subaru_cruise_engaged_last = 0;
 int subaru_rt_torque_last = 0;
 int subaru_desired_torque_last = 0;
-int subaru_speed = 0;
 uint32_t subaru_ts_last = 0;
 bool subaru_global = false;
 struct sample_t subaru_torque_driver;         // last few driver torques measured
@@ -99,15 +98,16 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // sample subaru wheel speed, averaging opposite corners
     if ((addr == 0x13a) && subaru_global) {
-      subaru_speed = (GET_BYTES_04(to_push) >> 12) & 0x1FFF;  // FR
+      int subaru_speed = (GET_BYTES_04(to_push) >> 12) & 0x1FFF;  // FR
       subaru_speed += (GET_BYTES_48(to_push) >> 6) & 0x1FFF;  // RL
       subaru_speed /= 2;
+      vehicle_moving = subaru_speed > SUBARU_STANDSTILL_THRSLD;
     }
 
     // exit controls on rising edge of brake press (TODO: missing check for unsupported legacy models)
     if ((addr == 0x139) && subaru_global) {
       bool brake_pressed = (GET_BYTES_48(to_push) & 0xFFF0) > 0;
-      if (brake_pressed && (!brake_pressed_prev || (subaru_speed > SUBARU_STANDSTILL_THRSLD))) {
+      if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
         controls_allowed = 0;
       }
       brake_pressed_prev = brake_pressed;
