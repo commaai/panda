@@ -20,7 +20,6 @@ const int CHRYSLER_RX_CHECK_LEN = sizeof(chrysler_rx_checks) / sizeof(chrysler_r
 
 int chrysler_rt_torque_last = 0;
 int chrysler_desired_torque_last = 0;
-int chrysler_cruise_engaged_last = 0;
 int chrysler_speed = 0;
 uint32_t chrysler_ts_last = 0;
 struct sample_t chrysler_torque_meas;         // last few torques measured
@@ -90,13 +89,13 @@ static int chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // enter controls on rising edge of ACC, exit controls on ACC off
     if (addr == 500) {
       int cruise_engaged = ((GET_BYTE(to_push, 2) & 0x38) >> 3) == 7;
-      if (cruise_engaged && !chrysler_cruise_engaged_last) {
+      if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
       }
       if (!cruise_engaged) {
         controls_allowed = 0;
       }
-      chrysler_cruise_engaged_last = cruise_engaged;
+      cruise_engaged_prev = cruise_engaged;
     }
 
     // update speed
