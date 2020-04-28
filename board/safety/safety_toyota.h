@@ -47,8 +47,6 @@ int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_
 
 // states
 int toyota_cruise_engaged_last = 0;       // cruise state
-bool toyota_moving = false;
-
 
 static uint8_t toyota_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   int addr = GET_ADDR(to_push);
@@ -119,7 +117,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         int next_byte = i + 1;  // hack to deal with misra 10.8
         speed += (GET_BYTE(to_push, i) << 8) + GET_BYTE(to_push, next_byte) - 0x1a6f;
       }
-      toyota_moving = ABS(speed / 4) > TOYOTA_STANDSTILL_THRSLD;
+      vehicle_moving = ABS(speed / 4) > TOYOTA_STANDSTILL_THRSLD;
     }
 
     // exit controls on rising edge of brake pedal
@@ -127,7 +125,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if ((addr == 0x224) || (addr == 0x226)) {
       int byte = (addr == 0x224) ? 0 : 4;
       bool brake_pressed = ((GET_BYTE(to_push, byte) >> 5) & 1) != 0;
-      if (brake_pressed && (!brake_pressed_prev || toyota_moving)) {
+      if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
         controls_allowed = 0;
       }
       brake_pressed_prev = brake_pressed;

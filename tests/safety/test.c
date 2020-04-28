@@ -125,6 +125,10 @@ bool get_brake_pressed_prev(void){
   return brake_pressed_prev;
 }
 
+bool get_vehicle_moving(void){
+  return vehicle_moving;
+}
+
 int get_hw_type(void){
   return hw_type;
 }
@@ -171,14 +175,6 @@ void set_desired_torque_last(int t){
   desired_torque_last = t;
 }
 
-int get_volkswagen_moving(void){
-  return volkswagen_moving;
-}
-
-bool get_honda_moving(void){
-  return honda_moving;
-}
-
 void set_honda_alt_brake_msg(bool c){
   honda_alt_brake_msg = c;
 }
@@ -208,6 +204,7 @@ void init_tests(void){
   torque_driver.max = 0;
   torque_meas.min = 0;
   torque_meas.max = 0;
+  vehicle_moving = false;
   unsafe_mode = 0;
   set_timer(0);
 }
@@ -217,14 +214,8 @@ void init_tests_chrysler(void){
   chrysler_speed = 0;
 }
 
-void init_tests_volkswagen(void){
-  init_tests();
-  volkswagen_moving = false;
-}
-
 void init_tests_honda(void){
   init_tests();
-  honda_moving = false;
   honda_fwd_brake = false;
 }
 

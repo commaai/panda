@@ -50,7 +50,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
   def setUp(self):
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_PQ, 0)
-    self.safety.init_tests_volkswagen()
+    self.safety.init_tests()
 
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)
@@ -121,20 +121,6 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
     to_send[0].RDLR = 1 << bit
     to_send[0].RDLR |= volkswagen_pq_checksum(to_send[0], MSG_GRA_NEU, 8)
     return to_send
-
-  def test_sample_speed(self):
-    # Stationary
-    self._rx(self._speed_msg(0))
-    self.assertEqual(0, self.safety.get_volkswagen_moving())
-    # 1 km/h, just under 0.3 m/s safety grace threshold
-    self._rx(self._speed_msg(1))
-    self.assertEqual(0, self.safety.get_volkswagen_moving())
-    # 2 km/h, just over 0.3 m/s safety grace threshold
-    self._rx(self._speed_msg(2))
-    self.assertEqual(1, self.safety.get_volkswagen_moving())
-    # 144 km/h, openpilot V_CRUISE_MAX
-    self._rx(self._speed_msg(144))
-    self.assertEqual(1, self.safety.get_volkswagen_moving())
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
@@ -216,7 +202,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
     self.safety.set_controls_allowed(True)
 
     for sign in [-1, 1]:
-      self.safety.init_tests_volkswagen()
+      self.safety.init_tests()
       self._set_prev_torque(0)
       self.safety.set_torque_driver(0, 0)
       for t in np.arange(0, MAX_RT_DELTA, 1):

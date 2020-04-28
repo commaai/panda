@@ -51,6 +51,7 @@ int get_torque_driver_max(void);
 void set_desired_torque_last(int t);
 void set_rt_torque_last(int t);
 
+bool get_vehicle_moving(void);
 int get_hw_type(void);
 void set_timer(uint32_t t);
 
@@ -62,7 +63,6 @@ int set_safety_hooks(uint16_t  mode, int16_t param);
 void init_tests(void);
 
 void init_tests_honda(void);
-bool get_honda_moving(void);
 void set_honda_fwd_brake(bool);
 void set_honda_alt_brake_msg(bool);
 int get_honda_hw(void);
@@ -70,12 +70,6 @@ int get_honda_hw(void);
 void init_tests_chrysler(void);
 
 bool get_subaru_global(void);
-
-void init_tests_volkswagen(void);
-bool get_volkswagen_moving(void);
-void set_volkswagen_desired_torque_last(int t);
-void set_volkswagen_rt_torque_last(int t);
-void set_volkswagen_torque_driver(int min, int max);
 
 void init_tests_nissan(void);
 void set_nissan_desired_angle_last(int t);
