@@ -30,7 +30,6 @@ AddrCheckStruct subaru_l_rx_checks[] = {
 const int SUBARU_RX_CHECK_LEN = sizeof(subaru_rx_checks) / sizeof(subaru_rx_checks[0]);
 const int SUBARU_L_RX_CHECK_LEN = sizeof(subaru_l_rx_checks) / sizeof(subaru_l_rx_checks[0]);
 
-int subaru_cruise_engaged_last = 0;
 bool subaru_global = false;
 
 static uint8_t subaru_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -83,13 +82,13 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         ((addr == 0x144) && !subaru_global)) {
       int bit_shift = subaru_global ? 9 : 17;
       int cruise_engaged = ((GET_BYTES_48(to_push) >> bit_shift) & 1);
-      if (cruise_engaged && !subaru_cruise_engaged_last) {
+      if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
       }
       if (!cruise_engaged) {
         controls_allowed = 0;
       }
-      subaru_cruise_engaged_last = cruise_engaged;
+      cruise_engaged_prev = cruise_engaged;
     }
 
     // sample subaru wheel speed, averaging opposite corners

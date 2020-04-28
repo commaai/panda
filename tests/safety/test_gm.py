@@ -40,6 +40,7 @@ class TestGmSafety(common.PandaSafetyTest):
   # override these tests from PandaSafetyTest, GM uses button enable
   def test_disable_control_allowed_from_cruise(self): pass
   def test_enable_control_allowed_from_cruise(self): pass
+  def test_cruise_engaged_prev(self): pass
 
   def _speed_msg(self, speed):
     values = {"%sWheelSpd"%s: speed for s in ["RL", "RR"]}

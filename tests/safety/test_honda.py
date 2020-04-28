@@ -36,6 +36,7 @@ class TestHondaSafety(common.PandaSafetyTest):
   # override these inherited tests. honda doesn't use pcm enable
   def test_disable_control_allowed_from_cruise(self): pass
   def test_enable_control_allowed_from_cruise(self): pass
+  def test_cruise_engaged_prev(self): pass
 
   def _speed_msg(self, speed):
     values = {"XMISSION_SPEED": speed, "COUNTER": self.cnt_speed % 4}

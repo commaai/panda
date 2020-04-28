@@ -45,9 +45,6 @@ const int TOYOTA_RX_CHECKS_LEN = sizeof(toyota_rx_checks) / sizeof(toyota_rx_che
 // global actuation limit states
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
-// states
-int toyota_cruise_engaged_last = 0;       // cruise state
-
 static uint8_t toyota_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
@@ -96,10 +93,10 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       if (!cruise_engaged) {
         controls_allowed = 0;
       }
-      if (cruise_engaged && !toyota_cruise_engaged_last) {
+      if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
       }
-      toyota_cruise_engaged_last = cruise_engaged;
+      cruise_engaged_prev = cruise_engaged;
 
       // handle gas_pressed
       bool gas_pressed = ((GET_BYTE(to_push, 0) >> 4) & 1) == 0;
