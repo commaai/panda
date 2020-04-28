@@ -25,7 +25,6 @@ typedef struct
 
 struct sample_t torque_meas;
 struct sample_t torque_driver;
-struct sample_t hyundai_torque_driver;
 struct sample_t subaru_torque_driver;
 struct sample_t volkswagen_torque_driver;
 
@@ -150,11 +149,6 @@ void set_torque_driver(int min, int max){
   torque_driver.max = max;
 }
 
-void set_hyundai_torque_driver(int min, int max){
-  hyundai_torque_driver.min = min;
-  hyundai_torque_driver.max = max;
-}
-
 void set_volkswagen_torque_driver(int min, int max){
   volkswagen_torque_driver.min = min;
   volkswagen_torque_driver.max = max;
@@ -180,10 +174,6 @@ void set_rt_torque_last(int t){
   rt_torque_last = t;
 }
 
-void set_hyundai_rt_torque_last(int t){
-  hyundai_rt_torque_last = t;
-}
-
 void set_subaru_rt_torque_last(int t){
   subaru_rt_torque_last = t;
 }
@@ -194,10 +184,6 @@ void set_volkswagen_rt_torque_last(int t){
 
 void set_desired_torque_last(int t){
   desired_torque_last = t;
-}
-
-void set_hyundai_desired_torque_last(int t){
-  hyundai_desired_torque_last = t;
 }
 
 void set_subaru_desired_torque_last(int t){
@@ -246,16 +232,6 @@ void init_tests(void){
   torque_meas.min = 0;
   torque_meas.max = 0;
   unsafe_mode = 0;
-  set_timer(0);
-}
-
-void init_tests_hyundai(void){
-  init_tests();
-  hyundai_torque_driver.min = 0;
-  hyundai_torque_driver.max = 0;
-  hyundai_desired_torque_last = 0;
-  hyundai_rt_torque_last = 0;
-  hyundai_ts_last = 0;
   set_timer(0);
 }
 

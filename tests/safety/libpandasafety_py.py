@@ -65,11 +65,6 @@ void set_honda_fwd_brake(bool);
 void set_honda_alt_brake_msg(bool);
 int get_honda_hw(void);
 
-void init_tests_hyundai(void);
-void set_hyundai_desired_torque_last(int t);
-void set_hyundai_rt_torque_last(int t);
-void set_hyundai_torque_driver(int min, int max);
-
 void init_tests_chrysler(void);
 
 void init_tests_subaru(void);
