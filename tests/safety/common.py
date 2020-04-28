@@ -198,6 +198,8 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._speed_msg(0))
 
   def test_sample_speed(self):
+    self.assertFalse(self.safety.get_vehicle_moving())
+    
     # not moving
     self.safety.safety_rx_hook(self._speed_msg(0))
     self.assertFalse(self.safety.get_vehicle_moving())

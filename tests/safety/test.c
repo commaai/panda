@@ -242,10 +242,6 @@ void set_volkswagen_desired_torque_last(int t){
   volkswagen_desired_torque_last = t;
 }
 
-bool get_honda_moving(void){
-  return honda_moving;
-}
-
 void set_honda_alt_brake_msg(bool c){
   honda_alt_brake_msg = c;
 }

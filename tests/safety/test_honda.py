@@ -92,11 +92,6 @@ class TestHondaSafety(common.PandaSafetyTest):
     self._rx(self._button_msg(Btn.CANCEL))
     self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_sample_speed(self):
-    self.assertEqual(0, self.safety.get_honda_moving())
-    self._rx(self._speed_msg(100))
-    self.assertEqual(1, self.safety.get_honda_moving())
-
   def test_disengage_on_brake(self):
     self.safety.set_controls_allowed(1)
     self._rx(self._brake_msg(1))

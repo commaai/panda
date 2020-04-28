@@ -58,7 +58,6 @@ void set_toyota_desired_torque_last(int t);
 void set_toyota_rt_torque_last(int t);
 
 void init_tests_honda(void);
-bool get_honda_moving(void);
 void set_honda_fwd_brake(bool);
 void set_honda_alt_brake_msg(bool);
 int get_honda_hw(void);

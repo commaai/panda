@@ -36,7 +36,6 @@ AddrCheckStruct honda_bh_rx_checks[] = {
 const int HONDA_BH_RX_CHECKS_LEN = sizeof(honda_bh_rx_checks) / sizeof(honda_bh_rx_checks[0]);
 
 int honda_brake = 0;
-bool honda_moving = false;
 bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
 enum {HONDA_N_HW, HONDA_BG_HW, HONDA_BH_HW} honda_hw = HONDA_N_HW;
@@ -90,7 +89,7 @@ static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // sample speed
     if (addr == 0x158) {
       // first 2 bytes
-      honda_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
+      vehicle_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
     }
 
     // state machine to enter and exit controls
@@ -120,7 +119,7 @@ static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     bool is_user_brake_msg = honda_alt_brake_msg ? ((addr) == 0x1BE) : ((addr) == 0x17C);
     if (is_user_brake_msg) {
       bool brake_pressed = honda_alt_brake_msg ? (GET_BYTE((to_push), 0) & 0x10) : (GET_BYTE((to_push), 6) & 0x20);
-      if (brake_pressed && (!brake_pressed_prev || honda_moving)) {
+      if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
         controls_allowed = 0;
       }
       brake_pressed_prev = brake_pressed;
@@ -206,7 +205,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
-  int pedal_pressed = brake_pressed_prev && honda_moving;
+  int pedal_pressed = brake_pressed_prev && vehicle_moving;
   bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
   if (!unsafe_allow_gas) {
     pedal_pressed = pedal_pressed || gas_pressed_prev || (gas_interceptor_prev > HONDA_GAS_INTERCEPTOR_THRESHOLD);
