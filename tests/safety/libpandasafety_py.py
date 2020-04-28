@@ -41,6 +41,14 @@ bool get_gas_interceptor_detetcted(void);
 int get_gas_interceptor_prev(void);
 bool get_gas_pressed_prev(void);
 bool get_brake_pressed_prev(void);
+
+int get_torque_meas_min(void);
+int get_torque_meas_max(void);
+void set_torque_meas(int min, int max);
+void set_desired_torque_last(int t);
+void set_rt_torque_last(int t);
+void set_torque_driver(int min, int max);
+
 int get_hw_type(void);
 void set_timer(uint32_t t);
 
@@ -49,12 +57,9 @@ int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int safety_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd);
 int set_safety_hooks(uint16_t  mode, int16_t param);
 
+void init_tests(void);
+
 void init_tests_toyota(void);
-int get_torque_meas_min(void);
-int get_torque_meas_max(void);
-void set_torque_meas(int min, int max);
-void set_desired_torque_last(int t);
-void set_rt_torque_last(int t);
 
 void init_tests_honda(void);
 bool get_honda_moving(void);
@@ -62,22 +67,12 @@ void set_honda_fwd_brake(bool);
 void set_honda_alt_brake_msg(bool);
 int get_honda_hw(void);
 
-void init_tests_gm(void);
-void set_gm_desired_torque_last(int t);
-void set_gm_rt_torque_last(int t);
-void set_gm_torque_driver(int min, int max);
-
 void init_tests_hyundai(void);
 void set_hyundai_desired_torque_last(int t);
 void set_hyundai_rt_torque_last(int t);
 void set_hyundai_torque_driver(int min, int max);
 
 void init_tests_chrysler(void);
-void set_chrysler_desired_torque_last(int t);
-void set_chrysler_rt_torque_last(int t);
-int get_chrysler_torque_meas_min(void);
-int get_chrysler_torque_meas_max(void);
-void set_chrysler_torque_meas(int min, int max);
 
 void init_tests_subaru(void);
 void set_subaru_desired_torque_last(int t);

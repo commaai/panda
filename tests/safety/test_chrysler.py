@@ -95,9 +95,9 @@ class TestChryslerSafety(common.PandaSafetyTest):
     return to_send
 
   def _set_prev_torque(self, t):
-    self.safety.set_chrysler_desired_torque_last(t)
-    self.safety.set_chrysler_rt_torque_last(t)
-    self.safety.set_chrysler_torque_meas(t, t)
+    self.safety.set_desired_torque_last(t)
+    self.safety.set_rt_torque_last(t)
+    self.safety.set_torque_meas(t, t)
 
   def _torque_meas_msg(self, torque):
     to_send = make_msg(0, 544)
@@ -121,7 +121,7 @@ class TestChryslerSafety(common.PandaSafetyTest):
           self.assertFalse(self._tx(self._torque_msg(t)))
         else:
           self.assertTrue(self._tx(self._torque_msg(t)))
-  
+
   # TODO: why does chrysler check if moving?
   def test_disengage_on_gas(self):
     self.safety.set_controls_allowed(1)
@@ -145,15 +145,15 @@ class TestChryslerSafety(common.PandaSafetyTest):
   def test_non_realtime_limit_down(self):
     self.safety.set_controls_allowed(True)
 
-    self.safety.set_chrysler_rt_torque_last(MAX_STEER)
+    self.safety.set_rt_torque_last(MAX_STEER)
     torque_meas = MAX_STEER - MAX_TORQUE_ERROR - 20
-    self.safety.set_chrysler_torque_meas(torque_meas, torque_meas)
-    self.safety.set_chrysler_desired_torque_last(MAX_STEER)
+    self.safety.set_torque_meas(torque_meas, torque_meas)
+    self.safety.set_desired_torque_last(MAX_STEER)
     self.assertTrue(self._tx(self._torque_msg(MAX_STEER - MAX_RATE_DOWN)))
 
-    self.safety.set_chrysler_rt_torque_last(MAX_STEER)
-    self.safety.set_chrysler_torque_meas(torque_meas, torque_meas)
-    self.safety.set_chrysler_desired_torque_last(MAX_STEER)
+    self.safety.set_rt_torque_last(MAX_STEER)
+    self.safety.set_torque_meas(torque_meas, torque_meas)
+    self.safety.set_desired_torque_last(MAX_STEER)
     self.assertFalse(self._tx(self._torque_msg(MAX_STEER - MAX_RATE_DOWN + 1)))
 
   def test_exceed_torque_sensor(self):
@@ -175,14 +175,14 @@ class TestChryslerSafety(common.PandaSafetyTest):
       self._set_prev_torque(0)
       for t in np.arange(0, MAX_RT_DELTA+1, 1):
         t *= sign
-        self.safety.set_chrysler_torque_meas(t, t)
+        self.safety.set_torque_meas(t, t)
         self.assertTrue(self._tx(self._torque_msg(t)))
       self.assertFalse(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
       self._set_prev_torque(0)
       for t in np.arange(0, MAX_RT_DELTA+1, 1):
         t *= sign
-        self.safety.set_chrysler_torque_meas(t, t)
+        self.safety.set_torque_meas(t, t)
         self.assertTrue(self._tx(self._torque_msg(t)))
 
       # Increase timer to update rt_torque_last
@@ -198,16 +198,16 @@ class TestChryslerSafety(common.PandaSafetyTest):
     self._rx(self._torque_meas_msg(0))
     self._rx(self._torque_meas_msg(0))
 
-    self.assertEqual(-50, self.safety.get_chrysler_torque_meas_min())
-    self.assertEqual(50, self.safety.get_chrysler_torque_meas_max())
+    self.assertEqual(-50, self.safety.get_torque_meas_min())
+    self.assertEqual(50, self.safety.get_torque_meas_max())
 
     self._rx(self._torque_meas_msg(0))
-    self.assertEqual(0, self.safety.get_chrysler_torque_meas_max())
-    self.assertEqual(-50, self.safety.get_chrysler_torque_meas_min())
+    self.assertEqual(0, self.safety.get_torque_meas_max())
+    self.assertEqual(-50, self.safety.get_torque_meas_min())
 
     self._rx(self._torque_meas_msg(0))
-    self.assertEqual(0, self.safety.get_chrysler_torque_meas_max())
-    self.assertEqual(0, self.safety.get_chrysler_torque_meas_min())
+    self.assertEqual(0, self.safety.get_torque_meas_max())
+    self.assertEqual(0, self.safety.get_torque_meas_min())
 
   def test_cancel_button(self):
     CANCEL = 1

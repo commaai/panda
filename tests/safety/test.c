@@ -24,9 +24,8 @@ typedef struct
 } TIM_TypeDef;
 
 struct sample_t torque_meas;
-struct sample_t gm_torque_driver;
+struct sample_t torque_driver;
 struct sample_t hyundai_torque_driver;
-struct sample_t chrysler_torque_meas;
 struct sample_t subaru_torque_driver;
 struct sample_t volkswagen_torque_driver;
 
@@ -146,19 +145,14 @@ void set_torque_meas(int min, int max){
   torque_meas.max = max;
 }
 
-void set_gm_torque_driver(int min, int max){
-  gm_torque_driver.min = min;
-  gm_torque_driver.max = max;
+void set_torque_driver(int min, int max){
+  torque_driver.min = min;
+  torque_driver.max = max;
 }
 
 void set_hyundai_torque_driver(int min, int max){
   hyundai_torque_driver.min = min;
   hyundai_torque_driver.max = max;
-}
-
-void set_chrysler_torque_meas(int min, int max){
-  chrysler_torque_meas.min = min;
-  chrysler_torque_meas.max = max;
 }
 
 void set_volkswagen_torque_driver(int min, int max){
@@ -174,14 +168,6 @@ int get_volkswagen_torque_driver_max(void){
   return volkswagen_torque_driver.max;
 }
 
-int get_chrysler_torque_meas_min(void){
-  return chrysler_torque_meas.min;
-}
-
-int get_chrysler_torque_meas_max(void){
-  return chrysler_torque_meas.max;
-}
-
 int get_torque_meas_min(void){
   return torque_meas.min;
 }
@@ -194,16 +180,8 @@ void set_rt_torque_last(int t){
   rt_torque_last = t;
 }
 
-void set_gm_rt_torque_last(int t){
-  gm_rt_torque_last = t;
-}
-
 void set_hyundai_rt_torque_last(int t){
   hyundai_rt_torque_last = t;
-}
-
-void set_chrysler_rt_torque_last(int t){
-  chrysler_rt_torque_last = t;
 }
 
 void set_subaru_rt_torque_last(int t){
@@ -218,16 +196,8 @@ void set_desired_torque_last(int t){
   desired_torque_last = t;
 }
 
-void set_gm_desired_torque_last(int t){
-  gm_desired_torque_last = t;
-}
-
 void set_hyundai_desired_torque_last(int t){
   hyundai_desired_torque_last = t;
-}
-
-void set_chrysler_desired_torque_last(int t){
-  chrysler_desired_torque_last = t;
 }
 
 void set_subaru_desired_torque_last(int t){
@@ -268,26 +238,20 @@ void init_tests(void){
   safety_mode_cnt = 2U;  // avoid ignoring relay_malfunction logic
   gas_pressed_prev = false;
   brake_pressed_prev = false;
+  desired_torque_last = 0;
+  rt_torque_last = 0;
+  ts_last = 0;
+  torque_driver.min = 0;
+  torque_driver.max = 0;
+  torque_meas.min = 0;
+  torque_meas.max = 0;
   unsafe_mode = 0;
+
+  set_timer(0);
 }
 
 void init_tests_toyota(void){
   init_tests();
-  torque_meas.min = 0;
-  torque_meas.max = 0;
-  desired_torque_last = 0;
-  rt_torque_last = 0;
-  ts_last = 0;
-  set_timer(0);
-}
-
-void init_tests_gm(void){
-  init_tests();
-  gm_torque_driver.min = 0;
-  gm_torque_driver.max = 0;
-  gm_desired_torque_last = 0;
-  gm_rt_torque_last = 0;
-  gm_ts_last = 0;
   set_timer(0);
 }
 
@@ -304,12 +268,6 @@ void init_tests_hyundai(void){
 void init_tests_chrysler(void){
   init_tests();
   chrysler_speed = 0;
-  chrysler_torque_meas.min = 0;
-  chrysler_torque_meas.max = 0;
-  chrysler_desired_torque_last = 0;
-  chrysler_rt_torque_last = 0;
-  chrysler_ts_last = 0;
-  set_timer(0);
 }
 
 void init_tests_subaru(void){
