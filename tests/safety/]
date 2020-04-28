@@ -138,16 +138,6 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
     self.safety.set_rt_torque_last(t)
     self.safety.set_torque_meas(t, t)
 
-  def test_steer_safety_check(self):
-    for enabled in [0, 1]:
-      for t in range(-self.MAX_TORQUE*2, self.MAX_TORQUE*2):
-        self.safety.set_controls_allowed(enabled)
-        self._set_prev_torque(t)
-        if abs(t) > self.MAX_TORQUE or (not enabled and abs(t) > 0):
-          self.assertFalse(self._tx(self._torque_msg(t)))
-        else:
-          self.assertTrue(self._tx(self._torque_msg(t)))
-
   def test_torque_absolute_limits(self):
     for controls_allowed in [True, False]:
       for torque in np.arange(-self.MAX_TORQUE - 1000, self.MAX_TORQUE + 1000, self.MAX_RATE_UP):
@@ -203,22 +193,22 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
     for sign in [-1, 1]:
       self.safety.init_tests()
       self._set_prev_torque(0)
-      for t in np.arange(0, self.MAX_RT_DELTA+1, 1):
+      for t in np.arange(0, 380, 10):
         t *= sign
         self.safety.set_torque_meas(t, t)
         self.assertTrue(self._tx(self._torque_msg(t)))
-      self.assertFalse(self._tx(self._torque_msg(sign * (self.MAX_RT_DELTA + 1))))
+      self.assertFalse(self._tx(self._torque_msg(sign * 380)))
 
       self._set_prev_torque(0)
-      for t in np.arange(0, self.MAX_RT_DELTA+1, 1):
+      for t in np.arange(0, 370, 10):
         t *= sign
         self.safety.set_torque_meas(t, t)
         self.assertTrue(self._tx(self._torque_msg(t)))
 
       # Increase timer to update rt_torque_last
       self.safety.set_timer(self.RT_INTERVAL + 1)
-      self.assertTrue(self._tx(self._torque_msg(sign * self.MAX_RT_DELTA)))
-      self.assertTrue(self._tx(self._torque_msg(sign * (self.MAX_RT_DELTA + 1))))
+      self.assertTrue(self._tx(self._torque_msg(sign * 370)))
+      self.assertTrue(self._tx(self._torque_msg(sign * 380)))
 
   def test_torque_measurements(self):
     trq = 50
