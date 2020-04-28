@@ -109,6 +109,122 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
         self.assertEqual(send, self._tx(self._interceptor_msg(gas, 0x200)))
 
 
+class TorqueSteeringSafetyTest(PandaSafetyTestBase):
+
+  MAX_RATE_UP = 0
+  MAX_RATE_DOWN = 0
+  MAX_TORQUE = 0
+  MAX_RT_DELTA = 0
+  RT_INTERVAL = 0
+  MAX_TORQUE_ERROR = 0
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "TorqueSteeringSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  @abc.abstractmethod
+  def _torque_meas_msg(self, torque):
+    pass
+
+  @abc.abstractmethod
+  def _torque_msg(self, torque):
+    pass
+
+  def _set_prev_torque(self, t):
+    self.safety.set_desired_torque_last(t)
+    self.safety.set_rt_torque_last(t)
+    self.safety.set_torque_meas(t, t)
+
+  def test_torque_absolute_limits(self):
+    for controls_allowed in [True, False]:
+      for torque in np.arange(-self.MAX_TORQUE - 1000, self.MAX_TORQUE + 1000, self.MAX_RATE_UP):
+          self.safety.set_controls_allowed(controls_allowed)
+          self.safety.set_rt_torque_last(torque)
+          self.safety.set_torque_meas(torque, torque)
+          self.safety.set_desired_torque_last(torque - self.MAX_RATE_UP)
+
+          if controls_allowed:
+            send = (-self.MAX_TORQUE <= torque <= self.MAX_TORQUE)
+          else:
+            send = torque == 0
+
+          self.assertEqual(send, self._tx(self._torque_msg(torque)))
+
+  def test_non_realtime_limit_up(self):
+    self.safety.set_controls_allowed(True)
+
+    self._set_prev_torque(0)
+    self.assertTrue(self._tx(self._torque_msg(self.MAX_RATE_UP)))
+
+    self._set_prev_torque(0)
+    self.assertFalse(self._tx(self._torque_msg(self.MAX_RATE_UP + 1)))
+
+  def test_non_realtime_limit_down(self):
+    self.safety.set_controls_allowed(True)
+
+    self.safety.set_rt_torque_last(1000)
+    self.safety.set_torque_meas(500, 500)
+    self.safety.set_desired_torque_last(1000)
+    self.assertTrue(self._tx(self._torque_msg(1000 - self.MAX_RATE_DOWN)))
+
+    self.safety.set_rt_torque_last(1000)
+    self.safety.set_torque_meas(500, 500)
+    self.safety.set_desired_torque_last(1000)
+    self.assertFalse(self._tx(self._torque_msg(1000 - self.MAX_RATE_DOWN + 1)))
+
+  def test_exceed_torque_sensor(self):
+    self.safety.set_controls_allowed(True)
+
+    for sign in [-1, 1]:
+      self._set_prev_torque(0)
+      for t in np.arange(0, self.MAX_TORQUE_ERROR + 10, 10):
+        t *= sign
+        self.assertTrue(self._tx(self._torque_msg(t)))
+
+      self.assertFalse(self._tx(self._torque_msg(sign * (self.MAX_TORQUE_ERROR + 10))))
+
+  def test_realtime_limit_up(self):
+    self.safety.set_controls_allowed(True)
+
+    for sign in [-1, 1]:
+      self.safety.init_tests()
+      self._set_prev_torque(0)
+      for t in np.arange(0, 380, 10):
+        t *= sign
+        self.safety.set_torque_meas(t, t)
+        self.assertTrue(self._tx(self._torque_msg(t)))
+      self.assertFalse(self._tx(self._torque_msg(sign * 380)))
+
+      self._set_prev_torque(0)
+      for t in np.arange(0, 370, 10):
+        t *= sign
+        self.safety.set_torque_meas(t, t)
+        self.assertTrue(self._tx(self._torque_msg(t)))
+
+      # Increase timer to update rt_torque_last
+      self.safety.set_timer(self.RT_INTERVAL + 1)
+      self.assertTrue(self._tx(self._torque_msg(sign * 370)))
+      self.assertTrue(self._tx(self._torque_msg(sign * 380)))
+
+  def test_torque_measurements(self):
+    for trq in [50, -50, 0, 0, 0, 0]:
+      self._rx(self._torque_meas_msg(trq))
+
+    # toyota safety adds one to be conservative on rounding
+    self.assertEqual(-51, self.safety.get_torque_meas_min())
+    self.assertEqual(51, self.safety.get_torque_meas_max())
+
+    self._rx(self._torque_meas_msg(0))
+    self.assertEqual(1, self.safety.get_torque_meas_max())
+    self.assertEqual(-51, self.safety.get_torque_meas_min())
+
+    self._rx(self._torque_meas_msg(0))
+    self.assertEqual(1, self.safety.get_torque_meas_max())
+    self.assertEqual(-1, self.safety.get_torque_meas_min())
+
+
 class PandaSafetyTest(PandaSafetyTestBase):
   TX_MSGS = None
   STANDSTILL_THRESHOLD = None
