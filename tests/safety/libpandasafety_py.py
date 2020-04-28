@@ -42,12 +42,14 @@ int get_gas_interceptor_prev(void);
 bool get_gas_pressed_prev(void);
 bool get_brake_pressed_prev(void);
 
+void set_torque_meas(int min, int max);
 int get_torque_meas_min(void);
 int get_torque_meas_max(void);
-void set_torque_meas(int min, int max);
+void set_torque_driver(int min, int max);
+int get_torque_driver_min(void);
+int get_torque_driver_max(void);
 void set_desired_torque_last(int t);
 void set_rt_torque_last(int t);
-void set_torque_driver(int min, int max);
 
 int get_hw_type(void);
 void set_timer(uint32_t t);
@@ -70,8 +72,6 @@ void init_tests_chrysler(void);
 bool get_subaru_global(void);
 
 void init_tests_volkswagen(void);
-int get_volkswagen_torque_driver_min(void);
-int get_volkswagen_torque_driver_max(void);
 bool get_volkswagen_moving(void);
 void set_volkswagen_desired_torque_last(int t);
 void set_volkswagen_rt_torque_last(int t);

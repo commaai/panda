@@ -25,7 +25,6 @@ typedef struct
 
 struct sample_t torque_meas;
 struct sample_t torque_driver;
-struct sample_t volkswagen_torque_driver;
 
 TIM_TypeDef timer;
 TIM_TypeDef *TIM2 = &timer;
@@ -143,24 +142,6 @@ void set_torque_meas(int min, int max){
   torque_meas.max = max;
 }
 
-void set_torque_driver(int min, int max){
-  torque_driver.min = min;
-  torque_driver.max = max;
-}
-
-void set_volkswagen_torque_driver(int min, int max){
-  volkswagen_torque_driver.min = min;
-  volkswagen_torque_driver.max = max;
-}
-
-int get_volkswagen_torque_driver_min(void){
-  return volkswagen_torque_driver.min;
-}
-
-int get_volkswagen_torque_driver_max(void){
-  return volkswagen_torque_driver.max;
-}
-
 int get_torque_meas_min(void){
   return torque_meas.min;
 }
@@ -169,20 +150,25 @@ int get_torque_meas_max(void){
   return torque_meas.max;
 }
 
+void set_torque_driver(int min, int max){
+  torque_driver.min = min;
+  torque_driver.max = max;
+}
+
+int get_torque_driver_min(void){
+  return torque_driver.min;
+}
+
+int get_torque_driver_max(void){
+  return torque_driver.max;
+}
+
 void set_rt_torque_last(int t){
   rt_torque_last = t;
 }
 
-void set_volkswagen_rt_torque_last(int t){
-  volkswagen_rt_torque_last = t;
-}
-
 void set_desired_torque_last(int t){
   desired_torque_last = t;
-}
-
-void set_volkswagen_desired_torque_last(int t){
-  volkswagen_desired_torque_last = t;
 }
 
 int get_volkswagen_moving(void){
@@ -234,12 +220,6 @@ void init_tests_chrysler(void){
 void init_tests_volkswagen(void){
   init_tests();
   volkswagen_moving = false;
-  volkswagen_torque_driver.min = 0;
-  volkswagen_torque_driver.max = 0;
-  volkswagen_desired_torque_last = 0;
-  volkswagen_rt_torque_last = 0;
-  volkswagen_ts_last = 0;
-  set_timer(0);
 }
 
 void init_tests_honda(void){
