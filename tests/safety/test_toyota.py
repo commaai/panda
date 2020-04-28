@@ -92,22 +92,6 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest, \
             should_tx = np.isclose(accel, 0, atol=0.0001)
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
-  def test_torque_measurements(self):
-    for trq in [50, -50, 0, 0, 0, 0]:
-      self._rx(self._torque_meas_msg(trq))
-
-    # toyota safety adds one to be conservative on rounding
-    self.assertEqual(-51, self.safety.get_torque_meas_min())
-    self.assertEqual(51, self.safety.get_torque_meas_max())
-
-    self._rx(self._torque_meas_msg(0))
-    self.assertEqual(1, self.safety.get_torque_meas_max())
-    self.assertEqual(-51, self.safety.get_torque_meas_min())
-
-    self._rx(self._torque_meas_msg(0))
-    self.assertEqual(1, self.safety.get_torque_meas_max())
-    self.assertEqual(-1, self.safety.get_torque_meas_min())
-
   def test_rx_hook(self):
     # checksum checks
     for msg in ["trq", "pcm"]:
