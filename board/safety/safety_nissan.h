@@ -25,7 +25,6 @@ const int NISSAN_RX_CHECK_LEN = sizeof(nissan_rx_checks) / sizeof(nissan_rx_chec
 float nissan_speed = 0;
 //int nissan_controls_allowed_last = 0;
 uint32_t nissan_ts_angle_last = 0;
-int nissan_cruise_engaged_last = 0;
 int nissan_desired_angle_last = 0;
 
 struct sample_t nissan_angle_meas;            // last 3 steer angles
@@ -104,13 +103,13 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if ((bus == 2) && (addr == 0x30f)) {
       bool cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1;
 
-      if (cruise_engaged && !nissan_cruise_engaged_last) {
+      if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
       }
       if (!cruise_engaged) {
         controls_allowed = 0;
       }
-      nissan_cruise_engaged_last = cruise_engaged;
+      cruise_engaged_prev = cruise_engaged;
     }
   }
   return valid;

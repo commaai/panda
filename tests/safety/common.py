@@ -226,6 +226,13 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._pcm_status_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
 
+  def test_cruise_engaged_prev(self):
+    for engaged in [True, False]:
+      self._rx(self._pcm_status_msg(engaged))
+      self.assertEqual(engaged, self.safety.get_cruise_engaged_prev())
+      self._rx(self._pcm_status_msg(not engaged))
+      self.assertEqual(not engaged, self.safety.get_cruise_engaged_prev())
+
   def test_allow_brake_at_zero_speed(self):
     # Brake was already pressed
     self._rx(self._speed_msg(0))

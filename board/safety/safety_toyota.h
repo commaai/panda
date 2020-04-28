@@ -49,7 +49,6 @@ int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_
 int toyota_desired_torque_last = 0;       // last desired steer torque
 int toyota_rt_torque_last = 0;            // last desired torque for real time check
 uint32_t toyota_ts_last = 0;
-int toyota_cruise_engaged_last = 0;       // cruise state
 struct sample_t toyota_torque_meas;       // last 3 motor torques produced by the eps
 
 
@@ -101,10 +100,10 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       if (!cruise_engaged) {
         controls_allowed = 0;
       }
-      if (cruise_engaged && !toyota_cruise_engaged_last) {
+      if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
       }
-      toyota_cruise_engaged_last = cruise_engaged;
+      cruise_engaged_prev = cruise_engaged;
 
       // handle gas_pressed
       bool gas_pressed = ((GET_BYTE(to_push, 0) >> 4) & 1) == 0;
