@@ -13,12 +13,6 @@ class UNSAFE_MODE:
   DISABLE_STOCK_AEB = 2
   RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
 
-def twos_comp(val, bits):
-  if val >= 0:
-    return val
-  else:
-    return (2**bits) + val
-
 def package_can_msg(msg):
   addr, _, dat, bus = msg
   rdlr, rdhr = struct.unpack('II', dat.ljust(8, b'\x00'))
