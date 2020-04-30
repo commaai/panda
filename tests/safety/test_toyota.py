@@ -34,7 +34,6 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest, \
   MAX_TORQUE_ERROR = 350
   TORQUE_MEAS_TOLERANCE = 1 # toyota safety adds one to be conversative for rounding
 
-  @classmethod
   def setUp(self):
     self.packer = CANPackerPanda("toyota_prius_2017_pt_generated")
     self.safety = libpandasafety_py.libpandasafety
@@ -68,7 +67,6 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest, \
 
   def _pcm_status_msg(self, cruise_on):
     values = {"CRUISE_ACTIVE": cruise_on}
-    values["CHECKSUM"] = 1
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
   # Toyota gas gains are the same
