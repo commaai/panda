@@ -41,7 +41,6 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-  @classmethod
   def setUp(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
     self.safety = libpandasafety_py.libpandasafety
