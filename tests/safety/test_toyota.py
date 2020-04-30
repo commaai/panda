@@ -6,22 +6,14 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, make_msg, UNSAFE_MODE
 
-MAX_RATE_UP = 10
-MAX_RATE_DOWN = 25
-MAX_TORQUE = 1500
-
 MAX_ACCEL = 1.5
 MIN_ACCEL = -3.0
 
 ISO_MAX_ACCEL = 2.0
 ISO_MIN_ACCEL = -3.5
 
-MAX_RT_DELTA = 375
-RT_INTERVAL = 250000
-
-MAX_TORQUE_ERROR = 350
-
-class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest):
+class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest, \
+                       common.TorqueSteeringSafetyTest):
 
   TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
              [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
@@ -34,17 +26,20 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INTERCEPTOR_THRESHOLD = 845
 
+  MAX_RATE_UP = 10
+  MAX_RATE_DOWN = 25
+  MAX_TORQUE = 1500
+  MAX_RT_DELTA = 375
+  RT_INTERVAL = 250000
+  MAX_TORQUE_ERROR = 350
+  TORQUE_MEAS_TOLERANCE = 1 # toyota safety adds one to be conversative for rounding
+
   @classmethod
   def setUp(self):
     self.packer = CANPackerPanda("toyota_prius_2017_pt_generated")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 66)
     self.safety.init_tests()
-
-  def _set_prev_torque(self, t):
-    self.safety.set_desired_torque_last(t)
-    self.safety.set_rt_torque_last(t)
-    self.safety.set_torque_meas(t, t)
 
   def _torque_meas_msg(self, torque):
     values = {"STEER_TORQUE_EPS": torque}
@@ -97,93 +92,6 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest):
           else:
             should_tx = np.isclose(accel, 0, atol=0.0001)
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
-
-  def test_torque_absolute_limits(self):
-    for controls_allowed in [True, False]:
-      for torque in np.arange(-MAX_TORQUE - 1000, MAX_TORQUE + 1000, MAX_RATE_UP):
-          self.safety.set_controls_allowed(controls_allowed)
-          self.safety.set_rt_torque_last(torque)
-          self.safety.set_torque_meas(torque, torque)
-          self.safety.set_desired_torque_last(torque - MAX_RATE_UP)
-
-          if controls_allowed:
-            send = (-MAX_TORQUE <= torque <= MAX_TORQUE)
-          else:
-            send = torque == 0
-
-          self.assertEqual(send, self._tx(self._torque_msg(torque)))
-
-  def test_non_realtime_limit_up(self):
-    self.safety.set_controls_allowed(True)
-
-    self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_msg(MAX_RATE_UP)))
-
-    self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_msg(MAX_RATE_UP + 1)))
-
-  def test_non_realtime_limit_down(self):
-    self.safety.set_controls_allowed(True)
-
-    self.safety.set_rt_torque_last(1000)
-    self.safety.set_torque_meas(500, 500)
-    self.safety.set_desired_torque_last(1000)
-    self.assertTrue(self._tx(self._torque_msg(1000 - MAX_RATE_DOWN)))
-
-    self.safety.set_rt_torque_last(1000)
-    self.safety.set_torque_meas(500, 500)
-    self.safety.set_desired_torque_last(1000)
-    self.assertFalse(self._tx(self._torque_msg(1000 - MAX_RATE_DOWN + 1)))
-
-  def test_exceed_torque_sensor(self):
-    self.safety.set_controls_allowed(True)
-
-    for sign in [-1, 1]:
-      self._set_prev_torque(0)
-      for t in np.arange(0, MAX_TORQUE_ERROR + 10, 10):
-        t *= sign
-        self.assertTrue(self._tx(self._torque_msg(t)))
-
-      self.assertFalse(self._tx(self._torque_msg(sign * (MAX_TORQUE_ERROR + 10))))
-
-  def test_realtime_limit_up(self):
-    self.safety.set_controls_allowed(True)
-
-    for sign in [-1, 1]:
-      self.safety.init_tests()
-      self._set_prev_torque(0)
-      for t in np.arange(0, 380, 10):
-        t *= sign
-        self.safety.set_torque_meas(t, t)
-        self.assertTrue(self._tx(self._torque_msg(t)))
-      self.assertFalse(self._tx(self._torque_msg(sign * 380)))
-
-      self._set_prev_torque(0)
-      for t in np.arange(0, 370, 10):
-        t *= sign
-        self.safety.set_torque_meas(t, t)
-        self.assertTrue(self._tx(self._torque_msg(t)))
-
-      # Increase timer to update rt_torque_last
-      self.safety.set_timer(RT_INTERVAL + 1)
-      self.assertTrue(self._tx(self._torque_msg(sign * 370)))
-      self.assertTrue(self._tx(self._torque_msg(sign * 380)))
-
-  def test_torque_measurements(self):
-    for trq in [50, -50, 0, 0, 0, 0]:
-      self._rx(self._torque_meas_msg(trq))
-
-    # toyota safety adds one to be conservative on rounding
-    self.assertEqual(-51, self.safety.get_torque_meas_min())
-    self.assertEqual(51, self.safety.get_torque_meas_max())
-
-    self._rx(self._torque_meas_msg(0))
-    self.assertEqual(1, self.safety.get_torque_meas_max())
-    self.assertEqual(-51, self.safety.get_torque_meas_min())
-
-    self._rx(self._torque_meas_msg(0))
-    self.assertEqual(1, self.safety.get_torque_meas_max())
-    self.assertEqual(-1, self.safety.get_torque_meas_min())
 
   def test_rx_hook(self):
     # checksum checks
