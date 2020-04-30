@@ -35,7 +35,6 @@ class TestChryslerSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest
   def _button_msg(self, cancel):
     values = {"ACC_CANCEL": cancel}
     return self.packer.make_can_msg_panda("WHEEL_BUTTONS", 0, values)
-    return to_send
 
   def _pcm_status_msg(self, active):
     values = {"ACC_STATUS_2": 0x7 if active else 0, \
