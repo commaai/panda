@@ -175,8 +175,9 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
   def test_non_realtime_limit_down(self):
     self.safety.set_controls_allowed(True)
 
+    torque_meas = self.MAX_TORQUE - self.MAX_TORQUE_ERROR - 50
+
     self.safety.set_rt_torque_last(self.MAX_TORQUE)
-    torque_meas = self.MAX_TORQUE - self.MAX_TORQUE_ERROR - 20
     self.safety.set_torque_meas(torque_meas, torque_meas)
     self.safety.set_desired_torque_last(self.MAX_TORQUE)
     self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE - self.MAX_RATE_DOWN)))
