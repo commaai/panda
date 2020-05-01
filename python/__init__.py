@@ -9,6 +9,7 @@ import os
 import time
 import traceback
 import subprocess
+import sys
 from .dfu import PandaDFU
 from .esptool import ESPROM, CesantaFlasher  # noqa: F401
 from .flash_release import flash_release  # noqa: F401
@@ -187,7 +188,8 @@ class Panda(object):
                 self.bootstub = device.getProductID() == 0xddee
                 self.legacy = (device.getbcdDevice() != 0x2300)
                 self._handle = device.open()
-                self._handle.setAutoDetachKernelDriver(True)
+                if not sys.platform in ["win32", "cygwin", "msys"]:
+                  self._handle.setAutoDetachKernelDriver(True)
                 if claim:
                   self._handle.claimInterface(0)
                   #self._handle.setInterfaceAltSetting(0, 0) #Issue in USB stack
