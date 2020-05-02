@@ -165,6 +165,7 @@ bool can_set_speed(uint8_t can_number) {
 void can_init_all(void) {
   bool ret = true;
   for (uint8_t i=0U; i < CAN_MAX; i++) {
+    can_clear(can_queues[i]);
     ret &= can_init(i);
   }
   UNUSED(ret);
