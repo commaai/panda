@@ -11,7 +11,7 @@
 #define MAZDA_AUX 1
 #define MAZDA_CAM 2
 
-#define MAZDA_MAX_STEER 2048
+#define MAZDA_MAX_STEER 2047
 
 // max delta torque allowed for real time checks
 #define MAZDA_MAX_RT_DELTA 940
