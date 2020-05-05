@@ -17,11 +17,6 @@ DRIVER_TORQUE_FACTOR = 1
 
 
 class TestMazdaSafety(common.PandaSafetyTest):
-  cnt_gas = 0
-  cnt_torque_driver = 0
-  cnt_cruise = 0
-  cnt_speed = 0
-  cnt_brake = 0
 
   TX_MSGS = [[0x243, 0]]
   STANDSTILL_THRESHOLD = 1  # 1kph (see dbc file)
@@ -48,12 +43,8 @@ class TestMazdaSafety(common.PandaSafetyTest):
     values = {"LKAS_REQUEST": torque}
     return self.packer.make_can_msg_panda("CAM_LKAS", 0, values)
 
-  def _accel_msg(self, accel):
-    values = {"SET_P": accel}
-    return self.packer.make_can_msg_panda("CRZ_BTNS", 0, values)
-
   def _speed_msg(self, s):
-    values = {("%s"%n): s for n in ["FR", "FL", "RR", "RL"]}
+    values = { n: s for n in ["FR", "FL", "RR", "RL"]}
     return self.packer.make_can_msg_panda("WHEEL_SPEEDS", 0, values)
 
   def _brake_msg(self, pressed):
@@ -67,20 +58,6 @@ class TestMazdaSafety(common.PandaSafetyTest):
   def _pcm_status_msg(self, cruise_on):
     values = {"CRZ_ACTIVE": cruise_on}
     return self.packer.make_can_msg_panda("CRZ_CTRL", 0, values)
-
-  def test_rx_hook(self):
-    # checksum checks
-    for msg in ["trq", "pcm"]:
-      self.safety.set_controls_allowed(1)
-      if msg == "trq":
-        to_push = self._torque_meas_msg(0)
-      if msg == "pcm":
-        to_push = self._pcm_status_msg(True)
-      self.assertTrue(self._rx(to_push))
-      to_push[0].RDHR = 0
-      self.assertFalse(self._rx(to_push))
-      self.assertFalse(self.safety.get_controls_allowed())
-
 
 if __name__ == "__main__":
   unittest.main()
