@@ -4,7 +4,7 @@
 #define BOOTKICK_TIME 3U
 uint8_t bootkick_timer = 0U;
 
-uint8_t uno_transciever_lookup[] = {1U, 2U, 3U, 4U}; // Map transciever to bus
+uint8_t uno_transciever_lookup[] = {1U, 2U, 3U, 4U}; // Map transciever to bus in default orientation
 
 void uno_enable_can_transciever(uint8_t transciever, bool enabled) {
   switch (transciever){
