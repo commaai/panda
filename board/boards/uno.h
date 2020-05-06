@@ -4,26 +4,18 @@
 #define BOOTKICK_TIME 3U
 uint8_t bootkick_timer = 0U;
 
+uint8_t transciever_lookup[] = {1U, 2U, 3U, 4U}; // Map transciever to bus
+
 void uno_enable_can_transciever(uint8_t transciever, bool enabled) {
   switch (transciever){
     case 1U:
-      if (car_harness_status == HARNESS_STATUS_FLIPPED) {
-        set_gpio_output(GPIOA, 0, !enabled);
-      }
-      else {
-        set_gpio_output(GPIOC, 1, !enabled);
-      }
+      set_gpio_output(GPIOC, 1, !enabled);
       break;
     case 2U:
       set_gpio_output(GPIOC, 13, !enabled);
       break;
     case 3U:
-      if (car_harness_status == HARNESS_STATUS_FLIPPED) {
-        set_gpio_output(GPIOC, 1, !enabled);
-      }
-      else {
         set_gpio_output(GPIOA, 0, !enabled);
-      }
       break;
     case 4U:
       set_gpio_output(GPIOB, 10, !enabled);
@@ -35,9 +27,9 @@ void uno_enable_can_transciever(uint8_t transciever, bool enabled) {
 }
 
 void uno_enable_can_transcievers(bool enabled) {
-  uint8_t t1 = enabled ? 1U : 2U;  // leave transciever 1 enabled to detect CAN ignition
-  for(uint8_t i=t1; i<=4U; i++){
-    uno_enable_can_transciever(i, enabled);
+  uint8_t first_bus = enabled ? 0U : 1U;  // leave transciever for bus 0 enabled to detect CAN ignition
+  for(uint8_t bus=first_bus; bus<=3U; bus++) {
+    uno_enable_can_transciever(transciever_lookup[bus], enabled);
   }
 }
 
@@ -243,6 +235,8 @@ void uno_init(void) {
   // flip CAN0 and CAN2 if we are flipped
   if (car_harness_status == HARNESS_STATUS_FLIPPED) {
     can_flip_buses(0, 2);
+    transciever_lookup[0] = 3U;
+    transciever_lookup[2] = 1U;
   }
 
   // init multiplexer
