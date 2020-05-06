@@ -15,7 +15,7 @@ void uno_enable_can_transciever(uint8_t transciever, bool enabled) {
       set_gpio_output(GPIOC, 13, !enabled);
       break;
     case 3U:
-        set_gpio_output(GPIOA, 0, !enabled);
+      set_gpio_output(GPIOA, 0, !enabled);
       break;
     case 4U:
       set_gpio_output(GPIOB, 10, !enabled);
