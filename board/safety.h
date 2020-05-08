@@ -136,7 +136,8 @@ void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
 bool is_msg_valid(AddrCheckStruct addr_list[], int index) {
   bool valid = true;
   if (index != -1) {
-    if ((!addr_list[index].valid_checksum) || (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {
+    if ((!addr_list[index].valid_checksum) || !addr_list[index].valid_length  ||
+          (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {
       valid = false;
       controls_allowed = 0;
     }
@@ -177,6 +178,13 @@ bool addr_safety_check(CAN_FIFOMailBox_TypeDef *to_push,
       update_counter(rx_checks, index, counter);
     } else {
       rx_checks[index].wrong_counters = 0U;
+    }
+
+    rx_checks[index].valid_length = GET_LEN(to_push) == rx_checks[index].length;
+
+    // TODO: don't merge with this, set lengths for all safety modes
+    if (rx_checks[index].length == 0) {
+      rx_checks[index].valid_length = true;
     }
   }
   return is_msg_valid(rx_checks, index);

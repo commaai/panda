@@ -24,11 +24,13 @@ typedef struct {
   // const params
   const int addr[3];                 // check either messages (e.g. honda steer). Array MUST terminate with a zero to know its length.
   const int bus;                     // bus where to expect the addr. Temp hack: -1 means skip the bus check
+  const int length;                  // expected message length
   const bool check_checksum;         // true is checksum check is performed
   const uint8_t max_counter;         // maximum value of the counter. 0 means that the counter check is skipped
   const uint32_t expected_timestep;  // expected time between message updates [us]
   // dynamic flags
   bool valid_checksum;               // true if and only if checksum check is passed
+  bool valid_length;                 // true if and only if message length is the expected length
   int wrong_counters;                // counter of wrong counters, saturated between 0 and MAX_WRONG_COUNTERS
   uint8_t last_counter;              // last counter value
   uint32_t last_timestamp;           // micro-s
