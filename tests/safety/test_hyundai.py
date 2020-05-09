@@ -25,6 +25,11 @@ class TestHyundaiSafety(common.PandaSafetyTest):
   FWD_BLACKLISTED_ADDRS = {2: [832, 1157]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
+  cnt_gas = 0
+  cnt_speed = 0
+  cnt_brake = 0
+  cnt_cruise = 0
+
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpandasafety_py.libpandasafety
@@ -36,20 +41,25 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("CLU11", 0, values)
 
   def _gas_msg(self, val):
-    values = {"CF_Ems_AclAct": val}
+    values = {"CF_Ems_AclAct": val, "AliveCounter": self.cnt_gas % 4}
+    self.__class__.cnt_gas += 1
     return self.packer.make_can_msg_panda("EMS16", 0, values)
 
   def _brake_msg(self, brake):
-    values = {"DriverBraking": brake}
+    values = {"DriverBraking": brake, "AliveCounterTCS": self.cnt_brake % 8}
+    self.__class__.cnt_brake += 1
     return self.packer.make_can_msg_panda("TCS13", 0, values)
 
   def _speed_msg(self, speed):
     # panda safety doesn't scale, so undo the scaling
     values = {"WHL_SPD_%s"%s: speed*0.03125 for s in ["FL", "FR", "RL", "RR"]}
+    values["WHL_SPD_AliveCounter_LSB"] = self.cnt_speed % 4
+    self.__class__.cnt_speed += 1
     return self.packer.make_can_msg_panda("WHL_SPD11", 0, values)
 
   def _pcm_status_msg(self, enabled):
-    values = {"ACCMode": enabled}
+    values = {"ACCMode": enabled, "CR_VSM_Alive": self.cnt_cruise % 16}
+    self.__class__.cnt_cruise += 1
     return self.packer.make_can_msg_panda("SCC12", 0, values)
 
   def _set_prev_torque(self, t):
