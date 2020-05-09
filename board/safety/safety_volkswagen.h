@@ -44,10 +44,10 @@ const AddrBus VOLKSWAGEN_PQ_TX_MSGS[] = {{MSG_HCA_1, 0}, {MSG_GRA_NEU, 0}, {MSG_
 const int VOLKSWAGEN_PQ_TX_MSGS_LEN = sizeof(VOLKSWAGEN_PQ_TX_MSGS) / sizeof(VOLKSWAGEN_PQ_TX_MSGS[0]);
 
 AddrCheckStruct volkswagen_pq_rx_checks[] = {
-  {.addr = {MSG_LENKHILFE_3}, .bus = 0, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 10000U},
-  {.addr = {MSG_MOTOR_2},     .bus = 0, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 20000U},
-  {.addr = {MSG_MOTOR_3},     .bus = 0, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U},
-  {.addr = {MSG_BREMSE_3},    .bus = 0, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U},
+  {.addr = {MSG_LENKHILFE_3}, .bus = 0, .length = 8, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 10000U},
+  {.addr = {MSG_MOTOR_2},     .bus = 0, .length = 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 20000U},
+  {.addr = {MSG_MOTOR_3},     .bus = 0, .length = 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U},
+  {.addr = {MSG_BREMSE_3},    .bus = 0, .length = 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U},
 };
 const int VOLKSWAGEN_PQ_RX_CHECKS_LEN = sizeof(volkswagen_pq_rx_checks) / sizeof(volkswagen_pq_rx_checks[0]);
 

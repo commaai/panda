@@ -181,11 +181,6 @@ bool addr_safety_check(CAN_FIFOMailBox_TypeDef *to_push,
     }
 
     rx_checks[index].valid_length = GET_LEN(to_push) == rx_checks[index].length;
-
-    // TODO: don't merge with this, set lengths for all safety modes
-    if (rx_checks[index].length == 0) {
-      rx_checks[index].valid_length = true;
-    }
   }
   return is_msg_valid(rx_checks, index);
 }
