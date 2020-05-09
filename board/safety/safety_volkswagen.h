@@ -22,11 +22,11 @@ const AddrBus VOLKSWAGEN_MQB_TX_MSGS[] = {{MSG_HCA_01, 0}, {MSG_GRA_ACC_01, 0}, 
 const int VOLKSWAGEN_MQB_TX_MSGS_LEN = sizeof(VOLKSWAGEN_MQB_TX_MSGS) / sizeof(VOLKSWAGEN_MQB_TX_MSGS[0]);
 
 AddrCheckStruct volkswagen_mqb_rx_checks[] = {
-  {.addr = {MSG_ESP_19},   .bus = 0, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U},
-  {.addr = {MSG_EPS_01},   .bus = 0, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 10000U},
-  {.addr = {MSG_ESP_05},   .bus = 0, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 20000U},
-  {.addr = {MSG_TSK_06},   .bus = 0, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 20000U},
-  {.addr = {MSG_MOTOR_20}, .bus = 0, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 20000U},
+  {.addr = {MSG_ESP_19},   .bus = 0, .length = 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U},
+  {.addr = {MSG_EPS_01},   .bus = 0, .length = 8, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 10000U},
+  {.addr = {MSG_ESP_05},   .bus = 0, .length = 8, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 20000U},
+  {.addr = {MSG_TSK_06},   .bus = 0, .length = 8, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 20000U},
+  {.addr = {MSG_MOTOR_20}, .bus = 0, .length = 8, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 20000U},
 };
 const int VOLKSWAGEN_MQB_RX_CHECKS_LEN = sizeof(volkswagen_mqb_rx_checks) / sizeof(volkswagen_mqb_rx_checks[0]);
 
