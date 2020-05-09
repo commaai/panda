@@ -82,7 +82,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
 
   # Driver steering input torque
   def _lenkhilfe_3_msg(self, torque):
-    to_send = make_msg(0, MSG_LENKHILFE_3)
+    to_send = make_msg(0, MSG_LENKHILFE_3, length=6)
     t = abs(torque)
     to_send[0].RDLR = ((t & 0x3FF) << 16)
     if torque < 0:
