@@ -34,7 +34,7 @@ RUN pip install -r /tmp/requirements.txt
 WORKDIR /openpilot
 RUN git clone https://github.com/commaai/opendbc.git || true
 WORKDIR /openpilot/opendbc
-RUN git pull && git checkout 4e796e06dd44757bb73042f0ec26fd9b6ddc7142
+RUN git pull && git checkout 54482cfb044fd2cf7ffa6a906e025adc66bbccd2
 WORKDIR /openpilot
 RUN git clone https://github.com/commaai/cereal.git
 WORKDIR /openpilot/cereal

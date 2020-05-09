@@ -26,10 +26,10 @@ const AddrBus GM_TX_MSGS[] = {{384, 0}, {1033, 0}, {1034, 0}, {715, 0}, {880, 0}
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 AddrCheckStruct gm_rx_checks[] = {
   {.addr = {388}, .bus = 0, .length = {8}, .expected_timestep = 100000U},
-  {.addr = {842}, .bus = 0, .length = {4}, .expected_timestep = 100000U},
+  {.addr = {842}, .bus = 0, .length = {5}, .expected_timestep = 100000U},
   {.addr = {481}, .bus = 0, .length = {7}, .expected_timestep = 100000U},
   {.addr = {241}, .bus = 0, .length = {6}, .expected_timestep = 100000U},
-  {.addr = {417}, .bus = 0, .length = {8}, .expected_timestep = 100000U},
+  {.addr = {417}, .bus = 0, .length = {7}, .expected_timestep = 100000U},
 };
 const int GM_RX_CHECK_LEN = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]);
 
