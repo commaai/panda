@@ -23,7 +23,7 @@ typedef struct {
 typedef struct {
   // const params
   const int addr[3];                 // check either messages (e.g. honda steer). Array MUST terminate with a zero to know its length.
-  const int length[3];               // expected message length, parallel to addr
+  const int length[3];               // expected message length, any is list is acceptable. Array MUST terminate with a zero to know its length.
   const int bus;                     // bus where to expect the addr. Temp hack: -1 means skip the bus check
   const bool check_checksum;         // true is checksum check is performed
   const uint8_t max_counter;         // maximum value of the counter. 0 means that the counter check is skipped
