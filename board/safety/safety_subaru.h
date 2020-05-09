@@ -15,17 +15,17 @@ const int SUBARU_TX_MSGS_LEN = sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]
 const int SUBARU_L_TX_MSGS_LEN = sizeof(SUBARU_L_TX_MSGS) / sizeof(SUBARU_L_TX_MSGS[0]);
 
 AddrCheckStruct subaru_rx_checks[] = {
-  {.addr = { 0x40}, .bus = 0, .length = 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U},
-  {.addr = {0x119}, .bus = 0, .length = 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
-  {.addr = {0x139}, .bus = 0, .length = 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
-  {.addr = {0x13a}, .bus = 0, .length = 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
-  {.addr = {0x240}, .bus = 0, .length = 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U},
+  {.addr = { 0x40}, .bus = 0, .length = {8}, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U},
+  {.addr = {0x119}, .bus = 0, .length = {8}, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
+  {.addr = {0x139}, .bus = 0, .length = {8}, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
+  {.addr = {0x13a}, .bus = 0, .length = {8}, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
+  {.addr = {0x240}, .bus = 0, .length = {8}, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U},
 };
 // TODO: do checksum and counter checks after adding the signals to the outback dbc file
 AddrCheckStruct subaru_l_rx_checks[] = {
-  {.addr = {0x140}, .bus = 0, .length = 8, .expected_timestep = 10000U},
-  {.addr = {0x371}, .bus = 0, .length = 8, .expected_timestep = 20000U},
-  {.addr = {0x144}, .bus = 0, .length = 8, .expected_timestep = 50000U},
+  {.addr = {0x140}, .bus = 0, .length = {8}, .expected_timestep = 10000U},
+  {.addr = {0x371}, .bus = 0, .length = {8}, .expected_timestep = 20000U},
+  {.addr = {0x144}, .bus = 0, .length = {8}, .expected_timestep = 50000U},
 };
 const int SUBARU_RX_CHECK_LEN = sizeof(subaru_rx_checks) / sizeof(subaru_rx_checks[0]);
 const int SUBARU_L_RX_CHECK_LEN = sizeof(subaru_l_rx_checks) / sizeof(subaru_l_rx_checks[0]);

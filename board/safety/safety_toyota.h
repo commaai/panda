@@ -35,10 +35,10 @@ const AddrBus TOYOTA_TX_MSGS[] = {{0x283, 0}, {0x2E6, 0}, {0x2E7, 0}, {0x33E, 0}
                                   {0x200, 0}, {0x750, 0}};  // interceptor + Blindspot monitor
 
 AddrCheckStruct toyota_rx_checks[] = {
-  {.addr = { 0xaa}, .bus = 0, .length = 8, .check_checksum = false, .expected_timestep = 12000U},
-  {.addr = {0x260}, .bus = 0, .length = 8, .check_checksum = true, .expected_timestep = 20000U},
-  {.addr = {0x1D2}, .bus = 0, .length = 8, .check_checksum = true, .expected_timestep = 30000U},
-  {.addr = {0x224, 0x226}, .bus = 0, .length = 8, .check_checksum = false, .expected_timestep = 25000U},
+  {.addr = { 0xaa}, .bus = 0, .length = {8}, .check_checksum = false, .expected_timestep = 12000U},
+  {.addr = {0x260}, .bus = 0, .length = {8}, .check_checksum = true, .expected_timestep = 20000U},
+  {.addr = {0x1D2}, .bus = 0, .length = {8}, .check_checksum = true, .expected_timestep = 30000U},
+  {.addr = {0x224, 0x226}, .bus = 0, .length = {8}, .check_checksum = false, .expected_timestep = 25000U},
 };
 const int TOYOTA_RX_CHECKS_LEN = sizeof(toyota_rx_checks) / sizeof(toyota_rx_checks[0]);
 

@@ -10,11 +10,11 @@ const AddrBus HYUNDAI_TX_MSGS[] = {{832, 0}, {1265, 0}, {1157, 0}};
 
 // TODO: do checksum and counter checks
 AddrCheckStruct hyundai_rx_checks[] = {
-  {.addr = {608}, .bus = 0, .length = 8, .expected_timestep = 10000U},
-  {.addr = {897}, .bus = 0, .length = 8, .expected_timestep = 10000U},
-  {.addr = {902}, .bus = 0, .length = 8, .expected_timestep = 10000U},
-  {.addr = {916}, .bus = 0, .length = 8, .expected_timestep = 10000U},
-  {.addr = {1057}, .bus = 0, .length = 8, .expected_timestep = 20000U},
+  {.addr = {608}, .bus = 0, .length = {8}, .expected_timestep = 10000U},
+  {.addr = {897}, .bus = 0, .length = {8}, .expected_timestep = 10000U},
+  {.addr = {902}, .bus = 0, .length = {8}, .expected_timestep = 10000U},
+  {.addr = {916}, .bus = 0, .length = {8}, .expected_timestep = 10000U},
+  {.addr = {1057}, .bus = 0, .length = {8}, .expected_timestep = 20000U},
 };
 const int HYUNDAI_RX_CHECK_LEN = sizeof(hyundai_rx_checks) / sizeof(hyundai_rx_checks[0]);
 

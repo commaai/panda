@@ -180,7 +180,13 @@ bool addr_safety_check(CAN_FIFOMailBox_TypeDef *to_push,
       rx_checks[index].wrong_counters = 0U;
     }
 
-    rx_checks[index].valid_length = GET_LEN(to_push) == rx_checks[index].length;
+    int length = GET_LEN(to_push);
+    rx_checks[index].valid_length = false;
+    for (uint8_t i = 0U; rx_checks[index].addr[i] != 0; i++) {
+      if (length == rx_checks[index].length[i]) {
+        rx_checks[index].valid_length = true;
+      }
+    }
   }
   return is_msg_valid(rx_checks, index);
 }
