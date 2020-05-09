@@ -11,7 +11,7 @@ const AddrBus CHRYSLER_TX_MSGS[] = {{571, 0}, {658, 0}, {678, 0}};
 // TODO: do checksum and counter checks
 AddrCheckStruct chrysler_rx_checks[] = {
   {.addr = {544}, .bus = 0, .length = {8}, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U},
-  {.addr = {514}, .bus = 0, .length = {4}, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U},
+  {.addr = {514}, .bus = 0, .length = {8}, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U},
   {.addr = {500}, .bus = 0, .length = {8}, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
   {.addr = {308}, .bus = 0, .length = {8}, .check_checksum = false, .max_counter = 15U,  .expected_timestep = 20000U},
   {.addr = {320}, .bus = 0, .length = {8}, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U},
