@@ -35,8 +35,6 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   bool valid = addr_safety_check(to_push, nissan_rx_checks, NISSAN_RX_CHECK_LEN,
                                  NULL, NULL, NULL);
 
-  if(!valid){printf("%d: %d\n", GET_ADDR(to_push), GET_LEN(to_push));}
-
   bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
 
   if (valid) {
