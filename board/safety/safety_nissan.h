@@ -14,9 +14,9 @@ const int NISSAN_DEG_TO_CAN = 100;
 const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x2b1, 0}, {0x4cc, 0}, {0x20b, 2}, {0x280, 2}};
 
 AddrCheckStruct nissan_rx_checks[] = {
-  {.addr = {0x2}, .bus = 0, .length = 8, .expected_timestep = 10000U},  // STEER_ANGLE_SENSOR (100Hz)
+  {.addr = {0x2}, .bus = 0, .length = 5, .expected_timestep = 10000U},  // STEER_ANGLE_SENSOR (100Hz)
   {.addr = {0x285}, .bus = 0, .length = 8, .expected_timestep = 20000U}, // WHEEL_SPEEDS_REAR (50Hz)
-  {.addr = {0x30f}, .bus = 2, .length = 8, .expected_timestep = 100000U}, // CRUISE_STATE (10Hz)
+  {.addr = {0x30f}, .bus = 2, .length = 3, .expected_timestep = 100000U}, // CRUISE_STATE (10Hz)
   {.addr = {0x15c, 0x239}, .bus = 0, .length = 8, .expected_timestep = 20000U}, // GAS_PEDAL (100Hz / 50Hz)
   {.addr = {0x454, 0x1cc}, .bus = 0, .length = 8, .expected_timestep = 100000U}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
 };
