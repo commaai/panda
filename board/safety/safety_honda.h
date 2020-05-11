@@ -6,9 +6,9 @@
 //      accel rising edge
 //      brake rising edge
 //      brake > 0mph
-const CanMsg HONDA_N_TX_MSGS[] = {{0xE4, 0}, {0x194, 0}, {0x1FA, 0}, {0x200, 0}, {0x30C, 0}, {0x33D, 0}};
-const CanMsg HONDA_BG_TX_MSGS[] = {{0xE4, 2}, {0xE5, 2}, {0x296, 0}, {0x33D, 2}};  // Bosch Giraffe
-const CanMsg HONDA_BH_TX_MSGS[] = {{0xE4, 0}, {0xE5, 0}, {0x296, 1}, {0x33D, 0}};  // Bosch Harness
+const CanMsg HONDA_N_TX_MSGS[] = {{0xE4, 0, 5}, {0x194, 0, 4}, {0x1FA, 0, 8}, {0x200, 0, 6}, {0x30C, 0, 8}, {0x33D, 0, 5}};
+const CanMsg HONDA_BG_TX_MSGS[] = {{0xE4, 2, 5}, {0xE5, 2, 8}, {0x296, 0, 4}, {0x33D, 2, 5}};  // Bosch Giraffe
+const CanMsg HONDA_BH_TX_MSGS[] = {{0xE4, 0, 5}, {0xE5, 0, 8}, {0x296, 1, 4}, {0x33D, 0, 5}};  // Bosch Harness
 
 // Roughly calculated using the offsets in openpilot +5%:
 // In openpilot: ((gas1_norm + gas2_norm)/2) > 15
@@ -21,7 +21,7 @@ const int HONDA_GAS_INTERCEPTOR_THRESHOLD = 344;
 
 // Nidec and Bosch giraffe have pt on bus 0
 AddrCheckStruct honda_rx_checks[] = {
-  {.msg = {{0x1A6, 0, 4},  {0x296, 0, 8}}, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
+  {.msg = {{0x1A6, 0, 8},  {0x296, 0, 4}}, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
   {.msg = {{0x158, 0, 8}}, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
   {.msg = {{0x17C, 0, 8}}, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
 };
