@@ -6,7 +6,7 @@ const int HYUNDAI_MAX_RATE_DOWN = 7;
 const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
 const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
 const int HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
-const CanMsg HYUNDAI_TX_MSGS[] = {{832, 0}, {1265, 0}, {1157, 0}};
+const CanMsg HYUNDAI_TX_MSGS[] = {{832, 0, 8}, {1265, 0, 4}, {1157, 0, 4}};
 
 // TODO: do checksum checks
 AddrCheckStruct hyundai_rx_checks[] = {
