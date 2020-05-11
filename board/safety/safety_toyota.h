@@ -29,12 +29,11 @@ const int TOYOTA_STANDSTILL_THRSLD = 100;  // 1kph
 const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 845;
 #define TOYOTA_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + (GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2) // avg between 2 tracks
 
-const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0x33E, 0, 8}, {0x344, 0, 8}, {0x365, 0, 7}, {0x366, 0, 8}, {0x4CB, 0, 8},  // DSU bus 0
-                                  {0x128, 1, 8}, {0x141, 1, 8}, {0x160, 1, 8}, {0x161, 1, 8}, {0x470, 1, 8},  // DSU bus 1
+const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0x33E, 0, 7}, {0x344, 0, 8}, {0x365, 0, 7}, {0x366, 0, 7}, {0x4CB, 0, 8},  // DSU bus 0
+                                  {0x128, 1, 6}, {0x141, 1, 4}, {0x160, 1, 8}, {0x161, 1, 7}, {0x470, 1, 4},  // DSU bus 1
                                   {0x2E4, 0, 5}, {0x411, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  // LKAS + ACC
                                   {0x200, 0, 6}, {0x750, 0, 8}};  // interceptor + Blindspot monitor
 // TODO: BSM msg isn't in DBC
-// TODO: 0x33e, 0x366, 0x128, 0x141, 0x160, 0x470 not in dbc
 
 AddrCheckStruct toyota_rx_checks[] = {
   {.msg = {{ 0xaa, 0, 8}}, .check_checksum = false, .expected_timestep = 12000U},
