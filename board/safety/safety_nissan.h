@@ -119,7 +119,6 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
-  int bus = GET_BUS(to_send);
   bool violation = 0;
 
   if (!msg_allowed(to_send, NISSAN_TX_MSGS, sizeof(NISSAN_TX_MSGS) / sizeof(NISSAN_TX_MSGS[0]))) {

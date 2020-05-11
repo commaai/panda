@@ -131,7 +131,6 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
-  int bus = GET_BUS(to_send);
 
   if ((!msg_allowed(to_send, SUBARU_TX_MSGS, SUBARU_TX_MSGS_LEN) && subaru_global) ||
       (!msg_allowed(to_send, SUBARU_L_TX_MSGS, SUBARU_L_TX_MSGS_LEN) && !subaru_global)) {

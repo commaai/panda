@@ -311,7 +311,6 @@ static bool volkswagen_steering_check(int desired_torque) {
 
 static int volkswagen_mqb_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
-  int bus = GET_BUS(to_send);
   int tx = 1;
 
   if (!msg_allowed(to_send, VOLKSWAGEN_MQB_TX_MSGS, VOLKSWAGEN_MQB_TX_MSGS_LEN) || relay_malfunction) {
@@ -348,7 +347,6 @@ static int volkswagen_mqb_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
 static int volkswagen_pq_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
-  int bus = GET_BUS(to_send);
   int tx = 1;
 
   if (!msg_allowed(to_send, VOLKSWAGEN_PQ_TX_MSGS, VOLKSWAGEN_PQ_TX_MSGS_LEN) || relay_malfunction) {
