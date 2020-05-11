@@ -10,13 +10,15 @@ const CanMsg HYUNDAI_TX_MSGS[] = {{832, 0, 8}, {1265, 0, 4}, {1157, 0, 4}};
 
 // TODO: do checksum checks
 AddrCheckStruct hyundai_rx_checks[] = {
-  {.msg = {{608, 0, 8}}, .max_counter = 3U, .expected_timestep = 10000U},
+  {.msg = {{608, 0, 8}}, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
   {.msg = {{897, 0, 8}}, .max_counter = 255U, .expected_timestep = 10000U},
   {.msg = {{902, 0, 8}}, .max_counter = 15U,  .expected_timestep = 10000U},
-  {.msg = {{916, 0, 8}}, .max_counter = 7U, .expected_timestep = 10000U},
-  {.msg = {{1057, 0, 8}}, .max_counter = 15U, .expected_timestep = 20000U},
+  {.msg = {{916, 0, 8}}, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U},
+  {.msg = {{1057, 0, 8}}, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
 };
 const int HYUNDAI_RX_CHECK_LEN = sizeof(hyundai_rx_checks) / sizeof(hyundai_rx_checks[0]);
+
+uint8_t hyundai_crc8_lut[256];
 
 static uint8_t hyundai_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
   int addr = GET_ADDR(to_push);
@@ -38,10 +40,55 @@ static uint8_t hyundai_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
   return cnt;
 }
 
+static uint8_t hyundai_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+  int addr = GET_ADDR(to_push);
+
+  uint8_t chksum;
+  if (addr == 608) {
+    chksum = GET_BYTE(to_push, 7) & 0xF;
+  } else if (addr == 897) {
+    chksum = GET_BYTE(to_push, 6);
+  } else if (addr == 902) {
+    chksum = (GET_BYTE(to_push, 5) >> 6) & 0x3;
+  } else if (addr == 916) {
+    chksum = GET_BYTE(to_push, 6) & 0xF;
+  } else if (addr == 1057) {
+    chksum = GET_BYTE(to_push, 7) >> 4;
+  } else {
+    chksum = 0;
+  }
+  return chksum;
+}
+
+static uint8_t hyundai_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+  int addr = GET_ADDR(to_push);
+
+  uint8_t chksum;
+  if ((addr == 608) || (addr == 916) || (addr == 1057)) {
+    // same algorithm, but checksum is in a different place
+    for (int i = 0; i < 8; i++) {
+      uint8_t b = GET_BYTE(to_push, i);
+      if (((addr == 608) && (i == 7)) || ((addr == 916) && (i == 6)) || ((addr == 1057) && (i == 7))) {
+        b &= (addr == 1057) ? 0x0F : 0xF0; // remove checksum
+      }
+      chksum += (b % 16) + (b / 16);
+    }
+    chksum = (16 - (chksum %  16)) % 16;
+  } else if (addr == 897) {
+    // same crc as LKAS msg
+  } else if (addr == 902) {
+
+  } else {
+    chksum = 0;
+  }
+  return chksum;
+}
+
 static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   bool valid = addr_safety_check(to_push, hyundai_rx_checks, HYUNDAI_RX_CHECK_LEN,
-                                 NULL, NULL, hyundai_get_counter);
+                                 hyundai_get_checksum, hyundai_compute_checksum,
+                                 hyundai_get_counter);
 
   bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
 
@@ -191,6 +238,12 @@ static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return bus_fwd;
 }
 
+static void hyundai_init(int16_t param) {
+  UNUSED(param);
+  controls_allowed = false;
+  relay_malfunction_reset();
+  gen_crc_lookup_table(0x11D, hyundai_crc8_lut);
+}
 
 const safety_hooks hyundai_hooks = {
   .init = nooutput_init,
