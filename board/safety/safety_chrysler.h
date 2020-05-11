@@ -6,15 +6,14 @@ const int CHRYSLER_MAX_RATE_DOWN = 3;
 const int CHRYSLER_MAX_TORQUE_ERROR = 80;    // max torque cmd in excess of torque motor
 const int CHRYSLER_GAS_THRSLD = 30;  // 7% more than 2m/s
 const int CHRYSLER_STANDSTILL_THRSLD = 10;  // about 1m/s
-const AddrBus CHRYSLER_TX_MSGS[] = {{571, 0}, {658, 0}, {678, 0}};
+const CanMsg CHRYSLER_TX_MSGS[] = {{571, 0, 3}, {658, 0, 6}, {678, 0, 8}};
 
-// TODO: do checksum and counter checks
 AddrCheckStruct chrysler_rx_checks[] = {
-  {.addr = {544}, .bus = 0, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U},
-  {.addr = {514}, .bus = 0, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U},
-  {.addr = {500}, .bus = 0, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
-  {.addr = {308}, .bus = 0, .check_checksum = false, .max_counter = 15U,  .expected_timestep = 20000U},
-  {.addr = {320}, .bus = 0, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U},
+  {.msg = {{544, 0, 8}}, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U},
+  {.msg = {{514, 0, 8}}, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U},
+  {.msg = {{500, 0, 8}}, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
+  {.msg = {{308, 0, 8}}, .check_checksum = false, .max_counter = 15U,  .expected_timestep = 20000U},
+  {.msg = {{320, 0, 8}}, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U},
 };
 const int CHRYSLER_RX_CHECK_LEN = sizeof(chrysler_rx_checks) / sizeof(chrysler_rx_checks[0]);
 
@@ -132,9 +131,8 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
-  int bus = GET_BUS(to_send);
 
-  if (!msg_allowed(addr, bus, CHRYSLER_TX_MSGS, sizeof(CHRYSLER_TX_MSGS) / sizeof(CHRYSLER_TX_MSGS[0]))) {
+  if (!msg_allowed(to_send, CHRYSLER_TX_MSGS, sizeof(CHRYSLER_TX_MSGS) / sizeof(CHRYSLER_TX_MSGS[0]))) {
     tx = 0;
   }
 

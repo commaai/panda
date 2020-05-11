@@ -72,10 +72,14 @@ void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]) {
   }
 }
 
-bool msg_allowed(int addr, int bus, const AddrBus addr_list[], int len) {
+bool msg_allowed(CAN_FIFOMailBox_TypeDef *to_send, const CanMsg msg_list[], int len) {
+  int addr = GET_ADDR(to_send);
+  int bus = GET_BUS(to_send);
+  int length = GET_LEN(to_send);
+
   bool allowed = false;
   for (int i = 0; i < len; i++) {
-    if ((addr == addr_list[i].addr) && (bus == addr_list[i].bus)) {
+    if ((addr == msg_list[i].addr) && (bus == msg_list[i].bus) && (length == msg_list[i].len)) {
       allowed = true;
       break;
     }
@@ -92,11 +96,13 @@ uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
 int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_list[], const int len) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
+  int length = GET_LEN(to_push);
 
   int index = -1;
   for (int i = 0; i < len; i++) {
-    for (uint8_t j = 0U; addr_list[i].addr[j] != 0; j++) {
-      if ((addr == addr_list[i].addr[j]) && (bus == addr_list[i].bus)) {
+    for (uint8_t j = 0U; addr_list[i].msg[j].addr != 0; j++) {
+      if ((addr == addr_list[i].msg[j].addr) && (bus == addr_list[i].msg[j].bus) &&
+            (length == addr_list[i].msg[j].len)) {
         index = i;
         goto Return;
       }

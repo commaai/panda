@@ -11,14 +11,14 @@ const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_DOWN = {
 
 const int NISSAN_DEG_TO_CAN = 100;
 
-const AddrBus NISSAN_TX_MSGS[] = {{0x169, 0}, {0x2b1, 0}, {0x4cc, 0}, {0x20b, 2}, {0x280, 2}};
+const CanMsg NISSAN_TX_MSGS[] = {{0x169, 0, 8}, {0x2b1, 0, 8}, {0x4cc, 0, 8}, {0x20b, 2, 8}, {0x280, 2, 8}};
 
 AddrCheckStruct nissan_rx_checks[] = {
-  {.addr = {0x2}, .bus = 0, .expected_timestep = 10000U},  // STEER_ANGLE_SENSOR (100Hz)
-  {.addr = {0x285}, .bus = 0, .expected_timestep = 20000U}, // WHEEL_SPEEDS_REAR (50Hz)
-  {.addr = {0x30f}, .bus = 2, .expected_timestep = 100000U}, // CRUISE_STATE (10Hz)
-  {.addr = {0x15c, 0x239}, .bus = 0, .expected_timestep = 20000U}, // GAS_PEDAL (100Hz / 50Hz)
-  {.addr = {0x454, 0x1cc}, .bus = 0, .expected_timestep = 100000U}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
+  {.msg = {{0x2, 0, 5}}, .expected_timestep = 10000U},  // STEER_ANGLE_SENSOR (100Hz)
+  {.msg = {{0x285, 0, 8}}, .expected_timestep = 20000U}, // WHEEL_SPEEDS_REAR (50Hz)
+  {.msg = {{0x30f, 2, 3}}, .expected_timestep = 100000U}, // CRUISE_STATE (10Hz)
+  {.msg = {{0x15c, 0, 8}, {0x239, 0, 8}}, .expected_timestep = 20000U}, // GAS_PEDAL (100Hz / 50Hz)
+  {.msg = {{0x454, 0, 8}, {0x1cc, 0, 8}}, .expected_timestep = 100000U}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
 };
 const int NISSAN_RX_CHECK_LEN = sizeof(nissan_rx_checks) / sizeof(nissan_rx_checks[0]);
 
@@ -119,10 +119,9 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
-  int bus = GET_BUS(to_send);
   bool violation = 0;
 
-  if (!msg_allowed(addr, bus, NISSAN_TX_MSGS, sizeof(NISSAN_TX_MSGS) / sizeof(NISSAN_TX_MSGS[0]))) {
+  if (!msg_allowed(to_send, NISSAN_TX_MSGS, sizeof(NISSAN_TX_MSGS) / sizeof(NISSAN_TX_MSGS[0]))) {
     tx = 0;
   }
 
