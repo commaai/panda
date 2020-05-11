@@ -101,8 +101,8 @@ int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_
   int index = -1;
   for (int i = 0; i < len; i++) {
     for (uint8_t j = 0U; addr_list[i].msg[j].addr != 0; j++) {
-      // TODO: add length check
-      if ((addr == addr_list[i].msg[j].addr) && (bus == addr_list[i].msg[j].bus)) {
+      if ((addr == addr_list[i].msg[j].addr) && (bus == addr_list[i].msg[j].bus) &&
+            (length == addr_list[i].msg[j].len)) {
         index = i;
         goto Return;
       }
