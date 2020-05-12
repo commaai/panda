@@ -11,8 +11,8 @@ const int SUBARU_DRIVER_TORQUE_FACTOR = 10;
 const int SUBARU_L_DRIVER_TORQUE_FACTOR = 1;
 const int SUBARU_STANDSTILL_THRSLD = 20;  // about 1kph
 
-const AddrBus SUBARU_TX_MSGS[] = {{0x122, 0, 8}, {0x221, 0, 8}, {0x322, 0, 8}};
-const AddrBus SUBARU_L_TX_MSGS[] = {{0x161, 0, 8}, {0x164, 0, 8}};
+const CanMsg SUBARU_TX_MSGS[] = {{0x122, 0, 8}, {0x221, 0, 8}, {0x322, 0, 8}};
+const CanMsg SUBARU_L_TX_MSGS[] = {{0x161, 0, 8}, {0x164, 0, 8}};
 const int SUBARU_TX_MSGS_LEN = sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]);
 const int SUBARU_L_TX_MSGS_LEN = sizeof(SUBARU_L_TX_MSGS) / sizeof(SUBARU_L_TX_MSGS[0]);
 
@@ -148,8 +148,6 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       ((addr == 0x164) && !subaru_global)) {
     int bit_shift = subaru_global ? 16 : 8;
     int desired_torque = ((GET_BYTES_04(to_send) >> bit_shift) & 0x1FFF);
-    int driver_torque_allowance = subaru_global ? SUBARU_DRIVER_TORQUE_ALLOWANCE : SUBARU_L_DRIVER_TORQUE_ALLOWANCE;
-    int driver_torque_factor = subaru_global ? SUBARU_DRIVER_TORQUE_FACTOR : SUBARU_L_DRIVER_TORQUE_FACTOR;
     bool violation = 0;
     uint32_t ts = TIM2->CNT;
     desired_torque = subaru_global ? -1 * to_signed(desired_torque, 13) : to_signed(desired_torque, 13);
@@ -160,9 +158,15 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       violation |= max_limit_check(desired_torque, SUBARU_MAX_STEER, -SUBARU_MAX_STEER);
 
       // *** torque rate limit check ***
-      violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-        SUBARU_MAX_STEER, SUBARU_MAX_RATE_UP, SUBARU_MAX_RATE_DOWN,
-        driver_torque_allowance, driver_torque_factor);
+      if (subaru_global) {
+        violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
+          SUBARU_MAX_STEER, SUBARU_MAX_RATE_UP, SUBARU_MAX_RATE_DOWN,
+          SUBARU_DRIVER_TORQUE_ALLOWANCE, SUBARU_DRIVER_TORQUE_FACTOR);
+      } else {
+        violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
+          SUBARU_MAX_STEER, SUBARU_MAX_RATE_UP, SUBARU_MAX_RATE_DOWN,
+          SUBARU_L_DRIVER_TORQUE_ALLOWANCE, SUBARU_L_DRIVER_TORQUE_FACTOR);
+      }
 
       // used next time
       desired_torque_last = desired_torque;
