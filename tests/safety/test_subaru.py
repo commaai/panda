@@ -28,7 +28,7 @@ class TestSubaruSafety(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 20  # 1kph (see dbc file)
   RELAY_MALFUNCTION_ADDR = 0x122
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [290, 545, 802]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x122, 0x221, 0x322]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
@@ -167,10 +167,13 @@ class TestSubaruSafety(common.PandaSafetyTest):
 
 class TestSubaruLegacySafety(TestSubaruSafety):
 
-  TX_MSGS = [[0x164, 0], [0x221, 0], [0x322, 0]]
+  DRIVER_TORQUE_ALLOWANCE = 600
+  DRIVER_TORQUE_FACTOR = 1
+
+  TX_MSGS = [[0x161, 0], [0x164, 0]]
   RELAY_MALFUNCTION_ADDR = 0x164
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [356, 545, 802]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x161, 0x164]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
