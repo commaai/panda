@@ -25,85 +25,101 @@
 #define MAZDA_MAX_TORQUE_ERROR 350
 
 const CanMsg MAZDA_TX_MSGS[] = {{MAZDA_LKAS, 0, 8}};
-int mazda_lkas_on = 0;
+bool mazda_lkas_on = false;
+
+AddrCheckStruct mazda_rx_checks[] = {
+  {.msg = {{MAZDA_CRZ_CTRL,     0, 8}}, .expected_timestep = 20000U},
+  {.msg = {{MAZDA_WHEEL_SPEED,  0, 8}}, .expected_timestep = 10000U},
+  {.msg = {{MAZDA_STEER_TORQUE, 0, 8}}, .expected_timestep = 12000U},
+  {.msg = {{MAZDA_ENGINE_DATA,  0, 8}}, .expected_timestep = 10000U},
+  {.msg = {{MAZDA_PEDALS,       0, 8}}, .expected_timestep = 20000U},
+};
+const int MAZDA_RX_CHECKS_LEN = sizeof(mazda_rx_checks) / sizeof(mazda_rx_checks[0]);
 
 // track msgs coming from OP so that we know what CAM msgs to drop and what to forward
 static int mazda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  int bus = GET_BUS(to_push);
-  int addr = GET_ADDR(to_push);
+  bool valid;
 
-  if (bus == MAZDA_MAIN) {
+  valid = addr_safety_check(to_push, mazda_rx_checks, MAZDA_RX_CHECKS_LEN,
+                            NULL, NULL, NULL);
+  if (valid) {
+    int bus = GET_BUS(to_push);
+    int addr = GET_ADDR(to_push);
 
-    // sample speed
-    if (addr == MAZDA_WHEEL_SPEED) {
-      int speed = 0;
-      // sum 4 wheel speeds
-      for (int i=0; i<8; i+=2) {
-        int next_byte = i + 1;  // hack to deal with misra 10.8
-        speed += (GET_BYTE(to_push, i) << 8) + GET_BYTE(to_push, next_byte) - 10000;
-      }
-      speed = speed / 4;
-      vehicle_moving = ABS(speed) > 10; // 0.1 kph
+    if (bus == MAZDA_MAIN) {
 
-      if (speed > 4950) {      // 49.5 kph
-        mazda_lkas_on = 1;
-      } else if (speed < 4450) { // 44.5 kph
-        mazda_lkas_on = 0;
-      } else {
-        // Misra-able appeasment block!
-      }
-    }
-
-    if (addr == MAZDA_STEER_TORQUE) {
-      int torque_driver_new = GET_BYTE(to_push, 0) - 127;
-      // update array of samples
-      update_sample(&torque_driver, torque_driver_new);
-    }
-
-    // enter controls on rising edge of ACC, exit controls on ACC off
-    if (addr == MAZDA_CRZ_CTRL) {
-      int cruise_engaged = GET_BYTE(to_push, 0) & 8;
-      if (cruise_engaged != 0) {
-        if (!cruise_engaged_prev) {
-          // do not engage until we hit the speed at which lkas is on
-          if (mazda_lkas_on == 1) {
-            controls_allowed = 1;
-          }
-          else {
-            controls_allowed = 0;
-            cruise_engaged = 0;
-          }
+      // sample speed
+      if (addr == MAZDA_WHEEL_SPEED) {
+        int speed = 0;
+        // sum 4 wheel speeds, speed signal offset is 10000 with a 0.01 scale
+        for (int i=0; i<8; i+=2) {
+          int next_byte = i + 1;  // hack to deal with misra 10.8
+          speed += (GET_BYTE(to_push, i) << 8) + GET_BYTE(to_push, next_byte) - 10000;
         }
-      } else {
-        controls_allowed = 0;
-      }
-      cruise_engaged_prev = cruise_engaged;
-    }
+        speed = speed / 4;
+        vehicle_moving = ABS(speed) > 10; // moving is the speed is > 0.1 kph
 
-    // Exit controls on rising edge of gas press
-    if (addr == MAZDA_ENGINE_DATA) {
-      bool gas_pressed = (GET_BYTE(to_push, 4) || (GET_BYTE(to_push, 5) & 0xF0));
-      if (gas_pressed && !gas_pressed_prev && !(unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS)) {
-        controls_allowed = 0;
+	// Enable LKAS at 50kph going up, disable at 45kph going down
+        if (speed > 5000) {        // 50 kph
+          mazda_lkas_on = true;
+        } else if (speed < 4500) { // 45 kph
+          mazda_lkas_on = false;
+        } else {
+          // Misra-able appeasment block!
+        }
       }
-      gas_pressed_prev = gas_pressed;
-    }
 
-    // Exit controls on rising edge of brake press
-    if (addr == MAZDA_PEDALS) {
-      bool brake_pressed = (GET_BYTE(to_push, 0) & 0x10);
-      if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
-        controls_allowed = 0;
+      if (addr == MAZDA_STEER_TORQUE) {
+        int torque_driver_new = GET_BYTE(to_push, 0) - 127;
+        // update array of samples
+        update_sample(&torque_driver, torque_driver_new);
       }
-      brake_pressed_prev = brake_pressed;
-    }
 
-    // if we see lkas msg on MAZDA_MAIN bus then relay is closed
-    if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == MAZDA_LKAS)) {
-      relay_malfunction_set();
+      // enter controls on rising edge of ACC, exit controls on ACC off
+      if (addr == MAZDA_CRZ_CTRL) {
+        bool cruise_engaged = GET_BYTE(to_push, 0) & 8;
+        if (cruise_engaged) {
+          if (!cruise_engaged_prev) {
+            // do not engage until we hit the speed at which lkas is on
+            if (mazda_lkas_on) {
+              controls_allowed = 1;
+            }
+            else {
+              controls_allowed = 0;
+              cruise_engaged = false;
+            }
+          }
+        } else {
+          controls_allowed = 0;
+        }
+        cruise_engaged_prev = cruise_engaged;
+      }
+
+      // Exit controls on rising edge of gas press
+      if (addr == MAZDA_ENGINE_DATA) {
+        bool gas_pressed = (GET_BYTE(to_push, 4) || (GET_BYTE(to_push, 5) & 0xF0));
+        if (gas_pressed && !gas_pressed_prev && !(unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS)) {
+          controls_allowed = 0;
+        }
+        gas_pressed_prev = gas_pressed;
+      }
+
+      // Exit controls on rising edge of brake press
+      if (addr == MAZDA_PEDALS) {
+        bool brake_pressed = (GET_BYTE(to_push, 0) & 0x10);
+        if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
+          controls_allowed = 0;
+        }
+        brake_pressed_prev = brake_pressed;
+      }
+
+      // if we see lkas msg on MAZDA_MAIN bus then relay is closed
+      if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == MAZDA_LKAS)) {
+        relay_malfunction_set();
+      }
     }
   }
-  return 1;
+  return valid;
 }
 
 static int mazda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
@@ -196,5 +212,6 @@ const safety_hooks mazda_hooks = {
   .tx = mazda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = mazda_fwd_hook,
-  // TODO: add addr safety checks
+  .addr_check = mazda_rx_checks,
+  .addr_check_len = sizeof(mazda_rx_checks) / sizeof(mazda_rx_checks[0]),
 };
