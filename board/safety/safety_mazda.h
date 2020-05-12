@@ -59,7 +59,7 @@ static int mazda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         speed = speed / 4;
         vehicle_moving = ABS(speed) > 10; // moving is the speed is > 0.1 kph
 
-	// Enable LKAS at 50kph going up, disable at 45kph going down
+        // Enable LKAS at 50kph going up, disable at 45kph going down
         if (speed > 5000) {        // 50 kph
           mazda_lkas_on = true;
         } else if (speed < 4500) { // 45 kph
@@ -83,8 +83,7 @@ static int mazda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
             // do not engage until we hit the speed at which lkas is on
             if (mazda_lkas_on) {
               controls_allowed = 1;
-            }
-            else {
+            } else {
               controls_allowed = 0;
               cruise_engaged = false;
             }
