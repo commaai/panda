@@ -152,7 +152,7 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int driver_torque_factor = subaru_global ? SUBARU_DRIVER_TORQUE_FACTOR : SUBARU_L_DRIVER_TORQUE_FACTOR;
     bool violation = 0;
     uint32_t ts = TIM2->CNT;
-    desired_torque = -1 * to_signed(desired_torque, 13);
+    desired_torque = subaru_global ? -1 * to_signed(desired_torque, 13) : to_signed(desired_torque, 13);
 
     if (controls_allowed) {
 
