@@ -24,6 +24,10 @@
 #define MAZDA_DRIVER_TORQUE_FACTOR 1
 #define MAZDA_MAX_TORQUE_ERROR 350
 
+// lkas enable speed 52kph, disable at 45kph
+#define MAZDA_LKAS_ENABLE_SPEED  5200
+#define MAZDA_LKAS_DISABLE_SPEED 4500
+
 const CanMsg MAZDA_TX_MSGS[] = {{MAZDA_LKAS, 0, 8}};
 bool mazda_lkas_on = false;
 
@@ -57,12 +61,12 @@ static int mazda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
           speed += (GET_BYTE(to_push, i) << 8) + GET_BYTE(to_push, next_byte) - 10000;
         }
         speed = speed / 4;
-        vehicle_moving = ABS(speed) > 10; // moving is the speed is > 0.1 kph
+        vehicle_moving = ABS(speed) > 10; // moving when speed > 0.1 kph
 
-        // Enable LKAS at 50kph going up, disable at 45kph going down
-        if (speed > 5000) {        // 50 kph
+        // Enable LKAS at 52kph going up, disable at 45kph going down
+        if (speed > MAZDA_LKAS_ENABLE_SPEED) {
           mazda_lkas_on = true;
-        } else if (speed < 4500) { // 45 kph
+        } else if (speed < MAZDA_LKAS_DISABLE_SPEED) {
           mazda_lkas_on = false;
         } else {
           // Misra-able appeasment block!
