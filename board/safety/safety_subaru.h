@@ -150,7 +150,12 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int desired_torque = ((GET_BYTES_04(to_send) >> bit_shift) & 0x1FFF);
     bool violation = 0;
     uint32_t ts = TIM2->CNT;
-    desired_torque = subaru_global ? -1 * to_signed(desired_torque, 13) : to_signed(desired_torque, 13);
+
+    if (subaru_global) {
+      desired_torque = -1 * to_signed(desired_torque, 13);
+    } else {
+      desired_torque = to_signed(desired_torque, 13);
+    }
 
     if (controls_allowed) {
 
