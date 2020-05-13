@@ -1,6 +1,8 @@
 version: 2
 jobs:
   safety:
+    machine:
+      image: ubuntu-1604:202004-01
     steps:
       - checkout
       - run:
@@ -12,6 +14,8 @@ jobs:
             docker run panda_safety /bin/bash -c "cd /openpilot/panda/tests/safety; PYTHONPATH=/openpilot ./test.sh"
 
   misra-c2012:
+    machine:
+      image: ubuntu-1604:202004-01
     steps:
       - checkout
       - run:
@@ -30,6 +34,8 @@ jobs:
           path: /tmp/misra/misra_output.txt
 
   build:
+    machine:
+      image: ubuntu-1604:202004-01
     steps:
       - checkout
       - run:
@@ -61,6 +67,8 @@ jobs:
             docker run panda_build /bin/bash -c "cd /panda/boardesp; ./get_sdk.sh; make user1.bin"
 
   safety_replay:
+    machine:
+      image: ubuntu-1604:202004-01
     steps:
       - checkout
       - run:
@@ -72,6 +80,8 @@ jobs:
             docker run panda_safety_replay /bin/bash -c "cd /openpilot/panda/tests/safety_replay; PYTHONPATH=/openpilot ./test_safety_replay.py"
 
   language_check:
+    machine:
+      image: ubuntu-1604:202004-01
     steps:
       - checkout
       - run:
@@ -83,6 +93,8 @@ jobs:
             docker run language_check /bin/bash -c "cd /panda/tests/language; ./test_language.py"
 
   linter_python:
+    machine:
+      image: ubuntu-1604:202004-01
     steps:
       - checkout
       - run:
