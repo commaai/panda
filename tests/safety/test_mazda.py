@@ -69,6 +69,13 @@ class TestMazdaSafety(common.PandaSafetyTest):
     self._rx(self._pcm_status_msg(True))
     self.assertFalse(self.safety.get_controls_allowed())
 
+    self._rx(self._pcm_status_msg(False))
+
+    self._rx(self._speed_msg(self.LKAS_ENABLE_SPEED + 1))
+    self._rx(self._speed_msg(self.LKAS_ENABLE_SPEED - 1))
+    self._rx(self._pcm_status_msg(True))
+    self.assertTrue(self.safety.get_controls_allowed())
+
     self._rx(self._speed_msg(self.LKAS_ENABLE_SPEED + 1))
     self._rx(self._pcm_status_msg(True))
     self.assertTrue(self.safety.get_controls_allowed())
