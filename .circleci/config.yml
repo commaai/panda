@@ -2,7 +2,7 @@ version: 2
 jobs:
   safety:
     machine:
-      docker_layer_caching: true
+      image: ubuntu-1604:202004-01
     steps:
       - checkout
       - run:
@@ -15,7 +15,7 @@ jobs:
 
   misra-c2012:
     machine:
-      docker_layer_caching: true
+      image: ubuntu-1604:202004-01
     steps:
       - checkout
       - run:
@@ -35,7 +35,7 @@ jobs:
 
   build:
     machine:
-      docker_layer_caching: true
+      image: ubuntu-1604:202004-01
     steps:
       - checkout
       - run:
@@ -68,7 +68,7 @@ jobs:
 
   safety_replay:
     machine:
-      docker_layer_caching: true
+      image: ubuntu-1604:202004-01
     steps:
       - checkout
       - run:
@@ -81,7 +81,7 @@ jobs:
 
   language_check:
     machine:
-      docker_layer_caching: true
+      image: ubuntu-1604:202004-01
     steps:
       - checkout
       - run:
@@ -94,7 +94,7 @@ jobs:
 
   linter_python:
     machine:
-      docker_layer_caching: true
+      image: ubuntu-1604:202004-01
     steps:
       - checkout
       - run:
