@@ -65,6 +65,10 @@ class TestMazdaSafety(common.PandaSafetyTest):
     self._rx(self._pcm_status_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
 
+    self._rx(self._speed_msg(self.MIN_LKAS_ENABLE_SPEED - 1))
+    self._rx(self._pcm_status_msg(True))
+    self.assertFalse(self.safety.get_controls_allowed())
+
     self._rx(self._speed_msg(self.MIN_LKAS_ENABLE_SPEED + 1))
     self._rx(self._pcm_status_msg(True))
     self.assertTrue(self.safety.get_controls_allowed())
@@ -84,8 +88,14 @@ class TestMazdaSafety(common.PandaSafetyTest):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_cruise_engaged_prev(self):
+    self._rx(self._pcm_status_msg(False))
+    self._rx(self._speed_msg(self.MIN_LKAS_ENABLE_SPEED - 1))
+    self._rx(self._pcm_status_msg(True))
+    self.assertFalse(self.safety.get_cruise_engaged_prev())
+
+    self._rx(self._speed_msg(self.MIN_LKAS_ENABLE_SPEED + 1))
+
     for engaged in [True, False]:
-      self._rx(self._speed_msg(self.MIN_LKAS_ENABLE_SPEED + 1))
       self._rx(self._pcm_status_msg(engaged))
       self.assertEqual(engaged, self.safety.get_cruise_engaged_prev())
       self._rx(self._pcm_status_msg(not engaged))
