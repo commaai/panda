@@ -24,7 +24,7 @@ class TestMazdaSafety(common.PandaSafetyTest):
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x243]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
-  MIN_LKAS_ENABLE_SPEED = 52
+  LKAS_ENABLE_SPEED  = 52
   LKAS_DISABLE_SPEED = 45
 
   def setUp(self):
@@ -65,15 +65,15 @@ class TestMazdaSafety(common.PandaSafetyTest):
     self._rx(self._pcm_status_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
 
-    self._rx(self._speed_msg(self.MIN_LKAS_ENABLE_SPEED - 1))
+    self._rx(self._speed_msg(self.LKAS_ENABLE_SPEED - 1))
     self._rx(self._pcm_status_msg(True))
     self.assertFalse(self.safety.get_controls_allowed())
 
-    self._rx(self._speed_msg(self.MIN_LKAS_ENABLE_SPEED + 1))
+    self._rx(self._speed_msg(self.LKAS_ENABLE_SPEED + 1))
     self._rx(self._pcm_status_msg(True))
     self.assertTrue(self.safety.get_controls_allowed())
 
-    self._rx(self._speed_msg(self.MIN_LKAS_ENABLE_SPEED - 1))
+    self._rx(self._speed_msg(self.LKAS_ENABLE_SPEED - 1))
     self.assertTrue(self.safety.get_controls_allowed())
 
     # Enabled going down
@@ -89,11 +89,11 @@ class TestMazdaSafety(common.PandaSafetyTest):
 
   def test_cruise_engaged_prev(self):
     self._rx(self._pcm_status_msg(False))
-    self._rx(self._speed_msg(self.MIN_LKAS_ENABLE_SPEED - 1))
+    self._rx(self._speed_msg(self.LKAS_ENABLE_SPEED - 1))
     self._rx(self._pcm_status_msg(True))
     self.assertFalse(self.safety.get_cruise_engaged_prev())
 
-    self._rx(self._speed_msg(self.MIN_LKAS_ENABLE_SPEED + 1))
+    self._rx(self._speed_msg(self.LKAS_ENABLE_SPEED + 1))
 
     for engaged in [True, False]:
       self._rx(self._pcm_status_msg(engaged))
