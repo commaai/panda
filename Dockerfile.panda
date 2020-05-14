@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     capnproto \
     clang \
     curl \
+    gcc-arm-none-eabi \
     git \
     libarchive-dev \
     libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libavresample-dev libavfilter-dev \
@@ -45,6 +46,7 @@ RUN pip install -r /tmp/requirements.txt
 ENV PYTHONPATH /tmp/openpilot:$PYTHONPATH
 
 COPY ./boardesp/get_sdk_ci.sh /tmp
+COPY ./boardesp/python2_make.py /tmp
 RUN cd /tmp && ./get_sdk_ci.sh
 
 WORKDIR /tmp
