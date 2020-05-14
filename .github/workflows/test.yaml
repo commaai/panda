@@ -3,9 +3,8 @@ on: [push, pull_request]
 
 env:
   RUN: docker run --rm panda /bin/sh -c
-  PERSIST: docker run --shm-size 1G --name panda panda /bin/sh -c
+  PERSIST: docker run --name panda panda /bin/sh -c
   LOAD: docker load -i panda.tar.gz/panda.tar.gz
-#  CI_RUN: docker run -e GITHUB_ACTION -e GITHUB_REF -e GITHUB_HEAD_REF -e GITHUB_SHA -e GITHUB_REPOSITORY -e GITHUB_RUN_ID --rm tmppilotci /bin/bash -c
 
 jobs:
   docker_build:
@@ -30,8 +29,7 @@ jobs:
     name: push
     runs-on: ubuntu-16.04
     needs: docker_build
-    #if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
-    if: github.repository == 'commaai/panda'
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
     steps:
       - uses: actions/download-artifact@v1
         with:
@@ -120,7 +118,7 @@ jobs:
       - name: Run Misra C 2012 analysis
         run: $PERSIST "cd /tmp/openpilot/panda/tests/misra && ./test_misra.sh"
       - name: Copy analysis outputs
-        run: docker cp panda:/tmp/openpilot/panda/tests/misra /tmp
+        run: docker cp panda:/tmp/misra /tmp
       - uses: actions/upload-artifact@v2
         if: always()
         with:
@@ -146,5 +144,3 @@ jobs:
         run: |
           $RUN "cd /tmp/openpilot/panda/tests/linter_python/ && ./flake8_panda.sh"
           $RUN "cd /tmp/openpilot/panda/tests/linter_python/ && ./pylint_panda.sh"
-
-

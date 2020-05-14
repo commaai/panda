@@ -45,10 +45,6 @@ RUN pip install -r /tmp/requirements.txt
 
 ENV PYTHONPATH /tmp/openpilot:$PYTHONPATH
 
-COPY ./boardesp/get_sdk_ci.sh /tmp
-COPY ./boardesp/python2_make.py /tmp
-RUN cd /tmp && ./get_sdk_ci.sh
-
 WORKDIR /tmp
 RUN git clone https://github.com/commaai/openpilot.git || true
 WORKDIR /tmp/openpilot
@@ -59,5 +55,6 @@ RUN cd /tmp/openpilot/opendbc && pip install -r requirements.txt
 RUN cd /tmp/openpilot/tools && pip install -r requirements.txt
 
 COPY . /tmp/openpilot/panda
+RUN cd /tmp/openpilot/panda/boardesp && ./get_sdk_ci.sh
 
 RUN scons -c && scons -j$(nproc) opendbc/ cereal/
