@@ -25,7 +25,7 @@ jobs:
         #docker pull docker.io/commaai/panda:latest || true
 
         #docker build --cache-from docker.io/commaai/openpilot:latest -t tmppilot -f Dockerfile.openpilot .
-        docker build -t panda f Dockerfile.panda .
+        docker build -t panda -f Dockerfile.panda .
         docker save panda:latest | gzip > panda.tar.gz
     - uses: actions/upload-artifact@v2
       with:
