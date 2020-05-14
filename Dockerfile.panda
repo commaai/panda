@@ -37,7 +37,7 @@ RUN pip install --upgrade pip==18.0
 COPY requirements.txt /tmp/
 RUN pip install -r /tmp/requirements.txt
 
-#ENV PYTHONPATH /tmp:$PYTHONPATH
+ENV PYTHONPATH /openpilot:$PYTHONPATH
 
 #COPY ./boardesp/get_sdk_ci.sh /tmp
 #COPY ./boardesp/python2_make.py /tmp

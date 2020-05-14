@@ -45,6 +45,19 @@ jobs:
       - name: Run safety tests
         run: $RUN "cd /tmp/openpilot/panda/test/safety && ./test.sh"
 
+  safety_replay:
+    name: safety replay
+    runs-on: ubuntu-16.04
+    needs: build
+    steps:
+      - uses: actions/download-artifact@v1
+        with:
+          name: panda.tar.gz
+      - name: Load image
+        run: $LOAD
+      - name: Run safety replay
+        run: $RUN "cd /tmp/openpilot/panda/test/safety_replay && ./test_safety_replay.py"
+
   language_check:
     name: language check
     runs-on: ubuntu-16.04
