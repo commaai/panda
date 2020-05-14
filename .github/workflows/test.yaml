@@ -45,6 +45,29 @@ jobs:
       - name: Push image
         run: docker push docker.io/commaai/panda:latest
 
+  build:
+    name: build
+    runs-on: ubuntu-16.04
+    needs: docker_build
+    steps:
+      - uses: actions/download-artifact@v1
+        with:
+          name: panda.tar.gz
+      - name: Load image
+        run: $LOAD
+      - name: Test python package installer
+        run: $RUN "cd /tmp/openpilot/panda && python setup.py install"
+      - name: Build panda STM image
+        run: $RUN "cd /tmp/openpilot/panda/board && make bin"
+      - name: Build panda STM bootstub image
+        run: $RUN "cd /tmp/openpilot/panda/board && make obj/bootstub.panda.bin"
+      - name: Build pedal STM image
+        run: $RUN "cd /tmp/openpilot/panda/board/pedal && make obj/comma.bin"
+      - name: Build pedal STM bootstub image
+        run: $RUN "cd /tmp/openpilot/panda/board/pedal && make obj/bootstub.bin"
+      - name: Build ESP image
+        run: $RUN "cd /tmp/openpilot/panda/boardesp && make obj/user1.bin"
+
   safety:
     name: safety
     runs-on: ubuntu-16.04
