@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     git \
     libarchive-dev \
     libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libavresample-dev libavfilter-dev \
+    libbz2-dev \
     libcapnp-dev \
     libtool \
     libssl-dev \

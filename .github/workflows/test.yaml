@@ -6,9 +6,6 @@ env:
   PERSIST: docker run --shm-size 1G --name panda panda /bin/sh -c
   LOAD: docker load -i panda.tar.gz/panda.tar.gz
 #  CI_RUN: docker run -e GITHUB_ACTION -e GITHUB_REF -e GITHUB_HEAD_REF -e GITHUB_SHA -e GITHUB_REPOSITORY -e GITHUB_RUN_ID --rm tmppilotci /bin/bash -c
-#  UNIT_TEST: coverage run --append -m unittest discover
-
-
 
 jobs:
   docker_build:
@@ -35,7 +32,8 @@ jobs:
     name: push
     runs-on: ubuntu-16.04
     needs: docker_build
-    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
+    #if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
+    if: github.repository == 'commaai/panda'
     steps:
       - uses: actions/download-artifact@v1
         with:
@@ -86,7 +84,7 @@ jobs:
       - name: Load image
         run: $LOAD
       - name: Run language check
-        run: $RUN "cd /tmp/openpilot/panda/tests/language && ./test_langugae.py"
+        run: $RUN "cd /tmp/openpilot/panda/tests/language && ./test_language.py"
 
   misra:
     name: misra c2012
