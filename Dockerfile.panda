@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
     clang \
     curl \
     git \
+    libarchive-dev \
+    libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libavresample-dev libavfilter-dev \
     libcapnp-dev \
     libtool \
     libssl-dev \
@@ -14,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     libzmq3-dev \
     locales \
     make \
+    pkg-config \
     python \
     python-pip \
     wget \
@@ -37,26 +40,22 @@ RUN pip install --upgrade pip==18.0
 COPY requirements.txt /tmp/
 RUN pip install -r /tmp/requirements.txt
 
-ENV PYTHONPATH /openpilot:$PYTHONPATH
+ENV PYTHONPATH /tmp/openpilot:$PYTHONPATH
 
 #COPY ./boardesp/get_sdk_ci.sh /tmp
 #COPY ./boardesp/python2_make.py /tmp
 #RUN ./get_sdk_ci.sh
 #RUN ./python2_make.py
 
-WORKDIR /openpilot
-RUN git clone https://github.com/commaai/opendbc.git || true
-WORKDIR /openpilot/opendbc
-RUN git pull && git checkout 45c0d9ecce255e028163539e22e9a169735de69d
-WORKDIR /openpilot
-RUN git clone https://github.com/commaai/cereal.git
-WORKDIR /openpilot/cereal
-RUN git pull && git checkout 856c9812d552fe0ac640b75074b080f76c9a3cba
+WORKDIR /tmp
+RUN git clone https://github.com/commaai/openpilot.git || true
+WORKDIR /tmp/openpilot
+RUN git pull && git checkout 49dd37b81b05c8d77d801c4a027d27d7b1b8094c
+RUN git submodule update --init cereal opendbc
 
-RUN pip install -r /openpilot/opendbc/requirements.txt
+RUN cd /tmp/openpilot/opendbc && pip install -r requirements.txt
+RUN cd /tmp/openpilot/tools && pip install -r requirements.txt
 
-WORKDIR /openpilot
-RUN cp /openpilot/opendbc/SConstruct /openpilot
-COPY . /openpilot/panda
+COPY . /tmp/openpilot/panda
 
-RUN scons -c && scons -j$(nproc)
+RUN scons -c && scons -j$(nproc) opendbc/ cereal/
