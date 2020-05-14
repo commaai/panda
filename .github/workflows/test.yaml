@@ -60,7 +60,7 @@ jobs:
       - name: Load image
         run: $LOAD
       - name: Run safety tests
-        run: $RUN "cd /tmp/openpilot/panda/test/safety && ./test.sh"
+        run: $RUN "cd /tmp/openpilot/panda/tests/safety && ./test.sh"
 
   safety_replay:
     name: safety replay
@@ -73,7 +73,7 @@ jobs:
       - name: Load image
         run: $LOAD
       - name: Run safety replay
-        run: $RUN "cd /tmp/openpilot/panda/test/safety_replay && ./test_safety_replay.py"
+        run: $RUN "cd /tmp/openpilot/panda/tests/safety_replay && ./test_safety_replay.py"
 
   language_check:
     name: language check
@@ -86,7 +86,7 @@ jobs:
       - name: Load image
         run: $LOAD
       - name: Run language check
-        run: $RUN "cd /tmp/openpilot/panda/test/language && ./test_langugae.py"
+        run: $RUN "cd /tmp/openpilot/panda/tests/language && ./test_langugae.py"
 
   misra:
     name: misra c2012
@@ -99,9 +99,9 @@ jobs:
       - name: Load image
         run: $LOAD
       - name: Run Misra C 2012 analysis
-        run: $PERSIST "cd /tmp/openpilot/panda/test/misra && ./test_misra.sh"
+        run: $PERSIST "cd /tmp/openpilot/panda/tests/misra && ./test_misra.sh"
       - name: Copy analysis outputs
-        run: docker cp panda:/tmp/openpilot/panda/test/misra /tmp
+        run: docker cp panda:/tmp/openpilot/panda/tests/misra /tmp
       - uses: actions/upload-artifact@v2
         if: always()
         with:
