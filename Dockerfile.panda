@@ -1,0 +1,62 @@
+FROM ubuntu:16.04
+ENV PYTHONUNBUFFERED 1
+
+RUN apt-get update && apt-get install -y \
+    autoconf \
+    capnproto \
+    clang \
+    curl \
+    git \
+    libcapnp-dev \
+    libtool \
+    libssl-dev \
+    libusb-1.0-0 \
+    libzmq3-dev \
+    locales \
+    make \
+    python \
+    python-pip \
+    wget \
+    zlib1g-dev
+
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+
+ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
+RUN pyenv install 3.8.2
+RUN pyenv install 2.7.12
+RUN pyenv global 3.8.2
+RUN pyenv rehash
+
+RUN pip install --upgrade pip==18.0
+
+COPY requirements.txt /tmp/
+RUN pip install -r /tmp/requirements.txt
+
+#ENV PYTHONPATH /tmp:$PYTHONPATH
+
+#COPY ./boardesp/get_sdk_ci.sh /tmp
+#COPY ./boardesp/python2_make.py /tmp
+#RUN ./get_sdk_ci.sh
+#RUN ./python2_make.py
+
+WORKDIR /openpilot
+RUN git clone https://github.com/commaai/opendbc.git || true
+WORKDIR /openpilot/opendbc
+RUN git pull && git checkout 45c0d9ecce255e028163539e22e9a169735de69d
+WORKDIR /openpilot
+RUN git clone https://github.com/commaai/cereal.git
+WORKDIR /openpilot/cereal
+RUN git pull && git checkout 856c9812d552fe0ac640b75074b080f76c9a3cba
+
+RUN pip install -r /openpilot/opendbc/requirements.txt
+
+WORKDIR /openpilot
+RUN cp /openpilot/opendbc/SConstruct /openpilot
+COPY . /openpilot/panda
+
+RUN scons -c && scons -j$(nproc)
