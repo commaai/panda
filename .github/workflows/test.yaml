@@ -17,11 +17,9 @@ jobs:
         submodules: true
     - name: Build docker image
       run: |
-        #docker pull $(grep -ioP '(?<=^from)\s+\S+' Dockerfile.openpilot) || true
-        #docker pull docker.io/commaai/panda:latest || true
-
-        #docker build --cache-from docker.io/commaai/openpilot:latest -t tmppilot -f Dockerfile.openpilot .
-        docker build -t panda -f Dockerfile.panda .
+        docker pull $(grep -ioP '(?<=^from)\s+\S+' Dockerfile.panda) || true
+        docker pull docker.io/commaai/panda:latest || true
+        docker build --cache-from docker.io/commaai/panda:latest -t panda -f Dockerfile.panda .
         docker save panda:latest | gzip > panda.tar.gz
     - uses: actions/upload-artifact@v2
       with:

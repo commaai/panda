@@ -51,7 +51,7 @@ ENV PYTHONPATH /tmp/openpilot:$PYTHONPATH
 WORKDIR /tmp
 RUN git clone https://github.com/commaai/openpilot.git || true
 WORKDIR /tmp/openpilot
-RUN git pull && git checkout 49dd37b81b05c8d77d801c4a027d27d7b1b8094c
+RUN git pull && git checkout f15f24b529a402ec3d0867560b9812e4767661d4
 RUN git submodule update --init cereal opendbc
 
 RUN cd /tmp/openpilot/opendbc && pip install -r requirements.txt
