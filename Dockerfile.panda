@@ -47,7 +47,7 @@ ENV PYTHONPATH /tmp/openpilot:$PYTHONPATH
 COPY ./boardesp/get_sdk_ci.sh /tmp
 RUN cd /tmp && ./get_sdk_ci.sh
 
-WORDIR /tmp
+WORKDIR /tmp
 RUN git clone https://github.com/commaai/openpilot.git || true
 WORKDIR /tmp/openpilot
 RUN git pull && git checkout f15f24b529a402ec3d0867560b9812e4767661d4
