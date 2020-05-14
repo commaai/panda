@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libavresample-dev libavfilter-dev \
     libbz2-dev \
     libcapnp-dev \
+    libcurl4-openssl-dev \
     libtool \
     libssl-dev \
     libusb-1.0-0 \
