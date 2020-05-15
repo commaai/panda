@@ -70,7 +70,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run language check
-        run: $RUN "cd tests/language && ./test_language.py"
+        run: cd tests/language && ./test_language.py
 
   safety:
     name: safety
