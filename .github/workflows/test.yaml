@@ -12,8 +12,6 @@ jobs:
     runs-on: ubuntu-16.04
     steps:
     - uses: actions/checkout@v2
-      with:
-        submodules: true
     - name: Build docker image
       run: |
         docker pull $(grep -ioP '(?<=^from)\s+\S+' Dockerfile.panda) || true
@@ -65,6 +63,14 @@ jobs:
         run: $RUN "cd /tmp/openpilot/panda/board/pedal && make obj/bootstub.bin"
       - name: Build ESP image
         run: $RUN "cd /tmp/openpilot/panda/boardesp && make user1.bin"
+
+  language_check:
+    name: language check
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run language check
+        run: $RUN "cd tests/language && ./test_language.py"
 
   safety:
     name: safety
