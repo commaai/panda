@@ -41,7 +41,8 @@ init_panda_serials()
 test_all_types = parameterized([
     param(panda_type=Panda.HW_TYPE_WHITE_PANDA),
     param(panda_type=Panda.HW_TYPE_GREY_PANDA),
-    param(panda_type=Panda.HW_TYPE_BLACK_PANDA)
+    param(panda_type=Panda.HW_TYPE_BLACK_PANDA),
+    param(panda_type=Panda.HW_TYPE_UNO)
   ])
 test_all_pandas = parameterized(
     list(map(lambda x: x[0], _panda_serials))
@@ -64,6 +65,9 @@ test_grey = parameterized([
   ])
 test_black = parameterized([
     param(panda_type=Panda.HW_TYPE_BLACK_PANDA)
+  ])
+test_uno = parameterized([
+    param(panda_type=Panda.HW_TYPE_UNO)
   ])
 
 def connect_wifi(serial=None):
