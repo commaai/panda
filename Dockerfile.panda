@@ -49,12 +49,23 @@ WORKDIR /tmp
 RUN git clone https://github.com/commaai/openpilot.git || true
 WORKDIR /tmp/openpilot
 RUN git pull && git checkout 44560b5bb74e451767725144c3fa5f1564481a20
+RUN rm -rf $(ls --hide= "selfdrive" --hide="cereal" --hide="opendbc" --hide="tools" --hide="SConstruct")
 RUN git submodule update --init cereal opendbc
 
 RUN cd /tmp/openpilot/opendbc && pip install -r requirements.txt
 RUN cd /tmp/openpilot/tools && pip install -r requirements.txt
 
 COPY . /tmp/openpilot/panda
-RUN cd /tmp/openpilot/panda/boardesp && ./get_sdk_ci.sh
 
+# Build esp toolchain
+RUN apt-get install -y gperf bison flex texinfo help2man gawk libtool libtool-bin ncurses-dev unzip
+WORKDIR /tmp/openpilot/panda/boardesp
+RUN git clone --recursive https://github.com/pfalcon/esp-open-sdk.git
+RUN cd esp-open-sdk/ && git checkout 03f5e898a059451ec5f3de30e7feff30455f7ce
+WORKDIR /tmp/openpilot/panda/boardesp/esp-open-sdk
+
+RUN cp ../python2_make.py .
+RUN python2 python2_make.py "CT_ALLOW_BUILD_AS_ROOT_SURE=1 make STANDALONE=y"
+
+WORKDIR /tmp/openpilot
 RUN scons -c && scons -j$(nproc) opendbc/ cereal/

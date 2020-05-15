@@ -92,19 +92,6 @@ jobs:
       - name: Run safety replay
         run: $RUN "cd /tmp/openpilot/panda/tests/safety_replay && ./test_safety_replay.py"
 
-  language_check:
-    name: language check
-    runs-on: ubuntu-16.04
-    needs: docker_build
-    steps:
-      - uses: actions/download-artifact@v1
-        with:
-          name: panda.tar.gz
-      - name: Load image
-        run: $LOAD
-      - name: Run language check
-        run: $RUN "cd /tmp/openpilot/panda/tests/language && ./test_language.py"
-
   misra:
     name: misra c2012
     runs-on: ubuntu-16.04
