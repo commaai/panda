@@ -46,8 +46,8 @@ class TestMazdaSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("CAM_LKAS", 0, values)
 
   def _speed_msg(self, s):
-    values = { n: s for n in ["FR", "FL", "RR", "RL"]}
-    return self.packer.make_can_msg_panda("WHEEL_SPEEDS", 0, values)
+    values = {"SPEED": s}
+    return self.packer.make_can_msg_panda("ENGINE_DATA", 0, values)
 
   def _brake_msg(self, pressed):
     values = {"BRAKE_ON": pressed}

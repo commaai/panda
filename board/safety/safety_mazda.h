@@ -2,7 +2,6 @@
 // CAN msgs we care about
 #define MAZDA_LKAS          0x243
 #define MAZDA_CRZ_CTRL      0x21c
-#define MAZDA_WHEEL_SPEED   0x215
 #define MAZDA_STEER_TORQUE  0x240
 #define MAZDA_ENGINE_DATA   0x202
 #define MAZDA_PEDALS        0x165
@@ -33,7 +32,6 @@ bool mazda_lkas_on = false;
 
 AddrCheckStruct mazda_rx_checks[] = {
   {.msg = {{MAZDA_CRZ_CTRL,     0, 8}}, .expected_timestep = 20000U},
-  {.msg = {{MAZDA_WHEEL_SPEED,  0, 8}}, .expected_timestep = 10000U},
   {.msg = {{MAZDA_STEER_TORQUE, 0, 8}}, .expected_timestep = 12000U},
   {.msg = {{MAZDA_ENGINE_DATA,  0, 8}}, .expected_timestep = 10000U},
   {.msg = {{MAZDA_PEDALS,       0, 8}}, .expected_timestep = 20000U},
@@ -52,16 +50,11 @@ static int mazda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     if (bus == MAZDA_MAIN) {
 
-      // sample speed
-      if (addr == MAZDA_WHEEL_SPEED) {
-        int speed = 0;
-        // sum 4 wheel speeds, speed signal offset is 10000 with a 0.01 scale
-        for (int i=0; i<8; i+=2) {
-          int next_byte = i + 1;  // hack to deal with misra 10.8
-          speed += (GET_BYTE(to_push, i) << 8) + GET_BYTE(to_push, next_byte) - 10000;
-        }
-        speed = speed / 4;
-        vehicle_moving = ABS(speed) > 10; // moving when speed > 0.1 kph
+      if (addr == MAZDA_ENGINE_DATA) {
+        // sample speed
+        int speed = (GET_BYTE(to_push, 2) << 8) | GET_BYTE(to_push, 3);
+
+        vehicle_moving = speed > 10; // moving when speed >= 0.1 kph
 
         // Enable LKAS at 52kph going up, disable at 45kph going down
         if (speed > MAZDA_LKAS_ENABLE_SPEED) {
