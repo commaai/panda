@@ -3,25 +3,40 @@ ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update && apt-get install -y \
     autoconf \
+    automake \
+    bison \
+    bzip2 \
     capnproto \
     clang \
     curl \
+    flex \
+    g++ \
+    gawk \
     gcc-arm-none-eabi \
     git \
+    gperf \
+    help2man \
     libarchive-dev \
     libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libavresample-dev libavfilter-dev \
     libbz2-dev \
     libcapnp-dev \
     libcurl4-openssl-dev \
+    libexpat-dev \
     libtool \
+    libtool-bin \
     libssl-dev \
     libusb-1.0-0 \
     libzmq3-dev \
     locales \
     make \
+    ncurses-dev \
     pkg-config \
     python \
+    python-dev \
     python-pip \
+    texinfo \
+    unrar-free \
+    unzip \
     wget \
     zlib1g-dev
 
@@ -55,17 +70,7 @@ RUN git submodule update --init cereal opendbc
 RUN cd /tmp/openpilot/opendbc && pip install -r requirements.txt
 RUN cd /tmp/openpilot/tools && pip install -r requirements.txt
 
-COPY . /tmp/openpilot/panda
-
-# Build esp toolchain
-RUN apt-get install -y gperf bison flex texinfo help2man gawk libtool libtool-bin ncurses-dev unzip
-WORKDIR /tmp/openpilot/panda/boardesp
-RUN git clone --recursive https://github.com/pfalcon/esp-open-sdk.git
-RUN cd esp-open-sdk/ && git checkout 03f5e898a059451ec5f3de30e7feff30455f7ce
-WORKDIR /tmp/openpilot/panda/boardesp/esp-open-sdk
-
-RUN cp ../python2_make.py .
-RUN python2 python2_make.py "CT_ALLOW_BUILD_AS_ROOT_SURE=1 make STANDALONE=y"
-
 WORKDIR /tmp/openpilot
 RUN scons -c && scons -j$(nproc) opendbc/ cereal/
+
+COPY . /tmp/openpilot/panda
