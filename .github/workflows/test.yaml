@@ -61,17 +61,6 @@ jobs:
         run: $RUN "cd /tmp/openpilot/panda/board/pedal && make obj/comma.bin"
       - name: Build pedal STM bootstub image
         run: $RUN "cd /tmp/openpilot/panda/board/pedal && make obj/bootstub.bin"
-
-  build_esp:
-    name: build esp
-    runs-on: ubuntu-16.04
-    needs: docker_build
-    steps:
-      - uses: actions/download-artifact@v1
-        with:
-          name: panda.tar.gz
-      - name: Load image
-        run: $LOAD
       - name: Build ESP image
         run: $RUN "cd /tmp/openpilot/panda/boardesp && pyenv local system && DOCKER=1 ./get_sdk.sh && pyenv local --unset && make user1.bin"
 
