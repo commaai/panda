@@ -4,27 +4,20 @@ ENV PYTHONUNBUFFERED 1
 RUN apt-get update && apt-get install -y --no-install-recommends \
     autoconf \
     automake \
-    bison \
     bzip2 \
     capnproto \
     clang \
     curl \
-    flex \
     g++ \
-    gawk \
     gcc-arm-none-eabi libnewlib-arm-none-eabi \
     git \
-    gperf \
-    help2man \
     libarchive-dev \
     libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libavresample-dev libavfilter-dev \
     libbz2-dev \
     libcapnp-dev \
     libcurl4-openssl-dev \
-    libexpat-dev \
     libffi-dev \
     libtool \
-    libtool-bin \
     libssl-dev \
     libusb-1.0-0 \
     libzmq3-dev \
@@ -35,11 +28,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python \
     python-dev \
     python-pip \
-    texinfo \
-    unrar-free \
     unzip \
     wget \
-    zlib1g-dev
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8
@@ -52,10 +44,10 @@ ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
 RUN pyenv install 3.7.3 && pyenv global 3.7.3
 RUN pyenv rehash
 
-RUN pip install --upgrade pip==18.0
+RUN pip install --no-cache-dir --upgrade pip==18.0
 
 COPY requirements.txt /tmp/
-RUN pip install -r /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 ENV PYTHONPATH /tmp/openpilot:$PYTHONPATH
 
@@ -66,8 +58,9 @@ RUN git pull && git checkout 44560b5bb74e451767725144c3fa5f1564481a20
 RUN rm -rf $(ls --hide="common" --hide="selfdrive" --hide="cereal" --hide="opendbc" --hide="tools" --hide="SConstruct")
 RUN git submodule update --init cereal opendbc
 
-RUN cd /tmp/openpilot/opendbc && pip install -r requirements.txt
-RUN cd /tmp/openpilot/tools && pip install -r requirements.txt
+RUN cd /tmp/openpilot/ && \
+    pip install --no-cache-dir -r opendbc/requirements.txt && \
+    pip install --no-cache-dir -r tools/requirements.txt
 
 WORKDIR /tmp/openpilot
 RUN scons -c && scons -j$(nproc) opendbc/ cereal/
