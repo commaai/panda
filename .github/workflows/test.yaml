@@ -74,7 +74,7 @@ jobs:
     - name: Build docker image
       run: |
         #docker pull docker.io/commaai/panda_esp:latest || true
-        docker build --cache-from docker.io/commaai/panda_esp:latest -t panda_esp -f tests/build/Dockerfile.panda_eps .
+        docker build --cache-from docker.io/commaai/panda_esp:latest -t panda_esp -f tests/build/Dockerfile.panda_esp .
     - name: Login to dockerhub
       run: docker login -u wmelching -p ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Tag image
