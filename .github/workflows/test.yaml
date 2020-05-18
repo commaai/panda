@@ -69,22 +69,20 @@ jobs:
     name: build esp
     runs-on: ubuntu-16.04
     timeout-minutes: 40
-    #if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
     steps:
     - uses: actions/checkout@v2
     - name: Build docker image
       run: |
-        #docker pull docker.io/commaai/panda_esp:latest || true
-        #docker build --cache-from docker.io/commaai/panda_esp:latest -t panda_esp -f tests/build/Dockerfile.panda_esp .
-        docker build -t panda_esp -f tests/build/Dockerfile.panda_esp .
-    - name: Login to dockerhub
-      run: docker login -u wmelching -p ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Tag image
+        docker pull docker.io/commaai/panda_esp:latest || true
+        docker build --cache-from docker.io/commaai/panda_esp:latest -t panda_esp -f tests/build/Dockerfile.panda_esp .
+    - name: Build ESP image
+      run: docker run --rm panda_esp /bin/sh -c "cd /panda/boardesp && pyenv local system && DOCKER=1 ./get_sdk.sh && pyenv local --unset && make user1.bin"
+    - name: Push image
       run:  |
+        docker login -u wmelching -p ${{ secrets.DOCKERHUB_TOKEN }}
         docker tag panda_esp docker.io/commaai/panda_esp:latest
         docker push docker.io/commaai/panda_esp:latest
-    - name: Build ESP image
-      run: $RUN "cd /panda/boardesp && pyenv local system && DOCKER=1 ./get_sdk.sh && pyenv local --unset && make user1.bin"
 
   safety:
     name: safety
