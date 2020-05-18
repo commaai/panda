@@ -55,8 +55,8 @@ WORKDIR /tmp
 RUN git clone https://github.com/commaai/openpilot.git || true && \
     cd /tmp/openpilot && \
     git pull && git checkout 44560b5bb74e451767725144c3fa5f1564481a20 && \
-    rm -rf $(ls --hide="common" --hide="selfdrive" --hide="cereal" --hide="opendbc" --hide="tools" --hide="SConstruct") && \
-    git submodule update --init cereal opendbc
+    git submodule update --init cereal opendbc && \
+    rm -rf $(ls --hide="common" --hide="selfdrive" --hide="cereal" --hide="opendbc" --hide="tools" --hide="SConstruct")
 
 RUN cd /tmp/openpilot && \
     pip install --no-cache-dir -r opendbc/requirements.txt && \
