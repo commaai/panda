@@ -12,7 +12,7 @@ const CanMsg HYUNDAI_TX_MSGS[] = {{832, 0, 8}, {1265, 0, 4}, {1157, 0, 4}};
 AddrCheckStruct hyundai_rx_checks[] = {
   {.msg = {{608, 0, 8}}, .max_counter = 3U, .expected_timestep = 10000U},
   {.msg = {{897, 0, 8}}, .max_counter = 255U, .expected_timestep = 10000U},
-  {.msg = {{902, 0, 8}}, .max_counter = 3U,  .expected_timestep = 10000U},
+  {.msg = {{902, 0, 8}}, .max_counter = 15U,  .expected_timestep = 10000U},
   {.msg = {{916, 0, 8}}, .max_counter = 7U, .expected_timestep = 10000U},
   {.msg = {{1057, 0, 8}}, .max_counter = 15U, .expected_timestep = 20000U},
 };
@@ -27,7 +27,7 @@ static uint8_t hyundai_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
   } else if (addr == 897) {
     cnt = GET_BYTE(to_push, 5);
   } else if (addr == 902) {
-    cnt = (GET_BYTE(to_push, 1) >> 6) & 0x3;
+    cnt = ((GET_BYTE(to_push, 3) >> 6) << 2) | (GET_BYTE(to_push, 1) >> 6);
   } else if (addr == 916) {
     cnt = (GET_BYTE(to_push, 1) >> 5) & 0x7;
   } else if (addr == 1057) {
