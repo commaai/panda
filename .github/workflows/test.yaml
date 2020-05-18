@@ -73,7 +73,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build docker image
       run: |
-        docker pull $(grep -ioP '(?<=^from)\s+\S+' tests/build/Dockerfile.panda) || true
+        docker pull $(grep -ioP '(?<=^from)\s+\S+' tests/build/Dockerfile.panda_esp) || true
         docker pull docker.io/commaai/panda_esp:latest || true
         docker build --cache-from docker.io/commaai/panda_esp:latest -t panda_esp -f tests/build/Dockerfile.panda_esp .
     - name: Build ESP image
