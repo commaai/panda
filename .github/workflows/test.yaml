@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-16.04
     timeout-minutes: 10
     needs: docker_build
-    #if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
     steps:
       - uses: actions/download-artifact@v1
         with:
