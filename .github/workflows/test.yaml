@@ -76,7 +76,7 @@ jobs:
         docker pull docker.io/commaai/panda_esp:latest || true
         docker build --cache-from docker.io/commaai/panda_esp:latest -t panda_esp -f tests/build/Dockerfile.panda_esp .
     - name: Build ESP image
-      run: docker run --rm panda_esp /bin/sh -c "cd /panda/boardesp && DOCKER=1 ./get_sdk.sh && make user1.bin"
+      run: docker run --rm panda_esp /bin/sh -c "cd /panda/boardesp && make user1.bin"
     - name: Push image
       if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
       run:  |
