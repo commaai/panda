@@ -2,7 +2,7 @@ name: panda tests
 on: [push, pull_request]
 
 env:
-  RUN: docker run --rm panda /bin/sh -c
+  RUN: docker run --rm panda /bin/bash -c
   PERSIST: docker run --name panda panda /bin/sh -c
   BUILD: |
       docker pull $(grep -ioP '(?<=^from)\s+\S+' Dockerfile.panda) || true
