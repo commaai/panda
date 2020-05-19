@@ -77,7 +77,7 @@ jobs:
         run: |
           $RUN "cd /tmp/openpilot && \
                 scons -c && \
-                scons -j$(nproc) && \
+                scons -j$(nproc) opendbc/ cereal/ && \
                 cd /panda/tests/safety && \
                 ./test.sh"
 
