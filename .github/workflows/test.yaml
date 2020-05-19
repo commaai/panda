@@ -73,7 +73,6 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: eval "$BUILD"
-      - name: Test python package installer
       - name: Run safety tests
         run: $RUN "cd /tmp/openpilot && \
                    scons -c && \
