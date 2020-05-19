@@ -1,5 +1,6 @@
 FROM ubuntu:16.04
 ENV PYTHONUNBUFFERED 1
+ENV PYTHONPATH /tmp/openpilot:$PYTHONPATH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     autoconf \
@@ -30,7 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     wget \
     zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/*
 
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8
@@ -38,20 +39,17 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
-
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
-RUN pyenv install 3.7.3 && pyenv global 3.7.3
-RUN pyenv rehash
-
-RUN pip install --no-cache-dir --upgrade pip==18.0
 
 COPY requirements.txt /tmp/
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN pyenv install 3.7.3 && \
+    pyenv global 3.7.3 && \
+    pyenv rehash && \
+    pip install --no-cache-dir --upgrade pip==18.0 && \
+    pip install --no-cache-dir -r /tmp/requirements.txt
 
-ENV PYTHONPATH /tmp/openpilot:$PYTHONPATH
-
-WORKDIR /tmp
-RUN git clone https://github.com/commaai/openpilot.git tmppilot || true && \
+RUN cd /tmp && \
+    git clone https://github.com/commaai/openpilot.git tmppilot || true && \
     cd /tmp/tmppilot && \
     git pull && git checkout 44560b5bb74e451767725144c3fa5f1564481a20 && \
     git submodule update --init cereal opendbc && \
@@ -62,8 +60,5 @@ RUN git clone https://github.com/commaai/openpilot.git tmppilot || true && \
 RUN cd /tmp/openpilot && \
     pip install --no-cache-dir -r opendbc/requirements.txt && \
     pip install --no-cache-dir -r tools/requirements.txt
-
-WORKDIR /tmp/openpilot
-RUN scons -c && scons -j$(nproc) opendbc/ cereal/
 
 COPY . /tmp/openpilot/panda

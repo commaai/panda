@@ -2,40 +2,23 @@ name: panda tests
 on: [push, pull_request]
 
 env:
-  RUN: docker run --rm panda /bin/sh -c
+  RUN: docker run --rm panda /bin/bash -c
   PERSIST: docker run --name panda panda /bin/sh -c
-  LOAD: docker load -i panda.tar.gz/panda.tar.gz
+  BUILD: |
+      docker pull $(grep -ioP '(?<=^from)\s+\S+' Dockerfile.panda) || true
+      docker pull docker.io/commaai/panda:latest || true
+      docker build --cache-from docker.io/commaai/panda:latest -t panda -f Dockerfile.panda .
 
 jobs:
-  docker_build:
-    name: docker build
-    runs-on: ubuntu-16.04
-    timeout-minutes: 30
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build docker image
-      run: |
-        docker pull $(grep -ioP '(?<=^from)\s+\S+' Dockerfile.panda) || true
-        docker pull docker.io/commaai/panda:latest || true
-        docker build --cache-from docker.io/commaai/panda:latest -t panda -f Dockerfile.panda .
-        docker save panda:latest | gzip > panda.tar.gz
-    - uses: actions/upload-artifact@v2
-      with:
-        name: panda.tar.gz
-        path: panda.tar.gz
-
   docker_push:
     name: docker push
     runs-on: ubuntu-16.04
-    timeout-minutes: 10
-    needs: docker_build
+    timeout-minutes: 45
     if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
     steps:
-      - uses: actions/download-artifact@v1
-        with:
-          name: panda.tar.gz
-      - name: Load image
-        run: $LOAD
+      - uses: actions/checkout@v2
+      - name: Build Docker image
+        run: eval "$BUILD"
       - name: Login to dockerhub
         run: docker login -u wmelching -p ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Tag image
@@ -46,14 +29,11 @@ jobs:
   build:
     name: build
     runs-on: ubuntu-16.04
-    timeout-minutes: 30
-    needs: docker_build
+    timeout-minutes: 45
     steps:
-      - uses: actions/download-artifact@v1
-        with:
-          name: panda.tar.gz
-      - name: Load image
-        run: $LOAD
+      - uses: actions/checkout@v2
+      - name: Build Docker image
+        run: eval "$BUILD"
       - name: Test python package installer
         run: $RUN "cd /tmp/openpilot/panda && python setup.py install"
       - name: Build panda STM image
@@ -68,7 +48,7 @@ jobs:
   build_esp:
     name: build esp
     runs-on: ubuntu-16.04
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
     - uses: actions/checkout@v2
     - name: Build docker image
@@ -88,42 +68,38 @@ jobs:
   safety:
     name: safety
     runs-on: ubuntu-16.04
-    timeout-minutes: 10
-    needs: docker_build
+    timeout-minutes: 45
     steps:
-      - uses: actions/download-artifact@v1
-        with:
-          name: panda.tar.gz
-      - name: Load image
-        run: $LOAD
+      - uses: actions/checkout@v2
+      - name: Build Docker image
+        run: eval "$BUILD"
       - name: Run safety tests
-        run: $RUN "cd /tmp/openpilot/panda/tests/safety && ./test.sh"
+        run: |
+          $RUN "cd /tmp/openpilot && \
+                scons -c && \
+                scons -j$(nproc) opendbc/ cereal/ && \
+                cd panda/tests/safety && \
+                ./test.sh"
 
   safety_replay:
     name: safety replay
     runs-on: ubuntu-16.04
-    timeout-minutes: 10
-    needs: docker_build
+    timeout-minutes: 45
     steps:
-      - uses: actions/download-artifact@v1
-        with:
-          name: panda.tar.gz
-      - name: Load image
-        run: $LOAD
+      - uses: actions/checkout@v2
+      - name: Build Docker image
+        run: eval "$BUILD"
       - name: Run safety replay
         run: $RUN "cd /tmp/openpilot/panda/tests/safety_replay && ./test_safety_replay.py"
 
   misra:
     name: misra c2012
     runs-on: ubuntu-16.04
-    timeout-minutes: 10
-    needs: docker_build
+    timeout-minutes: 45
     steps:
-      - uses: actions/download-artifact@v1
-        with:
-          name: panda.tar.gz
-      - name: Load image
-        run: $LOAD
+      - uses: actions/checkout@v2
+      - name: Build Docker image
+        run: eval "$BUILD"
       - name: Run Misra C 2012 analysis
         run: $PERSIST "cd /tmp/openpilot/panda/tests/misra && ./test_misra.sh"
       - name: Copy analysis outputs
@@ -142,14 +118,11 @@ jobs:
   python_linter:
     name: python linter
     runs-on: ubuntu-16.04
-    timeout-minutes: 10
-    needs: docker_build
+    timeout-minutes: 45
     steps:
-      - uses: actions/download-artifact@v1
-        with:
-          name: panda.tar.gz
-      - name: Load image
-        run: $LOAD
+      - uses: actions/checkout@v2
+      - name: Build Docker image
+        run: eval "$BUILD"
       - name: Run linters
         run: |
           $RUN "cd /tmp/openpilot/panda/tests/linter_python/ && ./flake8_panda.sh"
