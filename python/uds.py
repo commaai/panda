@@ -372,7 +372,7 @@ class IsoTpMessage():
     self._tx_first_frame()
 
   def _tx_first_frame(self) -> None:
-    if self.tx_len < 8:
+    if self.tx_len < self.max_len:
       # single frame (send all bytes)
       if self.debug: print("ISO-TP: TX - single frame")
       msg = (bytes([self.tx_len]) + self.tx_dat).ljust(self.max_len, b"\x00")
@@ -380,7 +380,7 @@ class IsoTpMessage():
     else:
       # first frame (send first 6 bytes)
       if self.debug: print("ISO-TP: TX - first frame")
-      msg = (struct.pack("!H", 0x1000 | self.tx_len) + self.tx_dat[:6]).ljust(self.max_len, b"\x00")
+      msg = (struct.pack("!H", 0x1000 | self.tx_len) + self.tx_dat[:self.max_len - 2]).ljust(self.max_len - 2, b"\x00")
     self._can_client.send([msg])
 
   def recv(self) -> bytes:
