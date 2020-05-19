@@ -75,7 +75,11 @@ jobs:
         run: eval "$BUILD"
       - name: Test python package installer
       - name: Run safety tests
-        run: $RUN "cd /tmp/openpilot/panda/tests/safety && ./test.sh"
+        run: $RUN "cd /tmp/openpilot && \
+                   scons -c && \
+                   scons -j$(nproc) && \
+                   cd /panda/tests/safety && \
+                   ./test.sh"
 
   safety_replay:
     name: safety replay
