@@ -44,8 +44,6 @@ static uint8_t hyundai_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   uint8_t chksum;
   if (addr == 608) {
     chksum = GET_BYTE(to_push, 7) & 0xF;
-  } else if (addr == 897) {
-    chksum = GET_BYTE(to_push, 6);
   } else if (addr == 916) {
     chksum = GET_BYTE(to_push, 6) & 0xF;
   } else if (addr == 1057) {
@@ -59,22 +57,16 @@ static uint8_t hyundai_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
 static uint8_t hyundai_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   int addr = GET_ADDR(to_push);
 
-  uint8_t chksum;
-  if ((addr == 608) || (addr == 916) || (addr == 1057)) {
-    // same algorithm, but checksum is in a different place
-    for (int i = 0; i < 8; i++) {
-      uint8_t b = GET_BYTE(to_push, i);
-      if (((addr == 608) && (i == 7)) || ((addr == 916) && (i == 6)) || ((addr == 1057) && (i == 7))) {
-        b &= (addr == 1057) ? 0x0F : 0xF0; // remove checksum
-      }
-      chksum += (b % 16) + (b / 16);
+  uint8_t chksum = 0;
+  // same algorithm, but checksum is in a different place
+  for (int i = 0; i < 8; i++) {
+    uint8_t b = GET_BYTE(to_push, i);
+    if (((addr == 608) && (i == 7)) || ((addr == 916) && (i == 6)) || ((addr == 1057) && (i == 7))) {
+      b &= (addr == 1057) ? 0x0F : 0xF0; // remove checksum
     }
-    chksum = (16 - (chksum %  16)) % 16;
-  } else if (addr == 897) {
-    // same crc as LKAS msg
-  } else {
-    chksum = 0;
+    chksum += (b % 16) + (b / 16);
   }
+  chksum = (16 - (chksum %  16)) % 16;
   return chksum;
 }
 
