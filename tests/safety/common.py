@@ -32,8 +32,10 @@ def make_msg(bus, addr, length=8):
   return package_can_msg([addr, 0, b'\x00'*length, bus])
 
 class CANPackerPanda(CANPacker):
-  def make_can_msg_panda(self, name_or_addr, bus, values, counter=-1):
+  def make_can_msg_panda(self, name_or_addr, bus, values, counter=-1, fix_checksum=None):
     msg = self.make_can_msg(name_or_addr, bus, values, counter=-1)
+    if fix_checksum is not None:
+      msg = fix_checksum(msg)
     return package_can_msg(msg)
 
 class PandaSafetyTestBase(unittest.TestCase):
