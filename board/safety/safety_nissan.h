@@ -14,11 +14,13 @@ const int NISSAN_DEG_TO_CAN = 100;
 const CanMsg NISSAN_TX_MSGS[] = {{0x169, 0, 8}, {0x2b1, 0, 8}, {0x4cc, 0, 8}, {0x20b, 2, 8}, {0x280, 2, 8}};
 
 AddrCheckStruct nissan_rx_checks[] = {
-  {.msg = {{0x2, 0, 5}}, .expected_timestep = 10000U},  // STEER_ANGLE_SENSOR (100Hz)
-  {.msg = {{0x285, 0, 8}}, .expected_timestep = 20000U}, // WHEEL_SPEEDS_REAR (50Hz)
-  {.msg = {{0x30f, 2, 3}}, .expected_timestep = 100000U}, // CRUISE_STATE (10Hz)
-  {.msg = {{0x15c, 0, 8}, {0x239, 0, 8}}, .expected_timestep = 20000U}, // GAS_PEDAL (100Hz / 50Hz)
-  {.msg = {{0x454, 0, 8}, {0x1cc, 0, 8}}, .expected_timestep = 100000U}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
+  {.msg = {{0x2, 0, 5, .expected_timestep = 10000U}}},  // STEER_ANGLE_SENSOR (100Hz)
+  {.msg = {{0x285, 0, 8, .expected_timestep = 20000U}}}, // WHEEL_SPEEDS_REAR (50Hz)
+  {.msg = {{0x30f, 2, 3, .expected_timestep = 100000U}}}, // CRUISE_STATE (10Hz)
+  {.msg = {{0x15c, 0, 8, .expected_timestep = 20000U},
+           {0x239, 0, 8, .expected_timestep = 20000U}}}, // GAS_PEDAL (100Hz / 50Hz)
+  {.msg = {{0x454, 0, 8, .expected_timestep = 100000U},
+           {0x1cc, 0, 8, .expected_timestep = 100000U}}}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
 };
 const int NISSAN_RX_CHECK_LEN = sizeof(nissan_rx_checks) / sizeof(nissan_rx_checks[0]);
 
