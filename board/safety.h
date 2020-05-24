@@ -112,8 +112,9 @@ int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_
       }
     }
 
-    CanMsgCheck msg = addr_list[i].msg[addr_list[i].index];
-    if ((addr == msg.addr) && (bus == msg.bus) && (length == msg.len)) {
+    if ((addr == addr_list[i].msg[addr_list[i].index].addr) &&
+        (bus == addr_list[i].msg[addr_list[i].index].bus) &&
+        (length == addr_list[i].msg[addr_list[i].index].len)) {
       index = i;
       break;
     }
@@ -123,15 +124,14 @@ int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_
 
 // 1Hz safety function called by main. Now just a check for lagging safety messages
 void safety_tick(const safety_hooks *hooks) {
-  //uint32_t ts = TIM2->CNT;
+  uint32_t ts = TIM2->CNT;
   if (hooks->addr_check != NULL) {
     for (int i=0; i < hooks->addr_check_len; i++) {
-      //uint32_t elapsed_time = get_ts_elapsed(ts, hooks->addr_check[i].last_timestamp);
+      uint32_t elapsed_time = get_ts_elapsed(ts, hooks->addr_check[i].last_timestamp);
       // lag threshold is max of: 1s and MAX_MISSED_MSGS * expected timestep.
       // Quite conservative to not risk false triggers.
       // 2s of lag is worse case, since the function is called at 1Hz
-      //bool lagging = elapsed_time > MAX(hooks->addr_check[i].expected_timestep * MAX_MISSED_MSGS, 1e6);
-      bool lagging = false;
+      bool lagging = elapsed_time > MAX(hooks->addr_check[i].msg[hooks->addr_check[i].index].expected_timestep * MAX_MISSED_MSGS, 1e6);
       hooks->addr_check[i].lagging = lagging;
       if (lagging) {
         controls_allowed = 0;
@@ -141,7 +141,7 @@ void safety_tick(const safety_hooks *hooks) {
 }
 
 void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
-  if (index != -1 && index != -1) {
+  if (index != -1) {
     uint8_t expected_counter = (addr_list[index].last_counter + 1U) % (addr_list[index].msg[addr_list[index].index].max_counter + 1U);
     addr_list[index].wrong_counters += (expected_counter == counter) ? -1 : 1;
     addr_list[index].wrong_counters = MAX(MIN(addr_list[index].wrong_counters, MAX_WRONG_COUNTERS), 0);
