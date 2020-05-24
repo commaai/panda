@@ -128,7 +128,7 @@ static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (addr == 0x371) {
       int torque_driver_new;
       torque_driver_new = (GET_BYTE(to_push, 3) >> 5) + (GET_BYTE(to_push, 4) << 3);
-      torque_driver_new = to_signed(torque_driver_new, 11);
+      torque_driver_new = 8 * to_signed(torque_driver_new, 11);
       update_sample(&torque_driver, torque_driver_new);
     }
 
@@ -259,7 +259,7 @@ static int subaru_legacy_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     bool violation = 0;
     uint32_t ts = TIM2->CNT;
 
-    desired_torque = to_signed(desired_torque, 13);
+    desired_torque = -1 * to_signed(desired_torque, 13);
 
     if (controls_allowed) {
 

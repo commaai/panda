@@ -38,9 +38,7 @@ class TestSubaruLegacySafety(common.PandaSafetyTest):
     self.safety.set_rt_torque_last(t)
 
   def _torque_driver_msg(self, torque):
-    # TODO: figure out if this scaling factor from the DBC is right.
-    # if it is, remove the scaling from here and put it in the safety code
-    values = {"Steer_Torque_Sensor": torque*8}
+    values = {"Steer_Torque_Sensor": torque}
     return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
 
   def _speed_msg(self, speed):
