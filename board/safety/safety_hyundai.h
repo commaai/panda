@@ -8,10 +8,10 @@ const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
 const int HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
 const CanMsg HYUNDAI_TX_MSGS[] = {{832, 0, 8}, {1265, 0, 4}, {1157, 0, 4}};
 
-// TODO: do checksum checks
+// TODO: missing checksum for wheel speeds message,worst failure case is
+//       wheel speeds stuck at 0 and we don't disengage on brake press
 AddrCheckStruct hyundai_rx_checks[] = {
   {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}}},
-  {.msg = {{897, 0, 8, .max_counter = 255U, .expected_timestep = 10000U}}},
   {.msg = {{902, 0, 8, .max_counter = 15U,  .expected_timestep = 10000U}}},
   {.msg = {{916, 0, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}}},
   {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
@@ -24,8 +24,6 @@ static uint8_t hyundai_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
   uint8_t cnt;
   if (addr == 608) {
     cnt = (GET_BYTE(to_push, 7) >> 4) & 0x3;
-  } else if (addr == 897) {
-    cnt = GET_BYTE(to_push, 5);
   } else if (addr == 902) {
     cnt = ((GET_BYTE(to_push, 3) >> 6) << 2) | (GET_BYTE(to_push, 1) >> 6);
   } else if (addr == 916) {
@@ -66,8 +64,7 @@ static uint8_t hyundai_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
     }
     chksum += (b % 16U) + (b / 16U);
   }
-  chksum = (16U - (chksum %  16U)) % 16U;
-  return chksum;
+  return (16U - (chksum %  16U)) % 16U;
 }
 
 static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
