@@ -116,7 +116,7 @@ def time_many_sends(p, bus, p_recv=None, msg_count=100, msg_id=None, two_pandas=
 
 def reset_pandas():
   panda_jungle.set_panda_power(False)
-  time.sleep(5)
+  time.sleep(3)
   panda_jungle.set_panda_power(True)
   time.sleep(5)
 
