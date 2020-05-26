@@ -271,9 +271,10 @@ int set_safety_hooks(uint16_t mode, int16_t param) {
       set_status = 0;  // set
     }
 
-    // reset msg index in addr struct
+    // reset message index and seen flags in addr struct
     for (int j = 0; j < safety_hook_registry[i].hooks->addr_check_len; j++) {
       safety_hook_registry[i].hooks->addr_check[j].index = 0;
+      safety_hook_registry[i].hooks->addr_check[j].msg_seen = false;
     }
   }
   if ((set_status == 0) && (current_hooks->init != NULL)) {

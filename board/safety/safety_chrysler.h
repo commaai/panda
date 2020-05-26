@@ -212,6 +212,7 @@ static int chrysler_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return bus_fwd;
 }
 
+
 const safety_hooks chrysler_hooks = {
   .init = nooutput_init,
   .rx = chrysler_rx_hook,
