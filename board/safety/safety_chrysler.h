@@ -17,8 +17,6 @@ AddrCheckStruct chrysler_rx_checks[] = {
 };
 const int CHRYSLER_RX_CHECK_LEN = sizeof(chrysler_rx_checks) / sizeof(chrysler_rx_checks[0]);
 
-int chrysler_speed = 0;
-
 static uint8_t chrysler_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte));
@@ -97,14 +95,14 @@ static int chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (addr == 514) {
       int speed_l = (GET_BYTE(to_push, 0) << 4) + (GET_BYTE(to_push, 1) >> 4);
       int speed_r = (GET_BYTE(to_push, 2) << 4) + (GET_BYTE(to_push, 3) >> 4);
-      chrysler_speed = (speed_l + speed_r) / 2;
-      vehicle_moving = chrysler_speed > CHRYSLER_STANDSTILL_THRSLD;
+      vehicle_speed = (speed_l + speed_r) / 2;
+      vehicle_moving = (int)vehicle_speed > CHRYSLER_STANDSTILL_THRSLD;
     }
 
     // exit controls on rising edge of gas press
     if (addr == 308) {
       bool gas_pressed = (GET_BYTE(to_push, 5) & 0x7F) != 0;
-      if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev && (chrysler_speed > CHRYSLER_GAS_THRSLD)) {
+      if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev && ((int)vehicle_speed > CHRYSLER_GAS_THRSLD)) {
         controls_allowed = 0;
       }
       gas_pressed_prev = gas_pressed;

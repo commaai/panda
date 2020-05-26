@@ -239,7 +239,29 @@ const safety_hook_config safety_hook_registry[] = {
 };
 
 int set_safety_hooks(uint16_t mode, int16_t param) {
-  safety_mode_cnt = 0U;  // reset safety mode timer
+  // reset state set by safety mode
+  safety_mode_cnt = 0U;
+  relay_malfunction = false;
+  gas_interceptor_detected = false;
+  gas_interceptor_prev = 0;
+  gas_pressed_prev = false;
+  brake_pressed_prev = false;
+  cruise_engaged_prev = false;
+  vehicle_speed = 0;
+  vehicle_moving = false;
+  desired_torque_last = 0;
+  rt_torque_last = 0;
+  ts_angle_last = 0;
+  desired_angle_last = 0;
+  ts_last = 0;
+
+  torque_meas.max = 0;
+  torque_meas.max = 0;
+  torque_driver.min = 0;
+  torque_driver.max = 0;
+  angle_meas.min = 0;
+  angle_meas.max = 0;
+
   int set_status = -1;  // not set
   int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);
   for (int i = 0; i < hook_config_count; i++) {
@@ -247,7 +269,12 @@ int set_safety_hooks(uint16_t mode, int16_t param) {
       current_hooks = safety_hook_registry[i].hooks;
       current_safety_mode = safety_hook_registry[i].id;
       set_status = 0;  // set
-      break;
+    }
+
+    // reset message index and seen flags in addr struct
+    for (int j = 0; j < safety_hook_registry[i].hooks->addr_check_len; j++) {
+      safety_hook_registry[i].hooks->addr_check[j].index = 0;
+      safety_hook_registry[i].hooks->addr_check[j].msg_seen = false;
     }
   }
   if ((set_status == 0) && (current_hooks->init != NULL)) {

@@ -98,14 +98,20 @@ int gas_interceptor_prev = 0;
 bool gas_pressed_prev = false;
 bool brake_pressed_prev = false;
 bool cruise_engaged_prev = false;
+float vehicle_speed = 0;
 bool vehicle_moving = false;
 
-// for torque-based safety modes
+// for safety modes with torque steering control
 int desired_torque_last = 0;       // last desired steer torque
 int rt_torque_last = 0;            // last desired torque for real time check
 struct sample_t torque_meas;       // last 3 motor torques produced by the eps
 struct sample_t torque_driver;     // last 3 driver torques measured
 uint32_t ts_last = 0;
+
+// for safety modes with angle steering control
+uint32_t ts_angle_last = 0;
+int desired_angle_last = 0;
+struct sample_t angle_meas;         // last 3 steer angles
 
 // This can be set with a USB command
 // It enables features we consider to be unsafe, but understand others may have different opinions
