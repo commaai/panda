@@ -100,15 +100,25 @@ int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_
 
   int index = -1;
   for (int i = 0; i < len; i++) {
-    for (uint8_t j = 0U; addr_list[i].msg[j].addr != 0; j++) {
-      if ((addr == addr_list[i].msg[j].addr) && (bus == addr_list[i].msg[j].bus) &&
-            (length == addr_list[i].msg[j].len)) {
-        index = i;
-        goto Return;
+    // if multiple msgs are allowed, determine which one is present on the bus
+    if (!addr_list[i].msg_seen) {
+      for (uint8_t j = 0U; addr_list[i].msg[j].addr != 0; j++) {
+        if ((addr == addr_list[i].msg[j].addr) && (bus == addr_list[i].msg[j].bus) &&
+              (length == addr_list[i].msg[j].len)) {
+          addr_list[i].index = j;
+          addr_list[i].msg_seen = true;
+          break;
+        }
       }
     }
+
+    int idx = addr_list[i].index;
+    if ((addr == addr_list[i].msg[idx].addr) && (bus == addr_list[i].msg[idx].bus) &&
+        (length == addr_list[i].msg[idx].len)) {
+      index = i;
+      break;
+    }
   }
-Return:
   return index;
 }
 
@@ -121,7 +131,7 @@ void safety_tick(const safety_hooks *hooks) {
       // lag threshold is max of: 1s and MAX_MISSED_MSGS * expected timestep.
       // Quite conservative to not risk false triggers.
       // 2s of lag is worse case, since the function is called at 1Hz
-      bool lagging = elapsed_time > MAX(hooks->addr_check[i].expected_timestep * MAX_MISSED_MSGS, 1e6);
+      bool lagging = elapsed_time > MAX(hooks->addr_check[i].msg[hooks->addr_check[i].index].expected_timestep * MAX_MISSED_MSGS, 1e6);
       hooks->addr_check[i].lagging = lagging;
       if (lagging) {
         controls_allowed = 0;
@@ -132,7 +142,7 @@ void safety_tick(const safety_hooks *hooks) {
 
 void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
   if (index != -1) {
-    uint8_t expected_counter = (addr_list[index].last_counter + 1U) % (addr_list[index].max_counter + 1U);
+    uint8_t expected_counter = (addr_list[index].last_counter + 1U) % (addr_list[index].msg[addr_list[index].index].max_counter + 1U);
     addr_list[index].wrong_counters += (expected_counter == counter) ? -1 : 1;
     addr_list[index].wrong_counters = MAX(MIN(addr_list[index].wrong_counters, MAX_WRONG_COUNTERS), 0);
     addr_list[index].last_counter = counter;
@@ -169,7 +179,7 @@ bool addr_safety_check(CAN_FIFOMailBox_TypeDef *to_push,
 
   if (index != -1) {
     // checksum check
-    if ((get_checksum != NULL) && (compute_checksum != NULL) && rx_checks[index].check_checksum) {
+    if ((get_checksum != NULL) && (compute_checksum != NULL) && rx_checks[index].msg[rx_checks[index].index].check_checksum) {
       uint8_t checksum = get_checksum(to_push);
       uint8_t checksum_comp = compute_checksum(to_push);
       rx_checks[index].valid_checksum = checksum_comp == checksum;
@@ -178,7 +188,7 @@ bool addr_safety_check(CAN_FIFOMailBox_TypeDef *to_push,
     }
 
     // counter check (max_counter == 0 means skip check)
-    if ((get_counter != NULL) && (rx_checks[index].max_counter > 0U)) {
+    if ((get_counter != NULL) && (rx_checks[index].msg[rx_checks[index].index].max_counter > 0U)) {
       uint8_t counter = get_counter(to_push);
       update_counter(rx_checks, index, counter);
     } else {

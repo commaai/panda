@@ -10,11 +10,11 @@ const CanMsg HYUNDAI_TX_MSGS[] = {{832, 0, 8}, {1265, 0, 4}, {1157, 0, 4}};
 
 // TODO: do checksum checks
 AddrCheckStruct hyundai_rx_checks[] = {
-  {.msg = {{608, 0, 8}}, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-  {.msg = {{897, 0, 8}}, .max_counter = 255U, .expected_timestep = 10000U},
-  {.msg = {{902, 0, 8}}, .max_counter = 15U,  .expected_timestep = 10000U},
-  {.msg = {{916, 0, 8}}, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U},
-  {.msg = {{1057, 0, 8}}, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
+  {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}}},
+  {.msg = {{897, 0, 8, .max_counter = 255U, .expected_timestep = 10000U}}},
+  {.msg = {{902, 0, 8, .max_counter = 15U,  .expected_timestep = 10000U}}},
+  {.msg = {{916, 0, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}}},
+  {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
 };
 const int HYUNDAI_RX_CHECK_LEN = sizeof(hyundai_rx_checks) / sizeof(hyundai_rx_checks[0]);
 

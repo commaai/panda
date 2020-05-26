@@ -26,17 +26,18 @@ const int HONDA_BOSCH_ACCEL_MIN = -350; // max braking == -3.5m/s2
 
 // Nidec and Bosch giraffe have pt on bus 0
 AddrCheckStruct honda_rx_checks[] = {
-  {.msg = {{0x1A6, 0, 8},  {0x296, 0, 4}}, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
-  {.msg = {{0x158, 0, 8}}, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-  {.msg = {{0x17C, 0, 8}}, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+  {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
+           {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}}},
+  {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}}},
+  {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}}},
 };
 const int HONDA_RX_CHECKS_LEN = sizeof(honda_rx_checks) / sizeof(honda_rx_checks[0]);
 
 // Bosch harness has pt on bus 1
 AddrCheckStruct honda_bh_rx_checks[] = {
-  {.msg = {{0x296, 1, 4}}, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
-  {.msg = {{0x158, 1, 8}}, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-  {.msg = {{0x17C, 1, 8}}, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+  {.msg = {{0x296, 1, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}}},
+  {.msg = {{0x158, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}}},
+  {.msg = {{0x17C, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}}},
 };
 const int HONDA_BH_RX_CHECKS_LEN = sizeof(honda_bh_rx_checks) / sizeof(honda_bh_rx_checks[0]);
 

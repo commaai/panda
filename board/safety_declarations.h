@@ -20,14 +20,22 @@ typedef struct {
   int len;
 } CanMsg;
 
-// params and flags about checksum, counter and frequency checks for each monitored address
 typedef struct {
-  // const params
-  const CanMsg msg[3];               // check either messages (e.g. honda steer). Array MUST terminate with an empty struct to know its length.
+  const int addr;
+  const int bus;
+  const int len;
   const bool check_checksum;         // true is checksum check is performed
   const uint8_t max_counter;         // maximum value of the counter. 0 means that the counter check is skipped
   const uint32_t expected_timestep;  // expected time between message updates [us]
+} CanMsgCheck;
+
+// params and flags about checksum, counter and frequency checks for each monitored address
+typedef struct {
+  // const params
+  const CanMsgCheck msg[3];          // check either messages (e.g. honda steer). Array MUST terminate with an empty struct to know its length.
   // dynamic flags
+  bool msg_seen;
+  int index;                         // if multiple messages are allowed to be checked, this stores the index of the first one seen. only msg[msg_index] will be used
   bool valid_checksum;               // true if and only if checksum check is passed
   int wrong_counters;                // counter of wrong counters, saturated between 0 and MAX_WRONG_COUNTERS
   uint8_t last_counter;              // last counter value
