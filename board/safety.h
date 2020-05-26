@@ -239,7 +239,22 @@ const safety_hook_config safety_hook_registry[] = {
 };
 
 int set_safety_hooks(uint16_t mode, int16_t param) {
-  safety_mode_cnt = 0U;  // reset safety mode timer
+  // reset state set by safety mode
+  safety_mode_cnt = 0U;
+  relay_malfunction = false;
+  gas_interceptor_detected = false;
+  gas_interceptor_prev = 0;
+  gas_pressed_prev = false;
+  brake_pressed_prev = false;
+  cruise_engaged_prev = false;
+  vehicle_moving = false;
+  desired_torque_last = 0;
+  rt_torque_last = 0;
+  //struct sample_t torque_driver;
+  ts_last = 0;
+
+  // TODO: reset addrcheck message index
+
   int set_status = -1;  // not set
   int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);
   for (int i = 0; i < hook_config_count; i++) {
