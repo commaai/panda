@@ -96,13 +96,13 @@ static int chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       int speed_l = (GET_BYTE(to_push, 0) << 4) + (GET_BYTE(to_push, 1) >> 4);
       int speed_r = (GET_BYTE(to_push, 2) << 4) + (GET_BYTE(to_push, 3) >> 4);
       vehicle_speed = (speed_l + speed_r) / 2;
-      vehicle_moving = vehicle_speed > CHRYSLER_STANDSTILL_THRSLD;
+      vehicle_moving = (int)vehicle_speed > CHRYSLER_STANDSTILL_THRSLD;
     }
 
     // exit controls on rising edge of gas press
     if (addr == 308) {
       bool gas_pressed = (GET_BYTE(to_push, 5) & 0x7F) != 0;
-      if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev && (vehicle_speed > CHRYSLER_GAS_THRSLD)) {
+      if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev && ((int)vehicle_speed > CHRYSLER_GAS_THRSLD)) {
         controls_allowed = 0;
       }
       gas_pressed_prev = gas_pressed;
