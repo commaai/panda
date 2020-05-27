@@ -18,7 +18,7 @@ DRIVER_TORQUE_FACTOR = 1
 
 class TestMazdaSafety(common.PandaSafetyTest):
 
-  TX_MSGS = [[0x243, 0]]
+  TX_MSGS = [[0x243, 0], [0x09d, 0]]
   STANDSTILL_THRESHOLD = .1
   RELAY_MALFUNCTION_ADDR = 0x243
   RELAY_MALFUNCTION_BUS = 0
