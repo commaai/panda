@@ -11,7 +11,7 @@ const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_DOWN = {
 
 const int NISSAN_DEG_TO_CAN = 100;
 
-const CanMsg NISSAN_TX_MSGS[] = {{0x169, 0, 8}, {0x2b1, 0, 8}, {0x4cc, 0, 8}, {0x20b, 2, 8}, {0x280, 2, 8}};
+const CanMsg NISSAN_TX_MSGS[] = {{0x169, 0, 8}, {0x2b1, 0, 8}, {0x4cc, 0, 8}, {0x20b, 2, 6}, {0x280, 2, 8}};
 
 AddrCheckStruct nissan_rx_checks[] = {
   {.msg = {{0x2, 0, 5, .expected_timestep = 10000U}}},  // STEER_ANGLE_SENSOR (100Hz)
