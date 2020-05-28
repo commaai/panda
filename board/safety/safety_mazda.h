@@ -1,5 +1,3 @@
-
-
 // CAN msgs we care about
 #define MAZDA_LKAS          0x243
 #define MAZDA_CRZ_CTRL      0x21c
@@ -197,12 +195,18 @@ static int mazda_fwd_hook(int bus, CAN_FIFOMailBox_TypeDef *to_fwd) {
       if (!(addr == MAZDA_LKAS)) {
         bus_fwd = MAZDA_MAIN;
       }
-    }
-    else {
+    } else {
       bus_fwd = -1;
     }
   }
   return bus_fwd;
+}
+
+static void mazda_init(int16_t param) {
+  UNUSED(param);
+  controls_allowed = false;
+  relay_malfunction_reset();
+  mazda_lkas_on = false;
 }
 
 const safety_hooks mazda_hooks = {
