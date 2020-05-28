@@ -206,11 +206,11 @@ static void mazda_init(int16_t param) {
   UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();
-  mazda_lkas_on = false;
+  mazda_lkas_allowed = false;
 }
 
 const safety_hooks mazda_hooks = {
-  .init = nooutput_init,
+  .init = mazda_init,
   .rx = mazda_rx_hook,
   .tx = mazda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
