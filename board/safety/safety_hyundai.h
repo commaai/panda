@@ -6,7 +6,16 @@ const int HYUNDAI_MAX_RATE_DOWN = 7;
 const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
 const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
 const int HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
-const CanMsg HYUNDAI_TX_MSGS[] = {{832, 0, 8}, {1265, 0, 4}, {1157, 0, 4}};
+const CanMsg HYUNDAI_TX_MSGS[] = {
+  {832, 0, 8},  // LKAS11 Bus 0
+  {1265, 0, 4}, // CLU11 Bus 0
+  {1157, 0, 4}, // LFAHDA_MFC Bus 0
+  // {1056, 0, 8}, //   SCC11,  Bus 0
+  // {1057, 0, 8}, //   SCC12,  Bus 0
+  // {1290, 0, 8}, //   SCC13,  Bus 0
+  // {905, 0, 8},  //   SCC14,  Bus 0
+  // {1186, 0, 8}  //   4a2SCC, Bus 0
+ };
 
 // TODO: missing checksum for wheel speeds message,worst failure case is
 //       wheel speeds stuck at 0 and we don't disengage on brake press
