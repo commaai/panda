@@ -125,5 +125,4 @@ jobs:
         run: eval "$BUILD"
       - name: Run linters
         run: |
-          $RUN "cd /tmp/openpilot/panda/tests/linter_python/ && ./flake8_panda.sh"
-          $RUN "cd /tmp/openpilot/panda/tests/linter_python/ && ./pylint_panda.sh"
+          $RUN "cd /tmp/openpilot/panda && git init && git add -A && pre-commit run --all"
