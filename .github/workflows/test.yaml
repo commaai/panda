@@ -123,6 +123,6 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: eval "$BUILD"
-      - name: Run lstatic analysis
+      - name: Run static analysis
         run: |
           $RUN "cd /tmp/openpilot/panda && git init && git add -A && MYPYPATH=/tmp/openpilot pre-commit run --all"
