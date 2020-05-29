@@ -416,7 +416,7 @@ class IsoTpMessage():
       self.rx_idx = 0
       self.rx_done = False
       if self.debug: print(f"ISO-TP: RX - first frame - idx={self.rx_idx} done={self.rx_done}")
-      if self.debug: print(f"ISO-TP: TX - flow control continue")
+      if self.debug: print("ISO-TP: TX - flow control continue")
       # send flow control message (send all bytes)
       msg = b"\x30\x00\x00".ljust(self.max_len, b"\x00")
       self._can_client.send([msg])

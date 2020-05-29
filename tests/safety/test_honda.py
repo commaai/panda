@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import unittest
+from typing import Optional
 import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
@@ -18,9 +19,9 @@ HONDA_BH_HW = 2
 
 
 class TestHondaSafety(common.PandaSafetyTest):
-  MAX_BRAKE = 255
-  PT_BUS = None # must be set when inherited
-  STEER_BUS = None # must be set when inherited
+  MAX_BRAKE: float = 255
+  PT_BUS: Optional[int] = None # must be set when inherited
+  STEER_BUS: Optional[int] = None # must be set when inherited
 
   cnt_speed = 0
   cnt_gas = 0
@@ -264,7 +265,7 @@ class TestHondaBoschSafety(TestHondaSafety):
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
-  
+
   def setUp(self):
     self.packer = CANPackerPanda("honda_accord_s2t_2018_can_generated")
     self.safety = libpandasafety_py.libpandasafety

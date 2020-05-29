@@ -123,7 +123,6 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: eval "$BUILD"
-      - name: Run linters
+      - name: Run static analysis
         run: |
-          $RUN "cd /tmp/openpilot/panda/tests/linter_python/ && ./flake8_panda.sh"
-          $RUN "cd /tmp/openpilot/panda/tests/linter_python/ && ./pylint_panda.sh"
+          $RUN "cd /tmp/openpilot/panda && git init && git add -A && MYPYPATH=/tmp/openpilot pre-commit run --all"

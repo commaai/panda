@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     libtool \
     libssl-dev \
+    libsqlite3-dev \
     libusb-1.0-0 \
     libzmq3-dev \
     locales \
@@ -62,3 +63,4 @@ RUN cd /tmp/openpilot && \
     pip install --no-cache-dir -r tools/requirements.txt
 
 COPY . /tmp/openpilot/panda
+RUN rm -rf /tmp/openpilot/panda/.git
