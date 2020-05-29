@@ -47,7 +47,7 @@ RUN pyenv install 3.7.3 && \
     pyenv rehash && \
     pip install --no-cache-dir --upgrade pip==18.0 && \
     pip install --no-cache-dir -r /tmp/requirements.txt && \
-    pip install pre-commit==2.4.0 pylint==2.5.2 \
+    pip install pre-commit==2.4.0 pylint==2.5.2
 
 RUN cd /tmp && \
     git clone https://github.com/commaai/openpilot.git tmppilot || true && \
