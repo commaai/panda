@@ -10,6 +10,7 @@ repos:
     rev: master
     hooks:
     -   id: mypy
+        exclude: '^(tests/automated)/'
 -   repo: https://github.com/PyCQA/flake8
     rev: master
     hooks:

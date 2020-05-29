@@ -45,13 +45,13 @@ test_all_types = parameterized([
     param(panda_type=Panda.HW_TYPE_UNO)
   ])
 test_all_pandas = parameterized(
-    list(map(lambda x: x[0], _panda_serials))
+    list(map(lambda x: x[0], _panda_serials))  # type: ignore
   )
 test_all_gen2_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in GEN2_HW_TYPES, _panda_serials)))
+    list(map(lambda x: x[0], filter(lambda x: x[1] in GEN2_HW_TYPES, _panda_serials)))  # type: ignore
   )
 test_all_gps_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in GPS_HW_TYPES, _panda_serials)))
+    list(map(lambda x: x[0], filter(lambda x: x[1] in GPS_HW_TYPES, _panda_serials)))  # type: ignore
   )
 test_white_and_grey = parameterized([
     param(panda_type=Panda.HW_TYPE_WHITE_PANDA),
@@ -202,7 +202,7 @@ def panda_connect_and_init(fn):
     finally:
       # Close all connections
       for panda in pandas:
-        panda.close()        
+        panda.close()
   return wrapper
 
 def clear_can_buffers(panda):
