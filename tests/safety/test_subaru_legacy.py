@@ -28,7 +28,7 @@ class TestSubaruLegacySafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
-    self.packer = CANPackerPanda("subaru_outback_2015_eyesight")
+    self.packer = CANPackerPanda("subaru_outback_2015_generated")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU_LEGACY, 0)
     self.safety.init_tests()
