@@ -32,7 +32,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest, \
   MAX_RT_DELTA = 375
   RT_INTERVAL = 250000
   MAX_TORQUE_ERROR = 350
-  TORQUE_MEAS_TOLERANCE = 1 # toyota safety adds one to be conversative for rounding
+  TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conversative for rounding
 
   def setUp(self):
     self.packer = CANPackerPanda("toyota_prius_2017_pt_generated")

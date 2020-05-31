@@ -200,7 +200,7 @@ class Panda(object):
           traceback.print_exc()
         if wait == False or self._handle != None:
           break
-        context = usb1.USBContext() #New context needed so new devices show up
+        context = usb1.USBContext()  # New context needed so new devices show up
     assert(self._handle != None)
     print("connected")
 

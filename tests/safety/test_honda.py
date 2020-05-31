@@ -20,8 +20,8 @@ HONDA_BH_HW = 2
 
 class TestHondaSafety(common.PandaSafetyTest):
   MAX_BRAKE: float = 255
-  PT_BUS: Optional[int] = None # must be set when inherited
-  STEER_BUS: Optional[int] = None # must be set when inherited
+  PT_BUS: Optional[int] = None  # must be set when inherited
+  STEER_BUS: Optional[int] = None  # must be set when inherited
 
   cnt_speed = 0
   cnt_gas = 0

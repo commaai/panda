@@ -65,7 +65,7 @@ def replay_drive(lr, safety_mode, param):
 
 if __name__ == "__main__":
   from tools.lib.route import Route
-  from tools.lib.logreader import MultiLogIterator # pylint: disable=import-error
+  from tools.lib.logreader import MultiLogIterator  # pylint: disable=import-error
 
   mode = int(sys.argv[2])
   param = 0 if len(sys.argv) < 4 else int(sys.argv[3])

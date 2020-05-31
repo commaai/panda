@@ -253,7 +253,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
   GAS_PRESSED_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR: Optional[int] = None
   RELAY_MALFUNCTION_BUS: Optional[int] = None
-  FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {} # {bus: [addr]}
+  FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
 
   @classmethod

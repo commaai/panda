@@ -74,7 +74,7 @@ class ELMCarSimulator():
     def __lin_monitor(self):
         print("STARTING LIN THREAD")
         self.panda.set_uart_baud(2, 10400)
-        self.panda.kline_drain() # Toss whatever was already there
+        self.panda.kline_drain()  # Toss whatever was already there
 
         lin_buff = bytearray()
 
@@ -85,7 +85,7 @@ class ELMCarSimulator():
 
             lin_buff += lin_msg
             #print("    ** Buff", lin_buff)
-            if lin_buff.endswith(b'\x00\xc1\x33\xf1\x81\x66'): # Leading 0 is wakeup
+            if lin_buff.endswith(b'\x00\xc1\x33\xf1\x81\x66'):  # Leading 0 is wakeup
                 lin_buff = bytearray()
                 self.__lin_active = True
                 print("GOT LIN (KWP FAST) WAKEUP SIGNAL")
@@ -100,7 +100,7 @@ class ELMCarSimulator():
                     continue
                 if len(lin_buff) < msglen + 4: continue
                 if lin_checksum(lin_buff[:-1]) != lin_buff[-1]: continue
-                self.__lin_process_msg(lin_buff[0] & 0xF8, #Priority
+                self.__lin_process_msg(lin_buff[0] & 0xF8,  # Priority
                                        lin_buff[1], lin_buff[2], lin_buff[3:-1])
                 lin_buff = bytearray()
 
@@ -168,7 +168,7 @@ class ELMCarSimulator():
     def __can_monitor(self):
         print("STARTING CAN THREAD")
         self.panda.set_can_speed_kbps(0, self.__can_kbaud)
-        self.panda.can_recv() # Toss whatever was already there
+        self.panda.can_recv()  # Toss whatever was already there
 
         while not self.__stop:
             for address, ts, data, src in self.panda.can_recv():
@@ -259,28 +259,28 @@ class ELMCarSimulator():
     #########################
 
     def _process_obd(self, mode, pid):
-        if mode == 0x01: # Mode: Show current data
+        if mode == 0x01:  # Mode: Show current data
             if pid == 0x00:   #List supported things
-                return b"\xff\xff\xff\xfe"#b"\xBE\x1F\xB8\x10" #Bitfield, random features
-            elif pid == 0x01: # Monitor Status since DTC cleared
-                return b"\x00\x00\x00\x00" #Bitfield, random features
-            elif pid == 0x04: # Calculated engine load
+                return b"\xff\xff\xff\xfe"  # b"\xBE\x1F\xB8\x10" #Bitfield, random features
+            elif pid == 0x01:  # Monitor Status since DTC cleared
+                return b"\x00\x00\x00\x00"  # Bitfield, random features
+            elif pid == 0x04:  # Calculated engine load
                 return b"\x2f"
-            elif pid == 0x05: # Engine coolant temperature
+            elif pid == 0x05:  # Engine coolant temperature
                 return b"\x3c"
-            elif pid == 0x0B: # Intake manifold absolute pressure
+            elif pid == 0x0B:  # Intake manifold absolute pressure
                 return b"\x90"
-            elif pid == 0x0C: # Engine RPM
+            elif pid == 0x0C:  # Engine RPM
                 return b"\x1A\xF8"
-            elif pid == 0x0D: # Vehicle Speed
+            elif pid == 0x0D:  # Vehicle Speed
                 return b"\x53"
-            elif pid == 0x10: # MAF air flow rate
+            elif pid == 0x10:  # MAF air flow rate
                 return b"\x01\xA0"
-            elif pid == 0x11: # Throttle Position
+            elif pid == 0x11:  # Throttle Position
                 return b"\x90"
-            elif pid == 0x33: # Absolute Barometric Pressure
+            elif pid == 0x33:  # Absolute Barometric Pressure
                 return b"\x90"
-        elif mode == 0x09: # Mode: Request vehicle information
+        elif mode == 0x09:  # Mode: Request vehicle information
             if pid == 0x02:   # Show VIN
                 return b"1D4GP00R55B123456"
             if pid == 0xFC:   # test long multi message. Ligned up for LIN responses

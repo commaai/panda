@@ -328,7 +328,7 @@ class CanClient():
       while True:
         yield self.rx_buff.popleft()
     except IndexError:
-      pass # empty
+      pass  # empty
 
   def send(self, msgs: List[bytes], delay: float=0) -> None:
     for i, msg in enumerate(msgs):
@@ -607,13 +607,13 @@ class UdsClient():
     if response_event_type == RESPONSE_EVENT_TYPE.REPORT_ACTIVATED_EVENTS:
       return {
         "num_of_activated_events": resp[0],
-        "data": resp[1:], # TODO: parse the reset of response
+        "data": resp[1:],  # TODO: parse the reset of response
       }
 
     return {
       "num_of_identified_events": resp[0],
       "event_window_time": resp[1],
-      "data": resp[2:], # TODO: parse the reset of response
+      "data": resp[2:],  # TODO: parse the reset of response
     }
 
   def link_control(self, link_control_type: LINK_CONTROL_TYPE, baud_rate_type: BAUD_RATE_TYPE=None):
@@ -661,7 +661,7 @@ class UdsClient():
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
     if resp_id != data_identifier_type:
       raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
-    return resp[2:] # TODO: parse the response
+    return resp[2:]  # TODO: parse the response
 
   def read_data_by_periodic_identifier(self, transmission_mode_type: TRANSMISSION_MODE_TYPE, periodic_data_identifier: int):
     # TODO: support list of identifiers
@@ -718,7 +718,7 @@ class UdsClient():
     self._uds_request(SERVICE_TYPE.WRITE_MEMORY_BY_ADDRESS, subfunction=0x00, data=data)
 
   def clear_diagnostic_information(self, dtc_group_type: DTC_GROUP_TYPE):
-    data = struct.pack('!I', dtc_group_type)[1:] # 3 bytes
+    data = struct.pack('!I', dtc_group_type)[1:]  # 3 bytes
     self._uds_request(SERVICE_TYPE.CLEAR_DIAGNOSTIC_INFORMATION, subfunction=None, data=data)
 
   def read_dtc_information(self, dtc_report_type: DTC_REPORT_TYPE, dtc_status_mask_type: DTC_STATUS_MASK_TYPE=DTC_STATUS_MASK_TYPE.ALL, dtc_severity_mask_type: DTC_SEVERITY_MASK_TYPE=DTC_SEVERITY_MASK_TYPE.ALL, dtc_mask_record: int=0xFFFFFF, dtc_snapshot_record_num: int=0xFF, dtc_extended_record_num: int=0xFF):
@@ -737,7 +737,7 @@ class UdsClient():
       dtc_report_type == DTC_REPORT_TYPE.DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER or \
       dtc_report_type == DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER or \
       dtc_report_type == DTC_REPORT_TYPE.SEVERITY_INFORMATION_OF_DTC:
-      data += struct.pack('!I', dtc_mask_record)[1:] # 3 bytes
+      data += struct.pack('!I', dtc_mask_record)[1:]  # 3 bytes
     # dtc_snapshot_record_num
     if dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_IDENTIFICATION or \
       dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_DTC_NUMBER or \
@@ -796,7 +796,7 @@ class UdsClient():
     else:
       raise ValueError('invalid max_num_bytes_len: {}'.format(max_num_bytes_len))
 
-    return max_num_bytes # max number of bytes per transfer data request
+    return max_num_bytes  # max number of bytes per transfer data request
 
   def request_upload(self, memory_address: int, memory_size: int, memory_address_bytes: int=4, memory_size_bytes: int=4, data_format: int=0x00):
     data = bytes([data_format])
@@ -821,7 +821,7 @@ class UdsClient():
     else:
       raise ValueError('invalid max_num_bytes_len: {}'.format(max_num_bytes_len))
 
-    return max_num_bytes # max number of bytes per transfer data request
+    return max_num_bytes  # max number of bytes per transfer data request
 
   def transfer_data(self, block_sequence_count: int, data: bytes=b''):
     data = bytes([block_sequence_count]) + data

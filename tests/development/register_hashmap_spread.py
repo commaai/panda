@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import matplotlib.pyplot as plt # pylint: disable=import-error
+import matplotlib.pyplot as plt  # pylint: disable=import-error
 
 HASHING_PRIME = 23
 REGISTER_MAP_SIZE = 0x3FF
