@@ -312,6 +312,7 @@ if __name__ == "__main__":
         sim.can_mode_29b()
 
     import signal
+
     def signal_handler(signal, frame):
         print('\nShutting down simulator')
         sim.stop()

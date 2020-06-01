@@ -4,6 +4,7 @@ import sys
 
 class Message():
   """Details about a specific message ID."""
+
   def __init__(self, message_id):
     self.message_id = message_id
     self.ones = [0] * 8   # bit set if 1 is always seen

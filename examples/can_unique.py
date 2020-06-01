@@ -24,6 +24,7 @@ import sys
 
 class Message():
   """Details about a specific message ID."""
+
   def __init__(self, message_id):
     self.message_id = message_id
     self.data = {}  # keyed by hex string encoded message data

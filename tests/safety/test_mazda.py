@@ -24,7 +24,7 @@ class TestMazdaSafety(common.PandaSafetyTest):
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x243]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
-  LKAS_ENABLE_SPEED  = 52
+  LKAS_ENABLE_SPEED = 52
   LKAS_DISABLE_SPEED = 45
 
   def setUp(self):

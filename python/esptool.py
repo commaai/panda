@@ -78,21 +78,21 @@ class FakePort(object):
 class ESPROM(object):
     # These are the currently known commands supported by the ROM
     ESP_FLASH_BEGIN = 0x02
-    ESP_FLASH_DATA  = 0x03
-    ESP_FLASH_END   = 0x04
-    ESP_MEM_BEGIN   = 0x05
-    ESP_MEM_END     = 0x06
-    ESP_MEM_DATA    = 0x07
-    ESP_SYNC        = 0x08
-    ESP_WRITE_REG   = 0x09
-    ESP_READ_REG    = 0x0a
+    ESP_FLASH_DATA = 0x03
+    ESP_FLASH_END = 0x04
+    ESP_MEM_BEGIN = 0x05
+    ESP_MEM_END = 0x06
+    ESP_MEM_DATA = 0x07
+    ESP_SYNC = 0x08
+    ESP_WRITE_REG = 0x09
+    ESP_READ_REG = 0x0a
 
     # Maximum block sized for RAM and Flash writes, respectively.
-    ESP_RAM_BLOCK   = 0x1800
+    ESP_RAM_BLOCK = 0x1800
     ESP_FLASH_BLOCK = 0x400
 
     # Default baudrate. The ROM auto-bauds, so we can use more or less whatever we want.
-    ESP_ROM_BAUD    = 115200
+    ESP_ROM_BAUD = 115200
 
     # First byte of the application image
     ESP_IMAGE_MAGIC = 0xe9
@@ -101,9 +101,9 @@ class ESPROM(object):
     ESP_CHECKSUM_MAGIC = 0xef
 
     # OTP ROM addresses
-    ESP_OTP_MAC0    = 0x3ff00050
-    ESP_OTP_MAC1    = 0x3ff00054
-    ESP_OTP_MAC3    = 0x3ff0005c
+    ESP_OTP_MAC0 = 0x3ff00050
+    ESP_OTP_MAC1 = 0x3ff00054
+    ESP_OTP_MAC3 = 0x3ff0005c
 
     # Flash sector size, minimum unit of erase.
     ESP_FLASH_SECTOR = 0x1000
@@ -113,10 +113,12 @@ class ESPROM(object):
         self._slip_reader = slip_reader(self._port)
 
     """ Read a SLIP packet from the serial port """
+
     def read(self):
         return next(self._slip_reader)
 
     """ Write bytes to the serial port while performing SLIP escaping """
+
     def write(self, packet):
         buf = '\xc0' \
               + (packet.replace('\xdb','\xdb\xdd').replace('\xc0','\xdb\xdc')) \
@@ -131,6 +133,7 @@ class ESPROM(object):
         return state
 
     """ Send a request and read the response """
+
     def command(self, op=None, data=None, chk=0):
         if op is not None:
             pkt = struct.pack('<BBHI', 0x00, op, len(data), chk) + data
@@ -154,12 +157,14 @@ class ESPROM(object):
         raise FatalError("Response doesn't match request")
 
     """ Perform a connection test """
+
     def sync(self):
         self.command(ESPROM.ESP_SYNC, '\x07\x07\x12\x20' + 32 * '\x55')
         for i in range(7):
             self.command()
 
     """ Try connecting repeatedly until successful, or giving up """
+
     def connect(self):
         print('Connecting...')
 
@@ -195,6 +200,7 @@ class ESPROM(object):
         raise FatalError('Failed to connect to ESP8266')
 
     """ Read memory address in target """
+
     def read_reg(self, addr):
         res = self.command(ESPROM.ESP_READ_REG, struct.pack('<I', addr))
         if res[1] != "\0\0":
@@ -202,18 +208,21 @@ class ESPROM(object):
         return res[0]
 
     """ Write to memory address in target """
+
     def write_reg(self, addr, value, mask, delay_us=0):
         if self.command(ESPROM.ESP_WRITE_REG,
                         struct.pack('<IIII', addr, value, mask, delay_us))[1] != "\0\0":
             raise FatalError('Failed to write target memory')
 
     """ Start downloading an application image to RAM """
+
     def mem_begin(self, size, blocks, blocksize, offset):
         if self.command(ESPROM.ESP_MEM_BEGIN,
                         struct.pack('<IIII', size, blocks, blocksize, offset))[1] != "\0\0":
             raise FatalError('Failed to enter RAM download mode')
 
     """ Send a block of an image to RAM """
+
     def mem_block(self, data, seq):
         if self.command(ESPROM.ESP_MEM_DATA,
                         struct.pack('<IIII', len(data), seq, 0, 0) + data,
@@ -221,12 +230,14 @@ class ESPROM(object):
             raise FatalError('Failed to write to target RAM')
 
     """ Leave download mode and run the application """
+
     def mem_finish(self, entrypoint=0):
         if self.command(ESPROM.ESP_MEM_END,
                         struct.pack('<II', int(entrypoint == 0), entrypoint))[1] != "\0\0":
             raise FatalError('Failed to leave RAM download mode')
 
     """ Start downloading to Flash (performs an erase) """
+
     def flash_begin(self, size, offset):
         old_tmo = self._port.timeout
         num_blocks = (size + ESPROM.ESP_FLASH_BLOCK - 1) / ESPROM.ESP_FLASH_BLOCK
@@ -256,6 +267,7 @@ class ESPROM(object):
         self._port.timeout = old_tmo
 
     """ Write block to flash """
+
     def flash_block(self, data, seq):
         result = self.command(ESPROM.ESP_FLASH_DATA,
                               struct.pack('<IIII', len(data), seq, 0, 0) + data,
@@ -264,18 +276,21 @@ class ESPROM(object):
             raise FatalError.WithResult('Failed to write to target Flash after seq %d (got result %%s)' % seq, result)
 
     """ Leave flash mode and run/reboot """
+
     def flash_finish(self, reboot=False):
         pkt = struct.pack('<I', int(not reboot))
         if self.command(ESPROM.ESP_FLASH_END, pkt)[1] != "\0\0":
             raise FatalError('Failed to leave Flash mode')
 
     """ Run application code in flash """
+
     def run(self, reboot=False):
         # Fake flash begin immediately followed by flash end
         self.flash_begin(0, 0)
         self.flash_finish(reboot)
 
     """ Read MAC from OTP ROM """
+
     def read_mac(self):
         mac0 = self.read_reg(self.ESP_OTP_MAC0)
         mac1 = self.read_reg(self.ESP_OTP_MAC1)
@@ -291,12 +306,14 @@ class ESPROM(object):
         return oui + ((mac1 >> 8) & 0xff, mac1 & 0xff, (mac0 >> 24) & 0xff)
 
     """ Read Chip ID from OTP ROM - see http://esp8266-re.foogod.com/wiki/System_get_chip_id_%28IoT_RTOS_SDK_0.9.9%29 """
+
     def chip_id(self):
         id0 = self.read_reg(self.ESP_OTP_MAC0)
         id1 = self.read_reg(self.ESP_OTP_MAC1)
         return (id0 >> 24) | ((id1 & 0xffffff) << 8)
 
     """ Read SPI flash manufacturer and device id """
+
     def flash_id(self):
         self.flash_begin(0, 0)
         self.write_reg(0x60000240, 0x0, 0xffffffff)
@@ -305,6 +322,7 @@ class ESPROM(object):
         return flash_id
 
     """ Abuse the loader protocol to force flash to be left in write mode """
+
     def flash_unlock_dio(self):
         # Enable flash write mode
         self.flash_begin(0, 0)
@@ -314,6 +332,7 @@ class ESPROM(object):
         self.mem_finish(0x40000080)
 
     """ Perform a chip erase of SPI flash """
+
     def flash_erase(self):
         # Trick ROM to initialize SFlash
         self.flash_begin(0, 0)
@@ -385,6 +404,7 @@ def LoadFirmwareImage(filename):
 
 class BaseFirmwareImage(object):
     """ Base class with common firmware image functions """
+
     def __init__(self):
         self.segments = []
         self.entrypoint = 0
@@ -439,6 +459,7 @@ class BaseFirmwareImage(object):
 
 class ESPFirmwareImage(BaseFirmwareImage):
     """ 'Version 1' firmware image, segments loaded directly by the ROM bootloader. """
+
     def __init__(self, load_file=None):
         super(ESPFirmwareImage, self).__init__()
         self.flash_mode = 0
@@ -469,6 +490,7 @@ class OTAFirmwareImage(BaseFirmwareImage):
     """ 'Version 2' firmware image, segments loaded by software bootloader stub
         (ie Espressif bootloader or rboot)
     """
+
     def __init__(self, load_file=None):
         super(OTAFirmwareImage, self).__init__()
         self.version = 2
@@ -817,6 +839,7 @@ class FatalError(RuntimeError):
     Wrapper class for runtime errors that aren't caused by internal bugs, but by
     ESP8266 responses or input content.
     """
+
     def __init__(self, message):
         RuntimeError.__init__(self, message)
 
@@ -1226,6 +1249,7 @@ def main():
 
 class AddrFilenamePairAction(argparse.Action):
     """ Custom parser class for the address/filename pairs passed as arguments """
+
     def __init__(self, option_strings, dest, nargs='+', **kwargs):
         super(AddrFilenamePairAction, self).__init__(option_strings, dest, nargs, **kwargs)
 
