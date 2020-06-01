@@ -31,7 +31,7 @@ def test_throughput(serials=None):
 
   p = Panda("WIFI")
 
-  for speed in [100,250,500,750,1000]:
+  for speed in [100, 250, 500, 750, 1000]:
     # set bus 0 speed to speed
     p.set_can_speed_kbps(0, speed)
     time.sleep(0.1)
@@ -60,7 +60,7 @@ def test_recv_only(serials=None):
   pwifi = Panda("WIFI")
 
   # TODO: msg_count=1000 drops packets, is this fixable?
-  for msg_count in [10,100,200]:
+  for msg_count in [10, 100, 200]:
     speed = 500
     p.set_can_speed_kbps(0, speed)
     comp_kbps = time_many_sends(p, 0, pwifi, msg_count)

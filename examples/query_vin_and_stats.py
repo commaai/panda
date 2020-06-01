@@ -45,7 +45,7 @@ if __name__ == "__main__":
   print("DTCs:", "".join(map(chr, dtcs[:2])))
 
   supported_pids = get_supported_pids()
-  print("Supported PIDs:",supported_pids)
+  print("Supported PIDs:", supported_pids)
 
   while 1:
     speed = struct.unpack(">B", get_current_data_for_pid(13)[2:])[0]                  # kph

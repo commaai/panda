@@ -121,7 +121,7 @@ class ESPROM(object):
 
     def write(self, packet):
         buf = '\xc0' \
-              + (packet.replace('\xdb','\xdb\xdd').replace('\xc0','\xdb\xdc')) \
+              + (packet.replace('\xdb', '\xdb\xdd').replace('\xc0', '\xdb\xdc')) \
               + '\xc0'
         self._port.write(buf)
 
@@ -328,7 +328,7 @@ class ESPROM(object):
         self.flash_begin(0, 0)
         # Reset the chip rather than call flash_finish(), which would have
         # write protected the chip again (why oh why does it do that?!)
-        self.mem_begin(0,0,0,0x40100000)
+        self.mem_begin(0, 0, 0, 0x40100000)
         self.mem_finish(0x40000080)
 
     """ Perform a chip erase of SPI flash """
@@ -340,7 +340,7 @@ class ESPROM(object):
         # This is hacky: we don't have a custom stub, instead we trick
         # the bootloader to jump to the SPIEraseChip() routine and then halt/crash
         # when it tries to boot an unconfigured system.
-        self.mem_begin(0,0,0,0x40100000)
+        self.mem_begin(0, 0, 0, 0x40100000)
         self.mem_finish(0x40004984)
 
         # Yup - there's no good way to detect if we succeeded.
@@ -912,9 +912,9 @@ def detect_flash_size(esp, args):
 
 def write_flash(esp, args):
     detect_flash_size(esp, args)
-    flash_mode = {'qio':0, 'qout':1, 'dio':2, 'dout': 3}[args.flash_mode]
-    flash_size_freq = {'4m':0x00, '2m':0x10, '8m':0x20, '16m':0x30, '32m':0x40, '16m-c1': 0x50, '32m-c1':0x60, '32m-c2':0x70}[args.flash_size]
-    flash_size_freq += {'40m':0, '26m':1, '20m':2, '80m': 0xf}[args.flash_freq]
+    flash_mode = {'qio': 0, 'qout': 1, 'dio': 2, 'dout': 3}[args.flash_mode]
+    flash_size_freq = {'4m': 0x00, '2m': 0x10, '8m': 0x20, '16m': 0x30, '32m': 0x40, '16m-c1': 0x50, '32m-c1': 0x60, '32m-c2': 0x70}[args.flash_size]
+    flash_size_freq += {'40m': 0, '26m': 1, '20m': 2, '80m': 0xf}[args.flash_freq]
     flash_params = struct.pack('BB', flash_mode, flash_size_freq)
 
     flasher = CesantaFlasher(esp, args.baud)
@@ -988,9 +988,9 @@ def elf2image(args):
         data = e.load_section(section)
         image.add_segment(e.get_symbol_addr(start), data)
 
-    image.flash_mode = {'qio':0, 'qout':1, 'dio':2, 'dout': 3}[args.flash_mode]
-    image.flash_size_freq = {'4m':0x00, '2m':0x10, '8m':0x20, '16m':0x30, '32m':0x40, '16m-c1': 0x50, '32m-c1':0x60, '32m-c2':0x70}[args.flash_size]
-    image.flash_size_freq += {'40m':0, '26m':1, '20m':2, '80m': 0xf}[args.flash_freq]
+    image.flash_mode = {'qio': 0, 'qout': 1, 'dio': 2, 'dout': 3}[args.flash_mode]
+    image.flash_size_freq = {'4m': 0x00, '2m': 0x10, '8m': 0x20, '16m': 0x30, '32m': 0x40, '16m-c1': 0x50, '32m-c1': 0x60, '32m-c2': 0x70}[args.flash_size]
+    image.flash_size_freq += {'40m': 0, '26m': 1, '20m': 2, '80m': 0xf}[args.flash_freq]
 
     irom_offs = e.get_symbol_addr("_irom0_text_start") - 0x40200000
 
@@ -1187,7 +1187,7 @@ def main():
         help='Create an application image from ELF file')
     parser_elf2image.add_argument('input', help='Input ELF file')
     parser_elf2image.add_argument('--output', '-o', help='Output filename prefix (for version 1 image), or filename (for version 2 single image)', type=str)
-    parser_elf2image.add_argument('--version', '-e', help='Output image version', choices=['1','2'], default='1')
+    parser_elf2image.add_argument('--version', '-e', help='Output image version', choices=['1', '2'], default='1')
     add_spi_flash_subparsers(parser_elf2image)
 
     subparsers.add_parser(
@@ -1237,7 +1237,7 @@ def main():
     # or be a member function of the ESPROM class.
 
     operation_func = globals()[args.operation]
-    operation_args,_,_,_ = inspect.getargspec(operation_func)
+    operation_args, _, _, _ = inspect.getargspec(operation_func)
     if operation_args[0] == 'esp':  # operation function takes an ESPROM connection object
         initial_baud = min(ESPROM.ESP_ROM_BAUD, args.baud)  # don't sync faster than the default baud rate
         esp = ESPROM(args.port, initial_baud)
@@ -1256,17 +1256,17 @@ class AddrFilenamePairAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # validate pair arguments
         pairs = []
-        for i in range(0,len(values),2):
+        for i in range(0, len(values), 2):
             try:
-                address = int(values[i],0)
+                address = int(values[i], 0)
             except ValueError:
-                raise argparse.ArgumentError(self,'Address "%s" must be a number' % values[i])
+                raise argparse.ArgumentError(self, 'Address "%s" must be a number' % values[i])
             try:
                 argfile = open(values[i + 1], 'rb')
             except IOError as e:
                 raise argparse.ArgumentError(self, e)
             except IndexError:
-                raise argparse.ArgumentError(self,'Must be pairs of an address and the binary filename to write there')
+                raise argparse.ArgumentError(self, 'Must be pairs of an address and the binary filename to write there')
             pairs.append((address, argfile))
         setattr(namespace, self.dest, pairs)
 

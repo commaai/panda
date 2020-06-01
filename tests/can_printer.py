@@ -30,8 +30,8 @@ def can_printer():
     if sec_since_boot() - lp > 0.1:
       dd = chr(27) + "[2J"
       dd += "%5.2f\n" % (sec_since_boot() - start)
-      for k,v in sorted(zip(list(msgs.keys()), [binascii.hexlify(x[-1]) for x in list(msgs.values())])):
-        dd += "%s(%6d) %s\n" % ("%04X(%4d)" % (k,k),len(msgs[k]), v)
+      for k, v in sorted(zip(list(msgs.keys()), [binascii.hexlify(x[-1]) for x in list(msgs.values())])):
+        dd += "%s(%6d) %s\n" % ("%04X(%4d)" % (k, k), len(msgs[k]), v)
       print(dd)
       lp = sec_since_boot()
 

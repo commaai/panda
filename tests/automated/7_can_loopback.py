@@ -22,7 +22,7 @@ def test_send_recv(p):
     p_recv.can_recv()
     p_send.can_recv()
 
-    busses = [0,1,2]
+    busses = [0, 1, 2]
 
     for bus in busses:
       for speed in [100, 250, 500, 750, 1000]:
@@ -75,7 +75,7 @@ def test_latency(p):
     p_recv.can_recv()
     p_send.can_recv()
 
-    busses = [0,1,2]
+    busses = [0, 1, 2]
 
     for bus in busses:
       for speed in [100, 250, 500, 750, 1000]:
@@ -107,8 +107,8 @@ def test_latency(p):
           if len(r) == 0 or len(r_echo) == 0:
             print("r: {}, r_echo: {}".format(r, r_echo))
 
-          assert_equal(len(r),1)
-          assert_equal(len(r_echo),1)
+          assert_equal(len(r), 1)
+          assert_equal(len(r_echo), 1)
 
           et = (et - st)*1000.0
           comp_kbps = (1+11+1+1+1+4+8*8+15+1+1+1+7) / et

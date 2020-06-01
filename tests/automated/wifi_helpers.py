@@ -32,7 +32,7 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
         print("WIFI: scanning %d" % cnt)
         os.system("iwlist %s scanning > /dev/null" % wlan_interface)
         os.system("nmcli device wifi rescan")
-        wifi_networks = [x.decode("utf8") for x in subprocess.check_output(["nmcli","dev", "wifi", "list"]).split(b"\n")]
+        wifi_networks = [x.decode("utf8") for x in subprocess.check_output(["nmcli", "dev", "wifi", "list"]).split(b"\n")]
         wifi_scan = [x for x in wifi_networks if ssid in x]
         if len(wifi_scan) != 0:
           break

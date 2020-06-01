@@ -49,7 +49,7 @@ def run_test_w_pandas(pandas, sleep_duration):
     print("health", ho[0], h[ho[0]].health())
 
     # **** test K/L line loopback ****
-    for bus in [2,3]:
+    for bus in [2, 3]:
       # flush the output
       h[ho[1]].kline_drain(bus=bus)
 
