@@ -64,7 +64,7 @@ def test_elm_cli():
         #Test Echo Off
         #Expected to be misimplimentation, but this is how the reference device behaved.
         send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>')  # Here is the odd part
-        send_compare(s, b'ATE0\r', b'OK\r\r>')       #Should prob show this immediately
+        send_compare(s, b'ATE0\r', b'OK\r\r>')  # Should prob show this immediately
         send_compare(s, b'ATI\r', b'ELM327 v1.5\r\r>')
 
         #Test Newline On

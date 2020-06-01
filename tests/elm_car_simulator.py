@@ -260,7 +260,7 @@ class ELMCarSimulator():
 
     def _process_obd(self, mode, pid):
         if mode == 0x01:  # Mode: Show current data
-            if pid == 0x00:   #List supported things
+            if pid == 0x00:  # List supported things
                 return b"\xff\xff\xff\xfe"  # b"\xBE\x1F\xB8\x10" #Bitfield, random features
             elif pid == 0x01:  # Monitor Status since DTC cleared
                 return b"\x00\x00\x00\x00"  # Bitfield, random features
