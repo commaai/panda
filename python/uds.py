@@ -406,7 +406,8 @@ class IsoTpMessage():
       self.rx_dat = rx_data[1:1 + self.rx_len]
       self.rx_idx = 0
       self.rx_done = True
-      if self.debug: print(f"ISO-TP: RX - single frame - idx={self.rx_idx} done={self.rx_done}")
+      if self.debug:
+        print(f"ISO-TP: RX - single frame - idx={self.rx_idx} done={self.rx_done}")
       return
 
     # first rx_frame
@@ -415,8 +416,10 @@ class IsoTpMessage():
       self.rx_dat = rx_data[2:]
       self.rx_idx = 0
       self.rx_done = False
-      if self.debug: print(f"ISO-TP: RX - first frame - idx={self.rx_idx} done={self.rx_done}")
-      if self.debug: print("ISO-TP: TX - flow control continue")
+      if self.debug:
+        print(f"ISO-TP: RX - first frame - idx={self.rx_idx} done={self.rx_done}")
+      if self.debug:
+        print("ISO-TP: TX - flow control continue")
       # send flow control message (send all bytes)
       msg = b"\x30\x00\x00".ljust(self.max_len, b"\x00")
       self._can_client.send([msg])
@@ -436,11 +439,12 @@ class IsoTpMessage():
 
     # flow control
     if rx_data[0] >> 4 == 0x3:
-      assert self.tx_done == False, "isotp - rx: flow control with no active frame"
+      assert not self.tx_done, "isotp - rx: flow control with no active frame"
       assert rx_data[0] != 0x32, "isotp - rx: flow-control overflow/abort"
       assert rx_data[0] == 0x30 or rx_data[0] == 0x31, "isotp - rx: flow-control transfer state indicator invalid"
       if rx_data[0] == 0x30:
-        if self.debug: print("ISO-TP: RX - flow control continue")
+        if self.debug:
+          print("ISO-TP: RX - flow control continue")
         delay_ts = rx_data[2] & 0x7F
         # scale is 1 milliseconds if first bit == 0, 100 micro seconds if first bit == 1
         delay_div = 1000. if rx_data[2] & 0x80 == 0 else 10000.
@@ -725,32 +729,32 @@ class UdsClient():
     data = b''
     # dtc_status_mask_type
     if dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_DTC_BY_STATUS_MASK or \
-      dtc_report_type == DTC_REPORT_TYPE.DTC_BY_STATUS_MASK or \
-      dtc_report_type == DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_BY_STATUS_MASK or \
-      dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_MIRROR_MEMORY_DTC_BY_STATUS_MASK or \
-      dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_EMISSIONS_RELATED_OBD_DTC_BY_STATUS_MASK or \
-      dtc_report_type == DTC_REPORT_TYPE.EMISSIONS_RELATED_OBD_DTC_BY_STATUS_MASK:
-      data += bytes([dtc_status_mask_type])
+       dtc_report_type == DTC_REPORT_TYPE.DTC_BY_STATUS_MASK or \
+       dtc_report_type == DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_BY_STATUS_MASK or \
+       dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_MIRROR_MEMORY_DTC_BY_STATUS_MASK or \
+       dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_EMISSIONS_RELATED_OBD_DTC_BY_STATUS_MASK or \
+       dtc_report_type == DTC_REPORT_TYPE.EMISSIONS_RELATED_OBD_DTC_BY_STATUS_MASK:
+       data += bytes([dtc_status_mask_type])
     # dtc_mask_record
     if dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_IDENTIFICATION or \
-      dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_DTC_NUMBER or \
-      dtc_report_type == DTC_REPORT_TYPE.DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER or \
-      dtc_report_type == DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER or \
-      dtc_report_type == DTC_REPORT_TYPE.SEVERITY_INFORMATION_OF_DTC:
-      data += struct.pack('!I', dtc_mask_record)[1:]  # 3 bytes
+       dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_DTC_NUMBER or \
+       dtc_report_type == DTC_REPORT_TYPE.DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER or \
+       dtc_report_type == DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER or \
+       dtc_report_type == DTC_REPORT_TYPE.SEVERITY_INFORMATION_OF_DTC:
+       data += struct.pack('!I', dtc_mask_record)[1:]  # 3 bytes
     # dtc_snapshot_record_num
     if dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_IDENTIFICATION or \
-      dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_DTC_NUMBER or \
-      dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_RECORD_NUMBER:
-      data += bytes([dtc_snapshot_record_num])
+       dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_DTC_NUMBER or \
+       dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_RECORD_NUMBER:
+       data += bytes([dtc_snapshot_record_num])
     # dtc_extended_record_num
     if dtc_report_type == DTC_REPORT_TYPE.DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER or \
-      dtc_report_type == DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER:
-      data += bytes([dtc_extended_record_num])
+       dtc_report_type == DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER:
+       data += bytes([dtc_extended_record_num])
     # dtc_severity_mask_type
     if dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_DTC_BY_SEVERITY_MASK_RECORD or \
-      dtc_report_type == DTC_REPORT_TYPE.DTC_BY_SEVERITY_MASK_RECORD:
-      data += bytes([dtc_severity_mask_type, dtc_status_mask_type])
+       dtc_report_type == DTC_REPORT_TYPE.DTC_BY_SEVERITY_MASK_RECORD:
+       data += bytes([dtc_severity_mask_type, dtc_status_mask_type])
 
     resp = self._uds_request(SERVICE_TYPE.READ_DTC_INFORMATION, subfunction=dtc_report_type, data=data)
 

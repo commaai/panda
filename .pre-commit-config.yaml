@@ -17,8 +17,7 @@ repos:
     -   id: flake8
         exclude: '^(tests/automated)/'
         args:
-        #- --ignore=E111,E114,E121,E501,E302,E305
-        - --select=E101
+        - --ignore=E111,E114,E121,E501,E302,E305
         - --exclude=python/esptool.py
         - --statistics
 -   repo: local
