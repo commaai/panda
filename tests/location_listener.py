@@ -4,7 +4,7 @@ import time
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda, PandaSerial
+from panda import Panda, PandaSerial  # noqa: 402
 
 def add_nmea_checksum(msg):
   d = msg[1:]
@@ -33,7 +33,7 @@ if __name__ == "__main__":
   msg = str.encode(add_nmea_checksum("$PUBX,41,1,0007,0003,%d,0" % baudrate) + "\r\n")
   print(msg)
   ser.write(msg)
-  time.sleep(0.1)   # needs a wait for it to actually send
+  time.sleep(0.1)  # needs a wait for it to actually send
 
   # new panda serial
   ser = PandaSerial(panda, 1, baudrate)
@@ -43,4 +43,3 @@ if __name__ == "__main__":
     if len(ret) > 0:
       sys.stdout.write(ret.decode('ascii', 'ignore'))
       sys.stdout.flush()
-      #print str(ret).encode("hex")

@@ -43,7 +43,7 @@ class PandaDFU(object):
 
   @staticmethod
   def st_serial_to_dfu_serial(st):
-    if st == None or st == "none":
+    if st is None or st == "none":
       return None
     uid_base = struct.unpack("H" * 6, bytes.fromhex(st))
     return binascii.hexlify(struct.pack("!HHH", uid_base[1] + uid_base[5], uid_base[0] + uid_base[4] + 0xA, uid_base[3])).upper().decode("utf-8")
@@ -69,7 +69,7 @@ class PandaDFU(object):
     self.status()
 
   def program(self, address, dat, block_size=None):
-    if block_size == None:
+    if block_size is None:
       block_size = len(dat)
 
     # Set Address Pointer

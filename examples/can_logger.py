@@ -15,14 +15,14 @@ def can_logger():
 
     try:
       p = Panda("WIFI")
-    except:
+    except Exception:
       print("WiFi connection timed out. Please make sure your Panda is connected and try again.")
       sys.exit(0)
 
   try:
     outputfile = open('output.csv', 'w')
     csvwriter = csv.writer(outputfile)
-    #Write Header
+    # Write Header
     csvwriter.writerow(['Bus', 'MessageID', 'Message', 'MessageLength'])
     print("Writing csv file output.csv. Press Ctrl-C to exit...\n")
 

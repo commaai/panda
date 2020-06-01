@@ -53,7 +53,8 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
     self.safety.init_tests()
 
   # override these inherited tests from PandaSafetyTest
-  def test_cruise_engaged_prev(self): pass
+  def test_cruise_engaged_prev(self):
+    pass
 
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)

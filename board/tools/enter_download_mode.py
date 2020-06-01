@@ -26,7 +26,7 @@ def find_first_panda(context=None):
 
 if __name__ == "__main__":
   panda_dev = find_first_panda()
-  if panda_dev == None:
+  if panda_dev is None:
     print("no device found")
     sys.exit(0)
   print("found device")

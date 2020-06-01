@@ -18,7 +18,8 @@ repos:
         exclude: '^(tests/automated)/'
         args:
         - --ignore=E111,E114,E121,E501,E302,E305,W504
-        - --exclude=python/esptool.py
+        #- --select=E126,E125
+        - --exclude=python/esptool.py,tests/gmbitbang/*
         - --statistics
 -   repo: local
     hooks:

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# flake8: noqa
+
 """Used to Reverse/Test ELM protocol auto detect and OBD message response without a car."""
 
 import sys
@@ -10,7 +12,7 @@ import threading
 from collections import deque
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda
+from panda import Panda  # noqa: E402
 
 def lin_checksum(dat):
     return sum(dat) % 0x100
@@ -292,8 +294,8 @@ class ELMCarSimulator():
                 parts = (b'\xAA\xAA\xAA' + struct.pack(">I", num) for num in range(584))
                 return b'\xAA\xAA\xAA' + b''.join(parts) + b'\xAA'
             if pid == 0xFF:
-                return b'\xAA\x00\x00' +\
-                        b"".join(((b'\xAA' * 5) + struct.pack(">H", num + 1) for num in range(584)))
+                return b'\xAA\x00\x00' + \
+                       b"".join(((b'\xAA' * 5) + struct.pack(">H", num + 1) for num in range(584)))
                 #return b"\xAA"*100#(0xFFF-3)
 
 
