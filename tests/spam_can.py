@@ -19,4 +19,4 @@ if __name__ == "__main__":
     st = get_test_string()[0:8]
     bus = random.randint(0, 2)
     p.can_send(at, st, bus)
-    #print("Sent message on bus: ", bus)
+    # print("Sent message on bus: ", bus)

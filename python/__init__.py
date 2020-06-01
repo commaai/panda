@@ -192,7 +192,7 @@ class Panda(object):
                   self._handle.setAutoDetachKernelDriver(True)
                 if claim:
                   self._handle.claimInterface(0)
-                  #self._handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
+                  # self._handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
                 break
         except Exception as e:
           print("exception", e)
@@ -343,7 +343,7 @@ class Panda(object):
     except Exception:
       pass
     # TODO: detect if this is real
-    #ret += ["WIFI"]
+    # ret += ["WIFI"]
     return ret
 
   def call_control_api(self, msg):
@@ -661,6 +661,6 @@ class Panda(object):
     a = struct.unpack("H", dat)
     return a[0]
 
-# ****************** Phone *****************
+  # ****************** Phone *****************
   def set_phone_power(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, int(enabled), 0, b'')
