@@ -7,7 +7,7 @@ import random
 import threading
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda, PandaSerial
+from panda import Panda, PandaSerial  # noqa: E402
 
 INIT_GPS_BAUD = 9600
 GPS_BAUD = 460800
@@ -116,10 +116,9 @@ def gps_read_thread(panda):
   while True:
     ret = ser.read(1024)
     time.sleep(0.001)
-    l = len(ret)
-    if l > 0:
+    if len(ret):
       received_messages += 1
-      received_bytes += l
+      received_bytes += len(ret)
     if send_something:
       ser.write("test")
       send_something = False

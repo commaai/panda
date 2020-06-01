@@ -6,7 +6,7 @@ import time
 import select
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda
+from panda import Panda  # noqa: E402
 
 setcolor = ["\033[1;32;40m", "\033[1;31;40m"]
 unsetcolor = "\033[00m"

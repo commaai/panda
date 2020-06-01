@@ -192,7 +192,7 @@ class Panda(object):
                   self._handle.setAutoDetachKernelDriver(True)
                 if claim:
                   self._handle.claimInterface(0)
-                  #self._handle.setInterfaceAltSetting(0, 0) #Issue in USB stack
+                  #self._handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
                 break
         except Exception as e:
           print("exception", e)
