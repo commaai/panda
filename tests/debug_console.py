@@ -46,4 +46,4 @@ if __name__ == "__main__":
           time.sleep(0.01)
     except Exception:
       print("panda disconnected!")
-      time.sleep(0.5);
+      time.sleep(0.5)

@@ -32,7 +32,7 @@ def send_compare(s, dat, ret, timeout=4):
         ready = select.select([s], [], [], timeout)
         if not ready[0]:
             print("current recv data:", repr(res))
-            break;
+            break
         res += s.recv(1000)
     #print("final recv data: '%s'" % repr(res))
     assert ret == res  # , "Data does not agree (%s) (%s)"%(repr(ret), repr(res))
@@ -299,7 +299,7 @@ def test_elm_panda_safety_mode_KWPFast():
     p_car.kline_drain()
 
     p_elm = Panda("WIFI")
-    p_elm.set_safety_mode(Panda.SAFETY_ELM327);
+    p_elm.set_safety_mode(Panda.SAFETY_ELM327)
 
     def get_checksum(dat):
         result = 0
@@ -623,7 +623,7 @@ def test_elm_panda_safety_mode_ISO15765():
     p_car.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
     p_elm = Panda("WIFI")
-    p_elm.set_safety_mode(Panda.SAFETY_ELM327);
+    p_elm.set_safety_mode(Panda.SAFETY_ELM327)
 
     #sim = elm_car_simulator.ELMCarSimulator(serial, lin=False)
     #sim.start()

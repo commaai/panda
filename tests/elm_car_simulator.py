@@ -225,7 +225,7 @@ class ELMCarSimulator():
             outmsg = None
             if data[:3] == b'\x30\x00\x00' and len(self.__can_multipart_data):
                 if not self.__silent:
-                    print("Request for more data");
+                    print("Request for more data")
                 outaddr = 0x7E8 if address == 0x7DF or address == 0x7E0 else 0x18DAF110
                 msgnum = 1
                 while(self.__can_multipart_data):
