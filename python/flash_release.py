@@ -95,4 +95,3 @@ def flash_release(path=None, st_serial=None):
 
 if __name__ == "__main__":
   flash_release(*sys.argv[1:])
-

@@ -87,4 +87,3 @@ def init_segment(safety, lr, mode):
     safety.set_controls_allowed(1)
     set_desired_torque_last(safety, mode, torque)
     assert safety.safety_tx_hook(to_send), "failed to initialize panda safety for segment"
-

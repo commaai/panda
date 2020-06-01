@@ -17,7 +17,8 @@ repos:
     -   id: flake8
         exclude: '^(tests/automated)/'
         args:
-        - --select=F
+        - --ignore=E111,E114
+        - --statistics
 -   repo: local
     hooks:
     -   id: pylint

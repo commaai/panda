@@ -34,4 +34,3 @@ with open(sys.argv[2], "wb") as f:
   sig = (hex(rsa_out)[2:].rjust(0x100, '0'))
   x += binascii.unhexlify(sig)
   f.write(x)
-

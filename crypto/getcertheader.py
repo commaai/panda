@@ -41,5 +41,3 @@ for fn in sys.argv[1:]:
   print('  .rr = %s,' % to_c_uint32(rr))
   print('  .exponent = %d,' % rsa.e)
   print('};')
-
-

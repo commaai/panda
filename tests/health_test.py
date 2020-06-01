@@ -16,4 +16,3 @@ if __name__ == "__main__":
       print(panda.health())
     print("\n")
     time.sleep(0.5)
-

@@ -23,5 +23,3 @@ class PandaSerial(object):
 
   def close(self):
     pass
-
-

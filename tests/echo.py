@@ -31,5 +31,3 @@ if __name__ == "__main__":
       address, notused, data, bus = message
       if b'test' in data:
         p.can_send(address, data[::-1], bus)
-
-

@@ -33,4 +33,3 @@ plt.show()
 #data = (data - 130.0 - voltoffset/voltscale*25) / 25 * voltscale
 
 print(data)
-

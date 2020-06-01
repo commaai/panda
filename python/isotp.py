@@ -134,4 +134,3 @@ def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
     print("R:", binascii.hexlify(dat))
 
   return dat
-

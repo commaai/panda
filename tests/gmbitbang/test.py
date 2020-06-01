@@ -30,4 +30,3 @@ while 1:
   time.sleep(0.01)
   print(p2.can_recv())
   #exit(0)
-

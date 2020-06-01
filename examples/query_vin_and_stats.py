@@ -55,6 +55,3 @@ if __name__ == "__main__":
     load = struct.unpack(">B", get_current_data_for_pid(4)[2:])[0]/255.0 * 100        # percent
     print("%d KPH, %d RPM, %.1f%% Throttle, %d deg C, %.1f%% load" % (speed, rpm, throttle, temp, load))
     time.sleep(0.2)
-
-
-

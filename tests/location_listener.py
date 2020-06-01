@@ -44,4 +44,3 @@ if __name__ == "__main__":
       sys.stdout.write(ret.decode('ascii', 'ignore'))
       sys.stdout.flush()
       #print str(ret).encode("hex")
-

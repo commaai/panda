@@ -75,4 +75,3 @@ if __name__ == "__main__":
   print("replaying drive %s with safety mode %d and param %d" % (sys.argv[1], mode, param))
 
   replay_drive(lr, mode, param)
-

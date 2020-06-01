@@ -71,5 +71,3 @@ if __name__ == "__main__":
     Panda.flash_static(CanHandle(p), code)
 
   print("can flash done")
-
-
