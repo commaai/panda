@@ -4,7 +4,7 @@ import sys
 import time
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda
+from panda import Panda  # noqa: E402
 
 power = 0
 if __name__ == "__main__":
@@ -14,4 +14,4 @@ if __name__ == "__main__":
     print("Power: ", str(power))
     time.sleep(1)
     power += 10
-    power %=100
+    power %= 100

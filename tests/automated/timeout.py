@@ -10,14 +10,14 @@ def run_with_timeout(timeout, fn, *kwargs):
     except Exception as e:
       print(e)
       raise e
-  
+
   process = Process(target=runner, args=(fn, kwargs))
   process.start()
 
   counter = 0
   while process.is_alive():
     time.sleep(INTERVAL)
-    counter+=1
+    counter += 1
     if (counter * INTERVAL) > timeout:
       process.terminate()
       raise TimeoutError("Function timed out!")

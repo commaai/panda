@@ -53,7 +53,7 @@ class TestChryslerSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest
 
   def _brake_msg(self, brake):
     values = {"BRAKE_PRESSED_2": 5 if brake else 0,
-                "COUNTER": self.cnt_brake % 16}
+              "COUNTER": self.cnt_brake % 16}
     self.__class__.cnt_brake += 1
     return self.packer.make_can_msg_panda("BRAKE_2", 0, values)
 

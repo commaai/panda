@@ -21,9 +21,9 @@ def test_can_loopback(p):
   p.set_can_loopback(True)
 
   if p.legacy:
-    busses = [0,1]
+    busses = [0, 1]
   else:
-    busses = [0,1,2]
+    busses = [0, 1, 2]
 
   for bus in busses:
     # set bus 0 speed to 250
@@ -78,8 +78,8 @@ def test_reliability(p):
   p.set_can_loopback(True)
   p.set_can_speed_kbps(0, 1000)
 
-  addrs = list(range(100, 100+MSG_COUNT))
-  ts = [(j, 0, b"\xaa"*8, 0) for j in addrs]
+  addrs = list(range(100, 100 + MSG_COUNT))
+  ts = [(j, 0, b"\xaa" * 8, 0) for j in addrs]
 
   # 100 loops
   for i in range(LOOP_COUNT):
@@ -99,7 +99,7 @@ def test_reliability(p):
     assert_equal(len(r), 200)
 
     # take sub 20ms
-    et = (time.time()-st)*1000.0
+    et = (time.time() - st) * 1000.0
     assert_less(et, 20)
 
     sys.stdout.write("P")
@@ -117,7 +117,7 @@ def test_throughput(p):
   # enable CAN loopback mode
   p.set_can_loopback(True)
 
-  for speed in [100,250,500,750,1000]:
+  for speed in [100, 250, 500, 750, 1000]:
     # set bus 0 speed to speed
     p.set_can_speed_kbps(0, speed)
     time.sleep(0.05)
@@ -125,7 +125,7 @@ def test_throughput(p):
     comp_kbps = time_many_sends(p, 0)
 
     # bit count from https://en.wikipedia.org/wiki/CAN_bus
-    saturation_pct = (comp_kbps/speed) * 100.0
+    saturation_pct = (comp_kbps / speed) * 100.0
     assert_greater(saturation_pct, 80)
     assert_less(saturation_pct, 100)
 

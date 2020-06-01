@@ -20,4 +20,3 @@ while 1:
   iden += 1
   p.can_send(iden, dat, bus=3)
   time.sleep(0.01)
-

@@ -1,3 +1,5 @@
+# flake8: noqa
+
 import os
 import sys
 import time
@@ -32,7 +34,7 @@ def send_compare(s, dat, ret, timeout=4):
         ready = select.select([s], [], [], timeout)
         if not ready[0]:
             print("current recv data:", repr(res))
-            break;
+            break
         res += s.recv(1000)
     #print("final recv data: '%s'" % repr(res))
     assert ret == res  # , "Data does not agree (%s) (%s)"%(repr(ret), repr(res))
@@ -64,7 +66,7 @@ def test_elm_cli():
         #Test Echo Off
         #Expected to be misimplimentation, but this is how the reference device behaved.
         send_compare(s, b'ATE0\r', b'ATE0\rOK\r\r>')  # Here is the odd part
-        send_compare(s, b'ATE0\r', b'OK\r\r>')       #Should prob show this immediately
+        send_compare(s, b'ATE0\r', b'OK\r\r>')  # Should prob show this immediately
         send_compare(s, b'ATI\r', b'ELM327 v1.5\r\r>')
 
         #Test Newline On
@@ -281,8 +283,8 @@ def test_elm_send_lin_multiline_msg_throughput():
 
         send_compare(s, b'09fc\r',  # headers OFF, Spaces OFF
                      b"BUS INIT: OK\r" +
-                     b''.join((b'49FC' + hex(num+1)[2:].upper().zfill(2) +
-                               b'AAAA' + hex(num+1)[2:].upper().zfill(4) + b'\r'
+                     b''.join((b'49FC' + hex(num + 1)[2:].upper().zfill(2) +
+                               b'AAAA' + hex(num + 1)[2:].upper().zfill(4) + b'\r'
                                for num in range(80))) +
                      b"\r>",
                      timeout=10
@@ -299,7 +301,7 @@ def test_elm_panda_safety_mode_KWPFast():
     p_car.kline_drain()
 
     p_elm = Panda("WIFI")
-    p_elm.set_safety_mode(Panda.SAFETY_ELM327);
+    p_elm.set_safety_mode(Panda.SAFETY_ELM327)
 
     def get_checksum(dat):
         result = 0
@@ -310,8 +312,8 @@ def test_elm_panda_safety_mode_KWPFast():
         t = time.time()
         msg = bytearray()
 
-        while time.time()-t < 0.5 and len(msg) != len(goodmsg):
-            msg += p._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, len(goodmsg)-len(msg))
+        while time.time() - t < 0.5 and len(msg) != len(goodmsg):
+            msg += p._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, len(goodmsg) - len(msg))
             #print("Received", repr(msg))
             if msg == goodmsg:
                 return True
@@ -543,10 +545,10 @@ def test_elm_send_can_multiline_msg_throughput():
 
         rows = 584
         send_compare(s, b'09ff\r',  # headers ON, Spaces OFF
-                     ("7E8" + "1" + hex((rows*7)+6)[2:].upper().zfill(3) + "49FF01"+"AA0000\r" +
+                     ("7E8" + "1" + hex((rows * 7) + 6)[2:].upper().zfill(3) + "49FF01" + "AA0000\r" +
                       "".join(
-                          ("7E82"+hex((num+1)%0x10)[2:].upper()+("AA"*5) +
-                           hex(num+1)[2:].upper().zfill(4) + "\r" for num in range(rows))
+                          ("7E82" + hex((num + 1) % 0x10)[2:].upper() + ("AA" * 5) +
+                           hex(num + 1)[2:].upper().zfill(4) + "\r" for num in range(rows))
                       ) + "\r>").encode(),
                      timeout=10
         )
@@ -623,7 +625,7 @@ def test_elm_panda_safety_mode_ISO15765():
     p_car.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
     p_elm = Panda("WIFI")
-    p_elm.set_safety_mode(Panda.SAFETY_ELM327);
+    p_elm.set_safety_mode(Panda.SAFETY_ELM327)
 
     #sim = elm_car_simulator.ELMCarSimulator(serial, lin=False)
     #sim.start()
@@ -631,7 +633,7 @@ def test_elm_panda_safety_mode_ISO15765():
     def did_send(p, addr, dat, bus):
         p.can_send(addr, dat, bus)
         t = time.time()
-        while time.time()-t < 0.5:
+        while time.time() - t < 0.5:
             msg = p.can_recv()
             for addrin, _, datin, busin in msg:
                 if (0x80 | bus) == busin and addr == addrin and datin == dat:

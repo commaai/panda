@@ -7,7 +7,7 @@ import random
 import threading
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda, PandaSerial
+from panda import Panda, PandaSerial  # noqa: E402
 
 INIT_GPS_BAUD = 9600
 GPS_BAUD = 460800
@@ -45,7 +45,7 @@ def spam_buses_thread(panda):
     panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
     while True:
       at = random.randint(1, 2000)
-      st = (b"test"+os.urandom(10))[0:8]
+      st = (b"test" + os.urandom(10))[0:8]
       bus = random.randint(0, 2)
       panda.can_send(at, st, bus)
   except Exception as e:
@@ -77,7 +77,7 @@ def init_gps(panda):
 
   # Upping baud rate
   print("Upping GPS baud rate")
-  msg = str.encode(add_nmea_checksum("$PUBX,41,1,0007,0003,%d,0" % GPS_BAUD)+"\r\n")
+  msg = str.encode(add_nmea_checksum("$PUBX,41,1,0007,0003,%d,0" % GPS_BAUD) + "\r\n")
   ser.write(msg)
   time.sleep(1)   # needs a wait for it to actually send
 
@@ -116,10 +116,9 @@ def gps_read_thread(panda):
   while True:
     ret = ser.read(1024)
     time.sleep(0.001)
-    l = len(ret)
-    if l > 0:
-      received_messages+=1
-      received_bytes+=l
+    if len(ret):
+      received_messages += 1
+      received_bytes += len(ret)
     if send_something:
       ser.write("test")
       send_something = False
@@ -149,11 +148,11 @@ if __name__ == "__main__":
     if(received_bytes < MIN_BYTES):
       print("Panda is not sending out enough data! Got " + str(received_messages) + " (" + str(received_bytes) + "B) in the last " + str(CHECK_PERIOD) + " seconds")
       send_something = True
-      min_failures+=1
+      min_failures += 1
     elif(received_bytes > MAX_BYTES):
       print("Panda is not sending out too much data! Got " + str(received_messages) + " (" + str(received_bytes) + "B) in the last " + str(CHECK_PERIOD) + " seconds")
       print("Probably not on the right baud rate, got reset somehow? Resetting...")
-      max_failures+=1
+      max_failures += 1
       init_gps(gps_panda)
     else:
       print("Got " + str(received_messages) + " (" + str(received_bytes) + "B) messages in the last " + str(CHECK_PERIOD) + " seconds.")

@@ -1,4 +1,4 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 """
     Panda CAN Controller Dongle
@@ -41,7 +41,7 @@ setup(
   author_email='',
   packages=[
     'panda',
-    ],
+  ],
   package_dir={'panda': 'python'},
   platforms='any',
   license='MIT',

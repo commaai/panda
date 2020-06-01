@@ -53,7 +53,7 @@ class TestNissanSafety(common.PandaSafetyTest):
 
   def _speed_msg(self, speed):
     # TODO: why the 3.6? m/s to kph? not in dbc
-    values = {"WHEEL_SPEED_%s"%s: speed*3.6 for s in ["RR", "RL"]}
+    values = {"WHEEL_SPEED_%s" % s: speed * 3.6 for s in ["RR", "RL"]}
     return self.packer.make_can_msg_panda("WHEEL_SPEEDS_REAR", 0, values)
 
   def _brake_msg(self, brake):

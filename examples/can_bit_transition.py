@@ -4,6 +4,7 @@ import sys
 
 class Message():
   """Details about a specific message ID."""
+
   def __init__(self, message_id):
     self.message_id = message_id
     self.ones = [0] * 8   # bit set if 1 is always seen
@@ -32,7 +33,8 @@ class Info():
       reader = csv.reader(input)
       next(reader, None)  # skip the CSV header
       for row in reader:
-        if not len(row): continue
+        if not len(row):
+          continue
         time = float(row[0])
         bus = int(row[2])
         if time < start or bus > 127:
@@ -76,7 +78,8 @@ def PrintUnique(log_file, low_range, high_range):
     if message_id in low.messages:
       high.messages[message_id].printBitDiff(low.messages[message_id])
       found = True
-  if not found: print('No messages that transition from always low to always high found!')
+  if not found:
+    print('No messages that transition from always low to always high found!')
 
 if __name__ == "__main__":
   if len(sys.argv) < 4:

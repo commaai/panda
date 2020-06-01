@@ -5,8 +5,7 @@ import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg, \
-                                      MAX_WRONG_COUNTERS, UNSAFE_MODE
+from panda.tests.safety.common import CANPackerPanda, make_msg, MAX_WRONG_COUNTERS, UNSAFE_MODE
 
 class Btn:
   CANCEL = 2
@@ -36,9 +35,14 @@ class TestHondaSafety(common.PandaSafetyTest):
       raise unittest.SkipTest
 
   # override these inherited tests. honda doesn't use pcm enable
-  def test_disable_control_allowed_from_cruise(self): pass
-  def test_enable_control_allowed_from_cruise(self): pass
-  def test_cruise_engaged_prev(self): pass
+  def test_disable_control_allowed_from_cruise(self):
+    pass
+
+  def test_enable_control_allowed_from_cruise(self):
+    pass
+
+  def test_cruise_engaged_prev(self):
+    pass
 
   def _speed_msg(self, speed):
     values = {"XMISSION_SPEED": speed, "COUNTER": self.cnt_speed % 4}
@@ -198,7 +202,7 @@ class TestHondaNidecSafety(TestHondaSafety, common.InterceptorSafetyTest):
     to_send = make_msg(0, addr, 6)
     gas2 = gas * 2
     to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
-                    ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
+                      ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
     return to_send
 
   def _send_brake_msg(self, brake):
@@ -236,8 +240,8 @@ class TestHondaNidecSafety(TestHondaSafety, common.InterceptorSafetyTest):
     for mode in [UNSAFE_MODE.DEFAULT, UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS]:
       self.safety.set_unsafe_mode(mode)
       # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
-      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD+1, 0x201))
-      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD+1, 0x201))
+      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
+      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
       allow_ctrl = mode == UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS
 
       self.safety.set_controls_allowed(1)

@@ -53,7 +53,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     return self.packer.make_can_msg_panda("ACC_CONTROL", 0, values)
 
   def _speed_msg(self, s):
-    values = {("WHEEL_SPEED_%s"%n): s for n in ["FR", "FL", "RR", "RL"]}
+    values = {("WHEEL_SPEED_%s" % n): s for n in ["FR", "FL", "RR", "RL"]}
     return self.packer.make_can_msg_panda("WHEEL_SPEEDS", 0, values)
 
   def _brake_msg(self, pressed):
@@ -86,7 +86,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
           self.safety.set_controls_allowed(controls_allowed)
           self.safety.set_unsafe_mode(unsafe_mode)
           if controls_allowed:
-            should_tx = int(min_accel*1000) <= int(accel*1000) <= int(max_accel*1000)
+            should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
           else:
             should_tx = np.isclose(accel, 0, atol=0.0001)
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))

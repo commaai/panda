@@ -5,4 +5,3 @@ def test_build_panda():
 
 def test_build_bootstub_panda():
   build_st("obj/bootstub.panda.bin")
-

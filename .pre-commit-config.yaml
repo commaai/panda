@@ -17,7 +17,9 @@ repos:
     -   id: flake8
         exclude: '^(tests/automated)/'
         args:
-        - --select=F
+        - --ignore=E111,E114,E121,E501,E302,E305,W504
+        - --exclude=python/esptool.py,tests/gmbitbang/*
+        - --statistics
 -   repo: local
     hooks:
     -   id: pylint

@@ -86,10 +86,10 @@ def time_many_sends(p, bus, p_recv=None, msg_count=100, msg_id=None, two_pandas=
     raise ValueError("Cannot have two pandas that are the same panda")
 
   start_time = time.time()
-  p.can_send_many([(msg_id, 0, b"\xaa"*8, bus)]*msg_count)
+  p.can_send_many([(msg_id, 0, b"\xaa" * 8, bus)] * msg_count)
   r = []
   r_echo = []
-  r_len_expected = msg_count if two_pandas else msg_count*2
+  r_len_expected = msg_count if two_pandas else msg_count * 2
   r_echo_len_exected = msg_count if two_pandas else 0
 
   while len(r) < r_len_expected and (time.time() - start_time) < 5:
@@ -109,8 +109,8 @@ def time_many_sends(p, bus, p_recv=None, msg_count=100, msg_id=None, two_pandas=
   assert_equal(len(resp), msg_count)
   assert_equal(len(sent_echo), msg_count)
 
-  end_time = (end_time-start_time)*1000.0
-  comp_kbps = (1+11+1+1+1+4+8*8+15+1+1+1+7)*msg_count / end_time
+  end_time = (end_time - start_time) * 1000.0
+  comp_kbps = (1 + 11 + 1 + 1 + 1 + 4 + 8 * 8 + 15 + 1 + 1 + 1 + 7) * msg_count / end_time
 
   return comp_kbps
 

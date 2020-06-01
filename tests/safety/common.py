@@ -30,7 +30,7 @@ def package_can_msg(msg):
   return ret
 
 def make_msg(bus, addr, length=8):
-  return package_can_msg([addr, 0, b'\x00'*length, bus])
+  return package_can_msg([addr, 0, b'\x00' * length, bus])
 
 class CANPackerPanda(CANPacker):
   def make_can_msg_panda(self, name_or_addr, bus, values, counter=-1, fix_checksum=None):
@@ -143,7 +143,7 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
-      for t in range(-self.MAX_TORQUE*2, self.MAX_TORQUE*2):
+      for t in range(-self.MAX_TORQUE * 2, self.MAX_TORQUE * 2):
         self.safety.set_controls_allowed(enabled)
         self._set_prev_torque(t)
         if abs(t) > self.MAX_TORQUE or (not enabled and abs(t) > 0):
@@ -207,14 +207,14 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
     for sign in [-1, 1]:
       self.safety.init_tests()
       self._set_prev_torque(0)
-      for t in np.arange(0, self.MAX_RT_DELTA+1, 1):
+      for t in np.arange(0, self.MAX_RT_DELTA + 1, 1):
         t *= sign
         self.safety.set_torque_meas(t, t)
         self.assertTrue(self._tx(self._torque_msg(t)))
       self.assertFalse(self._tx(self._torque_msg(sign * (self.MAX_RT_DELTA + 1))))
 
       self._set_prev_torque(0)
-      for t in np.arange(0, self.MAX_RT_DELTA+1, 1):
+      for t in np.arange(0, self.MAX_RT_DELTA + 1, 1):
         t *= sign
         self.safety.set_torque_meas(t, t)
         self.assertTrue(self._tx(self._torque_msg(t)))
@@ -230,17 +230,17 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
       self._rx(self._torque_meas_msg(t))
 
     max_range = range(trq, trq + self.TORQUE_MEAS_TOLERANCE + 1)
-    min_range = range(-(trq+self.TORQUE_MEAS_TOLERANCE), -trq + 1)
+    min_range = range(-(trq + self.TORQUE_MEAS_TOLERANCE), -trq + 1)
     self.assertTrue(self.safety.get_torque_meas_min() in min_range)
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
-    max_range = range(0, self.TORQUE_MEAS_TOLERANCE+1)
-    min_range = range(-(trq+self.TORQUE_MEAS_TOLERANCE), -trq + 1)
+    max_range = range(0, self.TORQUE_MEAS_TOLERANCE + 1)
+    min_range = range(-(trq + self.TORQUE_MEAS_TOLERANCE), -trq + 1)
     self._rx(self._torque_meas_msg(0))
     self.assertTrue(self.safety.get_torque_meas_min() in min_range)
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
-    max_range = range(0, self.TORQUE_MEAS_TOLERANCE+1)
+    max_range = range(0, self.TORQUE_MEAS_TOLERANCE + 1)
     min_range = range(-self.TORQUE_MEAS_TOLERANCE, 0 + 1)
     self._rx(self._torque_meas_msg(0))
     self.assertTrue(self.safety.get_torque_meas_min() in min_range)
@@ -320,7 +320,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   def test_prev_gas(self):
     self.assertFalse(self.safety.get_gas_pressed_prev())
-    for pressed in [self.GAS_PRESSED_THRESHOLD+1, 0]:
+    for pressed in [self.GAS_PRESSED_THRESHOLD + 1, 0]:
       self._rx(self._gas_msg(pressed))
       self.assertEqual(bool(pressed), self.safety.get_gas_pressed_prev())
 
@@ -335,14 +335,14 @@ class PandaSafetyTest(PandaSafetyTestBase):
   def test_disengage_on_gas(self):
     self._rx(self._gas_msg(0))
     self.safety.set_controls_allowed(True)
-    self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD+1))
+    self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_unsafe_mode_no_disengage_on_gas(self):
     self._rx(self._gas_msg(0))
     self.safety.set_controls_allowed(True)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
-    self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD+1))
+    self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_prev_brake(self):
@@ -409,5 +409,5 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertFalse(self.safety.get_vehicle_moving())
 
     # past threshold
-    self.safety.safety_rx_hook(self._speed_msg(self.STANDSTILL_THRESHOLD+1))
+    self.safety.safety_rx_hook(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
     self.assertTrue(self.safety.get_vehicle_moving())

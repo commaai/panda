@@ -68,7 +68,7 @@ class TestHyundaiSafety(common.PandaSafetyTest):
 
   def _speed_msg(self, speed):
     # panda safety doesn't scale, so undo the scaling
-    values = {"WHL_SPD_%s"%s: speed*0.03125 for s in ["FL", "FR", "RL", "RR"]}
+    values = {"WHL_SPD_%s" % s: speed * 0.03125 for s in ["FL", "FR", "RL", "RR"]}
     values["WHL_SPD_AliveCounter_LSB"] = (self.cnt_speed % 16) & 0x3
     values["WHL_SPD_AliveCounter_MSB"] = (self.cnt_speed % 16) >> 2
     self.__class__.cnt_speed += 1

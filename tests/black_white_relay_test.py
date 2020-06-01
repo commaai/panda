@@ -11,10 +11,10 @@ import random
 import argparse
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda
+from panda import Panda  # noqa: E402
 
 def get_test_string():
-  return b"test"+os.urandom(10)
+  return b"test" + os.urandom(10)
 
 counter = 0
 open_errors = 0
@@ -25,7 +25,6 @@ def run_test(sleep_duration):
   global counter, open_errors, closed_errors, content_errors
 
   pandas = Panda.list()
-  #pandas = ["540046000c51363338383037", "07801b800f51363038363036"]
   print(pandas)
 
   # make sure two pandas are connected

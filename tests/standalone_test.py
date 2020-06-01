@@ -5,7 +5,7 @@ import struct
 import time
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda
+from panda import Panda  # noqa: E402
 
 if __name__ == "__main__":
   if os.getenv("WIFI") is not None:
@@ -19,14 +19,14 @@ if __name__ == "__main__":
   for i in range(100):
     p.get_serial()
   t2 = time.time()
-  print("100 requests took %.2f ms" % ((t2-t1)*1000))
+  print("100 requests took %.2f ms" % ((t2 - t1) * 1000))
 
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
   a = 0
   while True:
     # flood
-    msg = b"\xaa"*4 + struct.pack("I", a)
+    msg = b"\xaa" * 4 + struct.pack("I", a)
     p.can_send(0xaa, msg, 0)
     p.can_send(0xaa, msg, 1)
     p.can_send(0xaa, msg, 4)

@@ -31,8 +31,6 @@ def send_msg(s, msg):
 
 if __name__ == "__main__":
     s = socket.create_connection(("192.168.0.10", 35000))
-    #t1 = Reader(s)
-    #t1.start()
     send_msg(s, b"ATZ\r")
     send_msg(s, b"ATL1\r")
     print(send_msg(s, b"ATE0\r"))

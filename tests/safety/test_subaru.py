@@ -48,7 +48,7 @@ class TestSubaruSafety(common.PandaSafetyTest):
 
   def _speed_msg(self, speed):
     # subaru safety doesn't use the scaled value, so undo the scaling
-    values = {s: speed*0.057 for s in ["FR", "FL", "RR", "RL"]}
+    values = {s: speed * 0.057 for s in ["FR", "FL", "RR", "RL"]}
     values["Counter"] = self.cnt_speed % 4
     self.__class__.cnt_speed += 1
     return self.packer.make_can_msg_panda("Wheel_Speeds", 0, values)
@@ -180,16 +180,23 @@ class TestSubaruLegacySafety(TestSubaruSafety):
     self.safety.init_tests()
 
   # subaru legacy safety doesn't have brake checks
-  def test_prev_brake(self): pass
-  def test_not_allow_brake_when_moving(self): pass
-  def test_allow_brake_at_zero_speed(self): pass
+  def test_prev_brake(self):
+    pass
+
+  def test_not_allow_brake_when_moving(self):
+    pass
+
+  def test_allow_brake_at_zero_speed(self):
+    pass
+
   # doesn't have speed checks either
-  def test_sample_speed(self): pass
+  def test_sample_speed(self):
+    pass
 
   def _torque_driver_msg(self, torque):
     # TODO: figure out if this scaling factor from the DBC is right.
     # if it is, remove the scaling from here and put it in the safety code
-    values = {"Steer_Torque_Sensor": torque*8}
+    values = {"Steer_Torque_Sensor": torque * 8}
     return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
 
   def _torque_msg(self, torque):

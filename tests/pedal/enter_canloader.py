@@ -10,7 +10,6 @@ class CanHandle(object):
     self.p = p
 
   def transact(self, dat):
-    #print "W:",dat.encode("hex")
     self.p.isotp_send(1, dat, 0, recvaddr=2)
 
     def _handle_timeout(signum, frame):
@@ -24,7 +23,6 @@ class CanHandle(object):
     finally:
       signal.alarm(0)
 
-    #print "R:",ret.encode("hex")
     return ret
 
   def controlWrite(self, request_type, request, value, index, data, timeout=0):
@@ -38,7 +36,7 @@ class CanHandle(object):
   def bulkWrite(self, endpoint, data, timeout=0):
     if len(data) > 0x10:
       raise ValueError("Data must not be longer than 0x10")
-    dat = struct.pack("HH", endpoint, len(data))+data
+    dat = struct.pack("HH", endpoint, len(data)) + data
     return self.transact(dat)
 
   def bulkRead(self, endpoint, length, timeout=0):
@@ -71,5 +69,3 @@ if __name__ == "__main__":
     Panda.flash_static(CanHandle(p), code)
 
   print("can flash done")
-
-

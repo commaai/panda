@@ -12,10 +12,10 @@ import random
 import argparse
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda
+from panda import Panda  # noqa: E402
 
 def get_test_string():
-  return b"test"+os.urandom(10)
+  return b"test" + os.urandom(10)
 
 counter = 0
 nonzero_bus_errors = 0
@@ -70,8 +70,8 @@ def run_test(sleep_duration):
     runtime = time.time() - start_time
     print("Number of cycles:", counter, "Non-zero bus errors:", nonzero_bus_errors, "Zero bus errors:", zero_bus_errors, "Content errors:", content_errors, "Runtime: ", runtime)
 
-    if (time.time() - temp_start_time) > 3600*6:
-    	# Toggle relay
+    if (time.time() - temp_start_time) > 3600 * 6:
+      # Toggle relay
       black_panda.set_safety_mode(Panda.SAFETY_SILENT)
       time.sleep(1)
       black_panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
@@ -105,7 +105,7 @@ def test_buses(black_panda, other_panda, direction, test_array, sleep_duration):
       if direction:
         other_panda.can_clear(recv_bus)
       else:
-	      black_panda.can_clear(recv_bus)
+        black_panda.can_clear(recv_bus)
 
     black_panda.can_recv()
     other_panda.can_recv()
@@ -130,7 +130,7 @@ def test_buses(black_panda, other_panda, direction, test_array, sleep_duration):
     loop_buses = []
     for loop in cans_loop:
       if (loop[0] != at) or (loop[2] != st):
-	      content_errors += 1
+        content_errors += 1
 
       print("  Loop on bus", str(loop[3]))
       loop_buses.append(loop[3])
@@ -144,9 +144,9 @@ def test_buses(black_panda, other_panda, direction, test_array, sleep_duration):
     loop_buses.sort()
     if(recv_buses != loop_buses):
       if len(loop_buses) == 0:
-	      zero_bus_errors += 1
+        zero_bus_errors += 1
       else:
-	      nonzero_bus_errors += 1
+        nonzero_bus_errors += 1
       if not os.getenv("NOASSERT"):
         assert False
     else:

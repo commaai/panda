@@ -33,8 +33,8 @@ def test_udp_doesnt_drop(serials=None):
 
       speed = 500
       p.set_can_speed_kbps(0, speed)
-      comp_kbps = time_many_sends(p, 0, pwifi, msg_count=msg_count, msg_id=0x100+i)
-      saturation_pct = (comp_kbps/speed) * 100.0
+      comp_kbps = time_many_sends(p, 0, pwifi, msg_count=msg_count, msg_id=0x100 + i)
+      saturation_pct = (comp_kbps / speed) * 100.0
 
       if msg_count == 1:
         sys.stdout.write(".")
@@ -45,7 +45,7 @@ def test_udp_doesnt_drop(serials=None):
         assert_less(saturation_pct, 100)
         saturation_pcts.append(saturation_pct)
     if len(saturation_pcts) > 0:
-      assert_greater(sum(saturation_pcts)/len(saturation_pcts), 60)
+      assert_greater(sum(saturation_pcts) / len(saturation_pcts), 60)
 
   time.sleep(5)
   usb_ok_cnt = 0

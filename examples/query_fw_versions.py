@@ -5,7 +5,7 @@ from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseErr
 
 if __name__ == "__main__":
   addrs = [0x700 + i for i in range(256)]
-  addrs += [0x18da0000 + (i<<8) + 0xf1 for i in range(256)]
+  addrs += [0x18da0000 + (i << 8) + 0xf1 for i in range(256)]
   results = {}
 
   panda = Panda()
@@ -31,37 +31,43 @@ if __name__ == "__main__":
 
       try:
         data = uds_client.read_data_by_identifier(DATA_IDENTIFIER_TYPE.BOOT_SOFTWARE_IDENTIFICATION)
-        if data: resp[DATA_IDENTIFIER_TYPE.BOOT_SOFTWARE_IDENTIFICATION] = data
+        if data:
+          resp[DATA_IDENTIFIER_TYPE.BOOT_SOFTWARE_IDENTIFICATION] = data
       except NegativeResponseError:
         pass
 
       try:
         data = uds_client.read_data_by_identifier(DATA_IDENTIFIER_TYPE.APPLICATION_SOFTWARE_IDENTIFICATION)
-        if data: resp[DATA_IDENTIFIER_TYPE.APPLICATION_SOFTWARE_IDENTIFICATION] = data
+        if data:
+          resp[DATA_IDENTIFIER_TYPE.APPLICATION_SOFTWARE_IDENTIFICATION] = data
       except NegativeResponseError:
         pass
 
       try:
         data = uds_client.read_data_by_identifier(DATA_IDENTIFIER_TYPE.APPLICATION_DATA_IDENTIFICATION)
-        if data: resp[DATA_IDENTIFIER_TYPE.APPLICATION_DATA_IDENTIFICATION] = data
+        if data:
+          resp[DATA_IDENTIFIER_TYPE.APPLICATION_DATA_IDENTIFICATION] = data
       except NegativeResponseError:
         pass
 
       try:
         data = uds_client.read_data_by_identifier(DATA_IDENTIFIER_TYPE.BOOT_SOFTWARE_FINGERPRINT)
-        if data: resp[DATA_IDENTIFIER_TYPE.BOOT_SOFTWARE_FINGERPRINT] = data
+        if data:
+          resp[DATA_IDENTIFIER_TYPE.BOOT_SOFTWARE_FINGERPRINT] = data
       except NegativeResponseError:
         pass
 
       try:
         data = uds_client.read_data_by_identifier(DATA_IDENTIFIER_TYPE.APPLICATION_SOFTWARE_FINGERPRINT)
-        if data: resp[DATA_IDENTIFIER_TYPE.APPLICATION_SOFTWARE_FINGERPRINT] = data
+        if data:
+          resp[DATA_IDENTIFIER_TYPE.APPLICATION_SOFTWARE_FINGERPRINT] = data
       except NegativeResponseError:
         pass
 
       try:
         data = uds_client.read_data_by_identifier(DATA_IDENTIFIER_TYPE.APPLICATION_DATA_FINGERPRINT)
-        if data: resp[DATA_IDENTIFIER_TYPE.APPLICATION_DATA_FINGERPRINT] = data
+        if data:
+          resp[DATA_IDENTIFIER_TYPE.APPLICATION_DATA_FINGERPRINT] = data
       except NegativeResponseError:
         pass
 

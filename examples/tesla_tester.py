@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# flake8: noqa
+
 import sys
 import binascii
 from panda import Panda
@@ -45,7 +47,7 @@ def tesla_tester():
   while True:
     #Read the VIN
     can_recv = p.can_recv()
-    for address, _, dat, src  in can_recv:
+    for address, _, dat, src in can_recv:
       if src == body_bus_num:
         if address == 1384:  # 0x568 is VIN
           vin_index = int(binascii.hexlify(dat)[:2])  # first byte is the index, 00, 01, 02

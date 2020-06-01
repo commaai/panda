@@ -48,7 +48,8 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
     self.safety.init_tests()
 
   # override these inherited tests from PandaSafetyTest
-  def test_cruise_engaged_prev(self): pass
+  def test_cruise_engaged_prev(self):
+    pass
 
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)
@@ -56,7 +57,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
 
   # Wheel speeds _esp_19_msg
   def _speed_msg(self, speed):
-    values = {"ESP_%s_Radgeschw_02"%s: speed for s in ["HL", "HR", "VL", "VR"]}
+    values = {"ESP_%s_Radgeschw_02" % s: speed for s in ["HL", "HR", "VL", "VR"]}
     return self.packer.make_can_msg_panda("ESP_19", 0, values)
 
   # Brake light switch _esp_05_msg
@@ -80,21 +81,21 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
   # Driver steering input torque
   def _eps_01_msg(self, torque):
     values = {"Driver_Strain": abs(torque), "Driver_Strain_VZ": torque < 0,
-                "COUNTER": self.cnt_eps_01 % 16}
+              "COUNTER": self.cnt_eps_01 % 16}
     self.__class__.cnt_eps_01 += 1
     return self.packer.make_can_msg_panda("EPS_01", 0, values)
 
   # openpilot steering output torque
   def _hca_01_msg(self, torque):
     values = {"Assist_Torque": abs(torque), "Assist_VZ": torque < 0,
-                "COUNTER": self.cnt_hca_01 % 16}
+              "COUNTER": self.cnt_hca_01 % 16}
     self.__class__.cnt_hca_01 += 1
     return self.packer.make_can_msg_panda("HCA_01", 0, values)
 
   # Cruise control buttons
   def _gra_acc_01_msg(self, cancel=0, resume=0, _set=0):
     values = {"GRA_Abbrechen": cancel, "GRA_Tip_Setzen": _set,
-                "GRA_Tip_Wiederaufnahme": resume, "COUNTER": self.cnt_gra_acc_01 % 16}
+              "GRA_Tip_Wiederaufnahme": resume, "COUNTER": self.cnt_gra_acc_01 % 16}
     self.__class__.cnt_gra_acc_01 += 1
     return self.packer.make_can_msg_panda("GRA_ACC_01", 0, values)
 

@@ -10,10 +10,10 @@ from hexdump import hexdump
 from itertools import permutations
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda
+from panda import Panda  # noqa: E402
 
 def get_test_string():
-  return b"test"+os.urandom(10)
+  return b"test" + os.urandom(10)
 
 def run_test(sleep_duration):
   pandas = Panda.list()
@@ -49,7 +49,7 @@ def run_test_w_pandas(pandas, sleep_duration):
     print("health", ho[0], h[ho[0]].health())
 
     # **** test K/L line loopback ****
-    for bus in [2,3]:
+    for bus in [2, 3]:
       # flush the output
       h[ho[1]].kline_drain(bus=bus)
 
