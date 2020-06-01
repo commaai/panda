@@ -286,14 +286,16 @@ class CanClient():
     if self.tx_addr == 0x7DF:
       is_response = addr >= 0x7E8 and addr <= 0x7EF
       if is_response:
-        if self.debug: print(f"switch to physical addr {hex(addr)}")
+        if self.debug:
+          print(f"switch to physical addr {hex(addr)}")
         self.tx_addr = addr - 8
         self.rx_addr = addr
       return is_response
     if self.tx_addr == 0x18DB33F1:
       is_response = addr >= 0x18DAF100 and addr <= 0x18DAF1FF
       if is_response:
-        if self.debug: print(f"switch to physical addr {hex(addr)}")
+        if self.debug:
+          print(f"switch to physical addr {hex(addr)}")
         self.tx_addr = 0x18DA00F1 + (addr << 8 & 0xFF00)
         self.rx_addr = addr
     return bus == self.bus and addr == self.rx_addr
@@ -302,14 +304,16 @@ class CanClient():
     while True:
       msgs = self.rx()
       if drain:
-        if self.debug: print("CAN-RX: drain - {}".format(len(msgs)))
+        if self.debug:
+          print("CAN-RX: drain - {}".format(len(msgs)))
         self.rx_buff.clear()
       else:
         for rx_addr, rx_ts, rx_data, rx_bus in msgs or []:
           if self._recv_filter(rx_bus, rx_addr) and len(rx_data) > 0:
             rx_data = bytes(rx_data)  # convert bytearray to bytes
 
-            if self.debug: print(f"CAN-RX: {hex(rx_addr)} - 0x{bytes.hex(rx_data)}")
+            if self.debug:
+              print(f"CAN-RX: {hex(rx_addr)} - 0x{bytes.hex(rx_data)}")
 
             # Cut off sub addr in first byte
             if self.sub_addr is not None:
@@ -333,13 +337,15 @@ class CanClient():
   def send(self, msgs: List[bytes], delay: float = 0) -> None:
     for i, msg in enumerate(msgs):
       if delay and i != 0:
-        if self.debug: print(f"CAN-TX: delay - {delay}")
+        if self.debug:
+          print(f"CAN-TX: delay - {delay}")
         time.sleep(delay)
 
       if self.sub_addr is not None:
         msg = bytes([self.sub_addr]) + msg
 
-      if self.debug: print(f"CAN-TX: {hex(self.tx_addr)} - 0x{bytes.hex(msg)}")
+      if self.debug:
+        print(f"CAN-TX: {hex(self.tx_addr)} - 0x{bytes.hex(msg)}")
       assert len(msg) <= 8
 
       self.tx(self.tx_addr, msg, self.bus)
@@ -368,18 +374,21 @@ class IsoTpMessage():
     self.rx_idx = 0
     self.rx_done = False
 
-    if self.debug: print(f"ISO-TP: REQUEST - 0x{bytes.hex(self.tx_dat)}")
+    if self.debug:
+      print(f"ISO-TP: REQUEST - 0x{bytes.hex(self.tx_dat)}")
     self._tx_first_frame()
 
   def _tx_first_frame(self) -> None:
     if self.tx_len < self.max_len:
       # single frame (send all bytes)
-      if self.debug: print("ISO-TP: TX - single frame")
+      if self.debug:
+        print("ISO-TP: TX - single frame")
       msg = (bytes([self.tx_len]) + self.tx_dat).ljust(self.max_len, b"\x00")
       self.tx_done = True
     else:
       # first frame (send first 6 bytes)
-      if self.debug: print("ISO-TP: TX - first frame")
+      if self.debug:
+        print("ISO-TP: TX - first frame")
       msg = (struct.pack("!H", 0x1000 | self.tx_len) + self.tx_dat[:self.max_len - 2]).ljust(self.max_len - 2, b"\x00")
     self._can_client.send([msg])
 
@@ -397,7 +406,8 @@ class IsoTpMessage():
         if time.time() - start_time > self.timeout:
           raise MessageTimeoutError("timeout waiting for response")
     finally:
-      if self.debug and self.rx_dat: print(f"ISO-TP: RESPONSE - 0x{bytes.hex(self.rx_dat)}")
+      if self.debug and self.rx_dat:
+        print(f"ISO-TP: RESPONSE - 0x{bytes.hex(self.rx_dat)}")
 
   def _isotp_rx_next(self, rx_data: bytes) -> None:
     # single rx_frame
@@ -427,14 +437,15 @@ class IsoTpMessage():
 
     # consecutive rx frame
     if rx_data[0] >> 4 == 0x2:
-      assert self.rx_done == False, "isotp - rx: consecutive frame with no active frame"
+      assert not self.rx_done, "isotp - rx: consecutive frame with no active frame"
       self.rx_idx += 1
       assert self.rx_idx & 0xF == rx_data[0] & 0xF, "isotp - rx: invalid consecutive frame index"
       rx_size = self.rx_len - len(self.rx_dat)
       self.rx_dat += rx_data[1:1 + rx_size]
       if self.rx_len == len(self.rx_dat):
         self.rx_done = True
-      if self.debug: print(f"ISO-TP: RX - consecutive frame - idx={self.rx_idx} done={self.rx_done}")
+      if self.debug:
+        print(f"ISO-TP: RX - consecutive frame - idx={self.rx_idx} done={self.rx_done}")
       return
 
     # flow control
@@ -465,10 +476,12 @@ class IsoTpMessage():
         self._can_client.send(tx_msgs, delay=delay_sec)
         if end >= self.tx_len:
           self.tx_done = True
-        if self.debug: print(f"ISO-TP: TX - consecutive frame - idx={self.tx_idx} done={self.tx_done}")
+        if self.debug:
+          print(f"ISO-TP: TX - consecutive frame - idx={self.tx_idx} done={self.tx_done}")
       elif rx_data[0] == 0x31:
         # wait (do nothing until next flow control message)
-        if self.debug: print("ISO-TP: TX - flow control wait")
+        if self.debug:
+          print("ISO-TP: TX - flow control wait")
 
 FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
 
@@ -529,7 +542,8 @@ class UdsClient():
           error_desc = resp[3:].hex()
         # wait for another message if response pending
         if error_code == 0x78:
-          if self.debug: print("UDS-RX: response pending")
+          if self.debug:
+            print("UDS-RX: response pending")
           continue
         raise NegativeResponseError('{} - {}'.format(service_desc, error_desc), service_id, error_code)
 
@@ -578,10 +592,8 @@ class UdsClient():
 
   def access_timing_parameter(self, timing_parameter_type: TIMING_PARAMETER_TYPE, parameter_values: bytes = None):
     write_custom_values = timing_parameter_type == TIMING_PARAMETER_TYPE.SET_TO_GIVEN_VALUES
-    read_values = (
-      timing_parameter_type == TIMING_PARAMETER_TYPE.READ_CURRENTLY_ACTIVE or
-      timing_parameter_type == TIMING_PARAMETER_TYPE.READ_EXTENDED_SET
-    )
+    read_values = (timing_parameter_type == TIMING_PARAMETER_TYPE.READ_CURRENTLY_ACTIVE or
+                   timing_parameter_type == TIMING_PARAMETER_TYPE.READ_EXTENDED_SET)
     if not write_custom_values and parameter_values is not None:
       raise ValueError('parameter_values not allowed')
     if write_custom_values and parameter_values is None:
