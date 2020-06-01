@@ -124,7 +124,7 @@ def test_buses(black_panda, other_panda, direction, test_array, sleep_duration):
     loop_buses = []
     for loop in cans_loop:
       if (loop[0] != at) or (loop[2] != st):
-	      content_errors += 1
+        content_errors += 1
 
       print("  Loop on bus", str(loop[3]))
       loop_buses.append(loop[3])
@@ -138,9 +138,9 @@ def test_buses(black_panda, other_panda, direction, test_array, sleep_duration):
     loop_buses.sort()
     if(recv_buses != loop_buses):
       if len(loop_buses) == 0:
-	      zero_bus_errors += 1
+        zero_bus_errors += 1
       else:
-	      nonzero_bus_errors += 1
+        nonzero_bus_errors += 1
       if not os.getenv("NOASSERT"):
         assert False
     else:
