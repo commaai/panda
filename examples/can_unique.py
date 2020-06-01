@@ -91,7 +91,7 @@ class Info():
       for i in range(len(bytes)):
         message.ones[i] = message.ones[i] | int(bytes[i])
         # Inverts the data and masks it to a byte to get the zeros as ones.
-        message.zeros[i] = message.zeros[i] | ( (~int(bytes[i])) & 0xff)
+        message.zeros[i] = message.zeros[i] | ((~int(bytes[i])) & 0xff)
 
 
 def PrintUnique(interesting_file, background_files):
