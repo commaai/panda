@@ -142,7 +142,6 @@ class TestSubaruSafety(common.PandaSafetyTest):
       self._set_torque_driver(-max_driver_torque * sign, -max_driver_torque * sign)
       self.assertFalse(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
 
-
   def test_realtime_limits(self):
     self.safety.set_controls_allowed(True)
 

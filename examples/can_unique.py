@@ -94,7 +94,6 @@ class Info():
         message.zeros[i] = message.zeros[i] | ( (~int(bytes[i])) & 0xff)
 
 
-
 def PrintUnique(interesting_file, background_files):
   background = Info()
   for background_file in background_files:
