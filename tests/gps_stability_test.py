@@ -45,7 +45,7 @@ def spam_buses_thread(panda):
     panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
     while True:
       at = random.randint(1, 2000)
-      st = (b"test" +os.urandom(10))[0:8]
+      st = (b"test" + os.urandom(10))[0:8]
       bus = random.randint(0, 2)
       panda.can_send(at, st, bus)
   except Exception as e:
@@ -77,7 +77,7 @@ def init_gps(panda):
 
   # Upping baud rate
   print("Upping GPS baud rate")
-  msg = str.encode(add_nmea_checksum("$PUBX,41,1,0007,0003,%d,0" % GPS_BAUD) +"\r\n")
+  msg = str.encode(add_nmea_checksum("$PUBX,41,1,0007,0003,%d,0" % GPS_BAUD) + "\r\n")
   ser.write(msg)
   time.sleep(1)   # needs a wait for it to actually send
 

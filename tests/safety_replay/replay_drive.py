@@ -35,7 +35,7 @@ def replay_drive(lr, safety_mode, param):
           blocked_addrs.add(canmsg.address)
 
           if "DEBUG" in os.environ:
-            print("blocked bus %d msg %d at %f" % (canmsg.src, canmsg.address, (msg.logMonoTime - start_t) /(1e9)))
+            print("blocked bus %d msg %d at %f" % (canmsg.src, canmsg.address, (msg.logMonoTime - start_t) / (1e9)))
         tx_controls += safety.get_controls_allowed()
         tx_tot += 1
     elif msg.which() == 'can':

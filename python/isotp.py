@@ -40,11 +40,11 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
     dat = msg[3:]
 
     # 0 block size?
-    CONTINUE = bytes([subaddr]) + b"\x30" + b"\x00" *6
+    CONTINUE = bytes([subaddr]) + b"\x30" + b"\x00" * 6
     panda.can_send(sendaddr, CONTINUE, bus)
 
     idx = 1
-    for mm in recv(panda, (tlen -len(dat) + 5) //6, addr, bus):
+    for mm in recv(panda, (tlen - len(dat) + 5) // 6, addr, bus):
       assert mm[0] == subaddr
       assert mm[1] == (0x20 | (idx & 0xF))
       dat += mm[2:]
@@ -63,7 +63,7 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
 
 def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None):
   if recvaddr is None:
-    recvaddr = addr +8
+    recvaddr = addr + 8
 
   if len(x) <= 7 and subaddr is None:
     panda.can_send(addr, msg(x), bus)
@@ -100,7 +100,7 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None):
 
 def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
   if sendaddr is None:
-    sendaddr = addr -8
+    sendaddr = addr - 8
 
   if subaddr is not None:
     dat = isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr)
@@ -113,12 +113,12 @@ def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
       dat = msg[2:]
 
       # 0 block size?
-      CONTINUE = b"\x30" + b"\x00" *7
+      CONTINUE = b"\x30" + b"\x00" * 7
 
       panda.can_send(sendaddr, CONTINUE, bus)
 
       idx = 1
-      for mm in recv(panda, (tlen -len(dat) + 6) //7, addr, bus):
+      for mm in recv(panda, (tlen - len(dat) + 6) // 7, addr, bus):
         assert mm[0] == (0x20 | (idx & 0xF))
         dat += mm[1:]
         idx += 1

@@ -86,7 +86,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
           self.safety.set_controls_allowed(controls_allowed)
           self.safety.set_unsafe_mode(unsafe_mode)
           if controls_allowed:
-            should_tx = int(min_accel *1000) <= int(accel *1000) <= int(max_accel *1000)
+            should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
           else:
             should_tx = np.isclose(accel, 0, atol=0.0001)
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))

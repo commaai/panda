@@ -114,8 +114,8 @@ class ELMCarSimulator():
         #SEND = 0x33 # Car OBD Functional Address
         headers = struct.pack("BBB", PHYS_ADDR | len(msg), RECV, to_addr)
         if not self.__silent:
-            print("    Sending LIN", binascii.hexlify(headers +msg),
-                  hex(sum(bytearray(headers +msg)) % 0x100))
+            print("    Sending LIN", binascii.hexlify(headers + msg),
+                  hex(sum(bytearray(headers + msg)) % 0x100))
         self.panda.kline_send(headers + msg)
 
     def __reset_lin_timeout(self):
@@ -154,12 +154,12 @@ class ELMCarSimulator():
             else:
                 first_msg_len = min(4, len(outmsg) % 4) or 4
                 self._lin_send(0x10, obd_header + b'\x01' +
-                               b'\x00' *(4 -first_msg_len) +
+                               b'\x00' * (4 - first_msg_len) +
                                outmsg[:first_msg_len])
 
                 for num, i in enumerate(range(first_msg_len, len(outmsg), 4)):
                     self._lin_send(0x10, obd_header +
-                                   struct.pack('B', (num +2) % 0x100) + outmsg[i:i +4])
+                                   struct.pack('B', (num + 2) % 0x100) + outmsg[i:i + 4])
 
     #########################
     # CAN related functions #
@@ -201,11 +201,11 @@ class ELMCarSimulator():
     def _can_send(self, addr, msg):
         if not self.__silent:
             print("    CAN Reply (%x)" % addr, binascii.hexlify(msg))
-        self.panda.can_send(addr, msg + b'\x00' *(8 -len(msg)), 0)
+        self.panda.can_send(addr, msg + b'\x00' * (8 - len(msg)), 0)
         if self.__can_extra_noise_msgs:
             noise = self.__can_extra_noise_msgs.popleft()
             self.panda.can_send(noise[0] if noise[0] is not None else addr,
-                             noise[1] + b'\x00' *(8 -len(noise[1])), 0)
+                             noise[1] + b'\x00' * (8 - len(noise[1])), 0)
 
     def _can_addr_matches(self, addr):
         if self.__can11b and (addr == 0x7DF or (addr & 0x7F8) == 0x7E0):
@@ -216,7 +216,7 @@ class ELMCarSimulator():
 
     def __can_process_msg(self, mode, pid, address, ts, data, src):
         if not self.__silent:
-            print("CAN MSG", binascii.hexlify(data[1:1 +data[0]]),
+            print("CAN MSG", binascii.hexlify(data[1:1 + data[0]]),
                   "Addr:", hex(address), "Mode:", hex(mode)[2:].zfill(2),
                   "PID:", hex(pid)[2:].zfill(2), "canLen:", len(data),
                   binascii.hexlify(data))
@@ -233,7 +233,7 @@ class ELMCarSimulator():
                     msgpiece = struct.pack("B", 0x20 | msgnum) + self.__can_multipart_data[:datalen]
                     self._can_send(outaddr, msgpiece)
                     self.__can_multipart_data = self.__can_multipart_data[7:]
-                    msgnum = (msgnum +1) % 0x10
+                    msgnum = (msgnum + 1) % 0x10
                     time.sleep(0.01)
 
             else:
@@ -244,10 +244,10 @@ class ELMCarSimulator():
 
                 if len(outmsg) <= 5:
                     self._can_send(outaddr,
-                                   struct.pack("BBB", len(outmsg) +2, 0x40 | data[1], pid) + outmsg)
+                                   struct.pack("BBB", len(outmsg) + 2, 0x40 | data[1], pid) + outmsg)
                 else:
                     first_msg_len = min(3, len(outmsg) % 7)
-                    payload_len = len(outmsg) +3
+                    payload_len = len(outmsg) + 3
                     msgpiece = struct.pack("BBBBB", 0x10 | ((payload_len >> 8) & 0xF),
                                            payload_len & 0xFF,
                                            0x40 | data[1], pid, 1) + outmsg[:first_msg_len]
@@ -284,7 +284,7 @@ class ELMCarSimulator():
             if pid == 0x02:   # Show VIN
                 return b"1D4GP00R55B123456"
             if pid == 0xFC:   # test long multi message. Ligned up for LIN responses
-                return b''.join((struct.pack(">BBH", 0xAA, 0xAA, num +1) for num in range(80)))
+                return b''.join((struct.pack(">BBH", 0xAA, 0xAA, num + 1) for num in range(80)))
             if pid == 0xFD:   # test long multi message
                 parts = (b'\xAA\xAA\xAA' + struct.pack(">I", num) for num in range(80))
                 return b'\xAA\xAA\xAA' + b''.join(parts)
@@ -293,7 +293,7 @@ class ELMCarSimulator():
                 return b'\xAA\xAA\xAA' + b''.join(parts) + b'\xAA'
             if pid == 0xFF:
                 return b'\xAA\x00\x00' +\
-                        b"".join(((b'\xAA' *5) +struct.pack(">H", num +1) for num in range(584)))
+                        b"".join(((b'\xAA' * 5) + struct.pack(">H", num + 1) for num in range(584)))
                 #return b"\xAA"*100#(0xFFF-3)
 
 

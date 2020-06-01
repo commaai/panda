@@ -15,7 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda
 
 def get_test_string():
-  return b"test" +os.urandom(10)
+  return b"test" + os.urandom(10)
 
 counter = 0
 nonzero_bus_errors = 0
@@ -70,7 +70,7 @@ def run_test(sleep_duration):
     runtime = time.time() - start_time
     print("Number of cycles:", counter, "Non-zero bus errors:", nonzero_bus_errors, "Zero bus errors:", zero_bus_errors, "Content errors:", content_errors, "Runtime: ", runtime)
 
-    if (time.time() - temp_start_time) > 3600 *6:
+    if (time.time() - temp_start_time) > 3600 * 6:
     	# Toggle relay
       black_panda.set_safety_mode(Panda.SAFETY_SILENT)
       time.sleep(1)

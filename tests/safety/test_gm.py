@@ -109,7 +109,7 @@ class TestGmSafety(common.PandaSafetyTest):
 
   def test_gas_safety_check(self):
     for enabled in [0, 1]:
-      for g in range(0, 2**12 -1):
+      for g in range(0, 2**12 - 1):
         self.safety.set_controls_allowed(enabled)
         if abs(g) > MAX_GAS or (not enabled and g != MAX_REGEN):
           self.assertFalse(self._tx(self._send_gas_msg(g)))

@@ -54,7 +54,7 @@ class FakePort(object):
   def write(self, buf):
     SEND_STEP = 0x20
     for i in range(0, len(buf), SEND_STEP):
-      self.panda.serial_write(1, buf[i:i +SEND_STEP])
+      self.panda.serial_write(1, buf[i:i + SEND_STEP])
 
   def flushInput(self):
     self.panda.serial_clear(1)

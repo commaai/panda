@@ -14,7 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda
 
 def get_test_string():
-  return b"test" +os.urandom(10)
+  return b"test" + os.urandom(10)
 
 counter = 0
 open_errors = 0
