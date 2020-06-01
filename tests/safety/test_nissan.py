@@ -66,8 +66,8 @@ class TestNissanSafety(common.PandaSafetyTest):
 
   def _acc_button_cmd(self, cancel=0, propilot=0, flw_dist=0, _set=0, res=0):
     no_button = not any([cancel, propilot, flw_dist, _set, res])
-    values = {"CANCEL_BUTTON": cancel, "PROPILOT_BUTTON": propilot, \
-              "FOLLOW_DISTANCE_BUTTON": flw_dist, "SET_BUTTON": _set, \
+    values = {"CANCEL_BUTTON": cancel, "PROPILOT_BUTTON": propilot,
+              "FOLLOW_DISTANCE_BUTTON": flw_dist, "SET_BUTTON": _set,
               "RES_BUTTON": res, "NO_BUTTON_PRESSED": no_button}
     return self.packer.make_can_msg_panda("CRUISE_THROTTLE", 2, values)
 

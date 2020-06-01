@@ -12,7 +12,7 @@ MIN_ACCEL = -3.0
 ISO_MAX_ACCEL = 2.0
 ISO_MIN_ACCEL = -3.5
 
-class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest, \
+class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
                        common.TorqueSteeringSafetyTest):
 
   TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0

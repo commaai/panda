@@ -126,7 +126,7 @@ def test_latency(p):
         average_comp_kbps = sum(comp_kbps_list)/num_messages
         average_saturation_pct = sum(saturation_pcts)/num_messages
 
-        print("two pandas bus {}, {} message average at speed {:4d}, latency is {:5.3f}ms, comp speed is {:7.2f}, percent {:6.2f}"\
+        print("two pandas bus {}, {} message average at speed {:4d}, latency is {:5.3f}ms, comp speed is {:7.2f}, percent {:6.2f}"
               .format(bus, num_messages, speed, average_latency, average_comp_kbps, average_saturation_pct))
 
   # Start heartbeat
