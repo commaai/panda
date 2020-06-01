@@ -4,7 +4,7 @@ import sys
 import datetime
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda
+from panda import Panda  # noqa: E402
 
 if __name__ == "__main__":
   p = Panda()

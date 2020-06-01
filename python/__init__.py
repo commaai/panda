@@ -161,7 +161,7 @@ class Panda(object):
     self._handle = None
 
   def connect(self, claim=True, wait=False):
-    if self._handle != None:
+    if self._handle is not None:
       self.close()
 
     if self._serial == "WIFI":
@@ -176,7 +176,6 @@ class Panda(object):
       while 1:
         try:
           for device in context.getDeviceList(skip_on_error=True):
-            #print(device)
             if device.getVendorID() == 0xbbaa and device.getProductID() in [0xddcc, 0xddee]:
               try:
                 this_serial = device.getSerialNumber()
@@ -189,7 +188,7 @@ class Panda(object):
                 self.bootstub = device.getProductID() == 0xddee
                 self.legacy = (device.getbcdDevice() != 0x2300)
                 self._handle = device.open()
-                if not sys.platform in ["win32", "cygwin", "msys"]:
+                if sys.platform not in ["win32", "cygwin", "msys"]:
                   self._handle.setAutoDetachKernelDriver(True)
                 if claim:
                   self._handle.claimInterface(0)
@@ -198,10 +197,10 @@ class Panda(object):
         except Exception as e:
           print("exception", e)
           traceback.print_exc()
-        if wait == False or self._handle != None:
+        if not wait or self._handle is not None:
           break
         context = usb1.USBContext()  # New context needed so new devices show up
-    assert(self._handle != None)
+    assert(self._handle is not None)
     print("connected")
 
   def reset(self, enter_bootstub=False, enter_bootloader=False):
@@ -326,7 +325,7 @@ class Panda(object):
   @staticmethod
   def flash_ota_wifi(release=False):
     release_str = "RELEASE=1" if release else ""
-    ret = os.system("cd {} && make clean && {} make ota".format(os.path.join(BASEDIR, "boardesp"),release_str))
+    ret = os.system("cd {} && make clean && {} make ota".format(os.path.join(BASEDIR, "boardesp"), release_str))
     time.sleep(1)
     return ret == 0
 
@@ -504,7 +503,6 @@ class Panda(object):
 
     while True:
       try:
-        #print("DAT: %s"%b''.join(snds).__repr__())
         if self.wifi:
           for s in snds:
             self._handle.bulkWrite(3, s)

@@ -7,7 +7,7 @@ import time
 from tqdm import tqdm
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda, PandaWifiStreaming
+from panda import Panda, PandaWifiStreaming # noqa: E402
 
 # test throughput between USB and wifi
 
@@ -15,7 +15,6 @@ if __name__ == "__main__":
   print(Panda.list())
   p_out = Panda("108018800f51363038363036")
   print(p_out.get_serial())
-  #p_in = Panda("02001b000f51363038363036")
   p_in = Panda("WIFI")
   print(p_in.get_serial())
 

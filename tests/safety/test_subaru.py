@@ -180,11 +180,18 @@ class TestSubaruLegacySafety(TestSubaruSafety):
     self.safety.init_tests()
 
   # subaru legacy safety doesn't have brake checks
-  def test_prev_brake(self): pass
-  def test_not_allow_brake_when_moving(self): pass
-  def test_allow_brake_at_zero_speed(self): pass
+  def test_prev_brake(self):
+    pass
+
+  def test_not_allow_brake_when_moving(self):
+    pass
+
+  def test_allow_brake_at_zero_speed(self):
+    pass
+
   # doesn't have speed checks either
-  def test_sample_speed(self): pass
+  def test_sample_speed(self):
+    pass
 
   def _torque_driver_msg(self, torque):
     # TODO: figure out if this scaling factor from the DBC is right.

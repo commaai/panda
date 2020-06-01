@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# flake8: noqa
+
 import sys
 import binascii
 from panda import Panda
