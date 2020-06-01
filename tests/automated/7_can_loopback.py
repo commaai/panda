@@ -157,7 +157,7 @@ def test_gen2_loopback(p):
       if bus == 3:
         obd = True
         bus = 1
-      
+
       # Clear buses
       clear_can_buffers(p_send)
       clear_can_buffers(p_recv)
@@ -178,7 +178,7 @@ def test_gen2_loopback(p):
 
       # Check content
       assert content[0][0] == addr and content[0][2] == string
-      
+
       # Check bus
       assert content[0][3] == bus
 
@@ -216,14 +216,14 @@ def test_bulk_write(p):
     # Disable timeout
     panda.can_send_many(packet, timeout=0)
     print(f"Done sending {3*NUM_MESSAGES_PER_BUS} messages!")
-  
+
   # Start heartbeat
   start_heartbeat_thread(p)
 
   # Set safety mode and power saving
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   p.set_power_save(False)
-  
+
   # Start transmisson
   threading.Thread(target=flood_tx, args=(p,)).start()
 

@@ -10,7 +10,7 @@ def run_with_timeout(timeout, fn, *kwargs):
     except Exception as e:
       print(e)
       raise e
-  
+
   process = Process(target=runner, args=(fn, kwargs))
   process.start()
 
