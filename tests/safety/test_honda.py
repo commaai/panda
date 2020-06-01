@@ -236,8 +236,8 @@ class TestHondaNidecSafety(TestHondaSafety, common.InterceptorSafetyTest):
     for mode in [UNSAFE_MODE.DEFAULT, UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS]:
       self.safety.set_unsafe_mode(mode)
       # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
-      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD+1, 0x201))
-      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD+1, 0x201))
+      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD +1, 0x201))
+      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD +1, 0x201))
       allow_ctrl = mode == UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS
 
       self.safety.set_controls_allowed(1)

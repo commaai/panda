@@ -5,7 +5,7 @@ from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseErr
 
 if __name__ == "__main__":
   addrs = [0x700 + i for i in range(256)]
-  addrs += [0x18da0000 + (i<<8) + 0xf1 for i in range(256)]
+  addrs += [0x18da0000 + (i << 8) + 0xf1 for i in range(256)]
   results = {}
 
   panda = Panda()

@@ -17,7 +17,7 @@ def test_send_recv(p):
     p_send.set_can_loopback(False)
     p_recv.set_can_loopback(False)
 
-    p_send.can_send_many([(0x1ba, 0, b"message", 0)]*2)
+    p_send.can_send_many([(0x1ba, 0, b"message", 0)] *2)
     time.sleep(0.05)
     p_recv.can_recv()
     p_send.can_recv()
@@ -35,7 +35,7 @@ def test_send_recv(p):
 
         comp_kbps = time_many_sends(p_send, bus, p_recv, two_pandas=True)
 
-        saturation_pct = (comp_kbps/speed) * 100.0
+        saturation_pct = (comp_kbps /speed) * 100.0
         assert_greater(saturation_pct, 80)
         assert_less(saturation_pct, 100)
 
@@ -70,7 +70,7 @@ def test_latency(p):
     p_recv.set_can_speed_kbps(0, 100)
     time.sleep(0.05)
 
-    p_send.can_send_many([(0x1ba, 0, b"testmsg", 0)]*10)
+    p_send.can_send_many([(0x1ba, 0, b"testmsg", 0)] *10)
     time.sleep(0.05)
     p_recv.can_recv()
     p_send.can_recv()
@@ -110,21 +110,21 @@ def test_latency(p):
           assert_equal(len(r), 1)
           assert_equal(len(r_echo), 1)
 
-          et = (et - st)*1000.0
-          comp_kbps = (1+11+1+1+1+4+8*8+15+1+1+1+7) / et
-          latency = et - ((1+11+1+1+1+4+8*8+15+1+1+1+7) / speed)
+          et = (et - st) *1000.0
+          comp_kbps = (1 +11 +1 +1 +1 +4 +8 *8 +15 +1 +1 +1 +7) / et
+          latency = et - ((1 +11 +1 +1 +1 +4 +8 *8 +15 +1 +1 +1 +7) / speed)
 
           assert_less(latency, 5.0)
 
-          saturation_pct = (comp_kbps/speed) * 100.0
+          saturation_pct = (comp_kbps /speed) * 100.0
           latencies.append(latency)
           comp_kbps_list.append(comp_kbps)
           saturation_pcts.append(saturation_pct)
 
-        average_latency = sum(latencies)/num_messages
+        average_latency = sum(latencies) /num_messages
         assert_less(average_latency, 1.0)
-        average_comp_kbps = sum(comp_kbps_list)/num_messages
-        average_saturation_pct = sum(saturation_pcts)/num_messages
+        average_comp_kbps = sum(comp_kbps_list) /num_messages
+        average_saturation_pct = sum(saturation_pcts) /num_messages
 
         print("two pandas bus {}, {} message average at speed {:4d}, latency is {:5.3f}ms, comp speed is {:7.2f}, percent {:6.2f}"
               .format(bus, num_messages, speed, average_latency, average_comp_kbps, average_saturation_pct))
@@ -164,7 +164,7 @@ def test_gen2_loopback(p):
 
       # Send a random string
       addr = random.randint(1, 2000)
-      string = b"test"+os.urandom(4)
+      string = b"test" +os.urandom(4)
       p_send.set_obd(obd)
       p_recv.set_obd(obd)
       time.sleep(0.2)
@@ -210,7 +210,7 @@ def test_bulk_write(p):
 
   def flood_tx(panda):
     print('Sending!')
-    msg = b"\xaa"*4
+    msg = b"\xaa" *4
     packet = [[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]] * NUM_MESSAGES_PER_BUS
 
     # Disable timeout
@@ -237,7 +237,7 @@ def test_bulk_write(p):
   print(f"Received {len(rx)} messages")
 
   # All messages should have been received
-  if len(rx) != 3*NUM_MESSAGES_PER_BUS:
+  if len(rx) != 3 *NUM_MESSAGES_PER_BUS:
     Exception("Did not receive all messages!")
 
   # Set back to silent mode

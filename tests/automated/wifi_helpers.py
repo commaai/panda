@@ -60,7 +60,7 @@ def _connect_wifi(dongle_id, pw, insecure_okay=False):
           r = requests.get("http://192.168.0.10/")
         except requests.ConnectionError:
           r = requests.get("http://192.168.0.10/")
-        assert r.status_code==200
+        assert r.status_code == 200
 
         print("securing")
         try:

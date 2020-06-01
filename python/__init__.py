@@ -38,17 +38,17 @@ def build_st(target, mkfile="Makefile", clean=True):
 def parse_can_buffer(dat):
   ret = []
   for j in range(0, len(dat), 0x10):
-    ddat = dat[j:j+0x10]
+    ddat = dat[j:j +0x10]
     f1, f2 = struct.unpack("II", ddat[0:8])
     extended = 4
     if f1 & extended:
       address = f1 >> 3
     else:
       address = f1 >> 21
-    dddat = ddat[8:8+(f2&0xF)]
+    dddat = ddat[8:8 +(f2 & 0xF)]
     if DEBUG:
       print("  R %x: %s" % (address, binascii.hexlify(dddat)))
-    ret.append((address, f2>>16, dddat, (f2>>4)&0xFF))
+    ret.append((address, f2 >> 16, dddat, (f2 >> 4) & 0xFF))
   return ret
 
 class PandaWifiStreaming(object):
@@ -67,7 +67,7 @@ class PandaWifiStreaming(object):
     ret = []
     while True:
       try:
-        dat, addr = self.sock.recvfrom(0x200*0x10)
+        dat, addr = self.sock.recvfrom(0x200 *0x10)
         if addr == (self.ip, self.port):
           ret += parse_can_buffer(dat)
       except socket.error as e:
@@ -84,7 +84,7 @@ class WifiHandle(object):
   def __recv(self):
     ret = self.sock.recv(0x44)
     length = struct.unpack("I", ret[0:4])[0]
-    return ret[4:4+length]
+    return ret[4:4 +length]
 
   def controlWrite(self, request_type, request, value, index, data, timeout=0):
     # ignore data in reply, panda doesn't use it
@@ -97,7 +97,7 @@ class WifiHandle(object):
   def bulkWrite(self, endpoint, data, timeout=0):
     if len(data) > 0x10:
       raise ValueError("Data must not be longer than 0x10")
-    self.sock.send(struct.pack("HH", endpoint, len(data))+data)
+    self.sock.send(struct.pack("HH", endpoint, len(data)) +data)
     self.__recv()  # to /dev/null
 
   def bulkRead(self, endpoint, length, timeout=0):
@@ -230,7 +230,7 @@ class Panda(object):
         success = True
         break
       except Exception:
-        print("reconnecting is taking %d seconds..." % (i+1))
+        print("reconnecting is taking %d seconds..." % (i +1))
         try:
           dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial))
           dfu.recover()
@@ -259,7 +259,7 @@ class Panda(object):
     STEP = 0x10
     print("flash: flashing")
     for i in range(0, len(code), STEP):
-      handle.bulkWrite(2, code[i:i+STEP])
+      handle.bulkWrite(2, code[i:i +STEP])
 
     # reset
     print("flash: resetting")
@@ -321,14 +321,14 @@ class Panda(object):
   def flash_ota_st():
     ret = os.system("cd %s && make clean && make ota" % (os.path.join(BASEDIR, "board")))
     time.sleep(1)
-    return ret==0
+    return ret == 0
 
   @staticmethod
   def flash_ota_wifi(release=False):
     release_str = "RELEASE=1" if release else ""
     ret = os.system("cd {} && make clean && {} make ota".format(os.path.join(BASEDIR, "boardesp"),release_str))
     time.sleep(1)
-    return ret==0
+    return ret == 0
 
   @staticmethod
   def list():
@@ -420,7 +420,7 @@ class Panda(object):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
     hashsig, calc_hash = dat[0x1c:], hashlib.sha1(dat[0:0x1c]).digest()[0:4]
     assert(hashsig == calc_hash)
-    return [dat[0:0x10].decode("utf8"), dat[0x10:0x10+10].decode("utf8")]
+    return [dat[0:0x10].decode("utf8"), dat[0x10:0x10 +10].decode("utf8")]
 
   def get_secret(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 1, 0, 0x10)
@@ -467,10 +467,10 @@ class Panda(object):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf4, int(bus_num), int(enable), b'')
 
   def set_can_speed_kbps(self, bus, speed):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xde, bus, int(speed*10), b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xde, bus, int(speed *10), b'')
 
   def set_uart_baud(self, uart, rate):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, int(rate/300), b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, int(rate /300), b'')
 
   def set_uart_parity(self, uart, parity):
     # parity, 0=off, 1=even, 2=odd
@@ -521,7 +521,7 @@ class Panda(object):
     dat = bytearray()
     while True:
       try:
-        dat = self._handle.bulkRead(1, 0x10*256)
+        dat = self._handle.bulkRead(1, 0x10 *256)
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD RECV, RETRYING")
@@ -561,7 +561,7 @@ class Panda(object):
   def serial_write(self, port_number, ln):
     ret = 0
     for i in range(0, len(ln), 0x20):
-      ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + ln[i:i+0x20])
+      ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + ln[i:i +0x20])
     return ret
 
   def serial_clear(self, port_number):
@@ -599,7 +599,7 @@ class Panda(object):
   def kline_ll_recv(self, cnt, bus=2):
     echo = bytearray()
     while len(echo) != cnt:
-      ret = self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, cnt-len(echo))
+      ret = self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, cnt -len(echo))
       if DEBUG and len(ret) > 0:
         print("kline recv: " + binascii.hexlify(ret))
       echo += ret
@@ -616,7 +616,7 @@ class Panda(object):
     if checksum:
       x += get_checksum(x)
     for i in range(0, len(x), 0xf):
-      ts = x[i:i+0xf]
+      ts = x[i:i +0xf]
       if DEBUG:
         print("kline send: " + binascii.hexlify(ts))
       self._handle.bulkWrite(2, bytes([bus]) + ts)
@@ -629,7 +629,7 @@ class Panda(object):
 
   def kline_recv(self, bus=2):
     msg = self.kline_ll_recv(2, bus=bus)
-    msg += self.kline_ll_recv(ord(msg[1])-2, bus=bus)
+    msg += self.kline_ll_recv(ord(msg[1]) -2, bus=bus)
     return msg
 
   def send_heartbeat(self):

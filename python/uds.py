@@ -287,14 +287,14 @@ class CanClient():
       is_response = addr >= 0x7E8 and addr <= 0x7EF
       if is_response:
         if self.debug: print(f"switch to physical addr {hex(addr)}")
-        self.tx_addr = addr-8
+        self.tx_addr = addr -8
         self.rx_addr = addr
       return is_response
     if self.tx_addr == 0x18DB33F1:
       is_response = addr >= 0x18DAF100 and addr <= 0x18DAF1FF
       if is_response:
         if self.debug: print(f"switch to physical addr {hex(addr)}")
-        self.tx_addr = 0x18DA00F1 + (addr<<8 & 0xFF00)
+        self.tx_addr = 0x18DA00F1 + (addr << 8 & 0xFF00)
         self.rx_addr = addr
     return bus == self.bus and addr == self.rx_addr
 
@@ -403,7 +403,7 @@ class IsoTpMessage():
     # single rx_frame
     if rx_data[0] >> 4 == 0x0:
       self.rx_len = rx_data[0] & 0xFF
-      self.rx_dat = rx_data[1:1+self.rx_len]
+      self.rx_dat = rx_data[1:1 +self.rx_len]
       self.rx_idx = 0
       self.rx_done = True
       if self.debug: print(f"ISO-TP: RX - single frame - idx={self.rx_idx} done={self.rx_done}")
@@ -428,7 +428,7 @@ class IsoTpMessage():
       self.rx_idx += 1
       assert self.rx_idx & 0xF == rx_data[0] & 0xF, "isotp - rx: invalid consecutive frame index"
       rx_size = self.rx_len - len(self.rx_dat)
-      self.rx_dat += rx_data[1:1+rx_size]
+      self.rx_dat += rx_data[1:1 +rx_size]
       if self.rx_len == len(self.rx_dat):
         self.rx_done = True
       if self.debug: print(f"ISO-TP: RX - consecutive frame - idx={self.rx_idx} done={self.rx_done}")
@@ -455,7 +455,7 @@ class IsoTpMessage():
         for i in range(start, end, num_bytes):
           self.tx_idx += 1
           # consecutive tx messages
-          msg = (bytes([0x20 | (self.tx_idx & 0xF)]) + self.tx_dat[i:i+num_bytes]).ljust(self.max_len, b"\x00")
+          msg = (bytes([0x20 | (self.tx_idx & 0xF)]) + self.tx_dat[i:i +num_bytes]).ljust(self.max_len, b"\x00")
           tx_msgs.append(msg)
         # send consecutive tx messages
         self._can_client.send(tx_msgs, delay=delay_sec)
@@ -478,7 +478,7 @@ def get_rx_addr_for_tx_addr(tx_addr):
 
   if tx_addr > 0x10000000 and tx_addr < 0xFFFFFFFF:
     # standard 29 bit response addr (flip last two bytes)
-    return (tx_addr & 0xFFFF0000) + (tx_addr<<8 & 0xFF00) + (tx_addr>>8 & 0xFF)
+    return (tx_addr & 0xFFFF0000) + (tx_addr << 8 & 0xFF00) + (tx_addr >> 8 & 0xFF)
 
   raise ValueError("invalid tx_addr: {}".format(tx_addr))
 
@@ -530,7 +530,7 @@ class UdsClient():
         raise NegativeResponseError('{} - {}'.format(service_desc, error_desc), service_id, error_code)
 
       # positive response
-      if service_type+0x40 != resp_sid:
+      if service_type +0x40 != resp_sid:
         resp_sid_hex = hex(resp_sid) if resp_sid is not None else None
         raise InvalidServiceIdError('invalid response service id: {}'.format(resp_sid_hex))
 
@@ -643,14 +643,14 @@ class UdsClient():
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
       raise ValueError('invalid memory_size_bytes: {}'.format(memory_size_bytes))
-    data = bytes([memory_size_bytes<<4 | memory_address_bytes])
+    data = bytes([memory_size_bytes << 4 | memory_address_bytes])
 
-    if memory_address >= 1<<(memory_address_bytes*8):
+    if memory_address >= 1 << (memory_address_bytes *8):
       raise ValueError('invalid memory_address: {}'.format(memory_address))
-    data += struct.pack('!I', memory_address)[4-memory_address_bytes:]
-    if memory_size >= 1<<(memory_size_bytes*8):
+    data += struct.pack('!I', memory_address)[4 -memory_address_bytes:]
+    if memory_size >= 1 << (memory_size_bytes *8):
       raise ValueError('invalid memory_size: {}'.format(memory_size))
-    data += struct.pack('!I', memory_size)[4-memory_size_bytes:]
+    data += struct.pack('!I', memory_size)[4 -memory_size_bytes:]
 
     resp = self._uds_request(SERVICE_TYPE.READ_MEMORY_BY_ADDRESS, subfunction=None, data=data)
     return resp
@@ -679,14 +679,14 @@ class UdsClient():
       for s in source_definitions:
         data += struct.pack('!H', s.data_identifier) + bytes([s.position, s.memory_size])
     elif dynamic_definition_type == DYNAMIC_DEFINITION_TYPE.DEFINE_BY_MEMORY_ADDRESS:
-      data += bytes([memory_size_bytes<<4 | memory_address_bytes])
+      data += bytes([memory_size_bytes << 4 | memory_address_bytes])
       for s in source_definitions:
-        if s.memory_address >= 1<<(memory_address_bytes*8):
+        if s.memory_address >= 1 << (memory_address_bytes *8):
           raise ValueError('invalid memory_address: {}'.format(s.memory_address))
-        data += struct.pack('!I', s.memory_address)[4-memory_address_bytes:]
-        if s.memory_size >= 1<<(memory_size_bytes*8):
+        data += struct.pack('!I', s.memory_address)[4 -memory_address_bytes:]
+        if s.memory_size >= 1 << (memory_size_bytes *8):
           raise ValueError('invalid memory_size: {}'.format(s.memory_size))
-        data += struct.pack('!I', s.memory_size)[4-memory_size_bytes:]
+        data += struct.pack('!I', s.memory_size)[4 -memory_size_bytes:]
     elif dynamic_definition_type == DYNAMIC_DEFINITION_TYPE.CLEAR_DYNAMICALLY_DEFINED_DATA_IDENTIFIER:
       pass
     else:
@@ -705,14 +705,14 @@ class UdsClient():
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
       raise ValueError('invalid memory_size_bytes: {}'.format(memory_size_bytes))
-    data = bytes([memory_size_bytes<<4 | memory_address_bytes])
+    data = bytes([memory_size_bytes << 4 | memory_address_bytes])
 
-    if memory_address >= 1<<(memory_address_bytes*8):
+    if memory_address >= 1 << (memory_address_bytes *8):
       raise ValueError('invalid memory_address: {}'.format(memory_address))
-    data += struct.pack('!I', memory_address)[4-memory_address_bytes:]
-    if memory_size >= 1<<(memory_size_bytes*8):
+    data += struct.pack('!I', memory_address)[4 -memory_address_bytes:]
+    if memory_size >= 1 << (memory_size_bytes *8):
       raise ValueError('invalid memory_size: {}'.format(memory_size))
-    data += struct.pack('!I', memory_size)[4-memory_size_bytes:]
+    data += struct.pack('!I', memory_size)[4 -memory_size_bytes:]
 
     data += data_record
     self._uds_request(SERVICE_TYPE.WRITE_MEMORY_BY_ADDRESS, subfunction=0x00, data=data)
@@ -780,19 +780,19 @@ class UdsClient():
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
       raise ValueError('invalid memory_size_bytes: {}'.format(memory_size_bytes))
-    data += bytes([memory_size_bytes<<4 | memory_address_bytes])
+    data += bytes([memory_size_bytes << 4 | memory_address_bytes])
 
-    if memory_address >= 1<<(memory_address_bytes*8):
+    if memory_address >= 1 << (memory_address_bytes *8):
       raise ValueError('invalid memory_address: {}'.format(memory_address))
-    data += struct.pack('!I', memory_address)[4-memory_address_bytes:]
-    if memory_size >= 1<<(memory_size_bytes*8):
+    data += struct.pack('!I', memory_address)[4 -memory_address_bytes:]
+    if memory_size >= 1 << (memory_size_bytes *8):
       raise ValueError('invalid memory_size: {}'.format(memory_size))
-    data += struct.pack('!I', memory_size)[4-memory_size_bytes:]
+    data += struct.pack('!I', memory_size)[4 -memory_size_bytes:]
 
     resp = self._uds_request(SERVICE_TYPE.REQUEST_DOWNLOAD, subfunction=None, data=data)
     max_num_bytes_len = resp[0] >> 4 if len(resp) > 0 else 0
     if max_num_bytes_len >= 1 and max_num_bytes_len <= 4:
-      max_num_bytes = struct.unpack('!I', (b"\x00"*(4-max_num_bytes_len))+resp[1:max_num_bytes_len+1])[0]
+      max_num_bytes = struct.unpack('!I', (b"\x00" *(4 -max_num_bytes_len)) +resp[1:max_num_bytes_len +1])[0]
     else:
       raise ValueError('invalid max_num_bytes_len: {}'.format(max_num_bytes_len))
 
@@ -805,19 +805,19 @@ class UdsClient():
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
       raise ValueError('invalid memory_size_bytes: {}'.format(memory_size_bytes))
-    data += bytes([memory_size_bytes<<4 | memory_address_bytes])
+    data += bytes([memory_size_bytes << 4 | memory_address_bytes])
 
-    if memory_address >= 1<<(memory_address_bytes*8):
+    if memory_address >= 1 << (memory_address_bytes *8):
       raise ValueError('invalid memory_address: {}'.format(memory_address))
-    data += struct.pack('!I', memory_address)[4-memory_address_bytes:]
-    if memory_size >= 1<<(memory_size_bytes*8):
+    data += struct.pack('!I', memory_address)[4 -memory_address_bytes:]
+    if memory_size >= 1 << (memory_size_bytes *8):
       raise ValueError('invalid memory_size: {}'.format(memory_size))
-    data += struct.pack('!I', memory_size)[4-memory_size_bytes:]
+    data += struct.pack('!I', memory_size)[4 -memory_size_bytes:]
 
     resp = self._uds_request(SERVICE_TYPE.REQUEST_UPLOAD, subfunction=None, data=data)
     max_num_bytes_len = resp[0] >> 4 if len(resp) > 0 else 0
     if max_num_bytes_len >= 1 and max_num_bytes_len <= 4:
-      max_num_bytes = struct.unpack('!I', (b"\x00"*(4-max_num_bytes_len))+resp[1:max_num_bytes_len+1])[0]
+      max_num_bytes = struct.unpack('!I', (b"\x00" *(4 -max_num_bytes_len)) +resp[1:max_num_bytes_len +1])[0]
     else:
       raise ValueError('invalid max_num_bytes_len: {}'.format(max_num_bytes_len))
 

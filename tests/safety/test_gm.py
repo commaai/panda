@@ -44,7 +44,7 @@ class TestGmSafety(common.PandaSafetyTest):
   def test_cruise_engaged_prev(self): pass
 
   def _speed_msg(self, speed):
-    values = {"%sWheelSpd"%s: speed for s in ["RL", "RR"]}
+    values = {"%sWheelSpd" % s: speed for s in ["RL", "RR"]}
     return self.packer.make_can_msg_panda("EBCMWheelSpdRear", 0, values)
 
   def _button_msg(self, buttons):
@@ -109,7 +109,7 @@ class TestGmSafety(common.PandaSafetyTest):
 
   def test_gas_safety_check(self):
     for enabled in [0, 1]:
-      for g in range(0, 2**12-1):
+      for g in range(0, 2**12 -1):
         self.safety.set_controls_allowed(enabled)
         if abs(g) > MAX_GAS or (not enabled and g != MAX_REGEN):
           self.assertFalse(self._tx(self._send_gas_msg(g)))

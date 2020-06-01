@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
       serials = Panda.list()
       if os.getenv("SERIAL"):
-        serials = [x for x in serials if x==os.getenv("SERIAL")]
+        serials = [x for x in serials if x == os.getenv("SERIAL")]
 
       pandas = list([Panda(x, claim=claim) for x in serials])
 

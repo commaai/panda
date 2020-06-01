@@ -14,4 +14,4 @@ if __name__ == "__main__":
     print("Power: ", str(power))
     time.sleep(1)
     power += 10
-    power %=100
+    power %= 100

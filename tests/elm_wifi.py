@@ -281,8 +281,8 @@ def test_elm_send_lin_multiline_msg_throughput():
 
         send_compare(s, b'09fc\r',  # headers OFF, Spaces OFF
                      b"BUS INIT: OK\r" +
-                     b''.join((b'49FC' + hex(num+1)[2:].upper().zfill(2) +
-                               b'AAAA' + hex(num+1)[2:].upper().zfill(4) + b'\r'
+                     b''.join((b'49FC' + hex(num +1)[2:].upper().zfill(2) +
+                               b'AAAA' + hex(num +1)[2:].upper().zfill(4) + b'\r'
                                for num in range(80))) +
                      b"\r>",
                      timeout=10
@@ -310,8 +310,8 @@ def test_elm_panda_safety_mode_KWPFast():
         t = time.time()
         msg = bytearray()
 
-        while time.time()-t < 0.5 and len(msg) != len(goodmsg):
-            msg += p._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, len(goodmsg)-len(msg))
+        while time.time() -t < 0.5 and len(msg) != len(goodmsg):
+            msg += p._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, len(goodmsg) -len(msg))
             #print("Received", repr(msg))
             if msg == goodmsg:
                 return True
@@ -543,10 +543,10 @@ def test_elm_send_can_multiline_msg_throughput():
 
         rows = 584
         send_compare(s, b'09ff\r',  # headers ON, Spaces OFF
-                     ("7E8" + "1" + hex((rows*7)+6)[2:].upper().zfill(3) + "49FF01"+"AA0000\r" +
+                     ("7E8" + "1" + hex((rows *7) +6)[2:].upper().zfill(3) + "49FF01" +"AA0000\r" +
                       "".join(
-                          ("7E82"+hex((num+1)%0x10)[2:].upper()+("AA"*5) +
-                           hex(num+1)[2:].upper().zfill(4) + "\r" for num in range(rows))
+                          ("7E82" +hex((num +1) % 0x10)[2:].upper() +("AA" *5) +
+                           hex(num +1)[2:].upper().zfill(4) + "\r" for num in range(rows))
                       ) + "\r>").encode(),
                      timeout=10
         )
@@ -631,7 +631,7 @@ def test_elm_panda_safety_mode_ISO15765():
     def did_send(p, addr, dat, bus):
         p.can_send(addr, dat, bus)
         t = time.time()
-        while time.time()-t < 0.5:
+        while time.time() -t < 0.5:
             msg = p.can_recv()
             for addrin, _, datin, busin in msg:
                 if (0x80 | bus) == busin and addr == addrin and datin == dat:

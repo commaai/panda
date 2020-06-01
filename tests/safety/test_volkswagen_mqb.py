@@ -56,7 +56,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
 
   # Wheel speeds _esp_19_msg
   def _speed_msg(self, speed):
-    values = {"ESP_%s_Radgeschw_02"%s: speed for s in ["HL", "HR", "VL", "VR"]}
+    values = {"ESP_%s_Radgeschw_02" % s: speed for s in ["HL", "HR", "VL", "VR"]}
     return self.packer.make_can_msg_panda("ESP_19", 0, values)
 
   # Brake light switch _esp_05_msg

@@ -39,7 +39,7 @@ def test_throughput(serials=None):
     comp_kbps = time_many_sends(p, 0)
 
     # bit count from https://en.wikipedia.org/wiki/CAN_bus
-    saturation_pct = (comp_kbps/speed) * 100.0
+    saturation_pct = (comp_kbps /speed) * 100.0
     #assert_greater(saturation_pct, 80)
     #assert_less(saturation_pct, 100)
 
@@ -64,6 +64,6 @@ def test_recv_only(serials=None):
     speed = 500
     p.set_can_speed_kbps(0, speed)
     comp_kbps = time_many_sends(p, 0, pwifi, msg_count)
-    saturation_pct = (comp_kbps/speed) * 100.0
+    saturation_pct = (comp_kbps /speed) * 100.0
 
     print("HT WIFI loopback %d messages at speed %d, comp speed is %.2f, percent %.2f" % (msg_count, speed, comp_kbps, saturation_pct))

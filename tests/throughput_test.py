@@ -36,8 +36,8 @@ if __name__ == "__main__":
   BATCH_SIZE = 16
   for a in tqdm(list(range(0, 10000, BATCH_SIZE))):
     for b in range(0, BATCH_SIZE):
-      msg = b"\xaa"*4 + struct.pack("I", a+b)
-      if a%1 == 0:
+      msg = b"\xaa" *4 + struct.pack("I", a +b)
+      if a % 1 == 0:
         p_out.can_send(0xaa, msg, 0)
 
     dat_out, dat_in = p_out.can_recv(), p_in.can_recv()
