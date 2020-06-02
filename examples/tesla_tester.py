@@ -16,7 +16,7 @@ def tesla_tester():
 
     try:
       p = Panda("WIFI")
-    except:
+    except Exception:
       print("WiFi connection timed out. Please make sure your Panda is connected and try again.")
       sys.exit(0)
 

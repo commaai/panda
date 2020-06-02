@@ -56,8 +56,8 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     values = {"CF_Clu_CruiseSwState": buttons}
     return self.packer.make_can_msg_panda("CLU11", 0, values)
 
-  def _gas_msg(self, val):
-    values = {"CF_Ems_AclAct": val, "AliveCounter": self.cnt_gas % 4}
+  def _gas_msg(self, gas):
+    values = {"CF_Ems_AclAct": gas, "AliveCounter": self.cnt_gas % 4}
     self.__class__.cnt_gas += 1
     return self.packer.make_can_msg_panda("EMS16", 0, values, fix_checksum=checksum)
 
@@ -74,8 +74,8 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     self.__class__.cnt_speed += 1
     return self.packer.make_can_msg_panda("WHL_SPD11", 0, values)
 
-  def _pcm_status_msg(self, enabled):
-    values = {"ACCMode": enabled, "CR_VSM_Alive": self.cnt_cruise % 16}
+  def _pcm_status_msg(self, enable):
+    values = {"ACCMode": enable, "CR_VSM_Alive": self.cnt_cruise % 16}
     self.__class__.cnt_cruise += 1
     return self.packer.make_can_msg_panda("SCC12", 0, values, fix_checksum=checksum)
 

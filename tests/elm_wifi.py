@@ -467,9 +467,9 @@ def test_elm_send_can_multimsg():
         sim.join()
         s.close()
 
-"""The ability to correctly filter out messages with the wrong PID is not
-implemented correctly in the reference device."""
 def test_elm_can_check_mode_pid():
+    """The ability to correctly filter out messages with the wrong PID is not
+    implemented correctly in the reference device."""
     s = elm_connect()
     serial = os.getenv("CANSIMSERIAL") if os.getenv("CANSIMSERIAL") else None
     sim = elm_car_simulator.ELMCarSimulator(serial, lin=False)

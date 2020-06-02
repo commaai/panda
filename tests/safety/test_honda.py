@@ -44,6 +44,9 @@ class TestHondaSafety(common.PandaSafetyTest):
   def test_cruise_engaged_prev(self):
     pass
 
+  def _pcm_status_msg(self, enable):
+    pass
+
   def _speed_msg(self, speed):
     values = {"XMISSION_SPEED": speed, "COUNTER": self.cnt_speed % 4}
     self.__class__.cnt_speed += 1
@@ -70,7 +73,7 @@ class TestHondaSafety(common.PandaSafetyTest):
 
   def _send_brake_msg(self, brake):
     # must be implemented when inherited
-    raise NotImplementedError()
+    raise NotImplementedError
 
   def test_resume_button(self):
     self.safety.set_controls_allowed(0)
@@ -178,7 +181,6 @@ class TestHondaSafety(common.PandaSafetyTest):
 
 
 class TestHondaNidecSafety(TestHondaSafety, common.InterceptorSafetyTest):
-
   TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x200, 0], [0x30C, 0], [0x33D, 0]]
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 0xE4
@@ -279,6 +281,9 @@ class TestHondaBoschSafety(TestHondaSafety):
     self.__class__.cnt_brake += 1
     return self.packer.make_can_msg_panda("BRAKE_MODULE", self.PT_BUS, values)
 
+  def _send_brake_msg(self, brake):
+    pass
+
   # TODO: add back in once alternative brake checksum/counter validation is added
   # def test_alt_brake_rx_hook(self):
   #   self.safety.set_honda_alt_brake_msg(1)
@@ -288,7 +293,6 @@ class TestHondaBoschSafety(TestHondaSafety):
   #   to_push[0].RDLR = to_push[0].RDLR & 0xFFF0FFFF # invalidate checksum
   #   self.assertFalse(self._rx(to_push))
   #   self.assertFalse(self.safety.get_controls_allowed())
-
   def test_alt_disengage_on_brake(self):
     self.safety.set_honda_alt_brake_msg(1)
     self.safety.set_controls_allowed(1)

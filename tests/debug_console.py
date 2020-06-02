@@ -14,7 +14,7 @@ unsetcolor = "\033[00m"
 if __name__ == "__main__":
   while True:
     try:
-      port_number = int(os.getenv("PORT", 0))
+      port_number = int(os.getenv("PORT", "0"))
       claim = os.getenv("CLAIM") is not None
 
       serials = Panda.list()

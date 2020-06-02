@@ -271,7 +271,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     pass
 
   @abc.abstractmethod
-  def _gas_msg(self, speed):
+  def _gas_msg(self, gas):
     pass
 
   @abc.abstractmethod

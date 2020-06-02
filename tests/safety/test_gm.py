@@ -48,6 +48,9 @@ class TestGmSafety(common.PandaSafetyTest):
   def test_cruise_engaged_prev(self):
     pass
 
+  def _pcm_status_msg(self, enable):
+    raise NotImplementedError
+
   def _speed_msg(self, speed):
     values = {"%sWheelSpd" % s: speed for s in ["RL", "RR"]}
     return self.packer.make_can_msg_panda("EBCMWheelSpdRear", 0, values)
@@ -260,6 +263,7 @@ class TestGmSafety(common.PandaSafetyTest):
         self._rx(self._brake_msg(0))
       elif pedal == 'gas':
         self._rx(self._gas_msg(0))
+
 
 if __name__ == "__main__":
   unittest.main()
