@@ -52,21 +52,21 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     values = {"ACCEL_CMD": accel}
     return self.packer.make_can_msg_panda("ACC_CONTROL", 0, values)
 
-  def _speed_msg(self, s):
-    values = {("WHEEL_SPEED_%s" % n): s for n in ["FR", "FL", "RR", "RL"]}
+  def _speed_msg(self, speed):
+    values = {("WHEEL_SPEED_%s" % n): speed for n in ["FR", "FL", "RR", "RL"]}
     return self.packer.make_can_msg_panda("WHEEL_SPEEDS", 0, values)
 
-  def _brake_msg(self, pressed):
-    values = {"BRAKE_PRESSED": pressed}
+  def _brake_msg(self, brake):
+    values = {"BRAKE_PRESSED": brake}
     return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
 
-  def _gas_msg(self, pressed):
+  def _gas_msg(self, gas):
     cruise_active = self.safety.get_controls_allowed()
-    values = {"GAS_RELEASED": not pressed, "CRUISE_ACTIVE": cruise_active}
+    values = {"GAS_RELEASED": not gas, "CRUISE_ACTIVE": cruise_active}
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
-  def _pcm_status_msg(self, cruise_on):
-    values = {"CRUISE_ACTIVE": cruise_on}
+  def _pcm_status_msg(self, enable):
+    values = {"CRUISE_ACTIVE": enable}
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
   # Toyota gas gains are the same

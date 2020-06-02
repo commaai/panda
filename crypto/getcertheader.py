@@ -10,7 +10,7 @@ def egcd(a, b):
     return (g, x - (b // a) * y, y)
 
 def modinv(a, m):
-  g, x, y = egcd(a, m)
+  g, x, _ = egcd(a, m)
   if g != 1:
     raise Exception('modular inverse does not exist')
   else:
@@ -23,7 +23,7 @@ def to_c_string(x):
 
 def to_c_uint32(x):
   nums = []
-  for i in range(0x20):
+  for _ in range(0x20):
     nums.append(x % (2**32))
     x //= (2**32)
   return "{" + 'U,'.join(map(str, nums)) + "U}"

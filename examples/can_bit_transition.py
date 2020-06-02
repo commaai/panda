@@ -29,8 +29,8 @@ class Info():
 
   def load(self, filename, start, end):
     """Given a CSV file, adds information about message IDs and their values."""
-    with open(filename, 'rb') as input:
-      reader = csv.reader(input)
+    with open(filename, 'rb') as inp:
+      reader = csv.reader(inp)
       next(reader, None)  # skip the CSV header
       for row in reader:
         if not len(row):
@@ -55,12 +55,12 @@ class Info():
           self.messages[message_id] = Message(message_id)
           new_message = True
         message = self.messages[message_id]
-        bytes = bytearray.fromhex(data)
-        for i in range(len(bytes)):
-          ones = int(bytes[i])
+        bts = bytearray.fromhex(data)
+        for i in range(len(bts)):
+          ones = int(bts[i])
           message.ones[i] = ones if new_message else message.ones[i] & ones
           # Inverts the data and masks it to a byte to get the zeros as ones.
-          zeros = (~int(bytes[i])) & 0xff
+          zeros = (~int(bts[i])) & 0xff
           message.zeros[i] = zeros if new_message else message.zeros[i] & zeros
 
 def PrintUnique(log_file, low_range, high_range):

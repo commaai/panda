@@ -67,13 +67,13 @@ class TestSubaruSafety(common.PandaSafetyTest):
     self.__class__.cnt_gas += 1
     return self.packer.make_can_msg_panda("Throttle", 0, values)
 
-  def _pcm_status_msg(self, cruise):
-    values = {"Cruise_Activated": cruise, "Counter": self.cnt_cruise % 4}
+  def _pcm_status_msg(self, enable):
+    values = {"Cruise_Activated": enable, "Counter": self.cnt_cruise % 4}
     self.__class__.cnt_cruise += 1
     return self.packer.make_can_msg_panda("CruiseControl", 0, values)
 
   def _set_torque_driver(self, min_t, max_t):
-    for i in range(0, 5):
+    for _ in range(0, 5):
       self._rx(self._torque_driver_msg(min_t))
     self._rx(self._torque_driver_msg(max_t))
 
@@ -207,8 +207,8 @@ class TestSubaruLegacySafety(TestSubaruSafety):
     values = {"Throttle_Pedal": gas}
     return self.packer.make_can_msg_panda("Throttle", 0, values)
 
-  def _pcm_status_msg(self, cruise):
-    values = {"Cruise_Activated": cruise}
+  def _pcm_status_msg(self, enable):
+    values = {"Cruise_Activated": enable}
     return self.packer.make_can_msg_panda("CruiseControl", 0, values)
 
 

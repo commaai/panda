@@ -30,10 +30,7 @@ def build_st(target, mkfile="Makefile", clean=True):
 
   clean_cmd = "make -f %s clean" % mkfile if clean else ":"
   cmd = 'cd %s && %s && make -f %s %s' % (os.path.join(BASEDIR, "board"), clean_cmd, mkfile, target)
-  try:
-    _ = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-  except subprocess.CalledProcessError:
-    raise
+  _ = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
 
 def parse_can_buffer(dat):
   ret = []
@@ -381,7 +378,6 @@ class Panda(object):
       self._handle.controlWrite(Panda.REQUEST_OUT, 0xd1, 0, 0, b'')
     except Exception as e:
       print(e)
-      pass
 
   def get_version(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40).decode('utf8')

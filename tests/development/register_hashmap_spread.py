@@ -25,7 +25,7 @@ REGISTER_ADDRESS_REGIONS = [
   (0xE0000000, 0xE00FFFFF)
 ]
 
-def hash(reg_addr):
+def _hash(reg_addr):
   return (((reg_addr >> 16) ^ ((((reg_addr + 1) & 0xFFFF) * HASHING_PRIME) & 0xFFFF)) & REGISTER_MAP_SIZE)
 
 # Calculate hash for each address
@@ -33,18 +33,18 @@ hashes = []
 double_hashes = []
 for (start_addr, stop_addr) in REGISTER_ADDRESS_REGIONS:
   for addr in range(start_addr, stop_addr + 1, BYTES_PER_REG):
-    h = hash(addr)
+    h = _hash(addr)
     hashes.append(h)
-    double_hashes.append(hash(h))
+    double_hashes.append(_hash(h))
 
 # Make histograms
 plt.subplot(2, 1, 1)
 plt.hist(hashes, bins=REGISTER_MAP_SIZE)
-plt.title("Number of collisions per hash")
+plt.title("Number of collisions per _hash")
 plt.xlabel("Address")
 
 plt.subplot(2, 1, 2)
 plt.hist(double_hashes, bins=REGISTER_MAP_SIZE)
-plt.title("Number of collisions per double hash")
+plt.title("Number of collisions per double _hash")
 plt.xlabel("Address")
 plt.show()

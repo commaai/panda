@@ -45,20 +45,20 @@ class TestMazdaSafety(common.PandaSafetyTest):
     values = {"LKAS_REQUEST": torque}
     return self.packer.make_can_msg_panda("CAM_LKAS", 0, values)
 
-  def _speed_msg(self, s):
-    values = {"SPEED": s}
+  def _speed_msg(self, speed):
+    values = {"SPEED": speed}
     return self.packer.make_can_msg_panda("ENGINE_DATA", 0, values)
 
-  def _brake_msg(self, pressed):
-    values = {"BRAKE_ON": pressed}
+  def _brake_msg(self, brake):
+    values = {"BRAKE_ON": brake}
     return self.packer.make_can_msg_panda("PEDALS", 0, values)
 
-  def _gas_msg(self, pressed):
-    values = {"PEDAL_GAS": pressed}
+  def _gas_msg(self, gas):
+    values = {"PEDAL_GAS": gas}
     return self.packer.make_can_msg_panda("ENGINE_DATA", 0, values)
 
-  def _pcm_status_msg(self, cruise_on):
-    values = {"CRZ_ACTIVE": cruise_on}
+  def _pcm_status_msg(self, enable):
+    values = {"CRZ_ACTIVE": enable}
     return self.packer.make_can_msg_panda("CRZ_CTRL", 0, values)
 
   def test_enable_control_allowed_from_cruise(self):

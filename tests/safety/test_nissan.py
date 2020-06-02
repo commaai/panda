@@ -40,11 +40,11 @@ class TestNissanSafety(common.PandaSafetyTest):
     self.safety.set_desired_angle_last(t)
 
   def _angle_meas_msg_array(self, angle):
-    for i in range(6):
+    for _ in range(6):
       self._rx(self._angle_meas_msg(angle))
 
-  def _pcm_status_msg(self, enabled):
-    values = {"CRUISE_ENABLED": enabled}
+  def _pcm_status_msg(self, enable):
+    values = {"CRUISE_ENABLED": enable}
     return self.packer.make_can_msg_panda("CRUISE_STATE", 2, values)
 
   def _lkas_control_msg(self, angle, state):

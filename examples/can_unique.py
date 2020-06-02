@@ -52,8 +52,8 @@ class Info():
 
   def load(self, filename):
     """Given a CSV file, adds information about message IDs and their values."""
-    with open(filename, 'r') as input:
-      reader = csv.reader(input)
+    with open(filename, 'r') as inp:
+      reader = csv.reader(inp)
       header = next(reader, None)
       if header[0] == 'time':
         self.cabana(reader)
@@ -88,11 +88,11 @@ class Info():
       message = self.messages[message_id]
       if data not in self.messages[message_id].data:
         message.data[data] = True
-      bytes = bytearray.fromhex(data)
-      for i in range(len(bytes)):
-        message.ones[i] = message.ones[i] | int(bytes[i])
+      bts = bytearray.fromhex(data)
+      for i in range(len(bts)):
+        message.ones[i] = message.ones[i] | int(bts[i])
         # Inverts the data and masks it to a byte to get the zeros as ones.
-        message.zeros[i] = message.zeros[i] | ((~int(bytes[i])) & 0xff)
+        message.zeros[i] = message.zeros[i] | ((~int(bts[i])) & 0xff)
 
 
 def PrintUnique(interesting_file, background_files):
