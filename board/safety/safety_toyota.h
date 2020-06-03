@@ -186,7 +186,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       bool violation = (unsafe_mode & UNSAFE_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX)?
         max_limit_check(desired_accel, TOYOTA_ISO_MAX_ACCEL, TOYOTA_ISO_MIN_ACCEL) :
         max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
-        
+
       if (violation) {
         tx = 0;
       }

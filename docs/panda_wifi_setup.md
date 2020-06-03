@@ -6,10 +6,10 @@
 
 3. Inside the web interface enable secured mode by clinking the **secure it** link/button (this should make the White Panda's Wi-Fi network visible)
 
-   ### If you need your White Panda's Wi-Fi Password 
+   ### If you need your White Panda's Wi-Fi Password
 
    * Run the **get_panda_password.py** script in found in **examples/** (Must have panda paw for this step because you need to connect White Panda via USB to retrive the Wi-Fi password)
-   * Also ensure that you are connected to your White Panda's Wi-Fi pairing network 
+   * Also ensure that you are connected to your White Panda's Wi-Fi pairing network
 
 4. Connect to your White Panda's default Wi-Fi network (this should be the Wi-Fi network WITHOUT the "-pair" at the end)
 

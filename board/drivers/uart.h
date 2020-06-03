@@ -135,14 +135,14 @@ uint32_t prev_w_index = 0;
 void dma_pointer_handler(uart_ring *q, uint32_t dma_ndtr) {
   ENTER_CRITICAL();
   uint32_t w_index = (q->rx_fifo_size - dma_ndtr);
-  
+
   // Check for new data
   if (w_index != prev_w_index){
     // Check for overflow
     if (
       ((prev_w_index < q->r_ptr_rx) && (q->r_ptr_rx <= w_index)) ||                               // No rollover
       ((w_index < prev_w_index) && ((q->r_ptr_rx <= w_index) || (prev_w_index < q->r_ptr_rx)))    // Rollover
-    ){   
+    ){
       // We lost data. Set the new read pointer to the oldest byte still available
       q->r_ptr_rx = (w_index + 1U) % q->rx_fifo_size;
     }
@@ -243,7 +243,7 @@ void dma_rx_init(uart_ring *q) {
     // Circular, Increment memory, byte size, periph -> memory, enable
     // Transfer complete, half transfer, transfer error and direct mode error interrupt enable
     DMA2_Stream5->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_MINC | DMA_SxCR_CIRC | DMA_SxCR_HTIE | DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | DMA_SxCR_EN;
-    
+
     // Enable DMA receiver in UART
     q->uart->CR3 |= USART_CR3_DMAR;
 
