@@ -284,8 +284,7 @@ static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     if (bus_num == 0) {
       // 0x240 is CruiseControl for Global
       // 0x13c is Brake_Status for Global
-      int block_msg = ((addr == 0x240) ||
-                       (addr == 0x13c));
+      int block_msg = ((addr == 0x240) || (addr == 0x13c));
       if (!block_msg) {
         bus_fwd = 2;  // Camera CAN
       }
