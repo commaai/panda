@@ -68,7 +68,8 @@ def run_test(sleep_duration):
     counter += 1
 
     runtime = time.time() - start_time
-    print("Number of cycles:", counter, "Non-zero bus errors:", nonzero_bus_errors, "Zero bus errors:", zero_bus_errors, "Content errors:", content_errors, "Runtime: ", runtime)
+    print("Number of cycles:", counter, "Non-zero bus errors:", nonzero_bus_errors, "Zero bus errors:", zero_bus_errors,
+          "Content errors:", content_errors, "Runtime: ", runtime)
 
     if (time.time() - temp_start_time) > 3600 * 6:
       # Toggle relay

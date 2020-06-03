@@ -19,8 +19,9 @@ repos:
     -   id: flake8
         exclude: '^(tests/automated)/'
         args:
-        - --ignore=E111,E114,E121,E501,E302,E305,W504
+        - --select=E112,E113,E304,E501,E502,E701,E702,E703,E71,E72,E731,W191,W6
         - --exclude=python/esptool.py,tests/gmbitbang/*
+        - --max-line-length=160
         - --statistics
 -   repo: local
     hooks:
