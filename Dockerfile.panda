@@ -50,6 +50,13 @@ RUN pyenv install 3.7.3 && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
 RUN cd /tmp && \
+    git clone https://github.com/danmar/cppcheck.git && \
+    cd cppcheck && \
+    git fetch && \
+    git checkout e46191e6e809272d8b34feca8999ee413f716b80 && \
+    FILESDIR=/usr/share/cppcheck make -j4 install
+
+RUN cd /tmp && \
     git clone https://github.com/commaai/openpilot.git tmppilot || true && \
     cd /tmp/tmppilot && \
     git pull && git checkout 44560b5bb74e451767725144c3fa5f1564481a20 && \
