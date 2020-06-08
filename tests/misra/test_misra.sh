@@ -1,23 +1,19 @@
 #!/bin/bash -e
 
+PANDA_DIR=../..
+
 mkdir /tmp/misra || true
-git clone https://github.com/danmar/cppcheck.git || true
-cd cppcheck
-git fetch
-git checkout e46191e6e809272d8b34feca8999ee413f716b80
-make -j4
-cd ../../../
 
 # generate coverage matrix
-python tests/misra/cppcheck/addons/misra.py -generate-table > tests/misra/coverage_table
+#python tests/misra/cppcheck/addons/misra.py -generate-table > tests/misra/coverage_table
 
 printf "\nPANDA CODE\n"
-tests/misra/cppcheck/cppcheck -DPANDA -UPEDAL -DCAN3 -DUID_BASE -DEON \
-                              --suppressions-list=tests/misra/suppressions.txt \
-                              --dump --enable=all --inline-suppr --force \
-                              board/main.c 2>/tmp/misra/cppcheck_output.txt
+cppcheck -DPANDA -UPEDAL -DCAN3 -DUID_BASE -DEON \
+         --suppressions-list=suppressions.txt \
+         --dump --enable=all --inline-suppr --force \
+         $PANDA_DIR/board/main.c 2>/tmp/misra/cppcheck_output.txt
 
-python tests/misra/cppcheck/addons/misra.py board/main.c.dump 2> /tmp/misra/misra_output.txt || true
+python /usr/share/cppcheck/addons/misra.py $PANDA_DIR/board/main.c.dump 2> /tmp/misra/misra_output.txt || true
 
 # strip (information) lines
 cppcheck_output=$( cat /tmp/misra/cppcheck_output.txt | grep -v ": information: " ) || true
@@ -25,12 +21,12 @@ misra_output=$( cat /tmp/misra/misra_output.txt | grep -v ": information: " ) ||
 
 
 printf "\nPEDAL CODE\n"
-tests/misra/cppcheck/cppcheck -UPANDA -DPEDAL -UCAN3 \
-                              --suppressions-list=tests/misra/suppressions.txt \
-                              -I board/ --dump --enable=all --inline-suppr --force \
-                              board/pedal/main.c 2>/tmp/misra/cppcheck_pedal_output.txt
+cppcheck -UPANDA -DPEDAL -UCAN3 \
+         --suppressions-list=suppressions.txt \
+         -I $PANDA_DIR/board/ --dump --enable=all --inline-suppr --force \
+         $PANDA_DIR/board/pedal/main.c 2>/tmp/misra/cppcheck_pedal_output.txt
 
-python tests/misra/cppcheck/addons/misra.py board/pedal/main.c.dump 2> /tmp/misra/misra_pedal_output.txt || true
+python /usr/share/cppcheck/addons/misra.py $PANDA_DIR/board/pedal/main.c.dump 2> /tmp/misra/misra_pedal_output.txt || true
 
 # strip (information) lines
 cppcheck_pedal_output=$( cat /tmp/misra/cppcheck_pedal_output.txt | grep -v ": information: " ) || true
