@@ -14,7 +14,7 @@ jobs:
     name: docker push
     runs-on: ubuntu-16.04
     timeout-minutes: 45
-    #if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
