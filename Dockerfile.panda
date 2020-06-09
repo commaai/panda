@@ -67,7 +67,7 @@ RUN cd /tmp && \
 
 RUN cd /tmp/openpilot && \
     pip install --no-cache-dir -r opendbc/requirements.txt && \
-    pip install --no-cache-dir -r tools/requirements.txt
+    pip install --no-cache-dir aenum lru-dict pycurl tenacity
 
 COPY . /tmp/openpilot/panda
 RUN rm -rf /tmp/openpilot/panda/.git
