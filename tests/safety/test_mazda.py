@@ -28,7 +28,7 @@ class TestMazdaSafety(common.PandaSafetyTest):
   LKAS_DISABLE_SPEED = 45
 
   def setUp(self):
-    self.packer = CANPackerPanda("mazda_cx5_gt_2017")
+    self.packer = CANPackerPanda("mazda_2017")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_MAZDA, 0)
     self.safety.init_tests()
