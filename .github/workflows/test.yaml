@@ -20,7 +20,7 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Login to dockerhub
-        run: docker login -u wmelching -p ${{ secrets.DOCKERHUB_TOKEN }}
+        run: docker login -u wmelching -p ${{ secrets.COMMA_DOCKERHUB_TOKEN }}
       - name: Tag image
         run: docker tag panda docker.io/commaai/panda:latest
       - name: Push image
