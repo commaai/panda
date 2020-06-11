@@ -70,7 +70,6 @@ void set_honda_alt_brake_msg(bool);
 void set_honda_bosch_long(bool c);
 int get_honda_hw(void);
 
-bool get_subaru_global(void);
 """)
 
 libpandasafety = ffi.dlopen(libpandasafety_fn)
