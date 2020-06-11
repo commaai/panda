@@ -1,4 +1,5 @@
 import binascii
+import time
 
 DEBUG = False
 
@@ -61,7 +62,7 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
 
 # **** import below this line ****
 
-def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None):
+def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None, rate=None):
   if recvaddr is None:
     recvaddr = addr + 8
 
@@ -96,7 +97,12 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None):
         rr = recv(panda, 1, recvaddr, bus)[0]
       panda.can_send(addr, sends[-1], 0)
     else:
-      panda.can_send_many([(addr, None, s, 0) for s in sends])
+      if rate is None:
+        panda.can_send_many([(addr, None, s, bus) for s in sends])
+      else:
+        for dat in sends:
+          panda.can_send(addr, dat, bus)
+          time.sleep(rate)
 
 def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
   if sendaddr is None:
