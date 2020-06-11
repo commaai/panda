@@ -55,8 +55,7 @@ static uint8_t subaru_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
-  bool valid = false;
-  valid = addr_safety_check(to_push, subaru_rx_checks, SUBARU_RX_CHECK_LEN,
+  bool valid = addr_safety_check(to_push, subaru_rx_checks, SUBARU_RX_CHECK_LEN,
                             subaru_get_checksum, subaru_compute_checksum, subaru_get_counter);
 
   bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
@@ -117,8 +116,7 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
-  bool valid = false;
-  valid = addr_safety_check(to_push, subaru_l_rx_checks, SUBARU_L_RX_CHECK_LEN,
+  bool valid = addr_safety_check(to_push, subaru_l_rx_checks, SUBARU_L_RX_CHECK_LEN,
                             NULL, NULL, NULL);
 
   bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
