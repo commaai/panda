@@ -957,6 +957,11 @@ void OTG_FS_IRQ_Handler(void) {
   NVIC_EnableIRQ(OTG_FS_IRQn);
 }
 
+bool usb_enumerated(void) {
+  // This relies on the USB being suspended after no activity for 3ms. Seems pretty stable
+  return (!(USBx_DEVICE->DSTS & USB_OTG_DSTS_SUSPSTS));
+}
+
 // ***************************** USB init *****************************
 
 void usb_init(void) {
