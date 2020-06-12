@@ -3,11 +3,6 @@
 import os
 import sys
 import time
-import random
-import argparse
-
-from hexdump import hexdump
-from itertools import permutations
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda  # noqa: E402
