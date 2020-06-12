@@ -3,11 +3,6 @@
 import os
 import sys
 import time
-import random
-import argparse
-
-from hexdump import hexdump
-from itertools import permutations
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda  # noqa: E402
@@ -27,11 +22,11 @@ def set_speed_kbps(p, speed):
   else:
     p.set_can_speed_kbps(OTHER_GMLAN_BUS, speed)
 
-def send(p, id, msg):
+def send(p, id_, msg):
   if p.is_white():
-    p.can_send(id, msg, WHITE_GMLAN_BUS)
+    p.can_send(id_, msg, WHITE_GMLAN_BUS)
   else:
-    p.can_send(id, msg, OTHER_GMLAN_BUS)
+    p.can_send(id_, msg, OTHER_GMLAN_BUS)
 
 if __name__ == "__main__":
   pl = Panda.list()
