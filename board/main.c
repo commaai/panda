@@ -697,7 +697,6 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
 
     // Tick fan driver
     fan_tick();
-    //puts("Fan speed: "); puth((unsigned int) fan_rpm); puts("rpm\n");
 
     // set green LED to be controls allowed
     current_board->set_led(LED_GREEN, controls_allowed);
@@ -725,9 +724,15 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
         set_power_save_state(POWER_SAVE_STATUS_ENABLED);
       }
 
-      // Also disable fan and IR when the heartbeat goes missing
-      current_board->set_fan_power(0U);
+      // Also disable IR when the heartbeat goes missing
       current_board->set_ir_power(0U);
+
+      // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
+      if(usb_enumerated()){
+        current_board->set_fan_power(30U);
+      } else {
+        current_board->set_fan_power(0U);
+      }
     }
 
     // enter CDP mode when car starts to ensure we are charging a turned off EON
