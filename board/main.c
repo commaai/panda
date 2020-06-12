@@ -729,7 +729,7 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
 
       // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
       if(usb_enumerated()){
-        current_board->set_fan_power(30U);
+        current_board->set_fan_power(50U);
       } else {
         current_board->set_fan_power(0U);
       }
