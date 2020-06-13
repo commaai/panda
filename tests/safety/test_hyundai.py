@@ -191,5 +191,13 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     self.assertTrue(self._tx(self._button_msg(RESUME_BTN)))
 
 
+class TestHyundaiLegacySafety(TestHyundaiSafety):
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_kia_generic")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_LEGACY, 0)
+    self.safety.init_tests()
+
+
 if __name__ == "__main__":
   unittest.main()

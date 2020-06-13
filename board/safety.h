@@ -37,6 +37,7 @@
 #define SAFETY_HONDA_BOSCH_HARNESS 20U
 #define SAFETY_VOLKSWAGEN_PQ 21U
 #define SAFETY_SUBARU_LEGACY 22U
+#define SAFETY_HYUNDAI_LEGACY 23U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
 const safety_hooks *current_hooks = &nooutput_hooks;
@@ -227,6 +228,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_VOLKSWAGEN_MQB, &volkswagen_mqb_hooks},
   {SAFETY_NISSAN, &nissan_hooks},
   {SAFETY_NOOUTPUT, &nooutput_hooks},
+  {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
 #ifdef ALLOW_DEBUG
   {SAFETY_MAZDA, &mazda_hooks},
   {SAFETY_SUBARU_LEGACY, &subaru_legacy_hooks},
