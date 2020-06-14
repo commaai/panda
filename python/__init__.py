@@ -598,7 +598,7 @@ class Panda(object):
       if DEBUG and len(ret) > 0:
         print("kline recv: " + binascii.hexlify(ret))
       echo += ret
-    return str(echo)
+    return bytes(echo)
 
   def kline_send(self, x, bus=2, checksum=True):
     def get_checksum(dat):
