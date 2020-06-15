@@ -218,8 +218,6 @@ void generic_rx_hook(bool stock_ecu_detected) {
   }
 }
 
-
-
 void relay_malfunction_set(void) {
   relay_malfunction = true;
   fault_occurred(FAULT_RELAY_MALFUNCTION);
