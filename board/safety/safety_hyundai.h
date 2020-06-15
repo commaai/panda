@@ -21,7 +21,7 @@ const CanMsg HYUNDAI_TX_MSGS[] = {
 //       wheel speeds stuck at 0 and we don't disengage on brake press
 AddrCheckStruct hyundai_rx_checks[] = {
   {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}}},
-  {.msg = {{902, 0, 8, .check_checksum = false, .max_counter = 15U,  .expected_timestep = 10000U}}},
+  {.msg = {{902, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 10000U}}},
   {.msg = {{916, 0, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}}},
   {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
 };
@@ -29,9 +29,10 @@ const int HYUNDAI_RX_CHECK_LEN = sizeof(hyundai_rx_checks) / sizeof(hyundai_rx_c
 
 // older hyundai models have less checks due to missing counters and checksums
 AddrCheckStruct hyundai_legacy_rx_checks[] = {
-  {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}}},
-  {.msg = {{902, 0, 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U}}},
-  {.msg = {{916, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}}},
+  {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+           {881, 0, 8, .expected_timestep = 10000U}}},
+  {.msg = {{902, 0, 8, .expected_timestep = 10000U}}},
+  {.msg = {{916, 0, 8, .expected_timestep = 10000U}}},
   {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
 };
 const int HYUNDAI_LEGACY_RX_CHECK_LEN = sizeof(hyundai_legacy_rx_checks) / sizeof(hyundai_legacy_rx_checks[0]);
@@ -127,8 +128,14 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // exit controls on rising edge of gas press
-    if (addr == 608) {
-      bool gas_pressed = (GET_BYTE(to_push, 7) >> 6) != 0;
+    if ((addr == 608) || (hyundai_legacy && (addr == 881))) {
+      bool gas_pressed;
+      if (addr == 608) {
+        gas_pressed = (GET_BYTE(to_push, 7) >> 6) != 0;
+      } else {
+        gas_pressed = (((GET_BYTE(to_push, 4) & 0x7F) << 1) | GET_BYTE(to_push, 3) >> 7) != 0;
+      }
+
       if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev) {
         controls_allowed = 0;
       }
