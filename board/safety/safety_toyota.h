@@ -131,7 +131,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       gas_interceptor_prev = gas_interceptor;
     }
 
-    generic_rx_hook((addr == 0x2E4));
+    generic_rx_checks((addr == 0x2E4));
   }
   return valid;
 }

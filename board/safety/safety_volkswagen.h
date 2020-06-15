@@ -184,7 +184,7 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       brake_pressed = (GET_BYTE(to_push, 3) & 0x4) >> 2;
     }
 
-    generic_rx_hook((addr == MSG_HCA_01));
+    generic_rx_checks((addr == MSG_HCA_01));
   }
   return valid;
 }
@@ -237,7 +237,7 @@ static int volkswagen_pq_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       brake_pressed = (GET_BYTE(to_push, 2) & 0x1);
     }
 
-    generic_rx_hook((addr == MSG_HCA_1));
+    generic_rx_checks((addr == MSG_HCA_1));
   }
   return valid;
 }

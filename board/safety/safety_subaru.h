@@ -95,7 +95,7 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       gas_pressed = GET_BYTE(to_push, 4) != 0;
     }
 
-    generic_rx_hook((addr == 0x122));
+    generic_rx_checks((addr == 0x122));
   }
   return valid;
 }
@@ -142,7 +142,7 @@ static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       gas_pressed = GET_BYTE(to_push, 0) != 0;
     }
 
-    generic_rx_hook((addr == 0x164));
+    generic_rx_checks((addr == 0x164));
   }
   return valid;
 }

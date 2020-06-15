@@ -111,7 +111,7 @@ static int chrysler_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       brake_pressed_prev = brake_pressed;
     }
 
-    generic_rx_hook((addr == 0x292));
+    generic_rx_checks((addr == 0x292));
   }
   return valid;
 }
