@@ -251,6 +251,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
   uart_ring *ur = NULL;
   int i;
   timestamp_t t;
+  bool k_wakeup;
+  bool l_wakeup;
   switch (setup->b.bRequest) {
     // **** 0xa0: get rtc time
     case 0xa0:
@@ -557,38 +559,39 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xe7:
       set_power_save_state(setup->b.wValue.w);
       break;
-    // **** 0xf0: do k-line wValue pulse on uart2 for Acura
+    // **** 0xf0: k-line/l-line wake-up pulse for KWP2000 fast initialization
     case 0xf0:
-      if (setup->b.wValue.w == 1U) {
-        GPIOC->ODR &= ~(1U << 10);
-        GPIOC->MODER &= ~GPIO_MODER_MODER10_1;
-        GPIOC->MODER |= GPIO_MODER_MODER10_0;
-      } else {
-        GPIOC->ODR &= ~(1U << 12);
-        GPIOC->MODER &= ~GPIO_MODER_MODER12_1;
-        GPIOC->MODER |= GPIO_MODER_MODER12_0;
+      k_wakeup = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
+      l_wakeup = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
+      if (k_wakeup) {
+        set_gpio_output(GPIOC, 12, false);
+      }
+      if (l_wakeup) {
+        set_gpio_output(GPIOC, 10, false);
       }
 
-      for (i = 0; i < 80; i++) {
-        delay(8000);
-        if (setup->b.wValue.w == 1U) {
-          GPIOC->ODR |= (1U << 10);
-          GPIOC->ODR &= ~(1U << 10);
-        } else {
+      // hold low for 25 ms
+      for (i = 0; i < 25; i++) {
+        delay(9500);
+        if (k_wakeup) {
           GPIOC->ODR |= (1U << 12);
           GPIOC->ODR &= ~(1U << 12);
         }
+        if (l_wakeup) {
+          GPIOC->ODR |= (1U << 10);
+          GPIOC->ODR &= ~(1U << 10);
+        }
       }
 
-      if (setup->b.wValue.w == 1U) {
-        GPIOC->MODER &= ~GPIO_MODER_MODER10_0;
-        GPIOC->MODER |= GPIO_MODER_MODER10_1;
-      } else {
-        GPIOC->MODER &= ~GPIO_MODER_MODER12_0;
-        GPIOC->MODER |= GPIO_MODER_MODER12_1;
+      if (k_wakeup) {
+        set_gpio_mode(GPIOC, 12, MODE_ALTERNATE);
       }
-
-      delay(140 * 9000);
+      if (l_wakeup) {
+        set_gpio_mode(GPIOC, 10, MODE_ALTERNATE);
+      }
+      // hold high for 24 ms
+      delay(24 * 9500);
+      // start communication needs to follow 49ms to 51ms after wake-up initial falling edge
       break;
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
