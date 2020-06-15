@@ -273,15 +273,27 @@ void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
 
 void uart_init(uart_ring *q, int baud) {
   // Register interrupts (max data rate: 115200 baud)
-  REGISTER_INTERRUPT(USART1_IRQn, USART1_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_1)
-  REGISTER_INTERRUPT(USART2_IRQn, USART2_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_2)
-  REGISTER_INTERRUPT(USART3_IRQn, USART3_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_3)
-  REGISTER_INTERRUPT(UART5_IRQn, UART5_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_5)
-  REGISTER_INTERRUPT(DMA2_Stream5_IRQn, DMA2_Stream5_IRQ_Handler, 100U, FAULT_INTERRUPT_RATE_UART_DMA)   // Called twice per buffer
+  if(q->uart == USART1){
+    REGISTER_INTERRUPT(USART1_IRQn, USART1_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_1)
+  } else if (q->uart == USART2){
+    REGISTER_INTERRUPT(USART2_IRQn, USART2_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_2)
+  } else if (q->uart == USART3){
+    REGISTER_INTERRUPT(USART3_IRQn, USART3_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_3)
+  } else if (q->uart == UART5){
+    REGISTER_INTERRUPT(UART5_IRQn, UART5_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_5)
+  } else {
+    // UART not used. Skip registering interrupts
+  }
+  if(q->dma_rx){
+    REGISTER_INTERRUPT(DMA2_Stream5_IRQn, DMA2_Stream5_IRQ_Handler, 100U, FAULT_INTERRUPT_RATE_UART_DMA)   // Called twice per buffer
+  }
 
   // Set baud and enable peripheral with TX and RX mode
   uart_set_baud(q->uart, baud);
   q->uart->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
+  if ((q->uart == USART2) || (q->uart == USART3) || (q->uart == UART5)) {
+    q->uart->CR1 |= USART_CR1_RXNEIE;
+  }
 
   // Enable UART interrupts
   if(q->uart == USART1){
