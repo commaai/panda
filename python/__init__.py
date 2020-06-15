@@ -571,10 +571,11 @@ class Panda(object):
   # ******************* kline *******************
 
   # pulse low for wakeup
-  def kline_wakeup(self):
+  def kline_wakeup(self, k=True, l=False):
+    assert k or l, "must specify k-line, l-line, or both"
     if DEBUG:
       print("kline wakeup...")
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 0, 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 2 if k and l else int(k), 0, b'')
     if DEBUG:
       print("kline wakeup done")
 
@@ -600,15 +601,9 @@ class Panda(object):
     return bytes(echo)
 
   def kline_send(self, x, bus=2, checksum=True):
-    def get_checksum(dat):
-      result = 0
-      result += sum(map(ord, dat)) if isinstance(b'dat', str) else sum(dat)
-      result = -result
-      return struct.pack("B", result % 0x100)
-
     self.kline_drain(bus=bus)
     if checksum:
-      x += get_checksum(x)
+      x += bytes([sum(x) % 0x100])
     for i in range(0, len(x), 0xf):
       ts = x[i:i + 0xf]
       if DEBUG:
@@ -621,9 +616,11 @@ class Panda(object):
         print(f"0x{ts.hex()}")
     assert echo == ts
 
-  def kline_recv(self, bus=2):
-    msg = self.kline_ll_recv(2, bus=bus)
-    msg += self.kline_ll_recv(ord(msg[1]) - 2, bus=bus)
+  def kline_recv(self, bus=2, header_len=4):
+    # read header (last byte is length)
+    msg = self.kline_ll_recv(header_len, bus=bus)
+    # read data (add one byte to length for checksum)
+    msg += self.kline_ll_recv(msg[-1]+1, bus=bus)
     return msg
 
   def send_heartbeat(self):
