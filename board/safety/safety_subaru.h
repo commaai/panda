@@ -58,8 +58,6 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   bool valid = addr_safety_check(to_push, subaru_rx_checks, SUBARU_RX_CHECK_LEN,
                             subaru_get_checksum, subaru_compute_checksum, subaru_get_counter);
 
-  bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
-
   if (valid && (GET_BUS(to_push) == 0)) {
     int addr = GET_ADDR(to_push);
     if (addr == 0x119) {
@@ -81,7 +79,7 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       cruise_engaged_prev = cruise_engaged;
     }
 
-    // sample subaru wheel speed, averaging opposite corners
+    // sample wheel speed, averaging opposite corners
     if (addr == 0x13a) {
       int subaru_speed = (GET_BYTES_04(to_push) >> 12) & 0x1FFF;  // FR
       subaru_speed += (GET_BYTES_48(to_push) >> 6) & 0x1FFF;  // RL
@@ -89,27 +87,15 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       vehicle_moving = subaru_speed > SUBARU_STANDSTILL_THRSLD;
     }
 
-    // exit controls on rising edge of brake press
     if (addr == 0x139) {
-      bool brake_pressed = (GET_BYTES_48(to_push) & 0xFFF0) > 0;
-      if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
-        controls_allowed = 0;
-      }
-      brake_pressed_prev = brake_pressed;
+      brake_pressed = (GET_BYTES_48(to_push) & 0xFFF0) > 0;
     }
 
-    // exit controls on rising edge of gas press
     if (addr == 0x40) {
-      bool gas_pressed = GET_BYTE(to_push, 4) != 0;
-      if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev) {
-        controls_allowed = 0;
-      }
-      gas_pressed_prev = gas_pressed;
+      gas_pressed = GET_BYTE(to_push, 4) != 0;
     }
 
-    if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == 0x122)) {
-      relay_malfunction_set();
-    }
+    generic_rx_checks((addr == 0x122));
   }
   return valid;
 }
@@ -118,8 +104,6 @@ static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   bool valid = addr_safety_check(to_push, subaru_l_rx_checks, SUBARU_L_RX_CHECK_LEN,
                             NULL, NULL, NULL);
-
-  bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
 
   if (valid && (GET_BUS(to_push) == 0)) {
     int addr = GET_ADDR(to_push);
@@ -142,7 +126,7 @@ static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       cruise_engaged_prev = cruise_engaged;
     }
 
-    // sample subaru wheel speed, averaging opposite corners
+    // sample wheel speed, averaging opposite corners
     if (addr == 0xD4) {
       int subaru_speed = (GET_BYTES_04(to_push) >> 16) & 0xFFFF;  // FR
       subaru_speed += GET_BYTES_48(to_push) & 0xFFFF;  // RL
@@ -150,27 +134,15 @@ static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       vehicle_moving = subaru_speed > SUBARU_STANDSTILL_THRSLD;
     }
 
-    // exit controls on rising edge of brake press
     if (addr == 0xD1) {
-      bool brake_pressed = ((GET_BYTES_04(to_push) >> 16) & 0xFF) > 0;
-      if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
-        controls_allowed = 0;
-      }
-      brake_pressed_prev = brake_pressed;
+      brake_pressed = ((GET_BYTES_04(to_push) >> 16) & 0xFF) > 0;
     }
 
-    // exit controls on rising edge of gas press
     if (addr == 0x140) {
-      bool gas_pressed = GET_BYTE(to_push, 0) != 0;
-      if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev) {
-        controls_allowed = 0;
-      }
-      gas_pressed_prev = gas_pressed;
+      gas_pressed = GET_BYTE(to_push, 0) != 0;
     }
 
-    if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == 0x164)) {
-      relay_malfunction_set();
-    }
+    generic_rx_checks((addr == 0x164));
   }
   return valid;
 }

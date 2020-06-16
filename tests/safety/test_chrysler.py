@@ -5,6 +5,7 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
+GAS_THRESHOLD = 2.14
 
 class TestChryslerSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest):
   TX_MSGS = [[571, 0], [658, 0], [678, 0]]
@@ -65,6 +66,15 @@ class TestChryslerSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest
   def _torque_msg(self, torque):
     values = {"LKAS_STEERING_TORQUE": torque}
     return self.packer.make_can_msg_panda("LKAS_COMMAND", 0, values)
+
+  def test_prev_gas(self):
+    self.assertFalse(self.safety.get_gas_pressed_prev())
+
+    # chrysler has an additional check on wheel speed
+    self._rx(self._speed_msg(GAS_THRESHOLD + 1))
+    for pressed in [self.GAS_PRESSED_THRESHOLD + 1, 0]:
+      self._rx(self._gas_msg(pressed))
+      self.assertEqual(bool(pressed), self.safety.get_gas_pressed_prev())
 
   def test_disengage_on_gas(self):
     self.safety.set_controls_allowed(1)

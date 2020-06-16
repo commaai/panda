@@ -102,12 +102,9 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
                               hyundai_get_counter);
   }
 
-  bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
+  if (valid && (GET_BUS(to_push) == 0)) {
+    int addr = GET_ADDR(to_push);
 
-  int addr = GET_ADDR(to_push);
-  int bus = GET_BUS(to_push);
-
-  if (valid && (bus == 0)) {
     if (addr == 593) {
       int torque_driver_new = ((GET_BYTES_04(to_push) & 0x7ff) * 0.79) - 808; // scale down new driver torque signal to match previous one
       // update array of samples
@@ -127,22 +124,15 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       cruise_engaged_prev = cruise_engaged;
     }
 
-    // exit controls on rising edge of gas press
     if ((addr == 608) || (hyundai_legacy && (addr == 881))) {
-      bool gas_pressed;
       if (addr == 608) {
         gas_pressed = (GET_BYTE(to_push, 7) >> 6) != 0;
       } else {
         gas_pressed = (((GET_BYTE(to_push, 4) & 0x7F) << 1) | GET_BYTE(to_push, 3) >> 7) != 0;
       }
-
-      if (!unsafe_allow_gas && gas_pressed && !gas_pressed_prev) {
-        controls_allowed = 0;
-      }
-      gas_pressed_prev = gas_pressed;
     }
 
-    // sample subaru wheel speed, averaging opposite corners
+    // sample wheel speed, averaging opposite corners
     if (addr == 902) {
       int hyundai_speed = GET_BYTES_04(to_push) & 0x3FFF;  // FL
       hyundai_speed += (GET_BYTES_48(to_push) >> 16) & 0x3FFF;  // RL
@@ -150,19 +140,11 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       vehicle_moving = hyundai_speed > HYUNDAI_STANDSTILL_THRSLD;
     }
 
-    // exit controls on rising edge of brake press
     if (addr == 916) {
-      bool brake_pressed = (GET_BYTE(to_push, 6) >> 7) != 0;
-      if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
-        controls_allowed = 0;
-      }
-      brake_pressed_prev = brake_pressed;
+      brake_pressed = (GET_BYTE(to_push, 6) >> 7) != 0;
     }
 
-    // check if stock camera ECU is on bus 0
-    if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (addr == 832)) {
-      relay_malfunction_set();
-    }
+    generic_rx_checks((addr == 832));
   }
   return valid;
 }
