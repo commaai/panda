@@ -571,7 +571,7 @@ class Panda(object):
   # ******************* kline *******************
 
   # pulse low for wakeup
-  def kline_wakeup(self, k=True, l=False):
+  def kline_wakeup(self, k=True, l=True):
     assert k or l, "must specify k-line, l-line, or both"
     if DEBUG:
       print("kline wakeup...")
