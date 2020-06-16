@@ -572,7 +572,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
 
       // hold low for 25 ms
       for (i = 0; i < 25; i++) {
-        delay(9500);
+        delay(8000);
         if (k_wakeup) {
           GPIOC->ODR |= (1U << 12);
           GPIOC->ODR &= ~(1U << 12);
@@ -590,7 +590,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         set_gpio_mode(GPIOC, 10, MODE_ALTERNATE);
       }
       // hold high for 24 ms
-      delay(24 * 9500);
+      delay(24 * 8000);
       // start communication needs to follow 49ms to 51ms after wake-up initial falling edge
       break;
     // **** 0xf1: Clear CAN ring buffer.
