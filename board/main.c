@@ -598,7 +598,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       }
       // hold high until 49ms have passed
       // (start communication needs to follow 49ms to 51ms after start of wakeup)
-      while (get_ts_elapsed(TIM2->CNT, ts) < 49000U);
+      while (get_ts_elapsed(TIM2->CNT, ts) < 49000U) {}
       break;
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
