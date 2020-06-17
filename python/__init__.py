@@ -575,7 +575,7 @@ class Panda(object):
     assert k or l, "must specify k-line, l-line, or both"
     if DEBUG:
       print("kline wakeup...")
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 2 if k and l else int(k), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 2 if k and l else int(l), 0, b'')
     if DEBUG:
       print("kline wakeup done")
 
