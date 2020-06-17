@@ -249,7 +249,8 @@ void usb_cb_enumeration_complete() {
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) {
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
-  int i;
+  uint32_t ts;
+  uint32_t ts_timer;
   timestamp_t t;
   bool k_wakeup;
   bool l_wakeup;
@@ -563,6 +564,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xf0:
       k_wakeup = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
       l_wakeup = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
+
+      ts = TIM2->CNT;
+      ts_timer = ts;
       if (k_wakeup) {
         set_gpio_output(GPIOC, 12, false);
       }
@@ -571,15 +575,18 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       }
 
       // hold low for 25 ms
-      for (i = 0; i < 25; i++) {
-        delay(8000);
-        if (k_wakeup) {
-          GPIOC->ODR |= (1U << 12);
-          GPIOC->ODR &= ~(1U << 12);
-        }
-        if (l_wakeup) {
-          GPIOC->ODR |= (1U << 10);
-          GPIOC->ODR &= ~(1U << 10);
+      while (get_ts_elapsed(TIM2->CNT, ts) < 25000U) {
+        // toggle pin every 5 ms to reset TXD dominant time-out timer
+        if (get_ts_elapsed(TIM2->CNT, ts_timer) >= 5000U) {
+          ts_timer = TIM2->CNT;
+          if (k_wakeup) {
+            register_set_bits(&(GPIOC->ODR), (1U << 12));
+            register_clear_bits(&(GPIOC->ODR), (1U << 12));
+          }
+          if (l_wakeup) {
+            register_set_bits(&(GPIOC->ODR), (1U << 10));
+            register_clear_bits(&(GPIOC->ODR), (1U << 10));
+          }
         }
       }
 
@@ -589,9 +596,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       if (l_wakeup) {
         set_gpio_mode(GPIOC, 10, MODE_ALTERNATE);
       }
-      // hold high for 24 ms
-      delay(24 * 8000);
-      // start communication needs to follow 49ms to 51ms after wake-up initial falling edge
+      // hold high until 49ms have passed
+      // (start communication needs to follow 49ms to 51ms after start of wakeup)
+      while (get_ts_elapsed(TIM2->CNT, ts) < 49000U);
       break;
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
