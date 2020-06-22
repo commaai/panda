@@ -24,7 +24,7 @@ class TestGmSafety(common.PandaSafetyTest):
   TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
              [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
              [789, 2],  # ch bus
-             [0x104c006c, 3], [0x10400060]]  # gmlan
+             [0x104c006c, 3], [0x10400060, 3]]  # gmlan
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0
