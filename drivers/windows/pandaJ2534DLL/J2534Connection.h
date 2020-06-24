@@ -51,8 +51,8 @@ public:
 
 	//IOCTL functions
 
-	long init5b(SBYTE_ARRAY* pInput, SBYTE_ARRAY* pOutput);
-	long initFast(PASSTHRU_MSG* pInput, PASSTHRU_MSG* pOutput);
+	virtual long init5b(SBYTE_ARRAY* pInput, SBYTE_ARRAY* pOutput);
+	virtual long initFast(PASSTHRU_MSG* pInput, PASSTHRU_MSG* pOutput);
 	long clearTXBuff();
 	long clearRXBuff();
 	long clearPeriodicMsgs();

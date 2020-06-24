@@ -17,7 +17,6 @@ ______/\\\\\\\\\\\____/\\\\\\\\\_______/\\\\\\\\\\\\\\\______/\\\\\\\\\\________
                                                                                |_| (Code by Jessy Diamond Exum)
 ```
 
-
 # Installing J2534 driver:
 
 [Download](https://github.com/commaai/panda/files/4017364/panda.J2534.driver.install.zip)
@@ -81,7 +80,7 @@ features.
 - [X] **CAN**
 - [X] **ISO15765**
 - [ ] **ISO9141** *(This protocol could be implemented if 5 BAUD init support is added to the panda.)*
-- [ ] **ISO14230/KWP2000** *(Could be supported with FAST init, 5baud init if panda adds support for 5bps serial)*
+- [X] **ISO14230/KWP2000** *(5baud init not currently supported)*
 
 # Building the Project:
 

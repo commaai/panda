@@ -11,6 +11,9 @@
 #define CAN_TRANSMIT 1
 #define CAN_EXTENDED 4
 
+#define KLINE_HEADER_FMT_ADDR_MASK 0xC0
+#define KLINE_HEADER_FMT_LEN_MASK 0x3F
+
 using namespace panda;
 
 Panda::Panda(
@@ -451,7 +454,7 @@ bool Panda::can_rx_q_push(HANDLE kill_event, DWORD timeoutms) {
 	return TRUE;
 }
 
-void Panda::can_rx_q_pop(PANDA_CAN_MSG msg_out[], int &count) {
+void Panda::can_rx_q_pop(PANDA_CAN_MSG msg_out[], int& count) {
 	count = 0;
 
 	// No data left in queue
@@ -461,8 +464,8 @@ void Panda::can_rx_q_pop(PANDA_CAN_MSG msg_out[], int &count) {
 	}
 
 	auto r_ptr = this->r_ptr;
-	for (int i = 0; i < this->can_rx_q[r_ptr].count; i += sizeof(PANDA_CAN_MSG_INTERNAL)) {
-		auto in_msg_raw = (PANDA_CAN_MSG_INTERNAL *)(this->can_rx_q[r_ptr].data + i);
+	for (unsigned long i = 0; i < this->can_rx_q[r_ptr].count; i += sizeof(PANDA_CAN_MSG_INTERNAL)) {
+		auto in_msg_raw = (PANDA_CAN_MSG_INTERNAL*)(this->can_rx_q[r_ptr].data + i);
 		msg_out[count] = parse_can_recv(in_msg_raw);
 		++count;
 	}
@@ -481,7 +484,7 @@ std::vector<PANDA_CAN_MSG> Panda::can_recv() {
 		return msg_recv;
 
 	for (int i = 0; i < retcount; i += sizeof(PANDA_CAN_MSG_INTERNAL)) {
-		PANDA_CAN_MSG_INTERNAL *in_msg_raw = (PANDA_CAN_MSG_INTERNAL *)(buff + i);
+		PANDA_CAN_MSG_INTERNAL* in_msg_raw = (PANDA_CAN_MSG_INTERNAL*)(buff + i);
 		auto in_msg = parse_can_recv(in_msg_raw);
 		msg_recv.push_back(in_msg);
 	}
@@ -508,15 +511,116 @@ std::string Panda::serial_read(PANDA_SERIAL_PORT port_number) {
 	return result;
 }
 
-int Panda::serial_write(PANDA_SERIAL_PORT port_number, const void* buff, uint16_t len) {
-	std::string dat;
-	dat += port_number;
-	dat += std::string((char*)buff, len);
-	int retcount;
-	if (this->bulk_write(2, dat.c_str(), len+1, (PULONG)&retcount, 0) == FALSE) return -1;
+std::string Panda::serial_read(PANDA_SERIAL_PORT port_number, unsigned int len, unsigned int timeout_ms) {
+	std::string result = std::string();
+	auto ms_remaining = timeout_ms;
+	char buff[0x40];
+	while (len > 0 && ms_remaining > 0) {
+		int retlen = this->control_transfer(REQUEST_IN, 0xe0, port_number, 0, &buff, min(len, 0x40), 0);
+		if (retlen <= 0) {
+			ms_remaining -= 1;
+			Sleep(1);
+			continue;
+		}
+		result += std::string(buff, retlen);
+		len -= retlen;
+		ms_remaining = timeout_ms;
+	}
+	return result;
+}
+
+int Panda::serial_write(PANDA_SERIAL_PORT port_number, const std::string& data) {
+	int retcount = 0;
+	for (int i = 0; i < data.size(); i += 0x3F) {
+		std::string slice = std::string(1, (char)port_number) + data.substr(i, min(data.size() - i, 0x3F));
+		int retlen;
+		if (this->bulk_write(2, slice.c_str(), slice.size(), (PULONG)&retlen, 0) == FALSE) return -1;
+		if (retlen != slice.size()) return -1;
+		retcount += retlen - 1;
+	}
 	return retcount;
 }
 
 bool Panda::serial_clear(PANDA_SERIAL_PORT port_number) {
 	return this->control_transfer(REQUEST_OUT, 0xf2, port_number, 0, NULL, 0, 0) != -1;
+}
+
+PANDA_KLINE_MSG Panda::kline_parse(const std::string& data) {
+	PANDA_KLINE_MSG msg_in;
+	ZeroMemory(&msg_in, sizeof(PANDA_KLINE_MSG));
+	auto bytes = data.c_str();
+	auto size = data.size();
+	memcpy(&msg_in.dat, bytes, size);
+	msg_in.len = size;
+
+	uint8_t i = 0;
+	uint8_t len = 0;
+	int expected_len = 2;
+	int expected_cs = 0;
+	if (size > i) {
+		// data layout: Fmt [Tgt] [Src] [Len] Data CS <- [ ] indicates optional
+		msg_in.addr_type = (PANDA_KLINE_ADDR_TYPE)(bytes[i] & KLINE_HEADER_FMT_ADDR_MASK);
+		len = bytes[i++] & KLINE_HEADER_FMT_LEN_MASK;
+		if (msg_in.addr_type != 0 && size > i + 2) {
+			expected_len += 2;
+			msg_in.target = bytes[i++];
+			msg_in.source = bytes[i++];
+		}
+		if (len == 0 && size > i + 1) {
+			expected_len += 1;
+			len = bytes[i++];
+			expected_len += len;
+		}
+		if (expected_len == size) {
+			msg_in.checksum = bytes[size - 1];
+			for (int j = 0; j < size - 1; j++) {
+				expected_cs += (uint8_t)j;
+			}
+			expected_cs %= 100;
+			if (msg_in.checksum == expected_cs) {
+				msg_in.valid = true;
+			}
+		}
+	}
+
+	return msg_in;
+}
+
+bool Panda::kline_wakeup(bool k, bool l) {
+	return this->control_transfer(REQUEST_OUT, 0xf0, k && l ? 2 : (uint16_t)l, 0, NULL, 0, 0) != -1;
+}
+
+std::vector<PANDA_KLINE_MSG> Panda::kline_recv(PANDA_SERIAL_PORT port_number) {
+	if (port_number != SERIAL_LIN1 && port_number != SERIAL_LIN2) {
+		throw "invalid serial port number";
+	}
+
+	std::vector<PANDA_KLINE_MSG> msg_recv;
+
+	while (1) {
+		// P1/P4 max time between bytes is 20ms
+		// max message length is 260 bytes (header = 4 bytes, data = 255 bytes, checksum = 1 byte)
+		auto result = this->serial_read(port_number, 260, 20);
+		if (result.size() == 0) {
+			break;
+		}
+
+		auto msg_in = this->kline_parse(result);
+		// TODO: only add if msg_in.valid ???
+		msg_recv.push_back(msg_in);
+	}
+
+	return msg_recv;
+}
+
+bool Panda::kline_send(PANDA_SERIAL_PORT port_number, const std::string& data) {
+	if (port_number != SERIAL_LIN1 && port_number != SERIAL_LIN2) {
+		throw "invalid serial port number";
+	}
+	auto result = this->serial_write(port_number, data);
+	auto echo = this->serial_read(port_number, data.size(), 5);
+	if (echo != data) {
+		return false;
+	}
+	return true;
 }

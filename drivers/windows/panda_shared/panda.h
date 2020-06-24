@@ -108,6 +108,22 @@ namespace panda {
 		bool addr_29b;
 	} PANDA_CAN_MSG;
 
+	typedef enum _PANDA_KLINE_ADDR_TYPE : uint8_t {
+		PANDA_KLINE_ADDR_NONE = 0,
+		PANDA_KLINE_ADDR_PHYS = 0x80,
+		PANDA_KLINE_ADDR_FUNC = 0xC0,
+	} PANDA_KLINE_ADDR_TYPE;
+
+	typedef struct _PANDA_KLINE_MSG {
+		PANDA_KLINE_ADDR_TYPE addr_type;
+		uint8_t target;
+		uint8_t source;
+		uint8_t len;
+		uint8_t dat[255];
+		uint8_t checksum;
+		bool valid;
+	} PANDA_KLINE_MSG;
+
 	//Copied from https://stackoverflow.com/a/31488113
 	class Timer
 	{
@@ -179,8 +195,15 @@ namespace panda {
 		bool can_clear(PANDA_CAN_PORT_CLEAR bus);
 
 		std::string serial_read(PANDA_SERIAL_PORT port_number);
-		int serial_write(PANDA_SERIAL_PORT port_number, const void* buff, uint16_t len);
+		std::string serial_read(PANDA_SERIAL_PORT port_number, unsigned int len, unsigned int timeout_ms);
+		int serial_write(PANDA_SERIAL_PORT port_number, const std::string& data);
 		bool serial_clear(PANDA_SERIAL_PORT port_number);
+
+		PANDA_KLINE_MSG kline_parse(const std::string& data);
+		bool kline_wakeup(bool k, bool l);
+		std::vector<PANDA_KLINE_MSG> kline_recv(PANDA_SERIAL_PORT port_number);
+		bool kline_send(PANDA_SERIAL_PORT port_number, const std::string& data);
+
 	private:
 		Panda(
 			WINUSB_INTERFACE_HANDLE WinusbHandle,
