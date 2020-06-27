@@ -23,10 +23,10 @@ public:
 			(msg_in.is_receipt ? TX_MSG_TYPE : 0);
 	}
 
-	J2534Frame(const panda::PANDA_KLINE_MSG& msg_in) {
-		ProtocolID = ISO14230;
-		ExtraDataIndex = msg_in.len;
-		Data = std::string((char*)&msg_in.dat, msg_in.len);
+	J2534Frame(unsigned long protocol, const panda::PANDA_KLINE_MSG& msg_in) {
+		ProtocolID = protocol;
+		ExtraDataIndex = msg_in.data.size() - (msg_in.valid ? 1 : 0);
+		Data = msg_in.data;
 		Timestamp = 0;
 		TxFlags = 0;
 		RxStatus = 0;

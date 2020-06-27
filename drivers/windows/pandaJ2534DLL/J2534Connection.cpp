@@ -7,7 +7,7 @@ J2534Connection::J2534Connection(
 	unsigned long ProtocolID,
 	unsigned long Flags,
 	unsigned long BaudRate
-) : panda_dev(panda_dev), ProtocolID(ProtocolID), Flags(Flags), BaudRate(BaudRate), port(0) { }
+) : panda_dev(panda_dev), ProtocolID(ProtocolID), Flags(Flags), BaudRate(BaudRate), Parity(0), port(0) { }
 
 unsigned long J2534Connection::validateTxMsg(PASSTHRU_MSG* msg) {
 	if (msg->DataSize < this->getMinMsgLen() || msg->DataSize > this->getMaxMsgLen())
@@ -178,6 +178,8 @@ long J2534Connection::clearTXBuff() {
 				case ISO15765_PS:
 					panda_ps->panda->can_clear(panda::PANDA_CAN1_TX);
 					break;
+				case ISO9141:
+				case ISO9141_PS:
 				case ISO14230:
 				case ISO14230_PS:
 					panda_ps->panda->serial_clear(panda::SERIAL_LIN1);
@@ -203,6 +205,8 @@ long J2534Connection::clearRXBuff() {
 			case ISO15765_PS:
 				panda_ps->panda->can_clear(panda::PANDA_CAN_RX);
 				break;
+			case ISO9141:
+			case ISO9141_PS:
 			case ISO14230:
 			case ISO14230_PS:
 				panda_ps->panda->serial_clear(panda::SERIAL_LIN1);
@@ -232,6 +236,10 @@ long J2534Connection::clearMsgFilters() {
 
 void J2534Connection::setBaud(unsigned long baud) {
 	this->BaudRate = baud;
+}
+
+void J2534Connection::setParity(unsigned long parity) {
+	this->Parity = parity;
 }
 
 void J2534Connection::schedultMsgTx(std::shared_ptr<Action> msgout) {
@@ -275,6 +283,9 @@ void J2534Connection::processIOCTLSetConfig(unsigned long Parameter, unsigned lo
 	case LOOPBACK:			// 0 (OFF), 1 (ON) [0]
 		this->loopback = (Value != 0);
 		break;
+	case PARITY:
+		this->setParity(Value);
+		break;
 	case ISO15765_WFT_MAX:
 		break;
 	case NODE_ADDRESS:		// J1850PWM Related (Not supported by panda). HDS requires these to 'work'.
@@ -296,7 +307,6 @@ void J2534Connection::processIOCTLSetConfig(unsigned long Parameter, unsigned lo
 	case TIDLE:
 	case TINIL:
 	case TWUP:
-	case PARITY:
 	case T1_MAX:			// SCI related options. The panda does not appear to support this
 	case T2_MAX:
 	case T3_MAX:

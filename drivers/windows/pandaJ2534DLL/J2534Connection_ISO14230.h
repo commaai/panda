@@ -17,17 +17,18 @@ public:
     virtual std::shared_ptr<MessageTx> parseMessageTx(PASSTHRU_MSG& pMsg);
 
     virtual void setBaud(unsigned long baud);
+    virtual void setParity(unsigned long Parity);
 
     virtual unsigned long getMinMsgLen() {
         return 2;
     }
 
     virtual unsigned long getMaxMsgLen() {
-        return 260;
+        return KLINE_MSG_MAX_LEN;
     }
 
     virtual unsigned long getMaxMsgSingleFrameLen() {
-        return 260;
+        return KLINE_MSG_MAX_LEN;
     }
 
     virtual bool isProtoCan() {

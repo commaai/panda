@@ -145,9 +145,9 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 			//case J1850PWM: // ^-- it appears HDS no longer needs this, and TIS needs it disabled --^
 			//case J1850VPW_PS:
 			//case J1850PWM_PS:
-			case ISO9141: //This protocol could be implemented if 5 BAUD init support is added to the panda.
+			case ISO9141:
 			case ISO9141_PS:
-			case ISO14230: //Only supporting Fast init until panda adds support for 5 BAUD init.
+			case ISO14230:
 			case ISO14230_PS:
 				conn = std::make_shared<J2534Connection_ISO14230>(panda, ProtocolID, Flags, BaudRate);
 				break;

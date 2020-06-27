@@ -52,8 +52,8 @@ public:
 	//transmission is complete. This tracks what is still waiting to hear an echo.
 	std::queue<std::shared_ptr<MessageTx>> txMsgsAwaitingEcho;
 
-	std::string PandaJ2534Device::kline_wakeup_start_comm(std::string start_comm);
-	BOOL PandaJ2534Device::kline_send(std::string data);
+	std::string PandaJ2534Device::kline_wakeup_start_comm(std::string& start_comm);
+	BOOL PandaJ2534Device::kline_send(std::string& data);
 
 private:
 	HANDLE thread_kill_event;

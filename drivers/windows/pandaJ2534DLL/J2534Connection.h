@@ -59,6 +59,7 @@ public:
 	long clearMsgFilters();
 
 	virtual void setBaud(unsigned long baud);
+	virtual void setParity(unsigned long parity);
 
 	unsigned long getBaud() {
 		return this->BaudRate;
@@ -124,6 +125,7 @@ protected:
 	unsigned long ProtocolID;
 	unsigned long Flags;
 	unsigned long BaudRate;
+	unsigned long Parity;
 	unsigned long port;
 
 	std::weak_ptr<PandaJ2534Device> panda_dev;

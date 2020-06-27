@@ -15,6 +15,7 @@ J2534Connection_ISO14230::J2534Connection_ISO14230(
         throw ERR_INVALID_BAUDRATE;
 
     panda_dev->panda->set_uart_baud(panda::SERIAL_LIN1, BaudRate);
+    panda_dev->panda->set_uart_baud(panda::SERIAL_LIN2, BaudRate);
 };
 
 unsigned long J2534Connection_ISO14230::validateTxMsg(PASSTHRU_MSG* msg) {
@@ -33,8 +34,34 @@ void J2534Connection_ISO14230::setBaud(unsigned long BaudRate) {
             throw ERR_NOT_SUPPORTED;
 
         panda_dev->panda->set_uart_baud(panda::SERIAL_LIN1, BaudRate);
+        panda_dev->panda->set_uart_baud(panda::SERIAL_LIN2, BaudRate);
         return J2534Connection::setBaud(BaudRate);
     } else {
+        throw ERR_DEVICE_NOT_CONNECTED;
+    }
+}
+
+void J2534Connection_ISO14230::setParity(unsigned long Parity) {
+    if (auto panda_dev = this->getPandaDev()) {
+        panda::PANDA_SERIAL_PORT_PARITY parity;
+        switch (Parity) {
+            case 0:
+                parity = panda::PANDA_PARITY_OFF;
+                break;
+            case 1:
+                parity = panda::PANDA_PARITY_ODD;
+                break;
+            case 2:
+                parity = panda::PANDA_PARITY_EVEN;
+                break;
+            default:
+                throw ERR_NOT_SUPPORTED;
+        }
+        panda_dev->panda->set_uart_parity(panda::SERIAL_LIN1, parity);
+        panda_dev->panda->set_uart_parity(panda::SERIAL_LIN2, parity);
+        return J2534Connection::setParity(Parity);
+    }
+    else {
         throw ERR_DEVICE_NOT_CONNECTED;
     }
 }
@@ -50,7 +77,7 @@ void J2534Connection_ISO14230::processMessage(const J2534Frame& msg) {
     }
 
     if (filter_res == FILTER_RESULT_PASS) {
-        addMsgToRxQueue(J2534Frame(ISO14230, START_OF_MESSAGE, 0, 0));
+        addMsgToRxQueue(J2534Frame(msg.ProtocolID, START_OF_MESSAGE, 0, 0));
         addMsgToRxQueue(msg);
     }
 }

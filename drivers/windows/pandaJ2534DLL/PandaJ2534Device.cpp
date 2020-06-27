@@ -80,7 +80,7 @@ DWORD PandaJ2534Device::addChannel(std::shared_ptr<J2534Connection>& conn, unsig
 	return STATUS_NOERROR;
 }
 
-std::string PandaJ2534Device::kline_wakeup_start_comm(std::string start_comm) {
+std::string PandaJ2534Device::kline_wakeup_start_comm(std::string& start_comm) {
 	synchronized(kline_rx_mutex) {
 		Sleep(25);
 		this->panda->kline_wakeup(true, true);
@@ -91,14 +91,14 @@ std::string PandaJ2534Device::kline_wakeup_start_comm(std::string start_comm) {
 		if (this->panda->kline_send(panda::SERIAL_LIN1, start_comm)) {
 			Sleep(25);
 			// read start communication response
-			return this->panda->serial_read(panda::SERIAL_LIN1, 260, 20);
+			return this->panda->serial_read(panda::SERIAL_LIN1, KLINE_MSG_MAX_LEN, 20);
 		}
 	}
 
 	return std::string();
 }
 
-BOOL PandaJ2534Device::kline_send(std::string data) {
+BOOL PandaJ2534Device::kline_send(std::string& data) {
 	// since send reads echo, block rx thread
 	synchronized(kline_rx_mutex) {
 		return this->panda->kline_send(panda::SERIAL_LIN1, data) ? TRUE : FALSE;
@@ -122,10 +122,12 @@ DWORD PandaJ2534Device::kline_recv_thread() {
 		}
 
 		for (auto msg : msg_recv) {
-			J2534Frame msg_out(msg);
-			for (auto& conn : this->connections)
-				if (conn != nullptr && !conn->isProtoCan())
+			for (auto& conn : this->connections) {
+				if (conn != nullptr && !conn->isProtoCan()) {
+					J2534Frame msg_out(conn->getProtocol(), msg);
 					conn->processMessage(msg_out);
+				}
+			}
 		}
 	}
 

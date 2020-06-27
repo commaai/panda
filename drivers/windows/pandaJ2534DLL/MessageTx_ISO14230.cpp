@@ -16,7 +16,7 @@ void MessageTx_ISO14230::execute() {
                     if (conn_sp->loopback) {
                         auto echo = J2534Frame(this->fullmsg);
                         echo.RxStatus |= TX_MSG_TYPE;
-                        conn_sp->addMsgToRxQueue(J2534Frame(ISO14230, START_OF_MESSAGE, 0, 0));
+                        conn_sp->addMsgToRxQueue(J2534Frame(conn_sp->getProtocol(), START_OF_MESSAGE, 0, 0));
                         conn_sp->addMsgToRxQueue(echo);
                     }
                 }

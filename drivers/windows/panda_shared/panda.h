@@ -33,6 +33,7 @@
 #define LIN_MSG_MAX_LEN 10
 #define CAN_RX_QUEUE_LEN 10000
 #define CAN_RX_MSG_LEN 1000
+#define KLINE_MSG_MAX_LEN 260
 
 //template class __declspec(dllexport) std::basic_string<char>;
 
@@ -118,8 +119,7 @@ namespace panda {
 		PANDA_KLINE_ADDR_TYPE addr_type;
 		uint8_t target;
 		uint8_t source;
-		uint8_t len;
-		uint8_t dat[255];
+		std::string data;
 		uint8_t checksum;
 		bool valid;
 	} PANDA_KLINE_MSG;
@@ -199,7 +199,8 @@ namespace panda {
 		int serial_write(PANDA_SERIAL_PORT port_number, const std::string& data);
 		bool serial_clear(PANDA_SERIAL_PORT port_number);
 
-		PANDA_KLINE_MSG kline_parse(const std::string& data);
+		uint8_t kline_checksum(const char* data, size_t size);
+		PANDA_KLINE_MSG kline_parse(const std::string& data, bool add_checksum);
 		bool kline_wakeup(bool k, bool l);
 		std::vector<PANDA_KLINE_MSG> kline_recv(PANDA_SERIAL_PORT port_number);
 		bool kline_send(PANDA_SERIAL_PORT port_number, const std::string& data);
