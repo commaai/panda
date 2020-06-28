@@ -37,7 +37,7 @@ static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       int torque_driver_new;
       torque_driver_new = (GET_BYTE(to_push, 3) >> 5) + (GET_BYTE(to_push, 4) << 3);
       torque_driver_new = to_signed(torque_driver_new, 11);
-      if (subaru_legacy_flip_driver_torque) {
+      if (subaru_l_flip_driver_torque) {
         torque_driver_new = -1 * torque_driver_new;
       }
       update_sample(&torque_driver, torque_driver_new);
