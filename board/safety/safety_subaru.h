@@ -35,8 +35,8 @@ AddrCheckStruct subaru_l_rx_checks[] = {
 };
 const int SUBARU_L_RX_CHECK_LEN = sizeof(subaru_l_rx_checks) / sizeof(subaru_l_rx_checks[0]);
 
-const uint16_t SUBARU_PARAM_FLIP_DRIVER_TORQUE = 1;
-bool subaru_flip_driver_torque = false;
+const uint16_t SUBARU_LEGACY_PARAM_FLIP_DRIVER_TORQUE = 1;
+bool subaru_legacy_flip_driver_torque = false;
 
 static uint8_t subaru_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -114,7 +114,7 @@ static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       int torque_driver_new;
       torque_driver_new = (GET_BYTE(to_push, 3) >> 5) + (GET_BYTE(to_push, 4) << 3);
       torque_driver_new = to_signed(torque_driver_new, 11);
-      if (subaru_flip_driver_torque) {
+      if (subaru_legacy_flip_driver_torque) {
         torque_driver_new = -1 * torque_driver_new;
       }
       update_sample(&torque_driver, torque_driver_new);
@@ -330,7 +330,7 @@ static void subaru_legacy_init(int16_t param) {
   controls_allowed = false;
   relay_malfunction_reset();
   // Checking for flip driver torque from safety parameter
-  subaru_flip_driver_torque = GET_FLAG(param, SUBARU_PARAM_FLIP_DRIVER_TORQUE);
+  subaru_legacy_flip_driver_torque = GET_FLAG(param, SUBARU_LEGACY_PARAM_FLIP_DRIVER_TORQUE);
 }
 
 const safety_hooks subaru_hooks = {
