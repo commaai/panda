@@ -571,13 +571,21 @@ class Panda(object):
   # ******************* kline *******************
 
   # pulse low for wakeup
-  def kline_wakeup(self, k=True, l=True):
+  def kline_fast_init(self, k=True, l=True):
     assert k or l, "must specify k-line, l-line, or both"
     if DEBUG:
-      print("kline wakeup...")
+      print("kline fast init...")
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 2 if k and l else int(l), 0, b'')
     if DEBUG:
-      print("kline wakeup done")
+      print("kline fast init done")
+
+  def kline_slow_init(self, addr, k=True, l=True):
+    assert k or l, "must specify k-line, l-line, or both"
+    if DEBUG:
+      print("kline slow init...")
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf4, 2 if k and l else int(l), addr, b'')
+    if DEBUG:
+      print("kline slow init done")
 
   def kline_drain(self, bus=2):
     # drain buffer
