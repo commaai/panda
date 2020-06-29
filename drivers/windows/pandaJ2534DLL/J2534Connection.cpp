@@ -172,8 +172,8 @@ long J2534Connection::initFast(PASSTHRU_MSG* pInput, PASSTHRU_MSG* pOutput) {
 		auto resp = panda_ps->kline_wakeup_start_comm(start_comm);
 		if (resp.size() > 0) {
 			pOutput->ProtocolID = pInput->ProtocolID;
-			pOutput->RxStatus = pInput->RxStatus;
-			pOutput->TxFlags = pInput->TxFlags;
+			pOutput->RxStatus = 0;
+			pOutput->TxFlags = 0;
 			pOutput->Timestamp = pInput->Timestamp;
 			pOutput->ExtraDataIndex = resp.size();
 			memcpy(pOutput->Data, resp.c_str(), resp.size());

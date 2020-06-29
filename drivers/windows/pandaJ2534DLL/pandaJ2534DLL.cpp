@@ -146,18 +146,18 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 			//case J1850VPW_PS:
 			//case J1850PWM_PS:
 			case ISO9141:
-			case ISO9141_PS:
+			//case ISO9141_PS:
 			case ISO14230:
-			case ISO14230_PS:
+			//case ISO14230_PS:
 				conn = std::make_shared<J2534Connection_ISO14230>(panda, ProtocolID, Flags, BaudRate);
 				break;
 			case CAN:
-			case CAN_PS:
+			//case CAN_PS:
 			//case SW_CAN_PS:
 				conn = std::make_shared<J2534Connection_CAN>(panda, ProtocolID, Flags, BaudRate);
 				break;
 			case ISO15765:
-			case ISO15765_PS:
+			//case ISO15765_PS:
 				conn = std::make_shared<J2534Connection_ISO15765>(panda, ProtocolID, Flags, BaudRate);
 				break;
 			//case SW_ISO15765_PS: // SW = Single Wire. GMLAN is a SW CAN protocol
@@ -167,7 +167,7 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 			//case SCI_A_ENGINE:
 			//case SCI_A_TRANS:
 			//case SCI_B_ENGINE:
-				//case SCI_B_TRANS:
+			//case SCI_B_TRANS:
 			//case J2610_PS:
 			default:
 				return ret_code(ERR_INVALID_PROTOCOL_ID);

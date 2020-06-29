@@ -14,9 +14,10 @@ void MessageTx_ISO14230::execute() {
                 if (auto conn_sp = this->connection.lock())
                 {
                     if (conn_sp->loopback) {
-                        auto echo = J2534Frame(this->fullmsg);
-                        echo.RxStatus |= TX_MSG_TYPE;
-                        conn_sp->addMsgToRxQueue(J2534Frame(conn_sp->getProtocol(), START_OF_MESSAGE, 0, 0));
+                        auto echo = J2534Frame(conn_sp->getProtocol(), TX_MSG_TYPE, 0, this->fullmsg.Timestamp);
+                        echo.Data = std::string(this->fullmsg.Data);
+                        echo.ExtraDataIndex = this->fullmsg.Data.size();
+                        conn_sp->addMsgToRxQueue(J2534Frame(conn_sp->getProtocol(), START_OF_MESSAGE, 0, this->fullmsg.Timestamp));
                         conn_sp->addMsgToRxQueue(echo);
                     }
                 }
