@@ -593,7 +593,11 @@ PANDA_KLINE_MSG Panda::kline_parse(const std::string& data, bool add_checksum) {
 	return msg_in;
 }
 
-bool Panda::kline_wakeup(bool k, bool l) {
+bool Panda::kline_slow_init(bool k, bool l, uint8_t addr) {
+	return this->control_transfer(REQUEST_OUT, 0xf4, k && l ? 2 : (uint16_t)l, (uint16_t)addr, NULL, 0, 0) != -1;
+}
+
+bool Panda::kline_fast_init(bool k, bool l) {
 	return this->control_transfer(REQUEST_OUT, 0xf0, k && l ? 2 : (uint16_t)l, 0, NULL, 0, 0) != -1;
 }
 

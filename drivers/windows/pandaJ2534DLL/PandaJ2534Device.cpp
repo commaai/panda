@@ -80,10 +80,39 @@ DWORD PandaJ2534Device::addChannel(std::shared_ptr<J2534Connection>& conn, unsig
 	return STATUS_NOERROR;
 }
 
+std::string PandaJ2534Device::kline_five_baud_init(uint8_t addr) {
+	synchronized(kline_rx_mutex) {
+		Sleep(300); // W1
+		this->panda->kline_slow_init(true, true, addr);
+		// wakeup sometimes adds a leading null char
+		this->panda->serial_clear(panda::SERIAL_LIN1);
+		this->panda->serial_clear(panda::SERIAL_LIN2);
+		// read 0x55 KB1 KB2
+		auto key_bytes = this->panda->serial_read(panda::SERIAL_LIN1, 3, 300);
+		auto bytes = key_bytes.c_str();
+		if (key_bytes.size() == 3 && bytes[0] == 0x55) {
+			Sleep(25); // W4
+			// send inverted KB2
+			auto kb2_inv = std::string(1, ~bytes[2]);
+			if (this->panda->serial_write(panda::SERIAL_LIN1, kb2_inv)) {
+				// read addr inverted
+				auto addr_inv = this->panda->serial_read(panda::SERIAL_LIN1, 1, 50);
+				if (addr_inv.size() == 1 && addr_inv.c_str()[0] == ~addr) {
+					// return only KB1 KB2
+					return key_bytes.substr(1, 2);
+				}
+			}
+		}
+
+	}
+
+	return std::string();
+}
+
 std::string PandaJ2534Device::kline_wakeup_start_comm(std::string& start_comm) {
 	synchronized(kline_rx_mutex) {
 		Sleep(25);
-		this->panda->kline_wakeup(true, true);
+		this->panda->kline_fast_init(true, true);
 		// wakeup sometimes adds a leading null char
 		this->panda->serial_clear(panda::SERIAL_LIN1);
 		this->panda->serial_clear(panda::SERIAL_LIN2);

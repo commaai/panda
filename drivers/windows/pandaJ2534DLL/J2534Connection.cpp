@@ -147,7 +147,25 @@ long J2534Connection::PassThruIoctl(unsigned long IoctlID, void *pInput, void *p
 	return STATUS_NOERROR;
 }
 
-long J2534Connection::init5b(SBYTE_ARRAY* pInput, SBYTE_ARRAY* pOutput) { return ERR_FAILED; }
+long J2534Connection::init5b(SBYTE_ARRAY* pInput, SBYTE_ARRAY* pOutput) {
+	if (pInput->NumOfBytes == 1) {
+		if (auto panda_ps = this->panda_dev.lock()) {
+			auto resp = panda_ps->kline_five_baud_init(pInput->BytePtr[0]);
+			if (resp.size() > 0) {
+				auto key_bytes = resp.c_str();
+				if (pOutput->NumOfBytes >= 1) {
+					pOutput->BytePtr[0] = key_bytes[0];
+				}
+				if (pOutput->NumOfBytes >= 2) {
+					pOutput->BytePtr[1] = key_bytes[1];
+				}
+				return STATUS_NOERROR;
+			}
+		}
+	}
+
+	return ERR_FAILED;
+}
 long J2534Connection::initFast(PASSTHRU_MSG* pInput, PASSTHRU_MSG* pOutput) {
 	if (auto panda_ps = this->panda_dev.lock()) {
 		auto start_comm = std::string((char*)pInput->Data, pInput->DataSize);

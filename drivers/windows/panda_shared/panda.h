@@ -201,7 +201,8 @@ namespace panda {
 
 		uint8_t kline_checksum(const char* data, size_t size);
 		PANDA_KLINE_MSG kline_parse(const std::string& data, bool add_checksum);
-		bool kline_wakeup(bool k, bool l);
+		bool kline_slow_init(bool k, bool l, uint8_t addr);
+		bool kline_fast_init(bool k, bool l);
 		std::vector<PANDA_KLINE_MSG> kline_recv(PANDA_SERIAL_PORT port_number);
 		bool kline_send(PANDA_SERIAL_PORT port_number, const std::string& data);
 

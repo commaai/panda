@@ -79,8 +79,8 @@ features.
 - [ ] **J1850PWM** *(Outdated, and not physically supported by the panda)*
 - [X] **CAN**
 - [X] **ISO15765**
-- [ ] **ISO9141** *(This protocol could be implemented if 5 BAUD init support is added to the panda.)*
-- [X] **ISO14230/KWP2000** *(5baud init not currently supported)*
+- [X] **ISO9141**
+- [X] **ISO14230/KWP2000**
 
 # Building the Project:
 
@@ -115,7 +115,6 @@ code will not work, so without this file, the installer will refuse to build.
 
 - Apply a style-guide and consistent naming convention for Classes/Functions/Variables.
 - Send multiple messages (each with a different address) from a given connection at the same time.
-- Implement ISO14230/KWP2000 FAST (LIN communication is already supported with the raw panda USB driver).
 - Find more documentation about SW_CAN_PS (Single Wire CAN, aka GMLAN).
 - Find example of client using a _PS version of a protocol (PS is pin select, and may support using different CAN buses).
 
