@@ -633,7 +633,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       k_wakeup = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
       l_wakeup = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
       // shift left one bit to add start bit
-      uint16_t addr = (setup->b.wIndex.w & 0xFF) << 1;
+      uint16_t addr = (setup->b.wIndex.w & 0xFFU) << 1;
 
       // turn off heartbeat LED to make colors consistent
       current_board->set_led(LED_RED, false);
@@ -646,14 +646,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
 
       ts = TIM2->CNT;
       // bit bang start bit + addr @ 5bps
-      for (int i = 0; i < 9; i++) {
-        bool marking = (addr & (1 << i)) != 0;
+      for (uint32_t i = 0; i < 9U; i++) {
+        bool marking = (addr & (1U << i)) != 0U;
         // blink blue LED each time line is pulled low
         current_board->set_led(LED_BLUE, !marking);
         ts_timer = 0U;
-        while (get_ts_elapsed(TIM2->CNT, ts) < (200000U * (i + 1))) {
+        while (get_ts_elapsed(TIM2->CNT, ts) < (200000U * (i + 1U))) {
           // toggle pin every 5 ms to reset TXD dominant time-out timer
-          if (ts_timer == 0U || get_ts_elapsed(TIM2->CNT, ts_timer) >= 5000U) {
+          if ((ts_timer == 0U) || (get_ts_elapsed(TIM2->CNT, ts_timer) >= 5000U)) {
             ts_timer = TIM2->CNT;
             if (k_wakeup) {
               register_set_bits(&(GPIOC->ODR), (1U << 12));
