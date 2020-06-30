@@ -25,6 +25,9 @@ USB_Setup_TypeDef;
 
 #define MAX_CAN_MSGS_PER_BULK_TRANSFER 4U
 
+uint32_t usb_packets_counter;
+bool usb_packets_seen;
+
 void usb_init(void);
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired);
 int usb_cb_ep1_in(void *usbdata, int len, bool hardwired);
@@ -952,14 +955,20 @@ void usb_outep3_resume_if_paused() {
 void OTG_FS_IRQ_Handler(void) {
   NVIC_DisableIRQ(OTG_FS_IRQn);
   //__disable_irq();
+  usb_packets_counter++;
   usb_irqhandler();
   //__enable_irq();
   NVIC_EnableIRQ(OTG_FS_IRQn);
 }
 
+void usb_tick(void) {
+  usb_packets_seen = (usb_packets_counter > 0U);
+  usb_packets_counter = 0U;
+}
+
 bool usb_enumerated(void) {
-  // This relies on the USB being suspended after no activity for 3ms. Seems pretty stable
-  return (!(USBx_DEVICE->DSTS & USB_OTG_DSTS_SUSPSTS));
+  // This relies on the USB being suspended after no activity for 3ms, and no packets received in the meantime. Seems pretty stable
+  return (!(USBx_DEVICE->DSTS & USB_OTG_DSTS_SUSPSTS) && usb_packets_seen);
 }
 
 // ***************************** USB init *****************************
