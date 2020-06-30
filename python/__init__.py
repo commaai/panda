@@ -571,7 +571,7 @@ class Panda(object):
   # ******************* kline *******************
 
   # pulse low for wakeup
-  def kline_fast_init(self, k=True, l=True):
+  def kline_wakeup(self, k=True, l=True):
     assert k or l, "must specify k-line, l-line, or both"
     if DEBUG:
       print("kline fast init...")
@@ -579,7 +579,7 @@ class Panda(object):
     if DEBUG:
       print("kline fast init done")
 
-  def kline_slow_init(self, addr, k=True, l=True):
+  def kline_5baud(self, addr, k=True, l=True):
     assert k or l, "must specify k-line, l-line, or both"
     if DEBUG:
       print("kline slow init...")
