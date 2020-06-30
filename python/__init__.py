@@ -574,18 +574,18 @@ class Panda(object):
   def kline_wakeup(self, k=True, l=True):
     assert k or l, "must specify k-line, l-line, or both"
     if DEBUG:
-      print("kline fast init...")
+      print("kline wakeup...")
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 2 if k and l else int(l), 0, b'')
     if DEBUG:
-      print("kline fast init done")
+      print("kline wakeup done")
 
   def kline_5baud(self, addr, k=True, l=True):
     assert k or l, "must specify k-line, l-line, or both"
     if DEBUG:
-      print("kline slow init...")
+      print("kline 5 baud...")
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf4, 2 if k and l else int(l), addr, b'')
     if DEBUG:
-      print("kline slow init done")
+      print("kline 5 baud done")
 
   def kline_drain(self, bus=2):
     # drain buffer
