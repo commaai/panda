@@ -705,7 +705,7 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
       puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
     #endif
 
-    // Tick fan driver
+    // Tick drivers
     fan_tick();
 
     // set green LED to be controls allowed
