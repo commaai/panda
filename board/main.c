@@ -707,10 +707,9 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
 
     // Tick drivers
     fan_tick();
-    usb_tick();
 
     // set green LED to be controls allowed
-    //current_board->set_led(LED_GREEN, controls_allowed);
+    current_board->set_led(LED_GREEN, controls_allowed);
 
     // turn off the blue LED, turned on by CAN
     // unless we are in power saving mode
@@ -741,10 +740,8 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
       // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
       if(usb_enumerated()){
         current_board->set_fan_power(50U);
-        current_board->set_led(LED_GREEN, true);
       } else {
         current_board->set_fan_power(0U);
-        current_board->set_led(LED_GREEN, false);
       }
     }
 
