@@ -1,4 +1,4 @@
-#define EON
+//#define EON
 //#define PANDA
 
 // ********************* Includes *********************

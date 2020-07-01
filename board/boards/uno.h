@@ -243,11 +243,11 @@ void uno_init(void) {
   can_set_obd(car_harness_status, false);
 
   // Switch to phone usb mode if harness connection is powered by less than 7V
-  /*if(adc_get_voltage() < 7000U){
+  if(adc_get_voltage() < 7000U){
     uno_set_usb_switch(true);
-  } else {*/
+  } else {
     uno_set_usb_switch(false);
-  //}
+  }
 
   // Bootkick phone
   uno_bootkick();
