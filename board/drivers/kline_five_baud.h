@@ -43,15 +43,13 @@ void set_bitbanged_kline(bool marking) {
   ENTER_CRITICAL();
   if (k_init) {
     register_set_bits(&(GPIOC->ODR), (1U << 12));
+    if (!marking) {
+      register_clear_bits(&(GPIOC->ODR), (1U << 12));
+    }
   }
   if (l_init) {
     register_set_bits(&(GPIOC->ODR), (1U << 10));
-  }
-  if (!marking) {
-    if (k_init) {
-      register_clear_bits(&(GPIOC->ODR), (1U << 12));
-    }
-    if (l_init) {
+    if (!marking) {
       register_clear_bits(&(GPIOC->ODR), (1U << 10));
     }
   }
