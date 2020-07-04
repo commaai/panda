@@ -64,19 +64,19 @@ int kline_tick_count = 0;
 
 void TIM5_IRQ_Handler(void) {
   if ((TIM4->SR & TIM_SR_UIF) && (kline_five_baud_bit != -1)) {
-    if ((kline_tick_count % KLINE_5BAUD_TICKS_PER_BIT) == 0) {
-      kline_five_baud_bit++;
-    }
-    if (kline_five_baud_bit > 10) {
+    if (kline_five_baud_bit < 10) {
+      bool marking = (kline_five_baud_dat & (1U << kline_five_baud_bit)) != 0U;
+      set_bitbanged_kline(marking);
+    } else {
       register_clear_bits(&(TIM4->DIER), TIM_DIER_UIE); // No update interrupt
       register_set(&(TIM4->CR1), 0U, 0x3FU); // Disable timer
       setup_kline(false);
       kline_five_baud_bit = -1;
-    } else {
-      bool marking = (kline_five_baud_dat & (1U << kline_five_baud_bit)) != 0U;
-      set_bitbanged_kline(marking);
     }
     kline_tick_count++;
+    if ((kline_tick_count % KLINE_5BAUD_TICKS_PER_BIT) == 0) {
+      kline_five_baud_bit++;
+    }
   }
   TIM4->SR = 0;
 }
@@ -85,7 +85,7 @@ void bitbang_five_baud_addr(bool k, bool l, uint8_t addr) {
   if (kline_five_baud_bit == -1) {
     k_init = k;
     l_init = l;
-    kline_five_baud_dat = (addr << 1); // add start bit
+    kline_five_baud_dat = (addr << 1) + 0x200; // add start/stop bits
     kline_tick_count = 0;
     kline_five_baud_bit = 0;
     setup_kline(true);
