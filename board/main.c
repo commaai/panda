@@ -25,6 +25,7 @@
 #include "drivers/uart.h"
 #include "drivers/usb.h"
 #include "drivers/gmlan_alt.h"
+#include "drivers/kline_five_baud.h"
 #include "drivers/timer.h"
 #include "drivers/clock.h"
 
@@ -254,6 +255,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
   timestamp_t t;
   bool k_wakeup;
   bool l_wakeup;
+  uint8_t five_baud_addr;
   switch (setup->b.bRequest) {
     // **** 0xa0: get rtc time
     case 0xa0:
@@ -632,56 +634,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xf4:
       k_wakeup = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
       l_wakeup = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
-      // shift left one bit to add start bit
-      uint16_t addr = (setup->b.wIndex.w & 0xFFU) << 1;
-
-      // turn off heartbeat LED to make colors consistent
-      current_board->set_led(LED_RED, false);
-      if (k_wakeup) {
-        set_gpio_output(GPIOC, 12, true);
-      }
-      if (l_wakeup) {
-        set_gpio_output(GPIOC, 10, true);
-      }
-
-      ts = TIM2->CNT;
-      // bit bang start bit + addr @ 5bps
-      for (uint32_t i = 0; i < 9U; i++) {
-        bool marking = (addr & (1U << i)) != 0U;
-        // blink blue LED each time line is pulled low
-        current_board->set_led(LED_BLUE, !marking);
-        ts_timer = 0U;
-        while (get_ts_elapsed(TIM2->CNT, ts) < (200000U * (i + 1U))) {
-          // toggle pin every 5 ms to reset TXD dominant time-out timer
-          if ((ts_timer == 0U) || (get_ts_elapsed(TIM2->CNT, ts_timer) >= 5000U)) {
-            ts_timer = TIM2->CNT;
-            if (k_wakeup) {
-              register_set_bits(&(GPIOC->ODR), (1U << 12));
-              if (!marking) {
-                register_clear_bits(&(GPIOC->ODR), (1U << 12));
-              }
-            }
-            if (l_wakeup) {
-              register_set_bits(&(GPIOC->ODR), (1U << 10));
-              if (!marking) {
-                register_clear_bits(&(GPIOC->ODR), (1U << 10));
-              }
-            }
-          }
-        }
-      }
-
-      if (k_wakeup) {
-        set_gpio_mode(GPIOC, 12, MODE_ALTERNATE);
-      }
-      if (l_wakeup) {
-        set_gpio_mode(GPIOC, 10, MODE_ALTERNATE);
-      }
-
-      // stop bit
-      current_board->set_led(LED_BLUE, true);
-      while (get_ts_elapsed(TIM2->CNT, ts) < 2000000U) {}
-      current_board->set_led(LED_BLUE, false);
+      five_baud_addr = (setup->b.wIndex.w & 0xFFU);
+      bitbang_five_baud_addr(k_wakeup, l_wakeup, five_baud_addr);
       break;
     default:
       puts("NO HANDLER ");
