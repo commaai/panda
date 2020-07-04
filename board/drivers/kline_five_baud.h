@@ -4,19 +4,19 @@ void TIM5_IRQ_Handler(void);
 
 void setup_timer5(void) {
   // register interrupt
-  REGISTER_INTERRUPT(TIM4_IRQn, TIM5_IRQ_Handler, 1000000U, 1000000)
+  REGISTER_INTERRUPT(TIM5_IRQn, TIM5_IRQ_Handler, 1000000U, 1000000)
 
   // setup
-  register_set(&(TIM4->PSC), (48-1), 0xFFFFU);    // Tick on 1 us
-  register_set(&(TIM4->CR1), TIM_CR1_CEN, 0x3FU); // Enable
-  register_set(&(TIM4->ARR), (5000-1), 0xFFFFU);  // Reset every 5 ms
+  register_set(&(TIM5->PSC), (48-1), 0xFFFFU);        // Tick on 1 us
+  register_set(&(TIM5->CR1), TIM_CR1_CEN, 0x3FU);     // Enable
+  register_set(&(TIM5->ARR), (5000-1), 0xFFFFFFFFU);  // Reset every 5 ms
 
   // in case it's disabled
-  NVIC_EnableIRQ(TIM4_IRQn);
+  NVIC_EnableIRQ(TIM5_IRQn);
 
   // run the interrupt
-  register_set(&(TIM4->DIER), TIM_DIER_UIE, 0x5F5FU); // Update interrupt
-  TIM4->SR = 0;
+  register_set(&(TIM5->DIER), TIM_DIER_UIE, 0x5F5FU); // Update interrupt
+  TIM5->SR = 0;
 }
 
 bool k_init = false;
@@ -40,6 +40,7 @@ void setup_kline(bool bitbang) {
 }
 
 void set_bitbanged_kline(bool marking) {
+  // tickle needs to be super fast (so logic level doesn't change)
   ENTER_CRITICAL();
   if (k_init) {
     register_set_bits(&(GPIOC->ODR), (1U << 12));
@@ -63,13 +64,13 @@ int kline_five_baud_bit = -1;
 int kline_tick_count = 0;
 
 void TIM5_IRQ_Handler(void) {
-  if ((TIM4->SR & TIM_SR_UIF) && (kline_five_baud_bit != -1)) {
+  if ((TIM5->SR & TIM_SR_UIF) && (kline_five_baud_bit != -1)) {
     if (kline_five_baud_bit < 10) {
       bool marking = (kline_five_baud_dat & (1U << kline_five_baud_bit)) != 0U;
       set_bitbanged_kline(marking);
     } else {
-      register_clear_bits(&(TIM4->DIER), TIM_DIER_UIE); // No update interrupt
-      register_set(&(TIM4->CR1), 0U, 0x3FU); // Disable timer
+      register_clear_bits(&(TIM5->DIER), TIM_DIER_UIE); // No update interrupt
+      register_set(&(TIM5->CR1), 0U, 0x3FU); // Disable timer
       setup_kline(false);
       kline_five_baud_bit = -1;
     }
@@ -78,7 +79,7 @@ void TIM5_IRQ_Handler(void) {
       kline_five_baud_bit++;
     }
   }
-  TIM4->SR = 0;
+  TIM5->SR = 0;
 }
 
 void bitbang_five_baud_addr(bool k, bool l, uint8_t addr) {
