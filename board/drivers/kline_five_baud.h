@@ -4,20 +4,19 @@ void TIM5_IRQ_Handler(void);
 
 void setup_timer5(void) {
   // register interrupt
-  REGISTER_INTERRUPT(TIM5_IRQn, TIM5_IRQ_Handler, 1000000U, 1000000)
+  REGISTER_INTERRUPT(TIM4_IRQn, TIM5_IRQ_Handler, 1000000U, 1000000)
 
   // setup
-  register_set(&(TIM5->PSC), (48-1), 0xFFFFU);    // Tick on 1 us
-  register_set(&(TIM5->CR1), TIM_CR1_CEN, 0x3FU); // Enable
-  register_set(&(TIM5->ARR), (5000-1), 0xFFFFU);  // Reset every 5 ms
+  register_set(&(TIM4->PSC), (48-1), 0xFFFFU);    // Tick on 1 us
+  register_set(&(TIM4->CR1), TIM_CR1_CEN, 0x3FU); // Enable
+  register_set(&(TIM4->ARR), (5000-1), 0xFFFFU);  // Reset every 5 ms
 
   // in case it's disabled
-  NVIC_EnableIRQ(TIM5_IRQn);
+  NVIC_EnableIRQ(TIM4_IRQn);
 
   // run the interrupt
-  register_set(&(TIM5->DIER), TIM_DIER_UIE, 0x5F5FU); // Update interrupt
-  TIM5->SR = 0;
-  puts("timer setup done\n");
+  register_set(&(TIM4->DIER), TIM_DIER_UIE, 0x5F5FU); // Update interrupt
+  TIM4->SR = 0;
 }
 
 bool k_init = false;
@@ -38,10 +37,10 @@ void setup_kline(bool bitbang) {
       set_gpio_mode(GPIOC, 10, MODE_ALTERNATE);
     }
   }
-  puts("kline setup done\n");
 }
 
 void set_bitbanged_kline(bool marking) {
+  ENTER_CRITICAL();
   if (k_init) {
     register_set_bits(&(GPIOC->ODR), (1U << 12));
   }
@@ -56,6 +55,7 @@ void set_bitbanged_kline(bool marking) {
       register_clear_bits(&(GPIOC->ODR), (1U << 10));
     }
   }
+  EXIT_CRITICAL();
   // blink blue LED each time line is pulled low
   current_board->set_led(LED_BLUE, !marking);
 }
@@ -65,14 +65,13 @@ int kline_five_baud_bit = -1;
 int kline_tick_count = 0;
 
 void TIM5_IRQ_Handler(void) {
-  puts("timer fired\n");
-  if ((TIM5->SR & TIM_SR_UIF) && (kline_five_baud_bit != -1)) {
+  if ((TIM4->SR & TIM_SR_UIF) && (kline_five_baud_bit != -1)) {
     if ((kline_tick_count % KLINE_5BAUD_TICKS_PER_BIT) == 0) {
       kline_five_baud_bit++;
     }
     if (kline_five_baud_bit > 10) {
-      register_clear_bits(&(TIM5->DIER), TIM_DIER_UIE); // No update interrupt
-      register_set(&(TIM5->CR1), 0U, 0x3FU); // Disable timer
+      register_clear_bits(&(TIM4->DIER), TIM_DIER_UIE); // No update interrupt
+      register_set(&(TIM4->CR1), 0U, 0x3FU); // Disable timer
       setup_kline(false);
       kline_five_baud_bit = -1;
     } else {
@@ -81,7 +80,7 @@ void TIM5_IRQ_Handler(void) {
     }
     kline_tick_count++;
   }
-  TIM5->SR = 0;
+  TIM4->SR = 0;
 }
 
 void bitbang_five_baud_addr(bool k, bool l, uint8_t addr) {
