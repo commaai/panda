@@ -33,7 +33,7 @@ void setup_kline(bool bitbang) {
     if (k_init) {
       set_gpio_mode(GPIOC, 12, MODE_ALTERNATE);
     }
-    if (k_init) {
+    if (l_init) {
       set_gpio_mode(GPIOC, 10, MODE_ALTERNATE);
     }
   }
