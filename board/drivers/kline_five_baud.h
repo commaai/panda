@@ -73,6 +73,8 @@ void TIM5_IRQ_Handler(void) {
       register_set(&(TIM5->CR1), 0U, 0x3FU); // Disable timer
       setup_kline(false);
       kline_five_baud_bit = -1;
+      USB_WritePacket(NULL, 0, 0); // required call (so send nothing)
+      USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
     }
     kline_tick_count++;
     if ((kline_tick_count % KLINE_5BAUD_TICKS_PER_BIT) == 0) {
