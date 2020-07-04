@@ -56,7 +56,7 @@ void set_bitbanged_kline(bool marking) {
   }
   EXIT_CRITICAL();
   // blink blue LED each time line is pulled low
-  current_board->set_led(LED_BLUE, !marking);
+  current_board->set_led(LED_BLUE, marking);
 }
 
 uint16_t kline_five_baud_dat = 0;
