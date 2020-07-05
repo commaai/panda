@@ -1,16 +1,12 @@
 # Welcome to panda
 
-[panda](http://github.com/commaai/panda) is the nicest universal car interface ever, and it comes in a [few variants](https://github.com/commaai/panda/tree/master/board/boards).
+[panda](http://github.com/commaai/panda) is the nicest universal car interface ever).
 
-<a href="https://comma.ai/shop/products/panda-obd-ii-dongle"><img src="https://github.com/commaai/panda/blob/master/panda.png">
+<a href="https://comma.ai/shop/products/panda-obd-ii-dongle"><img src="https://github.com/commaai/panda/blob/master/panda.png"></a>
 
-<img src="https://github.com/commaai/panda/blob/master/buy.png"></a>
+It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?querycriteria=productId=LN2004), and all pandas have 3x CAN.
 
-It supports 3x CAN, 2x LIN, and 1x GMLAN. It also charges a phone. On the computer side, it has both USB and Wi-Fi.
-
-It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?querycriteria=productId=LN2004) for low level stuff.
-
-It is 2nd gen hardware, reusing code and parts from the [NEO](https://github.com/commaai/neo) interface board.
+panda comes in a [few variants](https://github.com/commaai/panda/tree/master/board/boards). Grey and black pandas have a high precision GPS, while white panda has an ESP8266 for WiFi.
 
 ![panda tests](https://github.com/commaai/panda/workflows/panda%20tests/badge.svg)
 
@@ -75,9 +71,9 @@ As a universal car interface, it should support every reasonable software interf
 
 ## Debugging
 
-To print out the serial console from the STM32, run tests/debug_console.py
+To print out the serial console from the STM32, run `tests/debug_console.py`
 
-To print out the serial console from the ESP8266, run PORT=1 tests/debug_console.py
+To print out the serial console from the ESP8266, run `PORT=1 tests/debug_console.py`
 
 ## Safety Model
 
