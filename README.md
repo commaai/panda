@@ -1,7 +1,7 @@
 Welcome to panda
 ======
 
-[panda](http://github.com/commaai/panda) is the nicest universal car interface ever.
+[panda](http://github.com/commaai/panda) is the nicest universal car interface ever, and it comes in a [few variants](https://github.com/commaai/panda/tree/master/board/boards).
 
 <a href="https://comma.ai/shop/products/panda-obd-ii-dongle"><img src="https://github.com/commaai/panda/blob/master/panda.png">
 
@@ -9,7 +9,7 @@ Welcome to panda
 
 It supports 3x CAN, 2x LIN, and 1x GMLAN. It also charges a phone. On the computer side, it has both USB and Wi-Fi.
 
-It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?querycriteria=productId=LN2004) for low level stuff and an [ESP8266](https://en.wikipedia.org/wiki/ESP8266) for Wi-Fi. They are connected over high speed SPI, so the panda is actually capable of dumping the full contents of the busses over Wi-Fi, unlike every other dongle on amazon. ELM327 is weak, panda is strong.
+It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?querycriteria=productId=LN2004) for low level stuff.
 
 It is 2nd gen hardware, reusing code and parts from the [NEO](https://github.com/commaai/neo) interface board.
 
@@ -26,19 +26,19 @@ To install the library:
 See [this class](https://github.com/commaai/panda/blob/master/python/__init__.py#L80) for how to interact with the panda.
 
 For example, to receive CAN messages:
-```
+``` python
 >>> from panda import Panda
 >>> panda = Panda()
 >>> panda.can_recv()
 ```
 And to send one on bus 0:
-```
+``` python
 >>> panda.can_send(0x1aa, "message", 0)
 ```
 Find user made scripts on the [wiki](https://community.comma.ai/wiki/index.php/Panda_scripts)
 
 Note that you may have to setup [udev rules](https://community.comma.ai/wiki/index.php/Panda#Linux_udev_rules) for Linux, such as
-```
+``` bash
 sudo tee /etc/udev/rules.d/11-panda.rules <<EOF
 SUBSYSTEM=="usb", ATTRS{idVendor}=="bbaa", ATTRS{idProduct}=="ddcc", MODE="0666"
 SUBSYSTEM=="usb", ATTRS{idVendor}=="bbaa", ATTRS{idProduct}=="ddee", MODE="0666"
@@ -95,14 +95,14 @@ Safety modes optionally supports `controls_allowed`, which allows or blocks a su
 
 Code Rigor
 ------
-When compiled from an [EON Dev Kit](https://comma.ai/shop/products/eon-gold-dashcam-devkit), the panda FW is configured and optimized (at compile time) for its use in
+When compiled from the [EON](https://comma.ai/shop/products/eon-gold-dashcam-devkit) or [comma two](https://comma.ai/shop/products/comma-two-devkit) dev kits, the panda FW is configured and optimized (at compile time) for its use in
 conjuction with [openpilot](https://github.com/commaai/openpilot). The panda FW, through its safety model, provides and enforces the
-[openpilot Safety](https://github.com/commaai/openpilot/blob/devel/SAFETY.md). Due to its critical function, it's important that the application code rigor within the `board` folder is held to high standards.
+[openpilot safety](https://github.com/commaai/openpilot/blob/devel/SAFETY.md). Due to its critical function, it's important that the application code rigor within the `board` folder is held to high standards.
 
 These are the [CI regression tests](https://github.com/commaai/panda/actions) we have in place:
-* A generic static code analysis is performed by [Cppcheck](https://github.com/danmar/cppcheck/).
-* In addition, [Cppcheck](https://github.com/danmar/cppcheck/) has a specific addon to check for [MISRA C:2012](https://www.misra.org.uk/MISRAHome/MISRAC2012/tabid/196/Default.aspx) violations. See [current coverage](https://github.com/commaai/panda/blob/master/tests/misra/coverage_table).
-* Compiler options are relatively strict: the flags `-Wall -Wextra -Wstrict-prototypes -Werror` are enforced on board and pedal makefiles.
+* A generic static code analysis is performed by [cppcheck](https://github.com/danmar/cppcheck/).
+* In addition, [cppcheck](https://github.com/danmar/cppcheck/) has a specific addon to check for [MISRA C:2012](https://www.misra.org.uk/MISRAHome/MISRAC2012/tabid/196/Default.aspx) violations. See [current coverage](https://github.com/commaai/panda/blob/master/tests/misra/coverage_table).
+* Compiler options are relatively strict: the flags `-Wall -Wextra -Wstrict-prototypes -Werror` are enforced on board and pedal Makefiles.
 * The [safety logic](https://github.com/commaai/panda/tree/master/board/safety) is tested and verified by [unit tests](https://github.com/commaai/panda/tree/master/tests/safety) for each supported car variant.
 * A recorded drive for each supported car variant is [replayed through the safety logic](https://github.com/commaai/panda/tree/master/tests/safety_replay)
 to ensure that the behavior remains unchanged.
@@ -110,7 +110,7 @@ to ensure that the behavior remains unchanged.
     * compiling the code in various configuration and flashing it both through USB and WiFi.
     * Receiving, sending and forwarding CAN messages on all buses, over USB and WiFi.
 
-In addition, we run [Pylint](https://www.pylint.org/) and [Flake8](https://github.com/PyCQA/flake8) linters on all python files within the panda repo.
+In addition, we run the [pylint](https://www.pylint.org/) and [flake8](https://github.com/PyCQA/flake8) linters on all python files within the panda repo.
 
 Hardware
 ------
