@@ -1,6 +1,6 @@
 # Welcome to panda
 
-[panda](http://github.com/commaai/panda) is the nicest universal car interface ever).
+[panda](http://github.com/commaai/panda) is the nicest universal car interface ever.
 
 <a href="https://comma.ai/shop/products/panda-obd-ii-dongle"><img src="https://github.com/commaai/panda/blob/master/panda.png"></a>
 
