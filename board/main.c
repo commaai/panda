@@ -632,11 +632,13 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       }
     // **** 0xf4: k-line/l-line 5 baud initialization
     case 0xf4:
-      k_wakeup = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
-      l_wakeup = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
-      five_baud_addr = (setup->b.wIndex.w & 0xFFU);
-      if (bitbang_five_baud_addr(k_wakeup, l_wakeup, five_baud_addr)) {
-        resp_len = -1; // do not clear NAK yet (wait for bit banging to finish)
+      if(board_has_lin()) {
+        k_wakeup = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
+        l_wakeup = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
+        five_baud_addr = (setup->b.wIndex.w & 0xFFU);
+        if (bitbang_five_baud_addr(k_wakeup, l_wakeup, five_baud_addr)) {
+          resp_len = -1; // do not clear NAK yet (wait for bit banging to finish)
+        }
       }
       break;
     default:
