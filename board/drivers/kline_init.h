@@ -2,7 +2,7 @@ void TIM5_IRQ_Handler(void);
 
 void setup_timer5(void) {
   // register interrupt
-  REGISTER_INTERRUPT(TIM5_IRQn, TIM5_IRQ_Handler, 1050000U, FAULT_INTERRUPT_RATE_KLINE_5BAUD)
+  REGISTER_INTERRUPT(TIM5_IRQn, TIM5_IRQ_Handler, 1050000U, FAULT_INTERRUPT_RATE_KLINE_INIT)
 
   // setup
   register_set(&(TIM5->PSC), (48-1), 0xFFFFU);        // Tick on 1 us

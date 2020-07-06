@@ -25,7 +25,7 @@
 #include "drivers/uart.h"
 #include "drivers/usb.h"
 #include "drivers/gmlan_alt.h"
-#include "drivers/kline_five_baud.h"
+#include "drivers/kline_init.h"
 #include "drivers/timer.h"
 #include "drivers/clock.h"
 
