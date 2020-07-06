@@ -1,5 +1,3 @@
-#define KLINE_5BAUD_TICKS_PER_BIT 40 // 200ms @ 5bps
-
 void TIM5_IRQ_Handler(void);
 
 void setup_timer5(void) {
@@ -59,26 +57,28 @@ void set_bitbanged_kline(bool marking) {
   current_board->set_led(LED_BLUE, marking);
 }
 
-uint16_t kline_five_baud_dat = 0;
-uint16_t kline_five_baud_bit = 0;
-int kline_tick_count = 0;
+uint16_t kline_data = 0;
+uint16_t kline_data_len = 0;
+uint16_t kline_bit_count = 0;
+uint16_t kline_tick_count = 0;
+uint16_t kline_ticks_per_bit = 0;
 
 void TIM5_IRQ_Handler(void) {
-  if ((TIM5->SR & TIM_SR_UIF) && (kline_five_baud_dat != 0U)) {
-    if (kline_five_baud_bit < 10U) {
-      bool marking = (kline_five_baud_dat & (1U << kline_five_baud_bit)) != 0U;
+  if ((TIM5->SR & TIM_SR_UIF) && (kline_data != 0U)) {
+    if (kline_bit_count < kline_data_len) {
+      bool marking = (kline_data & (1U << kline_bit_count)) != 0U;
       set_bitbanged_kline(marking);
     } else {
       register_clear_bits(&(TIM5->DIER), TIM_DIER_UIE); // No update interrupt
       register_set(&(TIM5->CR1), 0U, 0x3FU); // Disable timer
       setup_kline(false);
-      kline_five_baud_dat = 0U;
+      kline_data = 0U;
       USB_WritePacket(NULL, 0, 0); // required call (so send nothing)
       USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
     }
     kline_tick_count++;
-    if ((kline_tick_count % KLINE_5BAUD_TICKS_PER_BIT) == 0) {
-      kline_five_baud_bit++;
+    if ((kline_tick_count % kline_ticks_per_bit) == 0U) {
+      kline_bit_count++;
     }
   }
   TIM5->SR = 0;
@@ -86,12 +86,31 @@ void TIM5_IRQ_Handler(void) {
 
 bool bitbang_five_baud_addr(bool k, bool l, uint8_t addr) {
   bool result = false;
-  if (kline_five_baud_dat == 0U) {
+  if (kline_data == 0U) {
     k_init = k;
     l_init = l;
-    kline_five_baud_dat = (addr << 1) + 0x200U; // add start/stop bits
+    kline_data = (addr << 1) + 0x200U; // add start/stop bits
+    kline_data_len = 10U;
+    kline_bit_count = 0;
     kline_tick_count = 0;
-    kline_five_baud_bit = 0;
+    kline_ticks_per_bit = 40U; // 200ms == 5bps
+    setup_kline(true);
+    setup_timer5();
+    result = true;
+  }
+  return result;
+}
+
+bool bitbang_wakeup(bool k, bool l) {
+  bool result = false;
+  if (kline_data == 0U) {
+    k_init = k;
+    l_init = l;
+    kline_data = 2U; // low then high
+    kline_data_len = 2U;
+    kline_bit_count = 0;
+    kline_tick_count = 0;
+    kline_ticks_per_bit = 5U; // 25ms == 40bps
     setup_kline(true);
     setup_timer5();
     result = true;
