@@ -79,7 +79,7 @@ FILTER_RESULT J2534MessageFilter::check(const J2534Frame& msg) {
 	if (msg.Data.size() < this->maskMsg.size()) {
 		matches = FALSE;
 	} else {
-		for (int i = 0; i < this->maskMsg.size(); i++) {
+		for (unsigned int i = 0; i < this->maskMsg.size(); i++) {
 			if (this->patternMsg[i] != (msg.Data[i] & this->maskMsg[i])) {
 				matches = FALSE;
 				break;

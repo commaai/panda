@@ -131,7 +131,7 @@ Section "J2534 Driver"
   WriteRegDWORD  HKLM "${J2534_Reg_Path}" "SCI_B_ENGINE"      00000000
   WriteRegDWORD  HKLM "${J2534_Reg_Path}" "SCI_B_TRANS"       00000000
   WriteRegDWORD  HKLM "${J2534_Reg_Path}" "J1850PWM"          00000000
-  WriteRegDWORD  HKLM "${J2534_Reg_Path}" "ISO9141"           00000000
+  WriteRegDWORD  HKLM "${J2534_Reg_Path}" "ISO9141"           00000001
   WriteRegDWORD  HKLM "${J2534_Reg_Path}" "ISO14230"          00000001
   WriteRegStr    HKLM "${J2534_Reg_Path}" "Name"              "panda"
   WriteRegStr    HKLM "${J2534_Reg_Path}" "Vendor"            "comma.ai"

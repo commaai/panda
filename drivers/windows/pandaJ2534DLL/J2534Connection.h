@@ -51,14 +51,15 @@ public:
 
 	//IOCTL functions
 
-	long init5b(SBYTE_ARRAY* pInput, SBYTE_ARRAY* pOutput);
-	long initFast(PASSTHRU_MSG* pInput, PASSTHRU_MSG* pOutput);
+	virtual long init5b(SBYTE_ARRAY* pInput, SBYTE_ARRAY* pOutput);
+	virtual long initFast(PASSTHRU_MSG* pInput, PASSTHRU_MSG* pOutput);
 	long clearTXBuff();
 	long clearRXBuff();
 	long clearPeriodicMsgs();
 	long clearMsgFilters();
 
 	virtual void setBaud(unsigned long baud);
+	virtual void setParity(unsigned long parity);
 
 	unsigned long getBaud() {
 		return this->BaudRate;
@@ -124,6 +125,7 @@ protected:
 	unsigned long ProtocolID;
 	unsigned long Flags;
 	unsigned long BaudRate;
+	unsigned long Parity;
 	unsigned long port;
 
 	std::weak_ptr<PandaJ2534Device> panda_dev;

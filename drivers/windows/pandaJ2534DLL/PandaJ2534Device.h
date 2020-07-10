@@ -52,8 +52,18 @@ public:
 	//transmission is complete. This tracks what is still waiting to hear an echo.
 	std::queue<std::shared_ptr<MessageTx>> txMsgsAwaitingEcho;
 
+	std::string kline_five_baud_init(uint8_t addr);
+	std::string kline_wakeup_start_comm(std::string& start_comm);
+	BOOL kline_send(std::string& data);
+
 private:
 	HANDLE thread_kill_event;
+
+	HANDLE kline_recv_handle;
+	static DWORD WINAPI _kline_recv_threadBootstrap(LPVOID This) {
+		return ((PandaJ2534Device*)This)->kline_recv_thread();
+	}
+	DWORD kline_recv_thread();
 
 	HANDLE can_recv_handle;
 	static DWORD WINAPI _can_recv_threadBootstrap(LPVOID This) {
@@ -80,4 +90,6 @@ private:
 	std::set<std::shared_ptr<J2534Connection>> ConnTxSet;
 	Mutex connTXSet_mutex;
 	BOOL txInProgress;
+
+	Mutex kline_rx_mutex;
 };

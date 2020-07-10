@@ -18,8 +18,18 @@ public:
 		Data += msg_in.addr & 0xFF;
 		Data += std::string((char*)&msg_in.dat, msg_in.len);
 		Timestamp = msg_in.recv_time;
+		TxFlags = 0;
 		RxStatus = (msg_in.addr_29b ? CAN_29BIT_ID : 0) |
 			(msg_in.is_receipt ? TX_MSG_TYPE : 0);
+	}
+
+	J2534Frame(unsigned long protocol, const panda::PANDA_KLINE_MSG& msg_in) {
+		ProtocolID = protocol;
+		ExtraDataIndex = msg_in.data.size() - (msg_in.valid ? 1 : 0);
+		Data = msg_in.data;
+		Timestamp = 0;
+		TxFlags = 0;
+		RxStatus = 0;
 	}
 
 	J2534Frame(const PASSTHRU_MSG& msg) {

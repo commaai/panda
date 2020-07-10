@@ -7,6 +7,7 @@
 #include "J2534_v0404.h"
 #include "panda_shared/panda.h"
 #include "J2534Connection.h"
+#include "J2534Connection_ISO14230.h"
 #include "J2534Connection_CAN.h"
 #include "J2534Connection_ISO15765.h"
 #include "PandaJ2534Device.h"
@@ -95,10 +96,10 @@ PANDAJ2534DLL_API long PTAPI    PassThruOpen(void *pName, unsigned long *pDevice
 	if (new_panda == nullptr) {
 		if(sn == "" && pandas.size() == 1)
 			return ret_code(ERR_DEVICE_IN_USE);
-		for (auto& pn : pandas) {
-			if (pn->panda->get_usb_sn() == sn)
-				return ret_code(ERR_DEVICE_IN_USE);
-		}
+		//for (auto& pn : pandas) {
+		//	if (pn->panda->get_usb_sn() == sn)
+		//		return ret_code(ERR_DEVICE_IN_USE);
+		//}
 		return ret_code(ERR_DEVICE_NOT_CONNECTED);
 	}
 
@@ -140,36 +141,36 @@ PANDAJ2534DLL_API long PTAPI	PassThruConnect(unsigned long DeviceID, unsigned lo
 		switch (ProtocolID) {
 			//SW seems to refer to Single Wire. https://www.nxp.com/files-static/training_pdf/20451_BUS_COMM_WBT.pdf
 			//SW_ protocols may be touched on here: https://www.iso.org/obp/ui/#iso:std:iso:22900:-2:ed-1:v1:en
-		//case J1850VPW: // These protocols are outdated and will not be supported. HDS wants them to not fail to open.
-		//case J1850PWM: // ^-- it appears HDS no longer needs this, and TIS needs it disabled --^
-		//case J1850VPW_PS:
-		//case J1850PWM_PS:
-		case ISO9141: //This protocol could be implemented if 5 BAUD init support is added to the panda.
-		case ISO9141_PS:
-		case ISO14230: //Only supporting Fast init until panda adds support for 5 BAUD init.
-		case ISO14230_PS:
-			conn = std::make_shared<J2534Connection>(panda, ProtocolID, Flags, BaudRate);
-			break;
-		case CAN:
-		case CAN_PS:
-		//case SW_CAN_PS:
-			conn = std::make_shared<J2534Connection_CAN>(panda, ProtocolID, Flags, BaudRate);
-			break;
-		case ISO15765:
-		case ISO15765_PS:
-			conn = std::make_shared<J2534Connection_ISO15765>(panda, ProtocolID, Flags, BaudRate);
-			break;
-		//case SW_ISO15765_PS: // SW = Single Wire. GMLAN is a SW CAN protocol
-		//case GM_UART_PS: // PS = Pin Select. Handles different ports.
-		//Looks like SCI based protocols may not be compatible with the panda:
-		//http://mdhmotors.com/can-communications-vehicle-network-protocols/3/
-		//case SCI_A_ENGINE:
-		//case SCI_A_TRANS:
-		//case SCI_B_ENGINE:
+			//case J1850VPW: // These protocols are outdated and will not be supported. HDS wants them to not fail to open.
+			//case J1850PWM: // ^-- it appears HDS no longer needs this, and TIS needs it disabled --^
+			//case J1850VPW_PS:
+			//case J1850PWM_PS:
+			case ISO9141:
+			//case ISO9141_PS:
+			case ISO14230:
+			//case ISO14230_PS:
+				conn = std::make_shared<J2534Connection_ISO14230>(panda, ProtocolID, Flags, BaudRate);
+				break;
+			case CAN:
+			//case CAN_PS:
+			//case SW_CAN_PS:
+				conn = std::make_shared<J2534Connection_CAN>(panda, ProtocolID, Flags, BaudRate);
+				break;
+			case ISO15765:
+			//case ISO15765_PS:
+				conn = std::make_shared<J2534Connection_ISO15765>(panda, ProtocolID, Flags, BaudRate);
+				break;
+			//case SW_ISO15765_PS: // SW = Single Wire. GMLAN is a SW CAN protocol
+			//case GM_UART_PS: // PS = Pin Select. Handles different ports.
+			//Looks like SCI based protocols may not be compatible with the panda:
+			//http://mdhmotors.com/can-communications-vehicle-network-protocols/3/
+			//case SCI_A_ENGINE:
+			//case SCI_A_TRANS:
+			//case SCI_B_ENGINE:
 			//case SCI_B_TRANS:
-		//case J2610_PS:
-		default:
-			return ret_code(ERR_INVALID_PROTOCOL_ID);
+			//case J2610_PS:
+			default:
+				return ret_code(ERR_INVALID_PROTOCOL_ID);
 		}
 	} catch (int e) {
 		return ret_code(e);
@@ -424,6 +425,7 @@ PANDAJ2534DLL_API long PTAPI	PassThruIoctl(unsigned long ChannelID, unsigned lon
 		break;
 	default:
 		printf("Got unknown IIOCTL %X\n", IoctlID);
+		return ret_code(ERR_INVALID_IOCTL_ID);
 	}
 
 	return ret_code(STATUS_NOERROR);

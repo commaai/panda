@@ -12,6 +12,9 @@ PandaJ2534Device::PandaJ2534Device(std::unique_ptr<panda::Panda> new_panda) : tx
 
 	this->thread_kill_event = CreateEvent(NULL, TRUE, FALSE, NULL);
 
+	DWORD klineListenThreadID;
+	this->kline_recv_handle = CreateThread(NULL, 0, _kline_recv_threadBootstrap, (LPVOID)this, 0, &klineListenThreadID);
+
 	DWORD canListenThreadID;
 	this->can_recv_handle = CreateThread(NULL, 0, _can_recv_threadBootstrap, (LPVOID)this, 0, &canListenThreadID);
 
@@ -25,7 +28,11 @@ PandaJ2534Device::PandaJ2534Device(std::unique_ptr<panda::Panda> new_panda) : tx
 
 PandaJ2534Device::~PandaJ2534Device() {
 	SetEvent(this->thread_kill_event);
-	DWORD res = WaitForSingleObject(this->can_recv_handle, INFINITE);
+
+	DWORD res = WaitForSingleObject(this->kline_recv_handle, INFINITE);
+	CloseHandle(this->kline_recv_handle);
+
+	res = WaitForSingleObject(this->can_recv_handle, INFINITE);
 	CloseHandle(this->can_recv_handle);
 
 	res = WaitForSingleObject(this->can_process_handle, INFINITE);
@@ -71,6 +78,89 @@ DWORD PandaJ2534Device::addChannel(std::shared_ptr<J2534Connection>& conn, unsig
 
 	*channel_id = channel_index;
 	return STATUS_NOERROR;
+}
+
+std::string PandaJ2534Device::kline_five_baud_init(uint8_t addr) {
+	synchronized(kline_rx_mutex) {
+		Sleep(300); // W1
+		this->panda->kline_slow_init(true, true, addr);
+		// wakeup sometimes adds a leading null char
+		this->panda->serial_clear(panda::SERIAL_LIN1);
+		this->panda->serial_clear(panda::SERIAL_LIN2);
+		// read 0x55 KB1 KB2
+		auto key_bytes = this->panda->serial_read(panda::SERIAL_LIN1, 3, 300);
+		auto bytes = key_bytes.c_str();
+		if (key_bytes.size() == 3 && bytes[0] == 0x55) {
+			Sleep(25); // W4
+			// send inverted KB2
+			auto kb2_inv = std::string(1, ~bytes[2]);
+			if (this->panda->serial_write(panda::SERIAL_LIN1, kb2_inv)) {
+				// read addr inverted
+				auto addr_inv = this->panda->serial_read(panda::SERIAL_LIN1, 1, 50);
+				if (addr_inv.size() == 1 && addr_inv.c_str()[0] == ~addr) {
+					// return only KB1 KB2
+					return key_bytes.substr(1, 2);
+				}
+			}
+		}
+
+	}
+
+	return std::string();
+}
+
+std::string PandaJ2534Device::kline_wakeup_start_comm(std::string& start_comm) {
+	synchronized(kline_rx_mutex) {
+		Sleep(25);
+		this->panda->kline_fast_init(true, true);
+		// wakeup sometimes adds a leading null char
+		this->panda->serial_clear(panda::SERIAL_LIN1);
+		this->panda->serial_clear(panda::SERIAL_LIN2);
+		// send start communication message
+		if (this->panda->kline_send(panda::SERIAL_LIN1, start_comm)) {
+			Sleep(25);
+			// read start communication response
+			return this->panda->serial_read(panda::SERIAL_LIN1, KLINE_MSG_MAX_LEN, 20);
+		}
+	}
+
+	return std::string();
+}
+
+BOOL PandaJ2534Device::kline_send(std::string& data) {
+	// since send reads echo, block rx thread
+	synchronized(kline_rx_mutex) {
+		return this->panda->kline_send(panda::SERIAL_LIN1, data) ? TRUE : FALSE;
+	}
+}
+
+DWORD PandaJ2534Device::kline_recv_thread() {
+	this->panda->serial_clear(panda::SERIAL_LIN1);
+	while (true) {
+		if (!WaitForSingleObject(this->thread_kill_event, 0)) {
+			break;
+		}
+
+		std::vector<panda::PANDA_KLINE_MSG> msg_recv;
+		synchronized(kline_rx_mutex) {
+			msg_recv = this->panda->kline_recv(panda::SERIAL_LIN1);
+		}
+		if (msg_recv.empty()) {
+			Sleep(1);
+			continue;
+		}
+
+		for (auto msg : msg_recv) {
+			for (auto& conn : this->connections) {
+				if (conn != nullptr && !conn->isProtoCan()) {
+					J2534Frame msg_out(conn->getProtocol(), msg);
+					conn->processMessage(msg_out);
+				}
+			}
+		}
+	}
+
+	return 0;
 }
 
 DWORD PandaJ2534Device::can_recv_thread() {

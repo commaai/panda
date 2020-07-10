@@ -33,6 +33,7 @@
 #define LIN_MSG_MAX_LEN 10
 #define CAN_RX_QUEUE_LEN 10000
 #define CAN_RX_MSG_LEN 1000
+#define KLINE_MSG_MAX_LEN 260
 
 //template class __declspec(dllexport) std::basic_string<char>;
 
@@ -108,6 +109,21 @@ namespace panda {
 		bool addr_29b;
 	} PANDA_CAN_MSG;
 
+	typedef enum _PANDA_KLINE_ADDR_TYPE : uint8_t {
+		PANDA_KLINE_ADDR_NONE = 0,
+		PANDA_KLINE_ADDR_PHYS = 0x80,
+		PANDA_KLINE_ADDR_FUNC = 0xC0,
+	} PANDA_KLINE_ADDR_TYPE;
+
+	typedef struct _PANDA_KLINE_MSG {
+		PANDA_KLINE_ADDR_TYPE addr_type;
+		uint8_t target;
+		uint8_t source;
+		std::string data;
+		uint8_t checksum;
+		bool valid;
+	} PANDA_KLINE_MSG;
+
 	//Copied from https://stackoverflow.com/a/31488113
 	class Timer
 	{
@@ -179,8 +195,17 @@ namespace panda {
 		bool can_clear(PANDA_CAN_PORT_CLEAR bus);
 
 		std::string serial_read(PANDA_SERIAL_PORT port_number);
-		int serial_write(PANDA_SERIAL_PORT port_number, const void* buff, uint16_t len);
+		std::string serial_read(PANDA_SERIAL_PORT port_number, unsigned int len, unsigned int timeout_ms);
+		int serial_write(PANDA_SERIAL_PORT port_number, const std::string& data);
 		bool serial_clear(PANDA_SERIAL_PORT port_number);
+
+		uint8_t kline_checksum(const char* data, size_t size);
+		PANDA_KLINE_MSG kline_parse(const std::string& data, bool add_checksum);
+		bool kline_slow_init(bool k, bool l, uint8_t addr);
+		bool kline_fast_init(bool k, bool l);
+		std::vector<PANDA_KLINE_MSG> kline_recv(PANDA_SERIAL_PORT port_number);
+		bool kline_send(PANDA_SERIAL_PORT port_number, const std::string& data);
+
 	private:
 		Panda(
 			WINUSB_INTERFACE_HANDLE WinusbHandle,
