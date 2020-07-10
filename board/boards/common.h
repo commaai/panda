@@ -60,7 +60,7 @@ void peripherals_init(void){
   RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;  // main counter
   RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;  // pedal and fan PWM
   RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;  // gmlan_alt and IR PWM
-  //RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;
+  RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;  // k-line init
   RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;  // interrupt timer
   RCC->APB1ENR |= RCC_APB1ENR_PWREN;   // for RTC config
   RCC->APB2ENR |= RCC_APB2ENR_USART1EN;

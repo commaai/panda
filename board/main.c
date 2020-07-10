@@ -25,6 +25,7 @@
 #include "drivers/uart.h"
 #include "drivers/usb.h"
 #include "drivers/gmlan_alt.h"
+#include "drivers/kline_init.h"
 #include "drivers/timer.h"
 #include "drivers/clock.h"
 
@@ -249,11 +250,7 @@ void usb_cb_enumeration_complete() {
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) {
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
-  uint32_t ts;
-  uint32_t ts_timer;
   timestamp_t t;
-  bool k_wakeup;
-  bool l_wakeup;
   switch (setup->b.bRequest) {
     // **** 0xa0: get rtc time
     case 0xa0:
@@ -562,43 +559,13 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xf0: k-line/l-line wake-up pulse for KWP2000 fast initialization
     case 0xf0:
-      k_wakeup = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
-      l_wakeup = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
-
-      ts = TIM2->CNT;
-      ts_timer = ts;
-      if (k_wakeup) {
-        set_gpio_output(GPIOC, 12, false);
-      }
-      if (l_wakeup) {
-        set_gpio_output(GPIOC, 10, false);
-      }
-
-      // hold low for 25 ms
-      while (get_ts_elapsed(TIM2->CNT, ts) < 25000U) {
-        // toggle pin every 5 ms to reset TXD dominant time-out timer
-        if (get_ts_elapsed(TIM2->CNT, ts_timer) >= 5000U) {
-          ts_timer = TIM2->CNT;
-          if (k_wakeup) {
-            register_set_bits(&(GPIOC->ODR), (1U << 12));
-            register_clear_bits(&(GPIOC->ODR), (1U << 12));
-          }
-          if (l_wakeup) {
-            register_set_bits(&(GPIOC->ODR), (1U << 10));
-            register_clear_bits(&(GPIOC->ODR), (1U << 10));
-          }
+      if(board_has_lin()) {
+        bool k = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
+        bool l = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
+        if (bitbang_wakeup(k, l)) {
+          resp_len = -1; // do not clear NAK yet (wait for bit banging to finish)
         }
       }
-
-      if (k_wakeup) {
-        set_gpio_mode(GPIOC, 12, MODE_ALTERNATE);
-      }
-      if (l_wakeup) {
-        set_gpio_mode(GPIOC, 10, MODE_ALTERNATE);
-      }
-      // hold high until 49ms have passed
-      // (start communication needs to follow 49ms to 51ms after start of wakeup)
-      while (get_ts_elapsed(TIM2->CNT, ts) < 49000U) {}
       break;
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
@@ -628,6 +595,17 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         heartbeat_counter = 0U;
         break;
       }
+    // **** 0xf4: k-line/l-line 5 baud initialization
+    case 0xf4:
+      if(board_has_lin()) {
+        bool k = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
+        bool l = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
+        uint8_t five_baud_addr = (setup->b.wIndex.w & 0xFFU);
+        if (bitbang_five_baud_addr(k, l, five_baud_addr)) {
+          resp_len = -1; // do not clear NAK yet (wait for bit banging to finish)
+        }
+      }
+      break;
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);

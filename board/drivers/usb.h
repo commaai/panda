@@ -662,8 +662,11 @@ void usb_setup(void) {
       break;
     default:
       resp_len = usb_cb_control_msg(&setup, resp, 1);
-      USB_WritePacket(resp, MIN(resp_len, setup.b.wLength.w), 0);
-      USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+      // response pending if -1 was returned
+      if (resp_len != -1) {
+        USB_WritePacket(resp, MIN(resp_len, setup.b.wLength.w), 0);
+        USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+      }
   }
 }
 
