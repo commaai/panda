@@ -89,7 +89,7 @@ To print out the serial console from the ESP8266, run PORT=1 tests/debug_console
 Safety Model
 ------
 
-When a panda powers up, by default it's in `SAFETY_SILENT` mode. While in `SAFETY_SILENT` mode, the buses are also forced to be silent. In order to send messages, you have to select a safety mode. Currently, setting safety modes is only supported over USB.
+When a panda powers up, by default it's in `SAFETY_SILENT` mode. While in `SAFETY_SILENT` mode, the buses are also forced to be silent. In order to send messages, you have to select a safety mode. Currently, setting safety modes is only supported over USB. Some of safety modes (for example `SAFETY_ALLOUTPUT`) are disabled in release firmwares. In order to use them, compile and flash your own build.
 
 Safety modes optionally supports `controls_allowed`, which allows or blocks a subset of messages based on a customizable state in the board.
 
