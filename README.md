@@ -36,7 +36,7 @@ And to send one on bus 0:
 ```
 Note that you may have to setup [udev rules](https://community.comma.ai/wiki/index.php/Panda#Linux_udev_rules) for Linux, such as
 ``` bash
-sudo tee /etc/udev/rules.d/11-panda.rules <<EOF
+sudo tee /etc/udev/rules.d/99-panda.rules <<EOF
 SUBSYSTEM=="usb", ATTRS{idVendor}=="bbaa", ATTRS{idProduct}=="ddcc", MODE="0666"
 SUBSYSTEM=="usb", ATTRS{idVendor}=="bbaa", ATTRS{idProduct}=="ddee", MODE="0666"
 EOF
