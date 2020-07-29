@@ -46,34 +46,36 @@ if __name__ == "__main__":
   p0.can_clear(0xFFFF)
   p1.can_clear(0xFFFF)
 
-  loops = 0
-  while True:
-    for speed in [33.3, 83.3]:
-      set_speed_kbps(p0, speed)
-      set_speed_kbps(p1, speed)
-      p0.can_clear(0xFFFF)
-      p1.can_clear(0xFFFF)
+  try:
+    loops = 0
+    while True:
+      for speed in [33.3, 83.3]:
+        set_speed_kbps(p0, speed)
+        set_speed_kbps(p1, speed)
+        p0.can_clear(0xFFFF)
+        p1.can_clear(0xFFFF)
 
-      print(f"Speed: {speed}")
-      time.sleep(0.1)
+        print(f"Speed: {speed}")
+        time.sleep(0.1)
 
-      print("Send 1 -> 0")
-      send(p1, 1, b"1to0:" + bytes(str(loops%100), "utf-8"))
-      time.sleep(0.05)
-      rx = list(filter(lambda x: x[3] < 128, p0.can_recv()))
-      #print(rx)
-      assert(len(rx) == 1)
+        print("Send 1 -> 0")
+        send(p1, 1, b"1to0:" + bytes(str(loops%100), "utf-8"))
+        time.sleep(0.05)
+        rx = list(filter(lambda x: x[3] < 128, p0.can_recv()))
+        print(rx)
+        assert(len(rx) == 1)
 
-      print("Send 0 -> 1")
-      send(p0, 1, b"0to1:" + bytes(str(loops%100), "utf-8"))
-      time.sleep(0.05)
-      rx = list(filter(lambda x: x[3] < 128, p1.can_recv()))
-      #print(rx)
-      assert(len(rx) == 1)
+        print("Send 0 -> 1")
+        send(p0, 1, b"0to1:" + bytes(str(loops%100), "utf-8"))
+        time.sleep(0.05)
+        rx = list(filter(lambda x: x[3] < 128, p1.can_recv()))
+        print(rx)
+        assert(len(rx) == 1)
 
-      time.sleep(0.5)
+        time.sleep(0.5)
 
 
-    loops += 1
-    print(f"Completed {loops} loops")
-    #time.sleep(2)
+      loops += 1
+      print(f"Completed {loops} loops")
+  except:
+    print("Test failed somehow. Did you power the black panda using the GMLAN harness?")
