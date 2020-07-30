@@ -77,5 +77,5 @@ if __name__ == "__main__":
 
       loops += 1
       print(f"Completed {loops} loops")
-  except:
+  except Exception:
     print("Test failed somehow. Did you power the black panda using the GMLAN harness?")
