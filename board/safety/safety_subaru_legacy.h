@@ -8,6 +8,7 @@ const int SUBARU_L_MAX_RATE_DOWN = 70;
 const int SUBARU_L_DRIVER_TORQUE_ALLOWANCE = 60;
 const int SUBARU_L_DRIVER_TORQUE_FACTOR = 10;
 const int SUBARU_L_STANDSTILL_THRSLD = 20;  // about 1kph
+const int SUBARU_L_BRAKE_THRSLD = 2; // filter sensor noise, max_brake is 400
 
 
 const CanMsg SUBARU_L_TX_MSGS[] = {{0x161, 0, 8}, {0x164, 0, 8}};
@@ -64,7 +65,7 @@ static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     if (addr == 0xD1) {
-      brake_pressed = GET_BYTE(to_push, 2) > 0;
+      brake_pressed = GET_BYTE(to_push, 2) > SUBARU_L_BRAKE_THRSLD;
     }
 
     if (addr == 0x140) {

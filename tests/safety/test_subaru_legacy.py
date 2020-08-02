@@ -15,6 +15,7 @@ RT_INTERVAL = 250000
 
 DRIVER_TORQUE_ALLOWANCE = 60
 DRIVER_TORQUE_FACTOR = 10
+BRAKE_THRESHOLD = 2
 
 
 class TestSubaruLegacySafety(common.PandaSafetyTest):
@@ -47,6 +48,8 @@ class TestSubaruLegacySafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("Wheel_Speeds", 0, values)
 
   def _brake_msg(self, brake):
+    if brake > 0 and brake < BRAKE_THRESHOLD:
+      brake = BRAKE_THRESHOLD + 1
     values = {"Brake_Pedal": brake}
     return self.packer.make_can_msg_panda("Brake_Pedal", 0, values)
 
