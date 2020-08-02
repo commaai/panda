@@ -45,7 +45,7 @@ static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // enter controls on rising edge of ACC, exit controls on ACC off
     if (addr == 0x144) {
-      int cruise_engaged = ((GET_BYTE(to_push, 5) > 1) & 1);
+      int cruise_engaged = ((GET_BYTE(to_push, 6) >> 1) & 1);
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
       }
