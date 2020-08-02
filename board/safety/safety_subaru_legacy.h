@@ -5,7 +5,7 @@ const int SUBARU_L_MAX_RT_DELTA = 940;          // max delta torque allowed for 
 const uint32_t SUBARU_L_RT_INTERVAL = 250000;    // 250ms between real time checks
 const int SUBARU_L_MAX_RATE_UP = 50;
 const int SUBARU_L_MAX_RATE_DOWN = 70;
-const int SUBARU_L_DRIVER_TORQUE_ALLOWANCE = 75;
+const int SUBARU_L_DRIVER_TORQUE_ALLOWANCE = 60;
 const int SUBARU_L_DRIVER_TORQUE_FACTOR = 10;
 const int SUBARU_L_STANDSTILL_THRSLD = 20;  // about 1kph
 
