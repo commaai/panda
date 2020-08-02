@@ -8,8 +8,7 @@ const int SUBARU_L_MAX_RATE_DOWN = 70;
 const int SUBARU_L_DRIVER_TORQUE_ALLOWANCE = 60;
 const int SUBARU_L_DRIVER_TORQUE_FACTOR = 10;
 const int SUBARU_L_STANDSTILL_THRSLD = 20;  // about 1kph
-const int SUBARU_L_BRAKE_THRSLD = 2; // filter sensor noise, max_brake is 400
-
+const uint32_t SUBARU_L_BRAKE_THRSLD = 2; // filter sensor noise, max_brake is 400
 
 const CanMsg SUBARU_L_TX_MSGS[] = {{0x161, 0, 8}, {0x164, 0, 8}};
 const int SUBARU_L_TX_MSGS_LEN = sizeof(SUBARU_L_TX_MSGS) / sizeof(SUBARU_L_TX_MSGS[0]);
