@@ -19,7 +19,7 @@ void EXTI0_IRQ_Handler(void) {
 }
 
 void TIM1_UP_TIM10_IRQ_Handler(void) {
-  if(TIM1->SR & TIM_SR_UIF) {
+  if((TIM1->SR & TIM_SR_UIF) != 0) {
     if(clock_source_mode != CLOCK_SOURCE_MODE_DISABLED) {
       // Start clock pulse
       set_gpio_output(GPIOB, 14, true);
@@ -32,7 +32,7 @@ void TIM1_UP_TIM10_IRQ_Handler(void) {
 }
 
 void TIM1_CC_IRQ_Handler(void) {
-  if(TIM1->SR & TIM_SR_CC1IF) {
+  if((TIM1->SR & TIM_SR_CC1IF) != 0) {
     if(clock_source_mode != CLOCK_SOURCE_MODE_DISABLED) {
       // End clock pulse
       set_gpio_output(GPIOB, 14, false);
@@ -53,10 +53,10 @@ void clock_source_init(uint8_t mode){
   register_clear_bits(&(EXTI->FTSR), (1U << 0));
 
   // Setup timer
-  REGISTER_INTERRUPT(TIM1_UP_TIM10_IRQn, TIM1_UP_TIM10_IRQ_Handler, (1200U /CLOCK_SOURCE_PERIOD_MS) , FAULT_INTERRUPT_RATE_TIM1)
-  REGISTER_INTERRUPT(TIM1_CC_IRQn, TIM1_CC_IRQ_Handler, (1200U /CLOCK_SOURCE_PERIOD_MS) , FAULT_INTERRUPT_RATE_TIM1)
+  REGISTER_INTERRUPT(TIM1_UP_TIM10_IRQn, TIM1_UP_TIM10_IRQ_Handler, (1200U / CLOCK_SOURCE_PERIOD_MS) , FAULT_INTERRUPT_RATE_TIM1)
+  REGISTER_INTERRUPT(TIM1_CC_IRQn, TIM1_CC_IRQ_Handler, (1200U / CLOCK_SOURCE_PERIOD_MS) , FAULT_INTERRUPT_RATE_TIM1)
   register_set(&(TIM1->PSC), (48000-1), 0xFFFFU);                        // Tick on 1 ms
-  register_set(&(TIM1->ARR), (CLOCK_SOURCE_PERIOD_MS-1), 0xFFFFU);       // Period
+  register_set(&(TIM1->ARR), (CLOCK_SOURCE_PERIOD_MS - 1U), 0xFFFFU);    // Period
   register_set(&(TIM1->CCMR1), 0U, 0xFFFFU);                             // No output on compare
   register_set_bits(&(TIM1->CCER), TIM_CCER_CC1E);                       // Enable compare 1
   register_set(&(TIM1->CCR1), CLOCK_SOURCE_PULSE_LEN_MS, 0xFFFFU);       // Compare 1 value
