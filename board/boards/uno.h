@@ -175,6 +175,10 @@ uint32_t uno_read_current(void){
   return 0U;
 }
 
+void uno_set_clock_source_mode(uint8_t mode){
+  UNUSED(mode);
+}
+
 void uno_init(void) {
   common_init_gpio();
 
@@ -282,5 +286,6 @@ const board board_uno = {
   .read_current = uno_read_current,
   .set_fan_power = uno_set_fan_power,
   .set_ir_power = uno_set_ir_power,
-  .set_phone_power = uno_set_phone_power
+  .set_phone_power = uno_set_phone_power,
+  .set_clock_source_mode = uno_set_clock_source_mode
 };
