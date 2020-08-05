@@ -71,6 +71,10 @@ void clock_source_init(uint8_t mode){
       NVIC_DisableIRQ(TIM1_UP_TIM10_IRQn);
       NVIC_DisableIRQ(TIM1_CC_IRQn);
 
+      // Disable pulse if we were in the middle of it
+      set_gpio_output(GPIOB, 14, false);
+      set_gpio_output(GPIOB, 15, false);
+
       clock_source_mode = CLOCK_SOURCE_MODE_DISABLED;
       break;
     case CLOCK_SOURCE_MODE_FREE_RUNNING:
