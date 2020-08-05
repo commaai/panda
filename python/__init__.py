@@ -148,6 +148,10 @@ class Panda(object):
   HW_TYPE_PEDAL = b'\x04'
   HW_TYPE_UNO = b'\x05'
 
+  CLOCK_SOURCE_MODE_DISABLED = 0
+  CLOCK_SOURCE_MODE_FREE_RUNNING = 1
+  CLOCK_SOURCE_MODE_EXTERNAL_SYNC = 2
+
   def __init__(self, serial=None, claim=True):
     self._serial = serial
     self._handle = None
@@ -665,3 +669,7 @@ class Panda(object):
   # ****************** Phone *****************
   def set_phone_power(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, int(enabled), 0, b'')
+
+  # ************** Clock Source **************
+  def set_clock_source_mode(self, mode):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, int(mode), 0, b'')

@@ -606,6 +606,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         }
       }
       break;
+    // **** 0xf5: set clock source mode
+    case 0xf5:
+      current_board->set_clock_source_mode(setup->b.wValue.w);
+      break;
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);

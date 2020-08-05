@@ -193,6 +193,9 @@ void dos_init(void) {
 
   // init multiplexer
   can_set_obd(car_harness_status, false);
+
+  // Init clock source as internal free running
+  dos_set_clock_source_mode(CLOCK_SOURCE_MODE_FREE_RUNNING);
 }
 
 const harness_configuration dos_harness_config = {
