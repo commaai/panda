@@ -7,7 +7,7 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-RUN pip3 install pycrypto==2.6.1
+RUN pip3 install pycryptodome==3.9.8
 
 # Build esp toolchain
 RUN mkdir -p /panda/boardesp

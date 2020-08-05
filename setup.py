@@ -48,7 +48,7 @@ setup(
   install_requires=[
     'libusb1 == 1.6.6',
     'hexdump >= 3.3',
-    'pycrypto >= 2.6.1',
+    'pycryptodome >= 3.9.8',
     'tqdm >= 4.14.0',
     'requests'
   ],
