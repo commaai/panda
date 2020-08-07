@@ -124,11 +124,11 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       cruise_engaged_prev = cruise_engaged;
     }
 
-    if ((addr == 608) || (hyundai_legacy && (addr == 881))) {
+    if ((addr == 608) || (addr == 916)) { /* keep 608 for some manual transmission vehicles that do not have TCS13*/
       if (addr == 608) {
         gas_pressed = (GET_BYTE(to_push, 7) >> 6) != 0;
       } else {
-        gas_pressed = (((GET_BYTE(to_push, 4) & 0x7F) << 1) | GET_BYTE(to_push, 3) >> 7) != 0;
+        gas_pressed = ((GET_BYTE(to_push, 5) >> 5) != 0) && ((GET_BYTE(to_push, 5) >> 6) == 0));
       }
     }
 
