@@ -23,8 +23,8 @@ def checksum(msg):
 
   chksum = 0
   for i, b in enumerate(dat):
-    if addr in [608, 1057] and i == 7:
-      b &= 0x0F if addr == 1057 else 0xF0
+    if addr == 1057 and i == 7:
+      b &= 0x0F
     elif addr == 916 and i == 6:
       b &= 0xF0
     chksum += sum(divmod(b, 16))
@@ -41,9 +41,8 @@ class TestHyundaiSafety(common.PandaSafetyTest):
   FWD_BLACKLISTED_ADDRS = {2: [832, 1157]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-  cnt_gas = 0
   cnt_speed = 0
-  cnt_brake = 0
+  cnt_gas_brake = 0
   cnt_cruise = 0
 
   def setUp(self):
@@ -57,13 +56,13 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("CLU11", 0, values)
 
   def _gas_msg(self, gas):
-    values = {"CF_Ems_AclAct": gas, "AliveCounter": self.cnt_gas % 4}
-    self.__class__.cnt_gas += 1
-    return self.packer.make_can_msg_panda("EMS16", 0, values, fix_checksum=checksum)
+    values = {"DriverOverride": 1 if gas else 0, "AliveCounterTCS": self.cnt_gas_brake % 8}
+    self.__class__.cnt_gas_brake += 1
+    return self.packer.make_can_msg_panda("TCS13", 0, values, fix_checksum=checksum)
 
   def _brake_msg(self, brake):
-    values = {"DriverBraking": brake, "AliveCounterTCS": self.cnt_brake % 8}
-    self.__class__.cnt_brake += 1
+    values = {"DriverBraking": brake, "AliveCounterTCS": self.cnt_gas_brake % 8}
+    self.__class__.cnt_gas_brake += 1
     return self.packer.make_can_msg_panda("TCS13", 0, values, fix_checksum=checksum)
 
   def _speed_msg(self, speed):
