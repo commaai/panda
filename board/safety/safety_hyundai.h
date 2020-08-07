@@ -127,7 +127,7 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // sample gas and brake pedal state
     if (addr == 916) {
-      gas_pressed = ((GET_BYTE(to_push, 4) >> 5) & 0x3) == 1;
+      gas_pressed = ((GET_BYTE(to_push, 5) >> 5) & 0x3) == 1;
       brake_pressed = (GET_BYTE(to_push, 6) >> 7) != 0;
     }
 
