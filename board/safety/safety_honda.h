@@ -186,7 +186,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
-  if ((honda_hw == HONDA_BG_HW)) {
+  if (honda_hw == HONDA_BG_HW) {
     tx = msg_allowed(to_send, HONDA_BG_TX_MSGS, sizeof(HONDA_BG_TX_MSGS)/sizeof(HONDA_BG_TX_MSGS[0]));
   } else if ((honda_hw == HONDA_BH_HW) && !honda_bosch_long) {
     tx = msg_allowed(to_send, HONDA_BH_TX_MSGS, sizeof(HONDA_BH_TX_MSGS)/sizeof(HONDA_BH_TX_MSGS[0]));
@@ -261,7 +261,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   }
 
-    // Bosch supplemental control check
+  // Bosch supplemental control check
   if (addr == 0xE5) {
     if ((GET_BYTES_04(to_send) != 0x10800004) || ((GET_BYTES_48(to_send) & 0x00FFFFFF) != 0x0)) {
       tx = 0;
