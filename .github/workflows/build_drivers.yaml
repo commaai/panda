@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          apt-get install -y dkms gcc linux-headers-$(uname -r) make sudo
+          sudo apt-get install -y dkms gcc linux-headers-$(uname -r) make
       - name: Build socketcan driver
         run: |
           cd drivers/linux
