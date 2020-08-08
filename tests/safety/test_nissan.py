@@ -19,7 +19,7 @@ class TestNissanSafety(common.PandaSafetyTest):
 
   TX_MSGS = [[0x169, 0], [0x2b1, 0], [0x4cc, 0], [0x20b, 2], [0x280, 2]]
   STANDSTILL_THRESHOLD = 0
-  GAS_PRESSED_THRESHOLD = 1
+  GAS_PRESSED_THRESHOLD = 3
   RELAY_MALFUNCTION_ADDR = 0x169
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {0: [0x280], 2: [0x169, 0x2b1, 0x4cc]}
