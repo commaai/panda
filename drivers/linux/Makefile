@@ -16,3 +16,7 @@ uninstall:
 	sudo dkms uninstall panda/$(VERSION)
 	sudo dkms remove panda/$(VERSION) --all
 
+unload:
+	sudo rmmod panda
+
+rebuild:	uninstall unload link build install
