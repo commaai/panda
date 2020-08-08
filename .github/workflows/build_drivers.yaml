@@ -1,0 +1,20 @@
+name: panda drivers
+on: [push, pull_request]
+
+jobs:
+  build_socketcan:
+    name: socketcan build
+    runs-on: ubuntu-16.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          apt-get install -y dkms gcc linux-headers-$(uname -r) make sudo
+      - name: Build socketcan driver
+        run: |
+          cd drivers/linux
+          make link
+          make all
+          make install
+
