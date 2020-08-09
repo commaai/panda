@@ -119,11 +119,6 @@ void dos_set_fan_power(uint8_t percentage){
   fan_set_power(percentage);
 }
 
-uint32_t dos_read_current(void){
-  // No current sense on Dos
-  return 0U;
-}
-
 void dos_init(void) {
   common_init_gpio();
 
@@ -209,7 +204,7 @@ const board board_dos = {
   .set_can_mode = dos_set_can_mode,
   .usb_power_mode_tick = dos_usb_power_mode_tick,
   .check_ignition = dos_check_ignition,
-  .read_current = dos_read_current,
+  .read_current = unused_read_current,
   .set_fan_power = dos_set_fan_power,
   .set_ir_power = dos_set_ir_power,
   .set_phone_power = unused_set_phone_power

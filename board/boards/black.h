@@ -132,11 +132,6 @@ bool black_check_ignition(void){
   return harness_check_ignition();
 }
 
-uint32_t black_read_current(void){
-  // No current sense on black panda
-  return 0U;
-}
-
 void black_init(void) {
   common_init_gpio();
 
@@ -219,7 +214,7 @@ const board board_black = {
   .set_can_mode = black_set_can_mode,
   .usb_power_mode_tick = unused_usb_power_mode_tick,
   .check_ignition = black_check_ignition,
-  .read_current = black_read_current,
+  .read_current = unused_read_current,
   .set_fan_power = unused_set_fan_power,
   .set_ir_power = unused_set_ir_power,
   .set_phone_power = unused_set_phone_power
