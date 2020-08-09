@@ -220,5 +220,11 @@ const board board_dos = {
   .read_current = dos_read_current,
   .set_fan_power = dos_set_fan_power,
   .set_ir_power = dos_set_ir_power,
-  .set_phone_power = dos_set_phone_power
+  .set_phone_power = dos_set_phone_power,
+  .has_gps = true,
+  .has_gmlan = false,
+  .has_obd = true,
+  .has_lin = false,
+  .has_rtc = true,
+  .has_relay = true
 };

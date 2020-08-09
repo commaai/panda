@@ -343,5 +343,11 @@ const board board_white = {
   .read_current = white_read_current,
   .set_fan_power = white_set_fan_power,
   .set_ir_power = white_set_ir_power,
-  .set_phone_power = white_set_phone_power
+  .set_phone_power = white_set_phone_power,
+  .has_gps = false,
+  .has_gmlan = true,
+  .has_obd = false,
+  .has_lin = true,
+  .has_rtc = false,
+  .has_relay = false
 };

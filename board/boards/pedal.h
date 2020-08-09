@@ -113,5 +113,11 @@ const board board_pedal = {
   .read_current = pedal_read_current,
   .set_fan_power = pedal_set_fan_power,
   .set_ir_power = pedal_set_ir_power,
-  .set_phone_power = pedal_set_phone_power
+  .set_phone_power = pedal_set_phone_power,
+  .has_gps = false,
+  .has_gmlan = false,
+  .has_obd = false,
+  .has_lin = false,
+  .has_rtc = false,
+  .has_relay = false
 };

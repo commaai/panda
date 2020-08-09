@@ -124,14 +124,14 @@ void set_safety_mode(uint16_t mode, int16_t param) {
   switch (mode_copy) {
     case SAFETY_SILENT:
       set_intercept_relay(false);
-      if (board_has_obd()) {
+      if (current_board->has_obd) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_SILENT;
       break;
     case SAFETY_NOOUTPUT:
       set_intercept_relay(false);
-      if (board_has_obd()) {
+      if (current_board->has_obd) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_LIVE;
@@ -139,7 +139,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
     case SAFETY_ELM327:
       set_intercept_relay(false);
       heartbeat_counter = 0U;
-      if (board_has_obd()) {
+      if (current_board->has_obd) {
         current_board->set_can_mode(CAN_MODE_OBD_CAN2);
       }
       can_silent = ALL_CAN_LIVE;
@@ -147,7 +147,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
     default:
       set_intercept_relay(true);
       heartbeat_counter = 0U;
-      if (board_has_obd()) {
+      if (current_board->has_obd) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_LIVE;
@@ -421,7 +421,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
     case 0xdb:
-      if(board_has_obd()){
+      if(current_board->has_obd){
         if (setup->b.wValue.w == 1U) {
           // Enable OBD CAN
           current_board->set_can_mode(CAN_MODE_OBD_CAN2);
@@ -559,7 +559,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xf0: k-line/l-line wake-up pulse for KWP2000 fast initialization
     case 0xf0:
-      if(board_has_lin()) {
+      if(current_board->has_lin) {
         bool k = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
         bool l = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
         if (bitbang_wakeup(k, l)) {
@@ -597,7 +597,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       }
     // **** 0xf4: k-line/l-line 5 baud initialization
     case 0xf4:
-      if(board_has_lin()) {
+      if(current_board->has_lin) {
         bool k = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
         bool l = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
         uint8_t five_baud_addr = (setup->b.wIndex.w & 0xFFU);
@@ -793,14 +793,14 @@ int main(void) {
     uart_init(&uart_ring_debug, 115200);
   }
 
-  if (board_has_gps()) {
+  if (current_board->has_gps) {
     uart_init(&uart_ring_esp_gps, 9600);
   } else {
     // enable ESP uart
     uart_init(&uart_ring_esp_gps, 115200);
   }
 
-  if(board_has_lin()){
+  if(current_board->has_lin){
     // enable LIN
     uart_init(&uart_ring_lin1, 10400);
     UART5->CR2 |= USART_CR2_LINEN;

@@ -282,5 +282,11 @@ const board board_uno = {
   .read_current = uno_read_current,
   .set_fan_power = uno_set_fan_power,
   .set_ir_power = uno_set_ir_power,
-  .set_phone_power = uno_set_phone_power
+  .set_phone_power = uno_set_phone_power,
+  .has_gps = true,
+  .has_gmlan = false,
+  .has_obd = true,
+  .has_lin = false,
+  .has_rtc = true,
+  .has_relay = true
 };

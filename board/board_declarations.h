@@ -29,10 +29,18 @@ struct board {
   board_set_ir_power set_ir_power;
   board_set_fan_power set_fan_power;
   board_set_phone_power set_phone_power;
+
+  // HW properties
+  bool has_gps;
+  bool has_gmlan;
+  bool has_obd;
+  bool has_lin;
+  bool has_rtc;
+  bool has_relay;
 };
 
 // ******************* Definitions ********************
-// These should match the enums in cereal/log.capnp and __init__.py
+// These should match the enums in cereal/log.capnp and python/__init__.py
 #define HW_TYPE_UNKNOWN 0U
 #define HW_TYPE_WHITE_PANDA 1U
 #define HW_TYPE_GREY_PANDA 2U
@@ -52,7 +60,7 @@ struct board {
 #define USB_POWER_CDP 2U
 #define USB_POWER_DCP 3U
 
-// ESP modes
+// ESP/GPS modes
 #define ESP_GPS_DISABLED 0U
 #define ESP_GPS_ENABLED 1U
 #define ESP_GPS_BOOTMODE 2U
@@ -65,11 +73,3 @@ struct board {
 
 // ********************* Globals **********************
 uint8_t usb_power_mode = USB_POWER_NONE;
-
-// ************ Board function prototypes *************
-bool board_has_gps(void);
-bool board_has_gmlan(void);
-bool board_has_obd(void);
-bool board_has_lin(void);
-bool board_has_rtc(void);
-bool board_has_relay(void);
