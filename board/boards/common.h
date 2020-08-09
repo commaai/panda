@@ -85,6 +85,10 @@ bool detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode) {
 
 // ********** Unused Board Functions **********
 
+void unused_set_esp_gps_mode(uint8_t mode) {
+  UNUSED(mode);
+}
+
 void unused_usb_power_mode_tick(uint32_t uptime){
   UNUSED(uptime);
 }
@@ -100,4 +104,3 @@ void unused_set_fan_power(uint8_t percentage){
 void unused_set_phone_power(bool enabled){
   UNUSED(enabled);
 }
-
