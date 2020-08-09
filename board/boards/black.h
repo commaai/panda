@@ -239,5 +239,11 @@ const board board_black = {
   .read_current = black_read_current,
   .set_fan_power = black_set_fan_power,
   .set_ir_power = black_set_ir_power,
-  .set_phone_power = black_set_phone_power
+  .set_phone_power = black_set_phone_power,
+  .has_gps = true,
+  .has_gmlan = false,
+  .has_obd = true,
+  .has_lin = false,
+  .has_rtc = false,
+  .has_relay = true
 };
