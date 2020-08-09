@@ -59,10 +59,6 @@ void dos_set_bootkick(bool enabled){
 
 void dos_bootkick(void) {}
 
-void dos_set_phone_power(bool enabled){
-  UNUSED(enabled);
-}
-
 void dos_set_usb_power_mode(uint8_t mode) {
   UNUSED(mode);
 }
@@ -220,5 +216,5 @@ const board board_dos = {
   .read_current = dos_read_current,
   .set_fan_power = dos_set_fan_power,
   .set_ir_power = dos_set_ir_power,
-  .set_phone_power = dos_set_phone_power
+  .set_phone_power = unused_set_phone_power
 };

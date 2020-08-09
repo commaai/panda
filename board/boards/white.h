@@ -225,21 +225,9 @@ void white_usb_power_mode_tick(uint32_t uptime){
 #endif
 }
 
-void white_set_ir_power(uint8_t percentage){
-  UNUSED(percentage);
-}
-
-void white_set_fan_power(uint8_t percentage){
-  UNUSED(percentage);
-}
-
 bool white_check_ignition(void){
   // ignition is on PA1
   return !get_gpio_input(GPIOA, 1);
-}
-
-void white_set_phone_power(bool enabled){
-  UNUSED(enabled);
 }
 
 void white_grey_common_init(void) {
@@ -341,7 +329,7 @@ const board board_white = {
   .usb_power_mode_tick = white_usb_power_mode_tick,
   .check_ignition = white_check_ignition,
   .read_current = white_read_current,
-  .set_fan_power = white_set_fan_power,
-  .set_ir_power = white_set_ir_power,
-  .set_phone_power = white_set_phone_power
+  .set_fan_power = unused_set_fan_power,
+  .set_ir_power = unused_set_ir_power,
+  .set_phone_power = unused_set_phone_power
 };
