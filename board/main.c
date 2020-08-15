@@ -778,7 +778,6 @@ int main(void) {
   puts("Config:\n");
   puts("  Board type: "); puts(current_board->board_type); puts("\n");
   puts(has_external_debug_serial ? "  Real serial\n" : "  USB serial\n");
-  puts(is_entering_bootmode ? "  ESP wants bootmode\n" : "  No bootmode\n");
 
   // init board
   current_board->init();
