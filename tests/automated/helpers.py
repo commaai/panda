@@ -8,7 +8,6 @@ from panda_jungle import PandaJungle  # pylint: disable=import-error
 from nose.tools import assert_equal
 from parameterized import parameterized, param
 from .timeout import run_with_timeout
-from .wifi_helpers import _connect_wifi
 
 SPEED_NORMAL = 500
 SPEED_GMLAN = 33.3
@@ -69,13 +68,6 @@ test_black = parameterized([
 test_uno = parameterized([
     param(panda_type=Panda.HW_TYPE_UNO)
   ])
-
-def connect_wifi(serial=None):
-  p = Panda(serial=serial)
-  p.set_esp_power(True)
-  dongle_id, pw = p.get_serial()
-  assert(dongle_id.isalnum())
-  _connect_wifi(dongle_id, pw)
 
 def time_many_sends(p, bus, p_recv=None, msg_count=100, msg_id=None, two_pandas=False):
   if p_recv == None:
