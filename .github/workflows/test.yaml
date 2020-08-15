@@ -45,26 +45,6 @@ jobs:
       - name: Build pedal STM bootstub image
         run: $RUN "cd /tmp/openpilot/panda/board/pedal && make obj/bootstub.bin"
 
-  build_esp:
-    name: build esp
-    runs-on: ubuntu-16.04
-    timeout-minutes: 45
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build docker image
-      run: |
-        docker pull $(grep -ioP '(?<=^from)\s+\S+' tests/build/Dockerfile.panda_esp) || true
-        docker pull docker.io/commaai/panda_esp:latest || true
-        docker build --cache-from docker.io/commaai/panda_esp:latest -t panda_esp -f tests/build/Dockerfile.panda_esp .
-    - name: Build ESP image
-      run: docker run --rm panda_esp /bin/sh -c "cd /panda/boardesp && make user1.bin"
-    - name: Push image
-      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
-      run:  |
-        docker login -u wmelching -p ${{ secrets.COMMA_DOCKERHUB_TOKEN }}
-        docker tag panda_esp docker.io/commaai/panda_esp:latest
-        docker push docker.io/commaai/panda_esp:latest
-
   safety:
     name: safety
     runs-on: ubuntu-16.04
