@@ -69,8 +69,4 @@ void early(void) {
     current_board->set_led(LED_GREEN, 1);
     jump_to_bootloader();
   }
-
-  if (is_entering_bootmode) {
-    enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
-  }
 }
