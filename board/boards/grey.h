@@ -49,5 +49,6 @@ const board board_grey = {
   .set_fan_power = white_set_fan_power,
   .set_ir_power = white_set_ir_power,
   .set_phone_power = white_set_phone_power,
-  .set_clock_source_mode = white_set_clock_source_mode
+  .set_clock_source_mode = white_set_clock_source_mode,
+  .set_siren = white_set_siren
 };

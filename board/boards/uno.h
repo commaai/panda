@@ -179,6 +179,10 @@ void uno_set_clock_source_mode(uint8_t mode){
   UNUSED(mode);
 }
 
+void uno_set_siren(bool enabled){
+  UNUSED(enabled);
+}
+
 void uno_init(void) {
   common_init_gpio();
 
@@ -287,5 +291,6 @@ const board board_uno = {
   .set_fan_power = uno_set_fan_power,
   .set_ir_power = uno_set_ir_power,
   .set_phone_power = uno_set_phone_power,
-  .set_clock_source_mode = uno_set_clock_source_mode
+  .set_clock_source_mode = uno_set_clock_source_mode,
+  .set_siren = uno_set_siren
 };

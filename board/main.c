@@ -610,6 +610,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xf5:
       current_board->set_clock_source_mode(setup->b.wValue.w);
       break;
+    // **** 0xf6: set siren enabled
+    case 0xf6:
+      siren_enabled = (setup->b.wValue.w != 0U);
+      break;
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);
@@ -667,87 +671,97 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 #define EON_HEARTBEAT_IGNITION_CNT_ON 5U
 #define EON_HEARTBEAT_IGNITION_CNT_OFF 2U
 
-// called at 1Hz
+// called at 8Hz
+uint8_t loop_counter = 0U;
 void TIM1_BRK_TIM9_IRQ_Handler(void) {
   if (TIM9->SR != 0) {
-    can_live = pending_can_live;
+    // siren
+    current_board->set_siren((loop_counter & 1U) && siren_enabled);
 
-    current_board->usb_power_mode_tick(uptime_cnt);
+    // decimated to 1Hz
+    if(loop_counter == 0U){
+      can_live = pending_can_live;
 
-    //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
+      current_board->usb_power_mode_tick(uptime_cnt);
 
-    // reset this every 16th pass
-    if ((uptime_cnt & 0xFU) == 0U) {
-      pending_can_live = 0;
-    }
-    #ifdef DEBUG
-      puts("** blink ");
-      puth(can_rx_q.r_ptr); puts(" "); puth(can_rx_q.w_ptr); puts("  ");
-      puth(can_tx1_q.r_ptr); puts(" "); puth(can_tx1_q.w_ptr); puts("  ");
-      puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
-    #endif
+      //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
 
-    // Tick drivers
-    fan_tick();
-
-    // set green LED to be controls allowed
-    current_board->set_led(LED_GREEN, controls_allowed);
-
-    // turn off the blue LED, turned on by CAN
-    // unless we are in power saving mode
-    current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
-
-    // increase heartbeat counter and cap it at the uint32 limit
-    if (heartbeat_counter < __UINT32_MAX__) {
-      heartbeat_counter += 1U;
-    }
-
-    #ifdef EON
-    // check heartbeat counter if we are running EON code.
-    // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
-    if (heartbeat_counter >= (check_started() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
-      puts("EON hasn't sent a heartbeat for 0x");
-      puth(heartbeat_counter);
-      puts(" seconds. Safety is set to SILENT mode.\n");
-      if (current_safety_mode != SAFETY_SILENT) {
-        set_safety_mode(SAFETY_SILENT, 0U);
+      // reset this every 16th pass
+      if ((uptime_cnt & 0xFU) == 0U) {
+        pending_can_live = 0;
       }
-      if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
-        set_power_save_state(POWER_SAVE_STATUS_ENABLED);
+      #ifdef DEBUG
+        puts("** blink ");
+        puth(can_rx_q.r_ptr); puts(" "); puth(can_rx_q.w_ptr); puts("  ");
+        puth(can_tx1_q.r_ptr); puts(" "); puth(can_tx1_q.w_ptr); puts("  ");
+        puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
+      #endif
+
+      // Tick drivers
+      fan_tick();
+
+      // set green LED to be controls allowed
+      current_board->set_led(LED_GREEN, controls_allowed);
+
+      // turn off the blue LED, turned on by CAN
+      // unless we are in power saving mode
+      current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
+
+      // increase heartbeat counter and cap it at the uint32 limit
+      if (heartbeat_counter < __UINT32_MAX__) {
+        heartbeat_counter += 1U;
       }
 
-      // Also disable IR when the heartbeat goes missing
-      current_board->set_ir_power(0U);
+      #ifdef EON
+      // check heartbeat counter if we are running EON code.
+      // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
+      if (heartbeat_counter >= (check_started() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
+        puts("EON hasn't sent a heartbeat for 0x");
+        puth(heartbeat_counter);
+        puts(" seconds. Safety is set to SILENT mode.\n");
+        if (current_safety_mode != SAFETY_SILENT) {
+          set_safety_mode(SAFETY_SILENT, 0U);
+        }
+        if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
+          set_power_save_state(POWER_SAVE_STATUS_ENABLED);
+        }
 
-      // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
-      if(usb_enumerated()){
-        current_board->set_fan_power(50U);
-      } else {
-        current_board->set_fan_power(0U);
+        // Also disable IR when the heartbeat goes missing
+        current_board->set_ir_power(0U);
+
+        // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
+        if(usb_enumerated()){
+          current_board->set_fan_power(50U);
+        } else {
+          current_board->set_fan_power(0U);
+        }
       }
+
+      // enter CDP mode when car starts to ensure we are charging a turned off EON
+      if (check_started() && (usb_power_mode != USB_POWER_CDP)) {
+        current_board->set_usb_power_mode(USB_POWER_CDP);
+      }
+      #endif
+
+      // check registers
+      check_registers();
+
+      // set ignition_can to false after 2s of no CAN seen
+      if (ignition_can_cnt > 2U) {
+        ignition_can = false;
+      };
+
+      // on to the next one
+      uptime_cnt += 1U;
+      safety_mode_cnt += 1U;
+      ignition_can_cnt += 1U;
+
+      // synchronous safety check
+      safety_tick(current_hooks);
     }
 
-    // enter CDP mode when car starts to ensure we are charging a turned off EON
-    if (check_started() && (usb_power_mode != USB_POWER_CDP)) {
-      current_board->set_usb_power_mode(USB_POWER_CDP);
-    }
-    #endif
-
-    // check registers
-    check_registers();
-
-    // set ignition_can to false after 2s of no CAN seen
-    if (ignition_can_cnt > 2U) {
-      ignition_can = false;
-    };
-
-    // on to the next one
-    uptime_cnt += 1U;
-    safety_mode_cnt += 1U;
-    ignition_can_cnt += 1U;
-
-    // synchronous safety check
-    safety_tick(current_hooks);
+    loop_counter++;
+    loop_counter %= 8U;
   }
   TIM9->SR = 0;
 }
@@ -830,8 +844,8 @@ int main(void) {
   spi_init();
 #endif
 
-  // 1hz
-  timer_init(TIM9, 1464);
+  // 8hz
+  timer_init(TIM9, 183);
   NVIC_EnableIRQ(TIM1_BRK_TIM9_IRQn);
 
 #ifdef DEBUG

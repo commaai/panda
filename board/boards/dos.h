@@ -136,6 +136,10 @@ void dos_set_clock_source_mode(uint8_t mode){
   clock_source_init(mode);
 }
 
+void dos_set_siren(bool enabled){
+  set_gpio_output(GPIOC, 12, enabled);
+}
+
 void dos_init(void) {
   common_init_gpio();
 
@@ -228,5 +232,6 @@ const board board_dos = {
   .set_fan_power = dos_set_fan_power,
   .set_ir_power = dos_set_ir_power,
   .set_phone_power = dos_set_phone_power,
-  .set_clock_source_mode = dos_set_clock_source_mode
+  .set_clock_source_mode = dos_set_clock_source_mode,
+  .set_siren = dos_set_siren
 };

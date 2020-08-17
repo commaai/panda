@@ -246,6 +246,10 @@ void white_set_clock_source_mode(uint8_t mode){
   UNUSED(mode);
 }
 
+void white_set_siren(bool enabled){
+  UNUSED(enabled);
+}
+
 void white_grey_common_init(void) {
   common_init_gpio();
 
@@ -348,5 +352,6 @@ const board board_white = {
   .set_fan_power = white_set_fan_power,
   .set_ir_power = white_set_ir_power,
   .set_phone_power = white_set_phone_power,
-  .set_clock_source_mode = white_set_clock_source_mode
+  .set_clock_source_mode = white_set_clock_source_mode,
+  .set_siren = white_set_siren
 };
