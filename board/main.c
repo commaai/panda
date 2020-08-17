@@ -771,8 +771,8 @@ int main(void) {
   // Init interrupt table
   init_interrupts(true);
 
-  // 1s timer
-  REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler, 2U, FAULT_INTERRUPT_RATE_TIM9)
+  // 8Hz timer
+  REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler, 10U, FAULT_INTERRUPT_RATE_TIM9)
 
   // shouldn't have interrupts here, but just in case
   disable_interrupts();
