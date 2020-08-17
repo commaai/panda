@@ -606,6 +606,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         }
       }
       break;
+    // **** 0xf5: set clock source mode
+    case 0xf5:
+      current_board->set_clock_source_mode(setup->b.wValue.w);
+      break;
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);
@@ -754,7 +758,7 @@ int main(void) {
   init_interrupts(true);
 
   // 1s timer
-  REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler, 2U, FAULT_INTERRUPT_RATE_TIM1)
+  REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler, 2U, FAULT_INTERRUPT_RATE_TIM9)
 
   // shouldn't have interrupts here, but just in case
   disable_interrupts();

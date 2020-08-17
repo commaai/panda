@@ -132,6 +132,10 @@ uint32_t dos_read_current(void){
   return 0U;
 }
 
+void dos_set_clock_source_mode(uint8_t mode){
+  clock_source_init(mode);
+}
+
 void dos_init(void) {
   common_init_gpio();
 
@@ -189,6 +193,9 @@ void dos_init(void) {
 
   // init multiplexer
   can_set_obd(car_harness_status, false);
+
+  // Init clock source as internal free running
+  dos_set_clock_source_mode(CLOCK_SOURCE_MODE_FREE_RUNNING);
 }
 
 const harness_configuration dos_harness_config = {
@@ -220,5 +227,6 @@ const board board_dos = {
   .read_current = dos_read_current,
   .set_fan_power = dos_set_fan_power,
   .set_ir_power = dos_set_ir_power,
-  .set_phone_power = dos_set_phone_power
+  .set_phone_power = dos_set_phone_power,
+  .set_clock_source_mode = dos_set_clock_source_mode
 };

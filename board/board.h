@@ -9,6 +9,7 @@
 #ifdef PANDA
   #include "drivers/fan.h"
   #include "drivers/rtc.h"
+  #include "drivers/clock_source.h"
   #include "boards/white.h"
   #include "boards/grey.h"
   #include "boards/black.h"
