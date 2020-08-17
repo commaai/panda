@@ -13,6 +13,7 @@ typedef void (*board_set_ir_power)(uint8_t percentage);
 typedef void (*board_set_fan_power)(uint8_t percentage);
 typedef void (*board_set_phone_power)(bool enabled);
 typedef void (*board_set_clock_source_mode)(uint8_t mode);
+typedef void (*board_set_siren)(bool enabled);
 
 struct board {
   const char *board_type;
@@ -31,6 +32,7 @@ struct board {
   board_set_fan_power set_fan_power;
   board_set_phone_power set_phone_power;
   board_set_clock_source_mode set_clock_source_mode;
+  board_set_siren set_siren;
 };
 
 // ******************* Definitions ********************

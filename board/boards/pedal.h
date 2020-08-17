@@ -81,6 +81,10 @@ void pedal_set_clock_source_mode(uint8_t mode){
   UNUSED(mode);
 }
 
+void pedal_set_siren(bool enabled){
+  UNUSED(enabled);
+}
+
 void pedal_init(void) {
   common_init_gpio();
 
@@ -118,5 +122,6 @@ const board board_pedal = {
   .set_fan_power = pedal_set_fan_power,
   .set_ir_power = pedal_set_ir_power,
   .set_phone_power = pedal_set_phone_power,
-  .set_clock_source_mode = pedal_set_clock_source_mode
+  .set_clock_source_mode = pedal_set_clock_source_mode,
+  .set_siren = pedal_set_siren
 };

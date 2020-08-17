@@ -673,3 +673,7 @@ class Panda(object):
   # ************** Clock Source **************
   def set_clock_source_mode(self, mode):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, int(mode), 0, b'')
+
+  # ****************** Siren *****************
+  def set_siren(self, enabled):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf6, int(enabled), 0, b'')

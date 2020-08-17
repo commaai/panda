@@ -158,6 +158,10 @@ void black_set_clock_source_mode(uint8_t mode){
   UNUSED(mode);
 }
 
+void black_set_siren(bool enabled){
+  UNUSED(enabled);
+}
+
 void black_init(void) {
   common_init_gpio();
 
@@ -244,5 +248,6 @@ const board board_black = {
   .set_fan_power = black_set_fan_power,
   .set_ir_power = black_set_ir_power,
   .set_phone_power = black_set_phone_power,
-  .set_clock_source_mode = black_set_clock_source_mode
+  .set_clock_source_mode = black_set_clock_source_mode,
+  .set_siren = black_set_siren
 };
