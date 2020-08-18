@@ -54,17 +54,15 @@ void dos_set_gps_load_switch(bool enabled) {
 }
 
 void dos_set_bootkick(bool enabled){
-  UNUSED(enabled);
+  set_gpio_output(GPIOC, 4, !enabled);
 }
-
-void dos_bootkick(void) {}
 
 void dos_set_phone_power(bool enabled){
   UNUSED(enabled);
 }
 
 void dos_set_usb_power_mode(uint8_t mode) {
-  UNUSED(mode);
+  dos_set_bootkick(mode == USB_POWER_CDP);
 }
 
 void dos_set_esp_gps_mode(uint8_t mode) {
@@ -101,11 +99,6 @@ void dos_set_can_mode(uint8_t mode){
 
 void dos_usb_power_mode_tick(uint32_t uptime){
   UNUSED(uptime);
-  if(bootkick_timer != 0U){
-    bootkick_timer--;
-  } else {
-    dos_set_bootkick(false);
-  }
 }
 
 bool dos_check_ignition(void){
