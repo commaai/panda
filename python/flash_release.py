@@ -43,9 +43,6 @@ def flash_release(path=None, st_serial=None):
   code_boot_15 = zf.read("boot_v1.5.bin")
   code_boot_15 = code_boot_15[0:2] + "\x00\x30" + code_boot_15[4:]
 
-  code_user1 = zf.read("user1.bin")
-  code_user2 = zf.read("user2.bin")
-
   # enter DFU mode
   status("1. Entering DFU mode")
   panda = Panda(st_serial)
