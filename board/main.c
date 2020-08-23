@@ -493,7 +493,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       }
 
       // TODO: Remove this again and fix boardd code to hande the message bursts instead of single chars
-      if (ur == &uart_ring_esp_gps) {
+      if (ur == &uart_ring_gps) {
         dma_pointer_handler(ur, DMA2_Stream5->NDTR);
       }
 
@@ -793,10 +793,10 @@ int main(void) {
   }
 
   if (board_has_gps()) {
-    uart_init(&uart_ring_esp_gps, 9600);
+    uart_init(&uart_ring_gps, 9600);
   } else {
     // enable ESP uart
-    uart_init(&uart_ring_esp_gps, 115200);
+    uart_init(&uart_ring_gps, 115200);
   }
 
   if(board_has_lin()){
