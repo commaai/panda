@@ -400,24 +400,24 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xd9: set ESP power
     case 0xd9:
       if (setup->b.wValue.w == 1U) {
-        current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
+        current_board->set_gps_mode(GPS_ENABLED);
       } else if (setup->b.wValue.w == 2U) {
-        current_board->set_esp_gps_mode(ESP_GPS_BOOTMODE);
+        current_board->set_gps_mode(GPS_BOOTMODE);
       } else {
-        current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
+        current_board->set_gps_mode(GPS_DISABLED);
       }
       break;
     // **** 0xda: reset ESP, with optional boot mode
     case 0xda:
-      current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
+      current_board->set_gps_mode(GPS_DISABLED);
       delay(1000000);
       if (setup->b.wValue.w == 1U) {
-        current_board->set_esp_gps_mode(ESP_GPS_BOOTMODE);
+        current_board->set_gps_mode(GPS_BOOTMODE);
       } else {
-        current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
+        current_board->set_gps_mode(GPS_ENABLED);
       }
       delay(1000000);
-      current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
+      current_board->set_gps_mode(GPS_ENABLED);
       break;
     // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
     case 0xdb:
