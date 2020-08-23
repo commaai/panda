@@ -12,7 +12,8 @@ It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?
 
 It is 2nd gen hardware, reusing code and parts from the [NEO](https://github.com/commaai/neo) interface board.
 
-![panda tests](https://github.com/commaai/panda/workflows/panda%20tests/badge.svg)
+![panda tests](https://github.com/commaai/panda/workflows/tests/badge.svg)
+![panda drivers](https://github.com/commaai/panda/workflows/drivers/badge.svg)
 
 ## Usage
 
