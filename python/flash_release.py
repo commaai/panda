@@ -7,7 +7,7 @@ import json
 import io
 
 def flash_release(path=None, st_serial=None):
-  from panda import Panda, PandaDFU, ESPROM, CesantaFlasher
+  from panda import Panda, PandaDFU
   from zipfile import ZipFile
 
   def status(x):
@@ -64,29 +64,8 @@ def flash_release(path=None, st_serial=None):
   panda.flash(code=code_panda)
   panda.close()
 
-  # flashing ESP
-  if panda.is_white():
-    status("4. Flashing ESP (slow!)")
-
-    def align(x, sz=0x1000):
-      x + "\xFF" * ((sz - len(x)) % sz)
-
-    esp = ESPROM(st_serial)
-    esp.connect()
-    flasher = CesantaFlasher(esp, 230400)
-    flasher.flash_write(0x0, align(code_boot_15), True)
-    flasher.flash_write(0x1000, align(code_user1), True)
-    flasher.flash_write(0x81000, align(code_user2), True)
-    flasher.flash_write(0x3FE000, "\xFF" * 0x1000)
-    flasher.boot_fw()
-    del flasher
-    del esp
-    time.sleep(1)
-  else:
-    status("4. No ESP in non-white panda")
-
   # check for connection
-  status("5. Verifying version")
+  status("4. Verifying version")
   panda = Panda(st_serial)
   my_version = panda.get_version()
   print("dongle id: %s" % panda.get_serial()[0])
