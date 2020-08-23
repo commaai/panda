@@ -93,8 +93,8 @@ These are the [CI regression tests](https://github.com/commaai/panda/actions) we
 * A recorded drive for each supported car variant is [replayed through the safety logic](https://github.com/commaai/panda/tree/master/tests/safety_replay)
 to ensure that the behavior remains unchanged.
 * An internal Hardware-in-the-loop test, which currently only runs on pull requests opened by comma.ai's organization members, verifies the following functionalities:
-    * compiling the code in various configuration and flashing it both through USB and WiFi.
-    * Receiving, sending and forwarding CAN messages on all buses, over USB and WiFi.
+    * compiling the code in various configuration and flashing it both through USB.
+    * Receiving, sending and forwarding CAN messages on all buses, over USB.
 
 In addition, we run the [pylint](https://www.pylint.org/) and [flake8](https://github.com/PyCQA/flake8) linters on all python files within the panda repo.
 
