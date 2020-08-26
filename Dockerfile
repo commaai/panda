@@ -67,6 +67,6 @@ ENV HOME /home/batman
 
 ENV PYTHONPATH /tmp:$PYTHONPATH
 
-COPY ./panda_jungle /tmp/panda_jungle
+RUN cd /tmp && git clone https://github.com/commaai/panda_jungle.git
 
 ADD ./panda.tar.gz /tmp/panda
