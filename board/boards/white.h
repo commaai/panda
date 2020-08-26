@@ -324,12 +324,8 @@ void white_grey_common_init(void) {
 void white_init(void) {
   white_grey_common_init();
 
-  // Set default state of ESP
-  #ifdef EON
-    current_board->set_gps_mode(GPS_DISABLED);
-  #else
-    current_board->set_gps_mode(GPS_ENABLED);
-  #endif
+  // Set ESP off by default
+  current_board->set_gps_mode(GPS_DISABLED);
 }
 
 const harness_configuration white_harness_config = {
