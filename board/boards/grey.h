@@ -8,22 +8,22 @@ void grey_init(void) {
   white_grey_common_init();
 
   // Set default state of GPS
-  current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
+  current_board->set_gps_mode(GPS_ENABLED);
 }
 
-void grey_set_esp_gps_mode(uint8_t mode) {
+void grey_set_gps_mode(uint8_t mode) {
   switch (mode) {
-    case ESP_GPS_DISABLED:
+    case GPS_DISABLED:
       // GPS OFF
       set_gpio_output(GPIOC, 14, 0);
       set_gpio_output(GPIOC, 5, 0);
       break;
-    case ESP_GPS_ENABLED:
+    case GPS_ENABLED:
       // GPS ON
       set_gpio_output(GPIOC, 14, 1);
       set_gpio_output(GPIOC, 5, 1);
       break;
-    case ESP_GPS_BOOTMODE:
+    case GPS_BOOTMODE:
       set_gpio_output(GPIOC, 14, 1);
       set_gpio_output(GPIOC, 5, 0);
       break;
@@ -41,7 +41,7 @@ const board board_grey = {
   .enable_can_transcievers = white_enable_can_transcievers,
   .set_led = white_set_led,
   .set_usb_power_mode = white_set_usb_power_mode,
-  .set_esp_gps_mode = grey_set_esp_gps_mode,
+  .set_gps_mode = grey_set_gps_mode,
   .set_can_mode = white_set_can_mode,
   .usb_power_mode_tick = white_usb_power_mode_tick,
   .check_ignition = white_check_ignition,

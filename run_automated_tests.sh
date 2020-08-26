@@ -6,11 +6,7 @@ else
   TESTSUITE_NAME="Panda_Test-DEV"
 fi
 
-if [ ! -z "${SKIPWIFI}" ] || [ -f "/EON" ]; then
-  TEST_SCRIPTS=$(ls tests/automated/$1*.py | grep -v wifi)
-else
-  TEST_SCRIPTS=$(ls tests/automated/$1*.py)
-fi
+TEST_SCRIPTS=$(ls tests/automated/$1*.py)
 
 IFS=$'\n'
 for NAME in $(nmcli --fields NAME con show | grep panda | awk '{$1=$1};1')

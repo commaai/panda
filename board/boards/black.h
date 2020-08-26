@@ -77,24 +77,24 @@ void black_set_usb_power_mode(uint8_t mode) {
   }
 }
 
-void black_set_esp_gps_mode(uint8_t mode) {
+void black_set_gps_mode(uint8_t mode) {
   switch (mode) {
-    case ESP_GPS_DISABLED:
+    case GPS_DISABLED:
       // GPS OFF
       set_gpio_output(GPIOC, 14, 0);
       set_gpio_output(GPIOC, 5, 0);
       break;
-    case ESP_GPS_ENABLED:
+    case GPS_ENABLED:
       // GPS ON
       set_gpio_output(GPIOC, 14, 1);
       set_gpio_output(GPIOC, 5, 1);
       break;
-    case ESP_GPS_BOOTMODE:
+    case GPS_BOOTMODE:
       set_gpio_output(GPIOC, 14, 1);
       set_gpio_output(GPIOC, 5, 0);
       break;
     default:
-      puts("Invalid ESP/GPS mode\n");
+      puts("Invalid GPS mode\n");
       break;
   }
 }
@@ -175,7 +175,7 @@ void black_init(void) {
   set_gpio_mode(GPIOC, 3, MODE_ANALOG);
 
   // Set default state of GPS
-  current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
+  current_board->set_gps_mode(GPS_ENABLED);
 
   // C10: OBD_SBU1_RELAY (harness relay driving output)
   // C11: OBD_SBU2_RELAY (harness relay driving output)
@@ -240,7 +240,7 @@ const board board_black = {
   .enable_can_transcievers = black_enable_can_transcievers,
   .set_led = black_set_led,
   .set_usb_power_mode = black_set_usb_power_mode,
-  .set_esp_gps_mode = black_set_esp_gps_mode,
+  .set_gps_mode = black_set_gps_mode,
   .set_can_mode = black_set_can_mode,
   .usb_power_mode_tick = black_usb_power_mode_tick,
   .check_ignition = black_check_ignition,

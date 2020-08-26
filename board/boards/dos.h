@@ -65,7 +65,7 @@ void dos_set_usb_power_mode(uint8_t mode) {
   dos_set_bootkick(mode == USB_POWER_CDP);
 }
 
-void dos_set_esp_gps_mode(uint8_t mode) {
+void dos_set_gps_mode(uint8_t mode) {
   UNUSED(mode);
 }
 
@@ -217,7 +217,7 @@ const board board_dos = {
   .enable_can_transcievers = dos_enable_can_transcievers,
   .set_led = dos_set_led,
   .set_usb_power_mode = dos_set_usb_power_mode,
-  .set_esp_gps_mode = dos_set_esp_gps_mode,
+  .set_gps_mode = dos_set_gps_mode,
   .set_can_mode = dos_set_can_mode,
   .usb_power_mode_tick = dos_usb_power_mode_tick,
   .check_ignition = dos_check_ignition,

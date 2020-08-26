@@ -6,9 +6,9 @@
 
 <img src="https://github.com/commaai/panda/blob/master/buy.png"></a>
 
-It supports 3x CAN, 2x LIN, and 1x GMLAN. It also charges a phone. On the computer side, it has both USB and Wi-Fi.
+It supports 3x CAN, 2x LIN, and 1x GMLAN. It also charges a phone. On the computer side, it has USB.
 
-It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?querycriteria=productId=LN2004) for low level stuff and an [ESP8266](https://en.wikipedia.org/wiki/ESP8266) for Wi-Fi. They are connected over high speed SPI, so the panda is actually capable of dumping the full contents of the busses over Wi-Fi, unlike every other dongle on amazon. ELM327 is weak, panda is strong.
+It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?querycriteria=productId=LN2004).
 
 It is 2nd gen hardware, reusing code and parts from the [NEO](https://github.com/commaai/neo) interface board.
 
@@ -56,29 +56,22 @@ As a universal car interface, it should support every reasonable software interf
 
 - [User space](https://github.com/commaai/panda/tree/master/python)
 - [socketcan in kernel](https://github.com/commaai/panda/tree/master/drivers/linux) (alpha)
-- [ELM327](https://github.com/commaai/panda/blob/master/boardesp/elm327.c)
 - [Windows J2534](https://github.com/commaai/panda/tree/master/drivers/windows)
 
 ## Directory structure
 
 - board      -- Code that runs on the STM32
-- boardesp   -- Code that runs on the ESP8266
 - drivers    -- Drivers (not needed for use with python)
 - python     -- Python userspace library for interfacing with the panda
 - tests      -- Tests and helper programs for panda
 
-## Programming over USB
+## Programming
 
-[Programming the Board (STM32)](board/README.md)
-
-[Programming the ESP](boardesp/README.md)
-
+See `board/README.md`
 
 ## Debugging
 
 To print out the serial console from the STM32, run `tests/debug_console.py`
-
-To print out the serial console from the ESP8266, run `PORT=1 tests/debug_console.py`
 
 ## Safety Model
 
@@ -100,8 +93,8 @@ These are the [CI regression tests](https://github.com/commaai/panda/actions) we
 * A recorded drive for each supported car variant is [replayed through the safety logic](https://github.com/commaai/panda/tree/master/tests/safety_replay)
 to ensure that the behavior remains unchanged.
 * An internal Hardware-in-the-loop test, which currently only runs on pull requests opened by comma.ai's organization members, verifies the following functionalities:
-    * compiling the code in various configuration and flashing it both through USB and WiFi.
-    * Receiving, sending and forwarding CAN messages on all buses, over USB and WiFi.
+    * compiling the code in various configuration and flashing it both through USB.
+    * Receiving, sending and forwarding CAN messages on all buses, over USB.
 
 In addition, we run the [pylint](https://www.pylint.org/) and [flake8](https://github.com/PyCQA/flake8) linters on all python files within the panda repo.
 

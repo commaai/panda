@@ -71,21 +71,21 @@ void white_set_usb_power_mode(uint8_t mode){
   }
 }
 
-void white_set_esp_gps_mode(uint8_t mode) {
+void white_set_gps_mode(uint8_t mode) {
   switch (mode) {
-    case ESP_GPS_DISABLED:
+    case GPS_DISABLED:
       // ESP OFF
       set_gpio_output(GPIOC, 14, 0);
       set_gpio_output(GPIOC, 5, 0);
       break;
 #ifndef EON
-    case ESP_GPS_ENABLED:
+    case GPS_ENABLED:
       // ESP ON
       set_gpio_output(GPIOC, 14, 1);
       set_gpio_output(GPIOC, 5, 1);
       break;
 #endif
-    case ESP_GPS_BOOTMODE:
+    case GPS_BOOTMODE:
       set_gpio_output(GPIOC, 14, 1);
       set_gpio_output(GPIOC, 5, 0);
       break;
@@ -324,12 +324,8 @@ void white_grey_common_init(void) {
 void white_init(void) {
   white_grey_common_init();
 
-  // Set default state of ESP
-  #ifdef EON
-    current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
-  #else
-    current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
-  #endif
+  // Set ESP off by default
+  current_board->set_gps_mode(GPS_DISABLED);
 }
 
 const harness_configuration white_harness_config = {
@@ -344,7 +340,7 @@ const board board_white = {
   .enable_can_transcievers = white_enable_can_transcievers,
   .set_led = white_set_led,
   .set_usb_power_mode = white_set_usb_power_mode,
-  .set_esp_gps_mode = white_set_esp_gps_mode,
+  .set_gps_mode = white_set_gps_mode,
   .set_can_mode = white_set_can_mode,
   .usb_power_mode_tick = white_usb_power_mode_tick,
   .check_ignition = white_check_ignition,

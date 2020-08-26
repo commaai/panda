@@ -23,7 +23,7 @@ void common_init_gpio(void){
   set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG_FS);
   GPIOA->OSPEEDR = GPIO_OSPEEDER_OSPEEDR11 | GPIO_OSPEEDER_OSPEEDR12;
 
-  // A9,A10: USART 1 for talking to the ESP / GPS
+  // A9,A10: USART 1 for talking to the GPS
   set_gpio_alternate(GPIOA, 9, GPIO_AF7_USART1);
   set_gpio_alternate(GPIOA, 10, GPIO_AF7_USART1);
 

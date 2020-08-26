@@ -400,24 +400,24 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xd9: set ESP power
     case 0xd9:
       if (setup->b.wValue.w == 1U) {
-        current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
+        current_board->set_gps_mode(GPS_ENABLED);
       } else if (setup->b.wValue.w == 2U) {
-        current_board->set_esp_gps_mode(ESP_GPS_BOOTMODE);
+        current_board->set_gps_mode(GPS_BOOTMODE);
       } else {
-        current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
+        current_board->set_gps_mode(GPS_DISABLED);
       }
       break;
     // **** 0xda: reset ESP, with optional boot mode
     case 0xda:
-      current_board->set_esp_gps_mode(ESP_GPS_DISABLED);
+      current_board->set_gps_mode(GPS_DISABLED);
       delay(1000000);
       if (setup->b.wValue.w == 1U) {
-        current_board->set_esp_gps_mode(ESP_GPS_BOOTMODE);
+        current_board->set_gps_mode(GPS_BOOTMODE);
       } else {
-        current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
+        current_board->set_gps_mode(GPS_ENABLED);
       }
       delay(1000000);
-      current_board->set_esp_gps_mode(ESP_GPS_ENABLED);
+      current_board->set_gps_mode(GPS_ENABLED);
       break;
     // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
     case 0xdb:
@@ -493,7 +493,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       }
 
       // TODO: Remove this again and fix boardd code to hande the message bursts instead of single chars
-      if (ur == &uart_ring_esp_gps) {
+      if (ur == &uart_ring_gps) {
         dma_pointer_handler(ur, DMA2_Stream5->NDTR);
       }
 
@@ -796,7 +796,6 @@ int main(void) {
   puts("Config:\n");
   puts("  Board type: "); puts(current_board->board_type); puts("\n");
   puts(has_external_debug_serial ? "  Real serial\n" : "  USB serial\n");
-  puts(is_entering_bootmode ? "  ESP wants bootmode\n" : "  No bootmode\n");
 
   // init board
   current_board->init();
@@ -812,10 +811,10 @@ int main(void) {
   }
 
   if (board_has_gps()) {
-    uart_init(&uart_ring_esp_gps, 9600);
+    uart_init(&uart_ring_gps, 9600);
   } else {
     // enable ESP uart
-    uart_init(&uart_ring_esp_gps, 115200);
+    uart_init(&uart_ring_gps, 115200);
   }
 
   if(board_has_lin()){
