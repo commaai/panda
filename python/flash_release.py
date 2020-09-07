@@ -23,30 +23,28 @@ def flash_release(path=None, st_serial=None):
     st_serial = panda_list[0]
     print("Using panda with serial %s" % st_serial)
 
-  if path is not None:
+  if path is None:
     print("Fetching latest firmware from github.com/commaai/panda-artifacts")
     r = requests.get("https://raw.githubusercontent.com/commaai/panda-artifacts/master/latest.json")
     url = json.loads(r.text)['url']
     r = requests.get(url)
     print("Fetching firmware from %s" % url)
-    path = io.StringIO(r.content)
+    path = io.BytesIO(r.content)
 
   zf = ZipFile(path)
   zf.printdir()
 
-  version = zf.read("version")
-  status("0. Preparing to flash " + version)
+  version = zf.read("version").decode()
+  status("0. Preparing to flash " + str(version))
 
   code_bootstub = zf.read("bootstub.panda.bin")
   code_panda = zf.read("panda.bin")
 
-  code_boot_15 = zf.read("boot_v1.5.bin")
-  code_boot_15 = code_boot_15[0:2] + "\x00\x30" + code_boot_15[4:]
-
   # enter DFU mode
   status("1. Entering DFU mode")
   panda = Panda(st_serial)
-  panda.enter_bootloader()
+  panda.reset(enter_bootstub=True)
+  panda.reset(enter_bootloader=True)
   time.sleep(1)
 
   # program bootstub
