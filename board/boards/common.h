@@ -85,10 +85,6 @@ bool detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode) {
 
 // ********** Unused Board Functions **********
 
-const harness_configuration no_harness_config = {
-  .has_harness = false
-};
-
 uint32_t unused_read_current(void) {
   return 0U;
 }

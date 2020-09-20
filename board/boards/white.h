@@ -308,9 +308,13 @@ void white_init(void) {
   current_board->set_gps_mode(GPS_DISABLED);
 }
 
+const harness_configuration white_harness_config = {
+  .has_harness = false
+};
+
 const board board_white = {
   .board_type = "White",
-  .harness_config = &no_harness_config,
+  .harness_config = &white_harness_config,
   .init = white_init,
   .enable_can_transciever = white_enable_can_transciever,
   .enable_can_transcievers = white_enable_can_transcievers,
