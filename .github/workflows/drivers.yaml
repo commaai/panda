@@ -1,4 +1,4 @@
-name: panda drivers
+name: drivers
 on: [push, pull_request]
 
 jobs:
