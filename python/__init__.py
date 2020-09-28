@@ -461,7 +461,7 @@ class Panda(object):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe5, int(enable), 0, b'')
 
   def set_can_enable(self, bus_num, enable):
-    # sets the can transciever enable pin
+    # sets the can transceiver enable pin
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf4, int(bus_num), int(enable), b'')
 
   def set_can_speed_kbps(self, bus, speed):
