@@ -4,8 +4,8 @@
 #define BOOTKICK_TIME 3U
 uint8_t bootkick_timer = 0U;
 
-void uno_enable_can_transciever(uint8_t transciever, bool enabled) {
-  switch (transciever){
+void uno_enable_can_transceiver(uint8_t transceiver, bool enabled) {
+  switch (transceiver){
     case 1U:
       set_gpio_output(GPIOC, 1, !enabled);
       break;
@@ -19,18 +19,18 @@ void uno_enable_can_transciever(uint8_t transciever, bool enabled) {
       set_gpio_output(GPIOB, 10, !enabled);
       break;
     default:
-      puts("Invalid CAN transciever ("); puth(transciever); puts("): enabling failed\n");
+      puts("Invalid CAN transceiver ("); puth(transceiver); puts("): enabling failed\n");
       break;
   }
 }
 
-void uno_enable_can_transcievers(bool enabled) {
+void uno_enable_can_transceivers(bool enabled) {
   for(uint8_t i=1U; i<=4U; i++){
     // Leave main CAN always on for CAN-based ignition detection
     if((car_harness_status == HARNESS_STATUS_FLIPPED) ? (i == 3U) : (i == 1U)){
-      uno_enable_can_transciever(i, true);
+      uno_enable_can_transceiver(i, true);
     } else {
-      uno_enable_can_transciever(i, enabled);
+      uno_enable_can_transceiver(i, enabled);
     }
   }
 }
@@ -231,8 +231,8 @@ void uno_init(void) {
   // Initialize RTC
   rtc_init();
 
-  // Enable CAN transcievers
-  uno_enable_can_transcievers(true);
+  // Enable CAN transceivers
+  uno_enable_can_transceivers(true);
 
   // Disable LEDs
   uno_set_led(LED_RED, false);
@@ -279,8 +279,8 @@ const board board_uno = {
   .board_type = "Uno",
   .harness_config = &uno_harness_config,
   .init = uno_init,
-  .enable_can_transciever = uno_enable_can_transciever,
-  .enable_can_transcievers = uno_enable_can_transcievers,
+  .enable_can_transceiver = uno_enable_can_transceiver,
+  .enable_can_transceivers = uno_enable_can_transceivers,
   .set_led = uno_set_led,
   .set_usb_power_mode = uno_set_usb_power_mode,
   .set_gps_mode = uno_set_gps_mode,
