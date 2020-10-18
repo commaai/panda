@@ -18,7 +18,7 @@ const int GM_DRIVER_TORQUE_FACTOR = 4;
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
-const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
+const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6}, {512, 0, 6}  // pt bus
                              {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
                              {789, 2, 5},  // ch bus
                              {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
@@ -33,8 +33,40 @@ AddrCheckStruct gm_rx_checks[] = {
 };
 const int GM_RX_CHECK_LEN = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]);
 
-static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+//tracking the last published rolling counter
+//uint32_t gm_rc_aeb = 0;
+uint32_t gm_rc_lkas = 5;
 
+bool gm_relay_open = false;
+bool gm_relay_desired_open = true;
+bool gm_ffc_detected = false; //only true when we have seen the ffc on camera bus
+int gm_camera_bus = -1;
+
+//wait for an lkas message, cut relay, save rc, wait for correct RC
+static bool gm_handle_relay(CAN_FIFOMailBox_TypeDef *to_push) {
+  if (!board_has_relay()) return true;
+  if (gm_relay_open == gm_relay_desired_open) return true;
+
+  if (gm_relay_desired_open) {
+    //closed to open, we only care about PT bus
+    if (GET_BUS(to_push) != 0) return false;
+    int addr = GET_ADDR(to_push);
+    if (addr != 384) return false;
+    gm_rc_lkas = GET_BYTE(to_send, 0) >> 4;
+    set_intercept_relay(true);
+    //TODO: this assumes relay change is near-instant. If it lags, some values could sneak through...
+    heartbeat_counter = 0U;
+    return true;
+  }
+  //TODO: Open -> Closed
+
+
+}
+
+
+
+static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+  if (!gm_handle_relay(to_push)) return 0;
   bool valid = addr_safety_check(to_push, gm_rx_checks, GM_RX_CHECK_LEN,
                                  NULL, NULL, NULL);
 
@@ -105,7 +137,7 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 //     block all commands that produce actuation
 
 static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
-
+  if (!gm_handle_relay(to_send)) return 0; // We do nothing till relay is opened
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
@@ -142,10 +174,16 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // LKA STEER: safety check
   if (addr == 384) {
+    int rolling_counter = GET_BYTE(to_send, 0) >> 4;
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1);
     uint32_t ts = TIM2->CNT;
     bool violation = 0;
     desired_torque = to_signed(desired_torque, 11);
+
+    // This esures that if a message is skipped, we wait until it comes back around to the correct value
+    // LKAS messages must always have a rolling counter in-order with no gaps.
+    // This will drop up to 3 messages - up to 60ms lag. Totally acceptable.
+    if (rolling_counter != (gm_rc_lkas + 1) % 4) violation = true;
 
     if (current_controls_allowed) {
 
@@ -169,6 +207,10 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         rt_torque_last = desired_torque;
         ts_last = ts;
       }
+      //TODO: may require tuning. TODO: hopefully the timing can be caught here. If not, the lag is downstream TODO: debug output
+      //We need to drop lkas frame when comes in too fast.
+      // (we will then skip up to 4 frames)
+      if (ts_elapsed < 20000) violation = true;
     }
 
     // no torque if controls is not allowed
@@ -185,6 +227,10 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     if (violation) {
       tx = 0;
+    }
+    else {
+      //If we are transmitting the lkas, update the rc
+      gm_rc_lkas = rolling_counter;
     }
   }
 
@@ -208,13 +254,45 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return tx;
 }
 
+static int gm_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+  if (!gm_handle_relay(to_fwd)) return 0; //for now, when relay is closed we don't want to do anything
+  int bus_fwd = -1;
+  if (bus_num == 0) {
+    if (gm_ffc_detected) {
+      //only perform forwarding if we have seen LKAS messages on CAN2
+      bus_fwd = gm_camera_bus;  // Camera is on CAN2
+    }
+  }
+  if (bus_num == gm_camera_bus) {
+    int addr = GET_ADDR(to_fwd);
+    if (addr != 384) {
+      //only perform forwarding if we have seen LKAS messages on CAN2
+      if (gm_ffc_detected) {
+        return 0;
+      }
+    }
+    gm_ffc_detected = true;
+  }
+  // fallback to do not forward
+  return bus_fwd;
+}
+
+static void gm_init_hook(int16_t param) {
+  if (board_has_relay()) {
+    gm_camera_bus = 2;
+  }
+  else {
+    gm_camera_bus = 1;
+  }
+}
+
 
 const safety_hooks gm_hooks = {
-  .init = nooutput_init,
+  .init = gm_init_hook,
   .rx = gm_rx_hook,
   .tx = gm_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
-  .fwd = default_fwd_hook,
+  .fwd = gm_fwd_hook,
   .addr_check = gm_rx_checks,
   .addr_check_len = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]),
 };

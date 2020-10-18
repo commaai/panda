@@ -144,6 +144,15 @@ void set_safety_mode(uint16_t mode, int16_t param) {
       }
       can_silent = ALL_CAN_LIVE;
       break;
+    case SAFETY_GM:
+      //GM saftey code needs to handle changing relay state
+      set_intercept_relay(false);
+      heartbeat_counter = 0U;
+      if (board_has_obd()) {
+        current_board->set_can_mode(CAN_MODE_NORMAL);
+      }
+      can_silent = ALL_CAN_LIVE;
+      break;
     default:
       set_intercept_relay(true);
       heartbeat_counter = 0U;
