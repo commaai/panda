@@ -8,7 +8,7 @@ from panda.tests.safety.common import CANPackerPanda
 
 MAX_RATE_UP = 3
 MAX_RATE_DOWN = 7
-MAX_STEER = 255
+MAX_STEER = 384
 
 MAX_RT_DELTA = 112
 RT_INTERVAL = 250000
