@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y \
     ncurses-dev \
     network-manager \
     python-dev \
-    python-serial \
+    python3-serial \
     sed \
     texinfo \
     unrar-free \
