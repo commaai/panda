@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     python \
     python-dev \
-    python-pip \
+    python3-pip \
     unzip \
     wget \
     zlib1g-dev \
