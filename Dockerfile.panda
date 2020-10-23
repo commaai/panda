@@ -28,7 +28,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     python \
     python-dev \
-    python3-pip \
     unzip \
     wget \
     zlib1g-dev \
@@ -43,8 +42,8 @@ RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-instal
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
 
 COPY requirements.txt /tmp/
-RUN pyenv install 3.7.3 && \
-    pyenv global 3.7.3 && \
+RUN pyenv install 3.8.2 && \
+    pyenv global 3.8.2 && \
     pyenv rehash && \
     pip install --no-cache-dir --upgrade pip==18.0 && \
     pip install --no-cache-dir -r /tmp/requirements.txt
