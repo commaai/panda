@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     bash \
     bison \
     bzip2 \
+    ca-certificates \
     curl \
     dfu-util \
     flex \
