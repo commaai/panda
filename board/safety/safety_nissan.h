@@ -11,18 +11,26 @@ const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_DOWN = {
 
 const int NISSAN_DEG_TO_CAN = 100;
 
-const CanMsg NISSAN_TX_MSGS[] = {{0x169, 0, 8}, {0x2b1, 0, 8}, {0x4cc, 0, 8}, {0x20b, 2, 6}, {0x280, 2, 8}};
+const CanMsg NISSAN_TX_MSGS[] = {{0x169, 0, 8}, {0x2b1, 0, 8}, {0x4cc, 0, 8}, {0x20b, 2, 6}, {0x20b, 1, 6}, {0x280, 2, 8}};
 
 AddrCheckStruct nissan_rx_checks[] = {
-  {.msg = {{0x2, 0, 5, .expected_timestep = 10000U}}},  // STEER_ANGLE_SENSOR (100Hz)
-  {.msg = {{0x285, 0, 8, .expected_timestep = 20000U}}}, // WHEEL_SPEEDS_REAR (50Hz)
-  {.msg = {{0x30f, 2, 3, .expected_timestep = 100000U}}}, // CRUISE_STATE (10Hz)
+  {.msg = {{0x2, 0, 5, .expected_timestep = 10000U},
+           {0x2, 1, 5, .expected_timestep = 10000U}}},  // STEER_ANGLE_SENSOR (100Hz)
+  {.msg = {{0x285, 0, 8, .expected_timestep = 20000U},
+           {0x285, 1, 8, .expected_timestep = 20000U}}}, // WHEEL_SPEEDS_REAR (50Hz)
+  {.msg = {{0x30f, 2, 3, .expected_timestep = 100000U},
+           {0x30f, 1, 3, .expected_timestep = 100000U}}}, // CRUISE_STATE (10Hz)
   {.msg = {{0x15c, 0, 8, .expected_timestep = 20000U},
+           {0x15c, 1, 8, .expected_timestep = 20000U},
            {0x239, 0, 8, .expected_timestep = 20000U}}}, // GAS_PEDAL (100Hz / 50Hz)
   {.msg = {{0x454, 0, 8, .expected_timestep = 100000U},
+           {0x454, 1, 8, .expected_timestep = 100000U},
            {0x1cc, 0, 4, .expected_timestep = 10000U}}}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
 };
 const int NISSAN_RX_CHECK_LEN = sizeof(nissan_rx_checks) / sizeof(nissan_rx_checks[0]);
+
+// EPS Location. 0 = V-CAN, 1 = C-CAN
+int nissan_eps_location = 0;
 
 
 static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -34,7 +42,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int bus = GET_BUS(to_push);
     int addr = GET_ADDR(to_push);
 
-    if (bus == 0) {
+    if (((bus == 0) && (nissan_eps_location == 0)) || ((bus == 1) && (nissan_eps_location == 1))) {
       if (addr == 0x2) {
         // Current steering angle
         // Factor -0.1, little endian
@@ -73,7 +81,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // Handle cruise enabled
-    if ((bus == 2) && (addr == 0x30f)) {
+    if (addr == 0x30f) {
       bool cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1;
 
       if (cruise_engaged && !cruise_engaged_prev) {
@@ -182,8 +190,14 @@ static int nissan_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return bus_fwd;
 }
 
+static void nissan_init(int16_t param) {
+  controls_allowed = 0;
+  nissan_eps_location = param;
+  relay_malfunction_reset();
+}
+
 const safety_hooks nissan_hooks = {
-  .init = nooutput_init,
+  .init = nissan_init,
   .rx = nissan_rx_hook,
   .tx = nissan_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
