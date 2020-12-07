@@ -121,7 +121,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       brake_pressed = ((GET_BYTE(to_push, byte) >> 5) & 1) != 0;
     }
 
-    // OR brake_pressed signal with backup brake_module2
+    // OR brake_pressed signal with backup signal from brake_module2
     if (addr == 0x230) {
       brake_pressed |= ((GET_BYTE(to_push, 3) >> 2) & 1) != 0;
     }
