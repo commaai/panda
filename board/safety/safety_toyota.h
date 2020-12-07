@@ -115,11 +115,19 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       vehicle_moving = ABS(speed / 4) > TOYOTA_STANDSTILL_THRSLD;
     }
 
-    // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224, lexus esh 2018 on 0x230
+    // capture brake press
     if ((addr == 0x224) || (addr == 0x226) || (addr == 0x230)) {
-      bool brake2 = (addr == 0x230) ? (GET_BYTE(to_push, 3) & 0x04) != 0 : false;
-      int byte = (addr == 0x224) ? 0 : 4;
-      brake_pressed = ((GET_BYTE(to_push, byte) >> 5) & 1) != 0 || brake2;
+      switch (addr) {
+        case 0x224: // most vehicles
+          brake_pressed = ((GET_BYTE(to_push, 0) >> 5) & 1) != 0;
+          break;
+        case 0x226: // corolla and rav4
+          brake_pressed = ((GET_BYTE(to_push, 4) >> 5) & 1) != 0;
+          break;
+        case 0x230: // lexus esh 2018
+          brake_pressed = ((GET_BYTE(to_push, 3) >> 2) & 1) != 0;
+          break;
+      }
     }
 
     // sample gas interceptor
