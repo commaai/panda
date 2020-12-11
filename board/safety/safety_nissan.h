@@ -13,6 +13,7 @@ const int NISSAN_DEG_TO_CAN = 100;
 
 const CanMsg NISSAN_TX_MSGS[] = {{0x169, 0, 8}, {0x2b1, 0, 8}, {0x4cc, 0, 8}, {0x20b, 2, 6}, {0x20b, 1, 6}, {0x280, 2, 8}};
 
+// Signals duplicated below due to the fact that these messages can come in on either CAN bus, depending on car model.
 AddrCheckStruct nissan_rx_checks[] = {
   {.msg = {{0x2, 0, 5, .expected_timestep = 10000U},
            {0x2, 1, 5, .expected_timestep = 10000U}}},  // STEER_ANGLE_SENSOR (100Hz)
@@ -29,9 +30,8 @@ AddrCheckStruct nissan_rx_checks[] = {
 };
 const int NISSAN_RX_CHECK_LEN = sizeof(nissan_rx_checks) / sizeof(nissan_rx_checks[0]);
 
-// EPS Location. 0 = V-CAN, 1 = C-CAN
-int nissan_eps_location = 0;
-
+// EPS Location. false = V-CAN, true = C-CAN
+bool nissan_alt_eps = false;
 
 static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
@@ -42,7 +42,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int bus = GET_BUS(to_push);
     int addr = GET_ADDR(to_push);
 
-    if (((bus == 0) && (nissan_eps_location == 0)) || ((bus == 1) && (nissan_eps_location == 1))) {
+    if (((bus == 0) && (!nissan_alt_eps)) || ((bus == 1) && (nissan_alt_eps))) {
       if (addr == 0x2) {
         // Current steering angle
         // Factor -0.1, little endian
@@ -81,7 +81,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // Handle cruise enabled
-    if (addr == 0x30f) {
+    if ((addr == 0x30f) && (((bus == 2) && (!nissan_alt_eps)) || ((bus == 1) && (nissan_alt_eps)))) {
       bool cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1;
 
       if (cruise_engaged && !cruise_engaged_prev) {
@@ -192,7 +192,7 @@ static int nissan_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
 static void nissan_init(int16_t param) {
   controls_allowed = 0;
-  nissan_eps_location = param;
+  nissan_alt_eps = param ? 1 : 0;
   relay_malfunction_reset();
 }
 
