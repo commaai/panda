@@ -680,3 +680,6 @@ class Panda(object):
   # ****************** Debug *****************
   def set_green_led(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')
+
+  def set_can_transceivers_enabled(self, enabled):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf8, int(enabled), 0, b'')

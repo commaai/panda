@@ -618,6 +618,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xf7:
       green_led_enabled = (setup->b.wValue.w != 0U);
       break;
+    // **** 0xf8: set green led enabled
+    case 0xf8:
+      current_board->enable_can_transceivers((setup->b.wValue.w > 0U));
+      break;
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);
