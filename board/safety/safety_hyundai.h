@@ -94,6 +94,9 @@ static uint8_t hyundai_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   } else {
     // sum of nibbles
     for (int i = 0; i < 8; i++) {
+      if ((addr == 916) && (i == 7)) {
+        continue; // exclude
+      }
       uint8_t b = GET_BYTE(to_push, i);
       if (((addr == 608) && (i == 7)) || ((addr == 916) && (i == 6)) || ((addr == 1057) && (i == 7))) {
         b &= (addr == 1057) ? 0x0FU : 0xF0U; // remove checksum
