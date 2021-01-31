@@ -78,10 +78,12 @@ static uint8_t hyundai_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
 
   uint8_t chksum = 0;
   if (addr == 902) {
+    // count the bits
     for (int i = 0; i < 8; i++) {
       uint8_t b = GET_BYTE(to_push, i);
       for (int j = 0; j < 8; j++) {
         uint8_t bit = 0;
+        // exclude checksum and counter
         if (((i != 1) || (j < 6)) && ((i != 3) || (j < 6)) && ((i != 5) || (j < 6)) && ((i != 7) || (j < 6))) {
           bit = (b >> (uint8_t)j) & 1U;
         }
@@ -90,7 +92,7 @@ static uint8_t hyundai_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
     }
     chksum = (chksum ^ 9U) & 15U;
   } else {
-    // same algorithm, but checksum is in a different place
+    // sum of nibbles
     for (int i = 0; i < 8; i++) {
       uint8_t b = GET_BYTE(to_push, i);
       if (((addr == 608) && (i == 7)) || ((addr == 916) && (i == 6)) || ((addr == 1057) && (i == 7))) {
