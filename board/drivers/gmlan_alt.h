@@ -138,7 +138,7 @@ void setup_timer(void) {
 
   // run the interrupt
   register_set(&(TIM12->DIER), TIM_DIER_UIE, 0x5F5FU); // Update interrupt
-  TIM4->SR = 0;
+  TIM12->SR = 0;
 }
 
 int gmlan_timeout_counter = GMLAN_TICKS_PER_TIMEOUT_TICKLE; //GMLAN transceiver times out every 17ms held high; tickle every 15ms
@@ -236,8 +236,8 @@ void TIM12_IRQ_Handler(void) {
       if ((gmlan_sending == gmlan_sendmax) || (gmlan_fail_count == MAX_FAIL_COUNT)) {
         set_bitbanged_gmlan(1); // recessive
         set_gpio_mode(GPIOB, 13, MODE_INPUT);
-        register_clear_bits(&(TIM4->DIER), TIM_DIER_UIE); // No update interrupt
-        register_set(&(TIM4->CR1), 0U, 0x3FU); // Disable timer
+        register_clear_bits(&(TIM12->DIER), TIM_DIER_UIE); // No update interrupt
+        register_set(&(TIM12->CR1), 0U, 0x3FU); // Disable timer
         gmlan_sendmax = -1;   // exit
       }
     }
