@@ -52,7 +52,7 @@ static int tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
       if(addr == 0x118) {
         // Brake pressed
-        brake_pressed = ((GET_BYTE(to_push, 1) & (1 << 7)) != 0);
+        brake_pressed = ((GET_BYTE(to_push, 1) & (1U << 7)) != 0);
       }
 
       if(addr == 0x368) {
