@@ -105,7 +105,8 @@ static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if ((addr == 0x1A6) || (addr == 0x296)) {
       int button = (GET_BYTE(to_push, 0) & 0xE0) >> 5;
       switch (button) {
-        case 2:  // cancel
+        case 1:  // main
+        case 2:  // cancel 
           controls_allowed = 0;
           break;
         case 3:  // set
