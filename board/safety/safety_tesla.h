@@ -14,7 +14,7 @@ const CanMsg TESLA_TX_MSGS[] = {
 };
 
 AddrCheckStruct tesla_rx_checks[] = {
-  {.msg = {{0x00e, 0, 8, .expected_timestep = 10000U}}},   // STW_ANGLHP_STAT (100Hz)
+  {.msg = {{0x370, 0, 8, .expected_timestep = 40000U}}},   // EPAS_sysStatus (25Hz)
   {.msg = {{0x108, 0, 8, .expected_timestep = 10000U}}},   // DI_torque1 (100Hz)
   {.msg = {{0x118, 0, 6, .expected_timestep = 10000U}}},   // DI_torque2 (100Hz)
   {.msg = {{0x155, 0, 8, .expected_timestep = 20000U}}},   // ESP_B (50Hz)
@@ -32,10 +32,10 @@ static int tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     int addr = GET_ADDR(to_push);
 
     if(bus == 0) {
-      if(addr == 0x00e) {
+      if(addr == 0x370) {
         // Steering angle: (0.1 * val) - 819.2 in deg.
         // Store it 1/10 deg to match steering request
-        int angle_meas_new = (int)((((GET_BYTE(to_push, 0) & 0x3F) << 8) + GET_BYTE(to_push, 1)) - 8192);
+        int angle_meas_new = (((GET_BYTE(to_push, 4) & 0x3F) << 8) | GET_BYTE(to_push, 5)) - 8192;
         update_sample(&angle_meas, angle_meas_new);
       }
 
