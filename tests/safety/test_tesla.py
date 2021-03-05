@@ -38,8 +38,8 @@ class TestTeslaSafety(common.PandaSafetyTest):
     self.safety.init_tests()
 
   def _angle_meas_msg(self, angle):
-    values = {"StW_AnglHP": angle}
-    return self.packer.make_can_msg_panda("STW_ANGLHP_STAT", 0, values)
+    values = {"EPAS_internalSAS": angle}
+    return self.packer.make_can_msg_panda("EPAS_sysStatus", 0, values)
 
   def _set_prev_angle(self, t):
     t = int(t * 10)
