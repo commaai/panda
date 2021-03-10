@@ -18,6 +18,7 @@ AddrCheckStruct tesla_rx_checks[] = {
   {.msg = {{0x108, 0, 8, .expected_timestep = 10000U}}},   // DI_torque1 (100Hz)
   {.msg = {{0x118, 0, 6, .expected_timestep = 10000U}}},   // DI_torque2 (100Hz)
   {.msg = {{0x155, 0, 8, .expected_timestep = 20000U}}},   // ESP_B (50Hz)
+  {.msg = {{0x20a, 0, 8, .expected_timestep = 20000U}}},   // BrakeMessage (50Hz)
   {.msg = {{0x368, 0, 8, .expected_timestep = 100000U}}},  // DI_state (10Hz)
   {.msg = {{0x318, 0, 8, .expected_timestep = 100000U}}},  // GTW_carState (10Hz)
 };
@@ -50,9 +51,9 @@ static int tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         gas_pressed = (GET_BYTE(to_push, 6) != 0);
       }
 
-      if(addr == 0x118) {
+      if(addr == 0x20a) {
         // Brake pressed
-        brake_pressed = ((GET_BYTE(to_push, 1) & (1U << 7)) != 0);
+        brake_pressed = ((GET_BYTE(to_push, 0) & 0x0C) >> 2 != 1);
       }
 
       if(addr == 0x368) {
