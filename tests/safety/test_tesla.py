@@ -71,7 +71,7 @@ class TestTeslaSafety(common.PandaSafetyTest):
 
   def _control_lever_cmd(self, command):
     values = {"SpdCtrlLvr_Stat": command}
-    return self.packer.make_can_msg_panda("STW_ACTN_RQ", 2, values)
+    return self.packer.make_can_msg_panda("STW_ACTN_RQ", 0, values)
 
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced

@@ -86,6 +86,7 @@ static int tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
+  int bus = GET_BUS(to_send);
   bool violation = false;
 
   if(!msg_allowed(to_send, TESLA_TX_MSGS, sizeof(TESLA_TX_MSGS) / sizeof(TESLA_TX_MSGS[0]))) {
@@ -133,8 +134,8 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   }
 
-  if(addr == 0x45) {
-    // No button other than cancel can be sent
+  if(addr == 0x45 && bus == 0) {
+    // No button other than cancel can be sent by us
     int control_lever_status = (GET_BYTE(to_send, 0) & 0x3F);
     if((control_lever_status != 0) && (control_lever_status != 1)) {
       violation = true;
