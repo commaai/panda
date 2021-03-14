@@ -23,7 +23,7 @@ def sign(a):
   return 1 if a > 0 else -1
 
 class TestTeslaSafety(common.PandaSafetyTest):
-  TX_MSGS = [[0x488, 0], [0x45, 2]]
+  TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2]]
   STANDSTILL_THRESHOLD = 0
   GAS_PRESSED_THRESHOLD = 3
   RELAY_MALFUNCTION_ADDR = 0x488
@@ -72,6 +72,10 @@ class TestTeslaSafety(common.PandaSafetyTest):
   def _control_lever_cmd(self, command):
     values = {"SpdCtrlLvr_Stat": command}
     return self.packer.make_can_msg_panda("STW_ACTN_RQ", 0, values)
+
+  def _autopilot_status_msg(self, status):
+    values = {"autopilotStatus": status}
+    return self.packer.make_can_msg_panda("AutopilotStatus", 2, values)
 
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
@@ -150,6 +154,12 @@ class TestTeslaSafety(common.PandaSafetyTest):
     self.safety.set_controls_allowed(1)
     self._tx(self._control_lever_cmd(CONTROL_LEVER_STATE.IDLE))
     self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_autopilot_passthrough(self):
+    for ap_status in range(16):
+      self.safety.set_controls_allowed(1)
+      self._rx(self._autopilot_status_msg(ap_status))
+      self.assertEqual(self.safety.get_controls_allowed(), (not ap_status in [3, 4, 5]))
 
 if __name__ == "__main__":
   unittest.main()
