@@ -47,7 +47,6 @@ COPY requirements.txt /tmp/
 RUN pyenv install 3.8.5 && \
     pyenv global 3.8.5 && \
     pyenv rehash && \
-    pip install --no-cache-dir --upgrade pip==18.0 && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
 RUN cd /tmp && \
@@ -60,7 +59,8 @@ RUN cd /tmp && \
 RUN cd /tmp && \
     git clone https://github.com/commaai/openpilot.git tmppilot || true && \
     cd /tmp/tmppilot && \
-    git fetch && git checkout c23ec9f75389c9ad86400e9a9d23ee6bc5b648a2 && \
+    git fetch && \
+    git checkout 5463469f71e7861ccfbbd4d09b8e4ae56b8d3e45 && \
     git submodule update --init cereal opendbc && \
     mkdir /tmp/openpilot && \
     cp -pR SConstruct tools/ selfdrive/ common/ cereal/ opendbc/ /tmp/openpilot && \
