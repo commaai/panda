@@ -10,7 +10,7 @@ const int TESLA_DEG_TO_CAN = 10;
 
 const CanMsg TESLA_TX_MSGS[] = {
   {0x488, 0, 4},  // DAS_steeringControl
-  {0x45, 2, 8},   // STW_ACTN_RQ
+  {0x45, 0, 8},   // STW_ACTN_RQ
 };
 
 AddrCheckStruct tesla_rx_checks[] = {
