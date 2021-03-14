@@ -80,7 +80,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
 
   # Driver steering input torque
   def _lh_eps_03_msg(self, torque):
-    values = {"EPS_Lenkmoment": abs(torque), "EPS_Lenkmoment_QBit": torque < 0,
+    values = {"EPS_Lenkmoment": abs(torque), "EPS_VZ_Lenkmoment": torque < 0,
               "COUNTER": self.cnt_lh_eps_03 % 16}
     self.__class__.cnt_lh_eps_03 += 1
     return self.packer.make_can_msg_panda("LH_EPS_03", 0, values)
