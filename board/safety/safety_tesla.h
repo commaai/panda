@@ -11,6 +11,7 @@ const int TESLA_DEG_TO_CAN = 10;
 const CanMsg TESLA_TX_MSGS[] = {
   {0x488, 0, 4},  // DAS_steeringControl
   {0x45, 0, 8},   // STW_ACTN_RQ
+  {0x45, 2, 8},   // STW_ACTN_RQ
 };
 
 AddrCheckStruct tesla_rx_checks[] = {
@@ -21,8 +22,11 @@ AddrCheckStruct tesla_rx_checks[] = {
   {.msg = {{0x20a, 0, 8, .expected_timestep = 20000U}}},   // BrakeMessage (50Hz)
   {.msg = {{0x368, 0, 8, .expected_timestep = 100000U}}},  // DI_state (10Hz)
   {.msg = {{0x318, 0, 8, .expected_timestep = 100000U}}},  // GTW_carState (10Hz)
+  {.msg = {{0x399, 0, 8, .expected_timestep = 500000U}}},  // AutopilotStatus (2Hz)
 };
 const int TESLA_RX_CHECK_LEN = sizeof(tesla_rx_checks) / sizeof(tesla_rx_checks[0]);
+
+bool autopilot_enabled = false;
 
 static int tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   bool valid = addr_safety_check(to_push, tesla_rx_checks, TESLA_RX_CHECK_LEN,
@@ -75,6 +79,20 @@ static int tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       }
     }
 
+    if (bus == 2) {
+      if (addr == 0x399) {
+        // Autopilot status
+        int autopilot_status = (GET_BYTE(to_push, 0) & 0xF);
+        autopilot_enabled = (autopilot_status == 3) ||  // ACTIVE_1
+                            (autopilot_status == 4) ||  // ACTIVE_2
+                            (autopilot_status == 5);    // ACTIVE_NAVIGATE_ON_AUTOPILOT
+
+        if (autopilot_enabled) {
+          controls_allowed = 0;
+        }
+      }
+    }
+
     // 0x488: DAS_steeringControl should not be received on bus 0
     generic_rx_checks((addr == 0x488) && (bus == 0));
   }
@@ -122,7 +140,6 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
     desired_angle_last = desired_angle;
 
-
     // Angle should be the same as current angle while not steering
     if(!controls_allowed && ((desired_angle < (angle_meas.min - 1)) || (desired_angle > (angle_meas.max + 1)))) {
       violation = true;
@@ -134,7 +151,7 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   }
 
-  if(addr == 0x45 && bus == 0) {
+  if(addr == 0x45) {
     // No button other than cancel can be sent by us
     int control_lever_status = (GET_BYTE(to_send, 0) & 0x3F);
     if((control_lever_status != 0) && (control_lever_status != 1)) {
@@ -161,7 +178,7 @@ static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   if(bus_num == 2) {
     // Autopilot to chassis
-    bool block_msg = (addr == 0x488);
+    bool block_msg = (addr == 0x488 && !autopilot_enabled);
     if(!block_msg) {
       bus_fwd = 0;
     }
