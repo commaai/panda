@@ -63,12 +63,12 @@ RUN cd /tmp && \
     git checkout 5463469f71e7861ccfbbd4d09b8e4ae56b8d3e45 && \
     git submodule update --init cereal opendbc && \
     mkdir /tmp/openpilot && \
-    cp -pR SConstruct tools/ selfdrive/ common/ cereal/ opendbc/ /tmp/openpilot && \
+    cp -pR SConstruct site_scons/ tools/ selfdrive/ common/ cereal/ opendbc/ /tmp/openpilot && \
     rm -rf /tmp/tmppilot
 
 RUN cd /tmp/openpilot && \
     pip install --no-cache-dir -r opendbc/requirements.txt && \
-    pip install --no-cache-dir aenum lru-dict pycurl tenacity atomicwrites
+    pip install --no-cache-dir --upgrade aenum lru-dict pycurl tenacity atomicwrites scons
 
 COPY . /tmp/openpilot/panda
 RUN rm -rf /tmp/openpilot/panda/.git
