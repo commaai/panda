@@ -104,7 +104,6 @@ static int tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
-  int bus = GET_BUS(to_send);
   bool violation = false;
 
   if(!msg_allowed(to_send, TESLA_TX_MSGS, sizeof(TESLA_TX_MSGS) / sizeof(TESLA_TX_MSGS[0]))) {
