@@ -292,7 +292,8 @@ int set_safety_hooks(uint16_t mode, int16_t param) {
   for (int i = 0; i < hook_config_count; i++) {
     if (safety_hook_registry[i].id == mode) {
       current_hooks = safety_hook_registry[i].hooks;
-      current_safety_mode = safety_hook_registry[i].id;
+      current_safety_mode = mode;
+      current_safety_param = param;
       set_status = 0;  // set
     }
 
@@ -304,7 +305,6 @@ int set_safety_hooks(uint16_t mode, int16_t param) {
   }
   if ((set_status == 0) && (current_hooks->init != NULL)) {
     current_hooks->init(param);
-    current_safety_param = param;
   }
   return set_status;
 }
