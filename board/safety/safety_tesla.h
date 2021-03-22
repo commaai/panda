@@ -87,9 +87,10 @@ static int tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
                               (cruise_state == 6) ||  // PRE_FAULT
                               (cruise_state == 7);    // PRE_CANCEL
 
-        if(cruise_engaged && !cruise_engaged_prev) {
+        if(cruise_engaged && !cruise_engaged_prev && !autopilot_enabled) {
           controls_allowed = 1;
         }
+        
         if(!cruise_engaged) {
           controls_allowed = 0;
         }
@@ -195,8 +196,8 @@ static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     //engage AutoPilot. Once we send the steering commands from OP the status
     //changes from 1-AVAILABLE to 2-ACTIVE and AutoPilot becomes unavailable
     //The condition has to be:
-    // IF controls_enabled AND EPAS_eacStatus = 2 THEN EPAS_eacStatus = 1
-    if ((addr == 0x370) && (controls_allowed == 1)) {
+    // IF controls_allowed AND EPAS_eacStatus = 2 THEN EPAS_eacStatus = 1
+    if ((addr == 0x370) && (controls_allowed == 1) && (!autopilot_enabled)) {
       int epas_eacStatus = ((GET_BYTE(to_fwd, 6) & 0xE0) >> 5);
       //we only change from 2 to 1 leaving all other values alone
       if (epas_eacStatus == 2) {
