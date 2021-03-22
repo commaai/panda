@@ -9,9 +9,17 @@ const struct lookup_t TESLA_LOOKUP_ANGLE_RATE_DOWN = {
 const int TESLA_DEG_TO_CAN = 10;
 
 const CanMsg TESLA_TX_MSGS[] = {
-  {0x488, 0, 4},  // DAS_steeringControl
-  {0x45, 0, 8},   // STW_ACTN_RQ
-  {0x45, 2, 8},   // STW_ACTN_RQ
+  {0x488, 0, 4},  // DAS_steeringControl - Lat Control
+  {0x2B9, 0, 8},  // DAS_control - Long Control
+  {0x209, 0, 8},  // DAS_longControl - Long Control
+  {0x45,  0, 8},  // STW_ACTN_RQ - ACC Control
+  {0x45,  2, 8},  // STW_ACTN_RQ - ACC Control
+  {0x399, 0, 8},  // DAS_status - HUD
+  {0x389, 0, 8},  // DAS_status2 - HUD
+  {0x239, 0, 8},  // DAS_lanes - HUD
+  {0x309, 0, 8},  // DAS_object - HUD
+  {0x3A9, 0, 8},  // DAS_telemetry - HUD
+  {0x3E9, 0, 8},  // DAS_bodyControls - Car Integration for turn signal on ALCA
 };
 
 AddrCheckStruct tesla_rx_checks[] = {
@@ -27,6 +35,16 @@ AddrCheckStruct tesla_rx_checks[] = {
 #define TESLA_RX_CHECK_LEN (sizeof(tesla_rx_checks) / sizeof(tesla_rx_checks[0]))
 
 bool autopilot_enabled = false;
+
+static uint8_t tesla_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+  int addr = GET_ADDR(to_push);
+  int len = GET_LEN(to_push);
+  uint8_t checksum = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U);
+  for (int i = 0; i < (len - 1); i++) {
+    checksum += (uint8_t)GET_BYTE(to_push, i);
+  }
+  return checksum;
+}
 
 static int tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   bool valid = addr_safety_check(to_push, tesla_rx_checks, TESLA_RX_CHECK_LEN,
@@ -172,12 +190,39 @@ static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   if(bus_num == 0) {
     // Chassis to autopilot
+
+    //we need to modify EPAS_sysStatus->EPAS_eacStatus from 2 to 1 otherwise we can never 
+    //engage AutoPilot. Once we send the steering commands from OP the status
+    //changes from 1-AVAILABLE to 2-ACTIVE and AutoPilot becomes unavailable
+    //The condition has to be:
+    // IF controls_enabled AND EPAS_eacStatus = 2 THEN EPAS_eacStatus = 1
+    if ((addr == 0x370) && (controls_allowed == 1)) {
+      int epas_eacStatus = ((GET_BYTE(to_fwd, 6) & 0xE0) >> 5);
+      //we only change from 2 to 1 leaving all other values alone
+      if (epas_eacStatus == 2) {
+        to_fwd->RDHR = (to_fwd->RDHR & 0x001FFFFF) | 0X00200000;
+        to_fwd->RDHR = (to_fwd->RDHR | (tesla_compute_checksum(to_fwd) << 24));
+      }
+    }
     bus_fwd = 2;
   }
 
   if(bus_num == 2) {
     // Autopilot to chassis
-    bool block_msg = (addr == 0x488 && !autopilot_enabled);
+    //0x488 DAS_steeringControl - Lat Control
+    //0x2B9 DAS_control - Long Control
+    //0x209 DAS_longControl - Long Control
+    //0x399 DAS_status - HUD
+    //0x389 DAS_status2 - HUD
+    //0x239 DAS_lanes - HUD
+    //0x309 DAS_object - HUD
+    //0x3A9 DAS_telemetry - HUD
+    //0x3E9 DAS_bodyControls - Car Integration for turn signal on ALCA
+    int is_lkas_msg = (addr == 0x488);
+    //int is_acc_msg = ((addr == 0x2B9) || (addr == 0x209));
+    //int is_hud_msg = ((addr == 0x399) || (addr == 0x389) || (addr == 0x239) || (addr == 0x309) || (addr == 0x3A9));
+    //int is_bodyControl_msg = (addr = 0x3E9);
+    bool block_msg = (is_lkas_msg && !autopilot_enabled);
     if(!block_msg) {
       bus_fwd = 0;
     }
