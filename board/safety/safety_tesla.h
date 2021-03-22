@@ -8,6 +8,9 @@ const struct lookup_t TESLA_LOOKUP_ANGLE_RATE_DOWN = {
 
 const int TESLA_DEG_TO_CAN = 10;
 
+const uint32_t TIME_TO_ENGAGE = 500000; //0.5s wait for AP
+uint32_t time_cruise_engaged = 0;
+
 const CanMsg TESLA_TX_MSGS[] = {
   {0x488, 0, 4},  // DAS_steeringControl - Lat Control
   {0x2B9, 0, 8},  // DAS_control - Long Control
@@ -88,12 +91,20 @@ static int tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
                               (cruise_state == 7);    // PRE_CANCEL
 
         if(cruise_engaged && !cruise_engaged_prev && !autopilot_enabled) {
-          controls_allowed = 1;
+          time_cruise_engaged = TIM2->CNT;
+        }
+        
+        if((time_cruise_engaged !=0) && (get_ts_elapsed(TIM2->CNT,time_cruise_engaged) >= TIME_TO_ENGAGE)) {
+          if (!autopilot_enabled) {
+            controls_allowed = 1;
+          }
+          time_cruise_engaged = 0;
         }
         
         if(!cruise_engaged) {
           controls_allowed = 0;
         }
+
         cruise_engaged_prev = cruise_engaged;
       }
     }
@@ -223,7 +234,7 @@ static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     //int is_acc_msg = ((addr == 0x2B9) || (addr == 0x209));
     //int is_hud_msg = ((addr == 0x399) || (addr == 0x389) || (addr == 0x239) || (addr == 0x309) || (addr == 0x3A9));
     //int is_bodyControl_msg = (addr = 0x3E9);
-    bool block_msg = (is_lkas_msg && !autopilot_enabled);
+    bool block_msg = (is_lkas_msg && controls_allowed);
     if(!block_msg) {
       bus_fwd = 0;
     }
