@@ -11,6 +11,19 @@ const int TESLA_DEG_TO_CAN = 10;
 const uint32_t TIME_TO_ENGAGE = 500000; //0.5s wait for AP
 uint32_t time_cruise_engaged = 0;
 
+//for safetyParam parsing
+const uint16_t TESLA_HAS_AP_HARDWARE = 1;
+const uint16_t TESLA_HAS_ACC = 2;
+const uint16_t TESLA_OP_LONG_CONTROL = 4;
+const uint16_t TESLA_HUD_INTEGRATION = 8;
+const uint16_t TESLA_BODY_CONTROLS = 16;
+
+bool has_ap_hardware = false;
+bool has_acc = false;
+bool has_op_long_control = false;
+bool has_hud_integration = false;
+bool has_body_controls = false;
+
 const CanMsg TESLA_TX_MSGS[] = {
   {0x488, 0, 4},  // DAS_steeringControl - Lat Control
   {0x2B9, 0, 8},  // DAS_control - Long Control
@@ -144,6 +157,29 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
+  //do not allow long control if not enabled
+  if ((!has_op_long_control) && ((addr == 0x2B9) || (addr == 0x209))) {
+    //{0x2B9, 0, 8},  // DAS_control - Long Control
+    //{0x209, 0, 8},  // DAS_longControl - Long Control
+    tx = 0;
+  }
+
+  //do not allow body controls if not enabled
+  if ((!has_body_controls) && (addr == 0x3E9)) {
+    //{0x3E9, 0, 8},  // DAS_bodyControls
+    tx = 0;
+  }
+
+  //do not allow hud integration messages if not enabled
+  if ((!has_hud_integration) && ((addr == 0x399) || (addr == 0x389) || (addr == 0x239) ||(addr == 0x309) || (addr == 0x3A9))) {
+    //{0x399, 0, 8},  // DAS_status - HUD
+    //{0x389, 0, 8},  // DAS_status2 - HUD
+    //{0x239, 0, 8},  // DAS_lanes - HUD
+    //{0x309, 0, 8},  // DAS_object - HUD
+    //{0x3A9, 0, 8},  // DAS_telemetry - HUD
+    tx = 0;
+  }
+
   if(addr == 0x488) {
     // Steering control: (0.1 * val) - 1638.35 in deg.
     // We use 1/10 deg as a unit here
@@ -230,11 +266,11 @@ static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     //0x309 DAS_object - HUD
     //0x3A9 DAS_telemetry - HUD
     //0x3E9 DAS_bodyControls - Car Integration for turn signal on ALCA
-    int is_lkas_msg = (addr == 0x488);
-    //int is_acc_msg = ((addr == 0x2B9) || (addr == 0x209));
-    //int is_hud_msg = ((addr == 0x399) || (addr == 0x389) || (addr == 0x239) || (addr == 0x309) || (addr == 0x3A9));
-    //int is_bodyControl_msg = (addr = 0x3E9);
-    bool block_msg = (is_lkas_msg && controls_allowed);
+    bool is_lkas_msg = (addr == 0x488);
+    bool is_acc_msg = has_op_long_control && ((addr == 0x2B9) || (addr == 0x209));
+    bool is_hud_msg = has_hud_integration && ((addr == 0x399) || (addr == 0x389) || (addr == 0x239) || (addr == 0x309) || (addr == 0x3A9));
+    bool is_bodyControl_msg = has_body_controls && (addr = 0x3E9);
+    bool block_msg = controls_allowed && (is_lkas_msg || is_acc_msg || is_hud_msg || is_bodyControl_msg );
     if(!block_msg) {
       bus_fwd = 0;
     }
@@ -251,6 +287,11 @@ static void tesla_init(int16_t param) {
   UNUSED(param);
   controls_allowed = 0;
   relay_malfunction_reset();
+  has_ap_hardware = GET_FLAG(param, TESLA_HAS_AP_HARDWARE);
+  has_acc = GET_FLAG(param, TESLA_HAS_ACC);
+  has_op_long_control = GET_FLAG(param, TESLA_OP_LONG_CONTROL);
+  has_hud_integration = GET_FLAG(param, TESLA_HUD_INTEGRATION);
+  has_body_controls = GET_FLAG(param, TESLA_BODY_CONTROLS);
 }
 
 const safety_hooks tesla_hooks = {
