@@ -284,7 +284,6 @@ static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 }
 
 static void tesla_init(int16_t param) {
-  UNUSED(param);
   controls_allowed = 0;
   relay_malfunction_reset();
   has_ap_hardware = GET_FLAG(param, TESLA_HAS_AP_HARDWARE);
