@@ -22,7 +22,6 @@ AddrCheckStruct tesla_rx_checks[] = {
   {.msg = {{0x20a, 0, 8, .expected_timestep = 20000U}}},   // BrakeMessage (50Hz)
   {.msg = {{0x368, 0, 8, .expected_timestep = 100000U}}},  // DI_state (10Hz)
   {.msg = {{0x318, 0, 8, .expected_timestep = 100000U}}},  // GTW_carState (10Hz)
-  // {.msg = {{0x399, 2, 8, .expected_timestep = 500000U}}},  // AutopilotStatus (2Hz)
 };
 #define TESLA_RX_CHECK_LEN (sizeof(tesla_rx_checks) / sizeof(tesla_rx_checks[0]))
 
