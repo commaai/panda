@@ -13,6 +13,7 @@ if os.getenv("PEDAL"):
         "-msoft-float",
         "-DSTM32F2",
         "-DSTM32F205xx",
+        "-O2",
         "-DPEDAL",
     ]
 else:
@@ -26,6 +27,8 @@ else:
         "-DSTM32F413xx",
         "-mfpu=fpv4-sp-d16",
         "-fsingle-precision-constant",
+        "-Os",
+        "-g",
     ]
 
 # TODO: pedal build
@@ -74,7 +77,6 @@ def objcopy(source, target, env, for_signature):
     return '$OBJCOPY -O binary %s %s' % (source[0], target[0])
 
 flags = [
-    "-g",
     "-Wall",
     "-Wextra",
     "-Wstrict-prototypes",
@@ -83,7 +85,6 @@ flags = [
     "-mthumb",
     "-nostdlib",
     "-fno-builtin",
-    "-Os",
     "-Tboard/stm32_flash.ld",
     "-std=gnu11",
 ] + PROJECT_FLAGS
