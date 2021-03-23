@@ -128,10 +128,10 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if(controls_allowed && steer_control_enabled) {
       // Add 1 to not false trigger the violation
       float delta_angle_float;
-      delta_angle_float = (interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, vehicle_speed) * TESLA_DEG_TO_CAN) + 1.;
-      int delta_angle_up = (int)(delta_angle_float);
-      delta_angle_float =  (interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, vehicle_speed) * TESLA_DEG_TO_CAN) + 1.;
-      int delta_angle_down = (int)(delta_angle_float);
+      delta_angle_float = (interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, vehicle_speed) * TESLA_DEG_TO_CAN);
+      int delta_angle_up = (int)(delta_angle_float) + 1;
+      delta_angle_float =  (interpolate(TESLA_LOOKUP_ANGLE_RATE_DOWN, vehicle_speed) * TESLA_DEG_TO_CAN);
+      int delta_angle_down = (int)(delta_angle_float) + 1;
       int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
       int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
 
