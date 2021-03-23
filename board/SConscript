@@ -4,6 +4,7 @@ import subprocess
 BUILD_TYPE = "DEBUG"
 PREFIX = "arm-none-eabi-"
 STARTUP_FILE = "startup_stm32f413xx.s"
+PROJECT= "panda"
 
 # TODO: pedal build
 # TODO: EON define
@@ -104,15 +105,15 @@ startup = panda_env.Object(STARTUP_FILE)
 
 # Bootstub
 crypto = ["../crypto/rsa.c", "../crypto/sha.c"]
-bootstub_elf = panda_env.Program("obj/bootstub.elf", [startup] + crypto + ["bootstub.c"])
-bootstub_bin = panda_env.Objcopy("obj/bootstub.bin", bootstub_elf)
+bootstub_elf = panda_env.Program(f"obj/bootstub.{PROJECT}.elf", [startup] + crypto + ["bootstub.c"])
+bootstub_bin = panda_env.Objcopy(f"obj/bootstub.{PROJECT}.bin", bootstub_elf)
 
-# Build panda
-panda_elf = panda_env.Program("obj/panda.elf", [startup, "main.c"],
+# Build main
+main_elf = panda_env.Program(f"obj/{PROJECT}.elf", [startup, "main.c"],
     LINKFLAGS=["-Wl,--section-start,.isr_vector=0x8004000"] + flags)
-panda_bin = panda_env.Objcopy("obj/panda.bin", panda_elf)
+main_bin = panda_env.Objcopy(f"obj/{PROJECT}.bin", main_elf)
 
-# Sign panda
+# Sign main
 cert_fn = File("../certs/debug").srcnode().abspath
 sign_py = File("../crypto/sign.py").srcnode().abspath
-panda_bin_signed = panda_env.Command("obj/panda.bin.signed", panda_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
+panda_bin_signed = panda_env.Command("obj/panda.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
