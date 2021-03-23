@@ -3,8 +3,30 @@ import subprocess
 
 BUILD_TYPE = "DEBUG"
 PREFIX = "arm-none-eabi-"
-STARTUP_FILE = "startup_stm32f413xx.s"
-PROJECT= "panda"
+
+if os.getenv("PEDAL"):
+    STARTUP_FILE = "startup_stm32f205xx.s"
+    PROJECT= "pedal"
+    MAIN = "pedal/main.c"
+    PROJECT_FLAGS = [
+        "-mcpu=cortex-m3",
+        "-msoft-float",
+        "-DSTM32F2",
+        "-DSTM32F205xx",
+        "-DPEDAL",
+    ]
+else:
+    STARTUP_FILE = "startup_stm32f413xx.s"
+    PROJECT= "panda"
+    MAIN = "main.c"
+    PROJECT_FLAGS = [
+        "-mcpu=cortex-m4",
+        "-mhard-float",
+        "-DSTM32F4",
+        "-DSTM32F413xx",
+        "-mfpu=fpv4-sp-d16",
+        "-fsingle-precision-constant",
+    ]
 
 # TODO: pedal build
 # TODO: EON define
@@ -59,23 +81,20 @@ flags = [
     "-Werror",
     "-mlittle-endian",
     "-mthumb",
-    "-mcpu=cortex-m4",
-    "-mhard-float",
-    "-DSTM32F4",
-    "-DSTM32F413xx",
-    "-mfpu=fpv4-sp-d16",
-    "-fsingle-precision-constant",
     "-nostdlib",
     "-fno-builtin",
     "-Os",
     "-Tboard/stm32_flash.ld",
     "-std=gnu11",
-    "-DALLOW_DEBUG",
-]
+] + PROJECT_FLAGS
+
+if BUILD_TYPE == "DEBUG":
+    flags += ["-DALLOW_DEBUG"]
 
 includes = [
   "inc",
   "..",
+  ".",
 ]
 
 
@@ -109,11 +128,11 @@ bootstub_elf = panda_env.Program(f"obj/bootstub.{PROJECT}.elf", [startup] + cryp
 bootstub_bin = panda_env.Objcopy(f"obj/bootstub.{PROJECT}.bin", bootstub_elf)
 
 # Build main
-main_elf = panda_env.Program(f"obj/{PROJECT}.elf", [startup, "main.c"],
+main_elf = panda_env.Program(f"obj/{PROJECT}.elf", [startup, MAIN],
     LINKFLAGS=["-Wl,--section-start,.isr_vector=0x8004000"] + flags)
 main_bin = panda_env.Objcopy(f"obj/{PROJECT}.bin", main_elf)
 
 # Sign main
 cert_fn = File("../certs/debug").srcnode().abspath
 sign_py = File("../crypto/sign.py").srcnode().abspath
-panda_bin_signed = panda_env.Command("obj/panda.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
+panda_bin_signed = panda_env.Command(f"obj/{PROJECT}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
