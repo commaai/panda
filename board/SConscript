@@ -108,8 +108,8 @@ if os.getenv("RELEASE") is None:
 else:
   BUILD_TYPE = "RELEASE"
   cert_fn = os.getenv("CERT")
-  assert(cert_fn is not None)
-  assert(os.path.exists(cert_fn))
+  assert cert_fn is not None, 'No certificate file specified. Please set CERT env variable'
+  assert os.path.exists(cert_fn), 'Certificate file not found. Please specify absolute path'
 
 includes = [
   "inc",
