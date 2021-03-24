@@ -46,7 +46,10 @@ else:
 def get_version(builder, build_type):
   version_file = File('../VERSION').srcnode().abspath
   version = open(version_file).read()
-  git = subprocess.check_output(["git", "rev-parse", "--short=8", "HEAD"], encoding='utf8').strip()
+  try:
+    git = subprocess.check_output(["git", "rev-parse", "--short=8", "HEAD"], encoding='utf8').strip()
+  except subprocess.CalledProcessError:
+    git = "unknown"
   return f"{version}-{builder}-{git}-{build_type}"
 
 
