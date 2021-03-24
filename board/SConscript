@@ -5,8 +5,6 @@ EON = os.path.isfile('/EON')
 TICI = os.path.isfile('/TICI')
 PC = not (EON or TICI)
 
-# TODO: release build & cert
-BUILD_TYPE = "DEBUG"
 PREFIX = "arm-none-eabi-"
 BUILDER = "DEV"
 
@@ -102,8 +100,16 @@ flags = [
   "-std=gnu11",
 ] + PROJECT_FLAGS
 
-if BUILD_TYPE == "DEBUG":
-    flags += ["-DALLOW_DEBUG"]
+
+if os.getenv("RELEASE") is None:
+  BUILD_TYPE = "DEBUG"
+  cert_fn = File("../certs/debug").srcnode().abspath
+  flags += ["-DALLOW_DEBUG"]
+else:
+  BUILD_TYPE = "RELEASE"
+  cert_fn = os.getenv("CERT")
+  assert(cert_fn is not None)
+  assert(os.path.exists(cert_fn))
 
 includes = [
   "inc",
@@ -146,6 +152,5 @@ main_elf = panda_env.Program(f"obj/{PROJECT}.elf", [startup, MAIN],
 main_bin = panda_env.Objcopy(f"obj/{PROJECT}.bin", main_elf)
 
 # Sign main
-cert_fn = File("../certs/debug").srcnode().abspath
 sign_py = File("../crypto/sign.py").srcnode().abspath
 panda_bin_signed = panda_env.Command(f"obj/{PROJECT}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
