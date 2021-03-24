@@ -23,7 +23,7 @@
 
 #define CAN CAN1
 
-//#define PEDAL_USB
+#define PEDAL_USB
 
 #ifdef PEDAL_USB
   #include "drivers/uart.h"
