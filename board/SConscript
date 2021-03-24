@@ -86,6 +86,9 @@ def get_key_header(name):
 def objcopy(source, target, env, for_signature):
     return '$OBJCOPY -O binary %s %s' % (source[0], target[0])
 
+
+linkerscript_fn = File("stm32_flash.ld").srcnode().abspath
+
 flags = [
   "-Wall",
   "-Wextra",
@@ -95,7 +98,7 @@ flags = [
   "-mthumb",
   "-nostdlib",
   "-fno-builtin",
-  "-Tboard/stm32_flash.ld",
+  f"-T{linkerscript_fn}",
   "-std=gnu11",
 ] + PROJECT_FLAGS
 
