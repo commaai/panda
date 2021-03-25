@@ -36,14 +36,10 @@ jobs:
         run: eval "$BUILD"
       - name: Test python package installer
         run: $RUN "cd /tmp/openpilot/panda && python setup.py install"
-      - name: Build panda STM image
-        run: $RUN "cd /tmp/openpilot/panda/board && make bin"
-      - name: Build panda STM bootstub image
-        run: $RUN "cd /tmp/openpilot/panda/board && make obj/bootstub.panda.bin"
-      - name: Build pedal STM image
-        run: $RUN "cd /tmp/openpilot/panda/board/pedal && make obj/comma.bin"
-      - name: Build pedal STM bootstub image
-        run: $RUN "cd /tmp/openpilot/panda/board/pedal && make obj/bootstub.bin"
+      - name: Build panda STM image and bootstub
+        run: $RUN "cd /tmp/openpilot/panda && scons"
+      - name: Build pedal STM image and bootstub
+        run: $RUN "cd /tmp/openpilot/panda && PEDAL=1 scons"
 
   safety:
     name: safety
@@ -57,7 +53,7 @@ jobs:
         run: |
           $RUN "cd /tmp/openpilot && \
                 scons -c && \
-                scons -j$(nproc) opendbc/ cereal/ && \
+                scons -j$(nproc) -i opendbc/ cereal/ && \
                 cd panda/tests/safety && \
                 ./test.sh"
 

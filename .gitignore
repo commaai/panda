@@ -13,6 +13,7 @@ pandacan.egg-info/
 board/obj/
 examples/output.csv
 .DS_Store
-.vscode
+.vscode*
 nosetests.xml
 .mypy_cache/
+.sconsign.dblite
