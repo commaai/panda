@@ -57,10 +57,10 @@ RUN cd /tmp && \
     FILESDIR=/usr/share/cppcheck make -j4 install
 
 RUN cd /tmp && \
-    git clone https://github.com/commaai/openpilot.git tmppilot || true && \
+    git clone https://github.com/martinl/openpilot.git tmppilot || true && \
     cd /tmp/tmppilot && \
     git fetch && \
-    git checkout 5463469f71e7861ccfbbd4d09b8e4ae56b8d3e45 && \
+    git checkout f9a60cd97bf74f48c93e66e41fa82d6601716c98 && \
     git submodule update --init cereal opendbc && \
     mkdir /tmp/openpilot && \
     cp -pR SConstruct site_scons/ tools/ selfdrive/ common/ cereal/ opendbc/ /tmp/openpilot && \
