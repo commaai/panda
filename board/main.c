@@ -763,7 +763,7 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
       ignition_can_cnt += 1U;
 
       // synchronous safety check
-      safety_tick(current_hooks);
+      safety_tick(current_rx_checks);
     }
 
     loop_counter++;

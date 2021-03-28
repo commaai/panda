@@ -34,14 +34,15 @@ const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0
                                   {0x2E4, 0, 5}, {0x411, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  // LKAS + ACC
                                   {0x200, 0, 6}};  // interceptor
 
-AddrCheckStruct toyota_rx_checks[] = {
+AddrCheckStruct toyota_addr_checks[] = {
   {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}}},
   {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}}},
   {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}}},
   {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U},
            {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}}},
 };
-const int TOYOTA_RX_CHECKS_LEN = sizeof(toyota_rx_checks) / sizeof(toyota_rx_checks[0]);
+const int TOYOTA_ADDR_CHECKS_LEN = sizeof(toyota_addr_checks) / sizeof(toyota_addr_checks[0]);
+addr_checks toyota_rx_checks = {toyota_addr_checks, TOYOTA_ADDR_CHECKS_LEN};
 
 // global actuation limit states
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
@@ -63,7 +64,7 @@ static uint8_t toyota_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
-  bool valid = addr_safety_check(to_push, toyota_rx_checks, TOYOTA_RX_CHECKS_LEN,
+  bool valid = addr_safety_check(to_push, &toyota_rx_checks,
                                  toyota_get_checksum, toyota_compute_checksum, NULL);
 
   if (valid && (GET_BUS(to_push) == 0)) {
@@ -232,11 +233,12 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return tx;
 }
 
-static void toyota_init(int16_t param) {
+static const addr_checks* toyota_init(int16_t param) {
   controls_allowed = 0;
   relay_malfunction_reset();
   gas_interceptor_detected = 0;
   toyota_dbc_eps_torque_factor = param;
+  return &toyota_rx_checks;
 }
 
 static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
@@ -268,6 +270,4 @@ const safety_hooks toyota_hooks = {
   .tx = toyota_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = toyota_fwd_hook,
-  .addr_check = toyota_rx_checks,
-  .addr_check_len = sizeof(toyota_rx_checks)/sizeof(toyota_rx_checks[0]),
 };

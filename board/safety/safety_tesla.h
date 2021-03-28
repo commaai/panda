@@ -169,10 +169,11 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return tx;
 }
 
-static void tesla_init(int16_t param) {
+static const addr_checks* tesla_init(int16_t param) {
   UNUSED(param);
   controls_allowed = 0;
   gmlan_switch_init(1); //init the gmlan switch with 1s timeout enabled
+  return &default_rx_checks;
 }
 
 static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
