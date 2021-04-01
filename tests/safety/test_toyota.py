@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import unittest
 import numpy as np
+import random
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
@@ -108,6 +109,12 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       self.assertFalse(self._tx(self._lta_msg(0, 1, 0)))
       self.assertFalse(self._tx(self._lta_msg(0, 0, 1)))
 
+      for _ in range(20):
+        req = random.choice([0, 1])
+        req2 = random.choice([0, 1])
+        angle = random.randint(-50, 50)
+        should_tx = not req and not req2 and angle == 0
+        self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle)))
 
   def test_rx_hook(self):
     # checksum checks
