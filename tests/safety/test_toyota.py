@@ -17,7 +17,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
 
   TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
              [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
-             [0x2E4, 0], [0x411, 0], [0x412, 0], [0x343, 0], [0x1D2, 0],  # LKAS + ACC
+             [0x2E4, 0], [0x191, 0], [0x411, 0], [0x412, 0], [0x343, 0], [0x1D2, 0],  # LKAS + ACC
              [0x200, 0], [0x750, 0]]  # interceptor + blindspot monitor
   STANDSTILL_THRESHOLD = 1  # 1kph
   RELAY_MALFUNCTION_ADDR = 0x2E4
@@ -35,9 +35,9 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conversative for rounding
 
   def setUp(self):
-    self.packer = CANPackerPanda("toyota_prius_2017_pt_generated")
+    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 66)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 73)
     self.safety.init_tests()
 
   def _torque_meas_msg(self, torque):
@@ -47,6 +47,10 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   def _torque_msg(self, torque):
     values = {"STEER_TORQUE_CMD": torque}
     return self.packer.make_can_msg_panda("STEERING_LKA", 0, values)
+
+  def _lta_msg(self, req, req2, angle_cmd):
+    values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd}
+    return self.packer.make_can_msg_panda("STEERING_LTA", 0, values)
 
   def _accel_msg(self, accel):
     values = {"ACCEL_CMD": accel}
@@ -90,6 +94,20 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
           else:
             should_tx = np.isclose(accel, 0, atol=0.0001)
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
+
+  # Only allow LTA msgs with no actuation
+  def test_lta_steer_cmd(self):
+    for engaged in [True, False]:
+      self.safety.set_controls_allowed(engaged)
+
+      # good msg
+      self.assertTrue(self._tx(self._lta_msg(0, 0, 0)))
+
+      # bad msgs
+      self.assertFalse(self._tx(self._lta_msg(1, 0, 0)))
+      self.assertFalse(self._tx(self._lta_msg(0, 1, 0)))
+      self.assertFalse(self._tx(self._lta_msg(0, 0, 1)))
+
 
   def test_rx_hook(self):
     # checksum checks
