@@ -1,0 +1,5 @@
+env = Environment(
+  CPPPATH=[".", "../../board"],
+)
+
+env.SharedLibrary("libpandasafety.so", ["test.c"])
