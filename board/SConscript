@@ -148,11 +148,13 @@ startup = panda_env.Object(STARTUP_FILE)
 crypto = ["../crypto/rsa.c", "../crypto/sha.c"]
 bootstub_elf = panda_env.Program(f"obj/bootstub.{PROJECT}.elf", [startup] + crypto + ["bootstub.c"])
 bootstub_bin = panda_env.Objcopy(f"obj/bootstub.{PROJECT}.bin", bootstub_elf)
+Requires(bootstub_elf, gitversion)
 
 # Build main
 main_elf = panda_env.Program(f"obj/{PROJECT}.elf", [startup, MAIN],
   LINKFLAGS=["-Wl,--section-start,.isr_vector=0x8004000"] + flags)
 main_bin = panda_env.Objcopy(f"obj/{PROJECT}.bin", main_elf)
+Requires(main_elf, gitversion)
 
 # Sign main
 sign_py = File("../crypto/sign.py").srcnode().abspath
