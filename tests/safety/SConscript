@@ -1,4 +1,6 @@
 env = Environment(
+  CC='clang',
+  CXX='clang++',
   CPPPATH=[".", "../../board"],
 )
 
