@@ -81,8 +81,8 @@ static const struct usb_device_id panda_usb_table[] = {
 MODULE_DEVICE_TABLE(usb, panda_usb_table);
 
 
-// panda:       CAN1 = 0   CAN2 = 1   CAN3 = 4
-const int can_numbering[] = {0,1,4};
+// panda:       CAN1 = 0   CAN2 = 1   CAN3 = 2
+const int can_numbering[] = {0,1,2};
 
 struct panda_inf_priv *
 panda_get_inf_from_bus_id(struct panda_dev_priv *priv_dev, int bus_id){
