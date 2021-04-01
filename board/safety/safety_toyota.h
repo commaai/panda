@@ -190,7 +190,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       lta_angle = to_signed(lta_angle, 16);
 
       // block LTA msgs with actuation requests
-      if (lta_request || lta_request2 || lta_angle != 0) {
+      if (lta_request || lta_request2 || (lta_angle != 0)) {
         tx = 0;
       }
     }
