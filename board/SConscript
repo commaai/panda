@@ -137,7 +137,9 @@ panda_env = Environment(
 version = f'const uint8_t gitversion[] = "{get_version(BUILDER, BUILD_TYPE)}";'
 gitversion = panda_env.Textfile("obj/gitversion.h", [version, ""])
 Ignore('bootstub.o', gitversion)
+Requires('bootstub.o', gitversion)
 Ignore('main.o', gitversion)
+Requires('main.o', gitversion)
 
 certs = [get_key_header(n) for n in ["debug", "release"]]
 certheader = panda_env.Textfile("obj/cert.h", certs + [""])
@@ -148,13 +150,11 @@ startup = panda_env.Object(STARTUP_FILE)
 crypto = ["../crypto/rsa.c", "../crypto/sha.c"]
 bootstub_elf = panda_env.Program(f"obj/bootstub.{PROJECT}.elf", [startup] + crypto + ["bootstub.c"])
 bootstub_bin = panda_env.Objcopy(f"obj/bootstub.{PROJECT}.bin", bootstub_elf)
-Requires(bootstub_elf, gitversion)
 
 # Build main
 main_elf = panda_env.Program(f"obj/{PROJECT}.elf", [startup, MAIN],
   LINKFLAGS=["-Wl,--section-start,.isr_vector=0x8004000"] + flags)
 main_bin = panda_env.Objcopy(f"obj/{PROJECT}.bin", main_elf)
-Requires(main_elf, gitversion)
 
 # Sign main
 sign_py = File("../crypto/sign.py").srcnode().abspath
