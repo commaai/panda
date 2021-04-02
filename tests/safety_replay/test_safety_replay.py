@@ -33,6 +33,7 @@ if __name__ == "__main__":
   # get all the routes
   for route, _, _ in logs:
     if not os.path.isfile(route):
+      print("\ndownloading %s%s" % (BASE_URL, route))
       with open(route, "wb") as f:
         f.write(requests.get(BASE_URL + route).content)
 
