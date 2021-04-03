@@ -24,7 +24,7 @@ class PandaDFU(object):
           self._handle = device.open()
           self.legacy = "07*128Kg" in self._handle.getASCIIStringDescriptor(4)
           return
-    raise Exception("failed to open " + dfu_serial)
+    raise Exception("failed to open " + dfu_serial if dfu_serial is not None else "DFU device")
 
   @staticmethod
   def list():
@@ -92,16 +92,8 @@ class PandaDFU(object):
     self.reset()
 
   def recover(self):
-    from panda import BASEDIR, build_st
-    if self.legacy:
-      fn = "obj/bootstub.comma.bin"
-      print("building legacy bootstub")
-      build_st(fn, "Makefile.legacy")
-    else:
-      fn = "obj/bootstub.panda.bin"
-      print("building panda bootstub")
-      build_st(fn)
-    fn = os.path.join(BASEDIR, "board", fn)
+    from panda import BASEDIR
+    fn = os.path.join(BASEDIR, "board", "obj", "bootstub.panda.bin")
 
     with open(fn, "rb") as f:
       code = f.read()

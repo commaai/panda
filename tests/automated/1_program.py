@@ -26,7 +26,7 @@ def test_flash(p):
 @test_all_pandas
 @panda_connect_and_init
 def test_get_signature(p):
-  fn = os.path.join(BASEDIR, "board/obj/panda.bin")
+  fn = os.path.join(BASEDIR, "board/obj/panda.bin.signed")
 
   firmware_sig = Panda.get_signature_from_firmware(fn)
   panda_sig = p.get_signature()

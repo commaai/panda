@@ -34,6 +34,12 @@
     <Filter Include="Source Files\J2534_CAN">
       <UniqueIdentifier>{08d548b5-4d0b-4ce4-85e6-5ff3fc987758}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\J2534_ISO14230">
+      <UniqueIdentifier>{b5c1874e-d3f8-4465-89c5-2e2b7e9f4fa4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\J2534_ISO14230">
+      <UniqueIdentifier>{b5a39015-f3ca-4888-bd5f-785aeec91345}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="J2534Connection.h">
@@ -102,6 +108,12 @@
     <ClInclude Include="MessagePeriodic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="J2534Connection_ISO14230.h">
+      <Filter>Header Files\J2534_ISO14230</Filter>
+    </ClInclude>
+    <ClInclude Include="MessageTx_ISO14230.h">
+      <Filter>Header Files\J2534_ISO14230</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pandaJ2534DLL.cpp">
@@ -142,6 +154,12 @@
     </ClCompile>
     <ClCompile Include="MessagePeriodic.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="J2534Connection_ISO14230.cpp">
+      <Filter>Source Files\J2534_ISO14230</Filter>
+    </ClCompile>
+    <ClCompile Include="MessageTx_ISO14230.cpp">
+      <Filter>Source Files\J2534_ISO14230</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

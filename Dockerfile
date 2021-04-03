@@ -1,12 +1,14 @@
-FROM ubuntu:16.04
+FROM ubuntu:20.04
 ENV PYTHONUNBUFFERED 1
 
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     autoconf \
     automake \
     bash \
     bison \
     bzip2 \
+    ca-certificates \
     curl \
     dfu-util \
     flex \
@@ -30,7 +32,7 @@ RUN apt-get update && apt-get install -y \
     ncurses-dev \
     network-manager \
     python-dev \
-    python-serial \
+    python3-serial \
     sed \
     texinfo \
     unrar-free \
@@ -38,7 +40,6 @@ RUN apt-get update && apt-get install -y \
     wget \
     build-essential \
     python-dev \
-    python-pip \
     screen \
     vim \
     wget \
@@ -53,9 +54,8 @@ ENV LC_ALL en_US.UTF-8
 RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
 
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
-RUN pyenv install 3.7.3
-RUN pyenv install 2.7.12
-RUN pyenv global 3.7.3
+RUN pyenv install 3.8.5
+RUN pyenv global 3.8.5
 RUN pyenv rehash
 
 RUN pip install --upgrade pip==18.0
@@ -68,16 +68,6 @@ ENV HOME /home/batman
 
 ENV PYTHONPATH /tmp:$PYTHONPATH
 
-COPY ./boardesp/get_sdk_ci.sh /tmp/panda/boardesp/
-COPY ./boardesp/python2_make.py /tmp/panda/boardesp/
-
-COPY ./panda_jungle /tmp/panda_jungle
-
-RUN useradd --system -s /sbin/nologin pandauser
-RUN mkdir -p /tmp/panda/boardesp/esp-open-sdk
-RUN chown pandauser /tmp/panda/boardesp/esp-open-sdk
-USER pandauser
-RUN cd /tmp/panda/boardesp && ./get_sdk_ci.sh
-USER root
+RUN cd /tmp && git clone https://github.com/commaai/panda_jungle.git
 
 ADD ./panda.tar.gz /tmp/panda

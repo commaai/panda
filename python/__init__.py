@@ -7,10 +7,8 @@ import usb1
 import os
 import time
 import traceback
-import subprocess
 import sys
 from .dfu import PandaDFU  # pylint: disable=import-error
-from .esptool import ESPROM, CesantaFlasher  # noqa pylint: disable=import-error
 from .flash_release import flash_release  # noqa pylint: disable=import-error
 from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
 from .serial import PandaSerial  # noqa pylint: disable=import-error
@@ -20,16 +18,9 @@ from .isotp import isotp_send, isotp_recv  # pylint: disable=import-error
 __version__ = '0.0.9'
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
+DEFAULT_FW_FN = os.path.join(BASEDIR, "board", "obj", "panda.bin.signed")
 
 DEBUG = os.getenv("PANDADEBUG") is not None
-
-# *** wifi mode ***
-def build_st(target, mkfile="Makefile", clean=True):
-  from panda import BASEDIR
-
-  clean_cmd = "make -f %s clean" % mkfile if clean else ":"
-  cmd = 'cd %s && %s && make -f %s %s' % (os.path.join(BASEDIR, "board"), clean_cmd, mkfile, target)
-  _ = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
 
 def parse_can_buffer(dat):
   ret = []
@@ -148,6 +139,10 @@ class Panda(object):
   HW_TYPE_PEDAL = b'\x04'
   HW_TYPE_UNO = b'\x05'
 
+  CLOCK_SOURCE_MODE_DISABLED = 0
+  CLOCK_SOURCE_MODE_FREE_RUNNING = 1
+  CLOCK_SOURCE_MODE_EXTERNAL_SYNC = 2
+
   def __init__(self, serial=None, claim=True):
     self._serial = serial
     self._handle = None
@@ -181,7 +176,6 @@ class Panda(object):
               if self._serial is None or this_serial == self._serial:
                 self._serial = this_serial
                 print("opening device", self._serial, hex(device.getProductID()))
-                time.sleep(1)
                 self.bootstub = device.getProductID() == 0xddee
                 self.legacy = (device.getbcdDevice() != 0x2300)
                 self._handle = device.open()
@@ -264,22 +258,11 @@ class Panda(object):
     except Exception:
       pass
 
-  def flash(self, fn=None, code=None, reconnect=True):
+  def flash(self, fn=DEFAULT_FW_FN, code=None, reconnect=True):
     print("flash: main version is " + self.get_version())
     if not self.bootstub:
       self.reset(enter_bootstub=True)
     assert(self.bootstub)
-
-    if fn is None and code is None:
-      if self.legacy:
-        fn = "obj/comma.bin"
-        print("building legacy st code")
-        build_st(fn, "Makefile.legacy")
-      else:
-        fn = "obj/panda.bin"
-        print("building panda st code")
-        build_st(fn)
-      fn = os.path.join(BASEDIR, "board", fn)
 
     if code is None:
       with open(fn, "rb") as f:
@@ -458,7 +441,7 @@ class Panda(object):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe5, int(enable), 0, b'')
 
   def set_can_enable(self, bus_num, enable):
-    # sets the can transciever enable pin
+    # sets the can transceiver enable pin
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf4, int(bus_num), int(enable), b'')
 
   def set_can_speed_kbps(self, bus, speed):
@@ -579,6 +562,14 @@ class Panda(object):
     if DEBUG:
       print("kline wakeup done")
 
+  def kline_5baud(self, addr, k=True, l=True):
+    assert k or l, "must specify k-line, l-line, or both"
+    if DEBUG:
+      print("kline 5 baud...")
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf4, 2 if k and l else int(l), addr, b'')
+    if DEBUG:
+      print("kline 5 baud done")
+
   def kline_drain(self, bus=2):
     # drain buffer
     bret = bytearray()
@@ -657,3 +648,15 @@ class Panda(object):
   # ****************** Phone *****************
   def set_phone_power(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, int(enabled), 0, b'')
+
+  # ************** Clock Source **************
+  def set_clock_source_mode(self, mode):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, int(mode), 0, b'')
+
+  # ****************** Siren *****************
+  def set_siren(self, enabled):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf6, int(enabled), 0, b'')
+
+  # ****************** Debug *****************
+  def set_green_led(self, enabled):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')

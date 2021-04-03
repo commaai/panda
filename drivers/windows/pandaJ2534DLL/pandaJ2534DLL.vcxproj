@@ -91,6 +91,7 @@
     <ClInclude Include="..\panda\panda.h" />
     <ClInclude Include="constants_ISO15765.h" />
     <ClInclude Include="dllmain.h" />
+    <ClInclude Include="J2534Connection_ISO14230.h" />
     <ClInclude Include="MessagePeriodic.h" />
     <ClInclude Include="MessageRx.h" />
     <ClInclude Include="J2534Connection.h" />
@@ -103,6 +104,7 @@
     <ClInclude Include="MessageTx.h" />
     <ClInclude Include="MessageTxTimeout.h" />
     <ClInclude Include="MessageTx_CAN.h" />
+    <ClInclude Include="MessageTx_ISO14230.h" />
     <ClInclude Include="MessageTx_ISO15765.h" />
     <ClInclude Include="PandaJ2534Device.h" />
     <ClInclude Include="resource.h" />
@@ -122,11 +124,13 @@
     </ClCompile>
     <ClCompile Include="J2534Connection.cpp" />
     <ClCompile Include="J2534Connection_CAN.cpp" />
+    <ClCompile Include="J2534Connection_ISO14230.cpp" />
     <ClCompile Include="J2534Connection_ISO15765.cpp" />
     <ClCompile Include="J2534MessageFilter.cpp" />
     <ClCompile Include="MessagePeriodic.cpp" />
     <ClCompile Include="MessageTxTimeout.cpp" />
     <ClCompile Include="MessageTx_CAN.cpp" />
+    <ClCompile Include="MessageTx_ISO14230.cpp" />
     <ClCompile Include="MessageTx_ISO15765.cpp" />
     <ClCompile Include="PandaJ2534Device.cpp" />
     <ClCompile Include="pandaJ2534DLL.cpp" />

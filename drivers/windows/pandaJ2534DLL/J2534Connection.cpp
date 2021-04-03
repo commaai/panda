@@ -7,7 +7,7 @@ J2534Connection::J2534Connection(
 	unsigned long ProtocolID,
 	unsigned long Flags,
 	unsigned long BaudRate
-) : panda_dev(panda_dev), ProtocolID(ProtocolID), Flags(Flags), BaudRate(BaudRate), port(0) { }
+) : panda_dev(panda_dev), ProtocolID(ProtocolID), Flags(Flags), BaudRate(BaudRate), Parity(0), port(0) { }
 
 unsigned long J2534Connection::validateTxMsg(PASSTHRU_MSG* msg) {
 	if (msg->DataSize < this->getMinMsgLen() || msg->DataSize > this->getMaxMsgLen())
@@ -60,7 +60,7 @@ long J2534Connection::PassThruReadMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMs
 
 long J2534Connection::PassThruWriteMsgs(PASSTHRU_MSG *pMsg, unsigned long *pNumMsgs, unsigned long Timeout) {
 	//There doesn't seem to be much reason to implement the timeout here.
-	for (int msgnum = 0; msgnum < *pNumMsgs; msgnum++) {
+	for (unsigned int msgnum = 0; msgnum < *pNumMsgs; msgnum++) {
 		PASSTHRU_MSG* msg = &pMsg[msgnum];
 		if (msg->ProtocolID != this->ProtocolID) {
 			*pNumMsgs = msgnum;
@@ -87,7 +87,7 @@ long J2534Connection::PassThruStartPeriodicMsg(PASSTHRU_MSG *pMsg, unsigned long
 	if (pMsg->ProtocolID != this->ProtocolID) return ERR_MSG_PROTOCOL_ID;
 	if (TimeInterval < 5 || TimeInterval > 65535) return ERR_INVALID_TIME_INTERVAL;
 
-	for (int i = 0; i < this->periodicMessages.size(); i++) {
+	for (unsigned int i = 0; i < this->periodicMessages.size(); i++) {
 		if (periodicMessages[i] != nullptr) continue;
 
 		*pMsgID = i;
@@ -114,11 +114,11 @@ long J2534Connection::PassThruStopPeriodicMsg(unsigned long MsgID) {
 
 long J2534Connection::PassThruStartMsgFilter(unsigned long FilterType, PASSTHRU_MSG *pMaskMsg, PASSTHRU_MSG *pPatternMsg,
 	PASSTHRU_MSG *pFlowControlMsg, unsigned long *pFilterID) {
-	for (int i = 0; i < this->filters.size(); i++) {
+	for (unsigned int i = 0; i < this->filters.size(); i++) {
 		if (filters[i] == nullptr) {
 			try {
 				auto newfilter = std::make_shared<J2534MessageFilter>(this, FilterType, pMaskMsg, pPatternMsg, pFlowControlMsg);
-				for (int check_idx = 0; check_idx < filters.size(); check_idx++) {
+				for (unsigned int check_idx = 0; check_idx < filters.size(); check_idx++) {
 					if (filters[check_idx] == nullptr) continue;
 					if (filters[check_idx] == newfilter) {
 						filters[i] = nullptr;
@@ -147,28 +147,99 @@ long J2534Connection::PassThruIoctl(unsigned long IoctlID, void *pInput, void *p
 	return STATUS_NOERROR;
 }
 
-long J2534Connection::init5b(SBYTE_ARRAY* pInput, SBYTE_ARRAY* pOutput) { return ERR_FAILED; }
-long J2534Connection::initFast(PASSTHRU_MSG* pInput, PASSTHRU_MSG* pOutput) { return ERR_FAILED; }
+long J2534Connection::init5b(SBYTE_ARRAY* pInput, SBYTE_ARRAY* pOutput) {
+	if (pInput->NumOfBytes == 1) {
+		if (auto panda_ps = this->panda_dev.lock()) {
+			auto resp = panda_ps->kline_five_baud_init(pInput->BytePtr[0]);
+			if (resp.size() > 0) {
+				auto key_bytes = resp.c_str();
+				if (pOutput->NumOfBytes >= 1) {
+					pOutput->BytePtr[0] = key_bytes[0];
+				}
+				if (pOutput->NumOfBytes >= 2) {
+					pOutput->BytePtr[1] = key_bytes[1];
+				}
+				return STATUS_NOERROR;
+			}
+		}
+	}
+
+	return ERR_FAILED;
+}
+long J2534Connection::initFast(PASSTHRU_MSG* pInput, PASSTHRU_MSG* pOutput) {
+	if (auto panda_ps = this->panda_dev.lock()) {
+		auto start_comm = std::string((char*)pInput->Data, pInput->DataSize);
+		auto resp = panda_ps->kline_wakeup_start_comm(start_comm);
+		if (resp.size() > 0) {
+			pOutput->ProtocolID = pInput->ProtocolID;
+			pOutput->RxStatus = 0;
+			pOutput->TxFlags = 0;
+			pOutput->Timestamp = pInput->Timestamp;
+			pOutput->ExtraDataIndex = resp.size();
+			memcpy(pOutput->Data, resp.c_str(), resp.size());
+			pOutput->DataSize = resp.size();
+			return STATUS_NOERROR;
+		}
+	}
+
+	return ERR_FAILED;
+}
 long J2534Connection::clearTXBuff() {
 	if (auto panda_ps = this->panda_dev.lock()) {
 		synchronized(staged_writes_lock) {
 			this->txbuff = {};
-			panda_ps->panda->can_clear(panda::PANDA_CAN1_TX);
+			switch (this->ProtocolID)
+			{
+				case CAN:
+				case CAN_PS:
+				case ISO15765:
+				case ISO15765_PS:
+					panda_ps->panda->can_clear(panda::PANDA_CAN1_TX);
+					break;
+				case ISO9141:
+				case ISO9141_PS:
+				case ISO14230:
+				case ISO14230_PS:
+					panda_ps->panda->serial_clear(panda::SERIAL_LIN1);
+					panda_ps->panda->serial_clear(panda::SERIAL_LIN2);
+					break;
+				default:
+					break;
+			}
 		}
+		return STATUS_NOERROR;
 	}
-	return STATUS_NOERROR;
+	return ERR_FAILED;
 }
 long J2534Connection::clearRXBuff() {
 	if (auto panda_ps = this->panda_dev.lock()) {
 		synchronized(messageRxBuff_mutex) {
 			this->messageRxBuff = {};
-			panda_ps->panda->can_clear(panda::PANDA_CAN_RX);
+			switch (this->ProtocolID)
+			{
+			case CAN:
+			case CAN_PS:
+			case ISO15765:
+			case ISO15765_PS:
+				panda_ps->panda->can_clear(panda::PANDA_CAN_RX);
+				break;
+			case ISO9141:
+			case ISO9141_PS:
+			case ISO14230:
+			case ISO14230_PS:
+				panda_ps->panda->serial_clear(panda::SERIAL_LIN1);
+				panda_ps->panda->serial_clear(panda::SERIAL_LIN2);
+				break;
+			default:
+				break;
+			}
 		}
+		return STATUS_NOERROR;
 	}
-	return STATUS_NOERROR;
+	return ERR_FAILED;
 }
 long J2534Connection::clearPeriodicMsgs() {
-	for (int i = 0; i < this->periodicMessages.size(); i++) {
+	for (unsigned int i = 0; i < this->periodicMessages.size(); i++) {
 		if (periodicMessages[i] == nullptr) continue;
 		this->periodicMessages[i]->cancel();
 		this->periodicMessages[i] = nullptr;
@@ -183,6 +254,10 @@ long J2534Connection::clearMsgFilters() {
 
 void J2534Connection::setBaud(unsigned long baud) {
 	this->BaudRate = baud;
+}
+
+void J2534Connection::setParity(unsigned long parity) {
+	this->Parity = parity;
 }
 
 void J2534Connection::schedultMsgTx(std::shared_ptr<Action> msgout) {
@@ -226,6 +301,9 @@ void J2534Connection::processIOCTLSetConfig(unsigned long Parameter, unsigned lo
 	case LOOPBACK:			// 0 (OFF), 1 (ON) [0]
 		this->loopback = (Value != 0);
 		break;
+	case PARITY:
+		this->setParity(Value);
+		break;
 	case ISO15765_WFT_MAX:
 		break;
 	case NODE_ADDRESS:		// J1850PWM Related (Not supported by panda). HDS requires these to 'work'.
@@ -247,7 +325,6 @@ void J2534Connection::processIOCTLSetConfig(unsigned long Parameter, unsigned lo
 	case TIDLE:
 	case TINIL:
 	case TWUP:
-	case PARITY:
 	case T1_MAX:			// SCI related options. The panda does not appear to support this
 	case T2_MAX:
 	case T3_MAX:
@@ -259,9 +336,9 @@ void J2534Connection::processIOCTLSetConfig(unsigned long Parameter, unsigned lo
 	}
 
 	// reserved parameters usually mean special equiptment is required
-	if (Parameter >= 0x20) {
-		throw ERR_NOT_SUPPORTED;
-	}
+	//if (Parameter >= 0x20) {
+	//	throw ERR_NOT_SUPPORTED;
+	//}
 }
 
 unsigned long J2534Connection::processIOCTLGetConfig(unsigned long Parameter) {
