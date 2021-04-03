@@ -54,8 +54,8 @@ ENV LC_ALL en_US.UTF-8
 RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
 
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
-RUN pyenv install 3.8.2
-RUN pyenv global 3.8.2
+RUN pyenv install 3.8.5
+RUN pyenv global 3.8.5
 RUN pyenv rehash
 
 RUN pip install --upgrade pip==18.0

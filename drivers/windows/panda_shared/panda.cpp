@@ -323,7 +323,7 @@ bool Panda::can_send_many(const std::vector<PANDA_CAN_MSG>& can_msgs) {
 	std::vector<PANDA_CAN_MSG_INTERNAL> formatted_msgs;
 	formatted_msgs.reserve(can_msgs.size());
 
-	for (auto msg : can_msgs) {
+	for (auto &msg : can_msgs) {
 		if (msg.bus == PANDA_CAN_UNK) continue;
 		if (msg.len > 8) continue;
 		PANDA_CAN_MSG_INTERNAL tmpmsg = {};

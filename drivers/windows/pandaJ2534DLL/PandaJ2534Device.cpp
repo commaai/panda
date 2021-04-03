@@ -150,7 +150,7 @@ DWORD PandaJ2534Device::kline_recv_thread() {
 			continue;
 		}
 
-		for (auto msg : msg_recv) {
+		for (auto &msg : msg_recv) {
 			for (auto& conn : this->connections) {
 				if (conn != nullptr && !conn->isProtoCan()) {
 					J2534Frame msg_out(conn->getProtocol(), msg);
