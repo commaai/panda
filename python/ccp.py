@@ -71,7 +71,7 @@ class CommandResponseError(Exception):
     return self.message
 
 class CcpClient():
-  def __init__(self, panda, tx_addr: int, rx_addr: int = None, bus: int = 0, debug=False):
+  def __init__(self, panda, tx_addr: int, rx_addr: int, bus: int = 0, debug=False):
     self.tx_addr = tx_addr
     self.rx_addr = rx_addr
     self.can_bus = bus
@@ -85,13 +85,13 @@ class CcpClient():
     if self.debug:
       print(f"CAN-TX: {hex(self.tx_addr)} - 0x{bytes.hex(tx_data)}")
     assert len(tx_data) == 8, "data is not 8 bytes"
-    self._panda.clear(self.can_bus)
-    self._panda.clear(0xFFFF)
+    self._panda.can_clear(self.can_bus)
+    self._panda.can_clear(0xFFFF)
     self._panda.can_send(self.tx_addr, tx_data, self.can_bus)
 
   def _recv_dto(self, timeout: float) -> bytes:
     start_time = time.time()
-    while time.time() - start_time > timeout:
+    while time.time() - start_time < timeout:
       msgs = self._panda.can_recv() or []
       if len(msgs) >= 256:
         print("CAN RX buffer overflow!!!", file=sys.stderr)
@@ -115,6 +115,7 @@ class CcpClient():
             if err >= 0x10 and err <= 0x12:
               if self.debug:
                 print(f"CCP-WAIT: {hex(err)} - {err_desc}")
+              start_time = time.time()
               continue
 
             if err >= 0x30:
@@ -123,7 +124,7 @@ class CcpClient():
             dat = rx_data[1:]
 
           return dat
-      time.sleep(0.1)
+      time.sleep(0.001)
 
     raise CommandTimeoutError("timeout waiting for response")
 
