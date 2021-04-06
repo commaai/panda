@@ -22,15 +22,32 @@ def checksum(msg):
   addr, t, dat, bus = msg
 
   chksum = 0
-  for i, b in enumerate(dat):
-    if addr in [608, 1057] and i == 7:
-      b &= 0x0F if addr == 1057 else 0xF0
-    elif addr == 916 and i == 6:
-      b &= 0xF0
-    chksum += sum(divmod(b, 16))
-  chksum = (16 - chksum) % 16
-  ret = bytearray(dat)
-  ret[6 if addr == 916 else 7] |= chksum << (4 if addr == 1057 else 0)
+  if addr == 902:
+    for i, b in enumerate(dat):
+      for j in range(8):
+        # exclude checksum and counter bits
+        if (i != 1 or j < 6) and (i != 3 or j < 6) and (i != 5 or j < 6) and (i != 7 or j < 6):
+          bit = (b >> j) & 1
+        else:
+          bit = 0
+        chksum += bit
+    chksum = (chksum ^ 9) & 0xF
+    ret = bytearray(dat)
+    ret[5] |= (chksum & 0x3) << 6
+    ret[7] |= (chksum & 0xc) << 4
+  else:
+    for i, b in enumerate(dat):
+      if addr in [608, 1057] and i == 7:
+        b &= 0x0F if addr == 1057 else 0xF0
+      elif addr == 916 and i == 6:
+        b &= 0xF0
+      elif addr == 916 and i == 7:
+        continue
+      chksum += sum(divmod(b, 16))
+    chksum = (16 - chksum) % 16
+    ret = bytearray(dat)
+    ret[6 if addr == 916 else 7] |= chksum << (4 if addr == 1057 else 0)
+
   return addr, t, ret, bus
 
 class TestHyundaiSafety(common.PandaSafetyTest):
@@ -72,7 +89,7 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     values["WHL_SPD_AliveCounter_LSB"] = (self.cnt_speed % 16) & 0x3
     values["WHL_SPD_AliveCounter_MSB"] = (self.cnt_speed % 16) >> 2
     self.__class__.cnt_speed += 1
-    return self.packer.make_can_msg_panda("WHL_SPD11", 0, values)
+    return self.packer.make_can_msg_panda("WHL_SPD11", 0, values, fix_checksum=checksum)
 
   def _pcm_status_msg(self, enable):
     values = {"ACCMode": enable, "CR_VSM_Alive": self.cnt_cruise % 16}
