@@ -12,6 +12,7 @@ void jump_to_bootloader(void) {
   void (*bootloader)(void) = (void (*)(void)) (*((uint32_t *)0x1fff0004));
 
   // jump to bootloader
+  enable_interrupts();
   bootloader();
 
   // reset on exit
