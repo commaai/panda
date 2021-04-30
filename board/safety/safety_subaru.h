@@ -151,6 +151,13 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
+  if (!controls_allowed) {
+    tx = 0;
+  }
+  if (addr == 0x221) {
+    tx = 1;
+  }
+  
   if (!msg_allowed(to_send, SUBARU_TX_MSGS, SUBARU_TX_MSGS_LEN)) {
     tx = 0;
   }
