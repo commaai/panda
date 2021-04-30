@@ -303,6 +303,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
         fwd_bus = self.FWD_BUS_LOOKUP.get(bus, -1)
         if bus in self.FWD_BLACKLISTED_ADDRS and addr in self.FWD_BLACKLISTED_ADDRS[bus]:
           fwd_bus = -1
+        self.safety.set_controls_allowed(1)
         self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg))
 
   def test_spam_can_buses(self):
