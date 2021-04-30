@@ -78,11 +78,11 @@ class TestSubaruSafety(common.PandaSafetyTest):
     self._rx(self._torque_driver_msg(max_t))
 
   def test_steer_safety_check(self):
-    for enabled in [0, 1]:
+    for enabled in [0,1]:
       for t in range(-3000, 3000):
         self.safety.set_controls_allowed(enabled)
         self._set_prev_torque(t)
-        block = abs(t) > MAX_STEER or (not enabled and abs(t) > 0)
+        block = (abs(t) > MAX_STEER) or not enabled
         self.assertEqual(not block, self._tx(self._torque_msg(t)))
 
   def test_non_realtime_limit_up(self):
