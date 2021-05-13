@@ -7,7 +7,10 @@
 //#define DEBUG_SPI
 //#define DEBUG_FAULTS
 
-#ifdef STM32F4
+#ifdef STM32H7
+  #define PANDA
+  #include "stm32h7xx.h"
+#elif STM32F4
   #define PANDA
   #include "stm32f4xx.h"
 #else

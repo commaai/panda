@@ -778,18 +778,28 @@ int main(void) {
   // Init interrupt table
   init_interrupts(true);
 
-  // 8Hz timer
-  REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler, 10U, FAULT_INTERRUPT_RATE_TIM9)
+  #ifdef STM32H7
+    // 8Hz timer
+    REGISTER_INTERRUPT(TIM1_BRK_TIM8_IRQn, TIM1_BRK_TIM8_IRQ_Handler, 10U, FAULT_INTERRUPT_RATE_TIM8)
+  #else
+    // 8Hz timer
+    REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler, 10U, FAULT_INTERRUPT_RATE_TIM9)
+  #endif
 
   // shouldn't have interrupts here, but just in case
   disable_interrupts();
 
   // init early devices
-  clock_init();
-  peripherals_init();
+  #ifdef STM32H7
+    clock_init_h7();
+    peripherals_init_h7();
+  #else
+    clock_init();
+    peripherals_init();
+  #endif
   detect_configuration();
   detect_board_type();
-  adc_init();
+  adc_init(); // FIX for H7
 
   // print hello
   puts("\n\n\n************************ MAIN START ************************\n");
@@ -850,9 +860,15 @@ int main(void) {
   spi_init();
 #endif
 
-  // 8hz
-  timer_init(TIM9, 183);
-  NVIC_EnableIRQ(TIM1_BRK_TIM9_IRQn);
+  #ifdef STM32H7
+    // 8hz
+    timer_init(TIM8, 183);
+    NVIC_EnableIRQ(TIM1_BRK_TIM8_IRQn);
+  #else
+    // 8hz
+    timer_init(TIM9, 183);
+    NVIC_EnableIRQ(TIM1_BRK_TIM9_IRQn);
+  #endif
 
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");

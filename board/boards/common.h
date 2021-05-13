@@ -1,8 +1,32 @@
-#ifdef STM32F4
+#ifdef STM32H7
+  #include "stm32h7xx_hal_gpio_ex.h"
+#elif STM32F4
   #include "stm32f4xx_hal_gpio_ex.h"
 #else
   #include "stm32f2xx_hal_gpio_ex.h"
 #endif
+
+// Common GPIO initialization for H7
+void common_init_gpio_h7(void){
+
+  // F14: Voltage sense line
+  set_gpio_mode(GPIOF, 14, MODE_ANALOG);
+
+  // A11,A12: USB
+  set_gpio_alternate(GPIOA, 11, GPIO_AF10_OTG1_FS);
+  set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG1_FS);
+  GPIOA->OSPEEDR = GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12;
+
+  // B8, B9: FDCAN1
+  set_gpio_alternate(GPIOB, 8, GPIO_AF9_FDCAN1);
+  set_gpio_alternate(GPIOB, 9, GPIO_AF9_FDCAN1);
+  // B5,B6: FDCAN2 (will be mplexed to B12,B13)
+  set_gpio_alternate(GPIOB, 5, GPIO_AF9_FDCAN2);
+  set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
+  // G9,G10: FDCAN3
+  set_gpio_alternate(GPIOG, 9, GPIO_AF2_FDCAN3);
+  set_gpio_alternate(GPIOG, 10, GPIO_AF2_FDCAN3);
+}
 
 // Common GPIO initialization
 void common_init_gpio(void){
@@ -35,6 +59,29 @@ void common_init_gpio(void){
     set_gpio_alternate(GPIOB, 8, GPIO_AF9_CAN1);
     set_gpio_alternate(GPIOB, 9, GPIO_AF9_CAN1);
   #endif
+}
+
+// Peripheral initialization for H7
+void peripherals_init_h7(void){
+  // enable GPIO(A,B,C,D,E,F,G,H), CANFD(1,2,3)
+   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;
+   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;
+   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;
+   RCC->AHB4ENR |= RCC_AHB4ENR_GPIODEN;
+   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOEEN;
+   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOFEN;
+   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOGEN;
+   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOHEN;  //?
+
+   RCC->APB1HENR |= RCC_APB1HENR_FDCANEN;
+
+   RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;  // main counter
+   RCC->APB1LENR |= RCC_APB1LENR_TIM6EN;  // interrupt timer
+   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;  // clock source timer
+   RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN // HS USB clock enable
+   //ADC->CR |= ADC_CR_ADEN; //enable ADC
+   RCC->AHB4ENR |= RCC_APB4ENR_SYSCFGEN;
+   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // slow loop (moved to TIM8!!!)
 }
 
 // Peripheral initialization
