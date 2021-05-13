@@ -170,7 +170,7 @@ static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         stock_ecu_detected = true;
       }
     }
-    generic_rx_checks(stock_ecu_detected);
+    generic_rx_checks(stock_ecu_detected, true, true);
   }
   return valid;
 }

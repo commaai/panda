@@ -95,7 +95,7 @@ static int mazda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       brake_pressed = (GET_BYTE(to_push, 0) & 0x10);
     }
 
-    generic_rx_checks((addr == MAZDA_LKAS));
+    generic_rx_checks(addr == MAZDA_LKAS, true, true);
   }
   return valid;
 }
