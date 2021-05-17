@@ -6,7 +6,11 @@
 #include "config.h"
 #include "obj/gitversion.h"
 
-#ifdef STM32F4
+#ifdef STM32H7
+  #define PANDA
+  #include "stm32h7xx.h"
+  #include "stm32h7xx_hal_gpio_ex.h"
+#elif STM32F4
   #define PANDA
   #include "stm32f4xx.h"
   #include "stm32f4xx_hal_gpio_ex.h"
@@ -121,4 +125,3 @@ good:
   ((void(*)(void)) _app_start[1])();
   return 0;
 }
-

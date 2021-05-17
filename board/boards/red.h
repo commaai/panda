@@ -17,7 +17,6 @@ void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
       set_gpio_output(GPIOB, 4, !enabled);
       break;
     default:
-      puts("Invalid CAN transceiver ("); puth(transceiver); puts("): enabling failed\n");
       break;
   }
 }
@@ -36,13 +35,16 @@ void red_enable_can_transceivers(bool enabled) {
 void red_set_led(uint8_t color, bool enabled) {
   switch (color){
     case LED_RED:
-      set_gpio_output(GPIOE, 4, !enabled);
+      set_gpio_output(GPIOC, 2, !enabled); //REDEBUG
+      //set_gpio_output(GPIOE, 4, !enabled);
       break;
      case LED_GREEN:
-      set_gpio_output(GPIOE, 3, !enabled);
+      set_gpio_output(GPIOC, 3, !enabled); //REDEBUG
+      //set_gpio_output(GPIOE, 3, !enabled);
       break;
     case LED_BLUE:
-      set_gpio_output(GPIOE, 2, !enabled);
+      set_gpio_output(GPIOF, 7, enabled); //REDEBUG
+      //set_gpio_output(GPIOE, 2, !enabled);
       break;
     default:
       break;
@@ -51,7 +53,7 @@ void red_set_led(uint8_t color, bool enabled) {
 
 void red_set_gps_load_switch(bool enabled) {
   // No GPS on red panda
-  UNUSED(mode);
+  UNUSED(enabled);
 }
 
 void red_set_usb_load_switch(bool enabled) {
@@ -70,7 +72,6 @@ void red_set_usb_power_mode(uint8_t mode) {
       valid = true;
       break;
     default:
-      puts("Invalid USB power mode\n");
       break;
   }
   if (valid) {
@@ -106,7 +107,6 @@ void red_set_can_mode(uint8_t mode){
       }
       break;
     default:
-      puts("Tried to set unsupported CAN mode: "); puth(mode); puts("\n");
       break;
   }
 }
@@ -147,7 +147,7 @@ void red_set_siren(bool enabled){
 }
 
 void red_init(void) {
-  common_init_gpio_h7();
+  common_init_gpio();
 
   // C12: OBD_SBU1 (orientation detection)
   // D0: OBD_SBU2 (orientation detection)
@@ -184,13 +184,9 @@ void red_init(void) {
   red_set_can_mode(CAN_MODE_NORMAL);
 
   // flip CAN0 and CAN2 if we are flipped
-  if (car_harness_status == HARNESS_STATUS_FLIPPED) {
-    can_flip_buses(0, 2);
-  }
 
   //TODO: check if this func is even needed !
   // init multiplexer
-  can_set_obd(car_harness_status, false);
 }
 
 const harness_configuration red_harness_config = {

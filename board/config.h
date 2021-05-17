@@ -10,11 +10,14 @@
 #ifdef STM32H7
   #define PANDA
   #include "stm32h7xx.h"
+  #define FREQ 550U // 550Mhz
 #elif STM32F4
   #define PANDA
   #include "stm32f4xx.h"
+  #define FREQ 100U // 100Mhz
 #else
   #include "stm32f2xx.h"
+  #define FREQ 100U // 100Mhz
 #endif
 
 #define USB_VID 0xbbaaU

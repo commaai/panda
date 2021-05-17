@@ -5,6 +5,10 @@ void delay(uint32_t a) {
   for (i = 0; i < a; i++);
 }
 
+void delay_ms(uint32_t a) { // Not precise at all, tested on H7 at 550Mhz
+  delay(a*FREQ*32);
+}
+
 void *memset(void *str, int c, unsigned int n) {
   uint8_t *s = str;
   for (unsigned int i = 0; i < n; i++) {

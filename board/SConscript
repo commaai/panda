@@ -8,7 +8,21 @@ PC = not (EON or TICI)
 PREFIX = "arm-none-eabi-"
 BUILDER = "DEV"
 
-if os.getenv("PEDAL"):
+if os.getenv("RED"):
+  PROJECT = "panda_red"
+  STARTUP_FILE = "startup_stm32h735xx.s"
+  MAIN = "main.c"
+  PROJECT_FLAGS = [
+    "-mcpu=cortex-m7",
+    "-mhard-float",
+    "-DSTM32H7",
+    "-DSTM32H735xx",
+    "-mfpu=fpv5-d16",
+    "-Os",
+    #"-O2",
+    "-g",
+  ]
+elif os.getenv("PEDAL"):
   PROJECT = "pedal"
   STARTUP_FILE = "startup_stm32f205xx.s"
   MAIN = "pedal/main.c"
@@ -85,13 +99,17 @@ def objcopy(source, target, env, for_signature):
     return '$OBJCOPY -O binary %s %s' % (source[0], target[0])
 
 
-linkerscript_fn = File("stm32_flash.ld").srcnode().abspath
+if os.getenv("RED"):
+  linkerscript_fn = File("STM32H735ZGTx_FLASH.ld").srcnode().abspath
+else:
+  linkerscript_fn = File("stm32_flash.ld").srcnode().abspath
 
 flags = [
-  "-Wall",
+  #"-Wall",
   "-Wextra",
   "-Wstrict-prototypes",
   "-Werror",
+  "-Wno-unused-variable", # Remove in prod
   "-mlittle-endian",
   "-mthumb",
   "-nostdlib",

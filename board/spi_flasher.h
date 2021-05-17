@@ -26,9 +26,15 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xb1: unlock flash
     case 0xb1:
+    #ifdef STM32H7
+    if (FLASH->CR1 & FLASH_CR_LOCK) {
+        FLASH->KEYR1 = 0x45670123;
+        FLASH->KEYR1 = 0xCDEF89AB;
+    #else
       if (FLASH->CR & FLASH_CR_LOCK) {
         FLASH->KEYR = 0x45670123;
         FLASH->KEYR = 0xCDEF89AB;
+    #endif
         resp[1] = 0xff;
       }
       current_board->set_led(LED_GREEN, 1);
@@ -40,9 +46,15 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       sec = setup->b.wValue.w;
       // don't erase the bootloader
       if (sec != 0 && sec < 12 && unlocked) {
+        #ifdef STM32H7
+        FLASH->CR1 = (sec << 3) | FLASH_CR_SER;
+        FLASH->CR1 |= FLASH_CR_START;
+        while (FLASH->SR1 & FLASH_SR_BSY);
+        #else
         FLASH->CR = (sec << 3) | FLASH_CR_SER;
         FLASH->CR |= FLASH_CR_STRT;
         while (FLASH->SR & FLASH_SR_BSY);
+        #endif
         resp[1] = 0xff;
       }
       break;
@@ -122,12 +134,19 @@ void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   current_board->set_led(LED_RED, 0);
   for (int i = 0; i < len/4; i++) {
+    #ifdef STM32H7
+    // program byte 1
+    FLASH->CR1 = FLASH_CR_PSIZE_1 | FLASH_CR_PG;
+
+    *prog_ptr = *(uint32_t*)(usbdata+(i*4));
+    while (FLASH->SR1 & FLASH_SR_BSY);
+    #else
     // program byte 1
     FLASH->CR = FLASH_CR_PSIZE_1 | FLASH_CR_PG;
 
     *prog_ptr = *(uint32_t*)(usbdata+(i*4));
     while (FLASH->SR & FLASH_SR_BSY);
-
+    #endif
     //*(uint64_t*)(&spi_tx_buf[0x30+(i*4)]) = *prog_ptr;
     prog_ptr++;
   }
@@ -278,10 +297,17 @@ void soft_flasher_start(void) {
 
   enter_bootloader_mode = 0;
 
+  #ifdef STM32H7
+  RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+  RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+  RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN;
+  RCC->APB1LENR |= RCC_APB1LENR_USART2EN;
+  #else
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
   RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
   RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+  #endif
 
 // pedal has the canloader
 #ifdef PEDAL
@@ -308,9 +334,14 @@ void soft_flasher_start(void) {
   set_gpio_alternate(GPIOA, 3, GPIO_AF7_USART2);
 
   // A11,A12: USB
+  #ifdef STM32H7
+  set_gpio_alternate(GPIOA, 11, GPIO_AF10_OTG1_FS);
+  set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG1_FS);
+  #else
   set_gpio_alternate(GPIOA, 11, GPIO_AF10_OTG_FS);
   set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG_FS);
-  GPIOA->OSPEEDR = GPIO_OSPEEDER_OSPEEDR11 | GPIO_OSPEEDER_OSPEEDR12;
+  #endif
+  GPIOA->OSPEEDR = GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12;
 
   // flasher
   spi_init();

@@ -8,11 +8,14 @@ typedef struct interrupt {
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!
-  puts("Unused interrupt handler called!\n");
   fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
 }
 
-#define NUM_INTERRUPTS 102U                // There are 102 external interrupt sources (see stm32f413.h)
+#ifdef STM32H7
+  #define NUM_INTERRUPTS 163U                // There are 163 external interrupt sources (see stm32f735xx.h)
+#else
+  #define NUM_INTERRUPTS 102U                // There are 102 external interrupt sources (see stm32f413xx.h)
+#endif
 interrupt interrupts[NUM_INTERRUPTS];
 
 #define REGISTER_INTERRUPT(irq_num, func_ptr, call_rate, rate_fault) \
@@ -30,7 +33,6 @@ void handle_interrupt(IRQn_Type irq_type){
 
   // Check that the interrupts don't fire too often
   if(check_interrupt_rate && (interrupts[irq_type].call_counter > interrupts[irq_type].max_call_rate)){
-    puts("Interrupt 0x"); puth(irq_type); puts(" fired too often (0x"); puth(interrupts[irq_type].call_counter); puts("/s)!\n");
     fault_occurred(interrupts[irq_type].call_rate_fault);
   }
 }
@@ -53,9 +55,13 @@ void init_interrupts(bool check_rate_limit){
   }
 
   // Init timer 10 for a 1s interval
-  register_set_bits(&(RCC->APB1ENR), RCC_APB1ENR_TIM6EN);  // Enable interrupt timer peripheral
+  #ifdef STM32H7
+    register_set_bits(&(RCC->APB1LENR), RCC_APB1LENR_TIM6EN);  // Enable interrupt timer peripheral
+  #else
+    register_set_bits(&(RCC->APB1ENR), RCC_APB1ENR_TIM6EN);  // Enable interrupt timer peripheral
+  #endif
   REGISTER_INTERRUPT(TIM6_DAC_IRQn, TIM6_DAC_IRQ_Handler, 1, FAULT_INTERRUPT_RATE_INTERRUPTS)
-  register_set(&(TIM6->PSC), (732-1), 0xFFFFU);
+  register_set(&(TIM6->PSC), (4196-1), 0xFFFFU);
   register_set(&(TIM6->DIER), TIM_DIER_UIE, 0x5F5FU);
   register_set(&(TIM6->CR1), TIM_CR1_CEN, 0x3FU);
   TIM6->SR = 0;
@@ -84,10 +90,6 @@ void DMA1_Stream4_IRQHandler(void) {handle_interrupt(DMA1_Stream4_IRQn);}
 void DMA1_Stream5_IRQHandler(void) {handle_interrupt(DMA1_Stream5_IRQn);}
 void DMA1_Stream6_IRQHandler(void) {handle_interrupt(DMA1_Stream6_IRQn);}
 void ADC_IRQHandler(void) {handle_interrupt(ADC_IRQn);}
-void CAN1_TX_IRQHandler(void) {handle_interrupt(CAN1_TX_IRQn);}
-void CAN1_RX0_IRQHandler(void) {handle_interrupt(CAN1_RX0_IRQn);}
-void CAN1_RX1_IRQHandler(void) {handle_interrupt(CAN1_RX1_IRQn);}
-void CAN1_SCE_IRQHandler(void) {handle_interrupt(CAN1_SCE_IRQn);}
 void EXTI9_5_IRQHandler(void) {handle_interrupt(EXTI9_5_IRQn);}
 void TIM1_BRK_TIM9_IRQHandler(void) {handle_interrupt(TIM1_BRK_TIM9_IRQn);}
 void TIM1_UP_TIM10_IRQHandler(void) {handle_interrupt(TIM1_UP_TIM10_IRQn);}
@@ -107,14 +109,11 @@ void USART2_IRQHandler(void) {handle_interrupt(USART2_IRQn);}
 void USART3_IRQHandler(void) {handle_interrupt(USART3_IRQn);}
 void EXTI15_10_IRQHandler(void) {handle_interrupt(EXTI15_10_IRQn);}
 void RTC_Alarm_IRQHandler(void) {handle_interrupt(RTC_Alarm_IRQn);}
-void OTG_FS_WKUP_IRQHandler(void) {handle_interrupt(OTG_FS_WKUP_IRQn);}
 void TIM8_BRK_TIM12_IRQHandler(void) {handle_interrupt(TIM8_BRK_TIM12_IRQn);}
 void TIM8_UP_TIM13_IRQHandler(void) {handle_interrupt(TIM8_UP_TIM13_IRQn);}
 void TIM8_TRG_COM_TIM14_IRQHandler(void) {handle_interrupt(TIM8_TRG_COM_TIM14_IRQn);}
 void TIM8_CC_IRQHandler(void) {handle_interrupt(TIM8_CC_IRQn);}
 void DMA1_Stream7_IRQHandler(void) {handle_interrupt(DMA1_Stream7_IRQn);}
-void FSMC_IRQHandler(void) {handle_interrupt(FSMC_IRQn);}
-void SDIO_IRQHandler(void) {handle_interrupt(SDIO_IRQn);}
 void TIM5_IRQHandler(void) {handle_interrupt(TIM5_IRQn);}
 void SPI3_IRQHandler(void) {handle_interrupt(SPI3_IRQn);}
 void UART4_IRQHandler(void) {handle_interrupt(UART4_IRQn);}
@@ -126,17 +125,32 @@ void DMA2_Stream1_IRQHandler(void) {handle_interrupt(DMA2_Stream1_IRQn);}
 void DMA2_Stream2_IRQHandler(void) {handle_interrupt(DMA2_Stream2_IRQn);}
 void DMA2_Stream3_IRQHandler(void) {handle_interrupt(DMA2_Stream3_IRQn);}
 void DMA2_Stream4_IRQHandler(void) {handle_interrupt(DMA2_Stream4_IRQn);}
-void CAN2_TX_IRQHandler(void) {handle_interrupt(CAN2_TX_IRQn);}
-void CAN2_RX0_IRQHandler(void) {handle_interrupt(CAN2_RX0_IRQn);}
-void CAN2_RX1_IRQHandler(void) {handle_interrupt(CAN2_RX1_IRQn);}
-void CAN2_SCE_IRQHandler(void) {handle_interrupt(CAN2_SCE_IRQn);}
-void OTG_FS_IRQHandler(void) {handle_interrupt(OTG_FS_IRQn);}
 void DMA2_Stream5_IRQHandler(void) {handle_interrupt(DMA2_Stream5_IRQn);}
 void DMA2_Stream6_IRQHandler(void) {handle_interrupt(DMA2_Stream6_IRQn);}
 void DMA2_Stream7_IRQHandler(void) {handle_interrupt(DMA2_Stream7_IRQn);}
 void USART6_IRQHandler(void) {handle_interrupt(USART6_IRQn);}
 void I2C3_EV_IRQHandler(void) {handle_interrupt(I2C3_EV_IRQn);}
 void I2C3_ER_IRQHandler(void) {handle_interrupt(I2C3_ER_IRQn);}
+#ifdef STM32H7
+  void OTG_HS_EP1_OUT_IRQHandler(void) {handle_interrupt(OTG_HS_EP1_OUT_IRQn);}
+  void OTG_HS_EP1_IN_IRQHandler(void) {handle_interrupt(OTG_HS_EP1_IN_IRQn);}
+  void OTG_HS_WKUP_IRQHandler(void) {handle_interrupt(OTG_HS_WKUP_IRQn);}
+  void OTG_HS_IRQHandler(void) {handle_interrupt(OTG_HS_IRQn);}
+#endif
+#ifndef STM32H7
+  void CAN1_TX_IRQHandler(void) {handle_interrupt(CAN1_TX_IRQn);}
+  void CAN1_RX0_IRQHandler(void) {handle_interrupt(CAN1_RX0_IRQn);}
+  void CAN1_RX1_IRQHandler(void) {handle_interrupt(CAN1_RX1_IRQn);}
+  void CAN1_SCE_IRQHandler(void) {handle_interrupt(CAN1_SCE_IRQn);}
+  void CAN2_TX_IRQHandler(void) {handle_interrupt(CAN2_TX_IRQn);}
+  void CAN2_RX0_IRQHandler(void) {handle_interrupt(CAN2_RX0_IRQn);}
+  void CAN2_RX1_IRQHandler(void) {handle_interrupt(CAN2_RX1_IRQn);}
+  void CAN2_SCE_IRQHandler(void) {handle_interrupt(CAN2_SCE_IRQn);}
+  void OTG_FS_WKUP_IRQHandler(void) {handle_interrupt(OTG_FS_WKUP_IRQn);}
+  void OTG_FS_IRQHandler(void) {handle_interrupt(OTG_FS_IRQn);}
+  void FSMC_IRQHandler(void) {handle_interrupt(FSMC_IRQn);}
+  void SDIO_IRQHandler(void) {handle_interrupt(SDIO_IRQn);}
+#endif
 #ifdef STM32F4
   void DFSDM1_FLT0_IRQHandler(void) {handle_interrupt(DFSDM1_FLT0_IRQn);}
   void DFSDM1_FLT1_IRQHandler(void) {handle_interrupt(DFSDM1_FLT1_IRQn);}

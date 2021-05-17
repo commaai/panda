@@ -90,8 +90,8 @@ void uart_tx_ring(uart_ring *q){
   // Send out next byte of TX buffer
   if (q->w_ptr_tx != q->r_ptr_tx) {
     // Only send if transmit register is empty (aka last byte has been sent)
-    if ((q->uart->SR & USART_SR_TXE) != 0) {
-      q->uart->DR = q->elems_tx[q->r_ptr_tx];   // This clears TXE
+    if ((q->uart->ISR & USART_ISR_TXFE) != 0) {
+      q->uart->RDR = q->elems_tx[q->r_ptr_tx];   // This clears TXE
       q->r_ptr_tx = (q->r_ptr_tx + 1U) % q->tx_fifo_size;
     }
 
@@ -111,7 +111,7 @@ void uart_rx_ring(uart_ring *q){
     ENTER_CRITICAL();
 
     // Read out RX buffer
-    uint8_t c = q->uart->DR;  // This read after reading SR clears a bunch of interrupts
+    uint8_t c = q->uart->RDR;  // This read after reading ISR clears a bunch of interrupts
 
     uint16_t next_w_ptr = (q->w_ptr_rx + 1U) % q->rx_fifo_size;
     // Do not overwrite buffer data
@@ -155,35 +155,35 @@ void dma_pointer_handler(uart_ring *q, uint32_t dma_ndtr) {
   EXIT_CRITICAL();
 }
 
-// This read after reading SR clears all error interrupts. We don't want compiler warnings, nor optimizations
-#define UART_READ_DR(uart) volatile uint8_t t = (uart)->DR; UNUSED(t);
+// This read after reading ISR clears all error interrupts. We don't want compiler warnings, nor optimizations
+#define UART_READ_RDR(uart) volatile uint8_t t = (uart)->RDR; UNUSED(t);
 
 void uart_interrupt_handler(uart_ring *q) {
   ENTER_CRITICAL();
 
   // Read UART status. This is also the first step necessary in clearing most interrupts
-  uint32_t status = q->uart->SR;
+  uint32_t status = q->uart->ISR;
 
   // If RXNE is set, perform a read. This clears RXNE, ORE, IDLE, NF and FE
-  if((status & USART_SR_RXNE) != 0U){
+  if((status & USART_ISR_RXFF) != 0U){
     uart_rx_ring(q);
   }
 
   // Detect errors and clear them
-  uint32_t err = (status & USART_SR_ORE) | (status & USART_SR_NE) | (status & USART_SR_FE) | (status & USART_SR_PE);
+  uint32_t err = (status & USART_ISR_ORE) | (status & USART_ISR_NE) | (status & USART_ISR_FE) | (status & USART_ISR_PE);
   if(err != 0U){
     #ifdef DEBUG_UART
       puts("Encountered UART error: "); puth(err); puts("\n");
     #endif
-    UART_READ_DR(q->uart)
+    UART_READ_RDR(q->uart)
   }
   // Send if necessary
   uart_tx_ring(q);
 
   // Run DMA pointer handler if the line is idle
-  if(q->dma_rx && (status & USART_SR_IDLE)){
+  if(q->dma_rx && (status & USART_ISR_IDLE)){
     // Reset IDLE flag
-    UART_READ_DR(q->uart)
+    UART_READ_RDR(q->uart)
 
     if(q == &uart_ring_gps){
       dma_pointer_handler(&uart_ring_gps, DMA2_Stream5->NDTR);
@@ -236,13 +236,13 @@ void dma_rx_init(uart_ring *q) {
     DMA2_Stream5->FCR &= ~DMA_SxFCR_DMDIS;
 
     // Setup addresses
-    DMA2_Stream5->PAR = (uint32_t)&(USART1->DR);    // Source
+    DMA2_Stream5->PAR = (uint32_t)&(USART1->RDR);    // Source
     DMA2_Stream5->M0AR = (uint32_t)q->elems_rx;     // Destination
     DMA2_Stream5->NDTR = q->rx_fifo_size;           // Number of bytes to copy
 
     // Circular, Increment memory, byte size, periph -> memory, enable
     // Transfer complete, half transfer, transfer error and direct mode error interrupt enable
-    DMA2_Stream5->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_MINC | DMA_SxCR_CIRC | DMA_SxCR_HTIE | DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | DMA_SxCR_EN;
+    DMA2_Stream5->CR = DMA_SxFCR_FS_2 | DMA_SxCR_MINC | DMA_SxCR_CIRC | DMA_SxCR_HTIE | DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | DMA_SxCR_EN;
 
     // Enable DMA receiver in UART
     q->uart->CR3 |= USART_CR3_DMAR;
@@ -380,8 +380,8 @@ void uart_flush_sync(uart_ring *q) {
 }
 
 void uart_send_break(uart_ring *u) {
-  while ((u->uart->CR1 & USART_CR1_SBK) != 0);
-  u->uart->CR1 |= USART_CR1_SBK;
+  while ((u->uart->CR1 & USART_CR1_M1) != 0);
+  u->uart->CR1 |= USART_CR1_M1;
 }
 
 void clear_uart_buff(uart_ring *q) {

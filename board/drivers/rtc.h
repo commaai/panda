@@ -1,5 +1,9 @@
 #define RCC_BDCR_OPTIONS (RCC_BDCR_RTCEN | RCC_BDCR_RTCSEL_0 | RCC_BDCR_LSEON)
+#ifdef STM32H7
+#define RCC_BDCR_MASK (RCC_BDCR_RTCEN | RCC_BDCR_RTCSEL | RCC_BDCR_LSEBYP | RCC_BDCR_LSEON)
+#else
 #define RCC_BDCR_MASK (RCC_BDCR_RTCEN | RCC_BDCR_RTCSEL | RCC_BDCR_LSEMOD | RCC_BDCR_LSEBYP | RCC_BDCR_LSEON)
+#endif
 
 #define YEAR_OFFSET 2000U
 
@@ -30,7 +34,11 @@ void rtc_init(void){
             register_set_bits(&(RCC->BDCR), RCC_BDCR_BDRST);
 
             // Disable write protection
+            #ifdef STM32H7
+            register_set_bits(&(PWR->CR1), PWR_CR1_DBP);
+            #else
             register_set_bits(&(PWR->CR), PWR_CR_DBP);
+            #endif
 
             // Clear backup domain reset
             register_clear_bits(&(RCC->BDCR), RCC_BDCR_BDRST);
@@ -39,7 +47,11 @@ void rtc_init(void){
             register_set(&(RCC->BDCR), RCC_BDCR_OPTIONS, RCC_BDCR_MASK);
 
             // Enable write protection
+            #ifdef STM32H7
+            register_clear_bits(&(PWR->CR1), PWR_CR1_DBP);
+            #else
             register_clear_bits(&(PWR->CR), PWR_CR_DBP);
+            #endif
         }
     }
 }
@@ -49,7 +61,11 @@ void rtc_set_time(timestamp_t time){
         puts("Setting RTC time\n");
 
         // Disable write protection
+        #ifdef STM32H7
+        register_set_bits(&(PWR->CR1), PWR_CR1_DBP);
+        #else
         register_set_bits(&(PWR->CR), PWR_CR_DBP);
+        #endif
         RTC->WPR = 0xCA;
         RTC->WPR = 0x53;
 
@@ -72,7 +88,11 @@ void rtc_set_time(timestamp_t time){
 
         // Re-enable write protection
         RTC->WPR = 0x00;
+        #ifdef STM32H7
+        register_clear_bits(&(PWR->CR1), PWR_CR1_DBP);
+        #else
         register_clear_bits(&(PWR->CR), PWR_CR_DBP);
+        #endif
     }
 }
 
