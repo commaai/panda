@@ -61,7 +61,7 @@ void init_interrupts(bool check_rate_limit){
     register_set_bits(&(RCC->APB1ENR), RCC_APB1ENR_TIM6EN);  // Enable interrupt timer peripheral
   #endif
   REGISTER_INTERRUPT(TIM6_DAC_IRQn, TIM6_DAC_IRQ_Handler, 1, FAULT_INTERRUPT_RATE_INTERRUPTS)
-  register_set(&(TIM6->PSC), (4196-1), 0xFFFFU);
+  register_set(&(TIM6->PSC), ((uint16_t)(15.25*(CORE_FREQ/2))-1), 0xFFFFU); // REDEBUG: should be suitable for f2/4 and h7
   register_set(&(TIM6->DIER), TIM_DIER_UIE, 0x5F5FU);
   register_set(&(TIM6->CR1), TIM_CR1_CEN, 0x3FU);
   TIM6->SR = 0;

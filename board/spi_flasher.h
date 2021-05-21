@@ -366,9 +366,9 @@ void soft_flasher_start(void) {
     }
     // blink the green LED fast
     current_board->set_led(LED_GREEN, 0);
-    delay(500000);
+    delay_ms(200);
     current_board->set_led(LED_GREEN, 1);
-    delay(500000);
+    delay_ms(200);
   }
 }
 

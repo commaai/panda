@@ -1,12 +1,18 @@
 // **** libc ****
 
+// Deprecated delay func, do not use
 void delay(uint32_t a) {
   volatile uint32_t i;
   for (i = 0; i < a; i++);
 }
 
-void delay_ms(uint32_t a) { // Not precise at all, tested on H7 at 550Mhz
-  delay(a*FREQ*32);
+void delay_us(uint32_t a) {
+  uint32_t end = TIM2->CNT + a;
+  while(TIM2->CNT < end);
+}
+
+void delay_ms(uint32_t a) {
+  delay_us(a*1000);
 }
 
 void *memset(void *str, int c, unsigned int n) {

@@ -9,10 +9,8 @@
 #ifdef PANDA
   #ifdef STM32H7
     #include "boards/red.h"
-#include "drivers/rtc.h"
   #else
     #include "drivers/fan.h"
-    #include "drivers/rtc.h"
     #include "drivers/clock_source.h"
     #include "boards/white.h"
     #include "boards/grey.h"
@@ -20,6 +18,7 @@
     #include "boards/uno.h"
     #include "boards/dos.h"
   #endif
+  #include "drivers/rtc.h"
 #else
   #include "boards/pedal.h"
 #endif
@@ -31,8 +30,6 @@ void detect_board_type(void) {
         hw_type = HW_TYPE_RED_PANDA;
         current_board = &board_red;
       }
-      hw_type = HW_TYPE_RED_PANDA; // DEBUG ONLY, REMOVE!
-      current_board = &board_red; // DEBUG ONLY, REMOVE!
     #else
     // SPI lines floating: white (TODO: is this reliable? Not really, we have to enable ESP/GPS to be able to detect this on the UART)
       set_gpio_output(GPIOC, 14, 1);

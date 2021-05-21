@@ -439,13 +439,13 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xda: reset ESP, with optional boot mode
     case 0xda:
       current_board->set_gps_mode(GPS_DISABLED);
-      delay(1000000);
+      delay(1000000); //REDEBUG understand what delay is needed and use new delay_ms()
       if (setup->b.wValue.w == 1U) {
         current_board->set_gps_mode(GPS_BOOTMODE);
       } else {
         current_board->set_gps_mode(GPS_ENABLED);
       }
-      delay(1000000);
+      delay(1000000); //REDEBUG understand what delay is needed and use new delay_ms()
       current_board->set_gps_mode(GPS_ENABLED);
       break;
     // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
@@ -815,11 +815,8 @@ void TIM8_BRK_TIM12_IRQ_Handler(void) {
   TIM12->SR = 0;
 }
 
-#ifdef STM32H7
-  #define MAX_FADE 24576U
-#else
-  #define MAX_FADE 81920U
-#endif
+
+#define MAX_FADE 4096U
 int main(void) {
   // Init interrupt table
   init_interrupts(true);
@@ -832,6 +829,15 @@ int main(void) {
   // init early devices
   clock_init();
   peripherals_init();
+
+  // init microsecond system timer
+  // increments 1000000 times per second
+  // generate an update to set the prescaler
+  TIM2->PSC = (CORE_FREQ/2)-1;
+  TIM2->CR1 = TIM_CR1_CEN;
+  TIM2->EGR = TIM_EGR_UG;
+  // use TIM2->CNT to read
+
   detect_configuration();
   detect_board_type();
   adc_init();
@@ -877,14 +883,6 @@ int main(void) {
     USART3->CR2 |= USART_CR2_LINEN;
   }
 
-  // init microsecond system timer
-  // increments 1000000 times per second
-  // generate an update to set the prescaler
-  TIM2->PSC = 275-1;
-  TIM2->CR1 = TIM_CR1_CEN;
-  TIM2->EGR = TIM_EGR_UG;
-  // use TIM2->CNT to read
-
   // init to SILENT and can silent
   //REDEBUG
   //set_safety_mode(SAFETY_SILENT, 0);
@@ -897,7 +895,7 @@ int main(void) {
 #endif
 
   // 8hz
-  timer_init(TIM12, 524);
+  timer_init( TIM12, (uint16_t)((15.25*(CORE_FREQ/2))/8) );
   NVIC_EnableIRQ(TIM8_BRK_TIM12_IRQn);
 
 #ifdef DEBUG
@@ -907,13 +905,11 @@ int main(void) {
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
 
-  //set_gpio_output(GPIOF, 7, true);//GREEN2 - true ON
-
   puts("**** INTERRUPTS ON ****\n");
   enable_interrupts();
 
   //     while(1) {
-  //   delay_ms(100);
+  //   delay_ms(500);
   //   //register_set_bits(&(GPIOC->ODR), (1U << 2));
   //   //set_gpio_output(GPIOC, 2, true); //RED - false ON
   //   //set_gpio_output(GPIOC, 3, false); //GREEN - false ON
@@ -921,7 +917,7 @@ int main(void) {
   //   current_board->set_led(LED_GREEN, true);
   //   current_board->set_led(LED_BLUE, true);
 
-  //   delay_ms(100);
+  //   delay_ms(500);
   //   //register_clear_bits(&(GPIOC->ODR), (1U << 2));
   //   //set_gpio_output(GPIOC, 2, false);
   //   //set_gpio_output(GPIOC, 3, true);
@@ -943,16 +939,16 @@ int main(void) {
         // useful for debugging, fade breaks = panda is overloaded
         for(uint32_t fade = 0U; fade < MAX_FADE; fade += div_mode){
           current_board->set_led(LED_RED, true);
-          delay(fade >> 4);
+          delay_us(fade >> 5);
           current_board->set_led(LED_RED, false);
-          delay((MAX_FADE - fade) >> 4);
+          delay_us((MAX_FADE - fade) >> 5);
         }
 
         for(uint32_t fade = MAX_FADE; fade > 0U; fade -= div_mode){
           current_board->set_led(LED_RED, true);
-          delay(fade >> 4);
+          delay_us(fade >> 5);
           current_board->set_led(LED_RED, false);
-          delay((MAX_FADE - fade) >> 4);
+          delay_us((MAX_FADE - fade) >> 5);
         }
 
       #ifdef DEBUG_FAULTS

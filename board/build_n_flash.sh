@@ -7,7 +7,7 @@ DFU_UTIL="dfu-util"
 
 cd ..
 
-scons --clean
+RED=1 scons --clean
 rm -rf board/obj/*
 RED=1 scons
 

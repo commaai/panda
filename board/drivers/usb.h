@@ -964,11 +964,8 @@ void usb_outep3_resume_if_paused() {
 }
 
 void OTG_HS_IRQ_Handler(void) {
-  set_gpio_output(GPIOF, 7, true);//GREEN2 - true ON
   NVIC_DisableIRQ(OTG_HS_IRQn);
-  //__disable_irq();
   usb_irqhandler();
-  //__enable_irq();
   NVIC_EnableIRQ(OTG_HS_IRQn);
 }
 
@@ -1011,11 +1008,6 @@ void usb_init(void) {
   USBx->GUSBCFG &= ~(USB_OTG_GUSBCFG_FHMOD | USB_OTG_GUSBCFG_FDMOD);
   USBx->GUSBCFG |= USB_OTG_GUSBCFG_FDMOD;
 
-
-
-  // Must init endpoints???
-
-
   volatile uint32_t i;
   for (i = 0U; i < 15U; i++)
   {
@@ -1037,7 +1029,6 @@ void usb_init(void) {
 
   /* Device mode configuration */
   USBx_DEVICE->DCFG |= DCFG_FRAME_INTERVAL_80;
-
   USBx_DEVICE->DCFG |= USB_OTG_SPEED_FULL | USB_OTG_DCFG_NZLSOHSK;
 
   // Flush FIFOs
@@ -1051,10 +1042,6 @@ void usb_init(void) {
   USBx_DEVICE->DIEPMSK = 0U;
   USBx_DEVICE->DOEPMSK = 0U;
   USBx_DEVICE->DAINTMSK = 0U;
-
-
-  // One more config for enpoints???
-
   USBx_DEVICE->DIEPMSK &= ~(USB_OTG_DIEPMSK_TXFURM);
 
   /* Disable all interrupts. */
@@ -1072,91 +1059,11 @@ void usb_init(void) {
                    USB_OTG_GINTMSK_OEPINT   | USB_OTG_GINTMSK_IISOIXFRM |
                    USB_OTG_GINTMSK_PXFRM_IISOOXFRM | USB_OTG_GINTMSK_WUIM;
 
-  // For VBUS sensing?
-  //USBx->GINTMSK |= (USB_OTG_GINTMSK_SRQIM | USB_OTG_GINTMSK_OTGINT);
-
-  // full speed PHY, do reset and remove power down
-  /*puth(USBx->GRSTCTL);
-  puts(" resetting PHY\n");*/
-
-
-  //puts("AHB idle\n");
-
-  
-  
-  //puts("reset done\n");
-
-  // volatile uint32_t i;
-  // for (i = 0; i < 10; i++) {
-  // set_gpio_output(GPIOC, 2, false);
-  // set_gpio_output(GPIOC, 3, false);
-  // delay_ms(500U);
-  // set_gpio_output(GPIOC, 2, true);
-  // set_gpio_output(GPIOC, 3, true);
-  // delay_ms(500U);
-  // }
-
-  // power up the PHY
-  //USBx->GCCFG &= ~(USB_OTG_GCCFG_BCDEN); // BCD switch off
-  //USBx->GCCFG = USB_OTG_GCCFG_PWRDWN;
-
-  //USBx->GCCFG |= USB_OTG_GCCFG_VBDEN | USB_OTG_GCCFG_SDEN |USB_OTG_GCCFG_PDEN | USB_OTG_GCCFG_DCDEN;
-
-  // Should we enable or disable VBUS sensing? 
-  //USBx->GCCFG &= ~USB_OTG_GCCFG_VBDEN; // Disable VBUS sensing
-  //USBx->GCCFG |= USB_OTG_GCCFG_VBDEN; // Enable VBUS sensing
-
-  /* B-peripheral session valid override enable*/
-  //USBx->GOTGCTL |= USB_OTG_GOTGCTL_BVALOVAL;
-  //USBx->GOTGCTL |= USB_OTG_GOTGCTL_BVALOEN;
-
   /* Set USB Turnaround time */
   USBx->GUSBCFG |= ((USBD_FS_TRDT_VALUE << 10) & USB_OTG_GUSBCFG_TRDT);
 
-  // be a device, slowest timings
-  //USBx->GUSBCFG = USB_OTG_GUSBCFG_FDMOD | USB_OTG_GUSBCFG_PHYSEL | USB_OTG_GUSBCFG_TRDT | USB_OTG_GUSBCFG_TOCAL;
-  //USBx->GUSBCFG |= (uint32_t)((USBD_FS_TRDT_VALUE << 10) & USB_OTG_GUSBCFG_TRDT);
-  //USBx->GUSBCFG = USB_OTG_GUSBCFG_PHYSEL | USB_OTG_GUSBCFG_TRDT | USB_OTG_GUSBCFG_TOCAL;
-
-  // **** for debugging, doesn't seem to work ****
-  //USBx->GUSBCFG |= USB_OTG_GUSBCFG_CTXPKT;
-
-  // Restart the Phy Clock
-  //USBx_PCGCCTL = 0;
-
-  /* Device mode configuration */
-  //USBx_DEVICE->DCFG |= DCFG_FRAME_INTERVAL_80;
-
-  // enable the fancy OTG things
-  // DCFG_FRAME_INTERVAL_80 is 0
-  //USBx->GUSBCFG |= USB_OTG_GUSBCFG_HNPCAP | USB_OTG_GUSBCFG_SRPCAP;
-  //USBx_DEVICE->DCFG |= USB_OTG_SPEED_FULL | USB_OTG_DCFG_NZLSOHSK;
-
-  //USBx_DEVICE->DCFG = USB_OTG_DCFG_NZLSOHSK | USB_OTG_DCFG_DSPD;
-  //USBx_DEVICE->DCFG = USB_OTG_DCFG_DSPD;
-
-  /* Disable all interrupts. */
-  //USBx->GINTMSK = 0U;
-
-  // clear pending interrupts
-  //USBx->GINTSTS = 0xBFFFFFFFU;
-
-  // setup USB interrupts
-  // all interrupts except TXFIFO EMPTY
-  //USBx->GINTMSK = 0xFFFFFFFF & ~(USB_OTG_GINTMSK_NPTXFEM | USB_OTG_GINTMSK_PTXFEM | USB_OTG_GINTSTS_SOF | USB_OTG_GINTSTS_EOPF);
-  //USBx->GINTMSK = 0xFFFFFFFF & ~(USB_OTG_GINTMSK_NPTXFEM | USB_OTG_GINTMSK_PTXFEM);
-  // USBx->GINTMSK = USB_OTG_GINTMSK_USBRST | USB_OTG_GINTMSK_ENUMDNEM | USB_OTG_GINTMSK_OTGINT |
-  //                 USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_GONAKEFFM | USB_OTG_GINTMSK_GINAKEFFM |
-  //                 USB_OTG_GINTMSK_OEPINT | USB_OTG_GINTMSK_IEPINT | USB_OTG_GINTMSK_USBSUSPM |
-  //                 USB_OTG_GINTMSK_CIDSCHGM | USB_OTG_GINTMSK_SRQIM | USB_OTG_GINTMSK_MMISM | USB_OTG_GINTMSK_EOPFM;
-
-  //USBx->GAHBCFG = USB_OTG_GAHBCFG_GINT;
-
   /* Enables the controller's Global Int in the AHB Config reg */
   USBx->GAHBCFG |= USB_OTG_GAHBCFG_GINT;
-
-  // DCTL startup value is 2 on new chip, 0 on old chip
-  //USBx_DEVICE->DCTL = 0;
 
   //Soft disconnect disable:
   USBx_DEVICE->DCTL &= ~(USB_OTG_DCTL_SDIS);

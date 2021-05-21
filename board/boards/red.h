@@ -35,16 +35,16 @@ void red_enable_can_transceivers(bool enabled) {
 void red_set_led(uint8_t color, bool enabled) {
   switch (color){
     case LED_RED:
-      set_gpio_output(GPIOC, 2, !enabled); //REDEBUG
-      //set_gpio_output(GPIOE, 4, !enabled);
+      //set_gpio_output(GPIOC, 2, !enabled); //REDEBUG
+      set_gpio_output(GPIOE, 4, !enabled);
       break;
      case LED_GREEN:
-      set_gpio_output(GPIOC, 3, !enabled); //REDEBUG
-      //set_gpio_output(GPIOE, 3, !enabled);
+      //set_gpio_output(GPIOC, 3, !enabled); //REDEBUG
+      set_gpio_output(GPIOE, 3, !enabled);
       break;
     case LED_BLUE:
-      set_gpio_output(GPIOF, 7, enabled); //REDEBUG
-      //set_gpio_output(GPIOE, 2, !enabled);
+      //set_gpio_output(GPIOF, 7, enabled); //REDEBUG
+      set_gpio_output(GPIOE, 2, !enabled);
       break;
     default:
       break;
@@ -151,15 +151,15 @@ void red_init(void) {
 
   // C12: OBD_SBU1 (orientation detection)
   // D0: OBD_SBU2 (orientation detection)
-  set_gpio_mode(GPIOC, 12, MODE_ANALOG);
-  set_gpio_mode(GPIOD, 0, MODE_ANALOG);
+  //set_gpio_mode(GPIOC, 12, MODE_ANALOG);
+  //set_gpio_mode(GPIOD, 0, MODE_ANALOG);
 
   // C10: OBD_SBU1_RELAY (harness relay driving output)
   // C11: OBD_SBU2_RELAY (harness relay driving output)
-  set_gpio_mode(GPIOC, 10, MODE_OUTPUT);
-  set_gpio_mode(GPIOC, 11, MODE_OUTPUT);
-  set_gpio_output_type(GPIOC, 10, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_output_type(GPIOC, 11, OUTPUT_TYPE_OPEN_DRAIN);
+  //set_gpio_mode(GPIOC, 10, MODE_OUTPUT);
+  //set_gpio_mode(GPIOC, 11, MODE_OUTPUT);
+  //set_gpio_output_type(GPIOC, 10, OUTPUT_TYPE_OPEN_DRAIN);
+  //set_gpio_output_type(GPIOC, 11, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_output(GPIOC, 10, 1);
   set_gpio_output(GPIOC, 11, 1);
 
