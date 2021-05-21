@@ -41,6 +41,8 @@ def checksum(msg):
         b &= 0x0F if addr == 1057 else 0xF0
       elif addr == 916 and i == 6:
         b &= 0xF0
+      elif addr == 916 and i == 7:
+        continue
       chksum += sum(divmod(b, 16))
     chksum = (16 - chksum) % 16
     ret = bytearray(dat)
