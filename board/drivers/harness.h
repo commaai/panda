@@ -72,7 +72,7 @@ uint8_t harness_detect_orientation(void) {
 void harness_init(void) {
   // delay such that the connection is fully made before trying orientation detection
   current_board->set_led(LED_BLUE, true);
-  delay(10000000);
+  delay(10000000); //REDEBUG understand what delay is needed and use new delay_ms()
   current_board->set_led(LED_BLUE, false);
 
   // try to detect orientation

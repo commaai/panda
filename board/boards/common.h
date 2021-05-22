@@ -101,27 +101,43 @@ void common_init_gpio(void){
     set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG1_FS);
 
     // B8,B9: FDCAN1
-    set_gpio_speed(GPIOB, 8, SPEED_VERY_HIGH);
+    set_gpio_output_type(GPIOB, 8, OUTPUT_TYPE_PUSH_PULL);
+    set_gpio_pullup(GPIOB, 8, PULL_NONE);
+    set_gpio_speed(GPIOB, 8, SPEED_LOW);
     set_gpio_alternate(GPIOB, 8, GPIO_AF9_FDCAN1);
 
-    set_gpio_speed(GPIOB, 8, SPEED_VERY_HIGH);
+    set_gpio_output_type(GPIOB, 9, OUTPUT_TYPE_PUSH_PULL);
+    set_gpio_pullup(GPIOB, 9, PULL_NONE);
+    set_gpio_speed(GPIOB, 9, SPEED_LOW);
     set_gpio_alternate(GPIOB, 9, GPIO_AF9_FDCAN1);
     
     // B5,B6 (mplex to B12,B13): FDCAN2
-    set_gpio_speed(GPIOB, 12, SPEED_VERY_HIGH);
-    set_gpio_speed(GPIOB, 13, SPEED_VERY_HIGH);
+    set_gpio_output_type(GPIOB, 12, OUTPUT_TYPE_PUSH_PULL);
+    set_gpio_pullup(GPIOB, 12, PULL_NONE);
+    set_gpio_speed(GPIOB, 12, SPEED_LOW);
+    set_gpio_output_type(GPIOB, 13, OUTPUT_TYPE_PUSH_PULL);
+    set_gpio_pullup(GPIOB, 13, PULL_NONE);
+    set_gpio_speed(GPIOB, 13, SPEED_LOW);
 
-    set_gpio_speed(GPIOB, 5, SPEED_VERY_HIGH);
+    set_gpio_output_type(GPIOB, 5, OUTPUT_TYPE_PUSH_PULL);
+    set_gpio_pullup(GPIOB, 5, PULL_NONE);
+    set_gpio_speed(GPIOB, 5, SPEED_LOW);
     set_gpio_alternate(GPIOB, 5, GPIO_AF9_FDCAN2);
 
-    set_gpio_speed(GPIOB, 6, SPEED_VERY_HIGH);
+    set_gpio_output_type(GPIOB, 6, OUTPUT_TYPE_PUSH_PULL);
+    set_gpio_pullup(GPIOB, 6, PULL_NONE);
+    set_gpio_speed(GPIOB, 6, SPEED_LOW);
     set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
     
     // G9,G10: FDCAN3
-    set_gpio_speed(GPIOG, 9, SPEED_VERY_HIGH);
+    set_gpio_output_type(GPIOG, 9, OUTPUT_TYPE_PUSH_PULL);
+    set_gpio_pullup(GPIOG, 9, PULL_NONE);
+    set_gpio_speed(GPIOG, 9, SPEED_LOW);
     set_gpio_alternate(GPIOG, 9, GPIO_AF2_FDCAN3);
 
-    set_gpio_speed(GPIOG, 10, SPEED_VERY_HIGH);
+    set_gpio_output_type(GPIOG, 10, OUTPUT_TYPE_PUSH_PULL);
+    set_gpio_pullup(GPIOG, 10, PULL_NONE);
+    set_gpio_speed(GPIOG, 10, SPEED_LOW);
     set_gpio_alternate(GPIOG, 10, GPIO_AF2_FDCAN3);
 
     //////////////////////////////////////

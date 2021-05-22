@@ -73,8 +73,125 @@ bool llcan_set_speed(CAN_TypeDef *CAN_obj, uint32_t speed, bool loopback, bool s
   return ret;
 }
 
+#define FDCAN_MESSAGE_RAM_SIZE 0x2800U
+#define FDCAN_MESSAGE_RAM_END_ADDRESS (SRAMCAN_BASE + FDCAN_MESSAGE_RAM_SIZE - 0x4U) /* The Message RAM has a width of 4 Bytes */
+
+#define FDCAN_DATA_BYTES_8  ((uint32_t)0x00000004U) /*!< 8 bytes data field  */
+#define FDCAN_DATA_BYTES_12 ((uint32_t)0x00000005U) /*!< 12 bytes data field */
+#define FDCAN_DATA_BYTES_16 ((uint32_t)0x00000006U) /*!< 16 bytes data field */
+#define FDCAN_DATA_BYTES_20 ((uint32_t)0x00000007U) /*!< 20 bytes data field */
+#define FDCAN_DATA_BYTES_24 ((uint32_t)0x00000008U) /*!< 24 bytes data field */
+#define FDCAN_DATA_BYTES_32 ((uint32_t)0x0000000AU) /*!< 32 bytes data field */
+#define FDCAN_DATA_BYTES_48 ((uint32_t)0x0000000EU) /*!< 48 bytes data field */
+#define FDCAN_DATA_BYTES_64 ((uint32_t)0x00000012U) /*!< 64 bytes data field */
+
 bool llcan_init(CAN_TypeDef *CAN_obj) {
   bool ret = true;
+
+  ////////////////////////////////////////////////
+  ////////////////////////////////////////////////
+  ////////////////////////////////////////////////
+
+  // Exit from sleep mode
+  CAN_obj->CCCR &= ~(FDCAN_CCCR_CSR);
+  while((CAN_obj->CCCR & FDCAN_CCCR_CSA) == FDCAN_CCCR_CSA);
+
+  // Request init
+  CAN_obj->CCCR |= FDCAN_CCCR_INIT;
+  while((CAN_obj->CCCR & FDCAN_CCCR_INIT) == 0U);
+
+  // Enable config change
+  CAN_obj->CCCR |= FDCAN_CCCR_CCE;
+
+  // Disable automatic retransmission of failed messages
+  CAN_obj->CCCR |= FDCAN_CCCR_DAR; // Imho should be enabled later
+
+  // Disable transmission pause feature
+  CAN_obj->CCCR &= ~(FDCAN_CCCR_TXP);
+
+  // Disable protocol exception handling
+  CAN_obj->CCCR |= FDCAN_CCCR_PXHD;
+
+  // Set FDCAN frame format (REDEBUG)
+    //  Classic mode
+  FDCCAN_objAN->CCCR &= ~(FDCAN_CCCR_BRSE);
+  CAN_obj->CCCR &= ~(FDCAN_CCCR_FDOE);
+    // FD without BRS
+  //CAN_obj->CCCR |= FDCAN_CCCR_FDOE;
+    // FD with BRS
+  //CAN_obj->CCCR |= (FDCAN_CCCR_FDOE | FDCAN_CCCR_BRSE);
+
+  // Reset FDCAN operation mode
+  CAN_obj->CCCR &= ~(FDCAN_CCCR_TEST | FDCAN_CCCR_MON | FDCAN_CCCR_ASM);
+  CAN_obj->TEST &= ~(FDCAN_TEST_LBCK);
+
+    /* Set FDCAN Operating Mode:
+               | Normal | Restricted |    Bus     | Internal | External
+               |        | Operation  | Monitoring | LoopBack | LoopBack
+     CCCR.TEST |   0    |     0      |     0      |    1     |    1
+     CCCR.MON  |   0    |     0      |     1      |    1     |    0
+     TEST.LBCK |   0    |     0      |     0      |    1     |    1
+     CCCR.ASM  |   0    |     1      |     0      |    0     |    0
+  */
+
+  // Set the nominal bit timing register
+  CAN_obj->NBTP = (0U<<FDCAN_NBTP_NSJW_Pos) | (1U<<FDCAN_NBTP_NTSEG1_Pos) | (1U<<FDCAN_NBTP_NTSEG2_Pos) | (0U<<FDCAN_NBTP_NBRP_Pos);
+
+  // If FD with BRS enabled - set data bit timing register
+  //CAN_obj->DBTP = (0U<<FDCAN_DBTP_DSJW_Pos) | (0U<<FDCAN_DBTP_DTSEG1_Pos) | (0U<<FDCAN_DBTP_DTSEG2_Pos) | (0U<<FDCAN_DBTP_DBRP_Pos);
+
+  // Set TX mode to FIFO
+  CAN_obj->TXBC &= ~(FDCAN_TXBC_TFQM);
+
+  // Configure TX element size (for now 8 bytes, no need to change)
+  //CAN_obj->TXESC |= 0x000U;
+
+  //Configure RX FIFO0, FIFO1, RX buffer element sizes (no need for now, using classic 8 bytes)
+  register_Set(&(CAN_obj->RXESC), 0x0U, (FDCAN_RXESC_F0DS | FDCAN_RXESC_F1DS | FDCAN_RXESC_RBDS));
+
+  // Disable TT for FDCAN1
+  if (CAN_obj == CAN1) {
+    CAN_obj->TTOCF &= ~(FDCAN_TTOCF_OM);
+  }
+
+  // Need to calculate RAM block addresses, so need to keep track of offset as a start address. Will need to add to input params.
+  // At this time 0 standard and 0 extended filters, so ignore those lists.
+  // This will be changed, for each FDCANx personal offset. (10kb RAM total for 3 FDCAN modules, so 3412 bytes per module for everything)
+  // or 2560 words total, ~852 per module
+  uint32_t StartAddress;
+
+  StartAddress = 0; // for FDCAN1
+  //StartAddress = 852; // for FDCAN2
+  //StartAddress = 1704; // for FDCAN3
+
+  // RX FIFO 0 start address
+  register_set(&(CAN_obj->RXF0C), (StartAddress<<FDCAN_RXF0C_F0SA_Pos) , FDCAN_RXF0C_F0SA);
+  // RX FIFO 0 elements number
+  register_set(&(CAN_obj->RXF0C), (32U<<FDCAN_RXF0C_F0S_Pos) , FDCAN_RXF0C_F0S); // 32 RX elements
+  uint32_t RxFIFO0SA = SRAMCAN_BASE + (StartAddress * 4U);
+
+  // TX buffer list start address
+  StartAddress += (32U * FDCAN_DATA_BYTES_8) 
+  register_set(&(CAN_obj->TXBC), (StartAddress<<FDCAN_TXBC_TBSA_Pos) , FDCAN_TXBC_TBSA);
+  // TX FIFO elements number
+  register_set(&(CAN_obj->TXBC), (32U<<FDCAN_TXBC_TFQS_Pos) , FDCAN_TXBC_TFQS); // 32 TX elements
+  uint32_t TxFIFOQSA = RxFIFO0SA + (32U * FDCAN_DATA_BYTES_8 * 4U);
+  
+  uint32_t EndAddress = TxFIFOQSA + (32U * FDCAN_DATA_BYTES_8 * 4U);
+
+  // Flush allocated RAM
+  for (uint32_t RAMcounter = RxFIFO0SA; RAMcounter < EndAddress; RAMcounter += 4U) {
+    *(uint32_t *)(RAMcounter) = 0x00000000;
+  }
+
+  //////////
+
+  // Request leave init, start FDCAN
+  CAN_obj->CCCR &= ~(FDCAN_CCCR_INIT);
+
+  ////////////////////////////////////////////////
+  ////////////////////////////////////////////////
+  ////////////////////////////////////////////////
 
   // Enter init mode
   register_set_bits(&(CAN_obj->FMR), CAN_FMR_FINIT);

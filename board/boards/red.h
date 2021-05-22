@@ -192,15 +192,15 @@ void red_init(void) {
 const harness_configuration red_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
-  .GPIO_SBU2 = GPIOC,
+  .GPIO_SBU2 = GPIOD,
   .GPIO_relay_SBU1 = GPIOC,
   .GPIO_relay_SBU2 = GPIOC,
-  .pin_SBU1 = 0,
-  .pin_SBU2 = 3,
+  .pin_SBU1 = 12,
+  .pin_SBU2 = 0,
   .pin_relay_SBU1 = 10,
   .pin_relay_SBU2 = 11,
-  .adc_channel_SBU1 = 10,
-  .adc_channel_SBU2 = 13
+  .adc_channel_SBU1 = 10, //REDEBUG needs ADC???
+  .adc_channel_SBU2 = 13 //REDEBUG needs ADC???
 };
 
 const board board_red = {

@@ -60,19 +60,21 @@ void clock_init(void) {
     while((RCC->CR & RCC_CR_PLL1RDY) == 0);
     // *** PLL1 end ***
 
-    // *** PLL2 start (PLL2P is used by ADC) ***
+    // *** PLL2 start ***
     // Specify multiplier N and dividers P, Q, R for PLL2 : 48, 4, 2, 2
-    register_set(&(RCC->PLL2DIVR), 0x101062FU, 0x7F7FFFFFU);
+    //register_set(&(RCC->PLL2DIVR), 0x101062FU, 0x7F7FFFFFU);
 
-    // Fractional frequency divider : 2950
-    //register_set(&(RCC->PLL2FRACR), 0x5C30U, 0xFFF8U);
+    // Fractional frequency divider : 0
+    //register_set(&(RCC->PLL2FRACR), 0x0U, 0xFFF8U);
 
     // Specify the input and output frequency ranges, enable dividers for PLL2: 8 to 16Mhz, wide VCO range(0)
-    register_set(&(RCC->PLLCFGR), RCC_PLLCFGR_PLL2RGE_2 | ~RCC_PLLCFGR_PLL2VCOSEL | RCC_PLLCFGR_DIVP2EN | RCC_PLLCFGR_DIVQ2EN | RCC_PLLCFGR_DIVR2EN, 0x3800E0U); //RCC_PLLCFGR_PLL2FRACEN
+    //register_set(&(RCC->PLLCFGR), RCC_PLLCFGR_PLL2RGE_2 | ~RCC_PLLCFGR_PLL2VCOSEL | RCC_PLLCFGR_DIVP2EN | RCC_PLLCFGR_DIVQ2EN | RCC_PLLCFGR_DIVR2EN, 0x3800E0U); //RCC_PLLCFGR_PLL2FRACEN
+
+    // Fractional divider must be also enabled if being used!
 
     // Enable PLL2
-    register_set_bits(&(RCC->CR), RCC_CR_PLL2ON);
-    while((RCC->CR & RCC_CR_PLL2RDY) == 0);
+    //register_set_bits(&(RCC->CR), RCC_CR_PLL2ON);
+    //while((RCC->CR & RCC_CR_PLL2RDY) == 0);
     // *** PLL2 end ***
 
     //////////////OTHER CLOCKS////////////////////
@@ -99,6 +101,12 @@ void clock_init(void) {
     // Configure clock source for USB
     //register_set(&(RCC->D2CCIP2R), RCC_D2CCIP2R_USBSEL_0 | RCC_D2CCIP2R_USBSEL_1, RCC_D2CCIP2R_USBSEL); //HSI48
     register_set(&(RCC->D2CCIP2R), RCC_D2CCIP2R_USBSEL_0, RCC_D2CCIP2R_USBSEL); //PLL1Q
+
+    // Configure clock source for FDCAN
+    register_set(&(RCC->D2CCIP2R), RCC_D2CCIP1R_FDCANSEL_0, RCC_D2CCIP1R_FDCANSEL); //PLL1Q
+
+    // Configure clock source for ADC1,2,3
+    register_set(&(RCC->D3CCIPR), RCC_D3CCIPR_ADCSEL_1, RCC_D3CCIPR_ADCSEL); //per_ck(currently HSE)
 
     // *** End config of high performance mode at 550Mhz ***
 
