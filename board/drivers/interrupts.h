@@ -132,6 +132,13 @@ void USART6_IRQHandler(void) {handle_interrupt(USART6_IRQn);}
 void I2C3_EV_IRQHandler(void) {handle_interrupt(I2C3_EV_IRQn);}
 void I2C3_ER_IRQHandler(void) {handle_interrupt(I2C3_ER_IRQn);}
 #ifdef STM32H7
+  void FDCAN1_IT0_IRQHandler(void) {handle_interrupt(FDCAN1_IT0_IRQn);}
+  void FDCAN1_IT1_IRQHandler(void) {handle_interrupt(FDCAN1_IT1_IRQn);}
+  void FDCAN2_IT0_IRQHandler(void) {handle_interrupt(FDCAN2_IT0_IRQn);}
+  void FDCAN2_IT1_IRQHandler(void) {handle_interrupt(FDCAN2_IT1_IRQn);}
+  void FDCAN3_IT0_IRQHandler(void) {handle_interrupt(FDCAN3_IT0_IRQn);}
+  void FDCAN3_IT1_IRQHandler(void) {handle_interrupt(FDCAN3_IT1_IRQn);}
+  void FDCAN_CAL_IRQHandler(void) {handle_interrupt(FDCAN_CAL_IRQn);}
   void OTG_HS_EP1_OUT_IRQHandler(void) {handle_interrupt(OTG_HS_EP1_OUT_IRQn);}
   void OTG_HS_EP1_IN_IRQHandler(void) {handle_interrupt(OTG_HS_EP1_IN_IRQn);}
   void OTG_HS_WKUP_IRQHandler(void) {handle_interrupt(OTG_HS_WKUP_IRQn);}

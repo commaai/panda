@@ -229,7 +229,6 @@ void can_set_gmlan(uint8_t bus) {
   }
 }
 
-// TODO: remove  (Should be not needed for Red and etc. CHECK!!)
 void can_set_obd(uint8_t harness_orientation, bool obd){
   if(obd){
     puts("setting CAN2 to be OBD\n");
@@ -479,4 +478,3 @@ bool can_init(uint8_t can_number) {
   }
   return ret;
 }
-

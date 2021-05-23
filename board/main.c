@@ -39,6 +39,7 @@
 //#include "safety.h"
 
 //#include "drivers/can.h"
+#include "drivers/fdcan.h" //REDEBUG
 
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
@@ -91,10 +92,6 @@ struct __attribute__((packed)) health_t {
 uint16_t current_safety_mode = SAFETY_SILENT;
 int16_t current_safety_param = 0;
 uint16_t fan_rpm = 1345;
-uint16_t can_tx_cnt = 123;
-uint16_t can_txd_cnt = 234;
-uint16_t can_rx_cnt = 345;
-uint16_t can_err_cnt = 999;
 int unsafe_mode = 0;
 int pending_can_live = 0;
 unsigned int ignition_can_cnt = 2;
@@ -218,13 +215,11 @@ int get_health_pkt(void *dat) {
   health->controls_allowed_pkt = controls_allowed;
   health->gas_interceptor_detected_pkt = gas_interceptor_detected;
   //health->can_rx_errs_pkt = can_rx_errs;
-  health->can_rx_errs_pkt = 20;
+  health->can_rx_errs_pkt = can_rx_cnt; // REDEBUG
   //health->can_send_errs_pkt = can_send_errs;
-  health->can_send_errs_pkt = 10;
-  //health->can_fwd_errs_pkt = can_fwd_errs;
-  health->can_fwd_errs_pkt = 5;
-  //health->gmlan_send_errs_pkt = gmlan_send_errs;
-  health->gmlan_send_errs_pkt = 1;
+  health->can_send_errs_pkt = can_tx_cnt; // REDEBUG
+  health->can_fwd_errs_pkt = can_fwd_errs;
+  health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = car_harness_status;
   health->usb_power_mode_pkt = usb_power_mode;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
@@ -905,8 +900,40 @@ int main(void) {
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
 
+  //fdcan_init(0); //REDEBUG
+  //fdcan_init(1);
+  //fdcan_init(2);
+  fdcan_init_all();
+
   puts("**** INTERRUPTS ON ****\n");
   enable_interrupts();
+
+  ///REDEBUG
+  can_message can_tx_message;
+  // test message
+  can_tx_message.id      = 1;
+  can_tx_message.format  = CAN_EXTENDED_FORMAT;
+  can_tx_message.type    = DATA_FRAME;
+  can_tx_message.length  = 10;
+  can_tx_message.data[0] = 0;
+  can_tx_message.data[1] = 10;
+  can_tx_message.data[2] = 20;
+  can_tx_message.data[3] = 30;
+  can_tx_message.data[4] = 40;
+  can_tx_message.data[5] = 50;
+  can_tx_message.data[6] = 60;
+  can_tx_message.data[7] = 70;
+  ///REDEBUG
+
+  // for (uint64_t cntr=0;;cntr++) {
+  // fdcan_send_msg(&can_tx_message, 0);
+  // delay_ms(2000);
+  // fdcan_send_msg(&can_tx_message, 1);
+  // delay_ms(2000);
+  // fdcan_send_msg(&can_tx_message, 2);
+  // delay_ms(2000);
+  // }
+  ///REDEBUG
 
   //     while(1) {
   //   delay_ms(500);
@@ -950,6 +977,15 @@ int main(void) {
           current_board->set_led(LED_RED, false);
           delay_us((MAX_FADE - fade) >> 5);
         }
+
+        //REDEBUG
+        if (cnt % 2 == 0) {
+          fdcan_send_msg(&can_tx_message, 0);
+        } else {
+          fdcan_send_msg(&can_tx_message, 1);
+        }
+
+        
 
       #ifdef DEBUG_FAULTS
       } else {
