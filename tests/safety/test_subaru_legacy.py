@@ -158,6 +158,14 @@ class TestSubaruLegacySafety(common.PandaSafetyTest):
       self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
       self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
+class TestSubaruLegacy2019Safety(TestSubaruLegacySafety):
+
+  def setUp(self):
+    self.packer = CANPackerPanda("subaru_outback_2019_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_SUBARU_LEGACY, 1)
+    self.safety.init_tests()
+
 
 if __name__ == "__main__":
   unittest.main()
