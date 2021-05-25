@@ -24,6 +24,8 @@ class TestSubaruLegacySafety(common.PandaSafetyTest, common.DriverTorqueSteering
   DRIVER_TORQUE_ALLOWANCE = 60
   DRIVER_TORQUE_FACTOR = 50
 
+  BRAKE_THRESHOLD = 2
+
   def setUp(self):
     self.packer = CANPackerPanda("subaru_outback_2015_generated")
     self.safety = libpandasafety_py.libpandasafety
@@ -45,6 +47,8 @@ class TestSubaruLegacySafety(common.PandaSafetyTest, common.DriverTorqueSteering
     return self.packer.make_can_msg_panda("Wheel_Speeds", 0, values)
 
   def _user_brake_msg(self, brake):
+    if brake > 0 and brake < self.BRAKE_THRESHOLD:
+      brake = self.BRAKE_THRESHOLD + 1
     values = {"Brake_Pedal": brake}
     return self.packer.make_can_msg_panda("Brake_Pedal", 0, values)
 

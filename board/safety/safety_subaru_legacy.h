@@ -1,6 +1,5 @@
 // more constants in board/safety/safety_subaru.h
-const int SUBARU_L_DRIVER_TORQUE_ALLOWANCE = 75;
-const int SUBARU_L_DRIVER_TORQUE_FACTOR = 10;
+const uint32_t SUBARU_L_BRAKE_THRSLD = 2; // filter sensor noise, max_brake is 400
 
 const CanMsg SUBARU_L_TX_MSGS[] = {
   {0x161, 0, 8},
@@ -50,7 +49,7 @@ static int subaru_legacy_rx_hook(CANPacket_t *to_push) {
     }
 
     if (addr == 0xD1) {
-      brake_pressed = ((GET_BYTES_04(to_push) >> 16) & 0xFFU) > 0U;
+      brake_pressed = GET_BYTE(to_push, 2) > SUBARU_L_BRAKE_THRSLD;
     }
 
     if (addr == 0x140) {
@@ -88,7 +87,7 @@ static int subaru_legacy_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
       // *** torque rate limit check ***
       violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
         SUBARU_MAX_STEER, SUBARU_MAX_RATE_UP, SUBARU_MAX_RATE_DOWN,
-        SUBARU_L_DRIVER_TORQUE_ALLOWANCE, SUBARU_L_DRIVER_TORQUE_FACTOR);
+        SUBARU_DRIVER_TORQUE_ALLOWANCE, SUBARU_DRIVER_TORQUE_FACTOR);
 
       // used next time
       desired_torque_last = desired_torque;
