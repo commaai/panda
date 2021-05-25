@@ -53,7 +53,7 @@ void clock_init(void) {
     //register_set(&(RCC->PLL1FRACR), 0x0U, 0xFFF8U);
 
     // Specify the input and output frequency ranges, enable dividers for PLL1
-    register_set(&(RCC->PLLCFGR), RCC_PLLCFGR_PLL1RGE_2 | ~RCC_PLLCFGR_PLL1VCOSEL | RCC_PLLCFGR_DIVP1EN | RCC_PLLCFGR_DIVQ1EN | RCC_PLLCFGR_DIVR1EN, 0x7000EU);
+    register_set(&(RCC->PLLCFGR), RCC_PLLCFGR_PLL1RGE_2 | RCC_PLLCFGR_DIVP1EN | RCC_PLLCFGR_DIVQ1EN | RCC_PLLCFGR_DIVR1EN, 0x7000CU);
 
     // Enable PLL1
     register_set_bits(&(RCC->CR), RCC_CR_PLL1ON);
@@ -103,7 +103,7 @@ void clock_init(void) {
     register_set(&(RCC->D2CCIP2R), RCC_D2CCIP2R_USBSEL_0, RCC_D2CCIP2R_USBSEL); //PLL1Q
 
     // Configure clock source for FDCAN
-    register_set(&(RCC->D2CCIP2R), RCC_D2CCIP1R_FDCANSEL_0, RCC_D2CCIP1R_FDCANSEL); //PLL1Q
+    register_set(&(RCC->D2CCIP1R), RCC_D2CCIP1R_FDCANSEL_0, RCC_D2CCIP1R_FDCANSEL); //PLL1Q
 
     // Configure clock source for ADC1,2,3
     register_set(&(RCC->D3CCIPR), RCC_D3CCIPR_ADCSEL_1, RCC_D3CCIPR_ADCSEL); //per_ck(currently HSE)

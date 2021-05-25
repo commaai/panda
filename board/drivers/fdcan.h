@@ -24,11 +24,14 @@
 #define FDCAN_OFFSET_W 853UL // words for each FDCAN module
 #define FDCAN_END_ADDRESS 0x4000D3FCUL // Message RAM has a width of 4 Bytes
 
-// Now is 500Kbit/s with 48MHz fdcan kernel clock
-#define CAN_PRESCALER   6 
-#define CAN_SYNC_JW     2 
-#define CAN_PHASE_SEG1 11 
-#define CAN_PHASE_SEG2  4
+// With this settings we can go up to 6Mbit/s
+#define CAN_SYNC_JW     1 // 1 to 4
+#define CAN_PHASE_SEG1  6 // =(PROP_SEG + PHASE_SEG1) , 1 to 16
+#define CAN_PHASE_SEG2  1 // 1 to 8
+#define CAN_PCLK 48000U // Sourced from PLL1Q
+// Valid speeds with this settings:
+// 5000 = 500 kbps, 2500 = 250kbps... Only these are valid: 6000/x where x is the int prescaler value
+#define can_speed_to_prescaler(x) (CAN_PCLK / (1+CAN_PHASE_SEG1+CAN_PHASE_SEG2) * 10U / (x))
 
 // RX FIFO 0
 #define FDCAN_RX_FIFO_0_EL_CNT 32
@@ -45,6 +48,20 @@
 #define FDCAN_TX_FIFO_EL_SIZE (FDCAN_TX_FIFO_HEAD_SIZE + FDCAN_TX_FIFO_DATA_SIZE)
 #define FDCAN_TX_FIFO_EL_W_SIZE (FDCAN_TX_FIFO_EL_SIZE / 4)
 #define FDCAN_TX_FIFO_OFFSET (FDCAN_RX_FIFO_0_OFFSET + (FDCAN_RX_FIFO_0_EL_CNT * FDCAN_RX_FIFO_0_EL_W_SIZE))
+
+// must reinit after changing these
+extern int can_loopback, can_silent;
+extern uint32_t can_speed[4];
+
+// Ignition detected from CAN meessages
+bool ignition_can = false;
+bool ignition_cadillac = false;
+uint32_t ignition_can_cnt = 0U;
+
+// end API
+
+#define ALL_CAN_SILENT 0xFF
+#define ALL_CAN_LIVE 0
 
 // Helpers
 FDCAN_GlobalTypeDef *fdcans[] = {FDCAN1, FDCAN2, FDCAN3};
@@ -65,7 +82,7 @@ uint32_t fdcan_speed[] = {5000, 5000, 5000, 333};
 #define FDCAN_NUM_FROM_BUS_NUM(num) (fdcan_num_lookup[num])
 #define FDCAN_NAME_FROM_FDCANIF(FDCAN_DEV) (((FDCAN_DEV)==FDCAN1) ? "FDCAN1" : (((FDCAN_DEV) == FDCAN2) ? "FDCAN2" : "FDCAN3"))
 
-#define CAN_INIT_TIMEOUT_MS 500U
+#define FDCAN_INIT_TIMEOUT_MS 500U
 
 
 // CAN message structure bits
@@ -103,6 +120,9 @@ int can_tx_cnt = 0;
 int can_txd_cnt = 0;
 int can_err_cnt = 0;
 int can_overflow_cnt = 0;
+extern int can_live, pending_can_live;
+
+int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_SILENT;
 
 uint32_t can_rx_errs = 0;
 uint32_t can_send_errs = 0;
@@ -196,37 +216,25 @@ void fdcan_read_msg(can_message* msg, uint8_t idx, uint8_t can_number) {
 
 
     //REDEBUG
-    for (uint8_t i=0;i<8;i++){
-      if (msg->data[i] == i*10) { 
-        for (uint8_t cnt=0;cnt<1;cnt++) {
-            switch(can_number) {
-              case 0:
-                delay_ms(50);
-                register_clear_bits(&(GPIOE->ODR), (1U << 2));
+            // switch(can_number) {
+            //   case 0:
+            //     current_board->set_led(LED_GREEN, true);
+            //     delay_ms(50);
+            //     current_board->set_led(LED_GREEN, false);
+            //   break;
 
-                delay_ms(50);
-                register_set_bits(&(GPIOE->ODR), (1U << 2));
-              break;
+            //   case 1:
+            //     current_board->set_led(LED_BLUE, true);
+            //     delay_ms(50);
+            //     current_board->set_led(LED_BLUE, false);
+            //   break;
 
-              case 1:
-                delay_ms(50);
-                register_clear_bits(&(GPIOE->ODR), (1U << 3));
-
-                delay_ms(50);
-                register_set_bits(&(GPIOE->ODR), (1U << 3));
-              break;
-
-              case 2:
-                delay_ms(50);
-                register_clear_bits(&(GPIOE->ODR), (1U << 4));
-
-                delay_ms(50);
-                register_set_bits(&(GPIOE->ODR), (1U << 4));
-              break;
-            }
-        }
-      } 
-    }
+            //   case 2:
+            //     current_board->set_led(LED_RED, true);
+            //     delay_ms(50);
+            //     current_board->set_led(LED_RED, false);
+            //   break;
+            // }
     //REDEBUG
 }
 
@@ -237,11 +245,13 @@ void fdcan_read_msg(can_message* msg, uint8_t idx, uint8_t can_number) {
 
 
 void fdcan_irq_handler(uint8_t can_number) {
-    FDCAN_GlobalTypeDef *FDCANx = FDCANIF_FROM_FDCAN_NUM(can_number);
+  FDCAN_GlobalTypeDef *FDCANx = FDCANIF_FROM_FDCAN_NUM(can_number);
 	uint8_t rx_fifo_get_index;
-   
+
 	// got new message
 	if((FDCANx->IR & FDCAN_IR_RF0N) != 0) {
+    current_board->set_led(LED_BLUE, true);
+    current_board->set_led(LED_GREEN, false);
     // clear flag
 		FDCANx->IR = FDCAN_IR_RF0N; 
     
@@ -254,8 +264,18 @@ void fdcan_irq_handler(uint8_t can_number) {
     // update read index 
 		FDCANx->RXF0A = rx_fifo_get_index;
 	};
+
+  //got protocol error in arbitration mode(problem with quanta/speed settings)
+  if((FDCANx->IR & FDCAN_IR_PEA) != 0) {
+  FDCANx->IR = FDCAN_IR_PEA;
+
+  can_fwd_errs++;
+
+  current_board->set_led(LED_GREEN, true);
+  current_board->set_led(LED_BLUE, false);
+  }
 	
-	// msg lost if fifo was full (think how to handle...)
+	// msg lost if RX fifo was full (think how to handle...)
 	if((FDCANx->IR & FDCAN_IR_RF0L) != 0) {
     // clear flag
 		FDCANx->IR = FDCAN_IR_RF0L; 
@@ -293,6 +313,90 @@ void FDCAN3_IT0_IRQ_Handler(void) { fdcan_irq_handler(2); }
 
 
 
+bool llfdcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, bool loopback, bool silent) {
+  bool ret = true;
+
+  // Exit from sleep mode
+  FDCANx->CCCR &= ~(FDCAN_CCCR_CSR);
+  while((FDCANx->CCCR & FDCAN_CCCR_CSA) == FDCAN_CCCR_CSA);
+
+  // Request init
+  uint32_t timeout_counter = 0U;
+  FDCANx->CCCR |= FDCAN_CCCR_INIT;
+  while((FDCANx->CCCR & FDCAN_CCCR_INIT) == 0) {
+    // Delay for about 1ms
+    delay_ms(1);
+    timeout_counter++;
+
+    if(timeout_counter >= FDCAN_INIT_TIMEOUT_MS){
+      puts(FDCAN_NAME_FROM_FDCANIF(FDCANx)); puts(" set_speed timed out (1)!\n");
+      ret = false;
+      break;
+    }
+  }
+
+  // Enable config change
+  FDCANx->CCCR |= FDCAN_CCCR_CCE;
+
+  //Reset operation mode to Normal
+  FDCANx->CCCR &= ~(FDCAN_CCCR_TEST);
+  FDCANx->TEST &= ~(FDCAN_TEST_LBCK);
+  FDCANx->CCCR &= ~(FDCAN_CCCR_MON);
+  FDCANx->CCCR &= ~(FDCAN_CCCR_ASM);
+
+  if(ret){
+    // Set the nominal bit timing register
+    FDCANx->NBTP = ((CAN_SYNC_JW-1)<<FDCAN_NBTP_NSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_NBTP_NTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_NBTP_NTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1)<<FDCAN_NBTP_NBRP_Pos);
+
+    // Set the data bit timing register (TODO: change it later for CAN FD and variable bitrate)
+    FDCANx->DBTP = ((CAN_SYNC_JW-1)<<FDCAN_DBTP_DSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_DBTP_DTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_DBTP_DTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1)<<FDCAN_DBTP_DBRP_Pos);
+
+    // silent loopback mode for debugging (new name: internal loopback)
+    if (loopback) {
+      FDCANx->CCCR |= FDCAN_CCCR_TEST;
+      FDCANx->TEST |= FDCAN_TEST_LBCK;
+      FDCANx->CCCR |= FDCAN_CCCR_MON;
+    }
+    // (new name: bus monitoring)
+    if (silent) {
+      FDCANx->CCCR |= FDCAN_CCCR_MON;
+    }
+
+    FDCANx->CCCR &= ~(FDCAN_CCCR_INIT);
+    timeout_counter = 0U;
+    while((FDCANx->CCCR & FDCAN_CCCR_INIT) == 1) {
+      // Delay for about 1ms
+      delay_ms(1);
+      timeout_counter++;
+
+      if(timeout_counter >= FDCAN_INIT_TIMEOUT_MS){
+        puts(FDCAN_NAME_FROM_FDCANIF(FDCANx)); puts(" set_speed timed out (2)!\n");
+        ret = false;
+        break;
+      }
+    }
+  }
+
+  return ret;
+}
+
+
+
+
+bool fdcan_set_speed(uint8_t can_number) {
+  bool ret = true;
+  FDCAN_GlobalTypeDef *FDCANx = FDCANIF_FROM_FDCAN_NUM(can_number);
+  uint8_t bus_number = BUS_NUM_FROM_FDCAN_NUM(can_number);
+
+  ret &= llfdcan_set_speed(FDCANx, fdcan_speed[bus_number], can_loopback, (unsigned int)(can_silent) & (1U << can_number));
+  return ret;
+}
+
+
+
+
+
+
 bool llfdcan_init(FDCAN_GlobalTypeDef *FDCANx) {
   bool ret = true;
   uint32_t can_number = FDCAN_NUM_FROM_FDCANIF(FDCANx);
@@ -308,7 +412,7 @@ bool llfdcan_init(FDCAN_GlobalTypeDef *FDCANx) {
     delay_ms(1);
     timeout_counter++;
 
-    if(timeout_counter >= CAN_INIT_TIMEOUT_MS) {
+    if(timeout_counter >= FDCAN_INIT_TIMEOUT_MS) {
       puts(FDCAN_NAME_FROM_FDCANIF(FDCANx)); puts(" initialization timed out!\n");
       ret = false;
       break;
@@ -319,68 +423,28 @@ bool llfdcan_init(FDCAN_GlobalTypeDef *FDCANx) {
 
     // Enable config change
     FDCANx->CCCR |= FDCAN_CCCR_CCE;
-
     // Disable automatic retransmission of failed messages
     FDCANx->CCCR |= FDCAN_CCCR_DAR; // Imho should be enabled later?
-
+    //TODO: Later add and enable transmitter delay compensation : FDCAN_DBTP.TDC (for CAN FD)
     // Disable transmission pause feature
     FDCANx->CCCR &= ~(FDCAN_CCCR_TXP);
-
     // Disable protocol exception handling
     FDCANx->CCCR |= FDCAN_CCCR_PXHD;
-
     // Set FDCAN frame format (REDEBUG)
-        //  Classic mode
+    //  Classic mode
     FDCANx->CCCR &= ~(FDCAN_CCCR_BRSE);
     FDCANx->CCCR &= ~(FDCAN_CCCR_FDOE);
-        // FD without BRS
+    // FD without BRS
     //FDCANx->CCCR |= FDCAN_CCCR_FDOE;
-        // FD with BRS
+    // FD with BRS
     //FDCANx->CCCR |= (FDCAN_CCCR_FDOE | FDCAN_CCCR_BRSE);
-
-
-
-        /* Set FDCAN Operating Mode:
-                | Normal | Restricted |    Bus     | Internal | External
-                |        | Operation  | Monitoring | LoopBack | LoopBack
-        CCCR.TEST |   0    |     0      |     0      |    1     |    1
-        CCCR.MON  |   0    |     0      |     1      |    1     |    0
-        TEST.LBCK |   0    |     0      |     0      |    1     |    1
-        CCCR.ASM  |   0    |     1      |     0      |    0     |    0
-        */
-    FDCANx->CCCR &= ~(FDCAN_CCCR_TEST);
-    FDCANx->TEST &= ~(FDCAN_TEST_LBCK);
-    FDCANx->CCCR &= ~(FDCAN_CCCR_MON);
-    FDCANx->CCCR &= ~(FDCAN_CCCR_ASM);
-
-    // //REDEBUG - external loopback mode enable
-    FDCANx->CCCR |= FDCAN_CCCR_TEST;
-    FDCANx->TEST |= FDCAN_TEST_LBCK;
-    FDCANx->CCCR &= ~(FDCAN_CCCR_MON);
-    FDCANx->CCCR &= ~(FDCAN_CCCR_ASM);
-    
-    //REDEBUG
-
-    // Set the nominal bit timing register
-    FDCANx->NBTP = ((CAN_SYNC_JW-1)<<FDCAN_NBTP_NSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_NBTP_NTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_NBTP_NTSEG2_Pos) | ((CAN_PRESCALER-1)<<FDCAN_NBTP_NBRP_Pos);
-
-    // If FD with BRS enabled - set data bit timing register
-    //FDCANx->DBTP = ((CAN_SYNC_JW-1)<<FDCAN_DBTP_DSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_DBTP_DTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_DBTP_DTSEG2_Pos) | ((CAN_PRESCALER-1)<<FDCAN_DBTP_DBRP_Pos);
 
     // Set TX mode to FIFO
     FDCANx->TXBC &= ~(FDCAN_TXBC_TFQM);
-
     // Configure TX element size (for now 8 bytes, no need to change)
     //FDCANx->TXESC |= 0x000U;
-
     //Configure RX FIFO0, FIFO1, RX buffer element sizes (no need for now, using classic 8 bytes)
     register_set(&(FDCANx->RXESC), 0x0U, (FDCAN_RXESC_F0DS | FDCAN_RXESC_F1DS | FDCAN_RXESC_RBDS));
-
-    // Disable TT for FDCAN1
-    //if (FDCANx == FDCAN1) {
-     //   FDCANx->TTOCF &= ~(FDCAN_TTOCF_OM);
-    //}
-
     // Disable filtering, accept all valid frames received
     FDCANx->XIDFC &= ~(FDCAN_XIDFC_LSE); // No extended filters
     FDCANx->SIDFC &= ~(FDCAN_SIDFC_LSS); // No standard filters
@@ -408,6 +472,9 @@ bool llfdcan_init(FDCAN_GlobalTypeDef *FDCANx) {
 
     // Turn on interrupt on RX
     FDCANx->IE |= FDCAN_IE_RF0NE;
+
+    FDCANx->IE |= FDCAN_IE_PEAE; // Getting this error!! Problem with quanta! (Fixed, should I keep it?)
+
     FDCANx->ILE |= FDCAN_ILE_EINT0;
 
     // Request leave init, start FDCAN
@@ -446,7 +513,7 @@ bool fdcan_init(uint8_t can_number) {
 
   if (can_number != 0xffU) {
     FDCAN_GlobalTypeDef *FDCANx = FDCANIF_FROM_FDCAN_NUM(can_number);
-    //ret &= can_set_speed(can_number); // Maybe better to set speed while initializing? 
+    ret &= fdcan_set_speed(can_number);
     ret &= llfdcan_init(FDCANx);
     // in case there are queued up messages
     //process_can(can_number); //Queued messages from who? 
@@ -466,6 +533,15 @@ void fdcan_init_all(void) {
   }
   //UNUSED(ret);
 }
+
+
+
+void llfdcan_clear_send(FDCAN_GlobalTypeDef *FDCANx) {
+  // From H7 datasheet: Transmit cancellation is not intended for Tx FIFO operation.
+  UNUSED(FDCANx);
+}
+
+
 
 //////////////////
 ///////////////////

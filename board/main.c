@@ -93,9 +93,6 @@ uint16_t current_safety_mode = SAFETY_SILENT;
 int16_t current_safety_param = 0;
 uint16_t fan_rpm = 1345;
 int unsafe_mode = 0;
-int pending_can_live = 0;
-unsigned int ignition_can_cnt = 2;
-bool ignition_can = true;
 int safety_mode_cnt = 0;
 bool controls_allowed = false;
 bool gas_interceptor_detected = false;
@@ -980,9 +977,9 @@ int main(void) {
 
         //REDEBUG
         if (cnt % 2 == 0) {
-          fdcan_send_msg(&can_tx_message, 0);
+          //fdcan_send_msg(&can_tx_message, 0);
         } else {
-          fdcan_send_msg(&can_tx_message, 1);
+          //fdcan_send_msg(&can_tx_message, 1);
         }
 
         
