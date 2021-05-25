@@ -16,6 +16,9 @@ AddrCheckStruct subaru_l_addr_checks[] = {
 #define SUBARU_L_ADDR_CHECK_LEN (sizeof(subaru_l_addr_checks) / sizeof(subaru_l_addr_checks[0]))
 addr_checks subaru_l_rx_checks = {subaru_l_addr_checks, SUBARU_L_ADDR_CHECK_LEN};
 
+const uint16_t SUBARU_L_PARAM_FLIP_DRIVER_TORQUE = 1;
+bool subaru_l_flip_driver_torque = false;
+
 static int subaru_legacy_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &subaru_l_rx_checks, NULL, NULL, NULL);
@@ -26,6 +29,9 @@ static int subaru_legacy_rx_hook(CANPacket_t *to_push) {
       int torque_driver_new;
       torque_driver_new = (GET_BYTE(to_push, 3) >> 5) + (GET_BYTE(to_push, 4) << 3);
       torque_driver_new = to_signed(torque_driver_new, 11);
+      if (subaru_l_flip_driver_torque) {
+        torque_driver_new = -1 * torque_driver_new;
+      }
       update_sample(&torque_driver, torque_driver_new);
     }
 
@@ -145,7 +151,8 @@ static int subaru_legacy_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 }
 
 static const addr_checks* subaru_legacy_init(uint16_t param) {
-  UNUSED(param);
+  // Checking for flip driver torque from safety parameter
+  subaru_l_flip_driver_torque = GET_FLAG(param, SUBARU_L_PARAM_FLIP_DRIVER_TORQUE);
   return &subaru_l_rx_checks;
 }
 

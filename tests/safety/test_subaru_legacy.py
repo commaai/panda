@@ -65,5 +65,14 @@ class TestSubaruLegacySafety(common.PandaSafetyTest, common.DriverTorqueSteering
     return self.packer.make_can_msg_panda("CruiseControl", 0, values)
 
 
+class TestSubaruLegacy2019Safety(TestSubaruLegacySafety):
+
+  def setUp(self):
+    self.packer = CANPackerPanda("subaru_outback_2019_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_SUBARU_LEGACY, Panda.FLAG_SUBARU_L_FLIP_DRIVER_TORQUE)
+    self.safety.init_tests()
+
+
 if __name__ == "__main__":
   unittest.main()

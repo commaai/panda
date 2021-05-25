@@ -204,6 +204,8 @@ class Panda:
 
   FLAG_SUBARU_GEN2 = 1
 
+  FLAG_SUBARU_L_FLIP_DRIVER_TORQUE = 1
+
   def __init__(self, serial: Optional[str] = None, claim: bool = True):
     self._serial = serial
     self._handle = None
