@@ -21,8 +21,8 @@ class TestSubaruLegacySafety(common.PandaSafetyTest, common.DriverTorqueSteering
   MAX_RT_DELTA = 940
   RT_INTERVAL = 250000
 
-  DRIVER_TORQUE_ALLOWANCE = 75
-  DRIVER_TORQUE_FACTOR = 10
+  DRIVER_TORQUE_ALLOWANCE = 60
+  DRIVER_TORQUE_FACTOR = 50
 
   def setUp(self):
     self.packer = CANPackerPanda("subaru_outback_2015_generated")
