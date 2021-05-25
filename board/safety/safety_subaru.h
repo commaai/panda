@@ -9,9 +9,6 @@ const int SUBARU_DRIVER_TORQUE_ALLOWANCE = 60;
 const int SUBARU_DRIVER_TORQUE_FACTOR = 10;
 const int SUBARU_STANDSTILL_THRSLD = 20;  // about 1kph
 
-const int SUBARU_L_DRIVER_TORQUE_ALLOWANCE = 75;
-const int SUBARU_L_DRIVER_TORQUE_FACTOR = 10;
-
 const CanMsg SUBARU_TX_MSGS[] = {{0x122, 0, 8}, {0x221, 0, 8}, {0x322, 0, 8}};
 const int SUBARU_TX_MSGS_LEN = sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]);
 
@@ -239,7 +236,7 @@ static int subaru_legacy_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       // *** torque rate limit check ***
       violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
         SUBARU_MAX_STEER, SUBARU_MAX_RATE_UP, SUBARU_MAX_RATE_DOWN,
-        SUBARU_L_DRIVER_TORQUE_ALLOWANCE, SUBARU_L_DRIVER_TORQUE_FACTOR);
+        SUBARU_DRIVER_TORQUE_ALLOWANCE, SUBARU_DRIVER_TORQUE_FACTOR);
 
       // used next time
       desired_torque_last = desired_torque;
