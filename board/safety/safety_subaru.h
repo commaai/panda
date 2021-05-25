@@ -18,8 +18,8 @@ const int SUBARU_TX_MSGS_LEN = sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]
 AddrCheckStruct subaru_rx_checks[] = {
   {.msg = {{ 0x40, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x119, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{0x139, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x13a, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{0x13c, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x240, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
 };
 const int SUBARU_RX_CHECK_LEN = sizeof(subaru_rx_checks) / sizeof(subaru_rx_checks[0]);
@@ -87,8 +87,8 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       vehicle_moving = subaru_speed > SUBARU_STANDSTILL_THRSLD;
     }
 
-    if (addr == 0x139) {
-      brake_pressed = (GET_BYTES_48(to_push) & 0xFFF0) > 0;
+    if (addr == 0x13c) {
+      brake_pressed = ((GET_BYTES_48(to_push) >> 30) & 1);
     }
 
     if (addr == 0x40) {
