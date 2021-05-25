@@ -8,7 +8,6 @@ from panda.tests.safety.common import CANPackerPanda
 
 MAX_RATE_UP = 50
 MAX_RATE_DOWN = 70
-MAX_STEER = 2047
 
 MAX_RT_DELTA = 940
 RT_INTERVAL = 250000
@@ -23,6 +22,8 @@ class TestSubaruSafety(common.PandaSafetyTest):
   cnt_cruise = 0
   cnt_speed = 0
   cnt_brake = 0
+
+  MAX_STEER = 2047
 
   TX_MSGS = [[0x122, 0], [0x221, 0], [0x322, 0]]
   STANDSTILL_THRESHOLD = 20  # 1kph (see dbc file)
@@ -82,7 +83,7 @@ class TestSubaruSafety(common.PandaSafetyTest):
       for t in range(-3000, 3000):
         self.safety.set_controls_allowed(enabled)
         self._set_prev_torque(t)
-        block = abs(t) > MAX_STEER or (not enabled and abs(t) > 0)
+        block = abs(t) > self.MAX_STEER or (not enabled and abs(t) > 0)
         self.assertEqual(not block, self._tx(self._torque_msg(t)))
 
   def test_non_realtime_limit_up(self):
@@ -111,19 +112,19 @@ class TestSubaruSafety(common.PandaSafetyTest):
       for t in np.arange(0, DRIVER_TORQUE_ALLOWANCE + 1, 1):
         t *= -sign
         self._set_torque_driver(t, t)
-        self._set_prev_torque(MAX_STEER * sign)
-        self.assertTrue(self._tx(self._torque_msg(MAX_STEER * sign)))
+        self._set_prev_torque(self.MAX_STEER * sign)
+        self.assertTrue(self._tx(self._torque_msg(self.MAX_STEER * sign)))
 
       self._set_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self._tx(self._torque_msg(-MAX_STEER)))
+      self.assertFalse(self._tx(self._torque_msg(-self.MAX_STEER)))
 
     # arbitrary high driver torque to ensure max steer torque is allowed
-    max_driver_torque = int(MAX_STEER / DRIVER_TORQUE_FACTOR + DRIVER_TORQUE_ALLOWANCE + 1)
+    max_driver_torque = int(self.MAX_STEER / DRIVER_TORQUE_FACTOR + DRIVER_TORQUE_ALLOWANCE + 1)
 
     # spot check some individual cases
     for sign in [-1, 1]:
       driver_torque = (DRIVER_TORQUE_ALLOWANCE + 10) * sign
-      torque_desired = (MAX_STEER - 10 * DRIVER_TORQUE_FACTOR) * sign
+      torque_desired = (self.MAX_STEER - 10 * DRIVER_TORQUE_FACTOR) * sign
       delta = 1 * sign
       self._set_prev_torque(torque_desired)
       self._set_torque_driver(-driver_torque, -driver_torque)
@@ -132,15 +133,15 @@ class TestSubaruSafety(common.PandaSafetyTest):
       self._set_torque_driver(-driver_torque, -driver_torque)
       self.assertFalse(self._tx(self._torque_msg(torque_desired + delta)))
 
-      self._set_prev_torque(MAX_STEER * sign)
+      self._set_prev_torque(self.MAX_STEER * sign)
       self._set_torque_driver(-max_driver_torque * sign, -max_driver_torque * sign)
-      self.assertTrue(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
-      self._set_prev_torque(MAX_STEER * sign)
+      self.assertTrue(self._tx(self._torque_msg((self.MAX_STEER - MAX_RATE_DOWN) * sign)))
+      self._set_prev_torque(self.MAX_STEER * sign)
       self._set_torque_driver(-max_driver_torque * sign, -max_driver_torque * sign)
       self.assertTrue(self._tx(self._torque_msg(0)))
-      self._set_prev_torque(MAX_STEER * sign)
+      self._set_prev_torque(self.MAX_STEER * sign)
       self._set_torque_driver(-max_driver_torque * sign, -max_driver_torque * sign)
-      self.assertFalse(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
+      self.assertFalse(self._tx(self._torque_msg((self.MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
 
   def test_realtime_limits(self):
     self.safety.set_controls_allowed(True)
@@ -163,6 +164,16 @@ class TestSubaruSafety(common.PandaSafetyTest):
       self.safety.set_timer(RT_INTERVAL + 1)
       self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
       self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+
+
+class TestSubaru2020Safety(TestSubaruSafety):
+  MAX_STEER = 1439
+
+  def setUp(self):
+    self.packer = CANPackerPanda("subaru_global_2017_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, 1)
+    self.safety.init_tests()
 
 
 if __name__ == "__main__":
