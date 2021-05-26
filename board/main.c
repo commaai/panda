@@ -22,10 +22,11 @@
 
 #include "board.h"
 
+#include "drivers/llfdcan.h" //REDEBUG
 #include "drivers/uart.h"
 #include "drivers/usb.h"
-//#include "drivers/gmlan_alt.h"
-//#include "drivers/kline_init.h"
+#include "drivers/gmlan_alt.h"
+#include "drivers/kline_init.h"
 #include "drivers/timer.h"
 #include "drivers/clock.h"
 
@@ -36,11 +37,12 @@
 #endif
 
 #include "power_saving.h"
-//#include "safety.h"
+#include "safety.h"
 
 //#include "drivers/can.h"
 #include "drivers/fdcan.h" //REDEBUG
 
+// Check if it's still truth
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // When changing this struct, boardd and python/__init__.py needs to be kept up to date!
@@ -66,45 +68,10 @@ struct __attribute__((packed)) health_t {
 };
 
 
-//REDEBUG//REDEBUG//REDEBUG//REDEBUG//REDEBUG//REDEBUG//REDEBUG
-#define SAFETY_SILENT 0U
-#define SAFETY_HONDA_NIDEC 1U
-#define SAFETY_TOYOTA 2U
-#define SAFETY_ELM327 3U
-#define SAFETY_GM 4U
-#define SAFETY_HONDA_BOSCH_GIRAFFE 5U
-#define SAFETY_FORD 6U
-#define SAFETY_HYUNDAI 8U
-#define SAFETY_CHRYSLER 9U
-#define SAFETY_TESLA 10U
-#define SAFETY_SUBARU 11U
-#define SAFETY_MAZDA 13U
-#define SAFETY_NISSAN 14U
-#define SAFETY_VOLKSWAGEN_MQB 15U
-#define SAFETY_ALLOUTPUT 17U
-#define SAFETY_GM_ASCM 18U
-#define SAFETY_NOOUTPUT 19U
-#define SAFETY_HONDA_BOSCH_HARNESS 20U
-#define SAFETY_VOLKSWAGEN_PQ 21U
-#define SAFETY_SUBARU_LEGACY 22U
-#define SAFETY_HYUNDAI_LEGACY 23U
-#define SAFETY_HYUNDAI_COMMUNITY 24U
-uint16_t current_safety_mode = SAFETY_SILENT;
-int16_t current_safety_param = 0;
-uint16_t fan_rpm = 1345;
-int unsafe_mode = 0;
-int safety_mode_cnt = 0;
-bool controls_allowed = false;
-bool gas_interceptor_detected = false;
-#define BUS_MAX 4U
-//REDEBUG//REDEBUG//REDEBUG//REDEBUG//REDEBUG//REDEBUG//REDEBUG
-
 // ********************* Serial debugging *********************
 
 bool check_started(void) {
-  //REDEBUG
-  //return current_board->check_ignition() || ignition_can;
-  return false; //REDEBUG
+  return current_board->check_ignition() || ignition_can;
 }
 
 void debug_ring_callback(uart_ring *ring) {
@@ -141,58 +108,58 @@ void debug_ring_callback(uart_ring *ring) {
     }
   }
 }
-//REDEBUG//REDEBUG//REDEBUG//REDEBUG//REDEBUG//REDEBUG
+
 // ****************************** safety mode ******************************
 
-// this is the only way to leave silent mode
-// void set_safety_mode(uint16_t mode, int16_t param) {
-//   uint16_t mode_copy = mode;
-//   int err = set_safety_hooks(mode_copy, param);
-//   if (err == -1) {
-//     puts("Error: safety set mode failed. Falling back to SILENT\n");
-//     mode_copy = SAFETY_SILENT;
-//     err = set_safety_hooks(mode_copy, 0);
-//     if (err == -1) {
-//       puts("Error: Failed setting SILENT mode. Hanging\n");
-//       while (true) {
-//         // TERMINAL ERROR: we can't continue if SILENT safety mode isn't succesfully set
-//       }
-//     }
-//   }
-//   switch (mode_copy) {
-//     case SAFETY_SILENT:
-//       set_intercept_relay(false);
-//       if (board_has_obd()) {
-//         current_board->set_can_mode(CAN_MODE_NORMAL);
-//       }
-//       can_silent = ALL_CAN_SILENT;
-//       break;
-//     case SAFETY_NOOUTPUT:
-//       set_intercept_relay(false);
-//       if (board_has_obd()) {
-//         current_board->set_can_mode(CAN_MODE_NORMAL);
-//       }
-//       can_silent = ALL_CAN_LIVE;
-//       break;
-//     case SAFETY_ELM327:
-//       set_intercept_relay(false);
-//       heartbeat_counter = 0U;
-//       if (board_has_obd()) {
-//         current_board->set_can_mode(CAN_MODE_OBD_CAN2);
-//       }
-//       can_silent = ALL_CAN_LIVE;
-//       break;
-//     default:
-//       set_intercept_relay(true);
-//       heartbeat_counter = 0U;
-//       if (board_has_obd()) {
-//         current_board->set_can_mode(CAN_MODE_NORMAL);
-//       }
-//       can_silent = ALL_CAN_LIVE;
-//       break;
-//   }
-//   can_init_all();
-// }
+//this is the only way to leave silent mode
+void set_safety_mode(uint16_t mode, int16_t param) {
+  uint16_t mode_copy = mode;
+  int err = set_safety_hooks(mode_copy, param);
+  if (err == -1) {
+    puts("Error: safety set mode failed. Falling back to SILENT\n");
+    mode_copy = SAFETY_SILENT;
+    err = set_safety_hooks(mode_copy, 0);
+    if (err == -1) {
+      puts("Error: Failed setting SILENT mode. Hanging\n");
+      while (true) {
+        // TERMINAL ERROR: we can't continue if SILENT safety mode isn't succesfully set
+      }
+    }
+  }
+  switch (mode_copy) {
+    case SAFETY_SILENT:
+      set_intercept_relay(false);
+      if (board_has_obd()) {
+        current_board->set_can_mode(CAN_MODE_NORMAL);
+      }
+      can_silent = ALL_CAN_SILENT;
+      break;
+    case SAFETY_NOOUTPUT:
+      set_intercept_relay(false);
+      if (board_has_obd()) {
+        current_board->set_can_mode(CAN_MODE_NORMAL);
+      }
+      can_silent = ALL_CAN_LIVE;
+      break;
+    case SAFETY_ELM327:
+      set_intercept_relay(false);
+      heartbeat_counter = 0U;
+      if (board_has_obd()) {
+        current_board->set_can_mode(CAN_MODE_OBD_CAN2);
+      }
+      can_silent = ALL_CAN_LIVE;
+      break;
+    default:
+      set_intercept_relay(true);
+      heartbeat_counter = 0U;
+      if (board_has_obd()) {
+        current_board->set_can_mode(CAN_MODE_NORMAL);
+      }
+      can_silent = ALL_CAN_LIVE;
+      break;
+  }
+  can_init_all();
+}
 
 // ***************************** USB port *****************************
 
@@ -206,17 +173,15 @@ int get_health_pkt(void *dat) {
 
   //Use the GPIO pin to determine ignition or use a CAN based logic
   health->ignition_line_pkt = (uint8_t)(current_board->check_ignition());
-  //REDEBUG //REDEBUG//REDEBUG//REDEBUG//REDEBUG
   health->ignition_can_pkt = (uint8_t)(ignition_can);
 
   health->controls_allowed_pkt = controls_allowed;
   health->gas_interceptor_detected_pkt = gas_interceptor_detected;
-  //health->can_rx_errs_pkt = can_rx_errs;
-  health->can_rx_errs_pkt = can_rx_cnt; // REDEBUG
-  //health->can_send_errs_pkt = can_send_errs;
-  health->can_send_errs_pkt = can_tx_cnt; // REDEBUG
+  health->can_rx_errs_pkt = can_overflow_cnt; //can_rx_errs;
+  health->can_send_errs_pkt = can_send_errs;
   health->can_fwd_errs_pkt = can_fwd_errs;
-  health->gmlan_send_errs_pkt = gmlan_send_errs;
+  //health->gmlan_send_errs_pkt = gmlan_send_errs;
+  health->gmlan_send_errs_pkt = can_rx_cnt; //REDEBUG
   health->car_harness_status_pkt = car_harness_status;
   health->usb_power_mode_pkt = usb_power_mode;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
@@ -237,30 +202,51 @@ int get_rtc_pkt(void *dat) {
 
 int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
-  UNUSED(len);
-  UNUSED(usbdata);
-  return 0x10;
+  CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;
+  int ilen = 0;
+  while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) {
+    ilen++;
+  }
+  return ilen*0x10;
 }
 
 // send on serial, first byte to select the ring
 void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
-  UNUSED(len);
-  UNUSED(usbdata);
+  uint8_t *usbdata8 = (uint8_t *)usbdata;
+  uart_ring *ur = get_ring_by_number(usbdata8[0]);
+  if ((len != 0) && (ur != NULL)) {
+    if ((usbdata8[0] < 2U) || safety_tx_lin_hook(usbdata8[0] - 2U, &usbdata8[1], len - 1)) {
+      for (int i = 1; i < len; i++) {
+        while (!putc(ur, usbdata8[i])) {
+          // wait
+        }
+      }
+    }
+  }
 }
 
 // send on CAN
 void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
-  UNUSED(len);
-  UNUSED(usbdata);
+  int dpkt = 0;
+  uint32_t *d32 = (uint32_t *)usbdata;
+  for (dpkt = 0; dpkt < (len / 4); dpkt += 4) {
+    CAN_FIFOMailBox_TypeDef to_push;
+    to_push.RDHR = d32[dpkt + 3];
+    to_push.RDLR = d32[dpkt + 2];
+    to_push.RDTR = d32[dpkt + 1];
+    to_push.RIR = d32[dpkt];
+
+    uint8_t bus_number = (to_push.RDTR >> 4) & CAN_BUS_NUM_MASK;
+    can_send(&to_push, bus_number, false);
+  }
 }
 
 void usb_cb_ep3_out_complete() {
-  //REDEBUG
-  // if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER)) {
-  //   usb_outep3_resume_if_paused();
-  // }
+  if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER)) {
+    usb_outep3_resume_if_paused();
+  }
 }
 
 void usb_cb_enumeration_complete() {
@@ -329,8 +315,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xb2: get fan rpm
     case 0xb2:
-      resp[0] = (fan_rpm & 0x00FFU);
-      resp[1] = ((fan_rpm & 0xFF00U) >> 8U);
+    // REDEBUG, fake RPM
+      //resp[0] = (fan_rpm & 0x00FFU);
+      //resp[1] = ((fan_rpm & 0xFF00U) >> 8U);
+      resp[0] = 0x88U;
+      resp[1] = ((0x1300U) >> 8U);
       resp_len = 2;
       break;
     // **** 0xb3: set phone power
@@ -353,13 +342,13 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xd0: fetch serial number
     case 0xd0:
       // addresses are OTP
-      if (setup->b.wValue.w == 1U) {
-        (void)memcpy(resp, (uint8_t *)0x1fff79c0, 0x10); //REDEBUG: fix for H7
-        resp_len = 0x10;
-      } else {
-        get_provision_chunk(resp);
-        resp_len = PROVISION_CHUNK_LEN;
-      }
+      // if (setup->b.wValue.w == 1U) {
+      //   (void)memcpy(resp, (uint8_t *)0x1fff79c0, 0x10); //REDEBUG: fix for H7, halts MCU!!
+      //   resp_len = 0x10;
+      // } else {
+      //   get_provision_chunk(resp);
+      //   resp_len = PROVISION_CHUNK_LEN;
+      // }
       break;
     // **** 0xd1: enter bootloader mode
     case 0xd1:
@@ -392,21 +381,21 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xd3: get first 64 bytes of signature
     case 0xd3: //REDEBUG: halts MCU!! (maybe because .bin wasn't signed?)
-      {
-        resp_len = 64;
-        char * code = (char*)_app_start;
-        int code_len = _app_start[0];
-        (void)memcpy(resp, &code[code_len], resp_len);
-      }
+      // {
+      //   resp_len = 64;
+      //   char * code = (char*)_app_start;
+      //   int code_len = _app_start[0];
+      //   (void)memcpy(resp, &code[code_len], resp_len);
+      // }
       break;
     // **** 0xd4: get second 64 bytes of signature
     case 0xd4: //REDEBUG: halts MCU!! (maybe because .bin wasn't signed?)
-      {
-        resp_len = 64;
-        char * code = (char*)_app_start;
-        int code_len = _app_start[0];
-        (void)memcpy(resp, &code[code_len + 64], resp_len);
-      }
+      // {
+      //   resp_len = 64;
+      //   char * code = (char*)_app_start;
+      //   int code_len = _app_start[0];
+      //   (void)memcpy(resp, &code[code_len + 64], resp_len);
+      // }
       break;
     // **** 0xd6: get version
     case 0xd6:
@@ -431,13 +420,13 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xda: reset ESP, with optional boot mode
     case 0xda:
       current_board->set_gps_mode(GPS_DISABLED);
-      delay(1000000); //REDEBUG understand what delay is needed and use new delay_ms()
+      delay(1000000); //REDEBUG understand what delay is needed and use new delay_ms() - SHOULD BE 100ms
       if (setup->b.wValue.w == 1U) {
         current_board->set_gps_mode(GPS_BOOTMODE);
       } else {
         current_board->set_gps_mode(GPS_ENABLED);
       }
-      delay(1000000); //REDEBUG understand what delay is needed and use new delay_ms()
+      delay(1000000); //REDEBUG understand what delay is needed and use new delay_ms() - SHOULD BE 100ms
       current_board->set_gps_mode(GPS_ENABLED);
       break;
     // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
@@ -454,17 +443,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         if (setup->b.wValue.w == 1U) {
           // GMLAN ON
           if (setup->b.wIndex.w == 1U) {
-            //REDEBUG
-            //can_set_gmlan(1);
+            can_set_gmlan(1);
           } else if (setup->b.wIndex.w == 2U) {
-            //REDEBUG
-            //can_set_gmlan(2);
+            can_set_gmlan(2);
           } else {
             puts("Invalid bus num for GMLAN CAN set\n");
           }
         } else {
-          //REDEBUG
-          //can_set_gmlan(-1);
+          can_set_gmlan(-1);
         }
       }
       break;
@@ -476,8 +462,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       if (hardwired || (setup->b.wValue.w == SAFETY_SILENT) ||
                        (setup->b.wValue.w == SAFETY_NOOUTPUT) ||
                        (setup->b.wValue.w == SAFETY_ELM327)) {
-        //REDEBUG
-        //set_safety_mode(setup->b.wValue.w, (uint16_t) setup->b.wIndex.w);
+        set_safety_mode(setup->b.wValue.w, (uint16_t) setup->b.wIndex.w);
       }
       break;
     // **** 0xdd: enable can forwarding
@@ -486,11 +471,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       // wIndex = Can Bus Num to forward to
       if ((setup->b.wValue.w < BUS_MAX) && (setup->b.wIndex.w < BUS_MAX) &&
           (setup->b.wValue.w != setup->b.wIndex.w)) { // set forwarding
-        //REDEBUG
-        //can_set_forwarding(setup->b.wValue.w, setup->b.wIndex.w & CAN_BUS_NUM_MASK);
+        can_set_forwarding(setup->b.wValue.w, setup->b.wIndex.w & CAN_BUS_NUM_MASK);
       } else if((setup->b.wValue.w < BUS_MAX) && (setup->b.wIndex.w == 0xFFU)){ //Clear Forwarding
-        //REDEBUG
-        //can_set_forwarding(setup->b.wValue.w, -1);
+        can_set_forwarding(setup->b.wValue.w, -1);
       } else {
         puts("Invalid CAN bus forwarding\n");
       }
@@ -498,10 +481,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xde: set can bitrate
     case 0xde:
       if (setup->b.wValue.w < BUS_MAX) {
-        //REDEBUG
-        //can_speed[setup->b.wValue.w] = setup->b.wIndex.w;
-        //bool ret = can_init(CAN_NUM_FROM_BUS_NUM(setup->b.wValue.w));
-        //UNUSED(ret);
+        can_speed[setup->b.wValue.w] = setup->b.wIndex.w;
+        bool ret = can_init(CAN_NUM_FROM_BUS_NUM(setup->b.wValue.w));
+        UNUSED(ret);
       }
       break;
     // **** 0xdf: set unsafe mode
@@ -574,9 +556,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xe5: set CAN loopback (for testing)
     case 0xe5:
-      //REDEBUG
-      //can_loopback = (setup->b.wValue.w > 0U);
-      //can_init_all();
+      can_loopback = (setup->b.wValue.w > 0U);
+      can_init_all();
       break;
     // **** 0xe6: set USB power
     case 0xe6:
@@ -589,24 +570,21 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xf0: k-line/l-line wake-up pulse for KWP2000 fast initialization
     case 0xf0:
       if(board_has_lin()) {
-        //REDEBUG
-        // bool k = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
-        // bool l = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
-        // if (bitbang_wakeup(k, l)) {
-        //   resp_len = -1; // do not clear NAK yet (wait for bit banging to finish)
-        // }
+        bool k = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
+        bool l = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
+        if (bitbang_wakeup(k, l)) {
+          resp_len = -1; // do not clear NAK yet (wait for bit banging to finish)
+        }
       }
       break;
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
       if (setup->b.wValue.w == 0xFFFFU) {
         puts("Clearing CAN Rx queue\n");
-        //REDEBUG
-        //can_clear(&can_rx_q);
+        can_clear(&can_rx_q);
       } else if (setup->b.wValue.w < BUS_MAX) {
         puts("Clearing CAN Tx queue\n");
-        //REDEBUG
-        //can_clear(can_queues[setup->b.wValue.w]);
+        can_clear(can_queues[setup->b.wValue.w]);
       } else {
         puts("Clearing CAN CAN ring buffer failed: wrong bus number\n");
       }
@@ -630,13 +608,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xf4: k-line/l-line 5 baud initialization
     case 0xf4:
       if(board_has_lin()) {
-        //REDEBUG
-        // bool k = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
-        // bool l = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
-        // uint8_t five_baud_addr = (setup->b.wIndex.w & 0xFFU);
-        // if (bitbang_five_baud_addr(k, l, five_baud_addr)) {
-        //   resp_len = -1; // do not clear NAK yet (wait for bit banging to finish)
-        // }
+        bool k = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
+        bool l = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
+        uint8_t five_baud_addr = (setup->b.wIndex.w & 0xFFU);
+        if (bitbang_five_baud_addr(k, l, five_baud_addr)) {
+          resp_len = -1; // do not clear NAK yet (wait for bit banging to finish)
+        }
       }
       break;
     // **** 0xf5: set clock source mode
@@ -718,8 +695,7 @@ void TIM8_BRK_TIM12_IRQ_Handler(void) {
 
     // decimated to 1Hz
     if(loop_counter == 0U){
-      //REDEBUG
-      //can_live = pending_can_live;
+      can_live = pending_can_live;
 
       current_board->usb_power_mode_tick(uptime_cnt);
 
@@ -737,8 +713,7 @@ void TIM8_BRK_TIM12_IRQ_Handler(void) {
       #endif
 
       // Tick drivers
-      //REDEBUG
-      //fan_tick();
+      //fan_tick(); //REDEBUG
 
       // set green LED to be controls allowed
       current_board->set_led(LED_GREEN, controls_allowed | green_led_enabled);
@@ -797,8 +772,7 @@ void TIM8_BRK_TIM12_IRQ_Handler(void) {
       ignition_can_cnt += 1U;
 
       // synchronous safety check
-      //REDEBUG
-      //safety_tick(current_hooks);
+      safety_tick(current_hooks);
     }
 
     loop_counter++;
@@ -876,8 +850,7 @@ int main(void) {
   }
 
   // init to SILENT and can silent
-  //REDEBUG
-  //set_safety_mode(SAFETY_SILENT, 0);
+  set_safety_mode(SAFETY_SILENT, 0);
 
   // enable CAN TXs
   current_board->enable_can_transceivers(true);
@@ -897,30 +870,8 @@ int main(void) {
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
 
-  //fdcan_init(0); //REDEBUG
-  //fdcan_init(1);
-  //fdcan_init(2);
-  fdcan_init_all();
-
   puts("**** INTERRUPTS ON ****\n");
   enable_interrupts();
-
-  ///REDEBUG
-  can_message can_tx_message;
-  // test message
-  can_tx_message.id      = 1;
-  can_tx_message.format  = CAN_EXTENDED_FORMAT;
-  can_tx_message.type    = DATA_FRAME;
-  can_tx_message.length  = 10;
-  can_tx_message.data[0] = 0;
-  can_tx_message.data[1] = 10;
-  can_tx_message.data[2] = 20;
-  can_tx_message.data[3] = 30;
-  can_tx_message.data[4] = 40;
-  can_tx_message.data[5] = 50;
-  can_tx_message.data[6] = 60;
-  can_tx_message.data[7] = 70;
-  ///REDEBUG
 
   // for (uint64_t cntr=0;;cntr++) {
   // fdcan_send_msg(&can_tx_message, 0);
@@ -974,16 +925,6 @@ int main(void) {
           current_board->set_led(LED_RED, false);
           delay_us((MAX_FADE - fade) >> 5);
         }
-
-        //REDEBUG
-        if (cnt % 2 == 0) {
-          //fdcan_send_msg(&can_tx_message, 0);
-        } else {
-          //fdcan_send_msg(&can_tx_message, 1);
-        }
-
-        
-
       #ifdef DEBUG_FAULTS
       } else {
           current_board->set_led(LED_RED, 1);

@@ -27,7 +27,8 @@ void detect_board_type(void) {
   #ifdef PANDA
     #ifdef STM32H7
       if(!detect_with_pull(GPIOF, 7, PULL_UP) && !detect_with_pull(GPIOF, 8, PULL_UP) && !detect_with_pull(GPIOF, 9, PULL_UP) && !detect_with_pull(GPIOF, 10, PULL_UP)){
-        hw_type = HW_TYPE_RED_PANDA;
+        //hw_type = HW_TYPE_RED_PANDA; //REDEBUG
+        hw_type = HW_TYPE_DOS;
         current_board = &board_red;
       }
     #else
@@ -90,7 +91,7 @@ bool board_has_lin(void) {
 }
 
 bool board_has_rtc(void) {
-  return ((hw_type == HW_TYPE_UNO) || (hw_type == HW_TYPE_DOS));
+  return ((hw_type == HW_TYPE_UNO)); // || (hw_type == HW_TYPE_DOS) REDEBUG
 }
 
 bool board_has_relay(void) {

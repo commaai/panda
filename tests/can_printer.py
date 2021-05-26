@@ -20,12 +20,14 @@ def can_printer():
   start = sec_since_boot()
   lp = sec_since_boot()
   msgs = defaultdict(list)
-  canbus = int(os.getenv("CAN", "0"))
+  canbus =[int(os.getenv("CAN", "0")), int(os.getenv("CAN", "1")), int(os.getenv("CAN", "2"))]
+  total_msgs = 0
   while True:
     can_recv = p.can_recv()
     for address, _, dat, src in can_recv:
-      if src == canbus:
+      if src in canbus:
         msgs[address].append(dat)
+        total_msgs += 1
 
     if sec_since_boot() - lp > 0.1:
       dd = chr(27) + "[2J"
@@ -34,6 +36,7 @@ def can_printer():
         dd += "%s(%6d) %s\n" % ("%04X(%4d)" % (k, k), len(msgs[k]), v)
       print(dd)
       lp = sec_since_boot()
-
+      print(total_msgs)
+      print(p.health())
 if __name__ == "__main__":
   can_printer()

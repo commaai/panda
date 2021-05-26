@@ -65,5 +65,5 @@ uint32_t adc_get_voltage(void) {
   // s = 1000/((4095/3.3)*(1/11)) = 8.8623046875
 
   // Avoid needing floating point math, so output in mV
-  return (adc_get(ADCCHAN_VOLTAGE) * 1000U) / 19893; //REDEBUG for red panda, output of the divider
+  return ((adc_get(ADCCHAN_VOLTAGE) * 1000U) / 19893) * 11;
 }
