@@ -67,24 +67,6 @@ void common_init_gpio(void){
     set_gpio_pullup(GPIOB, 1, PULL_NONE);
     set_gpio_mode(GPIOB, 1, MODE_OUTPUT);
 
-    //C10,C11 : OBD_SBU1_RELAY, OBD_SBU2_RELAY
-    set_gpio_speed(GPIOC, 10, SPEED_LOW); 
-    set_gpio_output_type(GPIOC, 10, OUTPUT_TYPE_OPEN_DRAIN);
-    set_gpio_pullup(GPIOC, 10, PULL_NONE);
-    set_gpio_mode(GPIOC, 10, MODE_OUTPUT);
-
-    set_gpio_speed(GPIOC, 111, SPEED_LOW); 
-    set_gpio_output_type(GPIOC, 11, OUTPUT_TYPE_OPEN_DRAIN);
-    set_gpio_pullup(GPIOC, 11, PULL_NONE);
-    set_gpio_mode(GPIOC, 11, MODE_OUTPUT);
-
-    //C12,D0: OBD_SBU1, OBD_SBU2
-    set_gpio_pullup(GPIOC, 12, PULL_NONE);
-    set_gpio_mode(GPIOC, 12, MODE_ANALOG);
-
-    set_gpio_pullup(GPIOD, 0, PULL_NONE);
-    set_gpio_mode(GPIOD, 0, MODE_ANALOG);
-
     //F11,F14: 5VOUT_S, VOLT_S
     set_gpio_pullup(GPIOF, 11, PULL_NONE);
     set_gpio_mode(GPIOF, 11, MODE_ANALOG);
@@ -149,14 +131,10 @@ void common_init_gpio(void){
     set_gpio_mode(GPIOA, 1, MODE_ANALOG);
     set_gpio_pullup(GPIOA, 2, PULL_NONE);
     set_gpio_mode(GPIOA, 2, MODE_ANALOG);
-    set_gpio_pullup(GPIOA, 3, PULL_NONE);
-    set_gpio_mode(GPIOA, 3, MODE_ANALOG);
     set_gpio_pullup(GPIOA, 4, PULL_NONE);
     set_gpio_mode(GPIOA, 4, MODE_ANALOG);
     set_gpio_pullup(GPIOA, 5, PULL_NONE);
     set_gpio_mode(GPIOA, 5, MODE_ANALOG);
-    set_gpio_pullup(GPIOA, 6, PULL_NONE);
-    set_gpio_mode(GPIOA, 6, MODE_ANALOG);
     set_gpio_pullup(GPIOA, 7, PULL_NONE);
     set_gpio_mode(GPIOA, 7, MODE_ANALOG);
     set_gpio_pullup(GPIOA, 8, PULL_NONE);
@@ -211,6 +189,8 @@ void common_init_gpio(void){
     set_gpio_mode(GPIOC, 8, MODE_ANALOG);
     set_gpio_pullup(GPIOC, 9, PULL_NONE);
     set_gpio_mode(GPIOC, 9, MODE_ANALOG);
+    set_gpio_pullup(GPIOC, 12, PULL_NONE); // OLD SBU1, moved to PA6
+    set_gpio_mode(GPIOC, 12, MODE_ANALOG);
     set_gpio_pullup(GPIOC, 13, PULL_NONE);
     set_gpio_mode(GPIOC, 13, MODE_ANALOG);
     set_gpio_pullup(GPIOC, 14, PULL_NONE);
@@ -218,6 +198,8 @@ void common_init_gpio(void){
     set_gpio_pullup(GPIOC, 15, PULL_NONE);
     set_gpio_mode(GPIOC, 15, MODE_ANALOG);
     // Port D
+    set_gpio_pullup(GPIOD, 0, PULL_NONE); // OLD SBU2, moved to PA3
+    set_gpio_mode(GPIOD, 0, MODE_ANALOG);
     set_gpio_pullup(GPIOD, 1, PULL_NONE);
     set_gpio_mode(GPIOD, 1, MODE_ANALOG);
     set_gpio_pullup(GPIOD, 2, PULL_NONE);
@@ -293,7 +275,7 @@ void common_init_gpio(void){
     set_gpio_mode(GPIOG, 14, MODE_ANALOG);
 
     //C9: MCO2, divider is set in clock.h (To check system clock)
-    set_gpio_alternate(GPIOC, 9, GPIO_AF0_MCO);
+    //set_gpio_alternate(GPIOC, 9, GPIO_AF0_MCO);
 
   #else
     // TODO: Is this block actually doing something???

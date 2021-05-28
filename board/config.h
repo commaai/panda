@@ -25,7 +25,7 @@
 #ifdef BOOTSTUB
 #define USB_PID 0xddeeU
 #else
-#define USB_PID 0xddccU
+#define USB_PID 0xddffU //REDEBUG (to be able to test with *;D* )
 #endif
 
 #include <stdbool.h>

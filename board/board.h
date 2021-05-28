@@ -10,7 +10,6 @@
   #ifdef STM32H7
     #include "boards/red.h"
   #else
-    #include "drivers/fan.h"
     #include "drivers/clock_source.h"
     #include "boards/white.h"
     #include "boards/grey.h"
@@ -19,6 +18,7 @@
     #include "boards/dos.h"
   #endif
   #include "drivers/rtc.h"
+  #include "drivers/fan.h"
 #else
   #include "boards/pedal.h"
 #endif

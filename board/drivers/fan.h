@@ -13,7 +13,7 @@ void fan_tick(void){
     fan_rpm = fan_tach_counter * 15U;
     fan_tach_counter = 0U;
 }
-
+#ifndef STM32H7
 // TACH interrupt handler
 void EXTI2_IRQ_Handler(void) {
     volatile unsigned int pr = EXTI->PR & (1U << 2);
@@ -24,6 +24,7 @@ void EXTI2_IRQ_Handler(void) {
 }
 
 void fan_init(void){
+    
     // 5000RPM * 4 tach edges / 60 seconds
     REGISTER_INTERRUPT(EXTI2_IRQn, EXTI2_IRQ_Handler, 700U, FAULT_INTERRUPT_RATE_TACH)
 
@@ -36,4 +37,6 @@ void fan_init(void){
     register_set_bits(&(EXTI->RTSR), (1U << 2));
     register_set_bits(&(EXTI->FTSR), (1U << 2));
     NVIC_EnableIRQ(EXTI2_IRQn);
+    
 }
+#endif

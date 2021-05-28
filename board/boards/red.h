@@ -89,20 +89,39 @@ void red_set_can_mode(uint8_t mode){
     case CAN_MODE_NORMAL:
     case CAN_MODE_OBD_CAN2:
       if ((bool)(mode == CAN_MODE_NORMAL) != (bool)(car_harness_status == HARNESS_STATUS_FLIPPED)) {
-        // B12,B13: disable OBD mode
-        set_gpio_mode(GPIOB, 12, MODE_INPUT);
-        set_gpio_mode(GPIOB, 13, MODE_INPUT);
+        // B12,B13: disable normal mode
+        set_gpio_pullup(GPIOB, 12, PULL_NONE);
+        set_gpio_mode(GPIOB, 12, MODE_ANALOG);
 
-        // B5,B6: normal CAN2 mode
+        set_gpio_pullup(GPIOB, 13, PULL_NONE);
+        set_gpio_mode(GPIOB, 13, MODE_ANALOG);
+        
+        // B5,B6: FDCAN2 mode
+        set_gpio_output_type(GPIOB, 5, OUTPUT_TYPE_PUSH_PULL);
+        set_gpio_pullup(GPIOB, 5, PULL_NONE);
+        set_gpio_speed(GPIOB, 5, SPEED_LOW);
         set_gpio_alternate(GPIOB, 5, GPIO_AF9_FDCAN2);
+
+        set_gpio_output_type(GPIOB, 6, OUTPUT_TYPE_PUSH_PULL);
+        set_gpio_pullup(GPIOB, 6, PULL_NONE);
+        set_gpio_speed(GPIOB, 6, SPEED_LOW);
         set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
       } else {
-        // B5,B6: disable normal CAN2 mode
-        set_gpio_mode(GPIOB, 5, MODE_INPUT);
-        set_gpio_mode(GPIOB, 6, MODE_INPUT);
+        // B5,B6: disable normal mode
+        set_gpio_pullup(GPIOB, 5, PULL_NONE);
+        set_gpio_mode(GPIOB, 5, MODE_ANALOG);
 
-        // B12,B13: OBD mode
+        set_gpio_pullup(GPIOB, 6, PULL_NONE);
+        set_gpio_mode(GPIOB, 6, MODE_ANALOG);
+        // B12,B13: FDCAN2 mode
+        set_gpio_output_type(GPIOB, 12, OUTPUT_TYPE_PUSH_PULL);
+        set_gpio_pullup(GPIOB, 12, PULL_NONE);
+        set_gpio_speed(GPIOB, 12, SPEED_LOW);
         set_gpio_alternate(GPIOB, 12, GPIO_AF9_FDCAN2);
+
+        set_gpio_output_type(GPIOB, 13, OUTPUT_TYPE_PUSH_PULL);
+        set_gpio_pullup(GPIOB, 13, PULL_NONE);
+        set_gpio_speed(GPIOB, 13, SPEED_LOW);
         set_gpio_alternate(GPIOB, 13, GPIO_AF9_FDCAN2);
       }
       break;
@@ -149,18 +168,24 @@ void red_set_siren(bool enabled){
 void red_init(void) {
   common_init_gpio();
 
-  // C12: OBD_SBU1 (orientation detection)
-  // D0: OBD_SBU2 (orientation detection)
-  //set_gpio_mode(GPIOC, 12, MODE_ANALOG);
-  //set_gpio_mode(GPIOD, 0, MODE_ANALOG);
+  //A6,A3: OBD_SBU1, OBD_SBU2
+  set_gpio_pullup(GPIOA, 6, PULL_NONE);
+  set_gpio_mode(GPIOA, 6, MODE_ANALOG);
 
-  // C10: OBD_SBU1_RELAY (harness relay driving output)
-  // C11: OBD_SBU2_RELAY (harness relay driving output)
-  //set_gpio_mode(GPIOC, 10, MODE_OUTPUT);
-  //set_gpio_mode(GPIOC, 11, MODE_OUTPUT);
-  //set_gpio_output_type(GPIOC, 10, OUTPUT_TYPE_OPEN_DRAIN);
-  //set_gpio_output_type(GPIOC, 11, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_pullup(GPIOA, 3, PULL_NONE);
+  set_gpio_mode(GPIOA, 3, MODE_ANALOG);
+
+  //C10,C11 : OBD_SBU1_RELAY, OBD_SBU2_RELAY
+  set_gpio_speed(GPIOC, 10, SPEED_LOW); 
+  set_gpio_output_type(GPIOC, 10, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_pullup(GPIOC, 10, PULL_NONE);
+  set_gpio_mode(GPIOC, 10, MODE_OUTPUT);
   set_gpio_output(GPIOC, 10, 1);
+
+  set_gpio_speed(GPIOC, 11, SPEED_LOW); 
+  set_gpio_output_type(GPIOC, 11, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_pullup(GPIOC, 11, PULL_NONE);
+  set_gpio_mode(GPIOC, 11, MODE_OUTPUT);
   set_gpio_output(GPIOC, 11, 1);
 
   // Turn on USB load switch.
@@ -184,23 +209,26 @@ void red_init(void) {
   red_set_can_mode(CAN_MODE_NORMAL);
 
   // flip CAN0 and CAN2 if we are flipped
+  if (car_harness_status == HARNESS_STATUS_FLIPPED) {
+    can_flip_buses(0, 2);
+  }
 
-  //TODO: check if this func is even needed !
   // init multiplexer
+  can_set_obd(car_harness_status, false);
 }
 
 const harness_configuration red_harness_config = {
   .has_harness = true,
-  .GPIO_SBU1 = GPIOC,
-  .GPIO_SBU2 = GPIOD,
+  .GPIO_SBU1 = GPIOA,
+  .GPIO_SBU2 = GPIOA,
   .GPIO_relay_SBU1 = GPIOC,
   .GPIO_relay_SBU2 = GPIOC,
-  .pin_SBU1 = 12,
-  .pin_SBU2 = 0,
+  .pin_SBU1 = 6,
+  .pin_SBU2 = 3,
   .pin_relay_SBU1 = 10,
   .pin_relay_SBU2 = 11,
-  .adc_channel_SBU1 = 10, //REDEBUG needs ADC???
-  .adc_channel_SBU2 = 13 //REDEBUG needs ADC???
+  .adc_channel_SBU1 = 3,
+  .adc_channel_SBU2 = 15
 };
 
 const board board_red = {

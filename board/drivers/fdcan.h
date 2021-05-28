@@ -248,10 +248,13 @@ void process_can(uint8_t can_number) {
       CAN_FIFOMailBox_TypeDef *fifo;
       fifo = (CAN_FIFOMailBox_TypeDef *)(TxFIFOSA + tx_index * FDCAN_TX_FIFO_EL_SIZE);
 
+      // Convert mailbox "type" to normal CAN
+      fifo->RIR = ((to_send.RIR & 0x4) << 27) | ((to_send.RIR & 0x2) << 28) | (to_send.RIR >> 3);  // identifier format | frame type | identifier
+      fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16); // DLC (length) | timestamp
       fifo->RDLR = to_send.RDLR;
       fifo->RDHR = to_send.RDHR;
-      fifo->RDTR = to_send.RDTR;
-      fifo->RIR = to_send.RIR;
+      
+      
 
       FDCANx->TXBAR |= (1UL << tx_index); 
 
@@ -295,7 +298,7 @@ void can_rx(uint8_t can_number) {
 	// Rx FIFO 0 new message
 	if((FDCANx->IR & FDCAN_IR_RF0N) != 0) {
     FDCANx->IR = FDCAN_IR_RF0N;
-    while((FDCANx->RXF0S & FDCAN_RXF0S_F0FL) != 0) {
+    //while((FDCANx->RXF0S & FDCAN_RXF0S_F0FL) != 0) {
       can_rx_cnt += 1;
 
       // can is live
@@ -316,8 +319,9 @@ void can_rx(uint8_t can_number) {
       // getting address
       fifo = (CAN_FIFOMailBox_TypeDef *)(RxFIFO0SA + rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE);
 
-      to_push.RIR = fifo->RIR;
-      to_push.RDTR = fifo->RDTR;
+      // Need to convert real CAN frame format to mailbox "type"
+      to_push.RIR = ((fifo->RIR >> 27) & 0x4) | ((fifo->RIR >> 28) & 0x2) | (fifo->RIR << 3); // identifier format | frame type | identifier
+      to_push.RDTR = ((fifo->RDTR >> 16) & 0xF) | (fifo->RDTR << 16); // DLC (length) | timestamp
       to_push.RDLR = fifo->RDLR;
       to_push.RDHR = fifo->RDHR;
 
@@ -328,7 +332,7 @@ void can_rx(uint8_t can_number) {
       int bus_fwd_num = (fdcan_forwarding[bus_number] != -1) ? fdcan_forwarding[bus_number] : safety_fwd_hook(bus_number, &to_push);
       if (bus_fwd_num != -1) {
         CAN_FIFOMailBox_TypeDef to_send;
-        to_send.RIR = to_push.RIR | 1; // TXRQ
+        to_send.RIR = to_push.RIR;
         to_send.RDTR = to_push.RDTR;
         to_send.RDLR = to_push.RDLR;
         to_send.RDHR = to_push.RDHR;
@@ -343,7 +347,7 @@ void can_rx(uint8_t can_number) {
       
       // update read index 
       FDCANx->RXF0A = rx_fifo_idx;
-    }
+    //}
 	}
 
   // Protocol error in Arbitration phase
@@ -480,7 +484,7 @@ void fdcan_init_all(void) {
 ///////////////////
 //////////////////
 
-void can_set_obd(uint8_t harness_orientation, bool obd){
+void fdcan_set_obd(uint8_t harness_orientation, bool obd){
   if(obd){
     puts("setting CAN2 to be OBD\n");
   } else {
@@ -505,6 +509,12 @@ void can_set_obd(uint8_t harness_orientation, bool obd){
         set_gpio_speed(GPIOB, 13, SPEED_LOW);
         set_gpio_alternate(GPIOB, 13, GPIO_AF9_FDCAN2);
     } else {
+      // B12,B13: disable normal mode
+        set_gpio_pullup(GPIOB, 12, PULL_NONE);
+        set_gpio_mode(GPIOB, 12, MODE_ANALOG);
+
+        set_gpio_pullup(GPIOB, 13, PULL_NONE);
+        set_gpio_mode(GPIOB, 13, MODE_ANALOG);
         // B5,B6: FDCAN2 mode
         set_gpio_output_type(GPIOB, 5, OUTPUT_TYPE_PUSH_PULL);
         set_gpio_pullup(GPIOB, 5, PULL_NONE);
@@ -515,12 +525,6 @@ void can_set_obd(uint8_t harness_orientation, bool obd){
         set_gpio_pullup(GPIOB, 6, PULL_NONE);
         set_gpio_speed(GPIOB, 6, SPEED_LOW);
         set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
-        // B12,B13: disable normal mode
-        set_gpio_pullup(GPIOB, 12, PULL_NONE);
-        set_gpio_mode(GPIOB, 12, MODE_ANALOG);
-
-        set_gpio_pullup(GPIOB, 13, PULL_NONE);
-        set_gpio_mode(GPIOB, 13, MODE_ANALOG);
     }
   } else {
     puts("OBD CAN not available on this board\n");
@@ -531,3 +535,5 @@ void can_set_obd(uint8_t harness_orientation, bool obd){
 void can_init_all(void) { fdcan_init_all(); }
 void can_set_forwarding(int from, int to) { fdcan_set_forwarding(from, to); }
 bool can_init(uint8_t can_number) { return fdcan_init(can_number); }
+void can_flip_buses(uint8_t bus1, uint8_t bus2){ fdcan_flip_buses(bus1, bus2); }
+void can_set_obd(uint8_t harness_orientation, bool obd){ fdcan_set_obd(harness_orientation, obd); }

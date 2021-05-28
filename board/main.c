@@ -42,7 +42,6 @@
 //#include "drivers/can.h"
 #include "drivers/fdcan.h" //REDEBUG
 
-// Check if it's still truth
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // When changing this struct, boardd and python/__init__.py needs to be kept up to date!
@@ -177,11 +176,10 @@ int get_health_pkt(void *dat) {
 
   health->controls_allowed_pkt = controls_allowed;
   health->gas_interceptor_detected_pkt = gas_interceptor_detected;
-  health->can_rx_errs_pkt = can_overflow_cnt; //can_rx_errs;
-  health->can_send_errs_pkt = can_send_errs;
-  health->can_fwd_errs_pkt = can_fwd_errs;
-  //health->gmlan_send_errs_pkt = gmlan_send_errs;
-  health->gmlan_send_errs_pkt = can_rx_cnt; //REDEBUG
+  health->can_rx_errs_pkt = can_rx_errs;
+  health->can_send_errs_pkt = adc_get(3);
+  health->can_fwd_errs_pkt = adc_get(15);
+  health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = car_harness_status;
   health->usb_power_mode_pkt = usb_power_mode;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
@@ -315,11 +313,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xb2: get fan rpm
     case 0xb2:
-    // REDEBUG, fake RPM
       //resp[0] = (fan_rpm & 0x00FFU);
       //resp[1] = ((fan_rpm & 0xFF00U) >> 8U);
-      resp[0] = 0x88U;
-      resp[1] = ((0x1300U) >> 8U);
+      // REDEBUG
+      resp[0] = (5000 & 0x00FFU);
+      resp[1] = ((5000 & 0xFF00U) >> 8U);
       resp_len = 2;
       break;
     // **** 0xb3: set phone power
@@ -342,13 +340,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xd0: fetch serial number
     case 0xd0:
       // addresses are OTP
-      // if (setup->b.wValue.w == 1U) {
-      //   (void)memcpy(resp, (uint8_t *)0x1fff79c0, 0x10); //REDEBUG: fix for H7, halts MCU!!
-      //   resp_len = 0x10;
-      // } else {
-      //   get_provision_chunk(resp);
-      //   resp_len = PROVISION_CHUNK_LEN;
-      // }
+      // REDEBUG: temporarily address, H7 has no OTP area !!
+      if (setup->b.wValue.w == 1U) {
+         (void)memcpy(resp, (uint8_t *)0x1FF1E800, 0x10);
+         resp_len = 0x10;
+       } else {
+         get_provision_chunk(resp);
+         resp_len = PROVISION_CHUNK_LEN;
+       }
       break;
     // **** 0xd1: enter bootloader mode
     case 0xd1:
@@ -381,21 +380,21 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xd3: get first 64 bytes of signature
     case 0xd3: //REDEBUG: halts MCU!! (maybe because .bin wasn't signed?)
-      // {
-      //   resp_len = 64;
-      //   char * code = (char*)_app_start;
-      //   int code_len = _app_start[0];
-      //   (void)memcpy(resp, &code[code_len], resp_len);
-      // }
+      {
+        resp_len = 64;
+        char * code = (char*)_app_start;
+        int code_len = _app_start[0];
+        (void)memcpy(resp, &code[code_len], resp_len);
+      }
       break;
     // **** 0xd4: get second 64 bytes of signature
     case 0xd4: //REDEBUG: halts MCU!! (maybe because .bin wasn't signed?)
-      // {
-      //   resp_len = 64;
-      //   char * code = (char*)_app_start;
-      //   int code_len = _app_start[0];
-      //   (void)memcpy(resp, &code[code_len + 64], resp_len);
-      // }
+      {
+        resp_len = 64;
+        char * code = (char*)_app_start;
+        int code_len = _app_start[0];
+        (void)memcpy(resp, &code[code_len + 64], resp_len);
+      }
       break;
     // **** 0xd6: get version
     case 0xd6:
@@ -936,7 +935,9 @@ int main(void) {
         }
       #endif
     } else {
-      __WFI();
+      //REDEBUG: disable power save mode
+      power_save_status = POWER_SAVE_STATUS_DISABLED;
+      //__WFI();
     }
   }
 

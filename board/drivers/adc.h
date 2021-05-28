@@ -41,10 +41,10 @@ void adc_init(void) {
 uint32_t adc_get(unsigned int channel) {
 
   ADC2->SQR1 &= ~(ADC_SQR1_L);
-  ADC2->SQR1 |= (channel << 6U);
+  ADC2->SQR1 = (channel << 6U);
   
-  ADC2->SMPR1 |= (0x7U << (channel * 3) );
-  ADC2->PCSEL_RES0 |= (0x1U << channel);
+  ADC2->SMPR1 = (0x7U << (channel * 3) );
+  ADC2->PCSEL_RES0 = (0x1U << channel);
 
   ADC2->CR |= ADC_CR_ADSTART;
   while (!(ADC2->ISR & ADC_ISR_EOC));
