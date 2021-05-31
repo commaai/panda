@@ -594,8 +594,8 @@ class UdsClient():
 
   def access_timing_parameter(self, timing_parameter_type: TIMING_PARAMETER_TYPE, parameter_values: bytes = None):
     write_custom_values = timing_parameter_type == TIMING_PARAMETER_TYPE.SET_TO_GIVEN_VALUES
-    read_values = (timing_parameter_type == TIMING_PARAMETER_TYPE.READ_CURRENTLY_ACTIVE or
-                   timing_parameter_type == TIMING_PARAMETER_TYPE.READ_EXTENDED_SET)
+    read_values = timing_parameter_type in (TIMING_PARAMETER_TYPE.READ_CURRENTLY_ACTIVE,
+                                            TIMING_PARAMETER_TYPE.READ_EXTENDED_SET)
     if not write_custom_values and parameter_values is not None:
       raise ValueError('parameter_values not allowed')
     if write_custom_values and parameter_values is None:
@@ -746,33 +746,43 @@ class UdsClient():
                            dtc_snapshot_record_num: int = 0xFF, dtc_extended_record_num: int = 0xFF):
     data = b''
     # dtc_status_mask_type
-    if dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_DTC_BY_STATUS_MASK or \
-       dtc_report_type == DTC_REPORT_TYPE.DTC_BY_STATUS_MASK or \
-       dtc_report_type == DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_BY_STATUS_MASK or \
-       dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_MIRROR_MEMORY_DTC_BY_STATUS_MASK or \
-       dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_EMISSIONS_RELATED_OBD_DTC_BY_STATUS_MASK or \
-       dtc_report_type == DTC_REPORT_TYPE.EMISSIONS_RELATED_OBD_DTC_BY_STATUS_MASK:
-       data += bytes([dtc_status_mask_type])
+    if dtc_report_type in (
+      DTC_REPORT_TYPE.NUMBER_OF_DTC_BY_STATUS_MASK,
+      DTC_REPORT_TYPE.DTC_BY_STATUS_MASK,
+      DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_BY_STATUS_MASK,
+      DTC_REPORT_TYPE.NUMBER_OF_MIRROR_MEMORY_DTC_BY_STATUS_MASK,
+      DTC_REPORT_TYPE.NUMBER_OF_EMISSIONS_RELATED_OBD_DTC_BY_STATUS_MASK,
+      DTC_REPORT_TYPE.EMISSIONS_RELATED_OBD_DTC_BY_STATUS_MASK
+    ):
+      data += bytes([dtc_status_mask_type])
     # dtc_mask_record
-    if dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_IDENTIFICATION or \
-       dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_DTC_NUMBER or \
-       dtc_report_type == DTC_REPORT_TYPE.DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER or \
-       dtc_report_type == DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER or \
-       dtc_report_type == DTC_REPORT_TYPE.SEVERITY_INFORMATION_OF_DTC:
-       data += struct.pack('!I', dtc_mask_record)[1:]  # 3 bytes
+    if dtc_report_type in (
+      DTC_REPORT_TYPE.DTC_SNAPSHOT_IDENTIFICATION,
+      DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_DTC_NUMBER,
+      DTC_REPORT_TYPE.DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER,
+      DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER,
+      DTC_REPORT_TYPE.SEVERITY_INFORMATION_OF_DTC
+    ):
+      data += struct.pack('!I', dtc_mask_record)[1:]  # 3 bytes
     # dtc_snapshot_record_num
-    if dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_IDENTIFICATION or \
-       dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_DTC_NUMBER or \
-       dtc_report_type == DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_RECORD_NUMBER:
-       data += bytes([dtc_snapshot_record_num])
+    if dtc_report_type in (
+      DTC_REPORT_TYPE.DTC_SNAPSHOT_IDENTIFICATION,
+      DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_DTC_NUMBER,
+      DTC_REPORT_TYPE.DTC_SNAPSHOT_RECORD_BY_RECORD_NUMBER
+    ):
+      data += bytes([dtc_snapshot_record_num])
     # dtc_extended_record_num
-    if dtc_report_type == DTC_REPORT_TYPE.DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER or \
-       dtc_report_type == DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER:
-       data += bytes([dtc_extended_record_num])
+    if dtc_report_type in (
+      DTC_REPORT_TYPE.DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER,
+      DTC_REPORT_TYPE.MIRROR_MEMORY_DTC_EXTENDED_DATA_RECORD_BY_DTC_NUMBER
+    ):
+      data += bytes([dtc_extended_record_num])
     # dtc_severity_mask_type
-    if dtc_report_type == DTC_REPORT_TYPE.NUMBER_OF_DTC_BY_SEVERITY_MASK_RECORD or \
-       dtc_report_type == DTC_REPORT_TYPE.DTC_BY_SEVERITY_MASK_RECORD:
-       data += bytes([dtc_severity_mask_type, dtc_status_mask_type])
+    if dtc_report_type in (
+      DTC_REPORT_TYPE.NUMBER_OF_DTC_BY_SEVERITY_MASK_RECORD,
+      DTC_REPORT_TYPE.DTC_BY_SEVERITY_MASK_RECORD
+    ):
+      data += bytes([dtc_severity_mask_type, dtc_status_mask_type])
 
     resp = self._uds_request(SERVICE_TYPE.READ_DTC_INFORMATION, subfunction=dtc_report_type, data=data)
 
