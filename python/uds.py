@@ -2,7 +2,7 @@
 import time
 import struct
 from collections import deque
-from typing import Callable, NamedTuple, Tuple, List, Deque, Generator, Optional, cast
+from typing import Callable, Dict, NamedTuple, Tuple, List, Deque, Generator, Optional, Union, cast
 from enum import IntEnum
 
 class SERVICE_TYPE(IntEnum):
@@ -270,7 +270,7 @@ _negative_response_codes = {
 }
 
 
-class CanClient():
+class CanClient:
   def __init__(self, can_send: Callable[[int, bytes, int], None], can_recv: Callable[[], List[Tuple[int, int, bytes, int]]],
                tx_addr: int, rx_addr: int, bus: int, sub_addr: int = None, debug: bool = False):
     self.tx = can_send
@@ -335,7 +335,7 @@ class CanClient():
     except IndexError:
       pass  # empty
 
-  def send(self, msgs: List[bytes], delay: float = 0) -> None:
+  def send(self, msgs: List[bytes], delay: float = 0.0) -> None:
     for i, msg in enumerate(msgs):
       if delay and i != 0:
         if self.debug:
@@ -354,8 +354,9 @@ class CanClient():
       if i % 10 == 9:
         self._recv_buffer()
 
-class IsoTpMessage():
-  def __init__(self, can_client: CanClient, timeout: float = 1, debug: bool = False, max_len: int = 8):
+class IsoTpMessage:
+  def __init__(self, can_client: CanClient, timeout: float = 1.0,
+               debug: bool = False, max_len: int = 8):
     self._can_client = can_client
     self.timeout = timeout
     self.debug = debug
@@ -376,7 +377,7 @@ class IsoTpMessage():
     self.rx_done = False
 
     if self.debug:
-      print(f"ISO-TP: REQUEST - 0x{bytes.hex(self.tx_dat)}")
+      print(f"ISO-TP: REQUEST - 0x{self.tx_dat.hex()}")
     self._tx_first_frame()
 
   def _tx_first_frame(self) -> None:
@@ -486,7 +487,7 @@ class IsoTpMessage():
 
 FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
 
-def get_rx_addr_for_tx_addr(tx_addr, rx_offset=0x8):
+def get_rx_addr_for_tx_addr(tx_addr: int, rx_offset: int = 0x8) -> Optional[int]:
   if tx_addr in FUNCTIONAL_ADDRS:
     return None
 
@@ -502,8 +503,8 @@ def get_rx_addr_for_tx_addr(tx_addr, rx_offset=0x8):
   raise ValueError("invalid tx_addr: {}".format(tx_addr))
 
 
-class UdsClient():
-  def __init__(self, panda, tx_addr: int, rx_addr: int = None, bus: int = 0, timeout: float = 1, debug: bool = False):
+class UdsClient:
+  def __init__(self, panda, tx_addr: int, rx_addr: Optional[int] = None, bus: int = 0, timeout: float = 1.0, debug: bool = False):
     self.bus = bus
     self.tx_addr = tx_addr
     self.rx_addr = rx_addr if rx_addr is not None else get_rx_addr_for_tx_addr(tx_addr)
@@ -512,7 +513,7 @@ class UdsClient():
     self._can_client = CanClient(panda.can_send, panda.can_recv, self.tx_addr, self.rx_addr, self.bus, debug=self.debug)
 
   # generic uds request
-  def _uds_request(self, service_type: SERVICE_TYPE, subfunction: int = None, data: bytes = None) -> bytes:
+  def _uds_request(self, service_type: SERVICE_TYPE, subfunction: Optional[int] = None, data: Optional[bytes] = None) -> bytes:
     req = bytes([service_type])
     if subfunction is not None:
       req += bytes([subfunction])
@@ -564,17 +565,17 @@ class UdsClient():
       return resp[(1 if subfunction is None else 2):]
 
   # services
-  def diagnostic_session_control(self, session_type: SESSION_TYPE):
+  def diagnostic_session_control(self, session_type: SESSION_TYPE) -> None:
     self._uds_request(SERVICE_TYPE.DIAGNOSTIC_SESSION_CONTROL, subfunction=session_type)
 
-  def ecu_reset(self, reset_type: RESET_TYPE):
+  def ecu_reset(self, reset_type: RESET_TYPE) -> Optional[int]:
     resp = self._uds_request(SERVICE_TYPE.ECU_RESET, subfunction=reset_type)
     power_down_time = None
     if reset_type == RESET_TYPE.ENABLE_RAPID_POWER_SHUTDOWN:
       power_down_time = resp[0]
       return power_down_time
 
-  def security_access(self, access_type: ACCESS_TYPE, security_key: bytes = None):
+  def security_access(self, access_type: ACCESS_TYPE, security_key: Optional[bytes] = None) -> Optional[bytes]:
     request_seed = access_type % 2 != 0
     if request_seed and security_key is not None:
       raise ValueError('security_key not allowed')
@@ -585,14 +586,14 @@ class UdsClient():
       security_seed = resp
       return security_seed
 
-  def communication_control(self, control_type: CONTROL_TYPE, message_type: MESSAGE_TYPE):
+  def communication_control(self, control_type: CONTROL_TYPE, message_type: MESSAGE_TYPE) -> None:
     data = bytes([message_type])
     self._uds_request(SERVICE_TYPE.COMMUNICATION_CONTROL, subfunction=control_type, data=data)
 
-  def tester_present(self, ):
+  def tester_present(self) -> None:
     self._uds_request(SERVICE_TYPE.TESTER_PRESENT, subfunction=0x00)
 
-  def access_timing_parameter(self, timing_parameter_type: TIMING_PARAMETER_TYPE, parameter_values: bytes = None):
+  def access_timing_parameter(self, timing_parameter_type: TIMING_PARAMETER_TYPE, parameter_values: Optional[bytes] = None) -> Optional[bytes]:
     write_custom_values = timing_parameter_type == TIMING_PARAMETER_TYPE.SET_TO_GIVEN_VALUES
     read_values = timing_parameter_type in (TIMING_PARAMETER_TYPE.READ_CURRENTLY_ACTIVE,
                                             TIMING_PARAMETER_TYPE.READ_EXTENDED_SET)
@@ -606,17 +607,17 @@ class UdsClient():
       parameter_values = resp
       return parameter_values
 
-  def secured_data_transmission(self, data: bytes):
+  def secured_data_transmission(self, data: bytes) -> bytes:
     # TODO: split data into multiple input parameters?
     resp = self._uds_request(SERVICE_TYPE.SECURED_DATA_TRANSMISSION, subfunction=None, data=data)
     # TODO: parse response into multiple output values?
     return resp
 
-  def control_dtc_setting(self, dtc_setting_type: DTC_SETTING_TYPE):
+  def control_dtc_setting(self, dtc_setting_type: DTC_SETTING_TYPE) -> None:
     self._uds_request(SERVICE_TYPE.CONTROL_DTC_SETTING, subfunction=dtc_setting_type)
 
   def response_on_event(self, response_event_type: RESPONSE_EVENT_TYPE, store_event: bool, window_time: int,
-                        event_type_record: int, service_response_record: int):
+                        event_type_record: int, service_response_record: int) -> Dict[str, Union[int, bytes]]:
     if store_event:
       response_event_type |= 0x20  # type: ignore
     # TODO: split record parameters into arrays
@@ -635,7 +636,7 @@ class UdsClient():
       "data": resp[2:],  # TODO: parse the reset of response
     }
 
-  def link_control(self, link_control_type: LINK_CONTROL_TYPE, baud_rate_type: BAUD_RATE_TYPE = None):
+  def link_control(self, link_control_type: LINK_CONTROL_TYPE, baud_rate_type: BAUD_RATE_TYPE = None) -> None:
     data: Optional[bytes]
 
     if link_control_type == LINK_CONTROL_TYPE.VERIFY_BAUDRATE_TRANSITION_WITH_FIXED_BAUDRATE:
@@ -648,7 +649,7 @@ class UdsClient():
       data = None
     self._uds_request(SERVICE_TYPE.LINK_CONTROL, subfunction=link_control_type, data=data)
 
-  def read_data_by_identifier(self, data_identifier_type: DATA_IDENTIFIER_TYPE):
+  def read_data_by_identifier(self, data_identifier_type: DATA_IDENTIFIER_TYPE) -> bytes:
     # TODO: support list of identifiers
     data = struct.pack('!H', data_identifier_type)
     resp = self._uds_request(SERVICE_TYPE.READ_DATA_BY_IDENTIFIER, subfunction=None, data=data)
@@ -657,7 +658,7 @@ class UdsClient():
       raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
     return resp[2:]
 
-  def read_memory_by_address(self, memory_address: int, memory_size: int, memory_address_bytes: int = 4, memory_size_bytes: int = 1):
+  def read_memory_by_address(self, memory_address: int, memory_size: int, memory_address_bytes: int = 4, memory_size_bytes: int = 1) -> bytes:
     if memory_address_bytes < 1 or memory_address_bytes > 4:
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
@@ -674,7 +675,7 @@ class UdsClient():
     resp = self._uds_request(SERVICE_TYPE.READ_MEMORY_BY_ADDRESS, subfunction=None, data=data)
     return resp
 
-  def read_scaling_data_by_identifier(self, data_identifier_type: DATA_IDENTIFIER_TYPE):
+  def read_scaling_data_by_identifier(self, data_identifier_type: DATA_IDENTIFIER_TYPE) -> bytes:
     data = struct.pack('!H', data_identifier_type)
     resp = self._uds_request(SERVICE_TYPE.READ_SCALING_DATA_BY_IDENTIFIER, subfunction=None, data=data)
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
@@ -682,13 +683,13 @@ class UdsClient():
       raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
     return resp[2:]  # TODO: parse the response
 
-  def read_data_by_periodic_identifier(self, transmission_mode_type: TRANSMISSION_MODE_TYPE, periodic_data_identifier: int):
+  def read_data_by_periodic_identifier(self, transmission_mode_type: TRANSMISSION_MODE_TYPE, periodic_data_identifier: int) -> None:
     # TODO: support list of identifiers
     data = bytes([transmission_mode_type, periodic_data_identifier])
     self._uds_request(SERVICE_TYPE.READ_DATA_BY_PERIODIC_IDENTIFIER, subfunction=None, data=data)
 
   def dynamically_define_data_identifier(self, dynamic_definition_type: DYNAMIC_DEFINITION_TYPE, dynamic_data_identifier: int,
-                                         source_definitions: List[DynamicSourceDefinition], memory_address_bytes: int = 4, memory_size_bytes: int = 1):
+                                         source_definitions: List[DynamicSourceDefinition], memory_address_bytes: int = 4, memory_size_bytes: int = 1) -> None:
     if memory_address_bytes < 1 or memory_address_bytes > 4:
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
@@ -713,14 +714,14 @@ class UdsClient():
       raise ValueError('invalid dynamic identifier type: {}'.format(hex(dynamic_definition_type)))
     self._uds_request(SERVICE_TYPE.DYNAMICALLY_DEFINE_DATA_IDENTIFIER, subfunction=dynamic_definition_type, data=data)
 
-  def write_data_by_identifier(self, data_identifier_type: DATA_IDENTIFIER_TYPE, data_record: bytes):
+  def write_data_by_identifier(self, data_identifier_type: DATA_IDENTIFIER_TYPE, data_record: bytes) -> None:
     data = struct.pack('!H', data_identifier_type) + data_record
     resp = self._uds_request(SERVICE_TYPE.WRITE_DATA_BY_IDENTIFIER, subfunction=None, data=data)
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
     if resp_id != data_identifier_type:
       raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
 
-  def write_memory_by_address(self, memory_address: int, memory_size: int, data_record: bytes, memory_address_bytes: int = 4, memory_size_bytes: int = 1):
+  def write_memory_by_address(self, memory_address: int, memory_size: int, data_record: bytes, memory_address_bytes: int = 4, memory_size_bytes: int = 1) -> None:
     if memory_address_bytes < 1 or memory_address_bytes > 4:
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
@@ -737,13 +738,13 @@ class UdsClient():
     data += data_record
     self._uds_request(SERVICE_TYPE.WRITE_MEMORY_BY_ADDRESS, subfunction=0x00, data=data)
 
-  def clear_diagnostic_information(self, dtc_group_type: DTC_GROUP_TYPE):
+  def clear_diagnostic_information(self, dtc_group_type: DTC_GROUP_TYPE) -> None:
     data = struct.pack('!I', dtc_group_type)[1:]  # 3 bytes
     self._uds_request(SERVICE_TYPE.CLEAR_DIAGNOSTIC_INFORMATION, subfunction=None, data=data)
 
   def read_dtc_information(self, dtc_report_type: DTC_REPORT_TYPE, dtc_status_mask_type: DTC_STATUS_MASK_TYPE = DTC_STATUS_MASK_TYPE.ALL,
                            dtc_severity_mask_type: DTC_SEVERITY_MASK_TYPE = DTC_SEVERITY_MASK_TYPE.ALL, dtc_mask_record: int = 0xFFFFFF,
-                           dtc_snapshot_record_num: int = 0xFF, dtc_extended_record_num: int = 0xFF):
+                           dtc_snapshot_record_num: int = 0xFF, dtc_extended_record_num: int = 0xFF) -> bytes:
     data = b''
     # dtc_status_mask_type
     if dtc_report_type in (
@@ -790,7 +791,7 @@ class UdsClient():
     return resp
 
   def input_output_control_by_identifier(self, data_identifier_type: DATA_IDENTIFIER_TYPE, control_parameter_type: CONTROL_PARAMETER_TYPE,
-                                         control_option_record: bytes, control_enable_mask_record: bytes = b''):
+                                         control_option_record: bytes, control_enable_mask_record: bytes = b'') -> bytes:
     data = struct.pack('!H', data_identifier_type) + bytes([control_parameter_type]) + control_option_record + control_enable_mask_record
     resp = self._uds_request(SERVICE_TYPE.INPUT_OUTPUT_CONTROL_BY_IDENTIFIER, subfunction=None, data=data)
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
@@ -798,7 +799,7 @@ class UdsClient():
       raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
     return resp[2:]
 
-  def routine_control(self, routine_control_type: ROUTINE_CONTROL_TYPE, routine_identifier_type: ROUTINE_IDENTIFIER_TYPE, routine_option_record: bytes = b''):
+  def routine_control(self, routine_control_type: ROUTINE_CONTROL_TYPE, routine_identifier_type: ROUTINE_IDENTIFIER_TYPE, routine_option_record: bytes = b'') -> bytes:
     data = struct.pack('!H', routine_identifier_type) + routine_option_record
     resp = self._uds_request(SERVICE_TYPE.ROUTINE_CONTROL, subfunction=routine_control_type, data=data)
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
@@ -806,7 +807,7 @@ class UdsClient():
       raise ValueError('invalid response routine identifier: {}'.format(hex(resp_id)))
     return resp[2:]
 
-  def request_download(self, memory_address: int, memory_size: int, memory_address_bytes: int = 4, memory_size_bytes: int = 4, data_format: int = 0x00):
+  def request_download(self, memory_address: int, memory_size: int, memory_address_bytes: int = 4, memory_size_bytes: int = 4, data_format: int = 0x00) -> int:
     data = bytes([data_format])
 
     if memory_address_bytes < 1 or memory_address_bytes > 4:
@@ -831,7 +832,8 @@ class UdsClient():
 
     return max_num_bytes  # max number of bytes per transfer data request
 
-  def request_upload(self, memory_address: int, memory_size: int, memory_address_bytes: int = 4, memory_size_bytes: int = 4, data_format: int = 0x00):
+  def request_upload(self, memory_address: int, memory_size: int, memory_address_bytes: int = 4,
+                     memory_size_bytes: int = 4, data_format: int = 0x00) -> int:
     data = bytes([data_format])
 
     if memory_address_bytes < 1 or memory_address_bytes > 4:
@@ -856,7 +858,7 @@ class UdsClient():
 
     return max_num_bytes  # max number of bytes per transfer data request
 
-  def transfer_data(self, block_sequence_count: int, data: bytes = b''):
+  def transfer_data(self, block_sequence_count: int, data: bytes = b'') -> bytes:
     data = bytes([block_sequence_count]) + data
     resp = self._uds_request(SERVICE_TYPE.TRANSFER_DATA, subfunction=None, data=data)
     resp_id = resp[0] if len(resp) > 0 else None
@@ -864,5 +866,5 @@ class UdsClient():
       raise ValueError('invalid block_sequence_count: {}'.format(resp_id))
     return resp[1:]
 
-  def request_transfer_exit(self):
+  def request_transfer_exit(self) -> None:
     self._uds_request(SERVICE_TYPE.REQUEST_TRANSFER_EXIT, subfunction=None)
