@@ -177,8 +177,8 @@ int get_health_pkt(void *dat) {
   health->controls_allowed_pkt = controls_allowed;
   health->gas_interceptor_detected_pkt = gas_interceptor_detected;
   health->can_rx_errs_pkt = can_rx_errs;
-  health->can_send_errs_pkt = adc_get(3);
-  health->can_fwd_errs_pkt = adc_get(15);
+  health->can_send_errs_pkt = can_send_errs;
+  health->can_fwd_errs_pkt = can_fwd_errs;
   health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = car_harness_status;
   health->usb_power_mode_pkt = usb_power_mode;
@@ -708,7 +708,16 @@ void TIM8_BRK_TIM12_IRQ_Handler(void) {
         puts("** blink ");
         puth(can_rx_q.r_ptr); puts(" "); puth(can_rx_q.w_ptr); puts("  ");
         puth(can_tx1_q.r_ptr); puts(" "); puth(can_tx1_q.w_ptr); puts("  ");
-        puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("\n");
+        puth(can_tx2_q.r_ptr); puts(" "); puth(can_tx2_q.w_ptr); puts("  ");
+        puth(can_tx3_q.r_ptr); puts(" "); puth(can_tx3_q.w_ptr); puts("\n"); //REDEBUG: make available only when CAN3 is defined!
+
+        // puts("TXFQS: "); puth((FDCAN1->TXFQS)); puts(" "); puth((FDCAN2->TXFQS)); puts(" "); puth((FDCAN3->TXFQS)); puts("\n");
+        // puts("IR: "); puth((FDCAN1->IR)); puts(" "); puth((FDCAN2->IR)); puts(" "); puth((FDCAN3->IR)); puts("\n");
+        // puts("PSR: ");puth((FDCAN1->PSR)); puts(" "); puth((FDCAN2->PSR)); puts(" "); puth((FDCAN3->PSR)); puts("\n");
+        // puts("CCCR: "); puth((FDCAN1->CCCR)); puts(" "); puth((FDCAN2->CCCR)); puts(" "); puth((FDCAN3->CCCR)); puts("\n");
+
+        // puts("IE: "); puth((FDCAN1->IE)); puts(" "); puth((FDCAN2->IE)); puts(" "); puth((FDCAN3->IE)); puts("\n");
+        // puts("ILS: "); puth((FDCAN1->ILS)); puts(" "); puth((FDCAN2->ILS)); puts(" "); puth((FDCAN3->ILS)); puts("\n");
       #endif
 
       // Tick drivers
@@ -803,7 +812,8 @@ int main(void) {
   TIM2->EGR = TIM_EGR_UG;
   // use TIM2->CNT to read
 
-  detect_configuration();
+  // REDEBUG - bad method to detect usart, gives false positive on H7!
+  //detect_configuration();
   detect_board_type();
   adc_init();
 
@@ -833,12 +843,14 @@ int main(void) {
     uart_init(&uart_ring_debug, 115200);
   }
 
+#ifndef STM32H7
   if (board_has_gps()) {
     uart_init(&uart_ring_gps, 9600);
   } else {
     // enable ESP uart
     uart_init(&uart_ring_gps, 115200);
   }
+#endif
 
   if(board_has_lin()){
     // enable LIN
@@ -855,7 +867,7 @@ int main(void) {
   current_board->enable_can_transceivers(true);
 
 #ifndef EON
-  spi_init();
+  //spi_init(); //REDEBUG: do not enable SPI for now, need to rewrite
 #endif
 
   // 8hz

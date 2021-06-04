@@ -104,6 +104,10 @@ bool llfdcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, bool loopbac
   FDCANx->CCCR &= ~(FDCAN_CCCR_ASM);
 
   if(ret){
+    if (FDCANx == FDCAN1) { // DIVC is 1 by default
+      FDCAN_CCU->CCFG |= FDCANCCU_CCFG_BCC; // Bypass calibration
+      FDCAN_CCU->CCFG |= CAN_QUANTA; // Setting time quanta to 8 for now
+    }
     // Set the nominal bit timing register
     FDCANx->NBTP = ((CAN_SYNC_JW-1)<<FDCAN_NBTP_NSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_NBTP_NTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_NBTP_NTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1)<<FDCAN_NBTP_NBRP_Pos);
 
@@ -123,7 +127,7 @@ bool llfdcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, bool loopbac
 
     FDCANx->CCCR &= ~(FDCAN_CCCR_INIT);
     timeout_counter = 0U;
-    while((FDCANx->CCCR & FDCAN_CCCR_INIT) == 1) {
+    while((FDCANx->CCCR & FDCAN_CCCR_INIT) != 0) {
       // Delay for about 1ms
       delay_ms(1);
       timeout_counter++;
@@ -166,12 +170,18 @@ bool llfdcan_init(FDCAN_GlobalTypeDef *FDCANx) {
     // Enable config change
     FDCANx->CCCR |= FDCAN_CCCR_CCE;
     // Disable automatic retransmission of failed messages
-    FDCANx->CCCR |= FDCAN_CCCR_DAR; // Imho should be enabled later?
+    //FDCANx->CCCR |= FDCAN_CCCR_DAR; 
+    // Enable automatic retransmission
+    FDCANx->CCCR &= ~(FDCAN_CCCR_DAR);
     //TODO: Later add and enable transmitter delay compensation : FDCAN_DBTP.TDC (for CAN FD)
     // Disable transmission pause feature
-    FDCANx->CCCR &= ~(FDCAN_CCCR_TXP);
+    //FDCANx->CCCR &= ~(FDCAN_CCCR_TXP);
+    // Enable transmission pause feature
+    FDCANx->CCCR |= FDCAN_CCCR_TXP;
     // Disable protocol exception handling
-    FDCANx->CCCR |= FDCAN_CCCR_PXHD;
+    //FDCANx->CCCR |= FDCAN_CCCR_PXHD;
+    // Enable protocol exception handling
+    FDCANx->CCCR &= ~(FDCAN_CCCR_PXHD);
     // Set FDCAN frame format (REDEBUG)
     //  Classic mode
     FDCANx->CCCR &= ~(FDCAN_CCCR_BRSE);
@@ -201,6 +211,8 @@ bool llfdcan_init(FDCAN_GlobalTypeDef *FDCANx) {
     // RX FIFO 0
     FDCANx->RXF0C = (FDCAN_RX_FIFO_0_OFFSET + (can_number * FDCAN_OFFSET_W)) << FDCAN_RXF0C_F0SA_Pos;
     FDCANx->RXF0C |= FDCAN_RX_FIFO_0_EL_CNT << FDCAN_RXF0C_F0S_Pos;
+    // RX FIFO 0 switch to overwrite mode? REDEBUG
+    FDCANx->RXF0C |= FDCAN_RXF0C_F0OM;
 
     // TX FIFO (mode set earlier)
     FDCANx->TXBC = (FDCAN_TX_FIFO_OFFSET + (can_number * FDCAN_OFFSET_W)) << FDCAN_TXBC_TBSA_Pos;
@@ -212,29 +224,36 @@ bool llfdcan_init(FDCAN_GlobalTypeDef *FDCANx) {
         *(uint32_t *)(RAMcounter) = 0x00000000;
     }
 
+    // Enable both interrupts for each module
+    FDCANx->ILE = (FDCAN_ILE_EINT0 | FDCAN_ILE_EINT1);
+
+    FDCANx->IE &= 0x0U; // Reset all interrupts
     // Messages for INT0
     FDCANx->IE |= FDCAN_IE_RF0NE; // Rx FIFO 0 new message
-    FDCANx->IE |= FDCAN_IE_RF0FE; // Rx FIFO 0 full
-    FDCANx->IE |= FDCAN_IE_RF0LE; // Rx FIFO 0 message lost
+    //FDCANx->IE |= FDCAN_IE_RF0FE; // Rx FIFO 0 full
+    //FDCANx->IE |= FDCAN_IE_RF0LE; // Rx FIFO 0 message lost
     // Errors
-    FDCANx->IE |= FDCAN_IE_PEAE; // Protocol error in Arbitration phase
-    FDCANx->IE |= FDCAN_IE_PEDE; // Protocol error in Data phase
-    FDCANx->IE |= FDCAN_IE_MRAFE; // Message RAM access failure
-    FDCANx->IE |= FDCAN_IE_TOOE; // Timeout occurred
-    FDCANx->IE |= FDCAN_IE_EWE; // Warning status (error counter is > 96)
-    
-    // Mesages for INT1
-    FDCANx->ILS |= FDCAN_ILS_TFEL | FDCAN_ILS_ARAE; // (FDCAN_ILS_TCL)
-    //FDCANx->IE |= FDCAN_IE_TCE; // Transmission completed
-    FDCANx->IE |= FDCAN_IE_TFEE; // Tx FIFO empty
-    FDCANx->IE |= FDCAN_IE_ARAE; // Access to Reserved address
+    //FDCANx->IE |= FDCAN_IE_BOE; // Bus_Off status
 
-    // Enable both interrupts for each module
-    FDCANx->ILE |= FDCAN_ILE_EINT0 | FDCAN_ILE_EINT1;
+    // Messages for INT1 (Only TFE works??)
+    FDCANx->ILS |= FDCAN_ILS_TFEL;
+    FDCANx->IE |= FDCAN_IE_TFEE; // Tx FIFO empty
+    
 
     // Request leave init, start FDCAN
     FDCANx->CCCR &= ~(FDCAN_CCCR_INIT);
-    while((FDCANx->CCCR & FDCAN_CCCR_INIT) == 1);
+    timeout_counter = 0U;
+    while((FDCANx->CCCR & FDCAN_CCCR_INIT) != 0) {
+      // Delay for about 1ms
+      delay_ms(1);
+      timeout_counter++;
+
+      if(timeout_counter >= FDCAN_INIT_TIMEOUT_MS){
+        puts(FDCAN_NAME_FROM_FDCANIF(FDCANx)); puts(" llfdcan_init timed out (2)!\n");
+        ret = false;
+        break;
+      }
+    }
 
     if (FDCANx == FDCAN1) {
       NVIC_EnableIRQ(FDCAN1_IT0_IRQn);

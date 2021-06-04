@@ -69,7 +69,7 @@ bool has_external_debug_serial = 0;
 
 void detect_configuration(void) {
   // detect if external serial debugging is present
-  has_external_debug_serial = detect_with_pull(GPIOA, 3, PULL_DOWN);
+  has_external_debug_serial = detect_with_pull(GPIOA, 3, PULL_DOWN); // REDEBUG - bad method to detect usart, gives false positive on H7!
 }
 
 // ///// Board functions ///// //

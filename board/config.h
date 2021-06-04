@@ -1,11 +1,11 @@
 #ifndef PANDA_CONFIG_H
 #define PANDA_CONFIG_H
 
-//#define DEBUG
+#define DEBUG
 //#define DEBUG_UART
-//#define DEBUG_USB
+///#define DEBUG_USB
 //#define DEBUG_SPI
-//#define DEBUG_FAULTS
+#define DEBUG_FAULTS
 
 #ifdef STM32H7
   #define PANDA
@@ -25,6 +25,7 @@
 #ifdef BOOTSTUB
 #define USB_PID 0xddeeU
 #else
+//#define USB_PID 0xddccU
 #define USB_PID 0xddffU //REDEBUG (to be able to test with *;D* )
 #endif
 
@@ -49,7 +50,7 @@
 #define MAX_RESP_LEN 0x40U
 
 // Around (1Mbps / 8 bits/byte / 12 bytes per message)
-#define CAN_INTERRUPT_RATE 12000U
+#define CAN_INTERRUPT_RATE 16000U // REDEBUG: raise from 12000 to 16000? message is 16 bytes and not 12 
 
 #endif
 

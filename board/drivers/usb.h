@@ -469,7 +469,7 @@ void usb_reset(void) {
   USBx_OUTEP(0)->DOEPINT = 0xFF;
 
   // unset the address
-  USBx_DEVICE->DCFG &= ~USB_OTG_DCFG_DAD;
+  USBx_DEVICE->DCFG &= ~(USB_OTG_DCFG_DAD);
 
   // set up USB FIFOs
   // RX start address is fixed to 0
@@ -987,7 +987,7 @@ void usb_init(void) {
   REGISTER_INTERRUPT(OTG_HS_IRQn, OTG_HS_IRQ_Handler, 1500000U, FAULT_INTERRUPT_RATE_USB) //TODO: Find out a better rate limit for USB. Now it's the 1.5MB/s rate
 
   // Disable global interrupt
-  USBx->GAHBCFG &= ~USB_OTG_GAHBCFG_GINT;
+  USBx->GAHBCFG &= ~(USB_OTG_GAHBCFG_GINT);
 
   // CoreInit
   /* Select FS Embedded PHY */
@@ -1018,7 +1018,7 @@ void usb_init(void) {
   USBx_DEVICE->DCTL |= USB_OTG_DCTL_SDIS;
 
   /* Deactivate VBUS Sensing B */
-  USBx->GCCFG &= ~USB_OTG_GCCFG_VBDEN;
+  USBx->GCCFG &= ~(USB_OTG_GCCFG_VBDEN);
 
   /* B-peripheral session valid override enable */
   USBx->GOTGCTL |= USB_OTG_GOTGCTL_BVALOEN;
@@ -1050,15 +1050,12 @@ void usb_init(void) {
   /* Clear any pending interrupts */
   USBx->GINTSTS = 0xBFFFFFFFU;
 
-  /* Enable the common interrupts */
-  USBx->GINTMSK |= USB_OTG_GINTMSK_RXFLVLM;
-
   /* Enable interrupts matching to the Device mode ONLY */
-  USBx->GINTMSK |= USB_OTG_GINTMSK_USBSUSPM | USB_OTG_GINTMSK_USBRST |
-                   USB_OTG_GINTMSK_ENUMDNEM | USB_OTG_GINTMSK_IEPINT |
-                   USB_OTG_GINTMSK_OEPINT   | USB_OTG_GINTMSK_IISOIXFRM |
-                   USB_OTG_GINTMSK_PXFRM_IISOOXFRM | USB_OTG_GINTMSK_WUIM;
-
+  USBx->GINTMSK = USB_OTG_GINTMSK_USBRST | USB_OTG_GINTMSK_ENUMDNEM | USB_OTG_GINTMSK_OTGINT |
+                  USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_GONAKEFFM | USB_OTG_GINTMSK_GINAKEFFM |
+                  USB_OTG_GINTMSK_OEPINT | USB_OTG_GINTMSK_IEPINT | USB_OTG_GINTMSK_USBSUSPM |
+                  USB_OTG_GINTMSK_CIDSCHGM | USB_OTG_GINTMSK_SRQIM | USB_OTG_GINTMSK_MMISM | USB_OTG_GINTMSK_EOPFM;
+// USB_OTG_GINTMSK_IISOIXFRM | USB_OTG_GINTMSK_PXFRM_IISOOXFRM | 
   /* Set USB Turnaround time */
   USBx->GUSBCFG |= ((USBD_FS_TRDT_VALUE << 10) & USB_OTG_GUSBCFG_TRDT);
 

@@ -50,8 +50,11 @@ int can_txd_cnt = 0;
 int can_err_cnt = 0;
 int can_overflow_cnt = 0;
 
+// Prototypes
+bool fdcan_init(uint8_t can_number);
+
 bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
-  bool ret = 0;
+  bool ret = false;
 
   ENTER_CRITICAL();
   if (q->w_ptr != q->r_ptr) {
@@ -61,7 +64,7 @@ bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
     } else {
       q->r_ptr += 1U;
     }
-    ret = 1;
+    ret = true;
   }
   EXIT_CRITICAL();
 
@@ -87,7 +90,7 @@ bool can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   if (!ret) {
     can_overflow_cnt++;
     #ifdef DEBUG
-      puts("can_push failed!\n");
+      puts("can_push failed! buffer overflow.\n");
     #endif
   }
   return ret;
@@ -124,11 +127,6 @@ void can_clear(can_ring *q) {
 
 #define BUS_NUM_FROM_FDCAN_NUM(num) (bus_lookup[num])
 #define FDCAN_NUM_FROM_BUS_NUM(num) (fdcan_num_lookup[num])
-
-
-
-
-
 
 
 // CAN message structure bits
@@ -198,10 +196,6 @@ void ignition_can_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 }
 
 
-
-
-
-
 void fdcan_set_forwarding(int from, int to) {
   fdcan_forwarding[from] = to;
 }
@@ -215,21 +209,33 @@ bool can_tx_check_min_slots_free(uint32_t min) {
     (can_slots_empty(&can_txgmlan_q) >= min);
 }
 
+//REDEBUG: move to board header? Also should be cycled only one that is in question? 
+// This MCU has no Bus_Off auto recovery so that's the replacement
+void cycle_transceivers(void) {
+  current_board->enable_can_transceiver(1, false);
+  current_board->enable_can_transceiver(2, false);
+  current_board->enable_can_transceiver(3, false);
+  current_board->enable_can_transceiver(4, false);
+  delay_ms(2);
+  current_board->enable_can_transceiver(1, true);
+  current_board->enable_can_transceiver(2, true);
+  current_board->enable_can_transceiver(3, true);
+  current_board->enable_can_transceiver(4, true);
+}
+
 
 void process_can(uint8_t can_number) {
   FDCAN_GlobalTypeDef *FDCANx = FDCANIF_FROM_FDCAN_NUM(can_number);
 
-  // Access to Reserved address
-  if((FDCANx->IR & FDCAN_IR_ARA) != 0) {
-    FDCANx->IR = FDCAN_IR_ARA;
-    can_err_cnt += 1;
-  } else if (can_number != 0xffU) {
-    FDCANx->IR = FDCAN_IR_TFE; // Clear Tx FIFO Empty flag
-    uint8_t bus_number = BUS_NUM_FROM_FDCAN_NUM(can_number);
+  if (can_number != 0xffU) {
     ENTER_CRITICAL();
 
-    CAN_FIFOMailBox_TypeDef to_send;
-    can_txd_cnt += 1;
+    uint8_t bus_number = BUS_NUM_FROM_FDCAN_NUM(can_number);
+    
+    FDCANx->IR |= FDCAN_IR_TFE; // Clear Tx FIFO Empty flag
+    
+    // REDEBUG: need to rewrite it with TX events??
+    //can_txd_cnt += 1;
     // Why to add successfully transmited message to my fifo??? Returning back with changed bus for Cabana?
     // if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
     //   CAN_FIFOMailBox_TypeDef to_push;
@@ -240,29 +246,48 @@ void process_can(uint8_t can_number) {
     //   can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
     // }
 
-    if (can_pop(can_queues[bus_number], &to_send) && ((FDCANx->TXFQS & FDCAN_TXFQS_TFQF) == 0)) {
-      can_tx_cnt += 1;
-      uint32_t TxFIFOSA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET) + (FDCAN_RX_FIFO_0_EL_CNT * FDCAN_RX_FIFO_0_EL_SIZE);
-      uint8_t tx_index = (FDCANx->TXFQS >> FDCAN_TXFQS_TFQPI_Pos) & 0x1F;
-      // only send if we have received a packet
-      CAN_FIFOMailBox_TypeDef *fifo;
-      fifo = (CAN_FIFOMailBox_TypeDef *)(TxFIFOSA + tx_index * FDCAN_TX_FIFO_EL_SIZE);
+    if ((FDCANx->TXFQS & FDCAN_TXFQS_TFQF) == 0) {
+      CAN_FIFOMailBox_TypeDef to_send;
+      if (can_pop(can_queues[bus_number], &to_send)) {
+        can_tx_cnt += 1;
+        uint32_t TxFIFOSA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET) + (FDCAN_RX_FIFO_0_EL_CNT * FDCAN_RX_FIFO_0_EL_SIZE);
+        uint8_t tx_index = (FDCANx->TXFQS >> FDCAN_TXFQS_TFQPI_Pos) & 0x1F;
+        // only send if we have received a packet
+        CAN_FIFOMailBox_TypeDef *fifo;
+        fifo = (CAN_FIFOMailBox_TypeDef *)(TxFIFOSA + tx_index * FDCAN_TX_FIFO_EL_SIZE);
 
-      // Convert mailbox "type" to normal CAN
-      fifo->RIR = ((to_send.RIR & 0x4) << 27) | ((to_send.RIR & 0x2) << 28) | (to_send.RIR >> 3);  // identifier format | frame type | identifier
-      fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16); // DLC (length) | timestamp
-      fifo->RDLR = to_send.RDLR;
-      fifo->RDHR = to_send.RDHR;
-      
-      
+        // Convert mailbox "type" to normal CAN
+        fifo->RIR = ((to_send.RIR & 0x4) << 27) | ((to_send.RIR & 0x2) << 28) | (to_send.RIR >> 3);  // identifier format | frame type | identifier
+        fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16); // DLC (length) | timestamp
+        fifo->RDLR = to_send.RDLR;
+        fifo->RDHR = to_send.RDHR;
+        
+        FDCANx->TXBAR = (1UL << tx_index); 
 
-      FDCANx->TXBAR |= (1UL << tx_index); 
-
-      if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER)) {
-        usb_outep3_resume_if_paused();
+        if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER)) {
+          usb_outep3_resume_if_paused();
+        }
       }
     }
     EXIT_CRITICAL();
+  }
+  // Needed to fix periodical problem with transceiver sticking
+  if ((FDCANx->PSR & FDCAN_PSR_BO) != 0 && (FDCANx->CCCR & FDCAN_CCCR_INIT) != 0) {
+    puts("FDCAN is in Bus_Off state! Resetting...\n");
+    cycle_transceivers();
+    FDCANx->IR = 0xFFC60000U; // Reset all flags(Only errors!)
+    FDCANx->CCCR &= ~(FDCAN_CCCR_INIT);
+    uint32_t timeout_counter = 0U;
+    while((FDCANx->CCCR & FDCAN_CCCR_INIT) != 0) {
+      // Delay for about 1ms
+      delay_ms(1);
+      timeout_counter++;
+
+      if(timeout_counter >= FDCAN_INIT_TIMEOUT_MS){
+        puts(FDCAN_NAME_FROM_FDCANIF(FDCANx)); puts(" Bus_Off reset timed out!\n");
+        break;
+      }
+    }
   }
 }
 
@@ -276,7 +301,13 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx
       if ((bus_number == 3U) && (fdcan_num_lookup[3] == 0xFFU)) {
         gmlan_send_errs += bitbang_gmlan(to_push) ? 0U : 1U;
       } else {
-        can_fwd_errs += can_push(can_queues[bus_number], to_push) ? 0U : 1U;
+        //can_fwd_errs += can_push(can_queues[bus_number], to_push) ? 0U : 1U;
+        //REDEBUG
+        if (can_push(can_queues[bus_number], to_push) == false) {
+          can_fwd_errs += 1;
+          puts("TX can_send failed because of can_push!");
+        }
+        //REDEBUG
         process_can(FDCAN_NUM_FROM_BUS_NUM(bus_number));
       }
     }
@@ -284,21 +315,15 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx
 }
 
 
-
-
-
-
-
 void can_rx(uint8_t can_number) {
   FDCAN_GlobalTypeDef *FDCANx = FDCANIF_FROM_FDCAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_FDCAN_NUM(can_number);
 	uint8_t rx_fifo_idx;
-  bool ret = true;
 
 	// Rx FIFO 0 new message
 	if((FDCANx->IR & FDCAN_IR_RF0N) != 0) {
-    FDCANx->IR = FDCAN_IR_RF0N;
-    //while((FDCANx->RXF0S & FDCAN_RXF0S_F0FL) != 0) {
+    FDCANx->IR |= FDCAN_IR_RF0N;
+    while((FDCANx->RXF0S & FDCAN_RXF0S_F0FL) != 0) {
       can_rx_cnt += 1;
 
       // can is live
@@ -307,11 +332,6 @@ void can_rx(uint8_t can_number) {
       // getting new message index (0 to 63)
       rx_fifo_idx = (uint8_t)((FDCANx->RXF0S >> FDCAN_RXF0S_F0GI_Pos) & 0x3F);
 
-      // reading message from fifo
-      ////////////////
-      /////////////
-      ///////////////
-    
       uint32_t RxFIFO0SA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET);
       CAN_FIFOMailBox_TypeDef to_push;
       CAN_FIFOMailBox_TypeDef *fifo;
@@ -344,57 +364,20 @@ void can_rx(uint8_t can_number) {
 
       current_board->set_led(LED_BLUE, true);
       can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
-      
+
       // update read index 
       FDCANx->RXF0A = rx_fifo_idx;
-    //}
-	}
+    }
 
-  // Protocol error in Arbitration phase
-  if((FDCANx->IR & FDCAN_IR_PEA) != 0) {
-    FDCANx->IR = FDCAN_IR_PEA;
-    ret = false;
-  }
-
-  // Protocol error in Data phase
-  if((FDCANx->IR & FDCAN_IR_PED) != 0) {
-    FDCANx->IR = FDCAN_IR_PED;
-    ret = false;
-
-  }
-	
-	// Rx FIFO 0 message lost
-	if((FDCANx->IR & FDCAN_IR_RF0L) != 0) {
-		FDCANx->IR = FDCAN_IR_RF0L;
-    ret = false;
-	};
-	
-	// Rx FIFO 0 full (but message isn't lost?)
-	if((FDCANx->IR & FDCAN_IR_RF0F) != 0) {
-    FDCANx->IR = FDCAN_IR_RF0F;
-    ret = false;
-  };
-  // RAM access failure OR Timeout OR error counter > 96
-  if ((FDCANx->IR & FDCAN_IR_MRAF) || (FDCANx->IR & FDCAN_IR_TOO) || (FDCANx->IR & FDCAN_IR_EW)) {
-    FDCANx->IR = FDCAN_IR_MRAF | FDCAN_IR_TOO | FDCAN_IR_EW;
-    ret = false;
-  }
-
-  if (ret == false) {
+  } else if((FDCANx->IR & (FDCAN_IR_PEA | FDCAN_IR_PED | FDCAN_IR_RF0L | FDCAN_IR_RF0F | FDCAN_IR_EW | FDCAN_IR_MRAF | FDCAN_IR_TOO)) != 0) {
+    #ifdef DEBUG
+      puts("FDCAN error, FDCAN_IR: ");puth(FDCANx->IR);puts("\n");
+    #endif
+    FDCANx->IR |= (FDCAN_IR_PEA | FDCAN_IR_PED | FDCAN_IR_RF0L | FDCAN_IR_RF0F | FDCAN_IR_EW | FDCAN_IR_MRAF | FDCAN_IR_TOO); // Clean all error flags
     can_err_cnt += 1;
   }
+  
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -403,17 +386,8 @@ void FDCAN1_IT0_IRQ_Handler(void) { can_rx(0); }
 void FDCAN1_IT1_IRQ_Handler(void) { process_can(0); }
 void FDCAN2_IT0_IRQ_Handler(void) { can_rx(1); }
 void FDCAN2_IT1_IRQ_Handler(void) { process_can(1); }
-void FDCAN3_IT0_IRQ_Handler(void) { can_rx(2); }
+void FDCAN3_IT0_IRQ_Handler(void) { can_rx(2);  }
 void FDCAN3_IT1_IRQ_Handler(void) { process_can(2); }
-
-
-
-
-
-
-
-
-
 
 
 
@@ -426,19 +400,6 @@ bool fdcan_set_speed(uint8_t can_number) {
   ret &= llfdcan_set_speed(FDCANx, can_speed[bus_number], can_loopback, (unsigned int)(can_silent) & (1U << can_number));
   return ret;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 bool fdcan_init(uint8_t can_number) {
@@ -463,8 +424,6 @@ bool fdcan_init(uint8_t can_number) {
 
 
 
-
-
 void fdcan_init_all(void) {
   bool ret = true;
   for (uint8_t i=0U; i < FDCAN_MAX; i++) {
@@ -474,15 +433,6 @@ void fdcan_init_all(void) {
   UNUSED(ret);
 }
 
-
-
-
-
-
-
-//////////////////
-///////////////////
-//////////////////
 
 void fdcan_set_obd(uint8_t harness_orientation, bool obd){
   if(obd){
