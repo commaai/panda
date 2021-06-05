@@ -62,6 +62,7 @@ struct __attribute__((packed)) health_t {
   int16_t safety_param_pkt;
   uint8_t fault_status_pkt;
   uint8_t power_save_enabled_pkt;
+  uint8_t heartbeat_lost_pkt;
 };
 
 
@@ -141,6 +142,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
     case SAFETY_ELM327:
       set_intercept_relay(false);
       heartbeat_counter = 0U;
+      heartbeat_lost = false;
       if (board_has_obd()) {
         current_board->set_can_mode(CAN_MODE_OBD_CAN2);
       }
@@ -149,6 +151,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
     default:
       set_intercept_relay(true);
       heartbeat_counter = 0U;
+      heartbeat_lost = false;
       if (board_has_obd()) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
@@ -183,6 +186,7 @@ int get_health_pkt(void *dat) {
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
   health->power_save_enabled_pkt = (uint8_t)(power_save_status == POWER_SAVE_STATUS_ENABLED);
+  health->heartbeat_lost_pkt = (uint8_t)(heartbeat_lost);
 
   health->fault_status_pkt = fault_status;
   health->faults_pkt = faults;
@@ -596,6 +600,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xf3:
       {
         heartbeat_counter = 0U;
+        heartbeat_lost = false;
         break;
       }
     // **** 0xf4: k-line/l-line 5 baud initialization
@@ -732,6 +737,9 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
         if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
           set_power_save_state(POWER_SAVE_STATUS_ENABLED);
         }
+
+        // set flag to indicate the heartbeat was lost
+        heartbeat_lost = true;
 
         // Also disable IR when the heartbeat goes missing
         current_board->set_ir_power(0U);
