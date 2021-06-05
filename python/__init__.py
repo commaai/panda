@@ -332,7 +332,7 @@ class Panda(object):
   # ******************* health *******************
 
   def health(self):
-    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 43)
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 44)
     a = struct.unpack("<IIIIIIIIBBBBBBBHBBB", dat)
     return {
       "uptime": a[0],
