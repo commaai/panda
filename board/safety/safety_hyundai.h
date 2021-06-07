@@ -149,7 +149,7 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     if (addr == 608) {  // ICE
       gas_pressed = (GET_BYTE(to_push, 7) >> 6) != 0;
-    } else if (addr == 881 && !hyundai_alt_gas) {  // EV & HEV
+    } else if ((addr == 881) && !hyundai_alt_gas) {  // EV & HEV
       gas_pressed = (((GET_BYTE(to_push, 4) & 0x7F) << 1) | GET_BYTE(to_push, 3) >> 7) != 0;
     } else if (addr == 881) {  // PHEV
       gas_pressed = GET_BYTE(to_push, 7) != 0;
