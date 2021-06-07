@@ -34,8 +34,10 @@ AddrCheckStruct hyundai_legacy_rx_checks[] = {
   {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
 };
 const int HYUNDAI_LEGACY_RX_CHECK_LEN = sizeof(hyundai_legacy_rx_checks) / sizeof(hyundai_legacy_rx_checks[0]);
+const uint16_t HYUNDAI_PARAM_ALT_GAS = 1;
 
 bool hyundai_legacy = false;
+bool hyundai_alt_gas = false;
 
 static uint8_t hyundai_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
   int addr = GET_ADDR(to_push);
@@ -145,12 +147,12 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       cruise_engaged_prev = cruise_engaged;
     }
 
-    if ((addr == 608) || (hyundai_legacy && (addr == 881))) {
-      if (addr == 608) {
-        gas_pressed = (GET_BYTE(to_push, 7) >> 6) != 0;
-      } else {
-        gas_pressed = (((GET_BYTE(to_push, 4) & 0x7F) << 1) | GET_BYTE(to_push, 3) >> 7) != 0;
-      }
+    if (addr == 608) {  // ICE
+      gas_pressed = (GET_BYTE(to_push, 7) >> 6) != 0;
+    } else if (addr == 881 && !hyundai_alt_gas) {  // EV & HEV
+      gas_pressed = (((GET_BYTE(to_push, 4) & 0x7F) << 1) | GET_BYTE(to_push, 3) >> 7) != 0;
+    } else if (addr == 881) {  // PHEV
+      gas_pressed = GET_BYTE(to_push, 7) != 0;
     }
 
     // sample wheel speed, averaging opposite corners
@@ -260,17 +262,19 @@ static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 }
 
 static void hyundai_init(int16_t param) {
-  UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();
+  // Checking for alternate gas signal from safety parameter
+  hyundai_alt_gas = GET_FLAG(param, HYUNDAI_PARAM_ALT_GAS);
 
   hyundai_legacy = false;
 }
 
 static void hyundai_legacy_init(int16_t param) {
-  UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();
+  // Checking for alternate gas signal from safety parameter
+  hyundai_alt_gas = GET_FLAG(param, HYUNDAI_PARAM_ALT_GAS);
 
   hyundai_legacy = true;
 }
