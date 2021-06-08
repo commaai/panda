@@ -161,12 +161,6 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     } else {
     }
 
-    // exit controls on rising edge of gas press
-    if (gas_pressed && !gas_pressed_prev && !unsafe_allow_gas) {
-      controls_allowed = 0;
-    }
-    gas_pressed_prev = gas_pressed;
-
     // sample wheel speed, averaging opposite corners
     if (addr == 902) {
       int hyundai_speed = GET_BYTES_04(to_push) & 0x3FFF;  // FL
