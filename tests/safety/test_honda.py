@@ -273,7 +273,7 @@ class TestHondaBoschSafety(TestHondaSafety):
       raise unittest.SkipTest
 
   def setUp(self):
-    self.packer = CANPackerPanda("honda_accord_s2t_2018_can_generated")
+    self.packer = CANPackerPanda("honda_accord_2018_can_generated")
     self.safety = libpandasafety_py.libpandasafety
 
   def _alt_brake_msg(self, brake):
