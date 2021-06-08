@@ -61,7 +61,7 @@ RUN cd /tmp && \
     cd /tmp/tmppilot && \
     git fetch && \
     git checkout 22b1db8af0be3ccd84ef30f6e1506a96c03488ba && \
-    git submodule update --init cereal opendbc && \
+    git submodule update --init --recursive && \
     mkdir /tmp/openpilot && \
     cp -pR SConstruct site_scons/ tools/ selfdrive/ common/ cereal/ opendbc/ /tmp/openpilot && \
     rm -rf /tmp/tmppilot
