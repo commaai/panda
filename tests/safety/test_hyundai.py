@@ -224,7 +224,7 @@ class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
     self.safety.init_tests()
 
   def _gas_msg(self, gas):
-    values = {"CR_Vcu_AccPedDep_Pc": gas}
+    values = {"CR_Vcu_AccPedDep_Pos": gas}
     return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
 
 
@@ -236,7 +236,7 @@ class TestHyundaiLegacySafetyEV(TestHyundaiSafety):
     self.safety.init_tests()
 
   def _gas_msg(self, gas):
-    values = {"Accel_Pedal_Pc": gas}
+    values = {"Accel_Pedal_Pos": gas}
     return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
 
 
