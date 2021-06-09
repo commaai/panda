@@ -1,8 +1,6 @@
-#define MICROSECOND_TIMER TIM2
 // ********************* Includes *********************
 #include "../config.h"
-//#include "stm32f2_config.h"
-#include "stm32f2xx.h"
+#include "stm32f2_config.h"
 #include "libc.h"
 
 #include "main_declarations.h"
