@@ -1,7 +1,7 @@
 /*
 *****************************************************************************
 **
-**  File        : stm32_flash.ld
+**  File        : stm32f4_flash.ld
 **
 **  Abstract    : Linker script for STM32F407VG Device with
 **                1024KByte FLASH, 192KByte RAM
@@ -15,7 +15,7 @@
 **
 **  Environment : Atollic TrueSTUDIO(R)
 **
-**  Distribution: The file is distributed “as is,” without any warranty
+**  Distribution: The file is distributed ï¿½as is,ï¿½ without any warranty
 **                of any kind.
 **
 **  (c)Copyright Atollic AB.

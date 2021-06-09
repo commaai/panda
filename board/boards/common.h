@@ -1,9 +1,3 @@
-#ifdef STM32F4
-  #include "stm32f4xx_hal_gpio_ex.h"
-#else
-  #include "stm32f2xx_hal_gpio_ex.h"
-#endif
-
 // Common GPIO initialization
 void common_init_gpio(void){
   // TODO: Is this block actually doing something???

@@ -12,7 +12,6 @@ void unused_interrupt_handler(void) {
   fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
 }
 
-#define NUM_INTERRUPTS 102U                // There are 102 external interrupt sources (see stm32f413.h)
 interrupt interrupts[NUM_INTERRUPTS];
 
 #define REGISTER_INTERRUPT(irq_num, func_ptr, call_rate, rate_fault) \
@@ -53,9 +52,8 @@ void init_interrupts(bool check_rate_limit){
   }
 
   // Init timer 10 for a 1s interval
-  register_set_bits(&(RCC->APB1ENR), RCC_APB1ENR_TIM6EN);  // Enable interrupt timer peripheral
   REGISTER_INTERRUPT(TIM6_DAC_IRQn, TIM6_DAC_IRQ_Handler, 1, FAULT_INTERRUPT_RATE_INTERRUPTS)
-  register_set(&(TIM6->PSC), (732-1), 0xFFFFU);
+  register_set(&(TIM6->PSC), ((uint16_t)(15.25*(CORE_FREQ/2))-1), 0xFFFFU);
   register_set(&(TIM6->DIER), TIM_DIER_UIE, 0x5F5FU);
   register_set(&(TIM6->CR1), TIM_CR1_CEN, 0x3FU);
   TIM6->SR = 0;

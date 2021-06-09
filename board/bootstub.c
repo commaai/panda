@@ -4,16 +4,12 @@
 #define MIN_VERSION 2
 
 #include "config.h"
-#include "obj/gitversion.h"
-
 #ifdef STM32F4
-  #define PANDA
-  #include "stm32f4xx.h"
-  #include "stm32f4xx_hal_gpio_ex.h"
+  #include "stm32f4_config.h"
 #else
-  #include "stm32f2xx.h"
-  #include "stm32f2xx_hal_gpio_ex.h"
+  #include "stm32f2_config.h"
 #endif
+#include "obj/gitversion.h"
 
 // ******************** Prototypes ********************
 void puts(const char *a){ UNUSED(a); }
@@ -44,7 +40,7 @@ const board *current_board;
 
 #include "board.h"
 
-#include "gpio.h"
+#include "bootmode.h"
 
 #include "drivers/spi.h"
 #include "drivers/usb.h"
@@ -58,7 +54,7 @@ const board *current_board;
 #include "spi_flasher.h"
 
 void __initialize_hardware_early(void) {
-  early();
+  bootmode();
 }
 
 void fail(void) {
@@ -72,11 +68,12 @@ extern void *_app_start[];
 // BOUNTY: $200 coupon on shop.comma.ai or $100 check.
 
 int main(void) {
+  clock_init();
+
   // Init interrupt table
   init_interrupts(true);
-
   disable_interrupts();
-  clock_init();
+  
   detect_configuration();
   detect_board_type();
 

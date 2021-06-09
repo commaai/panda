@@ -2,6 +2,11 @@
 
 // ********************* Includes *********************
 #include "config.h"
+#ifdef STM32F4
+  #include "stm32f4_config.h"
+#else
+  #include "stm32f2_config.h"
+#endif
 #include "obj/gitversion.h"
 
 #include "main_declarations.h"
@@ -28,7 +33,7 @@
 #include "drivers/timer.h"
 #include "drivers/clock.h"
 
-#include "gpio.h"
+#include "bootmode.h"
 
 #include "power_saving.h"
 #include "safety.h"
@@ -339,7 +344,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xd0:
       // addresses are OTP
       if (setup->b.wValue.w == 1U) {
-        (void)memcpy(resp, (uint8_t *)0x1fff79c0, 0x10);
+        (void)memcpy(resp, (uint8_t *)SERIAL_NUMBER_ADDRESS, 0x10);
         resp_len = 0x10;
       } else {
         get_provision_chunk(resp);
@@ -645,7 +650,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
-  early();
+  bootmode();
 }
 
 void __attribute__ ((noinline)) enable_fpu(void) {
@@ -659,8 +664,8 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called at 8Hz
 uint8_t loop_counter = 0U;
-void TIM1_BRK_TIM9_IRQ_Handler(void) {
-  if (TIM9->SR != 0) {
+void heartbeat_handler(void) {
+  if (HEARTBEAT_TIMER->SR != 0) {
     // siren
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
 
@@ -760,23 +765,22 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
     loop_counter++;
     loop_counter %= 8U;
   }
-  TIM9->SR = 0;
+  HEARTBEAT_TIMER->SR = 0;
 }
 
-#define MAX_FADE 8192U
+
 int main(void) {
+  clock_init();
+  peripherals_init();
+  
   // Init interrupt table
   init_interrupts(true);
-
-  // 8Hz timer
-  REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler, 10U, FAULT_INTERRUPT_RATE_TIM9)
-
   // shouldn't have interrupts here, but just in case
   disable_interrupts();
 
-  // init early devices
-  clock_init();
-  peripherals_init();
+  // 8Hz timer
+  REGISTER_INTERRUPT(HEARTBEAT_TIMER_IRQ, heartbeat_handler, 10U, FAULT_INTERRUPT_RATE_HEARTBEAT)
+
   detect_configuration();
   detect_board_type();
   adc_init();
@@ -825,10 +829,10 @@ int main(void) {
   // init microsecond system timer
   // increments 1000000 times per second
   // generate an update to set the prescaler
-  TIM2->PSC = 48-1;
-  TIM2->CR1 = TIM_CR1_CEN;
-  TIM2->EGR = TIM_EGR_UG;
-  // use TIM2->CNT to read
+  MICROSECOND_TIMER->PSC = (APB1_FREQ)-1;
+  MICROSECOND_TIMER->CR1 = TIM_CR1_CEN;
+  MICROSECOND_TIMER->EGR = TIM_EGR_UG;
+  // use MICROSECOND_TIMER->CNT to read
 
   // init to SILENT and can silent
   set_safety_mode(SAFETY_SILENT, 0);
@@ -837,8 +841,8 @@ int main(void) {
   current_board->enable_can_transceivers(true);
 
   // 8hz
-  timer_init(TIM9, 183);
-  NVIC_EnableIRQ(TIM1_BRK_TIM9_IRQn);
+  timer_init(HEARTBEAT_TIMER, (uint16_t)((15.25*(APB2_FREQ))/8));
+  NVIC_EnableIRQ(HEARTBEAT_TIMER_IRQ);
 
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");
@@ -860,18 +864,18 @@ int main(void) {
         uint32_t div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4U : 1U);
 
         // useful for debugging, fade breaks = panda is overloaded
-        for(uint32_t fade = 0U; fade < MAX_FADE; fade += div_mode){
+        for(uint32_t fade = 0U; fade < MAX_LED_FADE; fade += div_mode){
           current_board->set_led(LED_RED, true);
           delay(fade >> 4);
           current_board->set_led(LED_RED, false);
-          delay((MAX_FADE - fade) >> 4);
+          delay((MAX_LED_FADE - fade) >> 4);
         }
 
-        for(uint32_t fade = MAX_FADE; fade > 0U; fade -= div_mode){
+        for(uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= div_mode){
           current_board->set_led(LED_RED, true);
           delay(fade >> 4);
           current_board->set_led(LED_RED, false);
-          delay((MAX_FADE - fade) >> 4);
+          delay((MAX_LED_FADE - fade) >> 4);
         }
 
       #ifdef DEBUG_FAULTS

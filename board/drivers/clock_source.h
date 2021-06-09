@@ -55,7 +55,7 @@ void clock_source_init(uint8_t mode){
   // Setup timer
   REGISTER_INTERRUPT(TIM1_UP_TIM10_IRQn, TIM1_UP_TIM10_IRQ_Handler, (1200U / CLOCK_SOURCE_PERIOD_MS) , FAULT_INTERRUPT_RATE_TIM1)
   REGISTER_INTERRUPT(TIM1_CC_IRQn, TIM1_CC_IRQ_Handler, (1200U / CLOCK_SOURCE_PERIOD_MS) , FAULT_INTERRUPT_RATE_TIM1)
-  register_set(&(TIM1->PSC), (9600-1), 0xFFFFU);                              // Tick on 0.1 ms
+  register_set(&(TIM1->PSC), ((APB2_FREQ*100)-1), 0xFFFFU);                   // Tick on 0.1 ms
   register_set(&(TIM1->ARR), ((CLOCK_SOURCE_PERIOD_MS*10U) - 1U), 0xFFFFU);   // Period
   register_set(&(TIM1->CCMR1), 0U, 0xFFFFU);                                  // No output on compare
   register_set_bits(&(TIM1->CCER), TIM_CCER_CC1E);                            // Enable compare 1

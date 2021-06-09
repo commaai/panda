@@ -5,6 +5,15 @@ void delay(uint32_t a) {
   for (i = 0; i < a; i++);
 }
 
+void delay_us(uint32_t a) {
+  uint32_t end = MICROSECOND_TIMER->CNT + a;
+  while(MICROSECOND_TIMER->CNT < end);
+}
+
+void delay_ms(uint32_t a) {
+  delay_us(a*1000);
+}
+
 void *memset(void *str, int c, unsigned int n) {
   uint8_t *s = str;
   for (unsigned int i = 0; i < n; i++) {
