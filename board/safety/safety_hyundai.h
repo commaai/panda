@@ -35,8 +35,8 @@ AddrCheckStruct hyundai_legacy_rx_checks[] = {
 };
 const int HYUNDAI_LEGACY_RX_CHECK_LEN = sizeof(hyundai_legacy_rx_checks) / sizeof(hyundai_legacy_rx_checks[0]);
 
-const int HYUNDAI_PARAM_HEV_GAS = 1;
-const int HYUNDAI_PARAM_EV_GAS = 2;
+const int HYUNDAI_PARAM_EV_GAS = 1;
+const int HYUNDAI_PARAM_HEV_GAS = 2;
 
 int hyundai_gas_signal = 0;
 bool hyundai_legacy = false;
