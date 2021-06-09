@@ -35,8 +35,8 @@ AddrCheckStruct hyundai_legacy_rx_checks[] = {
 };
 const int HYUNDAI_LEGACY_RX_CHECK_LEN = sizeof(hyundai_legacy_rx_checks) / sizeof(hyundai_legacy_rx_checks[0]);
 
-#define HYUNDAI_PARAM_HEV_GAS 1
-#define HYUNDAI_PARAM_EV_GAS 2
+const int HYUNDAI_PARAM_HEV_GAS = 1;
+const int HYUNDAI_PARAM_EV_GAS = 2;
 
 int hyundai_gas_signal = 0;
 bool hyundai_legacy = false;
@@ -149,8 +149,8 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       cruise_engaged_prev = cruise_engaged;
     }
 
-    if ((addr == 881) && (hyundai_gas_signal & (HYUNDAI_PARAM_HEV_GAS | HYUNDAI_PARAM_EV_GAS))) {
-      if (hyundai_gas_signal & HYUNDAI_PARAM_HEV_GAS) {
+    if ((addr == 881) && ((hyundai_gas_signal & (HYUNDAI_PARAM_HEV_GAS | HYUNDAI_PARAM_EV_GAS)) != 0)) {
+      if ((hyundai_gas_signal & HYUNDAI_PARAM_HEV_GAS) != 0) {
         gas_pressed = GET_BYTE(to_push, 7) != 0;
       } else {
         gas_pressed = (((GET_BYTE(to_push, 4) & 0x7F) << 1) | GET_BYTE(to_push, 3) >> 7) != 0;
