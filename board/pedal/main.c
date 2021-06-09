@@ -92,10 +92,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         break;
       }
       // read
-      // while ((resp_len < MIN(setup->b.wLength.w, MAX_RESP_LEN)) &&
-      //                    getc(ur, (char*)&resp[resp_len])) {
-      //   ++resp_len;
-      // }
+      while ((resp_len < MIN(setup->b.wLength.w, MAX_RESP_LEN)) &&
+                         getc(ur, (char*)&resp[resp_len])) {
+        ++resp_len;
+      }
       break;
     default:
       puts("NO HANDLER ");
