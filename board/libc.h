@@ -11,7 +11,7 @@ void delay_us(uint32_t a) {
 }
 
 void delay_ms(uint32_t a) {
-  delay_us(a*1000);
+  delay_us(a*1000U);
 }
 
 void *memset(void *str, int c, unsigned int n) {
