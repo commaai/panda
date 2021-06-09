@@ -149,11 +149,11 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       cruise_engaged_prev = cruise_engaged;
     }
 
-    if ((addr == 881) && ((hyundai_gas_signal & (HYUNDAI_PARAM_HEV_GAS | HYUNDAI_PARAM_EV_GAS)) != 0)) {
-      if ((hyundai_gas_signal & HYUNDAI_PARAM_HEV_GAS) != 0) {
-        gas_pressed = GET_BYTE(to_push, 7) != 0;
-      } else {
+    if ((addr == 881) && ((hyundai_gas_signal & (HYUNDAI_PARAM_EV_GAS | HYUNDAI_PARAM_HEV_GAS)) != 0)) {
+      if ((hyundai_gas_signal & HYUNDAI_PARAM_EV_GAS) != 0) {
         gas_pressed = (((GET_BYTE(to_push, 4) & 0x7F) << 1) | GET_BYTE(to_push, 3) >> 7) != 0;
+      } else {
+        gas_pressed = GET_BYTE(to_push, 7) != 0;
       }
     } else if (addr == 608) {  // ICE
       gas_pressed = (GET_BYTE(to_push, 7) >> 6) != 0;
