@@ -829,7 +829,7 @@ int main(void) {
   // init microsecond system timer
   // increments 1000000 times per second
   // generate an update to set the prescaler
-  MICROSECOND_TIMER->PSC = (APB1_FREQ)-1;
+  MICROSECOND_TIMER->PSC = (APB1_FREQ)-1U;
   MICROSECOND_TIMER->CR1 = TIM_CR1_CEN;
   MICROSECOND_TIMER->EGR = TIM_EGR_UG;
   // use MICROSECOND_TIMER->CNT to read
@@ -841,7 +841,7 @@ int main(void) {
   current_board->enable_can_transceivers(true);
 
   // 8hz
-  timer_init(HEARTBEAT_TIMER, (uint16_t)((15.25*(APB2_FREQ))/8));
+  timer_init(HEARTBEAT_TIMER, (uint16_t)((15.25U*(APB2_FREQ))/8U));
   NVIC_EnableIRQ(HEARTBEAT_TIMER_IRQ);
 
 #ifdef DEBUG
