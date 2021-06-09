@@ -36,6 +36,7 @@ TIM_TypeDef *MICROSECOND_TIMER = &timer;
 #define HW_TYPE_BLACK_PANDA 3U
 #define HW_TYPE_PEDAL 4U
 #define HW_TYPE_UNO 5U
+#define HW_TYPE_DOS 6U
 
 #define ALLOW_DEBUG
 
