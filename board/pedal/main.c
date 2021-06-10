@@ -41,7 +41,7 @@
   }
 #endif
 
-#define ENTER_BOOTLOADER_MAGIC 0xdeadbeef
+#define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
 uint32_t enter_bootloader_mode;
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
