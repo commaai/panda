@@ -35,7 +35,17 @@ typedef struct uart_ring {
     .dma_rx = rx_dma \
   };
 
+
 // ***************************** Function prototypes *****************************
+void uart_init(uart_ring *q, int baud);
+
+bool getc(uart_ring *q, char *elem);
+bool putc(uart_ring *q, char elem);
+
+void puts(const char *a);
+void puth(unsigned int i);
+void hexdump(const void *a, int l);
+
 void debug_ring_callback(uart_ring *ring);
 
 // ******************************** UART buffers ********************************
