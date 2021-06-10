@@ -420,7 +420,7 @@ void USB_WritePacket(const void *src, uint16_t len, uint32_t ep) {
   USBx_INEP(ep)->DIEPCTL |= (USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA);
 
   // load the FIFO
-  if (src) {
+  if (src != NULL) {
     const uint32_t *src_copy = (const uint32_t *)src;
     for (uint32_t i = 0; i < count32b; i++) {
       USBx_DFIFO(ep) = *src_copy;
