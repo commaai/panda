@@ -26,14 +26,6 @@ extern int can_loopback;
 extern int can_silent;
 extern uint32_t can_speed[4];
 
-void can_set_forwarding(int from, int to);
-
-bool can_init(uint8_t can_number);
-void can_init_all(void);
-bool can_tx_check_min_slots_free(uint32_t min);
-void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx_hook);
-bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem);
-
 // Ignition detected from CAN meessages
 bool ignition_can = false;
 bool ignition_cadillac = false;
@@ -157,8 +149,6 @@ uint32_t can_speed[] = {5000, 5000, 5000, 333};
 #define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
 #define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
 
-void process_can(uint8_t can_number);
-
 bool can_set_speed(uint8_t can_number) {
   bool ret = true;
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
@@ -168,70 +158,11 @@ bool can_set_speed(uint8_t can_number) {
   return ret;
 }
 
-void can_init_all(void) {
-  bool ret = true;
-  for (uint8_t i=0U; i < CAN_MAX; i++) {
-    can_clear(can_queues[i]);
-    ret &= can_init(i);
-  }
-  UNUSED(ret);
-}
-
 void can_flip_buses(uint8_t bus1, uint8_t bus2){
   bus_lookup[bus1] = bus2;
   bus_lookup[bus2] = bus1;
   can_num_lookup[bus1] = bus2;
   can_num_lookup[bus2] = bus1;
-}
-
-// TODO: Cleanup with new abstraction
-void can_set_gmlan(uint8_t bus) {
-  if(board_has_gmlan()){
-    // first, disable GMLAN on prev bus
-    uint8_t prev_bus = can_num_lookup[3];
-    if (bus != prev_bus) {
-      switch (prev_bus) {
-        case 1:
-        case 2:
-          puts("Disable GMLAN on CAN");
-          puth(prev_bus + 1U);
-          puts("\n");
-          current_board->set_can_mode(CAN_MODE_NORMAL);
-          bus_lookup[prev_bus] = prev_bus;
-          can_num_lookup[prev_bus] = prev_bus;
-          can_num_lookup[3] = -1;
-          bool ret = can_init(prev_bus);
-          UNUSED(ret);
-          break;
-        default:
-          // GMLAN was not set on either BUS 1 or 2
-          break;
-      }
-    }
-
-    // now enable GMLAN on the new bus
-    switch (bus) {
-      case 1:
-      case 2:
-        puts("Enable GMLAN on CAN");
-        puth(bus + 1U);
-        puts("\n");
-        current_board->set_can_mode((bus == 1U) ? CAN_MODE_GMLAN_CAN2 : CAN_MODE_GMLAN_CAN3);
-        bus_lookup[bus] = 3;
-        can_num_lookup[bus] = -1;
-        can_num_lookup[3] = bus;
-        bool ret = can_init(bus);
-        UNUSED(ret);
-        break;
-      case 0xFF:  //-1 unsigned
-        break;
-      default:
-        puts("GMLAN can only be set on CAN2 or CAN3\n");
-        break;
-    }
-  } else {
-    puts("GMLAN not available on black panda\n");
-  }
 }
 
 // TODO: remove
@@ -291,6 +222,14 @@ void can_sce(CAN_TypeDef *CAN) {
 }
 
 // ***************************** CAN *****************************
+
+bool can_tx_check_min_slots_free(uint32_t min) {
+  return
+    (can_slots_empty(&can_tx1_q) >= min) &&
+    (can_slots_empty(&can_tx2_q) >= min) &&
+    (can_slots_empty(&can_tx3_q) >= min) &&
+    (can_slots_empty(&can_txgmlan_q) >= min);
+}
 
 void process_can(uint8_t can_number) {
   if (can_number != 0xffU) {
@@ -379,6 +318,22 @@ void ignition_can_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 }
 
+void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx_hook) {
+  if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
+    if (bus_number < BUS_MAX) {
+      // add CAN packet to send queue
+      // bus number isn't passed through
+      to_push->RDTR &= 0xF;
+      if ((bus_number == 3U) && (can_num_lookup[3] == 0xFFU)) {
+        gmlan_send_errs += bitbang_gmlan(to_push) ? 0U : 1U;
+      } else {
+        can_fwd_errs += can_push(can_queues[bus_number], to_push) ? 0U : 1U;
+        process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
+      }
+    }
+  }
+}
+
 // CAN receive handlers
 // blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number) {
@@ -434,30 +389,6 @@ void CAN3_TX_IRQ_Handler(void) { process_can(2); }
 void CAN3_RX0_IRQ_Handler(void) { can_rx(2); }
 void CAN3_SCE_IRQ_Handler(void) { can_sce(CAN3); }
 
-bool can_tx_check_min_slots_free(uint32_t min) {
-  return
-    (can_slots_empty(&can_tx1_q) >= min) &&
-    (can_slots_empty(&can_tx2_q) >= min) &&
-    (can_slots_empty(&can_tx3_q) >= min) &&
-    (can_slots_empty(&can_txgmlan_q) >= min);
-}
-
-void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx_hook) {
-  if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
-    if (bus_number < BUS_MAX) {
-      // add CAN packet to send queue
-      // bus number isn't passed through
-      to_push->RDTR &= 0xF;
-      if ((bus_number == 3U) && (can_num_lookup[3] == 0xFFU)) {
-        gmlan_send_errs += bitbang_gmlan(to_push) ? 0U : 1U;
-      } else {
-        can_fwd_errs += can_push(can_queues[bus_number], to_push) ? 0U : 1U;
-        process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
-      }
-    }
-  }
-}
-
 void can_set_forwarding(int from, int to) {
   can_forwarding[from] = to;
 }
@@ -485,3 +416,61 @@ bool can_init(uint8_t can_number) {
   return ret;
 }
 
+void can_init_all(void) {
+  bool ret = true;
+  for (uint8_t i=0U; i < CAN_MAX; i++) {
+    can_clear(can_queues[i]);
+    ret &= can_init(i);
+  }
+  UNUSED(ret);
+}
+
+// TODO: Cleanup with new abstraction
+void can_set_gmlan(uint8_t bus) {
+  if(board_has_gmlan()){
+    // first, disable GMLAN on prev bus
+    uint8_t prev_bus = can_num_lookup[3];
+    if (bus != prev_bus) {
+      switch (prev_bus) {
+        case 1:
+        case 2:
+          puts("Disable GMLAN on CAN");
+          puth(prev_bus + 1U);
+          puts("\n");
+          current_board->set_can_mode(CAN_MODE_NORMAL);
+          bus_lookup[prev_bus] = prev_bus;
+          can_num_lookup[prev_bus] = prev_bus;
+          can_num_lookup[3] = -1;
+          bool ret = can_init(prev_bus);
+          UNUSED(ret);
+          break;
+        default:
+          // GMLAN was not set on either BUS 1 or 2
+          break;
+      }
+    }
+
+    // now enable GMLAN on the new bus
+    switch (bus) {
+      case 1:
+      case 2:
+        puts("Enable GMLAN on CAN");
+        puth(bus + 1U);
+        puts("\n");
+        current_board->set_can_mode((bus == 1U) ? CAN_MODE_GMLAN_CAN2 : CAN_MODE_GMLAN_CAN3);
+        bus_lookup[bus] = 3;
+        can_num_lookup[bus] = -1;
+        can_num_lookup[3] = bus;
+        bool ret = can_init(bus);
+        UNUSED(ret);
+        break;
+      case 0xFF:  //-1 unsigned
+        break;
+      default:
+        puts("GMLAN can only be set on CAN2 or CAN3\n");
+        break;
+    }
+  } else {
+    puts("GMLAN not available on black panda\n");
+  }
+}
