@@ -50,7 +50,8 @@ int can_loopback = 0;
 int can_silent = ALL_CAN_SILENT;
 
 // ********************* instantiate queues *********************
-
+// cppcheck-suppress misra-c2012-20.10
+// cppcheck-suppress misra-c2012-20.7
 #define can_buffer(x, size) \
   CAN_FIFOMailBox_TypeDef elems_##x[size]; \
   can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = size, .elems = (CAN_FIFOMailBox_TypeDef *)&elems_##x };
@@ -60,6 +61,7 @@ can_buffer(tx1_q, 0x100)
 can_buffer(tx2_q, 0x100)
 can_buffer(tx3_q, 0x100)
 can_buffer(txgmlan_q, 0x100)
+// cppcheck-suppress misra-c2012-9.3
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
 
 // global CAN stats
