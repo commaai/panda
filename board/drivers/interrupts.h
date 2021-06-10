@@ -53,7 +53,7 @@ void init_interrupts(bool check_rate_limit){
 
   // Init timer 10 for a 1s interval
   REGISTER_INTERRUPT(TIM6_DAC_IRQn, TIM6_DAC_IRQ_Handler, 1, FAULT_INTERRUPT_RATE_INTERRUPTS)
-  register_set(&(TIM6->PSC), ((15.25*APB1_FREQ)-1U), 0xFFFFU);
+  register_set(&(TIM6->PSC), ((uint16_t)(15.25*APB1_FREQ)-1U), 0xFFFFU);
   register_set(&(TIM6->DIER), TIM_DIER_UIE, 0x5F5FU);
   register_set(&(TIM6->CR1), TIM_CR1_CEN, 0x3FU);
   TIM6->SR = 0;

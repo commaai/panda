@@ -841,7 +841,7 @@ int main(void) {
   current_board->enable_can_transceivers(true);
 
   // 8hz
-  timer_init(HEARTBEAT_TIMER, ((15.25*APB2_FREQ)/8U));
+  timer_init(HEARTBEAT_TIMER, (uint16_t)((15.25*APB2_FREQ)/8U));
   NVIC_EnableIRQ(HEARTBEAT_TIMER_IRQ);
 
 #ifdef DEBUG
