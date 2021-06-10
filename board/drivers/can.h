@@ -70,7 +70,7 @@ int can_err_cnt = 0;
 int can_overflow_cnt = 0;
 
 // ********************* interrupt safe queue *********************
-
+// cppcheck-suppress misra-c2012-8.2
 bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   bool ret = 0;
 
@@ -291,7 +291,7 @@ void can_sce(CAN_TypeDef *CAN) {
 }
 
 // ***************************** CAN *****************************
-
+// cppcheck-suppress misra-c2012-8.2
 void process_can(uint8_t can_number) {
   if (can_number != 0xffU) {
 
@@ -433,7 +433,7 @@ void CAN2_SCE_IRQ_Handler(void) { can_sce(CAN2); }
 void CAN3_TX_IRQ_Handler(void) { process_can(2); }
 void CAN3_RX0_IRQ_Handler(void) { can_rx(2); }
 void CAN3_SCE_IRQ_Handler(void) { can_sce(CAN3); }
-
+// cppcheck-suppress misra-c2012-8.2
 bool can_tx_check_min_slots_free(uint32_t min) {
   return
     (can_slots_empty(&can_tx1_q) >= min) &&
@@ -441,7 +441,7 @@ bool can_tx_check_min_slots_free(uint32_t min) {
     (can_slots_empty(&can_tx3_q) >= min) &&
     (can_slots_empty(&can_txgmlan_q) >= min);
 }
-
+// cppcheck-suppress misra-c2012-8.2
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx_hook) {
   if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
     if (bus_number < BUS_MAX) {
@@ -457,11 +457,11 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx
     }
   }
 }
-
+// cppcheck-suppress misra-c2012-8.2
 void can_set_forwarding(int from, int to) {
   can_forwarding[from] = to;
 }
-
+// cppcheck-suppress misra-c2012-8.2
 bool can_init(uint8_t can_number) {
   bool ret = false;
 
