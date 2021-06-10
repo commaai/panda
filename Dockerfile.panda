@@ -60,10 +60,10 @@ RUN cd /tmp && \
     git clone https://github.com/commaai/openpilot.git tmppilot || true && \
     cd /tmp/tmppilot && \
     git fetch && \
-    git checkout 5463469f71e7861ccfbbd4d09b8e4ae56b8d3e45 && \
-    git submodule update --init cereal opendbc && \
+    git checkout 20b066a0cd0539dd7ef822490c90342d6f05ac32 && \
+    git submodule update --init cereal opendbc rednose_repo && \
     mkdir /tmp/openpilot && \
-    cp -pR SConstruct site_scons/ tools/ selfdrive/ common/ cereal/ opendbc/ /tmp/openpilot && \
+    cp -pR SConstruct site_scons/ tools/ selfdrive/ common/ cereal/ opendbc/ rednose/ /tmp/openpilot && \
     rm -rf /tmp/tmppilot
 
 RUN cd /tmp/openpilot && \
