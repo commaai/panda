@@ -18,10 +18,12 @@ uint32_t can_rx_errs = 0;
 uint32_t can_send_errs = 0;
 uint32_t can_fwd_errs = 0;
 uint32_t gmlan_send_errs = 0;
-extern int can_live, pending_can_live;
+extern int can_live;
+extern int pending_can_live;
 
 // must reinit after changing these
-extern int can_loopback, can_silent;
+extern int can_loopback;
+extern int can_silent;
 extern uint32_t can_speed[4];
 
 void can_set_forwarding(int from, int to);
@@ -42,7 +44,10 @@ uint32_t ignition_can_cnt = 0U;
 #define ALL_CAN_SILENT 0xFF
 #define ALL_CAN_LIVE 0
 
-int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_SILENT;
+int can_live = 0;
+int pending_can_live = 0;
+int can_loopback = 0;
+int can_silent = ALL_CAN_SILENT;
 
 // ********************* instantiate queues *********************
 
