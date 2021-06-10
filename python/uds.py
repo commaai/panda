@@ -593,7 +593,8 @@ class UdsClient:
   def tester_present(self) -> None:
     self._uds_request(SERVICE_TYPE.TESTER_PRESENT, subfunction=0x00)
 
-  def access_timing_parameter(self, timing_parameter_type: TIMING_PARAMETER_TYPE, parameter_values: Optional[bytes] = None) -> Optional[bytes]:
+  def access_timing_parameter(self, timing_parameter_type: TIMING_PARAMETER_TYPE,
+                              parameter_values: Optional[bytes] = None) -> Optional[bytes]:
     write_custom_values = timing_parameter_type == TIMING_PARAMETER_TYPE.SET_TO_GIVEN_VALUES
     read_values = timing_parameter_type in (TIMING_PARAMETER_TYPE.READ_CURRENTLY_ACTIVE,
                                             TIMING_PARAMETER_TYPE.READ_EXTENDED_SET)
@@ -658,7 +659,8 @@ class UdsClient:
       raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
     return resp[2:]
 
-  def read_memory_by_address(self, memory_address: int, memory_size: int, memory_address_bytes: int = 4, memory_size_bytes: int = 1) -> bytes:
+  def read_memory_by_address(self, memory_address: int, memory_size: int,
+                             memory_address_bytes: int = 4, memory_size_bytes: int = 1) -> bytes:
     if memory_address_bytes < 1 or memory_address_bytes > 4:
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
@@ -688,8 +690,9 @@ class UdsClient:
     data = bytes([transmission_mode_type, periodic_data_identifier])
     self._uds_request(SERVICE_TYPE.READ_DATA_BY_PERIODIC_IDENTIFIER, subfunction=None, data=data)
 
-  def dynamically_define_data_identifier(self, dynamic_definition_type: DYNAMIC_DEFINITION_TYPE, dynamic_data_identifier: int,
-                                         source_definitions: List[DynamicSourceDefinition], memory_address_bytes: int = 4, memory_size_bytes: int = 1) -> None:
+  def dynamically_define_data_identifier(self, dynamic_definition_type: DYNAMIC_DEFINITION_TYPE,
+                                         dynamic_data_identifier: int, source_definitions: List[DynamicSourceDefinition],
+                                         memory_address_bytes: int = 4, memory_size_bytes: int = 1) -> None:
     if memory_address_bytes < 1 or memory_address_bytes > 4:
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
@@ -721,7 +724,8 @@ class UdsClient:
     if resp_id != data_identifier_type:
       raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
 
-  def write_memory_by_address(self, memory_address: int, memory_size: int, data_record: bytes, memory_address_bytes: int = 4, memory_size_bytes: int = 1) -> None:
+  def write_memory_by_address(self, memory_address: int, memory_size: int, data_record: bytes,
+                              memory_address_bytes: int = 4, memory_size_bytes: int = 1) -> None:
     if memory_address_bytes < 1 or memory_address_bytes > 4:
       raise ValueError('invalid memory_address_bytes: {}'.format(memory_address_bytes))
     if memory_size_bytes < 1 or memory_size_bytes > 4:
@@ -799,7 +803,9 @@ class UdsClient:
       raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
     return resp[2:]
 
-  def routine_control(self, routine_control_type: ROUTINE_CONTROL_TYPE, routine_identifier_type: ROUTINE_IDENTIFIER_TYPE, routine_option_record: bytes = b'') -> bytes:
+  def routine_control(self, routine_control_type: ROUTINE_CONTROL_TYPE,
+                      routine_identifier_type: ROUTINE_IDENTIFIER_TYPE,
+                      routine_option_record: bytes = b'') -> bytes:
     data = struct.pack('!H', routine_identifier_type) + routine_option_record
     resp = self._uds_request(SERVICE_TYPE.ROUTINE_CONTROL, subfunction=routine_control_type, data=data)
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
@@ -807,7 +813,8 @@ class UdsClient:
       raise ValueError('invalid response routine identifier: {}'.format(hex(resp_id)))
     return resp[2:]
 
-  def request_download(self, memory_address: int, memory_size: int, memory_address_bytes: int = 4, memory_size_bytes: int = 4, data_format: int = 0x00) -> int:
+  def request_download(self, memory_address: int, memory_size: int, memory_address_bytes: int = 4,
+                       memory_size_bytes: int = 4, data_format: int = 0x00) -> int:
     data = bytes([data_format])
 
     if memory_address_bytes < 1 or memory_address_bytes > 4:
