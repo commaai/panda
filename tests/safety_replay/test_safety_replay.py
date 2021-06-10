@@ -4,7 +4,7 @@ import os
 import requests
 
 from panda import Panda
-from replay_drive import replay_drive
+from panda.tests.safety_replay.replay_drive import replay_drive
 from tools.lib.logreader import LogReader  # pylint: disable=import-error
 
 BASE_URL = "https://commadataci.blob.core.windows.net/openpilotci/"
