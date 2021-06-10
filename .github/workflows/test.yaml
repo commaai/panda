@@ -101,4 +101,4 @@ jobs:
         run: eval "$BUILD"
       - name: Run static analysis
         run: |
-          $RUN "cd /tmp/openpilot/panda && git init && git add -A && MYPYPATH=/tmp/openpilot pre-commit run --all"
+          $RUN "cd /tmp/openpilot/panda && git init && git add -A && pre-commit run --all"
