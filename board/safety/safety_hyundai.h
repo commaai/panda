@@ -18,7 +18,8 @@ const CanMsg HYUNDAI_TX_MSGS[] = {
  };
 
 AddrCheckStruct hyundai_rx_checks[] = {
-  {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}}},
+  {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+           {881, 0, 8, .expected_timestep = 10000U}}},
   {.msg = {{902, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},
   {.msg = {{916, 0, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}}},
   {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
@@ -35,7 +36,12 @@ AddrCheckStruct hyundai_legacy_rx_checks[] = {
 };
 const int HYUNDAI_LEGACY_RX_CHECK_LEN = sizeof(hyundai_legacy_rx_checks) / sizeof(hyundai_legacy_rx_checks[0]);
 
+const int HYUNDAI_PARAM_EV_GAS = 1;
+const int HYUNDAI_PARAM_HYBRID_GAS = 2;
+
 bool hyundai_legacy = false;
+bool hyundai_ev_gas_signal = false;
+bool hyundai_hybrid_gas_signal = false;
 
 static uint8_t hyundai_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
   int addr = GET_ADDR(to_push);
@@ -145,12 +151,14 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       cruise_engaged_prev = cruise_engaged;
     }
 
-    if ((addr == 608) || (hyundai_legacy && (addr == 881))) {
-      if (addr == 608) {
-        gas_pressed = (GET_BYTE(to_push, 7) >> 6) != 0;
-      } else {
-        gas_pressed = (((GET_BYTE(to_push, 4) & 0x7F) << 1) | GET_BYTE(to_push, 3) >> 7) != 0;
-      }
+    // read gas pressed signal
+    if ((addr == 881) && hyundai_ev_gas_signal) {
+      gas_pressed = (((GET_BYTE(to_push, 4) & 0x7F) << 1) | GET_BYTE(to_push, 3) >> 7) != 0;
+    } else if ((addr == 881) && hyundai_hybrid_gas_signal) {
+      gas_pressed = GET_BYTE(to_push, 7) != 0;
+    } else if (addr == 608) {  // ICE
+      gas_pressed = (GET_BYTE(to_push, 7) >> 6) != 0;
+    } else {
     }
 
     // sample wheel speed, averaging opposite corners
@@ -260,19 +268,21 @@ static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 }
 
 static void hyundai_init(int16_t param) {
-  UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();
 
   hyundai_legacy = false;
+  hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
+  hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
 }
 
 static void hyundai_legacy_init(int16_t param) {
-  UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();
 
   hyundai_legacy = true;
+  hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
+  hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
 }
 
 const safety_hooks hyundai_hooks = {
