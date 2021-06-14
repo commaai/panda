@@ -19,6 +19,7 @@ typedef struct uart_ring {
 } uart_ring;
 
 // TODO: replace with the function
+// cppcheck-suppress misra-c2012-20.10
 #define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, rx_dma) \
   uint8_t elems_rx_##x[size_rx]; \
   uint8_t elems_tx_##x[size_tx]; \
