@@ -6,5 +6,7 @@ misra-c2012-11.5
 misra-c2012-15.1
 # Advisory: union types can be used
 misra-c2012-19.2
+# Advisory: The # and ## preprocessor operators should not be used
+misra-c2012-20.10
 # Required: it's ok re-defining potentially reserved Macro names. Not likely to cause confusion
 misra-c2012-21.1

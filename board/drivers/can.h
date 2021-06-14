@@ -42,7 +42,6 @@ int can_loopback = 0;
 int can_silent = ALL_CAN_SILENT;
 
 // ********************* instantiate queues *********************
-// cppcheck-suppress misra-c2012-20.10
 // cppcheck-suppress misra-c2012-20.7
 #define can_buffer(x, size) \
   CAN_FIFOMailBox_TypeDef elems_##x[size]; \
