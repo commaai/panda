@@ -22,7 +22,7 @@ To install the library:
 pip install pandacan
 ```
 
-See [this class](https://github.com/commaai/panda/blob/master/python/__init__.py#L99) for how to interact with the panda.
+See [the Panda class](https://github.com/commaai/panda/blob/master/python/__init__.py) for how to interact with the panda.
 
 For example, to receive CAN messages:
 ``` python
