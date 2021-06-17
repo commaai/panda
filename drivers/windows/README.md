@@ -44,7 +44,7 @@ the panda for you.
 
 A simple tool for testing J2534 drivers is DrewTech's 'J2534-1 Bus Analysis
 Tool' available in the 'Other Support Applications' section of their
-[Download Page](http://www.drewtech.com/downloads/).
+[Download Page](http://www.drewtech.com/downloads/#OtherSupportApplications).
 
 # What is J2534?
 
