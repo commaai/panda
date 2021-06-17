@@ -79,7 +79,7 @@ Safety modes optionally supports `controls_allowed`, which allows or blocks a su
 
 ## Code Rigor
 
-When compiled from the [comma two](https://comma.ai/shop/products/comma-two-devkit) dev kit, the panda FW is configured and optimized (at compile time) for its use in
+When compiled from a comma device, the panda FW is configured and optimized (at compile time) for its use in
 conjuction with [openpilot](https://github.com/commaai/openpilot). The panda FW, through its safety model, provides and enforces the
 [openpilot safety](https://github.com/commaai/openpilot/blob/devel/SAFETY.md). Due to its critical function, it's important that the application code rigor within the `board` folder is held to high standards.
 
