@@ -22,7 +22,7 @@ To install the library:
 pip install pandacan
 ```
 
-See [this class](https://github.com/commaai/panda/blob/master/python/__init__.py#L80) for how to interact with the panda.
+See [the Panda class](https://github.com/commaai/panda/blob/master/python/__init__.py) for how to interact with the panda.
 
 For example, to receive CAN messages:
 ``` python
@@ -34,7 +34,7 @@ And to send one on bus 0:
 ``` python
 >>> panda.can_send(0x1aa, "message", 0)
 ```
-Note that you may have to setup [udev rules](https://community.comma.ai/wiki/index.php/Panda#Linux_udev_rules) for Linux, such as
+Note that you may have to setup [udev rules](https://github.com/commaai/panda/tree/master/drivers/linux) for Linux, such as
 ``` bash
 sudo tee /etc/udev/rules.d/11-panda.rules <<EOF
 SUBSYSTEM=="usb", ATTRS{idVendor}=="bbaa", ATTRS{idProduct}=="ddcc", MODE="0666"
@@ -79,7 +79,7 @@ Safety modes optionally supports `controls_allowed`, which allows or blocks a su
 
 ## Code Rigor
 
-When compiled from the [EON](https://comma.ai/shop/products/eon-gold-dashcam-devkit) or [comma two](https://comma.ai/shop/products/comma-two-devkit) dev kits, the panda FW is configured and optimized (at compile time) for its use in
+When compiled from a comma device, the panda FW is configured and optimized (at compile time) for its use in
 conjuction with [openpilot](https://github.com/commaai/openpilot). The panda FW, through its safety model, provides and enforces the
 [openpilot safety](https://github.com/commaai/openpilot/blob/devel/SAFETY.md). Due to its critical function, it's important that the application code rigor within the `board` folder is held to high standards.
 
