@@ -143,6 +143,9 @@ class Panda(object):
   CLOCK_SOURCE_MODE_FREE_RUNNING = 1
   CLOCK_SOURCE_MODE_EXTERNAL_SYNC = 2
 
+  FLAG_HONDA_ALT_BRAKE = 1
+  FLAG_HONDA_BOSCH_LONG = 2
+
   def __init__(self, serial=None, claim=True):
     self._serial = serial
     self._handle = None
