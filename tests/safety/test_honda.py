@@ -366,10 +366,10 @@ class TestHondaBoschLongSafety(TestHondaBoschSafety):
 
   def test_diagnostics(self):
     tester_present = common.package_can_msg((0x18DAB0F1, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", self.PT_BUS))
-    self.assertEqual(True, self.safety.safety_tx_hook(tester_present))
+    self.assertTrue(self.safety.safety_tx_hook(tester_present))
 
     not_tester_present = common.package_can_msg((0x18DAB0F1, 0, b"\x03\xAA\xAA\x00\x00\x00\x00\x00", self.PT_BUS))
-    self.assertEqual(False, self.safety.safety_tx_hook(not_tester_present))
+    self.assertFalse(self.safety.safety_tx_hook(not_tester_present))
 
   def test_radar_alive(self):
     # If the radar knockout failed, make sure the relay malfunction is shown
