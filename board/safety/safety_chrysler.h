@@ -26,14 +26,10 @@ static uint8_t chrysler_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
 static uint8_t chrysler_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   /* This function does not want the checksum byte in the input data.
   jeep chrysler canbus checksum from http://illmatics.com/Remote%20Car%20Hacking.pdf */
-  // FIXME:
-  // cppcheck-suppress misra-c2012-7.2
-  uint8_t checksum = 0xFF;
+  uint8_t checksum = 0xFFU;
   int len = GET_LEN(to_push);
   for (int j = 0; j < (len - 1); j++) {
-    // FIXME:
-    // cppcheck-suppress misra-c2012-7.2
-    uint8_t shift = 0x80;
+    uint8_t shift = 0x80U;
     uint8_t curr = (uint8_t)GET_BYTE(to_push, j);
     for (int i=0; i<8; i++) {
       uint8_t bit_sum = curr & shift;
