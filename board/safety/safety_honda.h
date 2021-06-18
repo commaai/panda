@@ -290,6 +290,13 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   }
 
+  // Only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
+  if (addr == 0x18DAB0F1) {
+    tx &= (GET_BYTE((to_send), 0) == 0x02);
+    tx &= (GET_BYTE((to_send), 1) == 0x3E);
+    tx &= (GET_BYTE((to_send), 2) == 0x80);
+  }
+
   // 1 allows the message through
   return tx;
 }
