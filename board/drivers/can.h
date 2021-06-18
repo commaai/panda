@@ -18,10 +18,12 @@ uint32_t can_rx_errs = 0;
 uint32_t can_send_errs = 0;
 uint32_t can_fwd_errs = 0;
 uint32_t gmlan_send_errs = 0;
+// FIXME:
 // cppcheck-suppress misra-c2012-12.3
 extern int can_live, pending_can_live;
 
 // must reinit after changing these
+// FIXME:
 // cppcheck-suppress misra-c2012-12.3
 extern int can_loopback, can_silent;
 extern uint32_t can_speed[4];
@@ -43,10 +45,12 @@ uint32_t ignition_can_cnt = 0U;
 
 #define ALL_CAN_SILENT 0xFF
 #define ALL_CAN_LIVE 0
+// FIXME:
 // cppcheck-suppress misra-c2012-12.3
 int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_SILENT;
 
 // ********************* instantiate queues *********************
+// FIXME:
 // cppcheck-suppress misra-c2012-20.7
 #define can_buffer(x, size) \
   CAN_FIFOMailBox_TypeDef elems_##x[size]; \
@@ -57,6 +61,7 @@ can_buffer(tx1_q, 0x100)
 can_buffer(tx2_q, 0x100)
 can_buffer(tx3_q, 0x100)
 can_buffer(txgmlan_q, 0x100)
+// FIXME:
 // cppcheck-suppress misra-c2012-9.3
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
 
@@ -68,6 +73,7 @@ int can_err_cnt = 0;
 int can_overflow_cnt = 0;
 
 // ********************* interrupt safe queue *********************
+// FIXME:
 // cppcheck-suppress misra-c2012-8.2
 bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   bool ret = 0;
@@ -289,6 +295,7 @@ void can_sce(CAN_TypeDef *CAN) {
 }
 
 // ***************************** CAN *****************************
+// FIXME:
 // cppcheck-suppress misra-c2012-8.2
 void process_can(uint8_t can_number) {
   if (can_number != 0xffU) {
@@ -431,6 +438,7 @@ void CAN2_SCE_IRQ_Handler(void) { can_sce(CAN2); }
 void CAN3_TX_IRQ_Handler(void) { process_can(2); }
 void CAN3_RX0_IRQ_Handler(void) { can_rx(2); }
 void CAN3_SCE_IRQ_Handler(void) { can_sce(CAN3); }
+// FIXME:
 // cppcheck-suppress misra-c2012-8.2
 bool can_tx_check_min_slots_free(uint32_t min) {
   return
@@ -439,6 +447,7 @@ bool can_tx_check_min_slots_free(uint32_t min) {
     (can_slots_empty(&can_tx3_q) >= min) &&
     (can_slots_empty(&can_txgmlan_q) >= min);
 }
+// FIXME:
 // cppcheck-suppress misra-c2012-8.2
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx_hook) {
   if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
@@ -455,10 +464,12 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx
     }
   }
 }
+// FIXME:
 // cppcheck-suppress misra-c2012-8.2
 void can_set_forwarding(int from, int to) {
   can_forwarding[from] = to;
 }
+// FIXME:
 // cppcheck-suppress misra-c2012-8.2
 bool can_init(uint8_t can_number) {
   bool ret = false;

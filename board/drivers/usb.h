@@ -415,6 +415,7 @@ void USB_WritePacket(const void *src, uint16_t len, uint32_t ep) {
   count32b = (len + 3U) / 4U;
 
   // TODO: revisit this
+  // FIXME:
   // cppcheck-suppress misra-c2012-12.2
   USBx_INEP(ep)->DIEPTSIZ = ((numpacket << 19) & USB_OTG_DIEPTSIZ_PKTCNT) |
                             (len               & USB_OTG_DIEPTSIZ_XFRSIZ);

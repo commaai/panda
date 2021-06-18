@@ -6,6 +6,7 @@ struct sample_t {
   int values[6];
   int min;
   int max;
+  // FIXME:
   // cppcheck-suppress misra-c2012-9.4
 } sample_t_default = {{0}, 0, 0};
 
