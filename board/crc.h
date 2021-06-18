@@ -1,8 +1,7 @@
 uint8_t crc_checksum(uint8_t *dat, int len, const uint8_t poly) {
   uint8_t crc = 0xFFU;
-  // FIXME:
-  // cppcheck-suppress misra-c2012-12.3
-  int i, j;
+  int i;
+  int j;
   for (i = len - 1; i >= 0; i--) {
     crc ^= dat[i];
     for (j = 0; j < 8; j++) {
