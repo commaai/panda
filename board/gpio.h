@@ -1,7 +1,7 @@
 // Early bringup
-#define ENTER_BOOTLOADER_MAGIC 0xdeadbeef
-#define ENTER_SOFTLOADER_MAGIC 0xdeadc0de
-#define BOOT_NORMAL 0xdeadb111
+#define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
+#define ENTER_SOFTLOADER_MAGIC 0xdeadc0deU
+#define BOOT_NORMAL 0xdeadb111U
 
 extern void *g_pfnVectors;
 extern uint32_t enter_bootloader_mode;
