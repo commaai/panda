@@ -4,32 +4,31 @@
 // CURR_S = ADC13
 // 5VOUT_S = ADC14
 
-// for red panda:
-// 5VOUT_S = ADC1_INP2
-// VOLT_S = ADC2_INP6
-
 #define ADCCHAN_ACCEL0 10
 #define ADCCHAN_ACCEL1 11
 //#define ADCCHAN_VOLTAGE 12
 #define ADCCHAN_CURRENT 13
 
-#define ADCCHAN_VOLTAGE 6
+// for red panda:
+// 5VOUT_S = ADC12_INP5
+// VOLT_S = ADC1_INP2
+#define ADCCHAN_VOLTAGE 2
 
 void adc_init(void) {
   #ifdef STM32H7
 
-    ADC2->CR &= ~(ADC_CR_DEEPPWD); //Reset deep-power-down mode
-    ADC2->CR |= ADC_CR_ADVREGEN; // Enable ADC regulator
+    ADC1->CR &= ~(ADC_CR_DEEPPWD); //Reset deep-power-down mode
+    ADC1->CR |= ADC_CR_ADVREGEN; // Enable ADC regulator
     delay_us(100); // Let regulator to start
 
-    ADC2->CR &= ~(ADC_CR_ADCALDIF); // Choose single-ended calibration
-    ADC2->CR |= ADC_CR_ADCALLIN; // Lineriality calibration
-    ADC2->CR |= ADC_CR_ADCAL; // Start calibrtation
-    while((ADC2->CR & ADC_CR_ADCAL) != 0);
+    ADC1->CR &= ~(ADC_CR_ADCALDIF); // Choose single-ended calibration
+    ADC1->CR |= ADC_CR_ADCALLIN; // Lineriality calibration
+    ADC1->CR |= ADC_CR_ADCAL; // Start calibrtation
+    while((ADC1->CR & ADC_CR_ADCAL) != 0);
 
-    ADC2->ISR |= ADC_ISR_ADRDY;
-    ADC2->CR |= ADC_CR_ADEN;
-    while((ADC2->ISR & ADC_ISR_ADRDY) != 1);
+    ADC1->ISR |= ADC_ISR_ADRDY;
+    ADC1->CR |= ADC_CR_ADEN;
+    while((ADC1->ISR & ADC_ISR_ADRDY) != 1);
 
   #else
     register_set(&(ADC->CCR), ADC_CCR_TSVREFE | ADC_CCR_VBATE, 0xC30000U); // BUG: VBATE must be disabled when TSVREFE is set. If both bits are set, only the VBAT conversion is performed. Also why???
@@ -40,19 +39,19 @@ void adc_init(void) {
 
 uint32_t adc_get(unsigned int channel) {
 
-  ADC2->SQR1 &= ~(ADC_SQR1_L);
-  ADC2->SQR1 = (channel << 6U);
+  ADC1->SQR1 &= ~(ADC_SQR1_L);
+  ADC1->SQR1 = (channel << 6U);
   
-  ADC2->SMPR1 = (0x7U << (channel * 3) );
-  ADC2->PCSEL_RES0 = (0x1U << channel);
+  ADC1->SMPR1 = (0x7U << (channel * 3) );
+  ADC1->PCSEL_RES0 = (0x1U << channel);
 
-  ADC2->CR |= ADC_CR_ADSTART;
-  while (!(ADC2->ISR & ADC_ISR_EOC));
+  ADC1->CR |= ADC_CR_ADSTART;
+  while (!(ADC1->ISR & ADC_ISR_EOC));
 
-  uint16_t res = ADC2->DR;
+  uint16_t res = ADC1->DR;
 
-  while (!(ADC2->ISR & ADC_ISR_EOS));
-  ADC2->ISR |= ADC_ISR_EOS;
+  while (!(ADC1->ISR & ADC_ISR_EOS));
+  ADC1->ISR |= ADC_ISR_EOS;
 
   return res;
 }

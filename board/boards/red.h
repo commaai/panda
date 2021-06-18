@@ -168,12 +168,12 @@ void red_set_siren(bool enabled){
 void red_init(void) {
   common_init_gpio();
 
-  //A6,A3: OBD_SBU1, OBD_SBU2
-  set_gpio_pullup(GPIOA, 6, PULL_NONE);
-  set_gpio_mode(GPIOA, 6, MODE_ANALOG);
+  //C4,A1: OBD_SBU1, OBD_SBU2
+  set_gpio_pullup(GPIOC, 4, PULL_NONE);
+  set_gpio_mode(GPIOC, 4, MODE_ANALOG);
 
-  set_gpio_pullup(GPIOA, 3, PULL_NONE);
-  set_gpio_mode(GPIOA, 3, MODE_ANALOG);
+  set_gpio_pullup(GPIOA, 1, PULL_NONE);
+  set_gpio_mode(GPIOA, 1, MODE_ANALOG);
 
   //C10,C11 : OBD_SBU1_RELAY, OBD_SBU2_RELAY
   set_gpio_speed(GPIOC, 10, SPEED_LOW); 
@@ -219,16 +219,16 @@ void red_init(void) {
 
 const harness_configuration red_harness_config = {
   .has_harness = true,
-  .GPIO_SBU1 = GPIOA,
+  .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
   .GPIO_relay_SBU1 = GPIOC,
   .GPIO_relay_SBU2 = GPIOC,
-  .pin_SBU1 = 6,
-  .pin_SBU2 = 3,
+  .pin_SBU1 = 4,
+  .pin_SBU2 = 1,
   .pin_relay_SBU1 = 10,
   .pin_relay_SBU2 = 11,
-  .adc_channel_SBU1 = 3,
-  .adc_channel_SBU2 = 15
+  .adc_channel_SBU1 = 4, //ADC12_INP4
+  .adc_channel_SBU2 = 17 //ADC1_INP17
 };
 
 const board board_red = {

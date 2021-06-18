@@ -104,10 +104,11 @@ bool llfdcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, bool loopbac
   FDCANx->CCCR &= ~(FDCAN_CCCR_ASM);
 
   if(ret){
-    if (FDCANx == FDCAN1) { // DIVC is 1 by default
-      FDCAN_CCU->CCFG |= FDCANCCU_CCFG_BCC; // Bypass calibration
-      FDCAN_CCU->CCFG |= CAN_QUANTA; // Setting time quanta to 8 for now
-    }
+    //REDEBUG: try without it, do not switch off calibration yet
+    // if (FDCANx == FDCAN1) { // DIVC is 1 by default
+    //   FDCAN_CCU->CCFG |= FDCANCCU_CCFG_BCC; // Bypass calibration
+    //   FDCAN_CCU->CCFG |= CAN_QUANTA; // Setting time quanta to 8 for now
+    // }
     // Set the nominal bit timing register
     FDCANx->NBTP = ((CAN_SYNC_JW-1)<<FDCAN_NBTP_NSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_NBTP_NTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_NBTP_NTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1)<<FDCAN_NBTP_NBRP_Pos);
 
@@ -170,18 +171,18 @@ bool llfdcan_init(FDCAN_GlobalTypeDef *FDCANx) {
     // Enable config change
     FDCANx->CCCR |= FDCAN_CCCR_CCE;
     // Disable automatic retransmission of failed messages
-    //FDCANx->CCCR |= FDCAN_CCCR_DAR; 
+    FDCANx->CCCR |= FDCAN_CCCR_DAR; 
     // Enable automatic retransmission
-    FDCANx->CCCR &= ~(FDCAN_CCCR_DAR);
+    //FDCANx->CCCR &= ~(FDCAN_CCCR_DAR);
     //TODO: Later add and enable transmitter delay compensation : FDCAN_DBTP.TDC (for CAN FD)
     // Disable transmission pause feature
-    //FDCANx->CCCR &= ~(FDCAN_CCCR_TXP);
+    FDCANx->CCCR &= ~(FDCAN_CCCR_TXP);
     // Enable transmission pause feature
-    FDCANx->CCCR |= FDCAN_CCCR_TXP;
+    //FDCANx->CCCR |= FDCAN_CCCR_TXP;
     // Disable protocol exception handling
-    //FDCANx->CCCR |= FDCAN_CCCR_PXHD;
+    FDCANx->CCCR |= FDCAN_CCCR_PXHD;
     // Enable protocol exception handling
-    FDCANx->CCCR &= ~(FDCAN_CCCR_PXHD);
+    //FDCANx->CCCR &= ~(FDCAN_CCCR_PXHD);
     // Set FDCAN frame format (REDEBUG)
     //  Classic mode
     FDCANx->CCCR &= ~(FDCAN_CCCR_BRSE);

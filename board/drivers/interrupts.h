@@ -55,7 +55,7 @@ void init_interrupts(bool check_rate_limit){
   }
 
   // Init timer 10 for a 1s interval
-  #ifdef STM32H7
+  #ifdef STM32H7 // This is already enabled in common.h, remove!
     register_set_bits(&(RCC->APB1LENR), RCC_APB1LENR_TIM6EN);  // Enable interrupt timer peripheral
   #else
     register_set_bits(&(RCC->APB1ENR), RCC_APB1ENR_TIM6EN);  // Enable interrupt timer peripheral

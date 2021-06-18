@@ -273,7 +273,7 @@ void process_can(uint8_t can_number) {
   }
   // Needed to fix periodical problem with transceiver sticking
   if ((FDCANx->PSR & FDCAN_PSR_BO) != 0 && (FDCANx->CCCR & FDCAN_CCCR_INIT) != 0) {
-    puts("FDCAN is in Bus_Off state! Resetting...\n");
+    puts("FDCAN is in Bus_Off state! Resetting... CAN number: "); puth(can_number); puts("\n");
     cycle_transceivers();
     FDCANx->IR = 0xFFC60000U; // Reset all flags(Only errors!)
     FDCANx->CCCR &= ~(FDCAN_CCCR_INIT);

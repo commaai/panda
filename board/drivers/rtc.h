@@ -100,7 +100,7 @@ timestamp_t rtc_get_time(void){
     timestamp_t result;
     // Init with zero values in case there is no RTC running 
     // Init with fake date better?
-    result.year = 0U  + YEAR_OFFSET;
+    result.year = 0U + YEAR_OFFSET;
     result.month = 1U;
     result.day = 1U;
     result.weekday = 1U;

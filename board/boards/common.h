@@ -61,19 +61,18 @@ void common_init_gpio(void){
     set_gpio_pullup(GPIOB, 4, PULL_NONE);
     set_gpio_mode(GPIOB, 4, MODE_OUTPUT);
 
-    // B1: usb load switch
-    set_gpio_speed(GPIOB, 1, SPEED_LOW); 
-    set_gpio_output_type(GPIOB, 1, OUTPUT_TYPE_PUSH_PULL);
-    set_gpio_pullup(GPIOB, 1, PULL_NONE);
-    set_gpio_mode(GPIOB, 1, MODE_OUTPUT);
+    // B14: usb load switch
+    set_gpio_speed(GPIOB, 14, SPEED_LOW); 
+    set_gpio_output_type(GPIOB, 14, OUTPUT_TYPE_PUSH_PULL);
+    set_gpio_pullup(GPIOB, 14, PULL_NONE);
+    set_gpio_mode(GPIOB, 14, MODE_OUTPUT);
 
-    //F11,F14: 5VOUT_S, VOLT_S
+    //B1,F11 5VOUT_S, VOLT_S
+    set_gpio_pullup(GPIOB, 1, PULL_NONE);
+    set_gpio_mode(GPIOB, 1, MODE_ANALOG);
+
     set_gpio_pullup(GPIOF, 11, PULL_NONE);
     set_gpio_mode(GPIOF, 11, MODE_ANALOG);
-
-    set_gpio_pullup(GPIOF, 14, PULL_NONE);
-    set_gpio_mode(GPIOF, 14, MODE_ANALOG);
-
 
     // A11,A12: USB:
     set_gpio_speed(GPIOA, 11, SPEED_VERY_HIGH); 
@@ -164,8 +163,6 @@ void common_init_gpio(void){
     set_gpio_mode(GPIOB, 12, MODE_ANALOG);
     set_gpio_pullup(GPIOB, 13, PULL_NONE);
     set_gpio_mode(GPIOB, 13, MODE_ANALOG);
-    set_gpio_pullup(GPIOB, 14, PULL_NONE);
-    set_gpio_mode(GPIOB, 14, MODE_ANALOG);
     set_gpio_pullup(GPIOB, 15, PULL_NONE);
     set_gpio_mode(GPIOB, 15, MODE_ANALOG);
     // Port C
@@ -258,6 +255,8 @@ void common_init_gpio(void){
     // Port F
     set_gpio_pullup(GPIOF, 6, PULL_NONE);
     set_gpio_mode(GPIOF, 6, MODE_ANALOG);
+    set_gpio_pullup(GPIOF, 14, PULL_NONE);
+    set_gpio_mode(GPIOF, 14, MODE_ANALOG);
     set_gpio_pullup(GPIOF, 15, PULL_NONE);
     set_gpio_mode(GPIOF, 15, MODE_ANALOG);
     // Port G
