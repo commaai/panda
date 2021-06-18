@@ -424,8 +424,10 @@ void USB_WritePacket(const void *src, uint16_t len, uint32_t ep) {
   // load the FIFO
   const uint32_t *src_copy = (const uint32_t *)src;
   for (uint32_t i = 0; i < count32b; i++) {
+    // FIXME:
     // cppcheck-suppress nullPointer
     USBx_DFIFO(ep) = *src_copy;
+    // FIXME:
     // cppcheck-suppress nullPointerArithmetic
     src_copy++;
   }
