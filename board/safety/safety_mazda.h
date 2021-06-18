@@ -29,7 +29,7 @@
 
 const CanMsg MAZDA_TX_MSGS[] = {{MAZDA_LKAS, 0, 8}, {MAZDA_CRZ_BTNS, 0, 8}};
 bool mazda_lkas_allowed = false;
-
+// cppcheck-suppress misra-c2012-9.3
 AddrCheckStruct mazda_rx_checks[] = {
   {.msg = {{MAZDA_CRZ_CTRL,     0, 8, .expected_timestep = 20000U}}},
   {.msg = {{MAZDA_CRZ_BTNS,     0, 8, .expected_timestep = 100000U}}},

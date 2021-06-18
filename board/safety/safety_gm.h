@@ -24,6 +24,7 @@ const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8
                              {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
+// cppcheck-suppress misra-c2012-9.3
 AddrCheckStruct gm_rx_checks[] = {
   {.msg = {{388, 0, 8, .expected_timestep = 100000U}}},
   {.msg = {{842, 0, 5, .expected_timestep = 100000U}}},

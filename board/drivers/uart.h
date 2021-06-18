@@ -17,7 +17,7 @@ typedef struct uart_ring {
   void (*callback)(struct uart_ring*);
   bool dma_rx;
 } uart_ring;
-
+// cppcheck-suppress misra-c2012-20.7
 #define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, rx_dma) \
   uint8_t elems_rx_##x[size_rx]; \
   uint8_t elems_tx_##x[size_tx]; \
@@ -270,7 +270,7 @@ void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
     u->BRR = __USART_BRR(24000000U, baud);
   }
 }
-
+// cppcheck-suppress misra-c2012-8.2
 void uart_init(uart_ring *q, int baud) {
   // Register interrupts (max data rate: 115200 baud)
   if(q->uart == USART1){
@@ -315,7 +315,7 @@ void uart_init(uart_ring *q, int baud) {
 }
 
 // ************************* Low-level buffer functions *************************
-
+// cppcheck-suppress misra-c2012-8.2
 bool getc(uart_ring *q, char *elem) {
   bool ret = false;
 
@@ -345,7 +345,7 @@ bool injectc(uart_ring *q, char elem) {
 
   return ret;
 }
-
+// cppcheck-suppress misra-c2012-8.2
 bool putc(uart_ring *q, char elem) {
   bool ret = false;
   uint16_t next_w_ptr;
@@ -427,6 +427,7 @@ void putui(uint32_t i) {
 }
 
 void puth(unsigned int i) {
+  // cppcheck-suppress misra-c2012-7.4
   char c[] = "0123456789abcdef";
   for (int pos = 28; pos != -4; pos -= 4) {
     putch(c[(i >> (unsigned int)(pos)) & 0xFU]);
@@ -434,12 +435,13 @@ void puth(unsigned int i) {
 }
 
 void puth2(unsigned int i) {
+  // cppcheck-suppress misra-c2012-7.4
   char c[] = "0123456789abcdef";
   for (int pos = 4; pos != -4; pos -= 4) {
     putch(c[(i >> (unsigned int)(pos)) & 0xFU]);
   }
 }
-
+// cppcheck-suppress misra-c2012-8.2
 void hexdump(const void *a, int l) {
   if (a != NULL) {
     for (int i=0; i < l; i++) {

@@ -7,7 +7,7 @@ const int CHRYSLER_MAX_TORQUE_ERROR = 80;    // max torque cmd in excess of torq
 const int CHRYSLER_GAS_THRSLD = 30;  // 7% more than 2m/s
 const int CHRYSLER_STANDSTILL_THRSLD = 10;  // about 1m/s
 const CanMsg CHRYSLER_TX_MSGS[] = {{571, 0, 3}, {658, 0, 6}, {678, 0, 8}};
-
+// cppcheck-suppress misra-c2012-9.3
 AddrCheckStruct chrysler_rx_checks[] = {
   {.msg = {{544, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},
   {.msg = {{514, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}}},
@@ -25,9 +25,11 @@ static uint8_t chrysler_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
 static uint8_t chrysler_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   /* This function does not want the checksum byte in the input data.
   jeep chrysler canbus checksum from http://illmatics.com/Remote%20Car%20Hacking.pdf */
+  // cppcheck-suppress misra-c2012-7.2
   uint8_t checksum = 0xFF;
   int len = GET_LEN(to_push);
   for (int j = 0; j < (len - 1); j++) {
+    // cppcheck-suppress misra-c2012-7.2
     uint8_t shift = 0x80;
     uint8_t curr = (uint8_t)GET_BYTE(to_push, j);
     for (int i=0; i<8; i++) {
