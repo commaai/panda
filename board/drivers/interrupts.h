@@ -14,14 +14,13 @@ void unused_interrupt_handler(void) {
 
 #define NUM_INTERRUPTS 102U                // There are 102 external interrupt sources (see stm32f413.h)
 interrupt interrupts[NUM_INTERRUPTS];
-// FIXME:
-// cppcheck-suppress misra-c2012-20.7
+
 #define REGISTER_INTERRUPT(irq_num, func_ptr, call_rate, rate_fault) \
-  interrupts[irq_num].irq_type = irq_num; \
-  interrupts[irq_num].handler = func_ptr;  \
+  interrupts[irq_num].irq_type = (irq_num); \
+  interrupts[irq_num].handler = (func_ptr);  \
   interrupts[irq_num].call_counter = 0U;   \
-  interrupts[irq_num].max_call_rate = call_rate; \
-  interrupts[irq_num].call_rate_fault = rate_fault;
+  interrupts[irq_num].max_call_rate = (call_rate); \
+  interrupts[irq_num].call_rate_fault = (rate_fault);
 
 bool check_interrupt_rate = false;
 
