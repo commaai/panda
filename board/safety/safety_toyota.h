@@ -33,14 +33,13 @@ const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0
                                  {0x128, 1, 6}, {0x141, 1, 4}, {0x160, 1, 8}, {0x161, 1, 7}, {0x470, 1, 4},  // DSU bus 1
                                  {0x2E4, 0, 5}, {0x191, 0, 8}, {0x411, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  // LKAS + ACC
                                  {0x200, 0, 6}};  // interceptor
-// FIXME:
-// cppcheck-suppress misra-c2012-9.3
+
 AddrCheckStruct toyota_rx_checks[] = {
-  {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}}},
-  {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}}},
-  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}}},
+  {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}},
+  {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}},
   {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U},
-           {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}}},
+           {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}},
 };
 const int TOYOTA_RX_CHECKS_LEN = sizeof(toyota_rx_checks) / sizeof(toyota_rx_checks[0]);
 
