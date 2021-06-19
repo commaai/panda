@@ -33,7 +33,7 @@
 #include "drivers/timer.h"
 #include "drivers/clock.h"
 
-#include "bootmode.h"
+#include "early_init.h"
 
 #include "power_saving.h"
 #include "safety.h"
@@ -650,7 +650,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
-  bootmode();
+  early_initialization();
 }
 
 void __attribute__ ((noinline)) enable_fpu(void) {
@@ -664,8 +664,8 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called at 8Hz
 uint8_t loop_counter = 0U;
-void heartbeat_handler(void) {
-  if (HEARTBEAT_TIMER->SR != 0) {
+void tick_handler(void) {
+  if (TICK_TIMER->SR != 0) {
     // siren
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
 
@@ -765,22 +765,23 @@ void heartbeat_handler(void) {
     loop_counter++;
     loop_counter %= 8U;
   }
-  HEARTBEAT_TIMER->SR = 0;
+  TICK_TIMER->SR = 0;
 }
 
 
 int main(void) {
-  clock_init();
-  peripherals_init();
-  
   // Init interrupt table
   init_interrupts(true);
+
+  // 8Hz timer
+  REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
+
   // shouldn't have interrupts here, but just in case
   disable_interrupts();
 
-  // 8Hz timer
-  REGISTER_INTERRUPT(HEARTBEAT_TIMER_IRQ, heartbeat_handler, 10U, FAULT_INTERRUPT_RATE_HEARTBEAT)
-
+  // init early devices
+  clock_init();
+  peripherals_init();
   detect_configuration();
   detect_board_type();
   adc_init();
@@ -841,8 +842,8 @@ int main(void) {
   current_board->enable_can_transceivers(true);
 
   // 8hz
-  timer_init(HEARTBEAT_TIMER, (uint16_t)((15.25*APB2_FREQ)/8U));
-  NVIC_EnableIRQ(HEARTBEAT_TIMER_IRQ);
+  timer_init(TICK_TIMER, (uint16_t)((15.25*APB2_FREQ)/8U));
+  NVIC_EnableIRQ(TICK_TIMER_IRQ);
 
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");

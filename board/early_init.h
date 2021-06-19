@@ -20,7 +20,7 @@ void jump_to_bootloader(void) {
   NVIC_SystemReset();
 }
 
-void bootmode(void) {
+void early_initialization(void) {
   // Reset global critical depth
   disable_interrupts();
   global_critical_depth = 0;

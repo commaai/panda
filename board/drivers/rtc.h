@@ -78,11 +78,10 @@ void rtc_set_time(timestamp_t time){
 
 timestamp_t rtc_get_time(void){
     timestamp_t result;
-    // Init with correct starting values in case there is no RTC running(zeros will break python datetime)
-    result.year = 0U + YEAR_OFFSET;
-    result.month = 1U;
-    result.day = 1U;
-    result.weekday = 1U;
+    result.year = 0U;
+    result.month = 0U;
+    result.day = 0U;
+    result.weekday = 0U;
     result.hour = 0U;
     result.minute = 0U;
     result.second = 0U;
