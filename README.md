@@ -58,10 +58,13 @@ As a universal car interface, it should support every reasonable software interf
 
 ## Directory structure
 
-- board      -- Code that runs on the STM32
-- drivers    -- Drivers (not needed for use with python)
-- python     -- Python userspace library for interfacing with the panda
-- tests      -- Tests and helper programs for panda
+```
+.
+├── board           # Code that runs on the STM32
+├── drivers         # Drivers (not needed for use with python)
+├── python          # Python userspace library for interfacing with the panda
+├── tests           # Tests and helper programs for panda
+```
 
 ## Programming
 
@@ -79,7 +82,7 @@ Safety modes optionally supports `controls_allowed`, which allows or blocks a su
 
 ## Code Rigor
 
-The panda FW is written for its use in conjuction with [openpilot](https://github.com/commaai/openpilot). The panda firmware, through its safety model, provides and enforces the
+The panda firmware is written for its use in conjuction with [openpilot](https://github.com/commaai/openpilot). The panda firmware, through its safety model, provides and enforces the
 [openpilot safety](https://github.com/commaai/openpilot/blob/devel/SAFETY.md). Due to its critical function, it's important that the application code rigor within the `board` folder is held to high standards.
 
 These are the [CI regression tests](https://github.com/commaai/panda/actions) we have in place:
