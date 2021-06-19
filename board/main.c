@@ -596,6 +596,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       {
         heartbeat_counter = 0U;
         heartbeat_lost = false;
+        heartbeat_disabled = false;
         break;
       }
     // **** 0xf4: k-line/l-line 5 baud initialization
@@ -621,6 +622,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xf7:
       green_led_enabled = (setup->b.wValue.w != 0U);
       break;
+#ifdef ALLOW_DEBUG
+    // **** 0xf8: disable heartbeat checks
+    case 0xf8:
+      heartbeat_disabled = true;
+      break;
+#endif
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);
@@ -687,35 +694,37 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
         heartbeat_counter += 1U;
       }
 
-      // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
-      if (heartbeat_counter >= (check_started() ? HEARTBEAT_IGNITION_CNT_ON : HEARTBEAT_IGNITION_CNT_OFF)) {
-        puts("device hasn't sent a heartbeat for 0x");
-        puth(heartbeat_counter);
-        puts(" seconds. Safety is set to SILENT mode.\n");
-        if (current_safety_mode != SAFETY_SILENT) {
-          set_safety_mode(SAFETY_SILENT, 0U);
+      if (!heartbeat_disabled) {
+        // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
+        if (heartbeat_counter >= (check_started() ? HEARTBEAT_IGNITION_CNT_ON : HEARTBEAT_IGNITION_CNT_OFF)) {
+          puts("device hasn't sent a heartbeat for 0x");
+          puth(heartbeat_counter);
+          puts(" seconds. Safety is set to SILENT mode.\n");
+          if (current_safety_mode != SAFETY_SILENT) {
+            set_safety_mode(SAFETY_SILENT, 0U);
+          }
+          if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
+            set_power_save_state(POWER_SAVE_STATUS_ENABLED);
+          }
+
+          // set flag to indicate the heartbeat was lost
+          heartbeat_lost = true;
+
+          // Also disable IR when the heartbeat goes missing
+          current_board->set_ir_power(0U);
+
+          // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
+          if(usb_enumerated()){
+            current_board->set_fan_power(50U);
+          } else {
+            current_board->set_fan_power(0U);
+          }
         }
-        if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
-          set_power_save_state(POWER_SAVE_STATUS_ENABLED);
+
+        // enter CDP mode when car starts to ensure we are charging a turned off EON
+        if (check_started() && (usb_power_mode != USB_POWER_CDP)) {
+          current_board->set_usb_power_mode(USB_POWER_CDP);
         }
-
-        // set flag to indicate the heartbeat was lost
-        heartbeat_lost = true;
-
-        // Also disable IR when the heartbeat goes missing
-        current_board->set_ir_power(0U);
-
-        // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
-        if(usb_enumerated()){
-          current_board->set_fan_power(50U);
-        } else {
-          current_board->set_fan_power(0U);
-        }
-      }
-
-      // enter CDP mode when car starts to ensure we are charging a turned off EON
-      if (check_started() && (usb_power_mode != USB_POWER_CDP)) {
-        current_board->set_usb_power_mode(USB_POWER_CDP);
       }
 
       // check registers

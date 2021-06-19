@@ -619,6 +619,11 @@ class Panda(object):
   def send_heartbeat(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf3, 0, 0, b'')
 
+  # disable heartbeat checks for use outside of openpilot
+  # sending a heartbeat will reenable the checks
+  def set_heartbeat_disabled(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf8, 0, 0, b'')
+
   # ******************* RTC *******************
   def set_datetime(self, dt):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xa1, int(dt.year), 0, b'')
