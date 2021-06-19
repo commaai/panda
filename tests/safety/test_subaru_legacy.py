@@ -20,11 +20,11 @@ DRIVER_TORQUE_FACTOR = 10
 class TestSubaruLegacySafety(common.PandaSafetyTest):
   cnt_gas = 0
 
-  TX_MSGS = [[0x161, 0], [0x164, 0]]
+  TX_MSGS = [[0x161, 0], [0x164, 0], [0x140, 2]]
   STANDSTILL_THRESHOLD = 20  # 1kph (see dbc file)
   RELAY_MALFUNCTION_ADDR = 0x164
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [0x161, 0x164]}
+  FWD_BLACKLISTED_ADDRS = {0: [0x140], 2: [0x161, 0x164]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
