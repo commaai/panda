@@ -1,5 +1,12 @@
-#include "stm32f2xx.h"
-#include "stm32f2xx_hal_gpio_ex.h"
+#ifdef STM32F4
+  #include "inc/stm32f4xx.h"
+  #include "inc/stm32f4xx_hal_gpio_ex.h"
+  #define MCU_IDCODE 0x463U
+#else
+  #include "inc/stm32f2xx.h"
+  #include "inc/stm32f2xx_hal_gpio_ex.h"
+  #define MCU_IDCODE 0x411U
+#endif
 
 #define CORE_FREQ 96U // 96Mhz
 //APB1 - 48Mhz, APB2 - 96Mhz
@@ -7,7 +14,7 @@
 #define APB2_FREQ CORE_FREQ/1U
 
 #define BOOTLOADER_ADDRESS 0x1FFF0004
-#define MCU_IDCODE 0x411U
+
 
 // Around (1Mbps / 8 bits/byte / 12 bytes per message)
 #define CAN_INTERRUPT_RATE 12000U
