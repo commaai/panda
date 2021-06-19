@@ -1,4 +1,3 @@
-//#define EON
 //#define PANDA
 
 // ********************* Includes *********************
@@ -30,10 +29,6 @@
 #include "drivers/clock.h"
 
 #include "gpio.h"
-
-#ifndef EON
-#include "drivers/spi.h"
-#endif
 
 #include "power_saving.h"
 #include "safety.h"
@@ -635,38 +630,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
   return resp_len;
 }
 
-#ifndef EON
-int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
-  // data[0]  = endpoint
-  // data[2]  = length
-  // data[4:] = data
-  UNUSED(len);
-  int resp_len = 0;
-  switch (data[0]) {
-    case 0:
-      // control transfer
-      resp_len = usb_cb_control_msg((USB_Setup_TypeDef *)(data+4), data_out, 0);
-      break;
-    case 1:
-      // ep 1, read
-      resp_len = usb_cb_ep1_in(data_out, 0x40, 0);
-      break;
-    case 2:
-      // ep 2, send serial
-      usb_cb_ep2_out(data+4, data[2], 0);
-      break;
-    case 3:
-      // ep 3, send CAN
-      usb_cb_ep3_out(data+4, data[2], 0);
-      break;
-    default:
-      puts("SPI data invalid");
-      break;
-  }
-  return resp_len;
-}
-#endif
-
 // ***************************** main code *****************************
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
@@ -679,9 +642,9 @@ void __attribute__ ((noinline)) enable_fpu(void) {
   SCB->CPACR |= ((3UL << (10U * 2U)) | (3UL << (11U * 2U)));
 }
 
-// go into SILENT when the EON does not send a heartbeat for this amount of seconds.
-#define EON_HEARTBEAT_IGNITION_CNT_ON 5U
-#define EON_HEARTBEAT_IGNITION_CNT_OFF 2U
+// go into SILENT when heartbeat isn't received for this amount of seconds.
+#define HEARTBEAT_IGNITION_CNT_ON 5U
+#define HEARTBEAT_IGNITION_CNT_OFF 2U
 
 // called at 8Hz
 uint8_t loop_counter = 0U;
@@ -724,11 +687,9 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
         heartbeat_counter += 1U;
       }
 
-      #ifdef EON
-      // check heartbeat counter if we are running EON code.
       // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
-      if (heartbeat_counter >= (check_started() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
-        puts("EON hasn't sent a heartbeat for 0x");
+      if (heartbeat_counter >= (check_started() ? HEARTBEAT_IGNITION_CNT_ON : HEARTBEAT_IGNITION_CNT_OFF)) {
+        puts("device hasn't sent a heartbeat for 0x");
         puth(heartbeat_counter);
         puts(" seconds. Safety is set to SILENT mode.\n");
         if (current_safety_mode != SAFETY_SILENT) {
@@ -756,7 +717,6 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
       if (check_started() && (usb_power_mode != USB_POWER_CDP)) {
         current_board->set_usb_power_mode(USB_POWER_CDP);
       }
-      #endif
 
       // check registers
       check_registers();
@@ -853,10 +813,6 @@ int main(void) {
 
   // enable CAN TXs
   current_board->enable_can_transceivers(true);
-
-#ifndef EON
-  spi_init();
-#endif
 
   // 8hz
   timer_init(TIM9, 183);
