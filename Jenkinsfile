@@ -24,7 +24,7 @@ pipeline {
                     --volume /var/run/dbus:/var/run/dbus \
                     --net host \
                     ${env.DOCKER_IMAGE_TAG} \
-                    bash -c 'cd /tmp/panda && scons && ./run_automated_tests.sh'"
+                    bash -c 'cd /tmp/panda && scons && ./tests/automated/test.sh'"
             }
           }
         }

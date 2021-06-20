@@ -313,7 +313,7 @@ void white_grey_common_init(void) {
   // Init usb power mode
   uint32_t voltage = adc_get_voltage();
   // Init in CDP mode only if panda is powered by 12V.
-  // Otherwise a PC would not be able to flash a standalone panda with EON build
+  // Otherwise a PC would not be able to flash a standalone panda
   if (voltage > 8000U) {  // 8V threshold
     white_set_usb_power_mode(USB_POWER_CDP);
   } else {
