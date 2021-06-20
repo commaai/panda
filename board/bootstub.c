@@ -1,7 +1,7 @@
 #define BOOTSTUB
 
-#define VERS_TAG 0x53524556
-#define MIN_VERSION 2
+#define VERS_TAG 0x53524556U
+#define MIN_VERSION 2U
 
 #include "config.h"
 #include "obj/gitversion.h"

@@ -1,4 +1,4 @@
-#define PROVISION_CHUNK_LEN 0x20
+#define PROVISION_CHUNK_LEN 0x20U
 
 // WiFi SSID     = 0x0  - 0x10
 // WiFi password = 0x10 - 0x1C
