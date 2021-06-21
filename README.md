@@ -58,10 +58,13 @@ As a universal car interface, it should support every reasonable software interf
 
 ## Directory structure
 
-- board      -- Code that runs on the STM32
-- drivers    -- Drivers (not needed for use with python)
-- python     -- Python userspace library for interfacing with the panda
-- tests      -- Tests and helper programs for panda
+```
+.
+├── board           # Code that runs on the STM32
+├── drivers         # Drivers (not needed for use with python)
+├── python          # Python userspace library for interfacing with the panda
+├── tests           # Tests and helper programs for panda
+```
 
 ## Programming
 
@@ -79,20 +82,19 @@ Safety modes optionally supports `controls_allowed`, which allows or blocks a su
 
 ## Code Rigor
 
-When compiled from a comma device, the panda FW is configured and optimized (at compile time) for its use in
-conjuction with [openpilot](https://github.com/commaai/openpilot). The panda FW, through its safety model, provides and enforces the
+The panda firmware is written for its use in conjuction with [openpilot](https://github.com/commaai/openpilot). The panda firmware, through its safety model, provides and enforces the
 [openpilot safety](https://github.com/commaai/openpilot/blob/devel/SAFETY.md). Due to its critical function, it's important that the application code rigor within the `board` folder is held to high standards.
 
 These are the [CI regression tests](https://github.com/commaai/panda/actions) we have in place:
 * A generic static code analysis is performed by [cppcheck](https://github.com/danmar/cppcheck/).
 * In addition, [cppcheck](https://github.com/danmar/cppcheck/) has a specific addon to check for [MISRA C:2012](https://www.misra.org.uk/MISRAHome/MISRAC2012/tabid/196/Default.aspx) violations. See [current coverage](https://github.com/commaai/panda/blob/master/tests/misra/coverage_table).
-* Compiler options are relatively strict: the flags `-Wall -Wextra -Wstrict-prototypes -Werror` are enforced on board and pedal Makefiles.
+* Compiler options are relatively strict: the flags `-Wall -Wextra -Wstrict-prototypes -Werror` are enforced.
 * The [safety logic](https://github.com/commaai/panda/tree/master/board/safety) is tested and verified by [unit tests](https://github.com/commaai/panda/tree/master/tests/safety) for each supported car variant.
 * A recorded drive for each supported car variant is [replayed through the safety logic](https://github.com/commaai/panda/tree/master/tests/safety_replay)
 to ensure that the behavior remains unchanged.
 * An internal Hardware-in-the-loop test, which currently only runs on pull requests opened by comma.ai's organization members, verifies the following functionalities:
-    * compiling the code in various configuration and flashing it both through USB.
-    * Receiving, sending and forwarding CAN messages on all buses, over USB.
+    * compiling the code and flashing it through USB.
+    * receiving, sending, and forwarding CAN messages on all buses, over USB.
 
 In addition, we run the [pylint](https://www.pylint.org/) and [flake8](https://github.com/PyCQA/flake8) linters on all python files within the panda repo.
 

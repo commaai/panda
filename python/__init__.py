@@ -420,8 +420,10 @@ class Panda(object):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xda, int(bootmode), 0, b'')
     time.sleep(0.2)
 
-  def set_safety_mode(self, mode=SAFETY_SILENT):
+  def set_safety_mode(self, mode=SAFETY_SILENT, disable_heartbeat=True):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, 0, b'')
+    if disable_heartbeat:
+      self.set_heartbeat_disabled()
 
   def set_can_forwarding(self, from_bus, to_bus):
     # TODO: This feature may not work correctly with saturated buses
@@ -618,6 +620,11 @@ class Panda(object):
 
   def send_heartbeat(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf3, 0, 0, b'')
+
+  # disable heartbeat checks for use outside of openpilot
+  # sending a heartbeat will reenable the checks
+  def set_heartbeat_disabled(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf8, 0, 0, b'')
 
   # ******************* RTC *******************
   def set_datetime(self, dt):
