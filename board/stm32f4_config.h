@@ -17,8 +17,8 @@
 
 #define NUM_INTERRUPTS 102U                // There are 102 external interrupt sources (see stm32f413.h)
 
-#define TICK_TIMER_IRQ TIM1_BRK_TIM9_IRQn
-#define TICK_TIMER TIM9
+#define HEARTBEAT_TIMER_IRQ TIM1_BRK_TIM9_IRQn
+#define HEARTBEAT_TIMER TIM9
 
 #define MICROSECOND_TIMER TIM2
 
