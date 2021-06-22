@@ -1,10 +1,10 @@
 #ifdef STM32F4
-  #include "stm32f4xx.h"
-  #include "stm32f4xx_hal_gpio_ex.h"
+  #include "inc/stm32f4xx.h"
+  #include "inc/stm32f4xx_hal_gpio_ex.h"
   #define MCU_IDCODE 0x463U
 #else
-  #include "stm32f2xx.h"
-  #include "stm32f2xx_hal_gpio_ex.h"
+  #include "inc/stm32f2xx.h"
+  #include "inc/stm32f2xx_hal_gpio_ex.h"
   #define MCU_IDCODE 0x411U
 #endif
 

@@ -107,7 +107,6 @@ else:
   flags += ["-DALLOW_DEBUG"]
 
 includes = [
-  "stm32fx/inc",
   "..",
   ".",
 ]
