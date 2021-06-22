@@ -161,16 +161,25 @@ static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       }
     }
 
-    // if steering controls messages are received on the destination bus, it's an indication
-    // that the relay might be malfunctioning
     bool stock_ecu_detected = false;
     int bus_rdr_car = (honda_hw == HONDA_BH_HW) ? 0 : 2;  // radar bus, car side
-    if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && ((addr == 0xE4) || (addr == 0x194))) {
-      if (((honda_hw != HONDA_N_HW) && (bus == bus_rdr_car)) ||
-        ((honda_hw == HONDA_N_HW) && (bus == 0))) {
+    int pt_bus = (honda_hw == HONDA_BH_HW) ? 1 : 0;
+
+    if (safety_mode_cnt > RELAY_TRNS_TIMEOUT) {
+      // If steering controls messages are received on the destination bus, it's an indication
+      // that the relay might be malfunctioning
+      if ((addr == 0xE4) || (addr == 0x194)) {
+        if (((honda_hw != HONDA_N_HW) && (bus == bus_rdr_car)) || ((honda_hw == HONDA_N_HW) && (bus == 0))) {
+          stock_ecu_detected = true;
+        }
+      }
+      // If Honda Bosch longitudinal mode is selected we need to ensure the radar is turned off
+      // Verify this by ensuring ACC_CONTROL (0x1DF) is not received on the PT bus
+      if (honda_bosch_long && (bus == pt_bus) && (addr == 0x1DF)) {
         stock_ecu_detected = true;
       }
     }
+
     generic_rx_checks(stock_ecu_detected);
   }
   return valid;
@@ -288,6 +297,13 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (((GET_BYTE(to_send, 0) >> 5) & 0x7) != 2) {
       tx = 0;
     }
+  }
+
+  // Only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
+  if (addr == 0x18DAB0F1) {
+  if ((GET_BYTES_04(to_send) != 0x00803E02) || (GET_BYTES_48(to_send) != 0x0)) {
+    tx = 0;
+  }
   }
 
   // 1 allows the message through
