@@ -8,7 +8,7 @@ mkdir /tmp/misra || true
 #python tests/misra/cppcheck/addons/misra.py -generate-table > tests/misra/coverage_table
 
 printf "\nPANDA CODE\n"
-cppcheck -DPANDA -UPEDAL -DCAN3 -DUID_BASE -DEON \
+cppcheck -DPANDA -UPEDAL -DCAN3 -DUID_BASE \
          --suppressions-list=suppressions.txt \
          --dump --enable=all --inline-suppr --force \
          $PANDA_DIR/board/main.c 2>/tmp/misra/cppcheck_output.txt

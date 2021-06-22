@@ -273,7 +273,7 @@ class TestHondaBoschSafety(TestHondaSafety):
       raise unittest.SkipTest
 
   def setUp(self):
-    self.packer = CANPackerPanda("honda_accord_s2t_2018_can_generated")
+    self.packer = CANPackerPanda("honda_accord_2018_can_generated")
     self.safety = libpandasafety_py.libpandasafety
 
   def _alt_brake_msg(self, brake):
@@ -363,6 +363,19 @@ class TestHondaBoschLongSafety(TestHondaBoschSafety):
       "BRAKE_REQUEST": accel < 0,
     }
     return self.packer.make_can_msg_panda("ACC_CONTROL", self.PT_BUS, values)
+
+  def test_diagnostics(self):
+    tester_present = common.package_can_msg((0x18DAB0F1, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", self.PT_BUS))
+    self.assertTrue(self.safety.safety_tx_hook(tester_present))
+
+    not_tester_present = common.package_can_msg((0x18DAB0F1, 0, b"\x03\xAA\xAA\x00\x00\x00\x00\x00", self.PT_BUS))
+    self.assertFalse(self.safety.safety_tx_hook(not_tester_present))
+
+  def test_radar_alive(self):
+    # If the radar knockout failed, make sure the relay malfunction is shown
+    self.assertFalse(self.safety.get_relay_malfunction())
+    self._rx(make_msg(self.PT_BUS, 0x1DF, 8))
+    self.assertTrue(self.safety.get_relay_malfunction())
 
   def test_gas_safety_check(self):
     for controls_allowed in [True, False]:

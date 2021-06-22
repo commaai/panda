@@ -41,7 +41,7 @@
   }
 #endif
 
-#define ENTER_BOOTLOADER_MAGIC 0xdeadbeef
+#define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
 uint32_t enter_bootloader_mode;
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
@@ -136,8 +136,7 @@ uint32_t current_index = 0;
 #define FAULT_TIMEOUT 5U
 #define FAULT_INVALID 6U
 uint8_t state = FAULT_STARTUP;
-
-const uint8_t crc_poly = 0xD5;  // standard crc8
+const uint8_t crc_poly = 0xD5U;  // standard crc8
 
 void CAN1_RX0_IRQ_Handler(void) {
   while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {

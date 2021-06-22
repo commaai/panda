@@ -1,7 +1,7 @@
 // Early bringup
-#define ENTER_BOOTLOADER_MAGIC 0xdeadbeef
-#define ENTER_SOFTLOADER_MAGIC 0xdeadc0de
-#define BOOT_NORMAL 0xdeadb111
+#define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
+#define ENTER_SOFTLOADER_MAGIC 0xdeadc0deU
+#define BOOT_NORMAL 0xdeadb111U
 
 extern void *g_pfnVectors;
 extern uint32_t enter_bootloader_mode;
@@ -12,6 +12,7 @@ void jump_to_bootloader(void) {
   void (*bootloader)(void) = (void (*)(void)) (*((uint32_t *)0x1fff0004));
 
   // jump to bootloader
+  enable_interrupts();
   bootloader();
 
   // reset on exit
@@ -21,13 +22,11 @@ void jump_to_bootloader(void) {
 
 void early(void) {
   // Reset global critical depth
+  disable_interrupts();
   global_critical_depth = 0;
 
   // Init register and interrupt tables
   init_registers();
-
-  // neccesary for DFU flashing on a non-power cycled white panda
-  enable_interrupts();
 
   // after it's been in the bootloader, things are initted differently, so we reset
   if ((enter_bootloader_mode != BOOT_NORMAL) &&

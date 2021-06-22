@@ -24,12 +24,13 @@ const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8
                              {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
+
 AddrCheckStruct gm_rx_checks[] = {
-  {.msg = {{388, 0, 8, .expected_timestep = 100000U}}},
-  {.msg = {{842, 0, 5, .expected_timestep = 100000U}}},
-  {.msg = {{481, 0, 7, .expected_timestep = 100000U}}},
-  {.msg = {{241, 0, 6, .expected_timestep = 100000U}}},
-  {.msg = {{417, 0, 7, .expected_timestep = 100000U}}},
+  {.msg = {{388, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{842, 0, 5, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{481, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{241, 0, 6, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{417, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
 const int GM_RX_CHECK_LEN = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]);
 

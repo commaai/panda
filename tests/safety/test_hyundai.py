@@ -41,6 +41,8 @@ def checksum(msg):
         b &= 0x0F if addr == 1057 else 0xF0
       elif addr == 916 and i == 6:
         b &= 0xF0
+      elif addr == 916 and i == 7:
+        continue
       chksum += sum(divmod(b, 16))
     chksum = (16 - chksum) % 16
     ret = bytearray(dat)
@@ -212,6 +214,30 @@ class TestHyundaiLegacySafety(TestHyundaiSafety):
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_LEGACY, 0)
     self.safety.init_tests()
+
+
+class TestHyundaiLegacySafetyEV(TestHyundaiSafety):
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_kia_generic")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_LEGACY, 1)
+    self.safety.init_tests()
+
+  def _gas_msg(self, gas):
+    values = {"Accel_Pedal_Pos": gas}
+    return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
+
+
+class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_kia_generic")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_LEGACY, 2)
+    self.safety.init_tests()
+
+  def _gas_msg(self, gas):
+    values = {"CR_Vcu_AccPedDep_Pos": gas}
+    return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
 
 
 if __name__ == "__main__":

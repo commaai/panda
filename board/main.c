@@ -1,4 +1,3 @@
-//#define EON
 //#define PANDA
 
 // ********************* Includes *********************
@@ -31,10 +30,6 @@
 
 #include "gpio.h"
 
-#ifndef EON
-#include "drivers/spi.h"
-#endif
-
 #include "power_saving.h"
 #include "safety.h"
 
@@ -42,6 +37,7 @@
 
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
+// When changing this struct, boardd and python/__init__.py needs to be kept up to date!
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
   uint32_t voltage_pkt;
@@ -61,6 +57,7 @@ struct __attribute__((packed)) health_t {
   int16_t safety_param_pkt;
   uint8_t fault_status_pkt;
   uint8_t power_save_enabled_pkt;
+  uint8_t heartbeat_lost_pkt;
 };
 
 
@@ -140,6 +137,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
     case SAFETY_ELM327:
       set_intercept_relay(false);
       heartbeat_counter = 0U;
+      heartbeat_lost = false;
       if (board_has_obd()) {
         current_board->set_can_mode(CAN_MODE_OBD_CAN2);
       }
@@ -148,6 +146,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
     default:
       set_intercept_relay(true);
       heartbeat_counter = 0U;
+      heartbeat_lost = false;
       if (board_has_obd()) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
@@ -182,6 +181,7 @@ int get_health_pkt(void *dat) {
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
   health->power_save_enabled_pkt = (uint8_t)(power_save_status == POWER_SAVE_STATUS_ENABLED);
+  health->heartbeat_lost_pkt = (uint8_t)(heartbeat_lost);
 
   health->fault_status_pkt = fault_status;
   health->faults_pkt = faults;
@@ -595,6 +595,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xf3:
       {
         heartbeat_counter = 0U;
+        heartbeat_lost = false;
+        heartbeat_disabled = false;
         break;
       }
     // **** 0xf4: k-line/l-line 5 baud initialization
@@ -620,6 +622,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xf7:
       green_led_enabled = (setup->b.wValue.w != 0U);
       break;
+#ifdef ALLOW_DEBUG
+    // **** 0xf8: disable heartbeat checks
+    case 0xf8:
+      heartbeat_disabled = true;
+      break;
+#endif
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);
@@ -628,38 +636,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
   }
   return resp_len;
 }
-
-#ifndef EON
-int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
-  // data[0]  = endpoint
-  // data[2]  = length
-  // data[4:] = data
-  UNUSED(len);
-  int resp_len = 0;
-  switch (data[0]) {
-    case 0:
-      // control transfer
-      resp_len = usb_cb_control_msg((USB_Setup_TypeDef *)(data+4), data_out, 0);
-      break;
-    case 1:
-      // ep 1, read
-      resp_len = usb_cb_ep1_in(data_out, 0x40, 0);
-      break;
-    case 2:
-      // ep 2, send serial
-      usb_cb_ep2_out(data+4, data[2], 0);
-      break;
-    case 3:
-      // ep 3, send CAN
-      usb_cb_ep3_out(data+4, data[2], 0);
-      break;
-    default:
-      puts("SPI data invalid");
-      break;
-  }
-  return resp_len;
-}
-#endif
 
 // ***************************** main code *****************************
 
@@ -673,9 +649,9 @@ void __attribute__ ((noinline)) enable_fpu(void) {
   SCB->CPACR |= ((3UL << (10U * 2U)) | (3UL << (11U * 2U)));
 }
 
-// go into SILENT when the EON does not send a heartbeat for this amount of seconds.
-#define EON_HEARTBEAT_IGNITION_CNT_ON 5U
-#define EON_HEARTBEAT_IGNITION_CNT_OFF 2U
+// go into SILENT when heartbeat isn't received for this amount of seconds.
+#define HEARTBEAT_IGNITION_CNT_ON 5U
+#define HEARTBEAT_IGNITION_CNT_OFF 2U
 
 // called at 8Hz
 uint8_t loop_counter = 0U;
@@ -718,36 +694,38 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
         heartbeat_counter += 1U;
       }
 
-      #ifdef EON
-      // check heartbeat counter if we are running EON code.
-      // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
-      if (heartbeat_counter >= (check_started() ? EON_HEARTBEAT_IGNITION_CNT_ON : EON_HEARTBEAT_IGNITION_CNT_OFF)) {
-        puts("EON hasn't sent a heartbeat for 0x");
-        puth(heartbeat_counter);
-        puts(" seconds. Safety is set to SILENT mode.\n");
-        if (current_safety_mode != SAFETY_SILENT) {
-          set_safety_mode(SAFETY_SILENT, 0U);
-        }
-        if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
-          set_power_save_state(POWER_SAVE_STATUS_ENABLED);
+      if (!heartbeat_disabled) {
+        // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
+        if (heartbeat_counter >= (check_started() ? HEARTBEAT_IGNITION_CNT_ON : HEARTBEAT_IGNITION_CNT_OFF)) {
+          puts("device hasn't sent a heartbeat for 0x");
+          puth(heartbeat_counter);
+          puts(" seconds. Safety is set to SILENT mode.\n");
+          if (current_safety_mode != SAFETY_SILENT) {
+            set_safety_mode(SAFETY_SILENT, 0U);
+          }
+          if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
+            set_power_save_state(POWER_SAVE_STATUS_ENABLED);
+          }
+
+          // set flag to indicate the heartbeat was lost
+          heartbeat_lost = true;
+
+          // Also disable IR when the heartbeat goes missing
+          current_board->set_ir_power(0U);
+
+          // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
+          if(usb_enumerated()){
+            current_board->set_fan_power(50U);
+          } else {
+            current_board->set_fan_power(0U);
+          }
         }
 
-        // Also disable IR when the heartbeat goes missing
-        current_board->set_ir_power(0U);
-
-        // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
-        if(usb_enumerated()){
-          current_board->set_fan_power(50U);
-        } else {
-          current_board->set_fan_power(0U);
+        // enter CDP mode when car starts to ensure we are charging a turned off EON
+        if (check_started() && (usb_power_mode != USB_POWER_CDP)) {
+          current_board->set_usb_power_mode(USB_POWER_CDP);
         }
       }
-
-      // enter CDP mode when car starts to ensure we are charging a turned off EON
-      if (check_started() && (usb_power_mode != USB_POWER_CDP)) {
-        current_board->set_usb_power_mode(USB_POWER_CDP);
-      }
-      #endif
 
       // check registers
       check_registers();
@@ -844,10 +822,6 @@ int main(void) {
 
   // enable CAN TXs
   current_board->enable_can_transceivers(true);
-
-#ifndef EON
-  spi_init();
-#endif
 
   // 8hz
   timer_init(TIM9, 183);

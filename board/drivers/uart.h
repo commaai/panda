@@ -24,15 +24,15 @@ typedef struct uart_ring {
   uart_ring uart_ring_##x = {  \
     .w_ptr_tx = 0, \
     .r_ptr_tx = 0, \
-    .elems_tx = ((uint8_t *)&elems_tx_##x), \
-    .tx_fifo_size = size_tx, \
+    .elems_tx = ((uint8_t *)&(elems_tx_##x)), \
+    .tx_fifo_size = (size_tx), \
     .w_ptr_rx = 0, \
     .r_ptr_rx = 0, \
-    .elems_rx = ((uint8_t *)&elems_rx_##x), \
-    .rx_fifo_size = size_rx, \
-    .uart = uart_ptr, \
-    .callback = callback_ptr, \
-    .dma_rx = rx_dma \
+    .elems_rx = ((uint8_t *)&(elems_rx_##x)), \
+    .rx_fifo_size = (size_rx), \
+    .uart = (uart_ptr), \
+    .callback = (callback_ptr), \
+    .dma_rx = (rx_dma) \
   };
 
 
@@ -270,7 +270,8 @@ void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
     u->BRR = __USART_BRR(24000000U, baud);
   }
 }
-
+// FIXME:
+// cppcheck-suppress misra-c2012-8.2
 void uart_init(uart_ring *q, int baud) {
   // Register interrupts (max data rate: 115200 baud)
   if(q->uart == USART1){
@@ -315,7 +316,8 @@ void uart_init(uart_ring *q, int baud) {
 }
 
 // ************************* Low-level buffer functions *************************
-
+// FIXME:
+// cppcheck-suppress misra-c2012-8.2
 bool getc(uart_ring *q, char *elem) {
   bool ret = false;
 
@@ -345,7 +347,8 @@ bool injectc(uart_ring *q, char elem) {
 
   return ret;
 }
-
+// FIXME:
+// cppcheck-suppress misra-c2012-8.2
 bool putc(uart_ring *q, char elem) {
   bool ret = false;
   uint16_t next_w_ptr;
@@ -427,19 +430,20 @@ void putui(uint32_t i) {
 }
 
 void puth(unsigned int i) {
-  char c[] = "0123456789abcdef";
+  const char c[] = "0123456789abcdef";
   for (int pos = 28; pos != -4; pos -= 4) {
     putch(c[(i >> (unsigned int)(pos)) & 0xFU]);
   }
 }
 
 void puth2(unsigned int i) {
-  char c[] = "0123456789abcdef";
+  const char c[] = "0123456789abcdef";
   for (int pos = 4; pos != -4; pos -= 4) {
     putch(c[(i >> (unsigned int)(pos)) & 0xFU]);
   }
 }
-
+// FIXME:
+// cppcheck-suppress misra-c2012-8.2
 void hexdump(const void *a, int l) {
   if (a != NULL) {
     for (int i=0; i < l; i++) {
