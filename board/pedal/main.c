@@ -19,7 +19,7 @@
 #include "drivers/dac.h"
 #include "drivers/timer.h"
 
-#include "bootmode.h"
+#include "early_init.h"
 #include "crc.h"
 
 #define CAN CAN1
@@ -47,7 +47,7 @@ uint32_t enter_bootloader_mode;
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
-  bootmode();
+  early_initialization();
 }
 
 // ********************* serial debugging *********************
