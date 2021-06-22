@@ -2,6 +2,11 @@
 
 // ********************* Includes *********************
 #include "config.h"
+#ifdef STM32F4
+  #include "stm32f4_config.h"
+#else
+  #include "stm32f2_config.h"
+#endif
 #include "obj/gitversion.h"
 
 #include "main_declarations.h"

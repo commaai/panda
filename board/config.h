@@ -7,8 +7,6 @@
 //#define DEBUG_SPI
 //#define DEBUG_FAULTS
 
-#include "stm32fx/stm32fx_config.h"
-
 #define USB_VID 0xbbaaU
 
 #ifdef BOOTSTUB

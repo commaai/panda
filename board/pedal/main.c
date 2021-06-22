@@ -1,5 +1,6 @@
 // ********************* Includes *********************
 #include "../config.h"
+#include "stm32f2_config.h"
 #include "libc.h"
 
 #include "main_declarations.h"
@@ -18,7 +19,7 @@
 #include "drivers/dac.h"
 #include "drivers/timer.h"
 
-#include "early_init.h"
+#include "bootmode.h"
 #include "crc.h"
 
 #define CAN CAN1
@@ -46,7 +47,7 @@ uint32_t enter_bootloader_mode;
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
-  early_initialization();
+  bootmode();
 }
 
 // ********************* serial debugging *********************

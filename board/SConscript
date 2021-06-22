@@ -6,8 +6,7 @@ BUILDER = "DEV"
 
 if os.getenv("PEDAL"):
   PROJECT = "pedal"
-  STARTUP_FILE = "stm32fx/startup_stm32f205xx.s"
-  LINKER_SCRIPT = "stm32fx/stm32fx_flash.ld"
+  STARTUP_FILE = "startup_stm32f205xx.s"
   MAIN = "pedal/main.c"
   PROJECT_FLAGS = [
     "-mcpu=cortex-m3",
@@ -20,8 +19,7 @@ if os.getenv("PEDAL"):
 
 else:
   PROJECT = "panda"
-  STARTUP_FILE = "stm32fx/startup_stm32f413xx.s"
-  LINKER_SCRIPT = "stm32fx/stm32fx_flash.ld"
+  STARTUP_FILE = "startup_stm32f413xx.s"
   MAIN = "main.c"
   PROJECT_FLAGS = [
     "-mcpu=cortex-m4",
@@ -32,7 +30,6 @@ else:
     "-fsingle-precision-constant",
     "-Os",
     "-g",
-    "-DPANDA",
   ]
 
 
@@ -80,7 +77,7 @@ def objcopy(source, target, env, for_signature):
     return '$OBJCOPY -O binary %s %s' % (source[0], target[0])
 
 
-linkerscript_fn = File(LINKER_SCRIPT).srcnode().abspath
+linkerscript_fn = File("stm32f4_flash.ld").srcnode().abspath
 
 flags = [
   "-Wall",
@@ -107,6 +104,7 @@ else:
   flags += ["-DALLOW_DEBUG"]
 
 includes = [
+  "inc",
   "..",
   ".",
 ]
