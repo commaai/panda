@@ -159,7 +159,7 @@ class TestTeslaSafety(common.PandaSafetyTest):
     for ap_status in range(16):
       self.safety.set_controls_allowed(1)
       self._rx(self._autopilot_status_msg(ap_status))
-      self.assertEqual(self.safety.get_controls_allowed(), (not ap_status in [3, 4, 5]))
+      self.assertEqual(self.safety.get_controls_allowed(), (ap_status not in [3, 4, 5]))
 
 if __name__ == "__main__":
   unittest.main()

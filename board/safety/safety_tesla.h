@@ -15,15 +15,13 @@ const CanMsg TESLA_TX_MSGS[] = {
 };
 
 AddrCheckStruct tesla_rx_checks[] = {
-  {.msg = {{0x370, 0, 8, .expected_timestep = 40000U}}},   // EPAS_sysStatus (25Hz)
-  {.msg = {{0x108, 0, 8, .expected_timestep = 10000U}}},   // DI_torque1 (100Hz)
-  {.msg = {{0x118, 0, 6, .expected_timestep = 10000U}}},   // DI_torque2 (100Hz)
-  {.msg = {{0x155, 0, 8, .expected_timestep = 20000U}}},   // ESP_B (50Hz)
-  {.msg = {{0x20a, 0, 8, .expected_timestep = 20000U}}},   // BrakeMessage (50Hz)
-  {.msg = {{0x368, 0, 8, .expected_timestep = 100000U}}},  // DI_state (10Hz)
-  {.msg = {{0x318, 0, 8, .expected_timestep = 100000U}}},  // GTW_carState (10Hz)
-  // TODO: add back once AP status is always sent
-  //{.msg = {{0x399, 2, 8, .expected_timestep = 500000U}}},  // AutopilotStatus (2Hz)
+  {.msg = {{0x370, 0, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // EPAS_sysStatus (25Hz)
+  {.msg = {{0x108, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque1 (100Hz)
+  {.msg = {{0x118, 0, 6, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque2 (100Hz)
+  {.msg = {{0x155, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},   // ESP_B (50Hz)
+  {.msg = {{0x20a, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},   // BrakeMessage (50Hz)
+  {.msg = {{0x368, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // DI_state (10Hz)
+  {.msg = {{0x318, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // GTW_carState (10Hz)
 };
 #define TESLA_RX_CHECK_LEN (sizeof(tesla_rx_checks) / sizeof(tesla_rx_checks[0]))
 
@@ -58,7 +56,7 @@ static int tesla_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
       if(addr == 0x20a) {
         // Brake pressed
-        brake_pressed = ((GET_BYTE(to_push, 0) & 0x0C) >> 2 != 1);
+        brake_pressed = (((GET_BYTE(to_push, 0) & 0x0C) >> 2) != 1);
       }
 
       if(addr == 0x368) {
@@ -178,7 +176,7 @@ static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   if(bus_num == 2) {
     // Autopilot to chassis
-    bool block_msg = (addr == 0x488 && !autopilot_enabled);
+    bool block_msg = ((addr == 0x488) && !autopilot_enabled);
     if(!block_msg) {
       bus_fwd = 0;
     }
