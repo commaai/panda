@@ -139,7 +139,11 @@ void set_safety_mode(uint16_t mode, int16_t param) {
       heartbeat_counter = 0U;
       heartbeat_lost = false;
       if (board_has_obd()) {
-        current_board->set_can_mode(CAN_MODE_OBD_CAN2);
+        if (param == 0) {
+          current_board->set_can_mode(CAN_MODE_OBD_CAN2);
+        } else {
+          current_board->set_can_mode(CAN_MODE_NORMAL);
+        }
       }
       can_silent = ALL_CAN_LIVE;
       break;
