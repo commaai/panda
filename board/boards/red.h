@@ -57,7 +57,7 @@ void red_set_gps_load_switch(bool enabled) {
 }
 
 void red_set_usb_load_switch(bool enabled) {
-  set_gpio_output(GPIOB, 1, !enabled);
+  set_gpio_output(GPIOB, 14, !enabled);
 }
 
 void red_set_usb_power_mode(uint8_t mode) {

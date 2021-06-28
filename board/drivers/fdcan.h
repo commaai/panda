@@ -258,7 +258,9 @@ void process_can(uint8_t can_number) {
 
         // Convert mailbox "type" to normal CAN
         fifo->RIR = ((to_send.RIR & 0x4) << 27) | ((to_send.RIR & 0x2) << 28) | (to_send.RIR >> 3);  // identifier format | frame type | identifier
-        fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16); // DLC (length) | timestamp
+        //REDEBUG: enable CAN FD and BRS for test purposes
+        fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16) | (1U << 21) | (1U << 20); // DLC (length) | timestamp | enable CAN FD | enable BRS
+        //fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16); // DLC (length) | timestamp
         fifo->RDLR = to_send.RDLR;
         fifo->RDHR = to_send.RDHR;
         

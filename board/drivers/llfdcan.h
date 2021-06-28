@@ -30,8 +30,8 @@
 #define CAN_PHASE_SEG2  1 // 1 to 8
 #define CAN_PCLK 48000U // Sourced from PLL1Q
 #define CAN_QUANTA (1 + CAN_PHASE_SEG1 + CAN_PHASE_SEG2)
-// Valid speeds with this settings:
-// 5000 = 500 kbps, 2500 = 250kbps... Only these are valid: 6000/x where x is the int prescaler value
+// Valid speeds in kbps and their prescalers:
+// 10=600, 20=300, 50=120, 83.333=72, 100=60, 125=48, 250=24, 500=12, 1000=6, 2000=3, 3000=2, 6000=1
 #define can_speed_to_prescaler(x) (CAN_PCLK / CAN_QUANTA * 10U / (x))
 
 // RX FIFO 0
@@ -113,7 +113,9 @@ bool llfdcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, bool loopbac
     FDCANx->NBTP = ((CAN_SYNC_JW-1)<<FDCAN_NBTP_NSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_NBTP_NTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_NBTP_NTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1)<<FDCAN_NBTP_NBRP_Pos);
 
     // Set the data bit timing register (TODO: change it later for CAN FD and variable bitrate)
-    FDCANx->DBTP = ((CAN_SYNC_JW-1)<<FDCAN_DBTP_DSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_DBTP_DTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_DBTP_DTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1)<<FDCAN_DBTP_DBRP_Pos);
+    // REDEBUG: set data rate manually for test plan purposes only! Revert back later!
+    FDCANx->DBTP = ((CAN_SYNC_JW-1)<<FDCAN_DBTP_DSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_DBTP_DTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_DBTP_DTSEG2_Pos) | ((can_speed_to_prescaler(60000)-1)<<FDCAN_DBTP_DBRP_Pos);
+    //FDCANx->DBTP = ((CAN_SYNC_JW-1)<<FDCAN_DBTP_DSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_DBTP_DTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_DBTP_DTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1)<<FDCAN_DBTP_DBRP_Pos);
 
     // silent loopback mode for debugging (new name: internal loopback)
     if (loopback) {
@@ -175,22 +177,24 @@ bool llfdcan_init(FDCAN_GlobalTypeDef *FDCANx) {
     // Enable automatic retransmission
     //FDCANx->CCCR &= ~(FDCAN_CCCR_DAR);
     //TODO: Later add and enable transmitter delay compensation : FDCAN_DBTP.TDC (for CAN FD)
+    //FDCANx->DBTP |= FDCAN_DBTP_TDC;
     // Disable transmission pause feature
-    FDCANx->CCCR &= ~(FDCAN_CCCR_TXP);
+    //FDCANx->CCCR &= ~(FDCAN_CCCR_TXP);
     // Enable transmission pause feature
-    //FDCANx->CCCR |= FDCAN_CCCR_TXP;
+    FDCANx->CCCR |= FDCAN_CCCR_TXP;
     // Disable protocol exception handling
     FDCANx->CCCR |= FDCAN_CCCR_PXHD;
     // Enable protocol exception handling
     //FDCANx->CCCR &= ~(FDCAN_CCCR_PXHD);
     // Set FDCAN frame format (REDEBUG)
     //  Classic mode
-    FDCANx->CCCR &= ~(FDCAN_CCCR_BRSE);
-    FDCANx->CCCR &= ~(FDCAN_CCCR_FDOE);
+    //FDCANx->CCCR &= ~(FDCAN_CCCR_BRSE);
+    //FDCANx->CCCR &= ~(FDCAN_CCCR_FDOE);
     // FD without BRS
     //FDCANx->CCCR |= FDCAN_CCCR_FDOE;
     // FD with BRS
-    //FDCANx->CCCR |= (FDCAN_CCCR_FDOE | FDCAN_CCCR_BRSE);
+    // REDEBUG: for test plan purposes only!! Remove after!
+    FDCANx->CCCR |= (FDCAN_CCCR_FDOE | FDCAN_CCCR_BRSE);
 
     // Set TX mode to FIFO
     FDCANx->TXBC &= ~(FDCAN_TXBC_TFQM);
