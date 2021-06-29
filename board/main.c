@@ -766,9 +766,6 @@ int main(void) {
   // Init interrupt table
   init_interrupts(true);
 
-  // 8Hz timer
-  REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
-
   // shouldn't have interrupts here, but just in case
   disable_interrupts();
 
@@ -832,9 +829,9 @@ int main(void) {
   // enable CAN TXs
   current_board->enable_can_transceivers(true);
 
-  // 8hz
-  timer_init(TICK_TIMER, (uint16_t)((15.25*APB2_FREQ)/8U));
-  NVIC_EnableIRQ(TICK_TIMER_IRQ);
+  // 8Hz timer
+  REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
+  tick_timer_init();
 
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");

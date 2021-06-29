@@ -20,3 +20,8 @@ void interrupt_timer_init(void) {
   INTERRUPT_TIMER->SR = 0;
   NVIC_EnableIRQ(INTERRUPT_TIMER_IRQ);
 }
+
+void tick_timer_init(void) {
+  timer_init(TICK_TIMER, (uint16_t)((15.25*APB2_FREQ)/8U));
+  NVIC_EnableIRQ(TICK_TIMER_IRQ);
+}
