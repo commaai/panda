@@ -662,7 +662,7 @@ uint8_t loop_counter = 0U;
 void TIM1_BRK_TIM9_IRQ_Handler(void) {
   if (TIM9->SR != 0) {
     // siren
-    current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0)));
+    current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
 
     // decimated to 1Hz
     if(loop_counter == 0U){
@@ -698,7 +698,7 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
         heartbeat_counter += 1U;
       }
 
-      if (siren_countdown > 0) {
+      if (siren_countdown > 0U) {
         siren_countdown -= 1U;
       }
 
