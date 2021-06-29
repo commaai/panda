@@ -8,8 +8,6 @@
   #define MCU_IDCODE 0x411U
 #endif
 
-#include "lladc.h"
-
 #define CORE_FREQ 96U // 96Mhz
 //APB1 - 48Mhz, APB2 - 96Mhz
 #define APB1_FREQ CORE_FREQ/2U 

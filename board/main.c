@@ -14,12 +14,13 @@
 
 #include "drivers/llcan.h"
 #include "drivers/llgpio.h"
+#include "stm32fx/lladc.h"
 #include "drivers/pwm.h"
 
 #include "board.h"
 
 #include "drivers/uart.h"
-#include "drivers/llusb.h"
+#include "stm32fx/llusb.h"
 #include "drivers/usb.h"
 #include "drivers/gmlan_alt.h"
 #include "drivers/kline_init.h"

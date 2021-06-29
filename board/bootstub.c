@@ -31,6 +31,7 @@ const board *current_board;
 #include "drivers/timers.h"
 #include "drivers/clock.h"
 #include "drivers/llgpio.h"
+#include "stm32fx/lladc.h"
 #include "drivers/pwm.h"
 
 #include "board.h"
@@ -38,7 +39,7 @@ const board *current_board;
 #include "early_init.h"
 
 #include "drivers/spi.h"
-#include "drivers/llusb.h"
+#include "stm32fx/llusb.h"
 #include "drivers/usb.h"
 //#include "drivers/uart.h"
 
