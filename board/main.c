@@ -1,5 +1,3 @@
-//#define PANDA
-
 // ********************* Includes *********************
 #include "config.h"
 #include "obj/gitversion.h"
