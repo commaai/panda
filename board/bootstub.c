@@ -40,7 +40,7 @@ const board *current_board;
 
 #include "board.h"
 
-#include "bootmode.h"
+#include "early_init.h"
 
 #include "drivers/spi.h"
 #include "drivers/usb.h"
@@ -54,7 +54,7 @@ const board *current_board;
 #include "spi_flasher.h"
 
 void __initialize_hardware_early(void) {
-  bootmode();
+  early_initialization();
 }
 
 void fail(void) {

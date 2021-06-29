@@ -33,7 +33,7 @@
 #include "drivers/timer.h"
 #include "drivers/clock.h"
 
-#include "bootmode.h"
+#include "early_init.h"
 
 #include "power_saving.h"
 #include "safety.h"
@@ -650,7 +650,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
-  bootmode();
+  early_initialization();
 }
 
 void __attribute__ ((noinline)) enable_fpu(void) {
