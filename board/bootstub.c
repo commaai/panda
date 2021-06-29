@@ -39,6 +39,7 @@ const board *current_board;
 #include "early_init.h"
 
 #include "drivers/spi.h"
+#include "drivers/llusb.h"
 #include "drivers/usb.h"
 //#include "drivers/uart.h"
 

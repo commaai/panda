@@ -20,6 +20,7 @@
 #include "board.h"
 
 #include "drivers/uart.h"
+#include "drivers/llusb.h"
 #include "drivers/usb.h"
 #include "drivers/gmlan_alt.h"
 #include "drivers/kline_init.h"
