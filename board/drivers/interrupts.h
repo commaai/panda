@@ -6,6 +6,8 @@ typedef struct interrupt {
   uint32_t call_rate_fault;
 } interrupt;
 
+void interrupt_timer_init(void);
+
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!
   puts("Unused interrupt handler called!\n");
@@ -35,13 +37,13 @@ void handle_interrupt(IRQn_Type irq_type){
 }
 
 // Reset interrupt counter every second
-void TIM6_DAC_IRQ_Handler(void) {
-  if (TIM6->SR != 0) {
+void interrupt_timer_handler(void) {
+  if (INTERRUPT_TIMER->SR != 0) {
     for(uint16_t i=0U; i<NUM_INTERRUPTS; i++){
       interrupts[i].call_counter = 0U;
     }
   }
-  TIM6->SR = 0;
+  INTERRUPT_TIMER->SR = 0;
 }
 
 void init_interrupts(bool check_rate_limit){
@@ -51,14 +53,8 @@ void init_interrupts(bool check_rate_limit){
     interrupts[i].handler = unused_interrupt_handler;
   }
 
-  // Init timer 10 for a 1s interval
-  register_set_bits(&(RCC->APB1ENR), RCC_APB1ENR_TIM6EN);  // Enable interrupt timer peripheral
-  REGISTER_INTERRUPT(TIM6_DAC_IRQn, TIM6_DAC_IRQ_Handler, 1, FAULT_INTERRUPT_RATE_INTERRUPTS)
-  register_set(&(TIM6->PSC), ((uint16_t)(15.25*APB1_FREQ)-1U), 0xFFFFU);
-  register_set(&(TIM6->DIER), TIM_DIER_UIE, 0x5F5FU);
-  register_set(&(TIM6->CR1), TIM_CR1_CEN, 0x3FU);
-  TIM6->SR = 0;
-  NVIC_EnableIRQ(TIM6_DAC_IRQn);
+  // Init interrupt timer for a 1s interval
+  interrupt_timer_init();
 }
 
 // ********************* Bare interrupt handlers *********************

@@ -28,6 +28,7 @@ const board *current_board;
 
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
+#include "drivers/timers.h"
 #include "drivers/clock.h"
 #include "drivers/llgpio.h"
 #include "drivers/adc.h"

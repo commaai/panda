@@ -23,7 +23,7 @@
 #include "drivers/usb.h"
 #include "drivers/gmlan_alt.h"
 #include "drivers/kline_init.h"
-#include "drivers/timer.h"
+#include "drivers/timers.h"
 #include "drivers/clock.h"
 
 #include "early_init.h"
@@ -823,9 +823,7 @@ int main(void) {
   // init microsecond system timer
   // increments 1000000 times per second
   // generate an update to set the prescaler
-  MICROSECOND_TIMER->PSC = (APB1_FREQ)-1U;
-  MICROSECOND_TIMER->CR1 = TIM_CR1_CEN;
-  MICROSECOND_TIMER->EGR = TIM_EGR_UG;
+  microsecond_timer_init();
   // use MICROSECOND_TIMER->CNT to read
 
   // init to SILENT and can silent
