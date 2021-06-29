@@ -1,6 +1,5 @@
 // ********************* Includes *********************
 #include "../config.h"
-#include "stm32f2_config.h"
 #include "libc.h"
 
 #include "main_declarations.h"
