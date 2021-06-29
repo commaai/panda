@@ -9,7 +9,7 @@
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
 #include "drivers/timers.h"
-#include "drivers/llcan.h"
+#include "stm32fx/llcan.h"
 #include "drivers/llgpio.h"
 #include "stm32fx/lladc.h"
 
