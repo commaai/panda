@@ -11,7 +11,7 @@
 #include "drivers/timers.h"
 #include "drivers/llcan.h"
 #include "drivers/llgpio.h"
-#include "stm32fx/adc.h"
+#include "stm32fx/lladc.h"
 
 #include "board.h"
 
