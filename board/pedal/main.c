@@ -17,7 +17,6 @@
 
 #include "drivers/clock.h"
 #include "drivers/dac.h"
-#include "drivers/timer.h"
 
 #include "early_init.h"
 #include "crc.h"
