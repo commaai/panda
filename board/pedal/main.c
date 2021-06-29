@@ -280,20 +280,21 @@ void pedal(void) {
 }
 
 int main(void) {
-  // init devices
-  clock_init();
-  peripherals_init();
-
   // Init interrupt table
   init_interrupts(true);
-  disable_interrupts();
 
   REGISTER_INTERRUPT(CAN1_TX_IRQn, CAN1_TX_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
   REGISTER_INTERRUPT(CAN1_RX0_IRQn, CAN1_RX0_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
   REGISTER_INTERRUPT(CAN1_SCE_IRQn, CAN1_SCE_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
+  
   // Should run at around 732Hz (see init below)
   REGISTER_INTERRUPT(TIM3_IRQn, TIM3_IRQ_Handler, 1000U, FAULT_INTERRUPT_RATE_TIM3)
 
+  disable_interrupts();
+
+  // init devices
+  clock_init();
+  peripherals_init();
   detect_configuration();
   detect_board_type();
 

@@ -770,17 +770,18 @@ void heartbeat_handler(void) {
 
 
 int main(void) {
-  clock_init();
-  peripherals_init();
-  
   // Init interrupt table
   init_interrupts(true);
-  // shouldn't have interrupts here, but just in case
-  disable_interrupts();
 
   // 8Hz timer
   REGISTER_INTERRUPT(HEARTBEAT_TIMER_IRQ, heartbeat_handler, 10U, FAULT_INTERRUPT_RATE_HEARTBEAT)
 
+  // shouldn't have interrupts here, but just in case
+  disable_interrupts();
+
+  // init early devices
+  clock_init();
+  peripherals_init();
   detect_configuration();
   detect_board_type();
   adc_init();
