@@ -17,4 +17,3 @@ void dac_set(int channel, uint32_t value) {
     puts("Failed to set DAC: invalid channel value: 0x"); puth(value); puts("\n");
   }
 }
-

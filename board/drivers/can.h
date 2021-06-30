@@ -484,4 +484,3 @@ bool can_init(uint8_t can_number) {
   }
   return ret;
 }
-

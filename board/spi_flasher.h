@@ -340,4 +340,3 @@ void soft_flasher_start(void) {
     delay(500000);
   }
 }
-

@@ -30,7 +30,7 @@ const board *current_board;
 #include "drivers/interrupts.h"
 #include "drivers/timers.h"
 #include "stm32fx/clock.h"
-#include "drivers/llgpio.h"
+#include "drivers/gpio.h"
 #include "stm32fx/lladc.h"
 #include "drivers/pwm.h"
 
@@ -115,4 +115,3 @@ good:
   ((void(*)(void)) _app_start[1])();
   return 0;
 }
-
