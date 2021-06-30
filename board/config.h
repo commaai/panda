@@ -7,8 +7,6 @@
 //#define DEBUG_SPI
 //#define DEBUG_FAULTS
 
-#include "stm32fx/stm32fx_config.h"
-
 #define USB_VID 0xbbaaU
 
 #ifdef BOOTSTUB
@@ -17,6 +15,7 @@
   #define USB_PID 0xddccU
 #endif
 
+#include "stm32fx/stm32fx_config.h"
 #include <stdbool.h>
 #define NULL ((void*)0)
 #define COMPILE_TIME_ASSERT(pred) ((void)sizeof(char[1 - (2 * ((int)(!(pred))))]))
