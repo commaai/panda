@@ -22,7 +22,7 @@ uint16_t from_bcd(uint8_t value){
 }
 
 void rtc_init(void){
-    if(board_has_rtc()){
+    if(current_board->has_rtc){
         // Initialize RTC module and clock if not done already.
         if((RCC->BDCR & RCC_BDCR_MASK) != RCC_BDCR_OPTIONS){
             puts("Initializing RTC\n");
@@ -45,7 +45,7 @@ void rtc_init(void){
 }
 
 void rtc_set_time(timestamp_t time){
-    if(board_has_rtc()){
+    if(current_board->has_rtc){
         puts("Setting RTC time\n");
 
         // Disable write protection
@@ -87,7 +87,7 @@ timestamp_t rtc_get_time(void){
     result.minute = 0U;
     result.second = 0U;
 
-    if(board_has_rtc()){
+    if(current_board->has_rtc){
         // Wait until the register sync flag is set
         while((RTC->ISR & RTC_ISR_RSF) == 0){}
 
