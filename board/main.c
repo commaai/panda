@@ -18,6 +18,7 @@
 #include "drivers/pwm.h"
 
 #include "stm32fx/board.h"
+#include "boards/board_functions.h"
 
 #include "drivers/uart.h"
 #include "stm32fx/llusb.h"
