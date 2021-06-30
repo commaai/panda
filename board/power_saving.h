@@ -37,7 +37,7 @@ void set_power_save_state(int state) {
       current_board->set_gps_mode(GPS_DISABLED);
     }
 
-    if(current_board->has_onboard_gmlan){
+    if(current_board->has_hw_gmlan){
       // turn on GMLAN
       set_gpio_output(GPIOB, 14, enable);
       set_gpio_output(GPIOB, 15, enable);

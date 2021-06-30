@@ -187,7 +187,7 @@ void can_flip_buses(uint8_t bus1, uint8_t bus2){
 
 // TODO: Cleanup with new abstraction
 void can_set_gmlan(uint8_t bus) {
-  if(current_board->has_onboard_gmlan){
+  if(current_board->has_hw_gmlan){
     // first, disable GMLAN on prev bus
     uint8_t prev_bus = can_num_lookup[3];
     if (bus != prev_bus) {

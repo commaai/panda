@@ -19,7 +19,7 @@ struct board {
   const char *board_type;
   const harness_configuration *harness_config;
   const bool has_gps;
-  const bool has_onboard_gmlan;
+  const bool has_hw_gmlan;
   const bool has_obd;
   const bool has_lin;
   const bool has_rtc;
