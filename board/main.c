@@ -819,11 +819,7 @@ int main(void) {
     USART3->CR2 |= USART_CR2_LINEN;
   }
 
-  // init microsecond system timer
-  // increments 1000000 times per second
-  // generate an update to set the prescaler
   microsecond_timer_init();
-  // use MICROSECOND_TIMER->CNT to read
 
   // init to SILENT and can silent
   set_safety_mode(SAFETY_SILENT, 0);

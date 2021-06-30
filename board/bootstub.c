@@ -68,7 +68,7 @@ extern void *_app_start[];
 int main(void) {
   // Init interrupt table
   init_interrupts(true);
-  
+
   disable_interrupts();
   clock_init();
   detect_external_debug_serial();
