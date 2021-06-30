@@ -29,7 +29,7 @@ const board *current_board;
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
 #include "drivers/timers.h"
-#include "drivers/clock.h"
+#include "stm32fx/clock.h"
 #include "drivers/llgpio.h"
 #include "stm32fx/lladc.h"
 #include "drivers/pwm.h"

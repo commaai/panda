@@ -25,7 +25,7 @@
 #include "drivers/gmlan_alt.h"
 #include "drivers/kline_init.h"
 #include "drivers/timers.h"
-#include "drivers/clock.h"
+#include "stm32fx/clock.h"
 
 #include "early_init.h"
 

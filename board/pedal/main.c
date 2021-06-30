@@ -15,7 +15,7 @@
 
 #include "board.h"
 
-#include "drivers/clock.h"
+#include "stm32fx/clock.h"
 #include "drivers/dac.h"
 
 #include "early_init.h"
