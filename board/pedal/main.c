@@ -13,6 +13,7 @@
 #include "drivers/gpio.h"
 #include "stm32fx/lladc.h"
 
+#include "boards/board_declarations.h"
 #include "stm32fx/board.h"
 
 #include "stm32fx/clock.h"

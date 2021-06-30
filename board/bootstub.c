@@ -34,6 +34,7 @@ const board *current_board;
 #include "stm32fx/lladc.h"
 #include "drivers/pwm.h"
 
+#include "boards/board_declarations.h"
 #include "stm32fx/board.h"
 
 #include "early_init.h"
