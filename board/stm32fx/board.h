@@ -1,7 +1,8 @@
 // ///////////////////////////////////////////////////////////// //
 // Hardware abstraction layer for all different supported boards //
 // ///////////////////////////////////////////////////////////// //
-#include "board_declarations.h"
+#include "boards/board_declarations.h"
+#include "boards/board_functions.h"
 #include "stm32fx/peripherals.h"
 
 // ///// Board definition and detection ///// //
@@ -51,37 +52,9 @@ void detect_board_type(void) {
   #endif
 }
 
-
-// ///// Configuration detection ///// //
 bool has_external_debug_serial = 0;
 
-void detect_configuration(void) {
+void detect_external_debug_serial(void) {
   // detect if external serial debugging is present
   has_external_debug_serial = detect_with_pull(GPIOA, 3, PULL_DOWN);
-}
-
-// ///// Board functions ///// //
-// TODO: Make these config options in the board struct
-bool board_has_gps(void) {
-  return ((hw_type == HW_TYPE_GREY_PANDA) || (hw_type == HW_TYPE_BLACK_PANDA) || (hw_type == HW_TYPE_UNO));
-}
-
-bool board_has_gmlan(void) {
-  return ((hw_type == HW_TYPE_WHITE_PANDA) || (hw_type == HW_TYPE_GREY_PANDA));
-}
-
-bool board_has_obd(void) {
-  return ((hw_type == HW_TYPE_BLACK_PANDA) || (hw_type == HW_TYPE_UNO) || (hw_type == HW_TYPE_DOS));
-}
-
-bool board_has_lin(void) {
-  return ((hw_type == HW_TYPE_WHITE_PANDA) || (hw_type == HW_TYPE_GREY_PANDA));
-}
-
-bool board_has_rtc(void) {
-  return ((hw_type == HW_TYPE_UNO) || (hw_type == HW_TYPE_DOS));
-}
-
-bool board_has_relay(void) {
-  return ((hw_type == HW_TYPE_BLACK_PANDA) || (hw_type == HW_TYPE_UNO) || (hw_type == HW_TYPE_DOS));
 }

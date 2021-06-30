@@ -13,7 +13,7 @@
 #include "drivers/llgpio.h"
 #include "stm32fx/lladc.h"
 
-#include "board.h"
+#include "stm32fx/board.h"
 
 #include "stm32fx/clock.h"
 #include "drivers/dac.h"
@@ -294,7 +294,7 @@ int main(void) {
   // init devices
   clock_init();
   peripherals_init();
-  detect_configuration();
+  detect_external_debug_serial();
   detect_board_type();
 
   // init board

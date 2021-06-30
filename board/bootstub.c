@@ -34,7 +34,7 @@ const board *current_board;
 #include "stm32fx/lladc.h"
 #include "drivers/pwm.h"
 
-#include "board.h"
+#include "stm32fx/board.h"
 
 #include "early_init.h"
 
@@ -70,7 +70,7 @@ int main(void) {
   
   disable_interrupts();
   clock_init();
-  detect_configuration();
+  detect_external_debug_serial();
   detect_board_type();
 
   if (enter_bootloader_mode == ENTER_SOFTLOADER_MAGIC) {

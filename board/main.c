@@ -17,7 +17,7 @@
 #include "stm32fx/lladc.h"
 #include "drivers/pwm.h"
 
-#include "board.h"
+#include "stm32fx/board.h"
 
 #include "drivers/uart.h"
 #include "stm32fx/llusb.h"
@@ -773,7 +773,7 @@ int main(void) {
   // init early devices
   clock_init();
   peripherals_init();
-  detect_configuration();
+  detect_external_debug_serial();
   detect_board_type();
   adc_init();
 
