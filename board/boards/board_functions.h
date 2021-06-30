@@ -19,7 +19,3 @@ bool board_has_lin(void) {
 bool board_has_rtc(void) {
   return ((hw_type == HW_TYPE_UNO) || (hw_type == HW_TYPE_DOS));
 }
-
-bool board_has_relay(void) {
-  return ((hw_type == HW_TYPE_BLACK_PANDA) || (hw_type == HW_TYPE_UNO) || (hw_type == HW_TYPE_DOS));
-}
