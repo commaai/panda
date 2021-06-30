@@ -66,14 +66,3 @@ void peripherals_init(void){
   RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
   RCC->APB2ENR |= RCC_APB2ENR_TIM9EN;  // slow loop
 }
-
-// Detection with internal pullup
-#define PULL_EFFECTIVE_DELAY 4096
-bool detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode) {
-  set_gpio_mode(GPIO, pin, MODE_INPUT);
-  set_gpio_pullup(GPIO, pin, mode);
-  for (volatile int i=0; i<PULL_EFFECTIVE_DELAY; i++);
-  bool ret = get_gpio_input(GPIO, pin);
-  set_gpio_pullup(GPIO, pin, PULL_NONE);
-  return ret;
-}

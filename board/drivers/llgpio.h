@@ -63,3 +63,13 @@ int get_gpio_input(GPIO_TypeDef *GPIO, unsigned int pin) {
   return (GPIO->IDR & (1U << pin)) == (1U << pin);
 }
 
+// Detection with internal pullup
+#define PULL_EFFECTIVE_DELAY 4096
+bool detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode) {
+  set_gpio_mode(GPIO, pin, MODE_INPUT);
+  set_gpio_pullup(GPIO, pin, mode);
+  for (volatile int i=0; i<PULL_EFFECTIVE_DELAY; i++);
+  bool ret = get_gpio_input(GPIO, pin);
+  set_gpio_pullup(GPIO, pin, PULL_NONE);
+  return ret;
+}
