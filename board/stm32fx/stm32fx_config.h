@@ -1,10 +1,10 @@
 #ifdef STM32F4
-  #include "stm32f4xx.h"
-  #include "stm32f4xx_hal_gpio_ex.h"
+  #include "stm32fx/inc/stm32f4xx.h"
+  #include "stm32fx/inc/stm32f4xx_hal_gpio_ex.h"
   #define MCU_IDCODE 0x463U
 #else
-  #include "stm32f2xx.h"
-  #include "stm32f2xx_hal_gpio_ex.h"
+  #include "stm32fx/inc/stm32f2xx.h"
+  #include "stm32fx/inc/stm32f2xx_hal_gpio_ex.h"
   #define MCU_IDCODE 0x411U
 #endif
 
@@ -34,30 +34,34 @@
 #define SERIAL_NUMBER_ADDRESS 0x1FFF79C0
 
 #ifndef BOOTSTUB
-  #include "../main_declarations.h"
+  #ifdef PANDA
+    #include "main_declarations.h"
+  #else
+    #include "pedal/main_declarations.h"
+  #endif
 #else
-  #include "../bootstub_declarations.h"
+  #include "bootstub_declarations.h"
 #endif
 
-#include "../libc.h"
-#include "../critical.h"
-#include "../faults.h"
+#include "libc.h"
+#include "critical.h"
+#include "faults.h"
 
-#include "../drivers/registers.h"
-#include "../drivers/interrupts.h"
-#include "../drivers/timers.h"
-#include "../drivers/gpio.h"
+#include "drivers/registers.h"
+#include "drivers/interrupts.h"
+#include "drivers/timers.h"
+#include "drivers/gpio.h"
 
 #ifndef BOOTSTUB
-  #include "llcan.h"
+  #include "stm32fx/llcan.h"
 #endif
 
-#include "lladc.h"
-#include "board.h"
-#include "clock.h"
+#include "stm32fx/lladc.h"
+#include "stm32fx/board.h"
+#include "stm32fx/clock.h"
 
 #if defined(PANDA) || defined(BOOTSTUB) || defined(PEDAL_USB)
-  #include "llusb.h"
+  #include "stm32fx/llusb.h"
 #endif
 
 void early_gpio_float(void) {
