@@ -8,7 +8,7 @@
   #define MCU_IDCODE 0x411U
 #endif
 
-#define CORE_FREQ 96U // 96Mhz
+#define CORE_FREQ 96U // in Mhz
 //APB1 - 48Mhz, APB2 - 96Mhz
 #define APB1_FREQ CORE_FREQ/2U 
 #define APB2_FREQ CORE_FREQ/1U
