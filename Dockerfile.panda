@@ -50,7 +50,7 @@ RUN pyenv install 3.8.5 && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
 RUN cd /tmp && \
-    git clone https://github.com/commaai/cppcheck.git && \
+    git clone https://github.com/danmar/cppcheck.git && \
     cd cppcheck && \
     git fetch && \
     git checkout e1cff1d1ef92f6a1c6962e0e4153b7353ccad04c && \
