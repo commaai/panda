@@ -1,37 +1,21 @@
 // ********************* Includes *********************
 #include "config.h"
-#include "obj/gitversion.h"
 
-#include "main_declarations.h"
-#include "critical.h"
-
-#include "libc.h"
-#include "provision.h"
-#include "faults.h"
-
-#include "drivers/registers.h"
-#include "drivers/interrupts.h"
-#include "drivers/timers.h"
-#include "drivers/gpio.h"
 #include "drivers/pwm.h"
-
-#include "stm32fx/llcan.h"
-#include "stm32fx/lladc.h"
-#include "stm32fx/board.h"
-#include "stm32fx/clock.h"
-#include "stm32fx/llusb.h"
-
 #include "drivers/usb.h"
 #include "drivers/uart.h"
 #include "drivers/gmlan_alt.h"
 #include "drivers/kline_init.h"
 
 #include "early_init.h"
+#include "provision.h"
 
 #include "power_saving.h"
 #include "safety.h"
 
 #include "drivers/can.h"
+
+#include "obj/gitversion.h"
 
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 

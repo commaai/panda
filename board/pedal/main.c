@@ -1,20 +1,5 @@
 // ********************* Includes *********************
 #include "../config.h"
-#include "libc.h"
-
-#include "main_declarations.h"
-#include "critical.h"
-#include "faults.h"
-
-#include "drivers/registers.h"
-#include "drivers/interrupts.h"
-#include "drivers/timers.h"
-#include "drivers/gpio.h"
-
-#include "stm32fx/llcan.h"
-#include "stm32fx/lladc.h"
-#include "stm32fx/board.h"
-#include "stm32fx/clock.h"
 
 #include "drivers/dac.h"
 

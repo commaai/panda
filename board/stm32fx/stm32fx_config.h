@@ -33,6 +33,33 @@
 #define PROVISION_CHUNK_ADDRESS 0x1FFF79E0
 #define SERIAL_NUMBER_ADDRESS 0x1FFF79C0
 
+#ifndef BOOTSTUB
+  #include "../main_declarations.h"
+#else
+  #include "../bootstub_declarations.h"
+#endif
+
+#include "../libc.h"
+#include "../critical.h"
+#include "../faults.h"
+
+#include "../drivers/registers.h"
+#include "../drivers/interrupts.h"
+#include "../drivers/timers.h"
+#include "../drivers/gpio.h"
+
+#ifndef BOOTSTUB
+  #include "llcan.h"
+#endif
+
+#include "lladc.h"
+#include "board.h"
+#include "clock.h"
+
+#if defined(PANDA) || defined(BOOTSTUB) || defined(PEDAL_USB)
+  #include "llusb.h"
+#endif
+
 void early_gpio_float(void) {
   RCC->AHB1ENR = RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN;
 
