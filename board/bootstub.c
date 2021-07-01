@@ -29,17 +29,17 @@ const board *current_board;
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
 #include "drivers/timers.h"
-#include "stm32fx/clock.h"
 #include "drivers/gpio.h"
-#include "stm32fx/lladc.h"
 #include "drivers/pwm.h"
 
+#include "stm32fx/lladc.h"
 #include "stm32fx/board.h"
+#include "stm32fx/clock.h"
+#include "stm32fx/llusb.h"
 
 #include "early_init.h"
 
 #include "drivers/spi.h"
-#include "stm32fx/llusb.h"
 #include "drivers/usb.h"
 //#include "drivers/uart.h"
 

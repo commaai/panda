@@ -9,13 +9,13 @@
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
 #include "drivers/timers.h"
-#include "stm32fx/llcan.h"
 #include "drivers/gpio.h"
+
+#include "stm32fx/llcan.h"
 #include "stm32fx/lladc.h"
-
 #include "stm32fx/board.h"
-
 #include "stm32fx/clock.h"
+
 #include "drivers/dac.h"
 
 #include "early_init.h"

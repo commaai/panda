@@ -11,21 +11,20 @@
 
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
-
-#include "stm32fx/llcan.h"
+#include "drivers/timers.h"
 #include "drivers/gpio.h"
-#include "stm32fx/lladc.h"
 #include "drivers/pwm.h"
 
+#include "stm32fx/llcan.h"
+#include "stm32fx/lladc.h"
 #include "stm32fx/board.h"
-
-#include "drivers/uart.h"
+#include "stm32fx/clock.h"
 #include "stm32fx/llusb.h"
+
 #include "drivers/usb.h"
+#include "drivers/uart.h"
 #include "drivers/gmlan_alt.h"
 #include "drivers/kline_init.h"
-#include "drivers/timers.h"
-#include "stm32fx/clock.h"
 
 #include "early_init.h"
 
