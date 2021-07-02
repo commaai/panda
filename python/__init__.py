@@ -393,6 +393,9 @@ class Panda(object):
   def is_black(self):
     return self.get_type() == Panda.HW_TYPE_BLACK_PANDA
 
+  def is_pedal(self):
+    return self.get_type() == Panda.HW_TYPE_PEDAL
+
   def is_uno(self):
     return self.get_type() == Panda.HW_TYPE_UNO
 
