@@ -35,11 +35,6 @@ void pedal_set_usb_power_mode(uint8_t mode){
   puts("Trying to set USB power mode on pedal. This is not supported.\n");
 }
 
-void pedal_set_gps_mode(uint8_t mode) {
-  UNUSED(mode);
-  puts("Trying to set ESP/GPS mode on pedal. This is not supported.\n");
-}
-
 void pedal_set_can_mode(uint8_t mode){
   switch (mode) {
     case CAN_MODE_NORMAL:
@@ -50,39 +45,9 @@ void pedal_set_can_mode(uint8_t mode){
   }
 }
 
-void pedal_usb_power_mode_tick(uint32_t uptime){
-  UNUSED(uptime);
-  // Not applicable
-}
-
 bool pedal_check_ignition(void){
   // not supported on pedal
   return false;
-}
-
-uint32_t pedal_read_current(void){
-  // No current sense on pedal
-  return 0U;
-}
-
-void pedal_set_ir_power(uint8_t percentage){
-  UNUSED(percentage);
-}
-
-void pedal_set_fan_power(uint8_t percentage){
-  UNUSED(percentage);
-}
-
-void pedal_set_phone_power(bool enabled){
-  UNUSED(enabled);
-}
-
-void pedal_set_clock_source_mode(uint8_t mode){
-  UNUSED(mode);
-}
-
-void pedal_set_siren(bool enabled){
-  UNUSED(enabled);
 }
 
 void pedal_init(void) {
@@ -114,14 +79,14 @@ const board board_pedal = {
   .enable_can_transceivers = pedal_enable_can_transceivers,
   .set_led = pedal_set_led,
   .set_usb_power_mode = pedal_set_usb_power_mode,
-  .set_gps_mode = pedal_set_gps_mode,
+  .set_gps_mode = unused_set_gps_mode,
   .set_can_mode = pedal_set_can_mode,
-  .usb_power_mode_tick = pedal_usb_power_mode_tick,
+  .usb_power_mode_tick = unused_usb_power_mode_tick,
   .check_ignition = pedal_check_ignition,
-  .read_current = pedal_read_current,
-  .set_fan_power = pedal_set_fan_power,
-  .set_ir_power = pedal_set_ir_power,
-  .set_phone_power = pedal_set_phone_power,
-  .set_clock_source_mode = pedal_set_clock_source_mode,
-  .set_siren = pedal_set_siren
+  .read_current = unused_read_current,
+  .set_fan_power = unused_set_fan_power,
+  .set_ir_power = unused_set_ir_power,
+  .set_phone_power = unused_set_phone_power,
+  .set_clock_source_mode = unused_set_clock_source_mode,
+  .set_siren = unused_set_siren
 };

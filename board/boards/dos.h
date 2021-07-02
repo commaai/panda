@@ -57,10 +57,6 @@ void dos_set_bootkick(bool enabled){
   set_gpio_output(GPIOC, 4, !enabled);
 }
 
-void dos_set_phone_power(bool enabled){
-  UNUSED(enabled);
-}
-
 void dos_set_usb_power_mode(uint8_t mode) {
   bool valid = false;
   switch (mode) {
@@ -79,10 +75,6 @@ void dos_set_usb_power_mode(uint8_t mode) {
   if (valid) {
     usb_power_mode = mode;
   }
-}
-
-void dos_set_gps_mode(uint8_t mode) {
-  UNUSED(mode);
 }
 
 void dos_set_can_mode(uint8_t mode){
@@ -233,14 +225,14 @@ const board board_dos = {
   .enable_can_transceivers = dos_enable_can_transceivers,
   .set_led = dos_set_led,
   .set_usb_power_mode = dos_set_usb_power_mode,
-  .set_gps_mode = dos_set_gps_mode,
+  .set_gps_mode = unused_set_gps_mode,
   .set_can_mode = dos_set_can_mode,
   .usb_power_mode_tick = dos_usb_power_mode_tick,
   .check_ignition = dos_check_ignition,
-  .read_current = dos_read_current,
+  .read_current = unused_read_current,
   .set_fan_power = dos_set_fan_power,
   .set_ir_power = dos_set_ir_power,
-  .set_phone_power = dos_set_phone_power,
+  .set_phone_power = unused_set_phone_power,
   .set_clock_source_mode = dos_set_clock_source_mode,
   .set_siren = dos_set_siren
 };

@@ -46,9 +46,9 @@ const board board_grey = {
   .usb_power_mode_tick = white_usb_power_mode_tick,
   .check_ignition = white_check_ignition,
   .read_current = white_read_current,
-  .set_fan_power = white_set_fan_power,
-  .set_ir_power = white_set_ir_power,
-  .set_phone_power = white_set_phone_power,
-  .set_clock_source_mode = white_set_clock_source_mode,
-  .set_siren = white_set_siren
+  .set_fan_power = unused_set_fan_power,
+  .set_ir_power = unused_set_ir_power,
+  .set_phone_power = unused_set_phone_power,
+  .set_clock_source_mode = unused_set_clock_source_mode,
+  .set_siren = unused_set_siren
 };
