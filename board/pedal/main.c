@@ -84,6 +84,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
   switch (setup->b.bRequest) {
+    // **** 0xc1: get hardware type
+    case 0xc1:
+      resp[0] = hw_type;
+      resp_len = 1;
+      break;
     // **** 0xe0: uart read
     case 0xe0:
       ur = get_ring_by_number(setup->b.wValue.w);
