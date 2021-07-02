@@ -1,4 +1,5 @@
 // ********************* Includes *********************
+//#define PEDAL_USB
 #include "../config.h"
 
 #include "drivers/dac.h"
@@ -7,8 +8,6 @@
 #include "crc.h"
 
 #define CAN CAN1
-
-//#define PEDAL_USB
 
 #ifdef PEDAL_USB
   #include "drivers/uart.h"
