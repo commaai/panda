@@ -187,7 +187,7 @@ void can_flip_buses(uint8_t bus1, uint8_t bus2){
 
 // TODO: Cleanup with new abstraction
 void can_set_gmlan(uint8_t bus) {
-  if(board_has_gmlan()){
+  if(current_board->has_hw_gmlan){
     // first, disable GMLAN on prev bus
     uint8_t prev_bus = can_num_lookup[3];
     if (bus != prev_bus) {
@@ -242,7 +242,7 @@ void can_set_obd(uint8_t harness_orientation, bool obd){
   } else {
     puts("setting CAN2 to be normal\n");
   }
-  if(board_has_obd()){
+  if(current_board->has_obd){
     if(obd != (bool)(harness_orientation == HARNESS_STATUS_NORMAL)){
         // B5,B6: disable normal mode
         set_gpio_mode(GPIOB, 5, MODE_INPUT);
@@ -484,4 +484,3 @@ bool can_init(uint8_t can_number) {
   }
   return ret;
 }
-

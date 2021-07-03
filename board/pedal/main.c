@@ -1,29 +1,13 @@
 // ********************* Includes *********************
+//#define PEDAL_USB
 #include "../config.h"
-#include "libc.h"
 
-#include "main_declarations.h"
-#include "critical.h"
-#include "faults.h"
-
-#include "drivers/registers.h"
-#include "drivers/interrupts.h"
-#include "drivers/llcan.h"
-#include "drivers/llgpio.h"
-#include "drivers/adc.h"
-
-#include "board.h"
-
-#include "drivers/clock.h"
 #include "drivers/dac.h"
-#include "drivers/timer.h"
 
-#include "gpio.h"
+#include "early_init.h"
 #include "crc.h"
 
 #define CAN CAN1
-
-//#define PEDAL_USB
 
 #ifdef PEDAL_USB
   #include "drivers/uart.h"
@@ -46,7 +30,7 @@ uint32_t enter_bootloader_mode;
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
-  early();
+  early_initialization();
 }
 
 // ********************* serial debugging *********************
@@ -290,7 +274,7 @@ int main(void) {
   REGISTER_INTERRUPT(CAN1_TX_IRQn, CAN1_TX_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
   REGISTER_INTERRUPT(CAN1_RX0_IRQn, CAN1_RX0_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
   REGISTER_INTERRUPT(CAN1_SCE_IRQn, CAN1_SCE_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
-
+  
   // Should run at around 732Hz (see init below)
   REGISTER_INTERRUPT(TIM3_IRQn, TIM3_IRQ_Handler, 1000U, FAULT_INTERRUPT_RATE_TIM3)
 
@@ -299,7 +283,7 @@ int main(void) {
   // init devices
   clock_init();
   peripherals_init();
-  detect_configuration();
+  detect_external_debug_serial();
   detect_board_type();
 
   // init board

@@ -127,7 +127,7 @@ int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_
 
 // 1Hz safety function called by main. Now just a check for lagging safety messages
 void safety_tick(const safety_hooks *hooks) {
-  uint32_t ts = TIM2->CNT;
+  uint32_t ts = MICROSECOND_TIMER->CNT;
   if (hooks->addr_check != NULL) {
     for (int i=0; i < hooks->addr_check_len; i++) {
       uint32_t elapsed_time = get_ts_elapsed(ts, hooks->addr_check[i].last_timestamp);
@@ -165,7 +165,7 @@ bool is_msg_valid(AddrCheckStruct addr_list[], int index) {
 
 void update_addr_timestamp(AddrCheckStruct addr_list[], int index) {
   if (index != -1) {
-    uint32_t ts = TIM2->CNT;
+    uint32_t ts = MICROSECOND_TIMER->CNT;
     addr_list[index].last_timestamp = ts;
   }
 }

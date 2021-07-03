@@ -244,7 +244,7 @@ static int volkswagen_pq_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 static bool volkswagen_steering_check(int desired_torque) {
   bool violation = false;
-  uint32_t ts = TIM2->CNT;
+  uint32_t ts = MICROSECOND_TIMER->CNT;
 
   if (controls_allowed) {
     // *** global torque limit check ***

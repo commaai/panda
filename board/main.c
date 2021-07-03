@@ -1,39 +1,21 @@
-//#define PANDA
-
 // ********************* Includes *********************
 #include "config.h"
-#include "obj/gitversion.h"
 
-#include "main_declarations.h"
-#include "critical.h"
-
-#include "libc.h"
-#include "provision.h"
-#include "faults.h"
-
-#include "drivers/registers.h"
-#include "drivers/interrupts.h"
-
-#include "drivers/llcan.h"
-#include "drivers/llgpio.h"
-#include "drivers/adc.h"
 #include "drivers/pwm.h"
-
-#include "board.h"
-
-#include "drivers/uart.h"
 #include "drivers/usb.h"
+#include "drivers/uart.h"
 #include "drivers/gmlan_alt.h"
 #include "drivers/kline_init.h"
-#include "drivers/timer.h"
-#include "drivers/clock.h"
 
-#include "gpio.h"
+#include "early_init.h"
+#include "provision.h"
 
 #include "power_saving.h"
 #include "safety.h"
 
 #include "drivers/can.h"
+
+#include "obj/gitversion.h"
 
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
@@ -122,14 +104,14 @@ void set_safety_mode(uint16_t mode, int16_t param) {
   switch (mode_copy) {
     case SAFETY_SILENT:
       set_intercept_relay(false);
-      if (board_has_obd()) {
+      if (current_board->has_obd) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_SILENT;
       break;
     case SAFETY_NOOUTPUT:
       set_intercept_relay(false);
-      if (board_has_obd()) {
+      if (current_board->has_obd) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_LIVE;
@@ -138,7 +120,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
       set_intercept_relay(false);
       heartbeat_counter = 0U;
       heartbeat_lost = false;
-      if (board_has_obd()) {
+      if (current_board->has_obd) {
         if (param == 0) {
           current_board->set_can_mode(CAN_MODE_OBD_CAN2);
         } else {
@@ -151,7 +133,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
       set_intercept_relay(true);
       heartbeat_counter = 0U;
       heartbeat_lost = false;
-      if (board_has_obd()) {
+      if (current_board->has_obd) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_LIVE;
@@ -339,7 +321,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xd0:
       // addresses are OTP
       if (setup->b.wValue.w == 1U) {
-        (void)memcpy(resp, (uint8_t *)0x1fff79c0, 0x10);
+        (void)memcpy(resp, (uint8_t *)SERIAL_NUMBER_ADDRESS, 0x10);
         resp_len = 0x10;
       } else {
         get_provision_chunk(resp);
@@ -427,7 +409,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
     case 0xdb:
-      if(board_has_obd()){
+      if(current_board->has_obd){
         if (setup->b.wValue.w == 1U) {
           // Enable OBD CAN
           current_board->set_can_mode(CAN_MODE_OBD_CAN2);
@@ -565,7 +547,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xf0: k-line/l-line wake-up pulse for KWP2000 fast initialization
     case 0xf0:
-      if(board_has_lin()) {
+      if(current_board->has_lin) {
         bool k = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
         bool l = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
         if (bitbang_wakeup(k, l)) {
@@ -605,7 +587,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       }
     // **** 0xf4: k-line/l-line 5 baud initialization
     case 0xf4:
-      if(board_has_lin()) {
+      if(current_board->has_lin) {
         bool k = (setup->b.wValue.w == 0U) || (setup->b.wValue.w == 2U);
         bool l = (setup->b.wValue.w == 1U) || (setup->b.wValue.w == 2U);
         uint8_t five_baud_addr = (setup->b.wIndex.w & 0xFFU);
@@ -645,7 +627,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
-  early();
+  early_initialization();
 }
 
 void __attribute__ ((noinline)) enable_fpu(void) {
@@ -659,8 +641,8 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called at 8Hz
 uint8_t loop_counter = 0U;
-void TIM1_BRK_TIM9_IRQ_Handler(void) {
-  if (TIM9->SR != 0) {
+void tick_handler(void) {
+  if (TICK_TIMER->SR != 0) {
     // siren
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
 
@@ -760,16 +742,13 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
     loop_counter++;
     loop_counter %= 8U;
   }
-  TIM9->SR = 0;
+  TICK_TIMER->SR = 0;
 }
 
-#define MAX_FADE 8192U
+
 int main(void) {
   // Init interrupt table
   init_interrupts(true);
-
-  // 8Hz timer
-  REGISTER_INTERRUPT(TIM1_BRK_TIM9_IRQn, TIM1_BRK_TIM9_IRQ_Handler, 10U, FAULT_INTERRUPT_RATE_TIM9)
 
   // shouldn't have interrupts here, but just in case
   disable_interrupts();
@@ -777,7 +756,7 @@ int main(void) {
   // init early devices
   clock_init();
   peripherals_init();
-  detect_configuration();
+  detect_external_debug_serial();
   detect_board_type();
   adc_init();
 
@@ -807,14 +786,14 @@ int main(void) {
     uart_init(&uart_ring_debug, 115200);
   }
 
-  if (board_has_gps()) {
+  if (current_board->has_gps) {
     uart_init(&uart_ring_gps, 9600);
   } else {
     // enable ESP uart
     uart_init(&uart_ring_gps, 115200);
   }
 
-  if(board_has_lin()){
+  if(current_board->has_lin){
     // enable LIN
     uart_init(&uart_ring_lin1, 10400);
     UART5->CR2 |= USART_CR2_LINEN;
@@ -822,13 +801,7 @@ int main(void) {
     USART3->CR2 |= USART_CR2_LINEN;
   }
 
-  // init microsecond system timer
-  // increments 1000000 times per second
-  // generate an update to set the prescaler
-  TIM2->PSC = 48-1;
-  TIM2->CR1 = TIM_CR1_CEN;
-  TIM2->EGR = TIM_EGR_UG;
-  // use TIM2->CNT to read
+  microsecond_timer_init();
 
   // init to SILENT and can silent
   set_safety_mode(SAFETY_SILENT, 0);
@@ -836,9 +809,9 @@ int main(void) {
   // enable CAN TXs
   current_board->enable_can_transceivers(true);
 
-  // 8hz
-  timer_init(TIM9, 183);
-  NVIC_EnableIRQ(TIM1_BRK_TIM9_IRQn);
+  // 8Hz timer
+  REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
+  tick_timer_init();
 
 #ifdef DEBUG
   puts("DEBUG ENABLED\n");
@@ -860,18 +833,18 @@ int main(void) {
         uint32_t div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4U : 1U);
 
         // useful for debugging, fade breaks = panda is overloaded
-        for(uint32_t fade = 0U; fade < MAX_FADE; fade += div_mode){
+        for(uint32_t fade = 0U; fade < MAX_LED_FADE; fade += div_mode){
           current_board->set_led(LED_RED, true);
           delay(fade >> 4);
           current_board->set_led(LED_RED, false);
-          delay((MAX_FADE - fade) >> 4);
+          delay((MAX_LED_FADE - fade) >> 4);
         }
 
-        for(uint32_t fade = MAX_FADE; fade > 0U; fade -= div_mode){
+        for(uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= div_mode){
           current_board->set_led(LED_RED, true);
           delay(fade >> 4);
           current_board->set_led(LED_RED, false);
-          delay((MAX_FADE - fade) >> 4);
+          delay((MAX_LED_FADE - fade) >> 4);
         }
 
       #ifdef DEBUG_FAULTS
