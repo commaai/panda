@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
   with open(os.devnull, "w") as devnull:
     with contextlib.redirect_stdout(devnull):
-      jungle = PandaJungle('1f004e000751373036333138')
+      jungle = PandaJungle()
   jungle.set_panda_power(True)
   jungle.set_ignition(False)
 
