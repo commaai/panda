@@ -1,14 +1,10 @@
 import os
-import sys
 import time
 import contextlib
-import random
 import struct
 import signal
-from nose.tools import assert_equal, assert_less, assert_greater
+from nose.tools import assert_greater
 
-#sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-#from python import PandaJungle
 from panda import Panda
 from panda_jungle import PandaJungle  # pylint: disable=import-error
 
