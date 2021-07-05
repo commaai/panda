@@ -30,5 +30,21 @@ pipeline {
         }
       }
     }
+    stage('PEDAL tests') {
+      steps {
+        lock(resource: "pedal", inversePrecedence: true, quantity: 1) {
+          timeout(time: 20, unit: 'MINUTES') {
+            script {
+              sh "docker run --rm --privileged \
+                    --volume /dev/bus/usb:/dev/bus/usb \
+                    --volume /var/run/dbus:/var/run/dbus \
+                    --net host \
+                    ${env.DOCKER_IMAGE_TAG} \
+                    bash -c 'cd /tmp/panda && PEDAL=1 scons && PEDAL_USB=1 scons && python ./tests/pedal/test_pedal.py'"
+            }
+          }
+        }
+      }
+    }
   }
 }
