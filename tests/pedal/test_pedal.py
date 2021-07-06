@@ -53,21 +53,18 @@ class CanHandle(object):
 class TestPedal(unittest.TestCase):
   PEDAL_BUS = 1
   def setUp(self):
-    self.jungle = TestPedal.jungle
+    self.jungle = PandaJungle()
+    self.jungle.set_panda_power(True)
+    self.jungle.set_ignition(False)
 
-  @classmethod
-  def setUpClass(cls):
-    super(TestPedal, cls).setUpClass()
-    cls.jungle = PandaJungle()
-    cls.jungle.set_panda_power(True)
-    cls.jungle.set_ignition(False)
+  def tearDown(self):
+    self.jungle.close()
 
   def _flash_over_can(self, bus, fw_file):
     print(f"Flashing {fw_file}")
     while len(self.jungle.can_recv()) != 0:
       continue
     self.jungle.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x0a", bus)
-    #p.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x02", bus) #DFU mode (recover)
 
     time.sleep(0.1)
     with open(fw_file, "rb") as code:
