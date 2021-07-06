@@ -675,3 +675,7 @@ class Panda(object):
   # ****************** Debug *****************
   def set_green_led(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')
+
+  # ************ Make pedal silent ***********
+  def set_pedal_silent(self, enabled):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf9, int(enabled), 0, b'')

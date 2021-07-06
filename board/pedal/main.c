@@ -27,6 +27,7 @@
 
 #define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
 uint32_t enter_bootloader_mode;
+bool silent = false;
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
@@ -84,6 +85,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
                          getc(ur, (char*)&resp[resp_len])) {
         ++resp_len;
       }
+      break;
+    // **** 0xf9: make pedal silent
+    case 0xf9:
+      silent = (setup->b.wValue.w != 0U);
       break;
     default:
       puts("NO HANDLER ");
@@ -211,27 +216,29 @@ void TIM3_IRQ_Handler(void) {
     puts("\n");
   #endif
 
-  // check timer for sending the user pedal and clearing the CAN
-  if ((CAN->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
-    uint8_t dat[8];
-    dat[0] = (pdl0 >> 8) & 0xFFU;
-    dat[1] = (pdl0 >> 0) & 0xFFU;
-    dat[2] = (pdl1 >> 8) & 0xFFU;
-    dat[3] = (pdl1 >> 0) & 0xFFU;
-    dat[4] = ((state & 0xFU) << 4) | pkt_idx;
-    dat[5] = crc_checksum(dat, CAN_GAS_SIZE - 1, crc_poly);
-    CAN->sTxMailBox[0].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
-    CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8);
-    CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 5
-    CAN->sTxMailBox[0].TIR = (CAN_GAS_OUTPUT << 21) | 1U;
-    ++pkt_idx;
-    pkt_idx &= COUNTER_CYCLE;
-  } else {
-    // old can packet hasn't sent!
-    state = FAULT_SEND;
-    #ifdef DEBUG
-      puts("CAN MISS\n");
-    #endif
+  if (!silent) {
+    // check timer for sending the user pedal and clearing the CAN
+    if ((CAN->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
+      uint8_t dat[8];
+      dat[0] = (pdl0 >> 8) & 0xFFU;
+      dat[1] = (pdl0 >> 0) & 0xFFU;
+      dat[2] = (pdl1 >> 8) & 0xFFU;
+      dat[3] = (pdl1 >> 0) & 0xFFU;
+      dat[4] = ((state & 0xFU) << 4) | pkt_idx;
+      dat[5] = crc_checksum(dat, CAN_GAS_SIZE - 1, crc_poly);
+      CAN->sTxMailBox[0].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
+      CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8);
+      CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 5
+      CAN->sTxMailBox[0].TIR = (CAN_GAS_OUTPUT << 21) | 1U;
+      ++pkt_idx;
+      pkt_idx &= COUNTER_CYCLE;
+    } else {
+      // old can packet hasn't sent!
+      state = FAULT_SEND;
+      #ifdef DEBUG
+        puts("CAN MISS\n");
+      #endif
+    }
   }
 
   // blink the LED
