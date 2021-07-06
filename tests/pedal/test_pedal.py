@@ -1,6 +1,4 @@
-import os
 import time
-import contextlib
 import struct
 import signal
 import unittest
