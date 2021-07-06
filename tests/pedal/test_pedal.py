@@ -97,6 +97,7 @@ class TestPedal(unittest.TestCase):
       incoming = self.jungle.can_recv()
       for message in incoming:
         address, _, _, bus = message
+        print(message)
         if address == 0x201 and bus == self.PEDAL_BUS:
           msgs += 1
       time.sleep(0.1)
