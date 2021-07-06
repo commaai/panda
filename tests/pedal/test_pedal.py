@@ -1,12 +1,10 @@
 import time
-import struct
-import signal
 import unittest
-
-from .canhandle import CanHandle
 from panda import Panda
 from panda_jungle import PandaJungle  # pylint: disable=import-error
-
+import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "."))
+from canhandle import CanHandle
 
 class TestPedal(unittest.TestCase):
   PEDAL_BUS = 1

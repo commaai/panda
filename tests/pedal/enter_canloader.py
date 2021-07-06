@@ -2,7 +2,9 @@
 import time
 import argparse
 from panda import Panda
-from .canhandle import CanHandle
+import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "."))
+from canhandle import CanHandle
 
 
 if __name__ == "__main__":
