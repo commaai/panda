@@ -40,7 +40,7 @@ pipeline {
                     --volume /var/run/dbus:/var/run/dbus \
                     --net host \
                     ${env.DOCKER_IMAGE_TAG} \
-                    bash -c 'cd /tmp/panda && PEDAL=1 scons && PEDAL_USB=1 scons && python ./tests/pedal/test_pedal.py'"
+                    bash -c 'cd /tmp/panda && PEDAL=1 scons && PEDAL=1 PEDAL_USB=1 scons && python ./tests/pedal/test_pedal.py'"
             }
           }
         }
