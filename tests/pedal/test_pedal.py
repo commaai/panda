@@ -3,50 +3,10 @@ import struct
 import signal
 import unittest
 
+from .canhandle import CanHandle
 from panda import Panda
 from panda_jungle import PandaJungle  # pylint: disable=import-error
 
-############################# CanHandle #########################
-class CanHandle(object):
-  def __init__(self, p, bus):
-    self.p = p
-    self.bus = bus
-
-  def transact(self, dat):
-    self.p.isotp_send(1, dat, self.bus, recvaddr=2)
-
-    def _handle_timeout(signum, frame):
-      # will happen on reset
-      raise Exception("timeout")
-
-    signal.signal(signal.SIGALRM, _handle_timeout)
-    signal.alarm(1)
-    try:
-      ret = self.p.isotp_recv(2, self.bus, sendaddr=1)
-    finally:
-      signal.alarm(0)
-
-    return ret
-
-  def controlWrite(self, request_type, request, value, index, data, timeout=0):
-    # ignore data in reply, panda doesn't use it
-    return self.controlRead(request_type, request, value, index, 0, timeout)
-
-  def controlRead(self, request_type, request, value, index, length, timeout=0):
-    dat = struct.pack("HHBBHHH", 0, 0, request_type, request, value, index, length)
-    return self.transact(dat)
-
-  def bulkWrite(self, endpoint, data, timeout=0):
-    if len(data) > 0x10:
-      raise ValueError("Data must not be longer than 0x10")
-    dat = struct.pack("HH", endpoint, len(data)) + data
-    return self.transact(dat)
-
-  def bulkRead(self, endpoint, length, timeout=0):
-    dat = struct.pack("HH", endpoint, 0)
-    return self.transact(dat)
-
-############################# unittest #########################
 
 class TestPedal(unittest.TestCase):
   PEDAL_BUS = 1
@@ -116,6 +76,7 @@ class TestPedal(unittest.TestCase):
 
     self.assertTrue(msgs == 0)
     print(f"Got {msgs} messages")
+
 
 if __name__ == '__main__':
   unittest.main()
