@@ -3,11 +3,12 @@ import os
 from nose.tools import assert_equal
 
 from panda import Panda, BASEDIR
-from .helpers import reset_pandas, test_all_pandas, panda_connect_and_init
+from .helpers import reset_pandas, pedal_silent, test_all_pandas, panda_connect_and_init
 
 
 # Reset the pandas before flashing them
 def aaaa_reset_before_tests():
+  pedal_silent()
   reset_pandas()
 
 
