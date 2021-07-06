@@ -9,6 +9,7 @@ from .helpers import panda_jungle, start_heartbeat_thread, reset_pandas, time_ma
 # Reset the pandas before running tests
 def aaaa_reset_before_tests():
   reset_pandas()
+  silence_pedal()
 
 @test_all_pandas
 @panda_connect_and_init

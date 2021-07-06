@@ -5,6 +5,7 @@ from .helpers import panda_jungle, reset_pandas, test_all_pandas, test_all_gen2_
 # Reset the pandas before running tests
 def aaaa_reset_before_tests():
   reset_pandas()
+  silence_pedal()
 
 @test_all_pandas
 @panda_connect_and_init

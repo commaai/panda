@@ -9,6 +9,7 @@ from .helpers import reset_pandas, test_all_pandas, panda_connect_and_init
 # Reset the pandas before flashing them
 def aaaa_reset_before_tests():
   reset_pandas()
+  silence_pedal()
 
 
 @test_all_pandas
