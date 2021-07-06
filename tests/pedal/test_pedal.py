@@ -27,7 +27,7 @@ class TestPedal(unittest.TestCase):
     with open(fw_file, "rb") as code:
       PandaJungle.flash_static(CanHandle(self.jungle, bus), code.read())
 
-  def test_1_flash_over_can(self):
+  def test_aaa_flash_over_can(self):
     self._flash_over_can(self.PEDAL_BUS, "/tmp/pedal.bin.signed")
     time.sleep(10)
     pandas_list = Panda.list()
@@ -40,7 +40,11 @@ class TestPedal(unittest.TestCase):
     self.assertTrue(p.is_pedal())
     p.close()
 
-  def test_2_can_spam(self):
+  def test_can_spam(self):
+    p = Panda('none')
+    p.set_pedal_silent(False)
+    p.close()
+
     self.jungle.can_clear(0xFFFF)
     rounds = 10
     msgs = 0
@@ -56,7 +60,7 @@ class TestPedal(unittest.TestCase):
     self.assertTrue(msgs > 40)
     print(f"Got {msgs} messages")
 
-  def test_3_silent_mode(self):
+  def test_silent_mode(self):
     p = Panda('none')
     p.set_pedal_silent(True)
     p.close()
