@@ -15,6 +15,7 @@ BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL), (3, SPEED
 TIMEOUT = 45
 GEN2_HW_TYPES = [Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
 GPS_HW_TYPES = [Panda.HW_TYPE_GREY_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
+PEDAL_SERIAL = 'none'
 
 # Enable fault debug
 faulthandler.enable(all_threads=False)
@@ -44,7 +45,7 @@ test_all_types = parameterized([
     param(panda_type=Panda.HW_TYPE_UNO)
   ])
 test_all_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[0] != 'none', _panda_serials)))  # type: ignore
+    list(map(lambda x: x[0], filter(lambda x: x[0] != PEDAL_SERIAL, _panda_serials)))  # type: ignore
   )
 test_all_gen2_pandas = parameterized(
     list(map(lambda x: x[0], filter(lambda x: x[1] in GEN2_HW_TYPES, _panda_serials)))  # type: ignore
@@ -113,8 +114,8 @@ def reset_pandas():
   time.sleep(5)
 
 def pedal_silent():
-  if 'none' in Panda.list():
-    p = Panda('none')
+  if PEDAL_SERIAL in Panda.list():
+    p = Panda(PEDAL_SERIAL)
     p.set_pedal_silent(True)
     p.close()
     
