@@ -113,9 +113,9 @@ def reset_pandas():
   time.sleep(5)
 
 def silence_pedal():
-  panda_jungle.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x02", 0)
-  panda_jungle.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x02", 1)
-  panda_jungle.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x02", 2)
+  panda_jungle.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x0a", 0)
+  panda_jungle.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x0a", 1)
+  panda_jungle.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x0a", 2)
 
 def panda_type_to_serial(fn):
   @wraps(fn)
