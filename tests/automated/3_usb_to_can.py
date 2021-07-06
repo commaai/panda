@@ -6,8 +6,8 @@ from .helpers import start_heartbeat_thread, reset_pandas, silence_pedal, SPEED_
 
 # Reset the pandas before running tests
 def aaaa_reset_before_tests():
-  reset_pandas()
   silence_pedal()
+  reset_pandas()
 
 @test_all_pandas
 @panda_connect_and_init
