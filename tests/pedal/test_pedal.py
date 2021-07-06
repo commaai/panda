@@ -105,5 +105,25 @@ class TestPedal(unittest.TestCase):
     self.assertTrue(msgs > 40)
     print(f"Got {msgs} messages")
 
+  def test_3_silent_mode(self):
+    p = Panda('none')
+    self.assertTrue(p.set_pedal_silent())
+    p.close()
+
+    self.jungle.can_clear(0xFFFF)
+    rounds = 10
+    msgs = 0
+    while rounds > 0:
+      incoming = self.jungle.can_recv()
+      for message in incoming:
+        address, _, _, bus = message
+        if address == 0x201 and bus == self.PEDAL_BUS:
+          msgs += 1
+      time.sleep(0.1)
+      rounds -= 1
+
+    self.assertTrue(msgs == 0)
+    print(f"Got {msgs} messages")
+
 if __name__ == '__main__':
   unittest.main()
