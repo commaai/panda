@@ -49,27 +49,12 @@ class CanHandle(object):
     dat = struct.pack("HH", endpoint, 0)
     return self.transact(dat)
 
-
-def flash_over_can(p, bus, fw_file):
-  print(f"Flashing {fw_file}")
-
-  while 1:
-    if len(p.can_recv()) == 0:
-      break
-
-  p.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x0a", bus)
-  #p.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x02", bus) #DFU mode (recover)
-
-  time.sleep(0.1)
-  with open(fw_file, "rb") as code:
-    PandaJungle.flash_static(CanHandle(p, bus), code.read())
-
 ############################# unittest #########################
 
 class TestPedal(unittest.TestCase):
+  PEDAL_BUS = 1
   def setUp(self):
     self.jungle = TestPedal.jungle
-    self.pedal_bus = TestPedal.pedal_bus
 
   @classmethod
   def setUpClass(cls):
@@ -79,34 +64,25 @@ class TestPedal(unittest.TestCase):
         cls.jungle = PandaJungle()
     cls.jungle.set_panda_power(True)
     cls.jungle.set_ignition(False)
-    cls.pedal_bus = -1
 
-  def test_1_pedal_bus(self):
-    """
-    Find if pedal is connected and to which bus
-    """
-    self.jungle.can_clear(0xFFFF)
-    rounds = 10
-    while rounds > 0:
-      incoming = self.jungle.can_recv()
-      for message in incoming:
-        address, unused, data, bus = message
-        if address == 0x201:
-          self.pedal_bus = bus
-          break
-      time.sleep(0.1)
-      rounds -= 1
-    self.assertTrue(self.pedal_bus > -1)
-    print(f"Pedal is on bus {self.pedal_bus}")
+  def _flash_over_can(self, bus, fw_file):
+    print(f"Flashing {fw_file}")
+    while 1:
+      if len(self.jungle.can_recv()) == 0:
+        break
+    self.jungle.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x0a", bus)
+    #p.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x02", bus) #DFU mode (recover)
 
-  def test_2_flash_over_can(self):
-    self.pedal_bus = 1
-    print(self.pedal_bus)
-    flash_over_can(self.jungle, self.pedal_bus, "board/obj/pedal.bin.signed")
+    time.sleep(0.1)
+    with open(fw_file, "rb") as code:
+      PandaJungle.flash_static(CanHandle(self.jungle, bus), code.read())
+
+  def test_1_flash_over_can(self):
+    self._flash_over_can(self.PEDAL_BUS, "board/obj/pedal.bin.signed")
     time.sleep(10)
     pandas_list = Panda.list()
 
-    flash_over_can(self.jungle, self.pedal_bus, "board/obj/pedal_usb.bin.signed")
+    self._flash_over_can(self.PEDAL_BUS, "board/obj/pedal_usb.bin.signed")
     time.sleep(10)
     pedal_uid = (set(Panda.list()) ^ set(pandas_list)).pop()
 
@@ -114,7 +90,7 @@ class TestPedal(unittest.TestCase):
     self.assertTrue(p.is_pedal())
     p.close()
 
-  def test_3_can_spam(self):
+  def test_2_can_spam(self):
     self.jungle.can_clear(0xFFFF)
     rounds = 10
     msgs = 0
@@ -122,7 +98,7 @@ class TestPedal(unittest.TestCase):
       incoming = self.jungle.can_recv()
       for message in incoming:
         address, unused, data, bus = message
-        if address == 0x201:
+        if address == 0x201 and bus == self.PEDAL_BUS:
           msgs += 1
       time.sleep(0.1)
       rounds -= 1
