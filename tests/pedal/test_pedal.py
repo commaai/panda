@@ -69,11 +69,11 @@ class TestPedal(unittest.TestCase):
       PandaJungle.flash_static(CanHandle(self.jungle, bus), code.read())
 
   def test_1_flash_over_can(self):
-    self._flash_over_can(self.PEDAL_BUS, "board/obj/pedal.bin.signed")
+    self._flash_over_can(self.PEDAL_BUS, "/tmp/pedal.bin.signed")
     time.sleep(10)
     pandas_list = Panda.list()
 
-    self._flash_over_can(self.PEDAL_BUS, "board/obj/pedal_usb.bin.signed")
+    self._flash_over_can(self.PEDAL_BUS, "/tmp/pedal_usb.bin.signed")
     time.sleep(10)
     pedal_uid = (set(Panda.list()) ^ set(pandas_list)).pop()
 

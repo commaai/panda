@@ -18,7 +18,6 @@ if os.getenv("PEDAL"):
     "-DPEDAL",
   ]
   if os.getenv("PEDAL_USB"):
-    PROJECT += "_usb"
     PROJECT_FLAGS.append("-DPEDAL_USB")
 
 else:
