@@ -3,7 +3,6 @@ import time
 import contextlib
 import struct
 import signal
-from nose.tools import assert_greater
 import unittest
 
 from panda import Panda
@@ -97,7 +96,7 @@ class TestPedal(unittest.TestCase):
     while rounds > 0:
       incoming = self.jungle.can_recv()
       for message in incoming:
-        address, unused, data, bus = message
+        address, _, _, bus = message
         if address == 0x201 and bus == self.PEDAL_BUS:
           msgs += 1
       time.sleep(0.1)
