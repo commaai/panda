@@ -107,7 +107,7 @@ class TestPedal(unittest.TestCase):
 
   def test_3_silent_mode(self):
     p = Panda('none')
-    self.assertTrue(p.set_pedal_silent(True))
+    p.set_pedal_silent(True)
     p.close()
 
     self.jungle.can_clear(0xFFFF)
