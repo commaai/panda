@@ -58,17 +58,14 @@ class TestPedal(unittest.TestCase):
   @classmethod
   def setUpClass(cls):
     super(TestPedal, cls).setUpClass()
-    with open(os.devnull, "w") as devnull:
-      with contextlib.redirect_stdout(devnull):
-        cls.jungle = PandaJungle()
+    cls.jungle = PandaJungle()
     cls.jungle.set_panda_power(True)
     cls.jungle.set_ignition(False)
 
   def _flash_over_can(self, bus, fw_file):
     print(f"Flashing {fw_file}")
-    while 1:
-      if len(self.jungle.can_recv()) == 0:
-        break
+    while len(self.jungle.can_recv()) != 0:
+      continue
     self.jungle.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x0a", bus)
     #p.can_send(0x200, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x02", bus) #DFU mode (recover)
 
