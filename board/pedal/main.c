@@ -89,6 +89,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xf9: make pedal silent
     case 0xf9:
       silent = (setup->b.wValue.w != 0U);
+      llcan_set_speed(CAN1, 5000, false, silent);
       break;
     default:
       puts("NO HANDLER ");
