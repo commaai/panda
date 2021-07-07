@@ -47,19 +47,19 @@ class TestPedal(unittest.TestCase):
 
   def test_usb_fw(self):
     subprocess.check_output(f"cd {BASEDIR} && PEDAL=1 PEDAL_USB=1 scons", shell=True)
-    self._flash_over_can(PEDAL_BUS, f"{BASEDIR}/board/obj/pedal.bin.signed")
+    self._flash_over_can(PEDAL_BUS, f"{BASEDIR}board/obj/pedal.bin.signed")
     time.sleep(2)
     p = Panda(PEDAL_SERIAL)
     self.assertTrue(p.is_pedal())
     p.close()
-    self.assertTrue(self._listen_can_frames > 40)
+    self.assertTrue(self._listen_can_frames() > 40)
 
   def test_nonusb_fw(self):
     subprocess.check_output(f"cd {BASEDIR} && PEDAL=1 scons", shell=True)
-    self._flash_over_can(PEDAL_BUS, f"{BASEDIR}/board/obj/pedal.bin.signed")
+    self._flash_over_can(PEDAL_BUS, f"{BASEDIR}board/obj/pedal.bin.signed")
     time.sleep(2)
     self.assertTrue(PEDAL_SERIAL not in Panda.list())
-    self.assertTrue(self._listen_can_frames > 40)
+    self.assertTrue(self._listen_can_frames() > 40)
 
 
 if __name__ == '__main__':
