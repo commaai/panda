@@ -33,16 +33,14 @@ class TestPedal(unittest.TestCase):
 
   def _listen_can_frames(self):
     self.jungle.can_clear(0xFFFF)
-    rounds = 10
     msgs = 0
-    while rounds > 0:
+    for x in range(10):
       incoming = self.jungle.can_recv()
       for message in incoming:
         address, _, _, bus = message
         if address == 0x201 and bus == PEDAL_BUS:
           msgs += 1
       time.sleep(0.1)
-      rounds -= 1
     return msgs
 
   def test_usb_fw(self):
