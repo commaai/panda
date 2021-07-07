@@ -2,9 +2,6 @@
 import time
 import argparse
 from panda import Panda
-import os
-import sys
-#sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "."))
 from canhandle import CanHandle
 
 
@@ -31,6 +28,6 @@ if __name__ == "__main__":
     time.sleep(0.1)
     print("flashing", args.fn)
     code = open(args.fn, "rb").read()
-    Panda.flash_static(CanHandle(p), code)
+    Panda.flash_static(CanHandle(p, 0), code)
 
   print("can flash done")

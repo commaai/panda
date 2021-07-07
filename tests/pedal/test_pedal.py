@@ -2,9 +2,6 @@ import time
 import unittest
 from panda import Panda
 from panda_jungle import PandaJungle  # pylint: disable=import-error
-import os
-import sys
-#sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "."))
 from canhandle import CanHandle
 
 class TestPedal(unittest.TestCase):

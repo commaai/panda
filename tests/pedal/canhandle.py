@@ -3,11 +3,12 @@ import signal
 
 
 class CanHandle(object):
-  def __init__(self, p):
+  def __init__(self, p, bus):
     self.p = p
+    self.bus = bus
 
   def transact(self, dat):
-    self.p.isotp_send(1, dat, 0, recvaddr=2)
+    self.p.isotp_send(1, dat, self.bus, recvaddr=2)
 
     def _handle_timeout(signum, frame):
       # will happen on reset
@@ -16,7 +17,7 @@ class CanHandle(object):
     signal.signal(signal.SIGALRM, _handle_timeout)
     signal.alarm(1)
     try:
-      ret = self.p.isotp_recv(2, 0, sendaddr=1)
+      ret = self.p.isotp_recv(2, self.bus, sendaddr=1)
     finally:
       signal.alarm(0)
 
