@@ -16,12 +16,13 @@ TIMEOUT = 45
 GEN2_HW_TYPES = [Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
 GPS_HW_TYPES = [Panda.HW_TYPE_GREY_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
 PEDAL_SERIAL = 'none'
+JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
 
 # Enable fault debug
 faulthandler.enable(all_threads=False)
 
 # Connect to Panda Jungle
-panda_jungle = PandaJungle()
+panda_jungle = PandaJungle(JUNGLE_SERIAL)
 
 # Find all panda's connected
 _panda_serials = None

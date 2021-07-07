@@ -16,8 +16,8 @@ pipeline {
     }
     stage('PEDAL tests') {
       steps {
-        lock(resource: "pandas", inversePrecedence: true, quantity: 1) {
-          timeout(time: 20, unit: 'MINUTES') {
+        lock(resource: "pedal", inversePrecedence: true, quantity: 1) {
+          timeout(time: 5, unit: 'MINUTES') {
             script {
               sh "docker run --rm --privileged \
                     --volume /dev/bus/usb:/dev/bus/usb \
@@ -26,7 +26,7 @@ pipeline {
                     ${env.DOCKER_IMAGE_TAG} \
                     bash -c 'cd /tmp/panda && PEDAL=1 scons && cp /tmp/panda/board/obj/pedal.bin.signed /tmp/pedal.bin.signed && \
                     PEDAL=1 PEDAL_USB=1 scons && cp /tmp/panda/board/obj/pedal.bin.signed /tmp/pedal_usb.bin.signed && \
-                    python ./tests/pedal/test_pedal.py'"
+                    PEDAL_JUNGLE=23002d000851393038373731 python ./tests/pedal/test_pedal.py'"
             }
           }
         }
@@ -42,7 +42,7 @@ pipeline {
                     --volume /var/run/dbus:/var/run/dbus \
                     --net host \
                     ${env.DOCKER_IMAGE_TAG} \
-                    bash -c 'cd /tmp/panda && scons && ./tests/automated/test.sh'"
+                    bash -c 'cd /tmp/panda && scons && PANDAS_JUNGLE=058010800f51363038363036 ./tests/automated/test.sh'"
             }
           }
         }

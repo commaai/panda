@@ -1,13 +1,16 @@
+import os
 import time
 import unittest
 from panda import Panda
 from panda_jungle import PandaJungle  # pylint: disable=import-error
 from canhandle import CanHandle
 
+JUNGLE_SERIAL = os.getenv("PEDAL_JUNGLE")
+
 class TestPedal(unittest.TestCase):
   PEDAL_BUS = 1
   def setUp(self):
-    self.jungle = PandaJungle()
+    self.jungle = PandaJungle(JUNGLE_SERIAL)
     self.jungle.set_panda_power(True)
     self.jungle.set_ignition(False)
 
