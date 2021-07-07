@@ -835,16 +835,16 @@ int main(void) {
         // useful for debugging, fade breaks = panda is overloaded
         for(uint32_t fade = 0U; fade < MAX_LED_FADE; fade += div_mode){
           current_board->set_led(LED_RED, true);
-          delay(fade >> 4);
+          delay(fade >> LED_FADE_SHIFT);
           current_board->set_led(LED_RED, false);
-          delay((MAX_LED_FADE - fade) >> 4);
+          delay((MAX_LED_FADE - fade) >> LED_FADE_SHIFT);
         }
 
         for(uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= div_mode){
           current_board->set_led(LED_RED, true);
-          delay(fade >> 4);
+          delay(fade >> LED_FADE_SHIFT);
           current_board->set_led(LED_RED, false);
-          delay((MAX_LED_FADE - fade) >> 4);
+          delay((MAX_LED_FADE - fade) >> LED_FADE_SHIFT);
         }
 
       #ifdef DEBUG_FAULTS

@@ -21,6 +21,7 @@
 #define CAN_INTERRUPT_RATE 12000U
 
 #define MAX_LED_FADE 8192U
+#define LED_FADE_SHIFT 4U
 
 // Threshold voltage (mV) for either of the SBUs to be below before deciding harness is connected
 #define HARNESS_CONNECTED_THRESHOLD 2500U

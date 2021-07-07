@@ -13,7 +13,8 @@
 // Around (1Mbps / 8 bits/byte / 12 bytes per message)
 #define CAN_INTERRUPT_RATE 12000U // FIXME: should raise to 16000 ?
 
-#define MAX_LED_FADE 4096U // FIXME: adjust as got rid of delay_us and delay_ms
+#define MAX_LED_FADE 4096U
+#define LED_FADE_SHIFT 5U
 
 // Threshold voltage (mV) for either of the SBUs to be below before deciding harness is connected
 #define HARNESS_CONNECTED_THRESHOLD 40000U
