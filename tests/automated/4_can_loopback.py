@@ -4,11 +4,10 @@ import random
 import threading
 from panda import Panda
 from nose.tools import assert_equal, assert_less, assert_greater
-from .helpers import panda_jungle, start_heartbeat_thread, reset_pandas, pedal_silent, time_many_sends, test_all_pandas, test_all_gen2_pandas, clear_can_buffers, panda_connect_and_init
+from .helpers import panda_jungle, start_heartbeat_thread, reset_pandas, time_many_sends, test_all_pandas, test_all_gen2_pandas, clear_can_buffers, panda_connect_and_init
 
 # Reset the pandas before running tests
 def aaaa_reset_before_tests():
-  pedal_silent()
   reset_pandas()
 
 @test_all_pandas

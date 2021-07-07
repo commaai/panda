@@ -115,13 +115,6 @@ def reset_pandas():
   panda_jungle.set_panda_power(True)
   time.sleep(5)
 
-def pedal_silent():
-  if PEDAL_SERIAL in Panda.list():
-    p = Panda(PEDAL_SERIAL)
-    p.set_pedal_silent(True)
-    p.close()
-    
-
 def panda_type_to_serial(fn):
   @wraps(fn)
   def wrapper(panda_type=None, **kwargs):
