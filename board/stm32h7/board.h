@@ -10,8 +10,7 @@
 
 void detect_board_type(void) {
   if(!detect_with_pull(GPIOF, 7, PULL_UP) && !detect_with_pull(GPIOF, 8, PULL_UP) && !detect_with_pull(GPIOF, 9, PULL_UP) && !detect_with_pull(GPIOF, 10, PULL_UP)){
-    //hw_type = HW_TYPE_RED_PANDA; //REDEBUG
-    hw_type = HW_TYPE_DOS;
+    hw_type = HW_TYPE_RED_PANDA;
     current_board = &board_red;
   } else {
     hw_type = HW_TYPE_UNKNOWN;
