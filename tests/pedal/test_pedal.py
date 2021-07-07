@@ -34,7 +34,7 @@ class TestPedal(unittest.TestCase):
   def _listen_can_frames(self):
     self.jungle.can_clear(0xFFFF)
     msgs = 0
-    for x in range(10):
+    for _ in range(10):
       incoming = self.jungle.can_recv()
       for message in incoming:
         address, _, _, bus = message
