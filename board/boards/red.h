@@ -35,15 +35,12 @@ void red_enable_can_transceivers(bool enabled) {
 void red_set_led(uint8_t color, bool enabled) {
   switch (color){
     case LED_RED:
-      //set_gpio_output(GPIOC, 2, !enabled); //REDEBUG
       set_gpio_output(GPIOE, 4, !enabled);
       break;
      case LED_GREEN:
-      //set_gpio_output(GPIOC, 3, !enabled); //REDEBUG
       set_gpio_output(GPIOE, 3, !enabled);
       break;
     case LED_BLUE:
-      //set_gpio_output(GPIOF, 7, enabled); //REDEBUG
       set_gpio_output(GPIOE, 2, !enabled);
       break;
     default:
