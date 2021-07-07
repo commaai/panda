@@ -14,6 +14,9 @@
 
 #define MAX_LED_FADE 4096U // FIXME: adjust as got rid of delay_us and delay_ms
 
+// Threshold voltage (mV) for either of the SBUs to be below before deciding harness is connected
+#define HARNESS_CONNECTED_THRESHOLD 40000U
+
 #define NUM_INTERRUPTS 163U                // There are 163 external interrupt sources (see stm32f735xx.h)
 
 #define TICK_TIMER_IRQ TIM8_BRK_TIM12_IRQn

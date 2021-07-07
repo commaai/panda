@@ -20,6 +20,9 @@
 
 #define MAX_LED_FADE 8192U
 
+// Threshold voltage (mV) for either of the SBUs to be below before deciding harness is connected
+#define HARNESS_CONNECTED_THRESHOLD 2500U
+
 #define NUM_INTERRUPTS 102U                // There are 102 external interrupt sources (see stm32f413.h)
 
 #define TICK_TIMER_IRQ TIM1_BRK_TIM9_IRQn
