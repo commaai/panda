@@ -77,3 +77,43 @@ void early_gpio_float(void) {
   GPIOA->ODR = 0; GPIOB->ODR = 0; GPIOC->ODR = 0;
   GPIOA->PUPDR = 0; GPIOB->PUPDR = 0; GPIOC->PUPDR = 0;
 }
+
+void handle_interrupt(IRQn_Type irq_type);
+// Specific interrupts for STM32F413
+void CAN1_TX_IRQHandler(void) {handle_interrupt(CAN1_TX_IRQn);}
+void CAN1_RX0_IRQHandler(void) {handle_interrupt(CAN1_RX0_IRQn);}
+void CAN1_RX1_IRQHandler(void) {handle_interrupt(CAN1_RX1_IRQn);}
+void CAN1_SCE_IRQHandler(void) {handle_interrupt(CAN1_SCE_IRQn);}
+void OTG_FS_WKUP_IRQHandler(void) {handle_interrupt(OTG_FS_WKUP_IRQn);}
+void FSMC_IRQHandler(void) {handle_interrupt(FSMC_IRQn);}
+void SDIO_IRQHandler(void) {handle_interrupt(SDIO_IRQn);}
+void CAN2_TX_IRQHandler(void) {handle_interrupt(CAN2_TX_IRQn);}
+void CAN2_RX0_IRQHandler(void) {handle_interrupt(CAN2_RX0_IRQn);}
+void CAN2_RX1_IRQHandler(void) {handle_interrupt(CAN2_RX1_IRQn);}
+void CAN2_SCE_IRQHandler(void) {handle_interrupt(CAN2_SCE_IRQn);}
+void OTG_FS_IRQHandler(void) {handle_interrupt(OTG_FS_IRQn);}
+#ifdef STM32F4
+  void DFSDM1_FLT0_IRQHandler(void) {handle_interrupt(DFSDM1_FLT0_IRQn);}
+  void DFSDM1_FLT1_IRQHandler(void) {handle_interrupt(DFSDM1_FLT1_IRQn);}
+  void CAN3_TX_IRQHandler(void) {handle_interrupt(CAN3_TX_IRQn);}
+  void CAN3_RX0_IRQHandler(void) {handle_interrupt(CAN3_RX0_IRQn);}
+  void CAN3_RX1_IRQHandler(void) {handle_interrupt(CAN3_RX1_IRQn);}
+  void CAN3_SCE_IRQHandler(void) {handle_interrupt(CAN3_SCE_IRQn);}
+  void RNG_IRQHandler(void) {handle_interrupt(RNG_IRQn);}
+  void FPU_IRQHandler(void) {handle_interrupt(FPU_IRQn);}
+  void UART7_IRQHandler(void) {handle_interrupt(UART7_IRQn);}
+  void UART8_IRQHandler(void) {handle_interrupt(UART8_IRQn);}
+  void SPI4_IRQHandler(void) {handle_interrupt(SPI4_IRQn);}
+  void SPI5_IRQHandler(void) {handle_interrupt(SPI5_IRQn);}
+  void SAI1_IRQHandler(void) {handle_interrupt(SAI1_IRQn);}
+  void UART9_IRQHandler(void) {handle_interrupt(UART9_IRQn);}
+  void UART10_IRQHandler(void) {handle_interrupt(UART10_IRQn);}
+  void QUADSPI_IRQHandler(void) {handle_interrupt(QUADSPI_IRQn);}
+  void FMPI2C1_EV_IRQHandler(void) {handle_interrupt(FMPI2C1_EV_IRQn);}
+  void FMPI2C1_ER_IRQHandler(void) {handle_interrupt(FMPI2C1_ER_IRQn);}
+  void LPTIM1_IRQHandler(void) {handle_interrupt(LPTIM1_IRQn);}
+  void DFSDM2_FLT0_IRQHandler(void) {handle_interrupt(DFSDM2_FLT0_IRQn);}
+  void DFSDM2_FLT1_IRQHandler(void) {handle_interrupt(DFSDM2_FLT1_IRQn);}
+  void DFSDM2_FLT2_IRQHandler(void) {handle_interrupt(DFSDM2_FLT2_IRQn);}
+  void DFSDM2_FLT3_IRQHandler(void) {handle_interrupt(DFSDM2_FLT3_IRQn);}
+#endif
