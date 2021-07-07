@@ -17,7 +17,7 @@ pipeline {
     stage('PEDAL tests') {
       steps {
         lock(resource: "pedal", inversePrecedence: true, quantity: 1) {
-          timeout(time: 5, unit: 'MINUTES') {
+          timeout(time: 10, unit: 'MINUTES') {
             script {
               sh "docker run --rm --privileged \
                     --volume /dev/bus/usb:/dev/bus/usb \
