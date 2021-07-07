@@ -17,6 +17,8 @@ if os.getenv("PEDAL"):
     "-O2",
     "-DPEDAL",
   ]
+  if os.getenv("PEDAL_USB"):
+    PROJECT_FLAGS.append("-DPEDAL_USB")
 
 else:
   PROJECT = "panda"

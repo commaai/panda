@@ -65,6 +65,9 @@ RUN pip install -r /tmp/requirements.txt
 
 ENV PYTHONPATH /tmp:$PYTHONPATH
 
-RUN cd /tmp && git clone https://github.com/commaai/panda_jungle.git
+RUN cd /tmp && git clone https://github.com/commaai/panda_jungle.git && \
+    cd panda_jungle && \
+    git fetch && \
+    git checkout 7b7197c605915ac34f3d62f314edd84e2e78a759
 
 ADD ./panda.tar.gz /tmp/panda
