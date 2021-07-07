@@ -56,7 +56,7 @@
 #define GET_BYTE(msg, b) (((int)(b) > 3) ? (((msg)->RDHR >> (8U * ((unsigned int)(b) % 4U))) & 0xFFU) : (((msg)->RDLR >> (8U * (unsigned int)(b))) & 0xFFU))
 #define GET_BYTES_04(msg) ((msg)->RDLR)
 #define GET_BYTES_48(msg) ((msg)->RDHR)
-#define GET_FLAG(value, mask) (((__typeof__(mask))param & mask) == mask)
+#define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
 
 #define FDCAN_INIT_TIMEOUT_MS 500U
 #define FDCAN_NAME_FROM_FDCANIF(FDCAN_DEV) (((FDCAN_DEV)==FDCAN1) ? "FDCAN1" : (((FDCAN_DEV) == FDCAN2) ? "FDCAN2" : "FDCAN3"))
