@@ -29,7 +29,7 @@ elif os.getenv("PANDA_GEN3"):
     "-mcpu=cortex-m7",
     "-mhard-float",
     "-DSTM32H7",
-    "-DSTM32H725xx",
+    "-DSTM32H735xx",
     "-mfpu=fpv5-d16",
     "-fsingle-precision-constant",
     "-Os",
