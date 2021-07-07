@@ -24,9 +24,7 @@ pipeline {
                     --volume /var/run/dbus:/var/run/dbus \
                     --net host \
                     ${env.DOCKER_IMAGE_TAG} \
-                    bash -c 'cd /tmp/panda && PEDAL=1 scons && cp /tmp/panda/board/obj/pedal.bin.signed /tmp/pedal.bin.signed && \
-                    PEDAL=1 PEDAL_USB=1 scons && cp /tmp/panda/board/obj/pedal.bin.signed /tmp/pedal_usb.bin.signed && \
-                    PEDAL_JUNGLE=23002d000851393038373731 python ./tests/pedal/test_pedal.py'"
+                    bash -c 'cd /tmp/panda && PEDAL_JUNGLE=23002d000851393038373731 python ./tests/pedal/test_pedal.py'"
             }
           }
         }

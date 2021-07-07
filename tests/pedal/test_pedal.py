@@ -1,14 +1,18 @@
 import os
 import time
+import subprocess
 import unittest
-from panda import Panda
+from panda import Panda, BASEDIR
 from panda_jungle import PandaJungle  # pylint: disable=import-error
 from panda.tests.pedal.canhandle import CanHandle
 
+
 JUNGLE_SERIAL = os.getenv("PEDAL_JUNGLE")
+PEDAL_SERIAL = 'none'
+PEDAL_BUS = 1
 
 class TestPedal(unittest.TestCase):
-  PEDAL_BUS = 1
+  
   def setUp(self):
     self.jungle = PandaJungle(JUNGLE_SERIAL)
     self.jungle.set_panda_power(True)
@@ -27,20 +31,7 @@ class TestPedal(unittest.TestCase):
     with open(fw_file, "rb") as code:
       PandaJungle.flash_static(CanHandle(self.jungle, bus), code.read())
 
-  def test_aaa_flash_over_can(self):
-    self._flash_over_can(self.PEDAL_BUS, "/tmp/pedal.bin.signed")
-    time.sleep(10)
-    pandas_list = Panda.list()
-
-    self._flash_over_can(self.PEDAL_BUS, "/tmp/pedal_usb.bin.signed")
-    time.sleep(10)
-    pedal_uid = (set(Panda.list()) ^ set(pandas_list)).pop()
-
-    p = Panda(pedal_uid)
-    self.assertTrue(p.is_pedal())
-    p.close()
-
-  def test_can_spam(self):
+  def _listen_can_frames(self):
     self.jungle.can_clear(0xFFFF)
     rounds = 10
     msgs = 0
@@ -48,13 +39,27 @@ class TestPedal(unittest.TestCase):
       incoming = self.jungle.can_recv()
       for message in incoming:
         address, _, _, bus = message
-        if address == 0x201 and bus == self.PEDAL_BUS:
+        if address == 0x201 and bus == PEDAL_BUS:
           msgs += 1
       time.sleep(0.1)
       rounds -= 1
-    
-    self.assertTrue(msgs > 40)
-    print(f"Got {msgs} messages")
+    return msgs
+
+  def test_usb_fw(self):
+    subprocess.check_output(f"cd {BASEDIR} && PEDAL=1 PEDAL_USB=1 scons", shell=True)
+    self._flash_over_can(PEDAL_BUS, f"{BASEDIR}/board/obj/pedal.bin.signed")
+    time.sleep(2)
+    p = Panda(PEDAL_SERIAL)
+    self.assertTrue(p.is_pedal())
+    p.close()
+    self.assertTrue(self._listen_can_frames > 40)
+
+  def test_nonusb_fw(self):
+    subprocess.check_output(f"cd {BASEDIR} && PEDAL=1 scons", shell=True)
+    self._flash_over_can(PEDAL_BUS, f"{BASEDIR}/board/obj/pedal.bin.signed")
+    time.sleep(2)
+    self.assertTrue(PEDAL_SERIAL not in Panda.list())
+    self.assertTrue(self._listen_can_frames > 40)
 
 
 if __name__ == '__main__':
