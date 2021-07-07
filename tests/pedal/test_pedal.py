@@ -3,7 +3,7 @@ import time
 import unittest
 from panda import Panda
 from panda_jungle import PandaJungle  # pylint: disable=import-error
-from canhandle import CanHandle
+from panda.tests.pedal.canhandle import CanHandle
 
 JUNGLE_SERIAL = os.getenv("PEDAL_JUNGLE")
 

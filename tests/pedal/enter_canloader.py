@@ -2,7 +2,7 @@
 import time
 import argparse
 from panda import Panda
-from canhandle import CanHandle
+from panda.tests.pedal.canhandle import CanHandle
 
 
 if __name__ == "__main__":
