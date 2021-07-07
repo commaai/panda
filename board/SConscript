@@ -20,6 +20,23 @@ if os.getenv("PEDAL"):
   if os.getenv("PEDAL_USB"):
     PROJECT_FLAGS.append("-DPEDAL_USB")
 
+elif os.getenv("PANDA_GEN3"):
+  PROJECT = "panda"
+  STARTUP_FILE = "stm32h7/startup_stm32h7x5xx.s"
+  LINKER_SCRIPT = "stm32h7/stm32h7x5_flash.ld"
+  MAIN = "main.c"
+  PROJECT_FLAGS = [
+    "-mcpu=cortex-m7",
+    "-mhard-float",
+    "-DSTM32H7",
+    "-DSTM32H725xx",
+    "-mfpu=fpv5-d16",
+    "-fsingle-precision-constant",
+    "-Os",
+    "-g",
+    "-DPANDA",
+  ]
+
 else:
   PROJECT = "panda"
   STARTUP_FILE = "stm32fx/startup_stm32f413xx.s"
