@@ -1,6 +1,7 @@
 #include "stm32h7/inc/stm32h7xx.h"
 #include "stm32h7/inc/stm32h7xx_hal_gpio_ex.h"
 #define MCU_IDCODE 0x483U
+#define BCDDEVICE 0x24
 
 #define CORE_FREQ 240U // in Mhz
 //APB1 - 120Mhz, APB2 - 120Mhz

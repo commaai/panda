@@ -2,10 +2,12 @@
   #include "stm32fx/inc/stm32f4xx.h"
   #include "stm32fx/inc/stm32f4xx_hal_gpio_ex.h"
   #define MCU_IDCODE 0x463U
+  #define BCDDEVICE 0x23
 #else
   #include "stm32fx/inc/stm32f2xx.h"
   #include "stm32fx/inc/stm32f2xx_hal_gpio_ex.h"
   #define MCU_IDCODE 0x411U
+  #define BCDDEVICE 0x22
 #endif
 
 #define CORE_FREQ 96U // in Mhz
