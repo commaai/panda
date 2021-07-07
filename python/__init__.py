@@ -138,6 +138,8 @@ class Panda(object):
   HW_TYPE_BLACK_PANDA = b'\x03'
   HW_TYPE_PEDAL = b'\x04'
   HW_TYPE_UNO = b'\x05'
+  HW_TYPE_DOS = b'\x06'
+  HW_TYPE_RED = b'\x07'
 
   CLOCK_SOURCE_MODE_DISABLED = 0
   CLOCK_SOURCE_MODE_FREE_RUNNING = 1
@@ -399,8 +401,14 @@ class Panda(object):
   def is_uno(self):
     return self.get_type() == Panda.HW_TYPE_UNO
 
+  def is_dos(self):
+    return self.get_type() == Panda.HW_TYPE_DOS
+
+  def is_red(self):
+    return self.get_type() == Panda.HW_TYPE_RED
+
   def has_obd(self):
-    return (self.is_uno() or self.is_black())
+    return (self.is_uno() or self.is_black() or self.is_dos() or self.is_red())
 
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
