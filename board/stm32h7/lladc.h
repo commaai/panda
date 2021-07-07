@@ -5,7 +5,7 @@
 void adc_init(void) {
   ADC1->CR &= ~(ADC_CR_DEEPPWD); //Reset deep-power-down mode
   ADC1->CR |= ADC_CR_ADVREGEN; // Enable ADC regulator
-  delay_us(100); // Let regulator to start
+  delay(10000); // Let regulator to start
 
   ADC1->CR &= ~(ADC_CR_ADCALDIF); // Choose single-ended calibration
   ADC1->CR |= ADC_CR_ADCALLIN; // Lineriality calibration
