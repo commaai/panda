@@ -84,7 +84,7 @@ bool llfdcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, bool loopbac
   FDCANx->CCCR |= FDCAN_CCCR_INIT;
   while((FDCANx->CCCR & FDCAN_CCCR_INIT) == 0) {
     // Delay for about 1ms
-    delay_ms(1);
+    delay(10000);
     timeout_counter++;
 
     if(timeout_counter >= FDCAN_INIT_TIMEOUT_MS){
@@ -132,7 +132,7 @@ bool llfdcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, bool loopbac
     timeout_counter = 0U;
     while((FDCANx->CCCR & FDCAN_CCCR_INIT) != 0) {
       // Delay for about 1ms
-      delay_ms(1);
+      delay(10000);
       timeout_counter++;
 
       if(timeout_counter >= FDCAN_INIT_TIMEOUT_MS){
@@ -158,7 +158,7 @@ bool llfdcan_init(FDCAN_GlobalTypeDef *FDCANx) {
   uint32_t timeout_counter = 0U;
   FDCANx->CCCR |= FDCAN_CCCR_INIT;
   while((FDCANx->CCCR & FDCAN_CCCR_INIT) == 0) {
-    delay_ms(1);
+    delay(10000);
     timeout_counter++;
 
     if(timeout_counter >= FDCAN_INIT_TIMEOUT_MS) {
@@ -250,7 +250,7 @@ bool llfdcan_init(FDCAN_GlobalTypeDef *FDCANx) {
     timeout_counter = 0U;
     while((FDCANx->CCCR & FDCAN_CCCR_INIT) != 0) {
       // Delay for about 1ms
-      delay_ms(1);
+      delay(10000);
       timeout_counter++;
 
       if(timeout_counter >= FDCAN_INIT_TIMEOUT_MS){
