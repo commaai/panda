@@ -33,8 +33,6 @@ if __name__ == "__main__":
   panda = Panda()
   panda.set_safety_mode(Panda.SAFETY_ELM327)
   panda.set_power_save(0)
-  panda.can_clear(0x1 if panda.has_obd() else 0x0)
-  panda.can_clear(0xffff)
   print("querying addresses ...")
   with tqdm(addrs) as t:
     for addr in t:
