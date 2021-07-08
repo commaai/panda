@@ -1,8 +1,7 @@
 // ///////////////////////////////////////////////////////////// //
 // Hardware abstraction layer for all different supported boards //
 // ///////////////////////////////////////////////////////////// //
-#include "stm32h7/peripherals.h"
-#include "../boards/board_declarations.h"
+#include "boards/board_declarations.h"
 
 // ///// Board definition and detection ///// //
 #include "drivers/harness.h"

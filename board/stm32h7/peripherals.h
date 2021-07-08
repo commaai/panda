@@ -290,3 +290,7 @@ void peripherals_init(void){
     RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN; // HS USB enable
     RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN; // Enable ADC clocks
 }
+
+void enable_interrupt_timer(void) {
+  register_set_bits(&(RCC->APB1LENR), RCC_APB1LENR_TIM6EN);  // Enable interrupt timer peripheral
+}

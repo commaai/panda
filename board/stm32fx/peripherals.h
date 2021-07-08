@@ -66,3 +66,7 @@ void peripherals_init(void){
   RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
   RCC->APB2ENR |= RCC_APB2ENR_TIM9EN;  // slow loop
 }
+
+void enable_interrupt_timer(void) {
+  register_set_bits(&(RCC->APB1ENR), RCC_APB1ENR_TIM6EN);  // Enable interrupt timer peripheral
+}

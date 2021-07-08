@@ -44,8 +44,9 @@
 
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
-#include "drivers/timers.h"
 #include "drivers/gpio.h"
+#include "stm32h7/peripherals.h"
+#include "drivers/timers.h"
 
 #ifndef BOOTSTUB
   #include "stm32h7/llfdcan.h"
