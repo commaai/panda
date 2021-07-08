@@ -138,7 +138,7 @@ class Panda(object):
   HW_TYPE_BLACK_PANDA = b'\x03'
   HW_TYPE_PEDAL = b'\x04'
   HW_TYPE_UNO = b'\x05'
-  HW_TYPE_DOS = b'\x05'
+  HW_TYPE_DOS = b'\x06'
 
   CLOCK_SOURCE_MODE_DISABLED = 0
   CLOCK_SOURCE_MODE_FREE_RUNNING = 1
