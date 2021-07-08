@@ -54,9 +54,10 @@
 
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
+#include "drivers/gpio.h"
+#include "stm32fx/peripherals.h"
 #include "stm32fx/interrupt_handlers.h"
 #include "drivers/timers.h"
-#include "drivers/gpio.h"
 
 #ifndef BOOTSTUB
   #include "stm32fx/llcan.h"
