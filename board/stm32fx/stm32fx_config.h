@@ -54,6 +54,7 @@
 
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
+#include "stm32fx/interrupt_handlers.h"
 #include "drivers/timers.h"
 #include "drivers/gpio.h"
 
