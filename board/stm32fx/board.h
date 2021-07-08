@@ -7,6 +7,7 @@
 #include "drivers/harness.h"
 #ifdef PANDA
   #include "drivers/fan.h"
+  #include "stm32fx/llfan.h"
   #include "drivers/rtc.h"
   #include "stm32fx/llrtc.h"
   #include "drivers/clock_source.h"
