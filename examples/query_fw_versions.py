@@ -66,12 +66,8 @@ if __name__ == "__main__":
         except (NegativeResponseError, MessageTimeoutError):
           pass
 
-
       if resp.keys():
         results[addr] = resp
-
-      #if len(resp.keys()) > 1:
-      #  break
 
     if len(results.items()):
       for addr, resp in results.items():
