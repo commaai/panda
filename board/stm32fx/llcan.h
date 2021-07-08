@@ -14,7 +14,7 @@
 #define GET_BYTE(msg, b) (((int)(b) > 3) ? (((msg)->RDHR >> (8U * ((unsigned int)(b) % 4U))) & 0xFFU) : (((msg)->RDLR >> (8U * (unsigned int)(b))) & 0xFFU))
 #define GET_BYTES_04(msg) ((msg)->RDLR)
 #define GET_BYTES_48(msg) ((msg)->RDHR)
-#define GET_FLAG(value, mask) (((__typeof__(mask))param & mask) == mask)
+#define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
 
 #define CAN_INIT_TIMEOUT_MS 500U
 #define CAN_NAME_FROM_CANIF(CAN_DEV) (((CAN_DEV)==CAN1) ? "CAN1" : (((CAN_DEV) == CAN2) ? "CAN2" : "CAN3"))
@@ -135,4 +135,3 @@ void llcan_clear_send(CAN_TypeDef *CAN_obj) {
   // cppcheck-suppress selfAssignment ; needed to clear the register
   CAN_obj->MSR = CAN_obj->MSR;
 }
-

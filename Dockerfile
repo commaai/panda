@@ -63,11 +63,11 @@ RUN pip install --upgrade pip==18.0
 COPY requirements.txt /tmp/
 RUN pip install -r /tmp/requirements.txt
 
-RUN mkdir -p /home/batman
-ENV HOME /home/batman
-
 ENV PYTHONPATH /tmp:$PYTHONPATH
 
-RUN cd /tmp && git clone https://github.com/commaai/panda_jungle.git
+RUN cd /tmp && git clone https://github.com/commaai/panda_jungle.git && \
+    cd panda_jungle && \
+    git fetch && \
+    git checkout 7b7197c605915ac34f3d62f314edd84e2e78a759
 
 ADD ./panda.tar.gz /tmp/panda

@@ -53,7 +53,7 @@ RUN cd /tmp && \
     git clone https://github.com/danmar/cppcheck.git && \
     cd cppcheck && \
     git fetch && \
-    git checkout e46191e6e809272d8b34feca8999ee413f716b80 && \
+    git checkout e1cff1d1ef92f6a1c6962e0e4153b7353ccad04c && \
     FILESDIR=/usr/share/cppcheck make -j4 install
 
 RUN cd /tmp && \

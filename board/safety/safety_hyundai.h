@@ -19,20 +19,20 @@ const CanMsg HYUNDAI_TX_MSGS[] = {
 
 AddrCheckStruct hyundai_rx_checks[] = {
   {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-           {881, 0, 8, .expected_timestep = 10000U}}},
-  {.msg = {{902, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},
-  {.msg = {{916, 0, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}}},
-  {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
+           {881, 0, 8, .expected_timestep = 10000U}, { 0 }}},
+  {.msg = {{902, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{916, 0, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 const int HYUNDAI_RX_CHECK_LEN = sizeof(hyundai_rx_checks) / sizeof(hyundai_rx_checks[0]);
 
 // older hyundai models have less checks due to missing counters and checksums
 AddrCheckStruct hyundai_legacy_rx_checks[] = {
   {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-           {881, 0, 8, .expected_timestep = 10000U}}},
-  {.msg = {{902, 0, 8, .expected_timestep = 10000U}}},
-  {.msg = {{916, 0, 8, .expected_timestep = 10000U}}},
-  {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
+           {881, 0, 8, .expected_timestep = 10000U}, { 0 }}},
+  {.msg = {{902, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{916, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 const int HYUNDAI_LEGACY_RX_CHECK_LEN = sizeof(hyundai_legacy_rx_checks) / sizeof(hyundai_legacy_rx_checks[0]);
 
@@ -194,7 +194,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // LKA STEER: safety check
   if (addr == 832) {
     int desired_torque = ((GET_BYTES_04(to_send) >> 16) & 0x7ff) - 1024;
-    uint32_t ts = TIM2->CNT;
+    uint32_t ts = MICROSECOND_TIMER->CNT;
     bool violation = 0;
 
     if (controls_allowed) {

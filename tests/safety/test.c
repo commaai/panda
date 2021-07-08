@@ -27,7 +27,7 @@ struct sample_t torque_meas;
 struct sample_t torque_driver;
 
 TIM_TypeDef timer;
-TIM_TypeDef *TIM2 = &timer;
+TIM_TypeDef *MICROSECOND_TIMER = &timer;
 
 // from board_declarations.h
 #define HW_TYPE_UNKNOWN 0U
@@ -36,6 +36,7 @@ TIM_TypeDef *TIM2 = &timer;
 #define HW_TYPE_BLACK_PANDA 3U
 #define HW_TYPE_PEDAL 4U
 #define HW_TYPE_UNO 5U
+#define HW_TYPE_DOS 6U
 
 #define ALLOW_DEBUG
 
