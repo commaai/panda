@@ -13,14 +13,10 @@ void flash_erase_sector(uint8_t sector, uint8_t unlocked) {
   }
 }
 
-void *flash_write(void *prog_ptr, const void *data, int len) {
+void flash_write_byte(void *prog_ptr, const void *data) {
   uint32_t *pp = prog_ptr;
   const uint32_t *d = data;
-  for (int i = 0; i < len/4; i++) {
     FLASH->CR = FLASH_CR_PSIZE_1 | FLASH_CR_PG;
-    *pp = *(uint32_t*)(d+(i*4));
+    *pp = *d;
     while (FLASH->SR & FLASH_SR_BSY);
-    pp++;
-  }
-  return prog_ptr;
 }

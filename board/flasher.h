@@ -114,13 +114,11 @@ void usb_cb_enumeration_complete(void) {
 void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   current_board->set_led(LED_RED, 0);
-  //flash_write(prog_ptr, usbdata, len);
   for (int i = 0; i < len/4; i++) {
-    // program byte 1
-    FLASH->CR = FLASH_CR_PSIZE_1 | FLASH_CR_PG;
+    flash_write_byte(prog_ptr, (uint32_t*)(usbdata+(i*4)));
 
-    *prog_ptr = *(uint32_t*)(usbdata+(i*4));
-    while (FLASH->SR & FLASH_SR_BSY);
+    //*(uint64_t*)(&spi_tx_buf[0x30+(i*4)]) = *prog_ptr;
+    prog_ptr++;
   }
   current_board->set_led(LED_RED, 1);
 }
