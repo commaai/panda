@@ -282,12 +282,8 @@ void soft_flasher_start(void) {
   llcan_init(CAN1);
 #endif
 
-  gpio_spi_init();
   gpio_usart2_init();
   gpio_usb_init();
-
-  // flasher
-  spi_init();
 
   // enable USB
   usb_init();

@@ -11,14 +11,6 @@ void gpio_usart2_init(void) {
   set_gpio_alternate(GPIOA, 3, GPIO_AF7_USART2);
 }
 
-void gpio_spi_init(void) {
-  // A4,A5,A6,A7: setup SPI
-  set_gpio_alternate(GPIOA, 4, GPIO_AF5_SPI1);
-  set_gpio_alternate(GPIOA, 5, GPIO_AF5_SPI1);
-  set_gpio_alternate(GPIOA, 6, GPIO_AF5_SPI1);
-  set_gpio_alternate(GPIOA, 7, GPIO_AF5_SPI1);
-}
-
 // Common GPIO initialization
 void common_init_gpio(void){
   // TODO: Is this block actually doing something???
