@@ -12,7 +12,7 @@ void us_timer_init(void) {
 }
 
 uint32_t us_timer_get(void) {
-  return US_TIMER -> CNT;
+  return US_TIMER->CNT;
 }
 
 void interrupt_timer_init(void) {
