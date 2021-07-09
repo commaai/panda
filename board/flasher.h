@@ -262,7 +262,7 @@ void soft_flasher_start(void) {
 
   enter_bootloader_mode = 0;
 
-  flasher_peripherals_init()
+  flasher_peripherals_init();
 
 // pedal has the canloader
 #ifdef PEDAL
