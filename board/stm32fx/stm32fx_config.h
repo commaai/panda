@@ -60,16 +60,20 @@
 #include "stm32fx/peripherals.h"
 #include "stm32fx/interrupt_handlers.h"
 #include "drivers/timers.h"
+#include "stm32fx/lladc.h"
+#include "stm32fx/board.h"
+#include "stm32fx/clock.h"
+
+#if (defined(PANDA) && !defined (BOOTSTUB)) || defined(PEDAL_USB)
+  #include "drivers/uart.h"
+  #include "stm32fx/lluart.h"
+#endif
 
 #ifndef BOOTSTUB
   #include "stm32fx/llcan.h"
 #else
   #include "stm32fx/llflash.h"
 #endif
-
-#include "stm32fx/lladc.h"
-#include "stm32fx/board.h"
-#include "stm32fx/clock.h"
 
 #if defined(PANDA) || defined(BOOTSTUB) || defined(PEDAL_USB)
   #include "stm32fx/llusb.h"
