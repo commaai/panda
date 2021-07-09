@@ -10,7 +10,6 @@
 #define CAN CAN1
 
 #ifdef PEDAL_USB
-  #include "drivers/uart.h"
   #include "drivers/usb.h"
 #else
   // no serial either
