@@ -9,6 +9,8 @@
   #define MCU_IDCODE 0x411U
   #define BCDDEVICE 0x22
 #endif
+// from the linker script
+#define APP_START 0x8004000U
 
 #define CORE_FREQ 96U // in Mhz
 //APB1 - 48Mhz, APB2 - 96Mhz
@@ -61,6 +63,8 @@
 
 #ifndef BOOTSTUB
   #include "stm32fx/llcan.h"
+#else
+  #include "stm32fx/llflash.h"
 #endif
 
 #include "stm32fx/lladc.h"
