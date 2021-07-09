@@ -6,6 +6,7 @@ void flash_unlock(void) {
 }
 
 void flash_erase_sector(uint8_t sector, uint8_t unlocked) {
+  // don't erase the bootloader(sector 0)
   if (sector != 0 && sector < 12 && unlocked) {
     FLASH->CR = (sector << 3) | FLASH_CR_SER;
     FLASH->CR |= FLASH_CR_STRT;
