@@ -2,7 +2,8 @@ void gpio_usb_init(void) {
   // A11,A12: USB
   set_gpio_alternate(GPIOA, 11, GPIO_AF10_OTG_FS);
   set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG_FS);
-  GPIOA->OSPEEDR = GPIO_OSPEEDER_OSPEEDR11 | GPIO_OSPEEDER_OSPEEDR12;
+  set_gpio_speed(GPIOA, 11, SPEED_VERY_HIGH);
+  set_gpio_speed(GPIOA, 12, SPEED_VERY_HIGH);
 }
 
 void gpio_usart2_init(void) {
