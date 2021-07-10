@@ -5,14 +5,14 @@ void timer_init(TIM_TypeDef *TIM, int psc) {
   TIM->SR = 0;
 }
 
-void us_timer_init(void) {
-  US_TIMER->PSC = (APB1_FREQ)-1U;
-  US_TIMER->CR1 = TIM_CR1_CEN;
-  US_TIMER->EGR = TIM_EGR_UG;
+void microsecond_timer_init(void) {
+  MICROSECOND_TIMER->PSC = (APB1_FREQ)-1U;
+  MICROSECOND_TIMER->CR1 = TIM_CR1_CEN;
+  MICROSECOND_TIMER->EGR = TIM_EGR_UG;
 }
 
-uint32_t us_timer_get(void) {
-  return US_TIMER->CNT;
+uint32_t microsecond_timer_get(void) {
+  return MICROSECOND_TIMER->CNT;
 }
 
 void interrupt_timer_init(void) {
