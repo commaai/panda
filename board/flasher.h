@@ -1,6 +1,6 @@
 // flasher state variables
 uint32_t *prog_ptr = NULL;
-uint8_t unlocked = 0;
+bool unlocked = false;
 
 #ifdef uart_ring
 void debug_ring_callback(uart_ring *ring) {}
@@ -26,10 +26,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xb1: unlock flash
     case 0xb1:
-      flash_unlock();
-      resp[1] = 0xff;
+      if (flash_unlock()) {
+        resp[1] = 0xff;
+      }
       current_board->set_led(LED_GREEN, 1);
-      unlocked = 1;
+      unlocked = true;
       prog_ptr = (uint32_t *)APP_START_ADDRESS;
       break;
     // **** 0xb2: erase sector

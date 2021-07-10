@@ -1,11 +1,13 @@
-void flash_unlock(void) {
+bool flash_unlock(void) {
   if (FLASH->CR & FLASH_CR_LOCK) {
     FLASH->KEYR = 0x45670123;
     FLASH->KEYR = 0xCDEF89AB;
+    return true;
   }
+  return false;
 }
 
-void flash_erase_sector(uint8_t sector, uint8_t unlocked) {
+void flash_erase_sector(uint8_t sector, bool unlocked) {
   // don't erase the bootloader(sector 0)
   if (sector != 0 && sector < 12 && unlocked) {
     FLASH->CR = (sector << 3) | FLASH_CR_SER;
