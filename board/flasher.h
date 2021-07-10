@@ -36,8 +36,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xb2: erase sector
     case 0xb2:
       sec = setup->b.wValue.w;
-      flash_erase_sector(sec, unlocked);
-      resp[1] = 0xff;
+      if (flash_erase_sector(sec, unlocked)) {
+        resp[1] = 0xff;
+      }
       break;
     // **** 0xd0: fetch serial number
     case 0xd0:
