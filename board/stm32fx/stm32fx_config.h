@@ -10,7 +10,7 @@
   #define BCDDEVICE 0x22
 #endif
 // from the linker script
-#define APP_START 0x8004000U
+#define APP_START_ADDRESS 0x8004000U
 
 #define CORE_FREQ 96U // in Mhz
 //APB1 - 48Mhz, APB2 - 96Mhz
@@ -38,7 +38,7 @@
 #define INTERRUPT_TIMER TIM6
 
 #define PROVISION_CHUNK_ADDRESS 0x1FFF79E0
-#define SERIAL_NUMBER_ADDRESS 0x1FFF79C0
+#define DEVICE_SERIAL_NUMBER_ADDRESS 0x1FFF79C0
 
 #ifndef BOOTSTUB
   #ifdef PANDA

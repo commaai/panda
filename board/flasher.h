@@ -30,7 +30,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       resp[1] = 0xff;
       current_board->set_led(LED_GREEN, 1);
       unlocked = 1;
-      prog_ptr = (uint32_t *)APP_START;
+      prog_ptr = (uint32_t *)APP_START_ADDRESS;
       break;
     // **** 0xb2: erase sector
     case 0xb2:
@@ -43,7 +43,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       #ifdef STM32F4
         // addresses are OTP
         if (setup->b.wValue.w == 1) {
-          memcpy(resp, (void *)SERIAL_NUMBER_ADDRESS, 0x10);
+          memcpy(resp, (void *)DEVICE_SERIAL_NUMBER_ADDRESS, 0x10);
           resp_len = 0x10;
         } else {
           get_provision_chunk(resp);
