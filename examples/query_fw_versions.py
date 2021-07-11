@@ -22,7 +22,7 @@ if __name__ == "__main__":
   uds_data_ids = {}
   for std_id in DATA_IDENTIFIER_TYPE:
     uds_data_ids[std_id.value] = std_id.name
-  if(args.nonstandard):
+  if args.nonstandard:
     for uds_id in range(0xf100,0xf180):
       uds_data_ids[uds_id] = "IDENTIFICATION_OPTION_VEHICLE_MANUFACTURER_SPECIFIC_DATA_IDENTIFIER"
     for uds_id in range(0xf1a0,0xf1f0):
