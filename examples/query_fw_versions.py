@@ -12,7 +12,7 @@ if __name__ == "__main__":
   parser.add_argument('--addr')
   args = parser.parse_args()
 
-  if(args.addr):
+  if args.addr:
     addrs = [int(args.addr, base=16)]
   else:
     addrs = [0x700 + i for i in range(256)]
