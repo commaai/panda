@@ -204,6 +204,9 @@ void dos_init(void) {
     can_flip_buses(0, 2);
   }
 
+  // init multiplexer
+  can_set_obd(car_harness_status, false);
+
   // Init clock source as internal free running
   dos_set_clock_source_mode(CLOCK_SOURCE_MODE_FREE_RUNNING);
 }
