@@ -800,7 +800,7 @@ int main(void) {
     USART3->CR2 |= USART_CR2_LINEN;
   }
 
-  microsecond_timer_init();
+  us_timer_init();
 
   // init to SILENT and can silent
   set_safety_mode(SAFETY_SILENT, 0);
