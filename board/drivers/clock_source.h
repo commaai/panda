@@ -24,6 +24,7 @@ void TIM1_UP_TIM10_IRQ_Handler(void) {
       // Start clock pulse
       set_gpio_output(GPIOB, 14, true);
       set_gpio_output(GPIOB, 15, true);
+      set_gpio_output(GPIOC, 5, true);
     }
 
     // Reset interrupt
@@ -37,6 +38,7 @@ void TIM1_CC_IRQ_Handler(void) {
       // End clock pulse
       set_gpio_output(GPIOB, 14, false);
       set_gpio_output(GPIOB, 15, false);
+      set_gpio_output(GPIOC, 5, false);
     }
 
     // Reset interrupt
