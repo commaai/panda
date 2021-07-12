@@ -120,7 +120,7 @@ static int mazda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (addr == MAZDA_LKAS) {
       int desired_torque = (((GET_BYTE(to_send, 0) & 0x0f) << 8) | GET_BYTE(to_send, 1)) - MAZDA_MAX_STEER;
       bool violation = 0;
-      uint32_t ts = us_timer_get();
+      uint32_t ts = MICROSECOND_TIMER->CNT;
 
       if (controls_allowed) {
 
