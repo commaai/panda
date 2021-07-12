@@ -10,11 +10,6 @@
 #define OUTPUT_TYPE_PUSH_PULL 0U
 #define OUTPUT_TYPE_OPEN_DRAIN 1U
 
-#define SPEED_LOW 0U
-#define SPEED_MEDIUM 1U
-#define SPEED_HIGH 2U
-#define SPEED_VERY_HIGH 3U
-
 void set_gpio_mode(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   ENTER_CRITICAL();
   uint32_t tmp = GPIO->MODER;
@@ -61,15 +56,6 @@ void set_gpio_pullup(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   tmp &= ~(3U << (pin * 2U));
   tmp |= (mode << (pin * 2U));
   register_set(&(GPIO->PUPDR), tmp, 0xFFFFFFFFU);
-  EXIT_CRITICAL();
-}
-
-void set_gpio_speed(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int speed) {
-  ENTER_CRITICAL();
-  uint32_t tmp = GPIO->OSPEEDR;
-  tmp &= ~(3U << (pin * 2U));
-  tmp |= (speed << (pin * 2U));
-  register_set(&(GPIO->OSPEEDR), tmp, 0xFFFFFFFFU);
   EXIT_CRITICAL();
 }
 
