@@ -27,8 +27,7 @@ struct sample_t torque_meas;
 struct sample_t torque_driver;
 
 TIM_TypeDef timer;
-TIM_TypeDef *US_TIMER = &timer;
-#define us_timer_get() US_TIMER->CNT
+TIM_TypeDef *MICROSECOND_TIMER = &timer;
 
 // from board_declarations.h
 #define HW_TYPE_UNKNOWN 0U
