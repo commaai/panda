@@ -1,31 +1,19 @@
 #ifdef STM32F4
   #include "stm32fx/inc/stm32f4xx.h"
   #include "stm32fx/inc/stm32f4xx_hal_gpio_ex.h"
-  #define MCU_IDCODE 0x463U
+  const uint16_t MCU_IDCODE = 0x463;
+  const uint8_t BCDDEVICE = 0x23;
 #else
   #include "stm32fx/inc/stm32f2xx.h"
   #include "stm32fx/inc/stm32f2xx_hal_gpio_ex.h"
-  #define MCU_IDCODE 0x411U
+  const uint16_t MCU_IDCODE = 0x411;
+  const uint8_t BCDDEVICE = 0x22;
 #endif
-// from the linker script
-#define APP_START_ADDRESS 0x8004000U
 
 #define CORE_FREQ 96U // in Mhz
 //APB1 - 48Mhz, APB2 - 96Mhz
 #define APB1_FREQ CORE_FREQ/2U 
 #define APB2_FREQ CORE_FREQ/1U
-
-#define BOOTLOADER_ADDRESS 0x1FFF0004
-
-// Around (1Mbps / 8 bits/byte / 12 bytes per message)
-#define CAN_INTERRUPT_RATE 12000U
-
-#define MAX_LED_FADE 8192U
-
-// Threshold voltage (mV) for either of the SBUs to be below before deciding harness is connected
-#define HARNESS_CONNECTED_THRESHOLD 2500U
-
-#define NUM_INTERRUPTS 102U                // There are 102 external interrupt sources (see stm32f413.h)
 
 #define TICK_TIMER_IRQ TIM1_BRK_TIM9_IRQn
 #define TICK_TIMER TIM9
@@ -34,9 +22,21 @@
 
 #define INTERRUPT_TIMER_IRQ TIM6_DAC_IRQn
 #define INTERRUPT_TIMER TIM6
+// There are 102 external interrupt sources (see stm32f413.h)
+#define NUM_INTERRUPTS 102
 
-#define PROVISION_CHUNK_ADDRESS 0x1FFF79E0
-#define DEVICE_SERIAL_NUMBER_ADDRESS 0x1FFF79C0
+// from the linker script
+const uint32_t APP_START_ADDRESS = 0x8004000;
+
+const uint32_t BOOTLOADER_ADDRESS = 0x1FFF0004;
+const uint32_t PROVISION_CHUNK_ADDRESS = 0x1FFF79E0;
+const uint32_t DEVICE_SERIAL_NUMBER_ADDRESS = 0x1FFF79C0;
+
+// Around (1Mbps / 8 bits/byte / 12 bytes per message)
+const uint16_t CAN_INTERRUPT_RATE = 12000;
+const uint16_t MAX_LED_FADE = 8192;
+// Threshold voltage (mV) for either of the SBUs to be below before deciding harness is connected
+const uint16_t HARNESS_CONNECTED_THRESHOLD = 2500;
 
 #ifndef BOOTSTUB
   #ifdef PANDA
