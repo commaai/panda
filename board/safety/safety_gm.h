@@ -144,7 +144,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // LKA STEER: safety check
   if (addr == 384) {
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1);
-    uint32_t ts = MICROSECOND_TIMER->CNT;
+    uint32_t ts = microsecond_timer_get();
     bool violation = 0;
     desired_torque = to_signed(desired_torque, 11);
 
