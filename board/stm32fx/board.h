@@ -8,8 +8,8 @@
 #ifdef PANDA
   #include "drivers/fan.h"
   #include "stm32fx/llfan.h"
-  #include "drivers/rtc.h"
   #include "stm32fx/llrtc.h"
+  #include "drivers/rtc.h"
   #include "stm32fx/clock_source.h"
   #include "boards/white.h"
   #include "boards/grey.h"
