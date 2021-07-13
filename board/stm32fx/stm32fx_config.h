@@ -2,10 +2,12 @@
   #include "stm32fx/inc/stm32f4xx.h"
   #include "stm32fx/inc/stm32f4xx_hal_gpio_ex.h"
   #define MCU_IDCODE 0x463U
+  #define BCDDEVICE 0x23U
 #else
   #include "stm32fx/inc/stm32f2xx.h"
   #include "stm32fx/inc/stm32f2xx_hal_gpio_ex.h"
   #define MCU_IDCODE 0x411U
+  #define BCDDEVICE 0x22U
 #endif
 // from the linker script
 #define APP_START_ADDRESS 0x8004000U
@@ -15,7 +17,7 @@
 #define APB1_FREQ CORE_FREQ/2U 
 #define APB2_FREQ CORE_FREQ/1U
 
-#define BOOTLOADER_ADDRESS 0x1FFF0004
+#define BOOTLOADER_ADDRESS 0x1FFF0004U
 
 // Around (1Mbps / 8 bits/byte / 12 bytes per message)
 #define CAN_INTERRUPT_RATE 12000U
@@ -35,8 +37,8 @@
 #define INTERRUPT_TIMER_IRQ TIM6_DAC_IRQn
 #define INTERRUPT_TIMER TIM6
 
-#define PROVISION_CHUNK_ADDRESS 0x1FFF79E0
-#define DEVICE_SERIAL_NUMBER_ADDRESS 0x1FFF79C0
+#define PROVISION_CHUNK_ADDRESS 0x1FFF79E0U
+#define DEVICE_SERIAL_NUMBER_ADDRESS 0x1FFF79C0U
 
 #ifndef BOOTSTUB
   #ifdef PANDA
