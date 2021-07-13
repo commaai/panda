@@ -7,7 +7,6 @@
 #include "config.h"
 
 #include "drivers/pwm.h"
-#include "drivers/spi.h"
 #include "drivers/usb.h"
 
 #include "early_init.h"

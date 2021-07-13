@@ -313,7 +313,7 @@ void soft_flasher_start(void) {
   GPIOA->OSPEEDR = GPIO_OSPEEDER_OSPEEDR11 | GPIO_OSPEEDER_OSPEEDR12;
 
   // flasher
-  spi_init();
+  //spi_init();
 
   // enable USB
   usb_init();

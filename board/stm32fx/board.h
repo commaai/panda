@@ -1,15 +1,16 @@
 // ///////////////////////////////////////////////////////////// //
 // Hardware abstraction layer for all different supported boards //
 // ///////////////////////////////////////////////////////////// //
-#include "stm32fx/peripherals.h"
 #include "boards/board_declarations.h"
 
 // ///// Board definition and detection ///// //
 #include "drivers/harness.h"
 #ifdef PANDA
   #include "drivers/fan.h"
+  #include "stm32fx/llfan.h"
+  #include "stm32fx/llrtc.h"
   #include "drivers/rtc.h"
-  #include "drivers/clock_source.h"
+  #include "stm32fx/clock_source.h"
   #include "boards/white.h"
   #include "boards/grey.h"
   #include "boards/black.h"
