@@ -235,34 +235,6 @@ void can_set_gmlan(uint8_t bus) {
   }
 }
 
-// TODO: remove
-void can_set_obd(uint8_t harness_orientation, bool obd){
-  if(obd){
-    puts("setting CAN2 to be OBD\n");
-  } else {
-    puts("setting CAN2 to be normal\n");
-  }
-  if(current_board->has_obd){
-    if(obd != (bool)(harness_orientation == HARNESS_STATUS_NORMAL)){
-        // B5,B6: disable normal mode
-        set_gpio_mode(GPIOB, 5, MODE_INPUT);
-        set_gpio_mode(GPIOB, 6, MODE_INPUT);
-        // B12,B13: CAN2 mode
-        set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
-        set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
-    } else {
-        // B5,B6: CAN2 mode
-        set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
-        set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
-        // B12,B13: disable normal mode
-        set_gpio_mode(GPIOB, 12, MODE_INPUT);
-        set_gpio_mode(GPIOB, 13, MODE_INPUT);
-    }
-  } else {
-    puts("OBD CAN not available on this board\n");
-  }
-}
-
 // CAN error
 void can_sce(CAN_TypeDef *CAN) {
   ENTER_CRITICAL();
