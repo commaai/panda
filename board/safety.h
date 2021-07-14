@@ -250,8 +250,8 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_NISSAN, &nissan_hooks},
   {SAFETY_NOOUTPUT, &nooutput_hooks},
   {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
-  {SAFETY_TESLA, &tesla_hooks},
 #ifdef ALLOW_DEBUG
+  {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
   {SAFETY_SUBARU_LEGACY, &subaru_legacy_hooks},
   {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
