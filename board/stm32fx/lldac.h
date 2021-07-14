@@ -1,6 +1,3 @@
-void puth(unsigned int i);
-void puts(const char *a);
-
 void dac_init(void) {
   // No buffers required since we have an opamp
   register_set(&(DAC->DHR12R1), 0U, 0xFFFU);
