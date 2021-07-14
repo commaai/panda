@@ -13,7 +13,12 @@
 #include "safety.h"
 
 #include "drivers/can_common.h"
-#include "drivers/bxcan.h"
+
+#ifdef STM32H7
+  #include "drivers/fdcan.h"
+#else
+  #include "drivers/bxcan.h"
+#endif
 
 #include "obj/gitversion.h"
 
