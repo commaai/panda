@@ -67,10 +67,10 @@
   #include "stm32fx/lluart.h"
 #endif
 
-#ifndef BOOTSTUB
-  #include "stm32fx/llcan.h"
-#else
+#ifdef BOOTSTUB
   #include "stm32fx/llflash.h"
+#else
+  #include "stm32fx/llcan.h"
 #endif
 
 #if defined(PANDA) || defined(BOOTSTUB) || defined(PEDAL_USB)
