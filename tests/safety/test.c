@@ -28,6 +28,7 @@ struct sample_t torque_driver;
 
 TIM_TypeDef timer;
 TIM_TypeDef *MICROSECOND_TIMER = &timer;
+uint32_t microsecond_timer_get(void);
 
 // from board_declarations.h
 #define HW_TYPE_UNKNOWN 0U
@@ -82,6 +83,10 @@ void fault_recovered(uint32_t fault) {
 #define NULL ((void*)0)
 #define static
 #include "safety.h"
+
+uint32_t microsecond_timer_get(void) {
+  return MICROSECOND_TIMER->CNT;
+}
 
 void set_controls_allowed(bool c){
   controls_allowed = c;

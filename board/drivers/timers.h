@@ -11,6 +11,10 @@ void microsecond_timer_init(void) {
   MICROSECOND_TIMER->EGR = TIM_EGR_UG;
 }
 
+uint32_t microsecond_timer_get(void) {
+  return MICROSECOND_TIMER->CNT;
+}
+
 void interrupt_timer_init(void) {
   enable_interrupt_timer();
   REGISTER_INTERRUPT(INTERRUPT_TIMER_IRQ, interrupt_timer_handler, 1, FAULT_INTERRUPT_RATE_INTERRUPTS)

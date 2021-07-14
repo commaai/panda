@@ -201,7 +201,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       desired_torque = to_signed(desired_torque, 16);
       bool violation = 0;
 
-      uint32_t ts = MICROSECOND_TIMER->CNT;
+      uint32_t ts = microsecond_timer_get();
 
       if (controls_allowed) {
 
