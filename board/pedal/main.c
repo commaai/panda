@@ -2,8 +2,6 @@
 //#define PEDAL_USB
 #include "../config.h"
 
-#include "drivers/dac.h"
-
 #include "early_init.h"
 #include "crc.h"
 
