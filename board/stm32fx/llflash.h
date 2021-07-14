@@ -1,10 +1,10 @@
-bool flash_unlock(void) {
-  if (FLASH->CR & FLASH_CR_LOCK) {
-    FLASH->KEYR = 0x45670123;
-    FLASH->KEYR = 0xCDEF89AB;
-    return true;
-  }
-  return false;
+bool flash_is_locked(void) {
+  return (FLASH->CR & FLASH_CR_LOCK);
+}
+
+void flash_unlock(void) {
+  FLASH->KEYR = 0x45670123;
+  FLASH->KEYR = 0xCDEF89AB;
 }
 
 bool flash_erase_sector(uint8_t sector, bool unlocked) {

@@ -26,7 +26,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xb1: unlock flash
     case 0xb1:
-      if (flash_unlock()) {
+      if (flash_is_locked()) {
+        flash_unlock();
         resp[1] = 0xff;
       }
       current_board->set_led(LED_GREEN, 1);
