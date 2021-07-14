@@ -123,11 +123,7 @@ uint8_t device_desc[] = {
   0xFF, 0xFF, 0xFF, 0x40, // Class, Subclass, Protocol, Max Packet Size
   TOUSBORDER(USB_VID), // idVendor
   TOUSBORDER(USB_PID), // idProduct
-#ifdef STM32F4
   0x00, 0x23, // bcdDevice
-#else
-  0x00, 0x22, // bcdDevice
-#endif
   0x01, 0x02, // Manufacturer, Product
   0x03, 0x01 // Serial Number, Num Configurations
 };
