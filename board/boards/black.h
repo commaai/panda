@@ -213,9 +213,6 @@ void black_init(void) {
   if (car_harness_status == HARNESS_STATUS_FLIPPED) {
     can_flip_buses(0, 2);
   }
-
-  // init multiplexer
-  can_set_obd(car_harness_status, false);
 }
 
 const harness_configuration black_harness_config = {
