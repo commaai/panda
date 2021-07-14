@@ -67,7 +67,9 @@
   #include "stm32fx/lluart.h"
 #endif
 
-#ifndef BOOTSTUB
+#ifdef BOOTSTUB
+  #include "stm32fx/llflash.h"
+#else
   #include "stm32fx/llcan.h"
 #endif
 
