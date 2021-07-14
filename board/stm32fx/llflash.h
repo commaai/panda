@@ -18,10 +18,9 @@ bool flash_erase_sector(uint8_t sector, bool unlocked) {
   return false;
 }
 
-void flash_write_word(void *prog_ptr, const void *data) {
+void flash_write_word(void *prog_ptr, uint32_t data) {
   uint32_t *pp = prog_ptr;
-  const uint32_t *d = data;
   FLASH->CR = FLASH_CR_PSIZE_1 | FLASH_CR_PG;
-  *pp = *d;
+  *pp = data;
   while (FLASH->SR & FLASH_SR_BSY);
 }

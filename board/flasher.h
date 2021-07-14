@@ -117,7 +117,7 @@ void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   current_board->set_led(LED_RED, 0);
   for (int i = 0; i < len/4; i++) {
-    flash_write_word(prog_ptr, (uint32_t*)(usbdata+(i*4)));
+    flash_write_word(prog_ptr, *(uint32_t*)(usbdata+(i*4)));
 
     //*(uint64_t*)(&spi_tx_buf[0x30+(i*4)]) = *prog_ptr;
     prog_ptr++;
