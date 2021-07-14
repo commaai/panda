@@ -3,7 +3,7 @@
 #define MCU_IDCODE 0x483U
 
 // from the linker script
-#define APP_START_ADDRESS 0x8004000U
+#define APP_START_ADDRESS 0x8020000U
 
 #define CORE_FREQ 240U // in Mhz
 //APB1 - 120Mhz, APB2 - 120Mhz

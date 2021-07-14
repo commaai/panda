@@ -55,7 +55,7 @@ ENTRY(Reset_Handler)
 /* Highest address of the user mode stack */
 enter_bootloader_mode = 0x38001FFC;
 _estack = 0x20020000;    /* end of RAM */
-_app_start = 0x08004000; /* Reserve 16K for bootloader */
+_app_start = 0x08020000; /* Reserve Sector 0(128K) for bootloader */
 
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0x200;      /* required amount of heap  */
