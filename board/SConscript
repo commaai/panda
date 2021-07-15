@@ -130,6 +130,7 @@ else:
 
 includes = [
   "stm32fx/inc",
+  "stm32h7/inc",
   "..",
   ".",
 ]
