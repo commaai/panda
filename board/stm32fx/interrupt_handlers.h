@@ -2,6 +2,7 @@
 // Only implemented the STM32F413 interrupts for now, the STM32F203 specific ones do not fall into the scope of SIL2
 
 void WWDG_IRQHandler(void) {handle_interrupt(WWDG_IRQn);}
+// cppcheck-suppress misra-c2012-5.5
 void PVD_IRQHandler(void) {handle_interrupt(PVD_IRQn);}
 void TAMP_STAMP_IRQHandler(void) {handle_interrupt(TAMP_STAMP_IRQn);}
 void RTC_WKUP_IRQHandler(void) {handle_interrupt(RTC_WKUP_IRQn);}
@@ -25,8 +26,10 @@ void CAN1_RX0_IRQHandler(void) {handle_interrupt(CAN1_RX0_IRQn);}
 void CAN1_RX1_IRQHandler(void) {handle_interrupt(CAN1_RX1_IRQn);}
 void CAN1_SCE_IRQHandler(void) {handle_interrupt(CAN1_SCE_IRQn);}
 void EXTI9_5_IRQHandler(void) {handle_interrupt(EXTI9_5_IRQn);}
+// cppcheck-suppress misra-c2012-5.5
 void TIM1_BRK_TIM9_IRQHandler(void) {handle_interrupt(TIM1_BRK_TIM9_IRQn);}
 void TIM1_UP_TIM10_IRQHandler(void) {handle_interrupt(TIM1_UP_TIM10_IRQn);}
+// cppcheck-suppress misra-c2012-5.5
 void TIM1_TRG_COM_TIM11_IRQHandler(void) {handle_interrupt(TIM1_TRG_COM_TIM11_IRQn);}
 void TIM1_CC_IRQHandler(void) {handle_interrupt(TIM1_CC_IRQn);}
 void TIM2_IRQHandler(void) {handle_interrupt(TIM2_IRQn);}
