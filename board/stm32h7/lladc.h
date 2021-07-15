@@ -39,10 +39,11 @@ uint32_t adc_get(unsigned int channel) {
 uint32_t adc_get_voltage(void) {
   // REVC has a 10, 1 (1/11) voltage divider
   // Here is the calculation for the scale (s)
-  // ADCV = VIN_S * (1/11) * (4095/3.3)
+  // ADCV = VIN_S * (1/11) * (65535/3.3)
   // RETVAL = ADCV * s = VIN_S*1000
-  // s = 1000/((4095/3.3)*(1/11)) = 8.8623046875
+  // s = 1000/((65535/3.3)*(1/11)) = 0.553902494
 
   // Avoid needing floating point math, so output in mV
-  return ((adc_get(ADCCHAN_VOLTAGE) * 1000U) / 19893) * 11;
+  //return ((adc_get(ADCCHAN_VOLTAGE) * 1000U) / 19893) * 11; // But this is more precise, measured
+  return (adc_get(ADCCHAN_VOLTAGE) * 5539U) / 10000U;
 }
