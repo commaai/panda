@@ -2,7 +2,7 @@
 // Interrupts for STM32H7x5
 
 void WWDG_IRQHandler(void) {handle_interrupt(WWDG_IRQn);}
-// cppcheck-suppress misra-c2012-5.5; FIXME
+// cppcheck-suppress misra-c2012-5.5
 void PVD_IRQHandler(void) {handle_interrupt(PVD_IRQn);}
 void TAMP_STAMP_IRQHandler(void) {handle_interrupt(TAMP_STAMP_IRQn);}
 void RTC_WKUP_IRQHandler(void) {handle_interrupt(RTC_WKUP_IRQn);}
@@ -26,10 +26,10 @@ void TIM1_BRK_TIM9_IRQHandler(void) {handle_interrupt(TIM1_BRK_TIM9_IRQn);}
 void TIM1_UP_TIM10_IRQHandler(void) {handle_interrupt(TIM1_UP_TIM10_IRQn);}
 void TIM1_TRG_COM_TIM11_IRQHandler(void) {handle_interrupt(TIM1_TRG_COM_TIM11_IRQn);}
 void TIM1_CC_IRQHandler(void) {handle_interrupt(TIM1_CC_IRQn);}
-// cppcheck-suppress misra-c2012-5.5; FIXME
+// cppcheck-suppress misra-c2012-5.5
 void TIM2_IRQHandler(void) {handle_interrupt(TIM2_IRQn);}
 void TIM3_IRQHandler(void) {handle_interrupt(TIM3_IRQn);}
-// cppcheck-suppress misra-c2012-5.5; FIXME
+// cppcheck-suppress misra-c2012-5.5
 void TIM4_IRQHandler(void) {handle_interrupt(TIM4_IRQn);}
 void I2C1_EV_IRQHandler(void) {handle_interrupt(I2C1_EV_IRQn);}
 void I2C1_ER_IRQHandler(void) {handle_interrupt(I2C1_ER_IRQn);}
