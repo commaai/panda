@@ -287,8 +287,11 @@ void peripherals_init(void){
     //RCC->APB1LENR |= RCC_APB1LENR_USART2EN; // Enable USART2 for debug serial
 
     RCC->APB1HENR |= RCC_APB1HENR_FDCANEN; // CANFD(1,2,3) enable
-    RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN; // HS USB enable
     RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN; // Enable ADC clocks
+
+    RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN; // HS USB enable, also LP is needed for CSleep state(__WFI())
+    RCC->AHB1LPENR |= RCC_AHB1LPENR_USB1OTGHSLPEN;
+    RCC->AHB1LPENR &= ~(RCC_AHB1LPENR_USB1OTGHSULPILPEN);
 }
 
 void enable_interrupt_timer(void) {
