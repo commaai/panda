@@ -867,9 +867,12 @@ int main(void) {
         }
       #endif
     } else {
-      //REDEBUG: disable power save mode
+      //REDEBUG: disable power save mode on H7
+      #ifdef STM32H7
       power_save_status = POWER_SAVE_STATUS_DISABLED;
-      //__WFI();
+      #else
+      __WFI();
+      #endif
     }
   }
 
