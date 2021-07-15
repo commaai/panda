@@ -34,7 +34,7 @@ uint32_t can_speed[] = {5000, 5000, 5000, 333};
 
 #define can_buffer(x, size) \
   CAN_FIFOMailBox_TypeDef elems_##x[size]; \
-  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = size, .elems = (CAN_FIFOMailBox_TypeDef *)&elems_##x };
+  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CAN_FIFOMailBox_TypeDef *)&(elems_##x) };
 
 can_buffer(rx_q, 0x1000)
 can_buffer(tx1_q, 0x100)
