@@ -867,7 +867,9 @@ int main(void) {
         }
       #endif
     } else {
-      __WFI();
+      //REDEBUG: disable power save mode
+      power_save_status = POWER_SAVE_STATUS_DISABLED;
+      //__WFI();
     }
   }
 
