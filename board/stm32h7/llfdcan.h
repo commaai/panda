@@ -173,9 +173,9 @@ bool llfdcan_init(FDCAN_GlobalTypeDef *FDCANx) {
     // Enable config change
     FDCANx->CCCR |= FDCAN_CCCR_CCE;
     // Disable automatic retransmission of failed messages
-    FDCANx->CCCR |= FDCAN_CCCR_DAR; 
+    //FDCANx->CCCR |= FDCAN_CCCR_DAR; 
     // Enable automatic retransmission
-    //FDCANx->CCCR &= ~(FDCAN_CCCR_DAR);
+    FDCANx->CCCR &= ~(FDCAN_CCCR_DAR);
     //TODO: Later add and enable transmitter delay compensation : FDCAN_DBTP.TDC (for CAN FD)
     //FDCANx->DBTP |= FDCAN_DBTP_TDC;
     // Disable transmission pause feature
@@ -216,7 +216,7 @@ bool llfdcan_init(FDCAN_GlobalTypeDef *FDCANx) {
     // RX FIFO 0
     FDCANx->RXF0C = (FDCAN_RX_FIFO_0_OFFSET + (can_number * FDCAN_OFFSET_W)) << FDCAN_RXF0C_F0SA_Pos;
     FDCANx->RXF0C |= FDCAN_RX_FIFO_0_EL_CNT << FDCAN_RXF0C_F0S_Pos;
-    // RX FIFO 0 switch to overwrite mode? REDEBUG
+    // RX FIFO 0 switch to non-blocking (overwrite) mode
     FDCANx->RXF0C |= FDCAN_RXF0C_F0OM;
 
     // TX FIFO (mode set earlier)

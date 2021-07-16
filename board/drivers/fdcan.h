@@ -233,18 +233,6 @@ void process_can(uint8_t can_number) {
     uint8_t bus_number = BUS_NUM_FROM_FDCAN_NUM(can_number);
     
     FDCANx->IR |= FDCAN_IR_TFE; // Clear Tx FIFO Empty flag
-    
-    // REDEBUG: need to rewrite it with TX events??
-    //can_txd_cnt += 1;
-    // Why to add successfully transmited message to my fifo??? Returning back with changed bus for Cabana?
-    // if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
-    //   CAN_FIFOMailBox_TypeDef to_push;
-    //   to_push.RIR = CAN->sTxMailBox[0].TIR;
-    //   to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
-    //   to_push.RDLR = CAN->sTxMailBox[0].TDLR;
-    //   to_push.RDHR = CAN->sTxMailBox[0].TDHR;
-    //   can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
-    // }
 
     if ((FDCANx->TXFQS & FDCAN_TXFQS_TFQF) == 0) {
       CAN_FIFOMailBox_TypeDef to_send;
@@ -265,6 +253,15 @@ void process_can(uint8_t can_number) {
         fifo->RDHR = to_send.RDHR;
         
         FDCANx->TXBAR = (1UL << tx_index); 
+
+        // Send back to USB
+        can_txd_cnt += 1;
+        CAN_FIFOMailBox_TypeDef to_push;
+        to_push.RIR = to_send.RIR;
+        to_push.RDTR = (to_send.RDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
+        to_push.RDLR = to_send.RDLR;
+        to_push.RDHR = to_send.RDHR;
+        can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
 
         if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER)) {
           usb_outep3_resume_if_paused();
