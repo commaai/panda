@@ -70,7 +70,7 @@
 #ifdef BOOTSTUB
   #include "stm32fx/llflash.h"
 #else
-  #include "stm32fx/llcan.h"
+  #include "stm32fx/llbxcan.h"
 #endif
 
 #if defined(PANDA) || defined(BOOTSTUB) || defined(PEDAL_USB)

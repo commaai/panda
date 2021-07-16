@@ -12,7 +12,8 @@
 #include "power_saving.h"
 #include "safety.h"
 
-#include "drivers/can.h"
+#include "drivers/can_common.h"
+#include "drivers/bxcan.h"
 
 #include "obj/gitversion.h"
 
