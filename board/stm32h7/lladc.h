@@ -22,7 +22,7 @@ uint32_t adc_get(unsigned int channel) {
   ADC1->SQR1 &= ~(ADC_SQR1_L);
   ADC1->SQR1 = (channel << 6U);
   
-  ADC1->SMPR1 = (0x7U << (channel * 3) );
+  ADC1->SMPR1 = (0x7U << (channel * 3U) );
   ADC1->PCSEL_RES0 = (0x1U << channel);
 
   ADC1->CR |= ADC_CR_ADSTART;

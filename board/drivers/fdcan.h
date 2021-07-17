@@ -41,11 +41,10 @@ void cycle_transceivers(void) {
 
 // ***************************** CAN *****************************
 void process_can(uint8_t can_number) {
-  FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
-
   if (can_number != 0xffU) {
     ENTER_CRITICAL();
 
+    FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
     uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
     
     CANx->IR |= FDCAN_IR_TFE; // Clear Tx FIFO Empty flag
@@ -58,7 +57,7 @@ void process_can(uint8_t can_number) {
         uint8_t tx_index = (CANx->TXFQS >> FDCAN_TXFQS_TFQPI_Pos) & 0x1F;
         // only send if we have received a packet
         CAN_FIFOMailBox_TypeDef *fifo;
-        fifo = (CAN_FIFOMailBox_TypeDef *)(TxFIFOSA + tx_index * FDCAN_TX_FIFO_EL_SIZE);
+        fifo = (CAN_FIFOMailBox_TypeDef *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
         // Convert mailbox "type" to normal CAN
         fifo->RIR = ((to_send.RIR & 0x4) << 27) | ((to_send.RIR & 0x2) << 28) | (to_send.RIR >> 3);  // identifier format | frame type | identifier
@@ -84,25 +83,26 @@ void process_can(uint8_t can_number) {
         }
       }
     }
-    EXIT_CRITICAL();
-  }
-  // Needed to fix periodical problem with transceiver sticking
-  if ((CANx->PSR & FDCAN_PSR_BO) != 0 && (CANx->CCCR & FDCAN_CCCR_INIT) != 0) {
-    puts("CAN is in Bus_Off state! Resetting... CAN number: "); puth(can_number); puts("\n");
-    cycle_transceivers();
-    CANx->IR = 0xFFC60000U; // Reset all flags(Only errors!)
-    CANx->CCCR &= ~(FDCAN_CCCR_INIT);
-    uint32_t timeout_counter = 0U;
-    while((CANx->CCCR & FDCAN_CCCR_INIT) != 0) {
-      // Delay for about 1ms
-      delay(10000);
-      timeout_counter++;
 
-      if(timeout_counter >= CAN_INIT_TIMEOUT_MS){
-        puts(CAN_NAME_FROM_CANIF(CANx)); puts(" Bus_Off reset timed out!\n");
-        break;
+    // Needed to fix periodical problem with transceiver sticking
+    if (((CANx->PSR & FDCAN_PSR_BO) != 0) && ((CANx->CCCR & FDCAN_CCCR_INIT) != 0)) {
+      puts("CAN is in Bus_Off state! Resetting... CAN number: "); puth(can_number); puts("\n");
+      cycle_transceivers();
+      CANx->IR = 0xFFC60000U; // Reset all flags(Only errors!)
+      CANx->CCCR &= ~(FDCAN_CCCR_INIT);
+      uint32_t timeout_counter = 0U;
+      while((CANx->CCCR & FDCAN_CCCR_INIT) != 0) {
+        // Delay for about 1ms
+        delay(10000);
+        timeout_counter++;
+
+        if(timeout_counter >= CAN_INIT_TIMEOUT_MS){
+          puts(CAN_NAME_FROM_CANIF(CANx)); puts(" Bus_Off reset timed out!\n");
+          break;
+        }
       }
     }
+    EXIT_CRITICAL();
   }
 }
 
@@ -130,7 +130,7 @@ void can_rx(uint8_t can_number) {
       CAN_FIFOMailBox_TypeDef *fifo;
 
       // getting address
-      fifo = (CAN_FIFOMailBox_TypeDef *)(RxFIFO0SA + rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE);
+      fifo = (CAN_FIFOMailBox_TypeDef *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
 
       // Need to convert real CAN frame format to mailbox "type"
       to_push.RIR = ((fifo->RIR >> 27) & 0x4) | ((fifo->RIR >> 28) & 0x2) | (fifo->RIR << 3); // identifier format | frame type | identifier
@@ -168,6 +168,8 @@ void can_rx(uint8_t can_number) {
     #endif
     CANx->IR |= (FDCAN_IR_PEA | FDCAN_IR_PED | FDCAN_IR_RF0L | FDCAN_IR_RF0F | FDCAN_IR_EW | FDCAN_IR_MRAF | FDCAN_IR_TOO); // Clean all error flags
     can_err_cnt += 1;
+  } else { 
+    
   }
   
 }

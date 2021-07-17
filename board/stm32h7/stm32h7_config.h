@@ -54,7 +54,7 @@
 #include "stm32h7/board.h"
 #include "stm32h7/clock.h"
 
-#if !defined (BOOTSTUB) && (defined(PANDA) || defined(PEDAL_USB))
+#if !defined (BOOTSTUB) && defined(PANDA)
   #include "drivers/uart.h"
   #include "stm32h7/lluart.h"
 #endif

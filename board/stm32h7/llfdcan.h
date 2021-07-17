@@ -25,29 +25,29 @@
 #define FDCAN_END_ADDRESS 0x4000D3FCUL // Message RAM has a width of 4 Bytes
 
 // With this settings we can go up to 6Mbit/s
-#define CAN_SYNC_JW     1 // 1 to 4
-#define CAN_PHASE_SEG1  6 // =(PROP_SEG + PHASE_SEG1) , 1 to 16
-#define CAN_PHASE_SEG2  1 // 1 to 8
+#define CAN_SYNC_JW     1U // 1 to 4
+#define CAN_PHASE_SEG1  6U // =(PROP_SEG + PHASE_SEG1) , 1 to 16
+#define CAN_PHASE_SEG2  1U // 1 to 8
 #define CAN_PCLK 48000U // Sourced from PLL1Q
-#define CAN_QUANTA (1 + CAN_PHASE_SEG1 + CAN_PHASE_SEG2)
+#define CAN_QUANTA (1U + CAN_PHASE_SEG1 + CAN_PHASE_SEG2)
 // Valid speeds in kbps and their prescalers:
 // 10=600, 20=300, 50=120, 83.333=72, 100=60, 125=48, 250=24, 500=12, 1000=6, 2000=3, 3000=2, 6000=1
 #define can_speed_to_prescaler(x) (CAN_PCLK / CAN_QUANTA * 10U / (x))
 
 // RX FIFO 0
-#define FDCAN_RX_FIFO_0_EL_CNT 32
+#define FDCAN_RX_FIFO_0_EL_CNT 32UL
 #define FDCAN_RX_FIFO_0_HEAD_SIZE 8UL // bytes
 #define FDCAN_RX_FIFO_0_DATA_SIZE 8UL // bytes
 #define FDCAN_RX_FIFO_0_EL_SIZE (FDCAN_RX_FIFO_0_HEAD_SIZE + FDCAN_RX_FIFO_0_DATA_SIZE)
-#define FDCAN_RX_FIFO_0_EL_W_SIZE (FDCAN_RX_FIFO_0_EL_SIZE / 4)
+#define FDCAN_RX_FIFO_0_EL_W_SIZE (FDCAN_RX_FIFO_0_EL_SIZE / 4UL)
 #define FDCAN_RX_FIFO_0_OFFSET 0UL
 
 // TX FIFO
-#define FDCAN_TX_FIFO_EL_CNT 32
+#define FDCAN_TX_FIFO_EL_CNT 32UL
 #define FDCAN_TX_FIFO_HEAD_SIZE 8UL // bytes
 #define FDCAN_TX_FIFO_DATA_SIZE 8UL // bytes
 #define FDCAN_TX_FIFO_EL_SIZE (FDCAN_TX_FIFO_HEAD_SIZE + FDCAN_TX_FIFO_DATA_SIZE)
-#define FDCAN_TX_FIFO_EL_W_SIZE (FDCAN_TX_FIFO_EL_SIZE / 4)
+#define FDCAN_TX_FIFO_EL_W_SIZE (FDCAN_TX_FIFO_EL_SIZE / 4UL)
 #define FDCAN_TX_FIFO_OFFSET (FDCAN_RX_FIFO_0_OFFSET + (FDCAN_RX_FIFO_0_EL_CNT * FDCAN_RX_FIFO_0_EL_W_SIZE))
 
 #define GET_BUS(msg) (((msg)->RDTR >> 4) & 0xFF)
@@ -60,7 +60,7 @@
 
 #define CAN_INIT_TIMEOUT_MS 500U
 #define CAN_NAME_FROM_CANIF(CAN_DEV) (((CAN_DEV)==FDCAN1) ? "FDCAN1" : (((CAN_DEV) == FDCAN2) ? "FDCAN2" : "FDCAN3"))
-#define CAN_NUM_FROM_CANIF(CAN) ((CAN)==FDCAN1 ? 0 : ((CAN) == FDCAN2 ? 1 : 2))
+#define CAN_NUM_FROM_CANIF(CAN_DEV) (((CAN_DEV)==FDCAN1) ? 0UL : (((CAN_DEV) == FDCAN2) ? 1UL : 2UL))
 
 // For backwards compatibility with safety code
 typedef struct {
@@ -110,11 +110,11 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, bool loopback, b
     //   FDCAN_CCU->CCFG |= CAN_QUANTA; // Setting time quanta to 8 for now
     // }
     // Set the nominal bit timing register
-    CANx->NBTP = ((CAN_SYNC_JW-1)<<FDCAN_NBTP_NSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_NBTP_NTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_NBTP_NTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1)<<FDCAN_NBTP_NBRP_Pos);
+    CANx->NBTP = ((CAN_SYNC_JW-1U)<<FDCAN_NBTP_NSJW_Pos) | ((CAN_PHASE_SEG1-1U)<<FDCAN_NBTP_NTSEG1_Pos) | ((CAN_PHASE_SEG2-1U)<<FDCAN_NBTP_NTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1U)<<FDCAN_NBTP_NBRP_Pos);
 
     // Set the data bit timing register (TODO: change it later for CAN FD and variable bitrate)
     // REDEBUG: set data rate manually for test plan purposes only! Revert back later!
-    CANx->DBTP = ((CAN_SYNC_JW-1)<<FDCAN_DBTP_DSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_DBTP_DTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_DBTP_DTSEG2_Pos) | ((can_speed_to_prescaler(60000)-1)<<FDCAN_DBTP_DBRP_Pos);
+    CANx->DBTP = ((CAN_SYNC_JW-1U)<<FDCAN_DBTP_DSJW_Pos) | ((CAN_PHASE_SEG1-1U)<<FDCAN_DBTP_DTSEG1_Pos) | ((CAN_PHASE_SEG2-1U)<<FDCAN_DBTP_DTSEG2_Pos) | ((can_speed_to_prescaler(60000U)-1U)<<FDCAN_DBTP_DBRP_Pos);
     //CANx->DBTP = ((CAN_SYNC_JW-1)<<FDCAN_DBTP_DSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_DBTP_DTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_DBTP_DTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1)<<FDCAN_DBTP_DBRP_Pos);
 
     // silent loopback mode for debugging (new name: internal loopback)
