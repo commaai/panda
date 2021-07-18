@@ -9,8 +9,7 @@ const int SUBARU_DRIVER_TORQUE_ALLOWANCE = 60;
 const int SUBARU_DRIVER_TORQUE_FACTOR = 10;
 const int SUBARU_STANDSTILL_THRSLD = 20;  // about 1kph
 
-const int SUBARU_L_DRIVER_TORQUE_ALLOWANCE = 75;
-const int SUBARU_L_DRIVER_TORQUE_FACTOR = 10;
+const uint32_t SUBARU_L_BRAKE_THRSLD = 2; // filter sensor noise, max_brake is 400
 
 const CanMsg SUBARU_TX_MSGS[] = {{0x122, 0, 8}, {0x221, 0, 8}, {0x322, 0, 8}};
 const int SUBARU_TX_MSGS_LEN = sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]);
@@ -34,6 +33,9 @@ AddrCheckStruct subaru_l_rx_checks[] = {
   {.msg = {{0x144, 0, 8, .expected_timestep = 50000U}, { 0 }, { 0 }}},
 };
 const int SUBARU_L_RX_CHECK_LEN = sizeof(subaru_l_rx_checks) / sizeof(subaru_l_rx_checks[0]);
+
+const uint16_t SUBARU_L_PARAM_FLIP_DRIVER_TORQUE = 1;
+bool subaru_l_flip_driver_torque = false;
 
 static uint8_t subaru_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -111,6 +113,9 @@ static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       int torque_driver_new;
       torque_driver_new = (GET_BYTE(to_push, 3) >> 5) + (GET_BYTE(to_push, 4) << 3);
       torque_driver_new = to_signed(torque_driver_new, 11);
+      if (subaru_l_flip_driver_torque) {
+        torque_driver_new = -1 * torque_driver_new;
+      }
       update_sample(&torque_driver, torque_driver_new);
     }
 
@@ -135,7 +140,7 @@ static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     if (addr == 0xD1) {
-      brake_pressed = ((GET_BYTES_04(to_push) >> 16) & 0xFF) > 0;
+      brake_pressed = GET_BYTE(to_push, 2) > SUBARU_L_BRAKE_THRSLD;
     }
 
     if (addr == 0x140) {
@@ -239,7 +244,7 @@ static int subaru_legacy_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       // *** torque rate limit check ***
       violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
         SUBARU_MAX_STEER, SUBARU_MAX_RATE_UP, SUBARU_MAX_RATE_DOWN,
-        SUBARU_L_DRIVER_TORQUE_ALLOWANCE, SUBARU_L_DRIVER_TORQUE_FACTOR);
+        SUBARU_DRIVER_TORQUE_ALLOWANCE, SUBARU_DRIVER_TORQUE_FACTOR);
 
       // used next time
       desired_torque_last = desired_torque;
@@ -320,6 +325,14 @@ static int subaru_legacy_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) 
   return bus_fwd;
 }
 
+static void subaru_legacy_init(int16_t param) {
+  controls_allowed = false;
+  relay_malfunction_reset();
+  // Checking for flip driver torque from safety parameter
+  subaru_l_flip_driver_torque = GET_FLAG(param, SUBARU_L_PARAM_FLIP_DRIVER_TORQUE);
+}
+
+
 const safety_hooks subaru_hooks = {
   .init = nooutput_init,
   .rx = subaru_rx_hook,
@@ -331,7 +344,7 @@ const safety_hooks subaru_hooks = {
 };
 
 const safety_hooks subaru_legacy_hooks = {
-  .init = nooutput_init,
+  .init = subaru_legacy_init,
   .rx = subaru_legacy_rx_hook,
   .tx = subaru_legacy_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
