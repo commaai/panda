@@ -387,7 +387,8 @@ class TestHondaBoschLongSafety(TestHondaBoschSafety):
 
   def test_brake_safety_check(self):
     for controls_allowed in [True, False]:
-      for accel in np.arange(0, self.MAX_BRAKE - 1, -0.1):
+      for accel in np.arange(0, self.MAX_BRAKE - 1, -0.01):
+        accel = round(accel, 2) # floats might not hit exact boundary conditions without rounding
         self.safety.set_controls_allowed(controls_allowed)
         send = self.MAX_BRAKE <= accel <= 0 if controls_allowed else accel == 0
         self.assertEqual(send, self._tx(self._send_gas_brake_msg(self.NO_GAS, accel)), (controls_allowed, accel))

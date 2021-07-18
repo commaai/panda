@@ -6,15 +6,25 @@ const int HYUNDAI_MAX_RATE_DOWN = 7;
 const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
 const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
 const int HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
+const int HYUNDAI_MAX_ACCEL = 200;  // max accel ==  2.0m/s2
+const int HYUNDAI_MIN_ACCEL = -350; // max decel == -3.5m/s2
 const CanMsg HYUNDAI_TX_MSGS[] = {
   {832, 0, 8},  // LKAS11 Bus 0
   {1265, 0, 4}, // CLU11 Bus 0
   {1157, 0, 4}, // LFAHDA_MFC Bus 0
-  // {1056, 0, 8}, //   SCC11,  Bus 0
-  // {1057, 0, 8}, //   SCC12,  Bus 0
-  // {1290, 0, 8}, //   SCC13,  Bus 0
-  // {905, 0, 8},  //   SCC14,  Bus 0
-  // {1186, 0, 8}  //   4a2SCC, Bus 0
+ };
+const CanMsg HYUNDAI_LONG_TX_MSGS[] = {
+  {832, 0, 8},  // LKAS11 Bus 0
+  {1265, 0, 4}, // CLU11 Bus 0
+  {1157, 0, 4}, // LFAHDA_MFC Bus 0
+  {1056, 0, 8}, // SCC11 Bus 0
+  {1057, 0, 8}, // SCC12 Bus 0
+  {1290, 0, 8}, // SCC13 Bus 0
+  {905, 0, 8},  // SCC14 Bus 0
+  {1186, 0, 2}, // FRT_RADAR11 Bus 0
+  {909, 0, 8},  // FCA11 Bus 0
+  {1155, 0, 8}, // FCA12 Bus 0
+  {2000, 0, 8}, // radar UDS TX addr Bus 0 (for radar disable)
  };
 
 AddrCheckStruct hyundai_rx_checks[] = {
@@ -22,7 +32,8 @@ AddrCheckStruct hyundai_rx_checks[] = {
            {881, 0, 8, .expected_timestep = 10000U}, { 0 }}},
   {.msg = {{902, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{916, 0, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  // TODO: hack to exclude SCC12 when radar is disabled
+  //{.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 const int HYUNDAI_RX_CHECK_LEN = sizeof(hyundai_rx_checks) / sizeof(hyundai_rx_checks[0]);
 
@@ -38,10 +49,12 @@ const int HYUNDAI_LEGACY_RX_CHECK_LEN = sizeof(hyundai_legacy_rx_checks) / sizeo
 
 const int HYUNDAI_PARAM_EV_GAS = 1;
 const int HYUNDAI_PARAM_HYBRID_GAS = 2;
+const uint16_t HYUNDAI_PARAM_LONGITUDINAL = 4;
 
 bool hyundai_legacy = false;
 bool hyundai_ev_gas_signal = false;
 bool hyundai_hybrid_gas_signal = false;
+bool hyundai_longitudinal = false;
 
 static uint8_t hyundai_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
   int addr = GET_ADDR(to_push);
@@ -138,17 +151,35 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    // enter controls on rising edge of ACC, exit controls on ACC off
-    if (addr == 1057) {
-      // 2 bits: 13-14
-      int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3;
-      if (cruise_engaged && !cruise_engaged_prev) {
-        controls_allowed = 1;
+    if (!hyundai_longitudinal) {
+      // enter controls on rising edge of ACC, exit controls on ACC off
+      if (addr == 1057) {
+        // 2 bits: 13-14
+        int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3;
+        if (cruise_engaged && !cruise_engaged_prev) {
+          controls_allowed = 1;
+        }
+        if (!cruise_engaged) {
+          controls_allowed = 0;
+        }
+        cruise_engaged_prev = cruise_engaged;
       }
-      if (!cruise_engaged) {
-        controls_allowed = 0;
+    } else {
+      // ACC steering wheel buttons
+      if (addr == 1265) {
+        int button = GET_BYTE(to_push, 0) & 0x7;
+        switch (button) {
+          case 1:  // resume
+          case 2:  // set
+            controls_allowed = 1;
+            break;
+          case 4:  // cancel
+            controls_allowed = 0;
+            break;
+          default:
+            break;  // any other button is irrelevant
+        }
       }
-      cruise_engaged_prev = cruise_engaged;
     }
 
     // read gas pressed signal
@@ -183,15 +214,36 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
-  if (!msg_allowed(to_send, HYUNDAI_TX_MSGS, sizeof(HYUNDAI_TX_MSGS)/sizeof(HYUNDAI_TX_MSGS[0]))) {
-    tx = 0;
+  if (!hyundai_longitudinal) {
+    tx = msg_allowed(to_send, HYUNDAI_TX_MSGS, sizeof(HYUNDAI_TX_MSGS)/sizeof(HYUNDAI_TX_MSGS[0]));
+  } else {
+    tx = msg_allowed(to_send, HYUNDAI_LONG_TX_MSGS, sizeof(HYUNDAI_LONG_TX_MSGS)/sizeof(HYUNDAI_LONG_TX_MSGS[0]));
   }
 
   if (relay_malfunction) {
     tx = 0;
   }
 
-  // LKA STEER: safety check
+  // ACCEL: safety check
+  if (addr == 1057) {
+    int desired_accel_raw = (((GET_BYTE(to_send, 4) & 0x7) << 8) | GET_BYTE(to_send, 3)) - 1023;
+    int desired_accel_val = ((GET_BYTE(to_send, 5) << 3) | (GET_BYTE(to_send, 4) >> 5)) - 1023;
+    bool violation = 0;
+
+    if (!controls_allowed) {
+      if ((desired_accel_raw != 0) || (desired_accel_val != 0)) {
+        violation = 1;
+      }
+    }
+    violation |= max_limit_check(desired_accel_raw, HYUNDAI_MAX_ACCEL, HYUNDAI_MIN_ACCEL);
+    violation |= max_limit_check(desired_accel_val, HYUNDAI_MAX_ACCEL, HYUNDAI_MIN_ACCEL);
+
+    if (violation) {
+      tx = 0;
+    }
+  }
+
+  // STEER: safety check
   if (addr == 832) {
     int desired_torque = ((GET_BYTES_04(to_send) >> 16) & 0x7ff) - 1024;
     uint32_t ts = microsecond_timer_get();
@@ -274,6 +326,7 @@ static void hyundai_init(int16_t param) {
   hyundai_legacy = false;
   hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
   hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
+  hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_LONGITUDINAL);
 }
 
 static void hyundai_legacy_init(int16_t param) {
@@ -283,6 +336,7 @@ static void hyundai_legacy_init(int16_t param) {
   hyundai_legacy = true;
   hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
   hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
+  hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_LONGITUDINAL);
 }
 
 const safety_hooks hyundai_hooks = {
