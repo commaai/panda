@@ -88,6 +88,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xd8: reset ST
     case 0xd8:
+      flush_write_buffer();
       NVIC_SystemReset();
       break;
   }
