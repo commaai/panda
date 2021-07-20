@@ -72,7 +72,7 @@ typedef struct {
 
 void puts(const char *a);
 
-bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, bool loopback, bool silent) {
+bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_speed, bool loopback, bool silent) {
   bool ret = true;
 
   // Exit from sleep mode
@@ -104,18 +104,10 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, bool loopback, b
   CANx->CCCR &= ~(FDCAN_CCCR_ASM);
 
   if(ret){
-    //REDEBUG: try without it, do not switch off calibration yet
-    // if (CANx == FDCAN1) { // DIVC is 1 by default
-    //   FDCAN_CCU->CCFG |= FDCANCCU_CCFG_BCC; // Bypass calibration
-    //   FDCAN_CCU->CCFG |= CAN_QUANTA; // Setting time quanta to 8 for now
-    // }
     // Set the nominal bit timing register
     CANx->NBTP = ((CAN_SYNC_JW-1U)<<FDCAN_NBTP_NSJW_Pos) | ((CAN_PHASE_SEG1-1U)<<FDCAN_NBTP_NTSEG1_Pos) | ((CAN_PHASE_SEG2-1U)<<FDCAN_NBTP_NTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1U)<<FDCAN_NBTP_NBRP_Pos);
-
-    // Set the data bit timing register (TODO: change it later for CAN FD and variable bitrate)
-    // REDEBUG: set data rate manually for test plan purposes only! Revert back later!
-    CANx->DBTP = ((CAN_SYNC_JW-1U)<<FDCAN_DBTP_DSJW_Pos) | ((CAN_PHASE_SEG1-1U)<<FDCAN_DBTP_DTSEG1_Pos) | ((CAN_PHASE_SEG2-1U)<<FDCAN_DBTP_DTSEG2_Pos) | ((can_speed_to_prescaler(60000U)-1U)<<FDCAN_DBTP_DBRP_Pos);
-    //CANx->DBTP = ((CAN_SYNC_JW-1)<<FDCAN_DBTP_DSJW_Pos) | ((CAN_PHASE_SEG1-1)<<FDCAN_DBTP_DTSEG1_Pos) | ((CAN_PHASE_SEG2-1)<<FDCAN_DBTP_DTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1)<<FDCAN_DBTP_DBRP_Pos);
+    // Set the data bit timing register
+    CANx->DBTP = ((CAN_SYNC_JW-1U)<<FDCAN_DBTP_DSJW_Pos) | ((CAN_PHASE_SEG1-1U)<<FDCAN_DBTP_DTSEG1_Pos) | ((CAN_PHASE_SEG2-1U)<<FDCAN_DBTP_DTSEG2_Pos) | ((can_speed_to_prescaler(data_speed)-1U)<<FDCAN_DBTP_DBRP_Pos);
 
     // silent loopback mode for debugging (new name: internal loopback)
     if (loopback) {

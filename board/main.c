@@ -623,6 +623,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       heartbeat_disabled = true;
       break;
 #endif
+    // **** 0xde: set CAN FD data bitrate
+    case 0xf9:
+      if (setup->b.wValue.w < BUS_MAX) {
+        can_data_speed[setup->b.wValue.w] = setup->b.wIndex.w;
+      }
+      break;
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);
