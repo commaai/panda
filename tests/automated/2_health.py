@@ -1,6 +1,6 @@
 import time
 from panda_jungle import PandaJungle  # pylint: disable=import-error
-from .helpers import panda_jungle, reset_pandas, test_all_pandas, test_all_gen2_pandas, panda_connect_and_init
+from .helpers import panda_jungle, reset_pandas, test_all_pandas, test_all_nextgen_pandas, panda_connect_and_init
 
 # Reset the pandas before running tests
 def aaaa_reset_before_tests():
@@ -23,7 +23,7 @@ def test_ignition(p):
   finally:
     panda_jungle.set_harness_orientation(PandaJungle.HARNESS_ORIENTATION_1)
 
-@test_all_gen2_pandas
+@test_all_nextgen_pandas
 @panda_connect_and_init
 def test_orientation_detection(p):
   seen_orientations = []
