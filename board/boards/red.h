@@ -94,11 +94,9 @@ void red_set_can_mode(uint8_t mode){
         set_gpio_mode(GPIOB, 13, MODE_ANALOG);
         
         // B5,B6: FDCAN2 mode
-        set_gpio_output_type(GPIOB, 5, OUTPUT_TYPE_PUSH_PULL);
         set_gpio_pullup(GPIOB, 5, PULL_NONE);
         set_gpio_alternate(GPIOB, 5, GPIO_AF9_FDCAN2);
 
-        set_gpio_output_type(GPIOB, 6, OUTPUT_TYPE_PUSH_PULL);
         set_gpio_pullup(GPIOB, 6, PULL_NONE);
         set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
       } else {
@@ -109,11 +107,9 @@ void red_set_can_mode(uint8_t mode){
         set_gpio_pullup(GPIOB, 6, PULL_NONE);
         set_gpio_mode(GPIOB, 6, MODE_ANALOG);
         // B12,B13: FDCAN2 mode
-        set_gpio_output_type(GPIOB, 12, OUTPUT_TYPE_PUSH_PULL);
         set_gpio_pullup(GPIOB, 12, PULL_NONE);
         set_gpio_alternate(GPIOB, 12, GPIO_AF9_FDCAN2);
 
-        set_gpio_output_type(GPIOB, 13, OUTPUT_TYPE_PUSH_PULL);
         set_gpio_pullup(GPIOB, 13, PULL_NONE);
         set_gpio_alternate(GPIOB, 13, GPIO_AF9_FDCAN2);
       }

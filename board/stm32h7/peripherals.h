@@ -15,15 +15,12 @@ void gpio_usart2_init(void) {
 void common_init_gpio(void){
   // FIXME: as soon as development is over - clean up this section and turn off unneeded IOs with register_set
   /// E2,E3,E4: RGB LED
-  set_gpio_output_type(GPIOE, 2, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOE, 2, PULL_NONE);
   set_gpio_mode(GPIOE, 2, MODE_OUTPUT);
 
-  set_gpio_output_type(GPIOE, 3, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOE, 3, PULL_NONE);
   set_gpio_mode(GPIOE, 3, MODE_OUTPUT);
 
-  set_gpio_output_type(GPIOE, 4, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOE, 4, PULL_NONE);
   set_gpio_mode(GPIOE, 4, MODE_OUTPUT);
 
@@ -41,25 +38,20 @@ void common_init_gpio(void){
   set_gpio_mode(GPIOF, 10, MODE_INPUT);
 
   // G11,B3,D7,B4: transceiver enable
-  set_gpio_output_type(GPIOG, 11, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOG, 11, PULL_NONE);
   set_gpio_mode(GPIOG, 11, MODE_OUTPUT);
 
-  GPIOB->OSPEEDR = GPIO_OSPEEDR_OSPEED3; // Speed was set to high by default after reset
-  set_gpio_output_type(GPIOB, 3, OUTPUT_TYPE_PUSH_PULL);
+  GPIOB->OSPEEDR = GPIO_OSPEEDR_OSPEED3; // Speed was set to high by default after reset, changing to low
   set_gpio_pullup(GPIOB, 3, PULL_NONE);
   set_gpio_mode(GPIOB, 3, MODE_OUTPUT);
 
-  set_gpio_output_type(GPIOD, 7, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOD, 7, PULL_NONE);
   set_gpio_mode(GPIOD, 7, MODE_OUTPUT);
 
-  set_gpio_output_type(GPIOB, 4, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOB, 4, PULL_NONE);
   set_gpio_mode(GPIOB, 4, MODE_OUTPUT);
 
   // B14: usb load switch
-  set_gpio_output_type(GPIOB, 14, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOB, 14, PULL_NONE);
   set_gpio_mode(GPIOB, 14, MODE_OUTPUT);
 
@@ -73,191 +65,28 @@ void common_init_gpio(void){
   gpio_usb_init();
 
   // B8,B9: FDCAN1
-  set_gpio_output_type(GPIOB, 8, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOB, 8, PULL_NONE);
   set_gpio_alternate(GPIOB, 8, GPIO_AF9_FDCAN1);
 
-  set_gpio_output_type(GPIOB, 9, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOB, 9, PULL_NONE);
   set_gpio_alternate(GPIOB, 9, GPIO_AF9_FDCAN1);
   
   // B5,B6 (mplex to B12,B13): FDCAN2
-  set_gpio_output_type(GPIOB, 12, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOB, 12, PULL_NONE);
-  set_gpio_output_type(GPIOB, 13, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOB, 13, PULL_NONE);
 
-  set_gpio_output_type(GPIOB, 5, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOB, 5, PULL_NONE);
   set_gpio_alternate(GPIOB, 5, GPIO_AF9_FDCAN2);
 
-  set_gpio_output_type(GPIOB, 6, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOB, 6, PULL_NONE);
   set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
   
   // G9,G10: FDCAN3
-  set_gpio_output_type(GPIOG, 9, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOG, 9, PULL_NONE);
   set_gpio_alternate(GPIOG, 9, GPIO_AF2_FDCAN3);
 
-  set_gpio_output_type(GPIOG, 10, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_pullup(GPIOG, 10, PULL_NONE);
   set_gpio_alternate(GPIOG, 10, GPIO_AF2_FDCAN3);
-
-  //////////////////////////////////////
-  // Unused pins to analog to save power
-  // Port A
-  set_gpio_pullup(GPIOA, 0, PULL_NONE);
-  set_gpio_mode(GPIOA, 0, MODE_ANALOG);
-  set_gpio_pullup(GPIOA, 1, PULL_NONE);
-  set_gpio_mode(GPIOA, 1, MODE_ANALOG);
-  set_gpio_pullup(GPIOA, 2, PULL_NONE);
-  set_gpio_mode(GPIOA, 2, MODE_ANALOG);
-  set_gpio_pullup(GPIOA, 4, PULL_NONE);
-  set_gpio_mode(GPIOA, 4, MODE_ANALOG);
-  set_gpio_pullup(GPIOA, 5, PULL_NONE);
-  set_gpio_mode(GPIOA, 5, MODE_ANALOG);
-  set_gpio_pullup(GPIOA, 7, PULL_NONE);
-  set_gpio_mode(GPIOA, 7, MODE_ANALOG);
-  set_gpio_pullup(GPIOA, 8, PULL_NONE);
-  set_gpio_mode(GPIOA, 8, MODE_ANALOG);
-  set_gpio_pullup(GPIOA, 9, PULL_NONE);
-  set_gpio_mode(GPIOA, 9, MODE_ANALOG);
-  set_gpio_pullup(GPIOA, 10, PULL_NONE);
-  set_gpio_mode(GPIOA, 10, MODE_ANALOG);
-  set_gpio_pullup(GPIOA, 13, PULL_NONE);
-  set_gpio_mode(GPIOA, 13, MODE_ANALOG);
-  set_gpio_pullup(GPIOA, 14, PULL_NONE);
-  set_gpio_mode(GPIOA, 14, MODE_ANALOG);
-  set_gpio_pullup(GPIOA, 15, PULL_NONE);
-  set_gpio_mode(GPIOA, 15, MODE_ANALOG);
-  // Port B
-  set_gpio_pullup(GPIOB, 0, PULL_NONE);
-  set_gpio_mode(GPIOB, 0, MODE_ANALOG);
-  set_gpio_pullup(GPIOB, 2, PULL_NONE);
-  set_gpio_mode(GPIOB, 2, MODE_ANALOG);
-  set_gpio_pullup(GPIOB, 7, PULL_NONE);
-  set_gpio_mode(GPIOB, 7, MODE_ANALOG);
-  set_gpio_pullup(GPIOB, 10, PULL_NONE);
-  set_gpio_mode(GPIOB, 10, MODE_ANALOG);
-  set_gpio_pullup(GPIOB, 11, PULL_NONE);
-  set_gpio_mode(GPIOB, 11, MODE_ANALOG);
-  set_gpio_pullup(GPIOB, 12, PULL_NONE);
-  set_gpio_mode(GPIOB, 12, MODE_ANALOG);
-  set_gpio_pullup(GPIOB, 13, PULL_NONE);
-  set_gpio_mode(GPIOB, 13, MODE_ANALOG);
-  set_gpio_pullup(GPIOB, 15, PULL_NONE);
-  set_gpio_mode(GPIOB, 15, MODE_ANALOG);
-  // Port C
-  set_gpio_pullup(GPIOC, 0, PULL_NONE);
-  set_gpio_mode(GPIOC, 0, MODE_ANALOG);
-  set_gpio_pullup(GPIOC, 1, PULL_NONE);
-  set_gpio_mode(GPIOC, 1, MODE_ANALOG);
-  set_gpio_pullup(GPIOC, 2, PULL_NONE);
-  set_gpio_mode(GPIOC, 2, MODE_ANALOG);
-  set_gpio_pullup(GPIOC, 3, PULL_NONE);
-  set_gpio_mode(GPIOC, 3, MODE_ANALOG);
-  set_gpio_pullup(GPIOC, 4, PULL_NONE);
-  set_gpio_mode(GPIOC, 4, MODE_ANALOG);
-  set_gpio_pullup(GPIOC, 5, PULL_NONE);
-  set_gpio_mode(GPIOC, 5, MODE_ANALOG);
-  set_gpio_pullup(GPIOC, 6, PULL_NONE);
-  set_gpio_mode(GPIOC, 6, MODE_ANALOG);
-  set_gpio_pullup(GPIOC, 7, PULL_NONE);
-  set_gpio_mode(GPIOC, 7, MODE_ANALOG);
-  set_gpio_pullup(GPIOC, 8, PULL_NONE);
-  set_gpio_mode(GPIOC, 8, MODE_ANALOG);
-  set_gpio_pullup(GPIOC, 9, PULL_NONE);
-  set_gpio_mode(GPIOC, 9, MODE_ANALOG);
-  set_gpio_pullup(GPIOC, 12, PULL_NONE); // OLD SBU1, moved to PA6
-  set_gpio_mode(GPIOC, 12, MODE_ANALOG);
-  set_gpio_pullup(GPIOC, 13, PULL_NONE);
-  set_gpio_mode(GPIOC, 13, MODE_ANALOG);
-  set_gpio_pullup(GPIOC, 14, PULL_NONE);
-  set_gpio_mode(GPIOC, 14, MODE_ANALOG);
-  set_gpio_pullup(GPIOC, 15, PULL_NONE);
-  set_gpio_mode(GPIOC, 15, MODE_ANALOG);
-  // Port D
-  set_gpio_pullup(GPIOD, 0, PULL_NONE); // OLD SBU2, moved to PA3
-  set_gpio_mode(GPIOD, 0, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 1, PULL_NONE);
-  set_gpio_mode(GPIOD, 1, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 2, PULL_NONE);
-  set_gpio_mode(GPIOD, 2, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 3, PULL_NONE);
-  set_gpio_mode(GPIOD, 3, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 4, PULL_NONE);
-  set_gpio_mode(GPIOD, 4, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 5, PULL_NONE);
-  set_gpio_mode(GPIOD, 5, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 6, PULL_NONE);
-  set_gpio_mode(GPIOD, 6, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 8, PULL_NONE);
-  set_gpio_mode(GPIOD, 8, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 9, PULL_NONE);
-  set_gpio_mode(GPIOD, 9, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 10, PULL_NONE);
-  set_gpio_mode(GPIOD, 10, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 11, PULL_NONE);
-  set_gpio_mode(GPIOD, 11, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 12, PULL_NONE);
-  set_gpio_mode(GPIOD, 12, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 13, PULL_NONE);
-  set_gpio_mode(GPIOD, 13, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 14, PULL_NONE);
-  set_gpio_mode(GPIOD, 14, MODE_ANALOG);
-  set_gpio_pullup(GPIOD, 15, PULL_NONE);
-  set_gpio_mode(GPIOD, 15, MODE_ANALOG);
-  // Port E
-  set_gpio_pullup(GPIOE, 0, PULL_NONE);
-  set_gpio_mode(GPIOE, 0, MODE_ANALOG);
-  set_gpio_pullup(GPIOE, 1, PULL_NONE);
-  set_gpio_mode(GPIOE, 1, MODE_ANALOG);
-  set_gpio_pullup(GPIOE, 5, PULL_NONE);
-  set_gpio_mode(GPIOE, 5, MODE_ANALOG);
-  set_gpio_pullup(GPIOE, 6, PULL_NONE);
-  set_gpio_mode(GPIOE, 6, MODE_ANALOG);
-  set_gpio_pullup(GPIOE, 7, PULL_NONE);
-  set_gpio_mode(GPIOE, 7, MODE_ANALOG);
-  set_gpio_pullup(GPIOE, 8, PULL_NONE);
-  set_gpio_mode(GPIOE, 8, MODE_ANALOG);
-  set_gpio_pullup(GPIOE, 9, PULL_NONE);
-  set_gpio_mode(GPIOE, 9, MODE_ANALOG);
-  set_gpio_pullup(GPIOE, 10, PULL_NONE);
-  set_gpio_mode(GPIOE, 10, MODE_ANALOG);
-  set_gpio_pullup(GPIOE, 11, PULL_NONE);
-  set_gpio_mode(GPIOE, 11, MODE_ANALOG);
-  set_gpio_pullup(GPIOE, 12, PULL_NONE);
-  set_gpio_mode(GPIOE, 12, MODE_ANALOG);
-  set_gpio_pullup(GPIOE, 13, PULL_NONE);
-  set_gpio_mode(GPIOE, 13, MODE_ANALOG);
-  set_gpio_pullup(GPIOE, 14, PULL_NONE);
-  set_gpio_mode(GPIOE, 14, MODE_ANALOG);
-  set_gpio_pullup(GPIOE, 15, PULL_NONE);
-  set_gpio_mode(GPIOE, 15, MODE_ANALOG);
-  // Port F
-  set_gpio_pullup(GPIOF, 6, PULL_NONE);
-  set_gpio_mode(GPIOF, 6, MODE_ANALOG);
-  set_gpio_pullup(GPIOF, 14, PULL_NONE);
-  set_gpio_mode(GPIOF, 14, MODE_ANALOG);
-  set_gpio_pullup(GPIOF, 15, PULL_NONE);
-  set_gpio_mode(GPIOF, 15, MODE_ANALOG);
-  // Port G
-  set_gpio_pullup(GPIOG, 6, PULL_NONE);
-  set_gpio_mode(GPIOG, 6, MODE_ANALOG);
-  set_gpio_pullup(GPIOG, 7, PULL_NONE);
-  set_gpio_mode(GPIOG, 7, MODE_ANALOG);
-  set_gpio_pullup(GPIOG, 8, PULL_NONE);
-  set_gpio_mode(GPIOG, 8, MODE_ANALOG);
-  set_gpio_pullup(GPIOG, 12, PULL_NONE);
-  set_gpio_mode(GPIOG, 12, MODE_ANALOG);
-  set_gpio_pullup(GPIOG, 13, PULL_NONE);
-  set_gpio_mode(GPIOG, 13, MODE_ANALOG);
-  set_gpio_pullup(GPIOG, 14, PULL_NONE);
-  set_gpio_mode(GPIOG, 14, MODE_ANALOG);
-
-  //C9: MCO2, divider is set in clock.h (To check system clock)
-  //set_gpio_alternate(GPIOC, 9, GPIO_AF0_MCO);
 }
 
 void flasher_peripherals_init(void) {
