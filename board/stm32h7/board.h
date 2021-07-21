@@ -26,9 +26,7 @@ void detect_board_type(void) {
 }
 
 bool has_external_debug_serial = 0;
-
-// FIXME: enable uart on external pads
 void detect_external_debug_serial(void) {
   // detect if external serial debugging is present
-  //has_external_debug_serial = detect_with_pull(GPIOA, 3, PULL_DOWN);
+  has_external_debug_serial = detect_with_pull(GPIOA, 3, PULL_DOWN);
 }
