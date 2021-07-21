@@ -24699,22 +24699,22 @@ typedef struct
 /******************************************************************************/
 
 /* Aliases for __IRQn */
-#define  RNG_IRQn                       HASH_RNG_IRQn
-#define  TIM1_BRK_TIM9_IRQn             TIM1_BRK_IRQn
+//#define  HASH_RNG_IRQn                  RNG_IRQn
+//#define  TIM1_BRK_TIM9_IRQn             TIM1_BRK_IRQn
 #define  TIM1_UP_TIM10_IRQn             TIM1_UP_IRQn
-#define  TIM1_TRG_COM_TIM11_IRQn        TIM1_TRG_COM_IRQn
-#define  PVD_IRQn                       PVD_AVD_IRQn
+//#define  TIM1_TRG_COM_TIM11_IRQn        TIM1_TRG_COM_IRQn
+//#define  PVD_IRQn                       PVD_AVD_IRQn
 
 
 /* Aliases for DCMI/PSSI __IRQn */
 #define  DCMI_IRQn                      DCMI_PSSI_IRQn
 
 /* Aliases for __IRQHandler */
-#define   RNG_IRQHandler               HASH_RNG_IRQHandler
-#define TIM1_BRK_TIM9_IRQHandler       TIM1_BRK_IRQHandler
+//#define  HASH_RNG_IRQHandler           RNG_IRQHandler
+//#define TIM1_BRK_TIM9_IRQHandler       TIM1_BRK_IRQHandler
 #define TIM1_UP_TIM9_IRQHandler        TIM1_UP_IRQHandler
-#define TIM1_TRG_COM_TIM11_IRQHandler  TIM1_TRG_COM_IRQHandler
-#define PVD_IRQHandler                 PVD_AVD_IRQHandler
+//#define TIM1_TRG_COM_TIM11_IRQHandler  TIM1_TRG_COM_IRQHandler
+//#define PVD_IRQHandler                 PVD_AVD_IRQHandler
 
 /* Aliases for COMP __IRQHandler */
 #define COMP_IRQHandler                COMP1_IRQHandler
