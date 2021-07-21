@@ -11,8 +11,12 @@
 #include "drivers/rtc.h"
 #include "boards/red.h"
 
+uint8_t board_id(void) {
+  return ((detect_with_pull(GPIOF, 7, PULL_UP) << 3) | (detect_with_pull(GPIOF, 7, PULL_UP) << 2) | (detect_with_pull(GPIOF, 7, PULL_UP) << 1) | detect_with_pull(GPIOF, 7, PULL_UP));
+}
+
 void detect_board_type(void) {
-  if(!detect_with_pull(GPIOF, 7, PULL_UP) && !detect_with_pull(GPIOF, 8, PULL_UP) && !detect_with_pull(GPIOF, 9, PULL_UP) && !detect_with_pull(GPIOF, 10, PULL_UP)){
+  if(board_id() == 0){
     hw_type = HW_TYPE_RED_PANDA;
     current_board = &board_red;
   } else {
