@@ -18,6 +18,7 @@ const int GM_DRIVER_TORQUE_FACTOR = 4;
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
+const uint32_t GM_LKAS_MIN_INTERVAL = 20000;    // 20ms minimum between LKAS frames
 const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
                              {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
                              {789, 2, 5},  // ch bus
@@ -33,6 +34,10 @@ AddrCheckStruct gm_rx_checks[] = {
   {.msg = {{417, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
 const int GM_RX_CHECK_LEN = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]);
+
+//LKAS vars for ensuring in-order, correct timing
+int gm_lkas_last_rc = -1;
+uint32_t gm_lkas_last_ts = 0;
 
 static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
@@ -143,6 +148,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // LKA STEER: safety check
   if (addr == 384) {
+    int rolling_counter = GET_BYTE(to_send, 0) >> 4;
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1);
     uint32_t ts = microsecond_timer_get();
     bool violation = 0;
@@ -187,6 +193,23 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (violation) {
       tx = 0;
     }
+
+    //TODO: Maybe should be checked at the moment the frame is sent via CAN - rcv interrupt could maybe prevent sending??
+    if (tx == 1) {
+      uint32_t lkas_elapsed = get_ts_elapsed(ts, gm_lkas_last_ts);
+      int expected_lkas_rc = (gm_lkas_last_rc + 1) % 4;
+      //If less than 20ms have passed since last LKAS message or the rolling counter value isn't correct it is a violation
+      //TODO: The interval may need some fine tuning - testing the tolerance of the PSCM / send lag
+      if (lkas_elapsed < GM_LKAS_MIN_INTERVAL || rolling_counter != expected_lkas_rc) {
+        tx = 0;
+      }
+      else {
+        //otherwise, save values
+        gm_lkas_last_rc = rolling_counter;
+        gm_lkas_last_ts = ts;
+      }
+    }
+
   }
 
   // GAS/REGEN: safety check
