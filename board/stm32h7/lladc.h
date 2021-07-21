@@ -5,16 +5,16 @@
 void adc_init(void) {
   ADC1->CR &= ~(ADC_CR_DEEPPWD); //Reset deep-power-down mode
   ADC1->CR |= ADC_CR_ADVREGEN; // Enable ADC regulator
-  while((ADC1->ISR & ADC_ISR_LDORDY) != 1);
+  while(!(ADC1->ISR & ADC_ISR_LDORDY));
 
   ADC1->CR &= ~(ADC_CR_ADCALDIF); // Choose single-ended calibration
   ADC1->CR |= ADC_CR_ADCALLIN; // Lineriality calibration
   ADC1->CR |= ADC_CR_ADCAL; // Start calibrtation
-  while((ADC1->CR & ADC_CR_ADCAL) != 0);
+  while((ADC1->CR & ADC_CR_ADCAL));
 
   ADC1->ISR |= ADC_ISR_ADRDY;
   ADC1->CR |= ADC_CR_ADEN;
-  while((ADC1->ISR & ADC_ISR_ADRDY) != 1);
+  while(!(ADC1->ISR & ADC_ISR_ADRDY));
 }
 
 uint32_t adc_get(unsigned int channel) {
