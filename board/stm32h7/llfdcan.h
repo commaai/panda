@@ -1,23 +1,3 @@
-// for DLC
-#define FDCAN_DLC_BYTES_0  ((uint32_t)0x00000000U) /*!< 0 bytes data field  */
-#define FDCAN_DLC_BYTES_1  ((uint32_t)0x00010000U) /*!< 1 bytes data field  */
-#define FDCAN_DLC_BYTES_2  ((uint32_t)0x00020000U) /*!< 2 bytes data field  */
-#define FDCAN_DLC_BYTES_3  ((uint32_t)0x00030000U) /*!< 3 bytes data field  */
-#define FDCAN_DLC_BYTES_4  ((uint32_t)0x00040000U) /*!< 4 bytes data field  */
-#define FDCAN_DLC_BYTES_5  ((uint32_t)0x00050000U) /*!< 5 bytes data field  */
-#define FDCAN_DLC_BYTES_6  ((uint32_t)0x00060000U) /*!< 6 bytes data field  */
-#define FDCAN_DLC_BYTES_7  ((uint32_t)0x00070000U) /*!< 7 bytes data field  */
-#define FDCAN_DLC_BYTES_8  ((uint32_t)0x00080000U) /*!< 8 bytes data field  */
-#define FDCAN_DLC_BYTES_12 ((uint32_t)0x00090000U) /*!< 12 bytes data field */
-#define FDCAN_DLC_BYTES_16 ((uint32_t)0x000A0000U) /*!< 16 bytes data field */
-#define FDCAN_DLC_BYTES_20 ((uint32_t)0x000B0000U) /*!< 20 bytes data field */
-#define FDCAN_DLC_BYTES_24 ((uint32_t)0x000C0000U) /*!< 24 bytes data field */
-#define FDCAN_DLC_BYTES_32 ((uint32_t)0x000D0000U) /*!< 32 bytes data field */
-#define FDCAN_DLC_BYTES_48 ((uint32_t)0x000E0000U) /*!< 48 bytes data field */
-#define FDCAN_DLC_BYTES_64 ((uint32_t)0x000F0000U) /*!< 64 bytes data field */
-
-/////////////////////
-
 #define FDCAN_MESSAGE_RAM_SIZE 0x2800UL
 #define FDCAN_START_ADDRESS 0x4000AC00UL
 #define FDCAN_OFFSET 3412UL // bytes for each FDCAN module
@@ -108,7 +88,6 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
     CANx->NBTP = ((CAN_SYNC_JW-1U)<<FDCAN_NBTP_NSJW_Pos) | ((CAN_PHASE_SEG1-1U)<<FDCAN_NBTP_NTSEG1_Pos) | ((CAN_PHASE_SEG2-1U)<<FDCAN_NBTP_NTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1U)<<FDCAN_NBTP_NBRP_Pos);
     // Set the data bit timing register
     CANx->DBTP = ((CAN_SYNC_JW-1U)<<FDCAN_DBTP_DSJW_Pos) | ((CAN_PHASE_SEG1-1U)<<FDCAN_DBTP_DTSEG1_Pos) | ((CAN_PHASE_SEG2-1U)<<FDCAN_DBTP_DTSEG2_Pos) | ((can_speed_to_prescaler(data_speed)-1U)<<FDCAN_DBTP_DBRP_Pos);
-
     // silent loopback mode for debugging (new name: internal loopback)
     if (loopback) {
       CANx->CCCR |= FDCAN_CCCR_TEST;
@@ -134,7 +113,6 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
       }
     }
   }
-
   return ret;
 }
 
@@ -161,31 +139,15 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
   }
 
   if(ret) {
-
     // Enable config change
     CANx->CCCR |= FDCAN_CCCR_CCE;
-    // Disable automatic retransmission of failed messages
-    //CANx->CCCR |= FDCAN_CCCR_DAR; 
     // Enable automatic retransmission
     CANx->CCCR &= ~(FDCAN_CCCR_DAR);
-    //TODO: Later add and enable transmitter delay compensation : FDCAN_DBTP.TDC (for CAN FD)
-    //CANx->DBTP |= FDCAN_DBTP_TDC;
-    // Disable transmission pause feature
-    //CANx->CCCR &= ~(FDCAN_CCCR_TXP);
     // Enable transmission pause feature
     CANx->CCCR |= FDCAN_CCCR_TXP;
     // Disable protocol exception handling
     CANx->CCCR |= FDCAN_CCCR_PXHD;
-    // Enable protocol exception handling
-    //CANx->CCCR &= ~(FDCAN_CCCR_PXHD);
-    // Set FDCAN frame format (REDEBUG)
-    //  Classic mode
-    //CANx->CCCR &= ~(FDCAN_CCCR_BRSE);
-    //CANx->CCCR &= ~(FDCAN_CCCR_FDOE);
-    // FD without BRS
-    //CANx->CCCR |= FDCAN_CCCR_FDOE;
     // FD with BRS
-    // REDEBUG: for test plan purposes only!! Remove after!
     CANx->CCCR |= (FDCAN_CCCR_FDOE | FDCAN_CCCR_BRSE);
 
     // Set TX mode to FIFO
@@ -227,16 +189,11 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
     CANx->IE &= 0x0U; // Reset all interrupts
     // Messages for INT0
     CANx->IE |= FDCAN_IE_RF0NE; // Rx FIFO 0 new message
-    //CANx->IE |= FDCAN_IE_RF0FE; // Rx FIFO 0 full
-    //CANx->IE |= FDCAN_IE_RF0LE; // Rx FIFO 0 message lost
-    // Errors
-    //CANx->IE |= FDCAN_IE_BOE; // Bus_Off status
 
     // Messages for INT1 (Only TFE works??)
     CANx->ILS |= FDCAN_ILS_TFEL;
     CANx->IE |= FDCAN_IE_TFEE; // Tx FIFO empty
     
-
     // Request leave init, start FDCAN
     CANx->CCCR &= ~(FDCAN_CCCR_INIT);
     timeout_counter = 0U;
