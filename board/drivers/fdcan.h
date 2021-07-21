@@ -2,13 +2,6 @@
 //       FDCAN2_IT0, FDCAN2_IT1
 //       FDCAN3_IT0, FDCAN3_IT1
 
-// CAN message structure bits
-#define CAN_STANDARD_FORMAT 0UL
-#define CAN_EXTENDED_FORMAT 1UL
-
-#define DATA_FRAME 0UL
-#define REMOTE_FRAME 1UL
-
 FDCAN_GlobalTypeDef *cans[] = {FDCAN1, FDCAN2, FDCAN3};
 
 bool can_set_speed(uint8_t can_number) {
@@ -25,8 +18,6 @@ void can_set_gmlan(uint8_t bus) {
   puts("GMLAN not available on red panda\n");
 }
 
-//REDEBUG: move to board header? Also should be cycled only one that is in question? 
-// This MCU has no Bus_Off auto recovery so that's the replacement
 void cycle_transceivers(void) {
   current_board->enable_can_transceiver(1, false);
   current_board->enable_can_transceiver(2, false);
@@ -59,7 +50,7 @@ void process_can(uint8_t can_number) {
         CAN_FIFOMailBox_TypeDef *fifo;
         fifo = (CAN_FIFOMailBox_TypeDef *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
-        // Convert mailbox "type" to normal CAN
+        // Convert from "mailbox type"
         fifo->RIR = ((to_send.RIR & 0x4) << 27) | ((to_send.RIR & 0x2) << 28) | (to_send.RIR >> 3);  // identifier format | frame type | identifier
         //REDEBUG: enable CAN FD and BRS for test purposes
         //fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16) | (1U << 21) | (1U << 20); // DLC (length) | timestamp | enable CAN FD | enable BRS
