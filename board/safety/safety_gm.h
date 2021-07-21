@@ -194,12 +194,11 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       tx = 0;
     }
 
-    //TODO: Maybe should be checked at the moment the frame is sent via CAN - rcv interrupt could maybe prevent sending??
+    //Check that approved LKAS message has correct rolling counter value and isn't arriving too soon
     if (tx == 1) {
       uint32_t lkas_elapsed = get_ts_elapsed(ts, gm_lkas_last_ts);
       int expected_lkas_rc = (gm_lkas_last_rc + 1) % 4;
       //If less than 20ms have passed since last LKAS message or the rolling counter value isn't correct it is a violation
-      //TODO: The interval may need some fine tuning - testing the tolerance of the PSCM / send lag
       if (lkas_elapsed < GM_LKAS_MIN_INTERVAL || rolling_counter != expected_lkas_rc) {
         tx = 0;
       }
