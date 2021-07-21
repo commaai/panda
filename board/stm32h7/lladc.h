@@ -10,7 +10,7 @@ void adc_init(void) {
   ADC1->CR &= ~(ADC_CR_ADCALDIF); // Choose single-ended calibration
   ADC1->CR |= ADC_CR_ADCALLIN; // Lineriality calibration
   ADC1->CR |= ADC_CR_ADCAL; // Start calibrtation
-  while((ADC1->CR & ADC_CR_ADCAL));
+  while((ADC1->CR & ADC_CR_ADCAL) != 0);
 
   ADC1->ISR |= ADC_ISR_ADRDY;
   ADC1->CR |= ADC_CR_ADEN;
