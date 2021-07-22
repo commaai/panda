@@ -53,8 +53,7 @@ void usb_init(void) {
   USBx->GUSBCFG |= USB_OTG_GUSBCFG_FDMOD;
 
   volatile uint32_t i;
-  for (i = 0U; i < 15U; i++)
-  {
+  for (i = 0U; i < 15U; i++) {
     USBx->DIEPTXF[i] = 0U;
   }
 
