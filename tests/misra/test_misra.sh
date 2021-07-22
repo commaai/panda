@@ -16,8 +16,8 @@ printf "\nPANDA F4 CODE\n"
 python /home/batman/cppcheck/addons/misra.py $PANDA_DIR/board/main.c.dump 2> /tmp/misra/misra_f4_output.txt || true
 
 # strip (information) lines
-cppcheck_output=$( cat /tmp/misra/cppcheck_f4_output.txt | grep -v ": information: " ) || true
-misra_output=$( cat /tmp/misra/misra_f4_output.txt | grep -v ": information: " ) || true
+cppcheck_f4_output=$( cat /tmp/misra/cppcheck_f4_output.txt | grep -v ": information: " ) || true
+misra_f4_output=$( cat /tmp/misra/misra_f4_output.txt | grep -v ": information: " ) || true
 
 
 printf "\nPANDA H7 CODE\n"
