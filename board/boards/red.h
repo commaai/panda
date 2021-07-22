@@ -3,7 +3,7 @@
 // ///////////////////// //
 
 void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
-  switch (transceiver){
+  switch (transceiver) {
     case 1U:
       set_gpio_output(GPIOG, 11, !enabled);
       break;
@@ -22,7 +22,7 @@ void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
 }
 
 void red_enable_can_transceivers(bool enabled) {
-  for(uint8_t i=1U; i<=4U; i++){
+  for(uint8_t i=1U; i<=4U; i++) {
     // Leave main CAN always on for CAN-based ignition detection
     if((car_harness_status == HARNESS_STATUS_FLIPPED) ? (i == 3U) : (i == 1U)){
       red_enable_can_transceiver(i, true);
@@ -33,7 +33,7 @@ void red_enable_can_transceivers(bool enabled) {
 }
 
 void red_set_led(uint8_t color, bool enabled) {
-  switch (color){
+  switch (color) {
     case LED_RED:
       set_gpio_output(GPIOE, 4, !enabled);
       break;
