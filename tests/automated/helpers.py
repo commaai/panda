@@ -14,9 +14,8 @@ SPEED_NORMAL = 500
 SPEED_GMLAN = 33.3
 BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL), (3, SPEED_GMLAN)]
 TIMEOUT = 45
-GEN3_HW_TYPES = [Panda.HW_TYPE_RED_PANDA]
-GEN2_HW_TYPES = [Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
-NEXTGEN_HW_TYPES = GEN2_HW_TYPES + GEN3_HW_TYPES
+H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA]
+GEN2_HW_TYPES = [Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO] + H7_HW_TYPES
 GPS_HW_TYPES = [Panda.HW_TYPE_GREY_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
 PEDAL_SERIAL = 'none'
 JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
@@ -52,14 +51,8 @@ test_all_types = parameterized([
 test_all_pandas = parameterized(
     list(map(lambda x: x[0], filter(lambda x: x[0] != PEDAL_SERIAL, _panda_serials)))  # type: ignore
   )
-test_all_gen3_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in GEN3_HW_TYPES, _panda_serials)))  # type: ignore
-  )
 test_all_gen2_pandas = parameterized(
     list(map(lambda x: x[0], filter(lambda x: x[1] in GEN2_HW_TYPES, _panda_serials)))  # type: ignore
-  )
-test_all_nextgen_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in NEXTGEN_HW_TYPES, _panda_serials)))  # type: ignore
   )
 test_all_gps_pandas = parameterized(
     list(map(lambda x: x[0], filter(lambda x: x[1] in GPS_HW_TYPES, _panda_serials)))  # type: ignore

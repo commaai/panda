@@ -27,7 +27,7 @@ def test_flash(p):
 @panda_connect_and_init
 def test_get_signature(p):
   if p.get_hw_generation() == 3:
-    fn = os.path.join(BASEDIR, "board/obj/panda_gen3.bin.signed")
+    fn = os.path.join(BASEDIR, "board/obj/panda_h7.bin.signed")
   else:
     fn = os.path.join(BASEDIR, "board/obj/panda.bin.signed")
 

@@ -104,7 +104,7 @@ class PandaDFU(object):
   def recover(self):
     from panda import BASEDIR
     if self._hw_gen == 3:
-      fn = os.path.join(BASEDIR, "board", "obj", "bootstub.panda_gen3.bin")
+      fn = os.path.join(BASEDIR, "board", "obj", "bootstub.panda_h7.bin")
     else:
       fn = os.path.join(BASEDIR, "board", "obj", "bootstub.panda.bin")
 

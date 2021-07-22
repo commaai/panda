@@ -19,7 +19,7 @@ __version__ = '0.0.9'
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 DEFAULT_FW_FN = os.path.join(BASEDIR, "board", "obj", "panda.bin.signed")
-DEFAULT_GEN3_FW_FN = os.path.join(BASEDIR, "board", "obj", "panda_gen3.bin.signed")
+DEFAULT_H7_FW_FN = os.path.join(BASEDIR, "board", "obj", "panda_h7.bin.signed")
 
 DEBUG = os.getenv("PANDADEBUG") is not None
 
@@ -266,7 +266,7 @@ class Panda(object):
 
   def flash(self, fn=DEFAULT_FW_FN, code=None, reconnect=True):
     if self._hw_gen == 3 and fn == DEFAULT_FW_FN:
-      fn = DEFAULT_GEN3_FW_FN
+      fn = DEFAULT_H7_FW_FN
     print("flash: main version is " + self.get_version())
     if not self.bootstub:
       self.reset(enter_bootstub=True)
