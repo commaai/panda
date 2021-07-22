@@ -2,7 +2,7 @@ import os
 
 from nose.tools import assert_equal
 
-from panda import Panda, BASEDIR
+from panda import Panda, BASEDIR, DEFAULT_FW_FN, DEFAULT_H7_FW_FN
 from .helpers import reset_pandas, test_all_pandas, panda_connect_and_init
 
 
@@ -26,10 +26,10 @@ def test_flash(p):
 @test_all_pandas
 @panda_connect_and_init
 def test_get_signature(p):
-  if p.get_hw_generation() == 3:
-    fn = os.path.join(BASEDIR, "board/obj/panda_h7.bin.signed")
+  if p.is_hw_h7():
+    fn = DEFAULT_H7_FW_FN
   else:
-    fn = os.path.join(BASEDIR, "board/obj/panda.bin.signed")
+    fn = DEFAULT_FW_FN
 
   firmware_sig = Panda.get_signature_from_firmware(fn)
   panda_sig = p.get_signature()

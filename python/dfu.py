@@ -21,7 +21,7 @@ class PandaDFU(object):
         except Exception:
           continue
         if this_dfu_serial == dfu_serial or dfu_serial is None:
-          self._hw_gen = self.get_hw_generation(device)
+          self._hw_h7 = self.is_hw_h7(device)
           self._handle = device.open()
           return
     raise Exception("failed to open " + dfu_serial if dfu_serial is not None else "DFU device")
@@ -42,17 +42,17 @@ class PandaDFU(object):
     return dfu_serials
 
   @staticmethod
-  def st_serial_to_dfu_serial(st, hw_gen=None):
+  def st_serial_to_dfu_serial(st, hw_h7=False):
     if st is None or st == "none":
       return None
     uid_base = struct.unpack("H" * 6, bytes.fromhex(st))
-    if hw_gen == 3:
+    if hw_h7:
       return binascii.hexlify(struct.pack("!HHH", uid_base[1] + uid_base[5], uid_base[0] + uid_base[4], uid_base[3])).upper().decode("utf-8")
     else:
       return binascii.hexlify(struct.pack("!HHH", uid_base[1] + uid_base[5], uid_base[0] + uid_base[4] + 0xA, uid_base[3])).upper().decode("utf-8")
 
-  def get_hw_generation(self, dev):
-    return 3 if dev.getbcdDevice() == 512 else None
+  def is_hw_h7(self, dev):
+    return True if dev.getbcdDevice() == 512 else False
 
   def status(self):
     while 1:
@@ -93,7 +93,7 @@ class PandaDFU(object):
   def program_bootstub(self, code_bootstub):
     self.clear_status()
     self.erase(0x8000000)
-    if self._hw_gen == 3:
+    if self._hw_h7:
       self.erase(0x8020000)
       self.program(0x8000000, code_bootstub, 0x400)
     else:
@@ -103,7 +103,7 @@ class PandaDFU(object):
 
   def recover(self):
     from panda import BASEDIR
-    if self._hw_gen == 3:
+    if self._hw_h7:
       fn = os.path.join(BASEDIR, "board", "obj", "bootstub.panda_h7.bin")
     else:
       fn = os.path.join(BASEDIR, "board", "obj", "bootstub.panda.bin")

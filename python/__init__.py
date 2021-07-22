@@ -153,7 +153,7 @@ class Panda(object):
     self._serial = serial
     self._handle = None
     self.connect(claim)
-    self._hw_gen = self.get_hw_generation()
+    self._hw_h7 = self.is_hw_h7()
 
   def close(self):
     self._handle.close()
@@ -228,7 +228,7 @@ class Panda(object):
       except Exception:
         print("reconnecting is taking %d seconds..." % (i + 1))
         try:
-          dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial, self._hw_gen))
+          dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial, self._hw_h7))
           dfu.recover()
         except Exception:
           pass
@@ -265,7 +265,7 @@ class Panda(object):
       pass
 
   def flash(self, fn=DEFAULT_FW_FN, code=None, reconnect=True):
-    if self._hw_gen == 3 and fn == DEFAULT_FW_FN:
+    if self._hw_h7 and fn == DEFAULT_FW_FN:
       fn = DEFAULT_H7_FW_FN
     print("flash: main version is " + self.get_version())
     if not self.bootstub:
@@ -296,7 +296,7 @@ class Panda(object):
       if timeout is not None and (time.time() - t_start) > timeout:
         return False
 
-    dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial, self._hw_gen))
+    dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial, self._hw_h7))
     dfu.recover()
 
     # reflash after recover
@@ -410,12 +410,8 @@ class Panda(object):
   def is_red(self):
     return self.get_type() == Panda.HW_TYPE_RED_PANDA
 
-  def get_hw_generation(self):
-    if self.is_uno() or self.is_black():
-      return 2
-    elif self.is_red():
-      return 3
-    return 1
+  def is_hw_h7(self):
+    return True if self.get_type() == Panda.HW_TYPE_RED_PANDA else False
 
   def has_obd(self):
     return (self.is_uno() or self.is_dos() or self.is_black() or self.is_red())
