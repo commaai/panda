@@ -18,16 +18,17 @@ void can_set_gmlan(uint8_t bus) {
   puts("GMLAN not available on red panda\n");
 }
 
-void cycle_transceivers(void) {
-  current_board->enable_can_transceiver(1, false);
-  current_board->enable_can_transceiver(2, false);
-  current_board->enable_can_transceiver(3, false);
-  current_board->enable_can_transceiver(4, false);
+void cycle_transceiver(uint8_t can_number) {
+  // FDCAN1 = trans 1, FDCAN3 = trans 3, FDCAN2 = trans 2 normal or 4 flipped harness
+  uint8_t transceiver_number = can_number;
+  if (can_number == 2U) {
+    uint8_t flip = (car_harness_status == HARNESS_STATUS_FLIPPED) ? 2U : 0U;
+    transceiver_number += flip;
+  }
+  current_board->enable_can_transceiver(transceiver_number, false);
   delay(20000);
-  current_board->enable_can_transceiver(1, true);
-  current_board->enable_can_transceiver(2, true);
-  current_board->enable_can_transceiver(3, true);
-  current_board->enable_can_transceiver(4, true);
+  current_board->enable_can_transceiver(transceiver_number, true);
+  puts("Cycled transceiver number: "); puth(transceiver_number); puts("\n");
 }
 
 // ***************************** CAN *****************************
@@ -75,10 +76,10 @@ void process_can(uint8_t can_number) {
       }
     }
 
-    // Needed to fix periodical problem with transceiver sticking
+    // Recover after Bus-off state
     if (((CANx->PSR & FDCAN_PSR_BO) != 0) && ((CANx->CCCR & FDCAN_CCCR_INIT) != 0)) {
       puts("CAN is in Bus_Off state! Resetting... CAN number: "); puth(can_number); puts("\n");
-      cycle_transceivers();
+      cycle_transceiver(can_number);
       CANx->IR = 0xFFC60000U; // Reset all flags(Only errors!)
       CANx->CCCR &= ~(FDCAN_CCCR_INIT);
       uint32_t timeout_counter = 0U;
