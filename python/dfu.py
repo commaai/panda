@@ -2,6 +2,7 @@ import os
 import usb1
 import struct
 import binascii
+from .mcu_defs import *
 
 # *** DFU mode ***
 
@@ -92,21 +93,18 @@ class PandaDFU(object):
 
   def program_bootstub(self, code_bootstub):
     self.clear_status()
-    self.erase(0x8000000)
+    self.erase(BOOTSTUB_ADDRESS)
     if self._hw_h7:
-      self.erase(0x8020000)
-      self.program(0x8000000, code_bootstub, 0x400)
+      self.erase(APP_ADDRESS_H7)
+      self.program(BOOTSTUB_ADDRESS, code_bootstub, BLOCK_SIZE_H7)
     else:
-      self.erase(0x8004000)
-      self.program(0x8000000, code_bootstub, 0x800)
+      self.erase(APP_ADDRESS_FX)
+      self.program(BOOTSTUB_ADDRESS, code_bootstub, BLOCK_SIZE_FX)
     self.reset()
 
   def recover(self):
     from panda import BASEDIR
-    if self._hw_h7:
-      fn = os.path.join(BASEDIR, "board", "obj", "bootstub.panda_h7.bin")
-    else:
-      fn = os.path.join(BASEDIR, "board", "obj", "bootstub.panda.bin")
+    fn = DEFAULT_H7_FW_FN if self._hw_h7 else DEFAULT_FW_FN
 
     with open(fn, "rb") as f:
       code = f.read()
@@ -115,7 +113,7 @@ class PandaDFU(object):
 
   def reset(self):
     # **** Reset ****
-    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", 0x8000000))
+    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", BOOTSTUB_ADDRESS))
     self.status()
     try:
       self._handle.controlWrite(0x21, DFU_DNLOAD, 2, 0, b"")
