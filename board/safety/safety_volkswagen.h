@@ -352,6 +352,12 @@ static int volkswagen_mqb_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     bool violation = 0;
     int desired_accel = ((((GET_BYTE(to_send, 4) & 0x7) << 8) | GET_BYTE(to_send, 3)) * 5) - 7220;
 
+    int acc_status = (GET_BYTE(to_send, 7) & 0x7) >> 4;
+    if (desired_accel == 3010 && !(acc_status == 3)) {
+      // VW send 3.01 m/s2 acceleration in place of zero while disengaged, treat it as such
+      desired_accel = 0;
+    }
+
     if (!controls_allowed && (desired_accel != 0)) {
       violation = 1;
     }
