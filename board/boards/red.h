@@ -49,11 +49,6 @@ void red_set_led(uint8_t color, bool enabled) {
   }
 }
 
-void red_set_gps_load_switch(bool enabled) {
-  // No GPS on red panda
-  UNUSED(enabled);
-}
-
 void red_set_usb_load_switch(bool enabled) {
   set_gpio_output(GPIOB, 14, !enabled);
 }
@@ -75,11 +70,6 @@ void red_set_usb_power_mode(uint8_t mode) {
   if (valid) {
     usb_power_mode = mode;
   }
-}
-
-void red_set_gps_mode(uint8_t mode) {
-  // No GPS on red panda
-  UNUSED(mode);
 }
 
 void red_set_can_mode(uint8_t mode){
@@ -120,39 +110,9 @@ void red_set_can_mode(uint8_t mode){
   }
 }
 
-void red_usb_power_mode_tick(uint32_t uptime){
-  UNUSED(uptime);
-  // Not applicable
-}
-
 bool red_check_ignition(void){
   // ignition is checked through harness
   return harness_check_ignition();
-}
-
-uint32_t red_read_current(void){
-  // No current sense on red panda
-  return 0U;
-}
-
-void red_set_ir_power(uint8_t percentage){
-  UNUSED(percentage);
-}
-
-void red_set_fan_power(uint8_t percentage){
-  UNUSED(percentage);
-}
-
-void red_set_phone_power(bool enabled){
-  UNUSED(enabled);
-}
-
-void red_set_clock_source_mode(uint8_t mode){
-  UNUSED(mode);
-}
-
-void red_set_siren(bool enabled){
-  UNUSED(enabled);
 }
 
 void red_init(void) {
@@ -229,14 +189,14 @@ const board board_red = {
   .enable_can_transceivers = red_enable_can_transceivers,
   .set_led = red_set_led,
   .set_usb_power_mode = red_set_usb_power_mode,
-  .set_gps_mode = red_set_gps_mode,
+  .set_gps_mode = unused_set_gps_mode,
   .set_can_mode = red_set_can_mode,
-  .usb_power_mode_tick = red_usb_power_mode_tick,
+  .usb_power_mode_tick = unused_usb_power_mode_tick,
   .check_ignition = red_check_ignition,
-  .read_current = red_read_current,
-  .set_fan_power = red_set_fan_power,
-  .set_ir_power = red_set_ir_power,
-  .set_phone_power = red_set_phone_power,
-  .set_clock_source_mode = red_set_clock_source_mode,
-  .set_siren = red_set_siren
+  .read_current = unused_read_current,
+  .set_fan_power = unused_set_fan_power,
+  .set_ir_power = unused_set_ir_power,
+  .set_phone_power = unused_set_phone_power,
+  .set_clock_source_mode = unused_set_clock_source_mode,
+  .set_siren = unused_set_siren
 };
