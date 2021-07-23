@@ -104,7 +104,7 @@ class PandaDFU(object):
 
   def recover(self):
     from panda import BASEDIR
-    fn = DEFAULT_H7_FW_FN if self._hw_h7 else DEFAULT_FW_FN
+    fn = DEFAULT_H7_BOOTSTUB_FN if self._hw_h7 else DEFAULT_BOOTSTUB_FN
 
     with open(fn, "rb") as f:
       code = f.read()
