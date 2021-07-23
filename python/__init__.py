@@ -8,7 +8,7 @@ import os
 import time
 import traceback
 import sys
-from .dfu import PandaDFU  # pylint: disable=import-error
+from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7  # pylint: disable=import-error
 from .flash_release import flash_release  # noqa pylint: disable=import-error
 from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
 from .serial import PandaSerial  # noqa pylint: disable=import-error
@@ -140,6 +140,10 @@ class Panda(object):
   HW_TYPE_DOS = b'\x06'
   HW_TYPE_RED_PANDA = b'\x07'
 
+  F2_DEVICES = [HW_TYPE_PEDAL]
+  F4_DEVICES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS]
+  H7_DEVICES = [HW_TYPE_RED_PANDA]
+
   CLOCK_SOURCE_MODE_DISABLED = 0
   CLOCK_SOURCE_MODE_FREE_RUNNING = 1
   CLOCK_SOURCE_MODE_EXTERNAL_SYNC = 2
@@ -151,7 +155,7 @@ class Panda(object):
     self._serial = serial
     self._handle = None
     self.connect(claim)
-    self._hw_h7 = self.is_hw_h7()
+    self._mcu_type = self.get_mcu_type()
 
   def close(self):
     self._handle.close()
@@ -226,7 +230,7 @@ class Panda(object):
       except Exception:
         print("reconnecting is taking %d seconds..." % (i + 1))
         try:
-          dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial, self._hw_h7))
+          dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial, self._mcu_type))
           dfu.recover()
         except Exception:
           pass
@@ -263,7 +267,7 @@ class Panda(object):
       pass
 
   def flash(self, fn=DEFAULT_FW_FN, code=None, reconnect=True):
-    if self._hw_h7 and fn == DEFAULT_FW_FN:
+    if self._mcu_type == MCU_TYPE_H7 and fn == DEFAULT_FW_FN:
       fn = DEFAULT_H7_FW_FN
     print("flash: main version is " + self.get_version())
     if not self.bootstub:
@@ -294,7 +298,7 @@ class Panda(object):
       if timeout is not None and (time.time() - t_start) > timeout:
         return False
 
-    dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial, self._hw_h7))
+    dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial, self._mcu_type))
     dfu.recover()
 
     # reflash after recover
@@ -408,11 +412,21 @@ class Panda(object):
   def is_red(self):
     return self.get_type() == Panda.HW_TYPE_RED_PANDA
 
-  def is_hw_h7(self):
-    return True if self.get_type() == Panda.HW_TYPE_RED_PANDA else False
+  def get_mcu_type(self):
+    hw_type = self.get_type()
+    if hw_type in F2_DEVICES:
+      return MCU_TYPE_F2
+    elif hw_type in F4_DEVICES:
+      return MCU_TYPE_F4
+    elif hw_type in H7_DEVICES:
+      return MCU_TYPE_H7
+    return None
 
   def has_obd(self):
     return (self.is_uno() or self.is_dos() or self.is_black() or self.is_red())
+
+  def has_canfd(self):
+    return self._mcu_type == MCU_TYPE_H7
 
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)

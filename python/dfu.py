@@ -3,8 +3,12 @@ import struct
 import binascii
 from .mcu_defs import BOOTSTUB_ADDRESS, APP_ADDRESS_H7, APP_ADDRESS_FX, BLOCK_SIZE_H7, BLOCK_SIZE_FX, DEFAULT_H7_BOOTSTUB_FN, DEFAULT_BOOTSTUB_FN
 
-# *** DFU mode ***
 
+MCU_TYPE_F2 = 0
+MCU_TYPE_F4 = 1
+MCU_TYPE_H7 = 2
+
+# *** DFU mode ***
 DFU_DNLOAD = 1
 DFU_UPLOAD = 2
 DFU_GETSTATUS = 3
@@ -21,7 +25,7 @@ class PandaDFU(object):
         except Exception:
           continue
         if this_dfu_serial == dfu_serial or dfu_serial is None:
-          self._hw_h7 = self.is_hw_h7(device)
+          self._mcu_type = self.get_mcu_type(device)
           self._handle = device.open()
           return
     raise Exception("failed to open " + dfu_serial if dfu_serial is not None else "DFU device")
@@ -42,17 +46,18 @@ class PandaDFU(object):
     return dfu_serials
 
   @staticmethod
-  def st_serial_to_dfu_serial(st, hw_h7=False):
+  def st_serial_to_dfu_serial(st, mcu_type=MCU_TYPE_F4):
     if st is None or st == "none":
       return None
     uid_base = struct.unpack("H" * 6, bytes.fromhex(st))
-    if hw_h7:
+    if mcu_type == MCU_TYPE_H7:
       return binascii.hexlify(struct.pack("!HHH", uid_base[1] + uid_base[5], uid_base[0] + uid_base[4], uid_base[3])).upper().decode("utf-8")
     else:
       return binascii.hexlify(struct.pack("!HHH", uid_base[1] + uid_base[5], uid_base[0] + uid_base[4] + 0xA, uid_base[3])).upper().decode("utf-8")
 
-  def is_hw_h7(self, dev):
-    return True if dev.getbcdDevice() == 512 else False
+  # TODO: Find a way to detect F4 vs F2
+  def get_mcu_type(self, dev):
+    return MCU_TYPE_H7 if dev.getbcdDevice() == 512 else MCU_TYPE_F4
 
   def status(self):
     while 1:
@@ -93,7 +98,7 @@ class PandaDFU(object):
   def program_bootstub(self, code_bootstub):
     self.clear_status()
     self.erase(BOOTSTUB_ADDRESS)
-    if self._hw_h7:
+    if self._mcu_type == MCU_TYPE_H7:
       self.erase(APP_ADDRESS_H7)
       self.program(BOOTSTUB_ADDRESS, code_bootstub, BLOCK_SIZE_H7)
     else:
@@ -102,7 +107,7 @@ class PandaDFU(object):
     self.reset()
 
   def recover(self):
-    fn = DEFAULT_H7_BOOTSTUB_FN if self._hw_h7 else DEFAULT_BOOTSTUB_FN
+    fn = DEFAULT_H7_BOOTSTUB_FN if self._mcu_type == MCU_TYPE_H7 else DEFAULT_BOOTSTUB_FN
 
     with open(fn, "rb") as f:
       code = f.read()
