@@ -1,6 +1,6 @@
 from nose.tools import assert_equal
 
-from panda import Panda, DEFAULT_FW_FN, DEFAULT_H7_FW_FN
+from panda import Panda, DEFAULT_FW_FN, DEFAULT_H7_FW_FN, MCU_TYPE_H7
 from .helpers import reset_pandas, test_all_pandas, panda_connect_and_init
 
 
@@ -24,7 +24,7 @@ def test_flash(p):
 @test_all_pandas
 @panda_connect_and_init
 def test_get_signature(p):
-  fn = DEFAULT_H7_FW_FN if p.is_hw_h7() else DEFAULT_FW_FN
+  fn = DEFAULT_H7_FW_FN if p.get_mcu_type() == MCU_TYPE_H7  else DEFAULT_FW_FN
 
   firmware_sig = Panda.get_signature_from_firmware(fn)
   panda_sig = p.get_signature()
