@@ -1,8 +1,7 @@
-import os
 import usb1
 import struct
 import binascii
-from .mcu_defs import *
+from .mcu_defs import BOOTSTUB_ADDRESS, APP_ADDRESS_H7, APP_ADDRESS_FX, BLOCK_SIZE_H7, BLOCK_SIZE_FX, DEFAULT_H7_BOOTSTUB_FN, DEFAULT_BOOTSTUB_FN
 
 # *** DFU mode ***
 
