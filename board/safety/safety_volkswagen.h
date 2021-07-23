@@ -179,29 +179,33 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    if (volkswagen_longitudinal && (addr == MSG_GRA_ACC_01)) {
-      // Exit controls on Cancel, otherwise, enter controls on Set or Resume
-      // Signal: GRA_ACC_01.GRA_Abbrechen
-      // Signal: GRA_ACC_01.GRA_Tip_Setzen
-      // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
-      if ((GET_BYTE(to_push, 2) & 0x9) != 0) {
-        controls_allowed = 1;
+    if (volkswagen_longitudinal) {
+      if (addr == MSG_GRA_ACC_01) {
+        // Exit controls on Cancel, otherwise, enter controls on Set or Resume
+        // Signal: GRA_ACC_01.GRA_Abbrechen
+        // Signal: GRA_ACC_01.GRA_Tip_Setzen
+        // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
+        if ((GET_BYTE(to_push, 2) & 0x9) != 0) {
+          controls_allowed = 1;
+        }
+        if ((GET_BYTE(to_push, 1) & 0x20) != 0) {
+          controls_allowed = 0;
+        }
       }
-      if ((GET_BYTE(to_push, 1) & 0x20) != 0) {
-        controls_allowed = 0;
+    } else {
+      if (addr == MSG_TSK_06) {
+        // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
+        // Signal: TSK_06.TSK_Status
+        int acc_status = (GET_BYTE(to_push, 3) & 0x7);
+        int cruise_engaged = ((acc_status == 3) || (acc_status == 4) || (acc_status == 5)) ? 1 : 0;
+        if (cruise_engaged && !cruise_engaged_prev) {
+          controls_allowed = 1;
+        }
+        if (!cruise_engaged) {
+          controls_allowed = 0;
+        }
+        cruise_engaged_prev = cruise_engaged;
       }
-    } else if (addr == MSG_TSK_06) {
-      // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
-      // Signal: TSK_06.TSK_Status
-      int acc_status = (GET_BYTE(to_push, 3) & 0x7);
-      int cruise_engaged = ((acc_status == 3) || (acc_status == 4) || (acc_status == 5)) ? 1 : 0;
-      if (cruise_engaged && !cruise_engaged_prev) {
-        controls_allowed = 1;
-      }
-      if (!cruise_engaged) {
-        controls_allowed = 0;
-      }
-      cruise_engaged_prev = cruise_engaged;
     }
 
     // Signal: Motor_20.MO_Fahrpedalrohwert_01
