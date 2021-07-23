@@ -22,9 +22,10 @@ void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
 }
 
 void red_enable_can_transceivers(bool enabled) {
+  uint8_t main_bus = (car_harness_status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
   for(uint8_t i=1U; i<=4U; i++) {
     // Leave main CAN always on for CAN-based ignition detection
-    if((car_harness_status == HARNESS_STATUS_FLIPPED) ? (i == 3U) : (i == 1U)){
+    if (i == main_bus) {
       red_enable_can_transceiver(i, true);
     } else {
       red_enable_can_transceiver(i, enabled);
