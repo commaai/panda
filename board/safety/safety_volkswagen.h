@@ -57,7 +57,7 @@ const int VOLKSWAGEN_PQ_RX_CHECKS_LEN = sizeof(volkswagen_pq_rx_checks) / sizeof
 
 const uint16_t VOLKSWAGEN_PARAM_LONG = 1;
 
-int volkswagen_longitudinal = false;
+bool volkswagen_longitudinal = false;
 int volkswagen_torque_msg = 0;
 int volkswagen_lane_msg = 0;
 int volkswagen_acc_accel_msg = 0;
@@ -184,10 +184,11 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       // Signal: GRA_ACC_01.GRA_Abbrechen
       // Signal: GRA_ACC_01.GRA_Tip_Setzen
       // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
+      if ((GET_BYTE(to_push, 2) & 0x9) != 0) {
+        controls_allowed = 1;
+      }
       if ((GET_BYTE(to_push, 1) & 0x20) != 0) {
         controls_allowed = 0;
-      } else if ((GET_BYTE(to_push, 2) & 0x9) != 0) {
-        controls_allowed = 1;
       }
     } else if (addr == MSG_TSK_06) {
       // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
@@ -196,7 +197,8 @@ static int volkswagen_mqb_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       int cruise_engaged = ((acc_status == 3) || (acc_status == 4) || (acc_status == 5)) ? 1 : 0;
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
-      } else if (!cruise_engaged) {
+      }
+      if (!cruise_engaged) {
         controls_allowed = 0;
       }
       cruise_engaged_prev = cruise_engaged;
