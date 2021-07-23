@@ -414,11 +414,11 @@ class Panda(object):
 
   def get_mcu_type(self):
     hw_type = self.get_type()
-    if hw_type in F2_DEVICES:
+    if hw_type in Panda.F2_DEVICES:
       return MCU_TYPE_F2
-    elif hw_type in F4_DEVICES:
+    elif hw_type in Panda.F4_DEVICES:
       return MCU_TYPE_F4
-    elif hw_type in H7_DEVICES:
+    elif hw_type in Panda.H7_DEVICES:
       return MCU_TYPE_H7
     return None
 
