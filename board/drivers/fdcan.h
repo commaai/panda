@@ -2,6 +2,9 @@
 //       FDCAN2_IT0, FDCAN2_IT1
 //       FDCAN3_IT0, FDCAN3_IT1
 
+#define BUS_OFF_FAIL_LIMIT 2U
+uint8_t bus_off_err[] = {0, 0, 0};
+
 FDCAN_GlobalTypeDef *cans[] = {FDCAN1, FDCAN2, FDCAN3};
 
 bool can_set_speed(uint8_t can_number) {
@@ -28,6 +31,7 @@ void cycle_transceiver(uint8_t can_number) {
   current_board->enable_can_transceiver(transceiver_number, false);
   delay(20000);
   current_board->enable_can_transceiver(transceiver_number, true);
+  bus_off_err[can_number] = 0;
   puts("Cycled transceiver number: "); puth(transceiver_number); puts("\n");
 }
 
@@ -78,8 +82,11 @@ void process_can(uint8_t can_number) {
 
     // Recover after Bus-off state
     if (((CANx->PSR & FDCAN_PSR_BO) != 0) && ((CANx->CCCR & FDCAN_CCCR_INIT) != 0)) {
+      bus_off_err[can_number] += 1;
       puts("CAN is in Bus_Off state! Resetting... CAN number: "); puth(can_number); puts("\n");
-      cycle_transceiver(can_number);
+      if (bus_off_err[can_number] > BUS_OFF_FAIL_LIMIT) {
+        cycle_transceiver(can_number);
+      }
       CANx->IR = 0xFFC60000U; // Reset all flags(Only errors!)
       CANx->CCCR &= ~(FDCAN_CCCR_INIT);
       uint32_t timeout_counter = 0U;
