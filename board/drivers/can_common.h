@@ -22,6 +22,7 @@ extern int pending_can_live;
 extern int can_loopback;
 extern int can_silent;
 extern uint32_t can_speed[4];
+extern uint32_t can_data_speed[4];
 
 // Ignition detected from CAN meessages
 bool ignition_can = false;
