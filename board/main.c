@@ -626,7 +626,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
 #endif
     // **** 0xde: set CAN FD data bitrate
     case 0xf9:
-      if (setup->b.wValue.w < BUS_MAX) {
+      if (setup->b.wValue.w < CAN_MAX) {
         // TODO: add sanity check, ideally check if value is correct(from array of correct values)
         can_data_speed[setup->b.wValue.w] = setup->b.wIndex.w;
       }
