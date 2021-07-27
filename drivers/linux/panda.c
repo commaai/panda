@@ -283,7 +283,7 @@ static void panda_usb_process_can_rx(struct panda_dev_priv *priv_dev,
   //if (msg->dlc & MCBA_DLC_RTR_MASK)
   //  cf->can_id |= CAN_RTR_FLAG;
 
-  cf->can_dlc = get_can_dlc(msg->bus_dat_len & PANDA_DLC_MASK);
+  cf->can_dlc = (min_t(__u8, (msg->bus_dat_len & PANDA_DLC_MASK), 8));
 
   memcpy(cf->data, msg->data, cf->can_dlc);
 
