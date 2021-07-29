@@ -13,7 +13,7 @@ from .flash_release import flash_release  # noqa pylint: disable=import-error
 from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
 from .serial import PandaSerial  # noqa pylint: disable=import-error
 from .isotp import isotp_send, isotp_recv  # pylint: disable=import-error
-from .mcu_defs import DEFAULT_FW_FN, DEFAULT_H7_FW_FN  # noqa pylint: disable=import-error
+from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN  # noqa pylint: disable=import-error
 
 __version__ = '0.0.9'
 
