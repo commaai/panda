@@ -23,7 +23,7 @@ void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
 
 void red_enable_can_transceivers(bool enabled) {
   uint8_t main_bus = (car_harness_status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
-  for(uint8_t i=1U; i<=4U; i++) {
+  for (uint8_t i=1U; i<=4U; i++) {
     // Leave main CAN always on for CAN-based ignition detection
     if (i == main_bus) {
       red_enable_can_transceiver(i, true);
@@ -72,7 +72,7 @@ void red_set_usb_power_mode(uint8_t mode) {
   }
 }
 
-void red_set_can_mode(uint8_t mode){
+void red_set_can_mode(uint8_t mode) {
   switch (mode) {
     case CAN_MODE_NORMAL:
     case CAN_MODE_OBD_CAN2:
@@ -110,7 +110,7 @@ void red_set_can_mode(uint8_t mode){
   }
 }
 
-bool red_check_ignition(void){
+bool red_check_ignition(void) {
   // ignition is checked through harness
   return harness_check_ignition();
 }

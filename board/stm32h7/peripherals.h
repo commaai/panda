@@ -12,8 +12,7 @@ void gpio_usart2_init(void) {
 }
 
 // Common GPIO initialization
-void common_init_gpio(void){
-  // FIXME: as soon as development is over - clean up this section and turn off unneeded IOs with register_set
+void common_init_gpio(void) {
   /// E2,E3,E4: RGB LED
   set_gpio_pullup(GPIOE, 2, PULL_NONE);
   set_gpio_mode(GPIOE, 2, MODE_OUTPUT);
@@ -41,7 +40,8 @@ void common_init_gpio(void){
   set_gpio_pullup(GPIOG, 11, PULL_NONE);
   set_gpio_mode(GPIOG, 11, MODE_OUTPUT);
 
-  GPIOB->OSPEEDR = GPIO_OSPEEDR_OSPEED3; // Speed was set to high by default after reset, changing to low
+  // Speed was set to high by default after reset, changing to low
+  GPIOB->OSPEEDR = GPIO_OSPEEDR_OSPEED3;
   set_gpio_pullup(GPIOB, 3, PULL_NONE);
   set_gpio_mode(GPIOB, 3, MODE_OUTPUT);
 
@@ -94,7 +94,7 @@ void flasher_peripherals_init(void) {
 }
 
 // Peripheral initialization
-void peripherals_init(void){
+void peripherals_init(void) {
   // enable GPIO(A,B,C,D,E,F,G,H)
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;
@@ -106,8 +106,8 @@ void peripherals_init(void){
 
   RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;  // main counter
   RCC->APB1LENR |= RCC_APB1LENR_TIM6EN;  // interrupt timer
-  RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // clock source timer (REDEBUG: move back to TIM1 ???)
-  RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop REDEBUG:(moved from TIM9 to TIM12!!!)
+  RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // clock source timer
+  RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop
 
   RCC->APB1HENR |= RCC_APB1HENR_FDCANEN; // FDCAN core enable
   RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN; // Enable ADC clocks
@@ -119,5 +119,5 @@ void peripherals_init(void){
 }
 
 void enable_interrupt_timer(void) {
-  register_set_bits(&(RCC->APB1LENR), RCC_APB1LENR_TIM6EN);  // Enable interrupt timer peripheral
+  register_set_bits(&(RCC->APB1LENR), RCC_APB1LENR_TIM6EN); // Enable interrupt timer peripheral
 }

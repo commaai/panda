@@ -148,7 +148,7 @@
 //   #include "stm32h7a3xxq.h"
 // #elif defined(STM32H7B3xxQ)
 //   #include "stm32h7b3xxq.h"
-#elif defined(STM32H735xx) || defined(STM32H725xx)
+#elif defined(STM32H735xx)
   #include "stm32h735xx.h"
 // #elif defined(STM32H733xx)
 //   #include "stm32h733xx.h"
@@ -156,8 +156,8 @@
 //   #include "stm32h730xx.h"
 // #elif defined(STM32H730xxQ)
 //   #include "stm32h730xxq.h"
-// #elif defined(STM32H725xx)
-//   #include "stm32h725xx.h"
+#elif defined(STM32H725xx)
+  #include "stm32h725xx.h"
 // #elif defined(STM32H723xx)
 //   #include "stm32h723xx.h"
 #else

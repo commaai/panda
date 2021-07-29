@@ -57,17 +57,17 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
 
   // Exit from sleep mode
   CANx->CCCR &= ~(FDCAN_CCCR_CSR);
-  while((CANx->CCCR & FDCAN_CCCR_CSA) == FDCAN_CCCR_CSA);
+  while ((CANx->CCCR & FDCAN_CCCR_CSA) == FDCAN_CCCR_CSA);
 
   // Request init
   uint32_t timeout_counter = 0U;
   CANx->CCCR |= FDCAN_CCCR_INIT;
-  while((CANx->CCCR & FDCAN_CCCR_INIT) == 0) {
+  while ((CANx->CCCR & FDCAN_CCCR_INIT) == 0) {
     // Delay for about 1ms
     delay(10000);
     timeout_counter++;
 
-    if(timeout_counter >= CAN_INIT_TIMEOUT_MS){
+    if (timeout_counter >= CAN_INIT_TIMEOUT_MS){
       puts(CAN_NAME_FROM_CANIF(CANx)); puts(" set_speed timed out (1)!\n");
       ret = false;
       break;
@@ -83,30 +83,30 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
   CANx->CCCR &= ~(FDCAN_CCCR_MON);
   CANx->CCCR &= ~(FDCAN_CCCR_ASM);
 
-  if(ret){
+  if (ret) {
     // Set the nominal bit timing register
     CANx->NBTP = ((CAN_SYNC_JW-1U)<<FDCAN_NBTP_NSJW_Pos) | ((CAN_PHASE_SEG1-1U)<<FDCAN_NBTP_NTSEG1_Pos) | ((CAN_PHASE_SEG2-1U)<<FDCAN_NBTP_NTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1U)<<FDCAN_NBTP_NBRP_Pos);
     // Set the data bit timing register
     CANx->DBTP = ((CAN_SYNC_JW-1U)<<FDCAN_DBTP_DSJW_Pos) | ((CAN_PHASE_SEG1-1U)<<FDCAN_DBTP_DTSEG1_Pos) | ((CAN_PHASE_SEG2-1U)<<FDCAN_DBTP_DTSEG2_Pos) | ((can_speed_to_prescaler(data_speed)-1U)<<FDCAN_DBTP_DBRP_Pos);
-    // silent loopback mode for debugging (new name: internal loopback)
+    // Silent loopback is known as internal loopback in the docs
     if (loopback) {
       CANx->CCCR |= FDCAN_CCCR_TEST;
       CANx->TEST |= FDCAN_TEST_LBCK;
       CANx->CCCR |= FDCAN_CCCR_MON;
     }
-    // (new name: bus monitoring)
+    // Silent is known as bus monitoring in the docs
     if (silent) {
       CANx->CCCR |= FDCAN_CCCR_MON;
     }
 
     CANx->CCCR &= ~(FDCAN_CCCR_INIT);
     timeout_counter = 0U;
-    while((CANx->CCCR & FDCAN_CCCR_INIT) != 0) {
+    while ((CANx->CCCR & FDCAN_CCCR_INIT) != 0) {
       // Delay for about 1ms
       delay(10000);
       timeout_counter++;
 
-      if(timeout_counter >= CAN_INIT_TIMEOUT_MS){
+      if (timeout_counter >= CAN_INIT_TIMEOUT_MS) {
         puts(CAN_NAME_FROM_CANIF(CANx)); puts(" set_speed timed out (2)!\n");
         ret = false;
         break;
@@ -122,23 +122,23 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
 
   // Exit from sleep mode
   CANx->CCCR &= ~(FDCAN_CCCR_CSR);
-  while((CANx->CCCR & FDCAN_CCCR_CSA) == FDCAN_CCCR_CSA);
+  while ((CANx->CCCR & FDCAN_CCCR_CSA) == FDCAN_CCCR_CSA);
 
   // Request init
   uint32_t timeout_counter = 0U;
   CANx->CCCR |= FDCAN_CCCR_INIT;
-  while((CANx->CCCR & FDCAN_CCCR_INIT) == 0) {
+  while ((CANx->CCCR & FDCAN_CCCR_INIT) == 0) {
     delay(10000);
     timeout_counter++;
 
-    if(timeout_counter >= CAN_INIT_TIMEOUT_MS) {
+    if (timeout_counter >= CAN_INIT_TIMEOUT_MS) {
       puts(CAN_NAME_FROM_CANIF(CANx)); puts(" initialization timed out!\n");
       ret = false;
       break;
     }
   }
 
-  if(ret) {
+  if (ret) {
     // Enable config change
     CANx->CCCR |= FDCAN_CCCR_CCE;
     // Enable automatic retransmission
@@ -197,12 +197,12 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
     // Request leave init, start FDCAN
     CANx->CCCR &= ~(FDCAN_CCCR_INIT);
     timeout_counter = 0U;
-    while((CANx->CCCR & FDCAN_CCCR_INIT) != 0) {
+    while ((CANx->CCCR & FDCAN_CCCR_INIT) != 0) {
       // Delay for about 1ms
       delay(10000);
       timeout_counter++;
 
-      if(timeout_counter >= CAN_INIT_TIMEOUT_MS){
+      if (timeout_counter >= CAN_INIT_TIMEOUT_MS) {
         puts(CAN_NAME_FROM_CANIF(CANx)); puts(" llcan_init timed out (2)!\n");
         ret = false;
         break;
@@ -215,7 +215,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
     } else if (CANx == FDCAN2) {
       NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
       NVIC_EnableIRQ(FDCAN2_IT1_IRQn);
-      } else if (CANx == FDCAN3) {
+    } else if (CANx == FDCAN3) {
       NVIC_EnableIRQ(FDCAN3_IT0_IRQn);
       NVIC_EnableIRQ(FDCAN3_IT1_IRQn);
     } else {
