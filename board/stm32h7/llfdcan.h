@@ -30,15 +30,6 @@
 #define FDCAN_TX_FIFO_EL_W_SIZE (FDCAN_TX_FIFO_EL_SIZE / 4UL)
 #define FDCAN_TX_FIFO_OFFSET (FDCAN_RX_FIFO_0_OFFSET + (FDCAN_RX_FIFO_0_EL_CNT * FDCAN_RX_FIFO_0_EL_W_SIZE))
 
-#define GET_BUS(msg) (((msg)->RDTR >> 4) & 0xFF)
-#define GET_LEN(msg) ((msg)->RDTR & 0xF)
-#define GET_ADDR(msg) ((((msg)->RIR & 4) != 0) ? ((msg)->RIR >> 3) : ((msg)->RIR >> 21))
-#define GET_BYTE(msg, b) (((int)(b) > 3) ? (((msg)->RDHR >> (8U * ((unsigned int)(b) % 4U))) & 0xFFU) : (((msg)->RDLR >> (8U * (unsigned int)(b))) & 0xFFU))
-#define GET_BYTES_04(msg) ((msg)->RDLR)
-#define GET_BYTES_48(msg) ((msg)->RDHR)
-#define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
-
-#define CAN_INIT_TIMEOUT_MS 500U
 #define CAN_NAME_FROM_CANIF(CAN_DEV) (((CAN_DEV)==FDCAN1) ? "FDCAN1" : (((CAN_DEV) == FDCAN2) ? "FDCAN2" : "FDCAN3"))
 #define CAN_NUM_FROM_CANIF(CAN_DEV) (((CAN_DEV)==FDCAN1) ? 0UL : (((CAN_DEV) == FDCAN2) ? 1UL : 2UL))
 
