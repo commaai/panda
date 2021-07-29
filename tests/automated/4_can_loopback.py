@@ -151,7 +151,7 @@ def test_latency(p):
 @test_all_gen2_pandas
 @panda_connect_and_init
 def test_gen2_loopback(p):
-  def test(p_send, p_recv):
+  def test(p_send, p_recv, address=None):
     for bus in range(4):
       obd = False
       if bus == 3:
@@ -163,7 +163,7 @@ def test_gen2_loopback(p):
       clear_can_buffers(p_recv)
 
       # Send a random string
-      addr = random.randint(1, 2000)
+      addr = address if address else random.randint(1, 2000)
       string = b"test" + os.urandom(4)
       p_send.set_obd(obd)
       p_recv.set_obd(obd)
@@ -182,7 +182,7 @@ def test_gen2_loopback(p):
       # Check bus
       assert content[0][3] == bus
 
-      print("Bus:", bus, "OBD:", obd, "OK")
+      print("Bus:", bus, "address:", addr, "OBD:", obd, "OK")
 
   # Start heartbeat
   start_heartbeat_thread(p)
@@ -195,6 +195,10 @@ def test_gen2_loopback(p):
     # Run tests in both directions
     test(p, panda_jungle)
     test(panda_jungle, p)
+    # Test extended frame address with ELM327 mode
+    p.set_safety_mode(Panda.SAFETY_ELM327)
+    test(p, panda_jungle, 0x18DB33F1)
+    test(panda_jungle, p, 0x18DB33F1)
   except Exception as e:
     # Raise errors again, we don't want them to get lost
     raise e
