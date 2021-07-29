@@ -52,9 +52,8 @@ typedef struct {
 
 void puts(const char *a);
 
-bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_speed, bool loopback, bool silent) {
+bool fdcan_request_init(FDCAN_GlobalTypeDef *CANx) {
   bool ret = true;
-
   // Exit from sleep mode
   CANx->CCCR &= ~(FDCAN_CCCR_CSR);
   while ((CANx->CCCR & FDCAN_CCCR_CSA) == FDCAN_CCCR_CSA);
@@ -68,22 +67,44 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
     timeout_counter++;
 
     if (timeout_counter >= CAN_INIT_TIMEOUT_MS){
-      puts(CAN_NAME_FROM_CANIF(CANx)); puts(" set_speed timed out (1)!\n");
       ret = false;
       break;
     }
   }
+  return ret;
+}
 
-  // Enable config change
-  CANx->CCCR |= FDCAN_CCCR_CCE;
+bool fdcan_exit_init(FDCAN_GlobalTypeDef *CANx) {
+  bool ret = true;
 
-  //Reset operation mode to Normal
-  CANx->CCCR &= ~(FDCAN_CCCR_TEST);
-  CANx->TEST &= ~(FDCAN_TEST_LBCK);
-  CANx->CCCR &= ~(FDCAN_CCCR_MON);
-  CANx->CCCR &= ~(FDCAN_CCCR_ASM);
+  CANx->CCCR &= ~(FDCAN_CCCR_INIT);
+  uint32_t timeout_counter = 0U;
+  while ((CANx->CCCR & FDCAN_CCCR_INIT) != 0) {
+    // Delay for about 1ms
+    delay(10000);
+    timeout_counter++;
+
+    if (timeout_counter >= CAN_INIT_TIMEOUT_MS) {
+      ret = false;
+      break;
+    }
+  }
+  return ret;
+}
+
+bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_speed, bool loopback, bool silent) {
+  bool ret = fdcan_request_init(CANx);
 
   if (ret) {
+    // Enable config change
+    CANx->CCCR |= FDCAN_CCCR_CCE;
+
+    //Reset operation mode to Normal
+    CANx->CCCR &= ~(FDCAN_CCCR_TEST);
+    CANx->TEST &= ~(FDCAN_TEST_LBCK);
+    CANx->CCCR &= ~(FDCAN_CCCR_MON);
+    CANx->CCCR &= ~(FDCAN_CCCR_ASM);
+
     // Set the nominal bit timing register
     CANx->NBTP = ((CAN_SYNC_JW-1U)<<FDCAN_NBTP_NSJW_Pos) | ((CAN_PHASE_SEG1-1U)<<FDCAN_NBTP_NTSEG1_Pos) | ((CAN_PHASE_SEG2-1U)<<FDCAN_NBTP_NTSEG2_Pos) | ((can_speed_to_prescaler(speed)-1U)<<FDCAN_NBTP_NBRP_Pos);
     // Set the data bit timing register
@@ -98,45 +119,20 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
     if (silent) {
       CANx->CCCR |= FDCAN_CCCR_MON;
     }
-
-    CANx->CCCR &= ~(FDCAN_CCCR_INIT);
-    timeout_counter = 0U;
-    while ((CANx->CCCR & FDCAN_CCCR_INIT) != 0) {
-      // Delay for about 1ms
-      delay(10000);
-      timeout_counter++;
-
-      if (timeout_counter >= CAN_INIT_TIMEOUT_MS) {
-        puts(CAN_NAME_FROM_CANIF(CANx)); puts(" set_speed timed out (2)!\n");
-        ret = false;
-        break;
-      }
+    ret = fdcan_exit_init(CANx);
+    if (!ret) {
+      puts(CAN_NAME_FROM_CANIF(CANx)); puts(" set_speed timed out! (2)\n");
+      return ret;
     }
+  } else {
+    puts(CAN_NAME_FROM_CANIF(CANx)); puts(" set_speed timed out! (1)\n");
   }
   return ret;
 }
 
 bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
-  bool ret = true;
   uint32_t can_number = CAN_NUM_FROM_CANIF(CANx);
-
-  // Exit from sleep mode
-  CANx->CCCR &= ~(FDCAN_CCCR_CSR);
-  while ((CANx->CCCR & FDCAN_CCCR_CSA) == FDCAN_CCCR_CSA);
-
-  // Request init
-  uint32_t timeout_counter = 0U;
-  CANx->CCCR |= FDCAN_CCCR_INIT;
-  while ((CANx->CCCR & FDCAN_CCCR_INIT) == 0) {
-    delay(10000);
-    timeout_counter++;
-
-    if (timeout_counter >= CAN_INIT_TIMEOUT_MS) {
-      puts(CAN_NAME_FROM_CANIF(CANx)); puts(" initialization timed out!\n");
-      ret = false;
-      break;
-    }
-  }
+  bool ret = fdcan_request_init(CANx);
 
   if (ret) {
     // Enable config change
@@ -194,19 +190,10 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
     CANx->ILS |= FDCAN_ILS_TFEL;
     CANx->IE |= FDCAN_IE_TFEE; // Tx FIFO empty
     
-    // Request leave init, start FDCAN
-    CANx->CCCR &= ~(FDCAN_CCCR_INIT);
-    timeout_counter = 0U;
-    while ((CANx->CCCR & FDCAN_CCCR_INIT) != 0) {
-      // Delay for about 1ms
-      delay(10000);
-      timeout_counter++;
-
-      if (timeout_counter >= CAN_INIT_TIMEOUT_MS) {
-        puts(CAN_NAME_FROM_CANIF(CANx)); puts(" llcan_init timed out (2)!\n");
-        ret = false;
-        break;
-      }
+    ret = fdcan_exit_init(CANx);
+    if(!ret) {
+      puts(CAN_NAME_FROM_CANIF(CANx)); puts(" llcan_init timed out (2)!\n");
+      return(ret);
     }
 
     if (CANx == FDCAN1) {
@@ -222,6 +209,8 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
       puts("Invalid CAN: initialization failed\n");
     }
 
+  } else {
+    puts(CAN_NAME_FROM_CANIF(CANx)); puts(" llcan_init timed out (1)!\n");
   }
   return ret;
 }
