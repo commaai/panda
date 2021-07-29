@@ -426,7 +426,7 @@ class Panda(object):
     return (self.is_uno() or self.is_dos() or self.is_black() or self.is_red())
 
   def has_canfd(self):
-    return self._mcu_type in H7_DEVICES
+    return self._mcu_type in Panda.H7_DEVICES
 
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
