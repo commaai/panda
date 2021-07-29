@@ -355,11 +355,13 @@ class CanClient():
         self._recv_buffer()
 
 class IsoTpMessage():
-  def __init__(self, can_client: CanClient, timeout: float = 1, debug: bool = False, max_len: int = 8):
+  def __init__(self, can_client: CanClient, timeout: float = 1, debug: bool = False, max_len: int = 8, response_pending_timeout: float = 5):
     self._can_client = can_client
     self.timeout = timeout
     self.debug = debug
     self.max_len = max_len
+    self.response_pending_timeout = response_pending_timeout
+    self.response_pending = False
 
   def send(self, dat: bytes) -> None:
     # throw away any stale data
@@ -376,39 +378,46 @@ class IsoTpMessage():
     self.rx_done = False
 
     if self.debug:
-      print(f"ISO-TP: REQUEST - 0x{bytes.hex(self.tx_dat)}")
+      print(f"ISO-TP: REQUEST - {hex(self._can_client.tx_addr)} 0x{bytes.hex(self.tx_dat)}")
     self._tx_first_frame()
 
   def _tx_first_frame(self) -> None:
     if self.tx_len < self.max_len:
       # single frame (send all bytes)
       if self.debug:
-        print("ISO-TP: TX - single frame")
+        print(f"ISO-TP: TX - {hex(self._can_client.tx_addr)} single frame")
       msg = (bytes([self.tx_len]) + self.tx_dat).ljust(self.max_len, b"\x00")
       self.tx_done = True
     else:
       # first frame (send first 6 bytes)
       if self.debug:
-        print("ISO-TP: TX - first frame")
+        print(f"ISO-TP: TX - {hex(self._can_client.tx_addr)} first frame")
       msg = (struct.pack("!H", 0x1000 | self.tx_len) + self.tx_dat[:self.max_len - 2]).ljust(self.max_len - 2, b"\x00")
     self._can_client.send([msg])
 
   def recv(self) -> Optional[bytes]:
     start_time = time.time()
+    self.rx_idx_prev = 0
     try:
       while True:
         for msg in self._can_client.recv():
           self._isotp_rx_next(msg)
           if self.tx_done and self.rx_done:
             return self.rx_dat
+          if self.rx_idx > self.rx_idx_prev:
+            start_time = time.time()
+            self.rx_idx_prev = self.rx_idx
         # no timeout indicates non-blocking
         if self.timeout == 0:
           return None
-        if time.time() - start_time > self.timeout:
+        if self.response_pending:
+          if time.time() - start_time > self.response_pending_timeout:
+            raise MessageTimeoutError("timeout waiting for pending response")
+        elif time.time() - start_time > self.timeout:
           raise MessageTimeoutError("timeout waiting for response")
     finally:
       if self.debug and self.rx_dat:
-        print(f"ISO-TP: RESPONSE - 0x{bytes.hex(self.rx_dat)}")
+        print(f"ISO-TP: RESPONSE - {hex(self._can_client.rx_addr)} 0x{bytes.hex(self.rx_dat)}")
 
   def _isotp_rx_next(self, rx_data: bytes) -> None:
     # single rx_frame
@@ -418,7 +427,7 @@ class IsoTpMessage():
       self.rx_idx = 0
       self.rx_done = True
       if self.debug:
-        print(f"ISO-TP: RX - single frame - idx={self.rx_idx} done={self.rx_done}")
+        print(f"ISO-TP: RX - single frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       return
 
     # first rx_frame
@@ -428,9 +437,9 @@ class IsoTpMessage():
       self.rx_idx = 0
       self.rx_done = False
       if self.debug:
-        print(f"ISO-TP: RX - first frame - idx={self.rx_idx} done={self.rx_done}")
+        print(f"ISO-TP: RX - first frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       if self.debug:
-        print("ISO-TP: TX - flow control continue")
+        print(f"ISO-TP: TX - {hex(self._can_client.tx_addr)} flow control continue")
       # send flow control message (send all bytes)
       msg = b"\x30\x00\x00".ljust(self.max_len, b"\x00")
       self._can_client.send([msg])
@@ -446,7 +455,7 @@ class IsoTpMessage():
       if self.rx_len == len(self.rx_dat):
         self.rx_done = True
       if self.debug:
-        print(f"ISO-TP: RX - consecutive frame - idx={self.rx_idx} done={self.rx_done}")
+        print(f"ISO-TP: RX - consecutive frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       return
 
     # flow control
@@ -456,7 +465,7 @@ class IsoTpMessage():
       assert rx_data[0] == 0x30 or rx_data[0] == 0x31, "isotp - rx: flow-control transfer state indicator invalid"
       if rx_data[0] == 0x30:
         if self.debug:
-          print("ISO-TP: RX - flow control continue")
+          print(f"ISO-TP: RX - {hex(self._can_client.rx_addr)} flow control continue")
         delay_ts = rx_data[2] & 0x7F
         # scale is 1 milliseconds if first bit == 0, 100 micro seconds if first bit == 1
         delay_div = 1000. if rx_data[2] & 0x80 == 0 else 10000.
@@ -478,11 +487,11 @@ class IsoTpMessage():
         if end >= self.tx_len:
           self.tx_done = True
         if self.debug:
-          print(f"ISO-TP: TX - consecutive frame - idx={self.tx_idx} done={self.tx_done}")
+          print(f"ISO-TP: TX - consecutive frame - {hex(self._can_client.tx_addr)} idx={self.tx_idx} done={self.tx_done}")
       elif rx_data[0] == 0x31:
         # wait (do nothing until next flow control message)
         if self.debug:
-          print("ISO-TP: TX - flow control wait")
+          print(f"ISO-TP: TX - {hex(self._can_client.tx_addr)} flow control wait")
 
 FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
 
@@ -544,6 +553,7 @@ class UdsClient():
           error_desc = resp[3:].hex()
         # wait for another message if response pending
         if error_code == 0x78:
+          isotp_msg.response_pending = True
           if self.debug:
             print("UDS-RX: response pending")
           continue
@@ -654,7 +664,7 @@ class UdsClient():
     resp = self._uds_request(SERVICE_TYPE.READ_DATA_BY_IDENTIFIER, subfunction=None, data=data)
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
     if resp_id != data_identifier_type:
-      raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
+      raise ValueError('invalid response data identifier: {} expected: {}'.format(hex(resp_id), hex(data_identifier_type)))
     return resp[2:]
 
   def read_memory_by_address(self, memory_address: int, memory_size: int, memory_address_bytes: int = 4, memory_size_bytes: int = 1):
