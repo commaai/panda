@@ -122,7 +122,6 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
     ret = fdcan_exit_init(CANx);
     if (!ret) {
       puts(CAN_NAME_FROM_CANIF(CANx)); puts(" set_speed timed out! (2)\n");
-      return ret;
     }
   } else {
     puts(CAN_NAME_FROM_CANIF(CANx)); puts(" set_speed timed out! (1)\n");
@@ -193,7 +192,6 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
     ret = fdcan_exit_init(CANx);
     if(!ret) {
       puts(CAN_NAME_FROM_CANIF(CANx)); puts(" llcan_init timed out (2)!\n");
-      return(ret);
     }
 
     if (CANx == FDCAN1) {
