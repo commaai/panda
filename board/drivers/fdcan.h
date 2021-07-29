@@ -56,7 +56,7 @@ void process_can(uint8_t can_number) {
         fifo = (CAN_FIFOMailBox_TypeDef *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
         // Convert from "mailbox type"
-        fifo->RIR = ((to_send.RIR & 0x4) << 27) | ((to_send.RIR & 0x2) << 28) | (to_send.RIR >> 3);  // identifier format | frame type | identifier
+        fifo->RIR = ((to_send.RIR & 0x6) << 28) | (to_send.RIR >> 3);  // identifier format and frame type | identifier
         //REDEBUG: enable CAN FD and BRS for test purposes
         //fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16) | (1U << 21) | (1U << 20); // DLC (length) | timestamp | enable CAN FD | enable BRS
         fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16); // DLC (length) | timestamp
@@ -132,7 +132,7 @@ void can_rx(uint8_t can_number) {
       fifo = (CAN_FIFOMailBox_TypeDef *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
 
       // Need to convert real CAN frame format to mailbox "type"
-      to_push.RIR = ((fifo->RIR >> 27) & 0x4) | ((fifo->RIR >> 28) & 0x2) | (fifo->RIR << 3); // identifier format | frame type | identifier
+      to_push.RIR = ((fifo->RIR >> 28) & 0x6) | (fifo->RIR << 3); // identifier format and frame type | identifier
       to_push.RDTR = ((fifo->RDTR >> 16) & 0xF) | (fifo->RDTR << 16); // DLC (length) | timestamp
       to_push.RDLR = fifo->RDLR;
       to_push.RDHR = fifo->RDHR;
