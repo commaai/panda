@@ -110,10 +110,10 @@ void process_can(uint8_t can_number) {
 void can_rx(uint8_t can_number) {
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
-	uint8_t rx_fifo_idx;
+  uint8_t rx_fifo_idx;
 
-	// Rx FIFO 0 new message
-	if((CANx->IR & FDCAN_IR_RF0N) != 0) {
+  // Rx FIFO 0 new message
+  if((CANx->IR & FDCAN_IR_RF0N) != 0) {
     CANx->IR |= FDCAN_IR_RF0N;
     while((CANx->RXF0S & FDCAN_RXF0S_F0FL) != 0) {
       can_rx_cnt += 1;
