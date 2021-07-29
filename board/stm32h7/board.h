@@ -13,12 +13,10 @@
 #include "boards/red.h"
 
 uint8_t board_id(void) {
-  return (
-    detect_with_pull(GPIOF, 7, PULL_UP) |
-    (detect_with_pull(GPIOF, 8, PULL_UP) << 1U) |
-    (detect_with_pull(GPIOF, 9, PULL_UP) << 2U) |
-    (detect_with_pull(GPIOF, 10, PULL_UP) << 3U)
-  );
+  return detect_with_pull(GPIOF, 7, PULL_UP) |
+        (detect_with_pull(GPIOF, 8, PULL_UP) << 1U) |
+        (detect_with_pull(GPIOF, 9, PULL_UP) << 2U) |
+        (detect_with_pull(GPIOF, 10, PULL_UP) << 3U);
 }
 
 void detect_board_type(void) {
