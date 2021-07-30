@@ -361,7 +361,6 @@ class IsoTpMessage():
     self.debug = debug
     self.max_len = max_len
     self.response_pending_timeout = response_pending_timeout
-    self.response_pending = False
 
   def send(self, dat: bytes) -> None:
     # throw away any stale data
@@ -385,32 +384,30 @@ class IsoTpMessage():
     if self.tx_len < self.max_len:
       # single frame (send all bytes)
       if self.debug:
-        print(f"ISO-TP: TX - {hex(self._can_client.tx_addr)} single frame")
+        print(f"ISO-TP: TX - single frame - {hex(self._can_client.tx_addr)}")
       msg = (bytes([self.tx_len]) + self.tx_dat).ljust(self.max_len, b"\x00")
       self.tx_done = True
     else:
       # first frame (send first 6 bytes)
       if self.debug:
-        print(f"ISO-TP: TX - {hex(self._can_client.tx_addr)} first frame")
+        print(f"ISO-TP: TX - first frame - {hex(self._can_client.tx_addr)}")
       msg = (struct.pack("!H", 0x1000 | self.tx_len) + self.tx_dat[:self.max_len - 2]).ljust(self.max_len - 2, b"\x00")
     self._can_client.send([msg])
 
-  def recv(self) -> Optional[bytes]:
+  def recv(self, response_pending: bool = False) -> Optional[bytes]:
     start_time = time.time()
-    self.rx_idx_prev = 0
     try:
       while True:
         for msg in self._can_client.recv():
           self._isotp_rx_next(msg)
+          start_time = time.time()
+          response_pending = False
           if self.tx_done and self.rx_done:
             return self.rx_dat
-          if self.rx_idx > self.rx_idx_prev:
-            start_time = time.time()
-            self.rx_idx_prev = self.rx_idx
         # no timeout indicates non-blocking
         if self.timeout == 0:
           return None
-        if self.response_pending:
+        if response_pending:
           if time.time() - start_time > self.response_pending_timeout:
             raise MessageTimeoutError("timeout waiting for pending response")
         elif time.time() - start_time > self.timeout:
@@ -439,7 +436,7 @@ class IsoTpMessage():
       if self.debug:
         print(f"ISO-TP: RX - first frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       if self.debug:
-        print(f"ISO-TP: TX - {hex(self._can_client.tx_addr)} flow control continue")
+        print(f"ISO-TP: TX - flow control continue - {hex(self._can_client.tx_addr)}")
       # send flow control message (send all bytes)
       msg = b"\x30\x00\x00".ljust(self.max_len, b"\x00")
       self._can_client.send([msg])
@@ -465,7 +462,7 @@ class IsoTpMessage():
       assert rx_data[0] == 0x30 or rx_data[0] == 0x31, "isotp - rx: flow-control transfer state indicator invalid"
       if rx_data[0] == 0x30:
         if self.debug:
-          print(f"ISO-TP: RX - {hex(self._can_client.rx_addr)} flow control continue")
+          print(f"ISO-TP: RX - flow control continue - {hex(self._can_client.tx_addr)}")
         delay_ts = rx_data[2] & 0x7F
         # scale is 1 milliseconds if first bit == 0, 100 micro seconds if first bit == 1
         delay_div = 1000. if rx_data[2] & 0x80 == 0 else 10000.
@@ -491,7 +488,7 @@ class IsoTpMessage():
       elif rx_data[0] == 0x31:
         # wait (do nothing until next flow control message)
         if self.debug:
-          print(f"ISO-TP: TX - {hex(self._can_client.tx_addr)} flow control wait")
+          print(f"ISO-TP: TX - flow control wait - {hex(self._can_client.tx_addr)}")
 
 FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
 
@@ -512,13 +509,14 @@ def get_rx_addr_for_tx_addr(tx_addr, rx_offset=0x8):
 
 
 class UdsClient():
-  def __init__(self, panda, tx_addr: int, rx_addr: int = None, bus: int = 0, timeout: float = 1, debug: bool = False):
+  def __init__(self, panda, tx_addr: int, rx_addr: int = None, bus: int = 0, timeout: float = 1, debug: bool = False, response_pending_timeout: float = 5):
     self.bus = bus
     self.tx_addr = tx_addr
     self.rx_addr = rx_addr if rx_addr is not None else get_rx_addr_for_tx_addr(tx_addr)
     self.timeout = timeout
     self.debug = debug
     self._can_client = CanClient(panda.can_send, panda.can_recv, self.tx_addr, self.rx_addr, self.bus, debug=self.debug)
+    self.response_pending_timeout = response_pending_timeout
 
   # generic uds request
   def _uds_request(self, service_type: SERVICE_TYPE, subfunction: int = None, data: bytes = None) -> bytes:
@@ -528,11 +526,13 @@ class UdsClient():
     if data is not None:
       req += data
 
+
     # send request, wait for response
-    isotp_msg = IsoTpMessage(self._can_client, self.timeout, self.debug)
+    isotp_msg = IsoTpMessage(self._can_client, self.timeout, self.debug, response_pending_timeout = self.response_pending_timeout)
     isotp_msg.send(req)
+    response_pending = False
     while True:
-      resp = isotp_msg.recv()
+      resp = isotp_msg.recv(response_pending)
 
       if resp is None:
         continue
@@ -553,7 +553,7 @@ class UdsClient():
           error_desc = resp[3:].hex()
         # wait for another message if response pending
         if error_code == 0x78:
-          isotp_msg.response_pending = True
+          response_pending = True
           if self.debug:
             print("UDS-RX: response pending")
           continue
