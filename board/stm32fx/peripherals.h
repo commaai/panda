@@ -12,7 +12,7 @@ void gpio_usart2_init(void) {
 }
 
 // Common GPIO initialization
-void common_init_gpio(void){
+void common_init_gpio(void) {
   // TODO: Is this block actually doing something???
   // pull low to hold ESP in reset??
   // enable OTG out tied to ground
@@ -49,7 +49,7 @@ void flasher_peripherals_init(void) {
 }
 
 // Peripheral initialization
-void peripherals_init(void){
+void peripherals_init(void) {
   // enable GPIOB, UART2, CAN, USB clock
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
