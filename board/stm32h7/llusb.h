@@ -34,6 +34,10 @@ void usb_init(void) {
   USBx->GAHBCFG &= ~(USB_OTG_GAHBCFG_GINT);
   // Select FS Embedded PHY
   USBx->GUSBCFG |= USB_OTG_GUSBCFG_PHYSEL;
+  // Force device mode
+  USBx->GUSBCFG &= ~(USB_OTG_GUSBCFG_FHMOD | USB_OTG_GUSBCFG_FDMOD);
+  USBx->GUSBCFG |= USB_OTG_GUSBCFG_FDMOD;
+  delay(250000); // Wait for about 25ms (explicitly stated in H7 ref manual)
   // Wait for AHB master IDLE state.
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL) == 0);
   // Core Soft Reset
@@ -41,9 +45,6 @@ void usb_init(void) {
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_CSRST) == USB_OTG_GRSTCTL_CSRST);
   // Activate the USB Transceiver
   USBx->GCCFG |= USB_OTG_GCCFG_PWRDWN;
-  // Force device mode
-  USBx->GUSBCFG &= ~(USB_OTG_GUSBCFG_FHMOD | USB_OTG_GUSBCFG_FDMOD);
-  USBx->GUSBCFG |= USB_OTG_GUSBCFG_FDMOD;
 
   for (uint8_t i = 0U; i < 15U; i++) {
     USBx->DIEPTXF[i] = 0U;
