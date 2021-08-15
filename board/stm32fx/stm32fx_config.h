@@ -7,18 +7,23 @@
   #include "stm32fx/inc/stm32f2xx_hal_gpio_ex.h"
   #define MCU_IDCODE 0x411U
 #endif
+// from the linker script
+#define APP_START_ADDRESS 0x8004000U
 
 #define CORE_FREQ 96U // in Mhz
 //APB1 - 48Mhz, APB2 - 96Mhz
 #define APB1_FREQ CORE_FREQ/2U 
 #define APB2_FREQ CORE_FREQ/1U
 
-#define BOOTLOADER_ADDRESS 0x1FFF0004
+#define BOOTLOADER_ADDRESS 0x1FFF0004U
 
 // Around (1Mbps / 8 bits/byte / 12 bytes per message)
 #define CAN_INTERRUPT_RATE 12000U
 
 #define MAX_LED_FADE 8192U
+
+// Threshold voltage (mV) for either of the SBUs to be below before deciding harness is connected
+#define HARNESS_CONNECTED_THRESHOLD 2500U
 
 #define NUM_INTERRUPTS 102U                // There are 102 external interrupt sources (see stm32f413.h)
 
@@ -30,8 +35,8 @@
 #define INTERRUPT_TIMER_IRQ TIM6_DAC_IRQn
 #define INTERRUPT_TIMER TIM6
 
-#define PROVISION_CHUNK_ADDRESS 0x1FFF79E0
-#define SERIAL_NUMBER_ADDRESS 0x1FFF79C0
+#define PROVISION_CHUNK_ADDRESS 0x1FFF79E0U
+#define DEVICE_SERIAL_NUMBER_ADDRESS 0x1FFF79C0U
 
 #ifndef BOOTSTUB
   #ifdef PANDA
@@ -49,19 +54,31 @@
 
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
-#include "drivers/timers.h"
 #include "drivers/gpio.h"
-
-#ifndef BOOTSTUB
-  #include "stm32fx/llcan.h"
-#endif
-
+#include "stm32fx/peripherals.h"
+#include "stm32fx/interrupt_handlers.h"
+#include "drivers/timers.h"
 #include "stm32fx/lladc.h"
 #include "stm32fx/board.h"
 #include "stm32fx/clock.h"
 
+#if !defined (BOOTSTUB) && (defined(PANDA) || defined(PEDAL_USB))
+  #include "drivers/uart.h"
+  #include "stm32fx/lluart.h"
+#endif
+
+#ifdef BOOTSTUB
+  #include "stm32fx/llflash.h"
+#else
+  #include "stm32fx/llbxcan.h"
+#endif
+
 #if defined(PANDA) || defined(BOOTSTUB) || defined(PEDAL_USB)
   #include "stm32fx/llusb.h"
+#endif
+
+#ifdef PEDAL
+  #include "stm32fx/lldac.h"
 #endif
 
 void early_gpio_float(void) {

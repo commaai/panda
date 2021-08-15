@@ -7,7 +7,6 @@
 #include "config.h"
 
 #include "drivers/pwm.h"
-#include "drivers/spi.h"
 #include "drivers/usb.h"
 
 #include "early_init.h"
@@ -18,7 +17,7 @@
 
 #include "obj/cert.h"
 #include "obj/gitversion.h"
-#include "spi_flasher.h"
+#include "flasher.h"
 
 void __initialize_hardware_early(void) {
   early_initialization();

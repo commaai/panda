@@ -20,10 +20,7 @@ def test_can_loopback(p):
   # enable CAN loopback mode
   p.set_can_loopback(True)
 
-  if p.legacy:
-    busses = [0, 1]
-  else:
-    busses = [0, 1, 2]
+  busses = [0, 1, 2]
 
   for bus in busses:
     # set bus 0 speed to 250
@@ -135,9 +132,6 @@ def test_throughput(p):
 @panda_type_to_serial
 @panda_connect_and_init
 def test_gmlan(p):
-  if p.legacy:
-    return
-
   # Start heartbeat
   start_heartbeat_thread(p)
 
@@ -169,9 +163,6 @@ def test_gmlan(p):
 @panda_type_to_serial
 @panda_connect_and_init
 def test_gmlan_bad_toggle(p):
-  if p.legacy:
-    return
-
   # Start heartbeat
   start_heartbeat_thread(p)
 

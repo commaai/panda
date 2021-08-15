@@ -45,7 +45,7 @@ class TestPedal(unittest.TestCase):
 
   def test_usb_fw(self):
     subprocess.check_output(f"cd {BASEDIR} && PEDAL=1 PEDAL_USB=1 scons", shell=True)
-    self._flash_over_can(PEDAL_BUS, f"{BASEDIR}board/obj/pedal.bin.signed")
+    self._flash_over_can(PEDAL_BUS, f"{BASEDIR}board/obj/pedal_usb.bin.signed")
     time.sleep(2)
     p = Panda(PEDAL_SERIAL)
     self.assertTrue(p.is_pedal())

@@ -11,8 +11,12 @@ void microsecond_timer_init(void) {
   MICROSECOND_TIMER->EGR = TIM_EGR_UG;
 }
 
+uint32_t microsecond_timer_get(void) {
+  return MICROSECOND_TIMER->CNT;
+}
+
 void interrupt_timer_init(void) {
-  register_set_bits(&(RCC->APB1ENR), RCC_APB1ENR_TIM6EN);  // Enable interrupt timer peripheral
+  enable_interrupt_timer();
   REGISTER_INTERRUPT(INTERRUPT_TIMER_IRQ, interrupt_timer_handler, 1, FAULT_INTERRUPT_RATE_INTERRUPTS)
   register_set(&(INTERRUPT_TIMER->PSC), ((uint16_t)(15.25*APB1_FREQ)-1U), 0xFFFFU);
   register_set(&(INTERRUPT_TIMER->DIER), TIM_DIER_UIE, 0x5F5FU);

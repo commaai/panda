@@ -132,7 +132,7 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // LKA STEER
   if (addr == 0x292) {
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1) - 1024U;
-    uint32_t ts = MICROSECOND_TIMER->CNT;
+    uint32_t ts = microsecond_timer_get();
     bool violation = 0;
 
     if (controls_allowed) {

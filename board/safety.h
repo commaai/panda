@@ -127,7 +127,7 @@ int get_addr_check_index(CAN_FIFOMailBox_TypeDef *to_push, AddrCheckStruct addr_
 
 // 1Hz safety function called by main. Now just a check for lagging safety messages
 void safety_tick(const safety_hooks *hooks) {
-  uint32_t ts = MICROSECOND_TIMER->CNT;
+  uint32_t ts = microsecond_timer_get();
   if (hooks->addr_check != NULL) {
     for (int i=0; i < hooks->addr_check_len; i++) {
       uint32_t elapsed_time = get_ts_elapsed(ts, hooks->addr_check[i].last_timestamp);
@@ -165,7 +165,7 @@ bool is_msg_valid(AddrCheckStruct addr_list[], int index) {
 
 void update_addr_timestamp(AddrCheckStruct addr_list[], int index) {
   if (index != -1) {
-    uint32_t ts = MICROSECOND_TIMER->CNT;
+    uint32_t ts = microsecond_timer_get();
     addr_list[index].last_timestamp = ts;
   }
 }
@@ -250,8 +250,8 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_NISSAN, &nissan_hooks},
   {SAFETY_NOOUTPUT, &nooutput_hooks},
   {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
-  {SAFETY_TESLA, &tesla_hooks},
 #ifdef ALLOW_DEBUG
+  {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
   {SAFETY_SUBARU_LEGACY, &subaru_legacy_hooks},
   {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},

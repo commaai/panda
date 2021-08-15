@@ -2,15 +2,12 @@
 //#define PEDAL_USB
 #include "../config.h"
 
-#include "drivers/dac.h"
-
 #include "early_init.h"
 #include "crc.h"
 
 #define CAN CAN1
 
 #ifdef PEDAL_USB
-  #include "drivers/uart.h"
   #include "drivers/usb.h"
 #else
   // no serial either

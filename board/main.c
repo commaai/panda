@@ -3,7 +3,6 @@
 
 #include "drivers/pwm.h"
 #include "drivers/usb.h"
-#include "drivers/uart.h"
 #include "drivers/gmlan_alt.h"
 #include "drivers/kline_init.h"
 
@@ -13,7 +12,13 @@
 #include "power_saving.h"
 #include "safety.h"
 
-#include "drivers/can.h"
+#include "drivers/can_common.h"
+
+#ifdef STM32H7
+  #include "drivers/fdcan.h"
+#else
+  #include "drivers/bxcan.h"
+#endif
 
 #include "obj/gitversion.h"
 
@@ -140,6 +145,12 @@ void set_safety_mode(uint16_t mode, int16_t param) {
       break;
   }
   can_init_all();
+}
+
+bool is_car_safety_mode(uint16_t mode) {
+  return (mode != SAFETY_SILENT) &&
+         (mode != SAFETY_NOOUTPUT) &&
+         (mode != SAFETY_ELM327);
 }
 
 // ***************************** USB port *****************************
@@ -321,7 +332,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xd0:
       // addresses are OTP
       if (setup->b.wValue.w == 1U) {
-        (void)memcpy(resp, (uint8_t *)SERIAL_NUMBER_ADDRESS, 0x10);
+        (void)memcpy(resp, (uint8_t *)DEVICE_SERIAL_NUMBER_ADDRESS, 0x10);
         resp_len = 0x10;
       } else {
         get_provision_chunk(resp);
@@ -459,6 +470,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xde: set can bitrate
     case 0xde:
       if (setup->b.wValue.w < BUS_MAX) {
+        // TODO: add sanity check, ideally check if value is correct(from array of correct values)
         can_speed[setup->b.wValue.w] = setup->b.wIndex.w;
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(setup->b.wValue.w));
         UNUSED(ret);
@@ -467,9 +479,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xdf: set unsafe mode
     case 0xdf:
       // you can only set this if you are in a non car safety mode
-      if ((current_safety_mode == SAFETY_SILENT) ||
-          (current_safety_mode == SAFETY_NOOUTPUT) ||
-          (current_safety_mode == SAFETY_ELM327)) {
+      if (!is_car_safety_mode(current_safety_mode)) {
         unsafe_mode = setup->b.wValue.w;
       }
       break;
@@ -614,6 +624,15 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       heartbeat_disabled = true;
       break;
 #endif
+    // **** 0xde: set CAN FD data bitrate
+    case 0xf9:
+      if (setup->b.wValue.w < CAN_MAX) {
+        // TODO: add sanity check, ideally check if value is correct(from array of correct values)
+        can_data_speed[setup->b.wValue.w] = setup->b.wIndex.w;
+        bool ret = can_init(CAN_NUM_FROM_BUS_NUM(setup->b.wValue.w));
+        UNUSED(ret);
+      }
+      break;
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);
@@ -647,7 +666,7 @@ void tick_handler(void) {
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
 
     // decimated to 1Hz
-    if(loop_counter == 0U){
+    if (loop_counter == 0U) {
       can_live = pending_can_live;
 
       current_board->usb_power_mode_tick(uptime_cnt);
@@ -695,15 +714,17 @@ void tick_handler(void) {
             siren_countdown = 5U;
           }
 
+          // set flag to indicate the heartbeat was lost
+          if (is_car_safety_mode(current_safety_mode)) {
+            heartbeat_lost = true;
+          }
+
           if (current_safety_mode != SAFETY_SILENT) {
             set_safety_mode(SAFETY_SILENT, 0U);
           }
           if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
             set_power_save_state(POWER_SAVE_STATUS_ENABLED);
           }
-
-          // set flag to indicate the heartbeat was lost
-          heartbeat_lost = true;
 
           // Also disable IR when the heartbeat goes missing
           current_board->set_ir_power(0U);
@@ -728,7 +749,7 @@ void tick_handler(void) {
       // set ignition_can to false after 2s of no CAN seen
       if (ignition_can_cnt > 2U) {
         ignition_can = false;
-      };
+      }
 
       // on to the next one
       uptime_cnt += 1U;
