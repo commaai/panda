@@ -24,3 +24,5 @@ void flash_write_word(void *prog_ptr, uint32_t data) {
   *pp = data;
   while (FLASH->SR & FLASH_SR_BSY);
 }
+
+void flush_write_buffer(void) { }

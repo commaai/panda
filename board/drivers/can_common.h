@@ -22,6 +22,7 @@ extern int pending_can_live;
 extern int can_loopback;
 extern int can_silent;
 extern uint32_t can_speed[4];
+extern uint32_t can_data_speed[3];
 
 // Ignition detected from CAN meessages
 bool ignition_can = false;
@@ -141,6 +142,7 @@ uint8_t bus_lookup[] = {0,1,2};
 uint8_t can_num_lookup[] = {0,1,2,-1};
 int8_t can_forwarding[] = {-1,-1,-1,-1};
 uint32_t can_speed[] = {5000, 5000, 5000, 333};
+uint32_t can_data_speed[] = {5000, 5000, 5000}; //For CAN FD with BRS only
 #define CAN_MAX 3U
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])

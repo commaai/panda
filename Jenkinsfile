@@ -40,7 +40,7 @@ pipeline {
                     --volume /var/run/dbus:/var/run/dbus \
                     --net host \
                     ${env.DOCKER_IMAGE_TAG} \
-                    bash -c 'cd /tmp/panda && scons && PANDAS_JUNGLE=058010800f51363038363036 ./tests/automated/test.sh'"
+                    bash -c 'cd /tmp/panda && ./board/build_all.sh && PANDAS_JUNGLE=058010800f51363038363036 ./tests/automated/test.sh'"
             }
           }
         }

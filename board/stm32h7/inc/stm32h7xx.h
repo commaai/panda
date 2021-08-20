@@ -8,8 +8,8 @@
   *          is using in the C source code, usually in main.c. This file contains:
   *           - Configuration section that allows to select:
   *              - The STM32H7xx device used in the target application
-  *              - To use or not the peripheral’s drivers in application code(i.e.
-  *                code will be based on direct access to peripheral’s registers
+  *              - To use or not the peripheralâ€™s drivers in application code(i.e.
+  *                code will be based on direct access to peripheralâ€™s registers
   *                rather than drivers API), this option is controlled by
   *                "#define USE_HAL_DRIVER"
   *
@@ -58,10 +58,10 @@
    application
   */
 
-#if !defined (STM32H743xx) && !defined (STM32H753xx)  && !defined (STM32H750xx) && !defined (STM32H742xx) && \
+/* #if !defined (STM32H743xx) && !defined (STM32H753xx)  && !defined (STM32H750xx) && !defined (STM32H742xx) && \
     !defined (STM32H745xx) && !defined (STM32H755xx)  && !defined (STM32H747xx) && !defined (STM32H757xx) && \
     !defined (STM32H7A3xx) && !defined (STM32H7A3xxQ) && !defined (STM32H7B3xx) && !defined (STM32H7B3xxQ) && !defined (STM32H7B0xx)  && !defined (STM32H7B0xxQ) && \
-    !defined (STM32H735xx) && !defined (STM32H733xx)  && !defined (STM32H730xx) && !defined (STM32H730xxQ)  && !defined (STM32H725xx) && !defined (STM32H723xx)
+    !defined (STM32H735xx) && !defined (STM32H733xx)  && !defined (STM32H730xx) && !defined (STM32H730xxQ)  && !defined (STM32H725xx) && !defined (STM32H723xx) */
   /* #define STM32H742xx */   /*!< STM32H742VI, STM32H742ZI, STM32H742AI, STM32H742II, STM32H742BI, STM32H742XI Devices */
   /* #define STM32H743xx */   /*!< STM32H743VI, STM32H743ZI, STM32H743AI, STM32H743II, STM32H743BI, STM32H743XI Devices */
   /* #define STM32H753xx */   /*!< STM32H753VI, STM32H753ZI, STM32H753AI, STM32H753II, STM32H753BI, STM32H753XI Devices */
@@ -81,7 +81,7 @@
   /* #define STM32H730xxQ */  /*!< STM32H730IBT6Q, STM32H730ABI6Q, STM32H730IBK6Q Devices */
   /* #define STM32H725xx */   /*!< STM32H725AGI6, STM32H725IGK6, STM32H725IGT6, STM32H725RGV6, STM32H725VGT6, STM32H725VGY6, STM32H725ZGT6, STM32H725REV6, SM32H725VET6, STM32H725ZET6, STM32H725AEI6, STM32H725IET6, STM32H725IEK6  Devices */
   /* #define STM32H723xx */   /*!< STM32H723VGH6, STM32H723VGT6, STM32H723ZGI6, STM32H723ZGT6, STM32H723VET6, STM32H723VEH6, STM32H723ZET6, STM32H723ZEI6 Devices */
-#endif
+/* #endif */
 
 /*  Tip: To avoid modifying this file each time you need to switch between these
         devices, you can define the device in your toolchain compiler preprocessor.
@@ -122,44 +122,44 @@
 
 #if defined(STM32H743xx)
   #include "stm32h743xx.h"
-#elif defined(STM32H753xx)
-  #include "stm32h753xx.h"
-#elif defined(STM32H750xx)
-  #include "stm32h750xx.h"
-#elif defined(STM32H742xx)
-  #include "stm32h742xx.h"
-#elif defined(STM32H745xx)
-  #include "stm32h745xx.h"
-#elif defined(STM32H755xx)
-  #include "stm32h755xx.h"
-#elif defined(STM32H747xx)
-  #include "stm32h747xx.h"
-#elif defined(STM32H757xx)
-  #include "stm32h757xx.h"
-#elif defined(STM32H7B0xx)
-  #include "stm32h7b0xx.h"
-#elif defined(STM32H7B0xxQ)
-  #include "stm32h7b0xxq.h"
-#elif defined(STM32H7A3xx)
-  #include "stm32h7a3xx.h"
-#elif defined(STM32H7B3xx)
-  #include "stm32h7b3xx.h"
-#elif defined(STM32H7A3xxQ)
-  #include "stm32h7a3xxq.h"
-#elif defined(STM32H7B3xxQ)
-  #include "stm32h7b3xxq.h"
+// #elif defined(STM32H753xx)
+//   #include "stm32h753xx.h"
+// #elif defined(STM32H750xx)
+//   #include "stm32h750xx.h"
+// #elif defined(STM32H742xx)
+//   #include "stm32h742xx.h"
+// #elif defined(STM32H745xx)
+//   #include "stm32h745xx.h"
+// #elif defined(STM32H755xx)
+//   #include "stm32h755xx.h"
+// #elif defined(STM32H747xx)
+//   #include "stm32h747xx.h"
+// #elif defined(STM32H757xx)
+//   #include "stm32h757xx.h"
+// #elif defined(STM32H7B0xx)
+//   #include "stm32h7b0xx.h"
+// #elif defined(STM32H7B0xxQ)
+//   #include "stm32h7b0xxq.h"
+// #elif defined(STM32H7A3xx)
+//   #include "stm32h7a3xx.h"
+// #elif defined(STM32H7B3xx)
+//   #include "stm32h7b3xx.h"
+// #elif defined(STM32H7A3xxQ)
+//   #include "stm32h7a3xxq.h"
+// #elif defined(STM32H7B3xxQ)
+//   #include "stm32h7b3xxq.h"
 #elif defined(STM32H735xx)
   #include "stm32h735xx.h"
-#elif defined(STM32H733xx)
-  #include "stm32h733xx.h"
-#elif defined(STM32H730xx)
-  #include "stm32h730xx.h"
-#elif defined(STM32H730xxQ)
-  #include "stm32h730xxq.h"
+// #elif defined(STM32H733xx)
+//   #include "stm32h733xx.h"
+// #elif defined(STM32H730xx)
+//   #include "stm32h730xx.h"
+// #elif defined(STM32H730xxQ)
+//   #include "stm32h730xxq.h"
 #elif defined(STM32H725xx)
   #include "stm32h725xx.h"
-#elif defined(STM32H723xx)
-  #include "stm32h723xx.h"
+// #elif defined(STM32H723xx)
+//   #include "stm32h723xx.h"
 #else
  #error "Please select first the target STM32H7xx device used in your application (in stm32h7xx.h file)"
 #endif

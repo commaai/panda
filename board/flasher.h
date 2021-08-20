@@ -43,7 +43,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xd0: fetch serial number
     case 0xd0:
-      #ifdef STM32F4
+      #ifndef STM32F2
         // addresses are OTP
         if (setup->b.wValue.w == 1) {
           memcpy(resp, (void *)DEVICE_SERIAL_NUMBER_ADDRESS, 0x10);
@@ -88,6 +88,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
       break;
     // **** 0xd8: reset ST
     case 0xd8:
+      flush_write_buffer();
       NVIC_SystemReset();
       break;
   }
