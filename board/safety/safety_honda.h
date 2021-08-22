@@ -61,7 +61,6 @@ static uint8_t honda_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   int len = GET_LEN(to_push);
   uint8_t checksum = 0U;
   unsigned int addr = GET_ADDR(to_push);
-  bool extended = (addr > 0x7FFU);
   while (addr > 0U) {
     checksum += (addr & 0xFU); addr >>= 4;
   }
@@ -72,9 +71,7 @@ static uint8_t honda_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
       checksum -= (byte & 0xFU);  // remove checksum in message
     }
   }
-  checksum = (8U - checksum);
-  if (extended){ checksum += 3U; }
-  return checksum & 0xFU;
+  return (8U - checksum) & 0xFU;
 }
 
 static uint8_t honda_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
