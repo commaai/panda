@@ -231,7 +231,7 @@ static int volkswagen_pq_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // Signal: Motor_2.GRA_Status
     if (addr == MSG_MOTOR_2) {
       int acc_status = (GET_BYTE(to_push, 2) & 0xC0) >> 6;
-      cruise_engaged = ((acc_status == 1) || (acc_status == 2)) ? 1 : 0;
+      int cruise_engaged = ((acc_status == 1) || (acc_status == 2)) ? 1 : 0;
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
       }
