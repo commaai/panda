@@ -47,7 +47,6 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
     self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
     self.safety.init_tests()
 
-  # override these inherited tests from PandaSafetyTest
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)
     self.safety.set_rt_torque_last(t)
