@@ -16,6 +16,9 @@ RT_INTERVAL = 250000
 DRIVER_TORQUE_ALLOWANCE = 50
 DRIVER_TORQUE_FACTOR = 2
 
+MAX_ACCEL = 2.0
+MIN_ACCEL = -3.5
+
 # 4 bit checkusm used in some hyundai messages
 # lives outside the can packer because we never send this msg
 def checksum(msg):
@@ -239,6 +242,64 @@ class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
     values = {"CR_Vcu_AccPedDep_Pos": gas}
     return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
 
+class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
+  TX_MSGS = [[832, 0], [1265, 0], [1157, 0], [1056, 0], [1057, 0], [1290, 0], [905, 0], [1186, 0], [909, 0], [1155, 0], [2000, 0]]
+
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_kia_generic")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, 4)
+    self.safety.init_tests()
+
+  # override these tests from PandaSafetyTest, hyundai longitudinal uses button enable
+  def test_disable_control_allowed_from_cruise(self):
+    pass
+
+  def test_enable_control_allowed_from_cruise(self):
+    pass
+
+  def test_cruise_engaged_prev(self):
+    pass
+
+  def _pcm_status_msg(self, enable):
+    raise NotImplementedError
+
+  def _button_msg(self, buttons):
+    values = {"CF_Clu_CruiseSwState": buttons}
+    return self.packer.make_can_msg_panda("CLU11", 0, values)
+
+  def _send_accel_msg(self, accel):
+    values = {
+      "aReqRaw": accel,
+      "aReqValue": accel,
+    }
+    return self.packer.make_can_msg_panda("SCC12", 0, values)
+
+  def test_resume_button(self):
+    RESUME_BTN = 1
+    self.safety.set_controls_allowed(0)
+    self._rx(self._button_msg(RESUME_BTN))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_set_button(self):
+    SET_BTN = 2
+    self.safety.set_controls_allowed(0)
+    self._rx(self._button_msg(SET_BTN))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_cancel_button(self):
+    CANCEL_BTN = 4
+    self.safety.set_controls_allowed(1)
+    self._rx(self._button_msg(CANCEL_BTN))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_accel_safety_check(self):
+    for controls_allowed in [True, False]:
+      for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.01):
+        accel = round(accel, 2) # floats might not hit exact boundary conditions without rounding
+        self.safety.set_controls_allowed(controls_allowed)
+        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == 0
+        self.assertEqual(send, self._tx(self._send_accel_msg(accel)), (controls_allowed, accel))
 
 if __name__ == "__main__":
   unittest.main()

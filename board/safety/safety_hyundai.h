@@ -6,6 +6,10 @@ const int HYUNDAI_MAX_RATE_DOWN = 7;
 const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
 const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
 const int HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
+
+const int HYUNDAI_MAX_ACCEL = 200;  // max accel ==  2.0m/s2
+const int HYUNDAI_MIN_ACCEL = -350; // max decel == -3.5m/s2
+
 const CanMsg HYUNDAI_TX_MSGS[] = {
   {832, 0, 8},  // LKAS11 Bus 0
   {1265, 0, 4}, // CLU11 Bus 0
@@ -17,6 +21,20 @@ const CanMsg HYUNDAI_TX_MSGS[] = {
   // {1186, 0, 8}  //   4a2SCC, Bus 0
  };
 
+const CanMsg HYUNDAI_LONG_TX_MSGS[] = {
+  {832, 0, 8},  // LKAS11 Bus 0
+  {1265, 0, 4}, // CLU11 Bus 0
+  {1157, 0, 4}, // LFAHDA_MFC Bus 0
+  {1056, 0, 8}, // SCC11 Bus 0
+  {1057, 0, 8}, // SCC12 Bus 0
+  {1290, 0, 8}, // SCC13 Bus 0
+  {905, 0, 8},  // SCC14 Bus 0
+  {1186, 0, 2}, // FRT_RADAR11 Bus 0
+  {909, 0, 8},  // FCA11 Bus 0
+  {1155, 0, 8}, // FCA12 Bus 0
+  {2000, 0, 8}, // radar UDS TX addr Bus 0 (for radar disable)
+ };
+
 AddrCheckStruct hyundai_addr_checks[] = {
   {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
            {881, 0, 8, .expected_timestep = 10000U}, { 0 }}},
@@ -25,6 +43,14 @@ AddrCheckStruct hyundai_addr_checks[] = {
   {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define HYUNDAI_ADDR_CHECK_LEN (sizeof(hyundai_addr_checks) / sizeof(hyundai_addr_checks[0]))
+
+AddrCheckStruct hyundai_long_addr_checks[] = {
+  {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+           {881, 0, 8, .expected_timestep = 10000U}, { 0 }}},
+  {.msg = {{902, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{916, 0, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+};
+const int HYUNDAI_LONG_ADDR_CHECK_LEN = sizeof(hyundai_long_addr_checks) / sizeof(hyundai_long_addr_checks[0]);
 
 // older hyundai models have less checks due to missing counters and checksums
 AddrCheckStruct hyundai_legacy_addr_checks[] = {
@@ -38,10 +64,12 @@ AddrCheckStruct hyundai_legacy_addr_checks[] = {
 
 const int HYUNDAI_PARAM_EV_GAS = 1;
 const int HYUNDAI_PARAM_HYBRID_GAS = 2;
+const int HYUNDAI_PARAM_LONGITUDINAL = 4;
 
 bool hyundai_legacy = false;
 bool hyundai_ev_gas_signal = false;
 bool hyundai_hybrid_gas_signal = false;
+bool hyundai_longitudinal = false;
 
 addr_checks hyundai_rx_checks = {hyundai_addr_checks, HYUNDAI_ADDR_CHECK_LEN};
 
@@ -132,17 +160,35 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    // enter controls on rising edge of ACC, exit controls on ACC off
-    if (addr == 1057) {
-      // 2 bits: 13-14
-      int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3;
-      if (cruise_engaged && !cruise_engaged_prev) {
-        controls_allowed = 1;
+    if (hyundai_longitudinal) {
+      // ACC steering wheel buttons
+      if (addr == 1265) {
+        int button = GET_BYTE(to_push, 0) & 0x7;
+        switch (button) {
+          case 1:  // resume
+          case 2:  // set
+            controls_allowed = 1;
+            break;
+          case 4:  // cancel
+            controls_allowed = 0;
+            break;
+          default:
+            break;  // any other button is irrelevant
+        }
       }
-      if (!cruise_engaged) {
-        controls_allowed = 0;
+    } else {
+      // enter controls on rising edge of ACC, exit controls on ACC off
+      if (addr == 1057) {
+        // 2 bits: 13-14
+        int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3;
+        if (cruise_engaged && !cruise_engaged_prev) {
+          controls_allowed = 1;
+        }
+        if (!cruise_engaged) {
+          controls_allowed = 0;
+        }
+        cruise_engaged_prev = cruise_engaged;
       }
-      cruise_engaged_prev = cruise_engaged;
     }
 
     // read gas pressed signal
@@ -167,6 +213,7 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       brake_pressed = (GET_BYTE(to_push, 6) >> 7) != 0;
     }
 
+    // TODO: add radar msgs to stock_ecu check in case of long
     generic_rx_checks((addr == 832));
   }
   return valid;
@@ -177,12 +224,33 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
-  if (!msg_allowed(to_send, HYUNDAI_TX_MSGS, sizeof(HYUNDAI_TX_MSGS)/sizeof(HYUNDAI_TX_MSGS[0]))) {
-    tx = 0;
+  if (hyundai_longitudinal) {
+    tx = msg_allowed(to_send, HYUNDAI_LONG_TX_MSGS, sizeof(HYUNDAI_LONG_TX_MSGS)/sizeof(HYUNDAI_LONG_TX_MSGS[0]));
+  } else {
+    tx = msg_allowed(to_send, HYUNDAI_TX_MSGS, sizeof(HYUNDAI_TX_MSGS)/sizeof(HYUNDAI_TX_MSGS[0]));
   }
 
   if (relay_malfunction) {
     tx = 0;
+  }
+
+  // ACCEL: safety check
+  if (addr == 1057) {
+    int desired_accel_raw = (((GET_BYTE(to_send, 4) & 0x7) << 8) | GET_BYTE(to_send, 3)) - 1023;
+    int desired_accel_val = ((GET_BYTE(to_send, 5) << 3) | (GET_BYTE(to_send, 4) >> 5)) - 1023;
+    bool violation = 0;
+
+    if (!controls_allowed) {
+      if ((desired_accel_raw != 0) || (desired_accel_val != 0)) {
+        violation = 1;
+      }
+    }
+    violation |= max_limit_check(desired_accel_raw, HYUNDAI_MAX_ACCEL, HYUNDAI_MIN_ACCEL);
+    violation |= max_limit_check(desired_accel_val, HYUNDAI_MAX_ACCEL, HYUNDAI_MIN_ACCEL);
+
+    if (violation) {
+      tx = 0;
+    }
   }
 
   // LKA STEER: safety check
@@ -266,6 +334,7 @@ static const addr_checks* hyundai_init(int16_t param) {
   relay_malfunction_reset();
 
   hyundai_legacy = false;
+  hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_LONGITUDINAL);
   hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
   hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
   hyundai_rx_checks = (addr_checks){hyundai_addr_checks, HYUNDAI_ADDR_CHECK_LEN};
@@ -277,6 +346,7 @@ static const addr_checks* hyundai_legacy_init(int16_t param) {
   relay_malfunction_reset();
 
   hyundai_legacy = true;
+  hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_LONGITUDINAL);
   hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
   hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
   hyundai_rx_checks = (addr_checks){hyundai_legacy_addr_checks, HYUNDAI_LEGACY_ADDR_CHECK_LEN};
