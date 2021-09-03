@@ -42,6 +42,7 @@ const int HYUNDAI_PARAM_HYBRID_GAS = 2;
 bool hyundai_legacy = false;
 bool hyundai_ev_gas_signal = false;
 bool hyundai_hybrid_gas_signal = false;
+
 addr_checks hyundai_rx_checks = {hyundai_addr_checks, HYUNDAI_ADDR_CHECK_LEN};
 
 static uint8_t hyundai_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -267,6 +268,7 @@ static const addr_checks* hyundai_init(int16_t param) {
   hyundai_legacy = false;
   hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
   hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
+  hyundai_rx_checks = (addr_checks){hyundai_addr_checks, HYUNDAI_ADDR_CHECK_LEN};
   return &hyundai_rx_checks;
 }
 
@@ -277,6 +279,7 @@ static const addr_checks* hyundai_legacy_init(int16_t param) {
   hyundai_legacy = true;
   hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
   hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
+  hyundai_rx_checks = (addr_checks){hyundai_legacy_addr_checks, HYUNDAI_LEGACY_ADDR_CHECK_LEN};
   return &hyundai_rx_checks;
 }
 
