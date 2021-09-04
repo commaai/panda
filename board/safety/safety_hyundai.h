@@ -50,7 +50,7 @@ AddrCheckStruct hyundai_long_addr_checks[] = {
   {.msg = {{902, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{916, 0, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
 };
-const int HYUNDAI_LONG_ADDR_CHECK_LEN = sizeof(hyundai_long_addr_checks) / sizeof(hyundai_long_addr_checks[0]);
+#define HYUNDAI_LONG_ADDR_CHECK_LEN (sizeof(hyundai_long_addr_checks) / sizeof(hyundai_long_addr_checks[0]))
 
 // older hyundai models have less checks due to missing counters and checksums
 AddrCheckStruct hyundai_legacy_addr_checks[] = {
