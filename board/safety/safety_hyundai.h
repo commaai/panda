@@ -24,7 +24,7 @@ AddrCheckStruct hyundai_addr_checks[] = {
   {.msg = {{916, 0, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
-const int HYUNDAI_ADDR_CHECK_LEN = sizeof(hyundai_addr_checks) / sizeof(hyundai_addr_checks[0]);
+#define HYUNDAI_ADDR_CHECK_LEN (sizeof(hyundai_addr_checks) / sizeof(hyundai_addr_checks[0]))
 
 // older hyundai models have less checks due to missing counters and checksums
 AddrCheckStruct hyundai_legacy_addr_checks[] = {
@@ -34,7 +34,7 @@ AddrCheckStruct hyundai_legacy_addr_checks[] = {
   {.msg = {{916, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
-const int HYUNDAI_LEGACY_ADDR_CHECK_LEN = sizeof(hyundai_legacy_addr_checks) / sizeof(hyundai_legacy_addr_checks[0]);
+#define HYUNDAI_LEGACY_ADDR_CHECK_LEN (sizeof(hyundai_legacy_addr_checks) / sizeof(hyundai_legacy_addr_checks[0]))
 
 const int HYUNDAI_PARAM_EV_GAS = 1;
 const int HYUNDAI_PARAM_HYBRID_GAS = 2;

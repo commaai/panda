@@ -31,7 +31,7 @@ AddrCheckStruct gm_addr_checks[] = {
   {.msg = {{241, 0, 6, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{417, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
-const int GM_RX_CHECK_LEN = sizeof(gm_addr_checks) / sizeof(gm_addr_checks[0]);
+#define GM_RX_CHECK_LEN (sizeof(gm_addr_checks) / sizeof(gm_addr_checks[0]))
 addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
 
 static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {

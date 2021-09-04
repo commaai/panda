@@ -13,7 +13,7 @@ const int SUBARU_L_DRIVER_TORQUE_ALLOWANCE = 75;
 const int SUBARU_L_DRIVER_TORQUE_FACTOR = 10;
 
 const CanMsg SUBARU_TX_MSGS[] = {{0x122, 0, 8}, {0x221, 0, 8}, {0x322, 0, 8}};
-const int SUBARU_TX_MSGS_LEN = sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]);
+#define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
 
 AddrCheckStruct subaru_addr_checks[] = {
   {.msg = {{ 0x40, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -22,11 +22,11 @@ AddrCheckStruct subaru_addr_checks[] = {
   {.msg = {{0x13a, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x240, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
 };
-const int SUBARU_ADDR_CHECK_LEN = sizeof(subaru_addr_checks) / sizeof(subaru_addr_checks[0]);
+#define SUBARU_ADDR_CHECK_LEN (sizeof(subaru_addr_checks) / sizeof(subaru_addr_checks[0]))
 addr_checks subaru_rx_checks = {subaru_addr_checks, SUBARU_ADDR_CHECK_LEN};
 
 const CanMsg SUBARU_L_TX_MSGS[] = {{0x161, 0, 8}, {0x164, 0, 8}};
-const int SUBARU_L_TX_MSGS_LEN = sizeof(SUBARU_L_TX_MSGS) / sizeof(SUBARU_L_TX_MSGS[0]);
+#define SUBARU_L_TX_MSGS_LEN (sizeof(SUBARU_L_TX_MSGS) / sizeof(SUBARU_L_TX_MSGS[0]))
 
 // TODO: do checksum and counter checks after adding the signals to the outback dbc file
 AddrCheckStruct subaru_l_addr_checks[] = {
@@ -34,7 +34,7 @@ AddrCheckStruct subaru_l_addr_checks[] = {
   {.msg = {{0x371, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x144, 0, 8, .expected_timestep = 50000U}, { 0 }, { 0 }}},
 };
-const int SUBARU_L_ADDR_CHECK_LEN = sizeof(subaru_l_addr_checks) / sizeof(subaru_l_addr_checks[0]);
+#define SUBARU_L_ADDR_CHECK_LEN (sizeof(subaru_l_addr_checks) / sizeof(subaru_l_addr_checks[0]))
 addr_checks subaru_l_rx_checks = {subaru_addr_checks, SUBARU_L_ADDR_CHECK_LEN};
 
 static uint8_t subaru_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {

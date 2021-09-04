@@ -15,7 +15,7 @@ AddrCheckStruct chrysler_addr_checks[] = {
   {.msg = {{308, 0, 8, .check_checksum = false, .max_counter = 15U,  .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{320, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
-const int CHRYSLER_ADDR_CHECK_LEN = sizeof(chrysler_addr_checks) / sizeof(chrysler_addr_checks[0]);
+#define CHRYSLER_ADDR_CHECK_LEN (sizeof(chrysler_addr_checks) / sizeof(chrysler_addr_checks[0]))
 addr_checks chrysler_rx_checks = {chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
 
 static uint8_t chrysler_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
