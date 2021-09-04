@@ -23,7 +23,7 @@ AddrCheckStruct tesla_addr_checks[] = {
   {.msg = {{0x368, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // DI_state (10Hz)
   {.msg = {{0x318, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // GTW_carState (10Hz)
 };
-const int TESLA_ADDR_CHECK_LEN = sizeof(tesla_addr_checks) / sizeof(tesla_addr_checks[0]);
+#define TESLA_ADDR_CHECK_LEN (sizeof(tesla_addr_checks) / sizeof(tesla_addr_checks[0]))
 addr_checks tesla_rx_checks = {tesla_addr_checks, TESLA_ADDR_CHECK_LEN};
 
 bool autopilot_enabled = false;

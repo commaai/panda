@@ -19,7 +19,7 @@ const int VOLKSWAGEN_DRIVER_TORQUE_FACTOR = 3;
 
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
 const CanMsg VOLKSWAGEN_MQB_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_GRA_ACC_01, 0, 8}, {MSG_GRA_ACC_01, 2, 8}, {MSG_LDW_02, 0, 8}};
-const int VOLKSWAGEN_MQB_TX_MSGS_LEN = sizeof(VOLKSWAGEN_MQB_TX_MSGS) / sizeof(VOLKSWAGEN_MQB_TX_MSGS[0]);
+#define VOLKSWAGEN_MQB_TX_MSGS_LEN (sizeof(VOLKSWAGEN_MQB_TX_MSGS) / sizeof(VOLKSWAGEN_MQB_TX_MSGS[0]))
 
 AddrCheckStruct volkswagen_mqb_addr_checks[] = {
   {.msg = {{MSG_ESP_19, 0, 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -28,7 +28,7 @@ AddrCheckStruct volkswagen_mqb_addr_checks[] = {
   {.msg = {{MSG_TSK_06, 0, 8, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MOTOR_20, 0, 8, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
-const int VOLKSWAGEN_MQB_ADDR_CHECKS_LEN = sizeof(volkswagen_mqb_addr_checks) / sizeof(volkswagen_mqb_addr_checks[0]);
+#define VOLKSWAGEN_MQB_ADDR_CHECKS_LEN (sizeof(volkswagen_mqb_addr_checks) / sizeof(volkswagen_mqb_addr_checks[0]))
 addr_checks volkswagen_mqb_rx_checks = {volkswagen_mqb_addr_checks, VOLKSWAGEN_MQB_ADDR_CHECKS_LEN};
 
 // Safety-relevant CAN messages for the Volkswagen PQ35/PQ46/NMS platforms
@@ -42,7 +42,7 @@ addr_checks volkswagen_mqb_rx_checks = {volkswagen_mqb_addr_checks, VOLKSWAGEN_M
 
 // Transmit of GRA_Neu is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
 const CanMsg VOLKSWAGEN_PQ_TX_MSGS[] = {{MSG_HCA_1, 0, 5}, {MSG_GRA_NEU, 0, 4}, {MSG_GRA_NEU, 2, 4}, {MSG_LDW_1, 0, 8}};
-const int VOLKSWAGEN_PQ_TX_MSGS_LEN = sizeof(VOLKSWAGEN_PQ_TX_MSGS) / sizeof(VOLKSWAGEN_PQ_TX_MSGS[0]);
+#define VOLKSWAGEN_PQ_TX_MSGS_LEN (sizeof(VOLKSWAGEN_PQ_TX_MSGS) / sizeof(VOLKSWAGEN_PQ_TX_MSGS[0]))
 
 AddrCheckStruct volkswagen_pq_addr_checks[] = {
   {.msg = {{MSG_LENKHILFE_3, 0, 6, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -50,7 +50,7 @@ AddrCheckStruct volkswagen_pq_addr_checks[] = {
   {.msg = {{MSG_MOTOR_3, 0, 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_BREMSE_3, 0, 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
 };
-const int VOLKSWAGEN_PQ_ADDR_CHECKS_LEN = sizeof(volkswagen_pq_addr_checks) / sizeof(volkswagen_pq_addr_checks[0]);
+#define VOLKSWAGEN_PQ_ADDR_CHECKS_LEN (sizeof(volkswagen_pq_addr_checks) / sizeof(volkswagen_pq_addr_checks[0]))
 addr_checks volkswagen_pq_rx_checks = {volkswagen_pq_addr_checks, VOLKSWAGEN_PQ_ADDR_CHECKS_LEN};
 
 int volkswagen_torque_msg = 0;
