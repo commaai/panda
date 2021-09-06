@@ -13,11 +13,8 @@ const int TOYOTA_MAX_RT_DELTA = 375;      // max delta torque allowed for real t
 const uint32_t TOYOTA_RT_INTERVAL = 250000;    // 250ms between real time checks
 
 // longitudinal limits
-const int TOYOTA_MAX_ACCEL = 1500;        // 1.5 m/s2
-const int TOYOTA_MIN_ACCEL = -3000;       // -3.0 m/s2
-
-const int TOYOTA_ISO_MAX_ACCEL = 2000;        // 2.0 m/s2
-const int TOYOTA_ISO_MIN_ACCEL = -3500;       // -3.5 m/s2
+const int TOYOTA_MAX_ACCEL = 2000;        // 2.0 m/s2
+const int TOYOTA_MIN_ACCEL = -3500;       // -3.5 m/s2
 
 const int TOYOTA_STANDSTILL_THRSLD = 100;  // 1kph
 
@@ -172,9 +169,7 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
           tx = 0;
         }
       }
-      bool violation = (unsafe_mode & UNSAFE_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX)?
-        max_limit_check(desired_accel, TOYOTA_ISO_MAX_ACCEL, TOYOTA_ISO_MIN_ACCEL) :
-        max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
+      bool violation = max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
 
       if (violation) {
         tx = 0;
