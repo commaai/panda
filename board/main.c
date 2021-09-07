@@ -718,8 +718,9 @@ void tick_handler(void) {
           puth(heartbeat_counter);
           puts(" seconds. Safety is set to SILENT mode.\n");
 
-          if (controls_allowed || (controls_allowed_countdown > 0U)) {
+          if (controls_allowed_countdown > 0U) {
             siren_countdown = 5U;
+            controls_allowed_countdown = 0U;
           }
 
           // set flag to indicate the heartbeat was lost
