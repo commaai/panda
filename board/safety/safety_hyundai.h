@@ -14,11 +14,6 @@ const CanMsg HYUNDAI_TX_MSGS[] = {
   {832, 0, 8},  // LKAS11 Bus 0
   {1265, 0, 4}, // CLU11 Bus 0
   {1157, 0, 4}, // LFAHDA_MFC Bus 0
-  // {1056, 0, 8}, //   SCC11,  Bus 0
-  // {1057, 0, 8}, //   SCC12,  Bus 0
-  // {1290, 0, 8}, //   SCC13,  Bus 0
-  // {905, 0, 8},  //   SCC14,  Bus 0
-  // {1186, 0, 8}  //   4a2SCC, Bus 0
  };
 
 const CanMsg HYUNDAI_LONG_TX_MSGS[] = {
@@ -213,8 +208,16 @@ static int hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       brake_pressed = (GET_BYTE(to_push, 6) >> 7) != 0;
     }
 
-    // TODO: add radar msgs to stock_ecu check in case of long
-    generic_rx_checks((addr == 832));
+    bool stock_ecu_detected = (addr == 832);
+
+    // If openpilot is controlling longitudinal we need to ensure the radar is turned off
+    // Enforce by checking we don't see SCC12
+    if (safety_mode_cnt > RELAY_TRNS_TIMEOUT) {
+      if (hyundai_longitudinal && (addr == 1057)) {
+        stock_ecu_detected = true;
+      }
+    }
+    generic_rx_checks(stock_ecu_detected);
   }
   return valid;
 }
