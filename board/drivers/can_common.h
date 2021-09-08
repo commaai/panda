@@ -40,7 +40,6 @@ int can_silent = ALL_CAN_SILENT;
 // ******************* functions prototypes *********************
 bool can_init(uint8_t can_number);
 void process_can(uint8_t can_number);
-bool can_tx_check_min_slots_free(uint32_t min);
 
 // ********************* instantiate queues *********************
 #define can_buffer(x, size) \
@@ -126,10 +125,8 @@ void can_clear(can_ring *q) {
   q->w_ptr = 0;
   q->r_ptr = 0;
   EXIT_CRITICAL();
-
-  if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER)) {
-    usb_outep3_resume_if_paused();
-  }
+  // handle TX buffer full with zero ECUs awake on the bus
+  usb_cb_ep3_out_complete();
 }
 
 // assign CAN numbering
