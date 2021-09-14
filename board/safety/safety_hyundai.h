@@ -7,8 +7,8 @@ const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
 const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
 const int HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
 
-const int HYUNDAI_MAX_ACCEL = 200;  // max accel ==  2.0m/s2
-const int HYUNDAI_MIN_ACCEL = -350; // max decel == -3.5m/s2
+const int HYUNDAI_MAX_ACCEL = 200;  // 1/100 m/s2
+const int HYUNDAI_MIN_ACCEL = -350; // 1/100 m/s2
 
 const CanMsg HYUNDAI_TX_MSGS[] = {
   {832, 0, 8},  // LKAS11 Bus 0
