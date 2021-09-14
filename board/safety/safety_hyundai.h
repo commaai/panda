@@ -241,8 +241,8 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // FCA11: Block any potential actuation
   if (addr == 909) {
     int CR_VSM_DecCmd = GET_BYTE(to_send, 1);
-    int FCA_CmdAct = GET_BYTE(to_send, 2) & (1u << 5);
-    int CF_VSM_DecCmdAct = GET_BYTE(to_send, 3) & (1u << 7);
+    int FCA_CmdAct = GET_BYTE(to_send, 2) & (1u << 5u);
+    int CF_VSM_DecCmdAct = GET_BYTE(to_send, 3) & (1u << 7u);
 
     if ((CR_VSM_DecCmd != 0) || (FCA_CmdAct != 0) || (CF_VSM_DecCmdAct != 0)) {
       tx = 0;
@@ -255,7 +255,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     int desired_accel_val = ((GET_BYTE(to_send, 5) << 3) | (GET_BYTE(to_send, 4) >> 5)) - 1023;
 
     int aeb_decel_cmd = GET_BYTE(to_send, 2);
-    int aeb_req = GET_BYTE(to_send, 6) & (1u << 6);
+    int aeb_req = GET_BYTE(to_send, 6) & (1u << 6u);
 
     bool violation = 0;
 
