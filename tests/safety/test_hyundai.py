@@ -246,6 +246,7 @@ class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
 
 class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
   TX_MSGS = [[832, 0], [1265, 0], [1157, 0], [1056, 0], [1057, 0], [1290, 0], [905, 0], [1186, 0], [909, 0], [1155, 0], [2000, 0]]
+  cnt_button = 0
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
@@ -267,7 +268,8 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     raise NotImplementedError
 
   def _button_msg(self, buttons):
-    values = {"CF_Clu_CruiseSwState": buttons}
+    values = {"CF_Clu_CruiseSwState": buttons, "CF_Clu_AliveCnt1": self.cnt_button}
+    self.__class__.cnt_button += 1
     return self.packer.make_can_msg_panda("CLU11", 0, values)
 
   def _send_accel_msg(self, accel):
@@ -288,20 +290,16 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     }
     return self.packer.make_can_msg_panda("FCA11", 0, values)
 
-  def test_no_aeb(self):
+  def test_no_aeb_fca11(self):
     self.assertTrue(self._tx(self._send_fca11_msg()))
     self.assertFalse(self._tx(self._send_fca11_msg(aeb_req=True)))
     self.assertFalse(self._tx(self._send_fca11_msg(aeb_decel=1.0)))
 
-  def test_resume_button(self):
-    self.safety.set_controls_allowed(0)
-    self._rx(self._button_msg(Buttons.RESUME))
-    self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_set_button(self):
-    self.safety.set_controls_allowed(0)
-    self._rx(self._button_msg(Buttons.SET))
-    self.assertTrue(self.safety.get_controls_allowed())
+  def test_set_resume_buttons(self):
+    for btn in range(8):
+      self.safety.set_controls_allowed(0)
+      self._rx(self._button_msg(btn))
+      self.assertEqual(btn in [Buttons.RESUME, Buttons.SET], self.safety.get_controls_allowed(), msg=f"btn {btn}")
 
   def test_cancel_button(self):
     self.safety.set_controls_allowed(1)
