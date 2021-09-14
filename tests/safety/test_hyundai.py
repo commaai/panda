@@ -250,7 +250,7 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, 4)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, Panda.FLAG_HYUNDAI_LONG)
     self.safety.init_tests()
 
   # override these tests from PandaSafetyTest, hyundai longitudinal uses button enable
