@@ -19,6 +19,11 @@ DRIVER_TORQUE_FACTOR = 2
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
 
+class Buttons:
+  RESUME = 1
+  SET = 2
+  CANCEL = 4
+
 # 4 bit checkusm used in some hyundai messages
 # lives outside the can packer because we never send this msg
 def checksum(msg):
@@ -199,16 +204,13 @@ class TestHyundaiSafety(common.PandaSafetyTest):
       self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
   def test_spam_cancel_safety_check(self):
-    RESUME_BTN = 1
-    SET_BTN = 2
-    CANCEL_BTN = 4
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._button_msg(CANCEL_BTN)))
-    self.assertFalse(self._tx(self._button_msg(RESUME_BTN)))
-    self.assertFalse(self._tx(self._button_msg(SET_BTN)))
+    self.assertTrue(self._tx(self._button_msg(Buttons.CANCEL)))
+    self.assertFalse(self._tx(self._button_msg(Buttons.RESUME)))
+    self.assertFalse(self._tx(self._button_msg(Buttons.SET)))
     # do not block resume if we are engaged already
     self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._button_msg(RESUME_BTN)))
+    self.assertTrue(self._tx(self._button_msg(Buttons.RESUME)))
 
 
 class TestHyundaiLegacySafety(TestHyundaiSafety):
@@ -292,21 +294,18 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     self.assertFalse(self._tx(self._send_fca11_msg(aeb_decel=1.0)))
 
   def test_resume_button(self):
-    RESUME_BTN = 1
     self.safety.set_controls_allowed(0)
-    self._rx(self._button_msg(RESUME_BTN))
+    self._rx(self._button_msg(Buttons.RESUME))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_set_button(self):
-    SET_BTN = 2
     self.safety.set_controls_allowed(0)
-    self._rx(self._button_msg(SET_BTN))
+    self._rx(self._button_msg(Buttons.SET))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_cancel_button(self):
-    CANCEL_BTN = 4
     self.safety.set_controls_allowed(1)
-    self._rx(self._button_msg(CANCEL_BTN))
+    self._rx(self._button_msg(Buttons.CANCEL))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_accel_safety_check(self):
