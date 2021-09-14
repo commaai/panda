@@ -240,6 +240,18 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
+  // FCA11: Block any potential actuation
+  if (addr == 909) {
+    int CR_VSM_DecCmd = GET_BYTE(to_send, 1);
+    tx &= (CR_VSM_DecCmd == 0);
+
+    int FCA_CmdAct = GET_BYTE(to_send, 2) & (1 << 4);
+    tx &= (FCA_CmdAct == 0);
+
+    int CF_VSM_DecCmdAct = GET_BYTE(to_send, 3) & (1 << 7);
+    tx &= (CF_VSM_DecCmdAct == 0);
+  }
+
   // ACCEL: safety check
   if (addr == 1057) {
     int desired_accel_raw = (((GET_BYTE(to_send, 4) & 0x7) << 8) | GET_BYTE(to_send, 3)) - 1023;
