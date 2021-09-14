@@ -4,7 +4,7 @@ import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda
+from panda.tests.safety.common import CANPackerPanda, make_msg
 
 MAX_RATE_UP = 3
 MAX_RATE_DOWN = 7
@@ -320,6 +320,21 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
         self.safety.set_controls_allowed(controls_allowed)
         send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == 0
         self.assertEqual(send, self._tx(self._send_accel_msg(accel)), (controls_allowed, accel))
+
+  def test_diagnostics(self):
+    tester_present = common.package_can_msg((0x7d0, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 0))
+    self.assertTrue(self.safety.safety_tx_hook(tester_present))
+
+    not_tester_present = common.package_can_msg((0x7d0, 0, b"\x03\xAA\xAA\x00\x00\x00\x00\x00", 0))
+    self.assertFalse(self.safety.safety_tx_hook(not_tester_present))
+
+  def test_radar_alive(self):
+    # If the radar knockout failed, make sure the relay malfunction is shown
+    self.assertFalse(self.safety.get_relay_malfunction())
+    self._rx(make_msg(0, 1057, 8))
+    self.assertTrue(self.safety.get_relay_malfunction())
+
+
 
 if __name__ == "__main__":
   unittest.main()
