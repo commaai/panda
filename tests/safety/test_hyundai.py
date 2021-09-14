@@ -272,10 +272,12 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     self.__class__.cnt_button += 1
     return self.packer.make_can_msg_panda("CLU11", 0, values)
 
-  def _send_accel_msg(self, accel):
+  def _send_accel_msg(self, accel, aeb_req=False, aeb_decel=0):
     values = {
       "aReqRaw": accel,
       "aReqValue": accel,
+      "AEB_CmdAct": int(aeb_req),
+      "CR_VSM_DecCmd": aeb_decel,
     }
     return self.packer.make_can_msg_panda("SCC12", 0, values)
 
@@ -294,6 +296,11 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     self.assertTrue(self._tx(self._send_fca11_msg()))
     self.assertFalse(self._tx(self._send_fca11_msg(aeb_req=True)))
     self.assertFalse(self._tx(self._send_fca11_msg(aeb_decel=1.0)))
+
+  def test_no_aeb_scc12(self):
+    self.assertTrue(self._tx(self._send_accel_msg(0)))
+    self.assertFalse(self._tx(self._send_accel_msg(0, aeb_req=True)))
+    self.assertFalse(self._tx(self._send_accel_msg(0, aeb_decel=1.0)))
 
   def test_set_resume_buttons(self):
     for btn in range(8):

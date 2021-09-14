@@ -253,6 +253,10 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if (addr == 1057) {
     int desired_accel_raw = (((GET_BYTE(to_send, 4) & 0x7) << 8) | GET_BYTE(to_send, 3)) - 1023;
     int desired_accel_val = ((GET_BYTE(to_send, 5) << 3) | (GET_BYTE(to_send, 4) >> 5)) - 1023;
+
+    int aeb_decel_cmd = GET_BYTE(to_send, 2);
+    int aeb_req = GET_BYTE(to_send, 6) & (1 << 6);
+
     bool violation = 0;
 
     if (!controls_allowed) {
@@ -262,6 +266,9 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
     violation |= max_limit_check(desired_accel_raw, HYUNDAI_MAX_ACCEL, HYUNDAI_MIN_ACCEL);
     violation |= max_limit_check(desired_accel_val, HYUNDAI_MAX_ACCEL, HYUNDAI_MIN_ACCEL);
+
+    violation |= (aeb_decel_cmd != 0);
+    violation |= (aeb_req != 0);
 
     if (violation) {
       tx = 0;
