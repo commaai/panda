@@ -19,10 +19,10 @@ DRIVER_TORQUE_FACTOR = 3
 MSG_EPS_2 = 0x31            # EPS driver input torque
 MSG_ABS_1 = 0x79            # Brake pedal and pressure
 MSG_TPS_1 = 0x81            # Throttle position sensor
-MSG_ABS_4 = 0x8B     # ABS wheel speeds
+MSG_ABS_4 = 0x8B            # ABS wheel speeds
 MSG_DASM_ACC_CMD_1 = 0x99   # ACC engagement states from DASM
 MSG_DASM_LKAS_CMD = 0xA6    # LKAS controls from DASM
-MSG_ACC_BUTTONS = 0xB1      # Cruise control buttons
+MSG_CSWC = 0xB1             # Cruise control buttons
 MSG_DASM_LKAS_HUD = 0xFA    # LKAS HUD and auto headlight control from DASM
 
 class TestStellantisSafety(common.PandaSafetyTest):
@@ -31,9 +31,9 @@ class TestStellantisSafety(common.PandaSafetyTest):
   cnt_ABS_4 = 0
   cnt_dasm_acc_cmd_1 = 0
   cnt_dasm_lkas_cmd = 0
-  cnt_acc_buttons = 0
+  cnt_cswc = 0
 
-  TX_MSGS = [[MSG_DASM_LKAS_CMD, 0], [MSG_DASM_LKAS_HUD, 0], [MSG_ACC_BUTTONS, 2]]
+  TX_MSGS = [[MSG_DASM_LKAS_CMD, 0], [MSG_DASM_LKAS_HUD, 0], [MSG_CSWC, 2]]
   STANDSTILL_THRESHOLD = 0.3
   GAS_PRESSED_THRESHOLD = 10
   RELAY_MALFUNCTION_ADDR = MSG_DASM_LKAS_CMD
@@ -88,9 +88,9 @@ class TestStellantisSafety(common.PandaSafetyTest):
   # Cruise control buttons
   def _acc_buttons_msg(self, cancel=0, resume=0, _set=0):
     values = {"CANCEL": cancel, "SET_PLUS": _set,
-              "RESUME": resume, "COUNTER": self.cnt_acc_buttons % 16}
-    self.__class__.cnt_acc_buttons += 1
-    return self.packer.make_can_msg_panda("ACC_BUTTONS", 2, values)
+              "RESUME": resume, "COUNTER": self.cnt_cswc % 16}
+    self.__class__.cnt_cswc += 1
+    return self.packer.make_can_msg_panda("CSWC", 2, values)
 
   def test_spam_cancel_safety_check(self):
     self.safety.set_controls_allowed(0)

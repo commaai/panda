@@ -14,10 +14,10 @@ const int STELLANTIS_DRIVER_TORQUE_FACTOR = 3;      // TODO: verify suitability
 #define MSG_ABS_4           0x8B  // ABS wheel speeds
 #define MSG_DASM_ACC_CMD_1  0x99  // ACC engagement states from DASM
 #define MSG_DASM_LKAS_CMD   0xA6  // LKAS controls from DASM
-#define MSG_ACC_BUTTONS     0xB1  // Cruise control buttons
+#define MSG_CSWC            0xB1  // Cruise control buttons
 #define MSG_DASM_LKAS_HUD   0xFA  // LKAS HUD and auto headlight control from DASM
 
-const CanMsg STELLANTIS_TX_MSGS[] = {{MSG_DASM_LKAS_CMD, 0, 8}, {MSG_DASM_LKAS_HUD, 0, 8}, {MSG_ACC_BUTTONS, 2, 3}};
+const CanMsg STELLANTIS_TX_MSGS[] = {{MSG_DASM_LKAS_CMD, 0, 8}, {MSG_DASM_LKAS_HUD, 0, 8}, {MSG_CSWC, 2, 3}};
 
 AddrCheckStruct stellantis_addr_checks[] = {
   {.msg = {{MSG_EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -194,7 +194,7 @@ static int stellantis_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // FORCE CANCEL: only the cancel button press is allowed
-  if ((addr == MSG_ACC_BUTTONS) && !controls_allowed) {
+  if ((addr == MSG_CSWC) && !controls_allowed) {
     if ((GET_BYTE(to_send, 0) & 0x14) != 0) {
       tx = 0;
     }
