@@ -11,7 +11,7 @@ const int STELLANTIS_DRIVER_TORQUE_FACTOR = 3;      // TODO: verify suitability
 #define MSG_EPS_2           0x31  // EPS driver input torque and angle-change rate
 #define MSG_ABS_1           0x79  // Brake pedal and pressure
 #define MSG_TPS_1           0x81  // Throttle position sensor
-#define MSG_WHEEL_SPEEDS    0x8B  // ABS wheel speeds
+#define MSG_ABS_4           0x8B  // ABS wheel speeds
 #define MSG_DASM_ACC_CMD_1  0x99  // ACC engagement states from DASM
 #define MSG_DASM_LKAS_CMD   0xA6  // LKAS controls from DASM
 #define MSG_ACC_BUTTONS     0xB1  // Cruise control buttons
@@ -23,7 +23,7 @@ AddrCheckStruct stellantis_addr_checks[] = {
   {.msg = {{MSG_EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_ABS_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_TPS_1, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_WHEEL_SPEEDS, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_ABS_4, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_DASM_ACC_CMD_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define STELLANTIS_ADDR_CHECK_LEN (sizeof(stellantis_addr_checks) / sizeof(stellantis_addr_checks[0]))
@@ -103,7 +103,7 @@ static int stellantis_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // update speed
-    if (addr == MSG_WHEEL_SPEEDS) {
+    if (addr == MSG_ABS_4) {
       int wheel_speed_fl = ((GET_BYTE(to_push, 4) & 0xFU) << 8) | GET_BYTE(to_push, 5);
       int wheel_speed_fr = ((GET_BYTE(to_push, 6) & 0xFU) << 8) | GET_BYTE(to_push, 7);
       // Check for average front speed in excess of 0.3m/s, 1.08km/h

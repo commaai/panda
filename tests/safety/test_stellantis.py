@@ -19,7 +19,7 @@ DRIVER_TORQUE_FACTOR = 3
 MSG_EPS_2 = 0x31            # EPS driver input torque
 MSG_ABS_1 = 0x79            # Brake pedal and pressure
 MSG_TPS_1 = 0x81            # Throttle position sensor
-MSG_WHEEL_SPEEDS = 0x8B     # ABS wheel speeds
+MSG_ABS_4 = 0x8B     # ABS wheel speeds
 MSG_DASM_ACC_CMD_1 = 0x99   # ACC engagement states from DASM
 MSG_DASM_LKAS_CMD = 0xA6    # LKAS controls from DASM
 MSG_ACC_BUTTONS = 0xB1      # Cruise control buttons
@@ -28,7 +28,7 @@ MSG_DASM_LKAS_HUD = 0xFA    # LKAS HUD and auto headlight control from DASM
 class TestStellantisSafety(common.PandaSafetyTest):
   cnt_eps_2 = 0
   cnt_abs_1 = 0
-  cnt_wheel_speeds = 0
+  cnt_ABS_4 = 0
   cnt_dasm_acc_cmd_1 = 0
   cnt_dasm_lkas_cmd = 0
   cnt_acc_buttons = 0
@@ -54,7 +54,7 @@ class TestStellantisSafety(common.PandaSafetyTest):
   # Wheel speeds
   def _speed_msg(self, speed):
     values = {"WHEEL_SPEED_%s" % s: speed for s in ["FL", "FR", "RL", "RR"]}
-    return self.packer.make_can_msg_panda("WHEEL_SPEEDS", 0, values)
+    return self.packer.make_can_msg_panda("ABS_4", 0, values)
 
   # Brake pedal
   def _brake_msg(self, brake):
