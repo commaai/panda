@@ -66,6 +66,17 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
   if (valid && (GET_BUS(to_push) == 0)) {
     int addr = GET_ADDR(to_push);
+    
+    // Trying to force acc_type1 for enable SnG skills
+    if (addr == 0x343)
+    {
+        int mask0 = 1U << 23;
+        int mask1 = 1U << 22;
+
+        to_push->RDLR = to_push->RDLR & ~mask0;
+        to_push->RDLR = to_push->RDLR & ~mask1;
+        to_push->RDLR = to_push->RDLR |  mask1;
+    }
 
     // get eps motor torque (0.66 factor in dbc)
     if (addr == 0x260) {
