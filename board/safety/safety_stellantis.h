@@ -24,7 +24,7 @@ AddrCheckStruct stellantis_addr_checks[] = {
   {.msg = {{MSG_ABS_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_TPS_1, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_ABS_4, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_DASM_ACC_CMD_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_DASM_ACC_CMD_1, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define STELLANTIS_ADDR_CHECK_LEN (sizeof(stellantis_addr_checks) / sizeof(stellantis_addr_checks[0]))
 addr_checks stellantis_rx_checks = {stellantis_addr_checks, STELLANTIS_ADDR_CHECK_LEN};
@@ -78,11 +78,12 @@ static int stellantis_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   bool valid = addr_safety_check(to_push, &stellantis_rx_checks,
                                  stellantis_get_checksum, stellantis_compute_checksum, stellantis_get_counter);
 
-  if (valid && (GET_BUS(to_push) == 0)) {
+  if (valid) {
+    int bus = GET_BUS(to_push);
     int addr = GET_ADDR(to_push);
 
     // Measured eps torque
-    if (addr == MSG_EPS_2) {
+    if ((bus == 0) && (addr == MSG_EPS_2)) {
       int torque_driver_new = (((GET_BYTE(to_push, 0) & 0xFU) << 8) | GET_BYTE(to_push, 1));
       torque_driver_new = to_signed(torque_driver_new, 12) + 1024;
 
@@ -91,7 +92,7 @@ static int stellantis_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if (addr == MSG_DASM_ACC_CMD_1) {
+    if ((bus == 2) && (addr == MSG_DASM_ACC_CMD_1)) {
       int cruise_engaged = ((GET_BYTE(to_push, 2) >> 4) & 0x3U) == 0x3U;
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
@@ -103,7 +104,7 @@ static int stellantis_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // update speed
-    if (addr == MSG_ABS_4) {
+    if ((bus == 0) && (addr == MSG_ABS_4)) {
       int wheel_speed_fl = ((GET_BYTE(to_push, 4) & 0xFU) << 8) | GET_BYTE(to_push, 5);
       int wheel_speed_fr = ((GET_BYTE(to_push, 6) & 0xFU) << 8) | GET_BYTE(to_push, 7);
       // Check for average front speed in excess of 0.3m/s, 1.08km/h
@@ -112,12 +113,12 @@ static int stellantis_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // exit controls on rising edge of gas press
-    if (addr == MSG_TPS_1) {
+    if ((bus == 0) && (addr == MSG_TPS_1)) {
       gas_pressed = GET_BYTE(to_push, 5) > 20;  // FIXME: this signal is suspect, nonzero on *some* vehicles/drives
     }
 
     // exit controls on rising edge of brake press
-    if (addr == MSG_ABS_1) {
+    if ((bus == 0) && (addr == MSG_ABS_1)) {
       brake_pressed = (((GET_BYTE(to_push, 2) & 0xFU) << 8) | GET_BYTE(to_push, 3)) > 0;
       if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
         controls_allowed = 0;

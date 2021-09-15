@@ -71,7 +71,7 @@ class TestStellantisSafety(common.PandaSafetyTest):
   def _pcm_status_msg(self, enable):
     values = {"ACC_STATUS": 3 if enable else 1, "COUNTER": self.cnt_dasm_acc_cmd_1 % 16}
     self.__class__.cnt_dasm_acc_cmd_1 += 1
-    return self.packer.make_can_msg_panda("DASM_ACC_CMD_1", 0, values)
+    return self.packer.make_can_msg_panda("DASM_ACC_CMD_1", 2, values)
 
   # Driver steering input torque
   def _eps_msg(self, torque):
