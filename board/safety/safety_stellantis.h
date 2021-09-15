@@ -126,7 +126,9 @@ static int stellantis_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       brake_pressed_prev = brake_pressed;
     }
 
-    generic_rx_checks((addr == MSG_DASM_LKAS_CMD));
+    if (bus == 0) {
+      generic_rx_checks((addr == MSG_DASM_LKAS_CMD));
+    }
   }
   return valid;
 }
