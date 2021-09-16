@@ -105,8 +105,8 @@ static int stellantis_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // update speed
     if ((bus == 0) && (addr == MSG_ABS_4)) {
-      int wheel_speed_fl = ((GET_BYTE(to_push, 4) & 0xFU) << 8) | GET_BYTE(to_push, 5);
-      int wheel_speed_fr = ((GET_BYTE(to_push, 6) & 0xFU) << 8) | GET_BYTE(to_push, 7);
+      int wheel_speed_fl = ((GET_BYTE(to_push, 0) & 0xFU) << 8) | GET_BYTE(to_push, 1);
+      int wheel_speed_fr = ((GET_BYTE(to_push, 2) & 0xFU) << 8) | GET_BYTE(to_push, 3);
       // Check for average front speed in excess of 0.3m/s, 1.08km/h
       // DBC speed scale 0.02: 0.3m/s = 15, sum both wheels to compare
       vehicle_moving = (wheel_speed_fl + wheel_speed_fr) > 30;
