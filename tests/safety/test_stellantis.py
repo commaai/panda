@@ -28,14 +28,13 @@ MSG_DASM_LKAS_HUD = 0xFA    # LKAS HUD and auto headlight control from DASM
 class TestStellantisSafety(common.PandaSafetyTest):
   cnt_eps_2 = 0
   cnt_abs_1 = 0
-  cnt_ABS_4 = 0
   cnt_dasm_acc_cmd_1 = 0
   cnt_dasm_lkas_cmd = 0
   cnt_cswc = 0
 
   TX_MSGS = [[MSG_DASM_LKAS_CMD, 0], [MSG_DASM_LKAS_HUD, 0], [MSG_CSWC, 2]]
   STANDSTILL_THRESHOLD = 0.3
-  GAS_PRESSED_THRESHOLD = 10
+  GAS_PRESSED_THRESHOLD = 20
   RELAY_MALFUNCTION_ADDR = MSG_DASM_LKAS_CMD
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [MSG_DASM_LKAS_CMD, MSG_DASM_LKAS_HUD]}
