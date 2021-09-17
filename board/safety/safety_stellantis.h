@@ -209,11 +209,11 @@ static int stellantis_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int addr = GET_ADDR(to_fwd);
 
   if (!relay_malfunction) {
-    // forward all messages from the rest of the car toward DASM
-    if (bus_num == 0) {
+    // trim ACC buttons from CSWC toward DASM
+    if ((bus_num == 0) && (addr != MSG_CSWC)) {
       bus_fwd = 2;
     }
-    // selectively forward messages from DASM toward the rest of the car
+    // trim LKAS torque and HUD commands from DASM toward rest of car
     if ((bus_num == 2) && (addr != MSG_DASM_LKAS_CMD) && (addr != MSG_DASM_LKAS_HUD)) {
       bus_fwd = 0;
     }
