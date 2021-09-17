@@ -114,7 +114,7 @@ static int stellantis_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
     // exit controls on rising edge of gas press
     if ((bus == 0) && (addr == MSG_TPS_1)) {
-      gas_pressed = ((GET_BYTE(to_push, 4) << 8) | GET_BYTE(to_push, 5)) > 1024;
+      gas_pressed = ((GET_BYTE(to_push, 4) << 8) | GET_BYTE(to_push, 5)) > 1000;
     }
 
     // exit controls on rising edge of brake press
