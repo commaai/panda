@@ -22,6 +22,8 @@ const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8
                              {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
                              {789, 2, 5},  // ch bus
                              {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
+//precalculated inactive zero values to be sent when there is a violation or inactivation of LKAS
+const uint32_t GM_LKAS_BLANK[] = {0x00000000U,0x10000fffU,0x20000ffeU,0x30000ffdU};
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 AddrCheckStruct gm_addr_checks[] = {
@@ -142,6 +144,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // LKA STEER: safety check
   if (addr == 384) {
+    int rolling_counter = GET_BYTE(to_send, 0) >> 4;
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1);
     uint32_t ts = microsecond_timer_get();
     bool violation = 0;
@@ -184,7 +187,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
 
     if (violation) {
-      tx = 0;
+      to_send->RDLR = GM_LKAS_BLANK[rolling_counter];
     }
   }
 
