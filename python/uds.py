@@ -507,7 +507,7 @@ def get_rx_addr_for_tx_addr(tx_addr, rx_offset=0x8):
 
 
 class UdsClient():
-  def __init__(self, panda, tx_addr: int, rx_addr: int = None, bus: int = 0, timeout: float = 1, debug: bool = False, response_pending_timeout: float = 6):
+  def __init__(self, panda, tx_addr: int, rx_addr: int = None, bus: int = 0, timeout: float = 1, debug: bool = False, response_pending_timeout: float = 10):
     self.bus = bus
     self.tx_addr = tx_addr
     self.rx_addr = rx_addr if rx_addr is not None else get_rx_addr_for_tx_addr(tx_addr)
