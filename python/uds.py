@@ -355,12 +355,11 @@ class CanClient():
         self._recv_buffer()
 
 class IsoTpMessage():
-  def __init__(self, can_client: CanClient, timeout: float = 1, debug: bool = False, max_len: int = 8, response_pending_timeout: float = 6):
+  def __init__(self, can_client: CanClient, timeout: float = 1, debug: bool = False, max_len: int = 8):
     self._can_client = can_client
     self.timeout = timeout
     self.debug = debug
     self.max_len = max_len
-    self.response_pending_timeout = response_pending_timeout
 
   def send(self, dat: bytes) -> None:
     # throw away any stale data
@@ -394,23 +393,22 @@ class IsoTpMessage():
       msg = (struct.pack("!H", 0x1000 | self.tx_len) + self.tx_dat[:self.max_len - 2]).ljust(self.max_len - 2, b"\x00")
     self._can_client.send([msg])
 
-  def recv(self, response_pending: bool = False) -> Optional[bytes]:
-    start_time = time.time()
+  def recv(self, timeout=None) -> Optional[bytes]:
+    if timeout is None:
+      timeout = self.timeout
+
+    start_time = time.monotonic()
     try:
       while True:
         for msg in self._can_client.recv():
           self._isotp_rx_next(msg)
-          start_time = time.time()
-          response_pending = False
+          start_time = time.monotonic()
           if self.tx_done and self.rx_done:
             return self.rx_dat
         # no timeout indicates non-blocking
-        if self.timeout == 0:
+        if timeout == 0:
           return None
-        if response_pending:
-          if time.time() - start_time > self.response_pending_timeout:
-            raise MessageTimeoutError("timeout waiting for pending response")
-        elif time.time() - start_time > self.timeout:
+        if time.monotonic() - start_time > timeout:
           raise MessageTimeoutError("timeout waiting for response")
     finally:
       if self.debug and self.rx_dat:
@@ -526,17 +524,18 @@ class UdsClient():
     if data is not None:
       req += data
 
-
     # send request, wait for response
-    isotp_msg = IsoTpMessage(self._can_client, self.timeout, self.debug, response_pending_timeout = self.response_pending_timeout)
+    isotp_msg = IsoTpMessage(self._can_client, self.timeout, self.debug)
     isotp_msg.send(req)
     response_pending = False
     while True:
-      resp = isotp_msg.recv(response_pending)
+      timeout = self.response_pending_timeout if response_pending else self.timeout
+      resp = isotp_msg.recv(timeout)
 
       if resp is None:
         continue
 
+      response_pending = False
       resp_sid = resp[0] if len(resp) > 0 else None
 
       # negative response
