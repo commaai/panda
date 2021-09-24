@@ -514,7 +514,8 @@ class UdsClient():
     self.rx_addr = rx_addr if rx_addr is not None else get_rx_addr_for_tx_addr(tx_addr)
     self.timeout = timeout
     self.debug = debug
-    self._can_client = CanClient(partial(panda.can_send, timeout=int(tx_timeout*1000)), panda.can_recv, self.tx_addr, self.rx_addr, self.bus, debug=self.debug)
+    can_send_with_timeout = partial(panda.can_send, timeout=int(tx_timeout*1000))
+    self._can_client = CanClient(can_send_with_timeout, panda.can_recv, self.tx_addr, self.rx_addr, self.bus, debug=self.debug)
     self.response_pending_timeout = response_pending_timeout
 
   # generic uds request
