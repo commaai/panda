@@ -31,7 +31,6 @@ if __name__ == "__main__":
       uds_data_ids[uds_id] = "IDENTIFICATION_OPTION_SYSTEM_SUPPLIER_SPECIFIC"
 
   panda = Panda()
-  panda.set_power_save(0)
   panda.set_safety_mode(Panda.SAFETY_ELM327)
   print("querying addresses ...")
   with tqdm(addrs) as t:
