@@ -127,6 +127,17 @@ else:
   cert_fn = File("../certs/debug").srcnode().abspath
   flags += ["-DALLOW_DEBUG"]
 
+if os.getenv("DEBUG"):
+  flags += ["-DDEBUG"]
+if os.getenv("DEBUG_UART"):
+  flags += ["-DDEBUG_UART"]
+if os.getenv("DEBUG_USB"):
+  flags += ["-DDEBUG_USB"]
+if os.getenv("DEBUG_SPI"):
+  flags += ["-DDEBUG_SPI"]
+if os.getenv("DEBUG_FAULTS"):
+  flags += ["-DDEBUG_FAULTS"]
+
 includes = [
   "stm32fx/inc",
   "stm32h7/inc",
