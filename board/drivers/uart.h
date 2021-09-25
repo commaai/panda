@@ -189,15 +189,15 @@ void puthx(unsigned int i, unsigned int len) {
 }
 
 void puth(unsigned int i) {
-  puthx(i, 8);
+  puthx(i, 8U);
 }
 
 void puth2(unsigned int i) {
-  puthx(i, 2);
+  puthx(i, 2U);
 }
 
 void puth4(unsigned int i) {
-  puthx(i, 4);
+  puthx(i, 4U);
 }
 
 void hexdump(const void *a, int l) {
