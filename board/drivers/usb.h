@@ -23,8 +23,6 @@ typedef union _USB_Setup {
 }
 USB_Setup_TypeDef;
 
-#define MAX_CAN_MSGS_PER_BULK_TRANSFER 16U
-
 bool usb_eopf_detected = false;
 
 void usb_init(void);
@@ -363,6 +361,8 @@ uint8_t usbdata[0x100];
 uint8_t* ep0_txdata = NULL;
 uint16_t ep0_txlen = 0;
 bool outep3_processing = false;
+
+#define MAX_CAN_MSGS_PER_BULK_TRANSFER (uint32_t)(sizeof(usbdata) / sizeof(CAN_FIFOMailBox_TypeDef))
 
 // Store the current interface alt setting.
 int current_int0_alt_setting = 0;
