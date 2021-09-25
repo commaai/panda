@@ -20,6 +20,9 @@
   void puth2(unsigned int i) {
     UNUSED(i);
   }
+  void puth4(unsigned int i) {
+    UNUSED(i);
+  }
 #endif
 
 #define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
