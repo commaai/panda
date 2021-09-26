@@ -181,9 +181,9 @@ void putui(uint32_t i) {
   puts(&str[idx + 1U]);
 }
 
-void puthx(unsigned int i, unsigned int len) {
+void puthx(uint32_t i, uint8_t len) {
   const char c[] = "0123456789abcdef";
-  for (int pos = (len * 4) - 4; pos > -4; pos -= 4) {
+  for (int pos = ((int)len * 4) - 4; pos > -4; pos -= 4) {
     putch(c[(i >> (unsigned int)(pos)) & 0xFU]);
   }
 }
