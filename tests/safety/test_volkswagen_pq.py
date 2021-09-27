@@ -21,7 +21,6 @@ MSG_MOTOR_2 = 0x288      # RX from ECU, for CC state and brake switch state
 MSG_MOTOR_3 = 0x380      # RX from ECU, for driver throttle input
 MSG_GRA_NEU = 0x38A      # TX by OP, ACC control buttons for cancel/resume
 MSG_BREMSE_1 = 0x1A0     # RX from ABS, for ego speed
-MSG_BREMSE_3 = 0x4A0     # RX from ABS, for wheel speeds
 MSG_LDW_1 = 0x5BE        # TX by OP, Lane line recognition and text alerts
 
 
