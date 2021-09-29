@@ -7,11 +7,8 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, make_msg, UNSAFE_MODE
 
-MAX_ACCEL = 1.5
-MIN_ACCEL = -3.0
-
-ISO_MAX_ACCEL = 2.0
-ISO_MIN_ACCEL = -3.5
+MAX_ACCEL = 2.0
+MIN_ACCEL = -3.5
 
 class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
                        common.TorqueSteeringSafetyTest):
@@ -83,7 +80,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
 
   def test_accel_actuation_limits(self):
     limits = ((MIN_ACCEL, MAX_ACCEL, UNSAFE_MODE.DEFAULT),
-              (ISO_MIN_ACCEL, ISO_MAX_ACCEL, UNSAFE_MODE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
+              (MIN_ACCEL, MAX_ACCEL, UNSAFE_MODE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
 
     for min_accel, max_accel, unsafe_mode in limits:
       for accel in np.arange(min_accel - 1, max_accel + 1, 0.1):

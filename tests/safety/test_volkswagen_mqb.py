@@ -47,10 +47,6 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
     self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
     self.safety.init_tests()
 
-  # override these inherited tests from PandaSafetyTest
-  def test_cruise_engaged_prev(self):
-    pass
-
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)
     self.safety.set_rt_torque_last(t)
@@ -98,16 +94,6 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
               "GRA_Tip_Wiederaufnahme": resume, "COUNTER": self.cnt_gra_acc_01 % 16}
     self.__class__.cnt_gra_acc_01 += 1
     return self.packer.make_can_msg_panda("GRA_ACC_01", 0, values)
-
-  def test_enable_control_allowed_from_cruise(self):
-    self.safety.set_controls_allowed(0)
-    self._rx(self._pcm_status_msg(True))
-    self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_disable_control_allowed_from_cruise(self):
-    self.safety.set_controls_allowed(1)
-    self._rx(self._pcm_status_msg(False))
-    self.assertFalse(self.safety.get_controls_allowed())
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
