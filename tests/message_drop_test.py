@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import usb1
 import time
 import struct
 import itertools
@@ -10,7 +11,7 @@ from panda import Panda
 
 JUNGLE = "JUNGLE" in os.environ
 if JUNGLE:
-  from panda_jungle import PandaJungle # noqa: E401
+  from panda_jungle import PandaJungle # pylint: disable=import-error
 
 # Generate unique messages
 NUM_MESSAGES_PER_BUS = 2000
@@ -28,9 +29,8 @@ def flood_tx(panda):
         panda.can_send_many(tx_messages[BLOCK_SIZE * i : BLOCK_SIZE * (i + 1)])
         print("OK")
         break
-      except:
+      except usb1.USBErrorTimeout:
         print("timeout")
-        pass
 
   print(f"Done sending {3*NUM_MESSAGES_PER_BUS} messages!")
 
@@ -66,6 +66,6 @@ if __name__ == "__main__":
 
   # Check if we received everything
   for bus in range(3):
-    received_msgs = set(map(lambda m: bytes(m[2]), filter(lambda m, b=bus: m[3] == b, rx)))
+    received_msgs = set(map(lambda m: bytes(m[2]), filter(lambda m, b=bus: m[3] == b, rx))) # type: ignore
     dropped_msgs = set(messages).difference(received_msgs)
     print(f"Bus {bus} dropped msgs: {len(list(dropped_msgs))} / {len(messages)}")

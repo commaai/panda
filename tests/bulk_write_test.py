@@ -8,7 +8,7 @@ from panda import Panda
 
 JUNGLE = "JUNGLE" in os.environ
 if JUNGLE:
-  from panda_jungle import PandaJungle # noqa: E401
+  from panda_jungle import PandaJungle # pylint: disable=import-error
 
 # The TX buffers on pandas is 0x100 in length.
 NUM_MESSAGES_PER_BUS = 10000
