@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+import os
+import time
+import struct
+import itertools
+import threading
+from typing import Any, List
+
+from panda import Panda
+
+JUNGLE = "JUNGLE" in os.environ
+if JUNGLE:
+  from panda_jungle import PandaJungle
+
+# Generate unique messages
+NUM_MESSAGES_PER_BUS = 10000
+messages = [bytes(struct.pack("Q", i)) for i in range(NUM_MESSAGES_PER_BUS)]
+tx_messages = list(itertools.chain.from_iterable(map(lambda msg: [[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]], messages)))
+
+def flood_tx(panda):
+  print('Sending!')
+  panda.can_send_many(tx_messages, timeout=0)
+  print(f"Done sending {3*NUM_MESSAGES_PER_BUS} messages!")
+
+if __name__ == "__main__":
+  serials = Panda.list()
+  if JUNGLE:
+    sender = Panda()
+    receiver = PandaJungle()
+  else:
+    if len(serials) != 2:
+      raise Exception("Connect two pandas to perform this test!")
+    sender = Panda(serials[0])
+    receiver = Panda(serials[1])
+    receiver.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+
+  sender.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  sender.set_heartbeat_disabled()
+
+  # Start transmisson
+  threading.Thread(target=flood_tx, args=(sender,)).start()
+
+  # Receive as much as we can, and stop when there hasn't been anything for a second
+  rx: List[Any] = []
+  old_len = 0
+  last_change = time.monotonic()
+  while time.monotonic() - last_change < 1:
+    if old_len < len(rx):
+      last_change = time.monotonic()
+    old_len = len(rx)
+
+    rx.extend(receiver.can_recv())
+  print(f"Received {len(rx)} messages")
+
+  # Check if we received everything
+  for bus in range(3):
+    received_msgs = set(map(lambda m: bytes(m[2]), filter(lambda m: m[3] == bus, rx)))
+    dropped_msgs = set(messages).difference(received_msgs)
+    print(f"Bus {bus} dropped msgs: {list(dropped_msgs)}")
