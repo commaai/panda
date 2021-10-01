@@ -10,7 +10,7 @@ from panda import Panda
 
 JUNGLE = "JUNGLE" in os.environ
 if JUNGLE:
-  from panda_jungle import PandaJungle
+  from panda_jungle import PandaJungle # noqa: E401
 
 # Generate unique messages
 NUM_MESSAGES_PER_BUS = 10000
@@ -54,6 +54,6 @@ if __name__ == "__main__":
 
   # Check if we received everything
   for bus in range(3):
-    received_msgs = set(map(lambda m: bytes(m[2]), filter(lambda m: m[3] == bus, rx)))
+    received_msgs = set(map(lambda m: bytes(m[2]), filter(lambda m, b=bus: m[3] == b, rx)))
     dropped_msgs = set(messages).difference(received_msgs)
     print(f"Bus {bus} dropped msgs: {list(dropped_msgs)}")
