@@ -7,8 +7,8 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, UNSAFE_MODE
 
-MAX_RATE_UP = 7
-MAX_RATE_DOWN = 17
+MAX_RATE_UP = 14
+MAX_RATE_DOWN = 34
 MAX_STEER = 300
 MAX_BRAKE = 350
 MAX_GAS = 3072
