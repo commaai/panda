@@ -13,13 +13,25 @@ if JUNGLE:
   from panda_jungle import PandaJungle # noqa: E401
 
 # Generate unique messages
-NUM_MESSAGES_PER_BUS = 10000
+NUM_MESSAGES_PER_BUS = 2000
 messages = [bytes(struct.pack("Q", i)) for i in range(NUM_MESSAGES_PER_BUS)]
 tx_messages = list(itertools.chain.from_iterable(map(lambda msg: [[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]], messages)))
 
 def flood_tx(panda):
   print('Sending!')
-  panda.can_send_many(tx_messages, timeout=0)
+
+  BLOCK_SIZE = 50
+  for i in range((len(tx_messages) + 1) // BLOCK_SIZE):
+    while True:
+      try:
+        print(f"Sending block {BLOCK_SIZE * i}-{ BLOCK_SIZE * (i + 1)}: ", end="")
+        panda.can_send_many(tx_messages[BLOCK_SIZE * i : BLOCK_SIZE * (i + 1)])
+        print("OK")
+        break
+      except:
+        print("timeout")
+        pass
+
   print(f"Done sending {3*NUM_MESSAGES_PER_BUS} messages!")
 
 if __name__ == "__main__":
@@ -56,4 +68,4 @@ if __name__ == "__main__":
   for bus in range(3):
     received_msgs = set(map(lambda m: bytes(m[2]), filter(lambda m, b=bus: m[3] == b, rx)))
     dropped_msgs = set(messages).difference(received_msgs)
-    print(f"Bus {bus} dropped msgs: {list(dropped_msgs)}")
+    print(f"Bus {bus} dropped msgs: {len(list(dropped_msgs))} / {len(messages)}")
