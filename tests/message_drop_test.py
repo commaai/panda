@@ -14,23 +14,22 @@ if JUNGLE:
   from panda_jungle import PandaJungle # pylint: disable=import-error
 
 # Generate unique messages
-NUM_MESSAGES_PER_BUS = 2000
+NUM_MESSAGES_PER_BUS = 10000
 messages = [bytes(struct.pack("Q", i)) for i in range(NUM_MESSAGES_PER_BUS)]
 tx_messages = list(itertools.chain.from_iterable(map(lambda msg: [[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]], messages)))
 
 def flood_tx(panda):
   print('Sending!')
-
-  BLOCK_SIZE = 50
-  for i in range((len(tx_messages) + 1) // BLOCK_SIZE):
-    while True:
-      try:
-        print(f"Sending block {BLOCK_SIZE * i}-{ BLOCK_SIZE * (i + 1)}: ", end="")
-        panda.can_send_many(tx_messages[BLOCK_SIZE * i : BLOCK_SIZE * (i + 1)])
-        print("OK")
-        break
-      except usb1.USBErrorTimeout:
-        print("timeout")
+  transferred = 0
+  while True:
+    try:
+      print(f"Sending block {transferred}-{len(tx_messages)}: ", end="")
+      panda.can_send_many(tx_messages[transferred:], timeout=10)
+      print("OK")
+      break
+    except usb1.USBErrorTimeout as e:
+      transferred += (e.transferred // 16)
+      print("timeout, transferred: ", transferred)
 
   print(f"Done sending {3*NUM_MESSAGES_PER_BUS} messages!")
 
