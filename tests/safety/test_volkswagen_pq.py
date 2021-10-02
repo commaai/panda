@@ -20,7 +20,7 @@ MSG_HCA_1 = 0x0D2        # TX by OP, Heading Control Assist steering torque
 MSG_MOTOR_2 = 0x288      # RX from ECU, for CC state and brake switch state
 MSG_MOTOR_3 = 0x380      # RX from ECU, for driver throttle input
 MSG_GRA_NEU = 0x38A      # TX by OP, ACC control buttons for cancel/resume
-MSG_BREMSE_3 = 0x4A0     # RX from ABS, for wheel speeds
+MSG_BREMSE_1 = 0x1A0     # RX from ABS, for ego speed
 MSG_LDW_1 = 0x5BE        # TX by OP, Lane line recognition and text alerts
 
 
@@ -56,12 +56,11 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
     self.safety.set_desired_torque_last(t)
     self.safety.set_rt_torque_last(t)
 
-  # Wheel speeds (Bremse_3)
+  # Ego speed (Bremse_1)
   def _speed_msg(self, speed):
-    wheel_speed_scaled = int(speed / 0.01)
-    to_send = make_msg(0, MSG_BREMSE_3)
-    to_send[0].RDLR = (wheel_speed_scaled | (wheel_speed_scaled << 16)) << 1
-    to_send[0].RDHR = (wheel_speed_scaled | (wheel_speed_scaled << 16)) << 1
+    ego_speed_scaled = int(speed / 0.01)
+    to_send = make_msg(0, MSG_BREMSE_1)
+    to_send[0].RDLR = ego_speed_scaled << 17
     return to_send
 
   # Brake light switch (shared message Motor_2)

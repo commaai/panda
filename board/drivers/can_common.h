@@ -100,7 +100,21 @@ bool can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   if (!ret) {
     can_overflow_cnt++;
     #ifdef DEBUG
-      puts("can_push failed!\n");
+      puts("can_push to ");
+      if (q == &can_rx_q) {
+        puts("can_rx_q");
+      } else if (q == &can_tx1_q) {
+        puts("can_tx1_q");
+      } else if (q == &can_tx2_q) {
+        puts("can_tx2_q");
+      } else if (q == &can_tx3_q) {
+        puts("can_tx3_q");
+      } else if (q == &can_txgmlan_q) {
+        puts("can_txgmlan_q");
+      } else {
+        puts("unknown");
+      }
+      puts(" failed!\n");
     #endif
   }
   return ret;
