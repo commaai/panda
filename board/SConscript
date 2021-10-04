@@ -27,43 +27,43 @@ if os.getenv("PEDAL"):
     build_projects["pedal_usb"] = build_projects.pop("pedal")
     build_projects["pedal_usb"]["PROJECT_FLAGS"].append("-DPEDAL_USB")
 
-else:
-  build_projects["panda"] = {
+build_projects["panda"] = {
+  "MAIN": "main.c",
+  "STARTUP_FILE": "stm32fx/startup_stm32f413xx.s",
+  "LINKER_SCRIPT": "stm32fx/stm32fx_flash.ld",
+  "APP_START_ADDRESS": "0x8004000",
+  "PROJECT_FLAGS": [
+    "-mcpu=cortex-m4",
+    "-mhard-float",
+    "-DSTM32F4",
+    "-DSTM32F413xx",
+    "-mfpu=fpv4-sp-d16",
+    "-fsingle-precision-constant",
+    "-Os",
+    "-g",
+    "-DPANDA",
+  ],
+}
+
+# arm-none-eabi-gcc on comma two has no cortex-m7 support
+if not os.path.exists("/EON"):
+  build_projects["panda_h7"] = {
     "MAIN": "main.c",
-    "STARTUP_FILE": "stm32fx/startup_stm32f413xx.s",
-    "LINKER_SCRIPT": "stm32fx/stm32fx_flash.ld",
-    "APP_START_ADDRESS": "0x8004000",
+    "STARTUP_FILE": "stm32h7/startup_stm32h7x5xx.s",
+    "LINKER_SCRIPT": "stm32h7/stm32h7x5_flash.ld",
+    "APP_START_ADDRESS": "0x8020000",
     "PROJECT_FLAGS": [
-      "-mcpu=cortex-m4",
+      "-mcpu=cortex-m7",
       "-mhard-float",
-      "-DSTM32F4",
-      "-DSTM32F413xx",
-      "-mfpu=fpv4-sp-d16",
+      "-DSTM32H7",
+      "-DSTM32H725xx",
+      "-mfpu=fpv5-d16",
       "-fsingle-precision-constant",
       "-Os",
       "-g",
       "-DPANDA",
     ],
   }
-
-  if not os.path.exists("/EON"):
-    build_projects["panda_h7"] = {
-      "MAIN": "main.c",
-      "STARTUP_FILE": "stm32h7/startup_stm32h7x5xx.s",
-      "LINKER_SCRIPT": "stm32h7/stm32h7x5_flash.ld",
-      "APP_START_ADDRESS": "0x8020000",
-      "PROJECT_FLAGS": [
-        "-mcpu=cortex-m7",
-        "-mhard-float",
-        "-DSTM32H7",
-        "-DSTM32H725xx",
-        "-mfpu=fpv5-d16",
-        "-fsingle-precision-constant",
-        "-Os",
-        "-g",
-        "-DPANDA",
-      ],
-    }
 
 if os.getenv("RELEASE"):
   BUILD_TYPE = "RELEASE"
