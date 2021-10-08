@@ -429,6 +429,9 @@ class Panda(object):
   def has_canfd(self):
     return self._mcu_type in Panda.H7_DEVICES
 
+  def is_internal(self):
+    return self.get_type() in [Panda.HW_TYPE_UNO, Panda.HW_TYPE_DOS]
+
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
     hashsig, calc_hash = dat[0x1c:], hashlib.sha1(dat[0:0x1c]).digest()[0:4]
