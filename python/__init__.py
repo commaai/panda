@@ -438,6 +438,9 @@ class Panda(object):
     assert(hashsig == calc_hash)
     return [dat[0:0x10].decode("utf8"), dat[0x10:0x10 + 10].decode("utf8")]
 
+  def get_usb_serial(self):
+    return self._serial
+
   def get_secret(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 1, 0, 0x10)
 
