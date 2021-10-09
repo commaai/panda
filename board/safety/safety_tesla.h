@@ -7,6 +7,9 @@ const struct lookup_t TESLA_LOOKUP_ANGLE_RATE_DOWN = {
     {5., 3.5, .8}};
 
 const int TESLA_DEG_TO_CAN = 10;
+const float TESLA_MAX_ACCEL = 2.0;  // m/s^2
+const float TESLA_MIN_ACCEL = -3.5; // m/s^2
+
 const int TESLA_FLAG_LONGITUDINAL = 1;
 
 const CanMsg TESLA_TX_MSGS[] = {
@@ -160,6 +163,41 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
     // No button other than cancel can be sent by us
     int control_lever_status = (GET_BYTE(to_send, 0) & 0x3F);
     if((control_lever_status != 0) && (control_lever_status != 1)) {
+      violation = true;
+    }
+  }
+
+  if(tesla_longitudinal && addr == 0x2bf) {
+    // DAS_control: longitudinal control message
+
+    // Only accState "ON" and "CANCEL_GENERIC" allowed
+    int acc_state = GET_BYTE(to_send, 1) >> 4;
+    if (acc_state != 4 && acc_state != 0) {
+      violation = true;
+    }
+
+    // accState "ON" only when control_allowed,
+    if (acc_state == 4 && !controls_allowed) {
+      violation = true;
+    }
+
+    // No AEB events may be sent by openpilot
+    int aeb_event = GET_BYTE(to_send, 2) & 0x03;
+    if (aeb_event != 0) {
+      violation = true;
+    }
+
+    // Don't allow any acceleration limits above the safety limits
+    int raw_accel_max = ((GET_BYTE(to_send, 6) & 0x1F) << 4) | (GET_BYTE(to_send, 5) >> 4);
+    int raw_accel_min = ((GET_BYTE(to_send, 5) & 0x0F) << 5) | (GET_BYTE(to_send, 4) >> 3);
+    float accel_max = (0.04 * raw_accel_max) - 15;
+    float accel_min = (0.04 * raw_accel_min) - 15;
+
+    if ((accel_max > TESLA_MAX_ACCEL) || (accel_min > TESLA_MAX_ACCEL)){
+      violation = true;
+    }
+
+    if ((accel_max < TESLA_MIN_ACCEL) || (accel_min < TESLA_MIN_ACCEL)){
       violation = true;
     }
   }
