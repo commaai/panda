@@ -58,8 +58,8 @@ class TestTeslaSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("DAS_steeringControl", 0, values)
 
   def _speed_msg(self, speed):
-    values = {"ESP_vehicleSpeed": speed * 3.6}
-    return self.packer.make_can_msg_panda("ESP_B", 0, values)
+    values = {"DI_vehicleSpeed": speed / 0.447}
+    return self.packer.make_can_msg_panda("DI_torque2", 0, values)
 
   def _brake_msg(self, brake):
     values = {"driverBrakeStatus": 2 if brake else 1}
@@ -72,10 +72,6 @@ class TestTeslaSafety(common.PandaSafetyTest):
   def _control_lever_cmd(self, command):
     values = {"SpdCtrlLvr_Stat": command}
     return self.packer.make_can_msg_panda("STW_ACTN_RQ", 0, values)
-
-  def _autopilot_status_msg(self, status):
-    values = {"autopilotStatus": status}
-    return self.packer.make_can_msg_panda("AutopilotStatus", 2, values)
 
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
@@ -155,11 +151,6 @@ class TestTeslaSafety(common.PandaSafetyTest):
     self._tx(self._control_lever_cmd(CONTROL_LEVER_STATE.IDLE))
     self.assertTrue(self.safety.get_controls_allowed())
 
-  def test_autopilot_passthrough(self):
-    for ap_status in range(16):
-      self.safety.set_controls_allowed(1)
-      self._rx(self._autopilot_status_msg(ap_status))
-      self.assertEqual(self.safety.get_controls_allowed(), (ap_status not in [3, 4, 5]))
 
 if __name__ == "__main__":
   unittest.main()
