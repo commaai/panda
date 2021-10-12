@@ -12,7 +12,7 @@ repos:
     -   id: mypy
         exclude: '^(tests/automated)/'
 -   repo: https://github.com/PyCQA/flake8
-    rev: master
+    rev: 3.8.4
     hooks:
     -   id: flake8
         exclude: '^(tests/automated)/'
