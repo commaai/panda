@@ -5,6 +5,24 @@
 #define BUS_OFF_FAIL_LIMIT 2U
 uint8_t bus_off_err[] = {0U, 0U, 0U};
 
+// TEMPORARY, not yet sure that I need it, might be just easier to use array?
+struct canfd_fifo {
+  uint32_t header1;
+  uint32_t header2;
+  uint32_t data_word1;
+  uint32_t data_word2;
+};
+typedef struct canfd_fifo canfd_fifo;
+
+// NOT NEEDED? For usb
+typedef struct
+{
+  __IO uint32_t RIR;  /*!< CAN receive FIFO mailbox identifier register */
+  __IO uint32_t RDTR; /*!< CAN receive FIFO mailbox data length control and time stamp register */
+  __IO uint32_t RDLR; /*!< CAN receive FIFO mailbox data low register */
+  __IO uint32_t RDHR; /*!< CAN receive FIFO mailbox data high register */
+} CAN_FIFOMailBox_TypeDef;
+
 FDCAN_GlobalTypeDef *cans[] = {FDCAN1, FDCAN2, FDCAN3};
 
 bool can_set_speed(uint8_t can_number) {
@@ -46,32 +64,42 @@ void process_can(uint8_t can_number) {
     CANx->IR |= FDCAN_IR_TFE; // Clear Tx FIFO Empty flag
 
     if ((CANx->TXFQS & FDCAN_TXFQS_TFQF) == 0) {
-      CAN_FIFOMailBox_TypeDef to_send;
+      CANPacket_t to_send;
       if (can_pop(can_queues[bus_number], &to_send)) {
         can_tx_cnt += 1;
         uint32_t TxFIFOSA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET) + (FDCAN_RX_FIFO_0_EL_CNT * FDCAN_RX_FIFO_0_EL_SIZE);
         uint8_t tx_index = (CANx->TXFQS >> FDCAN_TXFQS_TFQPI_Pos) & 0x1F;
         // only send if we have received a packet
-        CAN_FIFOMailBox_TypeDef *fifo;
-        fifo = (CAN_FIFOMailBox_TypeDef *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
+        canfd_fifo *fifo;
+        fifo = (canfd_fifo *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
         // Convert from "mailbox type"
-        fifo->RIR = ((to_send.RIR & 0x6) << 28) | (to_send.RIR >> 3);  // identifier format and frame type | identifier
+        //fifo->RIR = ((to_send.RIR & 0x6) << 28) | (to_send.RIR >> 3);  // identifier format and frame type | identifier
         //REDEBUG: enable CAN FD and BRS for test purposes
-        //fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16) | (1U << 21) | (1U << 20); // DLC (length) | timestamp | enable CAN FD | enable BRS
-        fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16); // DLC (length) | timestamp
-        fifo->RDLR = to_send.RDLR;
-        fifo->RDHR = to_send.RDHR;
+        ////fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16) | (1U << 21) | (1U << 20); // DLC (length) | timestamp | enable CAN FD | enable BRS
+        //fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16); // DLC (length) | timestamp
+        //fifo->RDLR = to_send.RDLR;
+        //fifo->RDHR = to_send.RDHR;
 
-        CANx->TXBAR = (1UL << tx_index);
+        fifo->header1 = (to_send.extended << 30) | ((to_send.extended != 0) ? (to_send.addr) : (to_send.addr << 18));
+        fifo->header2 = (to_send.len << 16); // DLC(length)
+        fifo->data_word1 = to_send.data[0] | (to_send.data[1] << 8) | (to_send.data[2] << 16) | (to_send.data[3] << 24);
+        fifo->data_word2 = to_send.data[4] | (to_send.data[5] << 8) | (to_send.data[6] << 16) | (to_send.data[7] << 24);
+
+        CANx->TXBAR = (1UL << tx_index); 
 
         // Send back to USB
         can_txd_cnt += 1;
-        CAN_FIFOMailBox_TypeDef to_push;
-        to_push.RIR = to_send.RIR;
-        to_push.RDTR = (to_send.RDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
-        to_push.RDLR = to_send.RDLR;
-        to_push.RDHR = to_send.RDHR;
+        CANPacket_t to_push;
+        // to_push.RIR = to_send.RIR;
+        // to_push.RDTR = (to_send.RDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
+        // to_push.RDLR = to_send.RDLR;
+        // to_push.RDHR = to_send.RDHR;
+        to_send.extended = to_push.extended;
+        to_send.addr = to_push.addr;
+        to_send.bus = to_push.bus;
+        to_send.len = to_push.len;
+        memcpy(to_send.data, to_push.data, sizeof(to_send.data));
         can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
 
         usb_cb_ep3_out_complete();
@@ -123,29 +151,47 @@ void can_rx(uint8_t can_number) {
       rx_fifo_idx = (uint8_t)((CANx->RXF0S >> FDCAN_RXF0S_F0GI_Pos) & 0x3F);
 
       uint32_t RxFIFO0SA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET);
-      CAN_FIFOMailBox_TypeDef to_push;
-      CAN_FIFOMailBox_TypeDef *fifo;
+      CANPacket_t to_push;
+      canfd_fifo *fifo;
 
       // getting address
-      fifo = (CAN_FIFOMailBox_TypeDef *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
+      fifo = (canfd_fifo *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
 
       // Need to convert real CAN frame format to mailbox "type"
-      to_push.RIR = ((fifo->RIR >> 28) & 0x6) | (fifo->RIR << 3); // identifier format and frame type | identifier
-      to_push.RDTR = ((fifo->RDTR >> 16) & 0xF) | (fifo->RDTR << 16); // DLC (length) | timestamp
-      to_push.RDLR = fifo->RDLR;
-      to_push.RDHR = fifo->RDHR;
+      // to_push.RIR = ((fifo->RIR >> 28) & 0x6) | (fifo->RIR << 3); // identifier format and frame type | identifier
+      // to_push.RDTR = ((fifo->RDTR >> 16) & 0xF) | (fifo->RDTR << 16); // DLC (length) | timestamp
+      // to_push.RDLR = fifo->RDLR;
+      // to_push.RDHR = fifo->RDHR;
+
+      to_push.extended = (fifo->header1 >> 30) & 1U;
+      to_push.addr = ((to_push.extended != 0) ? (fifo->header1 & 0x1FFFFFFFU) : ((fifo->header1 >> 18) & 0x7FFU));
+      to_push.bus = bus_number;
+      to_push.len = ((fifo->header2 >> 16) & 0xFU);
+      to_push.data[0] = fifo->data_word1 & 0xFFU;
+      to_push.data[1] = (fifo->data_word1 >> 8U) & 0xFFU;
+      to_push.data[2] = (fifo->data_word1 >> 16U) & 0xFFU;
+      to_push.data[3] = (fifo->data_word1 >> 24U) & 0xFFU;
+      to_push.data[4] = fifo->data_word2 & 0xFFU;
+      to_push.data[5] = (fifo->data_word2 >> 8U) & 0xFFU;
+      to_push.data[6] = (fifo->data_word2 >> 16U) & 0xFFU;
+      to_push.data[7] = (fifo->data_word2 >> 24U) & 0xFFU;
 
       // modify RDTR for our API
-      to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (bus_number << 4);
+      //to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (bus_number << 4);
 
       // forwarding (panda only)
       int bus_fwd_num = safety_fwd_hook(bus_number, &to_push);
       if (bus_fwd_num != -1) {
-        CAN_FIFOMailBox_TypeDef to_send;
-        to_send.RIR = to_push.RIR;
-        to_send.RDTR = to_push.RDTR;
-        to_send.RDLR = to_push.RDLR;
-        to_send.RDHR = to_push.RDHR;
+        CANPacket_t to_send;
+        // to_send.RIR = to_push.RIR;
+        // to_send.RDTR = to_push.RDTR;
+        // to_send.RDLR = to_push.RDLR;
+        // to_send.RDHR = to_push.RDHR;
+        to_send.extended = to_push.extended;
+        to_send.addr = to_push.addr;
+        to_send.bus = to_push.bus;
+        to_send.len = to_push.len;
+        memcpy(to_send.data, to_push.data, sizeof(to_send.data));
         can_send(&to_send, bus_fwd_num, true);
       }
 

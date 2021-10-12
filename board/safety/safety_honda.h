@@ -53,12 +53,12 @@ enum {HONDA_N_HW, HONDA_BG_HW, HONDA_BH_HW} honda_hw = HONDA_N_HW;
 addr_checks honda_rx_checks = {honda_addr_checks, HONDA_ADDR_CHECKS_LEN};
 
 
-static uint8_t honda_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+static uint8_t honda_get_checksum(CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte)) & 0xFU;
 }
 
-static uint8_t honda_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+static uint8_t honda_compute_checksum(CANPacket_t *to_push) {
   int len = GET_LEN(to_push);
   uint8_t checksum = 0U;
   unsigned int addr = GET_ADDR(to_push);
@@ -75,12 +75,12 @@ static uint8_t honda_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   return (8U - checksum) & 0xFU;
 }
 
-static uint8_t honda_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
+static uint8_t honda_get_counter(CANPacket_t *to_push) {
   int counter_byte = GET_LEN(to_push) - 1;
   return ((uint8_t)(GET_BYTE(to_push, counter_byte)) >> 4U) & 0x3U;
 }
 
-static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+static int honda_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &honda_rx_checks,
                                  honda_get_checksum, honda_compute_checksum, honda_get_counter);
@@ -186,7 +186,7 @@ static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 // else
 //     block all commands that produce actuation
 
-static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+static int honda_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -345,7 +345,7 @@ static const addr_checks* honda_bosch_harness_init(int16_t param) {
   return &honda_rx_checks;
 }
 
-static int honda_nidec_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+static int honda_nidec_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   // fwd from car to camera. also fwd certain msgs from camera to car
   // 0xE4 is steering on all cars except CRV and RDX, 0x194 for CRV and RDX,
   // 0x1FA is brake control, 0x30C is acc hud, 0x33D is lkas hud,
@@ -370,7 +370,7 @@ static int honda_nidec_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return bus_fwd;
 }
 
-static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+static int honda_bosch_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
   int bus_rdr_cam = (honda_hw == HONDA_BH_HW) ? 2 : 1;  // radar bus, camera side
   int bus_rdr_car = (honda_hw == HONDA_BH_HW) ? 0 : 2;  // radar bus, car side

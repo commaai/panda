@@ -196,8 +196,15 @@ int get_rtc_pkt(void *dat) {
 int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;
+  CANPacket_t to_send[4];
   int ilen = 0;
-  while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) {
+  while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &to_send[ilen])) {
+
+    reply[ilen].RDLR = to_send[ilen].data[0] | (to_send[ilen].data[1] << 8) | (to_send[ilen].data[2] << 16) | (to_send[ilen].data[3] << 24);
+    reply[ilen].RDHR = to_send[ilen].data[4] | (to_send[ilen].data[5] << 8) | (to_send[ilen].data[6] << 16) | (to_send[ilen].data[7] << 24);
+    reply[ilen].RDTR = (to_send[ilen].len & 0xFU) | (to_send[ilen].bus << 4); // We use 6 bit len, CAN needs 4. Critical for CAN FD!
+    reply[ilen].RIR = ((to_send[ilen].extended != 0) ? (to_send[ilen].addr << 3) : (to_send[ilen].addr << 21)) | (to_send[ilen].extended << 2);
+
     ilen++;
   }
   return ilen*0x10;
@@ -225,14 +232,28 @@ void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   int dpkt = 0;
   uint32_t *d32 = (uint32_t *)usbdata;
   for (dpkt = 0; dpkt < (len / 4); dpkt += 4) {
-    CAN_FIFOMailBox_TypeDef to_push;
-    to_push.RDHR = d32[dpkt + 3];
-    to_push.RDLR = d32[dpkt + 2];
-    to_push.RDTR = d32[dpkt + 1];
-    to_push.RIR = d32[dpkt];
+    CANPacket_t to_push;
+    // to_push.RDHR = d32[dpkt + 3];
+    // to_push.RDLR = d32[dpkt + 2];
+    // to_push.RDTR = d32[dpkt + 1];
+    // to_push.RIR = d32[dpkt];
 
-    uint8_t bus_number = (to_push.RDTR >> 4) & CAN_BUS_NUM_MASK;
-    can_send(&to_push, bus_number, false);
+    // Temporary conversion, should be implemented from host site
+    to_push.extended = d32[dpkt] & 4U;
+    to_push.addr = (to_push.extended != 0) ? (d32[dpkt] >> 3) : (d32[dpkt] >> 21);
+    to_push.len = d32[dpkt + 1] & 0xFU;
+    to_push.bus = (d32[dpkt + 1] >> 4) & CAN_BUS_NUM_MASK;
+    to_push.data[0] = d32[dpkt + 2] & 0xFFU;
+    to_push.data[1] = (d32[dpkt + 2] >> 8U) & 0xFFU;
+    to_push.data[2] = (d32[dpkt + 2] >> 16U) & 0xFFU;
+    to_push.data[3] = (d32[dpkt + 2] >> 24U) & 0xFFU;
+    to_push.data[4] = d32[dpkt + 3] & 0xFFU;
+    to_push.data[5] = (d32[dpkt + 3] >> 8U) & 0xFFU;
+    to_push.data[6] = (d32[dpkt + 3] >> 16U) & 0xFFU;
+    to_push.data[7] = (d32[dpkt + 3] >> 24U) & 0xFFU;
+
+    //uint8_t bus_number = (to_push.RDTR >> 4) & CAN_BUS_NUM_MASK;
+    can_send(&to_push, to_push.bus, false);
   }
 }
 

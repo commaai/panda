@@ -41,7 +41,7 @@ addr_checks nissan_rx_checks = {nissan_addr_checks, NISSAN_ADDR_CHECK_LEN};
 // EPS Location. false = V-CAN, true = C-CAN
 bool nissan_alt_eps = false;
 
-static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+static int nissan_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &nissan_rx_checks, NULL, NULL, NULL);
 
@@ -106,7 +106,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 }
 
 
-static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+static int nissan_tx_hook(CANPacket_t *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
   bool violation = 0;
@@ -166,7 +166,7 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 }
 
 
-static int nissan_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+static int nissan_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
   int addr = GET_ADDR(to_fwd);
 
