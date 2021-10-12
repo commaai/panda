@@ -123,7 +123,7 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
     tx = 0;
   }
 
-  if(!tesla_longitudinal && addr == 0x488) {
+  if(!tesla_longitudinal && (addr == 0x488)) {
     // Steering control: (0.1 * val) - 1638.35 in deg.
     // We use 1/10 deg as a unit here
     int raw_angle_can = (((GET_BYTE(to_send, 0) & 0x7F) << 8) | GET_BYTE(to_send, 1));
@@ -159,7 +159,7 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  if(!tesla_longitudinal && addr == 0x45) {
+  if(!tesla_longitudinal && (addr == 0x45)) {
     // No button other than cancel can be sent by us
     int control_lever_status = (GET_BYTE(to_send, 0) & 0x3F);
     if((control_lever_status != 0) && (control_lever_status != 1)) {
@@ -167,17 +167,17 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  if(tesla_longitudinal && addr == 0x2bf) {
+  if(tesla_longitudinal && (addr == 0x2bf)) {
     // DAS_control: longitudinal control message
 
     // Only accState "ON" and "CANCEL_GENERIC" allowed
     int acc_state = GET_BYTE(to_send, 1) >> 4;
-    if (acc_state != 4 && acc_state != 0) {
+    if ((acc_state != 4) && (acc_state != 0)) {
       violation = true;
     }
 
     // accState "ON" only when control_allowed,
-    if (acc_state == 4 && !controls_allowed) {
+    if ((acc_state == 4) && !controls_allowed) {
       violation = true;
     }
 
