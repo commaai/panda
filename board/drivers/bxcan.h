@@ -186,6 +186,7 @@ void can_rx(uint8_t can_number) {
     //to_push.RDLR = CAN->sFIFOMailBox[0].RDLR;
     //to_push.RDHR = CAN->sFIFOMailBox[0].RDHR;
 
+    to_push.returned = 0U;
     to_push.extended = CAN->sFIFOMailBox[0].RIR & 4U;
     to_push.addr = (to_push.extended != 0) ? (CAN->sFIFOMailBox[0].RIR >> 3) : (CAN->sFIFOMailBox[0].RIR >> 21);
     to_push.len = CAN->sFIFOMailBox[0].RDTR & 0xFU;
@@ -211,6 +212,7 @@ void can_rx(uint8_t can_number) {
       //to_send.RDLR = to_push.RDLR;
       //to_send.RDHR = to_push.RDHR;
 
+      to_send.returned = 0U;
       to_send.extended = to_push.extended; // TXRQ
       to_send.addr = to_push.addr;
       to_send.bus = to_push.bus;

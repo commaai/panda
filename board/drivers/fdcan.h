@@ -164,6 +164,7 @@ void can_rx(uint8_t can_number) {
       // to_push.RDLR = fifo->RDLR;
       // to_push.RDHR = fifo->RDHR;
 
+      to_push.returned = 0U;
       to_push.extended = (fifo->header1 >> 30) & 1U;
       to_push.addr = ((to_push.extended != 0) ? (fifo->header1 & 0x1FFFFFFFU) : ((fifo->header1 >> 18) & 0x7FFU));
       to_push.bus = bus_number;
@@ -188,6 +189,7 @@ void can_rx(uint8_t can_number) {
         // to_send.RDTR = to_push.RDTR;
         // to_send.RDLR = to_push.RDLR;
         // to_send.RDHR = to_push.RDHR;
+        to_send.returned = 0U;
         to_send.extended = to_push.extended;
         to_send.addr = to_push.addr;
         to_send.bus = to_push.bus;
