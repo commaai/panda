@@ -546,22 +546,18 @@ class Panda(object):
   @ensure_can_packet_version
   def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
     snds = []
-    #transmit = 1
-    #extended = 4
-    for address, _, dat, bus in arr:
+    transmit = 1
+    extended = 4
+    for addr, _, dat, bus in arr:
       assert len(dat) <= 8
       if DEBUG:
-        print(f"  W 0x{address:x}: 0x{dat.hex()}")
-      # if addr >= 0x800:
-      #   rir = (addr << 3) | transmit | extended
-      # else:
-      #   rir = (addr << 21) | transmit
-      #snd = struct.pack("II", rir, len(dat) | (bus << 4)) + dat
-      extended = 1 if address >= 0x800 else 0
-      snd = bytearray(bitstruct.pack('u6 u2 u29 b1 b1 b1', len(dat), bus, address, extended, 0, 0))
-      snd.reverse()
-      snd += dat
-      snd = snd.ljust(0xD, b'\x00') # Force size from 0x10 to 0xD for now
+        print(f"  W 0x{addr:x}: 0x{dat.hex()}")
+      if addr >= 0x800:
+        rir = (addr << 3) | transmit | extended
+      else:
+        rir = (addr << 21) | transmit
+      snd = struct.pack("II", rir, len(dat) | (bus << 4)) + dat
+      snd = snd.ljust(0x10, b'\x00')
       snds.append(snd)
 
     while True:
