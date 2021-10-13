@@ -95,11 +95,12 @@ void process_can(uint8_t can_number) {
         // to_push.RDTR = (to_send.RDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
         // to_push.RDLR = to_send.RDLR;
         // to_push.RDHR = to_send.RDHR;
-        to_send.extended = to_push.extended;
-        to_send.addr = to_push.addr;
-        to_send.bus = to_push.bus;
-        to_send.len = to_push.len;
-        memcpy(to_send.data, to_push.data, sizeof(to_send.data));
+        to_push.returned = 1U;
+        to_push.extended = to_send.extended;
+        to_push.addr = to_send.addr;
+        to_push.bus = to_send.bus;
+        to_push.len = to_send.len;
+        memcpy(to_push.data, to_send.data, sizeof(to_push.data));
         can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
 
         usb_cb_ep3_out_complete();

@@ -113,6 +113,7 @@ void process_can(uint8_t can_number) {
           //to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
           //to_push.RDLR = CAN->sTxMailBox[0].TDLR;
           //to_push.RDHR = CAN->sTxMailBox[0].TDHR;
+          to_push.returned = 1U;
           to_push.extended = CAN->sTxMailBox[0].TIR & 4U;
           to_push.addr = (to_push.extended != 0) ? (CAN->sTxMailBox[0].TIR >> 3) : (CAN->sTxMailBox[0].TIR >> 21);
           to_push.len = CAN->sTxMailBox[0].TDTR & 0xFU;

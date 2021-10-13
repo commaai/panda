@@ -202,7 +202,7 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
 
     reply[ilen].RDLR = to_send[ilen].data[0] | (to_send[ilen].data[1] << 8) | (to_send[ilen].data[2] << 16) | (to_send[ilen].data[3] << 24);
     reply[ilen].RDHR = to_send[ilen].data[4] | (to_send[ilen].data[5] << 8) | (to_send[ilen].data[6] << 16) | (to_send[ilen].data[7] << 24);
-    reply[ilen].RDTR = (to_send[ilen].len & 0xFU) | (to_send[ilen].bus << 4); // We use 6 bit len, CAN needs 4. Critical for CAN FD!
+    reply[ilen].RDTR = (to_send[ilen].len & 0xFU) | ((to_send[ilen].returned != 0) ? ((CAN_BUS_RET_FLAG | to_send[ilen].bus) << 4) : (to_send[ilen].bus << 4)); // We use 6 bit len, CAN needs 4. Critical for CAN FD!
     reply[ilen].RIR = ((to_send[ilen].extended != 0) ? (to_send[ilen].addr << 3) : (to_send[ilen].addr << 21)) | (to_send[ilen].extended << 2);
 
     ilen++;

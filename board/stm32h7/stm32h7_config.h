@@ -48,7 +48,7 @@
 #define DATA_SIZE_MAX 8
 struct __attribute__((packed)) CANPacket_t {
   bool reserved2 : 1;
-  bool reserved1 : 1;
+  bool returned : 1;
   bool extended : 1;  
   uint32_t addr : 29;
   uint8_t bus : 2;
