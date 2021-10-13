@@ -50,7 +50,8 @@ setup(
     'hexdump >= 3.3',
     'pycryptodome >= 3.9.8',
     'tqdm >= 4.14.0',
-    'requests'
+    'requests',
+    'bitstruct'
   ],
   ext_modules=[],
   description="Code powering the comma.ai panda",

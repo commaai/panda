@@ -195,19 +195,12 @@ int get_rtc_pkt(void *dat) {
 
 int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
-  CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;
-  CANPacket_t to_send[4];
+  CANPacket_t *reply = (CANPacket_t *)usbdata;
   int ilen = 0;
-  while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &to_send[ilen])) {
-
-    reply[ilen].RDLR = to_send[ilen].data[0] | (to_send[ilen].data[1] << 8) | (to_send[ilen].data[2] << 16) | (to_send[ilen].data[3] << 24);
-    reply[ilen].RDHR = to_send[ilen].data[4] | (to_send[ilen].data[5] << 8) | (to_send[ilen].data[6] << 16) | (to_send[ilen].data[7] << 24);
-    reply[ilen].RDTR = (to_send[ilen].len & 0xFU) | ((to_send[ilen].returned != 0) ? ((CAN_BUS_RET_FLAG | to_send[ilen].bus) << 4) : (to_send[ilen].bus << 4)); // We use 6 bit len, CAN needs 4. Critical for CAN FD!
-    reply[ilen].RIR = ((to_send[ilen].extended != 0) ? (to_send[ilen].addr << 3) : (to_send[ilen].addr << 21)) | (to_send[ilen].extended << 2);
-
+  while (ilen < MIN(len/0xD, 4) && can_pop(&can_rx_q, &reply[ilen])) { // Force len to 13 bytes? Test 0x10 to 0xD
     ilen++;
   }
-  return ilen*0x10;
+  return ilen*0xD;
 }
 
 // send on serial, first byte to select the ring

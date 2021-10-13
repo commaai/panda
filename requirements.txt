@@ -12,3 +12,4 @@ crcmod
 pre-commit==2.13.0
 pylint==2.5.2
 scons==4.1.0.post1
+bitstruct

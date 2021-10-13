@@ -14,15 +14,6 @@ struct canfd_fifo {
 };
 typedef struct canfd_fifo canfd_fifo;
 
-// NOT NEEDED? For usb
-typedef struct
-{
-  __IO uint32_t RIR;  /*!< CAN receive FIFO mailbox identifier register */
-  __IO uint32_t RDTR; /*!< CAN receive FIFO mailbox data length control and time stamp register */
-  __IO uint32_t RDLR; /*!< CAN receive FIFO mailbox data low register */
-  __IO uint32_t RDHR; /*!< CAN receive FIFO mailbox data high register */
-} CAN_FIFOMailBox_TypeDef;
-
 FDCAN_GlobalTypeDef *cans[] = {FDCAN1, FDCAN2, FDCAN3};
 
 bool can_set_speed(uint8_t can_number) {

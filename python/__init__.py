@@ -1,6 +1,7 @@
 # python library to interface with panda
 import datetime
 import struct
+import bitstruct
 import hashlib
 import socket
 import usb1
@@ -16,7 +17,7 @@ from .serial import PandaSerial  # noqa pylint: disable=import-error
 from .isotp import isotp_send, isotp_recv  # pylint: disable=import-error
 from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN  # noqa pylint: disable=import-error
 
-__version__ = '0.0.9'
+__version__ = '0.0.10'
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
@@ -24,18 +25,16 @@ DEBUG = os.getenv("PANDADEBUG") is not None
 
 def parse_can_buffer(dat):
   ret = []
-  for j in range(0, len(dat), 0x10):
-    ddat = dat[j:j + 0x10]
-    f1, f2 = struct.unpack("II", ddat[0:8])
-    extended = 4
-    if f1 & extended:
-      address = f1 >> 3
-    else:
-      address = f1 >> 21
-    dddat = ddat[8:8 + (f2 & 0xF)]
+  for j in range(0, len(dat), 0xD): # Force len from 0x10 to 0xD to test, limit 13 bytes
+    ddat = dat[j:j + 0xD]
+    header = ddat[0:5]
+    header.reverse()
+    length, bus, address, _, returned, _ = bitstruct.unpack('u6 u2 u29 b1 b1 b1', header) # extended and reserved fields are omitted
+    dddat = ddat[5:5 + length]
+    bus = bus + 128 if returned else bus
     if DEBUG:
       print(f"  R 0x{address:x}: 0x{dddat.hex()}")
-    ret.append((address, f2 >> 16, dddat, (f2 >> 4) & 0xFF))
+    ret.append((address, 0, dddat, bus))
   return ret
 
 def ensure_health_packet_version(fn):
