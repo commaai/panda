@@ -59,6 +59,7 @@ struct __attribute__((packed)) CANPacket_t {
   bool returned : 1;
   bool extended : 1;  
   uint32_t addr : 29;
+  uint32_t bus_time : 24;
   uint8_t bus : 2;
   uint8_t len : 6;
   uint8_t data[DATA_SIZE_MAX];

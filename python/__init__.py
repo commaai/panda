@@ -1,7 +1,7 @@
 # python library to interface with panda
 import datetime
 import struct
-import bitstruct
+import bitstruct.c as bitstruct
 import hashlib
 import socket
 import usb1
@@ -25,12 +25,12 @@ DEBUG = os.getenv("PANDADEBUG") is not None
 
 def parse_can_buffer(dat):
   ret = []
-  for j in range(0, len(dat), 0xD): # Force len from 0x10 to 0xD to test, limit 13 bytes
-    ddat = dat[j:j + 0xD]
-    header = ddat[0:5]
+  for j in range(0, len(dat), 0x10):
+    ddat = dat[j:j + 0x10]
+    header = ddat[0:8]
     header.reverse()
-    length, bus, address, _, returned, _ = bitstruct.unpack('u6 u2 u29 b1 b1 b1', header) # extended and reserved fields are omitted
-    dddat = ddat[5:5 + length]
+    length, bus, _, address, _, returned, _ = bitstruct.unpack('u6 u2 u24 u29 b1 b1 b1', bytes(header)) # timer, extended and reserved fields are omitted
+    dddat = ddat[8:8 + length]
     bus = bus + 128 if returned else bus
     if DEBUG:
       print(f"  R 0x{address:x}: 0x{dddat.hex()}")
@@ -546,17 +546,14 @@ class Panda(object):
   @ensure_can_packet_version
   def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
     snds = []
-    transmit = 1
-    extended = 4
-    for addr, _, dat, bus in arr:
+    for address, _, dat, bus in arr:
       assert len(dat) <= 8
       if DEBUG:
-        print(f"  W 0x{addr:x}: 0x{dat.hex()}")
-      if addr >= 0x800:
-        rir = (addr << 3) | transmit | extended
-      else:
-        rir = (addr << 21) | transmit
-      snd = struct.pack("II", rir, len(dat) | (bus << 4)) + dat
+        print(f"  W 0x{address:x}: 0x{dat.hex()}")
+      extended = 1 if address >= 0x800 else 0
+      snd = bytearray(bitstruct.pack('u6 u2 u24 u29 b1 b1 b1', len(dat), bus, 0, address, extended, 0, 0))
+      snd.reverse()
+      snd += dat
       snd = snd.ljust(0x10, b'\x00')
       snds.append(snd)
 

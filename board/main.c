@@ -197,10 +197,10 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   CANPacket_t *reply = (CANPacket_t *)usbdata;
   int ilen = 0;
-  while (ilen < MIN(len/0xD, 4) && can_pop(&can_rx_q, &reply[ilen])) { // Force len to 13 bytes? Test 0x10 to 0xD
+  while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) { // Force len to 13 bytes? Test 0x10 to 0xD
     ilen++;
   }
-  return ilen*0xD;
+  return ilen*0x10;
 }
 
 // send on serial, first byte to select the ring
@@ -223,30 +223,9 @@ void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
 void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   int dpkt = 0;
-  uint32_t *d32 = (uint32_t *)usbdata;
-  for (dpkt = 0; dpkt < (len / 4); dpkt += 4) {
-    CANPacket_t to_push;
-    // to_push.RDHR = d32[dpkt + 3];
-    // to_push.RDLR = d32[dpkt + 2];
-    // to_push.RDTR = d32[dpkt + 1];
-    // to_push.RIR = d32[dpkt];
-
-    // Temporary conversion, should be implemented from host site
-    to_push.extended = d32[dpkt] & 4U;
-    to_push.addr = (to_push.extended != 0) ? (d32[dpkt] >> 3) : (d32[dpkt] >> 21);
-    to_push.len = d32[dpkt + 1] & 0xFU;
-    to_push.bus = (d32[dpkt + 1] >> 4) & CAN_BUS_NUM_MASK;
-    to_push.data[0] = d32[dpkt + 2] & 0xFFU;
-    to_push.data[1] = (d32[dpkt + 2] >> 8U) & 0xFFU;
-    to_push.data[2] = (d32[dpkt + 2] >> 16U) & 0xFFU;
-    to_push.data[3] = (d32[dpkt + 2] >> 24U) & 0xFFU;
-    to_push.data[4] = d32[dpkt + 3] & 0xFFU;
-    to_push.data[5] = (d32[dpkt + 3] >> 8U) & 0xFFU;
-    to_push.data[6] = (d32[dpkt + 3] >> 16U) & 0xFFU;
-    to_push.data[7] = (d32[dpkt + 3] >> 24U) & 0xFFU;
-
-    //uint8_t bus_number = (to_push.RDTR >> 4) & CAN_BUS_NUM_MASK;
-    can_send(&to_push, to_push.bus, false);
+  CANPacket_t *receive = (CANPacket_t *)usbdata;
+  for (dpkt = 0; dpkt < (len/0x10); dpkt++) {
+    can_send(&receive[dpkt], receive[dpkt].bus, false);
   }
 }
 
