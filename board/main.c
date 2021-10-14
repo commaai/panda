@@ -2,14 +2,14 @@
 #include "config.h"
 
 typedef struct __attribute__((packed)) {
-  bool reserved2 : 1;
-  bool returned : 1;
-  bool extended : 1;  
-  uint32_t addr : 29;
-  uint32_t bus_time : 24;
-  uint8_t bus : 2;
-  uint8_t len : 6;
-  uint8_t data[DATA_SIZE_MAX];
+  unsigned char reserved2 : 1;
+  unsigned char returned : 1;
+  unsigned char extended : 1;  
+  unsigned int addr : 29;
+  unsigned int bus_time : 24;
+  unsigned char bus : 2;
+  unsigned char len : 6;
+  unsigned char data[DATA_SIZE_MAX];
 } CANPacket_t;
 
 #include "drivers/pwm.h"
