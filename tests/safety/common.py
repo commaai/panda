@@ -17,17 +17,13 @@ class UNSAFE_MODE:
   RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
 
 def package_can_msg(msg):
-  addr, _, dat, bus = msg
-  rdlr, rdhr = struct.unpack('II', dat.ljust(8, b'\x00'))
-
-  ret = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-  if addr >= 0x800:
-    ret[0].RIR = (addr << 3) | 5
-  else:
-    ret[0].RIR = (addr << 21) | 1
-  ret[0].RDTR = len(dat) | ((bus & 0xF) << 4)
-  ret[0].RDHR = rdhr
-  ret[0].RDLR = rdlr
+  #rdlr, rdhr = struct.unpack('II', msg.dat.ljust(8, b'\x00'))
+  ret = libpandasafety_py.ffi.new('CANPacket_t *')
+  ret[0].extended = 1 if msg.address >= 0x800 else 0
+  ret[0].address = msg.address
+  ret[0].len = len(msg.dat)
+  ret[0].bus = msg.src
+  ret[0].data = msg.dat 
 
   return ret
 

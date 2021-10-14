@@ -1,18 +1,23 @@
 #include <stdio.h>
 #include <stdint.h>
 
-typedef struct {
-  uint32_t RIR;  /*!< CAN receive FIFO mailbox identifier register */
-  uint32_t RDTR; /*!< CAN receive FIFO mailbox data length control and time stamp register */
-  uint32_t RDLR; /*!< CAN receive FIFO mailbox data low register */
-  uint32_t RDHR; /*!< CAN receive FIFO mailbox data high register */
-} CAN_FIFOMailBox_TypeDef;
+#define DATA_SIZE_MAX 8
+typedef struct __attribute__((packed)) {
+  bool reserved2 : 1;
+  bool returned : 1;
+  bool extended : 1;  
+  uint32_t addr : 29;
+  uint32_t bus_time : 24;
+  uint8_t bus : 2;
+  uint8_t len : 6;
+  uint8_t data[DATA_SIZE_MAX];
+} CANPacket_t;
 
 #include "../../board/drivers/canbitbang.h"
 
 int main() {
   char out[300];
-  CAN_FIFOMailBox_TypeDef to_bang = {0};
+  CANPacket_t to_bang = {0};
   to_bang.RIR = 20 << 21;
   to_bang.RDTR = 1;
   to_bang.RDLR = 1;
