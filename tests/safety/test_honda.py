@@ -210,8 +210,6 @@ class TestHondaNidecSafety(TestHondaSafety, common.InterceptorSafetyTest):
     to_send[0].data[1] = gas & 0xFF
     to_send[0].data[2] = (gas2 & 0xFF00) >> 8
     to_send[0].data[3] = gas2 & 0xFF
-    # to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
-    #                   ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
     return to_send
 
   def _send_brake_msg(self, brake):
