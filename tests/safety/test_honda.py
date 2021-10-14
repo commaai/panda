@@ -116,7 +116,10 @@ class TestHondaSafety(common.PandaSafetyTest):
         to_push = self._speed_msg(0)
       self.assertTrue(self._rx(to_push))
       if msg != "btn":
-        to_push[0].RDHR = 0  # invalidate checksum
+        to_push[0].data[4] = 0  # invalidate checksum
+        to_push[0].data[5] = 0
+        to_push[0].data[6] = 0
+        to_push[0].data[7] = 0
         self.assertFalse(self._rx(to_push))
         self.assertFalse(self.safety.get_controls_allowed())
 
