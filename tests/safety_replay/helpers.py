@@ -61,11 +61,11 @@ def set_desired_torque_last(safety, mode, torque):
 def package_can_msg(msg):
   #rdlr, rdhr = struct.unpack('II', msg.dat.ljust(8, b'\x00'))
   ret = libpandasafety_py.ffi.new('CANPacket_t *')
-  ret[0].extended = 1 if msg.addr >= 0x800 else 0
-  ret[0].addr = msg.addr
+  ret[0].extended = 1 if msg.address >= 0x800 else 0
+  ret[0].addr = msg.address
   ret[0].len = len(msg.dat)
   ret[0].bus = msg.src
-  ret[0].data = msg.dat 
+  ret[0].data = msg.dat
 
   return ret
 

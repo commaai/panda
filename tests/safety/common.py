@@ -17,13 +17,13 @@ class UNSAFE_MODE:
   RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
 
 def package_can_msg(msg):
-  #rdlr, rdhr = struct.unpack('II', msg.dat.ljust(8, b'\x00'))
+  addr, _, dat, bus = msg
   ret = libpandasafety_py.ffi.new('CANPacket_t *')
-  ret[0].extended = 1 if msg.addr >= 0x800 else 0
-  ret[0].addr = msg.addr
-  ret[0].len = len(msg.dat)
-  ret[0].bus = msg.src
-  ret[0].data = msg.dat 
+  ret[0].extended = 1 if addr >= 0x800 else 0
+  ret[0].addr = addr
+  ret[0].len = len(dat)
+  ret[0].bus = bus
+  ret[0].data = dat 
 
   return ret
 
