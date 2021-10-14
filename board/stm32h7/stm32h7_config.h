@@ -34,6 +34,8 @@
 #define PROVISION_CHUNK_ADDRESS 0x080FFFE0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x080FFFC0U
 
+#define DATA_SIZE_MAX 8
+
 #ifndef BOOTSTUB
   #include "main_declarations.h"
 #else
@@ -43,20 +45,6 @@
 #include "libc.h"
 #include "critical.h"
 #include "faults.h"
-
-///////////////////////////
-#define DATA_SIZE_MAX 8
-typedef struct __attribute__((packed)) {
-  bool reserved2 : 1;
-  bool returned : 1;
-  bool extended : 1;  
-  uint32_t addr : 29;
-  uint32_t bus_time : 24;
-  uint8_t bus : 2;
-  uint8_t len : 6;
-  uint8_t data[DATA_SIZE_MAX];
-} CANPacket_t;
-//////////////////////////
 
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"

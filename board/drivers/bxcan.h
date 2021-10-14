@@ -109,10 +109,6 @@ void process_can(uint8_t can_number) {
 
         if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
           CANPacket_t to_push;
-          //to_push.RIR = CAN->sTxMailBox[0].TIR;
-          //to_push.RDTR = (CAN->sTxMailBox[0].TDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
-          //to_push.RDLR = CAN->sTxMailBox[0].TDLR;
-          //to_push.RDHR = CAN->sTxMailBox[0].TDHR;
           to_push.returned = 1U;
           to_push.extended = CAN->sTxMailBox[0].TIR & 4U;
           to_push.addr = (to_push.extended != 0) ? (CAN->sTxMailBox[0].TIR >> 3) : (CAN->sTxMailBox[0].TIR >> 21);
@@ -151,10 +147,6 @@ void process_can(uint8_t can_number) {
       if (can_pop(can_queues[bus_number], &to_send)) {
         can_tx_cnt += 1;
         // only send if we have received a packet
-        //CAN->sTxMailBox[0].TDLR = to_send.RDLR;
-        //CAN->sTxMailBox[0].TDHR = to_send.RDHR;
-        //CAN->sTxMailBox[0].TDTR = to_send.RDTR;
-        //CAN->sTxMailBox[0].TIR = to_send.RIR;
         CAN->sTxMailBox[0].TDLR = to_send.data[0] | (to_send.data[1] << 8) | (to_send.data[2] << 16) | (to_send.data[3] << 24);
         CAN->sTxMailBox[0].TDHR = to_send.data[4] | (to_send.data[5] << 8) | (to_send.data[6] << 16) | (to_send.data[7] << 24);
         CAN->sTxMailBox[0].TDTR = to_send.len  & 0xFU; // We use 6 bit len, CAN needs 4. Critical for CAN FD!
@@ -181,10 +173,6 @@ void can_rx(uint8_t can_number) {
 
     // add to my fifo
     CANPacket_t to_push;
-    //to_push.RIR = CAN->sFIFOMailBox[0].RIR;
-    //to_push.RDTR = CAN->sFIFOMailBox[0].RDTR;
-    //to_push.RDLR = CAN->sFIFOMailBox[0].RDLR;
-    //to_push.RDHR = CAN->sFIFOMailBox[0].RDHR;
 
     to_push.returned = 0U;
     to_push.extended = CAN->sFIFOMailBox[0].RIR & 4U;
@@ -200,17 +188,10 @@ void can_rx(uint8_t can_number) {
     to_push.data[6] = (CAN->sFIFOMailBox[0].RDHR >> 16U) & 0xFFU;
     to_push.data[7] = (CAN->sFIFOMailBox[0].RDHR >> 24U) & 0xFFU;
 
-    // modify RDTR for our API
-    //to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (bus_number << 4);
-
     // forwarding (panda only)
     int bus_fwd_num = safety_fwd_hook(bus_number, &to_push);
     if (bus_fwd_num != -1) {
       CANPacket_t to_send;
-      //to_send.RIR = to_push.RIR | 1; // TXRQ
-      //to_send.RDTR = to_push.RDTR;
-      //to_send.RDLR = to_push.RDLR;
-      //to_send.RDHR = to_push.RDHR;
 
       to_send.returned = 0U;
       to_send.extended = to_push.extended; // TXRQ

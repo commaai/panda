@@ -64,16 +64,8 @@ void process_can(uint8_t can_number) {
         canfd_fifo *fifo;
         fifo = (canfd_fifo *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
-        // Convert from "mailbox type"
-        //fifo->RIR = ((to_send.RIR & 0x6) << 28) | (to_send.RIR >> 3);  // identifier format and frame type | identifier
-        //REDEBUG: enable CAN FD and BRS for test purposes
-        ////fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16) | (1U << 21) | (1U << 20); // DLC (length) | timestamp | enable CAN FD | enable BRS
-        //fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16); // DLC (length) | timestamp
-        //fifo->RDLR = to_send.RDLR;
-        //fifo->RDHR = to_send.RDHR;
-
         fifo->header1 = (to_send.extended << 30) | ((to_send.extended != 0) ? (to_send.addr) : (to_send.addr << 18));
-        fifo->header2 = (to_send.len << 16); // DLC(length)
+        fifo->header2 = (to_send.len << 16); // DLC(length) // | (1U << 21) | (1U << 20) to enable CAN FD , enable BRS
         fifo->data_word1 = to_send.data[0] | (to_send.data[1] << 8) | (to_send.data[2] << 16) | (to_send.data[3] << 24);
         fifo->data_word2 = to_send.data[4] | (to_send.data[5] << 8) | (to_send.data[6] << 16) | (to_send.data[7] << 24);
 
@@ -82,10 +74,7 @@ void process_can(uint8_t can_number) {
         // Send back to USB
         can_txd_cnt += 1;
         CANPacket_t to_push;
-        // to_push.RIR = to_send.RIR;
-        // to_push.RDTR = (to_send.RDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | bus_number) << 4);
-        // to_push.RDLR = to_send.RDLR;
-        // to_push.RDHR = to_send.RDHR;
+
         to_push.returned = 1U;
         to_push.extended = to_send.extended;
         to_push.addr = to_send.addr;
@@ -149,12 +138,6 @@ void can_rx(uint8_t can_number) {
       // getting address
       fifo = (canfd_fifo *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
 
-      // Need to convert real CAN frame format to mailbox "type"
-      // to_push.RIR = ((fifo->RIR >> 28) & 0x6) | (fifo->RIR << 3); // identifier format and frame type | identifier
-      // to_push.RDTR = ((fifo->RDTR >> 16) & 0xF) | (fifo->RDTR << 16); // DLC (length) | timestamp
-      // to_push.RDLR = fifo->RDLR;
-      // to_push.RDHR = fifo->RDHR;
-
       to_push.returned = 0U;
       to_push.extended = (fifo->header1 >> 30) & 1U;
       to_push.addr = ((to_push.extended != 0) ? (fifo->header1 & 0x1FFFFFFFU) : ((fifo->header1 >> 18) & 0x7FFU));
@@ -176,10 +159,7 @@ void can_rx(uint8_t can_number) {
       int bus_fwd_num = safety_fwd_hook(bus_number, &to_push);
       if (bus_fwd_num != -1) {
         CANPacket_t to_send;
-        // to_send.RIR = to_push.RIR;
-        // to_send.RDTR = to_push.RDTR;
-        // to_send.RDLR = to_push.RDLR;
-        // to_send.RDHR = to_push.RDHR;
+
         to_send.returned = 0U;
         to_send.extended = to_push.extended;
         to_send.addr = to_push.addr;

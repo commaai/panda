@@ -34,13 +34,6 @@
 
 #define MAX_RESP_LEN 0x40U
 
-// #define GET_BUS(msg) (((msg)->RDTR >> 4) & 0xFF)
-// #define GET_LEN(msg) ((msg)->RDTR & 0xF)
-// #define GET_ADDR(msg) ((((msg)->RIR & 4) != 0) ? ((msg)->RIR >> 3) : ((msg)->RIR >> 21))
-// #define GET_BYTE(msg, b) (((int)(b) > 3) ? (((msg)->RDHR >> (8U * ((unsigned int)(b) % 4U))) & 0xFFU) : (((msg)->RDLR >> (8U * (unsigned int)(b))) & 0xFFU))
-// #define GET_BYTES_04(msg) ((msg)->RDLR)
-// #define GET_BYTES_48(msg) ((msg)->RDHR)
-
 #define GET_BUS(msg) ((int)(msg)->bus)
 #define GET_LEN(msg) ((int)(msg)->len)
 #define GET_ADDR(msg) ((int)(msg)->addr)
