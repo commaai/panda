@@ -198,7 +198,7 @@ void can_rx(uint8_t can_number) {
       to_send.addr = to_push.addr;
       to_send.bus = to_push.bus;
       to_send.len = to_push.len;
-      memcpy(to_send.data, to_push.data, sizeof(to_send.data));
+      (void)memcpy(to_send.data, to_push.data, sizeof(to_send.data));
       can_send(&to_send, bus_fwd_num, true);
     }
 

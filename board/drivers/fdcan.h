@@ -80,7 +80,7 @@ void process_can(uint8_t can_number) {
         to_push.addr = to_send.addr;
         to_push.bus = to_send.bus;
         to_push.len = to_send.len;
-        memcpy(to_push.data, to_send.data, sizeof(to_push.data));
+        (void)memcpy(to_push.data, to_send.data, sizeof(to_push.data));
         can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
 
         usb_cb_ep3_out_complete();
@@ -165,7 +165,7 @@ void can_rx(uint8_t can_number) {
         to_send.addr = to_push.addr;
         to_send.bus = to_push.bus;
         to_send.len = to_push.len;
-        memcpy(to_send.data, to_push.data, sizeof(to_send.data));
+        (void)memcpy(to_send.data, to_push.data, sizeof(to_send.data));
         can_send(&to_send, bus_fwd_num, true);
       }
 
