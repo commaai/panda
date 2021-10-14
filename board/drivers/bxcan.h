@@ -123,7 +123,6 @@ void process_can(uint8_t can_number) {
           to_push.data[6] = (CAN->sTxMailBox[0].TDHR >> 16) & 0xFFU;
           to_push.data[7] = (CAN->sTxMailBox[0].TDHR >> 24) & 0xFFU;
 
-
           can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
         }
 
@@ -147,10 +146,12 @@ void process_can(uint8_t can_number) {
       if (can_pop(can_queues[bus_number], &to_send)) {
         can_tx_cnt += 1;
         // only send if we have received a packet
+        CAN->sTxMailBox[0].TIR = ((to_send.extended != 0) ? (to_send.addr << 3) : (to_send.addr << 21)) | (to_send.extended << 2);
+        CAN->sTxMailBox[0].TDTR = to_send.len  & 0xFU;
         CAN->sTxMailBox[0].TDLR = to_send.data[0] | (to_send.data[1] << 8) | (to_send.data[2] << 16) | (to_send.data[3] << 24);
         CAN->sTxMailBox[0].TDHR = to_send.data[4] | (to_send.data[5] << 8) | (to_send.data[6] << 16) | (to_send.data[7] << 24);
-        CAN->sTxMailBox[0].TDTR = to_send.len  & 0xFU; // We use 6 bit len, CAN needs 4. Critical for CAN FD!
-        CAN->sTxMailBox[0].TIR = ((to_send.extended != 0) ? (to_send.addr << 3) : (to_send.addr << 21)) | (to_send.extended << 2) | 0x1U; // addr | extended | TXRQ
+        // Send request TXRQ
+        CAN->sTxMailBox[0].TIR |= 0x1U; 
 
         usb_cb_ep3_out_complete();
       }

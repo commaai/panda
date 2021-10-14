@@ -7,10 +7,10 @@ uint8_t bus_off_err[] = {0U, 0U, 0U};
 
 // TEMPORARY, not yet sure that I need it, might be just easier to use array?
 struct canfd_fifo {
-  uint32_t header1;
-  uint32_t header2;
-  uint32_t data_word1;
-  uint32_t data_word2;
+  volatile uint32_t header1;
+  volatile uint32_t header2;
+  volatile uint32_t data_word1;
+  volatile uint32_t data_word2;
 };
 typedef struct canfd_fifo canfd_fifo;
 
@@ -151,9 +151,6 @@ void can_rx(uint8_t can_number) {
       to_push.data[5] = (fifo->data_word2 >> 8) & 0xFFU;
       to_push.data[6] = (fifo->data_word2 >> 16) & 0xFFU;
       to_push.data[7] = (fifo->data_word2 >> 24) & 0xFFU;
-
-      // modify RDTR for our API
-      //to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (bus_number << 4);
 
       // forwarding (panda only)
       int bus_fwd_num = safety_fwd_hook(bus_number, &to_push);
