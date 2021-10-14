@@ -15,7 +15,7 @@ typedef struct
   uint32_t TDHR; /*!< CAN mailbox data high register */
 } CAN_TxMailBox_TypeDef;
 
-typedef struct __attribute__((packed)) {
+typedef struct {
   bool reserved2 : 1;
   bool returned : 1;
   bool extended : 1;  
@@ -71,6 +71,6 @@ void set_honda_alt_brake_msg(bool);
 void set_honda_bosch_long(bool c);
 int get_honda_hw(void);
 
-""")
+""", packed=True)
 
 libpandasafety = ffi.dlopen(libpandasafety_fn)
