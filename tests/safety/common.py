@@ -1,6 +1,5 @@
 import os
 import abc
-import struct
 import unittest
 import importlib
 import numpy as np
@@ -23,7 +22,7 @@ def package_can_msg(msg):
   ret[0].addr = addr
   ret[0].len = len(dat)
   ret[0].bus = bus
-  ret[0].data = dat 
+  ret[0].data = bytes(dat) 
 
   return ret
 

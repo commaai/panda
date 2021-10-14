@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import struct
 import panda.tests.safety.libpandasafety_py as libpandasafety_py
 from panda import Panda
 
@@ -59,7 +58,6 @@ def set_desired_torque_last(safety, mode, torque):
     safety.set_subaru_desired_torque_last(torque)
 
 def package_can_msg(msg):
-  #rdlr, rdhr = struct.unpack('II', msg.dat.ljust(8, b'\x00'))
   ret = libpandasafety_py.ffi.new('CANPacket_t *')
   ret[0].extended = 1 if msg.address >= 0x800 else 0
   ret[0].addr = msg.address
