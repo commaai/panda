@@ -139,18 +139,18 @@ void can_rx(uint8_t can_number) {
       fifo = (canfd_fifo *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
 
       to_push.returned = 0U;
-      to_push.extended = (fifo->header1 >> 30) & 1U;
+      to_push.extended = (fifo->header1 >> 30) & 0x1U;
       to_push.addr = ((to_push.extended != 0) ? (fifo->header1 & 0x1FFFFFFFU) : ((fifo->header1 >> 18) & 0x7FFU));
       to_push.bus = bus_number;
       to_push.len = ((fifo->header2 >> 16) & 0xFU);
       to_push.data[0] = fifo->data_word1 & 0xFFU;
-      to_push.data[1] = (fifo->data_word1 >> 8U) & 0xFFU;
-      to_push.data[2] = (fifo->data_word1 >> 16U) & 0xFFU;
-      to_push.data[3] = (fifo->data_word1 >> 24U) & 0xFFU;
+      to_push.data[1] = (fifo->data_word1 >> 8) & 0xFFU;
+      to_push.data[2] = (fifo->data_word1 >> 16) & 0xFFU;
+      to_push.data[3] = (fifo->data_word1 >> 24) & 0xFFU;
       to_push.data[4] = fifo->data_word2 & 0xFFU;
-      to_push.data[5] = (fifo->data_word2 >> 8U) & 0xFFU;
-      to_push.data[6] = (fifo->data_word2 >> 16U) & 0xFFU;
-      to_push.data[7] = (fifo->data_word2 >> 24U) & 0xFFU;
+      to_push.data[5] = (fifo->data_word2 >> 8) & 0xFFU;
+      to_push.data[6] = (fifo->data_word2 >> 16) & 0xFFU;
+      to_push.data[7] = (fifo->data_word2 >> 24) & 0xFFU;
 
       // modify RDTR for our API
       //to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (bus_number << 4);

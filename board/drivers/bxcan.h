@@ -110,18 +110,18 @@ void process_can(uint8_t can_number) {
         if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
           CANPacket_t to_push;
           to_push.returned = 1U;
-          to_push.extended = CAN->sTxMailBox[0].TIR & 4U;
+          to_push.extended = (CAN->sFIFOMailBox[0].RIR >> 2) & 0x1U;
           to_push.addr = (to_push.extended != 0) ? (CAN->sTxMailBox[0].TIR >> 3) : (CAN->sTxMailBox[0].TIR >> 21);
           to_push.len = CAN->sTxMailBox[0].TDTR & 0xFU;
           to_push.bus = bus_number;
           to_push.data[0] = CAN->sTxMailBox[0].TDLR & 0xFFU;
-          to_push.data[1] = (CAN->sTxMailBox[0].TDLR >> 8U) & 0xFFU;
-          to_push.data[2] = (CAN->sTxMailBox[0].TDLR >> 16U) & 0xFFU;
-          to_push.data[3] = (CAN->sTxMailBox[0].TDLR >> 24U) & 0xFFU;
+          to_push.data[1] = (CAN->sTxMailBox[0].TDLR >> 8) & 0xFFU;
+          to_push.data[2] = (CAN->sTxMailBox[0].TDLR >> 16) & 0xFFU;
+          to_push.data[3] = (CAN->sTxMailBox[0].TDLR >> 24) & 0xFFU;
           to_push.data[4] = CAN->sTxMailBox[0].TDHR & 0xFFU;
-          to_push.data[5] = (CAN->sTxMailBox[0].TDHR >> 8U) & 0xFFU;
-          to_push.data[6] = (CAN->sTxMailBox[0].TDHR >> 16U) & 0xFFU;
-          to_push.data[7] = (CAN->sTxMailBox[0].TDHR >> 24U) & 0xFFU;
+          to_push.data[5] = (CAN->sTxMailBox[0].TDHR >> 8) & 0xFFU;
+          to_push.data[6] = (CAN->sTxMailBox[0].TDHR >> 16) & 0xFFU;
+          to_push.data[7] = (CAN->sTxMailBox[0].TDHR >> 24) & 0xFFU;
 
 
           can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
@@ -150,7 +150,7 @@ void process_can(uint8_t can_number) {
         CAN->sTxMailBox[0].TDLR = to_send.data[0] | (to_send.data[1] << 8) | (to_send.data[2] << 16) | (to_send.data[3] << 24);
         CAN->sTxMailBox[0].TDHR = to_send.data[4] | (to_send.data[5] << 8) | (to_send.data[6] << 16) | (to_send.data[7] << 24);
         CAN->sTxMailBox[0].TDTR = to_send.len  & 0xFU; // We use 6 bit len, CAN needs 4. Critical for CAN FD!
-        CAN->sTxMailBox[0].TIR = ((to_send.extended != 0) ? (to_send.addr << 3) : (to_send.addr << 21)) | (to_send.extended << 2) | 1U; // addr | extended | TXRQ
+        CAN->sTxMailBox[0].TIR = ((to_send.extended != 0) ? (to_send.addr << 3) : (to_send.addr << 21)) | (to_send.extended << 2) | 0x1U; // addr | extended | TXRQ
 
         usb_cb_ep3_out_complete();
       }
@@ -175,18 +175,18 @@ void can_rx(uint8_t can_number) {
     CANPacket_t to_push;
 
     to_push.returned = 0U;
-    to_push.extended = CAN->sFIFOMailBox[0].RIR & 4U;
+    to_push.extended = (CAN->sFIFOMailBox[0].RIR >> 2) & 0x1U;
     to_push.addr = (to_push.extended != 0) ? (CAN->sFIFOMailBox[0].RIR >> 3) : (CAN->sFIFOMailBox[0].RIR >> 21);
     to_push.len = CAN->sFIFOMailBox[0].RDTR & 0xFU;
     to_push.bus = bus_number;
     to_push.data[0] = CAN->sFIFOMailBox[0].RDLR & 0xFFU;
-    to_push.data[1] = (CAN->sFIFOMailBox[0].RDLR >> 8U) & 0xFFU;
-    to_push.data[2] = (CAN->sFIFOMailBox[0].RDLR >> 16U) & 0xFFU;
-    to_push.data[3] = (CAN->sFIFOMailBox[0].RDLR >> 24U) & 0xFFU;
+    to_push.data[1] = (CAN->sFIFOMailBox[0].RDLR >> 8) & 0xFFU;
+    to_push.data[2] = (CAN->sFIFOMailBox[0].RDLR >> 16) & 0xFFU;
+    to_push.data[3] = (CAN->sFIFOMailBox[0].RDLR >> 24) & 0xFFU;
     to_push.data[4] = CAN->sFIFOMailBox[0].RDHR & 0xFFU;
-    to_push.data[5] = (CAN->sFIFOMailBox[0].RDHR >> 8U) & 0xFFU;
-    to_push.data[6] = (CAN->sFIFOMailBox[0].RDHR >> 16U) & 0xFFU;
-    to_push.data[7] = (CAN->sFIFOMailBox[0].RDHR >> 24U) & 0xFFU;
+    to_push.data[5] = (CAN->sFIFOMailBox[0].RDHR >> 8) & 0xFFU;
+    to_push.data[6] = (CAN->sFIFOMailBox[0].RDHR >> 16) & 0xFFU;
+    to_push.data[7] = (CAN->sFIFOMailBox[0].RDHR >> 24) & 0xFFU;
 
     // forwarding (panda only)
     int bus_fwd_num = safety_fwd_hook(bus_number, &to_push);
