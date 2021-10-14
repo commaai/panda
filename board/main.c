@@ -1,17 +1,6 @@
 // ********************* Includes *********************
 #include "config.h"
 
-typedef struct __attribute__((packed)) {
-  unsigned char reserved2 : 1;
-  unsigned char returned : 1;
-  unsigned char extended : 1;  
-  unsigned int addr : 29;
-  unsigned int bus_time : 24;
-  unsigned char bus : 2;
-  unsigned char len : 6;
-  unsigned char data[DATA_SIZE_MAX];
-} CANPacket_t;
-
 #include "drivers/pwm.h"
 #include "drivers/usb.h"
 #include "drivers/gmlan_alt.h"
