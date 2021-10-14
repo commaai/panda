@@ -46,7 +46,7 @@
 
 ///////////////////////////
 #define DATA_SIZE_MAX 8
-struct __attribute__((packed)) CANPacket_t {
+typedef struct __attribute__((packed)) {
   bool reserved2 : 1;
   bool returned : 1;
   bool extended : 1;  
@@ -55,8 +55,7 @@ struct __attribute__((packed)) CANPacket_t {
   uint8_t bus : 2;
   uint8_t len : 6;
   uint8_t data[DATA_SIZE_MAX];
-};
-typedef struct CANPacket_t CANPacket_t;
+} CANPacket_t;
 //////////////////////////
 
 #include "drivers/registers.h"
