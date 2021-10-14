@@ -34,12 +34,12 @@
 
 #define MAX_RESP_LEN 0x40U
 
-#define GET_BUS(msg) ((msg)->bus)
-#define GET_LEN(msg) ((msg)->len)
-#define GET_ADDR(msg) ((msg)->addr)
-#define GET_BYTE(msg, b) ((msg)->data[(b)])
-#define GET_BYTES_04(msg) ((msg)->data[0] | ((msg)->data[1] << 8) | ((msg)->data[2] << 16) | ((msg)->data[3] << 24))
-#define GET_BYTES_48(msg) ((msg)->data[4] | ((msg)->data[5] << 8) | ((msg)->data[6] << 16) | ((msg)->data[7] << 24))
+#define GET_BUS(msg) ((int)(msg)->bus)
+#define GET_LEN(msg) ((int)(msg)->len)
+#define GET_ADDR(msg) ((int)(msg)->addr)
+#define GET_BYTE(msg, b) ((int)(msg)->data[(int)(b)])
+#define GET_BYTES_04(msg) ((int)(msg)->data[0] | ((int)(msg)->data[1] << 8) | ((int)(msg)->data[2] << 16) | ((int)(msg)->data[3] << 24))
+#define GET_BYTES_48(msg) ((int)(msg)->data[4] | ((int)(msg)->data[5] << 8) | ((int)(msg)->data[6] << 16) | ((int)(msg)->data[7] << 24))
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
 
 // Flasher and pedal with raw mailbox access

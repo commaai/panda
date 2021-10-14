@@ -99,7 +99,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     // state machine to enter and exit controls
     // 0x1A6 for the ILX, 0x296 for the Civic Touring
     if ((addr == 0x1A6) || (addr == 0x296)) {
-      int button = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
+      int button = (GET_BYTE(to_push, 0) & 0xE0) >> 5;
       switch (button) {
         case 2:  // cancel
           controls_allowed = 0;

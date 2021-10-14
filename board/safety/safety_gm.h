@@ -42,7 +42,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     int addr = GET_ADDR(to_push);
 
     if (addr == 388) {
-      int torque_driver_new = ((GET_BYTE(to_push, 6) & 0x7U) << 8) | GET_BYTE(to_push, 7);
+      int torque_driver_new = ((GET_BYTE(to_push, 6) & 0x7) << 8) | GET_BYTE(to_push, 7);
       torque_driver_new = to_signed(torque_driver_new, 11);
       // update array of samples
       update_sample(&torque_driver, torque_driver_new);
@@ -56,7 +56,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 
     // ACC steering wheel buttons
     if (addr == 481) {
-      int button = (GET_BYTE(to_push, 5) & 0x70U) >> 4;
+      int button = (GET_BYTE(to_push, 5) & 0x70) >> 4;
       switch (button) {
         case 2:  // resume
         case 3:  // set

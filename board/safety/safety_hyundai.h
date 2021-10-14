@@ -191,7 +191,7 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
 
     // read gas pressed signal
     if ((addr == 881) && hyundai_ev_gas_signal) {
-      gas_pressed = (((GET_BYTE(to_push, 4) & 0x7FU) << 1) | GET_BYTE(to_push, 3) >> 7) != 0;
+      gas_pressed = (((GET_BYTE(to_push, 4) & 0x7F) << 1) | GET_BYTE(to_push, 3) >> 7) != 0;
     } else if ((addr == 881) && hyundai_hybrid_gas_signal) {
       gas_pressed = GET_BYTE(to_push, 7) != 0;
     } else if (addr == 608) {  // ICE
@@ -247,7 +247,7 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
 
   // ACCEL: safety check
   if (addr == 1057) {
-    int desired_accel_raw = (((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) - 1023;
+    int desired_accel_raw = (((GET_BYTE(to_send, 4) & 0x7) << 8) | GET_BYTE(to_send, 3)) - 1023;
     int desired_accel_val = ((GET_BYTE(to_send, 5) << 3) | (GET_BYTE(to_send, 4) >> 5)) - 1023;
 
     int aeb_decel_cmd = GET_BYTE(to_send, 2);

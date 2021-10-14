@@ -40,7 +40,7 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
       if(addr == 0x370) {
         // Steering angle: (0.1 * val) - 819.2 in deg.
         // Store it 1/10 deg to match steering request
-        int angle_meas_new = (((GET_BYTE(to_push, 4) & 0x3FU) << 8) | GET_BYTE(to_push, 5)) - 8192;
+        int angle_meas_new = (((GET_BYTE(to_push, 4) & 0x3F) << 8) | GET_BYTE(to_push, 5)) - 8192;
         update_sample(&angle_meas, angle_meas_new);
       }
 
@@ -57,7 +57,7 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
 
       if(addr == 0x20a) {
         // Brake pressed
-        brake_pressed = (((GET_BYTE(to_push, 0) & 0x0CU) >> 2) != 1);
+        brake_pressed = (((GET_BYTE(to_push, 0) & 0x0C) >> 2) != 1);
       }
 
       if(addr == 0x368) {
@@ -113,7 +113,7 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
   if(addr == 0x488) {
     // Steering control: (0.1 * val) - 1638.35 in deg.
     // We use 1/10 deg as a unit here
-    int raw_angle_can = (((GET_BYTE(to_send, 0) & 0x7FU) << 8) | GET_BYTE(to_send, 1));
+    int raw_angle_can = (((GET_BYTE(to_send, 0) & 0x7F) << 8) | GET_BYTE(to_send, 1));
     int desired_angle = raw_angle_can - 16384;
     int steer_control_type = GET_BYTE(to_send, 2) >> 6;
     bool steer_control_enabled = (steer_control_type != 0) &&  // NONE
