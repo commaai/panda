@@ -110,7 +110,7 @@ void process_can(uint8_t can_number) {
         if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
           CANPacket_t to_push;
           to_push.returned = 1U;
-          to_push.extended = (CAN->sFIFOMailBox[0].RIR >> 2) & 0x1U;
+          to_push.extended = (CAN->sTxMailBox[0].TIR >> 2) & 0x1U;
           to_push.addr = (to_push.extended != 0) ? (CAN->sTxMailBox[0].TIR >> 3) : (CAN->sTxMailBox[0].TIR >> 21);
           to_push.len = CAN->sTxMailBox[0].TDTR & 0xFU;
           to_push.bus = bus_number;
