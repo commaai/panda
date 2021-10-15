@@ -434,7 +434,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
     for tx_msgs in all_tx:
       for addr, bus in tx_msgs:
-        msg = make_msg(addr, bus)
+        msg = make_msg(bus, addr)
         self.safety.set_controls_allowed(1)
         self.assertFalse(self._tx(msg))
 
