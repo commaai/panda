@@ -25,7 +25,7 @@ MSG_LDW_1 = 0x5BE        # TX by OP, Lane line recognition and text alerts
 
 
 def volkswagen_pq_checksum(msg, addr, len_msg):
-  msg_bytes = msg.RDLR.to_bytes(4, 'little') + msg.RDHR.to_bytes(4, 'little')
+  msg_bytes = bytes(msg.data)
   msg_bytes = msg_bytes[1:len_msg]
 
   checksum = 0
