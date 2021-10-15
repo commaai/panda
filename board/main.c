@@ -197,7 +197,7 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   CANPacket_t *reply = (CANPacket_t *)usbdata;
   int ilen = 0;
-  while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) { // Force len to 13 bytes? Test 0x10 to 0xD
+  while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) {
     ilen++;
   }
   return ilen*0x10;
