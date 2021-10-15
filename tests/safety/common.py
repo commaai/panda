@@ -21,7 +21,7 @@ def package_can_msg(msg):
   ret[0].extended = 1 if addr >= 0x800 else 0
   ret[0].addr = addr
   ret[0].len = len(dat)
-  ret[0].bus = bus
+  ret[0].bus = 3 if bus > 3 else bus
   ret[0].data = bytes(dat) 
 
   return ret
