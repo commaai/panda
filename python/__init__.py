@@ -533,7 +533,13 @@ class Panda(object):
           for s in snds:
             self._handle.bulkWrite(3, s)
         else:
-          self._handle.bulkWrite(3, b''.join(snds), timeout=timeout)
+          dat = b''.join(snds)
+          while True:
+            bs = self._handle.bulkWrite(3, dat, timeout=timeout)
+            dat = dat[bs:]
+            if len(dat) == 0:
+              break
+            print("CAN: PARTIAL SEND MANY, RETRYING")
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD SEND MANY, RETRYING")

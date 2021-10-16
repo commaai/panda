@@ -214,8 +214,12 @@ def test_bulk_write(p):
 
   def flood_tx(panda):
     print('Sending!')
-    msg = b"\xaa" * 4
-    packet = [[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]] * NUM_MESSAGES_PER_BUS
+    msg = b"\xaa" * 8
+    packet = []
+    # start with many messages on a single bus (higher contention for single TX ring buffer)
+    packet += [[0xaa, None, msg, 0]] * NUM_MESSAGES_PER_BUS
+    # end with many messages on multiple buses
+    packet += [[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]] * NUM_MESSAGES_PER_BUS
 
     # Disable timeout
     panda.can_send_many(packet, timeout=0)
@@ -241,7 +245,7 @@ def test_bulk_write(p):
   print(f"Received {len(rx)} messages")
 
   # All messages should have been received
-  if len(rx) != 3 * NUM_MESSAGES_PER_BUS:
+  if len(rx) != 4 * NUM_MESSAGES_PER_BUS:
     Exception("Did not receive all messages!")
 
   # Set back to silent mode
