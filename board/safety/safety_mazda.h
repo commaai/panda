@@ -3,6 +3,7 @@
 #define MAZDA_CRZ_CTRL      0x21c
 #define MAZDA_CRZ_BTNS      0x09d
 #define MAZDA_STEER_TORQUE  0x240
+#define MAZDA_STEER_RATE    0x241
 #define MAZDA_ENGINE_DATA   0x202
 #define MAZDA_PEDALS        0x165
 
@@ -27,15 +28,16 @@
 #define MAZDA_LKAS_ENABLE_SPEED  5200
 #define MAZDA_LKAS_DISABLE_SPEED 4500
 
-const CanMsg MAZDA_TX_MSGS[] = {{MAZDA_LKAS, 0, 8}, {MAZDA_CRZ_BTNS, 0, 8}};
+const CanMsg MAZDA_TX_MSGS[] = {{MAZDA_LKAS, 0, 8}, {MAZDA_CRZ_BTNS, 0, 8}, {MAZDA_STEER_RATE, 2, 8}};
 bool mazda_lkas_allowed = false;
 
 AddrCheckStruct mazda_addr_checks[] = {
-  {.msg = {{MAZDA_CRZ_CTRL,     0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MAZDA_CRZ_CTRL,     0, 8, .expected_timestep = 20000U} , { 0 }, { 0 }}},
   {.msg = {{MAZDA_CRZ_BTNS,     0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-  {.msg = {{MAZDA_STEER_TORQUE, 0, 8, .expected_timestep = 12000U}, { 0 }, { 0 }}},
-  {.msg = {{MAZDA_ENGINE_DATA,  0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MAZDA_PEDALS,       0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MAZDA_STEER_TORQUE, 0, 8, .expected_timestep = 12000U} , { 0 }, { 0 }}},
+  {.msg = {{MAZDA_STEER_RATE,   0, 8, .expected_timestep = 12000U} , { 0 }, { 0 }}},
+  {.msg = {{MAZDA_ENGINE_DATA,  0, 8, .expected_timestep = 10000U} , { 0 }, { 0 }}},
+  {.msg = {{MAZDA_PEDALS,       0, 8, .expected_timestep = 20000U} , { 0 }, { 0 }}},
 };
 #define MAZDA_ADDR_CHECKS_LEN (sizeof(mazda_addr_checks) / sizeof(mazda_addr_checks[0]))
 addr_checks mazda_rx_checks = {mazda_addr_checks, MAZDA_ADDR_CHECKS_LEN};
@@ -171,7 +173,9 @@ static int mazda_fwd_hook(int bus, CAN_FIFOMailBox_TypeDef *to_fwd) {
   if (!relay_malfunction) {
     int addr = GET_ADDR(to_fwd);
     if (bus == MAZDA_MAIN) {
-      bus_fwd = MAZDA_CAM;
+      if (!(addr == MAZDA_STEER_RATE)) {
+	bus_fwd = MAZDA_CAM;
+      }
     } else if (bus == MAZDA_CAM) {
       if (!(addr == MAZDA_LKAS)) {
         bus_fwd = MAZDA_MAIN;
