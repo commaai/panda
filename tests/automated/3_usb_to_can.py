@@ -59,9 +59,9 @@ def test_safety_nooutput(p):
   # confirm receive nothing
   time.sleep(0.05)
   r = p.can_recv()
-  # bus 255 is messages blocked by TX safety hook
-  assert len([x for x in r if x[3] != 255]) == 0
-  assert len([x for x in r if x[3] == 255]) == 1
+  # bus 192 is messages blocked by TX safety hook on bus 0
+  assert len([x for x in r if x[3] != 192]) == 0
+  assert len([x for x in r if x[3] == 192]) == 1
 
 @test_all_pandas
 @panda_connect_and_init
