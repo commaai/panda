@@ -15,17 +15,17 @@
 #define can_speed_to_prescaler(x) (CAN_PCLK / CAN_QUANTA * 10U / (x))
 
 // RX FIFO 0
-#define FDCAN_RX_FIFO_0_EL_CNT 32UL
+#define FDCAN_RX_FIFO_0_EL_CNT 24UL
 #define FDCAN_RX_FIFO_0_HEAD_SIZE 8UL // bytes
-#define FDCAN_RX_FIFO_0_DATA_SIZE 8UL // bytes
+#define FDCAN_RX_FIFO_0_DATA_SIZE 64UL // bytes
 #define FDCAN_RX_FIFO_0_EL_SIZE (FDCAN_RX_FIFO_0_HEAD_SIZE + FDCAN_RX_FIFO_0_DATA_SIZE)
 #define FDCAN_RX_FIFO_0_EL_W_SIZE (FDCAN_RX_FIFO_0_EL_SIZE / 4UL)
 #define FDCAN_RX_FIFO_0_OFFSET 0UL
 
 // TX FIFO
-#define FDCAN_TX_FIFO_EL_CNT 32UL
+#define FDCAN_TX_FIFO_EL_CNT 16UL
 #define FDCAN_TX_FIFO_HEAD_SIZE 8UL // bytes
-#define FDCAN_TX_FIFO_DATA_SIZE 8UL // bytes
+#define FDCAN_TX_FIFO_DATA_SIZE 64UL // bytes
 #define FDCAN_TX_FIFO_EL_SIZE (FDCAN_TX_FIFO_HEAD_SIZE + FDCAN_TX_FIFO_DATA_SIZE)
 #define FDCAN_TX_FIFO_EL_W_SIZE (FDCAN_TX_FIFO_EL_SIZE / 4UL)
 #define FDCAN_TX_FIFO_OFFSET (FDCAN_RX_FIFO_0_OFFSET + (FDCAN_RX_FIFO_0_EL_CNT * FDCAN_RX_FIFO_0_EL_W_SIZE))
@@ -138,10 +138,10 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
 
     // Set TX mode to FIFO
     CANx->TXBC &= ~(FDCAN_TXBC_TFQM);
-    // Configure TX element size (for now 8 bytes, no need to change)
-    //CANx->TXESC |= 0x000U;
-    //Configure RX FIFO0, FIFO1, RX buffer element sizes (no need for now, using classic 8 bytes)
-    register_set(&(CANx->RXESC), 0x0U, (FDCAN_RXESC_F0DS | FDCAN_RXESC_F1DS | FDCAN_RXESC_RBDS));
+    // Configure TX element data size
+    CANx->TXESC |= 0x7U << FDCAN_TXESC_TBDS_Pos; // 64 bytes
+    //Configure RX FIFO0 element data size
+    CANx->RXESC |= 0x7U << FDCAN_RXESC_F0DS_Pos;
     // Disable filtering, accept all valid frames received
     CANx->XIDFC &= ~(FDCAN_XIDFC_LSE); // No extended filters
     CANx->SIDFC &= ~(FDCAN_SIDFC_LSS); // No standard filters
@@ -154,13 +154,13 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
     uint32_t TxFIFOSA = RxFIFO0SA + (FDCAN_RX_FIFO_0_EL_CNT * FDCAN_RX_FIFO_0_EL_SIZE);
 
     // RX FIFO 0
-    CANx->RXF0C = (FDCAN_RX_FIFO_0_OFFSET + (can_number * FDCAN_OFFSET_W)) << FDCAN_RXF0C_F0SA_Pos;
+    CANx->RXF0C |= (FDCAN_RX_FIFO_0_OFFSET + (can_number * FDCAN_OFFSET_W)) << FDCAN_RXF0C_F0SA_Pos;
     CANx->RXF0C |= FDCAN_RX_FIFO_0_EL_CNT << FDCAN_RXF0C_F0S_Pos;
     // RX FIFO 0 switch to non-blocking (overwrite) mode
     CANx->RXF0C |= FDCAN_RXF0C_F0OM;
 
     // TX FIFO (mode set earlier)
-    CANx->TXBC = (FDCAN_TX_FIFO_OFFSET + (can_number * FDCAN_OFFSET_W)) << FDCAN_TXBC_TBSA_Pos;
+    CANx->TXBC |= (FDCAN_TX_FIFO_OFFSET + (can_number * FDCAN_OFFSET_W)) << FDCAN_TXBC_TBSA_Pos;
     CANx->TXBC |= FDCAN_TX_FIFO_EL_CNT << FDCAN_TXBC_TFQS_Pos;
 
     // Flush allocated RAM
