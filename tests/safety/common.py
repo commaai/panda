@@ -429,7 +429,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
           if tx is not None:
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
             if attr in ['TestHondaBoschLongGiraffeSafety', 'TestHondaNidecSafety']:
-              tx = [x for x in tx if x[0] != 0x1FA and x[0] != 0x30C ]
+              tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C], tx))
             all_tx.append(tx)
 
     # make sure we got all the msgs
