@@ -414,7 +414,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.safety.safety_rx_hook(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
     self.assertTrue(self.safety.get_vehicle_moving())
 
-def test_tx_hook_on_wrong_safety_mode(self):
+  def test_tx_hook_on_wrong_safety_mode(self):
     files = os.listdir(os.path.dirname(os.path.realpath(__file__)))
     test_files = [f for f in files if f.startswith("test_") and f.endswith(".py")]
 
