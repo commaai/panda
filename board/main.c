@@ -193,15 +193,51 @@ int get_rtc_pkt(void *dat) {
   return sizeof(t);
 }
 
+#define HEAD_SIZE 5
+#define USB_BUFFER_SIZE 208
+#define MAX_PACKET_SIZE (DATA_SIZE_MAX + HEAD_SIZE)
+typedef struct {
+  volatile uint32_t ptr;
+  volatile uint32_t r_ptr;
+  uint8_t data[USB_BUFFER_SIZE];
+} usb_buffer;
+
+usb_buffer tx_usb = { .ptr = 0, .r_ptr = 0 };
+
 int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
-  CANPacket_t *reply = (CANPacket_t *)usbdata;
-  int ilen = 0;
-  while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) {
-    ilen++;
+  int data_size = 0;
+  if (tx_usb.ptr == 0) { // if buffer is empty - fill to full with messages.
+    CANPacket_t can_packet;
+    while (tx_usb.ptr < USB_BUFFER_SIZE-MAX_PACKET_SIZE && can_pop(&can_rx_q, &can_packet)) {
+      int packet_len = HEAD_SIZE + can_packet.len;
+      (void)memcpy(tx_usb.data + tx_usb.ptr, &can_packet, packet_len);
+      tx_usb.ptr += packet_len;
+    }
+    tx_usb.r_ptr = 0;
   }
-  return ilen*0x10;
+
+  if (tx_usb.ptr > 0) { // If buffer is not empty
+    data_size = tx_usb.ptr - tx_usb.r_ptr;
+    if (data_size > len) data_size = len;
+
+    (void)memcpy((uint8_t*)usbdata, tx_usb.data + tx_usb.r_ptr, data_size);
+    tx_usb.r_ptr += data_size;
+
+    if (tx_usb.r_ptr == tx_usb.ptr) tx_usb.ptr = 0;
+  }
+  return data_size;
 }
+
+// int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
+//   UNUSED(hardwired);
+//   uint8_t *usbdata8 = (uint8_t *)usbdata;
+//   int ilen = 0;
+//   while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) { // Force len to 13 bytes? Test 0x10 to 0xD
+//     ilen++;
+//   }
+//   return ilen*0x10;
+// }
 
 // send on serial, first byte to select the ring
 void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
@@ -219,13 +255,44 @@ void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
   }
 }
 
+usb_buffer rx_usb = { .ptr = 0 };
+
+void process_rx_usb(void) {
+  uint32_t dpkt = 0;
+  while (dpkt < rx_usb.ptr) {
+    CANPacket_t to_push;
+    // Temporary conversion, should be implemented from host site
+    //uint32_t word_0 = (rx_usb.data[dpkt] << 0U) | (rx_usb.data[dpkt+1] << 8U) | (rx_usb.data[dpkt+2] << 16U) | (rx_usb.data[dpkt+3] << 24U);
+    uint8_t len = rx_usb.data[dpkt+4] >> 2U;
+    
+    //to_push.extended = (word_0 & 4U) >> 2U;
+    //to_push.addr = word_0 >> 3U;
+    //to_push.len = len;
+    //to_push.bus = rx_usb.data[dpkt+7] & 0x3U;
+    // to_push.data[0] = rx_usb.data[dpkt+8];
+    // to_push.data[1] = rx_usb.data[dpkt+9];
+    // to_push.data[2] = rx_usb.data[dpkt+10];
+    // to_push.data[3] = rx_usb.data[dpkt+11];
+    // to_push.data[4] = rx_usb.data[dpkt+12];
+    // to_push.data[5] = rx_usb.data[dpkt+13];
+    // to_push.data[6] = rx_usb.data[dpkt+14];
+    // to_push.data[7] = rx_usb.data[dpkt+15];
+    (void)memcpy(&to_push, rx_usb.data + dpkt, len + HEAD_SIZE);
+    //(void)memcpy(to_push.data, rx_usb.data + dpkt + HEAD_SIZE, len);
+
+    can_send(&to_push, to_push.bus, false);
+    dpkt += HEAD_SIZE + len;
+  }
+  rx_usb.ptr = 0;
+}
+
 // send on CAN
 void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
-  int dpkt = 0;
-  CANPacket_t *receive = (CANPacket_t *)usbdata;
-  for (dpkt = 0; dpkt < (len/0x10); dpkt++) {
-    can_send(&receive[dpkt], receive[dpkt].bus, false);
+  (void)memcpy(rx_usb.data + rx_usb.ptr, (uint8_t *)usbdata, len);
+  rx_usb.ptr += len;
+  if (len < 0x40 || len == 0) {
+    process_rx_usb();
   }
 }
 

@@ -25,16 +25,26 @@ DEBUG = os.getenv("PANDADEBUG") is not None
 
 def parse_can_buffer(dat):
   ret = []
-  for j in range(0, len(dat), 0x10):
-    ddat = dat[j:j + 0x10]
-    header = ddat[0:8]
+  # if len(dat):
+  #   print(f"Received: {len(dat)}")
+  #for j in range(0, len(dat), 0x10):
+  dpkt = 0
+  head_size = 0x5
+  while dpkt < len(dat):
+    #ddat = dat[j:j + 0x10]
+    header = dat[dpkt:dpkt + head_size]
     header.reverse()
-    length, bus, _, address, _, returned, _ = bitstruct.unpack('u6 u2 u24 u29 b1 b1 b1', bytes(header)) # timer, extended and reserved fields are omitted
-    dddat = ddat[8:8 + length]
+    #print(dpkt)
+    #print(len(header))
+    length, bus, address, _, returned, _ = bitstruct.unpack('u6 u2 u29 b1 b1 b1', bytes(header)) # timer, extended and reserved fields are omitted
+    #print(length)
+    dddat = dat[dpkt + head_size:dpkt + head_size + length]
     bus = bus + 128 if returned else bus
     if DEBUG:
       print(f"  R 0x{address:x}: 0x{dddat.hex()}")
     ret.append((address, 0, dddat, bus))
+    #print(dddat)
+    dpkt += head_size + length
   return ret
 
 def ensure_health_packet_version(fn):
@@ -551,10 +561,10 @@ class Panda(object):
       if DEBUG:
         print(f"  W 0x{address:x}: 0x{dat.hex()}")
       extended = 1 if address >= 0x800 else 0
-      snd = bytearray(bitstruct.pack('u6 u2 u24 u29 b1 b1 b1', len(dat), bus, 0, address, extended, 0, 0))
+      snd = bytearray(bitstruct.pack('u6 u2 u29 b1 b1 b1', len(dat), bus, address, extended, 0, 0))
       snd.reverse()
       snd += dat
-      snd = snd.ljust(0x10, b'\x00')
+      #snd = snd.ljust(0x10, b'\x00')
       snds.append(snd)
 
     while True:
