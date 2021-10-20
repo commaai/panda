@@ -194,7 +194,7 @@ int get_rtc_pkt(void *dat) {
 }
 
 #define HEAD_SIZE 5
-#define USB_BUFFER_SIZE 208
+#define USB_BUFFER_SIZE 10240
 #define MAX_PACKET_SIZE (DATA_SIZE_MAX + HEAD_SIZE)
 typedef struct {
   volatile uint32_t ptr;
