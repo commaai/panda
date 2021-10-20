@@ -279,7 +279,7 @@ void process_rx_usb(void) {
     // to_push.data[7] = rx_usb.data[dpkt+15];
     (void)memcpy(&to_push, rx_usb.data + dpkt, len + HEAD_SIZE);
     //(void)memcpy(to_push.data, rx_usb.data + dpkt + HEAD_SIZE, len);
-
+    
     can_send(&to_push, to_push.bus, false);
     dpkt += HEAD_SIZE + len;
   }
@@ -291,9 +291,7 @@ void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   (void)memcpy(rx_usb.data + rx_usb.ptr, (uint8_t *)usbdata, len);
   rx_usb.ptr += len;
-  if (len < 0x40 || len == 0) {
-    process_rx_usb();
-  }
+  if (len < 0x40) process_rx_usb();
 }
 
 void usb_cb_ep3_out_complete(void) {
