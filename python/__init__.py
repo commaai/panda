@@ -573,6 +573,7 @@ class Panda(object):
           for s in snds:
             self._handle.bulkWrite(3, s)
         else:
+<<<<<<< HEAD
           dat = b''.join(snds)
           while True:
             bs = self._handle.bulkWrite(3, dat, timeout=timeout)
@@ -580,6 +581,17 @@ class Panda(object):
             if len(dat) == 0:
               break
             print("CAN: PARTIAL SEND MANY, RETRYING")
+=======
+          while len(snds) > 0:
+            tx_packet = b''
+            while len(tx_packet) < 10240-16 and len(snds) > 0:
+              tx_packet += snds.pop(0)
+            #tx_packet = b''.join(snds)
+            self._handle.bulkWrite(3, tx_packet, timeout=timeout)
+            # print(f"Sent: {len(tx_packet)}")
+            if len(tx_packet) >= 64 and len(tx_packet) % 64 == 0:
+              self._handle.bulkWrite(3, b'', timeout=timeout)
+>>>>>>> f0da37e (raise python bulk read/write limits)
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD SEND MANY, RETRYING")
@@ -592,7 +604,7 @@ class Panda(object):
     dat = bytearray()
     while True:
       try:
-        dat = self._handle.bulkRead(1, 0x10 * 256)
+        dat = self._handle.bulkRead(1, 10240)
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD RECV, RETRYING")
