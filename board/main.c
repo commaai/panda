@@ -255,43 +255,84 @@ void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
   }
 }
 
-usb_buffer rx_usb = { .ptr = 0 };
+// usb_buffer rx_usb = { .ptr = 0 };
 
-void process_rx_usb(void) {
-  uint32_t dpkt = 0;
-  while (dpkt < rx_usb.ptr) {
-    CANPacket_t to_push;
-    // Temporary conversion, should be implemented from host site
-    //uint32_t word_0 = (rx_usb.data[dpkt] << 0U) | (rx_usb.data[dpkt+1] << 8U) | (rx_usb.data[dpkt+2] << 16U) | (rx_usb.data[dpkt+3] << 24U);
-    uint8_t len = rx_usb.data[dpkt] >> 2U;
+// void process_rx_usb(void) {
+//   uint32_t dpkt = 0;
+//   while (dpkt < rx_usb.ptr) {
+//     CANPacket_t to_push;
+//     // Temporary conversion, should be implemented from host site
+//     //uint32_t word_0 = (rx_usb.data[dpkt] << 0U) | (rx_usb.data[dpkt+1] << 8U) | (rx_usb.data[dpkt+2] << 16U) | (rx_usb.data[dpkt+3] << 24U);
+//     uint8_t len = rx_usb.data[dpkt] >> 2U;
     
-    //to_push.extended = (word_0 & 4U) >> 2U;
-    //to_push.addr = word_0 >> 3U;
-    //to_push.len = len;
-    //to_push.bus = rx_usb.data[dpkt+7] & 0x3U;
-    // to_push.data[0] = rx_usb.data[dpkt+8];
-    // to_push.data[1] = rx_usb.data[dpkt+9];
-    // to_push.data[2] = rx_usb.data[dpkt+10];
-    // to_push.data[3] = rx_usb.data[dpkt+11];
-    // to_push.data[4] = rx_usb.data[dpkt+12];
-    // to_push.data[5] = rx_usb.data[dpkt+13];
-    // to_push.data[6] = rx_usb.data[dpkt+14];
-    // to_push.data[7] = rx_usb.data[dpkt+15];
-    (void)memcpy(&to_push, rx_usb.data + dpkt, len + HEAD_SIZE);
-    //(void)memcpy(to_push.data, rx_usb.data + dpkt + HEAD_SIZE, len);
+//     //to_push.extended = (word_0 & 4U) >> 2U;
+//     //to_push.addr = word_0 >> 3U;
+//     //to_push.len = len;
+//     //to_push.bus = rx_usb.data[dpkt+7] & 0x3U;
+//     // to_push.data[0] = rx_usb.data[dpkt+8];
+//     // to_push.data[1] = rx_usb.data[dpkt+9];
+//     // to_push.data[2] = rx_usb.data[dpkt+10];
+//     // to_push.data[3] = rx_usb.data[dpkt+11];
+//     // to_push.data[4] = rx_usb.data[dpkt+12];
+//     // to_push.data[5] = rx_usb.data[dpkt+13];
+//     // to_push.data[6] = rx_usb.data[dpkt+14];
+//     // to_push.data[7] = rx_usb.data[dpkt+15];
+//     (void)memcpy(&to_push, rx_usb.data + dpkt, len + HEAD_SIZE);
+//     //(void)memcpy(to_push.data, rx_usb.data + dpkt + HEAD_SIZE, len);
     
-    can_send(&to_push, to_push.bus, false);
-    dpkt += HEAD_SIZE + len;
-  }
-  rx_usb.ptr = 0;
-}
+//     can_send(&to_push, to_push.bus, false);
+//     dpkt += HEAD_SIZE + len;
+//   }
+//   rx_usb.ptr = 0;
+// }
+
+// send on CAN
+// void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
+//   UNUSED(hardwired);
+//   (void)memcpy(rx_usb.data + rx_usb.ptr, (uint8_t *)usbdata, len);
+//   rx_usb.ptr += len;
+//   if (len < 0x40) process_rx_usb();
+// }
+
+////////////////////////////////////////////////////////////////
+
+struct {
+  volatile uint8_t ptr;
+  volatile uint8_t tail_size;
+  uint8_t data[72];
+} packet = {.ptr = 0, .tail_size = 0};
 
 // send on CAN
 void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
-  (void)memcpy(rx_usb.data + rx_usb.ptr, (uint8_t *)usbdata, len);
-  rx_usb.ptr += len;
-  if (len < 0x40) process_rx_usb();
+
+  uint8_t *usbdata8 = (uint8_t *)usbdata;
+  uint8_t pos = 0;
+
+  if (packet.ptr != 0) {
+    CANPacket_t to_push;
+    (void)memcpy(packet.data + packet.ptr, usbdata8, packet.tail_size);
+    (void)memcpy(&to_push, packet.data, packet.ptr + packet.tail_size);
+    can_send(&to_push, to_push.bus, false);
+    pos += packet.tail_size;
+    packet.ptr = 0;
+    packet.tail_size = 0;
+  }
+
+  while (pos < len) {
+    uint8_t pckt_len = usbdata8[pos] >> 2U;
+    if ((pos + HEAD_SIZE + pckt_len) <= len) {
+      CANPacket_t to_push;
+      (void)memcpy(&to_push, usbdata8 + pos, pckt_len + HEAD_SIZE);
+      can_send(&to_push, to_push.bus, false);
+      pos += HEAD_SIZE + pckt_len;
+    } else {
+      (void)memcpy(packet.data, usbdata8 + pos, len - pos);
+      packet.ptr = len - pos;
+      packet.tail_size = HEAD_SIZE + pckt_len - packet.ptr;
+      pos += packet.ptr;
+    }
+  }
 }
 
 void usb_cb_ep3_out_complete(void) {

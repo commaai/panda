@@ -36,7 +36,7 @@ def parse_can_buffer(dat):
     header.reverse()
     #print(dpkt)
     #print(len(header))
-    address, _, returned, _, length, bus = bitstruct.unpack('u29 b1 b1 b1 u6 u2', bytes(header)) # timer, extended and reserved fields are omitted
+    length, bus, address, _, returned, _ = bitstruct.unpack('u6 u2 u29 b1 b1 b1', bytes(header)) # timer, extended and reserved fields are omitted
     #print(length)
     dddat = dat[dpkt + head_size:dpkt + head_size + length]
     bus = bus + 128 if returned else bus
@@ -561,7 +561,7 @@ class Panda(object):
       if DEBUG:
         print(f"  W 0x{address:x}: 0x{dat.hex()}")
       extended = 1 if address >= 0x800 else 0
-      snd = bytearray(bitstruct.pack('u29 b1 b1 b1 u6 u2', address, extended, 0, 0, len(dat), bus))
+      snd = bytearray(bitstruct.pack('u6 u2 u29 b1 b1 b1', len(dat), bus, address, extended, 0, 0))
       snd.reverse()
       snd += dat
       #snd = snd.ljust(0x10, b'\x00')
@@ -573,7 +573,6 @@ class Panda(object):
           for s in snds:
             self._handle.bulkWrite(3, s)
         else:
-<<<<<<< HEAD
           dat = b''.join(snds)
           while True:
             bs = self._handle.bulkWrite(3, dat, timeout=timeout)
@@ -581,17 +580,6 @@ class Panda(object):
             if len(dat) == 0:
               break
             print("CAN: PARTIAL SEND MANY, RETRYING")
-=======
-          while len(snds) > 0:
-            tx_packet = b''
-            while len(tx_packet) < 10240-16 and len(snds) > 0:
-              tx_packet += snds.pop(0)
-            #tx_packet = b''.join(snds)
-            self._handle.bulkWrite(3, tx_packet, timeout=timeout)
-            # print(f"Sent: {len(tx_packet)}")
-            if len(tx_packet) >= 64 and len(tx_packet) % 64 == 0:
-              self._handle.bulkWrite(3, b'', timeout=timeout)
->>>>>>> f0da37e (raise python bulk read/write limits)
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD SEND MANY, RETRYING")
