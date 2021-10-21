@@ -9,12 +9,12 @@ void can_flip_buses(uint8_t bus1, uint8_t bus2);
 void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
 void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 typedef struct {
+  unsigned char bus : 2;
+  unsigned char len : 6;
   unsigned char reserved2 : 1;
   unsigned char returned : 1;
   unsigned char extended : 1;  
   unsigned int addr : 29;
-  unsigned char bus : 2;
-  unsigned char len : 6;
   unsigned char data[DATA_SIZE_MAX];
 } __attribute__((packed, aligned(1))) CANPacket_t;
 // ********************* Globals **********************

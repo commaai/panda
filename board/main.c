@@ -263,7 +263,7 @@ void process_rx_usb(void) {
     CANPacket_t to_push;
     // Temporary conversion, should be implemented from host site
     //uint32_t word_0 = (rx_usb.data[dpkt] << 0U) | (rx_usb.data[dpkt+1] << 8U) | (rx_usb.data[dpkt+2] << 16U) | (rx_usb.data[dpkt+3] << 24U);
-    uint8_t len = rx_usb.data[dpkt+4] >> 2U;
+    uint8_t len = rx_usb.data[dpkt] >> 2U;
     
     //to_push.extended = (word_0 & 4U) >> 2U;
     //to_push.addr = word_0 >> 3U;
