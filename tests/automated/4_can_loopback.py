@@ -246,7 +246,7 @@ def test_bulk_write(p):
 
   # All messages should have been received
   if len(rx) != 4 * NUM_MESSAGES_PER_BUS:
-    Exception("Did not receive all messages!")
+    raise Exception("Did not receive all messages!")
 
   # Set back to silent mode
   p.set_safety_mode(Panda.SAFETY_SILENT)
