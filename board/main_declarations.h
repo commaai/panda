@@ -11,7 +11,7 @@ void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 typedef struct {
   unsigned char bus : 2;
   unsigned char len : 6;
-  unsigned char reserved2 : 1;
+  unsigned char rejected : 1;
   unsigned char returned : 1;
   unsigned char extended : 1;  
   unsigned int addr : 29;

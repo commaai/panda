@@ -110,6 +110,7 @@ void process_can(uint8_t can_number) {
         if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
           CANPacket_t to_push;
           to_push.returned = 1U;
+          to_push.rejected = 0U;
           to_push.extended = (CAN->sTxMailBox[0].TIR >> 2) & 0x1U;
           to_push.addr = (to_push.extended != 0) ? (CAN->sTxMailBox[0].TIR >> 3) : (CAN->sTxMailBox[0].TIR >> 21);
           to_push.len = CAN->sTxMailBox[0].TDTR & 0xFU;
@@ -176,6 +177,7 @@ void can_rx(uint8_t can_number) {
     CANPacket_t to_push;
 
     to_push.returned = 0U;
+    to_push.rejected = 0U;
     to_push.extended = (CAN->sFIFOMailBox[0].RIR >> 2) & 0x1U;
     to_push.addr = (to_push.extended != 0) ? (CAN->sFIFOMailBox[0].RIR >> 3) : (CAN->sFIFOMailBox[0].RIR >> 21);
     to_push.len = CAN->sFIFOMailBox[0].RDTR & 0xFU;
@@ -195,6 +197,7 @@ void can_rx(uint8_t can_number) {
       CANPacket_t to_send;
 
       to_send.returned = 0U;
+      to_push.rejected = 0U;
       to_send.extended = to_push.extended; // TXRQ
       to_send.addr = to_push.addr;
       to_send.bus = to_push.bus;

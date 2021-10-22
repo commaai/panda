@@ -76,6 +76,7 @@ void process_can(uint8_t can_number) {
         CANPacket_t to_push;
 
         to_push.returned = 1U;
+        to_push.rejected = 0U;
         to_push.extended = to_send.extended;
         to_push.addr = to_send.addr;
         to_push.bus = to_send.bus;
@@ -139,6 +140,7 @@ void can_rx(uint8_t can_number) {
       fifo = (canfd_fifo *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
 
       to_push.returned = 0U;
+      to_push.rejected = 0U;
       to_push.extended = (fifo->header1 >> 30) & 0x1U;
       to_push.addr = ((to_push.extended != 0) ? (fifo->header1 & 0x1FFFFFFFU) : ((fifo->header1 >> 18) & 0x7FFU));
       to_push.bus = bus_number;
@@ -158,6 +160,7 @@ void can_rx(uint8_t can_number) {
         CANPacket_t to_send;
 
         to_send.returned = 0U;
+        to_push.rejected = 0U;
         to_send.extended = to_push.extended;
         to_send.addr = to_push.addr;
         to_send.bus = to_push.bus;

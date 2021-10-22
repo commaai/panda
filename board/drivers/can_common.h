@@ -12,8 +12,6 @@ typedef struct {
   uint32_t can_data_speed;
 } bus_config_t;
 
-#define CAN_BUS_RET_FLAG 0x80U
-#define CAN_BUS_BLK_FLAG 0x40U
 #define CAN_BUS_NUM_MASK 0x3FU
 
 #define BUS_MAX 4U
@@ -250,7 +248,7 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
       }
     }
   } else {
-    to_push->RDTR = (to_push->RDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | CAN_BUS_BLK_FLAG | bus_number) << 4);
+    to_push->rejected = 1U;
     can_send_errs += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }
 }
