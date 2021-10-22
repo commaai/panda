@@ -208,6 +208,45 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   return pos;
 }
 
+//////////////////////////////
+// This stream-like method should waste less bandwidth, but has major flaw: No way to restart stream if one packet was lost.
+// Don't like it... Also with 3x CAN test saw no real increase in speed!
+
+// struct {
+//   volatile uint8_t ptr;
+//   volatile uint8_t tail_size;
+//   uint8_t data[MAX_CANPACKET_SIZE];
+// } packet2 = {.ptr = 0, .tail_size = 0};
+
+// int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
+//   UNUSED(hardwired);
+//   UNUSED(len);
+//   uint8_t pos = 0;
+//   CANPacket_t can_packet;
+//   uint8_t *usbdata8 = (uint8_t *)usbdata;
+
+//   if (packet2.ptr > 0) {
+//     (void)memcpy(&usbdata8[pos], packet2.data, packet2.ptr);
+//     pos += packet2.ptr;
+//     packet2.ptr = 0;
+//   }
+
+//   while (pos < len && can_pop(&can_rx_q, &can_packet)) {
+//     uint8_t canpacket_size = CANPACKET_HEAD_SIZE + can_packet.len;
+//     if ((pos + canpacket_size) <= len) {
+//       (void)memcpy(&usbdata8[pos], &can_packet, canpacket_size);
+//       pos += canpacket_size;
+//     } else {
+//       (void)memcpy(&usbdata8[pos], &can_packet, len - pos);
+//       packet2.ptr = canpacket_size - (len - pos);
+//       (void)memcpy(packet2.data, ((uint8_t*)&can_packet + (len - pos)), packet2.ptr);
+//       pos = len; 
+//     }
+//   }
+//   return pos;
+// }
+/////////////////////////////////////////
+
 // send on serial, first byte to select the ring
 void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
