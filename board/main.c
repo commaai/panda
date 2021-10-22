@@ -271,24 +271,35 @@ struct {
 // send on CAN
 void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
-  if ((rx_usb.ptr + len) > 256) { // Discard everything, malformed usb batch!
-    rx_usb.ptr = 0;
-    return;
-  }
-
-  (void)memcpy(&rx_usb.data[rx_usb.ptr], (uint8_t *)usbdata, len);
-  rx_usb.ptr += len;
   
-  if (len < 0x40) {
-    uint32_t pos = 0;
-    while (pos < rx_usb.ptr) {
-      CANPacket_t to_push;
-      uint8_t data_len = rx_usb.data[pos] >> 2U;
-      (void)memcpy(&to_push, &rx_usb.data[pos], CANPACKET_HEAD_SIZE + data_len);
-      can_send(&to_push, to_push.bus, false);
-      pos += CANPACKET_HEAD_SIZE + data_len;
-    }
+  // Discard everything, malformed usb batch if can't fit into buffer!
+  if ((rx_usb.ptr + len) > 256) {
     rx_usb.ptr = 0;
+  } else {
+    (void)memcpy(&rx_usb.data[rx_usb.ptr], (uint8_t *)usbdata, len);
+    rx_usb.ptr += len;
+    
+    if (len < 0x40) {
+      // Check data integrity by length before sending on CAN
+      uint32_t cnt = 0;
+      while (cnt < rx_usb.ptr) {
+        cnt += CANPACKET_HEAD_SIZE + (rx_usb.data[cnt] >> 2U);
+      }
+
+      if (cnt == rx_usb.ptr) {
+        uint32_t pos = 0;
+        while (pos < rx_usb.ptr) {
+          CANPacket_t to_push;
+          uint8_t data_len = rx_usb.data[pos] >> 2U;
+          (void)memcpy(&to_push, &rx_usb.data[pos], CANPACKET_HEAD_SIZE + data_len);
+          can_send(&to_push, to_push.bus, false);
+          pos += CANPACKET_HEAD_SIZE + data_len;
+        }
+        rx_usb.ptr = 0;
+      } else {
+        rx_usb.ptr = 0;
+      }
+    }
   }
 }
 
