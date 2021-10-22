@@ -571,12 +571,10 @@ class Panda(object):
         else:
           while snds:
             dat = b''
-            while len(dat) < 256-13 and snds:
+            while len(dat) < 256-13-1 and snds: # 256 is the buffer size from panda side, 13 - max can msg length, 1 - extra to make last frame always less than 64
               dat += snds.pop(0)
             while True:
               bs = self._handle.bulkWrite(3, dat, timeout=timeout)
-              if len(dat) % 64 == 0:
-                self._handle.bulkWrite(3, b'', timeout=timeout)
               dat = dat[bs:]
               if len(dat) == 0:
                 break
