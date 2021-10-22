@@ -571,7 +571,7 @@ class Panda(object):
         else:
           while snds:
             dat = b''
-            while len(dat) < 1024-13 and snds:
+            while len(dat) < 256-13 and snds:
               dat += snds.pop(0)
             while True:
               bs = self._handle.bulkWrite(3, dat, timeout=timeout)

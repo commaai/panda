@@ -265,14 +265,20 @@ void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
 
 struct {
   volatile uint32_t ptr;
-  uint8_t data[1024];
+  uint8_t data[256];
 } rx_usb = { .ptr = 0 };
 
 // send on CAN
 void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
+  if ((rx_usb.ptr + len) > 256) { // Discard everything, malformed usb batch!
+    rx_usb.ptr = 0;
+    return;
+  }
+
   (void)memcpy(&rx_usb.data[rx_usb.ptr], (uint8_t *)usbdata, len);
   rx_usb.ptr += len;
+  
   if (len < 0x40) {
     uint32_t pos = 0;
     while (pos < rx_usb.ptr) {
@@ -329,8 +335,7 @@ void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
 //////////////////////////////////////////////////////////////////
 
 void usb_cb_ep3_out_complete(void) {
-  // TODO: how does a second USB packet sneek in? (why multiply by 2)
-  if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER * 2U)) {
+  if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER)) {
     usb_outep3_resume_if_paused();
   }
 }
