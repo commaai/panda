@@ -30,7 +30,11 @@ def parse_can_buffer(dat):
   while dpkt < len(dat):
     header = dat[dpkt:dpkt + head_size]
     header.reverse()
-    address, _, returned, rejected, length, bus = bitstruct.unpack('u29 b1 b1 b1 u6 u2', bytes(header)) # timer, extended and reserved fields are omitted
+    try:
+      address, _, returned, rejected, length, bus = bitstruct.unpack('u29 b1 b1 b1 u6 u2', bytes(header)) # timer, extended and reserved fields are omitted
+    except ValueError:
+      print("CAN: MALFORMED USB RECV PACKET")
+      return []
     dddat = dat[dpkt + head_size:dpkt + head_size + length]
     bus = bus + 128 if returned else bus
     bus = bus + 192 if rejected else bus
@@ -565,13 +569,16 @@ class Panda(object):
           for s in snds:
             self._handle.bulkWrite(3, s)
         else:
-          dat = b''.join(snds)
-          while True:
-            bs = self._handle.bulkWrite(3, dat, timeout=timeout)
-            dat = dat[bs:]
-            if len(dat) == 0:
-              break
-            print("CAN: PARTIAL SEND MANY, RETRYING")
+          while snds:
+            dat = b''
+            while len(dat) < 1024-13 and snds:
+              dat += snds.pop(0)
+            while True:
+              bs = self._handle.bulkWrite(3, dat, timeout=timeout)
+              dat = dat[bs:]
+              if len(dat) == 0:
+                break
+              print("CAN: PARTIAL SEND MANY, RETRYING")
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD SEND MANY, RETRYING")
@@ -584,7 +591,7 @@ class Panda(object):
     dat = bytearray()
     while True:
       try:
-        dat = self._handle.bulkRead(1, 4096 * 0x10)
+        dat = self._handle.bulkRead(1, 256 * 0x10)
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD RECV, RETRYING")

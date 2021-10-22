@@ -196,7 +196,7 @@ int get_rtc_pkt(void *dat) {
 int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   UNUSED(len);
-  uint8_t pos = 0;
+  uint32_t pos = 0;
   CANPacket_t can_packet;
   uint8_t *usbdata8 = (uint8_t *)usbdata;
 
@@ -264,43 +264,69 @@ void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
 }
 
 struct {
-  volatile uint8_t ptr;
-  volatile uint8_t tail_size;
-  uint8_t data[MAX_CANPACKET_SIZE];
-} packet = {.ptr = 0, .tail_size = 0};
+  volatile uint32_t ptr;
+  uint8_t data[1024];
+} rx_usb = { .ptr = 0 };
 
 // send on CAN
 void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
-
-  uint8_t *usbdata8 = (uint8_t *)usbdata;
-  uint8_t pos = 0;
-
-  if (packet.ptr != 0) {
-    CANPacket_t to_push;
-    (void)memcpy(&packet.data[packet.ptr], usbdata8, packet.tail_size);
-    (void)memcpy(&to_push, packet.data, packet.ptr + packet.tail_size);
-    can_send(&to_push, to_push.bus, false);
-    pos += packet.tail_size;
-    packet.ptr = 0;
-    packet.tail_size = 0;
-  }
-
-  while (pos < len) {
-    uint8_t pckt_len = usbdata8[pos] >> 2U;
-    if ((pos + CANPACKET_HEAD_SIZE + pckt_len) <= len) {
+  (void)memcpy(&rx_usb.data[rx_usb.ptr], (uint8_t *)usbdata, len);
+  rx_usb.ptr += len;
+  if (len < 0x40) {
+    uint32_t pos = 0;
+    while (pos < rx_usb.ptr) {
       CANPacket_t to_push;
-      (void)memcpy(&to_push, &usbdata8[pos], pckt_len + CANPACKET_HEAD_SIZE);
+      uint8_t data_len = rx_usb.data[pos] >> 2U;
+      (void)memcpy(&to_push, &rx_usb.data[pos], CANPACKET_HEAD_SIZE + data_len);
       can_send(&to_push, to_push.bus, false);
-      pos += CANPACKET_HEAD_SIZE + pckt_len;
-    } else {
-      (void)memcpy(packet.data, &usbdata8[pos], len - pos);
-      packet.ptr = len - pos;
-      packet.tail_size = CANPACKET_HEAD_SIZE + pckt_len - packet.ptr;
-      pos += packet.ptr;
+      pos += CANPACKET_HEAD_SIZE + data_len;
     }
+    rx_usb.ptr = 0;
   }
 }
+
+///////////////////////////////////////////////////////
+// Also stream-like send, but has problem with stream recovery if one packet was lost while host crashed.
+// struct {
+//   volatile uint8_t ptr;
+//   volatile uint8_t tail_size;
+//   uint8_t data[MAX_CANPACKET_SIZE];
+// } packet = {.ptr = 0, .tail_size = 0};
+
+// // send on CAN
+// void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
+//   UNUSED(hardwired);
+
+//   uint8_t *usbdata8 = (uint8_t *)usbdata;
+//   uint8_t pos = 0;
+
+//   if (packet.ptr != 0) {
+//     CANPacket_t to_push;
+//     (void)memcpy(&packet.data[packet.ptr], usbdata8, packet.tail_size);
+//     (void)memcpy(&to_push, packet.data, packet.ptr + packet.tail_size);
+//     can_send(&to_push, to_push.bus, false);
+//     pos += packet.tail_size;
+//     packet.ptr = 0;
+//     packet.tail_size = 0;
+//   }
+
+//   while (pos < len) {
+//     uint8_t pckt_len = usbdata8[pos] >> 2U;
+//     if ((pos + CANPACKET_HEAD_SIZE + pckt_len) <= len) {
+//       CANPacket_t to_push;
+//       (void)memcpy(&to_push, &usbdata8[pos], pckt_len + CANPACKET_HEAD_SIZE);
+//       can_send(&to_push, to_push.bus, false);
+//       pos += CANPACKET_HEAD_SIZE + pckt_len;
+//     } else {
+//       (void)memcpy(packet.data, &usbdata8[pos], len - pos);
+//       packet.ptr = len - pos;
+//       packet.tail_size = CANPACKET_HEAD_SIZE + pckt_len - packet.ptr;
+//       pos += packet.ptr;
+//     }
+//   }
+// }
+//////////////////////////////////////////////////////////////////
 
 void usb_cb_ep3_out_complete(void) {
   // TODO: how does a second USB packet sneek in? (why multiply by 2)
