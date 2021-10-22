@@ -575,6 +575,8 @@ class Panda(object):
               dat += snds.pop(0)
             while True:
               bs = self._handle.bulkWrite(3, dat, timeout=timeout)
+              if len(dat) % 64 == 0:
+                self._handle.bulkWrite(3, b'', timeout=timeout)
               dat = dat[bs:]
               if len(dat) == 0:
                 break
