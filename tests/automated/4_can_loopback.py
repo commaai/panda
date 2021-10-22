@@ -223,7 +223,7 @@ def test_bulk_write(p):
 
     # Disable timeout
     panda.can_send_many(packet, timeout=0)
-    print(f"Done sending {3*NUM_MESSAGES_PER_BUS} messages!")
+    print(f"Done sending {4 * NUM_MESSAGES_PER_BUS} messages!")
 
   # Start heartbeat
   start_heartbeat_thread(p)
@@ -239,7 +239,7 @@ def test_bulk_write(p):
   rx = []
   old_len = 0
   start_time = time.time()
-  while time.time() - start_time < 4 or len(rx) > old_len:
+  while time.time() - start_time < 5 or len(rx) > old_len:
     old_len = len(rx)
     rx.extend(panda_jungle.can_recv())
   print(f"Received {len(rx)} messages")
