@@ -239,7 +239,7 @@ def test_bulk_write(p):
   rx = []
   old_len = 0
   start_time = time.time()
-  while time.time() - start_time < 2 or len(rx) > old_len:
+  while time.time() - start_time < 4 or len(rx) > old_len:
     old_len = len(rx)
     rx.extend(panda_jungle.can_recv())
   print(f"Received {len(rx)} messages")
