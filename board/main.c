@@ -196,38 +196,62 @@ int get_rtc_pkt(void *dat) {
 #define HEAD_SIZE 5
 #define USB_BUFFER_SIZE 10240
 #define MAX_PACKET_SIZE (DATA_SIZE_MAX + HEAD_SIZE)
-typedef struct {
-  volatile uint32_t ptr;
-  volatile uint32_t r_ptr;
-  uint8_t data[USB_BUFFER_SIZE];
-} usb_buffer;
+// typedef struct {
+//   volatile uint32_t ptr;
+//   volatile uint32_t r_ptr;
+//   uint8_t data[USB_BUFFER_SIZE];
+// } usb_buffer;
 
-usb_buffer tx_usb = { .ptr = 0, .r_ptr = 0 };
+// usb_buffer tx_usb = { .ptr = 0, .r_ptr = 0 };
+
+// int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
+//   UNUSED(hardwired);
+//   int data_size = 0;
+//   if (tx_usb.ptr == 0) { // if buffer is empty - fill to full with messages.
+//     CANPacket_t can_packet;
+//     while (tx_usb.ptr < USB_BUFFER_SIZE-MAX_PACKET_SIZE && can_pop(&can_rx_q, &can_packet)) {
+//       int packet_len = HEAD_SIZE + can_packet.len;
+//       (void)memcpy(tx_usb.data + tx_usb.ptr, &can_packet, packet_len);
+//       tx_usb.ptr += packet_len;
+//     }
+//     tx_usb.r_ptr = 0;
+//   }
+
+//   if (tx_usb.ptr > 0) { // If buffer is not empty
+//     data_size = tx_usb.ptr - tx_usb.r_ptr;
+//     if (data_size > len) data_size = len;
+
+//     (void)memcpy((uint8_t*)usbdata, tx_usb.data + tx_usb.r_ptr, data_size);
+//     tx_usb.r_ptr += data_size;
+
+//     if (tx_usb.r_ptr == tx_usb.ptr) tx_usb.ptr = 0;
+//   }
+//   return data_size;
+// }
+
+
+struct {
+  volatile uint8_t ptr;
+  uint8_t data[72];
+} packet2 = { .ptr = 0 };
+
 
 int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
-  int data_size = 0;
-  if (tx_usb.ptr == 0) { // if buffer is empty - fill to full with messages.
-    CANPacket_t can_packet;
-    while (tx_usb.ptr < USB_BUFFER_SIZE-MAX_PACKET_SIZE && can_pop(&can_rx_q, &can_packet)) {
-      int packet_len = HEAD_SIZE + can_packet.len;
-      (void)memcpy(tx_usb.data + tx_usb.ptr, &can_packet, packet_len);
-      tx_usb.ptr += packet_len;
-    }
-    tx_usb.r_ptr = 0;
+  UNUSED(len);
+
+  uint8_t *usbdata8 = (uint8_t *)usbdata;
+  uint8_t pos = 0;
+  CANPacket_t can_packet;
+
+  while (pos < 0x100 - MAX_PACKET_SIZE && can_pop(&can_rx_q, &can_packet)) {
+      (void)memcpy(usbdata8 + pos, &can_packet, can_packet.len + HEAD_SIZE);
+      pos += can_packet.len + HEAD_SIZE;
+
   }
 
-  if (tx_usb.ptr > 0) { // If buffer is not empty
-    data_size = tx_usb.ptr - tx_usb.r_ptr;
-    if (data_size > len) data_size = len;
-
-    (void)memcpy((uint8_t*)usbdata, tx_usb.data + tx_usb.r_ptr, data_size);
-    tx_usb.r_ptr += data_size;
-
-    if (tx_usb.r_ptr == tx_usb.ptr) tx_usb.ptr = 0;
-  }
-  return data_size;
-}
+  return pos;
+} //TESTSSSS
 
 // int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
 //   UNUSED(hardwired);
