@@ -575,6 +575,7 @@ class Panda(object):
           while snds:
             tx_list[idx] += bytes(snds.pop(0))
             if len(tx_list[idx]) > 1024:
+              tx_list.append(b'')
               idx += 1
           for dat in tx_list:
             tx = b''
