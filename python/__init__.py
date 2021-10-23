@@ -603,7 +603,7 @@ class Panda(object):
       snd.reverse()
       snd += dat
       snds[idx] += snd
-      if len(snds[idx]) > 1024:
+      if len(snds[idx]) > 4096:
         snds.append(b'')
         idx += 1
 
@@ -637,7 +637,7 @@ class Panda(object):
     dat = bytearray()
     while True:
       try:
-        dat = self._handle.bulkRead(1, 256 * 0x10)
+        dat = self._handle.bulkRead(1, 4096+64)
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD RECV, RETRYING")

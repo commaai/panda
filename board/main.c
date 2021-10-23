@@ -212,7 +212,7 @@ int get_rtc_pkt(void *dat) {
 // This stream-like method should waste less bandwidth, but has major flaw: No way to restart stream if one packet was lost.
 // Don't like it... Also with 3x CAN test saw no real increase in speed!
 
-#define LIMIT_MAX_MESSAGES 1024 // in bytes, should be limited not to overflow counter and not to loose too much data
+#define LIMIT_MAX_MESSAGES 4096 // in bytes, should be limited not to overflow counter and not to loose too much data
 struct {
   uint8_t ptr;
   uint8_t tail_size;
