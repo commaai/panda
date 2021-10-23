@@ -573,7 +573,7 @@ class Panda(object):
           tx = b''
           counter = 0
           for i in range (0, len(dat), 63):
-            tx += bytes([counter]) + dat[i:i+63]
+            tx += bytes([counter & 0xFF]) + dat[i:i+63]
             counter += 1
           while True:
             bs = self._handle.bulkWrite(3, tx, timeout=timeout)
