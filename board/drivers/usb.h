@@ -23,7 +23,7 @@ typedef union _USB_Setup {
 }
 USB_Setup_TypeDef;
 
-#define MAX_CAN_MSGS_PER_BULK_TRANSFER 51U
+#define MAX_CAN_MSGS_PER_BULK_TRANSFER 13U
 
 bool usb_eopf_detected = false;
 
