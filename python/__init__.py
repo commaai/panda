@@ -552,7 +552,8 @@ class Panda(object):
 
   @ensure_can_packet_version
   def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
-    snds = []
+    snds = [b'']
+    idx = 0
     for address, _, dat, bus in arr:
       assert len(dat) <= 8
       if DEBUG:
@@ -561,7 +562,10 @@ class Panda(object):
       snd = bytearray(bitstruct.pack('u29 b1 b1 b1 u6 u2', address, extended, 0, 0, len(dat), bus))
       snd.reverse()
       snd += dat
-      snds.append(snd)
+      snds[idx] += snd
+      if len(snds[idx]) > 1024:
+        snds.append(b'')
+        idx += 1
 
     while True:
       try:
@@ -569,15 +573,7 @@ class Panda(object):
           for s in snds:
             self._handle.bulkWrite(3, s)
         else:
-
-          tx_list = [b'']
-          idx = 0
-          while snds:
-            tx_list[idx] += bytes(snds.pop(0))
-            if len(tx_list[idx]) > 1024:
-              tx_list.append(b'')
-              idx += 1
-          for dat in tx_list:
+          for dat in snds:
             tx = b''
             counter = 0
             for i in range (0, len(dat), 63):
@@ -585,8 +581,8 @@ class Panda(object):
               counter += 1
             while True:
               bs = self._handle.bulkWrite(3, tx, timeout=timeout)
-              dat = dat[bs:]
-              if len(dat) == 0:
+              tx = tx[bs:]
+              if len(tx) == 0:
                 break
               print("CAN: PARTIAL SEND MANY, RETRYING")
         break
