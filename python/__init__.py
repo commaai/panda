@@ -569,18 +569,25 @@ class Panda(object):
           for s in snds:
             self._handle.bulkWrite(3, s)
         else:
-          dat = b''.join(snds)
-          tx = b''
-          counter = 0
-          for i in range (0, len(dat), 63):
-            tx += bytes([counter & 0xFF]) + dat[i:i+63]
-            counter += 1
-          while True:
-            bs = self._handle.bulkWrite(3, tx, timeout=timeout)
-            dat = dat[bs:]
-            if len(dat) == 0:
-              break
-            print("CAN: PARTIAL SEND MANY, RETRYING")
+
+          tx_list = [b'']
+          idx = 0
+          while snds:
+            tx_list[idx] += bytes(snds.pop(0))
+            if len(tx_list[idx]) > 1024:
+              idx += 1
+          for dat in tx_list:
+            tx = b''
+            counter = 0
+            for i in range (0, len(dat), 63):
+              tx += bytes([counter]) + dat[i:i+63]
+              counter += 1
+            while True:
+              bs = self._handle.bulkWrite(3, tx, timeout=timeout)
+              dat = dat[bs:]
+              if len(dat) == 0:
+                break
+              print("CAN: PARTIAL SEND MANY, RETRYING")
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD SEND MANY, RETRYING")
