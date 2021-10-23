@@ -27,21 +27,61 @@ def parse_can_buffer(dat):
   ret = []
   dpkt = 0
   head_size = 0x5
-  while dpkt < len(dat):
-    header = dat[dpkt:dpkt + head_size]
-    header.reverse()
-    try:
-      address, _, returned, rejected, length, bus = bitstruct.unpack('u29 b1 b1 b1 u6 u2', bytes(header)) # timer, extended and reserved fields are omitted
-    except ValueError:
-      print("CAN: MALFORMED USB RECV PACKET")
+  if len(dat)<2:
+    return []
+  #print("Received:", len(dat))
+  counter = 0
+  counters = []
+  int_counters = []
+  tail = bytearray()
+  #print("BEGIN")
+  for i in range(0, len(dat), 64):
+    #print("Packet number:", i,"Counter:", dat[i])
+    counters.append(dat[i])
+    int_counters.append(counter)
+    #if len(dat[i:]) < 2: break # Why we might have this last chunk??
+    if counter != dat[i]:
+      print("CAN: LOST RECV PACKET COUNTER")
+      print("-"*10)
+      print(dat)
+      print("-"*10)
+      print("Bytes left:", len(dat[i+1:]))
+      print("Packet number:", i,"Packet counter:", dat[i])
+      print("Internal counter:", counter)
+      print("Tail length:", len(tail))
+      print("Counters:", counters, "Internal counters:", int_counters)
+      print("Total packet length:", len(dat), "Number of chuncks:", len(dat)//64)
       return []
-    dddat = dat[dpkt + head_size:dpkt + head_size + length]
-    bus = bus + 128 if returned else bus
-    bus = bus + 192 if rejected else bus
-    if DEBUG:
-      print(f"  R 0x{address:x}: 0x{dddat.hex()}")
-    ret.append((address, 0, dddat, bus))
-    dpkt += head_size + length
+    counter+=1
+    chunk = tail + dat[i+1:i+64]
+    #print("Tail length:", len(tail))
+    #print("Chunk length",len(chunk))
+    aa = 0 
+    while aa<len(chunk):
+      packet_len = (chunk[aa]>>2) + head_size
+      #print("Packet_len",packet_len)
+      if packet_len <= len(chunk[aa:]):
+        header = chunk[aa:aa+head_size]
+        header.reverse()
+        try:
+          address, _, returned, rejected, length, bus = bitstruct.unpack('u29 b1 b1 b1 u6 u2', bytes(header)) # timer, extended and reserved fields are omitted
+        except ValueError:
+          print("CAN: MALFORMED USB RECV PACKET")
+          return []
+        #print(address)
+        dddat = chunk[aa + head_size:aa + head_size + length]
+        bus = bus + 128 if returned else bus
+        bus = bus + 192 if rejected else bus
+        if DEBUG:
+          print(f"  R 0x{address:x}: 0x{dddat.hex()}")
+        ret.append((address, 0, dddat, bus))
+        aa += head_size + length
+        tail = bytearray()
+      else:
+        tail = chunk[aa:]
+        aa+=len(tail)
+        break
+  #print("END")
   return ret
 
 def ensure_health_packet_version(fn):
