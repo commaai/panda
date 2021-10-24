@@ -193,25 +193,6 @@ int get_rtc_pkt(void *dat) {
   return sizeof(t);
 }
 
-// int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
-//   UNUSED(hardwired);
-//   UNUSED(len);
-//   uint32_t pos = 0;
-//   CANPacket_t can_packet;
-//   uint8_t *usbdata8 = (uint8_t *)usbdata;
-
-//   while (pos < (USBDATA_SIZE - MAX_CANPACKET_SIZE) && can_pop(&can_rx_q, &can_packet)) {
-//       uint8_t canpacket_size = CANPACKET_HEAD_SIZE + can_packet.len;
-//       (void)memcpy(&usbdata8[pos], &can_packet, canpacket_size);
-//       pos += canpacket_size;
-//   }
-//   return pos;
-// }
-
-//////////////////////////////
-// This stream-like method should waste less bandwidth, but has major flaw: No way to restart stream if one packet was lost.
-// Don't like it... Also with 3x CAN test saw no real increase in speed!
-
 #define LIMIT_MAX_MESSAGES 4096 // in bytes, should be limited not to overflow counter and not to loose too much data
 struct {
   uint8_t ptr;
@@ -287,48 +268,6 @@ void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
   }
 }
 
-// struct {
-//   volatile uint32_t ptr;
-//   uint8_t data[256];
-// } rx_usb = { .ptr = 0 };
-
-// // send on CAN
-// void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
-//   UNUSED(hardwired);
-  
-//   // Discard everything, malformed usb batch if can't fit into buffer!
-//   if ((rx_usb.ptr + len) > 256) {
-//     rx_usb.ptr = 0;
-//   } else {
-//     (void)memcpy(&rx_usb.data[rx_usb.ptr], (uint8_t *)usbdata, len);
-//     rx_usb.ptr += len;
-    
-//     if (len < 0x40) {
-//       // Check data integrity by length before sending on CAN
-//       uint32_t cnt = 0;
-//       while (cnt < rx_usb.ptr) {
-//         cnt += CANPACKET_HEAD_SIZE + (rx_usb.data[cnt] >> 2U);
-//       }
-
-//       if (cnt == rx_usb.ptr) {
-//         uint32_t pos = 0;
-//         while (pos < rx_usb.ptr) {
-//           CANPacket_t to_push;
-//           uint8_t data_len = rx_usb.data[pos] >> 2U;
-//           (void)memcpy(&to_push, &rx_usb.data[pos], CANPACKET_HEAD_SIZE + data_len);
-//           can_send(&to_push, to_push.bus, false);
-//           pos += CANPACKET_HEAD_SIZE + data_len;
-//         }
-//         rx_usb.ptr = 0;
-//       } else {
-//         rx_usb.ptr = 0;
-//       }
-//     }
-//   }
-// }
-
-///////////////////////////////////////////////////////
-// Also stream-like send, but has problem with stream recovery if one packet was lost while host crashed.
 struct {
   uint8_t ptr;
   uint8_t tail_size;
@@ -376,7 +315,6 @@ void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
     }
   }
 }
-//////////////////////////////////////////////////////////////////
 
 void usb_cb_ep3_out_complete(void) {
   if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER * 2U)) {
