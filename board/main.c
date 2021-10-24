@@ -220,34 +220,33 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
     if (pos > 1) { usbdata8[0] = ep1_buffer.counter; }
     total_rx_size = 0;
     ep1_buffer.counter = 0;
-    return pos;
-  }
-
-  while ((pos < len) && can_pop(&can_rx_q, &can_packet)) {
-    uint8_t canpacket_size = CANPACKET_HEAD_SIZE + can_packet.len;
-    if ((pos + canpacket_size) <= len) {
-      (void)memcpy(&usbdata8[pos], &can_packet, canpacket_size);
-      pos += canpacket_size;
-    } else {
-      (void)memcpy(&usbdata8[pos], &can_packet, len - pos);
-      ep1_buffer.ptr = canpacket_size - (len - pos);
-      (void)memcpy(ep1_buffer.data, ((uint8_t*)&can_packet + (len - pos)), ep1_buffer.ptr);
-      pos = len; 
+  } else {
+    while ((pos < len) && can_pop(&can_rx_q, &can_packet)) {
+      uint8_t canpacket_size = CANPACKET_HEAD_SIZE + can_packet.len;
+      if ((pos + canpacket_size) <= len) {
+        (void)memcpy(&usbdata8[pos], &can_packet, canpacket_size);
+        pos += canpacket_size;
+      } else {
+        (void)memcpy(&usbdata8[pos], &can_packet, len - pos);
+        ep1_buffer.ptr = canpacket_size - (len - pos);
+        (void)memcpy(ep1_buffer.data, ((uint8_t*)&can_packet + (len - pos)), ep1_buffer.ptr);
+        pos = len; 
+      }
     }
+    if (pos > 1) {
+      usbdata8[0] = ep1_buffer.counter;
+      ep1_buffer.counter++;
+    }
+    else {
+      pos = 0;
+      ep1_buffer.counter = 0;
+    }
+    if (pos != len) { 
+      ep1_buffer.counter = 0;
+      total_rx_size = 0;
+    }
+    total_rx_size += pos;
   }
-  if (pos > 1) {
-    usbdata8[0] = ep1_buffer.counter;
-    ep1_buffer.counter++;
-  }
-  else {
-    pos = 0;
-    ep1_buffer.counter = 0;
-  }
-  if (pos != len) { 
-    ep1_buffer.counter = 0;
-    total_rx_size = 0;
-  }
-  total_rx_size += pos; 
   return pos;
 }
 
