@@ -217,7 +217,7 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   }
 
   if (total_rx_size > MAX_USB_FRAMES_PER_BULK_TRANSFER) {
-    if (pos > 1) usbdata8[0] = ep1_buffer.counter;
+    if (pos > 1) { usbdata8[0] = ep1_buffer.counter; }
     total_rx_size = 0;
     ep1_buffer.counter = 0;
     return pos;
