@@ -193,14 +193,14 @@ int get_rtc_pkt(void *dat) {
   return sizeof(t);
 }
 
-#define LIMIT_MAX_MESSAGES 4096 // in bytes, should be limited not to overflow counter and not to loose too much data
-struct {
+typedef struct {
   uint8_t ptr;
   uint8_t tail_size;
   uint8_t data[MAX_CANPACKET_SIZE];
   uint8_t counter;  
-} packet2 = {.ptr = 0, .tail_size = 0, .counter = 0};
+} usb_asm_buffer;
 
+usb_asm_buffer ep1_buffer = {.ptr = 0, .tail_size = 0, .counter = 0};
 uint32_t total_rx_size = 0;
 
 int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
@@ -210,16 +210,16 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   CANPacket_t can_packet;
   uint8_t *usbdata8 = (uint8_t *)usbdata;
 
-  if (packet2.ptr > 0) {
-    (void)memcpy(&usbdata8[pos], packet2.data, packet2.ptr);
-    pos += packet2.ptr;
-    packet2.ptr = 0;
+  if (ep1_buffer.ptr > 0) {
+    (void)memcpy(&usbdata8[pos], ep1_buffer.data, ep1_buffer.ptr);
+    pos += ep1_buffer.ptr;
+    ep1_buffer.ptr = 0;
   }
 
-  if (total_rx_size > LIMIT_MAX_MESSAGES) {
-    if (pos > 1) usbdata8[0] = packet2.counter;
+  if (total_rx_size > MAX_USB_FRAMES_PER_BULK_TRANSFER) {
+    if (pos > 1) usbdata8[0] = ep1_buffer.counter;
     total_rx_size = 0;
-    packet2.counter = 0;
+    ep1_buffer.counter = 0;
     return pos;
   }
 
@@ -230,27 +230,26 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
       pos += canpacket_size;
     } else {
       (void)memcpy(&usbdata8[pos], &can_packet, len - pos);
-      packet2.ptr = canpacket_size - (len - pos);
-      (void)memcpy(packet2.data, ((uint8_t*)&can_packet + (len - pos)), packet2.ptr);
+      ep1_buffer.ptr = canpacket_size - (len - pos);
+      (void)memcpy(ep1_buffer.data, ((uint8_t*)&can_packet + (len - pos)), ep1_buffer.ptr);
       pos = len; 
     }
   }
   if (pos > 1) {
-    usbdata8[0] = packet2.counter;
-    packet2.counter++;
+    usbdata8[0] = ep1_buffer.counter;
+    ep1_buffer.counter++;
   }
   else {
     pos = 0;
-    packet2.counter = 0;
+    ep1_buffer.counter = 0;
   }
   if (pos != len) { 
-    packet2.counter = 0;
+    ep1_buffer.counter = 0;
     total_rx_size = 0;
   }
   total_rx_size += pos; 
   return pos;
 }
-/////////////////////////////////////////
 
 // send on serial, first byte to select the ring
 void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
@@ -268,12 +267,7 @@ void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
   }
 }
 
-struct {
-  uint8_t ptr;
-  uint8_t tail_size;
-  uint8_t data[MAX_CANPACKET_SIZE];
-  uint8_t counter;
-} packet = {.ptr = 0, .tail_size = 0, .counter = 0};
+usb_asm_buffer ep3_buffer = {.ptr = 0, .tail_size = 0, .counter = 0};
 
 // send on CAN
 void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
@@ -281,22 +275,22 @@ void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   uint8_t *usbdata8 = (uint8_t *)usbdata;
 
   if (usbdata8[0] == 0) {
-    packet.counter = 0;
-    packet.ptr = 0;
-    packet.tail_size = 0;
+    ep3_buffer.counter = 0;
+    ep3_buffer.ptr = 0;
+    ep3_buffer.tail_size = 0;
   }
 
-  if (usbdata8[0] == packet.counter) {
+  if (usbdata8[0] == ep3_buffer.counter) {
     uint8_t pos = 1;
-    packet.counter++;
-    if (packet.ptr != 0) {
+    ep3_buffer.counter++;
+    if (ep3_buffer.ptr != 0) {
       CANPacket_t to_push;
-      (void)memcpy(&packet.data[packet.ptr], &usbdata8[pos], packet.tail_size);
-      (void)memcpy(&to_push, packet.data, packet.ptr + packet.tail_size);
+      (void)memcpy(&ep3_buffer.data[ep3_buffer.ptr], &usbdata8[pos], ep3_buffer.tail_size);
+      (void)memcpy(&to_push, ep3_buffer.data, ep3_buffer.ptr + ep3_buffer.tail_size);
       can_send(&to_push, to_push.bus, false);
-      pos += packet.tail_size;
-      packet.ptr = 0;
-      packet.tail_size = 0;
+      pos += ep3_buffer.tail_size;
+      ep3_buffer.ptr = 0;
+      ep3_buffer.tail_size = 0;
     }
 
     while (pos < len) {
@@ -307,10 +301,10 @@ void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
         can_send(&to_push, to_push.bus, false);
         pos += CANPACKET_HEAD_SIZE + pckt_len;
       } else {
-        (void)memcpy(packet.data, &usbdata8[pos], len - pos);
-        packet.ptr = len - pos;
-        packet.tail_size = CANPACKET_HEAD_SIZE + pckt_len - packet.ptr;
-        pos += packet.ptr;
+        (void)memcpy(ep3_buffer.data, &usbdata8[pos], len - pos);
+        ep3_buffer.ptr = len - pos;
+        ep3_buffer.tail_size = CANPACKET_HEAD_SIZE + pckt_len - ep3_buffer.ptr;
+        pos += ep3_buffer.ptr;
       }
     }
   }
