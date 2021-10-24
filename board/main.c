@@ -362,7 +362,7 @@ void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
 
     while (pos < len) {
       uint8_t pckt_len = usbdata8[pos] >> 2U;
-      if ((int)(pos + CANPACKET_HEAD_SIZE + pckt_len) <= len) {
+      if ((pos + CANPACKET_HEAD_SIZE + pckt_len) <= (uint8_t)len) {
         CANPacket_t to_push;
         (void)memcpy(&to_push, &usbdata8[pos], pckt_len + CANPACKET_HEAD_SIZE);
         can_send(&to_push, to_push.bus, false);
