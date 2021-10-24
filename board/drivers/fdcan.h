@@ -7,10 +7,8 @@ uint8_t bus_off_err[] = {0U, 0U, 0U};
 
 // TEMPORARY, not yet sure that I need it, might be just easier to use array?
 struct canfd_fifo {
-  volatile uint32_t header1;
-  volatile uint32_t header2;
-  volatile uint32_t data_word1;
-  volatile uint32_t data_word2;
+  volatile uint32_t header[2];
+  volatile uint32_t data_word[DATA_SIZE_MAX/4U];
 };
 typedef struct canfd_fifo canfd_fifo;
 
@@ -64,10 +62,14 @@ void process_can(uint8_t can_number) {
         canfd_fifo *fifo;
         fifo = (canfd_fifo *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
-        fifo->header1 = (to_send.extended << 30) | ((to_send.extended != 0) ? (to_send.addr) : (to_send.addr << 18));
-        fifo->header2 = (to_send.len << 16); // DLC(length) // | (1U << 21) | (1U << 20) to enable CAN FD , enable BRS
-        fifo->data_word1 = to_send.data[0] | (to_send.data[1] << 8) | (to_send.data[2] << 16) | (to_send.data[3] << 24);
-        fifo->data_word2 = to_send.data[4] | (to_send.data[5] << 8) | (to_send.data[6] << 16) | (to_send.data[7] << 24);
+        fifo->header[0] = (to_send.extended << 30) | ((to_send.extended != 0) ? (to_send.addr) : (to_send.addr << 18));
+        fifo->header[1] = (to_send.len << 16); // DLC(length) // | (1U << 21) | (1U << 20) to enable CAN FD , enable BRS
+
+        uint8_t data_len_w = (to_send.len / 4U);
+        data_len_w += (to_send.len % 4 > 0) ? 1U : 0U;
+        for (unsigned int i = 0; i < data_len_w; i++) {
+          fifo->data_word[i] = to_send.data[(i*4)+0] | (to_send.data[(i*4)+1] << 8) | (to_send.data[(i*4)+2] << 16) | (to_send.data[(i*4)+3] << 24);
+        }
 
         CANx->TXBAR = (1UL << tx_index); 
 
@@ -81,7 +83,7 @@ void process_can(uint8_t can_number) {
         to_push.addr = to_send.addr;
         to_push.bus = to_send.bus;
         to_push.len = to_send.len;
-        (void)memcpy(to_push.data, to_send.data, sizeof(to_push.data));
+        (void)memcpy(to_push.data, to_send.data, to_push.len);
         can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
 
         usb_cb_ep3_out_complete();
@@ -141,18 +143,19 @@ void can_rx(uint8_t can_number) {
 
       to_push.returned = 0U;
       to_push.rejected = 0U;
-      to_push.extended = (fifo->header1 >> 30) & 0x1U;
-      to_push.addr = ((to_push.extended != 0) ? (fifo->header1 & 0x1FFFFFFFU) : ((fifo->header1 >> 18) & 0x7FFU));
+      to_push.extended = (fifo->header[0] >> 30) & 0x1U;
+      to_push.addr = ((to_push.extended != 0) ? (fifo->header[0] & 0x1FFFFFFFU) : ((fifo->header[0] >> 18) & 0x7FFU));
       to_push.bus = bus_number;
-      to_push.len = ((fifo->header2 >> 16) & 0xFU);
-      to_push.data[0] = fifo->data_word1 & 0xFFU;
-      to_push.data[1] = (fifo->data_word1 >> 8) & 0xFFU;
-      to_push.data[2] = (fifo->data_word1 >> 16) & 0xFFU;
-      to_push.data[3] = (fifo->data_word1 >> 24) & 0xFFU;
-      to_push.data[4] = fifo->data_word2 & 0xFFU;
-      to_push.data[5] = (fifo->data_word2 >> 8) & 0xFFU;
-      to_push.data[6] = (fifo->data_word2 >> 16) & 0xFFU;
-      to_push.data[7] = (fifo->data_word2 >> 24) & 0xFFU;
+      to_push.len = ((fifo->header[1] >> 16) & 0xFU);
+
+      uint8_t data_len_w = (to_push.len / 4U);
+      data_len_w += (to_push.len % 4 > 0) ? 1U : 0U;
+      for (unsigned int i = 0; i < data_len_w; i++) {
+        to_push.data[(i*4)+0] = fifo->data_word[i] & 0xFFU;
+        to_push.data[(i*4)+1] = (fifo->data_word[i] >> 8) & 0xFFU;
+        to_push.data[(i*4)+2] = (fifo->data_word[i] >> 16) & 0xFFU;
+        to_push.data[(i*4)+3] = (fifo->data_word[i] >> 24) & 0xFFU;
+      }
 
       // forwarding (panda only)
       int bus_fwd_num = safety_fwd_hook(bus_number, &to_push);
@@ -165,7 +168,7 @@ void can_rx(uint8_t can_number) {
         to_send.addr = to_push.addr;
         to_send.bus = to_push.bus;
         to_send.len = to_push.len;
-        (void)memcpy(to_send.data, to_push.data, sizeof(to_send.data));
+        (void)memcpy(to_send.data, to_push.data, to_push.len);
         can_send(&to_send, bus_fwd_num, true);
       }
 
