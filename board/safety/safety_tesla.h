@@ -47,7 +47,7 @@ AddrCheckStruct tesla_pt_addr_checks[] = {
 addr_checks tesla_pt_rx_checks = {tesla_pt_addr_checks, TESLA_PT_ADDR_CHECK_LEN};
 
 bool tesla_longitudinal = false;
-bool tesla_powertrain = false;
+bool tesla_powertrain = false;  // Are we the second panda intercepting the powertrain bus?
 
 static int tesla_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, tesla_powertrain ? (&tesla_pt_rx_checks) : (&tesla_rx_checks),
@@ -176,6 +176,12 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
       // No AEB events may be sent by openpilot
       int aeb_event = GET_BYTE(to_send, 2) & 0x03;
       if (aeb_event != 0) {
+        violation = true;
+      }
+
+      // Only accState "ON" and "CANCEL_GENERIC" allowed
+      int acc_state = GET_BYTE(to_send, 1) >> 4;
+      if ((acc_state != 4) && (acc_state != 0)) {
         violation = true;
       }
 
