@@ -229,7 +229,9 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
       } else {
         (void)memcpy(&usbdata8[pos], &can_packet, len - pos);
         ep1_buffer.ptr = canpacket_size - (len - pos);
-        (void)memcpy(ep1_buffer.data, ((uint8_t*)&can_packet + (len - pos)), ep1_buffer.ptr);
+        //(void)memcpy(ep1_buffer.data, ((uint8_t*)&can_packet + (len - pos)), ep1_buffer.ptr);
+        // cppcheck-suppress objectIndex
+        (void)memcpy(ep1_buffer.data, &((uint8_t*)&can_packet)[(len - pos)], ep1_buffer.ptr);
         pos = len; 
       }
     }
