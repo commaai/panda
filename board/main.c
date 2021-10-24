@@ -242,7 +242,7 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
     return pos;
   }
 
-  while (pos < len && can_pop(&can_rx_q, &can_packet)) {
+  while ((pos < len) && can_pop(&can_rx_q, &can_packet)) {
     uint8_t canpacket_size = CANPACKET_HEAD_SIZE + can_packet.len;
     if ((pos + canpacket_size) <= len) {
       (void)memcpy(&usbdata8[pos], &can_packet, canpacket_size);

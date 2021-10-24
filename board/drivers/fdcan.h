@@ -66,7 +66,7 @@ void process_can(uint8_t can_number) {
         fifo->header[1] = (to_send.len << 16); // DLC(length) // | (1U << 21) | (1U << 20) to enable CAN FD , enable BRS
 
         uint8_t data_len_w = (to_send.len / 4U);
-        data_len_w += (to_send.len % 4 > 0) ? 1U : 0U;
+        data_len_w += ((to_send.len % 4) > 0) ? 1U : 0U;
         for (unsigned int i = 0; i < data_len_w; i++) {
           fifo->data_word[i] = to_send.data[(i*4)+0] | (to_send.data[(i*4)+1] << 8) | (to_send.data[(i*4)+2] << 16) | (to_send.data[(i*4)+3] << 24);
         }
@@ -149,7 +149,7 @@ void can_rx(uint8_t can_number) {
       to_push.len = ((fifo->header[1] >> 16) & 0xFU);
 
       uint8_t data_len_w = (to_push.len / 4U);
-      data_len_w += (to_push.len % 4 > 0) ? 1U : 0U;
+      data_len_w += ((to_push.len % 4) > 0) ? 1U : 0U;
       for (unsigned int i = 0; i < data_len_w; i++) {
         to_push.data[(i*4)+0] = fifo->data_word[i] & 0xFFU;
         to_push.data[(i*4)+1] = (fifo->data_word[i] >> 8) & 0xFFU;
