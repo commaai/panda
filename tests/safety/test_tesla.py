@@ -180,11 +180,6 @@ class TestTeslaLongitudinalSafety(TestTeslaSafety):
     for aeb_event in range(4):
       self.assertEqual(self._tx(self._long_control_msg(10, aeb_event=aeb_event)), aeb_event == 0)
 
-  def test_no_weird_acc(self):
-    for acc_state in range(16):
-      self.safety.set_controls_allowed(1)
-      self.assertEqual(self._tx(self._long_control_msg(10, acc_val=acc_state)), acc_state in [0, 4])
-
   def test_acc_accel_limits(self):
     for min_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
       for max_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):

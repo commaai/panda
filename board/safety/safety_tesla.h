@@ -179,12 +179,6 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
         violation = true;
       }
 
-      // Only accState "ON" and "CANCEL_GENERIC" allowed
-      int acc_state = GET_BYTE(to_send, 1) >> 4;
-      if ((acc_state != 4) && (acc_state != 0)) {
-        violation = true;
-      }
-
       // Don't allow any acceleration limits above the safety limits
       int raw_accel_max = ((GET_BYTE(to_send, 6) & 0x1F) << 4) | (GET_BYTE(to_send, 5) >> 4);
       int raw_accel_min = ((GET_BYTE(to_send, 5) & 0x0F) << 5) | (GET_BYTE(to_send, 4) >> 3);
