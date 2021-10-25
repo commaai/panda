@@ -66,7 +66,9 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Run safety replay
-        run: $RUN "cd /tmp/openpilot/panda/tests/safety_replay && ./test_safety_replay.py"
+        run: $RUN "cd /tmp/openpilot/panda/tests/safety_replay &&
+                   scons -u --test &&
+                   ./test_safety_replay.py"
 
   misra:
     name: misra c2012
