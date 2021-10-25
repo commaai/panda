@@ -8,7 +8,7 @@ uint8_t bus_off_err[] = {0U, 0U, 0U};
 // TEMPORARY, not yet sure that I need it, might be just easier to use array?
 struct canfd_fifo {
   volatile uint32_t header[2];
-  volatile uint32_t data_word[DATA_SIZE_MAX/4U];
+  volatile uint32_t data_word[CANPACKET_DATA_SIZE_MAX/4U];
 };
 typedef struct canfd_fifo canfd_fifo;
 

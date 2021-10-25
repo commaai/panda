@@ -15,7 +15,7 @@ typedef struct {
   unsigned char returned : 1;
   unsigned char extended : 1;  
   unsigned int addr : 29;
-  unsigned char data[DATA_SIZE_MAX];
+  unsigned char data[CANPACKET_DATA_SIZE_MAX];
 } __attribute__((packed, aligned(1))) CANPacket_t;
 // ********************* Globals **********************
 uint8_t hw_type = 0;

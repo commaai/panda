@@ -10,7 +10,7 @@ typedef struct
   uint32_t TDHR; /*!< CAN mailbox data high register */
 } CAN_TxMailBox_TypeDef;
 
-#define DATA_SIZE_MAX 8
+#define CANPACKET_DATA_SIZE_MAX 8
 typedef struct __attribute__((packed)) {
   unsigned char reserved2 : 1;
   unsigned char returned : 1;
@@ -19,7 +19,7 @@ typedef struct __attribute__((packed)) {
   unsigned int bus_time : 24;
   unsigned char bus : 2;
   unsigned char len : 6;
-  unsigned char data[DATA_SIZE_MAX];
+  unsigned char data[CANPACKET_DATA_SIZE_MAX];
 } CANPacket_t;
 
 typedef struct

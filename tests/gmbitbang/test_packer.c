@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define DATA_SIZE_MAX 8
+#define CANPACKET_DATA_SIZE_MAX 8
 typedef struct __attribute__((packed)) {
   bool reserved2 : 1;
   bool returned : 1;
@@ -10,7 +10,7 @@ typedef struct __attribute__((packed)) {
   uint32_t bus_time : 24;
   uint8_t bus : 2;
   uint8_t len : 6;
-  uint8_t data[DATA_SIZE_MAX];
+  uint8_t data[CANPACKET_DATA_SIZE_MAX];
 } CANPacket_t;
 
 #include "../../board/drivers/canbitbang.h"

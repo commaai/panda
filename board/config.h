@@ -33,7 +33,7 @@
    (_a > 0) ? _a : (-_a); })
 
 #define MAX_RESP_LEN 0x40U
-#define USBDATA_SIZE 0x100U
+#define CANPACKET_HEAD_SIZE 5U
 
 #define GET_BUS(msg) ((msg)->bus)
 #define GET_LEN(msg) ((msg)->len)
