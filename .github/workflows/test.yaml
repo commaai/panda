@@ -67,7 +67,7 @@ jobs:
         run: eval "$BUILD"
       - name: Run safety replay
         run: $RUN "cd /tmp/openpilot/panda/tests/safety_replay &&
-                   scons -u --test &&
+                   scons -u --test .. &&
                    ./test_safety_replay.py"
 
   misra:
