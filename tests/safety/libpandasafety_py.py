@@ -8,26 +8,17 @@ libpandasafety_fn = os.path.join(can_dir, "libpandasafety.so")
 ffi = FFI()
 ffi.cdef("""
 typedef struct {
-  unsigned char reserved2 : 1;
+  unsigned char bus : 2;
+  unsigned char len : 6;
+  unsigned char rejected : 1;
   unsigned char returned : 1;
   unsigned char extended : 1;  
   unsigned int addr : 29;
-  unsigned int bus_time : 24;
-  unsigned char bus : 2;
-  unsigned char len : 6;
   unsigned char data[8];
 } CANPacket_t;
 """, packed=True)
 
 ffi.cdef("""
-typedef struct
-{
-  uint32_t TIR;  /*!< CAN TX mailbox identifier register */
-  uint32_t TDTR; /*!< CAN mailbox data length control and time stamp register */
-  uint32_t TDLR; /*!< CAN mailbox data low register */
-  uint32_t TDHR; /*!< CAN mailbox data high register */
-} CAN_TxMailBox_TypeDef;
-
 typedef struct
 {
   uint32_t CNT;

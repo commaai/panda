@@ -2,23 +2,15 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef struct
-{
-  uint32_t TIR;  /*!< CAN TX mailbox identifier register */
-  uint32_t TDTR; /*!< CAN mailbox data length control and time stamp register */
-  uint32_t TDLR; /*!< CAN mailbox data low register */
-  uint32_t TDHR; /*!< CAN mailbox data high register */
-} CAN_TxMailBox_TypeDef;
 
 #define CANPACKET_DATA_SIZE_MAX 8
 typedef struct __attribute__((packed)) {
-  unsigned char reserved2 : 1;
+  unsigned char bus : 2;
+  unsigned char len : 6;
+  unsigned char rejected : 1;
   unsigned char returned : 1;
   unsigned char extended : 1;  
   unsigned int addr : 29;
-  unsigned int bus_time : 24;
-  unsigned char bus : 2;
-  unsigned char len : 6;
   unsigned char data[CANPACKET_DATA_SIZE_MAX];
 } CANPacket_t;
 
