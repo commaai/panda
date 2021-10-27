@@ -57,11 +57,19 @@ def set_desired_torque_last(safety, mode, torque):
   elif mode == Panda.SAFETY_SUBARU:
     safety.set_subaru_desired_torque_last(torque)
 
+def len_to_dlc(len):
+  if len <=8:
+    return len
+  if len <=24:
+    return 8 + ((len - 8) // 4) + (1 if len % 4 else 0)
+  else:
+    return 11 + (len // 16) + (1 if len % 16 else 0)
+
 def package_can_msg(msg):
   ret = libpandasafety_py.ffi.new('CANPacket_t *')
   ret[0].extended = 1 if msg.address >= 0x800 else 0
   ret[0].addr = msg.address
-  ret[0].len = len(msg.dat)
+  ret[0].dlc = len_to_dlc(len(msg.dat))
   ret[0].bus = msg.src
   ret[0].data = msg.dat
 

@@ -23,6 +23,8 @@ BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
 DEBUG = os.getenv("PANDADEBUG") is not None
 
+DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
+
 def parse_can_buffer(dat):
   ret = []
   head_size = 0x5
@@ -36,22 +38,22 @@ def parse_can_buffer(dat):
     chunk = tail + dat[i+1:i+64]
     aa = 0 
     while aa<len(chunk):
-      packet_len = (chunk[aa]>>2) + head_size
+      packet_len = DLC_TO_LEN[(chunk[aa]>>4)] + head_size
       if packet_len <= len(chunk[aa:]):
         header = chunk[aa:aa+head_size]
         header.reverse()
         try:
-          address, _, returned, rejected, length, bus = bitstruct.unpack('u29 b1 b1 b1 u6 u2', bytes(header)) # timer, extended and reserved fields are omitted
+          address, _, returned, rejected, dlc, bus, _ = bitstruct.unpack('u29 b1 b1 b1 u4 u3 b1', bytes(header))
         except ValueError:
           print("CAN: MALFORMED USB RECV PACKET")
           return []
-        dddat = chunk[aa + head_size:aa + head_size + length]
+        dddat = chunk[aa + head_size:aa + head_size + DLC_TO_LEN[dlc]]
         bus = bus + 128 if returned else bus
         bus = bus + 192 if rejected else bus
         if DEBUG:
           print(f"  R 0x{address:x}: 0x{dddat.hex()}")
         ret.append((address, 0, dddat, bus))
-        aa += head_size + length
+        aa += head_size + DLC_TO_LEN[dlc]
         tail = bytearray()
       else:
         tail = chunk[aa:]
@@ -565,6 +567,14 @@ class Panda(object):
   # Timeout is in ms. If set to 0, the timeout is infinite.
   CAN_SEND_TIMEOUT_MS = 10
 
+  def len_to_dlc(len):
+    if len <=8:
+      return len
+    if len <=24:
+      return 8 + ((len - 8) // 4) + (1 if len % 4 else 0)
+    else:
+      return 11 + (len // 16) + (1 if len % 16 else 0)
+
   @ensure_can_packet_version
   def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
     snds = [b'']
@@ -574,9 +584,10 @@ class Panda(object):
       if DEBUG:
         print(f"  W 0x{address:x}: 0x{dat.hex()}")
       extended = 1 if address >= 0x800 else 0
-      snd = bytearray(bitstruct.pack('u29 b1 b1 b1 u6 u2', address, extended, 0, 0, len(dat), bus))
+      dlc = self.len_to_dlc(len(dat))
+      snd = bytearray(bitstruct.pack('u29 b1 b1 b1 u4 u3 b1', address, extended, 0, 0, dlc, bus, 0))
       snd.reverse()
-      snd += dat
+      snd += dat.ljust(DLC_TO_LEN[dlc] ,b'\xCC')
       snds[idx] += snd
       if len(snds[idx]) > 4096:
         snds.append(b'')

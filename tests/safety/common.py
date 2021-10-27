@@ -15,12 +15,20 @@ class UNSAFE_MODE:
   DISABLE_STOCK_AEB = 2
   RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
 
+def len_to_dlc(len):
+  if len <=8:
+    return len
+  if len <=24:
+    return 8 + ((len - 8) // 4) + (1 if len % 4 else 0)
+  else:
+    return 11 + (len // 16) + (1 if len % 16 else 0)
+
 def package_can_msg(msg):
   addr, _, dat, bus = msg
   ret = libpandasafety_py.ffi.new('CANPacket_t *')
   ret[0].extended = 1 if addr >= 0x800 else 0
   ret[0].addr = addr
-  ret[0].len = len(dat)
+  ret[0].dlc = len_to_dlc(len(dat))
   ret[0].bus = bus
   ret[0].data = bytes(dat) 
 

@@ -9,8 +9,9 @@ void can_flip_buses(uint8_t bus1, uint8_t bus2);
 void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
 void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 typedef struct {
-  unsigned char bus : 2;
-  unsigned char len : 6;
+  unsigned char reserved : 1;
+  unsigned char bus : 3;
+  unsigned char dlc : 4;
   unsigned char rejected : 1;
   unsigned char returned : 1;
   unsigned char extended : 1;  

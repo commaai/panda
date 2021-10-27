@@ -229,7 +229,7 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
     ep1_buffer.counter = 0;
   } else {
     while ((pos < len) && can_pop(&can_rx_q, &can_packet)) {
-      uint8_t canpacket_size = CANPACKET_HEAD_SIZE + can_packet.len;
+      uint8_t canpacket_size = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.dlc];
       if ((pos + canpacket_size) <= len) {
         (void)memcpy(&usbdata8[pos], &can_packet, canpacket_size);
         pos += canpacket_size;
@@ -309,7 +309,7 @@ void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
     }
 
     while (pos < len) {
-      uint8_t pckt_len = usbdata8[pos] >> 2U;
+      uint8_t pckt_len = dlc_to_len[(usbdata8[pos] >> 4U)];
       if ((pos + CANPACKET_HEAD_SIZE + pckt_len) <= (uint8_t)len) {
         CANPacket_t to_push;
         (void)memcpy(&to_push, &usbdata8[pos], pckt_len + CANPACKET_HEAD_SIZE);

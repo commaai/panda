@@ -5,8 +5,9 @@
 
 #define CANPACKET_DATA_SIZE_MAX 8
 typedef struct __attribute__((packed)) {
-  unsigned char bus : 2;
-  unsigned char len : 6;
+  unsigned char reserved : 1;
+  unsigned char bus : 3;
+  unsigned char dlc : 4;
   unsigned char rejected : 1;
   unsigned char returned : 1;
   unsigned char extended : 1;  

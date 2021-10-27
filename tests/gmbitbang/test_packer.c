@@ -3,13 +3,13 @@
 
 #define CANPACKET_DATA_SIZE_MAX 8
 typedef struct __attribute__((packed)) {
-  bool reserved2 : 1;
-  bool returned : 1;
-  bool extended : 1;  
-  uint32_t addr : 29;
-  uint32_t bus_time : 24;
-  uint8_t bus : 2;
-  uint8_t len : 6;
+  unsigned char reserved : 1;
+  unsigned char bus : 3;
+  unsigned char dlc : 4;
+  unsigned char rejected : 1;
+  unsigned char returned : 1;
+  unsigned char extended : 1;  
+  unsigned int addr : 29;
   uint8_t data[CANPACKET_DATA_SIZE_MAX];
 } CANPacket_t;
 
@@ -18,9 +18,9 @@ typedef struct __attribute__((packed)) {
 int main() {
   char out[300];
   CANPacket_t to_bang = {0};
-  to_bang.RIR = 20 << 21;
-  to_bang.RDTR = 1;
-  to_bang.RDLR = 1;
+  to_bang.addr = 5242880;
+  to_bang.dlc = 1;
+  to_bang.data[0] = 1;
 
   int len = get_bit_message(out, &to_bang);
   printf("T:");
