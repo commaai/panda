@@ -64,8 +64,9 @@ void fault_recovered(uint32_t fault) {
 }
 
 // from config.h
+unsigned char dlc_to_len[] = {0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 12U, 16U, 20U, 24U, 32U, 48U, 64U};
 #define GET_BUS(msg) ((msg)->bus)
-#define GET_LEN(msg) ((msg)->len)
+#define GET_LEN(msg) (dlc_to_len[(msg)->dlc])
 #define GET_ADDR(msg) ((msg)->addr)
 #define GET_BYTE(msg, b) ((msg)->data[(int)(b)])
 #define GET_BYTES_04(msg) ((msg)->data[0] | ((msg)->data[1] << 8) | ((msg)->data[2] << 16) | ((msg)->data[3] << 24))
