@@ -52,14 +52,14 @@ void process_can(uint8_t can_number);
 
 #ifdef STM32H7
 __attribute__((section(".ram_d1"))) can_buffer(rx_q, 0x1000)
-__attribute__((section(".ram_d1"))) can_buffer(txgmlan_q, 0x100)
+__attribute__((section(".ram_d1"))) can_buffer(txgmlan_q, 0x1A0)
 #else
 can_buffer(rx_q, 0x1000)
-can_buffer(txgmlan_q, 0x100)
+can_buffer(txgmlan_q, 0x1A0)
 #endif
-can_buffer(tx1_q, 0x100)
-can_buffer(tx2_q, 0x100)
-can_buffer(tx3_q, 0x100)
+can_buffer(tx1_q, 0x1A0)
+can_buffer(tx2_q, 0x1A0)
+can_buffer(tx3_q, 0x1A0)
 // FIXME:
 // cppcheck-suppress misra-c2012-9.3
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};

@@ -223,7 +223,7 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
     }
   }
 
-  if (total_rx_size > MAX_USB_FRAMES_PER_BULK_TRANSFER) {
+  if (total_rx_size > MAX_EP1_CHUNK_PER_BULK_TRANSFER) {
     if (pos > 1) { usbdata8[0] = ep1_buffer.counter; }
     total_rx_size = 0;
     ep1_buffer.counter = 0;
@@ -326,7 +326,7 @@ void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
 }
 
 void usb_cb_ep3_out_complete(void) {
-  if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER * 2U)) {
+  if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER)) {
     usb_outep3_resume_if_paused();
   }
 }

@@ -589,7 +589,7 @@ class Panda(object):
       snd.reverse()
       snd += dat.ljust(DLC_TO_LEN[dlc] ,b'\xCC')
       snds[idx] += snd
-      if len(snds[idx]) > 4096:
+      if len(snds[idx]) > 1536: # Limit chunks to 1536 bytes
         snds.append(b'')
         idx += 1
 
