@@ -567,7 +567,7 @@ class Panda(object):
   # Timeout is in ms. If set to 0, the timeout is infinite.
   CAN_SEND_TIMEOUT_MS = 10
 
-  def len_to_dlc(len):
+  def len_to_dlc(self, len):
     if len <=8:
       return len
     if len <=24:
