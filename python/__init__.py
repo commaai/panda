@@ -567,13 +567,13 @@ class Panda(object):
   # Timeout is in ms. If set to 0, the timeout is infinite.
   CAN_SEND_TIMEOUT_MS = 10
 
-  def len_to_dlc(self, len):
-    if len <=8:
-      return len
-    if len <=24:
-      return 8 + ((len - 8) // 4) + (1 if len % 4 else 0)
+  def len_to_dlc(self, length):
+    if length <=8:
+      return length
+    if length <=24:
+      return 8 + ((length - 8) // 4) + (1 if length % 4 else 0)
     else:
-      return 11 + (len // 16) + (1 if len % 16 else 0)
+      return 11 + (length // 16) + (1 if length % 16 else 0)
 
   @ensure_can_packet_version
   def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
