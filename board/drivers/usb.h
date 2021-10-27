@@ -360,7 +360,7 @@ uint8_t winusb_20_desc[WINUSB_PLATFORM_DESCRIPTOR_LENGTH] = {
 
 // current packet
 USB_Setup_TypeDef setup;
-uint8_t usbdata[0x100];
+uint8_t usbdata[0x1000];
 uint8_t* ep0_txdata = NULL;
 uint16_t ep0_txlen = 0;
 bool outep3_processing = false;
@@ -494,7 +494,7 @@ void usb_setup(void) {
                                USB_OTG_DOEPCTL_SD0PID_SEVNFRM | USB_OTG_DOEPCTL_USBAEP;
       USBx_OUTEP(2)->DOEPINT = 0xFF;
 
-      USBx_OUTEP(3)->DOEPTSIZ = (1U << 19) | 0x40U;
+      USBx_OUTEP(3)->DOEPTSIZ = (64U << 19) | 0x1000U;
       USBx_OUTEP(3)->DOEPCTL = (0x40U & USB_OTG_DOEPCTL_MPSIZ) | (2U << 18) |
                                USB_OTG_DOEPCTL_SD0PID_SEVNFRM | USB_OTG_DOEPCTL_USBAEP;
       USBx_OUTEP(3)->DOEPINT = 0xFF;
@@ -935,7 +935,7 @@ void usb_irqhandler(void) {
 void usb_outep3_resume_if_paused(void) {
   ENTER_CRITICAL();
   if (!outep3_processing && (USBx_OUTEP(3)->DOEPCTL & USB_OTG_DOEPCTL_NAKSTS) != 0) {
-    USBx_OUTEP(3)->DOEPTSIZ = (1U << 19) | 0x40U;
+    USBx_OUTEP(3)->DOEPTSIZ = (64U << 19) | 0x1000U;
     USBx_OUTEP(3)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
   }
   EXIT_CRITICAL();
