@@ -71,7 +71,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       }
     }
 
-    // X-trail 0x454, Leaf  0x1cc
+    // X-trail 0x454, Leaf  0x25e
     if ((addr == 0x454) || (addr == 0x25e)) {
       if (addr == 0x454){
         brake_pressed = (GET_BYTE(to_push, 2) & 0x80) != 0;
