@@ -28,7 +28,7 @@ def package_can_msg(msg):
   ret = libpandasafety_py.ffi.new('CANPacket_t *')
   ret[0].extended = 1 if addr >= 0x800 else 0
   ret[0].addr = addr
-  ret[0].dlc = len_to_dlc(len(dat))
+  ret[0].data_len_code = len_to_dlc(len(dat))
   ret[0].bus = bus
   ret[0].data = bytes(dat) 
 

@@ -43,17 +43,17 @@ def parse_can_buffer(dat):
         header = chunk[aa:aa+head_size]
         header.reverse()
         try:
-          address, _, returned, rejected, dlc, bus, _ = bitstruct.unpack('u29 b1 b1 b1 u4 u3 b1', bytes(header))
+          address, _, returned, rejected, data_len_code, bus, _ = bitstruct.unpack('u29 b1 b1 b1 u4 u3 b1', bytes(header))
         except ValueError:
           print("CAN: MALFORMED USB RECV PACKET")
           return []
-        dddat = chunk[aa + head_size:aa + head_size + DLC_TO_LEN[dlc]]
+        dddat = chunk[aa + head_size:aa + head_size + DLC_TO_LEN[data_len_code]]
         bus = bus + 128 if returned else bus
         bus = bus + 192 if rejected else bus
         if DEBUG:
           print(f"  R 0x{address:x}: 0x{dddat.hex()}")
         ret.append((address, 0, dddat, bus))
-        aa += head_size + DLC_TO_LEN[dlc]
+        aa += head_size + DLC_TO_LEN[data_len_code]
         tail = bytearray()
       else:
         tail = chunk[aa:]
@@ -584,10 +584,10 @@ class Panda(object):
       if DEBUG:
         print(f"  W 0x{address:x}: 0x{dat.hex()}")
       extended = 1 if address >= 0x800 else 0
-      dlc = self.len_to_dlc(len(dat))
-      snd = bytearray(bitstruct.pack('u29 b1 b1 b1 u4 u3 b1', address, extended, 0, 0, dlc, bus, 0))
+      data_len_code = self.len_to_dlc(len(dat))
+      snd = bytearray(bitstruct.pack('u29 b1 b1 b1 u4 u3 b1', address, extended, 0, 0, data_len_code, bus, 0))
       snd.reverse()
-      snd += dat.ljust(DLC_TO_LEN[dlc] ,b'\xCC')
+      snd += dat.ljust(DLC_TO_LEN[data_len_code] ,b'\xCC')
       snds[idx] += snd
       if len(snds[idx]) > 1536: # Limit chunks to 1536 bytes
         snds.append(b'')

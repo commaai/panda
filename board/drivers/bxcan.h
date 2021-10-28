@@ -113,7 +113,7 @@ void process_can(uint8_t can_number) {
           to_push.rejected = 0U;
           to_push.extended = (CAN->sTxMailBox[0].TIR >> 2) & 0x1U;
           to_push.addr = (to_push.extended != 0) ? (CAN->sTxMailBox[0].TIR >> 3) : (CAN->sTxMailBox[0].TIR >> 21);
-          to_push.dlc = CAN->sTxMailBox[0].TDTR & 0xFU;
+          to_push.data_len_code = CAN->sTxMailBox[0].TDTR & 0xFU;
           to_push.bus = bus_number;
           to_push.data[0] = CAN->sTxMailBox[0].TDLR & 0xFFU;
           to_push.data[1] = (CAN->sTxMailBox[0].TDLR >> 8) & 0xFFU;
@@ -148,7 +148,7 @@ void process_can(uint8_t can_number) {
         can_tx_cnt += 1;
         // only send if we have received a packet
         CAN->sTxMailBox[0].TIR = ((to_send.extended != 0) ? (to_send.addr << 3) : (to_send.addr << 21)) | (to_send.extended << 2);
-        CAN->sTxMailBox[0].TDTR = to_send.dlc;
+        CAN->sTxMailBox[0].TDTR = to_send.data_len_code;
         CAN->sTxMailBox[0].TDLR = to_send.data[0] | (to_send.data[1] << 8) | (to_send.data[2] << 16) | (to_send.data[3] << 24);
         CAN->sTxMailBox[0].TDHR = to_send.data[4] | (to_send.data[5] << 8) | (to_send.data[6] << 16) | (to_send.data[7] << 24);
         // Send request TXRQ
@@ -180,7 +180,7 @@ void can_rx(uint8_t can_number) {
     to_push.rejected = 0U;
     to_push.extended = (CAN->sFIFOMailBox[0].RIR >> 2) & 0x1U;
     to_push.addr = (to_push.extended != 0) ? (CAN->sFIFOMailBox[0].RIR >> 3) : (CAN->sFIFOMailBox[0].RIR >> 21);
-    to_push.dlc = CAN->sFIFOMailBox[0].RDTR & 0xFU;
+    to_push.data_len_code = CAN->sFIFOMailBox[0].RDTR & 0xFU;
     to_push.bus = bus_number;
     to_push.data[0] = CAN->sFIFOMailBox[0].RDLR & 0xFFU;
     to_push.data[1] = (CAN->sFIFOMailBox[0].RDLR >> 8) & 0xFFU;
@@ -201,7 +201,7 @@ void can_rx(uint8_t can_number) {
       to_send.extended = to_push.extended; // TXRQ
       to_send.addr = to_push.addr;
       to_send.bus = to_push.bus;
-      to_send.dlc = to_push.dlc;
+      to_send.data_len_code = to_push.data_len_code;
       (void)memcpy(to_send.data, to_push.data, sizeof(to_send.data));
       can_send(&to_send, bus_fwd_num, true);
     }

@@ -238,8 +238,6 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
   if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
     if (bus_number < BUS_MAX) {
       // add CAN packet to send queue
-      // bus number isn't passed through
-      // to_push->RDTR &= 0xF; // TODO: Waht is this and why?
       if ((bus_number == 3U) && (bus_config[3].can_num_lookup == 0xFFU)) {
         gmlan_send_errs += bitbang_gmlan(to_push) ? 0U : 1U;
       } else {

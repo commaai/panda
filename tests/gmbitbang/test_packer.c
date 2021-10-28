@@ -5,7 +5,7 @@
 typedef struct __attribute__((packed)) {
   unsigned char reserved : 1;
   unsigned char bus : 3;
-  unsigned char dlc : 4;
+  unsigned char data_len_code : 4;
   unsigned char rejected : 1;
   unsigned char returned : 1;
   unsigned char extended : 1;  
@@ -18,8 +18,8 @@ typedef struct __attribute__((packed)) {
 int main() {
   char out[300];
   CANPacket_t to_bang = {0};
-  to_bang.addr = 5242880;
-  to_bang.dlc = 1;
+  to_bang.addr = 20 << 18;
+  to_bang.data_len_code = 1;
   to_bang.data[0] = 1;
 
   int len = get_bit_message(out, &to_bang);

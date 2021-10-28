@@ -61,10 +61,10 @@ void process_can(uint8_t can_number) {
         fifo = (canfd_fifo *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
         fifo->header[0] = (to_send.extended << 30) | ((to_send.extended != 0) ? (to_send.addr) : (to_send.addr << 18));
-        fifo->header[1] = (to_send.dlc << 16); // DLC(length) // | (1U << 21) | (1U << 20) to enable CAN FD , enable BRS
+        fifo->header[1] = (to_send.data_len_code << 16); // | (1U << 21) | (1U << 20) to enable CAN FD , enable BRS
 
-        uint8_t data_len_w = (dlc_to_len[to_send.dlc] / 4U);
-        data_len_w += ((dlc_to_len[to_send.dlc] % 4) > 0) ? 1U : 0U;
+        uint8_t data_len_w = (dlc_to_len[to_send.data_len_code] / 4U);
+        data_len_w += ((dlc_to_len[to_send.data_len_code] % 4) > 0) ? 1U : 0U;
         for (unsigned int i = 0; i < data_len_w; i++) {
           fifo->data_word[i] = to_send.data[(i*4)+0] | (to_send.data[(i*4)+1] << 8) | (to_send.data[(i*4)+2] << 16) | (to_send.data[(i*4)+3] << 24);
         }
@@ -80,8 +80,8 @@ void process_can(uint8_t can_number) {
         to_push.extended = to_send.extended;
         to_push.addr = to_send.addr;
         to_push.bus = to_send.bus;
-        to_push.dlc = to_send.dlc;
-        (void)memcpy(to_push.data, to_send.data, dlc_to_len[to_push.dlc]);
+        to_push.data_len_code = to_send.data_len_code;
+        (void)memcpy(to_push.data, to_send.data, dlc_to_len[to_push.data_len_code]);
         can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
 
         usb_cb_ep3_out_complete();
@@ -144,10 +144,10 @@ void can_rx(uint8_t can_number) {
       to_push.extended = (fifo->header[0] >> 30) & 0x1U;
       to_push.addr = ((to_push.extended != 0) ? (fifo->header[0] & 0x1FFFFFFFU) : ((fifo->header[0] >> 18) & 0x7FFU));
       to_push.bus = bus_number;
-      to_push.dlc = ((fifo->header[1] >> 16) & 0xFU);
+      to_push.data_len_code = ((fifo->header[1] >> 16) & 0xFU);
 
-      uint8_t data_len_w = (dlc_to_len[to_push.dlc] / 4U);
-      data_len_w += ((dlc_to_len[to_push.dlc] % 4) > 0) ? 1U : 0U;
+      uint8_t data_len_w = (dlc_to_len[to_push.data_len_code] / 4U);
+      data_len_w += ((dlc_to_len[to_push.data_len_code] % 4) > 0) ? 1U : 0U;
       for (unsigned int i = 0; i < data_len_w; i++) {
         to_push.data[(i*4)+0] = fifo->data_word[i] & 0xFFU;
         to_push.data[(i*4)+1] = (fifo->data_word[i] >> 8) & 0xFFU;
@@ -165,8 +165,8 @@ void can_rx(uint8_t can_number) {
         to_send.extended = to_push.extended;
         to_send.addr = to_push.addr;
         to_send.bus = to_push.bus;
-        to_send.dlc = to_push.dlc;
-        (void)memcpy(to_send.data, to_push.data, dlc_to_len[to_push.dlc]);
+        to_send.data_len_code = to_push.data_len_code;
+        (void)memcpy(to_send.data, to_push.data, dlc_to_len[to_push.data_len_code]);
         can_send(&to_send, bus_fwd_num, true);
       }
 

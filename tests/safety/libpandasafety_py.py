@@ -10,7 +10,7 @@ ffi.cdef("""
 typedef struct {
   unsigned char reserved : 1;
   unsigned char bus : 3;
-  unsigned char dlc : 4;
+  unsigned char data_len_code : 4;
   unsigned char rejected : 1;
   unsigned char returned : 1;
   unsigned char extended : 1;  
