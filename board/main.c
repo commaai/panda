@@ -205,21 +205,19 @@ uint32_t total_rx_size = 0;
 
 int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
-  UNUSED(len);
   uint8_t pos = 1;
-  CANPacket_t can_packet;
   uint8_t *usbdata8 = (uint8_t *)usbdata;
-
+  // Send tail of previous message if it is in buffer
   if (ep1_buffer.ptr > 0) {
-    if (ep1_buffer.ptr <= 63) { 
+    if (ep1_buffer.ptr <= 63U) { 
       (void)memcpy(&usbdata8[pos], ep1_buffer.data, ep1_buffer.ptr);
       pos += ep1_buffer.ptr;
       ep1_buffer.ptr = 0;
     } else {
-      (void)memcpy(&usbdata8[pos], ep1_buffer.data, 63);
+      (void)memcpy(&usbdata8[pos], ep1_buffer.data, 63U);
       ep1_buffer.ptr = ep1_buffer.ptr - 63U;
-      (void)memcpy(ep1_buffer.data, &ep1_buffer.data[63], ep1_buffer.ptr);
-      pos += 63;
+      (void)memcpy(ep1_buffer.data, &ep1_buffer.data[63U], ep1_buffer.ptr);
+      pos += 63U;
     }
   }
 
@@ -228,6 +226,7 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
     total_rx_size = 0;
     ep1_buffer.counter = 0;
   } else {
+    CANPacket_t can_packet;
     while ((pos < len) && can_pop(&can_rx_q, &can_packet)) {
       uint8_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
       if ((pos + pckt_len) <= len) {
@@ -281,13 +280,13 @@ usb_asm_buffer ep3_buffer = {.ptr = 0, .tail_size = 0, .counter = 0};
 void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   uint8_t *usbdata8 = (uint8_t *)usbdata;
-
+  // Got first packet from a stream, resetting buffer and counter
   if (usbdata8[0] == 0) {
     ep3_buffer.counter = 0;
     ep3_buffer.ptr = 0;
     ep3_buffer.tail_size = 0;
   }
-
+  // Assembling can message with data from buffer
   if (usbdata8[0] == ep3_buffer.counter) {
     uint8_t pos = 1;
     ep3_buffer.counter++;
