@@ -48,8 +48,10 @@ def parse_can_buffer(dat):
           print("CAN: MALFORMED USB RECV PACKET")
           return []
         data = packet[pos + head_size:pos + head_size + DLC_TO_LEN[data_len_code]]
-        if returned: bus += 128
-        if rejected: bus += 192
+        if returned:
+          bus += 128
+        if rejected:
+          bus += 192
         if DEBUG:
           print(f"  R 0x{address:x}: 0x{data.hex()}")
         ret.append((address, 0, data, bus))
@@ -586,7 +588,9 @@ class Panda(object):
       data_len_code = self.len_to_dlc(len(dat))
       head = bytearray(bitstruct.pack('u29 b1 b1 b1 u4 u3 b1', address, extended, 0, 0, data_len_code, bus, 0))
       head.reverse()
-      snds[idx] += head + dat.ljust(DLC_TO_LEN[data_len_code], b'\xCC')
+      if len(dat) < DLC_TO_LEN[data_len_code]:
+        dat = dat.ljust(DLC_TO_LEN[data_len_code], b'\xCC')
+      snds[idx] += head + dat
       if len(snds[idx]) > 1536: # Limit chunks to 1536 bytes
         snds.append(b'')
         idx += 1
