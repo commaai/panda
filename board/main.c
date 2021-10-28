@@ -229,13 +229,13 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
     ep1_buffer.counter = 0;
   } else {
     while ((pos < len) && can_pop(&can_rx_q, &can_packet)) {
-      uint8_t canpacket_size = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
-      if ((pos + canpacket_size) <= len) {
-        (void)memcpy(&usbdata8[pos], &can_packet, canpacket_size);
-        pos += canpacket_size;
+      uint8_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
+      if ((pos + pckt_len) <= len) {
+        (void)memcpy(&usbdata8[pos], &can_packet, pckt_len);
+        pos += pckt_len;
       } else {
         (void)memcpy(&usbdata8[pos], &can_packet, len - pos);
-        ep1_buffer.ptr = canpacket_size - (len - pos);
+        ep1_buffer.ptr = pckt_len - (len - pos);
         //(void)memcpy(ep1_buffer.data, ((uint8_t*)&can_packet + (len - pos)), ep1_buffer.ptr);
         // cppcheck-suppress objectIndex
         (void)memcpy(ep1_buffer.data, &((uint8_t*)&can_packet)[(len - pos)], ep1_buffer.ptr);
@@ -309,16 +309,16 @@ void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
     }
 
     while (pos < len) {
-      uint8_t pckt_len = dlc_to_len[(usbdata8[pos] >> 4U)];
-      if ((pos + CANPACKET_HEAD_SIZE + pckt_len) <= (uint8_t)len) {
+      uint8_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[(usbdata8[pos] >> 4U)];
+      if ((pos + pckt_len) <= (uint8_t)len) {
         CANPacket_t to_push;
-        (void)memcpy(&to_push, &usbdata8[pos], pckt_len + CANPACKET_HEAD_SIZE);
+        (void)memcpy(&to_push, &usbdata8[pos], pckt_len);
         can_send(&to_push, to_push.bus, false);
-        pos += CANPACKET_HEAD_SIZE + pckt_len;
+        pos += pckt_len;
       } else {
         (void)memcpy(ep3_buffer.data, &usbdata8[pos], len - pos);
         ep3_buffer.ptr = len - pos;
-        ep3_buffer.tail_size = CANPACKET_HEAD_SIZE + pckt_len - ep3_buffer.ptr;
+        ep3_buffer.tail_size = pckt_len - ep3_buffer.ptr;
         pos += ep3_buffer.ptr;
       }
     }
