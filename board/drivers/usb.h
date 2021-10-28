@@ -24,7 +24,7 @@ typedef union _USB_Setup {
 USB_Setup_TypeDef;
 
 #define MAX_CAN_MSGS_PER_BULK_TRANSFER 320U
-#define MAX_EP1_CHUNK_PER_BULK_TRANSFER 4096 // max data stream chunk in bytes, shouldn't be higher than 16320 or counter will overflow
+#define MAX_EP1_CHUNK_PER_BULK_TRANSFER 16256 // max data stream chunk in bytes, shouldn't be higher than 16320 or counter will overflow
 
 bool usb_eopf_detected = false;
 
@@ -360,7 +360,7 @@ uint8_t winusb_20_desc[WINUSB_PLATFORM_DESCRIPTOR_LENGTH] = {
 
 // current packet
 USB_Setup_TypeDef setup;
-uint8_t usbdata[0x800];
+uint8_t usbdata[0x100];
 uint8_t* ep0_txdata = NULL;
 uint16_t ep0_txlen = 0;
 bool outep3_processing = false;
