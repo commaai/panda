@@ -35,29 +35,29 @@ def parse_can_buffer(dat):
       print("CAN: LOST RECV PACKET COUNTER")
       return []
     counter+=1
-    chunk = tail + dat[i+1:i+64]
-    aa = 0 
-    while aa<len(chunk):
-      packet_len = DLC_TO_LEN[(chunk[aa]>>4)] + head_size
-      if packet_len <= len(chunk[aa:]):
-        header = chunk[aa:aa+head_size]
+    packet = tail + dat[i+1:i+64]
+    pos = 0 
+    while pos<len(packet):
+      pckt_len = DLC_TO_LEN[(packet[pos]>>4)] + head_size
+      if pckt_len <= len(packet[pos:]):
+        header = packet[pos:pos+head_size]
         header.reverse()
         try:
           address, _, returned, rejected, data_len_code, bus, _ = bitstruct.unpack('u29 b1 b1 b1 u4 u3 b1', bytes(header))
         except ValueError:
           print("CAN: MALFORMED USB RECV PACKET")
           return []
-        dddat = chunk[aa + head_size:aa + head_size + DLC_TO_LEN[data_len_code]]
-        bus = bus + 128 if returned else bus
-        bus = bus + 192 if rejected else bus
+        data = packet[pos + head_size:pos + head_size + DLC_TO_LEN[data_len_code]]
+        if returned: bus += 128
+        if rejected: bus += 192
         if DEBUG:
-          print(f"  R 0x{address:x}: 0x{dddat.hex()}")
-        ret.append((address, 0, dddat, bus))
-        aa += head_size + DLC_TO_LEN[data_len_code]
+          print(f"  R 0x{address:x}: 0x{data.hex()}")
+        ret.append((address, 0, data, bus))
+        pos += head_size + DLC_TO_LEN[data_len_code]
         tail = bytearray()
       else:
-        tail = chunk[aa:]
-        aa+=len(tail)
+        tail = packet[pos:]
+        pos+=len(tail)
         break
   return ret
 
@@ -575,8 +575,7 @@ class Panda(object):
     else:
       return 11 + (length // 16) + (1 if length % 16 else 0)
 
-  @ensure_can_packet_version
-  def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
+  def pack_can_buffer(self, arr):
     snds = [b'']
     idx = 0
     for address, _, dat, bus in arr:
@@ -585,14 +584,17 @@ class Panda(object):
         print(f"  W 0x{address:x}: 0x{dat.hex()}")
       extended = 1 if address >= 0x800 else 0
       data_len_code = self.len_to_dlc(len(dat))
-      snd = bytearray(bitstruct.pack('u29 b1 b1 b1 u4 u3 b1', address, extended, 0, 0, data_len_code, bus, 0))
-      snd.reverse()
-      snd += dat.ljust(DLC_TO_LEN[data_len_code] ,b'\xCC')
-      snds[idx] += snd
+      head = bytearray(bitstruct.pack('u29 b1 b1 b1 u4 u3 b1', address, extended, 0, 0, data_len_code, bus, 0))
+      head.reverse()
+      snds[idx] += head + dat.ljust(DLC_TO_LEN[data_len_code], b'\xCC')
       if len(snds[idx]) > 1536: # Limit chunks to 1536 bytes
         snds.append(b'')
         idx += 1
+    return snds
 
+  @ensure_can_packet_version
+  def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
+    snds = self.pack_can_buffer(arr)
     while True:
       try:
         if self.wifi:
