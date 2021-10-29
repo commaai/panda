@@ -33,7 +33,7 @@ def parse_can_buffer(dat):
   for i in range(0, len(dat), 64):
     if counter != dat[i]:
       print("CAN: LOST RECV PACKET COUNTER")
-      return []
+      break
     counter+=1
     packet = tail + dat[i+1:i+64]
     pos = 0 
@@ -46,7 +46,7 @@ def parse_can_buffer(dat):
           address, _, returned, rejected, data_len_code, bus, _ = bitstruct.unpack('u29 b1 b1 b1 u4 u3 b1', bytes(header))
         except ValueError:
           print("CAN: MALFORMED USB RECV PACKET")
-          return []
+          break
         data = packet[pos + head_size:pos + head_size + DLC_TO_LEN[data_len_code]]
         if returned:
           bus += 128
