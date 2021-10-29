@@ -79,10 +79,6 @@ static int ford_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
 
-  if (relay_malfunction) {
-    tx = 0;
-  }
-
   // STEER: safety check
   if (addr == 0x3CA) {
     if (!current_controls_allowed) {

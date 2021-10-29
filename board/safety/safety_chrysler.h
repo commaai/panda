@@ -126,10 +126,6 @@ static int chrysler_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
-  if (relay_malfunction) {
-    tx = 0;
-  }
-
   // LKA STEER
   if (addr == 0x292) {
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1) - 1024U;

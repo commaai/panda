@@ -50,7 +50,7 @@ int safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 }
 
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
-  return current_hooks->tx(to_send);
+  return (relay_malfunction ? -1 : current_hooks->tx(to_send));
 }
 
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
