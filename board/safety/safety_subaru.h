@@ -156,10 +156,6 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
-  if (relay_malfunction) {
-    tx = 0;
-  }
-
   // steer cmd checks
   if (addr == 0x122) {
     int desired_torque = ((GET_BYTES_04(to_send) >> 16) & 0x1FFF);
@@ -217,10 +213,6 @@ static int subaru_legacy_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
 
   if (!msg_allowed(to_send, SUBARU_L_TX_MSGS, SUBARU_L_TX_MSGS_LEN)) {
-    tx = 0;
-  }
-
-  if (relay_malfunction) {
     tx = 0;
   }
 

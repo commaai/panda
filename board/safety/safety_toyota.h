@@ -144,10 +144,6 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
-  if (relay_malfunction) {
-    tx = 0;
-  }
-
   // Check if msg is sent on BUS 0
   if (bus == 0) {
 

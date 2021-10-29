@@ -204,10 +204,6 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = msg_allowed(to_send, HONDA_N_TX_MSGS, sizeof(HONDA_N_TX_MSGS)/sizeof(HONDA_N_TX_MSGS[0]));
   }
 
-  if (relay_malfunction) {
-    tx = 0;
-  }
-
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
   int pedal_pressed = brake_pressed_prev && vehicle_moving;

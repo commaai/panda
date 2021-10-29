@@ -109,10 +109,6 @@ static int mazda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
-  if (relay_malfunction) {
-    tx = 0;
-  }
-
   // Check if msg is sent on the main BUS
   if (bus == MAZDA_MAIN) {
 
