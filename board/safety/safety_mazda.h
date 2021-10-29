@@ -23,12 +23,7 @@
 #define MAZDA_DRIVER_TORQUE_FACTOR 1
 #define MAZDA_MAX_TORQUE_ERROR 350
 
-// lkas enable speed 52kph, disable at 45kph
-#define MAZDA_LKAS_ENABLE_SPEED  5200
-#define MAZDA_LKAS_DISABLE_SPEED 4500
-
 const CanMsg MAZDA_TX_MSGS[] = {{MAZDA_LKAS, 0, 8}, {MAZDA_CRZ_BTNS, 0, 8}};
-bool mazda_lkas_allowed = false;
 
 AddrCheckStruct mazda_addr_checks[] = {
   {.msg = {{MAZDA_CRZ_CTRL,     0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
@@ -49,17 +44,7 @@ static int mazda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (addr == MAZDA_ENGINE_DATA) {
       // sample speed: scale by 0.01 to get kph
       int speed = (GET_BYTE(to_push, 2) << 8) | GET_BYTE(to_push, 3);
-
       vehicle_moving = speed > 10; // moving when speed > 0.1 kph
-
-      // Enable LKAS at 52kph going up, disable at 45kph going down
-      if (speed > MAZDA_LKAS_ENABLE_SPEED) {
-        mazda_lkas_allowed = true;
-      } else if (speed < MAZDA_LKAS_DISABLE_SPEED) {
-        mazda_lkas_allowed = false;
-      } else {
-        // Misra-able appeasment block!
-      }
     }
 
     if (addr == MAZDA_STEER_TORQUE) {
@@ -73,13 +58,7 @@ static int mazda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       bool cruise_engaged = GET_BYTE(to_push, 0) & 8;
       if (cruise_engaged) {
         if (!cruise_engaged_prev) {
-          // do not engage until we hit the speed at which lkas is on
-          if (mazda_lkas_allowed) {
-            controls_allowed = 1;
-          } else {
-            controls_allowed = 0;
-            cruise_engaged = false;
-          }
+          controls_allowed = 1;
         }
       } else {
         controls_allowed = 0;
@@ -183,7 +162,6 @@ static const addr_checks* mazda_init(int16_t param) {
   UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();
-  mazda_lkas_allowed = false;
   return &mazda_rx_checks;
 }
 
