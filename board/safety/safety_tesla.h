@@ -183,10 +183,6 @@ static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     }
   }
 
-  if(relay_malfunction) {
-    bus_fwd = -1;
-  }
-
   return bus_fwd;
 }
 

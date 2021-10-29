@@ -168,18 +168,18 @@ static int mazda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
 static int mazda_fwd_hook(int bus, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int bus_fwd = -1;
-  if (!relay_malfunction) {
-    int addr = GET_ADDR(to_fwd);
-    if (bus == MAZDA_MAIN) {
-      bus_fwd = MAZDA_CAM;
-    } else if (bus == MAZDA_CAM) {
-      if (!(addr == MAZDA_LKAS)) {
-        bus_fwd = MAZDA_MAIN;
-      }
-    } else {
-      bus_fwd = -1;
+  int addr = GET_ADDR(to_fwd);
+
+  if (bus == MAZDA_MAIN) {
+    bus_fwd = MAZDA_CAM;
+  } else if (bus == MAZDA_CAM) {
+    if (!(addr == MAZDA_LKAS)) {
+      bus_fwd = MAZDA_MAIN;
     }
+  } else {
+    bus_fwd = -1;
   }
+
   return bus_fwd;
 }
 

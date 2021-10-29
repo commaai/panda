@@ -182,11 +182,6 @@ static int nissan_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     }
   }
 
-  if (relay_malfunction) {
-    bus_fwd = -1;
-  }
-
-  // fallback to do not forward
   return bus_fwd;
 }
 
