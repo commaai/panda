@@ -42,7 +42,7 @@ void process_can(uint8_t can_number) {
 
     FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
     uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
-    
+
     CANx->IR |= FDCAN_IR_TFE; // Clear Tx FIFO Empty flag
 
     if ((CANx->TXFQS & FDCAN_TXFQS_TFQF) == 0) {
@@ -62,8 +62,8 @@ void process_can(uint8_t can_number) {
         fifo->RDTR = ((to_send.RDTR & 0xF) << 16) | ((to_send.RDTR) >> 16); // DLC (length) | timestamp
         fifo->RDLR = to_send.RDLR;
         fifo->RDHR = to_send.RDHR;
-        
-        CANx->TXBAR = (1UL << tx_index); 
+
+        CANx->TXBAR = (1UL << tx_index);
 
         // Send back to USB
         can_txd_cnt += 1;
@@ -139,7 +139,7 @@ void can_rx(uint8_t can_number) {
       to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (bus_number << 4);
 
       // forwarding (panda only)
-      int bus_fwd_num = (can_forwarding[bus_number] != -1) ? can_forwarding[bus_number] : safety_fwd_hook(bus_number, &to_push);
+      int bus_fwd_num = safety_fwd_hook(bus_number, &to_push);
       if (bus_fwd_num != -1) {
         CAN_FIFOMailBox_TypeDef to_send;
         to_send.RIR = to_push.RIR;
@@ -155,7 +155,7 @@ void can_rx(uint8_t can_number) {
       current_board->set_led(LED_BLUE, true);
       can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
 
-      // update read index 
+      // update read index
       CANx->RXF0A = rx_fifo_idx;
     }
 
@@ -165,10 +165,9 @@ void can_rx(uint8_t can_number) {
     #endif
     CANx->IR |= (FDCAN_IR_PEA | FDCAN_IR_PED | FDCAN_IR_RF0L | FDCAN_IR_RF0F | FDCAN_IR_EW | FDCAN_IR_MRAF | FDCAN_IR_TOO); // Clean all error flags
     can_err_cnt += 1;
-  } else { 
-    
+  } else {
+
   }
-  
 }
 
 void FDCAN1_IT0_IRQ_Handler(void) { can_rx(0); }
