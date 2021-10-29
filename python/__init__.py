@@ -465,10 +465,6 @@ class Panda(object):
       self.set_heartbeat_disabled()
       self.set_power_save(0)
 
-  def set_can_forwarding(self, from_bus, to_bus):
-    # TODO: This feature may not work correctly with saturated buses
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xdd, from_bus, to_bus, b'')
-
   def set_gmlan(self, bus=2):
     # TODO: check panda type
     if bus is None:
