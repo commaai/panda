@@ -156,13 +156,11 @@ void can_clear(can_ring *q) {
 // can number: numeric lookup for MCU CAN interfaces (0 = CAN1, 1 = CAN2, etc);
 // bus_lookup: Translates from 'can number' to 'bus number'.
 // can_num_lookup: Translates from 'bus number' to 'can number'.
-// can_forwarding: Given a bus num, lookup bus num to forward to. -1 means no forward.
 
 // Helpers
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
 uint8_t bus_lookup[] = {0,1,2};
 uint8_t can_num_lookup[] = {0,1,2,-1};
-int8_t can_forwarding[] = {-1,-1,-1,-1};
 uint32_t can_speed[] = {5000, 5000, 5000, 333};
 uint32_t can_data_speed[] = {5000, 5000, 5000}; //For CAN FD with BRS only
 #define CAN_MAX 3U
@@ -240,8 +238,4 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx
     to_push->RDTR = (to_push->RDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | CAN_BUS_BLK_FLAG | bus_number) << 4);
     can_send_errs += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }
-}
-
-void can_set_forwarding(int from, int to) {
-  can_forwarding[from] = to;
 }
