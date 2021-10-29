@@ -279,45 +279,43 @@ static int subaru_legacy_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int bus_fwd = -1;
 
-  if (!relay_malfunction) {
-    if (bus_num == 0) {
-      bus_fwd = 2;  // Camera CAN
-    }
-    if (bus_num == 2) {
-      // Global platform
-      // 0x122 ES_LKAS
-      // 0x221 ES_Distance
-      // 0x322 ES_LKAS_State
-      int addr = GET_ADDR(to_fwd);
-      int block_msg = ((addr == 0x122) || (addr == 0x221) || (addr == 0x322));
-      if (!block_msg) {
-        bus_fwd = 0;  // Main CAN
-      }
+  if (bus_num == 0) {
+    bus_fwd = 2;  // Camera CAN
+  }
+
+  if (bus_num == 2) {
+    // Global platform
+    // 0x122 ES_LKAS
+    // 0x221 ES_Distance
+    // 0x322 ES_LKAS_State
+    int addr = GET_ADDR(to_fwd);
+    int block_msg = ((addr == 0x122) || (addr == 0x221) || (addr == 0x322));
+    if (!block_msg) {
+      bus_fwd = 0;  // Main CAN
     }
   }
-  // fallback to do not forward
+
   return bus_fwd;
 }
 
 static int subaru_legacy_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int bus_fwd = -1;
 
-  if (!relay_malfunction) {
-    if (bus_num == 0) {
-      bus_fwd = 2;  // Camera CAN
-    }
-    if (bus_num == 2) {
-      // Preglobal platform
-      // 0x161 is ES_CruiseThrottle
-      // 0x164 is ES_LKAS
-      int addr = GET_ADDR(to_fwd);
-      int block_msg = ((addr == 0x161) || (addr == 0x164));
-      if (!block_msg) {
-        bus_fwd = 0;  // Main CAN
-      }
+  if (bus_num == 0) {
+    bus_fwd = 2;  // Camera CAN
+  }
+
+  if (bus_num == 2) {
+    // Preglobal platform
+    // 0x161 is ES_CruiseThrottle
+    // 0x164 is ES_LKAS
+    int addr = GET_ADDR(to_fwd);
+    int block_msg = ((addr == 0x161) || (addr == 0x164));
+    if (!block_msg) {
+      bus_fwd = 0;  // Main CAN
     }
   }
-  // fallback to do not forward
+
   return bus_fwd;
 }
 

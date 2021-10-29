@@ -58,7 +58,7 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 }
 
 int safety_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
-  return current_hooks->fwd(bus_num, to_fwd);
+  return (relay_malfunction ? -1 : current_hooks->fwd(bus_num, to_fwd));
 }
 
 // Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8
