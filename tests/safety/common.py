@@ -291,7 +291,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertTrue(self.safety.get_relay_malfunction())
     for a in range(1, 0x800):
       for b in range(0, 3):
-        self.assertFalse(self._tx(make_msg(b, a, 8)))
+        self.assertEqual(-1, self._tx(make_msg(b, a, 8)))
         self.assertEqual(-1, self.safety.safety_fwd_hook(b, make_msg(b, a, 8)))
 
   def test_fwd_hook(self):
