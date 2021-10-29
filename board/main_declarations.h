@@ -14,7 +14,7 @@ typedef struct {
   unsigned char data_len_code : 4;
   unsigned char rejected : 1;
   unsigned char returned : 1;
-  unsigned char extended : 1;  
+  unsigned char extended : 1;
   unsigned int addr : 29;
   unsigned char data[CANPACKET_DATA_SIZE_MAX];
 } __attribute__((packed, aligned(1))) CANPacket_t;

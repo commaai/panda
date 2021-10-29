@@ -23,11 +23,11 @@ BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
 DEBUG = os.getenv("PANDADEBUG") is not None
 
+CANPACKET_HEAD_SIZE = 0x5
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 
 def parse_can_buffer(dat):
   ret = []
-  head_size = 0x5
   counter = 0
   tail = bytearray()
   for i in range(0, len(dat), 64):
@@ -36,18 +36,19 @@ def parse_can_buffer(dat):
       break
     counter+=1
     packet = tail + dat[i+1:i+64]
-    pos = 0 
+    tail = bytearray()
+    pos = 0
     while pos<len(packet):
-      pckt_len = DLC_TO_LEN[(packet[pos]>>4)] + head_size
+      pckt_len = CANPACKET_HEAD_SIZE + DLC_TO_LEN[(packet[pos]>>4)]
       if pckt_len <= len(packet[pos:]):
-        header = packet[pos:pos+head_size]
+        header = packet[pos:pos+CANPACKET_HEAD_SIZE]
         header.reverse()
         try:
           address, _, returned, rejected, data_len_code, bus, _ = bitstruct.unpack('u29 b1 b1 b1 u4 u3 b1', bytes(header))
         except ValueError:
           print("CAN: MALFORMED USB RECV PACKET")
           break
-        data = packet[pos + head_size:pos + head_size + DLC_TO_LEN[data_len_code]]
+        data = packet[pos + CANPACKET_HEAD_SIZE:pos + CANPACKET_HEAD_SIZE + DLC_TO_LEN[data_len_code]]
         if returned:
           bus += 128
         if rejected:
@@ -55,11 +56,9 @@ def parse_can_buffer(dat):
         if DEBUG:
           print(f"  R 0x{address:x}: 0x{data.hex()}")
         ret.append((address, 0, data, bus))
-        pos += head_size + DLC_TO_LEN[data_len_code]
-        tail = bytearray()
+        pos += pckt_len
       else:
         tail = packet[pos:]
-        pos+=len(tail)
         break
   return ret
 

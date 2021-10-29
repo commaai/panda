@@ -152,7 +152,7 @@ void process_can(uint8_t can_number) {
         CAN->sTxMailBox[0].TDLR = to_send.data[0] | (to_send.data[1] << 8) | (to_send.data[2] << 16) | (to_send.data[3] << 24);
         CAN->sTxMailBox[0].TDHR = to_send.data[4] | (to_send.data[5] << 8) | (to_send.data[6] << 16) | (to_send.data[7] << 24);
         // Send request TXRQ
-        CAN->sTxMailBox[0].TIR |= 0x1U; 
+        CAN->sTxMailBox[0].TIR |= 0x1U;
 
         usb_cb_ep3_out_complete();
       }
@@ -202,7 +202,7 @@ void can_rx(uint8_t can_number) {
       to_send.addr = to_push.addr;
       to_send.bus = to_push.bus;
       to_send.data_len_code = to_push.data_len_code;
-      (void)memcpy(to_send.data, to_push.data, sizeof(to_send.data));
+      (void)memcpy(to_send.data, to_push.data, dlc_to_len[to_push.data_len_code]);
       can_send(&to_send, bus_fwd_num, true);
     }
 

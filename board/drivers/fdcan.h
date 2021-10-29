@@ -69,7 +69,7 @@ void process_can(uint8_t can_number) {
           fifo->data_word[i] = to_send.data[(i*4)+0] | (to_send.data[(i*4)+1] << 8) | (to_send.data[(i*4)+2] << 16) | (to_send.data[(i*4)+3] << 24);
         }
 
-        CANx->TXBAR = (1UL << tx_index); 
+        CANx->TXBAR = (1UL << tx_index);
 
         // Send back to USB
         can_txd_cnt += 1;
