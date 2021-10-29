@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # pylint: skip-file
+# type: ignore
 import numpy as np
 import visa
 import matplotlib.pyplot as plt
