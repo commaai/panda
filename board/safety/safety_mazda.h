@@ -138,7 +138,18 @@ static int mazda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         tx = 0;
       }
     }
+
+    // cruise buttons check
+    if (addr == MAZDA_CRZ_BTNS) {
+      // allow resume spamming while controls allowed, but
+      // only allow cancel while contrls not allowed
+      bool cancel_cmd = (GET_BYTE(to_send, 0) == 0x1U);
+      if (!controls_allowed && !cancel_cmd) {
+        tx = 0;
+      }
+    }
   }
+
   return tx;
 }
 

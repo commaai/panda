@@ -59,6 +59,26 @@ class TestMazdaSafety(common.PandaSafetyTest):
     values = {"CRZ_ACTIVE": enable}
     return self.packer.make_can_msg_panda("CRZ_CTRL", 0, values)
 
+  def _button_msg(self, resume=False, cancel=False):
+    values = {
+      "CAN_OFF": cancel,
+      "CAN_OFF_INV": (cancel + 1) % 2,
+      "RES": resume,
+      "RES_INV": (resume + 1) % 2,
+    }
+    return self.packer.make_can_msg_panda("CRZ_BTNS", 0, values)
+
+  def test_buttons(self):
+    # only cancel allows while controls not allowed
+    self.safety.set_controls_allowed(0)
+    self.assertTrue(self._tx(self._button_msg(cancel=True)))
+    self.assertFalse(self._tx(self._button_msg(resume=True)))
+
+    # do not block resume if we are engaged already
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self._tx(self._button_msg(cancel=True)))
+    self.assertTrue(self._tx(self._button_msg(resume=True)))
+
 
 if __name__ == "__main__":
   unittest.main()
