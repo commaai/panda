@@ -35,20 +35,21 @@ def parse_can_buffer(dat):
       print("CAN: LOST RECV PACKET COUNTER")
       break
     counter+=1
-    packet = tail + dat[i+1:i+64]
+    chunk = tail + dat[i+1:i+64]
     tail = bytearray()
     pos = 0
-    while pos<len(packet):
-      pckt_len = CANPACKET_HEAD_SIZE + DLC_TO_LEN[(packet[pos]>>4)]
-      if pckt_len <= len(packet[pos:]):
-        header = packet[pos:pos+CANPACKET_HEAD_SIZE]
+    while pos<len(chunk):
+      data_len = DLC_TO_LEN[(chunk[pos]>>4)]
+      pckt_len = CANPACKET_HEAD_SIZE + data_len
+      if pckt_len <= len(chunk[pos:]):
+        header = chunk[pos:pos+CANPACKET_HEAD_SIZE]
         header.reverse()
         try:
-          address, _, returned, rejected, data_len_code, bus, _ = bitstruct.unpack('u29 b1 b1 b1 u4 u3 b1', bytes(header))
+          address, _, returned, rejected, _, bus, _ = bitstruct.unpack('u29 b1 b1 b1 u4 u3 b1', bytes(header))
         except ValueError:
           print("CAN: MALFORMED USB RECV PACKET")
           break
-        data = packet[pos + CANPACKET_HEAD_SIZE:pos + CANPACKET_HEAD_SIZE + DLC_TO_LEN[data_len_code]]
+        data = chunk[pos + CANPACKET_HEAD_SIZE:pos + CANPACKET_HEAD_SIZE + data_len]
         if returned:
           bus += 128
         if rejected:
@@ -58,7 +59,7 @@ def parse_can_buffer(dat):
         ret.append((address, 0, data, bus))
         pos += pckt_len
       else:
-        tail = packet[pos:]
+        tail = chunk[pos:]
         break
   return ret
 
