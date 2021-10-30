@@ -1,5 +1,6 @@
 // CAN msgs we care about
 #define MAZDA_LKAS          0x243
+#define MAZDA_LKAS_HUD      0x440
 #define MAZDA_CRZ_CTRL      0x21c
 #define MAZDA_CRZ_BTNS      0x09d
 #define MAZDA_STEER_TORQUE  0x240
@@ -23,7 +24,7 @@
 #define MAZDA_DRIVER_TORQUE_FACTOR 1
 #define MAZDA_MAX_TORQUE_ERROR 350
 
-const CanMsg MAZDA_TX_MSGS[] = {{MAZDA_LKAS, 0, 8}, {MAZDA_CRZ_BTNS, 0, 8}};
+const CanMsg MAZDA_TX_MSGS[] = {{MAZDA_LKAS, 0, 8}, {MAZDA_CRZ_BTNS, 0, 8}, {MAZDA_LKAS_HUD, 0, 8}};
 
 AddrCheckStruct mazda_addr_checks[] = {
   {.msg = {{MAZDA_CRZ_CTRL,     0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
@@ -148,11 +149,12 @@ static int mazda_fwd_hook(int bus, CAN_FIFOMailBox_TypeDef *to_fwd) {
   if (bus == MAZDA_MAIN) {
     bus_fwd = MAZDA_CAM;
   } else if (bus == MAZDA_CAM) {
-    if (!(addr == MAZDA_LKAS)) {
+    bool block = (addr == MAZDA_LKAS) || (addr == MAZDA_LKAS_HUD);
+    if (!block) {
       bus_fwd = MAZDA_MAIN;
     }
   } else {
-    bus_fwd = -1;
+    // don't fwd
   }
 
   return bus_fwd;
