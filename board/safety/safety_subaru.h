@@ -35,7 +35,7 @@ AddrCheckStruct subaru_l_addr_checks[] = {
   {.msg = {{0x144, 0, 8, .expected_timestep = 50000U}, { 0 }, { 0 }}},
 };
 #define SUBARU_L_ADDR_CHECK_LEN (sizeof(subaru_l_addr_checks) / sizeof(subaru_l_addr_checks[0]))
-addr_checks subaru_l_rx_checks = {subaru_addr_checks, SUBARU_L_ADDR_CHECK_LEN};
+addr_checks subaru_l_rx_checks = {subaru_l_addr_checks, SUBARU_L_ADDR_CHECK_LEN};
 
 static uint8_t subaru_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
