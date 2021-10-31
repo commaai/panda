@@ -156,7 +156,7 @@ class CcpClient():
       raise ValueError("resource mask must be less than 256")
     self._send_cro(COMMAND_CODE.GET_SEED)
     resp = self._recv_dto(0.025)
-    protected = resp[0] == 0
+    # protected = resp[0] == 0
     seed = resp[1:]
     return seed
 
@@ -181,7 +181,7 @@ class CcpClient():
       raise ValueError("max data size is 5 bytes")
     self._send_cro(COMMAND_CODE.DNLOAD, bytes([len(data)]) + data)
     resp = self._recv_dto(0.025)
-    mta_addr_ext = resp[0]
+    # mta_addr_ext = resp[0]
     mta_addr = struct.unpack(f"{self.byte_order.value}I", resp[1:5])[0]
     return mta_addr
 
@@ -190,7 +190,7 @@ class CcpClient():
       raise ValueError("data size must be 6 bytes")
     self._send_cro(COMMAND_CODE.DNLOAD_6, data)
     resp = self._recv_dto(0.025)
-    mta_addr_ext = resp[0]
+    # mta_addr_ext = resp[0]
     mta_addr = struct.unpack(f"{self.byte_order.value}I", resp[1:5])[0]
     return mta_addr
 
@@ -294,7 +294,7 @@ class CcpClient():
       raise ValueError("max data size is 5 bytes")
     self._send_cro(COMMAND_CODE.PROGRAM, bytes([size]) + data)
     resp = self._recv_dto(0.1)
-    mta_addr_ext = resp[0]
+    # mta_addr_ext = resp[0]
     mta_addr = struct.unpack(f"{self.byte_order.value}I", resp[1:5])[0]
     return mta_addr
 
@@ -303,7 +303,7 @@ class CcpClient():
       raise ValueError("data size must be 6 bytes")
     self._send_cro(COMMAND_CODE.PROGRAM_6, data)
     resp = self._recv_dto(0.1)
-    mta_addr_ext = resp[0]
+    # mta_addr_ext = resp[0]
     mta_addr = struct.unpack(f"{self.byte_order.value}I", resp[1:5])[0]
     return mta_addr
 
@@ -351,7 +351,7 @@ class CcpClient():
   def get_active_calibration_page(self):
     self._send_cro(COMMAND_CODE.GET_ACTIVE_CAL_PAGE)
     resp = self._recv_dto(0.025)
-    cal_addr_ext = resp[0]
+    # cal_addr_ext = resp[0]
     cal_addr = struct.unpack(f"{self.byte_order.value}I", resp[1:5])[0]
     return cal_addr
 
