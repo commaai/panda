@@ -275,7 +275,7 @@ class CcpClient():
       "info": resp[2] if resp[1] else None,
     }
 
-  def build_checksum(self, size: int) -> int:
+  def build_checksum(self, size: int) -> bytes:
     self._send_cro(COMMAND_CODE.BUILD_CHKSUM, struct.pack(f"{self.byte_order.value}I", size))
     resp = self._recv_dto(30.0)
     chksum_size = resp[0]
@@ -283,7 +283,7 @@ class CcpClient():
     chksum = resp[1:1+chksum_size]
     return chksum
 
-  def clear_memory(self, size: int) -> int:
+  def clear_memory(self, size: int) -> None:
     self._send_cro(COMMAND_CODE.CLEAR_MEMORY, struct.pack(f"{self.byte_order.value}I", size))
     self._recv_dto(30.0)
 
