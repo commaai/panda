@@ -23,7 +23,7 @@ typedef union _USB_Setup {
 }
 USB_Setup_TypeDef;
 
-#define MAX_CAN_MSGS_PER_BULK_TRANSFER 320U
+#define MAX_CAN_MSGS_PER_BULK_TRANSFER 64U
 #define MAX_EP1_CHUNK_PER_BULK_TRANSFER 16256 // max data stream chunk in bytes, shouldn't be higher than 16320 or counter will overflow
 
 bool usb_eopf_detected = false;

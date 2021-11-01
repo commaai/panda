@@ -1,7 +1,6 @@
 # python library to interface with panda
 import datetime
 import struct
-import bitstruct.c as bitstruct
 import hashlib
 import socket
 import usb1
@@ -43,12 +42,13 @@ def parse_can_buffer(dat):
       pckt_len = CANPACKET_HEAD_SIZE + data_len
       if pckt_len <= len(chunk[pos:]):
         header = chunk[pos:pos+CANPACKET_HEAD_SIZE]
-        header.reverse()
-        try:
-          address, _, returned, rejected, _, bus, _ = bitstruct.unpack('u29 b1 b1 b1 u4 u3 b1', bytes(header))
-        except ValueError:
+        if len(header) < 5:
           print("CAN: MALFORMED USB RECV PACKET")
           break
+        bus = (header[0] >> 1) & 0x7
+        address = (header[4] << 24 | header[3] << 16 | header[2] << 8 | header[1]) >> 3
+        returned = (header[1] >> 1) & 0x1
+        rejected = header[1] & 0x1
         data = chunk[pos + CANPACKET_HEAD_SIZE:pos + CANPACKET_HEAD_SIZE + data_len]
         if returned:
           bus += 128
@@ -586,12 +586,17 @@ class Panda(object):
         print(f"  W 0x{address:x}: 0x{dat.hex()}")
       extended = 1 if address >= 0x800 else 0
       data_len_code = self.len_to_dlc(len(dat))
-      head = bytearray(bitstruct.pack('u29 b1 b1 b1 u4 u3 b1', address, extended, 0, 0, data_len_code, bus, 0))
-      head.reverse()
+      header = bytearray(5)
+      word_4b = address << 3 | extended << 2
+      header[0] = (data_len_code << 4) | (bus << 1)
+      header[1] = word_4b & 0xFF
+      header[2] = (word_4b >> 8) & 0xFF
+      header[3] = (word_4b >> 16) & 0xFF
+      header[4] = (word_4b >> 24) & 0xFF
       if len(dat) < DLC_TO_LEN[data_len_code]:
         dat = dat.ljust(DLC_TO_LEN[data_len_code], b'\xCC')
-      snds[idx] += head + dat
-      if len(snds[idx]) > 1536: # Limit chunks to 1536 bytes
+      snds[idx] += header + dat
+      if len(snds[idx]) > 256: # Limit chunks to 256 bytes
         snds.append(b'')
         idx += 1
     return snds
