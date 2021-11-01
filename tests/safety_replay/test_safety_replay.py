@@ -23,7 +23,7 @@ logs = [
   ("610ebb9faaad6b43|2020-06-13--15-28-36.bz2", Panda.SAFETY_HYUNDAI_LEGACY, 0),       # HYUNDAI.IONIQ_EV_LTD
   ("5ab784f361e19b78_2020-06-08--16-30-41.bz2", Panda.SAFETY_SUBARU_LEGACY, 0),        # SUBARU.OUTBACK
   ("bb50caf5f0945ab1|2021-06-19--17-20-18.bz2", Panda.SAFETY_TESLA, 0),                # TESLA.AP2_MODELS
-  ("bd6a637565e91581_2021-10-29--22-18-31--1--rlog.bz2", Panda.SAFETY_MAZDA, 0),       # TESLA.AP2_MODELS
+  ("bd6a637565e91581_2021-10-29--22-18-31--1--rlog.bz2", Panda.SAFETY_MAZDA, 0),       # MAZDA.CX9_2021
 ]
 
 
