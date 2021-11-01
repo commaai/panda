@@ -108,10 +108,6 @@ static int nissan_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
-  if (relay_malfunction) {
-    tx = 0;
-  }
-
   // steer cmd checks
   if (addr == 0x169) {
     int desired_angle = ((GET_BYTE(to_send, 0) << 10) | (GET_BYTE(to_send, 1) << 2) | ((GET_BYTE(to_send, 2) >> 6) & 0x3));
@@ -182,11 +178,6 @@ static int nissan_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     }
   }
 
-  if (relay_malfunction) {
-    bus_fwd = -1;
-  }
-
-  // fallback to do not forward
   return bus_fwd;
 }
 

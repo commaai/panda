@@ -156,13 +156,11 @@ void can_clear(can_ring *q) {
 // can number: numeric lookup for MCU CAN interfaces (0 = CAN1, 1 = CAN2, etc);
 // bus_lookup: Translates from 'can number' to 'bus number'.
 // can_num_lookup: Translates from 'bus number' to 'can number'.
-// can_forwarding: Given a bus num, lookup bus num to forward to. -1 means no forward.
 
 // Helpers
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
 uint8_t bus_lookup[] = {0,1,2};
 uint8_t can_num_lookup[] = {0,1,2,-1};
-int8_t can_forwarding[] = {-1,-1,-1,-1};
 uint32_t can_speed[] = {5000, 5000, 5000, 333};
 uint32_t can_data_speed[] = {5000, 5000, 5000}; //For CAN FD with BRS only
 #define CAN_MAX 3U
@@ -195,23 +193,30 @@ void ignition_can_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   ignition_can_cnt = 0U;  // reset counter
 
   if (bus == 0) {
+    // GM exception
     // TODO: verify on all supported GM models that we can reliably detect ignition using only this signal,
     // since the 0x1F1 signal can briefly go low immediately after ignition
     if ((addr == 0x160) && (len == 5)) {
       // this message isn't all zeros when ignition is on
       ignition_cadillac = GET_BYTES_04(to_push) != 0;
     }
-    // GM exception
     if ((addr == 0x1F1) && (len == 8)) {
       // Bit 5 is ignition "on"
       bool ignition_gm = ((GET_BYTE(to_push, 0) & 0x20) != 0);
       ignition_can = ignition_gm || ignition_cadillac;
     }
+
     // Tesla exception
     if ((addr == 0x348) && (len == 8)) {
       // GTW_status
       ignition_can = (GET_BYTE(to_push, 0) & 0x1) != 0;
     }
+
+    // Mazda exception
+    if ((addr == 0x9E) && (len == 8)) {
+      ignition_can = (GET_BYTE(to_push, 0) >> 4) == 0xDU;
+    }
+
   }
 }
 
@@ -240,8 +245,4 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx
     to_push->RDTR = (to_push->RDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | CAN_BUS_BLK_FLAG | bus_number) << 4);
     can_send_errs += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }
-}
-
-void can_set_forwarding(int from, int to) {
-  can_forwarding[from] = to;
 }

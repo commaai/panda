@@ -301,7 +301,7 @@ static int volkswagen_mqb_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
   int tx = 1;
 
-  if (!msg_allowed(to_send, VOLKSWAGEN_MQB_TX_MSGS, VOLKSWAGEN_MQB_TX_MSGS_LEN) || relay_malfunction) {
+  if (!msg_allowed(to_send, VOLKSWAGEN_MQB_TX_MSGS, VOLKSWAGEN_MQB_TX_MSGS_LEN)) {
     tx = 0;
   }
 
@@ -337,7 +337,7 @@ static int volkswagen_pq_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int addr = GET_ADDR(to_send);
   int tx = 1;
 
-  if (!msg_allowed(to_send, VOLKSWAGEN_PQ_TX_MSGS, VOLKSWAGEN_PQ_TX_MSGS_LEN) || relay_malfunction) {
+  if (!msg_allowed(to_send, VOLKSWAGEN_PQ_TX_MSGS, VOLKSWAGEN_PQ_TX_MSGS_LEN)) {
     tx = 0;
   }
 
@@ -374,27 +374,26 @@ static int volkswagen_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int addr = GET_ADDR(to_fwd);
   int bus_fwd = -1;
 
-  if (!relay_malfunction) {
-    switch (bus_num) {
-      case 0:
-        // Forward all traffic from the Extended CAN onward
-        bus_fwd = 2;
-        break;
-      case 2:
-        if ((addr == volkswagen_torque_msg) || (addr == volkswagen_lane_msg)) {
-          // OP takes control of the Heading Control Assist and Lane Departure Warning messages from the camera
-          bus_fwd = -1;
-        } else {
-          // Forward all remaining traffic from Extended CAN devices to J533 gateway
-          bus_fwd = 0;
-        }
-        break;
-      default:
-        // No other buses should be in use; fallback to do-not-forward
+  switch (bus_num) {
+    case 0:
+      // Forward all traffic from the Extended CAN onward
+      bus_fwd = 2;
+      break;
+    case 2:
+      if ((addr == volkswagen_torque_msg) || (addr == volkswagen_lane_msg)) {
+        // OP takes control of the Heading Control Assist and Lane Departure Warning messages from the camera
         bus_fwd = -1;
-        break;
-    }
+      } else {
+        // Forward all remaining traffic from Extended CAN devices to J533 gateway
+        bus_fwd = 0;
+      }
+      break;
+    default:
+      // No other buses should be in use; fallback to do-not-forward
+      bus_fwd = -1;
+      break;
   }
+
   return bus_fwd;
 }
 

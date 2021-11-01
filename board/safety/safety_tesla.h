@@ -110,10 +110,6 @@ static int tesla_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
-  if(relay_malfunction) {
-    tx = 0;
-  }
-
   if(addr == 0x488) {
     // Steering control: (0.1 * val) - 1638.35 in deg.
     // We use 1/10 deg as a unit here
@@ -181,10 +177,6 @@ static int tesla_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     if(!block_msg) {
       bus_fwd = 0;
     }
-  }
-
-  if(relay_malfunction) {
-    bus_fwd = -1;
   }
 
   return bus_fwd;

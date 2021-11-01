@@ -455,19 +455,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         set_safety_mode(setup->b.wValue.w, (uint16_t) setup->b.wIndex.w);
       }
       break;
-    // **** 0xdd: enable can forwarding
-    case 0xdd:
-      // wValue = Can Bus Num to forward from
-      // wIndex = Can Bus Num to forward to
-      if ((setup->b.wValue.w < BUS_MAX) && (setup->b.wIndex.w < BUS_MAX) &&
-          (setup->b.wValue.w != setup->b.wIndex.w)) { // set forwarding
-        can_set_forwarding(setup->b.wValue.w, setup->b.wIndex.w & CAN_BUS_NUM_MASK);
-      } else if((setup->b.wValue.w < BUS_MAX) && (setup->b.wIndex.w == 0xFFU)){ //Clear Forwarding
-        can_set_forwarding(setup->b.wValue.w, -1);
-      } else {
-        puts("Invalid CAN bus forwarding\n");
-      }
-      break;
     // **** 0xde: set can bitrate
     case 0xde:
       if (setup->b.wValue.w < BUS_MAX) {

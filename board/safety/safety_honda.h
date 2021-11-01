@@ -204,10 +204,6 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = msg_allowed(to_send, HONDA_N_TX_MSGS, sizeof(HONDA_N_TX_MSGS)/sizeof(HONDA_N_TX_MSGS[0]));
   }
 
-  if (relay_malfunction) {
-    tx = 0;
-  }
-
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
   int pedal_pressed = brake_pressed_prev && vehicle_moving;
@@ -355,22 +351,22 @@ static int honda_nidec_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   // 0x1FA is brake control, 0x30C is acc hud, 0x33D is lkas hud,
   int bus_fwd = -1;
 
-  if (!relay_malfunction) {
-    if (bus_num == 0) {
-      bus_fwd = 2;
-    }
-    if (bus_num == 2) {
-      // block stock lkas messages and stock acc messages (if OP is doing ACC)
-      int addr = GET_ADDR(to_fwd);
-      bool is_lkas_msg = (addr == 0xE4) || (addr == 0x194) || (addr == 0x33D);
-      bool is_acc_hud_msg = addr == 0x30C;
-      bool is_brake_msg = addr == 0x1FA;
-      bool block_fwd = is_lkas_msg || is_acc_hud_msg || (is_brake_msg && !honda_fwd_brake);
-      if (!block_fwd) {
-        bus_fwd = 0;
-      }
+  if (bus_num == 0) {
+    bus_fwd = 2;
+  }
+
+  if (bus_num == 2) {
+    // block stock lkas messages and stock acc messages (if OP is doing ACC)
+    int addr = GET_ADDR(to_fwd);
+    bool is_lkas_msg = (addr == 0xE4) || (addr == 0x194) || (addr == 0x33D);
+    bool is_acc_hud_msg = addr == 0x30C;
+    bool is_brake_msg = addr == 0x1FA;
+    bool block_fwd = is_lkas_msg || is_acc_hud_msg || (is_brake_msg && !honda_fwd_brake);
+    if (!block_fwd) {
+      bus_fwd = 0;
     }
   }
+
   return bus_fwd;
 }
 
@@ -379,18 +375,17 @@ static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int bus_rdr_cam = (honda_hw == HONDA_BH_HW) ? 2 : 1;  // radar bus, camera side
   int bus_rdr_car = (honda_hw == HONDA_BH_HW) ? 0 : 2;  // radar bus, car side
 
-  if (!relay_malfunction) {
-    if (bus_num == bus_rdr_car) {
-      bus_fwd = bus_rdr_cam;
-    }
-    if (bus_num == bus_rdr_cam)  {
-      int addr = GET_ADDR(to_fwd);
-      int is_lkas_msg = (addr == 0xE4) || (addr == 0xE5) || (addr == 0x33D);
-      if (!is_lkas_msg) {
-        bus_fwd = bus_rdr_car;
-      }
+  if (bus_num == bus_rdr_car) {
+    bus_fwd = bus_rdr_cam;
+  }
+  if (bus_num == bus_rdr_cam)  {
+    int addr = GET_ADDR(to_fwd);
+    int is_lkas_msg = (addr == 0xE4) || (addr == 0xE5) || (addr == 0x33D);
+    if (!is_lkas_msg) {
+      bus_fwd = bus_rdr_car;
     }
   }
+
   return bus_fwd;
 }
 

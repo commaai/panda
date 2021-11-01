@@ -234,10 +234,6 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = msg_allowed(to_send, HYUNDAI_TX_MSGS, sizeof(HYUNDAI_TX_MSGS)/sizeof(HYUNDAI_TX_MSGS[0]));
   }
 
-  if (relay_malfunction) {
-    tx = 0;
-  }
-
   // FCA11: Block any potential actuation
   if (addr == 909) {
     int CR_VSM_DecCmd = GET_BYTE(to_send, 1);
@@ -346,15 +342,15 @@ static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   int bus_fwd = -1;
   int addr = GET_ADDR(to_fwd);
+
   // forward cam to ccan and viceversa, except lkas cmd
-  if (!relay_malfunction) {
-    if (bus_num == 0) {
-      bus_fwd = 2;
-    }
-    if ((bus_num == 2) && (addr != 832) && (addr != 1157)) {
-      bus_fwd = 0;
-    }
+  if (bus_num == 0) {
+    bus_fwd = 2;
   }
+  if ((bus_num == 2) && (addr != 832) && (addr != 1157)) {
+    bus_fwd = 0;
+  }
+
   return bus_fwd;
 }
 

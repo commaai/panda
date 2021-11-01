@@ -144,10 +144,6 @@ static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     tx = 0;
   }
 
-  if (relay_malfunction) {
-    tx = 0;
-  }
-
   // Check if msg is sent on BUS 0
   if (bus == 0) {
 
@@ -252,25 +248,25 @@ static const addr_checks* toyota_init(int16_t param) {
 }
 
 static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
-
   int bus_fwd = -1;
-  if (!relay_malfunction) {
-    if (bus_num == 0) {
-      bus_fwd = 2;
-    }
-    if (bus_num == 2) {
-      int addr = GET_ADDR(to_fwd);
-      // block stock lkas messages and stock acc messages (if OP is doing ACC)
-      // in TSS2, 0x191 is LTA which we need to block to avoid controls collision
-      int is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191));
-      // in TSS2 the camera does ACC as well, so filter 0x343
-      int is_acc_msg = (addr == 0x343);
-      int block_msg = is_lkas_msg || is_acc_msg;
-      if (!block_msg) {
-        bus_fwd = 0;
-      }
+
+  if (bus_num == 0) {
+    bus_fwd = 2;
+  }
+
+  if (bus_num == 2) {
+    int addr = GET_ADDR(to_fwd);
+    // block stock lkas messages and stock acc messages (if OP is doing ACC)
+    // in TSS2, 0x191 is LTA which we need to block to avoid controls collision
+    int is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191));
+    // in TSS2 the camera does ACC as well, so filter 0x343
+    int is_acc_msg = (addr == 0x343);
+    int block_msg = is_lkas_msg || is_acc_msg;
+    if (!block_msg) {
+      bus_fwd = 0;
     }
   }
+
   return bus_fwd;
 }
 
