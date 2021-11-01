@@ -26,7 +26,7 @@ AddrCheckStruct nissan_addr_checks[] = {
            {0x239, 0, 8, .expected_timestep = 20000U}}}, // GAS_PEDAL (100Hz / 50Hz)
   {.msg = {{0x454, 0, 8, .expected_timestep = 100000U},
            {0x454, 1, 8, .expected_timestep = 100000U},
-           {0x25e, 0, 1, .expected_timestep = 10000U}}}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
+           {0x239, 0, 8, .expected_timestep = 10000U}}}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
 };
 #define NISSAN_ADDR_CHECK_LEN (sizeof(nissan_addr_checks) / sizeof(nissan_addr_checks[0]))
 addr_checks nissan_rx_checks = {nissan_addr_checks, NISSAN_ADDR_CHECK_LEN};
@@ -71,12 +71,12 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       }
     }
 
-    // X-trail 0x454, Leaf  0x25e
-    if ((addr == 0x454) || (addr == 0x25e)) {
+    // X-trail 0x454, Leaf  0x239
+    if ((addr == 0x454) || (addr == 0x239)) {
       if (addr == 0x454){
         brake_pressed = (GET_BYTE(to_push, 2) & 0x80) != 0;
       } else {
-        brake_pressed = GET_BYTE(to_push, 0) != 0;
+        brake_pressed = (GET_BYTE(to_push, 4) & 0x20) != 0;
       }
     }
 
