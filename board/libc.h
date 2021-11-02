@@ -45,7 +45,7 @@ void *memcpy(void *dest, const void *src, unsigned int len) {
   while (n-- > 0U) {
     *d8 = *s8; d8++; s8++;
   }
-  return pDest;
+  return dest;
 }
 
 int memcmp(const void * ptr1, const void * ptr2, unsigned int num) {
