@@ -25,8 +25,7 @@ AddrCheckStruct nissan_addr_checks[] = {
            {0x15c, 1, 8, .expected_timestep = 20000U},
            {0x239, 0, 8, .expected_timestep = 20000U}}}, // GAS_PEDAL (100Hz / 50Hz)
   {.msg = {{0x454, 0, 8, .expected_timestep = 100000U},
-           {0x454, 1, 8, .expected_timestep = 100000U},
-           {0x239, 0, 8, .expected_timestep = 10000U}}}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
+           {0x454, 1, 8, .expected_timestep = 100000U}, { 0 }}}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
 };
 #define NISSAN_ADDR_CHECK_LEN (sizeof(nissan_addr_checks) / sizeof(nissan_addr_checks[0]))
 addr_checks nissan_rx_checks = {nissan_addr_checks, NISSAN_ADDR_CHECK_LEN};
