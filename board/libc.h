@@ -14,13 +14,22 @@ void *memset(void *str, int c, unsigned int n) {
   return str;
 }
 
+
 void *memcpy(void *dest, const void *src, unsigned int n) {
-  uint8_t *d = dest;
-  const uint8_t *s = src;
-  for (unsigned int i = 0; i < n; i++) {
-    *d = *s;
-    d++;
-    s++;
+  const uint32_t *s32 = (const uint32_t *)src;
+  uint32_t *d32 = (uint32_t *)dest;
+  for (unsigned int i = (n / 4U); i > 0; i--) {
+    *d32 = *s32;
+    d32++;
+    s32++;
+  }
+
+  const uint8_t *s8 = (const uint8_t *)s32;
+  uint8_t *d8 = (uint8_t *)d32;
+  for (unsigned int i = (n & 0x03U); i > 0; i--) {
+    *d8 = *s8;
+    d8++;
+    s8++;
   }
   return dest;
 }
