@@ -24,6 +24,7 @@ DEBUG = os.getenv("PANDADEBUG") is not None
 
 CANPACKET_HEAD_SIZE = 0x5
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
+LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
 
 def parse_can_buffer(dat):
   ret = []
@@ -569,23 +570,16 @@ class Panda(object):
   # Timeout is in ms. If set to 0, the timeout is infinite.
   CAN_SEND_TIMEOUT_MS = 10
 
-  def len_to_dlc(self, length):
-    if length <=8:
-      return length
-    if length <=24:
-      return 8 + ((length - 8) // 4) + (1 if length % 4 else 0)
-    else:
-      return 11 + (length // 16) + (1 if length % 16 else 0)
-
   def pack_can_buffer(self, arr):
     snds = [b'']
     idx = 0
     for address, _, dat, bus in arr:
-      assert len(dat) <= 8
+      assert len(dat) <= (8 if self._mcu_type != MCU_TYPE_H7 else 64)
+      assert len(dat) in LEN_TO_DLC
       if DEBUG:
         print(f"  W 0x{address:x}: 0x{dat.hex()}")
       extended = 1 if address >= 0x800 else 0
-      data_len_code = self.len_to_dlc(len(dat))
+      data_len_code = LEN_TO_DLC[len(dat)]
       header = bytearray(5)
       word_4b = address << 3 | extended << 2
       header[0] = (data_len_code << 4) | (bus << 1)
@@ -593,8 +587,6 @@ class Panda(object):
       header[2] = (word_4b >> 8) & 0xFF
       header[3] = (word_4b >> 16) & 0xFF
       header[4] = (word_4b >> 24) & 0xFF
-      if len(dat) < DLC_TO_LEN[data_len_code]:
-        dat = dat.ljust(DLC_TO_LEN[data_len_code], b'\xCC')
       snds[idx] += header + dat
       if len(snds[idx]) > 256: # Limit chunks to 256 bytes
         snds.append(b'')

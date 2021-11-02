@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import panda.tests.safety.libpandasafety_py as libpandasafety_py
-from panda import Panda
+from panda import Panda, LEN_TO_DLC
 
 def to_signed(d, bits):
   ret = d
@@ -57,19 +57,11 @@ def set_desired_torque_last(safety, mode, torque):
   elif mode == Panda.SAFETY_SUBARU:
     safety.set_subaru_desired_torque_last(torque)
 
-def len_to_dlc(length):
-  if length <=8:
-    return length
-  if length <=24:
-    return 8 + ((length - 8) // 4) + (1 if length % 4 else 0)
-  else:
-    return 11 + (length // 16) + (1 if length % 16 else 0)
-
 def package_can_msg(msg):
   ret = libpandasafety_py.ffi.new('CANPacket_t *')
   ret[0].extended = 1 if msg.address >= 0x800 else 0
   ret[0].addr = msg.address
-  ret[0].data_len_code = len_to_dlc(len(msg.dat))
+  ret[0].data_len_code = LEN_TO_DLC[len(msg.dat)]
   ret[0].bus = msg.src
   ret[0].data = msg.dat
 
