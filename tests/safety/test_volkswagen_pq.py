@@ -83,15 +83,10 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
 
   # openpilot steering output torque
   def _hca_1_msg(self, torque):
-    to_send = make_msg(0, MSG_HCA_1, 5)
-    t = abs(torque) << 5  # DBC scale from centi-Nm to PQ network (approximated)
-    to_send[0].RDLR = (t & 0x7FFF) << 16
-    if torque < 0:
-      to_send[0].RDLR |= 0x1 << 31
-    to_send[0].RDLR |= (self.cnt_hca_1 % 16) << 8
-    to_send[0].RDLR |= volkswagen_pq_checksum(to_send[0], MSG_HCA_1, 8)
+    values = {"LM_Offset": abs(torque), "LM_OffSign": torque < 0,
+              "HCA_Zaehler": self.cnt_hca_1 % 16}
     self.__class__.cnt_hca_1 += 1
-    return to_send
+    return self.packer.make_can_msg_panda("HCA_1", 0, values)
 
   # ACC engagement and brake light switch status
   # Called indirectly for compatibility with common.py tests
