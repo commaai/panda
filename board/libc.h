@@ -15,7 +15,7 @@ void *memset(void *str, int c, unsigned int n) {
 }
 
 #define UNALIGNED(X, Y) \
-  (((uint32_t)(X) & (sizeof(uint32_t) - 1)) | ((uint32_t)(Y) & (sizeof(uint32_t) - 1)))
+  (((uint32_t)(X) & (sizeof(uint32_t) - 1U)) | ((uint32_t)(Y) & (sizeof(uint32_t) - 1U)))
 
 void *memcpy(void *dest, const void *src, unsigned int len) {
   unsigned int n = len;
