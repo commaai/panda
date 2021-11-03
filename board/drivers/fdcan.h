@@ -66,7 +66,7 @@ void process_can(uint8_t can_number) {
         uint8_t data_len_w = (dlc_to_len[to_send.data_len_code] / 4U);
         data_len_w += ((dlc_to_len[to_send.data_len_code] % 4) > 0) ? 1U : 0U;
         for (unsigned int i = 0; i < data_len_w; i++) {
-          BYTE_ARRAY_TO_WORD(fifo->data_word[i], &to_send.data[i*4]);
+          fifo->data_word[i] = to_send.data[(i*4)+0] | (to_send.data[(i*4)+1] << 8) | (to_send.data[(i*4)+2] << 16) | (to_send.data[(i*4)+3] << 24);
         }
 
         CANx->TXBAR = (1UL << tx_index);
@@ -149,7 +149,10 @@ void can_rx(uint8_t can_number) {
       uint8_t data_len_w = (dlc_to_len[to_push.data_len_code] / 4U);
       data_len_w += ((dlc_to_len[to_push.data_len_code] % 4) > 0) ? 1U : 0U;
       for (unsigned int i = 0; i < data_len_w; i++) {
-        WORD_TO_BYTE_ARRAY(&to_push.data[i*4], fifo->data_word[i]);
+        to_push.data[(i*4)+0] = fifo->data_word[i] & 0xFFU;
+        to_push.data[(i*4)+1] = (fifo->data_word[i] >> 8) & 0xFFU;
+        to_push.data[(i*4)+2] = (fifo->data_word[i] >> 16) & 0xFFU;
+        to_push.data[(i*4)+3] = (fifo->data_word[i] >> 24) & 0xFFU;
       }
 
       // forwarding (panda only)

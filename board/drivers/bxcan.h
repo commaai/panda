@@ -115,8 +115,14 @@ void process_can(uint8_t can_number) {
           to_push.addr = (to_push.extended != 0) ? (CAN->sTxMailBox[0].TIR >> 3) : (CAN->sTxMailBox[0].TIR >> 21);
           to_push.data_len_code = CAN->sTxMailBox[0].TDTR & 0xFU;
           to_push.bus = bus_number;
-          WORD_TO_BYTE_ARRAY(&to_push.data[0], CAN->sTxMailBox[0].TDLR);
-          WORD_TO_BYTE_ARRAY(&to_push.data[4], CAN->sTxMailBox[0].TDHR);
+          to_push.data[0] = CAN->sTxMailBox[0].TDLR & 0xFFU;
+          to_push.data[1] = (CAN->sTxMailBox[0].TDLR >> 8) & 0xFFU;
+          to_push.data[2] = (CAN->sTxMailBox[0].TDLR >> 16) & 0xFFU;
+          to_push.data[3] = (CAN->sTxMailBox[0].TDLR >> 24) & 0xFFU;
+          to_push.data[4] = CAN->sTxMailBox[0].TDHR & 0xFFU;
+          to_push.data[5] = (CAN->sTxMailBox[0].TDHR >> 8) & 0xFFU;
+          to_push.data[6] = (CAN->sTxMailBox[0].TDHR >> 16) & 0xFFU;
+          to_push.data[7] = (CAN->sTxMailBox[0].TDHR >> 24) & 0xFFU;
 
           can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
         }
@@ -143,8 +149,8 @@ void process_can(uint8_t can_number) {
         // only send if we have received a packet
         CAN->sTxMailBox[0].TIR = ((to_send.extended != 0) ? (to_send.addr << 3) : (to_send.addr << 21)) | (to_send.extended << 2);
         CAN->sTxMailBox[0].TDTR = to_send.data_len_code;
-        BYTE_ARRAY_TO_WORD(CAN->sTxMailBox[0].TDLR, &to_send.data[0]);
-        BYTE_ARRAY_TO_WORD(CAN->sTxMailBox[0].TDHR, &to_send.data[4]);
+        CAN->sTxMailBox[0].TDLR = to_send.data[0] | (to_send.data[1] << 8) | (to_send.data[2] << 16) | (to_send.data[3] << 24);
+        CAN->sTxMailBox[0].TDHR = to_send.data[4] | (to_send.data[5] << 8) | (to_send.data[6] << 16) | (to_send.data[7] << 24);
         // Send request TXRQ
         CAN->sTxMailBox[0].TIR |= 0x1U;
 
@@ -176,8 +182,14 @@ void can_rx(uint8_t can_number) {
     to_push.addr = (to_push.extended != 0) ? (CAN->sFIFOMailBox[0].RIR >> 3) : (CAN->sFIFOMailBox[0].RIR >> 21);
     to_push.data_len_code = CAN->sFIFOMailBox[0].RDTR & 0xFU;
     to_push.bus = bus_number;
-    WORD_TO_BYTE_ARRAY(&to_push.data[0], CAN->sFIFOMailBox[0].RDLR);
-    WORD_TO_BYTE_ARRAY(&to_push.data[4], CAN->sFIFOMailBox[0].RDHR);
+    to_push.data[0] = CAN->sFIFOMailBox[0].RDLR & 0xFFU;
+    to_push.data[1] = (CAN->sFIFOMailBox[0].RDLR >> 8) & 0xFFU;
+    to_push.data[2] = (CAN->sFIFOMailBox[0].RDLR >> 16) & 0xFFU;
+    to_push.data[3] = (CAN->sFIFOMailBox[0].RDLR >> 24) & 0xFFU;
+    to_push.data[4] = CAN->sFIFOMailBox[0].RDHR & 0xFFU;
+    to_push.data[5] = (CAN->sFIFOMailBox[0].RDHR >> 8) & 0xFFU;
+    to_push.data[6] = (CAN->sFIFOMailBox[0].RDHR >> 16) & 0xFFU;
+    to_push.data[7] = (CAN->sFIFOMailBox[0].RDHR >> 24) & 0xFFU;
 
     // forwarding (panda only)
     int bus_fwd_num = safety_fwd_hook(bus_number, &to_push);
