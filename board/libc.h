@@ -45,7 +45,6 @@ void *memcpy(void *dest, const void *src, unsigned int len) {
   while (n-- > 0U) {
     *d8 = *s8; d8++; s8++;
   }
-
   return dest;
 }
 

@@ -13,7 +13,7 @@ typedef struct {
   unsigned char data_len_code : 4;
   unsigned char rejected : 1;
   unsigned char returned : 1;
-  unsigned char extended : 1;  
+  unsigned char extended : 1;
   unsigned int addr : 29;
   unsigned char data[8];
 } CANPacket_t;
