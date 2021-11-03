@@ -626,7 +626,7 @@ class Panda(object):
     dat = bytearray()
     while True:
       try:
-        dat = self._handle.bulkRead(1, 16384) # Max receive batch size + 2 extra reserve frames
+        dat = self._handle.bulkRead(1, 4224) # Max receive batch size + 2 extra reserve frames
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD RECV, RETRYING")
