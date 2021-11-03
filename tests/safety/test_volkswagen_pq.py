@@ -4,7 +4,7 @@ import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import make_msg, CANPackerPanda, MAX_WRONG_COUNTERS
+from panda.tests.safety.common import CANPackerPanda, MAX_WRONG_COUNTERS
 
 MAX_RATE_UP = 4
 MAX_RATE_DOWN = 10
@@ -37,6 +37,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
   cruise_engaged = False
   cnt_lenkhilfe_3 = 0
   cnt_hca_1 = 0
+  cnt_gra_neu = 0
 
   # Transmit of GRA_Neu is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
   TX_MSGS = [[MSG_HCA_1, 0], [MSG_GRA_NEU, 0], [MSG_GRA_NEU, 2], [MSG_LDW_1, 0]]
@@ -85,6 +86,9 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
   def _hca_1_msg(self, torque):
     values = {"LM_Offset": abs(torque), "LM_OffSign": torque < 0,
               "HCA_Zaehler": self.cnt_hca_1 % 16}
+    # TODO: move checksum handling to CPP library with the rest
+    to_calc = self.packer.make_can_msg_panda("HCA_1", 0, values)
+    values.update({"HCA_Checksumme": volkswagen_pq_checksum(to_calc[0], MSG_HCA_1, 5)})
     self.__class__.cnt_hca_1 += 1
     return self.packer.make_can_msg_panda("HCA_1", 0, values)
 
@@ -95,18 +99,20 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
               "GRA_Status": cruise_engaged}
     return self.packer.make_can_msg_panda("Motor_2", 0, values)
 
-  # Driver throttle input (motor_3)
+  # Driver throttle input (Motor_3)
   def _gas_msg(self, gas):
-    to_send = make_msg(0, MSG_MOTOR_3)
-    to_send[0].RDLR = (gas & 0xFF) << 16
-    return to_send
+    values = {"Fahrpedal_Rohsignal": gas}
+    return self.packer.make_can_msg_panda("Motor_3", 0, values)
 
-  # Cruise control buttons
-  def _gra_neu_msg(self, bit):
-    to_send = make_msg(2, MSG_GRA_NEU, 4)
-    to_send[0].RDLR = 1 << bit
-    to_send[0].RDLR |= volkswagen_pq_checksum(to_send[0], MSG_GRA_NEU, 8)
-    return to_send
+  # Cruise control buttons (GRA_Neu)
+  def _button_msg(self, _set=False, resume=False, cancel=False):
+    values = {"GRA_Neu_Setzen": _set, "GRA_Recall": resume,
+              "GRA_Abbrechen": cancel, "GRA_Neu_Zaehler": self.cnt_gra_neu % 16}
+    # TODO: move checksum handling to CPP library with the rest
+    to_calc = self.packer.make_can_msg_panda("GRA_Neu", 2, values)
+    values.update({"GRA_Checksum": volkswagen_pq_checksum(to_calc[0], MSG_GRA_NEU, 4)})
+    self.__class__.cnt_gra_neu += 1
+    return self.packer.make_can_msg_panda("GRA_Neu", 2, values)
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
@@ -119,16 +125,13 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
           self.assertTrue(self._tx(self._hca_1_msg(t)))
 
   def test_spam_cancel_safety_check(self):
-    BIT_CANCEL = 9
-    BIT_SET = 16
-    BIT_RESUME = 17
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._gra_neu_msg(BIT_CANCEL)))
-    self.assertFalse(self._tx(self._gra_neu_msg(BIT_RESUME)))
-    self.assertFalse(self._tx(self._gra_neu_msg(BIT_SET)))
+    self.assertTrue(self._tx(self._button_msg(cancel=True)))
+    self.assertFalse(self._tx(self._button_msg(resume=True)))
+    self.assertFalse(self._tx(self._button_msg(_set=True)))
     # do not block resume if we are engaged already
     self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._gra_neu_msg(BIT_RESUME)))
+    self.assertTrue(self._tx(self._button_msg(resume=True)))
 
   def test_non_realtime_limit_up(self):
     self.safety.set_torque_driver(0, 0)
