@@ -588,7 +588,7 @@ class Panda(object):
       header[3] = (word_4b >> 16) & 0xFF
       header[4] = (word_4b >> 24) & 0xFF
       snds[idx] += header + dat
-      if len(snds[idx]) > 256: # Limit chunks to 256 bytes
+      if len(snds[idx]) > 1024: # Limit chunks to 256 bytes
         snds.append(b'')
         idx += 1
     return snds
