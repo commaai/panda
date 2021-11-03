@@ -14,22 +14,39 @@ void *memset(void *str, int c, unsigned int n) {
   return str;
 }
 
-void *memcpy(void *dest, const void *src, unsigned int n) {
-  const uint32_t *s32 = (const uint32_t *)src;
-  uint32_t *d32 = (uint32_t *)dest;
-  for (unsigned int i = (n / 4U); i > 0U; i--) {
-    *d32 = *s32;
-    d32++;
-    s32++;
+#define UNALIGNED(X, Y) \
+  (((uint32_t)(X) & (sizeof(uint32_t) - 1)) | ((uint32_t)(Y) & (sizeof(uint32_t) - 1)))
+
+void *memcpy(void *dest, const void *src, unsigned int len) {
+  unsigned int n = len;
+  uint8_t *d8 = dest;
+  const uint8_t *s8 = src;
+
+  if ((n >= 4U) && !UNALIGNED(s8, d8)) {
+    uint32_t *d32 = (uint32_t *)d8; // cppcheck-suppress misra-c2012-11.3 ; already checked that it's properly aligned
+    const uint32_t *s32 = (const uint32_t *)s8; // cppcheck-suppress misra-c2012-11.3 ; already checked that it's properly aligned
+
+    while(n >= 16U) {
+      *d32 = *s32; d32++; s32++;
+      *d32 = *s32; d32++; s32++;
+      *d32 = *s32; d32++; s32++;
+      *d32 = *s32; d32++; s32++;
+      n -= 16U;
+    }
+
+    while(n >= 4U) {
+      *d32 = *s32; d32++; s32++;
+      n -= 4U;
+    }
+
+    d8 = (uint8_t *)d32;
+    s8 = (const uint8_t *)s32;
   }
 
-  const uint8_t *s8 = (const uint8_t *)s32;
-  uint8_t *d8 = (uint8_t *)d32;
-  for (unsigned int i = (n & 0x03U); i > 0U; i--) {
-    *d8 = *s8;
-    d8++;
-    s8++;
+  while (n-- > 0U) {
+    *d8 = *s8; d8++; s8++;
   }
+
   return dest;
 }
 
