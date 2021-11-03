@@ -22,7 +22,7 @@ void *memcpy(void *dest, const void *src, unsigned int len) {
   uint8_t *d8 = dest;
   const uint8_t *s8 = src;
 
-  if ((n >= 4U)) {
+  if ((n >= 4U) && !UNALIGNED(s8, d8)) {
     uint32_t *d32 = (uint32_t *)d8; // cppcheck-suppress misra-c2012-11.3 ; already checked that it's properly aligned
     const uint32_t *s32 = (const uint32_t *)s8; // cppcheck-suppress misra-c2012-11.3 ; already checked that it's properly aligned
 
@@ -42,11 +42,9 @@ void *memcpy(void *dest, const void *src, unsigned int len) {
     d8 = (uint8_t *)d32;
     s8 = (const uint8_t *)s32;
   }
-
   while (n-- > 0U) {
     *d8 = *s8; d8++; s8++;
   }
-
   return dest;
 }
 
