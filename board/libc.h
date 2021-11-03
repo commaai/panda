@@ -14,7 +14,6 @@ void *memset(void *str, int c, unsigned int n) {
   return str;
 }
 
-
 void *memcpy(void *dest, const void *src, unsigned int n) {
   const uint32_t *s32 = (const uint32_t *)src;
   uint32_t *d32 = (uint32_t *)dest;
