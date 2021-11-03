@@ -574,8 +574,8 @@ class Panda(object):
     snds = [b'']
     idx = 0
     for address, _, dat, bus in arr:
-      #assert len(dat) <= (8 if self._mcu_type != MCU_TYPE_H7 else 64)
-      #assert len(dat) in LEN_TO_DLC
+      assert len(dat) <= (8 if self._mcu_type != MCU_TYPE_H7 else 64)
+      assert len(dat) in LEN_TO_DLC
       if DEBUG:
         print(f"  W 0x{address:x}: 0x{dat.hex()}")
       extended = 1 if address >= 0x800 else 0
