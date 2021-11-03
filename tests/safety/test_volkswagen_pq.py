@@ -68,8 +68,8 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
     return self._motor_2_msg(brake_pressed=brake, cruise_engaged=self.safety.get_controls_allowed())
 
   # ACC engaged status (shared message Motor_2)
-  def _pcm_status_msg(self, engaged):
-    self.__class__.cruise_engaged = engaged
+  def _pcm_status_msg(self, enabled):
+    self.__class__.cruise_engaged = enabled
     return self._motor_2_msg(cruise_engaged=engaged)
 
   # Driver steering input torque
