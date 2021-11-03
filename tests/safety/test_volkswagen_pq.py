@@ -35,7 +35,6 @@ def volkswagen_pq_checksum(msg, addr, len_msg):
 
 class TestVolkswagenPqSafety(common.PandaSafetyTest):
   cruise_engaged = False
-  brake_pressed = False
   cnt_lenkhilfe_3 = 0
   cnt_hca_1 = 0
 
@@ -64,16 +63,13 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
 
   # Brake light switch (shared message Motor_2)
   def _brake_msg(self, brake):
-    to_send = make_msg(0, MSG_MOTOR_2)
-    to_send[0].RDLR = (0x1 << 16) if brake else 0
-    # since this siganl's used for engagement status, preserve current state
-    to_send[0].RDLR |= (self.safety.get_controls_allowed() & 0x3) << 22
-    return to_send
+    # since this signal is used for engagement status, preserve current state
+    return self._motor_2_msg(brake_pressed=brake, cruise_engaged=self.safety.get_controls_allowed())
 
   # ACC engaged status (shared message Motor_2)
-  def _pcm_status_msg(self, enable):
-    self.__class__.cruise_engaged = enable
-    return self._motor_2_msg()
+  def _pcm_status_msg(self, engaged):
+    self.__class__.cruise_engaged = engaged
+    return self._motor_2_msg(cruise_engaged=engaged)
 
   # Driver steering input torque
   def _lenkhilfe_3_msg(self, torque):
@@ -99,9 +95,9 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
 
   # ACC engagement and brake light switch status
   # Called indirectly for compatibility with common.py tests
-  def _motor_2_msg(self):
-    values = {"Bremstestschalter": self.__class__.brake_pressed,
-              "GRA_Status": self.__class__.cruise_engaged}
+  def _motor_2_msg(self, brake_pressed=False, cruise_engaged=False):
+    values = {"Bremslichtschalter": brake_pressed,
+              "GRA_Status": cruise_engaged}
     return self.packer.make_can_msg_panda("Motor_2", 0, values)
 
   # Driver throttle input (motor_3)
