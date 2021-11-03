@@ -16,3 +16,6 @@ unsigned char dlc_to_len[] = {0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 12U, 16U, 20U,
 #define CAN_INIT_TIMEOUT_MS 500U
 
 #define CANPACKET_HEAD_SIZE 5U
+
+#define WORD_TO_BYTE_ARRAY(dst8, src32) 0[dst8] = (src32 & 0xFF); 1[dst8] = ((src32 >> 8) & 0xFF); 2[dst8] = ((src32 >> 16) & 0xFF); 3[dst8] = ((src32 >> 24) & 0xFF)
+#define BYTE_ARRAY_TO_WORD(dst32, src8) (dst32 = 0[src8] | (1[src8] << 8) | (2[src8] << 16) | (3[src8] << 24))
