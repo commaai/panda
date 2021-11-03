@@ -36,6 +36,8 @@
 
 #define CANPACKET_DATA_SIZE_MAX 64U
 
+#include "can_definitions.h"
+
 #ifndef BOOTSTUB
   #include "main_declarations.h"
 #else

@@ -2,16 +2,7 @@
 #include <stdint.h>
 
 #define CANPACKET_DATA_SIZE_MAX 8
-typedef struct __attribute__((packed)) {
-  unsigned char reserved : 1;
-  unsigned char bus : 3;
-  unsigned char data_len_code : 4;
-  unsigned char rejected : 1;
-  unsigned char returned : 1;
-  unsigned char extended : 1;  
-  unsigned int addr : 29;
-  uint8_t data[CANPACKET_DATA_SIZE_MAX];
-} CANPacket_t;
+#include "../../board/can_definitions.h"
 
 #include "../../board/drivers/canbitbang.h"
 
