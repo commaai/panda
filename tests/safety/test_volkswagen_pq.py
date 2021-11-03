@@ -234,7 +234,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
     self.safety.set_controls_allowed(1)
     to_push = self._lenkhilfe_3_msg(0)
     self.assertTrue(self._rx(to_push))
-    to_push[0].RDHR ^= 0xFF
+    to_push[0].data[4] ^= 0xFF
     self.assertFalse(self._rx(to_push))
     self.assertFalse(self.safety.get_controls_allowed())
 
