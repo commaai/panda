@@ -9,7 +9,7 @@ typedef struct {
   unsigned char extended : 1;
   unsigned int addr : 29;
   unsigned char data[CANPACKET_DATA_SIZE_MAX];
-} __attribute__((packed, aligned(1))) CANPacket_t;
+} __attribute__((packed, aligned(4))) CANPacket_t;
 
 #define GET_BUS(msg) ((msg)->bus)
 #define GET_LEN(msg) (dlc_to_len[(msg)->data_len_code])
