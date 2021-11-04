@@ -15,6 +15,5 @@ jobs:
         run: |
           cd drivers/linux
           make link
-          make all
+          make build
           make install
-
