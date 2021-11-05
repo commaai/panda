@@ -264,7 +264,7 @@ def test_message_integrity(p):
 
   p.set_can_loopback(True)
 
-  n = 1000
+  n = 250
   for i in range(n):
     sent_msgs = defaultdict(set)
     for _ in range(random.randrange(10)):
@@ -282,8 +282,8 @@ def test_message_integrity(p):
       recvd = p.can_recv()
       for msg in recvd:
         if msg[3] >= 128:
-          k = (msg[0], msg[2])
-          assert k in sent_msgs[msg[3]-128]
+          k = (msg[0], bytes(msg[2]))
+          assert k in sent_msgs[msg[3]-128], f"message {k} was never sent on bus {bus}"
           sent_msgs[msg[3]-128].discard(k)
 
     # if a set isn't empty, messages got dropped
@@ -292,3 +292,4 @@ def test_message_integrity(p):
 
   # Set back to silent mode
   p.set_safety_mode(Panda.SAFETY_SILENT)
+  print("Got all messages intact")
