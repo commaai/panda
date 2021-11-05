@@ -27,6 +27,7 @@ def parse_can_buffer(dat):
     ddat = dat[j:j + 0x10]
     f1, f2 = struct.unpack("II", ddat[0:8])
     extended = 4
+    f1 -= 1
     if f1 & extended:
       address = f1 >> 3
     else:
