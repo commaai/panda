@@ -3,6 +3,7 @@ import time
 import random
 import threading
 from panda import Panda
+from collections import defaultdict
 from nose.tools import assert_equal, assert_less, assert_greater
 from .helpers import panda_jungle, start_heartbeat_thread, reset_pandas, time_many_sends, test_all_pandas, test_all_gen2_pandas, clear_can_buffers, panda_connect_and_init
 
@@ -247,6 +248,47 @@ def test_bulk_write(p):
   # All messages should have been received
   if len(rx) != 4 * NUM_MESSAGES_PER_BUS:
     raise Exception("Did not receive all messages!")
+
+  # Set back to silent mode
+  p.set_safety_mode(Panda.SAFETY_SILENT)
+
+@test_all_pandas
+@panda_connect_and_init
+def test_message_integrity(p):
+  start_heartbeat_thread(p)
+
+  clear_can_buffers(p)
+
+  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  p.set_power_save(False)
+
+  p.set_can_loopback(True)
+
+  n = 1000
+  for i in range(n):
+    sent_msgs = defaultdict(set)
+    for _ in range(random.randrange(10)):
+      to_send = []
+      for __ in range(random.randrange(100)):
+        bus = random.randrange(3)
+        addr = random.randrange(1, 1<<29)
+        dat = bytes([random.getrandbits(8) for _ in range(random.randrange(1, 9))])
+        sent_msgs[bus].add((addr, dat))
+        to_send.append([addr, None, dat, bus])
+      p.can_send_many(to_send, timeout=0)
+
+    start_time = time.time()
+    while time.time() - start_time < 2 and any(len(sent_msgs[bus]) for bus in range(3)):
+      recvd = p.can_recv()
+      for msg in recvd:
+        if msg[3] >= 128:
+          k = (msg[0], msg[2])
+          assert k in sent_msgs[msg[3]-128]
+          sent_msgs[msg[3]-128].discard(k)
+
+    # if a set isn't empty, messages got dropped
+    for bus in range(3):
+      assert not len(sent_msgs[bus]), f"loop {i}: bus {bus} missing {len(sent_msgs[bus])} messages"
 
   # Set back to silent mode
   p.set_safety_mode(Panda.SAFETY_SILENT)
