@@ -423,6 +423,10 @@ class PandaSafetyTest(PandaSafetyTestBase):
         if attr.startswith("Test") and attr != current_test:
           tx = getattr(getattr(test, attr), "TX_MSGS")
           if tx is not None:
+            # No point in comparing different Tesla safety modes
+            if 'Tesla' in attr and 'Tesla' in current_test:
+              continue
+
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
             if attr.startswith('TestHonda'):
               # exceptions for common msgs across different hondas
