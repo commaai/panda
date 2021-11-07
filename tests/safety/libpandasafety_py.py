@@ -1,11 +1,9 @@
 import os
-import subprocess
 
 from cffi import FFI
 
 can_dir = os.path.dirname(os.path.abspath(__file__))
 libpandasafety_fn = os.path.join(can_dir, "libpandasafety.so")
-subprocess.check_call([f"scons -u -j{os.cpu_count()} --test ."], shell=True, cwd=can_dir)
 
 ffi = FFI()
 ffi.cdef("""
