@@ -318,7 +318,7 @@ bool Panda::set_uart_baud(PANDA_SERIAL_PORT uart, uint32_t rate) {
 bool Panda::set_uart_parity(PANDA_SERIAL_PORT uart, PANDA_SERIAL_PORT_PARITY parity) {
 	return this->control_transfer(REQUEST_OUT, 0xe2, uart, parity, NULL, 0, 0) != -1;
 }
-
+// TODO: fix to support new USB packet and CANPacket structure
 bool Panda::can_send_many(const std::vector<PANDA_CAN_MSG>& can_msgs) {
 	std::vector<PANDA_CAN_MSG_INTERNAL> formatted_msgs;
 	formatted_msgs.reserve(can_msgs.size());
