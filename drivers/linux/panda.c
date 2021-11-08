@@ -438,7 +438,7 @@ static int panda_usb_close(struct net_device *netdev)
 
   return 0;
 }
-
+// TODO: fix to support new USB packet and CANPacket structure
 static netdev_tx_t panda_usb_start_xmit(struct sk_buff *skb,
 					struct net_device *netdev)
 {
