@@ -2,7 +2,7 @@
 
 [panda](http://github.com/commaai/panda) is the nicest universal car interface ever.
 
-<a href="https://comma.ai/shop/products/panda-obd-ii-dongle"><img src="https://github.com/commaai/panda/blob/master/panda.png">
+<a href="https://comma.ai/shop/products/panda-obd-ii-dongle"><img src="https://github.com/commaai/panda/blob/master/panda.png?raw=true"></a>
 
 It supports 3x CAN, 2x LIN, and 1x GMLAN. It also charges a phone. On the computer side, it has USB.
 
