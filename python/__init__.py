@@ -158,15 +158,36 @@ class Panda(object):
   def __init__(self, serial=None, claim=True):
     self._serial = serial
     self._handle = None
+    self.compatible = True
     self.connect(claim)
-    self._mcu_type = self.get_mcu_type()
-    if self._mcu_type != MCU_TYPE_F2:
-      self.check_compatibility()
+
+  def compatibility_gate(func):
+    def wrapper(self, *args, **kwargs):
+      if not self.compatible:
+        if self.health_version < self.HEALTH_PACKET_VERSION or self.can_version < self.CAN_PACKET_VERSION:
+          raise Exception("Update panda firmware")
+        else:
+          raise Exception("Update python panda library")
+      func(self, *args, **kwargs)
+    return wrapper
+
+  def compatibility_check(func):
+    def wrapper(self, *args, **kwargs):
+      func(self, *args, **kwargs)
+      if self._mcu_type != MCU_TYPE_F2:
+        if self.health_version < self.HEALTH_PACKET_VERSION or self.can_version < self.CAN_PACKET_VERSION:
+          self.compatible = False
+          print("Warning! Panda firmware needs to be updated", file=sys.stderr)
+        elif self.health_version > self.HEALTH_PACKET_VERSION or self.can_version > self.CAN_PACKET_VERSION:
+          self.compatible = False
+          print("Warning! Python panda library needs to be updated", file=sys.stderr)
+    return wrapper
 
   def close(self):
     self._handle.close()
     self._handle = None
 
+  @compatibility_check
   def connect(self, claim=True, wait=False):
     if self._handle is not None:
       self.close()
@@ -206,6 +227,7 @@ class Panda(object):
           break
         context = usb1.USBContext()  # New context needed so new devices show up
     assert(self._handle is not None)
+    self._mcu_type = self.get_mcu_type()
     self.health_version, self.can_version = self.get_packets_versions()
     print("connected")
 
@@ -244,12 +266,6 @@ class Panda(object):
         time.sleep(1.0)
     if not success:
       raise Exception("reconnect failed")
-
-  def check_compatibility(self):
-    if self.health_version < self.HEALTH_PACKET_VERSION or self.can_version < self.CAN_PACKET_VERSION:
-      print("Warning! Panda firmware needs to be updated", file=sys.stderr)
-    elif self.health_version > self.HEALTH_PACKET_VERSION or self.can_version > self.CAN_PACKET_VERSION:
-      print("Warning! Python panda library needs to be updated", file=sys.stderr)
 
   @staticmethod
   def flash_static(handle, code):
@@ -354,31 +370,31 @@ class Panda(object):
 
   # ******************* health *******************
 
+  @compatibility_gate
   def health(self):
-    if self.health_version == self.HEALTH_PACKET_VERSION:
-      dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 44)
-      a = struct.unpack("<IIIIIIIIBBBBBBBHBBB", dat)
-      return {
-        "uptime": a[0],
-        "voltage": a[1],
-        "current": a[2],
-        "can_rx_errs": a[3],
-        "can_send_errs": a[4],
-        "can_fwd_errs": a[5],
-        "gmlan_send_errs": a[6],
-        "faults": a[7],
-        "ignition_line": a[8],
-        "ignition_can": a[9],
-        "controls_allowed": a[10],
-        "gas_interceptor_detected": a[11],
-        "car_harness_status": a[12],
-        "usb_power_mode": a[13],
-        "safety_mode": a[14],
-        "safety_param": a[15],
-        "fault_status": a[16],
-        "power_save_enabled": a[17],
-        "heartbeat_lost": a[18],
-      }
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 44)
+    a = struct.unpack("<IIIIIIIIBBBBBBBHBBB", dat)
+    return {
+      "uptime": a[0],
+      "voltage": a[1],
+      "current": a[2],
+      "can_rx_errs": a[3],
+      "can_send_errs": a[4],
+      "can_fwd_errs": a[5],
+      "gmlan_send_errs": a[6],
+      "faults": a[7],
+      "ignition_line": a[8],
+      "ignition_can": a[9],
+      "controls_allowed": a[10],
+      "gas_interceptor_detected": a[11],
+      "car_harness_status": a[12],
+      "usb_power_mode": a[13],
+      "safety_mode": a[14],
+      "safety_param": a[15],
+      "fault_status": a[16],
+      "power_save_enabled": a[17],
+      "heartbeat_lost": a[18],
+    }
 
   # ******************* control *******************
 
@@ -529,56 +545,54 @@ class Panda(object):
   # Timeout is in ms. If set to 0, the timeout is infinite.
   CAN_SEND_TIMEOUT_MS = 10
 
+  @compatibility_gate
   def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
-    if self.can_version == self.CAN_PACKET_VERSION:
-      snds = []
-      transmit = 1
-      extended = 4
-      for addr, _, dat, bus in arr:
-        assert len(dat) <= 8
-        if DEBUG:
-          print(f"  W 0x{addr:x}: 0x{dat.hex()}")
-        if addr >= 0x800:
-          rir = (addr << 3) | transmit | extended
-        else:
-          rir = (addr << 21) | transmit
-        snd = struct.pack("II", rir, len(dat) | (bus << 4)) + dat
-        snd = snd.ljust(0x10, b'\x00')
-        snds.append(snd)
+    snds = []
+    transmit = 1
+    extended = 4
+    for addr, _, dat, bus in arr:
+      assert len(dat) <= 8
+      if DEBUG:
+        print(f"  W 0x{addr:x}: 0x{dat.hex()}")
+      if addr >= 0x800:
+        rir = (addr << 3) | transmit | extended
+      else:
+        rir = (addr << 21) | transmit
+      snd = struct.pack("II", rir, len(dat) | (bus << 4)) + dat
+      snd = snd.ljust(0x10, b'\x00')
+      snds.append(snd)
 
-      while True:
-        try:
-          if self.wifi:
-            for s in snds:
-              self._handle.bulkWrite(3, s)
-          else:
-            dat = b''.join(snds)
-            while True:
-              bs = self._handle.bulkWrite(3, dat, timeout=timeout)
-              dat = dat[bs:]
-              if len(dat) == 0:
-                break
-              print("CAN: PARTIAL SEND MANY, RETRYING")
-          break
-        except (usb1.USBErrorIO, usb1.USBErrorOverflow):
-          print("CAN: BAD SEND MANY, RETRYING")
+    while True:
+      try:
+        if self.wifi:
+          for s in snds:
+            self._handle.bulkWrite(3, s)
+        else:
+          dat = b''.join(snds)
+          while True:
+            bs = self._handle.bulkWrite(3, dat, timeout=timeout)
+            dat = dat[bs:]
+            if len(dat) == 0:
+              break
+            print("CAN: PARTIAL SEND MANY, RETRYING")
+        break
+      except (usb1.USBErrorIO, usb1.USBErrorOverflow):
+        print("CAN: BAD SEND MANY, RETRYING")
 
   def can_send(self, addr, dat, bus, timeout=CAN_SEND_TIMEOUT_MS):
     self.can_send_many([[addr, None, dat, bus]], timeout=timeout)
 
+  @compatibility_gate
   def can_recv(self):
-    if self.can_version == self.CAN_PACKET_VERSION:
-      dat = bytearray()
-      while True:
-        try:
-          dat = self._handle.bulkRead(1, 0x10 * 256)
-          break
-        except (usb1.USBErrorIO, usb1.USBErrorOverflow):
-          print("CAN: BAD RECV, RETRYING")
-          time.sleep(0.1)
-      return parse_can_buffer(dat)
-    else:
-      return []
+    dat = bytearray()
+    while True:
+      try:
+        dat = self._handle.bulkRead(1, 0x10 * 256)
+        break
+      except (usb1.USBErrorIO, usb1.USBErrorOverflow):
+        print("CAN: BAD RECV, RETRYING")
+        time.sleep(0.1)
+    return parse_can_buffer(dat)
 
   def can_clear(self, bus):
     """Clears all messages from the specified internal CAN ringbuffer as
