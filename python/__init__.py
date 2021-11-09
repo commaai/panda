@@ -160,7 +160,8 @@ class Panda(object):
     self._handle = None
     self.connect(claim)
     self._mcu_type = self.get_mcu_type()
-    self.check_compatibility()
+    if self._mcu_type != MCU_TYPE_F2:
+      self.check_compatibility()
 
   def close(self):
     self._handle.close()
