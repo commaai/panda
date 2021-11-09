@@ -577,6 +577,8 @@ class Panda(object):
           print("CAN: BAD RECV, RETRYING")
           time.sleep(0.1)
       return parse_can_buffer(dat)
+    else:
+      return []
 
   def can_clear(self, bus):
     """Clears all messages from the specified internal CAN ringbuffer as
