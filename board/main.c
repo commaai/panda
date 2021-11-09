@@ -207,6 +207,7 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   UNUSED(hardwired);
   uint8_t pos = 1;
   uint8_t *usbdata8 = (uint8_t *)usbdata;
+  usbdata8[0] = ep1_buffer.counter;
   // Send tail of previous message if it is in buffer
   if (ep1_buffer.ptr > 0) {
     if (ep1_buffer.ptr <= 63U) {
@@ -222,7 +223,6 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
   }
 
   if (total_rx_size > MAX_EP1_CHUNK_PER_BULK_TRANSFER) {
-    if (pos > 1) { usbdata8[0] = ep1_buffer.counter; }
     total_rx_size = 0;
     ep1_buffer.counter = 0;
   } else {
@@ -241,20 +241,14 @@ int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
         pos = len;
       }
     }
-    if (pos > 1) {
-      usbdata8[0] = ep1_buffer.counter;
-      ep1_buffer.counter++;
-    }
-    else {
-      pos = 0;
-      ep1_buffer.counter = 0;
-    }
-    if (pos != len) {
-      ep1_buffer.counter = 0;
-      total_rx_size = 0;
-    }
+    ep1_buffer.counter++;
     total_rx_size += pos;
   }
+  if (pos != len) {
+    ep1_buffer.counter = 0;
+    total_rx_size = 0;
+  }
+  if (pos <= 1) { pos = 0; }
   return pos;
 }
 
