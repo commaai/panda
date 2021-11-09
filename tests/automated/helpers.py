@@ -184,7 +184,8 @@ def panda_connect_and_init(fn):
       panda.set_power_save(False)
       for bus, speed in BUS_SPEEDS:
         panda.set_can_speed_kbps(bus, speed)
-      clear_can_buffers(panda)
+      if panda.compatible:
+        clear_can_buffers(panda)
       panda.set_power_save(False)
 
     try:
