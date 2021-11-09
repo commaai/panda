@@ -246,12 +246,10 @@ class Panda(object):
       raise Exception("reconnect failed")
 
   def check_compatibility(self):
-    if self.health_version and self.can_version:
-      if self.health_version == self.HEALTH_PACKET_VERSION and self.can_version == self.CAN_PACKET_VERSION:
-        return
-      elif self.health_version > self.HEALTH_PACKET_VERSION or self.can_version > self.CAN_PACKET_VERSION:
-        print("Warning! Python panda library needs to be updated", file=sys.stderr)
-    print("Warning! Panda firmware needs to be updated", file=sys.stderr)
+    if self.health_version < self.HEALTH_PACKET_VERSION or self.can_version < self.CAN_PACKET_VERSION:
+      print("Warning! Panda firmware needs to be updated", file=sys.stderr)
+    elif self.health_version > self.HEALTH_PACKET_VERSION or self.can_version > self.CAN_PACKET_VERSION:
+      print("Warning! Python panda library needs to be updated", file=sys.stderr)
 
   @staticmethod
   def flash_static(handle, code):
@@ -414,7 +412,7 @@ class Panda(object):
       a = struct.unpack("BB", dat)
       return (a[0], a[1])
     else:
-      return (None, None)
+      return (0, 0)
 
   def is_white(self):
     return self.get_type() == Panda.HW_TYPE_WHITE_PANDA
