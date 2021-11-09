@@ -161,7 +161,7 @@ class Panda(object):
     self.compatible = True
     self.connect(claim)
 
-  def compatibility_gate(func):
+  def compatibility_gate(self, func):
     def wrapper(self, *args, **kwargs):
       if not self.compatible:
         if self.health_version < self.HEALTH_PACKET_VERSION or self.can_version < self.CAN_PACKET_VERSION:
@@ -171,7 +171,7 @@ class Panda(object):
       func(self, *args, **kwargs)
     return wrapper
 
-  def compatibility_check(func):
+  def compatibility_check(self, func):
     def wrapper(self, *args, **kwargs):
       func(self, *args, **kwargs)
       if self._mcu_type != MCU_TYPE_F2:
