@@ -250,8 +250,8 @@ class Panda(object):
       if ver_health == self.HEALTH_PACKET_VERSION and ver_can == self.CAN_PACKET_VERSION:
         return
       elif ver_health > self.HEALTH_PACKET_VERSION or ver_can > self.CAN_PACKET_VERSION:
-        raise Exception("Python panda library needs to be updated")
-    raise Exception("Panda firmware needs to be updated")
+        print("Warning! Python panda library needs to be updated")
+    print("Warning! Panda firmware needs to be updated")
 
   @staticmethod
   def flash_static(handle, code):
