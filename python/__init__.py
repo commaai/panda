@@ -160,6 +160,7 @@ class Panda(object):
     self._handle = None
     self.connect(claim)
     self._mcu_type = self.get_mcu_type()
+    self.health_version, self.can_version = self.get_packets_versions()
     if self._mcu_type != MCU_TYPE_F2:
       self.check_compatibility()
 
@@ -245,13 +246,12 @@ class Panda(object):
       raise Exception("reconnect failed")
 
   def check_compatibility(self):
-    ver_health, ver_can = self.get_packets_versions()
-    if ver_health and ver_health:
-      if ver_health == self.HEALTH_PACKET_VERSION and ver_can == self.CAN_PACKET_VERSION:
+    if self.health_version and self.can_version:
+      if self.health_version == self.HEALTH_PACKET_VERSION and self.can_version == self.CAN_PACKET_VERSION:
         return
-      elif ver_health > self.HEALTH_PACKET_VERSION or ver_can > self.CAN_PACKET_VERSION:
-        print("Warning! Python panda library needs to be updated")
-    print("Warning! Panda firmware needs to be updated")
+      elif self.health_version > self.HEALTH_PACKET_VERSION or self.can_version > self.CAN_PACKET_VERSION:
+        print("Warning! Python panda library needs to be updated", file=sys.stderr)
+    print("Warning! Panda firmware needs to be updated", file=sys.stderr)
 
   @staticmethod
   def flash_static(handle, code):
@@ -357,29 +357,30 @@ class Panda(object):
   # ******************* health *******************
 
   def health(self):
-    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 44)
-    a = struct.unpack("<IIIIIIIIBBBBBBBHBBB", dat)
-    return {
-      "uptime": a[0],
-      "voltage": a[1],
-      "current": a[2],
-      "can_rx_errs": a[3],
-      "can_send_errs": a[4],
-      "can_fwd_errs": a[5],
-      "gmlan_send_errs": a[6],
-      "faults": a[7],
-      "ignition_line": a[8],
-      "ignition_can": a[9],
-      "controls_allowed": a[10],
-      "gas_interceptor_detected": a[11],
-      "car_harness_status": a[12],
-      "usb_power_mode": a[13],
-      "safety_mode": a[14],
-      "safety_param": a[15],
-      "fault_status": a[16],
-      "power_save_enabled": a[17],
-      "heartbeat_lost": a[18],
-    }
+    if self.health_version == self.HEALTH_PACKET_VERSION:
+      dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 44)
+      a = struct.unpack("<IIIIIIIIBBBBBBBHBBB", dat)
+      return {
+        "uptime": a[0],
+        "voltage": a[1],
+        "current": a[2],
+        "can_rx_errs": a[3],
+        "can_send_errs": a[4],
+        "can_fwd_errs": a[5],
+        "gmlan_send_errs": a[6],
+        "faults": a[7],
+        "ignition_line": a[8],
+        "ignition_can": a[9],
+        "controls_allowed": a[10],
+        "gas_interceptor_detected": a[11],
+        "car_harness_status": a[12],
+        "usb_power_mode": a[13],
+        "safety_mode": a[14],
+        "safety_param": a[15],
+        "fault_status": a[16],
+        "power_save_enabled": a[17],
+        "heartbeat_lost": a[18],
+      }
 
   # ******************* control *******************
 
@@ -531,51 +532,53 @@ class Panda(object):
   CAN_SEND_TIMEOUT_MS = 10
 
   def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
-    snds = []
-    transmit = 1
-    extended = 4
-    for addr, _, dat, bus in arr:
-      assert len(dat) <= 8
-      if DEBUG:
-        print(f"  W 0x{addr:x}: 0x{dat.hex()}")
-      if addr >= 0x800:
-        rir = (addr << 3) | transmit | extended
-      else:
-        rir = (addr << 21) | transmit
-      snd = struct.pack("II", rir, len(dat) | (bus << 4)) + dat
-      snd = snd.ljust(0x10, b'\x00')
-      snds.append(snd)
-
-    while True:
-      try:
-        if self.wifi:
-          for s in snds:
-            self._handle.bulkWrite(3, s)
+    if self.can_version == self.CAN_PACKET_VERSION:
+      snds = []
+      transmit = 1
+      extended = 4
+      for addr, _, dat, bus in arr:
+        assert len(dat) <= 8
+        if DEBUG:
+          print(f"  W 0x{addr:x}: 0x{dat.hex()}")
+        if addr >= 0x800:
+          rir = (addr << 3) | transmit | extended
         else:
-          dat = b''.join(snds)
-          while True:
-            bs = self._handle.bulkWrite(3, dat, timeout=timeout)
-            dat = dat[bs:]
-            if len(dat) == 0:
-              break
-            print("CAN: PARTIAL SEND MANY, RETRYING")
-        break
-      except (usb1.USBErrorIO, usb1.USBErrorOverflow):
-        print("CAN: BAD SEND MANY, RETRYING")
+          rir = (addr << 21) | transmit
+        snd = struct.pack("II", rir, len(dat) | (bus << 4)) + dat
+        snd = snd.ljust(0x10, b'\x00')
+        snds.append(snd)
+
+      while True:
+        try:
+          if self.wifi:
+            for s in snds:
+              self._handle.bulkWrite(3, s)
+          else:
+            dat = b''.join(snds)
+            while True:
+              bs = self._handle.bulkWrite(3, dat, timeout=timeout)
+              dat = dat[bs:]
+              if len(dat) == 0:
+                break
+              print("CAN: PARTIAL SEND MANY, RETRYING")
+          break
+        except (usb1.USBErrorIO, usb1.USBErrorOverflow):
+          print("CAN: BAD SEND MANY, RETRYING")
 
   def can_send(self, addr, dat, bus, timeout=CAN_SEND_TIMEOUT_MS):
     self.can_send_many([[addr, None, dat, bus]], timeout=timeout)
 
   def can_recv(self):
-    dat = bytearray()
-    while True:
-      try:
-        dat = self._handle.bulkRead(1, 0x10 * 256)
-        break
-      except (usb1.USBErrorIO, usb1.USBErrorOverflow):
-        print("CAN: BAD RECV, RETRYING")
-        time.sleep(0.1)
-    return parse_can_buffer(dat)
+    if self.can_version == self.CAN_PACKET_VERSION:
+      dat = bytearray()
+      while True:
+        try:
+          dat = self._handle.bulkRead(1, 0x10 * 256)
+          break
+        except (usb1.USBErrorIO, usb1.USBErrorOverflow):
+          print("CAN: BAD RECV, RETRYING")
+          time.sleep(0.1)
+      return parse_can_buffer(dat)
 
   def can_clear(self, bus):
     """Clears all messages from the specified internal CAN ringbuffer as
