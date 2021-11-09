@@ -35,6 +35,7 @@
 #define MAX_RESP_LEN 0x40U
 
 #include <stdbool.h>
+#include "dlc_to_len.h"
 #ifdef STM32H7
   #include "stm32h7/stm32h7_config.h"
 #else
