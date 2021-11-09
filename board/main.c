@@ -25,6 +25,7 @@
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // When changing this struct, boardd and python/__init__.py needs to be kept up to date!
+#define HEALTH_PACKET_VERSION 1
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
   uint32_t voltage_pkt;
@@ -620,6 +621,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(setup->b.wValue.w));
         UNUSED(ret);
       }
+      break;
+    // **** 0xfa: get healthpacket and CANPacket versions
+    case 0xfa:
+      resp[0] = HEALTH_PACKET_VERSION;
+      resp[1] = CAN_PACKET_VERSION;
+      resp_len = 2;
       break;
     default:
       puts("NO HANDLER ");

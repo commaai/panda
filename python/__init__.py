@@ -140,6 +140,9 @@ class Panda(object):
   HW_TYPE_DOS = b'\x06'
   HW_TYPE_RED_PANDA = b'\x07'
 
+  CAN_PACKET_VERSION = 1
+  HEALTH_PACKET_VERSION = 1
+
   F2_DEVICES = [HW_TYPE_PEDAL]
   F4_DEVICES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS]
   H7_DEVICES = [HW_TYPE_RED_PANDA]
@@ -157,6 +160,7 @@ class Panda(object):
     self._handle = None
     self.connect(claim)
     self._mcu_type = self.get_mcu_type()
+    self.check_compatibility()
 
   def close(self):
     self._handle.close()
@@ -238,6 +242,15 @@ class Panda(object):
         time.sleep(1.0)
     if not success:
       raise Exception("reconnect failed")
+
+  def check_compatibility(self):
+    ver_health, ver_can = self.get_packets_versions()
+    if ver_health and ver_health:
+      if ver_health == self.HEALTH_PACKET_VERSION and ver_can == self.CAN_PACKET_VERSION:
+        return
+      elif ver_health > self.HEALTH_PACKET_VERSION or ver_can > self.CAN_PACKET_VERSION:
+        raise Exception("Python panda library needs to be updated")
+    raise Exception("Panda firmware needs to be updated")
 
   @staticmethod
   def flash_static(handle, code):
@@ -392,6 +405,15 @@ class Panda(object):
   def get_type(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
 
+  # Returns tuple with health packet version and CAN packet/USB packet version
+  def get_packets_versions(self):
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfa, 0, 0, 2)
+    if dat:
+      a = struct.unpack("BB", dat)
+      return (a[0], a[1])
+    else:
+      return (None, None)
+
   def is_white(self):
     return self.get_type() == Panda.HW_TYPE_WHITE_PANDA
 
@@ -409,7 +431,7 @@ class Panda(object):
 
   def is_dos(self):
     return self.get_type() == Panda.HW_TYPE_DOS
-  
+
   def is_red(self):
     return self.get_type() == Panda.HW_TYPE_RED_PANDA
 
