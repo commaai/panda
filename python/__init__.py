@@ -158,36 +158,15 @@ class Panda(object):
   def __init__(self, serial=None, claim=True):
     self._serial = serial
     self._handle = None
-    self.compatible = True
     self.connect(claim)
-
-  def compatibility_gate(func):
-    def wrapper(self, *args, **kwargs):
-      if not self.compatible:
-        if self.health_version < self.HEALTH_PACKET_VERSION or self.can_version < self.CAN_PACKET_VERSION:
-          raise Exception("Update panda firmware")
-        else:
-          raise Exception("Update python panda library")
-      return func(self, *args, **kwargs)
-    return wrapper
-
-  def compatibility_check(func):
-    def wrapper(self, *args, **kwargs):
-      func(self, *args, **kwargs)
-      if self._mcu_type != MCU_TYPE_F2:
-        if self.health_version < self.HEALTH_PACKET_VERSION or self.can_version < self.CAN_PACKET_VERSION:
-          self.compatible = False
-          print("Warning! Panda firmware needs to be updated", file=sys.stderr)
-        elif self.health_version > self.HEALTH_PACKET_VERSION or self.can_version > self.CAN_PACKET_VERSION:
-          self.compatible = False
-          print("Warning! Python panda library needs to be updated", file=sys.stderr)
-    return wrapper
+    self._mcu_type = self.get_mcu_type()
+    self.health_version, self.can_version = self.get_packets_versions()
+    self.compatible = self.compatibility_check()
 
   def close(self):
     self._handle.close()
     self._handle = None
 
-  @compatibility_check
   def connect(self, claim=True, wait=False):
     if self._handle is not None:
       self.close()
@@ -227,8 +206,6 @@ class Panda(object):
           break
         context = usb1.USBContext()  # New context needed so new devices show up
     assert(self._handle is not None)
-    self._mcu_type = self.get_mcu_type()
-    self.health_version, self.can_version = self.get_packets_versions()
     print("connected")
 
   def reset(self, enter_bootstub=False, enter_bootloader=False):
@@ -266,6 +243,26 @@ class Panda(object):
         time.sleep(1.0)
     if not success:
       raise Exception("reconnect failed")
+
+  def compatibility_gate(func):
+    def wrapper(self, *args, **kwargs):
+      if not self.compatible:
+        if self.health_version < self.HEALTH_PACKET_VERSION or self.can_version < self.CAN_PACKET_VERSION:
+          raise Exception("Update panda firmware")
+        else:
+          raise Exception("Update python panda library")
+      return func(self, *args, **kwargs)
+    return wrapper
+
+  def compatibility_check(self):
+    if self._mcu_type != MCU_TYPE_F2:
+      if self.health_version < self.HEALTH_PACKET_VERSION or self.can_version < self.CAN_PACKET_VERSION:
+        print("Warning! Panda firmware needs to be updated", file=sys.stderr)
+        return False
+      elif self.health_version > self.HEALTH_PACKET_VERSION or self.can_version > self.CAN_PACKET_VERSION:
+        print("Warning! Python panda library needs to be updated", file=sys.stderr)
+        return False
+    return True
 
   @staticmethod
   def flash_static(handle, code):
