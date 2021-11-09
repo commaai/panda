@@ -168,7 +168,7 @@ class Panda(object):
           raise Exception("Update panda firmware")
         else:
           raise Exception("Update python panda library")
-      func(self, *args, **kwargs)
+      return func(self, *args, **kwargs)
     return wrapper
 
   def compatibility_check(func):
