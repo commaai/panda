@@ -1,3 +1,5 @@
+#include "dlc_to_len.h"
+
 typedef struct {
   unsigned char reserved : 1;
   unsigned char bus : 3;
