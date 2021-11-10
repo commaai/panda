@@ -8,6 +8,7 @@ import os
 import time
 import traceback
 import sys
+from functools import wraps
 from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7  # pylint: disable=import-error
 from .flash_release import flash_release  # noqa pylint: disable=import-error
 from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
@@ -244,14 +245,24 @@ class Panda(object):
     if not success:
       raise Exception("reconnect failed")
 
-  def compatibility_gate(func):
+  def ensure_health_packet_version(fn):
+    @wraps(fn)
     def wrapper(self, *args, **kwargs):
-      if not self.compatible:
-        if self.health_version < self.HEALTH_PACKET_VERSION or self.can_version < self.CAN_PACKET_VERSION:
-          raise Exception("Update panda firmware")
-        else:
-          raise Exception("Update python panda library")
-      return func(self, *args, **kwargs)
+      if self.health_version < self.HEALTH_PACKET_VERSION:
+        raise Exception("Update panda firmware")
+      elif self.health_version > self.HEALTH_PACKET_VERSION:
+        raise Exception("Update python panda library")
+      return fn(self, *args, **kwargs)
+    return wrapper
+
+  def ensure_can_packet_version(fn):
+    @wraps(fn)
+    def wrapper(self, *args, **kwargs):
+      if self.can_version < self.CAN_PACKET_VERSION:
+        raise Exception("Update panda firmware")
+      elif self.can_version > self.CAN_PACKET_VERSION:
+        raise Exception("Update python panda library")
+      return fn(self, *args, **kwargs)
     return wrapper
 
   def compatibility_check(self):
@@ -367,7 +378,7 @@ class Panda(object):
 
   # ******************* health *******************
 
-  @compatibility_gate
+  @ensure_health_packet_version
   def health(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 44)
     a = struct.unpack("<IIIIIIIIBBBBBBBHBBB", dat)
@@ -542,7 +553,7 @@ class Panda(object):
   # Timeout is in ms. If set to 0, the timeout is infinite.
   CAN_SEND_TIMEOUT_MS = 10
 
-  @compatibility_gate
+  @ensure_can_packet_version
   def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
     snds = []
     transmit = 1
@@ -579,7 +590,7 @@ class Panda(object):
   def can_send(self, addr, dat, bus, timeout=CAN_SEND_TIMEOUT_MS):
     self.can_send_many([[addr, None, dat, bus]], timeout=timeout)
 
-  @compatibility_gate
+  @ensure_can_packet_version
   def can_recv(self):
     dat = bytearray()
     while True:
