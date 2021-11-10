@@ -155,7 +155,7 @@ def start_heartbeat_thread(p):
         break
   _thread.start_new_thread(heartbeat_thread, (p,))
 
-def panda_connect_and_init(fn):
+def panda_connect_and_init(fn, clear_can=True):
   @wraps(fn)
   def wrapper(panda_serials=None, **kwargs):
     # Change panda_serials to a list
@@ -184,7 +184,7 @@ def panda_connect_and_init(fn):
       panda.set_power_save(False)
       for bus, speed in BUS_SPEEDS:
         panda.set_can_speed_kbps(bus, speed)
-      if panda.compatible:
+      if clear_can:
         clear_can_buffers(panda)
       panda.set_power_save(False)
 

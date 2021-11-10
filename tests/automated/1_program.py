@@ -10,19 +10,19 @@ def aaaa_reset_before_tests():
 
 
 @test_all_pandas
-@panda_connect_and_init
+@panda_connect_and_init(clear_can=False)
 def test_recover(p):
   assert p.recover(timeout=30)
 
 
 @test_all_pandas
-@panda_connect_and_init
+@panda_connect_and_init(clear_can=False)
 def test_flash(p):
   p.flash()
 
 
 @test_all_pandas
-@panda_connect_and_init
+@panda_connect_and_init(clear_can=False)
 def test_get_signature(p):
   fn = DEFAULT_H7_FW_FN if p.get_mcu_type() == MCU_TYPE_H7  else DEFAULT_FW_FN
 
