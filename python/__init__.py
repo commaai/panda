@@ -162,8 +162,6 @@ class Panda(object):
     self.connect(claim)
     self._mcu_type = self.get_mcu_type()
     self.health_version, self.can_version = self.get_packets_versions()
-    if self._mcu_type != MCU_TYPE_F2:
-      self.compatibility_check()
 
   def close(self):
     self._handle.close()
@@ -265,12 +263,6 @@ class Panda(object):
         raise Exception("Update python panda library")
       return fn(self, *args, **kwargs)
     return wrapper
-
-  def compatibility_check(self):
-      if self.health_version < self.HEALTH_PACKET_VERSION or self.can_version < self.CAN_PACKET_VERSION:
-        print("Warning! Panda firmware needs to be updated", file=sys.stderr)
-      elif self.health_version > self.HEALTH_PACKET_VERSION or self.can_version > self.CAN_PACKET_VERSION:
-        print("Warning! Python panda library needs to be updated", file=sys.stderr)
 
   @staticmethod
   def flash_static(handle, code):
