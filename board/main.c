@@ -456,6 +456,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         set_safety_mode(setup->b.wValue.w, (uint16_t) setup->b.wIndex.w);
       }
       break;
+    // **** 0xdd: get healthpacket and CANPacket versions
+    case 0xdd:
+      resp[0] = HEALTH_PACKET_VERSION;
+      resp[1] = CAN_PACKET_VERSION;
+      resp_len = 2;
+      break;
     // **** 0xde: set can bitrate
     case 0xde:
       if (setup->b.wValue.w < BUS_MAX) {
@@ -621,12 +627,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(setup->b.wValue.w));
         UNUSED(ret);
       }
-      break;
-    // **** 0xfa: get healthpacket and CANPacket versions
-    case 0xfa:
-      resp[0] = HEALTH_PACKET_VERSION;
-      resp[1] = CAN_PACKET_VERSION;
-      resp_len = 2;
       break;
     default:
       puts("NO HANDLER ");
