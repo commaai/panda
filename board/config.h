@@ -34,6 +34,8 @@
 
 #define MAX_RESP_LEN 0x40U
 
+#define CAN_PACKET_VERSION 1
+
 #define GET_BUS(msg) (((msg)->RDTR >> 4) & 0xFF)
 #define GET_LEN(msg) ((msg)->RDTR & 0xF)
 #define GET_ADDR(msg) ((((msg)->RIR & 4) != 0) ? ((msg)->RIR >> 3) : ((msg)->RIR >> 21))

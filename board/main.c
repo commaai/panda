@@ -25,6 +25,7 @@
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // When changing this struct, boardd and python/__init__.py needs to be kept up to date!
+#define HEALTH_PACKET_VERSION 1
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
   uint32_t voltage_pkt;
@@ -454,6 +455,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
                        (setup->b.wValue.w == SAFETY_ELM327)) {
         set_safety_mode(setup->b.wValue.w, (uint16_t) setup->b.wIndex.w);
       }
+      break;
+    // **** 0xdd: get healthpacket and CANPacket versions
+    case 0xdd:
+      resp[0] = HEALTH_PACKET_VERSION;
+      resp[1] = CAN_PACKET_VERSION;
+      resp_len = 2;
       break;
     // **** 0xde: set can bitrate
     case 0xde:

@@ -8,6 +8,7 @@ import os
 import time
 import traceback
 import sys
+from functools import wraps
 from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7  # pylint: disable=import-error
 from .flash_release import flash_release  # noqa pylint: disable=import-error
 from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
@@ -36,6 +37,26 @@ def parse_can_buffer(dat):
       print(f"  R 0x{address:x}: 0x{dddat.hex()}")
     ret.append((address, f2 >> 16, dddat, (f2 >> 4) & 0xFF))
   return ret
+
+def ensure_health_packet_version(fn):
+  @wraps(fn)
+  def wrapper(self, *args, **kwargs):
+    if self.health_version < self.HEALTH_PACKET_VERSION:
+      raise RuntimeError("Panda firmware has outdated health packet definition. Reflash panda firmware.")
+    elif self.health_version > self.HEALTH_PACKET_VERSION:
+      raise RuntimeError("Panda python library has outdated health packet definition. Update panda python library.")
+    return fn(self, *args, **kwargs)
+  return wrapper
+
+def ensure_can_packet_version(fn):
+  @wraps(fn)
+  def wrapper(self, *args, **kwargs):
+    if self.can_version < self.CAN_PACKET_VERSION:
+      raise RuntimeError("Panda firmware has outdated CAN packet definition. Reflash panda firmware.")
+    elif self.can_version > self.CAN_PACKET_VERSION:
+      raise RuntimeError("Panda python library has outdated CAN packet definition. Update panda python library.")
+    return fn(self, *args, **kwargs)
+  return wrapper
 
 class PandaWifiStreaming(object):
   def __init__(self, ip="192.168.0.10", port=1338):
@@ -140,6 +161,9 @@ class Panda(object):
   HW_TYPE_DOS = b'\x06'
   HW_TYPE_RED_PANDA = b'\x07'
 
+  CAN_PACKET_VERSION = 1
+  HEALTH_PACKET_VERSION = 1
+
   F2_DEVICES = [HW_TYPE_PEDAL]
   F4_DEVICES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS]
   H7_DEVICES = [HW_TYPE_RED_PANDA]
@@ -201,6 +225,7 @@ class Panda(object):
           break
         context = usb1.USBContext()  # New context needed so new devices show up
     assert(self._handle is not None)
+    self.health_version, self.can_version = self.get_packets_versions()
     print("connected")
 
   def reset(self, enter_bootstub=False, enter_bootloader=False):
@@ -238,6 +263,8 @@ class Panda(object):
         time.sleep(1.0)
     if not success:
       raise Exception("reconnect failed")
+
+
 
   @staticmethod
   def flash_static(handle, code):
@@ -342,6 +369,7 @@ class Panda(object):
 
   # ******************* health *******************
 
+  @ensure_health_packet_version
   def health(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 44)
     a = struct.unpack("<IIIIIIIIBBBBBBBHBBB", dat)
@@ -392,6 +420,15 @@ class Panda(object):
   def get_type(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
 
+  # Returns tuple with health packet version and CAN packet/USB packet version
+  def get_packets_versions(self):
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xdd, 0, 0, 2)
+    if dat:
+      a = struct.unpack("BB", dat)
+      return (a[0], a[1])
+    else:
+      return (0, 0)
+
   def is_white(self):
     return self.get_type() == Panda.HW_TYPE_WHITE_PANDA
 
@@ -409,7 +446,7 @@ class Panda(object):
 
   def is_dos(self):
     return self.get_type() == Panda.HW_TYPE_DOS
-  
+
   def is_red(self):
     return self.get_type() == Panda.HW_TYPE_RED_PANDA
 
@@ -507,6 +544,7 @@ class Panda(object):
   # Timeout is in ms. If set to 0, the timeout is infinite.
   CAN_SEND_TIMEOUT_MS = 10
 
+  @ensure_can_packet_version
   def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
     snds = []
     transmit = 1
@@ -543,6 +581,7 @@ class Panda(object):
   def can_send(self, addr, dat, bus, timeout=CAN_SEND_TIMEOUT_MS):
     self.can_send_many([[addr, None, dat, bus]], timeout=timeout)
 
+  @ensure_can_packet_version
   def can_recv(self):
     dat = bytearray()
     while True:
