@@ -38,6 +38,26 @@ def parse_can_buffer(dat):
     ret.append((address, f2 >> 16, dddat, (f2 >> 4) & 0xFF))
   return ret
 
+def ensure_health_packet_version(fn):
+  @wraps(fn)
+  def wrapper(self, *args, **kwargs):
+    if self.health_version < self.HEALTH_PACKET_VERSION:
+      raise Exception("Update panda firmware")
+    elif self.health_version > self.HEALTH_PACKET_VERSION:
+      raise Exception("Update python panda library")
+    return fn(self, *args, **kwargs)
+  return wrapper
+
+def ensure_can_packet_version(fn):
+  @wraps(fn)
+  def wrapper(self, *args, **kwargs):
+    if self.can_version < self.CAN_PACKET_VERSION:
+      raise Exception("Update panda firmware")
+    elif self.can_version > self.CAN_PACKET_VERSION:
+      raise Exception("Update python panda library")
+    return fn(self, *args, **kwargs)
+  return wrapper
+
 class PandaWifiStreaming(object):
   def __init__(self, ip="192.168.0.10", port=1338):
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -244,25 +264,7 @@ class Panda(object):
     if not success:
       raise Exception("reconnect failed")
 
-  def ensure_health_packet_version(fn):
-    @wraps(fn)
-    def wrapper(self, *args, **kwargs):
-      if self.health_version < self.HEALTH_PACKET_VERSION:
-        raise Exception("Update panda firmware")
-      elif self.health_version > self.HEALTH_PACKET_VERSION:
-        raise Exception("Update python panda library")
-      return fn(self, *args, **kwargs)
-    return wrapper
 
-  def ensure_can_packet_version(fn):
-    @wraps(fn)
-    def wrapper(self, *args, **kwargs):
-      if self.can_version < self.CAN_PACKET_VERSION:
-        raise Exception("Update panda firmware")
-      elif self.can_version > self.CAN_PACKET_VERSION:
-        raise Exception("Update python panda library")
-      return fn(self, *args, **kwargs)
-    return wrapper
 
   @staticmethod
   def flash_static(handle, code):
