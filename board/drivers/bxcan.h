@@ -9,7 +9,7 @@ bool can_set_speed(uint8_t can_number) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
 
-  ret &= llcan_set_speed(CAN, can_speed[bus_number], can_loopback, (unsigned int)(can_silent) & (1U << can_number));
+  ret &= llcan_set_speed(CAN, bus_config[bus_number].can_speed, can_loopback, (unsigned int)(can_silent) & (1U << can_number));
   return ret;
 }
 
@@ -17,7 +17,7 @@ bool can_set_speed(uint8_t can_number) {
 void can_set_gmlan(uint8_t bus) {
   if(current_board->has_hw_gmlan){
     // first, disable GMLAN on prev bus
-    uint8_t prev_bus = can_num_lookup[3];
+    uint8_t prev_bus = bus_config[3].can_num_lookup;
     if (bus != prev_bus) {
       switch (prev_bus) {
         case 1:
@@ -26,9 +26,9 @@ void can_set_gmlan(uint8_t bus) {
           puth(prev_bus + 1U);
           puts("\n");
           current_board->set_can_mode(CAN_MODE_NORMAL);
-          bus_lookup[prev_bus] = prev_bus;
-          can_num_lookup[prev_bus] = prev_bus;
-          can_num_lookup[3] = -1;
+          bus_config[prev_bus].bus_lookup = prev_bus;
+          bus_config[prev_bus].can_num_lookup = prev_bus;
+          bus_config[3].can_num_lookup = -1;
           bool ret = can_init(prev_bus);
           UNUSED(ret);
           break;
@@ -46,9 +46,9 @@ void can_set_gmlan(uint8_t bus) {
         puth(bus + 1U);
         puts("\n");
         current_board->set_can_mode((bus == 1U) ? CAN_MODE_GMLAN_CAN2 : CAN_MODE_GMLAN_CAN3);
-        bus_lookup[bus] = 3;
-        can_num_lookup[bus] = -1;
-        can_num_lookup[3] = bus;
+        bus_config[bus].bus_lookup = 3;
+        bus_config[bus].can_num_lookup = -1;
+        bus_config[3].can_num_lookup = bus;
         bool ret = can_init(bus);
         UNUSED(ret);
         break;
