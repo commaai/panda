@@ -42,9 +42,9 @@ def ensure_health_packet_version(fn):
   @wraps(fn)
   def wrapper(self, *args, **kwargs):
     if self.health_version < self.HEALTH_PACKET_VERSION:
-      raise Exception("Update panda firmware")
+      raise RuntimeError("Panda firmware has outdated health packet definition. Reflash panda firmware.")
     elif self.health_version > self.HEALTH_PACKET_VERSION:
-      raise Exception("Update python panda library")
+      raise RuntimeError("Panda python library has outdated health packet definition. Update panda python library.")
     return fn(self, *args, **kwargs)
   return wrapper
 
@@ -52,9 +52,9 @@ def ensure_can_packet_version(fn):
   @wraps(fn)
   def wrapper(self, *args, **kwargs):
     if self.can_version < self.CAN_PACKET_VERSION:
-      raise Exception("Update panda firmware")
+      raise RuntimeError("Panda firmware has outdated CAN packet definition. Reflash panda firmware.")
     elif self.can_version > self.CAN_PACKET_VERSION:
-      raise Exception("Update python panda library")
+      raise RuntimeError("Panda python library has outdated CAN packet definition. Update panda python library.")
     return fn(self, *args, **kwargs)
   return wrapper
 
