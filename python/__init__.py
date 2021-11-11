@@ -161,7 +161,6 @@ class Panda(object):
     self._handle = None
     self.connect(claim)
     self._mcu_type = self.get_mcu_type()
-    self.health_version, self.can_version = self.get_packets_versions()
 
   def close(self):
     self._handle.close()
@@ -206,6 +205,7 @@ class Panda(object):
           break
         context = usb1.USBContext()  # New context needed so new devices show up
     assert(self._handle is not None)
+    self.health_version, self.can_version = self.get_packets_versions()
     print("connected")
 
   def reset(self, enter_bootstub=False, enter_bootloader=False):
