@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #define CANPACKET_DATA_SIZE_MAX 8
-#include "../../board/can_definitions.h"
+#include "can_definitions.h"
 
 typedef struct
 {
