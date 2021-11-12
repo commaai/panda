@@ -26,7 +26,7 @@ CANPACKET_HEAD_SIZE = 0x5
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
 
-def parse_can_buffer(dat):
+def unpack_can_buffer(dat):
   ret = []
   counter = 0
   tail = bytearray()
@@ -102,7 +102,7 @@ class PandaWifiStreaming(object):
       try:
         dat, addr = self.sock.recvfrom(0x200 * 0x10)
         if addr == (self.ip, self.port):
-          ret += parse_can_buffer(dat)
+          ret += unpack_can_buffer(dat)
       except socket.error as e:
         if e.errno != 35 and e.errno != 11:
           traceback.print_exc()
@@ -631,7 +631,7 @@ class Panda(object):
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD RECV, RETRYING")
         time.sleep(0.1)
-    return parse_can_buffer(dat)
+    return unpack_can_buffer(dat)
 
   def can_clear(self, bus):
     """Clears all messages from the specified internal CAN ringbuffer as
