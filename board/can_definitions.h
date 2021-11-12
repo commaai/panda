@@ -3,13 +3,13 @@
 #define CAN_PACKET_VERSION 2
 typedef struct {
   unsigned char reserved : 1;
-  const unsigned char bus : 3;
-  const unsigned char data_len_code : 4;
+  unsigned char bus : 3;
+  unsigned char data_len_code : 4;
   unsigned char rejected : 1;
   unsigned char returned : 1;
-  const unsigned char extended : 1;
-  const unsigned int addr : 29;
-  const unsigned char data[CANPACKET_DATA_SIZE_MAX];
+  unsigned char extended : 1;
+  unsigned int addr : 29;
+  unsigned char data[CANPACKET_DATA_SIZE_MAX];
 } __attribute__((packed, aligned(4))) CANPacket_t;
 
 #define GET_BUS(msg) ((msg)->bus)

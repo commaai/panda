@@ -9,13 +9,13 @@ ffi = FFI()
 ffi.cdef("""
 typedef struct {
   unsigned char reserved : 1;
-  const unsigned char bus : 3;
-  const unsigned char data_len_code : 4;
+  unsigned char bus : 3;
+  unsigned char data_len_code : 4;
   unsigned char rejected : 1;
   unsigned char returned : 1;
-  const unsigned char extended : 1;
-  const unsigned int addr : 29;
-  const unsigned char data[8];
+  unsigned char extended : 1;
+  unsigned int addr : 29;
+  unsigned char data[8];
 } CANPacket_t;
 """, packed=True)
 
