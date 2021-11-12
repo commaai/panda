@@ -20,7 +20,7 @@ typedef struct {
 #define GET_BYTES_48(msg) ((msg)->data[4] | ((msg)->data[5] << 8) | ((msg)->data[6] << 16) | ((msg)->data[7] << 24))
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
 
-// Flasher and pedal with raw mailbox access
+// Flasher and pedal use raw mailbox access
 #define GET_MAILBOX_BYTE(msg, b) (((int)(b) > 3) ? (((msg)->RDHR >> (8U * ((unsigned int)(b) % 4U))) & 0xFFU) : (((msg)->RDLR >> (8U * (unsigned int)(b))) & 0xFFU))
 #define GET_MAILBOX_BYTES_04(msg) ((msg)->RDLR)
 #define GET_MAILBOX_BYTES_48(msg) ((msg)->RDHR)

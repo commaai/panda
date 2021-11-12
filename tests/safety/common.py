@@ -5,8 +5,8 @@ import importlib
 import numpy as np
 from typing import Optional, List, Dict
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
-from panda.tests.safety import libpandasafety_py
 from panda import LEN_TO_DLC
+from panda.tests.safety import libpandasafety_py
 
 MAX_WRONG_COUNTERS = 5
 
