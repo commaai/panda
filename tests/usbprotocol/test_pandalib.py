@@ -18,7 +18,6 @@ class PandaTestPackUnpack(unittest.TestCase):
       unpacked.extend(unpack_can_buffer(dat))
 
     assert unpacked == to_pack
-    print("Successfully packed and unpacked 10000 messages")
 
 if __name__ == "__main__":
   unittest.main()
