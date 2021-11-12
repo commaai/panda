@@ -11,13 +11,13 @@ def aaaa_reset_before_tests():
 
 @test_all_pandas
 @panda_connect_and_init(clear_can=False)
-def test_recover(p):
+def test_a_recover(p):
   assert p.recover(timeout=30)
 
 
 @test_all_pandas
 @panda_connect_and_init(clear_can=False)
-def test_flash(p):
+def test_b_flash(p):
   p.flash()
 
 
