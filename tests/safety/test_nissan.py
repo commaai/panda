@@ -163,7 +163,7 @@ class TestNissanLeafSafety(TestNissanSafety):
     values = {"GAS_PEDAL": gas}
     return self.packer.make_can_msg_panda("CRUISE_THROTTLE", 0, values)
 
-  # TODO: leaf should use it's own safety param
+  # TODO: leaf should use its own safety param
   def test_acc_buttons(self):
     pass
 
