@@ -26,6 +26,37 @@ CANPACKET_HEAD_SIZE = 0x5
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
 
+def pack_can_buffer(arr):
+  snds = [b'']
+  idx = 0
+  for address, _, dat, bus in arr:
+    assert len(dat) in LEN_TO_DLC
+    if DEBUG:
+      print(f"  W 0x{address:x}: 0x{dat.hex()}")
+    extended = 1 if address >= 0x800 else 0
+    data_len_code = LEN_TO_DLC[len(dat)]
+    header = bytearray(5)
+    word_4b = address << 3 | extended << 2
+    header[0] = (data_len_code << 4) | (bus << 1)
+    header[1] = word_4b & 0xFF
+    header[2] = (word_4b >> 8) & 0xFF
+    header[3] = (word_4b >> 16) & 0xFF
+    header[4] = (word_4b >> 24) & 0xFF
+    snds[idx] += header + dat
+    if len(snds[idx]) > 256: # Limit chunks to 256 bytes
+      snds.append(b'')
+      idx += 1
+
+  #Apply counter to each 64 byte packet
+  for idx in range(len(snds)):
+    tx = b''
+    counter = 0
+    for i in range (0, len(snds[idx]), 63):
+      tx += bytes([counter]) + snds[idx][i:i+63]
+      counter += 1
+    snds[idx] = tx
+  return snds
+
 def unpack_can_buffer(dat):
   ret = []
   counter = 0
@@ -570,44 +601,16 @@ class Panda(object):
   # Timeout is in ms. If set to 0, the timeout is infinite.
   CAN_SEND_TIMEOUT_MS = 10
 
-  def pack_can_buffer(self, arr):
-    snds = [b'']
-    idx = 0
-    for address, _, dat, bus in arr:
-      assert len(dat) <= (8 if self._mcu_type != MCU_TYPE_H7 else 64)
-      assert len(dat) in LEN_TO_DLC
-      if DEBUG:
-        print(f"  W 0x{address:x}: 0x{dat.hex()}")
-      extended = 1 if address >= 0x800 else 0
-      data_len_code = LEN_TO_DLC[len(dat)]
-      header = bytearray(5)
-      word_4b = address << 3 | extended << 2
-      header[0] = (data_len_code << 4) | (bus << 1)
-      header[1] = word_4b & 0xFF
-      header[2] = (word_4b >> 8) & 0xFF
-      header[3] = (word_4b >> 16) & 0xFF
-      header[4] = (word_4b >> 24) & 0xFF
-      snds[idx] += header + dat
-      if len(snds[idx]) > 256: # Limit chunks to 256 bytes
-        snds.append(b'')
-        idx += 1
-    return snds
-
   @ensure_can_packet_version
   def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
-    snds = self.pack_can_buffer(arr)
+    snds = pack_can_buffer(arr)
     while True:
       try:
         if self.wifi:
           for s in snds:
             self._handle.bulkWrite(3, s)
         else:
-          for dat in snds:
-            tx = b''
-            counter = 0
-            for i in range (0, len(dat), 63):
-              tx += bytes([counter]) + dat[i:i+63]
-              counter += 1
+          for tx in snds:
             while True:
               bs = self._handle.bulkWrite(3, tx, timeout=timeout)
               tx = tx[bs:]
