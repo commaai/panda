@@ -11,7 +11,14 @@ const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_DOWN = {
 
 const int NISSAN_DEG_TO_CAN = 100;
 
-const CanMsg NISSAN_TX_MSGS[] = {{0x169, 0, 8}, {0x2b1, 0, 8}, {0x4cc, 0, 8}, {0x20b, 2, 6}, {0x20b, 1, 6}, {0x280, 2, 8}};
+const CanMsg NISSAN_TX_MSGS[] = {
+  {0x169, 0, 8},  // LKAS
+  {0x2b1, 0, 8},  // PROPILOT_HUD
+  {0x4cc, 0, 8},  // PROPILOT_HUD_INFO_MSG
+  {0x20b, 2, 6},  // CRUISE_THROTTLE (X-Trail)
+  {0x20b, 1, 6},  // CRUISE_THROTTLE (Altima)
+  {0x280, 2, 8}   // CANCEL_MSG (Leaf)
+};
 
 // Signals duplicated below due to the fact that these messages can come in on either CAN bus, depending on car model.
 AddrCheckStruct nissan_addr_checks[] = {
@@ -76,7 +83,7 @@ static int nissan_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       if (addr == 0x454){
         brake_pressed = (GET_BYTE(to_push, 2) & 0x80) != 0;
       } else {
-        brake_pressed = (GET_BYTE(to_push, 4) & 0x20) != 0;
+        brake_pressed = ((GET_BYTE(to_push, 4) >> 5) & 1) != 0;
       }
     }
 
