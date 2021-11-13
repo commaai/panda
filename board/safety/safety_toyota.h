@@ -44,7 +44,7 @@ addr_checks toyota_rx_checks = {toyota_addr_checks, TOYOTA_ADDR_CHECKS_LEN};
 // global actuation limit states
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
-static uint8_t toyota_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+static uint8_t toyota_compute_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   uint8_t checksum = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U) + (uint8_t)(len);
@@ -54,12 +54,12 @@ static uint8_t toyota_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   return checksum;
 }
 
-static uint8_t toyota_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+static uint8_t toyota_get_checksum(CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte));
 }
 
-static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+static int toyota_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &toyota_rx_checks,
                                  toyota_get_checksum, toyota_compute_checksum, NULL);
@@ -134,7 +134,7 @@ static int toyota_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   return valid;
 }
 
-static int toyota_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+static int toyota_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -247,7 +247,8 @@ static const addr_checks* toyota_init(int16_t param) {
   return &toyota_rx_checks;
 }
 
-static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+static int toyota_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+
   int bus_fwd = -1;
 
   if (bus_num == 0) {

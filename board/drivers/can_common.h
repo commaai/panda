@@ -2,7 +2,7 @@ typedef struct {
   volatile uint32_t w_ptr;
   volatile uint32_t r_ptr;
   uint32_t fifo_size;
-  CAN_FIFOMailBox_TypeDef *elems;
+  CANPacket_t *elems;
 } can_ring;
 
 typedef struct {
@@ -12,8 +12,6 @@ typedef struct {
   uint32_t can_data_speed;
 } bus_config_t;
 
-#define CAN_BUS_RET_FLAG 0x80U
-#define CAN_BUS_BLK_FLAG 0x40U
 #define CAN_BUS_NUM_MASK 0x3FU
 
 #define BUS_MAX 4U
@@ -49,19 +47,19 @@ void process_can(uint8_t can_number);
 
 // ********************* instantiate queues *********************
 #define can_buffer(x, size) \
-  CAN_FIFOMailBox_TypeDef elems_##x[size]; \
-  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CAN_FIFOMailBox_TypeDef *)&(elems_##x) };
+  CANPacket_t elems_##x[size]; \
+  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
 
 #ifdef STM32H7
 __attribute__((section(".ram_d1"))) can_buffer(rx_q, 0x1000)
-__attribute__((section(".ram_d1"))) can_buffer(txgmlan_q, 0x100)
+__attribute__((section(".ram_d1"))) can_buffer(txgmlan_q, 0x1A0)
 #else
 can_buffer(rx_q, 0x1000)
-can_buffer(txgmlan_q, 0x100)
+can_buffer(txgmlan_q, 0x1A0)
 #endif
-can_buffer(tx1_q, 0x100)
-can_buffer(tx2_q, 0x100)
-can_buffer(tx3_q, 0x100)
+can_buffer(tx1_q, 0x1A0)
+can_buffer(tx2_q, 0x1A0)
+can_buffer(tx3_q, 0x1A0)
 // FIXME:
 // cppcheck-suppress misra-c2012-9.3
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
@@ -74,7 +72,7 @@ int can_err_cnt = 0;
 int can_overflow_cnt = 0;
 
 // ********************* interrupt safe queue *********************
-bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
+bool can_pop(can_ring *q, CANPacket_t *elem) {
   bool ret = 0;
 
   ENTER_CRITICAL();
@@ -92,7 +90,7 @@ bool can_pop(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
   return ret;
 }
 
-bool can_push(can_ring *q, CAN_FIFOMailBox_TypeDef *elem) {
+bool can_push(can_ring *q, CANPacket_t *elem) {
   bool ret = false;
   uint32_t next_w_ptr;
 
@@ -193,7 +191,7 @@ void can_flip_buses(uint8_t bus1, uint8_t bus2){
   bus_config[bus2].can_num_lookup = bus1;
 }
 
-void ignition_can_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+void ignition_can_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
@@ -236,12 +234,10 @@ bool can_tx_check_min_slots_free(uint32_t min) {
     (can_slots_empty(&can_txgmlan_q) >= min);
 }
 
-void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx_hook) {
+void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
   if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
     if (bus_number < BUS_MAX) {
       // add CAN packet to send queue
-      // bus number isn't passed through
-      to_push->RDTR &= 0xF;
       if ((bus_number == 3U) && (bus_config[3].can_num_lookup == 0xFFU)) {
         gmlan_send_errs += bitbang_gmlan(to_push) ? 0U : 1U;
       } else {
@@ -250,7 +246,7 @@ void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number, bool skip_tx
       }
     }
   } else {
-    to_push->RDTR = (to_push->RDTR & 0xFFFF000FU) | ((CAN_BUS_RET_FLAG | CAN_BUS_BLK_FLAG | bus_number) << 4);
+    to_push->rejected = 1U;
     can_send_errs += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }
 }

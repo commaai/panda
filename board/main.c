@@ -20,6 +20,8 @@
   #include "drivers/bxcan.h"
 #endif
 
+#include "usb_protocol.h"
+
 #include "obj/gitversion.h"
 
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
@@ -193,15 +195,7 @@ int get_rtc_pkt(void *dat) {
   return sizeof(t);
 }
 
-int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
-  UNUSED(hardwired);
-  CAN_FIFOMailBox_TypeDef *reply = (CAN_FIFOMailBox_TypeDef *)usbdata;
-  int ilen = 0;
-  while (ilen < MIN(len/0x10, 4) && can_pop(&can_rx_q, &reply[ilen])) {
-    ilen++;
-  }
-  return ilen*0x10;
-}
+
 
 // send on serial, first byte to select the ring
 void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
@@ -219,26 +213,8 @@ void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
   }
 }
 
-// send on CAN
-void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
-  UNUSED(hardwired);
-  int dpkt = 0;
-  uint32_t *d32 = (uint32_t *)usbdata;
-  for (dpkt = 0; dpkt < (len / 4); dpkt += 4) {
-    CAN_FIFOMailBox_TypeDef to_push;
-    to_push.RDHR = d32[dpkt + 3];
-    to_push.RDLR = d32[dpkt + 2];
-    to_push.RDTR = d32[dpkt + 1];
-    to_push.RIR = d32[dpkt];
-
-    uint8_t bus_number = (to_push.RDTR >> 4) & CAN_BUS_NUM_MASK;
-    can_send(&to_push, bus_number, false);
-  }
-}
-
 void usb_cb_ep3_out_complete(void) {
-  // TODO: how does a second USB packet sneek in? (why multiply by 2)
-  if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER * 2U)) {
+  if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER)) {
     usb_outep3_resume_if_paused();
   }
 }

@@ -116,7 +116,10 @@ class TestHondaSafety(common.PandaSafetyTest):
         to_push = self._speed_msg(0)
       self.assertTrue(self._rx(to_push))
       if msg != "btn":
-        to_push[0].RDHR = 0  # invalidate checksum
+        to_push[0].data[4] = 0  # invalidate checksum
+        to_push[0].data[5] = 0
+        to_push[0].data[6] = 0
+        to_push[0].data[7] = 0
         self.assertFalse(self._rx(to_push))
         self.assertFalse(self.safety.get_controls_allowed())
 
@@ -203,8 +206,10 @@ class TestHondaNidecSafety(TestHondaSafety, common.InterceptorSafetyTest):
   def _interceptor_msg(self, gas, addr):
     to_send = make_msg(0, addr, 6)
     gas2 = gas * 2
-    to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
-                      ((gas2 & 0xff) << 24) | ((gas2 & 0xff00) << 8)
+    to_send[0].data[0] = (gas & 0xFF00) >> 8 
+    to_send[0].data[1] = gas & 0xFF
+    to_send[0].data[2] = (gas2 & 0xFF00) >> 8
+    to_send[0].data[3] = gas2 & 0xFF
     return to_send
 
   def _send_brake_msg(self, brake):

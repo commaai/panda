@@ -225,7 +225,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
       if msg == MSG_MOTOR_20:
         to_push = self._gas_msg(0)
       self.assertTrue(self._rx(to_push))
-      to_push[0].RDHR ^= 0xFF
+      to_push[0].data[4] ^= 0xFF
       self.assertFalse(self._rx(to_push))
       self.assertFalse(self.safety.get_controls_allowed())
 

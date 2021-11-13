@@ -37,15 +37,15 @@ AddrCheckStruct subaru_l_addr_checks[] = {
 #define SUBARU_L_ADDR_CHECK_LEN (sizeof(subaru_l_addr_checks) / sizeof(subaru_l_addr_checks[0]))
 addr_checks subaru_l_rx_checks = {subaru_l_addr_checks, SUBARU_L_ADDR_CHECK_LEN};
 
-static uint8_t subaru_get_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+static uint8_t subaru_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
 }
 
-static uint8_t subaru_get_counter(CAN_FIFOMailBox_TypeDef *to_push) {
+static uint8_t subaru_get_counter(CANPacket_t *to_push) {
   return (uint8_t)(GET_BYTE(to_push, 1) & 0xF);
 }
 
-static uint8_t subaru_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
+static uint8_t subaru_compute_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   uint8_t checksum = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U);
@@ -55,7 +55,7 @@ static uint8_t subaru_compute_checksum(CAN_FIFOMailBox_TypeDef *to_push) {
   return checksum;
 }
 
-static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+static int subaru_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &subaru_rx_checks,
                             subaru_get_checksum, subaru_compute_checksum, subaru_get_counter);
@@ -102,7 +102,7 @@ static int subaru_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   return valid;
 }
 
-static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+static int subaru_legacy_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &subaru_l_rx_checks, NULL, NULL, NULL);
 
@@ -148,7 +148,7 @@ static int subaru_legacy_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   return valid;
 }
 
-static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+static int subaru_tx_hook(CANPacket_t *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
@@ -208,7 +208,7 @@ static int subaru_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return tx;
 }
 
-static int subaru_legacy_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+static int subaru_legacy_tx_hook(CANPacket_t *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
@@ -268,7 +268,7 @@ static int subaru_legacy_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   return tx;
 }
 
-static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
 
   if (bus_num == 0) {
@@ -290,7 +290,7 @@ static int subaru_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return bus_fwd;
 }
 
-static int subaru_legacy_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+static int subaru_legacy_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
 
   if (bus_num == 0) {

@@ -2,21 +2,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef struct
-{
-  uint32_t TIR;  /*!< CAN TX mailbox identifier register */
-  uint32_t TDTR; /*!< CAN mailbox data length control and time stamp register */
-  uint32_t TDLR; /*!< CAN mailbox data low register */
-  uint32_t TDHR; /*!< CAN mailbox data high register */
-} CAN_TxMailBox_TypeDef;
-
-typedef struct
-{
-  uint32_t RIR;  /*!< CAN receive FIFO mailbox identifier register */
-  uint32_t RDTR; /*!< CAN receive FIFO mailbox data length control and time stamp register */
-  uint32_t RDLR; /*!< CAN receive FIFO mailbox data low register */
-  uint32_t RDHR; /*!< CAN receive FIFO mailbox data high register */
-} CAN_FIFOMailBox_TypeDef;
+#define CANPACKET_DATA_SIZE_MAX 8
+#include "can_definitions.h"
 
 typedef struct
 {
@@ -65,15 +52,6 @@ void fault_occurred(uint32_t fault) {
 }
 void fault_recovered(uint32_t fault) {
 }
-
-// from llcan.h
-#define GET_BUS(msg) (((msg)->RDTR >> 4) & 0xFF)
-#define GET_LEN(msg) ((msg)->RDTR & 0xf)
-#define GET_ADDR(msg) ((((msg)->RIR & 4) != 0) ? ((msg)->RIR >> 3) : ((msg)->RIR >> 21))
-#define GET_BYTE(msg, b) (((int)(b) > 3) ? (((msg)->RDHR >> (8U * ((unsigned int)(b) % 4U))) & 0XFFU) : (((msg)->RDLR >> (8U * (unsigned int)(b))) & 0xFFU))
-#define GET_BYTES_04(msg) ((msg)->RDLR)
-#define GET_BYTES_48(msg) ((msg)->RDHR)
-#define GET_FLAG(value, mask) (((__typeof__(mask))param & mask) == mask)
 
 #define UNUSED(x) (void)(x)
 

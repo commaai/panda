@@ -1,11 +1,11 @@
 import os
 import abc
-import struct
 import unittest
 import importlib
 import numpy as np
 from typing import Optional, List, Dict
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
+from panda import LEN_TO_DLC
 from panda.tests.safety import libpandasafety_py
 
 MAX_WRONG_COUNTERS = 5
@@ -18,16 +18,12 @@ class UNSAFE_MODE:
 
 def package_can_msg(msg):
   addr, _, dat, bus = msg
-  rdlr, rdhr = struct.unpack('II', dat.ljust(8, b'\x00'))
-
-  ret = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-  if addr >= 0x800:
-    ret[0].RIR = (addr << 3) | 5
-  else:
-    ret[0].RIR = (addr << 21) | 1
-  ret[0].RDTR = len(dat) | ((bus & 0xF) << 4)
-  ret[0].RDHR = rdhr
-  ret[0].RDLR = rdlr
+  ret = libpandasafety_py.ffi.new('CANPacket_t *')
+  ret[0].extended = 1 if addr >= 0x800 else 0
+  ret[0].addr = addr
+  ret[0].data_len_code = LEN_TO_DLC[len(dat)]
+  ret[0].bus = bus
+  ret[0].data = bytes(dat)
 
   return ret
 

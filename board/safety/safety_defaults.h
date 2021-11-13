@@ -3,7 +3,7 @@ const addr_checks default_rx_checks = {
   .len = 0,
 };
 
-int default_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+int default_rx_hook(CANPacket_t *to_push) {
   UNUSED(to_push);
   return true;
 }
@@ -17,7 +17,7 @@ static const addr_checks* nooutput_init(int16_t param) {
   return &default_rx_checks;
 }
 
-static int nooutput_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+static int nooutput_tx_hook(CANPacket_t *to_send) {
   UNUSED(to_send);
   return false;
 }
@@ -29,7 +29,7 @@ static int nooutput_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   return false;
 }
 
-static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+static int default_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   UNUSED(bus_num);
   UNUSED(to_fwd);
   return -1;
@@ -52,7 +52,7 @@ static const addr_checks* alloutput_init(int16_t param) {
   return &default_rx_checks;
 }
 
-static int alloutput_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+static int alloutput_tx_hook(CANPacket_t *to_send) {
   UNUSED(to_send);
   return true;
 }

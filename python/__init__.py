@@ -16,26 +16,83 @@ from .serial import PandaSerial  # noqa pylint: disable=import-error
 from .isotp import isotp_send, isotp_recv  # pylint: disable=import-error
 from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN  # noqa pylint: disable=import-error
 
-__version__ = '0.0.9'
+__version__ = '0.0.10'
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
 DEBUG = os.getenv("PANDADEBUG") is not None
 
-def parse_can_buffer(dat):
-  ret = []
-  for j in range(0, len(dat), 0x10):
-    ddat = dat[j:j + 0x10]
-    f1, f2 = struct.unpack("II", ddat[0:8])
-    extended = 4
-    if f1 & extended:
-      address = f1 >> 3
-    else:
-      address = f1 >> 21
-    dddat = ddat[8:8 + (f2 & 0xF)]
+CANPACKET_HEAD_SIZE = 0x5
+DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
+LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
+
+def pack_can_buffer(arr):
+  snds = [b'']
+  idx = 0
+  for address, _, dat, bus in arr:
+    assert len(dat) in LEN_TO_DLC
     if DEBUG:
-      print(f"  R 0x{address:x}: 0x{dddat.hex()}")
-    ret.append((address, f2 >> 16, dddat, (f2 >> 4) & 0xFF))
+      print(f"  W 0x{address:x}: 0x{dat.hex()}")
+    extended = 1 if address >= 0x800 else 0
+    data_len_code = LEN_TO_DLC[len(dat)]
+    header = bytearray(5)
+    word_4b = address << 3 | extended << 2
+    header[0] = (data_len_code << 4) | (bus << 1)
+    header[1] = word_4b & 0xFF
+    header[2] = (word_4b >> 8) & 0xFF
+    header[3] = (word_4b >> 16) & 0xFF
+    header[4] = (word_4b >> 24) & 0xFF
+    snds[idx] += header + dat
+    if len(snds[idx]) > 256: # Limit chunks to 256 bytes
+      snds.append(b'')
+      idx += 1
+
+  #Apply counter to each 64 byte packet
+  for idx in range(len(snds)):
+    tx = b''
+    counter = 0
+    for i in range (0, len(snds[idx]), 63):
+      tx += bytes([counter]) + snds[idx][i:i+63]
+      counter += 1
+    snds[idx] = tx
+  return snds
+
+def unpack_can_buffer(dat):
+  ret = []
+  counter = 0
+  tail = bytearray()
+  for i in range(0, len(dat), 64):
+    if counter != dat[i]:
+      print("CAN: LOST RECV PACKET COUNTER")
+      break
+    counter+=1
+    chunk = tail + dat[i+1:i+64]
+    tail = bytearray()
+    pos = 0
+    while pos<len(chunk):
+      data_len = DLC_TO_LEN[(chunk[pos]>>4)]
+      pckt_len = CANPACKET_HEAD_SIZE + data_len
+      if pckt_len <= len(chunk[pos:]):
+        header = chunk[pos:pos+CANPACKET_HEAD_SIZE]
+        if len(header) < 5:
+          print("CAN: MALFORMED USB RECV PACKET")
+          break
+        bus = (header[0] >> 1) & 0x7
+        address = (header[4] << 24 | header[3] << 16 | header[2] << 8 | header[1]) >> 3
+        returned = (header[1] >> 1) & 0x1
+        rejected = header[1] & 0x1
+        data = chunk[pos + CANPACKET_HEAD_SIZE:pos + CANPACKET_HEAD_SIZE + data_len]
+        if returned:
+          bus += 128
+        if rejected:
+          bus += 192
+        if DEBUG:
+          print(f"  R 0x{address:x}: 0x{data.hex()}")
+        ret.append((address, 0, data, bus))
+        pos += pckt_len
+      else:
+        tail = chunk[pos:]
+        break
   return ret
 
 def ensure_health_packet_version(fn):
@@ -76,7 +133,7 @@ class PandaWifiStreaming(object):
       try:
         dat, addr = self.sock.recvfrom(0x200 * 0x10)
         if addr == (self.ip, self.port):
-          ret += parse_can_buffer(dat)
+          ret += unpack_can_buffer(dat)
       except socket.error as e:
         if e.errno != 35 and e.errno != 11:
           traceback.print_exc()
@@ -161,7 +218,7 @@ class Panda(object):
   HW_TYPE_DOS = b'\x06'
   HW_TYPE_RED_PANDA = b'\x07'
 
-  CAN_PACKET_VERSION = 1
+  CAN_PACKET_VERSION = 2
   HEALTH_PACKET_VERSION = 1
 
   F2_DEVICES = [HW_TYPE_PEDAL]
@@ -546,34 +603,20 @@ class Panda(object):
 
   @ensure_can_packet_version
   def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
-    snds = []
-    transmit = 1
-    extended = 4
-    for addr, _, dat, bus in arr:
-      assert len(dat) <= 8
-      if DEBUG:
-        print(f"  W 0x{addr:x}: 0x{dat.hex()}")
-      if addr >= 0x800:
-        rir = (addr << 3) | transmit | extended
-      else:
-        rir = (addr << 21) | transmit
-      snd = struct.pack("II", rir, len(dat) | (bus << 4)) + dat
-      snd = snd.ljust(0x10, b'\x00')
-      snds.append(snd)
-
+    snds = pack_can_buffer(arr)
     while True:
       try:
         if self.wifi:
           for s in snds:
             self._handle.bulkWrite(3, s)
         else:
-          dat = b''.join(snds)
-          while True:
-            bs = self._handle.bulkWrite(3, dat, timeout=timeout)
-            dat = dat[bs:]
-            if len(dat) == 0:
-              break
-            print("CAN: PARTIAL SEND MANY, RETRYING")
+          for tx in snds:
+            while True:
+              bs = self._handle.bulkWrite(3, tx, timeout=timeout)
+              tx = tx[bs:]
+              if len(tx) == 0:
+                break
+              print("CAN: PARTIAL SEND MANY, RETRYING")
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD SEND MANY, RETRYING")
@@ -586,12 +629,12 @@ class Panda(object):
     dat = bytearray()
     while True:
       try:
-        dat = self._handle.bulkRead(1, 0x10 * 256)
+        dat = self._handle.bulkRead(1, 16384) # Max receive batch size + 2 extra reserve frames
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD RECV, RETRYING")
         time.sleep(0.1)
-    return parse_can_buffer(dat)
+    return unpack_can_buffer(dat)
 
   def can_clear(self, bus):
     """Clears all messages from the specified internal CAN ringbuffer as

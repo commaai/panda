@@ -25,7 +25,7 @@ MSG_LDW_1 = 0x5BE        # TX by OP, Lane line recognition and text alerts
 
 
 def volkswagen_pq_checksum(msg, addr, len_msg):
-  msg_bytes = msg.RDLR.to_bytes(4, 'little') + msg.RDHR.to_bytes(4, 'little')
+  msg_bytes = bytes(msg.data)
   msg_bytes = msg_bytes[1:len_msg]
 
   checksum = 0
@@ -234,7 +234,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
     self.safety.set_controls_allowed(1)
     to_push = self._lenkhilfe_3_msg(0)
     self.assertTrue(self._rx(to_push))
-    to_push[0].RDHR ^= 0xFF
+    to_push[0].data[4] ^= 0xFF
     self.assertFalse(self._rx(to_push))
     self.assertFalse(self.safety.get_controls_allowed())
 

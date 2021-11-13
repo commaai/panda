@@ -41,6 +41,18 @@ jobs:
       - name: Build pedal STM image and bootstub
         run: $RUN "cd /tmp/openpilot/panda && PEDAL=1 scons"
 
+  unit_tests:
+    name: unit tests
+    runs-on: ubuntu-20.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Docker image
+        run: eval "$BUILD"
+      - name: Test pack/unpack for USB protocol
+        run: $RUN "cd /tmp/openpilot/panda/tests/usbprotocol &&
+                   python -m unittest discover ."
+
   safety:
     name: safety
     runs-on: ubuntu-20.04

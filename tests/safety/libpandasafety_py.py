@@ -7,22 +7,19 @@ libpandasafety_fn = os.path.join(can_dir, "libpandasafety.so")
 
 ffi = FFI()
 ffi.cdef("""
-typedef struct
-{
-  uint32_t TIR;  /*!< CAN TX mailbox identifier register */
-  uint32_t TDTR; /*!< CAN mailbox data length control and time stamp register */
-  uint32_t TDLR; /*!< CAN mailbox data low register */
-  uint32_t TDHR; /*!< CAN mailbox data high register */
-} CAN_TxMailBox_TypeDef;
+typedef struct {
+  unsigned char reserved : 1;
+  unsigned char bus : 3;
+  unsigned char data_len_code : 4;
+  unsigned char rejected : 1;
+  unsigned char returned : 1;
+  unsigned char extended : 1;
+  unsigned int addr : 29;
+  unsigned char data[8];
+} CANPacket_t;
+""", packed=True)
 
-typedef struct
-{
-  uint32_t RIR;  /*!< CAN receive FIFO mailbox identifier register */
-  uint32_t RDTR; /*!< CAN receive FIFO mailbox data length control and time stamp register */
-  uint32_t RDLR; /*!< CAN receive FIFO mailbox data low register */
-  uint32_t RDHR; /*!< CAN receive FIFO mailbox data high register */
-} CAN_FIFOMailBox_TypeDef;
-
+ffi.cdef("""
 typedef struct
 {
   uint32_t CNT;
@@ -55,9 +52,9 @@ bool get_vehicle_moving(void);
 int get_hw_type(void);
 void set_timer(uint32_t t);
 
-int safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_send);
-int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_push);
-int safety_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd);
+int safety_rx_hook(CANPacket_t *to_send);
+int safety_tx_hook(CANPacket_t *to_push);
+int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd);
 int set_safety_hooks(uint16_t  mode, int16_t param);
 
 void init_tests(void);
