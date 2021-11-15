@@ -35,6 +35,7 @@ AddrCheckStruct toyota_addr_checks[] = {
   {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}},
   {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}},
+  {.msg = {{0x1D3, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}},
   {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U},
            {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}},
 };
@@ -100,6 +101,16 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       if (!gas_interceptor_detected) {
         gas_pressed = ((GET_BYTE(to_push, 0) >> 4) & 1) == 0;
       }
+    }
+
+    // exit controls with any "main on" button press
+    if (addr == 0x1D3) {
+      // 15th bit is MAIN_ON
+      bool main_on = (GET_BYTE(to_push, 1) & 0x80) != 0;
+      if (main_on != main_on_prev) {
+        controls_allowed = 0;
+      }
+      main_on_prev = main_on;
     }
 
     // sample speed
