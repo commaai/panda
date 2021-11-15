@@ -45,8 +45,13 @@ const safety_hooks nooutput_hooks = {
 
 // *** all output safety mode ***
 
+// Enables passthrough mode where relay is open and bus 0 gets forwarded to bus 2 and vice versa
+const uint16_t ALLOUTPUT_PARAM_PASSTHROUGH = 1;
+bool alloutput_passthrough = false;
+
 static const addr_checks* alloutput_init(int16_t param) {
   UNUSED(param);
+  alloutput_passthrough = GET_FLAG(param, ALLOUTPUT_PARAM_PASSTHROUGH);
   controls_allowed = true;
   relay_malfunction_reset();
   return &default_rx_checks;
@@ -64,34 +69,26 @@ static int alloutput_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   return true;
 }
 
-const safety_hooks alloutput_hooks = {
-  .init = alloutput_init,
-  .rx = default_rx_hook,
-  .tx = alloutput_tx_hook,
-  .tx_lin = alloutput_tx_lin_hook,
-  .fwd = default_fwd_hook,
-};
-
-// *** passthrough safety mode ***
-
-static int passthrough_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
-  int bus_fwd = -1;
+static int alloutput_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   UNUSED(to_fwd);
+  int bus_fwd = -1;
 
-  if (bus_num == 0) {
-    bus_fwd = 2;
-  }
-  if (bus_num == 2) {
-    bus_fwd = 0;
+  if (alloutput_passthrough == true) {
+    if (bus_num == 0) {
+      bus_fwd = 2;
+    }
+    if (bus_num == 2) {
+      bus_fwd = 0;
+    }
   }
 
   return bus_fwd;
 }
 
-const safety_hooks passthrough_hooks = {
+const safety_hooks alloutput_hooks = {
   .init = alloutput_init,
   .rx = default_rx_hook,
   .tx = alloutput_tx_hook,
   .tx_lin = alloutput_tx_lin_hook,
-  .fwd = passthrough_fwd_hook,
+  .fwd = alloutput_fwd_hook,
 };
