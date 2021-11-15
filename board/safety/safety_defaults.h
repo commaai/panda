@@ -71,3 +71,27 @@ const safety_hooks alloutput_hooks = {
   .tx_lin = alloutput_tx_lin_hook,
   .fwd = default_fwd_hook,
 };
+
+// *** passthrough safety mode ***
+
+static int passthrough_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+  int bus_fwd = -1;
+  UNUSED(to_fwd);
+
+  if (bus_num == 0) {
+    bus_fwd = 2;
+  }
+  if (bus_num == 2) {
+    bus_fwd = 0;
+  }
+
+  return bus_fwd;
+}
+
+const safety_hooks passthrough_hooks = {
+  .init = alloutput_init,
+  .rx = default_rx_hook,
+  .tx = alloutput_tx_hook,
+  .tx_lin = alloutput_tx_lin_hook,
+  .fwd = passthrough_fwd_hook,
+};
