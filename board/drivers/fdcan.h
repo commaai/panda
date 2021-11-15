@@ -61,7 +61,7 @@ void process_can(uint8_t can_number) {
         fifo = (canfd_fifo *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
         fifo->header[0] = (to_send.extended << 30) | ((to_send.extended != 0) ? (to_send.addr) : (to_send.addr << 18));
-        fifo->header[1] = (to_send.data_len_code << 16); // | (1U << 21) | (1U << 20) to enable CAN FD , enable BRS
+        fifo->header[1] = (to_send.data_len_code << 16) | (bus_config[can_number].canfd_enabled << 21) | (bus_config[can_number].brs_enabled << 20);
 
         uint8_t data_len_w = (dlc_to_len[to_send.data_len_code] / 4U);
         data_len_w += ((dlc_to_len[to_send.data_len_code] % 4) > 0) ? 1U : 0U;

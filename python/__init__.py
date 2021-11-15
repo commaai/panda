@@ -584,6 +584,15 @@ class Panda(object):
   def set_can_data_speed_kbps(self, bus, speed):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf9, bus, int(speed * 10), b'')
 
+    # CAN FD and BRS status
+  def get_canfd_status(self, bus):
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfa, bus, 0, 2)
+    if dat:
+      a = struct.unpack("BB", dat)
+      return (a[0], a[1])
+    else:
+      return (None, None)
+
   def set_uart_baud(self, uart, rate):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, int(rate / 300), b'')
 
