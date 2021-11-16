@@ -10,6 +10,8 @@ typedef struct {
   uint8_t can_num_lookup;
   uint32_t can_speed;
   uint32_t can_data_speed;
+  bool canfd_enabled;
+  bool brs_enabled;
 } bus_config_t;
 
 #define CAN_BUS_NUM_MASK 0x3FU
@@ -163,10 +165,10 @@ void can_clear(can_ring *q) {
 // Helpers
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
 bus_config_t bus_config[] = {
-  { .bus_lookup = 0U, .can_num_lookup = 0U, .can_speed = 5000U, .can_data_speed = 5000U },
-  { .bus_lookup = 1U, .can_num_lookup = 1U, .can_speed = 5000U, .can_data_speed = 5000U },
-  { .bus_lookup = 2U, .can_num_lookup = 2U, .can_speed = 5000U, .can_data_speed = 5000U },
-  { .bus_lookup = 0xFFU, .can_num_lookup = 0xFFU, .can_speed = 333U, .can_data_speed = 333U },
+  { .bus_lookup = 0U, .can_num_lookup = 0U, .can_speed = 5000U, .can_data_speed = 5000U, .canfd_enabled = false, .brs_enabled = false },
+  { .bus_lookup = 1U, .can_num_lookup = 1U, .can_speed = 5000U, .can_data_speed = 5000U, .canfd_enabled = false, .brs_enabled = false },
+  { .bus_lookup = 2U, .can_num_lookup = 2U, .can_speed = 5000U, .can_data_speed = 5000U, .canfd_enabled = false, .brs_enabled = false },
+  { .bus_lookup = 0xFFU, .can_num_lookup = 0xFFU, .can_speed = 333U, .can_data_speed = 333U, .canfd_enabled = false, .brs_enabled = false },
 };
 
 #define CAN_MAX 3U
