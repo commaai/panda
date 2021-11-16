@@ -4,14 +4,14 @@
 #define FDCAN_OFFSET_W 853UL // words for each FDCAN module
 #define FDCAN_END_ADDRESS 0x4000D3FCUL // Message RAM has a width of 4 Bytes
 
-// With this settings we can go up to 6Mbit/s
+// With this settings we can go up to 5Mbit/s
 #define CAN_SYNC_JW     1U // 1 to 4
 #define CAN_PHASE_SEG1  6U // =(PROP_SEG + PHASE_SEG1) , 1 to 16
 #define CAN_PHASE_SEG2  1U // 1 to 8
-#define CAN_PCLK 48000U // Sourced from PLL1Q
+#define CAN_PCLK 80000U // Sourced from PLL1Q
 #define CAN_QUANTA (1U + CAN_PHASE_SEG1 + CAN_PHASE_SEG2)
 // Valid speeds in kbps and their prescalers:
-// 10=600, 20=300, 50=120, 83.333=72, 100=60, 125=48, 250=24, 500=12, 1000=6, 2000=3, 3000=2, 6000=1
+// 10=1000, 20=500, 50=200, 83.333=120, 100=100, 125=80, 250=40, 500=20, 1000=10, 2000=5, 5000=2
 #define can_speed_to_prescaler(x) (CAN_PCLK / CAN_QUANTA * 10U / (x))
 
 // RX FIFO 0
