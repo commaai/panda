@@ -25,14 +25,23 @@ const int HONDA_BOSCH_GAS_MAX = 2000;
 const int HONDA_BOSCH_ACCEL_MIN = -350; // max braking == -3.5m/s2
 
 // Nidec and Bosch giraffe have pt on bus 0
-AddrCheckStruct honda_addr_checks[] = {
+AddrCheckStruct honda_nidec_addr_checks[] = {
   {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
            {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x326, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }}},
 };
-#define HONDA_ADDR_CHECKS_LEN (sizeof(honda_addr_checks) / sizeof(honda_addr_checks[0]))
+#define HONDA_NIDEC_ADDR_CHECKS_LEN (sizeof(honda_nidec_addr_checks) / sizeof(honda_nidec_addr_checks[0]))
+
+// For Nidecs with main on signal on 0x326
+AddrCheckStruct honda_nidec_alt_addr_checks[] = {
+  {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
+           {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
+  {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x326, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+};
+#define HONDA_NIDEC_ALT_ADDR_CHECKS_LEN (sizeof(honda_nidec_alt_addr_checks) / sizeof(honda_nidec_alt_addr_checks[0]))
 
 // Bosch harness has pt on bus 1
 AddrCheckStruct honda_bh_addr_checks[] = {
@@ -46,13 +55,14 @@ AddrCheckStruct honda_bh_addr_checks[] = {
 
 const uint16_t HONDA_PARAM_ALT_BRAKE = 1;
 const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
+const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
 
 int honda_brake = 0;
 bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
 bool honda_bosch_long = false;
 enum {HONDA_N_HW, HONDA_BG_HW, HONDA_BH_HW} honda_hw = HONDA_N_HW;
-addr_checks honda_rx_checks = {honda_addr_checks, HONDA_ADDR_CHECKS_LEN};
+addr_checks honda_rx_checks = {honda_nidec_addr_checks, HONDA_NIDEC_ADDR_CHECKS_LEN};
 
 
 static uint8_t honda_get_checksum(CANPacket_t *to_push) {
@@ -99,7 +109,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     }
 
     // check ACC main state
-    // 0x326 for all Bosch and some Nidec, 0x1A6 for some nidec
+    // 0x326 for all Bosch and some Nidec, 0x1A6 for some Nidec
     if ((addr == 0x326) || (addr == 0x1A6)) {
       acc_main_on = GET_BIT(to_push, (addr == 0x326) ? 28 : 47);
       if (!acc_main_on) {
@@ -307,9 +317,9 @@ static int honda_tx_hook(CANPacket_t *to_send) {
 
   // Only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
   if (addr == 0x18DAB0F1) {
-  if ((GET_BYTES_04(to_send) != 0x00803E02) || (GET_BYTES_48(to_send) != 0x0)) {
-    tx = 0;
-  }
+    if ((GET_BYTES_04(to_send) != 0x00803E02) || (GET_BYTES_48(to_send) != 0x0)) {
+      tx = 0;
+    }
   }
 
   // 1 allows the message through
@@ -324,7 +334,12 @@ static const addr_checks* honda_nidec_init(int16_t param) {
   honda_hw = HONDA_N_HW;
   honda_alt_brake_msg = false;
   honda_bosch_long = false;
-  honda_rx_checks = (addr_checks){honda_addr_checks, HONDA_ADDR_CHECKS_LEN};
+
+  if (GET_FLAG(param, HONDA_PARAM_NIDEC_ALT)) {
+    honda_rx_checks = (addr_checks){honda_nidec_addr_checks, HONDA_NIDEC_ADDR_CHECKS_LEN};
+  } else {
+    honda_rx_checks = (addr_checks){honda_nidec_alt_addr_checks, HONDA_NIDEC_ALT_ADDR_CHECKS_LEN};
+  }
   return &honda_rx_checks;
 }
 
@@ -340,7 +355,7 @@ static const addr_checks* honda_bosch_giraffe_init(int16_t param) {
   honda_bosch_long = GET_FLAG(param, HONDA_PARAM_BOSCH_LONG);
 #endif
 
-  honda_rx_checks = (addr_checks){honda_addr_checks, HONDA_ADDR_CHECKS_LEN};
+  honda_rx_checks = (addr_checks){honda_nidec_addr_checks, HONDA_NIDEC_ADDR_CHECKS_LEN};
   return &honda_rx_checks;
 }
 

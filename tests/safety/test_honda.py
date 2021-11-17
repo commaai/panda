@@ -281,6 +281,22 @@ class TestHondaNidecSafety(TestHondaSafety, common.InterceptorSafetyTest):
       self.safety.set_gas_interceptor_detected(False)
 
 
+class TestHondaNidecAltSafety(TestHondaNidecSafety, common.InterceptorSafetyTest):
+  def setUp(self):
+    self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
+    self.safety.init_tests_honda()
+
+  def _acc_state_msg(self, main_on):
+    values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}
+    self.__class__.cnt_acc_state += 1
+    return self.packer.make_can_msg_panda("SCM_BUTTONS", self.PT_BUS, values)
+
+  def test_tx_hook_on_wrong_safety_mode(self):
+    raise unittest.SkipTest("")
+
+
 class TestHondaBoschSafety(TestHondaSafety):
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 0xE4
