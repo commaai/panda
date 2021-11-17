@@ -30,8 +30,7 @@ AddrCheckStruct honda_addr_checks[] = {
            {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x294, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-           {0x326, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }}},
+  {.msg = {{0x326, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }}},
 };
 #define HONDA_ADDR_CHECKS_LEN (sizeof(honda_addr_checks) / sizeof(honda_addr_checks[0]))
 
@@ -39,9 +38,9 @@ AddrCheckStruct honda_addr_checks[] = {
 AddrCheckStruct honda_bh_addr_checks[] = {
   {.msg = {{0x296, 1, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }, { 0 }}},
   {.msg = {{0x158, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x326, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x17C, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
            {0x1BE, 1, 3, .check_checksum = true, .max_counter = 3U, .expected_timestep = 20000U}, { 0 }}},
+  {.msg = {{0x326, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
 #define HONDA_BH_ADDR_CHECKS_LEN (sizeof(honda_bh_addr_checks) / sizeof(honda_bh_addr_checks[0]))
 
@@ -100,10 +99,9 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     }
 
     // check ACC main state
-    if (addr == 0x326) {
-      const int byte = (addr == 0x326) ? 3 : 0;
-      const int shift = (addr == 0x326) ? 4 : 0;
-      acc_main_on = (GET_BYTE(to_push, byte) >> shift) & 0x1;
+    // 0x326 for all Bosch and some Nidec, 0x1A6 for some nidec
+    if ((addr == 0x326) || (addr == 0x1A6)) {
+      acc_main_on = GET_BIT(to_push, (addr == 0x326) ? 28 : 47);
       if (!acc_main_on) {
         controls_allowed = 0;
       }

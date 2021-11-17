@@ -1,3 +1,4 @@
+#define GET_BIT(msg, b) (((msg)->data[(int)((b) / 8)] >> ((b) % 8)) & 0x1)
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_BYTES_04(msg) ((msg)->data[0] | ((msg)->data[1] << 8) | ((msg)->data[2] << 16) | ((msg)->data[3] << 24))
 #define GET_BYTES_48(msg) ((msg)->data[4] | ((msg)->data[5] << 8) | ((msg)->data[6] << 16) | ((msg)->data[7] << 24))
