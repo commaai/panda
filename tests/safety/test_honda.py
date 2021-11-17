@@ -26,6 +26,7 @@ class TestHondaSafety(common.PandaSafetyTest):
   cnt_gas = 0
   cnt_button = 0
   cnt_brake = 0
+  cnt_acc_state = 0
 
   @classmethod
   def setUpClass(cls):
@@ -52,6 +53,11 @@ class TestHondaSafety(common.PandaSafetyTest):
     self.__class__.cnt_speed += 1
     return self.packer.make_can_msg_panda("ENGINE_DATA", self.PT_BUS, values)
 
+  def _acc_state_msg(self, main_on):
+    values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}
+    self.__class__.cnt_acc_state += 1
+    return self.packer.make_can_msg_panda("SCM_FEEDBACK", self.PT_BUS, values)
+
   def _button_msg(self, buttons):
     values = {"CRUISE_BUTTONS": buttons, "COUNTER": self.cnt_button % 4}
     self.__class__.cnt_button += 1
@@ -76,11 +82,13 @@ class TestHondaSafety(common.PandaSafetyTest):
     raise NotImplementedError
 
   def test_resume_button(self):
+    self._rx(self._acc_state_msg(True))
     self.safety.set_controls_allowed(0)
     self._rx(self._button_msg(Btn.RESUME))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_set_button(self):
+    self._rx(self._acc_state_msg(True))
     self.safety.set_controls_allowed(0)
     self._rx(self._button_msg(Btn.SET))
     self.assertTrue(self.safety.get_controls_allowed())
@@ -88,6 +96,13 @@ class TestHondaSafety(common.PandaSafetyTest):
   def test_cancel_button(self):
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(Btn.CANCEL))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_disengage_on_main(self):
+    self.safety.set_controls_allowed(1)
+    self._rx(self._acc_state_msg(True))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self._rx(self._acc_state_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_disengage_on_brake(self):
@@ -206,7 +221,7 @@ class TestHondaNidecSafety(TestHondaSafety, common.InterceptorSafetyTest):
   def _interceptor_msg(self, gas, addr):
     to_send = make_msg(0, addr, 6)
     gas2 = gas * 2
-    to_send[0].data[0] = (gas & 0xFF00) >> 8 
+    to_send[0].data[0] = (gas & 0xFF00) >> 8
     to_send[0].data[1] = gas & 0xFF
     to_send[0].data[2] = (gas2 & 0xFF00) >> 8
     to_send[0].data[3] = gas2 & 0xFF

@@ -27,9 +27,11 @@ const int HONDA_BOSCH_ACCEL_MIN = -350; // max braking == -3.5m/s2
 // Nidec and Bosch giraffe have pt on bus 0
 AddrCheckStruct honda_addr_checks[] = {
   {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
-           {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},{ 0 }}},
+           {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x294, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+           {0x326, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }}},
 };
 #define HONDA_ADDR_CHECKS_LEN (sizeof(honda_addr_checks) / sizeof(honda_addr_checks[0]))
 
@@ -37,6 +39,7 @@ AddrCheckStruct honda_addr_checks[] = {
 AddrCheckStruct honda_bh_addr_checks[] = {
   {.msg = {{0x296, 1, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }, { 0 }}},
   {.msg = {{0x158, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x326, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x17C, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
            {0x1BE, 1, 3, .check_checksum = true, .max_counter = 3U, .expected_timestep = 20000U}, { 0 }}},
 };
@@ -96,17 +99,31 @@ static int honda_rx_hook(CANPacket_t *to_push) {
       vehicle_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
     }
 
+    // check ACC main state
+    if (addr == 0x326) {
+      const int byte = (addr == 0x326) ? 3 : 0;
+      const int shift = (addr == 0x326) ? 4 : 0;
+      acc_main_on = (GET_BYTE(to_push, byte) >> shift) & 0x1;
+      if (!acc_main_on) {
+        controls_allowed = 0;
+      }
+    }
+
     // state machine to enter and exit controls
     // 0x1A6 for the ILX, 0x296 for the Civic Touring
     if ((addr == 0x1A6) || (addr == 0x296)) {
+      // check for button presses
       int button = (GET_BYTE(to_push, 0) & 0xE0) >> 5;
       switch (button) {
+        case 1:  // main
         case 2:  // cancel
           controls_allowed = 0;
           break;
         case 3:  // set
         case 4:  // resume
-          controls_allowed = 1;
+          if (acc_main_on) {
+            controls_allowed = 1;
+          }
           break;
         default:
           break; // any other button is irrelevant
