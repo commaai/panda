@@ -135,7 +135,9 @@ static const addr_checks* volkswagen_mqb_init(int16_t param) {
 
   controls_allowed = false;
   relay_malfunction_reset();
+#ifdef ALLOW_DEBUG
   volkswagen_longitudinal = GET_FLAG(param, VOLKSWAGEN_PARAM_LONG);
+#endif
   volkswagen_torque_msg = MSG_HCA_01;
   volkswagen_lane_msg = MSG_LDW_02;
   volkswagen_acc_accel_msg_1 = MSG_ACC_06;
