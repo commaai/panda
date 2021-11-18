@@ -38,6 +38,8 @@ class CANPackerPanda(CANPacker):
     return package_can_msg(msg)
 
 class PandaSafetyTestBase(unittest.TestCase):
+  SKIP_TX_CHECK = False
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "PandaSafetyTestBase":
@@ -424,7 +426,8 @@ class PandaSafetyTest(PandaSafetyTestBase):
           tx = getattr(getattr(test, attr), "TX_MSGS")
           if tx is not None:
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
-            if attr in ['TestHondaBoschLongGiraffeSafety', 'TestHondaNidecSafety']:
+            if attr.startswith('TestHonda'):
+              # exceptions for common msgs across different hondas
               tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C], tx))
             all_tx.append(tx)
 
