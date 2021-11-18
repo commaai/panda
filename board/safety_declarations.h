@@ -1,3 +1,4 @@
+#define GET_BIT(msg, b) (((msg)->data[(int)((b) / 8)] >> ((b) % 8)) & 0x1)
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_BYTES_04(msg) ((msg)->data[0] | ((msg)->data[1] << 8) | ((msg)->data[2] << 16) | ((msg)->data[3] << 24))
 #define GET_BYTES_48(msg) ((msg)->data[4] | ((msg)->data[5] << 8) | ((msg)->data[6] << 16) | ((msg)->data[7] << 24))
@@ -110,6 +111,7 @@ bool brake_pressed_prev = false;
 bool cruise_engaged_prev = false;
 float vehicle_speed = 0;
 bool vehicle_moving = false;
+bool acc_main_on = false;  // referred to as "ACC off" in ISO 15622:2018
 
 // for safety modes with torque steering control
 int desired_torque_last = 0;       // last desired steer torque
