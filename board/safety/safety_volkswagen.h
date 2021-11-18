@@ -447,8 +447,8 @@ static int volkswagen_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
       if ((addr == volkswagen_torque_msg) || (addr == volkswagen_lane_msg)) {
         // OP takes control of the Heading Control Assist and Lane Departure Warning messages from the camera
         bus_fwd = -1;
-        } else if (volkswagen_longitudinal && ((addr == volkswagen_acc_accel_msg_1) ||
-                  (addr == volkswagen_acc_accel_msg_2) || (addr == volkswagen_acc_hud_msg))) {
+      } else if (volkswagen_longitudinal && ((addr == volkswagen_acc_accel_msg_1) ||
+                (addr == volkswagen_acc_accel_msg_2) || (addr == volkswagen_acc_hud_msg))) {
         // If longitudinal control is enabled, OP takes control of ACC accel/braking and HUD messaging
         bus_fwd = -1;
       } else {
