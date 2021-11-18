@@ -38,8 +38,6 @@ class CANPackerPanda(CANPacker):
     return package_can_msg(msg)
 
 class PandaSafetyTestBase(unittest.TestCase):
-  SKIP_TX_CHECK = False
-
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "PandaSafetyTestBase":
