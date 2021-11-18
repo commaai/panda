@@ -427,16 +427,25 @@ class PandaSafetyTest(PandaSafetyTestBase):
             if attr.startswith('TestHonda'):
               # exceptions for common msgs across different hondas
               tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C], tx))
-            all_tx.append(list([m[0], m[1], attr[4:]] for m in tx))
+            all_tx.append(list([m[0], m[1], attr] for m in tx))
 
     # make sure we got all the msgs
     self.assertTrue(len(all_tx) >= len(test_files)-1)
 
     for tx_msgs in all_tx:
-      for addr, bus, test_name in tx_msgs:
+      for addr, bus, source_test in tx_msgs:
         msg = make_msg(bus, addr)
         self.safety.set_controls_allowed(1)
         # TODO: this should be blocked
         if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
           continue
-        self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")
+        # Both VW safety variants send the same steer and HUD messages
+        if current_test.startswith("TestVolkswagenMqb") and source_test.startswith("TestVolkswagenMqb") and addr in [0x126, 0x397]:
+          continue
+        # Verified conflict
+        if current_test.startswith("TestSubaru") and source_test.startswith("TestVolkswagenMqb") and addr == 0x122:
+          continue
+        # Verified conflict
+        if current_test.startswith("TestHonda") and source_test.startswith("TestVolkswagenMqb") and addr == 0x30c:
+          continue
+        self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {source_test} was allowed")
