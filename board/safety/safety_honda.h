@@ -336,9 +336,9 @@ static const addr_checks* honda_nidec_init(int16_t param) {
   honda_bosch_long = false;
 
   if (GET_FLAG(param, HONDA_PARAM_NIDEC_ALT)) {
-    honda_rx_checks = (addr_checks){honda_nidec_addr_checks, HONDA_NIDEC_ADDR_CHECKS_LEN};
-  } else {
     honda_rx_checks = (addr_checks){honda_nidec_alt_addr_checks, HONDA_NIDEC_ALT_ADDR_CHECKS_LEN};
+  } else {
+    honda_rx_checks = (addr_checks){honda_nidec_addr_checks, HONDA_NIDEC_ADDR_CHECKS_LEN};
   }
   return &honda_rx_checks;
 }
