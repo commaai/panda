@@ -26,6 +26,7 @@ class TestHondaSafety(common.PandaSafetyTest):
   cnt_gas = 0
   cnt_button = 0
   cnt_brake = 0
+  cnt_acc_state = 0
 
   @classmethod
   def setUpClass(cls):
@@ -52,7 +53,12 @@ class TestHondaSafety(common.PandaSafetyTest):
     self.__class__.cnt_speed += 1
     return self.packer.make_can_msg_panda("ENGINE_DATA", self.PT_BUS, values)
 
-  def _button_msg(self, buttons):
+  def _acc_state_msg(self, main_on):
+    values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}
+    self.__class__.cnt_acc_state += 1
+    return self.packer.make_can_msg_panda("SCM_FEEDBACK", self.PT_BUS, values)
+
+  def _button_msg(self, buttons, main_on=False):
     values = {"CRUISE_BUTTONS": buttons, "COUNTER": self.cnt_button % 4}
     self.__class__.cnt_button += 1
     return self.packer.make_can_msg_panda("SCM_BUTTONS", self.PT_BUS, values)
@@ -75,19 +81,35 @@ class TestHondaSafety(common.PandaSafetyTest):
     # must be implemented when inherited
     raise NotImplementedError
 
+  def test_buttons_with_main_off(self):
+    for btn in [Btn.SET, Btn.RESUME, Btn.CANCEL]:
+      self.safety.set_controls_allowed(1)
+      self._rx(self._acc_state_msg(False))
+      self._rx(self._button_msg(btn, main_on=False))
+      self.assertFalse(self.safety.get_controls_allowed())
+
   def test_resume_button(self):
+    self._rx(self._acc_state_msg(True))
     self.safety.set_controls_allowed(0)
-    self._rx(self._button_msg(Btn.RESUME))
+    self._rx(self._button_msg(Btn.RESUME, main_on=True))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_set_button(self):
+    self._rx(self._acc_state_msg(True))
     self.safety.set_controls_allowed(0)
-    self._rx(self._button_msg(Btn.SET))
+    self._rx(self._button_msg(Btn.SET, main_on=True))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_cancel_button(self):
     self.safety.set_controls_allowed(1)
-    self._rx(self._button_msg(Btn.CANCEL))
+    self._rx(self._button_msg(Btn.CANCEL, main_on=True))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_disengage_on_main(self):
+    self.safety.set_controls_allowed(1)
+    self._rx(self._acc_state_msg(True))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self._rx(self._acc_state_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_disengage_on_brake(self):
@@ -106,8 +128,6 @@ class TestHondaSafety(common.PandaSafetyTest):
     # checksum checks
     for msg in ["btn", "gas", "speed"]:
       self.safety.set_controls_allowed(1)
-      # TODO: add this coverage back by re-running all tests with the acura dbc
-      # to_push = self._button_msg(Btn.SET, 0x1A6)  # only in Honda_NIDEC
       if msg == "btn":
         to_push = self._button_msg(Btn.SET)
       if msg == "gas":
@@ -146,7 +166,7 @@ class TestHondaSafety(common.PandaSafetyTest):
       self._rx(self._button_msg(Btn.SET))
       self._rx(self._speed_msg(0))
       self._rx(self._gas_msg(0))
-    self._rx(self._button_msg(Btn.SET))
+    self._rx(self._button_msg(Btn.SET, main_on=True))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_tx_hook_on_pedal_pressed(self):
@@ -206,7 +226,7 @@ class TestHondaNidecSafety(TestHondaSafety, common.InterceptorSafetyTest):
   def _interceptor_msg(self, gas, addr):
     to_send = make_msg(0, addr, 6)
     gas2 = gas * 2
-    to_send[0].data[0] = (gas & 0xFF00) >> 8 
+    to_send[0].data[0] = (gas & 0xFF00) >> 8
     to_send[0].data[1] = gas & 0xFF
     to_send[0].data[2] = (gas2 & 0xFF00) >> 8
     to_send[0].data[3] = gas2 & 0xFF
@@ -264,6 +284,24 @@ class TestHondaNidecSafety(TestHondaSafety, common.InterceptorSafetyTest):
       self._tx(self._send_steer_msg(0))
       self._tx(self._interceptor_msg(0, 0x200))
       self.safety.set_gas_interceptor_detected(False)
+
+
+class TestHondaNidecAltSafety(TestHondaNidecSafety, common.InterceptorSafetyTest):
+  def setUp(self):
+    self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
+    self.safety.init_tests_honda()
+
+  def _acc_state_msg(self, main_on):
+    values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}
+    self.__class__.cnt_acc_state += 1
+    return self.packer.make_can_msg_panda("SCM_BUTTONS", self.PT_BUS, values)
+
+  def _button_msg(self, buttons, main_on=False):
+    values = {"CRUISE_BUTTONS": buttons, "MAIN_ON": main_on, "COUNTER": self.cnt_button % 4}
+    self.__class__.cnt_button += 1
+    return self.packer.make_can_msg_panda("SCM_BUTTONS", self.PT_BUS, values)
 
 
 class TestHondaBoschSafety(TestHondaSafety):
