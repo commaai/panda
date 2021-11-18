@@ -15,13 +15,19 @@ RT_INTERVAL = 250000
 DRIVER_TORQUE_ALLOWANCE = 80
 DRIVER_TORQUE_FACTOR = 3
 
+MAX_ACCEL = 2.0
+MIN_ACCEL = -3.5
+
 MSG_ESP_19 = 0xB2       # RX from ABS, for wheel speeds
 MSG_LH_EPS_03 = 0x9F    # RX from EPS, for driver steering torque
 MSG_ESP_05 = 0x106      # RX from ABS, for brake light state
 MSG_TSK_06 = 0x120      # RX from ECU, for ACC status from drivetrain coordinator
 MSG_MOTOR_20 = 0x121    # RX from ECU, for driver throttle input
+MSG_ACC_06 = 0x122      # TX by OP, ACC control instructions to the drivetrain coordinator
 MSG_HCA_01 = 0x126      # TX by OP, Heading Control Assist steering torque
 MSG_GRA_ACC_01 = 0x12B  # TX by OP, ACC control buttons for cancel/resume
+MSG_ACC_07 = 0x12E      # TX by OP, ACC control instructions to the drivetrain coordinator
+MSG_ACC_02 = 0x30C      # TX by OP, ACC HUD data to the instrument cluster
 MSG_LDW_02 = 0x397      # TX by OP, Lane line recognition and text alerts
 
 
@@ -32,6 +38,8 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
   cnt_motor_20 = 0
   cnt_hca_01 = 0
   cnt_gra_acc_01 = 0
+  cnt_acc_06 = 0
+  cnt_acc_07 = 0
 
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_HCA_01
@@ -91,6 +99,18 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
               "GRA_Tip_Wiederaufnahme": resume, "COUNTER": self.cnt_gra_acc_01 % 16}
     self.__class__.cnt_gra_acc_01 += 1
     return self.packer.make_can_msg_panda("GRA_ACC_01", 0, values)
+
+  # Acceleration request to drivetrain coordinator
+  def _acc_06_msg(self, accel):
+    values = {"ACC_Sollbeschleunigung_02": accel, "COUNTER": self.cnt_acc_06 % 16}
+    self.__class__.cnt_acc_06 += 1
+    return self.packer.make_can_msg_panda("ACC_06", 0, values)
+
+  # Acceleration request to drivetrain coordinator
+  def _acc_07_msg(self, accel):
+    values = {"ACC_Sollbeschleunigung_01": accel, "COUNTER": self.cnt_acc_07 % 16}
+    self.__class__.cnt_acc_07 += 1
+    return self.packer.make_can_msg_panda("ACC_07", 0, values)
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
@@ -266,6 +286,54 @@ class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
     # do not block resume if we are engaged already
     self.safety.set_controls_allowed(1)
     self.assertTrue(self._tx(self._gra_acc_01_msg(resume=1)))
+
+
+class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
+  TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_ACC_02, 0], [MSG_ACC_06, 0], [MSG_ACC_07, 0]]
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02, MSG_ACC_02, MSG_ACC_06, MSG_ACC_07]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("vw_mqb_2010")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, Panda.FLAG_VOLKSWAGEN_LONGITUDINAL)
+    self.safety.init_tests()
+
+  # stock cruise controls are entirely bypassed under openpilot longitudinal control
+  def test_disable_control_allowed_from_cruise(self):
+    pass
+
+  def test_enable_control_allowed_from_cruise(self):
+    pass
+
+  def test_cruise_engaged_prev(self):
+    pass
+
+  def test_resume_button(self):
+    self.safety.set_controls_allowed(0)
+    self._rx(self._gra_acc_01_msg(resume=1))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_set_button(self):
+    self.safety.set_controls_allowed(0)
+    self._rx(self._gra_acc_01_msg(_set=1))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_cancel_button(self):
+    self.safety.set_controls_allowed(1)
+    self._rx(self._gra_acc_01_msg(cancel=1))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_accel_safety_check(self):
+    for controls_allowed in [True, False]:
+      for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.01):
+        accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
+        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == 0
+        self.safety.set_controls_allowed(controls_allowed)
+        # primary accel request used by ECU
+        self.assertEqual(send, self._tx(self._acc_06_msg(accel)), (controls_allowed, accel))
+        # additional accel request used by ABS/ESP
+        self.assertEqual(send, self._tx(self._acc_07_msg(accel)), (controls_allowed, accel))
 
 
 if __name__ == "__main__":
