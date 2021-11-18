@@ -194,10 +194,10 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
         // Signal: GRA_ACC_01.GRA_Abbrechen
         // Signal: GRA_ACC_01.GRA_Tip_Setzen
         // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
-        if ((GET_BYTE(to_push, 2) & 0x9) != 0) {
+        if (GET_BIT(to_push, 19) | GET_BIT(to_push, 16)) {
           controls_allowed = 1;
         }
-        if ((GET_BYTE(to_push, 1) & 0x20) != 0) {
+        if GET_BIT(to_push, 13) {
           controls_allowed = 0;
         }
       }
