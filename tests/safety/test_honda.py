@@ -372,21 +372,6 @@ class TestHondaBoschHarnessSafety(TestHondaBoschSafety):
     self.assertTrue(self._tx(self._button_msg(Btn.RESUME)))
 
 
-class TestHondaBoschGiraffeSafety(TestHondaBoschHarnessSafety):
-  TX_MSGS = [[0xE4, 2], [0xE5, 2], [0x296, 0], [0x33D, 2]]  # Bosch Giraffe
-  RELAY_MALFUNCTION_BUS = 2
-  FWD_BLACKLISTED_ADDRS = {1: [0xE4, 0xE5, 0x33D]}
-  FWD_BUS_LOOKUP = {1: 2, 2: 1}
-
-  PT_BUS = 0
-  STEER_BUS = 2
-
-  def setUp(self):
-    super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH_GIRAFFE, 0)
-    self.safety.init_tests_honda()
-
-
 class TestHondaBoschLongSafety(TestHondaBoschSafety):
   NO_GAS = -30000
   MAX_GAS = 2000

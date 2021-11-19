@@ -7,9 +7,7 @@
 //      brake rising edge
 //      brake > 0mph
 const CanMsg HONDA_N_TX_MSGS[] = {{0xE4, 0, 5}, {0x194, 0, 4}, {0x1FA, 0, 8}, {0x200, 0, 6}, {0x30C, 0, 8}, {0x33D, 0, 5}};
-const CanMsg HONDA_BG_TX_MSGS[] = {{0xE4, 2, 5}, {0xE5, 2, 8}, {0x296, 0, 4}, {0x33D, 2, 5}};  // Bosch Giraffe
 const CanMsg HONDA_BH_TX_MSGS[] = {{0xE4, 0, 5}, {0xE5, 0, 8}, {0x296, 1, 4}, {0x33D, 0, 5}};  // Bosch Harness
-const CanMsg HONDA_BG_LONG_TX_MSGS[] = {{0xE4, 0, 5}, {0x1DF, 0, 8}, {0x1EF, 0, 8}, {0x1FA, 0, 8}, {0x30C, 0, 8}, {0x33D, 0, 5}, {0x39F, 0, 8}, {0x18DAB0F1, 0, 8}};  // Bosch Giraffe w/ gas and brakes
 const CanMsg HONDA_BH_LONG_TX_MSGS[] = {{0xE4, 1, 5}, {0x1DF, 1, 8}, {0x1EF, 1, 8}, {0x1FA, 1, 8}, {0x30C, 1, 8}, {0x33D, 1, 5}, {0x39F, 1, 8}, {0x18DAB0F1, 1, 8}};  // Bosch Harness w/ gas and brakes
 
 // Roughly calculated using the offsets in openpilot +5%:
@@ -24,7 +22,7 @@ const int HONDA_BOSCH_NO_GAS_VALUE = -30000; // value sent when not requesting g
 const int HONDA_BOSCH_GAS_MAX = 2000;
 const int HONDA_BOSCH_ACCEL_MIN = -350; // max braking == -3.5m/s2
 
-// Nidec and Bosch giraffe have pt on bus 0
+// Nidec has the powertrain bus on bus 0
 AddrCheckStruct honda_nidec_addr_checks[] = {
   {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
            {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
@@ -61,7 +59,7 @@ int honda_brake = 0;
 bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
 bool honda_bosch_long = false;
-enum {HONDA_N_HW, HONDA_BG_HW, HONDA_BH_HW} honda_hw = HONDA_N_HW;
+enum {HONDA_N_HW, HONDA_BH_HW} honda_hw = HONDA_N_HW;
 addr_checks honda_rx_checks = {honda_nidec_addr_checks, HONDA_NIDEC_ADDR_CHECKS_LEN};
 
 
@@ -217,11 +215,7 @@ static int honda_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
-  if ((honda_hw == HONDA_BG_HW) && !honda_bosch_long) {
-    tx = msg_allowed(to_send, HONDA_BG_TX_MSGS, sizeof(HONDA_BG_TX_MSGS)/sizeof(HONDA_BG_TX_MSGS[0]));
-  } else if ((honda_hw == HONDA_BG_HW) && honda_bosch_long) {
-    tx = msg_allowed(to_send, HONDA_BG_LONG_TX_MSGS, sizeof(HONDA_BG_LONG_TX_MSGS)/sizeof(HONDA_BG_LONG_TX_MSGS[0]));
-  } else if ((honda_hw == HONDA_BH_HW) && !honda_bosch_long) {
+  if ((honda_hw == HONDA_BH_HW) && !honda_bosch_long) {
     tx = msg_allowed(to_send, HONDA_BH_TX_MSGS, sizeof(HONDA_BH_TX_MSGS)/sizeof(HONDA_BH_TX_MSGS[0]));
   } else if ((honda_hw == HONDA_BH_HW) && honda_bosch_long) {
     tx = msg_allowed(to_send, HONDA_BH_LONG_TX_MSGS, sizeof(HONDA_BH_LONG_TX_MSGS)/sizeof(HONDA_BH_LONG_TX_MSGS[0]));
@@ -343,22 +337,6 @@ static const addr_checks* honda_nidec_init(int16_t param) {
   return &honda_rx_checks;
 }
 
-static const addr_checks* honda_bosch_giraffe_init(int16_t param) {
-  controls_allowed = false;
-  relay_malfunction_reset();
-  honda_hw = HONDA_BG_HW;
-  // Checking for alternate brake override from safety parameter
-  honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE);
-
-  // radar disabled so allow gas/brakes
-#ifdef ALLOW_DEBUG
-  honda_bosch_long = GET_FLAG(param, HONDA_PARAM_BOSCH_LONG);
-#endif
-
-  honda_rx_checks = (addr_checks){honda_nidec_addr_checks, HONDA_NIDEC_ADDR_CHECKS_LEN};
-  return &honda_rx_checks;
-}
-
 static const addr_checks* honda_bosch_harness_init(int16_t param) {
   controls_allowed = false;
   relay_malfunction_reset();
@@ -425,14 +403,6 @@ const safety_hooks honda_nidec_hooks = {
   .tx = honda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = honda_nidec_fwd_hook,
-};
-
-const safety_hooks honda_bosch_giraffe_hooks = {
-  .init = honda_bosch_giraffe_init,
-  .rx = honda_rx_hook,
-  .tx = honda_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
-  .fwd = honda_bosch_fwd_hook,
 };
 
 const safety_hooks honda_bosch_harness_hooks = {
