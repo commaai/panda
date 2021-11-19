@@ -272,6 +272,7 @@ int set_safety_hooks(uint16_t mode, int16_t param) {
   cruise_engaged_prev = false;
   vehicle_speed = 0;
   vehicle_moving = false;
+  acc_main_on = false;
   desired_torque_last = 0;
   rt_torque_last = 0;
   ts_angle_last = 0;
