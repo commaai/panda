@@ -36,6 +36,7 @@ bool get_gas_interceptor_detetcted(void);
 int get_gas_interceptor_prev(void);
 bool get_gas_pressed_prev(void);
 bool get_brake_pressed_prev(void);
+bool get_acc_main_on(void);
 
 void set_torque_meas(int min, int max);
 int get_torque_meas_min(void);

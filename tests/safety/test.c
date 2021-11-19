@@ -118,6 +118,10 @@ bool get_vehicle_moving(void){
   return vehicle_moving;
 }
 
+bool get_acc_main_on(void){
+  return acc_main_on;
+}
+
 int get_hw_type(void){
   return hw_type;
 }
