@@ -403,7 +403,7 @@ const safety_hooks honda_nidec_hooks = {
   .fwd = honda_nidec_fwd_hook,
 };
 
-const safety_hooks honda_bosch_harness_hooks = {
+const safety_hooks honda_bosch_hooks = {
   .init = honda_bosch_init,
   .rx = honda_rx_hook,
   .tx = honda_tx_hook,
