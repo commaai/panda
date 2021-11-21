@@ -354,7 +354,7 @@ class TestHondaBoschSafetyBase(TestHondaSafetyBase):
 class TestHondaBosch(TestHondaBoschSafetyBase):
   def setUp(self):
     super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH_HARNESS, 0)
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, 0)
     self.safety.init_tests_honda()
 
   def test_spam_cancel_safety_check(self):
@@ -378,7 +378,7 @@ class TestHondaBoschLongSafety(TestHondaBoschSafetyBase):
 
   def setUp(self):
     super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH_HARNESS, Panda.FLAG_HONDA_BOSCH_LONG)
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_BOSCH_LONG)
     self.safety.init_tests_honda()
 
   def _send_gas_brake_msg(self, gas, accel):
