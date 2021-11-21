@@ -11,7 +11,7 @@ def to_signed(d, bits):
 def is_steering_msg(mode, addr):
   ret = False
   if mode in [Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH]:
-    ret = (addr == 0xE4) or (addr == 0x194) or (addr == 0x33D)
+    ret = (addr == 0xE4) or (addr == 0x194) or (addr == 0x33D) or (addr == 0x33DA) or (addr == 0x33DB)
   elif mode == Panda.SAFETY_TOYOTA:
     ret = addr == 0x2E4
   elif mode == Panda.SAFETY_GM:
