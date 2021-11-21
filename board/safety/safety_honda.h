@@ -42,14 +42,14 @@ AddrCheckStruct honda_nidec_alt_addr_checks[] = {
 #define HONDA_NIDEC_ALT_ADDR_CHECKS_LEN (sizeof(honda_nidec_alt_addr_checks) / sizeof(honda_nidec_alt_addr_checks[0]))
 
 // Bosch has pt on bus 1
-AddrCheckStruct honda_bh_addr_checks[] = {
+AddrCheckStruct honda_bosch_addr_checks[] = {
   {.msg = {{0x296, 1, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }, { 0 }}},
   {.msg = {{0x158, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x17C, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
            {0x1BE, 1, 3, .check_checksum = true, .max_counter = 3U, .expected_timestep = 20000U}, { 0 }}},
   {.msg = {{0x326, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
-#define HONDA_BOSCH_ADDR_CHECKS_LEN (sizeof(honda_bh_addr_checks) / sizeof(honda_bh_addr_checks[0]))
+#define HONDA_BOSCH_ADDR_CHECKS_LEN (sizeof(honda_bosch_addr_checks) / sizeof(honda_bosch_addr_checks[0]))
 
 const uint16_t HONDA_PARAM_ALT_BRAKE = 1;
 const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
@@ -349,7 +349,7 @@ static const addr_checks* honda_bosch_init(int16_t param) {
   honda_bosch_long = GET_FLAG(param, HONDA_PARAM_BOSCH_LONG);
 #endif
 
-  honda_rx_checks = (addr_checks){honda_bh_addr_checks, HONDA_BOSCH_ADDR_CHECKS_LEN};
+  honda_rx_checks = (addr_checks){honda_bosch_addr_checks, HONDA_BOSCH_ADDR_CHECKS_LEN};
   return &honda_rx_checks;
 }
 
