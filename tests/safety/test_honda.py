@@ -12,15 +12,19 @@ class Btn:
   SET = 3
   RESUME = 4
 
-HONDA_N_HW = 0
-HONDA_BG_HW = 1
-HONDA_BH_HW = 2
+HONDA_NIDEC = 0
+HONDA_BOSCH = 1
 
 
-class TestHondaSafety(common.PandaSafetyTest):
+class TestHondaSafetyBase(common.PandaSafetyTest):
   MAX_BRAKE: float = 255
   PT_BUS: Optional[int] = None  # must be set when inherited
   STEER_BUS: Optional[int] = None  # must be set when inherited
+
+  STANDSTILL_THRESHOLD = 0
+  RELAY_MALFUNCTION_ADDR = 0xE4
+  RELAY_MALFUNCTION_BUS = 0
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   cnt_speed = 0
   cnt_gas = 0
@@ -30,7 +34,7 @@ class TestHondaSafety(common.PandaSafetyTest):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "TestHondaSafety":
+    if cls.__name__ == "TestHondaSafetyBase":
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
@@ -185,7 +189,7 @@ class TestHondaSafety(common.PandaSafetyTest):
 
         self.safety.set_controls_allowed(1)
         hw = self.safety.get_honda_hw()
-        if hw == HONDA_N_HW:
+        if hw == HONDA_NIDEC:
           self.safety.set_honda_fwd_brake(False)
           self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(self.MAX_BRAKE)))
         self.assertEqual(allow_ctrl, self._tx(self._send_steer_msg(0x1000)))
@@ -193,7 +197,7 @@ class TestHondaSafety(common.PandaSafetyTest):
         # reset status
         self.safety.set_controls_allowed(0)
         self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
-        if hw == HONDA_N_HW:
+        if hw == HONDA_NIDEC:
           self._tx(self._send_brake_msg(0))
         self._tx(self._send_steer_msg(0))
         if pedal == 'brake':
@@ -203,13 +207,9 @@ class TestHondaSafety(common.PandaSafetyTest):
           self._rx(self._gas_msg(0))
 
 
-class TestHondaNidecSafety(TestHondaSafety, common.InterceptorSafetyTest):
+class TestHondaNidecSafety(TestHondaSafetyBase, common.InterceptorSafetyTest):
   TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x200, 0], [0x30C, 0], [0x33D, 0]]
-  STANDSTILL_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR = 0xE4
-  RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0x194, 0x33D, 0x30C]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   PT_BUS = 0
   STEER_BUS = 0
@@ -304,13 +304,16 @@ class TestHondaNidecAltSafety(TestHondaNidecSafety, common.InterceptorSafetyTest
     return self.packer.make_can_msg_panda("SCM_BUTTONS", self.PT_BUS, values)
 
 
-class TestHondaBoschSafety(TestHondaSafety):
-  STANDSTILL_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR = 0xE4
+class TestHondaBoschSafetyBase(TestHondaSafetyBase):
+  PT_BUS = 1
+  STEER_BUS = 0
+
+  TX_MSGS = [[0xE4, 0], [0xE5, 0], [0x296, 1], [0x33D, 0]]
+  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D]}
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "TestHondaBoschSafety":
+    if cls.__name__ == "TestHondaBoschSafetyBase":
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
@@ -348,18 +351,10 @@ class TestHondaBoschSafety(TestHondaSafety):
     self.assertTrue(self.safety.get_controls_allowed())
 
 
-class TestHondaBoschHarnessSafety(TestHondaBoschSafety):
-  TX_MSGS = [[0xE4, 0], [0xE5, 0], [0x296, 1], [0x33D, 0]]  # Bosch Harness
-  RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
-
-  PT_BUS = 1
-  STEER_BUS = 0
-
+class TestHondaBosch(TestHondaBoschSafetyBase):
   def setUp(self):
     super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH_HARNESS, 0)
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, 0)
     self.safety.init_tests_honda()
 
   def test_spam_cancel_safety_check(self):
@@ -372,32 +367,19 @@ class TestHondaBoschHarnessSafety(TestHondaBoschSafety):
     self.assertTrue(self._tx(self._button_msg(Btn.RESUME)))
 
 
-class TestHondaBoschGiraffeSafety(TestHondaBoschHarnessSafety):
-  TX_MSGS = [[0xE4, 2], [0xE5, 2], [0x296, 0], [0x33D, 2]]  # Bosch Giraffe
-  RELAY_MALFUNCTION_BUS = 2
-  FWD_BLACKLISTED_ADDRS = {1: [0xE4, 0xE5, 0x33D]}
-  FWD_BUS_LOOKUP = {1: 2, 2: 1}
-
-  PT_BUS = 0
-  STEER_BUS = 2
-
-  def setUp(self):
-    super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH_GIRAFFE, 0)
-    self.safety.init_tests_honda()
-
-
-class TestHondaBoschLongSafety(TestHondaBoschSafety):
+class TestHondaBoschLongSafety(TestHondaBoschSafetyBase):
   NO_GAS = -30000
   MAX_GAS = 2000
   MAX_BRAKE = -3.5
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestHondaBoschLongSafety":
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
+  STEER_BUS = 1
+  TX_MSGS = [[0xE4, 1], [0x1DF, 1], [0x1EF, 1], [0x1FA, 1], [0x30C, 1], [0x33D, 1], [0x39F, 1], [0x18DAB0F1, 1]]  # Bosch w/ gas and brakes
+  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D]}
+
+  def setUp(self):
+    super().setUp()
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_BOSCH_LONG)
+    self.safety.init_tests_honda()
 
   def _send_gas_brake_msg(self, gas, accel):
     values = {
@@ -435,35 +417,6 @@ class TestHondaBoschLongSafety(TestHondaBoschSafety):
         self.safety.set_controls_allowed(controls_allowed)
         send = self.MAX_BRAKE <= accel <= 0 if controls_allowed else accel == 0
         self.assertEqual(send, self._tx(self._send_gas_brake_msg(self.NO_GAS, accel)), (controls_allowed, accel))
-
-class TestHondaBoschLongHarnessSafety(TestHondaBoschLongSafety):
-  TX_MSGS = [[0xE4, 1], [0x1DF, 1], [0x1EF, 1], [0x1FA, 1], [0x30C, 1], [0x33D, 1], [0x39F, 1], [0x18DAB0F1, 1]]  # Bosch Harness w/ gas and brakes
-  RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
-
-  PT_BUS = 1
-  STEER_BUS = 1
-
-  def setUp(self):
-    super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH_HARNESS, 2)
-    self.safety.init_tests_honda()
-
-
-class TestHondaBoschLongGiraffeSafety(TestHondaBoschLongSafety):
-  TX_MSGS = [[0xE4, 0], [0x1DF, 0], [0x1EF, 0], [0x1FA, 0], [0x30C, 0], [0x33D, 0], [0x39F, 0], [0x18DAB0F1, 0]]  # Bosch Giraffe w/ gas and brakes
-  RELAY_MALFUNCTION_BUS = 2
-  FWD_BLACKLISTED_ADDRS = {1: [0xE4, 0xE5, 0x33D]}
-  FWD_BUS_LOOKUP = {1: 2, 2: 1}
-
-  PT_BUS = 0
-  STEER_BUS = 0
-
-  def setUp(self):
-    super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH_GIRAFFE, 2)
-    self.safety.init_tests_honda()
 
 
 if __name__ == "__main__":
