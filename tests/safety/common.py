@@ -444,7 +444,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
         if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
           continue
         # Both VW safety variants send the same steer and HUD messages
-        if current_test.startswith("TestVolkswagenMqb") and source_test.startswith("TestVolkswagenMqb") and addr in [0x126, 0x397]:
+        if current_test.startswith("TestVolkswagenMqb") and source_test.startswith("TestVolkswagenMqb") and addr in [0x126, 0x324, 0x397]:
           continue
         # Verified conflict
         if current_test.startswith("TestSubaru") and source_test.startswith("TestVolkswagenMqb") and addr == 0x122:

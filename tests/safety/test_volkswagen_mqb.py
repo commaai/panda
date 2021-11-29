@@ -28,6 +28,7 @@ MSG_HCA_01 = 0x126      # TX by OP, Heading Control Assist steering torque
 MSG_GRA_ACC_01 = 0x12B  # TX by OP, ACC control buttons for cancel/resume
 MSG_ACC_07 = 0x12E      # TX by OP, ACC control instructions to the drivetrain coordinator
 MSG_ACC_02 = 0x30C      # TX by OP, ACC HUD data to the instrument cluster
+MSG_ACC_04 = 0x324      # TX by OP, ACC HUD alerts and driving profile selection
 MSG_LDW_02 = 0x397      # TX by OP, Lane line recognition and text alerts
 
 
@@ -108,7 +109,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
 
   # Acceleration request to drivetrain coordinator
   def _acc_07_msg(self, accel):
-    values = {"ACC_Sollbeschleunigung_01": accel, "COUNTER": self.cnt_acc_07 % 16}
+    values = {"ACC_Accel_TSK": accel, "COUNTER": self.cnt_acc_07 % 16}
     self.__class__.cnt_acc_07 += 1
     return self.packer.make_can_msg_panda("ACC_07", 0, values)
 
@@ -289,8 +290,8 @@ class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
 
 
 class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
-  TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_ACC_02, 0], [MSG_ACC_06, 0], [MSG_ACC_07, 0]]
-  FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02, MSG_ACC_02, MSG_ACC_06, MSG_ACC_07]}
+  TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_ACC_02, 0], [MSG_ACC_04, 0], [MSG_ACC_06, 0], [MSG_ACC_07, 0]]
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02, MSG_ACC_02, MSG_ACC_04, MSG_ACC_06, MSG_ACC_07]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):

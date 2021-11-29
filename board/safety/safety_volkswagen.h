@@ -20,11 +20,13 @@ const int VOLKSWAGEN_MIN_ACCEL = -3500;             // Max decel 3.5 m/s2
 #define MSG_GRA_ACC_01  0x12B   // TX by OP, ACC control buttons for cancel/resume
 #define MSG_ACC_07      0x12E   // TX by OP, ACC control instructions to the drivetrain coordinator
 #define MSG_ACC_02      0x30C   // TX by OP, ACC HUD data to the instrument cluster
+#define MSG_ACC_04      0x324   // TX by OP, ACC HUD alerts and driving profile selection
 #define MSG_LDW_02      0x397   // TX by OP, Lane line recognition and text alerts
 
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
 const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_GRA_ACC_01, 0, 8}, {MSG_GRA_ACC_01, 2, 8}, {MSG_LDW_02, 0, 8}};
-const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_ACC_02, 0, 8}, {MSG_ACC_06, 0, 8}, {MSG_ACC_07, 0, 8}, {MSG_LDW_02, 0, 8}};
+const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_ACC_02, 0, 8}, {MSG_ACC_04, 0, 8},
+                                              {MSG_ACC_06, 0, 8}, {MSG_ACC_07, 0, 8}, {MSG_LDW_02, 0, 8}};
 
 AddrCheckStruct volkswagen_mqb_addr_checks[] = {
   {.msg = {{MSG_ESP_19, 0, 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -65,7 +67,8 @@ int volkswagen_torque_msg = 0;
 int volkswagen_lane_msg = 0;
 int volkswagen_acc_accel_msg_1 = 0;
 int volkswagen_acc_accel_msg_2 = 0;
-int volkswagen_acc_hud_msg = 0;
+int volkswagen_acc_hud_msg_1 = 0;
+int volkswagen_acc_hud_msg_2 = 0;
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
 
 
@@ -142,7 +145,8 @@ static const addr_checks* volkswagen_mqb_init(int16_t param) {
   volkswagen_lane_msg = MSG_LDW_02;
   volkswagen_acc_accel_msg_1 = MSG_ACC_06;
   volkswagen_acc_accel_msg_2 = MSG_ACC_07;
-  volkswagen_acc_hud_msg = MSG_ACC_02;
+  volkswagen_acc_hud_msg_1 = MSG_ACC_02;
+  volkswagen_acc_hud_msg_2 = MSG_ACC_04;
   gen_crc_lookup_table(0x2F, volkswagen_crc8_lut_8h2f);
   return &volkswagen_mqb_rx_checks;
 }
@@ -448,7 +452,8 @@ static int volkswagen_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
         // OP takes control of the Heading Control Assist and Lane Departure Warning messages from the camera
         bus_fwd = -1;
       } else if (volkswagen_longitudinal && ((addr == volkswagen_acc_accel_msg_1) ||
-                (addr == volkswagen_acc_accel_msg_2) || (addr == volkswagen_acc_hud_msg))) {
+                (addr == volkswagen_acc_accel_msg_2) || (addr == volkswagen_acc_hud_msg_1) ||
+                (addr == volkswagen_acc_hud_msg_2))) {
         // If longitudinal control is enabled, OP takes control of ACC accel/braking and HUD messaging
         bus_fwd = -1;
       } else {
