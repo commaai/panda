@@ -12,5 +12,3 @@ misra-c2012-20.10
 misra-c2012-21.1
 # MUST BE FIXED, mostly in the safety code
 misra-c2012-10.4
-# MUST BE FIXED, mostly in the safety code
-misra-c2012-10.1

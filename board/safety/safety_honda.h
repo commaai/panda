@@ -109,7 +109,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     // check ACC main state
     // 0x326 for all Bosch and some Nidec, 0x1A6 for some Nidec
     if ((addr == 0x326) || (addr == 0x1A6)) {
-      acc_main_on = GET_BIT(to_push, (addr == 0x326) ? 28 : 47);
+      acc_main_on = GET_BIT(to_push, ((addr == 0x326) ? 28 : 47));
       if (!acc_main_on) {
         controls_allowed = 0;
       }
@@ -119,7 +119,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     // 0x1A6 for the ILX, 0x296 for the Civic Touring
     if ((addr == 0x1A6) || (addr == 0x296)) {
       // check for button presses
-      int button = (GET_BYTE(to_push, 0) & 0xE0) >> 5;
+      int button = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
       switch (button) {
         case 1:  // main
         case 2:  // cancel
