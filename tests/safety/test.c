@@ -70,6 +70,16 @@ void safety_tick_current_rx_checks() {
   safety_tick(current_rx_checks);
 }
 
+bool addr_checks_valid() {
+  for (int i = 0; i < current_rx_checks->len; i++) {
+    const AddrCheckStruct addr = current_rx_checks->check[i];
+    if (!addr.msg_seen || addr.lagging || !addr.valid_checksum || (addr.wrong_counters >= MAX_WRONG_COUNTERS)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void set_controls_allowed(bool c){
   controls_allowed = c;
 }
