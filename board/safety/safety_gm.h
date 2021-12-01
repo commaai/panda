@@ -38,7 +38,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &gm_rx_checks, NULL, NULL, NULL);
 
-  if (valid && (GET_BUS(to_push) == 0)) {
+  if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
 
     if (addr == 388) {
@@ -74,16 +74,16 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     if (addr == 241) {
       // Brake pedal's potentiometer returns near-zero reading
       // even when pedal is not pressed
-      brake_pressed = GET_BYTE(to_push, 1) >= 10;
+      brake_pressed = GET_BYTE(to_push, 1) >= 10U;
     }
 
     if (addr == 417) {
-      gas_pressed = GET_BYTE(to_push, 6) != 0;
+      gas_pressed = GET_BYTE(to_push, 6) != 0U;
     }
 
     // exit controls on regen paddle
     if (addr == 189) {
-      bool regen = GET_BYTE(to_push, 0) & 0x20;
+      bool regen = GET_BYTE(to_push, 0) & 0x20U;
       if (regen) {
         controls_allowed = 0;
       }

@@ -62,7 +62,7 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
         if(addr == 0x370) {
           // Steering angle: (0.1 * val) - 819.2 in deg.
           // Store it 1/10 deg to match steering request
-          int angle_meas_new = (((GET_BYTE(to_push, 4) & 0x3FU) << 8) | GET_BYTE(to_push, 5)) - 8192;
+          int angle_meas_new = (((GET_BYTE(to_push, 4) & 0x3FU) << 8) | GET_BYTE(to_push, 5)) - 8192U;
           update_sample(&angle_meas, angle_meas_new);
         }
       }
@@ -75,12 +75,12 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
 
       if(addr == (tesla_powertrain ? 0x106 : 0x108)) {
         // Gas pressed
-        gas_pressed = (GET_BYTE(to_push, 6) != 0);
+        gas_pressed = (GET_BYTE(to_push, 6) != 0U);
       }
 
       if(addr == (tesla_powertrain ? 0x1f8 : 0x20a)) {
         // Brake pressed
-        brake_pressed = (((GET_BYTE(to_push, 0) & 0x0CU) >> 2) != 1);
+        brake_pressed = (((GET_BYTE(to_push, 0) & 0x0CU) >> 2) != 1U);
       }
 
       if(addr == (tesla_powertrain ? 0x256 : 0x368)) {

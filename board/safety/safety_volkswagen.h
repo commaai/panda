@@ -145,7 +145,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &volkswagen_mqb_rx_checks,
                                  volkswagen_get_checksum, volkswagen_mqb_compute_crc, volkswagen_mqb_get_counter);
 
-  if (valid && (GET_BUS(to_push) == 0)) {
+  if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
 
     // Update in-motion state by sampling front wheel speeds
@@ -187,7 +187,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
 
     // Signal: Motor_20.MO_Fahrpedalrohwert_01
     if (addr == MSG_MOTOR_20) {
-      gas_pressed = ((GET_BYTES_04(to_push) >> 12) & 0xFFU) != 0;
+      gas_pressed = ((GET_BYTES_04(to_push) >> 12) & 0xFFU) != 0U;
     }
 
     // Signal: ESP_05.ESP_Fahrer_bremst
@@ -205,7 +205,7 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &volkswagen_pq_rx_checks,
                                 volkswagen_get_checksum, volkswagen_pq_compute_checksum, volkswagen_pq_get_counter);
 
-  if (valid && (GET_BUS(to_push) == 0)) {
+  if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
 
     // Update in-motion state from speed value.
@@ -324,7 +324,7 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == MSG_GRA_ACC_01) && !controls_allowed) {
     // disallow resume and set: bits 16 and 19
-    if ((GET_BYTE(to_send, 2) & 0x9U) != 0) {
+    if ((GET_BYTE(to_send, 2) & 0x9U) != 0U) {
       tx = 0;
     }
   }
@@ -361,7 +361,7 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send) {
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == MSG_GRA_NEU) && !controls_allowed) {
     // disallow resume and set: bits 16 and 17
-    if ((GET_BYTE(to_send, 2) & 0x3U) != 0) {
+    if ((GET_BYTE(to_send, 2) & 0x3U) != 0U) {
       tx = 0;
     }
   }
