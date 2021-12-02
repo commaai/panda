@@ -28,16 +28,16 @@ AddrCheckStruct honda_nidec_addr_checks[] = {
            {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x326, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
 #define HONDA_NIDEC_ADDR_CHECKS_LEN (sizeof(honda_nidec_addr_checks) / sizeof(honda_nidec_addr_checks[0]))
 
-// For Nidecs with main on signal on 0x326
+// For Nidecs with main on signal on an alternate msg
 AddrCheckStruct honda_nidec_alt_addr_checks[] = {
   {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
            {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x326, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
 #define HONDA_NIDEC_ALT_ADDR_CHECKS_LEN (sizeof(honda_nidec_alt_addr_checks) / sizeof(honda_nidec_alt_addr_checks[0]))
 
@@ -329,15 +329,11 @@ static const addr_checks* honda_nidec_init(int16_t param) {
   honda_alt_brake_msg = false;
   honda_bosch_long = false;
 
-  honda_rx_checks = (addr_checks){honda_nidec_addr_checks, HONDA_NIDEC_ADDR_CHECKS_LEN};
-
-  /*
   if (GET_FLAG(param, HONDA_PARAM_NIDEC_ALT)) {
     honda_rx_checks = (addr_checks){honda_nidec_alt_addr_checks, HONDA_NIDEC_ALT_ADDR_CHECKS_LEN};
   } else {
     honda_rx_checks = (addr_checks){honda_nidec_addr_checks, HONDA_NIDEC_ADDR_CHECKS_LEN};
   }
-  */
   return &honda_rx_checks;
 }
 
