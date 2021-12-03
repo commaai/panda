@@ -360,28 +360,35 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
 
   // Safety check for both ACC_06 and ACC_07 acceleration requests
   // Signal: ACC_06.ACC_Sollbeschleunigung_02 (acceleration in m/s2, scale 0.005, offset -7.22)
-  // Signal: ACC_07.ACC_Sollbeschleunigung_01 (acceleration in m/s2, scale 0.005, offset -7.22)
-  // To avoid floating point math, scale upward and compare to pre-scaled safety m/s2 boundaries * 100
+  // Signal: ACC_07.ACC_Accel_TSK (acceleration in m/s2, scale 0.005, offset -7.22)
+  // Signal: ACC_07.ACC_Accel_Secondary (acceleration in m/s2, scale 0.03, offset -4.6)
+  // To avoid floating point math, scale upward and compare to pre-scaled safety m/s2 boundaries
   if ((addr == MSG_ACC_06) || (addr == MSG_ACC_07)) {
     bool violation = 0;
     int desired_accel = 0;
+    int secondary_accel = 0;
 
     if (addr == MSG_ACC_06) {
       desired_accel = ((((GET_BYTE(to_send, 4) & 0x7) << 8) | GET_BYTE(to_send, 3)) * 5) - 7220;
     }
     else {
       desired_accel = (((GET_BYTE(to_send, 7) << 3) | ((GET_BYTE(to_send, 6) & 0xE0) >> 5)) * 5) - 7220;
+      secondary_accel = (GET_BYTE(to_send, 4) * 30) - 4600;
     }
 
-    // VW send 3.01 m/s2 acceleration in place of zero
+    // VW send one increment above the max range when inactive
     if (desired_accel == 3010) {
       desired_accel = 0;
     }
+    if (secondary_accel == 3030) {
+      secondary_accel = 0;
+    }
 
-    if (!controls_allowed && (desired_accel != 0)) {
+    if (!controls_allowed && ((desired_accel != 0) || (secondary_accel != 0))) {
       violation = 1;
     }
     violation |= max_limit_check(desired_accel, VOLKSWAGEN_MAX_ACCEL, VOLKSWAGEN_MIN_ACCEL);
+    violation |= max_limit_check(secondary_accel, VOLKSWAGEN_MAX_ACCEL, VOLKSWAGEN_MIN_ACCEL);
 
     if (violation) {
       tx = 0;
