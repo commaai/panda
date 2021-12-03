@@ -166,7 +166,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &volkswagen_mqb_rx_checks,
                                  volkswagen_get_checksum, volkswagen_mqb_compute_crc, volkswagen_mqb_get_counter);
 
-  if (valid && (GET_BUS(to_push) == 0)) {
+  if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
 
     // Update in-motion state by sampling front wheel speeds
@@ -184,8 +184,8 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
     // Signal: LH_EPS_03.EPS_Lenkmoment (absolute torque)
     // Signal: LH_EPS_03.EPS_VZ_Lenkmoment (direction)
     if (addr == MSG_LH_EPS_03) {
-      int torque_driver_new = GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0x1F) << 8);
-      int sign = (GET_BYTE(to_push, 6) & 0x80) >> 7;
+      int torque_driver_new = GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0x1FU) << 8);
+      int sign = (GET_BYTE(to_push, 6) & 0x80U) >> 7;
       if (sign == 1) {
         torque_driver_new *= -1;
       }
@@ -198,7 +198,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
         // Signal: GRA_ACC_01.GRA_Abbrechen
         // Signal: GRA_ACC_01.GRA_Tip_Setzen
         // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
-        if ((GET_BIT(to_push, 19) == 1) || (GET_BIT(to_push, 16) == 1)) {
+        if ((GET_BIT(to_push, 19) == 1) || (GET_BIT(to_push, 16) == 1U)) {
           controls_allowed = 1;
         }
         if (GET_BIT(to_push, 13) == 1) {
@@ -209,7 +209,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
       if (addr == MSG_TSK_06) {
         // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
         // Signal: TSK_06.TSK_Status
-        int acc_status = (GET_BYTE(to_push, 3) & 0x7);
+        int acc_status = (GET_BYTE(to_push, 3) & 0x7U);
         int cruise_engaged = ((acc_status == 3) || (acc_status == 4) || (acc_status == 5)) ? 1 : 0;
         if (cruise_engaged && !cruise_engaged_prev) {
           controls_allowed = 1;
@@ -223,12 +223,12 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
 
     // Signal: Motor_20.MO_Fahrpedalrohwert_01
     if (addr == MSG_MOTOR_20) {
-      gas_pressed = ((GET_BYTES_04(to_push) >> 12) & 0xFF) != 0;
+      gas_pressed = ((GET_BYTES_04(to_push) >> 12) & 0xFFU) != 0U;
     }
 
     // Signal: ESP_05.ESP_Fahrer_bremst
     if (addr == MSG_ESP_05) {
-      brake_pressed = (GET_BYTE(to_push, 3) & 0x4) >> 2;
+      brake_pressed = (GET_BYTE(to_push, 3) & 0x4U) >> 2;
     }
 
     generic_rx_checks((addr == MSG_HCA_01));
@@ -241,13 +241,13 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &volkswagen_pq_rx_checks,
                                 volkswagen_get_checksum, volkswagen_pq_compute_checksum, volkswagen_pq_get_counter);
 
-  if (valid && (GET_BUS(to_push) == 0)) {
+  if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
 
     // Update in-motion state from speed value.
     // Signal: Bremse_1.Geschwindigkeit_neu__Bremse_1_
     if (addr == MSG_BREMSE_1) {
-      int speed = ((GET_BYTE(to_push, 2) & 0xFE) >> 1) | (GET_BYTE(to_push, 3) << 7);
+      int speed = ((GET_BYTE(to_push, 2) & 0xFEU) >> 1) | (GET_BYTE(to_push, 3) << 7);
       // DBC speed scale 0.01: 0.3m/s = 108.
       vehicle_moving = speed > 108;
     }
@@ -256,8 +256,8 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
     // Signal: Lenkhilfe_3.LH3_LM (absolute torque)
     // Signal: Lenkhilfe_3.LH3_LMSign (direction)
     if (addr == MSG_LENKHILFE_3) {
-      int torque_driver_new = GET_BYTE(to_push, 2) | ((GET_BYTE(to_push, 3) & 0x3) << 8);
-      int sign = (GET_BYTE(to_push, 3) & 0x4) >> 2;
+      int torque_driver_new = GET_BYTE(to_push, 2) | ((GET_BYTE(to_push, 3) & 0x3U) << 8);
+      int sign = (GET_BYTE(to_push, 3) & 0x4U) >> 2;
       if (sign == 1) {
         torque_driver_new *= -1;
       }
@@ -267,7 +267,7 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
     // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
     // Signal: Motor_2.GRA_Status
     if (addr == MSG_MOTOR_2) {
-      int acc_status = (GET_BYTE(to_push, 2) & 0xC0) >> 6;
+      int acc_status = (GET_BYTE(to_push, 2) & 0xC0U) >> 6;
       int cruise_engaged = ((acc_status == 1) || (acc_status == 2)) ? 1 : 0;
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
@@ -285,7 +285,7 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
 
     // Signal: Motor_2.Bremslichtschalter
     if (addr == MSG_MOTOR_2) {
-      brake_pressed = (GET_BYTE(to_push, 2) & 0x1);
+      brake_pressed = (GET_BYTE(to_push, 2) & 0x1U);
     }
 
     generic_rx_checks((addr == MSG_HCA_1));
@@ -347,8 +347,8 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
   // Signal: HCA_01.Assist_Torque (absolute torque)
   // Signal: HCA_01.Assist_VZ (direction)
   if (addr == MSG_HCA_01) {
-    int desired_torque = GET_BYTE(to_send, 2) | ((GET_BYTE(to_send, 3) & 0x3F) << 8);
-    int sign = (GET_BYTE(to_send, 3) & 0x80) >> 7;
+    int desired_torque = GET_BYTE(to_send, 2) | ((GET_BYTE(to_send, 3) & 0x3FU) << 8);
+    int sign = (GET_BYTE(to_send, 3) & 0x80U) >> 7;
     if (sign == 1) {
       desired_torque *= -1;
     }
@@ -369,18 +369,18 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
     int secondary_accel = 0;
 
     if (addr == MSG_ACC_06) {
-      desired_accel = ((((GET_BYTE(to_send, 4) & 0x7) << 8) | GET_BYTE(to_send, 3)) * 5) - 7220;
+      desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5) - 7220;
     }
     else {
-      desired_accel = (((GET_BYTE(to_send, 7) << 3) | ((GET_BYTE(to_send, 6) & 0xE0) >> 5)) * 5) - 7220;
+      desired_accel = (((GET_BYTE(to_send, 7) << 3U) | ((GET_BYTE(to_send, 6) & 0xE0) >> 5)) * 5) - 7220;
       secondary_accel = (GET_BYTE(to_send, 4) * 30) - 4600;
     }
 
     // VW send one increment above the max range when inactive
-    if (desired_accel == 3010) {
+    if (desired_accel == 3010U) {
       desired_accel = 0;
     }
-    if (secondary_accel == 3030) {
+    if (secondary_accel == 3030U) {
       secondary_accel = 0;
     }
 
@@ -399,7 +399,7 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == MSG_GRA_ACC_01) && !controls_allowed) {
     // disallow resume and set: bits 16 and 19
-    if ((GET_BYTE(to_send, 2) & 0x9) != 0) {
+    if ((GET_BYTE(to_send, 2) & 0x9U) != 0U) {
       tx = 0;
     }
   }
@@ -420,9 +420,9 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send) {
   // Signal: HCA_1.LM_Offset (absolute torque)
   // Signal: HCA_1.LM_Offsign (direction)
   if (addr == MSG_HCA_1) {
-    int desired_torque = GET_BYTE(to_send, 2) | ((GET_BYTE(to_send, 3) & 0x7F) << 8);
+    int desired_torque = GET_BYTE(to_send, 2) | ((GET_BYTE(to_send, 3) & 0x7FU) << 8);
     desired_torque = desired_torque / 32;  // DBC scale from PQ network to centi-Nm
-    int sign = (GET_BYTE(to_send, 3) & 0x80) >> 7;
+    int sign = (GET_BYTE(to_send, 3) & 0x80U) >> 7;
     if (sign == 1) {
       desired_torque *= -1;
     }
@@ -436,7 +436,7 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send) {
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == MSG_GRA_NEU) && !controls_allowed) {
     // disallow resume and set: bits 16 and 17
-    if ((GET_BYTE(to_send, 2) & 0x3) != 0) {
+    if ((GET_BYTE(to_send, 2) & 0x3U) != 0U) {
       tx = 0;
     }
   }

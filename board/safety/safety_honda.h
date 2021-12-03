@@ -17,7 +17,7 @@ const CanMsg HONDA_BOSCH_LONG_TX_MSGS[] = {{0xE4, 1, 5}, {0x1DF, 1, 8}, {0x1EF, 
 // assuming that 2*(gain_dbc1*gas1) == (gain_dbc2*gas2)
 // In this safety: ((gas1 + (gas2/2))/2) > THRESHOLD
 const int HONDA_GAS_INTERCEPTOR_THRESHOLD = 344;
-#define HONDA_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + ((GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2 ) / 2) // avg between 2 tracks
+#define HONDA_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + ((GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2U ) / 2U) // avg between 2 tracks
 const int HONDA_BOSCH_NO_GAS_VALUE = -30000; // value sent when not requesting gas
 const int HONDA_BOSCH_GAS_MAX = 2000;
 const int HONDA_BOSCH_ACCEL_MIN = -350; // max braking == -3.5m/s2
@@ -28,16 +28,16 @@ AddrCheckStruct honda_nidec_addr_checks[] = {
            {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x326, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
 #define HONDA_NIDEC_ADDR_CHECKS_LEN (sizeof(honda_nidec_addr_checks) / sizeof(honda_nidec_addr_checks[0]))
 
-// For Nidecs with main on signal on 0x326
+// For Nidecs with main on signal on an alternate msg
 AddrCheckStruct honda_nidec_alt_addr_checks[] = {
   {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
            {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x326, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
 #define HONDA_NIDEC_ALT_ADDR_CHECKS_LEN (sizeof(honda_nidec_alt_addr_checks) / sizeof(honda_nidec_alt_addr_checks[0]))
 
@@ -64,7 +64,7 @@ addr_checks honda_rx_checks = {honda_nidec_addr_checks, HONDA_NIDEC_ADDR_CHECKS_
 
 
 static uint8_t honda_get_checksum(CANPacket_t *to_push) {
-  int checksum_byte = GET_LEN(to_push) - 1;
+  int checksum_byte = GET_LEN(to_push) - 1U;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte)) & 0xFU;
 }
 
@@ -86,7 +86,7 @@ static uint8_t honda_compute_checksum(CANPacket_t *to_push) {
 }
 
 static uint8_t honda_get_counter(CANPacket_t *to_push) {
-  int counter_byte = GET_LEN(to_push) - 1;
+  int counter_byte = GET_LEN(to_push) - 1U;
   return ((uint8_t)(GET_BYTE(to_push, counter_byte)) >> 4U) & 0x3U;
 }
 
@@ -109,7 +109,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     // check ACC main state
     // 0x326 for all Bosch and some Nidec, 0x1A6 for some Nidec
     if ((addr == 0x326) || (addr == 0x1A6)) {
-      acc_main_on = GET_BIT(to_push, (addr == 0x326) ? 28 : 47);
+      acc_main_on = GET_BIT(to_push, ((addr == 0x326) ? 28U : 47U));
       if (!acc_main_on) {
         controls_allowed = 0;
       }
@@ -119,7 +119,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     // 0x1A6 for the ILX, 0x296 for the Civic Touring
     if ((addr == 0x1A6) || (addr == 0x296)) {
       // check for button presses
-      int button = (GET_BYTE(to_push, 0) & 0xE0) >> 5;
+      int button = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
       switch (button) {
         case 1:  // main
         case 2:  // cancel
@@ -144,7 +144,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     // accord, crv: 0x1BE bit 4
     bool is_user_brake_msg = honda_alt_brake_msg ? ((addr) == 0x1BE) : ((addr) == 0x17C);
     if (is_user_brake_msg) {
-      brake_pressed = honda_alt_brake_msg ? (GET_BYTE((to_push), 0) & 0x10) : (GET_BYTE((to_push), 6) & 0x20);
+      brake_pressed = honda_alt_brake_msg ? (GET_BYTE((to_push), 0) & 0x10U) : (GET_BYTE((to_push), 6) & 0x20U);
     }
 
     // length check because bosch hardware also uses this id (0x201 w/ len = 8)
@@ -157,15 +157,15 @@ static int honda_rx_hook(CANPacket_t *to_push) {
 
     if (!gas_interceptor_detected) {
       if (addr == 0x17C) {
-        gas_pressed = GET_BYTE(to_push, 0) != 0;
+        gas_pressed = GET_BYTE(to_push, 0) != 0U;
       }
     }
 
     // disable stock Honda AEB in unsafe mode
     if ( !(unsafe_mode & UNSAFE_DISABLE_STOCK_AEB) ) {
       if ((bus == 2) && (addr == 0x1FA)) {
-        bool honda_stock_aeb = GET_BYTE(to_push, 3) & 0x20;
-        int honda_stock_brake = (GET_BYTE(to_push, 0) << 2) + ((GET_BYTE(to_push, 1) >> 6) & 0x3);
+        bool honda_stock_aeb = GET_BYTE(to_push, 3) & 0x20U;
+        int honda_stock_brake = (GET_BYTE(to_push, 0) << 2) + ((GET_BYTE(to_push, 1) >> 6) & 0x3U);
 
         // Forward AEB when stock braking is higher than openpilot braking
         // only stop forwarding when AEB event is over
@@ -235,7 +235,7 @@ static int honda_tx_hook(CANPacket_t *to_send) {
 
   // BRAKE: safety check (nidec)
   if ((addr == 0x1FA) && (bus == bus_pt)) {
-    honda_brake = (GET_BYTE(to_send, 0) << 2) + ((GET_BYTE(to_send, 1) >> 6) & 0x3);
+    honda_brake = (GET_BYTE(to_send, 0) << 2) + ((GET_BYTE(to_send, 1) >> 6) & 0x3U);
     if (!current_controls_allowed) {
       if (honda_brake != 0) {
         tx = 0;
@@ -251,7 +251,7 @@ static int honda_tx_hook(CANPacket_t *to_send) {
 
   // BRAKE/GAS: safety check (bosch)
   if ((addr == 0x1DF) && (bus == bus_pt)) {
-    int accel = (GET_BYTE(to_send, 3) << 3) | ((GET_BYTE(to_send, 4) >> 5) & 0x7);
+    int accel = (GET_BYTE(to_send, 3) << 3) | ((GET_BYTE(to_send, 4) >> 5) & 0x7U);
     accel = to_signed(accel, 11);
     if (!current_controls_allowed) {
       if (accel != 0) {
@@ -286,7 +286,7 @@ static int honda_tx_hook(CANPacket_t *to_send) {
 
     // Bosch supplemental control check
   if (addr == 0xE5) {
-    if ((GET_BYTES_04(to_send) != 0x10800004) || ((GET_BYTES_48(to_send) & 0x00FFFFFF) != 0x0)) {
+    if ((GET_BYTES_04(to_send) != 0x10800004U) || ((GET_BYTES_48(to_send) & 0x00FFFFFFU) != 0x0U)) {
       tx = 0;
     }
   }
@@ -304,14 +304,14 @@ static int honda_tx_hook(CANPacket_t *to_send) {
   // ensuring that only the cancel button press is sent (VAL 2) when controls are off.
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == 0x296) && !current_controls_allowed && (bus == bus_pt)) {
-    if (((GET_BYTE(to_send, 0) >> 5) & 0x7) != 2) {
+    if (((GET_BYTE(to_send, 0) >> 5) & 0x7U) != 2U) {
       tx = 0;
     }
   }
 
   // Only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
   if (addr == 0x18DAB0F1) {
-    if ((GET_BYTES_04(to_send) != 0x00803E02) || (GET_BYTES_48(to_send) != 0x0)) {
+    if ((GET_BYTES_04(to_send) != 0x00803E02U) || (GET_BYTES_48(to_send) != 0x0U)) {
       tx = 0;
     }
   }
