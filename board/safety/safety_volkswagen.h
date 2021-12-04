@@ -366,29 +366,23 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
   if ((addr == MSG_ACC_06) || (addr == MSG_ACC_07)) {
     bool violation = 0;
     int desired_accel = 0;
-    int secondary_accel = 0;
 
     if (addr == MSG_ACC_06) {
       desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5) - 7220;
     }
     else {
       desired_accel = (((GET_BYTE(to_send, 7) << 3U) | ((GET_BYTE(to_send, 6) & 0xE0) >> 5)) * 5) - 7220;
-      secondary_accel = (GET_BYTE(to_send, 4) * 30) - 4600;
     }
 
     // VW send one increment above the max range when inactive
     if (desired_accel == 3010U) {
       desired_accel = 0;
     }
-    if (secondary_accel == 3030U) {
-      secondary_accel = 0;
-    }
 
-    if (!controls_allowed && ((desired_accel != 0) || (secondary_accel != 0))) {
+    if (!controls_allowed && (desired_accel != 0)) {
       violation = 1;
     }
     violation |= max_limit_check(desired_accel, VOLKSWAGEN_MAX_ACCEL, VOLKSWAGEN_MIN_ACCEL);
-    violation |= max_limit_check(secondary_accel, VOLKSWAGEN_MAX_ACCEL, VOLKSWAGEN_MIN_ACCEL);
 
     if (violation) {
       tx = 0;
