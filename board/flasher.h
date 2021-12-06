@@ -129,11 +129,11 @@ int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
   switch (data[0]) {
     case 0:
       // control transfer
-      resp_len = usb_cb_control_msg((USB_Setup_TypeDef *)(data+4), data_out, 0);
+      resp_len = usb_cb_control_msg((USB_Setup_TypeDef *)(data+4), data_out);
       break;
     case 2:
       // ep 2, flash!
-      usb_cb_ep2_out(data+4, data[2], 0);
+      usb_cb_ep2_out(data+4, data[2]);
       break;
   }
   return resp_len;
