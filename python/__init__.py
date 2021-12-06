@@ -2,7 +2,6 @@
 import datetime
 import struct
 import hashlib
-import socket
 import usb1
 import os
 import time
