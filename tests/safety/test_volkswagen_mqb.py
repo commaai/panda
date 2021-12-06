@@ -109,7 +109,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
 
   # Acceleration request to drivetrain coordinator
   def _acc_07_msg(self, accel):
-    values = {"ACC_Accel_TSK": accel, "ACC_Accel_Secondary": accel, "COUNTER": self.cnt_acc_07 % 16}
+    values = {"ACC_Accel_TSK": accel, "ACC_Accel_Secondary": 3.02, "COUNTER": self.cnt_acc_07 % 16}
     self.__class__.cnt_acc_07 += 1
     return self.packer.make_can_msg_panda("ACC_07", 0, values)
 

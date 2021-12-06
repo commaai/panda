@@ -361,7 +361,7 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
   // Safety check for both ACC_06 and ACC_07 acceleration requests
   // Signal: ACC_06.ACC_Sollbeschleunigung_02 (acceleration in m/s2, scale 0.005, offset -7.22)
   // Signal: ACC_07.ACC_Accel_TSK (acceleration in m/s2, scale 0.005, offset -7.22)
-  // Signal: ACC_07.ACC_Accel_Secondary (acceleration in m/s2, scale 0.03, offset -4.6)
+  // Signal: ACC_07.ACC_Accel_Secondary (acceleration in m/s2, scale 0.03, offset -4.6) (always disabled for now)
   // To avoid floating point math, scale upward and compare to pre-scaled safety m/s2 boundaries
   if ((addr == MSG_ACC_06) || (addr == MSG_ACC_07)) {
     bool violation = 0;
@@ -371,6 +371,8 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
       desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5) - 7220;
     }
     else {
+      int secondary_accel = (GET_BYTE(to_send, 4) * 30) - 4600;
+      violation |= (secondary_accel != 3020);  // enforce secondary accel unused at this time
       desired_accel = (((GET_BYTE(to_send, 7) << 3U) | ((GET_BYTE(to_send, 6) & 0xE0) >> 5)) * 5) - 7220;
     }
 
