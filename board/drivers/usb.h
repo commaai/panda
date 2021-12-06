@@ -29,10 +29,10 @@ USB_Setup_TypeDef;
 bool usb_eopf_detected = false;
 
 void usb_init(void);
-int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired);
-int usb_cb_ep1_in(void *usbdata, int len, bool hardwired);
-void usb_cb_ep2_out(void *usbdata, int len, bool hardwired);
-void usb_cb_ep3_out(void *usbdata, int len, bool hardwired);
+int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp);
+int usb_cb_ep1_in(void *usbdata, int len);
+void usb_cb_ep2_out(void *usbdata, int len);
+void usb_cb_ep3_out(void *usbdata, int len);
 void usb_cb_ep3_out_complete(void);
 void usb_cb_enumeration_complete(void);
 void usb_outep3_resume_if_paused(void);

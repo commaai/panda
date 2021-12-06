@@ -6,7 +6,7 @@ bool unlocked = false;
 void debug_ring_callback(uart_ring *ring) {}
 #endif
 
-int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) {
+int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
   int resp_len = 0;
 
   // flasher machine
@@ -57,16 +57,15 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xd1: enter bootloader mode
     case 0xd1:
       // this allows reflashing of the bootstub
-      // so it's blocked over wifi
       switch (setup->b.wValue.w) {
         case 0:
           // TODO: put this back when it's no longer a "devkit"
           //#ifdef ALLOW_DEBUG
           #if 1
-          if (hardwired) {
+          if (1) {
           #else
           // no more bootstub on UNO once OTP block is flashed
-          if (hardwired && ((hw_type != HW_TYPE_UNO) || (!is_provisioned()))) {
+          if ((hw_type != HW_TYPE_UNO) || (!is_provisioned())) {
           #endif
             puts("-> entering bootloader\n");
             enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
@@ -95,16 +94,14 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
   return resp_len;
 }
 
-int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
+int usb_cb_ep1_in(void *usbdata, int len) {
   UNUSED(usbdata);
   UNUSED(len);
-  UNUSED(hardwired);
   return 0;
 }
-void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
+void usb_cb_ep3_out(void *usbdata, int len) {
   UNUSED(usbdata);
   UNUSED(len);
-  UNUSED(hardwired);
 }
 void usb_cb_ep3_out_complete(void) {}
 
@@ -114,8 +111,7 @@ void usb_cb_enumeration_complete(void) {
   is_enumerated = 1;
 }
 
-void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
-  UNUSED(hardwired);
+void usb_cb_ep2_out(void *usbdata, int len) {
   current_board->set_led(LED_RED, 0);
   for (int i = 0; i < len/4; i++) {
     flash_write_word(prog_ptr, *(uint32_t*)(usbdata+(i*4)));
