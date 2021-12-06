@@ -5,19 +5,7 @@ import sys
 from panda import Panda
 
 def can_logger():
-
-  try:
-    print("Trying to connect to Panda over USB...")
-    p = Panda()
-
-  except AssertionError:
-    print("USB connection failed. Trying WiFi...")
-
-    try:
-      p = Panda("WIFI")
-    except Exception:
-      print("WiFi connection timed out. Please make sure your Panda is connected and try again.")
-      sys.exit(0)
+  p = Panda()
 
   try:
     outputfile = open('output.csv', 'w')
