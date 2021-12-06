@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import csv
-import sys
 from panda import Panda
 
 def can_logger():
