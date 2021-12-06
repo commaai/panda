@@ -8,10 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda  # noqa: E402
 
 if __name__ == "__main__":
-  if os.getenv("WIFI") is not None:
-    p = Panda("WIFI")
-  else:
-    p = Panda()
+  p = Panda()
   print(p.get_serial())
   print(p.health())
 
