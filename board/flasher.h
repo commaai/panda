@@ -59,18 +59,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
       // this allows reflashing of the bootstub
       switch (setup->b.wValue.w) {
         case 0:
-          // TODO: put this back when it's no longer a "devkit"
-          //#ifdef ALLOW_DEBUG
-          #if 1
-          if (1) {
-          #else
-          // no more bootstub on UNO once OTP block is flashed
-          if ((hw_type != HW_TYPE_UNO) || (!is_provisioned())) {
-          #endif
-            puts("-> entering bootloader\n");
-            enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-            NVIC_SystemReset();
-          }
+          puts("-> entering bootloader\n");
+          enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+          NVIC_SystemReset();
           break;
         case 1:
           puts("-> entering softloader\n");
