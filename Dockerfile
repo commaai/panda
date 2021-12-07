@@ -68,6 +68,6 @@ ENV PYTHONPATH /tmp:$PYTHONPATH
 RUN cd /tmp && git clone https://github.com/commaai/panda_jungle.git && \
     cd panda_jungle && \
     git fetch && \
-    git checkout 7b7197c605915ac34f3d62f314edd84e2e78a759
+    git checkout 2e0c73fc0cbac64e442085390dd22e6b408d0478
 
 ADD ./panda.tar.gz /tmp/panda
