@@ -202,10 +202,10 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
         // Signal: GRA_ACC_01.GRA_Abbrechen
         // Signal: GRA_ACC_01.GRA_Tip_Setzen
         // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
-        if ((GET_BIT(to_push, 19) == 1) || (GET_BIT(to_push, 16) == 1)) {
+        if ((GET_BIT(to_push, 19U) || GET_BIT(to_push, 16U)) {
           controls_allowed = 1;
         }
-        if (GET_BIT(to_push, 13) == 1) {
+        if (GET_BIT(to_push, 13U)) {
           controls_allowed = 0;
         }
       }
@@ -372,12 +372,12 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
     int desired_accel = 0;
 
     if (addr == MSG_ACC_06) {
-      desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5) - 7220;
+      desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220;
     }
     else {
-      int secondary_accel = (GET_BYTE(to_send, 4) * 30) - 4600;
+      int secondary_accel = (GET_BYTE(to_send, 4) * 30U) - 4600;
       violation |= (secondary_accel != 3020);  // enforce secondary accel unused at this time
-      desired_accel = (((GET_BYTE(to_send, 7) << 3) | ((GET_BYTE(to_send, 6) & 0xE0U) >> 5)) * 5) - 7220;
+      desired_accel = (((GET_BYTE(to_send, 7) << 3) | ((GET_BYTE(to_send, 6) & 0xE0U) >> 5)) * 5U) - 7220;
     }
 
     // VW send one increment above the max range when inactive
