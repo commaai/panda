@@ -199,12 +199,12 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
     if (volkswagen_longitudinal) {
       if (addr == MSG_GRA_ACC_01) {
         // Exit controls on Cancel, otherwise, enter controls on Set or Resume
-        // Signal: GRA_ACC_01.GRA_Abbrechen
         // Signal: GRA_ACC_01.GRA_Tip_Setzen
         // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
         if (GET_BIT(to_push, 19U) || GET_BIT(to_push, 16U)) {
           controls_allowed = 1;
         }
+        // Signal: GRA_ACC_01.GRA_Abbrechen
         if (GET_BIT(to_push, 13U) == 1U) {
           controls_allowed = 0;
         }
@@ -363,20 +363,20 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
   }
 
   // Safety check for both ACC_06 and ACC_07 acceleration requests
-  // Signal: ACC_06.ACC_Sollbeschleunigung_02 (acceleration in m/s2, scale 0.005, offset -7.22)
-  // Signal: ACC_07.ACC_Accel_TSK (acceleration in m/s2, scale 0.005, offset -7.22)
-  // Signal: ACC_07.ACC_Accel_Secondary (acceleration in m/s2, scale 0.03, offset -4.6) (always disabled for now)
   // To avoid floating point math, scale upward and compare to pre-scaled safety m/s2 boundaries
   if ((addr == MSG_ACC_06) || (addr == MSG_ACC_07)) {
     bool violation = 0;
     int desired_accel = 0;
 
+    // Signal: ACC_06.ACC_Sollbeschleunigung_02 (acceleration in m/s2, scale 0.005, offset -7.22)
     if (addr == MSG_ACC_06) {
       desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
     }
+    // Signal: ACC_07.ACC_Accel_TSK (acceleration in m/s2, scale 0.005, offset -7.22)
+    // Signal: ACC_07.ACC_Accel_Secondary (acceleration in m/s2, scale 0.03, offset -4.6)
     else {
       int secondary_accel = (GET_BYTE(to_send, 4) * 30U) - 4600U;
-      violation |= (secondary_accel != 3020);  // enforce secondary accel unused at this time
+      violation |= (secondary_accel != 3020);  // enforce inactive (one increment above max range) at this time
       desired_accel = (((GET_BYTE(to_send, 7) << 3) | ((GET_BYTE(to_send, 6) & 0xE0U) >> 5)) * 5U) - 7220U;
     }
 
