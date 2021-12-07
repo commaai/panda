@@ -109,8 +109,8 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("ACC_06", 0, values)
 
   # Acceleration request to drivetrain coordinator
-  def _acc_07_msg(self, accel):
-    values = {"ACC_Accel_TSK": accel, "ACC_Accel_Secondary": 3.02, "COUNTER": self.cnt_acc_07 % 16}
+  def _acc_07_msg(self, accel, secondary_accel=3.02):
+    values = {"ACC_Accel_TSK": accel, "ACC_Accel_Secondary": secondary_accel, "COUNTER": self.cnt_acc_07 % 16}
     self.__class__.cnt_acc_07 += 1
     return self.packer.make_can_msg_panda("ACC_07", 0, values)
 
@@ -336,6 +336,8 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
         self.assertEqual(send, self._tx(self._acc_06_msg(accel)), (controls_allowed, accel))
         # additional accel request used by ABS/ESP
         self.assertEqual(send, self._tx(self._acc_07_msg(accel)), (controls_allowed, accel))
+        # ensure the optional secondary accel field remains disabled for now
+        self.assertFalse(self._tx(self._acc_07_msg(accel, secondary_accel=accel)), (controls_allowed, accel))
 
 
 if __name__ == "__main__":
