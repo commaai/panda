@@ -19,13 +19,10 @@ def run_test(sleep_duration):
   pandas = Panda.list()
   print(pandas)
 
-  if len(pandas) == 0:
-    print("NO PANDAS")
+  if len(pandas) < 2:
+    print("Minimum two pandas are needed for test")
     assert False
 
-  if len(pandas) == 1:
-    # if we only have one on USB, assume the other is on wifi
-    pandas.append("WIFI")
   run_test_w_pandas(pandas, sleep_duration)
 
 def run_test_w_pandas(pandas, sleep_duration):
@@ -40,10 +37,6 @@ def run_test_w_pandas(pandas, sleep_duration):
     print("***************** TESTING", ho)
 
     panda0, panda1 = h[ho[0]], h[ho[1]]
-
-    if(panda0._serial == "WIFI"):
-      print("  *** Can not send can data over wifi panda. Skipping! ***")
-      continue
 
     # **** test health packet ****
     print("health", ho[0], h[ho[0]].health())

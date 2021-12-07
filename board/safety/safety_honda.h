@@ -7,8 +7,8 @@
 //      brake rising edge
 //      brake > 0mph
 const CanMsg HONDA_N_TX_MSGS[] = {{0xE4, 0, 5}, {0x194, 0, 4}, {0x1FA, 0, 8}, {0x200, 0, 6}, {0x30C, 0, 8}, {0x33D, 0, 5}};
-const CanMsg HONDA_BOSCH_TX_MSGS[] = {{0xE4, 0, 5}, {0xE5, 0, 8}, {0x296, 1, 4}, {0x33D, 0, 5}};  // Bosch
-const CanMsg HONDA_BOSCH_LONG_TX_MSGS[] = {{0xE4, 1, 5}, {0x1DF, 1, 8}, {0x1EF, 1, 8}, {0x1FA, 1, 8}, {0x30C, 1, 8}, {0x33D, 1, 5}, {0x39F, 1, 8}, {0x18DAB0F1, 1, 8}};  // Bosch w/ gas and brakes
+const CanMsg HONDA_BOSCH_TX_MSGS[] = {{0xE4, 0, 5}, {0xE5, 0, 8}, {0x296, 1, 4}, {0x33D, 0, 5}, {0x33DA, 0, 5}, {0x33DB, 0, 8}};  // Bosch
+const CanMsg HONDA_BOSCH_LONG_TX_MSGS[] = {{0xE4, 1, 5}, {0x1DF, 1, 8}, {0x1EF, 1, 8}, {0x1FA, 1, 8}, {0x30C, 1, 8}, {0x33D, 1, 5}, {0x33DA, 1, 5}, {0x33DB, 1, 8}, {0x39F, 1, 8}, {0x18DAB0F1, 1, 8}};  // Bosch w/ gas and brakes
 
 // Roughly calculated using the offsets in openpilot +5%:
 // In openpilot: ((gas1_norm + gas2_norm)/2) > 15
@@ -231,7 +231,7 @@ static int honda_tx_hook(CANPacket_t *to_send) {
     pedal_pressed = pedal_pressed || gas_pressed_prev || (gas_interceptor_prev > HONDA_GAS_INTERCEPTOR_THRESHOLD);
   }
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
-  int bus_pt = (honda_hw == HONDA_BOSCH)? 1 : 0;
+  int bus_pt = (honda_hw == HONDA_BOSCH) ? 1 : 0;
 
   // BRAKE: safety check (nidec)
   if ((addr == 0x1FA) && (bus == bus_pt)) {
@@ -284,7 +284,7 @@ static int honda_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-    // Bosch supplemental control check
+  // Bosch supplemental control check
   if (addr == 0xE5) {
     if ((GET_BYTES_04(to_send) != 0x10800004U) || ((GET_BYTES_48(to_send) & 0x00FFFFFFU) != 0x0U)) {
       tx = 0;
@@ -386,7 +386,7 @@ static int honda_bosch_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   }
   if (bus_num == 2)  {
     int addr = GET_ADDR(to_fwd);
-    int is_lkas_msg = (addr == 0xE4) || (addr == 0xE5) || (addr == 0x33D);
+    int is_lkas_msg = (addr == 0xE4) || (addr == 0xE5) || (addr == 0x33D) || (addr == 0x33DA) || (addr == 0x33DB);
     if (!is_lkas_msg) {
       bus_fwd = 0;
     }
