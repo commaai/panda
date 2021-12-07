@@ -377,7 +377,7 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
     else {
       int secondary_accel = (GET_BYTE(to_send, 4) * 30) - 4600;
       violation |= (secondary_accel != 3020);  // enforce secondary accel unused at this time
-      desired_accel = (((GET_BYTE(to_send, 7) << 3U) | ((GET_BYTE(to_send, 6) & 0xE0) >> 5)) * 5) - 7220;
+      desired_accel = (((GET_BYTE(to_send, 7) << 3U) | ((GET_BYTE(to_send, 6) & 0xE0U) >> 5)) * 5) - 7220;
     }
 
     // VW send one increment above the max range when inactive
