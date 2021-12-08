@@ -373,10 +373,10 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
       desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
     }
     else {
-      // Signal: ACC_07.ACC_Accel_TSK (acceleration in m/s2, scale 0.005, offset -7.22)
       // Signal: ACC_07.ACC_Accel_Secondary (acceleration in m/s2, scale 0.03, offset -4.6)
       int secondary_accel = (GET_BYTE(to_send, 4) * 30U) - 4600U;
       violation |= (secondary_accel != 3020);  // enforce inactive (one increment above max range) at this time
+      // Signal: ACC_07.ACC_Accel_TSK (acceleration in m/s2, scale 0.005, offset -7.22)
       desired_accel = (((GET_BYTE(to_send, 7) << 3) | ((GET_BYTE(to_send, 6) & 0xE0U) >> 5)) * 5U) - 7220U;
     }
 
