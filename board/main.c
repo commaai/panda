@@ -554,6 +554,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
         heartbeat_counter = 0U;
         heartbeat_lost = false;
         heartbeat_disabled = false;
+        heartbeat_engaged = (setup->b.wValue.w == 1U);
         break;
       }
     // **** 0xf4: k-line/l-line 5 baud initialization
@@ -681,6 +682,15 @@ void tick_handler(void) {
         controls_allowed_countdown -= 1U;
       } else {
 
+      }
+
+      if (controls_allowed && !heartbeat_engaged) {
+        heartbeat_engaged_mismatches += 1U;
+        if (heartbeat_engaged_mismatches >= 2U) {
+          controls_allowed = 0U;
+        }
+      } else {
+        heartbeat_engaged_mismatches = 0U;
       }
 
       if (!heartbeat_disabled) {

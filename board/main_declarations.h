@@ -19,7 +19,9 @@ bool green_led_enabled = false;
 // heartbeat state
 uint32_t heartbeat_counter = 0;
 bool heartbeat_lost = false;
-bool heartbeat_disabled = false; // set over USB
+bool heartbeat_disabled = false;  // set over USB
+bool heartbeat_engaged = false;   // openpilot enabled
+uint32_t heartbeat_engaged_mismatches = 0;
 
 // siren state
 bool siren_enabled = false;
