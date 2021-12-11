@@ -3,14 +3,14 @@ import time
 import random
 import _thread
 from collections import defaultdict
-#from panda import Panda, DLC_TO_LEN
+from panda import Panda
 from panda_jungle import PandaJungle  # pylint: disable=import-error
 
 H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA]
 JUNGLE_SERIAL = os.getenv("JUNGLE")
-H7_PANDAS_EXCLUDE = []
+H7_PANDAS_EXCLUDE = [] # type: ignore
 if os.getenv("H7_PANDAS_EXCLUDE"):
-  H7_PANDAS_EXCLUDE = os.getenv("H7_PANDAS_EXCLUDE").strip().split(" ")
+  H7_PANDAS_EXCLUDE = os.getenv("H7_PANDAS_EXCLUDE").strip().split(" ") # type: ignore
 
 #TODO: REMOVE, temporary list of CAN FD lengths, one in panda python lib MUST be used
 DLC_TO_LEN = [0,1,2,3,4,5,6,7,8, 12, 16, 20, 24, 32, 48]
