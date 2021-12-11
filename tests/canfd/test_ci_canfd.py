@@ -3,7 +3,7 @@ import time
 import random
 import _thread
 from collections import defaultdict
-from panda import Panda, DLC_TO_LEN
+#from panda import Panda, DLC_TO_LEN
 from panda_jungle import PandaJungle  # pylint: disable=import-error
 
 H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA]
@@ -23,7 +23,7 @@ def start_heartbeat_thread(p):
       try:
         p.send_heartbeat()
         time.sleep(.5)
-      except:
+      except Exception:
         break
   _thread.start_new_thread(heartbeat_thread, (p,))
 
@@ -76,9 +76,10 @@ def canfd_test(p_send, p_recv):
 
     while True:
       incoming = p_recv.can_recv()
-      if not incoming: break
+      if not incoming:
+        break
       for msg in incoming:
-        address, unused, data, bus = msg
+        address, _, data, bus = msg
         k = (address, bytes(data))
         assert k in sent_msgs[bus], f"message {k} was never sent on bus {bus}"
         sent_msgs[bus].discard(k)
