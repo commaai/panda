@@ -25,7 +25,7 @@
    (_a > 0) ? _a : (-_a); })
 
 #include <stdbool.h>
-#include "global_definitions.h"
+#include "panda.h"
 #ifdef STM32H7
   #include "stm32h7/stm32h7_config.h"
 #else

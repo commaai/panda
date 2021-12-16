@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "global_definitions.h"
+#include "panda.h"
 #include "can_definitions.h"
 
 typedef struct
