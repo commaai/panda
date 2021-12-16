@@ -72,7 +72,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
       break;
     // **** 0xd6: get version
     case 0xd6:
-      COMPILE_TIME_ASSERT(sizeof(gitversion) <= MAX_RESP_LEN);
+      COMPILE_TIME_ASSERT(sizeof(gitversion) <= USBPACKET_MAX_SIZE);
       memcpy(resp, gitversion, sizeof(gitversion));
       resp_len = sizeof(gitversion);
       break;
