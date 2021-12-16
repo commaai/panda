@@ -73,7 +73,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
         break;
       }
       // read
-      while ((resp_len < MIN(setup->b.wLength.w, MAX_RESP_LEN)) &&
+      while ((resp_len < MIN(setup->b.wLength.w, USBPACKET_MAX_SIZE)) &&
                          getc(ur, (char*)&resp[resp_len])) {
         ++resp_len;
       }
