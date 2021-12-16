@@ -2,8 +2,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#define CANPACKET_DATA_SIZE_MAX 8
+#include "global_definitions.h"
 #include "can_definitions.h"
+#define CANPACKET_DATA_SIZE_MAX 8
 
 typedef struct
 {
