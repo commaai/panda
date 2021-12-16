@@ -1,3 +1,5 @@
+#include "dlc_to_len.h"
+
 #define CAN_PACKET_VERSION 2
 typedef struct {
   unsigned char reserved : 1;
