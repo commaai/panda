@@ -18,7 +18,7 @@ const int GM_DRIVER_TORQUE_FACTOR = 4;
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
-const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
+const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6}, {789, 0, 5}, {800, 0, 6},   // pt bus
                              {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
                              {789, 2, 5},  // ch bus
                              {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
@@ -29,7 +29,7 @@ AddrCheckStruct gm_addr_checks[] = {
   {.msg = {{842, 0, 5, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{481, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{241, 0, 6, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-  {.msg = {{417, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{452, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
 #define GM_RX_CHECK_LEN (sizeof(gm_addr_checks) / sizeof(gm_addr_checks[0]))
 addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
@@ -77,7 +77,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       brake_pressed = GET_BYTE(to_push, 1) >= 10U;
     }
 
-    if (addr == 417) {
+    if (addr == 452) {
       gas_pressed = GET_BYTE(to_push, 6) != 0U;
     }
 
