@@ -21,7 +21,7 @@ DRIVER_TORQUE_ALLOWANCE = 50
 DRIVER_TORQUE_FACTOR = 4
 
 class TestGmSafety(common.PandaSafetyTest):
-  TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
+  TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0], [789, 0], [800, 0],  # pt bus
              [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
              [789, 2],  # ch bus
              [0x104c006c, 3], [0x10400060, 3]]  # gmlan
@@ -65,8 +65,8 @@ class TestGmSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
 
   def _gas_msg(self, gas):
-    values = {"AcceleratorPedal": 1 if gas else 0}
-    return self.packer.make_can_msg_panda("AcceleratorPedal", 0, values)
+    values = {"AcceleratorPedal2": 1 if gas else 0}
+    return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
   def _send_brake_msg(self, brake):
     values = {"FrictionBrakeCmd": -brake}
