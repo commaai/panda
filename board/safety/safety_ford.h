@@ -6,9 +6,13 @@ const struct lookup_t FORD_LOOKUP_ANGLE_RATE_DOWN = {
   {2., 7., 17.},
   {5., 3.5, .8}};
 
+// CV.DEG_TO_RAD
+#define DEG_TO_RAD (3.14159265358979 / 180.0)
+
 // Signal: LatCtlPath_An_Actl
 // Factor: 0.0005
-const int FORD_DEG_TO_CAN = 2000;
+#define FORD_RAD_TO_CAN 2000.0
+#define FORD_DEG_TO_CAN DEG_TO_RAD * FORD_RAD_TO_CAN
 
 // Safety-relevant CAN messages for Ford vehicles.
 #define MSG_STEERING_PINION_DATA      0x07E  // RX from PSCM, for steering pinion angle
@@ -41,106 +45,194 @@ AddrCheckStruct ford_addr_checks[] = {
 #define FORD_ADDR_CHECK_LEN (sizeof(ford_addr_checks) / sizeof(ford_addr_checks[0]))
 addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
 
-static int ford_rx_hook(CANPacket_t *to_push) {
 
-  int addr = GET_ADDR(to_push);
-  int bus = GET_BUS(to_push);
-  bool alt_exp_allow_gas = alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS;
+static const addr_checks* ford_init(uint32_t param) {
+  UNUSED(param);
 
-  if (addr == 0x217) {
-    // wheel speeds are 14 bits every 16
-    vehicle_moving = false;
-    for (int i = 0; i < 8; i += 2) {
-      vehicle_moving |= GET_BYTE(to_push, i) | (GET_BYTE(to_push, (int)(i + 1)) & 0xFCU);
-    }
-  }
+  controls_allowed = false;
+  relay_malfunction_reset();
 
-  // state machine to enter and exit controls
-  if (addr == 0x83) {
-    bool cancel = GET_BYTE(to_push, 1) & 0x1U;
-    bool set_or_resume = GET_BYTE(to_push, 3) & 0x30U;
-    if (cancel) {
-      controls_allowed = 0;
-    }
-    if (set_or_resume) {
-      controls_allowed = 1;
-    }
-  }
-
-  // exit controls on rising edge of brake press or on brake press when
-  // speed > 0
-  if (addr == 0x165) {
-    brake_pressed = GET_BYTE(to_push, 0) & 0x20U;
-    if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
-      controls_allowed = 0;
-    }
-    brake_pressed_prev = brake_pressed;
-  }
-
-  // exit controls on rising edge of gas press
-  if (addr == 0x204) {
-    gas_pressed = ((GET_BYTE(to_push, 0) & 0x03U) | GET_BYTE(to_push, 1)) != 0U;
-    if (!alt_exp_allow_gas && gas_pressed && !gas_pressed_prev) {
-      controls_allowed = 0;
-    }
-    gas_pressed_prev = gas_pressed;
-  }
-
-  if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && (bus == 0) && (addr == 0x3CA)) {
-    relay_malfunction_set();
-  }
-  return 1;
+  return &ford_rx_checks;
 }
 
-// all commands: just steering
-// if controls_allowed and no pedals pressed
-//     allow all commands up to limit
-// else
-//     block all commands that produce actuation
+static int ford_rx_hook(CANPacket_t *to_push) {
+  bool valid = addr_safety_check(to_push, &ford_rx_checks, NULL, NULL, NULL);
+
+  if (valid && (GET_BUS(to_push) == FORD_MAIN)) {
+    int addr = GET_ADDR(to_push);
+
+    // Update steering angle
+    if (addr == MSG_STEERING_PINION_DATA) {
+      // Steering angle: (0.1 * val) - 1600 in deg
+      // Signal: StePinComp_An_Est
+      // Convert to CAN units (FORD_DEG_TO_CAN).
+      int angle_meas_new = (((((GET_BYTE(to_push, 2) & 0x7F) << 7) | GET_BYTE(to_push, 3)) * 0.1) - 1600U) * FORD_DEG_TO_CAN;
+      update_sample(&angle_meas, angle_meas_new);
+    }
+
+    // Update in motion state from speed value
+    if (addr == MSG_ENG_VEHICLE_SP_THROTTLE2) {
+      // Speed in kph, convert to m/s
+      // Speed: (0.01 * val) in kph
+      // Signal: Veh_V_ActlEng
+      vehicle_speed = ((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01 / 3.6;
+      vehicle_moving = vehicle_speed > 0.3;
+    }
+
+    // Update gas pedal
+    if (addr == MSG_ENG_VEHICLE_SP_THROTTLE) {
+      // Pedal position: (0.1 * val) in percent
+      // Signal: ApedPos_Pc_ActlArb
+      gas_pressed = (((GET_BYTE(to_push, 0) & 0x03U) << 8) | GET_BYTE(to_push, 1)) > 0U;
+    }
+
+    // Update brake pedal and cruise state
+    if (addr == MSG_ENG_BRAKE_DATA) {
+      // Signal: BpedDrvAppl_D_Actl
+      brake_pressed = ((GET_BYTE(to_push, 0) & 0x30U) >> 4) == 2U;
+
+      // Signal: CcStat_D_Actl
+      bool cruise_engaged = (GET_BYTE(to_push, 1) & 0x07U) == 5U;
+
+      // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
+      if (cruise_engaged && !cruise_engaged_prev) {
+        controls_allowed = true;
+      }
+      if (!cruise_engaged) {
+        controls_allowed = false;
+      }
+      cruise_engaged_prev = cruise_engaged;
+    }
+
+    // If steering controls messages are received on the destination bus, it's an indication
+    // that the relay might be malfunctioning.
+    bool is_lkas_msg = (addr == MSG_LANE_ASSIST_DATA1)
+                    || (addr == MSG_LATERAL_MOTION_CONTROL)
+                    || (addr == MSG_IPMA_DATA);
+    generic_rx_checks(is_lkas_msg);
+  }
+
+  return valid;
+}
 
 static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   UNUSED(longitudinal_allowed);
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
+  bool violation = false;
 
-  // disallow actuator commands if gas or brake (with vehicle moving) are pressed
-  // and the the latching controls_allowed flag is True
-  int pedal_pressed = brake_pressed_prev && vehicle_moving;
-  bool alt_exp_allow_gas = alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS;
-  if (!alt_exp_allow_gas) {
-    pedal_pressed = pedal_pressed || gas_pressed_prev;
+  if (!msg_allowed(to_send, FORD_TX_MSGS, FORD_TX_LEN)) {
+    tx = 0;
   }
-  bool current_controls_allowed = controls_allowed && !(pedal_pressed);
 
-  // STEER: safety check
-  if (addr == 0x3CA) {
-    if (!current_controls_allowed) {
-      // bits 7-4 need to be 0xF to disallow lkas commands
-      if ((GET_BYTE(to_send, 0) & 0xF0U) != 0xF0U) {
-        tx = 0;
-      }
+  // Safety check for Lane_Assist_Data1 action
+  if (addr == MSG_LANE_ASSIST_DATA1) {
+    // Do not allow steering using Lane_Assist_Data1 (Lane-Departure Aid).
+    // This message must be sent for Lane Centering to work, and can include
+    // values such as the steering angle or lane curvature for debugging,
+    // but the action must be set to zero.
+    unsigned int action = (GET_BYTE(to_send, 0) & 0xE0U) >> 5;
+    violation |= (action != 0U);
+  }
+
+  // Safety check for LateralMotionControl steering angle
+  if (addr == MSG_LATERAL_MOTION_CONTROL) {
+    // Signal: LatCtlPath_An_Actl
+    // Command Angle: (0.0005 * val) - 0.5 in radians
+    // Convert to CAN units (FORD_RAD_TO_CAN).
+    int desired_angle = ((((GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5)) * 0.0005) - 0.5) * FORD_RAD_TO_CAN;
+    // Signal: LatCtl_D_Rq
+    unsigned int steer_control_type = (GET_BYTE(to_send, 4) & 0x1CU) >> 2;
+    bool steer_control_enabled = steer_control_type > 0U;
+
+    // Rate limit while steering
+    if (controls_allowed && steer_control_enabled) {
+      // Add 1 to not false trigger violation
+      float delta_angle_float;
+      delta_angle_float = interpolate(FORD_LOOKUP_ANGLE_RATE_UP, vehicle_speed) * FORD_DEG_TO_CAN;
+      int delta_angle_up = (int)(delta_angle_float) + 1;
+      delta_angle_float = interpolate(FORD_LOOKUP_ANGLE_RATE_DOWN, vehicle_speed) * FORD_DEG_TO_CAN;
+      int delta_angle_down = (int)(delta_angle_float) + 1;
+      int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
+      int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
+
+      // Check for violation
+      violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
+    }
+    desired_angle_last = desired_angle;
+
+    // Angle should be the same as current angle while not steering
+    if (!controls_allowed && ((desired_angle < (angle_meas.min - 1)) || (desired_angle > (angle_meas.max + 1)))) {
+      violation = true;
+    }
+
+    // No angle control allowed when controls are not allowed
+    if (!controls_allowed && steer_control_enabled) {
+      violation = true;
+    }
+
+    // Reset to 0 if either controls is not allowed or there's a violation
+    if (!controls_allowed || violation) {
+      desired_angle_last = 0;
     }
   }
 
-  // FORCE CANCEL: safety check only relevant when spamming the cancel button
-  // ensuring that set and resume aren't sent
-  if (addr == 0x83) {
-    if ((GET_BYTE(to_send, 3) & 0x30U) != 0U) {
-      tx = 0;
-    }
+  // Cruise button check, only allow cancel button to be sent
+  if (addr == MSG_STEERING_DATA_FD1) {
+    // Violation if any button other than cancel is pressed
+    // Signal: CcAslButtnCnclPress
+    violation |= 0U != (GET_BYTE(to_send, 0) |
+                        (GET_BYTE(to_send, 1) & 0xFEU) |
+                        GET_BYTE(to_send, 2) |
+                        GET_BYTE(to_send, 3) |
+                        GET_BYTE(to_send, 4) |
+                        GET_BYTE(to_send, 5));
+  }
+
+  if (violation) {
+    controls_allowed = false;
+    tx = 0;
   }
 
   // 1 allows the message through
   return tx;
 }
 
-// TODO: keep camera on bus 2 and make a fwd_hook
+static int ford_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+  int addr = GET_ADDR(to_fwd);
+  int bus_fwd = -1;
+
+  switch (bus_num) {
+    case FORD_MAIN: {
+      // Forward all traffic from bus 0 onward
+      bus_fwd = FORD_CAM;
+      break;
+    }
+    case FORD_CAM: {
+      // Block stock LKAS messages
+      bool is_lkas_msg = (addr == MSG_LANE_ASSIST_DATA1)
+                      || (addr == MSG_LATERAL_MOTION_CONTROL)
+                      || (addr == MSG_IPMA_DATA);
+      if (!is_lkas_msg) {
+        bus_fwd = FORD_MAIN;
+      }
+      break;
+    }
+    default: {
+      // No other buses should be in use; fallback to do-not-forward
+      bus_fwd = -1;
+      break;
+    }
+  }
+
+  return bus_fwd;
+}
 
 const safety_hooks ford_hooks = {
-  .init = nooutput_init,
+  .init = ford_init,
   .rx = ford_rx_hook,
   .tx = ford_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
-  .fwd = default_fwd_hook,
+  .fwd = ford_fwd_hook,
 };
