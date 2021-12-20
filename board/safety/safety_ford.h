@@ -1,12 +1,45 @@
-// board enforces
-//   in-state
-//      accel set/resume
-//   out-state
-//      cancel button
-//      accel rising edge
-//      brake rising edge
-//      brake > 0mph
+const struct lookup_t FORD_LOOKUP_ANGLE_RATE_UP = {
+  {2., 7., 17.},
+  {5., .8, .25}};
 
+const struct lookup_t FORD_LOOKUP_ANGLE_RATE_DOWN = {
+  {2., 7., 17.},
+  {5., 3.5, .8}};
+
+// Signal: LatCtlPath_An_Actl
+// Factor: 0.0005
+const int FORD_DEG_TO_CAN = 2000;
+
+// Safety-relevant CAN messages for Ford vehicles.
+#define MSG_STEERING_PINION_DATA      0x07E  // RX from PSCM, for steering pinion angle
+#define MSG_ENG_BRAKE_DATA            0x165  // RX from PCM, for driver brake pedal and cruise state
+#define MSG_ENG_VEHICLE_SP_THROTTLE2  0x202  // RX from PCM, for vehicle speed
+#define MSG_ENG_VEHICLE_SP_THROTTLE   0x204  // RX from PCM, for driver throttle input
+#define MSG_STEERING_DATA_FD1         0x083  // TX by OP, ACC control buttons for cancel
+#define MSG_LANE_ASSIST_DATA1         0x3CA  // TX by OP, Lane Keeping Assist
+#define MSG_LATERAL_MOTION_CONTROL    0x3D3  // TX by OP, Lane Centering Assist
+#define MSG_IPMA_DATA                 0x3D8  // TX by OP, IPMA HUD user interface
+
+// CAN bus numbers.
+#define FORD_MAIN 0U
+#define FORD_CAM  2U
+
+const CanMsg FORD_TX_MSGS[] = {
+  {MSG_STEERING_DATA_FD1, 0, 8},
+  {MSG_LANE_ASSIST_DATA1, 0, 8},
+  {MSG_LATERAL_MOTION_CONTROL, 0, 8},
+  {MSG_IPMA_DATA, 0, 8},
+};
+#define FORD_TX_LEN (sizeof(FORD_TX_MSGS) / sizeof(FORD_TX_MSGS[0]))
+
+AddrCheckStruct ford_addr_checks[] = {
+  {.msg = {{MSG_STEERING_PINION_DATA, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_ENG_BRAKE_DATA, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_ENG_VEHICLE_SP_THROTTLE2, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_ENG_VEHICLE_SP_THROTTLE, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+};
+#define FORD_ADDR_CHECK_LEN (sizeof(ford_addr_checks) / sizeof(ford_addr_checks[0]))
+addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
 
 static int ford_rx_hook(CANPacket_t *to_push) {
 
