@@ -65,8 +65,8 @@ class TestGmSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
 
   def _gas_msg(self, gas):
-    values = {"AcceleratorPedal": 1 if gas else 0}
-    return self.packer.make_can_msg_panda("AcceleratorPedal", 0, values)
+    values = {"AcceleratorPedal2": 1 if gas else 0}
+    return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
   def _send_brake_msg(self, brake):
     values = {"FrictionBrakeCmd": -brake}
