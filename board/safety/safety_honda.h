@@ -262,7 +262,7 @@ static int honda_tx_hook(CANPacket_t *to_send) {
   }
 
   // BRAKE/GAS: safety check (bosch and radarless)
-  if ((addr == 0x1DF) || (addr == 0x1DD) && (bus == bus_pt)) {
+  if (((addr == 0x1DF) || (addr == 0x1DD)) && (bus == bus_pt)) {
     int accel = (GET_BYTE(to_send, 3) << 3) | ((GET_BYTE(to_send, 4) >> 5) & 0x7U);
     accel = to_signed(accel, 11);
     if (!current_controls_allowed) {
