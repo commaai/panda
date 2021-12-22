@@ -228,7 +228,7 @@ static int honda_tx_hook(CANPacket_t *to_send) {
   if ((honda_hw == HONDA_BOSCH) && !honda_bosch_long) {
     tx = msg_allowed(to_send, HONDA_BOSCH_TX_MSGS, sizeof(HONDA_BOSCH_TX_MSGS)/sizeof(HONDA_BOSCH_TX_MSGS[0]));
   } else if ((honda_hw == HONDA_RL) && !honda_bosch_long) {
-    tx = msg_allowed(to_send, HONDA_RL_TX_MSGS, sizeof(HONDA_RL_TX_MSGS)/sizeof(HONDA_RL_TX_MSGS[0]));  }
+    tx = msg_allowed(to_send, HONDA_RL_TX_MSGS, sizeof(HONDA_RL_TX_MSGS)/sizeof(HONDA_RL_TX_MSGS[0]));
   } else if ((honda_hw == HONDA_BOSCH) && honda_bosch_long) {
     tx = msg_allowed(to_send, HONDA_BOSCH_LONG_TX_MSGS, sizeof(HONDA_BOSCH_LONG_TX_MSGS)/sizeof(HONDA_BOSCH_LONG_TX_MSGS[0]));
   } else {
