@@ -216,7 +216,7 @@ void ignition_can_hook(CANPacket_t *to_push) {
 
     // Mazda exception
     if ((addr == 0x9E) && (len == 8)) {
-      ignition_can = (GET_BYTE(to_push, 0) >> 4) == 0xDU;
+      ignition_can = (GET_BYTE(to_push, 0) >> 5) == 0x6U;
     }
 
   }
