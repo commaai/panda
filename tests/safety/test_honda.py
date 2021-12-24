@@ -418,7 +418,7 @@ class TestHondaBoschLongSafety(TestHondaBoschSafetyBase):
         send = self.MAX_BRAKE <= accel <= 0 if controls_allowed else accel == 0
         self.assertEqual(send, self._tx(self._send_gas_brake_msg(self.NO_GAS, accel)), (controls_allowed, accel))
 
-class TestHondaBoschSafetyBase(TestHondaSafetyBase):
+class TestHondaRadarlessSafetyBase(TestHondaSafetyBase):
   PT_BUS = 0
   STEER_BUS = 0
 
