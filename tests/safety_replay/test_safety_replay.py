@@ -23,6 +23,7 @@ logs = [
   ("5ab784f361e19b78_2020-06-08--16-30-41.bz2", Panda.SAFETY_SUBARU_LEGACY, 0),        # SUBARU.OUTBACK
   ("bb50caf5f0945ab1|2021-06-19--17-20-18.bz2", Panda.SAFETY_TESLA, 0),                # TESLA.AP2_MODELS
   ("bd6a637565e91581_2021-10-29--22-18-31--1--rlog.bz2", Panda.SAFETY_MAZDA, 0),       # MAZDA.CX9_2021
+  ("f44aa96ace22f34a|2021-12-22--06-22-31.bz2", Panda.SAFETY_HONDA_RADARLESS, 0),      # HONDA.CIVIC_22
 ]
 
 
