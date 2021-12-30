@@ -8,6 +8,13 @@ from panda import Panda
 from panda.tests.safety import libpandasafety_py
 from panda.tests.safety.common import CANPackerPanda
 
+DEG_TO_RAD = np.pi / 180.
+
+# Signal: LatCtlPath_An_Actl
+# Factor: 0.0005
+FORD_RAD_TO_CAN = 2000.0
+FORD_DEG_TO_CAN = DEG_TO_RAD * FORD_RAD_TO_CAN
+
 ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
 ANGLE_DELTA_VU = [5., 3.5, 0.4]   # unwind limit
@@ -33,8 +40,8 @@ class TestFordSafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
-      self.packer = None
-      raise unittest.SkipTest
+    self.packer = None
+    raise unittest.SkipTest
 
   # Driver brake pedal
   def _brake_msg(self, brake):
@@ -70,7 +77,7 @@ class TestFordSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("SteeringPinion_Data", 0, values)
 
   def _set_prev_angle(self, t):
-    self.safety.set_desired_angle_last(t)
+    self.safety.set_desired_angle_last(int(t * FORD_DEG_TO_CAN))
 
   def _angle_meas_msg_array(self, angle):
     for _ in range(6):
@@ -83,6 +90,14 @@ class TestFordSafety(common.PandaSafetyTest):
       "LatCtlPath_An_Actl": angle,
     }
     return self.packer.make_can_msg_panda("LateralMotionControl", 0, values)
+
+  def _acc_button_msg(self, cancel=0, resume=0, set=0):
+    values = {
+      "CcAslButtnCnclPress": cancel,
+      "CcAsllButtnResPress": resume,
+      "CcAslButtnSetPress": set,
+    }
+    return self.packer.make_can_msg_panda("Steering_Data_FD1", 0, values)
 
 
 class TestFordSteeringSafety(TestFordSafety):
@@ -153,9 +168,19 @@ class TestFordSteeringSafety(TestFordSafety):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_spam_cancel_safety_check(self):
-    # TODO: test_spam_cancel_safety_check
-    pass
+    self.safety.set_controls_allowed(1)
+    self._tx(self._acc_button_msg(cancel=1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self._tx(self._acc_button_msg(resume=1))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.safety.set_controls_allowed(1)
+    self._tx(self._acc_button_msg(set=1))
+    self.assertFalse(self.safety.get_controls_allowed())
 
   def test_rx_hook(self):
     # TODO: test_rx_hook
     pass
+
+
+if __name__ == "__main__":
+  unittest.main()
