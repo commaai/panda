@@ -1,11 +1,11 @@
 import os
 import abc
-import struct
 import unittest
 import importlib
 import numpy as np
 from typing import Optional, List, Dict
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
+from panda import LEN_TO_DLC
 from panda.tests.safety import libpandasafety_py
 
 MAX_WRONG_COUNTERS = 5
@@ -18,16 +18,12 @@ class UNSAFE_MODE:
 
 def package_can_msg(msg):
   addr, _, dat, bus = msg
-  rdlr, rdhr = struct.unpack('II', dat.ljust(8, b'\x00'))
-
-  ret = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-  if addr >= 0x800:
-    ret[0].RIR = (addr << 3) | 5
-  else:
-    ret[0].RIR = (addr << 21) | 1
-  ret[0].RDTR = len(dat) | ((bus & 0xF) << 4)
-  ret[0].RDHR = rdhr
-  ret[0].RDLR = rdlr
+  ret = libpandasafety_py.ffi.new('CANPacket_t *')
+  ret[0].extended = 1 if addr >= 0x800 else 0
+  ret[0].addr = addr
+  ret[0].data_len_code = LEN_TO_DLC[len(dat)]
+  ret[0].bus = bus
+  ret[0].data = bytes(dat)
 
   return ret
 
@@ -291,22 +287,22 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertTrue(self.safety.get_relay_malfunction())
     for a in range(1, 0x800):
       for b in range(0, 3):
-        self.assertFalse(self._tx(make_msg(b, a, 8)))
+        self.assertEqual(-1, self._tx(make_msg(b, a, 8)))
         self.assertEqual(-1, self.safety.safety_fwd_hook(b, make_msg(b, a, 8)))
 
   def test_fwd_hook(self):
     # some safety modes don't forward anything, while others blacklist msgs
     for bus in range(0x0, 0x3):
-      for addr in range(0x1, 0x800):
+      for addr in range(0x1, 0x40000):
         # assume len 8
         msg = make_msg(bus, addr, 8)
         fwd_bus = self.FWD_BUS_LOOKUP.get(bus, -1)
         if bus in self.FWD_BLACKLISTED_ADDRS and addr in self.FWD_BLACKLISTED_ADDRS[bus]:
           fwd_bus = -1
-        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg))
+        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg), f"{addr=:#x} from {bus=} to {fwd_bus=}")
 
   def test_spam_can_buses(self):
-    for addr in range(1, 0x800):
+    for addr in range(1, 0x40000):
       for bus in range(0, 4):
         if all(addr != m[0] or bus != m[1] for m in self.TX_MSGS):
           self.assertFalse(self._tx(make_msg(bus, addr, 8)))
@@ -426,18 +422,25 @@ class PandaSafetyTest(PandaSafetyTestBase):
       for attr in dir(test):
         if attr.startswith("Test") and attr != current_test:
           tx = getattr(getattr(test, attr), "TX_MSGS")
-          if tx is not None:
+          if tx is not None and not attr.endswith('Base'):
+            # No point in comparing different Tesla safety modes
+            if 'Tesla' in attr and 'Tesla' in current_test:
+              continue
+
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
-            if attr in ['TestHondaBoschLongGiraffeSafety', 'TestHondaNidecSafety']:
+            if attr.startswith('TestHonda'):
+              # exceptions for common msgs across different hondas
               tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C], tx))
-            all_tx.append(tx)
+            all_tx.append(list([m[0], m[1], attr[4:]] for m in tx))
 
     # make sure we got all the msgs
     self.assertTrue(len(all_tx) >= len(test_files)-1)
 
     for tx_msgs in all_tx:
-      for addr, bus in tx_msgs:
+      for addr, bus, test_name in tx_msgs:
         msg = make_msg(bus, addr)
         self.safety.set_controls_allowed(1)
-        self.assertFalse(self._tx(msg))
-
+        # TODO: this should be blocked
+        if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
+          continue
+        self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")

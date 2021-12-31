@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-import struct
 import panda.tests.safety.libpandasafety_py as libpandasafety_py
-from panda import Panda
+from panda import Panda, LEN_TO_DLC
 
 def to_signed(d, bits):
   ret = d
@@ -11,8 +10,8 @@ def to_signed(d, bits):
 
 def is_steering_msg(mode, addr):
   ret = False
-  if mode in [Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH_GIRAFFE, Panda.SAFETY_HONDA_BOSCH_HARNESS]:
-    ret = (addr == 0xE4) or (addr == 0x194) or (addr == 0x33D)
+  if mode in [Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH]:
+    ret = (addr == 0xE4) or (addr == 0x194) or (addr == 0x33D) or (addr == 0x33DA) or (addr == 0x33DB)
   elif mode == Panda.SAFETY_TOYOTA:
     ret = addr == 0x2E4
   elif mode == Panda.SAFETY_GM:
@@ -27,7 +26,7 @@ def is_steering_msg(mode, addr):
 
 def get_steer_torque(mode, to_send):
   ret = 0
-  if mode in [Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH_GIRAFFE, Panda.SAFETY_HONDA_BOSCH_HARNESS]:
+  if mode in [Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH]:
     ret = to_send.RDLR & 0xFFFF0000
   elif mode == Panda.SAFETY_TOYOTA:
     ret = (to_send.RDLR & 0xFF00) | ((to_send.RDLR >> 16) & 0xFF)
@@ -45,7 +44,7 @@ def get_steer_torque(mode, to_send):
   return ret
 
 def set_desired_torque_last(safety, mode, torque):
-  if mode in [Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH_GIRAFFE, Panda.SAFETY_HONDA_BOSCH_HARNESS]:
+  if mode in [Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH]:
     pass  # honda safety mode doesn't enforce a rate on steering msgs
   elif mode == Panda.SAFETY_TOYOTA:
     safety.set_toyota_desired_torque_last(torque)
@@ -59,16 +58,12 @@ def set_desired_torque_last(safety, mode, torque):
     safety.set_subaru_desired_torque_last(torque)
 
 def package_can_msg(msg):
-  rdlr, rdhr = struct.unpack('II', msg.dat.ljust(8, b'\x00'))
-
-  ret = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
-  if msg.address >= 0x800:
-    ret[0].RIR = (msg.address << 3) | 5
-  else:
-    ret[0].RIR = (msg.address << 21) | 1
-  ret[0].RDTR = len(msg.dat) | ((msg.src & 0xF) << 4)
-  ret[0].RDHR = rdhr
-  ret[0].RDLR = rdlr
+  ret = libpandasafety_py.ffi.new('CANPacket_t *')
+  ret[0].extended = 1 if msg.address >= 0x800 else 0
+  ret[0].addr = msg.address
+  ret[0].data_len_code = LEN_TO_DLC[len(msg.dat)]
+  ret[0].bus = msg.src
+  ret[0].data = msg.dat
 
   return ret
 

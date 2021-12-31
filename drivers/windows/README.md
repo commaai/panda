@@ -1,3 +1,5 @@
+
+# Windows driver
 ```
                                                                                                         ;"   ^;     ;'   ",
 ______/\\\\\\\\\\\____/\\\\\\\\\_______/\\\\\\\\\\\\\\\______/\\\\\\\\\\_____________/\\\____           ;    s$$$$$$$s     ;
@@ -17,13 +19,13 @@ ______/\\\\\\\\\\\____/\\\\\\\\\_______/\\\\\\\\\\\\\\\______/\\\\\\\\\\________
                                                                                |_| (Code by Jessy Diamond Exum)
 ```
 
-# Installing J2534 driver:
+## Installing J2534 driver
 
 [Download](https://github.com/commaai/panda/files/4844692/panda.J2534.driver.install.zip)
 
 Depending on what version of windows you are on, you may need to separately install the WinUSB driver (see next section).
 
-# Installing WinUSB driver:
+## Installing WinUSB driver
 
 Installation automatically happens for Windows 8 and Windows 10 because the panda
 firmware contains the USB descriptors necessary to auto-install the WinUSB driver.
@@ -36,7 +38,7 @@ More details here:
 [WCID Devices](https://github.com/pbatard/libwdi/wiki/WCID-Devices)
 [Zadig for installing libusb compatible driver](https://github.com/pbatard/libwdi/wiki/Zadig)
 
-# Using J2534:
+## Using J2534
 
 After installing the J2534 drivers for the panda, you can do... nothing.
 You first need to get a J2534 client that can load the drivers and talk to
@@ -46,7 +48,7 @@ A simple tool for testing J2534 drivers is DrewTech's 'J2534-1 Bus Analysis
 Tool' available in the 'Other Support Applications' section of their
 [Download Page](http://www.drewtech.com/downloads/#OtherSupportApplications).
 
-# What is J2534?
+## What is J2534?
 
 J2534 is an API that tries to provide a consistent way to send/receive
 messages over the many different protocols supported by the OBD II
@@ -66,14 +68,14 @@ A lot of J2534 has good ideas behind it, but the standard has some odd choices:
 * Constant vague language about important behavior (small differences between vendors).
 * Most common differences become standard in later revisions.
 
-# Why use J2534 with the panda?
+## Why use J2534 with the panda?
 
 J2534 is the only interface supported by most professional grade
 vehicle diagnostics systems (such as HDS). These tools are useful for
 diagnosing vehicles, as well as reverse engineering some lesser known
 features.
 
-# What parts are supported with panda?
+## What parts are supported with panda?
 
 - [ ] **J1850VPW** *(Outdated, and not physically supported by the panda)*
 - [ ] **J1850PWM** *(Outdated, and not physically supported by the panda)*
@@ -82,7 +84,7 @@ features.
 - [X] **ISO9141**
 - [X] **ISO14230/KWP2000**
 
-# Building the Project:
+## Building the Project
 
 This project is developed with Visual Studio 2017, the Windows SDK,
 and the Windows Driver Kit (WDK).
@@ -106,12 +108,12 @@ vscruntimeinfo.nsh and follow the instructions to bundle in the Visual Studio C
 Runtime required by your version of Visual Studio. Without this runtime, the panda
 code will not work, so without this file, the installer will refuse to build.
 
-# Developing:
+## Developing
 
 - Edit and merge pandaJ2534DLL\J2534register_x64.reg to register your development J2534 DLL.
 - Add your output directory (panda\drivers\windows\Debug_x86) to your system PATH to avoid insanity.
 
-# ToDo Items:
+## ToDo Items
 
 - Apply a style-guide and consistent naming convention for Classes/Functions/Variables.
 - Send multiple messages (each with a different address) from a given connection at the same time.
@@ -119,7 +121,7 @@ code will not work, so without this file, the installer will refuse to build.
 - Find example of client using a _PS version of a protocol (PS is pin select, and may support using different CAN buses).
 
 
-# Known Issues:
+## Known Issues
 
 - ISO15765 Multi-frame TX: Hardware delays make transmission overshoot
   STMIN by several milliseconds. This does not violate the requirements
@@ -129,7 +131,7 @@ code will not work, so without this file, the installer will refuse to build.
   relaxed to allow serialization of messages based on their address
   (making multiple queues, effectively one queue per address).
 
-# Troubleshooting:
+## Troubleshooting
 troubleshooting:
 1. Install DrewTech J2534-1 Bus Analysis Tool
 http://www.drewtech.com/downloads/tools/Drew%20Technologies%20Tool%20for%20J2534-1%20API%20v1.07.msi
@@ -138,5 +140,5 @@ http://www.drewtech.com/downloads/tools/Drew%20Technologies%20Tool%20for%20J2534
 4. To figure out why the driver fails to load install Process Monitor and filter by the appropriate process name
 https://docs.microsoft.com/en-us/sysinternals/downloads/procmon
 
-# Other:
+## Other
 Panda head ASCII art by dcau

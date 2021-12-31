@@ -24,6 +24,7 @@ MSG_HCA_01 = 0x126      # TX by OP, Heading Control Assist steering torque
 MSG_GRA_ACC_01 = 0x12B  # TX by OP, ACC control buttons for cancel/resume
 MSG_LDW_02 = 0x397      # TX by OP, Lane line recognition and text alerts
 
+
 class TestVolkswagenMqbSafety(common.PandaSafetyTest):
   cnt_lh_eps_03 = 0
   cnt_esp_05 = 0
@@ -32,20 +33,16 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
   cnt_hca_01 = 0
   cnt_gra_acc_01 = 0
 
-  # Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep
-  # compatibility with gateway and camera integration
-  TX_MSGS = [[MSG_HCA_01, 0], [MSG_GRA_ACC_01, 0], [MSG_GRA_ACC_01, 2], [MSG_LDW_02, 0]]
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_HCA_01
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-  def setUp(self):
-    self.packer = CANPackerPanda("vw_mqb_2010")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
-    self.safety.init_tests()
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "TestVolkswagenMqbSafety":
+      cls.packer = None
+      cls.safety = None
+      raise unittest.SkipTest
 
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)
@@ -104,15 +101,6 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
           self.assertFalse(self._tx(self._hca_01_msg(t)))
         else:
           self.assertTrue(self._tx(self._hca_01_msg(t)))
-
-  def test_spam_cancel_safety_check(self):
-    self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._gra_acc_01_msg(cancel=1)))
-    self.assertFalse(self._tx(self._gra_acc_01_msg(resume=1)))
-    self.assertFalse(self._tx(self._gra_acc_01_msg(_set=1)))
-    # do not block resume if we are engaged already
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._gra_acc_01_msg(resume=1)))
 
   def test_non_realtime_limit_up(self):
     self.safety.set_torque_driver(0, 0)
@@ -225,7 +213,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
       if msg == MSG_MOTOR_20:
         to_push = self._gas_msg(0)
       self.assertTrue(self._rx(to_push))
-      to_push[0].RDHR ^= 0xFF
+      to_push[0].data[4] ^= 0xFF
       self.assertFalse(self._rx(to_push))
       self.assertFalse(self.safety.get_controls_allowed())
 
@@ -257,6 +245,27 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
       self._rx(self._pcm_status_msg(True))
       self._rx(self._gas_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
+
+
+class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
+  TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_GRA_ACC_01, 0], [MSG_GRA_ACC_01, 2]]
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("vw_mqb_2010")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
+    self.safety.init_tests()
+
+  def test_spam_cancel_safety_check(self):
+    self.safety.set_controls_allowed(0)
+    self.assertTrue(self._tx(self._gra_acc_01_msg(cancel=1)))
+    self.assertFalse(self._tx(self._gra_acc_01_msg(resume=1)))
+    self.assertFalse(self._tx(self._gra_acc_01_msg(_set=1)))
+    # do not block resume if we are engaged already
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self._tx(self._gra_acc_01_msg(resume=1)))
 
 
 if __name__ == "__main__":

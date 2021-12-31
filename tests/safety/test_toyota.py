@@ -74,8 +74,10 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   # Toyota gas gains are the same
   def _interceptor_msg(self, gas, addr):
     to_send = make_msg(0, addr, 6)
-    to_send[0].RDLR = ((gas & 0xff) << 8) | ((gas & 0xff00) >> 8) | \
-                      ((gas & 0xff) << 24) | ((gas & 0xff00) << 8)
+    to_send[0].data[0] = (gas & 0xFF00) >> 8 
+    to_send[0].data[1] = gas & 0xFF
+    to_send[0].data[2] = (gas & 0xFF00) >> 8
+    to_send[0].data[3] = gas & 0xFF
     return to_send
 
   def test_accel_actuation_limits(self):
@@ -122,7 +124,10 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       if msg == "pcm":
         to_push = self._pcm_status_msg(True)
       self.assertTrue(self._rx(to_push))
-      to_push[0].RDHR = 0
+      to_push[0].data[4] = 0
+      to_push[0].data[5] = 0
+      to_push[0].data[6] = 0
+      to_push[0].data[7] = 0
       self.assertFalse(self._rx(to_push))
       self.assertFalse(self.safety.get_controls_allowed())
 

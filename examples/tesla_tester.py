@@ -1,24 +1,11 @@
 #!/usr/bin/env python3
 # flake8: noqa
 
-import sys
 import binascii
 from panda import Panda
 
 def tesla_tester():
-
-  try:
-    print("Trying to connect to Panda over USB...")
-    p = Panda()
-
-  except AssertionError:
-    print("USB connection failed. Trying WiFi...")
-
-    try:
-      p = Panda("WIFI")
-    except Exception:
-      print("WiFi connection timed out. Please make sure your Panda is connected and try again.")
-      sys.exit(0)
+  p = Panda()
 
   body_bus_speed = 125  # Tesla Body busses (B, BF) are 125kbps, rest are 500kbps
   body_bus_num = 1  # My TDC to OBD adapter has PT on bus0 BDY on bus1 and CH on bus2

@@ -41,27 +41,23 @@ void debug_ring_callback(uart_ring *ring) {
   }
 }
 
-int usb_cb_ep1_in(void *usbdata, int len, bool hardwired) {
+int usb_cb_ep1_in(void *usbdata, int len) {
   UNUSED(usbdata);
   UNUSED(len);
-  UNUSED(hardwired);
   return 0;
 }
-void usb_cb_ep2_out(void *usbdata, int len, bool hardwired) {
+void usb_cb_ep2_out(void *usbdata, int len) {
   UNUSED(usbdata);
   UNUSED(len);
-  UNUSED(hardwired);
 }
-void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
+void usb_cb_ep3_out(void *usbdata, int len) {
   UNUSED(usbdata);
   UNUSED(len);
-  UNUSED(hardwired);
 }
 void usb_cb_ep3_out_complete(void) {}
 void usb_cb_enumeration_complete(void) {}
 
-int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) {
-  UNUSED(hardwired);
+int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
   switch (setup->b.bRequest) {
@@ -77,7 +73,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
         break;
       }
       // read
-      while ((resp_len < MIN(setup->b.wLength.w, MAX_RESP_LEN)) &&
+      while ((resp_len < MIN(setup->b.wLength.w, USBPACKET_MAX_SIZE)) &&
                          getc(ur, (char*)&resp[resp_len])) {
         ++resp_len;
       }
@@ -132,11 +128,11 @@ void CAN1_RX0_IRQ_Handler(void) {
     int address = CAN->sFIFOMailBox[0].RIR >> 21;
     if (address == CAN_GAS_INPUT) {
       // softloader entry
-      if (GET_BYTES_04(&CAN->sFIFOMailBox[0]) == 0xdeadface) {
-        if (GET_BYTES_48(&CAN->sFIFOMailBox[0]) == 0x0ab00b1e) {
+      if (GET_MAILBOX_BYTES_04(&CAN->sFIFOMailBox[0]) == 0xdeadface) {
+        if (GET_MAILBOX_BYTES_48(&CAN->sFIFOMailBox[0]) == 0x0ab00b1e) {
           enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
           NVIC_SystemReset();
-        } else if (GET_BYTES_48(&CAN->sFIFOMailBox[0]) == 0x02b00b1e) {
+        } else if (GET_MAILBOX_BYTES_48(&CAN->sFIFOMailBox[0]) == 0x02b00b1e) {
           enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
           NVIC_SystemReset();
         } else {
@@ -147,7 +143,7 @@ void CAN1_RX0_IRQ_Handler(void) {
       // normal packet
       uint8_t dat[8];
       for (int i=0; i<8; i++) {
-        dat[i] = GET_BYTE(&CAN->sFIFOMailBox[0], i);
+        dat[i] = GET_MAILBOX_BYTE(&CAN->sFIFOMailBox[0], i);
       }
       uint16_t value_0 = (dat[0] << 8) | dat[1];
       uint16_t value_1 = (dat[2] << 8) | dat[3];

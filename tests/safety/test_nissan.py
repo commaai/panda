@@ -147,5 +147,25 @@ class TestNissanSafety(common.PandaSafetyTest):
     self.assertFalse(self.safety.get_controls_allowed())
 
 
+class TestNissanLeafSafety(TestNissanSafety):
+
+  def setUp(self):
+    self.packer = CANPackerPanda("nissan_leaf_2018")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
+    self.safety.init_tests()
+
+  def _brake_msg(self, brake):
+    values = {"USER_BRAKE_PRESSED": brake}
+    return self.packer.make_can_msg_panda("CRUISE_THROTTLE", 0, values)
+
+  def _gas_msg(self, gas):
+    values = {"GAS_PEDAL": gas}
+    return self.packer.make_can_msg_panda("CRUISE_THROTTLE", 0, values)
+
+  # TODO: leaf should use its own safety param
+  def test_acc_buttons(self):
+    pass
+
 if __name__ == "__main__":
   unittest.main()
