@@ -6,8 +6,9 @@ const struct lookup_t FORD_LOOKUP_ANGLE_RATE_DOWN = {
   {2., 7., 17.},
   {5., 3.5, .8}};
 
-// CV.DEG_TO_RAD
 #define DEG_TO_RAD (3.14159265358979 / 180.0)
+#define RAD_TO_DEG (180.0 / 3.14159265358979)
+#define KPH_TO_MS (0.01 / 3.6)
 
 // Signal: LatCtlPath_An_Actl
 // Factor: 0.0005
@@ -65,17 +66,19 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (addr == MSG_STEERING_PINION_DATA) {
       // Steering angle: (0.1 * val) - 1600 in deg
       // Signal: StePinComp_An_Est
-      // Convert to CAN units (FORD_DEG_TO_CAN).
-      int angle_meas_new = (((((GET_BYTE(to_push, 2) & 0x7F) << 7) | GET_BYTE(to_push, 3)) * 0.1) - 1600U) * FORD_DEG_TO_CAN;
+      // Convert to CAN units (1/2000 radians).
+      int angle_meas_new = ((((GET_BYTE(to_push, 2) & 0x7FU) << 7) | GET_BYTE(to_push, 3)) * 0.1) - 1600U;
+      angle_meas_new *= FORD_DEG_TO_CAN;
       update_sample(&angle_meas, angle_meas_new);
     }
 
     // Update in motion state from speed value
     if (addr == MSG_ENG_VEHICLE_SP_THROTTLE2) {
-      // Speed in kph, convert to m/s
-      // Speed: (0.01 * val) in kph
+      // Speed in km/h, convert to m/s
+      // Speed: (0.01 * val) in km/h
       // Signal: Veh_V_ActlEng
-      vehicle_speed = ((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01 / 3.6;
+      int raw_can_speed = ((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01;
+      vehicle_speed = raw_can_speed * KPH_TO_MS;
       vehicle_moving = vehicle_speed > 0.3;
     }
 
@@ -83,7 +86,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (addr == MSG_ENG_VEHICLE_SP_THROTTLE) {
       // Pedal position: (0.1 * val) in percent
       // Signal: ApedPos_Pc_ActlArb
-      gas_pressed = (((GET_BYTE(to_push, 0) & 0x03U) << 8) | GET_BYTE(to_push, 1)) > 0U;
+      gas_pressed = (((GET_BYTE(to_push, 0) & 0x03U) << 8) | GET_BYTE(to_push, 1)) != 0U;
     }
 
     // Update brake pedal and cruise state
@@ -140,8 +143,9 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (addr == MSG_LATERAL_MOTION_CONTROL) {
     // Signal: LatCtlPath_An_Actl
     // Command Angle: (0.0005 * val) - 0.5 in radians
-    // Convert to CAN units (FORD_RAD_TO_CAN).
-    int desired_angle = ((((GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5)) * 0.0005) - 0.5) * FORD_RAD_TO_CAN;
+    // Store in CAN units (1/2000 radians).
+    int desired_angle = ((GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5)) - 1000U;
+
     // Signal: LatCtl_D_Rq
     unsigned int steer_control_type = (GET_BYTE(to_send, 4) & 0x1CU) >> 2;
     bool steer_control_enabled = steer_control_type > 0U;
@@ -150,9 +154,9 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     if (controls_allowed && steer_control_enabled) {
       // Add 1 to not false trigger violation
       float delta_angle_float;
-      delta_angle_float = interpolate(FORD_LOOKUP_ANGLE_RATE_UP, vehicle_speed) * FORD_DEG_TO_CAN;
+      delta_angle_float = (interpolate(FORD_LOOKUP_ANGLE_RATE_UP, vehicle_speed) * FORD_DEG_TO_CAN);
       int delta_angle_up = (int)(delta_angle_float) + 1;
-      delta_angle_float = interpolate(FORD_LOOKUP_ANGLE_RATE_DOWN, vehicle_speed) * FORD_DEG_TO_CAN;
+      delta_angle_float = (interpolate(FORD_LOOKUP_ANGLE_RATE_DOWN, vehicle_speed) * FORD_DEG_TO_CAN);
       int delta_angle_down = (int)(delta_angle_float) + 1;
       int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
       int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);

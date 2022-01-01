@@ -15,9 +15,9 @@ DEG_TO_RAD = np.pi / 180.
 FORD_RAD_TO_CAN = 2000.0
 FORD_DEG_TO_CAN = DEG_TO_RAD * FORD_RAD_TO_CAN
 
-ANGLE_DELTA_BP = [0., 5., 15.]
-ANGLE_DELTA_V = [5., .8, .15]     # windup limit
-ANGLE_DELTA_VU = [5., 3.5, 0.4]   # unwind limit
+ANGLE_DELTA_BP = [2., 7., 17.]
+ANGLE_DELTA_V = [5., .8, .25]     # windup limit
+ANGLE_DELTA_VU = [5., 3.5, .8]   # unwind limit
 
 MSG_STEERING_PINION_DATA = 0x07E      # RX from PSCM, for steering pinion angle
 MSG_ENG_BRAKE_DATA = 0x165            # RX from PCM, for driver brake pedal and cruise state
@@ -33,9 +33,12 @@ def sign(a):
   return 1 if a > 0 else -1
 
 
+def clamp(n, low, high):
+  return max(low, min(n, high))
+
+
 class TestFordSafety(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 0.3
-  GAS_PRESSED_THRESHOLD = 3
   RELAY_MALFUNCTION_BUS = 0
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
@@ -84,18 +87,18 @@ class TestFordSafety(common.PandaSafetyTest):
       self._rx(self._angle_meas_msg(angle))
 
   # Lane Centering Assist command
-  def _steer_msg(self, angle, enabled):
+  def _lkas_control_msg(self, angle, enabled):
     values = {
       "LatCtl_D_Rq": 1 if enabled else 0,
-      "LatCtlPath_An_Actl": angle,
+      "LatCtlPath_An_Actl": clamp(angle * DEG_TO_RAD, -0.5, 0.5),  # FIXME if DBC changes
     }
     return self.packer.make_can_msg_panda("LateralMotionControl", 0, values)
 
-  def _acc_button_msg(self, cancel=0, resume=0, set=0):
+  def _acc_button_msg(self, cancel=0, resume=0, _set=0):
     values = {
       "CcAslButtnCnclPress": cancel,
       "CcAsllButtnResPress": resume,
-      "CcAslButtnSetPress": set,
+      "CcAslButtnSetPress": _set,
     }
     return self.packer.make_can_msg_panda("Steering_Data_FD1", 0, values)
 
@@ -111,10 +114,11 @@ class TestFordSteeringSafety(TestFordSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
     self.safety.init_tests()
 
-  def test_steer_when_enabled(self):
+  def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
     speeds = [0., 1., 5., 10., 15., 50.]
-    angles = [-300, -100, -10, 0, 10, 100, 300]
+    # angles = [-300, -100, -10, 0, 10, 100, 300]
+    angles = [-23, -10, 0, 10, 23]
     for a in angles:
       for s in speeds:
         max_delta_up = np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_V)
@@ -128,43 +132,45 @@ class TestFordSteeringSafety(TestFordSafety):
         self.safety.set_controls_allowed(1)
 
         # Stay within limits
-        # Up
-        self.assertEqual(True, self._tx(self._steer_msg(a + sign(a) * max_delta_up, 1)))
+        # Don't change
+        self.assertTrue(self._tx(self._lkas_control_msg(a, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
-        # Don't change
-        self.assertEqual(True, self._tx(self._steer_msg(a, 1)))
+        # Up
+        self.assertTrue(self._tx(self._lkas_control_msg(a + sign(a) * max_delta_up, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        self.assertEqual(True, self._tx(self._steer_msg(a - sign(a) * max_delta_down, 1)))
+        self._set_prev_angle(a)
+        self.assertTrue(self._tx(self._lkas_control_msg(a - sign(a) * max_delta_down, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Inject too high rates
         # Up
-        self.assertEqual(False, self._tx(self._steer_msg(a + sign(a) * (max_delta_up + 1.1), 1)))
+        self._set_prev_angle(a)
+        self.assertFalse(self._tx(self._lkas_control_msg(a + sign(a) * (max_delta_up + 1.1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
 
         # Don't change
         self.safety.set_controls_allowed(1)
         self._set_prev_angle(a)
         self.assertTrue(self.safety.get_controls_allowed())
-        self.assertEqual(True, self._tx(self._steer_msg(a, 1)))
+        self.assertEqual(True, self._tx(self._lkas_control_msg(a, 1)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        self.assertEqual(False, self._tx(self._steer_msg(a - sign(a) * (max_delta_down + 1.1), 1)))
+        self.assertEqual(False, self._tx(self._lkas_control_msg(a - sign(a) * (max_delta_down + 1.1), 1)))
         self.assertFalse(self.safety.get_controls_allowed())
 
         # Check desired steer should be the same as steer angle when controls are off
         self.safety.set_controls_allowed(0)
-        self.assertEqual(True, self._tx(self._steer_msg(a, 0)))
+        self.assertEqual(True, self._tx(self._lkas_control_msg(a, 0)))
 
   def test_steer_when_disabled(self):
     self.safety.set_controls_allowed(0)
 
     self._set_prev_angle(0)
-    self.assertFalse(self._tx(self._steer_msg(0, 1)))
+    self.assertFalse(self._tx(self._lkas_control_msg(0, 1)))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_spam_cancel_safety_check(self):
@@ -174,7 +180,7 @@ class TestFordSteeringSafety(TestFordSafety):
     self._tx(self._acc_button_msg(resume=1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.safety.set_controls_allowed(1)
-    self._tx(self._acc_button_msg(set=1))
+    self._tx(self._acc_button_msg(_set=1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_rx_hook(self):
