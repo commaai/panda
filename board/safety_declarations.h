@@ -142,6 +142,14 @@ struct sample_t angle_meas;         // last 3 steer angles
 // See ISO 15622:2018 for more information.
 #define UNSAFE_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX 8
 
+// Enable the ability to toggle LKAS and ACC independently of each other. Allows openpilot to be engaged 
+// after pressing the LKAS button and doesn't block openpilot from engaging after pressing the cancel 
+// button.
+#define UNSAFE_SPLIT_LKAS_AND_ACC 16
+
+// If the previous disengagement is from a brake press, allow openpilot to engage after releasing the brake.
+#define UNSAFE_RESUME_LKAS_AFTER_BRAKE 32
+
 int unsafe_mode = 0;
 
 // time since safety mode has been changed
