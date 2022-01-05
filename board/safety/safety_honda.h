@@ -8,7 +8,7 @@
 //      brake > 0mph
 const CanMsg HONDA_N_TX_MSGS[] = {{0xE4, 0, 5}, {0x194, 0, 4}, {0x1FA, 0, 8}, {0x200, 0, 6}, {0x30C, 0, 8}, {0x33D, 0, 5}};
 const CanMsg HONDA_BOSCH_TX_MSGS[] = {{0xE4, 0, 5}, {0xE5, 0, 8}, {0x296, 1, 4}, {0x33D, 0, 5}, {0x33DA, 0, 5}, {0x33DB, 0, 8}};  // Bosch
-const CanMsg HONDA_RL_TX_MSGS[] = {{0xE4, 0, 5}, {0x296, 2, 4}, {0x33D, 0, 8}}; // Radarless
+const CanMsg HONDA_RL_TX_MSGS[] = {{0xE4, 0, 5}, {0x296, 2, 4}, {0x33D, 0, 8}, {0xF31AA54, 0, 8}}; // Radarless
 const CanMsg HONDA_BOSCH_LONG_TX_MSGS[] = {{0xE4, 1, 5}, {0x1DF, 1, 8}, {0x1EF, 1, 8}, {0x1FA, 1, 8}, {0x30C, 1, 8}, {0x33D, 1, 5}, {0x33DA, 1, 5}, {0x33DB, 1, 8}, {0x39F, 1, 8}, {0x18DAB0F1, 1, 8}};  // Bosch w/ gas and brakes
 
 // Roughly calculated using the offsets in openpilot +5%:
@@ -58,6 +58,7 @@ AddrCheckStruct honda_rl_addr_checks[] = {
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
            {0x1BE, 0, 3, .check_checksum = true, .max_counter = 3U, .expected_timestep = 20000U}, { 0 }}},
+  {.msg = {{0xF31AA54, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 50000U}, { 0 }}},
 };
 #define HONDA_RL_ADDR_CHECKS_LEN (sizeof(honda_rl_addr_checks) / sizeof(honda_rl_addr_checks[0]))
 
@@ -423,7 +424,7 @@ static int honda_radarless_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   // fwd from car to camera. also fwd certain msgs from camera to car
   // no radar bus on this car
   // 0xE4 is steering on all cars except CRV and RDX, 0x194 for CRV and RDX,
-  // 0x1FA is brake control, 0x30C is acc hud, 0x33D is lkas hud,
+  // 0x1FA is brake control, 0x30C is acc hud, 0x33D is lkas hud, 0xF31AA54 is additional lkas hud
   int bus_fwd = -1;
 
   if (!relay_malfunction) {
@@ -432,7 +433,7 @@ static int honda_radarless_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     }
     if (bus_num == 2)  {
       int addr = GET_ADDR(to_fwd);
-      int is_lkas_msg = (addr == 0xE4) || (addr == 0x33D);
+      int is_lkas_msg = (addr == 0xE4) || (addr == 0x33D) || (addr == 0xF31AA54);
       if (!is_lkas_msg) {
         bus_fwd = 0;
       }
