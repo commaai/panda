@@ -8,7 +8,7 @@
 //      brake > 0mph
 const CanMsg HONDA_N_TX_MSGS[] = {{0xE4, 0, 5}, {0x194, 0, 4}, {0x1FA, 0, 8}, {0x200, 0, 6}, {0x30C, 0, 8}, {0x33D, 0, 5}};
 const CanMsg HONDA_BOSCH_TX_MSGS[] = {{0xE4, 0, 5}, {0xE5, 0, 8}, {0x296, 1, 4}, {0x33D, 0, 5}, {0x33DA, 0, 5}, {0x33DB, 0, 8}};  // Bosch
-const CanMsg HONDA_RL_TX_MSGS[] = {{0xE4, 0, 5}, {0x296, 2, 4}, {0x33D, 0, 8}, {0xF31AA54, 2, 8}}; // Radarless
+const CanMsg HONDA_RL_TX_MSGS[] = {{0xE4, 0, 5}, {0x296, 2, 4}, {0x33D, 0, 8}, {0xF31AA54, 0, 8}}; // Radarless
 const CanMsg HONDA_BOSCH_LONG_TX_MSGS[] = {{0xE4, 1, 5}, {0x1DF, 1, 8}, {0x1EF, 1, 8}, {0x1FA, 1, 8}, {0x30C, 1, 8}, {0x33D, 1, 5}, {0x33DA, 1, 5}, {0x33DB, 1, 8}, {0x39F, 1, 8}, {0x18DAB0F1, 1, 8}};  // Bosch w/ gas and brakes
 
 // Roughly calculated using the offsets in openpilot +5%:
@@ -228,8 +228,8 @@ static int honda_tx_hook(CANPacket_t *to_send) {
 
   if ((honda_hw == HONDA_BOSCH) && !honda_bosch_long) {
     tx = msg_allowed(to_send, HONDA_BOSCH_TX_MSGS, sizeof(HONDA_BOSCH_TX_MSGS)/sizeof(HONDA_BOSCH_TX_MSGS[0]));
-  } else if ((honda_hw == HONDA_RL) && !honda_bosch_long) {
-    tx = msg_allowed(to_send, HONDA_RL_TX_MSGS, sizeof(HONDA_RL_TX_MSGS)/sizeof(HONDA_RL_TX_MSGS[0]));
+//  } else if ((honda_hw == HONDA_RL) && !honda_bosch_long) {
+//    tx = msg_allowed(to_send, HONDA_RL_TX_MSGS, sizeof(HONDA_RL_TX_MSGS)/sizeof(HONDA_RL_TX_MSGS[0]));
   } else if ((honda_hw == HONDA_BOSCH) && honda_bosch_long) {
     tx = msg_allowed(to_send, HONDA_BOSCH_LONG_TX_MSGS, sizeof(HONDA_BOSCH_LONG_TX_MSGS)/sizeof(HONDA_BOSCH_LONG_TX_MSGS[0]));
   } else {
