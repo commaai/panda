@@ -58,7 +58,7 @@ AddrCheckStruct honda_rl_addr_checks[] = {
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
            {0x1BE, 0, 3, .check_checksum = true, .max_counter = 3U, .expected_timestep = 20000U}, { 0 }}},
-  {.msg = {{0xF31AA54, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
+  {.msg = {{0xF31AA54, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 200000U}, { 0 }, { 0 }}},
 };
 #define HONDA_RL_ADDR_CHECKS_LEN (sizeof(honda_rl_addr_checks) / sizeof(honda_rl_addr_checks[0]))
 
