@@ -695,13 +695,15 @@ void tick_handler(void) {
       }
 
       if (!heartbeat_disabled) {
+        const bool ignition = check_started();
+
         // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
-        if (heartbeat_counter >= (check_started() ? HEARTBEAT_IGNITION_CNT_ON : HEARTBEAT_IGNITION_CNT_OFF)) {
+        if (heartbeat_counter >= (ignition ? HEARTBEAT_IGNITION_CNT_ON : HEARTBEAT_IGNITION_CNT_OFF)) {
           puts("device hasn't sent a heartbeat for 0x");
           puth(heartbeat_counter);
           puts(" seconds. Safety is set to SILENT mode.\n");
 
-          if (controls_allowed_countdown > 0U) {
+          if (ignition && controls_allowed_countdown > 0U) {
             siren_countdown = 5U;
             controls_allowed_countdown = 0U;
           }
@@ -730,7 +732,7 @@ void tick_handler(void) {
         }
 
         // enter CDP mode when car starts to ensure we are charging a turned off EON
-        if (check_started() && (usb_power_mode != USB_POWER_CDP)) {
+        if (ignition && (usb_power_mode != USB_POWER_CDP)) {
           current_board->set_usb_power_mode(USB_POWER_CDP);
         }
       }
