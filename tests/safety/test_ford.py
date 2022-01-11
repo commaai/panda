@@ -38,7 +38,8 @@ def clamp(n, low, high):
 
 
 class TestFordSafety(common.PandaSafetyTest):
-  STANDSTILL_THRESHOLD = 0.3
+  STANDSTILL_THRESHOLD = 1
+  GAS_PRESSED_THRESHOLD = 3
   RELAY_MALFUNCTION_BUS = 0
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 

@@ -8,7 +8,7 @@ const struct lookup_t FORD_LOOKUP_ANGLE_RATE_DOWN = {
 
 #define DEG_TO_RAD (3.14159265358979 / 180.0)
 #define RAD_TO_DEG (180.0 / 3.14159265358979)
-#define KPH_TO_MS (0.01 / 3.6)
+#define KPH_TO_MS (1 / 3.6)
 
 // Signal: LatCtlPath_An_Actl
 // Factor: 0.0005
@@ -75,10 +75,9 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     // Update in motion state from speed value
     if (addr == MSG_ENG_VEHICLE_SP_THROTTLE2) {
       // Speed in km/h, convert to m/s
-      // Speed: (0.01 * val) in km/h
+      // Speed: (0.01 * val) * KPH_TO_MS
       // Signal: Veh_V_ActlEng
-      int raw_can_speed = ((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01;
-      vehicle_speed = raw_can_speed * KPH_TO_MS;
+      vehicle_speed = (((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01) * KPH_TO_MS;
       vehicle_moving = vehicle_speed > 0.3;
     }
 
