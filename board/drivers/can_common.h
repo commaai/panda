@@ -14,10 +14,6 @@ typedef struct {
   bool brs_enabled;
 } bus_config_t;
 
-#define CAN_BUS_NUM_MASK 0x3FU
-
-#define BUS_MAX 4U
-
 uint32_t can_rx_errs = 0;
 uint32_t can_send_errs = 0;
 uint32_t can_fwd_errs = 0;
@@ -171,15 +167,13 @@ bus_config_t bus_config[] = {
   { .bus_lookup = 0xFFU, .can_num_lookup = 0xFFU, .can_speed = 333U, .can_data_speed = 333U, .canfd_enabled = false, .brs_enabled = false },
 };
 
-#define CAN_MAX 3U
-
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
 #define BUS_NUM_FROM_CAN_NUM(num) (bus_config[num].bus_lookup)
 #define CAN_NUM_FROM_BUS_NUM(num) (bus_config[num].can_num_lookup)
 
 void can_init_all(void) {
   bool ret = true;
-  for (uint8_t i=0U; i < CAN_MAX; i++) {
+  for (uint8_t i=0U; i < CAN_CNT; i++) {
     can_clear(can_queues[i]);
     ret &= can_init(i);
   }
@@ -222,7 +216,7 @@ void ignition_can_hook(CANPacket_t *to_push) {
 
     // Mazda exception
     if ((addr == 0x9E) && (len == 8)) {
-      ignition_can = (GET_BYTE(to_push, 0) >> 4) == 0xDU;
+      ignition_can = (GET_BYTE(to_push, 0) >> 5) == 0x6U;
     }
 
   }
@@ -238,7 +232,7 @@ bool can_tx_check_min_slots_free(uint32_t min) {
 
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
   if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
-    if (bus_number < BUS_MAX) {
+    if (bus_number < BUS_CNT) {
       // add CAN packet to send queue
       if ((bus_number == 3U) && (bus_config[3].can_num_lookup == 0xFFU)) {
         gmlan_send_errs += bitbang_gmlan(to_push) ? 0U : 1U;

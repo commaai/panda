@@ -23,9 +23,6 @@ typedef union _USB_Setup {
 }
 USB_Setup_TypeDef;
 
-#define MAX_CAN_MSGS_PER_BULK_TRANSFER 51U
-#define MAX_EP1_CHUNK_PER_BULK_TRANSFER 16256 // max data stream chunk in bytes, shouldn't be higher than 16320 or counter will overflow
-
 bool usb_eopf_detected = false;
 
 void usb_init(void);
@@ -87,7 +84,7 @@ void usb_outep3_resume_if_paused(void);
 #define STS_SETUP_COMP                         4
 #define STS_SETUP_UPDT                         6
 
-uint8_t resp[MAX_RESP_LEN];
+uint8_t resp[USBPACKET_MAX_SIZE];
 
 // for the repeating interfaces
 #define DSCR_INTERFACE_LEN 9
@@ -387,7 +384,7 @@ void USB_WritePacket(const void *src, uint16_t len, uint32_t ep) {
   hexdump(src, len);
   #endif
 
-  uint32_t numpacket = (len + (MAX_RESP_LEN - 1U)) / MAX_RESP_LEN;
+  uint32_t numpacket = (len + (USBPACKET_MAX_SIZE - 1U)) / USBPACKET_MAX_SIZE;
   uint32_t count32b = 0;
   count32b = (len + 3U) / 4U;
 

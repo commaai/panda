@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#define CANPACKET_DATA_SIZE_MAX 8
+#include "panda.h"
 #include "can_definitions.h"
 
 typedef struct

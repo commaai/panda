@@ -678,8 +678,8 @@ class Panda(object):
     msg += self.kline_ll_recv(msg[-1]+1, bus=bus)
     return msg
 
-  def send_heartbeat(self):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf3, 0, 0, b'')
+  def send_heartbeat(self, engaged=True):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf3, engaged, 0, b'')
 
   # disable heartbeat checks for use outside of openpilot
   # sending a heartbeat will reenable the checks

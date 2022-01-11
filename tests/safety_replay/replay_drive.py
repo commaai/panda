@@ -70,7 +70,7 @@ if __name__ == "__main__":
   mode = int(sys.argv[2])
   param = 0 if len(sys.argv) < 4 else int(sys.argv[3])
   r = Route(sys.argv[1])
-  lr = MultiLogIterator(r.log_paths(), wraparound=False)
+  lr = MultiLogIterator(r.log_paths())
 
   print("replaying drive %s with safety mode %d and param %d" % (sys.argv[1], mode, param))
 
