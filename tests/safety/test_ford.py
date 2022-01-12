@@ -49,10 +49,12 @@ class TestFordSafety(common.PandaSafetyTest):
 
   # Driver brake pedal
   def _brake_msg(self, brake):
-    # TODO: combine with pcm_status_msg since they share a CAN message
+    # brake pedal and cruise state share same message, so we have to send
+    # the cruise state signal too
+    enable = self.safety.get_cruise_engaged_prev()
     values = {
       "BpedDrvAppl_D_Actl": 2 if brake else 1,
-      "CcStat_D_Actl": 5 if self.safety.get_controls_allowed() else 0,  # what to do
+      "CcStat_D_Actl": 5 if enable else 0,
     }
     return self.packer.make_can_msg_panda("EngBrakeData", 0, values)
 
@@ -68,10 +70,8 @@ class TestFordSafety(common.PandaSafetyTest):
 
   # Cruise status
   def _pcm_status_msg(self, enable):
-    # TODO: combine with _brake_msg since they share a CAN message
     values = {
       "CcStat_D_Actl": 5 if enable else 0,
-      "BpedDrvAppl_D_Actl": 1,  # what to do
     }
     return self.packer.make_can_msg_panda("EngBrakeData", 0, values)
 
