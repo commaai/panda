@@ -703,7 +703,7 @@ void tick_handler(void) {
           puth(heartbeat_counter);
           puts(" seconds. Safety is set to SILENT mode.\n");
 
-          if (ignition && controls_allowed_countdown > 0U) {
+          if (ignition && (controls_allowed_countdown > 0U)) {
             siren_countdown = 5U;
             controls_allowed_countdown = 0U;
           }
