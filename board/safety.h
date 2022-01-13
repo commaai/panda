@@ -267,6 +267,7 @@ int set_safety_hooks(uint16_t mode, int16_t param) {
   gas_interceptor_prev = 0;
   gas_pressed = false;
   gas_pressed_prev = false;
+  gas_resume_allowed = false;
   brake_pressed = false;
   brake_pressed_prev = false;
   cruise_engaged_prev = false;

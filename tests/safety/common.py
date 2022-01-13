@@ -332,7 +332,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas(self):
-    self.safety.set_gas_resume_allowed(self.GAS_RESUME_ALLOWED)
     self.safety.set_controls_allowed(True)
     self._rx(self._speed_msg(0))
     self._rx(self._gas_msg(0))

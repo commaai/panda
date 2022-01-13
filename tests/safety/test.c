@@ -96,10 +96,6 @@ void set_gas_interceptor_detected(bool c){
   gas_interceptor_detected = c;
 }
 
-void set_gas_resume_allowed(bool allowed){
-  gas_resume_allowed = allowed;
-}
-
 bool get_controls_allowed(void){
   return controls_allowed;
 }
