@@ -37,7 +37,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_HCA_01
   RELAY_MALFUNCTION_BUS = 0
-  STOCK_AEB_MSGS = [(MSG_ACC_10, 2, 0)]
+  STOCK_AEB_MSGS = [(MSG_ACC_10, 0, 2)]
 
   @classmethod
   def setUpClass(cls):
