@@ -249,6 +249,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
   TX_MSGS: Optional[List[List[int]]] = None
   STANDSTILL_THRESHOLD: Optional[float] = None
   GAS_PRESSED_THRESHOLD = 0
+  GAS_RESUME_ALLOWED = False
   RELAY_MALFUNCTION_ADDR: Optional[int] = None
   RELAY_MALFUNCTION_BUS: Optional[int] = None
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
@@ -331,10 +332,15 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas(self):
+    self.safety.set_gas_resume_allowed(self.GAS_RESUME_ALLOWED)
+    self._rx(self._speed_msg(0))
     self._rx(self._gas_msg(0))
     self.safety.set_controls_allowed(True)
     self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
-    self.assertFalse(self.safety.get_controls_allowed())
+    controls_at_takeoff = self.safety.get_controls_allowed()
+    self.assertEqual(controls_at_takeoff, self.GAS_RESUME_ALLOWED)
+    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
+    self.assertEqual(controls_at_takeoff, self.safety.get_controls_allowed())
 
   def test_unsafe_mode_no_disengage_on_gas(self):
     self._rx(self._gas_msg(0))

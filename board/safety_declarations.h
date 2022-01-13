@@ -104,6 +104,7 @@ bool controls_allowed = false;
 bool relay_malfunction = false;
 bool gas_interceptor_detected = false;
 int gas_interceptor_prev = 0;
+bool gas_resume_allowed = false;
 bool gas_pressed = false;
 bool gas_pressed_prev = false;
 bool brake_pressed = false;

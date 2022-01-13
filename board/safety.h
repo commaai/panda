@@ -203,7 +203,7 @@ bool addr_safety_check(CANPacket_t *to_push,
 
 void generic_rx_checks(bool stock_ecu_detected) {
   // exit controls on rising edge of gas press
-  if (gas_pressed && !gas_pressed_prev && !(unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS)) {
+  if (gas_pressed && !gas_pressed_prev && !(gas_resume_allowed && !vehicle_moving) && !(unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS)) {
     controls_allowed = 0;
   }
   gas_pressed_prev = gas_pressed;
