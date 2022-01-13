@@ -3,7 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import LEN_TO_DLC
 from panda.tests.safety import libpandasafety_py
@@ -253,7 +253,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
   RELAY_MALFUNCTION_BUS: Optional[int] = None
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
-  STOCK_AEB_MSGS = None
+  STOCK_AEB_MSGS: Optional[List[Tuple[int, int, int]]] = None
 
   @classmethod
   def setUpClass(cls):
