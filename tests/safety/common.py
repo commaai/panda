@@ -294,7 +294,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
   def test_fwd_hook(self):
     # some safety modes don't forward anything, while others blacklist msgs
     for bus in range(0x0, 0x3):
-      for addr in range(0x1, 0x40000):
+      for addr in range(0x1, 0x800):
         # assume len 8
         msg = make_msg(bus, addr, 8)
         fwd_bus = self.FWD_BUS_LOOKUP.get(bus, -1)
@@ -303,7 +303,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
         self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg), f"{addr=:#x} from {bus=} to {fwd_bus=}")
 
   def test_spam_can_buses(self):
-    for addr in range(1, 0x40000):
+    for addr in range(1, 0x800):
       for bus in range(0, 4):
         if all(addr != m[0] or bus != m[1] for m in self.TX_MSGS):
           self.assertFalse(self._tx(make_msg(bus, addr, 8)))
@@ -333,14 +333,16 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   def test_disengage_on_gas(self):
     self.safety.set_gas_resume_allowed(self.GAS_RESUME_ALLOWED)
+    self.safety.set_controls_allowed(True)
     self._rx(self._speed_msg(0))
     self._rx(self._gas_msg(0))
-    self.safety.set_controls_allowed(True)
     self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
-    controls_at_takeoff = self.safety.get_controls_allowed()
-    self.assertEqual(controls_at_takeoff, self.GAS_RESUME_ALLOWED)
+    self.assertEqual(self.safety.get_controls_allowed(), self.GAS_RESUME_ALLOWED)
+    self.safety.set_controls_allowed(True)
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
-    self.assertEqual(controls_at_takeoff, self.safety.get_controls_allowed())
+    self._rx(self._gas_msg(0))
+    self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
+    self.assertFalse(self.safety.get_controls_allowed())
 
   def test_unsafe_mode_no_disengage_on_gas(self):
     self._rx(self._gas_msg(0))
