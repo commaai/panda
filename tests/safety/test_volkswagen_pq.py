@@ -18,6 +18,7 @@ DRIVER_TORQUE_FACTOR = 3
 MSG_LENKHILFE_3 = 0x0D0  # RX from EPS, for steering angle and driver steering torque
 MSG_HCA_1 = 0x0D2        # TX by OP, Heading Control Assist steering torque
 MSG_MOTOR_2 = 0x288      # RX from ECU, for CC state and brake switch state
+MSG_AWV = 0x366          # TX by stock radar, automated emergency braking
 MSG_MOTOR_3 = 0x380      # RX from ECU, for driver throttle input
 MSG_GRA_NEU = 0x38A      # TX by OP, ACC control buttons for cancel/resume
 MSG_BREMSE_1 = 0x1A0     # RX from ABS, for ego speed
@@ -44,6 +45,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_HCA_1
   RELAY_MALFUNCTION_BUS = 0
+  STOCK_AEB_MSGS = [(MSG_AWV, 2, 0)]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_1, MSG_LDW_1]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 

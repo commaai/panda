@@ -253,6 +253,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
   RELAY_MALFUNCTION_BUS: Optional[int] = None
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
+  STOCK_AEB_MSGS = None
 
   @classmethod
   def setUpClass(cls):
@@ -306,6 +307,13 @@ class PandaSafetyTest(PandaSafetyTestBase):
       for bus in range(0, 4):
         if all(addr != m[0] or bus != m[1] for m in self.TX_MSGS):
           self.assertFalse(self._tx(make_msg(bus, addr, 8)))
+
+  def test_block_aeb(self):
+    if self.STOCK_AEB_MSGS is None:
+      raise unittest.SkipTest
+    for addr, bus, fwd_bus in self.STOCK_AEB_MSGS:
+      self.assertFalse(self._tx(make_msg(fwd_bus, addr, 8)))
+      self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, make_msg(bus, addr, 8)))
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())

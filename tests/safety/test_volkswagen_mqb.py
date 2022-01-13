@@ -18,6 +18,7 @@ DRIVER_TORQUE_FACTOR = 3
 MSG_ESP_19 = 0xB2       # RX from ABS, for wheel speeds
 MSG_LH_EPS_03 = 0x9F    # RX from EPS, for driver steering torque
 MSG_ESP_05 = 0x106      # RX from ABS, for brake light state
+MSG_ACC_10 = 0x117      # TX by stock radar, automated emergency braking
 MSG_TSK_06 = 0x120      # RX from ECU, for ACC status from drivetrain coordinator
 MSG_MOTOR_20 = 0x121    # RX from ECU, for driver throttle input
 MSG_HCA_01 = 0x126      # TX by OP, Heading Control Assist steering torque
@@ -36,6 +37,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_HCA_01
   RELAY_MALFUNCTION_BUS = 0
+  STOCK_AEB_MSGS = [(MSG_ACC_10, 2, 0)]
 
   @classmethod
   def setUpClass(cls):
