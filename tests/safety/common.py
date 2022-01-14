@@ -310,7 +310,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   def test_block_aeb(self):
     if self.STOCK_AEB_MSGS is None:
-      raise unittest.SkipTest
+      raise unittest.SkipTest("no stock AEB messages found")
     for addr, target_bus, fwd_source_bus in self.STOCK_AEB_MSGS:
       self.assertFalse(self._tx(make_msg(target_bus, addr, 8)))
       if fwd_source_bus is not None:
