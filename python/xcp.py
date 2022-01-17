@@ -161,7 +161,7 @@ class XcpClient():
       "max_cto": resp[2],
       "max_dto": struct.unpack(f"{self._byte_order}H", resp[3:5])[0],
       "protocol_version": resp[5],
-      "transprot_version": resp[6],
+      "transport_version": resp[6],
     }
 
   def disconnect(self) -> None:
