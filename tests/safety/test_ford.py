@@ -172,14 +172,9 @@ class TestFordSteeringSafety(TestFordSafety):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_spam_cancel_safety_check(self):
-    self.safety.set_controls_allowed(1)
-    self._tx(self._acc_button_msg(cancel=1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self._tx(self._acc_button_msg(resume=1))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(1)
-    self._tx(self._acc_button_msg(_set=1))
-    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertTrue(self._tx(self._acc_button_msg(cancel=1)))
+    self.assertFalse(self._tx(self._acc_button_msg(resume=1)))
+    self.assertFalse(self._tx(self._acc_button_msg(_set=1)))
 
   def test_rx_hook(self):
     # TODO: test_rx_hook
