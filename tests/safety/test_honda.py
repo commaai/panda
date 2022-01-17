@@ -422,8 +422,8 @@ class TestHondaRadarlessSafetyBase(TestHondaSafetyBase):
   PT_BUS = 0
   STEER_BUS = 0
 
-  TX_MSGS = [[0xE4, 0], [0x296, 0], [0x33D, 0], [0xF31AA54, 0]]
-  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0x33D, 0xF31AA54]}
+  TX_MSGS = [[0xE4, 0], [0x296, 0], [0x33D, 0]]
+  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0x33D]}
 
   @classmethod
   def setUpClass(cls):
