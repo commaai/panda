@@ -8,7 +8,7 @@ const struct lookup_t FORD_LOOKUP_ANGLE_RATE_DOWN = {
 
 #define DEG_TO_RAD (3.14159265358979 / 180.0)
 #define RAD_TO_DEG (180.0 / 3.14159265358979)
-#define KPH_TO_MS (1 / 3.6)
+#define KPH_TO_MS (1.0 / 3.6)
 
 // Signal: LatCtlPath_An_Actl
 // Factor: 0.0005
@@ -117,12 +117,25 @@ static int ford_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
+static bool ford_steering_check(int desired_angle) {
+  // Add 1 to not false trigger violation
+  float delta_angle_float;
+  delta_angle_float = (interpolate(FORD_LOOKUP_ANGLE_RATE_UP, vehicle_speed) * FORD_DEG_TO_CAN);
+  int delta_angle_up = (int)(delta_angle_float) + 1;
+  delta_angle_float = (interpolate(FORD_LOOKUP_ANGLE_RATE_DOWN, vehicle_speed) * FORD_DEG_TO_CAN);
+  int delta_angle_down = (int)(delta_angle_float) + 1;
+  int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
+  int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
+
+  // Check for violation
+  return max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
+}
+
 static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   UNUSED(longitudinal_allowed);
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
-  bool violation = false;
 
   if (!msg_allowed(to_send, FORD_TX_MSGS, FORD_TX_LEN)) {
     tx = 0;
@@ -135,48 +148,44 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     // values such as the steering angle or lane curvature for debugging,
     // but the action must be set to zero.
     unsigned int action = (GET_BYTE(to_send, 0) & 0xE0U) >> 5;
-    violation |= (action != 0U);
+    if (action != 0U) {
+      tx = 0;
+    }
   }
 
   // Safety check for LateralMotionControl steering angle
   if (addr == MSG_LATERAL_MOTION_CONTROL) {
     // Signal: LatCtlPath_An_Actl
     // Command Angle: (0.0005 * val) - 0.5 in radians
-    // Store in CAN units (1/2000 radians).
+    // Store in CAN units (1/2000 or 0.0005 radians).
     int desired_angle = ((GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5)) - 1000U;
 
     // Signal: LatCtl_D_Rq
     unsigned int steer_control_type = (GET_BYTE(to_send, 4) & 0x1CU) >> 2;
-    bool steer_control_enabled = steer_control_type > 0U;
+    bool steer_control_enabled = steer_control_type != 0U;
 
     // Rate limit while steering
     if (controls_allowed && steer_control_enabled) {
-      // Add 1 to not false trigger violation
-      float delta_angle_float;
-      delta_angle_float = (interpolate(FORD_LOOKUP_ANGLE_RATE_UP, vehicle_speed) * FORD_DEG_TO_CAN);
-      int delta_angle_up = (int)(delta_angle_float) + 1;
-      delta_angle_float = (interpolate(FORD_LOOKUP_ANGLE_RATE_DOWN, vehicle_speed) * FORD_DEG_TO_CAN);
-      int delta_angle_down = (int)(delta_angle_float) + 1;
-      int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
-      int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
-
-      // Check for violation
-      violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
+      if (ford_steering_check(desired_angle)) {
+        tx = 0;
+      }
     }
     desired_angle_last = desired_angle;
 
-    // Angle should be the same as current angle while not steering
-    if (!controls_allowed && ((desired_angle < (angle_meas.min - 1)) || (desired_angle > (angle_meas.max + 1)))) {
-      violation = true;
-    }
+    // TODO: this is broken because we can't send the current angle most of the time -
+    // the signal only supports angles in range [-0.5, 0.5] radians
+    // // Angle should be the same as current angle while not steering
+    // if (!controls_allowed && ((desired_angle < (angle_meas.min - 1)) || (desired_angle > (angle_meas.max + 1)))) {
+    //   tx = 0;
+    // }
 
     // No angle control allowed when controls are not allowed
     if (!controls_allowed && steer_control_enabled) {
-      violation = true;
+      tx = 0;
     }
 
-    // Reset to 0 if either controls is not allowed or there's a violation
-    if (!controls_allowed || violation) {
+    // Reset to 0 if controls not allowed
+    if (!controls_allowed) {
       desired_angle_last = 0;
     }
   }
@@ -185,17 +194,15 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (addr == MSG_STEERING_DATA_FD1) {
     // Violation if any button other than cancel is pressed
     // Signal: CcAslButtnCnclPress
-    violation |= 0U != (GET_BYTE(to_send, 0) |
-                        (GET_BYTE(to_send, 1) & 0xFEU) |
-                        GET_BYTE(to_send, 2) |
-                        GET_BYTE(to_send, 3) |
-                        GET_BYTE(to_send, 4) |
-                        GET_BYTE(to_send, 5));
-  }
-
-  if (violation) {
-    controls_allowed = false;
-    tx = 0;
+    bool violation = 0U != (GET_BYTE(to_send, 0) |
+                            (GET_BYTE(to_send, 1) & 0xFEU) |
+                            GET_BYTE(to_send, 2) |
+                            GET_BYTE(to_send, 3) |
+                            GET_BYTE(to_send, 4) |
+                            GET_BYTE(to_send, 5));
+    if (violation) {
+      tx = 0;
+    }
   }
 
   // 1 allows the message through
