@@ -179,7 +179,7 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     //   tx = 0;
     // }
 
-    // No angle control allowed when controls are not allowed
+    // No steer control allowed when controls are not allowed
     if (!controls_allowed && steer_control_enabled) {
       tx = 0;
     }

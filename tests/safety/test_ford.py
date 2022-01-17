@@ -139,37 +139,30 @@ class TestFordSteeringSafety(TestFordSafety):
         # Stay within limits
         # Don't change
         self.assertTrue(self._tx(self._lkas_control_msg(a, 1)))
-        self.assertTrue(self.safety.get_controls_allowed())
 
         # Up
         self.assertTrue(self._tx(self._lkas_control_msg(a + sign(a) * max_delta_up, 1)))
-        self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
         self._set_prev_angle(a)
         self.assertTrue(self._tx(self._lkas_control_msg(a - sign(a) * max_delta_down, 1)))
-        self.assertTrue(self.safety.get_controls_allowed())
 
         # Inject too high rates
         # Up
         self._set_prev_angle(a)
         self.assertFalse(self._tx(self._lkas_control_msg(a + sign(a) * (max_delta_up + 1.1), 1)))
-        self.assertFalse(self.safety.get_controls_allowed())
 
         # Don't change
-        self.safety.set_controls_allowed(1)
         self._set_prev_angle(a)
-        self.assertTrue(self.safety.get_controls_allowed())
         self.assertEqual(True, self._tx(self._lkas_control_msg(a, 1)))
-        self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
         self.assertEqual(False, self._tx(self._lkas_control_msg(a - sign(a) * (max_delta_down + 1.1), 1)))
-        self.assertFalse(self.safety.get_controls_allowed())
 
-        # Check desired steer should be the same as steer angle when controls are off
-        self.safety.set_controls_allowed(0)
-        self.assertEqual(True, self._tx(self._lkas_control_msg(a, 0)))
+        # TODO: ford safety doesn't check for this yet
+        # # Check desired steer should be the same as steer angle when controls are off
+        # self.safety.set_controls_allowed(0)
+        # self.assertEqual(True, self._tx(self._lkas_control_msg(a, 0)))
 
   def test_steer_when_disabled(self):
     self.safety.set_controls_allowed(0)
