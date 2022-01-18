@@ -56,8 +56,6 @@ static const addr_checks* volkswagen_pq_init(int16_t param) {
 
   controls_allowed = false;
   relay_malfunction_reset();
-  volkswagen_torque_msg = MSG_HCA_1;
-  volkswagen_lane_msg = MSG_LDW_1;
   return &volkswagen_pq_rx_checks;
 }
 
@@ -201,7 +199,7 @@ static int volkswagen_pq_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
       bus_fwd = 2;
       break;
     case 2:
-      if ((addr == volkswagen_torque_msg) || (addr == volkswagen_lane_msg)) {
+      if ((addr == MSG_HCA_1) || (addr == MSG_LDW_1)) {
         // OP takes control of the Heading Control Assist and Lane Departure Warning messages from the camera
         bus_fwd = -1;
       } else {

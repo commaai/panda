@@ -31,8 +31,6 @@ AddrCheckStruct volkswagen_mqb_addr_checks[] = {
 #define VOLKSWAGEN_MQB_ADDR_CHECKS_LEN (sizeof(volkswagen_mqb_addr_checks) / sizeof(volkswagen_mqb_addr_checks[0]))
 addr_checks volkswagen_mqb_rx_checks = {volkswagen_mqb_addr_checks, VOLKSWAGEN_MQB_ADDR_CHECKS_LEN};
 
-int volkswagen_torque_msg = 0;
-int volkswagen_lane_msg = 0;
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
 
 
@@ -85,8 +83,6 @@ static const addr_checks* volkswagen_mqb_init(int16_t param) {
 
   controls_allowed = false;
   relay_malfunction_reset();
-  volkswagen_torque_msg = MSG_HCA_01;
-  volkswagen_lane_msg = MSG_LDW_02;
   gen_crc_lookup_table(0x2F, volkswagen_crc8_lut_8h2f);
   return &volkswagen_mqb_rx_checks;
 }
@@ -233,7 +229,7 @@ static int volkswagen_mqb_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
       bus_fwd = 2;
       break;
     case 2:
-      if ((addr == volkswagen_torque_msg) || (addr == volkswagen_lane_msg)) {
+      if ((addr == MSG_HCA_01) || (addr == MSG_LDW_02)) {
         // OP takes control of the Heading Control Assist and Lane Departure Warning messages from the camera
         bus_fwd = -1;
       } else {
