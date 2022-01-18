@@ -1,4 +1,3 @@
-// Safety-relevant steering constants for Volkswagen MQB
 const int VOLKSWAGEN_MQB_MAX_STEER = 300;               // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
 const int VOLKSWAGEN_MQB_MAX_RT_DELTA = 75;             // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
 const uint32_t VOLKSWAGEN_MQB_RT_INTERVAL = 250000;     // 250ms between real time checks
@@ -7,7 +6,6 @@ const int VOLKSWAGEN_MQB_MAX_RATE_DOWN = 10;            // 5.0 Nm/s RoC limit (E
 const int VOLKSWAGEN_MQB_DRIVER_TORQUE_ALLOWANCE = 80;
 const int VOLKSWAGEN_MQB_DRIVER_TORQUE_FACTOR = 3;
 
-// Safety-relevant CAN messages for the Volkswagen MQB platform
 #define MSG_ESP_19      0x0B2   // RX from ABS, for wheel speeds
 #define MSG_LH_EPS_03   0x09F   // RX from EPS, for driver steering torque
 #define MSG_ESP_05      0x106   // RX from ABS, for brake switch state
@@ -246,7 +244,6 @@ static int volkswagen_mqb_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return bus_fwd;
 }
 
-// Volkswagen MQB platform
 const safety_hooks volkswagen_mqb_hooks = {
   .init = volkswagen_mqb_init,
   .rx = volkswagen_mqb_rx_hook,
