@@ -1,11 +1,20 @@
-// Safety-relevant steering constants for Volkswagen
-const int VOLKSWAGEN_MAX_STEER = 300;               // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
-const int VOLKSWAGEN_MAX_RT_DELTA = 75;             // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
-const uint32_t VOLKSWAGEN_RT_INTERVAL = 250000;     // 250ms between real time checks
-const int VOLKSWAGEN_MAX_RATE_UP = 4;               // 2.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
-const int VOLKSWAGEN_MAX_RATE_DOWN = 10;            // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
-const int VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE = 80;
-const int VOLKSWAGEN_DRIVER_TORQUE_FACTOR = 3;
+// Safety-relevant steering constants for Volkswagen MQB
+const int VOLKSWAGEN_MQB_MAX_STEER = 300;               // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
+const int VOLKSWAGEN_MQB_MAX_RT_DELTA = 75;             // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
+const uint32_t VOLKSWAGEN_MQB_RT_INTERVAL = 250000;     // 250ms between real time checks
+const int VOLKSWAGEN_MQB_MAX_RATE_UP = 4;               // 2.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
+const int VOLKSWAGEN_MQB_MAX_RATE_DOWN = 10;            // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
+const int VOLKSWAGEN_MQB_DRIVER_TORQUE_ALLOWANCE = 80;
+const int VOLKSWAGEN_MQB_DRIVER_TORQUE_FACTOR = 3;
+
+// Safety-relevant steering constants for Volkswagen PQ
+const int VOLKSWAGEN_PQ_MAX_STEER = 300;                // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
+const int VOLKSWAGEN_PQ_MAX_RT_DELTA = 75;              // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
+const uint32_t VOLKSWAGEN_PQ_RT_INTERVAL = 250000;      // 250ms between real time checks
+const int VOLKSWAGEN_PQ_MAX_RATE_UP = 4;                // 2.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
+const int VOLKSWAGEN_PQ_MAX_RATE_DOWN = 10;             // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
+const int VOLKSWAGEN_PQ_DRIVER_TORQUE_ALLOWANCE = 80;
+const int VOLKSWAGEN_PQ_DRIVER_TORQUE_FACTOR = 3;
 
 // Safety-relevant CAN messages for the Volkswagen MQB platform
 #define MSG_ESP_19      0x0B2   // RX from ABS, for wheel speeds
@@ -280,20 +289,20 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
 
     if (controls_allowed) {
       // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, VOLKSWAGEN_MAX_STEER, -VOLKSWAGEN_MAX_STEER);
+      violation |= max_limit_check(desired_torque, VOLKSWAGEN_MQB_MAX_STEER, -VOLKSWAGEN_MQB_MAX_STEER);
 
       // *** torque rate limit check ***
       violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-        VOLKSWAGEN_MAX_STEER, VOLKSWAGEN_MAX_RATE_UP, VOLKSWAGEN_MAX_RATE_DOWN,
-        VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE, VOLKSWAGEN_DRIVER_TORQUE_FACTOR);
+        VOLKSWAGEN_MQB_MAX_STEER, VOLKSWAGEN_MQB_MAX_RATE_UP, VOLKSWAGEN_MQB_MAX_RATE_DOWN,
+        VOLKSWAGEN_MQB_DRIVER_TORQUE_ALLOWANCE, VOLKSWAGEN_MQB_DRIVER_TORQUE_FACTOR);
       desired_torque_last = desired_torque;
 
       // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, VOLKSWAGEN_MAX_RT_DELTA);
+      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, VOLKSWAGEN_MQB_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
       uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
-      if (ts_elapsed > VOLKSWAGEN_RT_INTERVAL) {
+      if (ts_elapsed > VOLKSWAGEN_MQB_RT_INTERVAL) {
         rt_torque_last = desired_torque;
         ts_last = ts;
       }
@@ -353,20 +362,20 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send) {
 
     if (controls_allowed) {
       // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, VOLKSWAGEN_MAX_STEER, -VOLKSWAGEN_MAX_STEER);
+      violation |= max_limit_check(desired_torque, VOLKSWAGEN_PQ_MAX_STEER, -VOLKSWAGEN_PQ_MAX_STEER);
 
       // *** torque rate limit check ***
       violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-        VOLKSWAGEN_MAX_STEER, VOLKSWAGEN_MAX_RATE_UP, VOLKSWAGEN_MAX_RATE_DOWN,
-        VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE, VOLKSWAGEN_DRIVER_TORQUE_FACTOR);
+        VOLKSWAGEN_PQ_MAX_STEER, VOLKSWAGEN_PQ_MAX_RATE_UP, VOLKSWAGEN_PQ_MAX_RATE_DOWN,
+        VOLKSWAGEN_PQ_DRIVER_TORQUE_ALLOWANCE, VOLKSWAGEN_PQ_DRIVER_TORQUE_FACTOR);
       desired_torque_last = desired_torque;
 
       // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, VOLKSWAGEN_MAX_RT_DELTA);
+      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, VOLKSWAGEN_PQ_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
       uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
-      if (ts_elapsed > VOLKSWAGEN_RT_INTERVAL) {
+      if (ts_elapsed > VOLKSWAGEN_PQ_RT_INTERVAL) {
         rt_torque_last = desired_torque;
         ts_last = ts;
       }
