@@ -283,10 +283,11 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   # ***** standard tests for all safety modes *****
 
-  def test_msg_in_valid_range(self):
-    # the relay malfunction, fwd hook, and spam can tests can't exhaustively
-    # scan the entire 29-bit address space, only some known important ranges.
-    # ensure SCANNED_ADDRS stays up to date with car port TX_MSGS.
+  def test_tx_msg_in_scanned_range(self):
+    # the relay malfunction, fwd hook, and spam can tests don't exhaustively
+    # scan the entire 29-bit address space, only some known important ranges
+    # make sure SCANNED_ADDRS stays up to date with car port TX_MSGS; new
+    # model ports should expand the range if needed
     for msg in self.TX_MSGS:
       self.assertTrue(msg[0] in self.SCANNED_ADDRS, f"{msg[0]=:#x}")
 
