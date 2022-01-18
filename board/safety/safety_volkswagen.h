@@ -257,46 +257,6 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static bool volkswagen_steering_check(int desired_torque) {
-  bool violation = false;
-  uint32_t ts = microsecond_timer_get();
-
-  if (controls_allowed) {
-    // *** global torque limit check ***
-    violation |= max_limit_check(desired_torque, VOLKSWAGEN_MAX_STEER, -VOLKSWAGEN_MAX_STEER);
-
-    // *** torque rate limit check ***
-    violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-      VOLKSWAGEN_MAX_STEER, VOLKSWAGEN_MAX_RATE_UP, VOLKSWAGEN_MAX_RATE_DOWN,
-      VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE, VOLKSWAGEN_DRIVER_TORQUE_FACTOR);
-    desired_torque_last = desired_torque;
-
-    // *** torque real time rate limit check ***
-    violation |= rt_rate_limit_check(desired_torque, rt_torque_last, VOLKSWAGEN_MAX_RT_DELTA);
-
-    // every RT_INTERVAL set the new limits
-    uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
-    if (ts_elapsed > VOLKSWAGEN_RT_INTERVAL) {
-      rt_torque_last = desired_torque;
-      ts_last = ts;
-    }
-  }
-
-  // no torque if controls is not allowed
-  if (!controls_allowed && (desired_torque != 0)) {
-    violation = true;
-  }
-
-  // reset to 0 if either controls is not allowed or there's a violation
-  if (violation || !controls_allowed) {
-    desired_torque_last = 0;
-    rt_torque_last = 0;
-    ts_last = ts;
-  }
-
-  return violation;
-}
-
 static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   int tx = 1;
@@ -315,7 +275,43 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
       desired_torque *= -1;
     }
 
-    if (volkswagen_steering_check(desired_torque)) {
+    bool violation = false;
+    uint32_t ts = microsecond_timer_get();
+
+    if (controls_allowed) {
+      // *** global torque limit check ***
+      violation |= max_limit_check(desired_torque, VOLKSWAGEN_MAX_STEER, -VOLKSWAGEN_MAX_STEER);
+
+      // *** torque rate limit check ***
+      violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
+        VOLKSWAGEN_MAX_STEER, VOLKSWAGEN_MAX_RATE_UP, VOLKSWAGEN_MAX_RATE_DOWN,
+        VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE, VOLKSWAGEN_DRIVER_TORQUE_FACTOR);
+      desired_torque_last = desired_torque;
+
+      // *** torque real time rate limit check ***
+      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, VOLKSWAGEN_MAX_RT_DELTA);
+
+      // every RT_INTERVAL set the new limits
+      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
+      if (ts_elapsed > VOLKSWAGEN_RT_INTERVAL) {
+        rt_torque_last = desired_torque;
+        ts_last = ts;
+      }
+    }
+
+    // no torque if controls is not allowed
+    if (!controls_allowed && (desired_torque != 0)) {
+      violation = true;
+    }
+
+    // reset to 0 if either controls is not allowed or there's a violation
+    if (violation || !controls_allowed) {
+      desired_torque_last = 0;
+      rt_torque_last = 0;
+      ts_last = ts;
+    }
+
+    if (violation) {
       tx = 0;
     }
   }
@@ -352,7 +348,43 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send) {
       desired_torque *= -1;
     }
 
-    if (volkswagen_steering_check(desired_torque)) {
+    bool violation = false;
+    uint32_t ts = microsecond_timer_get();
+
+    if (controls_allowed) {
+      // *** global torque limit check ***
+      violation |= max_limit_check(desired_torque, VOLKSWAGEN_MAX_STEER, -VOLKSWAGEN_MAX_STEER);
+
+      // *** torque rate limit check ***
+      violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
+        VOLKSWAGEN_MAX_STEER, VOLKSWAGEN_MAX_RATE_UP, VOLKSWAGEN_MAX_RATE_DOWN,
+        VOLKSWAGEN_DRIVER_TORQUE_ALLOWANCE, VOLKSWAGEN_DRIVER_TORQUE_FACTOR);
+      desired_torque_last = desired_torque;
+
+      // *** torque real time rate limit check ***
+      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, VOLKSWAGEN_MAX_RT_DELTA);
+
+      // every RT_INTERVAL set the new limits
+      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
+      if (ts_elapsed > VOLKSWAGEN_RT_INTERVAL) {
+        rt_torque_last = desired_torque;
+        ts_last = ts;
+      }
+    }
+
+    // no torque if controls is not allowed
+    if (!controls_allowed && (desired_torque != 0)) {
+      violation = true;
+    }
+
+    // reset to 0 if either controls is not allowed or there's a violation
+    if (violation || !controls_allowed) {
+      desired_torque_last = 0;
+      rt_torque_last = 0;
+      ts_last = ts;
+    }
+
+    if (violation) {
       tx = 0;
     }
   }
