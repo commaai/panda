@@ -67,6 +67,7 @@
 #if !defined(BOOTSTUB) && (defined(PANDA) || defined(PEDAL_USB))
   #include "drivers/uart.h"
   #include "stm32fx/lluart.h"
+  #include "stm32fx/llexti.h"
 #endif
 
 #ifdef BOOTSTUB

@@ -24,132 +24,6 @@
 
 #include "usb_comms.h"
 
-#ifndef STM32H7
-void EXTI_IRQ_Handler(void)
-{
-    // Check if the interrupt came from exti8
-    if ((EXTI->PR & EXTI_PR_PR8) || (EXTI->PR & EXTI_PR_PR3) || (EXTI->PR & EXTI_PR_PR0)) {
-      current_board->set_led(LED_GREEN, true);
-      delay(512000U);
-      current_board->set_led(LED_GREEN, false);
-      delay(512000U);
-
-      power_save_status = POWER_SAVE_STATUS_DISABLED;
-      //heartbeat_disabled = true;
-
-      // Clear pending bit
-      EXTI->PR |= EXTI_PR_PR8;
-      //NVIC_DisableIRQ(EXTI9_5_IRQn);
-      EXTI->IMR &= ~EXTI_IMR_MR8;
-
-      EXTI->PR |= EXTI_PR_PR0;
-      EXTI->PR |= EXTI_PR_PR3;
-      //NVIC_DisableIRQ(EXTI0_IRQn);
-      //NVIC_DisableIRQ(EXTI3_IRQn);
-      EXTI->IMR &= ~EXTI_IMR_MR0;
-      EXTI->IMR &= ~EXTI_IMR_MR3;
-
-      EXTI->PR |= EXTI_PR_PR22;
-      EXTI->IMR &= ~EXTI_IMR_MR22;
-
-      clock_init();
-    } else {
-      current_board->set_led(LED_RED, true);
-      current_board->set_led(LED_GREEN, true);
-      current_board->set_led(LED_BLUE, true);
-    }
-}
-
-void RTC_WKUP_IRQ_Handler(void) {
-
-  EXTI->IMR  &= ~EXTI_IMR_MR22;
-  EXTI->IMR  &= ~EXTI_IMR_MR3;
-  EXTI->IMR  &= ~EXTI_IMR_MR0;
-  EXTI->IMR  &= ~EXTI_IMR_MR8;
-  EXTI->PR |= EXTI_PR_PR22;
-  EXTI->PR |= EXTI_PR_PR3;
-  EXTI->PR |= EXTI_PR_PR0;
-  EXTI->PR |= EXTI_PR_PR8;
-
-  clock_init();
-
-
-  current_board->set_led(LED_RED, true);
-  delay(512000U);
-  current_board->set_led(LED_RED, false);
-  current_board->set_led(LED_BLUE, true);
-  delay(512000U);
-  current_board->set_led(LED_BLUE, false);
-
-}
-
-void deepsleep(void){
-
-  SYSCFG->EXTICR[2] &= ~(SYSCFG_EXTICR3_EXTI8_Msk);
-  if (car_harness_status == HARNESS_STATUS_FLIPPED) {
-    current_board->enable_can_transceiver(3U, false);
-    SYSCFG->EXTICR[2] |=  (SYSCFG_EXTICR3_EXTI8_PA);
-
-    SYSCFG->EXTICR[0] &= ~(SYSCFG_EXTICR1_EXTI3_Msk);
-    SYSCFG->EXTICR[0] |=  (SYSCFG_EXTICR1_EXTI3_PC);
-    EXTI->IMR  |=  EXTI_IMR_MR3;
-    EXTI->RTSR &=  ~EXTI_RTSR_TR3; // rising edge
-    EXTI->FTSR |=  EXTI_FTSR_TR3; // falling edge
-    REGISTER_INTERRUPT(EXTI3_IRQn, EXTI_IRQ_Handler, 100U, FAULT_INTERRUPT_RATE_DEEPSLEEP)
-    NVIC_EnableIRQ(EXTI3_IRQn);
-  } else {
-    current_board->enable_can_transceiver(1U, false);
-    SYSCFG->EXTICR[2] |=  (SYSCFG_EXTICR3_EXTI8_PB);
-
-    SYSCFG->EXTICR[0] &= ~(SYSCFG_EXTICR1_EXTI0_Msk);
-    SYSCFG->EXTICR[0] |=  (SYSCFG_EXTICR1_EXTI0_PC);
-    EXTI->IMR  |=  EXTI_IMR_MR0;
-    EXTI->RTSR &=  ~EXTI_RTSR_TR0; // rising edge
-    EXTI->FTSR |=  EXTI_FTSR_TR0; // falling edge
-    REGISTER_INTERRUPT(EXTI0_IRQn, EXTI_IRQ_Handler, 100U, FAULT_INTERRUPT_RATE_DEEPSLEEP)
-    NVIC_EnableIRQ(EXTI0_IRQn);
-  }
-  EXTI->IMR  |=  EXTI_IMR_MR8;
-  EXTI->RTSR &=  ~EXTI_RTSR_TR8; // rising edge
-  EXTI->FTSR |=  EXTI_FTSR_TR8; // falling edge
-  REGISTER_INTERRUPT(EXTI9_5_IRQn, EXTI_IRQ_Handler, 100U, FAULT_INTERRUPT_RATE_DEEPSLEEP)
-  NVIC_EnableIRQ(EXTI9_5_IRQn); //EXTI3_IRQHandler
-
-  // RTC wakeup
-  EXTI->IMR  |=  EXTI_IMR_MR22;
-  EXTI->RTSR |=  EXTI_RTSR_TR22; // rising edge
-  EXTI->FTSR &=  ~EXTI_FTSR_TR22; // falling edge
-
-  NVIC_DisableIRQ(RTC_WKUP_IRQn);
-  disable_bdomain_protection();
-  RTC->WPR = 0xCA;
-  RTC->WPR = 0x53;
-  RTC->CR &= ~RTC_CR_WUTE;
-  while((RTC->ISR & RTC_ISR_WUTWF) == 0){}
-
-  RTC->CR &= ~RTC_CR_WUTIE;
-  RTC->ISR &= ~RTC_ISR_WUTF;
-  PWR->CR |= PWR_CR_CWUF;
-
-  RTC->WUTR = 0x3U;
-  RTC->CR |= RTC_CR_WUTE | RTC_CR_WUTIE | RTC_CR_WUCKSEL_2; // Wakeup timer interrupt enable, wakeup timer enable
-  RTC->WPR = 0x00;
-  enable_bdomain_protection();
-  REGISTER_INTERRUPT(RTC_WKUP_IRQn, RTC_WKUP_IRQ_Handler, 10U, FAULT_INTERRUPT_RATE_DEEPSLEEP)
-  NVIC_EnableIRQ(RTC_WKUP_IRQn);
-  // //
-
-  SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
-  __WFI();
-  SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
-}
-#else
-void deepsleep(void) {
-  __WFI();
-}
-#endif
-
-
 
 // ********************* Serial debugging *********************
 
@@ -402,6 +276,34 @@ void tick_handler(void) {
   TICK_TIMER->SR = 0;
 }
 
+void EXTI_IRQ_Handler(void) {
+  if (check_exti_irq()) {
+    current_board->set_usb_power_mode(USB_POWER_CDP);
+    power_save_status = POWER_SAVE_STATUS_DISABLED;
+    heartbeat_counter = 0U;
+
+    current_board->set_led(LED_GREEN, true);
+    delay(512000U);
+    current_board->set_led(LED_GREEN, false);
+    delay(512000U);
+
+    exti_irq_clear();
+    clock_init();
+  }
+}
+
+void RTC_WKUP_IRQ_Handler(void) {
+  exti_irq_clear();
+  clock_init();
+
+  current_board->set_led(LED_RED, true);
+  delay(512000U);
+  current_board->set_led(LED_RED, false);
+  current_board->set_led(LED_BLUE, true);
+  delay(512000U);
+  current_board->set_led(LED_BLUE, false);
+}
+
 
 int main(void) {
   // Init interrupt table
@@ -513,8 +415,23 @@ int main(void) {
         }
       #endif
     } else {
-      deepsleep();
-      // __WFI();
+      if (!heartbeat_disabled && (heartbeat_counter > 30U)) {
+        current_board->set_usb_power_mode(USB_POWER_CLIENT);
+
+        // Init IRQs for CAN transceiver and ignition line
+        exti_irq_init();
+
+        // Init RTC Wakeup event on EXTI22
+        rtc_wakeup_init();
+        REGISTER_INTERRUPT(RTC_WKUP_IRQn, RTC_WKUP_IRQ_Handler, 10U, FAULT_INTERRUPT_RATE_DEEPSLEEP)
+
+        // STOP mode
+        SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+        __WFI();
+        SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
+      } else {
+        __WFI();
+      }
     }
   }
 
