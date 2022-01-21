@@ -81,16 +81,16 @@ void black_set_gps_mode(uint8_t mode) {
   switch (mode) {
     case GPS_DISABLED:
       // GPS OFF
-      set_gpio_output(GPIOC, 14, 0);
+      set_gpio_output(GPIOC, 12, 0);
       set_gpio_output(GPIOC, 5, 0);
       break;
     case GPS_ENABLED:
       // GPS ON
-      set_gpio_output(GPIOC, 14, 1);
+      set_gpio_output(GPIOC, 12, 1);
       set_gpio_output(GPIOC, 5, 1);
       break;
     case GPS_BOOTMODE:
-      set_gpio_output(GPIOC, 14, 1);
+      set_gpio_output(GPIOC, 12, 1);
       set_gpio_output(GPIOC, 5, 0);
       break;
     default:
