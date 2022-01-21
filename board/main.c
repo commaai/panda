@@ -416,7 +416,7 @@ int main(void) {
         }
       #endif
     } else {
-      if (!heartbeat_disabled && (heartbeat_counter > 30U)) {
+      if (!heartbeat_disabled && (heartbeat_counter > 120U)) {
         current_board->set_usb_power_mode(USB_POWER_CLIENT);
 
         // Init IRQs for CAN transceiver and ignition line
