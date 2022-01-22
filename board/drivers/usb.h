@@ -23,7 +23,7 @@ typedef union _USB_Setup {
 }
 USB_Setup_TypeDef;
 
-bool usb_eopf_detected = false;
+bool usb_enumerated = false;
 
 void usb_init(void);
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp);
@@ -680,12 +680,16 @@ void usb_irqhandler(void) {
   }
 
   if ((gintsts & USB_OTG_GINTSTS_EOPF) != 0) {
-    usb_eopf_detected = true;
+    usb_enumerated = true;
   }
 
   if ((gintsts & USB_OTG_GINTSTS_USBRST) != 0) {
     puts("USB reset\n");
     usb_reset();
+  }
+
+  if ((gintsts & USB_OTG_GINTSTS_USBSUSP) != 0) {
+    usb_enumerated = false;
   }
 
   if ((gintsts & USB_OTG_GINTSTS_ENUMDNE) != 0) {
@@ -936,16 +940,4 @@ void usb_outep3_resume_if_paused(void) {
     USBx_OUTEP(3)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
   }
   EXIT_CRITICAL();
-}
-
-bool usb_enumerated(void) {
-  // This relies on the USB being suspended after no activity for 3ms.
-  // Seems pretty stable in combination with the EOPF to reject noise.
-  bool ret = false;
-  if(!(USBx_DEVICE->DSTS & USB_OTG_DSTS_SUSPSTS)){
-    // Check to see if an end of periodic frame is detected
-    ret = usb_eopf_detected;
-  }
-  usb_eopf_detected = false;
-  return ret;
 }
