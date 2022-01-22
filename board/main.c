@@ -283,26 +283,22 @@ void EXTI_IRQ_Handler(void) {
     power_save_status = POWER_SAVE_STATUS_DISABLED;
     heartbeat_counter = 0U;
 
-    current_board->set_led(LED_GREEN, true);
-    delay(512000U);
-    current_board->set_led(LED_GREEN, false);
-    delay(512000U);
+    // current_board->set_led(LED_GREEN, true);
+    // delay(512000U);
+    // current_board->set_led(LED_GREEN, false);
+    // delay(512000U);
 
     exti_irq_clear();
     clock_init();
     usb_soft_disconnect(false);
   }
 }
-
+bool fffk = false;
 void RTC_WKUP_IRQ_Handler(void) {
   exti_irq_clear();
-  clock_init();
 
-  current_board->set_led(LED_RED, true);
-  delay(512000U);
-  current_board->set_led(LED_RED, false);
   current_board->set_led(LED_BLUE, true);
-  delay(512000U);
+  delay(100000U);
   current_board->set_led(LED_BLUE, false);
 }
 

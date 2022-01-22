@@ -30,7 +30,7 @@ void rtc_wakeup_init(void) {
   RTC->ISR &= ~RTC_ISR_WUTF;
   PWR->CR |= PWR_CR_CWUF;
 
-  RTC->WUTR = 0x3U; // 3 seconds
+  RTC->WUTR = DEEPSLEEP_WAKEUP_DELAY;
   // Wakeup timer interrupt enable, wakeup timer enable, select 1Hz rate
   RTC->CR |= RTC_CR_WUTE | RTC_CR_WUTIE | RTC_CR_WUCKSEL_2;
 
