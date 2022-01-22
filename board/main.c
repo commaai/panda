@@ -413,7 +413,7 @@ int main(void) {
         }
       #endif
     } else {
-      if (!heartbeat_disabled && (heartbeat_counter > 60U) && !usb_enumerated) {
+      if (!heartbeat_disabled && (heartbeat_counter > 60U) && !usb_enumerated && !check_started()) {
         usb_soft_disconnect(true);
         current_board->set_led(LED_BLUE, false);
         current_board->set_usb_power_mode(USB_POWER_CLIENT);
