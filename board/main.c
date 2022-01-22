@@ -179,11 +179,11 @@ void tick_handler(void) {
       fan_tick();
 
       // set green LED to be controls allowed
-      //current_board->set_led(LED_GREEN, controls_allowed | green_led_enabled);
+      current_board->set_led(LED_GREEN, controls_allowed | green_led_enabled);
 
       // turn off the blue LED, turned on by CAN
       // unless we are in power saving mode
-      //current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
+      current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
 
       // increase heartbeat counter and cap it at the uint32 limit
       if (heartbeat_counter < __UINT32_MAX__) {
@@ -290,6 +290,7 @@ void EXTI_IRQ_Handler(void) {
 
     exti_irq_clear();
     clock_init();
+    usb_soft_disconnect(false);
   }
 }
 
@@ -416,7 +417,9 @@ int main(void) {
         }
       #endif
     } else {
-      if (!heartbeat_disabled && (heartbeat_counter > 2222U)) {
+      if (!heartbeat_disabled && (heartbeat_counter > 10U) && !usb_enumerated) {
+        usb_soft_disconnect(true);
+        current_board->set_led(LED_BLUE, false);
         current_board->set_usb_power_mode(USB_POWER_CLIENT);
 
         // Init IRQs for CAN transceiver and ignition line
@@ -428,11 +431,9 @@ int main(void) {
 
         // STOP mode
         SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
-        __WFI();
-        SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
-      } else {
-        __WFI();
       }
+      __WFI();
+      SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
     }
   }
 
