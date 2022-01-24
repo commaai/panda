@@ -279,6 +279,9 @@ void tick_handler(void) {
 // cppcheck-suppress unusedFunction ; not implemented for H7 yet
 void EXTI_IRQ_Handler(void) {
   if (check_exti_irq()) {
+    exti_irq_clear();
+    clock_init();
+
     current_board->set_usb_power_mode(USB_POWER_CDP);
     power_save_status = POWER_SAVE_STATUS_DISABLED;
     heartbeat_counter = 0U;
@@ -288,17 +291,16 @@ void EXTI_IRQ_Handler(void) {
     // current_board->set_led(LED_GREEN, false);
     // delay(512000U);
 
-    exti_irq_clear();
-    clock_init();
     usb_soft_disconnect(false);
   }
 }
-bool fffk = false;
+
 void RTC_WKUP_IRQ_Handler(void) {
   exti_irq_clear();
+  clock_init();
 
   current_board->set_led(LED_BLUE, true);
-  delay(100000U);
+  delay(512000U);
   current_board->set_led(LED_BLUE, false);
 }
 
