@@ -160,7 +160,7 @@ class Panda(object):
   HW_TYPE_RED_PANDA = b'\x07'
 
   CAN_PACKET_VERSION = 2
-  HEALTH_PACKET_VERSION = 1
+  HEALTH_PACKET_VERSION = 2
 
   F2_DEVICES = [HW_TYPE_PEDAL]
   F4_DEVICES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS]
@@ -372,9 +372,10 @@ class Panda(object):
       "usb_power_mode": a[13],
       "safety_mode": a[14],
       "safety_param": a[15],
-      "fault_status": a[16],
-      "power_save_enabled": a[17],
-      "heartbeat_lost": a[18],
+      "unsafe_mode": a[16],
+      "fault_status": a[17],
+      "power_save_enabled": a[18],
+      "heartbeat_lost": a[19],
     }
 
   # ******************* control *******************
