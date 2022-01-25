@@ -21,10 +21,10 @@ struct __attribute__((packed)) health_t {
   uint8_t usb_power_mode_pkt;
   uint8_t safety_mode_pkt;
   int16_t safety_param_pkt;
-  int16_t unsafe_mode_pkt;
   uint8_t fault_status_pkt;
   uint8_t power_save_enabled_pkt;
   uint8_t heartbeat_lost_pkt;
+  int16_t unsafe_mode_pkt;
 };
 
 // Prototypes
