@@ -247,6 +247,11 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
 
 class PandaSafetyTest(PandaSafetyTestBase):
   TX_MSGS: Optional[List[List[int]]] = None
+  SCANNED_ADDRS = [*range(0x0, 0x800),                      # Entire 11-bit CAN address space
+                   *range(0x18DA00F1, 0x18DB00F1, 0x100),   # 29-bit UDS physical addressing
+                   *range(0x18DB00F1, 0x18DC00F1, 0x100),   # 29-bit UDS functional addressing
+                   *range(0x3300, 0x3400),                  # Honda
+                   0x10400060, 0x104c006c]                  # GMLAN (exceptions, range/format unclear)
   STANDSTILL_THRESHOLD: Optional[float] = None
   GAS_PRESSED_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR: Optional[int] = None
@@ -278,6 +283,14 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   # ***** standard tests for all safety modes *****
 
+  def test_tx_msg_in_scanned_range(self):
+    # the relay malfunction, fwd hook, and spam can tests don't exhaustively
+    # scan the entire 29-bit address space, only some known important ranges
+    # make sure SCANNED_ADDRS stays up to date with car port TX_MSGS; new
+    # model ports should expand the range if needed
+    for msg in self.TX_MSGS:
+      self.assertTrue(msg[0] in self.SCANNED_ADDRS, f"{msg[0]=:#x}")
+
   def test_relay_malfunction(self):
     # each car has an addr that is used to detect relay malfunction
     # if that addr is seen on specified bus, triggers the relay malfunction
@@ -285,15 +298,15 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertFalse(self.safety.get_relay_malfunction())
     self._rx(make_msg(self.RELAY_MALFUNCTION_BUS, self.RELAY_MALFUNCTION_ADDR, 8))
     self.assertTrue(self.safety.get_relay_malfunction())
-    for a in range(1, 0x800):
-      for b in range(0, 3):
-        self.assertEqual(-1, self._tx(make_msg(b, a, 8)))
-        self.assertEqual(-1, self.safety.safety_fwd_hook(b, make_msg(b, a, 8)))
+    for bus in range(0, 3):
+      for addr in self.SCANNED_ADDRS:
+        self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
+        self.assertEqual(-1, self.safety.safety_fwd_hook(bus, make_msg(bus, addr, 8)))
 
   def test_fwd_hook(self):
     # some safety modes don't forward anything, while others blacklist msgs
-    for bus in range(0x0, 0x3):
-      for addr in range(0x1, 0x40000):
+    for bus in range(0, 3):
+      for addr in self.SCANNED_ADDRS:
         # assume len 8
         msg = make_msg(bus, addr, 8)
         fwd_bus = self.FWD_BUS_LOOKUP.get(bus, -1)
@@ -302,8 +315,8 @@ class PandaSafetyTest(PandaSafetyTestBase):
         self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg), f"{addr=:#x} from {bus=} to {fwd_bus=}")
 
   def test_spam_can_buses(self):
-    for addr in range(1, 0x40000):
-      for bus in range(0, 4):
+    for bus in range(0, 4):
+      for addr in self.SCANNED_ADDRS:
         if all(addr != m[0] or bus != m[1] for m in self.TX_MSGS):
           self.assertFalse(self._tx(make_msg(bus, addr, 8)))
 
