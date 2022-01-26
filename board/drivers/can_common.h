@@ -49,8 +49,8 @@ void process_can(uint8_t can_number);
   can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
 
 #ifdef STM32H7
-__attribute__((section(".ram_d1"))) can_buffer(rx_q, 0x1000)
-__attribute__((section(".ram_d1"))) can_buffer(txgmlan_q, 0x1A0)
+__attribute__(section(".ram_d1")) can_buffer(rx_q, 0x1000)
+__attribute__(section(".ram_d1")) can_buffer(txgmlan_q, 0x1A0)
 #else
 can_buffer(rx_q, 0x1000)
 can_buffer(txgmlan_q, 0x1A0)
