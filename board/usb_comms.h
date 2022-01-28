@@ -3,7 +3,7 @@
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // When changing this struct, boardd and python/__init__.py needs to be kept up to date!
-#define HEALTH_PACKET_VERSION 2
+#define HEALTH_PACKET_VERSION 3
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
   uint32_t voltage_pkt;
@@ -25,6 +25,7 @@ struct __attribute__((packed)) health_t {
   uint8_t power_save_enabled_pkt;
   uint8_t heartbeat_lost_pkt;
   uint16_t unsafe_mode_pkt;
+  uint32_t blocked_msg_cnt_pkt;
 };
 
 // Prototypes
@@ -56,6 +57,7 @@ int get_health_pkt(void *dat) {
   health->unsafe_mode_pkt = unsafe_mode;
   health->power_save_enabled_pkt = (uint8_t)(power_save_status == POWER_SAVE_STATUS_ENABLED);
   health->heartbeat_lost_pkt = (uint8_t)(heartbeat_lost);
+  health->blocked_msg_cnt_pkt = blocked_msg_cnt;
 
   health->fault_status_pkt = fault_status;
   health->faults_pkt = faults;

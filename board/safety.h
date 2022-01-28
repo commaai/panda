@@ -287,6 +287,8 @@ int set_safety_hooks(uint16_t mode, int16_t param) {
   angle_meas.min = 0;
   angle_meas.max = 0;
 
+  blocked_msg_cnt = 0;
+
   int set_status = -1;  // not set
   int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);
   for (int i = 0; i < hook_config_count; i++) {
