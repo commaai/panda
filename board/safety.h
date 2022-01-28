@@ -1,6 +1,6 @@
-// include first, needed by safety policies
 #include "safety_declarations.h"
-// Include the actual safety policies.
+
+// include the safety policies.
 #include "safety/safety_defaults.h"
 #include "safety/safety_honda.h"
 #include "safety/safety_toyota.h"
@@ -286,8 +286,6 @@ int set_safety_hooks(uint16_t mode, int16_t param) {
   torque_driver.max = 0;
   angle_meas.min = 0;
   angle_meas.max = 0;
-
-  blocked_msg_cnt = 0;
 
   int set_status = -1;  // not set
   int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);
