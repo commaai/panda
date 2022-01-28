@@ -161,6 +161,7 @@ class Panda(object):
 
   CAN_PACKET_VERSION = 2
   HEALTH_PACKET_VERSION = 3
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHI")
 
   F2_DEVICES = [HW_TYPE_PEDAL]
   F4_DEVICES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS]
@@ -353,8 +354,8 @@ class Panda(object):
 
   @ensure_health_packet_version
   def health(self):
-    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, 46)
-    a = struct.unpack("<IIIIIIIIBBBBBBBHBBBHI", dat)
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, self.HEALTH_STRUCT.size)
+    a = self.HEALTH_STRUCT.unpack(dat)
     return {
       "uptime": a[0],
       "voltage": a[1],
