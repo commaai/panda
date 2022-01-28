@@ -83,6 +83,8 @@ void set_safety_mode(uint16_t mode, int16_t param) {
       }
     }
   }
+  blocked_msg_cnt = 0;
+
   switch (mode_copy) {
     case SAFETY_SILENT:
       set_intercept_relay(false);
