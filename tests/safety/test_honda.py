@@ -27,7 +27,9 @@ HONDA_BOSCH = 1
 #    * Bosch with Longitudinal Support
 
 
-class HondaButtonEnableBase:
+class HondaButtonEnableBase(common.PandaSafetyTest):
+  # pylint: disable=no-member,abstract-method
+
   # override these inherited tests since we're using button enable
   def test_disable_control_allowed_from_cruise(self):
     pass
@@ -150,7 +152,8 @@ class HondaButtonEnableBase:
           self._rx(self._gas_msg(0))
 
 
-class HondaPcmEnableBase:
+class HondaPcmEnableBase(common.PandaSafetyTest):
+  # pylint: disable=no-member,abstract-method
 
   def test_buttons(self):
     """
@@ -348,7 +351,6 @@ class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
   """
     Covers the Honda Nidec safety mode
   """
-  pass
 
 
 class TestHondaNidecInterceptorSafety(HondaButtonEnableBase, TestHondaNidecSafety, common.InterceptorSafetyTest):

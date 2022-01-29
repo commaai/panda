@@ -120,7 +120,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
 
     // enter controls when PCM enters cruise state
     if (pcm_cruise && (addr == 0x17C)) {
-      const bool cruise_engaged = GET_BIT(to_push, 38) != 0;
+      const bool cruise_engaged = (GET_BIT(to_push, 38) != 0);
       if (!cruise_engaged) {
         controls_allowed = 0;
       }
