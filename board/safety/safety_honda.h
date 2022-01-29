@@ -96,7 +96,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
                                  honda_get_checksum, honda_compute_checksum, honda_get_counter);
 
 
-  const bool pcm_enable = ((honda_hw == HONDA_BOSCH && !honda_bosch_long)) || ((honda_hw == HONDA_NIDEC) && !gas_interceptor_detected);
+  const bool pcm_cruise = ((honda_hw == HONDA_BOSCH) && !honda_bosch_long) || ((honda_hw == HONDA_NIDEC) && !gas_interceptor_detected);
 
   if (valid) {
     int addr = GET_ADDR(to_push);
@@ -118,13 +118,21 @@ static int honda_rx_hook(CANPacket_t *to_push) {
       }
     }
 
-    if (pcm_enable && (addr == 0x17C)) {
-      controls_allowed = GET_BIT(to_push, 38) != 0;
+    // enter controls when PCM enters cruise state
+    if (pcm_cruise && (addr == 0x17C)) {
+      const bool cruise_engaged = GET_BIT(to_push, 38) != 0;
+      if (!cruise_engaged) {
+        controls_allowed = 0;
+      }
+      if (cruise_engaged && !cruise_engaged_prev) {
+        controls_allowed = 1;
+      }
+      cruise_engaged_prev = cruise_engaged;
     }
 
     // state machine to enter and exit controls for button enabling
     // 0x1A6 for the ILX, 0x296 for the Civic Touring
-    if (!pcm_enable && ((addr == 0x1A6) || (addr == 0x296))) {
+    if (!pcm_cruise && ((addr == 0x1A6) || (addr == 0x296))) {
       // check for button presses
       int button = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
       switch (button) {
