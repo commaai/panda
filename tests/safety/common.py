@@ -60,6 +60,9 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
       cls.safety = None
       raise unittest.SkipTest
 
+    # make sure interceptor is detected
+    self._rx(self._interceptor_msg(0, 0x201))
+
   @abc.abstractmethod
   def _interceptor_msg(self, gas, addr):
     pass
