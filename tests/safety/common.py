@@ -60,6 +60,9 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
       cls.safety = None
       raise unittest.SkipTest
 
+    # make sure interceptor is detected
+    cls._rx(cls._interceptor_msg(0, 0x201)) # pylint: disable=no-value-for-parameter
+
   @abc.abstractmethod
   def _interceptor_msg(self, gas, addr):
     pass
@@ -261,7 +264,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "PandaSafetyTest":
+    if cls.__name__ == "PandaSafetyTest" or cls.__name__.endswith('Base'):
       cls.safety = None
       raise unittest.SkipTest
 
