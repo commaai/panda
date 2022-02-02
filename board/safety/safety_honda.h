@@ -171,11 +171,6 @@ static int honda_rx_hook(CANPacket_t *to_push) {
       }
     }
 
-    bool is_user_brake_msg = honda_alt_brake_msg ? ((addr) == 0x1BE) : ((addr) == 0x17C);
-    if (is_user_brake_msg) {
-      brake_pressed = honda_alt_brake_msg ? (GET_BYTE((to_push), 0) & 0x10U) : (GET_BYTE((to_push), 6) & 0x20U);
-    }
-
     // length check because bosch hardware also uses this id (0x201 w/ len = 8)
     if ((addr == 0x201) && (len == 6)) {
       gas_interceptor_detected = 1;
