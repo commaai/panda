@@ -103,16 +103,22 @@ class CommandResponseError(Exception):
     return self.message
 
 class XcpClient():
-  def __init__(self, panda, tx_addr: int, rx_addr: int, bus: int = 0, debug=False):
+  def __init__(self, panda, tx_addr: int, rx_addr: int, bus: int = 0, debug=False, pad=True):
     self.tx_addr = tx_addr
     self.rx_addr = rx_addr
     self.can_bus = bus
     self.debug = debug
     self._panda = panda
     self._byte_order = ">"
+    self.pad = pad
 
   def _send_cto(self, cmd: int, dat: bytes = b"") -> None:
     tx_data = (bytes([cmd]) + dat)
+
+    # Some ECUs don't respond if the packets are not padded to 8 bytes
+    if self.pad:
+      tx_data = tx_data.ljust(8, b"\x00")
+
     if self.debug:
       print(f"CAN-TX: {hex(self.tx_addr)} - 0x{bytes.hex(tx_data)}")
     self._panda.can_clear(self.can_bus)
@@ -168,6 +174,30 @@ class XcpClient():
     self._send_cto(COMMAND_CODE.DISCONNECT)
     resp = self._recv_dto()
     assert len(resp) == 0, f"incorrect data length: {len(resp)}"
+
+  def get_seed(self, mode: int = 0) -> bytes:
+    self._send_cto(COMMAND_CODE.GET_SEED, bytes([0, mode]))
+
+    # TODO: add support for longer seeds spread over multiple blocks
+    ret = self._recv_dto()
+    length = ret[0]
+    return ret[1:length+1]
+
+  def unlock(self, key: bytes) -> bytes:
+    # TODO: add support for longer keys spread over multiple blocks
+    self._send_cto(COMMAND_CODE.UNLOCK, bytes([len(key)]) + key)
+    return self._recv_dto()
+
+  def set_mta(self, addr: int = 0) -> bytes:
+    self._send_cto(COMMAND_CODE.SET_MTA, struct.pack(f"{self._byte_order}I", addr))
+    return self._recv_dto()
+
+  def upload(self, size: int = 0) -> bytes:
+    if size > 255:
+      raise ValueError("size must be less than 256")
+
+    self._send_cto(COMMAND_CODE.UPLOAD, bytes([size]))
+    return self._recv_dto()
 
   def short_upload(self, size: int, addr_ext: int, addr: int) -> bytes:
     if size > 6:
