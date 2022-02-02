@@ -155,8 +155,8 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     // and crv, which prevents the usual brake safety from working correctly. these
     // cars have a signal on 0x1BE which only detects user's brake being applied so
     // in these cases, this is used instead.
-    // most hondas: 0x17C bit 53 and bit 32 for brake switch
-    // accord, crv: 0x1BE bit 4
+    // most hondas: 0x17C
+    // accord, crv: 0x1BE
 
     if (honda_alt_brake_msg) {
       if (addr == 0x1BE) {
