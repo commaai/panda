@@ -18,6 +18,7 @@ uint32_t can_rx_errs = 0;
 uint32_t can_send_errs = 0;
 uint32_t can_fwd_errs = 0;
 uint32_t gmlan_send_errs = 0;
+uint32_t blocked_msg_cnt = 0;
 
 extern int can_live;
 extern int pending_can_live;
@@ -242,6 +243,7 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
       }
     }
   } else {
+    blocked_msg_cnt += 1U;
     to_push->rejected = 1U;
     can_send_errs += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }

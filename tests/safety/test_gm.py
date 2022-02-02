@@ -32,7 +32,7 @@ class TestGmSafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP: Dict[int, int] = {}
 
   def setUp(self):
-    self.packer = CANPackerPanda("gm_global_a_powertrain")
+    self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
