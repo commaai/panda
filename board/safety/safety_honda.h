@@ -56,7 +56,7 @@ const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
 const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
 
 int honda_brake = 0;
-bool brake_switch_prev = false;
+bool honda_brake_switch_prev = false;
 bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
 bool honda_bosch_long = false;
@@ -166,8 +166,8 @@ static int honda_rx_hook(CANPacket_t *to_push) {
       if (addr == 0x17C) {
         // also if brake switch is 1 for two CAN frames, as brake pressed is delayed
         const bool brake_switch = GET_BIT(to_push, 32U) != 0U;
-        brake_pressed = (GET_BIT(to_push, 53U) != 0U) || (brake_switch && brake_switch_prev);
-        brake_switch_prev = brake_switch;
+        brake_pressed = (GET_BIT(to_push, 53U) != 0U) || (brake_switch && honda_brake_switch_prev);
+        honda_brake_switch_prev = brake_switch;
       }
     }
 
