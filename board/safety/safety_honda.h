@@ -157,7 +157,6 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     // in these cases, this is used instead.
     // most hondas: 0x17C
     // accord, crv: 0x1BE
-
     if (honda_alt_brake_msg) {
       if (addr == 0x1BE) {
         brake_pressed = GET_BIT(to_push, 4U) != 0U;
