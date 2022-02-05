@@ -70,8 +70,8 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       }
     }
 
-    if (addr == 201) { // ECMEngineStatus.Brake_Pressed
-      brake_pressed = GET_BYTE(to_push, 5) & 1U;
+    if (addr == 201) {
+      brake_pressed = GET_BIT(to_push, 40U) != 0U;
     }
 
     if (addr == 452) {
