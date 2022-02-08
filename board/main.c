@@ -281,7 +281,7 @@ void EXTI_IRQ_Handler(void) {
     exti_irq_clear();
     clock_init();
 
-    current_board->set_usb_power_mode(USB_POWER_CDP);
+    //current_board->set_usb_power_mode(USB_POWER_CDP);
     power_save_status = POWER_SAVE_STATUS_DISABLED;
     heartbeat_counter = 0U;
 
@@ -417,7 +417,8 @@ int main(void) {
       if (!heartbeat_disabled && (heartbeat_counter > 60U) && !usb_enumerated && !check_started()) {
         usb_soft_disconnect(true);
         current_board->set_led(LED_BLUE, false);
-        current_board->set_usb_power_mode(USB_POWER_CLIENT);
+        current_board->set_fan_power(0U);
+        //current_board->set_usb_power_mode(USB_POWER_CLIENT);
 
         // Init IRQs for CAN transceiver and ignition line
         exti_irq_init();
