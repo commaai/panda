@@ -276,7 +276,6 @@ void tick_handler(void) {
   TICK_TIMER->SR = 0;
 }
 
-// cppcheck-suppress unusedFunction ; not implemented for H7 yet
 void EXTI_IRQ_Handler(void) {
   if (check_exti_irq()) {
     exti_irq_clear();
