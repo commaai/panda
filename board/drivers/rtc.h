@@ -34,25 +34,20 @@ void rtc_init(void){
     while((RCC->CSR & RCC_CSR_LSIRDY) == 0){}
   }
 
-<<<<<<< HEAD
   // Initialize RTC module and clock if not done already.
   if((RCC->BDCR & bdcr_mask) != bdcr_opts){
     puts("Initializing RTC\n");
+    // Reset backup domain
     register_set_bits(&(RCC->BDCR), RCC_BDCR_BDRST);
-=======
-  if(current_board->has_rtc){
-    // Initialize RTC module and clock if not done already.
-    if((RCC->BDCR & bdcr_mask) != bdcr_opts){
+
+    // Disable write protection
+    disable_bdomain_protection();
+
     // Clear backup domain reset
     register_clear_bits(&(RCC->BDCR), RCC_BDCR_BDRST);
 
-<<<<<<< HEAD
     // Set RTC options
     register_set(&(RCC->BDCR), bdcr_opts, bdcr_mask);
-=======
-      // Set RTC options
-      register_set(&(RCC->BDCR), bdcr_opts, bdcr_mask);
->>>>>>> Add RTC with LSI for BP, GP, WP
 
     // Enable write protection
     enable_bdomain_protection();
