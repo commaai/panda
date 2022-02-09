@@ -421,6 +421,7 @@ int main(void) {
       if (!heartbeat_disabled && (heartbeat_counter > 30U) && !usb_enumerated && !check_started()) {
         usb_soft_disconnect(true);
         current_board->set_fan_power(0U);
+        current_board->set_usb_power_mode(USB_POWER_CLIENT);
         NVIC_DisableIRQ(TICK_TIMER_IRQ);
         delay(512000U);
 
