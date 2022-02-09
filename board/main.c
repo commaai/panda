@@ -281,26 +281,30 @@ void EXTI_IRQ_Handler(void) {
     exti_irq_clear();
     clock_init();
 
-    //current_board->set_usb_power_mode(USB_POWER_CDP);
+    current_board->set_usb_power_mode(USB_POWER_CDP);
     power_save_status = POWER_SAVE_STATUS_DISABLED;
     heartbeat_counter = 0U;
-
-    // current_board->set_led(LED_GREEN, true);
-    // delay(512000U);
-    // current_board->set_led(LED_GREEN, false);
-    // delay(512000U);
-
     usb_soft_disconnect(false);
+
+    NVIC_EnableIRQ(TICK_TIMER_IRQ);
   }
 }
 
+uint8_t rtc_counter = 0;
 void RTC_WKUP_IRQ_Handler(void) {
   exti_irq_clear();
   clock_init();
 
-  current_board->set_led(LED_BLUE, true);
-  delay(512000U);
-  current_board->set_led(LED_BLUE, false);
+  rtc_counter++;
+  if ((rtc_counter % 2) == 0) {
+    current_board->set_led(LED_BLUE, false);
+  } else {
+    current_board->set_led(LED_BLUE, true);
+  }
+
+  if (rtc_counter == __UINT8_MAX__) {
+    rtc_counter = 1;
+  }
 }
 
 
@@ -414,11 +418,11 @@ int main(void) {
         }
       #endif
     } else {
-      if (!heartbeat_disabled && (heartbeat_counter > 60U) && !usb_enumerated && !check_started()) {
+      if (!heartbeat_disabled && (heartbeat_counter > 30U) && !usb_enumerated && !check_started()) {
         usb_soft_disconnect(true);
-        current_board->set_led(LED_BLUE, false);
         current_board->set_fan_power(0U);
-        //current_board->set_usb_power_mode(USB_POWER_CLIENT);
+        NVIC_DisableIRQ(TICK_TIMER_IRQ);
+        delay(512000U);
 
         // Init IRQs for CAN transceiver and ignition line
         exti_irq_init();
