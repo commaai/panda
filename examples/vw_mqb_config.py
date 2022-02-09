@@ -2,8 +2,6 @@
 
 import argparse
 import struct
-import time
-from datetime import date
 from panda import Panda
 from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseError, SESSION_TYPE, DATA_IDENTIFIER_TYPE
 
@@ -15,7 +13,7 @@ if __name__ == "__main__":
 
   panda = Panda()
   panda.set_safety_mode(Panda.SAFETY_ELM327)
-  bus = 1 if panda.has_obd else 0
+  bus = 1 if panda.has_obd() else 0
   uds_client = UdsClient(panda, 0x712, 0x77c, bus, timeout=0.2, debug=args.debug)
 
   try:
