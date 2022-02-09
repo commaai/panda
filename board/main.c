@@ -296,14 +296,14 @@ void RTC_WKUP_IRQ_Handler(void) {
   clock_init();
 
   rtc_counter++;
-  if ((rtc_counter % 2) == 0) {
+  if ((rtc_counter % 2U) == 0U) {
     current_board->set_led(LED_BLUE, false);
   } else {
     current_board->set_led(LED_BLUE, true);
   }
 
   if (rtc_counter == __UINT8_MAX__) {
-    rtc_counter = 1;
+    rtc_counter = 1U;
   }
 }
 
