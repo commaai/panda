@@ -38,5 +38,6 @@ void rtc_wakeup_init(void) {
   RTC->WPR = 0x00;
   enable_bdomain_protection();
 
+  REGISTER_INTERRUPT(RTC_WKUP_IRQn, RTC_WKUP_IRQ_Handler, 10U, FAULT_INTERRUPT_RATE_DEEPSLEEP)
   NVIC_EnableIRQ(RTC_WKUP_IRQn);
 }
