@@ -10,7 +10,7 @@ void exti_irq_init(void) {
     EXTI->RTSR1 &=  ~EXTI_RTSR1_TR10; // rising edge
     EXTI->FTSR1 |=  EXTI_FTSR1_TR10; // falling edge
 
-    // IRQ on falling edge for PC3 (SBU2, EXTI1)
+    // IRQ on falling edge for PA1 (SBU2, EXTI1)
     SYSCFG->EXTICR[0] &= ~(SYSCFG_EXTICR1_EXTI1_Msk);
     SYSCFG->EXTICR[0] |=  (SYSCFG_EXTICR1_EXTI1_PA);
     EXTI->IMR1  |=  EXTI_IMR1_IM1;
@@ -29,7 +29,7 @@ void exti_irq_init(void) {
     EXTI->RTSR1 &=  ~EXTI_RTSR1_TR8; // rising edge
     EXTI->FTSR1 |=  EXTI_FTSR1_TR8; // falling edge
 
-    // IRQ on falling edge for PC0 (SBU1, EXTI4)
+    // IRQ on falling edge for PC4 (SBU1, EXTI4)
     SYSCFG->EXTICR[1] &= ~(SYSCFG_EXTICR2_EXTI4_Msk);
     SYSCFG->EXTICR[1] |=  (SYSCFG_EXTICR2_EXTI4_PC);
     EXTI->IMR1  |=  EXTI_IMR1_IM4;
