@@ -282,7 +282,7 @@ void EXTI_IRQ_Handler(void) {
     clock_init();
 
     current_board->set_usb_power_mode(USB_POWER_CDP);
-    power_save_status = POWER_SAVE_STATUS_DISABLED;
+    set_power_save_state(POWER_SAVE_STATUS_DISABLED);
     heartbeat_counter = 0U;
     usb_soft_disconnect(false);
 
