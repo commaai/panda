@@ -51,7 +51,6 @@ void clock_source_init(uint8_t mode){
   switch(mode) {
     case CLOCK_SOURCE_MODE_DISABLED:
       // No clock signal
-      NVIC_DisableIRQ(EXTI0_IRQn);
       NVIC_DisableIRQ(TIM1_UP_TIM10_IRQn);
       NVIC_DisableIRQ(TIM1_CC_IRQn);
 
@@ -63,7 +62,6 @@ void clock_source_init(uint8_t mode){
       break;
     case CLOCK_SOURCE_MODE_FREE_RUNNING:
       // Clock signal is based on internal timer
-      NVIC_DisableIRQ(EXTI0_IRQn);
       NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
       NVIC_EnableIRQ(TIM1_CC_IRQn);
 
