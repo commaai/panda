@@ -1,8 +1,6 @@
 #define RCC_BDCR_MASK_LSE (RCC_BDCR_RTCEN | RCC_BDCR_RTCSEL | RCC_BDCR_LSEMOD | RCC_BDCR_LSEBYP | RCC_BDCR_LSEON)
 #define RCC_BDCR_MASK_LSI (RCC_BDCR_RTCEN | RCC_BDCR_RTCSEL)
 
-void RTC_WKUP_IRQ_Handler(void);
-
 void enable_bdomain_protection(void) {
   register_clear_bits(&(PWR->CR), PWR_CR_DBP);
 }
@@ -38,6 +36,5 @@ void rtc_wakeup_init(void) {
   RTC->WPR = 0x00;
   enable_bdomain_protection();
 
-  REGISTER_INTERRUPT(RTC_WKUP_IRQn, RTC_WKUP_IRQ_Handler, 10U, FAULT_INTERRUPT_RATE_DEEPSLEEP)
   NVIC_EnableIRQ(RTC_WKUP_IRQn);
 }
