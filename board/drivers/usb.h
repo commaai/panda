@@ -685,6 +685,7 @@ void usb_irqhandler(void) {
 
   if ((gintsts & USB_OTG_GINTSTS_USBRST) != 0) {
     puts("USB reset\n");
+    usb_enumerated = false;
     usb_reset();
   }
 
