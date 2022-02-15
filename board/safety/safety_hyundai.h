@@ -67,6 +67,8 @@ bool hyundai_ev_gas_signal = false;
 bool hyundai_hybrid_gas_signal = false;
 bool hyundai_longitudinal = false;
 
+bool hyundai_prev_button_enable = false;
+
 addr_checks hyundai_rx_checks = {hyundai_addr_checks, HYUNDAI_ADDR_CHECK_LEN};
 
 static uint8_t hyundai_get_counter(CANPacket_t *to_push) {
@@ -162,10 +164,11 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       // ACC steering wheel buttons
       if (addr == 1265) {
         int button = GET_BYTE(to_push, 0) & 0x7U;
+        bool button_enable;
         switch (button) {
           case 1:  // resume
           case 2:  // set
-            controls_allowed = 1;
+            button_enable = 1;
             break;
           case 4:  // cancel
             controls_allowed = 0;
@@ -173,6 +176,11 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
           default:
             break;  // any other button is irrelevant
         }
+        // controls allowed on falling edge of enable
+        if (!button_enable && hyundai_prev_button_enable) {
+          controls_allowed = 1;
+        }
+        hyundai_prev_button_enable = button_enable;
       }
     } else {
       // enter controls on rising edge of ACC, exit controls on ACC off
