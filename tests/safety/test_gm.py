@@ -32,7 +32,7 @@ class TestGmSafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP: Dict[int, int] = {}
 
   def setUp(self):
-    self.packer = CANPackerPanda("gm_global_a_powertrain")
+    self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
@@ -60,9 +60,8 @@ class TestGmSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("ASCMSteeringButton", 0, values)
 
   def _brake_msg(self, brake):
-    # GM safety has a brake threshold of 10
-    values = {"BrakePedalPosition": 10 if brake else 0}
-    return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
+    values = {"Brake_Pressed": 1 if brake else 0}
+    return self.packer.make_can_msg_panda("ECMEngineStatus", 0, values)
 
   def _gas_msg(self, gas):
     values = {"AcceleratorPedal2": 1 if gas else 0}

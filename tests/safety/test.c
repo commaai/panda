@@ -71,9 +71,14 @@ void safety_tick_current_rx_checks() {
 }
 
 bool addr_checks_valid() {
+  if (current_rx_checks->len <= 0) {
+    return false;
+  }
+
   for (int i = 0; i < current_rx_checks->len; i++) {
     const AddrCheckStruct addr = current_rx_checks->check[i];
-    if (!addr.msg_seen || addr.lagging || !addr.valid_checksum || (addr.wrong_counters >= MAX_WRONG_COUNTERS)) {
+    bool valid = addr.msg_seen && !addr.lagging && addr.valid_checksum && (addr.wrong_counters < MAX_WRONG_COUNTERS);
+    if (!valid) {
       return false;
     }
   }

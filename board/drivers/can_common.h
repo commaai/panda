@@ -18,6 +18,7 @@ uint32_t can_rx_errs = 0;
 uint32_t can_send_errs = 0;
 uint32_t can_fwd_errs = 0;
 uint32_t gmlan_send_errs = 0;
+uint32_t blocked_msg_cnt = 0;
 
 extern int can_live;
 extern int pending_can_live;
@@ -28,7 +29,6 @@ extern int can_silent;
 
 // Ignition detected from CAN meessages
 bool ignition_can = false;
-bool ignition_cadillac = false;
 uint32_t ignition_can_cnt = 0U;
 
 #define ALL_CAN_SILENT 0xFF
@@ -196,16 +196,9 @@ void ignition_can_hook(CANPacket_t *to_push) {
 
   if (bus == 0) {
     // GM exception
-    // TODO: verify on all supported GM models that we can reliably detect ignition using only this signal,
-    // since the 0x1F1 signal can briefly go low immediately after ignition
     if ((addr == 0x160) && (len == 5)) {
       // this message isn't all zeros when ignition is on
-      ignition_cadillac = GET_BYTES_04(to_push) != 0U;
-    }
-    if ((addr == 0x1F1) && (len == 8)) {
-      // Bit 5 is ignition "on"
-      bool ignition_gm = ((GET_BYTE(to_push, 0) & 0x20U) != 0U);
-      ignition_can = ignition_gm || ignition_cadillac;
+      ignition_can = GET_BYTES_04(to_push) != 0U;
     }
 
     // Tesla exception
@@ -242,6 +235,7 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
       }
     }
   } else {
+    blocked_msg_cnt += 1U;
     to_push->rejected = 1U;
     can_send_errs += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }
