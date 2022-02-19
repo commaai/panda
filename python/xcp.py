@@ -87,6 +87,14 @@ class CONNECT_MODE(IntEnum):
   NORMAL = 0x00,
   USER_DEFINED = 0x01,
 
+class GET_ID_REQUEST_TYPE(IntEnum):
+  ASCII = 0x00,
+  ASAM_MC2_FILE = 0x01,
+  ASAM_MC2_PATH = 0x02,
+  ASAM_MC2_URL = 0x03,
+  ASAM_MC2_UPLOAD = 0x04,
+  # 128-255 user defined
+
 class CommandTimeoutError(Exception):
   pass
 
@@ -110,6 +118,8 @@ class XcpClient():
     self.debug = debug
     self._panda = panda
     self._byte_order = ">"
+    self._max_cto = 8
+    self._max_dto = 8
     self.pad = pad
 
   def _send_cto(self, cmd: int, dat: bytes = b"") -> None:
@@ -120,9 +130,13 @@ class XcpClient():
       tx_data = tx_data.ljust(8, b"\x00")
 
     if self.debug:
-      print(f"CAN-TX: {hex(self.tx_addr)} - 0x{bytes.hex(tx_data)}")
+      print("CAN-CLEAR: TX")
     self._panda.can_clear(self.can_bus)
+    if self.debug:
+      print("CAN-CLEAR: RX")
     self._panda.can_clear(0xFFFF)
+    if self.debug:
+      print(f"CAN-TX: {hex(self.tx_addr)} - 0x{bytes.hex(tx_data)}")
     self._panda.can_send(self.tx_addr, tx_data, self.can_bus)
 
   def _recv_dto(self, timeout: float=0.025) -> bytes:
@@ -155,6 +169,9 @@ class XcpClient():
     resp = self._recv_dto()
     assert len(resp) == 7, f"incorrect data length: {len(resp)}"
     self._byte_order = ">" if resp[1] & 0x01 else "<"
+    self._slave_block_mode = resp[1] & 0x40 != 0
+    self._max_cto = resp[2]
+    self._max_dto = struct.unpack(f"{self._byte_order}H", resp[3:5])[0]
     return {
       "cal_support": resp[0] & 0x01 != 0,
       "daq_support": resp[0] & 0x04 != 0,
@@ -162,10 +179,10 @@ class XcpClient():
       "pgm_support": resp[0] & 0x10 != 0,
       "byte_order": self._byte_order,
       "address_granularity": 2**((resp[1] & 0x06) >> 1),
-      "slave_block_mode": resp[1] & 0x40 != 0,
+      "slave_block_mode": self._slave_block_mode,
       "optional": resp[1] & 0x80 != 0,
-      "max_cto": resp[2],
-      "max_dto": struct.unpack(f"{self._byte_order}H", resp[3:5])[0],
+      "max_cto": self._max_cto,
+      "max_dto": self._max_dto,
       "protocol_version": resp[5],
       "transport_version": resp[6],
     }
@@ -175,7 +192,22 @@ class XcpClient():
     resp = self._recv_dto()
     assert len(resp) == 0, f"incorrect data length: {len(resp)}"
 
+  def get_id(self, req_id_type: GET_ID_REQUEST_TYPE = GET_ID_REQUEST_TYPE.ASCII) -> dict:
+    if req_id_type > 255:
+      raise ValueError("request id type must be less than 255")
+    self._send_cto(COMMAND_CODE.GET_ID, bytes([req_id_type]))
+    resp = self._recv_dto()
+    return {
+      # mode = 0 means MTA was set
+      # mode = 1 means data is at end (only CAN-FD has space for this)
+      "mode": resp[0],
+      "length": struct.unpack(f"{self._byte_order}I", resp[3:7])[0],
+      "identifier": resp[7:] if self._max_cto > 8 else None
+    }
+
   def get_seed(self, mode: int = 0) -> bytes:
+    if mode > 255:
+      raise ValueError("mode must be less than 255")
     self._send_cto(COMMAND_CODE.GET_SEED, bytes([0, mode]))
 
     # TODO: add support for longer seeds spread over multiple blocks
@@ -188,16 +220,24 @@ class XcpClient():
     self._send_cto(COMMAND_CODE.UNLOCK, bytes([len(key)]) + key)
     return self._recv_dto()
 
-  def set_mta(self, addr: int = 0) -> bytes:
-    self._send_cto(COMMAND_CODE.SET_MTA, struct.pack(f"{self._byte_order}I", addr))
+  def set_mta(self, addr: int, addr_ext: int = 0) -> bytes:
+    if addr_ext > 255:
+      raise ValueError("address extension must be less than 256")
+    # TODO: this looks broken (missing addr extension)
+    self._send_cto(COMMAND_CODE.SET_MTA, bytes([0x00, 0x00, addr_ext]) + struct.pack(f"{self._byte_order}I", addr))
     return self._recv_dto()
 
-  def upload(self, size: int = 0) -> bytes:
+  def upload(self, size: int) -> bytes:
     if size > 255:
       raise ValueError("size must be less than 256")
+    if not self._slave_block_mode and size > self._max_dto - 1:
+      raise ValueError("block mode not supported")
 
     self._send_cto(COMMAND_CODE.UPLOAD, bytes([size]))
-    return self._recv_dto()
+    resp = b""
+    while len(resp) < size:
+      resp += self._recv_dto()[:size - len(resp) + 1]
+    return resp[:size] # trim off bytes with undefined values
 
   def short_upload(self, size: int, addr_ext: int, addr: int) -> bytes:
     if size > 6:
@@ -205,4 +245,14 @@ class XcpClient():
     if addr_ext > 255:
       raise ValueError("address extension must be less than 256")
     self._send_cto(COMMAND_CODE.SHORT_UPLOAD, bytes([size, 0x00, addr_ext]) + struct.pack(f"{self._byte_order}I", addr))
-    return self._recv_dto()
+    return self._recv_dto()[:size] # trim off bytes with undefined values
+
+  def download(self, data: bytes) -> bytes:
+    size = len(data)
+    if size > 255:
+      raise ValueError("size must be less than 256")
+    if not self._slave_block_mode and size > self._max_dto - 2:
+      raise ValueError("block mode not supported")
+
+    self._send_cto(COMMAND_CODE.DOWNLOAD, bytes([size]) + data)
+    return self._recv_dto()[:size]
