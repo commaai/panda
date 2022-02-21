@@ -480,8 +480,8 @@ class Panda(object):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xda, int(bootmode), 0, b'')
     time.sleep(0.2)
 
-  def set_safety_mode(self, mode=SAFETY_SILENT, disable_checks=True):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, 0, b'')
+  def set_safety_mode(self, mode=SAFETY_SILENT, param=0, disable_checks=True):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
     if disable_checks:
       self.set_heartbeat_disabled()
       self.set_power_save(0)
