@@ -347,13 +347,13 @@ class TestHondaNidecSafetyBase(HondaBase):
 
 
 
-class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
+class TestHondaNidecSafety(HondaButtonEnableBase, TestHondaNidecSafetyBase):
   """
     Covers the Honda Nidec safety mode
   """
 
 
-class TestHondaNidecInterceptorSafety(HondaButtonEnableBase, TestHondaNidecSafety, common.InterceptorSafetyTest):
+class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTest):
   """
     Covers the Honda Nidec safety mode with a gas interceptor
   """
@@ -362,7 +362,7 @@ class TestHondaNidecInterceptorSafety(HondaButtonEnableBase, TestHondaNidecSafet
     common.InterceptorSafetyTest.setUpClass()
 
 
-class TestHondaNidecAltSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
+class TestHondaNidecAltSafety(HondaButtonEnableBase, TestHondaNidecSafetyBase):
   """
     Covers the Honda Nidec safety mode with alt SCM messages
   """
@@ -383,7 +383,7 @@ class TestHondaNidecAltSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
     return self.packer.make_can_msg_panda("SCM_BUTTONS", self.PT_BUS, values)
 
 
-class TestHondaNidecAltInterceptorSafety(HondaButtonEnableBase, TestHondaNidecSafety, common.InterceptorSafetyTest):
+class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTest):
   """
     Covers the Honda Nidec safety mode with alt SCM messages and gas interceptor
   """
