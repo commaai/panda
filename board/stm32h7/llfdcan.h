@@ -2,11 +2,11 @@
 // SAE J2284-5 document specifies a point-to-point communication running at 5 Mbit/s
 
 #define CAN_PCLK 80000U // KHz, sourced from PLL1Q
-#define BITRATE_PRESCALER 2U // Valid from 83.333Kbps to 5Mbps with 80Mhz clock
+#define BITRATE_PRESCALER 2U // Valid from 250Kbps to 5Mbps with 80Mhz clock
 #define CAN_SP_NOMINAL 80U // 80% for both SAE J2284-4 and SAE J2284-5
 #define CAN_SP_DATA_2M 80U // 80% for SAE J2284-4
 #define CAN_SP_DATA_5M 75U // 75% for SAE J2284-5
-#define CAN_QUANTA(speed) (CAN_PCLK / ((speed) / 10U * BITRATE_PRESCALER))
+#define CAN_QUANTA(speed, prescaler) (CAN_PCLK / ((speed) / 10U * (prescaler)))
 #define CAN_SEG1(tq, sp) (((tq) * (sp) / 100U)- 1U)
 #define CAN_SEG2(tq, sp) ((tq) * (100U - (sp)) / 100U)
 
@@ -93,17 +93,24 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
     CANx->CCCR &= ~(FDCAN_CCCR_MON);
     CANx->CCCR &= ~(FDCAN_CCCR_ASM);
 
+    // TODO: add as a separate safety mode
     // Enable ASM restricted operation(for debug or automatic bitrate switching)
     //CANx->CCCR |= FDCAN_CCCR_ASM;
 
+    uint8_t prescaler = BITRATE_PRESCALER;
+    if (speed < 2500U) {
+      // The only way to support speeds lower than 250Kbit/s (down to 10Kbit/s)
+      prescaler = BITRATE_PRESCALER * 16U;
+    }
+
     // Set the nominal bit timing values
+    uint16_t tq = CAN_QUANTA(speed, prescaler);
     uint8_t sp = CAN_SP_NOMINAL;
-    uint16_t tq = CAN_QUANTA(speed);
     uint8_t seg1 = CAN_SEG1(tq, sp);
     uint8_t seg2 = CAN_SEG2(tq, sp);
     uint8_t sjw = seg2;
 
-    CANx->NBTP = ((sjw-1U)<<FDCAN_NBTP_NSJW_Pos) | ((seg1-1U)<<FDCAN_NBTP_NTSEG1_Pos) | ((seg2-1U)<<FDCAN_NBTP_NTSEG2_Pos) | ((BITRATE_PRESCALER-1U)<<FDCAN_NBTP_NBRP_Pos);
+    CANx->NBTP = (((sjw & 0x7FU)-1U)<<FDCAN_NBTP_NSJW_Pos) | (((seg1 & 0xFFU)-1U)<<FDCAN_NBTP_NTSEG1_Pos) | (((seg2 & 0x7FU)-1U)<<FDCAN_NBTP_NTSEG2_Pos) | (((prescaler & 0x1FFU)-1U)<<FDCAN_NBTP_NBRP_Pos);
 
     // Set the data bit timing values
     if (data_speed == 50000U) {
@@ -111,12 +118,12 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
     } else {
       sp = CAN_SP_DATA_2M;
     }
-    tq = CAN_QUANTA(data_speed);
+    tq = CAN_QUANTA(data_speed, prescaler);
     seg1 = CAN_SEG1(tq, sp);
     seg2 = CAN_SEG2(tq, sp);
     sjw = seg2;
 
-    CANx->DBTP = ((sjw-1U)<<FDCAN_DBTP_DSJW_Pos) | ((seg1-1U)<<FDCAN_DBTP_DTSEG1_Pos) | ((seg2-1U)<<FDCAN_DBTP_DTSEG2_Pos) | ((BITRATE_PRESCALER-1U)<<FDCAN_DBTP_DBRP_Pos);
+    CANx->DBTP = (((sjw & 0xFU)-1U)<<FDCAN_DBTP_DSJW_Pos) | (((seg1 & 0x1FU)-1U)<<FDCAN_DBTP_DTSEG1_Pos) | (((seg2 & 0xFU)-1U)<<FDCAN_DBTP_DTSEG2_Pos) | (((prescaler & 0x1FU)-1U)<<FDCAN_DBTP_DBRP_Pos);
 
     // Silent loopback is known as internal loopback in the docs
     if (loopback) {
