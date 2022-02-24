@@ -26,7 +26,7 @@ def test_send_recv(p):
     busses = [0, 1, 2]
 
     for bus in busses:
-      for speed in [100, 250, 500, 1000]:
+      for speed in [10, 20, 50, 100, 125, 250, 500, 1000]:
         p_send.set_can_speed_kbps(bus, speed)
         p_recv.set_can_speed_kbps(bus, speed)
         time.sleep(0.05)
@@ -67,8 +67,8 @@ def test_latency(p):
     p_send.set_can_loopback(False)
     p_recv.set_can_loopback(False)
 
-    p_send.set_can_speed_kbps(0, 100)
-    p_recv.set_can_speed_kbps(0, 100)
+    p_send.set_can_speed_kbps(0, 500)
+    p_recv.set_can_speed_kbps(0, 500)
     time.sleep(0.05)
 
     p_send.can_send_many([(0x1ba, 0, b"testmsg", 0)] * 10)
@@ -79,7 +79,7 @@ def test_latency(p):
     busses = [0, 1, 2]
 
     for bus in busses:
-      for speed in [100, 250, 500, 1000]:
+      for speed in [10, 20, 50, 100, 125, 250, 500, 1000]:
         p_send.set_can_speed_kbps(bus, speed)
         p_recv.set_can_speed_kbps(bus, speed)
         time.sleep(0.1)
