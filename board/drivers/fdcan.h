@@ -17,7 +17,13 @@ bool can_set_speed(uint8_t can_number) {
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
 
-  ret &= llcan_set_speed(CANx, bus_config[bus_number].can_speed, bus_config[bus_number].can_data_speed, can_loopback, (unsigned int)(can_silent) & (1U << can_number));
+  ret &= llcan_set_speed(
+    CANx,
+    bus_config[bus_number].can_speed,
+    bus_config[bus_number].can_data_speed,
+    can_loopback,
+    (unsigned int)(can_silent) & (1U << can_number)
+  );
   return ret;
 }
 
