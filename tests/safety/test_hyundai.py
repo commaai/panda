@@ -204,14 +204,11 @@ class TestHyundaiSafety(common.PandaSafetyTest):
       self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
   def test_spam_cancel_safety_check(self):
-    self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._button_msg(Buttons.CANCEL)))
-    self.assertFalse(self._tx(self._button_msg(Buttons.RESUME)))
-    self.assertFalse(self._tx(self._button_msg(Buttons.SET)))
-    # do not block resume if we are engaged already
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._button_msg(Buttons.RESUME)))
-
+    # buttons only allowed while engaged
+    for btn in (Buttons.SET, Buttons.RESUME, Buttons.CANCEL):
+      for engaged in (True, False):
+        self.safety.set_controls_allowed(engaged)
+        self.assertEqual(engaged, self._tx(self._button_msg(btn)))
 
 class TestHyundaiLegacySafety(TestHyundaiSafety):
   def setUp(self):
