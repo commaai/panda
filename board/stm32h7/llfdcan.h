@@ -3,8 +3,8 @@
 
 #define CAN_PCLK 80000U // KHz, sourced from PLL1Q
 #define BITRATE_PRESCALER 2U // Valid from 83.333Kbps to 5Mbps with 80Mhz clock
-#define CAN_SP_NOMINAL 75U // 80% for both SAE J2284-4 and SAE J2284-5
-#define CAN_SP_DATA_2M 75U // 80% for SAE J2284-4
+#define CAN_SP_NOMINAL 80U // 80% for both SAE J2284-4 and SAE J2284-5
+#define CAN_SP_DATA_2M 80U // 80% for SAE J2284-4
 #define CAN_SP_DATA_5M 75U // 75% for SAE J2284-5
 #define CAN_QUANTA(speed) (CAN_PCLK / ((speed) / 10U * BITRATE_PRESCALER))
 #define CAN_SEG1(tq, sp) (((tq) * (sp) / 100U)- 1U)
@@ -117,11 +117,6 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
     sjw = seg2;
 
     CANx->DBTP = ((sjw-1U)<<FDCAN_DBTP_DSJW_Pos) | ((seg1-1U)<<FDCAN_DBTP_DTSEG1_Pos) | ((seg2-1U)<<FDCAN_DBTP_DTSEG2_Pos) | ((BITRATE_PRESCALER-1U)<<FDCAN_DBTP_DBRP_Pos);
-
-    // Enable transceiver delay compensation for data phase with speeds higher than 1Mbps
-    if (data_speed > 10000U) {
-    CANx->DBTP |= FDCAN_DBTP_TDC;
-    }
 
     // Silent loopback is known as internal loopback in the docs
     if (loopback) {
