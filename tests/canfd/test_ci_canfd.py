@@ -31,9 +31,6 @@ def panda_init(serial):
   p = Panda(serial=serial)
   assert p.recover(timeout=30)
   start_heartbeat_thread(p)
-  for bus in range(3):
-    p.set_can_speed_kbps(bus,  500)
-    p.set_can_data_speed_kbps(bus, 2000)
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   p.set_power_save(False)
   return p
@@ -96,5 +93,16 @@ def canfd_test(p_send, p_recv):
 
 
 p_send = panda_init(_panda_serials[0])
+# Enable CAN FD for sending panda only(to test auto enable feature)
+for bus in range(3):
+  p_send.set_can_speed_kbps(bus,  500)
+  p_send.set_can_data_speed_kbps(bus, 2000)
+
 p_recv = panda_init(_panda_serials[1])
 canfd_test(p_send, p_recv)
+
+# Check if all tested buses on receiveing panda have swithed to CAN FD with BRS
+for bus in range(3):
+  canfd, brs = p_recv.get_canfd_status(bus)
+  assert canfd
+  assert brs
