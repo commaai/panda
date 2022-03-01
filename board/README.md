@@ -21,8 +21,9 @@ Programming
 **Panda**
 
 ```
-scons -u # Compile
-./flash.sh # Compile & Flash
+scons -u       # Compile
+./flash_h7.sh  # for panda red
+./flash.sh     # for other pandas
 ```
 
 Troubleshooting
@@ -30,8 +31,12 @@ Troubleshooting
 
 If your panda will not flash and is quickly blinking a single Green LED, use:
 ```
-./recover.sh
+./recover_h7.sh  # for panda red
+./recover.sh     # for other pandas
 ```
+
+If your panda is not being recognized (for example after flashing wrong firmware),
+use [panda paw](https://comma.ai/shop/products/panda-paw) to put panda into boot mode.
 
 
 [dfu-util](http://github.com/dsigma/dfu-util.git) for flashing
