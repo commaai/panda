@@ -324,11 +324,9 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  // FORCE CANCEL: safety check only relevant when spamming the cancel button.
-  // ensuring that only the cancel button press is sent (VAL 4) when controls are off.
-  // This avoids unintended engagements while still allowing resume spam
+  // RESUME: check to make sure we never send resume button when controls are off
   if ((addr == 1265) && !controls_allowed) {
-    if ((GET_BYTES_04(to_send) & 0x7U) != 4U) {
+    if ((GET_BYTES_04(to_send) & 0x7U) == 1U) {
       tx = 0;
     }
   }
