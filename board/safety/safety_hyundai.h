@@ -331,12 +331,6 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  // CANCEL: To cancel, we send the driver door open bit (CGW1) along with a copy
-  // of the last message the car sent to avoid undefined behavior
-  if ((addr == 1345) && !controls_allowed) {
-    tx = 0;
-  }
-
   // 1 allows the message through
   return tx;
 }
