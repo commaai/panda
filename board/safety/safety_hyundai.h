@@ -19,7 +19,6 @@ const CanMsg HYUNDAI_TX_MSGS[] = {
 
 const CanMsg HYUNDAI_LONG_TX_MSGS[] = {
   {832, 0, 8},  // LKAS11 Bus 0
-  {1265, 0, 4}, // CLU11 Bus 0
   {1157, 0, 4}, // LFAHDA_MFC Bus 0
   {1056, 0, 8}, // SCC11 Bus 0
   {1057, 0, 8}, // SCC12 Bus 0
@@ -330,6 +329,13 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == 1265) && !controls_allowed) {
     if ((GET_BYTES_04(to_send) & 0x7U) != 4U) {
+      tx = 0;
+    }
+  }
+
+  // CGW1: Only allow sending driver door open bit while still engaged
+  if ((addr == 1345) && !controls_allowed) {
+    if (GET_BIT(to_send, 8U) != 0U) {
       tx = 0;
     }
   }
