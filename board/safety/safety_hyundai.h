@@ -333,11 +333,12 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
 
   // FORCE CANCEL: we cancel by causing a temporary fault in the SCC module
   // check to make sure we never send a non-zero message
-  if ((addr == 916) && !controls_allowed) {
-    if (to_send->data != 0U) {
-      tx = 0;
-    }
-  }
+  // TODO: correct safety check, if at all (as SCC always faults)
+//  if ((addr == 916) && !controls_allowed) {
+//    if (to_send->data != 0U) {
+//      tx = 0;
+//    }
+//  }
 
   // 1 allows the message through
   return tx;
