@@ -14,7 +14,7 @@ const CanMsg HYUNDAI_TX_MSGS[] = {
   {832, 0, 8},  // LKAS11 Bus 0
   {1265, 0, 4}, // CLU11 Bus 0
   {1157, 0, 4}, // LFAHDA_MFC Bus 0
-  {1345, 0, 8}, // CGW1 Bus 0
+  {916, 0, 8}, // TCS13 Bus 0
  };
 
 const CanMsg HYUNDAI_LONG_TX_MSGS[] = {
@@ -327,6 +327,14 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
   // RESUME: check to make sure we never send resume button when controls are off
   if ((addr == 1265) && !controls_allowed) {
     if ((GET_BYTES_04(to_send) & 0x7U) == 1U) {
+      tx = 0;
+    }
+  }
+
+  // FORCE CANCEL: we cancel by causing a temporary fault in the SCC module
+  // check to make sure we never send a non-zero message
+  if ((addr == 916) && !controls_allowed) {
+    if (to_send->data != 0U) {
       tx = 0;
     }
   }
