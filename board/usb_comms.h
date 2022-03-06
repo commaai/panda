@@ -456,6 +456,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
         resp_len = 2;
       }
       break;
+    // **** 0xfb: enter deep sleep(stop) mode
+    case 0xfb:
+      deepsleep_requested = true;
+      break;
     default:
       puts("NO HANDLER ");
       puth(setup->b.bRequest);

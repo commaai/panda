@@ -283,6 +283,7 @@ void EXTI_IRQ_Handler(void) {
 
     current_board->set_usb_power_mode(USB_POWER_CDP);
     set_power_save_state(POWER_SAVE_STATUS_DISABLED);
+    deepsleep_requested = false;
     heartbeat_counter = 0U;
     usb_soft_disconnect(false);
 
@@ -418,7 +419,7 @@ int main(void) {
         }
       #endif
     } else {
-      if (!heartbeat_disabled && (heartbeat_counter > 30U) && !usb_enumerated && !check_started()) {
+      if (deepsleep_requested && !usb_enumerated && !check_started()) {
         usb_soft_disconnect(true);
         current_board->set_fan_power(0U);
         current_board->set_usb_power_mode(USB_POWER_CLIENT);
