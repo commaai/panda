@@ -473,7 +473,7 @@ class Panda(object):
   def set_power_save(self, power_save_enabled=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe7, int(power_save_enabled), 0, b'')
 
-  def set_deepsleep(self):
+  def enable_deepsleep(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xfb, 0, 0, b'')
 
   def set_esp_power(self, on):
