@@ -69,6 +69,10 @@
   #include "stm32fx/lluart.h"
 #endif
 
+#if !defined(PEDAL_USB) && !defined(PEDAL) && !defined(BOOTSTUB)
+  #include "stm32fx/llexti.h"
+#endif
+
 #ifdef BOOTSTUB
   #include "stm32fx/llflash.h"
 #else

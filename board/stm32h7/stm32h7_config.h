@@ -59,6 +59,7 @@
 #if !defined(BOOTSTUB) && defined(PANDA)
   #include "drivers/uart.h"
   #include "stm32h7/lluart.h"
+  #include "stm32h7/llexti.h"
 #endif
 
 #ifdef BOOTSTUB
