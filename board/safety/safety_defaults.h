@@ -71,11 +71,13 @@ static int alloutput_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   UNUSED(to_fwd);
   int bus_fwd = -1;
 
+  int addr = GET_ADDR(to_fwd);
+
   if (alloutput_passthrough) {
     if (bus_num == 0) {
       bus_fwd = 2;
     }
-    if (bus_num == 2) {
+    if ((bus_num == 2) && (addr != 0x50)) {
       bus_fwd = 0;
     }
   }
