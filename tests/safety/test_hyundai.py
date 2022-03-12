@@ -203,14 +203,23 @@ class TestHyundaiSafety(common.PandaSafetyTest):
       self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
       self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
-  def test_spam_cancel_safety_check(self):
+  def test_buttons(self):
+    """
+      Only RES and CANCEL buttons are allowed
+      - RES allowed while controls allowed
+      - CANCEL allowed while cruise is enabled
+    """
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._button_msg(Buttons.CANCEL)))
     self.assertFalse(self._tx(self._button_msg(Buttons.RESUME)))
     self.assertFalse(self._tx(self._button_msg(Buttons.SET)))
-    # do not block resume if we are engaged already
+
     self.safety.set_controls_allowed(1)
     self.assertTrue(self._tx(self._button_msg(Buttons.RESUME)))
+    self.assertFalse(self._tx(self._button_msg(Buttons.SET)))
+
+    for enabled in (True, False):
+      self._rx(self._pcm_status_msg(enabled))
+      self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
 
 
 class TestHyundaiLegacySafety(TestHyundaiSafety):
@@ -262,6 +271,9 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     pass
 
   def test_cruise_engaged_prev(self):
+    pass
+
+  def test_buttons(self):
     pass
 
   def _pcm_status_msg(self, enable):
