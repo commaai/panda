@@ -22,7 +22,7 @@ Programming
 
 ```
 scons -u       # Compile
-./flash_h7.sh  # for panda red
+./flash_h7.sh  # for red panda
 ./flash.sh     # for other pandas
 ```
 
@@ -31,7 +31,7 @@ Troubleshooting
 
 If your panda will not flash and is quickly blinking a single Green LED, use:
 ```
-./recover_h7.sh  # for panda red
+./recover_h7.sh  # for red panda
 ./recover.sh     # for other pandas
 ```
 
