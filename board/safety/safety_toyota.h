@@ -41,6 +41,9 @@ AddrCheckStruct toyota_addr_checks[] = {
 #define TOYOTA_ADDR_CHECKS_LEN (sizeof(toyota_addr_checks) / sizeof(toyota_addr_checks[0]))
 addr_checks toyota_rx_checks = {toyota_addr_checks, TOYOTA_ADDR_CHECKS_LEN};
 
+const int TOYOTA_PARAM_STOCK_LONG = 1;
+bool toyota_stock_long = false;
+
 // global actuation limit states
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
@@ -252,7 +255,8 @@ static const addr_checks* toyota_init(int16_t param) {
   controls_allowed = 0;
   relay_malfunction_reset();
   gas_interceptor_detected = 0;
-  toyota_dbc_eps_torque_factor = param;
+  toyota_dbc_eps_torque_factor = param >> 8;
+  toyota_stock_long = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONG);
   return &toyota_rx_checks;
 }
 
@@ -271,7 +275,7 @@ static int toyota_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     int is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191));
     // in TSS2 the camera does ACC as well, so filter 0x343
     int is_acc_msg = (addr == 0x343);
-    int block_msg = is_lkas_msg || is_acc_msg;
+    int block_msg = is_lkas_msg || (is_acc_msg && !toyota_stock_long);
     if (!block_msg) {
       bus_fwd = 0;
     }
