@@ -35,8 +35,7 @@ If your panda will not flash and is quickly blinking a single Green LED, use:
 ./recover.sh     # for other pandas
 ```
 
-If your panda is not being recognized (for example after flashing wrong firmware),
-use [panda paw](https://comma.ai/shop/products/panda-paw) to put panda into boot mode.
+A [panda paw](https://comma.ai/shop/products/panda-paw) can be used to put panda into DFU mode.
 
 
 [dfu-util](http://github.com/dsigma/dfu-util.git) for flashing
