@@ -56,6 +56,7 @@ const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
 const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
 
 int honda_brake = 0;
+int honda_button_prev = 0;
 bool honda_brake_switch_prev = false;
 bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
@@ -138,22 +139,20 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     // state machine to enter and exit controls for button enabling
     // 0x1A6 for the ILX, 0x296 for the Civic Touring
     if (((addr == 0x1A6) || (addr == 0x296))) {
-      // check for button presses
       int button = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
-      switch (button) {
-        case 1:  // main
-        case 2:  // cancel
-          controls_allowed = 0;
-          break;
-        case 3:  // set
-        case 4:  // resume
-          if (acc_main_on && !pcm_cruise) {
-            controls_allowed = 1;
-          }
-          break;
-        default:
-          break; // any other button is irrelevant
+
+      // exit controls once main or cancel are pressed
+      if ((button == 1) || (button == 2)) {
+        controls_allowed = 0;
       }
+
+      // enter controls on the falling edge of set or resume
+      bool set = (button == 0) && (honda_button_prev = 3);
+      bool res = (button == 0) && (honda_button_prev = 4);
+      if (acc_main_on && (button == 0) && (set || res)) {
+        controls_allowed = 1;
+      }
+      honda_button_prev = button;
     }
 
     // user brake signal on 0x17C reports applied brake from computer brake on accord
