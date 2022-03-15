@@ -96,7 +96,8 @@ static int honda_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &honda_rx_checks,
                                  honda_get_checksum, honda_compute_checksum, honda_get_counter);
 
-  const bool pcm_cruise = ((honda_hw == HONDA_BOSCH) && !honda_bosch_long) || ((honda_hw == HONDA_NIDEC) && !gas_interceptor_detected);
+  const bool pcm_cruise = ((honda_hw == HONDA_BOSCH) && !honda_bosch_long) || \
+                          ((honda_hw == HONDA_NIDEC) && !gas_interceptor_detected);
 
   if (valid) {
     int addr = GET_ADDR(to_push);
