@@ -157,7 +157,7 @@ class HondaPcmEnableBase(common.PandaSafetyTest):
 
   def test_buttons(self):
     """
-      Buttons shouldn't do anything in this configuration,
+      Buttons should only cancel in this configuration,
       since our state is tied to the PCM's cruise state.
     """
     for controls_allowed in (True, False):
@@ -170,7 +170,11 @@ class HondaPcmEnableBase(common.PandaSafetyTest):
           self.safety.set_controls_allowed(controls_allowed)
           self._rx(self._acc_state_msg(main_on))
           self._rx(self._button_msg(btn, main_on=main_on))
-          self.assertEqual(controls_allowed, self.safety.get_controls_allowed())
+
+          if btn == Btn.CANCEL:
+            self.assertFalse(self.safety.get_controls_allowed())
+          else:
+            self.assertEqual(controls_allowed, self.safety.get_controls_allowed())
 
 
 class HondaBase(common.PandaSafetyTest):
@@ -347,10 +351,14 @@ class TestHondaNidecSafetyBase(HondaBase):
 
 
 
-class TestHondaNidecSafety(HondaButtonEnableBase, TestHondaNidecSafetyBase):
+class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
   """
     Covers the Honda Nidec safety mode
   """
+
+  # Nidec doesn't disengage on falling edge of cruise. See comment in safety_honda.h
+  def test_disable_control_allowed_from_cruise(self):
+    pass
 
 
 class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTest):
@@ -362,7 +370,7 @@ class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSa
     common.InterceptorSafetyTest.setUpClass()
 
 
-class TestHondaNidecAltSafety(HondaButtonEnableBase, TestHondaNidecSafetyBase):
+class TestHondaNidecAltSafety(TestHondaNidecSafety):
   """
     Covers the Honda Nidec safety mode with alt SCM messages
   """
