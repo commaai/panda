@@ -112,6 +112,7 @@ bool cruise_engaged_prev = false;
 float vehicle_speed = 0;
 bool vehicle_moving = false;
 bool acc_main_on = false;  // referred to as "ACC off" in ISO 15622:2018
+int cruise_button_prev = 0;
 
 // for safety modes with torque steering control
 int desired_torque_last = 0;       // last desired steer torque

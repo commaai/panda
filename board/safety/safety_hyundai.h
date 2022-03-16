@@ -62,6 +62,13 @@ const int HYUNDAI_PARAM_EV_GAS = 1;
 const int HYUNDAI_PARAM_HYBRID_GAS = 2;
 const int HYUNDAI_PARAM_LONGITUDINAL = 4;
 
+enum {
+  HYUNDAI_BTN_NONE = 0,
+  HYUNDAI_BTN_RESUME = 1,
+  HYUNDAI_BTN_SET = 2,
+  HYUNDAI_BTN_CANCEL = 4,
+};
+
 bool hyundai_legacy = false;
 bool hyundai_ev_gas_signal = false;
 bool hyundai_hybrid_gas_signal = false;
@@ -162,17 +169,20 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       // ACC steering wheel buttons
       if (addr == 1265) {
         int button = GET_BYTE(to_push, 0) & 0x7U;
-        switch (button) {
-          case 1:  // resume
-          case 2:  // set
-            controls_allowed = 1;
-            break;
-          case 4:  // cancel
-            controls_allowed = 0;
-            break;
-          default:
-            break;  // any other button is irrelevant
+
+        // exit controls on cancel press
+        if (button == HYUNDAI_BTN_CANCEL) {
+          controls_allowed = 0;
         }
+
+        // enter controls on falling edge of resume or set
+        bool set = (button == HYUNDAI_BTN_NONE) && (cruise_button_prev == HYUNDAI_BTN_SET);
+        bool res = (button == HYUNDAI_BTN_NONE) && (cruise_button_prev == HYUNDAI_BTN_RESUME);
+        if (set || res) {
+          controls_allowed = 1;
+        }
+
+        cruise_button_prev = button;
       }
     } else {
       // enter controls on rising edge of ACC, exit controls on ACC off

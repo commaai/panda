@@ -64,7 +64,6 @@ enum {
 };
 
 int honda_brake = 0;
-int honda_button_prev = 0;
 bool honda_brake_switch_prev = false;
 bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
@@ -155,12 +154,12 @@ static int honda_rx_hook(CANPacket_t *to_push) {
       }
 
       // enter controls on the falling edge of set or resume
-      bool set = (button == HONDA_BTN_NONE) && (honda_button_prev == HONDA_BTN_SET);
-      bool res = (button == HONDA_BTN_NONE) && (honda_button_prev == HONDA_BTN_RESUME);
+      bool set = (button == HONDA_BTN_NONE) && (cruise_button_prev == HONDA_BTN_SET);
+      bool res = (button == HONDA_BTN_NONE) && (cruise_button_prev == HONDA_BTN_RESUME);
       if (acc_main_on && !pcm_cruise && (set || res)) {
         controls_allowed = 1;
       }
-      honda_button_prev = button;
+      cruise_button_prev = button;
     }
 
     // user brake signal on 0x17C reports applied brake from computer brake on accord
@@ -363,7 +362,6 @@ static const addr_checks* honda_nidec_init(int16_t param) {
   honda_hw = HONDA_NIDEC;
   honda_alt_brake_msg = false;
   honda_bosch_long = false;
-  honda_button_prev = 0;
 
   if (GET_FLAG(param, HONDA_PARAM_NIDEC_ALT)) {
     honda_rx_checks = (addr_checks){honda_nidec_alt_addr_checks, HONDA_NIDEC_ALT_ADDR_CHECKS_LEN};
@@ -379,7 +377,6 @@ static const addr_checks* honda_bosch_init(int16_t param) {
   honda_hw = HONDA_BOSCH;
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE);
-  honda_button_prev = 0;
 
   // radar disabled so allow gas/brakes
 #ifdef ALLOW_DEBUG
