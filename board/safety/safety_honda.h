@@ -55,6 +55,14 @@ const uint16_t HONDA_PARAM_ALT_BRAKE = 1;
 const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
 const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
 
+enum {
+  BTN_NONE = 0,
+  BTN_MAIN = 1,
+  BTN_CANCEL = 2,
+  BTN_SET = 3,
+  BTN_RESUME = 4,
+};
+
 int honda_brake = 0;
 int honda_button_prev = 0;
 bool honda_brake_switch_prev = false;
@@ -142,14 +150,14 @@ static int honda_rx_hook(CANPacket_t *to_push) {
       int button = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
 
       // exit controls once main or cancel are pressed
-      if ((button == 1) || (button == 2)) {
+      if ((button == BTN_MAIN) || (button == BTN_CANCEL)) {
         controls_allowed = 0;
       }
 
       // enter controls on the falling edge of set or resume
-      bool set = (button == 0) && (honda_button_prev = 3);
-      bool res = (button == 0) && (honda_button_prev = 4);
-      if (acc_main_on && !pcm_cruise && (button == 0) && (set || res)) {
+      bool set = (button == BTN_NONE) && (honda_button_prev = BTN_SET);
+      bool res = (button == BTN_NONE) && (honda_button_prev = BTN_RESUME);
+      if (acc_main_on && !pcm_cruise && (button == BTN_NONE) && (set || res)) {
         controls_allowed = 1;
       }
       honda_button_prev = button;
