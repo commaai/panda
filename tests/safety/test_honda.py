@@ -9,6 +9,8 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, make_msg, MAX_WRONG_COUNTERS, UNSAFE_MODE
 
 class Btn:
+  NONE = 0
+  MAIN = 1
   CANCEL = 2
   SET = 3
   RESUME = 4
@@ -47,22 +49,31 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
       self._rx(self._button_msg(btn, main_on=False))
       self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_resume_button(self):
-    self._rx(self._acc_state_msg(True))
-    self.safety.set_controls_allowed(0)
-    self._rx(self._button_msg(Btn.RESUME, main_on=True))
-    self.assertTrue(self.safety.get_controls_allowed())
+  def test_set_resume_buttons(self):
+    """
+      Both SET and RES should enter controls allowed on their falling edge.
+    """
+    for btn in (Btn.SET, Btn.RESUME):
+      for main_on in (True, False):
+        self._rx(self._acc_state_msg(main_on))
+        self.safety.set_controls_allowed(0)
 
-  def test_set_button(self):
-    self._rx(self._acc_state_msg(True))
-    self.safety.set_controls_allowed(0)
-    self._rx(self._button_msg(Btn.SET, main_on=True))
-    self.assertTrue(self.safety.get_controls_allowed())
+        # nothing until falling edge
+        for _ in range(10):
+          self._rx(self._button_msg(btn, main_on=main_on))
+        self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_cancel_button(self):
-    self.safety.set_controls_allowed(1)
-    self._rx(self._button_msg(Btn.CANCEL, main_on=True))
-    self.assertFalse(self.safety.get_controls_allowed())
+        self._rx(self._button_msg(Btn.NONE, main_on=main_on))
+        self.assertEqual(main_on, self.safety.get_controls_allowed(), msg=f"{main_on=} {btn=}")
+
+  def test_main_cancel_buttons(self):
+    """
+      Both MAIN and CANCEL should exit controls immediately.
+    """
+    for btn in (Btn.MAIN, Btn.CANCEL):
+      self.safety.set_controls_allowed(1)
+      self._rx(self._button_msg(btn, main_on=True))
+      self.assertFalse(self.safety.get_controls_allowed())
 
   def test_disengage_on_main(self):
     self.safety.set_controls_allowed(1)
@@ -169,7 +180,10 @@ class HondaPcmEnableBase(common.PandaSafetyTest):
         for btn in (Btn.SET, Btn.RESUME, Btn.CANCEL):
           self.safety.set_controls_allowed(controls_allowed)
           self._rx(self._acc_state_msg(main_on))
+
+          # btn + none for falling edge
           self._rx(self._button_msg(btn, main_on=main_on))
+          self._rx(self._button_msg(Btn.NONE, main_on=main_on))
 
           if btn == Btn.CANCEL:
             self.assertFalse(self.safety.get_controls_allowed())
