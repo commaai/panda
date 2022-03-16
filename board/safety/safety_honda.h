@@ -363,6 +363,7 @@ static const addr_checks* honda_nidec_init(int16_t param) {
   honda_hw = HONDA_NIDEC;
   honda_alt_brake_msg = false;
   honda_bosch_long = false;
+  honda_button_prev = 0;
 
   if (GET_FLAG(param, HONDA_PARAM_NIDEC_ALT)) {
     honda_rx_checks = (addr_checks){honda_nidec_alt_addr_checks, HONDA_NIDEC_ALT_ADDR_CHECKS_LEN};
@@ -378,6 +379,7 @@ static const addr_checks* honda_bosch_init(int16_t param) {
   honda_hw = HONDA_BOSCH;
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE);
+  honda_button_prev = 0;
 
   // radar disabled so allow gas/brakes
 #ifdef ALLOW_DEBUG
