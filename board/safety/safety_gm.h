@@ -34,6 +34,14 @@ AddrCheckStruct gm_addr_checks[] = {
 #define GM_RX_CHECK_LEN (sizeof(gm_addr_checks) / sizeof(gm_addr_checks[0]))
 addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
 
+
+enum {
+  GM_BTN_UNPRESS = 1,
+  GM_BTN_RESUME = 2,
+  GM_BTN_SET = 3,
+  GM_BTN_CANCEL = 6,
+};
+
 static int gm_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &gm_rx_checks, NULL, NULL, NULL);
@@ -57,17 +65,20 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     // ACC steering wheel buttons
     if (addr == 481) {
       int button = (GET_BYTE(to_push, 5) & 0x70U) >> 4;
-      switch (button) {
-        case 2:  // resume
-        case 3:  // set
-          controls_allowed = 1;
-          break;
-        case 6:  // cancel
-          controls_allowed = 0;
-          break;
-        default:
-          break;  // any other button is irrelevant
+
+      // exit controls on cancel press
+      if (button == GM_BTN_CANCEL) {
+        controls_allowed = 0;
       }
+
+      // enter controls on falling edge of set or resume
+      bool set = (button == GM_BTN_UNPRESS) && (cruise_button_prev == GM_BTN_SET);
+      bool res = (button == GM_BTN_UNPRESS) && (cruise_button_prev == GM_BTN_RESUME);
+      if (set || res) {
+        controls_allowed = 1;
+      }
+
+      cruise_button_prev = button;
     }
 
     if (addr == 201) {
