@@ -55,7 +55,16 @@ const uint16_t HONDA_PARAM_ALT_BRAKE = 1;
 const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
 const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
 
+enum {
+  HONDA_BTN_NONE = 0,
+  HONDA_BTN_MAIN = 1,
+  HONDA_BTN_CANCEL = 2,
+  HONDA_BTN_SET = 3,
+  HONDA_BTN_RESUME = 4,
+};
+
 int honda_brake = 0;
+int honda_button_prev = 0;
 bool honda_brake_switch_prev = false;
 bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
@@ -138,22 +147,20 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     // state machine to enter and exit controls for button enabling
     // 0x1A6 for the ILX, 0x296 for the Civic Touring
     if (((addr == 0x1A6) || (addr == 0x296))) {
-      // check for button presses
       int button = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
-      switch (button) {
-        case 1:  // main
-        case 2:  // cancel
-          controls_allowed = 0;
-          break;
-        case 3:  // set
-        case 4:  // resume
-          if (acc_main_on && !pcm_cruise) {
-            controls_allowed = 1;
-          }
-          break;
-        default:
-          break; // any other button is irrelevant
+
+      // exit controls once main or cancel are pressed
+      if ((button == HONDA_BTN_MAIN) || (button == HONDA_BTN_CANCEL)) {
+        controls_allowed = 0;
       }
+
+      // enter controls on the falling edge of set or resume
+      bool set = (button == HONDA_BTN_NONE) && (honda_button_prev == HONDA_BTN_SET);
+      bool res = (button == HONDA_BTN_NONE) && (honda_button_prev == HONDA_BTN_RESUME);
+      if (acc_main_on && !pcm_cruise && (set || res)) {
+        controls_allowed = 1;
+      }
+      honda_button_prev = button;
     }
 
     // user brake signal on 0x17C reports applied brake from computer brake on accord
@@ -356,6 +363,7 @@ static const addr_checks* honda_nidec_init(int16_t param) {
   honda_hw = HONDA_NIDEC;
   honda_alt_brake_msg = false;
   honda_bosch_long = false;
+  honda_button_prev = 0;
 
   if (GET_FLAG(param, HONDA_PARAM_NIDEC_ALT)) {
     honda_rx_checks = (addr_checks){honda_nidec_alt_addr_checks, HONDA_NIDEC_ALT_ADDR_CHECKS_LEN};
@@ -371,6 +379,7 @@ static const addr_checks* honda_bosch_init(int16_t param) {
   honda_hw = HONDA_BOSCH;
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE);
+  honda_button_prev = 0;
 
   // radar disabled so allow gas/brakes
 #ifdef ALLOW_DEBUG
