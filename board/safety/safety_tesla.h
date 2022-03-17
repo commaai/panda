@@ -197,8 +197,7 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  if(violation) {
-    controls_allowed = 0;
+  if (violation) {
     tx = 0;
   }
 
