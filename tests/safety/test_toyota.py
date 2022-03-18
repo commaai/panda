@@ -36,7 +36,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 73)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 73 << 8)
     self.safety.init_tests()
 
   def _torque_meas_msg(self, torque):
