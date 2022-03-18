@@ -21,6 +21,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   RELAY_MALFUNCTION_ADDR = 0x2E4
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
+  FWD_GATED_ADDRS = {0x343: Panda.FLAG_TOYOTA_STOCK_LONG}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INTERCEPTOR_THRESHOLD = 845
 
@@ -40,7 +41,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     self.safety.init_tests()
 
   def _torque_meas_msg(self, torque):
-    values = {"STEER_TORQUE_EPS": (torque/self.EPS_SCALE)}
+    values = {"STEER_TORQUE_EPS": torque / self.EPS_SCALE}
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
 
   def _torque_msg(self, torque):
@@ -80,6 +81,21 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     to_send[0].data[2] = (gas & 0xFF00) >> 8
     to_send[0].data[3] = gas & 0xFF
     return to_send
+
+  def test_fwd_hook(self):
+    for bus in range(0, 3):
+      for addr in self.SCANNED_ADDRS:
+        # assume len 8
+        msg = make_msg(bus, addr, 8)
+        fwd_bus = self.FWD_BUS_LOOKUP.get(bus, -1)
+        if bus in self.FWD_BLACKLISTED_ADDRS and addr in self.FWD_BLACKLISTED_ADDRS[bus]:
+          fwd_bus = -1
+        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg), f"{addr=:#x} from {bus=} to {fwd_bus=}")
+
+        # Test setting safety param doesn't block
+        if addr in self.FWD_GATED_ADDRS:
+          self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, (73 << 8) | self.FWD_GATED_ADDRS[addr])
+          self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg), f"{addr=:#x} from {bus=} to {fwd_bus=}")
 
   def test_block_aeb(self):
     for controls_allowed in (True, False):
