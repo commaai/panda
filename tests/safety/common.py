@@ -1,12 +1,13 @@
-import os
 import abc
-import unittest
 import importlib
 import numpy as np
-from typing import Optional, List, Dict
+import os
+import unittest
+
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import LEN_TO_DLC
 from panda.tests.safety import libpandasafety_py
+from typing import Dict, List, Optional, Tuple
 
 MAX_WRONG_COUNTERS = 5
 

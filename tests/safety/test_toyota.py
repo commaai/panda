@@ -92,7 +92,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
           fwd_bus = -1
         self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg), f"{addr=:#x} from {bus=} to {fwd_bus=}")
 
-        # Test setting safety param doesn't block
+        # Test that we can forward specific addresses gated by safety param
         if addr in self.FWD_GATED_ADDRS:
           param, fwd_bus = self.FWD_GATED_ADDRS[addr]
           self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, (73 << 8) | param)
