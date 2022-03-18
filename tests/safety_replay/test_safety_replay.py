@@ -11,7 +11,7 @@ BASE_URL = "https://commadataci.blob.core.windows.net/openpilotci/"
 logs = [
   # (route, safety mode, param)
   ("2425568437959f9d|2019-12-22--16-24-37.bz2", Panda.SAFETY_HONDA_NIDEC, 0),          # HONDA.CIVIC (fcw presents: 0x1FA blocked as expected)
-  ("38bfd238edecbcd7|2019-06-07--10-15-25.bz2", Panda.SAFETY_TOYOTA, 66),              # TOYOTA.PRIUS
+  ("38bfd238edecbcd7|2019-06-07--10-15-25.bz2", Panda.SAFETY_TOYOTA, 66 << 8),              # TOYOTA.PRIUS
   ("f89c604cf653e2bf|2018-09-29--13-46-50.bz2", Panda.SAFETY_GM, 0),                   # GM.VOLT
   ("6fb4948a7ebe670e|2019-11-12--00-35-53.bz2", Panda.SAFETY_CHRYSLER, 0),             # CHRYSLER.PACIFICA_2018_HYBRID
   ("791340bc01ed993d|2019-04-08--10-26-00.bz2", Panda.SAFETY_SUBARU, 0),               # SUBARU.IMPREZA
