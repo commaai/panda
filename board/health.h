@@ -1,4 +1,4 @@
-// When changing this struct, boardd and python/__init__.py needs to be kept up to date!
+// When changing this struct, python/__init__.py needs to be kept up to date!
 #define HEALTH_PACKET_VERSION 4
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
