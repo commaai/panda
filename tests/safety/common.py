@@ -260,6 +260,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
   RELAY_MALFUNCTION_ADDR: Optional[int] = None
   RELAY_MALFUNCTION_BUS: Optional[int] = None
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
+  FWD_GATED_ADDRS: Dict[int, Tuple[int, int]] = {}  # {addr: (flag, fwd_bus)}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
 
   @classmethod

@@ -21,7 +21,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   RELAY_MALFUNCTION_ADDR = 0x2E4
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
-  FWD_GATED_ADDRS = {0x343: Panda.FLAG_TOYOTA_STOCK_LONG}
+  FWD_GATED_ADDRS = {0x343: (Panda.FLAG_TOYOTA_STOCK_LONG, 2)}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INTERCEPTOR_THRESHOLD = 845
 
@@ -94,7 +94,8 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
 
         # Test setting safety param doesn't block
         if addr in self.FWD_GATED_ADDRS:
-          self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, (73 << 8) | self.FWD_GATED_ADDRS[addr])
+          param, fwd_bus = self.FWD_GATED_ADDRS[addr]
+          self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, (73 << 8) | param)
           self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg), f"{addr=:#x} from {bus=} to {fwd_bus=}")
 
   def test_block_aeb(self):
