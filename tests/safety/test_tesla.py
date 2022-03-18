@@ -126,7 +126,6 @@ class TestTeslaSteeringSafety(TestTeslaSafety):
         # Inject too high rates
         # Up
         self.assertEqual(False, self._tx(self._lkas_control_msg(a + sign(a) * (max_delta_up + 1.1), 1)))
-        self.assertFalse(self.safety.get_controls_allowed())
 
         # Don't change
         self.safety.set_controls_allowed(1)
@@ -137,7 +136,6 @@ class TestTeslaSteeringSafety(TestTeslaSafety):
 
         # Down
         self.assertEqual(False, self._tx(self._lkas_control_msg(a - sign(a) * (max_delta_down + 1.1), 1)))
-        self.assertFalse(self.safety.get_controls_allowed())
 
         # Check desired steer should be the same as steer angle when controls are off
         self.safety.set_controls_allowed(0)
@@ -151,26 +149,24 @@ class TestTeslaSteeringSafety(TestTeslaSafety):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_acc_buttons(self):
-    self.safety.set_controls_allowed(1)
-    self._tx(self._control_lever_cmd(CONTROL_LEVER_STATE.FWD))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self._tx(self._control_lever_cmd(CONTROL_LEVER_STATE.RWD))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(1)
-    self._tx(self._control_lever_cmd(CONTROL_LEVER_STATE.UP_1ST))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(1)
-    self._tx(self._control_lever_cmd(CONTROL_LEVER_STATE.UP_2ND))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(1)
-    self._tx(self._control_lever_cmd(CONTROL_LEVER_STATE.DN_1ST))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(1)
-    self._tx(self._control_lever_cmd(CONTROL_LEVER_STATE.DN_2ND))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(1)
-    self._tx(self._control_lever_cmd(CONTROL_LEVER_STATE.IDLE))
-    self.assertTrue(self.safety.get_controls_allowed())
+    """
+      FWD (cancel) and IDLE always allowed.
+    """
+    btns = [
+      (CONTROL_LEVER_STATE.FWD, True),
+      (CONTROL_LEVER_STATE.RWD, False),
+      (CONTROL_LEVER_STATE.UP_1ST, False),
+      (CONTROL_LEVER_STATE.UP_2ND, False),
+      (CONTROL_LEVER_STATE.DN_1ST, False),
+      (CONTROL_LEVER_STATE.DN_2ND, False),
+      (CONTROL_LEVER_STATE.IDLE, True),
+    ]
+    for btn, should_tx in btns:
+      for controls_allowed in (True, False):
+        self.safety.set_controls_allowed(controls_allowed)
+        tx = self._tx(self._control_lever_cmd(btn))
+        self.assertEqual(tx, should_tx)
+
 
 class TestTeslaLongitudinalSafety(TestTeslaSafety):
   def setUp(self):
