@@ -20,6 +20,12 @@ RT_INTERVAL = 250000
 DRIVER_TORQUE_ALLOWANCE = 50
 DRIVER_TORQUE_FACTOR = 4
 
+class Buttons:
+  UNPRESS = 1
+  RES_ACCEL = 2
+  DECEL_SET = 3
+  CANCEL = 6
+
 class TestGmSafety(common.PandaSafetyTest):
   TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
              [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
@@ -87,22 +93,24 @@ class TestGmSafety(common.PandaSafetyTest):
     values = {"LKASteeringCmd": torque}
     return self.packer.make_can_msg_panda("ASCMLKASteeringCmd", 0, values)
 
-  def test_resume_button(self):
-    RESUME_BTN = 2
-    self.safety.set_controls_allowed(0)
-    self._rx(self._button_msg(RESUME_BTN))
-    self.assertTrue(self.safety.get_controls_allowed())
+  def test_set_resume_buttons(self):
+    """
+      SET and RESUME enter controls allowed on their falling edge.
+    """
+    for btn in range(8):
+      self.safety.set_controls_allowed(0)
+      for _ in range(10):
+        self._rx(self._button_msg(btn))
+        self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_set_button(self):
-    SET_BTN = 3
-    self.safety.set_controls_allowed(0)
-    self._rx(self._button_msg(SET_BTN))
-    self.assertTrue(self.safety.get_controls_allowed())
+      # should enter controls allowed on falling edge
+      if btn in (Buttons.RES_ACCEL, Buttons.DECEL_SET):
+        self._rx(self._button_msg(Buttons.UNPRESS))
+        self.assertTrue(self.safety.get_controls_allowed())
 
   def test_cancel_button(self):
-    CANCEL_BTN = 6
     self.safety.set_controls_allowed(1)
-    self._rx(self._button_msg(CANCEL_BTN))
+    self._rx(self._button_msg(Buttons.CANCEL))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_brake_safety_check(self):
