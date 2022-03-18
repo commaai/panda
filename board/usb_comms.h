@@ -288,7 +288,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
         UNUSED(ret);
       }
       break;
-    // **** 0xdf: set unsafe mode
+    // **** 0xdf: set alternative experience
     case 0xdf:
       // you can only set this if you are in a non car safety mode
       if (!is_car_safety_mode(current_safety_mode)) {

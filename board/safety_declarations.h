@@ -128,7 +128,7 @@ struct sample_t angle_meas;         // last 3 steer angles
 
 // This can be set with a USB command
 // It enables features that allow alternative experiences, like not disengaging on gas press
-// It is always 0 or 1 on mainline comma.ai openpilot
+// It is always 0 on mainline comma.ai openpilot
 
 // If using this flag, be very careful about what happens if your fork wants to brake while the
 //   user is pressing the gas. Tesla is careful with this.

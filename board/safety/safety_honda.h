@@ -195,7 +195,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
       }
     }
 
-    // disable stock Honda AEB in unsafe mode
+    // disable stock Honda AEB in alternative experience
     if (!(alternative_experience & ALT_EXP_DISABLE_STOCK_AEB)) {
       if ((bus == 2) && (addr == 0x1FA)) {
         bool honda_stock_aeb = GET_BYTE(to_push, 3) & 0x20U;
