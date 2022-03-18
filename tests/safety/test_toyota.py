@@ -5,7 +5,7 @@ import random
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg, UNSAFE_MODE
+from panda.tests.safety.common import CANPackerPanda, make_msg, ALTERNATIVE_EXPERIENCE
 
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
@@ -93,14 +93,14 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
           self.assertEqual(not bad, self._tx(msg))
 
   def test_accel_actuation_limits(self):
-    limits = ((MIN_ACCEL, MAX_ACCEL, UNSAFE_MODE.DEFAULT),
-              (MIN_ACCEL, MAX_ACCEL, UNSAFE_MODE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
+    limits = ((MIN_ACCEL, MAX_ACCEL, ALTERNATIVE_EXPERIENCE.DEFAULT),
+              (MIN_ACCEL, MAX_ACCEL, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
 
-    for min_accel, max_accel, unsafe_mode in limits:
+    for min_accel, max_accel, alternative_experience in limits:
       for accel in np.arange(min_accel - 1, max_accel + 1, 0.1):
         for controls_allowed in [True, False]:
           self.safety.set_controls_allowed(controls_allowed)
-          self.safety.set_unsafe_mode(unsafe_mode)
+          self.safety.set_alternative_experience(alternative_experience)
           if controls_allowed:
             should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
           else:
