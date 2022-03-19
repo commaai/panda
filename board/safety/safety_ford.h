@@ -223,7 +223,8 @@ static int ford_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     }
     case FORD_CAM: {
       // Block stock LKAS messages
-      bool is_lkas_msg = (addr == MSG_LANE_ASSIST_DATA1)
+      bool is_lkas_msg = (addr == MSG_ACC_DATA_3)
+                      || (addr == MSG_LANE_ASSIST_DATA1)
                       || (addr == MSG_LATERAL_MOTION_CONTROL)
                       || (addr == MSG_IPMA_DATA);
       if (!is_lkas_msg) {
