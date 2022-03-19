@@ -255,7 +255,7 @@ static const addr_checks* toyota_init(int16_t param) {
   controls_allowed = 0;
   relay_malfunction_reset();
   gas_interceptor_detected = 0;
-  toyota_dbc_eps_torque_factor = param >> 8U;
+  toyota_dbc_eps_torque_factor = (uint16_t)(param) >> 8U;
   toyota_stock_long = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONG);
   return &toyota_rx_checks;
 }
