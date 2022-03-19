@@ -21,9 +21,10 @@ const struct lookup_t FORD_LOOKUP_ANGLE_RATE_DOWN = {
 #define MSG_ENG_VEHICLE_SP_THROTTLE2  0x202  // RX from PCM, for vehicle speed
 #define MSG_ENG_VEHICLE_SP_THROTTLE   0x204  // RX from PCM, for driver throttle input
 #define MSG_STEERING_DATA_FD1         0x083  // TX by OP, ACC control buttons for cancel
+#define MSG_ACC_DATA_3                0x18A  // TX by OP, IPMA ACC/TJA status
 #define MSG_LANE_ASSIST_DATA1         0x3CA  // TX by OP, Lane Keeping Assist
 #define MSG_LATERAL_MOTION_CONTROL    0x3D3  // TX by OP, Lane Centering Assist
-#define MSG_IPMA_DATA                 0x3D8  // TX by OP, IPMA HUD user interface
+#define MSG_IPMA_DATA                 0x3D8  // TX by OP, IPMA LKAS status
 
 // CAN bus numbers.
 #define FORD_MAIN 0U
@@ -31,6 +32,7 @@ const struct lookup_t FORD_LOOKUP_ANGLE_RATE_DOWN = {
 
 const CanMsg FORD_TX_MSGS[] = {
   {MSG_STEERING_DATA_FD1, 0, 8},
+  {MSG_ACC_DATA_3, 0, 8},
   {MSG_LANE_ASSIST_DATA1, 0, 8},
   {MSG_LATERAL_MOTION_CONTROL, 0, 8},
   {MSG_IPMA_DATA, 0, 8},
@@ -141,6 +143,21 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     tx = 0;
   }
 
+  // Cruise button check, only allow cancel button to be sent
+  if (addr == MSG_STEERING_DATA_FD1) {
+    // Violation if any button other than cancel is pressed
+    // Signal: CcAslButtnCnclPress
+    bool violation = 0U != (GET_BYTE(to_send, 0) |
+                            (GET_BYTE(to_send, 1) & 0xFEU) |
+                            GET_BYTE(to_send, 2) |
+                            GET_BYTE(to_send, 3) |
+                            GET_BYTE(to_send, 4) |
+                            GET_BYTE(to_send, 5));
+    if (violation) {
+      tx = 0;
+    }
+  }
+
   // Safety check for Lane_Assist_Data1 action
   if (addr == MSG_LANE_ASSIST_DATA1) {
     // Do not allow steering using Lane_Assist_Data1 (Lane-Departure Aid).
@@ -187,21 +204,6 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     // Reset to 0 if controls not allowed
     if (!controls_allowed) {
       desired_angle_last = 0;
-    }
-  }
-
-  // Cruise button check, only allow cancel button to be sent
-  if (addr == MSG_STEERING_DATA_FD1) {
-    // Violation if any button other than cancel is pressed
-    // Signal: CcAslButtnCnclPress
-    bool violation = 0U != (GET_BYTE(to_send, 0) |
-                            (GET_BYTE(to_send, 1) & 0xFEU) |
-                            GET_BYTE(to_send, 2) |
-                            GET_BYTE(to_send, 3) |
-                            GET_BYTE(to_send, 4) |
-                            GET_BYTE(to_send, 5));
-    if (violation) {
-      tx = 0;
     }
   }
 
