@@ -105,6 +105,14 @@ bool get_controls_allowed(void){
   return controls_allowed;
 }
 
+bool get_lat_controls_allowed(void){
+  return lat_controls_allowed;
+}
+
+bool get_long_controls_allowed(void){
+  return long_controls_allowed;
+}
+
 int get_unsafe_mode(void){
   return unsafe_mode;
 }

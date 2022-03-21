@@ -13,6 +13,8 @@ int default_rx_hook(CANPacket_t *to_push) {
 static const addr_checks* nooutput_init(int16_t param) {
   UNUSED(param);
   controls_allowed = false;
+  lat_controls_allowed = false;
+  long_controls_allowed = false;
   relay_malfunction_reset();
   return &default_rx_checks;
 }
@@ -53,6 +55,8 @@ static const addr_checks* alloutput_init(int16_t param) {
   UNUSED(param);
   alloutput_passthrough = GET_FLAG(param, ALLOUTPUT_PARAM_PASSTHROUGH);
   controls_allowed = true;
+  lat_controls_allowed = true;
+  long_controls_allowed = true;
   relay_malfunction_reset();
   return &default_rx_checks;
 }

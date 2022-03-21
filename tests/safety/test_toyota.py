@@ -110,7 +110,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
     for engaged in [True, False]:
-      self.safety.set_controls_allowed(engaged)
+      self.safety.set_lat_controls_allowed(engaged)
 
       # good msg
       self.assertTrue(self._tx(self._lta_msg(0, 0, 0)))

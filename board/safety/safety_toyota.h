@@ -89,10 +89,12 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       // 5th bit is CRUISE_ACTIVE
       int cruise_engaged = GET_BYTE(to_push, 0) & 0x20U;
       if (!cruise_engaged) {
-        controls_allowed = 0;
+        lat_controls_allowed = 0;
+        long_controls_allowed = 0;
       }
       if (cruise_engaged && !cruise_engaged_prev) {
-        controls_allowed = 1;
+        lat_controls_allowed = 1;
+        long_controls_allowed = 1;
       }
       cruise_engaged_prev = cruise_engaged;
 
@@ -149,7 +151,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
 
     // GAS PEDAL: safety check
     if (addr == 0x200) {
-      if (!controls_allowed) {
+      if (!long_controls_allowed) {
         if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
           tx = 0;
         }
@@ -160,7 +162,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
     if (addr == 0x343) {
       int desired_accel = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
       desired_accel = to_signed(desired_accel, 16);
-      if (!controls_allowed) {
+      if (!long_controls_allowed) {
         if (desired_accel != 0) {
           tx = 0;
         }
@@ -204,7 +206,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
 
       uint32_t ts = microsecond_timer_get();
 
-      if (controls_allowed) {
+      if (lat_controls_allowed) {
 
         // *** global torque limit check ***
         violation |= max_limit_check(desired_torque, TOYOTA_MAX_TORQUE, -TOYOTA_MAX_TORQUE);
@@ -228,12 +230,12 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
       }
 
       // no torque if controls is not allowed
-      if (!controls_allowed && (desired_torque != 0)) {
+      if (!lat_controls_allowed && (desired_torque != 0)) {
         violation = 1;
       }
 
       // reset to 0 if either controls is not allowed or there's a violation
-      if (violation || !controls_allowed) {
+      if (violation || !lat_controls_allowed) {
         desired_torque_last = 0;
         rt_torque_last = 0;
         ts_last = ts;
@@ -249,7 +251,8 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
 }
 
 static const addr_checks* toyota_init(int16_t param) {
-  controls_allowed = 0;
+  lat_controls_allowed = 0;
+  long_controls_allowed = 0;
   relay_malfunction_reset();
   gas_interceptor_detected = 0;
   toyota_dbc_eps_torque_factor = param;

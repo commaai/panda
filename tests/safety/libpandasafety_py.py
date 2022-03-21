@@ -27,6 +27,8 @@ typedef struct
 
 void set_controls_allowed(bool c);
 bool get_controls_allowed(void);
+bool get_lat_controls_allowed(void);
+bool get_long_controls_allowed(void);
 void set_unsafe_mode(int mode);
 int get_unsafe_mode(void);
 void set_relay_malfunction(bool c);
