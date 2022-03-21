@@ -26,6 +26,8 @@ typedef struct
 } TIM_TypeDef;
 
 void set_controls_allowed(bool c);
+void set_lat_controls_allowed(bool c);
+void set_long_controls_allowed(bool c);
 bool get_controls_allowed(void);
 bool get_lat_controls_allowed(void);
 bool get_long_controls_allowed(void);

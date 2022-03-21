@@ -92,7 +92,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
     for g in range(0, 0x1000):
       self._rx(self._interceptor_msg(g, 0x201))
       self.assertTrue(self.safety.get_lat_controls_allowed())
-      self.assertFalse(self.safety.get_long_controls_allowed())
+      self.assertEqual(g <= self.INTERCEPTOR_THRESHOLD, self.safety.get_long_controls_allowed())
       self._rx(self._interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
@@ -107,7 +107,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
   def test_gas_interceptor_safety_check(self):
     for gas in np.arange(0, 4000, 100):
       for controls_allowed in [True, False]:
-        self.safety.set_controls_allowed(controls_allowed)
+        self.safety.set_long_controls_allowed(controls_allowed)
         if controls_allowed:
           send = True
         else:
@@ -347,19 +347,23 @@ class PandaSafetyTest(PandaSafetyTestBase):
       self.assertEqual(bool(pressed), self.safety.get_gas_pressed_prev())
 
   def test_allow_engage_with_gas_pressed(self):
-    # TODO: currently in upstream, if you engage with gas press, panda will allow long and lateral actuation
     self._rx(self._gas_msg(1))
-    self.safety.set_controls_allowed(True)
+    self.safety.set_lat_controls_allowed(True)
+    self.safety.set_long_controls_allowed(True)
     self._rx(self._gas_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_lat_controls_allowed())
+    self.assertTrue(self.safety.get_long_controls_allowed())
     self._rx(self._gas_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_lat_controls_allowed())
+    self.assertTrue(self.safety.get_long_controls_allowed())
 
   def test_disengage_on_gas(self):
     self._rx(self._gas_msg(0))
-    self.safety.set_controls_allowed(True)
+    self.safety.set_lat_controls_allowed(True)
+    self.safety.set_long_controls_allowed(True)
     self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
-    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_lat_controls_allowed())
+    self.assertFalse(self.safety.get_long_controls_allowed())
 
   def test_unsafe_mode_no_disengage_on_gas(self):
     self._rx(self._gas_msg(0))
@@ -378,14 +382,18 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   def test_enable_control_allowed_from_cruise(self):
     self._rx(self._pcm_status_msg(False))
-    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_lat_controls_allowed())
+    self.assertFalse(self.safety.get_long_controls_allowed())
     self._rx(self._pcm_status_msg(True))
-    self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_lat_controls_allowed())
+    self.assertTrue(self.safety.get_long_controls_allowed())
 
   def test_disable_control_allowed_from_cruise(self):
-    self.safety.set_controls_allowed(1)
+    self.safety.set_lat_controls_allowed(1)
+    self.safety.set_long_controls_allowed(1)
     self._rx(self._pcm_status_msg(False))
-    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_lat_controls_allowed())
+    self.assertFalse(self.safety.get_long_controls_allowed())
 
   def test_cruise_engaged_prev(self):
     for engaged in [True, False]:
