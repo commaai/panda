@@ -97,6 +97,11 @@ void set_long_controls_allowed(bool c){
   long_controls_allowed = c;
 }
 
+void set_all_controls_allowed(bool c){
+  lat_controls_allowed = c;
+  long_controls_allowed = c;
+}
+
 void set_unsafe_mode(int mode){
   unsafe_mode = mode;
 }
