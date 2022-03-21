@@ -37,7 +37,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE << 8)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self._safety_param())
     self.safety.init_tests()
 
   def _torque_meas_msg(self, torque):
@@ -82,11 +82,14 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     to_send[0].data[3] = gas & 0xFF
     return to_send
 
+  def _safety_param(self, flag=0):
+    return (self.EPS_SCALE << 8) | flag
+
   def test_stock_acc(self):
     # Test that we can forward specific addresses gated by safety param
     for addr, (flag, bus, fwd_bus) in self.FWD_GATED_ADDRS.items():
       msg = make_msg(bus, addr, 8)
-      self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, (self.EPS_SCALE << 8) | flag)
+      self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self._safety_param(flag))
       self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg), f"{addr=:#x} from {bus=} to {fwd_bus=}")
 
   def test_block_aeb(self):
