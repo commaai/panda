@@ -100,12 +100,12 @@ static int faw_rx_hook(CANPacket_t *to_push) {
 
     // Signal: ECM_1.DRIVER_THROTTLE
     if (addr == MSG_ECM_1) {
-      gas_pressed = GET_BYTE(to_push, 5) != 0;
+      gas_pressed = (GET_BYTE(to_push, 5) != 0);
     }
 
     // Signal: ABS_2.BRAKE_PRESSURE
     if (addr == MSG_ABS_2) {
-      brake_pressed = GET_BYTE(to_push, 5) != 0;
+      brake_pressed = (GET_BYTE(to_push, 5) != 0);
     }
 
     generic_rx_checks((addr == MSG_LKAS));
