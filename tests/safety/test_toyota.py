@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-import unittest  # TODO: sort these
 import numpy as np
 import random
-from parameterized import parameterized_class
+import unittest
+
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
@@ -10,10 +10,8 @@ from panda.tests.safety.common import CANPackerPanda, make_msg, UNSAFE_MODE
 
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
-EPS_SCALE = 73
-PANDA_FLAGS = [[0]]
 
-@parameterized_class('panda_flag', PANDA_FLAGS)
+
 class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
                        common.TorqueSteeringSafetyTest):
 
@@ -38,14 +36,13 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   EPS_SCALE = 73
 
   def setUp(self):
-    print('setUp panda flag: {}'.format(self.panda_flag))
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self._safety_param())
     self.safety.init_tests()
 
   def _torque_meas_msg(self, torque):
-    values = {"STEER_TORQUE_EPS": torque / self.EPS_SCALE * 100.}
+    values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
 
   def _torque_msg(self, torque):
@@ -56,9 +53,9 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd}
     return self.packer.make_can_msg_panda("STEERING_LTA", 0, values)
 
-  def _accel_msg(self, accel, bus=0):
+  def _accel_msg(self, accel):
     values = {"ACCEL_CMD": accel}
-    return self.packer.make_can_msg_panda("ACC_CONTROL", bus, values)
+    return self.packer.make_can_msg_panda("ACC_CONTROL", 0, values)
 
   def _speed_msg(self, speed):
     values = {("WHEEL_SPEED_%s" % n): speed for n in ["FR", "FL", "RR", "RL"]}
@@ -89,15 +86,14 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   def _safety_param(self, flag=0):
     return (self.EPS_SCALE << 8) | flag
 
-  # def test_stock_acc(self):
-  #   # Test that we can forward specific addresses gated by safety param
-  #   FWD_GATED_ADDRS = {0x343: (Panda.FLAG_TOYOTA_STOCK_LONG, 2, 0)}  # {addr: (flag, bus, fwd_bus)}
-  #   addr = 0x343
-  #   bus = 2
-  #   fwd_bus = 0
-  #   msg = self._accel_msg(0, bus=bus)
-  #   self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self._safety_param(self._safety_param(Panda.FLAG_TOYOTA_STOCK_LONG)))
-  #   self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg), f"{addr=:#x} from {bus=} to {fwd_bus=}")
+  def test_fwd_hook(self):
+    # normal operation, not forwarding ACC_CONTROL
+    super().test_fwd_hook()
+
+    # forwarding ACC_CONTROL for stock ACC
+    self.FWD_BLACKLISTED_ADDRS[2].remove(0x343)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self._safety_param(Panda.FLAG_TOYOTA_STOCK_LONG))
+    super().test_fwd_hook()
 
   def test_block_aeb(self):
     for controls_allowed in (True, False):

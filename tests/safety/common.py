@@ -1,14 +1,13 @@
+import os
 import abc
+import unittest
 import importlib
 import numpy as np
-import os
-import unittest
+from typing import Dict, List, Optional
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import LEN_TO_DLC
 from panda.tests.safety import libpandasafety_py
-from typing import Dict, List, Optional, Tuple
-from parameterized import parameterized_class
 
 MAX_WRONG_COUNTERS = 5
 
@@ -52,7 +51,6 @@ class PandaSafetyTestBase(unittest.TestCase):
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
 
-@parameterized_class('panda_flag', [])
 class InterceptorSafetyTest(PandaSafetyTestBase):
 
   INTERCEPTOR_THRESHOLD = 0
@@ -116,7 +114,6 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
         self.assertEqual(send, self._tx(self._interceptor_msg(gas, 0x200)))
 
 
-@parameterized_class('panda_flag', [])
 class TorqueSteeringSafetyTest(PandaSafetyTestBase):
 
   MAX_RATE_UP = 0
@@ -251,7 +248,7 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
     self.assertTrue(self.safety.get_torque_meas_min() in min_range)
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
-@parameterized_class('panda_flag', [[]])
+
 class PandaSafetyTest(PandaSafetyTestBase):
   TX_MSGS: Optional[List[List[int]]] = None
   SCANNED_ADDRS = [*range(0x0, 0x800),                      # Entire 11-bit CAN address space
