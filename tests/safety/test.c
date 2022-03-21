@@ -85,21 +85,21 @@ bool addr_checks_valid() {
   return true;
 }
 
-void set_controls_allowed(bool c){
+void set_control_allowed(bool c){
   controls_allowed = c;
 }
 
-void set_lat_controls_allowed(bool c){
-  lat_controls_allowed = c;
+void set_lat_control_allowed(bool c){
+  lat_control_allowed = c;
 }
 
-void set_long_controls_allowed(bool c){
-  long_controls_allowed = c;
+void set_long_control_allowed(bool c){
+  long_control_allowed = c;
 }
 
-void set_all_controls_allowed(bool c){
-  lat_controls_allowed = c;
-  long_controls_allowed = c;
+void set_all_control_allowed(bool c){
+  lat_control_allowed = c;
+  long_control_allowed = c;
 }
 
 void set_unsafe_mode(int mode){
@@ -114,16 +114,16 @@ void set_gas_interceptor_detected(bool c){
   gas_interceptor_detected = c;
 }
 
-bool get_controls_allowed(void){
+bool get_control_allowed(void){
   return controls_allowed;
 }
 
-bool get_lat_controls_allowed(void){
-  return lat_controls_allowed;
+bool get_lat_control_allowed(void){
+  return lat_control_allowed;
 }
 
-bool get_long_controls_allowed(void){
-  return long_controls_allowed;
+bool get_long_control_allowed(void){
+  return long_control_allowed;
 }
 
 int get_unsafe_mode(void){

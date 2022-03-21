@@ -172,16 +172,16 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
 
         // exit controls on cancel press
         if (button == HYUNDAI_BTN_CANCEL) {
-          lat_controls_allowed = 0;
-          long_controls_allowed = 0;
+          lat_control_allowed = 0;
+          long_control_allowed = 0;
         }
 
         // enter controls on falling edge of resume or set
         bool set = (button == HYUNDAI_BTN_NONE) && (cruise_button_prev == HYUNDAI_BTN_SET);
         bool res = (button == HYUNDAI_BTN_NONE) && (cruise_button_prev == HYUNDAI_BTN_RESUME);
         if (set || res) {
-          lat_controls_allowed = 1;
-          long_controls_allowed = 1;
+          lat_control_allowed = 1;
+          long_control_allowed = 1;
         }
 
         cruise_button_prev = button;
@@ -192,12 +192,12 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
         // 2 bits: 13-14
         int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3U;
         if (cruise_engaged && !cruise_engaged_prev) {
-          lat_controls_allowed = 1;
-          long_controls_allowed = 1;
+          lat_control_allowed = 1;
+          long_control_allowed = 1;
         }
         if (!cruise_engaged) {
-          lat_controls_allowed = 0;
-          long_controls_allowed = 0;
+          lat_control_allowed = 0;
+          long_control_allowed = 0;
         }
         cruise_engaged_prev = cruise_engaged;
       }
@@ -268,7 +268,7 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
 
     bool violation = 0;
 
-    if (!long_controls_allowed) {
+    if (!long_control_allowed) {
       if ((desired_accel_raw != 0) || (desired_accel_val != 0)) {
         violation = 1;
       }
@@ -290,7 +290,7 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
     uint32_t ts = microsecond_timer_get();
     bool violation = 0;
 
-    if (lat_controls_allowed) {
+    if (lat_control_allowed) {
 
       // *** global torque limit check ***
       violation |= max_limit_check(desired_torque, HYUNDAI_MAX_STEER, -HYUNDAI_MAX_STEER);
@@ -315,12 +315,12 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
     }
 
     // no torque if controls is not allowed
-    if (!lat_controls_allowed && (desired_torque != 0)) {
+    if (!lat_control_allowed && (desired_torque != 0)) {
       violation = 1;
     }
 
     // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !lat_controls_allowed) {
+    if (violation || !lat_control_allowed) {
       desired_torque_last = 0;
       rt_torque_last = 0;
       ts_last = ts;
@@ -342,7 +342,7 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
   if ((addr == 1265) && !hyundai_longitudinal) {
     int button = GET_BYTE(to_send, 0) & 0x7U;
 
-    bool allowed_resume = (button == 1) && (lat_controls_allowed || long_controls_allowed);
+    bool allowed_resume = (button == 1) && (lat_control_allowed || long_control_allowed);
     bool allowed_cancel = (button == 4) && cruise_engaged_prev;
     if (!(allowed_resume || allowed_cancel)) {
       tx = 0;
@@ -369,8 +369,8 @@ static int hyundai_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 }
 
 static const addr_checks* hyundai_init(int16_t param) {
-  lat_controls_allowed = false;
-  long_controls_allowed = false;
+  lat_control_allowed = false;
+  long_control_allowed = false;
   relay_malfunction_reset();
 
   hyundai_legacy = false;
@@ -390,8 +390,8 @@ static const addr_checks* hyundai_init(int16_t param) {
 }
 
 static const addr_checks* hyundai_legacy_init(int16_t param) {
-  lat_controls_allowed = false;
-  long_controls_allowed = false;
+  lat_control_allowed = false;
+  long_control_allowed = false;
   relay_malfunction_reset();
 
   hyundai_legacy = true;

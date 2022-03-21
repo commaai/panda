@@ -25,13 +25,13 @@ typedef struct
   uint32_t CNT;
 } TIM_TypeDef;
 
-void set_controls_allowed(bool c);
-void set_all_controls_allowed(bool c);
-void set_lat_controls_allowed(bool c);
-void set_long_controls_allowed(bool c);
-bool get_controls_allowed(void);
-bool get_lat_controls_allowed(void);
-bool get_long_controls_allowed(void);
+void set_control_allowed(bool c);
+void set_all_control_allowed(bool c);
+void set_lat_control_allowed(bool c);
+void set_long_control_allowed(bool c);
+bool get_control_allowed(void);
+bool get_lat_control_allowed(void);
+bool get_long_control_allowed(void);
 void set_unsafe_mode(int mode);
 int get_unsafe_mode(void);
 void set_relay_malfunction(bool c);

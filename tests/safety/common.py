@@ -78,39 +78,39 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
   def test_disengage_on_gas_interceptor(self):
     for g in range(0, 0x1000):
       self._rx(self._interceptor_msg(0, 0x201))
-      self.safety.set_all_controls_allowed(True)
+      self.safety.set_all_control_allowed(True)
       self._rx(self._interceptor_msg(g, 0x201))
       remain_enabled = g <= self.INTERCEPTOR_THRESHOLD
-      self.assertEqual(remain_enabled, self.safety.get_lat_controls_allowed())
-      self.assertEqual(remain_enabled, self.safety.get_long_controls_allowed())
+      self.assertEqual(remain_enabled, self.safety.get_lat_control_allowed())
+      self.assertEqual(remain_enabled, self.safety.get_long_control_allowed())
       self._rx(self._interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
 
   def test_unsafe_mode_no_disengage_on_gas_interceptor(self):
-    self.safety.set_all_controls_allowed(True)
+    self.safety.set_all_control_allowed(True)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
     for g in range(0, 0x1000):
       self._rx(self._interceptor_msg(g, 0x201))
       remain_enabled = g <= self.INTERCEPTOR_THRESHOLD
-      self.assertTrue(self.safety.get_lat_controls_allowed())
-      self.assertEqual(remain_enabled, self.safety.get_long_controls_allowed())
+      self.assertTrue(self.safety.get_lat_control_allowed())
+      self.assertEqual(remain_enabled, self.safety.get_long_control_allowed())
       self._rx(self._interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
     self._rx(self._interceptor_msg(0x1000, 0x201))
-    self.safety.set_all_controls_allowed(1)
+    self.safety.set_all_control_allowed(1)
     self._rx(self._interceptor_msg(0x1000, 0x201))
-    self.assertTrue(self.safety.get_lat_controls_allowed())
-    self.assertTrue(self.safety.get_long_controls_allowed())
+    self.assertTrue(self.safety.get_lat_control_allowed())
+    self.assertTrue(self.safety.get_long_control_allowed())
     self._rx(self._interceptor_msg(0, 0x201))
 
   def test_gas_interceptor_safety_check(self):
     for gas in np.arange(0, 4000, 100):
-      for long_controls_allowed in [True, False]:
-        self.safety.set_long_controls_allowed(long_controls_allowed)
-        if long_controls_allowed:
+      for long_control_allowed in [True, False]:
+        self.safety.set_long_control_allowed(long_control_allowed)
+        if long_control_allowed:
           send = True
         else:
           send = gas == 0
@@ -149,7 +149,7 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
       for t in range(-self.MAX_TORQUE * 2, self.MAX_TORQUE * 2):
-        self.safety.set_lat_controls_allowed(enabled)
+        self.safety.set_lat_control_allowed(enabled)
         self._set_prev_torque(t)
         if abs(t) > self.MAX_TORQUE or (not enabled and abs(t) > 0):
           self.assertFalse(self._tx(self._torque_msg(t)))
@@ -157,14 +157,14 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
           self.assertTrue(self._tx(self._torque_msg(t)))
 
   def test_torque_absolute_limits(self):
-    for lat_controls_allowed in [True, False]:
+    for lat_control_allowed in [True, False]:
       for torque in np.arange(-self.MAX_TORQUE - 1000, self.MAX_TORQUE + 1000, self.MAX_RATE_UP):
-        self.safety.set_lat_controls_allowed(lat_controls_allowed)
+        self.safety.set_lat_control_allowed(lat_control_allowed)
         self.safety.set_rt_torque_last(torque)
         self.safety.set_torque_meas(torque, torque)
         self.safety.set_desired_torque_last(torque - self.MAX_RATE_UP)
 
-        if lat_controls_allowed:
+        if lat_control_allowed:
           send = (-self.MAX_TORQUE <= torque <= self.MAX_TORQUE)
         else:
           send = torque == 0
@@ -172,7 +172,7 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
         self.assertEqual(send, self._tx(self._torque_msg(torque)))
 
   def test_non_realtime_limit_up(self):
-    self.safety.set_lat_controls_allowed(True)
+    self.safety.set_lat_control_allowed(True)
 
     self._set_prev_torque(0)
     self.assertTrue(self._tx(self._torque_msg(self.MAX_RATE_UP)))
@@ -181,7 +181,7 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
     self.assertFalse(self._tx(self._torque_msg(self.MAX_RATE_UP + 1)))
 
   def test_non_realtime_limit_down(self):
-    self.safety.set_lat_controls_allowed(True)
+    self.safety.set_lat_control_allowed(True)
 
     torque_meas = self.MAX_TORQUE - self.MAX_TORQUE_ERROR - 50
 
@@ -196,7 +196,7 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
     self.assertFalse(self._tx(self._torque_msg(self.MAX_TORQUE - self.MAX_RATE_DOWN + 1)))
 
   def test_exceed_torque_sensor(self):
-    self.safety.set_lat_controls_allowed(True)
+    self.safety.set_lat_control_allowed(True)
 
     for sign in [-1, 1]:
       self._set_prev_torque(0)
@@ -207,7 +207,7 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
       self.assertFalse(self._tx(self._torque_msg(sign * (self.MAX_TORQUE_ERROR + 2))))
 
   def test_realtime_limit_up(self):
-    self.safety.set_lat_controls_allowed(True)
+    self.safety.set_lat_control_allowed(True)
 
     for sign in [-1, 1]:
       self.safety.init_tests()
@@ -327,18 +327,18 @@ class PandaSafetyTest(PandaSafetyTestBase):
         if all(addr != m[0] or bus != m[1] for m in self.TX_MSGS):
           self.assertFalse(self._tx(make_msg(bus, addr, 8)))
 
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_lat_controls_allowed())
-    self.assertFalse(self.safety.get_long_controls_allowed())
+  def test_default_control_not_allowed(self):
+    self.assertFalse(self.safety.get_lat_control_allowed())
+    self.assertFalse(self.safety.get_long_control_allowed())
 
-  def test_manually_enable_controls_allowed(self):
-    self.safety.set_all_controls_allowed(1)
-    self.assertTrue(self.safety.get_lat_controls_allowed())
-    self.assertTrue(self.safety.get_long_controls_allowed())
+  def test_manually_enable_control_allowed(self):
+    self.safety.set_all_control_allowed(1)
+    self.assertTrue(self.safety.get_lat_control_allowed())
+    self.assertTrue(self.safety.get_long_control_allowed())
 
-    self.safety.set_all_controls_allowed(0)
-    self.assertFalse(self.safety.get_lat_controls_allowed())
-    self.assertFalse(self.safety.get_long_controls_allowed())
+    self.safety.set_all_control_allowed(0)
+    self.assertFalse(self.safety.get_lat_control_allowed())
+    self.assertFalse(self.safety.get_long_control_allowed())
 
   def test_prev_gas(self):
     self.assertFalse(self.safety.get_gas_pressed_prev())
@@ -348,33 +348,33 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   def test_allow_engage_with_gas_pressed(self):
     self._rx(self._gas_msg(1))
-    self.safety.set_all_controls_allowed(True)
+    self.safety.set_all_control_allowed(True)
     self._rx(self._gas_msg(1))
-    self.assertTrue(self.safety.get_lat_controls_allowed())
-    self.assertTrue(self.safety.get_long_controls_allowed())
+    self.assertTrue(self.safety.get_lat_control_allowed())
+    self.assertTrue(self.safety.get_long_control_allowed())
     self._rx(self._gas_msg(1))
-    self.assertTrue(self.safety.get_lat_controls_allowed())
-    self.assertTrue(self.safety.get_long_controls_allowed())
+    self.assertTrue(self.safety.get_lat_control_allowed())
+    self.assertTrue(self.safety.get_long_control_allowed())
 
   def test_disengage_on_gas(self):
     self._rx(self._gas_msg(0))
-    self.safety.set_all_controls_allowed(True)
+    self.safety.set_all_control_allowed(True)
     self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
-    self.assertFalse(self.safety.get_lat_controls_allowed())
-    self.assertFalse(self.safety.get_long_controls_allowed())
+    self.assertFalse(self.safety.get_lat_control_allowed())
+    self.assertFalse(self.safety.get_long_control_allowed())
 
   def test_unsafe_mode_no_disengage_on_gas(self):
     self._rx(self._gas_msg(0))
-    self.safety.set_all_controls_allowed(True)
+    self.safety.set_all_control_allowed(True)
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
     self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
-    self.assertTrue(self.safety.get_lat_controls_allowed())
-    self.assertFalse(self.safety.get_long_controls_allowed())
+    self.assertTrue(self.safety.get_lat_control_allowed())
+    self.assertFalse(self.safety.get_long_control_allowed())
 
     # Test long control re-enables after releasing gas
     self._rx(self._gas_msg(0))
-    self.assertTrue(self.safety.get_lat_controls_allowed())
-    self.assertTrue(self.safety.get_long_controls_allowed())
+    self.assertTrue(self.safety.get_lat_control_allowed())
+    self.assertTrue(self.safety.get_long_control_allowed())
 
   def test_prev_brake(self):
     self.assertFalse(self.safety.get_brake_pressed_prev())
@@ -386,17 +386,17 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   def test_enable_control_allowed_from_cruise(self):
     self._rx(self._pcm_status_msg(False))
-    self.assertFalse(self.safety.get_lat_controls_allowed())
-    self.assertFalse(self.safety.get_long_controls_allowed())
+    self.assertFalse(self.safety.get_lat_control_allowed())
+    self.assertFalse(self.safety.get_long_control_allowed())
     self._rx(self._pcm_status_msg(True))
-    self.assertTrue(self.safety.get_lat_controls_allowed())
-    self.assertTrue(self.safety.get_long_controls_allowed())
+    self.assertTrue(self.safety.get_lat_control_allowed())
+    self.assertTrue(self.safety.get_long_control_allowed())
 
   def test_disable_control_allowed_from_cruise(self):
-    self.safety.set_all_controls_allowed(1)
+    self.safety.set_all_control_allowed(1)
     self._rx(self._pcm_status_msg(False))
-    self.assertFalse(self.safety.get_lat_controls_allowed())
-    self.assertFalse(self.safety.get_long_controls_allowed())
+    self.assertFalse(self.safety.get_lat_control_allowed())
+    self.assertFalse(self.safety.get_long_control_allowed())
 
   def test_cruise_engaged_prev(self):
     for engaged in [True, False]:
@@ -409,31 +409,31 @@ class PandaSafetyTest(PandaSafetyTestBase):
     # Brake was already pressed
     self._rx(self._speed_msg(0))
     self._rx(self._brake_msg(1))
-    self.safety.set_all_controls_allowed(1)
+    self.safety.set_all_control_allowed(1)
     self._rx(self._brake_msg(1))
-    self.assertTrue(self.safety.get_lat_controls_allowed())
-    self.assertTrue(self.safety.get_long_controls_allowed())
+    self.assertTrue(self.safety.get_lat_control_allowed())
+    self.assertTrue(self.safety.get_long_control_allowed())
     self._rx(self._brake_msg(0))
-    self.assertTrue(self.safety.get_lat_controls_allowed())
-    self.assertTrue(self.safety.get_long_controls_allowed())
+    self.assertTrue(self.safety.get_lat_control_allowed())
+    self.assertTrue(self.safety.get_long_control_allowed())
     # rising edge of brake should disengage
     self._rx(self._brake_msg(1))
-    self.assertFalse(self.safety.get_lat_controls_allowed())
-    self.assertFalse(self.safety.get_long_controls_allowed())
+    self.assertFalse(self.safety.get_lat_control_allowed())
+    self.assertFalse(self.safety.get_long_control_allowed())
     self._rx(self._brake_msg(0))  # reset no brakes
 
   def test_not_allow_brake_when_moving(self):
     # Brake was already pressed
     self._rx(self._brake_msg(1))
-    self.safety.set_all_controls_allowed(1)
+    self.safety.set_all_control_allowed(1)
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
     self._rx(self._brake_msg(1))
-    self.assertTrue(self.safety.get_lat_controls_allowed())
-    self.assertTrue(self.safety.get_long_controls_allowed())
+    self.assertTrue(self.safety.get_lat_control_allowed())
+    self.assertTrue(self.safety.get_long_control_allowed())
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
     self._rx(self._brake_msg(1))
-    self.assertFalse(self.safety.get_lat_controls_allowed())
-    self.assertFalse(self.safety.get_long_controls_allowed())
+    self.assertFalse(self.safety.get_lat_control_allowed())
+    self.assertFalse(self.safety.get_long_control_allowed())
     self._rx(self._speed_msg(0))
 
   def test_sample_speed(self):
@@ -480,7 +480,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     for tx_msgs in all_tx:
       for addr, bus, test_name in tx_msgs:
         msg = make_msg(bus, addr)
-        self.safety.set_all_controls_allowed(1)
+        self.safety.set_all_control_allowed(1)
         # TODO: this should be blocked
         if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
           continue

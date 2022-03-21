@@ -64,7 +64,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
 
   def _gas_msg(self, gas):
-    cruise_active = self.safety.get_long_controls_allowed() or self.safety.get_lat_controls_allowed()
+    cruise_active = self.safety.get_long_control_allowed() or self.safety.get_lat_control_allowed()
     values = {"GAS_RELEASED": not gas, "CRUISE_ACTIVE": cruise_active}
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
@@ -85,7 +85,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     for controls_allowed in (True, False):
       for bad in (True, False):
         for _ in range(10):
-          self.safety.set_all_controls_allowed(controls_allowed)
+          self.safety.set_all_control_allowed(controls_allowed)
           dat = [random.randint(1, 255) for _ in range(7)]
           if not bad:
             dat = [0]*6 + dat[-1:]
@@ -98,10 +98,10 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
 
     for min_accel, max_accel, unsafe_mode in limits:
       for accel in np.arange(min_accel - 1, max_accel + 1, 0.1):
-        for long_controls_allowed in [True, False]:
-          self.safety.set_long_controls_allowed(long_controls_allowed)
+        for long_control_allowed in [True, False]:
+          self.safety.set_long_control_allowed(long_control_allowed)
           self.safety.set_unsafe_mode(unsafe_mode)
-          if long_controls_allowed:
+          if long_control_allowed:
             should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
           else:
             should_tx = np.isclose(accel, 0, atol=0.0001)
@@ -110,7 +110,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
     for engaged in [True, False]:
-      self.safety.set_all_controls_allowed(engaged)
+      self.safety.set_all_control_allowed(engaged)
 
       # good msg
       self.assertTrue(self._tx(self._lta_msg(0, 0, 0)))
@@ -130,7 +130,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   def test_rx_hook(self):
     # checksum checks
     for msg in ["trq", "pcm"]:
-      self.safety.set_all_controls_allowed(1)
+      self.safety.set_all_control_allowed(1)
       if msg == "trq":
         to_push = self._torque_meas_msg(0)
       if msg == "pcm":
@@ -141,8 +141,8 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       to_push[0].data[6] = 0
       to_push[0].data[7] = 0
       self.assertFalse(self._rx(to_push))
-      self.assertFalse(self.safety.get_lat_controls_allowed())
-      self.assertFalse(self.safety.get_long_controls_allowed())
+      self.assertFalse(self.safety.get_lat_control_allowed())
+      self.assertFalse(self.safety.get_long_control_allowed())
 
 
 if __name__ == "__main__":
