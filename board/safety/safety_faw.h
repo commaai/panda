@@ -13,7 +13,6 @@ const int FAW_DRIVER_TORQUE_FACTOR = 3;
 #define MSG_LKAS            0x112   // TX from openpilot, for LKAS torque
 #define MSG_EPS_2           0x150   // RX from EPS, torque inputs and outputs
 
-// Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
 const CanMsg FAW_TX_MSGS[] = {{MSG_LKAS, 0, 8}};
 #define FAW_TX_MSGS_LEN (sizeof(FAW_TX_MSGS) / sizeof(FAW_TX_MSGS[0]))
 
