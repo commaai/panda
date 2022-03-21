@@ -150,7 +150,7 @@ class TestTeslaSteeringSafety(TestTeslaSafety):
 
   def test_acc_buttons(self):
     """
-      FWD (cancel) and IDLE always allowed.
+      FWD (cancel) always allowed.
     """
     btns = [
       (CONTROL_LEVER_STATE.FWD, True),
@@ -159,7 +159,7 @@ class TestTeslaSteeringSafety(TestTeslaSafety):
       (CONTROL_LEVER_STATE.UP_2ND, False),
       (CONTROL_LEVER_STATE.DN_1ST, False),
       (CONTROL_LEVER_STATE.DN_2ND, False),
-      (CONTROL_LEVER_STATE.IDLE, True),
+      (CONTROL_LEVER_STATE.IDLE, False),
     ]
     for btn, should_tx in btns:
       for controls_allowed in (True, False):
