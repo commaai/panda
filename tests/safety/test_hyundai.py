@@ -121,7 +121,7 @@ class TestHyundaiSafety(common.PandaSafetyTest):
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
       for t in range(-0x200, 0x200):
-        self.safety.set_controls_allowed(enabled)
+        self.safety.set_lat_controls_allowed(enabled)
         self._set_prev_torque(t)
         if abs(t) > MAX_STEER or (not enabled and abs(t) > 0):
           self.assertFalse(self._tx(self._torque_msg(t)))
@@ -130,7 +130,7 @@ class TestHyundaiSafety(common.PandaSafetyTest):
 
   def test_non_realtime_limit_up(self):
     self.safety.set_torque_driver(0, 0)
-    self.safety.set_controls_allowed(True)
+    self.safety.set_lat_controls_allowed(True)
 
     self._set_prev_torque(0)
     self.assertTrue(self._tx(self._torque_msg(MAX_RATE_UP)))
@@ -139,16 +139,16 @@ class TestHyundaiSafety(common.PandaSafetyTest):
 
     self._set_prev_torque(0)
     self.assertFalse(self._tx(self._torque_msg(MAX_RATE_UP + 1)))
-    self.safety.set_controls_allowed(True)
+    self.safety.set_lat_controls_allowed(True)
     self._set_prev_torque(0)
     self.assertFalse(self._tx(self._torque_msg(-MAX_RATE_UP - 1)))
 
   def test_non_realtime_limit_down(self):
     self.safety.set_torque_driver(0, 0)
-    self.safety.set_controls_allowed(True)
+    self.safety.set_lat_controls_allowed(True)
 
   def test_against_torque_driver(self):
-    self.safety.set_controls_allowed(True)
+    self.safety.set_lat_controls_allowed(True)
 
     for sign in [-1, 1]:
       for t in np.arange(0, DRIVER_TORQUE_ALLOWANCE + 1, 1):
@@ -183,7 +183,7 @@ class TestHyundaiSafety(common.PandaSafetyTest):
       self.assertFalse(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
 
   def test_realtime_limits(self):
-    self.safety.set_controls_allowed(True)
+    self.safety.set_lat_controls_allowed(True)
 
     for sign in [-1, 1]:
       self.safety.init_tests()
@@ -210,11 +210,11 @@ class TestHyundaiSafety(common.PandaSafetyTest):
       - RES allowed while controls allowed
       - CANCEL allowed while cruise is enabled
     """
-    self.safety.set_controls_allowed(0)
+    self.safety.set_all_controls_allowed(0)
     self.assertFalse(self._tx(self._button_msg(Buttons.RESUME)))
     self.assertFalse(self._tx(self._button_msg(Buttons.SET)))
 
-    self.safety.set_controls_allowed(1)
+    self.safety.set_all_controls_allowed(1)
     self.assertTrue(self._tx(self._button_msg(Buttons.RESUME)))
     self.assertFalse(self._tx(self._button_msg(Buttons.SET)))
 
@@ -320,28 +320,31 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
       SET and RESUME enter controls allowed on their falling edge.
     """
     for btn in range(8):
-      self.safety.set_controls_allowed(0)
+      self.safety.set_all_controls_allowed(0)
       for _ in range(10):
         self._rx(self._button_msg(btn))
-        self.assertFalse(self.safety.get_controls_allowed())
+        self.assertFalse(self.safety.get_lat_controls_allowed())
+        self.assertFalse(self.safety.get_long_controls_allowed())
 
       # should enter controls allowed on falling edge
       if btn in (Buttons.RESUME, Buttons.SET):
         self._rx(self._button_msg(Buttons.NONE))
-        self.assertTrue(self.safety.get_controls_allowed())
+        self.assertTrue(self.safety.get_lat_controls_allowed())
+        self.assertTrue(self.safety.get_long_controls_allowed())
 
   def test_cancel_button(self):
-    self.safety.set_controls_allowed(1)
+    self.safety.set_all_controls_allowed(1)
     self._rx(self._button_msg(Buttons.CANCEL))
-    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_lat_controls_allowed())
+    self.assertFalse(self.safety.get_long_controls_allowed())
 
   def test_accel_safety_check(self):
-    for controls_allowed in [True, False]:
+    for long_controls_allowed in [True, False]:
       for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.01):
-        accel = round(accel, 2) # floats might not hit exact boundary conditions without rounding
-        self.safety.set_controls_allowed(controls_allowed)
-        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == 0
-        self.assertEqual(send, self._tx(self._send_accel_msg(accel)), (controls_allowed, accel))
+        accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
+        self.safety.set_long_controls_allowed(long_controls_allowed)
+        send = MIN_ACCEL <= accel <= MAX_ACCEL if long_controls_allowed else accel == 0
+        self.assertEqual(send, self._tx(self._send_accel_msg(accel)), (long_controls_allowed, accel))
 
   def test_diagnostics(self):
     tester_present = common.package_can_msg((0x7d0, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 0))
