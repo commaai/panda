@@ -379,9 +379,6 @@ class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSa
   """
     Covers the Honda Nidec safety mode with a gas interceptor
   """
-  def setUp(self):
-    TestHondaNidecSafety.setUpClass()
-    common.InterceptorSafetyTest.setUpClass()
 
 
 class TestHondaNidecAltSafety(TestHondaNidecSafety):
@@ -414,7 +411,6 @@ class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.Intercepto
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
     self.safety.init_tests_honda()
-    common.InterceptorSafetyTest.setUpClass()
 
   def _acc_state_msg(self, main_on):
     values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}
