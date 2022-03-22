@@ -15,7 +15,7 @@ def sign(a):
   return 1 if a > 0 else -1
 
 
-class TestNissanSafety(common.PandaSafetyTest):
+class TestNissanSafety(common.PandaSafetyTest, unittest.TestCase):
 
   TX_MSGS = [[0x169, 0], [0x2b1, 0], [0x4cc, 0], [0x20b, 2], [0x280, 2]]
   STANDSTILL_THRESHOLD = 0
@@ -141,7 +141,7 @@ class TestNissanSafety(common.PandaSafetyTest):
         tx = self._tx(self._acc_button_cmd(**args))
         self.assertEqual(tx, should_tx)
 
-class TestNissanLeafSafety(TestNissanSafety):
+class TestNissanLeafSafety(TestNissanSafety, unittest.TestCase):
 
   def setUp(self):
     self.packer = CANPackerPanda("nissan_leaf_2018")

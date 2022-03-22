@@ -17,7 +17,7 @@ DRIVER_TORQUE_ALLOWANCE = 60
 DRIVER_TORQUE_FACTOR = 10
 
 
-class TestSubaruSafety(common.PandaSafetyTest):
+class TestSubaruSafety(common.PandaSafetyTest, unittest.TestCase):
   cnt_gas = 0
   cnt_torque_driver = 0
   cnt_cruise = 0

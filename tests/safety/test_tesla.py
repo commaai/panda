@@ -25,15 +25,11 @@ class CONTROL_LEVER_STATE:
 def sign(a):
   return 1 if a > 0 else -1
 
-class TestTeslaSafety(common.PandaSafetyTest):
+class TestTeslaSafetyBase(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 0
   GAS_PRESSED_THRESHOLD = 3
   RELAY_MALFUNCTION_BUS = 0
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
-
-  def setUp(self):
-    self.packer = None
-    raise unittest.SkipTest
 
   def _angle_meas_msg(self, angle):
     values = {"EPAS_internalSAS": angle}
@@ -83,7 +79,7 @@ class TestTeslaSafety(common.PandaSafetyTest):
     }
     return self.packer.make_can_msg_panda("DAS_control", 0, values)
 
-class TestTeslaSteeringSafety(TestTeslaSafety):
+class TestTeslaSteeringSafety(TestTeslaSafetyBase, unittest.TestCase):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2]]
   RELAY_MALFUNCTION_ADDR = 0x488
   FWD_BLACKLISTED_ADDRS = {2: [0x488]}
@@ -168,10 +164,7 @@ class TestTeslaSteeringSafety(TestTeslaSafety):
         self.assertEqual(tx, should_tx)
 
 
-class TestTeslaLongitudinalSafety(TestTeslaSafety):
-  def setUp(self):
-    raise unittest.SkipTest
-
+class TestTeslaLongitudinalSafetyBase(TestTeslaSafetyBase):
   def test_no_aeb(self):
     for aeb_event in range(4):
       self.assertEqual(self._tx(self._long_control_msg(10, aeb_event=aeb_event)), aeb_event == 0)
@@ -187,7 +180,7 @@ class TestTeslaLongitudinalSafety(TestTeslaSafety):
         send = (MIN_ACCEL <= min_accel <= MAX_ACCEL) and (MIN_ACCEL <= max_accel <= MAX_ACCEL)
         self.assertEqual(self._tx(self._long_control_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])), send)
 
-class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafety):
+class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafetyBase, unittest.TestCase):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2], [0x2B9, 0]]
   RELAY_MALFUNCTION_ADDR = 0x488
   FWD_BLACKLISTED_ADDRS = {2: [0x2B9, 0x488]}
@@ -198,7 +191,7 @@ class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL)
     self.safety.init_tests()
 
-class TestTeslaPTLongitudinalSafety(TestTeslaLongitudinalSafety):
+class TestTeslaPTLongitudinalSafety(TestTeslaLongitudinalSafetyBase, unittest.TestCase):
   TX_MSGS = [[0x2BF, 0]]
   RELAY_MALFUNCTION_ADDR = 0x2BF
   FWD_BLACKLISTED_ADDRS = {2: [0x2BF]}

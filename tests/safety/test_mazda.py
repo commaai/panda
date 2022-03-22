@@ -16,7 +16,7 @@ DRIVER_TORQUE_ALLOWANCE = 15
 DRIVER_TORQUE_FACTOR = 1
 
 
-class TestMazdaSafety(common.PandaSafetyTest):
+class TestMazdaSafety(common.PandaSafetyTest, unittest.TestCase):
 
   TX_MSGS = [[0x243, 0], [0x09d, 0], [0x440, 0]]
   STANDSTILL_THRESHOLD = .1

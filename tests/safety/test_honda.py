@@ -207,13 +207,6 @@ class HondaBase(common.PandaSafetyTest):
   cnt_powertrain_data = 0
   cnt_acc_state = 0
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "HondaBase":
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
-
   def _powertrain_data_msg(self, cruise_on=None, brake_pressed=None, gas_pressed=None):
     # preserve the state
     if cruise_on is None:
@@ -288,12 +281,6 @@ class TestHondaNidecSafetyBase(HondaBase):
 
   INTERCEPTOR_THRESHOLD = 344
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestHondaNidecSafetyBase":
-      cls.safety = None
-      raise unittest.SkipTest
-
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
     self.safety = libpandasafety_py.libpandasafety
@@ -365,7 +352,7 @@ class TestHondaNidecSafetyBase(HondaBase):
 
 
 
-class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
+class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase, unittest.TestCase):
   """
     Covers the Honda Nidec safety mode
   """
@@ -375,16 +362,14 @@ class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
     pass
 
 
-class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTest):
+class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTest, unittest.TestCase):
   """
     Covers the Honda Nidec safety mode with a gas interceptor
   """
-  def setUp(self):
-    TestHondaNidecSafety.setUpClass()
-    common.InterceptorSafetyTest.setUpClass()
+  pass
 
 
-class TestHondaNidecAltSafety(TestHondaNidecSafety):
+class TestHondaNidecAltSafety(TestHondaNidecSafety, unittest.TestCase):
   """
     Covers the Honda Nidec safety mode with alt SCM messages
   """
@@ -405,7 +390,7 @@ class TestHondaNidecAltSafety(TestHondaNidecSafety):
     return self.packer.make_can_msg_panda("SCM_BUTTONS", self.PT_BUS, values)
 
 
-class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTest):
+class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTest, unittest.TestCase):
   """
     Covers the Honda Nidec safety mode with alt SCM messages and gas interceptor
   """
@@ -414,7 +399,6 @@ class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.Intercepto
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
     self.safety.init_tests_honda()
-    common.InterceptorSafetyTest.setUpClass()
 
   def _acc_state_msg(self, main_on):
     values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}
@@ -437,13 +421,6 @@ class TestHondaBoschSafetyBase(HondaBase):
 
   TX_MSGS = [[0xE4, 0], [0xE5, 0], [0x296, 1], [0x33D, 0], [0x33DA, 0], [0x33DB, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestHondaBoschSafetyBase":
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_accord_2018_can_generated")
@@ -478,7 +455,7 @@ class TestHondaBoschSafetyBase(HondaBase):
     self.assertTrue(self.safety.get_controls_allowed())
 
 
-class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
+class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase, unittest.TestCase):
   """
     Covers the Honda Bosch safety mode with stock longitudinal
   """
@@ -497,7 +474,7 @@ class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
     self.assertTrue(self._tx(self._button_msg(Btn.RESUME)))
 
 
-class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
+class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase, unittest.TestCase):
   """
     Covers the Honda Bosch safety mode with longitudinal control
   """

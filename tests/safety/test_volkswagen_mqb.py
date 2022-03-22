@@ -25,7 +25,7 @@ MSG_GRA_ACC_01 = 0x12B  # TX by OP, ACC control buttons for cancel/resume
 MSG_LDW_02 = 0x397      # TX by OP, Lane line recognition and text alerts
 
 
-class TestVolkswagenMqbSafety(common.PandaSafetyTest):
+class TestVolkswagenMqbSafety(common.PandaSafetyTest, unittest.TestCase):
   cnt_lh_eps_03 = 0
   cnt_esp_05 = 0
   cnt_tsk_06 = 0
@@ -247,7 +247,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
     self.assertTrue(self.safety.get_controls_allowed())
 
 
-class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
+class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety, unittest.TestCase):
   TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_GRA_ACC_01, 0], [MSG_GRA_ACC_01, 2]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}

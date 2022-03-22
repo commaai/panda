@@ -37,12 +37,12 @@ class CANPackerPanda(CANPacker):
       msg = fix_checksum(msg)
     return package_can_msg(msg)
 
-class PandaSafetyTestBase(unittest.TestCase):
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "PandaSafetyTestBase":
-      cls.safety = None
-      raise unittest.SkipTest
+class PandaSafetyTestBase(object):
+  # @classmethod
+  # def setUpClass(cls):
+    # if cls.__name__ == "PandaSafetyTestBase":
+    #   cls.safety = None
+    #   raise unittest.SkipTest
 
   def _rx(self, msg):
     return self.safety.safety_rx_hook(msg)
@@ -53,15 +53,6 @@ class PandaSafetyTestBase(unittest.TestCase):
 class InterceptorSafetyTest(PandaSafetyTestBase):
 
   INTERCEPTOR_THRESHOLD = 0
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "InterceptorSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
-
-    # make sure interceptor is detected
-    cls._rx(cls._interceptor_msg(0, 0x201)) # pylint: disable=no-value-for-parameter
 
   @abc.abstractmethod
   def _interceptor_msg(self, gas, addr):
@@ -123,11 +114,11 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
   MAX_TORQUE_ERROR = 0
   TORQUE_MEAS_TOLERANCE = 0
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TorqueSteeringSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
+  # @classmethod
+  # def setUpClass(cls):
+  #   if cls.__name__ == "TorqueSteeringSafetyTest":
+  #     cls.safety = None
+  #     raise unittest.SkipTest
 
   @abc.abstractmethod
   def _torque_meas_msg(self, torque):
@@ -262,11 +253,11 @@ class PandaSafetyTest(PandaSafetyTestBase):
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "PandaSafetyTest" or cls.__name__.endswith('Base'):
-      cls.safety = None
-      raise unittest.SkipTest
+  # @classmethod
+  # def setUpClass(cls):
+  #   if cls.__name__ == "PandaSafetyTest" or cls.__name__.endswith('Base'):
+  #     cls.safety = None
+  #     raise unittest.SkipTest
 
   @abc.abstractmethod
   def _brake_msg(self, brake):
