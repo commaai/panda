@@ -25,7 +25,7 @@ MSG_GRA_ACC_01 = 0x12B  # TX by OP, ACC control buttons for cancel/resume
 MSG_LDW_02 = 0x397      # TX by OP, Lane line recognition and text alerts
 
 
-class TestVolkswagenMqbSafety(common.PandaSafetyTest, unittest.TestCase):
+class TestVolkswagenMqbSafetyBase(common.PandaSafetyTest):
   cnt_lh_eps_03 = 0
   cnt_esp_05 = 0
   cnt_tsk_06 = 0
@@ -36,13 +36,6 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, unittest.TestCase):
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_HCA_01
   RELAY_MALFUNCTION_BUS = 0
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestVolkswagenMqbSafety":
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
 
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)
@@ -247,7 +240,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, unittest.TestCase):
     self.assertTrue(self.safety.get_controls_allowed())
 
 
-class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety, unittest.TestCase):
+class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafetyBase, unittest.TestCase):
   TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_GRA_ACC_01, 0], [MSG_GRA_ACC_01, 2]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}

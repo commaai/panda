@@ -5,7 +5,7 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
-class TestChryslerSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest):
+class TestChryslerSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest, unittest.TestCase):
   TX_MSGS = [[571, 0], [658, 0], [678, 0]]
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 0x292
