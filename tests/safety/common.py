@@ -291,10 +291,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
   def _pcm_status_msg(self, enable):
     pass
 
-  @abc.abstractmethod
-  def _accel_control_msg(self, *args, **kwargs):
-    pass
-
   # ***** standard tests for all safety modes *****
 
   def test_tx_msg_in_scanned_range(self):
@@ -370,7 +366,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
     self.assertTrue(self.safety.get_controls_allowed())
 
-    if self._accel_control_msg(0) is not None:
+    if hasattr(self, "_accel_control_msg"):
       # Test we don't allow any longitudinal actuation while gas is pressed
       self.assertTrue(self._tx(self._accel_control_msg(0)))
       self.assertFalse(self._tx(self._accel_control_msg(1)))
