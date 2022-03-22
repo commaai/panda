@@ -261,6 +261,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
   RELAY_MALFUNCTION_BUS: Optional[int] = None
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
+  OP_LONG_CONTROL: bool = False
 
   @classmethod
   def setUpClass(cls):
@@ -282,6 +283,10 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   @abc.abstractmethod
   def _pcm_status_msg(self, enable):
+    pass
+
+  @abc.abstractmethod
+  def _accel_control_msg(self, *args, **kwargs):
     pass
 
   # ***** standard tests for all safety modes *****
@@ -358,6 +363,14 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
     self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
     self.assertTrue(self.safety.get_controls_allowed())
+
+    if self.OP_LONG_CONTROL:
+      # Test we don't allow any longitudinal actuation while gas is pressed
+      self.assertTrue(self._tx(self._accel_control_msg(0)))
+      self.assertFalse(self._tx(self._accel_control_msg(1)))
+
+      self._rx(self._gas_msg(0))
+      self.assertTrue(self._tx(self._accel_control_msg(1)))
 
   def test_prev_brake(self):
     self.assertFalse(self.safety.get_brake_pressed_prev())

@@ -51,7 +51,8 @@ int safety_rx_hook(CANPacket_t *to_push) {
 }
 
 int safety_tx_hook(CANPacket_t *to_send) {
-  return (relay_malfunction ? -1 : current_hooks->tx(to_send));
+  bool longitudinal_allowed = controls_allowed && !gas_pressed;
+  return (relay_malfunction ? -1 : current_hooks->tx(to_send, longitudinal_allowed));
 }
 
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {

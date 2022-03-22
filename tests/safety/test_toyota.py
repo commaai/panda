@@ -23,6 +23,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INTERCEPTOR_THRESHOLD = 845
+  OP_LONG_CONTROL = True
 
   MAX_RATE_UP = 10
   MAX_RATE_DOWN = 25
@@ -51,7 +52,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd}
     return self.packer.make_can_msg_panda("STEERING_LTA", 0, values)
 
-  def _accel_msg(self, accel):
+  def _accel_control_msg(self, accel, brake=0):
     values = {"ACCEL_CMD": accel}
     return self.packer.make_can_msg_panda("ACC_CONTROL", 0, values)
 
@@ -105,7 +106,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
             should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
           else:
             should_tx = np.isclose(accel, 0, atol=0.0001)
-          self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
+          self.assertEqual(should_tx, self._tx(self._accel_control_msg(accel)))
 
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
