@@ -257,7 +257,6 @@ class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
 class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
   TX_MSGS = [[832, 0], [1265, 0], [1157, 0], [1056, 0], [1057, 0], [1290, 0], [905, 0], [1186, 0], [909, 0], [1155, 0], [2000, 0]]
   cnt_button = 0
-  OP_LONG_CONTROL = True
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")

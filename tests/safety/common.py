@@ -93,7 +93,14 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
       self.assertTrue(self.safety.get_controls_allowed())
       self._rx(self._interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
+
+    # Test we don't allow any interceptor actuation while gas is pressed
+    self._rx(self._interceptor_msg(0x1000, 0x201))
+    self.assertTrue(self._tx(self._interceptor_msg(0, 0x200)))
+    self.assertFalse(self._tx(self._interceptor_msg(0x1000, 0x200)))
+
+    self._rx(self._interceptor_msg(0, 0x201))
+    self.assertTrue(self._tx(self._interceptor_msg(0x1000, 0x200)))
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
     self._rx(self._interceptor_msg(0x1000, 0x201))
@@ -261,7 +268,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
   RELAY_MALFUNCTION_BUS: Optional[int] = None
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
-  OP_LONG_CONTROL: bool = False
 
   @classmethod
   def setUpClass(cls):
@@ -364,7 +370,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
     self.assertTrue(self.safety.get_controls_allowed())
 
-    if self.OP_LONG_CONTROL:
+    if self._accel_control_msg(0) is not None:
       # Test we don't allow any longitudinal actuation while gas is pressed
       self.assertTrue(self._tx(self._accel_control_msg(0)))
       self.assertFalse(self._tx(self._accel_control_msg(1)))
