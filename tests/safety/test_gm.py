@@ -26,7 +26,7 @@ class Buttons:
   DECEL_SET = 3
   CANCEL = 6
 
-class TestGmSafety(common.PandaSafetyTest, unittest.TestCase):
+class TestGmSafety(common.BaseTestCases.PandaSafetyTest):
   TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
              [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
              [789, 2],  # ch bus

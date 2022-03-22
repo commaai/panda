@@ -33,7 +33,7 @@ def volkswagen_pq_checksum(msg, addr, len_msg):
     checksum ^= i
   return checksum
 
-class TestVolkswagenPqSafety(common.PandaSafetyTest, unittest.TestCase):
+class TestVolkswagenPqSafety(common.BaseTestCases.PandaSafetyTest):
   cruise_engaged = False
   cnt_lenkhilfe_3 = 0
   cnt_hca_1 = 0

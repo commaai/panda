@@ -25,61 +25,78 @@ class CONTROL_LEVER_STATE:
 def sign(a):
   return 1 if a > 0 else -1
 
-class TestTeslaSafetyBase(common.PandaSafetyTest):
-  STANDSTILL_THRESHOLD = 0
-  GAS_PRESSED_THRESHOLD = 3
-  RELAY_MALFUNCTION_BUS = 0
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+class TeslaBaseTestCases:
+  class TestTeslaSafetyBase(common.BaseTestCases.PandaSafetyTest):
+    STANDSTILL_THRESHOLD = 0
+    GAS_PRESSED_THRESHOLD = 3
+    RELAY_MALFUNCTION_BUS = 0
+    FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-  def _angle_meas_msg(self, angle):
-    values = {"EPAS_internalSAS": angle}
-    return self.packer.make_can_msg_panda("EPAS_sysStatus", 0, values)
+    def _angle_meas_msg(self, angle):
+      values = {"EPAS_internalSAS": angle}
+      return self.packer.make_can_msg_panda("EPAS_sysStatus", 0, values)
 
-  def _set_prev_angle(self, t):
-    t = int(t * 10)
-    self.safety.set_desired_angle_last(t)
+    def _set_prev_angle(self, t):
+      t = int(t * 10)
+      self.safety.set_desired_angle_last(t)
 
-  def _angle_meas_msg_array(self, angle):
-    for _ in range(6):
-      self._rx(self._angle_meas_msg(angle))
+    def _angle_meas_msg_array(self, angle):
+      for _ in range(6):
+        self._rx(self._angle_meas_msg(angle))
 
-  def _lkas_control_msg(self, angle, enabled):
-    values = {"DAS_steeringAngleRequest": angle, "DAS_steeringControlType": 1 if enabled else 0}
-    return self.packer.make_can_msg_panda("DAS_steeringControl", 0, values)
+    def _lkas_control_msg(self, angle, enabled):
+      values = {"DAS_steeringAngleRequest": angle, "DAS_steeringControlType": 1 if enabled else 0}
+      return self.packer.make_can_msg_panda("DAS_steeringControl", 0, values)
 
-  def _speed_msg(self, speed):
-    values = {"DI_vehicleSpeed": speed / 0.447}
-    return self.packer.make_can_msg_panda("DI_torque2", 0, values)
+    def _speed_msg(self, speed):
+      values = {"DI_vehicleSpeed": speed / 0.447}
+      return self.packer.make_can_msg_panda("DI_torque2", 0, values)
 
-  def _brake_msg(self, brake):
-    values = {"driverBrakeStatus": 2 if brake else 1}
-    return self.packer.make_can_msg_panda("BrakeMessage", 0, values)
+    def _brake_msg(self, brake):
+      values = {"driverBrakeStatus": 2 if brake else 1}
+      return self.packer.make_can_msg_panda("BrakeMessage", 0, values)
 
-  def _gas_msg(self, gas):
-    values = {"DI_pedalPos": gas}
-    return self.packer.make_can_msg_panda("DI_torque1", 0, values)
+    def _gas_msg(self, gas):
+      values = {"DI_pedalPos": gas}
+      return self.packer.make_can_msg_panda("DI_torque1", 0, values)
 
-  def _control_lever_cmd(self, command):
-    values = {"SpdCtrlLvr_Stat": command}
-    return self.packer.make_can_msg_panda("STW_ACTN_RQ", 0, values)
+    def _control_lever_cmd(self, command):
+      values = {"SpdCtrlLvr_Stat": command}
+      return self.packer.make_can_msg_panda("STW_ACTN_RQ", 0, values)
 
-  def _pcm_status_msg(self, enable):
-    values = {"DI_cruiseState": 2 if enable else 0}
-    return self.packer.make_can_msg_panda("DI_state", 0, values)
+    def _pcm_status_msg(self, enable):
+      values = {"DI_cruiseState": 2 if enable else 0}
+      return self.packer.make_can_msg_panda("DI_state", 0, values)
 
-  def _long_control_msg(self, set_speed, acc_val=0, jerk_limits=(0, 0), accel_limits=(0, 0), aeb_event=0):
-    values = {
-      "DAS_setSpeed": set_speed,
-      "DAS_accState": acc_val,
-      "DAS_aebEvent": aeb_event,
-      "DAS_jerkMin": jerk_limits[0],
-      "DAS_jerkMax": jerk_limits[1],
-      "DAS_accelMin": accel_limits[0],
-      "DAS_accelMax": accel_limits[1],
-    }
-    return self.packer.make_can_msg_panda("DAS_control", 0, values)
+    def _long_control_msg(self, set_speed, acc_val=0, jerk_limits=(0, 0), accel_limits=(0, 0), aeb_event=0):
+      values = {
+        "DAS_setSpeed": set_speed,
+        "DAS_accState": acc_val,
+        "DAS_aebEvent": aeb_event,
+        "DAS_jerkMin": jerk_limits[0],
+        "DAS_jerkMax": jerk_limits[1],
+        "DAS_accelMin": accel_limits[0],
+        "DAS_accelMax": accel_limits[1],
+      }
+      return self.packer.make_can_msg_panda("DAS_control", 0, values)
 
-class TestTeslaSteeringSafety(TestTeslaSafetyBase, unittest.TestCase):
+  class TestTeslaLongitudinalSafetyBase(TestTeslaSafetyBase):
+    def test_no_aeb(self):
+      for aeb_event in range(4):
+        self.assertEqual(self._tx(self._long_control_msg(10, aeb_event=aeb_event)), aeb_event == 0)
+
+    def test_acc_accel_limits(self):
+      for min_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
+        for max_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
+          # floats might not hit exact boundary conditions without rounding
+          min_accel = round(min_accel, 2)
+          max_accel = round(max_accel, 2)
+
+          self.safety.set_controls_allowed(True)
+          send = (MIN_ACCEL <= min_accel <= MAX_ACCEL) and (MIN_ACCEL <= max_accel <= MAX_ACCEL)
+          self.assertEqual(self._tx(self._long_control_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])), send)
+
+class TestTeslaSteeringSafety(TeslaBaseTestCases.TestTeslaSafetyBase):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2]]
   RELAY_MALFUNCTION_ADDR = 0x488
   FWD_BLACKLISTED_ADDRS = {2: [0x488]}
@@ -163,24 +180,7 @@ class TestTeslaSteeringSafety(TestTeslaSafetyBase, unittest.TestCase):
         tx = self._tx(self._control_lever_cmd(btn))
         self.assertEqual(tx, should_tx)
 
-
-class TestTeslaLongitudinalSafetyBase(TestTeslaSafetyBase):
-  def test_no_aeb(self):
-    for aeb_event in range(4):
-      self.assertEqual(self._tx(self._long_control_msg(10, aeb_event=aeb_event)), aeb_event == 0)
-
-  def test_acc_accel_limits(self):
-    for min_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
-      for max_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
-        # floats might not hit exact boundary conditions without rounding
-        min_accel = round(min_accel, 2)
-        max_accel = round(max_accel, 2)
-
-        self.safety.set_controls_allowed(True)
-        send = (MIN_ACCEL <= min_accel <= MAX_ACCEL) and (MIN_ACCEL <= max_accel <= MAX_ACCEL)
-        self.assertEqual(self._tx(self._long_control_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])), send)
-
-class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafetyBase, unittest.TestCase):
+class TestTeslaChassisLongitudinalSafety(TeslaBaseTestCases.TestTeslaLongitudinalSafetyBase):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2], [0x2B9, 0]]
   RELAY_MALFUNCTION_ADDR = 0x488
   FWD_BLACKLISTED_ADDRS = {2: [0x2B9, 0x488]}
@@ -191,7 +191,7 @@ class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafetyBase, unitte
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL)
     self.safety.init_tests()
 
-class TestTeslaPTLongitudinalSafety(TestTeslaLongitudinalSafetyBase, unittest.TestCase):
+class TestTeslaPTLongitudinalSafety(TeslaBaseTestCases.TestTeslaLongitudinalSafetyBase):
   TX_MSGS = [[0x2BF, 0]]
   RELAY_MALFUNCTION_ADDR = 0x2BF
   FWD_BLACKLISTED_ADDRS = {2: [0x2BF]}

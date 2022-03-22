@@ -59,7 +59,7 @@ def checksum(msg):
 
   return addr, t, ret, bus
 
-class TestHyundaiSafety(common.PandaSafetyTest, unittest.TestCase):
+class TestHyundaiSafety(common.BaseTestCases.PandaSafetyTest):
   TX_MSGS = [[832, 0], [1265, 0], [1157, 0]]
   STANDSTILL_THRESHOLD = 30  # ~1kph
   RELAY_MALFUNCTION_ADDR = 832
@@ -223,7 +223,7 @@ class TestHyundaiSafety(common.PandaSafetyTest, unittest.TestCase):
       self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
 
 
-class TestHyundaiLegacySafety(TestHyundaiSafety, unittest.TestCase):
+class TestHyundaiLegacySafety(TestHyundaiSafety):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpandasafety_py.libpandasafety
@@ -231,7 +231,7 @@ class TestHyundaiLegacySafety(TestHyundaiSafety, unittest.TestCase):
     self.safety.init_tests()
 
 
-class TestHyundaiLegacySafetyEV(TestHyundaiSafety, unittest.TestCase):
+class TestHyundaiLegacySafetyEV(TestHyundaiSafety):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpandasafety_py.libpandasafety
@@ -243,7 +243,7 @@ class TestHyundaiLegacySafetyEV(TestHyundaiSafety, unittest.TestCase):
     return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
 
 
-class TestHyundaiLegacySafetyHEV(TestHyundaiSafety, unittest.TestCase):
+class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpandasafety_py.libpandasafety
@@ -254,7 +254,7 @@ class TestHyundaiLegacySafetyHEV(TestHyundaiSafety, unittest.TestCase):
     values = {"CR_Vcu_AccPedDep_Pos": gas}
     return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
 
-class TestHyundaiLongitudinalSafety(TestHyundaiSafety, unittest.TestCase):
+class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
   TX_MSGS = [[832, 0], [1265, 0], [1157, 0], [1056, 0], [1057, 0], [1290, 0], [905, 0], [1186, 0], [909, 0], [1155, 0], [2000, 0]]
   cnt_button = 0
 
