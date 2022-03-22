@@ -379,6 +379,7 @@ class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSa
   """
     Covers the Honda Nidec safety mode with a gas interceptor
   """
+  pass
 
 
 class TestHondaNidecAltSafety(TestHondaNidecSafety):
