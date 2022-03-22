@@ -38,12 +38,6 @@ class CANPackerPanda(CANPacker):
     return package_can_msg(msg)
 
 class PandaSafetyTestBase(object):
-  # @classmethod
-  # def setUpClass(cls):
-    # if cls.__name__ == "PandaSafetyTestBase":
-    #   cls.safety = None
-    #   raise unittest.SkipTest
-
   def _rx(self, msg):
     return self.safety.safety_rx_hook(msg)
 
@@ -113,12 +107,6 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
   RT_INTERVAL = 0
   MAX_TORQUE_ERROR = 0
   TORQUE_MEAS_TOLERANCE = 0
-
-  # @classmethod
-  # def setUpClass(cls):
-  #   if cls.__name__ == "TorqueSteeringSafetyTest":
-  #     cls.safety = None
-  #     raise unittest.SkipTest
 
   @abc.abstractmethod
   def _torque_meas_msg(self, torque):
@@ -252,12 +240,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
   RELAY_MALFUNCTION_BUS: Optional[int] = None
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
-
-  # @classmethod
-  # def setUpClass(cls):
-  #   if cls.__name__ == "PandaSafetyTest" or cls.__name__.endswith('Base'):
-  #     cls.safety = None
-  #     raise unittest.SkipTest
 
   @abc.abstractmethod
   def _brake_msg(self, brake):
