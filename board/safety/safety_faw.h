@@ -20,7 +20,7 @@ AddrCheckStruct faw_addr_checks[] = {
   {.msg = {{MSG_ECM_1, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_ABS_1, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_ABS_2, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_ACC, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_ACC, 2, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define FAW_ADDR_CHECKS_LEN (sizeof(faw_addr_checks) / sizeof(faw_addr_checks[0]))
@@ -57,10 +57,26 @@ static const addr_checks* faw_init(int16_t param) {
 static int faw_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &faw_rx_checks, faw_get_checksum, faw_compute_checksum, faw_get_counter);
+  int bus = GET_BUS(to_push);
+  int addr = GET_ADDR(to_push);
 
-  if (valid && (GET_BUS(to_push) == 0U)) {
-    int addr = GET_ADDR(to_push);
+  if (valid && (bus == 2U)) {
+    // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
+    // Signal: ACC.STATUS
+    if (addr == MSG_ACC) {
+      int acc_status = (GET_BYTE(to_push, 4) & 0x7CU) >> 2;
+      int cruise_engaged = acc_status == 20;
+      if (cruise_engaged && !cruise_engaged_prev) {
+        controls_allowed = 1;
+      }
+      if (!cruise_engaged) {
+        controls_allowed = 0;
+      }
+      cruise_engaged_prev = cruise_engaged;
+    }
+  }
 
+  if (valid && (bus == 0U)) {
     // Update in-motion state by sampling front wheel speeds
     // Signal: ABS_1.FRONT_LEFT in scaled km/h
     // Signal: ABS_1.FRONT_RIGHT in scaled km/h
@@ -84,20 +100,6 @@ static int faw_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
-    // Signal: ACC.STATUS
-    if (addr == MSG_ACC) {
-      int acc_status = (GET_BYTE(to_push, 4) & 0x7CU) >> 2;
-      int cruise_engaged = acc_status == 20;
-      if (cruise_engaged && !cruise_engaged_prev) {
-        controls_allowed = 1;
-      }
-      if (!cruise_engaged) {
-        controls_allowed = 0;
-      }
-      cruise_engaged_prev = cruise_engaged;
-    }
-
     // Signal: ECM_1.DRIVER_THROTTLE
     if (addr == MSG_ECM_1) {
       gas_pressed = (GET_BYTE(to_push, 5) != 0);
@@ -110,6 +112,7 @@ static int faw_rx_hook(CANPacket_t *to_push) {
 
     generic_rx_checks((addr == MSG_LKAS));
   }
+
   return valid;
 }
 

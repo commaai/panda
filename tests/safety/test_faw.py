@@ -68,7 +68,7 @@ class TestFawSafety(common.PandaSafetyTest):
   def _pcm_status_msg(self, enable):
     values = {"STATUS": 20 if enable else 11, "COUNTER": self.cnt_acc % 16}
     self.__class__.cnt_acc += 1
-    return self.packer.make_can_msg_panda("ACC", 0, values)
+    return self.packer.make_can_msg_panda("ACC", 2, values)
 
   # Driver steering input torque
   def _eps_2_msg(self, torque):
