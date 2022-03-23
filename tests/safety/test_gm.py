@@ -242,7 +242,7 @@ class TestGmSafety(common.PandaSafetyTest):
       elif pedal == 'gas':
         self._rx(self._gas_msg(0))
 
-  def test_tx_hook_on_pedal_pressed_on_unsafe_gas_mode(self):
+  def test_tx_hook_on_pedal_pressed_on_alternative_gas_experience(self):
     for pedal in ['brake', 'gas']:
       self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
       if pedal == 'brake':
