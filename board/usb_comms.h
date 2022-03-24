@@ -29,7 +29,7 @@ int get_health_pkt(void *dat) {
   health->usb_power_mode_pkt = usb_power_mode;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
-  health->unsafe_mode_pkt = unsafe_mode;
+  health->alternative_experience_pkt = alternative_experience;
   health->power_save_enabled_pkt = (uint8_t)(power_save_status == POWER_SAVE_STATUS_ENABLED);
   health->heartbeat_lost_pkt = (uint8_t)(heartbeat_lost);
   health->blocked_msg_cnt_pkt = blocked_msg_cnt;
@@ -288,11 +288,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
         UNUSED(ret);
       }
       break;
-    // **** 0xdf: set unsafe mode
+    // **** 0xdf: set alternative experience
     case 0xdf:
       // you can only set this if you are in a non car safety mode
       if (!is_car_safety_mode(current_safety_mode)) {
-        unsafe_mode = setup->b.wValue.w;
+        alternative_experience = setup->b.wValue.w;
       }
       break;
     // **** 0xe0: uart read
