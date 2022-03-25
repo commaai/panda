@@ -160,7 +160,7 @@ class Panda(object):
   HW_TYPE_RED_PANDA = b'\x07'
 
   CAN_PACKET_VERSION = 2
-  HEALTH_PACKET_VERSION = 3
+  HEALTH_PACKET_VERSION = 4
   HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHI")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
@@ -375,7 +375,7 @@ class Panda(object):
       "fault_status": a[16],
       "power_save_enabled": a[17],
       "heartbeat_lost": a[18],
-      "unsafe_mode": a[19],
+      "alternative_experience": a[19],
       "blocked_msg_cnt": a[20],
     }
 

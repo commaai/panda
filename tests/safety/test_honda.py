@@ -6,7 +6,7 @@ from typing import Optional
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg, MAX_WRONG_COUNTERS, UNSAFE_MODE
+from panda.tests.safety.common import CANPackerPanda, make_msg, MAX_WRONG_COUNTERS, ALTERNATIVE_EXPERIENCE
 
 class Btn:
   NONE = 0
@@ -130,9 +130,9 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_tx_hook_on_pedal_pressed(self):
-    for mode in [UNSAFE_MODE.DEFAULT, UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS]:
+    for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
       for pedal in ['brake', 'gas']:
-        self.safety.set_unsafe_mode(mode)
+        self.safety.set_alternative_experience(mode)
         allow_ctrl = False
         if pedal == 'brake':
           # brake_pressed_prev and vehicle_moving
@@ -141,7 +141,7 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
         elif pedal == 'gas':
           # gas_pressed_prev
           self._rx(self._gas_msg(1))
-          allow_ctrl = mode == UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS
+          allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
 
         self.safety.set_controls_allowed(1)
         hw = self.safety.get_honda_hw()
@@ -152,7 +152,7 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
 
         # reset status
         self.safety.set_controls_allowed(0)
-        self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
+        self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DEFAULT)
         if hw == HONDA_NIDEC:
           self._tx(self._send_brake_msg(0))
         self._tx(self._send_steer_msg(0))
@@ -314,6 +314,19 @@ class TestHondaNidecSafetyBase(HondaBase):
     values = {"COMPUTER_BRAKE": brake}
     return self.packer.make_can_msg_panda("BRAKE_COMMAND", 0, values)
 
+  def _send_acc_hud_msg(self, pcm_gas, pcm_speed):
+    # Used to control ACC on Nidec without pedal
+    values = {"PCM_GAS": pcm_gas, "PCM_SPEED": pcm_speed}
+    return self.packer.make_can_msg_panda("ACC_HUD", 0, values)
+
+  def test_acc_hud_safety_check(self):
+    for controls_allowed in [True, False]:
+      self.safety.set_controls_allowed(controls_allowed)
+      for pcm_gas in range(0, 0xc6):
+        for pcm_speed in range(0, 100):
+          send = True if controls_allowed else pcm_gas == 0 and pcm_speed == 0
+          self.assertEqual(send, self.safety.safety_tx_hook(self._send_acc_hud_msg(pcm_gas, pcm_speed)))
+
   def test_fwd_hook(self):
     # normal operation, not forwarding AEB
     self.FWD_BLACKLISTED_ADDRS[2].append(0x1FA)
@@ -342,12 +355,12 @@ class TestHondaNidecSafetyBase(HondaBase):
     self.safety.set_honda_fwd_brake(False)
 
   def test_tx_hook_on_interceptor_pressed(self):
-    for mode in [UNSAFE_MODE.DEFAULT, UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS]:
-      self.safety.set_unsafe_mode(mode)
+    for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
+      self.safety.set_alternative_experience(mode)
       # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
       self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
       self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
-      allow_ctrl = mode == UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS
+      allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
 
       self.safety.set_controls_allowed(1)
       self.safety.set_honda_fwd_brake(False)
@@ -357,7 +370,7 @@ class TestHondaNidecSafetyBase(HondaBase):
 
       # reset status
       self.safety.set_controls_allowed(0)
-      self.safety.set_unsafe_mode(UNSAFE_MODE.DEFAULT)
+      self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DEFAULT)
       self._tx(self._send_brake_msg(0))
       self._tx(self._send_steer_msg(0))
       self._tx(self._interceptor_msg(0, 0x200))
@@ -379,9 +392,6 @@ class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSa
   """
     Covers the Honda Nidec safety mode with a gas interceptor
   """
-  def setUp(self):
-    TestHondaNidecSafety.setUpClass()
-    common.InterceptorSafetyTest.setUpClass()
 
 
 class TestHondaNidecAltSafety(TestHondaNidecSafety):
@@ -414,7 +424,6 @@ class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.Intercepto
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
     self.safety.init_tests_honda()
-    common.InterceptorSafetyTest.setUpClass()
 
   def _acc_state_msg(self, main_on):
     values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}

@@ -10,7 +10,7 @@ from panda.tests.safety import libpandasafety_py
 
 MAX_WRONG_COUNTERS = 5
 
-class UNSAFE_MODE:
+class ALTERNATIVE_EXPERIENCE:
   DEFAULT = 0
   DISABLE_DISENGAGE_ON_GAS = 1
   DISABLE_STOCK_AEB = 2
@@ -60,9 +60,6 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
       cls.safety = None
       raise unittest.SkipTest
 
-    # make sure interceptor is detected
-    cls._rx(cls._interceptor_msg(0, 0x201)) # pylint: disable=no-value-for-parameter
-
   @abc.abstractmethod
   def _interceptor_msg(self, gas, addr):
     pass
@@ -85,14 +82,15 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
       self._rx(self._interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
 
-  def test_unsafe_mode_no_disengage_on_gas_interceptor(self):
+  def test_alternative_experience_no_disengage_on_gas_interceptor(self):
     self.safety.set_controls_allowed(True)
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
+    self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
     for g in range(0, 0x1000):
       self._rx(self._interceptor_msg(g, 0x201))
       self.assertTrue(self.safety.get_controls_allowed())
       self._rx(self._interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
+    self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DEFAULT)
 
     # Test we don't allow any interceptor actuation while gas is pressed
     self._rx(self._interceptor_msg(0x1000, 0x201))
@@ -359,10 +357,10 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
     self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_unsafe_mode_no_disengage_on_gas(self):
+  def test_alternative_experience_no_disengage_on_gas(self):
     self._rx(self._gas_msg(0))
     self.safety.set_controls_allowed(True)
-    self.safety.set_unsafe_mode(UNSAFE_MODE.DISABLE_DISENGAGE_ON_GAS)
+    self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
     self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
     self.assertTrue(self.safety.get_controls_allowed())
 
