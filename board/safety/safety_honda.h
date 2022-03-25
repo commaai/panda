@@ -270,7 +270,7 @@ static int honda_tx_hook(CANPacket_t *to_send) {
   // ACC_HUD: safety check (nidec w/o pedal)
   if ((addr == 0x30C) && (bus == bus_pt)) {
     int pcm_speed = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
-    int pcm_gas = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
+    int pcm_gas = GET_BYTE(to_send, 2);
     if (!current_controls_allowed) {
       if ((pcm_speed != 0) || (pcm_gas != 0)) {
         tx = 0;
