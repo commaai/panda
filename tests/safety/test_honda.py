@@ -314,6 +314,19 @@ class TestHondaNidecSafetyBase(HondaBase):
     values = {"COMPUTER_BRAKE": brake}
     return self.packer.make_can_msg_panda("BRAKE_COMMAND", 0, values)
 
+  def _send_acc_hud_msg(self, pcm_gas, pcm_speed):
+    # Used to control ACC on Nidec without pedal
+    values = {"PCM_GAS": pcm_gas, "PCM_SPEED": pcm_speed}
+    return self.packer.make_can_msg_panda("ACC_HUD", 0, values)
+
+  def test_acc_hud_safety_check(self):
+    for controls_allowed in [True, False]:
+      self.safety.set_controls_allowed(controls_allowed)
+      for pcm_gas in range(0, 0xc6):
+        for pcm_speed in range(0, 100):
+          send = True if controls_allowed else pcm_gas == 0 and pcm_speed == 0
+          self.assertEqual(send, self.safety.safety_tx_hook(self._send_acc_hud_msg(pcm_gas, pcm_speed)))
+
   def test_fwd_hook(self):
     # normal operation, not forwarding AEB
     self.FWD_BLACKLISTED_ADDRS[2].append(0x1FA)
