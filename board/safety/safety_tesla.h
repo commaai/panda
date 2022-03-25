@@ -192,6 +192,13 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
       if ((accel_max < TESLA_MIN_ACCEL) || (accel_min < TESLA_MIN_ACCEL)){
         violation = true;
       }
+
+      // Don't allow longitudinal actuation if not controls_allowed
+      if (!controls_allowed) {
+        if ((accel_max != 0) || (accel_min != 0)) {
+          violation = true;
+        }
+      }
     } else {
       violation = true;
     }
