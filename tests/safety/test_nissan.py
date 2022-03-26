@@ -2,9 +2,8 @@
 import unittest
 import numpy as np
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda
+from panda.tests.safety.common import set_up_test
 
 ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
@@ -26,10 +25,7 @@ class TestNissanSafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
-    self.packer = CANPackerPanda("nissan_x_trail_2017")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
-    self.safety.init_tests()
+    set_up_test(self, "nissan_x_trail_2017", Panda.SAFETY_NISSAN, 0)
 
   def _angle_meas_msg(self, angle):
     values = {"STEER_ANGLE": angle}
@@ -141,13 +137,11 @@ class TestNissanSafety(common.PandaSafetyTest):
         tx = self._tx(self._acc_button_cmd(**args))
         self.assertEqual(tx, should_tx)
 
+
 class TestNissanLeafSafety(TestNissanSafety):
 
   def setUp(self):
-    self.packer = CANPackerPanda("nissan_leaf_2018")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
-    self.safety.init_tests()
+    set_up_test(self, "nissan_leaf_2018", Panda.SAFETY_NISSAN, 0)
 
   def _user_brake_msg(self, brake):
     values = {"USER_BRAKE_PRESSED": brake}

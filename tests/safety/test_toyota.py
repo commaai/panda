@@ -3,12 +3,12 @@ import unittest
 import numpy as np
 import random
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg, ALTERNATIVE_EXPERIENCE
+from panda.tests.safety.common import make_msg, set_up_test, ALTERNATIVE_EXPERIENCE
 
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
+
 
 class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
                        common.TorqueSteeringSafetyTest):
@@ -34,10 +34,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   EPS_SCALE = 0.73
 
   def setUp(self):
-    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 73)
-    self.safety.init_tests()
+    set_up_test(self, "toyota_nodsu_pt_generated", Panda.SAFETY_TOYOTA, 73)
 
   def _torque_meas_msg(self, torque):
     values = {"STEER_TORQUE_EPS": (torque/self.EPS_SCALE)}

@@ -2,9 +2,8 @@
 import unittest
 import numpy as np
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, MAX_WRONG_COUNTERS
+from panda.tests.safety.common import MAX_WRONG_COUNTERS, set_up_test
 
 MAX_RATE_UP = 4
 MAX_RATE_DOWN = 10
@@ -48,10 +47,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
-    self.packer = CANPackerPanda("vw_golf_mk4")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_PQ, 0)
-    self.safety.init_tests()
+    set_up_test(self, "vw_golf_mk4", Panda.SAFETY_VOLKSWAGEN_PQ, 0)
 
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)

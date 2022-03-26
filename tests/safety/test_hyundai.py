@@ -2,9 +2,8 @@
 import unittest
 import numpy as np
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg
+from panda.tests.safety.common import make_msg, set_up_test
 
 MAX_RATE_UP = 3
 MAX_RATE_DOWN = 7
@@ -19,11 +18,13 @@ DRIVER_TORQUE_FACTOR = 2
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
 
+
 class Buttons:
   NONE = 0
   RESUME = 1
   SET = 2
   CANCEL = 4
+
 
 # 4 bit checkusm used in some hyundai messages
 # lives outside the can packer because we never send this msg
@@ -73,10 +74,7 @@ class TestHyundaiSafety(common.PandaSafetyTest):
   cnt_cruise = 0
 
   def setUp(self):
-    self.packer = CANPackerPanda("hyundai_kia_generic")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, 0)
-    self.safety.init_tests()
+    set_up_test(self, "hyundai_kia_generic", Panda.SAFETY_HYUNDAI, 0)
 
   def _button_msg(self, buttons):
     values = {"CF_Clu_CruiseSwState": buttons}
@@ -225,18 +223,12 @@ class TestHyundaiSafety(common.PandaSafetyTest):
 
 class TestHyundaiLegacySafety(TestHyundaiSafety):
   def setUp(self):
-    self.packer = CANPackerPanda("hyundai_kia_generic")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_LEGACY, 0)
-    self.safety.init_tests()
+    set_up_test(self, "hyundai_kia_generic", Panda.SAFETY_HYUNDAI_LEGACY, 0)
 
 
 class TestHyundaiLegacySafetyEV(TestHyundaiSafety):
   def setUp(self):
-    self.packer = CANPackerPanda("hyundai_kia_generic")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_LEGACY, 1)
-    self.safety.init_tests()
+    set_up_test(self, "hyundai_kia_generic", Panda.SAFETY_HYUNDAI_LEGACY, 1)
 
   def _user_gas_msg(self, gas):
     values = {"Accel_Pedal_Pos": gas}
@@ -245,24 +237,19 @@ class TestHyundaiLegacySafetyEV(TestHyundaiSafety):
 
 class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
   def setUp(self):
-    self.packer = CANPackerPanda("hyundai_kia_generic")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_LEGACY, 2)
-    self.safety.init_tests()
+    set_up_test(self, "hyundai_kia_generic", Panda.SAFETY_HYUNDAI_LEGACY, 2)
 
   def _user_gas_msg(self, gas):
     values = {"CR_Vcu_AccPedDep_Pos": gas}
     return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
+
 
 class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
   TX_MSGS = [[832, 0], [1265, 0], [1157, 0], [1056, 0], [1057, 0], [1290, 0], [905, 0], [1186, 0], [909, 0], [1155, 0], [2000, 0]]
   cnt_button = 0
 
   def setUp(self):
-    self.packer = CANPackerPanda("hyundai_kia_generic")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, Panda.FLAG_HYUNDAI_LONG)
-    self.safety.init_tests()
+    set_up_test(self, "hyundai_kia_generic", Panda.SAFETY_HYUNDAI, Panda.FLAG_HYUNDAI_LONG)
 
   # override these tests from PandaSafetyTest, hyundai longitudinal uses button enable
   def test_disable_control_allowed_from_cruise(self):
@@ -355,7 +342,6 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     self.assertFalse(self.safety.get_relay_malfunction())
     self._rx(make_msg(0, 1057, 8))
     self.assertTrue(self.safety.get_relay_malfunction())
-
 
 
 if __name__ == "__main__":
