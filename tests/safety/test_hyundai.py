@@ -106,10 +106,6 @@ class TestHyundaiSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest)
     self.__class__.cnt_cruise += 1
     return self.packer.make_can_msg_panda("SCC12", 0, values, fix_checksum=checksum)
 
-  def _set_prev_torque(self, t):
-    self.safety.set_desired_torque_last(t)
-    self.safety.set_rt_torque_last(t)
-
   # TODO: this is unused
   def _torque_driver_msg(self, torque):
     values = {"CR_Mdps_StrColTq": torque}
@@ -118,6 +114,9 @@ class TestHyundaiSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest)
   def _torque_cmd_msg(self, torque):
     values = {"CR_Lkas_StrToqReq": torque}
     return self.packer.make_can_msg_panda("LKAS11", 0, values)
+
+  def _torque_meas_msg(self, torque):
+    pass
 
   def test_non_realtime_limit_down(self):
     # TODO: implement this
