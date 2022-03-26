@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import unittest
 from panda import Panda
+from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import set_up_test
+from panda.tests.safety.common import CANPackerPanda
 
 MAX_RATE_UP = 10
 MAX_RATE_DOWN = 25
@@ -25,7 +26,10 @@ class TestMazdaSafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
-    set_up_test(self, "mazda_2017", Panda.SAFETY_MAZDA, 0)
+    self.packer = CANPackerPanda("mazda_2017")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_MAZDA, 0)
+    self.safety.init_tests()
 
   def _torque_meas_msg(self, torque):
     values = {"STEER_TORQUE_MOTOR": torque}

@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 from panda import Panda
 import panda.tests.safety.common as common
-from panda.tests.safety.common import set_up_test
+from panda.tests.safety import libpandasafety_py
+from panda.tests.safety.common import CANPackerPanda
 
 ANGLE_DELTA_BP = [0., 5., 15.]
 ANGLE_DELTA_V = [5., .8, .15]     # windup limit
@@ -11,7 +12,6 @@ ANGLE_DELTA_VU = [5., 3.5, 0.4]   # unwind limit
 
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
-
 
 class CONTROL_LEVER_STATE:
   DN_1ST = 32
@@ -22,10 +22,8 @@ class CONTROL_LEVER_STATE:
   FWD = 1
   IDLE = 0
 
-
 def sign(a):
   return 1 if a > 0 else -1
-
 
 class TestTeslaSafety(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 0
@@ -34,6 +32,7 @@ class TestTeslaSafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
+    self.packer = None
     raise unittest.SkipTest
 
   def _angle_meas_msg(self, angle):
@@ -90,7 +89,10 @@ class TestTeslaSteeringSafety(TestTeslaSafety):
   FWD_BLACKLISTED_ADDRS = {2: [0x488]}
 
   def setUp(self):
-    set_up_test(self, "tesla_can", Panda.SAFETY_TESLA, 0)
+    self.packer = CANPackerPanda("tesla_can")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, 0)
+    self.safety.init_tests()
 
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
@@ -185,15 +187,16 @@ class TestTeslaLongitudinalSafety(TestTeslaSafety):
         send = (MIN_ACCEL <= min_accel <= MAX_ACCEL) and (MIN_ACCEL <= max_accel <= MAX_ACCEL)
         self.assertEqual(self._tx(self._long_control_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])), send)
 
-
 class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafety):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2], [0x2B9, 0]]
   RELAY_MALFUNCTION_ADDR = 0x488
   FWD_BLACKLISTED_ADDRS = {2: [0x2B9, 0x488]}
 
   def setUp(self):
-    set_up_test(self, "tesla_can", Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL)
-
+    self.packer = CANPackerPanda("tesla_can")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL)
+    self.safety.init_tests()
 
 class TestTeslaPTLongitudinalSafety(TestTeslaLongitudinalSafety):
   TX_MSGS = [[0x2BF, 0]]
@@ -201,8 +204,10 @@ class TestTeslaPTLongitudinalSafety(TestTeslaLongitudinalSafety):
   FWD_BLACKLISTED_ADDRS = {2: [0x2BF]}
 
   def setUp(self):
-    set_up_test(self, "tesla_powertrain", Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL | Panda.FLAG_TESLA_POWERTRAIN)
-
+    self.packer = CANPackerPanda("tesla_powertrain")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL | Panda.FLAG_TESLA_POWERTRAIN)
+    self.safety.init_tests()
 
 if __name__ == "__main__":
   unittest.main()

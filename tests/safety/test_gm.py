@@ -3,8 +3,9 @@ import unittest
 from typing import Dict, List
 import numpy as np
 from panda import Panda
+from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, ALTERNATIVE_EXPERIENCE, set_up_test
+from panda.tests.safety.common import CANPackerPanda, ALTERNATIVE_EXPERIENCE
 
 MAX_RATE_UP = 7
 MAX_RATE_DOWN = 17
@@ -37,8 +38,11 @@ class TestGmSafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP: Dict[int, int] = {}
 
   def setUp(self):
-    set_up_test(self, "gm_global_a_powertrain_generated", Panda.SAFETY_GM, 0)
+    self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
+    self.safety.init_tests()
 
   # override these tests from PandaSafetyTest, GM uses button enable
   def test_disable_control_allowed_from_cruise(self):

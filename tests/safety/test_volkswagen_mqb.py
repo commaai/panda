@@ -2,8 +2,9 @@
 import unittest
 import numpy as np
 from panda import Panda
+from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import MAX_WRONG_COUNTERS, set_up_test
+from panda.tests.safety.common import CANPackerPanda, MAX_WRONG_COUNTERS
 
 MAX_RATE_UP = 4
 MAX_RATE_DOWN = 10
@@ -252,7 +253,10 @@ class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
-    set_up_test(self, "vw_mqb_2010", Panda.SAFETY_VOLKSWAGEN_MQB, 0)
+    self.packer = CANPackerPanda("vw_mqb_2010")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
+    self.safety.init_tests()
 
   def test_spam_cancel_safety_check(self):
     self.safety.set_controls_allowed(0)

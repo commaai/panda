@@ -2,8 +2,9 @@
 import unittest
 import numpy as np
 from panda import Panda
+from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import set_up_test
+from panda.tests.safety.common import CANPackerPanda
 
 MAX_RATE_UP = 50
 MAX_RATE_DOWN = 70
@@ -31,7 +32,10 @@ class TestSubaruSafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
-    set_up_test(self, "subaru_global_2017_generated", Panda.SAFETY_SUBARU, 0)
+    self.packer = CANPackerPanda("subaru_global_2017_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, 0)
+    self.safety.init_tests()
 
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)
