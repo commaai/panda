@@ -124,6 +124,9 @@ class TestHyundaiSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest)
     self.safety.set_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
 
+  def test_torque_measurements(self):
+    pass
+
   def test_exceed_torque_error_limit(self):
     # Hyundai has no torque error limit
     pass

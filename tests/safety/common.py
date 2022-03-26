@@ -224,8 +224,7 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
       self.assertTrue(self._tx(self._torque_cmd_msg(sign * self.MAX_RT_DELTA)))
       self.assertTrue(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA + 1))))
 
-  def test_torque_measurements(self):
-    raise unittest.SkipTest
+  def test_torque_measurements(self):  # TODO: rename
     trq = 50
     for t in [trq, -trq, 0, 0, 0, 0]:
       self._rx(self._torque_meas_msg(t))
