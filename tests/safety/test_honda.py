@@ -314,7 +314,7 @@ class TestHondaNidecSafetyBase(HondaBase):
     values = {"COMPUTER_BRAKE": brake}
     return self.packer.make_can_msg_panda("BRAKE_COMMAND", 0, values)
 
-  def _send_acc_hud_msg(self, pcm_gas, pcm_speed):
+  def _accel_control_msg(self, pcm_gas, pcm_speed=0, aeb_req=0, aeb_decel=0):  # superset of all implemented functions
     # Used to control ACC on Nidec without pedal
     values = {"PCM_GAS": pcm_gas, "PCM_SPEED": pcm_speed}
     return self.packer.make_can_msg_panda("ACC_HUD", 0, values)
@@ -325,7 +325,7 @@ class TestHondaNidecSafetyBase(HondaBase):
       for pcm_gas in range(0, 0xc6):
         for pcm_speed in range(0, 100):
           send = True if controls_allowed else pcm_gas == 0 and pcm_speed == 0
-          self.assertEqual(send, self.safety.safety_tx_hook(self._send_acc_hud_msg(pcm_gas, pcm_speed)))
+          self.assertEqual(send, self.safety.safety_tx_hook(self._accel_control_msg(pcm_gas, pcm_speed)))
 
   def test_fwd_hook(self):
     # normal operation, not forwarding AEB
@@ -355,17 +355,16 @@ class TestHondaNidecSafetyBase(HondaBase):
     self.safety.set_honda_fwd_brake(False)
 
   def test_tx_hook_on_interceptor_pressed(self):
+    # raise unittest.SkipTest
     for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
       self.safety.set_alternative_experience(mode)
       # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
-      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
       self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
       allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
 
       self.safety.set_controls_allowed(1)
       self.safety.set_honda_fwd_brake(False)
       self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(self.MAX_BRAKE)))
-      self.assertEqual(allow_ctrl, self._tx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD, 0x200)))
       self.assertEqual(allow_ctrl, self._tx(self._send_steer_msg(0x1000)))
 
       # reset status
@@ -378,7 +377,7 @@ class TestHondaNidecSafetyBase(HondaBase):
 
 
 
-class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
+class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase, common.PandaLongitudinalSafetyTest):
   """
     Covers the Honda Nidec safety mode
   """
