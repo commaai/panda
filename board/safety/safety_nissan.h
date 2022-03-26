@@ -106,7 +106,7 @@ static int nissan_rx_hook(CANPacket_t *to_push) {
 }
 
 
-static int nissan_tx_hook(CANPacket_t *to_send) {
+static int nissan_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
   bool violation = 0;
@@ -123,7 +123,7 @@ static int nissan_tx_hook(CANPacket_t *to_send) {
     // offeset 1310 * NISSAN_DEG_TO_CAN
     desired_angle =  desired_angle - 131000;
 
-    if (controls_allowed && lka_active) {
+    if (current_controls_allowed && lka_active) {
       // add 1 to not false trigger the violation
       float delta_angle_float;
       delta_angle_float = (interpolate(NISSAN_LOOKUP_ANGLE_RATE_UP, vehicle_speed) * NISSAN_DEG_TO_CAN) + 1.;
@@ -139,14 +139,14 @@ static int nissan_tx_hook(CANPacket_t *to_send) {
     desired_angle_last = desired_angle;
 
     // desired steer angle should be the same as steer angle measured when controls are off
-    if ((!controls_allowed) &&
+    if ((!current_controls_allowed) &&
           ((desired_angle < (angle_meas.min - 1)) ||
           (desired_angle > (angle_meas.max + 1)))) {
       violation = 1;
     }
 
     // no lka_enabled bit if controls not allowed
-    if (!controls_allowed && lka_active) {
+    if (!current_controls_allowed && lka_active) {
       violation = 1;
     }
   }

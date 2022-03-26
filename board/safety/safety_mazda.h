@@ -80,7 +80,7 @@ static int mazda_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int mazda_tx_hook(CANPacket_t *to_send) {
+static int mazda_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
@@ -98,7 +98,7 @@ static int mazda_tx_hook(CANPacket_t *to_send) {
       bool violation = 0;
       uint32_t ts = microsecond_timer_get();
 
-      if (controls_allowed) {
+      if (current_controls_allowed) {
 
         // *** global torque limit check ***
         violation |= max_limit_check(desired_torque, MAZDA_MAX_STEER, -MAZDA_MAX_STEER);
@@ -123,12 +123,12 @@ static int mazda_tx_hook(CANPacket_t *to_send) {
       }
 
       // no torque if controls is not allowed
-      if (!controls_allowed && (desired_torque != 0)) {
+      if (!current_controls_allowed && (desired_torque != 0)) {
         violation = 1;
       }
 
       // reset to 0 if either controls is not allowed or there's a violation
-      if (violation || !controls_allowed) {
+      if (violation || !current_controls_allowed) {
         desired_torque_last = 0;
         rt_torque_last = 0;
         ts_last = ts;
@@ -144,7 +144,7 @@ static int mazda_tx_hook(CANPacket_t *to_send) {
       // allow resume spamming while controls allowed, but
       // only allow cancel while contrls not allowed
       bool cancel_cmd = (GET_BYTE(to_send, 0) == 0x1U);
-      if (!controls_allowed && !cancel_cmd) {
+      if (!current_controls_allowed && !cancel_cmd) {
         tx = 0;
       }
     }

@@ -117,7 +117,7 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
 }
 
 
-static int tesla_tx_hook(CANPacket_t *to_send) {
+static int tesla_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
   bool violation = false;
@@ -138,7 +138,7 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
                                  (steer_control_type != 3);    // DISABLED
 
     // Rate limit while steering
-    if(controls_allowed && steer_control_enabled) {
+    if(current_controls_allowed && steer_control_enabled) {
       // Add 1 to not false trigger the violation
       float delta_angle_float;
       delta_angle_float = (interpolate(TESLA_LOOKUP_ANGLE_RATE_UP, vehicle_speed) * TESLA_DEG_TO_CAN);
@@ -154,12 +154,12 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
     desired_angle_last = desired_angle;
 
     // Angle should be the same as current angle while not steering
-    if(!controls_allowed && ((desired_angle < (angle_meas.min - 1)) || (desired_angle > (angle_meas.max + 1)))) {
+    if(!current_controls_allowed && ((desired_angle < (angle_meas.min - 1)) || (desired_angle > (angle_meas.max + 1)))) {
       violation = true;
     }
 
     // No angle control allowed when controls are not allowed
-    if(!controls_allowed && steer_control_enabled) {
+    if(!current_controls_allowed && steer_control_enabled) {
       violation = true;
     }
   }

@@ -232,7 +232,7 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int hyundai_tx_hook(CANPacket_t *to_send) {
+static int hyundai_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -264,7 +264,7 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
 
     bool violation = 0;
 
-    if (!controls_allowed) {
+    if (!current_controls_allowed) {
       if ((desired_accel_raw != 0) || (desired_accel_val != 0)) {
         violation = 1;
       }
@@ -286,7 +286,7 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
     uint32_t ts = microsecond_timer_get();
     bool violation = 0;
 
-    if (controls_allowed) {
+    if (current_controls_allowed) {
 
       // *** global torque limit check ***
       violation |= max_limit_check(desired_torque, HYUNDAI_MAX_STEER, -HYUNDAI_MAX_STEER);
@@ -311,12 +311,12 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
     }
 
     // no torque if controls is not allowed
-    if (!controls_allowed && (desired_torque != 0)) {
+    if (!current_controls_allowed && (desired_torque != 0)) {
       violation = 1;
     }
 
     // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !controls_allowed) {
+    if (violation || !current_controls_allowed) {
       desired_torque_last = 0;
       rt_torque_last = 0;
       ts_last = ts;
@@ -338,7 +338,7 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
   if ((addr == 1265) && !hyundai_longitudinal) {
     int button = GET_BYTE(to_send, 0) & 0x7U;
 
-    bool allowed_resume = (button == 1) && controls_allowed;
+    bool allowed_resume = (button == 1) && current_controls_allowed;
     bool allowed_cancel = (button == 4) && cruise_engaged_prev;
     if (!(allowed_resume || allowed_cancel)) {
       tx = 0;

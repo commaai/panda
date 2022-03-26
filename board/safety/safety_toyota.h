@@ -134,7 +134,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int toyota_tx_hook(CANPacket_t *to_send) {
+static int toyota_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -149,7 +149,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
 
     // GAS PEDAL: safety check
     if (addr == 0x200) {
-      if (!controls_allowed) {
+      if (!current_controls_allowed) {
         if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
           tx = 0;
         }
@@ -160,7 +160,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
     if (addr == 0x343) {
       int desired_accel = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
       desired_accel = to_signed(desired_accel, 16);
-      if (!controls_allowed) {
+      if (!current_controls_allowed) {
         if (desired_accel != 0) {
           tx = 0;
         }
@@ -204,7 +204,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
 
       uint32_t ts = microsecond_timer_get();
 
-      if (controls_allowed) {
+      if (current_controls_allowed) {
 
         // *** global torque limit check ***
         violation |= max_limit_check(desired_torque, TOYOTA_MAX_TORQUE, -TOYOTA_MAX_TORQUE);
@@ -228,12 +228,12 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
       }
 
       // no torque if controls is not allowed
-      if (!controls_allowed && (desired_torque != 0)) {
+      if (!current_controls_allowed && (desired_torque != 0)) {
         violation = 1;
       }
 
       // reset to 0 if either controls is not allowed or there's a violation
-      if (violation || !controls_allowed) {
+      if (violation || !current_controls_allowed) {
         desired_torque_last = 0;
         rt_torque_last = 0;
         ts_last = ts;

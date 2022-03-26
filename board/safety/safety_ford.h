@@ -65,19 +65,10 @@ static int ford_rx_hook(CANPacket_t *to_push) {
 // else
 //     block all commands that produce actuation
 
-static int ford_tx_hook(CANPacket_t *to_send) {
+static int ford_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
-
-  // disallow actuator commands if gas or brake (with vehicle moving) are pressed
-  // and the the latching controls_allowed flag is True
-  int pedal_pressed = brake_pressed_prev && vehicle_moving;
-  bool alt_exp_allow_gas = alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS;
-  if (!alt_exp_allow_gas) {
-    pedal_pressed = pedal_pressed || gas_pressed_prev;
-  }
-  bool current_controls_allowed = controls_allowed && !(pedal_pressed);
 
   // STEER: safety check
   if (addr == 0x3CA) {

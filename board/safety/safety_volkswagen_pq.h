@@ -114,7 +114,7 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int volkswagen_pq_tx_hook(CANPacket_t *to_send) {
+static int volkswagen_pq_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
   int addr = GET_ADDR(to_send);
   int tx = 1;
 
@@ -136,7 +136,7 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send) {
     bool violation = false;
     uint32_t ts = microsecond_timer_get();
 
-    if (controls_allowed) {
+    if (current_controls_allowed) {
       // *** global torque limit check ***
       violation |= max_limit_check(desired_torque, VOLKSWAGEN_PQ_MAX_STEER, -VOLKSWAGEN_PQ_MAX_STEER);
 
@@ -158,12 +158,12 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send) {
     }
 
     // no torque if controls is not allowed
-    if (!controls_allowed && (desired_torque != 0)) {
+    if (!current_controls_allowed && (desired_torque != 0)) {
       violation = true;
     }
 
     // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !controls_allowed) {
+    if (violation || !current_controls_allowed) {
       desired_torque_last = 0;
       rt_torque_last = 0;
       ts_last = ts;
@@ -176,7 +176,7 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send) {
 
   // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
   // This avoids unintended engagements while still allowing resume spam
-  if ((addr == MSG_GRA_NEU) && !controls_allowed) {
+  if ((addr == MSG_GRA_NEU) && !current_controls_allowed) {
     // disallow resume and set: bits 16 and 17
     if ((GET_BYTE(to_send, 2) & 0x3U) != 0U) {
       tx = 0;

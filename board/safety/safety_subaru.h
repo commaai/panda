@@ -146,7 +146,7 @@ static int subaru_legacy_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int subaru_tx_hook(CANPacket_t *to_send) {
+static int subaru_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
@@ -162,7 +162,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
     desired_torque = -1 * to_signed(desired_torque, 13);
 
-    if (controls_allowed) {
+    if (current_controls_allowed) {
 
       // *** global torque limit check ***
       violation |= max_limit_check(desired_torque, SUBARU_MAX_STEER, -SUBARU_MAX_STEER);
@@ -187,12 +187,12 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     }
 
     // no torque if controls is not allowed
-    if (!controls_allowed && (desired_torque != 0)) {
+    if (!current_controls_allowed && (desired_torque != 0)) {
       violation = 1;
     }
 
     // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !controls_allowed) {
+    if (violation || !current_controls_allowed) {
       desired_torque_last = 0;
       rt_torque_last = 0;
       ts_last = ts;
@@ -206,7 +206,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static int subaru_legacy_tx_hook(CANPacket_t *to_send) {
+static int subaru_legacy_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
@@ -222,7 +222,7 @@ static int subaru_legacy_tx_hook(CANPacket_t *to_send) {
 
     desired_torque = -1 * to_signed(desired_torque, 13);
 
-    if (controls_allowed) {
+    if (current_controls_allowed) {
 
       // *** global torque limit check ***
       violation |= max_limit_check(desired_torque, SUBARU_MAX_STEER, -SUBARU_MAX_STEER);
@@ -247,12 +247,12 @@ static int subaru_legacy_tx_hook(CANPacket_t *to_send) {
     }
 
     // no torque if controls is not allowed
-    if (!controls_allowed && (desired_torque != 0)) {
+    if (!current_controls_allowed && (desired_torque != 0)) {
       violation = 1;
     }
 
     // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !controls_allowed) {
+    if (violation || !current_controls_allowed) {
       desired_torque_last = 0;
       rt_torque_last = 0;
       ts_last = ts;
