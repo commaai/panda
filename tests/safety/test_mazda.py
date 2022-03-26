@@ -31,7 +31,7 @@ class TestMazdaSafety(common.PandaSafetyTest):
     self.safety.set_safety_hooks(Panda.SAFETY_MAZDA, 0)
     self.safety.init_tests()
 
-  def _torque_meas_msg(self, torque):
+  def _torque_driver_msg(self, torque):
     values = {"STEER_TORQUE_MOTOR": torque}
     return self.packer.make_can_msg_panda("STEER_TORQUE", 0, values)
 

@@ -10,6 +10,7 @@ from panda.tests.safety.common import CANPackerPanda, make_msg, ALTERNATIVE_EXPE
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
 
+
 class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
                        common.TorqueSteeringSafetyTest):
 
@@ -30,7 +31,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   MAX_RT_DELTA = 450
   RT_INTERVAL = 250000
   MAX_TORQUE_ERROR = 350
-  TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conversative for rounding
+  TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conservative for rounding
   EPS_SCALE = 0.73
 
   def setUp(self):
@@ -39,11 +40,11 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 73)
     self.safety.init_tests()
 
-  def _torque_meas_msg(self, torque):
+  def _torque_driver_msg(self, torque):
     values = {"STEER_TORQUE_EPS": (torque/self.EPS_SCALE)}
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
 
-  def _torque_msg(self, torque):
+  def _torque_cmd_msg(self, torque):
     values = {"STEER_TORQUE_CMD": torque}
     return self.packer.make_can_msg_panda("STEERING_LKA", 0, values)
 
@@ -132,7 +133,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     for msg in ["trq", "pcm"]:
       self.safety.set_controls_allowed(1)
       if msg == "trq":
-        to_push = self._torque_meas_msg(0)
+        to_push = self._torque_driver_msg(0)
       if msg == "pcm":
         to_push = self._pcm_status_msg(True)
       self.assertTrue(self._rx(to_push))

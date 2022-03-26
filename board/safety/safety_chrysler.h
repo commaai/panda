@@ -71,10 +71,10 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // Measured eps torque
     if (addr == 544) {
-      int torque_meas_new = ((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5) - 1024U;
+      int torque_driver_new = ((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5) - 1024U;
 
       // update array of samples
-      update_sample(&torque_meas, torque_meas_new);
+      update_sample(&torque_driver, torque_driver_new);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -134,7 +134,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
 
       // *** torque rate limit check ***
       violation |= dist_to_meas_check(desired_torque, desired_torque_last,
-        &torque_meas, CHRYSLER_MAX_RATE_UP, CHRYSLER_MAX_RATE_DOWN, CHRYSLER_MAX_TORQUE_ERROR);
+        &torque_driver, CHRYSLER_MAX_RATE_UP, CHRYSLER_MAX_RATE_DOWN, CHRYSLER_MAX_TORQUE_ERROR);
 
       // used next time
       desired_torque_last = desired_torque;
