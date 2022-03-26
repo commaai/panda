@@ -8,12 +8,14 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, make_msg, MAX_WRONG_COUNTERS, ALTERNATIVE_EXPERIENCE
 
+
 class Btn:
   NONE = 0
   MAIN = 1
   CANCEL = 2
   SET = 3
   RESUME = 4
+
 
 HONDA_NIDEC = 0
 HONDA_BOSCH = 1
