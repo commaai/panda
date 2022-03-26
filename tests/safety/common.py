@@ -127,7 +127,7 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
       raise unittest.SkipTest
 
   @abc.abstractmethod
-  def _torque_driver_msg(self, torque):
+  def _torque_meas_msg(self, torque):
     pass
 
   @abc.abstractmethod
@@ -226,7 +226,7 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
     raise unittest.SkipTest
     trq = 50
     for t in [trq, -trq, 0, 0, 0, 0]:
-      self._rx(self._torque_driver_msg(t))
+      self._rx(self._torque_meas_msg(t))
 
     max_range = range(trq, trq + self.TORQUE_MEAS_TOLERANCE + 1)
     min_range = range(-(trq + self.TORQUE_MEAS_TOLERANCE), -trq + 1)
@@ -235,13 +235,13 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
 
     max_range = range(0, self.TORQUE_MEAS_TOLERANCE + 1)
     min_range = range(-(trq + self.TORQUE_MEAS_TOLERANCE), -trq + 1)
-    self._rx(self._torque_driver_msg(0))
+    self._rx(self._torque_meas_msg(0))
     self.assertTrue(self.safety.get_torque_meas_min() in min_range)
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
     max_range = range(0, self.TORQUE_MEAS_TOLERANCE + 1)
     min_range = range(-self.TORQUE_MEAS_TOLERANCE, 0 + 1)
-    self._rx(self._torque_driver_msg(0))
+    self._rx(self._torque_meas_msg(0))
     self.assertTrue(self.safety.get_torque_meas_min() in min_range)
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 

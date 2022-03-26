@@ -69,18 +69,18 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
 
     // get eps motor torque (0.66 factor in dbc)
     if (addr == 0x260) {
-      int torque_driver_new = (GET_BYTE(to_push, 5) << 8) | GET_BYTE(to_push, 6);
-      torque_driver_new = to_signed(torque_driver_new, 16);
+      int torque_meas_new = (GET_BYTE(to_push, 5) << 8) | GET_BYTE(to_push, 6);
+      torque_meas_new = to_signed(torque_meas_new, 16);
 
       // scale by dbc_factor
-      torque_driver_new = (torque_driver_new * toyota_dbc_eps_torque_factor) / 100;
+      torque_meas_new = (torque_meas_new * toyota_dbc_eps_torque_factor) / 100;
 
       // update array of sample
-      update_sample(&torque_driver, torque_driver_new);
+      update_sample(&torque_meas, torque_meas_new);
 
-      // increase torque_driver by 1 to be conservative on rounding
-      torque_driver.min--;
-      torque_driver.max++;
+      // increase torque_meas by 1 to be conservative on rounding
+      torque_meas.min--;
+      torque_meas.max++;
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -211,7 +211,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
 
         // *** torque rate limit check ***
         violation |= dist_to_meas_check(desired_torque, desired_torque_last,
-          &torque_driver, TOYOTA_MAX_RATE_UP, TOYOTA_MAX_RATE_DOWN, TOYOTA_MAX_TORQUE_ERROR);
+          &torque_meas, TOYOTA_MAX_RATE_UP, TOYOTA_MAX_RATE_DOWN, TOYOTA_MAX_TORQUE_ERROR);
 
         // used next time
         desired_torque_last = desired_torque;

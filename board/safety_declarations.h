@@ -117,7 +117,7 @@ int cruise_button_prev = 0;
 // for safety modes with torque steering control
 int desired_torque_last = 0;       // last desired steer torque
 int rt_torque_last = 0;            // last desired torque for real time check
-struct sample_t torque_driver;       // last 3 motor torques produced by the eps
+struct sample_t torque_meas;       // last 3 motor torques produced by the eps
 struct sample_t torque_driver;     // last 3 driver torques measured
 uint32_t ts_last = 0;
 

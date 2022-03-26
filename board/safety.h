@@ -281,8 +281,8 @@ int set_safety_hooks(uint16_t mode, int16_t param) {
   desired_angle_last = 0;
   ts_last = 0;
 
-  torque_driver.max = 0;
-  torque_driver.max = 0;
+  torque_meas.max = 0;
+  torque_meas.max = 0;
   torque_driver.min = 0;
   torque_driver.max = 0;
   angle_meas.min = 0;
