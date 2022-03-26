@@ -479,7 +479,7 @@ class PandaLongitudinalSafetyTest(PandaSafetyTestBase):
   def _accel_control_msg(self, accel, aeb_req, aeb_decel):  # superset of all implemented functions
     pass
 
-  def test_disable_longitudinal_on_gas(self):
+  def test_disable_longitudinal_no_disengage_on_gas(self):
     self._rx(self._gas_msg(0))
     self.safety.set_controls_allowed(True)
     self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
