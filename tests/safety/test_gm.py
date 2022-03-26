@@ -12,9 +12,6 @@ MAX_BRAKE = 350
 MAX_GAS = 3072
 MAX_REGEN = 1404
 
-DRIVER_TORQUE_ALLOWANCE = 50
-DRIVER_TORQUE_FACTOR = 4
-
 
 class Buttons:
   UNPRESS = 1
@@ -39,6 +36,8 @@ class TestGmSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest):
   MAX_TORQUE = 300
   MAX_RT_DELTA = 128
   RT_INTERVAL = 250000
+  DRIVER_TORQUE_ALLOWANCE = 50
+  DRIVER_TORQUE_FACTOR = 4
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -84,6 +83,7 @@ class TestGmSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest):
     values = {"GasRegenCmd": gas}
     return self.packer.make_can_msg_panda("ASCMGasRegenCmd", 0, values)
 
+  # TODO: this is unused
   def _torque_driver_msg(self, torque):
     values = {"LKADriverAppldTrq": torque}
     return self.packer.make_can_msg_panda("PSCMStatus", 0, values)
@@ -133,59 +133,17 @@ class TestGmSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest):
         else:
           self.assertTrue(self._tx(self._send_gas_msg(g)))
 
-  def test_non_realtime_limit_up(self):
-    self.safety.set_torque_driver(0, 0)
-    self.safety.set_controls_allowed(True)
+  def test_torque_measurements(self):  # TODO: implement
+    pass
 
-    self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_RATE_UP)))
-    self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP)))
-
-    self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_RATE_UP + 1)))
-    self.safety.set_controls_allowed(True)
-    self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP - 1)))
+  def test_exceed_torque_error_limit(self):
+    # GM has no torque error limit, run test_against_torque_driver instead
+    pass
 
   def test_non_realtime_limit_down(self):
+    # TODO: implement this
     self.safety.set_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
-
-  def test_against_torque_driver(self):
-    self.safety.set_controls_allowed(True)
-
-    for sign in [-1, 1]:
-      for t in np.arange(0, DRIVER_TORQUE_ALLOWANCE + 1, 1):
-        t *= -sign
-        self.safety.set_torque_driver(t, t)
-        self._set_prev_torque(self.MAX_TORQUE * sign)
-        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE * sign)))
-
-      self.safety.set_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_TORQUE)))
-
-    # spot check some individual cases
-    for sign in [-1, 1]:
-      driver_torque = (DRIVER_TORQUE_ALLOWANCE + 10) * sign
-      torque_desired = (self.MAX_TORQUE - 10 * DRIVER_TORQUE_FACTOR) * sign
-      delta = 1 * sign
-      self._set_prev_torque(torque_desired)
-      self.safety.set_torque_driver(-driver_torque, -driver_torque)
-      self.assertTrue(self._tx(self._torque_cmd_msg(torque_desired)))
-      self._set_prev_torque(torque_desired + delta)
-      self.safety.set_torque_driver(-driver_torque, -driver_torque)
-      self.assertFalse(self._tx(self._torque_cmd_msg(torque_desired + delta)))
-
-      self._set_prev_torque(self.MAX_TORQUE * sign)
-      self.safety.set_torque_driver(-self.MAX_TORQUE * sign, -self.MAX_TORQUE * sign)
-      self.assertTrue(self._tx(self._torque_cmd_msg((self.MAX_TORQUE - self.MAX_RATE_DOWN) * sign)))
-      self._set_prev_torque(self.MAX_TORQUE * sign)
-      self.safety.set_torque_driver(-self.MAX_TORQUE * sign, -self.MAX_TORQUE * sign)
-      self.assertTrue(self._tx(self._torque_cmd_msg(0)))
-      self._set_prev_torque(self.MAX_TORQUE * sign)
-      self.safety.set_torque_driver(-self.MAX_TORQUE * sign, -self.MAX_TORQUE * sign)
-      self.assertFalse(self._tx(self._torque_cmd_msg((self.MAX_TORQUE - self.MAX_RATE_DOWN + 1) * sign)))
 
   def test_realtime_limits(self):
     self.safety.set_controls_allowed(True)

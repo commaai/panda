@@ -6,17 +6,16 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, make_msg
 
-DRIVER_TORQUE_ALLOWANCE = 50
-DRIVER_TORQUE_FACTOR = 2
-
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
+
 
 class Buttons:
   NONE = 0
   RESUME = 1
   SET = 2
   CANCEL = 4
+
 
 # 4 bit checkusm used in some hyundai messages
 # lives outside the can packer because we never send this msg
@@ -64,9 +63,10 @@ class TestHyundaiSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest)
   MAX_RATE_UP = 3
   MAX_RATE_DOWN = 7
   MAX_TORQUE = 384
-
   MAX_RT_DELTA = 112
   RT_INTERVAL = 250000
+  DRIVER_TORQUE_ALLOWANCE = 50
+  DRIVER_TORQUE_FACTOR = 2
 
   cnt_gas = 0
   cnt_speed = 0
@@ -123,48 +123,12 @@ class TestHyundaiSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest)
     self.safety.set_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
 
-  def test_torque_measurements(self):
+  def test_torque_measurements(self):  # TODO: implement
     pass
 
   def test_exceed_torque_error_limit(self):
-    # Hyundai has no torque error limit
+    # Hyundai has no torque error limit, run test_against_torque_driver instead
     pass
-
-  def test_against_torque_driver(self):
-    # Runs instead of test_exceed_torque_error_limit
-    self.safety.set_controls_allowed(True)
-
-    for sign in [-1, 1]:
-      for t in np.arange(0, DRIVER_TORQUE_ALLOWANCE + 1, 1):
-        t *= -sign
-        self.safety.set_torque_driver(t, t)
-        self._set_prev_torque(self.MAX_TORQUE * sign)
-        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE * sign)))
-
-      self.safety.set_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_TORQUE)))
-
-    # spot check some individual cases
-    for sign in [-1, 1]:
-      driver_torque = (DRIVER_TORQUE_ALLOWANCE + 10) * sign
-      torque_desired = (self.MAX_TORQUE - 10 * DRIVER_TORQUE_FACTOR) * sign
-      delta = 1 * sign
-      self._set_prev_torque(torque_desired)
-      self.safety.set_torque_driver(-driver_torque, -driver_torque)
-      self.assertTrue(self._tx(self._torque_cmd_msg(torque_desired)))
-      self._set_prev_torque(torque_desired + delta)
-      self.safety.set_torque_driver(-driver_torque, -driver_torque)
-      self.assertFalse(self._tx(self._torque_cmd_msg(torque_desired + delta)))
-
-      self._set_prev_torque(self.MAX_TORQUE * sign)
-      self.safety.set_torque_driver(-self.MAX_TORQUE * sign, -self.MAX_TORQUE * sign)
-      self.assertTrue(self._tx(self._torque_cmd_msg((self.MAX_TORQUE - self.MAX_RATE_DOWN) * sign)))
-      self._set_prev_torque(self.MAX_TORQUE * sign)
-      self.safety.set_torque_driver(-self.MAX_TORQUE * sign, -self.MAX_TORQUE * sign)
-      self.assertTrue(self._tx(self._torque_cmd_msg(0)))
-      self._set_prev_torque(self.MAX_TORQUE * sign)
-      self.safety.set_torque_driver(-self.MAX_TORQUE * sign, -self.MAX_TORQUE * sign)
-      self.assertFalse(self._tx(self._torque_cmd_msg((self.MAX_TORQUE - self.MAX_RATE_DOWN + 1) * sign)))
 
   def test_realtime_limits(self):
     self.safety.set_controls_allowed(True)

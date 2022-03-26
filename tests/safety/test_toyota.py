@@ -82,6 +82,11 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     to_send[0].data[3] = gas & 0xFF
     return to_send
 
+  def test_against_torque_driver(self):
+    # Toyota does not check driver torque for control,
+    # run test_exceed_torque_error_limit instead
+    pass
+
   def test_block_aeb(self):
     for controls_allowed in (True, False):
       for bad in (True, False):
