@@ -194,7 +194,8 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
     self.safety.set_rt_torque_last(self.MAX_TORQUE)
     self.safety.set_torque_meas(torque_meas, torque_meas)
     self.safety.set_desired_torque_last(self.MAX_TORQUE)
-    self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE - self.MAX_RATE_DOWN + 100)))
+    # TODO: why doesn't +1 fail on some cars?
+    self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE - self.MAX_RATE_DOWN + 1)))
 
   def test_exceed_torque_error_limit(self):
     # For cars with a torque error limit

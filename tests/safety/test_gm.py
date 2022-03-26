@@ -152,13 +152,13 @@ class TestGmSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest):
       self.safety.init_tests()
       self._set_prev_torque(0)
       self.safety.set_torque_driver(0, 0)
-      for t in np.arange(0, self.MAX_RT_DELTA, 1):
+      for t in np.arange(0, self.MAX_RT_DELTA + 1, 1):
         t *= sign
         self.assertTrue(self._tx(self._torque_cmd_msg(t)))
       self.assertFalse(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA + 1))))
 
       self._set_prev_torque(0)
-      for t in np.arange(0, self.MAX_RT_DELTA, 1):
+      for t in np.arange(0, self.MAX_RT_DELTA + 1, 1):
         t *= sign
         self.assertTrue(self._tx(self._torque_cmd_msg(t)))
 
