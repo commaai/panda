@@ -92,12 +92,11 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
       self.safety.set_gas_interceptor_detected(False)
     self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DEFAULT)
 
-    # Test we don't allow any interceptor actuation while gas is pressed
-    self._rx(self._interceptor_msg(0x1000, 0x201))
+    # Test that we don't allow any interceptor actuation while gas is pressed
     self.assertTrue(self._tx(self._interceptor_msg(0, 0x200)))
     self.assertFalse(self._tx(self._interceptor_msg(0x1000, 0x200)))
 
-    self._rx(self._interceptor_msg(0, 0x201))
+    self._rx(self._interceptor_msg(0, 0x201))  # user releases gas
     self.assertTrue(self._tx(self._interceptor_msg(0x1000, 0x200)))
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
