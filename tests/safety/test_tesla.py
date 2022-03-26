@@ -55,11 +55,11 @@ class TestTeslaSafety(common.PandaSafetyTest):
     values = {"DI_vehicleSpeed": speed / 0.447}
     return self.packer.make_can_msg_panda("DI_torque2", 0, values)
 
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     values = {"driverBrakeStatus": 2 if brake else 1}
     return self.packer.make_can_msg_panda("BrakeMessage", 0, values)
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"DI_pedalPos": gas}
     return self.packer.make_can_msg_panda("DI_torque1", 0, values)
 

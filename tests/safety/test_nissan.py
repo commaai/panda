@@ -56,11 +56,11 @@ class TestNissanSafety(common.PandaSafetyTest):
     values = {"WHEEL_SPEED_%s" % s: speed * 3.6 for s in ["RR", "RL"]}
     return self.packer.make_can_msg_panda("WHEEL_SPEEDS_REAR", 0, values)
 
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     values = {"USER_BRAKE_PRESSED": brake}
     return self.packer.make_can_msg_panda("DOORS_LIGHTS", 1, values)
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"GAS_PEDAL": gas}
     return self.packer.make_can_msg_panda("GAS_PEDAL", 0, values)
 
@@ -149,11 +149,11 @@ class TestNissanLeafSafety(TestNissanSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
     self.safety.init_tests()
 
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     values = {"USER_BRAKE_PRESSED": brake}
     return self.packer.make_can_msg_panda("CRUISE_THROTTLE", 0, values)
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"GAS_PEDAL": gas}
     return self.packer.make_can_msg_panda("CRUISE_THROTTLE", 0, values)
 

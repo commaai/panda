@@ -59,11 +59,11 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     values = {("WHEEL_SPEED_%s" % n): speed for n in ["FR", "FL", "RR", "RL"]}
     return self.packer.make_can_msg_panda("WHEEL_SPEEDS", 0, values)
 
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     values = {"BRAKE_PRESSED": brake}
     return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     cruise_active = self.safety.get_controls_allowed()
     values = {"GAS_RELEASED": not gas, "CRUISE_ACTIVE": cruise_active}
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
