@@ -403,6 +403,11 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
+  def test_disengage_on_brake_rising_edge(self):
+    self.safety.set_controls_allowed(1)
+    self._rx(self._brake_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+
   def test_sample_speed(self):
     self.assertFalse(self.safety.get_vehicle_moving())
 
