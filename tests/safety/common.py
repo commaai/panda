@@ -382,7 +382,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
       self._rx(self._pcm_status_msg(not engaged))
       self.assertEqual(not engaged, self.safety.get_cruise_engaged_prev())
 
-  def test_allow_brake_at_zero_speed(self):
+  def test_allow_brake_at_standstill(self):
     # Brake was already pressed
     self._rx(self._speed_msg(0))
     self._rx(self._brake_msg(1))
@@ -391,10 +391,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertTrue(self.safety.get_controls_allowed())
     self._rx(self._brake_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
-    # rising edge of brake should disengage
-    self._rx(self._brake_msg(1))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self._rx(self._brake_msg(0))  # reset no brakes
 
   def test_not_allow_brake_when_moving(self):
     # Brake was already pressed
@@ -406,7 +402,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
     self._rx(self._brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
-    self._rx(self._speed_msg(0))
 
   def test_sample_speed(self):
     self.assertFalse(self.safety.get_vehicle_moving())

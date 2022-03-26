@@ -265,11 +265,6 @@ class HondaBase(common.PandaSafetyTest):
     # must be implemented when inherited
     raise NotImplementedError
 
-  def test_disengage_on_brake(self):
-    self.safety.set_controls_allowed(1)
-    self._rx(self._brake_msg(1))
-    self.assertFalse(self.safety.get_controls_allowed())
-
   def test_steer_safety_check(self):
     self.safety.set_controls_allowed(0)
     self.assertTrue(self._tx(self._send_steer_msg(0x0000)))
