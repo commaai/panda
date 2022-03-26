@@ -119,22 +119,8 @@ class TestHyundaiSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest)
     values = {"CR_Lkas_StrToqReq": torque}
     return self.packer.make_can_msg_panda("LKAS11", 0, values)
 
-  def test_non_realtime_limit_up(self):
-    self.safety.set_torque_driver(0, 0)
-    self.safety.set_controls_allowed(True)
-
-    self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_RATE_UP)))
-    self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP)))
-
-    self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_RATE_UP + 1)))
-    self.safety.set_controls_allowed(True)
-    self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP - 1)))
-
   def test_non_realtime_limit_down(self):
+    # TODO: implement this
     self.safety.set_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
 
