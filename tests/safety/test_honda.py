@@ -288,17 +288,14 @@ class TestHondaNidecSafetyBase(HondaBase):
 
   INTERCEPTOR_THRESHOLD = 344
 
+  DBC = "honda_civic_touring_2016_can_generated"
+  SAFETY_MODE = Panda.SAFETY_HONDA_NIDEC
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "TestHondaNidecSafetyBase":
       cls.safety = None
       raise unittest.SkipTest
-
-  def setUp(self):
-    self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
-    self.safety.init_tests_honda()
 
   # Honda gas gains are the different
   def _interceptor_msg(self, gas, addr):
@@ -398,11 +395,9 @@ class TestHondaNidecAltSafety(TestHondaNidecSafety):
   """
     Covers the Honda Nidec safety mode with alt SCM messages
   """
-  def setUp(self):
-    self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
-    self.safety.init_tests_honda()
+
+  DBC = "acura_ilx_2016_can_generated"
+  SAFETY_PARAM = Panda.FLAG_HONDA_NIDEC_ALT
 
   def _acc_state_msg(self, main_on):
     values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}
@@ -419,11 +414,6 @@ class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.Intercepto
   """
     Covers the Honda Nidec safety mode with alt SCM messages and gas interceptor
   """
-  def setUp(self):
-    self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
-    self.safety.init_tests_honda()
 
   def _acc_state_msg(self, main_on):
     values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}
@@ -447,16 +437,15 @@ class TestHondaBoschSafetyBase(HondaBase):
   TX_MSGS = [[0xE4, 0], [0xE5, 0], [0x296, 1], [0x33D, 0], [0x33DA, 0], [0x33DB, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
 
+  DBC = "honda_accord_2018_can_generated"
+  SAFETY_MODE = Panda.SAFETY_HONDA_BOSCH
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "TestHondaBoschSafetyBase":
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
-
-  def setUp(self):
-    self.packer = CANPackerPanda("honda_accord_2018_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
 
   def _alt_brake_msg(self, brake):
     values = {"BRAKE_PRESSED": brake, "COUNTER": self.cnt_brake % 4}
@@ -491,10 +480,6 @@ class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
   """
     Covers the Honda Bosch safety mode with stock longitudinal
   """
-  def setUp(self):
-    super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, 0)
-    self.safety.init_tests_honda()
 
   def test_spam_cancel_safety_check(self):
     self.safety.set_controls_allowed(0)
@@ -518,10 +503,7 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
   TX_MSGS = [[0xE4, 1], [0x1DF, 1], [0x1EF, 1], [0x1FA, 1], [0x30C, 1], [0x33D, 1], [0x33DA, 1], [0x33DB, 1], [0x39F, 1], [0x18DAB0F1, 1]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
 
-  def setUp(self):
-    super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_BOSCH_LONG)
-    self.safety.init_tests_honda()
+  SAFETY_PARAM = Panda.FLAG_HONDA_BOSCH_LONG
 
   def _send_gas_brake_msg(self, gas, accel):
     values = {

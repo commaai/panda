@@ -10,11 +10,13 @@ from panda.tests.safety import libpandasafety_py
 
 MAX_WRONG_COUNTERS = 5
 
+
 class ALTERNATIVE_EXPERIENCE:
   DEFAULT = 0
   DISABLE_DISENGAGE_ON_GAS = 1
   DISABLE_STOCK_AEB = 2
   RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
+
 
 def package_can_msg(msg):
   addr, _, dat, bus = msg
@@ -27,8 +29,10 @@ def package_can_msg(msg):
 
   return ret
 
+
 def make_msg(bus, addr, length=8):
   return package_can_msg([addr, 0, b'\x00' * length, bus])
+
 
 class CANPackerPanda(CANPacker):
   def make_can_msg_panda(self, name_or_addr, bus, values, counter=-1, fix_checksum=None):
@@ -37,12 +41,25 @@ class CANPackerPanda(CANPacker):
       msg = fix_checksum(msg)
     return package_can_msg(msg)
 
+
 class PandaSafetyTestBase(unittest.TestCase):
+
+  SAFETY_PARAM = 0
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "PandaSafetyTestBase":
       cls.safety = None
       raise unittest.SkipTest
+
+  def setUp(self):
+    self.packer = CANPackerPanda(self.DBC)
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(self.SAFETY_MODE, self.SAFETY_PARAM)
+    if 'Honda' in self.__class__.__name__:
+      self.safety._init_tests_honda()
+    else:
+      self.safety.init_tests()
 
   def _rx(self, msg):
     return self.safety.safety_rx_hook(msg)

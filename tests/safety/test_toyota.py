@@ -33,11 +33,9 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conversative for rounding
   EPS_SCALE = 0.73
 
-  def setUp(self):
-    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 73)
-    self.safety.init_tests()
+  DBC = 'toyota_nodsu_pt_generated'
+  SAFETY_MODE = Panda.SAFETY_TOYOTA
+  SAFETY_PARAM = 73
 
   def _torque_meas_msg(self, torque):
     values = {"STEER_TORQUE_EPS": (torque/self.EPS_SCALE)}
