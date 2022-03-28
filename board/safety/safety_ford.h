@@ -65,8 +65,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
 // else
 //     block all commands that produce actuation
 
-static int ford_tx_hook(CANPacket_t *to_send, bool current_controls_allowed, bool longitudinal_allowed) {
-  UNUSED(longitudinal_allowed);
+static int ford_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);

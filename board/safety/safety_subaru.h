@@ -146,9 +146,7 @@ static int subaru_legacy_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int subaru_tx_hook(CANPacket_t *to_send, bool current_controls_allowed, bool longitudinal_allowed) {
-  UNUSED(longitudinal_allowed);
-
+static int subaru_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
@@ -208,9 +206,7 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool current_controls_allowed, b
   return tx;
 }
 
-static int subaru_legacy_tx_hook(CANPacket_t *to_send, bool current_controls_allowed, bool longitudinal_allowed) {
-  UNUSED(longitudinal_allowed);
-
+static int subaru_legacy_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 

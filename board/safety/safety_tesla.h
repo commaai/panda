@@ -117,9 +117,7 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
 }
 
 
-static int tesla_tx_hook(CANPacket_t *to_send, bool current_controls_allowed, bool longitudinal_allowed) {
-  UNUSED(longitudinal_allowed);
-
+static int tesla_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
   bool violation = false;
