@@ -266,7 +266,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
       raise unittest.SkipTest
 
   @abc.abstractmethod
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     pass
 
   @abc.abstractmethod
@@ -274,7 +274,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     pass
 
   @abc.abstractmethod
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     pass
 
   @abc.abstractmethod
@@ -332,36 +332,36 @@ class PandaSafetyTest(PandaSafetyTestBase):
   def test_prev_gas(self):
     self.assertFalse(self.safety.get_gas_pressed_prev())
     for pressed in [self.GAS_PRESSED_THRESHOLD + 1, 0]:
-      self._rx(self._gas_msg(pressed))
+      self._rx(self._user_gas_msg(pressed))
       self.assertEqual(bool(pressed), self.safety.get_gas_pressed_prev())
 
   def test_allow_engage_with_gas_pressed(self):
-    self._rx(self._gas_msg(1))
+    self._rx(self._user_gas_msg(1))
     self.safety.set_controls_allowed(True)
-    self._rx(self._gas_msg(1))
+    self._rx(self._user_gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
-    self._rx(self._gas_msg(1))
+    self._rx(self._user_gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas(self):
-    self._rx(self._gas_msg(0))
+    self._rx(self._user_gas_msg(0))
     self.safety.set_controls_allowed(True)
-    self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
+    self._rx(self._user_gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_alternative_experience_no_disengage_on_gas(self):
-    self._rx(self._gas_msg(0))
+    self._rx(self._user_gas_msg(0))
     self.safety.set_controls_allowed(True)
     self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
-    self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
+    self._rx(self._user_gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_prev_brake(self):
     self.assertFalse(self.safety.get_brake_pressed_prev())
     for pressed in [True, False]:
-      self._rx(self._brake_msg(not pressed))
+      self._rx(self._user_brake_msg(not pressed))
       self.assertEqual(not pressed, self.safety.get_brake_pressed_prev())
-      self._rx(self._brake_msg(pressed))
+      self._rx(self._user_brake_msg(pressed))
       self.assertEqual(pressed, self.safety.get_brake_pressed_prev())
 
   def test_enable_control_allowed_from_cruise(self):
@@ -385,26 +385,26 @@ class PandaSafetyTest(PandaSafetyTestBase):
   def test_allow_brake_at_zero_speed(self):
     # Brake was already pressed
     self._rx(self._speed_msg(0))
-    self._rx(self._brake_msg(1))
+    self._rx(self._user_brake_msg(1))
     self.safety.set_controls_allowed(1)
-    self._rx(self._brake_msg(1))
+    self._rx(self._user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
-    self._rx(self._brake_msg(0))
+    self._rx(self._user_brake_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
     # rising edge of brake should disengage
-    self._rx(self._brake_msg(1))
+    self._rx(self._user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
-    self._rx(self._brake_msg(0))  # reset no brakes
+    self._rx(self._user_brake_msg(0))  # reset no brakes
 
   def test_not_allow_brake_when_moving(self):
     # Brake was already pressed
-    self._rx(self._brake_msg(1))
+    self._rx(self._user_brake_msg(1))
     self.safety.set_controls_allowed(1)
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
-    self._rx(self._brake_msg(1))
+    self._rx(self._user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
-    self._rx(self._brake_msg(1))
+    self._rx(self._user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     self._rx(self._speed_msg(0))
 

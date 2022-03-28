@@ -47,11 +47,11 @@ class TestMazdaSafety(common.PandaSafetyTest):
     values = {"SPEED": speed}
     return self.packer.make_can_msg_panda("ENGINE_DATA", 0, values)
 
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     values = {"BRAKE_ON": brake}
     return self.packer.make_can_msg_panda("PEDALS", 0, values)
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"PEDAL_GAS": gas}
     return self.packer.make_can_msg_panda("ENGINE_DATA", 0, values)
 
