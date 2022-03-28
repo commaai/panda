@@ -232,7 +232,8 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int hyundai_tx_hook(CANPacket_t *to_send, bool current_controls_allowed) {
+static int hyundai_tx_hook(CANPacket_t *to_send, bool current_controls_allowed, bool longitudinal_allowed) {
+  UNUSED(longitudinal_allowed);
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
