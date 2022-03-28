@@ -83,32 +83,13 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
       self.safety.set_gas_interceptor_detected(False)
 
   def test_alternative_experience_no_disengage_on_gas_interceptor(self):
-    # raise unittest.SkipTest
-    test_experiences = [ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS, ALTERNATIVE_EXPERIENCE.DEFAULT]
-    for experience in test_experiences:
-      self.safety.set_controls_allowed(True)
-      self.safety.set_alternative_experience(experience)
-      for g in range(0, 0x1000):
-        ctrl_allowed = g > self.INTERCEPTOR_THRESHOLD or experience == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
-
-        self._rx(self._interceptor_msg(g, 0x201))
-        self.assertEqual(ctrl_allowed, self.safety.get_controls_allowed())
-
-        self._rx(self._interceptor_msg(0, 0x201))
-        self.safety.set_gas_interceptor_detected(False)
-
-
-    return
-    # Test that we don't allow any interceptor actuation while gas is pressed
-    self.assertTrue(self._tx(self._interceptor_msg(0, 0x200)))
-    self.assertFalse(self._tx(self._interceptor_msg(0x1000, 0x200)))
-
-    self.assertTrue(self._tx(self._send_steer_msg(0x1000)))
-
-    self._rx(self._interceptor_msg(0, 0x201))  # user releases gas
-    self.assertTrue(self._tx(self._interceptor_msg(0x1000, 0x200)))
-
-    self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DEFAULT)
+    self.safety.set_controls_allowed(True)
+    self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
+    for g in range(0, 0x1000):
+      self._rx(self._interceptor_msg(g, 0x201))
+      self.assertTrue(self.safety.get_controls_allowed())
+      self._rx(self._interceptor_msg(0, 0x201))
+      self.safety.set_gas_interceptor_detected(False)
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
     self._rx(self._interceptor_msg(0x1000, 0x201))
@@ -126,6 +107,22 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
         else:
           send = gas == 0
         self.assertEqual(send, self._tx(self._interceptor_msg(gas, 0x200)))
+
+  def test_tx_hook_on_interceptor_pressed(self):
+    for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
+      self.safety.set_alternative_experience(mode)
+      self.safety.set_controls_allowed(1)
+      # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
+      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
+      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
+      allow_lat_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
+
+      self.assertFalse(self._tx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD, 0x200)))
+      self.assertEqual(allow_lat_ctrl, self._tx(self._torque_msg(1)))
+
+      # reset status
+      self._tx(self._interceptor_msg(0, 0x200))
+      self.safety.set_gas_interceptor_detected(False)
 
 
 class TorqueSteeringSafetyTest(PandaSafetyTestBase):
@@ -477,7 +474,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
         self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")
 
 
-class PandaLongitudinalSafetyTest(unittest.TestCase):
+class PandaLongitudinalAccelSafetyTest(PandaSafetyTestBase):
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "PandaLongitudinalSafetyTest" or cls.__name__.endswith('Base'):
@@ -485,19 +482,17 @@ class PandaLongitudinalSafetyTest(unittest.TestCase):
       raise unittest.SkipTest
 
   @abc.abstractmethod
-  def _accel_control_msg(self, pcm_accel, pcm_speed=0, aeb_req=0, aeb_decel=0):  # superset of all implemented functions
+  def _accel_cmd_msg(self, pcm_accel, pcm_speed=0, aeb_req=False, aeb_decel=0):  # superset of all implemented functions
     pass
 
   def test_disable_longitudinal_no_disengage_on_gas(self):
-    self._rx(self._gas_msg(0))
     self.safety.set_controls_allowed(True)
     self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
-    self._rx(self._gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
-    self.assertTrue(self.safety.get_controls_allowed())
+    self._rx(self._user_gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
 
     # Test we don't allow any longitudinal actuation while gas is pressed
-    self.assertTrue(self._tx(self._accel_control_msg(0)))
-    self.assertFalse(self._tx(self._accel_control_msg(1)))
+    self.assertTrue(self._tx(self._accel_cmd_msg(0)))
+    self.assertFalse(self._tx(self._accel_cmd_msg(1)))
 
-    self._rx(self._gas_msg(0))
-    self.assertTrue(self._tx(self._accel_control_msg(1)))
+    self._rx(self._user_gas_msg(0))
+    self.assertTrue(self._tx(self._accel_cmd_msg(1)))
