@@ -26,7 +26,7 @@ const CanMsg TESLA_PT_TX_MSGS[] = {
 };
 #define TESLA_PT_TX_LEN (sizeof(TESLA_PT_TX_MSGS) / sizeof(TESLA_PT_TX_MSGS[0]))
 
-const int TESLA_NO_ACCEL_VALUE = (int)(15 / .04);
+const int TESLA_NO_ACCEL_VALUE = 375;  // value sent when not requesting acceleration
 
 AddrCheckStruct tesla_addr_checks[] = {
   {.msg = {{0x370, 0, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // EPAS_sysStatus (25Hz)
@@ -164,7 +164,7 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  if (!tesla_powertrain && (addr == 0x45)) {
+  if (!tesla_safety_hondapowertrain && (addr == 0x45)) {
     // No button other than cancel can be sent by us
     int control_lever_status = (GET_BYTE(to_send, 0) & 0x3FU);
     if (control_lever_status != 1) {
