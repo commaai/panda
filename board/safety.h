@@ -57,7 +57,7 @@ int safety_tx_hook(CANPacket_t *to_send) {
   if (!(alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS)) {
     pedal_pressed = pedal_pressed || gas_pressed_prev;
   }
-  bool current_controls_allowed = controls_allowed && !(pedal_pressed);
+  bool current_controls_allowed = controls_allowed && !pedal_pressed;
   return (relay_malfunction ? -1 : current_hooks->tx(to_send, current_controls_allowed));
 }
 
