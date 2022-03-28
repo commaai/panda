@@ -91,7 +91,7 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
       if msg == "btn":
         to_push = self._button_msg(Btn.SET)
       if msg == "gas":
-        to_push = self._gas_msg(0)
+        to_push = self._user_gas_msg(0)
       if msg == "speed":
         to_push = self._speed_msg(0)
       self.assertTrue(self._rx(to_push))
@@ -113,11 +113,11 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
         self.safety.set_controls_allowed(1)
         self._rx(self._button_msg(Btn.SET))
         self._rx(self._speed_msg(0))
-        self._rx(self._gas_msg(0))
+        self._rx(self._user_gas_msg(0))
       else:
         self.assertFalse(self._rx(self._button_msg(Btn.SET)))
         self.assertFalse(self._rx(self._speed_msg(0)))
-        self.assertFalse(self._rx(self._gas_msg(0)))
+        self.assertFalse(self._rx(self._user_gas_msg(0)))
         self.assertFalse(self.safety.get_controls_allowed())
 
     # restore counters for future tests with a couple of good messages
@@ -125,7 +125,7 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
       self.safety.set_controls_allowed(1)
       self._rx(self._button_msg(Btn.SET))
       self._rx(self._speed_msg(0))
-      self._rx(self._gas_msg(0))
+      self._rx(self._user_gas_msg(0))
     self._rx(self._button_msg(Btn.SET, main_on=True))
     self.assertTrue(self.safety.get_controls_allowed())
 
@@ -137,10 +137,10 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
         if pedal == 'brake':
           # brake_pressed_prev and vehicle_moving
           self._rx(self._speed_msg(100))
-          self._rx(self._brake_msg(1))
+          self._rx(self._user_brake_msg(1))
         elif pedal == 'gas':
           # gas_pressed_prev
-          self._rx(self._gas_msg(1))
+          self._rx(self._user_gas_msg(1))
           allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
 
         self.safety.set_controls_allowed(1)
@@ -158,9 +158,9 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
         self._tx(self._send_steer_msg(0))
         if pedal == 'brake':
           self._rx(self._speed_msg(0))
-          self._rx(self._brake_msg(0))
+          self._rx(self._user_brake_msg(0))
         elif pedal == 'gas':
-          self._rx(self._gas_msg(0))
+          self._rx(self._user_gas_msg(0))
 
 
 class HondaPcmEnableBase(common.PandaSafetyTest):
@@ -251,10 +251,10 @@ class HondaBase(common.PandaSafetyTest):
     self.__class__.cnt_button += 1
     return self.packer.make_can_msg_panda("SCM_BUTTONS", self.PT_BUS, values)
 
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     return self._powertrain_data_msg(brake_pressed=brake)
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     return self._powertrain_data_msg(gas_pressed=gas)
 
   def _send_steer_msg(self, steer):
@@ -267,7 +267,7 @@ class HondaBase(common.PandaSafetyTest):
 
   def test_disengage_on_brake(self):
     self.safety.set_controls_allowed(1)
-    self._rx(self._brake_msg(1))
+    self._rx(self._user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_steer_safety_check(self):

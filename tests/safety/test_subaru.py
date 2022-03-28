@@ -53,7 +53,7 @@ class TestSubaruSafety(common.PandaSafetyTest):
     self.__class__.cnt_speed += 1
     return self.packer.make_can_msg_panda("Wheel_Speeds", 0, values)
 
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     values = {"Brake": brake, "Counter": self.cnt_brake % 4}
     self.__class__.cnt_brake += 1
     return self.packer.make_can_msg_panda("Brake_Status", 0, values)
@@ -62,7 +62,7 @@ class TestSubaruSafety(common.PandaSafetyTest):
     values = {"LKAS_Output": torque}
     return self.packer.make_can_msg_panda("ES_LKAS", 0, values)
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"Throttle_Pedal": gas, "Counter": self.cnt_gas % 4}
     self.__class__.cnt_gas += 1
     return self.packer.make_can_msg_panda("Throttle", 0, values)

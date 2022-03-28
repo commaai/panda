@@ -45,12 +45,12 @@ class TestChryslerSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest
     values = {"SPEED_LEFT": speed, "SPEED_RIGHT": speed}
     return self.packer.make_can_msg_panda("SPEED_1", 0, values)
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"ACCEL_134": gas, "COUNTER": self.cnt_gas % 16}
     self.__class__.cnt_gas += 1
     return self.packer.make_can_msg_panda("ACCEL_GAS_134", 0, values)
 
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     values = {"BRAKE_PRESSED_2": 5 if brake else 0,
               "COUNTER": self.cnt_brake % 16}
     self.__class__.cnt_brake += 1

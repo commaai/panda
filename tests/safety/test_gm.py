@@ -65,11 +65,11 @@ class TestGmSafety(common.PandaSafetyTest):
     values = {"ACCButtons": buttons}
     return self.packer.make_can_msg_panda("ASCMSteeringButton", 0, values)
 
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     values = {"Brake_Pressed": 1 if brake else 0}
     return self.packer.make_can_msg_panda("ECMEngineStatus", 0, values)
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"AcceleratorPedal2": 1 if gas else 0}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
@@ -222,10 +222,10 @@ class TestGmSafety(common.PandaSafetyTest):
       if pedal == 'brake':
         # brake_pressed_prev and vehicle_moving
         self._rx(self._speed_msg(100))
-        self._rx(self._brake_msg(MAX_BRAKE))
+        self._rx(self._user_brake_msg(MAX_BRAKE))
       elif pedal == 'gas':
         # gas_pressed_prev
-        self._rx(self._gas_msg(MAX_GAS))
+        self._rx(self._user_gas_msg(MAX_GAS))
 
       self.safety.set_controls_allowed(1)
       self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
@@ -238,9 +238,9 @@ class TestGmSafety(common.PandaSafetyTest):
       self._tx(self._torque_msg(0))
       if pedal == 'brake':
         self._rx(self._speed_msg(0))
-        self._rx(self._brake_msg(0))
+        self._rx(self._user_brake_msg(0))
       elif pedal == 'gas':
-        self._rx(self._gas_msg(0))
+        self._rx(self._user_gas_msg(0))
 
   def test_tx_hook_on_pedal_pressed_on_alternative_gas_experience(self):
     for pedal in ['brake', 'gas']:
@@ -248,11 +248,11 @@ class TestGmSafety(common.PandaSafetyTest):
       if pedal == 'brake':
         # brake_pressed_prev and vehicle_moving
         self._rx(self._speed_msg(100))
-        self._rx(self._brake_msg(MAX_BRAKE))
+        self._rx(self._user_brake_msg(MAX_BRAKE))
         allow_ctrl = False
       elif pedal == 'gas':
         # gas_pressed_prev
-        self._rx(self._gas_msg(MAX_GAS))
+        self._rx(self._user_gas_msg(MAX_GAS))
         allow_ctrl = True
 
       self.safety.set_controls_allowed(1)
@@ -267,9 +267,9 @@ class TestGmSafety(common.PandaSafetyTest):
       self._tx(self._torque_msg(0))
       if pedal == 'brake':
         self._rx(self._speed_msg(0))
-        self._rx(self._brake_msg(0))
+        self._rx(self._user_brake_msg(0))
       elif pedal == 'gas':
-        self._rx(self._gas_msg(0))
+        self._rx(self._user_gas_msg(0))
 
 
 if __name__ == "__main__":
