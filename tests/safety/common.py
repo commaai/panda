@@ -90,8 +90,10 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
       # Test we allow lateral, but not longitudinal
       self.assertTrue(self.safety.get_controls_allowed())
       self.assertEqual(g <= self.INTERCEPTOR_THRESHOLD, self.safety.get_longitudinal_allowed())
+      # Make sure we can re-gain longitudinal actuation
       self._rx(self._interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
+      self.assertTrue(self.safety.get_longitudinal_allowed())
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
     self._rx(self._interceptor_msg(0x1000, 0x201))
@@ -358,6 +360,9 @@ class PandaSafetyTest(PandaSafetyTestBase):
     # Test we allow lateral, but not longitudinal
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
+    # Make sure we can re-gain longitudinal actuation
+    self._rx(self._user_gas_msg(0))
+    self.assertTrue(self.safety.get_longitudinal_allowed())
 
   def test_prev_brake(self):
     self.assertFalse(self.safety.get_brake_pressed_prev())
