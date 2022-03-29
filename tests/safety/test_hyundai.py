@@ -254,7 +254,7 @@ class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
     values = {"CR_Vcu_AccPedDep_Pos": gas}
     return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
 
-class TestHyundaiLongitudinalSafety(TestHyundaiSafety, common.PandaLongitudinalAccelSafetyTest):
+class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
   TX_MSGS = [[832, 0], [1265, 0], [1157, 0], [1056, 0], [1057, 0], [1290, 0], [905, 0], [1186, 0], [909, 0], [1155, 0], [2000, 0]]
   cnt_button = 0
 
@@ -285,10 +285,10 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety, common.PandaLongitudinalA
     self.__class__.cnt_button += 1
     return self.packer.make_can_msg_panda("CLU11", 0, values)
 
-  def _accel_cmd_msg(self, pcm_accel, pcm_speed=0, aeb_req=False, aeb_decel=0):
+  def _send_accel_msg(self, accel, aeb_req=False, aeb_decel=0):
     values = {
-      "aReqRaw": pcm_accel,
-      "aReqValue": pcm_accel,
+      "aReqRaw": accel,
+      "aReqValue": accel,
       "AEB_CmdAct": int(aeb_req),
       "CR_VSM_DecCmd": aeb_decel,
     }
@@ -311,9 +311,9 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety, common.PandaLongitudinalA
     self.assertFalse(self._tx(self._send_fca11_msg(aeb_decel=1.0)))
 
   def test_no_aeb_scc12(self):
-    self.assertTrue(self._tx(self._accel_cmd_msg(0)))
-    self.assertFalse(self._tx(self._accel_cmd_msg(0, aeb_req=True)))
-    self.assertFalse(self._tx(self._accel_cmd_msg(0, aeb_decel=1.0)))
+    self.assertTrue(self._tx(self._send_accel_msg(0)))
+    self.assertFalse(self._tx(self._send_accel_msg(0, aeb_req=True)))
+    self.assertFalse(self._tx(self._send_accel_msg(0, aeb_decel=1.0)))
 
   def test_set_resume_buttons(self):
     """
@@ -341,7 +341,7 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety, common.PandaLongitudinalA
         accel = round(accel, 2) # floats might not hit exact boundary conditions without rounding
         self.safety.set_controls_allowed(controls_allowed)
         send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == 0
-        self.assertEqual(send, self._tx(self._accel_cmd_msg(accel)), (controls_allowed, accel))
+        self.assertEqual(send, self._tx(self._send_accel_msg(accel)), (controls_allowed, accel))
 
   def test_diagnostics(self):
     tester_present = common.package_can_msg((0x7d0, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 0))

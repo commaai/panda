@@ -360,13 +360,13 @@ class TestHondaNidecSafetyBase(HondaBase):
       # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
       self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
       self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
-      allow_lat_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
+      allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
 
       self.safety.set_controls_allowed(1)
       self.safety.set_honda_fwd_brake(False)
-      self.assertFalse(self._tx(self._send_brake_msg(self.MAX_BRAKE)))
-      self.assertFalse(self._tx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD, 0x200)))
-      self.assertEqual(allow_lat_ctrl, self._tx(self._send_steer_msg(0x1000)))
+      self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(self.MAX_BRAKE)))
+      self.assertEqual(allow_ctrl, self._tx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD, 0x200)))
+      self.assertEqual(allow_ctrl, self._tx(self._send_steer_msg(0x1000)))
 
       # reset status
       self.safety.set_controls_allowed(0)
@@ -506,7 +506,7 @@ class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
     self.assertTrue(self._tx(self._button_msg(Btn.RESUME)))
 
 
-class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase, common.PandaLongitudinalAccelSafetyTest):
+class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
   """
     Covers the Honda Bosch safety mode with longitudinal control
   """
@@ -522,10 +522,6 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase, 
     super().setUp()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_BOSCH_LONG)
     self.safety.init_tests_honda()
-
-  def _accel_cmd_msg(self, pcm_accel, pcm_speed=0, aeb_req=False, aeb_decel=0):  # superset of all implemented functions
-    gas = self.NO_GAS if pcm_accel == 0 else self.MAX_GAS
-    return self._send_gas_brake_msg(gas, pcm_accel)
 
   def _send_gas_brake_msg(self, gas, accel):
     values = {
