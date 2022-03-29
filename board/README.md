@@ -21,9 +21,9 @@ Programming
 **Panda**
 
 ```
-scons -u       # Compile
-./flash_h7.sh  # for red panda
-./flash.sh     # for other pandas
+scons -u -j$(nproc)  # Compile
+./flash_h7.sh        # for red panda
+./flash.sh           # for other pandas
 ```
 
 Troubleshooting
