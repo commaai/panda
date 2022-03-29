@@ -92,7 +92,6 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
       self.assertEqual(g <= self.INTERCEPTOR_THRESHOLD, self.safety.get_longitudinal_allowed())
       # Make sure we can re-gain longitudinal actuation
       self._rx(self._interceptor_msg(0, 0x201))
-      self.safety.set_gas_interceptor_detected(False)
       self.assertTrue(self.safety.get_longitudinal_allowed())
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
