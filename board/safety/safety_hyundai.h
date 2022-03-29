@@ -264,7 +264,7 @@ static int hyundai_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
     bool violation = 0;
 
-    if (!controls_allowed || !longitudinal_allowed) {
+    if (!longitudinal_allowed) {
       if ((desired_accel_raw != 0) || (desired_accel_val != 0)) {
         violation = 1;
       }

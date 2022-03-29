@@ -197,7 +197,7 @@ static int tesla_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       }
 
       // Don't allow longitudinal actuation if controls aren't allowed
-      if (!controls_allowed || !longitudinal_allowed) {
+      if (!longitudinal_allowed) {
         if ((raw_accel_max != TESLA_NO_ACCEL_VALUE) || (raw_accel_min != TESLA_NO_ACCEL_VALUE)) {
           violation = true;
         }
