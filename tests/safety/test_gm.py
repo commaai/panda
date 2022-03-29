@@ -253,12 +253,12 @@ class TestGmSafety(common.PandaSafetyTest):
         # gas_pressed_prev
         self._rx(self._user_gas_msg(MAX_GAS))
 
-      # We only allow lateral control when user is overriding
-      allow_lat_ctrl = pedal == 'gas'
+      # Test we allow lateral, but not longitudinal
+      allow_ctrl = pedal == 'gas'
       self.safety.set_controls_allowed(1)
       self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
       self.assertFalse(self._tx(self._send_gas_msg(MAX_GAS)))
-      self.assertEqual(allow_lat_ctrl, self._tx(self._torque_msg(MAX_RATE_UP)))
+      self.assertEqual(allow_ctrl, self._tx(self._torque_msg(MAX_RATE_UP)))
 
       # reset status
       self.safety.set_controls_allowed(0)
