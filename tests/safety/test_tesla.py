@@ -71,6 +71,18 @@ class TestTeslaSafety(common.PandaSafetyTest):
     values = {"DI_cruiseState": 2 if enable else 0}
     return self.packer.make_can_msg_panda("DI_state", 0, values)
 
+  def _long_control_msg(self, set_speed, acc_val=0, jerk_limits=(0, 0), accel_limits=(0, 0), aeb_event=0):
+    values = {
+      "DAS_setSpeed": set_speed,
+      "DAS_accState": acc_val,
+      "DAS_aebEvent": aeb_event,
+      "DAS_jerkMin": jerk_limits[0],
+      "DAS_jerkMax": jerk_limits[1],
+      "DAS_accelMin": accel_limits[0],
+      "DAS_accelMax": accel_limits[1],
+    }
+    return self.packer.make_can_msg_panda("DAS_control", 0, values)
+
 class TestTeslaSteeringSafety(TestTeslaSafety):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2]]
   RELAY_MALFUNCTION_ADDR = 0x488
@@ -156,27 +168,9 @@ class TestTeslaSteeringSafety(TestTeslaSafety):
         self.assertEqual(tx, should_tx)
 
 
-class TestTeslaLongitudinalSafety(TestTeslaSafety, common.PandaLongitudinalAccelSafetyTest):
+class TestTeslaLongitudinalSafety(TestTeslaSafety):
   def setUp(self):
     raise unittest.SkipTest
-
-  def _accel_cmd_msg(self, pcm_accel, pcm_speed=0, aeb_req=False, aeb_decel=0):
-    # For PandaLongitudinalAccelSafetyTest
-    min_accel = min(pcm_accel, 0)
-    max_accel = max(pcm_accel, 0)
-    return self._long_control_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])
-
-  def _long_control_msg(self, set_speed, acc_val=0, jerk_limits=(0, 0), accel_limits=(0, 0), aeb_event=0):
-    values = {
-      "DAS_setSpeed": set_speed,
-      "DAS_accState": acc_val,
-      "DAS_aebEvent": aeb_event,
-      "DAS_jerkMin": jerk_limits[0],
-      "DAS_jerkMax": jerk_limits[1],
-      "DAS_accelMin": accel_limits[0],
-      "DAS_accelMax": accel_limits[1],
-    }
-    return self.packer.make_can_msg_panda("DAS_control", 0, values)
 
   def test_no_aeb(self):
     for aeb_event in range(4):

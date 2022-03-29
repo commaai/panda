@@ -87,7 +87,9 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
     self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
     for g in range(0, 0x1000):
       self._rx(self._interceptor_msg(g, 0x201))
+      # Test we allow lateral, but not longitudinal
       self.assertTrue(self.safety.get_controls_allowed())
+      self.assertEqual(g <= self.INTERCEPTOR_THRESHOLD, self.safety.get_longitudinal_allowed())
       self._rx(self._interceptor_msg(0, 0x201))
       self.safety.set_gas_interceptor_detected(False)
 
@@ -369,7 +371,9 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.safety.set_controls_allowed(True)
     self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
     self._rx(self._user_gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
+    # Test we allow lateral, but not longitudinal
     self.assertTrue(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_longitudinal_allowed())
 
   def test_prev_brake(self):
     self.assertFalse(self.safety.get_brake_pressed_prev())
@@ -475,14 +479,20 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
 
 class PandaLongitudinalAccelSafetyTest(PandaSafetyTestBase):
+  GAS_PRESSED_THRESHOLD = 0
+
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "PandaLongitudinalSafetyTest" or cls.__name__.endswith('Base'):
+    if cls.__name__ == "PandaLongitudinalAccelSafetyTest" or cls.__name__.endswith('Base'):
       cls.safety = None
       raise unittest.SkipTest
 
   @abc.abstractmethod
   def _accel_cmd_msg(self, pcm_accel, pcm_speed=0, aeb_req=False, aeb_decel=0):  # superset of all implemented functions
+    pass
+
+  @abc.abstractmethod
+  def _user_gas_msg(self, gas):
     pass
 
   def test_disable_longitudinal_no_disengage_on_gas(self):
