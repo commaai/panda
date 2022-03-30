@@ -228,19 +228,20 @@ class TestGmSafety(common.PandaSafetyTest):
         self._rx(self._user_gas_msg(MAX_GAS))
 
       self.safety.set_controls_allowed(1)
+
+      # Test we allow lateral, but not longitudinal
+      self.assertFalse(self.safety.get_longitudinal_allowed())
       self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
       self.assertFalse(self._tx(self._torque_msg(MAX_RATE_UP)))
       self.assertFalse(self._tx(self._send_gas_msg(MAX_GAS)))
 
-      # reset status
-      self.safety.set_controls_allowed(0)
-      self._tx(self._send_brake_msg(0))
-      self._tx(self._torque_msg(0))
+      # Make sure we can re-gain longitudinal actuation
       if pedal == 'brake':
         self._rx(self._speed_msg(0))
         self._rx(self._user_brake_msg(0))
       elif pedal == 'gas':
         self._rx(self._user_gas_msg(0))
+      self.assertTrue(self.safety.get_longitudinal_allowed())
 
   def test_tx_hook_on_pedal_pressed_on_alternative_gas_experience(self):
     for pedal in ['brake', 'gas']:
