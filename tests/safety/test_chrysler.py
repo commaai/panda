@@ -61,13 +61,21 @@ class TestChryslerSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest
     self.__class__.cnt_torque_meas += 1
     return self.packer.make_can_msg_panda("EPS_STATUS", 0, values)
 
-  def _torque_msg(self, torque):
+  def _steer_cmd_msg(self, torque):
     values = {"LKAS_STEERING_TORQUE": torque}
     return self.packer.make_can_msg_panda("LKAS_COMMAND", 0, values)
+
+  def _long_control_msg(self, accel):
+    # No longitudinal control
+    raise NotImplementedError
 
   def test_cancel_button(self):
     for cancel in [True, False]:
       self.assertEqual(cancel, self._tx(self._button_msg(cancel)))
+
+  def test_longitudinal_tx_hook_on_pedal_pressed(self):
+    # No longitudinal control
+    pass
 
 
 if __name__ == "__main__":

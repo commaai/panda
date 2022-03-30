@@ -51,6 +51,9 @@ class TestNissanSafety(common.PandaSafetyTest):
     values = {"DESIRED_ANGLE": angle, "LKA_ACTIVE": state}
     return self.packer.make_can_msg_panda("LKAS", 0, values)
 
+  def _steer_cmd_msg(self, steer):
+    return self._lkas_control_msg(steer, int(bool(steer)))
+
   def _speed_msg(self, speed):
     # TODO: why the 3.6? m/s to kph? not in dbc
     values = {"WHEEL_SPEED_%s" % s: speed * 3.6 for s in ["RR", "RL"]}
@@ -70,6 +73,10 @@ class TestNissanSafety(common.PandaSafetyTest):
               "FOLLOW_DISTANCE_BUTTON": flw_dist, "SET_BUTTON": _set,
               "RES_BUTTON": res, "NO_BUTTON_PRESSED": no_button}
     return self.packer.make_can_msg_panda("CRUISE_THROTTLE", 2, values)
+
+  def _long_control_msg(self, accel):
+    # No longitudinal control
+    raise NotImplementedError
 
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
@@ -140,6 +147,11 @@ class TestNissanSafety(common.PandaSafetyTest):
         args = {} if btn is None else {btn: 1}
         tx = self._tx(self._acc_button_cmd(**args))
         self.assertEqual(tx, should_tx)
+
+  def test_longitudinal_tx_hook_on_pedal_pressed(self):
+    # No longitudinal control
+    pass
+
 
 class TestNissanLeafSafety(TestNissanSafety):
 

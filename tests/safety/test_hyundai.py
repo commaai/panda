@@ -114,9 +114,12 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     values = {"CR_Mdps_StrColTq": torque}
     return self.packer.make_can_msg_panda("MDPS12", 0, values)
 
-  def _torque_msg(self, torque):
+  def _steer_cmd_msg(self, torque):
     values = {"CR_Lkas_StrToqReq": torque}
     return self.packer.make_can_msg_panda("LKAS11", 0, values)
+
+  def _long_control_msg(self, accel):
+    raise NotImplementedError
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
@@ -124,24 +127,24 @@ class TestHyundaiSafety(common.PandaSafetyTest):
         self.safety.set_controls_allowed(enabled)
         self._set_prev_torque(t)
         if abs(t) > MAX_STEER or (not enabled and abs(t) > 0):
-          self.assertFalse(self._tx(self._torque_msg(t)))
+          self.assertFalse(self._tx(self._steer_cmd_msg(t)))
         else:
-          self.assertTrue(self._tx(self._torque_msg(t)))
+          self.assertTrue(self._tx(self._steer_cmd_msg(t)))
 
   def test_non_realtime_limit_up(self):
     self.safety.set_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
 
     self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_msg(MAX_RATE_UP)))
+    self.assertTrue(self._tx(self._steer_cmd_msg(MAX_RATE_UP)))
     self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_msg(-MAX_RATE_UP)))
+    self.assertTrue(self._tx(self._steer_cmd_msg(-MAX_RATE_UP)))
 
     self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_msg(MAX_RATE_UP + 1)))
+    self.assertFalse(self._tx(self._steer_cmd_msg(MAX_RATE_UP + 1)))
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_msg(-MAX_RATE_UP - 1)))
+    self.assertFalse(self._tx(self._steer_cmd_msg(-MAX_RATE_UP - 1)))
 
   def test_non_realtime_limit_down(self):
     self.safety.set_torque_driver(0, 0)
@@ -155,10 +158,10 @@ class TestHyundaiSafety(common.PandaSafetyTest):
         t *= -sign
         self.safety.set_torque_driver(t, t)
         self._set_prev_torque(MAX_STEER * sign)
-        self.assertTrue(self._tx(self._torque_msg(MAX_STEER * sign)))
+        self.assertTrue(self._tx(self._steer_cmd_msg(MAX_STEER * sign)))
 
       self.safety.set_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self._tx(self._torque_msg(-MAX_STEER)))
+      self.assertFalse(self._tx(self._steer_cmd_msg(-MAX_STEER)))
 
     # spot check some individual cases
     for sign in [-1, 1]:
@@ -167,20 +170,20 @@ class TestHyundaiSafety(common.PandaSafetyTest):
       delta = 1 * sign
       self._set_prev_torque(torque_desired)
       self.safety.set_torque_driver(-driver_torque, -driver_torque)
-      self.assertTrue(self._tx(self._torque_msg(torque_desired)))
+      self.assertTrue(self._tx(self._steer_cmd_msg(torque_desired)))
       self._set_prev_torque(torque_desired + delta)
       self.safety.set_torque_driver(-driver_torque, -driver_torque)
-      self.assertFalse(self._tx(self._torque_msg(torque_desired + delta)))
+      self.assertFalse(self._tx(self._steer_cmd_msg(torque_desired + delta)))
 
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
+      self.assertTrue(self._tx(self._steer_cmd_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self._tx(self._torque_msg(0)))
+      self.assertTrue(self._tx(self._steer_cmd_msg(0)))
       self._set_prev_torque(MAX_STEER * sign)
       self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertFalse(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
+      self.assertFalse(self._tx(self._steer_cmd_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
 
   def test_realtime_limits(self):
     self.safety.set_controls_allowed(True)
@@ -191,18 +194,18 @@ class TestHyundaiSafety(common.PandaSafetyTest):
       self.safety.set_torque_driver(0, 0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.assertTrue(self._tx(self._torque_msg(t)))
-      self.assertFalse(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+        self.assertTrue(self._tx(self._steer_cmd_msg(t)))
+      self.assertFalse(self._tx(self._steer_cmd_msg(sign * (MAX_RT_DELTA + 1))))
 
       self._set_prev_torque(0)
       for t in np.arange(0, MAX_RT_DELTA, 1):
         t *= sign
-        self.assertTrue(self._tx(self._torque_msg(t)))
+        self.assertTrue(self._tx(self._steer_cmd_msg(t)))
 
       # Increase timer to update rt_torque_last
       self.safety.set_timer(RT_INTERVAL + 1)
-      self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
-      self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+      self.assertTrue(self._tx(self._steer_cmd_msg(sign * (MAX_RT_DELTA - 1))))
+      self.assertTrue(self._tx(self._steer_cmd_msg(sign * (MAX_RT_DELTA + 1))))
 
   def test_buttons(self):
     """
@@ -221,6 +224,9 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     for enabled in (True, False):
       self._rx(self._pcm_status_msg(enabled))
       self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
+
+  def test_longitudinal_tx_hook_on_pedal_pressed(self):
+    pass
 
 
 class TestHyundaiLegacySafety(TestHyundaiSafety):
@@ -284,6 +290,9 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     values = {"CF_Clu_CruiseSwState": buttons, "CF_Clu_AliveCnt1": self.cnt_button}
     self.__class__.cnt_button += 1
     return self.packer.make_can_msg_panda("CLU11", 0, values)
+
+  def _long_control_msg(self, accel):
+    return self._send_accel_msg(accel)
 
   def _send_accel_msg(self, accel, aeb_req=False, aeb_decel=0):
     values = {

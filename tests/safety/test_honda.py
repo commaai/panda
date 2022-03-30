@@ -287,7 +287,7 @@ class TestHondaNidecSafetyBase(HondaBase):
 
   def _long_control_msg(self, accel):
     if accel > 0:
-      return self._send_acc_hud_msg(accel, 1)
+      return self._send_acc_hud_msg(accel, pcm_speed=accel)
     else:
       return self._send_brake_msg(-accel)
 

@@ -51,6 +51,9 @@ class TestTeslaSafety(common.PandaSafetyTest):
     values = {"DAS_steeringAngleRequest": angle, "DAS_steeringControlType": 1 if enabled else 0}
     return self.packer.make_can_msg_panda("DAS_steeringControl", 0, values)
 
+  def _steer_cmd_msg(self, steer):
+    return self._lkas_control_msg(steer, int(bool(steer)))
+
   def _speed_msg(self, speed):
     values = {"DI_vehicleSpeed": speed / 0.447}
     return self.packer.make_can_msg_panda("DI_torque2", 0, values)
@@ -71,7 +74,7 @@ class TestTeslaSafety(common.PandaSafetyTest):
     values = {"DI_cruiseState": 2 if enable else 0}
     return self.packer.make_can_msg_panda("DI_state", 0, values)
 
-  def _long_control_msg(self, set_speed, acc_val=0, jerk_limits=(0, 0), accel_limits=(0, 0), aeb_event=0):
+  def _send_accel_msg(self, set_speed, acc_val=0, jerk_limits=(0, 0), accel_limits=(0, 0), aeb_event=0):
     values = {
       "DAS_setSpeed": set_speed,
       "DAS_accState": acc_val,
@@ -82,6 +85,12 @@ class TestTeslaSafety(common.PandaSafetyTest):
       "DAS_accelMax": accel_limits[1],
     }
     return self.packer.make_can_msg_panda("DAS_control", 0, values)
+
+  def _long_control_msg(self, accel):
+    max_accel = max(accel, 0)
+    min_accel = min(accel, 0)
+    self._send_accel_msg(1, accel_limits=(min_accel, max_accel))
+
 
 class TestTeslaSteeringSafety(TestTeslaSafety):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2]]
@@ -174,7 +183,7 @@ class TestTeslaLongitudinalSafety(TestTeslaSafety):
 
   def test_no_aeb(self):
     for aeb_event in range(4):
-      self.assertEqual(self._tx(self._long_control_msg(10, aeb_event=aeb_event)), aeb_event == 0)
+      self.assertEqual(self._tx(self._send_accel_msg(10, aeb_event=aeb_event)), aeb_event == 0)
 
   def test_acc_accel_limits(self):
     for controls_allowed in [True, False]:
@@ -188,9 +197,9 @@ class TestTeslaLongitudinalSafety(TestTeslaSafety):
             send = (MIN_ACCEL <= min_accel <= MAX_ACCEL) and (MIN_ACCEL <= max_accel <= MAX_ACCEL)
           else:
             send = np.all(np.isclose([min_accel, max_accel], 0, atol=0.0001))
-          self.assertEqual(send, self._tx(self._long_control_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])))
+          self.assertEqual(send, self._tx(self._send_accel_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])))
 
-class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafety):
+class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafety, TestTeslaSafety):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2], [0x2B9, 0]]
   RELAY_MALFUNCTION_ADDR = 0x488
   FWD_BLACKLISTED_ADDRS = {2: [0x2B9, 0x488]}
