@@ -5,7 +5,7 @@ static int body_tx_hook(CANPacket_t *to_send) {
   int tx = 0;
   int addr = GET_ADDR(to_send);
 
-  if (addr == 0x200U) {
+  if (addr == 0x200) {
     tx = 1;
   }
 
