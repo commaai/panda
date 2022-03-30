@@ -51,14 +51,7 @@ int safety_rx_hook(CANPacket_t *to_push) {
 }
 
 int safety_tx_hook(CANPacket_t *to_send) {
-  // disallow actuator commands if gas or brake (with vehicle moving) are pressed
-  // and the the latching controls_allowed flag is True (pre-enable)
-  int pedal_pressed = brake_pressed_prev && vehicle_moving;
-  if (!(alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS)) {
-    pedal_pressed = pedal_pressed || gas_pressed_prev;
-  }
-  bool current_controls_allowed = controls_allowed && !pedal_pressed;
-  return (relay_malfunction ? -1 : current_hooks->tx(to_send, current_controls_allowed));
+  return (relay_malfunction ? -1 : current_hooks->tx(to_send, get_current_controls_allowed()));
 }
 
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
@@ -67,6 +60,16 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 
 int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return (relay_malfunction ? -1 : current_hooks->fwd(bus_num, to_fwd));
+}
+
+bool get_current_controls_allowed(void) {
+  // disallow actuator commands if gas or brake (with vehicle moving) are pressed
+  // and the the latching controls_allowed flag is True (pre-enable)
+  int pedal_pressed = brake_pressed_prev && vehicle_moving;
+  if (!(alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS)) {
+    pedal_pressed = pedal_pressed || gas_pressed_prev;
+  }
+  return controls_allowed && !pedal_pressed;
 }
 
 // Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8

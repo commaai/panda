@@ -43,7 +43,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     values = {"STEER_TORQUE_EPS": (torque/self.EPS_SCALE)}
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
 
-  def _torque_msg(self, torque):
+  def _steer_cmd_msg(self, torque):
     values = {"STEER_TORQUE_CMD": torque}
     return self.packer.make_can_msg_panda("STEERING_LKA", 0, values)
 
@@ -51,7 +51,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd}
     return self.packer.make_can_msg_panda("STEERING_LTA", 0, values)
 
-  def _accel_msg(self, accel):
+  def _long_control_msg(self, accel):
     values = {"ACCEL_CMD": accel}
     return self.packer.make_can_msg_panda("ACC_CONTROL", 0, values)
 
@@ -105,7 +105,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
             should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
           else:
             should_tx = np.isclose(accel, 0, atol=0.0001)
-          self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
+          self.assertEqual(should_tx, self._tx(self._long_control_msg(accel)))
 
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):

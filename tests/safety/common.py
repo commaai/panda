@@ -9,6 +9,8 @@ from panda import LEN_TO_DLC
 from panda.tests.safety import libpandasafety_py
 
 MAX_WRONG_COUNTERS = 5
+HONDA_NIDEC = 0
+HONDA_BOSCH = 1
 
 class ALTERNATIVE_EXPERIENCE:
   DEFAULT = 0
@@ -457,3 +459,62 @@ class PandaSafetyTest(PandaSafetyTestBase):
         if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
           continue
         self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")
+
+  @abc.abstractmethod
+  def _long_control_msg(self, accel):
+    # Implemented by each make, returning its most relevant longitudinal control message
+    pass
+
+  def test_lateral_tx_hook_on_pedal_pressed(self):
+    for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
+      for pedal in ['brake', 'gas']:
+        self.safety.set_alternative_experience(mode)
+        allow_ctrl = False
+        if pedal == 'brake':
+          # brake_pressed_prev and vehicle_moving
+          self._rx(self._speed_msg(100))
+          self._rx(self._user_brake_msg(1))
+        elif pedal == 'gas':
+          # gas_pressed_prev
+          self._rx(self._user_gas_msg(1))
+          allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
+
+        self.safety.set_controls_allowed(1)
+        self.assertEqual(allow_ctrl, self._tx(self._steer_cmd_msg(1)))
+
+        # reset status
+        if pedal == 'brake':
+          self._rx(self._speed_msg(0))
+          self._rx(self._user_brake_msg(0))
+        elif pedal == 'gas':
+          self._rx(self._user_gas_msg(0))
+
+  def test_longitudinal_tx_hook_on_pedal_pressed(self):
+    for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
+      for pedal in ['brake', 'gas']:
+        self.safety.set_alternative_experience(mode)
+        allow_ctrl = False
+        if pedal == 'brake':
+          # brake_pressed_prev and vehicle_moving
+          self._rx(self._speed_msg(100))
+          self._rx(self._user_brake_msg(1))
+        elif pedal == 'gas':
+          # gas_pressed_prev
+          self._rx(self._user_gas_msg(1))
+          allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
+
+        self.safety.set_controls_allowed(1)
+
+        if 'Honda' in self.__class__.__name__:
+          if self.safety.get_honda_hw() == HONDA_NIDEC:
+            self.safety.set_honda_fwd_brake(False)
+
+        self.assertEqual(allow_ctrl, self._tx(self._long_control_msg(1)))  # accel
+        self.assertEqual(allow_ctrl, self._tx(self._long_control_msg(-1)))  # decel/brake
+
+        # reset status
+        if pedal == 'brake':
+          self._rx(self._speed_msg(0))
+          self._rx(self._user_brake_msg(0))
+        elif pedal == 'gas':
+          self._rx(self._user_gas_msg(0))

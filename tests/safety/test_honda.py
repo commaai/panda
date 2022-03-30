@@ -129,39 +129,6 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
     self._rx(self._button_msg(Btn.SET, main_on=True))
     self.assertTrue(self.safety.get_controls_allowed())
 
-  def test_tx_hook_on_pedal_pressed(self):
-    for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
-      for pedal in ['brake', 'gas']:
-        self.safety.set_alternative_experience(mode)
-        allow_ctrl = False
-        if pedal == 'brake':
-          # brake_pressed_prev and vehicle_moving
-          self._rx(self._speed_msg(100))
-          self._rx(self._user_brake_msg(1))
-        elif pedal == 'gas':
-          # gas_pressed_prev
-          self._rx(self._user_gas_msg(1))
-          allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
-
-        self.safety.set_controls_allowed(1)
-        hw = self.safety.get_honda_hw()
-        if hw == HONDA_NIDEC:
-          self.safety.set_honda_fwd_brake(False)
-          self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(self.MAX_BRAKE)))
-        self.assertEqual(allow_ctrl, self._tx(self._send_steer_msg(0x1000)))
-
-        # reset status
-        self.safety.set_controls_allowed(0)
-        self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DEFAULT)
-        if hw == HONDA_NIDEC:
-          self._tx(self._send_brake_msg(0))
-        self._tx(self._send_steer_msg(0))
-        if pedal == 'brake':
-          self._rx(self._speed_msg(0))
-          self._rx(self._user_brake_msg(0))
-        elif pedal == 'gas':
-          self._rx(self._user_gas_msg(0))
-
 
 class HondaPcmEnableBase(common.PandaSafetyTest):
   # pylint: disable=no-member,abstract-method
@@ -257,11 +224,15 @@ class HondaBase(common.PandaSafetyTest):
   def _user_gas_msg(self, gas):
     return self._powertrain_data_msg(gas_pressed=gas)
 
-  def _send_steer_msg(self, steer):
+  def _steer_cmd_msg(self, steer):
     values = {"STEER_TORQUE": steer}
     return self.packer.make_can_msg_panda("STEERING_CONTROL", self.STEER_BUS, values)
 
   def _send_brake_msg(self, brake):
+    # must be implemented when inherited
+    raise NotImplementedError
+
+  def _long_control_msg(self, accel):
     # must be implemented when inherited
     raise NotImplementedError
 
@@ -272,8 +243,8 @@ class HondaBase(common.PandaSafetyTest):
 
   def test_steer_safety_check(self):
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._send_steer_msg(0x0000)))
-    self.assertFalse(self._tx(self._send_steer_msg(0x1000)))
+    self.assertTrue(self._tx(self._steer_cmd_msg(0x0000)))
+    self.assertFalse(self._tx(self._steer_cmd_msg(0x1000)))
 
 
 # ********************* Honda Nidec **********************
@@ -313,6 +284,12 @@ class TestHondaNidecSafetyBase(HondaBase):
   def _send_brake_msg(self, brake):
     values = {"COMPUTER_BRAKE": brake}
     return self.packer.make_can_msg_panda("BRAKE_COMMAND", 0, values)
+
+  def _long_control_msg(self, accel):
+    if accel > 0:
+      return self._send_acc_hud_msg(accel, 1)
+    else:
+      return self._send_brake_msg(-accel)
 
   def _send_acc_hud_msg(self, pcm_gas, pcm_speed):
     # Used to control ACC on Nidec without pedal
@@ -354,29 +331,6 @@ class TestHondaNidecSafetyBase(HondaBase):
           self.assertEqual(send, self._tx(self._send_brake_msg(brake)))
     self.safety.set_honda_fwd_brake(False)
 
-  def test_tx_hook_on_interceptor_pressed(self):
-    for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
-      self.safety.set_alternative_experience(mode)
-      # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
-      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
-      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
-      allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
-
-      self.safety.set_controls_allowed(1)
-      self.safety.set_honda_fwd_brake(False)
-      self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(self.MAX_BRAKE)))
-      self.assertEqual(allow_ctrl, self._tx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD, 0x200)))
-      self.assertEqual(allow_ctrl, self._tx(self._send_steer_msg(0x1000)))
-
-      # reset status
-      self.safety.set_controls_allowed(0)
-      self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DEFAULT)
-      self._tx(self._send_brake_msg(0))
-      self._tx(self._send_steer_msg(0))
-      self._tx(self._interceptor_msg(0, 0x200))
-      self.safety.set_gas_interceptor_detected(False)
-
-
 
 class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
   """
@@ -392,6 +346,34 @@ class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSa
   """
     Covers the Honda Nidec safety mode with a gas interceptor
   """
+
+  def _long_control_msg(self, accel):
+    if accel > 0:
+      return self._interceptor_msg(accel, 0x200)
+    else:
+      return self._send_brake_msg(-accel)
+
+  def test_tx_hook_on_interceptor_pressed(self):  # TODO: make this common
+    for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
+      self.safety.set_alternative_experience(mode)
+      # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
+      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
+      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
+      allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
+
+      self.safety.set_controls_allowed(1)
+      self.safety.set_honda_fwd_brake(False)
+      self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(self.MAX_BRAKE)))
+      self.assertEqual(allow_ctrl, self._tx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD, 0x200)))
+      self.assertEqual(allow_ctrl, self._tx(self._steer_cmd_msg(0x1000)))
+
+      # reset status
+      self.safety.set_controls_allowed(0)
+      self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DEFAULT)
+      self._tx(self._send_brake_msg(0))
+      self._tx(self._steer_cmd_msg(0))
+      self._tx(self._interceptor_msg(0, 0x200))
+      self.safety.set_gas_interceptor_detected(False)
 
 
 class TestHondaNidecAltSafety(TestHondaNidecSafety):
@@ -505,6 +487,9 @@ class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
     self.safety.set_controls_allowed(1)
     self.assertTrue(self._tx(self._button_msg(Btn.RESUME)))
 
+  def test_longitudinal_tx_hook_on_pedal_pressed(self):
+    pass
+
 
 class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
   """
@@ -530,6 +515,9 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
       "BRAKE_REQUEST": accel < 0,
     }
     return self.packer.make_can_msg_panda("ACC_CONTROL", self.PT_BUS, values)
+
+  def _long_control_msg(self, accel):
+    return self._send_gas_brake_msg(accel, accel)
 
   def test_diagnostics(self):
     tester_present = common.package_can_msg((0x18DAB0F1, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", self.PT_BUS))
