@@ -72,6 +72,7 @@ void safety_tick_current_rx_checks() {
 
 bool addr_checks_valid() {
   if (current_rx_checks->len <= 0) {
+    printf("missing RX checks\n");
     return false;
   }
 
@@ -79,6 +80,7 @@ bool addr_checks_valid() {
     const AddrCheckStruct addr = current_rx_checks->check[i];
     bool valid = addr.msg_seen && !addr.lagging && addr.valid_checksum && (addr.wrong_counters < MAX_WRONG_COUNTERS);
     if (!valid) {
+      //printf("seen %d lagging %d valid checksum %d wrong counters %d\n", addr.msg_seen, addr.lagging, addr.valid_checksum, addr.wrong_counters);
       return false;
     }
   }
