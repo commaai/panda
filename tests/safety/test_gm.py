@@ -229,8 +229,8 @@ class TestGmSafety(common.PandaSafetyTest):
 
       self.safety.set_controls_allowed(1)
 
-      # Test we allow lateral, but not longitudinal
-      self.assertFalse(self.safety.get_longitudinal_allowed())
+      # On gas press test we don't allow longitudinal
+      self.assertEqual(pedal != 'gas', self.safety.get_longitudinal_allowed())
       self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
       self.assertFalse(self._tx(self._torque_msg(MAX_RATE_UP)))
       self.assertFalse(self._tx(self._send_gas_msg(MAX_GAS)))

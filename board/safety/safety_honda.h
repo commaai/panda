@@ -271,7 +271,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if ((addr == 0x30C) && (bus == bus_pt)) {
     int pcm_speed = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
     int pcm_gas = GET_BYTE(to_send, 2);
-    if (!longitudinal_allowed) {
+    if (!current_controls_allowed || !longitudinal_allowed) {
       if ((pcm_speed != 0) || (pcm_gas != 0)) {
         tx = 0;
       }
@@ -281,7 +281,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   // BRAKE: safety check (nidec)
   if ((addr == 0x1FA) && (bus == bus_pt)) {
     honda_brake = (GET_BYTE(to_send, 0) << 2) + ((GET_BYTE(to_send, 1) >> 6) & 0x3U);
-    if (!longitudinal_allowed) {
+    if (!current_controls_allowed || !longitudinal_allowed) {
       if (honda_brake != 0) {
         tx = 0;
       }
@@ -298,7 +298,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if ((addr == 0x1DF) && (bus == bus_pt)) {
     int accel = (GET_BYTE(to_send, 3) << 3) | ((GET_BYTE(to_send, 4) >> 5) & 0x7U);
     accel = to_signed(accel, 11);
-    if (!longitudinal_allowed) {
+    if (!current_controls_allowed || !longitudinal_allowed) {
       if (accel != 0) {
         tx = 0;
       }
@@ -309,7 +309,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
     int gas = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
     gas = to_signed(gas, 16);
-    if (!longitudinal_allowed) {
+    if (!current_controls_allowed || !longitudinal_allowed) {
       if (gas != HONDA_BOSCH_NO_GAS_VALUE) {
         tx = 0;
       }
@@ -338,7 +338,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   // GAS: safety check (interceptor)
   if (addr == 0x200) {
-    if (!longitudinal_allowed) {
+    if (!current_controls_allowed || !longitudinal_allowed) {
       if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
         tx = 0;
       }
