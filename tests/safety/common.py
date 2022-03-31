@@ -396,11 +396,14 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.safety.set_controls_allowed(1)
     self._rx(self._user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_longitudinal_allowed())
     self._rx(self._user_brake_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_longitudinal_allowed())
     # rising edge of brake should disengage
     self._rx(self._user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_longitudinal_allowed())
     self._rx(self._user_brake_msg(0))  # reset no brakes
 
   def test_not_allow_brake_when_moving(self):
@@ -410,9 +413,11 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
     self._rx(self._user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_longitudinal_allowed())
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
     self._rx(self._user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_longitudinal_allowed())
     self._rx(self._speed_msg(0))
 
   def test_sample_speed(self):
