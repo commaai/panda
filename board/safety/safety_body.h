@@ -1,5 +1,3 @@
-
-
 static int body_tx_hook(CANPacket_t *to_send) {
 
   int tx = 0;
