@@ -57,7 +57,6 @@ typedef struct {
 int safety_rx_hook(CANPacket_t *to_push);
 int safety_tx_hook(CANPacket_t *to_send);
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
-bool get_longitudinal_allowed(void);
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
@@ -67,6 +66,7 @@ bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
 bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
   const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
   const int MAX_ALLOWANCE, const int DRIVER_FACTOR);
+bool get_longitudinal_allowed(void);
 bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 float interpolate(struct lookup_t xy, float x);
 void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]);
