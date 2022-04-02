@@ -11,7 +11,8 @@ static int body_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int body_tx_hook(CANPacket_t *to_send) {
+static int body_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+  UNUSED(longitudinal_allowed);
 
   int tx = 0;
   int addr = GET_ADDR(to_send);

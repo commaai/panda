@@ -255,16 +255,13 @@ class TestGmSafety(common.PandaSafetyTest):
         self._rx(self._user_gas_msg(MAX_GAS))
         allow_ctrl = True
 
+      # Test we allow lateral on gas press, but never longitudinal
       self.safety.set_controls_allowed(1)
-      self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(MAX_BRAKE)))
       self.assertEqual(allow_ctrl, self._tx(self._torque_msg(MAX_RATE_UP)))
-      self.assertEqual(allow_ctrl, self._tx(self._send_gas_msg(MAX_GAS)))
+      self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
+      self.assertFalse(self._tx(self._send_gas_msg(MAX_GAS)))
 
       # reset status
-      self.safety.set_controls_allowed(0)
-      self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DEFAULT)
-      self._tx(self._send_brake_msg(0))
-      self._tx(self._torque_msg(0))
       if pedal == 'brake':
         self._rx(self._speed_msg(0))
         self._rx(self._user_brake_msg(0))

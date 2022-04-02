@@ -370,18 +370,11 @@ class TestHondaNidecSafetyBase(HondaBase):
 
       self.safety.set_controls_allowed(1)
       self.safety.set_honda_fwd_brake(False)
-      self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(self.MAX_BRAKE)))
-      self.assertEqual(allow_ctrl, self._tx(self._interceptor_gas_cmd(self.INTERCEPTOR_THRESHOLD)))
+
+      # Test we allow lateral, but never longitudinal
+      self.assertFalse(self._tx(self._interceptor_gas_cmd(self.INTERCEPTOR_THRESHOLD)))
+      self.assertFalse(self._tx(self._send_brake_msg(self.MAX_BRAKE)))
       self.assertEqual(allow_ctrl, self._tx(self._send_steer_msg(0x1000)))
-
-      # reset status
-      self.safety.set_controls_allowed(0)
-      self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DEFAULT)
-      self._tx(self._send_brake_msg(0))
-      self._tx(self._send_steer_msg(0))
-      self._tx(self._interceptor_gas_cmd(0))
-      self.safety.set_gas_interceptor_detected(False)
-
 
 
 class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):

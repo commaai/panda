@@ -91,10 +91,12 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
     self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
     for g in range(0, 0x1000):
       self._rx(self._interceptor_user_gas(g))
+      # Test we allow lateral, but not longitudinal
       self.assertTrue(self.safety.get_controls_allowed())
+      self.assertEqual(g <= self.INTERCEPTOR_THRESHOLD, self.safety.get_longitudinal_allowed())
+      # Make sure we can re-gain longitudinal actuation
       self._rx(self._interceptor_user_gas(0))
-      self.safety.set_gas_interceptor_detected(False)
-    self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DEFAULT)
+      self.assertTrue(self.safety.get_longitudinal_allowed())
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
     self._rx(self._interceptor_user_gas(0x1000))
@@ -358,7 +360,12 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.safety.set_controls_allowed(True)
     self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
     self._rx(self._user_gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
+    # Test we allow lateral, but not longitudinal
     self.assertTrue(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_longitudinal_allowed())
+    # Make sure we can re-gain longitudinal actuation
+    self._rx(self._user_gas_msg(0))
+    self.assertTrue(self.safety.get_longitudinal_allowed())
 
   def test_prev_brake(self):
     self.assertFalse(self.safety.get_brake_pressed_prev())
@@ -393,11 +400,14 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.safety.set_controls_allowed(1)
     self._rx(self._user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_longitudinal_allowed())
     self._rx(self._user_brake_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_longitudinal_allowed())
     # rising edge of brake should disengage
     self._rx(self._user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_longitudinal_allowed())
     self._rx(self._user_brake_msg(0))  # reset no brakes
 
   def test_not_allow_brake_when_moving(self):
@@ -407,9 +417,11 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
     self._rx(self._user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_longitudinal_allowed())
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
     self._rx(self._user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_longitudinal_allowed())
     self._rx(self._speed_msg(0))
 
   def test_sample_speed(self):

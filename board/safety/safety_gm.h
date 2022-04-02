@@ -112,7 +112,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 // else
 //     block all commands that produce actuation
 
-static int gm_tx_hook(CANPacket_t *to_send) {
+static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -134,7 +134,7 @@ static int gm_tx_hook(CANPacket_t *to_send) {
   if (addr == 789) {
     int brake = ((GET_BYTE(to_send, 0) & 0xFU) << 8) + GET_BYTE(to_send, 1);
     brake = (0x1000 - brake) & 0xFFF;
-    if (!current_controls_allowed) {
+    if (!current_controls_allowed || !longitudinal_allowed) {
       if (brake != 0) {
         tx = 0;
       }
@@ -197,8 +197,9 @@ static int gm_tx_hook(CANPacket_t *to_send) {
     int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
     // Disabled message is !engaged with gas
     // value that corresponds to max regen.
-    if (!current_controls_allowed) {
+    if (!current_controls_allowed || !longitudinal_allowed) {
       bool apply = GET_BYTE(to_send, 0) & 1U;
+      // Stock ECU sends max regen when not enabled
       if (apply || (gas_regen != GM_MAX_REGEN)) {
         tx = 0;
       }
