@@ -19,6 +19,16 @@ HONDA_NIDEC = 0
 HONDA_BOSCH = 1
 
 
+def interceptor_msg(gas, addr):
+  to_send = make_msg(0, addr, 6)
+  gas2 = gas * 2
+  to_send[0].data[0] = (gas & 0xFF00) >> 8
+  to_send[0].data[1] = gas & 0xFF
+  to_send[0].data[2] = (gas2 & 0xFF00) >> 8
+  to_send[0].data[3] = gas2 & 0xFF
+  return to_send
+
+
 # Honda safety has several different configurations tested here:
 #  * Nidec
 #    * normal
@@ -300,15 +310,11 @@ class TestHondaNidecSafetyBase(HondaBase):
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
     self.safety.init_tests_honda()
 
-  # Honda gas gains are the different
-  def _interceptor_msg(self, gas, addr):
-    to_send = make_msg(0, addr, 6)
-    gas2 = gas * 2
-    to_send[0].data[0] = (gas & 0xFF00) >> 8
-    to_send[0].data[1] = gas & 0xFF
-    to_send[0].data[2] = (gas2 & 0xFF00) >> 8
-    to_send[0].data[3] = gas2 & 0xFF
-    return to_send
+  def _interceptor_gas_cmd(self, gas):
+    return interceptor_msg(gas, 0x200)
+
+  def _interceptor_user_gas(self, gas):
+    return interceptor_msg(gas, 0x201)
 
   def _send_brake_msg(self, brake):
     values = {"COMPUTER_BRAKE": brake}
@@ -358,15 +364,15 @@ class TestHondaNidecSafetyBase(HondaBase):
     for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
       self.safety.set_alternative_experience(mode)
       # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
-      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
-      self._rx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD + 1, 0x201))
+      self._rx(self._interceptor_user_gas(self.INTERCEPTOR_THRESHOLD + 1))
+      self._rx(self._interceptor_user_gas(self.INTERCEPTOR_THRESHOLD + 1))
       allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
 
       self.safety.set_controls_allowed(1)
       self.safety.set_honda_fwd_brake(False)
 
       # Test we allow lateral, but never longitudinal
-      self.assertFalse(self._tx(self._interceptor_msg(self.INTERCEPTOR_THRESHOLD, 0x200)))
+      self.assertFalse(self._tx(self._interceptor_gas_cmd(self.INTERCEPTOR_THRESHOLD)))
       self.assertFalse(self._tx(self._send_brake_msg(self.MAX_BRAKE)))
       self.assertEqual(allow_ctrl, self._tx(self._send_steer_msg(0x1000)))
 
