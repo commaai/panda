@@ -61,43 +61,47 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
       raise unittest.SkipTest
 
   @abc.abstractmethod
-  def _interceptor_msg(self, gas, addr):
+  def _interceptor_gas_cmd(self, gas):
+    pass
+
+  @abc.abstractmethod
+  def _interceptor_user_gas(self, gas):
     pass
 
   def test_prev_gas_interceptor(self):
-    self._rx(self._interceptor_msg(0x0, 0x201))
+    self._rx(self._interceptor_user_gas(0x0))
     self.assertFalse(self.safety.get_gas_interceptor_prev())
-    self._rx(self._interceptor_msg(0x1000, 0x201))
+    self._rx(self._interceptor_user_gas(0x1000))
     self.assertTrue(self.safety.get_gas_interceptor_prev())
-    self._rx(self._interceptor_msg(0x0, 0x201))
+    self._rx(self._interceptor_user_gas(0x0))
     self.safety.set_gas_interceptor_detected(False)
 
   def test_disengage_on_gas_interceptor(self):
     for g in range(0, 0x1000):
-      self._rx(self._interceptor_msg(0, 0x201))
+      self._rx(self._interceptor_user_gas(0))
       self.safety.set_controls_allowed(True)
-      self._rx(self._interceptor_msg(g, 0x201))
+      self._rx(self._interceptor_user_gas(g))
       remain_enabled = g <= self.INTERCEPTOR_THRESHOLD
       self.assertEqual(remain_enabled, self.safety.get_controls_allowed())
-      self._rx(self._interceptor_msg(0, 0x201))
+      self._rx(self._interceptor_user_gas(0))
       self.safety.set_gas_interceptor_detected(False)
 
   def test_alternative_experience_no_disengage_on_gas_interceptor(self):
     self.safety.set_controls_allowed(True)
     self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
     for g in range(0, 0x1000):
-      self._rx(self._interceptor_msg(g, 0x201))
+      self._rx(self._interceptor_user_gas(g))
       self.assertTrue(self.safety.get_controls_allowed())
-      self._rx(self._interceptor_msg(0, 0x201))
+      self._rx(self._interceptor_user_gas(0))
       self.safety.set_gas_interceptor_detected(False)
     self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DEFAULT)
 
   def test_allow_engage_with_gas_interceptor_pressed(self):
-    self._rx(self._interceptor_msg(0x1000, 0x201))
+    self._rx(self._interceptor_user_gas(0x1000))
     self.safety.set_controls_allowed(1)
-    self._rx(self._interceptor_msg(0x1000, 0x201))
+    self._rx(self._interceptor_user_gas(0x1000))
     self.assertTrue(self.safety.get_controls_allowed())
-    self._rx(self._interceptor_msg(0, 0x201))
+    self._rx(self._interceptor_user_gas(0))
 
   def test_gas_interceptor_safety_check(self):
     for gas in np.arange(0, 4000, 100):
@@ -107,7 +111,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
           send = True
         else:
           send = gas == 0
-        self.assertEqual(send, self._tx(self._interceptor_msg(gas, 0x200)))
+        self.assertEqual(send, self._tx(self._interceptor_gas_cmd(gas)))
 
 
 class TorqueSteeringSafetyTest(PandaSafetyTestBase):
