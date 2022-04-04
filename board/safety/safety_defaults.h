@@ -77,7 +77,8 @@ static int alloutput_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     if (bus_num == 0) {
       bus_fwd = 2;
     }
-    if ((bus_num == 2) && (addr != 0x12a)) {
+    if ((bus_num == 2) && (addr != 0x50)) {
+    //if ((bus_num == 2) && (addr != 0x12a)) {
     //if (bus_num == 2) {
       bus_fwd = 0;
     }
