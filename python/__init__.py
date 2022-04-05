@@ -114,6 +114,12 @@ def ensure_can_packet_version(fn):
     return fn(self, *args, **kwargs)
   return wrapper
 
+class ALTERNATIVE_EXPERIENCE:
+  DEFAULT = 0
+  DISABLE_DISENGAGE_ON_GAS = 1
+  DISABLE_STOCK_AEB = 2
+  RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
+
 class Panda(object):
 
   # matches cereal.car.CarParams.SafetyModel

@@ -5,16 +5,10 @@ import importlib
 import numpy as np
 from typing import Optional, List, Dict
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
-from panda import LEN_TO_DLC
+from panda import ALTERNATIVE_EXPERIENCE, LEN_TO_DLC
 from panda.tests.safety import libpandasafety_py
 
 MAX_WRONG_COUNTERS = 5
-
-class ALTERNATIVE_EXPERIENCE:
-  DEFAULT = 0
-  DISABLE_DISENGAGE_ON_GAS = 1
-  DISABLE_STOCK_AEB = 2
-  RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
 
 def package_can_msg(msg):
   addr, _, dat, bus = msg
