@@ -195,8 +195,8 @@ static int honda_rx_hook(CANPacket_t *to_push) {
       }
     }
 
-    // disable stock Honda AEB in unsafe mode
-    if (!(unsafe_mode & UNSAFE_DISABLE_STOCK_AEB)) {
+    // disable stock Honda AEB in alternative experience
+    if (!(alternative_experience & ALT_EXP_DISABLE_STOCK_AEB)) {
       if ((bus == 2) && (addr == 0x1FA)) {
         bool honda_stock_aeb = GET_BYTE(to_push, 3) & 0x20U;
         int honda_stock_brake = (GET_BYTE(to_push, 0) << 2) + ((GET_BYTE(to_push, 1) >> 6) & 0x3U);
@@ -243,7 +243,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
 // else
 //     block all commands that produce actuation
 
-static int honda_tx_hook(CANPacket_t *to_send) {
+static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -260,17 +260,28 @@ static int honda_tx_hook(CANPacket_t *to_send) {
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
   int pedal_pressed = brake_pressed_prev && vehicle_moving;
-  bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
-  if (!unsafe_allow_gas) {
+  bool alt_exp_allow_gas = alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS;
+  if (!alt_exp_allow_gas) {
     pedal_pressed = pedal_pressed || gas_pressed_prev;
   }
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
   int bus_pt = (honda_hw == HONDA_BOSCH) ? 1 : 0;
 
+  // ACC_HUD: safety check (nidec w/o pedal)
+  if ((addr == 0x30C) && (bus == bus_pt)) {
+    int pcm_speed = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
+    int pcm_gas = GET_BYTE(to_send, 2);
+    if (!current_controls_allowed || !longitudinal_allowed) {
+      if ((pcm_speed != 0) || (pcm_gas != 0)) {
+        tx = 0;
+      }
+    }
+  }
+
   // BRAKE: safety check (nidec)
   if ((addr == 0x1FA) && (bus == bus_pt)) {
     honda_brake = (GET_BYTE(to_send, 0) << 2) + ((GET_BYTE(to_send, 1) >> 6) & 0x3U);
-    if (!current_controls_allowed) {
+    if (!current_controls_allowed || !longitudinal_allowed) {
       if (honda_brake != 0) {
         tx = 0;
       }
@@ -287,7 +298,7 @@ static int honda_tx_hook(CANPacket_t *to_send) {
   if ((addr == 0x1DF) && (bus == bus_pt)) {
     int accel = (GET_BYTE(to_send, 3) << 3) | ((GET_BYTE(to_send, 4) >> 5) & 0x7U);
     accel = to_signed(accel, 11);
-    if (!current_controls_allowed) {
+    if (!current_controls_allowed || !longitudinal_allowed) {
       if (accel != 0) {
         tx = 0;
       }
@@ -298,7 +309,7 @@ static int honda_tx_hook(CANPacket_t *to_send) {
 
     int gas = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
     gas = to_signed(gas, 16);
-    if (!current_controls_allowed) {
+    if (!current_controls_allowed || !longitudinal_allowed) {
       if (gas != HONDA_BOSCH_NO_GAS_VALUE) {
         tx = 0;
       }
@@ -327,7 +338,7 @@ static int honda_tx_hook(CANPacket_t *to_send) {
 
   // GAS: safety check (interceptor)
   if (addr == 0x200) {
-    if (!current_controls_allowed) {
+    if (!current_controls_allowed || !longitudinal_allowed) {
       if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
         tx = 0;
       }
@@ -390,7 +401,7 @@ static const addr_checks* honda_bosch_init(int16_t param) {
 static int honda_nidec_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   // fwd from car to camera. also fwd certain msgs from camera to car
   // 0xE4 is steering on all cars except CRV and RDX, 0x194 for CRV and RDX,
-  // 0x1FA is brake control, 0x30C is acc hud, 0x33D is lkas hud,
+  // 0x1FA is brake control, 0x30C is acc hud, 0x33D is lkas hud
   int bus_fwd = -1;
 
   if (bus_num == 0) {

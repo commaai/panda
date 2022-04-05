@@ -114,6 +114,12 @@ def ensure_can_packet_version(fn):
     return fn(self, *args, **kwargs)
   return wrapper
 
+class ALTERNATIVE_EXPERIENCE:
+  DEFAULT = 0
+  DISABLE_DISENGAGE_ON_GAS = 1
+  DISABLE_STOCK_AEB = 2
+  RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
+
 class Panda(object):
 
   # matches cereal.car.CarParams.SafetyModel
@@ -138,6 +144,10 @@ class Panda(object):
   SAFETY_VOLKSWAGEN_PQ = 21
   SAFETY_SUBARU_LEGACY = 22
   SAFETY_HYUNDAI_LEGACY = 23
+  SAFETY_HYUNDAI_COMMUNITY = 24
+  SAFETY_STELLANTIS = 25
+  SAFETY_FAW = 26
+  SAFETY_BODY = 27
 
   SERIAL_DEBUG = 0
   SERIAL_ESP = 1
@@ -160,7 +170,7 @@ class Panda(object):
   HW_TYPE_RED_PANDA = b'\x07'
 
   CAN_PACKET_VERSION = 2
-  HEALTH_PACKET_VERSION = 3
+  HEALTH_PACKET_VERSION = 4
   HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHI")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
@@ -378,7 +388,7 @@ class Panda(object):
       "fault_status": a[16],
       "power_save_enabled": a[17],
       "heartbeat_lost": a[18],
-      "unsafe_mode": a[19],
+      "alternative_experience": a[19],
       "blocked_msg_cnt": a[20],
     }
 
