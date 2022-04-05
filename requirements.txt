@@ -1,5 +1,5 @@
 libusb1==2.0.1
-numpy==1.17.2
+numpy==1.21.0
 hexdump>=3.3
 pycryptodome==3.9.8
 tqdm>=4.14.0
