@@ -10,7 +10,6 @@ from panda.tests.safety import libpandasafety_py
 
 MAX_WRONG_COUNTERS = 5
 
-
 def package_can_msg(msg):
   addr, _, dat, bus = msg
   ret = libpandasafety_py.ffi.new('CANPacket_t *')
