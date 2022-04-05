@@ -182,7 +182,7 @@ static void panda_usb_write_bulk_callback(struct urb *urb)
   netdev->stats.tx_packets++;
   netdev->stats.tx_bytes += ctx->dlc;
 
-  can_get_echo_skb(netdev, ctx->ndx);
+  can_get_echo_skb(netdev, ctx->ndx, NULL);
 
   if (urb->status)
     netdev_info(netdev, "Tx URB aborted (%d)\n", urb->status);
@@ -459,7 +459,7 @@ static netdev_tx_t panda_usb_start_xmit(struct sk_buff *skb,
 
   //Warning: cargo cult. Can't tell what this is for, but it is
   //everywhere and encouraged in the documentation.
-  can_put_echo_skb(skb, priv_inf->netdev, ctx->ndx);
+  can_put_echo_skb(skb, priv_inf->netdev, ctx->ndx, NULL);
 
   if(cf->can_id & CAN_EFF_FLAG){
     usb_msg.rir = cpu_to_le32(((cf->can_id & 0x1FFFFFFF) << 3) |
@@ -484,9 +484,9 @@ static netdev_tx_t panda_usb_start_xmit(struct sk_buff *skb,
   return NETDEV_TX_OK;
 
  xmit_failed:
-  can_free_echo_skb(priv_inf->netdev, ctx->ndx);
+  can_free_echo_skb(priv_inf->netdev, ctx->ndx, NULL);
   panda_usb_free_ctx(ctx);
-  dev_kfree_skb(skb);
+  dev_kfree_skb_any(skb);
   stats->tx_dropped++;
 
   return NETDEV_TX_OK;
