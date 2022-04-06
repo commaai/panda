@@ -365,7 +365,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   return tx;
 }
 
-static const addr_checks* honda_nidec_init(int16_t param) {
+static const addr_checks* honda_nidec_init(uint16_t param) {
   UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();
@@ -382,7 +382,7 @@ static const addr_checks* honda_nidec_init(int16_t param) {
   return &honda_rx_checks;
 }
 
-static const addr_checks* honda_bosch_init(int16_t param) {
+static const addr_checks* honda_bosch_init(uint16_t param) {
   controls_allowed = false;
   relay_malfunction_reset();
   honda_hw = HONDA_BOSCH;

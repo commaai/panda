@@ -49,7 +49,7 @@ static uint8_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static const addr_checks* volkswagen_pq_init(int16_t param) {
+static const addr_checks* volkswagen_pq_init(uint16_t param) {
   UNUSED(param);
 
   controls_allowed = false;
