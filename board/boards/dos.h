@@ -184,7 +184,7 @@ void dos_init(void) {
   }
 
   // Init clock source as internal free running
-  dos_set_clock_source_mode(CLOCK_SOURCE_MODE_FREE_RUNNING);
+  dos_set_clock_source_mode(CLOCK_SOURCE_MODE_PWM);
 }
 
 const harness_configuration dos_harness_config = {
