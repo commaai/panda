@@ -1,5 +1,5 @@
 // When changing this struct, python/__init__.py needs to be kept up to date!
-#define HEALTH_PACKET_VERSION 4
+#define HEALTH_PACKET_VERSION 5
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
   uint32_t voltage_pkt;
@@ -22,4 +22,5 @@ struct __attribute__((packed)) health_t {
   uint8_t heartbeat_lost_pkt;
   uint16_t alternative_experience_pkt;
   uint32_t blocked_msg_cnt_pkt;
+  float interrupt_load;
 };

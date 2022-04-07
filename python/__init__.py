@@ -171,7 +171,7 @@ class Panda(object):
 
   CAN_PACKET_VERSION = 2
   HEALTH_PACKET_VERSION = 4
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHI")
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHIf")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
@@ -387,6 +387,7 @@ class Panda(object):
       "heartbeat_lost": a[18],
       "alternative_experience": a[19],
       "blocked_msg_cnt": a[20],
+      "interrupt_load": a[21],
     }
 
   # ******************* control *******************

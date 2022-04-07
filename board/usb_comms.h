@@ -37,6 +37,8 @@ int get_health_pkt(void *dat) {
   health->fault_status_pkt = fault_status;
   health->faults_pkt = faults;
 
+  health->interrupt_load = interrupt_load;
+
   return sizeof(*health);
 }
 
