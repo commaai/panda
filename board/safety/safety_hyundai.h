@@ -58,9 +58,9 @@ AddrCheckStruct hyundai_legacy_addr_checks[] = {
 };
 #define HYUNDAI_LEGACY_ADDR_CHECK_LEN (sizeof(hyundai_legacy_addr_checks) / sizeof(hyundai_legacy_addr_checks[0]))
 
-const int HYUNDAI_PARAM_EV_GAS = 1;
-const int HYUNDAI_PARAM_HYBRID_GAS = 2;
-const int HYUNDAI_PARAM_LONGITUDINAL = 4;
+const uint32_t HYUNDAI_PARAM_EV_GAS = 1;
+const uint32_t HYUNDAI_PARAM_HYBRID_GAS = 2;
+const uint32_t HYUNDAI_PARAM_LONGITUDINAL = 4;
 
 enum {
   HYUNDAI_BTN_NONE = 0,

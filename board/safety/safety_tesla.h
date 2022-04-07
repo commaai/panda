@@ -10,8 +10,8 @@ const int TESLA_DEG_TO_CAN = 10;
 const float TESLA_MAX_ACCEL = 2.0;  // m/s^2
 const float TESLA_MIN_ACCEL = -3.5; // m/s^2
 
-const int TESLA_FLAG_POWERTRAIN = 1;
-const int TESLA_FLAG_LONGITUDINAL_CONTROL = 2;
+const uint32_t TESLA_FLAG_POWERTRAIN = 1;
+const uint32_t TESLA_FLAG_LONGITUDINAL_CONTROL = 2;
 
 const CanMsg TESLA_TX_MSGS[] = {
   {0x488, 0, 4},  // DAS_steeringControl
