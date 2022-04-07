@@ -200,8 +200,15 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     if (!current_controls_allowed || !longitudinal_allowed) {
       bool apply = GET_BYTE(to_send, 0) & 1U;
       // Stock ECU sends max regen when not enabled
-      if (apply || (gas_regen != GM_MAX_REGEN)) {
+      if ((gas_regen != GM_MAX_REGEN)) {
         tx = 0;
+      }
+      // Stock ECU keeps apply bit set when gas is pressed
+      if (!current_controls_allowed) {
+        bool apply = GET_BYTE(to_send, 0) & 1U;
+        if (apply) {
+          tx = 0;
+        }
       }
     }
     if (gas_regen > GM_MAX_GAS) {
