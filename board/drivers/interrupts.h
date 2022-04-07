@@ -8,7 +8,6 @@ typedef struct interrupt {
 
 void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!
