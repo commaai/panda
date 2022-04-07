@@ -51,9 +51,9 @@ AddrCheckStruct honda_bosch_addr_checks[] = {
 };
 #define HONDA_BOSCH_ADDR_CHECKS_LEN (sizeof(honda_bosch_addr_checks) / sizeof(honda_bosch_addr_checks[0]))
 
-const uint32_t HONDA_PARAM_ALT_BRAKE = 1;
-const uint32_t HONDA_PARAM_BOSCH_LONG = 2;
-const uint32_t HONDA_PARAM_NIDEC_ALT = 4;
+const uint16_t HONDA_PARAM_ALT_BRAKE = 1;
+const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
+const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
 
 enum {
   HONDA_BTN_NONE = 0,

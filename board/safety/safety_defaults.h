@@ -47,7 +47,7 @@ const safety_hooks nooutput_hooks = {
 // *** all output safety mode ***
 
 // Enables passthrough mode where relay is open and bus 0 gets forwarded to bus 2 and vice versa
-const uint32_t ALLOUTPUT_PARAM_PASSTHROUGH = 1;
+const uint16_t ALLOUTPUT_PARAM_PASSTHROUGH = 1;
 bool alloutput_passthrough = false;
 
 static const addr_checks* alloutput_init(uint32_t param) {
