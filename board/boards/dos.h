@@ -183,7 +183,7 @@ void dos_init(void) {
     can_flip_buses(0, 2);
   }
 
-  // Init clock source as internal free running
+  // Init clock source (camera strobe) using PWM
   dos_set_clock_source_mode(CLOCK_SOURCE_MODE_PWM);
 }
 
