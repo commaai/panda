@@ -70,7 +70,8 @@ void interrupt_timer_handler(void) {
     }
 
     // Calculate interrupt load
-#ifndef BOOTSTUB  // The bootstub does not have the FPU enabled, so can't do float operations.
+    // The bootstub does not have the FPU enabled, so can't do float operations.
+#if !defined(PEDAL) && !defined(BOOTSTUB)
     interrupt_load = ((busy_time + idle_time) > 0) ? ((float) busy_time) / (busy_time + idle_time) : 0.0f;
 #endif
     idle_time = 0U;
