@@ -70,7 +70,11 @@ void interrupt_timer_handler(void) {
     }
 
     // Calculate interrupt load
-    interrupt_load = ((float) busy_time) / (busy_time + idle_time);
+#ifndef BOOTSTUB  // The bootstub does not have the FPU enabled, so can't do float operations.
+    interrupt_load = ((busy_time + idle_time) > 0) ? ((float) busy_time) / (busy_time + idle_time) : 0.0f;
+#endif
+    idle_time += 1U;
+
     idle_time = 0U;
     busy_time = 0U;
   }
