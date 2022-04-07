@@ -8,6 +8,7 @@ typedef struct interrupt {
 
 void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);
+uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!
@@ -36,7 +37,7 @@ void handle_interrupt(IRQn_Type irq_type){
   ENTER_CRITICAL();
   if (interrupt_depth == 0U) {
     uint32_t time = microsecond_timer_get();
-    idle_time += (time - last_time);
+    idle_time += get_ts_elapsed(time, last_time);
     last_time = time;
   }
   interrupt_depth += 1U;
@@ -55,7 +56,7 @@ void handle_interrupt(IRQn_Type irq_type){
   interrupt_depth -= 1U;
   if (interrupt_depth == 0U) {
     uint32_t time = microsecond_timer_get();
-    busy_time += (time - last_time);
+    busy_time += get_ts_elapsed(time, last_time);
     last_time = time;
   }
   EXIT_CRITICAL();
