@@ -296,7 +296,7 @@ class TestHondaNidecSafetyBase(HondaBase):
   PT_BUS = 0
   STEER_BUS = 0
 
-  INTERCEPTOR_THRESHOLD = 344
+  INTERCEPTOR_THRESHOLD = 328
 
   @classmethod
   def setUpClass(cls):
