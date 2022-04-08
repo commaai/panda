@@ -199,7 +199,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     // value that corresponds to max regen.
     if (!current_controls_allowed || !longitudinal_allowed) {
       // Stock ECU sends max regen when not enabled
-      if ((gas_regen != GM_MAX_REGEN)) {
+      if (gas_regen != GM_MAX_REGEN) {
         tx = 0;
       }
     }
