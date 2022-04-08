@@ -205,7 +205,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     }
     // Need to allow apply bit in pre-enabled and overriding states
     if (!controls_allowed) {
-      bool apply = GET_BIT(to_send, 0);
+      bool apply = GET_BIT(to_send, 0) != 0U;
       if (apply) {
         tx = 0;
       }
