@@ -198,9 +198,15 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     // Disabled message is !engaged with gas
     // value that corresponds to max regen.
     if (!current_controls_allowed || !longitudinal_allowed) {
-      bool apply = GET_BYTE(to_send, 0) & 1U;
       // Stock ECU sends max regen when not enabled
-      if (apply || (gas_regen != GM_MAX_REGEN)) {
+      if (gas_regen != GM_MAX_REGEN) {
+        tx = 0;
+      }
+    }
+    // Need to allow apply bit in pre-enabled and overriding states
+    if (!controls_allowed) {
+      bool apply = GET_BIT(to_send, 0U) != 0U;
+      if (apply) {
         tx = 0;
       }
     }
