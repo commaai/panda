@@ -21,11 +21,10 @@ HONDA_BOSCH = 1
 
 def interceptor_msg(gas, addr):
   to_send = make_msg(0, addr, 6)
-  gas2 = gas * 2
   to_send[0].data[0] = (gas & 0xFF00) >> 8
   to_send[0].data[1] = gas & 0xFF
-  to_send[0].data[2] = (gas2 & 0xFF00) >> 8
-  to_send[0].data[3] = gas2 & 0xFF
+  to_send[0].data[2] = (gas & 0xFF00) >> 8
+  to_send[0].data[3] = gas & 0xFF
   return to_send
 
 
