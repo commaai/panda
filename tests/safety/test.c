@@ -5,6 +5,7 @@
 
 #include "panda.h"
 #include "can_definitions.h"
+#include "utils.h"
 
 typedef struct
 {
