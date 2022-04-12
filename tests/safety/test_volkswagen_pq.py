@@ -63,7 +63,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("Bremse_1", 0, values)
 
   # Brake light switch (shared message Motor_2)
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     # since this signal is used for engagement status, preserve current state
     return self._motor_2_msg(brake_pressed=brake, cruise_engaged=self.safety.get_controls_allowed())
 
@@ -100,7 +100,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("Motor_2", 0, values)
 
   # Driver throttle input (Motor_3)
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"Fahrpedal_Rohsignal": gas}
     return self.packer.make_can_msg_panda("Motor_3", 0, values)
 

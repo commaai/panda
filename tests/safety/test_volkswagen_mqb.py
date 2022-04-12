@@ -54,13 +54,13 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("ESP_19", 0, values)
 
   # Brake light switch _esp_05_msg
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     values = {"ESP_Fahrer_bremst": brake, "COUNTER": self.cnt_esp_05 % 16}
     self.__class__.cnt_esp_05 += 1
     return self.packer.make_can_msg_panda("ESP_05", 0, values)
 
   # Driver throttle input
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"MO_Fahrpedalrohwert_01": gas, "COUNTER": self.cnt_motor_20 % 16}
     self.__class__.cnt_motor_20 += 1
     return self.packer.make_can_msg_panda("Motor_20", 0, values)
@@ -207,11 +207,11 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
       if msg == MSG_LH_EPS_03:
         to_push = self._lh_eps_03_msg(0)
       if msg == MSG_ESP_05:
-        to_push = self._brake_msg(False)
+        to_push = self._user_brake_msg(False)
       if msg == MSG_TSK_06:
         to_push = self._pcm_status_msg(True)
       if msg == MSG_MOTOR_20:
-        to_push = self._gas_msg(0)
+        to_push = self._user_gas_msg(0)
       self.assertTrue(self._rx(to_push))
       to_push[0].data[4] ^= 0xFF
       self.assertFalse(self._rx(to_push))
@@ -227,23 +227,23 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest):
       if i < MAX_WRONG_COUNTERS:
         self.safety.set_controls_allowed(1)
         self._rx(self._lh_eps_03_msg(0))
-        self._rx(self._brake_msg(False))
+        self._rx(self._user_brake_msg(False))
         self._rx(self._pcm_status_msg(True))
-        self._rx(self._gas_msg(0))
+        self._rx(self._user_gas_msg(0))
       else:
         self.assertFalse(self._rx(self._lh_eps_03_msg(0)))
-        self.assertFalse(self._rx(self._brake_msg(False)))
+        self.assertFalse(self._rx(self._user_brake_msg(False)))
         self.assertFalse(self._rx(self._pcm_status_msg(True)))
-        self.assertFalse(self._rx(self._gas_msg(0)))
+        self.assertFalse(self._rx(self._user_gas_msg(0)))
         self.assertFalse(self.safety.get_controls_allowed())
 
     # restore counters for future tests with a couple of good messages
     for i in range(2):
       self.safety.set_controls_allowed(1)
       self._rx(self._lh_eps_03_msg(0))
-      self._rx(self._brake_msg(False))
+      self._rx(self._user_brake_msg(False))
       self._rx(self._pcm_status_msg(True))
-      self._rx(self._gas_msg(0))
+      self._rx(self._user_gas_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
 
 

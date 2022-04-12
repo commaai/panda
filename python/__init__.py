@@ -114,6 +114,12 @@ def ensure_can_packet_version(fn):
     return fn(self, *args, **kwargs)
   return wrapper
 
+class ALTERNATIVE_EXPERIENCE:
+  DEFAULT = 0
+  DISABLE_DISENGAGE_ON_GAS = 1
+  DISABLE_STOCK_AEB = 2
+  RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
+
 class Panda(object):
 
   # matches cereal.car.CarParams.SafetyModel
@@ -138,6 +144,10 @@ class Panda(object):
   SAFETY_VOLKSWAGEN_PQ = 21
   SAFETY_SUBARU_LEGACY = 22
   SAFETY_HYUNDAI_LEGACY = 23
+  SAFETY_HYUNDAI_COMMUNITY = 24
+  SAFETY_STELLANTIS = 25
+  SAFETY_FAW = 26
+  SAFETY_BODY = 27
 
   SERIAL_DEBUG = 0
   SERIAL_ESP = 1
@@ -160,12 +170,12 @@ class Panda(object):
   HW_TYPE_RED_PANDA = b'\x07'
 
   CAN_PACKET_VERSION = 2
-  HEALTH_PACKET_VERSION = 3
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHI")
+  HEALTH_PACKET_VERSION = 5
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHIf")
 
-  F2_DEVICES = [HW_TYPE_PEDAL]
-  F4_DEVICES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS]
-  H7_DEVICES = [HW_TYPE_RED_PANDA]
+  F2_DEVICES = (HW_TYPE_PEDAL, )
+  F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
+  H7_DEVICES = (HW_TYPE_RED_PANDA, )
 
   CLOCK_SOURCE_MODE_DISABLED = 0
   CLOCK_SOURCE_MODE_FREE_RUNNING = 1
@@ -375,8 +385,9 @@ class Panda(object):
       "fault_status": a[16],
       "power_save_enabled": a[17],
       "heartbeat_lost": a[18],
-      "unsafe_mode": a[19],
+      "alternative_experience": a[19],
       "blocked_msg_cnt": a[20],
+      "interrupt_load": a[21],
     }
 
   # ******************* control *******************
@@ -448,7 +459,7 @@ class Panda(object):
     return (self.is_uno() or self.is_dos() or self.is_black() or self.is_red())
 
   def has_canfd(self):
-    return self._mcu_type in Panda.H7_DEVICES
+    return self.get_type() in Panda.H7_DEVICES
 
   def is_internal(self):
     return self.get_type() in [Panda.HW_TYPE_UNO, Panda.HW_TYPE_DOS]
@@ -473,6 +484,9 @@ class Panda(object):
   def set_power_save(self, power_save_enabled=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe7, int(power_save_enabled), 0, b'')
 
+  def enable_deepsleep(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xfb, 0, 0, b'')
+
   def set_esp_power(self, on):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xd9, int(on), 0, b'')
 
@@ -480,8 +494,8 @@ class Panda(object):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xda, int(bootmode), 0, b'')
     time.sleep(0.2)
 
-  def set_safety_mode(self, mode=SAFETY_SILENT, disable_checks=True):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, 0, b'')
+  def set_safety_mode(self, mode=SAFETY_SILENT, param=0, disable_checks=True):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
     if disable_checks:
       self.set_heartbeat_disabled()
       self.set_power_save(0)
@@ -511,7 +525,7 @@ class Panda(object):
   def set_can_data_speed_kbps(self, bus, speed):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf9, bus, int(speed * 10), b'')
 
-    # CAN FD and BRS status
+  # CAN FD and BRS status
   def get_canfd_status(self, bus):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfa, bus, 0, 2)
     if dat:

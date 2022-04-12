@@ -15,6 +15,7 @@
 #include "safety/safety_volkswagen_mqb.h"
 #include "safety/safety_volkswagen_pq.h"
 #include "safety/safety_elm327.h"
+#include "safety/safety_body.h"
 
 // from cereal.car.CarParams.SafetyModel
 #define SAFETY_SILENT 0U
@@ -40,6 +41,8 @@
 #define SAFETY_HYUNDAI_LEGACY 23U
 #define SAFETY_HYUNDAI_COMMUNITY 24U
 #define SAFETY_STELLANTIS 25U
+#define SAFETY_FAW 26U
+#define SAFETY_BODY 27U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
 int16_t current_safety_param = 0;
@@ -51,7 +54,7 @@ int safety_rx_hook(CANPacket_t *to_push) {
 }
 
 int safety_tx_hook(CANPacket_t *to_send) {
-  return (relay_malfunction ? -1 : current_hooks->tx(to_send));
+  return (relay_malfunction ? -1 : current_hooks->tx(to_send, get_longitudinal_allowed()));
 }
 
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
@@ -60,6 +63,10 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 
 int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return (relay_malfunction ? -1 : current_hooks->fwd(bus_num, to_fwd));
+}
+
+bool get_longitudinal_allowed(void) {
+  return controls_allowed && !gas_pressed_prev;
 }
 
 // Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8
@@ -90,12 +97,6 @@ bool msg_allowed(CANPacket_t *to_send, const CanMsg msg_list[], int len) {
     }
   }
   return allowed;
-}
-
-// compute the time elapsed (in microseconds) from 2 counter samples
-// case where ts < ts_last is ok: overflow is properly re-casted into uint32_t
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
-  return ts - ts_last;
 }
 
 int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], const int len) {
@@ -204,7 +205,7 @@ bool addr_safety_check(CANPacket_t *to_push,
 
 void generic_rx_checks(bool stock_ecu_detected) {
   // exit controls on rising edge of gas press
-  if (gas_pressed && !gas_pressed_prev && !(unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS)) {
+  if (gas_pressed && !gas_pressed_prev && !(alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS)) {
     controls_allowed = 0;
   }
   gas_pressed_prev = gas_pressed;
@@ -251,6 +252,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_NOOUTPUT, &nooutput_hooks},
   {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
+  {SAFETY_BODY, &body_hooks},
 #ifdef ALLOW_DEBUG
   {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_SUBARU_LEGACY, &subaru_legacy_hooks},
@@ -274,6 +276,7 @@ int set_safety_hooks(uint16_t mode, int16_t param) {
   vehicle_speed = 0;
   vehicle_moving = false;
   acc_main_on = false;
+  cruise_button_prev = 0;
   desired_torque_last = 0;
   rt_torque_last = 0;
   ts_angle_last = 0;

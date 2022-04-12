@@ -248,7 +248,7 @@ void tick_handler(void) {
         }
 
         // enter CDP mode when car starts to ensure we are charging a turned off EON
-        if (check_started() && (usb_power_mode != USB_POWER_CDP)) {
+        if (check_started() && ((usb_power_mode != USB_POWER_CDP) || !usb_enumerated)) {
           current_board->set_usb_power_mode(USB_POWER_CDP);
         }
       }
@@ -274,6 +274,38 @@ void tick_handler(void) {
     loop_counter %= 8U;
   }
   TICK_TIMER->SR = 0;
+}
+
+void EXTI_IRQ_Handler(void) {
+  if (check_exti_irq()) {
+    exti_irq_clear();
+    clock_init();
+
+    current_board->set_usb_power_mode(USB_POWER_CDP);
+    set_power_save_state(POWER_SAVE_STATUS_DISABLED);
+    deepsleep_requested = false;
+    heartbeat_counter = 0U;
+    usb_soft_disconnect(false);
+
+    NVIC_EnableIRQ(TICK_TIMER_IRQ);
+  }
+}
+
+uint8_t rtc_counter = 0;
+void RTC_WKUP_IRQ_Handler(void) {
+  exti_irq_clear();
+  clock_init();
+
+  rtc_counter++;
+  if ((rtc_counter % 2U) == 0U) {
+    current_board->set_led(LED_BLUE, false);
+  } else {
+    current_board->set_led(LED_BLUE, true);
+  }
+
+  if (rtc_counter == __UINT8_MAX__) {
+    rtc_counter = 1U;
+  }
 }
 
 
@@ -387,7 +419,25 @@ int main(void) {
         }
       #endif
     } else {
+      if (deepsleep_requested && !usb_enumerated && !check_started()) {
+        usb_soft_disconnect(true);
+        current_board->set_fan_power(0U);
+        current_board->set_usb_power_mode(USB_POWER_CLIENT);
+        NVIC_DisableIRQ(TICK_TIMER_IRQ);
+        delay(512000U);
+
+        // Init IRQs for CAN transceiver and ignition line
+        exti_irq_init();
+
+        // Init RTC Wakeup event on EXTI22
+        REGISTER_INTERRUPT(RTC_WKUP_IRQn, RTC_WKUP_IRQ_Handler, 10U, FAULT_INTERRUPT_RATE_EXTI)
+        rtc_wakeup_init();
+
+        // STOP mode
+        SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+      }
       __WFI();
+      SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
     }
   }
 
