@@ -189,13 +189,6 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     }
     desired_angle_last = desired_angle;
 
-    // TODO: this is broken because we can't send the current angle most of the time -
-    // the signal only supports angles in range [-0.5, 0.5] radians
-    // // Angle should be the same as current angle while not steering
-    // if (!controls_allowed && ((desired_angle < (angle_meas.min - 1)) || (desired_angle > (angle_meas.max + 1)))) {
-    //   tx = 0;
-    // }
-
     // No steer control allowed when controls are not allowed
     if (!controls_allowed && steer_control_enabled) {
       tx = 0;

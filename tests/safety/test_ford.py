@@ -48,7 +48,7 @@ class TestFordSafety(common.PandaSafetyTest):
     raise unittest.SkipTest
 
   # Driver brake pedal
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     # brake pedal and cruise state share same message, so we have to send
     # the other signal too (use prev value)
     enable = self.safety.get_controls_allowed()
@@ -64,7 +64,7 @@ class TestFordSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("EngVehicleSpThrottle2", 0, values)
 
   # Drive throttle input
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"ApedPos_Pc_ActlArb": gas}
     return self.packer.make_can_msg_panda("EngVehicleSpThrottle", 0, values)
 
@@ -158,11 +158,6 @@ class TestFordSteeringSafety(TestFordSafety):
 
         # Down
         self.assertEqual(False, self._tx(self._lkas_control_msg(a - sign(a) * (max_delta_down + 1.1), 1)))
-
-        # TODO: ford safety doesn't check for this yet
-        # # Check desired steer should be the same as steer angle when controls are off
-        # self.safety.set_controls_allowed(0)
-        # self.assertEqual(True, self._tx(self._lkas_control_msg(a, 0)))
 
   def test_steer_when_disabled(self):
     self.safety.set_controls_allowed(0)
