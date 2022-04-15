@@ -202,7 +202,7 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
         bool main_pressed = false;
         for (int i = 0; i < MIN(cruise_buttons.length, PREV_BUTTON_SAMPLES); i++) {
           int button = cruise_buttons.values[i];
-          if (button == HYUNDAI_BTN_RESUME || button == HYUNDAI_BTN_SET || button == HYUNDAI_BTN_CANCEL) {
+          if ((button == HYUNDAI_BTN_RESUME) || (button == HYUNDAI_BTN_SET) || (button == HYUNDAI_BTN_CANCEL)) {
             cruise_pressed = true;
             break;
           }
