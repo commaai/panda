@@ -320,13 +320,14 @@ int to_signed(int d, int bits) {
   return d_signed;
 }
 
-// given a new sample, update the smaple_t struct
+// given a new sample, update the sample_t struct
 void update_sample(struct sample_t *sample, int sample_new) {
   int sample_size = sizeof(sample->values) / sizeof(sample->values[0]);
   for (int i = sample_size - 1; i > 0; i--) {
     sample->values[i] = sample->values[i-1];
   }
   sample->values[0] = sample_new;
+  sample->length = sample_size;
 
   // get the minimum and maximum measured samples
   sample->min = sample->values[0];
