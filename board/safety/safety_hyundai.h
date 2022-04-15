@@ -198,8 +198,6 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
     if (!hyundai_longitudinal) {
       // enter controls on rising edge of ACC and user button press, exit controls on ACC off
       if (addr == 1057) {
-        // User needs to have recently interacted with a button that can engage, as some newer model year
-        // HKG have pause/resume buttons and we may accidentally re-engage on gas press when spamming it
         bool cruise_pressed = false;
         bool main_pressed = false;
         for (int i = 0; i < MIN(cruise_buttons.length, PREV_BUTTON_SAMPLES); i++) {
