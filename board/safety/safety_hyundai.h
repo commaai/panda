@@ -68,6 +68,9 @@ enum {
   HYUNDAI_BTN_SET = 2,
   HYUNDAI_BTN_CANCEL = 4,
 };
+// TODO: need a sample_t that has 8 previous values
+sample_t cruise_buttons;
+sample_t main_buttons;
 
 bool hyundai_legacy = false;
 bool hyundai_ev_gas_signal = false;
@@ -165,31 +168,43 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    if (hyundai_longitudinal) {
-      // ACC steering wheel buttons
-      if (addr == 1265) {
-        int button = GET_BYTE(to_push, 0) & 0x7U;
+    // ACC steering wheel buttons
+    if (addr == 1265) {
+      int cruise_button = GET_BYTE(to_push, 0) & 0x7U;
+      int main_button = GET_BIT(to_push, 3U);
 
+      update_sample(&cruise_buttons, cruise_button);
+      update_sample(&main_buttons, main_button);
+
+      if (hyundai_longitudinal) {
         // exit controls on cancel press
-        if (button == HYUNDAI_BTN_CANCEL) {
+        if (cruise_button == HYUNDAI_BTN_CANCEL) {
           controls_allowed = 0;
         }
 
         // enter controls on falling edge of resume or set
-        bool set = (button == HYUNDAI_BTN_NONE) && (cruise_button_prev == HYUNDAI_BTN_SET);
-        bool res = (button == HYUNDAI_BTN_NONE) && (cruise_button_prev == HYUNDAI_BTN_RESUME);
+        bool set = (cruise_button == HYUNDAI_BTN_NONE) && (cruise_button_prev == HYUNDAI_BTN_SET);
+        bool res = (cruise_button == HYUNDAI_BTN_NONE) && (cruise_button_prev == HYUNDAI_BTN_RESUME);
         if (set || res) {
           controls_allowed = 1;
         }
 
         cruise_button_prev = button;
       }
-    } else {
+    }
+
+    if (!hyundai_longitudinal) {
       // enter controls on rising edge of ACC, exit controls on ACC off
       if (addr == 1057) {
         // 2 bits: 13-14
         int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3U;
-        if (cruise_engaged && !cruise_engaged_prev) {
+        bool main_pressed = main_buttons.max > 0;
+        // TODO: do cruise buttons (don't want to just check max as dist gap shouldn't allow engage)
+        // bool cruise_buttons_pressed = false;
+
+        // User needs to have recently interacted with a button that can engage, as some newer model year
+        // HKG have pause/resume buttons and we may accidentally re-engage on gas press if spamming it
+        if (cruise_engaged && !cruise_engaged_prev && main_pressed) {
           controls_allowed = 1;
         }
         if (!cruise_engaged) {
