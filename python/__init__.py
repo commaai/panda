@@ -190,6 +190,8 @@ class Panda(object):
   FLAG_TESLA_POWERTRAIN = 1
   FLAG_TESLA_LONG_CONTROL = 2
 
+  FLAG_VOLKSWAGEN_LONG_CONTROL = 1
+
   def __init__(self, serial=None, claim=True):
     self._serial = serial
     self._handle = None
