@@ -17,3 +17,7 @@ jobs:
           make link
           make build
           make install
+      - name: Print make log
+        if: always()
+        continue-on-error: true
+        run: cat /var/lib/dkms/panda/*/build/make.log

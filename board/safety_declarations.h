@@ -66,6 +66,7 @@ bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
 bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
   const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
   const int MAX_ALLOWANCE, const int DRIVER_FACTOR);
+bool get_longitudinal_allowed(void);
 bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 float interpolate(struct lookup_t xy, float x);
 void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]);
@@ -85,7 +86,7 @@ void relay_malfunction_reset(void);
 
 typedef const addr_checks* (*safety_hook_init)(int16_t param);
 typedef int (*rx_hook)(CANPacket_t *to_push);
-typedef int (*tx_hook)(CANPacket_t *to_send);
+typedef int (*tx_hook)(CANPacket_t *to_send, bool longitudinal_allowed);
 typedef int (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
 typedef int (*fwd_hook)(int bus_num, CANPacket_t *to_fwd);
 
@@ -112,6 +113,7 @@ bool cruise_engaged_prev = false;
 float vehicle_speed = 0;
 bool vehicle_moving = false;
 bool acc_main_on = false;  // referred to as "ACC off" in ISO 15622:2018
+int cruise_button_prev = 0;
 
 // for safety modes with torque steering control
 int desired_torque_last = 0;       // last desired steer torque
@@ -126,23 +128,21 @@ int desired_angle_last = 0;
 struct sample_t angle_meas;         // last 3 steer angles
 
 // This can be set with a USB command
-// It enables features we consider to be unsafe, but understand others may have different opinions
-// It is always 0 on mainline comma.ai openpilot
+// It enables features that allow alternative experiences, like not disengaging on gas press
+// It is only either 0 or 1 on mainline comma.ai openpilot
 
-// If using this flag, be very careful about what happens if your fork wants to brake while the
-//   user is pressing the gas. Tesla is careful with this.
-#define UNSAFE_DISABLE_DISENGAGE_ON_GAS 1
+#define ALT_EXP_DISABLE_DISENGAGE_ON_GAS 1
 
 // If using this flag, make sure to communicate to your users that a stock safety feature is now disabled.
-#define UNSAFE_DISABLE_STOCK_AEB 2
+#define ALT_EXP_DISABLE_STOCK_AEB 2
 
 // If using this flag, be aware that harder braking is more likely to lead to rear endings,
 //   and that alone this flag doesn't make braking compliant because there's also a time element.
 // Setting this flag is used for allowing the full -5.0 to +4.0 m/s^2 at lower speeds
 // See ISO 15622:2018 for more information.
-#define UNSAFE_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX 8
+#define ALT_EXP_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX 8
 
-int unsafe_mode = 0;
+int alternative_experience = 0;
 
 // time since safety mode has been changed
 uint32_t safety_mode_cnt = 0U;

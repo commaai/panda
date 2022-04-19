@@ -17,8 +17,9 @@ static const addr_checks* nooutput_init(int16_t param) {
   return &default_rx_checks;
 }
 
-static int nooutput_tx_hook(CANPacket_t *to_send) {
+static int nooutput_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   UNUSED(to_send);
+  UNUSED(longitudinal_allowed);
   return false;
 }
 
@@ -57,8 +58,9 @@ static const addr_checks* alloutput_init(int16_t param) {
   return &default_rx_checks;
 }
 
-static int alloutput_tx_hook(CANPacket_t *to_send) {
+static int alloutput_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   UNUSED(to_send);
+  UNUSED(longitudinal_allowed);
   return true;
 }
 

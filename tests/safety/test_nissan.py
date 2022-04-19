@@ -56,11 +56,11 @@ class TestNissanSafety(common.PandaSafetyTest):
     values = {"WHEEL_SPEED_%s" % s: speed * 3.6 for s in ["RR", "RL"]}
     return self.packer.make_can_msg_panda("WHEEL_SPEEDS_REAR", 0, values)
 
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     values = {"USER_BRAKE_PRESSED": brake}
     return self.packer.make_can_msg_panda("DOORS_LIGHTS", 1, values)
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"GAS_PEDAL": gas}
     return self.packer.make_can_msg_panda("GAS_PEDAL", 0, values)
 
@@ -103,7 +103,6 @@ class TestNissanSafety(common.PandaSafetyTest):
         # Inject too high rates
         # Up
         self.assertEqual(False, self._tx(self._lkas_control_msg(a + sign(a) * (max_delta_up + 1), 1)))
-        self.assertFalse(self.safety.get_controls_allowed())
 
         # Don't change
         self.safety.set_controls_allowed(1)
@@ -114,7 +113,6 @@ class TestNissanSafety(common.PandaSafetyTest):
 
         # Down
         self.assertEqual(False, self._tx(self._lkas_control_msg(a - sign(a) * (max_delta_down + 1), 1)))
-        self.assertFalse(self.safety.get_controls_allowed())
 
         # Check desired steer should be the same as steer angle when controls are off
         self.safety.set_controls_allowed(0)
@@ -128,24 +126,20 @@ class TestNissanSafety(common.PandaSafetyTest):
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_acc_buttons(self):
-    self.safety.set_controls_allowed(1)
-    self._tx(self._acc_button_cmd(cancel=1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self._tx(self._acc_button_cmd(propilot=1))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(1)
-    self._tx(self._acc_button_cmd(flw_dist=1))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(1)
-    self._tx(self._acc_button_cmd(_set=1))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(1)
-    self._tx(self._acc_button_cmd(res=1))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(1)
-    self._tx(self._acc_button_cmd())
-    self.assertFalse(self.safety.get_controls_allowed())
-
+    btns = [
+      ("cancel", True),
+      ("propilot", False),
+      ("flw_dist", False),
+      ("_set", False),
+      ("res", False),
+      (None, False),
+    ]
+    for controls_allowed in (True, False):
+      for btn, should_tx in btns:
+        self.safety.set_controls_allowed(controls_allowed)
+        args = {} if btn is None else {btn: 1}
+        tx = self._tx(self._acc_button_cmd(**args))
+        self.assertEqual(tx, should_tx)
 
 class TestNissanLeafSafety(TestNissanSafety):
 
@@ -155,11 +149,11 @@ class TestNissanLeafSafety(TestNissanSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
     self.safety.init_tests()
 
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     values = {"USER_BRAKE_PRESSED": brake}
     return self.packer.make_can_msg_panda("CRUISE_THROTTLE", 0, values)
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"GAS_PEDAL": gas}
     return self.packer.make_can_msg_panda("CRUISE_THROTTLE", 0, values)
 

@@ -10,7 +10,7 @@ def to_signed(d, bits):
 
 def is_steering_msg(mode, addr):
   ret = False
-  if mode in [Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH]:
+  if mode in (Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH):
     ret = (addr == 0xE4) or (addr == 0x194) or (addr == 0x33D) or (addr == 0x33DA) or (addr == 0x33DB)
   elif mode == Panda.SAFETY_TOYOTA:
     ret = addr == 0x2E4
@@ -26,7 +26,7 @@ def is_steering_msg(mode, addr):
 
 def get_steer_torque(mode, to_send):
   ret = 0
-  if mode in [Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH]:
+  if mode in (Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH):
     ret = to_send.RDLR & 0xFFFF0000
   elif mode == Panda.SAFETY_TOYOTA:
     ret = (to_send.RDLR & 0xFF00) | ((to_send.RDLR >> 16) & 0xFF)
@@ -44,7 +44,7 @@ def get_steer_torque(mode, to_send):
   return ret
 
 def set_desired_torque_last(safety, mode, torque):
-  if mode in [Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH]:
+  if mode in (Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH):
     pass  # honda safety mode doesn't enforce a rate on steering msgs
   elif mode == Panda.SAFETY_TOYOTA:
     safety.set_toyota_desired_torque_last(torque)

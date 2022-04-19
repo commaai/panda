@@ -2,14 +2,14 @@
 const int TOYOTA_MAX_TORQUE = 1500;       // max torque cmd allowed ever
 
 // rate based torque limit + stay within actually applied
-// packet is sent at 100hz, so this limit is 1000/sec
-const int TOYOTA_MAX_RATE_UP = 10;        // ramp up slow
+// packet is sent at 100hz, so this limit is 1500/sec
+const int TOYOTA_MAX_RATE_UP = 15;        // ramp up slow
 const int TOYOTA_MAX_RATE_DOWN = 25;      // ramp down fast
 const int TOYOTA_MAX_TORQUE_ERROR = 350;  // max torque cmd in excess of torque motor
 
 // real time torque limit to prevent controls spamming
-// the real time limit is 1500/sec
-const int TOYOTA_MAX_RT_DELTA = 375;      // max delta torque allowed for real time checks
+// the real time limit is 1800/sec, a 20% buffer
+const int TOYOTA_MAX_RT_DELTA = 450;      // max delta torque allowed for real time checks
 const uint32_t TOYOTA_RT_INTERVAL = 250000;    // 250ms between real time checks
 
 // longitudinal limits
@@ -134,7 +134,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int toyota_tx_hook(CANPacket_t *to_send) {
+static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -149,7 +149,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
 
     // GAS PEDAL: safety check
     if (addr == 0x200) {
-      if (!controls_allowed) {
+      if (!longitudinal_allowed) {
         if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
           tx = 0;
         }
@@ -160,7 +160,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
     if (addr == 0x343) {
       int desired_accel = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
       desired_accel = to_signed(desired_accel, 16);
-      if (!controls_allowed) {
+      if (!longitudinal_allowed) {
         if (desired_accel != 0) {
           tx = 0;
         }

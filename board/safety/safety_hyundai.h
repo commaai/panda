@@ -62,6 +62,13 @@ const int HYUNDAI_PARAM_EV_GAS = 1;
 const int HYUNDAI_PARAM_HYBRID_GAS = 2;
 const int HYUNDAI_PARAM_LONGITUDINAL = 4;
 
+enum {
+  HYUNDAI_BTN_NONE = 0,
+  HYUNDAI_BTN_RESUME = 1,
+  HYUNDAI_BTN_SET = 2,
+  HYUNDAI_BTN_CANCEL = 4,
+};
+
 bool hyundai_legacy = false;
 bool hyundai_ev_gas_signal = false;
 bool hyundai_hybrid_gas_signal = false;
@@ -162,17 +169,20 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       // ACC steering wheel buttons
       if (addr == 1265) {
         int button = GET_BYTE(to_push, 0) & 0x7U;
-        switch (button) {
-          case 1:  // resume
-          case 2:  // set
-            controls_allowed = 1;
-            break;
-          case 4:  // cancel
-            controls_allowed = 0;
-            break;
-          default:
-            break;  // any other button is irrelevant
+
+        // exit controls on cancel press
+        if (button == HYUNDAI_BTN_CANCEL) {
+          controls_allowed = 0;
         }
+
+        // enter controls on falling edge of resume or set
+        bool set = (button == HYUNDAI_BTN_NONE) && (cruise_button_prev == HYUNDAI_BTN_SET);
+        bool res = (button == HYUNDAI_BTN_NONE) && (cruise_button_prev == HYUNDAI_BTN_RESUME);
+        if (set || res) {
+          controls_allowed = 1;
+        }
+
+        cruise_button_prev = button;
       }
     } else {
       // enter controls on rising edge of ACC, exit controls on ACC off
@@ -222,7 +232,7 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int hyundai_tx_hook(CANPacket_t *to_send) {
+static int hyundai_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -254,7 +264,7 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
 
     bool violation = 0;
 
-    if (!controls_allowed) {
+    if (!longitudinal_allowed) {
       if ((desired_accel_raw != 0) || (desired_accel_val != 0)) {
         violation = 1;
       }
@@ -324,16 +334,17 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  // FORCE CANCEL: safety check only relevant when spamming the cancel button.
-  // ensuring that only the cancel button press is sent (VAL 4) when controls are off.
-  // This avoids unintended engagements while still allowing resume spam
-  if ((addr == 1265) && !controls_allowed) {
-    if ((GET_BYTES_04(to_send) & 0x7U) != 4U) {
+  // BUTTONS: used for resume spamming and cruise cancellation
+  if ((addr == 1265) && !hyundai_longitudinal) {
+    int button = GET_BYTE(to_send, 0) & 0x7U;
+
+    bool allowed_resume = (button == 1) && controls_allowed;
+    bool allowed_cancel = (button == 4) && cruise_engaged_prev;
+    if (!(allowed_resume || allowed_cancel)) {
       tx = 0;
     }
   }
 
-  // 1 allows the message through
   return tx;
 }
 

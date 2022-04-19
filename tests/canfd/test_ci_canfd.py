@@ -13,7 +13,7 @@ if os.getenv("H7_PANDAS_EXCLUDE"):
   H7_PANDAS_EXCLUDE = os.getenv("H7_PANDAS_EXCLUDE").strip().split(" ") # type: ignore
 
 #TODO: REMOVE, temporary list of CAN FD lengths, one in panda python lib MUST be used
-DLC_TO_LEN = [0,1,2,3,4,5,6,7,8, 12, 16, 20, 24, 32, 48]
+DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48]
 
 _panda_serials = []
 
@@ -27,15 +27,14 @@ def start_heartbeat_thread(p):
         break
   _thread.start_new_thread(heartbeat_thread, (p,))
 
-def panda_init(serial):
+def panda_init(serial, enable_canfd=False):
   p = Panda(serial=serial)
-  assert p.recover(timeout=30)
   start_heartbeat_thread(p)
-  for bus in range(3):
-    p.set_can_speed_kbps(bus,  500)
-    p.set_can_data_speed_kbps(bus, 2000)
-  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   p.set_power_save(False)
+  for bus in range(3):
+    if enable_canfd:
+      p.set_can_data_speed_kbps(bus, 2000)
+  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   return p
 
 if JUNGLE_SERIAL:
@@ -44,14 +43,12 @@ if JUNGLE_SERIAL:
   time.sleep(2)
   panda_jungle.set_panda_power(True)
   time.sleep(4)
-  #panda_jungle.set_can_enable(0, False)
-  #panda_jungle.set_can_enable(1, False)
-  #panda_jungle.set_can_enable(2, False)
 
 for serial in Panda.list():
   if serial not in H7_PANDAS_EXCLUDE:
     p = Panda(serial=serial)
     if p.get_type() in H7_HW_TYPES:
+      assert p.recover(timeout=30)
       _panda_serials.append(serial)
     p.close()
 
@@ -61,7 +58,7 @@ if len(_panda_serials) < 2:
 
 
 def canfd_test(p_send, p_recv):
-  for _ in range(500):
+  for _ in range(100):
     sent_msgs = defaultdict(set)
     to_send = []
     for _ in range(200):
@@ -74,10 +71,9 @@ def canfd_test(p_send, p_recv):
 
     p_send.can_send_many(to_send, timeout=0)
 
-    while True:
+    start_time = time.time()
+    while time.time() - start_time < 1:
       incoming = p_recv.can_recv()
-      if not incoming:
-        break
       for msg in incoming:
         address, _, data, bus = msg
         k = (address, bytes(data))
@@ -95,6 +91,24 @@ def canfd_test(p_send, p_recv):
   print("Got all messages intact")
 
 
-p_send = panda_init(_panda_serials[0])
-p_recv = panda_init(_panda_serials[1])
+p_send = panda_init(_panda_serials[0], enable_canfd=False)
+p_recv = panda_init(_panda_serials[1], enable_canfd=True)
+
+# Check that sending panda CAN FD and BRS are turned off
+for bus in range(3):
+  canfd, brs = p_send.get_canfd_status(bus)
+  assert not canfd
+  assert not brs
+
+# Receiving panda sends dummy CAN FD message that should enable CAN FD on sender side
+for bus in range(3):
+  p_recv.can_send(0x200, b"dummymessage", bus)
+p_recv.can_recv()
+
+# Check if all tested buses on sending panda have swithed to CAN FD with BRS
+for bus in range(3):
+  canfd, brs = p_send.get_canfd_status(bus)
+  assert canfd
+  assert brs
+
 canfd_test(p_send, p_recv)
