@@ -246,7 +246,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   return tx;
 }
 
-static const addr_checks* toyota_init(int16_t param) {
+static const addr_checks* toyota_init(uint32_t param) {
   controls_allowed = 0;
   relay_malfunction_reset();
   gas_interceptor_detected = 0;
