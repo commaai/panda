@@ -51,7 +51,6 @@ const uint16_t ALLOUTPUT_PARAM_PASSTHROUGH = 1;
 bool alloutput_passthrough = false;
 
 static const addr_checks* alloutput_init(uint32_t param) {
-  UNUSED(param);
   alloutput_passthrough = GET_FLAG(param, ALLOUTPUT_PARAM_PASSTHROUGH);
   controls_allowed = true;
   relay_malfunction_reset();

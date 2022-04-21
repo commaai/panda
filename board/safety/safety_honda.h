@@ -363,7 +363,6 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 }
 
 static const addr_checks* honda_nidec_init(uint32_t param) {
-  UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();
   gas_interceptor_detected = 0;
