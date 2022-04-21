@@ -197,29 +197,32 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       }
     }
 
-    // enter controls on rising edge of ACC and user button press, exit controls on ACC off
+    // enter controls on rising edge of ACC and user button press, exit controls when ACC off
     if (!hyundai_longitudinal && (addr == 1057)) {
-      bool cruise_pressed_recent = false;
-      bool main_pressed_recent = false;
-      for (int i = 0; i < MIN(cruise_buttons.length, PREV_BUTTON_SAMPLES); i++) {
-        int button = cruise_buttons.values[i];
-        if ((button == HYUNDAI_BTN_RESUME) || (button == HYUNDAI_BTN_SET) || (button == HYUNDAI_BTN_CANCEL)) {
-          cruise_pressed_recent = true;
-          break;
+      // 2 bits: 13-14
+      int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3U;
+      if (cruise_engaged && !cruise_engaged_prev) {
+        bool cruise_pressed_recent = false;
+        bool main_pressed_recent = false;
+        for (int i = 0; i < MIN(cruise_buttons.length, PREV_BUTTON_SAMPLES); i++) {
+          int button = cruise_buttons.values[i];
+          if ((button == HYUNDAI_BTN_RESUME) || (button == HYUNDAI_BTN_SET) || (button == HYUNDAI_BTN_CANCEL)) {
+            cruise_pressed_recent = true;
+            break;
+          }
         }
-      }
-      for (int i = 0; i < MIN(main_buttons.length, PREV_BUTTON_SAMPLES); i++) {
-        if (main_buttons.values[i] != 0) {
-          main_pressed_recent = true;
-          break;
+        for (int i = 0; i < MIN(main_buttons.length, PREV_BUTTON_SAMPLES); i++) {
+          if (main_buttons.values[i] != 0) {
+            main_pressed_recent = true;
+            break;
+          }
+        }
+
+        if (main_pressed_recent || cruise_pressed_recent) {
+          controls_allowed = 1;
         }
       }
 
-      // 2 bits: 13-14
-      int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3U;
-      if (cruise_engaged && !cruise_engaged_prev && (main_pressed_recent || cruise_pressed_recent)) {
-        controls_allowed = 1;
-      }
       if (!cruise_engaged) {
         controls_allowed = 0;
       }
