@@ -61,6 +61,7 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
+bool check_values_in_sample(struct sample_t sample, int sample_lookback, const int search_items[], int search_size);
 bool max_limit_check(int val, const int MAX, const int MIN);
 bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
   const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR);

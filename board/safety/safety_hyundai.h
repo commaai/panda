@@ -72,6 +72,8 @@ enum {
 // some newer HKG models can re-enable after spamming cancel button,
 // so keep track of user button presses to deny engagement if no interaction
 const int PREV_BUTTON_SAMPLES = 4;  // roughly 80 ms
+const int ENABLE_BUTTONS[3] = {HYUNDAI_BTN_RESUME, HYUNDAI_BTN_SET, HYUNDAI_BTN_CANCEL};
+const int MAIN_BUTTON[1] = {1};
 struct sample_t cruise_buttons;
 struct sample_t main_buttons;
 
@@ -202,27 +204,12 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       // 2 bits: 13-14
       int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3U;
       if (cruise_engaged && !cruise_engaged_prev) {
-        bool cruise_pressed_recent = false;
-        bool main_pressed_recent = false;
-        for (int i = 0; i < MIN(cruise_buttons.length, PREV_BUTTON_SAMPLES); i++) {
-          int button = cruise_buttons.values[i];
-          if ((button == HYUNDAI_BTN_RESUME) || (button == HYUNDAI_BTN_SET) || (button == HYUNDAI_BTN_CANCEL)) {
-            cruise_pressed_recent = true;
-            break;
-          }
-        }
-        for (int i = 0; i < MIN(main_buttons.length, PREV_BUTTON_SAMPLES); i++) {
-          if (main_buttons.values[i] != 0) {
-            main_pressed_recent = true;
-            break;
-          }
-        }
-
-        if (main_pressed_recent || cruise_pressed_recent) {
+        bool cruise_pressed = check_values_in_sample(cruise_buttons, PREV_BUTTON_SAMPLES, ENABLE_BUTTONS, 3);
+        bool main_pressed = check_values_in_sample(main_buttons, PREV_BUTTON_SAMPLES, MAIN_BUTTON, 1);
+        if (main_pressed || cruise_pressed) {
           controls_allowed = 1;
         }
       }
-
       if (!cruise_engaged) {
         controls_allowed = 0;
       }

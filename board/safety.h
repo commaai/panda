@@ -320,6 +320,18 @@ int to_signed(int d, int bits) {
   return d_signed;
 }
 
+bool check_values_in_sample(struct sample_t sample, int sample_lookback, const int search_items[], int search_size) {
+  for (int i = 0; i < MIN(sample.length, sample_lookback); i++) {
+    int value = sample.values[i];
+    for (int j = 0; j < search_size; j++) {
+      if (value == search_items[j]) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 // given a new sample, update the sample_t struct
 void update_sample(struct sample_t *sample, int sample_new) {
   int sample_size = sizeof(sample->values) / sizeof(sample->values[0]);
