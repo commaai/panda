@@ -69,13 +69,13 @@ void debug_ring_callback(uart_ring *ring) {
 // ****************************** safety mode ******************************
 
 // this is the only way to leave silent mode
-void set_safety_mode(uint16_t mode, int16_t param) {
+void set_safety_mode(uint16_t mode, uint32_t param) {
   uint16_t mode_copy = mode;
   int err = set_safety_hooks(mode_copy, param);
   if (err == -1) {
     puts("Error: safety set mode failed. Falling back to SILENT\n");
     mode_copy = SAFETY_SILENT;
-    err = set_safety_hooks(mode_copy, 0);
+    err = set_safety_hooks(mode_copy, 0U);
     if (err == -1) {
       puts("Error: Failed setting SILENT mode. Hanging\n");
       while (true) {
@@ -105,7 +105,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
       heartbeat_counter = 0U;
       heartbeat_lost = false;
       if (current_board->has_obd) {
-        if (param == 0) {
+        if (param == 0U) {
           current_board->set_can_mode(CAN_MODE_OBD_CAN2);
         } else {
           current_board->set_can_mode(CAN_MODE_NORMAL);
@@ -367,7 +367,7 @@ int main(void) {
   microsecond_timer_init();
 
   // init to SILENT and can silent
-  set_safety_mode(SAFETY_SILENT, 0);
+  set_safety_mode(SAFETY_SILENT, 0U);
 
   // enable CAN TXs
   current_board->enable_can_transceivers(true);
