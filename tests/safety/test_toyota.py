@@ -32,7 +32,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
-  INTERCEPTOR_THRESHOLD = 845
+  INTERCEPTOR_THRESHOLD = 805
 
   MAX_RATE_UP = 15
   MAX_RATE_DOWN = 25

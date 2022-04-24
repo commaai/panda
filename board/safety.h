@@ -45,7 +45,7 @@
 #define SAFETY_BODY 27U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
-int16_t current_safety_param = 0;
+uint32_t current_safety_param = 0;
 const safety_hooks *current_hooks = &nooutput_hooks;
 const addr_checks *current_rx_checks = &default_rx_checks;
 
@@ -262,7 +262,7 @@ const safety_hook_config safety_hook_registry[] = {
 #endif
 };
 
-int set_safety_hooks(uint16_t mode, int16_t param) {
+int set_safety_hooks(uint16_t mode, uint32_t param) {
   // reset state set by safety mode
   safety_mode_cnt = 0U;
   relay_malfunction = false;
