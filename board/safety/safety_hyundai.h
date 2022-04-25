@@ -71,9 +71,8 @@ enum {
 
 // some newer HKG models can re-enable after spamming cancel button,
 // so keep track of user button presses to deny engagement if no interaction
-const int PREV_BUTTON_SAMPLES = 4;  // roughly 80 ms
-struct sample_t cruise_buttons;
-struct sample_t main_buttons;
+const uint8_t PREV_BUTTON_SAMPLES = 4;  // roughly 80 ms
+uint32_t last_button_interaction;
 
 bool hyundai_legacy = false;
 bool hyundai_ev_gas_signal = false;
@@ -176,9 +175,11 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       int cruise_button = GET_BYTE(to_push, 0) & 0x7U;
       int main_button = GET_BIT(to_push, 3U);
 
-      // used for keeping track of user button interaction
-      update_sample(&cruise_buttons, cruise_button);
-      update_sample(&main_buttons, main_button);
+      if ((cruise_button == HYUNDAI_BTN_RESUME) || (cruise_button == HYUNDAI_BTN_SET) || (cruise_button == HYUNDAI_BTN_CANCEL) || (main_button != 0)) {
+        last_button_interaction = 0;
+      } else {
+        last_button_interaction += 1;
+      }
 
       if (hyundai_longitudinal) {
         // exit controls on cancel press
@@ -202,23 +203,7 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       // 2 bits: 13-14
       int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3U;
       if (cruise_engaged && !cruise_engaged_prev) {
-        bool cruise_pressed_recent = false;
-        bool main_pressed_recent = false;
-        for (int i = 0; i < MIN(cruise_buttons.length, PREV_BUTTON_SAMPLES); i++) {
-          int button = cruise_buttons.values[i];
-          if ((button == HYUNDAI_BTN_RESUME) || (button == HYUNDAI_BTN_SET) || (button == HYUNDAI_BTN_CANCEL)) {
-            cruise_pressed_recent = true;
-            break;
-          }
-        }
-        for (int i = 0; i < MIN(main_buttons.length, PREV_BUTTON_SAMPLES); i++) {
-          if (main_buttons.values[i] != 0) {
-            main_pressed_recent = true;
-            break;
-          }
-        }
-
-        if (main_pressed_recent || cruise_pressed_recent) {
+        if (last_button_interaction < PREV_BUTTON_SAMPLES) {
           controls_allowed = 1;
         }
       }
