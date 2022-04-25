@@ -327,7 +327,6 @@ void update_sample(struct sample_t *sample, int sample_new) {
     sample->values[i] = sample->values[i-1];
   }
   sample->values[0] = sample_new;
-  sample->length = sample_size;
 
   // get the minimum and maximum measured samples
   sample->min = sample->values[0];

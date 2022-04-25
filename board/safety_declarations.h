@@ -12,8 +12,7 @@ struct sample_t {
   int values[6];
   int min;
   int max;
-  int length;
-} sample_t_default = {.values = {0}, .min = 0, .max = 0, .length = 0};
+} sample_t_default = {.values = {0}, .min = 0, .max = 0};
 
 // safety code requires floats
 struct lookup_t {
