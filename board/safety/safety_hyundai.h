@@ -176,9 +176,9 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       int main_button = GET_BIT(to_push, 3U);
 
       if ((cruise_button == HYUNDAI_BTN_RESUME) || (cruise_button == HYUNDAI_BTN_SET) || (cruise_button == HYUNDAI_BTN_CANCEL) || (main_button != 0)) {
-        last_button_interaction = 0;
+        last_button_interaction = 0U;
       } else {
-        last_button_interaction += 1;
+        last_button_interaction += 1U;
       }
 
       if (hyundai_longitudinal) {
