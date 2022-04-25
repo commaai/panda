@@ -72,7 +72,7 @@ enum {
 // some newer HKG models can re-enable after spamming cancel button,
 // so keep track of user button presses to deny engagement if no interaction
 const uint8_t PREV_BUTTON_SAMPLES = 4;  // roughly 80 ms
-uint8_t last_button_interaction;
+uint8_t last_button_interaction = PREV_BUTTON_SAMPLES;
 
 bool hyundai_legacy = false;
 bool hyundai_ev_gas_signal = false;
