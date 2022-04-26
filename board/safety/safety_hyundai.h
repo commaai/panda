@@ -71,8 +71,8 @@ enum {
 
 // some newer HKG models can re-enable after spamming cancel button,
 // so keep track of user button presses to deny engagement if no interaction
-const uint8_t PREV_BUTTON_SAMPLES = 4;  // roughly 80 ms
-uint8_t last_button_interaction = PREV_BUTTON_SAMPLES;
+const uint8_t HYUNDAI_PREV_BUTTON_SAMPLES = 4;  // roughly 80 ms
+uint8_t hyundai_last_button_interaction;
 
 bool hyundai_legacy = false;
 bool hyundai_ev_gas_signal = false;
@@ -176,9 +176,9 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       int main_button = GET_BIT(to_push, 3U);
 
       if ((cruise_button == HYUNDAI_BTN_RESUME) || (cruise_button == HYUNDAI_BTN_SET) || (cruise_button == HYUNDAI_BTN_CANCEL) || (main_button != 0)) {
-        last_button_interaction = 0U;
+        hyundai_last_button_interaction = 0U;
       } else {
-        last_button_interaction = MIN(last_button_interaction + 1U, PREV_BUTTON_SAMPLES);
+        hyundai_last_button_interaction = MIN(hyundai_last_button_interaction + 1U, HYUNDAI_PREV_BUTTON_SAMPLES);
       }
 
       if (hyundai_longitudinal) {
@@ -202,10 +202,8 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
     if (!hyundai_longitudinal && (addr == 1057)) {
       // 2 bits: 13-14
       int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3U;
-      if (cruise_engaged && !cruise_engaged_prev) {
-        if (last_button_interaction < PREV_BUTTON_SAMPLES) {
-          controls_allowed = 1;
-        }
+      if (cruise_engaged && !cruise_engaged_prev && (hyundai_last_button_interaction < HYUNDAI_PREV_BUTTON_SAMPLES)) {
+        controls_allowed = 1;
       }
 
       if (!cruise_engaged) {
@@ -386,6 +384,7 @@ static const addr_checks* hyundai_init(uint32_t param) {
   hyundai_legacy = false;
   hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
   hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
+  hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
 
 #ifdef ALLOW_DEBUG
   hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_LONGITUDINAL);
@@ -407,6 +406,7 @@ static const addr_checks* hyundai_legacy_init(uint32_t param) {
   hyundai_longitudinal = false;
   hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
   hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
+  hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
   hyundai_rx_checks = (addr_checks){hyundai_legacy_addr_checks, HYUNDAI_LEGACY_ADDR_CHECK_LEN};
   return &hyundai_rx_checks;
 }
