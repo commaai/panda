@@ -323,9 +323,11 @@ class Panda(object):
     if reconnect:
       self.reconnect()
 
-  def recover(self, timeout=None):
-    self.reset(enter_bootstub=True)
-    self.reset(enter_bootloader=True)
+  def recover(self, timeout=None, reset=True):
+    if reset:
+      self.reset(enter_bootstub=True)
+      self.reset(enter_bootloader=True)
+
     t_start = time.time()
     while len(PandaDFU.list()) == 0:
       print("waiting for DFU...")
