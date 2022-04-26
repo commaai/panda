@@ -74,6 +74,7 @@ class TestHyundaiSafety(common.PandaSafetyTest):
   cnt_speed = 0
   cnt_brake = 0
   cnt_cruise = 0
+  cnt_button = 0
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
@@ -82,7 +83,8 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     self.safety.init_tests()
 
   def _button_msg(self, buttons, main_button=0):
-    values = {"CF_Clu_CruiseSwState": buttons, "CF_Clu_CruiseSwMain": main_button}
+    values = {"CF_Clu_CruiseSwState": buttons, "CF_Clu_CruiseSwMain": main_button, "CF_Clu_AliveCnt1": self.cnt_button}
+    self.__class__.cnt_button += 1
     return self.packer.make_can_msg_panda("CLU11", 0, values)
 
   def _user_gas_msg(self, gas):
@@ -292,7 +294,6 @@ class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
 
 class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
   TX_MSGS = [[832, 0], [1265, 0], [1157, 0], [1056, 0], [1057, 0], [1290, 0], [905, 0], [1186, 0], [909, 0], [1155, 0], [2000, 0]]
-  cnt_button = 0
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
@@ -318,11 +319,6 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
 
   def _pcm_status_msg(self, enable):
     raise NotImplementedError
-
-  def _button_msg(self, buttons, main_button=0):
-    values = {"CF_Clu_CruiseSwState": buttons, "CF_Clu_AliveCnt1": self.cnt_button}
-    self.__class__.cnt_button += 1
-    return self.packer.make_can_msg_panda("CLU11", 0, values)
 
   def _send_accel_msg(self, accel, aeb_req=False, aeb_decel=0):
     values = {
