@@ -25,6 +25,9 @@ class Buttons:
   SET = 2
   CANCEL = 4
 
+PREV_BUTTON_SAMPLES = 4
+ENABLE_BUTTONS = (Buttons.RESUME, Buttons.SET, Buttons.CANCEL)
+
 # 4 bit checkusm used in some hyundai messages
 # lives outside the can packer because we never send this msg
 def checksum(msg):
@@ -71,6 +74,7 @@ class TestHyundaiSafety(common.PandaSafetyTest):
   cnt_speed = 0
   cnt_brake = 0
   cnt_cruise = 0
+  cnt_button = 0
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
@@ -78,8 +82,9 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, 0)
     self.safety.init_tests()
 
-  def _button_msg(self, buttons):
-    values = {"CF_Clu_CruiseSwState": buttons}
+  def _button_msg(self, buttons, main_button=0):
+    values = {"CF_Clu_CruiseSwState": buttons, "CF_Clu_CruiseSwMain": main_button, "CF_Clu_AliveCnt1": self.cnt_button}
+    self.__class__.cnt_button += 1
     return self.packer.make_can_msg_panda("CLU11", 0, values)
 
   def _user_gas_msg(self, gas):
@@ -222,6 +227,39 @@ class TestHyundaiSafety(common.PandaSafetyTest):
       self._rx(self._pcm_status_msg(enabled))
       self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
 
+  def test_enable_control_allowed_from_cruise(self):
+    """
+      Hyundai non-longitudinal only enables on PCM rising edge and recent button press. Tests PCM enabling with:
+      - disallowed: No buttons
+      - disallowed: Buttons that don't enable cruise
+      - allowed: Buttons that do enable cruise
+      - allowed: Main button with all above combinations
+    """
+    for main_button in [0, 1]:
+      for btn in range(8):
+        for _ in range(PREV_BUTTON_SAMPLES):  # reset
+          self._rx(self._button_msg(Buttons.NONE))
+
+        self._rx(self._pcm_status_msg(False))
+        self.assertFalse(self.safety.get_controls_allowed())
+        self._rx(self._button_msg(btn, main_button=main_button))
+        self._rx(self._pcm_status_msg(True))
+        controls_allowed = btn in ENABLE_BUTTONS or main_button
+        self.assertEqual(controls_allowed, self.safety.get_controls_allowed())
+
+  def test_sampling_cruise_buttons(self):
+    """
+      Test that we allow controls on recent button press, but not as button leaves sliding window
+    """
+    self._rx(self._button_msg(Buttons.SET))
+    for i in range(2 * PREV_BUTTON_SAMPLES):
+      self._rx(self._pcm_status_msg(False))
+      self.assertFalse(self.safety.get_controls_allowed())
+      self._rx(self._pcm_status_msg(True))
+      controls_allowed = i < PREV_BUTTON_SAMPLES
+      self.assertEqual(controls_allowed, self.safety.get_controls_allowed())
+      self._rx(self._button_msg(Buttons.NONE))
+
 
 class TestHyundaiLegacySafety(TestHyundaiSafety):
   def setUp(self):
@@ -256,7 +294,6 @@ class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
 
 class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
   TX_MSGS = [[832, 0], [1265, 0], [1157, 0], [1056, 0], [1057, 0], [1290, 0], [905, 0], [1186, 0], [909, 0], [1155, 0], [2000, 0]]
-  cnt_button = 0
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
@@ -271,6 +308,9 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
   def test_enable_control_allowed_from_cruise(self):
     pass
 
+  def test_sampling_cruise_buttons(self):
+    pass
+
   def test_cruise_engaged_prev(self):
     pass
 
@@ -279,11 +319,6 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
 
   def _pcm_status_msg(self, enable):
     raise NotImplementedError
-
-  def _button_msg(self, buttons):
-    values = {"CF_Clu_CruiseSwState": buttons, "CF_Clu_AliveCnt1": self.cnt_button}
-    self.__class__.cnt_button += 1
-    return self.packer.make_can_msg_panda("CLU11", 0, values)
 
   def _send_accel_msg(self, accel, aeb_req=False, aeb_decel=0):
     values = {
@@ -355,7 +390,6 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     self.assertFalse(self.safety.get_relay_malfunction())
     self._rx(make_msg(0, 1057, 8))
     self.assertTrue(self.safety.get_relay_malfunction())
-
 
 
 if __name__ == "__main__":
