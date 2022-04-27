@@ -450,6 +450,9 @@ class PandaSafetyTest(PandaSafetyTestBase):
             if 'Tesla' in attr and 'Tesla' in current_test:
               continue
 
+            if {attr, current_test} == {'TestToyotaSafety', 'TestToyotaAltBrakeSafety'}:
+              continue
+
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
             if attr.startswith('TestHonda'):
               # exceptions for common msgs across different hondas

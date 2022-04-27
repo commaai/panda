@@ -151,5 +151,21 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       self.assertFalse(self.safety.get_controls_allowed())
 
 
+class TestToyotaAltBrakeSafety(TestToyotaSafety):
+  def setUp(self):
+    self.packer = CANPackerPanda("toyota_new_mc_pt_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 73 | Panda.FLAG_TOYOTA_ALT_BRAKE)
+    self.safety.init_tests()
+
+  def _user_brake_msg(self, brake):
+    values = {"BRAKE_PRESSED": brake}
+    return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
+
+  # No LTA on these cars
+  def test_lta_steer_cmd(self):
+    pass
+
+
 if __name__ == "__main__":
   unittest.main()
