@@ -153,33 +153,6 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       self.assertFalse(self._rx(to_push))
       self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_longitudinal_message(self, stock_longitudinal=False):
-    """
-      Tests that we can always send ACC_CONTROL with 0 accel when openpilot is controlling longitudinal,
-      and only messages with the cancel bit when using stock longitudinal
-    """
-    for controls_allowed in [True, False]:
-      self.safety.set_controls_allowed(controls_allowed)
-      if not stock_longitudinal:
-        self.assertTrue(self._tx(self._accel_msg(0)))
-      else:
-        self.assertFalse(self._tx(self._accel_msg(0)))
-      self.assertTrue(self._tx(self._accel_msg(0, cancel_req=1)))
-
-
-class TestToyotaStockLongitudinal(TestToyotaSafety):
-  def setUp(self):
-    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
-    self.safety.init_tests()
-
-  def test_accel_actuation_limits(self):
-    super().test_accel_actuation_limits(stock_longitudinal=True)
-
-  def test_longitudinal_message(self):
-    super().test_longitudinal_message(stock_longitudinal=True)
-
 
 class TestToyotaAltBrakeSafety(TestToyotaSafety):
   def setUp(self):
@@ -195,6 +168,28 @@ class TestToyotaAltBrakeSafety(TestToyotaSafety):
   # No LTA on these cars
   def test_lta_steer_cmd(self):
     pass
+
+
+class TestToyotaStockLongitudinal(TestToyotaSafety):
+  def setUp(self):
+    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
+    self.safety.init_tests()
+
+  def test_accel_actuation_limits(self, stock_longitudinal=True):
+    super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)
+
+  def test_acc_cancel(self):
+    """
+      Regardless of controls allowed, never allow ACC_CONTROL when non setting the cancel bit
+    """
+    for controls_allowed in [True, False]:
+      self.safety.set_controls_allowed(controls_allowed)
+      for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
+        self.assertFalse(self._tx(self._accel_msg(accel)))
+        should_tx = np.isclose(accel, 0, atol=0.0001)
+        self.assertEqual(should_tx, self._tx(self._accel_msg(accel, cancel_req=1)))
 
 
 if __name__ == "__main__":
