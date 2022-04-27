@@ -257,7 +257,7 @@ static const addr_checks* toyota_init(uint32_t param) {
   relay_malfunction_reset();
   gas_interceptor_detected = 0;
   toyota_alt_brake = GET_FLAG(param, TOYOTA_ALT_BRAKE);
-  toyota_dbc_eps_torque_factor = (param) & TOYOTA_EPS_FACTOR;
+  toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
   return &toyota_rx_checks;
 }
 
