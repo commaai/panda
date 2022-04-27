@@ -433,40 +433,42 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.safety.safety_rx_hook(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
     self.assertTrue(self.safety.get_vehicle_moving())
 
-  # def test_tx_hook_on_wrong_safety_mode(self):
-  #   files = os.listdir(os.path.dirname(os.path.realpath(__file__)))
-  #   test_files = [f for f in files if f.startswith("test_") and f.endswith(".py")]
-  #
-  #   current_test = self.__class__.__name__
-  #
-  #   all_tx = []
-  #   for tf in test_files:
-  #     test = importlib.import_module("panda.tests.safety."+tf[:-3])
-  #     for attr in dir(test):
-  #       if attr.startswith("Test") and attr != current_test:
-  #         tx = getattr(getattr(test, attr), "TX_MSGS")
-  #         if tx is not None and not attr.endswith('Base'):
-  #           # No point in comparing different Tesla safety modes
-  #           if 'Tesla' in attr and 'Tesla' in current_test:
-  #             continue
-  #
-  #           if {attr, current_test} == {'TestToyotaSafety', 'TestToyotaAltBrakeSafety'}:
-  #             continue
-  #
-  #           # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
-  #           if attr.startswith('TestHonda'):
-  #             # exceptions for common msgs across different hondas
-  #             tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C], tx))
-  #           all_tx.append(list([m[0], m[1], attr[4:]] for m in tx))
-  #
-  #   # make sure we got all the msgs
-  #   self.assertTrue(len(all_tx) >= len(test_files)-1)
-  #
-  #   for tx_msgs in all_tx:
-  #     for addr, bus, test_name in tx_msgs:
-  #       msg = make_msg(bus, addr)
-  #       self.safety.set_controls_allowed(1)
-  #       # TODO: this should be blocked
-  #       if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
-  #         continue
-  #       self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")
+  def test_tx_hook_on_wrong_safety_mode(self):
+    files = os.listdir(os.path.dirname(os.path.realpath(__file__)))
+    test_files = [f for f in files if f.startswith("test_") and f.endswith(".py")]
+
+    current_test = self.__class__.__name__
+
+    all_tx = []
+    for tf in test_files:
+      test = importlib.import_module("panda.tests.safety."+tf[:-3])
+      for attr in dir(test):
+        if attr.startswith("Test") and attr != current_test:
+          tx = getattr(getattr(test, attr), "TX_MSGS")
+          if tx is not None and not attr.endswith('Base'):
+            # No point in comparing different Tesla safety modes
+            if 'Tesla' in attr and 'Tesla' in current_test:
+              continue
+
+            if {attr, current_test} in ({'TestToyotaSafety', 'TestToyotaAltBrakeSafety'},
+                                        {'TestToyotaSafety', 'TestToyotaStockLongitudinal'},
+                                        {'TestToyotaAltBrakeSafety', 'TestToyotaStockLongitudinal'}):
+              continue
+
+            # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
+            if attr.startswith('TestHonda'):
+              # exceptions for common msgs across different hondas
+              tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C], tx))
+            all_tx.append(list([m[0], m[1], attr[4:]] for m in tx))
+
+    # make sure we got all the msgs
+    self.assertTrue(len(all_tx) >= len(test_files)-1)
+
+    for tx_msgs in all_tx:
+      for addr, bus, test_name in tx_msgs:
+        msg = make_msg(bus, addr)
+        self.safety.set_controls_allowed(1)
+        # TODO: this should be blocked
+        if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
+          continue
+        self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")
