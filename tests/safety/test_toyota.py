@@ -182,7 +182,7 @@ class TestToyotaStockLongitudinal(TestToyotaSafety):
 
   def test_acc_cancel(self):
     """
-      Regardless of controls allowed, never allow ACC_CONTROL when non setting the cancel bit
+      Regardless of controls allowed, never allow ACC_CONTROL if cancel bit isn't set
     """
     for controls_allowed in [True, False]:
       self.safety.set_controls_allowed(controls_allowed)
