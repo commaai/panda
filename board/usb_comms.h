@@ -275,10 +275,12 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
 
     // **** 0xdc: set safety mode
     case 0xdc:
-      set_safety_mode(last_safety_mode, (uint32_t)setup->b.wValue.w | ((uint32_t)setup->b.wIndex.w << 16));
-      break;
-    case 0xfc:
-      last_safety_mode = setup->b.wValue.w;
+      if (last_safety_mode == 0) {
+        last_safety_mode = setup->b.wValue.w;
+      } else {
+        set_safety_mode(last_safety_mode, (uint32_t)setup->b.wValue.w | ((uint32_t)setup->b.wIndex.w << 16));
+        last_safety_mode = 0;
+      }
       break;
     // **** 0xdd: get healthpacket and CANPacket versions
     case 0xdd:
