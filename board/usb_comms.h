@@ -76,6 +76,8 @@ void usb_cb_enumeration_complete(void) {
   is_enumerated = 1;
 }
 
+uint16_t last_safety_mode;
+
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
@@ -273,7 +275,10 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
 
     // **** 0xdc: set safety mode
     case 0xdc:
-      set_safety_mode(setup->b.wValue.w, (uint32_t) setup->b.wIndex.w);
+      set_safety_mode(last_safety_mode, setup->b.wValue.w | (setup->b.wIndex.w << 16));
+      break;
+    case 0xfc:
+      last_safety_mode = setup->b.wValue.w;
       break;
     // **** 0xdd: get healthpacket and CANPacket versions
     case 0xdd:
