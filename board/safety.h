@@ -45,7 +45,7 @@
 #define SAFETY_BODY 27U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
-int16_t current_safety_param = 0;
+uint32_t current_safety_param = 0;
 const safety_hooks *current_hooks = &nooutput_hooks;
 const addr_checks *current_rx_checks = &default_rx_checks;
 
@@ -262,7 +262,7 @@ const safety_hook_config safety_hook_registry[] = {
 #endif
 };
 
-int set_safety_hooks(uint16_t mode, int16_t param) {
+int set_safety_hooks(uint16_t mode, uint32_t param) {
   // reset state set by safety mode
   safety_mode_cnt = 0U;
   relay_malfunction = false;
@@ -320,7 +320,7 @@ int to_signed(int d, int bits) {
   return d_signed;
 }
 
-// given a new sample, update the smaple_t struct
+// given a new sample, update the sample_t struct
 void update_sample(struct sample_t *sample, int sample_new) {
   int sample_size = sizeof(sample->values) / sizeof(sample->values[0]);
   for (int i = sample_size - 1; i > 0; i--) {

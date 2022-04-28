@@ -7,7 +7,7 @@
 const int MAX_WRONG_COUNTERS = 5;
 const uint8_t MAX_MISSED_MSGS = 10U;
 
-// sample struct that keeps 3 samples in memory
+// sample struct that keeps 6 samples in memory
 struct sample_t {
   int values[6];
   int min;
@@ -84,7 +84,7 @@ void generic_rx_checks(bool stock_ecu_detected);
 void relay_malfunction_set(void);
 void relay_malfunction_reset(void);
 
-typedef const addr_checks* (*safety_hook_init)(int16_t param);
+typedef const addr_checks* (*safety_hook_init)(uint32_t param);
 typedef int (*rx_hook)(CANPacket_t *to_push);
 typedef int (*tx_hook)(CANPacket_t *to_send, bool longitudinal_allowed);
 typedef int (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
@@ -118,14 +118,14 @@ int cruise_button_prev = 0;
 // for safety modes with torque steering control
 int desired_torque_last = 0;       // last desired steer torque
 int rt_torque_last = 0;            // last desired torque for real time check
-struct sample_t torque_meas;       // last 3 motor torques produced by the eps
-struct sample_t torque_driver;     // last 3 driver torques measured
+struct sample_t torque_meas;       // last 6 motor torques produced by the eps
+struct sample_t torque_driver;     // last 6 driver torques measured
 uint32_t ts_last = 0;
 
 // for safety modes with angle steering control
 uint32_t ts_angle_last = 0;
 int desired_angle_last = 0;
-struct sample_t angle_meas;         // last 3 steer angles
+struct sample_t angle_meas;         // last 6 steer angles
 
 // This can be set with a USB command
 // It enables features that allow alternative experiences, like not disengaging on gas press

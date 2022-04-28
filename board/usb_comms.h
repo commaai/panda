@@ -4,7 +4,7 @@
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // Prototypes
-void set_safety_mode(uint16_t mode, int16_t param);
+void set_safety_mode(uint16_t mode, uint32_t param);
 bool is_car_safety_mode(uint16_t mode);
 
 int get_health_pkt(void *dat) {
@@ -273,7 +273,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
 
     // **** 0xdc: set safety mode
     case 0xdc:
-      set_safety_mode(setup->b.wValue.w, (uint16_t) setup->b.wIndex.w);
+      set_safety_mode(setup->b.wValue.w, (uint32_t) setup->b.wIndex.w);
       break;
     // **** 0xdd: get healthpacket and CANPacket versions
     case 0xdd:

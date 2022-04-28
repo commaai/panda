@@ -170,8 +170,8 @@ class Panda(object):
   HW_TYPE_RED_PANDA = b'\x07'
 
   CAN_PACKET_VERSION = 2
-  HEALTH_PACKET_VERSION = 5
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHIf")
+  HEALTH_PACKET_VERSION = 6
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBIBBBHIf")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
@@ -179,6 +179,8 @@ class Panda(object):
 
   CLOCK_SOURCE_MODE_DISABLED = 0
   CLOCK_SOURCE_MODE_FREE_RUNNING = 1
+
+  FLAG_TOYOTA_ALT_BRAKE = (1 << 16)
 
   FLAG_HONDA_ALT_BRAKE = 1
   FLAG_HONDA_BOSCH_LONG = 2
@@ -325,9 +327,11 @@ class Panda(object):
     if reconnect:
       self.reconnect()
 
-  def recover(self, timeout=None):
-    self.reset(enter_bootstub=True)
-    self.reset(enter_bootloader=True)
+  def recover(self, timeout=None, reset=True):
+    if reset:
+      self.reset(enter_bootstub=True)
+      self.reset(enter_bootloader=True)
+
     t_start = time.time()
     while len(PandaDFU.list()) == 0:
       print("waiting for DFU...")

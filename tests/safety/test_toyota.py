@@ -32,7 +32,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
-  INTERCEPTOR_THRESHOLD = 845
+  INTERCEPTOR_THRESHOLD = 805
 
   MAX_RATE_UP = 15
   MAX_RATE_DOWN = 25
@@ -149,6 +149,22 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       to_push[0].data[7] = 0
       self.assertFalse(self._rx(to_push))
       self.assertFalse(self.safety.get_controls_allowed())
+
+
+class TestToyotaAltBrakeSafety(TestToyotaSafety):
+  def setUp(self):
+    self.packer = CANPackerPanda("toyota_new_mc_pt_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 73 | Panda.FLAG_TOYOTA_ALT_BRAKE)
+    self.safety.init_tests()
+
+  def _user_brake_msg(self, brake):
+    values = {"BRAKE_PRESSED": brake}
+    return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
+
+  # No LTA on these cars
+  def test_lta_steer_cmd(self):
+    pass
 
 
 if __name__ == "__main__":
