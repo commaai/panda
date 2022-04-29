@@ -40,8 +40,8 @@ AddrCheckStruct toyota_addr_checks[] = {
 addr_checks toyota_rx_checks = {toyota_addr_checks, TOYOTA_ADDR_CHECKS_LEN};
 
 // safety param flags
-// first two bytes are for eps factor, last two are for flags
-const uint32_t TOYOTA_PARAM_OFFSET = 16U;
+// first byte is for eps factor, second is for flags
+const uint32_t TOYOTA_PARAM_OFFSET = 8U;
 const uint32_t TOYOTA_EPS_FACTOR = (1U << TOYOTA_PARAM_OFFSET) - 1U;
 const uint32_t TOYOTA_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
 
