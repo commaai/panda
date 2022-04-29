@@ -377,7 +377,7 @@ static int hyundai_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return bus_fwd;
 }
 
-static const addr_checks* hyundai_init(uint32_t param) {
+static const addr_checks* hyundai_init(uint16_t param) {
   controls_allowed = false;
   relay_malfunction_reset();
 
@@ -398,7 +398,7 @@ static const addr_checks* hyundai_init(uint32_t param) {
   return &hyundai_rx_checks;
 }
 
-static const addr_checks* hyundai_legacy_init(uint32_t param) {
+static const addr_checks* hyundai_legacy_init(uint16_t param) {
   controls_allowed = false;
   relay_malfunction_reset();
 
