@@ -116,3 +116,4 @@ jobs:
       - name: Run static analysis
         run: |
           $RUN "cd /tmp/openpilot/panda && git init && git add -A && pre-commit run --all"
+
