@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-import unittest
 import numpy as np
 import random
+import unittest
+
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
@@ -40,17 +41,17 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   MAX_RT_DELTA = 450
   RT_INTERVAL = 250000
   MAX_TORQUE_ERROR = 350
-  TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conversative for rounding
-  EPS_SCALE = 0.73
+  TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conservative for rounding
+  EPS_SCALE = 73
 
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 73)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE)
     self.safety.init_tests()
 
   def _torque_meas_msg(self, torque):
-    values = {"STEER_TORQUE_EPS": (torque/self.EPS_SCALE)}
+    values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
 
   def _torque_msg(self, torque):
@@ -61,8 +62,8 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd}
     return self.packer.make_can_msg_panda("STEERING_LTA", 0, values)
 
-  def _accel_msg(self, accel):
-    values = {"ACCEL_CMD": accel}
+  def _accel_msg(self, accel, cancel_req=0):
+    values = {"ACCEL_CMD": accel, "CANCEL_REQ": cancel_req}
     return self.packer.make_can_msg_panda("ACC_CONTROL", 0, values)
 
   def _speed_msg(self, speed):
@@ -99,7 +100,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
           msg = common.package_can_msg([0x283, 0, bytes(dat),  0])
           self.assertEqual(not bad, self._tx(msg))
 
-  def test_accel_actuation_limits(self):
+  def test_accel_actuation_limits(self, stock_longitudinal=False):
     limits = ((MIN_ACCEL, MAX_ACCEL, ALTERNATIVE_EXPERIENCE.DEFAULT),
               (MIN_ACCEL, MAX_ACCEL, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
 
@@ -108,7 +109,9 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
         for controls_allowed in [True, False]:
           self.safety.set_controls_allowed(controls_allowed)
           self.safety.set_alternative_experience(alternative_experience)
-          if controls_allowed:
+          if stock_longitudinal:
+            should_tx = False
+          elif controls_allowed:
             should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
           else:
             should_tx = np.isclose(accel, 0, atol=0.0001)
@@ -155,7 +158,7 @@ class TestToyotaAltBrakeSafety(TestToyotaSafety):
   def setUp(self):
     self.packer = CANPackerPanda("toyota_new_mc_pt_generated")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, 73 | Panda.FLAG_TOYOTA_ALT_BRAKE)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_ALT_BRAKE)
     self.safety.init_tests()
 
   def _user_brake_msg(self, brake):
@@ -165,6 +168,28 @@ class TestToyotaAltBrakeSafety(TestToyotaSafety):
   # No LTA on these cars
   def test_lta_steer_cmd(self):
     pass
+
+
+class TestToyotaStockLongitudinal(TestToyotaSafety):
+  def setUp(self):
+    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
+    self.safety.init_tests()
+
+  def test_accel_actuation_limits(self, stock_longitudinal=True):
+    super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)
+
+  def test_acc_cancel(self):
+    """
+      Regardless of controls allowed, never allow ACC_CONTROL if cancel bit isn't set
+    """
+    for controls_allowed in [True, False]:
+      self.safety.set_controls_allowed(controls_allowed)
+      for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
+        self.assertFalse(self._tx(self._accel_msg(accel)))
+        should_tx = np.isclose(accel, 0, atol=0.0001)
+        self.assertEqual(should_tx, self._tx(self._accel_msg(accel, cancel_req=1)))
 
 
 if __name__ == "__main__":

@@ -43,9 +43,11 @@ addr_checks toyota_rx_checks = {toyota_addr_checks, TOYOTA_ADDR_CHECKS_LEN};
 // first byte is for eps factor, second is for flags
 const uint32_t TOYOTA_PARAM_OFFSET = 8U;
 const uint32_t TOYOTA_EPS_FACTOR = (1U << TOYOTA_PARAM_OFFSET) - 1U;
-const uint32_t TOYOTA_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2U << TOYOTA_PARAM_OFFSET;
 
 bool toyota_alt_brake = false;
+bool toyota_stock_longitudinal = false;
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
 static uint8_t toyota_compute_checksum(CANPacket_t *to_push) {
@@ -164,11 +166,20 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     if (addr == 0x343) {
       int desired_accel = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
       desired_accel = to_signed(desired_accel, 16);
-      if (!longitudinal_allowed) {
+      if (!longitudinal_allowed || toyota_stock_longitudinal) {
         if (desired_accel != 0) {
           tx = 0;
         }
       }
+
+      // only ACC messages that cancel are allowed when openpilot is not controlling longitudinal
+      if (toyota_stock_longitudinal) {
+        bool cancel_req = GET_BIT(to_send, 24U) != 0U;
+        if (!cancel_req) {
+          tx = 0;
+        }
+      }
+
       bool violation = max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
 
       if (violation) {
@@ -256,7 +267,8 @@ static const addr_checks* toyota_init(uint32_t param) {
   controls_allowed = 0;
   relay_malfunction_reset();
   gas_interceptor_detected = 0;
-  toyota_alt_brake = GET_FLAG(param, TOYOTA_ALT_BRAKE);
+  toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
+  toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
   return &toyota_rx_checks;
 }
