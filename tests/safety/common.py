@@ -447,10 +447,10 @@ class PandaSafetyTest(PandaSafetyTestBase):
           tx = getattr(getattr(test, attr), "TX_MSGS")
           if tx is not None and not attr.endswith('Base'):
             # No point in comparing different Tesla safety modes
-            if 'TestTesla' in attr and 'TestTesla' in current_test:
+            if 'Tesla' in attr and 'Tesla' in current_test:
               continue
 
-            if 'TestToyota' in attr and 'TestToyota' in current_test:
+            if {attr, current_test}.issubset({'TestToyotaSafety', 'TestToyotaAltBrakeSafety', 'TestToyotaStockLongitudinal'}):
               continue
 
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
