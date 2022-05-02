@@ -69,7 +69,7 @@ void debug_ring_callback(uart_ring *ring) {
 // ****************************** safety mode ******************************
 
 // this is the only way to leave silent mode
-void set_safety_mode(uint16_t mode, uint32_t param) {
+void set_safety_mode(uint16_t mode, uint16_t param) {
   uint16_t mode_copy = mode;
   int err = set_safety_hooks(mode_copy, param);
   if (err == -1) {
