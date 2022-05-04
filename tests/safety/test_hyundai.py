@@ -329,20 +329,21 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     }
     return self.packer.make_can_msg_panda("SCC12", 0, values)
 
-  def _send_fca11_msg(self, idx=0, aeb_req=False, aeb_decel=0):
+  def _send_fca11_msg(self, idx=0, vsm_aeb_req=False, fca_aeb_req=False, aeb_decel=0):
     values = {
       "CR_FCA_Alive": ((-((idx % 0xF) + 2) % 4) << 2) + 1,
       "Supplemental_Counter": idx % 0xF,
       "FCA_Status": 2,
       "CR_VSM_DecCmd": aeb_decel,
-      "CF_VSM_DecCmdAct": int(aeb_req),
-      "FCA_CmdAct": int(aeb_req),
+      "CF_VSM_DecCmdAct": int(vsm_aeb_req),
+      "FCA_CmdAct": int(fca_aeb_req),
     }
     return self.packer.make_can_msg_panda("FCA11", 0, values)
 
   def test_no_aeb_fca11(self):
     self.assertTrue(self._tx(self._send_fca11_msg()))
-    self.assertFalse(self._tx(self._send_fca11_msg(aeb_req=True)))
+    self.assertFalse(self._tx(self._send_fca11_msg(vsm_aeb_req=True)))
+    self.assertFalse(self._tx(self._send_fca11_msg(fca_aeb_req=True)))
     self.assertFalse(self._tx(self._send_fca11_msg(aeb_decel=1.0)))
 
   def test_no_aeb_scc12(self):
