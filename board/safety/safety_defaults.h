@@ -10,7 +10,7 @@ int default_rx_hook(CANPacket_t *to_push) {
 
 // *** no output safety mode ***
 
-static const addr_checks* nooutput_init(uint32_t param) {
+static const addr_checks* nooutput_init(uint16_t param) {
   UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();
@@ -50,7 +50,7 @@ const safety_hooks nooutput_hooks = {
 const uint16_t ALLOUTPUT_PARAM_PASSTHROUGH = 1;
 bool alloutput_passthrough = false;
 
-static const addr_checks* alloutput_init(uint32_t param) {
+static const addr_checks* alloutput_init(uint16_t param) {
   alloutput_passthrough = GET_FLAG(param, ALLOUTPUT_PARAM_PASSTHROUGH);
   controls_allowed = true;
   relay_malfunction_reset();
