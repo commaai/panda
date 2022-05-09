@@ -42,7 +42,7 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="bbaa", ATTRS{idProduct}=="ddee", MODE="0666"
 EOF
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
-
+The Panda Jungle uses different udev rules, see [the repo](https://github.com/commaai/panda_jungle#udev-rules) for instructions. 
 ### JavaScript
 
 See [PandaJS](https://github.com/commaai/pandajs)
