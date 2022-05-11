@@ -21,8 +21,7 @@ def interceptor_msg(gas, addr):
   return to_send
 
 
-class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
-                       common.TorqueSteeringSafetyTest):
+class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest):
 
   TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
              [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
@@ -38,9 +37,10 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   MAX_RATE_UP = 15
   MAX_RATE_DOWN = 25
   MAX_TORQUE = 1500
+  DRIVER_TORQUE_ALLOWANCE = 100
+  DRIVER_TORQUE_FACTOR = 10
   MAX_RT_DELTA = 450
   RT_INTERVAL = 250000
-  MAX_TORQUE_ERROR = 350
   TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conservative for rounding
   EPS_SCALE = 73
 
