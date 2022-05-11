@@ -5,7 +5,8 @@ const int TOYOTA_MAX_TORQUE = 1500;       // max torque cmd allowed ever
 // packet is sent at 100hz, so this limit is 1500/sec
 const int TOYOTA_MAX_RATE_UP = 15;        // ramp up slow
 const int TOYOTA_MAX_RATE_DOWN = 25;      // ramp down fast
-const int TOYOTA_MAX_TORQUE_ERROR = 350;  // max torque cmd in excess of torque motor
+const int TOYOTA_DRIVER_TORQUE_ALLOWANCE = 10;
+const int TOYOTA_DRIVER_TORQUE_FACTOR = 10;
 
 // real time torque limit to prevent controls spamming
 // the real time limit is 1800/sec, a 20% buffer
@@ -73,20 +74,12 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
   if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
 
-    // get eps motor torque (0.66 factor in dbc)
+    // get driver torque
     if (addr == 0x260) {
-      int torque_meas_new = (GET_BYTE(to_push, 5) << 8) | GET_BYTE(to_push, 6);
-      torque_meas_new = to_signed(torque_meas_new, 16);
-
-      // scale by dbc_factor
-      torque_meas_new = (torque_meas_new * toyota_dbc_eps_torque_factor) / 100;
-
-      // update array of sample
-      update_sample(&torque_meas, torque_meas_new);
-
-      // increase torque_meas by 1 to be conservative on rounding
-      torque_meas.min--;
-      torque_meas.max++;
+      int torque_driver_new = (GET_BYTE(to_push, 1) << 8) | GET_BYTE(to_push, 2);
+      torque_driver_new = to_signed(torque_driver_new, 16);
+      // update array of samples
+      update_sample(&torque_driver, torque_driver_new);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -225,8 +218,9 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         violation |= max_limit_check(desired_torque, TOYOTA_MAX_TORQUE, -TOYOTA_MAX_TORQUE);
 
         // *** torque rate limit check ***
-        violation |= dist_to_meas_check(desired_torque, desired_torque_last,
-          &torque_meas, TOYOTA_MAX_RATE_UP, TOYOTA_MAX_RATE_DOWN, TOYOTA_MAX_TORQUE_ERROR);
+        violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
+          TOYOTA_MAX_TORQUE, TOYOTA_MAX_RATE_UP, TOYOTA_MAX_RATE_DOWN,
+          TOYOTA_DRIVER_TORQUE_ALLOWANCE, TOYOTA_DRIVER_TORQUE_FACTOR);
 
         // used next time
         desired_torque_last = desired_torque;
