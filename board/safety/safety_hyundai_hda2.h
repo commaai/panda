@@ -21,6 +21,7 @@ AddrCheckStruct hyundai_hda2_addr_checks[] = {
 
 addr_checks hyundai_hda2_rx_checks = {hyundai_hda2_addr_checks, HYUNDAI_HDA2_ADDR_CHECK_LEN};
 
+
 static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &hyundai_hda2_rx_checks, NULL, NULL, NULL);
@@ -58,6 +59,67 @@ static int hyundai_hda2_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed)
   UNUSED(longitudinal_allowed);
 
   int tx = msg_allowed(to_send, HYUNDAI_HDA2_TX_MSGS, sizeof(HYUNDAI_HDA2_TX_MSGS)/sizeof(HYUNDAI_HDA2_TX_MSGS[0]));
+  int addr = GET_ADDR(to_send);
+  int bus = GET_BUS(to_send);
+
+  // steering
+  if ((addr == 0x50) && (bus == 0)) {
+    int desired_torque = (((GET_BYTE(to_send, 6) & 0xF) << 7) | (GET_BYTE(to_send, 5) >> 1)) - 1024U;
+    uint32_t ts = microsecond_timer_get();
+    bool violation = 0;
+
+    if (controls_allowed) {
+
+      // *** global torque limit check ***
+      violation |= max_limit_check(desired_torque, HYUNDAI_HDA2_MAX_STEER, -HYUNDAI_HDA2_MAX_STEER);
+
+      /*
+      // *** torque rate limit check ***
+      violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
+        HYUNDAI_MAX_STEER, HYUNDAI_MAX_RATE_UP, HYUNDAI_MAX_RATE_DOWN,
+        HYUNDAI_DRIVER_TORQUE_ALLOWANCE, HYUNDAI_DRIVER_TORQUE_FACTOR);
+      */
+
+      // used next time
+      desired_torque_last = desired_torque;
+
+      // *** torque real time rate limit check ***
+      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, HYUNDAI_MAX_RT_DELTA);
+
+      // every RT_INTERVAL set the new limits
+      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
+      if (ts_elapsed > HYUNDAI_RT_INTERVAL) {
+        rt_torque_last = desired_torque;
+        ts_last = ts;
+      }
+    }
+
+    // no torque if controls is not allowed
+    if (!controls_allowed && (desired_torque != 0)) {
+      violation = 1;
+    }
+
+    // reset to 0 if either controls is not allowed or there's a violation
+    if (violation || !controls_allowed) {
+      desired_torque_last = 0;
+      rt_torque_last = 0;
+      ts_last = ts;
+    }
+
+    if (violation) {
+      tx = 0;
+    }
+  }
+
+  // cruise buttons check
+  if ((addr == 0x1CF) && (bus == 1)) {
+    bool is_cancel = (GET_BYTES_04(to_send) == (1U << 18)) && (GET_BYTES_48(to_send) == 0U);
+    if (!is_cancel || !cruise_engaged_prev) {
+      tx = 0;
+    }
+  }
+
+
   return tx;
 }
 
