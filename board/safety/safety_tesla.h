@@ -241,7 +241,7 @@ static int tesla_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
     if (tesla_longitudinal && (addr == das_control_addr)) {
       // "AEB_ACTIVE"
-      tesla_stock_aeb = ((GET_BYTE(to_fwd, 2) & 0x03U) == 1);
+      tesla_stock_aeb = ((GET_BYTE(to_fwd, 2) & 0x03U) == 1U);
 
       if (!tesla_stock_aeb) {
         block_msg = true;
