@@ -50,8 +50,8 @@ bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
-// steering faults occur when the angle rate is above 100 deg/s for too long,
-// so allow cutting torque with a non-zero torque value when expected
+// steering faults occur when the angle rate is above a certain threshold for too long,
+// allow setting STEER_REQUEST bit to 0 with a non-zero desired torque when expected
 const uint8_t TOYOTA_MAX_STEER_RATE_FRAMES = 18U;
 uint8_t toyota_steer_req_matches;  // counter for steer request bit matching non-zero torque
 
