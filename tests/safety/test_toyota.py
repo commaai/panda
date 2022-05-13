@@ -143,7 +143,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
       self.assertFalse(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
       self._set_prev_torque(self.MAX_TORQUE)  # TODO: recover from violation
-      for _ in range(steer_rate_frames):
+      for _ in range(steer_rate_frames - 1):
         self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1)))
 
       should_tx = steer_rate_frames >= MAX_STEER_RATE_FRAMES
