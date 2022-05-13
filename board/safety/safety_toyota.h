@@ -252,7 +252,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       bool steer_req_mismatch = (desired_torque != 0) && !steer_req;
       if (steer_req_mismatch) {
         // disallow torque cut if not enough recent matching steer_req messages
-        if (toyota_steer_req_matches < (TOYOTA_MAX_STEER_RATE_FRAMES - 1)) {
+        if (toyota_steer_req_matches < (TOYOTA_MAX_STEER_RATE_FRAMES - 1U)) {
           violation = 1;
         }
       } else {
