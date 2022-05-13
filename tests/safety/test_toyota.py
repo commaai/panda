@@ -10,6 +10,7 @@ from panda.tests.safety.common import CANPackerPanda, make_msg, ALTERNATIVE_EXPE
 
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
+MAX_STEER_RATE_FRAMES = 18  # 180 ms
 
 
 def interceptor_msg(gas, addr):
@@ -44,6 +45,12 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conservative for rounding
   EPS_SCALE = 73
 
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "TorqueSteeringSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpandasafety_py.libpandasafety
@@ -54,8 +61,8 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
 
-  def _torque_msg(self, torque):
-    values = {"STEER_TORQUE_CMD": torque}
+  def _torque_msg(self, torque, steer_req=1):
+    values = {"STEER_TORQUE_CMD": torque, "STEER_REQUEST": steer_req}
     return self.packer.make_can_msg_panda("STEERING_LKA", 0, values)
 
   def _lta_msg(self, req, req2, angle_cmd):
@@ -117,6 +124,79 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
             should_tx = np.isclose(accel, 0, atol=0.0001)
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
+  def test_steer_req_bit(self):
+    # On Toyota, we set the STEER_REQUEST bit to 0 every 18 messages while above 100 deg/s
+    # to avoid a steering fault and maintain torque
+    print('steer_request_bit()')
+
+    self.safety.set_controls_allowed(True)
+    self._set_prev_torque(self.MAX_TORQUE)
+    # assume angle rate >= 100 deg/s
+    for _ in range(100):
+      self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1)))
+
+    sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1));
+    print(f'{sent=}')
+    sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0))
+    print(f'{sent=}')
+    for _ in range(17):
+      sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1))
+      print(f'{sent=}')
+    print()
+    print(self.safety.get_controls_allowed())
+    sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0))
+    print(f'{sent=}')
+    print(self.safety.get_controls_allowed())
+    self._set_prev_torque(self.MAX_TORQUE)
+    for _ in range(25):
+      sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1))
+      print(f'{sent=}')
+
+
+    # steer_rate_frames = 1
+    # self.safety.set_controls_allowed(True)
+    # self._set_prev_torque(self.MAX_TORQUE)
+    # steer_rate_counter = 0
+    # for frame in range(100):
+    #   steer_rate_counter += 1
+    #   steer_req = 1
+    #   if steer_rate_counter > steer_rate_frames:
+    #     steer_req = 0
+    #     steer_rate_counter = 0
+    #
+    #   print(f'{steer_rate_counter=}, {frame=}')
+    #   sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=steer_req))
+    #   should_tx = frame <= 1 or steer_rate_frames == MAX_STEER_RATE_FRAMES
+    #   print(f'{sent=}, {steer_req=}')
+    #   print(f'{steer_rate_frames=}, {MAX_STEER_RATE_FRAMES=}')
+    #   self.assertEqual(should_tx, sent)
+    #   print()
+
+
+    # # Now test various torque cut frame thresholds
+    # # assume angle rate < 100 deg/s
+    # # for steer_rate_frames in range(0, MAX_STEER_RATE_FRAMES * 2):
+    # steer_rate_frames = 1
+    # self.safety.set_controls_allowed(False)
+    # self._tx(self._torque_msg(0, steer_req=0))
+    # self.safety.set_controls_allowed(True)
+    # self._set_prev_torque(self.MAX_TORQUE)
+    # steer_rate_counter = 0
+    # for frame in range(100):
+    #   steer_rate_counter += 1
+    #   steer_req = 1
+    #   if steer_rate_counter > steer_rate_frames:
+    #     steer_req = 0
+    #     steer_rate_counter = 0
+    #
+    #   print(f'{steer_rate_counter=}, {frame=}')
+    #   sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=steer_req))
+    #   should_tx = frame <= 1 or steer_rate_frames == MAX_STEER_RATE_FRAMES
+    #   print(f'{sent=}, {steer_req=}')
+    #   print(f'{steer_rate_frames=}, {MAX_STEER_RATE_FRAMES=}')
+    #   self.assertEqual(should_tx, sent)
+    #   print()
+
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
     for engaged in [True, False]:
@@ -169,6 +249,9 @@ class TestToyotaAltBrakeSafety(TestToyotaSafety):
   def test_lta_steer_cmd(self):
     pass
 
+  def test_steer_req_bit(self):
+    pass
+
 
 class TestToyotaStockLongitudinal(TestToyotaSafety):
   def setUp(self):
@@ -176,6 +259,9 @@ class TestToyotaStockLongitudinal(TestToyotaSafety):
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
     self.safety.init_tests()
+
+  def test_steer_req_bit(self):
+    pass
 
   def test_accel_actuation_limits(self, stock_longitudinal=True):
     super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)

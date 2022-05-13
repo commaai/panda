@@ -61,7 +61,7 @@ class TestChryslerSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest
     self.__class__.cnt_torque_meas += 1
     return self.packer.make_can_msg_panda("EPS_STATUS", 0, values)
 
-  def _torque_msg(self, torque):
+  def _torque_msg(self, torque, steer_req=1):
     values = {"LKAS_STEERING_TORQUE": torque}
     return self.packer.make_can_msg_panda("LKAS_COMMAND", 0, values)
 

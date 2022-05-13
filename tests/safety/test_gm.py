@@ -89,7 +89,7 @@ class TestGmSafety(common.PandaSafetyTest):
     values = {"LKADriverAppldTrq": torque}
     return self.packer.make_can_msg_panda("PSCMStatus", 0, values)
 
-  def _torque_msg(self, torque):
+  def _torque_msg(self, torque, steer_req=1):
     values = {"LKASteeringCmd": torque}
     return self.packer.make_can_msg_panda("ASCMLKASteeringCmd", 0, values)
 

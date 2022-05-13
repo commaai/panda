@@ -254,24 +254,21 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       if (steer_req_mismatch) {
         toyota_steer_req_mismatches = MIN(toyota_steer_req_mismatches + 1U, 255U);
         toyota_steer_req_matches = 0U;
-      } else {
-        toyota_steer_req_matches = MIN(toyota_steer_req_matches + 1U, 255U);
-      }
 
-      // torque is only allowed when steer_req bit matches desired_torque long enough
-      if ((toyota_steer_req_matches > TOYOTA_MAX_STEER_RATE_FRAMES) || !controls_allowed) {
-        toyota_steer_req_mismatches = 0U;
-      }
-
-      if (desired_torque != 0) {
-        // no torque if controls is not allowed
-        if (!controls_allowed) {
-          violation = 1;
-        }
-        // no torque for 18 messages after a mismatch
         if (toyota_steer_req_mismatches > 1U) {
           violation = 1;
         }
+      } else {
+        toyota_steer_req_matches = MIN(toyota_steer_req_matches + 1U, 255U);
+        // torque is only allowed when steer_req bit matches desired_torque long enough
+        if ((toyota_steer_req_matches >= TOYOTA_MAX_STEER_RATE_FRAMES) || !controls_allowed) {
+          toyota_steer_req_mismatches = 0U;
+        }
+      }
+
+      // no torque if controls is not allowed
+      if (!controls_allowed && (desired_torque != 0)) {
+        violation = 1;
       }
 
       // reset to 0 if either controls is not allowed or there's a violation
