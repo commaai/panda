@@ -52,9 +52,9 @@ int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_
 
 // steering faults occur when the angle rate is above 100 deg/s for too long,
 // so allow cutting torque with a non-zero torque value when expected
-const uint8_t TOYOTA_MAX_STEER_RATE = 100;  // deg/s
-const uint8_t TOYOTA_MAX_STEER_RATE_SAMPLES = 13;
-uint8_t toyota_rate_limit_counter;  // messages where angle rate is above 100 deg/s
+const uint8_t TOYOTA_MAX_STEER_RATE_FRAMES = 18U;
+uint8_t toyota_steer_req_mismatches;  // counter for steer request bit being mismatched with torque
+uint8_t toyota_steer_req_matches;  // counter for steer request bit matching non-zero torque
 
 static uint8_t toyota_compute_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
@@ -93,16 +93,6 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       // increase torque_meas by 1 to be conservative on rounding
       torque_meas.min--;
       torque_meas.max++;
-    }
-
-    // get angle rate
-    if (addr == 0x25) {
-      int steer_rate = to_signed(((GET_BYTE(to_push, 4) & 0xfU) << 8) | GET_BYTE(to_push, 5), 12);
-      if (controls_allowed && ABS(steer_rate) >= TOYOTA_MAX_STEER_RATE) {
-        toyota_rate_limit_counter = MIN(toyota_rate_limit_counter + 1U, 255U);
-      } else {
-        toyota_rate_limit_counter = 0U;
-      }
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -259,14 +249,28 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         }
       }
 
-      // no torque if controls is not allowed or apply bit not set
+      // on a steer_req bit mismatch, increment counter and reset match count
+      bool steer_req_mismatch = (desired_torque != 0) && !steer_req;
+      if (steer_req_mismatch) {
+        toyota_steer_req_mismatches = MIN(toyota_steer_req_mismatches + 1U, 255U);
+        toyota_steer_req_matches = 0U;
+      } else {
+        toyota_steer_req_matches = MIN(toyota_steer_req_matches + 1U, 255U);
+      }
+
+      // torque is only allowed when steer_req bit matches desired_torque long enough
+      if ((toyota_steer_req_matches > TOYOTA_MAX_STEER_RATE_FRAMES) || !controls_allowed) {
+        toyota_steer_req_mismatches = 0U;
+      }
+
       if (desired_torque != 0) {
-        bool no_steer_req_allowed = toyota_rate_limit_counter > TOYOTA_MAX_STEER_RATE_SAMPLES;
-        if (!controls_allowed || (!steer_req && !no_steer_req_allowed)) {
+        // no torque if controls is not allowed
+        if (!controls_allowed) {
           violation = 1;
         }
-        if (no_steer_req_allowed) {
-          toyota_rate_limit_counter = 0U;
+        // no torque for 18 messages after a mismatch
+        if (toyota_steer_req_mismatches > 1U) {
+          violation = 1;
         }
       }
 
