@@ -53,7 +53,6 @@ int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_
 // steering faults occur when the angle rate is above 100 deg/s for too long,
 // so allow cutting torque with a non-zero torque value when expected
 const uint8_t TOYOTA_MAX_STEER_RATE_FRAMES = 18U;
-uint8_t toyota_steer_req_mismatches;  // counter for steer request bit being mismatched with torque
 uint8_t toyota_steer_req_matches;  // counter for steer request bit matching non-zero torque
 
 static uint8_t toyota_compute_checksum(CANPacket_t *to_push) {
@@ -252,18 +251,17 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       // on a steer_req bit mismatch, increment counter and reset match count
       bool steer_req_mismatch = (desired_torque != 0) && !steer_req;
       if (steer_req_mismatch) {
-        toyota_steer_req_mismatches = MIN(toyota_steer_req_mismatches + 1U, 255U);
-        toyota_steer_req_matches = 0U;
-
-        if (toyota_steer_req_mismatches > 1U) {
+        // disallow torque cut if steer_req match count is less than or equal to 18
+        if (toyota_steer_req_matches <= TOYOTA_MAX_STEER_RATE_FRAMES) {
           violation = 1;
         }
       } else {
         toyota_steer_req_matches = MIN(toyota_steer_req_matches + 1U, 255U);
-        // torque is only allowed when steer_req bit matches desired_torque long enough
-        if ((toyota_steer_req_matches >= TOYOTA_MAX_STEER_RATE_FRAMES) || !controls_allowed) {
-          toyota_steer_req_mismatches = 0U;
-        }
+      }
+
+      // reset match count if controls not allowed or steer_req mismatch
+      if (!controls_allowed || steer_req_mismatch) {
+        toyota_steer_req_matches = 0U;
       }
 
       // no torque if controls is not allowed
