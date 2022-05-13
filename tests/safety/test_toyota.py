@@ -153,7 +153,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     """
       Tests for an extended period of time:
         - Nothing is blocked when sending torque normally
-        - Nothing is sent when cutting torque
+        - Nothing is sent when cutting torque after the first message
     """
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(self.MAX_TORQUE)
