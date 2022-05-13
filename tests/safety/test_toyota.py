@@ -124,78 +124,46 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
             should_tx = np.isclose(accel, 0, atol=0.0001)
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
-  def test_steer_req_bit(self):
-    # On Toyota, we set the STEER_REQUEST bit to 0 every 18 messages while above 100 deg/s
-    # to avoid a steering fault and maintain torque
-    print('steer_request_bit()')
+  def test_steer_req_bit_torque_cut(self):
+    """
+      On Toyota, we set the STEER_REQUEST bit to 0 every 19 messages while above 100 deg/s
+      to avoid a steering fault and maintain torque. This tests:
+        - We can't cut torque for two frames in a row
+        - We can't cut torque until at least MAX_STEER_RATE_FRAMES frames of matching steer_req messages
+        - We can always recover from violations if steer_req=1, ignoring openpilot issue #24475
+    """
+    for steer_rate_frames in range(0, MAX_STEER_RATE_FRAMES * 2):
+      # reset match counter to allow cut
+      self.safety.set_controls_allowed(True)
+      self._set_prev_torque(self.MAX_TORQUE)
+      for _ in range(MAX_STEER_RATE_FRAMES):
+        self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1))
 
+      self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1)))  # toyota_steer_req_matches is now 19
+      self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
+      self.assertFalse(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
+      self._set_prev_torque(self.MAX_TORQUE)  # TODO: recover from violation
+      for _ in range(steer_rate_frames):
+        self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1)))
+
+      should_tx = steer_rate_frames > MAX_STEER_RATE_FRAMES
+      self.assertEqual(should_tx, self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
+
+  def test_steer_req_bit(self):
+    """
+      Tests for an extended period of time:
+        - Nothing is blocked when sending torque normally
+        - Nothing is sent when cutting torque
+    """
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(self.MAX_TORQUE)
-    # assume angle rate >= 100 deg/s
     for _ in range(100):
       self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1)))
 
-    sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1));
-    print(f'{sent=}')
-    sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0))
-    print(f'{sent=}')
-    for _ in range(17):
-      sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1))
-      print(f'{sent=}')
-    print()
-    print(self.safety.get_controls_allowed())
-    sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0))
-    print(f'{sent=}')
-    print(self.safety.get_controls_allowed())
-    self._set_prev_torque(self.MAX_TORQUE)
-    for _ in range(25):
-      sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1))
-      print(f'{sent=}')
-
-
-    # steer_rate_frames = 1
-    # self.safety.set_controls_allowed(True)
-    # self._set_prev_torque(self.MAX_TORQUE)
-    # steer_rate_counter = 0
-    # for frame in range(100):
-    #   steer_rate_counter += 1
-    #   steer_req = 1
-    #   if steer_rate_counter > steer_rate_frames:
-    #     steer_req = 0
-    #     steer_rate_counter = 0
-    #
-    #   print(f'{steer_rate_counter=}, {frame=}')
-    #   sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=steer_req))
-    #   should_tx = frame <= 1 or steer_rate_frames == MAX_STEER_RATE_FRAMES
-    #   print(f'{sent=}, {steer_req=}')
-    #   print(f'{steer_rate_frames=}, {MAX_STEER_RATE_FRAMES=}')
-    #   self.assertEqual(should_tx, sent)
-    #   print()
-
-
-    # # Now test various torque cut frame thresholds
-    # # assume angle rate < 100 deg/s
-    # # for steer_rate_frames in range(0, MAX_STEER_RATE_FRAMES * 2):
-    # steer_rate_frames = 1
-    # self.safety.set_controls_allowed(False)
-    # self._tx(self._torque_msg(0, steer_req=0))
-    # self.safety.set_controls_allowed(True)
-    # self._set_prev_torque(self.MAX_TORQUE)
-    # steer_rate_counter = 0
-    # for frame in range(100):
-    #   steer_rate_counter += 1
-    #   steer_req = 1
-    #   if steer_rate_counter > steer_rate_frames:
-    #     steer_req = 0
-    #     steer_rate_counter = 0
-    #
-    #   print(f'{steer_rate_counter=}, {frame=}')
-    #   sent = self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=steer_req))
-    #   should_tx = frame <= 1 or steer_rate_frames == MAX_STEER_RATE_FRAMES
-    #   print(f'{sent=}, {steer_req=}')
-    #   print(f'{steer_rate_frames=}, {MAX_STEER_RATE_FRAMES=}')
-    #   self.assertEqual(should_tx, sent)
-    #   print()
+    self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0))
+    for _ in range(100):
+      self._set_prev_torque(self.MAX_TORQUE)
+      self.assertFalse(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
 
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
