@@ -10,7 +10,7 @@ from panda.tests.safety.common import CANPackerPanda, make_msg, ALTERNATIVE_EXPE
 
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
-MAX_STEER_RATE_FRAMES = 18  # 180 ms
+MAX_STEER_RATE_FRAMES = 19
 
 
 def interceptor_msg(gas, addr):
@@ -132,11 +132,11 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
         - We can't cut torque until at least MAX_STEER_RATE_FRAMES frames of matching steer_req messages
         - We can always recover from violations if steer_req=1, ignoring openpilot issue #24475
     """
-    for steer_rate_frames in range(0, MAX_STEER_RATE_FRAMES * 2):
+    for steer_rate_frames in range(MAX_STEER_RATE_FRAMES * 2):
       # reset match counter to allow cut
       self.safety.set_controls_allowed(True)
       self._set_prev_torque(self.MAX_TORQUE)
-      for _ in range(MAX_STEER_RATE_FRAMES):
+      for _ in range(MAX_STEER_RATE_FRAMES - 1):
         self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1))
 
       self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1)))  # toyota_steer_req_matches is now 19
@@ -146,7 +146,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       for _ in range(steer_rate_frames):
         self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1)))
 
-      should_tx = steer_rate_frames > MAX_STEER_RATE_FRAMES
+      should_tx = steer_rate_frames >= MAX_STEER_RATE_FRAMES
       self.assertEqual(should_tx, self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
 
   def test_steer_req_bit(self):
