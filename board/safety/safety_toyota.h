@@ -262,7 +262,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       // no torque if controls is not allowed or apply bit not set
       if (desired_torque != 0) {
         bool no_steer_req_allowed = toyota_rate_limit_counter > TOYOTA_MAX_STEER_RATE_SAMPLES;
-        if (!controls_allowed || (!steer_req || no_steer_req_allowed)) {
+        if (!controls_allowed || (!steer_req && !no_steer_req_allowed)) {
           violation = 1;
         }
         if (no_steer_req_allowed) {
