@@ -29,7 +29,7 @@ const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0
                                  {0x2E4, 0, 5}, {0x191, 0, 8}, {0x411, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  // LKAS + ACC
                                  {0x200, 0, 6}};  // interceptor
 
-AddrCheckStruct toyota_addr_checks[] = {
+AddrCheckStruct toyota_addr_checks[] = { // TODO: add 0x25 STEER_ANGLE_SENSOR here?
   {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}},
   {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}},
@@ -49,6 +49,12 @@ const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2U << TOYOTA_PARAM_OFFSET;
 bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
+
+// steering faults occur when the angle rate is above 100 deg/s for too long,
+// so allow cutting torque with a non-zero torque value when expected
+const uint8_t TOYOTA_MAX_STEER_RATE = 100;  // deg/s
+const uint8_t TOYOTA_MAX_STEER_RATE_SAMPLES = 13;
+uint8_t toyota_rate_limit_counter;  // messages where angle rate is above 100 deg/s
 
 static uint8_t toyota_compute_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
@@ -87,6 +93,16 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       // increase torque_meas by 1 to be conservative on rounding
       torque_meas.min--;
       torque_meas.max++;
+    }
+
+    // get angle rate
+    if (addr == 0x25) {
+      int steer_rate = to_signed(((GET_BYTE(to_push, 4) & 0xfU) << 8) | GET_BYTE(to_push, 5), 12);
+      if (controls_allowed && ABS(steer_rate) >= TOYOTA_MAX_STEER_RATE) {
+        toyota_rate_limit_counter = MIN(toyota_rate_limit_counter + 1U, 255U);
+      } else {
+        toyota_rate_limit_counter = 0U;
+      }
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -214,6 +230,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     // STEER: safety check on bytes 2-3
     if (addr == 0x2E4) {
       int desired_torque = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
+      bool steer_req = GET_BIT(to_send, 0U) != 0U;
       desired_torque = to_signed(desired_torque, 16);
       bool violation = 0;
 
@@ -242,9 +259,15 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         }
       }
 
-      // no torque if controls is not allowed
-      if (!controls_allowed && (desired_torque != 0)) {
-        violation = 1;
+      // no torque if controls is not allowed or apply bit not set
+      if (desired_torque != 0) {
+        bool no_steer_req_allowed = toyota_rate_limit_counter > TOYOTA_MAX_STEER_RATE_SAMPLES;
+        if (!controls_allowed || (!steer_req || no_steer_req_allowed)) {
+          violation = 1;
+        }
+        if (no_steer_req_allowed) {
+          toyota_rate_limit_counter = 0U;
+        }
       }
 
       // reset to 0 if either controls is not allowed or there's a violation
