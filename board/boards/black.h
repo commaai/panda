@@ -168,6 +168,9 @@ void black_init(void) {
   // Initialize harness
   harness_init();
 
+  // Initialize RTC
+  rtc_init();
+
   // Enable CAN transceivers
   black_enable_can_transceivers(true);
 
@@ -206,7 +209,7 @@ const board board_black = {
   .has_hw_gmlan = false,
   .has_obd = true,
   .has_lin = false,
-  .has_rtc = false,
+  .has_rtc_battery = false,
   .init = black_init,
   .enable_can_transceiver = black_enable_can_transceiver,
   .enable_can_transceivers = black_enable_can_transceivers,

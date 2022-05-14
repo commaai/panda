@@ -20,9 +20,13 @@ MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
 
 class Buttons:
+  NONE = 0
   RESUME = 1
   SET = 2
   CANCEL = 4
+
+PREV_BUTTON_SAMPLES = 4
+ENABLE_BUTTONS = (Buttons.RESUME, Buttons.SET, Buttons.CANCEL)
 
 # 4 bit checkusm used in some hyundai messages
 # lives outside the can packer because we never send this msg
@@ -70,6 +74,7 @@ class TestHyundaiSafety(common.PandaSafetyTest):
   cnt_speed = 0
   cnt_brake = 0
   cnt_cruise = 0
+  cnt_button = 0
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
@@ -77,16 +82,17 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, 0)
     self.safety.init_tests()
 
-  def _button_msg(self, buttons):
-    values = {"CF_Clu_CruiseSwState": buttons}
+  def _button_msg(self, buttons, main_button=0):
+    values = {"CF_Clu_CruiseSwState": buttons, "CF_Clu_CruiseSwMain": main_button, "CF_Clu_AliveCnt1": self.cnt_button}
+    self.__class__.cnt_button += 1
     return self.packer.make_can_msg_panda("CLU11", 0, values)
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"CF_Ems_AclAct": gas, "AliveCounter": self.cnt_gas % 4}
     self.__class__.cnt_gas += 1
     return self.packer.make_can_msg_panda("EMS16", 0, values, fix_checksum=checksum)
 
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     values = {"DriverBraking": brake, "AliveCounterTCS": self.cnt_brake % 8}
     self.__class__.cnt_brake += 1
     return self.packer.make_can_msg_panda("TCS13", 0, values, fix_checksum=checksum)
@@ -203,14 +209,56 @@ class TestHyundaiSafety(common.PandaSafetyTest):
       self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
       self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
 
-  def test_spam_cancel_safety_check(self):
+  def test_buttons(self):
+    """
+      Only RES and CANCEL buttons are allowed
+      - RES allowed while controls allowed
+      - CANCEL allowed while cruise is enabled
+    """
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._button_msg(Buttons.CANCEL)))
     self.assertFalse(self._tx(self._button_msg(Buttons.RESUME)))
     self.assertFalse(self._tx(self._button_msg(Buttons.SET)))
-    # do not block resume if we are engaged already
+
     self.safety.set_controls_allowed(1)
     self.assertTrue(self._tx(self._button_msg(Buttons.RESUME)))
+    self.assertFalse(self._tx(self._button_msg(Buttons.SET)))
+
+    for enabled in (True, False):
+      self._rx(self._pcm_status_msg(enabled))
+      self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
+
+  def test_enable_control_allowed_from_cruise(self):
+    """
+      Hyundai non-longitudinal only enables on PCM rising edge and recent button press. Tests PCM enabling with:
+      - disallowed: No buttons
+      - disallowed: Buttons that don't enable cruise
+      - allowed: Buttons that do enable cruise
+      - allowed: Main button with all above combinations
+    """
+    for main_button in [0, 1]:
+      for btn in range(8):
+        for _ in range(PREV_BUTTON_SAMPLES):  # reset
+          self._rx(self._button_msg(Buttons.NONE))
+
+        self._rx(self._pcm_status_msg(False))
+        self.assertFalse(self.safety.get_controls_allowed())
+        self._rx(self._button_msg(btn, main_button=main_button))
+        self._rx(self._pcm_status_msg(True))
+        controls_allowed = btn in ENABLE_BUTTONS or main_button
+        self.assertEqual(controls_allowed, self.safety.get_controls_allowed())
+
+  def test_sampling_cruise_buttons(self):
+    """
+      Test that we allow controls on recent button press, but not as button leaves sliding window
+    """
+    self._rx(self._button_msg(Buttons.SET))
+    for i in range(2 * PREV_BUTTON_SAMPLES):
+      self._rx(self._pcm_status_msg(False))
+      self.assertFalse(self.safety.get_controls_allowed())
+      self._rx(self._pcm_status_msg(True))
+      controls_allowed = i < PREV_BUTTON_SAMPLES
+      self.assertEqual(controls_allowed, self.safety.get_controls_allowed())
+      self._rx(self._button_msg(Buttons.NONE))
 
 
 class TestHyundaiLegacySafety(TestHyundaiSafety):
@@ -228,7 +276,7 @@ class TestHyundaiLegacySafetyEV(TestHyundaiSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_LEGACY, 1)
     self.safety.init_tests()
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"Accel_Pedal_Pos": gas}
     return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
 
@@ -240,13 +288,12 @@ class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_LEGACY, 2)
     self.safety.init_tests()
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"CR_Vcu_AccPedDep_Pos": gas}
     return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
 
 class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
   TX_MSGS = [[832, 0], [1265, 0], [1157, 0], [1056, 0], [1057, 0], [1290, 0], [905, 0], [1186, 0], [909, 0], [1155, 0], [2000, 0]]
-  cnt_button = 0
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
@@ -261,16 +308,17 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
   def test_enable_control_allowed_from_cruise(self):
     pass
 
+  def test_sampling_cruise_buttons(self):
+    pass
+
   def test_cruise_engaged_prev(self):
+    pass
+
+  def test_buttons(self):
     pass
 
   def _pcm_status_msg(self, enable):
     raise NotImplementedError
-
-  def _button_msg(self, buttons):
-    values = {"CF_Clu_CruiseSwState": buttons, "CF_Clu_AliveCnt1": self.cnt_button}
-    self.__class__.cnt_button += 1
-    return self.packer.make_can_msg_panda("CLU11", 0, values)
 
   def _send_accel_msg(self, accel, aeb_req=False, aeb_decel=0):
     values = {
@@ -281,20 +329,21 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     }
     return self.packer.make_can_msg_panda("SCC12", 0, values)
 
-  def _send_fca11_msg(self, idx=0, aeb_req=False, aeb_decel=0):
+  def _send_fca11_msg(self, idx=0, vsm_aeb_req=False, fca_aeb_req=False, aeb_decel=0):
     values = {
       "CR_FCA_Alive": ((-((idx % 0xF) + 2) % 4) << 2) + 1,
       "Supplemental_Counter": idx % 0xF,
       "FCA_Status": 2,
       "CR_VSM_DecCmd": aeb_decel,
-      "CF_VSM_DecCmdAct": int(aeb_req),
-      "FCA_CmdAct": int(aeb_req),
+      "CF_VSM_DecCmdAct": int(vsm_aeb_req),
+      "FCA_CmdAct": int(fca_aeb_req),
     }
     return self.packer.make_can_msg_panda("FCA11", 0, values)
 
   def test_no_aeb_fca11(self):
     self.assertTrue(self._tx(self._send_fca11_msg()))
-    self.assertFalse(self._tx(self._send_fca11_msg(aeb_req=True)))
+    self.assertFalse(self._tx(self._send_fca11_msg(vsm_aeb_req=True)))
+    self.assertFalse(self._tx(self._send_fca11_msg(fca_aeb_req=True)))
     self.assertFalse(self._tx(self._send_fca11_msg(aeb_decel=1.0)))
 
   def test_no_aeb_scc12(self):
@@ -303,10 +352,19 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     self.assertFalse(self._tx(self._send_accel_msg(0, aeb_decel=1.0)))
 
   def test_set_resume_buttons(self):
+    """
+      SET and RESUME enter controls allowed on their falling edge.
+    """
     for btn in range(8):
       self.safety.set_controls_allowed(0)
-      self._rx(self._button_msg(btn))
-      self.assertEqual(btn in [Buttons.RESUME, Buttons.SET], self.safety.get_controls_allowed(), msg=f"btn {btn}")
+      for _ in range(10):
+        self._rx(self._button_msg(btn))
+        self.assertFalse(self.safety.get_controls_allowed())
+
+      # should enter controls allowed on falling edge
+      if btn in (Buttons.RESUME, Buttons.SET):
+        self._rx(self._button_msg(Buttons.NONE))
+        self.assertTrue(self.safety.get_controls_allowed())
 
   def test_cancel_button(self):
     self.safety.set_controls_allowed(1)
@@ -333,7 +391,6 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     self.assertFalse(self.safety.get_relay_malfunction())
     self._rx(make_msg(0, 1057, 8))
     self.assertTrue(self.safety.get_relay_malfunction())
-
 
 
 if __name__ == "__main__":

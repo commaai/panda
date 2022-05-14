@@ -146,7 +146,9 @@ static int subaru_legacy_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int subaru_tx_hook(CANPacket_t *to_send) {
+static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+  UNUSED(longitudinal_allowed);
+
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
@@ -206,7 +208,9 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static int subaru_legacy_tx_hook(CANPacket_t *to_send) {
+static int subaru_legacy_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+  UNUSED(longitudinal_allowed);
+
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
@@ -309,7 +313,7 @@ static int subaru_legacy_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return bus_fwd;
 }
 
-static const addr_checks* subaru_init(int16_t param) {
+static const addr_checks* subaru_init(uint16_t param) {
   UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();
@@ -324,7 +328,7 @@ const safety_hooks subaru_hooks = {
   .fwd = subaru_fwd_hook,
 };
 
-static const addr_checks* subaru_legacy_init(int16_t param) {
+static const addr_checks* subaru_legacy_init(uint16_t param) {
   UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();

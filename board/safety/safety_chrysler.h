@@ -112,7 +112,8 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int chrysler_tx_hook(CANPacket_t *to_send) {
+static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+  UNUSED(longitudinal_allowed);
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -195,7 +196,7 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return bus_fwd;
 }
 
-static const addr_checks* chrysler_init(int16_t param) {
+static const addr_checks* chrysler_init(uint16_t param) {
   UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();

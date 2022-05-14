@@ -23,8 +23,8 @@ def test_can_loopback(p):
   busses = [0, 1, 2]
 
   for bus in busses:
-    # set bus 0 speed to 250
-    p.set_can_speed_kbps(bus, 250)
+    # set bus 0 speed to 5000
+    p.set_can_speed_kbps(bus, 500)
 
     # send a message on bus 0
     p.can_send(0x1aa, b"message", bus)
@@ -116,7 +116,7 @@ def test_throughput(p):
   # enable CAN loopback mode
   p.set_can_loopback(True)
 
-  for speed in [100, 250, 500, 1000]:
+  for speed in [10, 20, 50, 100, 125, 250, 500, 1000]:
     # set bus 0 speed to speed
     p.set_can_speed_kbps(0, speed)
     time.sleep(0.05)

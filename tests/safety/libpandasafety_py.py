@@ -27,8 +27,9 @@ typedef struct
 
 void set_controls_allowed(bool c);
 bool get_controls_allowed(void);
-void set_unsafe_mode(int mode);
-int get_unsafe_mode(void);
+bool get_longitudinal_allowed(void);
+void set_alternative_experience(int mode);
+int get_alternative_experience(void);
 void set_relay_malfunction(bool c);
 bool get_relay_malfunction(void);
 void set_gas_interceptor_detected(bool c);
@@ -56,7 +57,7 @@ void set_timer(uint32_t t);
 int safety_rx_hook(CANPacket_t *to_send);
 int safety_tx_hook(CANPacket_t *to_push);
 int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd);
-int set_safety_hooks(uint16_t  mode, int16_t param);
+int set_safety_hooks(uint16_t mode, uint16_t param);
 
 void safety_tick_current_rx_checks();
 bool addr_checks_valid();

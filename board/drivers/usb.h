@@ -685,6 +685,7 @@ void usb_irqhandler(void) {
 
   if ((gintsts & USB_OTG_GINTSTS_USBRST) != 0) {
     puts("USB reset\n");
+    usb_enumerated = false;
     usb_reset();
   }
 
@@ -940,4 +941,12 @@ void usb_outep3_resume_if_paused(void) {
     USBx_OUTEP(3)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
   }
   EXIT_CRITICAL();
+}
+
+void usb_soft_disconnect(bool enable) {
+  if (enable) {
+    USBx_DEVICE->DCTL |= USB_OTG_DCTL_SDIS;
+  } else {
+    USBx_DEVICE->DCTL &= ~USB_OTG_DCTL_SDIS;
+  }
 }

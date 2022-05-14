@@ -49,7 +49,7 @@ static uint8_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static const addr_checks* volkswagen_pq_init(int16_t param) {
+static const addr_checks* volkswagen_pq_init(uint16_t param) {
   UNUSED(param);
 
   controls_allowed = false;
@@ -114,7 +114,9 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int volkswagen_pq_tx_hook(CANPacket_t *to_send) {
+static int volkswagen_pq_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+  UNUSED(longitudinal_allowed);
+
   int addr = GET_ADDR(to_send);
   int tx = 1;
 
