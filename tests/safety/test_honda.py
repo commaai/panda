@@ -558,23 +558,19 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
         send = self.MAX_BRAKE <= accel <= 0 if controls_allowed else accel == 0
         self.assertEqual(send, self._tx(self._send_gas_brake_msg(self.NO_GAS, accel)), (controls_allowed, accel))
 
-class TestHondaRadarlessSafetyBase(TestHondaSafetyBase):
+
+class TestHondaBoschRadarless(TestHondaBoschSafetyBase):
   PT_BUS = 0
   STEER_BUS = 0
 
   TX_MSGS = [[0xE4, 0], [0x296, 0], [0x33D, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0x33D]}
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestHondaRadarlessSafetyBase":
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
-
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_ex_2022_can_generated")
     self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS)
+    self.safety.init_tests_honda()
 
   def _send_brake_msg(self, brake):
     pass
@@ -594,14 +590,7 @@ class TestHondaRadarlessSafetyBase(TestHondaSafetyBase):
           self.assertEqual(send, self._tx(self._send_brake_msg(brake)))
     self.safety.set_honda_fwd_brake(False)
 
-
-class TestHondaRadarless(TestHondaRadarlessSafetyBase):
-  def setUp(self):
-    super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_RADARLESS, 0)
-    self.safety.init_tests_honda()
-
-  def test_spam_cancel_safety_check(self):
+  def test_spam_cancel_safety_check(self):  # TODO: move into base?
     self.safety.set_controls_allowed(0)
     self.assertTrue(self._tx(self._button_msg(Btn.CANCEL)))
     self.assertFalse(self._tx(self._button_msg(Btn.RESUME)))
