@@ -214,6 +214,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     // STEER: safety check on bytes 2-3
     if (addr == 0x2E4) {
       int desired_torque = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
+      bool steer_req = GET_BIT(to_send, 0U) != 0U;
       desired_torque = to_signed(desired_torque, 16);
       bool violation = 0;
 
@@ -242,8 +243,8 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         }
       }
 
-      // no torque if controls is not allowed
-      if (!controls_allowed && (desired_torque != 0)) {
+      // no torque if controls is not allowed or mismatch with STEER_REQUEST bit
+      if (!(controls_allowed && steer_req) && (desired_torque != 0)) {
         violation = 1;
       }
 
