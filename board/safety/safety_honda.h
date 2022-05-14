@@ -396,17 +396,16 @@ static const addr_checks* honda_bosch_init(uint16_t param) {
   controls_allowed = false;
   relay_malfunction_reset();
   honda_bosch_radarless = GET_FLAG(param,  HONDA_PARAM_RADARLESS);
-
   honda_hw = HONDA_BOSCH;
-  // Checking for alternate brake override from safety parameter
-  honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE);  // TODO: should we not check this if radarless?
 
-  // radar disabled so allow gas/brakes
-#ifdef ALLOW_DEBUG
   if (!honda_bosch_radarless) {
+    // Checking for alternate brake override from safety parameter
+    honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE);
+#ifdef ALLOW_DEBUG
+    // radar disabled so allow gas/brakes
     honda_bosch_long = GET_FLAG(param, HONDA_PARAM_BOSCH_LONG);
-  }
 #endif
+  }
 
   if (honda_bosch_radarless) {
     honda_rx_checks = (addr_checks){honda_radarless_addr_checks, HONDA_RADARLESS_ADDR_CHECKS_LEN};
