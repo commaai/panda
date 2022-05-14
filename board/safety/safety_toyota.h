@@ -244,7 +244,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       }
 
       // no torque if controls is not allowed or mismatch with STEER_REQUEST bit
-      if (!(controls_allowed && steer_req) && (desired_torque != 0)) {
+      if ((!controls_allowed || !steer_req) && (desired_torque != 0)) {
         violation = 1;
       }
 
