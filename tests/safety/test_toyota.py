@@ -192,7 +192,7 @@ class TestToyotaStockLongitudinal(TestToyotaSafety):
         self.assertEqual(should_tx, self._tx(self._accel_msg(accel, cancel_req=1)))
 
   def test_fwd_hook(self):
-    # remove 0x343
+    # remove ACC_CONTROL
     self.FWD_BLACKLISTED_ADDRS[2].remove(0x343)
     super().test_fwd_hook()
 
