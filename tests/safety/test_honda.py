@@ -559,12 +559,12 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
         self.assertEqual(send, self._tx(self._send_gas_brake_msg(self.NO_GAS, accel)), (controls_allowed, accel))
 
 
-class TestHondaBoschRadarless(TestHondaBoschSafetyBase):
+class TestHondaBoschRadarless(HondaPcmEnableBase, TestHondaBoschSafetyBase):
   PT_BUS = 0
   STEER_BUS = 0
 
   TX_MSGS = [[0xE4, 0], [0x296, 0], [0x33D, 0]]
-  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0x33D]}
+  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_ex_2022_can_generated")
@@ -575,29 +575,33 @@ class TestHondaBoschRadarless(TestHondaBoschSafetyBase):
   def _send_brake_msg(self, brake):
     pass
 
-  def test_brake_safety_check(self):
-    for fwd_brake in [False, True]:
-      self.safety.set_honda_fwd_brake(fwd_brake)
-      for brake in np.arange(0, self.MAX_BRAKE + 10, 1):
-        for controls_allowed in [True, False]:
-          self.safety.set_controls_allowed(controls_allowed)
-          if fwd_brake:
-            send = False  # block openpilot brake msg when fwd'ing stock msg
-          elif controls_allowed:
-            send = self.MAX_BRAKE >= brake >= 0
-          else:
-            send = brake == 0
-          self.assertEqual(send, self._tx(self._send_brake_msg(brake)))
-    self.safety.set_honda_fwd_brake(False)
+  def test_alt_disengage_on_brake(self):
+    # This car doesn't have 0x1BE (BRAKE_MODULE)
+    pass
 
-  def test_spam_cancel_safety_check(self):  # TODO: move into base?
-    self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._button_msg(Btn.CANCEL)))
-    self.assertFalse(self._tx(self._button_msg(Btn.RESUME)))
-    self.assertFalse(self._tx(self._button_msg(Btn.SET)))
-    # do not block resume if we are engaged already
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._button_msg(Btn.RESUME)))
+  # def test_brake_safety_check(self):
+  #   for fwd_brake in [False, True]:
+  #     self.safety.set_honda_fwd_brake(fwd_brake)
+  #     for brake in np.arange(0, self.MAX_BRAKE + 10, 1):
+  #       for controls_allowed in [True, False]:
+  #         self.safety.set_controls_allowed(controls_allowed)
+  #         if fwd_brake:
+  #           send = False  # block openpilot brake msg when fwd'ing stock msg
+  #         elif controls_allowed:
+  #           send = self.MAX_BRAKE >= brake >= 0
+  #         else:
+  #           send = brake == 0
+  #         self.assertEqual(send, self._tx(self._send_brake_msg(brake)))
+  #   self.safety.set_honda_fwd_brake(False)
+  #
+  # def test_spam_cancel_safety_check(self):  # TODO: move into base?
+  #   self.safety.set_controls_allowed(0)
+  #   self.assertTrue(self._tx(self._button_msg(Btn.CANCEL)))
+  #   self.assertFalse(self._tx(self._button_msg(Btn.RESUME)))
+  #   self.assertFalse(self._tx(self._button_msg(Btn.SET)))
+  #   # do not block resume if we are engaged already
+  #   self.safety.set_controls_allowed(1)
+  #   self.assertTrue(self._tx(self._button_msg(Btn.RESUME)))
 
 
 if __name__ == "__main__":
