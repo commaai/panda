@@ -149,22 +149,6 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       should_tx = steer_rate_frames >= MAX_STEER_RATE_FRAMES
       self.assertEqual(should_tx, self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
 
-  def test_steer_req_bit(self):
-    """
-      Tests for an extended period of time:
-        - Nothing is blocked when sending torque normally
-        - Nothing is sent when cutting torque after the first message
-    """
-    self.safety.set_controls_allowed(True)
-    self._set_prev_torque(self.MAX_TORQUE)
-    for _ in range(100):
-      self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1)))
-
-    self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0))
-    for _ in range(100):
-      self._set_prev_torque(self.MAX_TORQUE)
-      self.assertFalse(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
-
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
     for engaged in [True, False]:

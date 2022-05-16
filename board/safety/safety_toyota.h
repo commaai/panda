@@ -258,6 +258,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         if (toyota_steer_req_matches < (TOYOTA_MAX_STEER_RATE_FRAMES - 1U)) {
           violation = 1;
         }
+        toyota_steer_req_matches = 0U;
       }
 
       // no torque if controls is not allowed
@@ -267,7 +268,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
       // reset to 0 if either controls is not allowed or there's a violation
       if (violation || !controls_allowed) {
-        steer_req_mismatch = 0U;
+        toyota_steer_req_matches = 0U;
         desired_torque_last = 0;
         rt_torque_last = 0;
         ts_last = ts;
