@@ -119,7 +119,7 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     values = {"CR_Mdps_StrColTq": torque}
     return self.packer.make_can_msg_panda("MDPS12", 0, values)
 
-  def _torque_msg(self, torque):
+  def _torque_msg(self, torque, steer_req=1):
     values = {"CR_Lkas_StrToqReq": torque}
     return self.packer.make_can_msg_panda("LKAS11", 0, values)
 

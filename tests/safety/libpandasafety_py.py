@@ -15,7 +15,7 @@ typedef struct {
   unsigned char returned : 1;
   unsigned char extended : 1;
   unsigned int addr : 29;
-  unsigned char data[8];
+  unsigned char data[64];
 } CANPacket_t;
 """, packed=True)
 
