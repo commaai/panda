@@ -139,8 +139,8 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
 
   def test_steer_req_bit(self):
     """
-      On Toyota, you can ramp up torque and then set the steer_req bit and the EPS will ramp up faster than
-      the effective panda safety limits. This tests:
+      On Toyota, you can ramp up torque and then set the STEER_REQUEST bit and the
+      EPS will ramp up faster than the effective panda safety limits. This tests:
         - Nothing is sent when cutting torque
         - Nothing is blocked when sending torque normally
     """
