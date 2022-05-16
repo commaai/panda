@@ -79,7 +79,7 @@ static uint32_t volkswagen_mqb_compute_crc(CANPacket_t *to_push) {
 static const addr_checks* volkswagen_mqb_init(uint16_t param) {
   UNUSED(param);
 
-  gen_crc_lookup_table(0x2F, volkswagen_crc8_lut_8h2f);
+  gen_crc_lookup_table_8(0x2F, volkswagen_crc8_lut_8h2f);
   return &volkswagen_mqb_rx_checks;
 }
 

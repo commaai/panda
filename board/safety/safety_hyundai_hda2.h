@@ -13,14 +13,16 @@ const CanMsg HYUNDAI_HDA2_TX_MSGS[] = {
 };
 
 AddrCheckStruct hyundai_hda2_addr_checks[] = {
-  {.msg = {{0x35, 1, 32, .check_checksum = false, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x65, 1, 32, .check_checksum = false, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0xa0, 1, 24, .check_checksum = false, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x175, 1, 24, .check_checksum = false, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x35, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x65, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0xa0, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x175, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
 };
 #define HYUNDAI_HDA2_ADDR_CHECK_LEN (sizeof(hyundai_hda2_addr_checks) / sizeof(hyundai_hda2_addr_checks[0]))
 
 addr_checks hyundai_hda2_rx_checks = {hyundai_hda2_addr_checks, HYUNDAI_HDA2_ADDR_CHECK_LEN};
+
+uint16_t hyundai_hda2_crc_lut[256];
 
 static uint8_t hyundai_hda2_get_counter(CANPacket_t *to_push) {
   return GET_BYTE(to_push, 2);
@@ -32,8 +34,30 @@ static uint32_t hyundai_hda2_get_checksum(CANPacket_t *to_push) {
 }
 
 static uint32_t hyundai_hda2_compute_checksum(CANPacket_t *to_push) {
-  uint32_t chksum = GET_BYTE(to_push, 0) | (GET_BYTE(to_push, 1) << 8);
-  return chksum;
+  int len = GET_LEN(to_push);
+  uint32_t address = GET_ADDR(to_push);
+
+  uint16_t crc = 0;
+
+  for (int i = 2; i < len; i++) {
+    crc = (crc << 8) ^ hyundai_hda2_crc_lut[(crc >> 8) ^ GET_BYTE(to_push, i)];
+  }
+
+  // Add address to crc
+  crc = (crc << 8) ^ hyundai_hda2_crc_lut[(crc >> 8) ^ ((address >> 0) & 0xFF)];
+  crc = (crc << 8) ^ hyundai_hda2_crc_lut[(crc >> 8) ^ ((address >> 8) & 0xFF)];
+
+  if (len == 8) {
+    crc ^= 0x5f29;
+  } else if (len == 16) {
+    crc ^= 0x041d;
+  } else if (len == 24) {
+    crc ^= 0x819d;
+  } else if (len == 32) {
+    crc ^= 0x9f5b;
+  }
+
+  return crc;
 }
 
 static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
@@ -166,6 +190,7 @@ static const addr_checks* hyundai_hda2_init(uint16_t param) {
   UNUSED(param);
   controls_allowed = false;
   relay_malfunction_reset();
+  gen_crc_lookup_table_16(0x1021, hyundai_hda2_crc_lut);
   return &hyundai_hda2_rx_checks;
 }
 

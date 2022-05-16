@@ -73,7 +73,7 @@ bool get_longitudinal_allowed(void) {
 
 // Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8
 // algorithm. Called at init time for safety modes using CRC-8.
-void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]) {
+void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]) {
   for (int i = 0; i < 256; i++) {
     uint8_t crc = i;
     for (int j = 0; j < 8; j++) {
@@ -81,6 +81,23 @@ void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]) {
         crc = (uint8_t)((crc << 1) ^ poly);
       else
         crc <<= 1;
+    }
+    crc_lut[i] = crc;
+  }
+}
+
+void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]) {
+  uint16_t crc;
+  int i, j;
+
+  for (i = 0; i < 256; i++) {
+    crc = i << 8;
+    for (j = 0; j < 8; j++) {
+      if ((crc & 0x8000) != 0) {
+        crc = (uint16_t)((crc << 1) ^ poly);
+      } else {
+        crc <<= 1;
+      }
     }
     crc_lut[i] = crc;
   }

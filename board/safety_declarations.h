@@ -69,7 +69,8 @@ bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
 bool get_longitudinal_allowed(void);
 bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 float interpolate(struct lookup_t xy, float x);
-void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]);
+void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]);
+void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]);
 bool msg_allowed(CANPacket_t *to_send, const CanMsg msg_list[], int len);
 int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], const int len);
 void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter);
