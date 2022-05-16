@@ -69,12 +69,12 @@ enum {HONDA_NIDEC, HONDA_BOSCH} honda_hw = HONDA_NIDEC;
 addr_checks honda_rx_checks = {honda_nidec_addr_checks, HONDA_NIDEC_ADDR_CHECKS_LEN};
 
 
-static uint8_t honda_get_checksum(CANPacket_t *to_push) {
+static uint32_t honda_get_checksum(CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1U;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte)) & 0xFU;
 }
 
-static uint8_t honda_compute_checksum(CANPacket_t *to_push) {
+static uint32_t honda_compute_checksum(CANPacket_t *to_push) {
   int len = GET_LEN(to_push);
   uint8_t checksum = 0U;
   unsigned int addr = GET_ADDR(to_push);
@@ -88,7 +88,7 @@ static uint8_t honda_compute_checksum(CANPacket_t *to_push) {
       checksum -= (byte & 0xFU);  // remove checksum in message
     }
   }
-  return (8U - checksum) & 0xFU;
+  return (uint8_t)((8U - checksum) & 0xFU);
 }
 
 static uint8_t honda_get_counter(CANPacket_t *to_push) {

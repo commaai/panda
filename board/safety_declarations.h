@@ -77,8 +77,8 @@ void update_addr_timestamp(AddrCheckStruct addr_list[], int index);
 bool is_msg_valid(AddrCheckStruct addr_list[], int index);
 bool addr_safety_check(CANPacket_t *to_push,
                        const addr_checks *rx_checks,
-                       uint8_t (*get_checksum)(CANPacket_t *to_push),
-                       uint8_t (*compute_checksum)(CANPacket_t *to_push),
+                       uint32_t (*get_checksum)(CANPacket_t *to_push),
+                       uint32_t (*compute_checksum)(CANPacket_t *to_push),
                        uint8_t (*get_counter)(CANPacket_t *to_push));
 void generic_rx_checks(bool stock_ecu_detected);
 void relay_malfunction_set(void);

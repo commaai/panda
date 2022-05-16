@@ -32,7 +32,7 @@ addr_checks volkswagen_mqb_rx_checks = {volkswagen_mqb_addr_checks, VOLKSWAGEN_M
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
 
 
-static uint8_t volkswagen_mqb_get_checksum(CANPacket_t *to_push) {
+static uint32_t volkswagen_mqb_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
 }
 
@@ -41,7 +41,7 @@ static uint8_t volkswagen_mqb_get_counter(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 1) & 0xFU;
 }
 
-static uint8_t volkswagen_mqb_compute_crc(CANPacket_t *to_push) {
+static uint32_t volkswagen_mqb_compute_crc(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
 
@@ -73,7 +73,7 @@ static uint8_t volkswagen_mqb_compute_crc(CANPacket_t *to_push) {
   }
   crc = volkswagen_crc8_lut_8h2f[crc];
 
-  return crc ^ 0xFFU;
+  return (uint8_t)(crc ^ 0xFFU);
 }
 
 static const addr_checks* volkswagen_mqb_init(uint16_t param) {

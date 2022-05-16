@@ -7,8 +7,7 @@
 #include "can_definitions.h"
 #include "utils.h"
 
-typedef struct
-{
+typedef struct {
   uint32_t CNT;
 } TIM_TypeDef;
 
