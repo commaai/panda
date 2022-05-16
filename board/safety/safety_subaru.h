@@ -37,7 +37,7 @@ AddrCheckStruct subaru_l_addr_checks[] = {
 #define SUBARU_L_ADDR_CHECK_LEN (sizeof(subaru_l_addr_checks) / sizeof(subaru_l_addr_checks[0]))
 addr_checks subaru_l_rx_checks = {subaru_l_addr_checks, SUBARU_L_ADDR_CHECK_LEN};
 
-static uint8_t subaru_get_checksum(CANPacket_t *to_push) {
+static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
 }
 
@@ -45,7 +45,7 @@ static uint8_t subaru_get_counter(CANPacket_t *to_push) {
   return (uint8_t)(GET_BYTE(to_push, 1) & 0xFU);
 }
 
-static uint8_t subaru_compute_checksum(CANPacket_t *to_push) {
+static uint32_t subaru_compute_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   uint8_t checksum = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U);

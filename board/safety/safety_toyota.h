@@ -50,7 +50,7 @@ bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
-static uint8_t toyota_compute_checksum(CANPacket_t *to_push) {
+static uint32_t toyota_compute_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   uint8_t checksum = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U) + (uint8_t)(len);
@@ -60,7 +60,7 @@ static uint8_t toyota_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static uint8_t toyota_get_checksum(CANPacket_t *to_push) {
+static uint32_t toyota_get_checksum(CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1U;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte));
 }
