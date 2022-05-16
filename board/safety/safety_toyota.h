@@ -219,7 +219,6 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     // STEER: safety check on bytes 2-3
     if (addr == 0x2E4) {
       int desired_torque = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
-      bool steer_req = GET_BIT(to_send, 0U) != 0U;
       desired_torque = to_signed(desired_torque, 16);
       bool steer_req = GET_BIT(to_send, 0U) != 0U;
       bool violation = 0;
@@ -249,20 +248,16 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         }
       }
 
-      // on a steer_req bit mismatch, increment counter and reset match count
+      // handle steer_req bit mismatches: we set the bit to 0 at an expected
+      // interval to bypass an EPS fault, violation if we exceed that frequency
       bool steer_req_mismatch = (desired_torque != 0) && !steer_req;
-      if (steer_req_mismatch) {
+      if (!steer_req_mismatch) {
+        toyota_steer_req_matches = MIN(toyota_steer_req_matches + 1U, 255U);
+      } else {
         // disallow torque cut if not enough recent matching steer_req messages
         if (toyota_steer_req_matches < (TOYOTA_MAX_STEER_RATE_FRAMES - 1U)) {
           violation = 1;
         }
-      } else {
-        toyota_steer_req_matches = MIN(toyota_steer_req_matches + 1U, 255U);
-      }
-
-      // reset match count if controls not allowed or steer_req mismatch
-      if (!controls_allowed || steer_req_mismatch) {
-        toyota_steer_req_matches = 0U;
       }
 
       // no torque if controls is not allowed
@@ -272,6 +267,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
       // reset to 0 if either controls is not allowed or there's a violation
       if (violation || !controls_allowed) {
+        steer_req_mismatch = 0U;
         desired_torque_last = 0;
         rt_torque_last = 0;
         ts_last = ts;
