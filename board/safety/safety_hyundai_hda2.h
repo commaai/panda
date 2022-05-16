@@ -26,10 +26,20 @@ static uint8_t hyundai_hda2_get_counter(CANPacket_t *to_push) {
   return GET_BYTE(to_push, 2);
 }
 
+static uint32_t hyundai_hda2_get_checksum(CANPacket_t *to_push) {
+  uint32_t chksum = GET_BYTE(to_push, 0) | (GET_BYTE(to_push, 1) << 8);
+  return chksum;
+}
+
+static uint32_t hyundai_hda2_compute_checksum(CANPacket_t *to_push) {
+  uint32_t chksum = GET_BYTE(to_push, 0) | (GET_BYTE(to_push, 1) << 8);
+  return chksum;
+}
+
 static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &hyundai_hda2_rx_checks,
-                                 NULL, NULL, hyundai_hda2_get_counter);
+                                 hyundai_hda2_get_checksum, hyundai_hda2_compute_checksum, hyundai_hda2_get_counter);
 
   if (valid && (GET_BUS(to_push) == 1U)) {
     int addr = GET_ADDR(to_push);
