@@ -176,6 +176,21 @@ class TestTeslaLongitudinalSafety(TestTeslaSafety):
     for aeb_event in range(4):
       self.assertEqual(self._tx(self._long_control_msg(10, aeb_event=aeb_event)), aeb_event == 0)
 
+  def test_stock_aeb_passthrough(self):
+    no_aeb_msg = self._long_control_msg(10, aeb_event=0)
+    aeb_msg = self._long_control_msg(10, aeb_event=1)
+
+    # stock system sends no AEB -> no forwarding, and OP is allowed to TX
+    self.assertEqual(-1, self.safety.safety_fwd_hook(2, no_aeb_msg))
+    self.assertEqual(True, self._tx(no_aeb_msg))
+
+    # stock system sends AEB -> forwarding, and OP is not allowed to TX
+    self.assertEqual(0, self.safety.safety_fwd_hook(2, aeb_msg))
+    self.assertEqual(False, self._tx(no_aeb_msg))
+
+    # reset global state for next tests
+    self.assertEqual(-1, self.safety.safety_fwd_hook(2, no_aeb_msg))
+
   def test_acc_accel_limits(self):
     for controls_allowed in [True, False]:
       self.safety.set_controls_allowed(controls_allowed)
