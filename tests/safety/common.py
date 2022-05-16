@@ -131,7 +131,7 @@ class TorqueSteeringSafetyTest(PandaSafetyTestBase):
     pass
 
   @abc.abstractmethod
-  def _torque_msg(self, torque):
+  def _torque_msg(self, torque, steer_req=1):
     pass
 
   def _set_prev_torque(self, t):

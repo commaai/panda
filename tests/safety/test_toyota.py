@@ -54,8 +54,8 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
 
-  def _torque_msg(self, torque):
-    values = {"STEER_TORQUE_CMD": torque}
+  def _torque_msg(self, torque, steer_req=1):
+    values = {"STEER_TORQUE_CMD": torque, "STEER_REQUEST": steer_req}
     return self.packer.make_can_msg_panda("STEERING_LKA", 0, values)
 
   def _lta_msg(self, req, req2, angle_cmd):
@@ -136,6 +136,22 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
         angle = random.randint(-50, 50)
         should_tx = not req and not req2 and angle == 0
         self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle)))
+
+  def test_steer_req_bit(self):
+    """
+      On Toyota, you can ramp up torque and then set the STEER_REQUEST bit and the
+      EPS will ramp up faster than the effective panda safety limits. This tests:
+        - Nothing is sent when cutting torque
+        - Nothing is blocked when sending torque normally
+    """
+    self.safety.set_controls_allowed(True)
+    for _ in range(100):
+      self._set_prev_torque(self.MAX_TORQUE)
+      self.assertFalse(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
+
+    self._set_prev_torque(self.MAX_TORQUE)
+    for _ in range(100):
+      self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1)))
 
   def test_rx_hook(self):
     # checksum checks
