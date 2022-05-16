@@ -50,7 +50,7 @@ bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
-static uint8_t toyota_compute_checksum(CANPacket_t *to_push) {
+static uint32_t toyota_compute_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   uint8_t checksum = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U) + (uint8_t)(len);
@@ -60,7 +60,7 @@ static uint8_t toyota_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static uint8_t toyota_get_checksum(CANPacket_t *to_push) {
+static uint32_t toyota_get_checksum(CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1U;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte));
 }
@@ -215,6 +215,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     if (addr == 0x2E4) {
       int desired_torque = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
       desired_torque = to_signed(desired_torque, 16);
+      bool steer_req = GET_BIT(to_send, 0U) != 0U;
       bool violation = 0;
 
       uint32_t ts = microsecond_timer_get();
@@ -242,8 +243,8 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         }
       }
 
-      // no torque if controls is not allowed
-      if (!controls_allowed && (desired_torque != 0)) {
+      // no torque if controls is not allowed or mismatch with STEER_REQUEST bit
+      if ((!controls_allowed || !steer_req) && (desired_torque != 0)) {
         violation = 1;
       }
 
@@ -288,7 +289,7 @@ static int toyota_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     int is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191));
     // in TSS2 the camera does ACC as well, so filter 0x343
     int is_acc_msg = (addr == 0x343);
-    int block_msg = is_lkas_msg || is_acc_msg;
+    int block_msg = is_lkas_msg || (is_acc_msg && !toyota_stock_longitudinal);
     if (!block_msg) {
       bus_fwd = 0;
     }

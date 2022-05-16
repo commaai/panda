@@ -175,8 +175,8 @@ void update_addr_timestamp(AddrCheckStruct addr_list[], int index) {
 
 bool addr_safety_check(CANPacket_t *to_push,
                        const addr_checks *rx_checks,
-                       uint8_t (*get_checksum)(CANPacket_t *to_push),
-                       uint8_t (*compute_checksum)(CANPacket_t *to_push),
+                       uint32_t (*get_checksum)(CANPacket_t *to_push),
+                       uint32_t (*compute_checksum)(CANPacket_t *to_push),
                        uint8_t (*get_counter)(CANPacket_t *to_push)) {
 
   int index = get_addr_check_index(to_push, rx_checks->check, rx_checks->len);
@@ -185,8 +185,8 @@ bool addr_safety_check(CANPacket_t *to_push,
   if (index != -1) {
     // checksum check
     if ((get_checksum != NULL) && (compute_checksum != NULL) && rx_checks->check[index].msg[rx_checks->check[index].index].check_checksum) {
-      uint8_t checksum = get_checksum(to_push);
-      uint8_t checksum_comp = compute_checksum(to_push);
+      uint32_t checksum = get_checksum(to_push);
+      uint32_t checksum_comp = compute_checksum(to_push);
       rx_checks->check[index].valid_checksum = checksum_comp == checksum;
     } else {
       rx_checks->check[index].valid_checksum = true;

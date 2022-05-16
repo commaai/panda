@@ -28,7 +28,7 @@ AddrCheckStruct volkswagen_pq_addr_checks[] = {
 addr_checks volkswagen_pq_rx_checks = {volkswagen_pq_addr_checks, VOLKSWAGEN_PQ_ADDR_CHECKS_LEN};
 
 
-static uint8_t volkswagen_pq_get_checksum(CANPacket_t *to_push) {
+static uint32_t volkswagen_pq_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
 }
 
@@ -38,7 +38,7 @@ static uint8_t volkswagen_pq_get_counter(CANPacket_t *to_push) {
   return (uint8_t)(GET_BYTE(to_push, 1) & 0xF0U) >> 4;
 }
 
-static uint8_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
+static uint32_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
   int len = GET_LEN(to_push);
   uint8_t checksum = 0U;
 
