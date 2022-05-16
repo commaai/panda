@@ -45,12 +45,6 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conservative for rounding
   EPS_SCALE = 73
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TorqueSteeringSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
-
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpandasafety_py.libpandasafety
@@ -217,9 +211,6 @@ class TestToyotaAltBrakeSafety(TestToyotaSafety):
   def test_lta_steer_cmd(self):
     pass
 
-  def test_steer_req_bit(self):
-    pass
-
 
 class TestToyotaStockLongitudinal(TestToyotaSafety):
   def setUp(self):
@@ -227,9 +218,6 @@ class TestToyotaStockLongitudinal(TestToyotaSafety):
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
     self.safety.init_tests()
-
-  def test_steer_req_bit(self):
-    pass
 
   def test_accel_actuation_limits(self, stock_longitudinal=True):
     super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)
