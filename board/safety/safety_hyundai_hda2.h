@@ -66,11 +66,13 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &hyundai_hda2_rx_checks,
                                  hyundai_hda2_get_checksum, hyundai_hda2_compute_checksum, hyundai_hda2_get_counter);
 
-  if (valid && (GET_BUS(to_push) == 1U)) {
-    int addr = GET_ADDR(to_push);
+  int bus = GET_BUS(to_push);
+  int addr = GET_ADDR(to_push);
+
+  if (valid && (bus == 1U)) {
 
     if (addr == 0xea) {
-      int torque_driver_new = (((GET_BYTE(to_push, 11) & 0x1f) << 8) | GET_BYTE(to_push, 11)) - 4095;
+      int torque_driver_new = (((GET_BYTE(to_push, 11) & 0x1f) << 8) | GET_BYTE(to_push, 10)) - 4095;
       update_sample(&torque_driver, torque_driver_new);
     }
 
@@ -91,7 +93,7 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
       gas_pressed = GET_BYTE(to_push, 5) != 0U;
     }
 
-    if (addr == 0x64) {
+    if (addr == 0x65) {
       brake_pressed = GET_BIT(to_push, 57) != 0U;
     }
 
@@ -103,9 +105,10 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
       speed = ABS(speed) / 4;
       vehicle_moving = speed > HYUNDAI_HDA2_STANDSTILL_THRSLD;
     }
-
-    generic_rx_checks(addr == 0x50);
   }
+
+  generic_rx_checks((addr == 0x50) && (bus == 0U));
+
   return valid;
 }
 
@@ -164,9 +167,11 @@ static int hyundai_hda2_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed)
   }
 
   // cruise buttons check
-  if ((addr == 0x1CF) && (bus == 1)) {
-    bool is_cancel = (GET_BYTES_04(to_send) == (1U << 18)) && (GET_BYTES_48(to_send) == 0U);
-    if (!is_cancel || !cruise_engaged_prev) {
+  if ((addr == 0x1cf) && (bus == 1)) {
+    bool is_cancel = GET_BYTE(to_send, 2) == 4U;
+    bool is_resume = GET_BYTE(to_send, 2) == 1U;
+    bool allowed = (is_cancel && cruise_engaged_prev) || (is_resume && controls_allowed);
+    if (!allowed) {
       tx = 0;
     }
   }
