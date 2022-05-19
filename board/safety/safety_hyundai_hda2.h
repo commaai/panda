@@ -16,6 +16,7 @@ AddrCheckStruct hyundai_hda2_addr_checks[] = {
   {.msg = {{0x35, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x65, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0xa0, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0xea, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x175, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
 };
 #define HYUNDAI_HDA2_ADDR_CHECK_LEN (sizeof(hyundai_hda2_addr_checks) / sizeof(hyundai_hda2_addr_checks[0]))
@@ -67,6 +68,11 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
 
   if (valid && (GET_BUS(to_push) == 1U)) {
     int addr = GET_ADDR(to_push);
+
+    if (addr == 0xea) {
+      int torque_driver_new = (((GET_BYTE(to_push, 11) & 0x1f) << 8) | GET_BYTE(to_push, 11)) - 4095;
+      update_sample(&torque_driver, torque_driver_new);
+    }
 
     if (addr == 0x175) {
       bool cruise_engaged = GET_BIT(to_push, 68);
@@ -121,12 +127,10 @@ static int hyundai_hda2_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed)
       // *** global torque limit check ***
       violation |= max_limit_check(desired_torque, HYUNDAI_HDA2_MAX_STEER, -HYUNDAI_HDA2_MAX_STEER);
 
-      /*
       // *** torque rate limit check ***
       violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-        HYUNDAI_MAX_STEER, HYUNDAI_MAX_RATE_UP, HYUNDAI_MAX_RATE_DOWN,
-        HYUNDAI_DRIVER_TORQUE_ALLOWANCE, HYUNDAI_DRIVER_TORQUE_FACTOR);
-      */
+                                      HYUNDAI_HDA2_MAX_STEER, HYUNDAI_HDA2_MAX_RATE_UP, HYUNDAI_HDA2_MAX_RATE_DOWN,
+                                      HYUNDAI_HDA2_DRIVER_TORQUE_ALLOWANCE, HYUNDAI_HDA2_DRIVER_TORQUE_FACTOR);
 
       // used next time
       desired_torque_last = desired_torque;
