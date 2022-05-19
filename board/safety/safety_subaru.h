@@ -315,8 +315,6 @@ static int subaru_legacy_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 static const addr_checks* subaru_init(uint16_t param) {
   UNUSED(param);
-  controls_allowed = false;
-  relay_malfunction_reset();
   return &subaru_rx_checks;
 }
 
@@ -330,8 +328,6 @@ const safety_hooks subaru_hooks = {
 
 static const addr_checks* subaru_legacy_init(uint16_t param) {
   UNUSED(param);
-  controls_allowed = false;
-  relay_malfunction_reset();
   return &subaru_l_rx_checks;
 }
 
