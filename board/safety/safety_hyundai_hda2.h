@@ -178,7 +178,6 @@ static int hyundai_hda2_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed)
     }
   }
 
-
   return tx;
 }
 
@@ -199,8 +198,6 @@ static int hyundai_hda2_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 static const addr_checks* hyundai_hda2_init(uint16_t param) {
   UNUSED(param);
-  controls_allowed = false;
-  relay_malfunction_reset();
   gen_crc_lookup_table_16(0x1021, hyundai_hda2_crc_lut);
   return &hyundai_hda2_rx_checks;
 }
