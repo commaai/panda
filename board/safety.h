@@ -8,7 +8,6 @@
 #include "safety/safety_gm.h"
 #include "safety/safety_ford.h"
 #include "safety/safety_hyundai.h"
-#include "safety/safety_hyundai_hda2.h"
 #include "safety/safety_chrysler.h"
 #include "safety/safety_subaru.h"
 #include "safety/safety_mazda.h"
@@ -17,6 +16,11 @@
 #include "safety/safety_volkswagen_pq.h"
 #include "safety/safety_elm327.h"
 #include "safety/safety_body.h"
+
+// CAN-FD only safety modes
+#ifdef CANFD
+#include "safety/safety_hyundai_hda2.h"
+#endif
 
 // from cereal.car.CarParams.SafetyModel
 #define SAFETY_SILENT 0U
@@ -270,7 +274,9 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
   {SAFETY_BODY, &body_hooks},
+#ifdef CANFD
   {SAFETY_HYUNDAI_HDA2, &hyundai_hda2_hooks},
+#endif
 #ifdef ALLOW_DEBUG
   {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_SUBARU_LEGACY, &subaru_legacy_hooks},
