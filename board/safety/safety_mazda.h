@@ -175,8 +175,6 @@ static int mazda_fwd_hook(int bus, CANPacket_t *to_fwd) {
 
 static const addr_checks* mazda_init(uint16_t param) {
   UNUSED(param);
-  controls_allowed = false;
-  relay_malfunction_reset();
   return &mazda_rx_checks;
 }
 
