@@ -2,6 +2,8 @@
 //       FDCAN2_IT0, FDCAN2_IT1
 //       FDCAN3_IT0, FDCAN3_IT1
 
+#define CANFD
+
 #define BUS_OFF_FAIL_LIMIT 2U
 uint8_t bus_off_err[] = {0U, 0U, 0U};
 

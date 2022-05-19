@@ -17,6 +17,11 @@
 #include "safety/safety_elm327.h"
 #include "safety/safety_body.h"
 
+// CAN-FD only safety modes
+#ifdef CANFD
+#include "safety/safety_hyundai_hda2.h"
+#endif
+
 // from cereal.car.CarParams.SafetyModel
 #define SAFETY_SILENT 0U
 #define SAFETY_HONDA_NIDEC 1U
@@ -43,6 +48,7 @@
 #define SAFETY_STELLANTIS 25U
 #define SAFETY_FAW 26U
 #define SAFETY_BODY 27U
+#define SAFETY_HYUNDAI_HDA2 28U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
 uint16_t current_safety_param = 0;
@@ -71,14 +77,29 @@ bool get_longitudinal_allowed(void) {
 
 // Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8
 // algorithm. Called at init time for safety modes using CRC-8.
-void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]) {
+void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]) {
   for (int i = 0; i < 256; i++) {
     uint8_t crc = i;
     for (int j = 0; j < 8; j++) {
-      if ((crc & 0x80U) != 0U)
+      if ((crc & 0x80U) != 0U) {
         crc = (uint8_t)((crc << 1) ^ poly);
-      else
+      } else {
         crc <<= 1;
+      }
+    }
+    crc_lut[i] = crc;
+  }
+}
+
+void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]) {
+  for (uint16_t i = 0; i < 256U; i++) {
+    uint16_t crc = i << 8U;
+    for (uint16_t j = 0; j < 8U; j++) {
+      if ((crc & 0x8000U) != 0U) {
+        crc = (uint16_t)((crc << 1) ^ poly);
+      } else {
+        crc <<= 1;
+      }
     }
     crc_lut[i] = crc;
   }
@@ -253,6 +274,9 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
   {SAFETY_BODY, &body_hooks},
+#ifdef CANFD
+  {SAFETY_HYUNDAI_HDA2, &hyundai_hda2_hooks},
+#endif
 #ifdef ALLOW_DEBUG
   {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_SUBARU_LEGACY, &subaru_legacy_hooks},
