@@ -17,6 +17,10 @@
 #include "safety/safety_elm327.h"
 #include "safety/safety_body.h"
 
+#ifdef STM32H7
+#define CANFD
+#endif
+
 // CAN-FD only safety modes
 #ifdef CANFD
 #include "safety/safety_hyundai_hda2.h"

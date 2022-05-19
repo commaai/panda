@@ -22,7 +22,7 @@ misra_f4_output=$( cat /tmp/misra/misra_f4_output.txt | grep -v ": information: 
 
 
 printf "\nPANDA H7 CODE\n"
-cppcheck -DPANDA -DSTM32H7 -DCANFD -UPEDAL -DUID_BASE \
+cppcheck -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE \
          --suppressions-list=suppressions.txt --suppress=*:*inc/* \
          -I $PANDA_DIR/board/ --dump --enable=all --inline-suppr --force \
          $PANDA_DIR/board/main.c 2>/tmp/misra/cppcheck_h7_output.txt
