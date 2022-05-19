@@ -41,21 +41,23 @@ static uint32_t hyundai_hda2_compute_checksum(CANPacket_t *to_push) {
   uint16_t crc = 0;
 
   for (int i = 2; i < len; i++) {
-    crc = (crc << 8) ^ hyundai_hda2_crc_lut[(crc >> 8) ^ GET_BYTE(to_push, i)];
+    crc = (crc << 8U) ^ hyundai_hda2_crc_lut[(crc >> 8U) ^ GET_BYTE(to_push, i)];
   }
 
   // Add address to crc
-  crc = (crc << 8) ^ hyundai_hda2_crc_lut[(crc >> 8) ^ ((address >> 0) & 0xFF)];
-  crc = (crc << 8) ^ hyundai_hda2_crc_lut[(crc >> 8) ^ ((address >> 8) & 0xFF)];
+  crc = (crc << 8U) ^ hyundai_hda2_crc_lut[(crc >> 8U) ^ ((address >> 0U) & 0xFFU)];
+  crc = (crc << 8U) ^ hyundai_hda2_crc_lut[(crc >> 8U) ^ ((address >> 8U) & 0xFFU)];
 
   if (len == 8) {
-    crc ^= 0x5f29;
+    crc ^= 0x5f29U;
   } else if (len == 16) {
-    crc ^= 0x041d;
+    crc ^= 0x041dU;
   } else if (len == 24) {
-    crc ^= 0x819d;
+    crc ^= 0x819dU;
   } else if (len == 32) {
-    crc ^= 0x9f5b;
+    crc ^= 0x9f5bU;
+  } else {
+
   }
 
   return crc;
@@ -69,15 +71,16 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
-  if (valid && (bus == 1U)) {
+  if (valid && (bus == 1)) {
 
     if (addr == 0xea) {
-      int torque_driver_new = (((GET_BYTE(to_push, 11) & 0x1f) << 8) | GET_BYTE(to_push, 10)) - 4095;
+      int torque_driver_new = ((GET_BYTE(to_push, 11) & 0x1fU) << 8U) | GET_BYTE(to_push, 10);
+      torque_driver_new -= 4095;
       update_sample(&torque_driver, torque_driver_new);
     }
 
     if (addr == 0x175) {
-      bool cruise_engaged = GET_BIT(to_push, 68);
+      bool cruise_engaged = GET_BIT(to_push, 68U);
 
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
@@ -94,20 +97,19 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
     }
 
     if (addr == 0x65) {
-      brake_pressed = GET_BIT(to_push, 57) != 0U;
+      brake_pressed = GET_BIT(to_push, 57U) != 0U;
     }
 
     if (addr == 0xa0) {
-      int speed = 0;
+      uint32_t speed = 0;
       for (int i = 8; i < 15; i+=2) {
-        speed += GET_BYTE(to_push, i) | (GET_BYTE(to_push, i + 1) << 8);
+        speed += GET_BYTE(to_push, i) | (GET_BYTE(to_push, i + 1) << 8U);
       }
-      speed = ABS(speed) / 4;
-      vehicle_moving = speed > HYUNDAI_HDA2_STANDSTILL_THRSLD;
+      vehicle_moving = (speed / 4U) > HYUNDAI_HDA2_STANDSTILL_THRSLD;
     }
   }
 
-  generic_rx_checks((addr == 0x50) && (bus == 0U));
+  generic_rx_checks((addr == 0x50) && (bus == 0));
 
   return valid;
 }
@@ -121,12 +123,12 @@ static int hyundai_hda2_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed)
 
   // steering
   if ((addr == 0x50) && (bus == 0)) {
-    int desired_torque = (((GET_BYTE(to_send, 6) & 0xF) << 7) | (GET_BYTE(to_send, 5) >> 1)) - 1024U;
+    int desired_torque = ((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U);
+    desired_torque -= 1024;
     uint32_t ts = microsecond_timer_get();
     bool violation = 0;
 
     if (controls_allowed) {
-
       // *** global torque limit check ***
       violation |= max_limit_check(desired_torque, HYUNDAI_HDA2_MAX_STEER, -HYUNDAI_HDA2_MAX_STEER);
 
