@@ -11,6 +11,7 @@
 #include "stm32h7/llrtc.h"
 #include "drivers/rtc.h"
 #include "boards/red.h"
+#include "boards/tres.h"
 
 uint8_t board_id(void) {
   return detect_with_pull(GPIOF, 7, PULL_UP) |
@@ -20,12 +21,18 @@ uint8_t board_id(void) {
 }
 
 void detect_board_type(void) {
-  if(board_id() == 0U){
-    hw_type = HW_TYPE_RED_PANDA;
-    current_board = &board_red;
-  } else {
-    hw_type = HW_TYPE_UNKNOWN;
-    puts("Hardware type is UNKNOWN!\n");
+  switch(board_id()) {
+    case 0U:
+      hw_type = HW_TYPE_RED_PANDA;
+      current_board = &board_red;
+      break;
+    case 1U:
+      hw_type = HW_TYPE_TRES;
+      current_board = &board_tres;
+      break;
+    default:
+      hw_type = HW_TYPE_UNKNOWN;
+      puts("Hardware type is UNKNOWN!\n");
   }
 }
 
