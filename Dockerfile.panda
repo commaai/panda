@@ -26,6 +26,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libusb-1.0-0 \
     libzmq3-dev \
     locales \
+    opencl-headers \
+    ocl-icd-opencl-dev \
     make \
     patch \
     pkg-config \
@@ -61,10 +63,10 @@ RUN cd /tmp && \
     git clone https://github.com/commaai/openpilot.git tmppilot || true && \
     cd /tmp/tmppilot && \
     git fetch && \
-    git checkout c95ec211e15e206bf8750bf8d9429206eefedc69 && \
+    git checkout a1fadc7b547f10782222b3f38df68e89d649dd92 && \
     git submodule update --init cereal opendbc rednose_repo && \
     mkdir /tmp/openpilot && \
-    cp -pR SConstruct site_scons/ tools/ selfdrive/ common/ cereal/ opendbc/ rednose/ /tmp/openpilot && \
+    cp -pR SConstruct site_scons/ tools/ selfdrive/ common/ cereal/ opendbc/ rednose/ third_party/ /tmp/openpilot && \
     rm -rf /tmp/tmppilot
 
 RUN cd /tmp/openpilot && \

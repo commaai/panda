@@ -52,8 +52,6 @@ static uint32_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
 static const addr_checks* volkswagen_pq_init(uint16_t param) {
   UNUSED(param);
 
-  controls_allowed = false;
-  relay_malfunction_reset();
   return &volkswagen_pq_rx_checks;
 }
 

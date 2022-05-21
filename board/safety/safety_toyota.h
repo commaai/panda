@@ -284,8 +284,6 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 }
 
 static const addr_checks* toyota_init(uint16_t param) {
-  controls_allowed = 0;
-  relay_malfunction_reset();
   gas_interceptor_detected = 0;
   toyota_steer_req_matches = 0U;
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
