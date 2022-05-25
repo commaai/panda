@@ -117,7 +117,119 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
         self.assertEqual(send, self._tx(self._interceptor_gas_cmd(gas)))
 
 
-class TorqueSteeringSafetyTest(PandaSafetyTestBase):
+class DriverTorqueSteeringSafetyTest(PandaSafetyTestBase):
+
+  MAX_RATE_UP = 0
+  MAX_RATE_DOWN = 0
+  MAX_TORQUE = 0
+  MAX_RT_DELTA = 0
+  RT_INTERVAL = 0
+  MAX_TORQUE_ERROR = 0
+  TORQUE_MEAS_TOLERANCE = 0
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "DriverTorqueSteeringSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  @abc.abstractmethod
+  def _torque_cmd_msg(self, torque, steer_req=1):
+    pass
+
+  def _set_prev_torque(self, t):
+    self.safety.set_desired_torque_last(t)
+    self.safety.set_rt_torque_last(t)
+
+  def test_steer_safety_check(self):
+    print('\n\ncommon.DriverTorqueSteeringSafetyTest.test_steer_safety_check()')
+    for enabled in [0, 1]:
+      for t in range(-self.MAX_TORQUE * 2, self.MAX_TORQUE * 2):
+        self.safety.set_controls_allowed(enabled)
+        self._set_prev_torque(t)
+        if abs(t) > self.MAX_TORQUE or (not enabled and abs(t) > 0):
+          self.assertFalse(self._tx(self._torque_cmd_msg(t)))
+        else:
+          self.assertTrue(self._tx(self._torque_cmd_msg(t)))
+
+  def test_non_realtime_limit_up(self):
+    self.safety.set_torque_driver(0, 0)
+    self.safety.set_controls_allowed(True)
+
+    self._set_prev_torque(0)
+    self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_RATE_UP)))
+    self._set_prev_torque(0)
+    self.assertTrue(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP)))
+
+    self._set_prev_torque(0)
+    self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_RATE_UP + 1)))
+    self.safety.set_controls_allowed(True)
+    self._set_prev_torque(0)
+    self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP - 1)))
+
+  def test_non_realtime_limit_down(self):  # TODO: make this test something
+    self.safety.set_torque_driver(0, 0)
+    self.safety.set_controls_allowed(True)
+
+  def test_against_torque_driver(self):
+    self.safety.set_controls_allowed(True)
+
+    for sign in [-1, 1]:
+      for t in np.arange(0, self.DRIVER_TORQUE_ALLOWANCE + 1, 1):
+        t *= -sign
+        self.safety.set_torque_driver(t, t)
+        self._set_prev_torque(self.MAX_TORQUE * sign)
+        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE * sign)))
+
+      self.safety.set_torque_driver(self.DRIVER_TORQUE_ALLOWANCE + 1, self.DRIVER_TORQUE_ALLOWANCE + 1)
+      self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_TORQUE)))
+
+    # spot check some individual cases
+    for sign in [-1, 1]:
+      driver_torque = (self.DRIVER_TORQUE_ALLOWANCE + 10) * sign
+      torque_desired = (self.MAX_TORQUE - 10 * self.DRIVER_TORQUE_FACTOR) * sign
+      delta = 1 * sign
+      self._set_prev_torque(torque_desired)
+      self.safety.set_torque_driver(-driver_torque, -driver_torque)
+      self.assertTrue(self._tx(self._torque_cmd_msg(torque_desired)))
+      self._set_prev_torque(torque_desired + delta)
+      self.safety.set_torque_driver(-driver_torque, -driver_torque)
+      self.assertFalse(self._tx(self._torque_cmd_msg(torque_desired + delta)))
+
+      self._set_prev_torque(self.MAX_TORQUE * sign)
+      self.safety.set_torque_driver(-self.MAX_TORQUE * sign, -self.MAX_TORQUE * sign)
+      self.assertTrue(self._tx(self._torque_cmd_msg((self.MAX_TORQUE - self.MAX_RATE_DOWN) * sign)))
+      self._set_prev_torque(self.MAX_TORQUE * sign)
+      self.safety.set_torque_driver(-self.MAX_TORQUE * sign, -self.MAX_TORQUE * sign)
+      self.assertTrue(self._tx(self._torque_cmd_msg(0)))
+      self._set_prev_torque(self.MAX_TORQUE * sign)
+      self.safety.set_torque_driver(-self.MAX_TORQUE * sign, -self.MAX_TORQUE * sign)
+      self.assertFalse(self._tx(self._torque_cmd_msg((self.MAX_TORQUE - self.MAX_RATE_DOWN + 1) * sign)))
+
+  def test_realtime_limits(self):
+    self.safety.set_controls_allowed(True)
+
+    for sign in [-1, 1]:
+      self.safety.init_tests()
+      self._set_prev_torque(0)
+      self.safety.set_torque_driver(0, 0)
+      for t in np.arange(0, self.MAX_RT_DELTA, 1):
+        t *= sign
+        self.assertTrue(self._tx(self._torque_cmd_msg(t)))
+      self.assertFalse(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA + 1))))
+
+      self._set_prev_torque(0)
+      for t in np.arange(0, self.MAX_RT_DELTA, 1):
+        t *= sign
+        self.assertTrue(self._tx(self._torque_cmd_msg(t)))
+
+      # Increase timer to update rt_torque_last
+      self.safety.set_timer(self.RT_INTERVAL + 1)
+      self.assertTrue(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA - 1))))
+      self.assertTrue(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA + 1))))
+
+
+class MotorTorqueSteeringSafetyTest(PandaSafetyTestBase):
 
   MAX_RATE_UP = 0
   MAX_RATE_DOWN = 0
