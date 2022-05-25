@@ -66,8 +66,9 @@ class TestGmSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("ASCMSteeringButton", 0, values)
 
   def _user_brake_msg(self, brake):
-    values = {"Brake_Pressed": 1 if brake else 0}
-    return self.packer.make_can_msg_panda("ECMEngineStatus", 0, values)
+    # GM safety has a brake threshold of 10
+    values = {"BrakePedalPosition": 10 if brake else 0}
+    return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
 
   def _user_gas_msg(self, gas):
     values = {"AcceleratorPedal2": 1 if gas else 0}

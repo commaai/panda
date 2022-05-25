@@ -3,7 +3,9 @@ import abc
 import unittest
 import importlib
 import numpy as np
+from collections import defaultdict
 from typing import Optional, List, Dict
+
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE, LEN_TO_DLC
 from panda.tests.safety import libpandasafety_py
@@ -25,8 +27,13 @@ def make_msg(bus, addr, length=8):
   return package_can_msg([addr, 0, b'\x00' * length, bus])
 
 class CANPackerPanda(CANPacker):
-  def make_can_msg_panda(self, name_or_addr, bus, values, counter=-1, fix_checksum=None):
-    msg = self.make_can_msg(name_or_addr, bus, values, counter=-1)
+  _counters: Dict[str, int] = defaultdict(lambda: -1)
+
+  def make_can_msg_panda(self, name_or_addr, bus, values, counter=False, fix_checksum=None):
+    if counter:
+      self._counters[name_or_addr] += 1
+
+    msg = self.make_can_msg(name_or_addr, bus, values, counter=self._counters[name_or_addr])
     if fix_checksum is not None:
       msg = fix_checksum(msg)
     return package_can_msg(msg)

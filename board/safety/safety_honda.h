@@ -376,8 +376,6 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 }
 
 static const addr_checks* honda_nidec_init(uint16_t param) {
-  controls_allowed = false;
-  relay_malfunction_reset();
   gas_interceptor_detected = 0;
   honda_hw = HONDA_NIDEC;
   honda_alt_brake_msg = false;
@@ -392,8 +390,6 @@ static const addr_checks* honda_nidec_init(uint16_t param) {
 }
 
 static const addr_checks* honda_bosch_init(uint16_t param) {
-  controls_allowed = false;
-  relay_malfunction_reset();
   honda_bosch_radarless = GET_FLAG(param,  HONDA_PARAM_RADARLESS);
   honda_hw = HONDA_BOSCH;
 
