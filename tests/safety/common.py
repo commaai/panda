@@ -124,8 +124,8 @@ class DriverTorqueSteeringSafetyTest(PandaSafetyTestBase):
   MAX_TORQUE = 0
   MAX_RT_DELTA = 0
   RT_INTERVAL = 0
-  MAX_TORQUE_ERROR = 0
-  TORQUE_MEAS_TOLERANCE = 0
+  DRIVER_TORQUE_ALLOWANCE = 0
+  DRIVER_TORQUE_FACTOR = 0
 
   @classmethod
   def setUpClass(cls):
