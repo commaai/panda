@@ -35,7 +35,7 @@ class TestHyundaiHDA2(common.PandaSafetyTest):
     values = {"STEERING_COL_TORQUE": torque}
     return self.packer.make_can_msg_panda("MDPS", 1, values, counter=True)
 
-  def _torque_msg(self, torque, steer_req=1):
+  def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"TORQUE_REQUEST": torque}
     return self.packer.make_can_msg_panda("LKAS", 0, values, counter=True)
 

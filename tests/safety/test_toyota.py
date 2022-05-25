@@ -54,7 +54,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
 
-  def _torque_msg(self, torque, steer_req=1):
+  def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"STEER_TORQUE_CMD": torque, "STEER_REQUEST": steer_req}
     return self.packer.make_can_msg_panda("STEERING_LKA", 0, values)
 
@@ -147,11 +147,11 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     self.safety.set_controls_allowed(True)
     for _ in range(100):
       self._set_prev_torque(self.MAX_TORQUE)
-      self.assertFalse(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
+      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
     self._set_prev_torque(self.MAX_TORQUE)
     for _ in range(100):
-      self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1)))
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
   def test_rx_hook(self):
     # checksum checks
