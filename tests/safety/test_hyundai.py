@@ -211,7 +211,7 @@ class TestHyundaiSafety(common.PandaSafetyTest):
 
   def test_steer_req_bit(self):
     """
-      On Hyundai, you can ramp up torque and then set the STEER_REQUEST bit and the
+      On Hyundai, you can ramp up torque and then set the CF_Lkas_ActToi bit and the
       EPS will ramp up faster than the effective panda safety limits. This tests:
         - Nothing is sent when cutting torque
         - Nothing is blocked when sending torque normally
