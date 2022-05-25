@@ -6,7 +6,7 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 
-class TestHyundaiHDA2(common.PandaSafetyTest):
+class TestHyundaiHDA2(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
 
   TX_MSGS = [[0x50, 0], [0x1CF, 1]]
   STANDSTILL_THRESHOLD = 30  # ~1kph
