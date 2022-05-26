@@ -223,19 +223,19 @@ static int honda_rx_hook(CANPacket_t *to_push) {
 
     bool stock_ecu_detected = false;
     int bus_rdr_car = (honda_hw == HONDA_BOSCH) ? 0 : 2;  // radar bus, car side
-    int pt_bus = (honda_hw == HONDA_BOSCH) ? 1 : 0;
+    int pt_bus = (honda_hw == HONDA_BOSCH && !honda_bosch_radarless) ? 1 : 0;
 
     if (safety_mode_cnt > RELAY_TRNS_TIMEOUT) {
       // If steering controls messages are received on the destination bus, it's an indication
       // that the relay might be malfunctioning
-      if ((addr == 0xE4) || (addr == 0x194)) {
+      if ((addr == 0xE4) || (addr == 0x194)) {  // STEERING_CONTROL
         if (((honda_hw != HONDA_NIDEC) && (bus == bus_rdr_car)) || ((honda_hw == HONDA_NIDEC) && (bus == 0))) {
           stock_ecu_detected = true;
         }
       }
       // If Honda Bosch longitudinal mode is selected we need to ensure the radar is turned off
       // Verify this by ensuring ACC_CONTROL (0x1DF) is not received on the PT bus
-      if (honda_bosch_long && (bus == pt_bus) && (addr == 0x1DF)) {
+      if (honda_bosch_long && !honda_bosch_radarless && (bus == pt_bus) && (addr == 0x1DF)) {
         stock_ecu_detected = true;
       }
     }
@@ -275,7 +275,8 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     pedal_pressed = pedal_pressed || gas_pressed_prev;
   }
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
-  int bus_pt = (honda_hw == HONDA_BOSCH) ? 1 : 0;
+  int bus_pt = (honda_hw == HONDA_BOSCH && !honda_bosch_radarless) ? 1 : 0;
+  int bus_buttons = (honda_bosch_radarless) ? 2 : bus_pt;  // the camera controls ACC on radarless Bosch cars
 
   // ACC_HUD: safety check (nidec w/o pedal)
   if ((addr == 0x30C) && (bus == bus_pt)) {
@@ -358,7 +359,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   // FORCE CANCEL: safety check only relevant when spamming the cancel button in Bosch HW
   // ensuring that only the cancel button press is sent (VAL 2) when controls are off.
   // This avoids unintended engagements while still allowing resume spam
-  if ((addr == 0x296) && !current_controls_allowed && (bus == bus_pt)) {
+  if ((addr == 0x296) && !current_controls_allowed && (bus == bus_buttons)) {
     if (((GET_BYTE(to_send, 0) >> 5) & 0x7U) != 2U) {
       tx = 0;
     }
