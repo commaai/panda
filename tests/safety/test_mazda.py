@@ -6,7 +6,7 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 
-class TestMazdaSafety(common.PandaSafetyTest):
+class TestMazdaSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
 
   TX_MSGS = [[0x243, 0], [0x09d, 0], [0x440, 0]]
   STANDSTILL_THRESHOLD = .1
@@ -17,9 +17,9 @@ class TestMazdaSafety(common.PandaSafetyTest):
 
   MAX_RATE_UP = 10
   MAX_RATE_DOWN = 25
-  MAX_STEER = 2047
+  MAX_TORQUE = 800
 
-  MAX_RT_DELTA = 940
+  MAX_RT_DELTA = 300
   RT_INTERVAL = 250000
 
   DRIVER_TORQUE_ALLOWANCE = 15
