@@ -142,7 +142,6 @@ class DriverTorqueSteeringSafetyTest(PandaSafetyTestBase):
     self.safety.set_rt_torque_last(t)
 
   def test_steer_safety_check(self):
-    print('\n\ncommon.DriverTorqueSteeringSafetyTest.test_steer_safety_check()')
     for enabled in [0, 1]:
       for t in range(-self.MAX_TORQUE * 2, self.MAX_TORQUE * 2):
         self.safety.set_controls_allowed(enabled)
