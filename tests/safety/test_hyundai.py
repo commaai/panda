@@ -6,18 +6,9 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, make_msg
 
-MAX_RATE_UP = 3
-MAX_RATE_DOWN = 7
-MAX_STEER = 384
-
-MAX_RT_DELTA = 112
-RT_INTERVAL = 250000
-
-DRIVER_TORQUE_ALLOWANCE = 50
-DRIVER_TORQUE_FACTOR = 2
-
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
+
 
 class Buttons:
   NONE = 0
@@ -25,8 +16,10 @@ class Buttons:
   SET = 2
   CANCEL = 4
 
+
 PREV_BUTTON_SAMPLES = 4
 ENABLE_BUTTONS = (Buttons.RESUME, Buttons.SET, Buttons.CANCEL)
+
 
 # 4 bit checkusm used in some hyundai messages
 # lives outside the can packer because we never send this msg
@@ -62,13 +55,22 @@ def checksum(msg):
 
   return addr, t, ret, bus
 
-class TestHyundaiSafety(common.PandaSafetyTest):
+
+class TestHyundaiSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   TX_MSGS = [[832, 0], [1265, 0], [1157, 0]]
   STANDSTILL_THRESHOLD = 30  # ~1kph
   RELAY_MALFUNCTION_ADDR = 832
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [832, 1157]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  MAX_RATE_UP = 3
+  MAX_RATE_DOWN = 7
+  MAX_TORQUE = 384
+  MAX_RT_DELTA = 112
+  RT_INTERVAL = 250000
+  DRIVER_TORQUE_ALLOWANCE = 50
+  DRIVER_TORQUE_FACTOR = 2
 
   cnt_gas = 0
   cnt_speed = 0
@@ -110,104 +112,30 @@ class TestHyundaiSafety(common.PandaSafetyTest):
     self.__class__.cnt_cruise += 1
     return self.packer.make_can_msg_panda("SCC12", 0, values, fix_checksum=checksum)
 
-  def _set_prev_torque(self, t):
-    self.safety.set_desired_torque_last(t)
-    self.safety.set_rt_torque_last(t)
-
   # TODO: this is unused
   def _torque_driver_msg(self, torque):
     values = {"CR_Mdps_StrColTq": torque}
     return self.packer.make_can_msg_panda("MDPS12", 0, values)
 
-  def _torque_msg(self, torque, steer_req=1):
-    values = {"CR_Lkas_StrToqReq": torque}
+  def _torque_cmd_msg(self, torque, steer_req=1):
+    values = {"CR_Lkas_StrToqReq": torque, "CF_Lkas_ActToi": steer_req}
     return self.packer.make_can_msg_panda("LKAS11", 0, values)
 
-  def test_steer_safety_check(self):
-    for enabled in [0, 1]:
-      for t in range(-0x200, 0x200):
-        self.safety.set_controls_allowed(enabled)
-        self._set_prev_torque(t)
-        if abs(t) > MAX_STEER or (not enabled and abs(t) > 0):
-          self.assertFalse(self._tx(self._torque_msg(t)))
-        else:
-          self.assertTrue(self._tx(self._torque_msg(t)))
-
-  def test_non_realtime_limit_up(self):
-    self.safety.set_torque_driver(0, 0)
+  def test_steer_req_bit(self):
+    """
+      On Hyundai, you can ramp up torque and then set the CF_Lkas_ActToi bit and the
+      EPS will ramp up faster than the effective panda safety limits. This tests:
+        - Nothing is sent when cutting torque
+        - Nothing is blocked when sending torque normally
+    """
     self.safety.set_controls_allowed(True)
+    for _ in range(100):
+      self._set_prev_torque(self.MAX_TORQUE)
+      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
-    self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_msg(MAX_RATE_UP)))
-    self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_msg(-MAX_RATE_UP)))
-
-    self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_msg(MAX_RATE_UP + 1)))
-    self.safety.set_controls_allowed(True)
-    self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_msg(-MAX_RATE_UP - 1)))
-
-  def test_non_realtime_limit_down(self):
-    self.safety.set_torque_driver(0, 0)
-    self.safety.set_controls_allowed(True)
-
-  def test_against_torque_driver(self):
-    self.safety.set_controls_allowed(True)
-
-    for sign in [-1, 1]:
-      for t in np.arange(0, DRIVER_TORQUE_ALLOWANCE + 1, 1):
-        t *= -sign
-        self.safety.set_torque_driver(t, t)
-        self._set_prev_torque(MAX_STEER * sign)
-        self.assertTrue(self._tx(self._torque_msg(MAX_STEER * sign)))
-
-      self.safety.set_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self._tx(self._torque_msg(-MAX_STEER)))
-
-    # spot check some individual cases
-    for sign in [-1, 1]:
-      driver_torque = (DRIVER_TORQUE_ALLOWANCE + 10) * sign
-      torque_desired = (MAX_STEER - 10 * DRIVER_TORQUE_FACTOR) * sign
-      delta = 1 * sign
-      self._set_prev_torque(torque_desired)
-      self.safety.set_torque_driver(-driver_torque, -driver_torque)
-      self.assertTrue(self._tx(self._torque_msg(torque_desired)))
-      self._set_prev_torque(torque_desired + delta)
-      self.safety.set_torque_driver(-driver_torque, -driver_torque)
-      self.assertFalse(self._tx(self._torque_msg(torque_desired + delta)))
-
-      self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
-      self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self._tx(self._torque_msg(0)))
-      self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertFalse(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
-
-  def test_realtime_limits(self):
-    self.safety.set_controls_allowed(True)
-
-    for sign in [-1, 1]:
-      self.safety.init_tests()
-      self._set_prev_torque(0)
-      self.safety.set_torque_driver(0, 0)
-      for t in np.arange(0, MAX_RT_DELTA, 1):
-        t *= sign
-        self.assertTrue(self._tx(self._torque_msg(t)))
-      self.assertFalse(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
-
-      self._set_prev_torque(0)
-      for t in np.arange(0, MAX_RT_DELTA, 1):
-        t *= sign
-        self.assertTrue(self._tx(self._torque_msg(t)))
-
-      # Increase timer to update rt_torque_last
-      self.safety.set_timer(RT_INTERVAL + 1)
-      self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
-      self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+    self._set_prev_torque(self.MAX_TORQUE)
+    for _ in range(100):
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
   def test_buttons(self):
     """

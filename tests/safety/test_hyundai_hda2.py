@@ -6,7 +6,7 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 
-class TestHyundaiHDA2(common.PandaSafetyTest):
+class TestHyundaiHDA2(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
 
   TX_MSGS = [[0x50, 0], [0x1CF, 1]]
   STANDSTILL_THRESHOLD = 30  # ~1kph
@@ -35,7 +35,7 @@ class TestHyundaiHDA2(common.PandaSafetyTest):
     values = {"STEERING_COL_TORQUE": torque}
     return self.packer.make_can_msg_panda("MDPS", 1, values, counter=True)
 
-  def _torque_msg(self, torque, steer_req=1):
+  def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"TORQUE_REQUEST": torque}
     return self.packer.make_can_msg_panda("LKAS", 0, values, counter=True)
 
