@@ -258,7 +258,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "TorqueSteeringSafetyTest":
+    if cls.__name__ == "MotorTorqueSteeringSafetyTest":
       cls.safety = None
       raise unittest.SkipTest
 
