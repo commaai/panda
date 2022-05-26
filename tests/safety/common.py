@@ -12,6 +12,7 @@ from panda.tests.safety import libpandasafety_py
 
 MAX_WRONG_COUNTERS = 5
 
+
 def package_can_msg(msg):
   addr, _, dat, bus = msg
   ret = libpandasafety_py.ffi.new('CANPacket_t *')
@@ -23,8 +24,10 @@ def package_can_msg(msg):
 
   return ret
 
+
 def make_msg(bus, addr, length=8):
   return package_can_msg([addr, 0, b'\x00' * length, bus])
+
 
 class CANPackerPanda(CANPacker):
   _counters: Dict[str, int] = defaultdict(lambda: -1)
@@ -38,6 +41,7 @@ class CANPackerPanda(CANPacker):
       msg = fix_checksum(msg)
     return package_can_msg(msg)
 
+
 class PandaSafetyTestBase(unittest.TestCase):
   @classmethod
   def setUpClass(cls):
@@ -50,6 +54,7 @@ class PandaSafetyTestBase(unittest.TestCase):
 
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
+
 
 class InterceptorSafetyTest(PandaSafetyTestBase):
 
@@ -253,7 +258,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "TorqueSteeringSafetyTest":
+    if cls.__name__ == "MotorTorqueSteeringSafetyTest":
       cls.safety = None
       raise unittest.SkipTest
 
