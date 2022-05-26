@@ -5,16 +5,6 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
-MAX_RATE_UP = 10
-MAX_RATE_DOWN = 25
-MAX_STEER = 2047
-
-MAX_RT_DELTA = 940
-RT_INTERVAL = 250000
-
-DRIVER_TORQUE_ALLOWANCE = 15
-DRIVER_TORQUE_FACTOR = 1
-
 
 class TestMazdaSafety(common.PandaSafetyTest):
 
@@ -24,6 +14,16 @@ class TestMazdaSafety(common.PandaSafetyTest):
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x243, 0x440]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  MAX_RATE_UP = 10
+  MAX_RATE_DOWN = 25
+  MAX_STEER = 2047
+
+  MAX_RT_DELTA = 940
+  RT_INTERVAL = 250000
+
+  DRIVER_TORQUE_ALLOWANCE = 15
+  DRIVER_TORQUE_FACTOR = 1
 
   def setUp(self):
     self.packer = CANPackerPanda("mazda_2017")
