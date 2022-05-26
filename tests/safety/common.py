@@ -206,6 +206,9 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
       self.safety.set_torque_driver(self.DRIVER_TORQUE_ALLOWANCE + 1, self.DRIVER_TORQUE_ALLOWANCE + 1)
       self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_TORQUE)))
 
+    # arbitrary high driver torque to ensure max steer torque is allowed
+    max_driver_torque = int(self.MAX_TORQUE / self.DRIVER_TORQUE_FACTOR + self.DRIVER_TORQUE_ALLOWANCE + 1)
+
     # spot check some individual cases
     for sign in [-1, 1]:
       driver_torque = (self.DRIVER_TORQUE_ALLOWANCE + 10) * sign
@@ -219,13 +222,13 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
       self.assertFalse(self._tx(self._torque_cmd_msg(torque_desired + delta)))
 
       self._set_prev_torque(self.MAX_TORQUE * sign)
-      self.safety.set_torque_driver(-self.MAX_TORQUE * sign, -self.MAX_TORQUE * sign)
+      self.safety.set_torque_driver(-max_driver_torque * sign, -max_driver_torque * sign)
       self.assertTrue(self._tx(self._torque_cmd_msg((self.MAX_TORQUE - self.MAX_RATE_DOWN) * sign)))
       self._set_prev_torque(self.MAX_TORQUE * sign)
-      self.safety.set_torque_driver(-self.MAX_TORQUE * sign, -self.MAX_TORQUE * sign)
+      self.safety.set_torque_driver(-max_driver_torque * sign, -max_driver_torque * sign)
       self.assertTrue(self._tx(self._torque_cmd_msg(0)))
       self._set_prev_torque(self.MAX_TORQUE * sign)
-      self.safety.set_torque_driver(-self.MAX_TORQUE * sign, -self.MAX_TORQUE * sign)
+      self.safety.set_torque_driver(-max_driver_torque * sign, -max_driver_torque * sign)
       self.assertFalse(self._tx(self._torque_cmd_msg((self.MAX_TORQUE - self.MAX_RATE_DOWN + 1) * sign)))
 
   def test_realtime_limits(self):

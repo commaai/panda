@@ -88,7 +88,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
     return self.packer.make_can_msg_panda("GRA_ACC_01", 0, values)
 
   def test_torque_measurements(self):
-    # TODO: move this test into common MotorTorqueSteeringSafetyTest
+    # TODO: make this test work with all cars
     self._rx(self._torque_meas_msg(50))
     self._rx(self._torque_meas_msg(-50))
     self._rx(self._torque_meas_msg(0))

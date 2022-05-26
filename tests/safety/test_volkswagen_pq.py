@@ -124,7 +124,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
     self.assertTrue(self._tx(self._button_msg(resume=True)))
 
   def test_torque_measurements(self):
-    # TODO: move this test into common MotorTorqueSteeringSafetyTest
+    # TODO: make this test work with all cars
     self._rx(self._torque_meas_msg(50))
     self._rx(self._torque_meas_msg(-50))
     self._rx(self._torque_meas_msg(0))
