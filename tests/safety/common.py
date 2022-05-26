@@ -117,19 +117,17 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
         self.assertEqual(send, self._tx(self._interceptor_gas_cmd(gas)))
 
 
-class DriverTorqueSteeringSafetyTest(PandaSafetyTestBase):
+class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
 
   MAX_RATE_UP = 0
   MAX_RATE_DOWN = 0
   MAX_TORQUE = 0
   MAX_RT_DELTA = 0
   RT_INTERVAL = 0
-  DRIVER_TORQUE_ALLOWANCE = 0
-  DRIVER_TORQUE_FACTOR = 0
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "DriverTorqueSteeringSafetyTest":
+    if cls.__name__ == "TorqueSteeringSafetyTestBase":
       cls.safety = None
       raise unittest.SkipTest
 
@@ -152,7 +150,6 @@ class DriverTorqueSteeringSafetyTest(PandaSafetyTestBase):
           self.assertTrue(self._tx(self._torque_cmd_msg(t)))
 
   def test_non_realtime_limit_up(self):
-    self.safety.set_torque_driver(0, 0)
     self.safety.set_controls_allowed(True)
 
     self._set_prev_torque(0)
@@ -165,6 +162,26 @@ class DriverTorqueSteeringSafetyTest(PandaSafetyTestBase):
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(0)
     self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP - 1)))
+
+
+class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
+
+  DRIVER_TORQUE_ALLOWANCE = 0
+  DRIVER_TORQUE_FACTOR = 0
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "DriverTorqueSteeringSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  @abc.abstractmethod
+  def _torque_cmd_msg(self, torque, steer_req=1):
+    pass
+
+  def test_non_realtime_limit_up(self):
+    self.safety.set_torque_driver(0, 0)
+    super().test_non_realtime_limit_up()
 
   # TODO: make this test something
   def test_non_realtime_limit_down(self):
@@ -229,13 +246,8 @@ class DriverTorqueSteeringSafetyTest(PandaSafetyTestBase):
       self.assertTrue(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA + 1))))
 
 
-class MotorTorqueSteeringSafetyTest(PandaSafetyTestBase):
+class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
 
-  MAX_RATE_UP = 0
-  MAX_RATE_DOWN = 0
-  MAX_TORQUE = 0
-  MAX_RT_DELTA = 0
-  RT_INTERVAL = 0
   MAX_TORQUE_ERROR = 0
   TORQUE_MEAS_TOLERANCE = 0
 
@@ -254,19 +266,8 @@ class MotorTorqueSteeringSafetyTest(PandaSafetyTestBase):
     pass
 
   def _set_prev_torque(self, t):
-    self.safety.set_desired_torque_last(t)
-    self.safety.set_rt_torque_last(t)
+    super()._set_prev_torque(t)
     self.safety.set_torque_meas(t, t)
-
-  def test_steer_safety_check(self):
-    for enabled in [0, 1]:
-      for t in range(-self.MAX_TORQUE * 2, self.MAX_TORQUE * 2):
-        self.safety.set_controls_allowed(enabled)
-        self._set_prev_torque(t)
-        if abs(t) > self.MAX_TORQUE or (not enabled and abs(t) > 0):
-          self.assertFalse(self._tx(self._torque_cmd_msg(t)))
-        else:
-          self.assertTrue(self._tx(self._torque_cmd_msg(t)))
 
   def test_torque_absolute_limits(self):
     for controls_allowed in [True, False]:
@@ -282,15 +283,6 @@ class MotorTorqueSteeringSafetyTest(PandaSafetyTestBase):
           send = torque == 0
 
         self.assertEqual(send, self._tx(self._torque_cmd_msg(torque)))
-
-  def test_non_realtime_limit_up(self):
-    self.safety.set_controls_allowed(True)
-
-    self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_RATE_UP)))
-
-    self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_RATE_UP + 1)))
 
   def test_non_realtime_limit_down(self):
     self.safety.set_controls_allowed(True)

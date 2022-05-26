@@ -83,7 +83,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
     return self.packer.make_can_msg_panda("Lenkhilfe_3", 0, values)
 
   # openpilot steering output torque
-  def _torque_cmd_msg(self, torque):
+  def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LM_Offset": abs(torque), "LM_OffSign": torque < 0,
               "HCA_Zaehler": self.cnt_hca_1 % 16}
     # TODO: move checksum handling to CPP library with the rest
