@@ -67,7 +67,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
     return self.packer.make_can_msg_panda("TSK_06", 0, values)
 
   # Driver steering input torque
-  def _torque_meas_msg(self, torque):
+  def _torque_driver_msg(self, torque):
     values = {"EPS_Lenkmoment": abs(torque), "EPS_VZ_Lenkmoment": torque < 0,
               "COUNTER": self.cnt_lh_eps_03 % 16}
     self.__class__.cnt_lh_eps_03 += 1
@@ -89,21 +89,21 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
 
   def test_torque_measurements(self):
     # TODO: make this test work with all cars
-    self._rx(self._torque_meas_msg(50))
-    self._rx(self._torque_meas_msg(-50))
-    self._rx(self._torque_meas_msg(0))
-    self._rx(self._torque_meas_msg(0))
-    self._rx(self._torque_meas_msg(0))
-    self._rx(self._torque_meas_msg(0))
+    self._rx(self._torque_driver_msg(50))
+    self._rx(self._torque_driver_msg(-50))
+    self._rx(self._torque_driver_msg(0))
+    self._rx(self._torque_driver_msg(0))
+    self._rx(self._torque_driver_msg(0))
+    self._rx(self._torque_driver_msg(0))
 
     self.assertEqual(-50, self.safety.get_torque_driver_min())
     self.assertEqual(50, self.safety.get_torque_driver_max())
 
-    self._rx(self._torque_meas_msg(0))
+    self._rx(self._torque_driver_msg(0))
     self.assertEqual(0, self.safety.get_torque_driver_max())
     self.assertEqual(-50, self.safety.get_torque_driver_min())
 
-    self._rx(self._torque_meas_msg(0))
+    self._rx(self._torque_driver_msg(0))
     self.assertEqual(0, self.safety.get_torque_driver_max())
     self.assertEqual(0, self.safety.get_torque_driver_min())
 
@@ -115,7 +115,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
     for msg in [MSG_LH_EPS_03, MSG_ESP_05, MSG_TSK_06, MSG_MOTOR_20]:
       self.safety.set_controls_allowed(1)
       if msg == MSG_LH_EPS_03:
-        to_push = self._torque_meas_msg(0)
+        to_push = self._torque_driver_msg(0)
       if msg == MSG_ESP_05:
         to_push = self._user_brake_msg(False)
       if msg == MSG_TSK_06:
@@ -136,12 +136,12 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
       self.__class__.cnt_motor_20 += 1
       if i < MAX_WRONG_COUNTERS:
         self.safety.set_controls_allowed(1)
-        self._rx(self._torque_meas_msg(0))
+        self._rx(self._torque_driver_msg(0))
         self._rx(self._user_brake_msg(False))
         self._rx(self._pcm_status_msg(True))
         self._rx(self._user_gas_msg(0))
       else:
-        self.assertFalse(self._rx(self._torque_meas_msg(0)))
+        self.assertFalse(self._rx(self._torque_driver_msg(0)))
         self.assertFalse(self._rx(self._user_brake_msg(False)))
         self.assertFalse(self._rx(self._pcm_status_msg(True)))
         self.assertFalse(self._rx(self._user_gas_msg(0)))
@@ -150,7 +150,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
     # restore counters for future tests with a couple of good messages
     for i in range(2):
       self.safety.set_controls_allowed(1)
-      self._rx(self._torque_meas_msg(0))
+      self._rx(self._torque_driver_msg(0))
       self._rx(self._user_brake_msg(False))
       self._rx(self._pcm_status_msg(True))
       self._rx(self._user_gas_msg(0))

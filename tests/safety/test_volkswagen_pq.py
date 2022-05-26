@@ -73,7 +73,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
     return self._motor_2_msg(cruise_engaged=enable)
 
   # Driver steering input torque
-  def _torque_meas_msg(self, torque):
+  def _torque_driver_msg(self, torque):
     values = {"LH3_LM": abs(torque), "LH3_LMSign": torque < 0,
               "LH3_Zaehler": self.cnt_lenkhilfe_3 % 16}
     # TODO: move checksum handling to CPP library with the rest
@@ -125,21 +125,21 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
 
   def test_torque_measurements(self):
     # TODO: make this test work with all cars
-    self._rx(self._torque_meas_msg(50))
-    self._rx(self._torque_meas_msg(-50))
-    self._rx(self._torque_meas_msg(0))
-    self._rx(self._torque_meas_msg(0))
-    self._rx(self._torque_meas_msg(0))
-    self._rx(self._torque_meas_msg(0))
+    self._rx(self._torque_driver_msg(50))
+    self._rx(self._torque_driver_msg(-50))
+    self._rx(self._torque_driver_msg(0))
+    self._rx(self._torque_driver_msg(0))
+    self._rx(self._torque_driver_msg(0))
+    self._rx(self._torque_driver_msg(0))
 
     self.assertEqual(-50, self.safety.get_torque_driver_min())
     self.assertEqual(50, self.safety.get_torque_driver_max())
 
-    self._rx(self._torque_meas_msg(0))
+    self._rx(self._torque_driver_msg(0))
     self.assertEqual(0, self.safety.get_torque_driver_max())
     self.assertEqual(-50, self.safety.get_torque_driver_min())
 
-    self._rx(self._torque_meas_msg(0))
+    self._rx(self._torque_driver_msg(0))
     self.assertEqual(0, self.safety.get_torque_driver_max())
     self.assertEqual(0, self.safety.get_torque_driver_min())
 
@@ -147,7 +147,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
     # checksum checks
     # this platform only has one relevant checksum-protected message
     self.safety.set_controls_allowed(1)
-    to_push = self._torque_meas_msg(0)
+    to_push = self._torque_driver_msg(0)
     self.assertTrue(self._rx(to_push))
     to_push[0].data[4] ^= 0xFF
     self.assertFalse(self._rx(to_push))
@@ -160,15 +160,15 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
       self.__class__.cnt_lenkhilfe_3 += 1
       if i < MAX_WRONG_COUNTERS:
         self.safety.set_controls_allowed(1)
-        self._rx(self._torque_meas_msg(0))
+        self._rx(self._torque_driver_msg(0))
       else:
-        self.assertFalse(self._rx(self._torque_meas_msg(0)))
+        self.assertFalse(self._rx(self._torque_driver_msg(0)))
         self.assertFalse(self.safety.get_controls_allowed())
 
     # restore counters for future tests with a couple of good messages
     for i in range(2):
       self.safety.set_controls_allowed(1)
-      self._rx(self._torque_meas_msg(0))
+      self._rx(self._torque_driver_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
 
 
