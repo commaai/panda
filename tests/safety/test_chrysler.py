@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 import unittest
-
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
-from panda.tests.safety.common import CANPackerPanda
 import panda.tests.safety.common as common
+from panda.tests.safety.common import CANPackerPanda
 
 
 class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafetyTest):
