@@ -221,6 +221,7 @@ void tick_handler(void) {
           puth(heartbeat_counter);
           puts(" seconds. Safety is set to SILENT mode.\n");
 
+          #ifdef HEARTBEAT_CHECK
           if (controls_allowed_countdown > 0U) {
             siren_countdown = 5U;
             controls_allowed_countdown = 0U;
@@ -230,6 +231,7 @@ void tick_handler(void) {
           if (is_car_safety_mode(current_safety_mode)) {
             heartbeat_lost = true;
           }
+          #endif
 
           if (current_safety_mode != SAFETY_SILENT) {
             set_safety_mode(SAFETY_SILENT, 0U);
