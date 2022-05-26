@@ -257,7 +257,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
-  if ((honda_hw = HONDA_BOSCH) && honda_bosch_radarless) {
+  if ((honda_hw == HONDA_BOSCH) && honda_bosch_radarless) {
     tx = msg_allowed(to_send, HONDA_RADARLESS_TX_MSGS, sizeof(HONDA_RADARLESS_TX_MSGS)/sizeof(HONDA_RADARLESS_TX_MSGS[0]));
   } else if ((honda_hw == HONDA_BOSCH) && !honda_bosch_long) {
     tx = msg_allowed(to_send, HONDA_BOSCH_TX_MSGS, sizeof(HONDA_BOSCH_TX_MSGS)/sizeof(HONDA_BOSCH_TX_MSGS[0]));
