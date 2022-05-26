@@ -95,7 +95,7 @@ static int mazda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
     // steer cmd checks
     if (addr == MAZDA_LKAS) {
-      int desired_torque = (((GET_BYTE(to_send, 0) & 0x0FU) << 8) | GET_BYTE(to_send, 1)) - 2048;
+      int desired_torque = (((GET_BYTE(to_send, 0) & 0x0FU) << 8) | GET_BYTE(to_send, 1)) - 2048U;
       bool violation = 0;
       uint32_t ts = microsecond_timer_get();
 
