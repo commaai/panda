@@ -41,6 +41,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
         resp[1] = 0xff;
       }
       break;
+    // **** 0xc1: get hardware type
+    case 0xc1:
+      resp[0] = hw_type;
+      resp_len = 1;
+      break;
     // **** 0xd0: fetch serial number
     case 0xd0:
       #ifndef STM32F2
