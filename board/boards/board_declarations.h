@@ -74,5 +74,11 @@ struct board {
 #define CAN_MODE_GMLAN_CAN3 2U
 #define CAN_MODE_OBD_CAN2 3U
 
+// Clock source
+#define CLOCK_SOURCE_MODE_DISABLED 0U
+#define CLOCK_SOURCE_MODE_FREE_RUNNING 1U
+#define CLOCK_SOURCE_MODE_PWM 2U
+
 // ********************* Globals **********************
 uint8_t usb_power_mode = USB_POWER_NONE;
+uint8_t clock_source_mode = CLOCK_SOURCE_MODE_DISABLED;

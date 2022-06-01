@@ -69,6 +69,8 @@ void clock_source_init(uint8_t mode){
       // Set GPIO as timer channels
       set_gpio_alternate(GPIOB, 14, GPIO_AF1_TIM1);
       set_gpio_alternate(GPIOB, 15, GPIO_AF1_TIM1);
+      set_gpio_output_type(GPIOB, 14, OUTPUT_TYPE_PUSH_PULL);
+      set_gpio_output_type(GPIOB, 15, OUTPUT_TYPE_PUSH_PULL);
 
       // Set PWM mode
       register_set(&(TIM1->CCMR1), (0b110 << TIM_CCMR1_OC2M_Pos), 0xFFFFU);

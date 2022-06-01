@@ -9,6 +9,9 @@
 
 #define DEEPSLEEP_WAKEUP_DELAY 3U
 
+#define CLOCK_SOURCE_PERIOD_MS 50U
+#define CLOCK_SOURCE_PULSE_LEN_MS 2U
+
 #define NULL ((void*)0)
 #define COMPILE_TIME_ASSERT(pred) ((void)sizeof(char[1 - (2 * ((int)(!(pred))))]))
 

@@ -10,6 +10,7 @@
 #include "stm32h7/llfan.h"
 #include "stm32h7/llrtc.h"
 #include "drivers/rtc.h"
+#include "stm32h7/clock_source.h"
 #include "boards/red.h"
 #include "boards/tres.h"
 

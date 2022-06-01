@@ -26,9 +26,9 @@ void tres_enable_can_transceivers(bool enabled) {
   for (uint8_t i=1U; i<=4U; i++) {
     // Leave main CAN always on for CAN-based ignition detection
     if (i == main_bus) {
-      red_enable_can_transceiver(i, true);
+      tres_enable_can_transceiver(i, true);
     } else {
-      red_enable_can_transceiver(i, enabled);
+      tres_enable_can_transceiver(i, enabled);
     }
   }
 }
@@ -121,9 +121,7 @@ void tres_set_ir_power(uint8_t percentage){
 }
 
 void tres_set_clock_source_mode(uint8_t mode){
-  // TODO: rewrite for H7
-  UNUSED(mode);
-  // clock_source_init(mode);
+  clock_source_init(mode);
 }
 
 void tres_set_siren(bool enabled){
@@ -191,8 +189,8 @@ void tres_init(void) {
     can_flip_buses(0, 2);
   }
 
-  // Init clock source (camera strobe) using PWM TODO
-  // tres_set_clock_source_mode(CLOCK_SOURCE_MODE_PWM);
+  // Init clock source (camera strobe) using PWM
+  tres_set_clock_source_mode(CLOCK_SOURCE_MODE_PWM);
 }
 
 const harness_configuration tres_harness_config = {
