@@ -197,12 +197,12 @@ const harness_configuration tres_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
-  .GPIO_relay_SBU1 = GPIOC,
-  .GPIO_relay_SBU2 = GPIOC,
+  .GPIO_relay_SBU1 = GPIOA,
+  .GPIO_relay_SBU2 = GPIOA,
   .pin_SBU1 = 4,
   .pin_SBU2 = 1,
-  .pin_relay_SBU1 = 10,
-  .pin_relay_SBU2 = 11,
+  .pin_relay_SBU1 = 8,
+  .pin_relay_SBU2 = 9,
   .adc_channel_SBU1 = 4, //ADC12_INP4
   .adc_channel_SBU2 = 17 //ADC1_INP17
 };
