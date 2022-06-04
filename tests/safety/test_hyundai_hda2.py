@@ -22,8 +22,8 @@ class TestHyundaiHDA2(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyT
   MAX_RT_DELTA = 112
   RT_INTERVAL = 250000
 
-  DRIVER_TORQUE_ALLOWANCE = 50
-  DRIVER_TORQUE_FACTOR = 2
+  DRIVER_TORQUE_ALLOWANCE = 200
+  DRIVER_TORQUE_FACTOR = 8
 
   def setUp(self):
     self.packer = CANPackerPanda("kia_ev6")
