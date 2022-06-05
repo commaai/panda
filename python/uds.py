@@ -335,7 +335,7 @@ class CanClient():
             rx_data = bytes(rx_data)  # convert bytearray to bytes
 
             if self.debug:
-              print(f"CAN-RX: {hex(rx_addr)} - 0x{bytes.hex(rx_data)}")
+              print(f"CAN-RX: {hex(rx_addr)} - 0x{rx_data.hex()}")
 
             # Cut off sub addr in first byte
             if self.sub_addr is not None:
@@ -367,7 +367,7 @@ class CanClient():
         msg = bytes([self.sub_addr]) + msg
 
       if self.debug:
-        print(f"CAN-TX: {hex(self.tx_addr)} - 0x{bytes.hex(msg)}")
+        print(f"CAN-TX: {hex(self.tx_addr)} - 0x{msg.hex()}")
       assert len(msg) <= 8
 
       self.tx(self.tx_addr, msg, self.bus)
@@ -397,7 +397,7 @@ class IsoTpMessage():
     self.rx_done = False
 
     if self.debug:
-      print(f"ISO-TP: REQUEST - {hex(self._can_client.tx_addr)} 0x{bytes.hex(self.tx_dat)}")
+      print(f"ISO-TP: REQUEST - {hex(self._can_client.tx_addr)} 0x{self.tx_dat.hex()}")
     self._tx_first_frame()
 
   def _tx_first_frame(self) -> None:
@@ -433,7 +433,7 @@ class IsoTpMessage():
           raise MessageTimeoutError("timeout waiting for response")
     finally:
       if self.debug and self._can_client.rx_addr is not None and self.rx_dat:
-        print(f"ISO-TP: RESPONSE - {hex(self._can_client.rx_addr)} 0x{bytes.hex(self.rx_dat)}")
+        print(f"ISO-TP: RESPONSE - {hex(self._can_client.rx_addr)} 0x{self.rx_dat.hex()}")
 
   def _isotp_rx_next(self, rx_data: bytes) -> None:
     # single rx_frame

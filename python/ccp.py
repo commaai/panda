@@ -88,7 +88,7 @@ class CcpClient():
     self._command_counter = (self._command_counter + 1) & 0xFF
     tx_data = (bytes([cmd, self._command_counter]) + dat).ljust(8, b"\x00")
     if self.debug:
-      print(f"CAN-TX: {hex(self.tx_addr)} - 0x{bytes.hex(tx_data)}")
+      print(f"CAN-TX: {hex(self.tx_addr)} - 0x{tx_data.hex()}")
     assert len(tx_data) == 8, "data is not 8 bytes"
     self._panda.can_clear(self.can_bus)
     self._panda.can_clear(0xFFFF)
@@ -104,7 +104,7 @@ class CcpClient():
         if rx_bus == self.can_bus and rx_addr == self.rx_addr:
           rx_data = bytes(rx_data)  # convert bytearray to bytes
           if self.debug:
-            print(f"CAN-RX: {hex(rx_addr)} - 0x{bytes.hex(rx_data)}")
+            print(f"CAN-RX: {hex(rx_addr)} - 0x{rx_data.hex()}")
           assert len(rx_data) == 8, f"message length not 8: {len(rx_data)}"
 
           pid = rx_data[0]
