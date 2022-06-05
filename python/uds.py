@@ -356,7 +356,7 @@ class CanClient():
     except IndexError:
       pass  # empty
 
-  def send(self, msgs: List[bytes], delay: float = 0) -> None:
+  def send(self, msgs: List[bytes], delay: float = 0.0) -> None:
     for i, msg in enumerate(msgs):
       if delay and i != 0:
         if self.debug:
@@ -376,7 +376,7 @@ class CanClient():
         self._recv_buffer()
 
 class IsoTpMessage():
-  def __init__(self, can_client: CanClient, timeout: float = 1, debug: bool = False, max_len: int = 8) -> None:
+  def __init__(self, can_client: CanClient, timeout: float = 1.0, debug: bool = False, max_len: int = 8) -> None:
     self._can_client = can_client
     self.timeout = timeout
     self.debug = debug
@@ -528,8 +528,8 @@ def get_rx_addr_for_tx_addr(tx_addr: int, rx_offset: int = 0x8) -> Optional[int]
 
 
 class UdsClient():
-  def __init__(self, panda, tx_addr: int, rx_addr: Optional[int] = None, bus: int = 0, timeout: float = 1,
-               debug: bool = False, tx_timeout: float = 1, response_pending_timeout: float = 10) -> None:
+  def __init__(self, panda, tx_addr: int, rx_addr: Optional[int] = None, bus: int = 0, timeout: float = 1.0,
+               debug: bool = False, tx_timeout: float = 1.0, response_pending_timeout: float = 10.0) -> None:
     self.bus = bus
     self.tx_addr = tx_addr
     self.rx_addr = rx_addr if rx_addr is not None else get_rx_addr_for_tx_addr(tx_addr)
