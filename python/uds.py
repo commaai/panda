@@ -293,7 +293,7 @@ def get_dtc_status_names(status):
 
 class CanClient():
   def __init__(self, can_send: Callable[[int, bytes, int], None], can_recv: Callable[[], List[Tuple[int, int, bytes, int]]],
-               tx_addr: int, rx_addr: int, bus: int, sub_addr: int = None, debug: bool = False):
+               tx_addr: int, rx_addr: Optional[int], bus: int, sub_addr: Optional[int] = None, debug: bool = False):
     self.tx = can_send
     self.rx = can_recv
     self.tx_addr = tx_addr
@@ -432,7 +432,7 @@ class IsoTpMessage():
         if time.monotonic() - start_time > timeout:
           raise MessageTimeoutError("timeout waiting for response")
     finally:
-      if self.debug and self.rx_dat:
+      if self.debug and self._can_client.rx_addr is not None and self.rx_dat:
         print(f"ISO-TP: RESPONSE - {hex(self._can_client.rx_addr)} 0x{bytes.hex(self.rx_dat)}")
 
   def _isotp_rx_next(self, rx_data: bytes) -> None:
@@ -442,7 +442,7 @@ class IsoTpMessage():
       self.rx_dat = rx_data[1:1 + self.rx_len]
       self.rx_idx = 0
       self.rx_done = True
-      if self.debug:
+      if self.debug and self._can_client.rx_addr is not None:
         print(f"ISO-TP: RX - single frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       return
 
@@ -452,7 +452,7 @@ class IsoTpMessage():
       self.rx_dat = rx_data[2:]
       self.rx_idx = 0
       self.rx_done = False
-      if self.debug:
+      if self.debug and self._can_client.rx_addr is not None:
         print(f"ISO-TP: RX - first frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       if self.debug:
         print(f"ISO-TP: TX - flow control continue - {hex(self._can_client.tx_addr)}")
@@ -470,7 +470,7 @@ class IsoTpMessage():
       self.rx_dat += rx_data[1:1 + rx_size]
       if self.rx_len == len(self.rx_dat):
         self.rx_done = True
-      if self.debug:
+      if self.debug and self._can_client.rx_addr is not None:
         print(f"ISO-TP: RX - consecutive frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       return
 
@@ -511,7 +511,7 @@ class IsoTpMessage():
 
 FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
 
-def get_rx_addr_for_tx_addr(tx_addr, rx_offset=0x8):
+def get_rx_addr_for_tx_addr(tx_addr: int, rx_offset: int = 0x8) -> Optional[int]:
   if tx_addr in FUNCTIONAL_ADDRS:
     return None
 
@@ -528,7 +528,7 @@ def get_rx_addr_for_tx_addr(tx_addr, rx_offset=0x8):
 
 
 class UdsClient():
-  def __init__(self, panda, tx_addr: int, rx_addr: int = None, bus: int = 0, timeout: float = 1, debug: bool = False,
+  def __init__(self, panda, tx_addr: int, rx_addr: Optional[int] = None, bus: int = 0, timeout: float = 1, debug: bool = False,
                tx_timeout: float = 1, response_pending_timeout: float = 10):
     self.bus = bus
     self.tx_addr = tx_addr
@@ -540,7 +540,7 @@ class UdsClient():
     self.response_pending_timeout = response_pending_timeout
 
   # generic uds request
-  def _uds_request(self, service_type: SERVICE_TYPE, subfunction: int = None, data: bytes = None) -> bytes:
+  def _uds_request(self, service_type: SERVICE_TYPE, subfunction: Optional[int] = None, data: Optional[bytes] = None) -> bytes:
     req = bytes([service_type])
     if subfunction is not None:
       req += bytes([subfunction])
@@ -627,7 +627,7 @@ class UdsClient():
   def tester_present(self, ):
     self._uds_request(SERVICE_TYPE.TESTER_PRESENT, subfunction=0x00)
 
-  def access_timing_parameter(self, timing_parameter_type: TIMING_PARAMETER_TYPE, parameter_values: bytes = None):
+  def access_timing_parameter(self, timing_parameter_type: TIMING_PARAMETER_TYPE, parameter_values: Optional[bytes] = None):
     write_custom_values = timing_parameter_type == TIMING_PARAMETER_TYPE.SET_TO_GIVEN_VALUES
     read_values = (timing_parameter_type == TIMING_PARAMETER_TYPE.READ_CURRENTLY_ACTIVE or
                    timing_parameter_type == TIMING_PARAMETER_TYPE.READ_EXTENDED_SET)
@@ -670,7 +670,7 @@ class UdsClient():
       "data": resp[2:],  # TODO: parse the reset of response
     }
 
-  def link_control(self, link_control_type: LINK_CONTROL_TYPE, baud_rate_type: BAUD_RATE_TYPE = None):
+  def link_control(self, link_control_type: LINK_CONTROL_TYPE, baud_rate_type: Optional[BAUD_RATE_TYPE] = None):
     data: Optional[bytes]
 
     if link_control_type == LINK_CONTROL_TYPE.VERIFY_BAUDRATE_TRANSITION_WITH_FIXED_BAUDRATE:
@@ -688,7 +688,7 @@ class UdsClient():
     data = struct.pack('!H', data_identifier_type)
     resp = self._uds_request(SERVICE_TYPE.READ_DATA_BY_IDENTIFIER, subfunction=None, data=data)
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
-    if resp_id != data_identifier_type:
+    if resp_id is not None and resp_id != data_identifier_type:
       raise ValueError('invalid response data identifier: {} expected: {}'.format(hex(resp_id), hex(data_identifier_type)))
     return resp[2:]
 
@@ -713,7 +713,7 @@ class UdsClient():
     data = struct.pack('!H', data_identifier_type)
     resp = self._uds_request(SERVICE_TYPE.READ_SCALING_DATA_BY_IDENTIFIER, subfunction=None, data=data)
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
-    if resp_id != data_identifier_type:
+    if resp_id is not None and resp_id != data_identifier_type:
       raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
     return resp[2:]  # TODO: parse the response
 
@@ -752,7 +752,7 @@ class UdsClient():
     data = struct.pack('!H', data_identifier_type) + data_record
     resp = self._uds_request(SERVICE_TYPE.WRITE_DATA_BY_IDENTIFIER, subfunction=None, data=data)
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
-    if resp_id != data_identifier_type:
+    if resp_id is not None and resp_id != data_identifier_type:
       raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
 
   def write_memory_by_address(self, memory_address: int, memory_size: int, data_record: bytes, memory_address_bytes: int = 4, memory_size_bytes: int = 1):
@@ -829,7 +829,7 @@ class UdsClient():
     data = struct.pack('!H', data_identifier_type) + bytes([control_parameter_type]) + control_option_record + control_enable_mask_record
     resp = self._uds_request(SERVICE_TYPE.INPUT_OUTPUT_CONTROL_BY_IDENTIFIER, subfunction=None, data=data)
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
-    if resp_id != data_identifier_type:
+    if resp_id is not None and resp_id != data_identifier_type:
       raise ValueError('invalid response data identifier: {}'.format(hex(resp_id)))
     return resp[2:]
 
@@ -837,7 +837,7 @@ class UdsClient():
     data = struct.pack('!H', routine_identifier_type) + routine_option_record
     resp = self._uds_request(SERVICE_TYPE.ROUTINE_CONTROL, subfunction=routine_control_type, data=data)
     resp_id = struct.unpack('!H', resp[0:2])[0] if len(resp) >= 2 else None
-    if resp_id != routine_identifier_type:
+    if resp_id is not None and resp_id != routine_identifier_type:
       raise ValueError('invalid response routine identifier: {}'.format(hex(resp_id)))
     return resp[2:]
 
