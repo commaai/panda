@@ -2,15 +2,20 @@
 
 import sys
 import time
+from typing import Optional, TYPE_CHECKING, Union
 import requests
 import json
 import io
 
-def flash_release(path=None, st_serial=None):
-  from panda import Panda, PandaDFU
+def flash_release(path: Optional[Union[str, io.BytesIO]] = None, st_serial: Optional[str] = None) -> None:
+  if TYPE_CHECKING:
+    from python import Panda, PandaDFU
+  else:
+    from panda import Panda, PandaDFU
+
   from zipfile import ZipFile
 
-  def status(x):
+  def status(x: str) -> None:
     print("\033[1;32;40m" + x + "\033[00m")
 
   if st_serial is not None:
