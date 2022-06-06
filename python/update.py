@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 import os
 import time
+from typing import TYPE_CHECKING
 
-def ensure_st_up_to_date():
-  from panda import Panda, PandaDFU, BASEDIR
+def ensure_st_up_to_date() -> None:
+  if TYPE_CHECKING:
+    from . import Panda, PandaDFU, BASEDIR
+  else:
+    from panda import Panda, PandaDFU, BASEDIR
 
   with open(os.path.join(BASEDIR, "VERSION")) as f:
     repo_version = f.read()
@@ -28,6 +32,8 @@ def ensure_st_up_to_date():
 
     print("waiting for board...")
     time.sleep(1)
+
+  assert panda is not None
 
   if panda.bootstub or not panda.get_version().startswith(repo_version):
     panda.flash()
