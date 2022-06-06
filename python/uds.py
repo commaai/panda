@@ -211,13 +211,13 @@ class MessageTimeoutError(Exception):
   pass
 
 class NegativeResponseError(Exception):
-  def __init__(self, message, service_id, error_code):
+  def __init__(self, message: str, service_id: int, error_code: int) -> None:
     super().__init__()
     self.message = message
     self.service_id = service_id
     self.error_code = error_code
 
-  def __str__(self):
+  def __str__(self) -> str:
     return self.message
 
 class InvalidServiceIdError(Exception):
@@ -293,7 +293,7 @@ def get_dtc_status_names(status: int) -> List[str]:
 
 class CanClient():
   def __init__(self, can_send: Callable[[int, bytes, int], None], can_recv: Callable[[], List[Tuple[int, int, bytes, int]]],
-               tx_addr: int, rx_addr: Optional[int], bus: int, sub_addr: Optional[int] = None, debug: bool = False):
+               tx_addr: int, rx_addr: Optional[int], bus: int, sub_addr: Optional[int] = None, debug: bool = False) -> None:
     self.tx = can_send
     self.rx = can_recv
     self.tx_addr = tx_addr
@@ -841,7 +841,7 @@ class UdsClient():
       raise ValueError('invalid response routine identifier: {}'.format(hex(resp_id)))
     return resp[2:]
 
-  def request_download(self, memory_address: int, memory_size: int, memory_address_bytes: int = 4, memory_size_bytes: int = 4, data_format: int = 0x00) -> bytes:
+  def request_download(self, memory_address: int, memory_size: int, memory_address_bytes: int = 4, memory_size_bytes: int = 4, data_format: int = 0x00) -> int:
     data = bytes([data_format])
 
     if memory_address_bytes < 1 or memory_address_bytes > 4:
@@ -860,7 +860,7 @@ class UdsClient():
     resp = self._uds_request(SERVICE_TYPE.REQUEST_DOWNLOAD, subfunction=None, data=data)
     max_num_bytes_len = resp[0] >> 4 if len(resp) > 0 else 0
     if max_num_bytes_len >= 1 and max_num_bytes_len <= 4:
-      max_num_bytes = struct.unpack('!I', (b"\x00" * (4 - max_num_bytes_len)) + resp[1:max_num_bytes_len + 1])[0]
+      max_num_bytes: int = struct.unpack('!I', (b"\x00" * (4 - max_num_bytes_len)) + resp[1:max_num_bytes_len + 1])[0]
     else:
       raise ValueError('invalid max_num_bytes_len: {}'.format(max_num_bytes_len))
 

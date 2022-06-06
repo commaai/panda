@@ -1,9 +1,13 @@
 import binascii
 import time
+from typing import List, Optional, Union
+
+from . import Panda
+from ._typing import CAN_MSG
 
 DEBUG = False
 
-def msg(x):
+def msg(x: bytes) -> bytes:
   if DEBUG:
     print("S:", binascii.hexlify(x))
   if len(x) <= 7:
@@ -12,8 +16,9 @@ def msg(x):
     assert False
   return ret.ljust(8, b"\x00")
 
-kmsgs = []
-def recv(panda, cnt, addr, nbus):
+
+kmsgs: List[CAN_MSG] = []
+def recv(panda: Panda, cnt: int, addr: int, nbus: int) -> List[bytes]:
   global kmsgs
   ret = []
 
@@ -29,7 +34,7 @@ def recv(panda, cnt, addr, nbus):
     kmsgs = nmsgs[-256:]
   return ret
 
-def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
+def isotp_recv_subaddr(panda: Panda, addr: int, bus: int, sendaddr: int, subaddr: int) -> bytes:
   msg = recv(panda, 1, addr, bus)[0]
 
   # TODO: handle other subaddr also communicating
@@ -62,7 +67,8 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
 
 # **** import below this line ****
 
-def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None, rate=None):
+def isotp_send(panda: Panda, x: bytes, addr: int , bus: int = 0, recvaddr: Optional[int] = None,
+               subaddr: Optional[int] = None, rate: Optional[Union[float, int]] = None) -> None:
   if recvaddr is None:
     recvaddr = addr + 8
 
@@ -104,7 +110,8 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None, rate=None):
           panda.can_send(addr, dat, bus)
           time.sleep(rate)
 
-def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
+def isotp_recv(panda: Panda, addr: int, bus: int = 0, sendaddr: Optional[int] = None,
+               subaddr: Optional[int] = None) -> bytes:
   if sendaddr is None:
     sendaddr = addr - 8
 

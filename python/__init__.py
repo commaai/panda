@@ -8,13 +8,17 @@ import time
 import traceback
 import sys
 from functools import wraps
-from typing import Optional
+from typing import List, Optional, Sequence, Tuple, Union
+from typing_extensions import TypedDict
+from . import Panda
 from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7  # pylint: disable=import-error
 from .flash_release import flash_release  # noqa pylint: disable=import-error
 from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
 from .serial import PandaSerial  # noqa pylint: disable=import-error
 from .isotp import isotp_send, isotp_recv  # pylint: disable=import-error
 from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN  # noqa pylint: disable=import-error
+from ._typing import CAN_MSG
+
 
 __version__ = '0.0.10'
 
@@ -26,7 +30,7 @@ CANPACKET_HEAD_SIZE = 0x5
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
 
-def pack_can_buffer(arr):
+def pack_can_buffer(arr: Sequence[CAN_MSG]) -> List[bytes]:
   snds = [b'']
   idx = 0
   for address, _, dat, bus in arr:
@@ -57,7 +61,7 @@ def pack_can_buffer(arr):
     snds[idx] = tx
   return snds
 
-def unpack_can_buffer(dat):
+def unpack_can_buffer(dat: bytes) -> List[CAN_MSG]:
   ret = []
   counter = 0
   tail = bytearray()
@@ -95,6 +99,8 @@ def unpack_can_buffer(dat):
         break
   return ret
 
+# TODO: type hints for these decorators
+
 def ensure_health_packet_version(fn):
   @wraps(fn)
   def wrapper(self, *args, **kwargs):
@@ -114,6 +120,30 @@ def ensure_can_packet_version(fn):
       raise RuntimeError("Panda python library has outdated CAN packet definition. Update panda python library.")
     return fn(self, *args, **kwargs)
   return wrapper
+
+class HealthPacketResponse(TypedDict):
+  uptime: int
+  voltage: int
+  current: int
+  can_rx_errs: int
+  can_send_errs: int
+  can_fwd_errs: int
+  gmlan_send_errs: int
+  faults: int
+  ignition_line: int
+  ignition_can: int
+  controls_allowed: int
+  gas_interceptor_detected: int
+  car_harness_status: int
+  usb_power_mode: int
+  safety_mode: int
+  safety_param: int
+  fault_status: int
+  power_save_enabled: int
+  heartbeat_lost: int
+  alternative_experience: int
+  blocked_msg_cnt: int
+  interrupt_load: int
 
 class ALTERNATIVE_EXPERIENCE:
   DEFAULT = 0
@@ -159,8 +189,8 @@ class Panda:
   GMLAN_CAN2 = 1
   GMLAN_CAN3 = 2
 
-  REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
-  REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
+  REQUEST_IN: int = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
+  REQUEST_OUT: int = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
 
   HW_TYPE_UNKNOWN = b'\x00'
   HW_TYPE_WHITE_PANDA = b'\x01'
@@ -197,17 +227,18 @@ class Panda:
   FLAG_TESLA_POWERTRAIN = 1
   FLAG_TESLA_LONG_CONTROL = 2
 
-  def __init__(self, serial: Optional[str] = None, claim: bool = True):
+  def __init__(self, serial: Optional[str] = None, claim: bool = True) -> None:
     self._serial = serial
-    self._handle = None
+    self._handle: Optional[usb1.USBDeviceHandle] = None
     self.connect(claim)
     self._mcu_type = self.get_mcu_type()
 
-  def close(self):
-    self._handle.close()
+  def close(self) -> None:
+    if self._handle is not None:
+      self._handle.close()
     self._handle = None
 
-  def connect(self, claim=True, wait=False):
+  def connect(self, claim: bool = True, wait: bool = False) -> None:
     if self._handle is not None:
       self.close()
 
@@ -243,7 +274,8 @@ class Panda:
     self.health_version, self.can_version = self.get_packets_versions()
     print("connected")
 
-  def reset(self, enter_bootstub=False, enter_bootloader=False):
+  def reset(self, enter_bootstub: bool = False, enter_bootloader: bool = False) -> None:
+    assert self._handle is not None
     try:
       if enter_bootloader:
         self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 0, 0, b'')
@@ -257,7 +289,7 @@ class Panda:
     if not enter_bootloader:
       self.reconnect()
 
-  def reconnect(self):
+  def reconnect(self) -> None:
     self.close()
     time.sleep(1.0)
     success = False
@@ -281,7 +313,7 @@ class Panda:
 
 
   @staticmethod
-  def flash_static(handle, code):
+  def flash_static(handle: usb1.USBDeviceHandle, code: bytes) -> None:
     # confirm flasher is present
     fr = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
     assert fr[4:8] == b"\xde\xad\xd0\x0d"
@@ -308,7 +340,8 @@ class Panda:
     except Exception:
       pass
 
-  def flash(self, fn=DEFAULT_FW_FN, code=None, reconnect=True):
+  def flash(self, fn: str = DEFAULT_FW_FN, code: Optional[bytes] = None, reconnect: bool = True) -> None:
+    assert self._handle is not None
     if self._mcu_type == MCU_TYPE_H7 and fn == DEFAULT_FW_FN:
       fn = DEFAULT_H7_FW_FN
     print("flash: main version is " + self.get_version())
@@ -351,7 +384,7 @@ class Panda:
     return True
 
   @staticmethod
-  def list():
+  def list() -> List[Optional[str]]:
     context = usb1.USBContext()
     ret = []
     try:
@@ -365,13 +398,15 @@ class Panda:
       pass
     return ret
 
-  def call_control_api(self, msg):
+  def call_control_api(self, msg: int) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, msg, 0, 0, b'')
 
   # ******************* health *******************
 
   @ensure_health_packet_version
-  def health(self):
+  def health(self) -> HealthPacketResponse:
+    assert self._handle is not None
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, self.HEALTH_STRUCT.size)
     a = self.HEALTH_STRUCT.unpack(dat)
     return {
@@ -401,60 +436,65 @@ class Panda:
 
   # ******************* control *******************
 
-  def enter_bootloader(self):
+  def enter_bootloader(self) -> None:
+    assert self._handle is not None
     try:
       self._handle.controlWrite(Panda.REQUEST_OUT, 0xd1, 0, 0, b'')
     except Exception as e:
       print(e)
 
-  def get_version(self):
+  def get_version(self) -> str:
+    assert self._handle is not None
     return self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40).decode('utf8')
 
   @staticmethod
-  def get_signature_from_firmware(fn) -> bytes:
-    f = open(fn, 'rb')
-    f.seek(-128, 2)  # Seek from end of file
-    return f.read(128)
+  def get_signature_from_firmware(fn: os.PathLike[bytes]) -> bytes:
+    with open(fn, 'rb') as f:
+      f.seek(-128, os.SEEK_END)  # Seek from end of file
+      return f.read(128)
 
-  def get_signature(self):
+  def get_signature(self) -> bytes:
+    assert self._handle is not None
     part_1 = self._handle.controlRead(Panda.REQUEST_IN, 0xd3, 0, 0, 0x40)
     part_2 = self._handle.controlRead(Panda.REQUEST_IN, 0xd4, 0, 0, 0x40)
     return bytes(part_1 + part_2)
 
-  def get_type(self):
+  def get_type(self) -> bytearray:
+    assert self._handle is not None
     return self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
 
   # Returns tuple with health packet version and CAN packet/USB packet version
-  def get_packets_versions(self):
+  def get_packets_versions(self) -> Tuple[int, int]:
+    assert self._handle is not None
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xdd, 0, 0, 2)
     if dat:
-      a = struct.unpack("BB", dat)
+      a: Tuple[int, int] = struct.unpack("BB", dat)
       return (a[0], a[1])
     else:
       return (0, 0)
 
-  def is_white(self):
+  def is_white(self) -> bool:
     return self.get_type() == Panda.HW_TYPE_WHITE_PANDA
 
-  def is_grey(self):
+  def is_grey(self) -> bool:
     return self.get_type() == Panda.HW_TYPE_GREY_PANDA
 
-  def is_black(self):
+  def is_black(self) -> bool:
     return self.get_type() == Panda.HW_TYPE_BLACK_PANDA
 
-  def is_pedal(self):
+  def is_pedal(self) -> bool:
     return self.get_type() == Panda.HW_TYPE_PEDAL
 
-  def is_uno(self):
+  def is_uno(self) -> bool:
     return self.get_type() == Panda.HW_TYPE_UNO
 
-  def is_dos(self):
+  def is_dos(self) -> bool:
     return self.get_type() == Panda.HW_TYPE_DOS
 
-  def is_red(self):
+  def is_red(self) -> bool:
     return self.get_type() == Panda.HW_TYPE_RED_PANDA
 
-  def get_mcu_type(self):
+  def get_mcu_type(self) -> Optional[int]:
     hw_type = self.get_type()
     if hw_type in Panda.F2_DEVICES:
       return MCU_TYPE_F2
@@ -464,7 +504,7 @@ class Panda:
       return MCU_TYPE_H7
     return None
 
-  def has_obd(self):
+  def has_obd(self) -> bool:
     return (self.is_uno() or self.is_dos() or self.is_black() or self.is_red())
 
   def has_canfd(self) -> bool:
@@ -473,84 +513,102 @@ class Panda:
   def is_internal(self) -> bool:
     return self.get_type() in (Panda.HW_TYPE_UNO, Panda.HW_TYPE_DOS)
 
-  def get_serial(self):
+  def get_serial(self) -> List[str]:
+    assert self._handle is not None
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
     hashsig, calc_hash = dat[0x1c:], hashlib.sha1(dat[0:0x1c]).digest()[0:4]
     assert(hashsig == calc_hash)
     return [dat[0:0x10].decode("utf8"), dat[0x10:0x10 + 10].decode("utf8")]
 
-  def get_usb_serial(self):
+  def get_usb_serial(self) -> Optional[str]:
     return self._serial
 
-  def get_secret(self):
+  def get_secret(self) -> bytearray:
+    assert self._handle is not None
     return self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 1, 0, 0x10)
 
   # ******************* configuration *******************
 
-  def set_usb_power(self, on):
+  def set_usb_power(self, on: bool) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe6, int(on), 0, b'')
 
-  def set_power_save(self, power_save_enabled=0):
+  def set_power_save(self, power_save_enabled: int = 0) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe7, int(power_save_enabled), 0, b'')
 
-  def enable_deepsleep(self):
+  def enable_deepsleep(self) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xfb, 0, 0, b'')
 
-  def set_esp_power(self, on):
+  def set_esp_power(self, on: bool) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xd9, int(on), 0, b'')
 
-  def esp_reset(self, bootmode=0):
+  def esp_reset(self, bootmode: int = 0) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xda, int(bootmode), 0, b'')
     time.sleep(0.2)
 
-  def set_safety_mode(self, mode=SAFETY_SILENT, param=0, disable_checks=True):
+  def set_safety_mode(self, mode: int = SAFETY_SILENT, param: int = 0, disable_checks: bool = True) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
     if disable_checks:
       self.set_heartbeat_disabled()
       self.set_power_save(0)
 
-  def set_gmlan(self, bus=2):
+  def set_gmlan(self, bus: int = 2) -> None:
+    assert self._handle is not None
     # TODO: check panda type
     if bus is None:
       self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, 0, 0, b'')
     elif bus in (Panda.GMLAN_CAN2, Panda.GMLAN_CAN3):
       self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, 1, bus, b'')
 
-  def set_obd(self, obd):
+  def set_obd(self, obd: bool) -> None:
+    assert self._handle is not None
     # TODO: check panda type
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, int(obd), 0, b'')
 
-  def set_can_loopback(self, enable):
+  def set_can_loopback(self, enable: bool) -> None:
+    assert self._handle is not None
     # set can loopback mode for all buses
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe5, int(enable), 0, b'')
 
-  def set_can_enable(self, bus_num, enable):
+  def set_can_enable(self, bus_num: int, enable: bool) -> None:
+    assert self._handle is not None
     # sets the can transceiver enable pin
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf4, int(bus_num), int(enable), b'')
 
-  def set_can_speed_kbps(self, bus, speed):
+  def set_can_speed_kbps(self, bus: int, speed: Union[int, float]) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xde, bus, int(speed * 10), b'')
 
-  def set_can_data_speed_kbps(self, bus, speed):
+  def set_can_data_speed_kbps(self, bus: int, speed: Union[int, float]) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf9, bus, int(speed * 10), b'')
 
   # CAN FD and BRS status
-  def get_canfd_status(self, bus):
+  def get_canfd_status(self, bus: int) -> Union[Tuple[int, int], Tuple[None, None]]:
+    assert self._handle is not None
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfa, bus, 0, 2)
     if dat:
-      a = struct.unpack("BB", dat)
+      a: Tuple[int, int] = struct.unpack("BB", dat)
       return (a[0], a[1])
     else:
       return (None, None)
 
-  def set_uart_baud(self, uart, rate):
+  def set_uart_baud(self, uart: int, rate: Union[float, int]) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, int(rate / 300), b'')
 
-  def set_uart_parity(self, uart, parity):
+  def set_uart_parity(self, uart: int, parity: int) -> None:
+    assert self._handle is not None
     # parity, 0=off, 1=even, 2=odd
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe2, uart, parity, b'')
 
   def set_uart_callback(self, uart, install):
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe3, uart, int(install), b'')
 
   # ******************* can *******************
@@ -561,7 +619,8 @@ class Panda:
   CAN_SEND_TIMEOUT_MS = 10
 
   @ensure_can_packet_version
-  def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
+  def can_send_many(self, arr: Sequence[CAN_MSG], timeout: int = CAN_SEND_TIMEOUT_MS) -> None:
+    assert self._handle is not None
     snds = pack_can_buffer(arr)
     while True:
       try:
@@ -576,11 +635,12 @@ class Panda:
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD SEND MANY, RETRYING")
 
-  def can_send(self, addr, dat, bus, timeout=CAN_SEND_TIMEOUT_MS):
-    self.can_send_many([[addr, None, dat, bus]], timeout=timeout)
+  def can_send(self, addr: int, dat: bytes, bus: int, timeout: int = CAN_SEND_TIMEOUT_MS) -> None:
+    self.can_send_many([(addr, None, dat, bus)], timeout=timeout)
 
   @ensure_can_packet_version
-  def can_recv(self):
+  def can_recv(self) -> List[CAN_MSG]:
+    assert self._handle is not None
     dat = bytearray()
     while True:
       try:
@@ -591,7 +651,7 @@ class Panda:
         time.sleep(0.1)
     return unpack_can_buffer(dat)
 
-  def can_clear(self, bus):
+  def can_clear(self, bus: int) -> None:
     """Clears all messages from the specified internal CAN ringbuffer as
     though it were drained.
 
@@ -600,11 +660,12 @@ class Panda:
         global can rx queue.
 
     """
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf1, bus, 0, b'')
 
   # ******************* isotp *******************
 
-  def isotp_send(self, addr, dat, bus, recvaddr=None, subaddr=None):
+  def isotp_send(self, addr: int, dat: bytes, bus, recvaddr=None, subaddr=None):
     return isotp_send(self, dat, addr, bus, recvaddr, subaddr)
 
   def isotp_recv(self, addr, bus=0, sendaddr=None, subaddr=None):
@@ -612,7 +673,8 @@ class Panda:
 
   # ******************* serial *******************
 
-  def serial_read(self, port_number):
+  def serial_read(self, port_number: int) -> bytes:
+    assert self._handle is not None
     ret = []
     while 1:
       lret = bytes(self._handle.controlRead(Panda.REQUEST_IN, 0xe0, port_number, 0, 0x40))
@@ -621,13 +683,14 @@ class Panda:
       ret.append(lret)
     return b''.join(ret)
 
-  def serial_write(self, port_number, ln):
+  def serial_write(self, port_number: int, ln: bytes) -> int:
+    assert self._handle is not None
     ret = 0
     for i in range(0, len(ln), 0x20):
       ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + ln[i:i + 0x20])
     return ret
 
-  def serial_clear(self, port_number):
+  def serial_clear(self, port_number: int) -> None:
     """Clears all messages (tx and rx) from the specified internal uart
     ringbuffer as though it were drained.
 
@@ -635,12 +698,14 @@ class Panda:
       port_number (int): port number of the uart to clear.
 
     """
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf2, port_number, 0, b'')
 
   # ******************* kline *******************
 
   # pulse low for wakeup
-  def kline_wakeup(self, k=True, l=True):
+  def kline_wakeup(self, k: bool = True, l: bool = True) -> None:
+    assert self._handle is not None
     assert k or l, "must specify k-line, l-line, or both"
     if DEBUG:
       print("kline wakeup...")
@@ -648,7 +713,8 @@ class Panda:
     if DEBUG:
       print("kline wakeup done")
 
-  def kline_5baud(self, addr, k=True, l=True):
+  def kline_5baud(self, addr: int, k: bool = True, l: bool = True) -> None:
+    assert self._handle is not None
     assert k or l, "must specify k-line, l-line, or both"
     if DEBUG:
       print("kline 5 baud...")
@@ -656,7 +722,8 @@ class Panda:
     if DEBUG:
       print("kline 5 baud done")
 
-  def kline_drain(self, bus=2):
+  def kline_drain(self, bus: int = 2) -> bytes:
+    assert self._handle is not None
     # drain buffer
     bret = bytearray()
     while True:
@@ -668,7 +735,8 @@ class Panda:
       bret += ret
     return bytes(bret)
 
-  def kline_ll_recv(self, cnt, bus=2):
+  def kline_ll_recv(self, cnt: int, bus: int = 2) -> bytes:
+    assert self._handle is not None
     echo = bytearray()
     while len(echo) != cnt:
       ret = self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, cnt - len(echo))
@@ -677,10 +745,12 @@ class Panda:
       echo += ret
     return bytes(echo)
 
-  def kline_send(self, x, bus=2, checksum=True):
+  def kline_send(self, x: bytes, bus: int = 2, checksum: bool = True) -> None:
+    assert self._handle is not None
     self.kline_drain(bus=bus)
     if checksum:
       x += bytes([sum(x) % 0x100])
+    echo = ts = None
     for i in range(0, len(x), 0xf):
       ts = x[i:i + 0xf]
       if DEBUG:
@@ -691,25 +761,29 @@ class Panda:
         print(f"**** ECHO ERROR {i} ****")
         print(f"0x{echo.hex()}")
         print(f"0x{ts.hex()}")
+    assert echo is not None and ts is not None
     assert echo == ts
 
-  def kline_recv(self, bus=2, header_len=4):
+  def kline_recv(self, bus: int = 2, header_len: int = 4) -> bytes:
     # read header (last byte is length)
     msg = self.kline_ll_recv(header_len, bus=bus)
     # read data (add one byte to length for checksum)
     msg += self.kline_ll_recv(msg[-1]+1, bus=bus)
     return msg
 
-  def send_heartbeat(self, engaged=True):
+  def send_heartbeat(self, engaged: bool = True) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf3, engaged, 0, b'')
 
   # disable heartbeat checks for use outside of openpilot
   # sending a heartbeat will reenable the checks
-  def set_heartbeat_disabled(self):
+  def set_heartbeat_disabled(self) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf8, 0, 0, b'')
 
   # ******************* RTC *******************
-  def set_datetime(self, dt):
+  def set_datetime(self, dt: datetime.datetime) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xa1, int(dt.year), 0, b'')
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xa2, int(dt.month), 0, b'')
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xa3, int(dt.day), 0, b'')
@@ -718,36 +792,43 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xa6, int(dt.minute), 0, b'')
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xa7, int(dt.second), 0, b'')
 
-  def get_datetime(self):
+  def get_datetime(self) -> datetime.datetime:
+    assert self._handle is not None
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xa0, 0, 0, 8)
     a = struct.unpack("HBBBBBB", dat)
     return datetime.datetime(a[0], a[1], a[2], a[4], a[5], a[6])
 
   # ******************* IR *******************
-  def set_ir_power(self, percentage):
+  def set_ir_power(self, percentage: Union[float, int]) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb0, int(percentage), 0, b'')
 
   # ******************* Fan ******************
-  def set_fan_power(self, percentage):
+  def set_fan_power(self, percentage: Union[float, int]) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb1, int(percentage), 0, b'')
 
-  def get_fan_rpm(self):
+  def get_fan_rpm(self) -> int:
+    assert self._handle is not None
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xb2, 0, 0, 2)
-    a = struct.unpack("H", dat)
-    return a[0]
+    return struct.unpack("H", dat)[0]
 
   # ****************** Phone *****************
-  def set_phone_power(self, enabled):
+  def set_phone_power(self, enabled: bool) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, int(enabled), 0, b'')
 
   # ************** Clock Source **************
-  def set_clock_source_mode(self, mode):
+  def set_clock_source_mode(self, mode: int) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, int(mode), 0, b'')
 
   # ****************** Siren *****************
-  def set_siren(self, enabled):
+  def set_siren(self, enabled: bool) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf6, int(enabled), 0, b'')
 
   # ****************** Debug *****************
-  def set_green_led(self, enabled):
+  def set_green_led(self, enabled: bool) -> None:
+    assert self._handle is not None
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')

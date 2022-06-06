@@ -3,6 +3,33 @@ import sys
 import time
 import struct
 from enum import IntEnum, Enum
+from typing import Optional
+from typing_extensions import TypedDict
+
+from . import Panda
+
+class StationIdsResponse(TypedDict):
+  id_length: int
+  data_type: int
+  available: int
+  protected: int
+
+class DAQListSizeResponse(TypedDict):
+  list_size: int
+  first_pid: int
+
+class SessionStatusResponse(TypedDict):
+  status: int
+  info: Optional[int]
+
+class DiagnosticServiceResponse(TypedDict):
+  length: int
+  type: int
+
+class ActionServiceResponse(TypedDict):
+  length: int
+  type: int
+
 
 class COMMAND_CODE(IntEnum):
   CONNECT = 0x01
@@ -66,16 +93,16 @@ class CommandCounterError(Exception):
   pass
 
 class CommandResponseError(Exception):
-  def __init__(self, message, return_code):
+  def __init__(self, message: str, return_code: int) -> None:
     super().__init__()
     self.message = message
     self.return_code = return_code
 
-  def __str__(self):
+  def __str__(self) -> str:
     return self.message
 
 class CcpClient():
-  def __init__(self, panda, tx_addr: int, rx_addr: int, bus: int=0, byte_order: BYTE_ORDER=BYTE_ORDER.BIG_ENDIAN, debug=False):
+  def __init__(self, panda: Panda, tx_addr: int, rx_addr: int, bus: int = 0, byte_order: BYTE_ORDER = BYTE_ORDER.BIG_ENDIAN, debug: bool = False) -> None:
     self.tx_addr = tx_addr
     self.rx_addr = rx_addr
     self.can_bus = bus
@@ -141,10 +168,10 @@ class CcpClient():
     self._send_cro(COMMAND_CODE.CONNECT, struct.pack("<H", station_addr))
     self._recv_dto(0.025)
 
-  def exchange_station_ids(self, device_id_info: bytes = b"") -> dict:
+  def exchange_station_ids(self, device_id_info: bytes = b"") -> StationIdsResponse:
     self._send_cro(COMMAND_CODE.EXCHANGE_ID, device_id_info)
     resp = self._recv_dto(0.025)
-    return { # TODO: define a type
+    return {
       "id_length": resp[0],
       "data_type": resp[1],
       "available": resp[2],
@@ -212,12 +239,12 @@ class CcpClient():
     self._send_cro(COMMAND_CODE.SELECT_CAL_PAGE)
     self._recv_dto(0.025)
 
-  def get_daq_list_size(self, list_num: int, can_id: int = 0) -> dict:
+  def get_daq_list_size(self, list_num: int, can_id: int = 0) -> DAQListSizeResponse:
     if list_num > 255:
       raise ValueError("list number must be less than 256")
     self._send_cro(COMMAND_CODE.GET_DAQ_SIZE, bytes([list_num, 0]) + struct.pack(f"{self.byte_order.value}I", can_id))
     resp = self._recv_dto(0.025)
-    return { # TODO: define a type
+    return {
       "list_size": resp[0],
       "first_pid": resp[1],
     }
@@ -267,10 +294,10 @@ class CcpClient():
     self._send_cro(COMMAND_CODE.SET_S_STATUS, bytes([status]))
     self._recv_dto(0.025)
 
-  def get_session_status(self) -> dict:
+  def get_session_status(self) -> SessionStatusResponse:
     self._send_cro(COMMAND_CODE.GET_S_STATUS)
     resp = self._recv_dto(0.025)
-    return { # TODO: define a type
+    return {
       "status": resp[0],
       "info": resp[2] if resp[1] else None,
     }
@@ -311,26 +338,26 @@ class CcpClient():
     self._send_cro(COMMAND_CODE.MOVE, struct.pack(f"{self.byte_order.value}I", size))
     self._recv_dto(0.025)
 
-  def diagnostic_service(self, service_num: int, data: bytes = b"") -> dict:
+  def diagnostic_service(self, service_num: int, data: bytes = b"") -> DiagnosticServiceResponse:
     if service_num > 65535:
       raise ValueError("service number must be less than 65536")
     if len(data) > 4:
       raise ValueError("max data size is 4 bytes")
     self._send_cro(COMMAND_CODE.DIAG_SERVICE, struct.pack(f"{self.byte_order.value}H", service_num) + data)
     resp = self._recv_dto(0.025)
-    return { # TODO: define a type
+    return {
       "length": resp[0],
       "type": resp[1],
     }
 
-  def action_service(self, service_num: int, data: bytes = b"") -> dict:
+  def action_service(self, service_num: int, data: bytes = b"") -> ActionServiceResponse:
     if service_num > 65535:
       raise ValueError("service number must be less than 65536")
     if len(data) > 4:
       raise ValueError("max data size is 4 bytes")
     self._send_cro(COMMAND_CODE.ACTION_SERVICE, struct.pack(f"{self.byte_order.value}H", service_num) + data)
     resp = self._recv_dto(0.025)
-    return { # TODO: define a type
+    return {
       "length": resp[0],
       "type": resp[1],
     }
@@ -348,11 +375,11 @@ class CcpClient():
     self._send_cro(COMMAND_CODE.START_STOP_ALL, bytes([mode]))
     self._recv_dto(0.025)
 
-  def get_active_calibration_page(self):
+  def get_active_calibration_page(self) -> int:
     self._send_cro(COMMAND_CODE.GET_ACTIVE_CAL_PAGE)
     resp = self._recv_dto(0.025)
     # cal_addr_ext = resp[0]
-    cal_addr = struct.unpack(f"{self.byte_order.value}I", resp[1:5])[0]
+    cal_addr: int = struct.unpack(f"{self.byte_order.value}I", resp[1:5])[0]
     return cal_addr
 
   def get_version(self, desired_version: float = 2.1) -> float:
