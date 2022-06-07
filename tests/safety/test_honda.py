@@ -204,7 +204,7 @@ class HondaBase(common.PandaSafetyTest):
   MAX_BRAKE: float = 255
   PT_BUS: Optional[int] = None  # must be set when inherited
   STEER_BUS: Optional[int] = None  # must be set when inherited
-  BUTTONS_BUS: Optional[int] = None  # must be set when inherited
+  BUTTONS_BUS: Optional[int] = None  # must be set when inherited, usually PT_BUS
 
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 0xE4
