@@ -20,7 +20,8 @@ AddrCheckStruct subaru_addr_checks[] = {
   {.msg = {{0x119, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x13a, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x13c, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{0x240, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
+  {.msg = {{0x240, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U},
+           {0x321, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 100000U}, { 0 }}},
 };
 #define SUBARU_ADDR_CHECK_LEN (sizeof(subaru_addr_checks) / sizeof(subaru_addr_checks[0]))
 addr_checks subaru_rx_checks = {subaru_addr_checks, SUBARU_ADDR_CHECK_LEN};
@@ -36,6 +37,9 @@ AddrCheckStruct subaru_l_addr_checks[] = {
 };
 #define SUBARU_L_ADDR_CHECK_LEN (sizeof(subaru_l_addr_checks) / sizeof(subaru_l_addr_checks[0]))
 addr_checks subaru_l_rx_checks = {subaru_l_addr_checks, SUBARU_L_ADDR_CHECK_LEN};
+
+const int SUBARU_PARAM_FORESTER_HYBRID = 1;
+bool subaru_forester_hybrid = false;
 
 static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -60,6 +64,20 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &subaru_rx_checks,
                             subaru_get_checksum, subaru_compute_checksum, subaru_get_counter);
 
+  if (valid && (GET_BUS(to_push) == 2U) && subaru_forester_hybrid) {
+    // enter controls on rising edge of ACC, exit controls on ACC off (ES_DashStatus)
+    if (addr == 0x321) {
+      int cruise_engaged = GET_BIT(to_push, 36U) != 0;
+      if (cruise_engaged && !cruise_engaged_prev) {
+        controls_allowed = 1;
+      }
+      if (!cruise_engaged) {
+        controls_allowed = 0;
+      }
+      cruise_engaged_prev = cruise_engaged;
+    }
+  }
+
   if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
     if (addr == 0x119) {
@@ -70,8 +88,8 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if (addr == 0x240) {
-      int cruise_engaged = ((GET_BYTES_48(to_push) >> 9) & 1U);
+    if (addr == 0x240 && !subaru_forester_hybrid) {
+      int cruise_engaged = GET_BIT(to_push, 41U) != 0U;
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
       }
@@ -314,7 +332,8 @@ static int subaru_legacy_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 }
 
 static const addr_checks* subaru_init(uint16_t param) {
-  UNUSED(param);
+  subaru_forester_hybrid = GET_FLAG(param, SUBARU_PARAM_FORESTER_HYBRID);
+
   return &subaru_rx_checks;
 }
 
