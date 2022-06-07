@@ -30,7 +30,9 @@ def make_msg(bus, addr, length=8):
 
 
 class CANPackerPanda(CANPacker):
-  _counters: Dict[str, int] = defaultdict(lambda: -1)
+  def __init__(self, dbc_name):
+    super().__init__(dbc_name)
+    self._counters: Dict[str, int] = defaultdict(lambda: -1)
 
   def make_can_msg_panda(self, name_or_addr, bus, values, counter=False, fix_checksum=None):
     if counter:
