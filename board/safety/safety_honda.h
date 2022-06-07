@@ -236,7 +236,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
       }
       // If Honda Bosch longitudinal mode is selected we need to ensure the radar is turned off
       // Verify this by ensuring ACC_CONTROL (0x1DF) is not received on the PT bus
-      if (honda_bosch_long && !honda_bosch_radarless && (bus == pt_bus) && (addr == 0x1DF)) {
+      if (honda_bosch_long && (bus == pt_bus) && (addr == 0x1DF)) {
         stock_ecu_detected = true;
       }
     }
