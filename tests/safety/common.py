@@ -577,7 +577,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
             if attr.startswith('TestHonda'):
               # exceptions for common msgs across different hondas
-              tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C, 0x33D], tx))  # TODO: is this correct adding 0x33D?
+              tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C, 0x33D], tx))
             all_tx.append(list([m[0], m[1], attr[4:]] for m in tx))
 
     # make sure we got all the msgs

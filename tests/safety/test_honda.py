@@ -487,6 +487,15 @@ class TestHondaBoschSafetyBase(HondaBase):
     self._rx(self._alt_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
 
+  def test_spam_cancel_safety_check(self):
+    self.safety.set_controls_allowed(0)
+    self.assertTrue(self._tx(self._button_msg(Btn.CANCEL)))
+    self.assertFalse(self._tx(self._button_msg(Btn.RESUME)))
+    self.assertFalse(self._tx(self._button_msg(Btn.SET)))
+    # do not block resume if we are engaged already
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self._tx(self._button_msg(Btn.RESUME)))
+
 
 class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
   """
@@ -496,15 +505,6 @@ class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
     super().setUp()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, 0)
     self.safety.init_tests_honda()
-
-  def test_spam_cancel_safety_check(self):
-    self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._button_msg(Btn.CANCEL)))
-    self.assertFalse(self._tx(self._button_msg(Btn.RESUME)))
-    self.assertFalse(self._tx(self._button_msg(Btn.SET)))
-    # do not block resume if we are engaged already
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._button_msg(Btn.RESUME)))
 
 
 class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
@@ -531,6 +531,10 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
       "BRAKE_REQUEST": accel < 0,
     }
     return self.packer.make_can_msg_panda("ACC_CONTROL", self.PT_BUS, values)
+
+  # Longitudinal doesn't need to send buttons
+  def test_spam_cancel_safety_check(self):
+    pass
 
   def test_diagnostics(self):
     tester_present = common.package_can_msg((0x18DAB0F1, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", self.PT_BUS))
@@ -567,7 +571,7 @@ class TestHondaBoschRadarless(HondaPcmEnableBase, TestHondaBoschSafetyBase):
   STEER_BUS = 0
   BUTTONS_BUS = 2  # camera controls ACC, so send buttons on bus 2
 
-  TX_MSGS = [[0xE4, 0], [0x296, 0], [0x33D, 0]]
+  TX_MSGS = [[0xE4, 0], [0x296, 2], [0x33D, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
 
   def setUp(self):
@@ -579,15 +583,6 @@ class TestHondaBoschRadarless(HondaPcmEnableBase, TestHondaBoschSafetyBase):
   def test_alt_disengage_on_brake(self):
     # This car doesn't have 0x1BE (BRAKE_MODULE)
     pass
-
-  def test_spam_cancel_safety_check(self):  # TODO: move into base?
-    self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._button_msg(Btn.CANCEL)))
-    self.assertFalse(self._tx(self._button_msg(Btn.RESUME)))
-    self.assertFalse(self._tx(self._button_msg(Btn.SET)))
-    # do not block resume if we are engaged already
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._button_msg(Btn.RESUME)))
 
 
 if __name__ == "__main__":
