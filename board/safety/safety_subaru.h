@@ -64,6 +64,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &subaru_rx_checks,
                             subaru_get_checksum, subaru_compute_checksum, subaru_get_counter);
 
+  int addr = GET_ADDR(to_push);
   if (valid && (GET_BUS(to_push) == 2U) && subaru_forester_hybrid) {
     // enter controls on rising edge of ACC, exit controls on ACC off (ES_DashStatus)
     if (addr == 0x321) {
@@ -79,7 +80,6 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
   }
 
   if (valid && (GET_BUS(to_push) == 0U)) {
-    int addr = GET_ADDR(to_push);
     if (addr == 0x119) {
       int torque_driver_new;
       torque_driver_new = ((GET_BYTES_04(to_push) >> 16) & 0x7FFU);
