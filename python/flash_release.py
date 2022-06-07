@@ -2,10 +2,10 @@
 
 import sys
 import time
-from typing import Optional, TYPE_CHECKING, Union
 import requests
 import json
 import io
+from typing import Optional, TYPE_CHECKING, Union
 
 def flash_release(path: Optional[Union[str, io.BytesIO]] = None, st_serial: Optional[str] = None) -> None:
   if TYPE_CHECKING:

@@ -1,7 +1,6 @@
 import binascii
 import time
 from typing import List, Optional, Union
-
 from . import Panda
 from ._typing import CAN_MSG
 

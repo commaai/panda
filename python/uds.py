@@ -2,9 +2,9 @@
 import time
 import struct
 from collections import deque
-from typing import Any, Callable, Mapping, NamedTuple, Tuple, List, Deque, Generator, Optional, cast
 from enum import IntEnum
 from functools import partial
+from typing import Any, Callable, Mapping, NamedTuple, Tuple, List, Deque, Generator, Optional, cast
 
 class SERVICE_TYPE(IntEnum):
   DIAGNOSTIC_SESSION_CONTROL = 0x10

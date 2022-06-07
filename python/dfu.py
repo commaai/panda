@@ -1,7 +1,7 @@
-from typing import List, Optional
 import usb1
 import struct
 import binascii
+from typing import List, Optional
 from .config import BOOTSTUB_ADDRESS, APP_ADDRESS_H7, APP_ADDRESS_FX, BLOCK_SIZE_H7, BLOCK_SIZE_FX, DEFAULT_H7_BOOTSTUB_FN, DEFAULT_BOOTSTUB_FN
 
 
