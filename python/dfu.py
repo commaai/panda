@@ -32,14 +32,14 @@ class PandaDFU(object):
     raise Exception("failed to open " + dfu_serial if dfu_serial is not None else "DFU device")
 
   @staticmethod
-  def list() -> List[Optional[str]]:
+  def list() -> List[str]:
     context = usb1.USBContext()
-    dfu_serials = []
+    dfu_serials: List[str] = []
     try:
       for device in context.getDeviceList(skip_on_error=True):
         if device.getVendorID() == 0x0483 and device.getProductID() == 0xdf11:
           try:
-            dfu_serials.append(device.open().getASCIIStringDescriptor(3))
+            dfu_serials.append(device.open().getASCIIStringDescriptor(3)) # type: ignore
           except Exception:
             pass
     except Exception:
