@@ -381,6 +381,7 @@ static const addr_checks* honda_nidec_init(uint16_t param) {
   honda_hw = HONDA_NIDEC;
   honda_alt_brake_msg = false;
   honda_bosch_long = false;
+  honda_bosch_radarless = false;
 
   if (GET_FLAG(param, HONDA_PARAM_NIDEC_ALT)) {
     honda_rx_checks = (addr_checks){honda_nidec_alt_addr_checks, HONDA_NIDEC_ALT_ADDR_CHECKS_LEN};
@@ -391,17 +392,15 @@ static const addr_checks* honda_nidec_init(uint16_t param) {
 }
 
 static const addr_checks* honda_bosch_init(uint16_t param) {
-  honda_bosch_radarless = GET_FLAG(param,  HONDA_PARAM_RADARLESS);
   honda_hw = HONDA_BOSCH;
+  honda_bosch_radarless = GET_FLAG(param, HONDA_PARAM_RADARLESS);
+  // Checking for alternate brake override from safety parameter
+  honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE) && !honda_bosch_radarless;
 
-  if (!honda_bosch_radarless) {
-    // Checking for alternate brake override from safety parameter
-    honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE);
+  // radar disabled so allow gas/brakes
 #ifdef ALLOW_DEBUG
-    // radar disabled so allow gas/brakes
-    honda_bosch_long = GET_FLAG(param, HONDA_PARAM_BOSCH_LONG);
+  honda_bosch_long = GET_FLAG(param, HONDA_PARAM_BOSCH_LONG) && !honda_bosch_radarless;
 #endif
-  }
 
   if (honda_bosch_radarless) {
     honda_rx_checks = (addr_checks){honda_radarless_addr_checks, HONDA_RADARLESS_ADDR_CHECKS_LEN};

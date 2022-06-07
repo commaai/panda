@@ -204,6 +204,7 @@ class HondaBase(common.PandaSafetyTest):
   MAX_BRAKE: float = 255
   PT_BUS: Optional[int] = None  # must be set when inherited
   STEER_BUS: Optional[int] = None  # must be set when inherited
+  BUTTONS_BUS: Optional[int] = None  # must be set when inherited
 
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 0xE4
@@ -258,7 +259,7 @@ class HondaBase(common.PandaSafetyTest):
   def _button_msg(self, buttons, main_on=False):
     values = {"CRUISE_BUTTONS": buttons, "COUNTER": self.cnt_button % 4}
     self.__class__.cnt_button += 1
-    return self.packer.make_can_msg_panda("SCM_BUTTONS", self.PT_BUS, values)
+    return self.packer.make_can_msg_panda("SCM_BUTTONS", self.BUTTONS_BUS, values)
 
   def _user_brake_msg(self, brake):
     return self._powertrain_data_msg(brake_pressed=brake)
@@ -294,6 +295,7 @@ class TestHondaNidecSafetyBase(HondaBase):
 
   PT_BUS = 0
   STEER_BUS = 0
+  BUTTONS_BUS = 0
 
   INTERCEPTOR_THRESHOLD = 492
 
@@ -441,6 +443,7 @@ class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.Intercepto
 class TestHondaBoschSafetyBase(HondaBase):
   PT_BUS = 1
   STEER_BUS = 0
+  BUTTONS_BUS = 1
 
   TX_MSGS = [[0xE4, 0], [0xE5, 0], [0x296, 1], [0x33D, 0], [0x33DA, 0], [0x33DB, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
@@ -562,6 +565,7 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
 class TestHondaBoschRadarless(HondaPcmEnableBase, TestHondaBoschSafetyBase):
   PT_BUS = 0
   STEER_BUS = 0
+  BUTTONS_BUS = 2  # camera controls ACC, so send buttons on bus 2
 
   TX_MSGS = [[0xE4, 0], [0x296, 0], [0x33D, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
@@ -572,36 +576,18 @@ class TestHondaBoschRadarless(HondaPcmEnableBase, TestHondaBoschSafetyBase):
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS)
     self.safety.init_tests_honda()
 
-  def _send_brake_msg(self, brake):
-    pass
-
   def test_alt_disengage_on_brake(self):
     # This car doesn't have 0x1BE (BRAKE_MODULE)
     pass
 
-  # def test_brake_safety_check(self):
-  #   for fwd_brake in [False, True]:
-  #     self.safety.set_honda_fwd_brake(fwd_brake)
-  #     for brake in np.arange(0, self.MAX_BRAKE + 10, 1):
-  #       for controls_allowed in [True, False]:
-  #         self.safety.set_controls_allowed(controls_allowed)
-  #         if fwd_brake:
-  #           send = False  # block openpilot brake msg when fwd'ing stock msg
-  #         elif controls_allowed:
-  #           send = self.MAX_BRAKE >= brake >= 0
-  #         else:
-  #           send = brake == 0
-  #         self.assertEqual(send, self._tx(self._send_brake_msg(brake)))
-  #   self.safety.set_honda_fwd_brake(False)
-  #
-  # def test_spam_cancel_safety_check(self):  # TODO: move into base?
-  #   self.safety.set_controls_allowed(0)
-  #   self.assertTrue(self._tx(self._button_msg(Btn.CANCEL)))
-  #   self.assertFalse(self._tx(self._button_msg(Btn.RESUME)))
-  #   self.assertFalse(self._tx(self._button_msg(Btn.SET)))
-  #   # do not block resume if we are engaged already
-  #   self.safety.set_controls_allowed(1)
-  #   self.assertTrue(self._tx(self._button_msg(Btn.RESUME)))
+  def test_spam_cancel_safety_check(self):  # TODO: move into base?
+    self.safety.set_controls_allowed(0)
+    self.assertTrue(self._tx(self._button_msg(Btn.CANCEL)))
+    self.assertFalse(self._tx(self._button_msg(Btn.RESUME)))
+    self.assertFalse(self._tx(self._button_msg(Btn.SET)))
+    # do not block resume if we are engaged already
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self._tx(self._button_msg(Btn.RESUME)))
 
 
 if __name__ == "__main__":
