@@ -72,6 +72,10 @@ enum {HONDA_NIDEC, HONDA_BOSCH} honda_hw = HONDA_NIDEC;
 addr_checks honda_rx_checks = {honda_common_addr_checks, HONDA_COMMON_ADDR_CHECKS_LEN};
 
 
+int honda_get_pt_bus(void) {
+  return ((honda_hw == HONDA_BOSCH) && !honda_bosch_radarless) ? 1 : 0;
+}
+
 static uint32_t honda_get_checksum(CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1U;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte)) & 0xFU;
@@ -215,7 +219,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
 
     bool stock_ecu_detected = false;
     int bus_rdr_car = (honda_hw == HONDA_BOSCH) ? 0 : 2;  // radar bus, car side
-    int pt_bus = ((honda_hw == HONDA_BOSCH) && !honda_bosch_radarless) ? 1 : 0;
+    int pt_bus = honda_get_pt_bus();
 
     if (safety_mode_cnt > RELAY_TRNS_TIMEOUT) {
       // If steering controls messages are received on the destination bus, it's an indication
@@ -267,7 +271,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     pedal_pressed = pedal_pressed || gas_pressed_prev;
   }
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
-  int bus_pt = ((honda_hw == HONDA_BOSCH) && !honda_bosch_radarless) ? 1 : 0;
+  int bus_pt = honda_get_pt_bus();
   int bus_buttons = (honda_bosch_radarless) ? 2 : bus_pt;  // the camera controls ACC on radarless Bosch cars
 
   // ACC_HUD: safety check (nidec w/o pedal)
