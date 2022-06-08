@@ -93,12 +93,12 @@ if __name__ == "__main__":
         if args.param is None:
           args.param = msg.carParams.safetyConfigs[0].safetyParam
         if args.alternative_experience is None:
-          args.param = msg.carParams.safetyConfigs[0].alternativeExperience
+          args.alternative_experience = msg.carParams.alternativeExperience
         break
     else:
       raise Exception("carParams not found in log. Set safety mode and param manually.")
 
     lr.reset()
 
-  print(f"replaying {args.route_or_segment_name[0]} with safety mode {args.mode} and param {args.param}")
+  print(f"replaying {args.route_or_segment_name[0]} with safety mode {args.mode}, param {args.param}, and alternative experience {args.alternative_experience}")
   replay_drive(lr, args.mode, args.param, args.alternative_experience, segment=(s.segment_num >= 0))
