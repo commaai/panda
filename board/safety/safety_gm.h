@@ -113,12 +113,9 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       gas_pressed = GET_BYTE(to_push, 5) != 0U;
     }
 
-    // exit controls on regen paddle
+    // Regen is braking
     if (addr == 189) {
-      bool regen = GET_BYTE(to_push, 0) & 0x20U;
-      if (regen) {
-        controls_allowed = 0;
-      }
+      brake_pressed = GET_BYTE(to_push, 0) & 0x20U;
     }
 
     // Check if ASCM or LKA camera are online
@@ -282,7 +279,7 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
       bool is_lkas_msg = (addr == 384);
       // Keepalives: (addr == 1033) || (addr == 1034)
       // TODO: carcontroller.py omit keepalives using cam harness
-      bool is_acc_msg = ((addr == 715) || (addr == 880) || (addr == 789) || (addr == 1033) || (addr == 1034));
+      bool is_acc_msg = ((addr == 715) || (addr == 880) || (addr == 789));
       bool block_fwd = (is_lkas_msg || (is_acc_msg && !gm_stock_long));
       if (!block_fwd) {
         bus_fwd = 0;
