@@ -224,7 +224,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     if (safety_mode_cnt > RELAY_TRNS_TIMEOUT) {
       // If steering controls messages are received on the destination bus, it's an indication
       // that the relay might be malfunctioning
-      if ((addr == 0xE4) || (addr == 0x194)) {  // STEERING_CONTROL
+      if ((addr == 0xE4) || (addr == 0x194)) {
         if (((honda_hw != HONDA_NIDEC) && (bus == bus_rdr_car)) || ((honda_hw == HONDA_NIDEC) && (bus == 0))) {
           stock_ecu_detected = true;
         }
