@@ -5,7 +5,6 @@ import os
 from panda.tests.safety import libpandasafety_py
 from panda.tests.safety_replay.helpers import package_can_msg, init_segment
 
-
 # replay a drive to check for safety violations
 def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   safety = libpandasafety_py.libpandasafety
@@ -66,7 +65,6 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
 
   return tx_controls_blocked == 0 and rx_invalid == 0
 
-
 if __name__ == "__main__":
   from tools.lib.route import Route, SegmentName
   from tools.lib.logreader import MultiLogIterator  # pylint: disable=import-error
@@ -100,5 +98,5 @@ if __name__ == "__main__":
 
     lr.reset()
 
-  print(f"replaying {args.route_or_segment_name[0]} with safety mode {args.mode}, param {args.param}, and alternative experience {args.alternative_experience}")
+  print(f"replaying {args.route_or_segment_name[0]} with safety mode {args.mode}, param {args.param}, alternative experience {args.alternative_experience}")
   replay_drive(lr, args.mode, args.param, args.alternative_experience, segment=(s.segment_num >= 0))

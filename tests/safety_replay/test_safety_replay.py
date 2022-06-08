@@ -31,18 +31,18 @@ logs = [
 if __name__ == "__main__":
 
   # get all the routes
-  for r in logs:
-    if not os.path.isfile(r.route):
-      with open(r.route, "wb") as f:
-        f.write(requests.get(BASE_URL + r.route).content)
+  for route, _, _, _ in logs:
+    if not os.path.isfile(route):
+      with open(route, "wb") as f:
+        f.write(requests.get(BASE_URL + route).content)
 
   failed = []
-  for r in logs:
-    lr = LogReader(r.route)
+  for route, mode, param, alt_exp in logs:
+    lr = LogReader(route)
 
-    print("\nreplaying %s with safety mode %d, param %s, alternative experience %s" % (r.route, r.safety_mode, r.param, r.alternative_experience))
-    if not replay_drive(lr, r.safety_mode, int(r.param), r.alternative_experience):
-      failed.append(r.route)
+    print("\nreplaying %s with safety mode %d, param %s, alternative experience %s" % (route, mode, param, alt_exp))
+    if not replay_drive(lr, mode, param, alt_exp):
+      failed.append(route)
 
     for f in failed:  # type: ignore
       print(f"\n**** failed on {f} ****")
