@@ -219,7 +219,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       // and OP misses the 20ms target quite frequently
       uint32_t ts2 = microsecond_timer_get();
       uint32_t ts_elapsed = get_ts_elapsed(ts2, gm_last_lkas_ts);
-      if (ts_elapsed <= 13000) {
+      if (ts_elapsed <= 13000U) {
         tx = 0;
       }
       else {
@@ -284,6 +284,9 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
       if (!block_fwd) {
         bus_fwd = 0;
       }
+    }
+    else {
+      // Do not forward
     }
   }
   return bus_fwd;
