@@ -59,6 +59,8 @@ enum {GM_OBD2, GM_CAM} gm_harness = GM_OBD2;
 bool gm_stock_long = false;
 
 #ifdef GM_EPS_TIMING_WORKAROUND
+  const uint16_t GM_PARAM_EPS_TIMING = 64;
+  bool gm_enforce_lkas_timing = false;
   uint32_t gm_start_ts = 0;
   uint32_t gm_last_lkas_ts = 0;
 #endif
@@ -214,16 +216,18 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     }
 
     #ifdef GM_EPS_TIMING_WORKAROUND
-      // Drop LKAS frames that come in too fast. 20ms is the target while active, 
-      // but "picky" PSCMs will fault under about 13ms
-      // and OP misses the 20ms target quite frequently
-      uint32_t ts2 = microsecond_timer_get();
-      uint32_t ts_elapsed = get_ts_elapsed(ts2, gm_last_lkas_ts);
-      if (ts_elapsed <= 13000U) {
-        tx = 0;
-      }
-      else {
-        gm_last_lkas_ts = ts2;
+      if (gm_enforce_lkas_timing) {
+        // Drop LKAS frames that come in too fast. 20ms is the target while active, 
+        // but "picky" PSCMs will fault under about 13ms
+        // and OP misses the 20ms target quite frequently
+        uint32_t ts2 = microsecond_timer_get();
+        uint32_t ts_elapsed = get_ts_elapsed(ts2, gm_last_lkas_ts);
+        if (ts_elapsed <= 13000U) {
+          tx = 0;
+        }
+        else {
+          gm_last_lkas_ts = ts2;
+        }
       }
       // TODO BEFORE PR: A delay over 200ms while ACTIVE will also cause a fault
       // Simplest way to avoid this would be to inject an inactive frame
@@ -297,7 +301,10 @@ static const addr_checks* gm_init(uint16_t param) {
   gm_stock_long = GET_FLAG(param, GM_PARAM_STOCK_LONG);
   gm_harness = (GET_FLAG(param, GM_PARAM_HARNESS_CAM) ? (GM_CAM) : (GM_OBD2));
   #ifdef GM_EPS_TIMING_WORKAROUND
-    gm_start_ts = microsecond_timer_get();
+    gm_enforce_lkas_timing = GET_FLAG(param, GM_PARAM_EPS_TIMING);
+    if (gm_enforce_lkas_timing) {
+      gm_start_ts = microsecond_timer_get();
+    }
   #endif
   return &gm_rx_checks;
 }
