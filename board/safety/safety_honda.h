@@ -145,7 +145,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
 
     // state machine to enter and exit controls for button enabling
     // 0x1A6 for the ILX, 0x296 for the Civic Touring
-    if (((addr == 0x1A6) || (addr == 0x296)) && bus == pt_bus) {
+    if (((addr == 0x1A6) || (addr == 0x296)) && (bus == pt_bus)) {
       int button = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
 
       // exit controls once main or cancel are pressed
