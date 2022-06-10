@@ -1,5 +1,5 @@
 import os
-
+from common.params import Params
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
@@ -9,6 +9,8 @@ BLOCK_SIZE_FX = 0x800
 APP_ADDRESS_FX = 0x8004000
 DEVICE_SERIAL_NUMBER_ADDR_FX = 0x1FFF79C0
 DEFAULT_FW_FN = os.path.join(BASEDIR, "board", "obj", "panda.bin.signed")
+if Params().get("dp_atl", encoding='utf8') != '0':
+  DEFAULT_FW_FN = os.path.join(BASEDIR, "board", "obj", "panda.bin.testing.signed")
 DEFAULT_BOOTSTUB_FN = os.path.join(BASEDIR, "board", "obj", "bootstub.panda.bin")
 
 BLOCK_SIZE_H7 = 0x400
