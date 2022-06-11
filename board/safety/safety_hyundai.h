@@ -14,7 +14,7 @@ const CanMsg HYUNDAI_TX_MSGS[] = {
   {832, 0, 8},  // LKAS11 Bus 0
   {1265, 0, 4}, // CLU11 Bus 0
   {1157, 0, 4}, // LFAHDA_MFC Bus 0
- };
+};
 
 const CanMsg HYUNDAI_LONG_TX_MSGS[] = {
   {832, 0, 8},  // LKAS11 Bus 0
@@ -28,13 +28,13 @@ const CanMsg HYUNDAI_LONG_TX_MSGS[] = {
   {909, 0, 8},  // FCA11 Bus 0
   {1155, 0, 8}, // FCA12 Bus 0
   {2000, 0, 8}, // radar UDS TX addr Bus 0 (for radar disable)
- };
+};
 
 const CanMsg HYUNDAI_CAMERA_SCC_TX_MSGS[] = {
   {832, 0, 8},  // LKAS11 Bus 0
   {1265, 0, 4}, // CLU11 Bus 0
   {1157, 0, 4}, // LFAHDA_MFC Bus 0
- };
+};
 
 AddrCheckStruct hyundai_addr_checks[] = {
   {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
@@ -437,6 +437,7 @@ static const addr_checks* hyundai_init(uint16_t param) {
 static const addr_checks* hyundai_legacy_init(uint16_t param) {
   hyundai_legacy = true;
   hyundai_longitudinal = false;
+  hyundai_camera_scc = false;
   hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
   hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
