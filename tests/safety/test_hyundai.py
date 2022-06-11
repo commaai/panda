@@ -189,6 +189,14 @@ class TestHyundaiSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafet
       self._rx(self._button_msg(Buttons.NONE))
 
 
+class TestHyundaiSafetyCameraSCC(TestHyundaiSafety):
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_kia_generic")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, Panda.FLAG_HYUNDAI_CAMERA_SCC)
+    self.safety.init_tests()
+
+
 class TestHyundaiLegacySafety(TestHyundaiSafety):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
