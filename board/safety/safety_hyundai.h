@@ -266,14 +266,15 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       brake_pressed = GET_BIT(to_push, 55U) != 0U;
     }
 
-    bool stock_ecu_detected = ((addr == 832) || ((addr == 1057) && hyundai_camera_scc));
+    bool stock_ecu_detected = (addr == 832);
 
     // If openpilot is controlling longitudinal we need to ensure the radar is turned off
     // Enforce by checking we don't see SCC12
-    if (hyundai_longitudinal && ((addr == 1057) && !hyundai_camera_scc)) {
+    if (hyundai_longitudinal && (addr == 1057)) {
       stock_ecu_detected = true;
     }
     generic_rx_checks(stock_ecu_detected);
+  } else {
   }
   return valid;
 }
