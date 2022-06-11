@@ -30,6 +30,12 @@ const CanMsg HYUNDAI_LONG_TX_MSGS[] = {
   {2000, 0, 8}, // radar UDS TX addr Bus 0 (for radar disable)
  };
 
+const CanMsg HYUNDAI_CAMERA_SCC_TX_MSGS[] = {
+  {832, 0, 8},  // LKAS11 Bus 0
+  {1265, 0, 4}, // CLU11 Bus 0
+  {1157, 0, 4}, // LFAHDA_MFC Bus 0
+ };
+
 AddrCheckStruct hyundai_addr_checks[] = {
   {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
            {881, 0, 8, .expected_timestep = 10000U}, { 0 }}},
@@ -58,9 +64,19 @@ AddrCheckStruct hyundai_legacy_addr_checks[] = {
 };
 #define HYUNDAI_LEGACY_ADDR_CHECK_LEN (sizeof(hyundai_legacy_addr_checks) / sizeof(hyundai_legacy_addr_checks[0]))
 
+AddrCheckStruct hyundai_camera_scc_addr_checks[] = {
+  {.msg = {{608, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
+           {881, 0, 8, .expected_timestep = 10000U}, { 0 }}},
+  {.msg = {{902, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{916, 0, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{1057, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+};
+#define HYUNDAI_CAMERA_SCC_ADDR_CHECK_LEN (sizeof(hyundai_camera_scc_addr_checks) / sizeof(hyundai_camera_scc_addr_checks[0]))
+
 const int HYUNDAI_PARAM_EV_GAS = 1;
 const int HYUNDAI_PARAM_HYBRID_GAS = 2;
 const int HYUNDAI_PARAM_LONGITUDINAL = 4;
+const int HYUNDAI_PARAM_CAMERA_SCC = 8;
 
 enum {
   HYUNDAI_BTN_NONE = 0,
@@ -78,6 +94,7 @@ bool hyundai_legacy = false;
 bool hyundai_ev_gas_signal = false;
 bool hyundai_hybrid_gas_signal = false;
 bool hyundai_longitudinal = false;
+bool hyundai_camera_scc = false;
 
 addr_checks hyundai_rx_checks = {hyundai_addr_checks, HYUNDAI_ADDR_CHECK_LEN};
 
@@ -161,7 +178,23 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
                                  hyundai_get_checksum, hyundai_compute_checksum,
                                  hyundai_get_counter);
 
-  if (valid && (GET_BUS(to_push) == 0U)) {
+  if (valid && (GET_BUS(to_push) == 2U)) {
+    int addr = GET_ADDR(to_push);
+
+    // enter controls on rising edge of ACC and user button press, exit controls when ACC off
+    if (!hyundai_longitudinal && (addr == 1057)) {
+      // 2 bits: 13-14
+      int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3U;
+      if (cruise_engaged && !cruise_engaged_prev && (hyundai_last_button_interaction < HYUNDAI_PREV_BUTTON_SAMPLES)) {
+        controls_allowed = 1;
+      }
+
+      if (!cruise_engaged) {
+        controls_allowed = 0;
+      }
+      cruise_engaged_prev = cruise_engaged;
+    }
+  } else if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
 
     if (addr == 593) {
@@ -233,11 +266,11 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       brake_pressed = GET_BIT(to_push, 55U) != 0U;
     }
 
-    bool stock_ecu_detected = (addr == 832);
+    bool stock_ecu_detected = ((addr == 832) || ((addr == 1057) && hyundai_camera_scc));
 
     // If openpilot is controlling longitudinal we need to ensure the radar is turned off
     // Enforce by checking we don't see SCC12
-    if (hyundai_longitudinal && (addr == 1057)) {
+    if (hyundai_longitudinal && ((addr == 1057) && !hyundai_camera_scc)) {
       stock_ecu_detected = true;
     }
     generic_rx_checks(stock_ecu_detected);
@@ -252,6 +285,8 @@ static int hyundai_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   if (hyundai_longitudinal) {
     tx = msg_allowed(to_send, HYUNDAI_LONG_TX_MSGS, sizeof(HYUNDAI_LONG_TX_MSGS)/sizeof(HYUNDAI_LONG_TX_MSGS[0]));
+  } else if (hyundai_camera_scc) {
+    tx = msg_allowed(to_send, HYUNDAI_CAMERA_SCC_TX_MSGS, sizeof(HYUNDAI_CAMERA_SCC_TX_MSGS)/sizeof(HYUNDAI_CAMERA_SCC_TX_MSGS[0]));
   } else {
     tx = msg_allowed(to_send, HYUNDAI_TX_MSGS, sizeof(HYUNDAI_TX_MSGS)/sizeof(HYUNDAI_TX_MSGS[0]));
   }
@@ -383,13 +418,16 @@ static const addr_checks* hyundai_init(uint16_t param) {
   hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
   hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
+  hyundai_camera_scc = GET_FLAG(param, HYUNDAI_PARAM_CAMERA_SCC);
 
 #ifdef ALLOW_DEBUG
-  hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_LONGITUDINAL);
+  hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_LONGITUDINAL) && !hyundai_camera_scc;
 #endif
 
   if (hyundai_longitudinal) {
     hyundai_rx_checks = (addr_checks){hyundai_long_addr_checks, HYUNDAI_LONG_ADDR_CHECK_LEN};
+  } else if (hyundai_camera_scc) {
+    hyundai_rx_checks = (addr_checks){hyundai_camera_scc_addr_checks, HYUNDAI_CAMERA_SCC_ADDR_CHECK_LEN};
   } else {
     hyundai_rx_checks = (addr_checks){hyundai_addr_checks, HYUNDAI_ADDR_CHECK_LEN};
   }
