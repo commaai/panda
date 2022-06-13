@@ -180,7 +180,7 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int bus = GET_BUS(to_push);
 
-  // cehcks camera SCC cars have 1057 on bus 2
+  // checks camera SCC cars have 1057 on bus 2
   if (valid && ((bus == 0U) || (bus == 2U))) {
     // enter controls on rising edge of ACC and user button press, exit controls when ACC off
     if (!hyundai_longitudinal && (addr == 1057)) {
