@@ -581,7 +581,7 @@ class TestHondaBoschRadarless(HondaPcmEnableBase, TestHondaBoschSafetyBase):
     self.safety.init_tests_honda()
 
   def test_alt_disengage_on_brake(self):
-    # This car doesn't have 0x1BE (BRAKE_MODULE)
+    # These cars do not have 0x1BE (BRAKE_MODULE)
     pass
 
 
