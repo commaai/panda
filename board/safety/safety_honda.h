@@ -113,7 +113,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
                             ((honda_hw == HONDA_NIDEC) && !gas_interceptor_detected);
 
     int bus_rdr_car = (honda_hw == HONDA_BOSCH) ? 0 : 2;  // radar bus, car side
-    int pt_bus = (honda_hw == HONDA_BOSCH) ? 1 : 0;
+    int pt_bus = honda_get_pt_bus();
 
     int addr = GET_ADDR(to_push);
     int len = GET_LEN(to_push);
