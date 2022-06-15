@@ -44,7 +44,7 @@ const uint16_t GM_PARAM_STOCK_LONG = 2;
 
 // TODO: Update tests to include params
 // TODO: If 1, check fwd. else check no fwd
-// TODO: If 2, check 715 allowed else 715 kills / blocks controls 
+// TODO: If 2, check 715 allowed else 715 kills / blocks controls
 
 enum {
   GM_BTN_UNPRESS = 1,
@@ -217,7 +217,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
     #ifdef GM_EPS_TIMING_WORKAROUND
       if (gm_enforce_lkas_timing) {
-        // Drop LKAS frames that come in too fast. 20ms is the target while active, 
+        // Drop LKAS frames that come in too fast. 20ms is the target while active,
         // but "picky" PSCMs will fault under about 13ms
         // and OP misses the 20ms target quite frequently
         uint32_t ts2 = microsecond_timer_get();
@@ -240,7 +240,6 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       //         Quite frequently
     #endif
   }
-
 
   // GAS/REGEN: safety check
   if (addr == 715) {
@@ -273,11 +272,8 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
   if (gm_harness == GM_CAM) {
     if (bus_num == 0) {
-      // Fwd PT to cam
       bus_fwd = gm_cam_bus;
-    }
-    else if (bus_num == gm_cam_bus) {
-      // Fwd cam to PT
+    } else if (bus_num == gm_cam_bus) {
       // block stock lkas messages and stock acc messages (if OP is doing ACC)
       int addr = GET_ADDR(to_fwd);
       bool is_lkas_msg = (addr == 384);
@@ -288,8 +284,7 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
       if (!block_fwd) {
         bus_fwd = 0;
       }
-    }
-    else {
+    } else {
       // Do not forward
     }
   }
