@@ -6,11 +6,12 @@ from panda.tests.safety import libpandasafety_py
 from panda.tests.safety_replay.helpers import package_can_msg, init_segment
 
 # replay a drive to check for safety violations
-def replay_drive(lr, safety_mode, param, segment=False):
+def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   safety = libpandasafety_py.libpandasafety
 
   err = safety.set_safety_hooks(safety_mode, param)
   assert err == 0, "invalid safety mode: %d" % safety_mode
+  safety.set_alternative_experience(alternative_experience)
 
   if segment:
     init_segment(safety, lr, safety_mode)
@@ -73,6 +74,7 @@ if __name__ == "__main__":
   parser.add_argument("route_or_segment_name", nargs='+')
   parser.add_argument("--mode", type=int, help="Override the safety mode from the log")
   parser.add_argument("--param", type=int, help="Override the safety param from the log")
+  parser.add_argument("--alternative-experience", type=int, help="Override the alternative experience from the log")
   args = parser.parse_args()
 
   s = SegmentName(args.route_or_segment_name[0], allow_route_name=True)
@@ -88,11 +90,13 @@ if __name__ == "__main__":
           args.mode = msg.carParams.safetyConfigs[0].safetyModel.raw
         if args.param is None:
           args.param = msg.carParams.safetyConfigs[0].safetyParam
+        if args.alternative_experience is None:
+          args.alternative_experience = msg.carParams.alternativeExperience
         break
     else:
       raise Exception("carParams not found in log. Set safety mode and param manually.")
 
     lr.reset()
 
-  print(f"replaying {args.route_or_segment_name[0]} with safety mode {args.mode} and param {args.param}")
-  replay_drive(lr, args.mode, args.param, segment=(s.segment_num >= 0))
+  print(f"replaying {args.route_or_segment_name[0]} with safety mode {args.mode}, param {args.param}, alternative experience {args.alternative_experience}")
+  replay_drive(lr, args.mode, args.param, args.alternative_experience, segment=(s.segment_num >= 0))
