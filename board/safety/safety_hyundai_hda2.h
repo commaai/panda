@@ -3,8 +3,8 @@ const int HYUNDAI_HDA2_MAX_RT_DELTA = 112;          // max delta torque allowed 
 const uint32_t HYUNDAI_HDA2_RT_INTERVAL = 250000;   // 250ms between real time checks
 const int HYUNDAI_HDA2_MAX_RATE_UP = 3;
 const int HYUNDAI_HDA2_MAX_RATE_DOWN = 7;
-const int HYUNDAI_HDA2_DRIVER_TORQUE_ALLOWANCE = 200;
-const int HYUNDAI_HDA2_DRIVER_TORQUE_FACTOR = 8;
+const int HYUNDAI_HDA2_DRIVER_TORQUE_ALLOWANCE = 150;
+const int HYUNDAI_HDA2_DRIVER_TORQUE_FACTOR = 2;
 const uint32_t HYUNDAI_HDA2_STANDSTILL_THRSLD = 30;  // ~1kph
 
 const CanMsg HYUNDAI_HDA2_TX_MSGS[] = {
