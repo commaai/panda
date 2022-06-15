@@ -8,10 +8,6 @@
 //      brake rising edge
 //      brake > 0mph
 
-// OP-side EPS timing fix isn't preventing all EPS faults
-// Workaround is in place until OP fix is completed
-#define GM_EPS_TIMING_WORKAROUND
-
 const int GM_MAX_STEER = 300;
 const int GM_MAX_RT_DELTA = 128;          // max delta torque allowed for real time checks
 const uint32_t GM_RT_INTERVAL = 250000;    // 250ms between real time checks
@@ -57,13 +53,6 @@ int gm_cam_bus = 2;
 
 enum {GM_OBD2, GM_CAM} gm_harness = GM_OBD2;
 bool gm_stock_long = false;
-
-#ifdef GM_EPS_TIMING_WORKAROUND
-  const uint16_t GM_PARAM_EPS_TIMING = 64;
-  bool gm_enforce_lkas_timing = false;
-  uint32_t gm_start_ts = 0;
-  uint32_t gm_last_lkas_ts = 0;
-#endif
 
 static int gm_rx_hook(CANPacket_t *to_push) {
 
@@ -214,31 +203,6 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     if (violation) {
       tx = 0;
     }
-
-    #ifdef GM_EPS_TIMING_WORKAROUND
-      if (gm_enforce_lkas_timing) {
-        // Drop LKAS frames that come in too fast. 20ms is the target while active,
-        // but "picky" PSCMs will fault under about 13ms
-        // and OP misses the 20ms target quite frequently
-        uint32_t ts2 = microsecond_timer_get();
-        uint32_t ts_elapsed = get_ts_elapsed(ts2, gm_last_lkas_ts);
-        if (ts_elapsed <= 13000U) {
-          tx = 0;
-        }
-        else {
-          gm_last_lkas_ts = ts2;
-        }
-      }
-      // TODO BEFORE PR: A delay over 200ms while ACTIVE will also cause a fault
-      // Simplest way to avoid this would be to inject an inactive frame
-      // when starting to block (for any reason)
-      // Note: Drooping LKAS frames is a protocol violation
-      //       They should not really ever be dropped like this
-      //       Instead, output should switch to inactive
-      // Note 2: Per jyoung, the steering limits should practically never be tripped.
-      //         Something is wrong with the limits - RT rate in particular is triggered
-      //         Quite frequently
-    #endif
   }
 
   // GAS/REGEN: safety check
@@ -269,11 +233,15 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 }
 
 static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+
   int bus_fwd = -1;
+
   if (gm_harness == GM_CAM) {
     if (bus_num == 0) {
       bus_fwd = gm_cam_bus;
-    } else if (bus_num == gm_cam_bus) {
+    }
+
+    if (bus_num == gm_cam_bus) {
       // block stock lkas messages and stock acc messages (if OP is doing ACC)
       int addr = GET_ADDR(to_fwd);
       bool is_lkas_msg = (addr == 384);
@@ -284,10 +252,9 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
       if (!block_fwd) {
         bus_fwd = 0;
       }
-    } else {
-      // Do not forward
     }
   }
+
   return bus_fwd;
 }
 
@@ -295,12 +262,6 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 static const addr_checks* gm_init(uint16_t param) {
   gm_stock_long = GET_FLAG(param, GM_PARAM_STOCK_LONG);
   gm_harness = (GET_FLAG(param, GM_PARAM_HARNESS_CAM) ? (GM_CAM) : (GM_OBD2));
-  #ifdef GM_EPS_TIMING_WORKAROUND
-    gm_enforce_lkas_timing = GET_FLAG(param, GM_PARAM_EPS_TIMING);
-    if (gm_enforce_lkas_timing) {
-      gm_start_ts = microsecond_timer_get();
-    }
-  #endif
   return &gm_rx_checks;
 }
 
