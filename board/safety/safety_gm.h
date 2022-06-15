@@ -34,13 +34,12 @@ AddrCheckStruct gm_addr_checks[] = {
 #define GM_RX_CHECK_LEN (sizeof(gm_addr_checks) / sizeof(gm_addr_checks[0]))
 addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
 
-// Param Definitions
-const uint16_t GM_PARAM_HARNESS_CAM = 1;
-const uint16_t GM_PARAM_STOCK_LONG = 2;
+const int GM_CAM_BUS = 2;
 
-// TODO: Update tests to include params
-// TODO: If 1, check fwd. else check no fwd
-// TODO: If 2, check 715 allowed else 715 kills / blocks controls
+// Param Definitions
+const uint16_t GM_PARAM_HW_ASCM = 0;
+const uint16_t GM_PARAM_HW_CAMACC = 1;
+const uint16_t GM_PARAM_HW_DSACC = 2;
 
 enum {
   GM_BTN_UNPRESS = 1,
@@ -49,10 +48,8 @@ enum {
   GM_BTN_CANCEL = 6,
 };
 
-int gm_cam_bus = 2;
-
-enum {GM_OBD2, GM_CAM} gm_harness = GM_OBD2;
-bool gm_stock_long = false;
+bool gm_fwd = false;
+bool gm_op_long = true;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
 
@@ -114,7 +111,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     // 384 = ASCMLKASteeringCmd
     // 715 = ASCMGasRegenCmd
     // Allow ACC if using stock long
-    generic_rx_checks(((addr == 384) || ((!gm_stock_long) && (addr == 715))));
+    generic_rx_checks(((addr == 384) || ((gm_op_long) && (addr == 715))));
   }
   return valid;
 }
@@ -236,19 +233,18 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
   int bus_fwd = -1;
 
-  if (gm_harness == GM_CAM) {
+  if (gm_fwd) {
     if (bus_num == 0) {
-      bus_fwd = gm_cam_bus;
+      bus_fwd = GM_CAM_BUS;
     }
 
-    if (bus_num == gm_cam_bus) {
+    if (bus_num == GM_CAM_BUS) {
       // block stock lkas messages and stock acc messages (if OP is doing ACC)
       int addr = GET_ADDR(to_fwd);
       bool is_lkas_msg = (addr == 384);
-      // Keepalives: (addr == 1033) || (addr == 1034)
-      // TODO: carcontroller.py omit keepalives using cam harness
       bool is_acc_msg = ((addr == 715) || (addr == 880) || (addr == 789));
-      bool block_fwd = (is_lkas_msg || (is_acc_msg && !gm_stock_long));
+      // If OP is handling long, do not forward ACC messages
+      bool block_fwd = (is_lkas_msg || (is_acc_msg && gm_op_long));
       if (!block_fwd) {
         bus_fwd = 0;
       }
@@ -260,8 +256,18 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 
 static const addr_checks* gm_init(uint16_t param) {
-  gm_stock_long = GET_FLAG(param, GM_PARAM_STOCK_LONG);
-  gm_harness = (GET_FLAG(param, GM_PARAM_HARNESS_CAM) ? (GM_CAM) : (GM_OBD2));
+  if (GET_FLAG(param, GM_PARAM_HW_CAMACC)) { // Camera-based ACC
+    gm_fwd = true;
+    gm_op_long = false;
+  }
+  else if (GET_FLAG(param, GM_PARAM_HW_DSACC)) { // Distance Sensing ACC
+    gm_fwd = true;
+    gm_op_long = false;
+  }
+  else { // Default to ASCM
+    gm_fwd = false;
+    gm_op_long = true;
+  }
   return &gm_rx_checks;
 }
 
