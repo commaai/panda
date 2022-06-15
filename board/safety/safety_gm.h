@@ -18,11 +18,14 @@ const int GM_DRIVER_TORQUE_FACTOR = 4;
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
-const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
+const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
                              {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
                              {789, 2, 5},  // ch bus
                              {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
-const CanMsg GM_CAM_TX_MSGS[] = {{384, 0, 4}, {715, 0, 8}, {789, 0, 5}, {880, 0, 6}};  // pt bus
+const CanMsg GM_OP_TX_MSGS[] = {{384, 0, 4}, {715, 0, 8}, {789, 0, 5}, {880, 0, 6}};
+const CanMsg GM_STOCK_TX_MSGS[] = {{384, 0, 4}};
+
+
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 AddrCheckStruct gm_addr_checks[] = {
@@ -38,9 +41,10 @@ addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
 const int GM_CAM_BUS = 2;
 
 // Param Definitions
-const uint16_t GM_PARAM_HW_ASCM = 0;
-const uint16_t GM_PARAM_HW_CAMACC = 1;
-const uint16_t GM_PARAM_HW_DSACC = 2;
+//const uint16_t GM_PARAM_HW_ASCM = 0;
+const uint16_t GM_PARAM_HW_CAM = 1;
+const uint16_t GM_PARAM_HW_DS = 2;
+const uint16_t GM_PARAM_HW_CAM_OP_ACC = 4;
 
 enum {
   GM_BTN_UNPRESS = 1,
@@ -49,7 +53,7 @@ enum {
   GM_BTN_CANCEL = 6,
 };
 
-bool gm_fwd = false;
+bool gm_cam = false;
 bool gm_op_long = true;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
@@ -128,10 +132,16 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
-  if (gm_fwd) {
-    tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
-  } else {
-    tx = msg_allowed(to_send, GM_TX_MSGS, sizeof(GM_TX_MSGS)/sizeof(GM_TX_MSGS[0]));
+  if (gm_cam) {
+    if (gm_op_long) {
+      tx = msg_allowed(to_send, GM_OP_TX_MSGS, sizeof(GM_OP_TX_MSGS)/sizeof(GM_OP_TX_MSGS[0]));
+    }
+    else {
+      tx = msg_allowed(to_send, GM_STOCK_TX_MSGS, sizeof(GM_STOCK_TX_MSGS)/sizeof(GM_STOCK_TX_MSGS[0]));
+    }
+  }
+  else {
+    tx = msg_allowed(to_send, GM_ASCM_TX_MSGS, sizeof(GM_ASCM_TX_MSGS)/sizeof(GM_ASCM_TX_MSGS[0]));
   }
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
@@ -236,7 +246,7 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
   int bus_fwd = -1;
 
-  if (gm_fwd) {
+  if (gm_cam) {
     if (bus_num == 0) {
       bus_fwd = GM_CAM_BUS;
     }
@@ -259,16 +269,20 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 
 static const addr_checks* gm_init(uint16_t param) {
-  if (GET_FLAG(param, GM_PARAM_HW_CAMACC)) { // Camera-based ACC
-    gm_fwd = true;
+  if (GET_FLAG(param, GM_PARAM_HW_CAM)) { // Camera-based ACC
+    gm_cam = true;
     gm_op_long = false;
   }
-  else if (GET_FLAG(param, GM_PARAM_HW_DSACC)) { // Distance Sensing ACC
-    gm_fwd = true;
+  else if (GET_FLAG(param, GM_PARAM_HW_DS)) { // Distance Sensing ACC
+    gm_cam = true;
     gm_op_long = false;
+  }
+  else if (GET_FLAG(param, GM_PARAM_HW_CAM_OP_ACC)) { // OP override Camera-based ACC
+    gm_cam = true;
+    gm_op_long = true;
   }
   else { // Default to ASCM
-    gm_fwd = false;
+    gm_cam = false;
     gm_op_long = true;
   }
   return &gm_rx_checks;
