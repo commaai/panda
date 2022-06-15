@@ -22,6 +22,7 @@ const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8
                              {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
                              {789, 2, 5},  // ch bus
                              {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
+const CanMsg GM_CAM_TX_MSGS[] = {{384, 0, 4}};  // pt bus
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 AddrCheckStruct gm_addr_checks[] = {
@@ -52,7 +53,7 @@ enum {
 int gm_cam_bus = 2;
 
 enum {GM_OBD2, GM_CAM} gm_harness = GM_OBD2;
-bool gm_stock_long = false;
+bool gm_cam_stock_long = false;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
 
@@ -114,7 +115,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     // 384 = ASCMLKASteeringCmd
     // 715 = ASCMGasRegenCmd
     // Allow ACC if using stock long
-    generic_rx_checks(((addr == 384) || ((!gm_stock_long) && (addr == 715))));
+    generic_rx_checks(((addr == 384) || ((!gm_cam_stock_long) && (addr == 715))));
   }
   return valid;
 }
@@ -130,8 +131,10 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
-  if (!msg_allowed(to_send, GM_TX_MSGS, sizeof(GM_TX_MSGS)/sizeof(GM_TX_MSGS[0]))) {
-    tx = 0;
+  if (gm_harness == GM_CAM) {
+    tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
+  } else {
+    tx = msg_allowed(to_send, GM_TX_MSGS, sizeof(GM_TX_MSGS)/sizeof(GM_TX_MSGS[0]));
   }
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
@@ -248,7 +251,7 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
       // Keepalives: (addr == 1033) || (addr == 1034)
       // TODO: carcontroller.py omit keepalives using cam harness
       bool is_acc_msg = ((addr == 715) || (addr == 880) || (addr == 789));
-      bool block_fwd = (is_lkas_msg || (is_acc_msg && !gm_stock_long));
+      bool block_fwd = (is_lkas_msg || (is_acc_msg && !gm_cam_stock_long));
       if (!block_fwd) {
         bus_fwd = 0;
       }
@@ -260,7 +263,7 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 
 static const addr_checks* gm_init(uint16_t param) {
-  gm_stock_long = GET_FLAG(param, GM_PARAM_STOCK_LONG);
+  gm_cam_stock_long = GET_FLAG(param, GM_PARAM_STOCK_LONG);
   gm_harness = (GET_FLAG(param, GM_PARAM_HARNESS_CAM) ? (GM_CAM) : (GM_OBD2));
   return &gm_rx_checks;
 }
