@@ -28,6 +28,7 @@ class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
+  STOCK_LONG = False
 
   MAX_RATE_UP = 7
   MAX_RATE_DOWN = 17
@@ -114,7 +115,7 @@ class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest
     for enabled in [0, 1]:
       for b in range(0, 500):
         self.safety.set_controls_allowed(enabled)
-        if abs(b) > MAX_BRAKE or (not enabled and b != 0):
+        if abs(b) > MAX_BRAKE or (not enabled and b != 0) or self.STOCK_LONG:
           self.assertFalse(self._tx(self._send_brake_msg(b)))
         else:
           self.assertTrue(self._tx(self._send_brake_msg(b)))
@@ -123,7 +124,7 @@ class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest
     for enabled in [0, 1]:
       for g in range(0, 2**12 - 1):
         self.safety.set_controls_allowed(enabled)
-        if abs(g) > MAX_GAS or (not enabled and g != MAX_REGEN):
+        if abs(g) > MAX_GAS or (not enabled and g != MAX_REGEN) or self.STOCK_LONG:
           self.assertFalse(self._tx(self._send_gas_msg(g)))
         else:
           self.assertTrue(self._tx(self._send_gas_msg(g)))
@@ -178,6 +179,22 @@ class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest
         self._rx(self._user_brake_msg(0))
       elif pedal == 'gas':
         self._rx(self._user_gas_msg(0))
+
+
+class TestGmCameraStockLongSafety(TestGmSafety):
+  """Harness is integrated at the camera, we only need to send steering messages, forward the rest"""
+
+  TX_MSGS = [[384, 0]]  # pt bus
+  FWD_BLACKLISTED_ADDRS = {2: [384]}  # LKAS message, ACC messages are (715, 880, 789)
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+  STOCK_LONG = True
+
+  def setUp(self):
+    self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
+    self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM)
+    self.safety.init_tests()
 
 
 if __name__ == "__main__":
