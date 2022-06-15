@@ -18,7 +18,7 @@ class Buttons:
   CANCEL = 6
 
 
-class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
              [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
              [789, 2],  # ch bus
@@ -38,25 +38,19 @@ class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest
   DRIVER_TORQUE_ALLOWANCE = 50
   DRIVER_TORQUE_FACTOR = 4
 
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "TestGmSafetyBase":
+      cls.packer = None
+      cls.safety = None
+      raise unittest.SkipTest
+
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
     self.safety.init_tests()
-
-  # override these tests from PandaSafetyTest, GM uses button enable
-  def test_disable_control_allowed_from_cruise(self):
-    pass
-
-  def test_enable_control_allowed_from_cruise(self):
-    pass
-
-  def test_cruise_engaged_prev(self):
-    pass
-
-  def _pcm_status_msg(self, enable):
-    raise NotImplementedError
 
   def _speed_msg(self, speed):
     values = {"%sWheelSpd" % s: speed for s in ["RL", "RR"]}
@@ -181,7 +175,30 @@ class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest
         self._rx(self._user_gas_msg(0))
 
 
-class TestGmCameraStockLongSafety(TestGmSafety):
+class TestGmSafety(TestGmSafetyBase):
+
+  def setUp(self):
+    self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
+    self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
+    self.safety.init_tests()
+
+  # override these tests from PandaSafetyTest, GM uses button enable
+  def test_disable_control_allowed_from_cruise(self):
+    pass
+
+  def test_enable_control_allowed_from_cruise(self):
+    pass
+
+  def test_cruise_engaged_prev(self):
+    pass
+
+  def _pcm_status_msg(self, enable):
+    raise NotImplementedError
+
+
+class TestGmCameraSafety(TestGmSafetyBase):
   """Harness is integrated at the camera, we only need to send steering messages, forward the rest"""
 
   TX_MSGS = [[384, 0]]  # pt bus
@@ -195,6 +212,10 @@ class TestGmCameraStockLongSafety(TestGmSafety):
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM)
     self.safety.init_tests()
+
+  # TODO: implement this
+  def _pcm_status_msg(self, enable):
+    raise NotImplementedError
 
 
 if __name__ == "__main__":
