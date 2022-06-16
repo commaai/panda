@@ -122,7 +122,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     """
       On Toyota, we set the STEER_REQUEST bit to 0 every 19 messages while above 100 deg/s
       to avoid a steering fault and maintain torque. This tests:
-        - We can't cut torque for two frames in a row
+        - We can't cut torque for more than one frame
         - We can't cut torque until at least MAX_STEER_RATE_FRAMES frames of matching steer_req messages
         - We can always recover from violations if steer_req=1, ignoring openpilot issue #24475
     """

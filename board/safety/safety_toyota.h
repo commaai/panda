@@ -50,8 +50,9 @@ bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
-// steering faults occur when the angle rate is above a certain threshold for too long,
-// allow setting STEER_REQUEST bit to 0 with a non-zero desired torque when expected
+// the EPS faults when the steering angle rate is above a certain threshold for too long. to prevent this,
+// we allow setting STEER_REQUEST bit to 0 while maintaining the request torque value for a single frame
+// every TOYOTA_MAX_STEER_RATE_FRAMES frames.
 const uint8_t TOYOTA_MAX_STEER_RATE_FRAMES = 19U;
 uint8_t toyota_steer_req_matches;  // counter for steer request bit matching non-zero torque
 
@@ -248,8 +249,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         }
       }
 
-      // handle steer_req bit mismatches: we set the bit to 0 at an expected
-      // interval to bypass an EPS fault, violation if we exceed that frequency
+      // allow setting STEER_REQUEST bit low for a single frame to prevent EPS faults
       bool steer_req_mismatch = (desired_torque != 0) && !steer_req;
       if (!steer_req_mismatch) {
         toyota_steer_req_matches = MIN(toyota_steer_req_matches + 1U, 255U);
