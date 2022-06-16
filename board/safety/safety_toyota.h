@@ -53,8 +53,8 @@ int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_
 // the EPS faults when the steering angle rate is above a certain threshold for too long. to prevent this,
 // we allow setting STEER_REQUEST bit to 0 while maintaining the request torque value for a single frame
 // every TOYOTA_MAX_STEER_RATE_FRAMES frames.
-const uint8_t TOYOTA_MAX_STEER_RATE_FRAMES = 19U;
-uint8_t toyota_steer_req_matches;  // counter for steer request bit matching non-zero torque
+const uint8_t TOYOTA_MIN_VALID_STEERING_FRAMES = 19U;
+uint8_t toyota_valid_steering_frame_count;  // counter for steer request bit matching non-zero torque
 
 static uint32_t toyota_compute_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
