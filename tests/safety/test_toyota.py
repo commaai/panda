@@ -131,17 +131,17 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       self.safety.set_controls_allowed(True)
       self._set_prev_torque(self.MAX_TORQUE)
       for _ in range(MAX_STEER_RATE_FRAMES - 1):
-        self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1))
+        self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1))
 
-      self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1)))  # toyota_steer_req_matches is now 19
-      self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
-      self.assertFalse(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))  # toyota_steer_req_matches is now 19
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
       self._set_prev_torque(self.MAX_TORQUE)  # TODO: recover from violation
       for _ in range(steer_rate_frames - 1):
-        self.assertTrue(self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=1)))
+        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
       should_tx = steer_rate_frames >= MAX_STEER_RATE_FRAMES
-      self.assertEqual(should_tx, self._tx(self._torque_msg(self.MAX_TORQUE, steer_req=0)))
+      self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
