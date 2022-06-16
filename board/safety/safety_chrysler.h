@@ -4,12 +4,12 @@ const uint32_t CHRYSLER_RT_INTERVAL = 250000; // 250ms between real time checks
 const int CHRYSLER_MAX_RATE_UP = 3;           //Must be double of limits set in op
 const int CHRYSLER_MAX_RATE_DOWN = 3;         //Must be double of limits set in op
 const int CHRYSLER_MAX_TORQUE_ERROR = 80;    // max torque cmd in excess of torque motor
-const int CHRYSLER_GAS_THRSLD = 7.7;          // 7% more than 2m/s changed from wheel rpm to km/h 
-const int CHRYSLER_STANDSTILL_THRSLD = 3.6;   // about 1m/s changed from wheel rpm to km/h 
-const int RAM_MAX_STEER = 363; 
+const int CHRYSLER_GAS_THRSLD = 7.7;          // 7% more than 2m/s changed from wheel rpm to km/h
+const int CHRYSLER_STANDSTILL_THRSLD = 3.6;   // about 1m/s changed from wheel rpm to km/h
+const int RAM_MAX_STEER = 363;
 const int RAM_MAX_RT_DELTA = 182;             // since 2 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
 const int RAM_MAX_RATE_UP = 14;               //Must be double of limits set in op
-const int RAM_MAX_RATE_DOWN = 14;             //Must be double of limits set in op  
+const int RAM_MAX_RATE_DOWN = 14;             //Must be double of limits set in op
 const int RAM_MAX_TORQUE_ERROR = 400;         // since 2 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
 
 
@@ -20,7 +20,7 @@ const int RAM_MAX_TORQUE_ERROR = 400;         // since 2 x the rate up from chrs
 #define ECM_5                      559  // Throttle position sensor
 #define DAS_3                      500  // ACC engagement states from DASM
 #define DAS_6                      678  // LKAS HUD and auto headlight control from DASM
-#define LKAS_COMMAND               658  // LKAS controls from DASM 
+#define LKAS_COMMAND               658  // LKAS controls from DASM
 #define Cruise_Control_Buttons     571  // Cruise control buttons
 
 // Safety-relevant CAN messages for the 5th gen RAM (DT) platform
@@ -30,13 +30,13 @@ const int RAM_MAX_TORQUE_ERROR = 400;         // since 2 x the rate up from chrs
 #define ECM_5_RAM                  157  // Throttle position sensor
 #define DAS_3_RAM                  153  // ACC engagement states from DASM
 #define DAS_6_RAM                  250  // LKAS HUD and auto headlight control from DASM
-#define LKAS_COMMAND_RAM           166  // LKAS controls from DASM 
+#define LKAS_COMMAND_RAM           166  // LKAS controls from DASM
 #define Cruise_Control_Buttons_RAM 177  // Cruise control buttons
 #define Center_Stack_2_RAM         650  // Center Stack buttons
 
 // Safety-relevant CAN messages for the 5th gen RAM HD platform
 #define DAS_6_HD                   629  // LKAS HUD and auto headlight control from DASM
-#define LKAS_COMMAND_HD            630  // LKAS controls from DASM 
+#define LKAS_COMMAND_HD            630  // LKAS controls from DASM
 #define Cruise_Control_Buttons_HD  570  // Cruise control buttons
 #define Center_Stack_2_HD          650  // Center Stack buttons
 
@@ -102,7 +102,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &chrysler_rx_checks,
                                  chrysler_get_checksum, chrysler_compute_checksum,
                                  chrysler_get_counter);
-  
+
   if (valid) {
     int bus = GET_BUS(to_push);
     int addr = GET_ADDR(to_push);
@@ -163,7 +163,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // LKA STEER Chrysler/Jeep
-  if ((addr == LKAS_COMMAND)) {
+  if (addr == LKAS_COMMAND) {
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1) - 1024U;
     uint32_t ts = microsecond_timer_get();
     bool violation = 0;
@@ -211,7 +211,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   // LKA STEER Ram
   if ((addr == LKAS_COMMAND_RAM) ||(addr == LKAS_COMMAND_HD)) {
     int desired_torque = ((GET_BYTE(to_send, 1) & 0x7U) << 8) + GET_BYTE(to_send, 2) - 1024U;
-    uint32_t ts = TIM2->CNT;
+    uint32_t ts = microsecond_timer_get();
     bool violation = 0;
 
     if (controls_allowed) {
@@ -254,7 +254,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     }
   }
 
-  
+
 
   // FORCE CANCEL: only the cancel button press is allowed
   if ((addr == Cruise_Control_Buttons) || (addr == Cruise_Control_Buttons_RAM) || (addr == Cruise_Control_Buttons_HD)) {
@@ -277,7 +277,7 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   }
 
   // forward all messages from camera except LKAS_COMMAND and LKAS_HUD
-  if ((bus_num == 2U) && (addr != LKAS_COMMAND) && (addr != DAS_6) 
+  if ((bus_num == 2U) && (addr != LKAS_COMMAND) && (addr != DAS_6)
     && (addr != LKAS_COMMAND_RAM) && (addr != DAS_6_RAM)
     && (addr != LKAS_COMMAND_HD) && (addr != DAS_6_HD)){
     bus_fwd = 0;
