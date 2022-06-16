@@ -1,11 +1,12 @@
 const int CHRYSLER_MAX_STEER = 261;
 const int CHRYSLER_MAX_RT_DELTA = 112;        // max delta torque allowed for real time checks
 const uint32_t CHRYSLER_RT_INTERVAL = 250000; // 250ms between real time checks
-const int CHRYSLER_MAX_RATE_UP = 3;           //Must be double of limits set in op
-const int CHRYSLER_MAX_RATE_DOWN = 3;         //Must be double of limits set in op
-const int CHRYSLER_MAX_TORQUE_ERROR = 80;    // max torque cmd in excess of torque motor
+const int CHRYSLER_MAX_RATE_UP = 3;           // Must be double of limits set in op
+const int CHRYSLER_MAX_RATE_DOWN = 3;         // Must be double of limits set in op
+const int CHRYSLER_MAX_TORQUE_ERROR = 80;     // max torque cmd in excess of torque motor
 const int CHRYSLER_GAS_THRSLD = 7.7;          // 7% more than 2m/s changed from wheel rpm to km/h
 const int CHRYSLER_STANDSTILL_THRSLD = 3.6;   // about 1m/s changed from wheel rpm to km/h
+
 const int RAM_MAX_STEER = 363;
 const int RAM_MAX_RT_DELTA = 182;             // since 2 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
 const int RAM_MAX_RATE_UP = 14;               //Must be double of limits set in op
@@ -13,7 +14,7 @@ const int RAM_MAX_RATE_DOWN = 14;             //Must be double of limits set in 
 const int RAM_MAX_TORQUE_ERROR = 400;         // since 2 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
 
 
-// Safety-relevant CAN messages for Chrysler/Jeep platforms
+// CAN messages for Chrysler/Jeep platforms
 #define EPS_2                      544  // EPS driver input torque
 #define ESP_1                      320  // Brake pedal and vehicle speed
 #define ESP_8                      284  // Brake pedal and vehicle speed
@@ -23,7 +24,7 @@ const int RAM_MAX_TORQUE_ERROR = 400;         // since 2 x the rate up from chrs
 #define LKAS_COMMAND               658  // LKAS controls from DASM
 #define Cruise_Control_Buttons     571  // Cruise control buttons
 
-// Safety-relevant CAN messages for the 5th gen RAM (DT) platform
+// CAN messages for the 5th gen RAM DT platform
 #define EPS_2_RAM                   49  // EPS driver input torque
 #define ESP_1_RAM                  131  // Brake pedal and vehicle speed
 #define ESP_8_RAM                  121  // Brake pedal and vehicle speed
@@ -34,25 +35,41 @@ const int RAM_MAX_TORQUE_ERROR = 400;         // since 2 x the rate up from chrs
 #define Cruise_Control_Buttons_RAM 177  // Cruise control buttons
 #define Center_Stack_2_RAM         650  // Center Stack buttons
 
-// Safety-relevant CAN messages for the 5th gen RAM HD platform
-#define DAS_6_HD                   629  // LKAS HUD and auto headlight control from DASM
-#define LKAS_COMMAND_HD            630  // LKAS controls from DASM
-#define Cruise_Control_Buttons_HD  570  // Cruise control buttons
-#define Center_Stack_2_HD          650  // Center Stack buttons
+const CanMsg CHRYSLER_TX_MSGS[] = {
+  {Cruise_Control_Buttons, 0, 3},
+  {LKAS_COMMAND, 0, 6},
+  {DAS_6, 0, 8},
+};
 
-const CanMsg CHRYSLER_TX_MSGS[] = {{Cruise_Control_Buttons, 0, 3},{LKAS_COMMAND, 0, 6}, {DAS_6, 0, 8},
-  {Cruise_Control_Buttons_RAM, 2, 3}, {LKAS_COMMAND_RAM, 0, 8}, {DAS_6_RAM, 0, 8},
-  {Cruise_Control_Buttons_HD, 2, 3}, {LKAS_COMMAND_HD, 0, 8}, {DAS_6_HD, 0, 8}};
+const CanMsg CHRYSLER_RAM_TX_MSGS[] = {
+  {Cruise_Control_Buttons_RAM, 2, 3},
+  {LKAS_COMMAND_RAM, 0, 8},
+  {DAS_6_RAM, 0, 8},
+};
 
 AddrCheckStruct chrysler_addr_checks[] = {
-  {.msg = {{EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, {EPS_2_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},  // EPS module
-  {.msg = {{ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {ESP_1_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // brake pressed
-  {.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {ESP_8_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // vehicle Speed
-  {.msg = {{ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {ECM_5_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}}, // gas pedal
-  {.msg = {{DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {DAS_3_RAM, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}}, // forward cam ACC may need set to bus 0 to for jeep/pacifica
+  {.msg = {{EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},  // EPS module
+  {.msg = {{ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // brake pressed
+  {.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // vehicle Speed
+  {.msg = {{ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // gas pedal
+  {.msg = {{DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
 };
 #define CHRYSLER_ADDR_CHECK_LEN (sizeof(chrysler_addr_checks) / sizeof(chrysler_addr_checks[0]))
+
+AddrCheckStruct chrysler_ram_addr_checks[] = {
+  {.msg = {{EPS_2_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},  // EPS module
+  {.msg = {{ESP_1_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // brake pressed
+  {.msg = {{ESP_8_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // vehicle Speed
+  {.msg = {{ECM_5_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // gas pedal
+  {.msg = {{DAS_3_RAM, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
+};
+#define CHRYSLER_RAM_ADDR_CHECK_LEN (sizeof(chrysler_ram_addr_checks) / sizeof(chrysler_ram_addr_checks[0]))
+
 addr_checks chrysler_rx_checks = {chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
+
+const uint32_t CHRYSLER_PARAM_RAM = 1U;  // set for Ram trucks
+
+bool chrysler_ram = false;
 
 static uint32_t chrysler_get_checksum(CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1U;
@@ -93,7 +110,7 @@ static uint32_t chrysler_compute_checksum(CANPacket_t *to_push) {
 }
 
 static uint8_t chrysler_get_counter(CANPacket_t *to_push) {
-  // Well defined counter only for 8 bytes messages
+  // defined only for 8 bytes messages
   return (uint8_t)(GET_BYTE(to_push, 6) >> 4);
 }
 
@@ -103,11 +120,12 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
                                  chrysler_get_checksum, chrysler_compute_checksum,
                                  chrysler_get_counter);
 
-  if (valid) {
-    int bus = GET_BUS(to_push);
-    int addr = GET_ADDR(to_push);
+  const int bus = GET_BUS(to_push);
+  const int addr = GET_ADDR(to_push);
 
-    // Measured eps torque
+  if (valid) {
+
+    // Measured EPS torque
     if ((bus == 0U) && ((addr == EPS_2) || (addr == EPS_2_RAM))) {
       int torque_meas_new = ((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5) - 1024U;
 
@@ -147,7 +165,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
       brake_pressed_prev = brake_pressed;
     }
 
-    generic_rx_checks((bus == 0U) && ((addr == LKAS_COMMAND) || (addr == LKAS_COMMAND_RAM) || (addr == LKAS_COMMAND_HD)));
+    generic_rx_checks((bus == 0U) && ((addr == LKAS_COMMAND) || (addr == LKAS_COMMAND_RAM)));
   }
   return valid;
 }
@@ -158,8 +176,10 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
-  if (!msg_allowed(to_send, CHRYSLER_TX_MSGS, sizeof(CHRYSLER_TX_MSGS) / sizeof(CHRYSLER_TX_MSGS[0]))) {
-    tx = 0;
+  if (chrysler_ram) {
+    tx = msg_allowed(to_send, CHRYSLER_RAM_TX_MSGS, sizeof(CHRYSLER_RAM_TX_MSGS) / sizeof(CHRYSLER_RAM_TX_MSGS[0]));
+  } else {
+    tx = msg_allowed(to_send, CHRYSLER_TX_MSGS, sizeof(CHRYSLER_TX_MSGS) / sizeof(CHRYSLER_TX_MSGS[0]));
   }
 
   // LKA STEER Chrysler/Jeep
@@ -209,7 +229,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // LKA STEER Ram
-  if ((addr == LKAS_COMMAND_RAM) ||(addr == LKAS_COMMAND_HD)) {
+  if (addr == LKAS_COMMAND_RAM) {
     int desired_torque = ((GET_BYTE(to_send, 1) & 0x7U) << 8) + GET_BYTE(to_send, 2) - 1024U;
     uint32_t ts = microsecond_timer_get();
     bool violation = 0;
@@ -254,10 +274,8 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     }
   }
 
-
-
   // FORCE CANCEL: only the cancel button press is allowed
-  if ((addr == Cruise_Control_Buttons) || (addr == Cruise_Control_Buttons_RAM) || (addr == Cruise_Control_Buttons_HD)) {
+  if ((addr == Cruise_Control_Buttons) || (addr == Cruise_Control_Buttons_RAM)) {
     if ((GET_BYTE(to_send, 0) != 1U) || ((GET_BYTE(to_send, 1) & 1U) == 1U)) {
       tx = 0;
     }
@@ -271,15 +289,14 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
   int addr = GET_ADDR(to_fwd);
 
-  // forward CAN 0 -> 2 so stock LKAS camera sees messages
-  if (bus_num == 0U && (addr != Center_Stack_2_RAM)) {//Ram and HD share the same
+  // forward to camera
+  if (bus_num == 0U && (addr != Center_Stack_2_RAM)) {
     bus_fwd = 2;
   }
 
   // forward all messages from camera except LKAS_COMMAND and LKAS_HUD
   if ((bus_num == 2U) && (addr != LKAS_COMMAND) && (addr != DAS_6)
-    && (addr != LKAS_COMMAND_RAM) && (addr != DAS_6_RAM)
-    && (addr != LKAS_COMMAND_HD) && (addr != DAS_6_HD)){
+    && (addr != LKAS_COMMAND_RAM) && (addr != DAS_6_RAM)){
     bus_fwd = 0;
   }
 
@@ -287,9 +304,14 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 }
 
 static const addr_checks* chrysler_init(uint16_t param) {
-  UNUSED(param);
-  controls_allowed = false;
-  relay_malfunction_reset();
+  chrysler_ram = GET_FLAG(param, CHRYSLER_PARAM_RAM);
+
+  if (chrysler_ram) {
+    chrysler_rx_checks = (addr_checks){chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
+  } else {
+    chrysler_rx_checks = (addr_checks){chrysler_ram_addr_checks, CHRYSLER_RAM_ADDR_CHECK_LEN};
+  }
+
   return &chrysler_rx_checks;
 }
 

@@ -71,5 +71,27 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
       self.assertEqual(cancel, self._tx(self._button_msg(cancel)))
 
 
+class TestChryslerRamSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafetyTest):
+  TX_MSGS = [[571, 0], [658, 0], [678, 0]]
+  STANDSTILL_THRESHOLD = 0
+  RELAY_MALFUNCTION_ADDR = 0x292
+  RELAY_MALFUNCTION_BUS = 0
+  FWD_BLACKLISTED_ADDRS = {2: [658, 678]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  MAX_RATE_UP = 12
+  MAX_RATE_DOWN = 12
+  MAX_TORQUE = 363
+  MAX_RT_DELTA = 182
+  RT_INTERVAL = 250000
+  MAX_TORQUE_ERROR = 80
+
+  def setUp(self):
+    self.packer = CANPackerPanda("chrysler_ram_1500")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM)
+    self.safety.init_tests()
+
+
 if __name__ == "__main__":
   unittest.main()
