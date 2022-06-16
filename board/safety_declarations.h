@@ -69,7 +69,8 @@ bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
 bool get_longitudinal_allowed(void);
 bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 float interpolate(struct lookup_t xy, float x);
-void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]);
+void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]);
+void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]);
 bool msg_allowed(CANPacket_t *to_send, const CanMsg msg_list[], int len);
 int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], const int len);
 void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter);
@@ -77,14 +78,14 @@ void update_addr_timestamp(AddrCheckStruct addr_list[], int index);
 bool is_msg_valid(AddrCheckStruct addr_list[], int index);
 bool addr_safety_check(CANPacket_t *to_push,
                        const addr_checks *rx_checks,
-                       uint8_t (*get_checksum)(CANPacket_t *to_push),
-                       uint8_t (*compute_checksum)(CANPacket_t *to_push),
+                       uint32_t (*get_checksum)(CANPacket_t *to_push),
+                       uint32_t (*compute_checksum)(CANPacket_t *to_push),
                        uint8_t (*get_counter)(CANPacket_t *to_push));
 void generic_rx_checks(bool stock_ecu_detected);
 void relay_malfunction_set(void);
 void relay_malfunction_reset(void);
 
-typedef const addr_checks* (*safety_hook_init)(uint32_t param);
+typedef const addr_checks* (*safety_hook_init)(uint16_t param);
 typedef int (*rx_hook)(CANPacket_t *to_push);
 typedef int (*tx_hook)(CANPacket_t *to_send, bool longitudinal_allowed);
 typedef int (*tx_lin_hook)(int lin_num, uint8_t *data, int len);

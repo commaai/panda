@@ -189,10 +189,8 @@ static int nissan_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return bus_fwd;
 }
 
-static const addr_checks* nissan_init(uint32_t param) {
-  controls_allowed = 0;
+static const addr_checks* nissan_init(uint16_t param) {
   nissan_alt_eps = param ? 1 : 0;
-  relay_malfunction_reset();
   return &nissan_rx_checks;
 }
 

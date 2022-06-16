@@ -31,10 +31,8 @@ static int body_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   return tx;
 }
 
-static const addr_checks* body_init(uint32_t param) {
+static const addr_checks* body_init(uint16_t param) {
   UNUSED(param);
-  controls_allowed = false;
-  relay_malfunction_reset();
   return &body_rx_checks;
 }
 

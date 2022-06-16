@@ -69,12 +69,12 @@ enum {HONDA_NIDEC, HONDA_BOSCH} honda_hw = HONDA_NIDEC;
 addr_checks honda_rx_checks = {honda_nidec_addr_checks, HONDA_NIDEC_ADDR_CHECKS_LEN};
 
 
-static uint8_t honda_get_checksum(CANPacket_t *to_push) {
+static uint32_t honda_get_checksum(CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1U;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte)) & 0xFU;
 }
 
-static uint8_t honda_compute_checksum(CANPacket_t *to_push) {
+static uint32_t honda_compute_checksum(CANPacket_t *to_push) {
   int len = GET_LEN(to_push);
   uint8_t checksum = 0U;
   unsigned int addr = GET_ADDR(to_push);
@@ -88,7 +88,7 @@ static uint8_t honda_compute_checksum(CANPacket_t *to_push) {
       checksum -= (byte & 0xFU);  // remove checksum in message
     }
   }
-  return (8U - checksum) & 0xFU;
+  return (uint8_t)((8U - checksum) & 0xFU);
 }
 
 static uint8_t honda_get_counter(CANPacket_t *to_push) {
@@ -101,10 +101,13 @@ static int honda_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &honda_rx_checks,
                                  honda_get_checksum, honda_compute_checksum, honda_get_counter);
 
-  const bool pcm_cruise = ((honda_hw == HONDA_BOSCH) && !honda_bosch_long) || \
-                          ((honda_hw == HONDA_NIDEC) && !gas_interceptor_detected);
-
   if (valid) {
+    const bool pcm_cruise = ((honda_hw == HONDA_BOSCH) && !honda_bosch_long) || \
+                            ((honda_hw == HONDA_NIDEC) && !gas_interceptor_detected);
+
+    int bus_rdr_car = (honda_hw == HONDA_BOSCH) ? 0 : 2;  // radar bus, car side
+    int pt_bus = (honda_hw == HONDA_BOSCH) ? 1 : 0;
+
     int addr = GET_ADDR(to_push);
     int len = GET_LEN(to_push);
     int bus = GET_BUS(to_push);
@@ -142,7 +145,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
 
     // state machine to enter and exit controls for button enabling
     // 0x1A6 for the ILX, 0x296 for the Civic Touring
-    if (((addr == 0x1A6) || (addr == 0x296))) {
+    if (((addr == 0x1A6) || (addr == 0x296)) && (bus == pt_bus)) {
       int button = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
 
       // exit controls once main or cancel are pressed
@@ -211,8 +214,6 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     }
 
     bool stock_ecu_detected = false;
-    int bus_rdr_car = (honda_hw == HONDA_BOSCH) ? 0 : 2;  // radar bus, car side
-    int pt_bus = (honda_hw == HONDA_BOSCH) ? 1 : 0;
 
     if (safety_mode_cnt > RELAY_TRNS_TIMEOUT) {
       // If steering controls messages are received on the destination bus, it's an indication
@@ -362,9 +363,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   return tx;
 }
 
-static const addr_checks* honda_nidec_init(uint32_t param) {
-  controls_allowed = false;
-  relay_malfunction_reset();
+static const addr_checks* honda_nidec_init(uint16_t param) {
   gas_interceptor_detected = 0;
   honda_hw = HONDA_NIDEC;
   honda_alt_brake_msg = false;
@@ -378,9 +377,7 @@ static const addr_checks* honda_nidec_init(uint32_t param) {
   return &honda_rx_checks;
 }
 
-static const addr_checks* honda_bosch_init(uint32_t param) {
-  controls_allowed = false;
-  relay_malfunction_reset();
+static const addr_checks* honda_bosch_init(uint16_t param) {
   honda_hw = HONDA_BOSCH;
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE);

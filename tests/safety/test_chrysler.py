@@ -5,7 +5,8 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
-class TestChryslerSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest):
+
+class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafetyTest):
   TX_MSGS = [[571, 0], [658, 0], [678, 0]]
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 0x292
@@ -61,7 +62,7 @@ class TestChryslerSafety(common.PandaSafetyTest, common.TorqueSteeringSafetyTest
     self.__class__.cnt_torque_meas += 1
     return self.packer.make_can_msg_panda("EPS_STATUS", 0, values)
 
-  def _torque_msg(self, torque):
+  def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKAS_STEERING_TORQUE": torque}
     return self.packer.make_can_msg_panda("LKAS_COMMAND", 0, values)
 

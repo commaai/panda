@@ -1,24 +1,15 @@
 #!/usr/bin/env python3
 import unittest
 from typing import Dict, List
-import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, ALTERNATIVE_EXPERIENCE
 
-MAX_RATE_UP = 7
-MAX_RATE_DOWN = 17
-MAX_STEER = 300
 MAX_BRAKE = 350
 MAX_GAS = 3072
 MAX_REGEN = 1404
 
-MAX_RT_DELTA = 128
-RT_INTERVAL = 250000
-
-DRIVER_TORQUE_ALLOWANCE = 50
-DRIVER_TORQUE_FACTOR = 4
 
 class Buttons:
   UNPRESS = 1
@@ -26,7 +17,8 @@ class Buttons:
   DECEL_SET = 3
   CANCEL = 6
 
-class TestGmSafety(common.PandaSafetyTest):
+
+class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
              [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
              [789, 2],  # ch bus
@@ -36,6 +28,14 @@ class TestGmSafety(common.PandaSafetyTest):
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
+
+  MAX_RATE_UP = 7
+  MAX_RATE_DOWN = 17
+  MAX_TORQUE = 300
+  MAX_RT_DELTA = 128
+  RT_INTERVAL = 250000
+  DRIVER_TORQUE_ALLOWANCE = 50
+  DRIVER_TORQUE_FACTOR = 4
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -66,8 +66,9 @@ class TestGmSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("ASCMSteeringButton", 0, values)
 
   def _user_brake_msg(self, brake):
-    values = {"Brake_Pressed": 1 if brake else 0}
-    return self.packer.make_can_msg_panda("ECMEngineStatus", 0, values)
+    # GM safety has a brake threshold of 10
+    values = {"BrakePedalPosition": 10 if brake else 0}
+    return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
 
   def _user_gas_msg(self, gas):
     values = {"AcceleratorPedal2": 1 if gas else 0}
@@ -81,15 +82,11 @@ class TestGmSafety(common.PandaSafetyTest):
     values = {"GasRegenCmd": gas}
     return self.packer.make_can_msg_panda("ASCMGasRegenCmd", 0, values)
 
-  def _set_prev_torque(self, t):
-    self.safety.set_desired_torque_last(t)
-    self.safety.set_rt_torque_last(t)
-
   def _torque_driver_msg(self, torque):
     values = {"LKADriverAppldTrq": torque}
     return self.packer.make_can_msg_panda("PSCMStatus", 0, values)
 
-  def _torque_msg(self, torque):
+  def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKASteeringCmd": torque}
     return self.packer.make_can_msg_panda("ASCMLKASteeringCmd", 0, values)
 
@@ -131,92 +128,6 @@ class TestGmSafety(common.PandaSafetyTest):
         else:
           self.assertTrue(self._tx(self._send_gas_msg(g)))
 
-  def test_steer_safety_check(self):
-    for enabled in [0, 1]:
-      for t in range(-0x200, 0x200):
-        self.safety.set_controls_allowed(enabled)
-        self._set_prev_torque(t)
-        if abs(t) > MAX_STEER or (not enabled and abs(t) > 0):
-          self.assertFalse(self._tx(self._torque_msg(t)))
-        else:
-          self.assertTrue(self._tx(self._torque_msg(t)))
-
-  def test_non_realtime_limit_up(self):
-    self.safety.set_torque_driver(0, 0)
-    self.safety.set_controls_allowed(True)
-
-    self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_msg(MAX_RATE_UP)))
-    self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_msg(-MAX_RATE_UP)))
-
-    self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_msg(MAX_RATE_UP + 1)))
-    self.safety.set_controls_allowed(True)
-    self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_msg(-MAX_RATE_UP - 1)))
-
-  def test_non_realtime_limit_down(self):
-    self.safety.set_torque_driver(0, 0)
-    self.safety.set_controls_allowed(True)
-
-  def test_against_torque_driver(self):
-    self.safety.set_controls_allowed(True)
-
-    for sign in [-1, 1]:
-      for t in np.arange(0, DRIVER_TORQUE_ALLOWANCE + 1, 1):
-        t *= -sign
-        self.safety.set_torque_driver(t, t)
-        self._set_prev_torque(MAX_STEER * sign)
-        self.assertTrue(self._tx(self._torque_msg(MAX_STEER * sign)))
-
-      self.safety.set_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self._tx(self._torque_msg(-MAX_STEER)))
-
-    # spot check some individual cases
-    for sign in [-1, 1]:
-      driver_torque = (DRIVER_TORQUE_ALLOWANCE + 10) * sign
-      torque_desired = (MAX_STEER - 10 * DRIVER_TORQUE_FACTOR) * sign
-      delta = 1 * sign
-      self._set_prev_torque(torque_desired)
-      self.safety.set_torque_driver(-driver_torque, -driver_torque)
-      self.assertTrue(self._tx(self._torque_msg(torque_desired)))
-      self._set_prev_torque(torque_desired + delta)
-      self.safety.set_torque_driver(-driver_torque, -driver_torque)
-      self.assertFalse(self._tx(self._torque_msg(torque_desired + delta)))
-
-      self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
-      self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self._tx(self._torque_msg(0)))
-      self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertFalse(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
-
-  def test_realtime_limits(self):
-    self.safety.set_controls_allowed(True)
-
-    for sign in [-1, 1]:
-      self.safety.init_tests()
-      self._set_prev_torque(0)
-      self.safety.set_torque_driver(0, 0)
-      for t in np.arange(0, MAX_RT_DELTA, 1):
-        t *= sign
-        self.assertTrue(self._tx(self._torque_msg(t)))
-      self.assertFalse(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
-
-      self._set_prev_torque(0)
-      for t in np.arange(0, MAX_RT_DELTA, 1):
-        t *= sign
-        self.assertTrue(self._tx(self._torque_msg(t)))
-
-      # Increase timer to update rt_torque_last
-      self.safety.set_timer(RT_INTERVAL + 1)
-      self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
-      self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
-
   def test_tx_hook_on_pedal_pressed(self):
     for pedal in ['brake', 'gas']:
       if pedal == 'brake':
@@ -229,13 +140,13 @@ class TestGmSafety(common.PandaSafetyTest):
 
       self.safety.set_controls_allowed(1)
       self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
-      self.assertFalse(self._tx(self._torque_msg(MAX_RATE_UP)))
+      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_RATE_UP)))
       self.assertFalse(self._tx(self._send_gas_msg(MAX_GAS)))
 
       # reset status
       self.safety.set_controls_allowed(0)
       self._tx(self._send_brake_msg(0))
-      self._tx(self._torque_msg(0))
+      self._tx(self._torque_cmd_msg(0))
       if pedal == 'brake':
         self._rx(self._speed_msg(0))
         self._rx(self._user_brake_msg(0))
@@ -257,7 +168,7 @@ class TestGmSafety(common.PandaSafetyTest):
 
       # Test we allow lateral on gas press, but never longitudinal
       self.safety.set_controls_allowed(1)
-      self.assertEqual(allow_ctrl, self._tx(self._torque_msg(MAX_RATE_UP)))
+      self.assertEqual(allow_ctrl, self._tx(self._torque_cmd_msg(self.MAX_RATE_UP)))
       self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
       self.assertFalse(self._tx(self._send_gas_msg(MAX_GAS)))
 
