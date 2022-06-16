@@ -52,7 +52,7 @@ int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_
 
 // the EPS faults when the steering angle rate is above a certain threshold for too long. to prevent this,
 // we allow setting STEER_REQUEST bit to 0 while maintaining the request torque value for a single frame
-// every TOYOTA_MAX_STEER_RATE_FRAMES frames.
+// every TOYOTA_MIN_VALID_STEERING_FRAMES frames.
 const uint8_t TOYOTA_MIN_VALID_STEERING_FRAMES = 19U;
 uint8_t toyota_valid_steering_frame_count;  // counter for steer request bit matching non-zero torque
 
@@ -252,13 +252,13 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       // allow setting STEER_REQUEST bit low for a single frame to prevent EPS faults
       bool steer_req_mismatch = (desired_torque != 0) && !steer_req;
       if (!steer_req_mismatch) {
-        toyota_steer_req_matches = MIN(toyota_steer_req_matches + 1U, 255U);
+        toyota_valid_steering_frame_count = MIN(toyota_valid_steering_frame_count + 1U, 255U);
       } else {
         // disallow torque cut if not enough recent matching steer_req messages
-        if (toyota_steer_req_matches < (TOYOTA_MAX_STEER_RATE_FRAMES - 1U)) {
+        if (toyota_valid_steering_frame_count < (TOYOTA_MIN_VALID_STEERING_FRAMES - 1U)) {
           violation = 1;
         }
-        toyota_steer_req_matches = 0U;
+        toyota_valid_steering_frame_count = 0U;
       }
 
       // no torque if controls is not allowed
@@ -268,7 +268,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
       // reset to 0 if either controls is not allowed or there's a violation
       if (violation || !controls_allowed) {
-        toyota_steer_req_matches = 0U;
+        toyota_valid_steering_frame_count = 0U;
         desired_torque_last = 0;
         rt_torque_last = 0;
         ts_last = ts;
@@ -285,7 +285,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
 static const addr_checks* toyota_init(uint16_t param) {
   gas_interceptor_detected = 0;
-  toyota_steer_req_matches = 0U;
+  toyota_valid_steering_frame_count = 0U;
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
