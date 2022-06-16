@@ -37,8 +37,8 @@ AddrCheckStruct volkswagen_mqb_addr_checks[] = {
 addr_checks volkswagen_mqb_rx_checks = {volkswagen_mqb_addr_checks, VOLKSWAGEN_MQB_ADDR_CHECKS_LEN};
 
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
-const uint16_t VOLKSWAGEN_PARAM_LONG = 1;
-bool volkswagen_longitudinal = false;
+const uint16_t VOLKSWAGEN_MQB_PARAM_LONG = 1;
+bool volkswagen_mqb_longitudinal = false;
 
 
 static uint32_t volkswagen_mqb_get_checksum(CANPacket_t *to_push) {
@@ -89,7 +89,7 @@ static const addr_checks* volkswagen_mqb_init(uint16_t param) {
   UNUSED(param);
 
 #ifdef ALLOW_DEBUG
-  volkswagen_longitudinal = GET_FLAG(param, VOLKSWAGEN_PARAM_LONG);
+  volkswagen_mqb_longitudinal = GET_FLAG(param, VOLKSWAGEN_MQB_PARAM_LONG);
 #endif
   gen_crc_lookup_table_8(0x2F, volkswagen_crc8_lut_8h2f);
   return &volkswagen_mqb_rx_checks;
@@ -126,7 +126,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    if (volkswagen_longitudinal) {
+    if (volkswagen_mqb_longitudinal) {
       if (addr == MSG_GRA_ACC_01) {
         // Exit controls on Cancel, otherwise, enter controls on Set or Resume
         // Signal: GRA_ACC_01.GRA_Tip_Setzen
@@ -176,7 +176,7 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send, bool longitudinal_allowe
   int addr = GET_ADDR(to_send);
   int tx = 1;
 
-  if (volkswagen_longitudinal) {
+  if (volkswagen_mqb_longitudinal) {
     tx = msg_allowed(to_send, VOLKSWAGEN_MQB_LONG_TX_MSGS, sizeof(VOLKSWAGEN_MQB_LONG_TX_MSGS) / sizeof(VOLKSWAGEN_MQB_LONG_TX_MSGS[0]));
   } else {
     tx = msg_allowed(to_send, VOLKSWAGEN_MQB_STOCK_TX_MSGS, sizeof(VOLKSWAGEN_MQB_STOCK_TX_MSGS) / sizeof(VOLKSWAGEN_MQB_STOCK_TX_MSGS[0]));
@@ -292,7 +292,7 @@ static int volkswagen_mqb_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
       if ((addr == MSG_HCA_01) || (addr == MSG_LDW_02)) {
         // openpilot takes over LKAS steering control and related HUD messages from the camera
         bus_fwd = -1;
-      } else if (volkswagen_longitudinal && ((addr == MSG_ACC_02) || (addr == MSG_ACC_04) ||
+      } else if (volkswagen_mqb_longitudinal && ((addr == MSG_ACC_02) || (addr == MSG_ACC_04) ||
                                              (addr == MSG_ACC_06) || (addr == MSG_ACC_07))) {
         // openpilot takes over acceleration/braking control and related HUD messages from the stock ACC radar
         bus_fwd = -1;
