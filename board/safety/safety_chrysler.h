@@ -104,7 +104,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // exit controls on rising edge of brake press
     if (addr == 320) {
-      brake_pressed = ((GET_BYTE(to_push, 0U) & 0xf) >> 2) == 1U;
+      brake_pressed = ((GET_BYTE(to_push, 0U) & 0xFU) >> 2U) == 1U;
     }
 
     generic_rx_checks((addr == 0x292));
