@@ -153,16 +153,12 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // exit controls on rising edge of gas press
     if ((bus == 0U) && ((addr == ECM_5) || (addr == ECM_5_RAM))) {
-      gas_pressed = (((GET_BYTE(to_push, 0) & 0x7FU)*0.4) >45) && ((int)vehicle_speed > CHRYSLER_GAS_THRSLD);
+      gas_pressed = GET_BYTE(to_push, 0U) != 0U;
     }
 
     // exit controls on rising edge of brake press
     if ((bus == 0U) && ((addr == ESP_1) || (addr == ESP_1_RAM))) {
-      brake_pressed = (GET_BYTE(to_push, 0) & 0xCU) == 0x4U;
-      if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
-        controls_allowed = 0;
-      }
-      brake_pressed_prev = brake_pressed;
+      brake_pressed = ((GET_BYTE(to_push, 0U) & 0xFU) >> 2U) == 1U;
     }
 
     generic_rx_checks((bus == 0U) && ((addr == LKAS_COMMAND) || (addr == LKAS_COMMAND_RAM)));
