@@ -204,7 +204,7 @@ class HondaBase(common.PandaSafetyTest):
   MAX_BRAKE: float = 255
   PT_BUS: Optional[int] = None  # must be set when inherited
   STEER_BUS: Optional[int] = None  # must be set when inherited
-  BUTTONS_BUS: Optional[int] = None  # must be set when inherited, usually PT_BUS
+  BUTTONS_BUS: Optional[int] = None  # must be set when inherited, tx on this bus, rx on PT_BUS
 
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 0xE4
@@ -572,7 +572,7 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
 class TestHondaBoschRadarless(HondaPcmEnableBase, TestHondaBoschSafetyBase):
   PT_BUS = 0
   STEER_BUS = 0
-  BUTTONS_BUS = 2  # camera controls ACC, so send buttons on bus 2
+  BUTTONS_BUS = 2  # camera controls ACC, need to send buttons on bus 2
 
   TX_MSGS = [[0xE4, 0], [0x296, 2], [0x33D, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
