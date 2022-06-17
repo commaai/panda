@@ -111,8 +111,6 @@ static int honda_rx_hook(CANPacket_t *to_push) {
   if (valid) {
     const bool pcm_cruise = ((honda_hw == HONDA_BOSCH) && !honda_bosch_long) || \
                             ((honda_hw == HONDA_NIDEC) && !gas_interceptor_detected);
-
-    int bus_rdr_car = (honda_hw == HONDA_BOSCH) ? 0 : 2;  // radar bus, car side
     int pt_bus = honda_get_pt_bus();
 
     int addr = GET_ADDR(to_push);
@@ -220,6 +218,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
       }
     }
 
+    int bus_rdr_car = (honda_hw == HONDA_BOSCH) ? 0 : 2;  // radar bus, car side
     bool stock_ecu_detected = false;
 
     if (safety_mode_cnt > RELAY_TRNS_TIMEOUT) {
