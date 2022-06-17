@@ -99,7 +99,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // exit controls on rising edge of gas press
     if (addr == 559) {
-      gas_pressed = GET_BYTE(to_push, 0) != 0U;
+      gas_pressed = GET_BYTE(to_push, 0U) != 0U;
     }
 
     // exit controls on rising edge of brake press
