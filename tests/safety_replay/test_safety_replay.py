@@ -4,6 +4,7 @@ import os
 import requests
 
 from panda import Panda
+from panda.python import ALTERNATIVE_EXPERIENCE as ALT_EXP
 from panda.tests.safety_replay.replay_drive import replay_drive
 from tools.lib.logreader import LogReader  # pylint: disable=import-error
 
@@ -25,6 +26,8 @@ logs = [
   ReplayRoute("5ab784f361e19b78_2020-06-08--16-30-41.bz2", Panda.SAFETY_SUBARU_LEGACY),     # SUBARU.OUTBACK
   ReplayRoute("bb50caf5f0945ab1|2021-06-19--17-20-18.bz2", Panda.SAFETY_TESLA),             # TESLA.AP2_MODELS
   ReplayRoute("bd6a637565e91581_2021-10-29--22-18-31--1--rlog.bz2", Panda.SAFETY_MAZDA),    # MAZDA.CX9_2021
+  # HONDA.CIVIC_2022
+  ReplayRoute("1a5d045d2c531a6d_2022-06-07--22-03-00--1--rlog.bz2", Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS, ALT_EXP.DISABLE_DISENGAGE_ON_GAS),
 ]
 
 
