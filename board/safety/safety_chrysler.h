@@ -4,14 +4,13 @@ const uint32_t CHRYSLER_RT_INTERVAL = 250000; // 250ms between real time checks
 const int CHRYSLER_MAX_RATE_UP = 3;           // Must be double of limits set in op
 const int CHRYSLER_MAX_RATE_DOWN = 3;         // Must be double of limits set in op
 const int CHRYSLER_MAX_TORQUE_ERROR = 80;     // max torque cmd in excess of torque motor
-const int CHRYSLER_GAS_THRSLD = 7.7;          // 7% more than 2m/s changed from wheel rpm to km/h
 const int CHRYSLER_STANDSTILL_THRSLD = 3.6;   // about 1m/s changed from wheel rpm to km/h
 
-const int RAM_MAX_STEER = 363;
-const int RAM_MAX_RT_DELTA = 182;             // since 2 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
-const int RAM_MAX_RATE_UP = 14;               //Must be double of limits set in op
-const int RAM_MAX_RATE_DOWN = 14;             //Must be double of limits set in op
-const int RAM_MAX_TORQUE_ERROR = 400;         // since 2 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
+const int CHRYSLER_RAM_MAX_STEER = 363;
+const int CHRYSLER_RAM_MAX_RT_DELTA = 182;             // since 2 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
+const int CHRYSLER_RAM_MAX_RATE_UP = 14;               //Must be double of limits set in op
+const int CHRYSLER_RAM_MAX_RATE_DOWN = 14;             //Must be double of limits set in op
+const int CHRYSLER_RAM_MAX_TORQUE_ERROR = 400;         // since 2 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
 
 
 // CAN messages for Chrysler/Jeep platforms
@@ -77,8 +76,8 @@ static uint32_t chrysler_get_checksum(CANPacket_t *to_push) {
 }
 
 static uint32_t chrysler_compute_checksum(CANPacket_t *to_push) {
-  /* This function does not want the checksum byte in the input data.
-  jeep chrysler canbus checksum from http://illmatics.com/Remote%20Car%20Hacking.pdf */
+  // TODO: clean this up
+  // http://illmatics.com/Remote%20Car%20Hacking.pdf
   uint8_t checksum = 0xFFU;
   int len = GET_LEN(to_push);
   for (int j = 0; j < (len - 1); j++) {
@@ -128,8 +127,6 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
     // Measured EPS torque
     if ((bus == 0U) && ((addr == EPS_2) || (addr == EPS_2_RAM))) {
       int torque_meas_new = ((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5) - 1024U;
-
-      // update array of samples
       update_sample(&torque_meas, torque_meas_new);
     }
 
@@ -178,72 +175,32 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     tx = msg_allowed(to_send, CHRYSLER_TX_MSGS, sizeof(CHRYSLER_TX_MSGS) / sizeof(CHRYSLER_TX_MSGS[0]));
   }
 
-  // LKA STEER Chrysler/Jeep
-  if (addr == LKAS_COMMAND) {
+  // STEERING
+  const int lkas_addr = chrysler_ram ? LKAS_COMMAND_RAM : LKAS_COMMAND;
+  if (tx && (addr == lkas_addr)) {
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1) - 1024U;
     uint32_t ts = microsecond_timer_get();
     bool violation = 0;
 
     if (controls_allowed) {
+      const int max_steer = chrysler_ram ? CHRYSLER_RAM_MAX_STEER : CHRYSLER_MAX_STEER;
+      const int max_rate_up = chrysler_ram ? CHRYSLER_RAM_MAX_RATE_UP : CHRYSLER_MAX_RATE_UP;
+      const int max_rate_down = chrysler_ram ? CHRYSLER_RAM_MAX_RATE_DOWN : CHRYSLER_MAX_RATE_DOWN;
+      const int max_torque_error = chrysler_ram ? CHRYSLER_RAM_MAX_TORQUE_ERROR : CHRYSLER_MAX_TORQUE_ERROR;
+      const int max_rt_delta = chrysler_ram ? CHRYSLER_RAM_MAX_RT_DELTA : CHRYSLER_MAX_RT_DELTA;
 
       // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, CHRYSLER_MAX_STEER, -CHRYSLER_MAX_STEER);
+      violation |= max_limit_check(desired_torque, max_steer, -max_steer);
 
       // *** torque rate limit check ***
       violation |= dist_to_meas_check(desired_torque, desired_torque_last,
-        &torque_meas, CHRYSLER_MAX_RATE_UP, CHRYSLER_MAX_RATE_DOWN, CHRYSLER_MAX_TORQUE_ERROR);
+        &torque_meas, max_rate_up, max_rate_down, max_torque_error);
 
       // used next time
       desired_torque_last = desired_torque;
 
       // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, CHRYSLER_MAX_RT_DELTA);
-
-      // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
-      if (ts_elapsed > CHRYSLER_RT_INTERVAL) {
-        rt_torque_last = desired_torque;
-        ts_last = ts;
-      }
-    }
-
-    // no torque if controls is not allowed
-    if (!controls_allowed && (desired_torque != 0)) {
-      violation = 1;
-    }
-
-    // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !controls_allowed) {
-      desired_torque_last = 0;
-      rt_torque_last = 0;
-      ts_last = ts;
-    }
-
-    if (violation) {
-      tx = 0;
-    }
-  }
-
-  // LKA STEER Ram
-  if (addr == LKAS_COMMAND_RAM) {
-    int desired_torque = ((GET_BYTE(to_send, 1) & 0x7U) << 8) + GET_BYTE(to_send, 2) - 1024U;
-    uint32_t ts = microsecond_timer_get();
-    bool violation = 0;
-
-    if (controls_allowed) {
-
-      // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, RAM_MAX_STEER, -RAM_MAX_STEER);
-
-      // *** torque rate limit check ***
-      //violation |= dist_to_meas_check(desired_torque, desired_torque_last,
-        //&torque_meas, RAM_MAX_RATE_UP, RAM_MAX_RATE_DOWN, RAM_MAX_TORQUE_ERROR);
-
-      // used next time
-      desired_torque_last = desired_torque;
-
-      // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, RAM_MAX_RT_DELTA);
+      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, max_rt_delta);
 
       // every RT_INTERVAL set the new limits
       uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
@@ -281,18 +238,18 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 }
 
 static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
-
   int bus_fwd = -1;
   int addr = GET_ADDR(to_fwd);
 
   // forward to camera
-  if (bus_num == 0U && (addr != Center_Stack_2_RAM)) {
+  if ((bus_num == 0U) && (addr != Center_Stack_2_RAM)) {
     bus_fwd = 2;
   }
 
-  // forward all messages from camera except LKAS_COMMAND and LKAS_HUD
-  if ((bus_num == 2U) && (addr != LKAS_COMMAND) && (addr != DAS_6)
-    && (addr != LKAS_COMMAND_RAM) && (addr != DAS_6_RAM)){
+  // forward all messages from camera except LKAS messages
+  const bool is_lkas = (addr == LKAS_COMMAND) || (addr == DAS_6) ||
+                       (addr == LKAS_COMMAND_RAM) || (addr == DAS_6_RAM);
+  if ((bus_num == 2U) && is_lkas){
     bus_fwd = 0;
   }
 
