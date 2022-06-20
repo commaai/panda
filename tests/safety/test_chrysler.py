@@ -40,7 +40,7 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
     values = {"ACC_Engaged": enable,
               "COUNTER": self.cnt_cruise % 16}
     self.__class__.cnt_cruise += 1
-    return self.packer.make_can_msg_panda("ACC_2", 0, values)
+    return self.packer.make_can_msg_panda("DAS_3", 0, values)
 
   def _speed_msg(self, speed):
     values = {"SPEED_LEFT": speed, "SPEED_RIGHT": speed}
