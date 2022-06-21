@@ -9,7 +9,9 @@
 
 #define DEEPSLEEP_WAKEUP_DELAY 3U
 
+#ifndef NULL
 #define NULL ((void*)0)
+#endif
 #define COMPILE_TIME_ASSERT(pred) ((void)sizeof(char[1 - (2 * ((int)(!(pred))))]))
 
 #define MIN(a,b) \
