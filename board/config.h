@@ -15,8 +15,20 @@
 #define MAX_CAN_MSGS_PER_BULK_TRANSFER 51U
 #define MAX_EP1_CHUNK_PER_BULK_TRANSFER 16256U // max data stream chunk in bytes, shouldn't be higher than 16320 or counter will overflow
 
+<<<<<<< HEAD
 // USB definitions
 #define USB_VID 0xBBAAU
+=======
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
+#define COMPILE_TIME_ASSERT(pred) ((void)sizeof(char[1 - (2 * ((int)(!(pred))))]))
+
+#define MIN(a,b) \
+ ({ __typeof__ (a) _a = (a); \
+     __typeof__ (b) _b = (b); \
+   (_a < _b) ? _a : _b; })
+>>>>>>> DAC POC
 
 #ifdef BOOTSTUB
   #define USB_PID 0xDDEEU

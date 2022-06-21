@@ -81,6 +81,9 @@ void common_init_gpio(void) {
 
   set_gpio_pullup(GPIOG, 10, PULL_NONE);
   set_gpio_alternate(GPIOG, 10, GPIO_AF2_FDCAN3);
+
+  // A4: DAC1 CH1
+  //set_gpio_mode(GPIOA, 4, MODE_ALTERNATE); // ?
 }
 
 void flasher_peripherals_init(void) {
@@ -105,6 +108,7 @@ void peripherals_init(void) {
   RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;  // fan pwm
   RCC->APB1LENR |= RCC_APB1LENR_TIM6EN;  // interrupt timer
   RCC->APB1LENR |= RCC_APB1LENR_UART7EN;  // SOM uart
+  RCC->APB1LENR |= RCC_APB1LENR_DAC12EN; // DAC
   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // clock source timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop
 

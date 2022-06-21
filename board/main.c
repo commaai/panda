@@ -304,6 +304,35 @@ void RTC_WKUP_IRQ_Handler(void) {
   }
 }
 
+#define PI 3.141593
+
+float power(float base, int exp) {
+  if(exp < 0) {
+    if(base == 0)
+      return -0;
+    return 1 / (base * power(base, (-exp) - 1));
+  }
+  if(exp == 0)
+    return 1;
+  if(exp == 1)
+    return base;
+  return base * power(base, exp - 1);
+}
+
+int fact(int n) {
+  return n <= 0 ? 1 : n * fact(n-1);
+}
+
+// make sure rad is between -PI and PI
+float sin(float rad) {
+    float sin = 0;
+
+    for(int i = 0; i < 7; i++) { // Taylor
+      sin += power(-1, i) * power(rad, 2 * i + 1) / fact(2 * i + 1);
+    }
+    return sin;
+}
+
 
 int main(void) {
   // Init interrupt table
@@ -405,14 +434,46 @@ int main(void) {
           delay((MAX_LED_FADE - fade) >> 4);
         }
 
-      #ifdef DEBUG_FAULTS
-      } else {
-          current_board->set_led(LED_RED, 1);
-          delay(512000U);
-          current_board->set_led(LED_RED, 0);
-          delay(512000U);
-        }
+      // Test DAC sine wave
+      #ifdef STM32H7
+
+      int32_t deg = ((int32_t) (((uint32_t) cnt) % 180) * 2) - 180;
+      dac_set((uint32_t) ((sin(deg * PI / 180.0f) + 1) * 1000U/2U));
+      // uint32_t short_count = (uint32_t) cnt;
+      // dac_set((uint32_t) ((sin(short_count * PI / 180.0) + 1)));
+
       #endif
+
+      // #ifdef DEBUG_FAULTS
+      // if(fault_status == FAULT_STATUS_NONE){
+      // #endif
+      //   uint32_t div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4U : 1U);
+
+      //   // useful for debugging, fade breaks = panda is overloaded
+      //   for(uint32_t fade = 0U; fade < MAX_LED_FADE; fade += div_mode){
+      //     current_board->set_led(LED_RED, true);
+      //     delay(fade >> 4);
+      //     current_board->set_led(LED_RED, false);
+      //     delay((MAX_LED_FADE - fade) >> 4);
+      //   }
+
+      //   for(uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= div_mode){
+      //     current_board->set_led(LED_RED, true);
+      //     delay(fade >> 4);
+      //     current_board->set_led(LED_RED, false);
+      //     delay((MAX_LED_FADE - fade) >> 4);
+      //   }
+
+      // #ifdef DEBUG_FAULTS
+      // } else {
+      //     current_board->set_led(LED_RED, 1);
+      //     delay(512000U);
+      //     current_board->set_led(LED_RED, 0);
+      //     delay(512000U);
+      //   }
+      // #endif
+
+
     } else {
       if (deepsleep_allowed && !usb_enumerated && !check_started() && ignition_seen && (heartbeat_counter > 20U)) {
         usb_soft_disconnect(true);
