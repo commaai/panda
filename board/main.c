@@ -437,7 +437,7 @@ int main(void) {
       // Test DAC sine wave
       #ifdef STM32H7
 
-      int32_t deg = ((int32_t) (((uint32_t) cnt) % 180) * 2) - 180;
+      int32_t deg = ((int32_t) (((uint32_t) cnt) % 45) * 8) - 180;
       dac_set((uint32_t) ((sin(deg * PI / 180.0f) + 1) * 1000U/2U));
       // uint32_t short_count = (uint32_t) cnt;
       // dac_set((uint32_t) ((sin(short_count * PI / 180.0) + 1)));
