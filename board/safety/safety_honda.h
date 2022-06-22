@@ -264,7 +264,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
-  // and the the latching controls_allowed flag is True
+  // and the latching controls_allowed flag is True
   int pedal_pressed = brake_pressed_prev && vehicle_moving;
   bool alt_exp_allow_gas = alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS;
   if (!alt_exp_allow_gas) {
