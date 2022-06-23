@@ -17,7 +17,7 @@ class TestHyundaiHDA2(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyT
 
   MAX_RATE_UP = 3
   MAX_RATE_DOWN = 7
-  MAX_TORQUE = 384
+  MAX_TORQUE = 270
 
   MAX_RT_DELTA = 112
   RT_INTERVAL = 250000
