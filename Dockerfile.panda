@@ -45,6 +45,8 @@ ENV LC_ALL en_US.UTF-8
 
 RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
+ENV OPENPILOT_REF="1b0167ce24afb037b36464c40f9c5e0d657e77d9"
+ENV OPENDBC_REF="e7cd3ebc893047bf6eb947c60d8e3196b506e8d3"
 
 COPY requirements.txt /tmp/
 RUN pyenv install 3.8.10 && \
@@ -63,8 +65,12 @@ RUN cd /tmp && \
     git clone https://github.com/commaai/openpilot.git tmppilot || true && \
     cd /tmp/tmppilot && \
     git fetch && \
-    git checkout 1b0167ce24afb037b36464c40f9c5e0d657e77d9 && \
+    git checkout $OPENPILOT_REF && \
     git submodule update --init cereal opendbc rednose_repo && \
+    git -C opendbc fetch && \
+    git -C opendbc checkout $OPENDBC_REF && \
+    git -C opendbc reset --hard HEAD && \
+    git -C opendbc clean -xfd && \
     mkdir /tmp/openpilot && \
     cp -pR SConstruct site_scons/ tools/ selfdrive/ system/ common/ cereal/ opendbc/ rednose/ third_party/ /tmp/openpilot && \
     rm -rf /tmp/tmppilot

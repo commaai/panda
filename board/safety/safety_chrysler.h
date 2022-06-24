@@ -132,7 +132,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // enter controls on rising edge of ACC, exit controls on ACC off
     if (((bus == 0U) && (addr == DAS_3)) || ((bus == 2) && ((addr == DAS_3) ||(addr == DAS_3_RAM)))) {
-      int cruise_engaged = (GET_BYTE(to_push, 2) & 0x20U) == 0x20U;
+      int cruise_engaged = GET_BIT(to_push, 21U) == 1U;
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
       }
