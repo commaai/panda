@@ -21,7 +21,7 @@ const int CHRYSLER_RAM_MAX_TORQUE_ERROR = 400;         // since 2 x the rate up 
 #define DAS_3                      500  // ACC engagement states from DASM
 #define DAS_6                      678  // LKAS HUD and auto headlight control from DASM
 #define LKAS_COMMAND               658  // LKAS controls from DASM
-#define Cruise_Control_Buttons     571  // Cruise control buttons
+#define CRUISE_BUTTONS             571  // Cruise control buttons
 
 // CAN messages for the 5th gen RAM DT platform
 #define EPS_2_RAM                   49  // EPS driver input torque
@@ -31,17 +31,17 @@ const int CHRYSLER_RAM_MAX_TORQUE_ERROR = 400;         // since 2 x the rate up 
 #define DAS_3_RAM                  153  // ACC engagement states from DASM
 #define DAS_6_RAM                  250  // LKAS HUD and auto headlight control from DASM
 #define LKAS_COMMAND_RAM           166  // LKAS controls from DASM
-#define Cruise_Control_Buttons_RAM 177  // Cruise control buttons
+#define CRUISE_BUTTONS_RAM         177  // Cruise control buttons
 #define Center_Stack_2_RAM         650  // Center Stack buttons
 
 const CanMsg CHRYSLER_TX_MSGS[] = {
-  {Cruise_Control_Buttons, 0, 3},
+  {CRUISE_BUTTONS, 0, 3},
   {LKAS_COMMAND, 0, 6},
   {DAS_6, 0, 8},
 };
 
 const CanMsg CHRYSLER_RAM_TX_MSGS[] = {
-  {Cruise_Control_Buttons_RAM, 2, 3},
+  {CRUISE_BUTTONS_RAM, 2, 3},
   {LKAS_COMMAND_RAM, 0, 8},
   {DAS_6_RAM, 0, 8},
 };
@@ -51,7 +51,7 @@ AddrCheckStruct chrysler_addr_checks[] = {
   {.msg = {{ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // brake pressed
   {.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // vehicle Speed
   {.msg = {{ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // gas pedal
-  {.msg = {{DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
+  {.msg = {{DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // cruise state
 };
 #define CHRYSLER_ADDR_CHECK_LEN (sizeof(chrysler_addr_checks) / sizeof(chrysler_addr_checks[0]))
 
@@ -60,7 +60,7 @@ AddrCheckStruct chrysler_ram_addr_checks[] = {
   {.msg = {{ESP_1_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // brake pressed
   {.msg = {{ESP_8_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // vehicle Speed
   {.msg = {{ECM_5_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // gas pedal
-  {.msg = {{DAS_3_RAM, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
+  {.msg = {{DAS_3_RAM, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // cruise state
 };
 #define CHRYSLER_RAM_ADDR_CHECK_LEN (sizeof(chrysler_ram_addr_checks) / sizeof(chrysler_ram_addr_checks[0]))
 
@@ -131,7 +131,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if (((bus == 0U) && (addr == DAS_3)) || ((bus == 2) && ((addr == DAS_3) ||(addr == DAS_3_RAM)))) {
+    if (((bus == 0U) && (addr == DAS_3)) || ((bus == 2) && (addr == DAS_3_RAM))) {
       int cruise_engaged = GET_BIT(to_push, 21U) == 1U;
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
@@ -168,8 +168,6 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
-
-  return 1;
 
   if (chrysler_ram) {
     tx = msg_allowed(to_send, CHRYSLER_RAM_TX_MSGS, sizeof(CHRYSLER_RAM_TX_MSGS) / sizeof(CHRYSLER_RAM_TX_MSGS[0]));
@@ -230,7 +228,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // FORCE CANCEL: only the cancel button press is allowed
-  if ((addr == Cruise_Control_Buttons) || (addr == Cruise_Control_Buttons_RAM)) {
+  if ((addr == CRUISE_BUTTONS) || (addr == CRUISE_BUTTONS_RAM)) {
     if ((GET_BYTE(to_send, 0) != 1U) || ((GET_BYTE(to_send, 1) & 1U) == 1U)) {
       tx = 0;
     }
@@ -244,13 +242,13 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int addr = GET_ADDR(to_fwd);
 
   // forward to camera
-  if ((bus_num == 0U) && (addr != Center_Stack_2_RAM)) {
+  if (bus_num == 0U) {
     bus_fwd = 2;
   }
 
   // forward all messages from camera except LKAS messages
-  const bool is_lkas = (addr == LKAS_COMMAND) || (addr == DAS_6) ||
-                       (addr == LKAS_COMMAND_RAM) || (addr == DAS_6_RAM);
+  const bool is_lkas = (!chrysler_ram && ((addr == LKAS_COMMAND) || (addr == DAS_6))) ||
+                       (chrysler_ram && ((addr == LKAS_COMMAND_RAM) || (addr == DAS_6_RAM)));
   if ((bus_num == 2U) && !is_lkas){
     bus_fwd = 0;
   }
@@ -262,9 +260,9 @@ static const addr_checks* chrysler_init(uint16_t param) {
   chrysler_ram = GET_FLAG(param, CHRYSLER_PARAM_RAM);
 
   if (chrysler_ram) {
-    chrysler_rx_checks = (addr_checks){chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
-  } else {
     chrysler_rx_checks = (addr_checks){chrysler_ram_addr_checks, CHRYSLER_RAM_ADDR_CHECK_LEN};
+  } else {
+    chrysler_rx_checks = (addr_checks){chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
   }
 
   return &chrysler_rx_checks;

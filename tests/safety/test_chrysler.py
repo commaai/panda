@@ -21,6 +21,8 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
   RT_INTERVAL = 250000
   MAX_TORQUE_ERROR = 80
 
+  DAS_BUS = 0
+
   cnt_torque_meas = 0
   cnt_gas = 0
   cnt_cruise = 0
@@ -33,21 +35,23 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
     self.safety.init_tests()
 
   def _button_msg(self, cancel):
-    values = {"ACC_CANCEL": cancel}
-    return self.packer.make_can_msg_panda("WHEEL_BUTTONS", 0, values)
+    values = {"ACC_Cancel": cancel}
+    return self.packer.make_can_msg_panda("CRUISE_BUTTONS", self.DAS_BUS, values)
 
   def _pcm_status_msg(self, enable):
-    values = {"ACC_ACTIVE": enable,
-              "COUNTER": self.cnt_cruise % 16}
+    values = {
+      "ACC_ACTIVE": enable,
+      "COUNTER": self.cnt_cruise % 0x10
+    }
     self.__class__.cnt_cruise += 1
-    return self.packer.make_can_msg_panda("DAS_3", 0, values)
+    return self.packer.make_can_msg_panda("DAS_3", self.DAS_BUS, values)
 
   def _speed_msg(self, speed):
     values = {"SPEED_LEFT": speed, "SPEED_RIGHT": speed}
     return self.packer.make_can_msg_panda("SPEED_1", 0, values)
 
   def _user_gas_msg(self, gas):
-    values = {"Accelerator_Position": gas, "COUNTER": self.cnt_gas % 16}
+    values = {"Accelerator_Position": gas, "COUNTER": self.cnt_gas % 0x10}
     self.__class__.cnt_gas += 1
     return self.packer.make_can_msg_panda("ECM_5", 0, values)
 
@@ -58,9 +62,9 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
     return self.packer.make_can_msg_panda("ESP_1", 0, values)
 
   def _torque_meas_msg(self, torque):
-    values = {"TORQUE_MOTOR": torque, "COUNTER": self.cnt_torque_meas % 16}
+    values = {"EPS_MOTOR_TORQUE": torque, "COUNTER": self.cnt_torque_meas % 0x10}
     self.__class__.cnt_torque_meas += 1
-    return self.packer.make_can_msg_panda("EPS_STATUS", 0, values)
+    return self.packer.make_can_msg_panda("EPS_2", 0, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKAS_STEERING_TORQUE": torque}
@@ -71,26 +75,33 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
       self.assertEqual(cancel, self._tx(self._button_msg(cancel)))
 
 
-class TestChryslerRamSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafetyTest):
+class TestChryslerRamSafety(TestChryslerSafety):
   TX_MSGS = [[571, 0], [658, 0], [678, 0]]
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 0x292
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [658, 678]}
+  FWD_BLACKLISTED_ADDRS = {2: [166, 250]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-  MAX_RATE_UP = 12
-  MAX_RATE_DOWN = 12
+  MAX_RATE_UP = 14
+  MAX_RATE_DOWN = 14
   MAX_TORQUE = 363
   MAX_RT_DELTA = 182
   RT_INTERVAL = 250000
-  MAX_TORQUE_ERROR = 80
+  MAX_TORQUE_ERROR = 400
+
+  DAS_BUS = 2
 
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_ram_1500")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM)
     self.safety.init_tests()
+
+  def _speed_msg(self, speed):
+    values = {"VEHICLE_SPEED": speed}
+    return self.packer.make_can_msg_panda("ESP_8", 0, values)
+
 
 
 if __name__ == "__main__":
