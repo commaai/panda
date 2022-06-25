@@ -169,6 +169,8 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
+  return 1;
+
   if (chrysler_ram) {
     tx = msg_allowed(to_send, CHRYSLER_RAM_TX_MSGS, sizeof(CHRYSLER_RAM_TX_MSGS) / sizeof(CHRYSLER_RAM_TX_MSGS[0]));
   } else {
@@ -249,7 +251,7 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   // forward all messages from camera except LKAS messages
   const bool is_lkas = (addr == LKAS_COMMAND) || (addr == DAS_6) ||
                        (addr == LKAS_COMMAND_RAM) || (addr == DAS_6_RAM);
-  if ((bus_num == 2U) && is_lkas){
+  if ((bus_num == 2U) && !is_lkas){
     bus_fwd = 0;
   }
 
