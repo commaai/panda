@@ -1,9 +1,9 @@
-const int HYUNDAI_HDA2_MAX_STEER = 150;
+const int HYUNDAI_HDA2_MAX_STEER = 270;
 const int HYUNDAI_HDA2_MAX_RT_DELTA = 112;          // max delta torque allowed for real time checks
 const uint32_t HYUNDAI_HDA2_RT_INTERVAL = 250000;   // 250ms between real time checks
 const int HYUNDAI_HDA2_MAX_RATE_UP = 3;
 const int HYUNDAI_HDA2_MAX_RATE_DOWN = 7;
-const int HYUNDAI_HDA2_DRIVER_TORQUE_ALLOWANCE = 50;
+const int HYUNDAI_HDA2_DRIVER_TORQUE_ALLOWANCE = 250;
 const int HYUNDAI_HDA2_DRIVER_TORQUE_FACTOR = 2;
 const uint32_t HYUNDAI_HDA2_STANDSTILL_THRSLD = 30;  // ~1kph
 

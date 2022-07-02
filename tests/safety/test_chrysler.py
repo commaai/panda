@@ -37,25 +37,25 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
     return self.packer.make_can_msg_panda("WHEEL_BUTTONS", 0, values)
 
   def _pcm_status_msg(self, enable):
-    values = {"ACC_STATUS_2": 0x7 if enable else 0,
+    values = {"ACC_ACTIVE": enable,
               "COUNTER": self.cnt_cruise % 16}
     self.__class__.cnt_cruise += 1
-    return self.packer.make_can_msg_panda("ACC_2", 0, values)
+    return self.packer.make_can_msg_panda("DAS_3", 0, values)
 
   def _speed_msg(self, speed):
     values = {"SPEED_LEFT": speed, "SPEED_RIGHT": speed}
     return self.packer.make_can_msg_panda("SPEED_1", 0, values)
 
   def _user_gas_msg(self, gas):
-    values = {"ACCEL_134": gas, "COUNTER": self.cnt_gas % 16}
+    values = {"Accelerator_Position": gas, "COUNTER": self.cnt_gas % 16}
     self.__class__.cnt_gas += 1
-    return self.packer.make_can_msg_panda("ACCEL_GAS_134", 0, values)
+    return self.packer.make_can_msg_panda("ECM_5", 0, values)
 
   def _user_brake_msg(self, brake):
-    values = {"BRAKE_PRESSED_2": 5 if brake else 0,
+    values = {"Brake_Pedal_State": 1 if brake else 0,
               "COUNTER": self.cnt_brake % 16}
     self.__class__.cnt_brake += 1
-    return self.packer.make_can_msg_panda("BRAKE_2", 0, values)
+    return self.packer.make_can_msg_panda("ESP_1", 0, values)
 
   def _torque_meas_msg(self, torque):
     values = {"TORQUE_MOTOR": torque, "COUNTER": self.cnt_torque_meas % 16}
