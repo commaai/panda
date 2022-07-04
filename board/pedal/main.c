@@ -97,6 +97,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
 #define CAN_GAS_SIZE 6
 #define COUNTER_CYCLE 0xFU
 
+#define XFORM_MODE_UNKNOWN 0U
+#define XFORM_MODE_NORMAL 1U
+#define XFORM_MODE_GM 2U
+uint16_t xform_mode = XFORM_MODE_UNKNOWN;
+
 void CAN1_TX_IRQ_Handler(void) {
   // clear interrupt
   CAN->TSR |= CAN_TSR_RQCP0;
@@ -241,12 +246,43 @@ void TIM3_IRQ_Handler(void) {
   }
 }
 
+// Scale values from the ADC to compensate for GM's unusual electrical characteristics
+uint32_t gm_transform_adc(uint32_t readVal) {
+  return ((readVal * 1545U) / 1000U) + 25U;
+}
+
 // ***************************** main code *****************************
 
 void pedal(void) {
   // read/write
-  pdl0 = adc_get(ADCCHAN_ACCEL0);
-  pdl1 = adc_get(ADCCHAN_ACCEL1);
+
+  // Detect installation in a GM vehicle and enable GM transform
+  // GM vehicles use a different internal resistance in the ECM, so ADC values are lower than actual.
+  // * If Channel 0 has a higher value than 1, it is most likely a GM car:
+  // * For completeness, also require the ADC value(s) to be unusually low (but greater than zero)
+  //   ch0 < 500 (should be 600+) or ch1 < 200 (should be 300+)
+  // If the conditions aren't met, latch into normal mode
+  if (xform_mode == XFORM_MODE_UNKNOWN) {
+    uint32_t raw_pdl0 = adc_get(ADCCHAN_ACCEL0);
+    uint32_t raw_pdl1 = adc_get(ADCCHAN_ACCEL1);
+    if ((raw_pdl0 > 0U) && (raw_pdl1 > 0U)) {
+      if ((raw_pdl0 > raw_pdl1) && ((raw_pdl0 < 500U) || (raw_pdl1 < 200U))) {
+        xform_mode = XFORM_MODE_GM;
+      }
+      else {
+        xform_mode = XFORM_MODE_NORMAL;
+      }
+    }
+  }
+
+  if (xform_mode == XFORM_MODE_GM) {
+    pdl0 = gm_transform_adc(adc_get(ADCCHAN_ACCEL0));
+    pdl1 = gm_transform_adc(adc_get(ADCCHAN_ACCEL1));
+  }
+  else {
+    pdl0 = adc_get(ADCCHAN_ACCEL0);
+    pdl1 = adc_get(ADCCHAN_ACCEL1);
+  }
 
   // write the pedal to the DAC
   if (state == NO_FAULT) {
