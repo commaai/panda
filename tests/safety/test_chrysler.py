@@ -21,11 +21,6 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
   RT_INTERVAL = 250000
   MAX_TORQUE_ERROR = 80
 
-  cnt_torque_meas = 0
-  cnt_gas = 0
-  cnt_cruise = 0
-  cnt_brake = 0
-
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid_generated")
     self.safety = libpandasafety_py.libpandasafety
@@ -38,7 +33,6 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
 
   def _pcm_status_msg(self, enable):
     values = {"ACC_ACTIVE": enable}
-    self.__class__.cnt_cruise += 1
     return self.packer.make_can_msg_panda("DAS_3", 0, values, counter=True)
 
   def _speed_msg(self, speed):
@@ -47,17 +41,14 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
 
   def _user_gas_msg(self, gas):
     values = {"Accelerator_Position": gas}
-    self.__class__.cnt_gas += 1
     return self.packer.make_can_msg_panda("ECM_5", 0, values, counter=True)
 
   def _user_brake_msg(self, brake):
     values = {"Brake_Pedal_State": 1 if brake else 0}
-    self.__class__.cnt_brake += 1
     return self.packer.make_can_msg_panda("ESP_1", 0, values, counter=True)
 
   def _torque_meas_msg(self, torque):
     values = {"EPS_TORQUE_MOTOR": torque}
-    self.__class__.cnt_torque_meas += 1
     return self.packer.make_can_msg_panda("EPS_2", 0, values, counter=True)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
