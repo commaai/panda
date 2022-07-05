@@ -27,47 +27,45 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
   cnt_brake = 0
 
   def setUp(self):
-    self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid")
+    self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid_generated")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, 0)
     self.safety.init_tests()
 
   def _button_msg(self, cancel):
-    values = {"ACC_CANCEL": cancel}
-    return self.packer.make_can_msg_panda("WHEEL_BUTTONS", 0, values)
+    values = {"ACC_Cancel": cancel}
+    return self.packer.make_can_msg_panda("CRUISE_BUTTONS", 0, values)
 
   def _pcm_status_msg(self, enable):
-    values = {"ACC_ACTIVE": enable,
-              "COUNTER": self.cnt_cruise % 16}
+    values = {"ACC_ACTIVE": enable}
     self.__class__.cnt_cruise += 1
-    return self.packer.make_can_msg_panda("DAS_3", 0, values)
+    return self.packer.make_can_msg_panda("DAS_3", 0, values, counter=True)
 
   def _speed_msg(self, speed):
     values = {"SPEED_LEFT": speed, "SPEED_RIGHT": speed}
     return self.packer.make_can_msg_panda("SPEED_1", 0, values)
 
   def _user_gas_msg(self, gas):
-    values = {"Accelerator_Position": gas, "COUNTER": self.cnt_gas % 16}
+    values = {"Accelerator_Position": gas}
     self.__class__.cnt_gas += 1
-    return self.packer.make_can_msg_panda("ECM_5", 0, values)
+    return self.packer.make_can_msg_panda("ECM_5", 0, values, counter=True)
 
   def _user_brake_msg(self, brake):
-    values = {"Brake_Pedal_State": 1 if brake else 0,
-              "COUNTER": self.cnt_brake % 16}
+    values = {"Brake_Pedal_State": 1 if brake else 0}
     self.__class__.cnt_brake += 1
-    return self.packer.make_can_msg_panda("ESP_1", 0, values)
+    return self.packer.make_can_msg_panda("ESP_1", 0, values, counter=True)
 
   def _torque_meas_msg(self, torque):
-    values = {"TORQUE_MOTOR": torque, "COUNTER": self.cnt_torque_meas % 16}
+    values = {"EPS_TORQUE_MOTOR": torque}
     self.__class__.cnt_torque_meas += 1
-    return self.packer.make_can_msg_panda("EPS_STATUS", 0, values)
+    return self.packer.make_can_msg_panda("EPS_2", 0, values, counter=True)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"LKAS_STEERING_TORQUE": torque}
+    values = {"STEERING_TORQUE": torque}
     return self.packer.make_can_msg_panda("LKAS_COMMAND", 0, values)
 
   def test_cancel_button(self):
-    for cancel in [True, False]:
+    for cancel in (True, False):
       self.assertEqual(cancel, self._tx(self._button_msg(cancel)))
 
 
