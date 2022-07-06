@@ -63,19 +63,16 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
 
 
 class TestChryslerRamSafety(TestChryslerSafety):
-  TX_MSGS = [[571, 0], [658, 0], [678, 0]]
-  STANDSTILL_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR = 0x292
-  RELAY_MALFUNCTION_BUS = 0
+  TX_MSGS = [[177, 2], [166, 0], [250, 0]]
+  STANDSTILL_THRESHOLD = 3
+  RELAY_MALFUNCTION_ADDR = 166
   FWD_BLACKLISTED_ADDRS = {2: [166, 250]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   MAX_RATE_UP = 14
   MAX_RATE_DOWN = 14
   MAX_TORQUE = 363
   MAX_RT_DELTA = 182
-  RT_INTERVAL = 250000
-  MAX_TORQUE_ERROR = 400
+  MAX_TORQUE_ERROR = 100
 
   DAS_BUS = 2
 
@@ -86,8 +83,8 @@ class TestChryslerRamSafety(TestChryslerSafety):
     self.safety.init_tests()
 
   def _speed_msg(self, speed):
-    values = {"VEHICLE_SPEED": speed}
-    return self.packer.make_can_msg_panda("ESP_8", 0, values)
+    values = {"Vehicle_Speed": speed}
+    return self.packer.make_can_msg_panda("ESP_8", 0, values, counter=True)
 
 
 

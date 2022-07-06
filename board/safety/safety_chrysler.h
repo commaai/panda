@@ -1,16 +1,16 @@
 const int CHRYSLER_MAX_STEER = 261;
-const int CHRYSLER_MAX_RT_DELTA = 112;        // max delta torque allowed for real time checks
-const uint32_t CHRYSLER_RT_INTERVAL = 250000; // 250ms between real time checks
-const int CHRYSLER_MAX_RATE_UP = 3;           // Must be double of limits set in op
-const int CHRYSLER_MAX_RATE_DOWN = 3;         // Must be double of limits set in op
-const int CHRYSLER_MAX_TORQUE_ERROR = 80;     // max torque cmd in excess of torque motor
-const int CHRYSLER_STANDSTILL_THRSLD = 3.6;   // about 1m/s changed from wheel rpm to km/h
+const int CHRYSLER_MAX_RT_DELTA = 112;         // max delta torque allowed for real time checks
+const uint32_t CHRYSLER_RT_INTERVAL = 250000;  // 250ms between real time checks
+const int CHRYSLER_MAX_RATE_UP = 3;            // Must be double of limits set in op
+const int CHRYSLER_MAX_RATE_DOWN = 3;          // Must be double of limits set in op
+const int CHRYSLER_MAX_TORQUE_ERROR = 80;      // max torque cmd in excess of torque motor
+const int CHRYSLER_STANDSTILL_THRSLD = 3;      // about 1m/s changed from wheel rpm to km/h
 
 const int CHRYSLER_RAM_MAX_STEER = 363;
 const int CHRYSLER_RAM_MAX_RT_DELTA = 182;             // since 2 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
-const int CHRYSLER_RAM_MAX_RATE_UP = 14;               //Must be double of limits set in op
-const int CHRYSLER_RAM_MAX_RATE_DOWN = 14;             //Must be double of limits set in op
-const int CHRYSLER_RAM_MAX_TORQUE_ERROR = 400;         // since 2 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
+const int CHRYSLER_RAM_MAX_RATE_UP = 14;               // Must be double of limits set in op
+const int CHRYSLER_RAM_MAX_RATE_DOWN = 14;             // Must be double of limits set in op
+const int CHRYSLER_RAM_MAX_TORQUE_ERROR = 100;         // since 2 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
 
 
 // CAN messages for Chrysler/Jeep platforms
@@ -49,7 +49,8 @@ const CanMsg CHRYSLER_RAM_TX_MSGS[] = {
 AddrCheckStruct chrysler_addr_checks[] = {
   {.msg = {{EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},  // EPS module
   {.msg = {{ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // brake pressed
-  {.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // vehicle Speed
+  //{.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // vehicle Speed
+  {.msg = {{514, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // gas pedal
   {.msg = {{DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // cruise state
 };
@@ -109,7 +110,6 @@ static uint32_t chrysler_compute_checksum(CANPacket_t *to_push) {
 }
 
 static uint8_t chrysler_get_counter(CANPacket_t *to_push) {
-  // defined only for 8 bytes messages
   return (uint8_t)(GET_BYTE(to_push, 6) >> 4);
 }
 
@@ -142,9 +142,16 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
       cruise_engaged_prev = cruise_engaged;
     }
 
+    // TODO: use the same message for both
     // update speed
-    if ((bus == 0U) && ((addr == ESP_8) || (addr == ESP_8_RAM))) {
+    if (chrysler_ram && (bus == 0U) && (addr == ESP_8_RAM)) {
       vehicle_speed = (((GET_BYTE(to_push, 4) & 0x3U) << 8) + GET_BYTE(to_push, 5))*0.0078125;
+      vehicle_moving = (int)vehicle_speed > CHRYSLER_STANDSTILL_THRSLD;
+    }
+    if (!chrysler_ram && (bus == 0U) && (addr == 514)) {
+      int speed_l = (GET_BYTE(to_push, 0) << 4) + (GET_BYTE(to_push, 1) >> 4);
+      int speed_r = (GET_BYTE(to_push, 2) << 4) + (GET_BYTE(to_push, 3) >> 4);
+      vehicle_speed = (speed_l + speed_r) / 2;
       vehicle_moving = (int)vehicle_speed > CHRYSLER_STANDSTILL_THRSLD;
     }
 
@@ -178,7 +185,9 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   // STEERING
   const int lkas_addr = chrysler_ram ? LKAS_COMMAND_RAM : LKAS_COMMAND;
   if (tx && (addr == lkas_addr)) {
-    int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1) - 1024U;
+    int start_byte = chrysler_ram ? 1 : 0;
+    int desired_torque = ((GET_BYTE(to_send, start_byte) & 0x7U) << 8) + GET_BYTE(to_send, start_byte + 1) - 1024U;
+
     uint32_t ts = microsecond_timer_get();
     bool violation = 0;
 
