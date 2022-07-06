@@ -23,7 +23,7 @@ const int CHRYSLER_RAM_MAX_TORQUE_ERROR = 100;         // since 2 x the rate up 
 #define LKAS_COMMAND               658  // LKAS controls from DASM
 #define CRUISE_BUTTONS             571  // Cruise control buttons
 
-// CAN messages for the 5th gen RAM DT platform
+// CAN messages for the 5h gen RAM DT platform
 #define EPS_2_RAM                   49  // EPS driver input torque
 #define ESP_1_RAM                  131  // Brake pedal and vehicle speed
 #define ESP_8_RAM                  121  // Brake pedal and vehicle speed
@@ -32,7 +32,6 @@ const int CHRYSLER_RAM_MAX_TORQUE_ERROR = 100;         // since 2 x the rate up 
 #define DAS_6_RAM                  250  // LKAS HUD and auto headlight control from DASM
 #define LKAS_COMMAND_RAM           166  // LKAS controls from DASM
 #define CRUISE_BUTTONS_RAM         177  // Cruise control buttons
-#define Center_Stack_2_RAM         650  // Center Stack buttons
 
 const CanMsg CHRYSLER_TX_MSGS[] = {
   {CRUISE_BUTTONS, 0, 3},
@@ -47,27 +46,27 @@ const CanMsg CHRYSLER_RAM_TX_MSGS[] = {
 };
 
 AddrCheckStruct chrysler_addr_checks[] = {
-  {.msg = {{EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},  // EPS module
-  {.msg = {{ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // brake pressed
+  {.msg = {{EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},  // EPS module
+  {.msg = {{ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // brake pressed
   //{.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // vehicle Speed
   {.msg = {{514, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // gas pedal
-  {.msg = {{DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // cruise state
+  {.msg = {{ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // gas pedal
+  {.msg = {{DAS_3, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // cruise state
 };
 #define CHRYSLER_ADDR_CHECK_LEN (sizeof(chrysler_addr_checks) / sizeof(chrysler_addr_checks[0]))
 
 AddrCheckStruct chrysler_ram_addr_checks[] = {
-  {.msg = {{EPS_2_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},  // EPS module
-  {.msg = {{ESP_1_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // brake pressed
-  {.msg = {{ESP_8_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // vehicle Speed
-  {.msg = {{ECM_5_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // gas pedal
-  {.msg = {{DAS_3_RAM, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // cruise state
+  {.msg = {{EPS_2_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},  // EPS module
+  {.msg = {{ESP_1_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // brake pressed
+  {.msg = {{ESP_8_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // vehicle Speed
+  {.msg = {{ECM_5_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // gas pedal
+  {.msg = {{DAS_3_RAM, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // cruise state
 };
 #define CHRYSLER_RAM_ADDR_CHECK_LEN (sizeof(chrysler_ram_addr_checks) / sizeof(chrysler_ram_addr_checks[0]))
 
 addr_checks chrysler_rx_checks = {chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
 
-const uint32_t CHRYSLER_PARAM_RAM_DT = 1U;  // set for Ram trucks
+const uint32_t CHRYSLER_PARAM_RAM_DT = 1U;  // set for Ram DT platform
 
 bool chrysler_ram = false;
 
@@ -125,13 +124,16 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
   if (valid) {
 
     // Measured EPS torque
-    if ((bus == 0U) && ((addr == EPS_2) || (addr == EPS_2_RAM))) {
+    const int eps_2 = chrysler_ram ? EPS_2_RAM : EPS_2;
+    if ((bus == 0U) && (addr == eps_2)) {
       int torque_meas_new = ((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5) - 1024U;
       update_sample(&torque_meas, torque_meas_new);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if (((bus == 0U) && (addr == DAS_3)) || ((bus == 2) && (addr == DAS_3_RAM))) {
+    const int das_3 = chrysler_ram ? DAS_3_RAM : DAS_3;
+    const int das_3_bus = chrysler_ram ? 2 : 0;
+    if ((bus == das_3_bus) && (addr == das_3)) {
       int cruise_engaged = GET_BIT(to_push, 21U) == 1U;
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
@@ -156,16 +158,19 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
     }
 
     // exit controls on rising edge of gas press
-    if ((bus == 0U) && ((addr == ECM_5) || (addr == ECM_5_RAM))) {
+    const int ecm_5 = chrysler_ram ? ECM_5_RAM : ECM_5;
+    if ((bus == 0U) && (addr == ecm_5)) {
       gas_pressed = GET_BYTE(to_push, 0U) != 0U;
     }
 
     // exit controls on rising edge of brake press
-    if ((bus == 0U) && ((addr == ESP_1) || (addr == ESP_1_RAM))) {
+    const int esp_1 = chrysler_ram ? ESP_1_RAM : ESP_1;
+    if ((bus == 0U) && (addr == esp_1)) {
       brake_pressed = ((GET_BYTE(to_push, 0U) & 0xFU) >> 2U) == 1U;
     }
 
-    generic_rx_checks((bus == 0U) && ((addr == LKAS_COMMAND) || (addr == LKAS_COMMAND_RAM)));
+    const int lkas_command = chrysler_ram ? LKAS_COMMAND_RAM : LKAS_COMMAND;
+    generic_rx_checks((bus == 0U) && (addr == lkas_command));
   }
   return valid;
 }
@@ -186,7 +191,8 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   const int lkas_addr = chrysler_ram ? LKAS_COMMAND_RAM : LKAS_COMMAND;
   if (tx && (addr == lkas_addr)) {
     int start_byte = chrysler_ram ? 1 : 0;
-    int desired_torque = ((GET_BYTE(to_send, start_byte) & 0x7U) << 8) + GET_BYTE(to_send, start_byte + 1) - 1024U;
+    int desired_torque = ((GET_BYTE(to_send, start_byte) & 0x7U) << 8) | GET_BYTE(to_send, start_byte + 1);
+    desired_torque -= 1024U;
 
     uint32_t ts = microsecond_timer_get();
     bool violation = 0;
