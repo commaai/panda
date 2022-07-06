@@ -125,7 +125,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // Measured EPS torque
     const int eps_2 = chrysler_ram ? EPS_2_RAM : EPS_2;
-    if ((bus == 0U) && (addr == eps_2)) {
+    if ((bus == 0) && (addr == eps_2)) {
       int torque_meas_new = ((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5) - 1024U;
       update_sample(&torque_meas, torque_meas_new);
     }
@@ -146,11 +146,11 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // TODO: use the same message for both
     // update speed
-    if (chrysler_ram && (bus == 0U) && (addr == ESP_8_RAM)) {
+    if (chrysler_ram && (bus == 0) && (addr == ESP_8_RAM)) {
       vehicle_speed = (((GET_BYTE(to_push, 4) & 0x3U) << 8) + GET_BYTE(to_push, 5))*0.0078125;
       vehicle_moving = (int)vehicle_speed > CHRYSLER_STANDSTILL_THRSLD;
     }
-    if (!chrysler_ram && (bus == 0U) && (addr == 514)) {
+    if (!chrysler_ram && (bus == 0) && (addr == 514)) {
       int speed_l = (GET_BYTE(to_push, 0) << 4) + (GET_BYTE(to_push, 1) >> 4);
       int speed_r = (GET_BYTE(to_push, 2) << 4) + (GET_BYTE(to_push, 3) >> 4);
       vehicle_speed = (speed_l + speed_r) / 2;
@@ -159,18 +159,18 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // exit controls on rising edge of gas press
     const int ecm_5 = chrysler_ram ? ECM_5_RAM : ECM_5;
-    if ((bus == 0U) && (addr == ecm_5)) {
+    if ((bus == 0) && (addr == ecm_5)) {
       gas_pressed = GET_BYTE(to_push, 0U) != 0U;
     }
 
     // exit controls on rising edge of brake press
     const int esp_1 = chrysler_ram ? ESP_1_RAM : ESP_1;
-    if ((bus == 0U) && (addr == esp_1)) {
+    if ((bus == 0) && (addr == esp_1)) {
       brake_pressed = ((GET_BYTE(to_push, 0U) & 0xFU) >> 2U) == 1U;
     }
 
     const int lkas_command = chrysler_ram ? LKAS_COMMAND_RAM : LKAS_COMMAND;
-    generic_rx_checks((bus == 0U) && (addr == lkas_command));
+    generic_rx_checks((bus == 0) && (addr == lkas_command));
   }
   return valid;
 }
@@ -192,7 +192,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (tx && (addr == lkas_addr)) {
     int start_byte = chrysler_ram ? 1 : 0;
     int desired_torque = ((GET_BYTE(to_send, start_byte) & 0x7U) << 8) | GET_BYTE(to_send, start_byte + 1);
-    desired_torque -= 1024U;
+    desired_torque -= 1024;
 
     uint32_t ts = microsecond_timer_get();
     bool violation = 0;
@@ -257,14 +257,14 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int addr = GET_ADDR(to_fwd);
 
   // forward to camera
-  if (bus_num == 0U) {
+  if (bus_num == 0) {
     bus_fwd = 2;
   }
 
   // forward all messages from camera except LKAS messages
   const bool is_lkas = (!chrysler_ram && ((addr == LKAS_COMMAND) || (addr == DAS_6))) ||
                        (chrysler_ram && ((addr == LKAS_COMMAND_RAM) || (addr == DAS_6_RAM)));
-  if ((bus_num == 2U) && !is_lkas){
+  if ((bus_num == 2) && !is_lkas){
     bus_fwd = 0;
   }
 
