@@ -66,7 +66,7 @@ AddrCheckStruct chrysler_ram_addr_checks[] = {
 
 addr_checks chrysler_rx_checks = {chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
 
-const uint32_t CHRYSLER_PARAM_RAM = 1U;  // set for Ram trucks
+const uint32_t CHRYSLER_PARAM_RAM_DT = 1U;  // set for Ram trucks
 
 bool chrysler_ram = false;
 
@@ -257,7 +257,7 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 }
 
 static const addr_checks* chrysler_init(uint16_t param) {
-  chrysler_ram = GET_FLAG(param, CHRYSLER_PARAM_RAM);
+  chrysler_ram = GET_FLAG(param, CHRYSLER_PARAM_RAM_DT);
 
   if (chrysler_ram) {
     chrysler_rx_checks = (addr_checks){chrysler_ram_addr_checks, CHRYSLER_RAM_ADDR_CHECK_LEN};
