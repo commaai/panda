@@ -68,12 +68,6 @@ class TestChryslerRamSafety(TestChryslerSafety):
   RELAY_MALFUNCTION_ADDR = 166
   FWD_BLACKLISTED_ADDRS = {2: [166, 250]}
 
-  MAX_RATE_UP = 14
-  MAX_RATE_DOWN = 14
-  MAX_TORQUE = 363
-  MAX_RT_DELTA = 182
-  MAX_TORQUE_ERROR = 100
-
   DAS_BUS = 2
 
   def setUp(self):
