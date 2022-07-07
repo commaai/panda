@@ -21,6 +21,8 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
   RT_INTERVAL = 250000
   MAX_TORQUE_ERROR = 80
 
+  DAS_BUS = 0
+
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid_generated")
     self.safety = libpandasafety_py.libpandasafety
@@ -29,11 +31,11 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
 
   def _button_msg(self, cancel):
     values = {"ACC_Cancel": cancel}
-    return self.packer.make_can_msg_panda("CRUISE_BUTTONS", 0, values)
+    return self.packer.make_can_msg_panda("CRUISE_BUTTONS", self.DAS_BUS, values)
 
   def _pcm_status_msg(self, enable):
     values = {"ACC_ACTIVE": enable}
-    return self.packer.make_can_msg_panda("DAS_3", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("DAS_3", self.DAS_BUS, values, counter=True)
 
   def _speed_msg(self, speed):
     values = {"SPEED_LEFT": speed, "SPEED_RIGHT": speed}
@@ -58,6 +60,26 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
   def test_cancel_button(self):
     for cancel in (True, False):
       self.assertEqual(cancel, self._tx(self._button_msg(cancel)))
+
+
+class TestChryslerRamSafety(TestChryslerSafety):
+  TX_MSGS = [[177, 2], [166, 0], [250, 0]]
+  STANDSTILL_THRESHOLD = 3
+  RELAY_MALFUNCTION_ADDR = 166
+  FWD_BLACKLISTED_ADDRS = {2: [166, 250]}
+
+  DAS_BUS = 2
+
+  def setUp(self):
+    self.packer = CANPackerPanda("chrysler_ram_dt_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM_DT)
+    self.safety.init_tests()
+
+  def _speed_msg(self, speed):
+    values = {"Vehicle_Speed": speed}
+    return self.packer.make_can_msg_panda("ESP_8", 0, values, counter=True)
+
 
 
 if __name__ == "__main__":
