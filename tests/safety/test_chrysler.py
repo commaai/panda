@@ -29,8 +29,8 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
     self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, 0)
     self.safety.init_tests()
 
-  def _button_msg(self, cancel):
-    values = {"ACC_Cancel": cancel}
+  def _button_msg(self, cancel=False, resume=False):
+    values = {"ACC_Cancel": cancel, "ACC_Resume": resume}
     return self.packer.make_can_msg_panda("CRUISE_BUTTONS", self.DAS_BUS, values)
 
   def _pcm_status_msg(self, enable):
@@ -57,9 +57,19 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
     values = {"STEERING_TORQUE": torque}
     return self.packer.make_can_msg_panda("LKAS_COMMAND", 0, values)
 
-  def test_cancel_button(self):
-    for cancel in (True, False):
-      self.assertEqual(cancel, self._tx(self._button_msg(cancel)))
+  def test_buttons(self):
+    for controls_allowed in (True, False):
+      self.safety.set_controls_allowed(controls_allowed)
+
+      # resume only while controls allowed
+      self.assertEqual(controls_allowed, self._tx(self._button_msg(resume=True)))
+
+      # can always cancel
+      self.assertTrue(self._tx(self._button_msg(cancel=True)))
+
+      # only one button at a time
+      self.assertFalse(self._tx(self._button_msg(cancel=True, resume=True)))
+      self.assertFalse(self._tx(self._button_msg(cancel=False, resume=False)))
 
 
 class TestChryslerRamSafety(TestChryslerSafety):
