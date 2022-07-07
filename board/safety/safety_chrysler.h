@@ -4,7 +4,8 @@ const uint32_t CHRYSLER_RT_INTERVAL = 250000;  // 250ms between real time checks
 const int CHRYSLER_MAX_RATE_UP = 3;            // Must be double of limits set in op
 const int CHRYSLER_MAX_RATE_DOWN = 3;          // Must be double of limits set in op
 const int CHRYSLER_MAX_TORQUE_ERROR = 80;      // max torque cmd in excess of torque motor
-const int CHRYSLER_STANDSTILL_THRSLD = 3;      // about 1m/s changed from wheel rpm to km/h
+const int CHRYSLER_STANDSTILL_THRSLD = 10;     // about 1m/s
+const int CHRYSLER_RAM_STANDSTILL_THRSLD = 3;  // about 1m/s changed from wheel rpm to km/h
 
 // CAN messages for Chrysler/Jeep platforms
 #define EPS_2                      544  // EPS driver input torque
@@ -141,7 +142,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
     // update speed
     if (chrysler_ram && (bus == 0) && (addr == ESP_8_RAM)) {
       vehicle_speed = (((GET_BYTE(to_push, 4) & 0x3U) << 8) + GET_BYTE(to_push, 5))*0.0078125;
-      vehicle_moving = (int)vehicle_speed > CHRYSLER_STANDSTILL_THRSLD;
+      vehicle_moving = (int)vehicle_speed > CHRYSLER_RAM_STANDSTILL_THRSLD;
     }
     if (!chrysler_ram && (bus == 0) && (addr == 514)) {
       int speed_l = (GET_BYTE(to_push, 0) << 4) + (GET_BYTE(to_push, 1) >> 4);
