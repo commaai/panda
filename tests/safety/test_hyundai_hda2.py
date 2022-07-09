@@ -8,11 +8,11 @@ from panda.tests.safety.common import CANPackerPanda
 
 class TestHyundaiHDA2(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
 
-  TX_MSGS = [[0x50, 0], [0x1CF, 1]]
+  TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0]]
   STANDSTILL_THRESHOLD = 30  # ~1kph
   RELAY_MALFUNCTION_ADDR = 0x50
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [0x50]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x50, 0x2a4]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   MAX_RATE_UP = 3
