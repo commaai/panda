@@ -9,7 +9,7 @@ def can_logger():
   try:
     outputfile = open('output.csv', 'w')
     csvwriter = csv.writer(outputfile)
-    # Write Header
+    #Write Header
     csvwriter.writerow(['Bus', 'MessageID', 'Message', 'MessageLength'])
     print("Writing csv file output.csv. Press Ctrl-C to exit...\n")
 
