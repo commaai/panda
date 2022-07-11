@@ -10,6 +10,7 @@ const uint32_t HYUNDAI_HDA2_STANDSTILL_THRSLD = 30;  // ~1kph
 const CanMsg HYUNDAI_HDA2_TX_MSGS[] = {
   {0x50, 0, 16},
   {0x1CF, 1, 8},
+  {0x2A4, 0, 24},
 };
 
 AddrCheckStruct hyundai_hda2_addr_checks[] = {
@@ -189,7 +190,7 @@ static int hyundai_hda2_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   if (bus_num == 0) {
     bus_fwd = 2;
   }
-  if ((bus_num == 2) && (addr != 0x50)) {
+  if ((bus_num == 2) && (addr != 0x50) && (addr != 0x2a4)) {
     bus_fwd = 0;
   }
 
