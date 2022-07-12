@@ -17,7 +17,7 @@ class Buttons:
   CANCEL = 4
 
 
-PREV_BUTTON_SAMPLES = 6
+PREV_BUTTON_SAMPLES = 8
 ENABLE_BUTTONS = (Buttons.RESUME, Buttons.SET, Buttons.CANCEL)
 
 
