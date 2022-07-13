@@ -4,7 +4,7 @@ from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
-from panda.tests.safety.test_hyundai import Buttons, HyundaiButtonBase
+from panda.tests.safety.test_hyundai import HyundaiButtonBase
 
 class TestHyundaiHDA2(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
 
@@ -60,16 +60,7 @@ class TestHyundaiHDA2(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTo
       "CRUISE_BUTTONS": buttons,
       "ADAPTIVE_CRUISE_MAIN_BTN": main_button,
     }
-    return self.packer.make_can_msg_panda("CRUISE_BUTTONS", 1, values)
-
-  def test_buttons(self):
-    for controls_allowed in (True, False):
-      for cruise_engaged in (True, False):
-        self._rx(self._pcm_status_msg(cruise_engaged))
-        self.safety.set_controls_allowed(controls_allowed)
-
-        self.assertEqual(cruise_engaged, self._tx(self._button_msg(Buttons.CANCEL)))
-        self.assertEqual(controls_allowed, self._tx(self._button_msg(Buttons.RESUME)))
+    return self.packer.make_can_msg_panda("CRUISE_BUTTONS", 1, values, counter=True)
 
 
 if __name__ == "__main__":

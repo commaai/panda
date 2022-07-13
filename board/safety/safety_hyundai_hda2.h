@@ -19,6 +19,7 @@ AddrCheckStruct hyundai_hda2_addr_checks[] = {
   {.msg = {{0xa0, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0xea, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x175, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x1cf, 1, 8, .check_checksum = false, .max_counter = 0xfU, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define HYUNDAI_HDA2_ADDR_CHECK_LEN (sizeof(hyundai_hda2_addr_checks) / sizeof(hyundai_hda2_addr_checks[0]))
 
@@ -28,7 +29,13 @@ addr_checks hyundai_hda2_rx_checks = {hyundai_hda2_addr_checks, HYUNDAI_HDA2_ADD
 uint16_t hyundai_hda2_crc_lut[256];
 
 static uint8_t hyundai_hda2_get_counter(CANPacket_t *to_push) {
-  return GET_BYTE(to_push, 2);
+  uint8_t ret = 0;
+  if (GET_LEN(to_push) == 8) {
+    ret = GET_BYTE(to_push, 1) >> 4;
+  } else {
+    ret = GET_BYTE(to_push, 2);
+  }
+  return ret;
 }
 
 static uint32_t hyundai_hda2_get_checksum(CANPacket_t *to_push) {
