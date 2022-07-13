@@ -30,7 +30,7 @@ uint16_t hyundai_hda2_crc_lut[256];
 
 static uint8_t hyundai_hda2_get_counter(CANPacket_t *to_push) {
   uint8_t ret = 0;
-  if (GET_LEN(to_push) == 8) {
+  if (GET_LEN(to_push) == 8U) {
     ret = GET_BYTE(to_push, 1) >> 4;
   } else {
     ret = GET_BYTE(to_push, 2);
