@@ -5,27 +5,38 @@ const int VOLKSWAGEN_PQ_MAX_RATE_UP = 4;                // 2.0 Nm/s RoC limit (E
 const int VOLKSWAGEN_PQ_MAX_RATE_DOWN = 10;             // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
 const int VOLKSWAGEN_PQ_DRIVER_TORQUE_ALLOWANCE = 80;
 const int VOLKSWAGEN_PQ_DRIVER_TORQUE_FACTOR = 3;
+const int VOLKSWAGEN_PQ_MAX_ACCEL = 2000;               // Max accel 2.0 m/s2
+const int VOLKSWAGEN_PQ_MIN_ACCEL = -3500;              // Max decel 3.5 m/s2
 
-#define MSG_LENKHILFE_3 0x0D0   // RX from EPS, for steering angle and driver steering torque
-#define MSG_HCA_1       0x0D2   // TX by OP, Heading Control Assist steering torque
-#define MSG_MOTOR_2     0x288   // RX from ECU, for CC state and brake switch state
-#define MSG_MOTOR_3     0x380   // RX from ECU, for driver throttle input
-#define MSG_GRA_NEU     0x38A   // TX by OP, ACC control buttons for cancel/resume
-#define MSG_BREMSE_1    0x1A0   // RX from ABS, for ego speed
-#define MSG_LDW_1       0x5BE   // TX by OP, Lane line recognition and text alerts
+#define MSG_LENKHILFE_3         0x0D0   // RX from EPS, for steering angle and driver steering torque
+#define MSG_HCA_1               0x0D2   // TX by OP, Heading Control Assist steering torque
+#define MSG_MOTOR_2             0x288   // RX from ECU, for CC state and brake switch state
+#define MSG_ACC_SYSTEM          0x368   // TX by OP, longitudinal acceleration controls
+#define MSG_MOTOR_3             0x380   // RX from ECU, for driver throttle input
+#define MSG_GRA_NEU             0x38A   // TX by OP, ACC control buttons for cancel/resume
+#define MSG_BREMSE_1            0x1A0   // RX from ABS, for ego speed
+#define MSG_ACC_GRA_ANZIEGE     0x56A   // TX by OP, ACC HUD
+#define MSG_LDW_1               0x5BE   // TX by OP, Lane line recognition and text alerts
 
 // Transmit of GRA_Neu is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-const CanMsg VOLKSWAGEN_PQ_TX_MSGS[] = {{MSG_HCA_1, 0, 5}, {MSG_GRA_NEU, 0, 4}, {MSG_GRA_NEU, 2, 4}, {MSG_LDW_1, 0, 8}};
-#define VOLKSWAGEN_PQ_TX_MSGS_LEN (sizeof(VOLKSWAGEN_PQ_TX_MSGS) / sizeof(VOLKSWAGEN_PQ_TX_MSGS[0]))
+const CanMsg VOLKSWAGEN_PQ_STOCK_TX_MSGS[] = {{MSG_HCA_1, 0, 5}, {MSG_GRA_NEU, 0, 4},
+                                              {MSG_GRA_NEU, 2, 4}, {MSG_LDW_1, 0, 8}};
+const CanMsg VOLKSWAGEN_PQ_LONG_TX_MSGS[] =  {{MSG_HCA_1, 0, 5}, {MSG_GRA_NEU, 0, 4},
+                                              {MSG_GRA_NEU, 2, 4}, {MSG_LDW_1, 0, 8},
+                                              {MSG_ACC_SYSTEM, 0, 8}, {MSG_ACC_GRA_ANZIEGE, 0, 8}};
 
 AddrCheckStruct volkswagen_pq_addr_checks[] = {
   {.msg = {{MSG_LENKHILFE_3, 0, 6, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MOTOR_2, 0, 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MOTOR_3, 0, 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_GRA_NEU, 0, 4, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 33000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_BREMSE_1, 0, 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
 };
 #define VOLKSWAGEN_PQ_ADDR_CHECKS_LEN (sizeof(volkswagen_pq_addr_checks) / sizeof(volkswagen_pq_addr_checks[0]))
 addr_checks volkswagen_pq_rx_checks = {volkswagen_pq_addr_checks, VOLKSWAGEN_PQ_ADDR_CHECKS_LEN};
+
+const uint16_t VOLKSWAGEN_PQ_PARAM_LONG = 1;
+bool volkswagen_pq_longitudinal = false;
 
 
 static uint32_t volkswagen_pq_get_checksum(CANPacket_t *to_push) {
@@ -33,9 +44,20 @@ static uint32_t volkswagen_pq_get_checksum(CANPacket_t *to_push) {
 }
 
 static uint8_t volkswagen_pq_get_counter(CANPacket_t *to_push) {
-  // Few PQ messages have counters, and their offsets are inconsistent. This
-  // function works only for Lenkhilfe_3 at this time.
-  return (uint8_t)(GET_BYTE(to_push, 1) & 0xF0U) >> 4;
+  int addr = GET_ADDR(to_push);
+  uint8_t counter = 0;
+
+  if (addr == MSG_LENKHILFE_3) {
+    // TODO: Do I need these casts?
+    counter = (uint8_t)(GET_BYTE(to_push, 1) & 0xF0U) >> 4;
+  } else if (addr == MSG_GRA_NEU) {
+    // TODO: Do I need these casts?
+    counter = (uint8_t)(GET_BYTE(to_push, 2) & 0xF0U) >> 4;
+  } else {
+    counter = 0U;
+  }
+
+  return counter;
 }
 
 static uint32_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
@@ -52,6 +74,9 @@ static uint32_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
 static const addr_checks* volkswagen_pq_init(uint16_t param) {
   UNUSED(param);
 
+#ifdef ALLOW_DEBUG
+  volkswagen_pq_longitudinal = GET_FLAG(param, VOLKSWAGEN_PQ_PARAM_LONG);
+#endif
   return &volkswagen_pq_rx_checks;
 }
 
@@ -83,18 +108,33 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
-    // Signal: Motor_2.GRA_Status
-    if (addr == MSG_MOTOR_2) {
-      int acc_status = (GET_BYTE(to_push, 2) & 0xC0U) >> 6;
-      int cruise_engaged = ((acc_status == 1) || (acc_status == 2)) ? 1 : 0;
-      if (cruise_engaged && !cruise_engaged_prev) {
-        controls_allowed = 1;
+    if (volkswagen_pq_longitudinal) {
+      // Exit controls on Cancel, otherwise, enter controls on Set or Resume
+      if (addr == MSG_GRA_ACC_01) {
+        // Signal: GRA_Neu.GRA_Neu_Setzen
+        // Signal: GRA_Neu.GRA_Neu_Recall
+        if (GET_BIT(to_push, 16U) || GET_BIT(to_push, 17U)) {
+          controls_allowed = 1;
+        }
+        // Signal: GRA_ACC_01.GRA_Abbrechen
+        if (GET_BIT(to_push, 9U) == 1U) {
+          controls_allowed = 0;
+        }
       }
-      if (!cruise_engaged) {
-        controls_allowed = 0;
+    } else {
+      // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
+      if (addr == MSG_MOTOR_2) {
+        // Signal: Motor_2.GRA_Status
+        int acc_status = (GET_BYTE(to_push, 2) & 0xC0U) >> 6;
+        int cruise_engaged = ((acc_status == 1) || (acc_status == 2)) ? 1 : 0;
+        if (cruise_engaged && !cruise_engaged_prev) {
+          controls_allowed = 1;
+        }
+        if (!cruise_engaged) {
+          controls_allowed = 0;
+        }
+        cruise_engaged_prev = cruise_engaged;
       }
-      cruise_engaged_prev = cruise_engaged;
     }
 
     // Signal: Motor_3.Fahrpedal_Rohsignal
@@ -113,13 +153,13 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
 }
 
 static int volkswagen_pq_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
-  UNUSED(longitudinal_allowed);
-
   int addr = GET_ADDR(to_send);
   int tx = 1;
 
-  if (!msg_allowed(to_send, VOLKSWAGEN_PQ_TX_MSGS, VOLKSWAGEN_PQ_TX_MSGS_LEN)) {
-    tx = 0;
+  if (volkswagen_pq_longitudinal) {
+    tx = msg_allowed(to_send, VOLKSWAGEN_PQ_LONG_TX_MSGS, sizeof(VOLKSWAGEN_PQ_LONG_TX_MSGS) / sizeof(VOLKSWAGEN_PQ_LONG_TX_MSGS[0]));
+  } else {
+    tx = msg_allowed(to_send, VOLKSWAGEN_PQ_STOCK_TX_MSGS, sizeof(VOLKSWAGEN_PQ_STOCK_TX_MSGS) / sizeof(VOLKSWAGEN_PQ_STOCK_TX_MSGS[0]));
   }
 
   // Safety check for HCA_1 Heading Control Assist torque
@@ -174,6 +214,31 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
     }
   }
 
+  // Safety check for acceleration commands
+  // To avoid floating point math, scale upward and compare to pre-scaled safety m/s2 boundaries
+  if (addr == MSG_ACC_SYSTEM) {
+    bool violation = 0;
+    int desired_accel = 0;
+
+    // Signal: ACC_System.ACS_Sollbeschl (acceleration in m/s2, scale 0.005, offset -7.22)
+    desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
+
+    // VW send one increment above the max range when inactive
+    if (desired_accel == 3010) {
+      desired_accel = 0;
+    }
+
+    if (!longitudinal_allowed && (desired_accel != 0)) {
+      violation = 1;
+    }
+
+    violation |= max_limit_check(desired_accel, VOLKSWAGEN_PQ_MAX_ACCEL, VOLKSWAGEN_PQ_MIN_ACCEL);
+
+    if (violation) {
+      tx = 0;
+    }
+  }
+
   // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == MSG_GRA_NEU) && !controls_allowed) {
@@ -198,8 +263,10 @@ static int volkswagen_pq_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
       break;
     case 2:
       if ((addr == MSG_HCA_1) || (addr == MSG_LDW_1)) {
-        // OP takes control of the Heading Control Assist and Lane Departure Warning messages from the camera
+        // openpilot takes over LKAS steering control and related HUD messages from the camera
         bus_fwd = -1;
+      } else if (volkswagen_pq_longitudinal && ((addr == MSG_ACC_SYSTEM) || (addr == MSG_ACC_GRA_ANZIEGE))) {
+        // openpilot takes over acceleration/braking control and related HUD messages from the stock ACC radar
       } else {
         // Forward all remaining traffic from Extended CAN devices to J533 gateway
         bus_fwd = 0;
