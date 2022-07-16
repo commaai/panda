@@ -17,13 +17,9 @@ MSG_LDW_1 = 0x5BE        # TX by OP, Lane line recognition and text alerts
 class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   cruise_engaged = False
 
-  # Transmit of GRA_Neu is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-  TX_MSGS = [[MSG_HCA_1, 0], [MSG_GRA_NEU, 0], [MSG_GRA_NEU, 2], [MSG_LDW_1, 0]]
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_HCA_1
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_1, MSG_LDW_1]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   MAX_RATE_UP = 4
   MAX_RATE_DOWN = 10
@@ -34,11 +30,12 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
   DRIVER_TORQUE_ALLOWANCE = 80
   DRIVER_TORQUE_FACTOR = 3
 
-  def setUp(self):
-    self.packer = CANPackerPanda("vw_golf_mk4")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_PQ, 0)
-    self.safety.init_tests()
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "TestVolkswagenPqSafety":
+      cls.packer = None
+      cls.safety = None
+      raise unittest.SkipTest
 
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)
@@ -86,15 +83,6 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
     values = {"GRA_Neu_Setzen": _set, "GRA_Recall": resume, "GRA_Abbrechen": cancel}
     return self.packer.make_can_msg_panda("GRA_Neu", 2, values, counter=True)
 
-  def test_spam_cancel_safety_check(self):
-    self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._button_msg(cancel=True)))
-    self.assertFalse(self._tx(self._button_msg(resume=True)))
-    self.assertFalse(self._tx(self._button_msg(_set=True)))
-    # do not block resume if we are engaged already
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._button_msg(resume=True)))
-
   def test_torque_measurements(self):
     # TODO: make this test work with all cars
     self._rx(self._torque_driver_msg(50))
@@ -114,6 +102,28 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
     self._rx(self._torque_driver_msg(0))
     self.assertEqual(0, self.safety.get_torque_driver_max())
     self.assertEqual(0, self.safety.get_torque_driver_min())
+
+
+class TestVolkswagenPqStockSafety(TestVolkswagenPqSafety):
+  # Transmit of GRA_Neu is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
+  TX_MSGS = [[MSG_HCA_1, 0], [MSG_GRA_NEU, 0], [MSG_GRA_NEU, 2], [MSG_LDW_1, 0]]
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_1, MSG_LDW_1]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("vw_golf_mk4")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_PQ, 0)
+    self.safety.init_tests()
+
+  def test_spam_cancel_safety_check(self):
+    self.safety.set_controls_allowed(0)
+    self.assertTrue(self._tx(self._button_msg(cancel=True)))
+    self.assertFalse(self._tx(self._button_msg(resume=True)))
+    self.assertFalse(self._tx(self._button_msg(_set=True)))
+    # do not block resume if we are engaged already
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self._tx(self._button_msg(resume=True)))
 
 
 if __name__ == "__main__":
