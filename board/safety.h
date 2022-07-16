@@ -60,7 +60,15 @@ const safety_hooks *current_hooks = &nooutput_hooks;
 const addr_checks *current_rx_checks = &default_rx_checks;
 
 int safety_rx_hook(CANPacket_t *to_push) {
-  return current_hooks->rx(to_push);
+  bool controls_allowed_prev = controls_allowed;
+  int ret = current_hooks->rx(to_push);
+
+  // reset mismatches on rising edge of controls_allowed to avoid rare race condition
+  if (controls_allowed && !controls_allowed_prev) {
+    heartbeat_engaged_mismatches = 0;
+  }
+
+  return ret;
 }
 
 int safety_tx_hook(CANPacket_t *to_send) {
