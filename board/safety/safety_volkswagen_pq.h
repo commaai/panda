@@ -37,7 +37,8 @@ addr_checks volkswagen_pq_rx_checks = {volkswagen_pq_addr_checks, VOLKSWAGEN_PQ_
 
 const uint16_t VOLKSWAGEN_PQ_PARAM_LONG = 1;
 bool volkswagen_pq_longitudinal = false;
-
+bool volkswagen_pq_set_button_prev = false;
+bool volkswagen_pq_resume_button_prev = false;
 
 static uint32_t volkswagen_pq_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -107,13 +108,17 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
     }
 
     if (volkswagen_pq_longitudinal) {
-      // Exit controls on Cancel, otherwise, enter controls on Set or Resume
+      // Exit controls on leading edge of Cancel, otherwise, enter controls on falling edge of Set or Resume
       if (addr == MSG_GRA_NEU) {
         // Signal: GRA_Neu.GRA_Neu_Setzen
         // Signal: GRA_Neu.GRA_Neu_Recall
-        if (GET_BIT(to_push, 16U) || GET_BIT(to_push, 17U)) {
+        bool set_button = GET_BIT(to_push, 16U);
+        bool resume_button = GET_BIT(to_push, 17U);
+        if ((!set_button & volkswagen_pq_set_button_prev) || (!resume_button & volkswagen_pq_resume_button_prev)) {
           controls_allowed = 1;
         }
+        volkswagen_pq_set_button_prev = set_button;
+        volkswagen_pq_resume_button_prev = resume_button;
         // Signal: GRA_ACC_01.GRA_Abbrechen
         if (GET_BIT(to_push, 9U) == 1U) {
           controls_allowed = 0;

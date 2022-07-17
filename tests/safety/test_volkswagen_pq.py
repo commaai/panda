@@ -158,19 +158,26 @@ class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety):
   def test_cruise_engaged_prev(self):
     pass
 
-  # TODO: include a check for acc_main_on == true
+  # TODO: include safety and check for acc_main_on == true
   def test_resume_button(self):
+    # Enable on falling edge
     self.safety.set_controls_allowed(0)
     self._rx(self._button_msg(resume=True, bus=0))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self._rx(self._button_msg(bus=0))
     self.assertTrue(self.safety.get_controls_allowed())
 
-  # TODO: include a check for acc_main_on == true
+  # TODO: include safety and check for acc_main_on == true
   def test_set_button(self):
+    # Enable on falling edge
     self.safety.set_controls_allowed(0)
     self._rx(self._button_msg(_set=True, bus=0))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self._rx(self._button_msg(bus=0))
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_cancel_button(self):
+    # Disable on leading edge
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(cancel=True, bus=0))
     self.assertFalse(self.safety.get_controls_allowed())
