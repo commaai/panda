@@ -48,10 +48,8 @@ static uint8_t volkswagen_pq_get_counter(CANPacket_t *to_push) {
   uint8_t counter = 0;
 
   if (addr == MSG_LENKHILFE_3) {
-    // TODO: Do I need these casts?
     counter = (uint8_t)(GET_BYTE(to_push, 1) & 0xF0U) >> 4;
   } else if (addr == MSG_GRA_NEU) {
-    // TODO: Do I need these casts?
     counter = (uint8_t)(GET_BYTE(to_push, 2) & 0xF0U) >> 4;
   } else {
     counter = 0U;
@@ -110,7 +108,7 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
 
     if (volkswagen_pq_longitudinal) {
       // Exit controls on Cancel, otherwise, enter controls on Set or Resume
-      if (addr == MSG_GRA_ACC_01) {
+      if (addr == MSG_GRA_NEU) {
         // Signal: GRA_Neu.GRA_Neu_Setzen
         // Signal: GRA_Neu.GRA_Neu_Recall
         if (GET_BIT(to_push, 16U) || GET_BIT(to_push, 17U)) {
