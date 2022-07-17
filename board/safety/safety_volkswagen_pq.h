@@ -114,7 +114,7 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
         // Signal: GRA_Neu.GRA_Neu_Recall
         bool set_button = GET_BIT(to_push, 16U);
         bool resume_button = GET_BIT(to_push, 17U);
-        if ((!set_button & volkswagen_pq_set_button_prev) || (!resume_button & volkswagen_pq_resume_button_prev)) {
+        if ((!set_button && volkswagen_pq_set_button_prev) || (!resume_button && volkswagen_pq_resume_button_prev)) {
           controls_allowed = 1;
         }
         volkswagen_pq_set_button_prev = set_button;
