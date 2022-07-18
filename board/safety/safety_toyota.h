@@ -42,9 +42,9 @@ addr_checks toyota_rx_checks = {toyota_addr_checks, TOYOTA_ADDR_CHECKS_LEN};
 // safety param flags
 // first byte is for eps factor, second is for flags
 const uint32_t TOYOTA_PARAM_OFFSET = 8U;
-const uint32_t TOYOTA_EPS_FACTOR = (1U << TOYOTA_PARAM_OFFSET) - 1U;
-const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2U << TOYOTA_PARAM_OFFSET;
+//const uint32_t TOYOTA_EPS_FACTOR = (1U << TOYOTA_PARAM_OFFSET) - 1U;
+//const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
+//const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2U << TOYOTA_PARAM_OFFSET;
 
 bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
@@ -284,6 +284,9 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 }
 
 static const addr_checks* toyota_init(uint16_t param) {
+  uint32_t TOYOTA_EPS_FACTOR = (1U << TOYOTA_PARAM_OFFSET) - 1U;
+  uint32_t TOYOTA_PARAM_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
+  uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2U << TOYOTA_PARAM_OFFSET;
   gas_interceptor_detected = 0;
   toyota_steer_req_matches = 0U;
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
