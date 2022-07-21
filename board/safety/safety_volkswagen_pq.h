@@ -10,11 +10,12 @@ const int VOLKSWAGEN_PQ_MIN_ACCEL = -3500;              // Max decel 3.5 m/s2
 
 #define MSG_LENKHILFE_3         0x0D0   // RX from EPS, for steering angle and driver steering torque
 #define MSG_HCA_1               0x0D2   // TX by OP, Heading Control Assist steering torque
+#define MSG_BREMSE_1            0x1A0   // RX from ABS, for ego speed
 #define MSG_MOTOR_2             0x288   // RX from ECU, for CC state and brake switch state
 #define MSG_ACC_SYSTEM          0x368   // TX by OP, longitudinal acceleration controls
 #define MSG_MOTOR_3             0x380   // RX from ECU, for driver throttle input
 #define MSG_GRA_NEU             0x38A   // TX by OP, ACC control buttons for cancel/resume
-#define MSG_BREMSE_1            0x1A0   // RX from ABS, for ego speed
+#define MSG_MOTOR_5             0x480   // RX from ECU, for ACC main switch state
 #define MSG_ACC_GRA_ANZIEGE     0x56A   // TX by OP, ACC HUD
 #define MSG_LDW_1               0x5BE   // TX by OP, Lane line recognition and text alerts
 
@@ -26,19 +27,21 @@ const CanMsg VOLKSWAGEN_PQ_LONG_TX_MSGS[] =  {{MSG_HCA_1, 0, 5}, {MSG_GRA_NEU, 0
                                               {MSG_ACC_SYSTEM, 0, 8}, {MSG_ACC_GRA_ANZIEGE, 0, 8}};
 
 AddrCheckStruct volkswagen_pq_addr_checks[] = {
-  {.msg = {{MSG_LENKHILFE_3, 0, 6, .check_checksum = true,  .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MOTOR_2, 0, 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MOTOR_3, 0, 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_GRA_NEU, 0, 4, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 33000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_BREMSE_1, 0, 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_LENKHILFE_3, 0, 6, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_BREMSE_1, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_MOTOR_2, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_MOTOR_3, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_MOTOR_5, 0, 8, .check_checksum = true, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_GRA_NEU, 0, 4, .check_checksum = true, .max_counter = 15U, .expected_timestep = 33000U}, { 0 }, { 0 }}},
 };
 #define VOLKSWAGEN_PQ_ADDR_CHECKS_LEN (sizeof(volkswagen_pq_addr_checks) / sizeof(volkswagen_pq_addr_checks[0]))
 addr_checks volkswagen_pq_rx_checks = {volkswagen_pq_addr_checks, VOLKSWAGEN_PQ_ADDR_CHECKS_LEN};
 
-const uint16_t VOLKSWAGEN_PQ_PARAM_LONG = 1;
+const uint16_t FLAG_VOLKSWAGEN_LONG_CONTROL = 1;
 bool volkswagen_pq_longitudinal = false;
-bool volkswagen_pq_set_button_prev = false;
-bool volkswagen_pq_resume_button_prev = false;
+bool volkswagen_pq_acc_main_on = false;
+bool volkswagen_pq_set_prev = false;
+bool volkswagen_pq_resume_prev = false;
 
 static uint32_t volkswagen_pq_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -74,7 +77,7 @@ static const addr_checks* volkswagen_pq_init(uint16_t param) {
   UNUSED(param);
 
 #ifdef ALLOW_DEBUG
-  volkswagen_pq_longitudinal = GET_FLAG(param, VOLKSWAGEN_PQ_PARAM_LONG);
+  volkswagen_pq_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
 #endif
   return &volkswagen_pq_rx_checks;
 }
@@ -109,16 +112,22 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
 
     if (volkswagen_pq_longitudinal) {
       // Exit controls on leading edge of Cancel, otherwise, enter controls on falling edge of Set or Resume
+      // ACC main switch must be on to enter, exit immediately on main switch off
+      if (addr == MSG_MOTOR_5) {
+        // Signal: Motor_5.GRA_Hauptschalter
+        volkswagen_pq_acc_main_on = GET_BIT(to_push, 50U);
+        controls_allowed &= volkswagen_pq_acc_main_on;
+      }
       if (addr == MSG_GRA_NEU) {
         // Signal: GRA_Neu.GRA_Neu_Setzen
         // Signal: GRA_Neu.GRA_Neu_Recall
         bool set_button = GET_BIT(to_push, 16U);
         bool resume_button = GET_BIT(to_push, 17U);
-        if ((!set_button && volkswagen_pq_set_button_prev) || (!resume_button && volkswagen_pq_resume_button_prev)) {
+        if (volkswagen_pq_acc_main_on && ((!set_button && volkswagen_pq_set_prev) || (!resume_button && volkswagen_pq_resume_prev))) {
           controls_allowed = 1;
         }
-        volkswagen_pq_set_button_prev = set_button;
-        volkswagen_pq_resume_button_prev = resume_button;
+        volkswagen_pq_set_prev = set_button;
+        volkswagen_pq_resume_prev = resume_button;
         // Signal: GRA_ACC_01.GRA_Abbrechen
         if (GET_BIT(to_push, 9U) == 1U) {
           controls_allowed = 0;

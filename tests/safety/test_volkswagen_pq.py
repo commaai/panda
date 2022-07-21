@@ -8,11 +8,12 @@ from panda.tests.safety.common import CANPackerPanda
 
 MSG_LENKHILFE_3 = 0x0D0       # RX from EPS, for steering angle and driver steering torque
 MSG_HCA_1 = 0x0D2             # TX by OP, Heading Control Assist steering torque
+MSG_BREMSE_1 = 0x1A0          # RX from ABS, for ego speed
 MSG_MOTOR_2 = 0x288           # RX from ECU, for CC state and brake switch state
 MSG_ACC_SYSTEM = 0x368        # TX by OP, longitudinal acceleration controls
 MSG_MOTOR_3 = 0x380           # RX from ECU, for driver throttle input
 MSG_GRA_NEU = 0x38A           # TX by OP, ACC control buttons for cancel/resume
-MSG_BREMSE_1 = 0x1A0          # RX from ABS, for ego speed
+MSG_MOTOR_5 = 0x480           # RX from ECU, for ACC main switch state
 MSG_ACC_GRA_ANZIEGE = 0x56A   # TX by OP, ACC HUD
 MSG_LDW_1 = 0x5BE             # TX by OP, Lane line recognition and text alerts
 
@@ -82,6 +83,11 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
     values = {"Bremslichtschalter": brake_pressed,
               "GRA_Status": cruise_engaged}
     return self.packer.make_can_msg_panda("Motor_2", 0, values)
+
+  # ACC main switch status
+  def _motor_5_msg(self, main_switch=False):
+    values = {"GRA_Hauptschalter": main_switch}
+    return self.packer.make_can_msg_panda("Motor_5", 0, values)
 
   # Driver throttle input (Motor_3)
   def _user_gas_msg(self, gas):
@@ -158,29 +164,33 @@ class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety):
   def test_cruise_engaged_prev(self):
     pass
 
-  # TODO: include safety and check for acc_main_on == true
-  def test_resume_button(self):
-    # Enable on falling edge
-    self.safety.set_controls_allowed(0)
-    self._rx(self._button_msg(resume=True, bus=0))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self._rx(self._button_msg(bus=0))
-    self.assertTrue(self.safety.get_controls_allowed())
-
-  # TODO: include safety and check for acc_main_on == true
-  def test_set_button(self):
-    # Enable on falling edge
-    self.safety.set_controls_allowed(0)
-    self._rx(self._button_msg(_set=True, bus=0))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self._rx(self._button_msg(bus=0))
-    self.assertTrue(self.safety.get_controls_allowed())
+  def test_set_and_resume_buttons(self):
+    for button in ["set", "resume"]:
+      # ACC main switch must be on, engage on falling edge
+      self.safety.set_controls_allowed(0)
+      self._rx(self._motor_5_msg(main_switch=False))
+      self._rx(self._button_msg(_set=(button == "set"), resume=(button == "resume"), bus=0))
+      self._rx(self._button_msg(bus=0))
+      self.assertFalse(self.safety.get_controls_allowed(), f"controls allowed on {button} with main switch off")
+      self._rx(self._motor_5_msg(main_switch=True))
+      self._rx(self._button_msg(_set=(button == "set"), resume=(button == "resume"), bus=0))
+      self.assertFalse(self.safety.get_controls_allowed(), f"controls allowed on {button} leading edge")
+      self._rx(self._button_msg(bus=0))
+      self.assertTrue(self.safety.get_controls_allowed(), f"controls not allowed on {button} trailing edge")
 
   def test_cancel_button(self):
-    # Disable on leading edge
+    # Disable on leading edge of cancel button
+    self._rx(self._motor_5_msg(main_switch=True))
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(cancel=True, bus=0))
-    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_controls_allowed(), "controls allowed after cancel")
+
+  def test_main_switch(self):
+    # Disable as soon as main switch turns off
+    self._rx(self._motor_5_msg(main_switch=True))
+    self.safety.set_controls_allowed(1)
+    self._rx(self._motor_5_msg(main_switch=False))
+    self.assertFalse(self.safety.get_controls_allowed(), "controls allowed after ACC main switch off")
 
   def test_accel_safety_check(self):
     for controls_allowed in [True, False]:
