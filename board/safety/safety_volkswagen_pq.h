@@ -72,11 +72,20 @@ static uint8_t volkswagen_pq_get_counter(CANPacket_t *to_push) {
 }
 
 static uint32_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
+  int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   uint8_t checksum = 0U;
+  int checksum_byte = 0;
 
-  for (int i = 1; i < len; i++) {
-    checksum ^= (uint8_t)GET_BYTE(to_push, i);
+  if (addr == MSG_MOTOR_5) {
+    checksum_byte = 7;
+  }
+
+  // Simple XOR over the payload, except for the byte where the checksum lives.
+  for (int i = 0; i < len; i++) {
+    if (i != checksum_byte) {
+      checksum ^= (uint8_t)GET_BYTE(to_push, i);
+    }
   }
 
   return checksum;
@@ -125,15 +134,18 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
       if (addr == MSG_MOTOR_5) {
         // Signal: Motor_5.GRA_Hauptschalter
         volkswagen_pq_acc_main_on = GET_BIT(to_push, 50U);
-        controls_allowed &= volkswagen_pq_acc_main_on;
+        if (!volkswagen_pq_acc_main_on) {
+          controls_allowed = 0;
+        }
+
       }
       if (addr == MSG_GRA_NEU) {
         // Signal: GRA_Neu.GRA_Neu_Setzen
         // Signal: GRA_Neu.GRA_Neu_Recall
         bool set_button = GET_BIT(to_push, 16U);
         bool resume_button = GET_BIT(to_push, 17U);
-        if (volkswagen_pq_acc_main_on && ((!set_button && volkswagen_pq_set_prev) || (!resume_button && volkswagen_pq_resume_prev))) {
-          controls_allowed = 1;
+        if ((!set_button && volkswagen_pq_set_prev) || (!resume_button && volkswagen_pq_resume_prev)) {
+          controls_allowed = volkswagen_pq_acc_main_on;
         }
         volkswagen_pq_set_prev = set_button;
         volkswagen_pq_resume_prev = resume_button;
