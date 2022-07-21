@@ -33,7 +33,7 @@ addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
 static int ford_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &ford_rx_checks, NULL, NULL, NULL);
 
-  if (valid && (GET_BUS(to_push) == FORD_MAIN)) {
+  if (valid && (GET_BUS(to_push) == FORD_MAIN_BUS)) {
     int addr = GET_ADDR(to_push);
 
     // Update in motion state from standstill signal
@@ -137,18 +137,18 @@ static int ford_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
 
   switch (bus_num) {
-    case FORD_MAIN: {
+    case FORD_MAIN_BUS: {
       // Forward all traffic from bus 0 onward
-      bus_fwd = FORD_CAM;
+      bus_fwd = FORD_CAM_BUS;
       break;
     }
-    case FORD_CAM: {
+    case FORD_CAM_BUS: {
       // Block stock LKAS messages
       bool is_lkas_msg = (addr == MSG_LANE_ASSIST_DATA1)
                       || (addr == MSG_LATERAL_MOTION_CONTROL)
                       || (addr == MSG_IPMA_DATA);
       if (!is_lkas_msg) {
-        bus_fwd = FORD_MAIN;
+        bus_fwd = FORD_MAIN_BUS;
       }
       break;
     }
