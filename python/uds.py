@@ -400,6 +400,10 @@ class IsoTpMessage():
       print(f"ISO-TP: REQUEST - {hex(self._can_client.tx_addr)} 0x{bytes.hex(self.tx_dat)}")
     self._tx_first_frame()
 
+  @property
+  def rx_addr(self):
+    return self._can_client.rx_addr
+
   def _tx_first_frame(self) -> None:
     if self.tx_len < self.max_len:
       # single frame (send all bytes)
