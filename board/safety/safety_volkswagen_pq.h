@@ -66,11 +66,7 @@ static uint32_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   uint8_t checksum = 0U;
-  int checksum_byte = 0;
-
-  if (addr == MSG_MOTOR_5) {
-    checksum_byte = 7;
-  }
+  int checksum_byte = (addr == MSG_MOTOR_5) ? 7 : 0;
 
   // Simple XOR over the payload, except for the byte where the checksum lives.
   for (int i = 0; i < len; i++) {
@@ -266,8 +262,9 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == MSG_GRA_NEU) && !controls_allowed) {
-    // disallow resume and set: bits 16 and 17
-    if ((GET_BYTE(to_send, 2) & 0x3U) != 0U) {
+    // Signal: GRA_Neu.GRA_Neu_Setzen
+    // Signal: GRA_Neu.GRA_Neu_Recall
+    if (GET_BIT(to_send, 16U) || GET_BIT(to_send, 17U)) {
       tx = 0;
     }
   }
