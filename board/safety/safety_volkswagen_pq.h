@@ -43,15 +43,8 @@ bool volkswagen_pq_resume_prev = false;
 
 static uint32_t volkswagen_pq_get_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
-  uint32_t checksum = 0U;
 
-  if (addr == MSG_MOTOR_5) {
-    checksum = (uint8_t)GET_BYTE(to_push, 7);
-  } else {
-    checksum = (uint8_t)GET_BYTE(to_push, 0);
-  }
-
-  return checksum;
+  return (uint32_t)GET_BYTE(to_push, (addr == MSG_MOTOR_5) ? 7 : 0);
 }
 
 static uint8_t volkswagen_pq_get_counter(CANPacket_t *to_push) {
