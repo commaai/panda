@@ -46,7 +46,7 @@ ENV LC_ALL en_US.UTF-8
 RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
 ENV OPENPILOT_REF="1b0167ce24afb037b36464c40f9c5e0d657e77d9"
-ENV OPENDBC_REF="c5001c53a2b5618ad8ca79c4751a58758a2b871a"
+ENV OPENDBC_REF="70a9353e05a7e31d67b0f2d9b7a8ea3d58b5f6d2"
 
 COPY requirements.txt /tmp/
 RUN pyenv install 3.8.10 && \
