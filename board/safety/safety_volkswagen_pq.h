@@ -39,7 +39,6 @@ addr_checks volkswagen_pq_rx_checks = {volkswagen_pq_addr_checks, VOLKSWAGEN_PQ_
 
 const uint16_t FLAG_VOLKSWAGEN_LONG_CONTROL = 1;
 bool volkswagen_pq_longitudinal = false;
-bool volkswagen_pq_acc_main_on = false;
 bool volkswagen_pq_set_prev = false;
 bool volkswagen_pq_resume_prev = false;
 
@@ -133,8 +132,8 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
       // ACC main switch must be on to enter, exit immediately on main switch off
       if (addr == MSG_MOTOR_5) {
         // Signal: Motor_5.GRA_Hauptschalter
-        volkswagen_pq_acc_main_on = GET_BIT(to_push, 50U);
-        if (!volkswagen_pq_acc_main_on) {
+        acc_main_on = GET_BIT(to_push, 50U);
+        if (!acc_main_on) {
           controls_allowed = 0;
         }
 
@@ -145,7 +144,7 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
         bool set_button = GET_BIT(to_push, 16U);
         bool resume_button = GET_BIT(to_push, 17U);
         if ((!set_button && volkswagen_pq_set_prev) || (!resume_button && volkswagen_pq_resume_prev)) {
-          controls_allowed = volkswagen_pq_acc_main_on;
+          controls_allowed = acc_main_on;
         }
         volkswagen_pq_set_prev = set_button;
         volkswagen_pq_resume_prev = resume_button;
