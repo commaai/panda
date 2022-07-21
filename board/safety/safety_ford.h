@@ -110,7 +110,7 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     // This message must be sent for Lane Centering to work, and can include
     // values such as the steering angle or lane curvature for debugging,
     // but the action (LkaActvStats_D2_Req) must be set to zero.
-    unsigned int action = (GET_BYTE(to_send, 0) & 0xE0U) >> 5;
+    unsigned int action = GET_BYTE(to_send, 0) >> 5;
     if (action != 0U) {
       tx = 0;
     }
