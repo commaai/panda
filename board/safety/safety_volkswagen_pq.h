@@ -52,6 +52,8 @@ static uint32_t volkswagen_pq_get_checksum(CANPacket_t *to_push) {
   } else {
     checksum = (uint8_t)GET_BYTE(to_push, 0);
   }
+
+  return checksum;
 }
 
 static uint8_t volkswagen_pq_get_counter(CANPacket_t *to_push) {
