@@ -52,7 +52,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     // Update brake pedal and cruise state
     if (addr == MSG_ENG_BRAKE_DATA) {
       // Signal: BpedDrvAppl_D_Actl
-      brake_pressed = ((GET_BYTE(to_push, 0) & 0x30U) >> 4) == 2U;
+      brake_pressed = ((GET_BYTE(to_push, 0) >> 4) & 0x3U) == 2U;
 
       // Signal: CcStat_D_Actl
       unsigned int cruise_state = GET_BYTE(to_push, 1) & 0x07U;
