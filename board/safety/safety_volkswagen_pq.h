@@ -22,8 +22,7 @@ const int VOLKSWAGEN_PQ_MIN_ACCEL = -3500;              // Max decel 3.5 m/s2
 // Transmit of GRA_Neu is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
 const CanMsg VOLKSWAGEN_PQ_STOCK_TX_MSGS[] = {{MSG_HCA_1, 0, 5}, {MSG_GRA_NEU, 0, 4},
                                               {MSG_GRA_NEU, 2, 4}, {MSG_LDW_1, 0, 8}};
-const CanMsg VOLKSWAGEN_PQ_LONG_TX_MSGS[] =  {{MSG_HCA_1, 0, 5}, {MSG_GRA_NEU, 0, 4},
-                                              {MSG_GRA_NEU, 2, 4}, {MSG_LDW_1, 0, 8},
+const CanMsg VOLKSWAGEN_PQ_LONG_TX_MSGS[] =  {{MSG_HCA_1, 0, 5}, {MSG_LDW_1, 0, 8},
                                               {MSG_ACC_SYSTEM, 0, 8}, {MSG_ACC_GRA_ANZIEGE, 0, 8}};
 
 AddrCheckStruct volkswagen_pq_addr_checks[] = {

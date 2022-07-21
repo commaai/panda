@@ -144,7 +144,7 @@ class TestVolkswagenPqStockSafety(TestVolkswagenPqSafety):
 
 class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety):
   # Transmit of GRA_Neu is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-  TX_MSGS = [[MSG_HCA_1, 0], [MSG_GRA_NEU, 0], [MSG_GRA_NEU, 2], [MSG_LDW_1, 0], [MSG_ACC_SYSTEM, 0], [MSG_ACC_GRA_ANZIEGE, 0]]
+  TX_MSGS = [[MSG_HCA_1, 0], [MSG_LDW_1, 0], [MSG_ACC_SYSTEM, 0], [MSG_ACC_GRA_ANZIEGE, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_1, MSG_LDW_1, MSG_ACC_SYSTEM, MSG_ACC_GRA_ANZIEGE]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
