@@ -30,6 +30,12 @@ AddrCheckStruct ford_addr_checks[] = {
 addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
 
 
+static bool ford_lkas_msg_check(int addr) {
+  return (addr == MSG_LANE_ASSIST_DATA1)
+      || (addr == MSG_LATERAL_MOTION_CONTROL)
+      || (addr == MSG_IPMA_DATA);
+}
+
 static int ford_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &ford_rx_checks, NULL, NULL, NULL);
 
@@ -70,10 +76,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
 
     // If steering controls messages are received on the destination bus, it's an indication
     // that the relay might be malfunctioning.
-    bool is_lkas_msg = (addr == MSG_LANE_ASSIST_DATA1)
-                    || (addr == MSG_LATERAL_MOTION_CONTROL)
-                    || (addr == MSG_IPMA_DATA);
-    generic_rx_checks(is_lkas_msg);
+    generic_rx_checks(ford_lkas_msg_check(addr));
   }
 
   return valid;
@@ -144,10 +147,7 @@ static int ford_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     }
     case FORD_CAM_BUS: {
       // Block stock LKAS messages
-      bool is_lkas_msg = (addr == MSG_LANE_ASSIST_DATA1)
-                      || (addr == MSG_LATERAL_MOTION_CONTROL)
-                      || (addr == MSG_IPMA_DATA);
-      if (!is_lkas_msg) {
+      if (!ford_lkas_msg_check(addr)) {
         bus_fwd = FORD_MAIN_BUS;
       }
       break;
