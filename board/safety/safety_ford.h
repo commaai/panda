@@ -2,16 +2,16 @@
 
 // Safety-relevant CAN messages for Ford vehicles.
 #define MSG_ENG_BRAKE_DATA            0x165  // RX from PCM, for driver brake pedal and cruise state
-#define MSG_ENG_VEHICLE_SP_THROTTLE2  0x202  // RX from PCM, for vehicle speed
 #define MSG_ENG_VEHICLE_SP_THROTTLE   0x204  // RX from PCM, for driver throttle input
+#define MSG_DESIRED_TORQ_BRK          0x213  // RX from ABS, for standstill state
 #define MSG_STEERING_DATA_FD1         0x083  // TX by OP, ACC control buttons for cancel
 #define MSG_LANE_ASSIST_DATA1         0x3CA  // TX by OP, Lane Keeping Assist
 #define MSG_LATERAL_MOTION_CONTROL    0x3D3  // TX by OP, Lane Centering Assist
 #define MSG_IPMA_DATA                 0x3D8  // TX by OP, IPMA HUD user interface
 
 // CAN bus numbers.
-#define FORD_MAIN 0U
-#define FORD_CAM  2U
+#define FORD_MAIN_BUS 0U
+#define FORD_CAM_BUS  2U
 
 const CanMsg FORD_TX_MSGS[] = {
   {MSG_STEERING_DATA_FD1, 0, 8},
@@ -23,8 +23,8 @@ const CanMsg FORD_TX_MSGS[] = {
 
 AddrCheckStruct ford_addr_checks[] = {
   {.msg = {{MSG_ENG_BRAKE_DATA, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_ENG_VEHICLE_SP_THROTTLE2, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_ENG_VEHICLE_SP_THROTTLE, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_DESIRED_TORQ_BRK, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define FORD_ADDR_CHECK_LEN (sizeof(ford_addr_checks) / sizeof(ford_addr_checks[0]))
 addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
@@ -36,13 +36,10 @@ static int ford_rx_hook(CANPacket_t *to_push) {
   if (valid && (GET_BUS(to_push) == FORD_MAIN)) {
     int addr = GET_ADDR(to_push);
 
-    // Update in motion state from speed value
-    if (addr == MSG_ENG_VEHICLE_SP_THROTTLE2) {
-      // Speed in kph, convert to m/s
-      // Speed: (0.01 * val) * KPH_TO_MS
-      // Signal: Veh_V_ActlEng
-      vehicle_speed = (((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01) * KPH_TO_MS;
-      vehicle_moving = vehicle_speed > 0.3;
+    // Update in motion state from standstill signal
+    if (addr == MSG_DESIRED_TORQ_BRK) {
+      // Signal: VehStop_D_Stat
+      vehicle_moving = ((GET_BYTE(to_push, 3) & 0x18U) >> 3) > 0U;
     }
 
     // Update gas pedal
