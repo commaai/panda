@@ -54,7 +54,7 @@ class TestSubaruLegacySafety(common.PandaSafetyTest, common.DriverTorqueSteering
 
   def _user_gas_msg(self, gas):
     values = {"Throttle_Pedal": gas}
-    return self.packer.make_can_msg_panda("Throttle", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("Throttle", 0, values)
 
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
