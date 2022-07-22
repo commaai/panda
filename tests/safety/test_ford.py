@@ -86,14 +86,13 @@ class TestFordSafety(common.PandaSafetyTest):
     }
     return self.packer.make_can_msg_panda("Steering_Data_FD1", 0, values)
 
-  def test_steer_when_enabled(self):
+  def test_steer_allowed(self):
     self.safety.set_controls_allowed(1)
     self.assertTrue(self._tx(self._tja_command_msg(1)))
     self.assertTrue(self.safety.get_controls_allowed())
 
-  def test_steer_when_disabled(self):
     self.safety.set_controls_allowed(0)
-    self.assertFalse(self._tx(self._tja_command_msg(0)))
+    self.assertFalse(self._tx(self._tja_command_msg(1)))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_prevent_lkas_action(self):
