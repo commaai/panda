@@ -43,7 +43,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     // Update in motion state from standstill signal
     if (addr == MSG_DESIRED_TORQ_BRK) {
       // Signal: VehStop_D_Stat
-      vehicle_moving = ((GET_BYTE(to_push, 3) & 0x18U) >> 3) > 0U;
+      vehicle_moving = ((GET_BYTE(to_push, 3) >> 3) & 0x3U) > 0U;
     }
 
     // Update gas pedal
@@ -117,7 +117,7 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   // Safety check for LateralMotionControl action
   if (addr == MSG_LATERAL_MOTION_CONTROL) {
     // Signal: LatCtl_D_Rq
-    unsigned int steer_control_type = (GET_BYTE(to_send, 4) & 0x1CU) >> 2;
+    unsigned int steer_control_type = (GET_BYTE(to_send, 4) >> 2) & 0x7U;
     bool steer_control_enabled = steer_control_type != 0U;
 
     // No steer control allowed when controls are not allowed
