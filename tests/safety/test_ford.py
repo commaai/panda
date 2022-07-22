@@ -35,7 +35,7 @@ class TestFordSafety(common.PandaSafetyTest):
   def _user_brake_msg(self, brake: bool):
     # brake pedal and cruise state share same message, so we have to send
     # the other signal too
-    enable: bool = self.safety.get_controls_allowed()
+    enable = self.safety.get_controls_allowed()
     values = {
       "BpedDrvAppl_D_Actl": 2 if brake else 1,
       "CcStat_D_Actl": 5 if enable else 0,
@@ -56,7 +56,7 @@ class TestFordSafety(common.PandaSafetyTest):
   def _pcm_status_msg(self, enable: bool):
     # brake pedal and cruise state share same message, so we have to send
     # the other signal too
-    brake: bool = self.safety.get_brake_pressed_prev()
+    brake = self.safety.get_brake_pressed_prev()
     values = {
       "BpedDrvAppl_D_Actl": 2 if brake else 1,
       "CcStat_D_Actl": 5 if enable else 0,
