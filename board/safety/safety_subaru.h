@@ -20,6 +20,7 @@ const CanMsg SUBARU_TX_MSGS[] = {
 
 const CanMsg SUBARU_GEN2_TX_MSGS[] = {
   {0x122, 0, 8},
+  {0x221, 1, 8},
   {0x321, 0, 8},
   {0x322, 0, 8}
 };
@@ -192,12 +193,11 @@ static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   if (bus_num == 2) {
     // Global platform
     // 0x122 ES_LKAS
-    // 0x221 ES_Distance
+    // 0x321 ES_DashStatus
     // 0x322 ES_LKAS_State
     int addr = GET_ADDR(to_fwd);
-    bool block_common = ((addr == 0x122) || (addr == 0x321) || (addr == 0x322));
-    bool block_gen1 = (addr == 0x221);
-    if (!block_common && !(!subaru_gen2 && block_gen1)) {
+    bool block_lkas = (addr == 0x122) || (addr == 0x321) || (addr == 0x322);
+    if (!block_lkas) {
       bus_fwd = 0;  // Main CAN
     }
   }
