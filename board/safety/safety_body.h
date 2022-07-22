@@ -27,8 +27,8 @@ static int body_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     tx = 1;
   }
 
-  if (!msg_allowed(to_send, BODY_TX_MSGS, sizeof(BODY_TX_MSGS)/sizeof(BODY_TX_MSGS[0]))) {
-    tx = 0;
+  if (msg_allowed(to_send, BODY_TX_MSGS, sizeof(BODY_TX_MSGS)/sizeof(BODY_TX_MSGS[0])) && controls_allowed) {
+    tx = 1;
   }
 
   return tx;
