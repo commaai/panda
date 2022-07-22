@@ -9,10 +9,12 @@ const int SUBARU_DRIVER_TORQUE_ALLOWANCE = 60;
 const int SUBARU_DRIVER_TORQUE_FACTOR = 10;
 const int SUBARU_STANDSTILL_THRSLD = 20;  // about 1kph
 
-const int SUBARU_L_DRIVER_TORQUE_ALLOWANCE = 75;
-const int SUBARU_L_DRIVER_TORQUE_FACTOR = 10;
 
-const CanMsg SUBARU_TX_MSGS[] = {{0x122, 0, 8}, {0x221, 0, 8}, {0x322, 0, 8}};
+const CanMsg SUBARU_TX_MSGS[] = {
+  {0x122, 0, 8},
+  {0x221, 0, 8},
+  {0x322, 0, 8}
+};
 #define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
 
 AddrCheckStruct subaru_addr_checks[] = {
@@ -24,6 +26,22 @@ AddrCheckStruct subaru_addr_checks[] = {
 };
 #define SUBARU_ADDR_CHECK_LEN (sizeof(subaru_addr_checks) / sizeof(subaru_addr_checks[0]))
 addr_checks subaru_rx_checks = {subaru_addr_checks, SUBARU_ADDR_CHECK_LEN};
+
+AddrCheckStruct subaru_gen2_addr_checks[] = {
+  {.msg = {{ 0x40, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x119, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{0x139, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{0x13a, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{0x13c, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{0x240, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
+};
+#define SUBARU_GEN2_ADDR_CHECK_LEN (sizeof(subaru_gen2_addr_checks) / sizeof(subaru_gen2_addr_checks[0]))
+addr_checks subaru_gen2_rx_checks = {subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
+
+
+const uint16_t SUBARU_PARAM_GEN2 = 1;
+bool subaru_gen2 = false;
+
 
 static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -46,11 +64,14 @@ static uint32_t subaru_compute_checksum(CANPacket_t *to_push) {
 static int subaru_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &subaru_rx_checks,
-                            subaru_get_checksum, subaru_compute_checksum, subaru_get_counter);
+                                 subaru_get_checksum, subaru_compute_checksum, subaru_get_counter);
 
-  if (valid && (GET_BUS(to_push) == 0U)) {
+  if (valid) {
+    const int bus = GET_BUS(to_push);
+    const int alt_bus = subaru_gen2 ? 1 : 0;
+
     int addr = GET_ADDR(to_push);
-    if (addr == 0x119) {
+    if ((addr == 0x119) && (bus == 0)) {
       int torque_driver_new;
       torque_driver_new = ((GET_BYTES_04(to_push) >> 16) & 0x7FFU);
       torque_driver_new = -1 * to_signed(torque_driver_new, 11);
@@ -58,7 +79,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if (addr == 0x240) {
+    if ((addr == 0x240) && (bus == alt_bus)) {
       int cruise_engaged = ((GET_BYTES_48(to_push) >> 9) & 1U);
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
@@ -70,17 +91,17 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     }
 
     // sample wheel speed, averaging opposite corners
-    if (addr == 0x13a) {
+    if ((addr == 0x13a) && (bus == alt_bus)) {
       int subaru_speed = ((GET_BYTES_04(to_push) >> 12) & 0x1FFFU) + ((GET_BYTES_48(to_push) >> 6) & 0x1FFFU);  // FR + RL
       subaru_speed /= 2;
       vehicle_moving = subaru_speed > SUBARU_STANDSTILL_THRSLD;
     }
 
-    if (addr == 0x13c) {
+    if ((addr == 0x13c) && (bus == alt_bus)) {
       brake_pressed = ((GET_BYTE(to_push, 7) >> 6) & 1U);
     }
 
-    if (addr == 0x40) {
+    if ((addr == 0x40) && (bus == 0)) {
       gas_pressed = GET_BYTE(to_push, 4) != 0U;
     }
 
@@ -155,7 +176,7 @@ static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
 
   if (bus_num == 0) {
-    bus_fwd = 2;  // Camera CAN
+    bus_fwd = 2;  // forward to camera
   }
 
   if (bus_num == 2) {
@@ -164,8 +185,10 @@ static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     // 0x221 ES_Distance
     // 0x322 ES_LKAS_State
     int addr = GET_ADDR(to_fwd);
-    int block_msg = ((addr == 0x122) || (addr == 0x221) || (addr == 0x322));
-    if (!block_msg) {
+    bool block_common = ((addr == 0x122) || (addr == 0x322));
+    bool block_gen1 = (addr == 0x221);
+    bool block_gen2 = (addr == 0x321);
+    if (!block_common && !(subaru_gen2 ? block_gen2 : block_gen1)) {
       bus_fwd = 0;  // Main CAN
     }
   }
@@ -174,7 +197,14 @@ static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 }
 
 static const addr_checks* subaru_init(uint16_t param) {
-  UNUSED(param);
+  subaru_gen2 = GET_FLAG(param, SUBARU_PARAM_GEN2);
+
+  if (subaru_gen2) {
+    subaru_rx_checks = (addr_checks){subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
+  } else {
+    subaru_rx_checks = (addr_checks){subaru_addr_checks, SUBARU_ADDR_CHECK_LEN};
+  }
+
   return &subaru_rx_checks;
 }
 

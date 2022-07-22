@@ -1,6 +1,11 @@
-// constants are in board/safety/safety_subaru.h
+// more constants in board/safety/safety_subaru.h
+const int SUBARU_L_DRIVER_TORQUE_ALLOWANCE = 75;
+const int SUBARU_L_DRIVER_TORQUE_FACTOR = 10;
 
-const CanMsg SUBARU_L_TX_MSGS[] = {{0x161, 0, 8}, {0x164, 0, 8}};
+const CanMsg SUBARU_L_TX_MSGS[] = {
+  {0x161, 0, 8},
+  {0x164, 0, 8}
+};
 #define SUBARU_L_TX_MSGS_LEN (sizeof(SUBARU_L_TX_MSGS) / sizeof(SUBARU_L_TX_MSGS[0]))
 
 // TODO: do checksum and counter checks after adding the signals to the outback dbc file
