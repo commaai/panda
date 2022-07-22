@@ -1,5 +1,3 @@
-#define KPH_TO_MS (1.0 / 3.6)
-
 // Safety-relevant CAN messages for Ford vehicles.
 #define MSG_ENG_BRAKE_DATA            0x165  // RX from PCM, for driver brake pedal and cruise state
 #define MSG_ENG_VEHICLE_SP_THROTTLE   0x204  // RX from PCM, for driver throttle input
