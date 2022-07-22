@@ -21,15 +21,21 @@ class TestFordSafety(common.PandaSafetyTest):
   RELAY_MALFUNCTION_ADDR = MSG_IPMA_DATA
   RELAY_MALFUNCTION_BUS = 0
 
+  TX_MSGS = [[MSG_STEERING_DATA_FD1, 0], [MSG_LANE_ASSIST_DATA1, 0], [MSG_LATERAL_MOTION_CONTROL, 0], [MSG_IPMA_DATA, 0]]
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_LANE_ASSIST_DATA1, MSG_LATERAL_MOTION_CONTROL, MSG_IPMA_DATA]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
   def setUp(self):
-    self.packer = None
-    raise unittest.SkipTest
+    self.packer = CANPackerPanda("ford_lincoln_base_pt")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
+    self.safety.init_tests()
 
   # Driver brake pedal
-  def _user_brake_msg(self, brake):
+  def _user_brake_msg(self, brake: bool):
     # brake pedal and cruise state share same message, so we have to send
     # the other signal too
-    enable = self.safety.get_controls_allowed()
+    enable: bool = self.safety.get_controls_allowed()
     values = {
       "BpedDrvAppl_D_Actl": 2 if brake else 1,
       "CcStat_D_Actl": 5 if enable else 0,
@@ -42,15 +48,15 @@ class TestFordSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("EngVehicleSpThrottle2", 0, values)
 
   # Drive throttle input
-  def _user_gas_msg(self, gas):
+  def _user_gas_msg(self, gas: float):
     values = {"ApedPos_Pc_ActlArb": gas}
     return self.packer.make_can_msg_panda("EngVehicleSpThrottle", 0, values)
 
   # Cruise status
-  def _pcm_status_msg(self, enable):
+  def _pcm_status_msg(self, enable: bool):
     # brake pedal and cruise state share same message, so we have to send
     # the other signal too
-    brake = self.safety.get_brake_pressed_prev()
+    brake: bool = self.safety.get_brake_pressed_prev()
     values = {
       "BpedDrvAppl_D_Actl": 2 if brake else 1,
       "CcStat_D_Actl": 5 if enable else 0,
@@ -58,14 +64,14 @@ class TestFordSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("EngBrakeData", 0, values)
 
   # LKAS command
-  def _lkas_command_msg(self, action):
+  def _lkas_command_msg(self, action: int):
     values = {
       "LkaActvStats_D2_Req": action,
     }
     return self.packer.make_can_msg_panda("Lane_Assist_Data1", 0, values)
 
   # TJA command
-  def _tja_command_msg(self, enabled):
+  def _tja_command_msg(self, enabled: bool):
     values = {
       "LatCtl_D_Rq": 1 if enabled else 0,
     }
@@ -79,14 +85,6 @@ class TestFordSafety(common.PandaSafetyTest):
       "CcAslButtnSetPress": _set,
     }
     return self.packer.make_can_msg_panda("Steering_Data_FD1", 0, values)
-
-
-class TestFordSteeringSafety(TestFordSafety):
-  def setUp(self):
-    self.packer = CANPackerPanda("ford_lincoln_base_pt")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
-    self.safety.init_tests()
 
   def test_steer_when_enabled(self):
     self.safety.set_controls_allowed(1)
@@ -104,18 +102,6 @@ class TestFordSteeringSafety(TestFordSafety):
 
     self.safety.set_controls_allowed(0)
     self.assertFalse(self._tx(self._lkas_command_msg(1)))
-
-
-class TestFordStockSafety(TestFordSafety):
-  TX_MSGS = [[MSG_STEERING_DATA_FD1, 0], [MSG_LANE_ASSIST_DATA1, 0], [MSG_LATERAL_MOTION_CONTROL, 0], [MSG_IPMA_DATA, 0]]
-  FWD_BLACKLISTED_ADDRS = {2: [MSG_LANE_ASSIST_DATA1, MSG_LATERAL_MOTION_CONTROL, MSG_IPMA_DATA]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
-
-  def setUp(self):
-    self.packer = CANPackerPanda("ford_lincoln_base_pt")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
-    self.safety.init_tests()
 
   def test_spam_cancel_safety_check(self):
     self.safety.set_controls_allowed(0)
