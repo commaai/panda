@@ -113,7 +113,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       gas_pressed = GET_BYTE(to_push, 4) != 0U;
     }
 
-    generic_rx_checks((addr == 0x122));
+    generic_rx_checks((addr == 0x122) && (bus == 0));
   }
   return valid;
 }
