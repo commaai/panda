@@ -43,7 +43,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     // Update in motion state from standstill signal
     if (addr == MSG_DESIRED_TORQ_BRK) {
       // Signal: VehStop_D_Stat
-      vehicle_moving = ((GET_BYTE(to_push, 3) >> 3) & 0x3U) > 0U;
+      vehicle_moving = ((GET_BYTE(to_push, 3) >> 3) & 0x3U) == 0U;
     }
 
     // Update gas pedal
