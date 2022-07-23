@@ -103,11 +103,11 @@ class TestFordSafety(common.PandaSafetyTest):
     self.assertFalse(self._tx(self._lkas_command_msg(1)))
 
   def test_spam_cancel_safety_check(self):
-    self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._acc_button_msg(cancel=1)))
-
-    self.assertFalse(self._tx(self._acc_button_msg(resume=1)))
-    self.assertFalse(self._tx(self._acc_button_msg(_set=1)))
+    for allowed in (0, 1):
+      self.safety.set_controls_allowed(allowed)
+      self.assertTrue(self._tx(self._acc_button_msg(cancel=1)))
+      self.assertFalse(self._tx(self._acc_button_msg(resume=1)))
+      self.assertFalse(self._tx(self._acc_button_msg(_set=1)))
 
 
 if __name__ == "__main__":
