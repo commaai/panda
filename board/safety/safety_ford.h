@@ -94,9 +94,7 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (addr == MSG_STEERING_DATA_FD1) {
     // Violation if any button other than cancel is pressed
     // Signal: CcAslButtnCnclPress
-    bool violation = 0U != ((GET_BYTES_04(to_send) & 0xFEFFU) |
-                            GET_BYTE(to_send, 4) |
-                            GET_BYTE(to_send, 5));
+    bool violation = ((GET_BYTES_04(to_send) | GET_BYTES_48(to_send)) & 0xFEFFFFFFU) != 0U;
     if (violation) {
       tx = 0;
     }
