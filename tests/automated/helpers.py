@@ -1,14 +1,13 @@
 import os
 import time
 import random
-import _thread
 import faulthandler
 from functools import wraps, partial
-from panda import Panda
-from panda_jungle import PandaJungle  # pylint: disable=import-error
 from nose.tools import assert_equal
 from parameterized import parameterized, param
-from .timeout import run_with_timeout
+
+from panda import Panda
+from panda_jungle import PandaJungle  # pylint: disable=import-error
 
 SPEED_NORMAL = 500
 SPEED_GMLAN = 33.3
@@ -86,18 +85,18 @@ def time_many_sends(p, bus, p_recv=None, msg_count=100, msg_id=None, two_pandas=
   if p == p_recv and two_pandas:
     raise ValueError("Cannot have two pandas that are the same panda")
 
-  start_time = time.time()
+  start_time = time.monotonic()
   p.can_send_many([(msg_id, 0, b"\xaa" * 8, bus)] * msg_count)
   r = []
   r_echo = []
   r_len_expected = msg_count if two_pandas else msg_count * 2
   r_echo_len_exected = msg_count if two_pandas else 0
 
-  while len(r) < r_len_expected and (time.time() - start_time) < 5:
+  while len(r) < r_len_expected and (time.monotonic() - start_time) < 5:
     r.extend(p_recv.can_recv())
-  end_time = time.time()
+  end_time = time.monotonic()
   if two_pandas:
-    while len(r_echo) < r_echo_len_exected and (time.time() - start_time) < 10:
+    while len(r_echo) < r_echo_len_exected and (time.monotonic() - start_time) < 10:
       r_echo.extend(p.can_recv())
 
   sent_echo = [x for x in r if x[3] == 0x80 | bus and x[0] == msg_id]
@@ -149,16 +148,6 @@ def panda_type_to_serial(fn):
     return fn(serials, **kwargs)
   return wrapper
 
-def start_heartbeat_thread(p):
-  def heartbeat_thread(p):
-    while True:
-      try:
-        p.send_heartbeat()
-        time.sleep(1)
-      except:
-        break
-  _thread.start_new_thread(heartbeat_thread, (p,))
-
 def panda_connect_and_init(fn=None, clear_can=True):
   if not fn:
     return partial(panda_connect_and_init, clear_can=clear_can)
@@ -196,18 +185,15 @@ def panda_connect_and_init(fn=None, clear_can=True):
       panda.set_power_save(False)
 
     try:
-      run_with_timeout(TIMEOUT, fn, *pandas, **kwargs)
+      fn(*pandas, *kwargs)
 
       # Check if the pandas did not throw any faults while running test
       for panda in pandas:
         panda.reconnect()
         assert panda.health()['fault_status'] == 0
-    except Exception as e:
-      raise e
     finally:
-      # Close all connections
-      for panda in pandas:
-        panda.close()
+      for p in pandas:
+        p.close()
   return wrapper
 
 def clear_can_buffers(panda):
@@ -218,10 +204,10 @@ def clear_can_buffers(panda):
   # clear rx buffers
   panda.can_clear(0xFFFF)
   r = [1]
-  st = time.time()
+  st = time.monotonic()
   while len(r) > 0:
     r = panda.can_recv()
     time.sleep(0.05)
-    if (time.time() - st) > 10:
+    if (time.monotonic() - st) > 10:
       print("Unable to clear can buffers for panda ", panda.get_serial())
       assert False

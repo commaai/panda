@@ -14,7 +14,7 @@ pipeline {
         }
       }
     }
-    stage('PEDAL tests') {
+    stage('pedal tests') {
       steps {
         lock(resource: "pedal", inversePrecedence: true, quantity: 1) {
           timeout(time: 10, unit: 'MINUTES') {
