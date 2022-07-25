@@ -116,17 +116,17 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
     }
 
     if (volkswagen_pq_longitudinal) {
-      // Exit controls on leading edge of Cancel, otherwise, enter controls on falling edge of Set or Resume
-      // ACC main switch must be on to enter, exit immediately on main switch off
       if (addr == MSG_MOTOR_5) {
+        // ACC main switch must be on to enter, exit immediately on main switch off
         // Signal: Motor_5.GRA_Hauptschalter
         acc_main_on = GET_BIT(to_push, 50U);
         if (!acc_main_on) {
           controls_allowed = 0;
         }
-
       }
+
       if (addr == MSG_GRA_NEU) {
+        // Enter controls on falling edge of Set or Resume
         // Signal: GRA_Neu.GRA_Neu_Setzen
         // Signal: GRA_Neu.GRA_Neu_Recall
         bool set_button = GET_BIT(to_push, 16U);
@@ -136,14 +136,15 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
         }
         volkswagen_pq_set_prev = set_button;
         volkswagen_pq_resume_prev = resume_button;
+        // Exit controls on leading edge of Cancel, override Set/Resume if present simultaneously
         // Signal: GRA_ACC_01.GRA_Abbrechen
         if (GET_BIT(to_push, 9U) == 1U) {
           controls_allowed = 0;
         }
       }
     } else {
-      // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
       if (addr == MSG_MOTOR_2) {
+        // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
         // Signal: Motor_2.GRA_Status
         int acc_status = (GET_BYTE(to_push, 2) & 0xC0U) >> 6;
         int cruise_engaged = ((acc_status == 1) || (acc_status == 2)) ? 1 : 0;
