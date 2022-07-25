@@ -31,7 +31,7 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
   } else {
     CANPacket_t can_packet;
     while ((pos < max_len) && can_pop(&can_rx_q, &can_packet)) {
-      int pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
+      uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
       if ((pos + pckt_len) <= max_len) {
         (void)memcpy(&data[pos], &can_packet, pckt_len);
         pos += pckt_len;
@@ -86,7 +86,7 @@ void comms_can_write(uint8_t *data, uint32_t len) {
     }
 
     while (pos < len) {
-      int pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[(data[pos] >> 4U)];
+      uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[(data[pos] >> 4U)];
       if ((pos + pckt_len) <= len) {
         CANPacket_t to_push;
         (void)memcpy(&to_push, &data[pos], pckt_len);
