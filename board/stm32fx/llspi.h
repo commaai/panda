@@ -10,7 +10,7 @@ uint8_t spi_buf[SPI_BUF_SIZE];
 int spi_buf_count = 0;
 int spi_total_count = 0;
 
-void spi_tx_dma(void *addr, int len) {
+void spi_tx_dma(uint8_t *addr, int len) {
   // disable DMA
   register_clear_bits(&(SPI1->CR2), SPI_CR2_TXDMAEN);
   register_clear_bits(&(DMA2_Stream3->CR), DMA_SxCR_EN);
@@ -32,7 +32,7 @@ void spi_tx_dma(void *addr, int len) {
   set_gpio_output(GPIOB, 0, 0);
 }
 
-void spi_rx_dma(void *addr, int len) {
+void spi_rx_dma(uint8_t *addr, int len) {
   // disable DMA
   register_clear_bits(&(SPI1->CR2), SPI_CR2_RXDMAEN);
   register_clear_bits(&(DMA2_Stream2->CR), DMA_SxCR_EN);
@@ -60,15 +60,15 @@ uint8_t spi_tx_buf[0x44];
 
 // SPI RX
 void DMA2_Stream2_IRQ_Handler(void) {
-  int *resp_len = (int*)spi_tx_buf;
+  int resp_len = (int) *spi_tx_buf;
   (void)memset(spi_tx_buf, 0xaa, 0x44);
-  *resp_len = spi_cb_rx(spi_buf, 0x14, spi_tx_buf+4);
+  //*resp_len = spi_cb_rx(spi_buf, 0x14, spi_tx_buf+4);
   #ifdef DEBUG_SPI
     puts("SPI write: ");
-    puth(*resp_len);
+    puth(resp_len);
     puts("\n");
   #endif
-  spi_tx_dma(spi_tx_buf, *resp_len + 4);
+  spi_tx_dma(spi_tx_buf, resp_len + 4);
 
   // ack
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
