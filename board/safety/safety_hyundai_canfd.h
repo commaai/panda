@@ -212,7 +212,7 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   }
 
   // cruise buttons check
-  /**if (((addr == 0x1aa) && (bus == 0)) || ((addr == 0x1cf) && (bus == 1))) {
+  if (((addr == 0x1aa) && (bus == 0)) || ((addr == 0x1cf) && (bus == 1))) {
     int button = 0;
 
     if ((addr == 0x1aa) && (bus == 0) && hyundai_tucson_hev_2022) {
@@ -227,7 +227,7 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
     if (!allowed) {
       tx = 0;
     }
-  }**/
+  }
 
   return tx;
 }
