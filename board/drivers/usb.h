@@ -1,7 +1,5 @@
 // IRQs: OTG_FS
 
-#include "comms_definitions.h"
-
 typedef union {
   uint16_t w;
   struct BW {
@@ -29,7 +27,6 @@ bool usb_enumerated = false;
 
 void usb_init(void);
 void usb_cb_ep3_out_complete(void);
-void usb_cb_enumeration_complete(void);
 void usb_outep3_resume_if_paused(void);
 
 // **** supporting defines ****
