@@ -17,6 +17,11 @@ const CanMsg HYUNDAI_CANFD_TX_MSGS[] = {
   {0x2A4, 0, 24},
 };
 
+const CanMsg HYUNDAI_TUCSON_HEV_2022_TX_MSGS[] = {
+  {0x12a, 0, 16},
+  {0x1aa, 0, 16},
+};
+
 AddrCheckStruct hyundai_canfd_addr_checks[] = {
   {.msg = {{0x35, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x65, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -26,6 +31,16 @@ AddrCheckStruct hyundai_canfd_addr_checks[] = {
   {.msg = {{0x1cf, 1, 8, .check_checksum = false, .max_counter = 0xfU, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define HYUNDAI_CANFD_ADDR_CHECK_LEN (sizeof(hyundai_canfd_addr_checks) / sizeof(hyundai_canfd_addr_checks[0]))
+
+AddrCheckStruct hyundai_tucson_hev_2022_addr_checks[] = {
+  {.msg = {{0x105, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x65, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0xa0, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0xea, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x175, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{0x1aa, 0, 16, .check_checksum = false, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+};
+#define HYUNDAI_TUCSON_HEV_2022_ADDR_CHECK_LEN (sizeof(hyundai_tucson_hev_2022_addr_checks) / sizeof(hyundai_tucson_hev_2022_addr_checks[0]))
 
 addr_checks hyundai_canfd_rx_checks = {hyundai_canfd_addr_checks, HYUNDAI_CANFD_ADDR_CHECK_LEN};
 
@@ -84,14 +99,27 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
-  if (valid && (bus == 1)) {
+  if (valid && (bus == 0) && hyundai_tucson_hev_2022) {
 
-    // driver torque
-    if (addr == 0xea) {
-      int torque_driver_new = ((GET_BYTE(to_push, 11) & 0x1fU) << 8U) | GET_BYTE(to_push, 10);
-      torque_driver_new -= 4095;
-      update_sample(&torque_driver, torque_driver_new);
+    // cruise buttons
+    if (addr == 0x1aa) {
+      int cruise_button = (GET_BYTE(to_push, 4) >> 4) & 0x7U;
+      int main_button = GET_BIT(to_push, 34U);
+
+      if ((cruise_button == HYUNDAI_BTN_RESUME) || (cruise_button == HYUNDAI_BTN_SET) || (cruise_button == HYUNDAI_BTN_CANCEL) || (main_button != 0)) {
+        hyundai_last_button_interaction = 0U;
+      } else {
+        hyundai_last_button_interaction = MIN(hyundai_last_button_interaction + 1U, HYUNDAI_PREV_BUTTON_SAMPLES);
+      }
     }
+
+    // gas press
+    if (addr == 0x105) {
+      gas_pressed = ((GET_BIT(to_push, 103U) != 0U) | (GET_BYTE(to_push, 13) != 0U) | (GET_BIT(to_push, 112U) != 0U));
+    }
+  }
+
+  if (valid && (bus == 1) && !hyundai_tucson_hev_2022) {
 
     // cruise buttons
     if (addr == 0x1cf) {
@@ -105,6 +133,21 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
       }
     }
 
+    // gas press
+    if (addr == 0x35) {
+      gas_pressed = GET_BYTE(to_push, 5) != 0U;
+    }
+  }
+
+  if (valid && ((bus == 0) || (bus == 1))) {
+
+    // driver torque
+    if (addr == 0xea) {
+      int torque_driver_new = ((GET_BYTE(to_push, 11) & 0x1fU) << 8U) | GET_BYTE(to_push, 10);
+      torque_driver_new -= 4095;
+      update_sample(&torque_driver, torque_driver_new);
+    }
+
     // cruise state
     if (addr == 0x175) {
       bool cruise_engaged = GET_BIT(to_push, 68U);
@@ -116,11 +159,6 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
         controls_allowed = 0;
       }
       cruise_engaged_prev = cruise_engaged;
-    }
-
-    // gas press
-    if (addr == 0x35) {
-      gas_pressed = GET_BYTE(to_push, 5) != 0U;
     }
 
     // brake press
@@ -138,7 +176,14 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     }
   }
 
-  generic_rx_checks((addr == 0x50) && (bus == 0));
+  bool stock_ecu_detected = false;
+  if (hyundai_tucson_hev_2022) {
+    stock_ecu_detected = ((addr == 0x12a) && (bus == 0));
+  } else {
+    stock_ecu_detected = ((addr == 0x50) && (bus == 0));
+  }
+
+  generic_rx_checks(stock_ecu_detected);
 
   return valid;
 }
@@ -146,12 +191,18 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
 static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   UNUSED(longitudinal_allowed);
 
-  int tx = msg_allowed(to_send, HYUNDAI_CANFD_TX_MSGS, sizeof(HYUNDAI_CANFD_TX_MSGS)/sizeof(HYUNDAI_CANFD_TX_MSGS[0]));
+  int tx = 1;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
+  if (hyundai_tucson_hev_2022) {
+    tx = msg_allowed(to_send, HYUNDAI_TUCSON_HEV_2022_TX_MSGS, sizeof(HYUNDAI_TUCSON_HEV_2022_TX_MSGS)/sizeof(HYUNDAI_TUCSON_HEV_2022_TX_MSGS[0]));
+  } else {
+    tx = msg_allowed(to_send, HYUNDAI_CANFD_TX_MSGS, sizeof(HYUNDAI_CANFD_TX_MSGS)/sizeof(HYUNDAI_CANFD_TX_MSGS[0]));
+  }
+
   // steering
-  if ((addr == 0x50) && (bus == 0)) {
+  if (((addr == 0x50) || ((addr == 0x12a) && hyundai_tucson_hev_2022)) && (bus == 0)) {
     int desired_torque = ((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U);
     desired_torque -= 1024;
 
@@ -161,14 +212,22 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   }
 
   // cruise buttons check
-  if ((addr == 0x1cf) && (bus == 1)) {
-    bool is_cancel = GET_BYTE(to_send, 2) == 4U;
-    bool is_resume = GET_BYTE(to_send, 2) == 1U;
+  /**if (((addr == 0x1aa) && (bus == 0)) || ((addr == 0x1cf) && (bus == 1))) {
+    int button = 0;
+
+    if ((addr == 0x1aa) && (bus == 0) && hyundai_tucson_hev_2022) {
+      button = (GET_BYTE(to_send, 4) >> 4) & 0x7U;
+    } else if ((addr == 0x1cf) && (bus == 1) && !hyundai_tucson_hev_2022) {
+      button = GET_BYTE(to_send, 2) & 0x7U;
+    }
+
+    bool is_cancel = (button == 4);
+    bool is_resume = (button == 1);
     bool allowed = (is_cancel && cruise_engaged_prev) || (is_resume && controls_allowed);
     if (!allowed) {
       tx = 0;
     }
-  }
+  }**/
 
   return tx;
 }
@@ -177,21 +236,36 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
   int bus_fwd = -1;
   int addr = GET_ADDR(to_fwd);
+  int block_msg = 0;
 
   if (bus_num == 0) {
     bus_fwd = 2;
   }
-  if ((bus_num == 2) && (addr != 0x50) && (addr != 0x2a4)) {
-    bus_fwd = 0;
+  if (bus_num == 2) {
+    if (hyundai_tucson_hev_2022) {
+      block_msg = (addr != 0x12a);
+    } else {
+      block_msg = ((addr != 0x50) && (addr != 0x2a4));
+    }
+    if (!block_msg) {
+      bus_fwd = 0;
+    }
   }
 
   return bus_fwd;
 }
 
 static const addr_checks* hyundai_canfd_init(uint16_t param) {
-  UNUSED(param);
   gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
+  hyundai_tucson_hev_2022 = GET_FLAG(param, HYUNDAI_PARAM_TUCSON_HEV_2022);
+
+  if (hyundai_tucson_hev_2022) {
+    hyundai_canfd_rx_checks = (addr_checks){hyundai_tucson_hev_2022_addr_checks, HYUNDAI_TUCSON_HEV_2022_ADDR_CHECK_LEN};
+  } else {
+    hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_addr_checks, HYUNDAI_CANFD_ADDR_CHECK_LEN};
+  }
+
   return &hyundai_canfd_rx_checks;
 }
 
