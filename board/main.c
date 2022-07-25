@@ -382,12 +382,6 @@ int main(void) {
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
 
-// TODO: STM32H7 implementation 
-#ifdef STM32F4
-  // enable SPI
-  spi_init();
-#endif  
-
   puts("**** INTERRUPTS ON ****\n");
   enable_interrupts();
 
