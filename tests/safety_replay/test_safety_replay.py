@@ -19,7 +19,8 @@ logs = [
   ReplayRoute("6fb4948a7ebe670e|2019-11-12--00-35-53.bz2", Panda.SAFETY_CHRYSLER),          # CHRYSLER.PACIFICA_2018_HYBRID
   ReplayRoute("791340bc01ed993d|2019-04-08--10-26-00.bz2", Panda.SAFETY_SUBARU),            # SUBARU.IMPREZA
   ReplayRoute("76b83eb0245de90e|2020-03-05--19-16-05.bz2", Panda.SAFETY_VOLKSWAGEN_MQB),    # VOLKSWAGEN.GOLF (MK7)
-  ReplayRoute("d12cd943127f267b|2020-03-27--15-57-18.bz2", Panda.SAFETY_VOLKSWAGEN_PQ),     # 2009 VW Passat R36 (B6), supporting OP port not yet upstreamed
+  ReplayRoute("d12cd943127f267b|2020-03-27--15-57-18.bz2", Panda.SAFETY_VOLKSWAGEN_PQ),     # 2009 VW Passat R36 (B6)
+  ReplayRoute("3cfdec54aa035f3f|2022-07-19--23-45-10.bz2", Panda.SAFETY_VOLKSWAGEN_PQ, Panda.FLAG_VOLKSWAGEN_LONG_CONTROL),  # 2018 Volkswagen Passat NMS
   ReplayRoute("fbbfa6af821552b9|2020-03-03--08-09-43.bz2", Panda.SAFETY_NISSAN),            # NISSAN.XTRAIL
   ReplayRoute("5b7c365c50084530_2020-04-15--16-13-24--3--rlog.bz2", Panda.SAFETY_HYUNDAI),  # HYUNDAI.SONATA
   ReplayRoute("610ebb9faaad6b43|2020-06-13--15-28-36.bz2", Panda.SAFETY_HYUNDAI_LEGACY),    # HYUNDAI.IONIQ_EV_LTD
