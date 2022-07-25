@@ -511,10 +511,6 @@ void usb_setup(void) {
         puts(" set address\n");
       #endif
 
-      // TODO: this isn't enumeration complete
-      // moved here to work better on OS X
-      usb_cb_enumeration_complete();
-
       USB_WritePacket(0, 0, 0);
       USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
 

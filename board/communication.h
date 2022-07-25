@@ -49,7 +49,6 @@ int get_rtc_pkt(void *dat) {
 }
 
 
-
 // send on serial, first byte to select the ring
 void usb_cb_ep2_out(void *usbdata, int len) {
   uint8_t *usbdata8 = (uint8_t *)usbdata;
@@ -69,11 +68,6 @@ void usb_cb_ep3_out_complete(void) {
   if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_BULK_TRANSFER)) {
     usb_outep3_resume_if_paused();
   }
-}
-
-void usb_cb_enumeration_complete(void) {
-  puts("USB enumeration complete\n");
-  is_enumerated = 1;
 }
 
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
