@@ -37,16 +37,16 @@ class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   # TODO: this is unused
   def _torque_driver_msg(self, torque):
     values = {"Steer_Torque_Sensor": torque}
-    return self.packer.make_can_msg_panda("Steering_Torque", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
 
   def _speed_msg(self, speed):
     # subaru safety doesn't use the scaled value, so undo the scaling
     values = {s: speed * 0.057 for s in ["FR", "FL", "RR", "RL"]}
-    return self.packer.make_can_msg_panda("Wheel_Speeds", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("Wheel_Speeds", 0, values)
 
   def _user_brake_msg(self, brake):
     values = {"Brake": brake}
-    return self.packer.make_can_msg_panda("Brake_Status", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("Brake_Status", 0, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKAS_Output": torque}
@@ -54,11 +54,11 @@ class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
 
   def _user_gas_msg(self, gas):
     values = {"Throttle_Pedal": gas}
-    return self.packer.make_can_msg_panda("Throttle", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("Throttle", 0, values)
 
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
-    return self.packer.make_can_msg_panda("CruiseControl", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("CruiseControl", 0, values)
 
 
 if __name__ == "__main__":

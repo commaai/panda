@@ -70,12 +70,12 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
   # Driver steering input torque
   def _torque_driver_msg(self, torque):
     values = {"LH3_LM": abs(torque), "LH3_LMSign": torque < 0}
-    return self.packer.make_can_msg_panda("Lenkhilfe_3", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("Lenkhilfe_3", 0, values)
 
   # openpilot steering output torque
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LM_Offset": abs(torque), "LM_OffSign": torque < 0}
-    return self.packer.make_can_msg_panda("HCA_1", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("HCA_1", 0, values)
 
   # ACC engagement and brake light switch status
   # Called indirectly for compatibility with common.py tests
@@ -97,7 +97,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
   # Cruise control buttons (GRA_Neu)
   def _button_msg(self, _set=False, resume=False, cancel=False, bus=2):
     values = {"GRA_Neu_Setzen": _set, "GRA_Recall": resume, "GRA_Abbrechen": cancel}
-    return self.packer.make_can_msg_panda("GRA_Neu", bus, values, counter=True)
+    return self.packer.make_can_msg_panda("GRA_Neu", bus, values)
 
   def test_torque_measurements(self):
     # TODO: make this test work with all cars
