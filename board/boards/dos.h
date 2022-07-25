@@ -149,6 +149,12 @@ void dos_init(void) {
   set_gpio_output(GPIOC, 10, 1);
   set_gpio_output(GPIOC, 11, 1);
 
+  // A4-A7: SPI
+  set_gpio_alternate(GPIOA, 4, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 5, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 6, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 7, GPIO_AF5_SPI1);
+
   // C8: FAN PWM aka TIM3_CH3
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
 

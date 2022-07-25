@@ -62,6 +62,7 @@ uint8_t spi_tx_buf[0x44];
 void DMA2_Stream2_IRQ_Handler(void) {
   int resp_len = (int) *spi_tx_buf;
   (void)memset(spi_tx_buf, 0xaa, 0x44);
+  // TODO: implement this
   //*resp_len = spi_cb_rx(spi_buf, 0x14, spi_tx_buf+4);
   #ifdef DEBUG_SPI
     puts("SPI write: ");
@@ -108,7 +109,6 @@ void spi_init(void) {
   REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, 50000U, FAULT_INTERRUPT_RATE_SPI_DMA)
   REGISTER_INTERRUPT(EXTI4_IRQn, EXTI4_IRQ_Handler, 50000U, FAULT_INTERRUPT_RATE_SPI_CS) // TODO: Figure out if this is a reasonable limit
 
-  //puts("SPI init\n");
   register_set(&(SPI1->CR1), SPI_CR1_SPE, 0xFFFFU);
 
   // enable SPI interrupts

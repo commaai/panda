@@ -65,6 +65,7 @@
 #include "stm32fx/lladc.h"
 #include "stm32fx/board.h"
 #include "stm32fx/clock.h"
+#include "stm32fx/llspi.h"
 
 #if !defined(BOOTSTUB) && (defined(PANDA) || defined(PEDAL_USB))
   #include "drivers/uart.h"
