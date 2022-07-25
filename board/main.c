@@ -22,7 +22,7 @@
 
 #include "obj/gitversion.h"
 
-#include "communication.h"
+#include "main_comms.h"
 
 
 // ********************* Serial debugging *********************

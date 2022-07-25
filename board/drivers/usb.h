@@ -1,5 +1,7 @@
 // IRQs: OTG_FS
 
+#include "comms_definitions.h"
+
 typedef union {
   uint16_t w;
   struct BW {
@@ -26,10 +28,6 @@ USB_Setup_TypeDef;
 bool usb_enumerated = false;
 
 void usb_init(void);
-int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp);
-int usb_cb_ep1_in(void *usbdata, int len);
-void usb_cb_ep2_out(void *usbdata, int len);
-void usb_cb_ep3_out(void *usbdata, int len);
 void usb_cb_ep3_out_complete(void);
 void usb_cb_enumeration_complete(void);
 void usb_outep3_resume_if_paused(void);
@@ -478,6 +476,8 @@ char to_hex_char(int a) {
 
 void usb_setup(void) {
   int resp_len;
+  ControlPacket_t control_req;
+
   // setup packet is ready
   switch (setup.b.bRequest) {
     case USB_REQ_SET_CONFIGURATION:
@@ -635,7 +635,12 @@ void usb_setup(void) {
       }
       break;
     default:
-      resp_len = usb_cb_control_msg(&setup, resp);
+      control_req.request = setup.b.bRequest;
+      control_req.param1 = setup.b.wValue.w;
+      control_req.param2 = setup.b.wIndex.w;
+      control_req.length = setup.b.wLength.w;
+
+      resp_len = comms_control_handler(&control_req, resp);
       // response pending if -1 was returned
       if (resp_len != -1) {
         USB_WritePacket(resp, MIN(resp_len, setup.b.wLength.w), 0);
@@ -733,12 +738,12 @@ void usb_irqhandler(void) {
       #endif
 
       if (endpoint == 2) {
-        usb_cb_ep2_out(usbdata, len);
+        comms_endpoint2_write((uint8_t *) usbdata, len);
       }
 
       if (endpoint == 3) {
         outep3_processing = true;
-        usb_cb_ep3_out(usbdata, len);
+        comms_can_write(usbdata, len);
       }
     } else if (status == STS_SETUP_UPDT) {
       (void)USB_ReadPacket(&setup, 8);
@@ -877,7 +882,7 @@ void usb_irqhandler(void) {
           puts("  IN PACKET QUEUE\n");
           #endif
           // TODO: always assuming max len, can we get the length?
-          USB_WritePacket((void *)resp, usb_cb_ep1_in(resp, 0x40), 1);
+          USB_WritePacket((void *)resp, comms_can_read(resp, 0x40), 1);
         }
         break;
 
@@ -888,7 +893,7 @@ void usb_irqhandler(void) {
           puts("  IN PACKET QUEUE\n");
           #endif
           // TODO: always assuming max len, can we get the length?
-          int len = usb_cb_ep1_in(resp, 0x40);
+          int len = comms_can_read(resp, 0x40);
           if (len > 0) {
             USB_WritePacket((void *)resp, len, 1);
           }
