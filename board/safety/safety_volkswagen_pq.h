@@ -117,7 +117,7 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
 
     if (volkswagen_pq_longitudinal) {
       if (addr == MSG_MOTOR_5) {
-        // ACC main switch must be on to enter, exit immediately on main switch off
+        // ACC main switch on is a prerequisite to enter controls, exit controls immediately on main switch off
         // Signal: Motor_5.GRA_Hauptschalter
         acc_main_on = GET_BIT(to_push, 50U);
         if (!acc_main_on) {
