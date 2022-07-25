@@ -96,12 +96,6 @@ void usb_cb_ep3_out(void *usbdata, int len) {
 }
 void usb_cb_ep3_out_complete(void) {}
 
-int is_enumerated = 0;
-void usb_cb_enumeration_complete(void) {
-  puts("USB enumeration complete\n");
-  is_enumerated = 1;
-}
-
 void usb_cb_ep2_out(void *usbdata, int len) {
   current_board->set_led(LED_RED, 0);
   for (int i = 0; i < len/4; i++) {
@@ -284,16 +278,7 @@ void soft_flasher_start(void) {
 
   enable_interrupts();
 
-  uint64_t cnt = 0;
-
-  for (cnt=0;;cnt++) {
-    if (cnt == 35 && !is_enumerated && usb_power_mode == USB_POWER_CLIENT) {
-      // if you are connected through a hub to the phone
-      // you need power to be able to see the device
-      puts("USBP: didn't enumerate, switching to CDP mode\n");
-      current_board->set_usb_power_mode(USB_POWER_CDP);
-      current_board->set_led(LED_BLUE, 1);
-    }
+  for (;;) {
     // blink the green LED fast
     current_board->set_led(LED_GREEN, 0);
     delay(500000);
