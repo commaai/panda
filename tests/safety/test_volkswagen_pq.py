@@ -27,10 +27,10 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
   RELAY_MALFUNCTION_ADDR = MSG_HCA_1
   RELAY_MALFUNCTION_BUS = 0
 
-  MAX_RATE_UP = 10
+  MAX_RATE_UP = 6
   MAX_RATE_DOWN = 10
   MAX_TORQUE = 300
-  MAX_RT_DELTA = 188
+  MAX_RT_DELTA = 113
   RT_INTERVAL = 250000
 
   DRIVER_TORQUE_ALLOWANCE = 80
