@@ -35,7 +35,7 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
 
   def _pcm_status_msg(self, enable):
     values = {"ACC_ACTIVE": enable}
-    return self.packer.make_can_msg_panda("DAS_3", self.DAS_BUS, values, counter=True)
+    return self.packer.make_can_msg_panda("DAS_3", self.DAS_BUS, values)
 
   def _speed_msg(self, speed):
     values = {"SPEED_LEFT": speed, "SPEED_RIGHT": speed}
@@ -43,15 +43,15 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
 
   def _user_gas_msg(self, gas):
     values = {"Accelerator_Position": gas}
-    return self.packer.make_can_msg_panda("ECM_5", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("ECM_5", 0, values)
 
   def _user_brake_msg(self, brake):
     values = {"Brake_Pedal_State": 1 if brake else 0}
-    return self.packer.make_can_msg_panda("ESP_1", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("ESP_1", 0, values)
 
   def _torque_meas_msg(self, torque):
     values = {"EPS_TORQUE_MOTOR": torque}
-    return self.packer.make_can_msg_panda("EPS_2", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("EPS_2", 0, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"STEERING_TORQUE": torque}
@@ -78,6 +78,9 @@ class TestChryslerRamSafety(TestChryslerSafety):
   RELAY_MALFUNCTION_ADDR = 166
   FWD_BLACKLISTED_ADDRS = {2: [166, 250]}
 
+  MAX_RATE_UP = 6
+  MAX_RATE_DOWN = 6
+
   DAS_BUS = 2
 
   def setUp(self):
@@ -88,7 +91,7 @@ class TestChryslerRamSafety(TestChryslerSafety):
 
   def _speed_msg(self, speed):
     values = {"Vehicle_Speed": speed}
-    return self.packer.make_can_msg_panda("ESP_8", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("ESP_8", 0, values)
 
 
 
