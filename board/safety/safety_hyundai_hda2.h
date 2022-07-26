@@ -11,7 +11,7 @@ const CanMsg HYUNDAI_HDA2_TX_MSGS[] = {
   //{0x50, 0, 16},
   //{0x1CF, 1, 8},
   //{0x2A4, 0, 24},
-  {0x1CF, 0, 16},
+  {0x1CF, 0, 8},
   {0x12A, 0, 16},
 };
 
