@@ -1,5 +1,5 @@
 typedef struct {
-  uint8_t request;
+  uint16_t request;
   uint16_t param1;
   uint16_t param2;
   uint16_t length;
