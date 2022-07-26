@@ -3,7 +3,6 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from collections import defaultdict
 from typing import Optional, List, Dict
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
@@ -30,15 +29,8 @@ def make_msg(bus, addr, length=8):
 
 
 class CANPackerPanda(CANPacker):
-  def __init__(self, dbc_name):
-    super().__init__(dbc_name)
-    self._counters: Dict[str, int] = defaultdict(lambda: -1)
-
-  def make_can_msg_panda(self, name_or_addr, bus, values, counter=False, fix_checksum=None):
-    if counter:
-      self._counters[name_or_addr] += 1
-
-    msg = self.make_can_msg(name_or_addr, bus, values, counter=self._counters[name_or_addr])
+  def make_can_msg_panda(self, name_or_addr, bus, values, fix_checksum=None):
+    msg = self.make_can_msg(name_or_addr, bus, values)
     if fix_checksum is not None:
       msg = fix_checksum(msg)
     return package_can_msg(msg)

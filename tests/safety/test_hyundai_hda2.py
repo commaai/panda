@@ -33,34 +33,34 @@ class TestHyundaiHDA2(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTo
 
   def _torque_driver_msg(self, torque):
     values = {"STEERING_COL_TORQUE": torque}
-    return self.packer.make_can_msg_panda("MDPS", 1, values, counter=True)
+    return self.packer.make_can_msg_panda("MDPS", 1, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"TORQUE_REQUEST": torque}
-    return self.packer.make_can_msg_panda("LKAS", 0, values, counter=True)
+    return self.packer.make_can_msg_panda("LKAS", 0, values)
 
   def _speed_msg(self, speed):
     values = {f"WHEEL_SPEED_{i}": speed * 0.03125 for i in range(1, 5)}
-    return self.packer.make_can_msg_panda("WHEEL_SPEEDS", 1, values, counter=True)
+    return self.packer.make_can_msg_panda("WHEEL_SPEEDS", 1, values)
 
   def _user_brake_msg(self, brake):
     values = {"BRAKE_PRESSED": brake}
-    return self.packer.make_can_msg_panda("BRAKE", 1, values, counter=True)
+    return self.packer.make_can_msg_panda("BRAKE", 1, values)
 
   def _user_gas_msg(self, gas):
     values = {"ACCELERATOR_PEDAL": gas}
-    return self.packer.make_can_msg_panda("ACCELERATOR", 1, values, counter=True)
+    return self.packer.make_can_msg_panda("ACCELERATOR", 1, values)
 
   def _pcm_status_msg(self, enable):
     values = {"CRUISE_ACTIVE": enable}
-    return self.packer.make_can_msg_panda("SCC1", 1, values, counter=True)
+    return self.packer.make_can_msg_panda("SCC1", 1, values)
 
   def _button_msg(self, buttons, main_button=0):
     values = {
       "CRUISE_BUTTONS": buttons,
       "ADAPTIVE_CRUISE_MAIN_BTN": main_button,
     }
-    return self.packer.make_can_msg_panda("CRUISE_BUTTONS", 1, values, counter=True)
+    return self.packer.make_can_msg_panda("CRUISE_BUTTONS", 1, values)
 
 
 if __name__ == "__main__":
