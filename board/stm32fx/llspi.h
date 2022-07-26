@@ -32,7 +32,7 @@ uint8_t spi_rx_state = SPI_RX_STATE_IDLE;
 void spi_tx_dma(uint8_t *addr, int len) {
   // disable DMA
   register_clear_bits(&(SPI1->CR2), SPI_CR2_TXDMAEN);
-  register_clear_bits(&(DMA2_Stream3->CR), DMA_SxCR_EN);
+  DMA2_Stream3->CR &= ~DMA_SxCR_EN;
 
   // DMA2, stream 3, channel 3
   register_set(&(DMA2_Stream3->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
@@ -40,7 +40,8 @@ void spi_tx_dma(uint8_t *addr, int len) {
   register_set(&(DMA2_Stream3->PAR), (uint32_t)&(SPI1->DR), 0xFFFFFFFFU);
 
   // channel3, increment memory, memory -> periph, enable
-  register_set(&(DMA2_Stream3->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_EN), 0x1E077EFEU);
+  register_set(&(DMA2_Stream3->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0), 0x1E077EFEU);
+  DMA2_Stream3->CR |= DMA_SxCR_EN;
   delay(0);
   register_set_bits(&(DMA2_Stream3->CR), DMA_SxCR_TCIE);
 
@@ -50,11 +51,13 @@ void spi_tx_dma(uint8_t *addr, int len) {
 void spi_rx_dma(uint8_t *addr, int len) {
   // disable DMA and RX interrupt
   register_clear_bits(&(SPI1->CR2), SPI_CR2_RXDMAEN | SPI_CR2_RXNEIE);
-  register_clear_bits(&(DMA2_Stream2->CR), DMA_SxCR_EN);
+  DMA2_Stream2->CR &= ~DMA_SxCR_EN;
 
   // drain the bus
-  volatile uint8_t dat = SPI1->DR;
-  (void)dat;
+  // volatile uint8_t dat = SPI1->DR;
+  // (void)dat;
+
+  puts("DMA2: want "); puth(len); puts(" bytes\n");
 
   // DMA2, stream 2, channel 3
   register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
@@ -62,11 +65,13 @@ void spi_rx_dma(uint8_t *addr, int len) {
   register_set(&(DMA2_Stream2->PAR), (uint32_t)&(SPI1->DR), 0xFFFFFFFFU);
 
   // channel3, increment memory, periph -> memory, enable
-  register_set(&(DMA2_Stream2->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_EN), 0x1E077EFEU);
+  register_set(&(DMA2_Stream2->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC), 0x1E077EFEU);
+  DMA2_Stream2->CR |= DMA_SxCR_EN;
   delay(0);
   register_set_bits(&(DMA2_Stream2->CR), DMA_SxCR_TCIE);
 
   register_set_bits(&(SPI1->CR2), SPI_CR2_RXDMAEN);
+  puts("DMA2 enabled\n");
 }
 
 // SPI RX
@@ -79,13 +84,17 @@ void DMA2_Stream2_IRQ_Handler(void) {
   uint16_t tx_len = 0U;
   bool tx_ack = false;
 
+  puts("DMA2 IRQ\n");
+
   if (spi_rx_state == SPI_RX_STATE_HEADER) {
+    puts("SPI: got header "); puth(endpoint); puts(" "); puth(data_len); puts("\n");
     // start receiving data + CRC
     next_rx_state = SPI_RX_STATE_DATA;
     spi_rx_dma(spi_buf_rx + 3, data_len + 1);
   }
 
   if (spi_rx_state == SPI_RX_STATE_DATA) {
+    puts("SPI: got data\n");
     // TODO: verify CRC
 
     // We got everything! Based on the endpoint specified, call the appropriate handler
@@ -138,6 +147,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
 
   // Re-enable RX interrupt if idle
   if (next_rx_state == SPI_RX_STATE_IDLE) {
+    puts("Re-enable RXNE\n");
     register_set_bits(&(SPI1->CR2), SPI_CR2_RXNEIE);
   }
   spi_rx_state = next_rx_state;
@@ -152,18 +162,22 @@ void DMA2_Stream3_IRQ_Handler(void) {
 void SPI1_IRQ_Handler(void) {
   if (SPI1->SR & SPI_SR_RXNE) {
     uint8_t dat = SPI1->DR;
-    puts("SPI: got something"); puth(dat); puts("\n");
+    // puts("SPI: got something: 0x"); puth(dat); puts("\n");
     if (spi_rx_state == SPI_RX_STATE_IDLE && dat == SPI_SYNC_BYTE) {
-      puts("SPI: got sync"); puts("\n");
+      // puts("SPI: got sync"); puts("\n");
       // Start receiving the rest of the header
       spi_rx_state = SPI_RX_STATE_HEADER;
       spi_rx_dma(spi_buf_rx, 3);
     }
-  } else if (SPI1->SR & SPI_SR_CRCERR) {
+  }
+
+  if (SPI1->SR & SPI_SR_CRCERR) {
     // CRC error
     puts("SPI: CRC error\n");
     SPI1->SR &= ~(1 << SPI_SR_CRCERR);
-  } else if (SPI1->SR & SPI_SR_OVR) {
+  }
+
+  if (SPI1->SR & SPI_SR_OVR) {
     // RX overrun
     // TODO: implement recovery if neccesary (reading DR and SR)
     puts("SPI: overrun error\n");
@@ -176,6 +190,10 @@ void spi_init(void) {
   REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, 1000U, FAULT_INTERRUPT_RATE_SPI_DMA)
   REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, 1000U, FAULT_INTERRUPT_RATE_SPI_DMA)
   REGISTER_INTERRUPT(SPI1_IRQn, SPI1_IRQ_Handler, 1000U, FAULT_INTERRUPT_RATE_SPI)
+
+  // Clear buffers (for debugging)
+  memset(spi_buf_rx, 0, SPI_BUF_SIZE);
+  memset(spi_buf_tx, 0, SPI_BUF_SIZE);
 
   // TODO: verify clock phase and polarity
   register_set(&(SPI1->CR1), SPI_CR1_SPE, 0xFFFFU);
