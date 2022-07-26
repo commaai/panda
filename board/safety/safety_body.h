@@ -1,8 +1,8 @@
-const CanMsg BODY_TX_MSGS[] = {{0x250, 0, 6}, {0x251, 0, 5},  // body
-                               {0x350, 0, 6}, {0x351, 0, 5}}; // knee
+const CanMsg BODY_TX_MSGS[] = {{0x250, 0, 8}, {0x250, 0, 6}, {0x251, 0, 5},  // body
+                               {0x350, 0, 8}, {0x350, 0, 6}, {0x351, 0, 5}}; // knee
 
 AddrCheckStruct body_addr_checks[] = {
-  {.msg = {{0x201, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
 };
 #define BODY_ADDR_CHECK_LEN (sizeof(body_addr_checks) / sizeof(body_addr_checks[0]))
 addr_checks body_rx_checks = {body_addr_checks, BODY_ADDR_CHECK_LEN};
@@ -22,8 +22,8 @@ static int body_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   int tx = 0;
   int addr = GET_ADDR(to_send);
 
-  // CAN flasher (0x1 - body, 0x7 - knee)
-  if ((addr == 0x1) || (addr == 0x7)) {
+  // CAN flasher
+  if (addr == 0x1) {
     tx = 1;
   }
 
