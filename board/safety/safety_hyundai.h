@@ -71,7 +71,7 @@ enum {
 
 // some newer HKG models can re-enable after spamming cancel button,
 // so keep track of user button presses to deny engagement if no interaction
-const uint8_t HYUNDAI_PREV_BUTTON_SAMPLES = 4;  // roughly 80 ms
+const uint8_t HYUNDAI_PREV_BUTTON_SAMPLES = 8;  // roughly 160 ms
 uint8_t hyundai_last_button_interaction;  // button messages since the user pressed an enable button
 
 bool hyundai_legacy = false;
