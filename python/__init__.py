@@ -303,9 +303,9 @@ class Panda:
     print("flash: unlocking")
     handle.controlWrite(Panda.REQUEST_IN, 0xb1, 0, 0, b'')
 
-    # erase sectors 1 through 3
+    # erase sectors 1 through 5
     print("flash: erasing")
-    for i in range(1, 4):
+    for i in range(1, 6):
       handle.controlWrite(Panda.REQUEST_IN, 0xb2, i, 0, b'')
 
     # flash over EP2
