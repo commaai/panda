@@ -22,7 +22,7 @@ static int body_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   int tx = 0;
   int addr = GET_ADDR(to_send);
 
-  // CAN flasher (0x1 - body, 0x7 - knee)
+  // CAN flasher
   if (addr == 0x1) {
     tx = 1;
   }
