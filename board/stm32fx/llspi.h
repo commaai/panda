@@ -94,14 +94,14 @@ void DMA2_Stream2_IRQ_Handler(void) {
         tx_len = comms_control_handler((ControlPacket_t *)(spi_buf_rx + 3), spi_buf_tx + 3);
         tx_ack = true;
       } else {
-        puts("SPI: insufficient data for control handler");
+        puts("SPI: insufficient data for control handler\n");
       }
     } else if (endpoint == 1U) {
       if (data_len == 0U) {
         tx_len = comms_can_read(spi_buf_tx + 3, SPI_BUF_SIZE - 4);
         tx_ack = true;
       } else {
-        puts("SPI: did not expect data for can_read");
+        puts("SPI: did not expect data for can_read\n");
       }
     } else if (endpoint == 2U) {
       comms_endpoint2_write(spi_buf_tx + 3, data_len);
@@ -111,7 +111,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
         comms_can_write(spi_buf_tx + 3, data_len);
         tx_ack = true;
       } else {
-        puts("SPI: did expect data for can_write");
+        puts("SPI: did expect data for can_write\n");
       }
     }
 
@@ -121,7 +121,11 @@ void DMA2_Stream2_IRQ_Handler(void) {
     spi_buf_tx[2] = tx_len & 0xFFU;
 
     // Add CRC
-    // TODO
+    uint8_t checksum = 0U;
+    for(uint16_t i = 0U; i < tx_len + 3; i++) {
+      checksum ^= spi_buf_tx[i];
+    }
+    spi_buf_tx[tx_len + 3] = checksum;
 
     // Write response
     spi_tx_dma(spi_buf_tx, tx_len + 4);
@@ -148,19 +152,21 @@ void DMA2_Stream3_IRQ_Handler(void) {
 void SPI1_IRQ_Handler(void) {
   if (SPI1->SR & SPI_SR_RXNE) {
     uint8_t dat = SPI1->DR;
+    puts("SPI: got something"); puth(dat); puts("\n");
     if (spi_rx_state == SPI_RX_STATE_IDLE && dat == SPI_SYNC_BYTE) {
+      puts("SPI: got sync"); puts("\n");
       // Start receiving the rest of the header
       spi_rx_state = SPI_RX_STATE_HEADER;
       spi_rx_dma(spi_buf_rx, 3);
     }
   } else if (SPI1->SR & SPI_SR_CRCERR) {
     // CRC error
-    puts("SPI: CRC error");
+    puts("SPI: CRC error\n");
     SPI1->SR &= ~(1 << SPI_SR_CRCERR);
   } else if (SPI1->SR & SPI_SR_OVR) {
     // RX overrun
     // TODO: implement recovery if neccesary (reading DR and SR)
-    puts("SPI: overrun error");
+    puts("SPI: overrun error\n");
   }
 }
 
@@ -177,4 +183,5 @@ void spi_init(void) {
 
   NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+  NVIC_EnableIRQ(SPI1_IRQn);
 }

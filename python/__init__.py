@@ -15,6 +15,7 @@ from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
 from .serial import PandaSerial  # noqa pylint: disable=import-error
 from .isotp import isotp_send, isotp_recv  # pylint: disable=import-error
 from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN  # noqa pylint: disable=import-error
+from .spi import SpiHandle # noqa pylint: disable=import-error
 
 __version__ = '0.0.10'
 
@@ -200,48 +201,57 @@ class Panda:
 
   FLAG_CHRYSLER_RAM_DT = 1
 
-  def __init__(self, serial: Optional[str] = None, claim: bool = True):
+  def __init__(self, serial: Optional[str] = None, claim: bool = True, spi: bool = False):
     self._serial = serial
     self._handle = None
-    self.connect(claim)
+    self.connect(claim, spi=spi)
     self._mcu_type = self.get_mcu_type()
 
   def close(self):
     self._handle.close()
     self._handle = None
 
-  def connect(self, claim=True, wait=False):
+  def connect(self, claim=True, wait=False, spi=False):
     if self._handle is not None:
       self.close()
 
-    context = usb1.USBContext()
-    self._handle = None
+    if spi:
+      self._handle = SpiHandle()
 
-    while 1:
-      try:
-        for device in context.getDeviceList(skip_on_error=True):
-          if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
-            try:
-              this_serial = device.getSerialNumber()
-            except Exception:
-              continue
-            if self._serial is None or this_serial == self._serial:
-              self._serial = this_serial
-              print("opening device", self._serial, hex(device.getProductID()))
-              self.bootstub = device.getProductID() == 0xddee
-              self._handle = device.open()
-              if sys.platform not in ("win32", "cygwin", "msys", "darwin"):
-                self._handle.setAutoDetachKernelDriver(True)
-              if claim:
-                self._handle.claimInterface(0)
-                # self._handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
-              break
-      except Exception as e:
-        print("exception", e)
-        traceback.print_exc()
-      if not wait or self._handle is not None:
-        break
-      context = usb1.USBContext()  # New context needed so new devices show up
+      # TODO implement
+      self._serial = "SPIDEV"
+      self.bootstub = False
+
+    else:
+      context = usb1.USBContext()
+      self._handle = None
+
+      while 1:
+        try:
+          for device in context.getDeviceList(skip_on_error=True):
+            if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
+              try:
+                this_serial = device.getSerialNumber()
+              except Exception:
+                continue
+              if self._serial is None or this_serial == self._serial:
+                self._serial = this_serial
+                print("opening device", self._serial, hex(device.getProductID()))
+                self.bootstub = device.getProductID() == 0xddee
+                self._handle = device.open()
+                if sys.platform not in ("win32", "cygwin", "msys", "darwin"):
+                  self._handle.setAutoDetachKernelDriver(True)
+                if claim:
+                  self._handle.claimInterface(0)
+                  # self._handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
+                break
+        except Exception as e:
+          print("exception", e)
+          traceback.print_exc()
+        if not wait or self._handle is not None:
+          break
+        context = usb1.USBContext()  # New context needed so new devices show up
+
     assert(self._handle is not None)
     self.health_version, self.can_version = self.get_packets_versions()
     print("connected")
