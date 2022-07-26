@@ -7,7 +7,6 @@ import os
 import time
 import traceback
 import sys
-import math
 from functools import wraps
 from typing import Optional
 from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7  # pylint: disable=import-error
@@ -305,9 +304,8 @@ class Panda:
     handle.controlWrite(Panda.REQUEST_IN, 0xb1, 0, 0, b'')
 
     # erase sectors 1 through 3
-    num_sectors = math.ceil(len(code) / 0x4000)
-    print(f"flash: erasing {num_sectors} sectors")
-    for i in range(1, num_sectors + 1):
+    print("flash: erasing")
+    for i in range(1, 4):
       handle.controlWrite(Panda.REQUEST_IN, 0xb2, i, 0, b'')
 
     # flash over EP2
