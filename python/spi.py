@@ -35,7 +35,7 @@ class SpiHandle:
       # time.sleep(0.1)
       print("RET", hex(dat[0]))
 
-    if dat == NACK:
+    if dat[0] == NACK:
       raise Exception("Got NACK response")
 
     packet = bytes(data)
@@ -50,7 +50,7 @@ class SpiHandle:
       # time.sleep(0.00001)
       print("RET", hex(dat[0]))
 
-    if dat == NACK:
+    if dat[0] == NACK:
       raise Exception("Got NACK response")
 
     print("reading response")

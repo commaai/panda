@@ -1,21 +1,3 @@
-/* SPI transfer:
-    B0: Sync (0x5A)
-    B1: Endpoint
-    B2: tx_len MSB
-    B3: tx_len LSB
-    B4-B(4+tx_len): Data
-    B(4+tx_len+1): CRC8
-
-  <keep sending 0x00 while (waiting to) rx>
-
-  Response:
-    B0: 0x79 (ACK) or 0x1F (NACK)
-    B1: rx_len MSB
-    B2: rx_len LSB
-    B3-B(3+rx_len): Data
-    B(3+rx_len_1): CRC8
-*/
-
 #define SPI_BUF_SIZE 1024U
 uint8_t spi_buf_rx[SPI_BUF_SIZE];
 uint8_t spi_buf_tx[SPI_BUF_SIZE];
@@ -25,13 +7,20 @@ uint8_t spi_buf_tx[SPI_BUF_SIZE];
 #define SPI_NACK 0x1FU
 
 #define SPI_RX_STATE_HEADER 0U
-#define SPI_RX_STATE_DATA_RX 1U
-#define SPI_RX_STATE_DATA_TX 2U
+#define SPI_RX_STATE_HEADER_ACK 1U
+#define SPI_RX_STATE_HEADER_NACK 2U
+#define SPI_RX_STATE_HEADER_ACKED 3U
+#define SPI_RX_STATE_HEADER_NACKED 4U
+#define SPI_RX_STATE_DATA_RX 5U
+#define SPI_RX_STATE_DATA_RX_ACK 6U
+#define SPI_RX_STATE_DATA_TX 7U
 
-uint8_t spi_rx_state = SPI_RX_STATE_HEADER;
+uint8_t spi_state = SPI_RX_STATE_HEADER;
 uint8_t spi_endpoint;
 uint16_t spi_data_len_mosi;
 uint16_t spi_data_len_miso;
+
+#define SPI_HEADER_SIZE 7U
 
 void spi_miso_dma(uint8_t *addr, int len) {
   // disable DMA
@@ -65,58 +54,86 @@ void spi_mosi_dma(uint8_t *addr, int len) {
   register_set_bits(&(SPI1->CR2), SPI_CR2_RXDMAEN);
 }
 
+bool check_checksum(uint8_t *data, uint16_t len) {
+  // TODO: can speed this up by casting the bulk to uint32_t and xor-ing the bytes afterwards
+  uint8_t checksum = 0U;
+  for(uint16_t i = 0U; i < len; i++){
+    checksum ^= data[i];
+  }
+  return checksum == 0U;
+}
+
 // SPI MOSI DMA FINISHED
 void DMA2_Stream2_IRQ_Handler(void) {
   // Clear interrupt flag
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
 
-  uint8_t next_rx_state = SPI_RX_STATE_HEADER; 
+  uint8_t next_rx_state = SPI_RX_STATE_HEADER;
 
   // parse header
   spi_endpoint = spi_buf_rx[1];
   spi_data_len_mosi = spi_buf_rx[2] << 8 | spi_buf_rx[3];
   spi_data_len_miso = spi_buf_rx[4] << 8 | spi_buf_rx[5];
 
-  if (spi_rx_state == SPI_RX_STATE_HEADER) {
-    // send (N)ACK
-    // TODO: check sync and CRC
-    spi_buf_tx[0] = SPI_ACK;
-    spi_miso_dma(spi_buf_tx, 1);    
+  if (spi_state == SPI_RX_STATE_HEADER) {
+    if (spi_buf_rx[0] == SPI_SYNC_BYTE && check_checksum(spi_buf_rx, SPI_HEADER_SIZE)) {
+      // response: ACK and start receiving data portion
+      spi_buf_tx[0] = SPI_ACK;
+      next_rx_state = SPI_RX_STATE_HEADER_ACK;
+    } else {
+      // response: NACK and reset state machine
+      puts("SPI: incorrect header sync or checksum\n");
+      spi_buf_tx[0] = SPI_NACK;
+      next_rx_state = SPI_RX_STATE_HEADER_NACK;
+    }
+    spi_miso_dma(spi_buf_tx, 1);
+  }
 
-    // start receiving data + CRC
+  if (spi_state == SPI_RX_STATE_HEADER_ACKED) {
+    spi_mosi_dma(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi + 1);
     next_rx_state = SPI_RX_STATE_DATA_RX;
   }
 
-  if (spi_rx_state == SPI_RX_STATE_DATA_RX) {
-    // TODO: verify CRC
+  if (spi_state == SPI_RX_STATE_HEADER_NACKED) {
+    // Reset state
+    spi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+    next_rx_state = SPI_RX_STATE_HEADER;
+  }
 
+  if (spi_state == SPI_RX_STATE_DATA_RX) {
     // We got everything! Based on the endpoint specified, call the appropriate handler
     uint16_t response_len = 0U;
     bool reponse_ack = false;
-    if (spi_endpoint == 0U) {
-      if (spi_data_len_mosi >= 8U) {
-        response_len = comms_control_handler((ControlPacket_t *)(spi_buf_rx + 8), spi_buf_tx + 3);
+    if (check_checksum(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi + 1)) {
+      if (spi_endpoint == 0U) {
+        if (spi_data_len_mosi >= 8U) {
+          response_len = comms_control_handler((ControlPacket_t *)(spi_buf_rx + SPI_HEADER_SIZE), spi_buf_tx + 3);
+          reponse_ack = true;
+        } else {
+          puts("SPI: insufficient data for control handler\n");
+        }
+      } else if (spi_endpoint == 1U) {
+        if (spi_data_len_mosi == 0U) {
+          response_len = comms_can_read(spi_buf_tx + 3, spi_data_len_miso);
+          reponse_ack = true;
+        } else {
+          puts("SPI: did not expect data for can_read\n");
+        }
+      } else if (spi_endpoint == 2U) {
+        comms_endpoint2_write(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi);
         reponse_ack = true;
-      } else {
-        puts("SPI: insufficient data for control handler\n");
+      } else if (spi_endpoint == 3U) {
+        if (spi_data_len_mosi > 0U) {
+          comms_can_write(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi);
+          reponse_ack = true;
+        } else {
+          puts("SPI: did expect data for can_write\n");
+        }
       }
-    } else if (spi_endpoint == 1U) {
-      if (spi_data_len_mosi == 0U) {
-        response_len = comms_can_read(spi_buf_tx + 3, spi_data_len_miso);
-        reponse_ack = true;
-      } else {
-        puts("SPI: did not expect data for can_read\n");
-      }
-    } else if (spi_endpoint == 2U) {
-      comms_endpoint2_write(spi_buf_rx + 8, spi_data_len_mosi);
-      reponse_ack = true;
-    } else if (spi_endpoint == 3U) {
-      if (spi_data_len_mosi > 0U) {
-        comms_can_write(spi_buf_tx + 3, spi_data_len_mosi);
-        reponse_ack = true;
-      } else {
-        puts("SPI: did expect data for can_write\n");
-      }
+    } else {
+      // Checksum was incorrect
+      reponse_ack = false;
+      puts("SPI: incorrect data checksum\n");
     }
 
     // Setup response header
@@ -124,7 +141,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
     spi_buf_tx[1] = (response_len >> 8) & 0xFFU;
     spi_buf_tx[2] = response_len & 0xFFU;
 
-    // Add CRC
+    // Add checksum
     uint8_t checksum = 0U;
     for(uint16_t i = 0U; i < response_len + 3; i++) {
       checksum ^= spi_buf_tx[i];
@@ -137,7 +154,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
     next_rx_state = SPI_RX_STATE_DATA_TX;
   }
 
-  spi_rx_state = next_rx_state;
+  spi_state = next_rx_state;
 }
 
 // SPI MISO DMA FINISHED
@@ -145,15 +162,21 @@ void DMA2_Stream3_IRQ_Handler(void) {
   // Clear interrupt flag
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
 
-  if (spi_rx_state == SPI_RX_STATE_DATA_RX) {
-    // ACK was sent, queue up the RX buf for the data + CRC
-    spi_mosi_dma(spi_buf_rx + 7, spi_data_len_mosi + 2);
+  if (spi_state == SPI_RX_STATE_HEADER_ACK) {
+    // ACK was sent, queue up the RX buf for the data + checksum
+    spi_mosi_dma(spi_buf_rx, 1U);
+    spi_state = SPI_RX_STATE_HEADER_ACKED;
   }
 
-  if (spi_rx_state == SPI_RX_STATE_DATA_TX) {
+  if (spi_state == SPI_RX_STATE_HEADER_NACK) {
+    spi_mosi_dma(spi_buf_rx, 1U);
+    spi_state = SPI_RX_STATE_HEADER_NACKED;
+  }
+
+  if (spi_state == SPI_RX_STATE_DATA_TX) {
     // Reset state
-    spi_rx_state = SPI_RX_STATE_HEADER;
-    spi_mosi_dma(spi_buf_rx, 7);
+    spi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+    spi_state = SPI_RX_STATE_HEADER;
   }
 }
 
@@ -181,8 +204,8 @@ void spi_init(void) {
   register_set(&(SPI1->CR2), 0U, 0xF7U);
 
   // Start the first packet!
-  spi_rx_state = SPI_RX_STATE_HEADER;
-  spi_mosi_dma(spi_buf_rx, 7);
+  spi_state = SPI_RX_STATE_HEADER;
+  spi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
 
   NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);
