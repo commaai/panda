@@ -11,9 +11,23 @@ const CanMsg HYUNDAI_CANFD_TX_MSGS[] = {
   {0x50, 0, 16},
   {0x1CF, 1, 8},
   {0x2A4, 0, 24},
+
+  // TODO: split these out
+  {0x12a, 0, 16},
+  {0x1aa, 0, 16},
 };
 
 AddrCheckStruct hyundai_canfd_addr_checks[] = {
+  {.msg = {{0x105, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x65, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0xa0, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0xea, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x175, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{0x1aa, 0, 16, .check_checksum = false, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+};
+#define HYUNDAI_CANFD_ADDR_CHECK_LEN (sizeof(hyundai_canfd_addr_checks) / sizeof(hyundai_canfd_addr_checks[0]))
+
+AddrCheckStruct hyundai_canfd_hda2_addr_checks[] = {
   {.msg = {{0x35, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x65, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0xa0, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -21,7 +35,7 @@ AddrCheckStruct hyundai_canfd_addr_checks[] = {
   {.msg = {{0x175, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x1cf, 1, 8, .check_checksum = false, .max_counter = 0xfU, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
-#define HYUNDAI_CANFD_ADDR_CHECK_LEN (sizeof(hyundai_canfd_addr_checks) / sizeof(hyundai_canfd_addr_checks[0]))
+#define HYUNDAI_CANFD_HDA2_ADDR_CHECK_LEN (sizeof(hyundai_canfd_hda2_addr_checks) / sizeof(hyundai_canfd_hda2_addr_checks[0]))
 
 addr_checks hyundai_canfd_rx_checks = {hyundai_canfd_addr_checks, HYUNDAI_CANFD_ADDR_CHECK_LEN};
 
@@ -136,7 +150,8 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     }
   }
 
-  generic_rx_checks((addr == 0x50) && (bus == 0));
+  int lkas_msg = hyundai_canfd_hda2 ? 0x50 : 0x12a;
+  generic_rx_checks((addr == lkas_msg) && (bus == 0));
 
   return valid;
 }
@@ -149,7 +164,8 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   int bus = GET_BUS(to_send);
 
   // steering
-  if ((addr == 0x50) && (bus == 0)) {
+  int lkas_msg = hyundai_canfd_hda2 ? 0x50 : 0x12a;
+  if ((addr == lkas_msg) && (bus == 0)) {
     int desired_torque = ((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U);
     desired_torque -= 1024;
     uint32_t ts = microsecond_timer_get();
@@ -216,8 +232,16 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   if (bus_num == 0) {
     bus_fwd = 2;
   }
-  if ((bus_num == 2) && (addr != 0x50) && (addr != 0x2a4)) {
-    bus_fwd = 0;
+  if (bus_num == 2) {
+    bool block = 0;
+    if (hyundai_canfd_hda2) {
+      block = (addr == 0x50) || (addr == 0x2a4);
+    } else {
+      block = (addr == 0x12a);
+    }
+    if (!block) {
+      bus_fwd = 0;
+    }
   }
 
   return bus_fwd;
@@ -228,6 +252,12 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
   gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
   hyundai_canfd_hda2 = GET_FLAG(HYUNDAI_CANFD_PARAM_HDA2, param);
+
+  if (hyundai_canfd_hda2) {
+    hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_hda2_addr_checks, HYUNDAI_CANFD_HDA2_ADDR_CHECK_LEN};
+  } else {
+    hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_addr_checks, HYUNDAI_CANFD_ADDR_CHECK_LEN};
+  }
 
   return &hyundai_canfd_rx_checks;
 }
