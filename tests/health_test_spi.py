@@ -8,4 +8,4 @@ if __name__ == "__main__":
   while True:
     print(panda.health())
     print("\n")
-    time.sleep(0.5)
+    time.sleep(0.01)

@@ -32,7 +32,7 @@ class SpiHandle:
     dat = b"\x00"
     while dat[0] not in [ACK, NACK]:
       dat = self.spi.xfer(b"\x00")
-      time.sleep(0.1)
+      # time.sleep(0.1)
       print("RET", hex(dat[0]))
 
     if dat == NACK:
@@ -47,7 +47,7 @@ class SpiHandle:
     dat = b"\x00"
     while dat[0] not in [ACK, NACK]:
       dat = self.spi.xfer(b"\x00")
-      time.sleep(0.1)
+      # time.sleep(0.00001)
       print("RET", hex(dat[0]))
 
     if dat == NACK:

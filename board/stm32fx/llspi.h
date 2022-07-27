@@ -56,8 +56,6 @@ void spi_mosi_dma(uint8_t *addr, int len) {
   volatile uint8_t dat = SPI1->DR;
   (void)dat;
 
-  puts("DMA2: want "); puth(len); puts(" bytes\n");
-
   // setup destination and length
   register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
   DMA2_Stream2->NDTR = len;
@@ -65,17 +63,14 @@ void spi_mosi_dma(uint8_t *addr, int len) {
   // enable DMA
   DMA2_Stream2->CR |= DMA_SxCR_EN;
   register_set_bits(&(SPI1->CR2), SPI_CR2_RXDMAEN);
-  puts("DMA2 enabled\n");
 }
 
 // SPI MOSI DMA FINISHED
 void DMA2_Stream2_IRQ_Handler(void) {
   // Clear interrupt flag
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
-  puts("DMA2 IRQ\n");
 
-  uint8_t next_rx_state = SPI_RX_STATE_HEADER;
-  
+  uint8_t next_rx_state = SPI_RX_STATE_HEADER; 
 
   // parse header
   spi_endpoint = spi_buf_rx[1];
@@ -83,8 +78,6 @@ void DMA2_Stream2_IRQ_Handler(void) {
   spi_data_len_miso = spi_buf_rx[4] << 8 | spi_buf_rx[5];
 
   if (spi_rx_state == SPI_RX_STATE_HEADER) {
-    puts("SPI: got header "); hexdump(spi_buf_rx, 7); puts(" "); puth(spi_endpoint); puts(" "); puth(spi_data_len_mosi); puts(" "); puth(spi_data_len_miso); puts("\n");    
-
     // send (N)ACK
     // TODO: check sync and CRC
     spi_buf_tx[0] = SPI_ACK;
@@ -95,7 +88,6 @@ void DMA2_Stream2_IRQ_Handler(void) {
   }
 
   if (spi_rx_state == SPI_RX_STATE_DATA_RX) {
-    puts("SPI: got data rx: "); hexdump(spi_buf_rx + 8, spi_data_len_mosi + 1); puts("\n");
     // TODO: verify CRC
 
     // We got everything! Based on the endpoint specified, call the appropriate handler
@@ -154,34 +146,14 @@ void DMA2_Stream3_IRQ_Handler(void) {
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
 
   if (spi_rx_state == SPI_RX_STATE_DATA_RX) {
-    puts("SPI: ACK sent\n");
-
     // ACK was sent, queue up the RX buf for the data + CRC
     spi_mosi_dma(spi_buf_rx + 7, spi_data_len_mosi + 2);
   }
 
   if (spi_rx_state == SPI_RX_STATE_DATA_TX) {
-    puts("SPI: return data sent\n");
-
     // Reset state
     spi_rx_state = SPI_RX_STATE_HEADER;
     spi_mosi_dma(spi_buf_rx, 7);
-  }
-}
-
-void SPI1_IRQ_Handler(void) {
-  if (SPI1->SR & SPI_SR_CRCERR) {
-    // CRC error
-    puts("SPI: CRC error\n");
-    SPI1->SR &= ~(1 << SPI_SR_CRCERR);
-  }
-
-  if (SPI1->SR & SPI_SR_OVR) {
-    // RX overrun
-    // TODO: implement recovery if neccesary (reading DR and SR)
-    volatile uint8_t dat = SPI1->DR;
-    (void)dat;
-    puts("SPI: overrun error, drained\n");
   }
 }
 
@@ -190,7 +162,6 @@ void spi_init(void) {
   // We expect less than 50 transactions (including control messages and CAN buffers) at the 100Hz boardd interval. Can be raised if needed.
   REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
   REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
-  REGISTER_INTERRUPT(SPI1_IRQn, SPI1_IRQ_Handler, 100U, FAULT_INTERRUPT_RATE_SPI)
 
   // Clear buffers (for debugging)
   memset(spi_buf_rx, 0, SPI_BUF_SIZE);
@@ -207,7 +178,7 @@ void spi_init(void) {
   // Enable SPI and the error interrupts
   // TODO: verify clock phase and polarity
   register_set(&(SPI1->CR1), SPI_CR1_SPE, 0xFFFFU);
-  register_set(&(SPI1->CR2), SPI_CR2_ERRIE, 0xF7U);
+  register_set(&(SPI1->CR2), 0U, 0xF7U);
 
   // Start the first packet!
   spi_rx_state = SPI_RX_STATE_HEADER;
@@ -215,5 +186,4 @@ void spi_init(void) {
 
   NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);
-  NVIC_EnableIRQ(SPI1_IRQn);
 }
