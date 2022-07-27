@@ -20,37 +20,59 @@ class SpiHandle:
     self.spi.max_speed_hz = 10000000
 
   # helpers
-  def _transfer(self, endpoint, data):
-    endpoint = 0xAB
+  def _transfer(self, endpoint, data, max_rx_len=1000):
+    #endpoint = 0xAB
 
-    packet = struct.pack(">BBH", SYNC, endpoint, len(data))
-    packet += data
+    packet = struct.pack(">BBHH", SYNC, endpoint, len(data), max_rx_len)
     packet += bytes([reduce(lambda x, y: x^y, packet)])
     self.spi.writebytes(packet)
 
-    print(hexlify(packet, sep=' '))
+    print("header", hexlify(packet, sep=' '))
 
     dat = b"\x00"
     while dat[0] not in [ACK, NACK]:
-      dat = self.spi.xfer(b"\x00", )
+      dat = self.spi.xfer(b"\x00")
       time.sleep(0.1)
-      print(dat)
+      print("RET", hex(dat[0]))
 
     if dat == NACK:
       raise Exception("Got NACK response")
 
-    print(dat)
-    raise
+    packet = bytes(data)
+    packet += bytes([reduce(lambda x, y: x^y, packet)])
+    self.spi.xfer(packet)
+
+    print("data", hexlify(packet, sep=' '))
+
+    dat = b"\x00"
+    while dat[0] not in [ACK, NACK]:
+      dat = self.spi.xfer(b"\x00")
+      time.sleep(0.1)
+      print("RET", hex(dat[0]))
+
+    if dat == NACK:
+      raise Exception("Got NACK response")
+
+    print("reading response")
+    response_len = struct.unpack(">H", bytes(self.spi.xfer(b"\x00" * 2)))[0]
+    print(f"response len: {response_len}")
+
+    dat = bytes(self.spi.xfer(b"\x00" * (response_len + 1)))
+    # TODO: verify CRC    
+    dat = dat[:-1]
+
+    print("data", hexlify(dat, sep=' '))
+    return dat
 
   # libusb1 functions
   def close(self):
     self.spi.close()
 
   def controlWrite(self, request_type, request, value, index, data, timeout=0):
-    return self._transfer(0, struct.pack(">HHHH", request, value, index, 0))
+    return self._transfer(0, struct.pack("<HHHH", request, value, index, 0))
 
   def controlRead(self, request_type, request, value, index, length, timeout=0):
-    return self._transfer(0, struct.pack(">HHHH", request, value, index, length))
+    return self._transfer(0, struct.pack("<HHHH", request, value, index, length))
 
   def bulkWrite(self, endpoint, data, timeout=0):
     pass
