@@ -31,7 +31,7 @@ static int body_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     tx = 1;
   }
 
-  if (!controls_allowed && ((uint32_t)GET_BYTES_04(to_send) == 0xdeadface) && ((uint32_t)GET_BYTES_48(to_send) == 0x0ab00b1e)) {
+  if (!controls_allowed && ((uint32_t)GET_BYTES_04(to_send) == 0xdeadfaceU) && ((uint32_t)GET_BYTES_48(to_send) == 0x0ab00b1eU)) {
     tx = 1;
   }
 
