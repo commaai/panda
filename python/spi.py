@@ -17,7 +17,7 @@ class SpiHandle:
     self.spi = spidev.SpiDev()
     self.spi.open(0, 0)
 
-    self.spi.max_speed_hz = 20000000
+    self.spi.max_speed_hz = 30000000
 
   # helpers
   def _transfer(self, endpoint, data, max_rx_len=1000):
@@ -25,29 +25,29 @@ class SpiHandle:
       try:
         packet = struct.pack(">BBHH", SYNC, endpoint, len(data), max_rx_len)
         packet += bytes([reduce(lambda x, y: x^y, packet) ^ CHECKSUM_START])
-        self.spi.writebytes(packet)
+        self.spi.xfer2(packet)
 
         dat = b"\x00"
         while dat[0] not in [HACK, NACK]:
-          dat = self.spi.xfer(b"\x12")
+          dat = self.spi.xfer2(b"\x12")
 
         if dat[0] == NACK:
           raise Exception("Got NACK response for header")
 
         packet = bytes(data)
         packet += bytes([reduce(lambda x, y: x^y, packet) ^ CHECKSUM_START])
-        self.spi.xfer(packet)
+        self.spi.xfer2(packet)
 
         dat = b"\x00"
         while dat[0] not in [DACK, NACK]:
-          dat = self.spi.xfer(b"\xab")
+          dat = self.spi.xfer2(b"\xab")
 
         if dat[0] == NACK:
           raise Exception("Got NACK response for data")
 
-        response_len = struct.unpack(">H", bytes(self.spi.xfer(b"\x00" * 2)))[0]
+        response_len = struct.unpack(">H", bytes(self.spi.xfer2(b"\x00" * 2)))[0]
 
-        dat = bytes(self.spi.xfer(b"\x00" * (response_len + 1)))
+        dat = bytes(self.spi.xfer2(b"\x00" * (response_len + 1)))
         # TODO: verify CRC
         dat = dat[:-1]
 

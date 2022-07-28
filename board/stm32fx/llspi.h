@@ -88,9 +88,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
       next_rx_state = SPI_RX_STATE_HEADER_NACK;
     }
     spi_miso_dma(spi_buf_tx, 1);
-  }
-
-  if (spi_state == SPI_RX_STATE_DATA_RX) {
+  } else if (spi_state == SPI_RX_STATE_DATA_RX) {
     // We got everything! Based on the endpoint specified, call the appropriate handler
     uint16_t response_len = 0U;
     bool reponse_ack = false;
@@ -142,6 +140,8 @@ void DMA2_Stream2_IRQ_Handler(void) {
     spi_miso_dma(spi_buf_tx, response_len + 4);
 
     next_rx_state = SPI_RX_STATE_DATA_TX;
+  } else {
+    puts("SPI: RX unexpected state: "); puth(spi_state); puts("\n");
   }
 
   spi_state = next_rx_state;
@@ -161,20 +161,18 @@ void DMA2_Stream3_IRQ_Handler(void) {
 
   if (spi_state == SPI_RX_STATE_HEADER_ACK) {
     // ACK was sent, queue up the RX buf for the data + checksum
-    spi_mosi_dma(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi + 1);
     spi_state = SPI_RX_STATE_DATA_RX;
-  }
-
-  if (spi_state == SPI_RX_STATE_HEADER_NACK) {
+    spi_mosi_dma(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi + 1);
+  } else if (spi_state == SPI_RX_STATE_HEADER_NACK) {
     // Reset state
-    spi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
     spi_state = SPI_RX_STATE_HEADER;
-  }
-
-  if (spi_state == SPI_RX_STATE_DATA_TX) {
+    spi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+  } else if (spi_state == SPI_RX_STATE_DATA_TX) {
     // Reset state
-    spi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
     spi_state = SPI_RX_STATE_HEADER;
+    spi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+  } else {
+    puts("SPI: TX unexpected state: "); puth(spi_state); puts("\n");
   }
 }
 
