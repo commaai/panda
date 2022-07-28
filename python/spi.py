@@ -1,14 +1,13 @@
-import time
 import struct
 import spidev
 from functools import reduce
 
-from binascii import hexlify
-
 # Constants
 SYNC = 0x5A
-ACK = 0x79
+HACK = 0x79
+DACK = 0x85
 NACK = 0x1F
+CHECKSUM_START = 0xAB
 
 # This mimics the handle given by libusb1 for easy interoperability
 class SpiHandle:
@@ -16,52 +15,38 @@ class SpiHandle:
     self.spi = spidev.SpiDev()
     self.spi.open(0, 0)
 
-    # TODO: raise?
-    self.spi.max_speed_hz = 10000000
+    self.spi.max_speed_hz = 20000000
 
   # helpers
   def _transfer(self, endpoint, data, max_rx_len=1000):
-    #endpoint = 0xAB
-
     packet = struct.pack(">BBHH", SYNC, endpoint, len(data), max_rx_len)
-    packet += bytes([reduce(lambda x, y: x^y, packet)])
+    packet += bytes([reduce(lambda x, y: x^y, packet) ^ CHECKSUM_START])
     self.spi.writebytes(packet)
 
-    print("header", hexlify(packet, sep=' '))
-
     dat = b"\x00"
-    while dat[0] not in [ACK, NACK]:
-      dat = self.spi.xfer(b"\x00")
-      # time.sleep(0.1)
-      print("RET", hex(dat[0]))
+    while dat[0] not in [HACK, NACK]:
+      dat = self.spi.xfer(b"\x12")
 
     if dat[0] == NACK:
-      raise Exception("Got NACK response")
+      raise Exception("Got NACK response for header")
 
     packet = bytes(data)
-    packet += bytes([reduce(lambda x, y: x^y, packet)])
+    packet += bytes([reduce(lambda x, y: x^y, packet) ^ CHECKSUM_START])
     self.spi.xfer(packet)
 
-    print("data", hexlify(packet, sep=' '))
-
     dat = b"\x00"
-    while dat[0] not in [ACK, NACK]:
-      dat = self.spi.xfer(b"\x00")
-      # time.sleep(0.00001)
-      print("RET", hex(dat[0]))
+    while dat[0] not in [DACK, NACK]:
+      dat = self.spi.xfer(b"\xab")
 
     if dat[0] == NACK:
-      raise Exception("Got NACK response")
+      raise Exception("Got NACK response for data")
 
-    print("reading response")
     response_len = struct.unpack(">H", bytes(self.spi.xfer(b"\x00" * 2)))[0]
-    print(f"response len: {response_len}")
 
     dat = bytes(self.spi.xfer(b"\x00" * (response_len + 1)))
-    # TODO: verify CRC    
+    # TODO: verify CRC
     dat = dat[:-1]
 
-    print("data", hexlify(dat, sep=' '))
     return dat
 
   # libusb1 functions

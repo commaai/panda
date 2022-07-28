@@ -2,8 +2,10 @@
 uint8_t spi_buf_rx[SPI_BUF_SIZE];
 uint8_t spi_buf_tx[SPI_BUF_SIZE];
 
-#define SPI_SYNC_BYTE 0x5A
-#define SPI_ACK 0x79U
+#define SPI_CHECKSUM_START 0xABU
+#define SPI_SYNC_BYTE 0x5AU
+#define SPI_HACK 0x79U
+#define SPI_DACK 0x85U
 #define SPI_NACK 0x1FU
 
 #define SPI_RX_STATE_HEADER 0U
@@ -24,16 +26,16 @@ uint16_t spi_data_len_miso;
 
 void spi_miso_dma(uint8_t *addr, int len) {
   // disable DMA
-  register_clear_bits(&(SPI1->CR2), SPI_CR2_TXDMAEN);
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
+  register_clear_bits(&(SPI1->CR2), SPI_CR2_TXDMAEN);
 
   // setup source and length
   register_set(&(DMA2_Stream3->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
   DMA2_Stream3->NDTR = len;
 
   // enable DMA
-  DMA2_Stream3->CR |= DMA_SxCR_EN;
   register_set_bits(&(SPI1->CR2), SPI_CR2_TXDMAEN);
+  DMA2_Stream3->CR |= DMA_SxCR_EN;
 }
 
 void spi_mosi_dma(uint8_t *addr, int len) {
@@ -56,7 +58,7 @@ void spi_mosi_dma(uint8_t *addr, int len) {
 
 bool check_checksum(uint8_t *data, uint16_t len) {
   // TODO: can speed this up by casting the bulk to uint32_t and xor-ing the bytes afterwards
-  uint8_t checksum = 0U;
+  uint8_t checksum = SPI_CHECKSUM_START;
   for(uint16_t i = 0U; i < len; i++){
     checksum ^= data[i];
   }
@@ -66,6 +68,7 @@ bool check_checksum(uint8_t *data, uint16_t len) {
 // SPI MOSI DMA FINISHED
 void DMA2_Stream2_IRQ_Handler(void) {
   // Clear interrupt flag
+  ENTER_CRITICAL();
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
 
   uint8_t next_rx_state = SPI_RX_STATE_HEADER;
@@ -78,26 +81,15 @@ void DMA2_Stream2_IRQ_Handler(void) {
   if (spi_state == SPI_RX_STATE_HEADER) {
     if (spi_buf_rx[0] == SPI_SYNC_BYTE && check_checksum(spi_buf_rx, SPI_HEADER_SIZE)) {
       // response: ACK and start receiving data portion
-      spi_buf_tx[0] = SPI_ACK;
+      spi_buf_tx[0] = SPI_HACK;
       next_rx_state = SPI_RX_STATE_HEADER_ACK;
     } else {
       // response: NACK and reset state machine
-      puts("SPI: incorrect header sync or checksum\n");
+      puts("SPI: incorrect header sync or checksum "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
       spi_buf_tx[0] = SPI_NACK;
       next_rx_state = SPI_RX_STATE_HEADER_NACK;
     }
     spi_miso_dma(spi_buf_tx, 1);
-  }
-
-  if (spi_state == SPI_RX_STATE_HEADER_ACKED) {
-    spi_mosi_dma(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi + 1);
-    next_rx_state = SPI_RX_STATE_DATA_RX;
-  }
-
-  if (spi_state == SPI_RX_STATE_HEADER_NACKED) {
-    // Reset state
-    spi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
-    next_rx_state = SPI_RX_STATE_HEADER;
   }
 
   if (spi_state == SPI_RX_STATE_DATA_RX) {
@@ -137,7 +129,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
     }
 
     // Setup response header
-    spi_buf_tx[0] = reponse_ack ? SPI_ACK : SPI_NACK;
+    spi_buf_tx[0] = reponse_ack ? SPI_DACK : SPI_NACK;
     spi_buf_tx[1] = (response_len >> 8) & 0xFFU;
     spi_buf_tx[2] = response_len & 0xFFU;
 
@@ -155,6 +147,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
   }
 
   spi_state = next_rx_state;
+  EXIT_CRITICAL();
 }
 
 // SPI MISO DMA FINISHED
@@ -162,15 +155,22 @@ void DMA2_Stream3_IRQ_Handler(void) {
   // Clear interrupt flag
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
 
+  // Wait until the transaction is actually finished and clear the DR
+  while (!(SPI1->SR & SPI_SR_TXE));
+  volatile uint8_t dat = SPI1->DR;
+  (void)dat;
+  SPI1->DR = 0U;
+
   if (spi_state == SPI_RX_STATE_HEADER_ACK) {
     // ACK was sent, queue up the RX buf for the data + checksum
-    spi_mosi_dma(spi_buf_rx, 1U);
-    spi_state = SPI_RX_STATE_HEADER_ACKED;
+    spi_mosi_dma(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi + 1);
+    spi_state = SPI_RX_STATE_DATA_RX;
   }
 
   if (spi_state == SPI_RX_STATE_HEADER_NACK) {
-    spi_mosi_dma(spi_buf_rx, 1U);
-    spi_state = SPI_RX_STATE_HEADER_NACKED;
+    // Reset state
+    spi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+    spi_state = SPI_RX_STATE_HEADER;
   }
 
   if (spi_state == SPI_RX_STATE_DATA_TX) {

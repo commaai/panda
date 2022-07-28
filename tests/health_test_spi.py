@@ -4,8 +4,16 @@ from panda import Panda
 
 if __name__ == "__main__":
   panda = Panda(spi=True)
+  # panda = Panda(spi=False)
 
-  while True:
-    print(panda.health())
-    print("\n")
-    time.sleep(0.01)
+  i = 0
+  pi = 0
+  while True:    
+    st = time.monotonic()
+    while time.monotonic() - st < 1:
+      panda.health()
+      i += 1
+    print(i, panda.health(), "\n")
+    print(f"Speed: {i - pi}Hz")
+    pi = i
+
