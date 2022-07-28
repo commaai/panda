@@ -243,9 +243,9 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   }
   if (bus_num == 2) {
     if (hyundai_tucson_hev_2022) {
-      block_msg = (addr != 0x12a);
+      block_msg = (addr == 0x12a);
     } else {
-      block_msg = ((addr != 0x50) && (addr != 0x2a4));
+      block_msg = ((addr == 0x50) || (addr == 0x2a4));
     }
     if (!block_msg) {
       bus_fwd = 0;
