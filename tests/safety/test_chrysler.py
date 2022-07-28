@@ -21,54 +21,78 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
   RT_INTERVAL = 250000
   MAX_TORQUE_ERROR = 80
 
-  cnt_torque_meas = 0
-  cnt_gas = 0
-  cnt_cruise = 0
-  cnt_brake = 0
+  DAS_BUS = 0
 
   def setUp(self):
-    self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid")
+    self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid_generated")
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, 0)
     self.safety.init_tests()
 
-  def _button_msg(self, cancel):
-    values = {"ACC_CANCEL": cancel}
-    return self.packer.make_can_msg_panda("WHEEL_BUTTONS", 0, values)
+  def _button_msg(self, cancel=False, resume=False):
+    values = {"ACC_Cancel": cancel, "ACC_Resume": resume}
+    return self.packer.make_can_msg_panda("CRUISE_BUTTONS", self.DAS_BUS, values)
 
   def _pcm_status_msg(self, enable):
-    values = {"ACC_STATUS_2": 0x7 if enable else 0,
-              "COUNTER": self.cnt_cruise % 16}
-    self.__class__.cnt_cruise += 1
-    return self.packer.make_can_msg_panda("ACC_2", 0, values)
+    values = {"ACC_ACTIVE": enable}
+    return self.packer.make_can_msg_panda("DAS_3", self.DAS_BUS, values)
 
   def _speed_msg(self, speed):
     values = {"SPEED_LEFT": speed, "SPEED_RIGHT": speed}
     return self.packer.make_can_msg_panda("SPEED_1", 0, values)
 
   def _user_gas_msg(self, gas):
-    values = {"ACCEL_134": gas, "COUNTER": self.cnt_gas % 16}
-    self.__class__.cnt_gas += 1
-    return self.packer.make_can_msg_panda("ACCEL_GAS_134", 0, values)
+    values = {"Accelerator_Position": gas}
+    return self.packer.make_can_msg_panda("ECM_5", 0, values)
 
   def _user_brake_msg(self, brake):
-    values = {"BRAKE_PRESSED_2": 5 if brake else 0,
-              "COUNTER": self.cnt_brake % 16}
-    self.__class__.cnt_brake += 1
-    return self.packer.make_can_msg_panda("BRAKE_2", 0, values)
+    values = {"Brake_Pedal_State": 1 if brake else 0}
+    return self.packer.make_can_msg_panda("ESP_1", 0, values)
 
   def _torque_meas_msg(self, torque):
-    values = {"TORQUE_MOTOR": torque, "COUNTER": self.cnt_torque_meas % 16}
-    self.__class__.cnt_torque_meas += 1
-    return self.packer.make_can_msg_panda("EPS_STATUS", 0, values)
+    values = {"EPS_TORQUE_MOTOR": torque}
+    return self.packer.make_can_msg_panda("EPS_2", 0, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"LKAS_STEERING_TORQUE": torque}
+    values = {"STEERING_TORQUE": torque}
     return self.packer.make_can_msg_panda("LKAS_COMMAND", 0, values)
 
-  def test_cancel_button(self):
-    for cancel in [True, False]:
-      self.assertEqual(cancel, self._tx(self._button_msg(cancel)))
+  def test_buttons(self):
+    for controls_allowed in (True, False):
+      self.safety.set_controls_allowed(controls_allowed)
+
+      # resume only while controls allowed
+      self.assertEqual(controls_allowed, self._tx(self._button_msg(resume=True)))
+
+      # can always cancel
+      self.assertTrue(self._tx(self._button_msg(cancel=True)))
+
+      # only one button at a time
+      self.assertFalse(self._tx(self._button_msg(cancel=True, resume=True)))
+      self.assertFalse(self._tx(self._button_msg(cancel=False, resume=False)))
+
+
+class TestChryslerRamSafety(TestChryslerSafety):
+  TX_MSGS = [[177, 2], [166, 0], [250, 0]]
+  STANDSTILL_THRESHOLD = 3
+  RELAY_MALFUNCTION_ADDR = 166
+  FWD_BLACKLISTED_ADDRS = {2: [166, 250]}
+
+  MAX_RATE_UP = 6
+  MAX_RATE_DOWN = 6
+
+  DAS_BUS = 2
+
+  def setUp(self):
+    self.packer = CANPackerPanda("chrysler_ram_dt_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM_DT)
+    self.safety.init_tests()
+
+  def _speed_msg(self, speed):
+    values = {"Vehicle_Speed": speed}
+    return self.packer.make_can_msg_panda("ESP_8", 0, values)
+
 
 
 if __name__ == "__main__":
