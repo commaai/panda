@@ -1,4 +1,4 @@
-const int SUBARU_MAX_STEER = 2047; // 1s
+const int SUBARU_MAX_STEER = 2047;
 // real time torque limit to prevent controls spamming
 // the real time limit is 1500/sec
 const int SUBARU_MAX_RT_DELTA = 940;          // max delta torque allowed for real time checks
@@ -6,9 +6,12 @@ const uint32_t SUBARU_RT_INTERVAL = 250000;    // 250ms between real time checks
 const int SUBARU_MAX_RATE_UP = 50;
 const int SUBARU_MAX_RATE_DOWN = 70;
 const int SUBARU_DRIVER_TORQUE_ALLOWANCE = 60;
-const int SUBARU_DRIVER_TORQUE_FACTOR = 10;
+const int SUBARU_DRIVER_TORQUE_FACTOR = 50;
 const int SUBARU_STANDSTILL_THRSLD = 20;  // about 1kph
 
+const int SUBARU_GEN2_MAX_STEER = 1100;
+const int SUBARU_GEN2_MAX_RATE_UP = 40;
+const int SUBARU_GEN2_MAX_RATE_DOWN = 40;
 
 const CanMsg SUBARU_TX_MSGS[] = {
   {0x122, 0, 8},
@@ -39,7 +42,6 @@ addr_checks subaru_rx_checks = {subaru_addr_checks, SUBARU_ADDR_CHECK_LEN};
 AddrCheckStruct subaru_gen2_addr_checks[] = {
   {.msg = {{ 0x40, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x119, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{0x139, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x13a, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x13c, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x240, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
@@ -140,13 +142,16 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     desired_torque = -1 * to_signed(desired_torque, 13);
 
     if (controls_allowed) {
+      const int max_steer = subaru_gen2 ? SUBARU_GEN2_MAX_STEER : SUBARU_MAX_STEER;
+      const int max_rate_up = subaru_gen2 ? SUBARU_GEN2_MAX_RATE_UP : SUBARU_MAX_RATE_UP;
+      const int max_rate_down = subaru_gen2 ? SUBARU_GEN2_MAX_RATE_DOWN : SUBARU_MAX_RATE_DOWN;
 
       // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, SUBARU_MAX_STEER, -SUBARU_MAX_STEER);
+      violation |= max_limit_check(desired_torque, max_steer, -max_steer);
 
       // *** torque rate limit check ***
       violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-        SUBARU_MAX_STEER, SUBARU_MAX_RATE_UP, SUBARU_MAX_RATE_DOWN,
+        max_steer, max_rate_up, max_rate_down,
         SUBARU_DRIVER_TORQUE_ALLOWANCE, SUBARU_DRIVER_TORQUE_FACTOR);
 
       // used next time

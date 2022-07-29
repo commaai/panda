@@ -22,7 +22,7 @@ class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   RT_INTERVAL = 250000
 
   DRIVER_TORQUE_ALLOWANCE = 60
-  DRIVER_TORQUE_FACTOR = 10
+  DRIVER_TORQUE_FACTOR = 50
 
   ALT_BUS = 0
 
@@ -66,6 +66,10 @@ class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
 class TestSubaruGen2Safety(TestSubaruSafety):
   TX_MSGS = [[0x122, 0], [0x221, 1], [0x321, 0], [0x322, 0]]
   ALT_BUS = 1
+
+  MAX_RATE_UP = 40
+  MAX_RATE_DOWN = 40
+  MAX_TORQUE = 1100
 
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
