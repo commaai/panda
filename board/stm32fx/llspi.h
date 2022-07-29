@@ -73,8 +73,8 @@ void DMA2_Stream2_IRQ_Handler(void) {
 
   // parse header
   spi_endpoint = spi_buf_rx[1];
-  spi_data_len_mosi = spi_buf_rx[2] << 8 | spi_buf_rx[3];
-  spi_data_len_miso = spi_buf_rx[4] << 8 | spi_buf_rx[5];
+  spi_data_len_mosi = spi_buf_rx[3] << 8 | spi_buf_rx[2];
+  spi_data_len_miso = spi_buf_rx[5] << 8 | spi_buf_rx[4];
 
   if (spi_state == SPI_RX_STATE_HEADER) {
     if (spi_buf_rx[0] == SPI_SYNC_BYTE && check_checksum(spi_buf_rx, SPI_HEADER_SIZE)) {
@@ -100,7 +100,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
         } else {
           puts("SPI: insufficient data for control handler\n");
         }
-      } else if (spi_endpoint == 1U) {
+      } else if (spi_endpoint == 1U || spi_endpoint == 0x81U) {
         if (spi_data_len_mosi == 0U) {
           response_len = comms_can_read(spi_buf_tx + 3, spi_data_len_miso);
           reponse_ack = true;
@@ -126,8 +126,8 @@ void DMA2_Stream2_IRQ_Handler(void) {
 
     // Setup response header
     spi_buf_tx[0] = reponse_ack ? SPI_DACK : SPI_NACK;
-    spi_buf_tx[1] = (response_len >> 8) & 0xFFU;
-    spi_buf_tx[2] = response_len & 0xFFU;
+    spi_buf_tx[1] = response_len & 0xFFU;
+    spi_buf_tx[2] = (response_len >> 8) & 0xFFU;
 
     // Add checksum
     uint8_t checksum = 0U;
@@ -154,6 +154,7 @@ void DMA2_Stream3_IRQ_Handler(void) {
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
 
   // Wait until the transaction is actually finished and clear the DR
+  // TODO: needs a timeout here, otherwise it gets stuck with no master clock!
   while (!(SPI1->SR & SPI_SR_TXE));
   volatile uint8_t dat = SPI1->DR;
   (void)dat;

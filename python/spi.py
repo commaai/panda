@@ -23,7 +23,7 @@ class SpiHandle:
   def _transfer(self, endpoint, data, max_rx_len=1000):
     for _ in range(MAX_RETRY_COUNT):
       try:
-        packet = struct.pack(">BBHH", SYNC, endpoint, len(data), max_rx_len)
+        packet = struct.pack("<BBHH", SYNC, endpoint, len(data), max_rx_len)
         packet += bytes([reduce(lambda x, y: x^y, packet) ^ CHECKSUM_START])
         self.spi.xfer2(packet)
 
@@ -45,7 +45,7 @@ class SpiHandle:
         if dat[0] == NACK:
           raise Exception("Got NACK response for data")
 
-        response_len = struct.unpack(">H", bytes(self.spi.xfer2(b"\x00" * 2)))[0]
+        response_len = struct.unpack("<H", bytes(self.spi.xfer2(b"\x00" * 2)))[0]
 
         dat = bytes(self.spi.xfer2(b"\x00" * (response_len + 1)))
         # TODO: verify CRC
