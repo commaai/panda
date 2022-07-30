@@ -69,7 +69,7 @@ class TestSubaruGen2Safety(TestSubaruSafety):
 
   MAX_RATE_UP = 40
   MAX_RATE_DOWN = 40
-  MAX_TORQUE = 1100
+  MAX_TORQUE = 1000
 
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
