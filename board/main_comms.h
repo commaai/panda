@@ -108,48 +108,57 @@ asm_buffer can_write_buffer = {.ptr = 0U, .tail_size = 0U, .counter = 0U};
 
 // send on CAN
 void comms_can_write(uint8_t *data, uint32_t len) {
-  // Got first packet from a stream, resetting buffer and counter
-  if (data[0] == 0U) {
-    can_write_buffer.counter = 0U;
-    can_write_buffer.ptr = 0U;
-    can_write_buffer.tail_size = 0U;
-  }
-  // Assembling can message with data from buffer
-  if (data[0] == can_write_buffer.counter) {
-    uint32_t pos = 1U;
-    can_write_buffer.counter++;
+  CanChunkHeader_t *chunk_header = (CanChunkHeader_t *)((void *) data);
+  uint16_t pos = sizeof(CanChunkHeader_t);
+
+  // if the counter does not match what we expect, clear the tx buffer and skip the overflow data
+  if (chunk_header->counter != can_write_buffer.counter) {
     if (can_write_buffer.ptr != 0U) {
-      if (can_write_buffer.tail_size <= 63U) {
-        CANPacket_t to_push;
-        (void)memcpy(&can_write_buffer.overflow_data[can_write_buffer.ptr], &data[pos], can_write_buffer.tail_size);
-        (void)memcpy(&to_push, can_write_buffer.overflow_data, can_write_buffer.ptr + can_write_buffer.tail_size);
-        can_send(&to_push, to_push.bus, false);
-        pos += can_write_buffer.tail_size;
-        can_write_buffer.ptr = 0U;
-        can_write_buffer.tail_size = 0U;
-      } else {
-        (void)memcpy(&can_write_buffer.overflow_data[can_write_buffer.ptr], &data[pos], len - pos);
-        can_write_buffer.tail_size -= 63U;
-        can_write_buffer.ptr += 63U;
-        pos += 63U;
-      }
+      puts("discarded incomplete can_write data\n");
     }
 
-    while (pos < len) {
-      uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[(data[pos] >> 4U)];
-      if ((pos + pckt_len) <= len) {
-        CANPacket_t to_push;
-        (void)memcpy(&to_push, &data[pos], pckt_len);
-        can_send(&to_push, to_push.bus, false);
-        pos += pckt_len;
-      } else {
-        (void)memcpy(can_write_buffer.overflow_data, &data[pos], len - pos);
-        can_write_buffer.ptr = len - pos;
-        can_write_buffer.tail_size = pckt_len - can_write_buffer.ptr;
-        pos += can_write_buffer.ptr;
-      }
+    can_write_buffer.counter = chunk_header->counter;
+    can_write_buffer.ptr = 0U;
+    can_write_buffer.tail_size = 0U;
+
+    pos += chunk_header->overflow_len;
+  }
+
+  // assemble the overflow data first
+  if (can_write_buffer.ptr != 0U) {
+    if (can_write_buffer.tail_size <= chunk_header->chunk_data_length) {
+      CANPacket_t to_push;
+      (void)memcpy(&can_write_buffer.overflow_data[can_write_buffer.ptr], &data[pos], can_write_buffer.tail_size);
+      (void)memcpy(&to_push, can_write_buffer.overflow_data, can_write_buffer.ptr + can_write_buffer.tail_size);
+      can_send(&to_push, to_push.bus, false);
+      pos += can_write_buffer.tail_size;
+      can_write_buffer.ptr = 0U;
+      can_write_buffer.tail_size = 0U;
+    } else {
+      (void)memcpy(&can_write_buffer.overflow_data[can_write_buffer.ptr], &data[pos], len - pos);
+      can_write_buffer.tail_size -= chunk_header->chunk_data_length;
+      can_write_buffer.ptr += chunk_header->chunk_data_length;
+      pos += chunk_header->chunk_data_length;
     }
   }
+
+  while (pos < len) {
+    uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[(data[pos] >> 4U)];
+    if ((pos + pckt_len) <= len) {
+      CANPacket_t to_push;
+      (void)memcpy(&to_push, &data[pos], pckt_len);
+      can_send(&to_push, to_push.bus, false);
+      pos += pckt_len;
+    } else {
+      (void)memcpy(can_write_buffer.overflow_data, &data[pos], len - pos);
+      can_write_buffer.ptr = len - pos;
+      can_write_buffer.tail_size = pckt_len - can_write_buffer.ptr;
+      pos += can_write_buffer.ptr;
+    }
+  }
+
+  // we expect the next packet!
+  can_write_buffer.counter++;
 }
 
 // send on serial, first byte to select the ring
