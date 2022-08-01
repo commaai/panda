@@ -59,25 +59,26 @@ asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U, .counter = 0U};
 int comms_can_read(uint8_t *data, uint16_t max_len) {
   uint16_t pos = sizeof(CanChunkHeader_t);
   uint16_t max_data_len = (max_len - sizeof(CanChunkHeader_t));
+  CanChunkHeader_t *chunk_header = (CanChunkHeader_t *)((void *) data);
 
-  ((CanChunkHeader_t *)data)->counter = can_read_buffer.counter;
+  chunk_header->counter = can_read_buffer.counter;
 
   // Send tail of previous message if it is in buffer
   if (can_read_buffer.ptr > 0U) {
     if (can_read_buffer.ptr <= max_data_len) {
       (void)memcpy(&data[pos], can_read_buffer.overflow_data, can_read_buffer.ptr);
       pos += can_read_buffer.ptr;
-      ((CanChunkHeader_t *)data)->overflow_len = can_read_buffer.ptr;
+      chunk_header->overflow_len = can_read_buffer.ptr;
       can_read_buffer.ptr = 0U;
     } else {
       (void)memcpy(&data[pos], can_read_buffer.overflow_data, max_data_len);
       can_read_buffer.ptr = can_read_buffer.ptr - max_data_len;
       (void)memcpy(can_read_buffer.overflow_data, &can_read_buffer.overflow_data[max_data_len], can_read_buffer.ptr);
-      ((CanChunkHeader_t *)data)->overflow_len = max_data_len;
+      chunk_header->overflow_len = max_data_len;
       pos += max_data_len;
     }
   } else {
-    ((CanChunkHeader_t *)data)->overflow_len = 0U;
+    chunk_header->overflow_len = 0U;
   }
 
   CANPacket_t can_packet;
@@ -95,7 +96,7 @@ int comms_can_read(uint8_t *data, uint16_t max_len) {
     }
   }
 
-  ((CanChunkHeader_t *)data)->chunk_data_length = pos - sizeof(CanChunkHeader_t);
+  chunk_header->chunk_data_length = pos - sizeof(CanChunkHeader_t);
 
   can_read_buffer.counter++;
 
