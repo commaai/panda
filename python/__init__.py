@@ -26,11 +26,19 @@ DEBUG = os.getenv("PANDADEBUG") is not None
 CANPACKET_HEAD_SIZE = 0x5
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
+CAN_CHUNK_HEADER_STRUCT = struct.Struct("<BBH")
 
 def pack_can_buffer(arr):
-  snds = [b'']
-  idx = 0
+  CHUNK_SIZE = 64
+  DATA_SIZE_PER_CHUNK = CHUNK_SIZE - CAN_CHUNK_HEADER_STRUCT.size
+
+  counter = 0
+  chunks = [b""]
+  transfers = []
+  prev_overflow_len = 0
+
   for address, _, dat, bus in arr:
+    # pack CAN header + data into msg
     assert len(dat) in LEN_TO_DLC
     if DEBUG:
       print(f"  W 0x{address:x}: 0x{dat.hex()}")
@@ -43,20 +51,38 @@ def pack_can_buffer(arr):
     header[2] = (word_4b >> 8) & 0xFF
     header[3] = (word_4b >> 16) & 0xFF
     header[4] = (word_4b >> 24) & 0xFF
-    snds[idx] += header + dat
-    if len(snds[idx]) > 256: # Limit chunks to 256 bytes
-      snds.append(b'')
-      idx += 1
+    msg = header + dat
 
-  #Apply counter to each 64 byte packet
-  for idx in range(len(snds)):
-    tx = b''
-    counter = 0
-    for i in range (0, len(snds[idx]), 63):
-      tx += bytes([counter]) + snds[idx][i:i+63]
+    overflow_len = max(0, len(msg) - (DATA_SIZE_PER_CHUNK - len(chunks[-1])))
+    if overflow_len == 0:
+      # we have enough space left for this message
+      chunks[-1] += msg
+    else:
+      # add partial data, and overflow to next chunk
+      chunks[-1] += msg[:len(msg) - overflow_len]
+      chunks[-1] = CAN_CHUNK_HEADER_STRUCT.pack(counter, prev_overflow_len, len(chunks[-1])) + chunks[-1]
+      chunks.append(msg[len(msg) - overflow_len:])
+      prev_overflow_len = overflow_len if overflow_len < len(msg) else 0
       counter += 1
-    snds[idx] = tx
-  return snds
+      counter %= 256
+
+    # split up chunks into roughly 256 byte transfers with no overflow
+    if len(chunks) >= (256 / CHUNK_SIZE):
+      # finish last header
+      chunks[-1] = CAN_CHUNK_HEADER_STRUCT.pack(counter, prev_overflow_len, len(chunks[-1])) + chunks[-1]
+      counter += 1
+      counter %= 256
+
+      # commit
+      transfers.append(b"".join(chunks))
+      chunks = [b""]
+      prev_overflow_len = 0
+
+  # finish last chunk header for this transfer and commit last chunks
+  chunks[-1] = CAN_CHUNK_HEADER_STRUCT.pack(counter, prev_overflow_len, len(chunks[-1])) + chunks[-1]
+  transfers.append(b"".join(chunks))
+
+  return transfers
 
 def unpack_can_buffer(dat, prev_rx_counter=None):
   ret = []
@@ -71,8 +97,8 @@ def unpack_can_buffer(dat, prev_rx_counter=None):
   i = 0
   while i < len(dat):
     # unpack chunk header
-    counter, overflow_len, data_len = struct.unpack("<BBH", dat[i:i+4])
-    i += 4
+    counter, overflow_len, data_len = CAN_CHUNK_HEADER_STRUCT.unpack(dat[i:i+CAN_CHUNK_HEADER_STRUCT.size])
+    i += CAN_CHUNK_HEADER_STRUCT.size
 
     # assert that the counter is what we expect
     if can_rx_counter != counter:
