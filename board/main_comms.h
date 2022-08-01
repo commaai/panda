@@ -48,34 +48,41 @@ int get_rtc_pkt(void *dat) {
 }
 
 typedef struct {
-  uint32_t ptr;
-  uint32_t tail_size;
-  uint8_t data[72];
+  uint16_t ptr;
+  uint16_t tail_size;
+  uint8_t overflow_data[72];
   uint8_t counter;
 } asm_buffer;
 
 asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U, .counter = 0U};
 
-int comms_can_read(uint8_t *data, uint32_t max_len) {
-  uint32_t pos = 1;
-  data[0] = can_read_buffer.counter;
+int comms_can_read(uint8_t *data, uint16_t max_len) {
+  uint16_t pos = sizeof(CanChunkHeader_t);
+  uint16_t max_data_len = (max_len - sizeof(CanChunkHeader_t));
+
+  ((CanChunkHeader_t *)data)->counter = can_read_buffer.counter;
+
   // Send tail of previous message if it is in buffer
   if (can_read_buffer.ptr > 0U) {
-    if (can_read_buffer.ptr <= 63U) {
-      (void)memcpy(&data[pos], can_read_buffer.data, can_read_buffer.ptr);
+    if (can_read_buffer.ptr <= max_data_len) {
+      (void)memcpy(&data[pos], can_read_buffer.overflow_data, can_read_buffer.ptr);
       pos += can_read_buffer.ptr;
+      ((CanChunkHeader_t *)data)->overflow_len = can_read_buffer.ptr;
       can_read_buffer.ptr = 0U;
     } else {
-      (void)memcpy(&data[pos], can_read_buffer.data, 63U);
-      can_read_buffer.ptr = can_read_buffer.ptr - 63U;
-      (void)memcpy(can_read_buffer.data, &can_read_buffer.data[63], can_read_buffer.ptr);
-      pos += 63U;
+      (void)memcpy(&data[pos], can_read_buffer.overflow_data, max_data_len);
+      can_read_buffer.ptr = can_read_buffer.ptr - max_data_len;
+      (void)memcpy(can_read_buffer.overflow_data, &can_read_buffer.overflow_data[max_data_len], can_read_buffer.ptr);
+      ((CanChunkHeader_t *)data)->overflow_len = max_data_len;
+      pos += max_data_len;
     }
+  } else {
+    ((CanChunkHeader_t *)data)->overflow_len = 0U;
   }
 
   CANPacket_t can_packet;
   while ((pos < max_len) && can_pop(&can_rx_q, &can_packet)) {
-    uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
+    uint16_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
     if ((pos + pckt_len) <= max_len) {
       (void)memcpy(&data[pos], &can_packet, pckt_len);
       pos += pckt_len;
@@ -83,10 +90,13 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
       (void)memcpy(&data[pos], &can_packet, max_len - pos);
       can_read_buffer.ptr = pckt_len - (max_len - pos);
       // cppcheck-suppress objectIndex
-      (void)memcpy(can_read_buffer.data, &((uint8_t*)&can_packet)[(max_len - pos)], can_read_buffer.ptr);
+      (void)memcpy(can_read_buffer.overflow_data, &((uint8_t*)&can_packet)[(max_len - pos)], can_read_buffer.ptr);
       pos = max_len;
     }
   }
+
+  ((CanChunkHeader_t *)data)->chunk_data_length = pos - sizeof(CanChunkHeader_t);
+
   can_read_buffer.counter++;
 
   if (pos <= 1U) { pos = 0U; }
@@ -110,14 +120,14 @@ void comms_can_write(uint8_t *data, uint32_t len) {
     if (can_write_buffer.ptr != 0U) {
       if (can_write_buffer.tail_size <= 63U) {
         CANPacket_t to_push;
-        (void)memcpy(&can_write_buffer.data[can_write_buffer.ptr], &data[pos], can_write_buffer.tail_size);
-        (void)memcpy(&to_push, can_write_buffer.data, can_write_buffer.ptr + can_write_buffer.tail_size);
+        (void)memcpy(&can_write_buffer.overflow_data[can_write_buffer.ptr], &data[pos], can_write_buffer.tail_size);
+        (void)memcpy(&to_push, can_write_buffer.overflow_data, can_write_buffer.ptr + can_write_buffer.tail_size);
         can_send(&to_push, to_push.bus, false);
         pos += can_write_buffer.tail_size;
         can_write_buffer.ptr = 0U;
         can_write_buffer.tail_size = 0U;
       } else {
-        (void)memcpy(&can_write_buffer.data[can_write_buffer.ptr], &data[pos], len - pos);
+        (void)memcpy(&can_write_buffer.overflow_data[can_write_buffer.ptr], &data[pos], len - pos);
         can_write_buffer.tail_size -= 63U;
         can_write_buffer.ptr += 63U;
         pos += 63U;
@@ -132,7 +142,7 @@ void comms_can_write(uint8_t *data, uint32_t len) {
         can_send(&to_push, to_push.bus, false);
         pos += pckt_len;
       } else {
-        (void)memcpy(can_write_buffer.data, &data[pos], len - pos);
+        (void)memcpy(can_write_buffer.overflow_data, &data[pos], len - pos);
         can_write_buffer.ptr = len - pos;
         can_write_buffer.tail_size = pckt_len - can_write_buffer.ptr;
         pos += can_write_buffer.ptr;

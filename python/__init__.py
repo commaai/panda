@@ -68,17 +68,30 @@ def unpack_can_buffer(dat, prev_rx_counter=None):
   else:
     can_rx_counter = dat[0]
 
-  for i in range(0, len(dat), 64):
-    if can_rx_counter != dat[i]:
-      print("CAN: LOST RECV PACKET COUNTER", can_rx_counter, dat[i])
-      break
+  i = 0
+  while i < len(dat):
+    # unpack chunk header
+    counter, overflow_len, data_len = struct.unpack("<BBH", dat[i:i+4])
+    i += 4
 
+    # assert that the counter is what we expect
+    if can_rx_counter != counter:
+      print("CAN: LOST RECV PACKET COUNTER")
+      break
     can_rx_counter += 1
     can_rx_counter %= 256
 
-    chunk = tail + dat[i+1:i+64]
+    # unpack data from chunk, skipping overflow data if there's no saved tail
+    if len(tail) == 0:
+      chunk = dat[i+overflow_len:i+data_len]
+    else:
+      chunk = tail + dat[i:i+data_len]
+    i += data_len
+
+    # unpack can messages
     tail = bytearray()
     pos = 0
+
     while pos<len(chunk):
       data_len = DLC_TO_LEN[(chunk[pos]>>4)]
       pckt_len = CANPACKET_HEAD_SIZE + data_len

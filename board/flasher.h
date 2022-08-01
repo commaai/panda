@@ -90,7 +90,7 @@ void comms_can_write(uint8_t *data, uint32_t len) {
   UNUSED(len);
 }
 
-int comms_can_read(uint8_t *data, uint32_t max_len) {
+int comms_can_read(uint8_t *data, uint16_t max_len) {
   UNUSED(data);
   UNUSED(max_len);
   return 0;
