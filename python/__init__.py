@@ -58,15 +58,24 @@ def pack_can_buffer(arr):
     snds[idx] = tx
   return snds
 
-def unpack_can_buffer(dat):
+def unpack_can_buffer(dat, prev_rx_counter=None):
   ret = []
-  counter = 0
   tail = bytearray()
+
+  # Initialize counter
+  if prev_rx_counter is not None:
+    can_rx_counter = prev_rx_counter
+  else:
+    can_rx_counter = dat[0]
+
   for i in range(0, len(dat), 64):
-    if counter != dat[i]:
-      print("CAN: LOST RECV PACKET COUNTER")
+    if can_rx_counter != dat[i]:
+      print("CAN: LOST RECV PACKET COUNTER", can_rx_counter, dat[i])
       break
-    counter+=1
+
+    can_rx_counter += 1
+    can_rx_counter %= 256
+
     chunk = tail + dat[i+1:i+64]
     tail = bytearray()
     pos = 0
@@ -94,7 +103,7 @@ def unpack_can_buffer(dat):
       else:
         tail = chunk[pos:]
         break
-  return ret
+  return ret, can_rx_counter
 
 def ensure_health_packet_version(fn):
   @wraps(fn)
@@ -172,7 +181,7 @@ class Panda:
   HW_TYPE_DOS = b'\x06'
   HW_TYPE_RED_PANDA = b'\x07'
 
-  CAN_PACKET_VERSION = 2
+  CAN_PACKET_VERSION = 3
   HEALTH_PACKET_VERSION = 7
   HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHIf")
 
@@ -211,6 +220,7 @@ class Panda:
 
     # connect and set mcu type
     self.connect(claim)
+    self._can_rx_counter = None
 
   def close(self):
     self._handle.close()
@@ -623,7 +633,9 @@ class Panda:
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD RECV, RETRYING")
         time.sleep(0.1)
-    return unpack_can_buffer(dat)
+
+    ret, self._can_rx_counter = unpack_can_buffer(dat, self._can_rx_counter)
+    return ret
 
   def can_clear(self, bus):
     """Clears all messages from the specified internal CAN ringbuffer as

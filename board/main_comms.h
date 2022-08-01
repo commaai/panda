@@ -55,7 +55,6 @@ typedef struct {
 } asm_buffer;
 
 asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U, .counter = 0U};
-uint32_t total_rx_size = 0U;
 
 int comms_can_read(uint8_t *data, uint32_t max_len) {
   uint32_t pos = 1;
@@ -74,31 +73,22 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
     }
   }
 
-  if (total_rx_size > MAX_EP1_CHUNK_PER_BULK_TRANSFER) {
-    total_rx_size = 0U;
-    can_read_buffer.counter = 0U;
-  } else {
-    CANPacket_t can_packet;
-    while ((pos < max_len) && can_pop(&can_rx_q, &can_packet)) {
-      uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
-      if ((pos + pckt_len) <= max_len) {
-        (void)memcpy(&data[pos], &can_packet, pckt_len);
-        pos += pckt_len;
-      } else {
-        (void)memcpy(&data[pos], &can_packet, max_len - pos);
-        can_read_buffer.ptr = pckt_len - (max_len - pos);
-        // cppcheck-suppress objectIndex
-        (void)memcpy(can_read_buffer.data, &((uint8_t*)&can_packet)[(max_len - pos)], can_read_buffer.ptr);
-        pos = max_len;
-      }
+  CANPacket_t can_packet;
+  while ((pos < max_len) && can_pop(&can_rx_q, &can_packet)) {
+    uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
+    if ((pos + pckt_len) <= max_len) {
+      (void)memcpy(&data[pos], &can_packet, pckt_len);
+      pos += pckt_len;
+    } else {
+      (void)memcpy(&data[pos], &can_packet, max_len - pos);
+      can_read_buffer.ptr = pckt_len - (max_len - pos);
+      // cppcheck-suppress objectIndex
+      (void)memcpy(can_read_buffer.data, &((uint8_t*)&can_packet)[(max_len - pos)], can_read_buffer.ptr);
+      pos = max_len;
     }
-    can_read_buffer.counter++;
-    total_rx_size += pos;
   }
-  if (pos != max_len) {
-    can_read_buffer.counter = 0U;
-    total_rx_size = 0U;
-  }
+  can_read_buffer.counter++;
+
   if (pos <= 1U) { pos = 0U; }
   return pos;
 }

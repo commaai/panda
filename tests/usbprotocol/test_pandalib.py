@@ -15,7 +15,7 @@ class PandaTestPackUnpack(unittest.TestCase):
     packed = pack_can_buffer(to_pack)
     unpacked = []
     for dat in packed:
-      unpacked.extend(unpack_can_buffer(dat))
+      unpacked.extend(unpack_can_buffer(dat)[0])
 
     assert unpacked == to_pack
 
