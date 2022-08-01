@@ -13,6 +13,7 @@ const CanMsg HYUNDAI_HDA2_TX_MSGS[] = {
   //{0x2A4, 0, 24},
   {0x1CF, 0, 8},
   {0x12A, 0, 16},
+  {0x1E0, 0, 16},
 };
 
 AddrCheckStruct hyundai_hda2_addr_checks[] = {
@@ -198,7 +199,7 @@ static int hyundai_hda2_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     bus_fwd = 2;
   }
   //if ((bus_num == 2) && (addr != 0x50) && (addr != 0x2a4)) {
-  if ((bus_num == 2) && (addr != 0x12A)) {
+  if ((bus_num == 2) && (addr != 0x12A) && (addr != 0x1E0)) {
     bus_fwd = 0;
   }
 
