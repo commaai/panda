@@ -40,7 +40,7 @@ pipeline {
                     --volume /var/run/dbus:/var/run/dbus \
                     --net host \
                     ${env.DOCKER_IMAGE_TAG} \
-                    bash -c 'cd /tmp/panda && ./board/build_all.sh && JUNGLE=058010800f51363038363036 H7_PANDAS_EXCLUDE=\"080021000c51303136383232\" python ./tests/canfd/test_ci_canfd.py'"
+                    bash -c 'cd /tmp/panda && ./board/build_all.sh && JUNGLE=058010800f51363038363036 H7_PANDAS_EXCLUDE=\"080021000c51303136383232\" ./tests/canfd/test_canfd.py'"
             }
           }
         }

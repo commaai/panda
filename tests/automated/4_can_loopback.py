@@ -5,11 +5,7 @@ import threading
 from panda import Panda
 from collections import defaultdict
 from nose.tools import assert_equal, assert_less, assert_greater
-from .helpers import panda_jungle, reset_pandas, time_many_sends, test_all_pandas, test_all_gen2_pandas, clear_can_buffers, panda_connect_and_init
-
-# Reset the pandas before running tests
-def aaaa_reset_before_tests():
-  reset_pandas()
+from .helpers import panda_jungle, time_many_sends, test_all_pandas, test_all_gen2_pandas, clear_can_buffers, panda_connect_and_init
 
 @test_all_pandas
 @panda_connect_and_init
@@ -23,16 +19,15 @@ def test_send_recv(p):
     p_recv.can_recv()
     p_send.can_recv()
 
-    busses = [0, 1, 2]
-
-    for bus in busses:
-      for speed in [10, 20, 50, 100, 125, 250, 500, 1000]:
+    for bus in (0, 1, 2):
+      for speed in (10, 20, 50, 100, 125, 250, 500, 1000):
         p_send.set_can_speed_kbps(bus, speed)
         p_recv.set_can_speed_kbps(bus, speed)
-        time.sleep(0.05)
+        time.sleep(0.1)
 
         clear_can_buffers(p_send)
         clear_can_buffers(p_recv)
+        time.sleep(0.1)
 
         comp_kbps = time_many_sends(p_send, bus, p_recv, two_pandas=True)
 
@@ -40,27 +35,17 @@ def test_send_recv(p):
         assert_greater(saturation_pct, 80)
         assert_less(saturation_pct, 100)
 
-        print("two pandas bus {}, 100 messages at speed {:4d}, comp speed is {:7.2f}, percent {:6.2f}".format(bus, speed, comp_kbps, saturation_pct))
+        print("two pandas bus {}, 100 messages at speed {:4d}, comp speed is {:7.2f}, {:6.2f}%".format(bus, speed, comp_kbps, saturation_pct))
 
-  # Set safety mode and power saving
+  # Run tests in both directions
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  test(p, panda_jungle)
+  test(panda_jungle, p)
 
-  try:
-    # Run tests in both directions
-    test(p, panda_jungle)
-    test(panda_jungle, p)
-  except Exception as e:
-    # Raise errors again, we don't want them to get lost
-    raise e
-  finally:
-    # Set back to silent mode
-    p.set_safety_mode(Panda.SAFETY_SILENT)
 
 @test_all_pandas
 @panda_connect_and_init
 def test_latency(p):
-  os.nice(-20)
-
   def test(p_send, p_recv):
     p_send.set_can_loopback(False)
     p_recv.set_can_loopback(False)
@@ -126,10 +111,8 @@ def test_latency(p):
         print("two pandas bus {}, {} message average at speed {:4d}, latency is {:5.3f}ms, comp speed is {:7.2f}, percent {:6.2f}"
               .format(bus, num_messages, speed, average_latency, average_comp_kbps, average_saturation_pct))
 
-  # Set safety mode and power saving
-  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-
   # Run tests in both directions
+  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   test(p, panda_jungle)
   test(panda_jungle, p)
 
@@ -170,23 +153,15 @@ def test_gen2_loopback(p):
 
       print("Bus:", bus, "address:", addr, "OBD:", obd, "OK")
 
-  # Set safety mode and power saving
+  # Run tests in both directions
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  test(p, panda_jungle)
+  test(panda_jungle, p)
 
-  try:
-    # Run tests in both directions
-    test(p, panda_jungle)
-    test(panda_jungle, p)
-    # Test extended frame address with ELM327 mode
-    p.set_safety_mode(Panda.SAFETY_ELM327)
-    test(p, panda_jungle, 0x18DB33F1)
-    test(panda_jungle, p, 0x18DB33F1)
-  except Exception as e:
-    # Raise errors again, we don't want them to get lost
-    raise e
-  finally:
-    # Set back to silent mode
-    p.set_safety_mode(Panda.SAFETY_SILENT)
+  # Test extended frame address with ELM327 mode
+  p.set_safety_mode(Panda.SAFETY_ELM327)
+  test(p, panda_jungle, 0x18DB33F1)
+  test(panda_jungle, p, 0x18DB33F1)
 
 @test_all_pandas
 @panda_connect_and_init

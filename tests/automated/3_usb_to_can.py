@@ -3,11 +3,7 @@ import time
 from nose.tools import assert_equal, assert_less, assert_greater
 
 from panda import Panda
-from .helpers import reset_pandas, SPEED_NORMAL, SPEED_GMLAN, time_many_sends, test_white_and_grey, panda_type_to_serial, test_all_pandas, panda_connect_and_init
-
-# Reset the pandas before running tests
-def aaaa_reset_before_tests():
-  reset_pandas()
+from .helpers import SPEED_NORMAL, SPEED_GMLAN, time_many_sends, test_white_and_grey, panda_type_to_serial, test_all_pandas, panda_connect_and_init
 
 @test_all_pandas
 @panda_connect_and_init

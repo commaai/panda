@@ -1,12 +1,7 @@
 from nose.tools import assert_equal
 
 from panda import Panda, DEFAULT_FW_FN, DEFAULT_H7_FW_FN, MCU_TYPE_H7
-from .helpers import reset_pandas, test_all_pandas, panda_connect_and_init
-
-
-# Reset the pandas before flashing them
-def aaaa_reset_before_tests():
-  reset_pandas()
+from .helpers import test_all_pandas, panda_connect_and_init
 
 
 @test_all_pandas
