@@ -408,6 +408,7 @@ static const addr_checks* hyundai_init(uint16_t param) {
   hyundai_camera_scc = GET_FLAG(param, HYUNDAI_PARAM_CAMERA_SCC);
 
 #ifdef ALLOW_DEBUG
+  // TODO: add longitudinal support for camera-based SCC platform
   hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_LONGITUDINAL) && !hyundai_camera_scc;
 #endif
 
