@@ -39,7 +39,9 @@ if __name__ == "__main__":
   for route, _, _, _ in logs:
     if not os.path.isfile(route):
       with open(route, "wb") as f:
-        f.write(requests.get(BASE_URL + route).content)
+        r = requests.get(BASE_URL + route)
+        r.raise_for_status()
+        f.write(r.content)
 
   failed = []
   for route, mode, param, alt_exp in logs:
