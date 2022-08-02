@@ -35,10 +35,10 @@ def reset_pandas():
   time.sleep(5)
 
 # Find all pandas connected
-_panda_serials = None
-def init_panda_serials():
-  global panda_jungle, _panda_serials
-  _panda_serials = []
+_all_panda_serials = None
+def init_all_panda_serials():
+  global panda_jungle, _all_panda_serials
+  _all_panda_serials = []
 
   # power cycle pandas
   reset_pandas()
@@ -46,10 +46,10 @@ def init_panda_serials():
   for serial in Panda.list():
     if serial not in PANDAS_EXCLUDE:
       p = Panda(serial=serial)
-      _panda_serials.append((serial, p.get_type()))
+      _all_panda_serials.append((serial, p.get_type()))
       p.close()
-  print(f"Found {len(_panda_serials)} pandas")
-init_panda_serials()
+  print(f"Found {len(_all_panda_serials)} pandas")
+init_all_panda_serials()
 
 # Panda providers
 test_all_types = parameterized([
@@ -60,13 +60,13 @@ test_all_types = parameterized([
     param(panda_type=Panda.HW_TYPE_RED_PANDA)
   ])
 test_all_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[0] != PEDAL_SERIAL, _panda_serials)))  # type: ignore
+    list(map(lambda x: x[0], filter(lambda x: x[0] != PEDAL_SERIAL, _all_panda_serials)))  # type: ignore
   )
 test_all_gen2_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in GEN2_HW_TYPES, _panda_serials)))  # type: ignore
+    list(map(lambda x: x[0], filter(lambda x: x[1] in GEN2_HW_TYPES, _all_panda_serials)))  # type: ignore
   )
 test_all_gps_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in GPS_HW_TYPES, _panda_serials)))  # type: ignore
+    list(map(lambda x: x[0], filter(lambda x: x[1] in GPS_HW_TYPES, _all_panda_serials)))  # type: ignore
   )
 test_white_and_grey = parameterized([
     param(panda_type=Panda.HW_TYPE_WHITE_PANDA),
@@ -131,15 +131,15 @@ def panda_type_to_serial(fn):
         panda_type = [panda_type]
 
     # If not done already, get panda serials and their type
-    global _panda_serials
-    if _panda_serials == None:
-      init_panda_serials()
+    global _all_panda_serials
+    if _all_panda_serials == None:
+      init_all_panda_serials()
 
     # Find a panda with the correct types and add the corresponding serial
     serials = []
     for p_type in panda_type:
       found = False
-      for serial, pt in _panda_serials:
+      for serial, pt in _all_panda_serials:
         # Never take the same panda twice
         if (pt == p_type) and (serial not in serials):
           serials.append(serial)
@@ -163,22 +163,26 @@ def panda_connect_and_init(fn=None, clear_can=True):
 
     # Initialize jungle
     clear_can_buffers(panda_jungle)
+    panda_jungle.set_panda_power(True)
     panda_jungle.set_can_loopback(False)
     panda_jungle.set_obd(False)
     panda_jungle.set_harness_orientation(PandaJungle.HARNESS_ORIENTATION_1)
     for bus, speed in BUS_SPEEDS:
         panda_jungle.set_can_speed_kbps(bus, speed)
 
-    # power cycle pandas
-    panda_jungle.set_panda_power(False)
-    time.sleep(1)
-    panda_jungle.set_panda_power(True)
-    time.sleep(5)
-
     # Connect to pandas
     pandas = []
-    for panda_serial in panda_serials:
-      pandas.append(Panda(serial=panda_serial))
+    for s, _ in _all_panda_serials:
+      if s == PEDAL_SERIAL:
+        continue
+
+      p = Panda(serial=s)
+      if s in panda_serials:
+        p.reset(reconnect=True)
+        pandas.append(p)
+      else:
+        p.reset(reconnect=False)
+        p.close()
 
     # Initialize pandas
     for panda in pandas:
