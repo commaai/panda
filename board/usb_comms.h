@@ -458,9 +458,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp) {
         resp_len = 2;
       }
       break;
-    // **** 0xfb: enter deep sleep(stop) mode
+    // **** 0xfb: allow highest power saving mode (stop) to be entered
     case 0xfb:
-      deepsleep_requested = true;
+      deepsleep_allowed = true;
       break;
     default:
       puts("NO HANDLER ");
