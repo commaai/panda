@@ -168,27 +168,10 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &hyundai_rx_checks,
                                  hyundai_get_checksum, hyundai_compute_checksum,
                                  hyundai_get_counter);
-  int addr = GET_ADDR(to_push);
-  int bus = GET_BUS(to_push);
 
-  // checks camera SCC cars have 1057 on bus 2
-  if (valid && ((bus == 0U) || (bus == 2U))) {
-    // enter controls on rising edge of ACC and user button press, exit controls when ACC off
-    if (!hyundai_longitudinal && (addr == 1057)) {
-      // 2 bits: 13-14
-      int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3U;
-      if (cruise_engaged && !cruise_engaged_prev && (hyundai_last_button_interaction < HYUNDAI_PREV_BUTTON_SAMPLES)) {
-        controls_allowed = 1;
-      }
+  if (valid && (GET_BUS(to_push) == 0U)) {
+    int addr = GET_ADDR(to_push);
 
-      if (!cruise_engaged) {
-        controls_allowed = 0;
-      }
-      cruise_engaged_prev = cruise_engaged;
-    }
-  }
-
-  if (valid && (bus == 0U)) {
     if (addr == 593) {
       int torque_driver_new = ((GET_BYTES_04(to_push) & 0x7ffU) * 0.79) - 808; // scale down new driver torque signal to match previous one
       // update array of samples
@@ -221,6 +204,20 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
 
         cruise_button_prev = cruise_button;
       }
+    }
+
+    // enter controls on rising edge of ACC and user button press, exit controls when ACC off
+    if (!hyundai_longitudinal && (addr == 1057)) {
+      // 2 bits: 13-14
+      int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3U;
+      if (cruise_engaged && !cruise_engaged_prev && (hyundai_last_button_interaction < HYUNDAI_PREV_BUTTON_SAMPLES)) {
+        controls_allowed = 1;
+      }
+
+      if (!cruise_engaged) {
+        controls_allowed = 0;
+      }
+      cruise_engaged_prev = cruise_engaged;
     }
 
     // read gas pressed signal
