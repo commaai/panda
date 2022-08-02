@@ -58,7 +58,7 @@ def checksum(msg):
 
 class HyundaiButtonBase: #(common.PandaSafetyTest):
   # pylint: disable=no-member,abstract-method
-  BUTTONS_BUS = 0  # tx on this bus, rx on 0
+  BUTTONS_BUS = 0  # tx on this bus, rx on 0. added to all `self._tx(self._button_msg(...))`
   SCC_BUS = 0  # rx on this bus
 
   def test_buttons(self):
