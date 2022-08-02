@@ -9,12 +9,13 @@ import traceback
 import sys
 from functools import wraps
 from typing import Optional
+from itertools import accumulate
 from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7  # pylint: disable=import-error
 from .flash_release import flash_release  # noqa pylint: disable=import-error
 from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
 from .serial import PandaSerial  # noqa pylint: disable=import-error
 from .isotp import isotp_send, isotp_recv  # pylint: disable=import-error
-from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN  # noqa pylint: disable=import-error
+from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN, SECTOR_SIZES_FX, SECTOR_SIZES_H7  # noqa pylint: disable=import-error
 
 __version__ = '0.0.10'
 
@@ -286,7 +287,7 @@ class Panda:
 
 
   @staticmethod
-  def flash_static(handle, code):
+  def flash_static(handle, code, mcu_type=MCU_TYPE_F4):
     # confirm flasher is present
     fr = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
     assert fr[4:8] == b"\xde\xad\xd0\x0d"
@@ -295,9 +296,12 @@ class Panda:
     print("flash: unlocking")
     handle.controlWrite(Panda.REQUEST_IN, 0xb1, 0, 0, b'')
 
-    # erase sectors 1 through 3
-    print("flash: erasing")
-    for i in range(1, 4):
+    # erase sectors
+    apps_sectors_cumsum = accumulate(SECTOR_SIZES_H7[1:] if mcu_type == MCU_TYPE_H7 else SECTOR_SIZES_FX[1:])
+    last_sector = next((i + 1 for i, v in enumerate(apps_sectors_cumsum) if v > len(code)), -1)
+    assert 1 < last_sector < 7, "Binary too large! Risk of overwriting provisioning chunk."
+    print(f"flash: erasing sectors 1 - {last_sector}")
+    for i in range(1, last_sector + 1):
       handle.controlWrite(Panda.REQUEST_IN, 0xb2, i, 0, b'')
 
     # flash over EP2
@@ -329,7 +333,7 @@ class Panda:
     print("flash: bootstub version is " + self.get_version())
 
     # do flash
-    Panda.flash_static(self._handle, code)
+    Panda.flash_static(self._handle, code, mcu_type=self._mcu_type)
 
     # reconnect
     if reconnect:
