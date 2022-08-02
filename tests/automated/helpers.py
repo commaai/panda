@@ -28,28 +28,26 @@ faulthandler.enable(all_threads=False)
 # Connect to Panda Jungle
 panda_jungle = PandaJungle(JUNGLE_SERIAL)
 
-def reset_pandas():
+# Find all pandas connected
+_all_pandas = None
+def init_all_pandas():
+  global panda_jungle, _all_pandas
+  _all_pandas = []
+
+  # power cycle pandas
   panda_jungle.set_panda_power(False)
   time.sleep(3)
   panda_jungle.set_panda_power(True)
   time.sleep(5)
 
-# Find all pandas connected
-_all_panda_serials = None
-def init_all_panda_serials():
-  global panda_jungle, _all_panda_serials
-  _all_panda_serials = []
-
-  # power cycle pandas
-  reset_pandas()
-
   for serial in Panda.list():
     if serial not in PANDAS_EXCLUDE:
       p = Panda(serial=serial)
-      _all_panda_serials.append((serial, p.get_type()))
+      _all_pandas.append((serial, p.get_type()))
       p.close()
-  print(f"Found {len(_all_panda_serials)} pandas")
-init_all_panda_serials()
+  print(f"Found {len(_all_pandas)} pandas")
+init_all_pandas()
+_all_panda_serials = [x[0] for x in _all_pandas]
 
 # Panda providers
 test_all_types = parameterized([
@@ -60,13 +58,13 @@ test_all_types = parameterized([
     param(panda_type=Panda.HW_TYPE_RED_PANDA)
   ])
 test_all_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[0] != PEDAL_SERIAL, _all_panda_serials)))  # type: ignore
+    list(map(lambda x: x[0], filter(lambda x: x[0] != PEDAL_SERIAL, _all_pandas)))  # type: ignore
   )
 test_all_gen2_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in GEN2_HW_TYPES, _all_panda_serials)))  # type: ignore
+    list(map(lambda x: x[0], filter(lambda x: x[1] in GEN2_HW_TYPES, _all_pandas)))  # type: ignore
   )
 test_all_gps_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in GPS_HW_TYPES, _all_panda_serials)))  # type: ignore
+    list(map(lambda x: x[0], filter(lambda x: x[1] in GPS_HW_TYPES, _all_pandas)))  # type: ignore
   )
 test_white_and_grey = parameterized([
     param(panda_type=Panda.HW_TYPE_WHITE_PANDA),
@@ -131,15 +129,15 @@ def panda_type_to_serial(fn):
         panda_type = [panda_type]
 
     # If not done already, get panda serials and their type
-    global _all_panda_serials
-    if _all_panda_serials == None:
-      init_all_panda_serials()
+    global _all_pandas
+    if _all_pandas == None:
+      init_all_pandas()
 
     # Find a panda with the correct types and add the corresponding serial
     serials = []
     for p_type in panda_type:
       found = False
-      for serial, pt in _all_panda_serials:
+      for serial, pt in _all_pandas:
         # Never take the same panda twice
         if (pt == p_type) and (serial not in serials):
           serials.append(serial)
@@ -150,9 +148,9 @@ def panda_type_to_serial(fn):
     return fn(serials, **kwargs)
   return wrapper
 
-def panda_connect_and_init(fn=None, clear_can=True):
+def panda_connect_and_init(fn=None, full_reset=True):
   if not fn:
-    return partial(panda_connect_and_init, clear_can=clear_can)
+    return partial(panda_connect_and_init, full_reset=full_reset)
 
   @wraps(fn)
   def wrapper(panda_serials=None, **kwargs):
@@ -170,32 +168,36 @@ def panda_connect_and_init(fn=None, clear_can=True):
     for bus, speed in BUS_SPEEDS:
         panda_jungle.set_can_speed_kbps(bus, speed)
 
+    # wait for all pandas to come up
+    for _ in range(50):
+      if set(_all_panda_serials).issubset(set(Panda.list())):
+        break
+      time.sleep(0.1)
+
     # Connect to pandas
     pandas = []
-    for s, _ in _all_panda_serials:
-      if s == PEDAL_SERIAL:
-        continue
-
-      p = Panda(serial=s)
+    for s in _all_panda_serials:
       if s in panda_serials:
+        p = Panda(serial=s)
         p.reset(reconnect=True)
         pandas.append(p)
-      else:
+      elif full_reset and s != PEDAL_SERIAL:
+        p = Panda(serial=s)
         p.reset(reconnect=False)
         p.close()
 
     # Initialize pandas
-    for panda in pandas:
-      panda.set_can_loopback(False)
-      panda.set_gmlan(None)
-      panda.set_esp_power(False)
-      panda.set_power_save(False)
-      for bus, speed in BUS_SPEEDS:
-        panda.set_can_speed_kbps(bus, speed)
-      if clear_can:
+    if full_reset:
+      for panda in pandas:
+        panda.set_can_loopback(False)
+        panda.set_gmlan(None)
+        panda.set_esp_power(False)
+        panda.set_power_save(False)
+        for bus, speed in BUS_SPEEDS:
+          panda.set_can_speed_kbps(bus, speed)
         clear_can_buffers(panda)
-      panda.set_power_save(False)
-      panda.set_heartbeat_disabled()
+        panda.set_power_save(False)
+        panda.set_heartbeat_disabled()
 
     try:
       fn(*pandas, *kwargs)
