@@ -58,7 +58,7 @@ def checksum(msg):
 
 class HyundaiButtonBase: #(common.PandaSafetyTest):
   # pylint: disable=no-member,abstract-method
-  BUTTONS_BUS = 0  # tx on this bus, rx on 0
+  SCC_BUS = 0  # tx on this bus, rx on 0
 
   def test_buttons(self):
     """
@@ -67,16 +67,16 @@ class HyundaiButtonBase: #(common.PandaSafetyTest):
       - CANCEL allowed while cruise is enabled
     """
     self.safety.set_controls_allowed(0)
-    self.assertFalse(self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_BUS)))
-    self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_BUS)))
+    self.assertFalse(self._tx(self._button_msg(Buttons.RESUME, bus=self.SCC_BUS)))
+    self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.SCC_BUS)))
 
     self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_BUS)))
-    self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_BUS)))
+    self.assertTrue(self._tx(self._button_msg(Buttons.RESUME, bus=self.SCC_BUS)))
+    self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.SCC_BUS)))
 
     for enabled in (True, False):
       self._rx(self._pcm_status_msg(enabled))
-      self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL, bus=self.BUTTONS_BUS)))
+      self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL, bus=self.SCC_BUS)))
 
   def test_enable_control_allowed_from_cruise(self):
     """
@@ -166,7 +166,7 @@ class TestHyundaiSafety(HyundaiButtonBase, common.PandaSafetyTest, common.Driver
   def _pcm_status_msg(self, enable):
     values = {"ACCMode": enable, "CR_VSM_Alive": self.cnt_cruise % 16}
     self.__class__.cnt_cruise += 1
-    return self.packer.make_can_msg_panda("SCC12", 0, values, fix_checksum=checksum)
+    return self.packer.make_can_msg_panda("SCC12", self.SCC_BUS, values, fix_checksum=checksum)
 
   # TODO: this is unused
   def _torque_driver_msg(self, torque):
@@ -196,6 +196,7 @@ class TestHyundaiSafety(HyundaiButtonBase, common.PandaSafetyTest, common.Driver
 
 class TestHyundaiSafetyCameraSCC(TestHyundaiSafety):
   BUTTONS_BUS = 2  # tx on 2, rx on 0
+  SCC_BUS = 2  # tx on 2, rx on 0
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
@@ -270,7 +271,7 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
       "AEB_CmdAct": int(aeb_req),
       "CR_VSM_DecCmd": aeb_decel,
     }
-    return self.packer.make_can_msg_panda("SCC12", 0, values)
+    return self.packer.make_can_msg_panda("SCC12", self.SCC_BUS, values)
 
   def _send_fca11_msg(self, idx=0, vsm_aeb_req=False, fca_aeb_req=False, aeb_decel=0):
     values = {
