@@ -1,28 +1,17 @@
 import sys
 import time
-from panda import Panda
 from nose.tools import assert_equal, assert_less, assert_greater
-from .helpers import start_heartbeat_thread, reset_pandas, SPEED_NORMAL, SPEED_GMLAN, time_many_sends, test_white_and_grey, panda_type_to_serial, test_all_pandas, panda_connect_and_init
 
-# Reset the pandas before running tests
-def aaaa_reset_before_tests():
-  reset_pandas()
+from panda import Panda
+from .helpers import SPEED_NORMAL, SPEED_GMLAN, time_many_sends, test_white_and_grey, panda_type_to_serial, test_all_pandas, panda_connect_and_init
 
 @test_all_pandas
 @panda_connect_and_init
 def test_can_loopback(p):
-  # Start heartbeat
-  start_heartbeat_thread(p)
-
-  # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-
-  # enable CAN loopback mode
   p.set_can_loopback(True)
 
-  busses = [0, 1, 2]
-
-  for bus in busses:
+  for bus in (0, 1, 2):
     # set bus 0 speed to 5000
     p.set_can_speed_kbps(bus, 500)
 
@@ -44,13 +33,7 @@ def test_can_loopback(p):
 @test_all_pandas
 @panda_connect_and_init
 def test_safety_nooutput(p):
-  # Start heartbeat
-  start_heartbeat_thread(p)
-
-  # enable output mode
   p.set_safety_mode(Panda.SAFETY_SILENT)
-
-  # enable CAN loopback mode
   p.set_can_loopback(True)
 
   # send a message on bus 0
@@ -69,10 +52,6 @@ def test_reliability(p):
   LOOP_COUNT = 100
   MSG_COUNT = 100
 
-  # Start heartbeat
-  start_heartbeat_thread(p)
-
-  # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   p.set_can_loopback(True)
   p.set_can_speed_kbps(0, 1000)
@@ -82,12 +61,12 @@ def test_reliability(p):
 
   # 100 loops
   for i in range(LOOP_COUNT):
-    st = time.time()
+    st = time.monotonic()
 
     p.can_send_many(ts)
 
     r = []
-    while len(r) < 200 and (time.time() - st) < 0.5:
+    while len(r) < 200 and (time.monotonic() - st) < 0.5:
       r.extend(p.can_recv())
 
     sent_echo = [x for x in r if x[3] == 0x80]
@@ -98,7 +77,7 @@ def test_reliability(p):
     assert_equal(len(r), 200)
 
     # take sub 20ms
-    et = (time.time() - st) * 1000.0
+    et = (time.monotonic() - st) * 1000.0
     assert_less(et, 20)
 
     sys.stdout.write("P")
@@ -107,9 +86,6 @@ def test_reliability(p):
 @test_all_pandas
 @panda_connect_and_init
 def test_throughput(p):
-  # Start heartbeat
-  start_heartbeat_thread(p)
-
   # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
@@ -134,13 +110,7 @@ def test_throughput(p):
 @panda_type_to_serial
 @panda_connect_and_init
 def test_gmlan(p):
-  # Start heartbeat
-  start_heartbeat_thread(p)
-
-  # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-
-  # enable CAN loopback mode
   p.set_can_loopback(True)
 
   p.set_can_speed_kbps(1, SPEED_NORMAL)
@@ -165,13 +135,7 @@ def test_gmlan(p):
 @panda_type_to_serial
 @panda_connect_and_init
 def test_gmlan_bad_toggle(p):
-  # Start heartbeat
-  start_heartbeat_thread(p)
-
-  # enable output mode
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-
-  # enable CAN loopback mode
   p.set_can_loopback(True)
 
   # GMLAN_CAN2

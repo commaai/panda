@@ -83,7 +83,7 @@ if __name__ == "__main__":
   logs = r.log_paths()[s.segment_num:s.segment_num+1] if s.segment_num >= 0 else r.log_paths()
   lr = MultiLogIterator(logs)
 
-  if None in (args.mode, args.param):
+  if None in (args.mode, args.param, args.alternative_experience):
     for msg in lr:
       if msg.which() == 'carParams':
         if args.mode is None:
