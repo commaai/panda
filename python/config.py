@@ -8,10 +8,29 @@ BLOCK_SIZE_FX = 0x800
 APP_ADDRESS_FX = 0x8004000
 DEVICE_SERIAL_NUMBER_ADDR_FX = 0x1FFF79C0
 DEFAULT_FW_FN = os.path.join(BASEDIR, "board", "obj", "panda.bin.signed")
+DEFAULT_SSPOOF_FW_FN = os.path.join(BASEDIR, "board", "obj", "panda.bin.sspoof.signed")
 TESTING_FW_FN = os.path.join(BASEDIR, "board", "obj", "panda.bin.testing.signed")
-with open('/data/params/d/dp_atl') as f:
-  if (int(f.read().strip())) != 0 and os.path.exists(TESTING_FW_FN):
-    DEFAULT_FW_FN = TESTING_FW_FN
+TESTING_SSPOOF_FW_FN = os.path.join(BASEDIR, "board", "obj", "panda.bin.testing.sspoof.signed")
+
+atl_enabled = False
+if os.path.exists('/data/params/d/dp_atl'):
+  with open('/data/params/d/dp_atl') as f:
+    if (int(f.read().strip())) != 0:
+      atl_enabled = True
+
+sspoof_enabled = False
+if os.path.exists('/data/params/d/dp_sspoof'):
+  with open('/data/params/d/dp_sspoof') as f:
+    if (int(f.read().strip())) != 0:
+      sspoof_enabled = True
+
+if atl_enabled and sspoof_enabled and os.path.exists(TESTING_SSPOOF_FW_FN):
+  DEFAULT_FW_FN = TESTING_SSPOOF_FW_FN
+elif atl_enabled and not sspoof_enabled and os.path.exists(TESTING_FW_FN):
+  DEFAULT_FW_FN = TESTING_FW_FN
+elif not atl_enabled and sspoof_enabled and os.path.exists(DEFAULT_SSPOOF_FW_FN):
+  DEFAULT_FW_FN = DEFAULT_SSPOOF_FW_FN
+
 DEFAULT_BOOTSTUB_FN = os.path.join(BASEDIR, "board", "obj", "bootstub.panda.bin")
 
 BLOCK_SIZE_H7 = 0x400
