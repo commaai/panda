@@ -204,11 +204,15 @@ def panda_connect_and_init(fn=None, full_reset=True):
 
       # Check if the pandas did not throw any faults while running test
       for panda in pandas:
-        panda.reconnect()
-        assert panda.health()['fault_status'] == 0
+        if not panda.bootstub:
+          panda.reconnect()
+          assert panda.health()['fault_status'] == 0
     finally:
       for p in pandas:
-        p.close()
+        try:
+          p.close()
+        except Exception:
+          pass
   return wrapper
 
 def clear_can_buffers(panda):

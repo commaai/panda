@@ -206,8 +206,10 @@ class Panda:
   def __init__(self, serial: Optional[str] = None, claim: bool = True):
     self._serial = serial
     self._handle = None
+    self._bcd_device = None
+
+    # connect and set mcu type
     self.connect(claim)
-    self._mcu_type = self.get_mcu_type()
 
   def close(self):
     self._handle.close()
@@ -238,6 +240,12 @@ class Panda:
               if claim:
                 self._handle.claimInterface(0)
                 # self._handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
+
+              # bcdDevice wasn't always set to the hw type, ignore if it's the old constant
+              bcd = device.getbcdDevice()
+              if bcd is not None and bcd != 0x2300:
+                self._bcd_device = bytearray([bcd >> 8, ])
+
               break
       except Exception as e:
         print("exception", e)
@@ -245,7 +253,9 @@ class Panda:
       if not wait or self._handle is not None:
         break
       context = usb1.USBContext()  # New context needed so new devices show up
-    assert(self._handle is not None)
+
+    assert self._handle is not None
+    self._mcu_type = self.get_mcu_type()
     self.health_version, self.can_version = self.get_packets_versions()
     print("connected")
 
@@ -264,8 +274,10 @@ class Panda:
       self.reconnect()
 
   def reconnect(self):
-    self.close()
-    time.sleep(1.0)
+    if self._handle is not None:
+      self.close()
+      time.sleep(1.0)
+
     success = False
     # wait up to 15 seconds
     for i in range(0, 15):
@@ -436,7 +448,14 @@ class Panda:
     return bytes(part_1 + part_2)
 
   def get_type(self):
-    return self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
+    ret = self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
+
+    # bootstub doesn't implement this call, so fallback to bcdDevice
+    invalid_type = self.bootstub and (ret is None or len(ret) != 1)
+    if invalid_type and self._bcd_device is not None:
+      ret = self._bcd_device
+
+    return ret
 
   # Returns tuple with health packet version and CAN packet/USB packet version
   def get_packets_versions(self):
