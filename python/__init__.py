@@ -200,6 +200,8 @@ class Panda:
 
   FLAG_CHRYSLER_RAM_DT = 1
 
+  FLAG_SUBARU_GEN2 = 1
+
   def __init__(self, serial: Optional[str] = None, claim: bool = True):
     self._serial = serial
     self._handle = None
@@ -246,7 +248,7 @@ class Panda:
     self.health_version, self.can_version = self.get_packets_versions()
     print("connected")
 
-  def reset(self, enter_bootstub=False, enter_bootloader=False):
+  def reset(self, enter_bootstub=False, enter_bootloader=False, reconnect=True):
     try:
       if enter_bootloader:
         self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 0, 0, b'')
@@ -257,7 +259,7 @@ class Panda:
           self._handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'')
     except Exception:
       pass
-    if not enter_bootloader:
+    if not enter_bootloader and reconnect:
       self.reconnect()
 
   def reconnect(self):
