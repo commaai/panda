@@ -287,19 +287,24 @@ class Panda:
 
 
   @staticmethod
-  def flash_static(handle, code, mcu_type=MCU_TYPE_F4):
+  def flash_static(handle, code, mcu_type):
+    assert mcu_type is not None, "must set valid mcu_type to flash"
+
     # confirm flasher is present
     fr = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
     assert fr[4:8] == b"\xde\xad\xd0\x0d"
+
+    # determine sectors to erase
+    apps_sectors_cumsum = accumulate(SECTOR_SIZES_H7[1:] if mcu_type == MCU_TYPE_H7 else SECTOR_SIZES_FX[1:])
+    last_sector = next((i + 1 for i, v in enumerate(apps_sectors_cumsum) if v > len(code)), -1)
+    assert last_sector >= 1, "Binary too small? No sector to erase."
+    assert last_sector < 7, "Binary too large! Risk of overwriting provisioning chunk."
 
     # unlock flash
     print("flash: unlocking")
     handle.controlWrite(Panda.REQUEST_IN, 0xb1, 0, 0, b'')
 
     # erase sectors
-    apps_sectors_cumsum = accumulate(SECTOR_SIZES_H7[1:] if mcu_type == MCU_TYPE_H7 else SECTOR_SIZES_FX[1:])
-    last_sector = next((i + 1 for i, v in enumerate(apps_sectors_cumsum) if v > len(code)), -1)
-    assert 1 < last_sector < 7, "Binary too large! Risk of overwriting provisioning chunk."
     print(f"flash: erasing sectors 1 - {last_sector}")
     for i in range(1, last_sector + 1):
       handle.controlWrite(Panda.REQUEST_IN, 0xb2, i, 0, b'')
