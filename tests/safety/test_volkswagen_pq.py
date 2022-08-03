@@ -173,12 +173,12 @@ class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety):
       self.assertFalse(self.safety.get_controls_allowed(), f"controls allowed on {button} with main switch off")
       self._rx(self._motor_5_msg(main_switch=True))
       self._rx(self._button_msg(_set=(button == "set"), resume=(button == "resume"), bus=0))
-      self.assertFalse(self.safety.get_controls_allowed(), f"controls allowed on {button} leading edge")
+      self.assertFalse(self.safety.get_controls_allowed(), f"controls allowed on {button} rising edge")
       self._rx(self._button_msg(bus=0))
-      self.assertTrue(self.safety.get_controls_allowed(), f"controls not allowed on {button} trailing edge")
+      self.assertTrue(self.safety.get_controls_allowed(), f"controls not allowed on {button} falling edge")
 
   def test_cancel_button(self):
-    # Disable on leading edge of cancel button
+    # Disable on rising edge of cancel button
     self._rx(self._motor_5_msg(main_switch=True))
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(cancel=True, bus=0))
