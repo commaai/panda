@@ -6,8 +6,8 @@ env:
   PERSIST: docker run --name panda panda /bin/sh -c
   BUILD: |
       docker pull $(grep -ioP '(?<=^from)\s+\S+' Dockerfile.panda) || true
-      docker pull docker.io/commaai/panda:latest || true
-      docker build --cache-from docker.io/commaai/panda:latest -t panda -f Dockerfile.panda .
+      docker pull ghcr.io/commaai/panda:latest || true
+      docker build --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile.panda .
 
 jobs:
   docker_push:
@@ -20,11 +20,11 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Login to dockerhub
-        run: docker login -u wmelching -p ${{ secrets.COMMA_DOCKERHUB_TOKEN }}
+        run: docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
       - name: Tag image
-        run: docker tag panda docker.io/commaai/panda:latest
+        run: docker tag panda ghcr.io/commaai/panda:latest
       - name: Push image
-        run: docker push docker.io/commaai/panda:latest
+        run: docker push ghcr.io/commaai/panda:latest
 
   build:
     name: build

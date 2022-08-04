@@ -7,8 +7,6 @@ from panda.tests.safety.common import CANPackerPanda
 
 
 class TestSubaruLegacySafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
-  cnt_gas = 0
-
   TX_MSGS = [[0x161, 0], [0x164, 0]]
   STANDSTILL_THRESHOLD = 20  # 1kph (see dbc file)
   RELAY_MALFUNCTION_ADDR = 0x164
@@ -55,8 +53,7 @@ class TestSubaruLegacySafety(common.PandaSafetyTest, common.DriverTorqueSteering
     return self.packer.make_can_msg_panda("ES_LKAS", 0, values)
 
   def _user_gas_msg(self, gas):
-    values = {"Throttle_Pedal": gas, "Counter": self.cnt_gas % 4}
-    self.__class__.cnt_gas += 1
+    values = {"Throttle_Pedal": gas}
     return self.packer.make_can_msg_panda("Throttle", 0, values)
 
   def _pcm_status_msg(self, enable):
