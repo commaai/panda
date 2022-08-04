@@ -1,4 +1,4 @@
-const int HYUNDAI_HDA2_MAX_STEER = 384;
+const int HYUNDAI_HDA2_MAX_STEER = 270;
 const int HYUNDAI_HDA2_MAX_RT_DELTA = 112;          // max delta torque allowed for real time checks
 const uint32_t HYUNDAI_HDA2_RT_INTERVAL = 250000;   // 250ms between real time checks
 const int HYUNDAI_HDA2_MAX_RATE_UP = 3;
@@ -9,36 +9,28 @@ const uint32_t HYUNDAI_HDA2_STANDSTILL_THRSLD = 30;  // ~1kph
 
 const CanMsg HYUNDAI_HDA2_TX_MSGS[] = {
   //{0x50, 0, 16},
-  //{0x1CF, 1, 8},
+  {0x1CF, 1, 8},
   //{0x2A4, 0, 24},
-  {0x1CF, 0, 8},
   {0x12A, 0, 16},
   {0x1E0, 0, 16},
 };
 
 AddrCheckStruct hyundai_hda2_addr_checks[] = {
-  {.msg = {{0x35, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x65, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0xa0, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0xea, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x175, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x1cf, 1, 8, .check_checksum = false, .max_counter = 0xfU, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{0x40, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x100, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0xa0, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0xea, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x175, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x1cf, 0, 8, .check_checksum = false, .max_counter = 0xfU, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define HYUNDAI_HDA2_ADDR_CHECK_LEN (sizeof(hyundai_hda2_addr_checks) / sizeof(hyundai_hda2_addr_checks[0]))
 
 addr_checks hyundai_hda2_rx_checks = {hyundai_hda2_addr_checks, HYUNDAI_HDA2_ADDR_CHECK_LEN};
 
-
 uint16_t hyundai_hda2_crc_lut[256];
 
 static uint8_t hyundai_hda2_get_counter(CANPacket_t *to_push) {
-  uint8_t ret = 0;
-  if (GET_LEN(to_push) == 8U) {
-    ret = GET_BYTE(to_push, 1) >> 4;
-  } else {
-    ret = GET_BYTE(to_push, 2);
-  }
-  return ret;
+  return GET_BYTE(to_push, 2);
 }
 
 static uint32_t hyundai_hda2_get_checksum(CANPacket_t *to_push) {
@@ -85,29 +77,16 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
 
   if (valid && (bus == 0)) {
 
-    // driver torque
     if (addr == 0xea) {
       int torque_driver_new = ((GET_BYTE(to_push, 11) & 0x1fU) << 8U) | GET_BYTE(to_push, 10);
       torque_driver_new -= 4095;
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    // cruise buttons
-    if (addr == 0x1cf) {
-      int cruise_button = GET_BYTE(to_push, 2) & 0x7U;
-      int main_button = GET_BIT(to_push, 19U);
-
-      if ((cruise_button == HYUNDAI_BTN_RESUME) || (cruise_button == HYUNDAI_BTN_SET) || (cruise_button == HYUNDAI_BTN_CANCEL) || (main_button != 0)) {
-        hyundai_last_button_interaction = 0U;
-      } else {
-        hyundai_last_button_interaction = MIN(hyundai_last_button_interaction + 1U, HYUNDAI_PREV_BUTTON_SAMPLES);
-      }
-    }
-
-    // cruise state
     if (addr == 0x175) {
       bool cruise_engaged = GET_BIT(to_push, 68U);
-      if (cruise_engaged && !cruise_engaged_prev && (hyundai_last_button_interaction < HYUNDAI_PREV_BUTTON_SAMPLES)) {
+
+      if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
       }
 
@@ -117,17 +96,15 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
       cruise_engaged_prev = cruise_engaged;
     }
 
-    // gas press
-    if (addr == 0x35) {
-      gas_pressed = GET_BYTE(to_push, 5) != 0U;
+    //if (addr == 0x40) {
+    //  gas_pressed = GET_BYTE(to_push, 5) != 0U;
+    //}
+
+    if (addr == 0x100) {
+      brake_pressed = GET_BIT(to_push, 32U) != 0U;
+      gas_pressed = GET_BIT(to_push, 176U) != 0U;
     }
 
-    // brake press
-    if (addr == 0x65) {
-      brake_pressed = GET_BIT(to_push, 57U) != 0U;
-    }
-
-    // vehicle moving
     if (addr == 0xa0) {
       uint32_t speed = 0;
       for (int i = 8; i < 15; i+=2) {
@@ -138,7 +115,7 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
   }
 
   generic_rx_checks((addr == 0x12A) && (bus == 0));
-  return true;
+  //return true;
   return valid;
 
   //generic_rx_checks((addr == 0x50) && (bus == 0));
@@ -233,7 +210,6 @@ static int hyundai_hda2_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 static const addr_checks* hyundai_hda2_init(uint16_t param) {
   UNUSED(param);
   gen_crc_lookup_table_16(0x1021, hyundai_hda2_crc_lut);
-  hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
   return &hyundai_hda2_rx_checks;
 }
 
