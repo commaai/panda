@@ -62,7 +62,7 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
 
   if (add_magic) {
     // Start of a transaction
-    *((uint32_t *) &data[0]) = CAN_TRANSACTION_MAGIC;
+    *((uint32_t *)(void *) &data[0]) = CAN_TRANSACTION_MAGIC;
     pos += sizeof(uint32_t);
     add_magic = false;
     can_read_buffer.ptr = 0U;
@@ -94,7 +94,7 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
   }
 
   total_rx_size += pos;
-  if (total_rx_size >= MAX_EP1_CHUNK_PER_BULK_TRANSFER || pos != max_len) {
+  if ((total_rx_size >= MAX_EP1_CHUNK_PER_BULK_TRANSFER) || (pos != max_len)) {
     // The end of a transaction, prepare for the next one
     total_rx_size = 0U;
     add_magic = true;
@@ -109,7 +109,7 @@ asm_buffer can_write_buffer = {.ptr = 0U, .tail_size = 0U};
 void comms_can_write(uint8_t *data, uint32_t len) {
   uint32_t pos = 0U;
   
-  if (*((uint32_t *) &data[0]) == CAN_TRANSACTION_MAGIC) {
+  if (*((uint32_t *)(void *) &data[0]) == CAN_TRANSACTION_MAGIC) {
     // Got first packet from a stream, resetting buffer and counter
     can_write_buffer.ptr = 0U;
     can_write_buffer.tail_size = 0U;
@@ -118,7 +118,7 @@ void comms_can_write(uint8_t *data, uint32_t len) {
 
   // Assembling can message with data from buffer
   if (can_write_buffer.ptr != 0U) {
-    if (can_write_buffer.tail_size < len - pos) {
+    if (can_write_buffer.tail_size < (len - pos)) {
       // we have enough data to complete the buffer
       CANPacket_t to_push;
       (void)memcpy(&can_write_buffer.data[can_write_buffer.ptr], &data[pos], can_write_buffer.tail_size);
