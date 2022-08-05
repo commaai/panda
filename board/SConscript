@@ -63,6 +63,7 @@ if not os.path.exists("/EON"):
       "-Os",
       "-g",
       "-DPANDA",
+      "-DSSPOOF" if os.getenv("SSPOOF") else "",
     ],
   }
 
