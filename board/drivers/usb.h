@@ -352,7 +352,7 @@ uint8_t winusb_20_desc[WINUSB_PLATFORM_DESCRIPTOR_LENGTH] = {
 
 // current packet
 USB_Setup_TypeDef setup;
-uint8_t usbdata[0x100];
+uint8_t usbdata[0x100] __attribute__((aligned(4)));
 uint8_t* ep0_txdata = NULL;
 uint16_t ep0_txlen = 0;
 bool outep3_processing = false;
