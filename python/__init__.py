@@ -59,7 +59,6 @@ def unpack_can_buffer(dat):
 
   while len(dat) >= CANPACKET_HEAD_SIZE:
     data_len = DLC_TO_LEN[(dat[0]>>4)]
-    pckt_len = CANPACKET_HEAD_SIZE + data_len
 
     header = dat[:CANPACKET_HEAD_SIZE]
     dat = dat[CANPACKET_HEAD_SIZE:]
