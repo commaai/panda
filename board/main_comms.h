@@ -118,7 +118,7 @@ void comms_can_write(uint8_t *data, uint32_t len) {
 
   // Assembling can message with data from buffer
   if (can_write_buffer.ptr != 0U) {
-    if (can_write_buffer.tail_size < (len - pos)) {
+    if (can_write_buffer.tail_size <= (len - pos)) {
       // we have enough data to complete the buffer
       CANPacket_t to_push;
       (void)memcpy(&can_write_buffer.data[can_write_buffer.ptr], &data[pos], can_write_buffer.tail_size);
