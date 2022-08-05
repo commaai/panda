@@ -1,6 +1,8 @@
 #include "dlc_to_len.h"
 
-#define CAN_PACKET_VERSION 2
+#define CAN_PACKET_VERSION 3
+#define CAN_TRANSACTION_MAGIC 0x43414E2FU
+
 typedef struct {
   unsigned char reserved : 1;
   unsigned char bus : 3;

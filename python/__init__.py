@@ -23,13 +23,13 @@ BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
 DEBUG = os.getenv("PANDADEBUG") is not None
 
+CAN_TRANSACTION_MAGIC = struct.pack("<I", 0x43414E2F)
 CANPACKET_HEAD_SIZE = 0x5
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
 
 def pack_can_buffer(arr):
-  snds = [b'']
-  idx = 0
+  snds = [CAN_TRANSACTION_MAGIC]
   for address, _, dat, bus in arr:
     assert len(dat) in LEN_TO_DLC
     if DEBUG:
@@ -43,57 +43,48 @@ def pack_can_buffer(arr):
     header[2] = (word_4b >> 8) & 0xFF
     header[3] = (word_4b >> 16) & 0xFF
     header[4] = (word_4b >> 24) & 0xFF
-    snds[idx] += header + dat
-    if len(snds[idx]) > 256: # Limit chunks to 256 bytes
-      snds.append(b'')
-      idx += 1
 
-  #Apply counter to each 64 byte packet
-  for idx in range(len(snds)):
-    tx = b''
-    counter = 0
-    for i in range (0, len(snds[idx]), 63):
-      tx += bytes([counter]) + snds[idx][i:i+63]
-      counter += 1
-    snds[idx] = tx
+    snds[-1] += header + dat
+    if len(snds[-1]) > 256: # Limit chunks to 256 bytes
+      snds.append(CAN_TRANSACTION_MAGIC)
+
   return snds
 
 def unpack_can_buffer(dat):
   ret = []
-  counter = 0
-  tail = bytearray()
-  for i in range(0, len(dat), 64):
-    if counter != dat[i]:
-      print("CAN: LOST RECV PACKET COUNTER")
-      break
-    counter+=1
-    chunk = tail + dat[i+1:i+64]
-    tail = bytearray()
-    pos = 0
-    while pos<len(chunk):
-      data_len = DLC_TO_LEN[(chunk[pos]>>4)]
-      pckt_len = CANPACKET_HEAD_SIZE + data_len
-      if pckt_len <= len(chunk[pos:]):
-        header = chunk[pos:pos+CANPACKET_HEAD_SIZE]
-        if len(header) < 5:
-          print("CAN: MALFORMED USB RECV PACKET")
-          break
-        bus = (header[0] >> 1) & 0x7
-        address = (header[4] << 24 | header[3] << 16 | header[2] << 8 | header[1]) >> 3
-        returned = (header[1] >> 1) & 0x1
-        rejected = header[1] & 0x1
-        data = chunk[pos + CANPACKET_HEAD_SIZE:pos + CANPACKET_HEAD_SIZE + data_len]
-        if returned:
-          bus += 128
-        if rejected:
-          bus += 192
-        if DEBUG:
-          print(f"  R 0x{address:x}: 0x{data.hex()}")
-        ret.append((address, 0, data, bus))
-        pos += pckt_len
-      else:
-        tail = chunk[pos:]
-        break
+  if dat[:len(CAN_TRANSACTION_MAGIC)] != CAN_TRANSACTION_MAGIC:
+    print("CAN: RECV EXPECTED MAGIC")
+    return ret
+  dat = dat[len(CAN_TRANSACTION_MAGIC):]
+
+  while len(dat) >= CANPACKET_HEAD_SIZE:
+    data_len = DLC_TO_LEN[(dat[0]>>4)]
+    pckt_len = CANPACKET_HEAD_SIZE + data_len
+
+    header = dat[:CANPACKET_HEAD_SIZE]
+    dat = dat[CANPACKET_HEAD_SIZE:]
+
+    bus = (header[0] >> 1) & 0x7
+    address = (header[4] << 24 | header[3] << 16 | header[2] << 8 | header[1]) >> 3
+
+    if (header[1] >> 1) & 0x1:
+      # returned
+      bus += 128
+    if header[1] & 0x1:
+      # rejected
+      bus += 192
+
+    data = dat[:data_len]
+    dat = dat[data_len:]
+
+    if DEBUG:
+      print(f"  R 0x{address:x}: 0x{data.hex()}")
+
+    ret.append((address, 0, data, bus))
+
+  if len(dat) > 0:
+    print("CAN: MALFORMED USB RECV PACKET")
+
   return ret
 
 def ensure_health_packet_version(fn):
@@ -172,7 +163,7 @@ class Panda:
   HW_TYPE_DOS = b'\x06'
   HW_TYPE_RED_PANDA = b'\x07'
 
-  CAN_PACKET_VERSION = 2
+  CAN_PACKET_VERSION = 3
   HEALTH_PACKET_VERSION = 7
   HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHIf")
 
@@ -618,7 +609,7 @@ class Panda:
     dat = bytearray()
     while True:
       try:
-        dat = self._handle.bulkRead(1, 16384) # Max receive batch size + 2 extra reserve frames
+        dat = self._handle.bulkRead(1, 16256)
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD RECV, RETRYING")
