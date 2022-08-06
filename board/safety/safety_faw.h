@@ -91,7 +91,7 @@ static int faw_rx_hook(CANPacket_t *to_push) {
     // Signal: EPS_2.EPS_TORQUE_DIRECTION (direction) (FIXME: may not be the correct direction signal)
     if (addr == MSG_EPS_2) {
       int torque_driver_new = GET_BYTE(to_push, 4);
-      int sign = (GET_BYTE(to_push, 2) & 0x4U) >> 2;
+      int sign = GET_BIT(to_push, 18);
       if (sign == 1) {
         torque_driver_new *= -1;
       }

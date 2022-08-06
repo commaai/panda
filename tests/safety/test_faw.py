@@ -5,15 +5,6 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, MAX_WRONG_COUNTERS
 
-MAX_RATE_UP = 3
-MAX_RATE_DOWN = 3
-MAX_STEER = 300
-MAX_RT_DELTA = 56
-RT_INTERVAL = 250000
-
-DRIVER_TORQUE_ALLOWANCE = 25
-DRIVER_TORQUE_FACTOR = 3
-
 MSG_ECM_1 = 0x92              # RX from ECM, for gas pedal
 MSG_ABS_1 = 0xC0              # RX from ABS, for wheel speeds
 MSG_ABS_2 = 0xC2              # RX from ABS, for wheel speeds and braking
@@ -33,6 +24,15 @@ class TestFawSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTes
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_LKAS
   RELAY_MALFUNCTION_BUS = 0
+
+  MAX_RATE_UP = 3
+  MAX_RATE_DOWN = 3
+  MAX_TORQUE = 300
+  MAX_RT_DELTA = 56
+  RT_INTERVAL = 250000
+
+  DRIVER_TORQUE_ALLOWANCE = 25
+  DRIVER_TORQUE_FACTOR = 3
 
   @classmethod
   def setUpClass(cls):
@@ -66,7 +66,7 @@ class TestFawSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTes
     return self.packer.make_can_msg_panda("ACC", 2, values)
 
   # Driver steering input torque
-  def _eps_2_msg(self, torque):
+  def _torque_driver_msg(self, torque):
     values = {"DRIVER_INPUT_TORQUE": abs(torque), "EPS_TORQUE_DIRECTION": torque < 0,
               "COUNTER": self.cnt_eps_2 % 16}
     self.__class__.cnt_eps_2 += 1
@@ -88,21 +88,21 @@ class TestFawSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTes
   #  return self.packer.make_can_msg_panda("GRA_ACC_01", 0, values)
 
   def test_torque_measurements(self):
-    self._rx(self._eps_2_msg(50))
-    self._rx(self._eps_2_msg(-50))
-    self._rx(self._eps_2_msg(0))
-    self._rx(self._eps_2_msg(0))
-    self._rx(self._eps_2_msg(0))
-    self._rx(self._eps_2_msg(0))
+    self._rx(self._torque_driver_msg(50))
+    self._rx(self._torque_driver_msg(-50))
+    self._rx(self._torque_driver_msg(0))
+    self._rx(self._torque_driver_msg(0))
+    self._rx(self._torque_driver_msg(0))
+    self._rx(self._torque_driver_msg(0))
 
     self.assertEqual(-50, self.safety.get_torque_driver_min())
     self.assertEqual(50, self.safety.get_torque_driver_max())
 
-    self._rx(self._eps_2_msg(0))
+    self._rx(self._torque_driver_msg(0))
     self.assertEqual(0, self.safety.get_torque_driver_max())
     self.assertEqual(-50, self.safety.get_torque_driver_min())
 
-    self._rx(self._eps_2_msg(0))
+    self._rx(self._torque_driver_msg(0))
     self.assertEqual(0, self.safety.get_torque_driver_max())
     self.assertEqual(0, self.safety.get_torque_driver_min())
 
@@ -111,7 +111,7 @@ class TestFawSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTes
     for msg in [MSG_EPS_2, MSG_ABS_2, MSG_ACC, MSG_ECM_1, MSG_ABS_1]:
       self.safety.set_controls_allowed(1)
       if msg == MSG_EPS_2:
-        to_push = self._eps_2_msg(0)
+        to_push = self._torque_driver_msg(0)
       if msg == MSG_ABS_2:
         to_push = self._user_brake_msg(False)
       if msg == MSG_ACC:
@@ -135,13 +135,13 @@ class TestFawSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTes
       self.__class__.cnt_abs_1 += 1
       if i < MAX_WRONG_COUNTERS:
         self.safety.set_controls_allowed(1)
-        self._rx(self._eps_2_msg(0))
+        self._rx(self._torque_driver_msg(0))
         self._rx(self._user_brake_msg(False))
         self._rx(self._pcm_status_msg(True))
         self._rx(self._user_gas_msg(0))
         self._rx(self._speed_msg(0))
       else:
-        self.assertFalse(self._rx(self._eps_2_msg(0)))
+        self.assertFalse(self._rx(self._torque_driver_msg(0)))
         self.assertFalse(self._rx(self._user_brake_msg(False)))
         self.assertFalse(self._rx(self._pcm_status_msg(True)))
         self.assertFalse(self._rx(self._user_gas_msg(0)))
@@ -151,7 +151,7 @@ class TestFawSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTes
     # restore counters for future tests with a couple of good messages
     for i in range(2):
       self.safety.set_controls_allowed(1)
-      self._rx(self._eps_2_msg(0))
+      self._rx(self._torque_driver_msg(0))
       self._rx(self._user_brake_msg(False))
       self._rx(self._pcm_status_msg(True))
       self._rx(self._user_gas_msg(0))
