@@ -67,7 +67,8 @@ RUN cd /tmp && \
     git fetch && \
     git checkout $OPENPILOT_REF && \
     git submodule update --init cereal opendbc rednose_repo && \
-    git -C opendbc fetch && \
+    git -C opendbc remote add jyoung8607 https://github.com/jyoung8607/opendbc.git
+    git -C opendbc fetch jyoung8607 && \
     git -C opendbc checkout $OPENDBC_REF && \
     git -C opendbc reset --hard HEAD && \
     git -C opendbc clean -xfd && \
