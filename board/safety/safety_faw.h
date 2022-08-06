@@ -27,7 +27,7 @@ AddrCheckStruct faw_addr_checks[] = {
 addr_checks faw_rx_checks = {faw_addr_checks, FAW_ADDR_CHECKS_LEN};
 
 
-static uint8_t faw_get_checksum(CANPacket_t *to_push) {
+static uint32_t faw_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
 }
 
@@ -35,7 +35,7 @@ static uint8_t faw_get_counter(CANPacket_t *to_push) {
   return ((uint8_t)GET_BYTE(to_push, 7) >> 4) & 0xFU;
 }
 
-static uint8_t faw_compute_checksum(CANPacket_t *to_push) {
+static uint32_t faw_compute_checksum(CANPacket_t *to_push) {
   int len = GET_LEN(to_push);
   int checksum = 0;
 
@@ -46,11 +46,9 @@ static uint8_t faw_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static const addr_checks* faw_init(int16_t param) {
+static const addr_checks* faw_init(uint16_t param) {
   UNUSED(param);
 
-  controls_allowed = false;
-  relay_malfunction_reset();
   return &faw_rx_checks;
 }
 
@@ -116,7 +114,9 @@ static int faw_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int faw_tx_hook(CANPacket_t *to_send) {
+static int faw_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+  UNUSED(longitudinal_allowed);
+
   int addr = GET_ADDR(to_send);
   int tx = 1;
 
