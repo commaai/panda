@@ -55,8 +55,8 @@ static const addr_checks* faw_init(uint16_t param) {
 static int faw_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &faw_rx_checks, faw_get_checksum, faw_compute_checksum, faw_get_counter);
-  int bus = GET_BUS(to_push);
-  int addr = GET_ADDR(to_push);
+  unsigned int bus = GET_BUS(to_push);
+  unsigned int addr = GET_ADDR(to_push);
 
   if (valid && (bus == 2U)) {
     // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
@@ -91,7 +91,7 @@ static int faw_rx_hook(CANPacket_t *to_push) {
     // Signal: EPS_2.EPS_TORQUE_DIRECTION (direction) (FIXME: may not be the correct direction signal)
     if (addr == MSG_EPS_2) {
       int torque_driver_new = GET_BYTE(to_push, 4);
-      int sign = GET_BIT(to_push, 18);
+      int sign = GET_BIT(to_push, 18U);
       if (sign == 1) {
         torque_driver_new *= -1;
       }
@@ -100,12 +100,12 @@ static int faw_rx_hook(CANPacket_t *to_push) {
 
     // Signal: ECM_1.DRIVER_THROTTLE
     if (addr == MSG_ECM_1) {
-      gas_pressed = (GET_BYTE(to_push, 5) != 0);
+      gas_pressed = (GET_BYTE(to_push, 5) != 0U);
     }
 
     // Signal: ABS_2.BRAKE_PRESSURE
     if (addr == MSG_ABS_2) {
-      brake_pressed = (GET_BYTE(to_push, 5) != 0);
+      brake_pressed = (GET_BYTE(to_push, 5) != 0U);
     }
 
     generic_rx_checks((addr == MSG_LKAS));
