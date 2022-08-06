@@ -10,12 +10,23 @@
 #include "safety/safety_hyundai.h"
 #include "safety/safety_chrysler.h"
 #include "safety/safety_subaru.h"
+#include "safety/safety_subaru_legacy.h"
 #include "safety/safety_mazda.h"
 #include "safety/safety_nissan.h"
 #include "safety/safety_volkswagen_mqb.h"
 #include "safety/safety_volkswagen_pq.h"
 #include "safety/safety_faw.h"
 #include "safety/safety_elm327.h"
+#include "safety/safety_body.h"
+
+#ifdef STM32H7
+#define CANFD
+#endif
+
+// CAN-FD only safety modes
+#ifdef CANFD
+#include "safety/safety_hyundai_hda2.h"
+#endif
 
 // from cereal.car.CarParams.SafetyModel
 #define SAFETY_SILENT 0U
@@ -42,18 +53,28 @@
 #define SAFETY_HYUNDAI_COMMUNITY 24U
 #define SAFETY_STELLANTIS 25U
 #define SAFETY_FAW 26U
+#define SAFETY_BODY 27U
+#define SAFETY_HYUNDAI_HDA2 28U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
-int16_t current_safety_param = 0;
+uint16_t current_safety_param = 0;
 const safety_hooks *current_hooks = &nooutput_hooks;
 const addr_checks *current_rx_checks = &default_rx_checks;
 
 int safety_rx_hook(CANPacket_t *to_push) {
-  return current_hooks->rx(to_push);
+  bool controls_allowed_prev = controls_allowed;
+  int ret = current_hooks->rx(to_push);
+
+  // reset mismatches on rising edge of controls_allowed to avoid rare race condition
+  if (controls_allowed && !controls_allowed_prev) {
+    heartbeat_engaged_mismatches = 0;
+  }
+
+  return ret;
 }
 
 int safety_tx_hook(CANPacket_t *to_send) {
-  return (relay_malfunction ? -1 : current_hooks->tx(to_send));
+  return (relay_malfunction ? -1 : current_hooks->tx(to_send, get_longitudinal_allowed()));
 }
 
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
@@ -64,16 +85,35 @@ int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return (relay_malfunction ? -1 : current_hooks->fwd(bus_num, to_fwd));
 }
 
+bool get_longitudinal_allowed(void) {
+  return controls_allowed && !gas_pressed_prev;
+}
+
 // Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8
 // algorithm. Called at init time for safety modes using CRC-8.
-void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]) {
+void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]) {
   for (int i = 0; i < 256; i++) {
     uint8_t crc = i;
     for (int j = 0; j < 8; j++) {
-      if ((crc & 0x80U) != 0U)
+      if ((crc & 0x80U) != 0U) {
         crc = (uint8_t)((crc << 1) ^ poly);
-      else
+      } else {
         crc <<= 1;
+      }
+    }
+    crc_lut[i] = crc;
+  }
+}
+
+void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]) {
+  for (uint16_t i = 0; i < 256U; i++) {
+    uint16_t crc = i << 8U;
+    for (uint16_t j = 0; j < 8U; j++) {
+      if ((crc & 0x8000U) != 0U) {
+        crc = (uint16_t)((crc << 1) ^ poly);
+      } else {
+        crc <<= 1;
+      }
     }
     crc_lut[i] = crc;
   }
@@ -92,12 +132,6 @@ bool msg_allowed(CANPacket_t *to_send, const CanMsg msg_list[], int len) {
     }
   }
   return allowed;
-}
-
-// compute the time elapsed (in microseconds) from 2 counter samples
-// case where ts < ts_last is ok: overflow is properly re-casted into uint32_t
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
-  return ts - ts_last;
 }
 
 int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], const int len) {
@@ -176,8 +210,8 @@ void update_addr_timestamp(AddrCheckStruct addr_list[], int index) {
 
 bool addr_safety_check(CANPacket_t *to_push,
                        const addr_checks *rx_checks,
-                       uint8_t (*get_checksum)(CANPacket_t *to_push),
-                       uint8_t (*compute_checksum)(CANPacket_t *to_push),
+                       uint32_t (*get_checksum)(CANPacket_t *to_push),
+                       uint32_t (*compute_checksum)(CANPacket_t *to_push),
                        uint8_t (*get_counter)(CANPacket_t *to_push)) {
 
   int index = get_addr_check_index(to_push, rx_checks->check, rx_checks->len);
@@ -186,8 +220,8 @@ bool addr_safety_check(CANPacket_t *to_push,
   if (index != -1) {
     // checksum check
     if ((get_checksum != NULL) && (compute_checksum != NULL) && rx_checks->check[index].msg[rx_checks->check[index].index].check_checksum) {
-      uint8_t checksum = get_checksum(to_push);
-      uint8_t checksum_comp = compute_checksum(to_push);
+      uint32_t checksum = get_checksum(to_push);
+      uint32_t checksum_comp = compute_checksum(to_push);
       rx_checks->check[index].valid_checksum = checksum_comp == checksum;
     } else {
       rx_checks->check[index].valid_checksum = true;
@@ -206,7 +240,7 @@ bool addr_safety_check(CANPacket_t *to_push,
 
 void generic_rx_checks(bool stock_ecu_detected) {
   // exit controls on rising edge of gas press
-  if (gas_pressed && !gas_pressed_prev && !(unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS)) {
+  if (gas_pressed && !gas_pressed_prev && !(alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS)) {
     controls_allowed = 0;
   }
   gas_pressed_prev = gas_pressed;
@@ -253,6 +287,10 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_NOOUTPUT, &nooutput_hooks},
   {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
+  {SAFETY_BODY, &body_hooks},
+#ifdef CANFD
+  {SAFETY_HYUNDAI_HDA2, &hyundai_hda2_hooks},
+#endif
 #ifdef ALLOW_DEBUG
   {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_SUBARU_LEGACY, &subaru_legacy_hooks},
@@ -263,7 +301,7 @@ const safety_hook_config safety_hook_registry[] = {
 #endif
 };
 
-int set_safety_hooks(uint16_t mode, int16_t param) {
+int set_safety_hooks(uint16_t mode, uint16_t param) {
   // reset state set by safety mode
   safety_mode_cnt = 0U;
   relay_malfunction = false;
@@ -290,6 +328,9 @@ int set_safety_hooks(uint16_t mode, int16_t param) {
   torque_driver.max = 0;
   angle_meas.min = 0;
   angle_meas.max = 0;
+
+  controls_allowed = false;
+  relay_malfunction_reset();
 
   int set_status = -1;  // not set
   int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);
@@ -321,7 +362,7 @@ int to_signed(int d, int bits) {
   return d_signed;
 }
 
-// given a new sample, update the smaple_t struct
+// given a new sample, update the sample_t struct
 void update_sample(struct sample_t *sample, int sample_new) {
   int sample_size = sizeof(sample->values) / sizeof(sample->values[0]);
   for (int i = sample_size - 1; i > 0; i--) {
@@ -348,7 +389,7 @@ bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
 
 // check that commanded value isn't too far from measured
 bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
-  const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR) {
+                        const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR) {
 
   // *** val rate limit check ***
   int highest_allowed_rl = MAX(val_last, 0) + MAX_RATE_UP;
@@ -364,12 +405,14 @@ bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
 
 // check that commanded value isn't fighting against driver
 bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
-  const int MAX_VAL, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
-  const int MAX_ALLOWANCE, const int DRIVER_FACTOR) {
+                        const int MAX_VAL, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
+                        const int MAX_ALLOWANCE, const int DRIVER_FACTOR) {
 
+  // torque delta/rate limits
   int highest_allowed_rl = MAX(val_last, 0) + MAX_RATE_UP;
   int lowest_allowed_rl = MIN(val_last, 0) - MAX_RATE_UP;
 
+  // driver
   int driver_max_limit = MAX_VAL + (MAX_ALLOWANCE + val_driver->max) * DRIVER_FACTOR;
   int driver_min_limit = -MAX_VAL + (-MAX_ALLOWANCE + val_driver->min) * DRIVER_FACTOR;
 

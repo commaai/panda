@@ -43,6 +43,8 @@ EOF
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
+The panda jungle uses different udev rules. See [the repo](https://github.com/commaai/panda_jungle#udev-rules) for instructions. 
+
 ### JavaScript
 
 See [PandaJS](https://github.com/commaai/pandajs)
@@ -83,7 +85,7 @@ Safety modes optionally supports `controls_allowed`, which allows or blocks a su
 ## Code Rigor
 
 The panda firmware is written for its use in conjuction with [openpilot](https://github.com/commaai/openpilot). The panda firmware, through its safety model, provides and enforces the
-[openpilot safety](https://github.com/commaai/openpilot/blob/devel/SAFETY.md). Due to its critical function, it's important that the application code rigor within the `board` folder is held to high standards.
+[openpilot safety](https://github.com/commaai/openpilot/blob/master/docs/SAFETY.md). Due to its critical function, it's important that the application code rigor within the `board` folder is held to high standards.
 
 These are the [CI regression tests](https://github.com/commaai/panda/actions) we have in place:
 * A generic static code analysis is performed by [cppcheck](https://github.com/danmar/cppcheck/).

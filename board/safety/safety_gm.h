@@ -28,7 +28,7 @@ AddrCheckStruct gm_addr_checks[] = {
   {.msg = {{388, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{842, 0, 5, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{481, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-  {.msg = {{201, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{241, 0, 6, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{452, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
 #define GM_RX_CHECK_LEN (sizeof(gm_addr_checks) / sizeof(gm_addr_checks[0]))
@@ -81,8 +81,11 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       cruise_button_prev = button;
     }
 
-    if (addr == 201) {
-      brake_pressed = GET_BIT(to_push, 40U) != 0U;
+    // speed > 0
+    if (addr == 241) {
+      // Brake pedal's potentiometer returns near-zero reading
+      // even when pedal is not pressed
+      brake_pressed = GET_BYTE(to_push, 1) >= 10U;
     }
 
     if (addr == 452) {
@@ -112,7 +115,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 // else
 //     block all commands that produce actuation
 
-static int gm_tx_hook(CANPacket_t *to_send) {
+static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -124,8 +127,8 @@ static int gm_tx_hook(CANPacket_t *to_send) {
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
   int pedal_pressed = brake_pressed_prev && vehicle_moving;
-  bool unsafe_allow_gas = unsafe_mode & UNSAFE_DISABLE_DISENGAGE_ON_GAS;
-  if (!unsafe_allow_gas) {
+  bool alt_exp_allow_gas = alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS;
+  if (!alt_exp_allow_gas) {
     pedal_pressed = pedal_pressed || gas_pressed_prev;
   }
   bool current_controls_allowed = controls_allowed && !pedal_pressed;
@@ -134,7 +137,7 @@ static int gm_tx_hook(CANPacket_t *to_send) {
   if (addr == 789) {
     int brake = ((GET_BYTE(to_send, 0) & 0xFU) << 8) + GET_BYTE(to_send, 1);
     brake = (0x1000 - brake) & 0xFFF;
-    if (!current_controls_allowed) {
+    if (!current_controls_allowed || !longitudinal_allowed) {
       if (brake != 0) {
         tx = 0;
       }
@@ -197,9 +200,16 @@ static int gm_tx_hook(CANPacket_t *to_send) {
     int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
     // Disabled message is !engaged with gas
     // value that corresponds to max regen.
-    if (!current_controls_allowed) {
-      bool apply = GET_BYTE(to_send, 0) & 1U;
-      if (apply || (gas_regen != GM_MAX_REGEN)) {
+    if (!current_controls_allowed || !longitudinal_allowed) {
+      // Stock ECU sends max regen when not enabled
+      if (gas_regen != GM_MAX_REGEN) {
+        tx = 0;
+      }
+    }
+    // Need to allow apply bit in pre-enabled and overriding states
+    if (!controls_allowed) {
+      bool apply = GET_BIT(to_send, 0U) != 0U;
+      if (apply) {
         tx = 0;
       }
     }
@@ -212,10 +222,8 @@ static int gm_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static const addr_checks* gm_init(int16_t param) {
+static const addr_checks* gm_init(uint16_t param) {
   UNUSED(param);
-  controls_allowed = false;
-  relay_malfunction_reset();
   return &gm_rx_checks;
 }
 

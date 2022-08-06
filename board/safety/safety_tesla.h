@@ -26,6 +26,8 @@ const CanMsg TESLA_PT_TX_MSGS[] = {
 };
 #define TESLA_PT_TX_LEN (sizeof(TESLA_PT_TX_MSGS) / sizeof(TESLA_PT_TX_MSGS[0]))
 
+const int TESLA_NO_ACCEL_VALUE = 375;  // value sent when not requesting acceleration
+
 AddrCheckStruct tesla_addr_checks[] = {
   {.msg = {{0x370, 0, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // EPAS_sysStatus (25Hz)
   {.msg = {{0x108, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque1 (100Hz)
@@ -48,6 +50,8 @@ addr_checks tesla_pt_rx_checks = {tesla_pt_addr_checks, TESLA_PT_ADDR_CHECK_LEN}
 
 bool tesla_longitudinal = false;
 bool tesla_powertrain = false;  // Are we the second panda intercepting the powertrain bus?
+
+bool tesla_stock_aeb = false;
 
 static int tesla_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, tesla_powertrain ? (&tesla_pt_rx_checks) : (&tesla_rx_checks),
@@ -115,7 +119,8 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
 }
 
 
-static int tesla_tx_hook(CANPacket_t *to_send) {
+static int tesla_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+
   int tx = 1;
   int addr = GET_ADDR(to_send);
   bool violation = false;
@@ -179,6 +184,11 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
         violation = true;
       }
 
+      // Don't send messages when the stock AEB system is active
+      if (tesla_stock_aeb) {
+        violation = true;
+      }
+
       // Don't allow any acceleration limits above the safety limits
       int raw_accel_max = ((GET_BYTE(to_send, 6) & 0x1FU) << 4) | (GET_BYTE(to_send, 5) >> 4);
       int raw_accel_min = ((GET_BYTE(to_send, 5) & 0x0FU) << 5) | (GET_BYTE(to_send, 4) >> 3);
@@ -191,6 +201,13 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
 
       if ((accel_max < TESLA_MIN_ACCEL) || (accel_min < TESLA_MIN_ACCEL)){
         violation = true;
+      }
+
+      // Don't allow longitudinal actuation if controls aren't allowed
+      if (!longitudinal_allowed) {
+        if ((raw_accel_max != TESLA_NO_ACCEL_VALUE) || (raw_accel_min != TESLA_NO_ACCEL_VALUE)) {
+          violation = true;
+        }
       }
     } else {
       violation = true;
@@ -223,7 +240,12 @@ static int tesla_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     }
 
     if (tesla_longitudinal && (addr == das_control_addr)) {
-      block_msg = true;
+      // "AEB_ACTIVE"
+      tesla_stock_aeb = ((GET_BYTE(to_fwd, 2) & 0x03U) == 1U);
+
+      if (!tesla_stock_aeb) {
+        block_msg = true;
+      }
     }
 
     if(!block_msg) {
@@ -234,11 +256,9 @@ static int tesla_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return bus_fwd;
 }
 
-static const addr_checks* tesla_init(int16_t param) {
+static const addr_checks* tesla_init(uint16_t param) {
   tesla_powertrain = GET_FLAG(param, TESLA_FLAG_POWERTRAIN);
   tesla_longitudinal = GET_FLAG(param, TESLA_FLAG_LONGITUDINAL_CONTROL);
-  controls_allowed = 0;
-  relay_malfunction_reset();
 
   return tesla_powertrain ? (&tesla_pt_rx_checks) : (&tesla_rx_checks);
 }

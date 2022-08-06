@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-
+import argparse
 import os
-import sys
+
 from panda.tests.safety import libpandasafety_py
 from panda.tests.safety_replay.helpers import package_can_msg, init_segment
 
 # replay a drive to check for safety violations
-def replay_drive(lr, safety_mode, param):
+def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   safety = libpandasafety_py.libpandasafety
 
   err = safety.set_safety_hooks(safety_mode, param)
   assert err == 0, "invalid safety mode: %d" % safety_mode
+  safety.set_alternative_experience(alternative_experience)
 
-  if "SEGMENT" in os.environ:
-    init_segment(safety, lr, mode)
+  if segment:
+    init_segment(safety, lr, safety_mode)
+    lr.reset()
 
   rx_tot, rx_invalid, tx_tot, tx_blocked, tx_controls, tx_controls_blocked = 0, 0, 0, 0, 0, 0
   blocked_addrs = set()
@@ -64,14 +66,37 @@ def replay_drive(lr, safety_mode, param):
   return tx_controls_blocked == 0 and rx_invalid == 0
 
 if __name__ == "__main__":
-  from tools.lib.route import Route
+  from tools.lib.route import Route, SegmentName
   from tools.lib.logreader import MultiLogIterator  # pylint: disable=import-error
 
-  mode = int(sys.argv[2])
-  param = 0 if len(sys.argv) < 4 else int(sys.argv[3])
-  r = Route(sys.argv[1])
-  lr = MultiLogIterator(r.log_paths())
+  parser = argparse.ArgumentParser(description="Replay CAN messages from a route or segment through a safety mode",
+                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+  parser.add_argument("route_or_segment_name", nargs='+')
+  parser.add_argument("--mode", type=int, help="Override the safety mode from the log")
+  parser.add_argument("--param", type=int, help="Override the safety param from the log")
+  parser.add_argument("--alternative-experience", type=int, help="Override the alternative experience from the log")
+  args = parser.parse_args()
 
-  print("replaying drive %s with safety mode %d and param %d" % (sys.argv[1], mode, param))
+  s = SegmentName(args.route_or_segment_name[0], allow_route_name=True)
 
-  replay_drive(lr, mode, param)
+  r = Route(s.route_name.canonical_name)
+  logs = r.log_paths()[s.segment_num:s.segment_num+1] if s.segment_num >= 0 else r.log_paths()
+  lr = MultiLogIterator(logs)
+
+  if None in (args.mode, args.param, args.alternative_experience):
+    for msg in lr:
+      if msg.which() == 'carParams':
+        if args.mode is None:
+          args.mode = msg.carParams.safetyConfigs[0].safetyModel.raw
+        if args.param is None:
+          args.param = msg.carParams.safetyConfigs[0].safetyParam
+        if args.alternative_experience is None:
+          args.alternative_experience = msg.carParams.alternativeExperience
+        break
+    else:
+      raise Exception("carParams not found in log. Set safety mode and param manually.")
+
+    lr.reset()
+
+  print(f"replaying {args.route_or_segment_name[0]} with safety mode {args.mode}, param {args.param}, alternative experience {args.alternative_experience}")
+  replay_drive(lr, args.mode, args.param, args.alternative_experience, segment=(s.segment_num >= 0))

@@ -39,6 +39,7 @@
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x1FFF79C0U
 
 #include "can_definitions.h"
+#include "comms_definitions.h"
 
 #ifndef BOOTSTUB
   #ifdef PANDA
@@ -53,6 +54,7 @@
 #include "libc.h"
 #include "critical.h"
 #include "faults.h"
+#include "utils.h"
 
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"

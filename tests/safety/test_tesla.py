@@ -55,11 +55,11 @@ class TestTeslaSafety(common.PandaSafetyTest):
     values = {"DI_vehicleSpeed": speed / 0.447}
     return self.packer.make_can_msg_panda("DI_torque2", 0, values)
 
-  def _brake_msg(self, brake):
+  def _user_brake_msg(self, brake):
     values = {"driverBrakeStatus": 2 if brake else 1}
     return self.packer.make_can_msg_panda("BrakeMessage", 0, values)
 
-  def _gas_msg(self, gas):
+  def _user_gas_msg(self, gas):
     values = {"DI_pedalPos": gas}
     return self.packer.make_can_msg_panda("DI_torque1", 0, values)
 
@@ -176,16 +176,34 @@ class TestTeslaLongitudinalSafety(TestTeslaSafety):
     for aeb_event in range(4):
       self.assertEqual(self._tx(self._long_control_msg(10, aeb_event=aeb_event)), aeb_event == 0)
 
-  def test_acc_accel_limits(self):
-    for min_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
-      for max_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
-        # floats might not hit exact boundary conditions without rounding
-        min_accel = round(min_accel, 2)
-        max_accel = round(max_accel, 2)
+  def test_stock_aeb_passthrough(self):
+    no_aeb_msg = self._long_control_msg(10, aeb_event=0)
+    aeb_msg = self._long_control_msg(10, aeb_event=1)
 
-        self.safety.set_controls_allowed(True)
-        send = (MIN_ACCEL <= min_accel <= MAX_ACCEL) and (MIN_ACCEL <= max_accel <= MAX_ACCEL)
-        self.assertEqual(self._tx(self._long_control_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])), send)
+    # stock system sends no AEB -> no forwarding, and OP is allowed to TX
+    self.assertEqual(-1, self.safety.safety_fwd_hook(2, no_aeb_msg))
+    self.assertEqual(True, self._tx(no_aeb_msg))
+
+    # stock system sends AEB -> forwarding, and OP is not allowed to TX
+    self.assertEqual(0, self.safety.safety_fwd_hook(2, aeb_msg))
+    self.assertEqual(False, self._tx(no_aeb_msg))
+
+    # reset global state for next tests
+    self.assertEqual(-1, self.safety.safety_fwd_hook(2, no_aeb_msg))
+
+  def test_acc_accel_limits(self):
+    for controls_allowed in [True, False]:
+      self.safety.set_controls_allowed(controls_allowed)
+      for min_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
+        for max_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
+          # floats might not hit exact boundary conditions without rounding
+          min_accel = round(min_accel, 2)
+          max_accel = round(max_accel, 2)
+          if controls_allowed:
+            send = (MIN_ACCEL <= min_accel <= MAX_ACCEL) and (MIN_ACCEL <= max_accel <= MAX_ACCEL)
+          else:
+            send = np.all(np.isclose([min_accel, max_accel], 0, atol=0.0001))
+          self.assertEqual(send, self._tx(self._long_control_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])))
 
 class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafety):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2], [0x2B9, 0]]

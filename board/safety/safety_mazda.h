@@ -12,12 +12,11 @@
 #define MAZDA_AUX  1
 #define MAZDA_CAM  2
 
-#define MAZDA_MAX_STEER 2048U
+#define MAZDA_MAX_STEER 800U
 
-// max delta torque allowed for real time checks
-#define MAZDA_MAX_RT_DELTA 940
-// 250ms between real time checks
-#define MAZDA_RT_INTERVAL 250000
+// the real time limit is 960/sec, a 20% buffer
+#define MAZDA_MAX_RT_DELTA 300  // max delta torque allowed for real time checks
+#define MAZDA_RT_INTERVAL 250000  // 250ms between real time checks
 #define MAZDA_MAX_RATE_UP 10
 #define MAZDA_MAX_RATE_DOWN 25
 #define MAZDA_DRIVER_TORQUE_ALLOWANCE 15
@@ -80,7 +79,9 @@ static int mazda_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int mazda_tx_hook(CANPacket_t *to_send) {
+static int mazda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+  UNUSED(longitudinal_allowed);
+
   int tx = 1;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
@@ -94,7 +95,7 @@ static int mazda_tx_hook(CANPacket_t *to_send) {
 
     // steer cmd checks
     if (addr == MAZDA_LKAS) {
-      int desired_torque = (((GET_BYTE(to_send, 0) & 0x0FU) << 8) | GET_BYTE(to_send, 1)) - MAZDA_MAX_STEER;
+      int desired_torque = (((GET_BYTE(to_send, 0) & 0x0FU) << 8) | GET_BYTE(to_send, 1)) - 2048U;
       bool violation = 0;
       uint32_t ts = microsecond_timer_get();
 
@@ -171,10 +172,8 @@ static int mazda_fwd_hook(int bus, CANPacket_t *to_fwd) {
   return bus_fwd;
 }
 
-static const addr_checks* mazda_init(int16_t param) {
+static const addr_checks* mazda_init(uint16_t param) {
   UNUSED(param);
-  controls_allowed = false;
-  relay_malfunction_reset();
   return &mazda_rx_checks;
 }
 

@@ -5,11 +5,7 @@ import threading
 from panda import Panda
 from collections import defaultdict
 from nose.tools import assert_equal, assert_less, assert_greater
-from .helpers import panda_jungle, start_heartbeat_thread, reset_pandas, time_many_sends, test_all_pandas, test_all_gen2_pandas, clear_can_buffers, panda_connect_and_init
-
-# Reset the pandas before running tests
-def aaaa_reset_before_tests():
-  reset_pandas()
+from .helpers import panda_jungle, time_many_sends, test_all_pandas, test_all_gen2_pandas, clear_can_buffers, panda_connect_and_init
 
 @test_all_pandas
 @panda_connect_and_init
@@ -23,16 +19,15 @@ def test_send_recv(p):
     p_recv.can_recv()
     p_send.can_recv()
 
-    busses = [0, 1, 2]
-
-    for bus in busses:
-      for speed in [10, 20, 50, 100, 125, 250, 500, 1000]:
+    for bus in (0, 1, 2):
+      for speed in (10, 20, 50, 100, 125, 250, 500, 1000):
         p_send.set_can_speed_kbps(bus, speed)
         p_recv.set_can_speed_kbps(bus, speed)
-        time.sleep(0.05)
+        time.sleep(0.1)
 
         clear_can_buffers(p_send)
         clear_can_buffers(p_recv)
+        time.sleep(0.1)
 
         comp_kbps = time_many_sends(p_send, bus, p_recv, two_pandas=True)
 
@@ -40,25 +35,13 @@ def test_send_recv(p):
         assert_greater(saturation_pct, 80)
         assert_less(saturation_pct, 100)
 
-        print("two pandas bus {}, 100 messages at speed {:4d}, comp speed is {:7.2f}, percent {:6.2f}".format(bus, speed, comp_kbps, saturation_pct))
+        print("two pandas bus {}, 100 messages at speed {:4d}, comp speed is {:7.2f}, {:6.2f}%".format(bus, speed, comp_kbps, saturation_pct))
 
-  # Start heartbeat
-  start_heartbeat_thread(p)
-
-  # Set safety mode and power saving
+  # Run tests in both directions
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-  p.set_power_save(False)
+  test(p, panda_jungle)
+  test(panda_jungle, p)
 
-  try:
-    # Run tests in both directions
-    test(p, panda_jungle)
-    test(panda_jungle, p)
-  except Exception as e:
-    # Raise errors again, we don't want them to get lost
-    raise e
-  finally:
-    # Set back to silent mode
-    p.set_safety_mode(Panda.SAFETY_SILENT)
 
 @test_all_pandas
 @panda_connect_and_init
@@ -76,10 +59,8 @@ def test_latency(p):
     p_recv.can_recv()
     p_send.can_recv()
 
-    busses = [0, 1, 2]
-
-    for bus in busses:
-      for speed in [10, 20, 50, 100, 125, 250, 500, 1000]:
+    for bus in (0, 1, 2):
+      for speed in (10, 20, 50, 100, 125, 250, 500, 1000):
         p_send.set_can_speed_kbps(bus, speed)
         p_recv.set_can_speed_kbps(bus, speed)
         time.sleep(0.1)
@@ -95,14 +76,14 @@ def test_latency(p):
         num_messages = 100
 
         for i in range(num_messages):
-          st = time.time()
+          st = time.monotonic()
           p_send.can_send(0x1ab, b"message", bus)
           r = []
-          while len(r) < 1 and (time.time() - st) < 5:
+          while len(r) < 1 and (time.monotonic() - st) < 5:
             r = p_recv.can_recv()
-          et = time.time()
+          et = time.monotonic()
           r_echo = []
-          while len(r_echo) < 1 and (time.time() - st) < 10:
+          while len(r_echo) < 1 and (time.monotonic() - st) < 10:
             r_echo = p_send.can_recv()
 
           if len(r) == 0 or len(r_echo) == 0:
@@ -130,23 +111,10 @@ def test_latency(p):
         print("two pandas bus {}, {} message average at speed {:4d}, latency is {:5.3f}ms, comp speed is {:7.2f}, percent {:6.2f}"
               .format(bus, num_messages, speed, average_latency, average_comp_kbps, average_saturation_pct))
 
-  # Start heartbeat
-  start_heartbeat_thread(p)
-
-  # Set safety mode and power saving
+  # Run tests in both directions
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-  p.set_power_save(False)
-
-  try:
-    # Run tests in both directions
-    test(p, panda_jungle)
-    test(panda_jungle, p)
-  except Exception as e:
-    # Raise errors again, we don't want them to get lost
-    raise e
-  finally:
-    # Set back to silent mode
-    p.set_safety_mode(Panda.SAFETY_SILENT)
+  test(p, panda_jungle)
+  test(panda_jungle, p)
 
 
 @test_all_gen2_pandas
@@ -185,27 +153,15 @@ def test_gen2_loopback(p):
 
       print("Bus:", bus, "address:", addr, "OBD:", obd, "OK")
 
-  # Start heartbeat
-  start_heartbeat_thread(p)
-
-  # Set safety mode and power saving
+  # Run tests in both directions
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-  p.set_power_save(False)
+  test(p, panda_jungle)
+  test(panda_jungle, p)
 
-  try:
-    # Run tests in both directions
-    test(p, panda_jungle)
-    test(panda_jungle, p)
-    # Test extended frame address with ELM327 mode
-    p.set_safety_mode(Panda.SAFETY_ELM327)
-    test(p, panda_jungle, 0x18DB33F1)
-    test(panda_jungle, p, 0x18DB33F1)
-  except Exception as e:
-    # Raise errors again, we don't want them to get lost
-    raise e
-  finally:
-    # Set back to silent mode
-    p.set_safety_mode(Panda.SAFETY_SILENT)
+  # Test extended frame address with ELM327 mode
+  p.set_safety_mode(Panda.SAFETY_ELM327)
+  test(p, panda_jungle, 0x18DB33F1)
+  test(panda_jungle, p, 0x18DB33F1)
 
 @test_all_pandas
 @panda_connect_and_init
@@ -226,12 +182,8 @@ def test_bulk_write(p):
     panda.can_send_many(packet, timeout=0)
     print(f"Done sending {4 * NUM_MESSAGES_PER_BUS} messages!")
 
-  # Start heartbeat
-  start_heartbeat_thread(p)
-
   # Set safety mode and power saving
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-  p.set_power_save(False)
 
   # Start transmisson
   threading.Thread(target=flood_tx, args=(p,)).start()
@@ -239,8 +191,8 @@ def test_bulk_write(p):
   # Receive as much as we can in a few second time period
   rx = []
   old_len = 0
-  start_time = time.time()
-  while time.time() - start_time < 5 or len(rx) > old_len:
+  start_time = time.monotonic()
+  while time.monotonic() - start_time < 5 or len(rx) > old_len:
     old_len = len(rx)
     rx.extend(panda_jungle.can_recv())
   print(f"Received {len(rx)} messages")
@@ -255,12 +207,9 @@ def test_bulk_write(p):
 @test_all_pandas
 @panda_connect_and_init
 def test_message_integrity(p):
-  start_heartbeat_thread(p)
-
   clear_can_buffers(p)
 
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-  p.set_power_save(False)
 
   p.set_can_loopback(True)
 
@@ -277,8 +226,8 @@ def test_message_integrity(p):
         to_send.append([addr, None, dat, bus])
       p.can_send_many(to_send, timeout=0)
 
-    start_time = time.time()
-    while time.time() - start_time < 2 and any(len(sent_msgs[bus]) for bus in range(3)):
+    start_time = time.monotonic()
+    while time.monotonic() - start_time < 2 and any(len(sent_msgs[bus]) for bus in range(3)):
       recvd = p.can_recv()
       for msg in recvd:
         if msg[3] >= 128:
