@@ -55,10 +55,10 @@ static const addr_checks* faw_init(uint16_t param) {
 static int faw_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &faw_rx_checks, faw_get_checksum, faw_compute_checksum, faw_get_counter);
-  unsigned int bus = GET_BUS(to_push);
-  unsigned int addr = GET_ADDR(to_push);
+  int bus = GET_BUS(to_push);
+  int addr = GET_ADDR(to_push);
 
-  if (valid && (bus == 2U)) {
+  if (valid && (bus == 2)) {
     // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
     // Signal: ACC.STATUS
     if (addr == MSG_ACC) {
@@ -74,7 +74,7 @@ static int faw_rx_hook(CANPacket_t *to_push) {
     }
   }
 
-  if (valid && (bus == 0U)) {
+  if (valid && (bus == 0)) {
     // Update in-motion state by sampling front wheel speeds
     // Signal: ABS_1.FRONT_LEFT in scaled km/h
     // Signal: ABS_1.FRONT_RIGHT in scaled km/h
