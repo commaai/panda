@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#pragma clang diagnostic ignored "-Wincompatible-library-redeclaration"
+
 #include "panda.h"
 #include "libc.h"
 #include "can_definitions.h"
@@ -26,13 +28,22 @@
 #define EXIT_CRITICAL() 0
 #define UNUSED(x) 0
 
-void usb_cb_ep3_out_complete();
+void usb_cb_ep3_out_complete() {};
 bool bitbang_gmlan(CANPacket_t *to_bang) { return true; }
+bool can_init(uint8_t can_number) { return true; }
+void process_can(uint8_t can_number) {}
+int safety_tx_hook(CANPacket_t *to_send) { return -1; }
 
 #include "safety_declarations.h"
 #include "drivers/can_common.h"
 
-#define CANFD
+can_ring *rx_q = &can_rx_q;
+can_ring *txgmlan_q = &can_rx_q;
+can_ring *tx1_q = &can_rx_q;
+can_ring *tx2_q = &can_rx_q;
+can_ring *tx3_q = &can_rx_q;
+
+
 
 #define COMPILE_TIME_ASSERT(pred) ((void)sizeof(char[1 - (2 * ((int)(!(pred))))]))
 #define POWER_SAVE_STATUS_DISABLED 0
