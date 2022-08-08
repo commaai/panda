@@ -564,6 +564,8 @@ class PandaSafetyTest(PandaSafetyTestBase):
               continue
             if {attr, current_test}.issubset({'TestToyotaSafety', 'TestToyotaAltBrakeSafety', 'TestToyotaStockLongitudinal'}):
               continue
+            if {attr, current_test}.issubset({'TestSubaruSafety', 'TestSubaruGen2Safety'}):
+              continue
 
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
             if attr.startswith('TestHonda'):

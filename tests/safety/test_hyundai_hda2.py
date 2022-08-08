@@ -55,7 +55,7 @@ class TestHyundaiHDA2(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTo
     values = {"CRUISE_ACTIVE": enable}
     return self.packer.make_can_msg_panda("SCC1", 1, values)
 
-  def _button_msg(self, buttons, main_button=0):
+  def _button_msg(self, buttons, main_button=0, bus=1):
     values = {
       "CRUISE_BUTTONS": buttons,
       "ADAPTIVE_CRUISE_MAIN_BTN": main_button,

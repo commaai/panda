@@ -7,11 +7,11 @@ from panda.tests.safety.common import CANPackerPanda
 
 
 class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
-  TX_MSGS = [[0x122, 0], [0x221, 0], [0x322, 0]]
+  TX_MSGS = [[0x122, 0], [0x221, 0], [0x321, 0], [0x322, 0]]
   STANDSTILL_THRESHOLD = 20  # 1kph (see dbc file)
   RELAY_MALFUNCTION_ADDR = 0x122
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [0x122, 0x221, 0x322]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x122, 0x321, 0x322]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   MAX_RATE_UP = 50
@@ -22,7 +22,9 @@ class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   RT_INTERVAL = 250000
 
   DRIVER_TORQUE_ALLOWANCE = 60
-  DRIVER_TORQUE_FACTOR = 10
+  DRIVER_TORQUE_FACTOR = 50
+
+  ALT_BUS = 0
 
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
@@ -42,11 +44,11 @@ class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   def _speed_msg(self, speed):
     # subaru safety doesn't use the scaled value, so undo the scaling
     values = {s: speed * 0.057 for s in ["FR", "FL", "RR", "RL"]}
-    return self.packer.make_can_msg_panda("Wheel_Speeds", 0, values)
+    return self.packer.make_can_msg_panda("Wheel_Speeds", self.ALT_BUS, values)
 
   def _user_brake_msg(self, brake):
     values = {"Brake": brake}
-    return self.packer.make_can_msg_panda("Brake_Status", 0, values)
+    return self.packer.make_can_msg_panda("Brake_Status", self.ALT_BUS, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKAS_Output": torque}
@@ -58,7 +60,22 @@ class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
 
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
-    return self.packer.make_can_msg_panda("CruiseControl", 0, values)
+    return self.packer.make_can_msg_panda("CruiseControl", self.ALT_BUS, values)
+
+
+class TestSubaruGen2Safety(TestSubaruSafety):
+  TX_MSGS = [[0x122, 0], [0x221, 1], [0x321, 0], [0x322, 0]]
+  ALT_BUS = 1
+
+  MAX_RATE_UP = 40
+  MAX_RATE_DOWN = 40
+  MAX_TORQUE = 1000
+
+  def setUp(self):
+    self.packer = CANPackerPanda("subaru_global_2017_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, Panda.FLAG_SUBARU_GEN2)
+    self.safety.init_tests()
 
 
 if __name__ == "__main__":
