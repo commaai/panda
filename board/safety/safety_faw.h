@@ -8,7 +8,7 @@ const int FAW_DRIVER_TORQUE_FACTOR = 3;
 
 #define MSG_ECM_1           0x92    // RX from ABS, for brake pressures
 #define MSG_ABS_1           0xC0    // RX from ABS, for wheel speeds
-#define MSG_ABS_2           0xC2    // RX from ABS, for wheel speeds and braking
+#define MSG_MAYBE_ABS       0x94    // RX from ABS? has brake-pressed and other signals
 #define MSG_ACC             0x110   // RX from ACC, for ACC engagement state
 #define MSG_LKAS            0x112   // TX from openpilot, for LKAS torque
 #define MSG_EPS_2           0x150   // RX from EPS, torque inputs and outputs
@@ -19,7 +19,7 @@ const CanMsg FAW_TX_MSGS[] = {{MSG_LKAS, 0, 8}};
 AddrCheckStruct faw_addr_checks[] = {
   {.msg = {{MSG_ECM_1, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_ABS_1, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_ABS_2, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_MAYBE_ABS, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_ACC, 2, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
@@ -62,8 +62,8 @@ static int faw_rx_hook(CANPacket_t *to_push) {
     // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
     // Signal: ACC.STATUS
     if (addr == MSG_ACC) {
-      int acc_status = (GET_BYTE(to_push, 4) & 0x7CU) >> 2;
-      int cruise_engaged = acc_status == 20;
+      int acc_status = (GET_BYTE(to_push, 4) & 0xF0U) >> 4;
+      int cruise_engaged = (acc_status == 5);
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
       }
@@ -103,9 +103,9 @@ static int faw_rx_hook(CANPacket_t *to_push) {
       gas_pressed = (GET_BYTE(to_push, 5) != 0U);
     }
 
-    // Signal: ABS_2.BRAKE_PRESSURE
-    if (addr == MSG_ABS_2) {
-      brake_pressed = (GET_BYTE(to_push, 5) != 0U);
+    // Signal: MAYBE_ABS.BRAKE_PRESSED
+    if (addr == MSG_MAYBE_ABS) {
+      brake_pressed = GET_BIT(to_push, 35U);
     }
 
     generic_rx_checks((addr == MSG_LKAS));
