@@ -130,6 +130,10 @@ static int faw_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (addr == MSG_LKAS) {
     int desired_torque = GET_BYTE(to_send, 1) | ((GET_BYTE(to_send, 2) & 0x3U) << 8);
     int sign = (GET_BYTE(to_send, 2) & 0x4U) >> 2;
+    // FAW sends 1022 when steering is inactive
+    if (desired_torque == 1022) {
+      desired_torque = 0;
+    }
     if (sign == 1) {
       desired_torque *= -1;
     }
