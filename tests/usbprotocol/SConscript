@@ -1,0 +1,9 @@
+env = Environment(
+  CC='clang',
+  CXX='clang++',
+  CPPPATH=[".", "../../board"],
+  CCFLAGS='-m32',
+  LINKFLAGS='-m32',
+)
+
+env.SharedLibrary("libpandaprotocol.so", ["test.c"])

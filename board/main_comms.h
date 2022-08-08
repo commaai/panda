@@ -6,6 +6,7 @@ extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 void set_safety_mode(uint16_t mode, uint16_t param);
 bool is_car_safety_mode(uint16_t mode);
 
+#ifndef PROTOCOL_TESTS
 int get_health_pkt(void *dat) {
   COMPILE_TIME_ASSERT(sizeof(struct health_t) <= USBPACKET_MAX_SIZE);
   struct health_t * health = (struct health_t*)dat;
@@ -46,6 +47,7 @@ int get_rtc_pkt(void *dat) {
   (void)memcpy(dat, &t, sizeof(t));
   return sizeof(t);
 }
+#endif
 
 typedef struct {
   uint32_t ptr;
@@ -60,7 +62,7 @@ bool add_magic = true;
 int comms_can_read(uint8_t *data, uint32_t max_len) {
   uint32_t pos = 0U;
 
-  if (add_magic) {
+  if (add_magic && (max_len >= sizeof(uint32_t))) {
     // Start of a transaction
     *((uint32_t *)(void *) &data[0]) = CAN_TRANSACTION_MAGIC;
     pos += sizeof(uint32_t);
@@ -77,25 +79,31 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
     can_read_buffer.ptr -= overflow_len;
   }
 
-  // Fill rest of buffer with new data
-  CANPacket_t can_packet;
-  while ((pos < max_len) && can_pop(&can_rx_q, &can_packet)) {
-    uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
-    if ((pos + pckt_len) <= max_len) {
-      (void)memcpy(&data[pos], &can_packet, pckt_len);
-      pos += pckt_len;
-    } else {
-      (void)memcpy(&data[pos], &can_packet, max_len - pos);
-      can_read_buffer.ptr = pckt_len - (max_len - pos);
-      // cppcheck-suppress objectIndex
-      (void)memcpy(can_read_buffer.data, &((uint8_t*)&can_packet)[(max_len - pos)], can_read_buffer.ptr);
-      pos = max_len;
+  if (total_rx_size >= MAX_EP1_CHUNK_PER_BULK_TRANSFER) {
+    // We ran out of space for this transaction, prepare for the next one
+    total_rx_size = 0U;
+    add_magic = true;
+  } else {
+    // Fill rest of buffer with new data
+    CANPacket_t can_packet;
+    while ((pos < max_len) && can_pop(&can_rx_q, &can_packet)) {
+      uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
+      if ((pos + pckt_len) <= max_len) {
+        (void)memcpy(&data[pos], &can_packet, pckt_len);
+        pos += pckt_len;
+      } else {
+        (void)memcpy(&data[pos], &can_packet, max_len - pos);
+        can_read_buffer.ptr = pckt_len - (max_len - pos);
+        // cppcheck-suppress objectIndex
+        (void)memcpy(can_read_buffer.data, &((uint8_t*)&can_packet)[(max_len - pos)], can_read_buffer.ptr);
+        pos = max_len;
+      }
     }
+    total_rx_size += pos;
   }
 
-  total_rx_size += pos;
-  if ((total_rx_size >= MAX_EP1_CHUNK_PER_BULK_TRANSFER) || (pos != max_len)) {
-    // The end of a transaction, prepare for the next one
+  if (pos != max_len) {
+    // Final packet for this transaction, prepare for the next one
     total_rx_size = 0U;
     add_magic = true;
   }
@@ -159,6 +167,7 @@ void comms_can_write(uint8_t *data, uint32_t len) {
   }
 }
 
+#ifndef PROTOCOL_TESTS
 // send on serial, first byte to select the ring
 void comms_endpoint2_write(uint8_t *data, uint32_t len) {
   uart_ring *ur = get_ring_by_number(data[0]);
@@ -574,3 +583,4 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   }
   return resp_len;
 }
+#endif

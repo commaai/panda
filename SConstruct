@@ -6,3 +6,4 @@ SConscript('board/SConscript')
 
 if GetOption('test'):
   SConscript('tests/safety/SConscript')
+  SConscript('tests/usbprotocol/SConscript')
