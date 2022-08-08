@@ -12,7 +12,6 @@ void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 // ********************* Globals **********************
 uint8_t hw_type = 0;
 const board *current_board;
-bool is_enumerated = 0;
 uint32_t uptime_cnt = 0;
 bool green_led_enabled = false;
 

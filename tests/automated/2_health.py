@@ -1,6 +1,9 @@
 import time
+
+from panda import Panda
 from panda_jungle import PandaJungle  # pylint: disable=import-error
 from .helpers import panda_jungle, test_all_pandas, test_all_gen2_pandas, panda_connect_and_init
+
 
 @test_all_pandas
 @panda_connect_and_init
@@ -38,3 +41,23 @@ def test_voltage(p):
     voltage = p.health()['voltage']
     assert ((voltage > 10000) and (voltage < 14000))
     time.sleep(0.1)
+
+@test_all_pandas
+@panda_connect_and_init
+def test_hw_type(p):
+  """
+    hw type should be same in bootstub as application
+  """
+
+  hw_type = p.get_type()
+  mcu_type = p.get_mcu_type()
+  assert mcu_type is not None
+
+  p.reset(enter_bootstub=True, reconnect=True)
+  p.close()
+  time.sleep(3)
+  pp = Panda(p.get_usb_serial())
+  assert pp.bootstub
+  assert pp.get_type() == hw_type, "Bootstub and app hw type mismatch"
+  assert pp.get_mcu_type() == mcu_type, "Bootstub and app MCU type mismatch"
+  pp.close()
