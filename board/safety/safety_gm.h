@@ -113,7 +113,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 
     // Regen is braking
     if (addr == 189) {
-      brake_pressed = GET_BYTE(to_push, 0) & 0x20U;
+      brake_pressed |= GET_BYTE(to_push, 0) & 0x20U;
     }
 
     // Check if ASCM or LKA camera are online
