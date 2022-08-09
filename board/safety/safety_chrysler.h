@@ -81,7 +81,7 @@ addr_checks chrysler_rx_checks = {chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN}
 const uint32_t CHRYSLER_PARAM_RAM_DT = 1U;  // set for Ram DT platform
 
 bool chrysler_ram = false;
-const ChryslerAddrs *addrs = &CHRYSLER_ADDRS;
+const ChryslerAddrs *chrysler_addrs = &CHRYSLER_ADDRS;
 
 static uint32_t chrysler_get_checksum(CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1U;
@@ -137,14 +137,14 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
   if (valid) {
 
     // Measured EPS torque
-    if ((bus == 0) && (addr == addrs->EPS_2)) {
+    if ((bus == 0) && (addr == chrysler_addrs->EPS_2)) {
       int torque_meas_new = ((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5) - 1024U;
       update_sample(&torque_meas, torque_meas_new);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
     const int das_3_bus = chrysler_ram ? 2 : 0;
-    if ((bus == das_3_bus) && (addr == addrs->DAS_3)) {
+    if ((bus == das_3_bus) && (addr == chrysler_addrs->DAS_3)) {
       int cruise_engaged = GET_BIT(to_push, 21U) == 1U;
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
@@ -157,7 +157,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // TODO: use the same message for both
     // update speed
-    if (chrysler_ram && (bus == 0) && (addr == addrs->ESP_8)) {
+    if (chrysler_ram && (bus == 0) && (addr == chrysler_addrs->ESP_8)) {
       vehicle_speed = (((GET_BYTE(to_push, 4) & 0x3U) << 8) + GET_BYTE(to_push, 5))*0.0078125;
       vehicle_moving = (int)vehicle_speed > CHRYSLER_RAM_STANDSTILL_THRSLD;
     }
@@ -169,16 +169,16 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
     }
 
     // exit controls on rising edge of gas press
-    if ((bus == 0) && (addr == addrs->ECM_5)) {
+    if ((bus == 0) && (addr == chrysler_addrs->ECM_5)) {
       gas_pressed = GET_BYTE(to_push, 0U) != 0U;
     }
 
     // exit controls on rising edge of brake press
-    if ((bus == 0) && (addr == addrs->ESP_1)) {
+    if ((bus == 0) && (addr == chrysler_addrs->ESP_1)) {
       brake_pressed = ((GET_BYTE(to_push, 0U) & 0xFU) >> 2U) == 1U;
     }
 
-    generic_rx_checks((bus == 0) && (addr == addrs->LKAS_COMMAND));
+    generic_rx_checks((bus == 0) && (addr == chrysler_addrs->LKAS_COMMAND));
   }
   return valid;
 }
@@ -196,7 +196,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // STEERING
-  if (tx && (addr == addrs->LKAS_COMMAND)) {
+  if (tx && (addr == chrysler_addrs->LKAS_COMMAND)) {
     int start_byte = chrysler_ram ? 1 : 0;
     int desired_torque = ((GET_BYTE(to_send, start_byte) & 0x7U) << 8) | GET_BYTE(to_send, start_byte + 1);
     desired_torque -= 1024;
@@ -246,7 +246,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // FORCE CANCEL: only the cancel button press is allowed
-  if (addr == addrs->CRUISE_BUTTONS) {
+  if (addr == chrysler_addrs->CRUISE_BUTTONS) {
     const bool is_cancel = GET_BYTE(to_send, 0) == 1U;
     const bool is_resume = GET_BYTE(to_send, 0) == 0x10U;
     const bool allowed = is_cancel || (is_resume && controls_allowed);
@@ -268,7 +268,7 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   }
 
   // forward all messages from camera except LKAS messages
-  const bool is_lkas = ((addr == addrs->LKAS_COMMAND) || (addr == addrs->DAS_6));
+  const bool is_lkas = ((addr == chrysler_addrs->LKAS_COMMAND) || (addr == chrysler_addrs->DAS_6));
   if ((bus_num == 2) && !is_lkas){
     bus_fwd = 0;
   }
@@ -280,10 +280,10 @@ static const addr_checks* chrysler_init(uint16_t param) {
   chrysler_ram = GET_FLAG(param, CHRYSLER_PARAM_RAM_DT);
 
   if (chrysler_ram) {
-    addrs = &CHRYSLER_RAM_DT_ADDRS;
+    chrysler_addrs = &CHRYSLER_RAM_DT_ADDRS;
     chrysler_rx_checks = (addr_checks){chrysler_ram_addr_checks, CHRYSLER_RAM_ADDR_CHECK_LEN};
   } else {
-    addrs = &CHRYSLER_ADDRS;
+    chrysler_addrs = &CHRYSLER_ADDRS;
     chrysler_rx_checks = (addr_checks){chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
   }
 
