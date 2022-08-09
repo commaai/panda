@@ -100,7 +100,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 
       // enter controls on rising edge of ACC, exit controls when ACC off
       if (gm_hw == GM_CAM) {
-        int cruise_engaged = (GET_BYTE(to_push, 1) >> 5) != 0;
+        int cruise_engaged = (GET_BYTE(to_push, 1) >> 5) != 0U;
         if (!cruise_engaged) {
           controls_allowed = 0;
         }
