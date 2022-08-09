@@ -183,8 +183,6 @@ class Panda:
   CLOCK_SOURCE_MODE_DISABLED = 0
   CLOCK_SOURCE_MODE_FREE_RUNNING = 1
 
-  FLAG_GM_HW_CAM = 1
-
   # first byte is for EPS scaling factor
   FLAG_TOYOTA_ALT_BRAKE = (1 << 8)
   FLAG_TOYOTA_STOCK_LONGITUDINAL = (2 << 8)
@@ -205,6 +203,8 @@ class Panda:
   FLAG_CHRYSLER_RAM_DT = 1
 
   FLAG_SUBARU_GEN2 = 1
+
+  FLAG_GM_HW_CAM = 1
 
   def __init__(self, serial: Optional[str] = None, claim: bool = True):
     self._serial = serial
