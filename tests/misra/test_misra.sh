@@ -7,6 +7,12 @@ PANDA_DIR=$DIR/../../
 CPPCHECK_DIR=$DIR/cppcheck
 CPPCHECK=$CPPCHECK_DIR/cppcheck
 
+RULES="$DIR/MISRA_C_2012.txt"
+MISRA="python $CPPCHECK_DIR/addons/misra.py"
+if [ -f "$RULES" ]; then
+  MISRA="$MISRA --rule-texts $RULES"
+fi
+
 mkdir -p /tmp/misra
 ERROR_CODE=0
 
@@ -24,7 +30,7 @@ $CPPCHECK -DPANDA -DSTM32F4 -UPEDAL -DCAN3 -DUID_BASE \
           -I $PANDA_DIR/board/ --dump --enable=all --inline-suppr --force \
           $PANDA_DIR/board/main.c 2>/tmp/misra/cppcheck_f4_output.txt
 
-python $CPPCHECK_DIR/addons/misra.py $PANDA_DIR/board/main.c.dump 2> /tmp/misra/misra_f4_output.txt || true
+$MISRA $PANDA_DIR/board/main.c.dump 2> /tmp/misra/misra_f4_output.txt || true
 
 # strip (information) lines
 cppcheck_f4_output=$( cat /tmp/misra/cppcheck_f4_output.txt | grep -v ": information: " ) || true
@@ -37,7 +43,7 @@ $CPPCHECK -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE \
           -I $PANDA_DIR/board/ --dump --enable=all --inline-suppr --force \
           $PANDA_DIR/board/main.c 2>/tmp/misra/cppcheck_h7_output.txt
 
-python $CPPCHECK_DIR/addons/misra.py $PANDA_DIR/board/main.c.dump 2> /tmp/misra/misra_h7_output.txt || true
+$MISRA $PANDA_DIR/board/main.c.dump 2> /tmp/misra/misra_h7_output.txt || true
 
 # strip (information) lines
 cppcheck_h7_output=$( cat /tmp/misra/cppcheck_h7_output.txt | grep -v ": information: " ) || true
@@ -50,7 +56,7 @@ $CPPCHECK -UPANDA -DSTM32F2 -DPEDAL -UCAN3 \
           -I $PANDA_DIR/board/ --dump --enable=all --inline-suppr --force \
           $PANDA_DIR/board/pedal/main.c 2>/tmp/misra/cppcheck_pedal_output.txt
 
-python $CPPCHECK_DIR/addons/misra.py $PANDA_DIR/board/pedal/main.c.dump 2> /tmp/misra/misra_pedal_output.txt || true
+$MISRA $PANDA_DIR/board/pedal/main.c.dump 2> /tmp/misra/misra_pedal_output.txt || true
 
 # strip (information) lines
 cppcheck_pedal_output=$( cat /tmp/misra/cppcheck_pedal_output.txt | grep -v ": information: " ) || true
