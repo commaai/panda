@@ -1,9 +1,9 @@
 const int FAW_MAX_STEER = 300;               // As-yet unknown fault boundary, guessing 300 / 3.0Nm for now
-const int FAW_MAX_RT_DELTA = 56;             // 3 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 37.5 ; 50 * 1.5 for safety pad = 56.25
+const int FAW_MAX_RT_DELTA = 113;            // 6 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 75 ; 50 * 1.5 for safety pad = 113
 const uint32_t FAW_RT_INTERVAL = 250000;     // 250ms between real time checks
-const int FAW_MAX_RATE_UP = 3;               // 3 unit/sec observed from factory LKAS, fault boundary unknown
-const int FAW_MAX_RATE_DOWN = 3;             // 3 unit/sec observed from factory LKAS, fault boundary unknown
-const int FAW_DRIVER_TORQUE_ALLOWANCE = 25;
+const int FAW_MAX_RATE_UP = 6;               // 10 unit/sec observed from factory LKAS, fault boundary unknown
+const int FAW_MAX_RATE_DOWN = 10;            // 10 unit/sec observed from factory LKAS, fault boundary unknown
+const int FAW_DRIVER_TORQUE_ALLOWANCE = 50;
 const int FAW_DRIVER_TORQUE_FACTOR = 3;
 
 #define MSG_ECM_1           0x92    // RX from ABS, for brake pressures
