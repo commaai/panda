@@ -1,7 +1,3 @@
-const int SUBARU_GEN2_MAX_STEER = 1000;
-const int SUBARU_GEN2_MAX_RATE_UP = 40;
-const int SUBARU_GEN2_MAX_RATE_DOWN = 40;
-
 const SteeringLimits SUBARU_STEERING_LIMITS = {
   .max_steer = 2047,
   .max_rt_delta = 940,
