@@ -472,14 +472,7 @@ bool steer_torque_cmd_checks(int desired_torque, const SteeringLimits limits) {
   bool violation = false;
   uint32_t ts = microsecond_timer_get();
 
-  int pedal_pressed = brake_pressed_prev && vehicle_moving;
-  bool alt_exp_allow_gas = alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS;
-  if (!alt_exp_allow_gas) {
-    pedal_pressed = pedal_pressed || gas_pressed_prev;
-  }
-  const bool current_controls_allowed = controls_allowed && !pedal_pressed;
-
-  if (current_controls_allowed) {
+  if (controls_allowed) {
     // *** global torque limit check ***
     violation |= max_limit_check(desired_torque, limits.max_steer, -limits.max_steer);
 
@@ -501,12 +494,12 @@ bool steer_torque_cmd_checks(int desired_torque, const SteeringLimits limits) {
   }
 
   // no torque if controls is not allowed
-  if (!current_controls_allowed && (desired_torque != 0)) {
+  if (!controls_allowed && (desired_torque != 0)) {
     violation = true;
   }
 
   // reset to 0 if either controls is not allowed or there's a violation
-  if (violation || !current_controls_allowed) {
+  if (violation || !controls_allowed) {
     desired_torque_last = 0;
     rt_torque_last = 0;
     ts_last = ts;
