@@ -63,7 +63,7 @@ static int faw_rx_hook(CANPacket_t *to_push) {
     // Signal: ACC.STATUS
     if (addr == MSG_ACC) {
       int acc_status = (GET_BYTE(to_push, 4) & 0xF0U) >> 4;
-      int cruise_engaged = (acc_status == 5);
+      int cruise_engaged = ((acc_status == 4) || (acc_status == 5) || (acc_status == 6) || (acc_status == 7));
       if (cruise_engaged && !cruise_engaged_prev) {
         controls_allowed = 1;
       }
