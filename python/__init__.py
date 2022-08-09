@@ -52,6 +52,9 @@ def pack_can_buffer(arr):
 
 def unpack_can_buffer(dat):
   ret = []
+  if len(dat) < len(CAN_TRANSACTION_MAGIC):
+    return ret
+
   if dat[:len(CAN_TRANSACTION_MAGIC)] != CAN_TRANSACTION_MAGIC:
     print("CAN: RECV EXPECTED MAGIC")
     return ret
