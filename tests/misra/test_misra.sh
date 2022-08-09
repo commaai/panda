@@ -7,7 +7,7 @@ PANDA_DIR=$DIR/../../
 CPPCHECK_DIR=$DIR/cppcheck
 CPPCHECK=$CPPCHECK_DIR/cppcheck
 
-mkdir /tmp/misra || true
+mkdir -p /tmp/misra
 ERROR_CODE=0
 
 # install cppcheck if missing

@@ -56,8 +56,8 @@ RUN pyenv install 3.8.10 && \
     pyenv rehash && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
-COPY tests/misra/install.sh $PANDA_PATH/tests/misra/
-RUN $PANDA_PATH/tests/misra/install.sh
+COPY tests/misra/install.sh /tmp/
+RUN /tmp/install.sh
 
 RUN cd /tmp && \
     git clone https://github.com/commaai/openpilot.git tmppilot || true && \
@@ -78,4 +78,5 @@ RUN cd /tmp/openpilot && \
     pip install --no-cache-dir --upgrade aenum lru-dict pycurl tenacity atomicwrites serial smbus2 scons
 
 COPY . /tmp/openpilot/panda
-RUN rm -rf /tmp/openpilot/panda/.git
+RUN mv /tmp/cppcheck /tmp/openpilot/panda/tests/misra && \
+    rm -rf /tmp/openpilot/panda/.git
