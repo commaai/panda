@@ -27,8 +27,6 @@ const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715,
 
 const CanMsg GM_CAM_TX_MSGS[] = {{384, 0, 4}};  // pt bus
 
-const CanMsg GM_CAM_VOACC_TX_MSGS[] = {{384, 0, 4}, {715, 0, 8}, {789, 0, 5}, {880, 0, 6}}; // pt bus
-
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 AddrCheckStruct gm_addr_checks[] = {
   {.msg = {{388, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
@@ -41,7 +39,6 @@ AddrCheckStruct gm_addr_checks[] = {
 addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
 
 const uint16_t GM_PARAM_HW_CAM = 1;
-const uint16_t GM_PARAM_HW_CAM_VOACC = 2;
 
 enum {
   GM_BTN_UNPRESS = 1,
@@ -50,7 +47,7 @@ enum {
   GM_BTN_CANCEL = 6,
 };
 
-enum {GM_ASCM, GM_CAM, GM_CAM_VOACC} gm_hw = GM_ASCM;
+enum {GM_ASCM, GM_CAM} gm_hw = GM_ASCM;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
 
@@ -124,7 +121,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     // 384 = ASCMLKASteeringCmd
     // 715 = ASCMGasRegenCmd
     // Allow ACC if using stock long
-    generic_rx_checks(((addr == 384) || ((gm_hw == GM_ASCM || gm_hw == GM_CAM_VOACC) && (addr == 715))));
+    generic_rx_checks(((addr == 384) || ((gm_hw == GM_ASCM) && (addr == 715))));
   }
   return valid;
 }
@@ -142,8 +139,6 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   if (gm_hw == GM_CAM) {
     tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
-  } else if (gm_hw == GM_CAM_VOACC) {
-    tx = msg_allowed(to_send, GM_CAM_VOACC_TX_MSGS, sizeof(GM_CAM_VOACC_TX_MSGS)/sizeof(GM_CAM_VOACC_TX_MSGS[0]));
   } else {
     tx = msg_allowed(to_send, GM_ASCM_TX_MSGS, sizeof(GM_ASCM_TX_MSGS)/sizeof(GM_ASCM_TX_MSGS[0]));
   }
@@ -251,7 +246,7 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
 
   // if camera does LKAS/ACC, forward all messages except LKAS from camera (stock longitudinal)
-  if (gm_hw == GM_CAM || gm_hw == GM_CAM_VOACC) {
+  if (gm_hw == GM_CAM) {
     if (bus_num == 0) {
       bus_fwd = 2;
     }
@@ -259,10 +254,7 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     if (bus_num == 2) {
       int addr = GET_ADDR(to_fwd);
       bool is_lkas_msg = (addr == 384);
-      bool is_acc_msg = ((addr == 715) || (addr == 880) || (addr == 789));
-      // If OP is handling long, do not forward ACC messages
-      bool block_fwd = (is_lkas_msg || (is_acc_msg && gm_hw == GM_CAM_VOACC));
-      if (!block_fwd) {
+      if (!is_lkas_msg) {
         bus_fwd = 0;
       }
     }
@@ -274,10 +266,6 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 static const addr_checks* gm_init(uint16_t param) {
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
-  if (gm_hw == GM_CAM && GET_FLAG(param, GM_PARAM_HW_CAM_VOACC)) {
-    gm_hw = GM_CAM_VOACC;
-  }
-  
   return &gm_rx_checks;
 }
 
