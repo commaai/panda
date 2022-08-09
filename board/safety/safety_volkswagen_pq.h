@@ -135,7 +135,7 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
       desired_torque *= -1;
     }
 
-    if (steering_checks(desired_torque, false, VOLKSWAGEN_PQ_STEERING_LIMITS)) {
+    if (steer_torque_cmd_checks(desired_torque, VOLKSWAGEN_PQ_STEERING_LIMITS)) {
       tx = 0;
     }
   }

@@ -145,7 +145,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1);
     desired_torque = to_signed(desired_torque, 11);
 
-    if (steering_checks(desired_torque, 0, GM_STEERING_LIMITS)) {
+    if (steer_torque_cmd_checks(desired_torque, GM_STEERING_LIMITS)) {
       tx = 0;
     }
   }

@@ -83,7 +83,7 @@ static int subaru_legacy_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
     int desired_torque = ((GET_BYTES_04(to_send) >> 8) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
-    if (steering_checks(desired_torque, false, SUBARU_L_STEERING_LIMITS)) {
+    if (steer_torque_cmd_checks(desired_torque, SUBARU_L_STEERING_LIMITS)) {
       tx = 0;
     }
 

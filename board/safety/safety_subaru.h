@@ -150,7 +150,7 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     desired_torque = -1 * to_signed(desired_torque, 13);
 
     const SteeringLimits limits = subaru_gen2 ? SUBARU_GEN2_STEERING_LIMITS : SUBARU_STEERING_LIMITS;
-    if (steering_checks(desired_torque, false, limits)) {
+    if (steer_torque_cmd_checks(desired_torque, limits)) {
       tx = 0;
     }
 

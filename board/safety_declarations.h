@@ -96,7 +96,7 @@ bool addr_safety_check(CANPacket_t *to_push,
 void generic_rx_checks(bool stock_ecu_detected);
 void relay_malfunction_set(void);
 void relay_malfunction_reset(void);
-bool steering_checks(int desired_torque, bool steer_req, const SteeringLimits limits);
+bool steer_torque_cmd_checks(int desired_torque, const SteeringLimits limits);
 
 typedef const addr_checks* (*safety_hook_init)(uint16_t param);
 typedef int (*rx_hook)(CANPacket_t *to_push);
