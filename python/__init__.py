@@ -205,7 +205,6 @@ class Panda:
   FLAG_SUBARU_GEN2 = 1
 
   FLAG_GM_HW_CAM = 1
-  FLAG_GM_HW_CAM_VOACC = 2
 
   def __init__(self, serial: Optional[str] = None, claim: bool = True):
     self._serial = serial
