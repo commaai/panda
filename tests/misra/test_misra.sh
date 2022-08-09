@@ -10,6 +10,11 @@ CPPCHECK=$CPPCHECK_DIR/cppcheck
 mkdir /tmp/misra || true
 ERROR_CODE=0
 
+# install cppcheck if missing
+if [ ! -d cppcheck/ ]; then
+  $DIR/install.sh
+fi
+
 # generate coverage matrix
 #python tests/misra/cppcheck/addons/misra.py -generate-table > tests/misra/coverage_table
 
