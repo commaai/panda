@@ -165,10 +165,7 @@ static int mazda_fwd_hook(int bus, CANPacket_t *to_fwd) {
     if (!block) {
       bus_fwd = MAZDA_MAIN;
     }
-  } else {
-    // don't fwd
   }
-
   return bus_fwd;
 }
 
