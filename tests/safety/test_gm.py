@@ -51,6 +51,9 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
     self.safety.init_tests()
 
+  def _pcm_status_msg(self, enable):
+    raise NotImplementedError
+
   def _speed_msg(self, speed):
     values = {"%sWheelSpd" % s: speed for s in ["RL", "RR"]}
     return self.packer.make_can_msg_panda("EBCMWheelSpdRear", 0, values)
@@ -79,7 +82,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKASteeringCmd": torque}
     return self.packer.make_can_msg_panda("ASCMLKASteeringCmd", 0, values)
-
 
   def test_brake_safety_check(self, stock_longitudinal=False):
     for enabled in [0, 1]:
@@ -212,7 +214,10 @@ class TestGmCameraSafety(TestGmSafetyBase):
     self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM)
     self.safety.init_tests()
 
-  # TODO: implement this
+  def _user_gas_msg(self, gas, pcm_cruise=0):
+    values = {"AcceleratorPedal2": 1 if gas else 0, "CruiseState": pcm_cruise}
+    return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
+
   def _pcm_status_msg(self, enable):
     values = {"CruiseState": enable}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
@@ -222,6 +227,30 @@ class TestGmCameraSafety(TestGmSafetyBase):
 
   def test_gas_safety_check(self, stock_longitudinal=True):
     super().test_gas_safety_check(stock_longitudinal=stock_longitudinal)
+
+  # override gas tests: PCM cruise enabled is in same message as gas for GM
+  # TODO: try to clean this up
+  def test_allow_engage_with_gas_pressed(self):
+    self._rx(self._user_gas_msg(1, pcm_cruise=1))
+    self.safety.set_controls_allowed(True)
+    self._rx(self._user_gas_msg(1, pcm_cruise=1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self._rx(self._user_gas_msg(1, pcm_cruise=1))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_alternative_experience_no_disengage_on_gas(self):
+    self._rx(self._user_gas_msg(0, pcm_cruise=1))
+    self.safety.set_controls_allowed(True)
+    self.assertTrue(self.safety.get_controls_allowed())
+
+    self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
+    self._rx(self._user_gas_msg(self.GAS_PRESSED_THRESHOLD + 1, pcm_cruise=1))
+    # Test we allow lateral, but not longitudinal
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_longitudinal_allowed())
+    # Make sure we can re-gain longitudinal actuation
+    self._rx(self._user_gas_msg(0, pcm_cruise=1))
+    self.assertTrue(self.safety.get_longitudinal_allowed())
 
 
 if __name__ == "__main__":
