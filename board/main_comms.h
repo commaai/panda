@@ -61,6 +61,7 @@ bool add_magic = true;
 
 int comms_can_read(uint8_t *data, uint32_t max_len) {
   uint32_t pos = 0U;
+  bool added_magic = false;
 
   if (add_magic && (max_len >= sizeof(uint32_t))) {
     // Start of a transaction
@@ -68,6 +69,8 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
     pos += sizeof(uint32_t);
     add_magic = false;
     can_read_buffer.ptr = 0U;
+    total_rx_size = 0U;
+    added_magic = true;
   }
 
   // Send tail of previous message if it is in buffer
@@ -79,11 +82,7 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
     can_read_buffer.ptr -= overflow_len;
   }
 
-  if (total_rx_size >= MAX_EP1_CHUNK_PER_BULK_TRANSFER) {
-    // We ran out of space for this transaction, prepare for the next one
-    total_rx_size = 0U;
-    add_magic = true;
-  } else {
+  if ((total_rx_size + pos) < MAX_EP1_CHUNK_PER_BULK_TRANSFER) {
     // Fill rest of buffer with new data
     CANPacket_t can_packet;
     while ((pos < max_len) && can_pop(&can_rx_q, &can_packet)) {
@@ -99,15 +98,19 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
         pos = max_len;
       }
     }
-    total_rx_size += pos;
   }
 
   if (pos != max_len) {
     // Final packet for this transaction, prepare for the next one
-    total_rx_size = 0U;
     add_magic = true;
   }
 
+  if (added_magic && (pos == sizeof(uint32_t))) {
+    // Magic alone doesn't make sense
+    pos = 0U;
+  }
+
+  total_rx_size += pos;
   return pos;
 }
 
