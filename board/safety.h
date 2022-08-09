@@ -469,7 +469,7 @@ float interpolate(struct lookup_t xy, float x) {
 
 
 
-bool steering_checks(int desired_torque, const SteeringLimits limits) {
+bool steering_checks(int desired_torque, bool steer_req, const SteeringLimits limits) {
   bool violation = false;
   uint32_t ts = microsecond_timer_get();
 
@@ -496,6 +496,7 @@ bool steering_checks(int desired_torque, const SteeringLimits limits) {
 
   // no torque if controls is not allowed
   if (!controls_allowed && (desired_torque != 0)) {
+  //if ((!controls_allowed || !steer_req) && (desired_torque != 0)) {
     violation = true;
   }
 
