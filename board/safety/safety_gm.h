@@ -70,7 +70,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     }
 
     // ACC steering wheel buttons
-    if (addr == 481) {
+    if ((addr == 481) && (gm_hw != GM_CAM)) {
       int button = (GET_BYTE(to_push, 5) & 0x70U) >> 4;
 
       // exit controls on cancel press
@@ -97,6 +97,18 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 
     if (addr == 452) {
       gas_pressed = GET_BYTE(to_push, 5) != 0U;
+
+      // enter controls on rising edge of ACC, exit controls when ACC off
+      if (gm_hw == GM_CAM) {
+        int cruise_engaged = (GET_BYTE(to_push, 1) >> 5) != 0;
+        if (!cruise_engaged) {
+          controls_allowed = 0;
+        }
+        if (cruise_engaged && !cruise_engaged_prev) {
+          controls_allowed = 1;
+        }
+        cruise_engaged_prev = cruise_engaged;
+      }
     }
 
     // Regen is braking

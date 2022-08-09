@@ -28,7 +28,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
-  STOCK_LONG = False
 
   MAX_RATE_UP = 7
   MAX_RATE_DOWN = 17
@@ -56,10 +55,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     values = {"%sWheelSpd" % s: speed for s in ["RL", "RR"]}
     return self.packer.make_can_msg_panda("EBCMWheelSpdRear", 0, values)
 
-  def _button_msg(self, buttons):
-    values = {"ACCButtons": buttons}
-    return self.packer.make_can_msg_panda("ASCMSteeringButton", 0, values)
-
   def _user_brake_msg(self, brake):
     # GM safety has a brake threshold of 10
     values = {"BrakePedalPosition": 10 if brake else 0}
@@ -85,40 +80,21 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     values = {"LKASteeringCmd": torque}
     return self.packer.make_can_msg_panda("ASCMLKASteeringCmd", 0, values)
 
-  def test_set_resume_buttons(self):
-    """
-      SET and RESUME enter controls allowed on their falling edge.
-    """
-    for btn in range(8):
-      self.safety.set_controls_allowed(0)
-      for _ in range(10):
-        self._rx(self._button_msg(btn))
-        self.assertFalse(self.safety.get_controls_allowed())
 
-      # should enter controls allowed on falling edge
-      if btn in (Buttons.RES_ACCEL, Buttons.DECEL_SET):
-        self._rx(self._button_msg(Buttons.UNPRESS))
-        self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_cancel_button(self):
-    self.safety.set_controls_allowed(1)
-    self._rx(self._button_msg(Buttons.CANCEL))
-    self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_brake_safety_check(self):
+  def test_brake_safety_check(self, stock_longitudinal=False):
     for enabled in [0, 1]:
       for b in range(0, 500):
         self.safety.set_controls_allowed(enabled)
-        if abs(b) > MAX_BRAKE or (not enabled and b != 0) or self.STOCK_LONG:
+        if abs(b) > MAX_BRAKE or (not enabled and b != 0) or stock_longitudinal:
           self.assertFalse(self._tx(self._send_brake_msg(b)))
         else:
           self.assertTrue(self._tx(self._send_brake_msg(b)))
 
-  def test_gas_safety_check(self):
+  def test_gas_safety_check(self, stock_longitudinal=False):
     for enabled in [0, 1]:
       for g in range(0, 2**12 - 1):
         self.safety.set_controls_allowed(enabled)
-        if abs(g) > MAX_GAS or (not enabled and g != MAX_REGEN) or self.STOCK_LONG:
+        if abs(g) > MAX_GAS or (not enabled and g != MAX_REGEN) or stock_longitudinal:
           self.assertFalse(self._tx(self._send_gas_msg(g)))
         else:
           self.assertTrue(self._tx(self._send_gas_msg(g)))
@@ -197,6 +173,30 @@ class TestGmSafety(TestGmSafetyBase):
   def _pcm_status_msg(self, enable):
     raise NotImplementedError
 
+  def _button_msg(self, buttons):
+    values = {"ACCButtons": buttons}
+    return self.packer.make_can_msg_panda("ASCMSteeringButton", 0, values)
+
+  def test_set_resume_buttons(self):
+    """
+      SET and RESUME enter controls allowed on their falling edge.
+    """
+    for btn in range(8):
+      self.safety.set_controls_allowed(0)
+      for _ in range(10):
+        self._rx(self._button_msg(btn))
+        self.assertFalse(self.safety.get_controls_allowed())
+
+      # should enter controls allowed on falling edge
+      if btn in (Buttons.RES_ACCEL, Buttons.DECEL_SET):
+        self._rx(self._button_msg(Buttons.UNPRESS))
+        self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_cancel_button(self):
+    self.safety.set_controls_allowed(1)
+    self._rx(self._button_msg(Buttons.CANCEL))
+    self.assertFalse(self.safety.get_controls_allowed())
+
 
 class TestGmCameraSafety(TestGmSafetyBase):
   """Harness is integrated at the camera, we only need to send steering messages, forward the rest"""
@@ -204,7 +204,6 @@ class TestGmCameraSafety(TestGmSafetyBase):
   TX_MSGS = [[384, 0]]  # pt bus
   FWD_BLACKLISTED_ADDRS = {2: [384]}  # LKAS message, ACC messages are (715, 880, 789)
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
-  STOCK_LONG = True
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -215,7 +214,14 @@ class TestGmCameraSafety(TestGmSafetyBase):
 
   # TODO: implement this
   def _pcm_status_msg(self, enable):
-    raise NotImplementedError
+    values = {"CruiseState": enable}
+    return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
+
+  def test_brake_safety_check(self, stock_longitudinal=True):
+    super().test_brake_safety_check(stock_longitudinal=stock_longitudinal)
+
+  def test_gas_safety_check(self, stock_longitudinal=True):
+    super().test_gas_safety_check(stock_longitudinal=stock_longitudinal)
 
 
 if __name__ == "__main__":
