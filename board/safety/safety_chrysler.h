@@ -84,7 +84,7 @@ const CanMsg CHRYSLER_TX_MSGS[] = {
   {CHRYSLER_ADDRS.DAS_6, 0, 8},
 };
 
-const CanMsg CHRYSLER_RAM_TX_MSGS[] = {
+const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
   {CHRYSLER_RAM_DT_ADDRS.CRUISE_BUTTONS, 2, 3},
   {CHRYSLER_RAM_DT_ADDRS.LKAS_COMMAND, 0, 8},
   {CHRYSLER_RAM_DT_ADDRS.DAS_6, 0, 8},
@@ -106,14 +106,14 @@ AddrCheckStruct chrysler_addr_checks[] = {
 };
 #define CHRYSLER_ADDR_CHECK_LEN (sizeof(chrysler_addr_checks) / sizeof(chrysler_addr_checks[0]))
 
-AddrCheckStruct chrysler_ram_addr_checks[] = {
+AddrCheckStruct chrysler_ram_dt_addr_checks[] = {
   {.msg = {{CHRYSLER_RAM_DT_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_DT_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_DT_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_DT_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_DT_ADDRS.DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
-#define CHRYSLER_RAM_ADDR_CHECK_LEN (sizeof(chrysler_ram_addr_checks) / sizeof(chrysler_ram_addr_checks[0]))
+#define CHRYSLER_RAM_DT_ADDR_CHECK_LEN (sizeof(chrysler_ram_dt_addr_checks) / sizeof(chrysler_ram_dt_addr_checks[0]))
 
 AddrCheckStruct chrysler_ram_hd_addr_checks[] = {
   {.msg = {{CHRYSLER_RAM_HD_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -133,7 +133,7 @@ const uint32_t CHRYSLER_PARAM_RAM_HD = 2U;  // set for Ram DT platform
 enum {
   CHRYSLER_RAM_DT,
   CHRYSLER_RAM_HD,
-  CHRYSLER_PACIFICA,
+  CHRYSLER_PACIFICA,  // plus Jeep
 } chrysler_platform = CHRYSLER_PACIFICA;
 const ChryslerAddrs *chrysler_addrs = &CHRYSLER_ADDRS;
 
@@ -244,7 +244,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   int addr = GET_ADDR(to_send);
 
   if (chrysler_platform == CHRYSLER_RAM_DT) {
-    tx = msg_allowed(to_send, CHRYSLER_RAM_TX_MSGS, sizeof(CHRYSLER_RAM_TX_MSGS) / sizeof(CHRYSLER_RAM_TX_MSGS[0]));
+    tx = msg_allowed(to_send, CHRYSLER_RAM_DT_TX_MSGS, sizeof(CHRYSLER_RAM_DT_TX_MSGS) / sizeof(CHRYSLER_RAM_DT_TX_MSGS[0]));
   } else if (chrysler_platform == CHRYSLER_RAM_HD) {
     tx = msg_allowed(to_send, CHRYSLER_RAM_HD_TX_MSGS, sizeof(CHRYSLER_RAM_HD_TX_MSGS) / sizeof(CHRYSLER_RAM_HD_TX_MSGS[0]));
   } else {
@@ -299,7 +299,7 @@ static const addr_checks* chrysler_init(uint16_t param) {
   if (GET_FLAG(param, CHRYSLER_PARAM_RAM_DT)) {
     chrysler_platform = CHRYSLER_RAM_DT;
     chrysler_addrs = &CHRYSLER_RAM_DT_ADDRS;
-    chrysler_rx_checks = (addr_checks){chrysler_ram_addr_checks, CHRYSLER_RAM_ADDR_CHECK_LEN};
+    chrysler_rx_checks = (addr_checks){chrysler_ram_dt_addr_checks, CHRYSLER_RAM_DT_ADDR_CHECK_LEN};
   } else if (GET_FLAG(param, CHRYSLER_PARAM_RAM_HD)) {
 #ifdef ALLOW_DEBUG
     chrysler_platform = CHRYSLER_RAM_HD;
