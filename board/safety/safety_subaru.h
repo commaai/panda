@@ -6,6 +6,7 @@ const SteeringLimits SUBARU_STEERING_LIMITS = {
   .max_rate_down = 70,
   .driver_torque_factor = 50,
   .driver_torque_allowance = 60,
+  .type = TorqueDriverLimited,
 };
 
 const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
@@ -16,6 +17,7 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
   .max_rate_down = 40,
   .driver_torque_factor = 50,
   .driver_torque_allowance = 60,
+  .type = TorqueDriverLimited,
 };
 
 const int SUBARU_STANDSTILL_THRSLD = 20;  // about 1kph
@@ -146,7 +148,7 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     desired_torque = -1 * to_signed(desired_torque, 13);
 
     const SteeringLimits limits = subaru_gen2 ? SUBARU_GEN2_STEERING_LIMITS : SUBARU_STEERING_LIMITS;
-    if (steer_torque_cmd_checks(desired_torque, limits)) {
+    if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
       tx = 0;
     }
 

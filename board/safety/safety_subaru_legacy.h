@@ -6,6 +6,7 @@ const SteeringLimits SUBARU_L_STEERING_LIMITS = {
   .max_rate_down = 70,
   .driver_torque_factor = 10,
   .driver_torque_allowance = 75,
+  .type = TorqueDriverLimited,
 };
 
 const CanMsg SUBARU_L_TX_MSGS[] = {
@@ -83,7 +84,7 @@ static int subaru_legacy_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
     int desired_torque = ((GET_BYTES_04(to_send) >> 8) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
-    if (steer_torque_cmd_checks(desired_torque, SUBARU_L_STEERING_LIMITS)) {
+    if (steer_torque_cmd_checks(desired_torque, -1, SUBARU_L_STEERING_LIMITS)) {
       tx = 0;
     }
 

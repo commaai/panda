@@ -6,6 +6,7 @@ const SteeringLimits HYUNDAI_HDA2_STEERING_LIMITS = {
   .max_rate_down = 7,
   .driver_torque_allowance = 250,
   .driver_torque_factor = 2,
+  .type = TorqueDriverLimited,
 };
 
 const uint32_t HYUNDAI_HDA2_STANDSTILL_THRSLD = 30;  // ~1kph
@@ -154,7 +155,7 @@ static int hyundai_hda2_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed)
     int desired_torque = ((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U);
     desired_torque -= 1024;
 
-    if (steer_torque_cmd_checks(desired_torque, HYUNDAI_HDA2_STEERING_LIMITS)) {
+    if (steer_torque_cmd_checks(desired_torque, -1, HYUNDAI_HDA2_STEERING_LIMITS)) {
       tx = 0;
     }
   }
