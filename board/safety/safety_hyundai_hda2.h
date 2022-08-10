@@ -1,10 +1,13 @@
-const int HYUNDAI_HDA2_MAX_STEER = 270;
-const int HYUNDAI_HDA2_MAX_RT_DELTA = 112;          // max delta torque allowed for real time checks
-const uint32_t HYUNDAI_HDA2_RT_INTERVAL = 250000;   // 250ms between real time checks
-const int HYUNDAI_HDA2_MAX_RATE_UP = 3;
-const int HYUNDAI_HDA2_MAX_RATE_DOWN = 7;
-const int HYUNDAI_HDA2_DRIVER_TORQUE_ALLOWANCE = 250;
-const int HYUNDAI_HDA2_DRIVER_TORQUE_FACTOR = 2;
+const SteeringLimits HYUNDAI_HDA2_STEERING_LIMITS = {
+  .max_steer = 270,
+  .max_rt_delta = 112,
+  .max_rt_interval = 250000,
+  .max_rate_up = 3,
+  .max_rate_down = 7,
+  .driver_torque_allowance = 250,
+  .driver_torque_factor = 2,
+};
+
 const uint32_t HYUNDAI_HDA2_STANDSTILL_THRSLD = 30;  // ~1kph
 
 const CanMsg HYUNDAI_HDA2_TX_MSGS[] = {
@@ -150,45 +153,8 @@ static int hyundai_hda2_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed)
   if ((addr == 0x50) && (bus == 0)) {
     int desired_torque = ((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U);
     desired_torque -= 1024;
-    uint32_t ts = microsecond_timer_get();
-    bool violation = 0;
 
-    if (controls_allowed) {
-      // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, HYUNDAI_HDA2_MAX_STEER, -HYUNDAI_HDA2_MAX_STEER);
-
-      // *** torque rate limit check ***
-      violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-                                      HYUNDAI_HDA2_MAX_STEER, HYUNDAI_HDA2_MAX_RATE_UP, HYUNDAI_HDA2_MAX_RATE_DOWN,
-                                      HYUNDAI_HDA2_DRIVER_TORQUE_ALLOWANCE, HYUNDAI_HDA2_DRIVER_TORQUE_FACTOR);
-
-      // used next time
-      desired_torque_last = desired_torque;
-
-      // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, HYUNDAI_MAX_RT_DELTA);
-
-      // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
-      if (ts_elapsed > HYUNDAI_RT_INTERVAL) {
-        rt_torque_last = desired_torque;
-        ts_last = ts;
-      }
-    }
-
-    // no torque if controls is not allowed
-    if (!controls_allowed && (desired_torque != 0)) {
-      violation = 1;
-    }
-
-    // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !controls_allowed) {
-      desired_torque_last = 0;
-      rt_torque_last = 0;
-      ts_last = ts;
-    }
-
-    if (violation) {
+    if (steer_torque_cmd_checks(desired_torque, HYUNDAI_HDA2_STEERING_LIMITS)) {
       tx = 0;
     }
   }

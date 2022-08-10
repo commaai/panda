@@ -466,3 +466,44 @@ float interpolate(struct lookup_t xy, float x) {
   }
   return ret;
 }
+
+// Steer torque command checks for driver torque limited cars
+bool steer_torque_cmd_checks(int desired_torque, const SteeringLimits limits) {
+  bool violation = false;
+  uint32_t ts = microsecond_timer_get();
+
+  if (controls_allowed) {
+    // *** global torque limit check ***
+    violation |= max_limit_check(desired_torque, limits.max_steer, -limits.max_steer);
+
+    // *** torque rate limit check ***
+    violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
+                                    limits.max_steer, limits.max_rate_up, limits.max_rate_down,
+                                    limits.driver_torque_allowance, limits.driver_torque_factor);
+    desired_torque_last = desired_torque;
+
+    // *** torque real time rate limit check ***
+    violation |= rt_rate_limit_check(desired_torque, rt_torque_last, limits.max_rt_delta);
+
+    // every RT_INTERVAL set the new limits
+    uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
+    if (ts_elapsed > limits.max_rt_interval) {
+      rt_torque_last = desired_torque;
+      ts_last = ts;
+    }
+  }
+
+  // no torque if controls is not allowed
+  if (!controls_allowed && (desired_torque != 0)) {
+    violation = true;
+  }
+
+  // reset to 0 if either controls is not allowed or there's a violation
+  if (violation || !controls_allowed) {
+    desired_torque_last = 0;
+    rt_torque_last = 0;
+    ts_last = ts;
+  }
+
+  return violation;
+}
