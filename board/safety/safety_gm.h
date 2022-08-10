@@ -25,7 +25,8 @@ const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715,
                                   {789, 2, 5},  // ch bus
                                   {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
 
-const CanMsg GM_CAM_TX_MSGS[] = {{384, 0, 4}};  // pt bus
+const CanMsg GM_CAM_TX_MSGS[] = {{384, 0, 4},  // pt bus
+                                 {481, 2, 7}};  // camera bus
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 AddrCheckStruct gm_addr_checks[] = {
@@ -237,6 +238,17 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       tx = 0;
     }
   }
+
+//  // BUTTONS: used for resume spamming and cruise cancellation
+//  if ((addr == 481) && (gm_hw == GM_CAM)) {
+//    int button = GET_BYTE(to_send, 0) & 0x7U;
+//
+//    bool allowed_resume = (button == 1) && controls_allowed;
+//    bool allowed_cancel = (button == 4) && cruise_engaged_prev;
+//    if (!(allowed_resume || allowed_cancel)) {
+//      tx = 0;
+//    }
+//  }
 
   // 1 allows the message through
   return tx;
