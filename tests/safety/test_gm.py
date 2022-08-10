@@ -19,15 +19,9 @@ class Buttons:
 
 
 class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
-  TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
-             [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
-             [789, 2],  # ch bus
-             [0x104c006c, 3], [0x10400060, 3]]  # gmlan
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}
-  FWD_BUS_LOOKUP: Dict[int, int] = {}
 
   MAX_RATE_UP = 7
   MAX_RATE_DOWN = 17
@@ -153,7 +147,13 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
         self._rx(self._user_gas_msg(0))
 
 
-class TestGmSafety(TestGmSafetyBase):
+class TestGmAscmSafety(TestGmSafetyBase):
+  TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
+             [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
+             [789, 2],  # ch bus
+             [0x104c006c, 3], [0x10400060, 3]]  # gmlan
+  FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}
+  FWD_BUS_LOOKUP: Dict[int, int] = {}
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -201,8 +201,6 @@ class TestGmSafety(TestGmSafetyBase):
 
 
 class TestGmCameraSafety(TestGmSafetyBase):
-  """Harness is integrated at the camera, we only need to send steering messages, forward the rest"""
-
   TX_MSGS = [[384, 0]]  # pt bus
   FWD_BLACKLISTED_ADDRS = {2: [384]}  # LKAS message, ACC messages are (715, 880, 789)
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
