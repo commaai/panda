@@ -469,7 +469,7 @@ float interpolate(struct lookup_t xy, float x) {
 
 
 // Steer torque command checks for driver torque limited cars
-bool steer_torque_cmd_checks(int desired_torque, const SteeringLimits limits) {
+bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits) {
   bool violation = false;
   uint32_t ts = microsecond_timer_get();
 
@@ -478,7 +478,7 @@ bool steer_torque_cmd_checks(int desired_torque, const SteeringLimits limits) {
     violation |= max_limit_check(desired_torque, limits.max_steer, -limits.max_steer);
 
     // *** torque rate limit check ***
-    if (limits.type == TorqueDriver) {
+    if (limits.type == TorqueDriverLimited) {
       violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
                                       limits.max_steer, limits.max_rate_up, limits.max_rate_down,
                                       limits.driver_torque_allowance, limits.driver_torque_factor);
@@ -501,6 +501,11 @@ bool steer_torque_cmd_checks(int desired_torque, const SteeringLimits limits) {
 
   // no torque if controls is not allowed
   if (!controls_allowed && (desired_torque != 0)) {
+    violation = true;
+  }
+
+  // no torque if request bit isn't high
+  if ((steer_req == 0) && (desired_torque != 0)) {
     violation = true;
   }
 

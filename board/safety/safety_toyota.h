@@ -5,9 +5,8 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
   .max_torque_error = 350,    // max torque cmd in excess of motor torque
   .max_rt_delta = 450,        // the real time limit is 1800/sec, a 20% buffer
   .max_rt_interval = 250000,
-  .type = TorqueMotor,
+  .type = TorqueMotorLimited,
 };
-const int TOYOTA_MAX_TORQUE = 1500;
 
 // longitudinal limits
 const int TOYOTA_MAX_ACCEL = 2000;        // 2.0 m/s2
@@ -212,8 +211,8 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     if (addr == 0x2E4) {
       int desired_torque = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
       desired_torque = to_signed(desired_torque, 16);
-      //bool steer_req = GET_BIT(to_send, 0U) != 0U;
-      if (steer_torque_cmd_checks(desired_torque, TOYOTA_STEERING_LIMITS)) {
+      bool steer_req = GET_BIT(to_send, 0U) != 0U;
+      if (steer_torque_cmd_checks(desired_torque, steer_req, TOYOTA_STEERING_LIMITS)) {
         tx = 0;
       }
     }

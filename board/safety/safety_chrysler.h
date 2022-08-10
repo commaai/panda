@@ -1,14 +1,25 @@
-const int CHRYSLER_MAX_STEER = 261;
-const int CHRYSLER_MAX_RT_DELTA = 112;         // max delta torque allowed for real time checks
-const uint32_t CHRYSLER_RT_INTERVAL = 250000;  // 250ms between real time checks
-const int CHRYSLER_MAX_RATE_UP = 3;
-const int CHRYSLER_MAX_RATE_DOWN = 3;
-const int CHRYSLER_MAX_TORQUE_ERROR = 80;      // max torque cmd in excess of torque motor
+const SteeringLimits CHRYSLER_STEERING_LIMITS = {
+  .max_steer = 261,
+  .max_rt_delta = 112,
+  .max_rt_interval = 250000,
+  .max_rate_up = 3,
+  .max_rate_down = 3,
+  .max_torque_error = 80,
+  .type = TorqueMotorLimited,
+};
+
+const SteeringLimits CHRYSLER_RAM_DT_STEERING_LIMITS = {
+  .max_steer = 261,
+  .max_rt_delta = 112,
+  .max_rt_interval = 250000,
+  .max_rate_up = 6,
+  .max_rate_down = 6,
+  .max_torque_error = 80,
+  .type = TorqueMotorLimited,
+};
+
 const int CHRYSLER_STANDSTILL_THRSLD = 10;     // about 1m/s
 const int CHRYSLER_RAM_STANDSTILL_THRSLD = 3;  // about 1m/s changed from wheel rpm to km/h
-
-const int CHRYSLER_RAM_MAX_RATE_UP = 6;
-const int CHRYSLER_RAM_MAX_RATE_DOWN = 6;
 
 typedef struct {
   const int EPS_2;
@@ -201,46 +212,8 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     int desired_torque = ((GET_BYTE(to_send, start_byte) & 0x7U) << 8) | GET_BYTE(to_send, start_byte + 1);
     desired_torque -= 1024;
 
-    uint32_t ts = microsecond_timer_get();
-    bool violation = 0;
-
-    if (controls_allowed) {
-      // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, CHRYSLER_MAX_STEER, -CHRYSLER_MAX_STEER);
-
-      // *** torque rate limit check ***
-      const int max_rate_up = chrysler_ram ? CHRYSLER_RAM_MAX_RATE_UP : CHRYSLER_MAX_RATE_UP;
-      const int max_rate_down = chrysler_ram ? CHRYSLER_RAM_MAX_RATE_DOWN : CHRYSLER_MAX_RATE_DOWN;
-      violation |= dist_to_meas_check(desired_torque, desired_torque_last,
-        &torque_meas, max_rate_up, max_rate_down, CHRYSLER_MAX_TORQUE_ERROR);
-
-      // used next time
-      desired_torque_last = desired_torque;
-
-      // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, CHRYSLER_MAX_RT_DELTA);
-
-      // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
-      if (ts_elapsed > CHRYSLER_RT_INTERVAL) {
-        rt_torque_last = desired_torque;
-        ts_last = ts;
-      }
-    }
-
-    // no torque if controls is not allowed
-    if (!controls_allowed && (desired_torque != 0)) {
-      violation = 1;
-    }
-
-    // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !controls_allowed) {
-      desired_torque_last = 0;
-      rt_torque_last = 0;
-      ts_last = ts;
-    }
-
-    if (violation) {
+    const SteeringLimits limits = chrysler_ram ? CHRYSLER_RAM_DT_STEERING_LIMITS : CHRYSLER_STEERING_LIMITS;
+    if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
       tx = 0;
     }
   }
