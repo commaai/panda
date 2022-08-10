@@ -6,6 +6,7 @@ const SteeringLimits VOLKSWAGEN_PQ_STEERING_LIMITS = {
   .max_rate_down = 10,             // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
   .driver_torque_factor = 3,
   .driver_torque_allowance = 80,
+  .type = TorqueDriverLimited,
 };
 
 #define MSG_LENKHILFE_3 0x0D0   // RX from EPS, for steering angle and driver steering torque
@@ -135,7 +136,7 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
       desired_torque *= -1;
     }
 
-    if (steer_torque_cmd_checks(desired_torque, VOLKSWAGEN_PQ_STEERING_LIMITS)) {
+    if (steer_torque_cmd_checks(desired_torque, -1, VOLKSWAGEN_PQ_STEERING_LIMITS)) {
       tx = 0;
     }
   }

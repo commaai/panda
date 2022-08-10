@@ -7,6 +7,7 @@ const SteeringLimits VOLKSWAGEN_MQB_STEERING_LIMITS = {
   .max_rate_down = 10,           // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
   .driver_torque_allowance = 80,
   .driver_torque_factor = 3,
+  .type = TorqueDriverLimited,
 };
 
 #define MSG_ESP_19      0x0B2   // RX from ABS, for wheel speeds
@@ -166,7 +167,7 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send, bool longitudinal_allowe
       desired_torque *= -1;
     }
 
-    if (steer_torque_cmd_checks(desired_torque, VOLKSWAGEN_MQB_STEERING_LIMITS)) {
+    if (steer_torque_cmd_checks(desired_torque, -1, VOLKSWAGEN_MQB_STEERING_LIMITS)) {
       tx = 0;
     }
   }
