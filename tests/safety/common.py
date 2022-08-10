@@ -431,7 +431,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     for bus in range(0, 4):
       for addr in self.SCANNED_ADDRS:
         if all(addr != m[0] or bus != m[1] for m in self.TX_MSGS):
-          self.assertFalse(self._tx(make_msg(bus, addr, 8)))
+          self.assertFalse(self._tx(make_msg(bus, addr, 8)), f"allowed TX {addr=} {bus=}")
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
