@@ -122,7 +122,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     if ((gm_hw == GM_ASCM) && (addr == 715)) {
       stock_ecu_detected = true;
     }
-    generic_rx_checks((stock_ecu_detected);
+    generic_rx_checks(stock_ecu_detected);
   }
   return valid;
 }
@@ -246,13 +246,13 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
   int bus_fwd = -1;
 
-  // if camera does LKAS/ACC, forward all messages except LKAS from camera (stock longitudinal)
-  if (gm_hw == GM_CAM) {
+  if (gm_hw != GM_ASCM) {
     if (bus_num == 0) {
       bus_fwd = 2;
     }
 
     if (bus_num == 2) {
+      // block lkas message, forward all others (including ACC messages)
       int addr = GET_ADDR(to_fwd);
       bool is_lkas_msg = (addr == 384);
       if (!is_lkas_msg) {
@@ -263,7 +263,6 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
   return bus_fwd;
 }
-
 
 static const addr_checks* gm_init(uint16_t param) {
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
