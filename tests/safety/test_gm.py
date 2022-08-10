@@ -162,7 +162,7 @@ class TestGmAscmSafety(TestGmSafetyBase):
     self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
     self.safety.init_tests()
 
-  # override these tests from PandaSafetyTest, GM uses button enable
+  # override these tests from PandaSafetyTest, ASCM GM uses button enable
   def test_disable_control_allowed_from_cruise(self):
     pass
 
@@ -214,7 +214,7 @@ class TestGmCameraSafety(TestGmSafetyBase):
 
   def _user_gas_msg(self, gas):
     # FIXME: be careful with tests that use _user_gas_msg, we set CruiseState=1 so that
-    # certain gas tests aren't impacted by this safety mode's use of PCM cruise in the same message
+    # certain gas tests aren't impacted by this safety mode's use of cruise state in the same message
     values = {"AcceleratorPedal2": 1 if gas else 0, "CruiseState": 1}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
@@ -222,6 +222,7 @@ class TestGmCameraSafety(TestGmSafetyBase):
     values = {"CruiseState": enable}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
+  # Uses stock longitudinal, allow no longitudinal actuation
   def test_brake_safety_check(self, stock_longitudinal=True):
     super().test_brake_safety_check(stock_longitudinal=stock_longitudinal)
 
