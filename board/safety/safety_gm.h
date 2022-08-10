@@ -69,8 +69,8 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       vehicle_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
     }
 
-    // ACC steering wheel buttons
-    if ((addr == 481) && (gm_hw != GM_CAM)) {
+    // ACC steering wheel buttons (GM_CAM is tied to the PCM)
+    if ((addr == 481) && (gm_hw == GM_ASCM)) {
       int button = (GET_BYTE(to_push, 5) & 0x70U) >> 4;
 
       // exit controls on cancel press
@@ -116,12 +116,13 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       brake_pressed |= GET_BYTE(to_push, 0) & 0x20U;
     }
 
-    // Check if ASCM or LKA camera are online
-    // on powertrain bus.
-    // 384 = ASCMLKASteeringCmd
-    // 715 = ASCMGasRegenCmd
-    // Allow ACC if using stock long
-    generic_rx_checks(((addr == 384) || ((gm_hw == GM_ASCM) && (addr == 715))));
+    bool stock_ecu_detected = (addr == 384);  // ASCMLKASteeringCmd
+
+    // Only check ASCMGasRegenCmd if ASCM, GM_CAM uses stock longitudinal
+    if ((gm_hw == GM_ASCM) && (addr == 715)) {
+      stock_ecu_detected = true;
+    }
+    generic_rx_checks((stock_ecu_detected);
   }
   return valid;
 }
