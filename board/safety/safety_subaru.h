@@ -6,6 +6,7 @@ const SteeringLimits SUBARU_STEERING_LIMITS = {
   .max_rate_down = 70,
   .driver_torque_factor = 50,
   .driver_torque_allowance = 60,
+  .type = TorqueDriver,
 };
 
 const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
@@ -16,6 +17,7 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
   .max_rate_down = 40,
   .driver_torque_factor = 50,
   .driver_torque_allowance = 60,
+  .type = TorqueDriver,
 };
 
 const int SUBARU_STANDSTILL_THRSLD = 20;  // about 1kph

@@ -6,6 +6,7 @@ const SteeringLimits HYUNDAI_HDA2_STEERING_LIMITS = {
   .max_rate_down = 7,
   .driver_torque_allowance = 250,
   .driver_torque_factor = 2,
+  .type = TorqueDriver,
 };
 
 const uint32_t HYUNDAI_HDA2_STANDSTILL_THRSLD = 30;  // ~1kph

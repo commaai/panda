@@ -6,6 +6,7 @@ const SteeringLimits SUBARU_L_STEERING_LIMITS = {
   .max_rate_down = 70,
   .driver_torque_factor = 10,
   .driver_torque_allowance = 75,
+  .type = TorqueDriver,
 };
 
 const CanMsg SUBARU_L_TX_MSGS[] = {
