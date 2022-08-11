@@ -80,7 +80,6 @@ class TestChryslerRamDTSafety(TestChryslerSafety):
 
   MAX_RATE_UP = 6
   MAX_RATE_DOWN = 6
-  MAX_RT_DELTA = 112
 
   DAS_BUS = 2
 
