@@ -24,6 +24,7 @@ void fan_tick(void){
   float error = fan_target_rpm - fan_rpm_fast;
 
   fan_error_integral += FAN_I * error;
+  fan_error_integral = MIN(70.0f, MAX(-70.0f, fan_error_integral));
   
   uint8_t output = MIN(100U, MAX(0U, feedforward + fan_error_integral));
   pwm_set(TIM3, 3, output);
