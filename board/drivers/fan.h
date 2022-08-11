@@ -8,8 +8,7 @@ uint16_t fan_target_rpm = 0U;
 float fan_error_integral = 0.0f;
 
 void fan_set_power(uint8_t percentage){
-  percentage = MIN(100U, MAX(0U, percentage));
-  fan_target_rpm = ((FAN_MAX_RPM * percentage) / 100U);
+  fan_target_rpm = ((FAN_MAX_RPM * MIN(100U, MAX(0U, percentage))) / 100U);
 }
 
 // Call this at 8Hz
