@@ -56,9 +56,9 @@ int main(void) {
   SHA_hash(&_app_start[1], len-4, digest);
 
   // verify version, last bytes in the signed area
-  uint32_t vers[2] = {0};
+  uint32_t vers[3] = {0};
   memcpy(&vers, ((void*)&_app_start[0]) + len - sizeof(vers), sizeof(vers));
-  if (vers[0] != VERS_TAG || vers[1] < MIN_VERSION) {
+  if (vers[0] != MCU_IDCODE || vers[1] != VERS_TAG || vers[2] < MIN_VERSION) {
     goto fail;
   }
 

@@ -13,6 +13,7 @@ build_projects["pedal"] = {
   "STARTUP_FILE": "stm32fx/startup_stm32f205xx.s",
   "LINKER_SCRIPT": "stm32fx/stm32fx_flash.ld",
   "APP_START_ADDRESS": "0x8004000",
+  "MCU_IDCODE": 0x411,
   "PROJECT_FLAGS": [
     "-mcpu=cortex-m3",
     "-msoft-float",
@@ -31,6 +32,7 @@ build_projects["panda"] = {
   "STARTUP_FILE": "stm32fx/startup_stm32f413xx.s",
   "LINKER_SCRIPT": "stm32fx/stm32fx_flash.ld",
   "APP_START_ADDRESS": "0x8004000",
+  "MCU_IDCODE": 0x463,
   "PROJECT_FLAGS": [
     "-mcpu=cortex-m4",
     "-mhard-float",
@@ -49,6 +51,7 @@ build_projects["panda_h7"] = {
   "STARTUP_FILE": "stm32h7/startup_stm32h7x5xx.s",
   "LINKER_SCRIPT": "stm32h7/stm32h7x5_flash.ld",
   "APP_START_ADDRESS": "0x8020000",
+  "MCU_IDCODE": 0x483,
   "PROJECT_FLAGS": [
     "-mcpu=cortex-m7",
     "-mhard-float",
@@ -61,6 +64,7 @@ build_projects["panda_h7"] = {
     "-DPANDA",
   ],
 }
+
 
 if os.getenv("RELEASE"):
   BUILD_TYPE = "RELEASE"
@@ -187,4 +191,4 @@ for project_name in build_projects:
 
   # Sign main
   sign_py = File("../crypto/sign.py").srcnode().abspath
-  panda_bin_signed = project_env.Command(f"obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
+  panda_bin_signed = project_env.Command(f"obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn} {project['MCU_IDCODE']}")

@@ -82,6 +82,9 @@ test_black = parameterized([
 test_uno = parameterized([
     param(panda_type=Panda.HW_TYPE_UNO)
   ])
+test_red = parameterized([
+    param(panda_type=Panda.HW_TYPE_RED_PANDA)
+  ])
 
 def time_many_sends(p, bus, p_recv=None, msg_count=100, msg_id=None, two_pandas=False):
   if p_recv == None:
