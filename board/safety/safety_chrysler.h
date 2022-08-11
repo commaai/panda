@@ -18,6 +18,16 @@ const SteeringLimits CHRYSLER_RAM_DT_STEERING_LIMITS = {
   .type = TorqueMotorLimited,
 };
 
+const SteeringLimits CHRYSLER_RAM_HD_STEERING_LIMITS = {
+  .max_steer = 361,
+  .max_rt_delta = 182,
+  .max_rt_interval = 250000,
+  .max_rate_up = 14,
+  .max_rate_down = 14,
+  .max_torque_error = 80,
+  .type = TorqueMotorLimited,
+};
+
 const int CHRYSLER_STANDSTILL_THRSLD = 10;     // about 1m/s
 const int CHRYSLER_RAM_STANDSTILL_THRSLD = 3;  // about 1m/s changed from wheel rpm to km/h
 
@@ -44,7 +54,7 @@ const ChryslerAddrs CHRYSLER_ADDRS = {
   .CRUISE_BUTTONS   = 571,  // Cruise control buttons
 };
 
-// CAN messages for the 5h gen RAM DT platform
+// CAN messages for the 5th gen RAM DT platform
 const ChryslerAddrs CHRYSLER_RAM_DT_ADDRS = {
   .EPS_2            = 49,   // EPS driver input torque
   .ESP_1            = 131,  // Brake pedal and vehicle speed
@@ -56,42 +66,75 @@ const ChryslerAddrs CHRYSLER_RAM_DT_ADDRS = {
   .CRUISE_BUTTONS   = 177,  // Cruise control buttons
 };
 
+// CAN messages for the 5th gen RAM HD platform
+const ChryslerAddrs CHRYSLER_RAM_HD_ADDRS = {
+  .EPS_2            = 544,  // EPS driver input torque
+  .ESP_1            = 320,  // Brake pedal and vehicle speed
+  .ESP_8            = 284,  // Brake pedal and vehicle speed
+  .ECM_5            = 559,  // Throttle position sensor
+  .DAS_3            = 500,  // ACC engagement states from DASM
+  .DAS_6            = 629,  // LKAS HUD and auto headlight control from DASM
+  .LKAS_COMMAND     = 630,  // LKAS controls from DASM
+  .CRUISE_BUTTONS   = 570,  // Cruise control buttons
+};
+
 const CanMsg CHRYSLER_TX_MSGS[] = {
   {CHRYSLER_ADDRS.CRUISE_BUTTONS, 0, 3},
   {CHRYSLER_ADDRS.LKAS_COMMAND, 0, 6},
   {CHRYSLER_ADDRS.DAS_6, 0, 8},
 };
 
-const CanMsg CHRYSLER_RAM_TX_MSGS[] = {
+const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
   {CHRYSLER_RAM_DT_ADDRS.CRUISE_BUTTONS, 2, 3},
   {CHRYSLER_RAM_DT_ADDRS.LKAS_COMMAND, 0, 8},
   {CHRYSLER_RAM_DT_ADDRS.DAS_6, 0, 8},
 };
 
+const CanMsg CHRYSLER_RAM_HD_TX_MSGS[] = {
+  {CHRYSLER_RAM_HD_ADDRS.CRUISE_BUTTONS, 2, 3},
+  {CHRYSLER_RAM_HD_ADDRS.LKAS_COMMAND, 0, 8},
+  {CHRYSLER_RAM_HD_ADDRS.DAS_6, 0, 8},
+};
+
 AddrCheckStruct chrysler_addr_checks[] = {
-  {.msg = {{CHRYSLER_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},  // EPS module
-  {.msg = {{CHRYSLER_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // brake pressed
-  //{.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // vehicle Speed
+  {.msg = {{CHRYSLER_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  //{.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
   {.msg = {{514, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // gas pedal
-  {.msg = {{CHRYSLER_ADDRS.DAS_3, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // cruise state
+  {.msg = {{CHRYSLER_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_ADDRS.DAS_3, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define CHRYSLER_ADDR_CHECK_LEN (sizeof(chrysler_addr_checks) / sizeof(chrysler_addr_checks[0]))
 
-AddrCheckStruct chrysler_ram_addr_checks[] = {
-  {.msg = {{CHRYSLER_RAM_DT_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},  // EPS module
-  {.msg = {{CHRYSLER_RAM_DT_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // brake pressed
-  {.msg = {{CHRYSLER_RAM_DT_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // vehicle Speed
-  {.msg = {{CHRYSLER_RAM_DT_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // gas pedal
-  {.msg = {{CHRYSLER_RAM_DT_ADDRS.DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // cruise state
+AddrCheckStruct chrysler_ram_dt_addr_checks[] = {
+  {.msg = {{CHRYSLER_RAM_DT_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_DT_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_DT_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_DT_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_DT_ADDRS.DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
-#define CHRYSLER_RAM_ADDR_CHECK_LEN (sizeof(chrysler_ram_addr_checks) / sizeof(chrysler_ram_addr_checks[0]))
+#define CHRYSLER_RAM_DT_ADDR_CHECK_LEN (sizeof(chrysler_ram_dt_addr_checks) / sizeof(chrysler_ram_dt_addr_checks[0]))
+
+AddrCheckStruct chrysler_ram_hd_addr_checks[] = {
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS.DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+};
+#define CHRYSLER_RAM_HD_ADDR_CHECK_LEN (sizeof(chrysler_ram_hd_addr_checks) / sizeof(chrysler_ram_hd_addr_checks[0]))
+
 
 addr_checks chrysler_rx_checks = {chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
 
 const uint32_t CHRYSLER_PARAM_RAM_DT = 1U;  // set for Ram DT platform
+const uint32_t CHRYSLER_PARAM_RAM_HD = 2U;  // set for Ram DT platform
 
-bool chrysler_ram = false;
+enum {
+  CHRYSLER_RAM_DT,
+  CHRYSLER_RAM_HD,
+  CHRYSLER_PACIFICA,  // plus Jeep
+} chrysler_platform = CHRYSLER_PACIFICA;
 const ChryslerAddrs *chrysler_addrs = &CHRYSLER_ADDRS;
 
 static uint32_t chrysler_get_checksum(CANPacket_t *to_push) {
@@ -154,7 +197,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    const int das_3_bus = chrysler_ram ? 2 : 0;
+    const int das_3_bus = (chrysler_platform == CHRYSLER_PACIFICA) ? 0 : 2;
     if ((bus == das_3_bus) && (addr == chrysler_addrs->DAS_3)) {
       int cruise_engaged = GET_BIT(to_push, 21U) == 1U;
       if (cruise_engaged && !cruise_engaged_prev) {
@@ -168,11 +211,11 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // TODO: use the same message for both
     // update speed
-    if (chrysler_ram && (bus == 0) && (addr == chrysler_addrs->ESP_8)) {
+    if ((chrysler_platform != CHRYSLER_PACIFICA) && (bus == 0) && (addr == chrysler_addrs->ESP_8)) {
       vehicle_speed = (((GET_BYTE(to_push, 4) & 0x3U) << 8) + GET_BYTE(to_push, 5))*0.0078125;
       vehicle_moving = (int)vehicle_speed > CHRYSLER_RAM_STANDSTILL_THRSLD;
     }
-    if (!chrysler_ram && (bus == 0) && (addr == 514)) {
+    if ((chrysler_platform == CHRYSLER_PACIFICA) && (bus == 0) && (addr == 514)) {
       int speed_l = (GET_BYTE(to_push, 0) << 4) + (GET_BYTE(to_push, 1) >> 4);
       int speed_r = (GET_BYTE(to_push, 2) << 4) + (GET_BYTE(to_push, 3) >> 4);
       vehicle_speed = (speed_l + speed_r) / 2;
@@ -200,19 +243,22 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
-  if (chrysler_ram) {
-    tx = msg_allowed(to_send, CHRYSLER_RAM_TX_MSGS, sizeof(CHRYSLER_RAM_TX_MSGS) / sizeof(CHRYSLER_RAM_TX_MSGS[0]));
+  if (chrysler_platform == CHRYSLER_RAM_DT) {
+    tx = msg_allowed(to_send, CHRYSLER_RAM_DT_TX_MSGS, sizeof(CHRYSLER_RAM_DT_TX_MSGS) / sizeof(CHRYSLER_RAM_DT_TX_MSGS[0]));
+  } else if (chrysler_platform == CHRYSLER_RAM_HD) {
+    tx = msg_allowed(to_send, CHRYSLER_RAM_HD_TX_MSGS, sizeof(CHRYSLER_RAM_HD_TX_MSGS) / sizeof(CHRYSLER_RAM_HD_TX_MSGS[0]));
   } else {
     tx = msg_allowed(to_send, CHRYSLER_TX_MSGS, sizeof(CHRYSLER_TX_MSGS) / sizeof(CHRYSLER_TX_MSGS[0]));
   }
 
   // STEERING
   if (tx && (addr == chrysler_addrs->LKAS_COMMAND)) {
-    int start_byte = chrysler_ram ? 1 : 0;
+    int start_byte = (chrysler_platform == CHRYSLER_PACIFICA) ? 0 : 1;
     int desired_torque = ((GET_BYTE(to_send, start_byte) & 0x7U) << 8) | GET_BYTE(to_send, start_byte + 1);
     desired_torque -= 1024;
 
-    const SteeringLimits limits = chrysler_ram ? CHRYSLER_RAM_DT_STEERING_LIMITS : CHRYSLER_STEERING_LIMITS;
+    const SteeringLimits limits = (chrysler_platform == CHRYSLER_PACIFICA) ? CHRYSLER_STEERING_LIMITS :
+                                  (chrysler_platform == CHRYSLER_RAM_DT) ? CHRYSLER_RAM_DT_STEERING_LIMITS : CHRYSLER_RAM_HD_STEERING_LIMITS;
     if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
       tx = 0;
     }
@@ -250,12 +296,18 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 }
 
 static const addr_checks* chrysler_init(uint16_t param) {
-  chrysler_ram = GET_FLAG(param, CHRYSLER_PARAM_RAM_DT);
-
-  if (chrysler_ram) {
+  if (GET_FLAG(param, CHRYSLER_PARAM_RAM_DT)) {
+    chrysler_platform = CHRYSLER_RAM_DT;
     chrysler_addrs = &CHRYSLER_RAM_DT_ADDRS;
-    chrysler_rx_checks = (addr_checks){chrysler_ram_addr_checks, CHRYSLER_RAM_ADDR_CHECK_LEN};
+    chrysler_rx_checks = (addr_checks){chrysler_ram_dt_addr_checks, CHRYSLER_RAM_DT_ADDR_CHECK_LEN};
+  } else if (GET_FLAG(param, CHRYSLER_PARAM_RAM_HD)) {
+#ifdef ALLOW_DEBUG
+    chrysler_platform = CHRYSLER_RAM_HD;
+    chrysler_addrs = &CHRYSLER_RAM_HD_ADDRS;
+    chrysler_rx_checks = (addr_checks){chrysler_ram_hd_addr_checks, CHRYSLER_RAM_HD_ADDR_CHECK_LEN};
+#endif
   } else {
+    chrysler_platform = CHRYSLER_PACIFICA;
     chrysler_addrs = &CHRYSLER_ADDRS;
     chrysler_rx_checks = (addr_checks){chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
   }
