@@ -1,23 +1,26 @@
-const int HYUNDAI_HDA2_MAX_STEER = 270;
-const int HYUNDAI_HDA2_MAX_RT_DELTA = 112;          // max delta torque allowed for real time checks
-const uint32_t HYUNDAI_HDA2_RT_INTERVAL = 250000;   // 250ms between real time checks
-const int HYUNDAI_HDA2_MAX_RATE_UP = 3;
-const int HYUNDAI_HDA2_MAX_RATE_DOWN = 7;
-const int HYUNDAI_HDA2_DRIVER_TORQUE_ALLOWANCE = 250;
-const int HYUNDAI_HDA2_DRIVER_TORQUE_FACTOR = 2;
+const SteeringLimits HYUNDAI_HDA2_STEERING_LIMITS = {
+  .max_steer = 384,
+  .max_rt_delta = 112,
+  .max_rt_interval = 250000,
+  .max_rate_up = 3,
+  .max_rate_down = 7,
+  .driver_torque_allowance = 250,
+  .driver_torque_factor = 2,
+  .type = TorqueDriverLimited,
+};
+
 const uint32_t HYUNDAI_HDA2_STANDSTILL_THRSLD = 30;  // ~1kph
 
 const CanMsg HYUNDAI_HDA2_TX_MSGS[] = {
-  //{0x50, 0, 16},
-  {0x1CF, 1, 8},
-  //{0x2A4, 0, 24},
+  {0x1CF, 0, 8},
   {0x12A, 0, 16},
   {0x1E0, 0, 16},
 };
 
 AddrCheckStruct hyundai_hda2_addr_checks[] = {
-  {.msg = {{0x40, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x100, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  //{.msg = {{0x35, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  //{.msg = {{0x65, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x100, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0xa0, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0xea, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x175, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -27,10 +30,17 @@ AddrCheckStruct hyundai_hda2_addr_checks[] = {
 
 addr_checks hyundai_hda2_rx_checks = {hyundai_hda2_addr_checks, HYUNDAI_HDA2_ADDR_CHECK_LEN};
 
+
 uint16_t hyundai_hda2_crc_lut[256];
 
 static uint8_t hyundai_hda2_get_counter(CANPacket_t *to_push) {
-  return GET_BYTE(to_push, 2);
+  uint8_t ret = 0;
+  if (GET_LEN(to_push) == 8U) {
+    ret = GET_BYTE(to_push, 1) >> 4;
+  } else {
+    ret = GET_BYTE(to_push, 2);
+  }
+  return ret;
 }
 
 static uint32_t hyundai_hda2_get_checksum(CANPacket_t *to_push) {
@@ -77,16 +87,29 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
 
   if (valid && (bus == 0)) {
 
+    // driver torque
     if (addr == 0xea) {
       int torque_driver_new = ((GET_BYTE(to_push, 11) & 0x1fU) << 8U) | GET_BYTE(to_push, 10);
       torque_driver_new -= 4095;
       update_sample(&torque_driver, torque_driver_new);
     }
 
+    // cruise buttons
+    if (addr == 0x1cf) {
+      int cruise_button = GET_BYTE(to_push, 2) & 0x7U;
+      int main_button = GET_BIT(to_push, 19U);
+
+      if ((cruise_button == HYUNDAI_BTN_RESUME) || (cruise_button == HYUNDAI_BTN_SET) || (cruise_button == HYUNDAI_BTN_CANCEL) || (main_button != 0)) {
+        hyundai_last_button_interaction = 0U;
+      } else {
+        hyundai_last_button_interaction = MIN(hyundai_last_button_interaction + 1U, HYUNDAI_PREV_BUTTON_SAMPLES);
+      }
+    }
+
+    // cruise state
     if (addr == 0x175) {
       bool cruise_engaged = GET_BIT(to_push, 68U);
-
-      if (cruise_engaged && !cruise_engaged_prev) {
+      if (cruise_engaged && !cruise_engaged_prev && (hyundai_last_button_interaction < HYUNDAI_PREV_BUTTON_SAMPLES)) {
         controls_allowed = 1;
       }
 
@@ -96,15 +119,12 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
       cruise_engaged_prev = cruise_engaged;
     }
 
-    //if (addr == 0x40) {
-    //  gas_pressed = GET_BYTE(to_push, 5) != 0U;
-    //}
-
+    // gas/brake press
     if (addr == 0x100) {
       brake_pressed = GET_BIT(to_push, 32U) != 0U;
       gas_pressed = GET_BIT(to_push, 176U) != 0U;
     }
-
+    // vehicle moving
     if (addr == 0xa0) {
       uint32_t speed = 0;
       for (int i = 8; i < 15; i+=2) {
@@ -114,13 +134,9 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
     }
   }
 
-  generic_rx_checks((addr == 0x12A) && (bus == 0));
-  //return true;
+  generic_rx_checks((addr == 0x12a) && (bus == 0));
+
   return valid;
-
-  //generic_rx_checks((addr == 0x50) && (bus == 0));
-
-  //return valid;
 }
 
 static int hyundai_hda2_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
@@ -131,49 +147,11 @@ static int hyundai_hda2_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed)
   int bus = GET_BUS(to_send);
 
   // steering
-  //if ((addr == 0x50) && (bus == 0)) {
   if ((addr == 0x12A) && (bus == 0)) {
     int desired_torque = ((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U);
     desired_torque -= 1024;
-    uint32_t ts = microsecond_timer_get();
-    bool violation = 0;
 
-    if (controls_allowed) {
-      // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, HYUNDAI_HDA2_MAX_STEER, -HYUNDAI_HDA2_MAX_STEER);
-
-      // *** torque rate limit check ***
-      violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-                                      HYUNDAI_HDA2_MAX_STEER, HYUNDAI_HDA2_MAX_RATE_UP, HYUNDAI_HDA2_MAX_RATE_DOWN,
-                                      HYUNDAI_HDA2_DRIVER_TORQUE_ALLOWANCE, HYUNDAI_HDA2_DRIVER_TORQUE_FACTOR);
-
-      // used next time
-      desired_torque_last = desired_torque;
-
-      // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, HYUNDAI_MAX_RT_DELTA);
-
-      // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
-      if (ts_elapsed > HYUNDAI_RT_INTERVAL) {
-        rt_torque_last = desired_torque;
-        ts_last = ts;
-      }
-    }
-
-    // no torque if controls is not allowed
-    if (!controls_allowed && (desired_torque != 0)) {
-      violation = 1;
-    }
-
-    // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !controls_allowed) {
-      desired_torque_last = 0;
-      rt_torque_last = 0;
-      ts_last = ts;
-    }
-
-    if (violation) {
+    if (steer_torque_cmd_checks(desired_torque, -1, HYUNDAI_HDA2_STEERING_LIMITS)) {
       tx = 0;
     }
   }
@@ -199,7 +177,6 @@ static int hyundai_hda2_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   if (bus_num == 0) {
     bus_fwd = 2;
   }
-  //if ((bus_num == 2) && (addr != 0x50) && (addr != 0x2a4)) {
   if ((bus_num == 2) && (addr != 0x12A) && (addr != 0x1E0)) {
     bus_fwd = 0;
   }
@@ -210,6 +187,7 @@ static int hyundai_hda2_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 static const addr_checks* hyundai_hda2_init(uint16_t param) {
   UNUSED(param);
   gen_crc_lookup_table_16(0x1021, hyundai_hda2_crc_lut);
+  hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
   return &hyundai_hda2_rx_checks;
 }
 
