@@ -518,3 +518,13 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 
   return violation;
 }
+
+void pcm_cruise_check(int cruise_engaged) {
+  if (!cruise_engaged) {
+    controls_allowed = 0;
+  }
+  if (cruise_engaged && !cruise_engaged_prev) {
+    controls_allowed = 1;
+  }
+  cruise_engaged_prev = cruise_engaged;
+}
