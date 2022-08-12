@@ -94,8 +94,8 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 
     // exit controls on regen paddle
     if (addr == 189) {
-      bool regen = GET_BYTE(to_push, 0) & 0x20U;
-      if (regen) {
+      int regen = GET_BYTE(to_push, 0) >> 4;
+      if (regen != 0) {
         controls_allowed = 0;
       }
     }
