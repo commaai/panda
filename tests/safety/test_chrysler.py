@@ -72,7 +72,7 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
       self.assertFalse(self._tx(self._button_msg(cancel=False, resume=False)))
 
 
-class TestChryslerRamSafety(TestChryslerSafety):
+class TestChryslerRamDTSafety(TestChryslerSafety):
   TX_MSGS = [[177, 2], [166, 0], [250, 0]]
   STANDSTILL_THRESHOLD = 3
   RELAY_MALFUNCTION_ADDR = 166
@@ -93,6 +93,28 @@ class TestChryslerRamSafety(TestChryslerSafety):
     values = {"Vehicle_Speed": speed}
     return self.packer.make_can_msg_panda("ESP_8", 0, values)
 
+class TestChryslerRamHDSafety(TestChryslerSafety):
+  TX_MSGS = [[629, 0], [630, 0], [570, 2]]
+  STANDSTILL_THRESHOLD = 3
+  RELAY_MALFUNCTION_ADDR = 630
+  FWD_BLACKLISTED_ADDRS = {2: [629, 630]}
+
+  MAX_TORQUE = 361
+  MAX_RATE_UP = 14
+  MAX_RATE_DOWN = 14
+  MAX_RT_DELTA = 182
+
+  DAS_BUS = 2
+
+  def setUp(self):
+    self.packer = CANPackerPanda("chrysler_ram_hd_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM_HD)
+    self.safety.init_tests()
+
+  def _speed_msg(self, speed):
+    values = {"Vehicle_Speed": speed}
+    return self.packer.make_can_msg_panda("ESP_8", 0, values)
 
 
 if __name__ == "__main__":

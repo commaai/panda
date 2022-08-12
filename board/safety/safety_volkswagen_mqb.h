@@ -122,14 +122,8 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
     // Signal: TSK_06.TSK_Status
     if (addr == MSG_TSK_06) {
       int acc_status = (GET_BYTE(to_push, 3) & 0x7U);
-      int cruise_engaged = ((acc_status == 3) || (acc_status == 4) || (acc_status == 5)) ? 1 : 0;
-      if (cruise_engaged && !cruise_engaged_prev) {
-        controls_allowed = 1;
-      }
-      if (!cruise_engaged) {
-        controls_allowed = 0;
-      }
-      cruise_engaged_prev = cruise_engaged;
+      bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 5);
+      pcm_cruise_check(cruise_engaged);
     }
 
     // Signal: Motor_20.MO_Fahrpedalrohwert_01

@@ -24,7 +24,7 @@
 
 // CAN-FD only safety modes
 #ifdef CANFD
-#include "safety/safety_hyundai_hda2.h"
+#include "safety/safety_hyundai_canfd.h"
 #endif
 
 // from cereal.car.CarParams.SafetyModel
@@ -53,7 +53,7 @@
 #define SAFETY_STELLANTIS 25U
 #define SAFETY_FAW 26U
 #define SAFETY_BODY 27U
-#define SAFETY_HYUNDAI_HDA2 28U
+#define SAFETY_HYUNDAI_CANFD 28U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
 uint16_t current_safety_param = 0;
@@ -288,7 +288,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_MAZDA, &mazda_hooks},
   {SAFETY_BODY, &body_hooks},
 #ifdef CANFD
-  {SAFETY_HYUNDAI_HDA2, &hyundai_hda2_hooks},
+  {SAFETY_HYUNDAI_CANFD, &hyundai_canfd_hooks},
 #endif
 #ifdef ALLOW_DEBUG
   {SAFETY_TESLA, &tesla_hooks},
@@ -517,4 +517,15 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
   }
 
   return violation;
+}
+
+void pcm_cruise_check(bool cruise_engaged) {
+  // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
+  if (!cruise_engaged) {
+    controls_allowed = false;
+  }
+  if (cruise_engaged && !cruise_engaged_prev) {
+    controls_allowed = true;
+  }
+  cruise_engaged_prev = cruise_engaged;
 }
