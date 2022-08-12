@@ -394,6 +394,17 @@ class PandaSafetyTest(PandaSafetyTestBase):
   def _pcm_status_msg(self, enable):
     pass
 
+  def set_controls_allowed(self, allowed):
+    # Some safety models share the same message for gas and pcm cruise
+    # Make sure they don't affect each other's tests
+    try:
+      if self._pcm_status_msg(0) is not None:
+        self._rx(self._pcm_status_msg(allowed))
+    except NotImplementedError:
+      pass
+
+    self.safety.set_controls_allowed(allowed)
+
   # ***** standard tests for all safety modes *****
 
   def test_tx_msg_in_scanned_range(self):
@@ -450,7 +461,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   def test_allow_engage_with_gas_pressed(self):
     self._rx(self._user_gas_msg(1))
-    self.safety.set_controls_allowed(True)
+    self.set_controls_allowed(True)
     self._rx(self._user_gas_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self._rx(self._user_gas_msg(1))
@@ -458,13 +469,13 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   def test_disengage_on_gas(self):
     self._rx(self._user_gas_msg(0))
-    self.safety.set_controls_allowed(True)
+    self.set_controls_allowed(True)
     self._rx(self._user_gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_alternative_experience_no_disengage_on_gas(self):
     self._rx(self._user_gas_msg(0))
-    self.safety.set_controls_allowed(True)
+    self.set_controls_allowed(True)
     self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
     self._rx(self._user_gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
     # Test we allow lateral, but not longitudinal
