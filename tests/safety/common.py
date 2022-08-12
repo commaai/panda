@@ -584,3 +584,55 @@ class PandaSafetyTest(PandaSafetyTestBase):
         if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
           continue
         self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")
+
+
+# Most safety models don't use regen paddle. Add on a make-by-make basic
+class RegenSafetyTest(PandaSafetyTestBase):
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "RegenSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  @abc.abstractmethod
+  def _user_regen_msg(self, regen):
+    pass
+
+  def test_prev_regen(self):
+    self.assertFalse(self.safety.get_regen_braking_prev())
+    for regen in [True, False]:
+      self._rx(self._user_regen_msg(not regen))
+      self.assertEqual(not regen, self.safety.get_regen_braking_prev())
+      self._rx(self._user_regen_msg(regen))
+      self.assertEqual(regen, self.safety.get_regen_braking_prev())
+
+  def test_allow_regen_at_zero_speed(self):
+    # Regen paddle was already pressed
+    self._rx(self._speed_msg(0))
+    self._rx(self._user_regen_msg(1))
+    self.safety.set_controls_allowed(1)
+    self._rx(self._user_regen_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_longitudinal_allowed())
+    self._rx(self._user_regen_msg(0))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_longitudinal_allowed())
+    # rising edge of regen paddle should disengage
+    self._rx(self._user_regen_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_longitudinal_allowed())
+    self._rx(self._user_regen_msg(0))  # reset no regen
+
+  def test_not_allow_regen_when_moving(self):
+    # Regen paddle was already pressed
+    self._rx(self._user_regen_msg(1))
+    self.safety.set_controls_allowed(1)
+    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
+    self._rx(self._user_regen_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_longitudinal_allowed())
+    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
+    self._rx(self._user_regen_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_longitudinal_allowed())
+    self._rx(self._speed_msg(0))

@@ -18,7 +18,7 @@ class Buttons:
   CANCEL = 6
 
 
-class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestGmSafety(common.PandaSafetyTest, common.RegenSafetyTest, common.DriverTorqueSteeringSafetyTest):
   TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
              [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
              [789, 2],  # ch bus
@@ -69,6 +69,10 @@ class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest
     # GM safety has a brake threshold of 10
     values = {"BrakePedalPosition": 10 if brake else 0}
     return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
+
+  def _user_regen_msg(self, regen):
+    values = {"RegenPaddle": 2 if regen else 0}
+    return self.packer.make_can_msg_panda("EBCMRegenPaddle", 0, values)
 
   def _user_gas_msg(self, gas):
     values = {"AcceleratorPedal2": 1 if gas else 0}
