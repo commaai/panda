@@ -254,7 +254,7 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
   int bus_fwd = -1;
 
-  if (gm_hw != GM_ASCM) {
+  if (gm_hw != GM_CAM) {
     if (bus_num == 0) {
       bus_fwd = 2;
     }
