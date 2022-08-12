@@ -489,7 +489,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
     if test == "brake":
       test_prev_brake(self._user_brake_msg, self.safety.get_brake_pressed_prev)
-    else:
+    else:  # test with regen message and global variable
       test_prev_brake(self._user_regen_msg, self.safety.get_regen_braking_prev)
 
   def test_enable_control_allowed_from_cruise(self):
@@ -528,11 +528,10 @@ class PandaSafetyTest(PandaSafetyTestBase):
       self.assertFalse(self.safety.get_longitudinal_allowed())
       self._rx(_user_brake_msg(0))  # reset no brakes
 
-    with self.subTest("brake test"):
+    if test == "brake":
       test_allow_brake_at_zero_speed(self._user_brake_msg)
-
-    # with self.subTest("regen test"):
-    #   test_allow_brake_at_zero_speed(self._user_regen_msg)
+    else:  # test with regen message and global variable
+      test_allow_brake_at_zero_speed(self._user_regen_msg)
 
   def test_not_allow_brake_when_moving(self, test="brake"):
     def test_not_allow_brake_when_moving(_user_brake_msg):
@@ -549,11 +548,10 @@ class PandaSafetyTest(PandaSafetyTestBase):
       self.assertFalse(self.safety.get_longitudinal_allowed())
       self._rx(self._speed_msg(0))
 
-    with self.subTest("brake test"):
+    if test == "brake":
       test_not_allow_brake_when_moving(self._user_brake_msg)
-
-    # with self.subTest("regen test"):
-    #   test_not_allow_brake_when_moving(self._user_regen_msg)
+    else:  # test with regen message and global variable
+      test_not_allow_brake_when_moving(self._user_regen_msg)
 
   def test_sample_speed(self):
     self.assertFalse(self.safety.get_vehicle_moving())
@@ -608,53 +606,3 @@ class PandaSafetyTest(PandaSafetyTestBase):
         if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
           continue
         self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")
-
-
-# # Most safety models don't use regen paddle. Add on a make-by-make basis
-# class RegenSafetyTest(PandaSafetyTestBase):
-#   # pylint: disable=no-member,abstract-method
-#
-#   @classmethod
-#   def setUpClass(cls):
-#     if cls.__name__ == "RegenSafetyTest":
-#       cls.safety = None
-#       raise unittest.SkipTest
-#
-#   def test_prev_brake(self):
-#     self.assertFalse(self.safety.get_regen_braking_prev())
-#     for regen in [True, False]:
-#       self._rx(self._user_regen_msg(not regen))
-#       self.assertEqual(not regen, self.safety.get_regen_braking_prev())
-#       self._rx(self._user_regen_msg(regen))
-#       self.assertEqual(regen, self.safety.get_regen_braking_prev())
-#
-#   def test_allow_regen_at_zero_speed(self):
-#     # Regen paddle was already pressed
-#     self._rx(self._speed_msg(0))
-#     self._rx(self._user_regen_msg(1))
-#     self.safety.set_controls_allowed(1)
-#     self._rx(self._user_regen_msg(1))
-#     self.assertTrue(self.safety.get_controls_allowed())
-#     self.assertTrue(self.safety.get_longitudinal_allowed())
-#     self._rx(self._user_regen_msg(0))
-#     self.assertTrue(self.safety.get_controls_allowed())
-#     self.assertTrue(self.safety.get_longitudinal_allowed())
-#     # rising edge of regen paddle should disengage
-#     self._rx(self._user_regen_msg(1))
-#     self.assertFalse(self.safety.get_controls_allowed())
-#     self.assertFalse(self.safety.get_longitudinal_allowed())
-#     self._rx(self._user_regen_msg(0))  # reset no regen
-#
-#   def test_not_allow_regen_when_moving(self):
-#     # Regen paddle was already pressed
-#     self._rx(self._user_regen_msg(1))
-#     self.safety.set_controls_allowed(1)
-#     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
-#     self._rx(self._user_regen_msg(1))
-#     self.assertTrue(self.safety.get_controls_allowed())
-#     self.assertTrue(self.safety.get_longitudinal_allowed())
-#     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
-#     self._rx(self._user_regen_msg(1))
-#     self.assertFalse(self.safety.get_controls_allowed())
-#     self.assertFalse(self.safety.get_longitudinal_allowed())
-#     self._rx(self._speed_msg(0))
