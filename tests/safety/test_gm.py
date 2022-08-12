@@ -18,7 +18,7 @@ class Buttons:
   CANCEL = 6
 
 
-class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest, common.RegenSafetyTest):
+class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
              [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
              [789, 2],  # ch bus
@@ -93,6 +93,18 @@ class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKASteeringCmd": torque}
     return self.packer.make_can_msg_panda("ASCMLKASteeringCmd", 0, values)
+
+  def test_prev_brake(self, test="brake"):
+    super().test_prev_brake(test="brake")
+    super().test_prev_brake(test="regen")
+
+  def test_allow_brake_at_zero_speed(self, test="brake"):
+    super().test_allow_brake_at_zero_speed(test="brake")
+    super().test_allow_brake_at_zero_speed(test="regen")
+
+  def test_not_allow_brake_when_moving(self, test="brake"):
+    super().test_not_allow_brake_when_moving(test="brake")
+    super().test_not_allow_brake_when_moving(test="regen")
 
   def test_set_resume_buttons(self):
     """

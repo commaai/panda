@@ -383,6 +383,10 @@ class PandaSafetyTest(PandaSafetyTestBase):
     pass
 
   @abc.abstractmethod
+  def _user_regen_msg(self, regen):
+    pass
+
+  @abc.abstractmethod
   def _speed_msg(self, speed):
     pass
 
@@ -474,13 +478,19 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._user_gas_msg(0))
     self.assertTrue(self.safety.get_longitudinal_allowed())
 
-  def test_prev_brake(self):
-    self.assertFalse(self.safety.get_brake_pressed_prev())
-    for pressed in [True, False]:
-      self._rx(self._user_brake_msg(not pressed))
-      self.assertEqual(not pressed, self.safety.get_brake_pressed_prev())
-      self._rx(self._user_brake_msg(pressed))
-      self.assertEqual(pressed, self.safety.get_brake_pressed_prev())
+  def test_prev_brake(self, test="brake"):
+    def test_prev_brake(_user_brake_msg, get_brake_pressed_prev):
+      self.assertFalse(self.safety.get_brake_pressed_prev())
+      for pressed in [True, False]:
+        self._rx(_user_brake_msg(not pressed))
+        self.assertEqual(not pressed, get_brake_pressed_prev())
+        self._rx(_user_brake_msg(pressed))
+        self.assertEqual(pressed, get_brake_pressed_prev())
+
+    if test == "brake":
+      test_prev_brake(self._user_brake_msg, self.safety.get_brake_pressed_prev)
+    else:
+      test_prev_brake(self._user_regen_msg, self.safety.get_regen_braking_prev)
 
   def test_enable_control_allowed_from_cruise(self):
     self._rx(self._pcm_status_msg(False))
@@ -500,36 +510,50 @@ class PandaSafetyTest(PandaSafetyTestBase):
       self._rx(self._pcm_status_msg(not engaged))
       self.assertEqual(not engaged, self.safety.get_cruise_engaged_prev())
 
-  def test_allow_brake_at_zero_speed(self):
-    # Brake was already pressed
-    self._rx(self._speed_msg(0))
-    self._rx(self._user_brake_msg(1))
-    self.safety.set_controls_allowed(1)
-    self._rx(self._user_brake_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.assertTrue(self.safety.get_longitudinal_allowed())
-    self._rx(self._user_brake_msg(0))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.assertTrue(self.safety.get_longitudinal_allowed())
-    # rising edge of brake should disengage
-    self._rx(self._user_brake_msg(1))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.assertFalse(self.safety.get_longitudinal_allowed())
-    self._rx(self._user_brake_msg(0))  # reset no brakes
+  def test_allow_brake_at_zero_speed(self, test="brake"):
+    def test_allow_brake_at_zero_speed(_user_brake_msg):
+      # Brake was already pressed
+      self._rx(self._speed_msg(0))
+      self._rx(_user_brake_msg(1))
+      self.safety.set_controls_allowed(1)
+      self._rx(_user_brake_msg(1))
+      self.assertTrue(self.safety.get_controls_allowed())
+      self.assertTrue(self.safety.get_longitudinal_allowed())
+      self._rx(_user_brake_msg(0))
+      self.assertTrue(self.safety.get_controls_allowed())
+      self.assertTrue(self.safety.get_longitudinal_allowed())
+      # rising edge of brake should disengage
+      self._rx(_user_brake_msg(1))
+      self.assertFalse(self.safety.get_controls_allowed())
+      self.assertFalse(self.safety.get_longitudinal_allowed())
+      self._rx(_user_brake_msg(0))  # reset no brakes
 
-  def test_not_allow_brake_when_moving(self):
-    # Brake was already pressed
-    self._rx(self._user_brake_msg(1))
-    self.safety.set_controls_allowed(1)
-    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
-    self._rx(self._user_brake_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.assertTrue(self.safety.get_longitudinal_allowed())
-    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
-    self._rx(self._user_brake_msg(1))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.assertFalse(self.safety.get_longitudinal_allowed())
-    self._rx(self._speed_msg(0))
+    with self.subTest("brake test"):
+      test_allow_brake_at_zero_speed(self._user_brake_msg)
+
+    # with self.subTest("regen test"):
+    #   test_allow_brake_at_zero_speed(self._user_regen_msg)
+
+  def test_not_allow_brake_when_moving(self, test="brake"):
+    def test_not_allow_brake_when_moving(_user_brake_msg):
+      # Brake was already pressed
+      self._rx(_user_brake_msg(1))
+      self.safety.set_controls_allowed(1)
+      self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
+      self._rx(_user_brake_msg(1))
+      self.assertTrue(self.safety.get_controls_allowed())
+      self.assertTrue(self.safety.get_longitudinal_allowed())
+      self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
+      self._rx(_user_brake_msg(1))
+      self.assertFalse(self.safety.get_controls_allowed())
+      self.assertFalse(self.safety.get_longitudinal_allowed())
+      self._rx(self._speed_msg(0))
+
+    with self.subTest("brake test"):
+      test_not_allow_brake_when_moving(self._user_brake_msg)
+
+    # with self.subTest("regen test"):
+    #   test_not_allow_brake_when_moving(self._user_regen_msg)
 
   def test_sample_speed(self):
     self.assertFalse(self.safety.get_vehicle_moving())
@@ -586,55 +610,51 @@ class PandaSafetyTest(PandaSafetyTestBase):
         self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")
 
 
-# Most safety models don't use regen paddle. Add on a make-by-make basis
-class RegenSafetyTest(PandaSafetyTestBase):
-  # pylint: disable=no-member,abstract-method
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "RegenSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
-
-  @abc.abstractmethod
-  def _user_regen_msg(self, regen):
-    pass
-
-  def test_prev_regen(self):
-    self.assertFalse(self.safety.get_regen_braking_prev())
-    for regen in [True, False]:
-      self._rx(self._user_regen_msg(not regen))
-      self.assertEqual(not regen, self.safety.get_regen_braking_prev())
-      self._rx(self._user_regen_msg(regen))
-      self.assertEqual(regen, self.safety.get_regen_braking_prev())
-
-  def test_allow_regen_at_zero_speed(self):
-    # Regen paddle was already pressed
-    self._rx(self._speed_msg(0))
-    self._rx(self._user_regen_msg(1))
-    self.safety.set_controls_allowed(1)
-    self._rx(self._user_regen_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.assertTrue(self.safety.get_longitudinal_allowed())
-    self._rx(self._user_regen_msg(0))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.assertTrue(self.safety.get_longitudinal_allowed())
-    # rising edge of regen paddle should disengage
-    self._rx(self._user_regen_msg(1))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.assertFalse(self.safety.get_longitudinal_allowed())
-    self._rx(self._user_regen_msg(0))  # reset no regen
-
-  def test_not_allow_regen_when_moving(self):
-    # Regen paddle was already pressed
-    self._rx(self._user_regen_msg(1))
-    self.safety.set_controls_allowed(1)
-    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
-    self._rx(self._user_regen_msg(1))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.assertTrue(self.safety.get_longitudinal_allowed())
-    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
-    self._rx(self._user_regen_msg(1))
-    self.assertFalse(self.safety.get_controls_allowed())
-    self.assertFalse(self.safety.get_longitudinal_allowed())
-    self._rx(self._speed_msg(0))
+# # Most safety models don't use regen paddle. Add on a make-by-make basis
+# class RegenSafetyTest(PandaSafetyTestBase):
+#   # pylint: disable=no-member,abstract-method
+#
+#   @classmethod
+#   def setUpClass(cls):
+#     if cls.__name__ == "RegenSafetyTest":
+#       cls.safety = None
+#       raise unittest.SkipTest
+#
+#   def test_prev_brake(self):
+#     self.assertFalse(self.safety.get_regen_braking_prev())
+#     for regen in [True, False]:
+#       self._rx(self._user_regen_msg(not regen))
+#       self.assertEqual(not regen, self.safety.get_regen_braking_prev())
+#       self._rx(self._user_regen_msg(regen))
+#       self.assertEqual(regen, self.safety.get_regen_braking_prev())
+#
+#   def test_allow_regen_at_zero_speed(self):
+#     # Regen paddle was already pressed
+#     self._rx(self._speed_msg(0))
+#     self._rx(self._user_regen_msg(1))
+#     self.safety.set_controls_allowed(1)
+#     self._rx(self._user_regen_msg(1))
+#     self.assertTrue(self.safety.get_controls_allowed())
+#     self.assertTrue(self.safety.get_longitudinal_allowed())
+#     self._rx(self._user_regen_msg(0))
+#     self.assertTrue(self.safety.get_controls_allowed())
+#     self.assertTrue(self.safety.get_longitudinal_allowed())
+#     # rising edge of regen paddle should disengage
+#     self._rx(self._user_regen_msg(1))
+#     self.assertFalse(self.safety.get_controls_allowed())
+#     self.assertFalse(self.safety.get_longitudinal_allowed())
+#     self._rx(self._user_regen_msg(0))  # reset no regen
+#
+#   def test_not_allow_regen_when_moving(self):
+#     # Regen paddle was already pressed
+#     self._rx(self._user_regen_msg(1))
+#     self.safety.set_controls_allowed(1)
+#     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
+#     self._rx(self._user_regen_msg(1))
+#     self.assertTrue(self.safety.get_controls_allowed())
+#     self.assertTrue(self.safety.get_longitudinal_allowed())
+#     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
+#     self._rx(self._user_regen_msg(1))
+#     self.assertFalse(self.safety.get_controls_allowed())
+#     self.assertFalse(self.safety.get_longitudinal_allowed())
+#     self._rx(self._speed_msg(0))
