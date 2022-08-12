@@ -1,13 +1,18 @@
+// lateral limits
 const SteeringLimits VOLKSWAGEN_PQ_STEERING_LIMITS = {
   .max_steer = 300,                // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
-  .max_rt_delta = 75,              // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
+  .max_rt_delta = 113,             // 6 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 75 ; 125 * 1.5 for safety pad = 113
   .max_rt_interval = 250000,       // 250ms between real time checks
-  .max_rate_up = 4,                // 2.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
+  .max_rate_up = 6,                // 3.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
   .max_rate_down = 10,             // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
   .driver_torque_factor = 3,
   .driver_torque_allowance = 80,
   .type = TorqueDriverLimited,
 };
+
+// longitudinal limits
+const int VOLKSWAGEN_PQ_MAX_ACCEL = 2000;   // 2.0 m/s2
+const int VOLKSWAGEN_PQ_MIN_ACCEL = -3500;  // -3.5 m/s2
 
 #define MSG_LENKHILFE_3         0x0D0   // RX from EPS, for steering angle and driver steering torque
 #define MSG_HCA_1               0x0D2   // TX by OP, Heading Control Assist steering torque
