@@ -236,7 +236,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     }
   }
 
-  // BUTTONS: used for resume spamming and cruise cancellation
+  // BUTTONS: used for resume spamming and cruise cancellation with stock longitudinal
   if ((addr == 481) && (gm_hw == GM_CAM)) {
     int button = (GET_BYTE(to_send, 5) >> 4) & 0x7U;
 
@@ -260,7 +260,7 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     }
 
     if (bus_num == 2) {
-      // block lkas message, forward all others (including ACC messages)
+      // block lkas message, forward all others
       int addr = GET_ADDR(to_fwd);
       bool is_lkas_msg = (addr == 384);
       if (!is_lkas_msg) {
