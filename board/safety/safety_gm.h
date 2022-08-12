@@ -240,9 +240,8 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if ((addr == 481) && (gm_hw == GM_CAM)) {
     int button = (GET_BYTE(to_send, 5) >> 4) & 0x7U;
 
-    bool allowed_resume = (button == 2) && controls_allowed;
     bool allowed_cancel = (button == 6) && cruise_engaged_prev;
-    if (!(allowed_resume || allowed_cancel)) {
+    if (!allowed_cancel) {
       tx = 0;
     }
   }
