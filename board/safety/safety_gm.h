@@ -41,7 +41,7 @@ enum {
   GM_BTN_CANCEL = 6,
 };
 
-int gm_regen_braking;
+uint8_t gm_regen_braking;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
 
@@ -86,7 +86,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     if (addr == 241) {
       // Brake pedal's potentiometer returns near-zero reading
       // even when pedal is not pressed
-      brake_pressed = (GET_BYTE(to_push, 1) >= 10U) || (gm_regen_braking != 0);
+      brake_pressed = (GET_BYTE(to_push, 1) >= 10U) || (gm_regen_braking != 0U);
     }
 
     if (addr == 452) {
@@ -222,7 +222,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
 static const addr_checks* gm_init(uint16_t param) {
   UNUSED(param);
-  gm_regen_braking = 0;
+  gm_regen_braking = 0U;
   return &gm_rx_checks;
 }
 
