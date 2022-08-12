@@ -213,9 +213,8 @@ class TestGmCameraSafety(TestGmSafetyBase):
     self.safety.init_tests()
 
   def _user_gas_msg(self, gas):
-    # FIXME: be careful with tests that use _user_gas_msg, we set CruiseState=1 so that
-    # certain gas tests aren't impacted by this safety mode's use of cruise state in the same message
-    values = {"AcceleratorPedal2": 1 if gas else 0, "CruiseState": 1}
+    cruise_active = self.safety.get_controls_allowed()
+    values = {"AcceleratorPedal2": 1 if gas else 0, "CruiseState": cruise_active}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
   def _pcm_status_msg(self, enable):
