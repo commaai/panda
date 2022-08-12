@@ -213,11 +213,13 @@ class TestGmCameraSafety(TestGmSafetyBase):
     self.safety.init_tests()
 
   def _user_gas_msg(self, gas):
-    values = {"AcceleratorPedal2": 1 if gas else 0, "CruiseState": self.safety.get_cruise_engaged_prev()}
+    # FIXME: be careful with tests that use _user_gas_msg, we set CruiseState=1 so that
+    # certain gas tests aren't impacted by this safety mode's use of cruise state in the same message
+    values = {"AcceleratorPedal2": 1 if gas else 0, "CruiseState": 1}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
   def _pcm_status_msg(self, enable):
-    values = {"CruiseState": enable, "AcceleratorPedal2": self.safety.get_gas_pressed_prev()}
+    values = {"CruiseState": enable}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
   # Uses stock longitudinal, allow no longitudinal actuation

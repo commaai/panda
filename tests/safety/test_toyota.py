@@ -75,11 +75,12 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
 
   def _user_gas_msg(self, gas):
-    values = {"GAS_RELEASED": not gas, "CRUISE_ACTIVE": self.safety.get_cruise_engaged_prev()}
+    cruise_active = self.safety.get_controls_allowed()
+    values = {"GAS_RELEASED": not gas, "CRUISE_ACTIVE": cruise_active}
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
   def _pcm_status_msg(self, enable):
-    values = {"CRUISE_ACTIVE": enable, "GAS_RELEASED": not self.safety.get_gas_pressed_prev()}
+    values = {"CRUISE_ACTIVE": enable}
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
   def _interceptor_gas_cmd(self, gas):
