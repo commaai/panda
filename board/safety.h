@@ -288,7 +288,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_MAZDA, &mazda_hooks},
   {SAFETY_BODY, &body_hooks},
 #ifdef CANFD
-  {SAFETY_HYUNDAI_CANFD, &hyundai_hda2_hooks},
+  {SAFETY_HYUNDAI_CANFD, &hyundai_canfd_hooks},
 #endif
 #ifdef ALLOW_DEBUG
   {SAFETY_TESLA, &tesla_hooks},
