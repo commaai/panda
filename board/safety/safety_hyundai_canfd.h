@@ -1,4 +1,4 @@
-const SteeringLimits HYUNDAI_HDA2_STEERING_LIMITS = {
+const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
   .max_steer = 384,
   .max_rt_delta = 112,
   .max_rt_interval = 250000,
@@ -11,13 +11,13 @@ const SteeringLimits HYUNDAI_HDA2_STEERING_LIMITS = {
 
 const uint32_t HYUNDAI_CANFD_STANDSTILL_THRSLD = 30;  // ~1kph
 
-const CanMsg HYUNDAI_HDA2_TX_MSGS[] = {
+const CanMsg HYUNDAI_CANFD_TX_MSGS[] = {
   {0x1CF, 0, 8},
   {0x12A, 0, 16},
   {0x1E0, 0, 16},
 };
 
-AddrCheckStruct hyundai_hda2_addr_checks[] = {
+AddrCheckStruct hyundai_canfd_addr_checks[] = {
   {.msg = {{0x100, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0xa0, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0xea, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
