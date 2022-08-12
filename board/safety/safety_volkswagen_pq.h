@@ -90,14 +90,8 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
     // Signal: Motor_2.GRA_Status
     if (addr == MSG_MOTOR_2) {
       int acc_status = (GET_BYTE(to_push, 2) & 0xC0U) >> 6;
-      int cruise_engaged = ((acc_status == 1) || (acc_status == 2)) ? 1 : 0;
-      if (cruise_engaged && !cruise_engaged_prev) {
-        controls_allowed = 1;
-      }
-      if (!cruise_engaged) {
-        controls_allowed = 0;
-      }
-      cruise_engaged_prev = cruise_engaged;
+      bool cruise_engaged = (acc_status == 1) || (acc_status == 2);
+      pcm_cruise_check(cruise_engaged);
     }
 
     // Signal: Motor_3.Fahrpedal_Rohsignal
