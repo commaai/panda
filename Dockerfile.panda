@@ -47,7 +47,7 @@ RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-instal
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
 
 ENV PANDA_PATH=/tmp/openpilot/panda
-ENV OPENPILOT_REF="1b0167ce24afb037b36464c40f9c5e0d657e77d9"
+ENV OPENPILOT_REF="96e8d5c9fe1a8084dfa5d97c78d4ea2037272420"
 ENV OPENDBC_REF="488568517162194fbb2aa45d3dba4c6af663a883"
 
 COPY requirements.txt /tmp/
