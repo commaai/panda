@@ -222,6 +222,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
 static const addr_checks* gm_init(uint16_t param) {
   UNUSED(param);
+  gm_regen_braking = 0;
   return &gm_rx_checks;
 }
 
