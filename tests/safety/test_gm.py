@@ -22,6 +22,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0
+  BUTTONS_BUS = 0
 
   MAX_RATE_UP = 7
   MAX_RATE_DOWN = 17
@@ -76,6 +77,10 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKASteeringCmd": torque}
     return self.packer.make_can_msg_panda("ASCMLKASteeringCmd", 0, values)
+
+  def _button_msg(self, buttons):
+    values = {"ACCButtons": buttons}
+    return self.packer.make_can_msg_panda("ASCMSteeringButton", self.BUTTONS_BUS, values)
 
   def test_brake_safety_check(self, stock_longitudinal=False):
     for enabled in [0, 1]:
@@ -175,10 +180,6 @@ class TestGmAscmSafety(TestGmSafetyBase):
   def _pcm_status_msg(self, enable):
     raise NotImplementedError
 
-  def _button_msg(self, buttons):
-    values = {"ACCButtons": buttons}
-    return self.packer.make_can_msg_panda("ASCMSteeringButton", 0, values)
-
   def test_set_resume_buttons(self):
     """
       SET and RESUME enter controls allowed on their falling edge.
@@ -204,6 +205,7 @@ class TestGmCameraSafety(TestGmSafetyBase):
   TX_MSGS = [[384, 0]]  # pt bus
   FWD_BLACKLISTED_ADDRS = {2: [384]}  # LKAS message, ACC messages are (715, 880, 789)
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
+  BUTTONS_BUS = 2  # tx only
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -220,6 +222,20 @@ class TestGmCameraSafety(TestGmSafetyBase):
   def _pcm_status_msg(self, enable):
     values = {"CruiseState": enable}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
+
+  def test_buttons(self):
+    # Only CANCEL button is allowed while cruise is enabled
+    self.safety.set_controls_allowed(0)
+    for btn in range(8):
+      self.assertFalse(self._tx(self._button_msg(btn)))
+
+    self.safety.set_controls_allowed(1)
+    for btn in range(8):
+      self.assertFalse(self._tx(self._button_msg(btn)))
+
+    for enabled in (True, False):
+      self._rx(self._pcm_status_msg(enabled))
+      self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
 
   # Uses stock longitudinal, allow no longitudinal actuation
   def test_brake_safety_check(self, stock_longitudinal=True):
