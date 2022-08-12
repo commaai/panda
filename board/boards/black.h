@@ -210,6 +210,7 @@ const board board_black = {
   .has_obd = true,
   .has_lin = false,
   .has_rtc_battery = false,
+  .fan_max_rpm = 0U,
   .init = black_init,
   .enable_can_transceiver = black_enable_can_transceiver,
   .enable_can_transceivers = black_enable_can_transceivers,

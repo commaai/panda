@@ -209,6 +209,7 @@ const board board_dos = {
   .has_obd = true,
   .has_lin = false,
   .has_rtc_battery = true,
+  .fan_max_rpm = 6500U,
   .init = dos_init,
   .enable_can_transceiver = dos_enable_can_transceiver,
   .enable_can_transceivers = dos_enable_can_transceivers,

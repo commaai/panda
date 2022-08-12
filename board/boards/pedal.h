@@ -84,6 +84,7 @@ const board board_pedal = {
   .has_obd = false,
   .has_lin = false,
   .has_rtc_battery = false,
+  .fan_max_rpm = 0U,
   .init = pedal_init,
   .enable_can_transceiver = pedal_enable_can_transceiver,
   .enable_can_transceivers = pedal_enable_can_transceivers,

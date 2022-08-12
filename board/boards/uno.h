@@ -270,6 +270,7 @@ const board board_uno = {
   .has_obd = true,
   .has_lin = false,
   .has_rtc_battery = true,
+  .fan_max_rpm = 5100U,
   .init = uno_init,
   .enable_can_transceiver = uno_enable_can_transceiver,
   .enable_can_transceivers = uno_enable_can_transceivers,
