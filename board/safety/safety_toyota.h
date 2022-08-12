@@ -89,14 +89,8 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
     // exit controls on rising edge of gas press
     if (addr == 0x1D2) {
       // 5th bit is CRUISE_ACTIVE
-      int cruise_engaged = GET_BYTE(to_push, 0) & 0x20U;
-      if (!cruise_engaged) {
-        controls_allowed = 0;
-      }
-      if (cruise_engaged && !cruise_engaged_prev) {
-        controls_allowed = 1;
-      }
-      cruise_engaged_prev = cruise_engaged;
+      bool cruise_engaged = GET_BIT(to_push, 5U) != 0U;
+      pcm_cruise_check(cruise_engaged);
 
       // sample gas pedal
       if (!gas_interceptor_detected) {
