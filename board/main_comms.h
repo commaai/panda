@@ -38,6 +38,8 @@ int get_health_pkt(void *dat) {
 
   health->interrupt_load = interrupt_load;
 
+  health->fan_power = fan_power;
+
   return sizeof(*health);
 }
 

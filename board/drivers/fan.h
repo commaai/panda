@@ -1,6 +1,7 @@
 uint16_t fan_tach_counter = 0U;
 uint16_t fan_rpm = 0U;
 uint16_t fan_target_rpm = 0U;
+uint8_t fan_power = 0U;
 
 #define FAN_MAX_RPM 6500U
 
@@ -24,7 +25,7 @@ void fan_tick(void){
 
   fan_error_integral += FAN_I * error;
   fan_error_integral = MIN(70.0f, MAX(-70.0f, fan_error_integral));
-  
-  uint8_t output = MIN(100U, MAX(0U, feedforward + fan_error_integral));
-  pwm_set(TIM3, 3, output);
+
+  fan_power = MIN(100U, MAX(0U, feedforward + fan_error_integral));
+  pwm_set(TIM3, 3, fan_power);
 }
