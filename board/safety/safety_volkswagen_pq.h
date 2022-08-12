@@ -90,7 +90,7 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
     // Signal: Motor_2.GRA_Status
     if (addr == MSG_MOTOR_2) {
       int acc_status = (GET_BYTE(to_push, 2) & 0xC0U) >> 6;
-      int cruise_engaged = ((acc_status == 1) || (acc_status == 2)) ? 1 : 0;
+      bool cruise_engaged = (acc_status == 1) || (acc_status == 2);
       pcm_cruise_check(cruise_engaged);
     }
 
