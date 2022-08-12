@@ -94,18 +94,6 @@ class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest
     values = {"LKASteeringCmd": torque}
     return self.packer.make_can_msg_panda("ASCMLKASteeringCmd", 0, values)
 
-  def test_prev_brake(self, test="brake"):
-    super().test_prev_brake(test="brake")
-    super().test_prev_brake(test="regen")
-
-  def test_allow_brake_at_zero_speed(self, test="brake"):
-    super().test_allow_brake_at_zero_speed(test="brake")
-    super().test_allow_brake_at_zero_speed(test="regen")
-
-  def test_not_allow_brake_when_moving(self, test="brake"):
-    super().test_not_allow_brake_when_moving(test="brake")
-    super().test_not_allow_brake_when_moving(test="regen")
-
   def test_set_resume_buttons(self):
     """
       SET and RESUME enter controls allowed on their falling edge.

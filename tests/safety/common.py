@@ -3,6 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
+from parameterized import parameterized
 from typing import Optional, List, Dict
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
@@ -477,19 +478,23 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._user_gas_msg(0))
     self.assertTrue(self.safety.get_longitudinal_allowed())
 
-  def test_prev_brake(self, test="brake"):
-    def test_prev_brake(_user_brake_msg, get_brake_pressed_prev):
-      self.assertFalse(self.safety.get_brake_pressed_prev())
+  @parameterized.expand(["brake", "regen"])
+  def test_prev_brake(self, brake_regen):
+    if brake_regen == "brake":
+      _user_brake_msg = self._user_brake_msg
+      get_brake_pressed_prev = self.safety.get_brake_pressed_prev
+    else:
+      if self._user_regen_msg(0) is None:
+        raise unittest.SkipTest
+      _user_brake_msg = self._user_regen_msg
+      get_brake_pressed_prev = self.safety.get_regen_braking_prev
+
+      self.assertFalse(get_brake_pressed_prev())
       for pressed in [True, False]:
         self._rx(_user_brake_msg(not pressed))
         self.assertEqual(not pressed, get_brake_pressed_prev())
         self._rx(_user_brake_msg(pressed))
         self.assertEqual(pressed, get_brake_pressed_prev())
-
-    if test == "brake":
-      test_prev_brake(self._user_brake_msg, self.safety.get_brake_pressed_prev)
-    else:  # test with regen message and global variable
-      test_prev_brake(self._user_regen_msg, self.safety.get_regen_braking_prev)
 
   def test_enable_control_allowed_from_cruise(self):
     self._rx(self._pcm_status_msg(False))
@@ -509,31 +514,40 @@ class PandaSafetyTest(PandaSafetyTestBase):
       self._rx(self._pcm_status_msg(not engaged))
       self.assertEqual(not engaged, self.safety.get_cruise_engaged_prev())
 
-  def test_allow_brake_at_zero_speed(self, test="brake"):
-    def test_allow_brake_at_zero_speed(_user_brake_msg):
-      # Brake was already pressed
-      self._rx(self._speed_msg(0))
-      self._rx(_user_brake_msg(1))
-      self.safety.set_controls_allowed(1)
-      self._rx(_user_brake_msg(1))
-      self.assertTrue(self.safety.get_controls_allowed())
-      self.assertTrue(self.safety.get_longitudinal_allowed())
-      self._rx(_user_brake_msg(0))
-      self.assertTrue(self.safety.get_controls_allowed())
-      self.assertTrue(self.safety.get_longitudinal_allowed())
-      # rising edge of brake should disengage
-      self._rx(_user_brake_msg(1))
-      self.assertFalse(self.safety.get_controls_allowed())
-      self.assertFalse(self.safety.get_longitudinal_allowed())
-      self._rx(_user_brake_msg(0))  # reset no brakes
+  @parameterized.expand(["brake", "regen"])
+  def test_allow_brake_at_zero_speed(self, brake_regen):
+    if brake_regen == "brake":
+      _user_brake_msg = self._user_brake_msg
+    else:
+      if self._user_regen_msg(0) is None:
+        raise unittest.SkipTest
+      _user_brake_msg = self._user_regen_msg
 
-    if test == "brake":
-      test_allow_brake_at_zero_speed(self._user_brake_msg)
-    else:  # test with regen message and global variable
-      test_allow_brake_at_zero_speed(self._user_regen_msg)
+    # Brake was already pressed
+    self._rx(self._speed_msg(0))
+    self._rx(_user_brake_msg(1))
+    self.safety.set_controls_allowed(1)
+    self._rx(_user_brake_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_longitudinal_allowed())
+    self._rx(_user_brake_msg(0))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_longitudinal_allowed())
+    # rising edge of brake should disengage
+    self._rx(_user_brake_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_longitudinal_allowed())
+    self._rx(_user_brake_msg(0))  # reset no brakes
 
-  def test_not_allow_brake_when_moving(self, test="brake"):
-    def test_not_allow_brake_when_moving(_user_brake_msg):
+  @parameterized.expand(["brake", "regen"])
+  def test_not_allow_brake_when_moving(self, brake_regen):
+    if brake_regen == "brake":
+      _user_brake_msg = self._user_brake_msg
+    else:
+      if self._user_regen_msg(0) is None:
+        raise unittest.SkipTest
+      _user_brake_msg = self._user_regen_msg
+
       # Brake was already pressed
       self._rx(_user_brake_msg(1))
       self.safety.set_controls_allowed(1)
@@ -546,11 +560,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
       self.assertFalse(self.safety.get_controls_allowed())
       self.assertFalse(self.safety.get_longitudinal_allowed())
       self._rx(self._speed_msg(0))
-
-    if test == "brake":
-      test_not_allow_brake_when_moving(self._user_brake_msg)
-    else:  # test with regen message and global variable
-      test_not_allow_brake_when_moving(self._user_regen_msg)
 
   def test_sample_speed(self):
     self.assertFalse(self.safety.get_vehicle_moving())
