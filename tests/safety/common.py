@@ -586,8 +586,10 @@ class PandaSafetyTest(PandaSafetyTestBase):
         self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")
 
 
-# Most safety models don't use regen paddle. Add on a make-by-make basic
+# Most safety models don't use regen paddle. Add on a make-by-make basis
 class RegenSafetyTest(PandaSafetyTestBase):
+  # pylint: disable=no-member,abstract-method
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "RegenSafetyTest":

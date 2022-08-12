@@ -18,7 +18,7 @@ class Buttons:
   CANCEL = 6
 
 
-class TestGmSafety(common.PandaSafetyTest, common.RegenSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestGmSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest, common.RegenSafetyTest):
   TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
              [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
              [789, 2],  # ch bus
