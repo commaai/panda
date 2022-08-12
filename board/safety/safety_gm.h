@@ -41,7 +41,10 @@ enum {
   GM_BTN_CANCEL = 6,
 };
 
-uint8_t gm_regen_braking;
+// openpilot sets brake_pressed by ORing friction brakes and regen (if available)
+// to prevent a mismatch with openpilot, set brake_pressed with either message
+bool gm_regen_braking;
+bool gm_braking;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
 
@@ -82,11 +85,11 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       cruise_button_prev = button;
     }
 
-    // speed > 0
     if (addr == 241) {
       // Brake pedal's potentiometer returns near-zero reading
       // even when pedal is not pressed
-      brake_pressed = (GET_BYTE(to_push, 1) >= 10U) || (gm_regen_braking != 0U);
+      gm_braking = GET_BYTE(to_push, 1) >= 10U;
+      brake_pressed = gm_braking || gm_regen_braking;
     }
 
     if (addr == 452) {
@@ -95,7 +98,8 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 
     // Regen braking is braking
     if (addr == 189) {
-      gm_regen_braking = GET_BYTE(to_push, 0) >> 4;
+      gm_regen_braking = (GET_BYTE(to_push, 0) >> 4) != 0U;
+      brake_pressed = gm_braking || gm_regen_braking;
     }
 
     // Check if ASCM or LKA camera are online
@@ -222,7 +226,8 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
 static const addr_checks* gm_init(uint16_t param) {
   UNUSED(param);
-  gm_regen_braking = 0U;
+  gm_braking = false;
+  gm_regen_braking = false;
   return &gm_rx_checks;
 }
 
