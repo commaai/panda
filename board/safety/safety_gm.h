@@ -106,9 +106,12 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       }
     }
 
-    // Regen is braking
+    // exit controls on regen paddle
     if (addr == 189) {
-      brake_pressed |= GET_BYTE(to_push, 0) & 0x20U;
+      bool regen = GET_BYTE(to_push, 0) & 0x20U;
+      if (regen) {
+        controls_allowed = 0;
+      }
     }
 
     bool stock_ecu_detected = (addr == 384);  // ASCMLKASteeringCmd
