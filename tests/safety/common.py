@@ -382,7 +382,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
   def _user_brake_msg(self, brake):
     pass
 
-  @abc.abstractmethod
   def _user_regen_msg(self, regen):
     pass
 
