@@ -1,4 +1,4 @@
-const SteeringLimits HYUNDAI_HDA2_STEERING_LIMITS = {
+const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
   .max_steer = 270,
   .max_rt_delta = 112,
   .max_rt_interval = 250000,
@@ -9,15 +9,15 @@ const SteeringLimits HYUNDAI_HDA2_STEERING_LIMITS = {
   .type = TorqueDriverLimited,
 };
 
-const uint32_t HYUNDAI_HDA2_STANDSTILL_THRSLD = 30;  // ~1kph
+const uint32_t HYUNDAI_CANFD_STANDSTILL_THRSLD = 30;  // ~1kph
 
-const CanMsg HYUNDAI_HDA2_TX_MSGS[] = {
+const CanMsg HYUNDAI_CANFD_TX_MSGS[] = {
   {0x50, 0, 16},
   {0x1CF, 1, 8},
   {0x2A4, 0, 24},
 };
 
-AddrCheckStruct hyundai_hda2_addr_checks[] = {
+AddrCheckStruct hyundai_canfd_addr_checks[] = {
   {.msg = {{0x35, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x65, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0xa0, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -25,14 +25,14 @@ AddrCheckStruct hyundai_hda2_addr_checks[] = {
   {.msg = {{0x175, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x1cf, 1, 8, .check_checksum = false, .max_counter = 0xfU, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
-#define HYUNDAI_HDA2_ADDR_CHECK_LEN (sizeof(hyundai_hda2_addr_checks) / sizeof(hyundai_hda2_addr_checks[0]))
+#define HYUNDAI_CANFD_ADDR_CHECK_LEN (sizeof(hyundai_canfd_addr_checks) / sizeof(hyundai_canfd_addr_checks[0]))
 
-addr_checks hyundai_hda2_rx_checks = {hyundai_hda2_addr_checks, HYUNDAI_HDA2_ADDR_CHECK_LEN};
+addr_checks hyundai_canfd_rx_checks = {hyundai_canfd_addr_checks, HYUNDAI_CANFD_ADDR_CHECK_LEN};
 
 
-uint16_t hyundai_hda2_crc_lut[256];
+uint16_t hyundai_canfd_crc_lut[256];
 
-static uint8_t hyundai_hda2_get_counter(CANPacket_t *to_push) {
+static uint8_t hyundai_canfd_get_counter(CANPacket_t *to_push) {
   uint8_t ret = 0;
   if (GET_LEN(to_push) == 8U) {
     ret = GET_BYTE(to_push, 1) >> 4;
@@ -42,24 +42,24 @@ static uint8_t hyundai_hda2_get_counter(CANPacket_t *to_push) {
   return ret;
 }
 
-static uint32_t hyundai_hda2_get_checksum(CANPacket_t *to_push) {
+static uint32_t hyundai_canfd_get_checksum(CANPacket_t *to_push) {
   uint32_t chksum = GET_BYTE(to_push, 0) | (GET_BYTE(to_push, 1) << 8);
   return chksum;
 }
 
-static uint32_t hyundai_hda2_compute_checksum(CANPacket_t *to_push) {
+static uint32_t hyundai_canfd_compute_checksum(CANPacket_t *to_push) {
   int len = GET_LEN(to_push);
   uint32_t address = GET_ADDR(to_push);
 
   uint16_t crc = 0;
 
   for (int i = 2; i < len; i++) {
-    crc = (crc << 8U) ^ hyundai_hda2_crc_lut[(crc >> 8U) ^ GET_BYTE(to_push, i)];
+    crc = (crc << 8U) ^ hyundai_canfd_crc_lut[(crc >> 8U) ^ GET_BYTE(to_push, i)];
   }
 
   // Add address to crc
-  crc = (crc << 8U) ^ hyundai_hda2_crc_lut[(crc >> 8U) ^ ((address >> 0U) & 0xFFU)];
-  crc = (crc << 8U) ^ hyundai_hda2_crc_lut[(crc >> 8U) ^ ((address >> 8U) & 0xFFU)];
+  crc = (crc << 8U) ^ hyundai_canfd_crc_lut[(crc >> 8U) ^ ((address >> 0U) & 0xFFU)];
+  crc = (crc << 8U) ^ hyundai_canfd_crc_lut[(crc >> 8U) ^ ((address >> 8U) & 0xFFU)];
 
   if (len == 8) {
     crc ^= 0x5f29U;
@@ -76,10 +76,10 @@ static uint32_t hyundai_hda2_compute_checksum(CANPacket_t *to_push) {
   return crc;
 }
 
-static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
+static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &hyundai_hda2_rx_checks,
-                                 hyundai_hda2_get_checksum, hyundai_hda2_compute_checksum, hyundai_hda2_get_counter);
+  bool valid = addr_safety_check(to_push, &hyundai_canfd_rx_checks,
+                                 hyundai_canfd_get_checksum, hyundai_canfd_compute_checksum, hyundai_canfd_get_counter);
 
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
@@ -134,7 +134,7 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
       for (int i = 8; i < 15; i+=2) {
         speed += GET_BYTE(to_push, i) | (GET_BYTE(to_push, i + 1) << 8U);
       }
-      vehicle_moving = (speed / 4U) > HYUNDAI_HDA2_STANDSTILL_THRSLD;
+      vehicle_moving = (speed / 4U) > HYUNDAI_CANFD_STANDSTILL_THRSLD;
     }
   }
 
@@ -143,10 +143,10 @@ static int hyundai_hda2_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int hyundai_hda2_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   UNUSED(longitudinal_allowed);
 
-  int tx = msg_allowed(to_send, HYUNDAI_HDA2_TX_MSGS, sizeof(HYUNDAI_HDA2_TX_MSGS)/sizeof(HYUNDAI_HDA2_TX_MSGS[0]));
+  int tx = msg_allowed(to_send, HYUNDAI_CANFD_TX_MSGS, sizeof(HYUNDAI_CANFD_TX_MSGS)/sizeof(HYUNDAI_CANFD_TX_MSGS[0]));
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
@@ -155,7 +155,7 @@ static int hyundai_hda2_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed)
     int desired_torque = ((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U);
     desired_torque -= 1024;
 
-    if (steer_torque_cmd_checks(desired_torque, -1, HYUNDAI_HDA2_STEERING_LIMITS)) {
+    if (steer_torque_cmd_checks(desired_torque, -1, HYUNDAI_CANFD_STEERING_LIMITS)) {
       tx = 0;
     }
   }
@@ -173,7 +173,7 @@ static int hyundai_hda2_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed)
   return tx;
 }
 
-static int hyundai_hda2_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
   int bus_fwd = -1;
   int addr = GET_ADDR(to_fwd);
@@ -188,17 +188,17 @@ static int hyundai_hda2_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return bus_fwd;
 }
 
-static const addr_checks* hyundai_hda2_init(uint16_t param) {
+static const addr_checks* hyundai_canfd_init(uint16_t param) {
   UNUSED(param);
-  gen_crc_lookup_table_16(0x1021, hyundai_hda2_crc_lut);
+  gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
-  return &hyundai_hda2_rx_checks;
+  return &hyundai_canfd_rx_checks;
 }
 
-const safety_hooks hyundai_hda2_hooks = {
-  .init = hyundai_hda2_init,
-  .rx = hyundai_hda2_rx_hook,
-  .tx = hyundai_hda2_tx_hook,
+const safety_hooks hyundai_canfd_hooks = {
+  .init = hyundai_canfd_init,
+  .rx = hyundai_canfd_rx_hook,
+  .tx = hyundai_canfd_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
-  .fwd = hyundai_hda2_fwd_hook,
+  .fwd = hyundai_canfd_fwd_hook,
 };
