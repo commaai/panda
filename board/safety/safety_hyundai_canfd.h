@@ -19,7 +19,7 @@ const CanMsg HYUNDAI_CANFD_TX_MSGS[] = {
 
 const CanMsg HYUNDAI_TUCSON_HEV_2022_TX_MSGS[] = {
   {0x12a, 0, 16},
-  {0x1a0, 0, 16},
+  {0x1a0, 0, 32},
 };
 
 AddrCheckStruct hyundai_canfd_addr_checks[] = {
