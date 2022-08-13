@@ -215,12 +215,11 @@ class TestGmCameraSafety(TestGmSafetyBase):
     self.safety.init_tests()
 
   def _user_gas_msg(self, gas):
-    cruise_active = self.safety.get_controls_allowed()
-    values = {"AcceleratorPedal2": 1 if gas else 0, "CruiseState": cruise_active}
+    values = {"AcceleratorPedal2": 1 if gas else 0, "CruiseState": self.safety.get_cruise_engaged_prev()}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
   def _pcm_status_msg(self, enable):
-    values = {"CruiseState": enable}
+    values = {"CruiseState": enable, "AcceleratorPedal2": self.safety.get_gas_pressed_prev()}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
   def test_buttons(self):
