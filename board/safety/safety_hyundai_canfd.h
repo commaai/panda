@@ -20,6 +20,7 @@ const CanMsg HYUNDAI_CANFD_TX_MSGS[] = {
 const CanMsg HYUNDAI_TUCSON_HEV_2022_TX_MSGS[] = {
   {0x12a, 0, 16},
   {0x1a0, 0, 32},
+  {0x1e0, 0, 16},
 };
 
 AddrCheckStruct hyundai_canfd_addr_checks[] = {
@@ -245,7 +246,7 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   }
   if (bus_num == 2) {
     if (hyundai_tucson_hev_2022) {
-      block_msg = ((addr == 0x12a) || (addr == 0x1a0));
+      block_msg = ((addr == 0x12a) || (addr == 0x1a0) || (addr == 0x1e0));
     } else {
       block_msg = ((addr == 0x50) || (addr == 0x2a4));
     }
