@@ -19,7 +19,7 @@ const CanMsg HYUNDAI_CANFD_TX_MSGS[] = {
 
 const CanMsg HYUNDAI_TUCSON_HEV_2022_TX_MSGS[] = {
   {0x12a, 0, 16},
-  {0x1aa, 0, 16},
+  {0x1a0, 0, 16},
 };
 
 AddrCheckStruct hyundai_canfd_addr_checks[] = {
@@ -212,19 +212,21 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   }
 
   // cruise buttons check
-  if (((addr == 0x1aa) && (bus == 0)) || ((addr == 0x1cf) && (bus == 1))) {
-    int button = 0;
-
-    if ((addr == 0x1aa) && (bus == 0) && hyundai_tucson_hev_2022) {
-      button = (GET_BYTE(to_send, 4) >> 4) & 0x7U;
-    } else if ((addr == 0x1cf) && (bus == 1) && !hyundai_tucson_hev_2022) {
-      button = GET_BYTE(to_send, 2) & 0x7U;
-    }
+  if ((addr == 0x1cf) && (bus == 1)) {
+    int button = GET_BYTE(to_send, 2) & 0x7U;
 
     bool is_cancel = (button == 4);
     bool is_resume = (button == 1);
     bool allowed = (is_cancel && cruise_engaged_prev) || (is_resume && controls_allowed);
     if (!allowed) {
+      tx = 0;
+    }
+  }
+
+  // cruise cancel check
+  if ((addr == 0x1a0) && (bus == 0)) {
+    bool is_cancel = ((GET_BYTE(to_send, 8) >> 3) & 0x7U) == 0;
+    if (!(is_cancel && cruise_engaged_prev)) {
       tx = 0;
     }
   }
@@ -243,7 +245,7 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   }
   if (bus_num == 2) {
     if (hyundai_tucson_hev_2022) {
-      block_msg = (addr == 0x12a);
+      block_msg = ((addr == 0x12a) || (addr == 0x1a0));
     } else {
       block_msg = ((addr == 0x50) || (addr == 0x2a4));
     }
