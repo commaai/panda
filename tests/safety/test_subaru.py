@@ -5,11 +5,6 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
-  cnt_torque_driver = 0
-  cnt_cruise = 0
-  cnt_speed = 0
-  cnt_brake = 0
-
 
 class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   TX_MSGS = [[0x122, 0], [0x220, 0], [0x221, 0], [0x222, 0], [0x321, 0], [0x322, 0], [0x240, 2], [0x13c, 2]]
