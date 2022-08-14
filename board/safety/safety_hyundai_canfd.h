@@ -226,7 +226,7 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
 
   // cruise cancel check
   if ((addr == 0x1a0) && (bus == 0)) {
-    bool is_cancel = ((GET_BYTE(to_send, 8) >> 3) & 0x7U) == 0;
+    bool is_cancel = ((((GET_BYTE(to_send, 8) >> 3) & 0x7U) == 0) && ((GET_BIT(to_send, 70U)) == 1));
     if (!(is_cancel && cruise_engaged_prev)) {
       tx = 0;
     }
