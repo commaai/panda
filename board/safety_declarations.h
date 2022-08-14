@@ -26,6 +26,28 @@ typedef struct {
   int len;
 } CanMsg;
 
+typedef enum {
+  TorqueMotorLimited,   // torque steering command, limited by EPS output torque
+  TorqueDriverLimited,  // torque steering command, limited by driver's input torque
+} SteeringControlType;
+
+typedef struct {
+  const int max_steer;
+  const int max_rate_up;
+  const int max_rate_down;
+  const int max_rt_delta;
+  const uint32_t max_rt_interval;
+
+  const SteeringControlType type;
+
+  // driver torque limits
+  const int driver_torque_allowance;
+  const int driver_torque_factor;
+
+  // motor torque limits
+  const int max_torque_error;
+} SteeringLimits;
+
 typedef struct {
   const int addr;
   const int bus;
@@ -69,7 +91,8 @@ bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
 bool get_longitudinal_allowed(void);
 bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 float interpolate(struct lookup_t xy, float x);
-void gen_crc_lookup_table(uint8_t poly, uint8_t crc_lut[]);
+void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]);
+void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]);
 bool msg_allowed(CANPacket_t *to_send, const CanMsg msg_list[], int len);
 int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], const int len);
 void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter);
@@ -77,12 +100,14 @@ void update_addr_timestamp(AddrCheckStruct addr_list[], int index);
 bool is_msg_valid(AddrCheckStruct addr_list[], int index);
 bool addr_safety_check(CANPacket_t *to_push,
                        const addr_checks *rx_checks,
-                       uint8_t (*get_checksum)(CANPacket_t *to_push),
-                       uint8_t (*compute_checksum)(CANPacket_t *to_push),
+                       uint32_t (*get_checksum)(CANPacket_t *to_push),
+                       uint32_t (*compute_checksum)(CANPacket_t *to_push),
                        uint8_t (*get_counter)(CANPacket_t *to_push));
 void generic_rx_checks(bool stock_ecu_detected);
 void relay_malfunction_set(void);
 void relay_malfunction_reset(void);
+bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits);
+void pcm_cruise_check(bool cruise_engaged);
 
 typedef const addr_checks* (*safety_hook_init)(uint16_t param);
 typedef int (*rx_hook)(CANPacket_t *to_push);
@@ -121,6 +146,10 @@ int rt_torque_last = 0;            // last desired torque for real time check
 struct sample_t torque_meas;       // last 6 motor torques produced by the eps
 struct sample_t torque_driver;     // last 6 driver torques measured
 uint32_t ts_last = 0;
+
+// state for controls_allowed timeout logic
+bool heartbeat_engaged = false;             // openpilot enabled, passed in heartbeat USB command
+uint32_t heartbeat_engaged_mismatches = 0;  // count of mismatches between heartbeat_engaged and controls_allowed
 
 // for safety modes with angle steering control
 uint32_t ts_angle_last = 0;

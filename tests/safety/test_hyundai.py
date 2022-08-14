@@ -6,18 +6,9 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, make_msg
 
-MAX_RATE_UP = 3
-MAX_RATE_DOWN = 7
-MAX_STEER = 384
-
-MAX_RT_DELTA = 112
-RT_INTERVAL = 250000
-
-DRIVER_TORQUE_ALLOWANCE = 50
-DRIVER_TORQUE_FACTOR = 2
-
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
+
 
 class Buttons:
   NONE = 0
@@ -25,8 +16,10 @@ class Buttons:
   SET = 2
   CANCEL = 4
 
-PREV_BUTTON_SAMPLES = 4
+
+PREV_BUTTON_SAMPLES = 8
 ENABLE_BUTTONS = (Buttons.RESUME, Buttons.SET, Buttons.CANCEL)
+
 
 # 4 bit checkusm used in some hyundai messages
 # lives outside the can packer because we never send this msg
@@ -62,152 +55,11 @@ def checksum(msg):
 
   return addr, t, ret, bus
 
-class TestHyundaiSafety(common.PandaSafetyTest):
-  TX_MSGS = [[832, 0], [1265, 0], [1157, 0]]
-  STANDSTILL_THRESHOLD = 30  # ~1kph
-  RELAY_MALFUNCTION_ADDR = 832
-  RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [832, 1157]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-  cnt_gas = 0
-  cnt_speed = 0
-  cnt_brake = 0
-  cnt_cruise = 0
-  cnt_button = 0
-
-  def setUp(self):
-    self.packer = CANPackerPanda("hyundai_kia_generic")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, 0)
-    self.safety.init_tests()
-
-  def _button_msg(self, buttons, main_button=0):
-    values = {"CF_Clu_CruiseSwState": buttons, "CF_Clu_CruiseSwMain": main_button, "CF_Clu_AliveCnt1": self.cnt_button}
-    self.__class__.cnt_button += 1
-    return self.packer.make_can_msg_panda("CLU11", 0, values)
-
-  def _user_gas_msg(self, gas):
-    values = {"CF_Ems_AclAct": gas, "AliveCounter": self.cnt_gas % 4}
-    self.__class__.cnt_gas += 1
-    return self.packer.make_can_msg_panda("EMS16", 0, values, fix_checksum=checksum)
-
-  def _user_brake_msg(self, brake):
-    values = {"DriverBraking": brake, "AliveCounterTCS": self.cnt_brake % 8}
-    self.__class__.cnt_brake += 1
-    return self.packer.make_can_msg_panda("TCS13", 0, values, fix_checksum=checksum)
-
-  def _speed_msg(self, speed):
-    # panda safety doesn't scale, so undo the scaling
-    values = {"WHL_SPD_%s" % s: speed * 0.03125 for s in ["FL", "FR", "RL", "RR"]}
-    values["WHL_SPD_AliveCounter_LSB"] = (self.cnt_speed % 16) & 0x3
-    values["WHL_SPD_AliveCounter_MSB"] = (self.cnt_speed % 16) >> 2
-    self.__class__.cnt_speed += 1
-    return self.packer.make_can_msg_panda("WHL_SPD11", 0, values, fix_checksum=checksum)
-
-  def _pcm_status_msg(self, enable):
-    values = {"ACCMode": enable, "CR_VSM_Alive": self.cnt_cruise % 16}
-    self.__class__.cnt_cruise += 1
-    return self.packer.make_can_msg_panda("SCC12", 0, values, fix_checksum=checksum)
-
-  def _set_prev_torque(self, t):
-    self.safety.set_desired_torque_last(t)
-    self.safety.set_rt_torque_last(t)
-
-  # TODO: this is unused
-  def _torque_driver_msg(self, torque):
-    values = {"CR_Mdps_StrColTq": torque}
-    return self.packer.make_can_msg_panda("MDPS12", 0, values)
-
-  def _torque_msg(self, torque):
-    values = {"CR_Lkas_StrToqReq": torque}
-    return self.packer.make_can_msg_panda("LKAS11", 0, values)
-
-  def test_steer_safety_check(self):
-    for enabled in [0, 1]:
-      for t in range(-0x200, 0x200):
-        self.safety.set_controls_allowed(enabled)
-        self._set_prev_torque(t)
-        if abs(t) > MAX_STEER or (not enabled and abs(t) > 0):
-          self.assertFalse(self._tx(self._torque_msg(t)))
-        else:
-          self.assertTrue(self._tx(self._torque_msg(t)))
-
-  def test_non_realtime_limit_up(self):
-    self.safety.set_torque_driver(0, 0)
-    self.safety.set_controls_allowed(True)
-
-    self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_msg(MAX_RATE_UP)))
-    self._set_prev_torque(0)
-    self.assertTrue(self._tx(self._torque_msg(-MAX_RATE_UP)))
-
-    self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_msg(MAX_RATE_UP + 1)))
-    self.safety.set_controls_allowed(True)
-    self._set_prev_torque(0)
-    self.assertFalse(self._tx(self._torque_msg(-MAX_RATE_UP - 1)))
-
-  def test_non_realtime_limit_down(self):
-    self.safety.set_torque_driver(0, 0)
-    self.safety.set_controls_allowed(True)
-
-  def test_against_torque_driver(self):
-    self.safety.set_controls_allowed(True)
-
-    for sign in [-1, 1]:
-      for t in np.arange(0, DRIVER_TORQUE_ALLOWANCE + 1, 1):
-        t *= -sign
-        self.safety.set_torque_driver(t, t)
-        self._set_prev_torque(MAX_STEER * sign)
-        self.assertTrue(self._tx(self._torque_msg(MAX_STEER * sign)))
-
-      self.safety.set_torque_driver(DRIVER_TORQUE_ALLOWANCE + 1, DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self._tx(self._torque_msg(-MAX_STEER)))
-
-    # spot check some individual cases
-    for sign in [-1, 1]:
-      driver_torque = (DRIVER_TORQUE_ALLOWANCE + 10) * sign
-      torque_desired = (MAX_STEER - 10 * DRIVER_TORQUE_FACTOR) * sign
-      delta = 1 * sign
-      self._set_prev_torque(torque_desired)
-      self.safety.set_torque_driver(-driver_torque, -driver_torque)
-      self.assertTrue(self._tx(self._torque_msg(torque_desired)))
-      self._set_prev_torque(torque_desired + delta)
-      self.safety.set_torque_driver(-driver_torque, -driver_torque)
-      self.assertFalse(self._tx(self._torque_msg(torque_desired + delta)))
-
-      self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN) * sign)))
-      self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertTrue(self._tx(self._torque_msg(0)))
-      self._set_prev_torque(MAX_STEER * sign)
-      self.safety.set_torque_driver(-MAX_STEER * sign, -MAX_STEER * sign)
-      self.assertFalse(self._tx(self._torque_msg((MAX_STEER - MAX_RATE_DOWN + 1) * sign)))
-
-  def test_realtime_limits(self):
-    self.safety.set_controls_allowed(True)
-
-    for sign in [-1, 1]:
-      self.safety.init_tests()
-      self._set_prev_torque(0)
-      self.safety.set_torque_driver(0, 0)
-      for t in np.arange(0, MAX_RT_DELTA, 1):
-        t *= sign
-        self.assertTrue(self._tx(self._torque_msg(t)))
-      self.assertFalse(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
-
-      self._set_prev_torque(0)
-      for t in np.arange(0, MAX_RT_DELTA, 1):
-        t *= sign
-        self.assertTrue(self._tx(self._torque_msg(t)))
-
-      # Increase timer to update rt_torque_last
-      self.safety.set_timer(RT_INTERVAL + 1)
-      self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA - 1))))
-      self.assertTrue(self._tx(self._torque_msg(sign * (MAX_RT_DELTA + 1))))
+class HyundaiButtonBase: #(common.PandaSafetyTest):
+  # pylint: disable=no-member,abstract-method
+  BUTTONS_BUS = 0  # tx on this bus, rx on 0. added to all `self._tx(self._button_msg(...))`
+  SCC_BUS = 0  # rx on this bus
 
   def test_buttons(self):
     """
@@ -216,16 +68,16 @@ class TestHyundaiSafety(common.PandaSafetyTest):
       - CANCEL allowed while cruise is enabled
     """
     self.safety.set_controls_allowed(0)
-    self.assertFalse(self._tx(self._button_msg(Buttons.RESUME)))
-    self.assertFalse(self._tx(self._button_msg(Buttons.SET)))
+    self.assertFalse(self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_BUS)))
+    self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_BUS)))
 
     self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._button_msg(Buttons.RESUME)))
-    self.assertFalse(self._tx(self._button_msg(Buttons.SET)))
+    self.assertTrue(self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_BUS)))
+    self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_BUS)))
 
     for enabled in (True, False):
       self._rx(self._pcm_status_msg(enabled))
-      self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
+      self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL, bus=self.BUTTONS_BUS)))
 
   def test_enable_control_allowed_from_cruise(self):
     """
@@ -235,7 +87,7 @@ class TestHyundaiSafety(common.PandaSafetyTest):
       - allowed: Buttons that do enable cruise
       - allowed: Main button with all above combinations
     """
-    for main_button in [0, 1]:
+    for main_button in (0, 1):
       for btn in range(8):
         for _ in range(PREV_BUTTON_SAMPLES):  # reset
           self._rx(self._button_msg(Buttons.NONE))
@@ -259,6 +111,99 @@ class TestHyundaiSafety(common.PandaSafetyTest):
       controls_allowed = i < PREV_BUTTON_SAMPLES
       self.assertEqual(controls_allowed, self.safety.get_controls_allowed())
       self._rx(self._button_msg(Buttons.NONE))
+
+
+class TestHyundaiSafety(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+  TX_MSGS = [[832, 0], [1265, 0], [1157, 0]]
+  STANDSTILL_THRESHOLD = 30  # ~1kph
+  RELAY_MALFUNCTION_ADDR = 832
+  RELAY_MALFUNCTION_BUS = 0
+  FWD_BLACKLISTED_ADDRS = {2: [832, 1157]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  MAX_RATE_UP = 3
+  MAX_RATE_DOWN = 7
+  MAX_TORQUE = 384
+  MAX_RT_DELTA = 112
+  RT_INTERVAL = 250000
+  DRIVER_TORQUE_ALLOWANCE = 50
+  DRIVER_TORQUE_FACTOR = 2
+
+  cnt_gas = 0
+  cnt_speed = 0
+  cnt_brake = 0
+  cnt_cruise = 0
+  cnt_button = 0
+
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_kia_generic")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, 0)
+    self.safety.init_tests()
+
+  def _button_msg(self, buttons, main_button=0, bus=0):
+    values = {"CF_Clu_CruiseSwState": buttons, "CF_Clu_CruiseSwMain": main_button, "CF_Clu_AliveCnt1": self.cnt_button}
+    self.__class__.cnt_button += 1
+    return self.packer.make_can_msg_panda("CLU11", bus, values)
+
+  def _user_gas_msg(self, gas):
+    values = {"CF_Ems_AclAct": gas, "AliveCounter": self.cnt_gas % 4}
+    self.__class__.cnt_gas += 1
+    return self.packer.make_can_msg_panda("EMS16", 0, values, fix_checksum=checksum)
+
+  def _user_brake_msg(self, brake):
+    values = {"DriverBraking": brake, "AliveCounterTCS": self.cnt_brake % 8}
+    self.__class__.cnt_brake += 1
+    return self.packer.make_can_msg_panda("TCS13", 0, values, fix_checksum=checksum)
+
+  def _speed_msg(self, speed):
+    # panda safety doesn't scale, so undo the scaling
+    values = {"WHL_SPD_%s" % s: speed * 0.03125 for s in ["FL", "FR", "RL", "RR"]}
+    values["WHL_SPD_AliveCounter_LSB"] = (self.cnt_speed % 16) & 0x3
+    values["WHL_SPD_AliveCounter_MSB"] = (self.cnt_speed % 16) >> 2
+    self.__class__.cnt_speed += 1
+    return self.packer.make_can_msg_panda("WHL_SPD11", 0, values, fix_checksum=checksum)
+
+  def _pcm_status_msg(self, enable):
+    values = {"ACCMode": enable, "CR_VSM_Alive": self.cnt_cruise % 16}
+    self.__class__.cnt_cruise += 1
+    return self.packer.make_can_msg_panda("SCC12", self.SCC_BUS, values, fix_checksum=checksum)
+
+  # TODO: this is unused
+  def _torque_driver_msg(self, torque):
+    values = {"CR_Mdps_StrColTq": torque}
+    return self.packer.make_can_msg_panda("MDPS12", 0, values)
+
+  def _torque_cmd_msg(self, torque, steer_req=1):
+    values = {"CR_Lkas_StrToqReq": torque, "CF_Lkas_ActToi": steer_req}
+    return self.packer.make_can_msg_panda("LKAS11", 0, values)
+
+  def test_steer_req_bit(self):
+    """
+      On Hyundai, you can ramp up torque and then set the CF_Lkas_ActToi bit and the
+      EPS will ramp up faster than the effective panda safety limits. This tests:
+        - Nothing is sent when cutting torque
+        - Nothing is blocked when sending torque normally
+    """
+    self.safety.set_controls_allowed(True)
+    for _ in range(100):
+      self._set_prev_torque(self.MAX_TORQUE)
+      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+    self._set_prev_torque(self.MAX_TORQUE)
+    for _ in range(100):
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
+
+
+class TestHyundaiSafetyCameraSCC(TestHyundaiSafety):
+  BUTTONS_BUS = 2  # tx on 2, rx on 0
+  SCC_BUS = 2  # rx on 2
+
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_kia_generic")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, Panda.FLAG_HYUNDAI_CAMERA_SCC)
+    self.safety.init_tests()
 
 
 class TestHyundaiLegacySafety(TestHyundaiSafety):
@@ -327,22 +272,23 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
       "AEB_CmdAct": int(aeb_req),
       "CR_VSM_DecCmd": aeb_decel,
     }
-    return self.packer.make_can_msg_panda("SCC12", 0, values)
+    return self.packer.make_can_msg_panda("SCC12", self.SCC_BUS, values)
 
-  def _send_fca11_msg(self, idx=0, aeb_req=False, aeb_decel=0):
+  def _send_fca11_msg(self, idx=0, vsm_aeb_req=False, fca_aeb_req=False, aeb_decel=0):
     values = {
       "CR_FCA_Alive": ((-((idx % 0xF) + 2) % 4) << 2) + 1,
       "Supplemental_Counter": idx % 0xF,
       "FCA_Status": 2,
       "CR_VSM_DecCmd": aeb_decel,
-      "CF_VSM_DecCmdAct": int(aeb_req),
-      "FCA_CmdAct": int(aeb_req),
+      "CF_VSM_DecCmdAct": int(vsm_aeb_req),
+      "FCA_CmdAct": int(fca_aeb_req),
     }
     return self.packer.make_can_msg_panda("FCA11", 0, values)
 
   def test_no_aeb_fca11(self):
     self.assertTrue(self._tx(self._send_fca11_msg()))
-    self.assertFalse(self._tx(self._send_fca11_msg(aeb_req=True)))
+    self.assertFalse(self._tx(self._send_fca11_msg(vsm_aeb_req=True)))
+    self.assertFalse(self._tx(self._send_fca11_msg(fca_aeb_req=True)))
     self.assertFalse(self._tx(self._send_fca11_msg(aeb_decel=1.0)))
 
   def test_no_aeb_scc12(self):

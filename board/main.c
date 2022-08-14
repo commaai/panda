@@ -22,13 +22,15 @@
 
 #include "obj/gitversion.h"
 
-#include "usb_comms.h"
+#include "main_comms.h"
 
 
 // ********************* Serial debugging *********************
 
 bool check_started(void) {
-  return current_board->check_ignition() || ignition_can;
+  bool started = current_board->check_ignition() || ignition_can;
+  ignition_seen |= started;
+  return started;
 }
 
 void debug_ring_callback(uart_ring *ring) {
@@ -283,7 +285,7 @@ void EXTI_IRQ_Handler(void) {
 
     current_board->set_usb_power_mode(USB_POWER_CDP);
     set_power_save_state(POWER_SAVE_STATUS_DISABLED);
-    deepsleep_requested = false;
+    deepsleep_allowed = false;
     heartbeat_counter = 0U;
     usb_soft_disconnect(false);
 
@@ -419,7 +421,7 @@ int main(void) {
         }
       #endif
     } else {
-      if (deepsleep_requested && !usb_enumerated && !check_started()) {
+      if (deepsleep_allowed && !usb_enumerated && !check_started() && ignition_seen && (heartbeat_counter > 20U)) {
         usb_soft_disconnect(true);
         current_board->set_fan_power(0U);
         current_board->set_usb_power_mode(USB_POWER_CLIENT);

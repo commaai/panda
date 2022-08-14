@@ -8,11 +8,17 @@ class CanHandle(object):
     self.bus = bus
 
   def transact(self, dat):
-    self.p.isotp_send(1, dat, self.bus, recvaddr=2)
-
     def _handle_timeout(signum, frame):
-      # will happen on reset
-      raise Exception("timeout")
+      # will happen on reset or can error
+      raise TimeoutError
+
+    signal.signal(signal.SIGALRM, _handle_timeout)
+    signal.alarm(1)
+
+    try:
+      self.p.isotp_send(1, dat, self.bus, recvaddr=2)
+    finally:
+      signal.alarm(0)
 
     signal.signal(signal.SIGALRM, _handle_timeout)
     signal.alarm(1)
