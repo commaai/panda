@@ -3,7 +3,6 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from collections import defaultdict
 from typing import Optional, List, Dict
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
@@ -30,15 +29,8 @@ def make_msg(bus, addr, length=8):
 
 
 class CANPackerPanda(CANPacker):
-  def __init__(self, dbc_name):
-    super().__init__(dbc_name)
-    self._counters: Dict[str, int] = defaultdict(lambda: -1)
-
-  def make_can_msg_panda(self, name_or_addr, bus, values, counter=False, fix_checksum=None):
-    if counter:
-      self._counters[name_or_addr] += 1
-
-    msg = self.make_can_msg(name_or_addr, bus, values, counter=self._counters[name_or_addr])
+  def make_can_msg_panda(self, name_or_addr, bus, values, fix_checksum=None):
+    msg = self.make_can_msg(name_or_addr, bus, values)
     if fix_checksum is not None:
       msg = fix_checksum(msg)
     return package_can_msg(msg)
@@ -439,7 +431,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     for bus in range(0, 4):
       for addr in self.SCANNED_ADDRS:
         if all(addr != m[0] or bus != m[1] for m in self.TX_MSGS):
-          self.assertFalse(self._tx(make_msg(bus, addr, 8)))
+          self.assertFalse(self._tx(make_msg(bus, addr, 8)), f"allowed TX {addr=} {bus=}")
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
@@ -570,15 +562,17 @@ class PandaSafetyTest(PandaSafetyTestBase):
             # No point in comparing different Tesla safety modes
             if 'Tesla' in attr and 'Tesla' in current_test:
               continue
-
             if {attr, current_test}.issubset({'TestToyotaSafety', 'TestToyotaAltBrakeSafety', 'TestToyotaStockLongitudinal'}):
               continue
-
+            if {attr, current_test}.issubset({'TestSubaruSafety', 'TestSubaruGen2Safety'}):
+              continue
+            if {attr, current_test}.issubset({'TestVolkswagenPqSafety', 'TestVolkswagenPqStockSafety', 'TestVolkswagenPqLongSafety'}):
+              continue
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
             if attr.startswith('TestHonda'):
               # exceptions for common msgs across different hondas
-              tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C], tx))
-            all_tx.append(list([m[0], m[1], attr] for m in tx))
+              tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C, 0x33D], tx))
+            all_tx.append(list([m[0], m[1], attr[4:]] for m in tx))
 
     # make sure we got all the msgs
     self.assertTrue(len(all_tx) >= len(test_files)-1)

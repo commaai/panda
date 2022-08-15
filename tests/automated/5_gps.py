@@ -1,10 +1,6 @@
 import time
 from panda import PandaSerial
-from .helpers import reset_pandas, test_all_gps_pandas, panda_connect_and_init
-
-# Reset the pandas before running tests
-def aaaa_reset_before_tests():
-  reset_pandas()
+from .helpers import test_all_gps_pandas, panda_connect_and_init
 
 @test_all_gps_pandas
 @panda_connect_and_init
