@@ -1,9 +1,14 @@
 import os
 import copy
+import struct
 import subprocess
+from base64 import b64encode
 
 PREFIX = "arm-none-eabi-"
 BUILDER = "DEV"
+
+# increment this to make new hardware not run old versions
+VERSION = 2
 
 common_flags = []
 build_projects = {}
@@ -191,4 +196,5 @@ for project_name in build_projects:
 
   # Sign main
   sign_py = File("../crypto/sign.py").srcnode().abspath
-  panda_bin_signed = project_env.Command(f"obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn} {project['MCU_IDCODE']}")
+  version_tag = struct.pack("I", project['MCU_IDCODE']) + b"VERS" + struct.pack("I", VERSION)
+  panda_bin_signed = project_env.Command(f"obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn} {b64encode(version_tag).decode()}")

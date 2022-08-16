@@ -3,14 +3,12 @@ import os
 import sys
 import struct
 import hashlib
-from Crypto.PublicKey import RSA
 import binascii
-
-# increment this to make new hardware not run old versions
-VERSION = 2
+from base64 import b64decode
+from Crypto.PublicKey import RSA
 
 rsa = RSA.importKey(open(sys.argv[3]).read())
-mcu_id = int(sys.argv[4])
+version_tag = b64decode(sys.argv[4].encode(encoding="utf-8"))
 
 with open(sys.argv[1], "rb") as f:
   dat = f.read()
@@ -19,10 +17,8 @@ print("signing", len(dat), "bytes")
 
 with open(sys.argv[2], "wb") as f:
   if os.getenv("SETLEN") is not None:
-    # add mcu id to signature
-    dat += struct.pack("I", mcu_id)
-    # add the version at the end
-    dat += b"VERS" + struct.pack("I", VERSION)
+    # add the version tag at the end
+    dat += version_tag
     # add the length at the beginning
     x = struct.pack("I", len(dat)) + dat[4:]
     # mock signature of dat[4:]
