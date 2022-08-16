@@ -340,9 +340,10 @@ class Panda:
     except Exception:
       pass
 
-  def flash(self, fn=DEFAULT_FW_FN, code=None, reconnect=True):
-    if self._mcu_type == MCU_TYPE_H7 and fn == DEFAULT_FW_FN:
-      fn = DEFAULT_H7_FW_FN
+  def flash(self, fn=None, code=None, reconnect=True):
+    if not fn:
+      fn = DEFAULT_H7_FW_FN if self._mcu_type == MCU_TYPE_H7 else DEFAULT_FW_FN
+    assert os.path.isfile(fn)
     print("flash: main version is " + self.get_version())
     if not self.bootstub:
       self.reset(enter_bootstub=True)
