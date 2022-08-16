@@ -73,7 +73,9 @@ const int HYUNDAI_PARAM_EV_GAS = 1;
 const int HYUNDAI_PARAM_HYBRID_GAS = 2;
 const int HYUNDAI_PARAM_LONGITUDINAL = 4;
 const int HYUNDAI_PARAM_CAMERA_SCC = 8;
-const int HYUNDAI_PARAM_TUCSON_HEV_2022 = 16;
+
+const int HYUNDAI_PARAM_CANFD_HDA2 = 1;
+const int HYUNDAI_PARAM_CANFD_BUTTON_SEND = 2;
 
 enum {
   HYUNDAI_BTN_NONE = 0,
@@ -92,7 +94,9 @@ bool hyundai_ev_gas_signal = false;
 bool hyundai_hybrid_gas_signal = false;
 bool hyundai_camera_scc = false;
 bool hyundai_longitudinal = false;
-bool hyundai_tucson_hev_2022 = false;
+
+bool hyundai_canfd_hda2 = false;
+bool hyundai_canfd_button_send = false;
 
 addr_checks hyundai_rx_checks = {hyundai_addr_checks, HYUNDAI_ADDR_CHECK_LEN};
 
