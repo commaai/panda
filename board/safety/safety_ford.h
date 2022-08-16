@@ -61,15 +61,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
       // Signal: CcStat_D_Actl
       unsigned int cruise_state = GET_BYTE(to_push, 1) & 0x07U;
       bool cruise_engaged = (cruise_state == 4U) || (cruise_state == 5U);
-
-      // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
-      if (cruise_engaged && !cruise_engaged_prev) {
-        controls_allowed = true;
-      }
-      if (!cruise_engaged) {
-        controls_allowed = false;
-      }
-      cruise_engaged_prev = cruise_engaged;
+      pcm_cruise_check(cruise_engaged);
     }
 
     // If steering controls messages are received on the destination bus, it's an indication
