@@ -208,7 +208,7 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
   def setUp(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, Panda.FLAG_VOLKSWAGEN_MQB_LONG)
+    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, Panda.FLAG_VOLKSWAGEN_LONG_CONTROL)
     self.safety.init_tests()
 
   # stock cruise controls are entirely bypassed under openpilot longitudinal control
