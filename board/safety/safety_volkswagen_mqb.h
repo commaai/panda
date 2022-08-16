@@ -1,4 +1,4 @@
-
+// lateral limits
 const SteeringLimits VOLKSWAGEN_MQB_STEERING_LIMITS = {
   .max_steer = 300,              // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
   .max_rt_delta = 75,            // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
@@ -10,8 +10,9 @@ const SteeringLimits VOLKSWAGEN_MQB_STEERING_LIMITS = {
   .type = TorqueDriverLimited,
 };
 
-const int VOLKSWAGEN_MAX_ACCEL = 2000;                  // Max accel 2.0 m/s2
-const int VOLKSWAGEN_MIN_ACCEL = -3500;                 // Max decel 3.5 m/s2
+// longitudinal limits
+const int VOLKSWAGEN_MQB_MAX_ACCEL = 2000;   // Max accel 2.0 m/s2
+const int VOLKSWAGEN_MQB_MIN_ACCEL = -3500;  // Max decel 3.5 m/s2
 
 #define MSG_ESP_19      0x0B2   // RX from ABS, for wheel speeds
 #define MSG_LH_EPS_03   0x09F   // RX from EPS, for driver steering torque
@@ -222,7 +223,7 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send, bool longitudinal_allowe
     if (!controls_allowed && (desired_accel != 0)) {
       violation = 1;
     }
-    violation |= max_limit_check(desired_accel, VOLKSWAGEN_MAX_ACCEL, VOLKSWAGEN_MIN_ACCEL);
+    violation |= max_limit_check(desired_accel, VOLKSWAGEN_MQB_MAX_ACCEL, VOLKSWAGEN_MQB_MIN_ACCEL);
 
     if (violation) {
       tx = 0;
