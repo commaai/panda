@@ -45,8 +45,10 @@ ENV LC_ALL en_US.UTF-8
 
 RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
-ENV OPENPILOT_REF="1b0167ce24afb037b36464c40f9c5e0d657e77d9"
-ENV OPENDBC_REF="387dcf9628cdbcc975caece2e8b0ae1dce5e546d"
+
+ENV PANDA_PATH=/tmp/openpilot/panda
+ENV OPENPILOT_REF="96e8d5c9fe1a8084dfa5d97c78d4ea2037272420"
+ENV OPENDBC_REF="488568517162194fbb2aa45d3dba4c6af663a883"
 
 COPY requirements.txt /tmp/
 RUN pyenv install 3.8.10 && \
@@ -54,12 +56,8 @@ RUN pyenv install 3.8.10 && \
     pyenv rehash && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
-RUN cd /tmp && \
-    git clone https://github.com/danmar/cppcheck.git && \
-    cd cppcheck && \
-    git fetch && \
-    git checkout e1cff1d1ef92f6a1c6962e0e4153b7353ccad04c && \
-    FILESDIR=/usr/share/cppcheck make -j4 install
+COPY tests/misra/install.sh /tmp/
+RUN /tmp/install.sh
 
 RUN cd /tmp && \
     git clone https://github.com/commaai/openpilot.git tmppilot || true && \
@@ -80,4 +78,5 @@ RUN cd /tmp/openpilot && \
     pip install --no-cache-dir --upgrade aenum lru-dict pycurl tenacity atomicwrites serial smbus2 scons
 
 COPY . /tmp/openpilot/panda
-RUN rm -rf /tmp/openpilot/panda/.git
+RUN mv /tmp/cppcheck /tmp/openpilot/panda/tests/misra && \
+    rm -rf /tmp/openpilot/panda/.git

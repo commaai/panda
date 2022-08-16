@@ -1,1 +1,4 @@
+*.pdf
 cppcheck/
+
+MISRA_C_2012.txt
