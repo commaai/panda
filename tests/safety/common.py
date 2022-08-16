@@ -568,11 +568,13 @@ class PandaSafetyTest(PandaSafetyTestBase):
               continue
             if {attr, current_test}.issubset({'TestVolkswagenPqSafety', 'TestVolkswagenPqStockSafety', 'TestVolkswagenPqLongSafety'}):
               continue
+            if {attr, current_test}.issubset({'TestVolkswagenMqbSafety', 'TestVolkswagenMqbStockSafety', 'TestVolkswagenMqbLongSafety'}):
+              continue
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
             if attr.startswith('TestHonda'):
               # exceptions for common msgs across different hondas
               tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C, 0x33D], tx))
-            all_tx.append(list([m[0], m[1], attr[4:]] for m in tx))
+            all_tx.append(list([m[0], m[1], attr] for m in tx))
 
     # make sure we got all the msgs
     self.assertTrue(len(all_tx) >= len(test_files)-1)
@@ -584,13 +586,12 @@ class PandaSafetyTest(PandaSafetyTestBase):
         # TODO: this should be blocked
         if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
           continue
-        # Both VW safety variants send the same steer and HUD messages
-        if current_test.startswith("TestVolkswagenMqb") and source_test.startswith("TestVolkswagenMqb") and addr in [0x126, 0x324, 0x397]:
+        # Verified conflict
+        testpair = ("TestVolkswagenMqb", "TestSubaru")
+        if current_test.startswith(testpair) and source_test.startswith(testpair) and addr == 0x122:
           continue
         # Verified conflict
-        if current_test.startswith("TestSubaru") and source_test.startswith("TestVolkswagenMqb") and addr == 0x122:
+        testpair = ("TestVolkswagenMqb", "TestHonda")
+        if current_test.startswith(testpair) and source_test.startswith(testpair) and addr == 0x30c:
           continue
-        # Verified conflict
-        if current_test.startswith("TestHonda") and source_test.startswith("TestVolkswagenMqb") and addr == 0x30c:
-          continue
-        self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {source_test} was allowed")
+        self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {source_test} during {current_test} was allowed")
