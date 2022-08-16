@@ -340,9 +340,10 @@ class Panda:
     except Exception:
       pass
 
-  def flash(self, fn=DEFAULT_FW_FN, code=None, reconnect=True):
-    if self._mcu_type == MCU_TYPE_H7 and fn == DEFAULT_FW_FN:
-      fn = DEFAULT_H7_FW_FN
+  def flash(self, fn=None, code=None, reconnect=True):
+    if not fn:
+      fn = DEFAULT_H7_FW_FN if self._mcu_type == MCU_TYPE_H7 else DEFAULT_FW_FN
+    assert os.path.isfile(fn)
     print("flash: main version is " + self.get_version())
     if not self.bootstub:
       self.reset(enter_bootstub=True)
@@ -363,23 +364,31 @@ class Panda:
       self.reconnect()
 
   def recover(self, timeout: Optional[int] = None, reset: bool = True) -> bool:
+    dfu_serial = PandaDFU.st_serial_to_dfu_serial(self._serial, self._mcu_type)
+
     if reset:
       self.reset(enter_bootstub=True)
       self.reset(enter_bootloader=True)
 
-    t_start = time.time()
-    while len(PandaDFU.list()) == 0:
-      print("waiting for DFU...")
-      time.sleep(0.1)
-      if timeout is not None and (time.time() - t_start) > timeout:
-        return False
+    if not self.wait_for_dfu(dfu_serial, timeout=timeout):
+      return False
 
-    dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial, self._mcu_type))
+    dfu = PandaDFU(dfu_serial)
     dfu.recover()
 
     # reflash after recover
     self.connect(True, True)
     self.flash()
+    return True
+
+  @staticmethod
+  def wait_for_dfu(dfu_serial: str, timeout: Optional[int] = None) -> bool:
+    t_start = time.monotonic()
+    while dfu_serial not in PandaDFU.list():
+      print("waiting for DFU...")
+      time.sleep(0.1)
+      if timeout is not None and (time.monotonic() - t_start) > timeout:
+        return False
     return True
 
   @staticmethod
