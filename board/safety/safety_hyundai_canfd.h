@@ -12,21 +12,21 @@ const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
 const uint32_t HYUNDAI_CANFD_STANDSTILL_THRSLD = 30;  // ~1kph
 
 const CanMsg HYUNDAI_CANFD_HDA2_TX_MSGS[] = {
-  {0x50, 0, 16},
-  {0x1CF, 1, 8},
-  {0x2A4, 0, 24},
+  {0x50, 0, 16},  // LKAS Bus 0
+  {0x1CF, 1, 8},  // CRUISE_BUTTON Bus 0
+  {0x2A4, 0, 24}, // 0x2A4 Bus 0 (for blocking LFA/HDA)
 };
 
 const CanMsg HYUNDAI_CANFD_BUTTON_SEND[] = {
-  {0x12A, 0, 16},
-  {0x1CF, 0, 8},
-  {0x1E0, 0, 16},
+  {0x12A, 0, 16}, // LFA Bus 0
+  {0x1CF, 0, 8},  // CRUISE_BUTTON Bus 0
+  {0x1E0, 0, 16}, // LFAHDA_CLUSTER Bus 0
 };
 
 const CanMsg HYUNDAI_CANFD_NON_BUTTON_SEND[] = {
-  {0x12A, 0, 16},
-  {0x1A0, 0, 32},
-  {0x1E0, 0, 16},
+  {0x12A, 0, 16}, // LFA Bus 0
+  {0x1A0, 0, 32}, // CRUISE_INFO Bus 0
+  {0x1E0, 0, 16}, // LFAHDA_CLUSTER Bus 0
 };
 
 AddrCheckStruct hyundai_canfd_addr_checks[] = {
@@ -243,12 +243,12 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   }
   if (bus_num == 2) {
     // in HDA2, we block 0x50 (LKAS) and 0x2a4 (LFA with HDA2) to send steering commands
-    int is_lkas_msg = (((addr == 0x50) || (addr == 0x2a4)) && hyundai_canfd_hda2);
     // in non-HDA2, we block 0x12a (LFA) to send steering commands
-    int is_lfa_msg = ((addr == 0x12a) && !hyundai_canfd_hda2);
-    // in CAN-FD with no 0x1cf, we block 0x1a0 in order to send stock SCC cancel command
-    int is_cruise_info_msg = ((addr == 0x1a0) && !(hyundai_canfd_hda2 && hyundai_canfd_button_send));
+    // in CAN-FD with no 0x1cf, we block 0x1a0 to send stock SCC cancel command
     // we block 0x1e0 to send LFA and LKAS icons on the car's dashboard
+    int is_lkas_msg = (((addr == 0x50) || (addr == 0x2a4)) && hyundai_canfd_hda2);
+    int is_lfa_msg = ((addr == 0x12a) && !hyundai_canfd_hda2);
+    int is_cruise_info_msg = ((addr == 0x1a0) && !(hyundai_canfd_hda2 && hyundai_canfd_button_send));
     int is_lfahda_msg = ((addr == 0x1e0) && !hyundai_canfd_hda2);
     int block_msg = is_lkas_msg || is_lfa_msg || is_cruise_info_msg || is_lfahda_msg;
     if (!block_msg) {
