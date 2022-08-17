@@ -43,6 +43,14 @@ typedef struct {
 } ChryslerAddrs;
 
 // CAN messages for Chrysler/Jeep platforms
+#define CHRYSLER_ADDRS_EPS_2          544
+#define CHRYSLER_ADDRS_ESP_1          320
+#define CHRYSLER_ADDRS_ESP_8          284
+#define CHRYSLER_ADDRS_ECM_5          559
+#define CHRYSLER_ADDRS_DAS_3          500
+#define CHRYSLER_ADDRS_DAS_6          678
+#define CHRYSLER_ADDRS_LKAS_COMMAND   658
+#define CHRYSLER_ADDRS_CRUISE_BUTTONS 571
 const ChryslerAddrs CHRYSLER_ADDRS = {
   .EPS_2            = 544,  // EPS driver input torque
   .ESP_1            = 320,  // Brake pedal and vehicle speed
@@ -55,6 +63,14 @@ const ChryslerAddrs CHRYSLER_ADDRS = {
 };
 
 // CAN messages for the 5th gen RAM DT platform
+#define CHRYSLER_RAM_DT_ADDRS_EPS_2          49
+#define CHRYSLER_RAM_DT_ADDRS_ESP_1          131
+#define CHRYSLER_RAM_DT_ADDRS_ESP_8          121
+#define CHRYSLER_RAM_DT_ADDRS_ECM_5          157
+#define CHRYSLER_RAM_DT_ADDRS_DAS_3          153
+#define CHRYSLER_RAM_DT_ADDRS_DAS_6          250
+#define CHRYSLER_RAM_DT_ADDRS_LKAS_COMMAND   166
+#define CHRYSLER_RAM_DT_ADDRS_CRUISE_BUTTONS 177
 const ChryslerAddrs CHRYSLER_RAM_DT_ADDRS = {
   .EPS_2            = 49,   // EPS driver input torque
   .ESP_1            = 131,  // Brake pedal and vehicle speed
@@ -67,6 +83,14 @@ const ChryslerAddrs CHRYSLER_RAM_DT_ADDRS = {
 };
 
 // CAN messages for the 5th gen RAM HD platform
+#define CHRYSLER_RAM_HD_ADDRS_EPS_2          544
+#define CHRYSLER_RAM_HD_ADDRS_ESP_1          320
+#define CHRYSLER_RAM_HD_ADDRS_ESP_8          284
+#define CHRYSLER_RAM_HD_ADDRS_ECM_5          559
+#define CHRYSLER_RAM_HD_ADDRS_DAS_3          500
+#define CHRYSLER_RAM_HD_ADDRS_DAS_6          629
+#define CHRYSLER_RAM_HD_ADDRS_LKAS_COMMAND   630
+#define CHRYSLER_RAM_HD_ADDRS_CRUISE_BUTTONS 570
 const ChryslerAddrs CHRYSLER_RAM_HD_ADDRS = {
   .EPS_2            = 544,  // EPS driver input torque
   .ESP_1            = 320,  // Brake pedal and vehicle speed
@@ -79,48 +103,48 @@ const ChryslerAddrs CHRYSLER_RAM_HD_ADDRS = {
 };
 
 const CanMsg CHRYSLER_TX_MSGS[] = {
-  {CHRYSLER_ADDRS.CRUISE_BUTTONS, 0, 3},
-  {CHRYSLER_ADDRS.LKAS_COMMAND, 0, 6},
-  {CHRYSLER_ADDRS.DAS_6, 0, 8},
+  {CHRYSLER_ADDRS_CRUISE_BUTTONS, 0, 3},
+  {CHRYSLER_ADDRS_LKAS_COMMAND, 0, 6},
+  {CHRYSLER_ADDRS_DAS_6, 0, 8},
 };
 
 const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
-  {CHRYSLER_RAM_DT_ADDRS.CRUISE_BUTTONS, 2, 3},
-  {CHRYSLER_RAM_DT_ADDRS.LKAS_COMMAND, 0, 8},
-  {CHRYSLER_RAM_DT_ADDRS.DAS_6, 0, 8},
+  {CHRYSLER_RAM_DT_ADDRS_CRUISE_BUTTONS, 2, 3},
+  {CHRYSLER_RAM_DT_ADDRS_LKAS_COMMAND, 0, 8},
+  {CHRYSLER_RAM_DT_ADDRS_DAS_6, 0, 8},
 };
 
 const CanMsg CHRYSLER_RAM_HD_TX_MSGS[] = {
-  {CHRYSLER_RAM_HD_ADDRS.CRUISE_BUTTONS, 2, 3},
-  {CHRYSLER_RAM_HD_ADDRS.LKAS_COMMAND, 0, 8},
-  {CHRYSLER_RAM_HD_ADDRS.DAS_6, 0, 8},
+  {CHRYSLER_RAM_HD_ADDRS_CRUISE_BUTTONS, 2, 3},
+  {CHRYSLER_RAM_HD_ADDRS_LKAS_COMMAND, 0, 8},
+  {CHRYSLER_RAM_HD_ADDRS_DAS_6, 0, 8},
 };
 
 AddrCheckStruct chrysler_addr_checks[] = {
-  {.msg = {{CHRYSLER_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_ADDRS_EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_ADDRS_ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   //{.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
   {.msg = {{514, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_ADDRS.DAS_3, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_ADDRS_ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_ADDRS_DAS_3, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define CHRYSLER_ADDR_CHECK_LEN (sizeof(chrysler_addr_checks) / sizeof(chrysler_addr_checks[0]))
 
 AddrCheckStruct chrysler_ram_dt_addr_checks[] = {
-  {.msg = {{CHRYSLER_RAM_DT_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_RAM_DT_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_RAM_DT_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_RAM_DT_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_RAM_DT_ADDRS.DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS_EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS_ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS_ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS_ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS_DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define CHRYSLER_RAM_DT_ADDR_CHECK_LEN (sizeof(chrysler_ram_dt_addr_checks) / sizeof(chrysler_ram_dt_addr_checks[0]))
 
 AddrCheckStruct chrysler_ram_hd_addr_checks[] = {
-  {.msg = {{CHRYSLER_RAM_HD_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_RAM_HD_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_RAM_HD_ADDRS.DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS_EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS_ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS_ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS_ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS_DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define CHRYSLER_RAM_HD_ADDR_CHECK_LEN (sizeof(chrysler_ram_hd_addr_checks) / sizeof(chrysler_ram_hd_addr_checks[0]))
 
