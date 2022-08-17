@@ -1,19 +1,9 @@
 #!/usr/bin/env python3
 import argparse
-import time
-import _thread
 from tqdm import tqdm
 from panda import Panda
 from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseError, SESSION_TYPE, DATA_IDENTIFIER_TYPE
 
-
-def heartbeat_thread(p):
-  while True:
-    try:
-      p.send_heartbeat()
-      time.sleep(0.5)
-    except Exception:
-      continue
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -44,7 +34,7 @@ if __name__ == "__main__":
 
   panda = Panda()
   panda.set_safety_mode(Panda.SAFETY_ELM327)
-  _thread.start_new_thread(heartbeat_thread, (panda,))
+  panda.set_heartbeat_disabled()
   print("querying addresses ...")
   with tqdm(addrs) as t:
     for addr in t:
