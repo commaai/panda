@@ -6,7 +6,7 @@ from functools import wraps, partial
 from nose.tools import assert_equal
 from parameterized import parameterized, param
 
-from panda import Panda
+from panda import Panda, DEFAULT_H7_FW_FN, DEFAULT_FW_FN, MCU_TYPE_H7
 from panda_jungle import PandaJungle  # pylint: disable=import-error
 
 SPEED_NORMAL = 500
@@ -230,3 +230,10 @@ def clear_can_buffers(panda):
     if (time.monotonic() - st) > 10:
       print("Unable to clear can buffers for panda ", panda.get_serial())
       assert False
+
+def check_signature(p):
+  assert not p.bootstub, "Flashed firmware not booting. Stuck in bootstub."
+  fn = DEFAULT_H7_FW_FN if p.get_mcu_type() == MCU_TYPE_H7 else DEFAULT_FW_FN
+  firmware_sig = Panda.get_signature_from_firmware(fn)
+  panda_sig = p.get_signature()
+  assert_equal(panda_sig, firmware_sig)
