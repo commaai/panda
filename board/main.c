@@ -241,9 +241,9 @@ void tick_handler(void) {
 
           // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
           if(usb_enumerated){
-            current_board->set_fan_power(50U);
+            fan_set_power(50U);
           } else {
-            current_board->set_fan_power(0U);
+            fan_set_power(0U);
           }
         }
 
@@ -421,7 +421,7 @@ int main(void) {
     } else {
       if (deepsleep_allowed && !usb_enumerated && !check_started()) {
         usb_soft_disconnect(true);
-        current_board->set_fan_power(0U);
+        fan_set_power(0U);
         current_board->set_usb_power_mode(USB_POWER_CLIENT);
         NVIC_DisableIRQ(TICK_TIMER_IRQ);
         delay(512000U);

@@ -231,7 +231,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xb1: set fan power
     case 0xb1:
-      current_board->set_fan_power(req->param1);
+      fan_set_power(req->param1);
       break;
     // **** 0xb2: get fan rpm
     case 0xb2:
