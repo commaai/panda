@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import time
 import _thread
 from tqdm import tqdm
 from panda import Panda
