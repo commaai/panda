@@ -10,7 +10,6 @@ from panda import Panda  # noqa: E402
 if __name__ == "__main__":
   p = Panda()
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-  p.set_heartbeat_disabled()
   p.set_power_save(False)
 
   while True:

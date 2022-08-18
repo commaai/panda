@@ -25,7 +25,6 @@ def panda_init(serial, enable_canfd=False):
     if enable_canfd:
       p.set_can_data_speed_kbps(bus, 2000)
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-  p.set_heartbeat_disabled()
   return p
 
 if JUNGLE_SERIAL:
