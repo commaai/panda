@@ -192,6 +192,11 @@ void tick_handler(void) {
         heartbeat_counter += 1U;
       }
 
+      // disabling heartbeat not allowed while in safety mode
+      if (is_car_safety_mode(current_safety_mode)) {
+        heartbeat_disabled = false;
+      }
+
       if (siren_countdown > 0U) {
         siren_countdown -= 1U;
       }

@@ -531,12 +531,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xf7:
       green_led_enabled = (req->param1 != 0U);
       break;
-#ifdef ALLOW_DEBUG
     // **** 0xf8: disable heartbeat checks
     case 0xf8:
-      heartbeat_disabled = true;
+      if (!is_car_safety_mode(current_safety_mode)) {
+        heartbeat_disabled = true;
+      }
       break;
-#endif
     // **** 0xde: set CAN FD data bitrate
     case 0xf9:
       if (req->param1 < CAN_CNT) {
