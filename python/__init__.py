@@ -209,13 +209,18 @@ class Panda:
 
   FLAG_GM_HW_CAM = 1
 
-  def __init__(self, serial: Optional[str] = None, claim: bool = True):
+  def __init__(self, serial: Optional[str] = None, claim: bool = True, disable_checks: bool = True):
     self._serial = serial
     self._handle = None
     self._bcd_device = None
 
     # connect and set mcu type
     self.connect(claim)
+
+    # disable openpilot's heartbeat checks
+    if disable_checks:
+      self.set_heartbeat_disabled()
+      self.set_power_save(0)
 
   def close(self):
     self._handle.close()
@@ -552,11 +557,8 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xda, int(bootmode), 0, b'')
     time.sleep(0.2)
 
-  def set_safety_mode(self, mode=SAFETY_SILENT, param=0, disable_checks=True):
+  def set_safety_mode(self, mode=SAFETY_SILENT, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
-    if disable_checks:
-      self.set_heartbeat_disabled()
-      self.set_power_save(0)
 
   def set_gmlan(self, bus=2):
     # TODO: check panda type

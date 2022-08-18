@@ -67,7 +67,7 @@ def test_hw_type(p):
 @panda_connect_and_init
 def test_heartbeat(p):
   # TODO: add more cases here once the tests aren't super slow
-  p.set_safety_mode(mode=Panda.SAFETY_HYUNDAI, param=FLAG_HYUNDAI_LONG, disable_checks=False)
+  p.set_safety_mode(mode=Panda.SAFETY_HYUNDAI, param=Panda.FLAG_HYUNDAI_LONG, disable_checks=False)
   p.send_heartbeat()
   assert p.health()['safety_mode'] == Panda.SAFETY_HYUNDAI
   assert p.health()['safety_param'] == Panda.FLAG_HYUNDAI_LONG
