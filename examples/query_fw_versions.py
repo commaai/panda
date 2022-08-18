@@ -34,7 +34,6 @@ if __name__ == "__main__":
 
   panda = Panda()
   panda.set_safety_mode(Panda.SAFETY_ELM327)
-  panda.set_heartbeat_disabled()
   print("querying addresses ...")
   with tqdm(addrs) as t:
     for addr in t:

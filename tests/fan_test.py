@@ -9,7 +9,6 @@ from panda import Panda  # noqa: E402
 power = 0
 if __name__ == "__main__":
   p = Panda()
-  p.set_heartbeat_disabled()
   while True:
     p.set_fan_power(power)
     time.sleep(5)

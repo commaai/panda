@@ -33,7 +33,6 @@ if __name__ == "__main__":
     receiver.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
   sender.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-  sender.set_heartbeat_disabled()
 
   # Start transmisson
   threading.Thread(target=flood_tx, args=(sender,)).start()
