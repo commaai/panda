@@ -7,11 +7,11 @@ from panda.tests.safety.common import CANPackerPanda
 
 
 class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
-  TX_MSGS = [[0x122, 0], [0x220, 0], [0x221, 0], [0x222, 0], [0x321, 0], [0x322, 0], [0x240, 2], [0x13c, 2]]
+  TX_MSGS = [[0x122, 0], [0x221, 0], [0x321, 0], [0x322, 0]]
   STANDSTILL_THRESHOLD = 20  # 1kph (see dbc file)
   RELAY_MALFUNCTION_ADDR = 0x122
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {0: [0x240, 0x13c], 2: [0x122, 0x220, 0x221, 0x222, 0x321, 0x322]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x122, 0x321, 0x322]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   MAX_RATE_UP = 50
@@ -76,6 +76,17 @@ class TestSubaruGen2Safety(TestSubaruSafety):
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, Panda.FLAG_SUBARU_GEN2)
     self.safety.init_tests()
+
+class TestSubaruLongitudinalSafety(TestSubaruSafety):
+  TX_MSGS = [[0x122, 0], [0x220, 0], [0x221, 0], [0x222, 0], [0x321, 0], [0x322, 0], [0x240, 2], [0x13c, 2]]
+  FWD_BLACKLISTED_ADDRS = {0: [0x240, 0x13c], 2: [0x122, 0x220, 0x221, 0x222, 0x321, 0x322]}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("subaru_global_2017_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, Panda.FLAG_SUBARU_LONG)
+    self.safety.init_tests()
+
 
 
 if __name__ == "__main__":

@@ -24,6 +24,14 @@ const int SUBARU_STANDSTILL_THRSLD = 20;  // about 1kph
 
 const CanMsg SUBARU_TX_MSGS[] = {
   {0x122, 0, 8},
+  {0x221, 0, 8},
+  {0x321, 0, 8},
+  {0x322, 0, 8}
+};
+#define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
+
+const CanMsg SUBARU_LONG_TX_MSGS[] = {
+  {0x122, 0, 8},
   {0x220, 0, 8},
   {0x221, 0, 8},
   {0x222, 0, 8},
@@ -32,7 +40,7 @@ const CanMsg SUBARU_TX_MSGS[] = {
   {0x13c, 2, 8},
   {0x240, 2, 8}
 };
-#define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
+#define SUBARU_LONG_TX_MSGS_LEN (sizeof(SUBARU_LONG_TX_MSGS) / sizeof(SUBARU_LONG_TX_MSGS[0]))
 
 const CanMsg SUBARU_GEN2_TX_MSGS[] = {
   {0x122, 0, 8},
@@ -64,7 +72,10 @@ addr_checks subaru_gen2_rx_checks = {subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_C
 
 
 const uint16_t SUBARU_PARAM_GEN2 = 1;
+const uint16_t SUBARU_PARAM_LONGITUDINAL = 2;
+
 bool subaru_gen2 = false;
+bool subaru_longitudinal = false;
 
 
 static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
@@ -136,6 +147,8 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   if (subaru_gen2) {
     tx = msg_allowed(to_send, SUBARU_GEN2_TX_MSGS, SUBARU_GEN2_TX_MSGS_LEN);
+  } else if (subaru_longitudinal) {
+    tx = msg_allowed(to_send, SUBARU_LONG_TX_MSGS, SUBARU_LONG_TX_MSGS_LEN);
   } else {
     tx = msg_allowed(to_send, SUBARU_TX_MSGS, SUBARU_TX_MSGS_LEN);
   }
@@ -160,24 +173,33 @@ static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int addr = GET_ADDR(to_fwd);
 
   if (bus_num == 0) {
-    // 0x13c is Brake_Status for Global
-    // 0x240 is CruiseControl for Global
-    int block_msg = ((addr == 0x13c) || (addr == 0x240));
-    if (!block_msg) {
+    if (subaru_longitudinal) {
+      // 0x13c is Brake_Status
+      // 0x240 is CruiseControl
+      int block_msg = ((addr == 0x13c) || (addr == 0x240));
+      if (!block_msg) {
+        bus_fwd = 2;  // Camera CAN
+      }
+    } else {
       bus_fwd = 2;  // Camera CAN
     }
   }
   if (bus_num == 2) {
-    // Global Platform:
-    // 0x122 is ES_LKAS
-    // 0x220 is ES_Brake
-    // 0x221 is ES_Distance
-    // 0x222 is ES_Status
-    // 0x321 is ES_DashStatus
-    // 0x322 is ES_LKAS_State
-    int block_msg = ((addr == 0x122) || (addr == 0x220) ||
-                     (addr == 0x221) || (addr == 0x222) ||
-                     (addr == 0x321) || (addr == 0x322));
+    int block_msg = -1;
+    if (subaru_longitudinal) {
+      // 0x122 is ES_LKAS
+      // 0x220 is ES_Brake
+      // 0x221 is ES_Distance
+      // 0x222 is ES_Status
+      // 0x321 is ES_DashStatus
+      // 0x322 is ES_LKAS_State
+      block_msg = ((addr == 0x122) || (addr == 0x220) ||
+                   (addr == 0x221) || (addr == 0x222) ||
+                   (addr == 0x321) || (addr == 0x322));
+    } else {
+      block_msg = ((addr == 0x122) || (addr == 0x321) ||
+                   (addr == 0x322));
+    }
     if (!block_msg) {
       bus_fwd = 0;  // Main CAN
     }
@@ -188,6 +210,10 @@ static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 static const addr_checks* subaru_init(uint16_t param) {
   subaru_gen2 = GET_FLAG(param, SUBARU_PARAM_GEN2);
+
+#ifdef ALLOW_DEBUG
+  subaru_longitudinal = GET_FLAG(param, SUBARU_PARAM_LONGITUDINAL);
+#endif
 
   if (subaru_gen2) {
     subaru_rx_checks = (addr_checks){subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};

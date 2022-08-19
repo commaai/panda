@@ -564,7 +564,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
               continue
             if {attr, current_test}.issubset({'TestToyotaSafety', 'TestToyotaAltBrakeSafety', 'TestToyotaStockLongitudinal'}):
               continue
-            if {attr, current_test}.issubset({'TestSubaruSafety', 'TestSubaruGen2Safety'}):
+            if {attr, current_test}.issubset({'TestSubaruSafety', 'TestSubaruGen2Safety', 'TestSubaruLongitudinalSafety'}):
               continue
             if {attr, current_test}.issubset({'TestVolkswagenPqSafety', 'TestVolkswagenPqStockSafety', 'TestVolkswagenPqLongSafety'}):
               continue
