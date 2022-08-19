@@ -24,7 +24,6 @@ build_projects["pedal"] = {
 }
 
 build_projects["pedal_usb"] = copy.deepcopy(build_projects["pedal"])
-build_projects["pedal_usb"] = build_projects.pop("pedal")
 build_projects["pedal_usb"]["PROJECT_FLAGS"].append("-DPEDAL_USB")
 
 build_projects["panda"] = {
