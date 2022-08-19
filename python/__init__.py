@@ -211,16 +211,14 @@ class Panda:
 
   def __init__(self, serial: Optional[str] = None, claim: bool = True, disable_checks: bool = True):
     self._serial = serial
+    self._disable_checks = disable_checks
+
     self._handle = None
     self._bcd_device = None
 
     # connect and set mcu type
     self.connect(claim)
 
-    # disable openpilot's heartbeat checks
-    if disable_checks:
-      self.set_heartbeat_disabled()
-      self.set_power_save(0)
 
   def close(self):
     self._handle.close()
@@ -269,6 +267,11 @@ class Panda:
     self._mcu_type = self.get_mcu_type()
     self.health_version, self.can_version = self.get_packets_versions()
     print("connected")
+
+    # disable openpilot's heartbeat checks
+    if self._disable_checks:
+      self.set_heartbeat_disabled()
+      self.set_power_save(0)
 
   def reset(self, enter_bootstub=False, enter_bootloader=False, reconnect=True):
     try:
