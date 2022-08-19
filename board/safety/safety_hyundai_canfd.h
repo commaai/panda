@@ -12,21 +12,16 @@ const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
 const uint32_t HYUNDAI_CANFD_STANDSTILL_THRSLD = 30;  // ~1kph
 
 const CanMsg HYUNDAI_CANFD_HDA2_TX_MSGS[] = {
-  {0x50, 0, 16},  // LKAS Bus 0
-  {0x1CF, 1, 8},  // CRUISE_BUTTON Bus 0
-  {0x2A4, 0, 24}, // 0x2A4 Bus 0 (for blocking LFA/HDA)
+  {0x50, 0, 16},  // LKAS
+  {0x1CF, 1, 8},  // CRUISE_BUTTON
+  {0x2A4, 0, 24}, // CAM_0x2A4
 };
 
-const CanMsg HYUNDAI_CANFD_BUTTON_SEND[] = {
-  {0x12A, 0, 16}, // LFA Bus 0
-  {0x1CF, 0, 8},  // CRUISE_BUTTON Bus 0
-  {0x1E0, 0, 16}, // LFAHDA_CLUSTER Bus 0
-};
-
-const CanMsg HYUNDAI_CANFD_NON_BUTTON_SEND[] = {
-  {0x12A, 0, 16}, // LFA Bus 0
-  {0x1A0, 0, 32}, // CRUISE_INFO Bus 0
-  {0x1E0, 0, 16}, // LFAHDA_CLUSTER Bus 0
+const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
+  {0x12A, 0, 16}, // LFA
+  {0x1A0, 0, 32}, // CRUISE_INFO
+  {0x1CF, 0, 8},  // CRUISE_BUTTON
+  {0x1E0, 0, 16}, // LFAHDA_CLUSTER
 };
 
 AddrCheckStruct hyundai_canfd_addr_checks[] = {
@@ -142,7 +137,8 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     }
   }
 
-  if (valid && ((bus == 0) || (bus == 1))) {
+  const int pt_bus = hyundai_canfd_hda2 ? 1 : 0;
+  if (valid && (bus == pt_bus)) {
 
     // driver torque
     if (addr == 0xea) {
@@ -168,7 +164,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     if ((addr == 0x35) && hyundai_canfd_hda2) {
       gas_pressed = GET_BYTE(to_push, 5) != 0U;
     } else if ((addr == 0x105) && !hyundai_canfd_hda2) {
-      gas_pressed = ((GET_BIT(to_push, 103U) != 0U) | (GET_BYTE(to_push, 13) != 0U) | (GET_BIT(to_push, 112U) != 0U));
+      gas_pressed = (GET_BIT(to_push, 103U) != 0U) || (GET_BYTE(to_push, 13) != 0U) || (GET_BIT(to_push, 112U) != 0U);
     } else {
     }
 
@@ -202,10 +198,8 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
 
   if (hyundai_canfd_hda2) {
     tx = msg_allowed(to_send, HYUNDAI_CANFD_HDA2_TX_MSGS, sizeof(HYUNDAI_CANFD_HDA2_TX_MSGS)/sizeof(HYUNDAI_CANFD_HDA2_TX_MSGS[0]));
-  } else if (hyundai_canfd_button_send) {
-    tx = msg_allowed(to_send, HYUNDAI_CANFD_BUTTON_SEND, sizeof(HYUNDAI_CANFD_BUTTON_SEND)/sizeof(HYUNDAI_CANFD_BUTTON_SEND[0]));
   } else {
-    tx = msg_allowed(to_send, HYUNDAI_CANFD_NON_BUTTON_SEND, sizeof(HYUNDAI_CANFD_NON_BUTTON_SEND)/sizeof(HYUNDAI_CANFD_NON_BUTTON_SEND[0]));
+    tx = msg_allowed(to_send, HYUNDAI_CANFD_HDA1_TX_MSGS, sizeof(HYUNDAI_CANFD_HDA1_TX_MSGS)/sizeof(HYUNDAI_CANFD_HDA1_TX_MSGS[0]));
   }
 
   // steering
@@ -220,7 +214,8 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   }
 
   // cruise buttons check
-  if ((addr == 0x1cf) && (((bus == 1) && hyundai_canfd_hda2) || ((bus == 0) && hyundai_canfd_button_send))) {
+  const int buttons_bus = hyundai_canfd_hda2 ? 1 : 0;
+  if ((addr == 0x1cf) && (bus == buttons_bus)) {
     int button = GET_BYTE(to_send, 2) & 0x7U;
 
     bool is_cancel = (button == 4);
@@ -248,7 +243,7 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     int is_lfa_msg = ((addr == 0x12a) && !hyundai_canfd_hda2);
 
     // HUD icons
-    int is_lfahda_msg = ((addr == 0x1e0) && !hyundai_canfd_hda2);  // HUD icons
+    int is_lfahda_msg = ((addr == 0x1e0) && !hyundai_canfd_hda2);
 
     int block_msg = is_lkas_msg || is_lfa_msg || is_lfahda_msg;
     if (!block_msg) {
