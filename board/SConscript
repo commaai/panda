@@ -134,6 +134,7 @@ with open("obj/cert.h", "w") as f:
   for cert in certs:
     f.write("\n".join(cert) + "\n")
 
+
 for project_name in build_projects:
   project = build_projects[project_name]
   linkerscript_fn = File(project["LINKER_SCRIPT"]).srcnode().abspath
@@ -166,7 +167,8 @@ for project_name in build_projects:
       'Objcopy': Builder(generator=objcopy, suffix='.bin', src_suffix='.elf')
     }
   )
-  startup = project_env.Object(project["STARTUP_FILE"])
+
+  startup = project_env.Object(f"obj/startup_{project_name}", project["STARTUP_FILE"])
 
   # Bootstub
   crypto_obj = [
