@@ -443,15 +443,10 @@ static int honda_bosch_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   if (bus_num == 2)  {
     int addr = GET_ADDR(to_fwd);
     int is_lkas_msg = (addr == 0xE4) || (addr == 0xE5) || (addr == 0x33D) || (addr == 0x33DA) || (addr == 0x33DB);
-    int is_acc_msg = (addr == 0x1C8);
-    if (honda_bosch_radarless && honda_bosch_long) {
-      if (!is_lkas_msg && !is_acc_msg) {
-        bus_fwd = 0;
-      }
-    } else {
-      if (!is_lkas_msg) {
-        bus_fwd = 0;
-      }
+    int is_acc_msg = (addr == 0x1C8) && honda_bosch_radarless && honda_bosch_long;
+    bool block_msg = is_lkas_msg || is_acc_msg;
+    if (!block_msg) {
+      bus_fwd = 0;
     }
   }
 
