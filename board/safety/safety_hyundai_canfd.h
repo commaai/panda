@@ -58,6 +58,15 @@ AddrCheckStruct hyundai_canfd_addr_checks[] = {
 };
 #define HYUNDAI_CANFD_ADDR_CHECK_LEN (sizeof(hyundai_canfd_addr_checks) / sizeof(hyundai_canfd_addr_checks[0]))
 
+AddrCheckStruct hyundai_canfd_ice_addr_checks[] = {
+  {.msg = {{0x100, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0xa0, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0xea, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x175, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x1aa, 0, 16, .check_checksum = false, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+};
+#define HYUNDAI_CANFD_ICE_ADDR_CHECK_LEN (sizeof(hyundai_canfd_ice_addr_checks) / sizeof(hyundai_canfd_ice_addr_checks[0]))
+
 addr_checks hyundai_canfd_rx_checks = {hyundai_canfd_addr_checks, HYUNDAI_CANFD_ADDR_CHECK_LEN};
 
 
@@ -156,13 +165,16 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     // gas press, different for EV, hybrid, and ICE models
     if ((addr == 0x35) && hyundai_ev_gas_signal) {
       gas_pressed = GET_BYTE(to_push, 5) != 0U;
-    } else if ((addr == 0x105) && !hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
+    } else if ((addr == 0x105) && hyundai_hybrid_gas_signal) {
       gas_pressed = (GET_BIT(to_push, 103U) != 0U) || (GET_BYTE(to_push, 13) != 0U) || (GET_BIT(to_push, 112U) != 0U);
-    } else {
+    } else if ((addr == 0x100) && !hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
+      gas_pressed = GET_BIT(to_push, 176U) != 0U;
     }
 
     // brake press
-    if (addr == 0x65) {
+    if ((addr == 0x100) && !hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
+      brake_pressed = GET_BIT(to_push, 32U) != 0U;
+    } else if (addr == 0x65) {
       brake_pressed = GET_BIT(to_push, 57U) != 0U;
     }
 
@@ -296,6 +308,12 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
 
   if (!hyundai_canfd_hda2) {
     hyundai_longitudinal = false;
+  }
+
+  if (!hyundai_ev_gas_signal || !hyundai_hybrid_gas_signal) {
+    hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_ice_addr_checks, HYUNDAI_CANFD_ICE_ADDR_CHECK_LEN};
+  } else {
+    hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_addr_checks, HYUNDAI_CANFD_ADDR_CHECK_LEN};
   }
 
   return &hyundai_canfd_rx_checks;
