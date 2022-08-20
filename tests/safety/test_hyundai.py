@@ -61,7 +61,7 @@ class HyundaiButtonBase: #(common.PandaSafetyTest):
   BUTTONS_BUS = 0  # tx on this bus, rx on 0. added to all `self._tx(self._button_msg(...))`
   SCC_BUS = 0  # rx on this bus
 
-  def test_buttons(self):
+  def test_button_sends(self):
     """
       Only RES and CANCEL buttons are allowed
       - RES allowed while controls allowed

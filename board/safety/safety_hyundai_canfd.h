@@ -108,6 +108,13 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   const int pt_bus = hyundai_canfd_hda2 ? 1 : 0;
 
   if (valid && (bus == pt_bus)) {
+    // driver torque
+    if (addr == 0xea) {
+      int torque_driver_new = ((GET_BYTE(to_push, 11) & 0x1fU) << 8U) | GET_BYTE(to_push, 10);
+      torque_driver_new -= 4095;
+      update_sample(&torque_driver, torque_driver_new);
+    }
+
     // cruise buttons
     const int button_addr = hyundai_canfd_alt_buttons ? 0x1aa : 0x1cf;
     if (addr == button_addr) {
@@ -126,13 +133,6 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
       } else {
         hyundai_last_button_interaction = MIN(hyundai_last_button_interaction + 1U, HYUNDAI_PREV_BUTTON_SAMPLES);
       }
-    }
-
-    // driver torque
-    if (addr == 0xea) {
-      int torque_driver_new = ((GET_BYTE(to_push, 11) & 0x1fU) << 8U) | GET_BYTE(to_push, 10);
-      torque_driver_new -= 4095;
-      update_sample(&torque_driver, torque_driver_new);
     }
 
     // cruise state
@@ -205,9 +205,9 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   const int buttons_bus = hyundai_canfd_hda2 ? 1 : 0;
   if ((addr == 0x1cf) && (bus == buttons_bus)) {
     int button = GET_BYTE(to_send, 2) & 0x7U;
+    bool is_cancel = (button == HYUNDAI_BTN_CANCEL);
+    bool is_resume = (button == HYUNDAI_BTN_RESUME);
 
-    bool is_cancel = (button == 4);
-    bool is_resume = (button == 1);
     bool allowed = (is_cancel && cruise_engaged_prev) || (is_resume && controls_allowed);
     if (!allowed) {
       tx = 0;

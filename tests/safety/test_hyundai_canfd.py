@@ -87,6 +87,30 @@ class TestHyundaiCanfdHDA1(TestHyundaiCanfdBase):
     values = {"ACCELERATOR_PEDAL": gas}
     return self.packer.make_can_msg_panda("ACCELERATOR_ALT", self.PT_BUS, values)
 
+class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1):
+
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_canfd")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_ALT_BUTTONS)
+    self.safety.init_tests()
+
+  def _button_msg(self, buttons, main_button=0, bus=1):
+    values = {
+      "CRUISE_BUTTONS": buttons,
+      "ADAPTIVE_CRUISE_MAIN_BTN": main_button,
+    }
+    return self.packer.make_can_msg_panda("CRUISE_BUTTONS_ALT", self.PT_BUS, values)
+
+  def test_button_sends(self):
+    """
+      No button send allowed with alt buttons.
+    """
+    for enabled in (True, False):
+      for btn in range(8):
+        self.safety.set_controls_allowed(enabled)
+        self.assertFalse(self._tx(self._button_msg(btn)))
+
 
 class TestHyundaiCanfdHDA2(TestHyundaiCanfdBase):
 
