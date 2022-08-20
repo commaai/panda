@@ -48,9 +48,9 @@ uint16_t hyundai_canfd_crc_lut[256];
 
 
 const int HYUNDAI_PARAM_CANFD_HDA2 = 1;
-const int HYUNDAI_PARAM_CANFD_BUTTON_SEND = 2;
+const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 2;
 bool hyundai_canfd_hda2 = false;
-bool hyundai_canfd_button_send = false;
+bool hyundai_canfd_alt_buttons = false;
 
 
 static uint8_t hyundai_canfd_get_counter(CANPacket_t *to_push) {
@@ -105,40 +105,28 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
-  // cars with 0x1cf to broadcast cruise button signals
-  if (valid && (((bus == 1) && hyundai_canfd_hda2) || ((bus == 0) && hyundai_canfd_button_send))) {
-
-    // cruise buttons
-    if (addr == 0x1cf) {
-      int cruise_button = GET_BYTE(to_push, 2) & 0x7U;
-      int main_button = GET_BIT(to_push, 19U);
-
-      if ((cruise_button == HYUNDAI_BTN_RESUME) || (cruise_button == HYUNDAI_BTN_SET) || (cruise_button == HYUNDAI_BTN_CANCEL) || (main_button != 0)) {
-        hyundai_last_button_interaction = 0U;
-      } else {
-        hyundai_last_button_interaction = MIN(hyundai_last_button_interaction + 1U, HYUNDAI_PREV_BUTTON_SAMPLES);
-      }
-    }
-  }
-
-  // cars with 0x1aa and no 0x1cf to broadcast cruise button signals
-  if (valid && (bus == 0) && !(hyundai_canfd_hda2 && hyundai_canfd_button_send)) {
-
-    // cruise buttons
-    if (addr == 0x1aa) {
-      int cruise_button = (GET_BYTE(to_push, 4) >> 4) & 0x7U;
-      int main_button = GET_BIT(to_push, 34U);
-
-      if ((cruise_button == HYUNDAI_BTN_RESUME) || (cruise_button == HYUNDAI_BTN_SET) || (cruise_button == HYUNDAI_BTN_CANCEL) || (main_button != 0)) {
-        hyundai_last_button_interaction = 0U;
-      } else {
-        hyundai_last_button_interaction = MIN(hyundai_last_button_interaction + 1U, HYUNDAI_PREV_BUTTON_SAMPLES);
-      }
-    }
-  }
-
   const int pt_bus = hyundai_canfd_hda2 ? 1 : 0;
+
   if (valid && (bus == pt_bus)) {
+    // cruise buttons
+    const int button_addr = hyundai_canfd_alt_buttons ? 0x1aa : 0x1cf;
+    if (addr == button_addr) {
+      int main_button = 0;
+      int cruise_button = 0;
+      if (addr == 0x1cf) {
+        cruise_button = GET_BYTE(to_push, 2) & 0x7U;
+        main_button = GET_BIT(to_push, 19U);
+      } else {
+        cruise_button = (GET_BYTE(to_push, 4) >> 4) & 0x7U;
+        main_button = GET_BIT(to_push, 34U);
+      }
+
+      if ((cruise_button == HYUNDAI_BTN_RESUME) || (cruise_button == HYUNDAI_BTN_SET) || (cruise_button == HYUNDAI_BTN_CANCEL) || (main_button != 0)) {
+        hyundai_last_button_interaction = 0U;
+      } else {
+        hyundai_last_button_interaction = MIN(hyundai_last_button_interaction + 1U, HYUNDAI_PREV_BUTTON_SAMPLES);
+      }
+    }
 
     // driver torque
     if (addr == 0xea) {
@@ -258,7 +246,7 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
   gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
   hyundai_canfd_hda2 = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2);
-  hyundai_canfd_button_send = GET_FLAG(param, HYUNDAI_PARAM_CANFD_BUTTON_SEND);
+  hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
 
   return &hyundai_canfd_rx_checks;
 }

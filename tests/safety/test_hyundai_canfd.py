@@ -26,9 +26,9 @@ class TestHyundaiCanfd(HyundaiButtonBase, common.PandaSafetyTest, common.DriverT
   DRIVER_TORQUE_FACTOR = 2
 
   def setUp(self):
-    self.packer = CANPackerPanda("kia_ev6")
+    self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, 0)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2)
     self.safety.init_tests()
 
   def _torque_driver_msg(self, torque):
