@@ -259,7 +259,7 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
   def test_cruise_engaged_prev(self):
     pass
 
-  def test_buttons(self):
+  def test_button_sends(self):
     pass
 
   def _pcm_status_msg(self, enable):
