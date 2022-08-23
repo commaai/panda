@@ -1,6 +1,13 @@
-// more constants in board/safety/safety_subaru.h
-const int SUBARU_L_DRIVER_TORQUE_ALLOWANCE = 75;
-const int SUBARU_L_DRIVER_TORQUE_FACTOR = 10;
+const SteeringLimits SUBARU_L_STEERING_LIMITS = {
+  .max_steer = 2047,
+  .max_rt_delta = 940,
+  .max_rt_interval = 250000,
+  .max_rate_up = 50,
+  .max_rate_down = 70,
+  .driver_torque_factor = 10,
+  .driver_torque_allowance = 75,
+  .type = TorqueDriverLimited,
+};
 
 const CanMsg SUBARU_L_TX_MSGS[] = {
   {0x161, 0, 8},
@@ -32,14 +39,8 @@ static int subaru_legacy_rx_hook(CANPacket_t *to_push) {
 
     // enter controls on rising edge of ACC, exit controls on ACC off
     if (addr == 0x144) {
-      int cruise_engaged = ((GET_BYTES_48(to_push) >> 17) & 1U);
-      if (cruise_engaged && !cruise_engaged_prev) {
-        controls_allowed = 1;
-      }
-      if (!cruise_engaged) {
-        controls_allowed = 0;
-      }
-      cruise_engaged_prev = cruise_engaged;
+      bool cruise_engaged = GET_BIT(to_push, 49U) != 0U;
+      pcm_cruise_check(cruise_engaged);
     }
 
     // sample wheel speed, averaging opposite corners
@@ -75,48 +76,9 @@ static int subaru_legacy_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   // steer cmd checks
   if (addr == 0x164) {
     int desired_torque = ((GET_BYTES_04(to_send) >> 8) & 0x1FFFU);
-    bool violation = 0;
-    uint32_t ts = microsecond_timer_get();
-
     desired_torque = -1 * to_signed(desired_torque, 13);
 
-    if (controls_allowed) {
-
-      // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, SUBARU_MAX_STEER, -SUBARU_MAX_STEER);
-
-      // *** torque rate limit check ***
-      violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-        SUBARU_MAX_STEER, SUBARU_MAX_RATE_UP, SUBARU_MAX_RATE_DOWN,
-        SUBARU_L_DRIVER_TORQUE_ALLOWANCE, SUBARU_L_DRIVER_TORQUE_FACTOR);
-
-      // used next time
-      desired_torque_last = desired_torque;
-
-      // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, SUBARU_MAX_RT_DELTA);
-
-      // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
-      if (ts_elapsed > SUBARU_RT_INTERVAL) {
-        rt_torque_last = desired_torque;
-        ts_last = ts;
-      }
-    }
-
-    // no torque if controls is not allowed
-    if (!controls_allowed && (desired_torque != 0)) {
-      violation = 1;
-    }
-
-    // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !controls_allowed) {
-      desired_torque_last = 0;
-      rt_torque_last = 0;
-      ts_last = ts;
-    }
-
-    if (violation) {
+    if (steer_torque_cmd_checks(desired_torque, -1, SUBARU_L_STEERING_LIMITS)) {
       tx = 0;
     }
 
