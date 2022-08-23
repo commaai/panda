@@ -237,11 +237,19 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // BUTTONS: used for resume spamming and cruise cancellation with stock longitudinal
-  if ((addr == 481) && (gm_hw == GM_CAM)) {
+  if (addr == 481) {
     int button = (GET_BYTE(to_send, 5) >> 4) & 0x7U;
+    bool allowed = false;
 
-    bool allowed_cancel = (button == 6) && cruise_engaged_prev;
-    if (!allowed_cancel) {
+    if (gm_hw == GM_CAM) {
+      // Only allow TX of cancel button when cruise is engaged, using Cam Harness
+      allowed |= (button == GM_BTN_CANCEL) && cruise_engaged_prev;
+    }
+
+    // Only allow TX of resume button when cruise is not engaged
+    allowed |= (button == GM_BTN_RESUME) && !cruise_engaged_prev;
+
+    if (!allowed) {
       tx = 0;
     }
   }
