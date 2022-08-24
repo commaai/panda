@@ -24,7 +24,7 @@ pipeline {
                     --volume /var/run/dbus:/var/run/dbus \
                     --net host \
                     ${env.DOCKER_IMAGE_TAG} \
-                    bash -c 'cd /tmp/panda && scons -j8 && python ./tests/ci_resetter.py'"
+                    bash -c 'cd /tmp/panda && scons -j8 && python ./tests/ci_reset_hw.py'"
             }
           }
         }
