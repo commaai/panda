@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
   r.cycle_power(5)
 
-  pandas = [x for x in Panda.list() if x != 'none'] # Exclude pedal
+  pandas = Panda.list()
   print(pandas)
   assert len(pandas) == 7
 
