@@ -197,7 +197,6 @@ def panda_connect_and_init(fn=None, full_reset=True):
           panda.set_can_speed_kbps(bus, speed)
         clear_can_buffers(panda)
         panda.set_power_save(False)
-        panda.set_heartbeat_disabled()
 
     try:
       fn(*pandas, *kwargs)

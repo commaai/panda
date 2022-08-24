@@ -173,8 +173,8 @@ class Panda:
   HW_TYPE_RED_PANDA = b'\x07'
 
   CAN_PACKET_VERSION = 2
-  HEALTH_PACKET_VERSION = 7
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHIf")
+  HEALTH_PACKET_VERSION = 8
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHIfB")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
@@ -197,6 +197,9 @@ class Panda:
   FLAG_HYUNDAI_LONG = 4
   FLAG_HYUNDAI_CAMERA_SCC = 8
 
+  FLAG_HYUNDAI_CANFD_HDA2 = 1
+  FLAG_HYUNDAI_CANFD_ALT_BUTTONS = 2
+
   FLAG_TESLA_POWERTRAIN = 1
   FLAG_TESLA_LONG_CONTROL = 2
 
@@ -209,13 +212,16 @@ class Panda:
 
   FLAG_GM_HW_CAM = 1
 
-  def __init__(self, serial: Optional[str] = None, claim: bool = True):
+  def __init__(self, serial: Optional[str] = None, claim: bool = True, disable_checks: bool = True):
     self._serial = serial
+    self._disable_checks = disable_checks
+
     self._handle = None
     self._bcd_device = None
 
     # connect and set mcu type
     self.connect(claim)
+
 
   def close(self):
     self._handle.close()
@@ -264,6 +270,11 @@ class Panda:
     self._mcu_type = self.get_mcu_type()
     self.health_version, self.can_version = self.get_packets_versions()
     print("connected")
+
+    # disable openpilot's heartbeat checks
+    if self._disable_checks:
+      self.set_heartbeat_disabled()
+      self.set_power_save(0)
 
   def reset(self, enter_bootstub=False, enter_bootloader=False, reconnect=True):
     try:
@@ -438,6 +449,7 @@ class Panda:
       "alternative_experience": a[19],
       "blocked_msg_cnt": a[20],
       "interrupt_load": a[21],
+      "fan_power": a[22],
     }
 
   # ******************* control *******************
@@ -551,11 +563,8 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xda, int(bootmode), 0, b'')
     time.sleep(0.2)
 
-  def set_safety_mode(self, mode=SAFETY_SILENT, param=0, disable_checks=True):
+  def set_safety_mode(self, mode=SAFETY_SILENT, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
-    if disable_checks:
-      self.set_heartbeat_disabled()
-      self.set_power_save(0)
 
   def set_gmlan(self, bus=2):
     # TODO: check panda type

@@ -61,3 +61,24 @@ def test_hw_type(p):
   assert pp.get_type() == hw_type, "Bootstub and app hw type mismatch"
   assert pp.get_mcu_type() == mcu_type, "Bootstub and app MCU type mismatch"
   pp.close()
+
+
+@test_all_pandas
+@panda_connect_and_init
+def test_heartbeat(p):
+  # TODO: add more cases here once the tests aren't super slow
+  p.set_safety_mode(mode=Panda.SAFETY_HYUNDAI, param=Panda.FLAG_HYUNDAI_LONG)
+  p.send_heartbeat()
+  assert p.health()['safety_mode'] == Panda.SAFETY_HYUNDAI
+  assert p.health()['safety_param'] == Panda.FLAG_HYUNDAI_LONG
+
+  # shouldn't do anything once we're in a car safety mode
+  p.set_heartbeat_disabled()
+
+  time.sleep(6)
+
+  h = p.health()
+  assert h['heartbeat_lost']
+  assert h['safety_mode'] == Panda.SAFETY_SILENT
+  assert h['safety_param'] == 0
+  assert h['controls_allowed'] == 0
