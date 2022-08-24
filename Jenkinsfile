@@ -49,7 +49,7 @@ pipeline {
         }
         stage('HITL tests') {
           steps {
-            timeout(time: 20, unit: 'MINUTES') {
+            timeout(time: 30, unit: 'MINUTES') {
               script {
                 sh "docker run --rm --privileged \
                       --volume /dev/bus/usb:/dev/bus/usb \
