@@ -1,10 +1,10 @@
-const int FAW_MAX_STEER = 300;               // As-yet unknown fault boundary, guessing 300 / 3.0Nm for now
-const int FAW_MAX_RT_DELTA = 113;            // 6 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 75 ; 50 * 1.5 for safety pad = 113
-const uint32_t FAW_RT_INTERVAL = 250000;     // 250ms between real time checks
-const int FAW_MAX_RATE_UP = 6;               // 10 unit/sec observed from factory LKAS, fault boundary unknown
-const int FAW_MAX_RATE_DOWN = 10;            // 10 unit/sec observed from factory LKAS, fault boundary unknown
-const int FAW_DRIVER_TORQUE_ALLOWANCE = 50;
-const int FAW_DRIVER_TORQUE_FACTOR = 3;
+const int HONGQI_MAX_STEER = 300;               // As-yet unknown fault boundary, guessing 300 / 3.0Nm for now
+const int HONGQI_MAX_RT_DELTA = 113;            // 6 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 75 ; 50 * 1.5 for safety pad = 113
+const uint32_t HONGQI_RT_INTERVAL = 250000;     // 250ms between real time checks
+const int HONGQI_MAX_RATE_UP = 6;               // 10 unit/sec observed from factory LKAS, fault boundary unknown
+const int HONGQI_MAX_RATE_DOWN = 10;            // 10 unit/sec observed from factory LKAS, fault boundary unknown
+const int HONGQI_DRIVER_TORQUE_ALLOWANCE = 50;
+const int HONGQI_DRIVER_TORQUE_FACTOR = 3;
 
 #define MSG_ECM_1           0x92    // RX from ABS, for brake pressures
 #define MSG_ABS_1           0xC0    // RX from ABS, for wheel speeds
@@ -13,29 +13,29 @@ const int FAW_DRIVER_TORQUE_FACTOR = 3;
 #define MSG_LKAS            0x112   // TX from openpilot, for LKAS torque
 #define MSG_EPS_2           0x150   // RX from EPS, torque inputs and outputs
 
-const CanMsg FAW_TX_MSGS[] = {{MSG_LKAS, 0, 8}};
-#define FAW_TX_MSGS_LEN (sizeof(FAW_TX_MSGS) / sizeof(FAW_TX_MSGS[0]))
+const CanMsg HONGQI_TX_MSGS[] = {{MSG_LKAS, 0, 8}};
+#define HONGQI_TX_MSGS_LEN (sizeof(HONGQI_TX_MSGS) / sizeof(HONGQI_TX_MSGS[0]))
 
-AddrCheckStruct faw_addr_checks[] = {
+AddrCheckStruct hongqi_addr_checks[] = {
   {.msg = {{MSG_ECM_1, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_ABS_1, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MAYBE_ABS, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_ACC, 2, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
-#define FAW_ADDR_CHECKS_LEN (sizeof(faw_addr_checks) / sizeof(faw_addr_checks[0]))
-addr_checks faw_rx_checks = {faw_addr_checks, FAW_ADDR_CHECKS_LEN};
+#define HONGQI_ADDR_CHECKS_LEN (sizeof(hongqi_addr_checks) / sizeof(hongqi_addr_checks[0]))
+addr_checks hongqi_rx_checks = {hongqi_addr_checks, HONGQI_ADDR_CHECKS_LEN};
 
 
-static uint32_t faw_get_checksum(CANPacket_t *to_push) {
+static uint32_t hongqi_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
 }
 
-static uint8_t faw_get_counter(CANPacket_t *to_push) {
+static uint8_t hongqi_get_counter(CANPacket_t *to_push) {
   return ((uint8_t)GET_BYTE(to_push, 7) >> 4) & 0xFU;
 }
 
-static uint32_t faw_compute_checksum(CANPacket_t *to_push) {
+static uint32_t hongqi_compute_checksum(CANPacket_t *to_push) {
   int len = GET_LEN(to_push);
   int checksum = 0;
 
@@ -46,15 +46,15 @@ static uint32_t faw_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static const addr_checks* faw_init(uint16_t param) {
+static const addr_checks* hongqi_init(uint16_t param) {
   UNUSED(param);
 
-  return &faw_rx_checks;
+  return &hongqi_rx_checks;
 }
 
-static int faw_rx_hook(CANPacket_t *to_push) {
+static int hongqi_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &faw_rx_checks, faw_get_checksum, faw_compute_checksum, faw_get_counter);
+  bool valid = addr_safety_check(to_push, &hongqi_rx_checks, hongqi_get_checksum, hongqi_compute_checksum, hongqi_get_counter);
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
@@ -114,13 +114,13 @@ static int faw_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int faw_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int hongqi_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   UNUSED(longitudinal_allowed);
 
   int addr = GET_ADDR(to_send);
   int tx = 1;
 
-  if (!msg_allowed(to_send, FAW_TX_MSGS, FAW_TX_MSGS_LEN)) {
+  if (!msg_allowed(to_send, HONGQI_TX_MSGS, HONGQI_TX_MSGS_LEN)) {
     tx = 0;
   }
 
@@ -130,7 +130,7 @@ static int faw_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (addr == MSG_LKAS) {
     int desired_torque = GET_BYTE(to_send, 1) | ((GET_BYTE(to_send, 2) & 0x3U) << 8);
     int sign = (GET_BYTE(to_send, 2) & 0x4U) >> 2;
-    // FAW sends 1022 when steering is inactive
+    // Hongqi sends 1022 when steering is inactive
     if (desired_torque == 1022) {
       desired_torque = 0;
     }
@@ -143,20 +143,20 @@ static int faw_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
     if (controls_allowed) {
       // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, FAW_MAX_STEER, -FAW_MAX_STEER);
+      violation |= max_limit_check(desired_torque, HONGQI_MAX_STEER, -HONGQI_MAX_STEER);
 
       // *** torque rate limit check ***
       violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-        FAW_MAX_STEER, FAW_MAX_RATE_UP, FAW_MAX_RATE_DOWN,
-        FAW_DRIVER_TORQUE_ALLOWANCE, FAW_DRIVER_TORQUE_FACTOR);
+        HONGQI_MAX_STEER, HONGQI_MAX_RATE_UP, HONGQI_MAX_RATE_DOWN,
+        HONGQI_DRIVER_TORQUE_ALLOWANCE, HONGQI_DRIVER_TORQUE_FACTOR);
       desired_torque_last = desired_torque;
 
       // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, FAW_MAX_RT_DELTA);
+      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, HONGQI_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
       uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
-      if (ts_elapsed > FAW_RT_INTERVAL) {
+      if (ts_elapsed > HONGQI_RT_INTERVAL) {
         rt_torque_last = desired_torque;
         ts_last = ts;
       }
@@ -193,7 +193,7 @@ static int faw_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   return tx;
 }
 
-static int faw_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+static int hongqi_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int addr = GET_ADDR(to_fwd);
   int bus_fwd = -1;
 
@@ -218,10 +218,10 @@ static int faw_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return bus_fwd;
 }
 
-const safety_hooks faw_hooks = {
-  .init = faw_init,
-  .rx = faw_rx_hook,
-  .tx = faw_tx_hook,
+const safety_hooks hongqi_hooks = {
+  .init = hongqi_init,
+  .rx = hongqi_rx_hook,
+  .tx = hongqi_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
-  .fwd = faw_fwd_hook,
+  .fwd = hongqi_fwd_hook,
 };

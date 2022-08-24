@@ -13,7 +13,7 @@ MSG_LKAS = 0x112              # TX from openpilot, for LKAS torque
 MSG_EPS_2 = 0x150             # RX from EPS, torque inputs and outputs
 
 
-class TestFawSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestHongqiSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_LKAS
   RELAY_MALFUNCTION_BUS = 0
@@ -29,7 +29,7 @@ class TestFawSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTes
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "TestFawSafety":
+    if cls.__name__ == "TestHongqiSafety":
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
@@ -92,15 +92,15 @@ class TestFawSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTes
     self.assertEqual(0, self.safety.get_torque_driver_min())
 
 
-class TestFawStockSafety(TestFawSafety):
+class TestHongqiStockSafety(TestHongqiSafety):
   TX_MSGS = [[MSG_LKAS, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_LKAS]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
-    self.packer = CANPackerPanda("faw")
+    self.packer = CANPackerPanda("hongqi_hs5")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_FAW, 0)
+    self.safety.set_safety_hooks(Panda.SAFETY_HONGQI, 0)
     self.safety.init_tests()
 
   # TODO: implement
