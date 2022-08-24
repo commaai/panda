@@ -15,7 +15,7 @@
 #include "safety/safety_nissan.h"
 #include "safety/safety_volkswagen_mqb.h"
 #include "safety/safety_volkswagen_pq.h"
-#include "safety/safety_faw.h"
+#include "safety/safety_hongqi.h"
 #include "safety/safety_elm327.h"
 #include "safety/safety_body.h"
 
@@ -52,7 +52,7 @@
 #define SAFETY_HYUNDAI_LEGACY 23U
 #define SAFETY_HYUNDAI_COMMUNITY 24U
 #define SAFETY_STELLANTIS 25U
-#define SAFETY_FAW 26U
+#define SAFETY_HONGQI 26U
 #define SAFETY_BODY 27U
 #define SAFETY_HYUNDAI_CANFD 28U
 
@@ -295,7 +295,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_SUBARU_LEGACY, &subaru_legacy_hooks},
   {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
-  {SAFETY_FAW, &faw_hooks},
+  {SAFETY_HONGQI, &faw_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
   {SAFETY_FORD, &ford_hooks},
 #endif
