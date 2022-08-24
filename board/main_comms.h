@@ -272,12 +272,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       // this allows reflashing of the bootstub
       switch (req->param1) {
         case 0:
-          // only allow bootloader entry on debug builds
-          #ifdef ALLOW_DEBUG
-            puts("-> entering bootloader\n");
-            enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-            NVIC_SystemReset();
-          #endif
+          puts("-> entering bootloader\n");
+          enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+          NVIC_SystemReset();
           break;
         case 1:
           puts("-> entering softloader\n");
