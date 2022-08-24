@@ -4,7 +4,7 @@ pipeline {
     DOCKER_IMAGE_TAG = "panda:build-${env.GIT_COMMIT}"
   }
   stages {
-    stage ('check locks') {
+    stage ('Acquire resource locks') {
       options {
         lock(resource: "pandas")
       }
