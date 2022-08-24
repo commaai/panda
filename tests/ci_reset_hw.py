@@ -1,5 +1,5 @@
 from panda import Panda, PandaDFU
-from libs.resetter import Resetter  # pylint: disable=import-error
+from panda.tests.libs.resetter import Resetter
 
 
 if __name__ == "__main__":
