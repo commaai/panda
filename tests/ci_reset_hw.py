@@ -1,31 +1,33 @@
 from panda import Panda, PandaDFU
 from libs.resetter import Resetter  # pylint: disable=import-error
 
-r = Resetter()
 
-r.enable_boot(True)
-r.cycle_power(5)
-r.enable_boot(False)
+if __name__ == "__main__":
+  r = Resetter()
 
-pandas = PandaDFU.list()
-print(pandas)
-assert len(pandas) == 7
+  r.enable_boot(True)
+  r.cycle_power(5)
+  r.enable_boot(False)
 
-for serial in pandas:
-  p = PandaDFU(serial)
-  p.recover()
+  pandas = PandaDFU.list()
+  print(pandas)
+  assert len(pandas) == 7
 
-r.cycle_power(5)
+  for serial in pandas:
+    p = PandaDFU(serial)
+    p.recover()
 
-pandas = Panda.list()
-print(pandas)
-assert len(pandas) == 7
+  r.cycle_power(5)
 
-for serial in pandas:
-  pf = Panda(serial)
-  if pf.bootstub:
-    pf.flash()
-  pf.close()
+  pandas = Panda.list()
+  print(pandas)
+  assert len(pandas) == 7
 
-r.cycle_power(0)
-r.close()
+  for serial in pandas:
+    pf = Panda(serial)
+    if pf.bootstub:
+      pf.flash()
+    pf.close()
+
+  r.cycle_power(0)
+  r.close()
