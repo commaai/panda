@@ -21,17 +21,13 @@ Programming
 **Panda**
 
 ```
-./flash.sh           # for any pandas
+./flash.sh           # for any panda
 ```
 
 Troubleshooting
 ----
 
-If your panda will not flash and is quickly blinking a single Green LED, use:
-```
-./recover_h7.sh  # for red panda
-./recover.sh     # for other pandas
-```
+If your panda will not flash and is quickly blinking a single Green LED, use `recover.sh`.
 
 A [panda paw](https://comma.ai/shop/products/panda-paw) can be used to put panda into DFU mode.
 
