@@ -4,19 +4,19 @@ pipeline {
     DOCKER_IMAGE_TAG = "panda:build-${env.GIT_COMMIT}"
   }
   stages {
-    stage('Build Docker Image') {
-      steps {
-        timeout(time: 60, unit: 'MINUTES') {
-          script {
-            sh 'git archive -v -o panda.tar.gz --format=tar.gz HEAD'
-            dockerImage = docker.build("${env.DOCKER_IMAGE_TAG}")
+    lock(resource: "pandas") {
+      stage('Build Docker Image') {
+        steps {
+          timeout(time: 60, unit: 'MINUTES') {
+            script {
+              sh 'git archive -v -o panda.tar.gz --format=tar.gz HEAD'
+              dockerImage = docker.build("${env.DOCKER_IMAGE_TAG}")
+            }
           }
         }
       }
-    }
-    stage('reset hardware') {
-      steps {
-        lock(extra: [[resource: "pedal"]], resource: "pandas") {
+      stage('reset hardware') {
+        steps {
           timeout(time: 10, unit: 'MINUTES') {
             script {
               sh "docker run --rm --privileged \
@@ -29,10 +29,8 @@ pipeline {
           }
         }
       }
-    }
-    stage('pedal tests') {
-      steps {
-        lock(resource: "pedal", inversePrecedence: true, quantity: 1) {
+      stage('pedal tests') {
+        steps {
           timeout(time: 10, unit: 'MINUTES') {
             script {
               sh "docker run --rm --privileged \
@@ -45,10 +43,8 @@ pipeline {
           }
         }
       }
-    }
-    stage('HITL tests') {
-      steps {
-        lock(resource: "pandas", inversePrecedence: true, quantity: 1) {
+      stage('HITL tests') {
+        steps {
           timeout(time: 20, unit: 'MINUTES') {
             script {
               sh "docker run --rm --privileged \
@@ -61,10 +57,8 @@ pipeline {
           }
         }
       }
-    }
-    stage('CANFD tests') {
-      steps {
-        lock(resource: "pedal", inversePrecedence: true, quantity: 1) {
+      stage('CANFD tests') {
+        steps {
           timeout(time: 10, unit: 'MINUTES') {
             script {
               sh "docker run --rm --privileged \
