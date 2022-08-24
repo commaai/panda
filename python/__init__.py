@@ -410,7 +410,9 @@ class Panda:
       for device in context.getDeviceList(skip_on_error=True):
         if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
           try:
-            ret.append(device.getSerialNumber())
+            serial = device.getSerialNumber()
+            if len(serial) == 24:
+              ret.append(serial)
           except Exception:
             continue
     except Exception:
