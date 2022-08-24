@@ -38,15 +38,18 @@ void debug_ring_callback(uart_ring *ring) {
   while (getc(ring, &rcv)) {
     (void)putc(ring, rcv);  // misra-c2012-17.7: cast to void is ok: debug function
 
-    // jump to DFU flash
-    if (rcv == 'z') {
-      enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-      NVIC_SystemReset();
-    }
+    // can do only if in a non car safety mode
+    if (!is_car_safety_mode(current_safety_mode)) {
+      // jump to DFU flash
+      if (rcv == 'z') {
+        enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+        NVIC_SystemReset();
+      }
 
-    // normal reset
-    if (rcv == 'x') {
-      NVIC_SystemReset();
+      // normal reset
+      if (rcv == 'x') {
+        NVIC_SystemReset();
+      }
     }
 
     // enable CDP mode

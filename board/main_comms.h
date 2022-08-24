@@ -270,20 +270,22 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xd1: enter bootloader mode
     case 0xd1:
       // this allows reflashing of the bootstub
-      switch (req->param1) {
-        case 0:
-          puts("-> entering bootloader\n");
-          enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-          NVIC_SystemReset();
-          break;
-        case 1:
-          puts("-> entering softloader\n");
-          enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
-          NVIC_SystemReset();
-          break;
-        default:
-          puts("Bootloader mode invalid\n");
-          break;
+      if (!is_car_safety_mode(current_safety_mode)) {
+        switch (req->param1) {
+          case 0:
+            puts("-> entering bootloader\n");
+            enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+            NVIC_SystemReset();
+            break;
+          case 1:
+            puts("-> entering softloader\n");
+            enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
+            NVIC_SystemReset();
+            break;
+          default:
+            puts("Bootloader mode invalid\n");
+            break;
+        }
       }
       break;
     // **** 0xd2: get health packet
@@ -316,7 +318,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xd8: reset ST
     case 0xd8:
-      NVIC_SystemReset();
+      if (!is_car_safety_mode(current_safety_mode)) {
+        NVIC_SystemReset();
+      }
       break;
     // **** 0xd9: set ESP power
     case 0xd9:
