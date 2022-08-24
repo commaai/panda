@@ -14,6 +14,22 @@ pipeline {
         }
       }
     }
+    stage('reset hardware') {
+      steps {
+        lock(extra: [[resource: "pedal"]], resource: "pandas") {
+          timeout(time: 10, unit: 'MINUTES') {
+            script {
+              sh "docker run --rm --privileged \
+                    --volume /dev/bus/usb:/dev/bus/usb \
+                    --volume /var/run/dbus:/var/run/dbus \
+                    --net host \
+                    ${env.DOCKER_IMAGE_TAG} \
+                    bash -c 'cd /tmp/panda && scons -j8 && python ./tests/ci_resetter.py'"
+            }
+          }
+        }
+      }
+    }
     stage('pedal tests') {
       steps {
         lock(resource: "pedal", inversePrecedence: true, quantity: 1) {
