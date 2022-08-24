@@ -413,6 +413,8 @@ class Panda:
             serial = device.getSerialNumber()
             if len(serial) == 24:
               ret.append(serial)
+            else:
+              print(f"found device with panda descriptors but invalid serial: {serial}")
           except Exception:
             continue
     except Exception:
