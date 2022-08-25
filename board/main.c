@@ -40,9 +40,9 @@ void debug_ring_callback(uart_ring *ring) {
 
     // can do only if in a non car safety mode
     if (!is_car_safety_mode(current_safety_mode)) {
-      // jump to DFU flash
+      // jump to bootstub
       if (rcv == 'z') {
-        enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+        enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
         NVIC_SystemReset();
       }
 

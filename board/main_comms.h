@@ -272,11 +272,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       // this allows reflashing of the bootstub
       if (!is_car_safety_mode(current_safety_mode)) {
         switch (req->param1) {
-          case 0:
-            puts("-> entering bootloader\n");
-            enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-            NVIC_SystemReset();
-            break;
           case 1:
             puts("-> entering softloader\n");
             enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
