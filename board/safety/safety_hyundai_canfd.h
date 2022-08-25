@@ -149,9 +149,9 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     }
 
     // gas press
-    if ((addr == 0x35) && hyundai_canfd_hda2) {
+    if ((addr == 0x35) && !hyundai_canfd_alt_buttons) {
       gas_pressed = GET_BYTE(to_push, 5) != 0U;
-    } else if ((addr == 0x105) && !hyundai_canfd_hda2) {
+    } else if ((addr == 0x105) && hyundai_canfd_alt_buttons) {
       gas_pressed = (GET_BIT(to_push, 103U) != 0U) || (GET_BYTE(to_push, 13) != 0U) || (GET_BIT(to_push, 112U) != 0U);
     } else {
     }
