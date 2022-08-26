@@ -1,10 +1,14 @@
-const int HONGQI_MAX_STEER = 300;               // As-yet unknown fault boundary, guessing 300 / 3.0Nm for now
-const int HONGQI_MAX_RT_DELTA = 113;            // 6 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 75 ; 50 * 1.5 for safety pad = 113
-const uint32_t HONGQI_RT_INTERVAL = 250000;     // 250ms between real time checks
-const int HONGQI_MAX_RATE_UP = 6;               // 10 unit/sec observed from factory LKAS, fault boundary unknown
-const int HONGQI_MAX_RATE_DOWN = 10;            // 10 unit/sec observed from factory LKAS, fault boundary unknown
-const int HONGQI_DRIVER_TORQUE_ALLOWANCE = 50;
-const int HONGQI_DRIVER_TORQUE_FACTOR = 3;
+// lateral limits
+const SteeringLimits HONGQI_STEERING_LIMITS = {
+  .max_steer = 300,              // As-yet unknown fault boundary, guessing 300 / 3.0Nm for now
+  .max_rt_delta = 113,           // 6 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 75 ; 50 * 1.5 for safety pad = 113
+  .max_rt_interval = 250000,     // 250ms between real time checks
+  .max_rate_up = 6,              // 10 unit/sec observed from factory LKAS, fault boundary unknown
+  .max_rate_down = 10,           // 10 unit/sec observed from factory LKAS, fault boundary unknown
+  .driver_torque_allowance = 50,
+  .driver_torque_factor = 3,
+  .type = TorqueDriverLimited,
+};
 
 #define MSG_ECM_1           0x92    // RX from ABS, for brake pressures
 #define MSG_ABS_1           0xC0    // RX from ABS, for wheel speeds
@@ -138,43 +142,7 @@ static int hongqi_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       desired_torque *= -1;
     }
 
-    bool violation = false;
-    uint32_t ts = microsecond_timer_get();
-
-    if (controls_allowed) {
-      // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, HONGQI_MAX_STEER, -HONGQI_MAX_STEER);
-
-      // *** torque rate limit check ***
-      violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-        HONGQI_MAX_STEER, HONGQI_MAX_RATE_UP, HONGQI_MAX_RATE_DOWN,
-        HONGQI_DRIVER_TORQUE_ALLOWANCE, HONGQI_DRIVER_TORQUE_FACTOR);
-      desired_torque_last = desired_torque;
-
-      // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, HONGQI_MAX_RT_DELTA);
-
-      // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
-      if (ts_elapsed > HONGQI_RT_INTERVAL) {
-        rt_torque_last = desired_torque;
-        ts_last = ts;
-      }
-    }
-
-    // no torque if controls is not allowed
-    if (!controls_allowed && (desired_torque != 0)) {
-      violation = true;
-    }
-
-    // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !controls_allowed) {
-      desired_torque_last = 0;
-      rt_torque_last = 0;
-      ts_last = ts;
-    }
-
-    if (violation) {
+    if (steer_torque_cmd_checks(desired_torque, -1, HONGQI_STEERING_LIMITS)) {
       tx = 0;
     }
   }
