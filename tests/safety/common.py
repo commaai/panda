@@ -484,17 +484,18 @@ class PandaSafetyTest(PandaSafetyTestBase):
       _user_brake_msg = self._user_brake_msg
       get_brake_pressed_prev = self.safety.get_brake_pressed_prev
     else:
+      # Regen message is not required for a safety model to define
       if self._user_regen_msg(0) is None:
         raise unittest.SkipTest
       _user_brake_msg = self._user_regen_msg
       get_brake_pressed_prev = self.safety.get_regen_braking_prev
 
-      self.assertFalse(get_brake_pressed_prev())
-      for pressed in [True, False]:
-        self._rx(_user_brake_msg(not pressed))
-        self.assertEqual(not pressed, get_brake_pressed_prev())
-        self._rx(_user_brake_msg(pressed))
-        self.assertEqual(pressed, get_brake_pressed_prev())
+    self.assertFalse(get_brake_pressed_prev())
+    for pressed in [True, False]:
+      self._rx(_user_brake_msg(not pressed))
+      self.assertEqual(not pressed, get_brake_pressed_prev())
+      self._rx(_user_brake_msg(pressed))
+      self.assertEqual(pressed, get_brake_pressed_prev())
 
   def test_enable_control_allowed_from_cruise(self):
     self._rx(self._pcm_status_msg(False))
