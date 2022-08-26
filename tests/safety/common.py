@@ -3,6 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
+from abc import ABC
 from typing import Optional, List, Dict
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
@@ -592,7 +593,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
         self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")
 
 
-class RegenSafetyTest(PandaSafetyTest):
+class RegenSafetyTest(PandaSafetyTest, ABC):
 
   @classmethod
   def setUpClass(cls):
