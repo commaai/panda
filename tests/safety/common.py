@@ -484,7 +484,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
       _user_brake_msg = self._user_brake_msg
       get_brake_pressed_prev = self.safety.get_brake_pressed_prev
     else:
-      # Regen message is not required for a safety model to define
+      # Not all safety models define a regen message to test
       if self._user_regen_msg(0) is None:
         raise unittest.SkipTest
       _user_brake_msg = self._user_regen_msg
