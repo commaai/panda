@@ -602,8 +602,8 @@ class RegenSafetyTest(PandaSafetyTest, ABC):
       raise unittest.SkipTest
 
   def test_prev_regen_brake(self):
-    get_brake_pressed_prev = self.safety.get_brake_pressed_prev
     self._user_brake_msg = self._user_regen_msg
+    get_brake_pressed_prev = self.safety.get_brake_pressed_prev
     self.safety.__dict__['get_brake_pressed_prev'] = self.safety.get_regen_braking_prev
     super().test_prev_brake()
     self.safety.__dict__['get_brake_pressed_prev'] = get_brake_pressed_prev
