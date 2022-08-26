@@ -2,7 +2,6 @@
 import os
 import time
 import random
-import _thread
 from collections import defaultdict
 from panda import Panda
 from panda_jungle import PandaJungle  # pylint: disable=import-error
@@ -18,19 +17,9 @@ DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48]
 
 _panda_serials = []
 
-def start_heartbeat_thread(p):
-  def heartbeat_thread(p):
-    while True:
-      try:
-        p.send_heartbeat()
-        time.sleep(.5)
-      except Exception:
-        break
-  _thread.start_new_thread(heartbeat_thread, (p,))
 
 def panda_init(serial, enable_canfd=False):
   p = Panda(serial=serial)
-  start_heartbeat_thread(p)
   p.set_power_save(False)
   for bus in range(3):
     if enable_canfd:
