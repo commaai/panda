@@ -549,18 +549,18 @@ class PandaSafetyTest(PandaSafetyTestBase):
         raise unittest.SkipTest
       _user_brake_msg = self._user_regen_msg
 
-      # Brake was already pressed
-      self._rx(_user_brake_msg(1))
-      self.safety.set_controls_allowed(1)
-      self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
-      self._rx(_user_brake_msg(1))
-      self.assertTrue(self.safety.get_controls_allowed())
-      self.assertTrue(self.safety.get_longitudinal_allowed())
-      self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
-      self._rx(_user_brake_msg(1))
-      self.assertFalse(self.safety.get_controls_allowed())
-      self.assertFalse(self.safety.get_longitudinal_allowed())
-      self._rx(self._speed_msg(0))
+    # Brake was already pressed
+    self._rx(_user_brake_msg(1))
+    self.safety.set_controls_allowed(1)
+    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
+    self._rx(_user_brake_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_longitudinal_allowed())
+    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
+    self._rx(_user_brake_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_longitudinal_allowed())
+    self._rx(self._speed_msg(0))
 
   def test_sample_speed(self):
     self.assertFalse(self.safety.get_vehicle_moving())
