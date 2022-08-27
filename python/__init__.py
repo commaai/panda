@@ -1,12 +1,13 @@
 # python library to interface with panda
-import datetime
+import os
+import sys
+import time
+import usb1
 import struct
 import hashlib
-import usb1
-import os
-import time
+import datetime
 import traceback
-import sys
+import warnings
 from functools import wraps
 from typing import Optional
 from itertools import accumulate
@@ -196,6 +197,9 @@ class Panda:
   FLAG_HYUNDAI_HYBRID_GAS = 2
   FLAG_HYUNDAI_LONG = 4
   FLAG_HYUNDAI_CAMERA_SCC = 8
+
+  FLAG_HYUNDAI_CANFD_HDA2 = 1
+  FLAG_HYUNDAI_CANFD_ALT_BUTTONS = 2
 
   FLAG_TESLA_POWERTRAIN = 1
   FLAG_TESLA_LONG_CONTROL = 2
@@ -407,7 +411,11 @@ class Panda:
       for device in context.getDeviceList(skip_on_error=True):
         if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
           try:
-            ret.append(device.getSerialNumber())
+            serial = device.getSerialNumber()
+            if len(serial) == 24:
+              ret.append(serial)
+            else:
+              warnings.warn(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
           except Exception:
             continue
     except Exception:
