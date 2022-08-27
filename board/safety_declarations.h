@@ -106,7 +106,7 @@ bool addr_safety_check(CANPacket_t *to_push,
 void generic_rx_checks(bool stock_ecu_detected);
 void relay_malfunction_set(void);
 void relay_malfunction_reset(void);
-void torque_measurements_reset(uint32_t);
+void torque_measurements_reset(uint32_t ts);
 bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits);
 void pcm_cruise_check(bool cruise_engaged);
 
