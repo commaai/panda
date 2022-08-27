@@ -266,6 +266,12 @@ void relay_malfunction_reset(void) {
   fault_recovered(FAULT_RELAY_MALFUNCTION);
 }
 
+void torque_measurements_reset(uint32_t ts) {
+  desired_torque_last = 0;
+  rt_torque_last = 0;
+  ts_last = ts;
+}
+
 typedef struct {
   uint16_t id;
   const safety_hooks *hooks;
@@ -511,9 +517,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 
   // reset to 0 if either controls is not allowed or there's a violation
   if (violation || !controls_allowed) {
-    desired_torque_last = 0;
-    rt_torque_last = 0;
-    ts_last = ts;
+    torque_measurements_reset(ts);
   }
 
   return violation;
