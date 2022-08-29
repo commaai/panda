@@ -69,6 +69,9 @@ if __name__ == "__main__":
             resp[uds_data_id] = data
         except (NegativeResponseError, MessageTimeoutError):
           pass
+        except Exception as e:
+          print(e)
+          continue
 
       if resp.keys():
         results[addr] = resp
