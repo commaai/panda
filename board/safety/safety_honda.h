@@ -331,10 +331,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   // ACCEL: safety check (radarless)
   if ((addr == 0x1C8) && (bus == bus_pt)) {
-    // BO_ 456 ACC_CONTROL: 8 XXX
-    //  SG_ ACCEL_COMMAND : 7|12@0- (0.01,0) [0|0] "m/s^2" XXX
-    int accel = (GET_BYTE(to_send, 3) << 3) | ((GET_BYTE(to_send, 4) >> 5) & 0x7U);
-    // ^^^ THIS LINE NEEDS FIXING ^^^
+    int accel = (GET_BYTE(to_send, 0) << 4) | (GET_BYTE(to_send, 1) >> 4);
     accel = to_signed(accel, 12);
     if (!current_controls_allowed || !longitudinal_allowed) {
       if (accel != 0) {
