@@ -96,15 +96,13 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       }
     }
 
-    // sample speed
     if (addr == 0xaa) {
-      int speed = 0;
-      // sum 4 wheel speeds
+      vehicle_moving = false;
+      // check any wheel speed for non-zero value
       for (uint8_t i=0U; i<8U; i+=2U) {
         int wheel_speed = (GET_BYTE(to_push, i) << 8U) + GET_BYTE(to_push, (i+1U));
-        speed += wheel_speed - 0x1a6f;
+        vehicle_moving |= wheel_speed != 0x1a6f;
       }
-      vehicle_moving = ABS(speed) > 0;
     }
 
     // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224
