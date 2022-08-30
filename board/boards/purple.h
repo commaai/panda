@@ -36,7 +36,7 @@ void purple_enable_can_transceivers(bool enabled) {
 }
 
 void purple_set_usb_load_switch(bool enabled) {
-  set_gpio_output(GPIOD, 3, !enabled);
+  set_gpio_output(GPIOD, 3, enabled);
 }
 
 void purple_init(void) {
