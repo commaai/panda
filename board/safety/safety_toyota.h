@@ -97,12 +97,12 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
     }
 
     if (addr == 0xaa) {
-      // check any wheel speed for non-zero value
-      vehicle_moving = false;
+      bool standstill = true;
       for (uint8_t i = 0U; i < 8U; i += 2U) {
         int wheel_speed = (GET_BYTE(to_push, i) << 8U) + GET_BYTE(to_push, (i + 1U));
-        vehicle_moving |= wheel_speed != 0x1a6f;
+        standstill = standstill && (wheel_speed == 0x1a6f);
       }
+      vehicle_moving = !standstill;
     }
 
     // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224
