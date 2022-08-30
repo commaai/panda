@@ -97,10 +97,10 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
     }
 
     if (addr == 0xaa) {
-      vehicle_moving = false;
       // check any wheel speed for non-zero value
-      for (uint8_t i=0U; i<8U; i+=2U) {
-        int wheel_speed = (GET_BYTE(to_push, i) << 8U) + GET_BYTE(to_push, (i+1U));
+      vehicle_moving = false;
+      for (uint8_t i = 0U; i < 8U; i += 2U) {
+        int wheel_speed = (GET_BYTE(to_push, i) << 8U) + GET_BYTE(to_push, (i + 1U));
         vehicle_moving |= wheel_speed != 0x1a6f;
       }
     }
