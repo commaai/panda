@@ -279,7 +279,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         default:
           puts("Bootloader mode invalid\n");
           break;
-        }
+      }
       break;
     // **** 0xd2: get health packet
     case 0xd2:
