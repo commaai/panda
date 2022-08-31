@@ -45,6 +45,8 @@ AddrCheckStruct hyundai_addr_checks[] = {
            {881, 0, 8, .expected_timestep = 10000U}, { 0 }}},
   {.msg = {{902, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{916, 0, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{1056, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
+           {1056, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }}},
   {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U},
            {1057, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }}},
 };
@@ -65,6 +67,7 @@ AddrCheckStruct hyundai_legacy_addr_checks[] = {
            {881, 0, 8, .expected_timestep = 10000U}, { 0 }}},
   {.msg = {{902, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{916, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{1067, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{1057, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define HYUNDAI_LEGACY_ADDR_CHECK_LEN (sizeof(hyundai_legacy_addr_checks) / sizeof(hyundai_legacy_addr_checks[0]))
@@ -179,18 +182,24 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
 
   // SCC12 is on bus 2 for camera-based SCC cars, bus 0 on all others
   if (valid && (((bus == 0) && !hyundai_camera_scc) || ((bus == 2) && hyundai_camera_scc))) {
-    // enter controls on rising edge of ACC and user button press, exit controls when ACC off
-    if (!hyundai_longitudinal && (addr == 1057)) {
-      // 2 bits: 13-14
-      int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3U;
-      if (cruise_engaged && !cruise_engaged_prev && (hyundai_last_button_interaction < HYUNDAI_PREV_BUTTON_SAMPLES)) {
-        controls_allowed = 1;
+    if (!hyundai_longitudinal) {
+      // ACC main state
+      if (addr == 1056) {
+        acc_main_on = GET_BIT(to_push, 0U);
       }
+      // enter controls on rising edge of ACC and user button press, exit controls when ACC off
+      if (addr == 1057) {
+        // 2 bits: 13-14
+        int cruise_engaged = (GET_BYTES_04(to_push) >> 13) & 0x3U;
+        if (cruise_engaged && !cruise_engaged_prev && (hyundai_last_button_interaction < HYUNDAI_PREV_BUTTON_SAMPLES)) {
+          controls_allowed = 1;
+        }
 
-      if (!cruise_engaged) {
-        controls_allowed = 0;
+        if (!cruise_engaged) {
+          controls_allowed = 0;
+        }
+        cruise_engaged_prev = cruise_engaged;
       }
-      cruise_engaged_prev = cruise_engaged;
     }
   }
 
@@ -199,6 +208,11 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       int torque_driver_new = ((GET_BYTES_04(to_push) & 0x7ffU) * 0.79) - 808; // scale down new driver torque signal to match previous one
       // update array of samples
       update_sample(&torque_driver, torque_driver_new);
+    }
+
+    // ACC main state
+    if (hyundai_longitudinal && !hyundai_camera_scc && (addr == 608)) {
+      acc_main_on = GET_BIT(to_push, 25U);
     }
 
     // ACC steering wheel buttons
@@ -258,6 +272,11 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
       stock_ecu_detected = true;
     }
     generic_rx_checks(stock_ecu_detected);
+  }
+
+  // ACC main state
+  if (!acc_main_on) {
+    controls_allowed = 0;
   }
   return valid;
 }
