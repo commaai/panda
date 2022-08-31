@@ -1,30 +1,30 @@
 // Safety-relevant CAN messages for Ford vehicles.
-#define MSG_ENG_BRAKE_DATA            0x165  // RX from PCM, for driver brake pedal and cruise state
-#define MSG_ENG_VEHICLE_SP_THROTTLE   0x204  // RX from PCM, for driver throttle input
-#define MSG_DESIRED_TORQ_BRK          0x213  // RX from ABS, for standstill state
-#define MSG_STEERING_DATA_FD1         0x083  // TX by OP, various driver switches and LKAS/CC buttons
-#define MSG_ACCDATA_3                 0x18A  // TX by OP, ACC/TJA user interface
-#define MSG_LANE_ASSIST_DATA1         0x3CA  // TX by OP, Lane Keep Assist
-#define MSG_LATERAL_MOTION_CONTROL    0x3D3  // TX by OP, Traffic Jam Assist
-#define MSG_IPMA_DATA                 0x3D8  // TX by OP, IPMA and LKAS user interface
+#define MSG_EngBrakeData          0x165   // RX from PCM, for driver brake pedal and cruise state
+#define MSG_EngVehicleSpThrottle  0x204   // RX from PCM, for driver throttle input
+#define MSG_DesiredTorqBrk        0x213   // RX from ABS, for standstill state
+#define MSG_Steering_Data_FD1     0x083   // TX by OP, various driver switches and LKAS/CC buttons
+#define MSG_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
+#define MSG_Lane_Assist_Data1     0x3CA   // TX by OP, Lane Keep Assist
+#define MSG_LateralMotionControl  0x3D3   // TX by OP, Traffic Jam Assist
+#define MSG_IPMA_Data             0x3D8   // TX by OP, IPMA and LKAS user interface
 
 // CAN bus numbers.
 #define FORD_MAIN_BUS 0U
 #define FORD_CAM_BUS  2U
 
 const CanMsg FORD_TX_MSGS[] = {
-  {MSG_STEERING_DATA_FD1, 0, 8},
+  {MSG_Steering_Data_FD1, 0, 8},
   {MSG_ACCDATA_3, 0, 8},
-  {MSG_LANE_ASSIST_DATA1, 0, 8},
-  {MSG_LATERAL_MOTION_CONTROL, 0, 8},
-  {MSG_IPMA_DATA, 0, 8},
+  {MSG_Lane_Assist_Data1, 0, 8},
+  {MSG_LateralMotionControl, 0, 8},
+  {MSG_IPMA_Data, 0, 8},
 };
 #define FORD_TX_LEN (sizeof(FORD_TX_MSGS) / sizeof(FORD_TX_MSGS[0]))
 
 AddrCheckStruct ford_addr_checks[] = {
-  {.msg = {{MSG_ENG_BRAKE_DATA, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_ENG_VEHICLE_SP_THROTTLE, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_DESIRED_TORQ_BRK, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_EngBrakeData, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_EngVehicleSpThrottle, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_DesiredTorqBrk, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define FORD_ADDR_CHECK_LEN (sizeof(ford_addr_checks) / sizeof(ford_addr_checks[0]))
 addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
@@ -32,9 +32,9 @@ addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
 
 static bool ford_lkas_msg_check(int addr) {
   return (addr == MSG_ACCDATA_3)
-      || (addr == MSG_LANE_ASSIST_DATA1)
-      || (addr == MSG_LATERAL_MOTION_CONTROL)
-      || (addr == MSG_IPMA_DATA);
+      || (addr == MSG_Lane_Assist_Data1)
+      || (addr == MSG_LateralMotionControl)
+      || (addr == MSG_IPMA_Data);
 }
 
 static int ford_rx_hook(CANPacket_t *to_push) {
@@ -44,20 +44,20 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     int addr = GET_ADDR(to_push);
 
     // Update in motion state from standstill signal
-    if (addr == MSG_DESIRED_TORQ_BRK) {
+    if (addr == MSG_DesiredTorqBrk) {
       // Signal: VehStop_D_Stat
       vehicle_moving = ((GET_BYTE(to_push, 3) >> 3) & 0x3U) == 0U;
     }
 
     // Update gas pedal
-    if (addr == MSG_ENG_VEHICLE_SP_THROTTLE) {
+    if (addr == MSG_EngVehicleSpThrottle) {
       // Pedal position: (0.1 * val) in percent
       // Signal: ApedPos_Pc_ActlArb
       gas_pressed = (((GET_BYTE(to_push, 0) & 0x03U) << 8) | GET_BYTE(to_push, 1)) > 0U;
     }
 
     // Update brake pedal and cruise state
-    if (addr == MSG_ENG_BRAKE_DATA) {
+    if (addr == MSG_EngBrakeData) {
       // Signal: BpedDrvAppl_D_Actl
       brake_pressed = ((GET_BYTE(to_push, 0) >> 4) & 0x3U) == 2U;
 
@@ -88,7 +88,7 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   // Safety check for Steering_Data_FD1 button signals
   // Note: Many other signals in this message are not relevant to safety (e.g. blinkers, wiper switches, high beam)
   // which we passthru in OP.
-  if ((addr == MSG_STEERING_DATA_FD1) && !controls_allowed) {
+  if ((addr == MSG_Steering_Data_FD1) && !controls_allowed) {
     // Violation if resume button is pressed while controls not allowed, or
     // if cancel button is pressed when cruise isn't engaged.
     bool violation = false;
@@ -101,7 +101,7 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // Safety check for Lane_Assist_Data1 action
-  if (addr == MSG_LANE_ASSIST_DATA1) {
+  if (addr == MSG_Lane_Assist_Data1) {
     // Do not allow steering using Lane_Assist_Data1 (Lane-Departure Aid).
     // This message must be sent for Lane Centering to work, and can include
     // values such as the steering angle or lane curvature for debugging,
@@ -113,7 +113,7 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // Safety check for LateralMotionControl action
-  if (addr == MSG_LATERAL_MOTION_CONTROL) {
+  if (addr == MSG_LateralMotionControl) {
     // Signal: LatCtl_D_Rq
     unsigned int steer_control_type = (GET_BYTE(to_send, 4) >> 2) & 0x7U;
     bool steer_control_enabled = steer_control_type != 0U;
