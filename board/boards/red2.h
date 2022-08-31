@@ -1,10 +1,10 @@
 // ///////////////////// //
-// Purple Panda + Harness //
+// Red Panda V2 with chiplet + Harness //
 // ///////////////////// //
 
 // Most hardware functionality is similar to red panda
 
-void purple_enable_can_transceiver(uint8_t transceiver, bool enabled) {
+void red2_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {
     case 1U:
       set_gpio_output(GPIOG, 11, !enabled);
@@ -23,23 +23,23 @@ void purple_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-void purple_enable_can_transceivers(bool enabled) {
+void red2_enable_can_transceivers(bool enabled) {
   uint8_t main_bus = (car_harness_status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
   for (uint8_t i=1U; i<=4U; i++) {
     // Leave main CAN always on for CAN-based ignition detection
     if (i == main_bus) {
-      purple_enable_can_transceiver(i, true);
+      red2_enable_can_transceiver(i, true);
     } else {
-      purple_enable_can_transceiver(i, enabled);
+      red2_enable_can_transceiver(i, enabled);
     }
   }
 }
 
-void purple_set_usb_load_switch(bool enabled) {
+void red2_set_usb_load_switch(bool enabled) {
   set_gpio_output(GPIOD, 3, enabled);
 }
 
-void purple_init(void) {
+void red2_init(void) {
   common_init_gpio();
 
   //C4,A1: OBD_SBU1, OBD_SBU2
@@ -82,7 +82,7 @@ void purple_init(void) {
   set_gpio_mode(GPIOB, 0, MODE_ANALOG);
 
   // Turn on USB load switch.
-  purple_set_usb_load_switch(true);
+  red2_set_usb_load_switch(true);
 
   // Set right power mode
   red_set_usb_power_mode(USB_POWER_CDP);
@@ -94,7 +94,7 @@ void purple_init(void) {
   rtc_init();
 
   // Enable CAN transceivers
-  purple_enable_can_transceivers(true);
+  red2_enable_can_transceivers(true);
 
   // Disable LEDs
   red_set_led(LED_RED, false);
@@ -110,7 +110,7 @@ void purple_init(void) {
   }
 }
 
-const harness_configuration purple_harness_config = {
+const harness_configuration red2_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
@@ -124,18 +124,18 @@ const harness_configuration purple_harness_config = {
   .adc_channel_SBU2 = 17 //ADC1_INP17
 };
 
-const board board_purple = {
-  .board_type = "Purple",
-  .harness_config = &purple_harness_config,
+const board board_red2 = {
+  .board_type = "Red2",
+  .harness_config = &red2_harness_config,
   .has_gps = false,
   .has_hw_gmlan = false,
   .has_obd = true,
   .has_lin = false,
   .has_rtc_battery = true,
   .fan_max_rpm = 0U,
-  .init = purple_init,
-  .enable_can_transceiver = purple_enable_can_transceiver,
-  .enable_can_transceivers = purple_enable_can_transceivers,
+  .init = red2_init,
+  .enable_can_transceiver = red2_enable_can_transceiver,
+  .enable_can_transceivers = red2_enable_can_transceivers,
   .set_led = red_set_led,
   .set_usb_power_mode = red_set_usb_power_mode,
   .set_gps_mode = unused_set_gps_mode,

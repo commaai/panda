@@ -11,7 +11,7 @@
 #include "stm32h7/llrtc.h"
 #include "drivers/rtc.h"
 #include "boards/red.h"
-#include "boards/purple.h"
+#include "boards/red2.h"
 
 
 uint8_t board_id(void) {
@@ -26,8 +26,8 @@ void detect_board_type(void) {
     hw_type = HW_TYPE_RED_PANDA;
     current_board = &board_red;
   } else if(board_id() == 1U){
-    hw_type = HW_TYPE_PURPLE_PANDA;
-    current_board = &board_purple;
+    hw_type = HW_TYPE_RED2_PANDA;
+    current_board = &board_red2;
   } else {
     hw_type = HW_TYPE_UNKNOWN;
     puts("Hardware type is UNKNOWN!\n");

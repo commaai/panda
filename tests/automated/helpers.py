@@ -13,7 +13,7 @@ SPEED_NORMAL = 500
 SPEED_GMLAN = 33.3
 BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL), (3, SPEED_GMLAN)]
 TIMEOUT = 45
-H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_PURPLE_PANDA]
+H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED2_PANDA]
 GEN2_HW_TYPES = [Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO] + H7_HW_TYPES
 GPS_HW_TYPES = [Panda.HW_TYPE_GREY_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
 PEDAL_SERIAL = 'none'
@@ -56,7 +56,7 @@ test_all_types = parameterized([
     param(panda_type=Panda.HW_TYPE_BLACK_PANDA),
     param(panda_type=Panda.HW_TYPE_UNO),
     param(panda_type=Panda.HW_TYPE_RED_PANDA),
-    param(panda_type=Panda.HW_TYPE_PURPLE_PANDA)
+    param(panda_type=Panda.HW_TYPE_RED2_PANDA)
   ])
 test_all_pandas = parameterized(
     list(map(lambda x: x[0], _all_pandas))  # type: ignore
