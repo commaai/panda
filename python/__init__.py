@@ -181,6 +181,8 @@ class Panda:
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
   H7_DEVICES = (HW_TYPE_RED_PANDA, )
 
+  HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA)
+
   CLOCK_SOURCE_MODE_DISABLED = 0
   CLOCK_SOURCE_MODE_FREE_RUNNING = 1
 
@@ -498,27 +500,6 @@ class Panda:
     else:
       return (0, 0)
 
-  def is_white(self):
-    return self.get_type() == Panda.HW_TYPE_WHITE_PANDA
-
-  def is_grey(self):
-    return self.get_type() == Panda.HW_TYPE_GREY_PANDA
-
-  def is_black(self):
-    return self.get_type() == Panda.HW_TYPE_BLACK_PANDA
-
-  def is_pedal(self):
-    return self.get_type() == Panda.HW_TYPE_PEDAL
-
-  def is_uno(self):
-    return self.get_type() == Panda.HW_TYPE_UNO
-
-  def is_dos(self):
-    return self.get_type() == Panda.HW_TYPE_DOS
-
-  def is_red(self):
-    return self.get_type() == Panda.HW_TYPE_RED_PANDA
-
   def get_mcu_type(self):
     hw_type = self.get_type()
     if hw_type in Panda.F2_DEVICES:
@@ -530,13 +511,7 @@ class Panda:
     return None
 
   def has_obd(self):
-    return (self.is_uno() or self.is_dos() or self.is_black() or self.is_red())
-
-  def has_canfd(self) -> bool:
-    return self.get_type() in Panda.H7_DEVICES
-
-  def is_internal(self) -> bool:
-    return self.get_type() in (Panda.HW_TYPE_UNO, Panda.HW_TYPE_DOS)
+    return self.get_type() in Panda.HAS_OBD
 
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
