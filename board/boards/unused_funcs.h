@@ -25,3 +25,7 @@ void unused_set_siren(bool enabled) {
 uint32_t unused_read_current(void) {
   return 0U;
 }
+
+void unused_board_tick(void) {
+
+}

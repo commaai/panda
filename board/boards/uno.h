@@ -56,7 +56,7 @@ void uno_set_gps_load_switch(bool enabled) {
 }
 
 void uno_set_bootkick(bool enabled){
-  if(enabled){
+  if (enabled) {
     set_gpio_output(GPIOB, 14, false);
   } else {
     // We want the pin to be floating, not forced high!
@@ -123,6 +123,14 @@ void uno_set_can_mode(uint8_t mode){
     default:
       puts("Tried to set unsupported CAN mode: "); puth(mode); puts("\n");
       break;
+  }
+}
+
+void uno_board_tick(void) {
+  if (bootkick_timer != 0U) {
+    bootkick_timer--;
+  } else {
+    uno_set_bootkick(false);
   }
 }
 
@@ -234,6 +242,7 @@ const harness_configuration uno_harness_config = {
 
 const board board_uno = {
   .board_type = "Uno",
+  .board_tick = uno_board_tick,
   .harness_config = &uno_harness_config,
   .has_gps = true,
   .has_hw_gmlan = false,

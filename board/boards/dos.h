@@ -53,6 +53,11 @@ void dos_set_bootkick(bool enabled){
   set_gpio_output(GPIOC, 4, !enabled);
 }
 
+void dos_board_tick(void) {
+  // TODO: bootkick logic here
+  dos_set_bootkick(true);
+}
+
 void dos_set_can_mode(uint8_t mode){
   switch (mode) {
     case CAN_MODE_NORMAL:
@@ -181,6 +186,7 @@ const harness_configuration dos_harness_config = {
 
 const board board_dos = {
   .board_type = "Dos",
+  .board_tick = dos_board_tick,
   .harness_config = &dos_harness_config,
   .has_gps = false,
   .has_hw_gmlan = false,
@@ -200,5 +206,5 @@ const board board_dos = {
   .set_ir_power = dos_set_ir_power,
   .set_phone_power = unused_set_phone_power,
   .set_clock_source_mode = dos_set_clock_source_mode,
-  .set_siren = dos_set_siren
+  .set_siren = unused_set_siren
 };

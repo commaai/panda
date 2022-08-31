@@ -73,6 +73,7 @@ const harness_configuration pedal_harness_config = {
 
 const board board_pedal = {
   .board_type = "Pedal",
+  .board_tick = unused_board_tick,
   .harness_config = &pedal_harness_config,
   .has_gps = false,
   .has_hw_gmlan = false,

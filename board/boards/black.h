@@ -181,6 +181,7 @@ const harness_configuration black_harness_config = {
 
 const board board_black = {
   .board_type = "Black",
+  .board_tick = unused_board_tick,
   .harness_config = &black_harness_config,
   .has_gps = true,
   .has_hw_gmlan = false,
