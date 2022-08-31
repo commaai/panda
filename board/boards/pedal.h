@@ -30,11 +30,6 @@ void pedal_set_led(uint8_t color, bool enabled) {
   }
 }
 
-void pedal_set_usb_power_mode(uint8_t mode){
-  usb_power_mode = mode;
-  puts("Trying to set USB power mode on pedal. This is not supported.\n");
-}
-
 void pedal_set_gps_mode(uint8_t mode) {
   UNUSED(mode);
   puts("Trying to set ESP/GPS mode on pedal. This is not supported.\n");
@@ -89,7 +84,6 @@ const board board_pedal = {
   .enable_can_transceiver = pedal_enable_can_transceiver,
   .enable_can_transceivers = pedal_enable_can_transceivers,
   .set_led = pedal_set_led,
-  .set_usb_power_mode = pedal_set_usb_power_mode,
   .set_gps_mode = pedal_set_gps_mode,
   .set_can_mode = pedal_set_can_mode,
   .check_ignition = pedal_check_ignition,

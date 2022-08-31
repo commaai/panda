@@ -72,5 +72,3 @@ struct board {
 #define CAN_MODE_GMLAN_CAN3 2U
 #define CAN_MODE_OBD_CAN2 3U
 
-// ********************* Globals **********************
-uint8_t usb_power_mode = USB_POWER_NONE;

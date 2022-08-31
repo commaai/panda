@@ -175,7 +175,7 @@ class Panda:
 
   CAN_PACKET_VERSION = 2
   HEALTH_PACKET_VERSION = 8
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHIfB")
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBHBBBHIfB")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
@@ -445,7 +445,6 @@ class Panda:
       "controls_allowed": a[10],
       "gas_interceptor_detected": a[11],
       "car_harness_status": a[12],
-      "usb_power_mode": a[13],
       "safety_mode": a[14],
       "safety_param": a[15],
       "fault_status": a[16],

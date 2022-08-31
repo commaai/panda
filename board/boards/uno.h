@@ -73,25 +73,6 @@ void uno_set_phone_power(bool enabled){
   set_gpio_output(GPIOB, 4, enabled);
 }
 
-void uno_set_usb_power_mode(uint8_t mode) {
-  bool valid = false;
-  switch (mode) {
-    case USB_POWER_CLIENT:
-      valid = true;
-      break;
-    case USB_POWER_CDP:
-      uno_bootkick();
-      valid = true;
-      break;
-    default:
-      puts("Invalid USB power mode\n");
-      break;
-  }
-  if (valid) {
-    usb_power_mode = mode;
-  }
-}
-
 void uno_set_gps_mode(uint8_t mode) {
   switch (mode) {
     case GPS_DISABLED:
@@ -264,7 +245,6 @@ const board board_uno = {
   .enable_can_transceiver = uno_enable_can_transceiver,
   .enable_can_transceivers = uno_enable_can_transceivers,
   .set_led = uno_set_led,
-  .set_usb_power_mode = uno_set_usb_power_mode,
   .set_gps_mode = uno_set_gps_mode,
   .set_can_mode = uno_set_can_mode,
   .check_ignition = uno_check_ignition,

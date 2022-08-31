@@ -46,7 +46,6 @@ const board board_grey = {
   .enable_can_transceiver = white_enable_can_transceiver,
   .enable_can_transceivers = white_enable_can_transceivers,
   .set_led = white_set_led,
-  .set_usb_power_mode = white_set_usb_power_mode,
   .set_gps_mode = grey_set_gps_mode,
   .set_can_mode = white_set_can_mode,
   .check_ignition = white_check_ignition,

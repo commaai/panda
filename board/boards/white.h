@@ -43,7 +43,6 @@ void white_set_led(uint8_t color, bool enabled) {
 }
 
 void white_set_usb_power_mode(uint8_t mode){
-  bool valid_mode = true;
   switch (mode) {
     case USB_POWER_CLIENT:
       // B2,A13: set client mode
@@ -61,13 +60,8 @@ void white_set_usb_power_mode(uint8_t mode){
       set_gpio_output(GPIOA, 13, 0);
       break;
     default:
-      valid_mode = false;
       puts("Invalid usb power mode\n");
       break;
-  }
-
-  if (valid_mode) {
-    usb_power_mode = mode;
   }
 }
 
@@ -254,7 +248,6 @@ const board board_white = {
   .enable_can_transceiver = white_enable_can_transceiver,
   .enable_can_transceivers = white_enable_can_transceivers,
   .set_led = white_set_led,
-  .set_usb_power_mode = white_set_usb_power_mode,
   .set_gps_mode = white_set_gps_mode,
   .set_can_mode = white_set_can_mode,
   .check_ignition = white_check_ignition,

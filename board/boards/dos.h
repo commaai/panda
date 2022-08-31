@@ -53,26 +53,6 @@ void dos_set_bootkick(bool enabled){
   set_gpio_output(GPIOC, 4, !enabled);
 }
 
-void dos_set_usb_power_mode(uint8_t mode) {
-  bool valid = false;
-  switch (mode) {
-    case USB_POWER_CLIENT:
-      dos_set_bootkick(false);
-      valid = true;
-      break;
-    case USB_POWER_CDP:
-      dos_set_bootkick(true);
-      valid = true;
-      break;
-    default:
-      puts("Invalid USB power mode\n");
-      break;
-  }
-  if (valid) {
-    usb_power_mode = mode;
-  }
-}
-
 void dos_set_can_mode(uint8_t mode){
   switch (mode) {
     case CAN_MODE_NORMAL:
@@ -212,7 +192,6 @@ const board board_dos = {
   .enable_can_transceiver = dos_enable_can_transceiver,
   .enable_can_transceivers = dos_enable_can_transceivers,
   .set_led = dos_set_led,
-  .set_usb_power_mode = dos_set_usb_power_mode,
   .set_gps_mode = unused_set_gps_mode,
   .set_can_mode = dos_set_can_mode,
   .check_ignition = dos_check_ignition,
