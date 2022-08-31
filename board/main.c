@@ -165,8 +165,6 @@ void tick_handler(void) {
     if (loop_counter == 0U) {
       can_live = pending_can_live;
 
-      current_board->usb_power_mode_tick(uptime_cnt);
-
       //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
 
       // reset this every 16th pass
