@@ -380,8 +380,7 @@ int main(void) {
       #ifdef DEBUG_FAULTS
       if(fault_status == FAULT_STATUS_NONE){
       #endif
-        //uint32_t div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4U : 1U);
-        uint32_t div_mode = 1U;
+        const uint32_t div_mode = 1U;
 
         // useful for debugging, fade breaks = panda is overloaded
         for(uint32_t fade = 0U; fade < MAX_LED_FADE; fade += div_mode){
