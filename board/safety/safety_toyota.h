@@ -98,7 +98,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
 
     if (addr == 0xaa) {
       // check that all wheel speeds are at zero value with offset
-      bool standstill = (GET_BYTES_04(to_push) == 0x6f1a6f1a) && (GET_BYTES_48(to_push) == 0x6f1a6f1a);
+      bool standstill = (GET_BYTES_04(to_push) == 0x6F1A6F1AU) && (GET_BYTES_48(to_push) == 0x6F1A6F1AU);
       vehicle_moving = !standstill;
     }
 
