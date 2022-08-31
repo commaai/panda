@@ -82,16 +82,16 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     tx = 0;
   }
 
-  // Cruise button check, only allow cancel button to be sent
-  if (addr == MSG_STEERING_DATA_FD1) {
-    // Violation if any button other than cancel is pressed
-    // Signal: CcAslButtnCnclPress
-    bool violation = (GET_BYTE(to_send, 0) |
-                      (GET_BYTE(to_send, 1) & 0xFEU) |
-                      GET_BYTE(to_send, 2) |
-                      GET_BYTE(to_send, 3) |
-                      GET_BYTE(to_send, 4) |
-                      GET_BYTE(to_send, 5)) != 0U;
+  // Safety check for Steering_Data_FD1 button signals
+  // Note: Many other signals in this message are not relevant to safety (e.g. blinkers, wiper switches, high beam)
+  // which we passthru in OP.
+  if ((addr == MSG_STEERING_DATA_FD1) && !controls_allowed) {
+    // Violation if resume button is pressed while controls not allowed, or
+    // if cancel button is pressed when cruise isn't engaged.
+    bool violation = false;
+    violation |= (GET_BIT(to_send, 8U) == 1U) && !cruise_engaged_prev;   // Signal: CcAslButtnCnclPress (cancel)
+    violation |= (GET_BIT(to_send, 25U) == 1U) && !controls_allowed;     // Signal: CcAsllButtnResPress (resume)
+
     if (violation) {
       tx = 0;
     }

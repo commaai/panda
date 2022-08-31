@@ -16,6 +16,11 @@ MSG_LATERAL_MOTION_CONTROL = 0x3D3    # TX by OP, Lane Centering Assist
 MSG_IPMA_DATA = 0x3D8                 # TX by OP, IPMA HUD user interface
 
 
+class Buttons:
+  CANCEL = 0
+  RESUME = 1
+
+
 class TestFordSafety(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_IPMA_DATA
@@ -78,11 +83,10 @@ class TestFordSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("LateralMotionControl", 0, values)
 
   # Cruise control buttons
-  def _acc_button_msg(self, cancel=0, resume=0, _set=0):
+  def _acc_button_msg(self, button: int):
     values = {
-      "CcAslButtnCnclPress": cancel,
-      "CcAsllButtnResPress": resume,
-      "CcAslButtnSetPress": _set,
+      "CcAslButtnCnclPress": 1 if button == Buttons.CANCEL else 0,
+      "CcAsllButtnResPress": 1 if button == Buttons.RESUME else 0,
     }
     return self.packer.make_can_msg_panda("Steering_Data_FD1", 0, values)
 
@@ -102,12 +106,14 @@ class TestFordSafety(common.PandaSafetyTest):
     self.safety.set_controls_allowed(0)
     self.assertFalse(self._tx(self._lkas_command_msg(1)))
 
-  def test_spam_cancel_safety_check(self):
+  def test_cancel_resume_buttons(self):
     for allowed in (0, 1):
       self.safety.set_controls_allowed(allowed)
-      self.assertTrue(self._tx(self._acc_button_msg(cancel=1)))
-      self.assertFalse(self._tx(self._acc_button_msg(resume=1)))
-      self.assertFalse(self._tx(self._acc_button_msg(_set=1)))
+      self.assertEqual(allowed, self._tx(self._acc_button_msg(Buttons.RESUME)))
+
+    for enabled in (True, False):
+      self._rx(self._pcm_status_msg(enabled))
+      self.assertEqual(enabled, self._tx(self._acc_button_msg(Buttons.CANCEL)))
 
 
 if __name__ == "__main__":
