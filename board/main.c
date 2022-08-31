@@ -51,20 +51,6 @@ void debug_ring_callback(uart_ring *ring) {
     if (rcv == 'x') {
       NVIC_SystemReset();
     }
-
-    // enable CDP mode
-    if (rcv == 'C') {
-      puts("switching USB to CDP mode\n");
-      current_board->set_usb_power_mode(USB_POWER_CDP);
-    }
-    if (rcv == 'c') {
-      puts("switching USB to client mode\n");
-      current_board->set_usb_power_mode(USB_POWER_CLIENT);
-    }
-    if (rcv == 'D') {
-      puts("switching USB to DCP mode\n");
-      current_board->set_usb_power_mode(USB_POWER_DCP);
-    }
   }
 }
 
@@ -252,11 +238,6 @@ void tick_handler(void) {
             fan_set_power(0U);
           }
         }
-
-        // enter CDP mode when car starts to ensure we are charging a turned off EON
-        if (check_started() && ((usb_power_mode != USB_POWER_CDP) || !usb_enumerated)) {
-          current_board->set_usb_power_mode(USB_POWER_CDP);
-        }
       }
 
       // check registers
@@ -287,7 +268,6 @@ void EXTI_IRQ_Handler(void) {
     exti_irq_clear();
     clock_init();
 
-    current_board->set_usb_power_mode(USB_POWER_CDP);
     set_power_save_state(POWER_SAVE_STATUS_DISABLED);
     deepsleep_allowed = false;
     heartbeat_counter = 0U;
@@ -428,7 +408,6 @@ int main(void) {
       if (deepsleep_allowed && !usb_enumerated && !check_started() && ignition_seen && (heartbeat_counter > 20U)) {
         usb_soft_disconnect(true);
         fan_set_power(0U);
-        current_board->set_usb_power_mode(USB_POWER_CLIENT);
         NVIC_DisableIRQ(TICK_TIMER_IRQ);
         delay(512000U);
 
