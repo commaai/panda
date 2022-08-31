@@ -48,8 +48,9 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
     return self.packer.make_can_msg_panda("WHEEL_SPEEDS", self.PT_BUS, values)
 
   def _user_brake_msg(self, brake):
-    values = {"BRAKE_PRESSED": brake}
-    return self.packer.make_can_msg_panda("BRAKE", self.PT_BUS, values)
+    pressed_threshold = 10
+    values = {"BRAKE_POSITION": pressed_threshold+1 if brake else pressed_threshold}
+    return self.packer.make_can_msg_panda("ESP_STATUS", self.PT_BUS, values)
 
   def _user_gas_msg(self, gas):
     values = {"ACCELERATOR_PEDAL": gas}
