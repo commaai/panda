@@ -52,7 +52,9 @@ int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_
 // we allow setting STEER_REQUEST bit to 0 while maintaining the request torque value for a single frame
 // every TOYOTA_MIN_VALID_STEERING_FRAMES frames.
 const uint8_t TOYOTA_MIN_VALID_STEERING_FRAMES = 19U;
-uint8_t toyota_valid_steering_frame_count;  // counter for steer request bit matching non-zero torque
+const uint32_t TOYOTA_RT_STEER_MISMATCH = 170000;  // 170ms; a ~10% buffer on the 19 frame threshold
+uint8_t toyota_valid_steering_frame_count = 0;  // counter for steer request bit matching non-zero torque
+uint32_t toyota_ts_last_steer_mismatch = 0;
 
 static uint32_t toyota_compute_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
@@ -245,7 +247,11 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         if (toyota_valid_steering_frame_count < (TOYOTA_MIN_VALID_STEERING_FRAMES - 1U)) {
           violation = 1;
         }
+        if ((ts - toyota_ts_last_steer_mismatch) < TOYOTA_RT_STEER_MISMATCH) {
+          violation = 1;
+        }
         toyota_valid_steering_frame_count = 0U;
+        toyota_ts_last_steer_mismatch = ts;
       }
 
       // no torque if controls is not allowed
@@ -256,6 +262,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       // reset to 0 if either controls is not allowed or there's a violation
       if (violation || !controls_allowed) {
         toyota_valid_steering_frame_count = 0U;
+        toyota_ts_last_steer_mismatch = ts;
         desired_torque_last = 0;
         rt_torque_last = 0;
         ts_last = ts;
