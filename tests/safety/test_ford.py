@@ -19,6 +19,7 @@ MSG_IPMA_Data = 0x3D8             # TX by OP, IPMA and LKAS user interface
 class Buttons:
   CANCEL = 0
   RESUME = 1
+  TJA_TOGGLE = 2
 
 
 class TestFordSafety(common.PandaSafetyTest):
@@ -90,6 +91,7 @@ class TestFordSafety(common.PandaSafetyTest):
     values = {
       "CcAslButtnCnclPress": 1 if button == Buttons.CANCEL else 0,
       "CcAsllButtnResPress": 1 if button == Buttons.RESUME else 0,
+      "TjaButtnOnOffPress": 1 if button == Buttons.TJA_TOGGLE else 0,
     }
     return self.packer.make_can_msg_panda("Steering_Data_FD1", 0, values)
 
@@ -109,7 +111,13 @@ class TestFordSafety(common.PandaSafetyTest):
     self.safety.set_controls_allowed(0)
     self.assertFalse(self._tx(self._lkas_command_msg(1)))
 
-  def test_cancel_resume_buttons(self):
+  def test_acc_buttons(self):
+    for allowed in (0, 1):
+      self.safety.set_controls_allowed(allowed)
+      for enabled in (True, False):
+        self._rx(self._pcm_status_msg(enabled))
+        self.assertTrue(self._tx(self._acc_button_msg(Buttons.TJA_TOGGLE)))
+
     for allowed in (0, 1):
       self.safety.set_controls_allowed(allowed)
       self.assertEqual(allowed, self._tx(self._acc_button_msg(Buttons.RESUME)))
