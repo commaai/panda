@@ -52,6 +52,11 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE)
     self.safety.init_tests()
 
+  def _reset_toyota_timer(self):
+    self.safety.set_timer(0)
+    self.safety.set_controls_allowed(False)
+    self._tx(self._torque_cmd_msg(0, steer_req=0))
+
   def _torque_meas_msg(self, torque):
     values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
@@ -121,11 +126,8 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
 
   def test_steer_req_bit_realtime(self):
     for rt_ms in np.arange(MIN_VALID_STEERING_RT - 50000, MIN_VALID_STEERING_RT + 50000, 10000):
-      # reset timer
       t = 0
-      self.safety.set_timer(t)
-      self.safety.set_controls_allowed(False)
-      self._tx(self._torque_cmd_msg(0, steer_req=0))
+      self._reset_toyota_timer()
 
       self.safety.set_controls_allowed(True)
       self._set_prev_torque(self.MAX_TORQUE)
@@ -137,61 +139,34 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       should_tx = rt_ms >= MIN_VALID_STEERING_RT
       self.assertEqual(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)), should_tx)
 
+  def test_steer_req_bit_torque_cut(self):
+    """
+      On Toyota, we set the STEER_REQUEST bit to 0 every 19 messages while above 100 deg/s
+      to avoid a steering fault and maintain torque. This tests:
+        - We can't cut torque for more than one frame
+        - We can't cut torque until at least MIN_VALID_STEERING_FRAMES frames of matching steer_req messages
+        - We can always recover from violations if steer_req=1, ignoring openpilot issue #24475
+    """
+    for steer_rate_frames in range(MIN_VALID_STEERING_FRAMES * 2):
+      # reset rt timer and match count to allow cut
+      self._reset_toyota_timer()
+      self.safety.set_timer(MIN_VALID_STEERING_RT)
 
-    # steer_msg_freq = 112
-    # rt_buffer = MIN_VALID_STEERING_FRAMES / MIN_VALID_STEERING_RT * 10000
-    # max_steer_send_rate = round(100 * rt_buffer)  # hz
-    # for steer_send_rate in [100]:  # range(50, 200):
-    #   with self.subTest(steer_send_rate=steer_send_rate):
-    #     self.safety.set_controls_allowed(False)
-    #     self._tx(self._torque_cmd_msg(0, steer_req=0))
-    #     self.safety.set_controls_allowed(True)
-    #     self._set_prev_torque(self.MAX_TORQUE)
-    #     # print(self.safety.get_timer())
-    #     t = 0
-    #     self.safety.set_timer(t)
-    #     for _ in range(100):
-    #       t += int(1000000 / steer_send_rate)
-    #       self.safety.set_timer(t)
-    #       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
-    #
-    #     should_tx = steer_send_rate <= max_steer_send_rate
-    #     actual_tx = self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0))
-    #     print(steer_send_rate, self.safety.get_timer(), should_tx, actual_tx)
-    #     self.assertEqual(should_tx, actual_tx)
+      self.safety.set_controls_allowed(True)
+      self._set_prev_torque(self.MAX_TORQUE)
+      for _ in range(steer_rate_frames - 1):
+        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
-    # for _ in range(19):
-    #   t += int(1000000 / steer_msg_freq)
-    #   self.safety.set_timer(t)
-    #   self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
-    #
-    # print(self.safety.get_timer())
-    # self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+      should_tx = steer_rate_frames >= MIN_VALID_STEERING_FRAMES
+      self.assertEqual(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)), should_tx)
 
-  # def test_steer_req_bit_torque_cut(self):
-  #   """
-  #     On Toyota, we set the STEER_REQUEST bit to 0 every 19 messages while above 100 deg/s
-  #     to avoid a steering fault and maintain torque. This tests:
-  #       - We can't cut torque for more than one frame
-  #       - We can't cut torque until at least MIN_VALID_STEERING_FRAMES frames of matching steer_req messages
-  #       - We can always recover from violations if steer_req=1, ignoring openpilot issue #24475
-  #   """
-  #   for steer_rate_frames in range(MIN_VALID_STEERING_FRAMES * 2):
-  #     # reset match counter to allow cut
-  #     self.safety.set_controls_allowed(True)
-  #     self._set_prev_torque(self.MAX_TORQUE)
-  #     for _ in range(MIN_VALID_STEERING_FRAMES - 1):
-  #       self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1))
-  #
-  #     self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))  # toyota_steer_req_matches is now 19
-  #     self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
-  #     self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
-  #     self._set_prev_torque(self.MAX_TORQUE)  # TODO: recover from violation
-  #     for _ in range(steer_rate_frames - 1):
-  #       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
-  #
-  #     should_tx = steer_rate_frames >= MIN_VALID_STEERING_FRAMES
-  #     self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+      # Keep blocking/block after one steer_req mismatch
+      for _ in range(100):
+        self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+      # Make sure we can recover
+      for _ in range(100):
+        self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
 
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
