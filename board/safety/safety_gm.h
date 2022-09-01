@@ -28,6 +28,9 @@ const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715,
 const CanMsg GM_CAM_TX_MSGS[] = {{384, 0, 4},  // pt bus
                                  {481, 2, 7}};  // camera bus
 
+const CanMsg GM_CAM_TX_MSGS_LONG[] = {{384, 0, 4}, {789, 0, 5}, {715, 0, 8}, {880, 0, 6},  // pt bus
+                                      {481, 2, 7}};  // camera bus
+
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 AddrCheckStruct gm_addr_checks[] = {
   {.msg = {{388, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
@@ -40,6 +43,7 @@ AddrCheckStruct gm_addr_checks[] = {
 addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
 
 const uint16_t GM_PARAM_HW_CAM = 1;
+const uint16_t GM_PARAM_HW_CAM_LONG = 2;
 
 enum {
   GM_BTN_UNPRESS = 1,
@@ -49,6 +53,7 @@ enum {
 };
 
 enum {GM_ASCM, GM_CAM} gm_hw = GM_ASCM;
+bool gm_cam_long = false;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
 
@@ -117,7 +122,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     bool stock_ecu_detected = (addr == 384);  // ASCMLKASteeringCmd
 
     // Only check ASCMGasRegenCmd if ASCM, GM_CAM uses stock longitudinal
-    if ((gm_hw == GM_ASCM) && (addr == 715)) {
+    if (((gm_hw == GM_ASCM) || (gm_hw == GM_ASCM) && gm_cam_long) && (addr == 715)) {
       stock_ecu_detected = true;
     }
     generic_rx_checks(stock_ecu_detected);
@@ -137,7 +142,11 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   int addr = GET_ADDR(to_send);
 
   if (gm_hw == GM_CAM) {
-    tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
+    if (gm_cam_long) {
+      tx = msg_allowed(to_send, GM_CAM_TX_MSGS_LONG, sizeof(GM_CAM_TX_MSGS_LONG)/sizeof(GM_CAM_TX_MSGS_LONG[0]));
+    } else {
+      tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
+    }
   } else {
     tx = msg_allowed(to_send, GM_ASCM_TX_MSGS, sizeof(GM_ASCM_TX_MSGS)/sizeof(GM_ASCM_TX_MSGS[0]));
   }
@@ -263,7 +272,9 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
       // block lkas message, forward all others
       int addr = GET_ADDR(to_fwd);
       bool is_lkas_msg = (addr == 384);
-      if (!is_lkas_msg) {
+      bool is_acc_msg = (addr == 789) || (addr == 715) || (addr == 880);
+      int block_msg = is_lkas_msg || (is_acc_msg && gm_cam_long);
+      if (!block_msg) {
         bus_fwd = 0;
       }
     }
@@ -274,6 +285,9 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 static const addr_checks* gm_init(uint16_t param) {
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
+#ifdef ALLOW_DEBUG
+  gm_cam_long = GET_FLAG(param, GM_PARAM_HW_CAM_LONG);
+#endif
   return &gm_rx_checks;
 }
 
