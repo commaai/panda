@@ -143,7 +143,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
         self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
       should_tx = steer_rate_frames >= MIN_VALID_STEERING_FRAMES
-      self.assertEqual(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)), should_tx)
+      self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
       # Keep blocking/block after one steer_req mismatch
       for _ in range(100):
@@ -169,7 +169,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       # Normally sending MIN_VALID_STEERING_FRAMES valid frames should always allow
       self.safety.set_timer(rt_us)
       should_tx = rt_us >= MIN_VALID_STEERING_RT
-      self.assertEqual(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)), should_tx)
+      self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
       # Keep blocking/block after one steer_req mismatch
       for _ in range(100):
