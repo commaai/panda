@@ -124,7 +124,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
             should_tx = np.isclose(accel, 0, atol=0.0001)
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
-  def test_steer_req_bit_torque_cut(self):
+  def test_steer_req_bit_frames(self):
     """
       On Toyota, we set the STEER_REQUEST bit to 0 every 19 messages while above 100 deg/s
       to avoid a steering fault and maintain torque. This tests:
