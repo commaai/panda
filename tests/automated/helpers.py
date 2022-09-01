@@ -58,7 +58,7 @@ test_all_types = parameterized([
     param(panda_type=Panda.HW_TYPE_RED_PANDA)
   ])
 test_all_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[0] != PEDAL_SERIAL, _all_pandas)))  # type: ignore
+    list(map(lambda x: x[0], _all_pandas))  # type: ignore
   )
 test_all_gen2_pandas = parameterized(
     list(map(lambda x: x[0], filter(lambda x: x[1] in GEN2_HW_TYPES, _all_pandas)))  # type: ignore

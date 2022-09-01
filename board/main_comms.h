@@ -25,7 +25,6 @@ int get_health_pkt(void *dat) {
   health->can_fwd_errs_pkt = can_fwd_errs;
   health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = car_harness_status;
-  health->usb_power_mode_pkt = usb_power_mode;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
   health->alternative_experience_pkt = alternative_experience;
@@ -458,10 +457,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xe5:
       can_loopback = (req->param1 > 0U);
       can_init_all();
-      break;
-    // **** 0xe6: set USB power
-    case 0xe6:
-      current_board->set_usb_power_mode(req->param1);
       break;
     // **** 0xe7: set power save state
     case 0xe7:

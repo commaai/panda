@@ -35,6 +35,7 @@ void grey_set_gps_mode(uint8_t mode) {
 
 const board board_grey = {
   .board_type = "Grey",
+  .board_tick = unused_board_tick,
   .harness_config = &white_harness_config,
   .has_gps = true,
   .has_hw_gmlan = true,
@@ -46,10 +47,8 @@ const board board_grey = {
   .enable_can_transceiver = white_enable_can_transceiver,
   .enable_can_transceivers = white_enable_can_transceivers,
   .set_led = white_set_led,
-  .set_usb_power_mode = white_set_usb_power_mode,
   .set_gps_mode = grey_set_gps_mode,
   .set_can_mode = white_set_can_mode,
-  .usb_power_mode_tick = unused_usb_power_mode_tick,
   .check_ignition = white_check_ignition,
   .read_current = white_read_current,
   .set_fan_enabled = unused_set_fan_enabled,
