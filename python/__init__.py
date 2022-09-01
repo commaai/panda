@@ -174,8 +174,8 @@ class Panda:
   HW_TYPE_RED_PANDA = b'\x07'
 
   CAN_PACKET_VERSION = 2
-  HEALTH_PACKET_VERSION = 8
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHIfB")
+  HEALTH_PACKET_VERSION = 9
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBHBBBHIfB")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
@@ -448,16 +448,15 @@ class Panda:
       "controls_allowed": a[10],
       "gas_interceptor_detected": a[11],
       "car_harness_status": a[12],
-      "usb_power_mode": a[13],
-      "safety_mode": a[14],
-      "safety_param": a[15],
-      "fault_status": a[16],
-      "power_save_enabled": a[17],
-      "heartbeat_lost": a[18],
-      "alternative_experience": a[19],
-      "blocked_msg_cnt": a[20],
-      "interrupt_load": a[21],
-      "fan_power": a[22],
+      "safety_mode": a[13],
+      "safety_param": a[14],
+      "fault_status": a[15],
+      "power_save_enabled": a[16],
+      "heartbeat_lost": a[17],
+      "alternative_experience": a[18],
+      "blocked_msg_cnt": a[19],
+      "interrupt_load": a[20],
+      "fan_power": a[21],
     }
 
   # ******************* control *******************
