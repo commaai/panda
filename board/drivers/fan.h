@@ -39,7 +39,7 @@ void fan_tick(void){
         current_board->set_fan_enabled(false);
 
         // clip integral, can't fully reset otherwise we may always be stuck in stall detection
-        fan_state.error_integral = MIN(70.0f, MAX(0.0f, fan_state.error_integral));
+        fan_state.error_integral = MIN(50.0f, MAX(0.0f, fan_state.error_integral));
       }
     } else {
       fan_state.stall_counter = 0U;
