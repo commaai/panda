@@ -55,9 +55,13 @@ void dos_set_bootkick(bool enabled){
 
 void dos_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
   if (ignition && !usb_enum) {
+    // enable bootkick if ignition seen
     dos_set_bootkick(true);
   } else if (heartbeat_seen) {
+    // disable once openpilot is up
     dos_set_bootkick(false);
+  } else {
+
   }
 }
 
