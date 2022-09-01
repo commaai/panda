@@ -12,7 +12,7 @@ typedef void (*board_set_fan_enabled)(bool enabled);
 typedef void (*board_set_phone_power)(bool enabled);
 typedef void (*board_set_clock_source_mode)(uint8_t mode);
 typedef void (*board_set_siren)(bool enabled);
-typedef void (*board_board_tick)(void);
+typedef void (*board_board_tick)(bool ignition, bool usb_enum, bool heartbeat_seen);
 
 struct board {
   const char *board_type;

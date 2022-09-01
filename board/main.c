@@ -146,7 +146,7 @@ void tick_handler(void) {
 
     // tick drivers
     fan_tick();
-    current_board->board_tick();
+    current_board->board_tick(check_started(), usb_enumerated, heartbeat_counter == 0);
 
     // decimated to 1Hz
     if (loop_counter == 0U) {

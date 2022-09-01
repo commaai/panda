@@ -53,13 +53,12 @@ void dos_set_bootkick(bool enabled){
   set_gpio_output(GPIOC, 4, !enabled);
 }
 
-void dos_board_tick(void) {
-  // TODO: bootkick logic here
-
-  // block bootkick on:
-  // - shutdown
-
-  dos_set_bootkick(true);
+void dos_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
+  if (ignition && !usb_enum) {
+    dos_set_bootkick(true);
+  } else if (heartbeat_seen) {
+    dos_set_bootkick(false);
+  }
 }
 
 void dos_set_can_mode(uint8_t mode){
