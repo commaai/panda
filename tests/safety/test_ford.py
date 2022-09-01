@@ -26,7 +26,10 @@ class TestFordSafety(common.PandaSafetyTest):
   RELAY_MALFUNCTION_ADDR = MSG_IPMA_Data
   RELAY_MALFUNCTION_BUS = 0
 
-  TX_MSGS = [[MSG_Steering_Data_FD1, 0], [MSG_ACCDATA_3, 2], [MSG_Lane_Assist_Data1, 0], [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0]]
+  TX_MSGS = [
+    [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
+    [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
+  ]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl, MSG_IPMA_Data]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
