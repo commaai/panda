@@ -12,8 +12,6 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
 const int TOYOTA_MAX_ACCEL = 2000;        // 2.0 m/s2
 const int TOYOTA_MIN_ACCEL = -3500;       // -3.5 m/s2
 
-const int TOYOTA_STANDSTILL_THRSLD = 100;  // 1kph
-
 // panda interceptor threshold needs to be equivalent to openpilot threshold to avoid controls mismatches
 // If thresholds are mismatched then it is possible for panda to see the gas fall and rise while openpilot is in the pre-enabled state
 // Threshold calculated from DBC gains: round((((15 + 75.555) / 0.159375) + ((15 + 151.111) / 0.159375)) / 2) = 805
@@ -98,15 +96,10 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       }
     }
 
-    // sample speed
     if (addr == 0xaa) {
-      int speed = 0;
-      // sum 4 wheel speeds
-      for (uint8_t i=0U; i<8U; i+=2U) {
-        int wheel_speed = (GET_BYTE(to_push, i) << 8U) + GET_BYTE(to_push, (i+1U));
-        speed += wheel_speed - 0x1a6f;
-      }
-      vehicle_moving = ABS(speed / 4) > TOYOTA_STANDSTILL_THRSLD;
+      // check that all wheel speeds are at zero value with offset
+      bool standstill = (GET_BYTES_04(to_push) == 0x6F1A6F1AU) && (GET_BYTES_48(to_push) == 0x6F1A6F1AU);
+      vehicle_moving = !standstill;
     }
 
     // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224

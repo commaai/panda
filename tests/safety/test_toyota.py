@@ -28,7 +28,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
              [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
              [0x2E4, 0], [0x191, 0], [0x411, 0], [0x412, 0], [0x343, 0], [0x1D2, 0],  # LKAS + ACC
              [0x200, 0], [0x750, 0]]  # interceptor + blindspot monitor
-  STANDSTILL_THRESHOLD = 1  # 1kph
+  STANDSTILL_THRESHOLD = 0  # kph
   RELAY_MALFUNCTION_ADDR = 0x2E4
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
