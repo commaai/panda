@@ -221,47 +221,47 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       self.assertFalse(self.safety.get_controls_allowed())
 
 
-# class TestToyotaAltBrakeSafety(TestToyotaSafety):
-#   def setUp(self):
-#     self.packer = CANPackerPanda("toyota_new_mc_pt_generated")
-#     self.safety = libpandasafety_py.libpandasafety
-#     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_ALT_BRAKE)
-#     self.safety.init_tests()
-#
-#   def _user_brake_msg(self, brake):
-#     values = {"BRAKE_PRESSED": brake}
-#     return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
-#
-#   # No LTA on these cars
-#   def test_lta_steer_cmd(self):
-#     pass
-#
-#
-# class TestToyotaStockLongitudinal(TestToyotaSafety):
-#   def setUp(self):
-#     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-#     self.safety = libpandasafety_py.libpandasafety
-#     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
-#     self.safety.init_tests()
-#
-#   def test_accel_actuation_limits(self, stock_longitudinal=True):
-#     super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)
-#
-#   def test_acc_cancel(self):
-#     """
-#       Regardless of controls allowed, never allow ACC_CONTROL if cancel bit isn't set
-#     """
-#     for controls_allowed in [True, False]:
-#       self.safety.set_controls_allowed(controls_allowed)
-#       for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
-#         self.assertFalse(self._tx(self._accel_msg(accel)))
-#         should_tx = np.isclose(accel, 0, atol=0.0001)
-#         self.assertEqual(should_tx, self._tx(self._accel_msg(accel, cancel_req=1)))
-#
-#   def test_fwd_hook(self):
-#     # forward ACC_CONTROL
-#     self.FWD_BLACKLISTED_ADDRS[2].remove(0x343)
-#     super().test_fwd_hook()
+class TestToyotaAltBrakeSafety(TestToyotaSafety):
+  def setUp(self):
+    self.packer = CANPackerPanda("toyota_new_mc_pt_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_ALT_BRAKE)
+    self.safety.init_tests()
+
+  def _user_brake_msg(self, brake):
+    values = {"BRAKE_PRESSED": brake}
+    return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
+
+  # No LTA on these cars
+  def test_lta_steer_cmd(self):
+    pass
+
+
+class TestToyotaStockLongitudinal(TestToyotaSafety):
+  def setUp(self):
+    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
+    self.safety.init_tests()
+
+  def test_accel_actuation_limits(self, stock_longitudinal=True):
+    super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)
+
+  def test_acc_cancel(self):
+    """
+      Regardless of controls allowed, never allow ACC_CONTROL if cancel bit isn't set
+    """
+    for controls_allowed in [True, False]:
+      self.safety.set_controls_allowed(controls_allowed)
+      for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
+        self.assertFalse(self._tx(self._accel_msg(accel)))
+        should_tx = np.isclose(accel, 0, atol=0.0001)
+        self.assertEqual(should_tx, self._tx(self._accel_msg(accel, cancel_req=1)))
+
+  def test_fwd_hook(self):
+    # forward ACC_CONTROL
+    self.FWD_BLACKLISTED_ADDRS[2].remove(0x343)
+    super().test_fwd_hook()
 
 
 if __name__ == "__main__":
