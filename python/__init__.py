@@ -181,6 +181,7 @@ class Panda:
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
   H7_DEVICES = (HW_TYPE_RED_PANDA, )
 
+  INTERNAL_DEVICES = (HW_TYPE_UNO, HW_TYPE_DOS)
   HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA)
 
   CLOCK_SOURCE_MODE_DISABLED = 0
@@ -512,6 +513,9 @@ class Panda:
 
   def has_obd(self):
     return self.get_type() in Panda.HAS_OBD
+
+  def is_internal(self):
+    return self.get_type() in Panda.INTERNAL_DEVICES
 
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)

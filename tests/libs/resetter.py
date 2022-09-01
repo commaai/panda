@@ -42,13 +42,13 @@ class Resetter():
   def enable_boot(self, enabled):
     self._handle.controlWrite((usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE), 0xff, 0, enabled, b'')
 
-  def cycle_power(self, delay=5):
-    self.enable_power(1, False)
-    self.enable_power(2, False)
-    self.enable_power(3, False)
+  def cycle_power(self, delay=5, ports=None):
+    if ports is None:
+      ports = [1,2,3]
+    for port in ports:
+      self.enable_power(port, False)
     time.sleep(1)
-    self.enable_power(1, True)
-    self.enable_power(2, True)
-    self.enable_power(3, True)
+    for port in ports:
+      self.enable_power(port, True)
     if delay > 0:
       time.sleep(delay)
