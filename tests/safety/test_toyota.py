@@ -124,28 +124,13 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
             should_tx = np.isclose(accel, 0, atol=0.0001)
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
-  def test_steer_req_bit_realtime(self):
-    for rt_ms in np.arange(MIN_VALID_STEERING_RT - 50000, MIN_VALID_STEERING_RT + 50000, 10000):
-      t = 0
-      self._reset_toyota_timer()
-
-      self.safety.set_controls_allowed(True)
-      self._set_prev_torque(self.MAX_TORQUE)
-      for _ in range(20):
-        t += int(rt_ms / 20)
-        self.safety.set_timer(t)
-        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
-
-      should_tx = rt_ms >= MIN_VALID_STEERING_RT
-      self.assertEqual(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)), should_tx)
-
   def test_steer_req_bit_torque_cut(self):
     """
       On Toyota, we set the STEER_REQUEST bit to 0 every 19 messages while above 100 deg/s
       to avoid a steering fault and maintain torque. This tests:
         - We can't cut torque for more than one frame
         - We can't cut torque until at least MIN_VALID_STEERING_FRAMES frames of matching steer_req messages
-        - We can always recover from violations if steer_req=1, ignoring openpilot issue #24475
+        - We can always recover from violations if steer_req=1
     """
     for steer_rate_frames in range(MIN_VALID_STEERING_FRAMES * 2):
       # reset rt timer and match count to allow cut
@@ -167,6 +152,28 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       # Make sure we can recover
       for _ in range(100):
         self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
+
+  def test_steer_req_bit_realtime(self):
+    """
+      Tests realtime safety for cutting STEER_REQUEST. This tests:
+        - That we allow messages with mismatching STEER_REQUEST if time from last is >= MIN_VALID_STEERING_RT
+        - That frame mismatch safety does not interfere with this test
+    """
+    for rt_us in np.arange(MIN_VALID_STEERING_RT - 50000, MIN_VALID_STEERING_RT + 50000, 10000):
+      self._reset_toyota_timer()
+      self.safety.set_controls_allowed(True)
+      self._set_prev_torque(self.MAX_TORQUE)
+      for _ in range(MIN_VALID_STEERING_FRAMES):
+        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
+
+      # Normally sending MIN_VALID_STEERING_FRAMES valid frames should always allow
+      self.safety.set_timer(rt_us)
+      should_tx = rt_us >= MIN_VALID_STEERING_RT
+      self.assertEqual(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)), should_tx)
+
+      # Keep blocking/block after one steer_req mismatch
+      for _ in range(100):
+        self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
