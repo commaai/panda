@@ -158,9 +158,9 @@ uint32_t get_timer(void){
   return timer.CNT;
 }
 
-uint32_t get_toyota(void){
-  return toyota_ts_last_steer_mismatch;
-}
+//uint32_t get_toyota(void){
+//  return toyota_ts_last_steer_mismatch;
+//}
 
 void set_torque_meas(int min, int max){
   torque_meas.min = min;

@@ -6,6 +6,11 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
   .max_rt_delta = 450,        // the real time limit is 1800/sec, a 20% buffer
   .max_rt_interval = 250000,
   .type = TorqueMotorLimited,
+
+  // steer request mismatch thresholds
+  .min_valid_request_frames = 19,
+  .min_valid_request_rt = 170000,  // 170ms; a ~10% buffer on the 19 frame threshold
+  .has_steer_req_tolerance = true,
 };
 
 // longitudinal limits
@@ -44,13 +49,13 @@ bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
-// the EPS faults when the steering angle rate is above a certain threshold for too long. to prevent this,
-// we allow setting STEER_REQUEST bit to 0 while maintaining the request torque value for a single frame
-// every TOYOTA_MIN_VALID_STEERING_FRAMES frames.
-const uint8_t TOYOTA_MIN_VALID_STEERING_FRAMES = 19U;
-const uint32_t TOYOTA_RT_STEER_MISMATCH = 170000;  // 170ms; a ~10% buffer on the 19 frame threshold
-uint8_t toyota_valid_steering_frame_count = 0;  // counter for steer request bit matching non-zero torque
-uint32_t toyota_ts_last_steer_mismatch = 0;
+//// the EPS faults when the steering angle rate is above a certain threshold for too long. to prevent this,
+//// we allow setting STEER_REQUEST bit to 0 while maintaining the request torque value for a single frame
+//// every TOYOTA_MIN_VALID_STEERING_FRAMES frames.
+//const uint8_t TOYOTA_MIN_VALID_STEERING_FRAMES = 19U;
+//const uint32_t TOYOTA_RT_STEER_MISMATCH = 170000;  // 170ms; a ~10% buffer on the 19 frame threshold
+//uint8_t toyota_valid_steering_frame_count = 0;  // counter for steer request bit matching non-zero torque
+//uint32_t toyota_ts_last_steer_mismatch = 0;
 
 static uint32_t toyota_compute_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
@@ -209,40 +214,43 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       bool steer_req = GET_BIT(to_send, 0U) != 0U;
 
       // toyota overrides the steer request bit check
-      bool violation = steer_torque_cmd_checks(desired_torque, -1, TOYOTA_STEERING_LIMITS);
-
-      uint32_t ts = microsecond_timer_get();
-
-      // allow setting STEER_REQUEST bit low for a single frame to prevent EPS faults
-      bool steer_req_mismatch = (desired_torque != 0) && !steer_req;
-      if (!steer_req_mismatch) {
-        toyota_valid_steering_frame_count = MIN(toyota_valid_steering_frame_count + 1U, 255U);
-      } else {
-        // disallow torque cut if not enough recent matching steer_req messages
-        if (toyota_valid_steering_frame_count < (TOYOTA_MIN_VALID_STEERING_FRAMES - 1U)) {
-          violation = 1;
-        }
-        // or we've cut torque too recently in time
-        if ((ts - toyota_ts_last_steer_mismatch) < TOYOTA_RT_STEER_MISMATCH) {
-          violation = 1;
-        }
-
-        toyota_valid_steering_frame_count = 0U;
-        toyota_ts_last_steer_mismatch = ts;
-      }
-
-      // reset to 0 if either controls is not allowed or there's a violation
-      if (violation || !controls_allowed) {
-        toyota_valid_steering_frame_count = 0U;
-        toyota_ts_last_steer_mismatch = ts;
-        desired_torque_last = 0;
-        rt_torque_last = 0;
-        ts_last = ts;
-      }
-
+      bool violation = steer_torque_cmd_checks(desired_torque, steer_req, TOYOTA_STEERING_LIMITS);
       if (violation) {
         tx = 0;
       }
+//
+//      uint32_t ts = microsecond_timer_get();
+//
+//      // allow setting STEER_REQUEST bit low for a single frame to prevent EPS faults
+//      bool steer_req_mismatch = (desired_torque != 0) && !steer_req;
+//      if (!steer_req_mismatch) {
+//        toyota_valid_steering_frame_count = MIN(toyota_valid_steering_frame_count + 1U, 255U);
+//      } else {
+//        // disallow torque cut if not enough recent matching steer_req messages
+//        if (toyota_valid_steering_frame_count < (TOYOTA_MIN_VALID_STEERING_FRAMES - 1U)) {
+//          violation = 1;
+//        }
+//        // or we've cut torque too recently in time
+//        if ((ts - toyota_ts_last_steer_mismatch) < TOYOTA_RT_STEER_MISMATCH) {
+//          violation = 1;
+//        }
+//
+//        toyota_valid_steering_frame_count = 0U;
+//        toyota_ts_last_steer_mismatch = ts;
+//      }
+//
+//      // reset to 0 if either controls is not allowed or there's a violation
+//      if (violation || !controls_allowed) {
+//        toyota_valid_steering_frame_count = 0U;
+//        toyota_ts_last_steer_mismatch = ts;
+//        desired_torque_last = 0;
+//        rt_torque_last = 0;
+//        ts_last = ts;
+//      }
+//
+//      if (violation) {
+//        tx = 0;
+//      }
     }
   }
 
@@ -251,8 +259,8 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
 static const addr_checks* toyota_init(uint16_t param) {
   gas_interceptor_detected = 0;
-  toyota_valid_steering_frame_count = 0U;
-  toyota_ts_last_steer_mismatch = 0U;
+//  toyota_valid_steering_frame_count = 0U;
+//  toyota_ts_last_steer_mismatch = 0U;
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;

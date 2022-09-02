@@ -318,7 +318,8 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   rt_torque_last = 0;
   ts_angle_last = 0;
   desired_angle_last = 0;
-  ts_last = 0;
+  ts_last_torque_check = 0;
+  ts_last_steer_req_mismatch = 0;
 
   torque_meas.max = 0;
   torque_meas.max = 0;
@@ -492,10 +493,10 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
     violation |= rt_rate_limit_check(desired_torque, rt_torque_last, limits.max_rt_delta);
 
     // every RT_INTERVAL set the new limits
-    uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
+    uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last_torque_check);
     if (ts_elapsed > limits.max_rt_interval) {
       rt_torque_last = desired_torque;
-      ts_last = ts;
+      ts_last_torque_check = ts;
     }
   }
 
@@ -504,16 +505,40 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
     violation = true;
   }
 
-  // no torque if request bit isn't high
-  if ((steer_req == 0) && (desired_torque != 0)) {
-    violation = true;
+  bool steer_req_mismatch = (steer_req == 0) && (desired_torque != 0);
+
+  if (limits.has_steer_req_tolerance) {
+
+    if (!steer_req_mismatch) {
+      valid_steering_msg_count = MIN(valid_steering_msg_count + 1, 255);
+    } else {
+      // disallow torque cut if not enough recent matching steer_req messages
+      if (valid_steering_msg_count < (limits.min_valid_request_frames - 1)) {
+        violation = 1;
+      }
+      // or we've cut torque too recently in time
+      if ((ts - ts_last_steer_req_mismatch) < limits.min_valid_request_rt) {
+        violation = 1;
+      }
+
+      valid_steering_msg_count = 0U;
+      ts_last_steer_req_mismatch = ts;
+    }
+
+  } else {
+    // no torque if request bit isn't high
+    if (steer_req_mismatch) {
+      violation = true;
+    }
   }
 
   // reset to 0 if either controls is not allowed or there's a violation
   if (violation || !controls_allowed) {
+    valid_steering_msg_count = 0;
     desired_torque_last = 0;
     rt_torque_last = 0;
-    ts_last = ts;
+    ts_last_torque_check = ts;
+    ts_last_steer_req_mismatch = ts;
   }
 
   return violation;
