@@ -48,7 +48,7 @@ class TestPedal(unittest.TestCase):
     self._flash_over_can(PEDAL_BUS, f"{BASEDIR}board/obj/pedal_usb.bin.signed")
     time.sleep(2)
     p = Panda(PEDAL_SERIAL)
-    self.assertTrue(p.is_pedal())
+    self.assertTrue(p.get_type() == Panda.HW_TYPE_PEDAL)
     p.close()
     self.assertTrue(self._listen_can_frames() > 40)
 

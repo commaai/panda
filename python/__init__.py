@@ -174,12 +174,15 @@ class Panda:
   HW_TYPE_RED_PANDA = b'\x07'
 
   CAN_PACKET_VERSION = 2
-  HEALTH_PACKET_VERSION = 8
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHIfB")
+  HEALTH_PACKET_VERSION = 9
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBHBBBHIfB")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
   H7_DEVICES = (HW_TYPE_RED_PANDA, )
+
+  INTERNAL_DEVICES = (HW_TYPE_UNO, HW_TYPE_DOS)
+  HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA)
 
   CLOCK_SOURCE_MODE_DISABLED = 0
   CLOCK_SOURCE_MODE_FREE_RUNNING = 1
@@ -445,16 +448,15 @@ class Panda:
       "controls_allowed": a[10],
       "gas_interceptor_detected": a[11],
       "car_harness_status": a[12],
-      "usb_power_mode": a[13],
-      "safety_mode": a[14],
-      "safety_param": a[15],
-      "fault_status": a[16],
-      "power_save_enabled": a[17],
-      "heartbeat_lost": a[18],
-      "alternative_experience": a[19],
-      "blocked_msg_cnt": a[20],
-      "interrupt_load": a[21],
-      "fan_power": a[22],
+      "safety_mode": a[13],
+      "safety_param": a[14],
+      "fault_status": a[15],
+      "power_save_enabled": a[16],
+      "heartbeat_lost": a[17],
+      "alternative_experience": a[18],
+      "blocked_msg_cnt": a[19],
+      "interrupt_load": a[20],
+      "fan_power": a[21],
     }
 
   # ******************* control *******************
@@ -498,27 +500,6 @@ class Panda:
     else:
       return (0, 0)
 
-  def is_white(self):
-    return self.get_type() == Panda.HW_TYPE_WHITE_PANDA
-
-  def is_grey(self):
-    return self.get_type() == Panda.HW_TYPE_GREY_PANDA
-
-  def is_black(self):
-    return self.get_type() == Panda.HW_TYPE_BLACK_PANDA
-
-  def is_pedal(self):
-    return self.get_type() == Panda.HW_TYPE_PEDAL
-
-  def is_uno(self):
-    return self.get_type() == Panda.HW_TYPE_UNO
-
-  def is_dos(self):
-    return self.get_type() == Panda.HW_TYPE_DOS
-
-  def is_red(self):
-    return self.get_type() == Panda.HW_TYPE_RED_PANDA
-
   def get_mcu_type(self):
     hw_type = self.get_type()
     if hw_type in Panda.F2_DEVICES:
@@ -530,13 +511,10 @@ class Panda:
     return None
 
   def has_obd(self):
-    return (self.is_uno() or self.is_dos() or self.is_black() or self.is_red())
+    return self.get_type() in Panda.HAS_OBD
 
-  def has_canfd(self) -> bool:
-    return self.get_type() in Panda.H7_DEVICES
-
-  def is_internal(self) -> bool:
-    return self.get_type() in (Panda.HW_TYPE_UNO, Panda.HW_TYPE_DOS)
+  def is_internal(self):
+    return self.get_type() in Panda.INTERNAL_DEVICES
 
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)

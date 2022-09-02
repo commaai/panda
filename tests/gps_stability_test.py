@@ -30,10 +30,10 @@ def connect():
   gps_panda = None
 
   # find out which one is white (for spamming the CAN buses)
-  if pandas[0].is_white() and not pandas[1].is_white():
+  if pandas[0].get_type() == Panda.HW_TYPE_WHITE_PANDA and pandas[1].get_type() != Panda.HW_TYPE_WHITE_PANDA:
     white_panda = pandas[0]
     gps_panda = pandas[1]
-  elif not pandas[0].is_white() and pandas[1].is_white():
+  elif pandas[0].get_type() != Panda.HW_TYPE_WHITE_PANDA and pandas[1].get_type() == Panda.HW_TYPE_WHITE_PANDA:
     white_panda = pandas[1]
     gps_panda = pandas[0]
   else:
