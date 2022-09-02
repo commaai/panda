@@ -150,8 +150,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
         self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
       # Make sure we can recover
-      for _ in range(100):
-        self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
+      self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
 
   def test_steer_req_bit_realtime(self):
     """
@@ -174,6 +173,9 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       # Keep blocking/block after one steer_req mismatch
       for _ in range(100):
         self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+      # Make sure we can recover
+      self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
 
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
