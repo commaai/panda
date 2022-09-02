@@ -53,10 +53,6 @@ typedef struct {
   const bool has_steer_req_tolerance;
 } SteeringLimits;
 
-struct X {
-  bool b;
-} X_default = {true};
-
 typedef struct {
   const int addr;
   const int bus;
@@ -88,7 +84,7 @@ typedef struct {
 int safety_rx_hook(CANPacket_t *to_push);
 int safety_tx_hook(CANPacket_t *to_send);
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last_torque_limit);
+uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last_torque_check);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
 bool max_limit_check(int val, const int MAX, const int MIN);
