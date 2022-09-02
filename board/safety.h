@@ -508,6 +508,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
   bool steer_req_mismatch = (steer_req == 0) && (desired_torque != 0);
 
   if (steer_req_mismatch) {
+    // no torque if request bit isn't high
     if (!limits.has_steer_req_tolerance) {
       violation = true;
 
