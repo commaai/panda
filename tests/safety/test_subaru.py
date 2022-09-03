@@ -62,6 +62,28 @@ class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     values = {"Cruise_Activated": enable}
     return self.packer.make_can_msg_panda("CruiseControl", self.ALT_BUS, values)
 
+  def _button_msg(self, cancel_button=0, set_button=0, resume_button=0):
+    values = {"Cruise_Cancel": cancel_button, "Cruise_Set": set_button, "Cruise_Resume": resume_button}
+    return self.packer.make_can_msg_panda("ES_Distance", self.ALT_BUS, values)
+
+  def test_button_sends(self):
+    """
+      Only RES and CANCEL buttons are allowed
+      - RES allowed while controls allowed
+      - CANCEL allowed while cruise is enabled
+    """
+    self.safety.set_controls_allowed(0)
+    self.assertFalse(self._tx(self._button_msg(resume_button=True)))
+    self.assertFalse(self._tx(self._button_msg(set_button=True)))
+
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self._tx(self._button_msg(resume_button=True)))
+    self.assertFalse(self._tx(self._button_msg(set_button=True)))
+
+    for enabled in (True, False):
+      self._rx(self._pcm_status_msg(enabled))
+      self.assertEqual(enabled, self._tx(self._button_msg(cancel_button=True)))
+
 
 class TestSubaruGen2Safety(TestSubaruSafety):
   TX_MSGS = [[0x122, 0], [0x221, 1], [0x321, 0], [0x322, 0]]

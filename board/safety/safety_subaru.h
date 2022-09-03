@@ -145,8 +145,20 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
       tx = 0;
     }
-
   }
+
+  // button safety, used for resume spamming and cruise cancellation
+  if (addr == 0x221) {
+    bool cancel_button = GET_BIT(to_send, 56U) != 0U;
+    bool resume_button = GET_BIT(to_send, 58U) != 0U;
+
+    bool allowed_resume = resume_button && controls_allowed;
+    bool allowed_cancel = cancel_button && cruise_engaged_prev;
+    if (!(allowed_resume || allowed_cancel)) {
+      tx = 0;
+    }
+  }
+
   return tx;
 }
 
