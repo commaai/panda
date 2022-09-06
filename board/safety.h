@@ -506,17 +506,15 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
     violation = true;
   }
 
+  // certain safety modes set their steer request bit low for one frame at a
+  // predefined max frequency to avoid steering faults in certain situations
   bool steer_req_mismatch = (steer_req == 0) && (desired_torque != 0);
-
   if (steer_req_mismatch) {
     // no torque if request bit isn't high
     if (!limits.has_steer_req_tolerance) {
       violation = true;
 
-    // certain safety modes set their steer request bit low for one frame at a
-    // predefined max frequency to avoid steering faults in certain situations
     } else {
-
       // disallow torque cut if not enough recent matching steer_req messages
       if (valid_steer_req_count < (limits.min_valid_request_frames - 1)) {
         violation = true;
