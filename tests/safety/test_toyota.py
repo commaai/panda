@@ -129,7 +129,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       On Toyota, we set the STEER_REQUEST bit to 0 every 19 messages while above 100 deg/s
       to avoid a steering fault and maintain torque. This tests:
         - We can't cut torque for more than one frame
-        - We can't cut torque until at least 19 frames of matching steer_req messages
+        - We can't cut torque until at least the minimum number of matching steer_req messages
         - We can always recover from violations if steer_req=1
     """
     for steer_rate_frames in range(MIN_VALID_STEERING_FRAMES * 2):
@@ -145,12 +145,14 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       should_tx = steer_rate_frames >= MIN_VALID_STEERING_FRAMES
       self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
-      # Keep blocking/block after one steer_req mismatch
+      # Keep blocking after one steer_req mismatch
       for _ in range(100):
         self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
       # Make sure we can recover
       self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
+      self._set_prev_torque(self.MAX_TORQUE)
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
   def test_steer_req_bit_realtime(self):
     """
@@ -170,12 +172,14 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       should_tx = rt_us >= MIN_VALID_STEERING_RT_INTERVAL
       self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
-      # Keep blocking/block after one steer_req mismatch
+      # Keep blocking after one steer_req mismatch
       for _ in range(100):
         self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
       # Make sure we can recover
       self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
+      self._set_prev_torque(self.MAX_TORQUE)
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):

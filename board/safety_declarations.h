@@ -148,11 +148,11 @@ int cruise_button_prev = 0;
 // for safety modes with torque steering control
 int desired_torque_last = 0;       // last desired steer torque
 int rt_torque_last = 0;            // last desired torque for real time check
-int valid_steering_msg_count = 0;  // counter for steer request bit matching non-zero torque
+int valid_steer_req_count = 0;     // counter for steer request bit matching non-zero torque
 struct sample_t torque_meas;       // last 6 motor torques produced by the eps
 struct sample_t torque_driver;     // last 6 driver torques measured
 uint32_t ts_torque_check_last = 0;
-uint32_t ts_steer_req_mismatch_last = 0;
+uint32_t ts_steer_req_mismatch_last = 0;  // last timestamp steer req was mismatched with torque
 
 // state for controls_allowed timeout logic
 bool heartbeat_engaged = false;             // openpilot enabled, passed in heartbeat USB command
