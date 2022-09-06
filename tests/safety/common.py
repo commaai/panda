@@ -177,7 +177,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
 
     for steer_rate_frames in range(self.MIN_VALID_STEERING_FRAMES * 2):
       # Reset match count and rt timer to allow cut (valid_steer_req_count, ts_steer_req_mismatch_last)
-      self.setUp()
+      self.safety.init_tests()
       self.safety.set_timer(self.MIN_VALID_STEERING_RT_INTERVAL)
 
       self.safety.set_controls_allowed(True)
@@ -208,7 +208,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
 
     for rt_us in np.arange(self.MIN_VALID_STEERING_RT_INTERVAL - 50000, self.MIN_VALID_STEERING_RT_INTERVAL + 50000, 10000):
       # Reset match count and rt timer (valid_steer_req_count, ts_steer_req_mismatch_last)
-      self.setUp()
+      self.safety.init_tests()
 
       # Make sure valid_steer_req_count doesn't affect this test
       self.safety.set_controls_allowed(True)
