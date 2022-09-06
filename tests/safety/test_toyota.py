@@ -52,11 +52,6 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE)
     self.safety.init_tests()
 
-  def _reset_toyota_timer(self):
-    self.safety.set_timer(0)
-    self.safety.set_controls_allowed(False)
-    self._tx(self._torque_cmd_msg(0, steer_req=0))
-
   def _torque_meas_msg(self, torque):
     values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
@@ -133,8 +128,8 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
         - We can always recover from violations if steer_req=1
     """
     for steer_rate_frames in range(MIN_VALID_STEERING_FRAMES * 2):
-      # reset rt timer and match count to allow cut
-      self._reset_toyota_timer()
+      # Reset match count and rt timer to allow cut (valid_steer_req_count, ts_steer_req_mismatch_last)
+      self.setUp()
       self.safety.set_timer(MIN_VALID_STEERING_RT_INTERVAL)
 
       self.safety.set_controls_allowed(True)
@@ -156,18 +151,21 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
 
   def test_steer_req_bit_realtime(self):
     """
-      Tests realtime safety for cutting STEER_REQUEST. This tests:
-        - That we allow messages with mismatching STEER_REQUEST if time from last is >= MIN_VALID_STEERING_RT_INTERVAL
+      Realtime safety for cutting steer request bit. This tests:
+        - That we allow messages with mismatching steer request bit if time from last is >= MIN_VALID_STEERING_RT_INTERVAL
         - That frame mismatch safety does not interfere with this test
     """
     for rt_us in np.arange(MIN_VALID_STEERING_RT_INTERVAL - 50000, MIN_VALID_STEERING_RT_INTERVAL + 50000, 10000):
-      self._reset_toyota_timer()
+      # Reset match count and rt timer (valid_steer_req_count, ts_steer_req_mismatch_last)
+      self.setUp()
+
+      # Make sure valid_steer_req_count doesn't affect this test
       self.safety.set_controls_allowed(True)
       self._set_prev_torque(self.MAX_TORQUE)
       for _ in range(MIN_VALID_STEERING_FRAMES):
         self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
-      # Normally sending MIN_VALID_STEERING_FRAMES valid frames should always allow
+      # Normally, sending MIN_VALID_STEERING_FRAMES valid frames should always allow
       self.safety.set_timer(rt_us)
       should_tx = rt_us >= MIN_VALID_STEERING_RT_INTERVAL
       self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
