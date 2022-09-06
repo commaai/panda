@@ -318,8 +318,8 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   rt_torque_last = 0;
   ts_angle_last = 0;
   desired_angle_last = 0;
-  ts_last_torque_check = 0;
-  ts_last_steer_req_mismatch = 0;
+  ts_torque_check_last = 0;
+  ts_steer_req_mismatch_last = 0;
 
   torque_meas.max = 0;
   torque_meas.max = 0;
@@ -493,10 +493,10 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
     violation |= rt_rate_limit_check(desired_torque, rt_torque_last, limits.max_rt_delta);
 
     // every RT_INTERVAL set the new limits
-    uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last_torque_check);
+    uint32_t ts_elapsed = get_ts_elapsed(ts, ts_torque_check_last);
     if (ts_elapsed > limits.max_rt_interval) {
       rt_torque_last = desired_torque;
-      ts_last_torque_check = ts;
+      ts_torque_check_last = ts;
     }
   }
 
@@ -522,13 +522,13 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
       }
 
       // or we've cut torque too recently in time
-      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last_steer_req_mismatch);
-      if (ts_elapsed < limits.min_valid_request_rt) {
+      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_steer_req_mismatch_last);
+      if (ts_elapsed < limits.min_valid_request_rt_interval) {
         violation = true;
       }
 
       valid_steering_msg_count = 0;
-      ts_last_steer_req_mismatch = ts;
+      ts_steer_req_mismatch_last = ts;
     }
   } else {
     valid_steering_msg_count = MIN(valid_steering_msg_count + 1, limits.min_valid_request_frames);
@@ -539,8 +539,8 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
     valid_steering_msg_count = 0;
     desired_torque_last = 0;
     rt_torque_last = 0;
-    ts_last_torque_check = ts;
-    ts_last_steer_req_mismatch = ts;
+    ts_torque_check_last = ts;
+    ts_steer_req_mismatch_last = ts;
   }
 
   return violation;

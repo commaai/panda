@@ -49,7 +49,7 @@ typedef struct {
 
   // safety around steer req bit
   const int min_valid_request_frames;
-  const uint32_t min_valid_request_rt;
+  const uint32_t min_valid_request_rt_interval;
   const bool has_steer_req_tolerance;
 } SteeringLimits;
 
@@ -84,7 +84,7 @@ typedef struct {
 int safety_rx_hook(CANPacket_t *to_push);
 int safety_tx_hook(CANPacket_t *to_send);
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last_torque_check);
+uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
 bool max_limit_check(int val, const int MAX, const int MIN);
@@ -151,8 +151,8 @@ int rt_torque_last = 0;            // last desired torque for real time check
 int valid_steering_msg_count = 0;  // counter for steer request bit matching non-zero torque
 struct sample_t torque_meas;       // last 6 motor torques produced by the eps
 struct sample_t torque_driver;     // last 6 driver torques measured
-uint32_t ts_last_torque_check = 0;
-uint32_t ts_last_steer_req_mismatch = 0;
+uint32_t ts_torque_check_last = 0;
+uint32_t ts_steer_req_mismatch_last = 0;
 
 // state for controls_allowed timeout logic
 bool heartbeat_engaged = false;             // openpilot enabled, passed in heartbeat USB command

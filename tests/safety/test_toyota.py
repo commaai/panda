@@ -11,7 +11,7 @@ from panda.tests.safety.common import CANPackerPanda, make_msg, ALTERNATIVE_EXPE
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
 MIN_VALID_STEERING_FRAMES = 19
-MIN_VALID_STEERING_RT = 170000  # a ~10% buffer, can send steer up to 110hz
+MIN_VALID_STEERING_RT_INTERVAL = 170000  # a ~10% buffer, can send steer up to 110hz
 
 
 def interceptor_msg(gas, addr):
@@ -135,7 +135,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
     for steer_rate_frames in range(MIN_VALID_STEERING_FRAMES * 2):
       # reset rt timer and match count to allow cut
       self._reset_toyota_timer()
-      self.safety.set_timer(MIN_VALID_STEERING_RT)
+      self.safety.set_timer(MIN_VALID_STEERING_RT_INTERVAL)
 
       self.safety.set_controls_allowed(True)
       self._set_prev_torque(self.MAX_TORQUE)
@@ -155,10 +155,10 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   def test_steer_req_bit_realtime(self):
     """
       Tests realtime safety for cutting STEER_REQUEST. This tests:
-        - That we allow messages with mismatching STEER_REQUEST if time from last is >= MIN_VALID_STEERING_RT
+        - That we allow messages with mismatching STEER_REQUEST if time from last is >= MIN_VALID_STEERING_RT_INTERVAL
         - That frame mismatch safety does not interfere with this test
     """
-    for rt_us in np.arange(MIN_VALID_STEERING_RT - 50000, MIN_VALID_STEERING_RT + 50000, 10000):
+    for rt_us in np.arange(MIN_VALID_STEERING_RT_INTERVAL - 50000, MIN_VALID_STEERING_RT_INTERVAL + 50000, 10000):
       self._reset_toyota_timer()
       self.safety.set_controls_allowed(True)
       self._set_prev_torque(self.MAX_TORQUE)
@@ -167,7 +167,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
 
       # Normally sending MIN_VALID_STEERING_FRAMES valid frames should always allow
       self.safety.set_timer(rt_us)
-      should_tx = rt_us >= MIN_VALID_STEERING_RT
+      should_tx = rt_us >= MIN_VALID_STEERING_RT_INTERVAL
       self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
       # Keep blocking/block after one steer_req mismatch
