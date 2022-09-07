@@ -11,7 +11,7 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
   // we allow setting STEER_REQUEST bit to 0 while maintaining the request torque value for a single frame
   // every min_valid_request_frames frames.
   .min_valid_request_frames = 18,
-  .min_valid_request_rt_interval = 160000,  // 160ms; a ~10% buffer on the 18 frame threshold
+  .min_valid_request_rt_interval = 170000,  // 170ms; a ~10% buffer on cutting every 19 frames
   .has_steer_req_tolerance = true,
 };
 
