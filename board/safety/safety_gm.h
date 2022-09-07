@@ -189,10 +189,10 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       violation |= rt_rate_limit_check(desired_torque, rt_torque_last, GM_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
+      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_torque_check_last);
       if (ts_elapsed > GM_RT_INTERVAL) {
         rt_torque_last = desired_torque;
-        ts_last = ts;
+        ts_torque_check_last = ts;
       }
     }
 
@@ -205,7 +205,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     if (violation || !current_controls_allowed) {
       desired_torque_last = 0;
       rt_torque_last = 0;
-      ts_last = ts;
+      ts_torque_check_last = ts;
     }
 
     if (violation) {

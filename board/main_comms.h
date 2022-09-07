@@ -25,7 +25,6 @@ int get_health_pkt(void *dat) {
   health->can_fwd_errs_pkt = can_fwd_errs;
   health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = car_harness_status;
-  health->usb_power_mode_pkt = usb_power_mode;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
   health->alternative_experience_pkt = alternative_experience;
@@ -37,6 +36,8 @@ int get_health_pkt(void *dat) {
   health->faults_pkt = faults;
 
   health->interrupt_load = interrupt_load;
+
+  health->fan_power = fan_state.power;
 
   return sizeof(*health);
 }
@@ -229,12 +230,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xb1: set fan power
     case 0xb1:
-      current_board->set_fan_power(req->param1);
+      fan_set_power(req->param1);
       break;
     // **** 0xb2: get fan rpm
     case 0xb2:
-      resp[0] = (fan_rpm & 0x00FFU);
-      resp[1] = ((fan_rpm & 0xFF00U) >> 8U);
+      resp[0] = (fan_state.rpm & 0x00FFU);
+      resp[1] = ((fan_state.rpm & 0xFF00U) >> 8U);
       resp_len = 2;
       break;
     // **** 0xb3: set phone power
@@ -457,10 +458,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       can_loopback = (req->param1 > 0U);
       can_init_all();
       break;
-    // **** 0xe6: set USB power
-    case 0xe6:
-      current_board->set_usb_power_mode(req->param1);
-      break;
     // **** 0xe7: set power save state
     case 0xe7:
       set_power_save_state(req->param1);
@@ -529,12 +526,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xf7:
       green_led_enabled = (req->param1 != 0U);
       break;
-#ifdef ALLOW_DEBUG
     // **** 0xf8: disable heartbeat checks
     case 0xf8:
-      heartbeat_disabled = true;
+      if (!is_car_safety_mode(current_safety_mode)) {
+        heartbeat_disabled = true;
+      }
       break;
-#endif
     // **** 0xde: set CAN FD data bitrate
     case 0xf9:
       if (req->param1 < CAN_CNT) {
