@@ -516,7 +516,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 
     } else {
       // disallow torque cut if not enough recent matching steer_req messages
-      if (valid_steer_req_count < (limits.min_valid_request_frames - 1)) {
+      if (valid_steer_req_count < limits.min_valid_request_frames) {
         violation = true;
       }
 

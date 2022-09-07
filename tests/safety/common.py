@@ -182,7 +182,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
 
       self.safety.set_controls_allowed(True)
       self._set_prev_torque(self.MAX_TORQUE)
-      for _ in range(steer_rate_frames - 1):
+      for _ in range(steer_rate_frames):
         self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
       should_tx = steer_rate_frames >= self.MIN_VALID_STEERING_FRAMES
