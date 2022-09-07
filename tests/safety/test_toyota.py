@@ -41,6 +41,8 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   MAX_RT_DELTA = 450
   RT_INTERVAL = 250000
   MAX_TORQUE_ERROR = 350
+  MIN_VALID_STEERING_FRAMES = 18
+  MIN_VALID_STEERING_RT_INTERVAL = 170000  # a ~10% buffer, can send steer up to 110Hz
   TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conservative for rounding
   EPS_SCALE = 73
 
