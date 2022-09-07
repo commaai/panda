@@ -8,7 +8,7 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
   .type = TorqueMotorLimited,
 
   // the EPS faults when the steering angle rate is above a certain threshold for too long. to prevent this,
-  // we allow setting STEER_REQUEST bit to 0 while maintaining the request torque value for a single frame
+  // we allow setting STEER_REQUEST bit to 0 while maintaining the requested torque value for a single frame
   // every min_valid_request_frames frames.
   .min_valid_request_frames = 18,
   .min_valid_request_rt_interval = 170000,  // 170ms; a ~10% buffer on cutting every 19 frames
