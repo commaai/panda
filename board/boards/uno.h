@@ -74,27 +74,6 @@ void uno_set_phone_power(bool enabled){
   set_gpio_output(GPIOB, 4, enabled);
 }
 
-void uno_set_usb_power_mode(uint8_t mode) {
-  bool valid = false;
-  switch (mode) {
-    case USB_POWER_CLIENT:
-      uno_set_phone_power(false);
-      valid = true;
-      break;
-    case USB_POWER_CDP:
-      uno_set_phone_power(true);
-      uno_bootkick();
-      valid = true;
-      break;
-    default:
-      puts("Invalid USB power mode\n");
-      break;
-  }
-  if (valid) {
-    usb_power_mode = mode;
-  }
-}
-
 void uno_set_gps_mode(uint8_t mode) {
   switch (mode) {
     case GPS_DISABLED:
@@ -148,9 +127,11 @@ void uno_set_can_mode(uint8_t mode){
   }
 }
 
-void uno_usb_power_mode_tick(uint32_t uptime){
-  UNUSED(uptime);
-  if(bootkick_timer != 0U){
+void uno_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
+  UNUSED(ignition);
+  UNUSED(usb_enum);
+  UNUSED(heartbeat_seen);
+  if (bootkick_timer != 0U) {
     bootkick_timer--;
   } else {
     uno_set_bootkick(false);
@@ -265,6 +246,7 @@ const harness_configuration uno_harness_config = {
 
 const board board_uno = {
   .board_type = "Uno",
+  .board_tick = uno_board_tick,
   .harness_config = &uno_harness_config,
   .has_gps = true,
   .has_hw_gmlan = false,
@@ -276,10 +258,8 @@ const board board_uno = {
   .enable_can_transceiver = uno_enable_can_transceiver,
   .enable_can_transceivers = uno_enable_can_transceivers,
   .set_led = uno_set_led,
-  .set_usb_power_mode = uno_set_usb_power_mode,
   .set_gps_mode = uno_set_gps_mode,
   .set_can_mode = uno_set_can_mode,
-  .usb_power_mode_tick = uno_usb_power_mode_tick,
   .check_ignition = uno_check_ignition,
   .read_current = unused_read_current,
   .set_fan_enabled = uno_set_fan_enabled,

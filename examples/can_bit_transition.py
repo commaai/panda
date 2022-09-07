@@ -7,8 +7,8 @@ class Message():
 
   def __init__(self, message_id):
     self.message_id = message_id
-    self.ones = [0] * 8   # bit set if 1 is always seen
-    self.zeros = [0] * 8  # bit set if 0 is always seen
+    self.ones = [0] * 64   # bit set if 1 is always seen
+    self.zeros = [0] * 64  # bit set if 0 is always seen
 
   def printBitDiff(self, other):
     """Prints bits that transition from always zero to always 1 and vice versa."""
