@@ -18,7 +18,7 @@ class Buttons:
   CANCEL = 6
 
 
-class TestGmSafetyBase(common.RegenSafetyTest, common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0
@@ -31,6 +31,8 @@ class TestGmSafetyBase(common.RegenSafetyTest, common.PandaSafetyTest, common.Dr
   RT_INTERVAL = 250000
   DRIVER_TORQUE_ALLOWANCE = 50
   DRIVER_TORQUE_FACTOR = 4
+
+  HAS_REGEN_MSG = True
 
   @classmethod
   def setUpClass(cls):
