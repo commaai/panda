@@ -173,33 +173,28 @@ static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int addr = GET_ADDR(to_fwd);
 
   if (bus_num == 0) {
-    if (subaru_longitudinal) {
-      // 0x13c is Brake_Status
-      // 0x240 is CruiseControl
-      int block_msg = ((addr == 0x13c) || (addr == 0x240));
-      if (!block_msg) {
-        bus_fwd = 2;  // Camera CAN
-      }
-    } else {
+    // Global Platform
+    // 0x13c is Brake_Status
+    // 0x240 is CruiseControl
+    bool block_msg = subaru_longitudinal ? (addr == 0x13c) || (addr == 0x240) : false;
+    if (!block_msg) {
       bus_fwd = 2;  // Camera CAN
     }
   }
+
   if (bus_num == 2) {
-    int block_msg = -1;
-    if (subaru_longitudinal) {
-      // 0x122 is ES_LKAS
-      // 0x220 is ES_Brake
-      // 0x221 is ES_Distance
-      // 0x222 is ES_Status
-      // 0x321 is ES_DashStatus
-      // 0x322 is ES_LKAS_State
-      block_msg = ((addr == 0x122) || (addr == 0x220) ||
-                   (addr == 0x221) || (addr == 0x222) ||
-                   (addr == 0x321) || (addr == 0x322));
-    } else {
-      block_msg = ((addr == 0x122) || (addr == 0x321) ||
-                   (addr == 0x322));
-    }
+    // Global Platform
+    // 0x122 is ES_LKAS
+    // 0x220 is ES_Brake
+    // 0x221 is ES_Distance
+    // 0x222 is ES_Status
+    // 0x321 is ES_DashStatus
+    // 0x322 is ES_LKAS_State
+    bool block_msg = subaru_longitudinal ? (addr == 0x122) || (addr == 0x220) ||
+                                           (addr == 0x221) || (addr == 0x222) ||
+                                           (addr == 0x321) || (addr == 0x322)
+                                         : (addr == 0x122) || (addr == 0x321) ||
+                                           (addr == 0x322);
     if (!block_msg) {
       bus_fwd = 0;  // Main CAN
     }
@@ -231,5 +226,3 @@ const safety_hooks subaru_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = subaru_fwd_hook,
 };
-
-
