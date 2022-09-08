@@ -545,13 +545,17 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._user_gas_msg(0))
     self.assertTrue(self.safety.get_longitudinal_allowed())
 
-  def test_prev_brake(self):
-    self.assertFalse(self.safety.get_brake_pressed_prev())
+  def test_prev_brake(self, user_brake_msg=None, get_brake_pressed_prev=None):
+    if user_brake_msg is None or get_brake_pressed_prev is None:
+      user_brake_msg = self._user_brake_msg
+      get_brake_pressed_prev = self.safety.get_brake_pressed_prev
+
+    self.assertFalse(get_brake_pressed_prev())
     for pressed in [True, False]:
-      self._rx(self._user_brake_msg(not pressed))
-      self.assertEqual(not pressed, self.safety.get_brake_pressed_prev())
-      self._rx(self._user_brake_msg(pressed))
-      self.assertEqual(pressed, self.safety.get_brake_pressed_prev())
+      self._rx(user_brake_msg(not pressed))
+      self.assertEqual(not pressed, get_brake_pressed_prev())
+      self._rx(user_brake_msg(pressed))
+      self.assertEqual(pressed, get_brake_pressed_prev())
 
   def test_enable_control_allowed_from_cruise(self):
     self._rx(self._pcm_status_msg(False))
@@ -571,33 +575,39 @@ class PandaSafetyTest(PandaSafetyTestBase):
       self._rx(self._pcm_status_msg(not engaged))
       self.assertEqual(not engaged, self.safety.get_cruise_engaged_prev())
 
-  def test_allow_brake_at_zero_speed(self):
+  def test_allow_brake_at_zero_speed(self, user_brake_msg=None):
+    if user_brake_msg is None:
+      user_brake_msg = self._user_brake_msg
+
     # Brake was already pressed
     self._rx(self._speed_msg(0))
-    self._rx(self._user_brake_msg(1))
+    self._rx(user_brake_msg(1))
     self.safety.set_controls_allowed(1)
-    self._rx(self._user_brake_msg(1))
+    self._rx(user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
-    self._rx(self._user_brake_msg(0))
+    self._rx(user_brake_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
     # rising edge of brake should disengage
-    self._rx(self._user_brake_msg(1))
+    self._rx(user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
-    self._rx(self._user_brake_msg(0))  # reset no brakes
+    self._rx(user_brake_msg(0))  # reset no brakes
 
-  def test_not_allow_brake_when_moving(self):
+  def test_not_allow_brake_when_moving(self, user_brake_msg=None):
+    if user_brake_msg is None:
+      user_brake_msg = self._user_brake_msg
+
     # Brake was already pressed
-    self._rx(self._user_brake_msg(1))
+    self._rx(user_brake_msg(1))
     self.safety.set_controls_allowed(1)
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
-    self._rx(self._user_brake_msg(1))
+    self._rx(user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
-    self._rx(self._user_brake_msg(1))
+    self._rx(user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
     self._rx(self._speed_msg(0))
@@ -669,17 +679,11 @@ class RegenSafetyTest(PandaSafetyTestBase):
       cls.safety = None
       raise unittest.SkipTest
 
-  def test_prev_regen_brake(self):
-    self._user_brake_msg = self._user_regen_msg
-    get_brake_pressed_prev = self.safety.get_brake_pressed_prev
-    self.safety.__dict__['get_brake_pressed_prev'] = self.safety.get_regen_braking_prev
-    super().test_prev_brake()
-    self.safety.__dict__['get_brake_pressed_prev'] = get_brake_pressed_prev
+  def test_prev_regen(self):
+    super().test_prev_brake(self._user_regen_msg, self.safety.get_regen_braking_prev)
 
-  def test_allow_regen_brake_at_zero_speed(self):
-    self._user_brake_msg = self._user_regen_msg
-    super().test_allow_brake_at_zero_speed()
+  def test_allow_regen_at_zero_speed(self):
+    super().test_allow_brake_at_zero_speed(self._user_regen_msg)
 
-  def test_not_allow_regen_brake_when_moving(self):
-    self._user_brake_msg = self._user_regen_msg
-    super().test_not_allow_brake_when_moving()
+  def test_not_allow_regen_when_moving(self):
+    super().test_not_allow_brake_when_moving(self._user_regen_msg)
