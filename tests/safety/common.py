@@ -439,7 +439,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
   RELAY_MALFUNCTION_BUS: Optional[int] = None
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
-  HAS_REGEN_MSG: bool = False  # whether safety mode implements a user regen paddle message
 
   @classmethod
   def setUpClass(cls):
@@ -546,6 +545,14 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._user_gas_msg(0))
     self.assertTrue(self.safety.get_longitudinal_allowed())
 
+  def test_prev_brake(self):
+    self.assertFalse(self.safety.get_brake_pressed_prev())
+    for pressed in [True, False]:
+      self._rx(self._user_brake_msg(not pressed))
+      self.assertEqual(not pressed, self.safety.get_brake_pressed_prev())
+      self._rx(self._user_brake_msg(pressed))
+      self.assertEqual(pressed, self.safety.get_brake_pressed_prev())
+
   def test_enable_control_allowed_from_cruise(self):
     self._rx(self._pcm_status_msg(False))
     self.assertFalse(self.safety.get_controls_allowed())
@@ -564,72 +571,36 @@ class PandaSafetyTest(PandaSafetyTestBase):
       self._rx(self._pcm_status_msg(not engaged))
       self.assertEqual(not engaged, self.safety.get_cruise_engaged_prev())
 
-  def test_prev_brake(self, user_brake_msg=None, get_brake_pressed_prev=None):
-    if user_brake_msg is None or get_brake_pressed_prev is None:
-      user_brake_msg = self._user_brake_msg
-      get_brake_pressed_prev = self.safety.get_brake_pressed_prev
-
-    self.assertFalse(get_brake_pressed_prev())
-    for pressed in [True, False]:
-      self._rx(user_brake_msg(not pressed))
-      self.assertEqual(not pressed, get_brake_pressed_prev())
-      self._rx(user_brake_msg(pressed))
-      self.assertEqual(pressed, get_brake_pressed_prev())
-
-  def test_allow_brake_at_zero_speed(self, user_brake_msg=None):
-    if user_brake_msg is None:
-      user_brake_msg = self._user_brake_msg
-
+  def test_allow_brake_at_zero_speed(self):
     # Brake was already pressed
     self._rx(self._speed_msg(0))
-    self._rx(user_brake_msg(1))
+    self._rx(self._user_brake_msg(1))
     self.safety.set_controls_allowed(1)
-    self._rx(user_brake_msg(1))
+    self._rx(self._user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
-    self._rx(user_brake_msg(0))
+    self._rx(self._user_brake_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
     # rising edge of brake should disengage
-    self._rx(user_brake_msg(1))
+    self._rx(self._user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
-    self._rx(user_brake_msg(0))  # reset no brakes
+    self._rx(self._user_brake_msg(0))  # reset no brakes
 
-  def test_not_allow_brake_when_moving(self, user_brake_msg=None):
-    if user_brake_msg is None:
-      user_brake_msg = self._user_brake_msg
-
+  def test_not_allow_brake_when_moving(self):
     # Brake was already pressed
-    self._rx(user_brake_msg(1))
+    self._rx(self._user_brake_msg(1))
     self.safety.set_controls_allowed(1)
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
-    self._rx(user_brake_msg(1))
+    self._rx(self._user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
-    self._rx(user_brake_msg(1))
+    self._rx(self._user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
     self._rx(self._speed_msg(0))
-
-  def test_prev_regen(self):
-    if not self.HAS_REGEN_MSG:
-      raise unittest.SkipTest("Safety mode does not implement a user regen message")
-
-    self.test_prev_brake(self._user_regen_msg, self.safety.get_regen_braking_prev)
-
-  def test_allow_regen_at_zero_speed(self):
-    if not self.HAS_REGEN_MSG:
-      raise unittest.SkipTest("Safety mode does not implement a user regen message")
-
-    self.test_allow_brake_at_zero_speed(self._user_regen_msg)
-
-  def test_not_allow_regen_when_moving(self):
-    if not self.HAS_REGEN_MSG:
-      raise unittest.SkipTest("Safety mode does not implement a user regen message")
-
-    self.test_not_allow_brake_when_moving(self._user_regen_msg)
 
   def test_sample_speed(self):
     self.assertFalse(self.safety.get_vehicle_moving())
@@ -687,3 +658,28 @@ class PandaSafetyTest(PandaSafetyTestBase):
         if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
           continue
         self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")
+
+
+class RegenSafetyTest(PandaSafetyTestBase):
+  # pylint: disable=no-member
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "RegenSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  def test_prev_regen_brake(self):
+    self._user_brake_msg = self._user_regen_msg
+    get_brake_pressed_prev = self.safety.get_brake_pressed_prev
+    self.safety.__dict__['get_brake_pressed_prev'] = self.safety.get_regen_braking_prev
+    super().test_prev_brake()
+    self.safety.__dict__['get_brake_pressed_prev'] = get_brake_pressed_prev
+
+  def test_allow_regen_brake_at_zero_speed(self):
+    self._user_brake_msg = self._user_regen_msg
+    super().test_allow_brake_at_zero_speed()
+
+  def test_not_allow_regen_brake_when_moving(self):
+    self._user_brake_msg = self._user_regen_msg
+    super().test_not_allow_brake_when_moving()
