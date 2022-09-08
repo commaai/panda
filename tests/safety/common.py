@@ -123,6 +123,8 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
   MAX_TORQUE = 0
   MAX_RT_DELTA = 0
   RT_INTERVAL = 0
+  MIN_VALID_STEERING_FRAMES = 0
+  MIN_VALID_STEERING_RT_INTERVAL = 0
 
   @classmethod
   def setUpClass(cls):
@@ -161,6 +163,72 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(0)
     self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP - 1)))
+
+  def test_steer_req_bit_frames(self):
+    """
+      Certain safety modes implement some tolerance on their steer request bits matching the
+      requested torque to avoid a steering fault or lockout and maintain torque. This tests:
+        - We can't cut torque for more than one frame
+        - We can't cut torque until at least the minimum number of matching steer_req messages
+        - We can always recover from violations if steer_req=1
+    """
+    if self.MIN_VALID_STEERING_FRAMES == 0:
+      raise unittest.SkipTest("Safety mode does not implement tolerance for steer request bit safety")
+
+    for steer_rate_frames in range(self.MIN_VALID_STEERING_FRAMES * 2):
+      # Reset match count and rt timer to allow cut (valid_steer_req_count, ts_steer_req_mismatch_last)
+      self.safety.init_tests()
+      self.safety.set_timer(self.MIN_VALID_STEERING_RT_INTERVAL)
+
+      self.safety.set_controls_allowed(True)
+      self._set_prev_torque(self.MAX_TORQUE)
+      for _ in range(steer_rate_frames):
+        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
+
+      should_tx = steer_rate_frames >= self.MIN_VALID_STEERING_FRAMES
+      self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+      # Keep blocking after one steer_req mismatch
+      for _ in range(100):
+        self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+      # Make sure we can recover
+      self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
+      self._set_prev_torque(self.MAX_TORQUE)
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
+
+  def test_steer_req_bit_realtime(self):
+    """
+      Realtime safety for cutting steer request bit. This tests:
+        - That we allow messages with mismatching steer request bit if time from last is >= MIN_VALID_STEERING_RT_INTERVAL
+        - That frame mismatch safety does not interfere with this test
+    """
+    if self.MIN_VALID_STEERING_RT_INTERVAL == 0:
+      raise unittest.SkipTest("Safety mode does not implement tolerance for steer request bit safety")
+
+    for rt_us in np.arange(self.MIN_VALID_STEERING_RT_INTERVAL - 50000, self.MIN_VALID_STEERING_RT_INTERVAL + 50000, 10000):
+      # Reset match count and rt timer (valid_steer_req_count, ts_steer_req_mismatch_last)
+      self.safety.init_tests()
+
+      # Make sure valid_steer_req_count doesn't affect this test
+      self.safety.set_controls_allowed(True)
+      self._set_prev_torque(self.MAX_TORQUE)
+      for _ in range(self.MIN_VALID_STEERING_FRAMES):
+        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
+
+      # Normally, sending MIN_VALID_STEERING_FRAMES valid frames should always allow
+      self.safety.set_timer(rt_us)
+      should_tx = rt_us >= self.MIN_VALID_STEERING_RT_INTERVAL
+      self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+      # Keep blocking after one steer_req mismatch
+      for _ in range(100):
+        self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+      # Make sure we can recover
+      self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
+      self._set_prev_torque(self.MAX_TORQUE)
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
 
 class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
