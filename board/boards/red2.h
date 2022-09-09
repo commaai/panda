@@ -84,9 +84,6 @@ void red2_init(void) {
   // Turn on USB load switch.
   red2_set_usb_load_switch(true);
 
-  // Set right power mode
-  red_set_usb_power_mode(USB_POWER_CDP);
-
   // Initialize harness
   harness_init();
 
@@ -137,10 +134,8 @@ const board board_red2 = {
   .enable_can_transceiver = red2_enable_can_transceiver,
   .enable_can_transceivers = red2_enable_can_transceivers,
   .set_led = red_set_led,
-  .set_usb_power_mode = red_set_usb_power_mode,
   .set_gps_mode = unused_set_gps_mode,
   .set_can_mode = red_set_can_mode,
-  .usb_power_mode_tick = unused_usb_power_mode_tick,
   .check_ignition = red_check_ignition,
   .read_current = unused_read_current,
   .set_fan_enabled = unused_set_fan_enabled,
