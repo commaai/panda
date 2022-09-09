@@ -4,7 +4,7 @@
 
 // Most hardware functionality is similar to red panda
 
-void red2_enable_can_transceiver(uint8_t transceiver, bool enabled) {
+void red_v2_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {
     case 1U:
       set_gpio_output(GPIOG, 11, !enabled);
@@ -23,23 +23,23 @@ void red2_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-void red2_enable_can_transceivers(bool enabled) {
+void red_v2_enable_can_transceivers(bool enabled) {
   uint8_t main_bus = (car_harness_status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
   for (uint8_t i=1U; i<=4U; i++) {
     // Leave main CAN always on for CAN-based ignition detection
     if (i == main_bus) {
-      red2_enable_can_transceiver(i, true);
+      red_v2_enable_can_transceiver(i, true);
     } else {
-      red2_enable_can_transceiver(i, enabled);
+      red_v2_enable_can_transceiver(i, enabled);
     }
   }
 }
 
-void red2_set_usb_load_switch(bool enabled) {
+void red_v2_set_usb_load_switch(bool enabled) {
   set_gpio_output(GPIOD, 3, enabled);
 }
 
-void red2_init(void) {
+void red_v2_init(void) {
   common_init_gpio();
 
   //A8, A9 : OBD_SBU1_RELAY, OBD_SBU2_RELAY
@@ -75,7 +75,7 @@ void red2_init(void) {
   set_gpio_mode(GPIOB, 0, MODE_ANALOG);
 
   // Turn on USB load switch.
-  red2_set_usb_load_switch(true);
+  red_v2_set_usb_load_switch(true);
 
   // Initialize harness
   harness_init();
@@ -84,7 +84,7 @@ void red2_init(void) {
   rtc_init();
 
   // Enable CAN transceivers
-  red2_enable_can_transceivers(true);
+  red_v2_enable_can_transceivers(true);
 
   // Disable LEDs
   red_set_led(LED_RED, false);
@@ -100,7 +100,7 @@ void red2_init(void) {
   }
 }
 
-const harness_configuration red2_harness_config = {
+const harness_configuration red_v2_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
@@ -114,18 +114,18 @@ const harness_configuration red2_harness_config = {
   .adc_channel_SBU2 = 17 //ADC1_INP17
 };
 
-const board board_red2 = {
-  .board_type = "Red2",
-  .harness_config = &red2_harness_config,
+const board board_red_v2 = {
+  .board_type = "Red_v2",
+  .harness_config = &red_v2_harness_config,
   .has_gps = false,
   .has_hw_gmlan = false,
   .has_obd = true,
   .has_lin = false,
   .has_rtc_battery = true,
   .fan_max_rpm = 0U,
-  .init = red2_init,
-  .enable_can_transceiver = red2_enable_can_transceiver,
-  .enable_can_transceivers = red2_enable_can_transceivers,
+  .init = red_v2_init,
+  .enable_can_transceiver = red_v2_enable_can_transceiver,
+  .enable_can_transceivers = red_v2_enable_can_transceivers,
   .set_led = red_set_led,
   .set_gps_mode = unused_set_gps_mode,
   .set_can_mode = red_set_can_mode,
