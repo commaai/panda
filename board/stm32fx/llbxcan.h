@@ -33,9 +33,9 @@ bool llcan_set_speed(CAN_TypeDef *CAN_obj, uint32_t speed, bool loopback, bool s
 
   if(ret){
     // set time quanta from defines
-    register_set(&(CAN_obj->BTR), ((CAN_BTR_TS1_0 * (CAN_SEQ1-1)) |
-                                   (CAN_BTR_TS2_0 * (CAN_SEQ2-1)) |
-                                   (CAN_BTR_SJW_0 * (CAN_SJW-1)) |
+    register_set(&(CAN_obj->BTR), ((CAN_BTR_TS1_0 * (CAN_SEQ1-1U)) |
+                                   (CAN_BTR_TS2_0 * (CAN_SEQ2-1U)) |
+                                   (CAN_BTR_SJW_0 * (CAN_SJW-1U)) |
                                    (can_speed_to_prescaler(speed) - 1U)), 0xC37F03FFU);
 
     // silent loopback mode for debugging
