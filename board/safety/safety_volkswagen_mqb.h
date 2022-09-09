@@ -24,13 +24,12 @@ const int VOLKSWAGEN_MQB_MIN_ACCEL = -3500;  // Max decel 3.5 m/s2
 #define MSG_GRA_ACC_01  0x12B   // TX by OP, ACC control buttons for cancel/resume
 #define MSG_ACC_07      0x12E   // TX by OP, ACC control instructions to the drivetrain coordinator
 #define MSG_ACC_02      0x30C   // TX by OP, ACC HUD data to the instrument cluster
-#define MSG_ACC_04      0x324   // TX by OP, ACC HUD alerts and driving profile selection
 #define MSG_LDW_02      0x397   // TX by OP, Lane line recognition and text alerts
 
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
 const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_GRA_ACC_01, 0, 8}, {MSG_GRA_ACC_01, 2, 8}, {MSG_LDW_02, 0, 8}};
-const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_ACC_02, 0, 8}, {MSG_ACC_04, 0, 8},
-                                              {MSG_ACC_06, 0, 8}, {MSG_ACC_07, 0, 8}, {MSG_LDW_02, 0, 8}};
+const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_LDW_02, 0, 8},
+                                              {MSG_ACC_02, 0, 8}, {MSG_ACC_06, 0, 8}, {MSG_ACC_07, 0, 8}};
 
 AddrCheckStruct volkswagen_mqb_addr_checks[] = {
   {.msg = {{MSG_ESP_19, 0, 8, .check_checksum = false, .max_counter = 0U,  .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -256,8 +255,7 @@ static int volkswagen_mqb_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
       if ((addr == MSG_HCA_01) || (addr == MSG_LDW_02)) {
         // openpilot takes over LKAS steering control and related HUD messages from the camera
         bus_fwd = -1;
-      } else if (volkswagen_mqb_longitudinal && ((addr == MSG_ACC_02) || (addr == MSG_ACC_04) ||
-                                             (addr == MSG_ACC_06) || (addr == MSG_ACC_07))) {
+      } else if (volkswagen_mqb_longitudinal && ((addr == MSG_ACC_02) || (addr == MSG_ACC_06) || (addr == MSG_ACC_07))) {
         // openpilot takes over acceleration/braking control and related HUD messages from the stock ACC radar
         bus_fwd = -1;
       } else {
