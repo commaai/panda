@@ -99,13 +99,6 @@ bool red_check_ignition(void) {
 void red_init(void) {
   common_init_gpio();
 
-  //C4,A1: OBD_SBU1, OBD_SBU2
-  set_gpio_pullup(GPIOC, 4, PULL_NONE);
-  set_gpio_mode(GPIOC, 4, MODE_ANALOG);
-
-  set_gpio_pullup(GPIOA, 1, PULL_NONE);
-  set_gpio_mode(GPIOA, 1, MODE_ANALOG);
-
   //C10,C11 : OBD_SBU1_RELAY, OBD_SBU2_RELAY
   set_gpio_output_type(GPIOC, 10, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_pullup(GPIOC, 10, PULL_NONE);
@@ -134,7 +127,7 @@ void red_init(void) {
   set_gpio_pullup(GPIOB, 14, PULL_NONE);
   set_gpio_mode(GPIOB, 14, MODE_OUTPUT);
 
-  //B1,F11 5VOUT_S, VOLT_S
+  //B1: 5VOUT_S
   set_gpio_pullup(GPIOB, 1, PULL_NONE);
   set_gpio_mode(GPIOB, 1, MODE_ANALOG);
 

@@ -42,6 +42,13 @@ void common_init_gpio(void) {
   set_gpio_pullup(GPIOF, 10, PULL_NONE);
   set_gpio_mode(GPIOF, 10, MODE_INPUT);
 
+  //C4,A1: OBD_SBU1, OBD_SBU2
+  set_gpio_pullup(GPIOC, 4, PULL_NONE);
+  set_gpio_mode(GPIOC, 4, MODE_ANALOG);
+
+  set_gpio_pullup(GPIOA, 1, PULL_NONE);
+  set_gpio_mode(GPIOA, 1, MODE_ANALOG);
+
   //F11: VOLT_S
   set_gpio_pullup(GPIOF, 11, PULL_NONE);
   set_gpio_mode(GPIOF, 11, MODE_ANALOG);
