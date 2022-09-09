@@ -117,6 +117,27 @@ void red_init(void) {
   set_gpio_mode(GPIOC, 11, MODE_OUTPUT);
   set_gpio_output(GPIOC, 11, 1);
 
+  // G11,B3,D7,B4: transceiver enable
+  set_gpio_pullup(GPIOG, 11, PULL_NONE);
+  set_gpio_mode(GPIOG, 11, MODE_OUTPUT);
+
+  set_gpio_pullup(GPIOB, 3, PULL_NONE);
+  set_gpio_mode(GPIOB, 3, MODE_OUTPUT);
+
+  set_gpio_pullup(GPIOD, 7, PULL_NONE);
+  set_gpio_mode(GPIOD, 7, MODE_OUTPUT);
+
+  set_gpio_pullup(GPIOB, 4, PULL_NONE);
+  set_gpio_mode(GPIOB, 4, MODE_OUTPUT);
+
+  // B14: usb load switch
+  set_gpio_pullup(GPIOB, 14, PULL_NONE);
+  set_gpio_mode(GPIOB, 14, MODE_OUTPUT);
+
+  //B1,F11 5VOUT_S, VOLT_S
+  set_gpio_pullup(GPIOB, 1, PULL_NONE);
+  set_gpio_mode(GPIOB, 1, MODE_ANALOG);
+
   // Turn on USB load switch.
   red_set_usb_load_switch(true);
 
