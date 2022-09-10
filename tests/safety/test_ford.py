@@ -7,22 +7,31 @@ from panda import Panda
 from panda.tests.safety import libpandasafety_py
 from panda.tests.safety.common import CANPackerPanda
 
-MSG_ENG_BRAKE_DATA = 0x165            # RX from PCM, for driver brake pedal and cruise state
-MSG_ENG_VEHICLE_SP_THROTTLE2 = 0x202  # RX from PCM, for vehicle speed
-MSG_ENG_VEHICLE_SP_THROTTLE = 0x204   # RX from PCM, for driver throttle input
-MSG_STEERING_DATA_FD1 = 0x083         # TX by OP, ACC control buttons for cancel
-MSG_LANE_ASSIST_DATA1 = 0x3CA         # TX by OP, Lane Keeping Assist
-MSG_LATERAL_MOTION_CONTROL = 0x3D3    # TX by OP, Lane Centering Assist
-MSG_IPMA_DATA = 0x3D8                 # TX by OP, IPMA HUD user interface
+MSG_EngBrakeData = 0x165          # RX from PCM, for driver brake pedal and cruise state
+MSG_EngVehicleSpThrottle = 0x204  # RX from PCM, for driver throttle input
+MSG_Steering_Data_FD1 = 0x083     # TX by OP, various driver switches and LKAS/CC buttons
+MSG_ACCDATA_3 = 0x18A             # TX by OP, ACC/TJA user interface
+MSG_Lane_Assist_Data1 = 0x3CA     # TX by OP, Lane Keep Assist
+MSG_LateralMotionControl = 0x3D3  # TX by OP, Traffic Jam Assist
+MSG_IPMA_Data = 0x3D8             # TX by OP, IPMA and LKAS user interface
+
+
+class Buttons:
+  CANCEL = 0
+  RESUME = 1
+  TJA_TOGGLE = 2
 
 
 class TestFordSafety(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 1
-  RELAY_MALFUNCTION_ADDR = MSG_IPMA_DATA
+  RELAY_MALFUNCTION_ADDR = MSG_IPMA_Data
   RELAY_MALFUNCTION_BUS = 0
 
-  TX_MSGS = [[MSG_STEERING_DATA_FD1, 0], [MSG_LANE_ASSIST_DATA1, 0], [MSG_LATERAL_MOTION_CONTROL, 0], [MSG_IPMA_DATA, 0]]
-  FWD_BLACKLISTED_ADDRS = {2: [MSG_LANE_ASSIST_DATA1, MSG_LATERAL_MOTION_CONTROL, MSG_IPMA_DATA]}
+  TX_MSGS = [
+    [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
+    [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
+  ]
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl, MSG_IPMA_Data]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
@@ -78,11 +87,11 @@ class TestFordSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("LateralMotionControl", 0, values)
 
   # Cruise control buttons
-  def _acc_button_msg(self, cancel=0, resume=0, _set=0):
+  def _acc_button_msg(self, button: int):
     values = {
-      "CcAslButtnCnclPress": cancel,
-      "CcAsllButtnResPress": resume,
-      "CcAslButtnSetPress": _set,
+      "CcAslButtnCnclPress": 1 if button == Buttons.CANCEL else 0,
+      "CcAsllButtnResPress": 1 if button == Buttons.RESUME else 0,
+      "TjaButtnOnOffPress": 1 if button == Buttons.TJA_TOGGLE else 0,
     }
     return self.packer.make_can_msg_panda("Steering_Data_FD1", 0, values)
 
@@ -102,12 +111,20 @@ class TestFordSafety(common.PandaSafetyTest):
     self.safety.set_controls_allowed(0)
     self.assertFalse(self._tx(self._lkas_command_msg(1)))
 
-  def test_spam_cancel_safety_check(self):
+  def test_acc_buttons(self):
     for allowed in (0, 1):
       self.safety.set_controls_allowed(allowed)
-      self.assertTrue(self._tx(self._acc_button_msg(cancel=1)))
-      self.assertFalse(self._tx(self._acc_button_msg(resume=1)))
-      self.assertFalse(self._tx(self._acc_button_msg(_set=1)))
+      for enabled in (True, False):
+        self._rx(self._pcm_status_msg(enabled))
+        self.assertTrue(self._tx(self._acc_button_msg(Buttons.TJA_TOGGLE)))
+
+    for allowed in (0, 1):
+      self.safety.set_controls_allowed(allowed)
+      self.assertEqual(allowed, self._tx(self._acc_button_msg(Buttons.RESUME)))
+
+    for enabled in (True, False):
+      self._rx(self._pcm_status_msg(enabled))
+      self.assertEqual(enabled, self._tx(self._acc_button_msg(Buttons.CANCEL)))
 
 
 if __name__ == "__main__":
