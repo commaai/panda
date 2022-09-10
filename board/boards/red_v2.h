@@ -116,6 +116,7 @@ const harness_configuration red_v2_harness_config = {
 
 const board board_red_v2 = {
   .board_type = "Red_v2",
+  .board_tick = unused_board_tick,
   .harness_config = &red_v2_harness_config,
   .has_gps = false,
   .has_hw_gmlan = false,
