@@ -78,6 +78,10 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     values = {"LKASteeringCmd": torque}
     return self.packer.make_can_msg_panda("ASCMLKASteeringCmd", 0, values)
 
+  def _button_msg(self, buttons):
+    values = {"ACCButtons": buttons}
+    return self.packer.make_can_msg_panda("ASCMSteeringButton", self.BUTTONS_BUS, values)
+
   def test_brake_safety_check(self, stock_longitudinal=False):
     for enabled in [0, 1]:
       for b in range(0, 500):
