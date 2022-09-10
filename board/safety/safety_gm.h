@@ -28,8 +28,7 @@ const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715,
 const CanMsg GM_CAM_TX_MSGS[] = {{384, 0, 4},  // pt bus
                                  {481, 2, 7}};  // camera bus
 
-const CanMsg GM_CAM_TX_MSGS_LONG[] = {{384, 0, 4}, {789, 0, 5}, {715, 0, 8}, {880, 0, 6},  // pt bus
-                                      {481, 2, 7}};  // camera bus
+const CanMsg GM_CAM_TX_MSGS_LONG[] = {{384, 0, 4}, {789, 0, 5}, {715, 0, 8}, {880, 0, 6}};  // pt bus
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 AddrCheckStruct gm_addr_checks[] = {

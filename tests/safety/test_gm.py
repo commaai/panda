@@ -201,9 +201,31 @@ class TestGmAscmSafety(TestGmSafetyBase):
     self.assertFalse(self.safety.get_controls_allowed())
 
 
+class TestGmCameraLongitudinalSafety(TestGmAscmSafety):
+  TX_MSGS = [[384, 0], [789, 0], [715, 0], [880, 0]]  # pt bus
+  FWD_BLACKLISTED_ADDRS = {2: [384, 715, 880, 789]}  # ACC messages are (715, 880, 789)
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
+    self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM | Panda.FLAG_GM_HW_CAM_LONG)
+    self.safety.init_tests()
+
+  def _pcm_status_msg(self, enable):
+    raise NotImplementedError
+
+  # brake message sends on bus 0 instead of 2 for GM Camera cars
+  def _send_brake_msg(self, brake):
+    values = {"FrictionBrakeCmd": -brake}
+    return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", 0, values)
+
+
 class TestGmCameraSafety(TestGmSafetyBase):
-  TX_MSGS = [[384, 0]]  # pt bus
-  FWD_BLACKLISTED_ADDRS = {2: [384]}  # LKAS message, ACC messages are (715, 880, 789)
+  TX_MSGS = [[384, 0],  # pt bus
+             [481, 2]]  # camera bus
+  FWD_BLACKLISTED_ADDRS = {2: [384]}  # LKAS message
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   BUTTONS_BUS = 2  # tx only
 
