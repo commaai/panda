@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
   pandas = PandaDFU.list()
   print(pandas)
-  assert len(pandas) == 7
+  assert len(pandas) == 8
 
   for serial in pandas:
     p = PandaDFU(serial)
@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
   pandas = Panda.list()
   print(pandas)
-  assert len(pandas) == 7
+  assert len(pandas) == 8
 
   for serial in pandas:
     pf = Panda(serial)
