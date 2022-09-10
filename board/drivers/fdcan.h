@@ -4,9 +4,6 @@
 
 #define CANFD
 
-#define BUS_OFF_FAIL_LIMIT 2U
-uint8_t bus_off_err[] = {0U, 0U, 0U};
-
 typedef struct {
   volatile uint32_t header[2];
   volatile uint32_t data_word[CANPACKET_DATA_SIZE_MAX/4U];
@@ -32,20 +29,6 @@ bool can_set_speed(uint8_t can_number) {
 void can_set_gmlan(uint8_t bus) {
   UNUSED(bus);
   puts("GMLAN not available on red panda\n");
-}
-
-void cycle_transceiver(uint8_t can_number) {
-  // FDCAN1 = trans 1, FDCAN3 = trans 3, FDCAN2 = trans 2 normal or 4 flipped harness
-  uint8_t transceiver_number = can_number;
-  if (can_number == 2U) {
-    uint8_t flip = (car_harness_status == HARNESS_STATUS_FLIPPED) ? 2U : 0U;
-    transceiver_number += flip;
-  }
-  current_board->enable_can_transceiver(transceiver_number, false);
-  delay(20000);
-  current_board->enable_can_transceiver(transceiver_number, true);
-  bus_off_err[can_number] = 0U;
-  puts("Cycled transceiver number: "); puth(transceiver_number); puts("\n");
 }
 
 // ***************************** CAN *****************************
@@ -96,27 +79,6 @@ void process_can(uint8_t can_number) {
       }
     }
 
-    // Recover after Bus-off state
-    if (((CANx->PSR & FDCAN_PSR_BO) != 0) && ((CANx->CCCR & FDCAN_CCCR_INIT) != 0)) {
-      bus_off_err[can_number] += 1U;
-      puts("CAN is in Bus_Off state! Resetting... CAN number: "); puth(can_number); puts("\n");
-      if (bus_off_err[can_number] > BUS_OFF_FAIL_LIMIT) {
-        cycle_transceiver(can_number);
-      }
-      CANx->IR = 0xFFC60000U; // Reset all flags(Only errors!)
-      CANx->CCCR &= ~(FDCAN_CCCR_INIT);
-      uint32_t timeout_counter = 0U;
-      while((CANx->CCCR & FDCAN_CCCR_INIT) != 0) {
-        // Delay for about 1ms
-        delay(10000);
-        timeout_counter++;
-
-        if(timeout_counter >= CAN_INIT_TIMEOUT_MS){
-          puts(CAN_NAME_FROM_CANIF(CANx)); puts(" Bus_Off reset timed out!\n");
-          break;
-        }
-      }
-    }
     EXIT_CRITICAL();
   }
 }

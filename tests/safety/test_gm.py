@@ -19,15 +19,10 @@ class Buttons:
 
 
 class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
-  TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
-             [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
-             [789, 2],  # ch bus
-             [0x104c006c, 3], [0x10400060, 3]]  # gmlan
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}
-  FWD_BUS_LOOKUP: Dict[int, int] = {}
+  BUTTONS_BUS = 0
 
   MAX_RATE_UP = 7
   MAX_RATE_DOWN = 17
@@ -153,7 +148,13 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
         self._rx(self._user_gas_msg(0))
 
 
-class TestGmSafety(TestGmSafetyBase):
+class TestGmAscmSafety(TestGmSafetyBase):
+  TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
+             [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
+             [789, 2],  # ch bus
+             [0x104c006c, 3], [0x10400060, 3]]  # gmlan
+  FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}
+  FWD_BUS_LOOKUP: Dict[int, int] = {}
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -162,7 +163,7 @@ class TestGmSafety(TestGmSafetyBase):
     self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
     self.safety.init_tests()
 
-  # override these tests from PandaSafetyTest, GM uses button enable
+  # override these tests from PandaSafetyTest, ASCM GM uses button enable
   def test_disable_control_allowed_from_cruise(self):
     pass
 
@@ -174,10 +175,6 @@ class TestGmSafety(TestGmSafetyBase):
 
   def _pcm_status_msg(self, enable):
     raise NotImplementedError
-
-  def _button_msg(self, buttons):
-    values = {"ACCButtons": buttons}
-    return self.packer.make_can_msg_panda("ASCMSteeringButton", 0, values)
 
   def test_set_resume_buttons(self):
     """
@@ -201,11 +198,10 @@ class TestGmSafety(TestGmSafetyBase):
 
 
 class TestGmCameraSafety(TestGmSafetyBase):
-  """Harness is integrated at the camera, we only need to send steering messages, forward the rest"""
-
   TX_MSGS = [[384, 0]]  # pt bus
   FWD_BLACKLISTED_ADDRS = {2: [384]}  # LKAS message, ACC messages are (715, 880, 789)
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
+  BUTTONS_BUS = 2  # tx only
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -215,15 +211,29 @@ class TestGmCameraSafety(TestGmSafetyBase):
     self.safety.init_tests()
 
   def _user_gas_msg(self, gas):
-    # FIXME: be careful with tests that use _user_gas_msg, we set CruiseState=1 so that
-    # certain gas tests aren't impacted by this safety mode's use of PCM cruise in the same message
-    values = {"AcceleratorPedal2": 1 if gas else 0, "CruiseState": 1}
+    cruise_active = self.safety.get_controls_allowed()
+    values = {"AcceleratorPedal2": 1 if gas else 0, "CruiseState": cruise_active}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
   def _pcm_status_msg(self, enable):
     values = {"CruiseState": enable}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
+  def test_buttons(self):
+    # Only CANCEL button is allowed while cruise is enabled
+    self.safety.set_controls_allowed(0)
+    for btn in range(8):
+      self.assertFalse(self._tx(self._button_msg(btn)))
+
+    self.safety.set_controls_allowed(1)
+    for btn in range(8):
+      self.assertFalse(self._tx(self._button_msg(btn)))
+
+    for enabled in (True, False):
+      self._rx(self._pcm_status_msg(enabled))
+      self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
+
+  # Uses stock longitudinal, allow no longitudinal actuation
   def test_brake_safety_check(self, stock_longitudinal=True):
     super().test_brake_safety_check(stock_longitudinal=stock_longitudinal)
 
