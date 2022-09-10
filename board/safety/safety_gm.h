@@ -28,6 +28,9 @@ const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715,
 const CanMsg GM_CAM_TX_MSGS[] = {{384, 0, 4},  // pt bus
                                  {481, 2, 7}};  // camera bus
 
+const CanMsg GM_CAM_TX_MSGS_LONG[] = {{384, 0, 4}, {789, 0, 5}, {715, 0, 8}, {880, 0, 6},  // pt bus
+                                      {481, 2, 7}};  // camera bus
+
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 AddrCheckStruct gm_addr_checks[] = {
   {.msg = {{388, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
@@ -40,6 +43,7 @@ AddrCheckStruct gm_addr_checks[] = {
 addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
 
 const uint16_t GM_PARAM_HW_CAM = 1;
+const uint16_t GM_PARAM_HW_CAM_LONG = 2;
 
 enum {
   GM_BTN_UNPRESS = 1,
@@ -49,6 +53,8 @@ enum {
 };
 
 enum {GM_ASCM, GM_CAM} gm_hw = GM_ASCM;
+bool gm_cam_long = false;
+bool gm_pcm_cruise = false;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
 
@@ -71,7 +77,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     }
 
     // ACC steering wheel buttons (GM_CAM is tied to the PCM)
-    if ((addr == 481) && (gm_hw == GM_ASCM)) {
+    if ((addr == 481) && !gm_pcm_cruise) {
       int button = (GET_BYTE(to_push, 5) & 0x70U) >> 4;
 
       // exit controls on cancel press
@@ -100,7 +106,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       gas_pressed = GET_BYTE(to_push, 5) != 0U;
 
       // enter controls on rising edge of ACC, exit controls when ACC off
-      if (gm_hw == GM_CAM) {
+      if (gm_pcm_cruise) {
         bool cruise_engaged = (GET_BYTE(to_push, 1) >> 5) != 0U;
         pcm_cruise_check(cruise_engaged);
       }
@@ -114,7 +120,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     bool stock_ecu_detected = (addr == 384);  // ASCMLKASteeringCmd
 
     // Only check ASCMGasRegenCmd if ASCM, GM_CAM uses stock longitudinal
-    if ((gm_hw == GM_ASCM) && (addr == 715)) {
+    if (((gm_hw == GM_ASCM) || ((gm_hw == GM_CAM) && gm_cam_long)) && (addr == 715)) {
       stock_ecu_detected = true;
     }
     generic_rx_checks(stock_ecu_detected);
@@ -134,7 +140,11 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   int addr = GET_ADDR(to_send);
 
   if (gm_hw == GM_CAM) {
-    tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
+    if (gm_cam_long) {
+      tx = msg_allowed(to_send, GM_CAM_TX_MSGS_LONG, sizeof(GM_CAM_TX_MSGS_LONG)/sizeof(GM_CAM_TX_MSGS_LONG[0]));
+    } else {
+      tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
+    }
   } else {
     tx = msg_allowed(to_send, GM_ASCM_TX_MSGS, sizeof(GM_ASCM_TX_MSGS)/sizeof(GM_ASCM_TX_MSGS[0]));
   }
@@ -234,7 +244,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // BUTTONS: used for resume spamming and cruise cancellation with stock longitudinal
-  if ((addr == 481) && (gm_hw == GM_CAM)) {
+  if ((addr == 481) && gm_pcm_cruise) {
     int button = (GET_BYTE(to_send, 5) >> 4) & 0x7U;
 
     bool allowed_cancel = (button == 6) && cruise_engaged_prev;
@@ -257,10 +267,12 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     }
 
     if (bus_num == 2) {
-      // block lkas message, forward all others
+      // block lkas message and acc messages if gm openpilot long, forward all others
       int addr = GET_ADDR(to_fwd);
       bool is_lkas_msg = (addr == 384);
-      if (!is_lkas_msg) {
+      bool is_acc_msg = (addr == 789) || (addr == 715) || (addr == 880);
+      int block_msg = is_lkas_msg || (is_acc_msg && gm_cam_long);
+      if (!block_msg) {
         bus_fwd = 0;
       }
     }
@@ -271,6 +283,10 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 static const addr_checks* gm_init(uint16_t param) {
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
+#ifdef ALLOW_DEBUG
+  gm_cam_long = GET_FLAG(param, GM_PARAM_HW_CAM_LONG);
+#endif
+  gm_pcm_cruise = (gm_hw == GM_CAM) && !gm_cam_long;
   return &gm_rx_checks;
 }
 
