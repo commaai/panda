@@ -546,7 +546,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertTrue(self.safety.get_longitudinal_allowed())
 
   def test_prev_brake(self, user_brake_msg=None, get_brake_pressed_prev=None):
-    if user_brake_msg is None or get_brake_pressed_prev is None:
+    if user_brake_msg is None:
       user_brake_msg = self._user_brake_msg
       get_brake_pressed_prev = self.safety.get_brake_pressed_prev
 
