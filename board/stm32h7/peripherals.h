@@ -11,6 +11,12 @@ void gpio_usart2_init(void) {
   set_gpio_alternate(GPIOA, 3, GPIO_AF7_USART2);
 }
 
+void gpio_uart7_init(void) {
+  // E7,E8: UART 7 for debugging
+  set_gpio_alternate(GPIOE, 7, GPIO_AF7_UART7);
+  set_gpio_alternate(GPIOE, 8, GPIO_AF7_UART7);
+}
+
 // Common GPIO initialization
 void common_init_gpio(void) {
   /// E2,E3,E4: RGB LED
@@ -36,29 +42,14 @@ void common_init_gpio(void) {
   set_gpio_pullup(GPIOF, 10, PULL_NONE);
   set_gpio_mode(GPIOF, 10, MODE_INPUT);
 
-  // G11,B3,D7,B4: transceiver enable
-  set_gpio_pullup(GPIOG, 11, PULL_NONE);
-  set_gpio_mode(GPIOG, 11, MODE_OUTPUT);
+  //C4,A1: OBD_SBU1, OBD_SBU2
+  set_gpio_pullup(GPIOC, 4, PULL_NONE);
+  set_gpio_mode(GPIOC, 4, MODE_ANALOG);
 
-  // Speed was set to high by default after reset, changing to low
-  GPIOB->OSPEEDR = GPIO_OSPEEDR_OSPEED3;
-  set_gpio_pullup(GPIOB, 3, PULL_NONE);
-  set_gpio_mode(GPIOB, 3, MODE_OUTPUT);
+  set_gpio_pullup(GPIOA, 1, PULL_NONE);
+  set_gpio_mode(GPIOA, 1, MODE_ANALOG);
 
-  set_gpio_pullup(GPIOD, 7, PULL_NONE);
-  set_gpio_mode(GPIOD, 7, MODE_OUTPUT);
-
-  set_gpio_pullup(GPIOB, 4, PULL_NONE);
-  set_gpio_mode(GPIOB, 4, MODE_OUTPUT);
-
-  // B14: usb load switch
-  set_gpio_pullup(GPIOB, 14, PULL_NONE);
-  set_gpio_mode(GPIOB, 14, MODE_OUTPUT);
-
-  //B1,F11 5VOUT_S, VOLT_S
-  set_gpio_pullup(GPIOB, 1, PULL_NONE);
-  set_gpio_mode(GPIOB, 1, MODE_ANALOG);
-
+  //F11: VOLT_S
   set_gpio_pullup(GPIOF, 11, PULL_NONE);
   set_gpio_mode(GPIOF, 11, MODE_ANALOG);
 
@@ -70,7 +61,7 @@ void common_init_gpio(void) {
 
   set_gpio_pullup(GPIOB, 9, PULL_NONE);
   set_gpio_alternate(GPIOB, 9, GPIO_AF9_FDCAN1);
-  
+
   // B5,B6 (mplex to B12,B13): FDCAN2
   set_gpio_pullup(GPIOB, 12, PULL_NONE);
   set_gpio_pullup(GPIOB, 13, PULL_NONE);
@@ -80,7 +71,7 @@ void common_init_gpio(void) {
 
   set_gpio_pullup(GPIOB, 6, PULL_NONE);
   set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
-  
+
   // G9,G10: FDCAN3
   set_gpio_pullup(GPIOG, 9, PULL_NONE);
   set_gpio_alternate(GPIOG, 9, GPIO_AF2_FDCAN3);

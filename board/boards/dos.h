@@ -216,5 +216,5 @@ const board board_dos = {
   .set_ir_power = dos_set_ir_power,
   .set_phone_power = unused_set_phone_power,
   .set_clock_source_mode = dos_set_clock_source_mode,
-  .set_siren = unused_set_siren
+  .set_siren = dos_set_siren
 };
