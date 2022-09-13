@@ -208,7 +208,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
     if ((chrysler_platform == CHRYSLER_PACIFICA) && (bus == 0) && (addr == 514)) {
       int speed_l = (GET_BYTE(to_push, 0) << 4) + (GET_BYTE(to_push, 1) >> 4);
       int speed_r = (GET_BYTE(to_push, 2) << 4) + (GET_BYTE(to_push, 3) >> 4);
-      vehicle_moving = (speed_l != 0U) || (speed_r != 0U);
+      vehicle_moving = (speed_l != 0) || (speed_r != 0);
     }
 
     // exit controls on rising edge of gas press
