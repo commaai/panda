@@ -39,6 +39,10 @@ class CANPackerPanda(CANPacker):
 def add_regen_tests(cls):
   """Dynamically adds regen tests for all user brake tests."""
 
+  # only for safety modes with a regen message
+  if cls._user_regen_msg(cls, 0) is None:
+    return cls
+
   # only rx/user brake tests, not brake command
   found_tests = [func for func in dir(cls) if func.startswith("test_") and "user_brake" in func]
   assert len(found_tests) >= 3, "Failed to detect known brake tests"
@@ -444,6 +448,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
 
+@add_regen_tests
 class PandaSafetyTest(PandaSafetyTestBase):
   TX_MSGS: Optional[List[List[int]]] = None
   SCANNED_ADDRS = [*range(0x0, 0x800),                      # Entire 11-bit CAN address space
