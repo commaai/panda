@@ -39,10 +39,6 @@ class CANPackerPanda(CANPacker):
 def add_regen_tests(cls):
   """Dynamically adds regen tests for all user brake tests."""
 
-  # only for safety modes with a regen message
-  if cls._user_regen_msg(cls, 0) is None:
-    return cls
-
   # only rx/user brake tests, not brake command
   found_tests = [func for func in dir(cls) if func.startswith("test_") and "user_brake" in func]
   assert len(found_tests) >= 3, "Failed to detect known brake tests"
@@ -50,6 +46,10 @@ def add_regen_tests(cls):
   for test in found_tests:
     def _make_regen_test(brake_func):
       def _regen_test(self):
+        # only for safety modes with a regen message
+        if self._user_regen_msg(0) is None:
+          raise unittest.SkipTest("Safety mode implements no _user_regen_msg")
+
         getattr(self, brake_func)(self._user_regen_msg, self.safety.get_regen_braking_prev)
       return _regen_test
 
