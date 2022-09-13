@@ -18,7 +18,8 @@ class Buttons:
   CANCEL = 6
 
 
-class TestGmSafetyBase(common.RegenSafetyTest, common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+@common.add_regen_tests
+class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0

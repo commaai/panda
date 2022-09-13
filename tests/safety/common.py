@@ -36,6 +36,26 @@ class CANPackerPanda(CANPacker):
     return package_can_msg(msg)
 
 
+def add_regen_tests(cls):
+  """Dynamically adds regen tests for all user brake tests."""
+  added_tests = 0
+  for func in dir(cls):
+    # only rx/user brake tests, not brake command
+    if not (func.startswith("test_") and "user_brake" in func):
+      continue
+
+    def _make_regen_test(brake_func):
+      def _regen_test(self):
+        getattr(self, brake_func)(self._user_regen_msg, self.safety.get_regen_braking_prev)
+      return _regen_test
+
+    setattr(cls, func.replace("brake", "regen"), _make_regen_test(func))
+    added_tests += 1
+
+  assert added_tests >= 3, "Failed to detect known brake tests"
+  return cls
+
+
 class PandaSafetyTestBase(unittest.TestCase):
   @classmethod
   def setUpClass(cls):
@@ -545,7 +565,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._user_gas_msg(0))
     self.assertTrue(self.safety.get_longitudinal_allowed())
 
-  def test_prev_brake(self, _user_brake_msg=None, get_brake_pressed_prev=None):
+  def test_prev_user_brake(self, _user_brake_msg=None, get_brake_pressed_prev=None):
     if _user_brake_msg is None:
       _user_brake_msg = self._user_brake_msg
       get_brake_pressed_prev = self.safety.get_brake_pressed_prev
@@ -575,7 +595,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
       self._rx(self._pcm_status_msg(not engaged))
       self.assertEqual(not engaged, self.safety.get_cruise_engaged_prev())
 
-  def test_allow_brake_at_zero_speed(self, _user_brake_msg=None):
+  def test_allow_user_brake_at_zero_speed(self, _user_brake_msg=None, get_brake_pressed_prev=None):
     if _user_brake_msg is None:
       _user_brake_msg = self._user_brake_msg
 
@@ -595,7 +615,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertFalse(self.safety.get_longitudinal_allowed())
     self._rx(_user_brake_msg(0))  # reset no brakes
 
-  def test_not_allow_brake_when_moving(self, _user_brake_msg=None):
+  def test_not_allow_user_brake_when_moving(self, _user_brake_msg=None, get_brake_pressed_prev=None):
     if _user_brake_msg is None:
       _user_brake_msg = self._user_brake_msg
 
@@ -668,22 +688,3 @@ class PandaSafetyTest(PandaSafetyTestBase):
         if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
           continue
         self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")
-
-
-class RegenSafetyTest(PandaSafetyTestBase):
-  # pylint: disable=no-member
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "RegenSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
-
-  def test_prev_regen(self):
-    super().test_prev_brake(self._user_regen_msg, self.safety.get_regen_braking_prev)
-
-  def test_allow_regen_at_zero_speed(self):
-    super().test_allow_brake_at_zero_speed(self._user_regen_msg)
-
-  def test_not_allow_regen_when_moving(self):
-    super().test_not_allow_brake_when_moving(self._user_regen_msg)
