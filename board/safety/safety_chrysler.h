@@ -201,7 +201,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
     }
 
     // TODO: use the same message for both
-    // update speed
+    // update vehicle moving
     if ((chrysler_platform != CHRYSLER_PACIFICA) && (bus == 0) && (addr == chrysler_addrs->ESP_8)) {
       vehicle_moving = ((GET_BYTE(to_push, 4) << 8) + GET_BYTE(to_push, 5)) != 0U;
     }
