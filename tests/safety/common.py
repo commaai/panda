@@ -39,7 +39,8 @@ class CANPackerPanda(CANPacker):
 def add_regen_tests(cls):
   """Dynamically adds regen tests for all user brake tests."""
 
-  if not hasattr(cls, "_user_regen_msg"):
+  # only for safety modes with a regen message
+  if cls._user_regen_msg(cls, 0) is None:
     return cls
 
   # only rx/user brake tests, not brake command
@@ -470,6 +471,9 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   @abc.abstractmethod
   def _user_brake_msg(self, brake):
+    pass
+
+  def _user_regen_msg(self, regen):
     pass
 
   @abc.abstractmethod
