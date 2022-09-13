@@ -58,6 +58,10 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     values = {"BrakePedalPosition": 10 if brake else 0}
     return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
 
+  def _user_regen_msg(self, regen):
+    values = {"RegenPaddle": 2 if regen else 0}
+    return self.packer.make_can_msg_panda("EBCMRegenPaddle", 0, values)
+
   def _user_gas_msg(self, gas):
     values = {"AcceleratorPedal2": 1 if gas else 0}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)

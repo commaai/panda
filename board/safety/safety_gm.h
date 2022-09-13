@@ -89,7 +89,6 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       cruise_button_prev = button;
     }
 
-    // speed > 0
     if (addr == 241) {
       // Brake pedal's potentiometer returns near-zero reading
       // even when pedal is not pressed
@@ -106,12 +105,8 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       }
     }
 
-    // exit controls on regen paddle
     if (addr == 189) {
-      bool regen = GET_BYTE(to_push, 0) & 0x20U;
-      if (regen) {
-        controls_allowed = 0;
-      }
+      regen_braking = (GET_BYTE(to_push, 0) >> 4) != 0U;
     }
 
     bool stock_ecu_detected = (addr == 384);  // ASCMLKASteeringCmd
