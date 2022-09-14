@@ -249,7 +249,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xd0: fetch serial number
     case 0xc2:
-      if (req->param1 < 3) {
+      if (req->param1 < 3U) {
         resp_len = sizeof(can_health[req->param1]);
         (void)memcpy(resp, &can_health[req->param1], resp_len);
       }

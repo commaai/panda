@@ -79,19 +79,19 @@ void update_can_health_pkt(uint8_t can_number) {
   can_health[can_number].error_passive = (CAN->ESR & CAN_ESR_EPVF);
 
   can_health[can_number].last_error = (CAN->ESR & CAN_ESR_LEC);
-  if ((can_health[can_number].last_error != 0) && (can_health[can_number].last_error != 7)) {
+  if ((can_health[can_number].last_error != 0U) && (can_health[can_number].last_error != 7U)) {
     can_health[can_number].last_stored_error = can_health[can_number].last_error;
   }
 
   can_health[can_number].receive_error_cnt = (CAN->ESR & CAN_ESR_REC);
   can_health[can_number].transmit_error_cnt = (CAN->ESR & CAN_ESR_TEC);
-  can_health[can_number].total_error_cnt += 1;
+  can_health[can_number].total_error_cnt += 1U;
 
   if ((CAN->TSR & (CAN_TSR_TERR0 | CAN_TSR_ALST0)) != 0) { // last TX failed due to error arbitration lost
-    can_health[can_number].total_rx_lost_cnt += 1;
+    can_health[can_number].total_rx_lost_cnt += 1U;
   }
   if ((CAN->RF0R & (CAN_RF0R_FOVR0)) != 0) { // RX message lost due to FIFO overrun
-    can_health[can_number].total_tx_lost_cnt += 1;
+    can_health[can_number].total_tx_lost_cnt += 1U;
   }
 
   llcan_clear_send(CAN);
@@ -137,7 +137,7 @@ void process_can(uint8_t can_number) {
       }
 
       if (can_pop(can_queues[bus_number], &to_send)) {
-        can_health[can_number].total_tx_cnt += 1;
+        can_health[can_number].total_tx_cnt += 1U;
         // only send if we have received a packet
         CAN->sTxMailBox[0].TIR = ((to_send.extended != 0U) ? (to_send.addr << 3) : (to_send.addr << 21)) | (to_send.extended << 2);
         CAN->sTxMailBox[0].TDTR = to_send.data_len_code;
@@ -160,7 +160,7 @@ void can_rx(uint8_t can_number) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
   while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
-    can_health[can_number].total_rx_cnt += 1;
+    can_health[can_number].total_rx_cnt += 1U;
 
     // can is live
     pending_can_live = 1;
