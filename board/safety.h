@@ -250,6 +250,12 @@ void generic_rx_checks(bool stock_ecu_detected) {
   }
   brake_pressed_prev = brake_pressed;
 
+  // exit controls on rising edge of regen paddle
+  if (regen_braking && (!regen_braking_prev || vehicle_moving)) {
+    controls_allowed = 0;
+  }
+  regen_braking_prev = regen_braking;
+
   // check if stock ECU is on bus broken by car harness
   if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && stock_ecu_detected) {
     relay_malfunction_set();
@@ -309,6 +315,8 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   gas_pressed_prev = false;
   brake_pressed = false;
   brake_pressed_prev = false;
+  regen_braking = false;
+  regen_braking_prev = false;
   cruise_engaged_prev = false;
   vehicle_speed = 0;
   vehicle_moving = false;

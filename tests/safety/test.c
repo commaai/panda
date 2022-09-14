@@ -134,6 +134,10 @@ bool get_brake_pressed_prev(void){
   return brake_pressed_prev;
 }
 
+bool get_regen_braking_prev(void){
+  return regen_braking_prev;
+}
+
 bool get_cruise_engaged_prev(void){
   return cruise_engaged_prev;
 }
