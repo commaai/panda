@@ -123,7 +123,6 @@ void process_can(uint8_t can_number) {
 void can_rx(uint8_t can_number) {
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
-  uint8_t rx_fifo_idx;
 
   // Rx FIFO 0 new message
   if((CANx->IR & FDCAN_IR_RF0N) != 0) {
@@ -135,7 +134,7 @@ void can_rx(uint8_t can_number) {
       pending_can_live = 1;
 
       // getting new message index (0 to 63)
-      rx_fifo_idx = (uint8_t)((CANx->RXF0S >> FDCAN_RXF0S_F0GI_Pos) & 0x3F);
+      uint8_t rx_fifo_idx = (uint8_t)((CANx->RXF0S >> FDCAN_RXF0S_F0GI_Pos) & 0x3F);
 
       uint32_t RxFIFO0SA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET);
       CANPacket_t to_push;
