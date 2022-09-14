@@ -72,19 +72,20 @@ void update_can_health_pkt(uint8_t can_number) {
   ENTER_CRITICAL();
 
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
+  uint32_t esr_reg = CAN->ESR;
 
-  can_health[can_number].bus_off = (CAN->ESR & CAN_ESR_BOFF);
+  can_health[can_number].bus_off = ((esr_reg & CAN_ESR_BOFF) >> CAN_ESR_BOFF_Pos);
   can_health[can_number].bus_off_cnt += can_health[can_number].bus_off;
-  can_health[can_number].error_warning = (CAN->ESR & CAN_ESR_EWGF);
-  can_health[can_number].error_passive = (CAN->ESR & CAN_ESR_EPVF);
+  can_health[can_number].error_warning = ((esr_reg & CAN_ESR_EWGF) >> CAN_ESR_EWGF_Pos);
+  can_health[can_number].error_passive = ((esr_reg & CAN_ESR_EPVF) >> CAN_ESR_EPVF_Pos);
 
-  can_health[can_number].last_error = (CAN->ESR & CAN_ESR_LEC);
+  can_health[can_number].last_error = ((esr_reg & CAN_ESR_LEC) >> CAN_ESR_LEC_Pos);
   if ((can_health[can_number].last_error != 0U) && (can_health[can_number].last_error != 7U)) {
     can_health[can_number].last_stored_error = can_health[can_number].last_error;
   }
 
-  can_health[can_number].receive_error_cnt = (CAN->ESR & CAN_ESR_REC);
-  can_health[can_number].transmit_error_cnt = (CAN->ESR & CAN_ESR_TEC);
+  can_health[can_number].receive_error_cnt = ((esr_reg & CAN_ESR_REC) >> CAN_ESR_REC_Pos);
+  can_health[can_number].transmit_error_cnt = ((esr_reg & CAN_ESR_TEC) >> CAN_ESR_TEC_Pos);
   can_health[can_number].total_error_cnt += 1U;
 
   if ((CAN->TSR & (CAN_TSR_TERR0 | CAN_TSR_ALST0)) != 0) { // last TX failed due to error arbitration lost

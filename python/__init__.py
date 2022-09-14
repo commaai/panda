@@ -474,6 +474,16 @@ class Panda:
 
   @ensure_can_health_packet_version
   def can_health(self, can_number):
+    LEC_ERROR_CODE = {
+      0: "No error",
+      1: "Stuff error",
+      2: "Form error",
+      3: "AckError",
+      4: "Bit1Error",
+      5: "Bit0Error",
+      6: "CRCError",
+      7: "NoChange",
+    }
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xc2, int(can_number), 0, self.CAN_HEALTH_STRUCT.size)
     a = self.CAN_HEALTH_STRUCT.unpack(dat)
     return {
@@ -481,10 +491,10 @@ class Panda:
       "bus_off_cnt": a[1],
       "error_warning": a[2],
       "error_passive": a[3],
-      "last_error": a[4],
-      "last_stored_error": a[5],
-      "last_data_error": a[6],
-      "last_data_stored_error": a[7],
+      "last_error": LEC_ERROR_CODE[a[4]],
+      "last_stored_error": LEC_ERROR_CODE[a[5]],
+      "last_data_error": LEC_ERROR_CODE[a[6]],
+      "last_data_stored_error": LEC_ERROR_CODE[a[7]],
       "receive_error_cnt": a[8],
       "transmit_error_cnt": a[9],
       "total_error_cnt": a[10],

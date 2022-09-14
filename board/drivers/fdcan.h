@@ -36,24 +36,26 @@ void update_can_health_pkt(uint8_t can_number) {
   ENTER_CRITICAL();
 
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
+  uint32_t psr_reg = CANx->PSR;
+  uint32_t ecr_reg = CANx->ECR;
 
-  can_health[can_number].bus_off = (CANx->PSR & FDCAN_PSR_BO);
+  can_health[can_number].bus_off = ((psr_reg & FDCAN_PSR_BO) >> FDCAN_PSR_BO_Pos);
   can_health[can_number].bus_off_cnt += can_health[can_number].bus_off;
-  can_health[can_number].error_warning = (CANx->PSR & FDCAN_PSR_EW);
-  can_health[can_number].error_passive = (CANx->PSR & FDCAN_PSR_EP);
+  can_health[can_number].error_warning = ((psr_reg & FDCAN_PSR_EW) >> FDCAN_PSR_EW_Pos);
+  can_health[can_number].error_passive = ((psr_reg & FDCAN_PSR_EP) >> FDCAN_PSR_EP_Pos);
 
-  can_health[can_number].last_error = (CANx->PSR & FDCAN_PSR_LEC);
+  can_health[can_number].last_error = ((psr_reg & FDCAN_PSR_LEC) >> FDCAN_PSR_LEC_Pos);
   if ((can_health[can_number].last_error != 0U) && (can_health[can_number].last_error != 7U)) {
     can_health[can_number].last_stored_error = can_health[can_number].last_error;
   }
 
-  can_health[can_number].last_data_error = (CANx->PSR & FDCAN_PSR_DLEC);
+  can_health[can_number].last_data_error = ((psr_reg & FDCAN_PSR_DLEC) >> FDCAN_PSR_DLEC_Pos);
   if ((can_health[can_number].last_data_error != 0U) && (can_health[can_number].last_data_error != 7U)) {
     can_health[can_number].last_data_stored_error = can_health[can_number].last_data_error;
   }
 
-  can_health[can_number].receive_error_cnt = (CANx->ECR & FDCAN_ECR_REC);
-  can_health[can_number].transmit_error_cnt = (CANx->ECR & FDCAN_ECR_TEC);
+  can_health[can_number].receive_error_cnt = ((ecr_reg & FDCAN_ECR_REC) >> FDCAN_ECR_REC_Pos);
+  can_health[can_number].transmit_error_cnt = ((ecr_reg & FDCAN_ECR_TEC) >> FDCAN_ECR_REC_Pos);
   can_health[can_number].total_error_cnt += 1U;
 
   if ((CANx->IR & (FDCAN_IR_RF0L)) != 0) {
