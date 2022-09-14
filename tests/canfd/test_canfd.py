@@ -6,7 +6,7 @@ from collections import defaultdict
 from panda import Panda
 from panda_jungle import PandaJungle  # pylint: disable=import-error
 
-H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA]
+H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2]
 JUNGLE_SERIAL = os.getenv("JUNGLE")
 H7_PANDAS_EXCLUDE = [] # type: ignore
 if os.getenv("H7_PANDAS_EXCLUDE"):
