@@ -249,6 +249,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xd0: fetch serial number
     case 0xc2:
+      COMPILE_TIME_ASSERT(sizeof(can_health_t) <= USBPACKET_MAX_SIZE);
       if (req->param1 < 3U) {
         resp_len = sizeof(can_health[req->param1]);
         (void)memcpy(resp, &can_health[req->param1], resp_len);
