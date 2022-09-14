@@ -8,7 +8,8 @@ struct __attribute__((packed)) health_t {
   uint32_t current_pkt;
   uint32_t blocked_tx_msg_cnt_pkt;
   uint32_t blocked_rx_msg_cnt_pkt;
-  uint32_t buffer_overflow_cnt_pkt;
+  uint32_t tx_buffer_overflow_cnt_pkt;
+  uint32_t rx_buffer_overflow_cnt_pkt;
   uint32_t gmlan_send_errs_pkt;
   uint32_t faults_pkt;
   uint8_t ignition_line_pkt;

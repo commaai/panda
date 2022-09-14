@@ -73,7 +73,7 @@ void process_can(uint8_t can_number) {
         to_push.bus = to_send.bus;
         to_push.data_len_code = to_send.data_len_code;
         (void)memcpy(to_push.data, to_send.data, dlc_to_len[to_push.data_len_code]);
-        buffer_overflow_cnt += can_push(&can_rx_q, &to_push) ? 0U : 1U;
+        rx_buffer_overflow_cnt += can_push(&can_rx_q, &to_push) ? 0U : 1U;
 
         usb_cb_ep3_out_complete();
       }
@@ -144,7 +144,7 @@ void can_rx(uint8_t can_number) {
       ignition_can_hook(&to_push);
 
       current_board->set_led(LED_BLUE, true);
-      buffer_overflow_cnt += can_push(&can_rx_q, &to_push) ? 0U : 1U;
+      rx_buffer_overflow_cnt += can_push(&can_rx_q, &to_push) ? 0U : 1U;
 
       // Enable CAN FD and BRS if CAN FD message was received
       if (!(bus_config[can_number].canfd_enabled) && (canfd_frame)) {

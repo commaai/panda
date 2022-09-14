@@ -123,7 +123,7 @@ void process_can(uint8_t can_number) {
           WORD_TO_BYTE_ARRAY(&to_push.data[0], CAN->sTxMailBox[0].TDLR);
           WORD_TO_BYTE_ARRAY(&to_push.data[4], CAN->sTxMailBox[0].TDHR);
 
-          buffer_overflow_cnt += can_push(&can_rx_q, &to_push) ? 0U : 1U;
+          rx_buffer_overflow_cnt += can_push(&can_rx_q, &to_push) ? 0U : 1U;
         }
 
         if ((CAN->TSR & CAN_TSR_TERR0) == CAN_TSR_TERR0) {
@@ -203,7 +203,7 @@ void can_rx(uint8_t can_number) {
     ignition_can_hook(&to_push);
 
     current_board->set_led(LED_BLUE, true);
-    buffer_overflow_cnt += can_push(&can_rx_q, &to_push) ? 0U : 1U;
+    rx_buffer_overflow_cnt += can_push(&can_rx_q, &to_push) ? 0U : 1U;
 
     // next
     CAN->RF0R |= CAN_RF0R_RFOM0;
