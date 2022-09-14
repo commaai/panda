@@ -242,20 +242,18 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xb3:
       current_board->set_phone_power(req->param1 > 0U);
       break;
-    // **** 0xc0: get CAN debug info
-    case 0xc0:
-      puts("can tx: "); puth(can_tx_cnt);
-      puts(" txd: "); puth(can_txd_cnt);
-      puts(" rx: "); puth(can_rx_cnt);
-      puts(" err: "); puth(can_err_cnt);
-      puts("\n");
-      break;
     // **** 0xc1: get hardware type
     case 0xc1:
       resp[0] = hw_type;
       resp_len = 1;
       break;
     // **** 0xd0: fetch serial number
+    case 0xc2:
+      if (req->param1 < 3) {
+        resp_len = sizeof(can_health[req->param1]);
+        (void)memcpy(resp, &can_health[req->param1], resp_len);
+      }
+      break;
     case 0xd0:
       // addresses are OTP
       if (req->param1 == 1U) {
@@ -376,7 +374,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xdd:
       resp[0] = HEALTH_PACKET_VERSION;
       resp[1] = CAN_PACKET_VERSION;
-      resp_len = 2;
+      resp[2] = CAN_HEALTH_PACKET_VERSION;
+      resp_len = 3;
       break;
     // **** 0xde: set can bitrate
     case 0xde:

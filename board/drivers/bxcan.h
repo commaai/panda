@@ -68,32 +68,39 @@ void can_set_gmlan(uint8_t bus) {
   }
 }
 
-// CAN error
-void can_sce(CAN_TypeDef *CAN) {
+void update_can_health_pkt(uint8_t can_number) {
   ENTER_CRITICAL();
 
-  #ifdef DEBUG
-    if (CAN==CAN1) puts("CAN1:  ");
-    if (CAN==CAN2) puts("CAN2:  ");
-    #ifdef CAN3
-      if (CAN==CAN3) puts("CAN3:  ");
-    #endif
-    puts("MSR:");
-    puth(CAN->MSR);
-    puts(" TSR:");
-    puth(CAN->TSR);
-    puts(" RF0R:");
-    puth(CAN->RF0R);
-    puts(" RF1R:");
-    puth(CAN->RF1R);
-    puts(" ESR:");
-    puth(CAN->ESR);
-    puts("\n");
-  #endif
+  CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
 
-  can_err_cnt += 1;
+  can_health[can_number].bus_off = (CAN->ESR & CAN_ESR_BOFF);
+  can_health[can_number].bus_off_cnt += can_health[can_number].bus_off;
+  can_health[can_number].error_warning = (CAN->ESR & CAN_ESR_EWGF);
+  can_health[can_number].error_passive = (CAN->ESR & CAN_ESR_EPVF);
+
+  can_health[can_number].last_error = (CAN->ESR & CAN_ESR_LEC);
+  if ((can_health[can_number].last_error != 0) && (can_health[can_number].last_error != 7)) {
+    can_health[can_number].last_stored_error = can_health[can_number].last_error;
+  }
+
+  can_health[can_number].receive_error_cnt = (CAN->ESR & CAN_ESR_REC);
+  can_health[can_number].transmit_error_cnt = (CAN->ESR & CAN_ESR_TEC);
+  can_health[can_number].total_error_cnt += 1;
+
+  if ((CAN->TSR & (CAN_TSR_TERR0 | CAN_TSR_ALST0)) != 0) { // last TX failed due to error arbitration lost
+    can_health[can_number].total_rx_lost_cnt += 1;
+  }
+  if ((CAN->RF0R & (CAN_RF0R_FOVR0)) != 0) { // RX message lost due to FIFO overrun
+    can_health[can_number].total_tx_lost_cnt += 1;
+  }
+
   llcan_clear_send(CAN);
   EXIT_CRITICAL();
+}
+
+// CAN error
+void can_sce(uint8_t can_number) {
+  update_can_health_pkt(can_number);
 }
 
 // ***************************** CAN *****************************
@@ -110,8 +117,6 @@ void process_can(uint8_t can_number) {
     if ((CAN->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
       // add successfully transmitted message to my fifo
       if ((CAN->TSR & CAN_TSR_RQCP0) == CAN_TSR_RQCP0) {
-        can_txd_cnt += 1;
-
         if ((CAN->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
           CANPacket_t to_push;
           to_push.returned = 1U;
@@ -126,25 +131,13 @@ void process_can(uint8_t can_number) {
           can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
         }
 
-        if ((CAN->TSR & CAN_TSR_TERR0) == CAN_TSR_TERR0) {
-          #ifdef DEBUG
-            puts("CAN TX ERROR!\n");
-          #endif
-        }
-
-        if ((CAN->TSR & CAN_TSR_ALST0) == CAN_TSR_ALST0) {
-          #ifdef DEBUG
-            puts("CAN TX ARBITRATION LOST!\n");
-          #endif
-        }
-
         // clear interrupt
         // careful, this can also be cleared by requesting a transmission
         CAN->TSR |= CAN_TSR_RQCP0;
       }
 
       if (can_pop(can_queues[bus_number], &to_send)) {
-        can_tx_cnt += 1;
+        can_health[can_number].total_tx_cnt += 1;
         // only send if we have received a packet
         CAN->sTxMailBox[0].TIR = ((to_send.extended != 0U) ? (to_send.addr << 3) : (to_send.addr << 21)) | (to_send.extended << 2);
         CAN->sTxMailBox[0].TDTR = to_send.data_len_code;
@@ -167,7 +160,7 @@ void can_rx(uint8_t can_number) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
   while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
-    can_rx_cnt += 1;
+    can_health[can_number].total_rx_cnt += 1;
 
     // can is live
     pending_can_live = 1;
@@ -212,15 +205,15 @@ void can_rx(uint8_t can_number) {
 
 void CAN1_TX_IRQ_Handler(void) { process_can(0); }
 void CAN1_RX0_IRQ_Handler(void) { can_rx(0); }
-void CAN1_SCE_IRQ_Handler(void) { can_sce(CAN1); }
+void CAN1_SCE_IRQ_Handler(void) { can_sce(0); }
 
 void CAN2_TX_IRQ_Handler(void) { process_can(1); }
 void CAN2_RX0_IRQ_Handler(void) { can_rx(1); }
-void CAN2_SCE_IRQ_Handler(void) { can_sce(CAN2); }
+void CAN2_SCE_IRQ_Handler(void) { can_sce(1); }
 
 void CAN3_TX_IRQ_Handler(void) { process_can(2); }
 void CAN3_RX0_IRQ_Handler(void) { can_rx(2); }
-void CAN3_SCE_IRQ_Handler(void) { can_sce(CAN3); }
+void CAN3_SCE_IRQ_Handler(void) { can_sce(2); }
 
 bool can_init(uint8_t can_number) {
   bool ret = false;

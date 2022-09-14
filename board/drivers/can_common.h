@@ -62,13 +62,6 @@ can_buffer(tx3_q, 0x1A0)
 // cppcheck-suppress misra-c2012-9.3
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
 
-// global CAN stats
-int can_rx_cnt = 0;
-int can_tx_cnt = 0;
-int can_txd_cnt = 0;
-int can_err_cnt = 0;
-int can_overflow_cnt = 0;
-
 // ********************* interrupt safe queue *********************
 bool can_pop(can_ring *q, CANPacket_t *elem) {
   bool ret = 0;
@@ -105,7 +98,6 @@ bool can_push(can_ring *q, CANPacket_t *elem) {
   }
   EXIT_CRITICAL();
   if (!ret) {
-    can_overflow_cnt++;
     #ifdef DEBUG
       puts("can_push to ");
       if (q == &can_rx_q) {

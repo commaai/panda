@@ -32,6 +32,41 @@ void can_set_gmlan(uint8_t bus) {
 }
 
 // ***************************** CAN *****************************
+void update_can_health_pkt(uint8_t can_number) {
+  ENTER_CRITICAL();
+
+  FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
+
+  can_health[can_number].bus_off = (CANx->PSR & FDCAN_PSR_BO);
+  can_health[can_number].bus_off_cnt += can_health[can_number].bus_off;
+  can_health[can_number].error_warning = (CANx->PSR & FDCAN_PSR_EW);
+  can_health[can_number].error_passive = (CANx->PSR & FDCAN_PSR_EP);
+
+  can_health[can_number].last_error = (CANx->PSR & FDCAN_PSR_LEC);
+  if ((can_health[can_number].last_error != 0) && (can_health[can_number].last_error != 7)) {
+    can_health[can_number].last_stored_error = can_health[can_number].last_error;
+  }
+
+  can_health[can_number].last_data_error = (CANx->PSR & FDCAN_PSR_DLEC);
+  if ((can_health[can_number].last_data_error != 0) && (can_health[can_number].last_data_error != 7)) {
+    can_health[can_number].last_data_stored_error = can_health[can_number].last_data_error;
+  }
+
+  can_health[can_number].receive_error_cnt = (CANx->ECR & FDCAN_ECR_REC);
+  can_health[can_number].transmit_error_cnt = (CANx->ECR & FDCAN_ECR_TEC);
+  can_health[can_number].total_error_cnt += 1;
+
+  if ((CANx->IR & (FDCAN_IR_RF0L)) != 0) {
+    can_health[can_number].total_rx_lost_cnt += 1;
+  }
+  if ((CANx->IR & (FDCAN_IR_TEFL)) != 0) {
+    can_health[can_number].total_tx_lost_cnt += 1;
+  }
+
+  CANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EW | FDCAN_IR_EP | FDCAN_IR_ELO | FDCAN_IR_BO | FDCAN_IR_TEFL | FDCAN_IR_RF0L);
+  EXIT_CRITICAL();
+}
+
 void process_can(uint8_t can_number) {
   if (can_number != 0xffU) {
     ENTER_CRITICAL();
@@ -44,7 +79,8 @@ void process_can(uint8_t can_number) {
     if ((CANx->TXFQS & FDCAN_TXFQS_TFQF) == 0) {
       CANPacket_t to_send;
       if (can_pop(can_queues[bus_number], &to_send)) {
-        can_tx_cnt += 1;
+        can_health[can_number].total_tx_cnt += 1;
+
         uint32_t TxFIFOSA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET) + (FDCAN_RX_FIFO_0_EL_CNT * FDCAN_RX_FIFO_0_EL_SIZE);
         uint8_t tx_index = (CANx->TXFQS >> FDCAN_TXFQS_TFQPI_Pos) & 0x1F;
         // only send if we have received a packet
@@ -63,7 +99,6 @@ void process_can(uint8_t can_number) {
         CANx->TXBAR = (1UL << tx_index);
 
         // Send back to USB
-        can_txd_cnt += 1;
         CANPacket_t to_push;
 
         to_push.returned = 1U;
@@ -94,7 +129,7 @@ void can_rx(uint8_t can_number) {
   if((CANx->IR & FDCAN_IR_RF0N) != 0) {
     CANx->IR |= FDCAN_IR_RF0N;
     while((CANx->RXF0S & FDCAN_RXF0S_F0FL) != 0) {
-      can_rx_cnt += 1;
+      can_health[can_number].total_rx_cnt += 1;
 
       // can is live
       pending_can_live = 1;
@@ -158,14 +193,10 @@ void can_rx(uint8_t can_number) {
       CANx->RXF0A = rx_fifo_idx;
     }
 
-  } else if((CANx->IR & (FDCAN_IR_PEA | FDCAN_IR_PED | FDCAN_IR_RF0L | FDCAN_IR_RF0F | FDCAN_IR_EW | FDCAN_IR_MRAF | FDCAN_IR_TOO)) != 0) {
-    #ifdef DEBUG
-      puts("FDCAN error, FDCAN_IR: ");puth(CANx->IR);puts("\n");
-    #endif
-    CANx->IR |= (FDCAN_IR_PEA | FDCAN_IR_PED | FDCAN_IR_RF0L | FDCAN_IR_RF0F | FDCAN_IR_EW | FDCAN_IR_MRAF | FDCAN_IR_TOO); // Clean all error flags
-    can_err_cnt += 1;
-  } else {
-
+  }
+  // Error handling
+  if ((CANx->IR & (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EW | FDCAN_IR_EP | FDCAN_IR_ELO | FDCAN_IR_BO | FDCAN_IR_TEFL | FDCAN_IR_RF0L)) != 0) {
+    update_can_health_pkt(can_number);
   }
 }
 
