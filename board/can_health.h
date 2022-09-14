@@ -16,6 +16,7 @@ typedef struct __attribute__((packed)) {
   uint32_t total_rx_lost_cnt; // Rx FIFO 0 message Lost
   uint32_t total_tx_cnt;
   uint32_t total_rx_cnt;
+  uint32_t total_fwd_cnt; // Messages forwarded from one bus to another
 } can_health_t;
 
 can_health_t can_health[] = {{0}, {0}, {0}};
