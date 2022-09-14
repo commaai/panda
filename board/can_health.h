@@ -1,4 +1,4 @@
-// When changing this struct, boardd and python/__init__.py needs to be kept up to date!
+// When changing this struct, python/__init__.py needs to be kept up to date!
 #define CAN_HEALTH_PACKET_VERSION 1
 typedef struct __attribute__((packed)) {
   uint8_t bus_off;
