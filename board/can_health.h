@@ -18,5 +18,3 @@ typedef struct __attribute__((packed)) {
   uint32_t total_rx_cnt;
   uint32_t total_fwd_cnt; // Messages forwarded from one bus to another
 } can_health_t;
-
-can_health_t can_health[] = {{0}, {0}, {0}};

@@ -20,6 +20,8 @@ uint32_t can_fwd_errs = 0;
 uint32_t gmlan_send_errs = 0;
 uint32_t blocked_msg_cnt = 0;
 
+can_health_t can_health[] = {{0}, {0}, {0}};
+
 extern int can_live;
 extern int pending_can_live;
 
