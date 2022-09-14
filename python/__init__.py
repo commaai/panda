@@ -175,8 +175,8 @@ class Panda:
   HW_TYPE_RED_PANDA_V2 = b'\x08'
 
   CAN_PACKET_VERSION = 2
-  HEALTH_PACKET_VERSION = 9
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBHBBBHIfB")
+  HEALTH_PACKET_VERSION = 10
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBHBBBHfB")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
@@ -439,9 +439,9 @@ class Panda:
       "uptime": a[0],
       "voltage": a[1],
       "current": a[2],
-      "can_rx_errs": a[3],
-      "can_send_errs": a[4],
-      "can_fwd_errs": a[5],
+      "blocked_tx_msg_cnt": a[3],
+      "blocked_rx_msg_cnt": a[4],
+      "buffer_overflow_cnt": a[5],
       "gmlan_send_errs": a[6],
       "faults": a[7],
       "ignition_line": a[8],
@@ -455,9 +455,8 @@ class Panda:
       "power_save_enabled": a[16],
       "heartbeat_lost": a[17],
       "alternative_experience": a[18],
-      "blocked_msg_cnt": a[19],
-      "interrupt_load": a[20],
-      "fan_power": a[21],
+      "interrupt_load": a[19],
+      "fan_power": a[20],
     }
 
   # ******************* control *******************
