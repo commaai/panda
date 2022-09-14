@@ -68,9 +68,7 @@ void can_set_gmlan(uint8_t bus) {
   }
 }
 
-void update_can_health_pkt(uint8_t can_number) {
-  ENTER_CRITICAL();
-
+void update_can_health_pkt(uint8_t can_number, bool error_irq) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint32_t esr_reg = CAN->ESR;
 
@@ -86,22 +84,18 @@ void update_can_health_pkt(uint8_t can_number) {
 
   can_health[can_number].receive_error_cnt = ((esr_reg & CAN_ESR_REC) >> CAN_ESR_REC_Pos);
   can_health[can_number].transmit_error_cnt = ((esr_reg & CAN_ESR_TEC) >> CAN_ESR_TEC_Pos);
-  can_health[can_number].total_error_cnt += 1U;
 
-  if ((CAN->TSR & (CAN_TSR_TERR0 | CAN_TSR_ALST0)) != 0) { // last TX failed due to error arbitration lost
-    can_health[can_number].total_rx_lost_cnt += 1U;
+  if (error_irq) {
+    can_health[can_number].total_error_cnt += 1U;
+    llcan_clear_send(CAN);
   }
-  if ((CAN->RF0R & (CAN_RF0R_FOVR0)) != 0) { // RX message lost due to FIFO overrun
-    can_health[can_number].total_tx_lost_cnt += 1U;
-  }
-
-  llcan_clear_send(CAN);
-  EXIT_CRITICAL();
 }
 
 // CAN error
 void can_sce(uint8_t can_number) {
-  update_can_health_pkt(can_number);
+  ENTER_CRITICAL();
+  update_can_health_pkt(can_number, true);
+  EXIT_CRITICAL();
 }
 
 // ***************************** CAN *****************************
@@ -115,6 +109,10 @@ void process_can(uint8_t can_number) {
 
     // check for empty mailbox
     CANPacket_t to_send;
+    if ((CAN->TSR & (CAN_TSR_TERR0 | CAN_TSR_ALST0)) != 0) { // last TX failed due to error arbitration lost
+      can_health[can_number].total_rx_lost_cnt += 1U;
+      CAN->TSR |= (CAN_TSR_TERR0 | CAN_TSR_ALST0);
+    }
     if ((CAN->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
       // add successfully transmitted message to my fifo
       if ((CAN->TSR & CAN_TSR_RQCP0) == CAN_TSR_RQCP0) {
@@ -151,6 +149,7 @@ void process_can(uint8_t can_number) {
       }
     }
 
+    update_can_health_pkt(can_number, false);
     EXIT_CRITICAL();
   }
 }
@@ -160,6 +159,12 @@ void process_can(uint8_t can_number) {
 void can_rx(uint8_t can_number) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
+
+  if ((CAN->RF0R & (CAN_RF0R_FOVR0)) != 0) { // RX message lost due to FIFO overrun
+    can_health[can_number].total_tx_lost_cnt += 1U;
+    CAN->RF0R &= ~(CAN_RF0R_FOVR0);
+  }
+
   while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
     can_health[can_number].total_rx_cnt += 1U;
 
@@ -201,6 +206,7 @@ void can_rx(uint8_t can_number) {
     can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
 
     // next
+    update_can_health_pkt(can_number, false);
     CAN->RF0R |= CAN_RF0R_RFOM0;
   }
 }
