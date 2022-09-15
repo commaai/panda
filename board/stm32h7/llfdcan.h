@@ -200,6 +200,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
     CANx->IE &= 0x0U; // Reset all interrupts
     // Messages for INT0
     CANx->IE |= FDCAN_IE_RF0NE; // Rx FIFO 0 new message
+    CANx->IE |= FDCAN_IE_PEDE | FDCAN_IE_PEAE | FDCAN_IE_BOE | FDCAN_IE_EPE | FDCAN_IE_ELOE | FDCAN_IE_TEFLE | FDCAN_IE_RF0LE;
 
     // Messages for INT1 (Only TFE works??)
     CANx->ILS |= FDCAN_ILS_TFEL;
@@ -230,6 +231,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
 }
 
 void llcan_clear_send(FDCAN_GlobalTypeDef *CANx) {
-  // From H7 datasheet: Transmit cancellation is not intended for Tx FIFO operation.
-  UNUSED(CANx);
+  CANx->TXBCR = 0xFFFFU; // Abort message transmission on error interrupt
+  // Clear error interrupts
+  CANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EW | FDCAN_IR_EP | FDCAN_IR_ELO | FDCAN_IR_BO | FDCAN_IR_TEFL | FDCAN_IR_RF0L);
 }
