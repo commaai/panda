@@ -1,9 +1,10 @@
-// this is needed for 1 mbps support
-#define CAN_QUANTA 8U
-#define CAN_SEQ1 6 // roundf(quanta * 0.875f) - 1;
-#define CAN_SEQ2 1 // roundf(quanta * 0.125f);
+// SAE 2284-3 : minimum 16 tq, SJW 3, sample point at 81.3%
+#define CAN_QUANTA 16U
+#define CAN_SEQ1 12U
+#define CAN_SEQ2 3U
+#define CAN_SJW  3U
 
-#define CAN_PCLK 24000U
+#define CAN_PCLK 48000U
 // 333 = 33.3 kbps
 // 5000 = 500 kbps
 #define can_speed_to_prescaler(x) (CAN_PCLK / CAN_QUANTA * 10U / (x))
@@ -32,9 +33,10 @@ bool llcan_set_speed(CAN_TypeDef *CAN_obj, uint32_t speed, bool loopback, bool s
 
   if(ret){
     // set time quanta from defines
-    register_set(&(CAN_obj->BTR), ((CAN_BTR_TS1_0 * (CAN_SEQ1-1)) |
-              (CAN_BTR_TS2_0 * (CAN_SEQ2-1)) |
-              (can_speed_to_prescaler(speed) - 1U)), 0xC37F03FFU);
+    register_set(&(CAN_obj->BTR), ((CAN_BTR_TS1_0 * (CAN_SEQ1-1U)) |
+                                   (CAN_BTR_TS2_0 * (CAN_SEQ2-1U)) |
+                                   (CAN_BTR_SJW_0 * (CAN_SJW-1U)) |
+                                   (can_speed_to_prescaler(speed) - 1U)), 0xC37F03FFU);
 
     // silent loopback mode for debugging
     if (loopback) {
@@ -97,7 +99,7 @@ bool llcan_init(CAN_TypeDef *CAN_obj) {
     register_clear_bits(&(CAN_obj->FMR), CAN_FMR_FINIT);
 
     // enable certain CAN interrupts
-    register_set_bits(&(CAN_obj->IER), CAN_IER_TMEIE | CAN_IER_FMPIE0 |  CAN_IER_WKUIE);
+    register_set_bits(&(CAN_obj->IER), CAN_IER_TMEIE | CAN_IER_FMPIE0 |  CAN_IER_WKUIE | CAN_IER_ERRIE | CAN_IER_BOFIE);
 
     if (CAN_obj == CAN1) {
       NVIC_EnableIRQ(CAN1_TX_IRQn);
