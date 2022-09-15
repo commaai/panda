@@ -19,7 +19,9 @@ It is 2nd gen hardware, reusing code and parts from the [NEO](https://github.com
 
 To install the library:
 ``` bash
-pip install pandacan
+git clone https://github.com/commaai/panda.git
+cd panda
+python setup.py install
 ```
 
 See [the Panda class](https://github.com/commaai/panda/blob/master/python/__init__.py) for how to interact with the panda.
