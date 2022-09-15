@@ -20,9 +20,7 @@ It is 2nd gen hardware, reusing code and parts from the [NEO](https://github.com
 To install the library:
 ``` bash
 git clone https://github.com/commaai/panda.git
-
 cd panda
-
 python setup.py install
 ```
 
