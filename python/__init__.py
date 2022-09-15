@@ -185,9 +185,9 @@ class Panda:
   HW_TYPE_RED_PANDA_V2 = b'\x08'
 
   CAN_PACKET_VERSION = 2
-  HEALTH_PACKET_VERSION = 9
+  HEALTH_PACKET_VERSION = 10
   CAN_HEALTH_PACKET_VERSION = 1
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBHBBBHIfB")
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfB")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIII")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
@@ -451,23 +451,23 @@ class Panda:
       "uptime": a[0],
       "voltage": a[1],
       "current": a[2],
-      "can_rx_errs": a[3],
-      "can_send_errs": a[4],
-      "can_fwd_errs": a[5],
-      "gmlan_send_errs": a[6],
-      "faults": a[7],
-      "ignition_line": a[8],
-      "ignition_can": a[9],
-      "controls_allowed": a[10],
-      "gas_interceptor_detected": a[11],
-      "car_harness_status": a[12],
-      "safety_mode": a[13],
-      "safety_param": a[14],
-      "fault_status": a[15],
-      "power_save_enabled": a[16],
-      "heartbeat_lost": a[17],
-      "alternative_experience": a[18],
-      "blocked_msg_cnt": a[19],
+      "safety_tx_blocked": a[3],
+      "safety_rx_invalid": a[4],
+      "tx_buffer_overflow": a[5],
+      "rx_buffer_overflow": a[6],
+      "gmlan_send_errs": a[7],
+      "faults": a[8],
+      "ignition_line": a[9],
+      "ignition_can": a[10],
+      "controls_allowed": a[11],
+      "gas_interceptor_detected": a[12],
+      "car_harness_status": a[13],
+      "safety_mode": a[14],
+      "safety_param": a[15],
+      "fault_status": a[16],
+      "power_save_enabled": a[17],
+      "heartbeat_lost": a[18],
+      "alternative_experience": a[19],
       "interrupt_load": a[20],
       "fan_power": a[21],
     }

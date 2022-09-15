@@ -20,9 +20,10 @@ int get_health_pkt(void *dat) {
 
   health->controls_allowed_pkt = controls_allowed;
   health->gas_interceptor_detected_pkt = gas_interceptor_detected;
-  health->can_rx_errs_pkt = can_rx_errs;
-  health->can_send_errs_pkt = can_send_errs;
-  health->can_fwd_errs_pkt = can_fwd_errs;
+  health->safety_tx_blocked_pkt = safety_tx_blocked;
+  health->safety_rx_invalid_pkt = safety_rx_invalid;
+  health->tx_buffer_overflow_pkt = tx_buffer_overflow;
+  health->rx_buffer_overflow_pkt = rx_buffer_overflow;
   health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = car_harness_status;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
@@ -30,7 +31,6 @@ int get_health_pkt(void *dat) {
   health->alternative_experience_pkt = alternative_experience;
   health->power_save_enabled_pkt = (uint8_t)(power_save_status == POWER_SAVE_STATUS_ENABLED);
   health->heartbeat_lost_pkt = (uint8_t)(heartbeat_lost);
-  health->blocked_msg_cnt_pkt = blocked_msg_cnt;
 
   health->fault_status_pkt = fault_status;
   health->faults_pkt = faults;

@@ -72,7 +72,8 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       }
     }
   }
-  blocked_msg_cnt = 0;
+  safety_tx_blocked = 0;
+  safety_rx_invalid = 0;
 
   switch (mode_copy) {
     case SAFETY_SILENT:

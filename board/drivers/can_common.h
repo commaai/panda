@@ -14,11 +14,11 @@ typedef struct {
   bool brs_enabled;
 } bus_config_t;
 
-uint32_t can_rx_errs = 0;
-uint32_t can_send_errs = 0;
-uint32_t can_fwd_errs = 0;
+uint32_t safety_tx_blocked = 0;
+uint32_t safety_rx_invalid = 0;
+uint32_t tx_buffer_overflow = 0;
+uint32_t rx_buffer_overflow = 0;
 uint32_t gmlan_send_errs = 0;
-uint32_t blocked_msg_cnt = 0;
 
 can_health_t can_health[] = {{0}, {0}, {0}};
 
@@ -224,13 +224,13 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
       if ((bus_number == 3U) && (bus_config[3].can_num_lookup == 0xFFU)) {
         gmlan_send_errs += bitbang_gmlan(to_push) ? 0U : 1U;
       } else {
-        can_fwd_errs += can_push(can_queues[bus_number], to_push) ? 0U : 1U;
+        tx_buffer_overflow += can_push(can_queues[bus_number], to_push) ? 0U : 1U;
         process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
       }
     }
   } else {
-    blocked_msg_cnt += 1U;
+    safety_tx_blocked += 1U;
     to_push->rejected = 1U;
-    can_send_errs += can_push(&can_rx_q, to_push) ? 0U : 1U;
+    rx_buffer_overflow += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }
 }
