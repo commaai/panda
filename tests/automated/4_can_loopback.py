@@ -156,24 +156,12 @@ def test_gen2_loopback(p):
   # Run tests in both directions
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   test(p, panda_jungle)
-  for i in range(3):
-    can_health = p.can_health(i)
-    print( can_health)
   test(panda_jungle, p)
-  for i in range(3):
-    can_health = p.can_health(i)
-    print( can_health)
 
   # Test extended frame address with ELM327 mode
   p.set_safety_mode(Panda.SAFETY_ELM327)
   test(p, panda_jungle, 0x18DB33F1)
-  for i in range(3):
-    can_health = p.can_health(i)
-    print( can_health)
   test(panda_jungle, p, 0x18DB33F1)
-  for i in range(3):
-    can_health = p.can_health(i)
-    print( can_health)
 
 @test_all_pandas
 @panda_connect_and_init
