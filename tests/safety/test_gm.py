@@ -6,7 +6,7 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, ALTERNATIVE_EXPERIENCE
 
-MAX_BRAKE = 350
+MAX_BRAKE = 400
 MAX_GAS = 3072
 MAX_REGEN = 1404
 
