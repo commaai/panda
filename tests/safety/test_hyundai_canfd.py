@@ -15,8 +15,8 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
   FWD_BLACKLISTED_ADDRS = {2: [0x50, 0x2a4]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-  MAX_RATE_UP = 3
-  MAX_RATE_DOWN = 7
+  MAX_RATE_UP = 2
+  MAX_RATE_DOWN = 3
   MAX_TORQUE = 270
 
   MAX_RT_DELTA = 112
