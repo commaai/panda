@@ -534,7 +534,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xde: set CAN FD data bitrate
     case 0xf9:
-      if (req->param1 < CAN_CNT) {
+      if ((req->param1 < CAN_CNT) && current_board->has_canfd) {
         // TODO: add sanity check, ideally check if value is correct (from array of correct values)
         bus_config[req->param1].can_data_speed = req->param2;
         bus_config[req->param1].canfd_enabled = (req->param2 >= bus_config[req->param1].can_speed);
