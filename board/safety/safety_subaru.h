@@ -172,9 +172,9 @@ static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     // Global Platform
     // 0x13c is Brake_Status
     // 0x240 is CruiseControl
-    bool block_msg = subaru_longitudinal ? (addr == 0x13c) || (addr == 0x240) : false;
+    bool block_msg = subaru_longitudinal && ((addr == 0x13c) || (addr == 0x240));
     if (!block_msg) {
-      bus_fwd = 2;  // Camera CAN
+      bus_fwd = 2;  // to the eyesight camera
     }
   }
 
@@ -186,11 +186,9 @@ static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     // 0x222 is ES_Status
     // 0x321 is ES_DashStatus
     // 0x322 is ES_LKAS_State
-    bool block_msg = subaru_longitudinal ? (addr == 0x122) || (addr == 0x220) ||
-                                           (addr == 0x221) || (addr == 0x222) ||
-                                           (addr == 0x321) || (addr == 0x322)
-                                         : (addr == 0x122) || (addr == 0x321) ||
-                                           (addr == 0x322);
+    bool block_common = (addr == 0x122) || (addr == 0x321) || (addr == 0x322);
+    bool block_long = (addr == 0x220) || (addr == 0x221) || (addr == 0x222);
+    bool block_msg = block_common || (subaru_longitudinal && block_long);
     if (!block_msg) {
       bus_fwd = 0;  // Main CAN
     }
