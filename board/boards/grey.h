@@ -41,6 +41,7 @@ const board board_grey = {
   .has_hw_gmlan = true,
   .has_obd = false,
   .has_lin = true,
+  .has_canfd = false,
   .has_rtc_battery = false,
   .fan_max_rpm = 0U,
   .init = grey_init,

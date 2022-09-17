@@ -158,5 +158,5 @@ def test_gmlan_bad_toggle(p):
 @panda_connect_and_init
 def test_serial_debug(p):
   _ = p.serial_read(Panda.SERIAL_DEBUG)  # junk
-  p.call_control_api(0xc0)
-  assert(p.serial_read(Panda.SERIAL_DEBUG).startswith(b"can "))
+  p.call_control_api(0x01)
+  assert(p.serial_read(Panda.SERIAL_DEBUG).startswith(b"NO HANDLER"))

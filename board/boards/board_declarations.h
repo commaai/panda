@@ -21,6 +21,7 @@ struct board {
   const bool has_hw_gmlan;
   const bool has_obd;
   const bool has_lin;
+  const bool has_canfd;
   const bool has_rtc_battery;
   const uint16_t fan_max_rpm;
   board_init init;
@@ -49,6 +50,7 @@ struct board {
 #define HW_TYPE_UNO 5U
 #define HW_TYPE_DOS 6U
 #define HW_TYPE_RED_PANDA 7U
+#define HW_TYPE_RED_PANDA_V2 8U
 
 // LED colors
 #define LED_RED 0U
