@@ -168,6 +168,9 @@ bus_config_t bus_config[] = {
 void can_init_all(void) {
   bool ret = true;
   for (uint8_t i=0U; i < CAN_CNT; i++) {
+    if (!current_board->has_canfd) {
+      bus_config[i].can_data_speed = 0U;
+    }
     can_clear(can_queues[i]);
     ret &= can_init(i);
   }
