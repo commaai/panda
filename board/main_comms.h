@@ -251,6 +251,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xc2:
       COMPILE_TIME_ASSERT(sizeof(can_health_t) <= USBPACKET_MAX_SIZE);
       if (req->param1 < 3U) {
+        can_health[req->param1].can_speed = (bus_config[req->param1].can_speed / 10U);
+        can_health[req->param1].can_data_speed = (bus_config[req->param1].can_data_speed / 10U);
+        can_health[req->param1].canfd_enabled = bus_config[req->param1].canfd_enabled;
+        can_health[req->param1].brs_enabled = bus_config[req->param1].brs_enabled;
         resp_len = sizeof(can_health[req->param1]);
         (void)memcpy(resp, &can_health[req->param1], resp_len);
       }
