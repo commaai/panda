@@ -117,6 +117,16 @@ def ensure_can_packet_version(fn):
     return fn(self, *args, **kwargs)
   return wrapper
 
+def ensure_can_health_packet_version(fn):
+  @wraps(fn)
+  def wrapper(self, *args, **kwargs):
+    if self.can_health_version < self.CAN_HEALTH_PACKET_VERSION:
+      raise RuntimeError("Panda firmware has outdated CAN health packet definition. Reflash panda firmware.")
+    elif self.can_health_version > self.CAN_HEALTH_PACKET_VERSION:
+      raise RuntimeError("Panda python library has outdated CAN health packet definition. Update panda python library.")
+    return fn(self, *args, **kwargs)
+  return wrapper
+
 class ALTERNATIVE_EXPERIENCE:
   DEFAULT = 0
   DISABLE_DISENGAGE_ON_GAS = 1
@@ -175,8 +185,10 @@ class Panda:
   HW_TYPE_RED_PANDA_V2 = b'\x08'
 
   CAN_PACKET_VERSION = 2
-  HEALTH_PACKET_VERSION = 9
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBHBBBHIfB")
+  HEALTH_PACKET_VERSION = 10
+  CAN_HEALTH_PACKET_VERSION = 2
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfB")
+  CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIHHBB")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
@@ -273,7 +285,7 @@ class Panda:
 
     assert self._handle is not None
     self._mcu_type = self.get_mcu_type()
-    self.health_version, self.can_version = self.get_packets_versions()
+    self.health_version, self.can_version, self.can_health_version = self.get_packets_versions()
     print("connected")
 
     # disable openpilot's heartbeat checks
@@ -439,25 +451,62 @@ class Panda:
       "uptime": a[0],
       "voltage": a[1],
       "current": a[2],
-      "can_rx_errs": a[3],
-      "can_send_errs": a[4],
-      "can_fwd_errs": a[5],
-      "gmlan_send_errs": a[6],
-      "faults": a[7],
-      "ignition_line": a[8],
-      "ignition_can": a[9],
-      "controls_allowed": a[10],
-      "gas_interceptor_detected": a[11],
-      "car_harness_status": a[12],
-      "safety_mode": a[13],
-      "safety_param": a[14],
-      "fault_status": a[15],
-      "power_save_enabled": a[16],
-      "heartbeat_lost": a[17],
-      "alternative_experience": a[18],
-      "blocked_msg_cnt": a[19],
+      "safety_tx_blocked": a[3],
+      "safety_rx_invalid": a[4],
+      "tx_buffer_overflow": a[5],
+      "rx_buffer_overflow": a[6],
+      "gmlan_send_errs": a[7],
+      "faults": a[8],
+      "ignition_line": a[9],
+      "ignition_can": a[10],
+      "controls_allowed": a[11],
+      "gas_interceptor_detected": a[12],
+      "car_harness_status": a[13],
+      "safety_mode": a[14],
+      "safety_param": a[15],
+      "fault_status": a[16],
+      "power_save_enabled": a[17],
+      "heartbeat_lost": a[18],
+      "alternative_experience": a[19],
       "interrupt_load": a[20],
       "fan_power": a[21],
+    }
+
+  @ensure_can_health_packet_version
+  def can_health(self, can_number):
+    LEC_ERROR_CODE = {
+      0: "No error",
+      1: "Stuff error",
+      2: "Form error",
+      3: "AckError",
+      4: "Bit1Error",
+      5: "Bit0Error",
+      6: "CRCError",
+      7: "NoChange",
+    }
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xc2, int(can_number), 0, self.CAN_HEALTH_STRUCT.size)
+    a = self.CAN_HEALTH_STRUCT.unpack(dat)
+    return {
+      "bus_off": a[0],
+      "bus_off_cnt": a[1],
+      "error_warning": a[2],
+      "error_passive": a[3],
+      "last_error": LEC_ERROR_CODE[a[4]],
+      "last_stored_error": LEC_ERROR_CODE[a[5]],
+      "last_data_error": LEC_ERROR_CODE[a[6]],
+      "last_data_stored_error": LEC_ERROR_CODE[a[7]],
+      "receive_error_cnt": a[8],
+      "transmit_error_cnt": a[9],
+      "total_error_cnt": a[10],
+      "total_tx_lost_cnt": a[11],
+      "total_rx_lost_cnt": a[12],
+      "total_tx_cnt": a[13],
+      "total_rx_cnt": a[14],
+      "total_fwd_cnt": a[15],
+      "can_speed": a[16],
+      "can_data_speed": a[17],
+      "canfd_enabled": a[18],
+      "brs_enabled": a[19],
     }
 
   # ******************* control *******************
@@ -494,12 +543,12 @@ class Panda:
 
   # Returns tuple with health packet version and CAN packet/USB packet version
   def get_packets_versions(self):
-    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xdd, 0, 0, 2)
-    if dat:
-      a = struct.unpack("BB", dat)
-      return (a[0], a[1])
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xdd, 0, 0, 3)
+    if dat and len(dat) == 3:
+      a = struct.unpack("BBB", dat)
+      return (a[0], a[1], a[2])
     else:
-      return (0, 0)
+      return (0, 0, 0)
 
   def get_mcu_type(self):
     hw_type = self.get_type()

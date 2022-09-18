@@ -13,6 +13,10 @@
 
 void puts(const char *a);
 
+// kbps multiplied by 10
+const uint32_t speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
+const uint32_t data_speeds[] = {0U}; // No separate data speed, dummy
+
 bool llcan_set_speed(CAN_TypeDef *CAN_obj, uint32_t speed, bool loopback, bool silent) {
   bool ret = true;
 
@@ -99,7 +103,7 @@ bool llcan_init(CAN_TypeDef *CAN_obj) {
     register_clear_bits(&(CAN_obj->FMR), CAN_FMR_FINIT);
 
     // enable certain CAN interrupts
-    register_set_bits(&(CAN_obj->IER), CAN_IER_TMEIE | CAN_IER_FMPIE0 |  CAN_IER_WKUIE | CAN_IER_ERRIE | CAN_IER_BOFIE);
+    register_set_bits(&(CAN_obj->IER), CAN_IER_TMEIE | CAN_IER_FMPIE0 | CAN_IER_ERRIE | CAN_IER_LECIE | CAN_IER_BOFIE | CAN_IER_EPVIE | CAN_IER_EWGIE | CAN_IER_FOVIE0 | CAN_IER_FFIE0);
 
     if (CAN_obj == CAN1) {
       NVIC_EnableIRQ(CAN1_TX_IRQn);
@@ -123,8 +127,6 @@ bool llcan_init(CAN_TypeDef *CAN_obj) {
 }
 
 void llcan_clear_send(CAN_TypeDef *CAN_obj) {
-  CAN_obj->TSR |= CAN_TSR_ABRQ0;
-  register_clear_bits(&(CAN_obj->MSR), CAN_MSR_ERRI);
-  // cppcheck-suppress selfAssignment ; needed to clear the register
-  CAN_obj->MSR = CAN_obj->MSR;
+  CAN_obj->TSR |= CAN_TSR_ABRQ0; // Abort message transmission on error interrupt
+  CAN_obj->MSR |= CAN_MSR_ERRI; // Clear error interrupt
 }
