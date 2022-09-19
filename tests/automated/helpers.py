@@ -13,7 +13,7 @@ SPEED_NORMAL = 500
 SPEED_GMLAN = 33.3
 BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL), (3, SPEED_GMLAN)]
 TIMEOUT = 45
-H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA]
+H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2]
 GEN2_HW_TYPES = [Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO] + H7_HW_TYPES
 GPS_HW_TYPES = [Panda.HW_TYPE_GREY_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
 PEDAL_SERIAL = 'none'
@@ -55,7 +55,8 @@ test_all_types = parameterized([
     param(panda_type=Panda.HW_TYPE_GREY_PANDA),
     param(panda_type=Panda.HW_TYPE_BLACK_PANDA),
     param(panda_type=Panda.HW_TYPE_UNO),
-    param(panda_type=Panda.HW_TYPE_RED_PANDA)
+    param(panda_type=Panda.HW_TYPE_RED_PANDA),
+    param(panda_type=Panda.HW_TYPE_RED_PANDA_V2)
   ])
 test_all_pandas = parameterized(
     list(map(lambda x: x[0], _all_pandas))  # type: ignore
@@ -206,6 +207,17 @@ def panda_connect_and_init(fn=None, full_reset=True):
         if not panda.bootstub:
           panda.reconnect()
           assert panda.health()['fault_status'] == 0
+          # Check health of each CAN core after test, normal to fail for test_gen2_loopback on OBD bus, so skipping
+          if fn.__name__ != "test_gen2_loopback":
+            for i in range(3):
+              print(fn.__name__)
+              can_health = panda.can_health(i)
+              assert can_health['bus_off_cnt'] == 0
+              assert can_health['receive_error_cnt'] == 0
+              assert can_health['transmit_error_cnt'] == 0
+              assert can_health['total_rx_lost_cnt'] == 0
+              assert can_health['total_tx_lost_cnt'] == 0
+              assert can_health['total_error_cnt'] == 0
     finally:
       for p in pandas:
         try:
