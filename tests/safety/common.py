@@ -36,6 +36,28 @@ class CANPackerPanda(CANPacker):
     return package_can_msg(msg)
 
 
+def add_regen_tests(cls):
+  """Dynamically adds regen tests for all user brake tests."""
+
+  # only rx/user brake tests, not brake command
+  found_tests = [func for func in dir(cls) if func.startswith("test_") and "user_brake" in func]
+  assert len(found_tests) >= 3, "Failed to detect known brake tests"
+
+  for test in found_tests:
+    def _make_regen_test(brake_func):
+      def _regen_test(self):
+        # only for safety modes with a regen message
+        if self._user_regen_msg(0) is None:
+          raise unittest.SkipTest("Safety mode implements no _user_regen_msg")
+
+        getattr(self, brake_func)(self._user_regen_msg, self.safety.get_regen_braking_prev)
+      return _regen_test
+
+    setattr(cls, test.replace("brake", "regen"), _make_regen_test(test))
+
+  return cls
+
+
 class PandaSafetyTestBase(unittest.TestCase):
   @classmethod
   def setUpClass(cls):
@@ -426,6 +448,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
 
+@add_regen_tests
 class PandaSafetyTest(PandaSafetyTestBase):
   TX_MSGS: Optional[List[List[int]]] = None
   SCANNED_ADDRS = [*range(0x0, 0x800),                      # Entire 11-bit CAN address space
@@ -448,6 +471,9 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   @abc.abstractmethod
   def _user_brake_msg(self, brake):
+    pass
+
+  def _user_regen_msg(self, regen):
     pass
 
   @abc.abstractmethod
@@ -542,13 +568,17 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._user_gas_msg(0))
     self.assertTrue(self.safety.get_longitudinal_allowed())
 
-  def test_prev_brake(self):
-    self.assertFalse(self.safety.get_brake_pressed_prev())
+  def test_prev_user_brake(self, _user_brake_msg=None, get_brake_pressed_prev=None):
+    if _user_brake_msg is None:
+      _user_brake_msg = self._user_brake_msg
+      get_brake_pressed_prev = self.safety.get_brake_pressed_prev
+
+    self.assertFalse(get_brake_pressed_prev())
     for pressed in [True, False]:
-      self._rx(self._user_brake_msg(not pressed))
-      self.assertEqual(not pressed, self.safety.get_brake_pressed_prev())
-      self._rx(self._user_brake_msg(pressed))
-      self.assertEqual(pressed, self.safety.get_brake_pressed_prev())
+      self._rx(_user_brake_msg(not pressed))
+      self.assertEqual(not pressed, get_brake_pressed_prev())
+      self._rx(_user_brake_msg(pressed))
+      self.assertEqual(pressed, get_brake_pressed_prev())
 
   def test_enable_control_allowed_from_cruise(self):
     self._rx(self._pcm_status_msg(False))
@@ -568,33 +598,39 @@ class PandaSafetyTest(PandaSafetyTestBase):
       self._rx(self._pcm_status_msg(not engaged))
       self.assertEqual(not engaged, self.safety.get_cruise_engaged_prev())
 
-  def test_allow_brake_at_zero_speed(self):
+  def test_allow_user_brake_at_zero_speed(self, _user_brake_msg=None, get_brake_pressed_prev=None):
+    if _user_brake_msg is None:
+      _user_brake_msg = self._user_brake_msg
+
     # Brake was already pressed
     self._rx(self._speed_msg(0))
-    self._rx(self._user_brake_msg(1))
+    self._rx(_user_brake_msg(1))
     self.safety.set_controls_allowed(1)
-    self._rx(self._user_brake_msg(1))
+    self._rx(_user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
-    self._rx(self._user_brake_msg(0))
+    self._rx(_user_brake_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
     # rising edge of brake should disengage
-    self._rx(self._user_brake_msg(1))
+    self._rx(_user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
-    self._rx(self._user_brake_msg(0))  # reset no brakes
+    self._rx(_user_brake_msg(0))  # reset no brakes
 
-  def test_not_allow_brake_when_moving(self):
+  def test_not_allow_user_brake_when_moving(self, _user_brake_msg=None, get_brake_pressed_prev=None):
+    if _user_brake_msg is None:
+      _user_brake_msg = self._user_brake_msg
+
     # Brake was already pressed
-    self._rx(self._user_brake_msg(1))
+    self._rx(_user_brake_msg(1))
     self.safety.set_controls_allowed(1)
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
-    self._rx(self._user_brake_msg(1))
+    self._rx(_user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
-    self._rx(self._user_brake_msg(1))
+    self._rx(_user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
     self._rx(self._speed_msg(0))
