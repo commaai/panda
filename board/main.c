@@ -12,7 +12,8 @@
 #include "power_saving.h"
 #include "safety.h"
 
-#include "can_health.h"
+#include "health.h"
+
 #include "drivers/can_common.h"
 
 #ifdef STM32H7
