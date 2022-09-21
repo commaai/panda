@@ -187,7 +187,7 @@ class Panda:
   CAN_PACKET_VERSION = 2
   HEALTH_PACKET_VERSION = 10
   CAN_HEALTH_PACKET_VERSION = 2
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfB")
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBB")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIHHBB")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
@@ -462,15 +462,15 @@ class Panda:
       "controls_allowed": a[11],
       "gas_interceptor_detected": a[12],
       "car_harness_status": a[13],
-      "usb_power_mode": a[14],
-      "safety_mode": a[15],
-      "safety_param": a[16],
-      "fault_status": a[17],
-      "power_save_enabled": a[18],
-      "heartbeat_lost": a[19],
-      "alternative_experience": a[20],
-      "interrupt_load": a[21],
-      "fan_power": a[22],
+      "safety_mode": a[14],
+      "safety_param": a[15],
+      "fault_status": a[16],
+      "power_save_enabled": a[17],
+      "heartbeat_lost": a[18],
+      "alternative_experience": a[19],
+      "interrupt_load": a[20],
+      "fan_power": a[21],
+      "usb_power_mode": a[22],
     }
 
   @ensure_can_health_packet_version
