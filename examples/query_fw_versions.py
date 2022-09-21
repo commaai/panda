@@ -40,7 +40,8 @@ if __name__ == "__main__":
   if len(panda_serials) > 1 and args.serial is None:
     print("Multiple pandas found, choose one:")
     for serial in panda_serials:
-      print(f"- {serial}")
+      panda = Panda(serial)
+      print(f"{serial}: type={panda.get_type_name()} internal={panda.is_internal()}")
     parser.print_help()
     exit(0)
   serial = args.serial if args.serial else panda_serials[0]

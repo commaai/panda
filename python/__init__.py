@@ -556,6 +556,27 @@ class Panda:
 
     return ret
 
+  def get_type_name(self):
+    hw_type = self.get_type()
+    if hw_type == Panda.HW_TYPE_WHITE_PANDA:
+      return "white"
+    elif hw_type == Panda.HW_TYPE_GREY_PANDA:
+      return "grey"
+    elif hw_type == Panda.HW_TYPE_BLACK_PANDA:
+      return "black"
+    elif hw_type == Panda.HW_TYPE_PEDAL:
+      return "pedal"
+    elif hw_type == Panda.HW_TYPE_UNO:
+      return "uno"
+    elif hw_type == Panda.HW_TYPE_DOS:
+      return "dos"
+    elif hw_type == Panda.HW_TYPE_RED_PANDA:
+      return "red"
+    elif hw_type == Panda.HW_TYPE_RED_PANDA_V2:
+      return "red v2"
+    else:
+      return "unknown"
+
   # Returns tuple with health packet version and CAN packet/USB packet version
   def get_packets_versions(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xdd, 0, 0, 3)
