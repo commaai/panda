@@ -12,6 +12,7 @@ if __name__ == "__main__":
   parser.add_argument('--debug', action='store_true')
   parser.add_argument('--addr')
   parser.add_argument('--bus')
+  parser.add_argument('--serial', help="Serial number of panda to use")
   args = parser.parse_args()
 
   if args.addr:
@@ -32,7 +33,19 @@ if __name__ == "__main__":
     for uds_id in range(0xf1f0,0xf200):
       uds_data_ids[uds_id] = "IDENTIFICATION_OPTION_SYSTEM_SUPPLIER_SPECIFIC"
 
-  panda = Panda()
+  panda_serials = Panda.list()
+  if len(panda_serials) == 0:
+    print("No panda found")
+    exit(0)
+  if len(panda_serials) > 1 and args.serial is None:
+    print("Multiple pandas found, choose one:")
+    for serial in panda_serials:
+      print(f"- {serial}")
+    parser.print_help()
+    exit(0)
+  serial = args.serial if args.serial else panda_serials[0]
+
+  panda = Panda(serial)
   panda.set_safety_mode(Panda.SAFETY_ELM327)
   print("querying addresses ...")
   with tqdm(addrs) as t:
