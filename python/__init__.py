@@ -183,6 +183,9 @@ class Panda:
   HW_TYPE_RED_PANDA_V2 = b'\x08'
   HW_TYPE_TRES = b'\x09'
 
+  HW_TYPES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_PEDAL, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2]
+  HW_TYPE_NAMES = ["white", "grey", "black", "pedal", "uno", "dos", "red", "red v2"]
+
   CAN_PACKET_VERSION = 4
   HEALTH_PACKET_VERSION = 11
   CAN_HEALTH_PACKET_VERSION = 4
@@ -557,24 +560,9 @@ class Panda:
     return ret
 
   def get_type_name(self):
-    hw_type = self.get_type()
-    if hw_type == Panda.HW_TYPE_WHITE_PANDA:
-      return "white"
-    elif hw_type == Panda.HW_TYPE_GREY_PANDA:
-      return "grey"
-    elif hw_type == Panda.HW_TYPE_BLACK_PANDA:
-      return "black"
-    elif hw_type == Panda.HW_TYPE_PEDAL:
-      return "pedal"
-    elif hw_type == Panda.HW_TYPE_UNO:
-      return "uno"
-    elif hw_type == Panda.HW_TYPE_DOS:
-      return "dos"
-    elif hw_type == Panda.HW_TYPE_RED_PANDA:
-      return "red"
-    elif hw_type == Panda.HW_TYPE_RED_PANDA_V2:
-      return "red v2"
-    else:
+    try:
+      return Panda.HW_TYPE_NAMES[Panda.HW_TYPES.index(self.get_type())]
+    except ValueError:
       return "unknown"
 
   # Returns tuple with health packet version and CAN packet/USB packet version
