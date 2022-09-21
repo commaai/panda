@@ -456,8 +456,8 @@ class IsoTpMessage():
         print(f"ISO-TP: RX - first frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       if self.debug:
         print(f"ISO-TP: TX - flow control continue - {hex(self._can_client.tx_addr)}")
-      # send flow control message (send all bytes)
-      msg = b"\x30\x00\x00".ljust(self.max_len, b"\x00")
+      # send flow control message (send all bytes) with a separation time of 10 ms
+      msg = b"\x30\x00\x0a".ljust(self.max_len, b"\x00")
       self._can_client.send([msg])
       return
 

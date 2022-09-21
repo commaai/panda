@@ -168,6 +168,9 @@ bus_config_t bus_config[] = {
 void can_init_all(void) {
   bool ret = true;
   for (uint8_t i=0U; i < CAN_CNT; i++) {
+    if (!current_board->has_canfd) {
+      bus_config[i].can_data_speed = 0U;
+    }
     can_clear(can_queues[i]);
     ret &= can_init(i);
   }
@@ -233,4 +236,14 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
     to_push->rejected = 1U;
     rx_buffer_overflow += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }
+}
+
+bool is_speed_valid(uint32_t speed, const uint32_t *speeds, uint8_t len) {
+  bool ret = false;
+  for (uint8_t i = 0U; i < len; i++) {
+    if (speeds[i] == speed) {
+      ret = true;
+    }
+  }
+  return ret;
 }

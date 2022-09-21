@@ -187,6 +187,7 @@ const board board_black = {
   .has_hw_gmlan = false,
   .has_obd = true,
   .has_lin = false,
+  .has_canfd = false,
   .has_rtc_battery = false,
   .fan_max_rpm = 0U,
   .init = black_init,
