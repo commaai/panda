@@ -35,16 +35,20 @@ if __name__ == "__main__":
 
   panda_serials = Panda.list()
   if len(panda_serials) == 0:
-    print("No panda found")
-    exit(0)
-  if len(panda_serials) > 1 and args.serial is None:
+    print("no panda found")
+    exit()
+  if args.serial is None and len(panda_serials) > 1:
     print("Multiple pandas found, choose one:")
     for serial in panda_serials:
       panda = Panda(serial)
       print(f"{serial}: type={panda.get_type_name()} internal={panda.is_internal()}")
+      panda.close()
     parser.print_help()
-    exit(0)
-  serial = args.serial if args.serial else panda_serials[0]
+    exit()
+  elif args.serial is not None and args.serial not in panda_serials:
+    print(f"panda {args.serial} not found")
+    exit()
+  serial = args.serial if args.serial is not None else panda_serials[0]
 
   panda = Panda(serial)
   panda.set_safety_mode(Panda.SAFETY_ELM327)
