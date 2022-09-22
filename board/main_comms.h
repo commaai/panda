@@ -24,7 +24,6 @@ int get_health_pkt(void *dat) {
   health->rx_buffer_overflow_pkt = rx_buffer_overflow;
   health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = car_harness_status;
-  health->usb_power_mode_pkt = usb_power_mode;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
   health->alternative_experience_pkt = alternative_experience;
@@ -38,6 +37,7 @@ int get_health_pkt(void *dat) {
 
   health->fan_power = fan_state.power;
 
+  health->usb_power_mode_pkt = usb_power_mode;
   return sizeof(*health);
 }
 
