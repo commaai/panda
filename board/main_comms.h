@@ -1,5 +1,3 @@
-#include "health.h"
-
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // Prototypes
@@ -251,6 +249,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xc2:
       COMPILE_TIME_ASSERT(sizeof(can_health_t) <= USBPACKET_MAX_SIZE);
       if (req->param1 < 3U) {
+        can_health[req->param1].can_speed = (bus_config[req->param1].can_speed / 10U);
+        can_health[req->param1].can_data_speed = (bus_config[req->param1].can_data_speed / 10U);
+        can_health[req->param1].canfd_enabled = bus_config[req->param1].canfd_enabled;
+        can_health[req->param1].brs_enabled = bus_config[req->param1].brs_enabled;
         resp_len = sizeof(can_health[req->param1]);
         (void)memcpy(resp, &can_health[req->param1], resp_len);
       }
@@ -380,8 +382,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xde: set can bitrate
     case 0xde:
-      if (req->param1 < BUS_CNT) {
-        // TODO: add sanity check, ideally check if value is correct(from array of correct values)
+      if ((req->param1 < BUS_CNT) && is_speed_valid(req->param2, speeds, sizeof(speeds)/sizeof(speeds[0]))) {
         bus_config[req->param1].can_speed = req->param2;
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(req->param1));
         UNUSED(ret);
@@ -534,8 +535,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xde: set CAN FD data bitrate
     case 0xf9:
-      if (req->param1 < CAN_CNT) {
-        // TODO: add sanity check, ideally check if value is correct (from array of correct values)
+      if ((req->param1 < CAN_CNT) &&
+           current_board->has_canfd &&
+           is_speed_valid(req->param2, data_speeds, sizeof(data_speeds)/sizeof(data_speeds[0]))) {
         bus_config[req->param1].can_data_speed = req->param2;
         bus_config[req->param1].canfd_enabled = (req->param2 >= bus_config[req->param1].can_speed);
         bus_config[req->param1].brs_enabled = (req->param2 > bus_config[req->param1].can_speed);
