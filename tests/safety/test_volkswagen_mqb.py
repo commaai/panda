@@ -85,7 +85,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
 
   # Acceleration request to drivetrain coordinator
   def _acc_07_msg(self, accel, secondary_accel=3.02):
-    values = {"ACC_Accel_TSK": accel, "ACC_Accel_Secondary": secondary_accel}
+    values = {"ACC_Sollbeschleunigung_02": accel, "ACC_Folgebeschl": secondary_accel}
     return self.packer.make_can_msg_panda("ACC_07", 0, values)
 
   def test_torque_measurements(self):
