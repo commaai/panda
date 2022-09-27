@@ -555,7 +555,7 @@ class UdsClient():
     response_pending = False
     while True:
       timeout = self.response_pending_timeout if response_pending else self.timeout
-      resp, updated = isotp_msg.recv(timeout)
+      resp, _ = isotp_msg.recv(timeout)
 
       if resp is None:
         continue
