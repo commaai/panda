@@ -458,8 +458,8 @@ class IsoTpMessage():
         print(f"ISO-TP: RX - first frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       if self.debug:
         print(f"ISO-TP: TX - flow control continue - {hex(self._can_client.tx_addr)}")
-      # send flow control message (send all bytes) with a separation time of 10 ms
-      msg = b"\x30\x00\x0a".ljust(self.max_len, b"\x00")
+      # send flow control message (send one frame at a time)
+      msg = b"\x30\x01\x00".ljust(self.max_len, b"\x00")
       self._can_client.send([msg])
       return
 
@@ -472,6 +472,10 @@ class IsoTpMessage():
       self.rx_dat += rx_data[1:1 + rx_size]
       if self.rx_len == len(self.rx_dat):
         self.rx_done = True
+      else:
+        # notify ECU to send next frame
+        msg = b"\x30\x01\x00".ljust(self.max_len, b"\x00")
+        self._can_client.send([msg])
       if self.debug:
         print(f"ISO-TP: RX - consecutive frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       return
