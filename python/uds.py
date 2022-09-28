@@ -460,8 +460,10 @@ class IsoTpMessage():
       if self.debug:
         print(f"ISO-TP: TX - flow control continue - {hex(self._can_client.tx_addr)}")
       # send flow control message
-      msg = b"\x30\x01\x00" if self.single_frame_mode else b"\x30\x00\x00"
-      self._can_client.send([msg.ljust(self.max_len, b"\x00")])
+      msg = [0x30, 0x00, 0x00]
+      if self.single_frame_mode:
+        msg[1] = 0x01
+      self._can_client.send([bytes(msg).ljust(self.max_len, b"\x00")])
       return
 
     # consecutive rx frame
