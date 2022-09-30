@@ -293,7 +293,7 @@ def get_dtc_status_names(status):
 
 class CanClient():
   def __init__(self, can_send: Callable[[int, bytes, int], None], can_recv: Callable[[], List[Tuple[int, int, bytes, int]]],
-               tx_addr: int, rx_addr: int, bus: int, sub_addr: int = None, debug: bool = False):
+               tx_addr: int, rx_addr: Optional[int], bus: int, sub_addr: int = None, debug: bool = False):
     self.tx = can_send
     self.rx = can_recv
     self.tx_addr = tx_addr
