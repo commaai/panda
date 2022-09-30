@@ -381,13 +381,10 @@ class IsoTpMessage():
     self.timeout = timeout
     self.debug = debug
     self.max_len = max_len
+    self.reset()
 
-  def send(self, dat: bytes) -> None:
-    # throw away any stale data
-    self._can_client.recv(drain=True)
-
-    self.tx_dat = dat
-    self.tx_len = len(dat)
+  def reset(self):
+    # If recv is called before send, we assume all tx has been performed prior
     self.tx_idx = 0
     self.tx_done = False
 
@@ -395,6 +392,14 @@ class IsoTpMessage():
     self.rx_len = 0
     self.rx_idx = 0
     self.rx_done = False
+
+  def send(self, dat: bytes) -> None:
+    # throw away any stale data
+    self._can_client.recv(drain=True)
+
+    self.tx_dat = dat
+    self.tx_len = len(dat)
+    self.tx_done = False
 
     if self.debug:
       print(f"ISO-TP: REQUEST - {hex(self._can_client.tx_addr)} 0x{bytes.hex(self.tx_dat)}")
