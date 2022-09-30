@@ -386,7 +386,7 @@ class IsoTpMessage():
   def reset(self):
     # If recv is called before send, we assume all tx has been performed prior
     self.tx_idx = 0
-    self.tx_done = False
+    self.tx_done = True
 
     self.rx_dat = b""
     self.rx_len = 0
