@@ -381,6 +381,8 @@ class IsoTpMessage():
     self.timeout = timeout
     self.debug = debug
     self.max_len = max_len
+    self.tx_done = True
+    self.rx_done = False
 
   def send(self, dat: bytes) -> None:
     # throw away any stale data
