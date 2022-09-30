@@ -393,7 +393,7 @@ class IsoTpMessage():
     self.rx_idx = 0
     self.rx_done = False
 
-  def send(self, dat: bytes) -> None:
+  def send(self, dat: bytes, dry_run: bool = False) -> None:
     # throw away any stale data
     self._can_client.recv(drain=True)
     self.tx_dat = dat
@@ -401,9 +401,9 @@ class IsoTpMessage():
 
     if self.debug:
       print(f"ISO-TP: REQUEST - {hex(self._can_client.tx_addr)} 0x{bytes.hex(self.tx_dat)}")
-    self._tx_first_frame()
+    self._tx_first_frame(dry_run=dry_run)
 
-  def _tx_first_frame(self) -> None:
+  def _tx_first_frame(self, dry_run: bool = False) -> None:
     if self.tx_len < self.max_len:
       # single frame (send all bytes)
       if self.debug:
@@ -415,7 +415,8 @@ class IsoTpMessage():
       if self.debug:
         print(f"ISO-TP: TX - first frame - {hex(self._can_client.tx_addr)}")
       msg = (struct.pack("!H", 0x1000 | self.tx_len) + self.tx_dat[:self.max_len - 2]).ljust(self.max_len - 2, b"\x00")
-    self._can_client.send([msg])
+    if not dry_run:
+      self._can_client.send([msg])
 
   def recv(self, timeout=None) -> Tuple[Optional[bytes], bool]:
     if timeout is None:
