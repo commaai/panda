@@ -382,7 +382,7 @@ class IsoTpMessage():
     self.debug = debug
     self.max_len = max_len
 
-  def send(self, dat: bytes) -> None:
+  def send(self, dat: bytes, setup_only: bool = False) -> None:
     # throw away any stale data
     self._can_client.recv(drain=True)
 
@@ -396,23 +396,24 @@ class IsoTpMessage():
     self.rx_idx = 0
     self.rx_done = False
 
-    if self.debug:
+    if self.debug and not setup_only:
       print(f"ISO-TP: REQUEST - {hex(self._can_client.tx_addr)} 0x{bytes.hex(self.tx_dat)}")
-    self._tx_first_frame()
+    self._tx_first_frame(setup_only=setup_only)
 
-  def _tx_first_frame(self) -> None:
+  def _tx_first_frame(self, setup_only: bool = False) -> None:
     if self.tx_len < self.max_len:
       # single frame (send all bytes)
-      if self.debug:
+      if self.debug and not setup_only:
         print(f"ISO-TP: TX - single frame - {hex(self._can_client.tx_addr)}")
       msg = (bytes([self.tx_len]) + self.tx_dat).ljust(self.max_len, b"\x00")
       self.tx_done = True
     else:
       # first frame (send first 6 bytes)
-      if self.debug:
+      if self.debug and not setup_only:
         print(f"ISO-TP: TX - first frame - {hex(self._can_client.tx_addr)}")
       msg = (struct.pack("!H", 0x1000 | self.tx_len) + self.tx_dat[:self.max_len - 2]).ljust(self.max_len - 2, b"\x00")
-    self._can_client.send([msg])
+    if not setup_only:
+      self._can_client.send([msg])
 
   def recv(self, timeout=None) -> Tuple[Optional[bytes], bool]:
     if timeout is None:
