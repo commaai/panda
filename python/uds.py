@@ -514,7 +514,8 @@ class IsoTpMessage():
         if self.debug:
           print(f"ISO-TP: TX - flow control wait - {hex(self._can_client.tx_addr)}")
 
-FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
+FUNCTIONAL_ADDRS = {0x7DF: [(0x7E0 + i, None) for i in range(8)],
+                    0x18DB33F1: [(0x18DA00F1 + (i << 8), None) for i in range(256)]}
 
 def get_rx_addr_for_tx_addr(tx_addr, rx_offset=0x8):
   if tx_addr in FUNCTIONAL_ADDRS:
