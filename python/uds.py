@@ -383,6 +383,7 @@ class IsoTpMessage():
     self.max_len = max_len
     self.tx_done = True
     self.rx_done = False
+    self.rx_dat = b""
 
   def send(self, dat: bytes) -> None:
     # throw away any stale data
