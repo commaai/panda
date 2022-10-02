@@ -20,6 +20,23 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
   .type = TorqueDriverLimited,
 };
 
+const int SUBARU_BRAKE_MIN = 0;
+const int SUBARU_BRAKE_MAX = 400;
+
+const int SUBARU_THROTTLE_MIN = 0;
+const int SUBARU_THROTTLE_MAX = 3400;
+
+const int SUBARU_RPM_MIN = 0;
+const int SUBARU_RPM_MAX = 3200;
+
+/* TODO
+const int SUBARU_THROTTLE_DELTA_UP = 50;
+const int SUBARU_THROTTLE_DELTA_DOWN = 50;
+
+const int SUBARU_RPM_DELTA_UP = 50;
+const int SUBARU_RPM_DELTA_DOWN = 50;
+*/
+
 const CanMsg SUBARU_TX_MSGS[] = {
   {0x122, 0, 8},
   {0x221, 0, 8},
@@ -136,10 +153,10 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
 }
 
 static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
-  UNUSED(longitudinal_allowed);
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
+  bool violation = false;
 
   if (subaru_gen2) {
     tx = msg_allowed(to_send, SUBARU_GEN2_TX_MSGS, SUBARU_GEN2_TX_MSGS_LEN);
@@ -159,6 +176,36 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       tx = 0;
     }
 
+  }
+
+  // longitudinal checks
+  if (addr == 0x220) {
+    int brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
+
+    if (!longitudinal_allowed && brake_pressure != 0) {
+      violation = true;
+    }
+    violation |= max_limit_check(brake_pressure, SUBARU_BRAKE_MAX, SUBARU_BRAKE_MIN);
+  }
+  if (addr == 0x221) {
+    int cruise_throttle = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
+
+    if (!longitudinal_allowed && cruise_throttle != 0) {
+      violation = true;
+    }
+    violation |= max_limit_check(cruise_throttle, SUBARU_THROTTLE_MAX, SUBARU_THROTTLE_MIN);
+  }
+  if (addr == 0x222) {
+    int cruise_rpm = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
+
+    if (!longitudinal_allowed && cruise_rpm != 0) {
+      violation = true;
+    }
+    violation |= max_limit_check(cruise_rpm, SUBARU_RPM_MAX, SUBARU_RPM_MIN);
+  }
+
+  if (violation) {
+    tx = 0;
   }
   return tx;
 }
