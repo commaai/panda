@@ -25,17 +25,14 @@ const int SUBARU_BRAKE_MAX = 400;
 
 const int SUBARU_THROTTLE_MIN = 0;
 const int SUBARU_THROTTLE_MAX = 3400;
+const int SUBARU_THROTTLE_DELTA = 50;
 
 const int SUBARU_RPM_MIN = 0;
 const int SUBARU_RPM_MAX = 3200;
+const int SUBARU_RPM_DELTA = 50;
 
-/* TODO
-const int SUBARU_THROTTLE_DELTA_UP = 50;
-const int SUBARU_THROTTLE_DELTA_DOWN = 50;
-
-const int SUBARU_RPM_DELTA_UP = 50;
-const int SUBARU_RPM_DELTA_DOWN = 50;
-*/
+int subaru_cruise_throttle_last = 0;
+int subaru_cruise_rpm_last = 0;
 
 const CanMsg SUBARU_TX_MSGS[] = {
   {0x122, 0, 8},
@@ -152,6 +149,17 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
+bool subaru_rate_limit_check(int val, int val_last, const int MAX_VAL_DELTA) {
+
+  // *** rate limit check ***
+  int highest_val = MAX(val_last, 0) + MAX_VAL_DELTA;
+  int lowest_val = MIN(val_last, 0) - MAX_VAL_DELTA;
+
+  // check for violation
+  return (val < lowest_val) || (val > highest_val);
+}
+
+
 static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   int tx = 1;
@@ -194,6 +202,8 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       violation = true;
     }
     violation |= max_limit_check(cruise_throttle, SUBARU_THROTTLE_MAX, SUBARU_THROTTLE_MIN);
+    violation |= subaru_rate_limit_check(cruise_throttle, subaru_cruise_throttle_last, SUBARU_THROTTLE_DELTA);
+    subaru_cruise_throttle_last = cruise_throttle;
   }
   if (addr == 0x222) {
     int cruise_rpm = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
@@ -202,6 +212,8 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       violation = true;
     }
     violation |= max_limit_check(cruise_rpm, SUBARU_RPM_MAX, SUBARU_RPM_MIN);
+    violation |= subaru_rate_limit_check(cruise_rpm, subaru_cruise_rpm_last, SUBARU_RPM_DELTA);
+    subaru_cruise_rpm_last = cruise_rpm;
   }
 
   if (violation) {
