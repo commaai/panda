@@ -182,7 +182,7 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (addr == 0x220) {
     int brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
 
-    if (!longitudinal_allowed && brake_pressure != 0) {
+    if (!longitudinal_allowed && (brake_pressure != 0)) {
       violation = true;
     }
     violation |= max_limit_check(brake_pressure, SUBARU_BRAKE_MAX, SUBARU_BRAKE_MIN);
@@ -190,7 +190,7 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (addr == 0x221) {
     int cruise_throttle = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
 
-    if (!longitudinal_allowed && cruise_throttle != 0) {
+    if (!longitudinal_allowed && (cruise_throttle != 0)) {
       violation = true;
     }
     violation |= max_limit_check(cruise_throttle, SUBARU_THROTTLE_MAX, SUBARU_THROTTLE_MIN);
@@ -198,7 +198,7 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (addr == 0x222) {
     int cruise_rpm = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
 
-    if (!longitudinal_allowed && cruise_rpm != 0) {
+    if (!longitudinal_allowed && (cruise_rpm != 0)) {
       violation = true;
     }
     violation |= max_limit_check(cruise_rpm, SUBARU_RPM_MAX, SUBARU_RPM_MIN);
