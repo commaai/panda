@@ -184,15 +184,7 @@ void safety_tick(const addr_checks *rx_checks) {
     }
   }
 
-  // update RX checks invalid fault
-  if (safety_rx_checks_invalid != rx_checks_invalid) {
-    safety_rx_checks_invalid = rx_checks_invalid;
-    if (safety_rx_checks_invalid) {
-      fault_occurred(FAULT_SAFETY_RX_CHECKS_INVALID);
-    } else {
-      fault_recovered(FAULT_SAFETY_RX_CHECKS_INVALID);
-    }
-  }
+  safety_rx_checks_invalid = rx_checks_invalid;
 }
 
 void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
@@ -355,7 +347,6 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   controls_allowed = false;
   relay_malfunction_reset();
   safety_rx_checks_invalid = false;
-  fault_recovered(FAULT_SAFETY_RX_CHECKS_INVALID);
 
   int set_status = -1;  // not set
   int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);

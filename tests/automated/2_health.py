@@ -69,9 +69,8 @@ def test_heartbeat(p):
   # TODO: add more cases here once the tests aren't super slow
   p.set_safety_mode(mode=Panda.SAFETY_HYUNDAI, param=Panda.FLAG_HYUNDAI_LONG)
   p.send_heartbeat()
-  h = p.health()
-  assert h['safety_mode'] == Panda.SAFETY_HYUNDAI
-  assert h['safety_param'] == Panda.FLAG_HYUNDAI_LONG
+  assert p.health()['safety_mode'] == Panda.SAFETY_HYUNDAI
+  assert p.health()['safety_param'] == Panda.FLAG_HYUNDAI_LONG
 
   # shouldn't do anything once we're in a car safety mode
   p.set_heartbeat_disabled()
@@ -83,6 +82,3 @@ def test_heartbeat(p):
   assert h['safety_mode'] == Panda.SAFETY_SILENT
   assert h['safety_param'] == 0
   assert h['controls_allowed'] == 0
-
-  # safetyRxChecksInvalid fault expected. reset to clear before final checks
-  p.reset()

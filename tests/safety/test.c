@@ -51,7 +51,6 @@ uint8_t hw_type = HW_TYPE_UNKNOWN;
 
 // from faults.h
 #define FAULT_RELAY_MALFUNCTION         (1U << 0)
-#define FAULT_SAFETY_RX_CHECKS_INVALID  (1U << 23)
 void fault_occurred(uint32_t fault) {
 }
 void fault_recovered(uint32_t fault) {

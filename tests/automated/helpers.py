@@ -206,8 +206,7 @@ def panda_connect_and_init(fn=None, full_reset=True):
       for panda in pandas:
         if not panda.bootstub:
           panda.reconnect()
-          health = panda.health()
-          assert health['fault_status'] == 0, str(health)
+          assert panda.health()['fault_status'] == 0
           # Check health of each CAN core after test, normal to fail for test_gen2_loopback on OBD bus, so skipping
           if fn.__name__ != "test_gen2_loopback":
             for i in range(3):
