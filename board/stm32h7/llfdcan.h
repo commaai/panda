@@ -39,6 +39,11 @@
 
 void puts(const char *a);
 
+// kbps multiplied by 10
+const uint32_t speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
+const uint32_t data_speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U, 20000U, 50000U};
+
+
 bool fdcan_request_init(FDCAN_GlobalTypeDef *CANx) {
   bool ret = true;
   // Exit from sleep mode

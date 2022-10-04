@@ -164,6 +164,7 @@ int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], cons
 
 // 1Hz safety function called by main. Now just a check for lagging safety messages
 void safety_tick(const addr_checks *rx_checks) {
+  bool rx_checks_invalid = false;
   uint32_t ts = microsecond_timer_get();
   if (rx_checks != NULL) {
     for (int i=0; i < rx_checks->len; i++) {
@@ -176,8 +177,14 @@ void safety_tick(const addr_checks *rx_checks) {
       if (lagging) {
         controls_allowed = 0;
       }
+
+      if (lagging || !is_msg_valid(rx_checks->check, i)) {
+        rx_checks_invalid = true;
+      }
     }
   }
+
+  safety_rx_checks_invalid = rx_checks_invalid;
 }
 
 void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
@@ -339,6 +346,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
 
   controls_allowed = false;
   relay_malfunction_reset();
+  safety_rx_checks_invalid = false;
 
   int set_status = -1;  // not set
   int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);
