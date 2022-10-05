@@ -464,7 +464,7 @@ class IsoTpMessage():
       msg = bytes([
         0x30,  # flow control
         0x01 if self.single_frame_mode else 0x00,  # block size
-        0x0a,  # 10 ms STmin
+        0x0a,  # 10 ms separation time
       ]).ljust(self.max_len, b"\x00")
       self._can_client.send([msg])
       return
