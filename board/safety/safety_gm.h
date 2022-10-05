@@ -18,7 +18,7 @@ const int GM_DRIVER_TORQUE_FACTOR = 4;
 
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
-const int GM_MAX_BRAKE = 350;
+const int GM_MAX_BRAKE = 400;
 
 const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
                                   {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
