@@ -376,11 +376,15 @@ class CanClient():
         self._recv_buffer()
 
 class IsoTpMessage():
-  def __init__(self, can_client: CanClient, timeout: float = 1, debug: bool = False, max_len: int = 8):
+  def __init__(self, can_client: CanClient, timeout: float = 1, separation_time: int = 0, debug: bool = False, max_len: int = 8):
     self._can_client = can_client
     self.timeout = timeout
+    self.separation_time = separation_time
     self.debug = debug
     self.max_len = max_len
+    # <= 127, separation time in milliseconds
+    # 0xF1 to 0xF9 UF, 100 to 900 microseconds
+    assert 0 <= self.separation_time <= 127 or 0xF1 <= self.separation_time <= 0xF9
 
   def send(self, dat: bytes, setup_only: bool = False) -> None:
     # throw away any stale data
@@ -459,8 +463,8 @@ class IsoTpMessage():
         print(f"ISO-TP: RX - first frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       if self.debug:
         print(f"ISO-TP: TX - flow control continue - {hex(self._can_client.tx_addr)}")
-      # send flow control message (send all bytes) with a separation time of 10 ms
-      msg = b"\x30\x00\x0a".ljust(self.max_len, b"\x00")
+      # send flow control message (send all bytes)
+      msg = (b"\x30\x00" + bytes([self.separation_time])).ljust(self.max_len, b"\x00")
       self._can_client.send([msg])
       return
 
