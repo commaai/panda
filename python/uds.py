@@ -480,7 +480,7 @@ class IsoTpMessage():
         self.rx_done = True
       elif self.single_frame_mode:
         # notify ECU to send next frame
-        msg = b"\x30\x01\x00".ljust(self.max_len, b"\x00")
+        msg = b"\x30\x01\x0a".ljust(self.max_len, b"\x00")
         self._can_client.send([msg])
       if self.debug:
         print(f"ISO-TP: RX - consecutive frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
