@@ -376,15 +376,21 @@ class CanClient():
         self._recv_buffer()
 
 class IsoTpMessage():
-  def __init__(self, can_client: CanClient, timeout: float = 1, separation_time: int = 0, debug: bool = False, max_len: int = 8):
+  def __init__(self, can_client: CanClient, timeout: float = 1, separation_time: float = 0, debug: bool = False, max_len: int = 8):
     self._can_client = can_client
     self.timeout = timeout
-    self.separation_time = separation_time
     self.debug = debug
     self.max_len = max_len
+
     # <= 127, separation time in milliseconds
     # 0xF1 to 0xF9 UF, 100 to 900 microseconds
-    assert 0 <= self.separation_time <= 127 or 0xF1 <= self.separation_time <= 0xF9
+    if 1e-4 <= separation_time <= 9e-4:
+      offset = int(round(separation_time, 4) * 1e4) - 1
+      self.separation_time = 0xF1 + offset
+    elif 0 <= separation_time <= 0.127:
+      self.separation_time = round(separation_time * 1000)
+    else:
+      raise Exception("Separation time not in range")
 
   def send(self, dat: bytes, setup_only: bool = False) -> None:
     # throw away any stale data
