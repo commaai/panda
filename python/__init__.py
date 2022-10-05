@@ -185,9 +185,9 @@ class Panda:
   HW_TYPE_RED_PANDA_V2 = b'\x08'
 
   CAN_PACKET_VERSION = 2
-  HEALTH_PACKET_VERSION = 10
+  HEALTH_PACKET_VERSION = 11
   CAN_HEALTH_PACKET_VERSION = 2
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBB")
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBBB")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIHHBB")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
@@ -470,7 +470,8 @@ class Panda:
       "alternative_experience": a[19],
       "interrupt_load": a[20],
       "fan_power": a[21],
-      "usb_power_mode": a[22],
+      "safety_rx_checks_invalid": a[22],
+      "usb_power_mode": a[23],
     }
 
   @ensure_can_health_packet_version
