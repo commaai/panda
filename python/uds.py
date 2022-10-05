@@ -560,7 +560,7 @@ class UdsClient():
       req += data
 
     # send request, wait for response
-    isotp_msg = IsoTpMessage(self._can_client, self.timeout, self.debug)
+    isotp_msg = IsoTpMessage(self._can_client, timeout=self.timeout, debug=self.debug)
     isotp_msg.send(req)
     response_pending = False
     while True:
