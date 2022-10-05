@@ -376,9 +376,10 @@ class CanClient():
         self._recv_buffer()
 
 class IsoTpMessage():
-  def __init__(self, can_client: CanClient, timeout: float = 1, separation_time: float = 0, debug: bool = False, max_len: int = 8):
+  def __init__(self, can_client: CanClient, timeout: float = 1, single_frame_mode: bool = False, separation_time: float = 0, debug: bool = False, max_len: int = 8):
     self._can_client = can_client
     self.timeout = timeout
+    self.single_frame_mode = single_frame_mode
     self.debug = debug
     self.max_len = max_len
 
@@ -469,8 +470,12 @@ class IsoTpMessage():
         print(f"ISO-TP: RX - first frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       if self.debug:
         print(f"ISO-TP: TX - flow control continue - {hex(self._can_client.tx_addr)}")
-      # send flow control message (send all bytes)
-      msg = (b"\x30\x00" + bytes([self.separation_time])).ljust(self.max_len, b"\x00")
+      # send flow control message
+      msg = bytes([
+        0x30,  # flow control
+        0x01 if self.single_frame_mode else 0x00,  # block size
+        self.separation_time,
+      ]).ljust(self.max_len, b"\x00")
       self._can_client.send([msg])
       return
 
@@ -483,6 +488,10 @@ class IsoTpMessage():
       self.rx_dat += rx_data[1:1 + rx_size]
       if self.rx_len == len(self.rx_dat):
         self.rx_done = True
+      elif self.single_frame_mode:
+        # notify ECU to send next frame
+        msg = (b"\x30\x01" + bytes([self.separation_time])).ljust(self.max_len, b"\x00")
+        self._can_client.send([msg])
       if self.debug:
         print(f"ISO-TP: RX - consecutive frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       return
