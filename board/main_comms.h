@@ -254,6 +254,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         can_health[req->param1].can_data_speed = (bus_config[req->param1].can_data_speed / 10U);
         can_health[req->param1].canfd_enabled = bus_config[req->param1].canfd_enabled;
         can_health[req->param1].brs_enabled = bus_config[req->param1].brs_enabled;
+        can_health[req->param1].canfd_non_iso = bus_config[req->param1].canfd_non_iso;
         resp_len = sizeof(can_health[req->param1]);
         (void)memcpy(resp, &can_health[req->param1], resp_len);
       }
@@ -534,7 +535,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         heartbeat_disabled = true;
       }
       break;
-    // **** 0xde: set CAN FD data bitrate
+    // **** 0xf9: set CAN FD data bitrate
     case 0xf9:
       if ((req->param1 < CAN_CNT) &&
            current_board->has_canfd &&
@@ -546,17 +547,17 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         UNUSED(ret);
       }
       break;
-    // **** 0xfa: check if CAN FD and BRS are enabled
-    case 0xfa:
-      if (req->param1 < CAN_CNT) {
-        resp[0] =  bus_config[req->param1].canfd_enabled;
-        resp[1] = bus_config[req->param1].brs_enabled;
-        resp_len = 2;
-      }
-      break;
     // **** 0xfb: allow highest power saving mode (stop) to be entered
     case 0xfb:
       deepsleep_allowed = true;
+      break;
+    // **** 0xfc: set CAN FD non-ISO mode
+    case 0xfc:
+      if ((req->param1 < CAN_CNT) && current_board->has_canfd) {
+        bus_config[req->param1].canfd_non_iso = (req->param2 != 0U);
+        bool ret = can_init(CAN_NUM_FROM_BUS_NUM(req->param1));
+        UNUSED(ret);
+      }
       break;
     default:
       puts("NO HANDLER ");
