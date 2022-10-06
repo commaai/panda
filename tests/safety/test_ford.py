@@ -112,19 +112,20 @@ class TestFordSafety(common.PandaSafetyTest):
     self.assertFalse(self._tx(self._lkas_command_msg(1)))
 
   def test_acc_buttons(self):
-    for bus in (0, 2):
-      for allowed in (0, 1):
-        self.safety.set_controls_allowed(allowed)
-        for enabled in (True, False):
-          self._rx(self._pcm_status_msg(enabled))
-          self.assertTrue(self._tx(self._acc_button_msg(Buttons.TJA_TOGGLE, bus)))
-
-      for allowed in (0, 1):
-        self.safety.set_controls_allowed(allowed)
-        self.assertEqual(allowed, self._tx(self._acc_button_msg(Buttons.RESUME, bus)))
-
+    for allowed in (0, 1):
+      self.safety.set_controls_allowed(allowed)
       for enabled in (True, False):
         self._rx(self._pcm_status_msg(enabled))
+        self.assertTrue(self._tx(self._acc_button_msg(Buttons.TJA_TOGGLE, 2)))
+
+    for allowed in (0, 1):
+      self.safety.set_controls_allowed(allowed)
+      for bus in (0, 2):
+        self.assertEqual(allowed, self._tx(self._acc_button_msg(Buttons.RESUME, bus)))
+
+    for enabled in (True, False):
+      self._rx(self._pcm_status_msg(enabled))
+      for bus in (0, 2):
         self.assertEqual(enabled, self._tx(self._acc_button_msg(Buttons.CANCEL, bus)))
 
 
