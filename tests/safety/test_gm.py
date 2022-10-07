@@ -54,9 +54,9 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     return self.packer.make_can_msg_panda("EBCMWheelSpdRear", 0, values)
 
   def _user_brake_msg(self, brake):
-    # GM safety has a brake threshold of 10
-    values = {"BrakePedalPosition": 10 if brake else 0}
-    return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
+    # GM safety has a brake threshold of 8
+    values = {"BrakePedalPos": 8 if brake else 0}
+    return self.packer.make_can_msg_panda("ECMAcceleratorPos", 0, values)
 
   def _user_regen_msg(self, regen):
     values = {"RegenPaddle": 2 if regen else 0}
