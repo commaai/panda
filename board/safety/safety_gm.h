@@ -90,7 +90,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     }
 
     if (addr == 190) {
-      // Reference safety mode's CarState in openpilot for signal and threshold meaning:
+      // Reference for signal and threshold:
       // https://github.com/commaai/openpilot/blob/master/selfdrive/car/gm/carstate.py
       brake_pressed = GET_BYTE(to_push, 1) >= 8U;
     }
