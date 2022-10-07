@@ -54,9 +54,9 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     return self.packer.make_can_msg_panda("EBCMWheelSpdRear", 0, values)
 
   def _user_brake_msg(self, brake):
-    # GM safety has a brake threshold of 10
-    values = {"BrakePedalPosition": 10 if brake else 0}
-    return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
+    # GM safety has a brake threshold of 8
+    values = {"BrakePedalPos": 8 if brake else 0}
+    return self.packer.make_can_msg_panda("ECMAcceleratorPos", 0, values)
 
   def _user_regen_msg(self, regen):
     values = {"RegenPaddle": 2 if regen else 0}
@@ -109,7 +109,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
       if pedal == 'brake':
         # brake_pressed_prev and vehicle_moving
         self._rx(self._speed_msg(100))
-        self._rx(self._user_brake_msg(MAX_BRAKE))
+        self._rx(self._user_brake_msg(1))
       elif pedal == 'gas':
         # gas_pressed_prev
         self._rx(self._user_gas_msg(MAX_GAS))
@@ -135,7 +135,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
       if pedal == 'brake':
         # brake_pressed_prev and vehicle_moving
         self._rx(self._speed_msg(100))
-        self._rx(self._user_brake_msg(MAX_BRAKE))
+        self._rx(self._user_brake_msg(1))
         allow_ctrl = False
       elif pedal == 'gas':
         # gas_pressed_prev
