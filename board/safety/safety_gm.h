@@ -90,10 +90,8 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     }
 
     if (addr == 190) {
-      // Some Volt 2016-17 have loose brake pedal push rod retainers which causes the ECM to believe
-      // that the brake is being intermittently pressed without user interaction.
-      // To avoid a cruise fault we need to match the ECM's brake pressed signal and threshold
-      // https://static.nhtsa.gov/odi/tsbs/2017/MC-10137629-9999.pdf
+      // Reference safety mode's CarState in openpilot for signal and threshold meaning:
+      // https://github.com/commaai/openpilot/blob/master/selfdrive/car/gm/carstate.py
       brake_pressed = GET_BYTE(to_push, 1) >= 8U;
     }
 
