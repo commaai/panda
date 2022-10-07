@@ -109,7 +109,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
       if pedal == 'brake':
         # brake_pressed_prev and vehicle_moving
         self._rx(self._speed_msg(100))
-        self._rx(self._user_brake_msg(MAX_BRAKE))
+        self._rx(self._user_brake_msg(1))
       elif pedal == 'gas':
         # gas_pressed_prev
         self._rx(self._user_gas_msg(MAX_GAS))
@@ -135,7 +135,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
       if pedal == 'brake':
         # brake_pressed_prev and vehicle_moving
         self._rx(self._speed_msg(100))
-        self._rx(self._user_brake_msg(MAX_BRAKE))
+        self._rx(self._user_brake_msg(1))
         allow_ctrl = False
       elif pedal == 'gas':
         # gas_pressed_prev
