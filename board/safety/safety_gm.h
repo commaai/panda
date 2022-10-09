@@ -28,7 +28,7 @@ const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715,
 const CanMsg GM_CAM_TX_MSGS[] = {{384, 0, 4},  // pt bus
                                  {481, 2, 7}};  // camera bus
 
-const CanMsg GM_CAM_TX_MSGS_LONG[] = {{384, 0, 4}, {789, 0, 5}, {715, 0, 8}, {880, 0, 6}};  // pt bus
+const CanMsg GM_CAM_LONG_TX_MSGS[] = {{384, 0, 4}, {789, 0, 5}, {715, 0, 8}, {880, 0, 6}};  // pt bus
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 AddrCheckStruct gm_addr_checks[] = {
@@ -140,7 +140,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   if (gm_hw == GM_CAM) {
     if (gm_cam_long) {
-      tx = msg_allowed(to_send, GM_CAM_TX_MSGS_LONG, sizeof(GM_CAM_TX_MSGS_LONG)/sizeof(GM_CAM_TX_MSGS_LONG[0]));
+      tx = msg_allowed(to_send, GM_CAM_LONG_TX_MSGS, sizeof(GM_CAM_LONG_TX_MSGS)/sizeof(GM_CAM_LONG_TX_MSGS[0]));
     } else {
       tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
     }
