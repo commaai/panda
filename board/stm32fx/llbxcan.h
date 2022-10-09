@@ -13,6 +13,10 @@
 
 void puts(const char *a);
 
+// kbps multiplied by 10
+const uint32_t speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
+const uint32_t data_speeds[] = {0U}; // No separate data speed, dummy
+
 bool llcan_set_speed(CAN_TypeDef *CAN_obj, uint32_t speed, bool loopback, bool silent) {
   bool ret = true;
 

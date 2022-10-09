@@ -122,6 +122,7 @@ const board board_red_v2 = {
   .has_hw_gmlan = false,
   .has_obd = true,
   .has_lin = false,
+  .has_canfd = true,
   .has_rtc_battery = true,
   .fan_max_rpm = 0U,
   .init = red_v2_init,
