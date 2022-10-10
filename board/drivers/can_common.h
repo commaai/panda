@@ -14,11 +14,13 @@ typedef struct {
   bool brs_enabled;
 } bus_config_t;
 
-uint32_t can_rx_errs = 0;
-uint32_t can_send_errs = 0;
-uint32_t can_fwd_errs = 0;
+uint32_t safety_tx_blocked = 0;
+uint32_t safety_rx_invalid = 0;
+uint32_t tx_buffer_overflow = 0;
+uint32_t rx_buffer_overflow = 0;
 uint32_t gmlan_send_errs = 0;
-uint32_t blocked_msg_cnt = 0;
+
+can_health_t can_health[] = {{0}, {0}, {0}};
 
 extern int can_live;
 extern int pending_can_live;
@@ -62,13 +64,6 @@ can_buffer(tx3_q, 0x1A0)
 // cppcheck-suppress misra-c2012-9.3
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
 
-// global CAN stats
-int can_rx_cnt = 0;
-int can_tx_cnt = 0;
-int can_txd_cnt = 0;
-int can_err_cnt = 0;
-int can_overflow_cnt = 0;
-
 // ********************* interrupt safe queue *********************
 bool can_pop(can_ring *q, CANPacket_t *elem) {
   bool ret = 0;
@@ -105,7 +100,6 @@ bool can_push(can_ring *q, CANPacket_t *elem) {
   }
   EXIT_CRITICAL();
   if (!ret) {
-    can_overflow_cnt++;
     #ifdef DEBUG
       puts("can_push to ");
       if (q == &can_rx_q) {
@@ -174,6 +168,9 @@ bus_config_t bus_config[] = {
 void can_init_all(void) {
   bool ret = true;
   for (uint8_t i=0U; i < CAN_CNT; i++) {
+    if (!current_board->has_canfd) {
+      bus_config[i].can_data_speed = 0U;
+    }
     can_clear(can_queues[i]);
     ret &= can_init(i);
   }
@@ -230,13 +227,23 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
       if ((bus_number == 3U) && (bus_config[3].can_num_lookup == 0xFFU)) {
         gmlan_send_errs += bitbang_gmlan(to_push) ? 0U : 1U;
       } else {
-        can_fwd_errs += can_push(can_queues[bus_number], to_push) ? 0U : 1U;
+        tx_buffer_overflow += can_push(can_queues[bus_number], to_push) ? 0U : 1U;
         process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
       }
     }
   } else {
-    blocked_msg_cnt += 1U;
+    safety_tx_blocked += 1U;
     to_push->rejected = 1U;
-    can_send_errs += can_push(&can_rx_q, to_push) ? 0U : 1U;
+    rx_buffer_overflow += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }
+}
+
+bool is_speed_valid(uint32_t speed, const uint32_t *speeds, uint8_t len) {
+  bool ret = false;
+  for (uint8_t i = 0U; i < len; i++) {
+    if (speeds[i] == speed) {
+      ret = true;
+    }
+  }
+  return ret;
 }

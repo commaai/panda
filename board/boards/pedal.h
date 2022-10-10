@@ -79,6 +79,7 @@ const board board_pedal = {
   .has_hw_gmlan = false,
   .has_obd = false,
   .has_lin = false,
+  .has_canfd = false,
   .has_rtc_battery = false,
   .fan_max_rpm = 0U,
   .init = pedal_init,

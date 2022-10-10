@@ -202,6 +202,7 @@ const board board_dos = {
   .has_hw_gmlan = false,
   .has_obd = true,
   .has_lin = false,
+  .has_canfd = false,
   .has_rtc_battery = true,
   .fan_max_rpm = 6500U,
   .init = dos_init,
@@ -216,5 +217,5 @@ const board board_dos = {
   .set_ir_power = dos_set_ir_power,
   .set_phone_power = unused_set_phone_power,
   .set_clock_source_mode = dos_set_clock_source_mode,
-  .set_siren = unused_set_siren
+  .set_siren = dos_set_siren
 };

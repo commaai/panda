@@ -11,6 +11,8 @@
 #include "stm32h7/llrtc.h"
 #include "drivers/rtc.h"
 #include "boards/red.h"
+#include "boards/red_v2.h"
+
 
 uint8_t board_id(void) {
   return detect_with_pull(GPIOF, 7, PULL_UP) |
@@ -23,6 +25,9 @@ void detect_board_type(void) {
   if(board_id() == 0U){
     hw_type = HW_TYPE_RED_PANDA;
     current_board = &board_red;
+  } else if(board_id() == 1U){
+    hw_type = HW_TYPE_RED_PANDA_V2;
+    current_board = &board_red_v2;
   } else {
     hw_type = HW_TYPE_UNKNOWN;
     puts("Hardware type is UNKNOWN!\n");
@@ -32,5 +37,5 @@ void detect_board_type(void) {
 bool has_external_debug_serial = 0;
 void detect_external_debug_serial(void) {
   // detect if external serial debugging is present
-  has_external_debug_serial = detect_with_pull(GPIOA, 3, PULL_DOWN);
+  has_external_debug_serial = detect_with_pull(GPIOA, 3, PULL_DOWN) || detect_with_pull(GPIOE, 7, PULL_DOWN);
 }

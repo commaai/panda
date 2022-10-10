@@ -1,5 +1,3 @@
-#include "health.h"
-
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // Prototypes
@@ -20,9 +18,10 @@ int get_health_pkt(void *dat) {
 
   health->controls_allowed_pkt = controls_allowed;
   health->gas_interceptor_detected_pkt = gas_interceptor_detected;
-  health->can_rx_errs_pkt = can_rx_errs;
-  health->can_send_errs_pkt = can_send_errs;
-  health->can_fwd_errs_pkt = can_fwd_errs;
+  health->safety_tx_blocked_pkt = safety_tx_blocked;
+  health->safety_rx_invalid_pkt = safety_rx_invalid;
+  health->tx_buffer_overflow_pkt = tx_buffer_overflow;
+  health->rx_buffer_overflow_pkt = rx_buffer_overflow;
   health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = car_harness_status;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
@@ -30,7 +29,7 @@ int get_health_pkt(void *dat) {
   health->alternative_experience_pkt = alternative_experience;
   health->power_save_enabled_pkt = (uint8_t)(power_save_status == POWER_SAVE_STATUS_ENABLED);
   health->heartbeat_lost_pkt = (uint8_t)(heartbeat_lost);
-  health->blocked_msg_cnt_pkt = blocked_msg_cnt;
+  health->safety_rx_checks_invalid = safety_rx_checks_invalid;
 
   health->fault_status_pkt = fault_status;
   health->faults_pkt = faults;
@@ -242,20 +241,23 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xb3:
       current_board->set_phone_power(req->param1 > 0U);
       break;
-    // **** 0xc0: get CAN debug info
-    case 0xc0:
-      puts("can tx: "); puth(can_tx_cnt);
-      puts(" txd: "); puth(can_txd_cnt);
-      puts(" rx: "); puth(can_rx_cnt);
-      puts(" err: "); puth(can_err_cnt);
-      puts("\n");
-      break;
     // **** 0xc1: get hardware type
     case 0xc1:
       resp[0] = hw_type;
       resp_len = 1;
       break;
     // **** 0xd0: fetch serial number
+    case 0xc2:
+      COMPILE_TIME_ASSERT(sizeof(can_health_t) <= USBPACKET_MAX_SIZE);
+      if (req->param1 < 3U) {
+        can_health[req->param1].can_speed = (bus_config[req->param1].can_speed / 10U);
+        can_health[req->param1].can_data_speed = (bus_config[req->param1].can_data_speed / 10U);
+        can_health[req->param1].canfd_enabled = bus_config[req->param1].canfd_enabled;
+        can_health[req->param1].brs_enabled = bus_config[req->param1].brs_enabled;
+        resp_len = sizeof(can_health[req->param1]);
+        (void)memcpy(resp, &can_health[req->param1], resp_len);
+      }
+      break;
     case 0xd0:
       // addresses are OTP
       if (req->param1 == 1U) {
@@ -376,12 +378,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xdd:
       resp[0] = HEALTH_PACKET_VERSION;
       resp[1] = CAN_PACKET_VERSION;
-      resp_len = 2;
+      resp[2] = CAN_HEALTH_PACKET_VERSION;
+      resp_len = 3;
       break;
     // **** 0xde: set can bitrate
     case 0xde:
-      if (req->param1 < BUS_CNT) {
-        // TODO: add sanity check, ideally check if value is correct(from array of correct values)
+      if ((req->param1 < BUS_CNT) && is_speed_valid(req->param2, speeds, sizeof(speeds)/sizeof(speeds[0]))) {
         bus_config[req->param1].can_speed = req->param2;
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(req->param1));
         UNUSED(ret);
@@ -534,8 +536,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xde: set CAN FD data bitrate
     case 0xf9:
-      if (req->param1 < CAN_CNT) {
-        // TODO: add sanity check, ideally check if value is correct (from array of correct values)
+      if ((req->param1 < CAN_CNT) &&
+           current_board->has_canfd &&
+           is_speed_valid(req->param2, data_speeds, sizeof(data_speeds)/sizeof(data_speeds[0]))) {
         bus_config[req->param1].can_data_speed = req->param2;
         bus_config[req->param1].canfd_enabled = (req->param2 >= bus_config[req->param1].can_speed);
         bus_config[req->param1].brs_enabled = (req->param2 > bus_config[req->param1].can_speed);
