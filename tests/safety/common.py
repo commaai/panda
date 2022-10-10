@@ -189,20 +189,6 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
     self._set_prev_torque(0)
     self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP - 1)))
 
-  # def test_sdffstersfsfs(self):
-  #   self.safety.init_tests()
-  #   self.safety.set_timer(self.MIN_VALID_STEERING_RT_INTERVAL)
-  #
-  #   for _ in range(100):
-  #     self.safety.set_controls_allowed(True)
-  #     self._set_prev_torque(self.MAX_TORQUE)
-  #     self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
-  #
-  #   # recover
-  #   self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
-  #   self._set_prev_torque(self.MAX_TORQUE)
-  #   self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
-
   def test_steer_req_bit_frames(self):
     """
       Certain safety modes implement some tolerance on their steer request bits matching the
