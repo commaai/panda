@@ -532,22 +532,16 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
       violation = true;
 
     } else {
-      invalid_steer_req_count = MIN(invalid_steer_req_count + 1, limits.max_invalid_request_frames);
-//      bool under_invalid_limit = invalid_steer_req_count < limits.max_invalid_request_frames;
+      // disallow torque cut if not enough recent matching steer_req messages
+      if (valid_steer_req_count < limits.min_valid_request_frames) {
+        violation = true;
+      }
 
-
-//      if (!under_invalid_limit || invalid_steer_req_count == 0) {
-        // disallow torque cut if not enough recent matching steer_req messages
-        if (valid_steer_req_count < limits.min_valid_request_frames) {
-          violation = true;
-        }
-
-        // or we've cut torque too recently in time
-        uint32_t ts_elapsed = get_ts_elapsed(ts, ts_steer_req_mismatch_last);
-        if (ts_elapsed < limits.min_valid_request_rt_interval) {
-          violation = true;
-        }
-//      }
+      // or we've cut torque too recently in time
+      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_steer_req_mismatch_last);
+      if (ts_elapsed < limits.min_valid_request_rt_interval) {
+        violation = true;
+      }
 
       valid_steer_req_count = 0;
       ts_steer_req_mismatch_last = ts;
