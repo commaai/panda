@@ -190,14 +190,21 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
     self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP - 1)))
 
   def test_stersfsfs(self):
+    self.safety.init_tests()
+    self.safety.set_timer(self.MIN_VALID_STEERING_RT_INTERVAL)
+
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(self.MAX_TORQUE)
-    for _ in range(self.MIN_VALID_STEERING_FRAMES+1):
+    for _ in range(self.MIN_VALID_STEERING_FRAMES + 1):
       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
-    # for _ in range(self.MAX_INVALID_STEERING_FRAMES):
-    self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+    for _ in range(self.MAX_INVALID_STEERING_FRAMES):
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
     self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+    # recover
+    self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
+    self._set_prev_torque(self.MAX_TORQUE)
     self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
   # def test_steer_req_bit_frames(self):

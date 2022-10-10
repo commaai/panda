@@ -543,10 +543,17 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
         violation = true;
       }
 
+      invalid_steer_req_count = MIN(invalid_steer_req_count + 1, limits.max_invalid_request_frames);
+      if (invalid_steer_req_count >= limits.max_invalid_request_frames) {
+        valid_steer_req_count = 0;
+        ts_steer_req_mismatch_last = ts;
+      }
+    }
+  } else {
+    if (invalid_steer_req_count > 0 && (invalid_steer_req_count != limits.max_invalid_request_frames)) {
       valid_steer_req_count = 0;
       ts_steer_req_mismatch_last = ts;
     }
-  } else {
     valid_steer_req_count = MIN(valid_steer_req_count + 1, limits.min_valid_request_frames);
     invalid_steer_req_count = 0;
   }
