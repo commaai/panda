@@ -9,9 +9,10 @@ const SteeringLimits HYUNDAI_STEERING_LIMITS = {
   .type = TorqueDriverLimited,
 
   // the EPS faults when the steering angle is above a certain threshold for too long. to prevent this,
-  // we allow setting CF_Lkas_ActToi bit to 0 while maintaining the requested torque value for a single frame
-  .min_valid_request_frames = 39,
-  .min_valid_request_rt_interval = 360000,  // 360ms; a ~10% buffer on cutting every 40 frames
+  // we allow setting CF_Lkas_ActToi bit to 0 while maintaining the requested torque value for two consecutive frames
+  .min_valid_request_frames = 89,
+  .max_invalid_request_frames = 1,
+  .min_valid_request_rt_interval = 810000,  // 360ms; a ~10% buffer on cutting every 40 frames
   .has_steer_req_tolerance = true,
 };
 

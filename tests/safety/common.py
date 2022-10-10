@@ -145,7 +145,10 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
   MAX_TORQUE = 0
   MAX_RT_DELTA = 0
   RT_INTERVAL = 0
+
+  # Safety around steering req bit
   MIN_VALID_STEERING_FRAMES = 0
+  MAX_INVALID_STEERING_FRAMES = 0
   MIN_VALID_STEERING_RT_INTERVAL = 0
 
   @classmethod
