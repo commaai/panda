@@ -532,11 +532,9 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
       violation = true;
 
     } else {
-//      invalid_steer_req_count = MIN(invalid_steer_req_count + 1, limits.max_invalid_request_frames + 1);
-//      bool under_invalid_limit = invalid_steer_req_count < limits.max_invalid_request_frames;
-//      bool within_invalid_limit = (0 < invalid_steer_req_count) && (invalid_steer_req_count < (limits.max_invalid_request_frames - 1));
+      invalid_steer_req_count = MIN(invalid_steer_req_count + 1, limits.max_invalid_request_frames + 1);
 
-      if ((invalid_steer_req_count == 0) || (invalid_steer_req_count > (limits.max_invalid_request_frames - 1))) {
+      if ((invalid_steer_req_count == 1) || (invalid_steer_req_count > limits.max_invalid_request_frames)) {
         // disallow torque cut if not enough recent matching steer_req messages
         if (valid_steer_req_count < limits.min_valid_request_frames) {
           violation = true;
@@ -549,26 +547,10 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
         }
       }
 
-      invalid_steer_req_count = MIN(invalid_steer_req_count + 1, limits.max_invalid_request_frames + 1);
-//      if (invalid_steer_req_count >= limits.max_invalid_request_frames) {
       valid_steer_req_count = 0;
       ts_steer_req_mismatch_last = ts;
-//      }
     }
-//  }
-//
-//  bool cut_for_long_enough = invalid_steer_req_count >= limits.max_invalid_request_frames;
-//
-//  if (!steer_req_mismatch || ((0 < invalid_steer_req_count) && cut_for_long_enough)) {
-//    valid_steer_req_count = 0;
-//    ts_steer_req_mismatch_last = ts;
-//  }
-
   } else {
-//    if (invalid_steer_req_count > 0 && (invalid_steer_req_count != limits.max_invalid_request_frames)) {
-//      valid_steer_req_count = 0;
-//      ts_steer_req_mismatch_last = ts;
-//    }
     valid_steer_req_count = MIN(valid_steer_req_count + 1, limits.min_valid_request_frames);
     invalid_steer_req_count = 0;
   }
