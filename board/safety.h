@@ -532,8 +532,8 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
       violation = true;
 
     } else {
-      bool consecutive_mismatch = (0 < invalid_steer_req_count) && (invalid_steer_req_count < limits.max_invalid_request_frames);
-      if (!consecutive_mismatch) {
+
+      if (invalid_steer_req_count == 0) {
         // disallow torque cut if not enough recent matching steer_req messages
         if (valid_steer_req_count < limits.min_valid_request_frames) {
           violation = true;
@@ -542,6 +542,11 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
         // or we've cut torque too recently in time
         uint32_t ts_elapsed = get_ts_elapsed(ts, ts_steer_req_mismatch_last);
         if (ts_elapsed < limits.min_valid_request_rt_interval) {
+          violation = true;
+        }
+      } else {
+        // or we're cutting more frames in a row than allowed
+        if (invalid_steer_req_count >= limits.max_invalid_request_frames) {
           violation = true;
         }
       }
