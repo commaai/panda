@@ -205,6 +205,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
       self.safety.init_tests()
       self.safety.set_timer(self.MIN_VALID_STEERING_RT_INTERVAL)
 
+      # Allow torque cut
       self.safety.set_controls_allowed(True)
       self._set_prev_torque(self.MAX_TORQUE)
       for _ in range(min_valid_steer_frames):
