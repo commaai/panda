@@ -273,7 +273,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
         self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
       # Normally, sending MIN_VALID_STEERING_FRAMES valid frames should always allow
-      self.safety.set_timer(rt_us)
+      self.safety.set_timer(max(rt_us, 0))
       should_tx = rt_us >= self.MIN_VALID_STEERING_RT_INTERVAL
       for idx in range(self.MAX_INVALID_STEERING_FRAMES):
         self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
