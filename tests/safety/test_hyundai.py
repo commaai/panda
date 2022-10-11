@@ -174,8 +174,8 @@ class TestHyundaiSafety(HyundaiButtonBase, common.PandaSafetyTest, common.Driver
     values = {"CR_Mdps_StrColTq": torque}
     return self.packer.make_can_msg_panda("MDPS12", 0, values)
 
-  def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"CR_Lkas_StrToqReq": torque, "CF_Lkas_ActToi": steer_req}
+  def _torque_cmd_msg(self, torque, steer_req=1, toi_flt=0):
+    values = {"CR_Lkas_StrToqReq": torque, "CF_Lkas_ActToi": steer_req, "CF_Lkas_ToiFlt": toi_flt}
     return self.packer.make_can_msg_panda("LKAS11", 0, values)
 
   def test_steer_req_bit(self):
@@ -193,6 +193,14 @@ class TestHyundaiSafety(HyundaiButtonBase, common.PandaSafetyTest, common.Driver
     self._set_prev_torque(self.MAX_TORQUE)
     for _ in range(100):
       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
+
+  def test_toi_flt_bit(self):
+    # No actuation of fault bit while controls are not allowed
+    for controls_allowed in [True, False]:
+      for toi_flt in [0, 1]:
+        self.safety.set_controls_allowed(controls_allowed)
+        should_tx = toi_flt == 0 or controls_allowed
+        self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(0, toi_flt=toi_flt)))
 
 
 class TestHyundaiSafetyCameraSCC(TestHyundaiSafety):
