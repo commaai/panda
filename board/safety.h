@@ -336,6 +336,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   ts_torque_check_last = 0;
   ts_steer_req_mismatch_last = 0;
   valid_steer_req_count = 0;
+  invalid_steer_req_count = 0;
 
   torque_meas.max = 0;
   torque_meas.max = 0;
@@ -522,36 +523,47 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
     violation = true;
   }
 
-  // certain safety modes set their steer request bit low for one frame at a
+  // certain safety modes set their steer request bit low for one or more frame at a
   // predefined max frequency to avoid steering faults in certain situations
   bool steer_req_mismatch = (steer_req == 0) && (desired_torque != 0);
-  if (steer_req_mismatch) {
-    // no torque if request bit isn't high
-    if (!limits.has_steer_req_tolerance) {
+  if (!limits.has_steer_req_tolerance) {
+    if (steer_req_mismatch) {
       violation = true;
+    }
 
-    } else {
-      // disallow torque cut if not enough recent matching steer_req messages
-      if (valid_steer_req_count < limits.min_valid_request_frames) {
-        violation = true;
-      }
+  } else {
+    if (steer_req_mismatch) {
+      if (invalid_steer_req_count == 0) {
+        // disallow torque cut if not enough recent matching steer_req messages
+        if (valid_steer_req_count < limits.min_valid_request_frames) {
+          violation = true;
+        }
 
-      // or we've cut torque too recently in time
-      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_steer_req_mismatch_last);
-      if (ts_elapsed < limits.min_valid_request_rt_interval) {
-        violation = true;
+        // or we've cut torque too recently in time
+        uint32_t ts_elapsed = get_ts_elapsed(ts, ts_steer_req_mismatch_last);
+        if (ts_elapsed < limits.min_valid_request_rt_interval) {
+          violation = true;
+        }
+      } else {
+        // or we're cutting more frames consecutively than allowed
+        if (invalid_steer_req_count >= limits.max_invalid_request_frames) {
+          violation = true;
+        }
       }
 
       valid_steer_req_count = 0;
       ts_steer_req_mismatch_last = ts;
+      invalid_steer_req_count = MIN(invalid_steer_req_count + 1, limits.max_invalid_request_frames);
+    } else {
+      valid_steer_req_count = MIN(valid_steer_req_count + 1, limits.min_valid_request_frames);
+      invalid_steer_req_count = 0;
     }
-  } else {
-    valid_steer_req_count = MIN(valid_steer_req_count + 1, limits.min_valid_request_frames);
   }
 
   // reset to 0 if either controls is not allowed or there's a violation
   if (violation || !controls_allowed) {
     valid_steer_req_count = 0;
+    invalid_steer_req_count = 0;
     desired_torque_last = 0;
     rt_torque_last = 0;
     ts_torque_check_last = ts;
