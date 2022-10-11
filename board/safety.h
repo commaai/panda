@@ -544,7 +544,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
           violation = true;
         }
       } else {
-        // or we're cutting more frames in a row than allowed
+        // or we're cutting more frames consecutively than allowed
         if (invalid_steer_req_count >= limits.max_invalid_request_frames) {
           violation = true;
         }
