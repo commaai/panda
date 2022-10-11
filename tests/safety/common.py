@@ -201,29 +201,35 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
       raise unittest.SkipTest("Safety mode does not implement tolerance for steer request bit safety")
 
     for min_valid_steer_frames in range(self.MIN_VALID_STEERING_FRAMES * 2):
-      # Reset match count and rt timer to allow cut (valid_steer_req_count, ts_steer_req_mismatch_last)
-      self.safety.init_tests()
-      self.safety.set_timer(self.MIN_VALID_STEERING_RT_INTERVAL)
+      for max_invalid_steer_frames in range(self.MAX_INVALID_STEERING_FRAMES * 2):
+        # Reset match count and rt timer to allow cut (valid_steer_req_count, ts_steer_req_mismatch_last)
+        self.safety.init_tests()
+        self.safety.set_timer(self.MIN_VALID_STEERING_RT_INTERVAL)
 
-      self.safety.set_controls_allowed(True)
-      self._set_prev_torque(self.MAX_TORQUE)
-      for _ in range(min_valid_steer_frames):
+        self.safety.set_controls_allowed(True)
+        self._set_prev_torque(self.MAX_TORQUE)
+        for _ in range(min_valid_steer_frames):
+          self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
+
+        # Test we've sent enough valid frames, and not too many invalid consecutive frames
+        should_tx = min_valid_steer_frames >= self.MIN_VALID_STEERING_FRAMES
+        for idx in range(max_invalid_steer_frames):
+          tx = self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0))
+          self.assertEqual(should_tx and idx < self.MAX_INVALID_STEERING_FRAMES, tx)
+
+        # Send rest of expected needed invalid frames
+        for _ in range(self.MAX_INVALID_STEERING_FRAMES - max_invalid_steer_frames):
+          should_tx = min_valid_steer_frames >= self.MIN_VALID_STEERING_FRAMES
+          self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+        # Keep blocking after one steer_req mismatch
+        for _ in range(100):
+          self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+        # Make sure we can recover
+        self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
+        self._set_prev_torque(self.MAX_TORQUE)
         self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
-
-      # Test we've sent enough valid frames, and not too many invalid consecutive frames
-      should_tx = min_valid_steer_frames >= self.MIN_VALID_STEERING_FRAMES
-      for idx in range(self.MAX_INVALID_STEERING_FRAMES * 2):
-        tx = self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0))
-        self.assertEqual(should_tx and idx < self.MAX_INVALID_STEERING_FRAMES, tx)
-
-      # Keep blocking after one steer_req mismatch
-      for _ in range(100):
-        self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
-
-      # Make sure we can recover
-      self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
-      self._set_prev_torque(self.MAX_TORQUE)
-      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
   def test_steer_req_bit_multi_invalid(self):
     """
