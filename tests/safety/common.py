@@ -227,12 +227,9 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
 
   def test_steer_req_bit_multi_invalid(self):
     """
-      For safety modes that allow multiple consecutive invalid frames, we need to make sure
-      we can't glitch the safety. This tests that if you only send a partial amount of the
-      allowed invalid frames, sending valid frames again resets all counters.
-
-      If MAX_INVALID_STEERING_FRAMES is x, openpilot operating with anything less than x
-      is safe, greater than we need to disallow.
+      For safety modes allowing multiple consecutive invalid frames, this ensures that once you
+      send a valid frame after an invalid frame (even without sending the max number of allowed invalid frames),
+      all counters are reset.
     """
     if self.MIN_VALID_STEERING_FRAMES == 0:
       raise unittest.SkipTest("Safety mode does not implement tolerance for steer request bit safety")
@@ -246,7 +243,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
     for _ in range(self.MIN_VALID_STEERING_FRAMES):
       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
-    # Use at least 1 or partial amount of allowed invalid frames
+    # Send at least 1 or partial amount of allowed invalid frames
     for _ in range(max(self.MAX_INVALID_STEERING_FRAMES - 1, 1)):
       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
