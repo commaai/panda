@@ -228,8 +228,8 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
 
   def test_steer_req_bit_multi_invalid(self):
     """
-      For safety modes allowing multiple consecutive invalid frames, this ensures that once you
-      send a valid frame after an invalid frame (even without sending the max number of allowed invalid frames),
+      For safety modes allowing multiple consecutive invalid frames, this ensures that once a valid frame
+      is sent after an invalid frame (even without sending the max number of allowed invalid frames),
       all counters are reset.
     """
     if self.MIN_VALID_STEERING_FRAMES == 0:
