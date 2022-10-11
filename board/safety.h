@@ -553,7 +553,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 
       valid_steer_req_count = 0;
       ts_steer_req_mismatch_last = ts;
-      invalid_steer_req_count = MIN(invalid_steer_req_count + 1, limits.max_invalid_request_frames + 1);
+      invalid_steer_req_count = MIN(invalid_steer_req_count + 1, limits.max_invalid_request_frames);
     }
   } else {
     valid_steer_req_count = MIN(valid_steer_req_count + 1, limits.min_valid_request_frames);
