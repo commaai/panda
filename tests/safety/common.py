@@ -234,23 +234,24 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
     if self.MIN_VALID_STEERING_FRAMES == 0:
       raise unittest.SkipTest("Safety mode does not implement tolerance for steer request bit safety")
 
-    self.safety.init_tests()
-    self.safety.set_timer(self.MIN_VALID_STEERING_RT_INTERVAL)
+    for max_invalid_steer_frames in range(1, self.MAX_INVALID_STEERING_FRAMES * 2):
+      self.safety.init_tests()
+      self.safety.set_timer(self.MIN_VALID_STEERING_RT_INTERVAL)
 
-    # Allow torque cut
-    self.safety.set_controls_allowed(True)
-    self._set_prev_torque(self.MAX_TORQUE)
-    for _ in range(self.MIN_VALID_STEERING_FRAMES):
+      # Allow torque cut
+      self.safety.set_controls_allowed(True)
+      self._set_prev_torque(self.MAX_TORQUE)
+      for _ in range(self.MIN_VALID_STEERING_FRAMES):
+        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
+
+      # Send partial amount of allowed invalid frames
+      for _ in range(max_invalid_steer_frames):
+        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+      # Send one valid frame, and subsequent invalid should now be blocked
       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
-
-    # Send at least 1 or partial amount of allowed invalid frames
-    for _ in range(max(self.MAX_INVALID_STEERING_FRAMES - 1, 1)):
-      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
-
-    # Send one valid frame, and subsequent invalid should now be blocked
-    self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
-    for _ in range(self.MIN_VALID_STEERING_FRAMES + 1):
-      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+      for _ in range(self.MIN_VALID_STEERING_FRAMES + 1):
+        self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
   def test_steer_req_bit_realtime(self):
     """
