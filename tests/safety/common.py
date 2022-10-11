@@ -210,7 +210,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
       for _ in range(min_valid_steer_frames):
         self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
-      # Test we've sent enough valid frames, and not too many invalid consecutive frames
+      # should tx if we've sent enough valid frames, and we're not cutting torque for too many frames consecutively
       should_tx = min_valid_steer_frames >= self.MIN_VALID_STEERING_FRAMES
       for idx in range(self.MAX_INVALID_STEERING_FRAMES * 2):
         tx = self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0))
