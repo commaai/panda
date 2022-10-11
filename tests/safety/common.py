@@ -197,8 +197,6 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
         - We can't cut torque until at least the minimum number of matching steer_req messages
         - We can always recover from violations if steer_req=1
     """
-    if self.MIN_VALID_STEERING_FRAMES == 0:
-      raise unittest.SkipTest("Safety mode does not implement tolerance for steer request bit safety")
 
     for min_valid_steer_frames in range(self.MIN_VALID_STEERING_FRAMES * 2):
       # Reset match count and rt timer to allow cut (valid_steer_req_count, ts_steer_req_mismatch_last)
@@ -232,6 +230,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
       is sent after an invalid frame (even without sending the max number of allowed invalid frames),
       all counters are reset.
     """
+    # TODO: Add safety around steer request bits for all safety modes and remove exception
     if self.MIN_VALID_STEERING_FRAMES == 0:
       raise unittest.SkipTest("Safety mode does not implement tolerance for steer request bit safety")
 
@@ -259,6 +258,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
         - That we allow messages with mismatching steer request bit if time from last is >= MIN_VALID_STEERING_RT_INTERVAL
         - That frame mismatch safety does not interfere with this test
     """
+    # TODO: Add safety around steer request bits for all safety modes and remove exception
     if self.MIN_VALID_STEERING_RT_INTERVAL == 0:
       raise unittest.SkipTest("Safety mode does not implement tolerance for steer request bit safety")
 
