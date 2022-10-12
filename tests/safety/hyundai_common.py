@@ -3,8 +3,6 @@ from typing import Tuple
 
 import panda.tests.safety.common as common
 from panda.tests.safety.common import make_msg
-MAX_ACCEL = 2.0
-MIN_ACCEL = -3.5
 
 
 class Buttons:
@@ -14,6 +12,8 @@ class Buttons:
   CANCEL = 4
 
 
+MAX_ACCEL = 2.0
+MIN_ACCEL = -3.5
 PREV_BUTTON_SAMPLES = 8
 ENABLE_BUTTONS = (Buttons.RESUME, Buttons.SET, Buttons.CANCEL)
 

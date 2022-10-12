@@ -21,7 +21,6 @@ const CanMsg HYUNDAI_CANFD_HDA2_LONG_TX_MSGS[] = {
   {0x50, 0, 16},  // LKAS
   {0x1CF, 1, 8},  // CRUISE_BUTTON
   {0x2A4, 0, 24}, // CAM_0x2A4
-
   {0x51, 0, 32},  // ADRV_0x51
   {0x730, 1, 8},  // tester present for ADAS ECU disable
   {0x12A, 1, 16}, // LFA
@@ -204,8 +203,7 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   }
 
   // steering
-  const int steer_addr = hyundai_canfd_hda2 ? 0x50 : 0x12a;
-  if ((addr == steer_addr) && (bus == 0)) {
+  if ((addr == 0x50) || (addr == 0x12a)) {
     int desired_torque = ((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U);
     desired_torque -= 1024;
 

@@ -26,6 +26,7 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
   DRIVER_TORQUE_FACTOR = 2
 
   PT_BUS = 0
+  STEER_BUS = 0
   STEER_MSG = ""
 
   @classmethod
@@ -41,7 +42,7 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
 
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"TORQUE_REQUEST": torque}
-    return self.packer.make_can_msg_panda(self.STEER_MSG, 0, values)
+    return self.packer.make_can_msg_panda(self.STEER_MSG, self.STEER_BUS, values)
 
   def _speed_msg(self, speed):
     values = {f"WHEEL_SPEED_{i}": speed * 0.03125 for i in range(1, 5)}
@@ -137,6 +138,9 @@ class TestHyundaiCanfdHDA2Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2):
 
   DISABLED_ECU_UDS_MSG = (0x730, 1)
   DISABLED_ECU_ACTUATION_MSG = (0x1a0, 1)
+
+  STEER_MSG = "LFA"
+  STEER_BUS = 1
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
