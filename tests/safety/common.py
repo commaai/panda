@@ -278,7 +278,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
       # Normally, sending MIN_VALID_STEERING_FRAMES valid frames should always allow
       self.safety.set_timer(max(rt_us, 0))
       should_tx = rt_us >= self.MIN_VALID_STEERING_RT_INTERVAL
-      for idx in range(self.MAX_INVALID_STEERING_FRAMES):
+      for _ in range(self.MAX_INVALID_STEERING_FRAMES):
         self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
       # Keep blocking after one steer_req mismatch
@@ -712,11 +712,16 @@ class PandaSafetyTest(PandaSafetyTestBase):
               continue
             if attr.startswith('TestHyundaiCanfd') and current_test.startswith('TestHyundaiCanfd'):
               continue
+
+            # overlapping TX addrs, but they're not actuating messages for either car
+            if attr == 'TestHyundaiCanfdHDA2Long' and current_test.startswith('TestToyota'):
+              tx = list(filter(lambda m: m[0] not in [0x160, ], tx))
+
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
             if attr.startswith('TestHonda'):
               # exceptions for common msgs across different hondas
               tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C, 0x33D], tx))
-            all_tx.append(list([m[0], m[1], attr[4:]] for m in tx))
+            all_tx.append(list([m[0], m[1], attr] for m in tx))
 
     # make sure we got all the msgs
     self.assertTrue(len(all_tx) >= len(test_files)-1)
