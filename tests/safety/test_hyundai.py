@@ -1,25 +1,10 @@
 #!/usr/bin/env python3
 import unittest
-import numpy as np
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg
-from panda.tests.safety.hyundai_common import HyundaiButtonBase
-
-MAX_ACCEL = 2.0
-MIN_ACCEL = -3.5
-
-
-class Buttons:
-  NONE = 0
-  RESUME = 1
-  SET = 2
-  CANCEL = 4
-
-
-PREV_BUTTON_SAMPLES = 8
-ENABLE_BUTTONS = (Buttons.RESUME, Buttons.SET, Buttons.CANCEL)
+from panda.tests.safety.common import CANPackerPanda
+from panda.tests.safety.hyundai_common import HyundaiButtonBase, HyundaiLongitudinalBase
 
 
 # 4 bit checkusm used in some hyundai messages
@@ -55,9 +40,6 @@ def checksum(msg):
     ret[6 if addr == 916 else 7] |= chksum << (4 if addr == 1057 else 0)
 
   return addr, t, ret, bus
-
-
-
 
 
 class TestHyundaiSafety(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
@@ -173,8 +155,12 @@ class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
     values = {"CR_Vcu_AccPedDep_Pos": gas}
     return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
 
-class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
+class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBase, TestHyundaiSafety):
   TX_MSGS = [[832, 0], [1265, 0], [1157, 0], [1056, 0], [1057, 0], [1290, 0], [905, 0], [1186, 0], [909, 0], [1155, 0], [2000, 0]]
+
+
+  DISABLED_ECU_UDS_MSG = (2000, 0)
+  DISABLED_ECU_ACTUATION_MSG = (1057, 0)
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
@@ -182,26 +168,7 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, Panda.FLAG_HYUNDAI_LONG)
     self.safety.init_tests()
 
-  # override these tests from PandaSafetyTest, hyundai longitudinal uses button enable
-  def test_disable_control_allowed_from_cruise(self):
-    pass
-
-  def test_enable_control_allowed_from_cruise(self):
-    pass
-
-  def test_sampling_cruise_buttons(self):
-    pass
-
-  def test_cruise_engaged_prev(self):
-    pass
-
-  def test_button_sends(self):
-    pass
-
-  def _pcm_status_msg(self, enable):
-    raise NotImplementedError
-
-  def _send_accel_msg(self, accel, aeb_req=False, aeb_decel=0):
+  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
     values = {
       "aReqRaw": accel,
       "aReqValue": accel,
@@ -210,7 +177,7 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     }
     return self.packer.make_can_msg_panda("SCC12", self.SCC_BUS, values)
 
-  def _send_fca11_msg(self, idx=0, vsm_aeb_req=False, fca_aeb_req=False, aeb_decel=0):
+  def _fca11_msg(self, idx=0, vsm_aeb_req=False, fca_aeb_req=False, aeb_decel=0):
     values = {
       "CR_FCA_Alive": ((-((idx % 0xF) + 2) % 4) << 2) + 1,
       "Supplemental_Counter": idx % 0xF,
@@ -222,56 +189,15 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
     return self.packer.make_can_msg_panda("FCA11", 0, values)
 
   def test_no_aeb_fca11(self):
-    self.assertTrue(self._tx(self._send_fca11_msg()))
-    self.assertFalse(self._tx(self._send_fca11_msg(vsm_aeb_req=True)))
-    self.assertFalse(self._tx(self._send_fca11_msg(fca_aeb_req=True)))
-    self.assertFalse(self._tx(self._send_fca11_msg(aeb_decel=1.0)))
+    self.assertTrue(self._tx(self._fca11_msg()))
+    self.assertFalse(self._tx(self._fca11_msg(vsm_aeb_req=True)))
+    self.assertFalse(self._tx(self._fca11_msg(fca_aeb_req=True)))
+    self.assertFalse(self._tx(self._fca11_msg(aeb_decel=1.0)))
 
   def test_no_aeb_scc12(self):
-    self.assertTrue(self._tx(self._send_accel_msg(0)))
-    self.assertFalse(self._tx(self._send_accel_msg(0, aeb_req=True)))
-    self.assertFalse(self._tx(self._send_accel_msg(0, aeb_decel=1.0)))
-
-  def test_set_resume_buttons(self):
-    """
-      SET and RESUME enter controls allowed on their falling edge.
-    """
-    for btn in range(8):
-      self.safety.set_controls_allowed(0)
-      for _ in range(10):
-        self._rx(self._button_msg(btn))
-        self.assertFalse(self.safety.get_controls_allowed())
-
-      # should enter controls allowed on falling edge
-      if btn in (Buttons.RESUME, Buttons.SET):
-        self._rx(self._button_msg(Buttons.NONE))
-        self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_cancel_button(self):
-    self.safety.set_controls_allowed(1)
-    self._rx(self._button_msg(Buttons.CANCEL))
-    self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_accel_safety_check(self):
-    for controls_allowed in [True, False]:
-      for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.01):
-        accel = round(accel, 2) # floats might not hit exact boundary conditions without rounding
-        self.safety.set_controls_allowed(controls_allowed)
-        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == 0
-        self.assertEqual(send, self._tx(self._send_accel_msg(accel)), (controls_allowed, accel))
-
-  def test_diagnostics(self):
-    tester_present = common.package_can_msg((0x7d0, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 0))
-    self.assertTrue(self.safety.safety_tx_hook(tester_present))
-
-    not_tester_present = common.package_can_msg((0x7d0, 0, b"\x03\xAA\xAA\x00\x00\x00\x00\x00", 0))
-    self.assertFalse(self.safety.safety_tx_hook(not_tester_present))
-
-  def test_radar_alive(self):
-    # If the radar knockout failed, make sure the relay malfunction is shown
-    self.assertFalse(self.safety.get_relay_malfunction())
-    self._rx(make_msg(0, 1057, 8))
-    self.assertTrue(self.safety.get_relay_malfunction())
+    self.assertTrue(self._tx(self._accel_msg(0)))
+    self.assertFalse(self._tx(self._accel_msg(0, aeb_req=True)))
+    self.assertFalse(self._tx(self._accel_msg(0, aeb_decel=1.0)))
 
 
 if __name__ == "__main__":

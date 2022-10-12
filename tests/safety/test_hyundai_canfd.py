@@ -4,7 +4,7 @@ from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
-from panda.tests.safety.hyundai_common import HyundaiButtonBase
+from panda.tests.safety.hyundai_common import HyundaiButtonBase, HyundaiLongitudinalBase
 
 class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
 
@@ -130,6 +130,26 @@ class TestHyundaiCanfdHDA2(TestHyundaiCanfdBase):
     self.safety.init_tests()
 
 
+class TestHyundaiCanfdHDA2Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2):
+
+  TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0], [0x51, 0], [0x730, 1], [0x12a, 1], [0x160, 1],
+             [0x1e0, 1], [0x1a0, 1], [0x1ea, 1], [0x200, 1], [0x345, 1], [0x1da, 1]]
+
+  DISABLED_ECU_UDS_MSG = (0x730, 1)
+  DISABLED_ECU_ACTUATION_MSG = (0x1a0, 1)
+
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_canfd")
+    self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_CANFD_LONG)
+    self.safety.init_tests()
+
+  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
+    values = {
+      "ACCEL_REQ": accel,
+      "ACCEL_REQ2": accel,
+    }
+    return self.packer.make_can_msg_panda("CRUISE_INFO", 1, values)
 
 
 if __name__ == "__main__":
