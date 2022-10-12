@@ -76,6 +76,11 @@ class TestHyundaiSafety(HyundaiButtonBase, common.PandaSafetyTest, common.Driver
   DRIVER_TORQUE_ALLOWANCE = 50
   DRIVER_TORQUE_FACTOR = 2
 
+  # Safety around steering req bit
+  MIN_VALID_STEERING_FRAMES = 89
+  MAX_INVALID_STEERING_FRAMES = 2
+  MIN_VALID_STEERING_RT_INTERVAL = 810000  # a ~10% buffer, can send steer up to 110Hz
+
   cnt_gas = 0
   cnt_speed = 0
   cnt_brake = 0
@@ -124,22 +129,6 @@ class TestHyundaiSafety(HyundaiButtonBase, common.PandaSafetyTest, common.Driver
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"CR_Lkas_StrToqReq": torque, "CF_Lkas_ActToi": steer_req}
     return self.packer.make_can_msg_panda("LKAS11", 0, values)
-
-  def test_steer_req_bit(self):
-    """
-      On Hyundai, you can ramp up torque and then set the CF_Lkas_ActToi bit and the
-      EPS will ramp up faster than the effective panda safety limits. This tests:
-        - Nothing is sent when cutting torque
-        - Nothing is blocked when sending torque normally
-    """
-    self.safety.set_controls_allowed(True)
-    for _ in range(100):
-      self._set_prev_torque(self.MAX_TORQUE)
-      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
-
-    self._set_prev_torque(self.MAX_TORQUE)
-    for _ in range(100):
-      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
 
 class TestHyundaiSafetyCameraSCC(TestHyundaiSafety):

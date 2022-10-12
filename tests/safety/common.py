@@ -245,10 +245,12 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
         self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
       # Send partial amount of allowed invalid frames
-      for _ in range(max_invalid_steer_frames):
-        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+      for idx in range(max_invalid_steer_frames):
+        should_tx = idx < self.MAX_INVALID_STEERING_FRAMES
+        self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
 
       # Send one valid frame, and subsequent invalid should now be blocked
+      self._set_prev_torque(self.MAX_TORQUE)
       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
       for _ in range(self.MIN_VALID_STEERING_FRAMES + 1):
         self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
