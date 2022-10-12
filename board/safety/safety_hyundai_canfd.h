@@ -1,3 +1,5 @@
+#include "safety_hyundai_common.h"
+
 const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
   .max_steer = 270,
   .max_rt_delta = 112,
@@ -8,8 +10,6 @@ const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
   .driver_torque_factor = 2,
   .type = TorqueDriverLimited,
 };
-
-const uint32_t HYUNDAI_CANFD_STANDSTILL_THRSLD = 30;  // ~1kph
 
 const CanMsg HYUNDAI_CANFD_HDA2_TX_MSGS[] = {
   {0x50, 0, 16},  // LKAS
@@ -127,25 +127,13 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
         cruise_button = (GET_BYTE(to_push, 4) >> 4) & 0x7U;
         main_button = GET_BIT(to_push, 34U);
       }
-
-      if ((cruise_button == HYUNDAI_BTN_RESUME) || (cruise_button == HYUNDAI_BTN_SET) || (cruise_button == HYUNDAI_BTN_CANCEL) || (main_button != 0)) {
-        hyundai_last_button_interaction = 0U;
-      } else {
-        hyundai_last_button_interaction = MIN(hyundai_last_button_interaction + 1U, HYUNDAI_PREV_BUTTON_SAMPLES);
-      }
+      hyundai_common_cruise_buttons_check(cruise_button, main_button);
     }
 
     // cruise state
     if (addr == 0x175) {
       bool cruise_engaged = GET_BIT(to_push, 68U);
-      if (cruise_engaged && !cruise_engaged_prev && (hyundai_last_button_interaction < HYUNDAI_PREV_BUTTON_SAMPLES)) {
-        controls_allowed = 1;
-      }
-
-      if (!cruise_engaged) {
-        controls_allowed = 0;
-      }
-      cruise_engaged_prev = cruise_engaged;
+      hyundai_common_cruise_state_check(cruise_engaged);
     }
 
     // gas press
@@ -167,7 +155,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
       for (int i = 8; i < 15; i+=2) {
         speed += GET_BYTE(to_push, i) | (GET_BYTE(to_push, i + 1) << 8U);
       }
-      vehicle_moving = (speed / 4U) > HYUNDAI_CANFD_STANDSTILL_THRSLD;
+      vehicle_moving = (speed / 4U) > HYUNDAI_STANDSTILL_THRSLD;
     }
   }
 
@@ -247,6 +235,8 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
   hyundai_canfd_hda2 = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2);
   hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
+
+  hyundai_longitudinal = false;
 
   return &hyundai_canfd_rx_checks;
 }

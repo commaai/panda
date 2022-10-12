@@ -4,7 +4,7 @@ from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
-from panda.tests.safety.test_hyundai import HyundaiButtonBase
+from panda.tests.safety.hyundai_common import HyundaiButtonBase
 
 class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
 
