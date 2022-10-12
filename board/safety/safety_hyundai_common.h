@@ -1,8 +1,8 @@
 #ifndef SAFETY_HYUNDAI_COMMON_H
 #define SAFETY_HYUNDAI_COMMON_H
 
-const int HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
 const uint8_t HYUNDAI_PREV_BUTTON_SAMPLES = 8;  // roughly 160 ms
+const uint32_t HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
 
 enum {
   HYUNDAI_BTN_NONE = 0,
