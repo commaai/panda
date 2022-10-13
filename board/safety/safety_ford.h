@@ -14,6 +14,7 @@
 
 const CanMsg FORD_TX_MSGS[] = {
   {MSG_Steering_Data_FD1, 0, 8},
+  {MSG_Steering_Data_FD1, 2, 8},
   {MSG_ACCDATA_3, 0, 8},
   {MSG_Lane_Assist_Data1, 0, 8},
   {MSG_LateralMotionControl, 0, 8},
