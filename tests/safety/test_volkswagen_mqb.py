@@ -59,13 +59,16 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
     return self.packer.make_can_msg_panda("Motor_20", 0, values)
 
   # ACC engagement status
-  def _pcm_status_msg(self, enable, main_switch=True):
+  def _tsk_status_msg(self, enable, main_switch=True):
     if main_switch:
       tsk_status = 3 if enable else 2
     else:
       tsk_status = 0
     values = {"TSK_Status": tsk_status}
     return self.packer.make_can_msg_panda("TSK_06", 0, values)
+
+  def _pcm_status_msg(self, enable):
+    return self._tsk_status_msg(enable)
 
   # Driver steering input torque
   def _torque_driver_msg(self, torque):
@@ -159,10 +162,10 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
     for button in ["set", "resume"]:
       # ACC main switch must be on, engage on falling edge
       self.safety.set_controls_allowed(0)
-      self._rx(self._pcm_status_msg(False, main_switch=False))
+      self._rx(self._tsk_status_msg(False, main_switch=False))
       self._rx(self._gra_acc_01_msg(_set=(button == "set"), resume=(button == "resume"), bus=0))
       self.assertFalse(self.safety.get_controls_allowed(), f"controls allowed on {button} with main switch off")
-      self._rx(self._pcm_status_msg(False, main_switch=True))
+      self._rx(self._tsk_status_msg(False, main_switch=True))
       self._rx(self._gra_acc_01_msg(_set=(button == "set"), resume=(button == "resume"), bus=0))
       self.assertFalse(self.safety.get_controls_allowed(), f"controls allowed on {button} rising edge")
       self._rx(self._gra_acc_01_msg(bus=0))
@@ -170,16 +173,16 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
 
   def test_cancel_button(self):
     # Disable on rising edge of cancel button
-    self._rx(self._pcm_status_msg(False, main_switch=True))
+    self._rx(self._tsk_status_msg(False, main_switch=True))
     self.safety.set_controls_allowed(1)
     self._rx(self._gra_acc_01_msg(cancel=True, bus=0))
     self.assertFalse(self.safety.get_controls_allowed(), "controls allowed after cancel")
 
   def test_main_switch(self):
     # Disable as soon as main switch turns off
-    self._rx(self._pcm_status_msg(False, main_switch=True))
+    self._rx(self._tsk_status_msg(False, main_switch=True))
     self.safety.set_controls_allowed(1)
-    self._rx(self._pcm_status_msg(False, main_switch=False))
+    self._rx(self._tsk_status_msg(False, main_switch=False))
     self.assertFalse(self.safety.get_controls_allowed(), "controls allowed after ACC main switch off")
 
   def test_accel_safety_check(self):
