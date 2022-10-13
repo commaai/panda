@@ -276,7 +276,6 @@ class TestHyundaiLongitudinalSafety(TestHyundaiSafety):
 
   def _send_fca11_msg(self, idx=0, vsm_aeb_req=False, fca_aeb_req=False, aeb_decel=0):
     values = {
-      "CR_FCA_Alive": ((-((idx % 0xF) + 2) % 4) << 2) + 1,
       "CR_FCA_Alive": idx % 0xF,
       "FCA_Status": 2,
       "CR_VSM_DecCmd": aeb_decel,
