@@ -87,13 +87,13 @@ class TestFordSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("LateralMotionControl", 0, values)
 
   # Cruise control buttons
-  def _acc_button_msg(self, button: int):
+  def _acc_button_msg(self, button: int, bus: int):
     values = {
       "CcAslButtnCnclPress": 1 if button == Buttons.CANCEL else 0,
       "CcAsllButtnResPress": 1 if button == Buttons.RESUME else 0,
       "TjaButtnOnOffPress": 1 if button == Buttons.TJA_TOGGLE else 0,
     }
-    return self.packer.make_can_msg_panda("Steering_Data_FD1", 0, values)
+    return self.packer.make_can_msg_panda("Steering_Data_FD1", bus, values)
 
   def test_steer_allowed(self):
     self.safety.set_controls_allowed(1)
@@ -116,15 +116,17 @@ class TestFordSafety(common.PandaSafetyTest):
       self.safety.set_controls_allowed(allowed)
       for enabled in (True, False):
         self._rx(self._pcm_status_msg(enabled))
-        self.assertTrue(self._tx(self._acc_button_msg(Buttons.TJA_TOGGLE)))
+        self.assertTrue(self._tx(self._acc_button_msg(Buttons.TJA_TOGGLE, 2)))
 
     for allowed in (0, 1):
       self.safety.set_controls_allowed(allowed)
-      self.assertEqual(allowed, self._tx(self._acc_button_msg(Buttons.RESUME)))
+      for bus in (0, 2):
+        self.assertEqual(allowed, self._tx(self._acc_button_msg(Buttons.RESUME, bus)))
 
     for enabled in (True, False):
       self._rx(self._pcm_status_msg(enabled))
-      self.assertEqual(enabled, self._tx(self._acc_button_msg(Buttons.CANCEL)))
+      for bus in (0, 2):
+        self.assertEqual(enabled, self._tx(self._acc_button_msg(Buttons.CANCEL, bus)))
 
 
 if __name__ == "__main__":
