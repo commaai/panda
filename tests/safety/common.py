@@ -719,6 +719,14 @@ class PandaSafetyTest(PandaSafetyTestBase):
             if attr == 'TestHyundaiCanfdHDA2Long' and current_test.startswith('TestToyota'):
               tx = list(filter(lambda m: m[0] not in [0x160, ], tx))
 
+            # Volkswagen MQB longitundal actuating message overlaps with the Subaru lateral actuating message
+            if attr == 'TestVolkswagenMqbLongSafety' and current_test.startswith('TestSubaru'):
+              tx = list(filter(lambda m: m[0] not in [0x122, ], tx))
+
+            # Volkswagen MQB and Honda Nidec ACC HUD messages overlap
+            if attr == 'TestVolkswagenMqbLongSafety' and current_test.startswith('TestHondaNidec'):
+              tx = list(filter(lambda m: m[0] not in [0x30c, ], tx))
+
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
             if attr.startswith('TestHonda'):
               # exceptions for common msgs across different hondas
@@ -729,18 +737,10 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertTrue(len(all_tx) >= len(test_files)-1)
 
     for tx_msgs in all_tx:
-      for addr, bus, source_test in tx_msgs:
+      for addr, bus, test_name in tx_msgs:
         msg = make_msg(bus, addr)
         self.safety.set_controls_allowed(1)
         # TODO: this should be blocked
         if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
           continue
-        # Verified conflict
-        testpair = ("TestVolkswagenMqb", "TestSubaru")
-        if current_test.startswith(testpair) and source_test.startswith(testpair) and addr == 0x122:
-          continue
-        # Verified conflict
-        testpair = ("TestVolkswagenMqb", "TestHonda")
-        if current_test.startswith(testpair) and source_test.startswith(testpair) and addr == 0x30c:
-          continue
-        self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {source_test} during {current_test} was allowed")
+        self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} during {current_test} was allowed")
