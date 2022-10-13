@@ -148,7 +148,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
       }
 
       if (!volkswagen_mqb_main_switch) {
-        controls_allowed = 0;
+        controls_allowed = false;
       }
     }
 
@@ -168,7 +168,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
       // Always exit controls on rising edge of Cancel
       // Signal: GRA_ACC_01.GRA_Abbrechen
       if (GET_BIT(to_push, 13U) == 1U) {
-        controls_allowed = 0;
+        controls_allowed = false;
       }
     }
 
