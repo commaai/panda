@@ -192,7 +192,6 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
 
   int tx = 0;
   int addr = GET_ADDR(to_send);
-  int bus = GET_BUS(to_send);
 
   if (hyundai_canfd_hda2 && !hyundai_longitudinal) {
     tx = msg_allowed(to_send, HYUNDAI_CANFD_HDA2_TX_MSGS, sizeof(HYUNDAI_CANFD_HDA2_TX_MSGS)/sizeof(HYUNDAI_CANFD_HDA2_TX_MSGS[0]));
@@ -214,8 +213,7 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   }
 
   // cruise buttons check
-  const int buttons_bus = hyundai_canfd_hda2 ? 1 : 0;
-  if ((addr == 0x1cf) && (bus == buttons_bus)) {
+  if (addr == 0x1cf) {
     int button = GET_BYTE(to_send, 2) & 0x7U;
     bool is_cancel = (button == HYUNDAI_BTN_CANCEL);
     bool is_resume = (button == HYUNDAI_BTN_RESUME);
