@@ -203,7 +203,8 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   }
 
   // steering
-  if ((addr == 0x50) || (addr == 0x12a)) {
+  const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? 0x50 : 0x12a;
+  if (addr == steer_addr) {
     int desired_torque = ((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U);
     desired_torque -= 1024;
 
