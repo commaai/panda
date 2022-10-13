@@ -44,6 +44,10 @@ addr_checks volkswagen_mqb_rx_checks = {volkswagen_mqb_addr_checks, VOLKSWAGEN_M
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
 const uint16_t VOLKSWAGEN_MQB_PARAM_LONG = 1;
 bool volkswagen_mqb_longitudinal = false;
+bool volkswagen_mqb_main_switch = false;
+bool volkswagen_mqb_cruise_engaged = false;
+bool volkswagen_mqb_set_prev = false;
+bool volkswagen_mqb_resume_prev = false;
 
 
 static uint32_t volkswagen_mqb_get_checksum(CANPacket_t *to_push) {
@@ -131,26 +135,40 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    if (volkswagen_mqb_longitudinal) {
-      if (addr == MSG_GRA_ACC_01) {
-        // Exit controls on Cancel, otherwise, enter controls on Set or Resume
-        // Signal: GRA_ACC_01.GRA_Tip_Setzen
-        // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
-        if (GET_BIT(to_push, 19U) || GET_BIT(to_push, 16U)) {
-          controls_allowed = 1;
-        }
-        // Signal: GRA_ACC_01.GRA_Abbrechen
-        if (GET_BIT(to_push, 13U) == 1U) {
-          controls_allowed = 0;
-        }
+    if (addr == MSG_TSK_06) {
+      // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
+      // Always exit controls on main switch off
+      // Signal: TSK_06.TSK_Status
+      int acc_status = (GET_BYTE(to_push, 3) & 0x7U);
+      volkswagen_mqb_cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 5);
+      volkswagen_mqb_main_switch = volkswagen_mqb_cruise_engaged || (acc_status == 2);
+
+      if (!volkswagen_mqb_longitudinal) {
+        pcm_cruise_check(volkswagen_mqb_cruise_engaged);
       }
-    } else {
-      if (addr == MSG_TSK_06) {
-        // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
-        // Signal: TSK_06.TSK_Status
-        int acc_status = (GET_BYTE(to_push, 3) & 0x7U);
-        bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 5);
-        pcm_cruise_check(cruise_engaged);
+
+      if (!volkswagen_mqb_main_switch) {
+        controls_allowed = 0;
+      }
+    }
+
+    if (addr == MSG_GRA_ACC_01) {
+      // If using openpilot longitudinal, enter controls on falling edge of Set or Resume with main switch on
+      // Signal: GRA_ACC_01.GRA_Tip_Setzen
+      // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
+      if (volkswagen_mqb_longitudinal) {
+        bool set_button = GET_BIT(to_push, 16U);
+        bool resume_button = GET_BIT(to_push, 19U);
+        if ((volkswagen_mqb_set_prev && !set_button) || (volkswagen_mqb_resume_prev && !resume_button)) {
+          controls_allowed = volkswagen_mqb_main_switch;
+        }
+        volkswagen_mqb_set_prev = set_button;
+        volkswagen_mqb_resume_prev = resume_button;
+      }
+      // Always exit controls on rising edge of Cancel
+      // Signal: GRA_ACC_01.GRA_Abbrechen
+      if (GET_BIT(to_push, 13U) == 1U) {
+        controls_allowed = 0;
       }
     }
 
