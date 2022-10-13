@@ -63,9 +63,8 @@ addr_checks hyundai_canfd_rx_checks = {hyundai_canfd_addr_checks, HYUNDAI_CANFD_
 uint16_t hyundai_canfd_crc_lut[256];
 
 
-const int HYUNDAI_PARAM_CANFD_HDA2 = 1;
-const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 2;
-const int HYUNDAI_PARAM_CANFD_LONG = 4;
+const int HYUNDAI_PARAM_CANFD_HDA2 = 8;
+const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 16;
 bool hyundai_canfd_hda2 = false;
 bool hyundai_canfd_alt_buttons = false;
 
@@ -287,16 +286,15 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 }
 
 static const addr_checks* hyundai_canfd_init(uint16_t param) {
+  hyundai_common_init(param);
+
   gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
-  hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
   hyundai_canfd_hda2 = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2);
   hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
 
-#ifdef ALLOW_DEBUG
-  hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_CANFD_LONG) && hyundai_canfd_hda2;
-#else
-  hyundai_longitudinal = false;
-#endif
+  if (!hyundai_canfd_hda2) {
+    hyundai_longitudinal = false;
+  }
 
   return &hyundai_canfd_rx_checks;
 }
