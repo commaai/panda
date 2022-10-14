@@ -20,6 +20,7 @@ bool can_set_speed(uint8_t can_number) {
     CANx,
     bus_config[bus_number].can_speed,
     bus_config[bus_number].can_data_speed,
+    bus_config[bus_number].canfd_non_iso,
     can_loopback,
     (unsigned int)(can_silent) & (1U << can_number)
   );

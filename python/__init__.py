@@ -186,9 +186,9 @@ class Panda:
 
   CAN_PACKET_VERSION = 2
   HEALTH_PACKET_VERSION = 11
-  CAN_HEALTH_PACKET_VERSION = 2
+  CAN_HEALTH_PACKET_VERSION = 3
   HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBB")
-  CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIHHBB")
+  CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIHHBBB")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
@@ -213,10 +213,8 @@ class Panda:
   FLAG_HYUNDAI_HYBRID_GAS = 2
   FLAG_HYUNDAI_LONG = 4
   FLAG_HYUNDAI_CAMERA_SCC = 8
-
-  FLAG_HYUNDAI_CANFD_HDA2 = 1
-  FLAG_HYUNDAI_CANFD_ALT_BUTTONS = 2
-  FLAG_HYUNDAI_CANFD_LONG = 4
+  FLAG_HYUNDAI_CANFD_HDA2 = 8
+  FLAG_HYUNDAI_CANFD_ALT_BUTTONS = 16
 
   FLAG_TESLA_POWERTRAIN = 1
   FLAG_TESLA_LONG_CONTROL = 2
@@ -509,6 +507,7 @@ class Panda:
       "can_data_speed": a[17],
       "canfd_enabled": a[18],
       "brs_enabled": a[19],
+      "canfd_non_iso": a[20],
     }
 
   # ******************* control *******************
@@ -626,14 +625,8 @@ class Panda:
   def set_can_data_speed_kbps(self, bus, speed):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf9, bus, int(speed * 10), b'')
 
-  # CAN FD and BRS status
-  def get_canfd_status(self, bus):
-    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfa, bus, 0, 2)
-    if dat:
-      a = struct.unpack("BB", dat)
-      return (a[0], a[1])
-    else:
-      return (None, None)
+  def set_canfd_non_iso(self, bus, non_iso):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xfc, bus, int(non_iso), b'')
 
   def set_uart_baud(self, uart, rate):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, int(rate / 300), b'')

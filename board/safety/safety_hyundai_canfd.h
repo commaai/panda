@@ -49,7 +49,8 @@ const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
 
 AddrCheckStruct hyundai_canfd_addr_checks[] = {
   {.msg = {{0x35, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},
-           {0x105, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }}},
+           {0x35, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},
+           {0x105, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}}},
   {.msg = {{0x65, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},
            {0x65, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }}},
   {.msg = {{0xa0, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},
@@ -70,9 +71,8 @@ addr_checks hyundai_canfd_rx_checks = {hyundai_canfd_addr_checks, HYUNDAI_CANFD_
 uint16_t hyundai_canfd_crc_lut[256];
 
 
-const int HYUNDAI_PARAM_CANFD_HDA2 = 1;
-const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 2;
-const int HYUNDAI_PARAM_CANFD_LONG = 4;
+const int HYUNDAI_PARAM_CANFD_HDA2 = 8;
+const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 16;
 bool hyundai_canfd_hda2 = false;
 bool hyundai_canfd_alt_buttons = false;
 
@@ -160,10 +160,10 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
       hyundai_common_cruise_state_check(cruise_engaged);
     }
 
-    // gas press
-    if ((addr == 0x35) && hyundai_canfd_hda2) {
+    // gas press, different for EV, hybrid, and ICE models
+    if ((addr == 0x35) && hyundai_ev_gas_signal) {
       gas_pressed = GET_BYTE(to_push, 5) != 0U;
-    } else if ((addr == 0x105) && !hyundai_canfd_hda2) {
+    } else if ((addr == 0x105) && !hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
       gas_pressed = (GET_BIT(to_push, 103U) != 0U) || (GET_BYTE(to_push, 13) != 0U) || (GET_BIT(to_push, 112U) != 0U);
     } else {
     }
@@ -210,7 +210,8 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   }
 
   // steering
-  if ((addr == 0x50) || (addr == 0x12a)) {
+  const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? 0x50 : 0x12a;
+  if (addr == steer_addr) {
     int desired_torque = (((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U)) - 1024;
     bool steer_req = GET_BIT(to_send, 52U) != 0U;
 
@@ -294,16 +295,15 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 }
 
 static const addr_checks* hyundai_canfd_init(uint16_t param) {
+  hyundai_common_init(param);
+
   gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
-  hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
   hyundai_canfd_hda2 = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2);
   hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
 
-#ifdef ALLOW_DEBUG
-  hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_CANFD_LONG) && hyundai_canfd_hda2;
-#else
-  hyundai_longitudinal = false;
-#endif
+  if (!hyundai_canfd_hda2) {
+    hyundai_longitudinal = false;
+  }
 
   return &hyundai_canfd_rx_checks;
 }
