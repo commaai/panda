@@ -11,7 +11,7 @@ if __name__ == "__main__":
   parser.add_argument('--nonstandard', action='store_true')
   parser.add_argument('--debug', action='store_true')
   parser.add_argument('--addr')
-  parser.add_argument('--bus')
+  parser.add_argument('--bus', type=int, default=1)
   args = parser.parse_args()
 
   if args.addr:
@@ -32,7 +32,10 @@ if __name__ == "__main__":
     for uds_id in range(0xf1f0,0xf200):
       uds_data_ids[uds_id] = "IDENTIFICATION_OPTION_SYSTEM_SUPPLIER_SPECIFIC"
 
-  panda = Panda()
+  panda_idx = args.bus // 4
+  assert len(Panda.list()) >= panda_idx, "No pandas found"
+
+  panda = Panda(Panda.list()[panda_idx])
   panda.set_safety_mode(Panda.SAFETY_ELM327)
   print("querying addresses ...")
   with tqdm(addrs) as t:
@@ -42,10 +45,6 @@ if __name__ == "__main__":
         continue
       t.set_description(hex(addr))
 
-      if args.bus:
-        bus = int(args.bus)
-      else:
-        bus = 1 if panda.has_obd() else 0
       rx_addr = addr + int(args.rxoffset, base=16) if args.rxoffset else None
       uds_client = UdsClient(panda, addr, rx_addr, bus, timeout=0.2, debug=args.debug)
       # Check for anything alive at this address, and switch to the highest
