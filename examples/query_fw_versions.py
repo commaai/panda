@@ -33,7 +33,7 @@ if __name__ == "__main__":
       uds_data_ids[uds_id] = "IDENTIFICATION_OPTION_SYSTEM_SUPPLIER_SPECIFIC"
 
   panda_idx = args.bus // 4
-  assert len(Panda.list()) >= panda_idx, "No pandas found"
+  assert len(Panda.list()) >= panda_idx, f"No pandas available for bus {args.bus}"
 
   panda = Panda(Panda.list()[panda_idx])
   panda.set_safety_mode(Panda.SAFETY_ELM327)
