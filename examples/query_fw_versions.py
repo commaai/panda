@@ -46,7 +46,7 @@ if __name__ == "__main__":
       t.set_description(hex(addr))
 
       rx_addr = addr + int(args.rxoffset, base=16) if args.rxoffset else None
-      uds_client = UdsClient(panda, addr, rx_addr, bus, timeout=0.2, debug=args.debug)
+      uds_client = UdsClient(panda, addr, rx_addr, args.bus, timeout=0.2, debug=args.debug)
       # Check for anything alive at this address, and switch to the highest
       # available diagnostic session without security access
       try:
