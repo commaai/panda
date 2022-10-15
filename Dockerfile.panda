@@ -56,6 +56,7 @@ RUN pyenv install 3.8.10 && \
     pyenv rehash && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
+ENV CPPCHECK_DIR=/tmp/cppcheck
 COPY tests/misra/install.sh /tmp/
 RUN /tmp/install.sh
 
@@ -76,7 +77,3 @@ RUN cd /tmp && \
 RUN cd /tmp/openpilot && \
     pip install --no-cache-dir -r opendbc/requirements.txt && \
     pip install --no-cache-dir --upgrade aenum lru-dict pycurl tenacity atomicwrites serial smbus2 scons
-
-COPY . /tmp/openpilot/panda
-RUN mv /tmp/cppcheck /tmp/openpilot/panda/tests/misra && \
-    rm -rf /tmp/openpilot/panda/.git
