@@ -194,7 +194,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     // ensure ADRV ECU is still knocked out
     if (hyundai_canfd_hda2 && ((addr == 0x1a0) && (bus == 1))) {
       stock_ecu_detected = true;
-    } else if (!hyundai_canfd_hda2 && ((addr == 0x1a0) && (bus == 2))) {
+    } else if (!hyundai_canfd_hda2 && ((addr == 0x1a0) && (bus == 0))) {
       stock_ecu_detected = true;
     }
   }
