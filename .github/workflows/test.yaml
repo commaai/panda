@@ -5,6 +5,7 @@ env:
   RUN: docker run --rm panda /bin/bash -c
   PERSIST: docker run --name panda panda /bin/sh -c
   BUILD: |
+      export DOCKER_BUILDKIT=1
       docker pull $(grep -ioP '(?<=^from)\s+\S+' Dockerfile.panda) || true
       docker pull ghcr.io/commaai/panda:latest || true
       docker build --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile.panda .
