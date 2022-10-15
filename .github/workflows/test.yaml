@@ -6,9 +6,9 @@ env:
   PERSIST: docker run --name panda panda /bin/sh -c
   BUILD: |
       export DOCKER_BUILDKIT=1
-      docker pull $(grep -ioP '(?<=^from)\s+\S+' Dockerfile.panda) || true
-      docker pull ghcr.io/commaai/panda:latest || true
-      docker build --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile.panda .
+      #docker pull $(grep -ioP '(?<=^from)\s+\S+' Dockerfile.panda) || true
+      #docker pull ghcr.io/commaai/panda:latest || true
+      docker build --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile.panda .
 
 jobs:
   docker_push:
