@@ -16,8 +16,30 @@ const int GM_MAX_RATE_DOWN = 17;
 const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
 const int GM_DRIVER_TORQUE_FACTOR = 4;
 
-const int GM_MAX_GAS = 3072;
-const int GM_MAX_REGEN = 1404;
+typedef struct {
+  const int max_gas;
+  const int max_regen;
+  const int inactive_regen;
+  const int max_brake;
+} GmLongLimits;
+
+const GmLongLimits GM_ASCM_LONG_LIMITS = {
+  .max_gas = 3072,
+  .max_regen = 1404,
+  .inactive_regen = 1404,
+  .max_brake = 400,
+};
+
+const GmLongLimits GM_CAM_LONG_LIMITS = {
+  .max_gas = 3072,
+  .max_regen = 1514,
+  .inactive_regen = 1554,
+  .max_brake = 400,
+};
+
+const GmLongLimits *GM_LONG_LIMITS;
+
+const int GM_INACTIVE_REGEN = 1404;
 const int GM_MAX_BRAKE = 400;
 
 const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
@@ -170,7 +192,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         tx = 0;
       }
     }
-    if (brake > GM_MAX_BRAKE) {
+    if (brake > GM_LONG_LIMITS->max_brake) {
       tx = 0;
     }
   }
@@ -227,10 +249,9 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (addr == 715) {
     int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
     // Disabled message is !engaged with gas
-    // value that corresponds to max regen.
+    // value that corresponds to inactive regen.
     if (!current_controls_allowed || !longitudinal_allowed) {
-      // Stock ECU sends max regen when not enabled
-      if (gas_regen != GM_MAX_REGEN) {
+      if (gas_regen != GM_LONG_LIMITS->inactive_regen) {
         tx = 0;
       }
     }
@@ -241,7 +262,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         tx = 0;
       }
     }
-    if (gas_regen > GM_MAX_GAS) {
+    if ((gas_regen < GM_LONG_LIMITS->max_regen) || (gas_regen > GM_LONG_LIMITS->max_gas)) {
       tx = 0;
     }
   }
@@ -286,6 +307,14 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 static const addr_checks* gm_init(uint16_t param) {
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
+
+  if (gm_hw == GM_ASCM) {
+    GM_LONG_LIMITS = &GM_ASCM_LONG_LIMITS;
+  } else if (gm_hw == GM_CAM) {
+    GM_LONG_LIMITS = &GM_CAM_LONG_LIMITS;
+  } else {
+  }
+
 #ifdef ALLOW_DEBUG
   gm_cam_long = GET_FLAG(param, GM_PARAM_HW_CAM_LONG);
 #endif
