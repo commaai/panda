@@ -2,7 +2,7 @@ name: tests
 on: [push, pull_request]
 
 env:
-  RUN: docker run --rm panda -v $PWD:/tmp/openpilot/panda /bin/bash -c
+  RUN: docker run -v $PWD:/tmp/openpilot/panda --rm panda /bin/bash -c
   PERSIST: docker run --name panda panda /bin/sh -c
   BUILD: |
       export DOCKER_BUILDKIT=1
