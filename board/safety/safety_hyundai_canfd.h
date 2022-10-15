@@ -12,9 +12,9 @@ const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
 
   // the EPS faults when the steering angle is above a certain threshold for too long. to prevent this,
   // we allow setting torque actuation bit to 0 while maintaining the requested torque value for two consecutive frames
-  .min_valid_request_frames = 89,
-  .max_invalid_request_frames = 2,
-  .min_valid_request_rt_interval = 810000,  // 810ms; a ~10% buffer on cutting every 90 frames
+  .min_valid_request_frames = 33,
+  .max_invalid_request_frames = 1,
+  .min_valid_request_rt_interval = 306000,  // 810ms; a ~10% buffer on cutting every 90 frames
   .has_steer_req_tolerance = true,
 };
 
