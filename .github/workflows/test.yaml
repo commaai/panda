@@ -6,19 +6,18 @@ env:
   PERSIST: docker run --name panda panda /bin/sh -c
   BUILD: |
       export DOCKER_BUILDKIT=1
-      #docker pull $(grep -ioP '(?<=^from)\s+\S+' Dockerfile.panda) || true
-      #docker pull ghcr.io/commaai/panda:latest || true
-      docker build --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile.panda .
+      docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile.panda .
 
 jobs:
   docker_push:
     name: docker push
     runs-on: ubuntu-20.04
-    timeout-minutes: 45
+    timeout-minutes: 20
     #if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
+        timeout-minutes: 11
         run: eval "$BUILD"
       - name: Login to dockerhub
         run: docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
@@ -30,7 +29,7 @@ jobs:
   build:
     name: build
     runs-on: ubuntu-20.04
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
@@ -45,7 +44,7 @@ jobs:
   unit_tests:
     name: unit tests
     runs-on: ubuntu-20.04
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
@@ -57,7 +56,7 @@ jobs:
   safety:
     name: safety
     runs-on: ubuntu-20.04
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
@@ -73,7 +72,7 @@ jobs:
   safety_replay:
     name: safety replay
     runs-on: ubuntu-20.04
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
@@ -86,7 +85,7 @@ jobs:
   misra:
     name: misra c2012
     runs-on: ubuntu-20.04
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
@@ -109,7 +108,7 @@ jobs:
   python_linter:
     name: python linter
     runs-on: ubuntu-20.04
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
