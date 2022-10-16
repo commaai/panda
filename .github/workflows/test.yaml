@@ -1,9 +1,13 @@
 name: tests
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref != 'refs/heads/master' && github.ref || github.run_id }}-${{ github.event_name }}
+  cancel-in-progress: true
+
 env:
-  RUN: docker run -v $PWD:/tmp/openpilot/panda --rm panda /bin/bash -c
-  PERSIST: docker run --name panda panda /bin/sh -c
+  RUN: docker run -v $GITHUB_WORKSPACE:/tmp/openpilot/panda -w /tmp/openpilot/panda --rm panda /bin/bash -c
+  PERSIST: docker run -v $GITHUB_WORKSPACE:/tmp/openpilot/panda -w /tmp/openpilot/panda --name panda panda /bin/bash -c
   BUILD: |
       export DOCKER_BUILDKIT=1
       docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile.panda .
@@ -35,11 +39,11 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Test python package installer
-        run: $RUN "cd /tmp/openpilot/panda && python setup.py install"
+        run: ${{ env.RUN }} "cd /tmp/openpilot/panda && python setup.py install"
       - name: Build panda STM image and bootstub
-        run: $RUN "cd /tmp/openpilot/panda && scons"
+        run: ${{ env.RUN }} "cd /tmp/openpilot/panda && scons"
       - name: Build pedal STM image and bootstub
-        run: $RUN "cd /tmp/openpilot/panda && PEDAL=1 scons"
+        run: ${{ env.RUN }} "cd /tmp/openpilot/panda && PEDAL=1 scons"
 
   unit_tests:
     name: unit tests
@@ -50,7 +54,7 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Test pack/unpack for USB protocol
-        run: $RUN "cd /tmp/openpilot/panda/tests/usbprotocol &&
+        run: ${{ env.RUN }} "cd /tmp/openpilot/panda/tests/usbprotocol &&
                    python -m unittest discover ."
 
   safety:
@@ -63,11 +67,11 @@ jobs:
         run: eval "$BUILD"
       - name: Run safety tests
         run: |
-          $RUN "cd /tmp/openpilot && \
-                scons -c && \
-                scons -j$(nproc) opendbc/ cereal/ && \
-                cd panda/tests/safety && \
-                ./test.sh"
+          ${{ env.RUN }} "cd /tmp/openpilot && \
+                          scons -c && \
+                          scons -j$(nproc) opendbc/ cereal/ && \
+                          cd panda/tests/safety && \
+                          ./test.sh"
 
   safety_replay:
     name: safety replay
@@ -78,9 +82,9 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Run safety replay
-        run: $RUN "cd /tmp/openpilot/panda/tests/safety_replay &&
-                   scons -u --test .. &&
-                   ./test_safety_replay.py"
+        run: ${{ env.RUN }} "cd tests/safety_replay &&
+                             scons -u --test .. &&
+                             ./test_safety_replay.py"
 
   misra:
     name: misra c2012
@@ -91,7 +95,7 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Run Misra C 2012 analysis
-        run: $PERSIST "cd /tmp/openpilot/panda/tests/misra && ./test_misra.sh"
+        run: ${{ env.PERSIST }} "cd tests/misra && ./test_misra.sh"
       - name: Copy analysis outputs
         run: docker cp panda:/tmp/misra /tmp
       - uses: actions/upload-artifact@v2
@@ -104,6 +108,8 @@ jobs:
         with:
           name: misra_output
           path: /tmp/misra/misra_*_output.txt
+      - run: docker rm panda
+        if: always()
 
   python_linter:
     name: python linter
@@ -115,4 +121,4 @@ jobs:
         run: eval "$BUILD"
       - name: Run static analysis
         run: |
-          $RUN "cd /tmp/openpilot/panda && pre-commit run --all"
+          ${{ env.RUN }} "pre-commit run --all"
