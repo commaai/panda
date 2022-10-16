@@ -63,6 +63,7 @@ ENV CPPCHECK_DIR=/tmp/cppcheck
 COPY tests/misra/install.sh /tmp/
 RUN /tmp/install.sh
 
+RUN sudo git config --global --add safe.directory /tmp/openpilot/panda
 RUN cd /tmp && \
     git clone https://github.com/commaai/openpilot.git tmppilot || true && \
     cd /tmp/tmppilot && \
