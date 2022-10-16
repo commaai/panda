@@ -73,7 +73,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     if (addr == 842) {
       int left_rear_speed = (GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1);
       int right_rear_speed = (GET_BYTE(to_push, 2) << 8) | GET_BYTE(to_push, 3);
-      vehicle_moving = (left_rear_speed <= GM_STANDSTILL_THRSLD) && (right_rear_speed <= GM_STANDSTILL_THRSLD);
+      vehicle_moving = (left_rear_speed < GM_STANDSTILL_THRSLD) && (right_rear_speed < GM_STANDSTILL_THRSLD);
     }
 
     // ACC steering wheel buttons (GM_CAM is tied to the PCM)
