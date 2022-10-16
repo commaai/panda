@@ -225,6 +225,7 @@ void init_tests(void){
   set_timer(0);
   ts_steer_req_mismatch_last = 0;
   valid_steer_req_count = 0;
+  invalid_steer_req_count = 0;
 }
 
 void init_tests_honda(void){
