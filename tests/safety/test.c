@@ -134,6 +134,10 @@ bool get_brake_pressed_prev(void){
   return brake_pressed_prev;
 }
 
+bool get_regen_braking_prev(void){
+  return regen_braking_prev;
+}
+
 bool get_cruise_engaged_prev(void){
   return cruise_engaged_prev;
 }
@@ -219,6 +223,9 @@ void init_tests(void){
   safety_mode_cnt = 2U;  // avoid ignoring relay_malfunction logic
   alternative_experience = 0;
   set_timer(0);
+  ts_steer_req_mismatch_last = 0;
+  valid_steer_req_count = 0;
+  invalid_steer_req_count = 0;
 }
 
 void init_tests_honda(void){

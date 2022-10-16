@@ -18,7 +18,7 @@ const int GM_DRIVER_TORQUE_FACTOR = 4;
 
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
-const int GM_MAX_BRAKE = 350;
+const int GM_MAX_BRAKE = 400;
 
 const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
                                   {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
@@ -33,7 +33,9 @@ AddrCheckStruct gm_addr_checks[] = {
   {.msg = {{388, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{842, 0, 5, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{481, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-  {.msg = {{241, 0, 6, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{190, 0, 6, .expected_timestep = 100000U},    // Volt, Silverado, Acadia Denali
+           {190, 0, 7, .expected_timestep = 100000U},    // Bolt EUV
+           {190, 0, 8, .expected_timestep = 100000U}}},  // Escalade
   {.msg = {{452, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
 #define GM_RX_CHECK_LEN (sizeof(gm_addr_checks) / sizeof(gm_addr_checks[0]))
@@ -49,6 +51,7 @@ enum {
 };
 
 enum {GM_ASCM, GM_CAM} gm_hw = GM_ASCM;
+bool gm_pcm_cruise = false;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
 
@@ -71,7 +74,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     }
 
     // ACC steering wheel buttons (GM_CAM is tied to the PCM)
-    if ((addr == 481) && (gm_hw == GM_ASCM)) {
+    if ((addr == 481) && !gm_pcm_cruise) {
       int button = (GET_BYTE(to_push, 5) & 0x70U) >> 4;
 
       // exit controls on cancel press
@@ -89,29 +92,28 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       cruise_button_prev = button;
     }
 
-    // speed > 0
-    if (addr == 241) {
-      // Brake pedal's potentiometer returns near-zero reading
-      // even when pedal is not pressed
-      brake_pressed = GET_BYTE(to_push, 1) >= 10U;
+    if (addr == 190) {
+      // Reference for signal and thresholds:
+      // https://github.com/commaai/openpilot/blob/master/selfdrive/car/gm/carstate.py
+      if (gm_hw == GM_ASCM) {
+        brake_pressed = GET_BYTE(to_push, 1) >= 8U;
+      } else {
+        brake_pressed = GET_BYTE(to_push, 1) >= 20U;
+      }
     }
 
     if (addr == 452) {
       gas_pressed = GET_BYTE(to_push, 5) != 0U;
 
       // enter controls on rising edge of ACC, exit controls when ACC off
-      if (gm_hw == GM_CAM) {
+      if (gm_pcm_cruise) {
         bool cruise_engaged = (GET_BYTE(to_push, 1) >> 5) != 0U;
         pcm_cruise_check(cruise_engaged);
       }
     }
 
-    // exit controls on regen paddle
     if (addr == 189) {
-      bool regen = GET_BYTE(to_push, 0) & 0x20U;
-      if (regen) {
-        controls_allowed = 0;
-      }
+      regen_braking = (GET_BYTE(to_push, 0) >> 4) != 0U;
     }
 
     bool stock_ecu_detected = (addr == 384);  // ASCMLKASteeringCmd
@@ -189,10 +191,10 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       violation |= rt_rate_limit_check(desired_torque, rt_torque_last, GM_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
+      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_torque_check_last);
       if (ts_elapsed > GM_RT_INTERVAL) {
         rt_torque_last = desired_torque;
-        ts_last = ts;
+        ts_torque_check_last = ts;
       }
     }
 
@@ -205,7 +207,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     if (violation || !current_controls_allowed) {
       desired_torque_last = 0;
       rt_torque_last = 0;
-      ts_last = ts;
+      ts_torque_check_last = ts;
     }
 
     if (violation) {
@@ -237,7 +239,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // BUTTONS: used for resume spamming and cruise cancellation with stock longitudinal
-  if ((addr == 481) && (gm_hw == GM_CAM)) {
+  if ((addr == 481) && gm_pcm_cruise) {
     int button = (GET_BYTE(to_send, 5) >> 4) & 0x7U;
 
     bool allowed_cancel = (button == 6) && cruise_engaged_prev;
@@ -274,6 +276,7 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 static const addr_checks* gm_init(uint16_t param) {
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
+  gm_pcm_cruise = gm_hw == GM_CAM;
   return &gm_rx_checks;
 }
 

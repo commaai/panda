@@ -74,7 +74,6 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
 
 class TestChryslerRamDTSafety(TestChryslerSafety):
   TX_MSGS = [[177, 2], [166, 0], [250, 0]]
-  STANDSTILL_THRESHOLD = 3
   RELAY_MALFUNCTION_ADDR = 166
   FWD_BLACKLISTED_ADDRS = {2: [166, 250]}
 
@@ -95,7 +94,6 @@ class TestChryslerRamDTSafety(TestChryslerSafety):
 
 class TestChryslerRamHDSafety(TestChryslerSafety):
   TX_MSGS = [[629, 0], [630, 0], [570, 2]]
-  STANDSTILL_THRESHOLD = 3
   RELAY_MALFUNCTION_ADDR = 630
   FWD_BLACKLISTED_ADDRS = {2: [629, 630]}
 
