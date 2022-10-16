@@ -121,4 +121,4 @@ jobs:
         run: eval "$BUILD"
       - name: Run static analysis
         run: |
-          ${{ env.RUN }} "pre-commit run --all"
+          ${{ env.RUN }} "pwd && ls -la .git && cat .git && pre-commit run --all"

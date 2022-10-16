@@ -63,7 +63,7 @@ RUN /tmp/install.sh
 RUN cd /tmp && \
     git clone https://github.com/commaai/openpilot.git tmppilot || true && \
     cd /tmp/tmppilot && \
-    git fetch && \
+    git fetch origin $OPENPILOT_REF && \
     git checkout $OPENPILOT_REF && \
     git submodule update --init cereal opendbc rednose_repo && \
     git -C opendbc fetch && \
@@ -72,6 +72,7 @@ RUN cd /tmp && \
     git -C opendbc clean -xfd && \
     mkdir /tmp/openpilot && \
     cp -pR SConstruct site_scons/ tools/ selfdrive/ system/ common/ cereal/ opendbc/ rednose/ third_party/ /tmp/openpilot && \
+    rm -rf /tmp/openpilot/panda && \
     rm -rf /tmp/tmppilot
 
 RUN cd /tmp/openpilot && \
