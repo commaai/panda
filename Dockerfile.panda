@@ -36,7 +36,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     wget \
     zlib1g-dev \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* && \
+    cd /usr/lib/gcc/arm-none-eabi/9.2.1 && \
+    rm -rf arm/ && \
+    rm -rf thumb/nofp thumb/v6* thumb/v8* thumb/v7+fp thumb/v7-r+fp.sp
 
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8
