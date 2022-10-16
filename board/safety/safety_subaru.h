@@ -195,6 +195,7 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     }
     violation |= max_limit_check(brake_pressure, SUBARU_BRAKE_MAX, SUBARU_BRAKE_MIN);
   }
+  /* FIXME: write tests and fix eyesight faults
   if (addr == 0x221) {
     int cruise_throttle = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
 
@@ -215,6 +216,7 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     violation |= subaru_rate_limit_check(cruise_rpm, subaru_cruise_rpm_last, SUBARU_RPM_DELTA);
     subaru_cruise_rpm_last = cruise_rpm;
   }
+  */
 
   if (violation) {
     tx = 0;
