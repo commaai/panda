@@ -17,7 +17,7 @@ jobs:
     name: docker push
     runs-on: ubuntu-20.04
     timeout-minutes: 20
-    #if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
@@ -95,6 +95,7 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Run Misra C 2012 analysis
+        timeout-minutes: 4
         run: ${{ env.PERSIST }} "cd tests/misra && ./test_misra.sh"
       - name: Copy analysis outputs
         run: docker cp panda:/tmp/misra /tmp
@@ -120,9 +121,7 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Run static analysis
-        run: |
-          ${{ env.RUN }} "pwd && git status && ls -la .git && pre-commit run --all"
-      - run: ${{ env.RUN }} "cat  /root/.cache/pre-commit/pre-commit.log"
-        if: always()
+        timeout-minutes: 3
+        run: ${{ env.RUN }} "pre-commit run --all"
 
 
