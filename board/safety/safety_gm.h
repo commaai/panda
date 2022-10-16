@@ -16,7 +16,7 @@ const int GM_MAX_RATE_DOWN = 17;
 const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
 const int GM_DRIVER_TORQUE_FACTOR = 4;
 
-const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
+const int GM_STANDSTILL_THRSLD = 11;  // 0.3421kph
 
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
