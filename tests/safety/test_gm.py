@@ -6,7 +6,7 @@ from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, ALTERNATIVE_EXPERIENCE
 
-MAX_BRAKE = 350
+MAX_BRAKE = 400
 MAX_GAS = 3072
 MAX_REGEN = 1404
 
@@ -23,6 +23,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0
   BUTTONS_BUS = 0
+  USER_BRAKE_THRESHOLD = 0
 
   MAX_RATE_UP = 7
   MAX_RATE_DOWN = 17
@@ -54,9 +55,9 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     return self.packer.make_can_msg_panda("EBCMWheelSpdRear", 0, values)
 
   def _user_brake_msg(self, brake):
-    # GM safety has a brake threshold of 10
-    values = {"BrakePedalPosition": 10 if brake else 0}
-    return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
+    # GM safety has a brake threshold of 8
+    values = {"BrakePedalPos": self.USER_BRAKE_THRESHOLD if brake else 0}
+    return self.packer.make_can_msg_panda("ECMAcceleratorPos", 0, values)
 
   def _user_regen_msg(self, regen):
     values = {"RegenPaddle": 2 if regen else 0}
@@ -109,7 +110,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
       if pedal == 'brake':
         # brake_pressed_prev and vehicle_moving
         self._rx(self._speed_msg(100))
-        self._rx(self._user_brake_msg(MAX_BRAKE))
+        self._rx(self._user_brake_msg(1))
       elif pedal == 'gas':
         # gas_pressed_prev
         self._rx(self._user_gas_msg(MAX_GAS))
@@ -135,7 +136,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
       if pedal == 'brake':
         # brake_pressed_prev and vehicle_moving
         self._rx(self._speed_msg(100))
-        self._rx(self._user_brake_msg(MAX_BRAKE))
+        self._rx(self._user_brake_msg(1))
         allow_ctrl = False
       elif pedal == 'gas':
         # gas_pressed_prev
@@ -163,6 +164,7 @@ class TestGmAscmSafety(TestGmSafetyBase):
              [0x104c006c, 3], [0x10400060, 3]]  # gmlan
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
+  USER_BRAKE_THRESHOLD = 8
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -210,6 +212,7 @@ class TestGmCameraSafety(TestGmSafetyBase):
   FWD_BLACKLISTED_ADDRS = {2: [384]}  # LKAS message, ACC messages are (715, 880, 789)
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   BUTTONS_BUS = 2  # tx only
+  USER_BRAKE_THRESHOLD = 20
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
