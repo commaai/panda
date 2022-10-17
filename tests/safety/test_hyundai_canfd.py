@@ -81,7 +81,7 @@ class TestHyundaiCanfdHDA1(TestHyundaiCanfdBase):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, 0)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_HYBRID_GAS)
     self.safety.init_tests()
 
   def _user_gas_msg(self, gas):
@@ -93,7 +93,7 @@ class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_ALT_BUTTONS)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_HYBRID_GAS | Panda.FLAG_HYUNDAI_CANFD_ALT_BUTTONS)
     self.safety.init_tests()
 
   def _button_msg(self, buttons, main_button=0, bus=1):
@@ -127,7 +127,7 @@ class TestHyundaiCanfdHDA2(TestHyundaiCanfdBase):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_EV_GAS)
     self.safety.init_tests()
 
 
@@ -145,7 +145,7 @@ class TestHyundaiCanfdHDA2Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_LONG)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_EV_GAS)
     self.safety.init_tests()
 
   def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):

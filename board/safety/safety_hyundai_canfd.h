@@ -42,7 +42,8 @@ const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
 
 AddrCheckStruct hyundai_canfd_addr_checks[] = {
   {.msg = {{0x35, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},
-           {0x105, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }}},
+           {0x35, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},
+           {0x105, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}}},
   {.msg = {{0x65, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},
            {0x65, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }}},
   {.msg = {{0xa0, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},
@@ -152,10 +153,10 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
       hyundai_common_cruise_state_check(cruise_engaged);
     }
 
-    // gas press
-    if ((addr == 0x35) && hyundai_canfd_hda2) {
+    // gas press, different for EV, hybrid, and ICE models
+    if ((addr == 0x35) && hyundai_ev_gas_signal) {
       gas_pressed = GET_BYTE(to_push, 5) != 0U;
-    } else if ((addr == 0x105) && !hyundai_canfd_hda2) {
+    } else if ((addr == 0x105) && hyundai_hybrid_gas_signal) {
       gas_pressed = (GET_BIT(to_push, 103U) != 0U) || (GET_BYTE(to_push, 13) != 0U) || (GET_BIT(to_push, 112U) != 0U);
     } else {
     }
@@ -202,7 +203,8 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   }
 
   // steering
-  if ((addr == 0x50) || (addr == 0x12a)) {
+  const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? 0x50 : 0x12a;
+  if (addr == steer_addr) {
     int desired_torque = ((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U);
     desired_torque -= 1024;
 
