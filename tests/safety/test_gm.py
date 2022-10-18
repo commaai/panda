@@ -19,7 +19,7 @@ class Buttons:
 
 
 class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
-  STANDSTILL_THRESHOLD = 0
+  STANDSTILL_THRESHOLD = 10 * 0.0311
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0
   BUTTONS_BUS = 0
