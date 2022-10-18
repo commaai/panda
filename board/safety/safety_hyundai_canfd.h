@@ -176,6 +176,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
       gas_pressed = (GET_BIT(to_push, 103U) != 0U) || (GET_BYTE(to_push, 13) != 0U) || (GET_BIT(to_push, 112U) != 0U);
     } else if ((addr == 0x100) && !hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
       gas_pressed = GET_BIT(to_push, 176U) != 0U;
+    } else {
     }
 
     // brake press
@@ -183,6 +184,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
       brake_pressed = GET_BIT(to_push, 32U) != 0U;
     } else if (addr == 0x65) {
       brake_pressed = GET_BIT(to_push, 57U) != 0U;
+    } else {
     }
 
     // vehicle moving
@@ -203,6 +205,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
       stock_ecu_detected = true;
     } else if (!hyundai_canfd_hda2 && ((addr == 0x1a0) && (bus == 0))) {
       stock_ecu_detected = true;
+    } else {
     }
   }
   generic_rx_checks(stock_ecu_detected);
