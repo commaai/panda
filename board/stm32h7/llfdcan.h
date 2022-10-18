@@ -84,7 +84,7 @@ bool fdcan_exit_init(FDCAN_GlobalTypeDef *CANx) {
   return ret;
 }
 
-bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_speed, bool loopback, bool silent) {
+bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_speed, bool non_iso, bool loopback, bool silent) {
   UNUSED(speed);
   bool ret = fdcan_request_init(CANx);
 
@@ -97,6 +97,7 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
     CANx->TEST &= ~(FDCAN_TEST_LBCK);
     CANx->CCCR &= ~(FDCAN_CCCR_MON);
     CANx->CCCR &= ~(FDCAN_CCCR_ASM);
+    CANx->CCCR &= ~(FDCAN_CCCR_NISO);
 
     // TODO: add as a separate safety mode
     // Enable ASM restricted operation(for debug or automatic bitrate switching)
@@ -129,6 +130,11 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
     sjw = MIN(15U, seg2);
 
     CANx->DBTP = (((sjw & 0xFU)-1U)<<FDCAN_DBTP_DSJW_Pos) | (((seg1 & 0x1FU)-1U)<<FDCAN_DBTP_DTSEG1_Pos) | (((seg2 & 0xFU)-1U)<<FDCAN_DBTP_DTSEG2_Pos) | (((prescaler & 0x1FU)-1U)<<FDCAN_DBTP_DBRP_Pos);
+
+    if (non_iso) {
+      // FD non-ISO mode
+      CANx->CCCR |= FDCAN_CCCR_NISO;
+    }
 
     // Silent loopback is known as internal loopback in the docs
     if (loopback) {

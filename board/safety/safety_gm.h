@@ -16,6 +16,8 @@ const int GM_MAX_RATE_DOWN = 17;
 const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
 const int GM_DRIVER_TORQUE_FACTOR = 4;
 
+const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
+
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 400;
@@ -51,6 +53,7 @@ enum {
 };
 
 enum {GM_ASCM, GM_CAM} gm_hw = GM_ASCM;
+bool gm_pcm_cruise = false;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
 
@@ -66,14 +69,15 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    // sample speed, really only care if car is moving or not
-    // rear left wheel speed
+    // sample rear wheel speeds
     if (addr == 842) {
-      vehicle_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
+      int left_rear_speed = (GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1);
+      int right_rear_speed = (GET_BYTE(to_push, 2) << 8) | GET_BYTE(to_push, 3);
+      vehicle_moving = (left_rear_speed > GM_STANDSTILL_THRSLD) || (right_rear_speed > GM_STANDSTILL_THRSLD);
     }
 
     // ACC steering wheel buttons (GM_CAM is tied to the PCM)
-    if ((addr == 481) && (gm_hw == GM_ASCM)) {
+    if ((addr == 481) && !gm_pcm_cruise) {
       int button = (GET_BYTE(to_push, 5) & 0x70U) >> 4;
 
       // exit controls on cancel press
@@ -92,16 +96,20 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     }
 
     if (addr == 190) {
-      // Reference for signal and threshold:
+      // Reference for signal and thresholds:
       // https://github.com/commaai/openpilot/blob/master/selfdrive/car/gm/carstate.py
-      brake_pressed = GET_BYTE(to_push, 1) >= 8U;
+      if (gm_hw == GM_ASCM) {
+        brake_pressed = GET_BYTE(to_push, 1) >= 8U;
+      } else {
+        brake_pressed = GET_BYTE(to_push, 1) >= 20U;
+      }
     }
 
     if (addr == 452) {
       gas_pressed = GET_BYTE(to_push, 5) != 0U;
 
       // enter controls on rising edge of ACC, exit controls when ACC off
-      if (gm_hw == GM_CAM) {
+      if (gm_pcm_cruise) {
         bool cruise_engaged = (GET_BYTE(to_push, 1) >> 5) != 0U;
         pcm_cruise_check(cruise_engaged);
       }
@@ -234,7 +242,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // BUTTONS: used for resume spamming and cruise cancellation with stock longitudinal
-  if ((addr == 481) && (gm_hw == GM_CAM)) {
+  if ((addr == 481) && gm_pcm_cruise) {
     int button = (GET_BYTE(to_send, 5) >> 4) & 0x7U;
 
     bool allowed_cancel = (button == 6) && cruise_engaged_prev;
@@ -274,6 +282,7 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 static const addr_checks* gm_init(uint16_t param) {
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
+  gm_pcm_cruise = gm_hw == GM_CAM;
   return &gm_rx_checks;
 }
 
