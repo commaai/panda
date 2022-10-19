@@ -25,6 +25,11 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
   DRIVER_TORQUE_ALLOWANCE = 250
   DRIVER_TORQUE_FACTOR = 2
 
+  # Safety around steering req bit
+  MIN_VALID_STEERING_FRAMES = 89
+  MAX_INVALID_STEERING_FRAMES = 2
+  MIN_VALID_STEERING_RT_INTERVAL = 810000  # a ~10% buffer, can send steer up to 110Hz
+
   PT_BUS = 0
   STEER_BUS = 0
   STEER_MSG = ""
@@ -41,7 +46,7 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
     return self.packer.make_can_msg_panda("MDPS", self.PT_BUS, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"TORQUE_REQUEST": torque}
+    values = {"TORQUE_REQUEST": torque, "STEER_REQ": steer_req}
     return self.packer.make_can_msg_panda(self.STEER_MSG, self.STEER_BUS, values)
 
   def _speed_msg(self, speed):
@@ -81,7 +86,7 @@ class TestHyundaiCanfdHDA1(TestHyundaiCanfdBase):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, 0)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_HYBRID_GAS)
     self.safety.init_tests()
 
   def _user_gas_msg(self, gas):
@@ -93,7 +98,7 @@ class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_ALT_BUTTONS)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_HYBRID_GAS | Panda.FLAG_HYUNDAI_CANFD_ALT_BUTTONS)
     self.safety.init_tests()
 
   def _button_msg(self, buttons, main_button=0, bus=1):

@@ -39,7 +39,10 @@ const GmLongLimits GM_CAM_LONG_LIMITS = {
 
 const GmLongLimits *GM_LONG_LIMITS;
 
-const int GM_INACTIVE_REGEN = 1404;
+const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
+
+const int GM_MAX_GAS = 3072;
+const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 400;
 
 const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
@@ -93,10 +96,11 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    // sample speed, really only care if car is moving or not
-    // rear left wheel speed
+    // sample rear wheel speeds
     if (addr == 842) {
-      vehicle_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
+      int left_rear_speed = (GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1);
+      int right_rear_speed = (GET_BYTE(to_push, 2) << 8) | GET_BYTE(to_push, 3);
+      vehicle_moving = (left_rear_speed > GM_STANDSTILL_THRSLD) || (right_rear_speed > GM_STANDSTILL_THRSLD);
     }
 
     // ACC steering wheel buttons (GM_CAM is tied to the PCM)
