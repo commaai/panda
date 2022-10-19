@@ -36,7 +36,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     wget \
     zlib1g-dev \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* && \
+    cd /usr/lib/gcc/arm-none-eabi/9.2.1 && \
+    rm -rf arm/ && \
+    rm -rf thumb/nofp thumb/v6* thumb/v8* thumb/v7+fp thumb/v7-r+fp.sp
 
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8
@@ -56,13 +59,15 @@ RUN pyenv install 3.8.10 && \
     pyenv rehash && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
+ENV CPPCHECK_DIR=/tmp/cppcheck
 COPY tests/misra/install.sh /tmp/
 RUN /tmp/install.sh
 
+RUN git config --global --add safe.directory /tmp/openpilot/panda
 RUN cd /tmp && \
     git clone https://github.com/commaai/openpilot.git tmppilot || true && \
     cd /tmp/tmppilot && \
-    git fetch && \
+    git fetch origin $OPENPILOT_REF && \
     git checkout $OPENPILOT_REF && \
     git submodule update --init cereal opendbc rednose_repo && \
     git -C opendbc fetch && \
@@ -71,12 +76,9 @@ RUN cd /tmp && \
     git -C opendbc clean -xfd && \
     mkdir /tmp/openpilot && \
     cp -pR SConstruct site_scons/ tools/ selfdrive/ system/ common/ cereal/ opendbc/ rednose/ third_party/ /tmp/openpilot && \
+    rm -rf /tmp/openpilot/panda && \
     rm -rf /tmp/tmppilot
 
 RUN cd /tmp/openpilot && \
     pip install --no-cache-dir -r opendbc/requirements.txt && \
     pip install --no-cache-dir --upgrade aenum lru-dict pycurl tenacity atomicwrites serial smbus2 scons
-
-COPY . /tmp/openpilot/panda
-RUN mv /tmp/cppcheck /tmp/openpilot/panda/tests/misra && \
-    rm -rf /tmp/openpilot/panda/.git
