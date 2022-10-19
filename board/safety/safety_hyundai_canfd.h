@@ -9,6 +9,13 @@ const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
   .driver_torque_allowance = 250,
   .driver_torque_factor = 2,
   .type = TorqueDriverLimited,
+
+  // the EPS faults when the steering angle is above a certain threshold for too long. to prevent this,
+  // we allow setting torque actuation bit to 0 while maintaining the requested torque value for two consecutive frames
+  .min_valid_request_frames = 89,
+  .max_invalid_request_frames = 2,
+  .min_valid_request_rt_interval = 810000,  // 810ms; a ~10% buffer on cutting every 90 frames
+  .has_steer_req_tolerance = true,
 };
 
 const CanMsg HYUNDAI_CANFD_HDA2_TX_MSGS[] = {
@@ -205,10 +212,10 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   // steering
   const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? 0x50 : 0x12a;
   if (addr == steer_addr) {
-    int desired_torque = ((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U);
-    desired_torque -= 1024;
+    int desired_torque = (((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U)) - 1024U;
+    bool steer_req = GET_BIT(to_send, 52U) != 0U;
 
-    if (steer_torque_cmd_checks(desired_torque, -1, HYUNDAI_CANFD_STEERING_LIMITS)) {
+    if (steer_torque_cmd_checks(desired_torque, steer_req, HYUNDAI_CANFD_STEERING_LIMITS)) {
       tx = 0;
     }
   }
