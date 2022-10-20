@@ -262,6 +262,7 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   if (gm_hw == GM_CAM) {
     int addr = GET_ADDR(to_fwd);
     if (bus_num == 0) {
+      // block PSCMStatus; forwarded through openpilot to hide an alert from the camera
       bool is_pscm_msg = (addr == 388);
       if (!is_pscm_msg) {
         bus_fwd = 2;
