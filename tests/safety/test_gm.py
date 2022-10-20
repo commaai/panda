@@ -208,8 +208,9 @@ class TestGmAscmSafety(TestGmSafetyBase):
 
 
 class TestGmCameraSafety(TestGmSafetyBase):
-  TX_MSGS = [[384, 0]]  # pt bus
-  FWD_BLACKLISTED_ADDRS = {2: [384]}  # LKAS message, ACC messages are (715, 880, 789)
+  TX_MSGS = [[384, 0],  # pt bus
+             [388, 2]]  # camera bus
+  FWD_BLACKLISTED_ADDRS = {2: [384], 0: [388]}  # block LKAS message and PSCMStatus
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   BUTTONS_BUS = 2  # tx only
   USER_BRAKE_THRESHOLD = 20

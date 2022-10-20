@@ -28,7 +28,7 @@ const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715,
                                   {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
 
 const CanMsg GM_CAM_TX_MSGS[] = {{384, 0, 4},  // pt bus
-                                 {481, 2, 7}};  // camera bus
+                                 {481, 2, 7}, {388, 2, 8}};  // camera bus
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 AddrCheckStruct gm_addr_checks[] = {
@@ -260,13 +260,17 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
 
   if (gm_hw == GM_CAM) {
+    int addr = GET_ADDR(to_fwd);
     if (bus_num == 0) {
-      bus_fwd = 2;
+      // block PSCMStatus; forwarded through openpilot to hide an alert from the camera
+      bool is_pscm_msg = (addr == 388);
+      if (!is_pscm_msg) {
+        bus_fwd = 2;
+      }
     }
 
     if (bus_num == 2) {
       // block lkas message, forward all others
-      int addr = GET_ADDR(to_fwd);
       bool is_lkas_msg = (addr == 384);
       if (!is_lkas_msg) {
         bus_fwd = 0;
