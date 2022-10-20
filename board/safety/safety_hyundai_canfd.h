@@ -172,7 +172,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
 
     // cruise state
     if ((addr == 0x1a0) && !hyundai_longitudinal) {
-      bool cruise_engaged = ((GET_BYTE(to_push, 8) >> 4) & 0x3U) != 0;
+      bool cruise_engaged = ((GET_BYTE(to_push, 8) >> 4) & 0x3U) != 0U;
       hyundai_common_cruise_state_check(cruise_engaged);
     }
 
