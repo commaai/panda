@@ -31,6 +31,7 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
   MIN_VALID_STEERING_RT_INTERVAL = 810000  # a ~10% buffer, can send steer up to 110Hz
 
   PT_BUS = 0
+  SCC_BUS = 2
   STEER_BUS = 0
   STEER_MSG = ""
   BUTTONS_TX_BUS = 1
@@ -64,7 +65,7 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
 
   def _pcm_status_msg(self, enable):
     values = {"CRUISE_STATUS": 3 if enable else 0}
-    return self.packer.make_can_msg_panda("CRUISE_INFO", self.PT_BUS, values)
+    return self.packer.make_can_msg_panda("CRUISE_INFO", self.SCC_BUS, values)
 
   def _button_msg(self, buttons, main_button=0, bus=None):
     if bus is None:
@@ -132,6 +133,7 @@ class TestHyundaiCanfdHDA2(TestHyundaiCanfdBase):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   PT_BUS = 1
+  SCC_BUS = 1
   STEER_MSG = "LKAS"
 
   def setUp(self):
