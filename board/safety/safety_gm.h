@@ -260,13 +260,16 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
 
   if (gm_hw == GM_CAM) {
+    int addr = GET_ADDR(to_fwd);
     if (bus_num == 0) {
-      bus_fwd = 2;
+      bool is_pscm_msg = (addr == 388);
+      if (!is_pscm_msg) {
+        bus_fwd = 2;
+      }
     }
 
     if (bus_num == 2) {
       // block lkas message, forward all others
-      int addr = GET_ADDR(to_fwd);
       bool is_lkas_msg = (addr == 384);
       if (!is_lkas_msg) {
         bus_fwd = 0;
