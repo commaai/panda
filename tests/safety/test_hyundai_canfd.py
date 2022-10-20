@@ -31,8 +31,10 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
   MIN_VALID_STEERING_RT_INTERVAL = 810000  # a ~10% buffer, can send steer up to 110Hz
 
   PT_BUS = 0
+  SCC_BUS = 2
   STEER_BUS = 0
   STEER_MSG = ""
+  BUTTONS_TX_BUS = 1
 
   @classmethod
   def setUpClass(cls):
@@ -62,15 +64,17 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
     return self.packer.make_can_msg_panda("ACCELERATOR", self.PT_BUS, values)
 
   def _pcm_status_msg(self, enable):
-    values = {"CRUISE_ACTIVE": enable}
-    return self.packer.make_can_msg_panda("SCC1", self.PT_BUS, values)
+    values = {"CRUISE_STATUS": 3 if enable else 0}
+    return self.packer.make_can_msg_panda("CRUISE_INFO", self.SCC_BUS, values)
 
-  def _button_msg(self, buttons, main_button=0, bus=1):
+  def _button_msg(self, buttons, main_button=0, bus=None):
+    if bus is None:
+      bus = self.PT_BUS
     values = {
       "CRUISE_BUTTONS": buttons,
       "ADAPTIVE_CRUISE_MAIN_BTN": main_button,
     }
-    return self.packer.make_can_msg_panda("CRUISE_BUTTONS", self.PT_BUS, values)
+    return self.packer.make_can_msg_panda("CRUISE_BUTTONS", bus, values)
 
 
 class TestHyundaiCanfdHDA1(TestHyundaiCanfdBase):
@@ -82,6 +86,7 @@ class TestHyundaiCanfdHDA1(TestHyundaiCanfdBase):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   STEER_MSG = "LFA"
+  BUTTONS_TX_BUS = 2
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
@@ -92,6 +97,7 @@ class TestHyundaiCanfdHDA1(TestHyundaiCanfdBase):
   def _user_gas_msg(self, gas):
     values = {"ACCELERATOR_PEDAL": gas}
     return self.packer.make_can_msg_panda("ACCELERATOR_ALT", self.PT_BUS, values)
+
 
 class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1):
 
@@ -127,6 +133,7 @@ class TestHyundaiCanfdHDA2(TestHyundaiCanfdBase):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   PT_BUS = 1
+  SCC_BUS = 1
   STEER_MSG = "LKAS"
 
   def setUp(self):
