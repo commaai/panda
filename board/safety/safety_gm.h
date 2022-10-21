@@ -124,7 +124,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
       if (gm_hw == GM_ASCM) {
         brake_pressed = GET_BYTE(to_push, 1) >= 8U;
       } else {
-        brake_pressed = GET_BYTE(to_push, 1) >= 20U;
+        brake_pressed = GET_BYTE(to_push, 1) >= (gm_pcm_cruise ? 20U : 8U);
       }
     }
 
