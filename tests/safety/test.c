@@ -83,7 +83,7 @@ bool addr_checks_valid() {
     const AddrCheckStruct addr = current_rx_checks->check[i];
     bool valid = addr.msg_seen && !addr.lagging && addr.valid_checksum && (addr.wrong_counters < MAX_WRONG_COUNTERS);
     if (!valid) {
-      //printf("seen %d lagging %d valid checksum %d wrong counters %d\n", addr.msg_seen, addr.lagging, addr.valid_checksum, addr.wrong_counters);
+      printf("i %d seen %d lagging %d valid checksum %d wrong counters %d\n", i, addr.msg_seen, addr.lagging, addr.valid_checksum, addr.wrong_counters);
       return false;
     }
   }
