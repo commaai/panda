@@ -47,7 +47,7 @@ const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715,
                                   {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
 
 const CanMsg GM_CAM_TX_MSGS[] = {{384, 0, 4},  // pt bus
-                                 {481, 2, 7}};  // camera bus
+                                 {481, 2, 7}, {388, 2, 8}};  // camera bus
 
 const CanMsg GM_CAM_LONG_TX_MSGS[] = {{384, 0, 4}, {789, 0, 5}, {715, 0, 8}, {880, 0, 6}};  // pt bus
 
@@ -262,6 +262,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         tx = 0;
       }
     }
+    // Enforce gas/regen actuation limits (max_regen <= gas_regen <= max_gas)
     if ((gas_regen < GM_LONG_LIMITS->max_regen) || (gas_regen > GM_LONG_LIMITS->max_gas)) {
       tx = 0;
     }
@@ -286,13 +287,17 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
 
   if (gm_hw == GM_CAM) {
+    int addr = GET_ADDR(to_fwd);
     if (bus_num == 0) {
-      bus_fwd = 2;
+      // block PSCMStatus; forwarded through openpilot to hide an alert from the camera
+      bool is_pscm_msg = (addr == 388);
+      if (!is_pscm_msg) {
+        bus_fwd = 2;
+      }
     }
 
     if (bus_num == 2) {
       // block lkas message and acc messages if gm openpilot long, forward all others
-      int addr = GET_ADDR(to_fwd);
       bool is_lkas_msg = (addr == 384);
       bool is_acc_msg = (addr == 789) || (addr == 715) || (addr == 880);
       int block_msg = is_lkas_msg || (is_acc_msg && gm_cam_long);

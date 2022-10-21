@@ -98,13 +98,13 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
           self.assertTrue(self._tx(self._send_brake_msg(b)))
 
   def test_gas_safety_check(self, stock_longitudinal=False):
+    # Block if enabled and out of actuation range, disabled and not inactive regen, or if stock longitudinal
     for enabled in [0, 1]:
-      for g in range(0, 2**12 - 1):
+      for gas_regen in range(0, 2 ** 12 - 1):
         self.safety.set_controls_allowed(enabled)
-        if abs(g) > self.MAX_GAS or (not enabled and g != self.MAX_REGEN) or stock_longitudinal:
-          self.assertFalse(self._tx(self._send_gas_msg(g)))
-        else:
-          self.assertTrue(self._tx(self._send_gas_msg(g)))
+        should_tx = (((enabled and self.MAX_REGEN <= gas_regen <= self.MAX_GAS) or
+                      (not enabled and gas_regen == self.INACTIVE_REGEN)) and not stock_longitudinal)
+        self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
 
   def test_tx_hook_on_pedal_pressed(self):
     for pedal in ['brake', 'gas']:
@@ -237,6 +237,15 @@ class TestGmAscmSafety(TestGmSafetyBase):
 #   def _send_brake_msg(self, brake):
 #     values = {"FrictionBrakeCmd": -brake}
 #     return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", 0, values)
+
+# class TestGmCameraSafety(TestGmSafetyBase):
+#   TX_MSGS = [[384, 0],  # pt bus
+#              [388, 2]]  # camera bus
+#   FWD_BLACKLISTED_ADDRS = {2: [384], 0: [388]}  # block LKAS message and PSCMStatus
+#   FWD_BUS_LOOKUP = {0: 2, 2: 0}
+#   BUTTONS_BUS = 2  # tx only
+#   USER_BRAKE_THRESHOLD = 20
+
 
 
 # class TestGmCameraSafety(TestGmSafetyBase):
