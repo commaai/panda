@@ -18,19 +18,10 @@ const int GM_DRIVER_TORQUE_FACTOR = 4;
 
 const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
 
-typedef struct {
-  const int max_gas;
-  const int max_regen;
-  const int inactive_regen;
-  const int max_brake;
-} GmLongLimits;
-
-const GmLongLimits GM_ASCM_LONG_LIMITS = {
-  .max_gas = 3072,
-  .max_regen = 1404,
-  .inactive_regen = 1404,
-  .max_brake = 400,
-};
+const int GM_MAX_GAS = 3072;
+const int GM_MAX_REGEN = 1404;
+const int GM_INACTIVE_REGEN = 1404;
+const int GM_MAX_BRAKE = 400;
 
 const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
                                   {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
@@ -175,7 +166,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         tx = 0;
       }
     }
-    if (brake > GM_ASCM_LONG_LIMITS.max_brake) {
+    if (brake > GM_MAX_BRAKE) {
       tx = 0;
     }
   }
@@ -232,9 +223,9 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (addr == 715) {
     int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
     // Disabled message is !engaged with gas
-    // value that corresponds to max regen.
+    // value that corresponds to inactive regen.
     if (!current_controls_allowed || !longitudinal_allowed) {
-      if (gas_regen != GM_ASCM_LONG_LIMITS.inactive_regen) {
+      if (gas_regen != GM_INACTIVE_REGEN) {
         tx = 0;
       }
     }
@@ -245,7 +236,8 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         tx = 0;
       }
     }
-    if ((gas_regen < GM_ASCM_LONG_LIMITS.max_regen) || (gas_regen > GM_ASCM_LONG_LIMITS.max_gas)) {
+    // Enforce actuation limits
+    if ((gas_regen < GM_MAX_GAS) || (gas_regen > GM_MAX_REGEN)) {
       tx = 0;
     }
   }
