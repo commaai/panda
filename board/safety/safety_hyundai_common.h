@@ -2,12 +2,11 @@
 #define SAFETY_HYUNDAI_COMMON_H
 
 // safety param flags
-// first byte is for max steer, second is for flags
-const int HYUNDAI_PARAM_OFFSET = 8;
-const int HYUNDAI_PARAM_MAX_STEER = (1U << HYUNDAI_PARAM_OFFSET) - 1U;
-const int HYUNDAI_PARAM_EV_GAS = 1 << HYUNDAI_PARAM_OFFSET;
-const int HYUNDAI_PARAM_HYBRID_GAS = 2 << HYUNDAI_PARAM_OFFSET;
-const int HYUNDAI_PARAM_LONGITUDINAL = 4 << HYUNDAI_PARAM_OFFSET;
+// first byte is for flags, second is for max steer
+const int HYUNDAI_PARAM_MAX_STEER = ((1 << 8) - 1) << 8;
+const int HYUNDAI_PARAM_EV_GAS = 1;
+const int HYUNDAI_PARAM_HYBRID_GAS = 2;
+const int HYUNDAI_PARAM_LONGITUDINAL = 4;
 
 const uint8_t HYUNDAI_PREV_BUTTON_SAMPLES = 8;  // roughly 160 ms
 const uint32_t HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
@@ -29,7 +28,7 @@ uint8_t hyundai_last_button_interaction;  // button messages since the user pres
 void hyundai_common_init(uint16_t param) {
   hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
   hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
-  hyundai_max_steer = param & HYUNDAI_PARAM_MAX_STEER;
+  hyundai_max_steer = (param & HYUNDAI_PARAM_MAX_STEER) * 10;
 
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
 
