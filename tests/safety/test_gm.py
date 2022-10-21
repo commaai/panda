@@ -9,6 +9,7 @@ from panda.tests.safety.common import CANPackerPanda, ALTERNATIVE_EXPERIENCE
 MAX_BRAKE = 400
 MAX_GAS = 3072
 MAX_REGEN = 1404
+INACTIVE_REGEN = 1404
 
 
 class Buttons:
@@ -97,13 +98,13 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
           self.assertTrue(self._tx(self._send_brake_msg(b)))
 
   def test_gas_safety_check(self, stock_longitudinal=False):
+    # Block if enabled and out of actuation range, disabled and not inactive regen, or if stock longitudinal
     for enabled in [0, 1]:
-      for g in range(0, 2**12 - 1):
+      for gas_regen in range(0, 2 ** 12 - 1):
         self.safety.set_controls_allowed(enabled)
-        if abs(g) > MAX_GAS or (not enabled and g != MAX_REGEN) or stock_longitudinal:
-          self.assertFalse(self._tx(self._send_gas_msg(g)))
-        else:
-          self.assertTrue(self._tx(self._send_gas_msg(g)))
+        should_tx = (((enabled and MAX_REGEN <= gas_regen <= MAX_GAS) or
+                      (not enabled and gas_regen == INACTIVE_REGEN)) and not stock_longitudinal)
+        self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
 
   def test_tx_hook_on_pedal_pressed(self):
     for pedal in ['brake', 'gas']:
