@@ -20,8 +20,8 @@ const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
 
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
-const int GM_INACTIVE_REGEN = 1404;
 const int GM_MAX_BRAKE = 400;
+const int GM_INACTIVE_REGEN = 1404;
 
 const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
                                   {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
@@ -236,7 +236,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         tx = 0;
       }
     }
-    // Enforce gas/regen actuation limits (max_regen <= apply <= max_gas)
+    // Enforce gas/regen actuation limits (max_regen <= gas_regen <= max_gas)
     if ((gas_regen < GM_MAX_REGEN) || (gas_regen > GM_MAX_GAS)) {
       tx = 0;
     }
