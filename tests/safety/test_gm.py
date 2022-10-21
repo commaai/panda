@@ -9,6 +9,7 @@ from panda.tests.safety.common import CANPackerPanda, ALTERNATIVE_EXPERIENCE
 MAX_BRAKE = 400
 MAX_GAS = 3072
 MAX_REGEN = 1404
+INACTIVE_REGEN = 1404
 
 
 class Buttons:
