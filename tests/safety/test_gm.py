@@ -98,7 +98,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
           self.assertTrue(self._tx(self._send_brake_msg(b)))
 
   def test_gas_safety_check(self, stock_longitudinal=False):
-    # Block if enabled and out of actuation range, disabled and not inactive regen, and if stock longitudinal
+    # Block if enabled and out of actuation range, disabled and not inactive regen, or if stock longitudinal
     for enabled in [0, 1]:
       for gas_regen in range(0, 2 ** 12 - 1):
         self.safety.set_controls_allowed(enabled)
