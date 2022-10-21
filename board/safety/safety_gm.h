@@ -236,8 +236,8 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         tx = 0;
       }
     }
-    // Enforce actuation limits
-    if ((gas_regen < GM_MAX_GAS) || (gas_regen > GM_MAX_REGEN)) {
+    // Enforce gas/regen actuation limits (max_regen <= apply <= max_gas)
+    if ((gas_regen < GM_MAX_REGEN) || (gas_regen > GM_MAX_GAS)) {
       tx = 0;
     }
   }
