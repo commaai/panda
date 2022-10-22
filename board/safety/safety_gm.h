@@ -31,7 +31,7 @@ const GmLongLimits GM_ASCM_LONG_LIMITS = {
 };
 
 const GmLongLimits GM_CAM_LONG_LIMITS = {
-  .max_gas = 3072,
+  .max_gas = 3400,
   .max_regen = 1514,
   .inactive_regen = 1554,
   .max_brake = 400,
