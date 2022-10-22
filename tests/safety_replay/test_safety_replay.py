@@ -14,7 +14,6 @@ ReplayRoute = namedtuple("ReplayRoute", ("route", "safety_mode", "param", "alter
 
 logs = [
   ReplayRoute("2425568437959f9d|2019-12-22--16-24-37.bz2", Panda.SAFETY_HONDA_NIDEC),         # HONDA.CIVIC (fcw presents: 0x1FA blocked as expected)
-  ReplayRoute("38bfd238edecbcd7|2019-06-07--10-15-25.bz2", Panda.SAFETY_TOYOTA, 66),          # TOYOTA.PRIUS
   ReplayRoute("f89c604cf653e2bf|2018-09-29--13-46-50.bz2", Panda.SAFETY_GM),                  # GM.VOLT
   ReplayRoute("6fb4948a7ebe670e|2019-11-12--00-35-53.bz2", Panda.SAFETY_CHRYSLER),            # CHRYSLER.PACIFICA_2018_HYBRID
   ReplayRoute("791340bc01ed993d|2019-04-08--10-26-00.bz2", Panda.SAFETY_SUBARU,               # SUBARU.OUTBACK
@@ -23,8 +22,6 @@ logs = [
   ReplayRoute("3cfdec54aa035f3f|2022-07-19--23-45-10.bz2", Panda.SAFETY_VOLKSWAGEN_PQ,        # VOLKSWAGEN.PASSAT_NMS (openpilot longitudinal)
               Panda.FLAG_VOLKSWAGEN_LONG_CONTROL),
   ReplayRoute("fbbfa6af821552b9|2020-03-03--08-09-43.bz2", Panda.SAFETY_NISSAN),              # NISSAN.XTRAIL
-  ReplayRoute("5b7c365c50084530_2020-04-15--16-13-24--3--rlog.bz2", Panda.SAFETY_HYUNDAI),    # HYUNDAI.SONATA
-  ReplayRoute("610ebb9faaad6b43|2020-06-13--15-28-36.bz2", Panda.SAFETY_HYUNDAI_LEGACY),      # HYUNDAI.IONIQ_EV_LTD
   ReplayRoute("5ab784f361e19b78_2020-06-08--16-30-41.bz2", Panda.SAFETY_SUBARU_LEGACY),       # SUBARU.OUTBACK_PREGLOBAL
   ReplayRoute("bb50caf5f0945ab1|2021-06-19--17-20-18.bz2", Panda.SAFETY_TESLA),               # TESLA.AP2_MODELS
   ReplayRoute("bd6a637565e91581_2021-10-29--22-18-31--1--rlog.bz2", Panda.SAFETY_MAZDA),      # MAZDA.CX9_2021
@@ -39,7 +36,7 @@ if __name__ == "__main__":
   for route, _, _, _ in logs:
     if not os.path.isfile(route):
       with open(route, "wb") as f:
-        r = requests.get(BASE_URL + route)
+        r = requests.get(BASE_URL + route, timeout=60)
         r.raise_for_status()
         f.write(r.content)
 
