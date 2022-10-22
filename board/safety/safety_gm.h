@@ -119,13 +119,9 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     }
 
     if (addr == 190) {
-      // Reference for signal and thresholds:
+      // Reference for signal and threshold:
       // https://github.com/commaai/openpilot/blob/master/selfdrive/car/gm/carstate.py
-      if (gm_hw == GM_ASCM) {
-        brake_pressed = GET_BYTE(to_push, 1) >= 8U;
-      } else {
-        brake_pressed = GET_BYTE(to_push, 1) >= (gm_pcm_cruise ? 20U : 8U);
-      }
+      brake_pressed = GET_BYTE(to_push, 1) >= 8U;
     }
 
     if (addr == 452) {
