@@ -1,6 +1,7 @@
 pipeline {
   agent any
   environment {
+    PARTIAL_TESTS = "${env.BRANCH_NAME == 'master' ? '1' : ' '}"
     DOCKER_IMAGE_TAG = "panda:build-${env.GIT_COMMIT}"
   }
   stages {
@@ -13,7 +14,6 @@ pipeline {
           steps {
             timeout(time: 60, unit: 'MINUTES') {
               script {
-                sh 'git archive -v -o panda.tar.gz --format=tar.gz HEAD'
                 dockerImage = docker.build("${env.DOCKER_IMAGE_TAG}")
               }
             }
@@ -24,6 +24,7 @@ pipeline {
             timeout(time: 10, unit: 'MINUTES') {
               script {
                 sh "docker run --rm --privileged \
+                      --volume ${WORKSPACE}:/tmp/openpilot/panda \
                       --volume /dev/bus/usb:/dev/bus/usb \
                       --volume /var/run/dbus:/var/run/dbus \
                       --net host \
