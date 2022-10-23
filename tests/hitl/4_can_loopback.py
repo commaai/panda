@@ -2,12 +2,15 @@ import os
 import time
 import random
 import threading
-from panda import Panda
+from flaky import flaky
 from collections import defaultdict
 from nose.tools import assert_equal, assert_less, assert_greater
+
+from panda import Panda
 from .helpers import panda_jungle, time_many_sends, test_all_pandas, test_all_gen2_pandas, clear_can_buffers, panda_connect_and_init
 
 @test_all_pandas
+@flaky(max_runs=3, min_passes=1)
 @panda_connect_and_init
 def test_send_recv(p):
   def test(p_send, p_recv):
@@ -44,6 +47,7 @@ def test_send_recv(p):
 
 
 @test_all_pandas
+@flaky(max_runs=3, min_passes=1)
 @panda_connect_and_init
 def test_latency(p):
   def test(p_send, p_recv):

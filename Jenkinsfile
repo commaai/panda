@@ -37,7 +37,7 @@ pipeline {
         stage('prep') {
           steps {
             script {
-              docker_run("build", 3, "scons -j8")
+              docker_run("build", 1, "scons -j8")
               docker_run("reset hardware", 3, "python ./tests/ci_reset_hw.py")
             }
           }
@@ -52,7 +52,7 @@ pipeline {
         stage('HITL tests') {
           steps {
             script {
-              docker_run("HITL tests", 20, "PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE=\"1d0002000c51303136383232 2f002e000c51303136383232\" ./tests/hitl/test.sh")
+              docker_run("HITL tests", 20, "PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE='1d0002000c51303136383232 2f002e000c51303136383232' ./tests/hitl/test.sh")
             }
           }
         }

@@ -88,4 +88,4 @@ RUN cd /tmp/openpilot && \
 
 RUN cd /tmp/openpilot && \
     pip install --no-cache-dir -r opendbc/requirements.txt && \
-    pip install --no-cache-dir --upgrade aenum lru-dict pycurl tenacity atomicwrites serial smbus2 scons
+    pip install --no-cache-dir --upgrade aenum lru-dict pycurl tenacity atomicwrites serial smbus2
