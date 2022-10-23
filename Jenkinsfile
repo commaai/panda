@@ -67,6 +67,7 @@ pipeline {
 
       post {
         always {
+          docker_run("git clean", 1, "git clean -xdff")
           sh "rm -rf ${WORKSPACE}/* || true"
           sh "rm -rf .* || true"
         }
