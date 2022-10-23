@@ -56,7 +56,7 @@ pipeline {
                       --volume /var/run/dbus:/var/run/dbus \
                       --net host \
                       ${env.DOCKER_IMAGE_TAG} \
-                      bash -c 'cd /tmp/panda && scons -j8 && PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE=\"1d0002000c51303136383232 2f002e000c51303136383232\" ./tests/automated/test.sh'"
+                      bash -c 'cd /tmp/panda && scons -j8 && PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE=\"1d0002000c51303136383232 2f002e000c51303136383232\" ./tests/hitl/test.sh'"
               }
             }
           }
