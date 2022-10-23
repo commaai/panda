@@ -67,7 +67,8 @@ pipeline {
 
       post {
         always {
-          sh "rm -rf ${WORKSPACE} || true"
+          sh "rm -rf ${WORKSPACE}/* || true"
+          sh "rm -rf .* || true"
         }
       }
     }
