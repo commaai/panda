@@ -22,7 +22,7 @@ PANDAS_EXCLUDE = []
 if os.getenv("PANDAS_EXCLUDE"):
   PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE").strip().split(" ")
 
-PARTIAL_TESTS = "PARTIAL_TESTS" in os.environ or True
+PARTIAL_TESTS = os.environ.get("PARTIAL_TESTS", "0") == "1"
 
 # Enable fault debug
 faulthandler.enable(all_threads=False)
