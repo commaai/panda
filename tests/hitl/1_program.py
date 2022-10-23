@@ -39,7 +39,7 @@ def test_b_recover(p):
 def test_c_flash(p):
   # test flash from bootstub
   serial = p._serial
-  assert serial != None
+  assert serial is not None
   p.reset(enter_bootstub=True)
   p.close()
   time.sleep(2)

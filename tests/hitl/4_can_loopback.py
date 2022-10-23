@@ -75,7 +75,7 @@ def test_latency(p):
 
         num_messages = 100
 
-        for i in range(num_messages):
+        for _ in range(num_messages):
           st = time.monotonic()
           p_send.can_send(0x1ab, b"message", bus)
           r = []

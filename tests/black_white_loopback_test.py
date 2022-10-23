@@ -23,7 +23,7 @@ zero_bus_errors = 0
 content_errors = 0
 
 def run_test(sleep_duration):
-  global counter, nonzero_bus_errors, zero_bus_errors, content_errors
+  global counter
 
   pandas = Panda.list()
   print(pandas)

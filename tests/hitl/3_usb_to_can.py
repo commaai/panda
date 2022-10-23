@@ -49,7 +49,6 @@ def test_safety_nooutput(p):
 @test_all_pandas
 @panda_connect_and_init
 def test_reliability(p):
-  LOOP_COUNT = 100
   MSG_COUNT = 100
 
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
@@ -59,8 +58,7 @@ def test_reliability(p):
   addrs = list(range(100, 100 + MSG_COUNT))
   ts = [(j, 0, b"\xaa" * 8, 0) for j in addrs]
 
-  # 100 loops
-  for i in range(LOOP_COUNT):
+  for _ in range(100):
     st = time.monotonic()
 
     p.can_send_many(ts)
