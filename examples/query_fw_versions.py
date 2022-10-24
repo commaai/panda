@@ -12,7 +12,7 @@ if __name__ == "__main__":
   parser.add_argument('--debug', action='store_true')
   parser.add_argument('--addr')
   parser.add_argument('--bus')
-  parser.add_argument('--serial', help="Serial number of panda to use")
+  parser.add_argument('-s', '--serial', help="Serial number of panda to use")
   args = parser.parse_args()
 
   if args.addr:
@@ -36,7 +36,7 @@ if __name__ == "__main__":
   panda_serials = Panda.list()
   if len(panda_serials) == 0:
     print("no panda found")
-    exit()
+    exit(1)
   if args.serial is None and len(panda_serials) > 1:
     print("Multiple pandas found, choose one:")
     for serial in panda_serials:
@@ -45,10 +45,10 @@ if __name__ == "__main__":
       panda.close()
     print()
     parser.print_help()
-    exit()
+    exit(1)
   elif args.serial is not None and args.serial not in panda_serials:
     print(f"panda {args.serial} not found")
-    exit()
+    exit(1)
   serial = args.serial if args.serial is not None else panda_serials[0]
 
   panda = Panda(serial)
