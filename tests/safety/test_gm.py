@@ -9,6 +9,7 @@ from panda.tests.safety.common import CANPackerPanda, ALTERNATIVE_EXPERIENCE
 MAX_BRAKE = 400
 MAX_GAS = 3072
 MAX_REGEN = 1404
+INACTIVE_REGEN = 1404
 
 
 class Buttons:
@@ -23,7 +24,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0
   BUTTONS_BUS = 0
-  USER_BRAKE_THRESHOLD = 0
 
   MAX_RATE_UP = 7
   MAX_RATE_DOWN = 17
@@ -56,7 +56,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
 
   def _user_brake_msg(self, brake):
     # GM safety has a brake threshold of 8
-    values = {"BrakePedalPos": self.USER_BRAKE_THRESHOLD if brake else 0}
+    values = {"BrakePedalPos": 8 if brake else 0}
     return self.packer.make_can_msg_panda("ECMAcceleratorPos", 0, values)
 
   def _user_regen_msg(self, regen):
@@ -97,13 +97,13 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
           self.assertTrue(self._tx(self._send_brake_msg(b)))
 
   def test_gas_safety_check(self, stock_longitudinal=False):
+    # Block if enabled and out of actuation range, disabled and not inactive regen, or if stock longitudinal
     for enabled in [0, 1]:
-      for g in range(0, 2**12 - 1):
+      for gas_regen in range(0, 2 ** 12 - 1):
         self.safety.set_controls_allowed(enabled)
-        if abs(g) > MAX_GAS or (not enabled and g != MAX_REGEN) or stock_longitudinal:
-          self.assertFalse(self._tx(self._send_gas_msg(g)))
-        else:
-          self.assertTrue(self._tx(self._send_gas_msg(g)))
+        should_tx = (((enabled and MAX_REGEN <= gas_regen <= MAX_GAS) or
+                      (not enabled and gas_regen == INACTIVE_REGEN)) and not stock_longitudinal)
+        self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
 
   def test_tx_hook_on_pedal_pressed(self):
     for pedal in ['brake', 'gas']:
@@ -164,7 +164,6 @@ class TestGmAscmSafety(TestGmSafetyBase):
              [0x104c006c, 3], [0x10400060, 3]]  # gmlan
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
-  USER_BRAKE_THRESHOLD = 8
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -213,7 +212,6 @@ class TestGmCameraSafety(TestGmSafetyBase):
   FWD_BLACKLISTED_ADDRS = {2: [384], 0: [388]}  # block LKAS message and PSCMStatus
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   BUTTONS_BUS = 2  # tx only
-  USER_BRAKE_THRESHOLD = 20
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
