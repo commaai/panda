@@ -52,14 +52,14 @@ pipeline {
         stage('HITL tests') {
           steps {
             script {
-              docker_run("HITL tests", 20, "PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE='1d0002000c51303136383232 2f002e000c51303136383232' ./tests/hitl/test.sh")
+              docker_run("HITL tests", 20, 'PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE="1d0002000c51303136383232 2f002e000c51303136383232" ./tests/hitl/test.sh')
             }
           }
         }
         stage('CANFD tests') {
           steps {
             script {
-              docker_run("CANFD tets", 6, "JUNGLE=058010800f51363038363036 H7_PANDAS_EXCLUDE='080021000c51303136383232 33000e001051393133353939' ./tests/canfd/test_canfd.py")
+              docker_run("CANFD tets", 6, 'JUNGLE=058010800f51363038363036 H7_PANDAS_EXCLUDE="080021000c51303136383232 33000e001051393133353939" ./tests/canfd/test_canfd.py')
             }
           }
         }
