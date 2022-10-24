@@ -59,7 +59,7 @@ pipeline {
         stage('CANFD tests') {
           steps {
             script {
-              docker_run("CANFD tets", 5, "JUNGLE=058010800f51363038363036 H7_PANDAS_EXCLUDE=\"080021000c51303136383232 33000e001051393133353939\" ./tests/canfd/test_canfd.py")
+              docker_run("CANFD tets", 6, "JUNGLE=058010800f51363038363036 H7_PANDAS_EXCLUDE='080021000c51303136383232 33000e001051393133353939' ./tests/canfd/test_canfd.py")
             }
           }
         }
