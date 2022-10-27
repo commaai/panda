@@ -1,3 +1,5 @@
+#include "safety_volkswagen_common.h"
+
 // lateral limits
 const SteeringLimits VOLKSWAGEN_MQB_STEERING_LIMITS = {
   .max_steer = 300,              // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
@@ -42,11 +44,6 @@ AddrCheckStruct volkswagen_mqb_addr_checks[] = {
 addr_checks volkswagen_mqb_rx_checks = {volkswagen_mqb_addr_checks, VOLKSWAGEN_MQB_ADDR_CHECKS_LEN};
 
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
-const uint16_t VOLKSWAGEN_MQB_PARAM_LONG = 1;
-bool volkswagen_mqb_longitudinal = false;
-bool volkswagen_mqb_set_prev = false;
-bool volkswagen_mqb_resume_prev = false;
-
 
 static uint32_t volkswagen_mqb_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -96,7 +93,7 @@ static const addr_checks* volkswagen_mqb_init(uint16_t param) {
   UNUSED(param);
 
 #ifdef ALLOW_DEBUG
-  volkswagen_mqb_longitudinal = GET_FLAG(param, VOLKSWAGEN_MQB_PARAM_LONG);
+  volkswagen_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
 #endif
   gen_crc_lookup_table_8(0x2F, volkswagen_crc8_lut_8h2f);
   return &volkswagen_mqb_rx_checks;
@@ -141,7 +138,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
       bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 5);
       acc_main_on = cruise_engaged || (acc_status == 2);
 
-      if (!volkswagen_mqb_longitudinal) {
+      if (!volkswagen_longitudinal) {
         pcm_cruise_check(cruise_engaged);
       }
 
@@ -154,14 +151,14 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
       // If using openpilot longitudinal, enter controls on falling edge of Set or Resume with main switch on
       // Signal: GRA_ACC_01.GRA_Tip_Setzen
       // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
-      if (volkswagen_mqb_longitudinal) {
+      if (volkswagen_longitudinal) {
         bool set_button = GET_BIT(to_push, 16U);
         bool resume_button = GET_BIT(to_push, 19U);
-        if ((volkswagen_mqb_set_prev && !set_button) || (volkswagen_mqb_resume_prev && !resume_button)) {
+        if ((set_button_prev && !set_button) || (resume_button_prev && !resume_button)) {
           controls_allowed = acc_main_on;
         }
-        volkswagen_mqb_set_prev = set_button;
-        volkswagen_mqb_resume_prev = resume_button;
+        set_button_prev = set_button;
+        resume_button_prev = resume_button;
       }
       // Always exit controls on rising edge of Cancel
       // Signal: GRA_ACC_01.GRA_Abbrechen
@@ -191,7 +188,7 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send, bool longitudinal_allowe
   int addr = GET_ADDR(to_send);
   int tx = 1;
 
-  if (volkswagen_mqb_longitudinal) {
+  if (volkswagen_longitudinal) {
     tx = msg_allowed(to_send, VOLKSWAGEN_MQB_LONG_TX_MSGS, sizeof(VOLKSWAGEN_MQB_LONG_TX_MSGS) / sizeof(VOLKSWAGEN_MQB_LONG_TX_MSGS[0]));
   } else {
     tx = msg_allowed(to_send, VOLKSWAGEN_MQB_STOCK_TX_MSGS, sizeof(VOLKSWAGEN_MQB_STOCK_TX_MSGS) / sizeof(VOLKSWAGEN_MQB_STOCK_TX_MSGS[0]));
@@ -270,7 +267,7 @@ static int volkswagen_mqb_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
       if ((addr == MSG_HCA_01) || (addr == MSG_LDW_02)) {
         // openpilot takes over LKAS steering control and related HUD messages from the camera
         bus_fwd = -1;
-      } else if (volkswagen_mqb_longitudinal && ((addr == MSG_ACC_02) || (addr == MSG_ACC_06) || (addr == MSG_ACC_07))) {
+      } else if (volkswagen_longitudinal && ((addr == MSG_ACC_02) || (addr == MSG_ACC_06) || (addr == MSG_ACC_07))) {
         // openpilot takes over acceleration/braking control and related HUD messages from the stock ACC radar
         bus_fwd = -1;
       } else {
