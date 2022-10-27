@@ -142,6 +142,8 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
     for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
       for pedal in ['brake', 'gas']:
         self.safety.set_alternative_experience(mode)
+        self.safety.set_controls_allowed(1)
+
         allow_ctrl = False
         if pedal == 'brake':
           # brake_pressed_prev and vehicle_moving
@@ -152,7 +154,6 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
           self._rx(self._user_gas_msg(1))
           allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
 
-        self.safety.set_controls_allowed(1)
         hw = self.safety.get_honda_hw()
         if hw == HONDA_NIDEC:
           self.safety.set_honda_fwd_brake(False)
@@ -364,13 +365,13 @@ class TestHondaNidecSafetyBase(HondaBase):
 
   def test_tx_hook_on_interceptor_pressed(self):
     for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
+      self.safety.set_controls_allowed(1)
       self.safety.set_alternative_experience(mode)
       # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
       self._rx(self._interceptor_user_gas(self.INTERCEPTOR_THRESHOLD + 1))
       self._rx(self._interceptor_user_gas(self.INTERCEPTOR_THRESHOLD + 1))
       allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
 
-      self.safety.set_controls_allowed(1)
       self.safety.set_honda_fwd_brake(False)
 
       # Test we allow lateral, but never longitudinal
