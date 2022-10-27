@@ -4,7 +4,7 @@ from typing import Dict, List
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, ALTERNATIVE_EXPERIENCE
+from panda.tests.safety.common import CANPackerPanda
 
 MAX_BRAKE = 400
 MAX_GAS = 3072

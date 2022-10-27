@@ -6,7 +6,7 @@ from typing import Optional
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg, MAX_WRONG_COUNTERS, ALTERNATIVE_EXPERIENCE
+from panda.tests.safety.common import CANPackerPanda, make_msg, MAX_WRONG_COUNTERS
 
 class Btn:
   NONE = 0
