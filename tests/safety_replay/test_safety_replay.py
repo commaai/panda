@@ -41,7 +41,7 @@ if __name__ == "__main__":
   for route, _, _, _ in logs:
     if not os.path.isfile(route):
       with open(route, "wb") as f:
-        r = requests.get(BASE_URL + route, timeout=60)
+        r = requests.get(BASE_URL + route, timeout=10)
         r.raise_for_status()
         f.write(r.content)
 
