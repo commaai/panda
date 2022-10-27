@@ -13,8 +13,9 @@ const SteeringLimits VOLKSWAGEN_PQ_STEERING_LIMITS = {
 };
 
 // longitudinal limits
-const int VOLKSWAGEN_PQ_MAX_ACCEL = 2000;   // 2.0 m/s2
-const int VOLKSWAGEN_PQ_MIN_ACCEL = -3500;  // -3.5 m/s2
+// acceleration in m/s2 * 1000 to avoid floating point math
+const int VOLKSWAGEN_PQ_MAX_ACCEL = 2000;
+const int VOLKSWAGEN_PQ_MIN_ACCEL = -3500;
 
 #define MSG_LENKHILFE_3         0x0D0   // RX from EPS, for steering angle and driver steering torque
 #define MSG_HCA_1               0x0D2   // TX by OP, Heading Control Assist steering torque

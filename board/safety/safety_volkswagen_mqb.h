@@ -13,8 +13,9 @@ const SteeringLimits VOLKSWAGEN_MQB_STEERING_LIMITS = {
 };
 
 // longitudinal limits
-const int VOLKSWAGEN_MQB_MAX_ACCEL = 2000;   // Max accel 2.0 m/s2
-const int VOLKSWAGEN_MQB_MIN_ACCEL = -3500;  // Max decel 3.5 m/s2
+// acceleration in m/s2 * 1000 to avoid floating point math
+const int VOLKSWAGEN_MQB_MAX_ACCEL = 2000;
+const int VOLKSWAGEN_MQB_MIN_ACCEL = -3500;
 
 #define MSG_ESP_19      0x0B2   // RX from ABS, for wheel speeds
 #define MSG_LH_EPS_03   0x09F   // RX from EPS, for driver steering torque
