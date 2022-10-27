@@ -44,8 +44,6 @@ addr_checks volkswagen_mqb_rx_checks = {volkswagen_mqb_addr_checks, VOLKSWAGEN_M
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
 const uint16_t VOLKSWAGEN_MQB_PARAM_LONG = 1;
 bool volkswagen_mqb_longitudinal = false;
-bool volkswagen_mqb_main_switch = false;
-bool volkswagen_mqb_cruise_engaged = false;
 bool volkswagen_mqb_set_prev = false;
 bool volkswagen_mqb_resume_prev = false;
 
@@ -140,14 +138,14 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
       // Always exit controls on main switch off
       // Signal: TSK_06.TSK_Status
       int acc_status = (GET_BYTE(to_push, 3) & 0x7U);
-      volkswagen_mqb_cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 5);
-      volkswagen_mqb_main_switch = volkswagen_mqb_cruise_engaged || (acc_status == 2);
+      bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 5);
+      acc_main_on = cruise_engaged || (acc_status == 2);
 
       if (!volkswagen_mqb_longitudinal) {
-        pcm_cruise_check(volkswagen_mqb_cruise_engaged);
+        pcm_cruise_check(cruise_engaged);
       }
 
-      if (!volkswagen_mqb_main_switch) {
+      if (!acc_main_on) {
         controls_allowed = false;
       }
     }
@@ -160,7 +158,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
         bool set_button = GET_BIT(to_push, 16U);
         bool resume_button = GET_BIT(to_push, 19U);
         if ((volkswagen_mqb_set_prev && !set_button) || (volkswagen_mqb_resume_prev && !resume_button)) {
-          controls_allowed = volkswagen_mqb_main_switch;
+          controls_allowed = acc_main_on;
         }
         volkswagen_mqb_set_prev = set_button;
         volkswagen_mqb_resume_prev = resume_button;
