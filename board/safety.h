@@ -85,7 +85,7 @@ int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 }
 
 bool get_longitudinal_allowed(void) {
-  return controls_allowed && !gas_pressed_prev;
+  return controls_allowed && !gas_pressed_prev && !brake_pressed_prev;
 }
 
 // Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8
