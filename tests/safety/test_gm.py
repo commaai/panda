@@ -18,7 +18,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   STANDSTILL_THRESHOLD = 10 * 0.0311
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0
-  BUTTONS_BUS = 0
+  BUTTONS_BUS = 0  # rx or tx
 
   MAX_RATE_UP = 7
   MAX_RATE_DOWN = 17
@@ -210,7 +210,7 @@ class TestGmCameraLongitudinalSafety(TestGmSafetyBase):
              [388, 2]]  # camera bus
   FWD_BLACKLISTED_ADDRS = {2: [384, 715, 880, 789], 0: [388]}  # block LKAS message and PSCMStatus
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
-  BUTTONS_BUS = 2  # tx only
+  BUTTONS_BUS = 0  # rx only
 
   MAX_GAS = 3400
   MAX_REGEN = 1514
@@ -224,7 +224,6 @@ class TestGmCameraLongitudinalSafety(TestGmSafetyBase):
     self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM | Panda.FLAG_GM_HW_CAM_LONG)
     self.safety.init_tests()
 
-  # start
   # override these tests from PandaSafetyTest, GM Cam longitudinal uses button enable
   def test_disable_control_allowed_from_cruise(self):
     pass
@@ -262,101 +261,6 @@ class TestGmCameraLongitudinalSafety(TestGmSafetyBase):
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(Buttons.CANCEL))
     self.assertFalse(self.safety.get_controls_allowed())
-  # end
-
-  # # Uses stock longitudinal, allow no longitudinal actuation
-  # def test_brake_safety_check(self, stock_longitudinal=True):
-  #   super().test_brake_safety_check(stock_longitudinal=stock_longitudinal)
-  #
-  # def test_gas_safety_check(self, stock_longitudinal=True):
-  #   super().test_gas_safety_check(stock_longitudinal=stock_longitudinal)
-
-
-# class TestGmCameraLongitudinalSafety(TestGmAscmSafety):
-#   TX_MSGS = [[384, 0], [789, 0], [715, 0], [880, 0]]  # pt bus
-#   FWD_BLACKLISTED_ADDRS = {2: [384, 715, 880, 789]}  # ACC messages are (715, 880, 789)
-#   FWD_BUS_LOOKUP = {0: 2, 2: 0}
-#
-#   MAX_GAS = 3072
-#   MAX_REGEN = 1514
-#   INACTIVE_REGEN = 1554
-#   MAX_BRAKE = 400
-#
-#   def setUp(self):
-#     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
-#     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
-#     self.safety = libpandasafety_py.libpandasafety
-#     self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM | Panda.FLAG_GM_HW_CAM_LONG)
-#     self.safety.init_tests()
-#
-#   def _pcm_status_msg(self, enable):
-#     raise NotImplementedError
-#
-#   # brake message sends on bus 0 instead of 2 for GM Camera cars
-#   def _send_brake_msg(self, brake):
-#     values = {"FrictionBrakeCmd": -brake}
-#     return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", 0, values)
-# class TestGmCameraSafety(TestGmSafetyBase):
-#   TX_MSGS = [[384, 0],  # pt bus
-#              [388, 2]]  # camera bus
-#   FWD_BLACKLISTED_ADDRS = {2: [384], 0: [388]}  # block LKAS message and PSCMStatus
-#   FWD_BUS_LOOKUP = {0: 2, 2: 0}
-#   BUTTONS_BUS = 2  # tx only
-
-# class TestGmCameraSafety(TestGmSafetyBase):
-#   TX_MSGS = [[384, 0],  # pt bus
-#              [388, 2]]  # camera bus
-#   FWD_BLACKLISTED_ADDRS = {2: [384], 0: [388]}  # block LKAS message and PSCMStatus
-#   FWD_BUS_LOOKUP = {0: 2, 2: 0}
-#   BUTTONS_BUS = 2  # tx only
-#   USER_BRAKE_THRESHOLD = 20
-
-
-
-# class TestGmCameraSafety(TestGmSafetyBase):
-#   TX_MSGS = [[384, 0],  # pt bus
-#              [481, 2]]  # camera bus
-#   FWD_BLACKLISTED_ADDRS = {2: [384]}  # LKAS message
-#   FWD_BUS_LOOKUP = {0: 2, 2: 0}
-#   BUTTONS_BUS = 2  # tx only
-#   USER_BRAKE_THRESHOLD = 20
-#
-#   def setUp(self):
-#     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
-#     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
-#     self.safety = libpandasafety_py.libpandasafety
-#     self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM)
-#     self.safety.init_tests()
-#
-#   def _user_gas_msg(self, gas):
-#     cruise_active = self.safety.get_controls_allowed()
-#     values = {"AcceleratorPedal2": 1 if gas else 0, "CruiseState": cruise_active}
-#     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
-#
-#   def _pcm_status_msg(self, enable):
-#     values = {"CruiseState": enable}
-#     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
-#
-#   def test_buttons(self):
-#     # Only CANCEL button is allowed while cruise is enabled
-#     self.safety.set_controls_allowed(0)
-#     for btn in range(8):
-#       self.assertFalse(self._tx(self._button_msg(btn)))
-#
-#     self.safety.set_controls_allowed(1)
-#     for btn in range(8):
-#       self.assertFalse(self._tx(self._button_msg(btn)))
-#
-#     for enabled in (True, False):
-#       self._rx(self._pcm_status_msg(enabled))
-#       self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
-#
-#   # Uses stock longitudinal, allow no longitudinal actuation
-#   def test_brake_safety_check(self, stock_longitudinal=True):
-#     super().test_brake_safety_check(stock_longitudinal=stock_longitudinal)
-#
-#   def test_gas_safety_check(self, stock_longitudinal=True):
-#     super().test_gas_safety_check(stock_longitudinal=stock_longitudinal)
 
 
 if __name__ == "__main__":
