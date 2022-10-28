@@ -85,6 +85,9 @@ static uint32_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
 static const addr_checks* volkswagen_pq_init(uint16_t param) {
   UNUSED(param);
 
+  volkswagen_set_button_prev = false;
+  volkswagen_resume_button_prev = false;
+
 #ifdef ALLOW_DEBUG
   volkswagen_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
 #endif
