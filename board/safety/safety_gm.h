@@ -141,8 +141,8 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 
     bool stock_ecu_detected = (addr == 384);  // ASCMLKASteeringCmd
 
-    // Only check ASCMGasRegenCmd if ASCM, GM_CAM uses stock longitudinal
-    if (((gm_hw == GM_ASCM) || ((gm_hw == GM_CAM) && gm_cam_long)) && (addr == 715)) {
+    // Check ASCMGasRegenCmd only if we're sending it
+    if (!gm_pcm_cruise && (addr == 715)) {
       stock_ecu_detected = true;
     }
     generic_rx_checks(stock_ecu_detected);
