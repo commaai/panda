@@ -85,6 +85,7 @@ int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 }
 
 bool get_longitudinal_allowed(void) {
+  // No longitudinal control when overriding with gas, or enabling at a stop with brake
   return controls_allowed && !gas_pressed_prev && !brake_pressed_prev;
 }
 
