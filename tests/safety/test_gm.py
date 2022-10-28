@@ -14,6 +14,47 @@ class Buttons:
   CANCEL = 6
 
 
+class GmLongitudinalBase:
+  # pylint: disable=no-member,abstract-method
+  MAX_GAS = 0
+  MAX_REGEN = 0
+  INACTIVE_REGEN = 0
+  MAX_BRAKE = 0
+
+  def test_set_resume_buttons(self):
+    """
+      SET and RESUME enter controls allowed on their falling edge.
+    """
+    for btn in range(8):
+      self.safety.set_controls_allowed(0)
+      for _ in range(10):
+        self._rx(self._button_msg(btn))
+        self.assertFalse(self.safety.get_controls_allowed())
+
+      # should enter controls allowed on falling edge
+      if btn in (Buttons.RES_ACCEL, Buttons.DECEL_SET):
+        self._rx(self._button_msg(Buttons.UNPRESS))
+        self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_cancel_button(self):
+    self.safety.set_controls_allowed(1)
+    self._rx(self._button_msg(Buttons.CANCEL))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  # override these tests from PandaSafetyTest, GM longitudinal uses button enable
+  def test_disable_control_allowed_from_cruise(self):
+    pass
+
+  def test_enable_control_allowed_from_cruise(self):
+    pass
+
+  def test_cruise_engaged_prev(self):
+    pass
+
+  def _pcm_status_msg(self, enable):
+    pass
+
+
 class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   STANDSTILL_THRESHOLD = 10 * 0.0311
   RELAY_MALFUNCTION_ADDR = 384
@@ -27,11 +68,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   RT_INTERVAL = 250000
   DRIVER_TORQUE_ALLOWANCE = 50
   DRIVER_TORQUE_FACTOR = 4
-
-  MAX_GAS = 0
-  MAX_REGEN = 0
-  INACTIVE_REGEN = 0
-  MAX_BRAKE = 0
 
   @classmethod
   def setUpClass(cls):
@@ -106,7 +142,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
         self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
 
 
-class TestGmAscmSafety(TestGmSafetyBase):
+class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
              [161, 1], [774, 1], [776, 1], [784, 1],  # obs bus
              [789, 2],  # ch bus
@@ -125,39 +161,6 @@ class TestGmAscmSafety(TestGmSafetyBase):
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
     self.safety.init_tests()
-
-  # override these tests from PandaSafetyTest, ASCM GM uses button enable
-  def test_disable_control_allowed_from_cruise(self):
-    pass
-
-  def test_enable_control_allowed_from_cruise(self):
-    pass
-
-  def test_cruise_engaged_prev(self):
-    pass
-
-  def _pcm_status_msg(self, enable):
-    raise NotImplementedError
-
-  def test_set_resume_buttons(self):
-    """
-      SET and RESUME enter controls allowed on their falling edge.
-    """
-    for btn in range(8):
-      self.safety.set_controls_allowed(0)
-      for _ in range(10):
-        self._rx(self._button_msg(btn))
-        self.assertFalse(self.safety.get_controls_allowed())
-
-      # should enter controls allowed on falling edge
-      if btn in (Buttons.RES_ACCEL, Buttons.DECEL_SET):
-        self._rx(self._button_msg(Buttons.UNPRESS))
-        self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_cancel_button(self):
-    self.safety.set_controls_allowed(1)
-    self._rx(self._button_msg(Buttons.CANCEL))
-    self.assertFalse(self.safety.get_controls_allowed())
 
 
 class TestGmCameraSafety(TestGmSafetyBase):
@@ -205,7 +208,7 @@ class TestGmCameraSafety(TestGmSafetyBase):
     pass
 
 
-class TestGmCameraLongitudinalSafety(TestGmSafetyBase):
+class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmSafetyBase):
   TX_MSGS = [[384, 0], [789, 0], [715, 0], [880, 0],  # pt bus
              [388, 2]]  # camera bus
   FWD_BLACKLISTED_ADDRS = {2: [384, 715, 880, 789], 0: [388]}  # block LKAS message and PSCMStatus
@@ -224,43 +227,10 @@ class TestGmCameraLongitudinalSafety(TestGmSafetyBase):
     self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM | Panda.FLAG_GM_HW_CAM_LONG)
     self.safety.init_tests()
 
-  # override these tests from PandaSafetyTest, GM Cam longitudinal uses button enable
-  def test_disable_control_allowed_from_cruise(self):
-    pass
-
-  def test_enable_control_allowed_from_cruise(self):
-    pass
-
-  def test_cruise_engaged_prev(self):
-    pass
-
-  def _pcm_status_msg(self, enable):
-    raise NotImplementedError
-
   # brake message sends on bus 0 instead of 2 for GM Camera cars
   def _send_brake_msg(self, brake):
     values = {"FrictionBrakeCmd": -brake}
     return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", 0, values)
-
-  def test_set_resume_buttons(self):
-    """
-      SET and RESUME enter controls allowed on their falling edge.
-    """
-    for btn in range(8):
-      self.safety.set_controls_allowed(0)
-      for _ in range(10):
-        self._rx(self._button_msg(btn))
-        self.assertFalse(self.safety.get_controls_allowed())
-
-      # should enter controls allowed on falling edge
-      if btn in (Buttons.RES_ACCEL, Buttons.DECEL_SET):
-        self._rx(self._button_msg(Buttons.UNPRESS))
-        self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_cancel_button(self):
-    self.safety.set_controls_allowed(1)
-    self._rx(self._button_msg(Buttons.CANCEL))
-    self.assertFalse(self.safety.get_controls_allowed())
 
 
 if __name__ == "__main__":
