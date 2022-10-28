@@ -4,11 +4,12 @@ from typing import Dict, List
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, ALTERNATIVE_EXPERIENCE
+from panda.tests.safety.common import CANPackerPanda
 
 MAX_BRAKE = 400
 MAX_GAS = 3072
 MAX_REGEN = 1404
+INACTIVE_REGEN = 1404
 
 
 class Buttons:
@@ -19,11 +20,10 @@ class Buttons:
 
 
 class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
-  STANDSTILL_THRESHOLD = 0
+  STANDSTILL_THRESHOLD = 10 * 0.0311
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0
   BUTTONS_BUS = 0
-  USER_BRAKE_THRESHOLD = 0
 
   MAX_RATE_UP = 7
   MAX_RATE_DOWN = 17
@@ -56,7 +56,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
 
   def _user_brake_msg(self, brake):
     # GM safety has a brake threshold of 8
-    values = {"BrakePedalPos": self.USER_BRAKE_THRESHOLD if brake else 0}
+    values = {"BrakePedalPos": 8 if brake else 0}
     return self.packer.make_can_msg_panda("ECMAcceleratorPos", 0, values)
 
   def _user_regen_msg(self, regen):
@@ -97,64 +97,13 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
           self.assertTrue(self._tx(self._send_brake_msg(b)))
 
   def test_gas_safety_check(self, stock_longitudinal=False):
+    # Block if enabled and out of actuation range, disabled and not inactive regen, or if stock longitudinal
     for enabled in [0, 1]:
-      for g in range(0, 2**12 - 1):
+      for gas_regen in range(0, 2 ** 12 - 1):
         self.safety.set_controls_allowed(enabled)
-        if abs(g) > MAX_GAS or (not enabled and g != MAX_REGEN) or stock_longitudinal:
-          self.assertFalse(self._tx(self._send_gas_msg(g)))
-        else:
-          self.assertTrue(self._tx(self._send_gas_msg(g)))
-
-  def test_tx_hook_on_pedal_pressed(self):
-    for pedal in ['brake', 'gas']:
-      if pedal == 'brake':
-        # brake_pressed_prev and vehicle_moving
-        self._rx(self._speed_msg(100))
-        self._rx(self._user_brake_msg(1))
-      elif pedal == 'gas':
-        # gas_pressed_prev
-        self._rx(self._user_gas_msg(MAX_GAS))
-
-      self.safety.set_controls_allowed(1)
-      self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
-      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_RATE_UP)))
-      self.assertFalse(self._tx(self._send_gas_msg(MAX_GAS)))
-
-      # reset status
-      self.safety.set_controls_allowed(0)
-      self._tx(self._send_brake_msg(0))
-      self._tx(self._torque_cmd_msg(0))
-      if pedal == 'brake':
-        self._rx(self._speed_msg(0))
-        self._rx(self._user_brake_msg(0))
-      elif pedal == 'gas':
-        self._rx(self._user_gas_msg(0))
-
-  def test_tx_hook_on_pedal_pressed_on_alternative_gas_experience(self):
-    for pedal in ['brake', 'gas']:
-      self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
-      if pedal == 'brake':
-        # brake_pressed_prev and vehicle_moving
-        self._rx(self._speed_msg(100))
-        self._rx(self._user_brake_msg(1))
-        allow_ctrl = False
-      elif pedal == 'gas':
-        # gas_pressed_prev
-        self._rx(self._user_gas_msg(MAX_GAS))
-        allow_ctrl = True
-
-      # Test we allow lateral on gas press, but never longitudinal
-      self.safety.set_controls_allowed(1)
-      self.assertEqual(allow_ctrl, self._tx(self._torque_cmd_msg(self.MAX_RATE_UP)))
-      self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
-      self.assertFalse(self._tx(self._send_gas_msg(MAX_GAS)))
-
-      # reset status
-      if pedal == 'brake':
-        self._rx(self._speed_msg(0))
-        self._rx(self._user_brake_msg(0))
-      elif pedal == 'gas':
-        self._rx(self._user_gas_msg(0))
+        should_tx = (((enabled and MAX_REGEN <= gas_regen <= MAX_GAS) or
+                      (not enabled and gas_regen == INACTIVE_REGEN)) and not stock_longitudinal)
+        self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
 
 
 class TestGmAscmSafety(TestGmSafetyBase):
@@ -164,7 +113,6 @@ class TestGmAscmSafety(TestGmSafetyBase):
              [0x104c006c, 3], [0x10400060, 3]]  # gmlan
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
-  USER_BRAKE_THRESHOLD = 8
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -208,11 +156,11 @@ class TestGmAscmSafety(TestGmSafetyBase):
 
 
 class TestGmCameraSafety(TestGmSafetyBase):
-  TX_MSGS = [[384, 0]]  # pt bus
-  FWD_BLACKLISTED_ADDRS = {2: [384]}  # LKAS message, ACC messages are (715, 880, 789)
+  TX_MSGS = [[384, 0],  # pt bus
+             [388, 2]]  # camera bus
+  FWD_BLACKLISTED_ADDRS = {2: [384], 0: [388]}  # block LKAS message and PSCMStatus
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   BUTTONS_BUS = 2  # tx only
-  USER_BRAKE_THRESHOLD = 20
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")

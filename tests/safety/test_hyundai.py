@@ -114,7 +114,7 @@ class TestHyundaiSafety(HyundaiButtonBase, common.PandaSafetyTest, common.Driver
 
 
 class TestHyundaiSafetyCameraSCC(TestHyundaiSafety):
-  BUTTONS_BUS = 2  # tx on 2, rx on 0
+  BUTTONS_TX_BUS = 2  # tx on 2, rx on 0
   SCC_BUS = 2  # rx on 2
 
   def setUp(self):

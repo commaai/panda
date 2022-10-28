@@ -152,7 +152,7 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >DTCMRAM AT> FLASH
 
-  
+
   /* Uninitialized data section */
   . = ALIGN(4);
   .bss :
@@ -185,6 +185,12 @@ SECTIONS
     . = ALIGN(4);
     *(.ram_d1*)
   } >RAM_D1
+
+  .ram_d2 (NOLOAD) :
+  {
+    . = ALIGN(4);
+    *(.ram_d2*)
+  } >RAM_D2
 
   .ARM.attributes 0 : { *(.ARM.attributes) }
 }
