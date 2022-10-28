@@ -212,6 +212,11 @@ class TestGmCameraLongitudinalSafety(TestGmSafetyBase):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   BUTTONS_BUS = 2  # tx only
 
+  MAX_GAS = 3400
+  MAX_REGEN = 1514
+  INACTIVE_REGEN = 1554
+  MAX_BRAKE = 400
+
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
@@ -220,7 +225,7 @@ class TestGmCameraLongitudinalSafety(TestGmSafetyBase):
     self.safety.init_tests()
 
   # start
-  # override these tests from PandaSafetyTest, ASCM GM uses button enable
+  # override these tests from PandaSafetyTest, GM Cam longitudinal uses button enable
   def test_disable_control_allowed_from_cruise(self):
     pass
 
@@ -232,6 +237,11 @@ class TestGmCameraLongitudinalSafety(TestGmSafetyBase):
 
   def _pcm_status_msg(self, enable):
     raise NotImplementedError
+
+  # brake message sends on bus 0 instead of 2 for GM Camera cars
+  def _send_brake_msg(self, brake):
+    values = {"FrictionBrakeCmd": -brake}
+    return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", 0, values)
 
   def test_set_resume_buttons(self):
     """
