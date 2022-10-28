@@ -285,7 +285,7 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     }
 
     if (bus_num == 2) {
-      // block lkas message and acc messages if gm openpilot long, forward all others
+      // block lkas message and acc messages if gm_cam_long, forward all others
       bool is_lkas_msg = (addr == 384);
       bool is_acc_msg = (addr == 789) || (addr == 715) || (addr == 880);
       int block_msg = is_lkas_msg || (is_acc_msg && gm_cam_long);
