@@ -14,7 +14,7 @@ class Buttons:
   CANCEL = 6
 
 
-class GmLongitudinalBase:
+class GmLongitudinalBase(common.PandaSafetyTest):
   # pylint: disable=no-member,abstract-method
   def test_set_resume_buttons(self):
     """
