@@ -211,7 +211,7 @@ class TestGmCameraSafety(TestGmSafetyBase):
 class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmSafetyBase):
   TX_MSGS = [[384, 0], [789, 0], [715, 0], [880, 0],  # pt bus
              [388, 2]]  # camera bus
-  FWD_BLACKLISTED_ADDRS = {2: [384, 715, 880, 789], 0: [388]}  # block LKAS message and PSCMStatus
+  FWD_BLACKLISTED_ADDRS = {2: [384, 715, 880, 789], 0: [388]}  # block LKAS, ACC messages and PSCMStatus
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   BUTTONS_BUS = 0  # rx only
 
