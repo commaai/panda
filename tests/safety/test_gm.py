@@ -4,7 +4,7 @@ from typing import Dict, List
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, ALTERNATIVE_EXPERIENCE
+from panda.tests.safety.common import CANPackerPanda
 
 MAX_BRAKE = 400
 MAX_GAS = 3072
@@ -104,57 +104,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
         should_tx = (((enabled and MAX_REGEN <= gas_regen <= MAX_GAS) or
                       (not enabled and gas_regen == INACTIVE_REGEN)) and not stock_longitudinal)
         self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
-
-  def test_tx_hook_on_pedal_pressed(self):
-    for pedal in ['brake', 'gas']:
-      if pedal == 'brake':
-        # brake_pressed_prev and vehicle_moving
-        self._rx(self._speed_msg(100))
-        self._rx(self._user_brake_msg(1))
-      elif pedal == 'gas':
-        # gas_pressed_prev
-        self._rx(self._user_gas_msg(MAX_GAS))
-
-      self.safety.set_controls_allowed(1)
-      self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
-      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_RATE_UP)))
-      self.assertFalse(self._tx(self._send_gas_msg(MAX_GAS)))
-
-      # reset status
-      self.safety.set_controls_allowed(0)
-      self._tx(self._send_brake_msg(0))
-      self._tx(self._torque_cmd_msg(0))
-      if pedal == 'brake':
-        self._rx(self._speed_msg(0))
-        self._rx(self._user_brake_msg(0))
-      elif pedal == 'gas':
-        self._rx(self._user_gas_msg(0))
-
-  def test_tx_hook_on_pedal_pressed_on_alternative_gas_experience(self):
-    for pedal in ['brake', 'gas']:
-      self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
-      if pedal == 'brake':
-        # brake_pressed_prev and vehicle_moving
-        self._rx(self._speed_msg(100))
-        self._rx(self._user_brake_msg(1))
-        allow_ctrl = False
-      elif pedal == 'gas':
-        # gas_pressed_prev
-        self._rx(self._user_gas_msg(MAX_GAS))
-        allow_ctrl = True
-
-      # Test we allow lateral on gas press, but never longitudinal
-      self.safety.set_controls_allowed(1)
-      self.assertEqual(allow_ctrl, self._tx(self._torque_cmd_msg(self.MAX_RATE_UP)))
-      self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
-      self.assertFalse(self._tx(self._send_gas_msg(MAX_GAS)))
-
-      # reset status
-      if pedal == 'brake':
-        self._rx(self._speed_msg(0))
-        self._rx(self._user_brake_msg(0))
-      elif pedal == 'gas':
-        self._rx(self._user_gas_msg(0))
 
 
 class TestGmAscmSafety(TestGmSafetyBase):
