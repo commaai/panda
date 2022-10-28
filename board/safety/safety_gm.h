@@ -144,20 +144,11 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     tx = msg_allowed(to_send, GM_ASCM_TX_MSGS, sizeof(GM_ASCM_TX_MSGS)/sizeof(GM_ASCM_TX_MSGS[0]));
   }
 
-  // disallow actuator commands if gas or brake (with vehicle moving) are pressed
-  // and the the latching controls_allowed flag is True
-  int pedal_pressed = brake_pressed_prev && vehicle_moving;
-  bool alt_exp_allow_gas = alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS;
-  if (!alt_exp_allow_gas) {
-    pedal_pressed = pedal_pressed || gas_pressed_prev;
-  }
-  bool current_controls_allowed = controls_allowed && !pedal_pressed;
-
   // BRAKE: safety check
   if (addr == 789) {
     int brake = ((GET_BYTE(to_send, 0) & 0xFU) << 8) + GET_BYTE(to_send, 1);
     brake = (0x1000 - brake) & 0xFFF;
-    if (!current_controls_allowed || !longitudinal_allowed) {
+    if (!longitudinal_allowed) {
       if (brake != 0) {
         tx = 0;
       }
@@ -174,7 +165,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     bool violation = 0;
     desired_torque = to_signed(desired_torque, 11);
 
-    if (current_controls_allowed) {
+    if (controls_allowed) {
 
       // *** global torque limit check ***
       violation |= max_limit_check(desired_torque, GM_MAX_STEER, -GM_MAX_STEER);
@@ -199,12 +190,12 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     }
 
     // no torque if controls is not allowed
-    if (!current_controls_allowed && (desired_torque != 0)) {
+    if (!controls_allowed && (desired_torque != 0)) {
       violation = 1;
     }
 
     // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !current_controls_allowed) {
+    if (violation || !controls_allowed) {
       desired_torque_last = 0;
       rt_torque_last = 0;
       ts_torque_check_last = ts;
@@ -220,7 +211,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
     // Disabled message is !engaged with gas
     // value that corresponds to inactive regen.
-    if (!current_controls_allowed || !longitudinal_allowed) {
+    if (!longitudinal_allowed) {
       if (gas_regen != GM_INACTIVE_REGEN) {
         tx = 0;
       }
