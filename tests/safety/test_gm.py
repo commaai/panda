@@ -16,11 +16,6 @@ class Buttons:
 
 class GmLongitudinalBase:
   # pylint: disable=no-member,abstract-method
-  MAX_GAS = 0
-  MAX_REGEN = 0
-  INACTIVE_REGEN = 0
-  MAX_BRAKE = 0
-
   def test_set_resume_buttons(self):
     """
       SET and RESUME enter controls allowed on their falling edge.
@@ -68,6 +63,11 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   RT_INTERVAL = 250000
   DRIVER_TORQUE_ALLOWANCE = 50
   DRIVER_TORQUE_FACTOR = 4
+
+  MAX_GAS = 0
+  MAX_REGEN = 0
+  INACTIVE_REGEN = 0
+  MAX_BRAKE = 0
 
   @classmethod
   def setUpClass(cls):
