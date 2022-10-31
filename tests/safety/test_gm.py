@@ -4,7 +4,7 @@ from typing import Dict, List
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, ALTERNATIVE_EXPERIENCE
+from panda.tests.safety.common import CANPackerPanda
 
 MAX_BRAKE = 400
 MAX_GAS = 3072
@@ -87,74 +87,23 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     values = {"ACCButtons": buttons}
     return self.packer.make_can_msg_panda("ASCMSteeringButton", self.BUTTONS_BUS, values)
 
-  def test_brake_safety_check(self, stock_longitudinal=False):
+  def test_brake_safety_check(self):
     for enabled in [0, 1]:
       for b in range(0, 500):
         self.safety.set_controls_allowed(enabled)
-        if abs(b) > MAX_BRAKE or (not enabled and b != 0) or stock_longitudinal:
+        if abs(b) > MAX_BRAKE or (not enabled and b != 0):
           self.assertFalse(self._tx(self._send_brake_msg(b)))
         else:
           self.assertTrue(self._tx(self._send_brake_msg(b)))
 
-  def test_gas_safety_check(self, stock_longitudinal=False):
+  def test_gas_safety_check(self):
     # Block if enabled and out of actuation range, disabled and not inactive regen, or if stock longitudinal
     for enabled in [0, 1]:
       for gas_regen in range(0, 2 ** 12 - 1):
         self.safety.set_controls_allowed(enabled)
-        should_tx = (((enabled and MAX_REGEN <= gas_regen <= MAX_GAS) or
-                      (not enabled and gas_regen == INACTIVE_REGEN)) and not stock_longitudinal)
+        should_tx = ((enabled and MAX_REGEN <= gas_regen <= MAX_GAS) or
+                     (not enabled and gas_regen == INACTIVE_REGEN))
         self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
-
-  def test_tx_hook_on_pedal_pressed(self):
-    for pedal in ['brake', 'gas']:
-      if pedal == 'brake':
-        # brake_pressed_prev and vehicle_moving
-        self._rx(self._speed_msg(100))
-        self._rx(self._user_brake_msg(1))
-      elif pedal == 'gas':
-        # gas_pressed_prev
-        self._rx(self._user_gas_msg(MAX_GAS))
-
-      self.safety.set_controls_allowed(1)
-      self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
-      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_RATE_UP)))
-      self.assertFalse(self._tx(self._send_gas_msg(MAX_GAS)))
-
-      # reset status
-      self.safety.set_controls_allowed(0)
-      self._tx(self._send_brake_msg(0))
-      self._tx(self._torque_cmd_msg(0))
-      if pedal == 'brake':
-        self._rx(self._speed_msg(0))
-        self._rx(self._user_brake_msg(0))
-      elif pedal == 'gas':
-        self._rx(self._user_gas_msg(0))
-
-  def test_tx_hook_on_pedal_pressed_on_alternative_gas_experience(self):
-    for pedal in ['brake', 'gas']:
-      self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
-      if pedal == 'brake':
-        # brake_pressed_prev and vehicle_moving
-        self._rx(self._speed_msg(100))
-        self._rx(self._user_brake_msg(1))
-        allow_ctrl = False
-      elif pedal == 'gas':
-        # gas_pressed_prev
-        self._rx(self._user_gas_msg(MAX_GAS))
-        allow_ctrl = True
-
-      # Test we allow lateral on gas press, but never longitudinal
-      self.safety.set_controls_allowed(1)
-      self.assertEqual(allow_ctrl, self._tx(self._torque_cmd_msg(self.MAX_RATE_UP)))
-      self.assertFalse(self._tx(self._send_brake_msg(MAX_BRAKE)))
-      self.assertFalse(self._tx(self._send_gas_msg(MAX_GAS)))
-
-      # reset status
-      if pedal == 'brake':
-        self._rx(self._speed_msg(0))
-        self._rx(self._user_brake_msg(0))
-      elif pedal == 'gas':
-        self._rx(self._user_gas_msg(0))
 
 
 class TestGmAscmSafety(TestGmSafetyBase):
@@ -243,12 +192,12 @@ class TestGmCameraSafety(TestGmSafetyBase):
       self._rx(self._pcm_status_msg(enabled))
       self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
 
-  # Uses stock longitudinal, allow no longitudinal actuation
-  def test_brake_safety_check(self, stock_longitudinal=True):
-    super().test_brake_safety_check(stock_longitudinal=stock_longitudinal)
+  # GM Cam safety mode does not allow longitudinal messages
+  def test_brake_safety_check(self):
+    pass
 
-  def test_gas_safety_check(self, stock_longitudinal=True):
-    super().test_gas_safety_check(stock_longitudinal=stock_longitudinal)
+  def test_gas_safety_check(self):
+    pass
 
 
 if __name__ == "__main__":

@@ -43,6 +43,7 @@ void fan_tick(void){
       }
     } else {
       fan_state.stall_counter = 0U;
+      fan_state.error_integral = 0.0f;
     }
 
     // Update controller
