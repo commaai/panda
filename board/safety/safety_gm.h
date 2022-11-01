@@ -37,7 +37,7 @@ const GmLongLimits GM_CAM_LONG_LIMITS = {
   .max_brake = 400,
 };
 
-const GmLongLimits *GM_LONG_LIMITS;
+const GmLongLimits *gm_long_limits;
 
 const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
 
@@ -180,7 +180,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         tx = 0;
       }
     }
-    if (brake > GM_LONG_LIMITS->max_brake) {
+    if (brake > gm_long_limits->max_brake) {
       tx = 0;
     }
   }
@@ -239,7 +239,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     // Disabled message is !engaged with gas
     // value that corresponds to inactive regen.
     if (!longitudinal_allowed) {
-      if (gas_regen != GM_LONG_LIMITS->inactive_regen) {
+      if (gas_regen != gm_long_limits->inactive_regen) {
         tx = 0;
       }
     }
@@ -251,7 +251,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       }
     }
     // Enforce gas/regen actuation limits (max_regen <= gas_regen <= max_gas)
-    if ((gas_regen < GM_LONG_LIMITS->max_regen) || (gas_regen > GM_LONG_LIMITS->max_gas)) {
+    if ((gas_regen < gm_long_limits->max_regen) || (gas_regen > gm_long_limits->max_gas)) {
       tx = 0;
     }
   }
@@ -302,9 +302,9 @@ static const addr_checks* gm_init(uint16_t param) {
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
 
   if (gm_hw == GM_ASCM) {
-    GM_LONG_LIMITS = &GM_ASCM_LONG_LIMITS;
+    gm_long_limits = &GM_ASCM_LONG_LIMITS;
   } else if (gm_hw == GM_CAM) {
-    GM_LONG_LIMITS = &GM_CAM_LONG_LIMITS;
+    gm_long_limits = &GM_CAM_LONG_LIMITS;
   } else {
   }
 
