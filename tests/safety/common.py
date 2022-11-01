@@ -710,6 +710,8 @@ class PandaSafetyTest(PandaSafetyTestBase):
               continue
             if {attr, current_test}.issubset({'TestVolkswagenPqSafety', 'TestVolkswagenPqStockSafety', 'TestVolkswagenPqLongSafety'}):
               continue
+            if {attr, current_test}.issubset({'TestGmCameraSafety', 'TestGmCameraLongitudinalSafety'}):
+              continue
             if attr.startswith('TestHyundaiCanfd') and current_test.startswith('TestHyundaiCanfd'):
               continue
 
