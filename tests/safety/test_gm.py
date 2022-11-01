@@ -55,6 +55,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0
   BUTTONS_BUS = 0  # rx or tx
+  BRAKE_BUS = 0  # tx only
 
   MAX_RATE_UP = 7
   MAX_RATE_DOWN = 17
@@ -105,7 +106,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
 
   def _send_brake_msg(self, brake):
     values = {"FrictionBrakeCmd": -brake}
-    return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", 2, values)
+    return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", self.BRAKE_BUS, values)
 
   def _send_gas_msg(self, gas):
     values = {"GasRegenCmd": gas}
@@ -149,6 +150,7 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
              [0x104c006c, 3], [0x10400060, 3]]  # gmlan
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
+  BRAKE_BUS = 2
 
   MAX_GAS = 3072
   MAX_REGEN = 1404
@@ -226,11 +228,6 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmSafetyBase):
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM | Panda.FLAG_GM_HW_CAM_LONG)
     self.safety.init_tests()
-
-  # brake message sends on bus 0 instead of 2 for GM Camera cars
-  def _send_brake_msg(self, brake):
-    values = {"FrictionBrakeCmd": -brake}
-    return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", 0, values)
 
 
 if __name__ == "__main__":
