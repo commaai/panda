@@ -325,7 +325,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if ((addr == 0x1C8) && (bus == bus_pt)) {
     int accel = (GET_BYTE(to_send, 0) << 4) | (GET_BYTE(to_send, 1) >> 4);
     accel = to_signed(accel, 12);
-    if (!current_controls_allowed || !longitudinal_allowed) {
+    if (!longitudinal_allowed) {
       if (accel != 0) {
         tx = 0;
       }
