@@ -16,12 +16,30 @@ const int GM_MAX_RATE_DOWN = 17;
 const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
 const int GM_DRIVER_TORQUE_FACTOR = 4;
 
-const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
+typedef struct {
+  const int max_gas;
+  const int max_regen;
+  const int inactive_regen;
+  const int max_brake;
+} GmLongLimits;
 
-const int GM_MAX_GAS = 3072;
-const int GM_MAX_REGEN = 1404;
-const int GM_MAX_BRAKE = 400;
-const int GM_INACTIVE_REGEN = 1404;
+const GmLongLimits GM_ASCM_LONG_LIMITS = {
+  .max_gas = 3072,
+  .max_regen = 1404,
+  .inactive_regen = 1404,
+  .max_brake = 400,
+};
+
+const GmLongLimits GM_CAM_LONG_LIMITS = {
+  .max_gas = 3400,
+  .max_regen = 1514,
+  .inactive_regen = 1554,
+  .max_brake = 400,
+};
+
+const GmLongLimits *gm_long_limits;
+
+const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
 
 const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
                                   {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
@@ -30,6 +48,9 @@ const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715,
 
 const CanMsg GM_CAM_TX_MSGS[] = {{384, 0, 4},  // pt bus
                                  {481, 2, 7}, {388, 2, 8}};  // camera bus
+
+const CanMsg GM_CAM_LONG_TX_MSGS[] = {{384, 0, 4}, {789, 0, 5}, {715, 0, 8}, {880, 0, 6},  // pt bus
+                                      {388, 2, 8}};  // camera bus
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 AddrCheckStruct gm_addr_checks[] = {
@@ -45,6 +66,7 @@ AddrCheckStruct gm_addr_checks[] = {
 addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
 
 const uint16_t GM_PARAM_HW_CAM = 1;
+const uint16_t GM_PARAM_HW_CAM_LONG = 2;
 
 enum {
   GM_BTN_UNPRESS = 1,
@@ -54,6 +76,7 @@ enum {
 };
 
 enum {GM_ASCM, GM_CAM} gm_hw = GM_ASCM;
+bool gm_cam_long = false;
 bool gm_pcm_cruise = false;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
@@ -118,8 +141,8 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 
     bool stock_ecu_detected = (addr == 384);  // ASCMLKASteeringCmd
 
-    // Only check ASCMGasRegenCmd if ASCM, GM_CAM uses stock longitudinal
-    if ((gm_hw == GM_ASCM) && (addr == 715)) {
+    // Check ASCMGasRegenCmd only if we're blocking it
+    if (!gm_pcm_cruise && (addr == 715)) {
       stock_ecu_detected = true;
     }
     generic_rx_checks(stock_ecu_detected);
@@ -139,7 +162,11 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   int addr = GET_ADDR(to_send);
 
   if (gm_hw == GM_CAM) {
-    tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
+    if (gm_cam_long) {
+      tx = msg_allowed(to_send, GM_CAM_LONG_TX_MSGS, sizeof(GM_CAM_LONG_TX_MSGS)/sizeof(GM_CAM_LONG_TX_MSGS[0]));
+    } else {
+      tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
+    }
   } else {
     tx = msg_allowed(to_send, GM_ASCM_TX_MSGS, sizeof(GM_ASCM_TX_MSGS)/sizeof(GM_ASCM_TX_MSGS[0]));
   }
@@ -153,7 +180,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         tx = 0;
       }
     }
-    if (brake > GM_MAX_BRAKE) {
+    if (brake > gm_long_limits->max_brake) {
       tx = 0;
     }
   }
@@ -212,7 +239,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     // Disabled message is !engaged with gas
     // value that corresponds to inactive regen.
     if (!longitudinal_allowed) {
-      if (gas_regen != GM_INACTIVE_REGEN) {
+      if (gas_regen != gm_long_limits->inactive_regen) {
         tx = 0;
       }
     }
@@ -224,7 +251,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       }
     }
     // Enforce gas/regen actuation limits (max_regen <= gas_regen <= max_gas)
-    if ((gas_regen < GM_MAX_REGEN) || (gas_regen > GM_MAX_GAS)) {
+    if ((gas_regen < gm_long_limits->max_regen) || (gas_regen > gm_long_limits->max_gas)) {
       tx = 0;
     }
   }
@@ -258,9 +285,11 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     }
 
     if (bus_num == 2) {
-      // block lkas message, forward all others
+      // block lkas message and acc messages if gm_cam_long, forward all others
       bool is_lkas_msg = (addr == 384);
-      if (!is_lkas_msg) {
+      bool is_acc_msg = (addr == 789) || (addr == 715) || (addr == 880);
+      int block_msg = is_lkas_msg || (is_acc_msg && gm_cam_long);
+      if (!block_msg) {
         bus_fwd = 0;
       }
     }
@@ -271,7 +300,18 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 static const addr_checks* gm_init(uint16_t param) {
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
-  gm_pcm_cruise = gm_hw == GM_CAM;
+
+  if (gm_hw == GM_ASCM) {
+    gm_long_limits = &GM_ASCM_LONG_LIMITS;
+  } else if (gm_hw == GM_CAM) {
+    gm_long_limits = &GM_CAM_LONG_LIMITS;
+  } else {
+  }
+
+#ifdef ALLOW_DEBUG
+  gm_cam_long = GET_FLAG(param, GM_PARAM_HW_CAM_LONG);
+#endif
+  gm_pcm_cruise = (gm_hw == GM_CAM) && !gm_cam_long;
   return &gm_rx_checks;
 }
 
