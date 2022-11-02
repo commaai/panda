@@ -308,9 +308,9 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     int is_lfahda_msg = ((addr == 0x1e0) && !hyundai_canfd_hda2);
 
     // CRUISE_INFO for non-HDA2, we send our own longitudinal commands
-    int is_SCC_msg = ((addr == 0x1a0) && hyundai_longitudinal);
+    int is_scc_msg = ((addr == 0x1a0) && hyundai_longitudinal);
     
-    int block_msg = is_lkas_msg || is_lfa_msg || is_lfahda_msg || is_SCC_msg;
+    int block_msg = is_lkas_msg || is_lfa_msg || is_lfahda_msg || is_scc_msg;
     if (!block_msg) {
       bus_fwd = 0;
     }
