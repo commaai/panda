@@ -52,4 +52,8 @@ void clock_init(void) {
   register_set_bits(&(RCC->CR), RCC_CR_CSSHSEON);
   //Enable Vdd33usb supply level detector
   register_set_bits(&(PWR->CR3), PWR_CR3_USB33DEN);
+
+  // Enable CPU access to SRAM1 and SRAM2 (in domain D2)
+  register_set_bits(&(RCC->AHB2ENR), RCC_AHB2ENR_SRAM1EN);
+  register_set_bits(&(RCC->AHB2ENR), RCC_AHB2ENR_SRAM2EN);
 }
