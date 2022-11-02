@@ -206,7 +206,12 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   bool stock_ecu_detected = (addr == steer_addr) && (bus == 0);
   if (hyundai_longitudinal) {
     // ensure ADRV ECU is still knocked out
-    stock_ecu_detected = stock_ecu_detected || ((addr == 0x1a0) && (bus == 1));
+    if (hyundai_canfd_hda2 && ((addr == 0x1a0) && (bus == 1))) {
+      stock_ecu_detected = true;
+    } else if (!hyundai_canfd_hda2 && ((addr == 0x1a0) && (bus == 0))) {
+      stock_ecu_detected = true;
+    } else {
+    }
   }
   generic_rx_checks(stock_ecu_detected);
 
@@ -251,7 +256,7 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
   }
 
   // UDS: only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
-  if (addr == 0x730) {
+  if ((addr == 0x730) && hyundai_canfd_hda2) {
     if ((GET_BYTES_04(to_send) != 0x00803E02U) || (GET_BYTES_48(to_send) != 0x0U)) {
       tx = 0;
     }
@@ -302,7 +307,10 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     // HUD icons
     int is_lfahda_msg = ((addr == 0x1e0) && !hyundai_canfd_hda2);
 
-    int block_msg = is_lkas_msg || is_lfa_msg || is_lfahda_msg;
+    // CRUISE_INFO for non-HDA2, we send our own longitudinal commands
+    int is_cruise_info_msg = ((addr == 0x1a0) && hyundai_longitudinal);
+    
+    int block_msg = is_lkas_msg || is_lfa_msg || is_lfahda_msg || is_cruise_info_msg;
     if (!block_msg) {
       bus_fwd = 0;
     }
@@ -317,10 +325,6 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
   gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
   hyundai_canfd_hda2 = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2);
   hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
-
-  if (!hyundai_canfd_hda2) {
-    hyundai_longitudinal = false;
-  }
 
   if (hyundai_longitudinal) {
     hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_long_addr_checks, HYUNDAI_CANFD_LONG_ADDR_CHECK_LEN};
