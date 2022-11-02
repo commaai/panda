@@ -28,8 +28,8 @@ class Message():
   def __init__(self, message_id):
     self.message_id = message_id
     self.data = {}  # keyed by hex string encoded message data
-    self.ones = [0] * 8   # bit set if 1 is seen
-    self.zeros = [0] * 8  # bit set if 0 has been seen
+    self.ones = [0] * 64   # bit set if 1 is seen
+    self.zeros = [0] * 64  # bit set if 0 has been seen
 
   def printBitDiff(self, other):
     """Prints bits that are set or cleared compared to other background."""

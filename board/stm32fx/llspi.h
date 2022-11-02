@@ -83,7 +83,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
       next_rx_state = SPI_RX_STATE_HEADER_ACK;
     } else {
       // response: NACK and reset state machine
-      puts("SPI: incorrect header sync or checksum "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
+      puts("SPI: incorrect header sync or checksum "); /*hexdump(spi_buf_rx, SPI_HEADER_SIZE);*/
       spi_buf_tx[0] = SPI_NACK;
       next_rx_state = SPI_RX_STATE_HEADER_NACK;
     }

@@ -83,7 +83,7 @@ bool addr_checks_valid() {
     const AddrCheckStruct addr = current_rx_checks->check[i];
     bool valid = addr.msg_seen && !addr.lagging && addr.valid_checksum && (addr.wrong_counters < MAX_WRONG_COUNTERS);
     if (!valid) {
-      //printf("seen %d lagging %d valid checksum %d wrong counters %d\n", addr.msg_seen, addr.lagging, addr.valid_checksum, addr.wrong_counters);
+      printf("i %d seen %d lagging %d valid checksum %d wrong counters %d\n", i, addr.msg_seen, addr.lagging, addr.valid_checksum, addr.wrong_counters);
       return false;
     }
   }
@@ -132,6 +132,10 @@ bool get_gas_pressed_prev(void){
 
 bool get_brake_pressed_prev(void){
   return brake_pressed_prev;
+}
+
+bool get_regen_braking_prev(void){
+  return regen_braking_prev;
 }
 
 bool get_cruise_engaged_prev(void){
@@ -219,6 +223,9 @@ void init_tests(void){
   safety_mode_cnt = 2U;  // avoid ignoring relay_malfunction logic
   alternative_experience = 0;
   set_timer(0);
+  ts_steer_req_mismatch_last = 0;
+  valid_steer_req_count = 0;
+  invalid_steer_req_count = 0;
 }
 
 void init_tests_honda(void){
