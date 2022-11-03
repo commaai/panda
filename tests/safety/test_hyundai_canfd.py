@@ -162,8 +162,8 @@ class TestHyundaiCanfdHDA2Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2):
 
   def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
     values = {
-      "ACCEL_REQ": accel,
-      "ACCEL_REQ2": accel,
+      "aReqRaw": accel,
+      "aReqValue": accel,
     }
     return self.packer.make_can_msg_panda("CRUISE_INFO", 1, values)
 
