@@ -64,8 +64,8 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
     return self.packer.make_can_msg_panda("ACCELERATOR", self.PT_BUS, values)
 
   def _pcm_status_msg(self, enable):
-    values = {"CRUISE_STATUS": 3 if enable else 0}
-    return self.packer.make_can_msg_panda("CRUISE_INFO", self.SCC_BUS, values)
+    values = {"ACCMode": 1 if enable else 0}
+    return self.packer.make_can_msg_panda("SCC_CONTROL", self.SCC_BUS, values)
 
   def _button_msg(self, buttons, main_button=0, bus=None):
     if bus is None:
@@ -165,7 +165,7 @@ class TestHyundaiCanfdHDA2Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2):
       "aReqRaw": accel,
       "aReqValue": accel,
     }
-    return self.packer.make_can_msg_panda("CRUISE_INFO", 1, values)
+    return self.packer.make_can_msg_panda("SCC_CONTROL", 1, values)
 
 
 if __name__ == "__main__":
