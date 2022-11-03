@@ -6,7 +6,7 @@ from typing import Optional
 from panda import Panda
 from panda.tests.safety import libpandasafety_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg, MAX_WRONG_COUNTERS, ALTERNATIVE_EXPERIENCE
+from panda.tests.safety.common import CANPackerPanda, make_msg, MAX_WRONG_COUNTERS
 
 class Btn:
   NONE = 0
@@ -137,39 +137,6 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
       self._rx(self._user_gas_msg(0))
     self._rx(self._button_msg(Btn.SET, main_on=True))
     self.assertTrue(self.safety.get_controls_allowed())
-
-  def test_tx_hook_on_pedal_pressed(self):
-    for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
-      for pedal in ['brake', 'gas']:
-        self.safety.set_alternative_experience(mode)
-        allow_ctrl = False
-        if pedal == 'brake':
-          # brake_pressed_prev and vehicle_moving
-          self._rx(self._speed_msg(100))
-          self._rx(self._user_brake_msg(1))
-        elif pedal == 'gas':
-          # gas_pressed_prev
-          self._rx(self._user_gas_msg(1))
-          allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
-
-        self.safety.set_controls_allowed(1)
-        hw = self.safety.get_honda_hw()
-        if hw == HONDA_NIDEC:
-          self.safety.set_honda_fwd_brake(False)
-          self.assertEqual(allow_ctrl, self._tx(self._send_brake_msg(self.MAX_BRAKE)))
-        self.assertEqual(allow_ctrl, self._tx(self._send_steer_msg(0x1000)))
-
-        # reset status
-        self.safety.set_controls_allowed(0)
-        self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DEFAULT)
-        if hw == HONDA_NIDEC:
-          self._tx(self._send_brake_msg(0))
-        self._tx(self._send_steer_msg(0))
-        if pedal == 'brake':
-          self._rx(self._speed_msg(0))
-          self._rx(self._user_brake_msg(0))
-        elif pedal == 'gas':
-          self._rx(self._user_gas_msg(0))
 
 
 class HondaPcmEnableBase(common.PandaSafetyTest):
@@ -361,22 +328,6 @@ class TestHondaNidecSafetyBase(HondaBase):
             send = brake == 0
           self.assertEqual(send, self._tx(self._send_brake_msg(brake)))
     self.safety.set_honda_fwd_brake(False)
-
-  def test_tx_hook_on_interceptor_pressed(self):
-    for mode in [ALTERNATIVE_EXPERIENCE.DEFAULT, ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS]:
-      self.safety.set_alternative_experience(mode)
-      # gas_interceptor_prev > INTERCEPTOR_THRESHOLD
-      self._rx(self._interceptor_user_gas(self.INTERCEPTOR_THRESHOLD + 1))
-      self._rx(self._interceptor_user_gas(self.INTERCEPTOR_THRESHOLD + 1))
-      allow_ctrl = mode == ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
-
-      self.safety.set_controls_allowed(1)
-      self.safety.set_honda_fwd_brake(False)
-
-      # Test we allow lateral, but never longitudinal
-      self.assertFalse(self._tx(self._interceptor_gas_cmd(self.INTERCEPTOR_THRESHOLD)))
-      self.assertFalse(self._tx(self._send_brake_msg(self.MAX_BRAKE)))
-      self.assertEqual(allow_ctrl, self._tx(self._send_steer_msg(0x1000)))
 
 
 class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
