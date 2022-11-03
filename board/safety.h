@@ -3,7 +3,6 @@
 // include the safety policies.
 #include "safety/safety_defaults.h"
 #include "safety/safety_honda.h"
-/*
 #include "safety/safety_toyota.h"
 #include "safety/safety_tesla.h"
 #include "safety/safety_gm.h"
@@ -16,9 +15,8 @@
 #include "safety/safety_nissan.h"
 #include "safety/safety_volkswagen_mqb.h"
 #include "safety/safety_volkswagen_pq.h"
-#include "safety/safety_body.h"
-*/
 #include "safety/safety_elm327.h"
+#include "safety/safety_body.h"
 
 #ifdef STM32H7
 #define CANFD
@@ -26,7 +24,7 @@
 
 // CAN-FD only safety modes
 #ifdef CANFD
-//#include "safety/safety_hyundai_canfd.h"
+#include "safety/safety_hyundai_canfd.h"
 #endif
 
 // from cereal.car.CarParams.SafetyModel
@@ -288,7 +286,6 @@ typedef struct {
 
 const safety_hook_config safety_hook_registry[] = {
   {SAFETY_SILENT, &nooutput_hooks},
-  /*
   {SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
   {SAFETY_TOYOTA, &toyota_hooks},
   {SAFETY_ELM327, &elm327_hooks},
@@ -303,18 +300,15 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
   {SAFETY_BODY, &body_hooks},
-  */
 #ifdef CANFD
-  //{SAFETY_HYUNDAI_CANFD, &hyundai_canfd_hooks},
+  {SAFETY_HYUNDAI_CANFD, &hyundai_canfd_hooks},
 #endif
 #ifdef ALLOW_DEBUG
-  /*
   {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_SUBARU_LEGACY, &subaru_legacy_hooks},
   {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
   {SAFETY_FORD, &ford_hooks},
-  */
 #endif
 };
 
