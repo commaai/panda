@@ -64,10 +64,10 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-DTCMRAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 128K
-RAM_D1 (xrw)      : ORIGIN = 0x24000000, LENGTH = 320K
-RAM_D2 (xrw)      : ORIGIN = 0x30000000, LENGTH = 32K
-RAM_D3 (xrw)      : ORIGIN = 0x38000000, LENGTH = 16K
+DTCMRAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 128K /* DTCM */
+RAM_D1 (xrw)      : ORIGIN = 0x24000000, LENGTH = 320K /* AXI SRAM */
+RAM_D2 (xrw)      : ORIGIN = 0x30000000, LENGTH = 32K /* SRAM1(16kb) + SRAM2(16kb) */
+RAM_D3 (xrw)      : ORIGIN = 0x38000000, LENGTH = 16K /* SRAM4 */
 ITCMRAM (xrw)      : ORIGIN = 0x00000000, LENGTH = 64K
 FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 1024K
 }
