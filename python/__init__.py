@@ -277,6 +277,12 @@ class Panda:
                 if claim:
                   self._handle.claimInterface(0)
                   # self._handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
+
+                # bcdDevice wasn't always set to the hw type, ignore if it's the old constant
+                bcd = device.getbcdDevice()
+                if bcd is not None and bcd != 0x2300:
+                  self._bcd_device = bytearray([bcd >> 8, ])
+
                 break
         except Exception as e:
           print("exception", e)
