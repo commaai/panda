@@ -11,7 +11,9 @@
 #include "stm32h7/llrtc.h"
 #include "drivers/rtc.h"
 #include "boards/red.h"
+#include "boards/red_chiplet.h"
 #include "boards/red_v2.h"
+#include "boards/tres.h"
 
 
 uint8_t get_board_id(void) {
@@ -22,17 +24,17 @@ uint8_t get_board_id(void) {
 }
 
 void detect_board_type(void) {
-  const uint8_t board_id = board_id();
+  const uint8_t board_id = get_board_id();
 
-  if (board_id() == 0U) {
+  if (board_id == 0U) {
     hw_type = HW_TYPE_RED_PANDA;
     current_board = &board_red;
-  } else if (board_id() == 1U) {
+  } else if (board_id == 1U) {
     hw_type = HW_TYPE_RED_PANDA_V2;
     current_board = &board_red_v2;
-  } else if (board_id() == 2U) {
+  } else if (board_id == 2U) {
     hw_type = HW_TYPE_TRES;
-    current_board = &board_red_v2;
+    current_board = &board_tres;
   } else {
     hw_type = HW_TYPE_UNKNOWN;
     puts("Hardware type is UNKNOWN!\n");
