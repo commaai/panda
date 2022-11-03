@@ -1,5 +1,6 @@
 import sys
 import time
+from flaky import flaky
 from nose.tools import assert_equal, assert_less, assert_greater
 
 from panda import Panda
@@ -82,6 +83,7 @@ def test_reliability(p):
     sys.stdout.flush()
 
 @test_all_pandas
+@flaky(max_runs=3, min_passes=1)
 @panda_connect_and_init
 def test_throughput(p):
   # enable output mode
