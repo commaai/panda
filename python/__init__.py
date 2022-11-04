@@ -11,6 +11,7 @@ import warnings
 from functools import wraps
 from typing import Optional
 from itertools import accumulate
+
 from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7  # pylint: disable=import-error
 from .flash_release import flash_release  # noqa pylint: disable=import-error
 from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
@@ -248,6 +249,7 @@ class Panda:
   def connect(self, claim=True, wait=False, spi=False):
     if self._handle is not None:
       self.close()
+    self._handle = None
 
     if spi:
       self._handle = SpiHandle()
@@ -257,40 +259,7 @@ class Panda:
       self.bootstub = False
 
     else:
-      context = usb1.USBContext()
-      self._handle = None
-
-      while 1:
-        try:
-          for device in context.getDeviceList(skip_on_error=True):
-            if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
-              try:
-                this_serial = device.getSerialNumber()
-              except Exception:
-                continue
-              if self._serial is None or this_serial == self._serial:
-                self._serial = this_serial
-                print("opening device", self._serial, hex(device.getProductID()))
-                self.bootstub = device.getProductID() == 0xddee
-                self._handle = device.open()
-                if sys.platform not in ("win32", "cygwin", "msys", "darwin"):
-                  self._handle.setAutoDetachKernelDriver(True)
-                if claim:
-                  self._handle.claimInterface(0)
-                  # self._handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
-
-                # bcdDevice wasn't always set to the hw type, ignore if it's the old constant
-                bcd = device.getbcdDevice()
-                if bcd is not None and bcd != 0x2300:
-                  self._bcd_device = bytearray([bcd >> 8, ])
-
-                break
-        except Exception as e:
-          print("exception", e)
-          traceback.print_exc()
-        if not wait or self._handle is not None:
-          break
-        context = usb1.USBContext()  # New context needed so new devices show up
+      self.usb_connect(claim=claim, wait=wait)
 
     assert self._handle is not None
     self._mcu_type = self.get_mcu_type()
@@ -301,6 +270,40 @@ class Panda:
     if self._disable_checks:
       self.set_heartbeat_disabled()
       self.set_power_save(0)
+
+  def usb_connect(self, claim=True, wait=False):
+    context = usb1.USBContext()
+    while 1:
+      try:
+        for device in context.getDeviceList(skip_on_error=True):
+          if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
+            try:
+              this_serial = device.getSerialNumber()
+            except Exception:
+              continue
+            if self._serial is None or this_serial == self._serial:
+              self._serial = this_serial
+              print("opening device", self._serial, hex(device.getProductID()))
+              self.bootstub = device.getProductID() == 0xddee
+              self._handle = device.open()
+              if sys.platform not in ("win32", "cygwin", "msys", "darwin"):
+                self._handle.setAutoDetachKernelDriver(True)
+              if claim:
+                self._handle.claimInterface(0)
+                # self._handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
+
+              # bcdDevice wasn't always set to the hw type, ignore if it's the old constant
+              bcd = device.getbcdDevice()
+              if bcd is not None and bcd != 0x2300:
+                self._bcd_device = bytearray([bcd >> 8, ])
+
+              break
+      except Exception as e:
+        print("exception", e)
+        traceback.print_exc()
+      if not wait or self._handle is not None:
+        break
+      context = usb1.USBContext()  # New context needed so new devices show up
 
   def reset(self, enter_bootstub=False, enter_bootloader=False, reconnect=True):
     try:
