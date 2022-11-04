@@ -117,6 +117,8 @@ class TestHyundaiCanfdHDA1(TestHyundaiCanfdHDA1Base):
                                                    (("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), Panda.FLAG_HYUNDAI_HYBRID_GAS)])
 class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1Base):
 
+  SAFETY_PARAM: int
+
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpandasafety_py.libpandasafety
