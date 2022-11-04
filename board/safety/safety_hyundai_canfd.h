@@ -318,10 +318,7 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     // HUD icons
     int is_lfahda_msg = ((addr == 0x1e0) && !hyundai_canfd_hda2);
 
-    // CRUISE_INFO for non-HDA2, we send our own longitudinal commands
-    int is_cruise_info_msg = ((addr == 0x1a0) && hyundai_longitudinal);
-
-    int block_msg = is_lkas_msg || is_lfa_msg || is_lfahda_msg || is_cruise_info_msg;
+    int block_msg = is_lkas_msg || is_lfa_msg || is_lfahda_msg;
     if (!block_msg) {
       bus_fwd = 0;
     }
@@ -336,6 +333,10 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
   gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
   hyundai_canfd_hda2 = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2);
   hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
+
+  if (!hyundai_canfd_hda2) {
+    hyundai_longitudinal = false;
+  }
 
   if (!hyundai_ev_gas_signal || !hyundai_hybrid_gas_signal) {
     hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_ice_addr_checks, HYUNDAI_CANFD_ICE_ADDR_CHECK_LEN};
