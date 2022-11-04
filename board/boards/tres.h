@@ -1,9 +1,9 @@
-// ///////////////////// //
-// Red Panda V2 with chiplet + Harness //
-// ///////////////////// //
+// /////////////////
+// Tres + Harness //
+// /////////////////
 
-const board board_red_v2 = {
-  .board_type = "Red_v2",
+const board board_tres = {
+  .board_type = "Tres",
   .board_tick = unused_board_tick,
   .harness_config = &red_chiplet_harness_config,
   .has_gps = false,

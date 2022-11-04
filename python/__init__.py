@@ -11,6 +11,7 @@ import warnings
 from functools import wraps
 from typing import Optional
 from itertools import accumulate
+
 from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7  # pylint: disable=import-error
 from .flash_release import flash_release  # noqa pylint: disable=import-error
 from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
@@ -184,6 +185,7 @@ class Panda:
   HW_TYPE_DOS = b'\x06'
   HW_TYPE_RED_PANDA = b'\x07'
   HW_TYPE_RED_PANDA_V2 = b'\x08'
+  HW_TYPE_TRES = b'\x09'
 
   CAN_PACKET_VERSION = 2
   HEALTH_PACKET_VERSION = 11
@@ -193,10 +195,10 @@ class Panda:
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
-  H7_DEVICES = (HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2)
+  H7_DEVICES = (HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES)
 
   INTERNAL_DEVICES = (HW_TYPE_UNO, HW_TYPE_DOS)
-  HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2)
+  HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES)
 
   CLOCK_SOURCE_MODE_DISABLED = 0
   CLOCK_SOURCE_MODE_FREE_RUNNING = 1
@@ -238,17 +240,19 @@ class Panda:
     self._bcd_device = None
 
     # connect and set mcu type
-    self.connect(claim, spi=spi)
+    self._spi = spi
+    self.connect(claim)
 
   def close(self):
     self._handle.close()
     self._handle = None
 
-  def connect(self, claim=True, wait=False, spi=False):
+  def connect(self, claim=True, wait=False):
     if self._handle is not None:
       self.close()
+    self._handle = None
 
-    if spi:
+    if self._spi:
       self._handle = SpiHandle()
 
       # TODO implement
@@ -256,40 +260,7 @@ class Panda:
       self.bootstub = False
 
     else:
-      context = usb1.USBContext()
-      self._handle = None
-
-      while 1:
-        try:
-          for device in context.getDeviceList(skip_on_error=True):
-            if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
-              try:
-                this_serial = device.getSerialNumber()
-              except Exception:
-                continue
-              if self._serial is None or this_serial == self._serial:
-                self._serial = this_serial
-                print("opening device", self._serial, hex(device.getProductID()))
-                self.bootstub = device.getProductID() == 0xddee
-                self._handle = device.open()
-                if sys.platform not in ("win32", "cygwin", "msys", "darwin"):
-                  self._handle.setAutoDetachKernelDriver(True)
-                if claim:
-                  self._handle.claimInterface(0)
-                  # self._handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
-
-                # bcdDevice wasn't always set to the hw type, ignore if it's the old constant
-                bcd = device.getbcdDevice()
-                if bcd is not None and bcd != 0x2300:
-                  self._bcd_device = bytearray([bcd >> 8, ])
-
-                break
-        except Exception as e:
-          print("exception", e)
-          traceback.print_exc()
-        if not wait or self._handle is not None:
-          break
-        context = usb1.USBContext()  # New context needed so new devices show up
+      self.usb_connect(claim=claim, wait=wait)
 
     assert self._handle is not None
     self._mcu_type = self.get_mcu_type()
@@ -300,6 +271,40 @@ class Panda:
     if self._disable_checks:
       self.set_heartbeat_disabled()
       self.set_power_save(0)
+
+  def usb_connect(self, claim=True, wait=False):
+    context = usb1.USBContext()
+    while 1:
+      try:
+        for device in context.getDeviceList(skip_on_error=True):
+          if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
+            try:
+              this_serial = device.getSerialNumber()
+            except Exception:
+              continue
+            if self._serial is None or this_serial == self._serial:
+              self._serial = this_serial
+              print("opening device", self._serial, hex(device.getProductID()))
+              self.bootstub = device.getProductID() == 0xddee
+              self._handle = device.open()
+              if sys.platform not in ("win32", "cygwin", "msys", "darwin"):
+                self._handle.setAutoDetachKernelDriver(True)
+              if claim:
+                self._handle.claimInterface(0)
+                # self._handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
+
+              # bcdDevice wasn't always set to the hw type, ignore if it's the old constant
+              bcd = device.getbcdDevice()
+              if bcd is not None and bcd != 0x2300:
+                self._bcd_device = bytearray([bcd >> 8, ])
+
+              break
+      except Exception as e:
+        print("exception", e)
+        traceback.print_exc()
+      if not wait or self._handle is not None:
+        break
+      context = usb1.USBContext()  # New context needed so new devices show up
 
   def reset(self, enter_bootstub=False, enter_bootloader=False, reconnect=True):
     try:
