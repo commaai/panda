@@ -14,3 +14,4 @@ pre-commit==2.13.0
 pylint==2.5.2
 scons
 flaky
+spidev

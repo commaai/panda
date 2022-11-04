@@ -52,7 +52,7 @@ class SpiHandle:
         dat = dat[:-1]
 
         return dat
-      except:
+      except Exception:
         pass
     raise Exception(f"SPI transaction failed {MAX_RETRY_COUNT} times")
 
@@ -66,6 +66,7 @@ class SpiHandle:
   def controlRead(self, request_type, request, value, index, length, timeout=0):
     return self._transfer(0, struct.pack("<HHHH", request, value, index, length))
 
+  # TODO: implement these
   def bulkWrite(self, endpoint, data, timeout=0):
     pass
 
