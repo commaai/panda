@@ -22,7 +22,7 @@ closed_errors = 0
 content_errors = 0
 
 def run_test(sleep_duration):
-  global counter, open_errors, closed_errors, content_errors
+  global counter, open_errors, closed_errors
 
   pandas = Panda.list()
   print(pandas)
