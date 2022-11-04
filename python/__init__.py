@@ -240,18 +240,19 @@ class Panda:
     self._bcd_device = None
 
     # connect and set mcu type
-    self.connect(claim, spi=spi)
+    self._spi = spi
+    self.connect(claim)
 
   def close(self):
     self._handle.close()
     self._handle = None
 
-  def connect(self, claim=True, wait=False, spi=False):
+  def connect(self, claim=True, wait=False):
     if self._handle is not None:
       self.close()
     self._handle = None
 
-    if spi:
+    if self._spi:
       self._handle = SpiHandle()
 
       # TODO implement
