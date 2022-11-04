@@ -18,9 +18,9 @@ GEN2_HW_TYPES = [Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO] + H7_HW_TYPES
 GPS_HW_TYPES = [Panda.HW_TYPE_GREY_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
 PEDAL_SERIAL = 'none'
 JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
-PANDAS_EXCLUDE = []
-if os.getenv("PANDAS_EXCLUDE"):
-  PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE").strip().split(" ")
+PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE", "").strip().split(" ")
+
+PARTIAL_TESTS = os.environ.get("PARTIAL_TESTS", "0") == "1"
 
 # Enable fault debug
 faulthandler.enable(all_threads=False)
@@ -29,9 +29,9 @@ faulthandler.enable(all_threads=False)
 panda_jungle = PandaJungle(JUNGLE_SERIAL)
 
 # Find all pandas connected
-_all_pandas = None
+_all_pandas = []
 def init_all_pandas():
-  global panda_jungle, _all_pandas
+  global _all_pandas
   _all_pandas = []
 
   # power cycle pandas
@@ -50,44 +50,31 @@ init_all_pandas()
 _all_panda_serials = [x[0] for x in _all_pandas]
 
 # Panda providers
-test_all_types = parameterized([
-    param(panda_type=Panda.HW_TYPE_WHITE_PANDA),
-    param(panda_type=Panda.HW_TYPE_GREY_PANDA),
-    param(panda_type=Panda.HW_TYPE_BLACK_PANDA),
-    param(panda_type=Panda.HW_TYPE_UNO),
-    param(panda_type=Panda.HW_TYPE_RED_PANDA),
-    param(panda_type=Panda.HW_TYPE_RED_PANDA_V2)
-  ])
+test_pandas = _all_pandas[:]
+if PARTIAL_TESTS:
+  # minimal set of pandas to get most of our coverage
+  # * red panda covers STM32H7
+  # * black panda covers STM32F4, GEN2, and GPS
+  test_pandas = [p for p in _all_pandas if p[1] in (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA)]
 test_all_pandas = parameterized(
-    list(map(lambda x: x[0], _all_pandas))  # type: ignore
+    list(map(lambda x: x[0], test_pandas))  # type: ignore
   )
 test_all_gen2_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in GEN2_HW_TYPES, _all_pandas)))  # type: ignore
+    list(map(lambda x: x[0], filter(lambda x: x[1] in GEN2_HW_TYPES, test_pandas)))  # type: ignore
   )
 test_all_gps_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in GPS_HW_TYPES, _all_pandas)))  # type: ignore
+    list(map(lambda x: x[0], filter(lambda x: x[1] in GPS_HW_TYPES, test_pandas)))  # type: ignore
   )
 test_white_and_grey = parameterized([
     param(panda_type=Panda.HW_TYPE_WHITE_PANDA),
     param(panda_type=Panda.HW_TYPE_GREY_PANDA)
   ])
-test_white = parameterized([
-    param(panda_type=Panda.HW_TYPE_WHITE_PANDA)
-  ])
-test_grey = parameterized([
-    param(panda_type=Panda.HW_TYPE_GREY_PANDA)
-  ])
-test_black = parameterized([
-    param(panda_type=Panda.HW_TYPE_BLACK_PANDA)
-  ])
-test_uno = parameterized([
-    param(panda_type=Panda.HW_TYPE_UNO)
-  ])
+
 
 def time_many_sends(p, bus, p_recv=None, msg_count=100, msg_id=None, two_pandas=False):
-  if p_recv == None:
+  if p_recv is None:
     p_recv = p
-  if msg_id == None:
+  if msg_id is None:
     msg_id = random.randint(0x100, 0x200)
   if p == p_recv and two_pandas:
     raise ValueError("Cannot have two pandas that are the same panda")
@@ -128,11 +115,6 @@ def panda_type_to_serial(fn):
     if panda_type is not None:
       if not isinstance(panda_type, list):
         panda_type = [panda_type]
-
-    # If not done already, get panda serials and their type
-    global _all_pandas
-    if _all_pandas == None:
-      init_all_pandas()
 
     # Find a panda with the correct types and add the corresponding serial
     serials = []
