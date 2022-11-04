@@ -89,6 +89,7 @@ class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
 
   STEER_MSG = "LFA"
   BUTTONS_TX_BUS = 2
+  safety_param: int
 
   @classmethod
   def setUpClass(cls):
