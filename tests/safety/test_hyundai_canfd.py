@@ -93,7 +93,7 @@ class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ in ("TestHyundaiCanfdHDA1EVParam", "TestHyundaiCanfdHDA1AltButtons") or cls.__name__.endswith('Base'):
+    if cls.__name__ in ("TestHyundaiCanfdHDA1", "TestHyundaiCanfdHDA1AltButtons") or cls.__name__.endswith('Base'):
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
@@ -106,7 +106,7 @@ class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
 
 
 @parameterized_class(("GAS_MSG", "safety_param"), [("ACCELERATOR", Panda.FLAG_HYUNDAI_EV_GAS), ("ACCELERATOR_ALT", Panda.FLAG_HYUNDAI_HYBRID_GAS)])
-class TestHyundaiCanfdHDA1EVParam(TestHyundaiCanfdHDA1Base):
+class TestHyundaiCanfdHDA1(TestHyundaiCanfdHDA1Base):
   pass
 
 
@@ -114,6 +114,7 @@ class TestHyundaiCanfdHDA1EVParam(TestHyundaiCanfdHDA1Base):
 class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1Base):
 
   GAS_MSG = "ACCELERATOR"
+  safety_param: int
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
