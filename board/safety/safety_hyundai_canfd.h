@@ -338,16 +338,14 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
     hyundai_longitudinal = false;
   }
 
-  if (!hyundai_ev_gas_signal || !hyundai_hybrid_gas_signal) {
-    hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_ice_addr_checks, HYUNDAI_CANFD_ICE_ADDR_CHECK_LEN};
-  } else {
-    hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_addr_checks, HYUNDAI_CANFD_ADDR_CHECK_LEN};
-  }
-
   if (hyundai_longitudinal) {
     hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_long_addr_checks, HYUNDAI_CANFD_LONG_ADDR_CHECK_LEN};
   } else {
-    hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_addr_checks, HYUNDAI_CANFD_ADDR_CHECK_LEN};
+    if (!hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
+      hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_ice_addr_checks, HYUNDAI_CANFD_ICE_ADDR_CHECK_LEN};
+    } else {
+      hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_addr_checks, HYUNDAI_CANFD_ADDR_CHECK_LEN};
+    }
   }
 
   return &hyundai_canfd_rx_checks;
