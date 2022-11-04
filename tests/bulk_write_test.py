@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# type: ignore # for jungle stuff
 import os
 import time
 import threading
