@@ -91,6 +91,28 @@ class TestHyundaiCanfdHDA1(TestHyundaiCanfdBase):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpandasafety_py.libpandasafety
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, 0)
+    self.safety.init_tests()
+
+  def _user_gas_msg(self, gas):
+    values = {"ACCELERATOR_PEDAL_PRESSED": gas}
+    return self.packer.make_can_msg_panda("ACCELERATOR_BRAKE_ALT", self.PT_BUS, values)
+
+
+class TestHyundaiCanfdHDA1HEV(TestHyundaiCanfdBase):
+
+  TX_MSGS = [[0x12A, 0], [0x1A0, 1], [0x1CF, 0], [0x1E0, 0]]
+  RELAY_MALFUNCTION_ADDR = 0x12A
+  RELAY_MALFUNCTION_BUS = 0
+  FWD_BLACKLISTED_ADDRS = {2: [0x12A, 0x1E0]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  STEER_MSG = "LFA"
+  BUTTONS_TX_BUS = 2
+
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_canfd")
+    self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_HYBRID_GAS)
     self.safety.init_tests()
 
