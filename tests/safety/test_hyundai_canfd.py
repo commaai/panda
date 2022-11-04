@@ -137,7 +137,7 @@ class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1Base):
         self.assertFalse(self._tx(self._button_msg(btn)))
 
 
-class TestHyundaiCanfdHDA2(TestHyundaiCanfdBase):
+class TestHyundaiCanfdHDA2EV(TestHyundaiCanfdBase):
 
   TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0]]
   RELAY_MALFUNCTION_ADDR = 0x50
@@ -157,7 +157,7 @@ class TestHyundaiCanfdHDA2(TestHyundaiCanfdBase):
     self.safety.init_tests()
 
 
-class TestHyundaiCanfdHDA2Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2):
+class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV):
 
   TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0], [0x51, 0], [0x730, 1], [0x12a, 1], [0x160, 1],
              [0x1e0, 1], [0x1a0, 1], [0x1ea, 1], [0x200, 1], [0x345, 1], [0x1da, 1]]
