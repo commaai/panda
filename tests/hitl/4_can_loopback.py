@@ -183,11 +183,10 @@ def test_bulk_write(p):
     packet += [[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]] * NUM_MESSAGES_PER_BUS
 
     # Disable timeout
+    panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
     panda.can_send_many(packet, timeout=0)
-    print(f"Done sending {4 * NUM_MESSAGES_PER_BUS} messages!")
-
-  # Set safety mode and power saving
-  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+    print(f"Done sending {4 * NUM_MESSAGES_PER_BUS} messages!", time.monotonic())
+    print(panda.health())
 
   # Start transmisson
   threading.Thread(target=flood_tx, args=(p,)).start()
@@ -199,7 +198,7 @@ def test_bulk_write(p):
   while time.monotonic() - start_time < 5 or len(rx) > old_len:
     old_len = len(rx)
     rx.extend(panda_jungle.can_recv())
-  print(f"Received {len(rx)} messages")
+  print(f"Received {len(rx)} messages", time.monotonic())
 
   # All messages should have been received
   if len(rx) != 4 * NUM_MESSAGES_PER_BUS:
