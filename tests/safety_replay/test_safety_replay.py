@@ -19,7 +19,9 @@ logs = [
   ReplayRoute("6fb4948a7ebe670e|2019-11-12--00-35-53.bz2", Panda.SAFETY_CHRYSLER),            # CHRYSLER.PACIFICA_2018_HYBRID
   ReplayRoute("791340bc01ed993d|2019-04-08--10-26-00.bz2", Panda.SAFETY_SUBARU,               # SUBARU.OUTBACK
               Panda.FLAG_SUBARU_GEN2),
-  ReplayRoute("76b83eb0245de90e|2020-03-05--19-16-05.bz2", Panda.SAFETY_VOLKSWAGEN_MQB),      # VOLKSWAGEN.GOLF (MK7)
+  ReplayRoute("76b83eb0245de90e|2020-03-05--19-16-05.bz2", Panda.SAFETY_VOLKSWAGEN_MQB),      # VOLKSWAGEN.GOLF (stock ACC)
+  ReplayRoute("3cfdec54aa035f3f|2022-10-13--14-58-58.bz2", Panda.SAFETY_VOLKSWAGEN_MQB,       # VOLKSWAGEN.GOLF (openpilot long)
+              Panda.FLAG_VOLKSWAGEN_LONG_CONTROL),
   ReplayRoute("3cfdec54aa035f3f|2022-07-19--23-45-10.bz2", Panda.SAFETY_VOLKSWAGEN_PQ,        # VOLKSWAGEN.PASSAT_NMS (openpilot longitudinal)
               Panda.FLAG_VOLKSWAGEN_LONG_CONTROL),
   ReplayRoute("fbbfa6af821552b9|2020-03-03--08-09-43.bz2", Panda.SAFETY_NISSAN),              # NISSAN.XTRAIL
@@ -39,7 +41,7 @@ if __name__ == "__main__":
   for route, _, _, _ in logs:
     if not os.path.isfile(route):
       with open(route, "wb") as f:
-        r = requests.get(BASE_URL + route)
+        r = requests.get(BASE_URL + route, timeout=10)
         r.raise_for_status()
         f.write(r.content)
 
