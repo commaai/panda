@@ -43,20 +43,6 @@ def get_steer_torque(mode, to_send):
     ret = to_signed(ret, 13)
   return ret
 
-def set_desired_torque_last(safety, mode, torque):
-  if mode in (Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH):
-    pass  # honda safety mode doesn't enforce a rate on steering msgs
-  elif mode == Panda.SAFETY_TOYOTA:
-    safety.set_toyota_desired_torque_last(torque)
-  elif mode == Panda.SAFETY_GM:
-    safety.set_gm_desired_torque_last(torque)
-  elif mode == Panda.SAFETY_HYUNDAI:
-    safety.set_hyundai_desired_torque_last(torque)
-  elif mode == Panda.SAFETY_CHRYSLER:
-    safety.set_chrysler_desired_torque_last(torque)
-  elif mode == Panda.SAFETY_SUBARU:
-    safety.set_subaru_desired_torque_last(torque)
-
 def package_can_msg(msg):
   ret = libpandasafety_py.ffi.new('CANPacket_t *')
   ret[0].extended = 1 if msg.address >= 0x800 else 0
@@ -80,5 +66,5 @@ def init_segment(safety, lr, mode):
   torque = get_steer_torque(mode, to_send)
   if torque != 0:
     safety.set_controls_allowed(1)
-    set_desired_torque_last(safety, mode, torque)
+    safety.set_desired_torque_last(torque)
     assert safety.safety_tx_hook(to_send), "failed to initialize panda safety for segment"
