@@ -88,6 +88,7 @@ void update_can_health_pkt(uint8_t can_number, bool error_irq) {
   if (error_irq) {
     can_health[can_number].total_error_cnt += 1U;
     llcan_clear_send(CAN);
+    CAN->MSR = CAN_MSR_ERRI;
   }
 }
 
