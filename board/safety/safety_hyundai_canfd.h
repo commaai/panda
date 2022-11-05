@@ -78,6 +78,8 @@ AddrCheckStruct hyundai_canfd_long_addr_checks[] = {
   {.msg = {{0x1cf, 1, 8, .check_checksum = false, .max_counter = 0xfU, .expected_timestep = 20000U},
            {0x1cf, 0, 8, .check_checksum = false, .max_counter = 0xfU, .expected_timestep = 20000U},
            {0x1aa, 0, 16, .check_checksum = false, .max_counter = 0xffU, .expected_timestep = 20000U}}},
+  {.msg = {{0x1a0, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 20000U},
+           {0x1a0, 2, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }}},
 };
 #define HYUNDAI_CANFD_LONG_ADDR_CHECK_LEN (sizeof(hyundai_canfd_long_addr_checks) / sizeof(hyundai_canfd_long_addr_checks[0]))
 
