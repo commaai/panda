@@ -198,9 +198,6 @@ class Panda:
   INTERNAL_DEVICES = (HW_TYPE_UNO, HW_TYPE_DOS)
   HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES)
 
-  CLOCK_SOURCE_MODE_DISABLED = 0
-  CLOCK_SOURCE_MODE_FREE_RUNNING = 1
-
   # first byte is for EPS scaling factor
   FLAG_TOYOTA_ALT_BRAKE = (1 << 8)
   FLAG_TOYOTA_STOCK_LONGITUDINAL = (2 << 8)
@@ -834,10 +831,6 @@ class Panda:
   # ****************** Phone *****************
   def set_phone_power(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, int(enabled), 0, b'')
-
-  # ************** Clock Source **************
-  def set_clock_source_mode(self, mode):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, int(mode), 0, b'')
 
   # ****************** Siren *****************
   def set_siren(self, enabled):
