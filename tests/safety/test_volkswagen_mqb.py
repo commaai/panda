@@ -48,10 +48,18 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
     values = {"ESP_%s_Radgeschw_02" % s: speed for s in ["HL", "HR", "VL", "VR"]}
     return self.packer.make_can_msg_panda("ESP_19", 0, values)
 
-  # Brake light switch _esp_05_msg
-  def _user_brake_msg(self, brake):
+  # Driver brake pressure over threshold
+  def _esp_05_msg(self, brake):
     values = {"ESP_Fahrer_bremst": brake}
     return self.packer.make_can_msg_panda("ESP_05", 0, values)
+
+  # Brake pedal switch
+  def _motor_14_msg(self, brake):
+    values = {"MO_Fahrer_bremst": brake}
+    return self.packer.make_can_msg_panda("Motor_14", 0, values)
+
+  def _user_brake_msg(self, brake):
+    return self._motor_14_msg(brake)
 
   # Driver throttle input
   def _user_gas_msg(self, gas):
@@ -94,6 +102,19 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
   def _acc_07_msg(self, accel, secondary_accel=3.02):
     values = {"ACC_Sollbeschleunigung_02": accel, "ACC_Folgebeschl": secondary_accel}
     return self.packer.make_can_msg_panda("ACC_07", 0, values)
+
+  # Verify brake_pressed is true if either the switch or pressure threshold signals are true
+  def test_redundant_brake_signals(self):
+    self.assertFalse(self.safety.get_brake_pressed_prev())
+    test_combinations = [(True, True, True), (True, True, False), (True, False, True), (False, False, False)]
+    for brake_pressed, motor_14_signal, esp_05_signal in test_combinations:
+      self._rx(self._motor_14_msg(False))
+      self._rx(self._esp_05_msg(False))
+      self.assertFalse(self.safety.get_brake_pressed_prev())
+      self._rx(self._motor_14_msg(motor_14_signal))
+      self._rx(self._esp_05_msg(esp_05_signal))
+      self.assertEqual(brake_pressed, self.safety.get_brake_pressed_prev(),
+                       f"expected brake_pressed {brake_pressed} with motor_14 {motor_14_signal} and esp_05 {esp_05_signal}")
 
   def test_torque_measurements(self):
     # TODO: make this test work with all cars
