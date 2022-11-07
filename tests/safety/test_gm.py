@@ -184,6 +184,10 @@ class TestGmCameraSafety(TestGmSafetyBase):
     values = {"AcceleratorPedal2": 1 if gas else 0, "CruiseState": cruise_active}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
+  def _user_brake_msg(self, brake):
+    values = {"BrakePressed": brake}
+    return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
+
   def _pcm_status_msg(self, enable):
     values = {"CruiseState": enable}
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
@@ -228,6 +232,10 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmSafetyBase):
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM | Panda.FLAG_GM_HW_CAM_LONG)
     self.safety.init_tests()
+
+  def _user_brake_msg(self, brake):
+    values = {"BrakePressed": brake}
+    return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
 
 
 if __name__ == "__main__":
