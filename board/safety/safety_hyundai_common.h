@@ -4,6 +4,7 @@
 const int HYUNDAI_PARAM_EV_GAS = 1;
 const int HYUNDAI_PARAM_HYBRID_GAS = 2;
 const int HYUNDAI_PARAM_LONGITUDINAL = 4;
+const int HYUNDAI_PARAM_CAMERA_SCC = 8;
 
 const uint8_t HYUNDAI_PREV_BUTTON_SAMPLES = 8;  // roughly 160 ms
 const uint32_t HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
