@@ -84,8 +84,6 @@ AddrCheckStruct hyundai_legacy_addr_checks[] = {
 };
 #define HYUNDAI_LEGACY_ADDR_CHECK_LEN (sizeof(hyundai_legacy_addr_checks) / sizeof(hyundai_legacy_addr_checks[0]))
 
-const int HYUNDAI_PARAM_CAMERA_SCC = 8;
-
 bool hyundai_legacy = false;
 bool hyundai_camera_scc = false;
 
