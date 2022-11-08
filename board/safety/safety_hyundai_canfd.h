@@ -100,7 +100,6 @@ const int HYUNDAI_PARAM_CANFD_HDA2 = 16;
 const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 32;
 bool hyundai_canfd_hda2 = false;
 bool hyundai_canfd_alt_buttons = false;
-bool hyundai_canfd_camera_scc = false;
 
 
 static uint8_t hyundai_canfd_get_counter(CANPacket_t *to_push) {
@@ -156,7 +155,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   const int pt_bus = hyundai_canfd_hda2 ? 1 : 0;
-  const int scc_bus = hyundai_canfd_hda2 ? 1 : hyundai_canfd_camera_scc ? 2 : 0;
+  const int scc_bus = hyundai_canfd_hda2 ? 1 : (hyundai_camera_scc ? 2 : 0);
 
   if (valid && (bus == pt_bus)) {
     // driver torque
@@ -329,7 +328,6 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
   gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
   hyundai_canfd_hda2 = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2);
   hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
-  hyundai_canfd_camera_scc = GET_FLAG(param, HYUNDAI_PARAM_CANFD_CAMERA_SCC);
 
   if (!hyundai_canfd_hda2) {
     hyundai_longitudinal = false;
