@@ -110,6 +110,10 @@ bool get_controls_allowed(void){
   return controls_allowed;
 }
 
+int get_valid_steer_req_count(void) {
+  return valid_steer_req_count;
+}
+
 int get_alternative_experience(void){
   return alternative_experience;
 }
@@ -225,7 +229,7 @@ void init_tests(void){
   set_timer(0);
   ts_steer_req_mismatch_last = 0;
   valid_steer_req_count = 0;
-  invalid_steer_req_count = 0;
+  invalid_steer_req_count = -1;
 }
 
 void init_tests_honda(void){

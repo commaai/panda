@@ -274,6 +274,7 @@ static int hyundai_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       tx = 0;
     }
   }
+//  return tx;
 
   // LKA STEER: safety check
   if (addr == 832) {

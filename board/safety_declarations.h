@@ -153,7 +153,7 @@ bool safety_rx_checks_invalid = false;
 int desired_torque_last = 0;       // last desired steer torque
 int rt_torque_last = 0;            // last desired torque for real time check
 int valid_steer_req_count = 0;     // counter for steer request bit matching non-zero torque
-int invalid_steer_req_count = 0;   // counter to allow multiple frames of mismatching torque request bit
+int invalid_steer_req_count = -1;   // counter to allow multiple frames of mismatching torque request bit
 struct sample_t torque_meas;       // last 6 motor torques produced by the eps
 struct sample_t torque_driver;     // last 6 driver torques measured
 uint32_t ts_torque_check_last = 0;

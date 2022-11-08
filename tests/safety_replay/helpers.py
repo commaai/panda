@@ -65,6 +65,7 @@ def init_segment(safety, lr, mode):
   to_send = package_can_msg(msg)
   torque = get_steer_torque(mode, to_send)
   if torque != 0:
+    print('HERE, {}'.format(torque))
     safety.set_controls_allowed(1)
     safety.set_desired_torque_last(torque)
     assert safety.safety_tx_hook(to_send), "failed to initialize panda safety for segment"
