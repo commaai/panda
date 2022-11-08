@@ -110,10 +110,6 @@ bool get_controls_allowed(void){
   return controls_allowed;
 }
 
-int get_valid_steer_req_count(void) {
-  return valid_steer_req_count;
-}
-
 int get_alternative_experience(void){
   return alternative_experience;
 }

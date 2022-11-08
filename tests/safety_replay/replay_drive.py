@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 import argparse
 import os
-import matplotlib.pyplot as plt
 
 from panda.tests.safety import libpandasafety_py
 from panda.tests.safety_replay.helpers import package_can_msg, init_segment
 
 # replay a drive to check for safety violations
 def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
-  msgs_sent = []
-  act_toi = []
-  valid_steer_req_count = []
   safety = libpandasafety_py.libpandasafety
 
   err = safety.set_safety_hooks(safety_mode, param)
@@ -35,11 +31,6 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
      for canmsg in msg.sendcan:
         to_send = package_can_msg(canmsg)
         sent = safety.safety_tx_hook(to_send)
-        print('send: {}'.format(sent))
-        if canmsg.address == 832:
-          msgs_sent.append(sent)
-          act_toi.append(bool(canmsg.dat[3] & 0x8))
-          valid_steer_req_count.append(safety.get_valid_steer_req_count())
         if not sent:
           tx_blocked += 1
           tx_controls_blocked += safety.get_controls_allowed()
@@ -60,15 +51,6 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
           rx_invalid += 1
           invalid_addrs.add(canmsg.address)
         rx_tot += 1
-
-  fig, ax = plt.subplots(2, 1, sharex=True)
-  ax[0].plot(act_toi, linewidth=2.5, label='act toi')
-  ax[0].plot(msgs_sent, linewidth=2, label='msg sent')
-  ax[0].legend()
-  ax[1].plot(valid_steer_req_count, label='valid_steer_req_count')
-  ax[1].legend()
-  plt.show()
-  plt.pause(100)
 
   print("\nRX")
   print("total rx msgs:", rx_tot)
