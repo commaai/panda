@@ -96,8 +96,8 @@ addr_checks hyundai_canfd_rx_checks = {hyundai_canfd_addr_checks, HYUNDAI_CANFD_
 uint16_t hyundai_canfd_crc_lut[256];
 
 
-const int HYUNDAI_PARAM_CANFD_HDA2 = 8;
-const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 16;
+const int HYUNDAI_PARAM_CANFD_HDA2 = 16;
+const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 32;
 bool hyundai_canfd_hda2 = false;
 bool hyundai_canfd_alt_buttons = false;
 
@@ -155,7 +155,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   const int pt_bus = hyundai_canfd_hda2 ? 1 : 0;
-  const int scc_bus = hyundai_canfd_hda2 ? 1 : 2;
+  const int scc_bus = hyundai_camera_scc ? 2 : pt_bus;
 
   if (valid && (bus == pt_bus)) {
     // driver torque
