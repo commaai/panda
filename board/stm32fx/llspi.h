@@ -48,7 +48,7 @@ void spi_mosi_dma(uint8_t *addr, int len) {
   // setup destination and length
   register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
   DMA2_Stream2->NDTR = len;
-  
+
   // enable DMA
   DMA2_Stream2->CR |= DMA_SxCR_EN;
   register_set_bits(&(SPI1->CR2), SPI_CR2_RXDMAEN);
@@ -130,7 +130,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
     spi_buf_tx[2] = (response_len >> 8) & 0xFFU;
 
     // Add checksum
-    uint8_t checksum = 0U;
+    uint8_t checksum = SPI_CHECKSUM_START;
     for(uint16_t i = 0U; i < response_len + 3; i++) {
       checksum ^= spi_buf_tx[i];
     }
