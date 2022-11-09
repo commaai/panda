@@ -18,7 +18,6 @@ from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
 from .serial import PandaSerial  # noqa pylint: disable=import-error
 from .isotp import isotp_send, isotp_recv  # pylint: disable=import-error
 from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN, SECTOR_SIZES_FX, SECTOR_SIZES_H7  # noqa pylint: disable=import-error
-from .spi import SpiHandle # noqa pylint: disable=import-error
 
 __version__ = '0.0.10'
 
@@ -216,8 +215,8 @@ class Panda:
   FLAG_HYUNDAI_HYBRID_GAS = 2
   FLAG_HYUNDAI_LONG = 4
   FLAG_HYUNDAI_CAMERA_SCC = 8
-  FLAG_HYUNDAI_CANFD_HDA2 = 8
-  FLAG_HYUNDAI_CANFD_ALT_BUTTONS = 16
+  FLAG_HYUNDAI_CANFD_HDA2 = 16
+  FLAG_HYUNDAI_CANFD_ALT_BUTTONS = 32
 
   FLAG_TESLA_POWERTRAIN = 1
   FLAG_TESLA_LONG_CONTROL = 2
@@ -253,6 +252,8 @@ class Panda:
     self._handle = None
 
     if self._spi:
+      # TODO: move this back. need to wait until next AGNOS build
+      from .spi import SpiHandle # noqa pylint: disable=import-error
       self._handle = SpiHandle()
 
       # TODO implement
