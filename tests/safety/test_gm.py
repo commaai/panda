@@ -186,7 +186,7 @@ class TestGmCameraSafety(TestGmSafetyBase):
 
   def _user_brake_msg(self, brake):
     values = {"BrakePressed": brake}
-    return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
+    return self.packer.make_can_msg_panda("ECMEngineStatus", 0, values)
 
   def _pcm_status_msg(self, enable):
     values = {"CruiseState": enable}
@@ -235,7 +235,7 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmSafetyBase):
 
   def _user_brake_msg(self, brake):
     values = {"BrakePressed": brake}
-    return self.packer.make_can_msg_panda("EBCMBrakePedalPosition", 0, values)
+    return self.packer.make_can_msg_panda("ECMEngineStatus", 0, values)
 
 
 if __name__ == "__main__":
