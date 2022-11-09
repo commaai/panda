@@ -59,14 +59,17 @@
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
 #include "drivers/gpio.h"
-#include "drivers/spi.h"
 #include "stm32fx/peripherals.h"
 #include "stm32fx/interrupt_handlers.h"
 #include "drivers/timers.h"
 #include "stm32fx/lladc.h"
 #include "stm32fx/board.h"
 #include "stm32fx/clock.h"
-#include "stm32fx/llspi.h"
+
+#ifdef ENABLE_SPI
+  #include "drivers/spi.h"
+  #include "stm32fx/llspi.h"
+#endif
 
 #if !defined(BOOTSTUB) && (defined(PANDA) || defined(PEDAL_USB))
   #include "drivers/uart.h"

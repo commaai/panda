@@ -375,8 +375,7 @@ int main(void) {
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
 
-// TODO: H7 implementation
-#ifdef STM32F4
+#ifdef ENABLE_SPI
   spi_init();
 #endif
 

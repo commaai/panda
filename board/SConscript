@@ -136,9 +136,6 @@ with open("obj/cert.h", "w") as f:
 
 
 for project_name in build_projects:
-  if "pedal" in project_name:
-    continue
-
   project = build_projects[project_name]
   linkerscript_fn = File(project["LINKER_SCRIPT"]).srcnode().abspath
 
@@ -154,6 +151,9 @@ for project_name in build_projects:
     f"-T{linkerscript_fn}",
     "-std=gnu11",
   ] + project["PROJECT_FLAGS"] + common_flags
+
+  if "ENABLE_SPI" in os.environ and not project_name.startswith('pedal'):
+    flags.append('-DENABLE_SPI')
 
   project_env = Environment(
     ENV=os.environ,
