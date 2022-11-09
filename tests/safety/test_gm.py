@@ -91,7 +91,11 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     self.safety.init_tests()
 
   def _pcm_status_msg(self, enable):
-    raise NotImplementedError
+    if self.PCM_CRUISE:
+      values = {"CruiseState": enable}
+      return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
+    else:
+      raise NotImplementedError
 
   def _speed_msg(self, speed):
     values = {"%sWheelSpd" % s: speed for s in ["RL", "RR"]}
@@ -187,10 +191,6 @@ class TestGmCameraSafety(TestGmSafetyBase):
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM)
     self.safety.init_tests()
-
-  def _pcm_status_msg(self, enable):
-    values = {"CruiseState": enable}
-    return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
   def test_buttons(self):
     # Only CANCEL button is allowed while cruise is enabled
