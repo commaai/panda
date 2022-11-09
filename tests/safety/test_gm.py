@@ -15,6 +15,11 @@ class Buttons:
 
 
 class GmLongitudinalBase(common.PandaSafetyTest):
+  MAX_GAS = 0
+  MAX_REGEN = 0
+  INACTIVE_REGEN = 0
+  MAX_BRAKE = 0
+
   PCM_CRUISE = False  # openpilot can control the PCM state if longitudinal
 
   # pylint: disable=no-member,abstract-method
@@ -66,11 +71,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   RT_INTERVAL = 250000
   DRIVER_TORQUE_ALLOWANCE = 50
   DRIVER_TORQUE_FACTOR = 4
-
-  MAX_GAS = 0
-  MAX_REGEN = 0
-  INACTIVE_REGEN = 0
-  MAX_BRAKE = 0
 
   PCM_CRUISE = True  # openpilot is tied to the PCM state if not longitudinal
 
