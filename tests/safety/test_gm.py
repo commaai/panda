@@ -15,9 +15,10 @@ class Buttons:
 
 
 class GmLongitudinalBase(common.PandaSafetyTest):
+  # pylint: disable=no-member,abstract-method
+
   PCM_CRUISE = False  # openpilot can control the PCM state if longitudinal
 
-  # pylint: disable=no-member,abstract-method
   def test_set_resume_buttons(self):
     """
       SET and RESUME enter controls allowed on their falling edge.
