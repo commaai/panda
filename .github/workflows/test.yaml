@@ -10,7 +10,7 @@ env:
   PERSIST: docker run -v $GITHUB_WORKSPACE:/tmp/openpilot/panda -w /tmp/openpilot/panda --name panda panda /bin/bash -c
   BUILD: |
       export DOCKER_BUILDKIT=1
-      docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile.panda .
+      docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile .
 
 jobs:
   docker_push:

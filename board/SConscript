@@ -11,7 +11,7 @@ build_projects = {}
 build_projects["pedal"] = {
   "MAIN": "pedal/main.c",
   "STARTUP_FILE": "stm32fx/startup_stm32f205xx.s",
-  "LINKER_SCRIPT": "stm32fx/stm32fx_flash.ld",
+  "LINKER_SCRIPT": "stm32fx/stm32f2_flash.ld",
   "APP_START_ADDRESS": "0x8004000",
   "PROJECT_FLAGS": [
     "-mcpu=cortex-m3",
@@ -29,7 +29,7 @@ build_projects["pedal_usb"]["PROJECT_FLAGS"].append("-DPEDAL_USB")
 build_projects["panda"] = {
   "MAIN": "main.c",
   "STARTUP_FILE": "stm32fx/startup_stm32f413xx.s",
-  "LINKER_SCRIPT": "stm32fx/stm32fx_flash.ld",
+  "LINKER_SCRIPT": "stm32fx/stm32f4_flash.ld",
   "APP_START_ADDRESS": "0x8004000",
   "PROJECT_FLAGS": [
     "-mcpu=cortex-m4",
