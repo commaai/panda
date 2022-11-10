@@ -253,9 +253,9 @@ void generic_rx_checks(bool stock_ecu_detected) {
 
   // exit controls on rising edge of brake press or regen paddle
   // match openpilot's behavior, or the signals
-  bool global_brake_pressed = brake_pressed || regen_braking;
-  bool global_brake_pressed_prev = brake_pressed_prev || regen_braking_prev;
-  if (global_brake_pressed && (!global_brake_pressed_prev || vehicle_moving)) {
+  bool current_brake_pressed = brake_pressed || regen_braking;
+  bool current_brake_pressed_prev = brake_pressed_prev || regen_braking_prev;
+  if (current_brake_pressed && (!current_brake_pressed_prev || vehicle_moving)) {
     controls_allowed = 0;
   }
   brake_pressed_prev = brake_pressed;
