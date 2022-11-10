@@ -5,7 +5,7 @@ from panda import Panda
 
 if __name__ == "__main__":
   spi = "SPI" in os.environ
-  print("using SPI" if spi else "using SPI")
+  print("using SPI" if spi else "using USB")
 
 
   i = 0
