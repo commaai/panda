@@ -379,6 +379,10 @@ int main(void) {
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
 
+#ifdef ENABLE_SPI
+  spi_init();
+#endif
+
   puts("**** INTERRUPTS ON ****\n");
   enable_interrupts();
 
