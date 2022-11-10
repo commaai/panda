@@ -1,6 +1,7 @@
 import struct
 import spidev
 from functools import reduce
+from typing import List
 
 # Constants
 SYNC = 0x5A
@@ -20,6 +21,12 @@ class SpiHandle:
     self.spi.max_speed_hz = 30000000
 
   # helpers
+  def _check_checksum(self, data: List[int]) -> bool:
+    cksum = CHECKSUM_START
+    for b in data:
+      cksum ^= b
+    return cksum == 0
+
   def _transfer(self, endpoint, data, max_rx_len=1000):
     for _ in range(MAX_RETRY_COUNT):
       try:
@@ -27,6 +34,7 @@ class SpiHandle:
         packet += bytes([reduce(lambda x, y: x^y, packet) ^ CHECKSUM_START])
         self.spi.xfer2(packet)
 
+        # TODO: add timeout?
         dat = b"\x00"
         while dat[0] not in [HACK, NACK]:
           dat = self.spi.xfer2(b"\x12")
@@ -34,6 +42,7 @@ class SpiHandle:
         if dat[0] == NACK:
           raise Exception("Got NACK response for header")
 
+        # add checksum
         packet = bytes(data)
         packet += bytes([reduce(lambda x, y: x^y, packet) ^ CHECKSUM_START])
         self.spi.xfer2(packet)
@@ -45,14 +54,18 @@ class SpiHandle:
         if dat[0] == NACK:
           raise Exception("Got NACK response for data")
 
-        response_len = struct.unpack("<H", bytes(self.spi.xfer2(b"\x00" * 2)))[0]
+        response_len_bytes = bytes(self.spi.xfer2(b"\x00" * 2))
+        response_len = struct.unpack("<H", response_len_bytes)[0]
 
         dat = bytes(self.spi.xfer2(b"\x00" * (response_len + 1)))
-        # TODO: verify CRC
-        dat = dat[:-1]
 
-        return dat
-      except Exception:
+        # verify checksum
+        if not self._check_checksum([DACK, *response_len_bytes, *dat]):
+          raise Exception("SPI got bad checksum")
+
+        return dat[:-1]
+      except Exception as e:
+        print(str(e))
         pass
     raise Exception(f"SPI transaction failed {MAX_RETRY_COUNT} times")
 
