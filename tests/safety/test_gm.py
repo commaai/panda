@@ -16,6 +16,9 @@ class Buttons:
 
 class GmLongitudinalBase(common.PandaSafetyTest):
   # pylint: disable=no-member,abstract-method
+
+  PCM_CRUISE = False  # openpilot can control the PCM state if longitudinal
+
   def test_set_resume_buttons(self):
     """
       SET and RESUME enter controls allowed on their falling edge.
@@ -70,6 +73,8 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   INACTIVE_REGEN = 0
   MAX_BRAKE = 0
 
+  PCM_CRUISE = True  # openpilot is tied to the PCM state if not longitudinal
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "TestGmSafetyBase":
@@ -85,7 +90,11 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     self.safety.init_tests()
 
   def _pcm_status_msg(self, enable):
-    raise NotImplementedError
+    if self.PCM_CRUISE:
+      values = {"CruiseState": enable}
+      return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
+    else:
+      raise NotImplementedError
 
   def _speed_msg(self, speed):
     values = {"%sWheelSpd" % s: speed for s in ["RL", "RR"]}
@@ -102,6 +111,9 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
 
   def _user_gas_msg(self, gas):
     values = {"AcceleratorPedal2": 1 if gas else 0}
+    if self.PCM_CRUISE:
+      # Fill CruiseState with expected value if the safety mode reads cruise state from gas msg
+      values["CruiseState"] = self.safety.get_controls_allowed()
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
   def _send_brake_msg(self, brake):
@@ -165,11 +177,26 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
     self.safety.init_tests()
 
 
-class TestGmCameraSafety(TestGmSafetyBase):
+class TestGmCameraSafetyBase(TestGmSafetyBase):
+
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "TestGmCameraSafetyBase":
+      cls.packer = None
+      cls.safety = None
+      raise unittest.SkipTest
+
+  def _user_brake_msg(self, brake):
+    values = {"BrakePressed": brake}
+    return self.packer.make_can_msg_panda("ECMEngineStatus", 0, values)
+
+
+class TestGmCameraSafety(TestGmCameraSafetyBase):
   TX_MSGS = [[384, 0],  # pt bus
              [388, 2]]  # camera bus
   FWD_BLACKLISTED_ADDRS = {2: [384], 0: [388]}  # block LKAS message and PSCMStatus
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
   BUTTONS_BUS = 2  # tx only
 
   def setUp(self):
@@ -178,15 +205,6 @@ class TestGmCameraSafety(TestGmSafetyBase):
     self.safety = libpandasafety_py.libpandasafety
     self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM)
     self.safety.init_tests()
-
-  def _user_gas_msg(self, gas):
-    cruise_active = self.safety.get_controls_allowed()
-    values = {"AcceleratorPedal2": 1 if gas else 0, "CruiseState": cruise_active}
-    return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
-
-  def _pcm_status_msg(self, enable):
-    values = {"CruiseState": enable}
-    return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
   def test_buttons(self):
     # Only CANCEL button is allowed while cruise is enabled
@@ -210,11 +228,10 @@ class TestGmCameraSafety(TestGmSafetyBase):
     pass
 
 
-class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmSafetyBase):
+class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase):
   TX_MSGS = [[384, 0], [789, 0], [715, 0], [880, 0],  # pt bus
              [388, 2]]  # camera bus
   FWD_BLACKLISTED_ADDRS = {2: [384, 715, 880, 789], 0: [388]}  # block LKAS, ACC messages and PSCMStatus
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
   BUTTONS_BUS = 0  # rx only
 
   MAX_GAS = 3400
