@@ -54,8 +54,7 @@ class SpiHandle:
 
         # send data
         logging.debug("- sending data")
-        packet = bytes(data)
-        packet += bytes([self._calc_checksum(data), ])
+        packet = bytes([*data, self._calc_checksum(data)])
         self.spi.xfer2(packet)
 
         logging.debug("- waiting for ACK")
