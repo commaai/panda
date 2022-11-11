@@ -348,6 +348,12 @@ int main(void) {
     USART3->CR2 |= USART_CR2_LINEN;
   }
 
+#ifdef STM32H7
+  if(hw_type == HW_TYPE_TRES){
+    uart_init(&uart_ring_som_debug, 115200);
+  }
+#endif
+
   microsecond_timer_init();
 
   // init to SILENT and can silent

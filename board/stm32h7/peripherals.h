@@ -100,6 +100,7 @@ void peripherals_init(void) {
 
   RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;  // main counter
   RCC->APB1LENR |= RCC_APB1LENR_TIM6EN;  // interrupt timer
+  RCC->APB1LENR |= RCC_APB1LENR_UART7EN;  // SOM uart
   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // clock source timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop
 
