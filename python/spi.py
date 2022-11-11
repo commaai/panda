@@ -31,12 +31,12 @@ class SpiHandle:
       cksum ^= b
     return cksum
 
-  def _transfer(self, endpoint, data, max_rx_len=1000):
-    logging.debug(f"starting transfer: {endpoint=}, {max_rx_len=}")
+  def _transfer(self, endpoint: int, data, max_rx_len: int = 1000) -> bytes:
+    logging.debug("starting transfer: endpoint=%d, max_rx_len=%d", endpoint, max_rx_len)
     logging.debug("==============================================")
 
     for n in range(MAX_RETRY_COUNT):
-      logging.debug(f"\ntry #{n+1}")
+      logging.debug("\ntry #%d", n+1)
       try:
         logging.debug("- send header")
         packet = struct.pack("<BBHH", SYNC, endpoint, len(data), max_rx_len)
@@ -76,27 +76,27 @@ class SpiHandle:
 
         return dat[:-1]
       except Exception:
-        logging.exception(f"SPI transfer failed, {n} retries left")
+        logging.exception("SPI transfer failed, %d retries left", n)
     raise Exception(f"SPI transaction failed {MAX_RETRY_COUNT} times")
 
   # libusb1 functions
   def close(self):
     self.spi.close()
 
-  def controlWrite(self, request_type, request, value, index, data, timeout=0):
+  def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = 0):
     return self._transfer(0, struct.pack("<BHHH", request, value, index, 0))
 
-  def controlRead(self, request_type, request, value, index, length, timeout=0):
+  def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = 0):
     return self._transfer(0, struct.pack("<BHHH", request, value, index, length))
 
   # TODO: implement these properly
-  def bulkWrite(self, endpoint, data, timeout=0):
+  def bulkWrite(self, endpoint: int, data: List[int], timeout: int = 0) -> int:
     for x in range(math.ceil(len(data) / USB_MAX_SIZE)):
       self._transfer(endpoint, data[USB_MAX_SIZE*x:USB_MAX_SIZE*(x+1)])
     return len(data)
 
-  def bulkRead(self, endpoint, length, timeout=0):
-    ret = []
+  def bulkRead(self, endpoint: int, length: int, timeout: int = 0) -> bytes:
+    ret: List[int] = []
     for _ in range(math.ceil(length / USB_MAX_SIZE)):
       d = self._transfer(endpoint, [], max_rx_len=USB_MAX_SIZE)
       ret += d
