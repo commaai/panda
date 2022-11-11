@@ -115,6 +115,7 @@ class HyundaiLongitudinalBase:
           self._rx(self._button_msg(btn_prev))
           self.assertFalse(self.safety.get_controls_allowed())
 
+        # should enter controls allowed on falling edge and not transitioning to cancel
         should_enable = btn_cur != btn_prev and \
                         btn_cur != Buttons.CANCEL and \
                         btn_prev in (Buttons.RESUME, Buttons.SET)
