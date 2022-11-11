@@ -376,7 +376,9 @@ int main(void) {
   usb_init();
 
 #ifdef ENABLE_SPI
-  spi_init();
+  if (current_board->has_spi) {
+    spi_init();
+  }
 #endif
 
   puts("**** INTERRUPTS ON ****\n");

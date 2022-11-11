@@ -19,6 +19,7 @@ const board board_tres = {
   .has_hw_gmlan = false,
   .has_obd = true,
   .has_lin = false,
+  .has_spi = true,
   .has_canfd = true,
   .has_rtc_battery = true,
   .fan_max_rpm = 0U,
