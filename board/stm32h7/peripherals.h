@@ -22,12 +22,15 @@ void common_init_gpio(void) {
   /// E2,E3,E4: RGB LED
   set_gpio_pullup(GPIOE, 2, PULL_NONE);
   set_gpio_mode(GPIOE, 2, MODE_OUTPUT);
+  set_gpio_output_type(GPIOE, 2, OUTPUT_TYPE_OPEN_DRAIN);
 
   set_gpio_pullup(GPIOE, 3, PULL_NONE);
   set_gpio_mode(GPIOE, 3, MODE_OUTPUT);
+  set_gpio_output_type(GPIOE, 3, OUTPUT_TYPE_OPEN_DRAIN);
 
   set_gpio_pullup(GPIOE, 4, PULL_NONE);
   set_gpio_mode(GPIOE, 4, MODE_OUTPUT);
+  set_gpio_output_type(GPIOE, 4, OUTPUT_TYPE_OPEN_DRAIN);
 
   // F7,F8,F9,F10: BOARD ID
   set_gpio_pullup(GPIOF, 7, PULL_NONE);
