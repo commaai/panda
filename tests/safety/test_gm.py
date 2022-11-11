@@ -30,7 +30,7 @@ class GmLongitudinalBase(common.PandaSafetyTest):
         should_enable = btn == Buttons.RES_ACCEL
         self.assertEqual(should_enable, self.safety.get_controls_allowed())
 
-      # should enter controls allowed on falling edge
+      # set should enter controls allowed on falling edge, resume should maintain controls allowed
       if btn in (Buttons.RES_ACCEL, Buttons.DECEL_SET):
         self._rx(self._button_msg(Buttons.UNPRESS))
         self.assertTrue(self.safety.get_controls_allowed())
