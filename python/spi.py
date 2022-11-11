@@ -75,7 +75,7 @@ class SpiHandle:
           raise Exception("SPI got bad checksum")
 
         return dat[:-1]
-      except Exception as e:
+      except Exception:
         logging.exception(f"SPI transfer failed, {n} retries left")
     raise Exception(f"SPI transaction failed {MAX_RETRY_COUNT} times")
 
