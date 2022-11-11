@@ -71,9 +71,6 @@ def unpack_can_buffer(dat):
   counter = 0
   tail = bytearray()
   for i in range(0, len(dat), 64):
-    print(f"counter: {counter} -> {dat[i]}")
-    #counter = dat[i]
-    #continue
     if counter != dat[i]:
       print("CAN: LOST RECV PACKET COUNTER")
       break

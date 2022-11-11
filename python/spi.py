@@ -25,15 +25,13 @@ class SpiHandle:
     self.spi.max_speed_hz = 30000000
 
   # helpers
-  def _check_checksum(self, data: List[int]) -> bool:
+  def _calc_checksum(self, data: List[int]) -> bool:
     cksum = CHECKSUM_START
     for b in data:
       cksum ^= b
-    logging.debug(f"  checksum: {cksum}")
-    return cksum == 0
+    return cksum
 
   def _transfer(self, endpoint, data, max_rx_len=1000):
-    logging.debug("\n\n")
     logging.debug(f"starting transfer: {endpoint=}, {max_rx_len=}")
     logging.debug("==============================================")
 
@@ -54,14 +52,10 @@ class SpiHandle:
         if dat[0] == NACK:
           raise Exception("Got NACK response for header")
 
-        # add checksum
-        if len(data):
-          packet = bytes(data)
-          packet += bytes([reduce(lambda x, y: x^y, packet) ^ CHECKSUM_START])
-        else:
-          packet = bytes([CHECKSUM_START, ])
-
+        # send data
         logging.debug("- sending data")
+        packet = bytes(data)
+        packet += bytes([self._calc_checksum(data), ])
         self.spi.xfer2(packet)
 
         logging.debug("- waiting for ACK")
@@ -72,14 +66,13 @@ class SpiHandle:
         if dat[0] == NACK:
           raise Exception("Got NACK response for data")
 
+        # get response length, then response
         response_len_bytes = bytes(self.spi.xfer2(b"\x00" * 2))
         response_len = struct.unpack("<H", response_len_bytes)[0]
 
         logging.debug("- receiving response")
         dat = bytes(self.spi.xfer2(b"\x00" * (response_len + 1)))
-
-        # verify checksum
-        if not self._check_checksum([DACK, *response_len_bytes, *dat]):
+        if self._calc_checksum([DACK, *response_len_bytes, *dat]) != 0:
           raise Exception("SPI got bad checksum")
 
         return dat[:-1]
