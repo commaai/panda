@@ -61,7 +61,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
     bool reponse_ack = false;
     if (check_checksum(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi + 1)) {
       if (spi_endpoint == 0U) {
-        if (spi_data_len_mosi >= 8U) {
+        if (spi_data_len_mosi >= sizeof(ControlPacket_t)) {
           response_len = comms_control_handler((ControlPacket_t *)(spi_buf_rx + SPI_HEADER_SIZE), spi_buf_tx + 3);
           reponse_ack = true;
         } else {
