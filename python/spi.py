@@ -1,3 +1,4 @@
+import math
 import struct
 import spidev
 import logging
@@ -12,6 +13,8 @@ NACK = 0x1F
 CHECKSUM_START = 0xAB
 
 MAX_RETRY_COUNT = 5
+
+USB_MAX_SIZE = 0x40
 
 # This mimics the handle given by libusb1 for easy interoperability
 class SpiHandle:
@@ -94,22 +97,17 @@ class SpiHandle:
   def controlRead(self, request_type, request, value, index, length, timeout=0):
     return self._transfer(0, struct.pack("<BHHH", request, value, index, length))
 
-  # TODO: implement these
+  # TODO: implement these properly
   def bulkWrite(self, endpoint, data, timeout=0):
-    pass
+    for x in range(math.ceil(len(data) / USB_MAX_SIZE)):
+      self._transfer(endpoint, data[USB_MAX_SIZE*x:USB_MAX_SIZE*(x+1)])
+    return len(data)
 
   def bulkRead(self, endpoint, length, timeout=0):
-    import math
     ret = []
-    usb_max_size = 0x40
-    tot = math.ceil(length / usb_max_size)
-    for x in range(tot):
-      d = self._transfer(endpoint, [], max_rx_len=usb_max_size)
-      #print(len(d), usb_max_size, bytes(d))
-      print(bytes(d))
+    for x in range(math.ceil(length / USB_MAX_SIZE)):
+      d = self._transfer(endpoint, [], max_rx_len=USB_MAX_SIZE)
       ret += d
-      #print(f"{x+1}/{tot}, {len(ret)}")
-      if len(d) < usb_max_size:
+      if len(d) < USB_MAX_SIZE:
         break
-    print("\n\n\nreturning", bytes(ret[:100]))
     return bytes(ret)
