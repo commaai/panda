@@ -19,13 +19,13 @@ USB_MAX_SIZE = 0x40
 # This mimics the handle given by libusb1 for easy interoperability
 class SpiHandle:
   def __init__(self):
-    self.spi = spidev.SpiDev()
+    self.spi = spidev.SpiDev()  # pylint: disable=c-extension-no-member
     self.spi.open(0, 0)
 
     self.spi.max_speed_hz = 30000000
 
   # helpers
-  def _calc_checksum(self, data: List[int]) -> bool:
+  def _calc_checksum(self, data: List[int]) -> int:
     cksum = CHECKSUM_START
     for b in data:
       cksum ^= b
@@ -97,7 +97,7 @@ class SpiHandle:
 
   def bulkRead(self, endpoint, length, timeout=0):
     ret = []
-    for x in range(math.ceil(length / USB_MAX_SIZE)):
+    for _ in range(math.ceil(length / USB_MAX_SIZE)):
       d = self._transfer(endpoint, [], max_rx_len=USB_MAX_SIZE)
       ret += d
       if len(d) < USB_MAX_SIZE:
