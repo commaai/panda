@@ -105,16 +105,16 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     if ((addr == 481) && !gm_pcm_cruise) {
       int button = (GET_BYTE(to_push, 5) & 0x70U) >> 4;
 
+      // enter controls on falling edge of set or resume
+      bool set = (button != GM_BTN_SET) && (cruise_button_prev == GM_BTN_SET);
+      bool res = (button != GM_BTN_RESUME) && (cruise_button_prev == GM_BTN_RESUME);
+      if (set || res) {
+        controls_allowed = 1;
+      }
+
       // exit controls on cancel press
       if (button == GM_BTN_CANCEL) {
         controls_allowed = 0;
-      }
-
-      // enter controls on falling edge of set or resume
-      bool set = (button == GM_BTN_UNPRESS) && (cruise_button_prev == GM_BTN_SET);
-      bool res = (button == GM_BTN_UNPRESS) && (cruise_button_prev == GM_BTN_RESUME);
-      if (set || res) {
-        controls_allowed = 1;
       }
 
       cruise_button_prev = button;
