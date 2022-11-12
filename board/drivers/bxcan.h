@@ -72,6 +72,12 @@ void update_can_health_pkt(uint8_t can_number, bool error_irq) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint32_t esr_reg = CAN->ESR;
 
+  if (error_irq) {
+    can_health[can_number].total_error_cnt += 1U;
+    CAN->MSR = CAN_MSR_ERRI;
+    llcan_clear_send(CAN);
+  }
+
   can_health[can_number].bus_off = ((esr_reg & CAN_ESR_BOFF) >> CAN_ESR_BOFF_Pos);
   can_health[can_number].bus_off_cnt += can_health[can_number].bus_off;
   can_health[can_number].error_warning = ((esr_reg & CAN_ESR_EWGF) >> CAN_ESR_EWGF_Pos);
@@ -84,11 +90,6 @@ void update_can_health_pkt(uint8_t can_number, bool error_irq) {
 
   can_health[can_number].receive_error_cnt = ((esr_reg & CAN_ESR_REC) >> CAN_ESR_REC_Pos);
   can_health[can_number].transmit_error_cnt = ((esr_reg & CAN_ESR_TEC) >> CAN_ESR_TEC_Pos);
-
-  if (error_irq) {
-    can_health[can_number].total_error_cnt += 1U;
-    llcan_clear_send(CAN);
-  }
 }
 
 // CAN error

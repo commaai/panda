@@ -1,9 +1,18 @@
-// ///////////////////// //
-// Red Panda V2 with chiplet + Harness //
-// ///////////////////// //
+// /////////////////
+// Tres + Harness //
+// /////////////////
 
-const board board_red_v2 = {
-  .board_type = "Red_v2",
+void tres_init(void) {
+  // Enable USB 3.3V LDO for USB block
+  register_set_bits(&(PWR->CR3), PWR_CR3_USBREGEN);
+  register_set_bits(&(PWR->CR3), PWR_CR3_USB33DEN);
+  while ((PWR->CR3 & PWR_CR3_USB33RDY) == 0);
+
+  red_chiplet_init();
+}
+
+const board board_tres = {
+  .board_type = "Tres",
   .board_tick = unused_board_tick,
   .harness_config = &red_chiplet_harness_config,
   .has_gps = false,
@@ -13,7 +22,7 @@ const board board_red_v2 = {
   .has_canfd = true,
   .has_rtc_battery = true,
   .fan_max_rpm = 0U,
-  .init = red_chiplet_init,
+  .init = tres_init,
   .enable_can_transceiver = red_chiplet_enable_can_transceiver,
   .enable_can_transceivers = red_chiplet_enable_can_transceivers,
   .set_led = red_set_led,

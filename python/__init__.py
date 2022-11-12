@@ -8,9 +8,11 @@ import hashlib
 import datetime
 import traceback
 import warnings
+import logging
 from functools import wraps
 from typing import Optional
 from itertools import accumulate
+
 from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7  # pylint: disable=import-error
 from .flash_release import flash_release  # noqa pylint: disable=import-error
 from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
@@ -19,6 +21,11 @@ from .isotp import isotp_send, isotp_recv  # pylint: disable=import-error
 from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN, SECTOR_SIZES_FX, SECTOR_SIZES_H7  # noqa pylint: disable=import-error
 
 __version__ = '0.0.10'
+
+# setup logging
+LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
+logging.basicConfig(level=LOGLEVEL, format='%(message)s')
+
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
@@ -49,7 +56,7 @@ def pack_can_buffer(arr):
       snds.append(b'')
       idx += 1
 
-  #Apply counter to each 64 byte packet
+  # Apply counter to each 64 byte packet
   for idx in range(len(snds)):
     tx = b''
     counter = 0
@@ -183,6 +190,7 @@ class Panda:
   HW_TYPE_DOS = b'\x06'
   HW_TYPE_RED_PANDA = b'\x07'
   HW_TYPE_RED_PANDA_V2 = b'\x08'
+  HW_TYPE_TRES = b'\x09'
 
   CAN_PACKET_VERSION = 2
   HEALTH_PACKET_VERSION = 11
@@ -192,10 +200,10 @@ class Panda:
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
-  H7_DEVICES = (HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2)
+  H7_DEVICES = (HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES)
 
   INTERNAL_DEVICES = (HW_TYPE_UNO, HW_TYPE_DOS)
-  HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2)
+  HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES)
 
   CLOCK_SOURCE_MODE_DISABLED = 0
   CLOCK_SOURCE_MODE_FREE_RUNNING = 1
@@ -213,8 +221,8 @@ class Panda:
   FLAG_HYUNDAI_HYBRID_GAS = 2
   FLAG_HYUNDAI_LONG = 4
   FLAG_HYUNDAI_CAMERA_SCC = 8
-  FLAG_HYUNDAI_CANFD_HDA2 = 8
-  FLAG_HYUNDAI_CANFD_ALT_BUTTONS = 16
+  FLAG_HYUNDAI_CANFD_HDA2 = 16
+  FLAG_HYUNDAI_CANFD_ALT_BUTTONS = 32
 
   FLAG_TESLA_POWERTRAIN = 1
   FLAG_TESLA_LONG_CONTROL = 2
@@ -230,7 +238,7 @@ class Panda:
   FLAG_GM_HW_CAM = 1
   FLAG_GM_HW_CAM_LONG = 2
 
-  def __init__(self, serial: Optional[str] = None, claim: bool = True, disable_checks: bool = True):
+  def __init__(self, serial: Optional[str] = None, claim: bool = True, spi: bool = False, disable_checks: bool = True):
     self._serial = serial
     self._disable_checks = disable_checks
 
@@ -238,8 +246,8 @@ class Panda:
     self._bcd_device = None
 
     # connect and set mcu type
+    self._spi = spi
     self.connect(claim)
-
 
   def close(self):
     self._handle.close()
@@ -248,10 +256,32 @@ class Panda:
   def connect(self, claim=True, wait=False):
     if self._handle is not None:
       self.close()
-
-    context = usb1.USBContext()
     self._handle = None
 
+    if self._spi:
+      # TODO: move this back. need to wait until next AGNOS build
+      from .spi import SpiHandle # noqa pylint: disable=import-error
+      self._handle = SpiHandle()
+
+      # TODO implement
+      self._serial = "SPIDEV"
+      self.bootstub = False
+
+    else:
+      self.usb_connect(claim=claim, wait=wait)
+
+    assert self._handle is not None
+    self._mcu_type = self.get_mcu_type()
+    self.health_version, self.can_version, self.can_health_version = self.get_packets_versions()
+    print("connected")
+
+    # disable openpilot's heartbeat checks
+    if self._disable_checks:
+      self.set_heartbeat_disabled()
+      self.set_power_save(0)
+
+  def usb_connect(self, claim=True, wait=False):
+    context = usb1.USBContext()
     while 1:
       try:
         for device in context.getDeviceList(skip_on_error=True):
@@ -283,16 +313,6 @@ class Panda:
       if not wait or self._handle is not None:
         break
       context = usb1.USBContext()  # New context needed so new devices show up
-
-    assert self._handle is not None
-    self._mcu_type = self.get_mcu_type()
-    self.health_version, self.can_version, self.can_health_version = self.get_packets_versions()
-    print("connected")
-
-    # disable openpilot's heartbeat checks
-    if self._disable_checks:
-      self.set_heartbeat_disabled()
-      self.set_power_save(0)
 
   def reset(self, enter_bootstub=False, enter_bootloader=False, reconnect=True):
     try:
