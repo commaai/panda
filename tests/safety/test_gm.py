@@ -25,7 +25,7 @@ class GmLongitudinalBase(common.PandaSafetyTest):
     """
     for btn_prev in range(8):
       for btn_cur in range(8):
-        self._rx(self._button_msg(Buttons.UNPRESS))
+        self._rx(self._button_msg(Buttons.NONE))
         self.safety.set_controls_allowed(0)
         for _ in range(10):
           self._rx(self._button_msg(btn_prev))
@@ -34,7 +34,7 @@ class GmLongitudinalBase(common.PandaSafetyTest):
         # should enter controls allowed on falling edge and not transitioning to cancel
         should_enable = btn_cur != btn_prev and \
                         btn_cur != Buttons.CANCEL and \
-                        btn_prev in (Buttons.RES_ACCEL, Buttons.DECEL_SET)
+                        btn_prev in (Buttons.RESUME, Buttons.SET)
 
         self._rx(self._button_msg(btn_cur))
         self.assertEqual(should_enable, self.safety.get_controls_allowed())
