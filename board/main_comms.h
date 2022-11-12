@@ -176,6 +176,14 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
   timestamp_t t;
+
+#ifdef DEBUG_COMMS
+  puts("raw control request: "); hexdump(req, sizeof(ControlPacket_t)); puts("\n");
+  puts("- request "); puth(req->request); puts("\n");
+  puts("- param1 "); puth(req->param1); puts("\n");
+  puts("- param2 "); puth(req->param2); puts("\n");
+#endif
+
   switch (req->request) {
     // **** 0xa0: get rtc time
     case 0xa0:
