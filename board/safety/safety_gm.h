@@ -110,9 +110,9 @@ static int gm_rx_hook(CANPacket_t *to_push) {
         controls_allowed = 0;
       }
 
-      // enter controls on falling edge of set or rising edge of resume (avoids fault)
+      // enter controls on falling edge of set or resume
       bool set = (button == GM_BTN_UNPRESS) && (cruise_button_prev == GM_BTN_SET);
-      bool res = (button == GM_BTN_RESUME) && (cruise_button_prev == GM_BTN_UNPRESS);
+      bool res = (button == GM_BTN_UNPRESS) && (cruise_button_prev == GM_BTN_RESUME);
       if (set || res) {
         controls_allowed = 1;
       }
