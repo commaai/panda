@@ -1,6 +1,6 @@
 // master -> panda DMA start
 void spi_mosi_dma(uint8_t *addr, int len) {
-  // disable DMA
+  // disable DMA + SPI
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
   DMA2_Stream2->CR &= ~DMA_SxCR_EN;
   register_clear_bits(&(SPI4->CR1), SPI_CR1_SPE);
@@ -10,24 +10,19 @@ void spi_mosi_dma(uint8_t *addr, int len) {
     volatile uint8_t dat = SPI4->RXDR;
     (void)dat;
   }
-  SPI4->IFCR |= SPI_IFCR_OVRC;
 
   // setup destination and length
   register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
   DMA2_Stream2->NDTR = len;
 
-  // enable DMA
+  // enable DMA + SPI
   DMA2_Stream2->CR |= DMA_SxCR_EN;
   register_set_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
   register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
-
-  puts("SPI waiting for "); puth(len); puts(", NDTR "); puth(DMA2_Stream2->NDTR); puts(", SR "); puth(SPI4->SR); puts("\n");
 }
 
 // panda -> master DMA start
 void spi_miso_dma(uint8_t *addr, int len) {
-  puts("- sending out: "); hexdump(addr, len);
-
   // disable DMA
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
@@ -56,16 +51,6 @@ void DMA2_Stream2_IRQ_Handler(void) {
   spi_endpoint = spi_buf_rx[1];
   spi_data_len_mosi = spi_buf_rx[3] << 8 | spi_buf_rx[2];
   spi_data_len_miso = spi_buf_rx[5] << 8 | spi_buf_rx[4];
-  puts("SPI got:\n");
-  if (true) {
-    for (int i = 0; i < 8; i++) {
-      hexdump(spi_buf_rx + i*8, 8);
-    }
-  }
-  puts("- SR: "); puth(SPI4->SR); puts("\n");
-  puts("- NDTR: "); puth(DMA2_Stream2->NDTR); puts("\n");
-  puts("- RXDR: "); puth(SPI4->RXDR); puts("\n");
-  puts("- RXDR: "); puth(SPI4->RXDR); puts("\n");
 
   if (spi_state == SPI_RX_STATE_HEADER) {
     if (spi_buf_rx[0] == SPI_SYNC_BYTE && check_checksum(spi_buf_rx, SPI_HEADER_SIZE)) {
@@ -80,7 +65,6 @@ void DMA2_Stream2_IRQ_Handler(void) {
     }
     spi_miso_dma(spi_buf_tx, 1);
   } else if (spi_state == SPI_RX_STATE_DATA_RX) {
-    puts("- data: "); hexdump(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi + 1);
     // We got everything! Based on the endpoint specified, call the appropriate handler
     uint16_t response_len = 0U;
     bool reponse_ack = false;
@@ -137,7 +121,6 @@ void DMA2_Stream2_IRQ_Handler(void) {
   }
 
   spi_state = next_rx_state;
-  puts("- new state: "); puth(spi_state); puts("\n");
   EXIT_CRITICAL();
 }
 
