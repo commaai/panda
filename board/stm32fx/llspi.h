@@ -1,131 +1,176 @@
-// IRQs: DMA2_Stream2, DMA2_Stream3, EXTI4
-
-void spi_init(void);
-int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out);
-
-// end API
-
-#define SPI_BUF_SIZE 256
-uint8_t spi_buf[SPI_BUF_SIZE];
-int spi_buf_count = 0;
-int spi_total_count = 0;
-
-void spi_tx_dma(void *addr, int len) {
+void spi_miso_dma(uint8_t *addr, int len) {
   // disable DMA
+  DMA2_Stream3->CR &= ~DMA_SxCR_EN;
   register_clear_bits(&(SPI1->CR2), SPI_CR2_TXDMAEN);
-  register_clear_bits(&(DMA2_Stream3->CR), DMA_SxCR_EN);
 
-  // DMA2, stream 3, channel 3
+  // setup source and length
   register_set(&(DMA2_Stream3->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
   DMA2_Stream3->NDTR = len;
-  register_set(&(DMA2_Stream3->PAR), (uint32_t)&(SPI1->DR), 0xFFFFFFFFU);
 
-  // channel3, increment memory, memory -> periph, enable
-  register_set(&(DMA2_Stream3->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_EN), 0x1E077EFEU);
-  delay(0);
-  register_set_bits(&(DMA2_Stream3->CR), DMA_SxCR_TCIE);
-
+  // enable DMA
   register_set_bits(&(SPI1->CR2), SPI_CR2_TXDMAEN);
-
-  // signal data is ready by driving low
-  // esp must be configured as input by this point
-  set_gpio_output(GPIOB, 0, 0);
+  DMA2_Stream3->CR |= DMA_SxCR_EN;
 }
 
-void spi_rx_dma(void *addr, int len) {
+void spi_mosi_dma(uint8_t *addr, int len) {
   // disable DMA
   register_clear_bits(&(SPI1->CR2), SPI_CR2_RXDMAEN);
-  register_clear_bits(&(DMA2_Stream2->CR), DMA_SxCR_EN);
+  DMA2_Stream2->CR &= ~DMA_SxCR_EN;
 
   // drain the bus
   volatile uint8_t dat = SPI1->DR;
   (void)dat;
 
-  // DMA2, stream 2, channel 3
+  // setup destination and length
   register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
   DMA2_Stream2->NDTR = len;
-  register_set(&(DMA2_Stream2->PAR), (uint32_t)&(SPI1->DR), 0xFFFFFFFFU);
 
-  // channel3, increment memory, periph -> memory, enable
-  register_set(&(DMA2_Stream2->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_EN), 0x1E077EFEU);
-  delay(0);
-  register_set_bits(&(DMA2_Stream2->CR), DMA_SxCR_TCIE);
-
+  // enable DMA
+  DMA2_Stream2->CR |= DMA_SxCR_EN;
   register_set_bits(&(SPI1->CR2), SPI_CR2_RXDMAEN);
 }
 
-// ***************************** SPI IRQs *****************************
-// can't go on the stack cause it's DMAed
-uint8_t spi_tx_buf[0x44];
-
-// SPI RX
+// SPI MOSI DMA FINISHED
 void DMA2_Stream2_IRQ_Handler(void) {
-  int *resp_len = (int*)spi_tx_buf;
-  (void)memset(spi_tx_buf, 0xaa, 0x44);
-  *resp_len = spi_cb_rx(spi_buf, 0x14, spi_tx_buf+4);
-  #ifdef DEBUG_SPI
-    puts("SPI write: ");
-    puth(*resp_len);
-    puts("\n");
-  #endif
-  spi_tx_dma(spi_tx_buf, *resp_len + 4);
-
-  // ack
+  // Clear interrupt flag
+  ENTER_CRITICAL();
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
-}
 
-// SPI TX
-void DMA2_Stream3_IRQ_Handler(void) {
-  #ifdef DEBUG_SPI
-    puts("SPI handshake\n");
-  #endif
+  uint8_t next_rx_state = SPI_RX_STATE_HEADER;
 
-  // reset handshake back to pull up
-  set_gpio_mode(GPIOB, 0, MODE_INPUT);
-  set_gpio_pullup(GPIOB, 0, PULL_UP);
+  // parse header
+  spi_endpoint = spi_buf_rx[1];
+  spi_data_len_mosi = spi_buf_rx[3] << 8 | spi_buf_rx[2];
+  spi_data_len_miso = spi_buf_rx[5] << 8 | spi_buf_rx[4];
 
-  // ack
-  DMA2->LIFCR = DMA_LIFCR_CTCIF3;
-}
+  if (spi_state == SPI_RX_STATE_HEADER) {
+    if (spi_buf_rx[0] == SPI_SYNC_BYTE && check_checksum(spi_buf_rx, SPI_HEADER_SIZE)) {
+      // response: ACK and start receiving data portion
+      spi_buf_tx[0] = SPI_HACK;
+      next_rx_state = SPI_RX_STATE_HEADER_ACK;
+    } else {
+      // response: NACK and reset state machine
+      puts("SPI: incorrect header sync or checksum "); /*hexdump(spi_buf_rx, SPI_HEADER_SIZE);*/
+      spi_buf_tx[0] = SPI_NACK;
+      next_rx_state = SPI_RX_STATE_HEADER_NACK;
+    }
+    spi_miso_dma(spi_buf_tx, 1);
+  } else if (spi_state == SPI_RX_STATE_DATA_RX) {
+    // We got everything! Based on the endpoint specified, call the appropriate handler
+    uint16_t response_len = 0U;
+    bool reponse_ack = false;
+    if (check_checksum(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi + 1)) {
+      if (spi_endpoint == 0U) {
+        if (spi_data_len_mosi >= sizeof(ControlPacket_t)) {
+          response_len = comms_control_handler((ControlPacket_t *)(spi_buf_rx + SPI_HEADER_SIZE), spi_buf_tx + 3);
+          reponse_ack = true;
+        } else {
+          puts("SPI: insufficient data for control handler\n");
+        }
+      } else if (spi_endpoint == 1U || spi_endpoint == 0x81U) {
+        if (spi_data_len_mosi == 0U) {
+          response_len = comms_can_read(spi_buf_tx + 3, spi_data_len_miso);
+          reponse_ack = true;
+        } else {
+          puts("SPI: did not expect data for can_read\n");
+        }
+      } else if (spi_endpoint == 2U) {
+        comms_endpoint2_write(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi);
+        reponse_ack = true;
+      } else if (spi_endpoint == 3U) {
+        if (spi_data_len_mosi > 0U) {
+          comms_can_write(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi);
+          reponse_ack = true;
+        } else {
+          puts("SPI: did expect data for can_write\n");
+        }
+      }
+    } else {
+      // Checksum was incorrect
+      reponse_ack = false;
+      puts("SPI: incorrect data checksum\n");
+    }
 
-void EXTI4_IRQ_Handler(void) {
-  volatile unsigned int pr = EXTI->PR & (1U << 4);
-  #ifdef DEBUG_SPI
-    puts("exti4\n");
-  #endif
-  // SPI CS falling
-  if ((pr & (1U << 4)) != 0U) {
-    spi_total_count = 0;
-    spi_rx_dma(spi_buf, 0x14);
+    // Setup response header
+    spi_buf_tx[0] = reponse_ack ? SPI_DACK : SPI_NACK;
+    spi_buf_tx[1] = response_len & 0xFFU;
+    spi_buf_tx[2] = (response_len >> 8) & 0xFFU;
+
+    // Add checksum
+    uint8_t checksum = SPI_CHECKSUM_START;
+    for(uint16_t i = 0U; i < response_len + 3; i++) {
+      checksum ^= spi_buf_tx[i];
+    }
+    spi_buf_tx[response_len + 3] = checksum;
+
+    // Write response
+    spi_miso_dma(spi_buf_tx, response_len + 4);
+
+    next_rx_state = SPI_RX_STATE_DATA_TX;
+  } else {
+    puts("SPI: RX unexpected state: "); puth(spi_state); puts("\n");
   }
-  EXTI->PR = pr;
+
+  spi_state = next_rx_state;
+  EXIT_CRITICAL();
+}
+
+// SPI MISO DMA FINISHED
+void DMA2_Stream3_IRQ_Handler(void) {
+  // Clear interrupt flag
+  DMA2->LIFCR = DMA_LIFCR_CTCIF3;
+
+  // Wait until the transaction is actually finished and clear the DR
+  // TODO: needs a timeout here, otherwise it gets stuck with no master clock!
+  while (!(SPI1->SR & SPI_SR_TXE));
+  volatile uint8_t dat = SPI1->DR;
+  (void)dat;
+  SPI1->DR = 0U;
+
+  if (spi_state == SPI_RX_STATE_HEADER_ACK) {
+    // ACK was sent, queue up the RX buf for the data + checksum
+    spi_state = SPI_RX_STATE_DATA_RX;
+    spi_mosi_dma(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi + 1);
+  } else if (spi_state == SPI_RX_STATE_HEADER_NACK) {
+    // Reset state
+    spi_state = SPI_RX_STATE_HEADER;
+    spi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+  } else if (spi_state == SPI_RX_STATE_DATA_TX) {
+    // Reset state
+    spi_state = SPI_RX_STATE_HEADER;
+    spi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+  } else {
+    puts("SPI: TX unexpected state: "); puth(spi_state); puts("\n");
+  }
 }
 
 // ***************************** SPI init *****************************
 void spi_init(void) {
-  // Max SPI clock the ESP can produce is 80MHz. At buffer size of 256 bytes, that's a max of about 40k buffers per second
-  REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, 50000U, FAULT_INTERRUPT_RATE_SPI_DMA)
-  REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, 50000U, FAULT_INTERRUPT_RATE_SPI_DMA)
-  REGISTER_INTERRUPT(EXTI4_IRQn, EXTI4_IRQ_Handler, 50000U, FAULT_INTERRUPT_RATE_SPI_CS) // TODO: Figure out if this is a reasonable limit
+  // We expect less than 50 transactions (including control messages and CAN buffers) at the 100Hz boardd interval. Can be raised if needed.
+  REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
+  REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
 
-  //puts("SPI init\n");
+  // Clear buffers (for debugging)
+  memset(spi_buf_rx, 0, SPI_BUF_SIZE);
+  memset(spi_buf_tx, 0, SPI_BUF_SIZE);
+
+  // Setup MOSI DMA
+  register_set(&(DMA2_Stream2->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_TCIE), 0x1E077EFEU);
+  register_set(&(DMA2_Stream2->PAR), (uint32_t)&(SPI1->DR), 0xFFFFFFFFU);
+
+  // Setup MISO DMA
+  register_set(&(DMA2_Stream3->CR), (DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_TCIE), 0x1E077EFEU);
+  register_set(&(DMA2_Stream3->PAR), (uint32_t)&(SPI1->DR), 0xFFFFFFFFU);
+
+  // Enable SPI and the error interrupts
+  // TODO: verify clock phase and polarity
   register_set(&(SPI1->CR1), SPI_CR1_SPE, 0xFFFFU);
+  register_set(&(SPI1->CR2), 0U, 0xF7U);
 
-  // enable SPI interrupts
-  //SPI1->CR2 = SPI_CR2_RXNEIE | SPI_CR2_ERRIE | SPI_CR2_TXEIE;
-  register_set(&(SPI1->CR2), SPI_CR2_RXNEIE, 0xF7U);
+  // Start the first packet!
+  spi_state = SPI_RX_STATE_HEADER;
+  spi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
 
   NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);
-  //NVIC_EnableIRQ(SPI1_IRQn);
-
-  // reset handshake back to pull up
-  set_gpio_mode(GPIOB, 0, MODE_INPUT);
-  set_gpio_pullup(GPIOB, 0, PULL_UP);
-
-  // setup interrupt on falling edge of SPI enable (on PA4)
-  register_set(&(SYSCFG->EXTICR[2]), SYSCFG_EXTICR2_EXTI4_PA, 0xFFFFU);
-  register_set_bits(&(EXTI->IMR), (1U << 4));
-  register_set_bits(&(EXTI->FTSR), (1U << 4));
-  NVIC_EnableIRQ(EXTI4_IRQn);
 }

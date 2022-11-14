@@ -40,10 +40,10 @@ jobs:
         run: eval "$BUILD"
       - name: Test python package installer
         run: ${{ env.RUN }} "cd /tmp/openpilot/panda && python setup.py install"
-      - name: Build panda STM image and bootstub
-        run: ${{ env.RUN }} "cd /tmp/openpilot/panda && scons"
-      - name: Build pedal STM image and bootstub
-        run: ${{ env.RUN }} "cd /tmp/openpilot/panda && PEDAL=1 scons"
+      - name: Build panda + pedal images and bootstub
+        run: ${{ env.RUN }} "cd /tmp/openpilot/panda && scons -j4"
+      - name: Build panda with SPI support
+        run: ${{ env.RUN }} "cd /tmp/openpilot/panda && ENABLE_SPI=1 scons -j4"
 
   unit_tests:
     name: unit tests
@@ -66,7 +66,7 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Run safety tests
-        timeout-minutes: 3
+        timeout-minutes: 4
         run: |
           ${{ env.RUN }} "cd /tmp/openpilot && \
                           scons -c && \

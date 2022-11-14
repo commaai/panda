@@ -8,6 +8,7 @@ import hashlib
 import datetime
 import traceback
 import warnings
+import logging
 from functools import wraps
 from typing import Optional
 from itertools import accumulate
@@ -20,6 +21,11 @@ from .isotp import isotp_send, isotp_recv  # pylint: disable=import-error
 from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN, SECTOR_SIZES_FX, SECTOR_SIZES_H7  # noqa pylint: disable=import-error
 
 __version__ = '0.0.10'
+
+# setup logging
+LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
+logging.basicConfig(level=LOGLEVEL, format='%(message)s')
+
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
@@ -50,7 +56,7 @@ def pack_can_buffer(arr):
       snds.append(b'')
       idx += 1
 
-  #Apply counter to each 64 byte packet
+  # Apply counter to each 64 byte packet
   for idx in range(len(snds)):
     tx = b''
     counter = 0
@@ -215,8 +221,8 @@ class Panda:
   FLAG_HYUNDAI_HYBRID_GAS = 2
   FLAG_HYUNDAI_LONG = 4
   FLAG_HYUNDAI_CAMERA_SCC = 8
-  FLAG_HYUNDAI_CANFD_HDA2 = 8
-  FLAG_HYUNDAI_CANFD_ALT_BUTTONS = 16
+  FLAG_HYUNDAI_CANFD_HDA2 = 16
+  FLAG_HYUNDAI_CANFD_ALT_BUTTONS = 32
 
   FLAG_TESLA_POWERTRAIN = 1
   FLAG_TESLA_LONG_CONTROL = 2
