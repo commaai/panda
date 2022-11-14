@@ -25,19 +25,21 @@ class GmLongitudinalBase(common.PandaSafetyTest):
     """
     for btn_prev in range(8):
       for btn_cur in range(8):
-        with self.subTest(btn_cur=btn_cur, btn_prev=btn_prev):
+        with self.subTest(btn_prev=btn_prev, btn_cur=btn_cur):
           self._rx(self._button_msg(Buttons.UNPRESS))
           self.safety.set_controls_allowed(0)
           for _ in range(10):
             self._rx(self._button_msg(btn_prev))
-            # should_enable = btn_prev == Buttons.RES_ACCEL
+            should_enable = btn_prev == Buttons.RES_ACCEL
             self.assertEqual(should_enable, self.safety.get_controls_allowed())
 
-          # TODO: these tests
-          # should enter controls allowed on falling edge and not transitioning to cancel
-          should_enable = btn_cur != btn_prev and \
-                          btn_cur != Buttons.CANCEL and \
-                          btn_prev in (Buttons.RES_ACCEL, Buttons.DECEL_SET)
+          # controls allowed if resume rising edge, or to any button (except cancel)
+          should_enable = btn_cur == Buttons.RES_ACCEL or btn_prev == Buttons.RES_ACCEL
+          # or falling edge of set
+          should_enable = should_enable or (btn_cur != Buttons.DECEL_SET and btn_prev == Buttons.DECEL_SET)
+
+          if btn_cur == Buttons.CANCEL:
+            should_enable = False
 
           self._rx(self._button_msg(btn_cur))
           self.assertEqual(should_enable, self.safety.get_controls_allowed())
