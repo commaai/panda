@@ -9,6 +9,8 @@ void tres_init(void) {
   while ((PWR->CR3 & PWR_CR3_USB33RDY) == 0);
 
   red_chiplet_init();
+
+  gpio_uart7_init();
 }
 
 const board board_tres = {

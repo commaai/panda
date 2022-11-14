@@ -51,7 +51,7 @@ void uart_tx_ring(uart_ring *q){
 
 void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
   // UART7 is connected to APB1 at 60MHz
-  u->BRR = __USART_BRR(60000000U, baud);
+  u->BRR = 60000000U / baud;
 }
 
 // This read after reading ISR clears all error interrupts. We don't want compiler warnings, nor optimizations
@@ -59,6 +59,7 @@ void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
 
 void uart_interrupt_handler(uart_ring *q) {
   ENTER_CRITICAL();
+  UNUSED(q);
 
   // Read UART status. This is also the first step necessary in clearing most interrupts
   uint32_t status = q->uart->ISR;
