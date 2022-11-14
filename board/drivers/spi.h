@@ -1,8 +1,14 @@
 #pragma once
 
 #define SPI_BUF_SIZE 1024U
+
+#ifdef STM32H7
+__attribute__((section(".ram_d1"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
+__attribute__((section(".ram_d1"))) uint8_t spi_buf_tx[SPI_BUF_SIZE];
+#else
 uint8_t spi_buf_rx[SPI_BUF_SIZE];
 uint8_t spi_buf_tx[SPI_BUF_SIZE];
+#endif
 
 #define SPI_CHECKSUM_START 0xABU
 #define SPI_SYNC_BYTE 0x5AU

@@ -168,7 +168,7 @@ void spi_init(void) {
   register_set(&(SPI1->CR2), 0U, 0xF7U);
 
   // Start the first packet!
-  spi_state = SPI_RX_STATE_HEADER;
+  //spi_state = SPI_RX_STATE_HEADER;
   spi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
 
   NVIC_EnableIRQ(DMA2_Stream2_IRQn);
