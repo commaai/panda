@@ -231,9 +231,11 @@ void tick_handler(void) {
           if (current_safety_mode != SAFETY_SILENT) {
             set_safety_mode(SAFETY_SILENT, 0U);
           }
-          if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
-            set_power_save_state(POWER_SAVE_STATUS_ENABLED);
-          }
+
+          // TODO: put this back
+          // if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
+          //   set_power_save_state(POWER_SAVE_STATUS_ENABLED);
+          // }
 
           // Also disable IR when the heartbeat goes missing
           current_board->set_ir_power(0U);
@@ -348,11 +350,11 @@ int main(void) {
     USART3->CR2 |= USART_CR2_LINEN;
   }
 
-#ifdef STM32H7
-  if(hw_type == HW_TYPE_TRES){
-    uart_init(&uart_ring_som_debug, 115200);
-  }
-#endif
+// #ifdef STM32H7
+//   if(hw_type == HW_TYPE_TRES){
+//     uart_init(&uart_ring_som_debug, 115200);
+//   }
+// #endif
 
   microsecond_timer_init();
 
