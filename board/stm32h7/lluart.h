@@ -34,7 +34,7 @@ void uart_tx_ring(uart_ring *q){
   // Send out next byte of TX buffer
   if (q->w_ptr_tx != q->r_ptr_tx) {
     // Only send if transmit register is empty (aka last byte has been sent)
-    if ((q->uart->ISR & USART_ISR_TXFE) != 0) {
+    if ((q->uart->ISR & USART_ISR_TXE_TXFNF) != 0) {
       q->uart->TDR = q->elems_tx[q->r_ptr_tx];   // This clears TXE
       q->r_ptr_tx = (q->r_ptr_tx + 1U) % q->tx_fifo_size;
     }
@@ -59,7 +59,6 @@ void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
 
 void uart_interrupt_handler(uart_ring *q) {
   ENTER_CRITICAL();
-  UNUSED(q);
 
   // Read UART status. This is also the first step necessary in clearing most interrupts
   uint32_t status = q->uart->ISR;
@@ -77,6 +76,17 @@ void uart_interrupt_handler(uart_ring *q) {
     #endif
     UART_READ_RDR(q->uart)
   }
+
+  if (err & USART_ISR_ORE) {
+    q->uart->ICR |= USART_ICR_ORECF;
+  } else if (err & USART_ISR_NE) {
+    q->uart->ICR |= USART_ICR_NECF;
+  } else if (err & USART_ISR_FE) {
+    q->uart->ICR |= USART_ICR_FECF;
+  } else if (err & USART_ISR_PE) {
+    q->uart->ICR |= USART_ICR_PECF;
+  }
+
   // Send if necessary
   uart_tx_ring(q);
 

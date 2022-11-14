@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import select
+import codecs
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda  # noqa: E402
@@ -16,12 +17,14 @@ if __name__ == "__main__":
     try:
       port_number = int(os.getenv("PORT", "0"))
       claim = os.getenv("CLAIM") is not None
+      no_color = os.getenv("NO_COLOR") is not None
 
       serials = Panda.list()
       if os.getenv("SERIAL"):
         serials = [x for x in serials if x == os.getenv("SERIAL")]
 
       pandas = list([Panda(x, claim=claim) for x in serials])
+      decoders = [codecs.getincrementaldecoder('utf-8')() for _ in pandas]
 
       if not len(pandas):
         sys.exit("no pandas found")
@@ -35,7 +38,11 @@ if __name__ == "__main__":
           while True:
             ret = panda.serial_read(port_number)
             if len(ret) > 0:
-              sys.stdout.write(setcolor[i] + ret.decode('ascii') + unsetcolor)
+              decoded = decoders[i].decode(ret)
+              if no_color:
+                sys.stdout.write(decoded)
+              else:
+                sys.stdout.write(setcolor[i] + decoded + unsetcolor)
               sys.stdout.flush()
             else:
               break
