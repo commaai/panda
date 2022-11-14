@@ -39,6 +39,11 @@ void llspi_mosi_dma(uint8_t *addr, int len);
 void llspi_miso_dma(uint8_t *addr, int len);
 
 void spi_init(void) {
+  // clear buffers (for debugging)
+  (void)memset(spi_buf_rx, 0, SPI_BUF_SIZE);
+  (void)memset(spi_buf_tx, 0, SPI_BUF_SIZE);
+
+  // platform init
   llspi_init();
 
   // Start the first packet!
@@ -60,11 +65,11 @@ void spi_handle_rx(void) {
 
   // parse header
   spi_endpoint = spi_buf_rx[1];
-  spi_data_len_mosi = spi_buf_rx[3] << 8 | spi_buf_rx[2];
-  spi_data_len_miso = spi_buf_rx[5] << 8 | spi_buf_rx[4];
+  spi_data_len_mosi = (spi_buf_rx[3] << 8) | spi_buf_rx[2];
+  spi_data_len_miso = (spi_buf_rx[5] << 8) | spi_buf_rx[4];
 
   if (spi_state == SPI_STATE_HEADER) {
-    if (spi_buf_rx[0] == SPI_SYNC_BYTE && check_checksum(spi_buf_rx, SPI_HEADER_SIZE)) {
+    if ((spi_buf_rx[0] == SPI_SYNC_BYTE) && check_checksum(spi_buf_rx, SPI_HEADER_SIZE)) {
       // response: ACK and start receiving data portion
       spi_buf_tx[0] = SPI_HACK;
       next_rx_state = SPI_STATE_HEADER_ACK;
@@ -79,31 +84,35 @@ void spi_handle_rx(void) {
     // We got everything! Based on the endpoint specified, call the appropriate handler
     uint16_t response_len = 0U;
     bool reponse_ack = false;
-    if (check_checksum(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi + 1)) {
+    if (check_checksum(&(spi_buf_rx[SPI_HEADER_SIZE]), spi_data_len_mosi + 1U)) {
       if (spi_endpoint == 0U) {
         if (spi_data_len_mosi >= sizeof(ControlPacket_t)) {
-          response_len = comms_control_handler((ControlPacket_t *)(spi_buf_rx + SPI_HEADER_SIZE), spi_buf_tx + 3);
+          ControlPacket_t ctrl;
+          (void)memcpy(&ctrl, &spi_buf_rx[SPI_HEADER_SIZE], sizeof(ControlPacket_t));
+          response_len = comms_control_handler(&ctrl, &spi_buf_tx[3]);
           reponse_ack = true;
         } else {
           puts("SPI: insufficient data for control handler\n");
         }
-      } else if (spi_endpoint == 1U || spi_endpoint == 0x81U) {
+      } else if ((spi_endpoint == 1U) || (spi_endpoint == 0x81U)) {
         if (spi_data_len_mosi == 0U) {
-          response_len = comms_can_read(spi_buf_tx + 3, spi_data_len_miso);
+          response_len = comms_can_read(&(spi_buf_tx[3]), spi_data_len_miso);
           reponse_ack = true;
         } else {
           puts("SPI: did not expect data for can_read\n");
         }
       } else if (spi_endpoint == 2U) {
-        comms_endpoint2_write(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi);
+        comms_endpoint2_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
         reponse_ack = true;
       } else if (spi_endpoint == 3U) {
         if (spi_data_len_mosi > 0U) {
-          comms_can_write(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi);
+          comms_can_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
           reponse_ack = true;
         } else {
           puts("SPI: did expect data for can_write\n");
         }
+      } else {
+        puts("SPI: unexpected endpoint"); puth(spi_endpoint); puts("\n");
       }
     } else {
       // Checksum was incorrect
@@ -118,13 +127,13 @@ void spi_handle_rx(void) {
 
     // Add checksum
     uint8_t checksum = SPI_CHECKSUM_START;
-    for(uint16_t i = 0U; i < response_len + 3; i++) {
+    for(uint16_t i = 0U; i < (response_len + 3U); i++) {
       checksum ^= spi_buf_tx[i];
     }
-    spi_buf_tx[response_len + 3] = checksum;
+    spi_buf_tx[response_len + 3U] = checksum;
 
     // Write response
-    llspi_miso_dma(spi_buf_tx, response_len + 4);
+    llspi_miso_dma(spi_buf_tx, response_len + 4U);
 
     next_rx_state = SPI_STATE_DATA_TX;
   } else {
@@ -138,7 +147,7 @@ void spi_handle_tx(void) {
   if (spi_state == SPI_STATE_HEADER_ACK) {
     // ACK was sent, queue up the RX buf for the data + checksum
     spi_state = SPI_STATE_DATA_RX;
-    llspi_mosi_dma(spi_buf_rx + SPI_HEADER_SIZE, spi_data_len_mosi + 1);
+    llspi_mosi_dma(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi + 1U);
   } else if (spi_state == SPI_STATE_HEADER_NACK) {
     // Reset state
     spi_state = SPI_STATE_HEADER;

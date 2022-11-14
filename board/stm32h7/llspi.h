@@ -6,7 +6,7 @@ void llspi_mosi_dma(uint8_t *addr, int len) {
   register_clear_bits(&(SPI4->CR1), SPI_CR1_SPE);
 
   // drain the bus
-  while ((SPI4->SR & SPI_SR_RXP)) {
+  while ((SPI4->SR & SPI_SR_RXP) != 0U) {
     volatile uint8_t dat = SPI4->RXDR;
     (void)dat;
   }
@@ -70,10 +70,6 @@ void llspi_init(void) {
   REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
   REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
 
-  // Clear buffers (for debugging)
-  memset(spi_buf_rx, 0, SPI_BUF_SIZE);
-  memset(spi_buf_tx, 0, SPI_BUF_SIZE);
-
   // Setup MOSI DMA
   register_set(&(DMAMUX1_Channel10->CCR), 83U, 0xFFFFFFFFU);
   register_set(&(DMA2_Stream2->CR), (DMA_SxCR_MINC | DMA_SxCR_TCIE), 0x1E077EFEU);
@@ -86,7 +82,7 @@ void llspi_init(void) {
 
   // Enable SPI
   register_set(&(SPI4->CFG1), (7U << SPI_CFG1_DSIZE_Pos), SPI_CFG1_DSIZE_Msk);
-  register_set(&(SPI4->UDRDR), 0xcd, 0xFFFFU);
+  register_set(&(SPI4->UDRDR), 0xcd, 0xFFFFU);  // set under-run value for debugging
   register_set(&(SPI4->CR1), SPI_CR1_SPE, 0xFFFFU);
   register_set(&(SPI4->CR2), 0, 0xFFFFU);
 

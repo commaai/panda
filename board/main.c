@@ -169,20 +169,11 @@ void tick_handler(void) {
       #endif
 
       // set green LED to be controls allowed
-#ifdef STM32H7
-      current_board->set_led(LED_BLUE, DMA2_Stream3->NDTR == 22U);
-
-      puts("\n");
-      puts("*** SPI4: SR="); puth(SPI4->SR); puts("\n");
-      puts("*** DMA2_2: NDTR="); puth(DMA2_Stream2->NDTR); puts("\n");
-      puts("*** DMA2_3: NDTR="); puth(DMA2_Stream3->NDTR); puts("\n");
-      puts("\n");
-#endif
       current_board->set_led(LED_GREEN, controls_allowed | green_led_enabled);
 
       // turn off the blue LED, turned on by CAN
       // unless we are in power saving mode
-      //current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
+      current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
 
       // tick drivers at 1Hz
       const bool recent_heartbeat = heartbeat_counter == 0U;
