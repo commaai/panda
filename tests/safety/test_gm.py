@@ -28,7 +28,8 @@ class GmLongitudinalBase(common.PandaSafetyTest):
         with self.subTest(btn_prev=btn_prev, btn_cur=btn_cur):
           self._rx(self._button_msg(btn_prev))
           self.safety.set_controls_allowed(0)
-          self._rx(self._button_msg(btn_cur))
+          for _ in range(10):
+            self._rx(self._button_msg(btn_cur))
 
           should_enable = btn_cur != Buttons.DECEL_SET and btn_prev == Buttons.DECEL_SET
           should_enable = should_enable or (btn_cur == Buttons.RES_ACCEL and btn_prev != Buttons.RES_ACCEL)
