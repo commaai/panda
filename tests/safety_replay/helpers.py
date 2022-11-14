@@ -32,7 +32,7 @@ def get_steer_torque(mode, to_send):
     ret = (to_send.RDLR & 0xFF00) | ((to_send.RDLR >> 16) & 0xFF)
     ret = to_signed(ret, 16)
   elif mode == Panda.SAFETY_GM:
-    ret = ((to_send.RDLR & 0x7) << 8) + ((to_send.RDLR & 0xFF00) >> 8)
+    ret = ((to_send.data[0] & 0x7) << 8) | to_send.data[1]
     ret = to_signed(ret, 11)
   elif mode == Panda.SAFETY_HYUNDAI:
     ret = (((to_send.data[3] & 0x7) << 8) | to_send.data[2]) - 1024
