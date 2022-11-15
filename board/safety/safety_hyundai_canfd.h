@@ -216,13 +216,9 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   const int steer_addr = hyundai_canfd_hda2 ? 0x50 : 0x12a;
   bool stock_ecu_detected = (addr == steer_addr) && (bus == 0);
   if (hyundai_longitudinal) {
-    // ensure ADRV ECU is still knocked out
-    if (hyundai_canfd_hda2 && ((addr == 0x1a0) && (bus == 1))) {
-      stock_ecu_detected = true;
-    } else if (!hyundai_canfd_hda2 && ((addr == 0x1a0) && (bus == 0))) {
-      stock_ecu_detected = true;
-    } else {
-    }
+    // HDA2: ensure ADRV ECU is still knocked out
+    const int scc_bus = hyundai_canfd_hda2 ? 1 : 0;
+    stock_ecu_detected = stock_ecu_detected || ((addr == 0x1a0) && (bus == scc_bus));
   }
   generic_rx_checks(stock_ecu_detected);
 
@@ -320,7 +316,7 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
     // CRUISE_INFO for non-HDA2, we send our own longitudinal commands
     int is_scc_msg = ((addr == 0x1a0) && hyundai_longitudinal);
-    
+
     int block_msg = is_lkas_msg || is_lfa_msg || is_lfahda_msg || is_scc_msg;
     if (!block_msg) {
       bus_fwd = 0;
@@ -336,6 +332,11 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
   gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
   hyundai_canfd_hda2 = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2);
   hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
+
+  // no long for ICE yet
+  if (!hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
+    hyundai_longitudinal = false;
+  }
 
   if (hyundai_longitudinal) {
     hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_long_addr_checks, HYUNDAI_CANFD_LONG_ADDR_CHECK_LEN};
