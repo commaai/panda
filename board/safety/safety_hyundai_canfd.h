@@ -216,9 +216,10 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   const int steer_addr = hyundai_canfd_hda2 ? 0x50 : 0x12a;
   bool stock_ecu_detected = (addr == steer_addr) && (bus == 0);
   if (hyundai_longitudinal) {
-    // HDA2: ensure ADRV ECU is still knocked out
-    const int scc_bus = hyundai_canfd_hda2 ? 1 : 0;
-    stock_ecu_detected = stock_ecu_detected || ((addr == 0x1a0) && (bus == scc_bus));
+    // on HDA2, ensure ADRV ECU is still knocked out
+    // on others, ensure accel msg is blocked from camera
+    const int stock_scc_bus = hyundai_canfd_hda2 ? 1 : 0;
+    stock_ecu_detected = stock_ecu_detected || ((addr == 0x1a0) && (bus == stock_scc_bus));
   }
   generic_rx_checks(stock_ecu_detected);
 
@@ -315,7 +316,7 @@ static int hyundai_canfd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     int is_lfahda_msg = ((addr == 0x1e0) && !hyundai_canfd_hda2);
 
     // CRUISE_INFO for non-HDA2, we send our own longitudinal commands
-    int is_scc_msg = ((addr == 0x1a0) && hyundai_longitudinal);
+    int is_scc_msg = ((addr == 0x1a0) && hyundai_longitudinal && !hyundai_canfd_hda2);
 
     int block_msg = is_lkas_msg || is_lfa_msg || is_lfahda_msg || is_scc_msg;
     if (!block_msg) {
