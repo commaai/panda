@@ -211,6 +211,11 @@ const board board_dos = {
   .has_hw_gmlan = false,
   .has_obd = true,
   .has_lin = false,
+#ifdef ENABLE_SPI
+  .has_spi = true,
+#else
+  .has_spi = false,
+#endif
   .has_canfd = false,
   .has_rtc_battery = true,
   .fan_max_rpm = 6500U,

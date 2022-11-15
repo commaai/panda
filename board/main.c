@@ -312,7 +312,6 @@ int main(void) {
   // init early devices
   clock_init();
   peripherals_init();
-  detect_external_debug_serial();
   detect_board_type();
   adc_init();
 
@@ -327,20 +326,12 @@ int main(void) {
 
   puts("Config:\n");
   puts("  Board type: "); puts(current_board->board_type); puts("\n");
-  puts(has_external_debug_serial ? "  Real serial\n" : "  USB serial\n");
 
   // init board
   current_board->init();
 
   // panda has an FPU, let's use it!
   enable_fpu();
-
-  // enable main uart if it's connected
-  if (has_external_debug_serial) {
-    // WEIRDNESS: without this gate around the UART, it would "crash", but only if the ESP is enabled
-    // assuming it's because the lines were left floating and spurious noise was on them
-    uart_init(&uart_ring_debug, 115200);
-  }
 
   if (current_board->has_gps) {
     uart_init(&uart_ring_gps, 9600);
@@ -376,7 +367,9 @@ int main(void) {
   usb_init();
 
 #ifdef ENABLE_SPI
-  spi_init();
+  if (current_board->has_spi) {
+    spi_init();
+  }
 #endif
 
   puts("**** INTERRUPTS ON ****\n");

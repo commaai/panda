@@ -72,10 +72,8 @@
 
 #include "stm32h7/llusb.h"
 
-#ifdef ENABLE_SPI
-  #include "drivers/spi.h"
-  #include "stm32h7/llspi.h"
-#endif
+#include "drivers/spi.h"
+#include "stm32h7/llspi.h"
 
 void early_gpio_float(void) {
   RCC->AHB4ENR = RCC_AHB4ENR_GPIOAEN | RCC_AHB4ENR_GPIOBEN | RCC_AHB4ENR_GPIOCEN | RCC_AHB4ENR_GPIODEN | RCC_AHB4ENR_GPIOEEN | RCC_AHB4ENR_GPIOFEN | RCC_AHB4ENR_GPIOGEN | RCC_AHB4ENR_GPIOHEN;

@@ -9,6 +9,13 @@ void tres_init(void) {
   while ((PWR->CR3 & PWR_CR3_USB33RDY) == 0);
 
   red_chiplet_init();
+
+  // SPI init
+  set_gpio_alternate(GPIOE, 11, GPIO_AF5_SPI4);
+  set_gpio_alternate(GPIOE, 12, GPIO_AF5_SPI4);
+  set_gpio_alternate(GPIOE, 13, GPIO_AF5_SPI4);
+  set_gpio_alternate(GPIOE, 14, GPIO_AF5_SPI4);
+  register_set_bits(&(GPIOE->OSPEEDR), GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12 | GPIO_OSPEEDR_OSPEED13 | GPIO_OSPEEDR_OSPEED14);
 }
 
 const board board_tres = {
@@ -19,6 +26,7 @@ const board board_tres = {
   .has_hw_gmlan = false,
   .has_obd = true,
   .has_lin = false,
+  .has_spi = true,
   .has_canfd = true,
   .has_rtc_battery = true,
   .fan_max_rpm = 0U,
