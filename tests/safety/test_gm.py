@@ -21,18 +21,20 @@ class GmLongitudinalBase(common.PandaSafetyTest):
 
   def test_set_resume_buttons(self):
     """
-      SET and RESUME enter controls allowed on their falling edge.
+      SET and RESUME enter controls allowed on their falling and rising edges, respectively.
     """
-    for btn in range(8):
-      self.safety.set_controls_allowed(0)
-      for _ in range(10):
-        self._rx(self._button_msg(btn))
-        self.assertFalse(self.safety.get_controls_allowed())
+    for btn_prev in range(8):
+      for btn_cur in range(8):
+        with self.subTest(btn_prev=btn_prev, btn_cur=btn_cur):
+          self._rx(self._button_msg(btn_prev))
+          self.safety.set_controls_allowed(0)
+          for _ in range(10):
+            self._rx(self._button_msg(btn_cur))
 
-      # should enter controls allowed on falling edge
-      if btn in (Buttons.RES_ACCEL, Buttons.DECEL_SET):
-        self._rx(self._button_msg(Buttons.UNPRESS))
-        self.assertTrue(self.safety.get_controls_allowed())
+          should_enable = btn_cur != Buttons.DECEL_SET and btn_prev == Buttons.DECEL_SET
+          should_enable = should_enable or (btn_cur == Buttons.RES_ACCEL and btn_prev != Buttons.RES_ACCEL)
+          should_enable = should_enable and btn_cur != Buttons.CANCEL
+          self.assertEqual(should_enable, self.safety.get_controls_allowed())
 
   def test_cancel_button(self):
     self.safety.set_controls_allowed(1)
