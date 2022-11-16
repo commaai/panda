@@ -7,7 +7,7 @@ from collections import defaultdict
 from nose.tools import assert_equal, assert_less, assert_greater
 
 from panda import Panda
-from .helpers import panda_jungle, time_many_sends, test_all_pandas, test_all_gen2_pandas, clear_can_buffers, panda_connect_and_init
+from .helpers import panda_jungle, time_many_sends, test_all_pandas, test_all_gen2_pandas, clear_can_buffers, panda_connect_and_init, PARTIAL_TESTS
 
 @test_all_pandas
 @flaky(max_runs=3, min_passes=1)
@@ -170,6 +170,10 @@ def test_gen2_loopback(p):
 @test_all_pandas
 @panda_connect_and_init
 def test_bulk_write(p):
+  # TODO: doesn't work in partial test mode
+  if PARTIAL_TESTS:
+    return
+
   # The TX buffers on pandas is 0x100 in length.
   NUM_MESSAGES_PER_BUS = 10000
 
