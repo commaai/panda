@@ -192,6 +192,10 @@ void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
 }
 
 void uart_init(uart_ring *q, int baud) {
+  if(q->uart == NULL){
+    return;
+  }
+
   // Register interrupts (max data rate: 115200 baud)
   if(q->uart == USART1){
     REGISTER_INTERRUPT(USART1_IRQn, USART1_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_1)

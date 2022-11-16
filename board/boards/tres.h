@@ -12,6 +12,7 @@ void tres_init(void) {
 
   // SOM debugging UART
   gpio_uart7_init();
+  uart_init(&uart_ring_som_debug, 115200);
 
   // SPI init
   set_gpio_alternate(GPIOE, 11, GPIO_AF5_SPI4);
