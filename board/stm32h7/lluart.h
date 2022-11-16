@@ -77,15 +77,15 @@ void uart_interrupt_handler(uart_ring *q) {
     UART_READ_RDR(q->uart)
   }
 
-  if (err & USART_ISR_ORE) {
+  if ((err & USART_ISR_ORE) != 0U) {
     q->uart->ICR |= USART_ICR_ORECF;
-  } else if (err & USART_ISR_NE) {
+  } else if ((err & USART_ISR_NE) != 0U) {
     q->uart->ICR |= USART_ICR_NECF;
-  } else if (err & USART_ISR_FE) {
+  } else if ((err & USART_ISR_FE) != 0U) {
     q->uart->ICR |= USART_ICR_FECF;
-  } else if (err & USART_ISR_PE) {
+  } else if ((err & USART_ISR_PE) != 0U) {
     q->uart->ICR |= USART_ICR_PECF;
-  }
+  } else {}
 
   // Send if necessary
   uart_tx_ring(q);
