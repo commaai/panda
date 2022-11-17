@@ -174,6 +174,7 @@ class Panda:
   SERIAL_ESP = 1
   SERIAL_LIN1 = 2
   SERIAL_LIN2 = 3
+  SERIAL_SOM_DEBUG = 4
 
   GMLAN_CAN2 = 1
   GMLAN_CAN3 = 2
@@ -727,7 +728,7 @@ class Panda:
   def serial_write(self, port_number, ln):
     ret = 0
     for i in range(0, len(ln), 0x20):
-      ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + ln[i:i + 0x20])
+      ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + bytes(ln[i:i + 0x20], 'utf-8'))
     return ret
 
   def serial_clear(self, port_number):
