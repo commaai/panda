@@ -847,7 +847,3 @@ class Panda:
   # ****************** Siren *****************
   def set_siren(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf6, int(enabled), 0, b'')
-
-  # ****************** Debug *****************
-  def set_green_led(self, enabled):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')
