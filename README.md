@@ -8,12 +8,23 @@ It supports 3x CAN, 2x LIN, and 1x GMLAN. It also charges a phone. On the comput
 
 It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?querycriteria=productId=LN2004).
 
-It is 2nd gen hardware, reusing code and parts from the [NEO](https://github.com/commaai/neo) interface board.
-
 ![panda tests](https://github.com/commaai/panda/workflows/tests/badge.svg)
 ![panda drivers](https://github.com/commaai/panda/workflows/drivers/badge.svg)
 
 ## Usage
+
+Setup your dependencies:
+
+```bash
+# Ubuntu
+sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip
+pip install -r requirements.txt
+
+# macOS
+brew tap ArmMbed/homebrew-formulae
+brew install python dfu-util arm-none-eabi-gcc
+pip install -r requirements.txt
+```
 
 ### Python
 
@@ -47,16 +58,12 @@ sudo udevadm control --reload-rules && sudo udevadm trigger
 
 The panda jungle uses different udev rules. See [the repo](https://github.com/commaai/panda_jungle#udev-rules) for instructions. 
 
-### JavaScript
-
-See [PandaJS](https://github.com/commaai/pandajs)
-
-
 ## Software interface support
 
 As a universal car interface, it should support every reasonable software interface.
 
-- [User space](https://github.com/commaai/panda/tree/master/python)
+- [Python library](https://github.com/commaai/panda/tree/master/python)
+- [C++ library](https://github.com/commaai/openpilot/tree/master/selfdrive/boardd)
 - [socketcan in kernel](https://github.com/commaai/panda/tree/master/drivers/linux) (alpha)
 - [Windows J2534](https://github.com/commaai/panda/tree/master/drivers/windows)
 

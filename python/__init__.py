@@ -14,8 +14,6 @@ from typing import Optional
 from itertools import accumulate
 
 from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7  # pylint: disable=import-error
-from .flash_release import flash_release  # noqa pylint: disable=import-error
-from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
 from .serial import PandaSerial  # noqa pylint: disable=import-error
 from .isotp import isotp_send, isotp_recv  # pylint: disable=import-error
 from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN, SECTOR_SIZES_FX, SECTOR_SIZES_H7  # noqa pylint: disable=import-error
@@ -600,9 +598,6 @@ class Panda:
 
   # ******************* configuration *******************
 
-  def set_usb_power(self, on):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe6, int(on), 0, b'')
-
   def set_power_save(self, power_save_enabled=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe7, int(power_save_enabled), 0, b'')
 
@@ -847,7 +842,3 @@ class Panda:
   # ****************** Siren *****************
   def set_siren(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf6, int(enabled), 0, b'')
-
-  # ****************** Debug *****************
-  def set_green_led(self, enabled):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')
