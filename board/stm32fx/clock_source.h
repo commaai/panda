@@ -1,4 +1,4 @@
-void clock_source_init() {
+void clock_source_init(void) {
   // No interrupts
   NVIC_DisableIRQ(TIM1_UP_TIM10_IRQn);
   NVIC_DisableIRQ(TIM1_CC_IRQn);
