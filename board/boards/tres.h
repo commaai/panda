@@ -2,6 +2,10 @@
 // Tres + Harness //
 // /////////////////
 
+void tres_set_ir_power(uint8_t percentage){
+  pwm_set(TIM3, 4, percentage);
+}
+
 void tres_init(void) {
   // Enable USB 3.3V LDO for USB block
   register_set_bits(&(PWR->CR3), PWR_CR3_USBREGEN);
@@ -23,6 +27,11 @@ void tres_init(void) {
 
   // fan setup
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
+
+  // Initialize IR PWM and set to 0%
+  set_gpio_alternate(GPIOC, 9, GPIO_AF2_TIM3);
+  pwm_init(TIM3, 4);
+  tres_set_ir_power(0U);
 }
 
 const board board_tres = {
@@ -46,7 +55,7 @@ const board board_tres = {
   .check_ignition = red_check_ignition,
   .read_current = unused_read_current,
   .set_fan_enabled = red_chiplet_set_fan_or_usb_load_switch,
-  .set_ir_power = unused_set_ir_power,
+  .set_ir_power = tres_set_ir_power,
   .set_phone_power = unused_set_phone_power,
   .set_siren = unused_set_siren
 };
