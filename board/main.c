@@ -239,8 +239,9 @@ void tick_handler(void) {
           // Also disable IR when the heartbeat goes missing
           current_board->set_ir_power(0U);
 
+          // TODO: need a SPI equivalent
           // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
-          if(usb_enumerated){
+          if (usb_enumerated) {
             fan_set_power(50U);
           } else {
             fan_set_power(0U);

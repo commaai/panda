@@ -20,6 +20,11 @@ void tres_init(void) {
   set_gpio_alternate(GPIOE, 13, GPIO_AF5_SPI4);
   set_gpio_alternate(GPIOE, 14, GPIO_AF5_SPI4);
   register_set_bits(&(GPIOE->OSPEEDR), GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12 | GPIO_OSPEEDR_OSPEED13 | GPIO_OSPEEDR_OSPEED14);
+
+  // fan init
+  fan_init();
+  red_chiplet_set_fan_or_usb_load_switch(false);
+  set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
 }
 
 const board board_tres = {
@@ -33,7 +38,7 @@ const board board_tres = {
   .has_spi = true,
   .has_canfd = true,
   .has_rtc_battery = true,
-  .fan_max_rpm = 0U,
+  .fan_max_rpm = 6500U,  // TODO: verify this, copied from dos
   .init = tres_init,
   .enable_can_transceiver = red_chiplet_enable_can_transceiver,
   .enable_can_transceivers = red_chiplet_enable_can_transceivers,
@@ -42,7 +47,7 @@ const board board_tres = {
   .set_can_mode = red_set_can_mode,
   .check_ignition = red_check_ignition,
   .read_current = unused_read_current,
-  .set_fan_enabled = unused_set_fan_enabled,
+  .set_fan_enabled = red_chiplet_set_fan_or_usb_load_switch,
   .set_ir_power = unused_set_ir_power,
   .set_phone_power = unused_set_phone_power,
   .set_siren = unused_set_siren
