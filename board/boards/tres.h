@@ -21,9 +21,7 @@ void tres_init(void) {
   set_gpio_alternate(GPIOE, 14, GPIO_AF5_SPI4);
   register_set_bits(&(GPIOE->OSPEEDR), GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12 | GPIO_OSPEEDR_OSPEED13 | GPIO_OSPEEDR_OSPEED14);
 
-  // fan init
-  llfan_init();
-  red_chiplet_set_fan_or_usb_load_switch(false);
+  // fan setup
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
 }
 
