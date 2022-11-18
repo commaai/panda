@@ -193,7 +193,7 @@ void uno_init(void) {
   uno_set_ir_power(0U);
 
   // Initialize fan and set to 0%
-  fan_init();
+  llfan_init();
   uno_set_fan_enabled(false);
 
   // Initialize harness

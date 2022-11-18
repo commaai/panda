@@ -34,9 +34,9 @@ void fan_tick(void){
         fan_state.stall_counter = 0U;
       }
 
-      if (fan_state.stall_counter > FAN_STALL_THRESHOLD && false) {
+      if (fan_state.stall_counter > FAN_STALL_THRESHOLD) {
         // Stall detected, power cycling fan controller
-        //current_board->set_fan_enabled(false);
+        current_board->set_fan_enabled(false);
 
         // clip integral, can't fully reset otherwise we may always be stuck in stall detection
         fan_state.error_integral = MIN(50.0f, MAX(0.0f, fan_state.error_integral));
@@ -53,8 +53,7 @@ void fan_tick(void){
     fan_state.error_integral += FAN_I * error;
     fan_state.error_integral = MIN(70.0f, MAX(-70.0f, fan_state.error_integral));
 
-    //fan_state.power = MIN(100U, MAX(0U, feedforward + fan_state.error_integral));
-    fan_state.power = MIN(100U, MAX(0U, feedforward));
+    fan_state.power = MIN(100U, MAX(0U, feedforward + fan_state.error_integral));
     pwm_set(TIM3, 3, fan_state.power);
   }
 }

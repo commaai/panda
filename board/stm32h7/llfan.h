@@ -7,7 +7,7 @@ void EXTI2_IRQ_Handler(void) {
   EXTI->PR1 = (1U << 2);
 }
 
-void fan_init(void){
+void llfan_init(void) {
   // 5000RPM * 4 tach edges / 60 seconds
   REGISTER_INTERRUPT(EXTI2_IRQn, EXTI2_IRQ_Handler, 700U, FAULT_INTERRUPT_RATE_TACH)
 

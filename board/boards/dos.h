@@ -153,7 +153,7 @@ void dos_init(void) {
   dos_set_ir_power(0U);
 
   // Initialize fan and set to 0%
-  fan_init();
+  llfan_init();
   dos_set_fan_enabled(false);
 
   // Initialize harness
