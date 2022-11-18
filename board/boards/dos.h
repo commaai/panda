@@ -152,10 +152,6 @@ void dos_init(void) {
   pwm_init(TIM4, 2);
   dos_set_ir_power(0U);
 
-  // Initialize fan and set to 0%
-  fan_init();
-  dos_set_fan_enabled(false);
-
   // Initialize harness
   harness_init();
 

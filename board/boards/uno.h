@@ -192,10 +192,6 @@ void uno_init(void) {
   pwm_init(TIM4, 2);
   uno_set_ir_power(0U);
 
-  // Initialize fan and set to 0%
-  fan_init();
-  uno_set_fan_enabled(false);
-
   // Initialize harness
   harness_init();
 

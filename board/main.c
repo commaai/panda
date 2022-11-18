@@ -239,8 +239,9 @@ void tick_handler(void) {
           // Also disable IR when the heartbeat goes missing
           current_board->set_ir_power(0U);
 
+          // TODO: need a SPI equivalent
           // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
-          if(usb_enumerated){
+          if (usb_enumerated) {
             fan_set_power(50U);
           } else {
             fan_set_power(0U);
@@ -341,12 +342,16 @@ int main(void) {
     uart_init(&uart_ring_gps, 115200);
   }
 
-  if(current_board->has_lin){
+  if (current_board->has_lin) {
     // enable LIN
     uart_init(&uart_ring_lin1, 10400);
     UART5->CR2 |= USART_CR2_LINEN;
     uart_init(&uart_ring_lin2, 10400);
     USART3->CR2 |= USART_CR2_LINEN;
+  }
+
+  if (current_board->fan_max_rpm > 0U) {
+    llfan_init();
   }
 
   microsecond_timer_init();
