@@ -21,6 +21,7 @@ struct board {
   const bool has_hw_gmlan;
   const bool has_obd;
   const bool has_lin;
+  const bool has_spi;
   const bool has_canfd;
   const bool has_rtc_battery;
   const uint16_t fan_max_rpm;
