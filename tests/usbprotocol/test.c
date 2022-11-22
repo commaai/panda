@@ -47,8 +47,5 @@ can_ring *tx3_q = &can_tx3_q;
 #define POWER_SAVE_STATUS_DISABLED 0
 #define POWER_SAVE_STATUS_ENABLED 1
 
-#define PROTOCOL_TESTS
-
 #include "comms_definitions.h"
 #include "main_comms.h"
-
