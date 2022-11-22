@@ -110,6 +110,10 @@ void dos_set_fan_enabled(bool enabled){
   set_gpio_output(GPIOA, 1, enabled);
 }
 
+void dos_set_clock_source_mode(uint8_t mode){
+  clock_source_init(mode);
+}
+
 void dos_set_siren(bool enabled){
   set_gpio_output(GPIOC, 12, enabled);
 }
@@ -178,7 +182,7 @@ void dos_init(void) {
   }
 
   // Init clock source (camera strobe) using PWM
-  clock_source_init();
+  dos_set_clock_source_mode(CLOCK_SOURCE_MODE_PWM);
 }
 
 const harness_configuration dos_harness_config = {
@@ -222,5 +226,6 @@ const board board_dos = {
   .set_fan_enabled = dos_set_fan_enabled,
   .set_ir_power = dos_set_ir_power,
   .set_phone_power = unused_set_phone_power,
+  .set_clock_source_mode = dos_set_clock_source_mode,
   .set_siren = dos_set_siren
 };
