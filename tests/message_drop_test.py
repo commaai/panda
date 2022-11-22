@@ -5,7 +5,7 @@ import time
 import struct
 import itertools
 import threading
-from typing import Any, List
+from typing import Any, Union, List
 
 from panda import Panda
 
@@ -35,6 +35,7 @@ def flood_tx(panda):
 
 if __name__ == "__main__":
   serials = Panda.list()
+  receiver: Union[Panda, PandaJungle]
   if JUNGLE:
     sender = Panda()
     receiver = PandaJungle()
@@ -46,7 +47,6 @@ if __name__ == "__main__":
     receiver.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
   sender.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-  sender.set_heartbeat_disabled()
 
   # Start transmisson
   threading.Thread(target=flood_tx, args=(sender,)).start()

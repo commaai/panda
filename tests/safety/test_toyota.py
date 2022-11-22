@@ -28,7 +28,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
              [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
              [0x2E4, 0], [0x191, 0], [0x411, 0], [0x412, 0], [0x343, 0], [0x1D2, 0],  # LKAS + ACC
              [0x200, 0], [0x750, 0]]  # interceptor + blindspot monitor
-  STANDSTILL_THRESHOLD = 1  # 1kph
+  STANDSTILL_THRESHOLD = 0  # kph
   RELAY_MALFUNCTION_ADDR = 0x2E4
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
@@ -43,6 +43,11 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   MAX_TORQUE_ERROR = 350
   TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conservative for rounding
   EPS_SCALE = 73
+
+  # Safety around steering req bit
+  MIN_VALID_STEERING_FRAMES = 18
+  MAX_INVALID_STEERING_FRAMES = 1
+  MIN_VALID_STEERING_RT_INTERVAL = 170000  # a ~10% buffer, can send steer up to 110Hz
 
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
@@ -136,22 +141,6 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
         angle = random.randint(-50, 50)
         should_tx = not req and not req2 and angle == 0
         self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle)))
-
-  def test_steer_req_bit(self):
-    """
-      On Toyota, you can ramp up torque and then set the STEER_REQUEST bit and the
-      EPS will ramp up faster than the effective panda safety limits. This tests:
-        - Nothing is sent when cutting torque
-        - Nothing is blocked when sending torque normally
-    """
-    self.safety.set_controls_allowed(True)
-    for _ in range(100):
-      self._set_prev_torque(self.MAX_TORQUE)
-      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
-
-    self._set_prev_torque(self.MAX_TORQUE)
-    for _ in range(100):
-      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
   def test_rx_hook(self):
     # checksum checks

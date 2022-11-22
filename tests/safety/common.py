@@ -36,6 +36,28 @@ class CANPackerPanda(CANPacker):
     return package_can_msg(msg)
 
 
+def add_regen_tests(cls):
+  """Dynamically adds regen tests for all user brake tests."""
+
+  # only rx/user brake tests, not brake command
+  found_tests = [func for func in dir(cls) if func.startswith("test_") and "user_brake" in func]
+  assert len(found_tests) >= 3, "Failed to detect known brake tests"
+
+  for test in found_tests:
+    def _make_regen_test(brake_func):
+      def _regen_test(self):
+        # only for safety modes with a regen message
+        if self._user_regen_msg(0) is None:
+          raise unittest.SkipTest("Safety mode implements no _user_regen_msg")
+
+        getattr(self, brake_func)(self._user_regen_msg, self.safety.get_regen_braking_prev)
+      return _regen_test
+
+    setattr(cls, test.replace("brake", "regen"), _make_regen_test(test))
+
+  return cls
+
+
 class PandaSafetyTestBase(unittest.TestCase):
   @classmethod
   def setUpClass(cls):
@@ -124,6 +146,11 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
   MAX_RT_DELTA = 0
   RT_INTERVAL = 0
 
+  # Safety around steering req bit
+  MIN_VALID_STEERING_FRAMES = 0
+  MAX_INVALID_STEERING_FRAMES = 0
+  MIN_VALID_STEERING_RT_INTERVAL = 0
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "TorqueSteeringSafetyTestBase":
@@ -161,6 +188,107 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(0)
     self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP - 1)))
+
+  def test_steer_req_bit_frames(self):
+    """
+      Certain safety modes implement some tolerance on their steer request bits matching the
+      requested torque to avoid a steering fault or lockout and maintain torque. This tests:
+        - We can't cut torque for more than one frame
+        - We can't cut torque until at least the minimum number of matching steer_req messages
+        - We can always recover from violations if steer_req=1
+    """
+
+    for min_valid_steer_frames in range(self.MIN_VALID_STEERING_FRAMES * 2):
+      # Reset match count and rt timer to allow cut (valid_steer_req_count, ts_steer_req_mismatch_last)
+      self.safety.init_tests()
+      self.safety.set_timer(self.MIN_VALID_STEERING_RT_INTERVAL)
+
+      # Allow torque cut
+      self.safety.set_controls_allowed(True)
+      self._set_prev_torque(self.MAX_TORQUE)
+      for _ in range(min_valid_steer_frames):
+        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
+
+      # should tx if we've sent enough valid frames, and we're not cutting torque for too many frames consecutively
+      should_tx = min_valid_steer_frames >= self.MIN_VALID_STEERING_FRAMES
+      for idx in range(self.MAX_INVALID_STEERING_FRAMES * 2):
+        tx = self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0))
+        self.assertEqual(should_tx and idx < self.MAX_INVALID_STEERING_FRAMES, tx)
+
+      # Keep blocking after one steer_req mismatch
+      for _ in range(100):
+        self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+      # Make sure we can recover
+      self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
+      self._set_prev_torque(self.MAX_TORQUE)
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
+
+  def test_steer_req_bit_multi_invalid(self):
+    """
+      For safety modes allowing multiple consecutive invalid frames, this ensures that once a valid frame
+      is sent after an invalid frame (even without sending the max number of allowed invalid frames),
+      all counters are reset.
+    """
+    # TODO: Add safety around steer request bits for all safety modes and remove exception
+    if self.MIN_VALID_STEERING_FRAMES == 0:
+      raise unittest.SkipTest("Safety mode does not implement tolerance for steer request bit safety")
+
+    for max_invalid_steer_frames in range(1, self.MAX_INVALID_STEERING_FRAMES * 2):
+      self.safety.init_tests()
+      self.safety.set_timer(self.MIN_VALID_STEERING_RT_INTERVAL)
+
+      # Allow torque cut
+      self.safety.set_controls_allowed(True)
+      self._set_prev_torque(self.MAX_TORQUE)
+      for _ in range(self.MIN_VALID_STEERING_FRAMES):
+        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
+
+      # Send partial amount of allowed invalid frames
+      for idx in range(max_invalid_steer_frames):
+        should_tx = idx < self.MAX_INVALID_STEERING_FRAMES
+        self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+      # Send one valid frame, and subsequent invalid should now be blocked
+      self._set_prev_torque(self.MAX_TORQUE)
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
+      for _ in range(self.MIN_VALID_STEERING_FRAMES + 1):
+        self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+  def test_steer_req_bit_realtime(self):
+    """
+      Realtime safety for cutting steer request bit. This tests:
+        - That we allow messages with mismatching steer request bit if time from last is >= MIN_VALID_STEERING_RT_INTERVAL
+        - That frame mismatch safety does not interfere with this test
+    """
+    # TODO: Add safety around steer request bits for all safety modes and remove exception
+    if self.MIN_VALID_STEERING_RT_INTERVAL == 0:
+      raise unittest.SkipTest("Safety mode does not implement tolerance for steer request bit safety")
+
+    for rt_us in np.arange(self.MIN_VALID_STEERING_RT_INTERVAL - 50000, self.MIN_VALID_STEERING_RT_INTERVAL + 50000, 10000):
+      # Reset match count and rt timer (valid_steer_req_count, ts_steer_req_mismatch_last)
+      self.safety.init_tests()
+
+      # Make sure valid_steer_req_count doesn't affect this test
+      self.safety.set_controls_allowed(True)
+      self._set_prev_torque(self.MAX_TORQUE)
+      for _ in range(self.MIN_VALID_STEERING_FRAMES):
+        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
+
+      # Normally, sending MIN_VALID_STEERING_FRAMES valid frames should always allow
+      self.safety.set_timer(max(rt_us, 0))
+      should_tx = rt_us >= self.MIN_VALID_STEERING_RT_INTERVAL
+      for _ in range(self.MAX_INVALID_STEERING_FRAMES):
+        self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+      # Keep blocking after one steer_req mismatch
+      for _ in range(100):
+        self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0)))
+
+      # Make sure we can recover
+      self.assertTrue(self._tx(self._torque_cmd_msg(0, steer_req=1)))
+      self._set_prev_torque(self.MAX_TORQUE)
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
 
 class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
@@ -358,6 +486,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
 
+@add_regen_tests
 class PandaSafetyTest(PandaSafetyTestBase):
   TX_MSGS: Optional[List[List[int]]] = None
   SCANNED_ADDRS = [*range(0x0, 0x800),                      # Entire 11-bit CAN address space
@@ -380,6 +509,9 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   @abc.abstractmethod
   def _user_brake_msg(self, brake):
+    pass
+
+  def _user_regen_msg(self, regen):
     pass
 
   @abc.abstractmethod
@@ -431,7 +563,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     for bus in range(0, 4):
       for addr in self.SCANNED_ADDRS:
         if all(addr != m[0] or bus != m[1] for m in self.TX_MSGS):
-          self.assertFalse(self._tx(make_msg(bus, addr, 8)))
+          self.assertFalse(self._tx(make_msg(bus, addr, 8)), f"allowed TX {addr=} {bus=}")
 
   def test_default_controls_not_allowed(self):
     self.assertFalse(self.safety.get_controls_allowed())
@@ -474,13 +606,17 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._user_gas_msg(0))
     self.assertTrue(self.safety.get_longitudinal_allowed())
 
-  def test_prev_brake(self):
-    self.assertFalse(self.safety.get_brake_pressed_prev())
+  def test_prev_user_brake(self, _user_brake_msg=None, get_brake_pressed_prev=None):
+    if _user_brake_msg is None:
+      _user_brake_msg = self._user_brake_msg
+      get_brake_pressed_prev = self.safety.get_brake_pressed_prev
+
+    self.assertFalse(get_brake_pressed_prev())
     for pressed in [True, False]:
-      self._rx(self._user_brake_msg(not pressed))
-      self.assertEqual(not pressed, self.safety.get_brake_pressed_prev())
-      self._rx(self._user_brake_msg(pressed))
-      self.assertEqual(pressed, self.safety.get_brake_pressed_prev())
+      self._rx(_user_brake_msg(not pressed))
+      self.assertEqual(not pressed, get_brake_pressed_prev())
+      self._rx(_user_brake_msg(pressed))
+      self.assertEqual(pressed, get_brake_pressed_prev())
 
   def test_enable_control_allowed_from_cruise(self):
     self._rx(self._pcm_status_msg(False))
@@ -500,33 +636,39 @@ class PandaSafetyTest(PandaSafetyTestBase):
       self._rx(self._pcm_status_msg(not engaged))
       self.assertEqual(not engaged, self.safety.get_cruise_engaged_prev())
 
-  def test_allow_brake_at_zero_speed(self):
+  def test_allow_user_brake_at_zero_speed(self, _user_brake_msg=None, get_brake_pressed_prev=None):
+    if _user_brake_msg is None:
+      _user_brake_msg = self._user_brake_msg
+
     # Brake was already pressed
     self._rx(self._speed_msg(0))
-    self._rx(self._user_brake_msg(1))
+    self._rx(_user_brake_msg(1))
     self.safety.set_controls_allowed(1)
-    self._rx(self._user_brake_msg(1))
+    self._rx(_user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
-    self._rx(self._user_brake_msg(0))
+    self._rx(_user_brake_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
     # rising edge of brake should disengage
-    self._rx(self._user_brake_msg(1))
+    self._rx(_user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
-    self._rx(self._user_brake_msg(0))  # reset no brakes
+    self._rx(_user_brake_msg(0))  # reset no brakes
 
-  def test_not_allow_brake_when_moving(self):
+  def test_not_allow_user_brake_when_moving(self, _user_brake_msg=None, get_brake_pressed_prev=None):
+    if _user_brake_msg is None:
+      _user_brake_msg = self._user_brake_msg
+
     # Brake was already pressed
-    self._rx(self._user_brake_msg(1))
+    self._rx(_user_brake_msg(1))
     self.safety.set_controls_allowed(1)
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
-    self._rx(self._user_brake_msg(1))
+    self._rx(_user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
-    self._rx(self._user_brake_msg(1))
+    self._rx(_user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
     self._rx(self._speed_msg(0))
@@ -566,12 +708,32 @@ class PandaSafetyTest(PandaSafetyTestBase):
               continue
             if {attr, current_test}.issubset({'TestSubaruSafety', 'TestSubaruGen2Safety'}):
               continue
+            if {attr, current_test}.issubset({'TestVolkswagenPqSafety', 'TestVolkswagenPqStockSafety', 'TestVolkswagenPqLongSafety'}):
+              continue
+            if {attr, current_test}.issubset({'TestGmCameraSafety', 'TestGmCameraLongitudinalSafety'}):
+              continue
+            if attr.startswith('TestHyundaiCanfd') and current_test.startswith('TestHyundaiCanfd'):
+              continue
+            if {attr, current_test}.issubset({'TestVolkswagenMqbSafety', 'TestVolkswagenMqbStockSafety', 'TestVolkswagenMqbLongSafety'}):
+              continue
+
+            # overlapping TX addrs, but they're not actuating messages for either car
+            if attr == 'TestHyundaiCanfdHDA2LongEV' and current_test.startswith('TestToyota'):
+              tx = list(filter(lambda m: m[0] not in [0x160, ], tx))
+
+            # Volkswagen MQB longitudinal actuating message overlaps with the Subaru lateral actuating message
+            if attr == 'TestVolkswagenMqbLongSafety' and current_test.startswith('TestSubaru'):
+              tx = list(filter(lambda m: m[0] not in [0x122, ], tx))
+
+            # Volkswagen MQB and Honda Nidec ACC HUD messages overlap
+            if attr == 'TestVolkswagenMqbLongSafety' and current_test.startswith('TestHondaNidec'):
+              tx = list(filter(lambda m: m[0] not in [0x30c, ], tx))
 
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
             if attr.startswith('TestHonda'):
               # exceptions for common msgs across different hondas
               tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C, 0x33D], tx))
-            all_tx.append(list([m[0], m[1], attr[4:]] for m in tx))
+            all_tx.append(list([m[0], m[1], attr] for m in tx))
 
     # make sure we got all the msgs
     self.assertTrue(len(all_tx) >= len(test_files)-1)
@@ -583,4 +745,4 @@ class PandaSafetyTest(PandaSafetyTestBase):
         # TODO: this should be blocked
         if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
           continue
-        self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} was allowed")
+        self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} during {current_test} was allowed")

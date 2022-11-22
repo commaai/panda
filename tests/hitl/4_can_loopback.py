@@ -2,12 +2,15 @@ import os
 import time
 import random
 import threading
-from panda import Panda
+from flaky import flaky
 from collections import defaultdict
 from nose.tools import assert_equal, assert_less, assert_greater
-from .helpers import panda_jungle, time_many_sends, test_all_pandas, test_all_gen2_pandas, clear_can_buffers, panda_connect_and_init
+
+from panda import Panda
+from .helpers import panda_jungle, time_many_sends, test_all_pandas, test_all_gen2_pandas, clear_can_buffers, panda_connect_and_init, PARTIAL_TESTS
 
 @test_all_pandas
+@flaky(max_runs=3, min_passes=1)
 @panda_connect_and_init
 def test_send_recv(p):
   def test(p_send, p_recv):
@@ -44,6 +47,7 @@ def test_send_recv(p):
 
 
 @test_all_pandas
+@flaky(max_runs=3, min_passes=1)
 @panda_connect_and_init
 def test_latency(p):
   def test(p_send, p_recv):
@@ -75,7 +79,7 @@ def test_latency(p):
 
         num_messages = 100
 
-        for i in range(num_messages):
+        for _ in range(num_messages):
           st = time.monotonic()
           p_send.can_send(0x1ab, b"message", bus)
           r = []
@@ -166,6 +170,10 @@ def test_gen2_loopback(p):
 @test_all_pandas
 @panda_connect_and_init
 def test_bulk_write(p):
+  # TODO: doesn't work in partial test mode
+  if PARTIAL_TESTS:
+    return
+
   # The TX buffers on pandas is 0x100 in length.
   NUM_MESSAGES_PER_BUS = 10000
 
@@ -179,11 +187,10 @@ def test_bulk_write(p):
     packet += [[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]] * NUM_MESSAGES_PER_BUS
 
     # Disable timeout
+    panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
     panda.can_send_many(packet, timeout=0)
-    print(f"Done sending {4 * NUM_MESSAGES_PER_BUS} messages!")
-
-  # Set safety mode and power saving
-  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+    print(f"Done sending {4 * NUM_MESSAGES_PER_BUS} messages!", time.monotonic())
+    print(panda.health())
 
   # Start transmisson
   threading.Thread(target=flood_tx, args=(p,)).start()
@@ -195,7 +202,7 @@ def test_bulk_write(p):
   while time.monotonic() - start_time < 5 or len(rx) > old_len:
     old_len = len(rx)
     rx.extend(panda_jungle.can_recv())
-  print(f"Received {len(rx)} messages")
+  print(f"Received {len(rx)} messages", time.monotonic())
 
   # All messages should have been received
   if len(rx) != 4 * NUM_MESSAGES_PER_BUS:

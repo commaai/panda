@@ -12,7 +12,7 @@ PEDAL_SERIAL = 'none'
 PEDAL_BUS = 1
 
 class TestPedal(unittest.TestCase):
-  
+
   def setUp(self):
     self.jungle = PandaJungle(JUNGLE_SERIAL)
     self.jungle.set_panda_power(True)
@@ -48,7 +48,7 @@ class TestPedal(unittest.TestCase):
     self._flash_over_can(PEDAL_BUS, f"{BASEDIR}board/obj/pedal_usb.bin.signed")
     time.sleep(2)
     p = Panda(PEDAL_SERIAL)
-    self.assertTrue(p.is_pedal())
+    self.assertTrue(p.get_type() == Panda.HW_TYPE_PEDAL)
     p.close()
     self.assertTrue(self._listen_can_frames() > 40)
 
@@ -56,7 +56,6 @@ class TestPedal(unittest.TestCase):
     subprocess.check_output(f"cd {BASEDIR} && PEDAL=1 scons", shell=True)
     self._flash_over_can(PEDAL_BUS, f"{BASEDIR}board/obj/pedal.bin.signed")
     time.sleep(2)
-    self.assertTrue(PEDAL_SERIAL not in Panda.list())
     self.assertTrue(self._listen_can_frames() > 40)
 
 

@@ -10,14 +10,12 @@ repos:
     rev: v0.910-1
     hooks:
     -   id: mypy
-        exclude: '^(tests/automated)/'
         additional_dependencies: ['git+https://github.com/numpy/numpy-stubs', 'types-requests', 'types-atomicwrites',
                                   'types-pycurl']
 -   repo: https://github.com/PyCQA/flake8
     rev: 4.0.1
     hooks:
     -   id: flake8
-        exclude: '^(tests/automated)/'
         args:
         - --select=F,E112,E113,E304,E501,E502,E701,E702,E703,E71,E72,E731,W191,W6
         - --exclude=tests/gmbitbang/*
@@ -30,7 +28,9 @@ repos:
         entry: pylint
         language: system
         types: [python]
-        exclude: '^(tests/automated)/'
         args:
+        - -rn
+        - -sn
+        - -j0
         - --disable=C,R,W0613,W0511,W0212,W0201,W0311,W0106,W0603,W0621,W0703,E1136
         - --generated-members="usb1.*"

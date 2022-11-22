@@ -12,6 +12,8 @@
 #include "power_saving.h"
 #include "safety.h"
 
+#include "health.h"
+
 #include "drivers/can_common.h"
 
 #ifdef STM32H7
@@ -28,7 +30,9 @@
 // ********************* Serial debugging *********************
 
 bool check_started(void) {
-  return current_board->check_ignition() || ignition_can;
+  bool started = current_board->check_ignition() || ignition_can;
+  ignition_seen |= started;
+  return started;
 }
 
 void debug_ring_callback(uart_ring *ring) {
@@ -48,20 +52,6 @@ void debug_ring_callback(uart_ring *ring) {
     // normal reset
     if (rcv == 'x') {
       NVIC_SystemReset();
-    }
-
-    // enable CDP mode
-    if (rcv == 'C') {
-      puts("switching USB to CDP mode\n");
-      current_board->set_usb_power_mode(USB_POWER_CDP);
-    }
-    if (rcv == 'c') {
-      puts("switching USB to client mode\n");
-      current_board->set_usb_power_mode(USB_POWER_CLIENT);
-    }
-    if (rcv == 'D') {
-      puts("switching USB to DCP mode\n");
-      current_board->set_usb_power_mode(USB_POWER_DCP);
     }
   }
 }
@@ -83,7 +73,8 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       }
     }
   }
-  blocked_msg_cnt = 0;
+  safety_tx_blocked = 0;
+  safety_rx_invalid = 0;
 
   switch (mode_copy) {
     case SAFETY_SILENT:
@@ -129,6 +120,7 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
 bool is_car_safety_mode(uint16_t mode) {
   return (mode != SAFETY_SILENT) &&
          (mode != SAFETY_NOOUTPUT) &&
+         (mode != SAFETY_ALLOUTPUT) &&
          (mode != SAFETY_ELM327);
 }
 
@@ -155,11 +147,12 @@ void tick_handler(void) {
     // siren
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
 
+    // tick drivers at 8Hz
+    fan_tick();
+
     // decimated to 1Hz
     if (loop_counter == 0U) {
       can_live = pending_can_live;
-
-      current_board->usb_power_mode_tick(uptime_cnt);
 
       //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
 
@@ -175,19 +168,25 @@ void tick_handler(void) {
         puts("tx3:"); puth4(can_tx3_q.r_ptr); puts("-"); puth4(can_tx3_q.w_ptr); puts("\n");
       #endif
 
-      // Tick drivers
-      fan_tick();
-
       // set green LED to be controls allowed
-      current_board->set_led(LED_GREEN, controls_allowed | green_led_enabled);
+      current_board->set_led(LED_GREEN, controls_allowed);
 
       // turn off the blue LED, turned on by CAN
       // unless we are in power saving mode
       current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
 
+      // tick drivers at 1Hz
+      const bool recent_heartbeat = heartbeat_counter == 0U;
+      current_board->board_tick(check_started(), usb_enumerated, recent_heartbeat);
+
       // increase heartbeat counter and cap it at the uint32 limit
       if (heartbeat_counter < __UINT32_MAX__) {
         heartbeat_counter += 1U;
+      }
+
+      // disabling heartbeat not allowed while in safety mode
+      if (is_car_safety_mode(current_safety_mode)) {
+        heartbeat_disabled = false;
       }
 
       if (siren_countdown > 0U) {
@@ -232,6 +231,7 @@ void tick_handler(void) {
           if (current_safety_mode != SAFETY_SILENT) {
             set_safety_mode(SAFETY_SILENT, 0U);
           }
+
           if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
             set_power_save_state(POWER_SAVE_STATUS_ENABLED);
           }
@@ -239,17 +239,13 @@ void tick_handler(void) {
           // Also disable IR when the heartbeat goes missing
           current_board->set_ir_power(0U);
 
+          // TODO: need a SPI equivalent
           // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
-          if(usb_enumerated){
-            current_board->set_fan_power(50U);
+          if (usb_enumerated) {
+            fan_set_power(50U);
           } else {
-            current_board->set_fan_power(0U);
+            fan_set_power(0U);
           }
-        }
-
-        // enter CDP mode when car starts to ensure we are charging a turned off EON
-        if (check_started() && ((usb_power_mode != USB_POWER_CDP) || !usb_enumerated)) {
-          current_board->set_usb_power_mode(USB_POWER_CDP);
         }
       }
 
@@ -281,7 +277,6 @@ void EXTI_IRQ_Handler(void) {
     exti_irq_clear();
     clock_init();
 
-    current_board->set_usb_power_mode(USB_POWER_CDP);
     set_power_save_state(POWER_SAVE_STATUS_DISABLED);
     deepsleep_allowed = false;
     heartbeat_counter = 0U;
@@ -319,7 +314,6 @@ int main(void) {
   // init early devices
   clock_init();
   peripherals_init();
-  detect_external_debug_serial();
   detect_board_type();
   adc_init();
 
@@ -334,20 +328,12 @@ int main(void) {
 
   puts("Config:\n");
   puts("  Board type: "); puts(current_board->board_type); puts("\n");
-  puts(has_external_debug_serial ? "  Real serial\n" : "  USB serial\n");
 
   // init board
   current_board->init();
 
   // panda has an FPU, let's use it!
   enable_fpu();
-
-  // enable main uart if it's connected
-  if (has_external_debug_serial) {
-    // WEIRDNESS: without this gate around the UART, it would "crash", but only if the ESP is enabled
-    // assuming it's because the lines were left floating and spurious noise was on them
-    uart_init(&uart_ring_debug, 115200);
-  }
 
   if (current_board->has_gps) {
     uart_init(&uart_ring_gps, 9600);
@@ -356,12 +342,16 @@ int main(void) {
     uart_init(&uart_ring_gps, 115200);
   }
 
-  if(current_board->has_lin){
+  if (current_board->has_lin) {
     // enable LIN
     uart_init(&uart_ring_lin1, 10400);
     UART5->CR2 |= USART_CR2_LINEN;
     uart_init(&uart_ring_lin2, 10400);
     USART3->CR2 |= USART_CR2_LINEN;
+  }
+
+  if (current_board->fan_max_rpm > 0U) {
+    llfan_init();
   }
 
   microsecond_timer_init();
@@ -382,6 +372,12 @@ int main(void) {
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
 
+#ifdef ENABLE_SPI
+  if (current_board->has_spi) {
+    spi_init();
+  }
+#endif
+
   puts("**** INTERRUPTS ON ****\n");
   enable_interrupts();
 
@@ -391,19 +387,17 @@ int main(void) {
   for (cnt=0;;cnt++) {
     if (power_save_status == POWER_SAVE_STATUS_DISABLED) {
       #ifdef DEBUG_FAULTS
-      if(fault_status == FAULT_STATUS_NONE){
+      if (fault_status == FAULT_STATUS_NONE) {
       #endif
-        uint32_t div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4U : 1U);
-
         // useful for debugging, fade breaks = panda is overloaded
-        for(uint32_t fade = 0U; fade < MAX_LED_FADE; fade += div_mode){
+        for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {
           current_board->set_led(LED_RED, true);
           delay(fade >> 4);
           current_board->set_led(LED_RED, false);
           delay((MAX_LED_FADE - fade) >> 4);
         }
 
-        for(uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= div_mode){
+        for (uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= 1U) {
           current_board->set_led(LED_RED, true);
           delay(fade >> 4);
           current_board->set_led(LED_RED, false);
@@ -419,10 +413,9 @@ int main(void) {
         }
       #endif
     } else {
-      if (deepsleep_allowed && !usb_enumerated && !check_started()) {
+      if (deepsleep_allowed && !usb_enumerated && !check_started() && ignition_seen && (heartbeat_counter > 20U)) {
         usb_soft_disconnect(true);
-        current_board->set_fan_power(0U);
-        current_board->set_usb_power_mode(USB_POWER_CLIENT);
+        fan_set_power(0U);
         NVIC_DisableIRQ(TICK_TIMER_IRQ);
         delay(512000U);
 
