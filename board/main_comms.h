@@ -155,7 +155,7 @@ void comms_can_write(uint8_t *data, uint32_t len) {
 void comms_endpoint2_write(uint8_t *data, uint32_t len) {
   uart_ring *ur = get_ring_by_number(data[0]);
   if ((len != 0U) && (ur != NULL)) {
-    if ((data[0] < 2U) || safety_tx_lin_hook(data[0] - 2U, &data[1], len - 1U)) {
+    if ((data[0] < 2U) || (data[0] >= 4U) || safety_tx_lin_hook(data[0] - 2U, &data[1], len - 1U)) {
       for (uint32_t i = 1; i < len; i++) {
         while (!putc(ur, data[i])) {
           // wait
@@ -525,17 +525,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         }
       }
       break;
-    // **** 0xf5: set clock source mode
-    case 0xf5:
-      current_board->set_clock_source_mode(req->param1);
-      break;
     // **** 0xf6: set siren enabled
     case 0xf6:
       siren_enabled = (req->param1 != 0U);
-      break;
-    // **** 0xf7: set green led enabled
-    case 0xf7:
-      green_led_enabled = (req->param1 != 0U);
       break;
     // **** 0xf8: disable heartbeat checks
     case 0xf8:
