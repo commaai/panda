@@ -57,6 +57,9 @@ asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U};
 uint32_t total_rx_size = 0U;
 bool add_magic = true;
 
+// we read and write CAN buffers of the format:
+// CAN_TRANSACTION_MAGIC + N*CANPacket_t
+// comms_can_read will output max_len sized chunks of this buffer
 int comms_can_read(uint8_t *data, uint32_t max_len) {
   uint32_t pos = 0U;
   bool added_magic = false;
@@ -117,7 +120,7 @@ asm_buffer can_write_buffer = {.ptr = 0U, .tail_size = 0U};
 // send on CAN
 void comms_can_write(uint8_t *data, uint32_t len) {
   uint32_t pos = 0U;
-  
+
   if (*((uint32_t *)(void *) &data[0]) == CAN_TRANSACTION_MAGIC) {
     // Got first packet from a stream, resetting buffer and counter
     can_write_buffer.ptr = 0U;
