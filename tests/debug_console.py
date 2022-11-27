@@ -12,13 +12,14 @@ from panda import Panda  # noqa: E402
 setcolor = ["\033[1;32;40m", "\033[1;31;40m"]
 unsetcolor = "\033[00m"
 
+port_number = int(os.getenv("PORT", "0"))
+claim = os.getenv("CLAIM") is not None
+no_color = os.getenv("NO_COLOR") is not None
+no_reconnect = os.getenv("NO_RECONNECT") is not None
+
 if __name__ == "__main__":
   while True:
     try:
-      port_number = int(os.getenv("PORT", "0"))
-      claim = os.getenv("CLAIM") is not None
-      no_color = os.getenv("NO_COLOR") is not None
-
       serials = Panda.list()
       if os.getenv("SERIAL"):
         serials = [x for x in serials if x == os.getenv("SERIAL")]
@@ -27,7 +28,11 @@ if __name__ == "__main__":
       decoders = [codecs.getincrementaldecoder('utf-8')() for _ in pandas]
 
       if not len(pandas):
-        sys.exit("no pandas found")
+        print("no pandas found")
+        if no_reconnect:
+          sys.exit(0)
+        time.sleep(1)
+        continue
 
       if os.getenv("BAUD") is not None:
         for panda in pandas:
