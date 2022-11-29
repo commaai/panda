@@ -61,6 +61,7 @@ typedef struct {
   const int inactive_accel;
 
   // gas/regen & brake cmd limits
+  // inactive and min gas are 0 on most safety modes
   const int max_gas;
   const int min_gas;
   const int inactive_gas;
