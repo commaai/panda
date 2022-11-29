@@ -22,12 +22,15 @@ void common_init_gpio(void) {
   /// E2,E3,E4: RGB LED
   set_gpio_pullup(GPIOE, 2, PULL_NONE);
   set_gpio_mode(GPIOE, 2, MODE_OUTPUT);
+  set_gpio_output_type(GPIOE, 2, OUTPUT_TYPE_OPEN_DRAIN);
 
   set_gpio_pullup(GPIOE, 3, PULL_NONE);
   set_gpio_mode(GPIOE, 3, MODE_OUTPUT);
+  set_gpio_output_type(GPIOE, 3, OUTPUT_TYPE_OPEN_DRAIN);
 
   set_gpio_pullup(GPIOE, 4, PULL_NONE);
   set_gpio_mode(GPIOE, 4, MODE_OUTPUT);
+  set_gpio_output_type(GPIOE, 4, OUTPUT_TYPE_OPEN_DRAIN);
 
   // F7,F8,F9,F10: BOARD ID
   set_gpio_pullup(GPIOF, 7, PULL_NONE);
@@ -82,6 +85,7 @@ void common_init_gpio(void) {
 
 void flasher_peripherals_init(void) {
   RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN;
+  RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;
 }
 
 // Peripheral initialization
@@ -95,8 +99,12 @@ void peripherals_init(void) {
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOFEN;
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOGEN;
 
+  RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;  // SPI
+  RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;  // SPI DMA
   RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;  // main counter
+  RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;  // fan pwm
   RCC->APB1LENR |= RCC_APB1LENR_TIM6EN;  // interrupt timer
+  RCC->APB1LENR |= RCC_APB1LENR_UART7EN;  // SOM uart
   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // clock source timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop
 

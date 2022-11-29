@@ -107,16 +107,21 @@ class HyundaiLongitudinalBase:
     """
       SET and RESUME enter controls allowed on their falling edge.
     """
-    for btn in range(8):
-      self.safety.set_controls_allowed(0)
-      for _ in range(10):
-        self._rx(self._button_msg(btn))
-        self.assertFalse(self.safety.get_controls_allowed())
-
-      # should enter controls allowed on falling edge
-      if btn in (Buttons.RESUME, Buttons.SET):
+    for btn_prev in range(8):
+      for btn_cur in range(8):
         self._rx(self._button_msg(Buttons.NONE))
-        self.assertTrue(self.safety.get_controls_allowed())
+        self.safety.set_controls_allowed(0)
+        for _ in range(10):
+          self._rx(self._button_msg(btn_prev))
+          self.assertFalse(self.safety.get_controls_allowed())
+
+        # should enter controls allowed on falling edge and not transitioning to cancel
+        should_enable = btn_cur != btn_prev and \
+                        btn_cur != Buttons.CANCEL and \
+                        btn_prev in (Buttons.RESUME, Buttons.SET)
+
+        self._rx(self._button_msg(btn_cur))
+        self.assertEqual(should_enable, self.safety.get_controls_allowed())
 
   def test_cancel_button(self):
     self.safety.set_controls_allowed(1)

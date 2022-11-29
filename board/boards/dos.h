@@ -139,6 +139,15 @@ void dos_init(void) {
   set_gpio_output(GPIOC, 10, 1);
   set_gpio_output(GPIOC, 11, 1);
 
+#ifdef ENABLE_SPI
+  // A4-A7: SPI
+  set_gpio_alternate(GPIOA, 4, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 5, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 6, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 7, GPIO_AF5_SPI1);
+  register_set_bits(&(GPIOA->OSPEEDR), GPIO_OSPEEDER_OSPEEDR4 | GPIO_OSPEEDER_OSPEEDR5 | GPIO_OSPEEDER_OSPEEDR6 | GPIO_OSPEEDER_OSPEEDR7);
+#endif
+
   // C8: FAN PWM aka TIM3_CH3
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
 
@@ -146,10 +155,6 @@ void dos_init(void) {
   set_gpio_alternate(GPIOB, 7, GPIO_AF2_TIM4);
   pwm_init(TIM4, 2);
   dos_set_ir_power(0U);
-
-  // Initialize fan and set to 0%
-  fan_init();
-  dos_set_fan_enabled(false);
 
   // Initialize harness
   harness_init();
@@ -202,6 +207,11 @@ const board board_dos = {
   .has_hw_gmlan = false,
   .has_obd = true,
   .has_lin = false,
+#ifdef ENABLE_SPI
+  .has_spi = true,
+#else
+  .has_spi = false,
+#endif
   .has_canfd = false,
   .has_rtc_battery = true,
   .fan_max_rpm = 6500U,
