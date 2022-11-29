@@ -199,10 +199,7 @@ class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety):
         send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == self.INACTIVE_ACCEL
         self.safety.set_controls_allowed(controls_allowed)
         # primary accel request used by ECU
-        # print()
-        sent = self._tx(self._accel_msg(accel))
-        print(controls_allowed, accel, bool(sent))
-        self.assertEqual(send, sent, (controls_allowed, accel))
+        self.assertEqual(send, self._tx(self._accel_msg(accel)), (controls_allowed, accel))
 
 
 if __name__ == "__main__":
