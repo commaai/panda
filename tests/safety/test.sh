@@ -4,7 +4,7 @@
 # Make sure test fails if one HW_TYPE fails
 set -e
 
-scons -u --test
+scons -u
 
 for hw_type in {0..7}; do
   echo "Testing HW_TYPE: $hw_type"
