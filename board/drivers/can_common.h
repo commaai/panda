@@ -173,7 +173,7 @@ bus_config_t bus_config[] = {
 
 void can_init_all(void) {
   bool ret = true;
-  for (uint8_t i=0U; i < CAN_CNT; i++) {
+  for (uint8_t i=0U; i < PANDA_CAN_CNT; i++) {
     if (!current_board->has_canfd) {
       bus_config[i].can_data_speed = 0U;
     }
@@ -228,7 +228,7 @@ bool can_tx_check_min_slots_free(uint32_t min) {
 
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
   if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
-    if (bus_number < BUS_CNT) {
+    if (bus_number < PANDA_BUS_CNT) {
       // add CAN packet to send queue
       if ((bus_number == 3U) && (bus_config[3].can_num_lookup == 0xFFU)) {
         gmlan_send_errs += bitbang_gmlan(to_push) ? 0U : 1U;

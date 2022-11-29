@@ -12,6 +12,4 @@
 #define MAX_CAN_MSGS_PER_BULK_TRANSFER 51U
 #define MAX_EP1_CHUNK_PER_BULK_TRANSFER 16256U // max data stream chunk in bytes, shouldn't be higher than 16320 or counter will overflow
 
-#define CAN_CNT 3U
-#define BUS_CNT 4U
 #define CAN_INIT_TIMEOUT_MS 500U
