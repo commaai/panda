@@ -76,8 +76,9 @@ static int ford_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed, bool gas_allowed) {
   UNUSED(longitudinal_allowed);
+  UNUSED(gas_allowed);
 
   int tx = 1;
   int addr = GET_ADDR(to_send);

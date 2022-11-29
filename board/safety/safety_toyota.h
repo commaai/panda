@@ -130,7 +130,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed, bool gas_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -145,7 +145,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
     // GAS PEDAL: safety check
     if (addr == 0x200) {
-      if (!longitudinal_allowed) {
+      if (!gas_allowed) {
         if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
           tx = 0;
         }

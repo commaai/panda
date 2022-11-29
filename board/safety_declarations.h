@@ -95,6 +95,7 @@ bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
   const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
   const int MAX_ALLOWANCE, const int DRIVER_FACTOR);
 bool get_longitudinal_allowed(void);
+bool get_gas_allowed(bool longitudinal_allowed);
 bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 float interpolate(struct lookup_t xy, float x);
 void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]);
@@ -117,7 +118,7 @@ void pcm_cruise_check(bool cruise_engaged);
 
 typedef const addr_checks* (*safety_hook_init)(uint16_t param);
 typedef int (*rx_hook)(CANPacket_t *to_push);
-typedef int (*tx_hook)(CANPacket_t *to_send, bool longitudinal_allowed);
+typedef int (*tx_hook)(CANPacket_t *to_send, bool longitudinal_allowed, bool gas_allowed);
 typedef int (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
 typedef int (*fwd_hook)(int bus_num, CANPacket_t *to_fwd);
 

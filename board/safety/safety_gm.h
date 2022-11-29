@@ -161,7 +161,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 // else
 //     block all commands that produce actuation
 
-static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed, bool gas_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -243,7 +243,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
     // Disabled message is !engaged with gas
     // value that corresponds to inactive regen.
-    if (!longitudinal_allowed) {
+    if (!gas_allowed) {
       if (gas_regen != gm_long_limits->inactive_regen) {
         tx = 0;
       }

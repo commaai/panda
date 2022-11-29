@@ -73,7 +73,9 @@ int safety_rx_hook(CANPacket_t *to_push) {
 }
 
 int safety_tx_hook(CANPacket_t *to_send) {
-  return (relay_malfunction ? -1 : current_hooks->tx(to_send, get_longitudinal_allowed()));
+  bool longitudinal_allowed = get_longitudinal_allowed();
+  bool gas_allowed = get_gas_allowed(longitudinal_allowed);
+  return (relay_malfunction ? -1 : current_hooks->tx(to_send, longitudinal_allowed, gas_allowed));
 }
 
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
@@ -85,8 +87,13 @@ int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 }
 
 bool get_longitudinal_allowed(void) {
-  // No longitudinal control when overriding with gas, or enabling at a stop with brake
-  return controls_allowed && !gas_pressed_prev && !brake_pressed_prev;
+  // No longitudinal control when overriding with gas
+  return controls_allowed && !gas_pressed_prev;
+}
+
+bool get_gas_allowed(bool longitudinal_allowed) {
+  // No +acceleration/gas command while pre-enabled at a stop with brake
+  return longitudinal_allowed && !brake_pressed_prev;
 }
 
 // Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8

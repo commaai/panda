@@ -225,7 +225,7 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int hyundai_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int hyundai_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed, bool gas_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -264,6 +264,13 @@ static int hyundai_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         violation = 1;
       }
     }
+
+    if (!gas_allowed) {
+      if ((desired_accel_raw <= 0) || (desired_accel_val <= 0)) {
+        violation = 1;
+      }
+    }
+
     violation |= max_limit_check(desired_accel_raw, HYUNDAI_MAX_ACCEL, HYUNDAI_MIN_ACCEL);
     violation |= max_limit_check(desired_accel_val, HYUNDAI_MAX_ACCEL, HYUNDAI_MIN_ACCEL);
 
