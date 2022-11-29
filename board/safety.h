@@ -489,15 +489,21 @@ float interpolate(struct lookup_t xy, float x) {
 // Safety checks for longitudinal actuation
 bool long_accel_checks(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed) {
   bool violation = false;
-  violation |= !longitudinal_allowed && (desired_accel != limits.inactive_accel);
-  violation |= max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
+  if (!longitudinal_allowed) {
+    violation |= desired_accel != limits.inactive_accel;
+  } else {
+    violation |= max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
+  }
   return violation;
 }
 
 bool long_gas_checks(int desired_gas, const LongitudinalLimits limits, const bool longitudinal_allowed) {
   bool violation = false;
-  violation |= !longitudinal_allowed && (desired_gas != limits.inactive_gas);
-  violation |= max_limit_check(desired_gas, limits.max_gas, limits.min_gas);
+  if (!longitudinal_allowed) {
+    violation |= desired_gas != limits.inactive_gas;
+  } else {
+    violation |= max_limit_check(desired_gas, limits.max_gas, limits.min_gas);
+  }
   return violation;
 }
 
