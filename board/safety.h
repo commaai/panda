@@ -495,6 +495,27 @@ float interpolate(struct lookup_t xy, float x) {
 }
 
 
+bool long_accel_check(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed, const bool gas_allowed) {
+  bool violation = false;
+
+  if (!longitudinal_allowed) {
+    if (desired_accel != 0) {
+      violation = true;
+    }
+  }
+
+  if (!gas_allowed) {
+    if (desired_accel > 0) {
+      violation = true;
+    }
+  }
+
+  violation |= max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
+
+  return violation;
+}
+
+
 // Safety checks for torque-based steering commands
 bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits) {
   bool violation = false;

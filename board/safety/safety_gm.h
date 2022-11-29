@@ -16,28 +16,28 @@ const int GM_MAX_RATE_DOWN = 17;
 const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
 const int GM_DRIVER_TORQUE_FACTOR = 4;
 
-typedef struct {
-  const int max_gas;
-  const int max_regen;
-  const int inactive_regen;
-  const int max_brake;
-} GmLongLimits;
+//typedef struct {
+//  const int max_gas;
+//  const int max_regen;
+//  const int inactive_regen;
+//  const int max_brake;
+//} GmLongLimits;
 
-const GmLongLimits GM_ASCM_LONG_LIMITS = {
+const LongitudinalLimits GM_ASCM_LONG_LIMITS = {
   .max_gas = 3072,
   .max_regen = 1404,
   .inactive_regen = 1404,
   .max_brake = 400,
 };
 
-const GmLongLimits GM_CAM_LONG_LIMITS = {
+const LongitudinalLimits GM_CAM_LONG_LIMITS = {
   .max_gas = 3400,
   .max_regen = 1514,
   .inactive_regen = 1554,
   .max_brake = 400,
 };
 
-const GmLongLimits *gm_long_limits;
+const LongitudinalLimits *gm_long_limits;
 
 const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
 

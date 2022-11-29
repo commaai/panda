@@ -18,6 +18,11 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
 // longitudinal limits
 const int TOYOTA_MAX_ACCEL = 2000;        // 2.0 m/s2
 const int TOYOTA_MIN_ACCEL = -3500;       // -3.5 m/s2
+const LongitudinalLimits TOYOTA_LONG_LIMITS = {
+  .max_accel = 2000,   // 2.0 m/s2
+  .min_accel = -2000,  // -3.5 m/s2
+};
+
 
 // panda interceptor threshold needs to be equivalent to openpilot threshold to avoid controls mismatches
 // If thresholds are mismatched then it is possible for panda to see the gas fall and rise while openpilot is in the pre-enabled state
@@ -156,6 +161,20 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed, bool 
     if (addr == 0x343) {
       int desired_accel = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
       desired_accel = to_signed(desired_accel, 16);
+      bool violation = false;
+
+      if (!longitudinal_allowed) {
+        if (desired_accel != 0) {
+          violation = true;
+        }
+      }
+
+      if (!gas_allowed) {
+        if (desired_accel > 0) {
+          violation = true;
+        }
+      }
+
       if (!longitudinal_allowed || toyota_stock_longitudinal) {
         if (desired_accel != 0) {
           tx = 0;

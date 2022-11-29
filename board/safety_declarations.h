@@ -55,6 +55,18 @@ typedef struct {
 } SteeringLimits;
 
 typedef struct {
+  // acceleration cmd limits
+  const int max_accel;
+  const int min_accel;
+
+  // gas/regen & brake cmd limits
+  const int max_gas;
+  const int max_regen;
+  const int inactive_regen;
+  const int max_brake;
+} LongitudinalLimits;
+
+typedef struct {
   const int addr;
   const int bus;
   const int len;
