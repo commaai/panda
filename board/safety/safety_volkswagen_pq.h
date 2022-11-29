@@ -209,12 +209,8 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
     // Signal: ACC_System.ACS_Sollbeschl (acceleration in m/s2, scale 0.005, offset -7.22)
     desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
-    // VW send one increment above the max range when inactive
-    if (desired_accel == 3010) {
-      desired_accel = 0;
-    }
-
-    if (!longitudinal_allowed && (desired_accel != 0)) {
+    // VW sends one increment above the max range when inactive
+    if (!longitudinal_allowed && (desired_accel != 3010)) {
       violation = 1;
     }
 
