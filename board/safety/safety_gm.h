@@ -16,28 +16,21 @@ const int GM_MAX_RATE_DOWN = 17;
 const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
 const int GM_DRIVER_TORQUE_FACTOR = 4;
 
-typedef struct {
-  const int max_gas;
-  const int max_regen;
-  const int inactive_regen;
-  const int max_brake;
-} GmLongLimits;
-
-const GmLongLimits GM_ASCM_LONG_LIMITS = {
+const LongitudinalLimits GM_ASCM_LONG_LIMITS = {
   .max_gas = 3072,
-  .max_regen = 1404,
-  .inactive_regen = 1404,
+  .min_gas = 1404,
+  .inactive_gas = 1404,
   .max_brake = 400,
 };
 
-const GmLongLimits GM_CAM_LONG_LIMITS = {
+const LongitudinalLimits GM_CAM_LONG_LIMITS = {
   .max_gas = 3400,
-  .max_regen = 1514,
-  .inactive_regen = 1554,
+  .min_gas = 1514,
+  .inactive_gas = 1554,
   .max_brake = 400,
 };
 
-const GmLongLimits *gm_long_limits;
+const LongitudinalLimits *gm_long_limits;
 
 const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
 
@@ -180,12 +173,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (addr == 789) {
     int brake = ((GET_BYTE(to_send, 0) & 0xFU) << 8) + GET_BYTE(to_send, 1);
     brake = (0x1000 - brake) & 0xFFF;
-    if (!longitudinal_allowed) {
-      if (brake != 0) {
-        tx = 0;
-      }
-    }
-    if (brake > gm_long_limits->max_brake) {
+    if (long_brake_checks(brake, *gm_long_limits, longitudinal_allowed)) {
       tx = 0;
     }
   }
@@ -241,22 +229,14 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   // GAS/REGEN: safety check
   if (addr == 715) {
     int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
-    // Disabled message is !engaged with gas
-    // value that corresponds to inactive regen.
-    if (!longitudinal_allowed) {
-      if (gas_regen != gm_long_limits->inactive_regen) {
-        tx = 0;
-      }
-    }
-    // Need to allow apply bit in pre-enabled and overriding states
-    if (!controls_allowed) {
-      bool apply = GET_BIT(to_send, 0U) != 0U;
-      if (apply) {
-        tx = 0;
-      }
-    }
-    // Enforce gas/regen actuation limits (max_regen <= gas_regen <= max_gas)
-    if ((gas_regen < gm_long_limits->max_regen) || (gas_regen > gm_long_limits->max_gas)) {
+    bool apply = GET_BIT(to_send, 0U) != 0U;
+
+    bool violation = false;
+    // Allow apply bit in pre-enabled and overriding states
+    violation |= !controls_allowed && apply;
+    violation |= long_gas_checks(gas_regen, *gm_long_limits, longitudinal_allowed);
+
+    if (violation) {
       tx = 0;
     }
   }
