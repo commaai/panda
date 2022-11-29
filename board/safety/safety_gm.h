@@ -1,20 +1,13 @@
-// board enforces
-//   in-state
-//      accel set/resume
-//   out-state
-//      cancel button
-//      regen paddle
-//      accel rising edge
-//      brake rising edge
-//      brake > 0mph
-
-const int GM_MAX_STEER = 300;
-const int GM_MAX_RT_DELTA = 128;          // max delta torque allowed for real time checks
-const uint32_t GM_RT_INTERVAL = 250000;    // 250ms between real time checks
-const int GM_MAX_RATE_UP = 7;
-const int GM_MAX_RATE_DOWN = 17;
-const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
-const int GM_DRIVER_TORQUE_FACTOR = 4;
+const SteeringLimits GM_STEERING_LIMITS = {
+  .max_steer = 300,
+  .max_rate_up = 7,
+  .max_rate_down = 17,
+  .driver_torque_allowance = 50,
+  .driver_torque_factor = 4,
+  .max_rt_delta = 128,
+  .max_rt_interval = 250000,
+  .type = TorqueDriverLimited,
+};
 
 const LongitudinalLimits GM_ASCM_LONG_LIMITS = {
   .max_gas = 3072,
@@ -181,47 +174,9 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   // LKA STEER: safety check
   if (addr == 384) {
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1);
-    uint32_t ts = microsecond_timer_get();
-    bool violation = 0;
     desired_torque = to_signed(desired_torque, 11);
 
-    if (controls_allowed) {
-
-      // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, GM_MAX_STEER, -GM_MAX_STEER);
-
-      // *** torque rate limit check ***
-      violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-        GM_MAX_STEER, GM_MAX_RATE_UP, GM_MAX_RATE_DOWN,
-        GM_DRIVER_TORQUE_ALLOWANCE, GM_DRIVER_TORQUE_FACTOR);
-
-      // used next time
-      desired_torque_last = desired_torque;
-
-      // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, GM_MAX_RT_DELTA);
-
-      // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_torque_check_last);
-      if (ts_elapsed > GM_RT_INTERVAL) {
-        rt_torque_last = desired_torque;
-        ts_torque_check_last = ts;
-      }
-    }
-
-    // no torque if controls is not allowed
-    if (!controls_allowed && (desired_torque != 0)) {
-      violation = 1;
-    }
-
-    // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !controls_allowed) {
-      desired_torque_last = 0;
-      rt_torque_last = 0;
-      ts_torque_check_last = ts;
-    }
-
-    if (violation) {
+    if (steer_torque_cmd_checks(desired_torque, -1, GM_STEERING_LIMITS)) {
       tx = 0;
     }
   }

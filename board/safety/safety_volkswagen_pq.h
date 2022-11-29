@@ -17,6 +17,7 @@ const SteeringLimits VOLKSWAGEN_PQ_STEERING_LIMITS = {
 const LongitudinalLimits VOLKSWAGEN_LONG_LIMITS = {
   .max_accel = 2000,
   .min_accel = -3500,
+  .inactive_accel = 3010,
 };
 
 #define MSG_LENKHILFE_3         0x0D0   // RX from EPS, for steering angle and driver steering torque
@@ -211,11 +212,7 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
     // Signal: ACC_System.ACS_Sollbeschl (acceleration in m/s2, scale 0.005, offset -7.22)
     desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
-    // VW send one increment above the max range when inactive // TODO: remove me
-    if (desired_accel == 3010) {
-      desired_accel = 0;
-    }
-
+    // VW sends one increment above the max range when inactive
     violation |= long_accel_checks(desired_accel, VOLKSWAGEN_LONG_LIMITS, longitudinal_allowed);
 
     if (violation) {
