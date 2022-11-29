@@ -20,6 +20,15 @@ const int HONDA_BOSCH_NO_GAS_VALUE = -30000; // value sent when not requesting g
 const int HONDA_BOSCH_GAS_MAX = 2000;
 const int HONDA_BOSCH_ACCEL_MIN = -350; // max braking == -3.5m/s2
 
+const LongitudinalLimits HONDA_BOSCH_LONG_LIMITS = {
+  .min_gas = 2000,
+  .max_gas = 2000,
+  .inactive_gas = -30000,
+
+  .max_accel = 200,
+  .min_accel = -350,
+};
+
 // Nidec and bosch radarless has the powertrain bus on bus 0
 AddrCheckStruct honda_common_addr_checks[] = {
   {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},                   // SCM_BUTTONS
@@ -297,23 +306,32 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if ((addr == 0x1DF) && (bus == bus_pt)) {
     int accel = (GET_BYTE(to_send, 3) << 3) | ((GET_BYTE(to_send, 4) >> 5) & 0x7U);
     accel = to_signed(accel, 11);
-    if (!longitudinal_allowed) {
-      if (accel != 0) {
-        tx = 0;
-      }
-    }
-    if (accel < HONDA_BOSCH_ACCEL_MIN) {
-      tx = 0;
-    }
+
+    bool violation = false;
+    violation |= long_accel_checks(accel, HONDA_BOSCH_LONG_LIMITS, longitudinal_allowed);
+//    if (!longitudinal_allowed) {
+//      if (accel != 0) {
+//        tx = 0;
+//      }
+//    }
+//    if (accel < HONDA_BOSCH_ACCEL_MIN) {
+//      tx = 0;
+//    }
 
     int gas = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
     gas = to_signed(gas, 16);
-    if (!longitudinal_allowed) {
-      if (gas != HONDA_BOSCH_NO_GAS_VALUE) {
-        tx = 0;
-      }
-    }
-    if (gas > HONDA_BOSCH_GAS_MAX) {
+    violation |= long_gas_checks(gas, HONDA_BOSCH_LONG_LIMITS, longitudinal_allowed);
+
+//    if (!longitudinal_allowed) {
+//      if (gas != HONDA_BOSCH_NO_GAS_VALUE) {
+//        tx = 0;
+//      }
+//    }
+//    if (gas > HONDA_BOSCH_GAS_MAX) {
+//      tx = 0;
+//    }
+
+    if (violation) {
       tx = 0;
     }
   }
