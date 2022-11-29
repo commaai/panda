@@ -1,4 +1,5 @@
 #include "safety_declarations.h"
+#include "can_definitions.h"
 
 // include the safety policies.
 #include "safety/safety_defaults.h"
@@ -17,10 +18,6 @@
 #include "safety/safety_volkswagen_pq.h"
 #include "safety/safety_elm327.h"
 #include "safety/safety_body.h"
-
-#ifdef STM32H7
-#define CANFD
-#endif
 
 // CAN-FD only safety modes
 #ifdef CANFD
