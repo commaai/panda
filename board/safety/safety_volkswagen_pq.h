@@ -210,11 +210,11 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
     desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
     // VW sends one increment above the max range when inactive
-    if (!longitudinal_allowed && (desired_accel != 3010)) {
-      violation = 1;
+    if (!longitudinal_allowed) {
+      violation |= desired_accel != 3010;
+    } else {
+      violation |= max_limit_check(desired_accel, VOLKSWAGEN_PQ_MAX_ACCEL, VOLKSWAGEN_PQ_MIN_ACCEL);
     }
-
-    violation |= max_limit_check(desired_accel, VOLKSWAGEN_PQ_MAX_ACCEL, VOLKSWAGEN_PQ_MIN_ACCEL);
 
     if (violation) {
       tx = 0;
