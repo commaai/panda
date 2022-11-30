@@ -159,7 +159,7 @@ const SteeringLimits MAZDA_2019_STEERING_LIMITS = {
   .max_steer = 8000,
   .max_rate_up = 45,
   .max_rate_down = 80,
-  .max_rt_delta = 300,
+  .max_rt_delta = 3500,
   .max_rt_interval = 250000,
   .driver_torque_factor = 1,
   .driver_torque_allowance = 2000,
@@ -255,7 +255,7 @@ static int mazda_2019_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     if (addr == MAZDA_2019_LKAS) {
       int desired_torque = ((GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1)); // signal is signed
       if (steer_torque_cmd_checks(desired_torque, -1, MAZDA_2019_STEERING_LIMITS)) {
-        tx = 0;
+        //tx = 0;
       }
     }
   }
