@@ -13,26 +13,30 @@
 #define NULL ((void*)0)
 #define COMPILE_TIME_ASSERT(pred) ((void)sizeof(char[1 - (2 * ((int)(!(pred))))]))
 
-#define MIN(a,b) \
- ({ __typeof__ (a) _a = (a); \
-     __typeof__ (b) _b = (b); \
-   (_a < _b) ? _a : _b; })
-
-#define MAX(a,b) \
- ({ __typeof__ (a) _a = (a); \
-     __typeof__ (b) _b = (b); \
-   (_a > _b) ? _a : _b; })
-
-#define ABS(a) \
- ({ __typeof__ (a) _a = (a); \
-   (_a > 0) ? _a : (-_a); })
-
 #include <stdbool.h>
-#include "panda.h"
+
+// USB definitions
+#define USB_VID 0xBBAAU
+
+#ifdef BOOTSTUB
+  #define USB_PID 0xDDEEU
+#else
+  #define USB_PID 0xDDCCU
+#endif
+
+#define USBPACKET_MAX_SIZE 0x40U
+
+#define MAX_CAN_MSGS_PER_BULK_TRANSFER 51U
+#define MAX_EP1_CHUNK_PER_BULK_TRANSFER 16256U // max data stream chunk in bytes, shouldn't be higher than 16320 or counter will overflow
+
+#define CAN_INIT_TIMEOUT_MS 500U
+
 #ifdef STM32H7
   #include "stm32h7/stm32h7_config.h"
-#else
+#elif defined(STM32F2) || defined(STM32F4)
   #include "stm32fx/stm32fx_config.h"
+#else
+  // pass, building for tests
 #endif
 
 #endif

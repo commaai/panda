@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "panda.h"
+#include "config.h"
 #include "can_definitions.h"
 #include "utils.h"
 
@@ -35,19 +35,6 @@ uint32_t microsecond_timer_get(void);
 uint8_t hw_type = HW_TYPE_UNKNOWN;
 
 // from config.h
-#define MIN(a,b)                                \
-  ({ __typeof__ (a) _a = (a);                   \
-    __typeof__ (b) _b = (b);                    \
-    _a < _b ? _a : _b; })
-
-#define MAX(a,b)                                \
-  ({ __typeof__ (a) _a = (a);                   \
-    __typeof__ (b) _b = (b);                    \
-    _a > _b ? _a : _b; })
-
-#define ABS(a)                                  \
- ({ __typeof__ (a) _a = (a);                    \
-   (_a > 0) ? _a : (-_a); })
 
 // from faults.h
 #define FAULT_RELAY_MALFUNCTION         (1U << 0)
@@ -56,12 +43,10 @@ void fault_occurred(uint32_t fault) {
 void fault_recovered(uint32_t fault) {
 }
 
-#define UNUSED(x) (void)(x)
-
 #ifndef PANDA
 #define PANDA
 #endif
-#define NULL ((void*)0)
+
 #define static
 #include "safety.h"
 
