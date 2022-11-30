@@ -55,6 +55,13 @@ typedef struct {
 } SteeringLimits;
 
 typedef struct {
+  // acceleration cmd limits
+  const int max_accel;
+  const int min_accel;
+  const int inactive_accel;
+} LongitudinalLimits;
+
+typedef struct {
   const int addr;
   const int bus;
   const int len;
@@ -113,6 +120,7 @@ void generic_rx_checks(bool stock_ecu_detected);
 void relay_malfunction_set(void);
 void relay_malfunction_reset(void);
 bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits);
+bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed);
 void pcm_cruise_check(bool cruise_engaged);
 
 typedef const addr_checks* (*safety_hook_init)(uint16_t param);
