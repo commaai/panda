@@ -178,10 +178,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   timestamp_t t;
 
 #ifdef DEBUG_COMMS
-  puts("raw control request: "); hexdump(req, sizeof(ControlPacket_t)); puts("\n");
-  puts("- request "); puth(req->request); puts("\n");
-  puts("- param1 "); puth(req->param1); puts("\n");
-  puts("- param2 "); puth(req->param2); puts("\n");
+  print("raw control request: "); hexdump(req, sizeof(ControlPacket_t)); print("\n");
+  print("- request "); puth(req->request); print("\n");
+  print("- param1 "); puth(req->param1); print("\n");
+  print("- param2 "); puth(req->param2); print("\n");
 #endif
 
   switch (req->request) {
@@ -284,18 +284,18 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         case 0:
           // only allow bootloader entry on debug builds
           #ifdef ALLOW_DEBUG
-            puts("-> entering bootloader\n");
+            print("-> entering bootloader\n");
             enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
             NVIC_SystemReset();
           #endif
           break;
         case 1:
-          puts("-> entering softloader\n");
+          print("-> entering softloader\n");
           enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
           NVIC_SystemReset();
           break;
         default:
-          puts("Bootloader mode invalid\n");
+          print("Bootloader mode invalid\n");
           break;
       }
       break;
@@ -371,7 +371,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
           } else if (req->param2 == 2U) {
             can_set_gmlan(2);
           } else {
-            puts("Invalid bus num for GMLAN CAN set\n");
+            print("Invalid bus num for GMLAN CAN set\n");
           }
         } else {
           can_set_gmlan(-1);
@@ -486,13 +486,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
       if (req->param1 == 0xFFFFU) {
-        puts("Clearing CAN Rx queue\n");
+        print("Clearing CAN Rx queue\n");
         can_clear(&can_rx_q);
       } else if (req->param1 < PANDA_BUS_CNT) {
-        puts("Clearing CAN Tx queue\n");
+        print("Clearing CAN Tx queue\n");
         can_clear(can_queues[req->param1]);
       } else {
-        puts("Clearing CAN CAN ring buffer failed: wrong bus number\n");
+        print("Clearing CAN CAN ring buffer failed: wrong bus number\n");
       }
       break;
     // **** 0xf2: Clear UART ring buffer.
@@ -500,7 +500,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       {
         uart_ring * rb = get_ring_by_number(req->param1);
         if (rb != NULL) {
-          puts("Clearing UART queue.\n");
+          print("Clearing UART queue.\n");
           clear_uart_buff(rb);
         }
         break;
@@ -564,9 +564,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       }
       break;
     default:
-      puts("NO HANDLER ");
+      print("NO HANDLER ");
       puth(req->request);
-      puts("\n");
+      print("\n");
       break;
   }
   return resp_len;
