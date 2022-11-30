@@ -278,8 +278,8 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed
     bool violation = false;
 
     if (hyundai_longitudinal) {
-      violation |= long_accel_checks(desired_accel_raw, HYUNDAI_LONG_LIMITS, longitudinal_allowed);
-      violation |= long_accel_checks(desired_accel_val, HYUNDAI_LONG_LIMITS, longitudinal_allowed);
+      violation |= longitudinal_accel_checks(desired_accel_raw, HYUNDAI_LONG_LIMITS, longitudinal_allowed);
+      violation |= longitudinal_accel_checks(desired_accel_val, HYUNDAI_LONG_LIMITS, longitudinal_allowed);
     } else {
       // only used to cancel on here
       if ((desired_accel_raw != 0) || (desired_accel_val != 0)) {
