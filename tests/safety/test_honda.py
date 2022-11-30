@@ -467,7 +467,8 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
   """
   NO_GAS = -30000
   MAX_GAS = 2000
-  MAX_BRAKE = -3.5
+  MAX_ACCEL = 2.0  # accel is used for brakes, but openpilot can set positive values
+  MIN_ACCEL = -3.5
 
   STEER_BUS = 1
   TX_MSGS = [[0xE4, 1], [0x1DF, 1], [0x1EF, 1], [0x1FA, 1], [0x30C, 1], [0x33D, 1], [0x33DA, 1], [0x33DB, 1], [0x39F, 1], [0x18DAB0F1, 1]]
@@ -509,14 +510,14 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
         accel = 0 if gas < 0 else gas / 1000
         self.safety.set_controls_allowed(controls_allowed)
         send = gas <= self.MAX_GAS if controls_allowed else gas == self.NO_GAS
-        self.assertEqual(send, self.safety.safety_tx_hook(self._send_gas_brake_msg(gas, accel)), gas)
+        self.assertEqual(send, self.safety.safety_tx_hook(self._send_gas_brake_msg(gas, accel)), (controls_allowed, gas, accel))
 
   def test_brake_safety_check(self):
     for controls_allowed in [True, False]:
-      for accel in np.arange(0, self.MAX_BRAKE - 1, -0.01):
-        accel = round(accel, 2) # floats might not hit exact boundary conditions without rounding
+      for accel in np.arange(self.MIN_ACCEL - 1, self.MAX_ACCEL + 1, 0.01):
+        accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
         self.safety.set_controls_allowed(controls_allowed)
-        send = self.MAX_BRAKE <= accel <= 0 if controls_allowed else accel == 0
+        send = self.MIN_ACCEL <= accel <= self.MAX_ACCEL if controls_allowed else accel == 0
         self.assertEqual(send, self._tx(self._send_gas_brake_msg(self.NO_GAS, accel)), (controls_allowed, accel))
 
 

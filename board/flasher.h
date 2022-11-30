@@ -59,12 +59,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       // this allows reflashing of the bootstub
       switch (req->param1) {
         case 0:
-          puts("-> entering bootloader\n");
+          print("-> entering bootloader\n");
           enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
           NVIC_SystemReset();
           break;
         case 1:
-          puts("-> entering softloader\n");
+          print("-> entering softloader\n");
           enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
           NVIC_SystemReset();
           break;
@@ -256,7 +256,7 @@ void soft_flasher_start(void) {
     REGISTER_INTERRUPT(CAN1_SCE_IRQn, CAN1_SCE_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
   #endif
 
-  puts("\n\n\n************************ FLASHER START ************************\n");
+  print("\n\n\n************************ FLASHER START ************************\n");
 
   enter_bootloader_mode = 0;
 
