@@ -157,7 +157,7 @@ const safety_hooks mazda_hooks = {
 
 const SteeringLimits MAZDA_2019_STEERING_LIMITS = {
   .max_steer = 8000,
-  .max_rate_up = 35,
+  .max_rate_up = 45,
   .max_rate_down = 80,
   .max_rt_delta = 300,
   .max_rt_interval = 250000,
