@@ -1,4 +1,5 @@
 // minimal code to fake a panda for tests
+#include <stdio.h>
 
 #include "utils.h"
 
@@ -6,8 +7,12 @@
 #define ALLOW_DEBUG
 #define PANDA
 
+void print(const char *a) {
+  printf(a);
+}
+
 void puth(unsigned int i) {
-  UNUSED(i);
+  printf("%u", i);
 }
 
 typedef struct {
