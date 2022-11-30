@@ -1,73 +1,11 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-
-#include "panda.h"
+#include "config.h"
+#include "fake_stm.h"
 #include "can_definitions.h"
-#include "utils.h"
+#include "main_declarations.h"
+#include "boards/board_declarations.h"
 
-#define CANFD
-
-typedef struct {
-  uint32_t CNT;
-} TIM_TypeDef;
-
-struct sample_t torque_meas;
-struct sample_t torque_driver;
-
-TIM_TypeDef timer;
-TIM_TypeDef *MICROSECOND_TIMER = &timer;
-uint32_t microsecond_timer_get(void);
-
-// from board_declarations.h
-#define HW_TYPE_UNKNOWN 0U
-#define HW_TYPE_WHITE_PANDA 1U
-#define HW_TYPE_GREY_PANDA 2U
-#define HW_TYPE_BLACK_PANDA 3U
-#define HW_TYPE_PEDAL 4U
-#define HW_TYPE_UNO 5U
-#define HW_TYPE_DOS 6U
-
-#define ALLOW_DEBUG
-
-// from main_declarations.h
-uint8_t hw_type = HW_TYPE_UNKNOWN;
-
-// from config.h
-#define MIN(a,b)                                \
-  ({ __typeof__ (a) _a = (a);                   \
-    __typeof__ (b) _b = (b);                    \
-    _a < _b ? _a : _b; })
-
-#define MAX(a,b)                                \
-  ({ __typeof__ (a) _a = (a);                   \
-    __typeof__ (b) _b = (b);                    \
-    _a > _b ? _a : _b; })
-
-#define ABS(a)                                  \
- ({ __typeof__ (a) _a = (a);                    \
-   (_a > 0) ? _a : (-_a); })
-
-// from faults.h
-#define FAULT_RELAY_MALFUNCTION         (1U << 0)
-void fault_occurred(uint32_t fault) {
-}
-void fault_recovered(uint32_t fault) {
-}
-
-#define UNUSED(x) (void)(x)
-
-#ifndef PANDA
-#define PANDA
-#endif
-#define NULL ((void*)0)
-#define static
+#include "faults.h"
 #include "safety.h"
-
-uint32_t microsecond_timer_get(void) {
-  return MICROSECOND_TIMER->CNT;
-}
 
 void safety_tick_current_rx_checks() {
   safety_tick(current_rx_checks);
