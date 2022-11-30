@@ -1,5 +1,7 @@
 // minimal code to fake a panda for tests
 #include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 #include "utils.h"
 
