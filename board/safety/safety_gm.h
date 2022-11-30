@@ -183,8 +183,8 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   // GAS/REGEN: safety check
   if (addr == 715) {
-    int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
     bool apply = GET_BIT(to_send, 0U) != 0U;
+    int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
 
     bool violation = false;
     // Allow apply bit in pre-enabled and overriding states
