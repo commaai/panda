@@ -242,11 +242,11 @@ static int mazda_2019_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int mazda_2019_tx_hook(CANPacket_t *to_send) {
+static int mazda_2019_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
-  int violation = 0;
+  UNUSED(longitudinal_allowed);
 
   if (!msg_allowed(to_send, MAZDA_2019_TX_MSGS, sizeof(MAZDA_2019_TX_MSGS)/sizeof(MAZDA_2019_TX_MSGS[0]))) {
     tx = 0;
