@@ -10,7 +10,7 @@
 #define PANDA
 
 void print(const char *a) {
-  printf(a);
+  printf("%s", a);
 }
 
 void puth(unsigned int i) {

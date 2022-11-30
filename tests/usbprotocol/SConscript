@@ -1,6 +1,10 @@
 env = Environment(
-  CC='clang',
-  CXX='clang++',
+  CC='gcc',
+  CFLAGS=[
+    '-nostdlib',
+    '-fno-builtin',
+    '-std=gnu11',
+  ],
   CPPPATH=[".", "../../board"],
 )
 
