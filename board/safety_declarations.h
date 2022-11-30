@@ -55,6 +55,20 @@ typedef struct {
 } SteeringLimits;
 
 typedef struct {
+  // acceleration cmd limits
+  const int max_accel;
+  const int min_accel;
+  const int inactive_accel;
+
+  // gas & brake cmd limits
+  // inactive and min gas are 0 on most safety modes
+  const int max_gas;
+  const int min_gas;
+  const int inactive_gas;
+  const int max_brake;
+} LongitudinalLimits;
+
+typedef struct {
   const int addr;
   const int bus;
   const int len;
@@ -113,6 +127,9 @@ void generic_rx_checks(bool stock_ecu_detected);
 void relay_malfunction_set(void);
 void relay_malfunction_reset(void);
 bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits);
+bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed);
+bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits, const bool longitudinal_allowed);
+bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits, const bool longitudinal_allowed);
 void pcm_cruise_check(bool cruise_engaged);
 
 typedef const addr_checks* (*safety_hook_init)(uint16_t param);

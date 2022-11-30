@@ -1,5 +1,5 @@
 // ******************** Prototypes ********************
-void puts(const char *a){ UNUSED(a); }
+void print(const char *a){ UNUSED(a); }
 void puth(uint8_t i){ UNUSED(i); }
 void puth2(uint8_t i){ UNUSED(i); }
 void puth4(uint8_t i){ UNUSED(i); }
