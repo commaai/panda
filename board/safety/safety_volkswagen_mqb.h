@@ -203,8 +203,6 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
 }
 
 static int volkswagen_mqb_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
-  UNUSED(longitudinal_allowed);
-
   int addr = GET_ADDR(to_send);
   int tx = 1;
 

@@ -166,7 +166,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (addr == 789) {
     int brake = ((GET_BYTE(to_send, 0) & 0xFU) << 8) + GET_BYTE(to_send, 1);
     brake = (0x1000 - brake) & 0xFFF;
-    if (long_brake_checks(brake, *gm_long_limits, longitudinal_allowed)) {
+    if (longitudinal_brake_checks(brake, *gm_long_limits, longitudinal_allowed)) {
       tx = 0;
     }
   }
@@ -189,7 +189,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     bool violation = false;
     // Allow apply bit in pre-enabled and overriding states
     violation |= !controls_allowed && apply;
-    violation |= long_gas_checks(gas_regen, *gm_long_limits, longitudinal_allowed);
+    violation |= longitudinal_gas_checks(gas_regen, *gm_long_limits, longitudinal_allowed);
 
     if (violation) {
       tx = 0;
