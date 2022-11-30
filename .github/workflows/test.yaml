@@ -67,7 +67,7 @@ jobs:
       - name: Run safety tests
         timeout-minutes: 4
         run: |
-          ${{ env.RUN }} "cd /tmp/openpilot && \
+          ${{ env.RUN }} "cd .. && \
                           scons -c && \
                           scons -j$(nproc) opendbc/ cereal/ && \
                           cd panda/tests/safety && \
