@@ -2,47 +2,13 @@
 #include <stdlib.h>
 //#include <stdio.h>
 
-typedef struct {
-  uint32_t CNT;
-} TIM_TypeDef;
-
-
 #include "config.h"
 #include "can_definitions.h"
-#include "utils.h"
 #include "main_declarations.h"
 #include "boards/board_declarations.h"
 
-#define CANFD
-
-struct sample_t torque_meas;
-struct sample_t torque_driver;
-
-TIM_TypeDef timer;
-TIM_TypeDef *MICROSECOND_TIMER = &timer;
-uint32_t microsecond_timer_get(void);
-
-// from board_declarations.h
-
-#define ALLOW_DEBUG
-
-// from faults.h
-#define FAULT_RELAY_MALFUNCTION         (1U << 0)
-void fault_occurred(uint32_t fault) {
-}
-void fault_recovered(uint32_t fault) {
-}
-
-#ifndef PANDA
-#define PANDA
-#endif
-
-#define static
+#include "faults.h"
 #include "safety.h"
-
-uint32_t microsecond_timer_get(void) {
-  return MICROSECOND_TIMER->CNT;
-}
 
 void safety_tick_current_rx_checks() {
   safety_tick(current_rx_checks);
