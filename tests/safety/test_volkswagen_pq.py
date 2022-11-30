@@ -146,6 +146,7 @@ class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety):
   TX_MSGS = [[MSG_HCA_1, 0], [MSG_LDW_1, 0], [MSG_ACC_SYSTEM, 0], [MSG_ACC_GRA_ANZIEGE, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_1, MSG_LDW_1, MSG_ACC_SYSTEM, MSG_ACC_GRA_ANZIEGE]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
+  INACTIVE_ACCEL = 3.01
 
   def setUp(self):
     self.packer = CANPackerPanda("vw_golf_mk4")
@@ -193,9 +194,9 @@ class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety):
 
   def test_accel_safety_check(self):
     for controls_allowed in [True, False]:
-      for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.01):
+      for accel in np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.005):
         accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
-        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == 0
+        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == self.INACTIVE_ACCEL
         self.safety.set_controls_allowed(controls_allowed)
         # primary accel request used by ECU
         self.assertEqual(send, self._tx(self._accel_msg(accel)), (controls_allowed, accel))

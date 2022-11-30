@@ -1,7 +1,3 @@
-AddOption('--test',
-          action='store_true',
-          help='build test files')
-
 # panda fw
 SConscript('board/SConscript')
 

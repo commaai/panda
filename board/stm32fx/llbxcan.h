@@ -1,3 +1,8 @@
+// Flasher and pedal use raw mailbox access
+#define GET_MAILBOX_BYTE(msg, b) (((int)(b) > 3) ? (((msg)->RDHR >> (8U * ((unsigned int)(b) % 4U))) & 0xFFU) : (((msg)->RDLR >> (8U * (unsigned int)(b))) & 0xFFU))
+#define GET_MAILBOX_BYTES_04(msg) ((msg)->RDLR)
+#define GET_MAILBOX_BYTES_48(msg) ((msg)->RDHR)
+
 // SAE 2284-3 : minimum 16 tq, SJW 3, sample point at 81.3%
 #define CAN_QUANTA 16U
 #define CAN_SEQ1 12U

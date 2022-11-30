@@ -1,4 +1,5 @@
 #include "safety_declarations.h"
+#include "can_definitions.h"
 
 // include the safety policies.
 #include "safety/safety_defaults.h"
@@ -17,10 +18,6 @@
 #include "safety/safety_volkswagen_pq.h"
 #include "safety/safety_elm327.h"
 #include "safety/safety_body.h"
-
-#ifdef STM32H7
-#define CANFD
-#endif
 
 // CAN-FD only safety modes
 #ifdef CANFD
@@ -486,6 +483,16 @@ float interpolate(struct lookup_t xy, float x) {
   return ret;
 }
 
+// Safety checks for longitudinal actuation
+bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed) {
+  bool violation = false;
+  if (!longitudinal_allowed) {
+    violation |= desired_accel != limits.inactive_accel;
+  } else {
+    violation |= max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
+  }
+  return violation;
+}
 
 // Safety checks for torque-based steering commands
 bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits) {

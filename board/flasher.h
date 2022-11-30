@@ -113,11 +113,11 @@ void comms_endpoint2_write(uint8_t *data, uint32_t len) {
 int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
   UNUSED(len);
   ControlPacket_t control_req;
-  
+
   int resp_len = 0;
   switch (data[0]) {
     case 0:
-      // control transfer      
+      // control transfer
       control_req.request = ((USB_Setup_TypeDef *)(data+4))->b.bRequest;
       control_req.param1 = ((USB_Setup_TypeDef *)(data+4))->b.wValue.w;
       control_req.param2 = ((USB_Setup_TypeDef *)(data+4))->b.wIndex.w;

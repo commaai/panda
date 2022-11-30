@@ -412,7 +412,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xde: set can bitrate
     case 0xde:
-      if ((req->param1 < BUS_CNT) && is_speed_valid(req->param2, speeds, sizeof(speeds)/sizeof(speeds[0]))) {
+      if ((req->param1 < PANDA_BUS_CNT) && is_speed_valid(req->param2, speeds, sizeof(speeds)/sizeof(speeds[0]))) {
         bus_config[req->param1].can_speed = req->param2;
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(req->param1));
         UNUSED(ret);
@@ -508,7 +508,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       if (req->param1 == 0xFFFFU) {
         puts("Clearing CAN Rx queue\n");
         can_clear(&can_rx_q);
-      } else if (req->param1 < BUS_CNT) {
+      } else if (req->param1 < PANDA_BUS_CNT) {
         puts("Clearing CAN Tx queue\n");
         can_clear(can_queues[req->param1]);
       } else {
@@ -545,6 +545,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         }
       }
       break;
+    // **** 0xf5: set clock source mode
+    case 0xf5:
+      current_board->set_clock_source_mode(req->param1);
+      break;
     // **** 0xf6: set siren enabled
     case 0xf6:
       siren_enabled = (req->param1 != 0U);
@@ -557,7 +561,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xf9: set CAN FD data bitrate
     case 0xf9:
-      if ((req->param1 < CAN_CNT) &&
+      if ((req->param1 < PANDA_CAN_CNT) &&
            current_board->has_canfd &&
            is_speed_valid(req->param2, data_speeds, sizeof(data_speeds)/sizeof(data_speeds[0]))) {
         bus_config[req->param1].can_data_speed = req->param2;
@@ -573,7 +577,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xfc: set CAN FD non-ISO mode
     case 0xfc:
-      if ((req->param1 < CAN_CNT) && current_board->has_canfd) {
+      if ((req->param1 < PANDA_CAN_CNT) && current_board->has_canfd) {
         bus_config[req->param1].canfd_non_iso = (req->param2 != 0U);
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(req->param1));
         UNUSED(ret);

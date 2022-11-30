@@ -83,7 +83,7 @@ jobs:
         run: eval "$BUILD"
       - name: Run safety replay
         run: ${{ env.RUN }} "cd tests/safety_replay &&
-                             scons -u --test .. &&
+                             scons -u .. &&
                              ./test_safety_replay.py"
 
   misra:
