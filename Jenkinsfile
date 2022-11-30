@@ -37,7 +37,7 @@ pipeline {
         stage('prep') {
           steps {
             script {
-              docker_run("build", 1, "scons -j8")
+              docker_run("build", 2, "scons -j8")
               docker_run("reset hardware", 3, "python ./tests/ci_reset_hw.py")
             }
           }
@@ -45,7 +45,7 @@ pipeline {
         stage('pedal tests') {
           steps {
             script {
-              docker_run("test pedal", 1, "PEDAL_JUNGLE=058010800f51363038363036 python ./tests/pedal/test_pedal.py")
+              docker_run("test pedal", 2, "PEDAL_JUNGLE=058010800f51363038363036 python ./tests/pedal/test_pedal.py")
             }
           }
         }
