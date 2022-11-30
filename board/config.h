@@ -30,6 +30,7 @@
 #elif defined(STM32F2) || defined(STM32F4)
   #include "stm32fx/stm32fx_config.h"
 #else
+  // TODO: uncomment this, cppcheck complains
   // building for tests
-  #include "fake_stm.h"
+  //#include "fake_stm.h"
 #endif

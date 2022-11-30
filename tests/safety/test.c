@@ -1,4 +1,5 @@
 #include "config.h"
+#include "fake_stm.h"
 #include "can_definitions.h"
 #include "main_declarations.h"
 #include "boards/board_declarations.h"
