@@ -196,7 +196,8 @@ static int mazda_2019_rx_hook(CANPacket_t *to_push) {
 
           case MAZDA_2019_CRUISE: ;
             cruise_engaged = GET_BYTE(to_push, 0) & 0x20U;
-            pcm_cruise_check(cruise_engaged);
+            bool pre_enable = GET_BYTE(to_push, 0) & 0x40U;
+            pcm_cruise_check((cruise_engaged || pre_enable));
             break; // end MAZDA_2019_CRUISE
 
           default: // default address main
