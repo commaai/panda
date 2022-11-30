@@ -252,7 +252,7 @@ static int mazda_2019_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     tx = 0;
   }
   if (bus == MAZDA_AUX) {
-    if (addr == MAZDA_LKAS) {
+    if (addr == MAZDA_2019_LKAS) {
       int desired_torque = ((GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1)); // signal is signed
       if (steer_torque_cmd_checks(desired_torque, -1, MAZDA_2019_STEERING_LIMITS)) {
         tx = 0;
