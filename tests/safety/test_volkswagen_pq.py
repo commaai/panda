@@ -194,7 +194,7 @@ class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety):
 
   def test_accel_safety_check(self):
     for controls_allowed in [True, False]:
-      for accel in np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.01):
+      for accel in np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.005):
         accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
         send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == self.INACTIVE_ACCEL
         self.safety.set_controls_allowed(controls_allowed)
