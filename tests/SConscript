@@ -1,0 +1,12 @@
+env = Environment(
+  CC='gcc',
+  CFLAGS=[
+    '-nostdlib',
+    '-fno-builtin',
+    '-std=gnu11',
+  ],
+  CPPPATH=[".", "../board"],
+)
+
+env.SharedLibrary("safety/libpandasafety.so", ["safety/test.c"])
+env.SharedLibrary("usbprotocol/libpandaprotocol.so", ["usbprotocol/test.c"])
