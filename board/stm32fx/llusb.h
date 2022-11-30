@@ -33,14 +33,14 @@ void usb_init(void) {
 
   // full speed PHY, do reset and remove power down
   /*puth(USBx->GRSTCTL);
-  puts(" resetting PHY\n");*/
+  putstr(" resetting PHY\n");*/
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL) == 0);
-  //puts("AHB idle\n");
+  //putstr("AHB idle\n");
 
   // reset PHY here
   USBx->GRSTCTL |= USB_OTG_GRSTCTL_CSRST;
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_CSRST) == USB_OTG_GRSTCTL_CSRST);
-  //puts("reset done\n");
+  //putstr("reset done\n");
 
   // internal PHY, force device mode
   USBx->GUSBCFG = USB_OTG_GUSBCFG_PHYSEL | USB_OTG_GUSBCFG_FDMOD;

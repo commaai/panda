@@ -107,21 +107,21 @@ bool can_push(can_ring *q, CANPacket_t *elem) {
   EXIT_CRITICAL();
   if (!ret) {
     #ifdef DEBUG
-      puts("can_push to ");
+      putstr("can_push to ");
       if (q == &can_rx_q) {
-        puts("can_rx_q");
+        putstr("can_rx_q");
       } else if (q == &can_tx1_q) {
-        puts("can_tx1_q");
+        putstr("can_tx1_q");
       } else if (q == &can_tx2_q) {
-        puts("can_tx2_q");
+        putstr("can_tx2_q");
       } else if (q == &can_tx3_q) {
-        puts("can_tx3_q");
+        putstr("can_tx3_q");
       } else if (q == &can_txgmlan_q) {
-        puts("can_txgmlan_q");
+        putstr("can_txgmlan_q");
       } else {
-        puts("unknown");
+        putstr("unknown");
       }
-      puts(" failed!\n");
+      putstr(" failed!\n");
     #endif
   }
   return ret;

@@ -17,7 +17,7 @@ void black_enable_can_transceiver(uint8_t transceiver, bool enabled) {
       set_gpio_output(GPIOB, 10, !enabled);
       break;
     default:
-      puts("Invalid CAN transceiver ("); puth(transceiver); puts("): enabling failed\n");
+      putstr("Invalid CAN transceiver ("); puth(transceiver); putstr("): enabling failed\n");
       break;
   }
 }
@@ -74,7 +74,7 @@ void black_set_gps_mode(uint8_t mode) {
       set_gpio_output(GPIOC, 5, 0);
       break;
     default:
-      puts("Invalid GPS mode\n");
+      putstr("Invalid GPS mode\n");
       break;
   }
 }
@@ -102,7 +102,7 @@ void black_set_can_mode(uint8_t mode){
       }
       break;
     default:
-      puts("Tried to set unsupported CAN mode: "); puth(mode); puts("\n");
+      putstr("Tried to set unsupported CAN mode: "); puth(mode); putstr("\n");
       break;
   }
 }
