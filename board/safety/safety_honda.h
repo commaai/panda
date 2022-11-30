@@ -16,9 +16,6 @@ const CanMsg HONDA_BOSCH_LONG_TX_MSGS[] = {{0xE4, 1, 5}, {0x1DF, 1, 8}, {0x1EF, 
 // Threshold calculated from DBC gains: round(((83.3 / 0.253984064) + (83.3 / 0.126992032)) / 2) = 492
 const int HONDA_GAS_INTERCEPTOR_THRESHOLD = 492;
 #define HONDA_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + (GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2U)  // avg between 2 tracks
-const int HONDA_BOSCH_NO_GAS_VALUE = -30000; // value sent when not requesting gas
-const int HONDA_BOSCH_GAS_MAX = 2000;
-const int HONDA_BOSCH_ACCEL_MIN = -350; // max braking == -3.5m/s2
 
 const LongitudinalLimits HONDA_BOSCH_LONG_LIMITS = {
   .max_accel = 200,   // accel is used for brakes
@@ -32,7 +29,6 @@ const LongitudinalLimits HONDA_BOSCH_LONG_LIMITS = {
 const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
   .max_brake = 255,
 };
-
 
 // Nidec and bosch radarless has the powertrain bus on bus 0
 AddrCheckStruct honda_common_addr_checks[] = {
