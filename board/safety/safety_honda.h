@@ -20,6 +20,20 @@ const int HONDA_BOSCH_NO_GAS_VALUE = -30000; // value sent when not requesting g
 const int HONDA_BOSCH_GAS_MAX = 2000;
 const int HONDA_BOSCH_ACCEL_MIN = -350; // max braking == -3.5m/s2
 
+const LongitudinalLimits HONDA_BOSCH_LONG_LIMITS = {
+  .max_accel = 200,   // accel is used for brakes
+  .min_accel = -350,
+
+  .max_gas = 2000,
+  .min_gas = -30000,
+  .inactive_gas = -30000,
+};
+
+const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
+  .max_brake = 255,
+};
+
+
 // Nidec and bosch radarless has the powertrain bus on bus 0
 AddrCheckStruct honda_common_addr_checks[] = {
   {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},                   // SCM_BUTTONS
@@ -280,12 +294,7 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   // BRAKE: safety check (nidec)
   if ((addr == 0x1FA) && (bus == bus_pt)) {
     honda_brake = (GET_BYTE(to_send, 0) << 2) + ((GET_BYTE(to_send, 1) >> 6) & 0x3U);
-    if (!longitudinal_allowed) {
-      if (honda_brake != 0) {
-        tx = 0;
-      }
-    }
-    if (honda_brake > 255) {
+    if (longitudinal_brake_checks(honda_brake, HONDA_NIDEC_LONG_LIMITS, longitudinal_allowed)) {
       tx = 0;
     }
     if (honda_fwd_brake) {
@@ -297,23 +306,14 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if ((addr == 0x1DF) && (bus == bus_pt)) {
     int accel = (GET_BYTE(to_send, 3) << 3) | ((GET_BYTE(to_send, 4) >> 5) & 0x7U);
     accel = to_signed(accel, 11);
-    if (!longitudinal_allowed) {
-      if (accel != 0) {
-        tx = 0;
-      }
-    }
-    if (accel < HONDA_BOSCH_ACCEL_MIN) {
-      tx = 0;
-    }
 
     int gas = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
     gas = to_signed(gas, 16);
-    if (!longitudinal_allowed) {
-      if (gas != HONDA_BOSCH_NO_GAS_VALUE) {
-        tx = 0;
-      }
-    }
-    if (gas > HONDA_BOSCH_GAS_MAX) {
+
+    bool violation = false;
+    violation |= longitudinal_accel_checks(accel, HONDA_BOSCH_LONG_LIMITS, longitudinal_allowed);
+    violation |= longitudinal_gas_checks(gas, HONDA_BOSCH_LONG_LIMITS, longitudinal_allowed);
+    if (violation) {
       tx = 0;
     }
   }
