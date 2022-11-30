@@ -487,7 +487,7 @@ float interpolate(struct lookup_t xy, float x) {
 }
 
 // Safety checks for longitudinal actuation
-bool long_accel_checks(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed) {
+bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed) {
   bool violation = false;
   if (!longitudinal_allowed) {
     violation |= desired_accel != limits.inactive_accel;
