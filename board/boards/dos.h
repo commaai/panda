@@ -17,7 +17,7 @@ void dos_enable_can_transceiver(uint8_t transceiver, bool enabled) {
       set_gpio_output(GPIOB, 10, !enabled);
       break;
     default:
-      putstr("Invalid CAN transceiver ("); puth(transceiver); putstr("): enabling failed\n");
+      print("Invalid CAN transceiver ("); puth(transceiver); print("): enabling failed\n");
       break;
   }
 }
@@ -88,7 +88,7 @@ void dos_set_can_mode(uint8_t mode){
       }
       break;
     default:
-      putstr("Tried to set unsupported CAN mode: "); puth(mode); putstr("\n");
+      print("Tried to set unsupported CAN mode: "); puth(mode); print("\n");
       break;
   }
 }

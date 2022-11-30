@@ -38,10 +38,10 @@ uint32_t faults = 0U;
 void fault_occurred(uint32_t fault) {
   faults |= fault;
   if((PERMANENT_FAULTS & fault) != 0U){
-    putstr("Permanent fault occurred: 0x"); puth(fault); putstr("\n");
+    print("Permanent fault occurred: 0x"); puth(fault); print("\n");
     fault_status = FAULT_STATUS_PERMANENT;
   } else {
-    putstr("Temporary fault occurred: 0x"); puth(fault); putstr("\n");
+    print("Temporary fault occurred: 0x"); puth(fault); print("\n");
     fault_status = FAULT_STATUS_TEMPORARY;
   }
 }
@@ -50,6 +50,6 @@ void fault_recovered(uint32_t fault) {
   if((PERMANENT_FAULTS & fault) == 0U){
     faults &= ~fault;
   } else {
-    putstr("Cannot recover from a permanent fault!\n");
+    print("Cannot recover from a permanent fault!\n");
   }
 }

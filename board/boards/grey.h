@@ -28,7 +28,7 @@ void grey_set_gps_mode(uint8_t mode) {
       set_gpio_output(GPIOC, 5, 0);
       break;
     default:
-      putstr("Invalid ESP/GPS mode\n");
+      print("Invalid ESP/GPS mode\n");
       break;
   }
 }

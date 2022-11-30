@@ -14,7 +14,7 @@ void white_enable_can_transceiver(uint8_t transceiver, bool enabled) {
       set_gpio_output(GPIOA, 0, !enabled);
       break;
     default:
-      putstr("Invalid CAN transceiver ("); puth(transceiver); putstr("): enabling failed\n");
+      print("Invalid CAN transceiver ("); puth(transceiver); print("): enabling failed\n");
       break;
   }
 }
@@ -60,7 +60,7 @@ void white_set_usb_power_mode(uint8_t mode){
       set_gpio_output(GPIOA, 13, 0);
       break;
     default:
-      putstr("Invalid usb power mode\n");
+      print("Invalid usb power mode\n");
       break;
   }
 }
@@ -77,7 +77,7 @@ void white_set_gps_mode(uint8_t mode) {
       set_gpio_output(GPIOC, 5, 0);
       break;
     default:
-      putstr("Invalid ESP/GPS mode\n");
+      print("Invalid ESP/GPS mode\n");
       break;
   }
 }
@@ -136,7 +136,7 @@ void white_set_can_mode(uint8_t mode){
       set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
       break;
     default:
-      putstr("Tried to set unsupported CAN mode: "); puth(mode); putstr("\n");
+      print("Tried to set unsupported CAN mode: "); puth(mode); print("\n");
       break;
   }
 }

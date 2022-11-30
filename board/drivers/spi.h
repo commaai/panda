@@ -75,7 +75,7 @@ void spi_handle_rx(void) {
       next_rx_state = SPI_STATE_HEADER_ACK;
     } else {
       // response: NACK and reset state machine
-      putstr("- incorrect header sync or checksum "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
+      print("- incorrect header sync or checksum "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
       spi_buf_tx[0] = SPI_NACK;
       next_rx_state = SPI_STATE_HEADER_NACK;
     }
@@ -92,14 +92,14 @@ void spi_handle_rx(void) {
           response_len = comms_control_handler(&ctrl, &spi_buf_tx[3]);
           reponse_ack = true;
         } else {
-          putstr("SPI: insufficient data for control handler\n");
+          print("SPI: insufficient data for control handler\n");
         }
       } else if ((spi_endpoint == 1U) || (spi_endpoint == 0x81U)) {
         if (spi_data_len_mosi == 0U) {
           response_len = comms_can_read(&(spi_buf_tx[3]), spi_data_len_miso);
           reponse_ack = true;
         } else {
-          putstr("SPI: did not expect data for can_read\n");
+          print("SPI: did not expect data for can_read\n");
         }
       } else if (spi_endpoint == 2U) {
         comms_endpoint2_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
@@ -109,15 +109,15 @@ void spi_handle_rx(void) {
           comms_can_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
           reponse_ack = true;
         } else {
-          putstr("SPI: did expect data for can_write\n");
+          print("SPI: did expect data for can_write\n");
         }
       } else {
-        putstr("SPI: unexpected endpoint"); puth(spi_endpoint); putstr("\n");
+        print("SPI: unexpected endpoint"); puth(spi_endpoint); print("\n");
       }
     } else {
       // Checksum was incorrect
       reponse_ack = false;
-      putstr("- incorrect data checksum\n");
+      print("- incorrect data checksum\n");
     }
 
     // Setup response header
@@ -137,7 +137,7 @@ void spi_handle_rx(void) {
 
     next_rx_state = SPI_STATE_DATA_TX;
   } else {
-    putstr("SPI: RX unexpected state: "); puth(spi_state); putstr("\n");
+    print("SPI: RX unexpected state: "); puth(spi_state); print("\n");
   }
 
   spi_state = next_rx_state;
@@ -159,6 +159,6 @@ void spi_handle_tx(void) {
   } else {
     spi_state = SPI_STATE_HEADER;
     llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
-    putstr("SPI: TX unexpected state: "); puth(spi_state); putstr("\n");
+    print("SPI: TX unexpected state: "); puth(spi_state); print("\n");
   }
 }
