@@ -1,17 +1,19 @@
 #include <stdint.h>
-#include <stdbool.h>
 #include <stdlib.h>
-#include <stdio.h>
-
-#include "config.h"
-#include "can_definitions.h"
-#include "utils.h"
-
-#define CANFD
+//#include <stdio.h>
 
 typedef struct {
   uint32_t CNT;
 } TIM_TypeDef;
+
+
+#include "config.h"
+#include "can_definitions.h"
+#include "utils.h"
+#include "main_declarations.h"
+#include "boards/board_declarations.h"
+
+#define CANFD
 
 struct sample_t torque_meas;
 struct sample_t torque_driver;
@@ -21,20 +23,8 @@ TIM_TypeDef *MICROSECOND_TIMER = &timer;
 uint32_t microsecond_timer_get(void);
 
 // from board_declarations.h
-#define HW_TYPE_UNKNOWN 0U
-#define HW_TYPE_WHITE_PANDA 1U
-#define HW_TYPE_GREY_PANDA 2U
-#define HW_TYPE_BLACK_PANDA 3U
-#define HW_TYPE_PEDAL 4U
-#define HW_TYPE_UNO 5U
-#define HW_TYPE_DOS 6U
 
 #define ALLOW_DEBUG
-
-// from main_declarations.h
-uint8_t hw_type = HW_TYPE_UNKNOWN;
-
-// from config.h
 
 // from faults.h
 #define FAULT_RELAY_MALFUNCTION         (1U << 0)
@@ -60,7 +50,7 @@ void safety_tick_current_rx_checks() {
 
 bool addr_checks_valid() {
   if (current_rx_checks->len <= 0) {
-    printf("missing RX checks\n");
+    //printf("missing RX checks\n");
     return false;
   }
 
@@ -68,7 +58,7 @@ bool addr_checks_valid() {
     const AddrCheckStruct addr = current_rx_checks->check[i];
     bool valid = addr.msg_seen && !addr.lagging && addr.valid_checksum && (addr.wrong_counters < MAX_WRONG_COUNTERS);
     if (!valid) {
-      printf("i %d seen %d lagging %d valid checksum %d wrong counters %d\n", i, addr.msg_seen, addr.lagging, addr.valid_checksum, addr.wrong_counters);
+      //printf("i %d seen %d lagging %d valid checksum %d wrong counters %d\n", i, addr.msg_seen, addr.lagging, addr.valid_checksum, addr.wrong_counters);
       return false;
     }
   }

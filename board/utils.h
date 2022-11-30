@@ -12,6 +12,9 @@
  ({ __typeof__ (a) _a = (a); \
    (_a > 0) ? _a : (-_a); })
 
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
 
 // STM32 HAL defines this
 #ifndef UNUSED
