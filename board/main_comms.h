@@ -178,10 +178,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   timestamp_t t;
 
 #ifdef DEBUG_COMMS
-  puts("raw control request: "); hexdump(req, sizeof(ControlPacket_t)); puts("\n");
-  puts("- request "); puth(req->request); puts("\n");
-  puts("- param1 "); puth(req->param1); puts("\n");
-  puts("- param2 "); puth(req->param2); puts("\n");
+  print("raw control request: "); hexdump(req, sizeof(ControlPacket_t)); print("\n");
+  print("- request "); puth(req->request); print("\n");
+  print("- param1 "); puth(req->param1); print("\n");
+  print("- param2 "); puth(req->param2); print("\n");
 #endif
 
   switch (req->request) {
@@ -284,18 +284,18 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         case 0:
           // only allow bootloader entry on debug builds
           #ifdef ALLOW_DEBUG
-            puts("-> entering bootloader\n");
+            print("-> entering bootloader\n");
             enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
             NVIC_SystemReset();
           #endif
           break;
         case 1:
-          puts("-> entering softloader\n");
+          print("-> entering softloader\n");
           enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
           NVIC_SystemReset();
           break;
         default:
-          puts("Bootloader mode invalid\n");
+          print("Bootloader mode invalid\n");
           break;
       }
       break;
@@ -371,7 +371,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
           } else if (req->param2 == 2U) {
             can_set_gmlan(2);
           } else {
-            puts("Invalid bus num for GMLAN CAN set\n");
+            print("Invalid bus num for GMLAN CAN set\n");
           }
         } else {
           can_set_gmlan(-1);
@@ -392,7 +392,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xde: set can bitrate
     case 0xde:
-      if ((req->param1 < BUS_CNT) && is_speed_valid(req->param2, speeds, sizeof(speeds)/sizeof(speeds[0]))) {
+      if ((req->param1 < PANDA_BUS_CNT) && is_speed_valid(req->param2, speeds, sizeof(speeds)/sizeof(speeds[0]))) {
         bus_config[req->param1].can_speed = req->param2;
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(req->param1));
         UNUSED(ret);
@@ -486,13 +486,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
       if (req->param1 == 0xFFFFU) {
-        puts("Clearing CAN Rx queue\n");
+        print("Clearing CAN Rx queue\n");
         can_clear(&can_rx_q);
-      } else if (req->param1 < BUS_CNT) {
-        puts("Clearing CAN Tx queue\n");
+      } else if (req->param1 < PANDA_BUS_CNT) {
+        print("Clearing CAN Tx queue\n");
         can_clear(can_queues[req->param1]);
       } else {
-        puts("Clearing CAN CAN ring buffer failed: wrong bus number\n");
+        print("Clearing CAN CAN ring buffer failed: wrong bus number\n");
       }
       break;
     // **** 0xf2: Clear UART ring buffer.
@@ -500,7 +500,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       {
         uart_ring * rb = get_ring_by_number(req->param1);
         if (rb != NULL) {
-          puts("Clearing UART queue.\n");
+          print("Clearing UART queue.\n");
           clear_uart_buff(rb);
         }
         break;
@@ -541,7 +541,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xf9: set CAN FD data bitrate
     case 0xf9:
-      if ((req->param1 < CAN_CNT) &&
+      if ((req->param1 < PANDA_CAN_CNT) &&
            current_board->has_canfd &&
            is_speed_valid(req->param2, data_speeds, sizeof(data_speeds)/sizeof(data_speeds[0]))) {
         bus_config[req->param1].can_data_speed = req->param2;
@@ -557,16 +557,16 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xfc: set CAN FD non-ISO mode
     case 0xfc:
-      if ((req->param1 < CAN_CNT) && current_board->has_canfd) {
+      if ((req->param1 < PANDA_CAN_CNT) && current_board->has_canfd) {
         bus_config[req->param1].canfd_non_iso = (req->param2 != 0U);
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(req->param1));
         UNUSED(ret);
       }
       break;
     default:
-      puts("NO HANDLER ");
+      print("NO HANDLER ");
       puth(req->request);
-      puts("\n");
+      print("\n");
       break;
   }
   return resp_len;

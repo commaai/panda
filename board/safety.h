@@ -1,4 +1,5 @@
 #include "safety_declarations.h"
+#include "can_definitions.h"
 
 // include the safety policies.
 #include "safety/safety_defaults.h"
@@ -17,10 +18,6 @@
 #include "safety/safety_volkswagen_pq.h"
 #include "safety/safety_elm327.h"
 #include "safety/safety_body.h"
-
-#ifdef STM32H7
-#define CANFD
-#endif
 
 // CAN-FD only safety modes
 #ifdef CANFD
@@ -494,6 +491,33 @@ float interpolate(struct lookup_t xy, float x) {
   return ret;
 }
 
+// Safety checks for longitudinal actuation
+bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed) {
+  bool violation = false;
+  if (!longitudinal_allowed) {
+    violation |= desired_accel != limits.inactive_accel;
+  } else {
+    violation |= max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
+  }
+  return violation;
+}
+
+bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits, const bool longitudinal_allowed) {
+  bool violation = false;
+  if (!longitudinal_allowed) {
+    violation |= desired_gas != limits.inactive_gas;
+  } else {
+    violation |= max_limit_check(desired_gas, limits.max_gas, limits.min_gas);
+  }
+  return violation;
+}
+
+bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits, const bool longitudinal_allowed) {
+  bool violation = false;
+  violation |= !longitudinal_allowed && (desired_brake != 0);
+  violation |= desired_brake > limits.max_brake;
+  return violation;
+}
 
 bool long_accel_check(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed, const bool gas_allowed) {
   bool violation = false;

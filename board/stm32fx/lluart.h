@@ -93,7 +93,7 @@ void uart_interrupt_handler(uart_ring *q) {
   uint32_t err = (status & USART_SR_ORE) | (status & USART_SR_NE) | (status & USART_SR_FE) | (status & USART_SR_PE);
   if(err != 0U){
     #ifdef DEBUG_UART
-      puts("Encountered UART error: "); puth(err); puts("\n");
+      print("Encountered UART error: "); puth(err); print("\n");
     #endif
     UART_READ_DR(q->uart)
   }
@@ -109,7 +109,7 @@ void uart_interrupt_handler(uart_ring *q) {
       dma_pointer_handler(&uart_ring_gps, DMA2_Stream5->NDTR);
     } else {
       #ifdef DEBUG_UART
-        puts("No IDLE dma_pointer_handler implemented for this UART.");
+        print("No IDLE dma_pointer_handler implemented for this UART.");
       #endif
     }
   }
@@ -128,7 +128,7 @@ void DMA2_Stream5_IRQ_Handler(void) {
   // Handle errors
   if((DMA2->HISR & DMA_HISR_TEIF5) || (DMA2->HISR & DMA_HISR_DMEIF5) || (DMA2->HISR & DMA_HISR_FEIF5)){
     #ifdef DEBUG_UART
-      puts("Encountered UART DMA error. Clearing and restarting DMA...\n");
+      print("Encountered UART DMA error. Clearing and restarting DMA...\n");
     #endif
 
     // Clear flags
@@ -173,7 +173,7 @@ void dma_rx_init(uart_ring *q) {
     // Enable interrupt
     NVIC_EnableIRQ(DMA2_Stream5_IRQn);
   } else {
-    puts("Tried to initialize RX DMA for an unsupported UART\n");
+    print("Tried to initialize RX DMA for an unsupported UART\n");
   }
 }
 
