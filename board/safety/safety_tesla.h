@@ -115,7 +115,7 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
 }
 
 
-static int tesla_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int tesla_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -188,8 +188,8 @@ static int tesla_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       // Don't allow any acceleration limits above the safety limits
       int raw_accel_max = ((GET_BYTE(to_send, 6) & 0x1FU) << 4) | (GET_BYTE(to_send, 5) >> 4);
       int raw_accel_min = ((GET_BYTE(to_send, 5) & 0x0FU) << 5) | (GET_BYTE(to_send, 4) >> 3);
-      violation |= longitudinal_accel_checks(raw_accel_max, TESLA_LONG_LIMITS, longitudinal_allowed);
-      violation |= longitudinal_accel_checks(raw_accel_min, TESLA_LONG_LIMITS, longitudinal_allowed);
+      violation |= longitudinal_accel_checks(raw_accel_max, TESLA_LONG_LIMITS);
+      violation |= longitudinal_accel_checks(raw_accel_min, TESLA_LONG_LIMITS);
     } else {
       violation = true;
     }
