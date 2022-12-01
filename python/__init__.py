@@ -39,7 +39,7 @@ def pack_can_buffer(arr):
   snds = [CAN_TRANSACTION_MAGIC]
   for address, _, dat, bus in arr:
     assert len(dat) in LEN_TO_DLC
-    logging.debug("  W 0x%x: 0x%s", address, dat.hex())
+    #logging.debug("  W 0x%x: 0x%s", address, dat.hex())
 
     extended = 1 if address >= 0x800 else 0
     data_len_code = LEN_TO_DLC[len(dat)]
@@ -87,7 +87,7 @@ def unpack_can_buffer(dat):
     data = dat[:data_len]
     dat = dat[data_len:]
 
-    logging.debug("  R 0x%x: 0x%s", address, data.hex())
+    #logging.debug("  R 0x%x: 0x%s", address, data.hex())
 
     ret.append((address, 0, data, bus))
 
