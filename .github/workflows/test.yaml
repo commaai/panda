@@ -65,16 +65,14 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Build openpilot + panda
-        timeout-minutes: 2
+        timeout-minutes: 4
         run: |
           ${{ env.RUN }} "cd .. && \
                           scons -c && \
                           scons -j$(nproc) opendbc/ cereal/ && \
                           cd panda && \
-                          scons -j$(nproc)"
-      - name: Run safety tests
-        timeout-minutes: 3
-        run: ${{ env.RUN }} "tests/safety/test.sh"
+                          scons -j$(nproc) && \
+                          tests/safety/test.sh"
 
   safety_replay:
     name: safety replay
