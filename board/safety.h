@@ -494,6 +494,10 @@ bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limit
   return violation;
 }
 
+bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits) {
+  return !get_longitudinal_allowed() && (desired_speed != limits.inactive_speed);
+}
+
 bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits) {
   bool violation = false;
   if (!get_longitudinal_allowed()) {

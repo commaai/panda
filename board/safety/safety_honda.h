@@ -27,7 +27,7 @@ const LongitudinalLimits HONDA_BOSCH_LONG_LIMITS = {
 };
 
 const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
-  .max_gas = 198,
+  .max_gas = 198,  // 0xc6
   .max_brake = 255,
 
   .inactive_speed = 0,
@@ -285,8 +285,8 @@ static int honda_tx_hook(CANPacket_t *to_send) {
     int pcm_gas = GET_BYTE(to_send, 2);
 
     bool violation = false;
-    violation |= longitudinal_assert_value(pcm_gas, 0);
-    violation |= longitudinal_assert_value(pcm_speed, 0);
+    violation |= longitudinal_speed_checks(pcm_speed, HONDA_NIDEC_LONG_LIMITS);
+    violation |= longitudinal_gas_checks(pcm_gas, HONDA_NIDEC_LONG_LIMITS);
     if (violation) {
       tx = 0;
     }

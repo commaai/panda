@@ -70,8 +70,9 @@ jobs:
           ${{ env.RUN }} "cd .. && \
                           scons -c && \
                           scons -j$(nproc) opendbc/ cereal/ && \
-                          cd panda/tests/safety && \
-                          ./test.sh"
+                          cd panda && \
+                          scons -j$(nproc) && \
+                          tests/safety/test.sh"
 
   safety_replay:
     name: safety replay
