@@ -177,7 +177,7 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int volkswagen_pq_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int volkswagen_pq_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   int tx = 1;
 

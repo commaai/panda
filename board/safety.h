@@ -484,9 +484,9 @@ float interpolate(struct lookup_t xy, float x) {
 }
 
 // Safety checks for longitudinal actuation
-bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed) {
+bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits) {
   bool violation = false;
-  if (!longitudinal_allowed) {
+  if (!get_longitudinal_allowed()) {
     violation |= desired_accel != limits.inactive_accel;
   } else {
     violation |= max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
@@ -494,9 +494,9 @@ bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limit
   return violation;
 }
 
-bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits, const bool longitudinal_allowed) {
+bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits) {
   bool violation = false;
-  if (!longitudinal_allowed) {
+  if (!get_longitudinal_allowed()) {
     violation |= desired_gas != limits.inactive_gas;
   } else {
     violation |= max_limit_check(desired_gas, limits.max_gas, limits.min_gas);
@@ -504,9 +504,9 @@ bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits, c
   return violation;
 }
 
-bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits, const bool longitudinal_allowed) {
+bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits) {
   bool violation = false;
-  violation |= !longitudinal_allowed && (desired_brake != 0);
+  violation |= !get_longitudinal_allowed() && (desired_brake != 0);
   violation |= desired_brake > limits.max_brake;
   return violation;
 }
