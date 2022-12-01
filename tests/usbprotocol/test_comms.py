@@ -1,11 +1,12 @@
 import random
 import unittest
 
-from panda import Panda, DLC_TO_LEN, pack_can_buffer, unpack_can_buffer
+from panda import Panda, DLC_TO_LEN, USBPACKET_MAX_SIZE, pack_can_buffer, unpack_can_buffer
 from panda.tests.libpanda import libpanda_py
 
 lpp = libpanda_py.libpanda
 
+CHUNK_SIZE = USBPACKET_MAX_SIZE
 TX_QUEUES = (lpp.tx1_q, lpp.tx2_q, lpp.tx3_q, lpp.txgmlan_q)
 
 
@@ -13,6 +14,17 @@ def unpackage_can_msg(pkt):
   dat_len = DLC_TO_LEN[pkt[0].data_len_code]
   dat = bytes(pkt[0].data[0:dat_len])
   return pkt[0].addr, 0, dat, pkt[0].bus
+
+
+def random_can_messages(n, bus=None):
+  msgs = []
+  for _ in range(n):
+    if bus is None:
+      bus = random.randint(0, 3)
+    address = random.randint(1, (1 << 29) - 1)
+    data = bytes([random.getrandbits(8) for _ in range(DLC_TO_LEN[random.randrange(0, len(DLC_TO_LEN))])])
+    msgs.append((address, 0, data, bus))
+  return msgs
 
 
 class TestPandaComms(unittest.TestCase):
@@ -34,15 +46,10 @@ class TestPandaComms(unittest.TestCase):
     for bus in range(3):
       with self.subTest(bus=bus):
         for _ in range(100):
-          msgs = []
-          for _ in range(200):
-            address = random.randint(1, (1 << 29) - 1)
-            data = bytes([random.getrandbits(8) for _ in range(DLC_TO_LEN[random.randrange(0, len(DLC_TO_LEN))])])
-            msgs.append((address, 0, data, bus))
+          msgs = random_can_messages(200, bus=bus)
           packed = pack_can_buffer(msgs)
 
           # Simulate USB bulk chunks
-          CHUNK_SIZE = 0x40
           for buf in packed:
             for i in range(0, len(buf), CHUNK_SIZE):
               chunk_len = min(CHUNK_SIZE, len(buf) - i)
@@ -58,14 +65,8 @@ class TestPandaComms(unittest.TestCase):
           self.assertEqual(queue_msgs, msgs)
 
   def test_can_receive_usb(self):
-    msgs = []
-    packets = []
-    for _ in range(50000):
-      bus = random.randint(0, 3)
-      address = random.randint(1, (1 << 29) - 1)
-      data = bytes([random.getrandbits(8) for _ in range(DLC_TO_LEN[random.randrange(0, len(DLC_TO_LEN))])])
-      msgs.append((address, 0, data, bus))
-      packets.append(libpanda_py.make_CANPacket(address, bus, data))
+    msgs = random_can_messages(50000)
+    packets = [libpanda_py.make_CANPacket(m[0], m[3], m[2]) for m in msgs]
 
     rx_msgs = []
     while len(packets) > 0:
@@ -74,7 +75,6 @@ class TestPandaComms(unittest.TestCase):
         lpp.can_push(lpp.rx_q, packets.pop(0))
 
       # Simulate USB bulk IN chunks
-      CHUNK_SIZE = 0x40
       MAX_TRANSFER_SIZE = 16384
       dat = libpanda_py.ffi.new(f"uint8_t[{CHUNK_SIZE}]")
       while True:

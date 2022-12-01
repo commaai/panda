@@ -53,6 +53,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: eval "$BUILD"
+      - name: Build panda
+        run: $RUN "scons -j4"
       - name: Test communication protocols
         run: $RUN "cd tests/usbprotocol && ./test.sh"
 

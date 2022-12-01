@@ -24,8 +24,8 @@
 
 #include "obj/gitversion.h"
 
-#include "main_comms.h"
 #include "can_comms.h"
+#include "main_comms.h"
 
 
 // ********************* Serial debugging *********************
