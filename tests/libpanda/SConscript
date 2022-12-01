@@ -5,7 +5,7 @@ env = Environment(
     '-fno-builtin',
     '-std=gnu11',
   ],
-  CPPPATH=[".", "#board/"],
+  CPPPATH=[".", "../../board"],
 )
 
 env.SharedLibrary("libpanda.so", ["safety_helpers.c"])
