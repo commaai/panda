@@ -610,7 +610,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
   bool violation = false;
 
   if (controls_allowed && steer_control_enabled) {
-    // convert floating point angle rate limits to ints in the scale of the desired angle on CAN,
+    // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
     // add 1 to not false trigger the violation
     int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed) * limits.angle_deg_to_can) + 1.;
     int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed) * limits.angle_deg_to_can) + 1.;
