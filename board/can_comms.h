@@ -92,7 +92,7 @@ void comms_can_write(uint8_t *data, uint32_t len) {
       (void)memcpy(&to_push, can_write_buffer.data, can_write_buffer.ptr);
       can_send(&to_push, to_push.bus, false);
 
-      // reset overflow buffer      
+      // reset overflow buffer 
       can_write_buffer.ptr = 0U;
       can_write_buffer.tail_size = 0U;
     } else {

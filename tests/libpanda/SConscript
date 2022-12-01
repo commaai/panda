@@ -4,8 +4,9 @@ env = Environment(
     '-nostdlib',
     '-fno-builtin',
     '-std=gnu11',
+    '-Wfatal-errors',
   ],
   CPPPATH=[".", "#board/"],
 )
 
-env.SharedLibrary("libpanda.so", ["safety_helpers.c"])
+env.SharedLibrary("libpanda.so", ["test.c",])
