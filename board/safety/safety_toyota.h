@@ -161,12 +161,14 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
 
       bool violation = false;
       violation |= longitudinal_accel_checks(desired_accel, TOYOTA_LONG_LIMITS);
-      violation |= longitudinal_accel_checks(desired_accel, TOYOTA_LONG_LIMITS, !toyota_stock_longitudinal);
 
       // only ACC messages that cancel are allowed when openpilot is not controlling longitudinal
       if (toyota_stock_longitudinal) {
         bool cancel_req = GET_BIT(to_send, 24U) != 0U;
         if (!cancel_req) {
+          violation = true;
+        }
+        if (desired_accel != TOYOTA_LONG_LIMITS.inactive_accel) {
           violation = true;
         }
       }
