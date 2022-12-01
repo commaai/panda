@@ -4,7 +4,7 @@ import numpy as np
 from typing import Optional
 
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, make_msg, MAX_WRONG_COUNTERS
 
@@ -275,9 +275,9 @@ class TestHondaNidecSafetyBase(HondaBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
-    self.safety.init_tests_honda()
+    self.safety.init_tests()
 
   def _interceptor_gas_cmd(self, gas):
     return interceptor_msg(gas, 0x200)
@@ -352,9 +352,9 @@ class TestHondaNidecAltSafety(TestHondaNidecSafety):
   """
   def setUp(self):
     self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
-    self.safety.init_tests_honda()
+    self.safety.init_tests()
 
   def _acc_state_msg(self, main_on):
     values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}
@@ -374,9 +374,9 @@ class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.Intercepto
   """
   def setUp(self):
     self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
-    self.safety.init_tests_honda()
+    self.safety.init_tests()
 
   def _acc_state_msg(self, main_on):
     values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}
@@ -411,7 +411,7 @@ class TestHondaBoschSafetyBase(HondaBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_accord_2018_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
 
   def _alt_brake_msg(self, brake):
     values = {"BRAKE_PRESSED": brake, "COUNTER": self.cnt_brake % 4}
@@ -458,7 +458,7 @@ class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
   def setUp(self):
     super().setUp()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, 0)
-    self.safety.init_tests_honda()
+    self.safety.init_tests()
 
 
 class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
@@ -477,7 +477,7 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
   def setUp(self):
     super().setUp()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_BOSCH_LONG)
-    self.safety.init_tests_honda()
+    self.safety.init_tests()
 
   def _send_gas_brake_msg(self, gas, accel):
     values = {
@@ -492,10 +492,10 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
     pass
 
   def test_diagnostics(self):
-    tester_present = common.package_can_msg((0x18DAB0F1, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", self.PT_BUS))
+    tester_present = libpanda_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x02\x3E\x80\x00\x00\x00\x00\x00")
     self.assertTrue(self.safety.safety_tx_hook(tester_present))
 
-    not_tester_present = common.package_can_msg((0x18DAB0F1, 0, b"\x03\xAA\xAA\x00\x00\x00\x00\x00", self.PT_BUS))
+    not_tester_present = libpanda_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x03\xAA\xAA\x00\x00\x00\x00\x00")
     self.assertFalse(self.safety.safety_tx_hook(not_tester_present))
 
   def test_radar_alive(self):
@@ -531,9 +531,9 @@ class TestHondaBoschRadarless(HondaPcmEnableBase, TestHondaBoschSafetyBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_ex_2022_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS)
-    self.safety.init_tests_honda()
+    self.safety.init_tests()
 
   def test_alt_disengage_on_brake(self):
     # These cars do not have 0x1BE (BRAKE_MODULE)
