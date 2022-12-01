@@ -27,7 +27,10 @@ const LongitudinalLimits HONDA_BOSCH_LONG_LIMITS = {
 };
 
 const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
+  .max_gas = 198,  // 0xc6
   .max_brake = 255,
+
+  .inactive_speed = 0,
 };
 
 // Nidec and bosch radarless has the powertrain bus on bus 0
@@ -280,10 +283,12 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if ((addr == 0x30C) && (bus == bus_pt)) {
     int pcm_speed = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
     int pcm_gas = GET_BYTE(to_send, 2);
-    if (!longitudinal_allowed) {
-      if ((pcm_speed != 0) || (pcm_gas != 0)) {
-        tx = 0;
-      }
+
+    bool violation = false;
+    violation |= longitudinal_speed_checks(pcm_speed, HONDA_NIDEC_LONG_LIMITS, longitudinal_allowed);
+    violation |= longitudinal_gas_checks(pcm_gas, HONDA_NIDEC_LONG_LIMITS, longitudinal_allowed);
+    if (violation) {
+      tx = 0;
     }
   }
 

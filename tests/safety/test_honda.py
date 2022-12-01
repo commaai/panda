@@ -266,6 +266,7 @@ class TestHondaNidecSafetyBase(HondaBase):
   BUTTONS_BUS = 0
 
   INTERCEPTOR_THRESHOLD = 492
+  MAX_GAS = 198
 
   @classmethod
   def setUpClass(cls):
@@ -297,9 +298,9 @@ class TestHondaNidecSafetyBase(HondaBase):
   def test_acc_hud_safety_check(self):
     for controls_allowed in [True, False]:
       self.safety.set_controls_allowed(controls_allowed)
-      for pcm_gas in range(0, 0xc6):
+      for pcm_gas in range(0, 255):
         for pcm_speed in range(0, 100):
-          send = True if controls_allowed else pcm_gas == 0 and pcm_speed == 0
+          send = pcm_gas <= self.MAX_GAS if controls_allowed else pcm_gas == 0 and pcm_speed == 0
           self.assertEqual(send, self.safety.safety_tx_hook(self._send_acc_hud_msg(pcm_gas, pcm_speed)))
 
   def test_fwd_hook(self):

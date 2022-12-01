@@ -66,6 +66,9 @@ typedef struct {
   const int min_gas;
   const int inactive_gas;
   const int max_brake;
+
+  // speed cmd limits
+  const int inactive_speed;
 } LongitudinalLimits;
 
 typedef struct {
@@ -128,6 +131,7 @@ void relay_malfunction_set(void);
 void relay_malfunction_reset(void);
 bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits);
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed);
+bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits, const bool longitudinal_allowed);
 bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits, const bool longitudinal_allowed);
 bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits, const bool longitudinal_allowed);
 bool longitudinal_interceptor_checks(CANPacket_t *to_send, const bool longitudinal_allowed);
