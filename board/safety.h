@@ -515,15 +515,6 @@ bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limit
   return violation;
 }
 
-bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits) {
-  bool violation = false;
-  return !get_longitudinal_allowed() && (desired_speed != limits.inactive_speed);
-}
-
-bool longitudinal_assert_value(int value, int asserted_value) {
-  return !get_longitudinal_allowed() && (value != asserted_value);
-}
-
 bool longitudinal_interceptor_checks(CANPacket_t *to_send) {
   return !get_longitudinal_allowed() && (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1));
 }
