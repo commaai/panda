@@ -1,3 +1,5 @@
+#pragma once
+
 #define GET_BIT(msg, b) (((msg)->data[((b) / 8U)] >> ((b) % 8U)) & 0x1U)
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_BYTES_04(msg) ((msg)->data[0] | ((msg)->data[1] << 8U) | ((msg)->data[2] << 16U) | ((msg)->data[3] << 24U))

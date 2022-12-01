@@ -64,7 +64,6 @@ class TestPandaComms(unittest.TestCase):
           self.assertEqual(len(queue_msgs), len(msgs))
           self.assertEqual(queue_msgs, msgs)
 
-  @unittest.skip("fails on current implementation")
   def test_can_receive_usb(self):
     msgs = random_can_messages(50000)
     packets = [libpanda_py.make_CANPacket(m[0], m[3], m[2]) for m in msgs]
