@@ -2,6 +2,7 @@ import os
 from cffi import FFI
 from typing import List
 
+from panda import LEN_TO_DLC
 from panda.tests.libpanda.safety_helpers import PandaSafety, setup_safety_helpers
 
 libpanda_dir = os.path.dirname(os.path.abspath(__file__))
@@ -48,4 +49,18 @@ class Panda(PandaSafety):
   def safety_fwd_hook(self, bus_num: int, to_fwd: CANPacket) -> int: ...
   def set_safety_hooks(self, mode: int, param: int) -> int: ...
 
+
 libpanda: Panda = ffi.dlopen(libpanda_fn)
+
+
+# helpers
+
+def make_CANPacket(addr: int, bus: int, dat):
+  ret = ffi.new('CANPacket_t *')
+  ret[0].extended = 1 if addr >= 0x800 else 0
+  ret[0].addr = addr
+  ret[0].data_len_code = LEN_TO_DLC[len(dat)]
+  ret[0].bus = bus
+  ret[0].data = bytes(dat)
+
+  return ret

@@ -102,7 +102,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
           dat = [random.randint(1, 255) for _ in range(7)]
           if not bad:
             dat = [0]*6 + dat[-1:]
-          msg = common.package_can_msg([0x283, 0, bytes(dat),  0])
+          msg = libpanda_py.make_CANPacket(0x283, 0, bytes(dat))
           self.assertEqual(not bad, self._tx(msg))
 
   def test_accel_actuation_limits(self, stock_longitudinal=False):
