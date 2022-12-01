@@ -9,4 +9,4 @@ env = Environment(
   CPPPATH=[".", "#board/"],
 )
 
-env.SharedLibrary("libpanda.so", ["test.c",])
+env.SharedLibrary("libpanda.so", ["panda.c",])

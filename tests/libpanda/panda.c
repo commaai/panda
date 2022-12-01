@@ -15,7 +15,6 @@ void usb_outep3_resume_if_paused(void) { };
 #include "faults.h"
 #include "libc.h"
 #include "boards/board_declarations.h"
-//#include "safety_declarations.h"
 #include "safety.h"
 #include "main_declarations.h"
 #include "drivers/can_common.h"
