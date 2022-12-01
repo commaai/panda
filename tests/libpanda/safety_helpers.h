@@ -1,12 +1,3 @@
-#include "config.h"
-#include "fake_stm.h"
-#include "can_definitions.h"
-#include "main_declarations.h"
-#include "boards/board_declarations.h"
-
-#include "faults.h"
-#include "safety.h"
-
 void safety_tick_current_rx_checks() {
   safety_tick(current_rx_checks);
 }

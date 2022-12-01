@@ -30,6 +30,27 @@ int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd);
 int set_safety_hooks(uint16_t mode, uint16_t param);
 """)
 
+ffi.cdef("""
+typedef struct {
+  volatile uint32_t w_ptr;
+  volatile uint32_t r_ptr;
+  uint32_t fifo_size;
+  CANPacket_t *elems;
+} can_ring;
+
+extern can_ring *rx_q;
+extern can_ring *txgmlan_q;
+extern can_ring *tx1_q;
+extern can_ring *tx2_q;
+extern can_ring *tx3_q;
+
+bool can_pop(can_ring *q, CANPacket_t *elem);
+bool can_push(can_ring *q, CANPacket_t *elem);
+int comms_can_read(uint8_t *data, uint32_t max_len);
+void comms_can_write(uint8_t *data, uint32_t len);
+uint32_t can_slots_empty(can_ring *q);
+""")
+
 setup_safety_helpers(ffi)
 
 class CANPacket:
