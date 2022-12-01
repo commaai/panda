@@ -72,7 +72,12 @@ int safety_rx_hook(CANPacket_t *to_push) {
 int safety_tx_hook(CANPacket_t *to_send) {
   bool longitudinal_allowed = get_longitudinal_allowed();
   bool gas_allowed = get_gas_allowed(longitudinal_allowed);
-  return (relay_malfunction ? -1 : current_hooks->tx(to_send, longitudinal_allowed, gas_allowed));
+  bool lateral_allowed = get_lateral_allowed();
+
+  // current_control_allowed excludes pre-enabled state (brake at standstill)
+  // steering and (positive) acceleration are disallowed while current_controls_allowed is false
+//  bool current_controls_allowed = get_current_controls_allowed();
+  return (relay_malfunction ? -1 : current_hooks->tx(to_send, longitudinal_allowed, lateral_allowed, gas_allowed));
 }
 
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
@@ -86,6 +91,11 @@ int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 bool get_longitudinal_allowed(void) {
   // No longitudinal control when overriding with gas
   return controls_allowed && !gas_pressed_prev;
+}
+
+bool get_lateral_allowed(void) {
+  // No steering allowed while pre-enabling at a standstill with brake
+  return controls_allowed && !brake_pressed_prev;
 }
 
 bool get_gas_allowed(bool longitudinal_allowed) {
@@ -494,6 +504,7 @@ float interpolate(struct lookup_t xy, float x) {
 // Safety checks for longitudinal actuation
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed) {
   bool violation = false;
+  bool longitudinal_allowed =
   if (!longitudinal_allowed) {
     violation |= desired_accel != limits.inactive_accel;
   } else {
@@ -544,8 +555,9 @@ bool long_accel_check(int desired_accel, const LongitudinalLimits limits, const 
 bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits) {
   bool violation = false;
   uint32_t ts = microsecond_timer_get();
+  bool lateral_allowed = get_lateral_allowed();
 
-  if (controls_allowed) {
+  if (lateral_allowed) {
     // *** global torque limit check ***
     violation |= max_limit_check(desired_torque, limits.max_steer, -limits.max_steer);
 
@@ -572,7 +584,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
   }
 
   // no torque if controls is not allowed
-  if (!controls_allowed && (desired_torque != 0)) {
+  if (!lateral_allowed && (desired_torque != 0)) {
     violation = true;
   }
 
@@ -614,7 +626,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
   }
 
   // reset to 0 if either controls is not allowed or there's a violation
-  if (violation || !controls_allowed) {
+  if (violation || !lateral_allowed) {
     valid_steer_req_count = 0;
     invalid_steer_req_count = 0;
     desired_torque_last = 0;
