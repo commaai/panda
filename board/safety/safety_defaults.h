@@ -55,7 +55,6 @@ static const addr_checks* alloutput_init(uint16_t param) {
 
 static int alloutput_tx_hook(CANPacket_t *to_send) {
   UNUSED(to_send);
-  UNUSED(longitudinal_allowed);
   return true;
 }
 

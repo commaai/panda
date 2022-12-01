@@ -147,7 +147,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
 
     // GAS PEDAL: safety check
     if (addr == 0x200) {
-      if (!longitudinal_allowed) {
+      if (!get_longitudinal_allowed()) {
         if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
           tx = 0;
         }
@@ -160,7 +160,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
       desired_accel = to_signed(desired_accel, 16);
 
       bool violation = false;
-      violation |= longitudinal_accel_checks(desired_accel, TOYOTA_LONG_LIMITS, longitudinal_allowed);
+      violation |= longitudinal_accel_checks(desired_accel, TOYOTA_LONG_LIMITS);
       violation |= longitudinal_accel_checks(desired_accel, TOYOTA_LONG_LIMITS, !toyota_stock_longitudinal);
 
       // only ACC messages that cancel are allowed when openpilot is not controlling longitudinal
