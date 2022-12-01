@@ -333,10 +333,8 @@ static int honda_tx_hook(CANPacket_t *to_send) {
 
   // GAS: safety check (interceptor)
   if (addr == 0x200) {
-    if (!get_longitudinal_allowed()) {
-      if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
-        tx = 0;
-      }
+    if (longitudinal_interceptor_checks(to_send)) {
+      tx = 0;
     }
   }
 

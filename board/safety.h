@@ -70,7 +70,7 @@ int safety_rx_hook(CANPacket_t *to_push) {
 }
 
 int safety_tx_hook(CANPacket_t *to_send) {
-  return (relay_malfunction ? -1 : current_hooks->tx(to_send, get_longitudinal_allowed()));
+  return (relay_malfunction ? -1 : current_hooks->tx(to_send));
 }
 
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
@@ -508,6 +508,16 @@ bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limit
   bool violation = false;
   violation |= !get_longitudinal_allowed() && (desired_brake != 0);
   violation |= desired_brake > limits.max_brake;
+  return violation;
+}
+
+bool longitudinal_interceptor_checks(CANPacket_t *to_send) {
+  bool violation = false;
+  if (!get_longitudinal_allowed()) {
+    if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
+      violation = true;
+    }
+  }
   return violation;
 }
 
