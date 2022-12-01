@@ -66,6 +66,8 @@ typedef struct {
   const int min_gas;
   const int inactive_gas;
   const int max_brake;
+
+  const int inactive_speed;
 } LongitudinalLimits;
 
 typedef struct {
@@ -130,6 +132,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits);
 bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits);
 bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits);
+bool longitudinal_assert_value(int value, int asserted_value);
 bool longitudinal_interceptor_checks(CANPacket_t *to_send);
 void pcm_cruise_check(bool cruise_engaged);
 
