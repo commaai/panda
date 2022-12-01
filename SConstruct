@@ -2,4 +2,4 @@
 SConscript('board/SConscript')
 
 # test files
-SConscript('tests/SConscript')
+SConscript('tests/libpanda/SConscript')

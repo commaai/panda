@@ -4,7 +4,7 @@ import random
 import unittest
 
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, make_msg, ALTERNATIVE_EXPERIENCE
 
@@ -51,7 +51,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
 
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE)
     self.safety.init_tests()
 
@@ -102,7 +102,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
           dat = [random.randint(1, 255) for _ in range(7)]
           if not bad:
             dat = [0]*6 + dat[-1:]
-          msg = common.package_can_msg([0x283, 0, bytes(dat),  0])
+          msg = libpanda_py.make_CANPacket(0x283, 0, bytes(dat))
           self.assertEqual(not bad, self._tx(msg))
 
   def test_accel_actuation_limits(self, stock_longitudinal=False):
@@ -162,7 +162,7 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
 class TestToyotaAltBrakeSafety(TestToyotaSafety):
   def setUp(self):
     self.packer = CANPackerPanda("toyota_new_mc_pt_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_ALT_BRAKE)
     self.safety.init_tests()
 
@@ -178,7 +178,7 @@ class TestToyotaAltBrakeSafety(TestToyotaSafety):
 class TestToyotaStockLongitudinal(TestToyotaSafety):
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
     self.safety.init_tests()
 

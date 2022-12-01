@@ -6,26 +6,14 @@ import numpy as np
 from typing import Optional, List, Dict
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
-from panda import ALTERNATIVE_EXPERIENCE, LEN_TO_DLC
-from panda.tests.safety import libpandasafety_py
+from panda import ALTERNATIVE_EXPERIENCE
+from panda.tests.libpanda import libpanda_py
 
 MAX_WRONG_COUNTERS = 5
 
 
-def package_can_msg(msg):
-  addr, _, dat, bus = msg
-  ret = libpandasafety_py.ffi.new('CANPacket_t *')
-  ret[0].extended = 1 if addr >= 0x800 else 0
-  ret[0].addr = addr
-  ret[0].data_len_code = LEN_TO_DLC[len(dat)]
-  ret[0].bus = bus
-  ret[0].data = bytes(dat)
-
-  return ret
-
-
 def make_msg(bus, addr, length=8):
-  return package_can_msg([addr, 0, b'\x00' * length, bus])
+  return libpanda_py.make_CANPacket(addr, bus, b'\x00' * length)
 
 
 class CANPackerPanda(CANPacker):
@@ -33,7 +21,8 @@ class CANPackerPanda(CANPacker):
     msg = self.make_can_msg(name_or_addr, bus, values)
     if fix_checksum is not None:
       msg = fix_checksum(msg)
-    return package_can_msg(msg)
+    addr, _, dat, bus = msg
+    return libpanda_py.make_CANPacket(addr, bus, dat)
 
 
 def add_regen_tests(cls):

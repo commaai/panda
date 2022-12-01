@@ -2,7 +2,7 @@
 import unittest
 import numpy as np
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
@@ -27,7 +27,7 @@ class TestNissanSafety(common.PandaSafetyTest):
 
   def setUp(self):
     self.packer = CANPackerPanda("nissan_x_trail_2017")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
     self.safety.init_tests()
 
@@ -145,7 +145,7 @@ class TestNissanLeafSafety(TestNissanSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("nissan_leaf_2018")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
     self.safety.init_tests()
 
