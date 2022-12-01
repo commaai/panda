@@ -1,3 +1,16 @@
+/*
+  CAN transactions to and from the host come in the form of
+  a 4 byte value called CAN_TRANSACTION_MAGIC followed by
+  a certain number of CANPacket_t. The transaction is split
+  into multiple transfer or chunks.
+
+  * comms_can_read outputs this buffer in chunks of a specified length.
+    chunks are always the max specified length, except the last one.
+  * comms_can_write reads in this buffer in chunks
+  * both functions maintain an overflow buffer for a partial CANPacket_t that
+    spans multiple transfers/chunks.
+*/
+
 typedef struct {
   uint32_t ptr;
   uint32_t tail_size;
@@ -8,9 +21,6 @@ asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U};
 uint32_t total_rx_size = 0U;
 bool add_magic = true;
 
-// we read and write CAN buffers of the format:
-// CAN_TRANSACTION_MAGIC + N*CANPacket_t
-// comms_can_read will output max_len sized chunks of this buffer
 int comms_can_read(uint8_t *data, uint32_t max_len) {
   uint32_t pos = 0U;
   bool added_magic = false;
@@ -92,7 +102,7 @@ void comms_can_write(uint8_t *data, uint32_t len) {
       (void)memcpy(&to_push, can_write_buffer.data, can_write_buffer.ptr);
       can_send(&to_push, to_push.bus, false);
 
-      // reset overflow buffer 
+      // reset overflow buffer
       can_write_buffer.ptr = 0U;
       can_write_buffer.tail_size = 0U;
     } else {
