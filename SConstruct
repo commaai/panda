@@ -4,12 +4,8 @@ TICI = os.path.isfile('/TICI')
 
 AddOption('--test',
           action='store_true',
-#           default=not TICI,
+          default=not TICI,
           help='build test files')
 
 # panda fw & test files
 SConscript('SConscript')
-# SConscript('board/SConscript')
-
-# test files
-# SConscript('tests/libpanda/SConscript')
