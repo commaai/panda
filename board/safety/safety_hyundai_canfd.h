@@ -65,6 +65,7 @@ AddrCheckStruct hyundai_canfd_addr_checks[] = {
 };
 #define HYUNDAI_CANFD_ADDR_CHECK_LEN (sizeof(hyundai_canfd_addr_checks) / sizeof(hyundai_canfd_addr_checks[0]))
 
+// 0x1a0 is on bus 0
 AddrCheckStruct hyundai_canfd_radar_scc_addr_checks[] = {
   {.msg = {{0x35, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},
            {0x35, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},
