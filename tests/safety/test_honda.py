@@ -277,7 +277,7 @@ class TestHondaNidecSafetyBase(HondaBase):
     self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
-    self.safety.init_tests_honda()
+    self.safety.init_tests()
 
   def _interceptor_gas_cmd(self, gas):
     return interceptor_msg(gas, 0x200)
@@ -354,7 +354,7 @@ class TestHondaNidecAltSafety(TestHondaNidecSafety):
     self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
-    self.safety.init_tests_honda()
+    self.safety.init_tests()
 
   def _acc_state_msg(self, main_on):
     values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}
@@ -376,7 +376,7 @@ class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.Intercepto
     self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
-    self.safety.init_tests_honda()
+    self.safety.init_tests()
 
   def _acc_state_msg(self, main_on):
     values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}
@@ -458,7 +458,7 @@ class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
   def setUp(self):
     super().setUp()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, 0)
-    self.safety.init_tests_honda()
+    self.safety.init_tests()
 
 
 class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
@@ -477,7 +477,7 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
   def setUp(self):
     super().setUp()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_BOSCH_LONG)
-    self.safety.init_tests_honda()
+    self.safety.init_tests()
 
   def _send_gas_brake_msg(self, gas, accel):
     values = {
@@ -533,7 +533,7 @@ class TestHondaBoschRadarless(HondaPcmEnableBase, TestHondaBoschSafetyBase):
     self.packer = CANPackerPanda("honda_civic_ex_2022_can_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS)
-    self.safety.init_tests_honda()
+    self.safety.init_tests()
 
   def test_alt_disengage_on_brake(self):
     # These cars do not have 0x1BE (BRAKE_MODULE)
