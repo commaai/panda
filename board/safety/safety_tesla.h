@@ -1,13 +1,3 @@
-const struct lookup_t TESLA_LOOKUP_ANGLE_RATE_UP = {
-    {2., 7., 17.},
-    {5., .8, .25}};
-
-const struct lookup_t TESLA_LOOKUP_ANGLE_RATE_DOWN = {
-    {2., 7., 17.},
-    {5., 3.5, .8}};
-
-const int TESLA_DEG_TO_CAN = 10;
-
 const SteeringLimits TESLA_STEERING_LIMITS = {
   .angle_deg_to_can = 10,
   .angle_rate_up_lookup = {

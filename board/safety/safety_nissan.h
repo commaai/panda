@@ -1,15 +1,3 @@
-const uint32_t NISSAN_RT_INTERVAL = 250000;    // 250ms between real time checks
-
-const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_UP = {
-  {2., 7., 17.},
-  {5., .8, .15}};
-
-const struct lookup_t NISSAN_LOOKUP_ANGLE_RATE_DOWN = {
-  {2., 7., 17.},
-  {5., 3.5, .5}};
-
-const int NISSAN_DEG_TO_CAN = 100;
-
 const SteeringLimits NISSAN_STEERING_LIMITS = {
   .angle_deg_to_can = 100,
   .angle_rate_up_lookup = {
@@ -126,7 +114,7 @@ static int nissan_tx_hook(CANPacket_t *to_send) {
     int desired_angle = ((GET_BYTE(to_send, 0) << 10) | (GET_BYTE(to_send, 1) << 2) | ((GET_BYTE(to_send, 2) >> 6) & 0x3U));
     bool lka_active = (GET_BYTE(to_send, 6) >> 4) & 1U;
 
-    // offeset 1310 * NISSAN_DEG_TO_CAN
+    // offeset 1310 * NISSAN_STEERING_LIMITS.angle_deg_to_can
     desired_angle =  desired_angle - 131000;
 
     if (steer_angle_cmd_checks(desired_angle, lka_active, NISSAN_STEERING_LIMITS)) {
