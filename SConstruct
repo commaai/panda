@@ -1,7 +1,3 @@
-import os
-
-TICI = os.path.isfile('/TICI')
-
 AddOption('--test',
           action='store_true',
           default=True,
