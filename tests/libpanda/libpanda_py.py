@@ -29,8 +29,6 @@ int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd);
 int set_safety_hooks(uint16_t mode, uint16_t param);
 """)
 
-
-
 setup_safety_helpers(ffi)
 
 class CANPacket:
@@ -49,6 +47,5 @@ class Panda(PandaSafety):
   def safety_tx_hook(self, to_push: CANPacket) -> int: ...
   def safety_fwd_hook(self, bus_num: int, to_fwd: CANPacket) -> int: ...
   def set_safety_hooks(self, mode: int, param: int) -> int: ...
-
 
 libpanda: Panda = ffi.dlopen(libpanda_fn)

@@ -69,7 +69,9 @@ jobs:
         run: |
           ${{ env.RUN }} "cd .. && \
                           scons -c && \
-                          scons -j$(nproc) opendbc/ cereal/ panda/ && \
+                          scons -j$(nproc) opendbc/ cereal/ && \
+                          cd panda && \
+                          scons -j$(nproc) && \
                           cd panda/tests/safety && \
                           ./test.sh"
 
