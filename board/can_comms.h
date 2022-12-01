@@ -2,11 +2,12 @@
   CAN transactions to and from the host come in the form of
   a 4 byte value called CAN_TRANSACTION_MAGIC followed by
   a certain number of CANPacket_t. The transaction is split
-  into multiple transfer or chunks.
+  into multiple transfers or chunks.
 
   * comms_can_read outputs this buffer in chunks of a specified length.
-    chunks are always the max specified length, except the last one.
-  * comms_can_write reads in this buffer in chunks
+    chunks are always the given length, except the last one.
+  * comms_can_write reads in this buffer in chunks. start of the transaction
+    is denoted by the CAN_TRANSACTION_MAGIC value.
   * both functions maintain an overflow buffer for a partial CANPacket_t that
     spans multiple transfers/chunks.
 */

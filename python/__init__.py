@@ -39,8 +39,8 @@ def pack_can_buffer(arr):
   snds = [CAN_TRANSACTION_MAGIC]
   for address, _, dat, bus in arr:
     assert len(dat) in LEN_TO_DLC
-    if DEBUG:
-      print(f"  W 0x{address:x}: 0x{dat.hex()}")
+    logging.debug("  W 0x%x: 0x%s", address, dat.hex())
+
     extended = 1 if address >= 0x800 else 0
     data_len_code = LEN_TO_DLC[len(dat)]
     header = bytearray(5)
@@ -63,8 +63,9 @@ def unpack_can_buffer(dat):
     return ret
 
   if dat[:len(CAN_TRANSACTION_MAGIC)] != CAN_TRANSACTION_MAGIC:
-    print("CAN: RECV EXPECTED MAGIC")
+    logging.error("CAN: recv didn't start with magic")
     return ret
+
   dat = dat[len(CAN_TRANSACTION_MAGIC):]
 
   while len(dat) >= CANPACKET_HEAD_SIZE:
@@ -86,13 +87,12 @@ def unpack_can_buffer(dat):
     data = dat[:data_len]
     dat = dat[data_len:]
 
-    if DEBUG:
-      print(f"  R 0x{address:x}: 0x{data.hex()}")
+    logging.debug("  R 0x%x: 0x%s", address, data.hex())
 
     ret.append((address, 0, data, bus))
 
   if len(dat) > 0:
-    print("CAN: MALFORMED USB RECV PACKET")
+    logging.error("CAN: malformed packet. leftover data")
 
   return ret
 
