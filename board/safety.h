@@ -511,8 +511,8 @@ bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limit
   return violation;
 }
 
-bool longitudinal_interceptor_checks(CANPacket_t *to_send, bool longitudinal_allowed) {
-  return !longitudinal_allowed && (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1));
+bool longitudinal_interceptor_checks(CANPacket_t *to_send) {
+  return !get_longitudinal_allowed() && (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1));
 }
 
 // Safety checks for torque-based steering commands
