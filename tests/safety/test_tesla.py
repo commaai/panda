@@ -6,10 +6,6 @@ import panda.tests.safety.common as common
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.common import CANPackerPanda
 
-ANGLE_DELTA_BP = [0., 5., 15.]
-ANGLE_DELTA_V = [5., .8, .15]     # windup limit
-ANGLE_DELTA_VU = [5., 3.5, 0.4]   # unwind limit
-
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
 
@@ -22,7 +18,7 @@ class CONTROL_LEVER_STATE:
   FWD = 1
   IDLE = 0
 
-def sign(a):
+def sign_of(a):
   return 1 if a > 0 else -1
 
 class TestTeslaSafety(common.PandaSafetyTest):
@@ -35,21 +31,21 @@ class TestTeslaSafety(common.PandaSafetyTest):
     self.packer = None
     raise unittest.SkipTest
 
-  def _angle_meas_msg(self, angle):
-    values = {"EPAS_internalSAS": angle}
-    return self.packer.make_can_msg_panda("EPAS_sysStatus", 0, values)
+  # def _angle_meas_msg(self, angle):
+  #   values = {"EPAS_internalSAS": angle}
+  #   return self.packer.make_can_msg_panda("EPAS_sysStatus", 0, values)
 
-  def _set_prev_angle(self, t):
-    t = int(t * 10)
-    self.safety.set_desired_angle_last(t)
+  # def _set_prev_desired_angle(self, t):
+  #   t = int(t * 10)
+  #   self.safety.set_desired_angle_last(t)
 
-  def _angle_meas_msg_array(self, angle):
-    for _ in range(6):
-      self._rx(self._angle_meas_msg(angle))
+  # def _angle_meas_msg_array(self, angle):
+  #   for _ in range(6):
+  #     self._rx(self._angle_meas_msg(angle))
 
-  def _lkas_control_msg(self, angle, enabled):
-    values = {"DAS_steeringAngleRequest": angle, "DAS_steeringControlType": 1 if enabled else 0}
-    return self.packer.make_can_msg_panda("DAS_steeringControl", 0, values)
+  # def _angle_cmd_msg(self, angle, enabled):
+  #   values = {"DAS_steeringAngleRequest": angle, "DAS_steeringControlType": 1 if enabled else 0}
+  #   return self.packer.make_can_msg_panda("DAS_steeringControl", 0, values)
 
   def _speed_msg(self, speed):
     values = {"DI_vehicleSpeed": speed / 0.447}
@@ -83,10 +79,17 @@ class TestTeslaSafety(common.PandaSafetyTest):
     }
     return self.packer.make_can_msg_panda("DAS_control", 0, values)
 
-class TestTeslaSteeringSafety(TestTeslaSafety):
+class TestTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTest):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2]]
   RELAY_MALFUNCTION_ADDR = 0x488
   FWD_BLACKLISTED_ADDRS = {2: [0x488]}
+
+  # Angle control limits
+  DEG_TO_CAN = 10
+
+  ANGLE_DELTA_BP = [0., 5., 15.]
+  ANGLE_DELTA_V = [5., .8, .15]  # windup limit
+  ANGLE_DELTA_VU = [5., 3.5, 0.4]  # unwind limit
 
   def setUp(self):
     self.packer = CANPackerPanda("tesla_can")
@@ -94,59 +97,67 @@ class TestTeslaSteeringSafety(TestTeslaSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, 0)
     self.safety.init_tests()
 
-  def test_angle_cmd_when_enabled(self):
+  def _angle_cmd_msg(self, angle, enabled):
+    values = {"DAS_steeringAngleRequest": angle, "DAS_steeringControlType": 1 if enabled else 0}
+    return self.packer.make_can_msg_panda("DAS_steeringControl", 0, values)
+
+  def _angle_meas_msg(self, angle):
+    values = {"EPAS_internalSAS": angle}
+    return self.packer.make_can_msg_panda("EPAS_sysStatus", 0, values)
+
+  def test_angle_cmd_when_enabled_old(self):
     # when controls are allowed, angle cmd rate limit is enforced
     speeds = [0., 1., 5., 10., 15., 50.]
     angles = [-300, -100, -10, 0, 10, 100, 300]
     for a in angles:
       for s in speeds:
-        max_delta_up = np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_V)
-        max_delta_down = np.interp(s, ANGLE_DELTA_BP, ANGLE_DELTA_VU)
+        max_delta_up = np.interp(s, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
+        max_delta_down = np.interp(s, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
 
         # first test against false positives
         self._angle_meas_msg_array(a)
         self._rx(self._speed_msg(s))
 
-        self._set_prev_angle(a)
+        self._set_prev_desired_angle(a)
         self.safety.set_controls_allowed(1)
 
         # Stay within limits
         # Up
-        self.assertEqual(True, self._tx(self._lkas_control_msg(a + sign(a) * max_delta_up, 1)))
+        self.assertEqual(True, self._tx(self._angle_cmd_msg(a + sign_of(a) * max_delta_up, True)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Don't change
-        self.assertEqual(True, self._tx(self._lkas_control_msg(a, 1)))
+        self.assertEqual(True, self._tx(self._angle_cmd_msg(a, True)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        self.assertEqual(True, self._tx(self._lkas_control_msg(a - sign(a) * max_delta_down, 1)))
+        self.assertEqual(True, self._tx(self._angle_cmd_msg(a - sign_of(a) * max_delta_down, True)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Inject too high rates
         # Up
-        self.assertEqual(False, self._tx(self._lkas_control_msg(a + sign(a) * (max_delta_up + 1.1), 1)))
+        self.assertEqual(False, self._tx(self._angle_cmd_msg(a + sign_of(a) * (max_delta_up + 1.1), True)))
 
         # Don't change
         self.safety.set_controls_allowed(1)
-        self._set_prev_angle(a)
+        self._set_prev_desired_angle(a)
         self.assertTrue(self.safety.get_controls_allowed())
-        self.assertEqual(True, self._tx(self._lkas_control_msg(a, 1)))
+        self.assertEqual(True, self._tx(self._angle_cmd_msg(a, True)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        self.assertEqual(False, self._tx(self._lkas_control_msg(a - sign(a) * (max_delta_down + 1.1), 1)))
+        self.assertEqual(False, self._tx(self._angle_cmd_msg(a - sign_of(a) * (max_delta_down + 1.1), True)))
 
         # Check desired steer should be the same as steer angle when controls are off
         self.safety.set_controls_allowed(0)
-        self.assertEqual(True, self._tx(self._lkas_control_msg(a, 0)))
+        self.assertEqual(True, self._tx(self._angle_cmd_msg(a, False)))
 
-  def test_angle_cmd_when_disabled(self):
-    self.safety.set_controls_allowed(0)
-
-    self._set_prev_angle(0)
-    self.assertFalse(self._tx(self._lkas_control_msg(0, 1)))
-    self.assertFalse(self.safety.get_controls_allowed())
+  # def test_angle_cmd_when_disabled(self):
+  #   self.safety.set_controls_allowed(0)
+  #
+  #   self._set_prev_desired_angle(0)
+  #   self.assertFalse(self._tx(self._angle_cmd_msg(0, 1)))
+  #   self.assertFalse(self.safety.get_controls_allowed())
 
   def test_acc_buttons(self):
     """
