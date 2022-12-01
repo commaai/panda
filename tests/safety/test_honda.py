@@ -4,7 +4,7 @@ import numpy as np
 from typing import Optional
 
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, make_msg, MAX_WRONG_COUNTERS
 
@@ -275,7 +275,7 @@ class TestHondaNidecSafetyBase(HondaBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
     self.safety.init_tests_honda()
 
@@ -352,7 +352,7 @@ class TestHondaNidecAltSafety(TestHondaNidecSafety):
   """
   def setUp(self):
     self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
     self.safety.init_tests_honda()
 
@@ -374,7 +374,7 @@ class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.Intercepto
   """
   def setUp(self):
     self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
     self.safety.init_tests_honda()
 
@@ -411,7 +411,7 @@ class TestHondaBoschSafetyBase(HondaBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_accord_2018_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
 
   def _alt_brake_msg(self, brake):
     values = {"BRAKE_PRESSED": brake, "COUNTER": self.cnt_brake % 4}
@@ -531,7 +531,7 @@ class TestHondaBoschRadarless(HondaPcmEnableBase, TestHondaBoschSafetyBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_ex_2022_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS)
     self.safety.init_tests_honda()
 

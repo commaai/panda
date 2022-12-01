@@ -7,14 +7,14 @@ from typing import Optional, List, Dict
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE, LEN_TO_DLC
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 
 MAX_WRONG_COUNTERS = 5
 
 
 def package_can_msg(msg):
   addr, _, dat, bus = msg
-  ret = libpandasafety_py.ffi.new('CANPacket_t *')
+  ret = libpanda_py.ffi.new('CANPacket_t *')
   ret[0].extended = 1 if addr >= 0x800 else 0
   ret[0].addr = addr
   ret[0].data_len_code = LEN_TO_DLC[len(dat)]

@@ -1,12 +1,12 @@
 import os
-
-from typing import List
 from cffi import FFI
+from typing import List
 
-can_dir = os.path.dirname(os.path.abspath(__file__))
-libpandasafety_fn = os.path.join(can_dir, "libpandasafety.so")
+libpanda_dir = os.path.dirname(os.path.abspath(__file__))
+libpanda_fn = os.path.join(libpanda_dir, "libpanda.so")
 
 ffi = FFI()
+
 ffi.cdef("""
 typedef struct {
   unsigned char reserved : 1;
@@ -20,12 +20,18 @@ typedef struct {
 } CANPacket_t;
 """, packed=True)
 
-ffi.cdef("""
-typedef struct
-{
-  uint32_t CNT;
-} TIM_TypeDef;
+class CANPacket:
+  reserved: int
+  bus: int
+  data_len_code: int
+  rejected: int
+  returned: int
+  extended: int
+  addr: int
+  data: List[int]
 
+# panda safety helpers, from safety_helpers.c
+ffi.cdef("""
 void set_controls_allowed(bool c);
 bool get_controls_allowed(void);
 bool get_longitudinal_allowed(void);
@@ -71,20 +77,7 @@ void set_honda_fwd_brake(bool c);
 void set_honda_alt_brake_msg(bool c);
 void set_honda_bosch_long(bool c);
 int get_honda_hw(void);
-
 """)
-
-
-class CANPacket:
-  reserved: int
-  bus: int
-  data_len_code: int
-  rejected: int
-  returned: int
-  extended: int
-  addr: int
-  data: List[int]
-
 
 class PandaSafety:
   def set_controls_allowed(self, c: bool) -> None: ...
@@ -133,4 +126,7 @@ class PandaSafety:
   def set_honda_bosch_long(self, c: bool) -> None: ...
   def get_honda_hw(self) -> int: ...
 
-libpandasafety: PandaSafety = ffi.dlopen(libpandasafety_fn)
+class Panda(PandaSafety):
+  pass
+
+libpanda: Panda = ffi.dlopen(libpanda_fn)
