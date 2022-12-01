@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Tuple
 
-import panda.tests.safety.common as common
+from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.common import make_msg
 
 
@@ -143,10 +143,10 @@ class HyundaiLongitudinalBase:
     """
 
     addr, bus = self.DISABLED_ECU_UDS_MSG
-    tester_present = common.package_can_msg((addr, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", bus))
+    tester_present = libpanda_py.make_CANPacket(addr, bus, b"\x02\x3E\x80\x00\x00\x00\x00\x00")
     self.assertTrue(self.safety.safety_tx_hook(tester_present))
 
-    not_tester_present = common.package_can_msg((addr, 0, b"\x03\xAA\xAA\x00\x00\x00\x00\x00", bus))
+    not_tester_present = libpanda_py.make_CANPacket(addr, bus, b"\x03\xAA\xAA\x00\x00\x00\x00\x00")
     self.assertFalse(self.safety.safety_tx_hook(not_tester_present))
 
   def test_disabled_ecu_alive(self):

@@ -1,5 +1,7 @@
-# panda fw
-SConscript('board/SConscript')
+AddOption('--test',
+          action='store_true',
+          default=True,
+          help='build test files')
 
-# test files
-SConscript('tests/safety/SConscript')
+# panda fw & test files
+SConscript('SConscript')

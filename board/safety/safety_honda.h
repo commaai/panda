@@ -27,7 +27,10 @@ const LongitudinalLimits HONDA_BOSCH_LONG_LIMITS = {
 };
 
 const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
+  .max_gas = 198,  // 0xc6
   .max_brake = 255,
+
+  .inactive_speed = 0,
 };
 
 // Nidec and bosch radarless has the powertrain bus on bus 0
@@ -257,7 +260,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
 // else
 //     block all commands that produce actuation
 
-static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed, bool gas_allowed) {
+static int honda_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -280,17 +283,19 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed, bool g
   if ((addr == 0x30C) && (bus == bus_pt)) {
     int pcm_speed = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
     int pcm_gas = GET_BYTE(to_send, 2);
-    if (!gas_allowed) {
-      if ((pcm_speed != 0) || (pcm_gas != 0)) {
-        tx = 0;
-      }
+
+    bool violation = false;
+    violation |= longitudinal_speed_checks(pcm_speed, HONDA_NIDEC_LONG_LIMITS);
+    violation |= longitudinal_gas_checks(pcm_gas, HONDA_NIDEC_LONG_LIMITS);
+    if (violation) {
+      tx = 0;
     }
   }
 
   // BRAKE: safety check (nidec)
   if ((addr == 0x1FA) && (bus == bus_pt)) {
     honda_brake = (GET_BYTE(to_send, 0) << 2) + ((GET_BYTE(to_send, 1) >> 6) & 0x3U);
-    if (longitudinal_brake_checks(honda_brake, HONDA_NIDEC_LONG_LIMITS, longitudinal_allowed)) {
+    if (longitudinal_brake_checks(honda_brake, HONDA_NIDEC_LONG_LIMITS)) {
       tx = 0;
     }
     if (honda_fwd_brake) {
@@ -307,8 +312,8 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed, bool g
     gas = to_signed(gas, 16);
 
     bool violation = false;
-    violation |= longitudinal_accel_checks(accel, HONDA_BOSCH_LONG_LIMITS, longitudinal_allowed);
-    violation |= longitudinal_gas_checks(gas, HONDA_BOSCH_LONG_LIMITS, longitudinal_allowed);
+    violation |= longitudinal_accel_checks(accel, HONDA_BOSCH_LONG_LIMITS);
+    violation |= longitudinal_gas_checks(gas, HONDA_BOSCH_LONG_LIMITS);
     if (violation) {
       tx = 0;
     }
@@ -333,10 +338,8 @@ static int honda_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed, bool g
 
   // GAS: safety check (interceptor)
   if (addr == 0x200) {
-    if (!gas_allowed) {
-      if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
-        tx = 0;
-      }
+    if (longitudinal_interceptor_checks(to_send)) {
+      tx = 0;
     }
   }
 

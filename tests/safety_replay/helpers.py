@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import panda.tests.safety.libpandasafety_py as libpandasafety_py
-from panda import Panda, LEN_TO_DLC
+import panda.tests.libpanda.libpanda_py as libpanda_py
+from panda import Panda
 
 def to_signed(d, bits):
   ret = d
@@ -44,14 +44,7 @@ def get_steer_torque(mode, to_send):
   return ret
 
 def package_can_msg(msg):
-  ret = libpandasafety_py.ffi.new('CANPacket_t *')
-  ret[0].extended = 1 if msg.address >= 0x800 else 0
-  ret[0].addr = msg.address
-  ret[0].data_len_code = LEN_TO_DLC[len(msg.dat)]
-  ret[0].bus = msg.src
-  ret[0].data = msg.dat
-
-  return ret
+  return libpanda_py.make_CANPacket(msg.address, msg.src, msg.dat)
 
 def init_segment(safety, lr, mode):
   sendcan = (msg for msg in lr if msg.which() == 'sendcan')

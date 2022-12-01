@@ -70,6 +70,7 @@ int safety_rx_hook(CANPacket_t *to_push) {
 }
 
 int safety_tx_hook(CANPacket_t *to_send) {
+<<<<<<< HEAD
   bool longitudinal_allowed = get_longitudinal_allowed();
   bool gas_allowed = get_gas_allowed(longitudinal_allowed);
   bool lateral_allowed = get_lateral_allowed();
@@ -78,6 +79,9 @@ int safety_tx_hook(CANPacket_t *to_send) {
   // steering and (positive) acceleration are disallowed while current_controls_allowed is false
 //  bool current_controls_allowed = get_current_controls_allowed();
   return (relay_malfunction ? -1 : current_hooks->tx(to_send, longitudinal_allowed, lateral_allowed, gas_allowed));
+=======
+  return (relay_malfunction ? -1 : current_hooks->tx(to_send));
+>>>>>>> upstream/master
 }
 
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
@@ -502,10 +506,14 @@ float interpolate(struct lookup_t xy, float x) {
 }
 
 // Safety checks for longitudinal actuation
-bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed) {
+bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits) {
   bool violation = false;
+<<<<<<< HEAD
   bool longitudinal_allowed =
   if (!longitudinal_allowed) {
+=======
+  if (!get_longitudinal_allowed()) {
+>>>>>>> upstream/master
     violation |= desired_accel != limits.inactive_accel;
   } else {
     violation |= max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
@@ -513,9 +521,13 @@ bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limit
   return violation;
 }
 
-bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits, const bool longitudinal_allowed) {
+bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits) {
+  return !get_longitudinal_allowed() && (desired_speed != limits.inactive_speed);
+}
+
+bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits) {
   bool violation = false;
-  if (!longitudinal_allowed) {
+  if (!get_longitudinal_allowed()) {
     violation |= desired_gas != limits.inactive_gas;
   } else {
     violation |= max_limit_check(desired_gas, limits.max_gas, limits.min_gas);
@@ -523,13 +535,14 @@ bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits, c
   return violation;
 }
 
-bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits, const bool longitudinal_allowed) {
+bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits) {
   bool violation = false;
-  violation |= !longitudinal_allowed && (desired_brake != 0);
+  violation |= !get_longitudinal_allowed() && (desired_brake != 0);
   violation |= desired_brake > limits.max_brake;
   return violation;
 }
 
+<<<<<<< HEAD
 bool long_accel_check(int desired_accel, const LongitudinalLimits limits, const bool longitudinal_allowed, const bool gas_allowed) {
   bool violation = false;
 
@@ -551,6 +564,12 @@ bool long_accel_check(int desired_accel, const LongitudinalLimits limits, const 
 }
 
 
+=======
+bool longitudinal_interceptor_checks(CANPacket_t *to_send) {
+  return !get_longitudinal_allowed() && (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1));
+}
+
+>>>>>>> upstream/master
 // Safety checks for torque-based steering commands
 bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits) {
   bool violation = false;
