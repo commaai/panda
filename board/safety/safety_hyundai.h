@@ -18,8 +18,10 @@ const SteeringLimits HYUNDAI_STEERING_LIMITS = {
   .has_steer_req_tolerance = true,
 };
 
-const int HYUNDAI_MAX_ACCEL = 200;  // 1/100 m/s2
-const int HYUNDAI_MIN_ACCEL = -350; // 1/100 m/s2
+const LongitudinalLimits HYUNDAI_LONG_LIMITS = {
+  .max_accel = 200,   // 1/100 m/s2
+  .min_accel = -350,  // 1/100 m/s2
+};
 
 const CanMsg HYUNDAI_TX_MSGS[] = {
   {832, 0, 8},  // LKAS11 Bus 0
@@ -225,7 +227,7 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int hyundai_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int hyundai_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -257,16 +259,10 @@ static int hyundai_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     int aeb_decel_cmd = GET_BYTE(to_send, 2);
     int aeb_req = GET_BIT(to_send, 54U);
 
-    bool violation = 0;
+    bool violation = false;
 
-    if (!longitudinal_allowed) {
-      if ((desired_accel_raw != 0) || (desired_accel_val != 0)) {
-        violation = 1;
-      }
-    }
-    violation |= max_limit_check(desired_accel_raw, HYUNDAI_MAX_ACCEL, HYUNDAI_MIN_ACCEL);
-    violation |= max_limit_check(desired_accel_val, HYUNDAI_MAX_ACCEL, HYUNDAI_MIN_ACCEL);
-
+    violation |= longitudinal_accel_checks(desired_accel_raw, HYUNDAI_LONG_LIMITS);
+    violation |= longitudinal_accel_checks(desired_accel_val, HYUNDAI_LONG_LIMITS);
     violation |= (aeb_decel_cmd != 0);
     violation |= (aeb_req != 0);
 

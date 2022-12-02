@@ -72,7 +72,7 @@ void uart_interrupt_handler(uart_ring *q) {
   uint32_t err = (status & USART_ISR_ORE) | (status & USART_ISR_NE) | (status & USART_ISR_FE) | (status & USART_ISR_PE);
   if(err != 0U){
     #ifdef DEBUG_UART
-      puts("Encountered UART error: "); puth(err); puts("\n");
+      print("Encountered UART error: "); puth(err); print("\n");
     #endif
     UART_READ_RDR(q->uart)
   }
@@ -96,7 +96,7 @@ void uart_interrupt_handler(uart_ring *q) {
     UART_READ_RDR(q->uart)
 
     #ifdef DEBUG_UART
-      puts("No IDLE dma_pointer_handler implemented for this UART.");
+      print("No IDLE dma_pointer_handler implemented for this UART.");
     #endif
   }
 

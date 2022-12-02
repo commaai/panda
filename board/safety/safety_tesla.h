@@ -7,8 +7,13 @@ const struct lookup_t TESLA_LOOKUP_ANGLE_RATE_DOWN = {
     {5., 3.5, .8}};
 
 const int TESLA_DEG_TO_CAN = 10;
-const float TESLA_MAX_ACCEL = 2.0;  // m/s^2
-const float TESLA_MIN_ACCEL = -3.5; // m/s^2
+
+const LongitudinalLimits TESLA_LONG_LIMITS = {
+  .max_accel = 425,       // 2. m/s^2
+  .min_accel = 287,       // -3.52 m/s^2  // TODO: limit to -3.48
+  .inactive_accel = 375,  // 0. m/s^2
+};
+
 
 const int TESLA_FLAG_POWERTRAIN = 1;
 const int TESLA_FLAG_LONGITUDINAL_CONTROL = 2;
@@ -25,8 +30,6 @@ const CanMsg TESLA_PT_TX_MSGS[] = {
   {0x2bf, 0, 8},  // DAS_control
 };
 #define TESLA_PT_TX_LEN (sizeof(TESLA_PT_TX_MSGS) / sizeof(TESLA_PT_TX_MSGS[0]))
-
-const int TESLA_NO_ACCEL_VALUE = 375;  // value sent when not requesting acceleration
 
 AddrCheckStruct tesla_addr_checks[] = {
   {.msg = {{0x370, 0, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // EPAS_sysStatus (25Hz)
@@ -112,7 +115,7 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
 }
 
 
-static int tesla_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int tesla_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -185,23 +188,8 @@ static int tesla_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
       // Don't allow any acceleration limits above the safety limits
       int raw_accel_max = ((GET_BYTE(to_send, 6) & 0x1FU) << 4) | (GET_BYTE(to_send, 5) >> 4);
       int raw_accel_min = ((GET_BYTE(to_send, 5) & 0x0FU) << 5) | (GET_BYTE(to_send, 4) >> 3);
-      float accel_max = (0.04 * raw_accel_max) - 15;
-      float accel_min = (0.04 * raw_accel_min) - 15;
-
-      if ((accel_max > TESLA_MAX_ACCEL) || (accel_min > TESLA_MAX_ACCEL)){
-        violation = true;
-      }
-
-      if ((accel_max < TESLA_MIN_ACCEL) || (accel_min < TESLA_MIN_ACCEL)){
-        violation = true;
-      }
-
-      // Don't allow longitudinal actuation if controls aren't allowed
-      if (!longitudinal_allowed) {
-        if ((raw_accel_max != TESLA_NO_ACCEL_VALUE) || (raw_accel_min != TESLA_NO_ACCEL_VALUE)) {
-          violation = true;
-        }
-      }
+      violation |= longitudinal_accel_checks(raw_accel_max, TESLA_LONG_LIMITS);
+      violation |= longitudinal_accel_checks(raw_accel_min, TESLA_LONG_LIMITS);
     } else {
       violation = true;
     }

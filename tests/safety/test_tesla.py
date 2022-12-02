@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from panda import Panda
 import panda.tests.safety.common as common
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.common import CANPackerPanda
 
 ANGLE_DELTA_BP = [0., 5., 15.]
@@ -90,7 +90,7 @@ class TestTeslaSteeringSafety(TestTeslaSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("tesla_can")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, 0)
     self.safety.init_tests()
 
@@ -212,7 +212,7 @@ class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("tesla_can")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL)
     self.safety.init_tests()
 
@@ -223,7 +223,7 @@ class TestTeslaPTLongitudinalSafety(TestTeslaLongitudinalSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("tesla_powertrain")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL | Panda.FLAG_TESLA_POWERTRAIN)
     self.safety.init_tests()
 
