@@ -6,6 +6,25 @@ void tres_set_ir_power(uint8_t percentage){
   pwm_set(TIM3, 4, percentage);
 }
 
+void tres_set_bootkick(bool enabled){
+  set_gpio_output(GPIOA, 0, !enabled);
+}
+
+bool tres_ignition_prev = false;
+void tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
+  UNUSED(usb_enum);
+  if (ignition && !tres_ignition_prev) {
+    // enable bootkick on rising edge of ignition
+    tres_set_bootkick(true);
+  } else if (heartbeat_seen) {
+    // disable once openpilot is up
+    tres_set_bootkick(false);
+  } else {
+
+  }
+  tres_ignition_prev = ignition;
+}
+
 void tres_init(void) {
   // Enable USB 3.3V LDO for USB block
   register_set_bits(&(PWR->CR3), PWR_CR3_USBREGEN);
@@ -13,6 +32,8 @@ void tres_init(void) {
   while ((PWR->CR3 & PWR_CR3_USB33RDY) == 0);
 
   red_chiplet_init();
+
+  tres_set_bootkick(true);
 
   // SOM debugging UART
   gpio_uart7_init();
@@ -36,7 +57,7 @@ void tres_init(void) {
 
 const board board_tres = {
   .board_type = "Tres",
-  .board_tick = unused_board_tick,
+  .board_tick = tres_board_tick,
   .harness_config = &red_chiplet_harness_config,
   .has_gps = false,
   .has_hw_gmlan = false,
