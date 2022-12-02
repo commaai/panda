@@ -141,6 +141,7 @@ class TestNissanSafety(common.PandaSafetyTest):
         tx = self._tx(self._acc_button_cmd(**args))
         self.assertEqual(tx, should_tx)
 
+
 class TestNissanLeafSafety(TestNissanSafety):
 
   def setUp(self):
@@ -160,6 +161,7 @@ class TestNissanLeafSafety(TestNissanSafety):
   # TODO: leaf should use its own safety param
   def test_acc_buttons(self):
     pass
+
 
 if __name__ == "__main__":
   unittest.main()
