@@ -10,10 +10,11 @@ void tres_set_bootkick(bool enabled){
   set_gpio_output(GPIOA, 0, !enabled);
 }
 
+bool tres_ignition_prev = false;
 void tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
   UNUSED(usb_enum);
-  if (ignition) {
-    // enable bootkick if ignition seen
+  if (ignition && !tres_ignition_prev) {
+    // enable bootkick on rising edge of ignition
     tres_set_bootkick(true);
   } else if (heartbeat_seen) {
     // disable once openpilot is up
@@ -21,6 +22,7 @@ void tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
   } else {
 
   }
+  tres_ignition_prev = ignition;
 }
 
 void tres_init(void) {
