@@ -527,34 +527,34 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
         # Stay within limits
         # Up
-        self.assertEqual(True, self._tx(self._angle_cmd_msg(a + sign_of(a) * max_delta_up, True)))
+        self.assertTrue(self._tx(self._angle_cmd_msg(a + sign_of(a) * max_delta_up, True)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Don't change
-        self.assertEqual(True, self._tx(self._angle_cmd_msg(a, True)))
+        self.assertTrue(self._tx(self._angle_cmd_msg(a, True)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        self.assertEqual(True, self._tx(self._angle_cmd_msg(a - sign_of(a) * max_delta_down, True)))
+        self.assertTrue(self._tx(self._angle_cmd_msg(a - sign_of(a) * max_delta_down, True)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Inject too high rates
         # Up
-        self.assertEqual(False, self._tx(self._angle_cmd_msg(a + sign_of(a) * (max_delta_up + 1.1), True)))
+        self.assertFalse(self._tx(self._angle_cmd_msg(a + sign_of(a) * (max_delta_up + 1.1), True)))
 
         # Don't change
         self.safety.set_controls_allowed(1)
         self._set_prev_desired_angle(a)
         self.assertTrue(self.safety.get_controls_allowed())
-        self.assertEqual(True, self._tx(self._angle_cmd_msg(a, True)))
+        self.assertTrue(self._tx(self._angle_cmd_msg(a, True)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        self.assertEqual(False, self._tx(self._angle_cmd_msg(a - sign_of(a) * (max_delta_down + 1.1), True)))
+        self.assertFalse(self._tx(self._angle_cmd_msg(a - sign_of(a) * (max_delta_down + 1.1), True)))
 
         # Check desired steer should be the same as steer angle when controls are off
         self.safety.set_controls_allowed(0)
-        self.assertEqual(True, self._tx(self._angle_cmd_msg(a, False)))
+        self.assertTrue(self._tx(self._angle_cmd_msg(a, False)))
 
   def test_angle_cmd_when_disabled(self):
     self.safety.set_controls_allowed(0)
