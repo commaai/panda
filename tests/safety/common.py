@@ -520,7 +520,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
         # first test against false positives
         self._angle_meas_msg_array(a)
-        self._rx(self._speed_msg(s))
+        self._rx(self._speed_msg(s))  # pylint: disable=no-member
 
         self._set_prev_desired_angle(a)
         self.safety.set_controls_allowed(1)
