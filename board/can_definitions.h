@@ -4,9 +4,10 @@ const uint8_t PANDA_CAN_CNT = 3U;
 const uint8_t PANDA_BUS_CNT = 4U;
 
 // bump this when changing the CAN packet
-#define CAN_PACKET_VERSION 2
+#define CAN_PACKET_VERSION 3
 
 #define CANPACKET_HEAD_SIZE 5U
+#define CAN_TRANSACTION_MAGIC 0x43414E2FU
 
 #if !defined(STM32F4) && !defined(STM32F2)
   #define CANFD
