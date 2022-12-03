@@ -20,10 +20,6 @@ def make_msg(bus, addr, length=8):
   return libpanda_py.make_CANPacket(addr, bus, b'\x00' * length)
 
 
-def sign_of(a):
-  return 1 if a > 0 else -1
-
-
 class CANPackerPanda(CANPacker):
   def make_can_msg_panda(self, name_or_addr, bus, values, fix_checksum=None):
     msg = self.make_can_msg(name_or_addr, bus, values)
