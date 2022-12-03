@@ -605,6 +605,35 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
   return violation;
 }
 
+// Safety checks for angle-based steering commands
+bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const SteeringLimits limits) {
+  bool violation = false;
+
+  if (controls_allowed && steer_control_enabled) {
+    // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
+    // add 1 to not false trigger the violation
+    int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed) * limits.angle_deg_to_can) + 1.;
+    int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed) * limits.angle_deg_to_can) + 1.;
+
+    int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
+    int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
+
+    // check for violation;
+    violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
+  }
+  desired_angle_last = desired_angle;
+
+  // Angle should be the same as current angle while not steering
+  violation |= (!controls_allowed &&
+                  ((desired_angle < (angle_meas.min - 1)) ||
+                  (desired_angle > (angle_meas.max + 1))));
+
+  // No angle control allowed when controls are not allowed
+  violation |= !controls_allowed && steer_control_enabled;
+
+  return violation;
+}
+
 void pcm_cruise_check(bool cruise_engaged) {
   // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
   if (!cruise_engaged) {

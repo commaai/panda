@@ -16,6 +16,7 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
   FWD_BLACKLISTED_ADDRS = {0: [0x280], 2: [0x169, 0x2b1, 0x4cc]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
+  # Angle control limits
   DEG_TO_CAN = -100
 
   ANGLE_DELTA_BP = [0., 5., 15.]
@@ -28,11 +29,11 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
     self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
     self.safety.init_tests()
 
-  def _angle_cmd_msg(self, angle, state):
-    values = {"DESIRED_ANGLE": angle, "LKA_ACTIVE": state}
+  def _angle_cmd_msg(self, angle: float, enabled: bool):
+    values = {"DESIRED_ANGLE": angle, "LKA_ACTIVE": 1 if enabled else 0}
     return self.packer.make_can_msg_panda("LKAS", 0, values)
 
-  def _angle_meas_msg(self, angle):
+  def _angle_meas_msg(self, angle: float):
     values = {"STEER_ANGLE": angle}
     return self.packer.make_can_msg_panda("STEER_ANGLE_SENSOR", 0, values)
 

@@ -68,6 +68,7 @@ class TestTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTest):
   RELAY_MALFUNCTION_ADDR = 0x488
   FWD_BLACKLISTED_ADDRS = {2: [0x488]}
 
+  # Angle control limits
   DEG_TO_CAN = 10
 
   ANGLE_DELTA_BP = [0., 5., 15.]
@@ -80,13 +81,13 @@ class TestTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTest):
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, 0)
     self.safety.init_tests()
 
-  def _angle_meas_msg(self, angle):
-    values = {"EPAS_internalSAS": angle}
-    return self.packer.make_can_msg_panda("EPAS_sysStatus", 0, values)
-
-  def _angle_cmd_msg(self, angle, enabled):
+  def _angle_cmd_msg(self, angle: float, enabled: bool):
     values = {"DAS_steeringAngleRequest": angle, "DAS_steeringControlType": 1 if enabled else 0}
     return self.packer.make_can_msg_panda("DAS_steeringControl", 0, values)
+
+  def _angle_meas_msg(self, angle: float):
+    values = {"EPAS_internalSAS": angle}
+    return self.packer.make_can_msg_panda("EPAS_sysStatus", 0, values)
 
   def test_acc_buttons(self):
     """

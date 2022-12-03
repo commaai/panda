@@ -34,6 +34,7 @@ typedef enum {
 } SteeringControlType;
 
 typedef struct {
+  // torque cmd limits
   const int max_steer;
   const int max_rate_up;
   const int max_rate_down;
@@ -54,6 +55,11 @@ typedef struct {
   const int max_invalid_request_frames;
   const uint32_t min_valid_request_rt_interval;
   const bool has_steer_req_tolerance;
+
+  // angle cmd limits
+  const int angle_deg_to_can;
+  const struct lookup_t angle_rate_up_lookup;
+  const struct lookup_t angle_rate_down_lookup;
 } SteeringLimits;
 
 typedef struct {
@@ -132,6 +138,7 @@ void generic_rx_checks(bool stock_ecu_detected);
 void relay_malfunction_set(void);
 void relay_malfunction_reset(void);
 bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits);
+bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const SteeringLimits limits);
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits);
 bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits);
 bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits);
