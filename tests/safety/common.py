@@ -163,10 +163,37 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
       for t in range(-self.MAX_TORQUE * 2, self.MAX_TORQUE * 2):
         self.safety.set_controls_allowed(enabled)
         self._set_prev_torque(t)
-        if abs(t) > self.MAX_TORQUE or (not enabled and abs(t) > 0):
-          self.assertFalse(self._tx(self._torque_cmd_msg(t)))
-        else:
-          self.assertTrue(self._tx(self._torque_cmd_msg(t)))
+        should_tx = abs(t) <= self.MAX_TORQUE and (enabled or abs(t) == 0)
+        self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(t)))
+
+  def test_steer_preenable_safety_check(self):
+    # self.safety.set_controls_allowed(False)
+    self.safety.set_controls_allowed(True)
+    self.assertTrue(self.safety.get_controls_allowed())
+    self._rx(self._speed_msg(0))  # pylint: disable=no-member
+    self._rx(self._user_brake_msg(True))  # pylint: disable=no-member
+    self.assertFalse(self.safety.get_controls_allowed())
+
+    self.safety.set_controls_allowed(True)
+    self.assertTrue(self.safety.get_controls_allowed())
+    self._set_prev_torque(self.MAX_TORQUE)
+    # should_tx = abs(t) <= self.MAX_TORQUE and (enabled or abs(t) == 0)
+    self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE)))
+
+    self._rx(self._user_brake_msg(False))
+    self.assertTrue(self.safety.get_controls_allowed())
+    self._set_prev_torque(self.MAX_TORQUE)
+    # should_tx = abs(t) <= self.MAX_TORQUE and (enabled or abs(t) == 0)
+    self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE)))
+
+
+
+    # for enabled in [0, 1]:
+    #   for t in range(-self.MAX_TORQUE * 2, self.MAX_TORQUE * 2):
+    #     self.safety.set_controls_allowed(enabled)
+    #     self._set_prev_torque(t)
+    #     should_tx = abs(t) <= self.MAX_TORQUE and (enabled or abs(t) == 0)
+    #     self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(t)))
 
   def test_non_realtime_limit_up(self):
     self.safety.set_controls_allowed(True)
