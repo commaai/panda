@@ -9,6 +9,7 @@ from panda.tests.safety.common import CANPackerPanda
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
 
+
 class CONTROL_LEVER_STATE:
   DN_1ST = 32
   UP_1ST = 16
@@ -17,6 +18,7 @@ class CONTROL_LEVER_STATE:
   RWD = 2
   FWD = 1
   IDLE = 0
+
 
 class TestTeslaSafety(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 0
@@ -60,6 +62,7 @@ class TestTeslaSafety(common.PandaSafetyTest):
     }
     return self.packer.make_can_msg_panda("DAS_control", 0, values)
 
+
 class TestTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTest):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2]]
   RELAY_MALFUNCTION_ADDR = 0x488
@@ -78,11 +81,11 @@ class TestTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTest):
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, 0)
     self.safety.init_tests()
 
-  def _angle_cmd_msg(self, angle, enabled):
+  def _angle_cmd_msg(self, angle: float, enabled: bool):
     values = {"DAS_steeringAngleRequest": angle, "DAS_steeringControlType": 1 if enabled else 0}
     return self.packer.make_can_msg_panda("DAS_steeringControl", 0, values)
 
-  def _angle_meas_msg(self, angle):
+  def _angle_meas_msg(self, angle: float):
     values = {"EPAS_internalSAS": angle}
     return self.packer.make_can_msg_panda("EPAS_sysStatus", 0, values)
 
@@ -143,6 +146,7 @@ class TestTeslaLongitudinalSafety(TestTeslaSafety):
             send = np.all(np.isclose([min_accel, max_accel], 0, atol=0.0001))
           self.assertEqual(send, self._tx(self._long_control_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])))
 
+
 class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafety):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2], [0x2B9, 0]]
   RELAY_MALFUNCTION_ADDR = 0x488
@@ -154,6 +158,7 @@ class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL)
     self.safety.init_tests()
 
+
 class TestTeslaPTLongitudinalSafety(TestTeslaLongitudinalSafety):
   TX_MSGS = [[0x2BF, 0]]
   RELAY_MALFUNCTION_ADDR = 0x2BF
@@ -164,6 +169,7 @@ class TestTeslaPTLongitudinalSafety(TestTeslaLongitudinalSafety):
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL | Panda.FLAG_TESLA_POWERTRAIN)
     self.safety.init_tests()
+
 
 if __name__ == "__main__":
   unittest.main()

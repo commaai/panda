@@ -33,7 +33,7 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
     values = {"DESIRED_ANGLE": angle, "LKA_ACTIVE": 1 if enabled else 0}
     return self.packer.make_can_msg_panda("LKAS", 0, values)
 
-  def _angle_meas_msg(self, angle):
+  def _angle_meas_msg(self, angle: float):
     values = {"STEER_ANGLE": angle}
     return self.packer.make_can_msg_panda("STEER_ANGLE_SENSOR", 0, values)
 
@@ -77,6 +77,7 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
         tx = self._tx(self._acc_button_cmd(**args))
         self.assertEqual(tx, should_tx)
 
+
 class TestNissanLeafSafety(TestNissanSafety):
 
   def setUp(self):
@@ -96,6 +97,7 @@ class TestNissanLeafSafety(TestNissanSafety):
   # TODO: leaf should use its own safety param
   def test_acc_buttons(self):
     pass
+
 
 if __name__ == "__main__":
   unittest.main()
