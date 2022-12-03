@@ -564,7 +564,6 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     self.assertFalse(self.safety.get_controls_allowed())
 
 
-
 @add_regen_tests
 class PandaSafetyTest(PandaSafetyTestBase):
   TX_MSGS: Optional[List[List[int]]] = None
