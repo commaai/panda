@@ -78,9 +78,9 @@ class TestSubaruGen2Safety(TestSubaruSafety):
     self.safety.init_tests()
 
 class TestSubaruForester2022Safety(TestSubaruSafety):
-  TX_MSGS = [[0x124, 0], [0x221, 0], [0x321, 0], [0x322, 0], [0x40, 2], [0x139, 2]]
+  TX_MSGS = [[0x124, 0], [0x221, 0], [0x321, 0], [0x322, 0]]
   RELAY_MALFUNCTION_ADDR = 0x124
-  FWD_BLACKLISTED_ADDRS = {0: [0x40, 0x139], 2: [0x124, 0x321, 0x322]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x124, 0x321, 0x322]}
 
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2022_generated")
