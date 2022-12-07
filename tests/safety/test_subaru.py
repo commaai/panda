@@ -83,7 +83,7 @@ class TestSubaruLongitudinalSafety(TestSubaruSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, Panda.FLAG_SUBARU_LONG)
     self.safety.init_tests()
 
