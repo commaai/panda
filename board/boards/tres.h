@@ -53,6 +53,9 @@ void tres_init(void) {
   set_gpio_alternate(GPIOC, 9, GPIO_AF2_TIM3);
   pwm_init(TIM3, 4);
   tres_set_ir_power(0U);
+
+  // Init DAC for fake siren
+  dac_init();
 }
 
 const board board_tres = {
