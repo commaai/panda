@@ -160,7 +160,7 @@ bool subaru_rate_limit_check(int val, int val_last, const int MAX_VAL_DELTA) {
 }
 
 
-static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int subaru_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -187,15 +187,15 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // longitudinal checks
+  /* FIXME: write tests and fix eyesight faults
   if (addr == 0x220) {
     int brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
 
-    if (!longitudinal_allowed && (brake_pressure != 0)) {
+    if (!controls_allowed && (brake_pressure != 0)) {
       violation = true;
     }
     violation |= max_limit_check(brake_pressure, SUBARU_BRAKE_MAX, SUBARU_BRAKE_MIN);
   }
-  /* FIXME: write tests and fix eyesight faults
   if (addr == 0x221) {
     int cruise_throttle = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
 

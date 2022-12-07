@@ -2,7 +2,7 @@
 import unittest
 import numpy as np
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
@@ -48,10 +48,18 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
     values = {"ESP_%s_Radgeschw_02" % s: speed for s in ["HL", "HR", "VL", "VR"]}
     return self.packer.make_can_msg_panda("ESP_19", 0, values)
 
-  # Brake light switch _esp_05_msg
-  def _user_brake_msg(self, brake):
+  # Driver brake pressure over threshold
+  def _esp_05_msg(self, brake):
     values = {"ESP_Fahrer_bremst": brake}
     return self.packer.make_can_msg_panda("ESP_05", 0, values)
+
+  # Brake pedal switch
+  def _motor_14_msg(self, brake):
+    values = {"MO_Fahrer_bremst": brake}
+    return self.packer.make_can_msg_panda("Motor_14", 0, values)
+
+  def _user_brake_msg(self, brake):
+    return self._motor_14_msg(brake)
 
   # Driver throttle input
   def _user_gas_msg(self, gas):
@@ -95,6 +103,18 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
     values = {"ACC_Sollbeschleunigung_02": accel, "ACC_Folgebeschl": secondary_accel}
     return self.packer.make_can_msg_panda("ACC_07", 0, values)
 
+  # Verify brake_pressed is true if either the switch or pressure threshold signals are true
+  def test_redundant_brake_signals(self):
+    test_combinations = [(True, True, True), (True, True, False), (True, False, True), (False, False, False)]
+    for brake_pressed, motor_14_signal, esp_05_signal in test_combinations:
+      self._rx(self._motor_14_msg(False))
+      self._rx(self._esp_05_msg(False))
+      self.assertFalse(self.safety.get_brake_pressed_prev())
+      self._rx(self._motor_14_msg(motor_14_signal))
+      self._rx(self._esp_05_msg(esp_05_signal))
+      self.assertEqual(brake_pressed, self.safety.get_brake_pressed_prev(),
+                       f"expected {brake_pressed=} with {motor_14_signal=} and {esp_05_signal=}")
+
   def test_torque_measurements(self):
     # TODO: make this test work with all cars
     self._rx(self._torque_driver_msg(50))
@@ -123,7 +143,7 @@ class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
     self.safety.init_tests()
 
@@ -141,10 +161,11 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
   TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_ACC_02, 0], [MSG_ACC_06, 0], [MSG_ACC_07, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02, MSG_ACC_02, MSG_ACC_06, MSG_ACC_07]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
+  INACTIVE_ACCEL = 3.01
 
   def setUp(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, Panda.FLAG_VOLKSWAGEN_LONG_CONTROL)
     self.safety.init_tests()
 
@@ -187,9 +208,9 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
 
   def test_accel_safety_check(self):
     for controls_allowed in [True, False]:
-      for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.01):
+      for accel in np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.03):
         accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
-        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == 0
+        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == self.INACTIVE_ACCEL
         self.safety.set_controls_allowed(controls_allowed)
         # primary accel request used by ECU
         self.assertEqual(send, self._tx(self._acc_06_msg(accel)), (controls_allowed, accel))

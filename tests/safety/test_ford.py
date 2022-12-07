@@ -4,7 +4,7 @@ import unittest
 import panda.tests.safety.common as common
 
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.common import CANPackerPanda
 
 MSG_EngBrakeData = 0x165          # RX from PCM, for driver brake pedal and cruise state
@@ -36,7 +36,7 @@ class TestFordSafety(common.PandaSafetyTest):
 
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
     self.safety.init_tests()
 
