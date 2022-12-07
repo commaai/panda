@@ -81,9 +81,6 @@ void common_init_gpio(void) {
 
   set_gpio_pullup(GPIOG, 10, PULL_NONE);
   set_gpio_alternate(GPIOG, 10, GPIO_AF2_FDCAN3);
-
-  // A4: DAC1 CH1
-  //set_gpio_mode(GPIOA, 4, MODE_ALTERNATE); // ?
 }
 
 void flasher_peripherals_init(void) {

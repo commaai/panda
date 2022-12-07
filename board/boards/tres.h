@@ -2,6 +2,8 @@
 // Tres + Harness //
 // /////////////////
 
+bool tres_siren_enabled = false;
+
 void tres_set_ir_power(uint8_t percentage){
   pwm_set(TIM3, 4, percentage);
 }
@@ -9,6 +11,14 @@ void tres_set_ir_power(uint8_t percentage){
 void tres_set_bootkick(bool enabled){
   set_gpio_output(GPIOA, 0, !enabled);
 }
+
+void tres_set_siren(bool enabled){
+  tres_siren_enabled = enabled;
+}
+
+
+// int32_t deg = ((int32_t) (((uint32_t) cnt) % 45) * 8) - 180;
+// dac_set((uint32_t) ((sin(deg * PI / 180.0f) + 1) * 1000U/2U));
 
 bool tres_ignition_prev = false;
 void tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
@@ -56,6 +66,7 @@ void tres_init(void) {
 
   // Init DAC for fake siren
   dac_init();
+  set_gpio_mode(GPIOA, 4, MODE_ALTERNATE); // Needed?
 }
 
 const board board_tres = {
@@ -82,5 +93,5 @@ const board board_tres = {
   .set_ir_power = tres_set_ir_power,
   .set_phone_power = unused_set_phone_power,
   .set_clock_source_mode = unused_set_clock_source_mode,
-  .set_siren = unused_set_siren
+  .set_siren = tres_set_siren
 };
