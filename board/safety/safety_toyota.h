@@ -13,6 +13,17 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
   .max_invalid_request_frames = 1,
   .min_valid_request_rt_interval = 170000,  // 170ms; a ~10% buffer on cutting every 19 frames
   .has_steer_req_tolerance = true,
+
+  // LTA angle limits
+  .angle_deg_to_can = 17.452007,  // 17.452006980802793
+  .angle_rate_up_lookup = {
+    {2., 7., 17.},
+    {5., .8, .25}
+  },
+  .angle_rate_down_lookup = {
+    {2., 7., 17.},
+    {5., 3.5, .8}
+  },
 };
 
 // longitudinal limits
@@ -196,14 +207,14 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
       int lta_angle = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
       lta_angle = to_signed(lta_angle, 16);
 
-      bool lta_actuation = lta_request || lta_request2;
+      bool steer_control_enabled = lta_request || lta_request2;
       if (toyota_lta) {
-        if (!controls_allowed && lta_actuation) {
+        if (steer_angle_cmd_checks(lta_angle, steer_control_enabled, TOYOTA_STEERING_LIMITS)) {
           tx = 0;
         }
       } else {
         // block LTA msgs with actuation requests
-        if (lta_actuation || (lta_angle != 0)) {
+        if (steer_control_enabled || (lta_angle != 0)) {
           tx = 0;
         }
       }
