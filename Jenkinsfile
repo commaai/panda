@@ -19,6 +19,11 @@ pipeline {
     PARTIAL_TESTS = "${env.BRANCH_NAME == 'master' ? ' ' : '1'}"
     DOCKER_IMAGE_TAG = "panda:build-${env.GIT_COMMIT}"
   }
+  options {
+    timeout(time: 3, unit: 'HOURS')
+    disableConcurrentBuilds(abortPrevious: env.BRANCH_NAME != 'master')
+  }
+
   stages {
     stage ('Acquire resource locks') {
       options {
