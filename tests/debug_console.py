@@ -9,7 +9,7 @@ import codecs
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda  # noqa: E402
 
-setcolor = ["\033[1;32;40m", "\033[1;31;40m"]
+setcolor = ["\033[1;32;40m", "\033[1;31;40m", "\033[1;33;40m"]
 unsetcolor = "\033[00m"
 
 port_number = int(os.getenv("PORT", "0"))

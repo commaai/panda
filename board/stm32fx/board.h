@@ -17,6 +17,7 @@
   #include "boards/black.h"
   #include "boards/uno.h"
   #include "boards/dos.h"
+  #include "boards/pzilla.h"
 #else
   #include "boards/pedal.h"
 #endif
@@ -40,7 +41,11 @@ void detect_board_type(void) {
       current_board = &board_uno;
     } else {
       hw_type = HW_TYPE_BLACK_PANDA;
-      current_board = &board_black;
+      if((detect_with_pull(GPIOB, 14, PULL_DOWN)) && (detect_with_pull(GPIOB, 15, PULL_DOWN))) {
+        current_board = &board_pzilla;
+      } else {
+        current_board = &board_black;
+      }
     }
   #else
     #ifdef PEDAL
