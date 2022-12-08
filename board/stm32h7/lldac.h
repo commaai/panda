@@ -8,8 +8,8 @@ void dac_init(DAC_TypeDef *DAC, uint8_t channel, bool dma) {
     case 1:
       if (dma) {
         register_set_bits(&DAC->CR, DAC_CR_DMAEN1);
+        // register_set(&DAC->CR, (6U << DAC_CR_TSEL1_Pos), DAC_CR_TSEL1);
         register_set_bits(&DAC->CR, DAC_CR_TEN1);
-        register_set(&DAC->CR, (1 << DAC_CR_TSEL1_Pos), DAC_CR_TSEL1);
       } else {
         register_clear_bits(&DAC->CR, DAC_CR_DMAEN1);
       }
