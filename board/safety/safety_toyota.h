@@ -196,14 +196,14 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
       int lta_angle = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
       lta_angle = to_signed(lta_angle, 16);
 
-      bool lta_actuation = lta_request || lta_request2 || (lta_angle != 0);
+      bool lta_actuation = lta_request || lta_request2;
       if (toyota_lta) {
         if (!controls_allowed && lta_actuation) {
           tx = 0;
         }
       } else {
         // block LTA msgs with actuation requests
-        if (lta_actuation) {
+        if (lta_actuation || (lta_angle != 0)) {
           tx = 0;
         }
       }
