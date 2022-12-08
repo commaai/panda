@@ -204,7 +204,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
       } else {
         // block LTA msgs with actuation requests
         if (lta_actuation) {
-          violation = true;
+          tx = 0;
         }
       }
     }
