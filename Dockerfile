@@ -89,3 +89,9 @@ RUN cd /tmp/openpilot && \
 RUN cd /tmp/openpilot && \
     pip install --no-cache-dir -r opendbc/requirements.txt && \
     pip install --no-cache-dir --upgrade aenum lru-dict pycurl tenacity atomicwrites serial smbus2
+
+
+# for Jenkins
+COPY README.md panda.tar.* /tmp/
+RUN mkdir /tmp/openpilot/panda && \
+    tar -xvf /tmp/panda.tar.gz -C /tmp/openpilot/panda/ || true
