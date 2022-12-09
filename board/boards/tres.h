@@ -55,6 +55,9 @@ void tres_init(void) {
   tres_set_ir_power(0U);
 
   // Fake siren
+  set_gpio_alternate(GPIOC, 10, GPIO_AF4_I2C5);
+  set_gpio_alternate(GPIOC, 11, GPIO_AF4_I2C5);
+  register_set_bits(&(GPIOC->OTYPER), GPIO_OTYPER_OT10 | GPIO_OTYPER_OT11); // open drain
   fake_siren_init();
   // set_gpio_mode(GPIOA, 4, MODE_ALTERNATE); // Needed?
 }
