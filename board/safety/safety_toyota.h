@@ -202,8 +202,8 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
     // sent to prevent dash errors, no actuation is accepted
     if (addr == 0x191) {
       // check the STEER_REQUEST, STEER_REQUEST_2, and STEER_ANGLE_CMD signals
-      bool lta_request = (GET_BYTE(to_send, 0) & 1U) != 0U;
-      bool lta_request2 = ((GET_BYTE(to_send, 3) >> 1) & 1U) != 0U;  // TODO: fix this, it should be a 2 bit signal
+      bool lta_request = GET_BIT(to_send, 0U) != 0U;
+      bool lta_request2 = GET_BIT(to_send, 25U) != 0U;
       int lta_angle = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
       lta_angle = to_signed(lta_angle, 16);
 
