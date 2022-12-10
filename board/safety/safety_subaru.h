@@ -189,7 +189,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   if (subaru_longitudinal) {
     // allow es_brake aeb passthrough and check limits
     if (addr == 0x220) {
-      bool es_brake_active = GET_BIT(to_send, 38U) != 0;
+      bool es_brake_active = GET_BIT(to_send, 38U) != 0U;
       int es_brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
 
       if (!controls_allowed && (es_brake_pressure != 0) && !es_brake_active) {
