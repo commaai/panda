@@ -71,6 +71,13 @@ class TestSubaruGen2Safety(TestSubaruSafety):
   MAX_RATE_DOWN = 40
   MAX_TORQUE = 1000
 
+  RPM_MAX = 3200
+  THROTTLE_MAX = 3400
+  BRAKE_MAX = 400
+
+  RPM_DELTA = 50
+  THROTTLE_DELTA = 50
+
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
     self.safety = libpanda_py.libpanda
@@ -87,6 +94,35 @@ class TestSubaruLongitudinalSafety(TestSubaruSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, Panda.FLAG_SUBARU_LONG)
     self.safety.init_tests()
 
+  def _es_brake_msg(self, brake=0, active=False):
+    values = {"Brake_Pressure": brake}
+    values = {"Cruise_Brake_Active": active}
+    return self.packer.make_can_msg_panda("ES_Brake", 0, values)
+
+  def _es_distance_msg(self, throttle=0):
+    values = {"Cruise_Throttle": throttle}
+    return self.packer.make_can_msg_panda("ES_Distance", 0, values)
+
+  def _es_status_msg(self, rpm=0):
+    values = {"Cruise_RPM": rpm}
+    return self.packer.make_can_msg_panda("ES_Status", 0, values)
+
+  def test_es_brake_msg(self):
+    self.assertTrue(self._tx(self._es_brake_msg()))
+    self.assertFalse(self._tx(self._es_brake_msg(brake=1)))
+    self.assertFalse(self._tx(self._es_brake_msg(brake=BRAKE_MAX+1)))
+
+  def test_es_distance_msg(self):
+    self.assertTrue(self._tx(self._es_distance_msg()))
+    self.assertTrue(self._tx(self._es_distance_msg(throttle=THROTTLE_DELTA)))
+    self.assertFalse(self._tx(self._es_distance_msg(throttle=THROTTLE_DELTA+THROTTLE_DELTA+1)))
+    self.assertFalse(self._tx(self._es_distance_msg(throttle=THROTTLE_MAX+1)))
+
+  def test_es_status_msg(self):
+    self.assertTrue(self._tx(self._es_status_msg()))
+    self.assertTrue(self._tx(self._es_status_msg(rpm=RPM_DELTA)))
+    self.assertFalse(self._tx(self._es_status_msg(rpm=RPM_DELTA+RPM_DELTA+1)))
+    self.assertFalse(self._tx(self._es_status_msg(rpm=RPM_MAX+1)))
 
 
 if __name__ == "__main__":

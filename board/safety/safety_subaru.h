@@ -186,37 +186,34 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
   }
 
-  // longitudinal checks
-  /* FIXME: write tests and fix eyesight faults
-  if (addr == 0x220) {
-    int brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
+  if (subaru_longitudinal) {
+    // allow es_brake aeb passthrough and check limits
+    if (addr == 0x220) {
+      bool es_brake_active = GET_BIT(to_send, 38U) != 0;
+      int es_brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
 
-    if (!controls_allowed && (brake_pressure != 0)) {
-      violation = true;
+      if (!controls_allowed && (es_brake_pressure != 0) && !es_brake_active) {
+        violation = true;
+      }
+      violation |= max_limit_check(es_brake_pressure, SUBARU_BRAKE_MAX, SUBARU_BRAKE_MIN);
     }
-    violation |= max_limit_check(brake_pressure, SUBARU_BRAKE_MAX, SUBARU_BRAKE_MIN);
-  }
-  if (addr == 0x221) {
-    int cruise_throttle = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
+    // check es_distance cruise_throttle limits
+    if ((addr == 0x221) && controls_allowed) {
+      int cruise_throttle = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
 
-    if (!longitudinal_allowed && (cruise_throttle != 0)) {
-      violation = true;
+      violation |= max_limit_check(cruise_throttle, SUBARU_THROTTLE_MAX, SUBARU_THROTTLE_MIN);
+      violation |= subaru_rate_limit_check(cruise_throttle, subaru_cruise_throttle_last, SUBARU_THROTTLE_DELTA);
+      subaru_cruise_throttle_last = cruise_throttle;
     }
-    violation |= max_limit_check(cruise_throttle, SUBARU_THROTTLE_MAX, SUBARU_THROTTLE_MIN);
-    violation |= subaru_rate_limit_check(cruise_throttle, subaru_cruise_throttle_last, SUBARU_THROTTLE_DELTA);
-    subaru_cruise_throttle_last = cruise_throttle;
-  }
-  if (addr == 0x222) {
-    int cruise_rpm = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
+    // check es_status cruise_rpm limits
+    if ((addr == 0x222) && controls_allowed) {
+      int cruise_rpm = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
 
-    if (!longitudinal_allowed && (cruise_rpm != 0)) {
-      violation = true;
+      violation |= max_limit_check(cruise_rpm, SUBARU_RPM_MAX, SUBARU_RPM_MIN);
+      violation |= subaru_rate_limit_check(cruise_rpm, subaru_cruise_rpm_last, SUBARU_RPM_DELTA);
+      subaru_cruise_rpm_last = cruise_rpm;
     }
-    violation |= max_limit_check(cruise_rpm, SUBARU_RPM_MAX, SUBARU_RPM_MIN);
-    violation |= subaru_rate_limit_check(cruise_rpm, subaru_cruise_rpm_last, SUBARU_RPM_DELTA);
-    subaru_cruise_rpm_last = cruise_rpm;
   }
-  */
 
   if (violation) {
     tx = 0;
