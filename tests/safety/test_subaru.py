@@ -84,7 +84,7 @@ class TestSubaruForester2022Safety(TestSubaruSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2022_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, Panda.FLAG_SUBARU_FORESTER_2022)
     self.safety.init_tests()
 

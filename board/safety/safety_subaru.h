@@ -168,7 +168,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
       tx = 0;
     }
   }
-  else if ((addr == 0x124) && subaru_forester_2022) {
+  if ((addr == 0x124) && subaru_forester_2022) {
     int desired_torque = ((GET_BYTES_48(to_send) >> 8) & 0x3FFFFU);
     desired_torque = -1 * to_signed(desired_torque, 17);
 
