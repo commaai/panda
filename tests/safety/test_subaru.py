@@ -109,11 +109,13 @@ class TestSubaruLongitudinalSafety(TestSubaruSafety):
     self.assertFalse(self._tx(self._es_brake_msg(brake=self.MAX_BRAKE+1)))
 
   def test_es_distance_msg(self):
+    self.safety.set_controls_allowed(True)
     self.assertTrue(self._tx(self._es_distance_msg()))
     self.assertTrue(self._tx(self._es_distance_msg(throttle=self.MAX_THROTTLE)))
     self.assertFalse(self._tx(self._es_distance_msg(throttle=self.MAX_THROTTLE+1)))
 
   def test_es_status_msg(self):
+    self.safety.set_controls_allowed(True)
     self.assertTrue(self._tx(self._es_status_msg()))
     self.assertTrue(self._tx(self._es_status_msg(rpm=self.MAX_RPM)))
     self.assertFalse(self._tx(self._es_status_msg(rpm=self.MAX_RPM+1)))
