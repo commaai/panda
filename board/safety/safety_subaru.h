@@ -25,14 +25,9 @@ const int SUBARU_BRAKE_MAX = 400;
 
 const int SUBARU_THROTTLE_MIN = 0;
 const int SUBARU_THROTTLE_MAX = 3400;
-//const int SUBARU_THROTTLE_DELTA = 50;
 
 const int SUBARU_RPM_MIN = 0;
 const int SUBARU_RPM_MAX = 3200;
-//const int SUBARU_RPM_DELTA = 50;
-
-int subaru_cruise_throttle_last = 0;
-int subaru_cruise_rpm_last = 0;
 
 const CanMsg SUBARU_TX_MSGS[] = {
   {0x122, 0, 8},
