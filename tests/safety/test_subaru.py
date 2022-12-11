@@ -81,12 +81,9 @@ class TestSubaruLongitudinalSafety(TestSubaruSafety):
   TX_MSGS = [[0x122, 0], [0x220, 0], [0x221, 0], [0x222, 0], [0x321, 0], [0x322, 0], [0x240, 2], [0x13c, 2]]
   FWD_BLACKLISTED_ADDRS = {0: [0x240, 0x13c], 2: [0x122, 0x220, 0x221, 0x222, 0x321, 0x322]}
 
-  RPM_MAX = 3200
-  THROTTLE_MAX = 3400
-  BRAKE_MAX = 400
-
-  RPM_DELTA = 50
-  THROTTLE_DELTA = 50
+  MAX_RPM = 3200
+  MAX_BRAKE = 400
+  MAX_THROTTLE = 3400
 
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
@@ -94,9 +91,8 @@ class TestSubaruLongitudinalSafety(TestSubaruSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, Panda.FLAG_SUBARU_LONG)
     self.safety.init_tests()
 
-  def _es_brake_msg(self, brake=0, active=False):
+  def _es_brake_msg(self, brake=0):
     values = {"Brake_Pressure": brake}
-    values = {"Cruise_Brake_Active": active}
     return self.packer.make_can_msg_panda("ES_Brake", 0, values)
 
   def _es_distance_msg(self, throttle=0):
@@ -109,20 +105,18 @@ class TestSubaruLongitudinalSafety(TestSubaruSafety):
 
   def test_es_brake_msg(self):
     self.assertTrue(self._tx(self._es_brake_msg()))
-    self.assertFalse(self._tx(self._es_brake_msg(brake=1)))
-    self.assertFalse(self._tx(self._es_brake_msg(brake=BRAKE_MAX+1)))
+    self.assertTrue(self._tx(self._es_brake_msg(brake=self.MAX_BRAKE)))
+    self.assertFalse(self._tx(self._es_brake_msg(brake=self.MAX_BRAKE+1)))
 
   def test_es_distance_msg(self):
     self.assertTrue(self._tx(self._es_distance_msg()))
-    self.assertTrue(self._tx(self._es_distance_msg(throttle=self.THROTTLE_DELTA)))
-    self.assertFalse(self._tx(self._es_distance_msg(throttle=self.THROTTLE_DELTA+self.THROTTLE_DELTA+1)))
-    self.assertFalse(self._tx(self._es_distance_msg(throttle=self.THROTTLE_MAX+1)))
+    self.assertTrue(self._tx(self._es_distance_msg(throttle=self.MAX_THROTTLE)))
+    self.assertFalse(self._tx(self._es_distance_msg(throttle=self.MAX_THROTTLE+1)))
 
   def test_es_status_msg(self):
     self.assertTrue(self._tx(self._es_status_msg()))
-    self.assertTrue(self._tx(self._es_status_msg(rpm=self.RPM_DELTA)))
-    self.assertFalse(self._tx(self._es_status_msg(rpm=self.RPM_DELTA+self.RPM_DELTA+1)))
-    self.assertFalse(self._tx(self._es_status_msg(rpm=self.RPM_MAX+1)))
+    self.assertTrue(self._tx(self._es_status_msg(rpm=self.MAX_RPM)))
+    self.assertFalse(self._tx(self._es_status_msg(rpm=self.MAX_RPM+1)))
 
 
 if __name__ == "__main__":
