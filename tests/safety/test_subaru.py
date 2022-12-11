@@ -90,7 +90,7 @@ class TestSubaruForester2022Safety(TestSubaruSafety):
 
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
-    return self.packer.make_can_msg_panda("ES_DashStatus", 2, values)
+    return self.packer.make_can_msg_panda("ES_Status", 2, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKAS_Output": torque}
