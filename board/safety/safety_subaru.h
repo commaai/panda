@@ -112,6 +112,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
   if (valid) {
     const int bus = GET_BUS(to_push);
     const int alt_bus = subaru_gen2 ? 1 : 0;
+    const int alt_bus2 = subaru_gen2 ? 1 : 2;
 
     int addr = GET_ADDR(to_push);
     if ((addr == 0x119) && (bus == 0)) {
@@ -121,8 +122,8 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    if ((addr == 0x220) && (bus == 2)) {
-      subaru_aeb = (GET_BIT(to_send, 38U) == 1)
+    if ((addr == 0x220) && (bus == alt_bus2)) {
+      subaru_aeb = (GET_BIT(to_push, 38U) == 1)
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
