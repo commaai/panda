@@ -8,16 +8,24 @@ bool fake_siren_enabled = false;
 
 void fake_siren_codec_enable(bool enabled) {
   if(enabled) {
-    i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x2B, (1U << 1)); // Left speaker mix from INA1
-    i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x2C, (1U << 1)); // Right speaker mix from INA1
-    i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x3D, 0x1F, 0b11111); // Left speaker volume
-    i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x3E, 0x1F, 0b11111); // Right speaker volume
-    i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x37, 0b101, 0b111); // INA gain
-    i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x4C, (1U << 7)); // Enable INA
-    i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x51, (1U << 7)); // Disable global shutdown
+    bool success = false;
+    success &= i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x2B, (1U << 1)); // Left speaker mix from INA1
+    success &= i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x2C, (1U << 1)); // Right speaker mix from INA1
+    success &= i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x3D, 0x1F, 0b11111); // Left speaker volume
+    success &= i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x3E, 0x1F, 0b11111); // Right speaker volume
+    success &= i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x37, 0b101, 0b111); // INA gain
+    success &= i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x4C, (1U << 7)); // Enable INA
+    success &= i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x51, (1U << 7)); // Disable global shutdown
+    if (!success) {
+      print("Failed to setup the codec for fake siren\n");
+    }
   } else {
     // Disable INA input. Make sure to retry a few times if the I2C bus is busy.
-    for(uint8_t i=0U; i<10U && !i2c_clear_reg_bits(I2C5, CODEC_I2C_ADDR, 0x4C, (1U << 7)); i++);
+    for(uint8_t i=0U; i<10U; i++) {
+      if (i2c_clear_reg_bits(I2C5, CODEC_I2C_ADDR, 0x4C, (1U << 7))) {
+        break;
+      }
+    }
   }
 }
 
