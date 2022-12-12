@@ -16,9 +16,11 @@ void fake_siren_codec_enable(bool enabled) {
     i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x4C, (1U << 7)); // Enable INA
     i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x51, (1U << 7)); // Disable global shutdown
   } else {
-    i2c_clear_reg_bits(I2C5, CODEC_I2C_ADDR, 0x4C, (1U << 7)); // Disable INA
+    // Disable INA input. Make sure to retry a few times if the I2C bus is busy.
+    for(uint8_t i=0U; i<10U && !i2c_clear_reg_bits(I2C5, CODEC_I2C_ADDR, 0x4C, (1U << 7)); i++);
   }
 }
+
 
 void fake_siren_set(bool enabled) {
   if (enabled != fake_siren_enabled) {

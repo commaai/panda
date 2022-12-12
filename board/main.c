@@ -146,7 +146,6 @@ uint8_t loop_counter = 0U;
 void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
     // siren
-    siren_enabled = true;
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
 
     // tick drivers at 8Hz
