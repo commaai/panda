@@ -4,7 +4,7 @@ const uint8_t PANDA_CAN_CNT = 3U;
 const uint8_t PANDA_BUS_CNT = 4U;
 
 // bump this when changing the CAN packet
-#define CAN_PACKET_VERSION 3
+#define CAN_PACKET_VERSION 4
 
 #define CANPACKET_HEAD_SIZE 5U
 
