@@ -91,9 +91,10 @@ class TestSubaruLongitudinalSafety(TestSubaruSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, Panda.FLAG_SUBARU_LONG)
     self.safety.init_tests()
 
-  def _es_brake_msg(self, brake=0):
+  def _es_brake_msg(self, brake=0, bus=0, aeb=0):
     values = {"Brake_Pressure": brake}
-    return self.packer.make_can_msg_panda("ES_Brake", 0, values)
+    values = {"Cruise_Brake_Active": aeb}
+    return self.packer.make_can_msg_panda("ES_Brake", bus, values)
 
   def _es_distance_msg(self, throttle=0):
     values = {"Cruise_Throttle": throttle}
@@ -106,7 +107,9 @@ class TestSubaruLongitudinalSafety(TestSubaruSafety):
   def test_es_brake_msg(self):
     self.assertTrue(self._tx(self._es_brake_msg()))
     self.assertTrue(self._tx(self._es_brake_msg(brake=self.MAX_BRAKE)))
-    self.assertFalse(self._tx(self._es_brake_msg(brake=self.MAX_BRAKE+1)))
+    self.assertFalse(self._tx(self._es_brake_msg(brake=self.MAX_BRAKE+10)))
+    self.assertFalse(self._tx(self._es_brake_msg(brake=self.MAX_BRAKE+10, bus=2, aeb=0)))
+    self.assertTrue(self._tx(self._es_brake_msg(brake=self.MAX_BRAKE+10, bus=2, aeb=1)))
 
   def test_es_distance_msg(self):
     self.safety.set_controls_allowed(True)

@@ -174,8 +174,9 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   if (subaru_longitudinal) {
     // check es_brake brake_pressure limits
     if (addr == 0x220) {
+      bool aeb = (bus == 2) && (GET_BIT(to_send, 38U) == 1);
       int es_brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
-      violation |= max_limit_check(es_brake_pressure, SUBARU_BRAKE_MAX, SUBARU_BRAKE_MIN);
+      violation |= !aeb && max_limit_check(es_brake_pressure, SUBARU_BRAKE_MAX, SUBARU_BRAKE_MIN);
     }
     // check es_distance cruise_throttle limits
     if ((addr == 0x221) && controls_allowed) {
