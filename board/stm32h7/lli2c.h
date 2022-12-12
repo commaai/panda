@@ -2,6 +2,13 @@
 // TODO: this driver relies heavily on polling,
 // if we want it to be more async, we should use interrupts
 
+#define I2C_TIMEOUT_US 100000U
+bool i2c_status_wait(volatile uint32_t *reg, uint32_t mask, uint32_t val) {
+  uint32_t start_time = microsecond_timer_get();
+  while(((*reg & mask) != val) && (get_ts_elapsed(microsecond_timer_get(), start_time) < I2C_TIMEOUT_US));
+  return ((*reg & mask) == val);
+}
+
 bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t value) {
   // Setup transfer and send START + addr
   bool start_success = false;
@@ -13,7 +20,9 @@ bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t value) {
     I2C->CR2 |= (2 << I2C_CR2_NBYTES_Pos);
 
     I2C->CR2 |= I2C_CR2_START;
-    while((I2C->CR2 & I2C_CR2_START) != 0U);
+    if(!i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U)) {
+      continue;
+    }
 
     // check if we lost arbitration
     if ((I2C->ISR & I2C_ISR_ARLO) != 0U) {
@@ -29,9 +38,14 @@ bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t value) {
   }
 
   // Send data
-  while((I2C->ISR & I2C_ISR_TXIS) == 0U);
+  if(!i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS)) {
+    return false;
+  }
   I2C->TXDR = reg;
-  while((I2C->ISR & I2C_ISR_TXIS) == 0U);
+
+  if(!i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS)) {
+    return false;
+  }
   I2C->TXDR = value;
 
   return true;
@@ -48,7 +62,9 @@ bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *value) {
     I2C->CR2 |= (1 << I2C_CR2_NBYTES_Pos);
 
     I2C->CR2 |= I2C_CR2_START;
-    while((I2C->CR2 & I2C_CR2_START) != 0U);
+    if(!i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U)) {
+      continue;
+    }
 
     // check if we lost arbitration
     if ((I2C->ISR & I2C_ISR_ARLO) != 0U) {
@@ -64,15 +80,27 @@ bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *value) {
   }
 
   // Send data
-  while((I2C->ISR & I2C_ISR_TXIS) == 0U);
+  if(!i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS)) {
+    return false;
+  }
   I2C->TXDR = reg;
 
   // Restart
   I2C->CR2 = (((addr << 1U) | 0x1) & I2C_CR2_SADD_Msk) | (1 << I2C_CR2_NBYTES_Pos) | I2C_CR2_RD_WRN | I2C_CR2_START;
-  while((I2C->CR2 & I2C_CR2_START) != 0U);
+  if(!i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U)) {
+    return false;
+  }
+
+  // check if we lost arbitration
+  if ((I2C->ISR & I2C_ISR_ARLO) != 0U) {
+    register_set_bits(&I2C->ICR, I2C_ICR_ARLOCF);
+    return false;
+  }
 
   // Read data
-  while((I2C->ISR & I2C_ISR_RXNE) == 0U);
+  if(!i2c_status_wait(&I2C->ISR, I2C_ISR_RXNE, I2C_ISR_RXNE)) {
+    return false;
+  }
   *value = I2C->RXDR;
 
   // Stop
