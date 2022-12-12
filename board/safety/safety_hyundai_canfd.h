@@ -1,7 +1,7 @@
 #include "safety_hyundai_common.h"
 
 const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
-  .max_steer = 270,
+  .max_steer = 330,
   .max_rt_delta = 112,
   .max_rt_interval = 250000,
   .max_rate_up = 2,
@@ -38,6 +38,11 @@ const CanMsg HYUNDAI_CANFD_HDA2_LONG_TX_MSGS[] = {
   {0x200, 1, 8},  // ADRV_0x200
   {0x345, 1, 8},  // ADRV_0x345
   {0x1DA, 1, 32}, // ADRV_0x1da
+
+  // for blinkers
+  {0x165, 1, 24}, // SPAS1
+  {0x16A, 1, 32}, // SPAS2
+  {0x7B1, 1, 8},  // tester present for APRK ECU disable
 };
 
 const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
@@ -119,6 +124,7 @@ const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 32;
 bool hyundai_canfd_hda2 = false;
 bool hyundai_canfd_alt_buttons = false;
 
+float hyundai_canfd_vego = 0.;
 
 static uint8_t hyundai_canfd_get_counter(CANPacket_t *to_push) {
   uint8_t ret = 0;
@@ -219,6 +225,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
       for (int i = 8; i < 15; i+=2) {
         speed += GET_BYTE(to_push, i) | (GET_BYTE(to_push, i + 1) << 8U);
       }
+      hyundai_canfd_vego = ((float)speed / 4.f) * 0.277778f * 0.03125f;
       vehicle_moving = (speed / 4U) > HYUNDAI_STANDSTILL_THRSLD;
     }
   }
@@ -263,8 +270,43 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {
     int desired_torque = (((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U)) - 1024U;
     bool steer_req = GET_BIT(to_send, 52U) != 0U;
 
-    if (steer_torque_cmd_checks(desired_torque, steer_req, HYUNDAI_CANFD_STEERING_LIMITS)) {
-      tx = 0;
+    // 2m/s margin
+    if ((hyundai_canfd_vego < (11.f + 2.f))) {
+      bool violation = false;
+      uint32_t ts = microsecond_timer_get();
+
+      if (controls_allowed) {
+        // *** global torque limit check ***
+        violation |= max_limit_check(desired_torque, 384, -384);
+
+        // ready to blend in limits
+        desired_torque_last = MAX(-330, MIN(desired_torque, 330));
+        rt_torque_last = desired_torque;
+        ts_torque_check_last = ts;
+      }
+
+      // no torque if controls is not allowed
+      if (!controls_allowed && (desired_torque != 0)) {
+        violation = true;
+      }
+
+      // reset to 0 if either controls is not allowed or there's a violation
+      if (violation || !controls_allowed) {
+        valid_steer_req_count = 0;
+        invalid_steer_req_count = 0;
+        desired_torque_last = 0;
+        rt_torque_last = 0;
+        ts_torque_check_last = ts;
+        ts_steer_req_mismatch_last = ts;
+      }
+
+      if (violation) {
+        tx = 0;
+      }
+    } else {
+      if (steer_torque_cmd_checks(desired_torque, steer_req, HYUNDAI_CANFD_STEERING_LIMITS)) {
+        tx = 0;
+      }
     }
   }
 
@@ -281,7 +323,7 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {
   }
 
   // UDS: only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
-  if ((addr == 0x730) && hyundai_canfd_hda2) {
+  if (((addr == 0x730) || (addr == 0x7b1)) && hyundai_canfd_hda2) {
     if ((GET_BYTES_04(to_send) != 0x00803E02U) || (GET_BYTES_48(to_send) != 0x0U)) {
       tx = 0;
     }
@@ -306,6 +348,22 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {
 
     if (violation) {
       tx = 0;
+    }
+  }
+
+  // SPAS: only blinkers
+  if ((addr == 0x165) || (addr == 0x16a)) {
+    // skip counter and checksum
+    for (int i = 3; i < GET_LEN(to_send); i++) {
+      uint8_t val = GET_BYTE(to_send, i);
+      if (i == 16) {
+        // allow blinkers
+        val &= 0x1fU;
+      }
+
+      if (val != 0U) {
+        tx = 0;
+      }
     }
   }
 
