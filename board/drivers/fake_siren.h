@@ -14,20 +14,23 @@ void fake_siren_codec_enable(bool enabled) {
     i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x3E, 0x1F, 0b11111); // Right speaker volume
     i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x37, 0b101, 0b111); // INA gain
     i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x4C, (1U << 7)); // Enable INA
+    i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x51, (1U << 7)); // Disable global shutdown
   } else {
     i2c_clear_reg_bits(I2C5, CODEC_I2C_ADDR, 0x4C, (1U << 7)); // Disable INA
   }
 }
 
 void fake_siren_set(bool enabled) {
-  fake_siren_enabled = enabled;
+  if (enabled != fake_siren_enabled) {
+    fake_siren_codec_enable(enabled);
+  }
 
-  fake_siren_codec_enable(enabled);
   if (enabled) {
     register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
   } else {
     register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
   }
+  fake_siren_enabled = enabled;
 }
 
 void fake_siren_init(void) {
@@ -57,4 +60,5 @@ void fake_siren_init(void) {
 
   // Enable the I2C to the codec
   i2c_init(I2C5);
+  fake_siren_codec_enable(false);
 }
