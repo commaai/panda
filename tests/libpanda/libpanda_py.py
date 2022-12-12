@@ -48,6 +48,7 @@ bool can_pop(can_ring *q, CANPacket_t *elem);
 bool can_push(can_ring *q, CANPacket_t *elem);
 int comms_can_read(uint8_t *data, uint32_t max_len);
 void comms_can_write(uint8_t *data, uint32_t len);
+void comms_can_reset(void);
 uint32_t can_slots_empty(can_ring *q);
 """)
 

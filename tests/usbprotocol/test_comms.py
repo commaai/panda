@@ -28,6 +28,9 @@ def random_can_messages(n, bus=None):
 
 
 class TestPandaComms(unittest.TestCase):
+  def setUp(self):
+    lpp.comms_can_reset()
+
   def test_tx_queues(self):
     for bus in range(4):
       message = (0x100, 0, b"test", bus)
@@ -69,6 +72,7 @@ class TestPandaComms(unittest.TestCase):
     packets = [libpanda_py.make_CANPacket(m[0], m[3], m[2]) for m in msgs]
 
     rx_msgs = []
+    overflow_buf = b""
     while len(packets) > 0:
       # Push into queue
       while lpp.can_slots_empty(lpp.rx_q) > 0 and len(packets) > 0:
@@ -88,7 +92,8 @@ class TestPandaComms(unittest.TestCase):
 
         if len(buf) == 0:
           break
-        rx_msgs.extend(unpack_can_buffer(buf))
+        unpacked_msgs, overflow_buf = unpack_can_buffer(overflow_buf + buf)
+        rx_msgs.extend(unpacked_msgs)
 
     self.assertEqual(len(rx_msgs), len(msgs))
     self.assertEqual(rx_msgs, msgs)

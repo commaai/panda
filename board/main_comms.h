@@ -138,6 +138,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xb3:
       current_board->set_phone_power(req->param1 > 0U);
       break;
+    // **** 0xc0: reset communications
+    case 0xc0:
+      comms_can_reset();
+      break;
     // **** 0xc1: get hardware type
     case 0xc1:
       resp[0] = hw_type;

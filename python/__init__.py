@@ -29,14 +29,13 @@ BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
 DEBUG = os.getenv("PANDADEBUG") is not None
 
-CAN_TRANSACTION_MAGIC = struct.pack("<I", 0x43414E2F)
 USBPACKET_MAX_SIZE = 0x40
 CANPACKET_HEAD_SIZE = 0x5
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
 
 def pack_can_buffer(arr):
-  snds = [CAN_TRANSACTION_MAGIC]
+  snds = [b'']
   for address, _, dat, bus in arr:
     assert len(dat) in LEN_TO_DLC
     #logging.debug("  W 0x%x: 0x%s", address, dat.hex())
@@ -53,26 +52,17 @@ def pack_can_buffer(arr):
 
     snds[-1] += header + dat
     if len(snds[-1]) > 256: # Limit chunks to 256 bytes
-      snds.append(CAN_TRANSACTION_MAGIC)
+      snds.append(b'')
 
   return snds
 
 def unpack_can_buffer(dat):
   ret = []
-  if len(dat) < len(CAN_TRANSACTION_MAGIC):
-    return ret
-
-  if dat[:len(CAN_TRANSACTION_MAGIC)] != CAN_TRANSACTION_MAGIC:
-    logging.error("CAN: recv didn't start with magic")
-    return ret
-
-  dat = dat[len(CAN_TRANSACTION_MAGIC):]
 
   while len(dat) >= CANPACKET_HEAD_SIZE:
     data_len = DLC_TO_LEN[(dat[0]>>4)]
 
     header = dat[:CANPACKET_HEAD_SIZE]
-    dat = dat[CANPACKET_HEAD_SIZE:]
 
     bus = (header[0] >> 1) & 0x7
     address = (header[4] << 24 | header[3] << 16 | header[2] << 8 | header[1]) >> 3
@@ -84,17 +74,16 @@ def unpack_can_buffer(dat):
       # rejected
       bus += 192
 
-    data = dat[:data_len]
-    dat = dat[data_len:]
+    # we need more from the next transfer
+    if data_len > len(dat) - CANPACKET_HEAD_SIZE:
+      break
 
-    #logging.debug("  R 0x%x: 0x%s", address, data.hex())
+    data = dat[CANPACKET_HEAD_SIZE:(CANPACKET_HEAD_SIZE+data_len)]
+    dat = dat[(CANPACKET_HEAD_SIZE+data_len):]
 
     ret.append((address, 0, data, bus))
 
-  if len(dat) > 0:
-    logging.error("CAN: malformed packet. leftover data")
-
-  return ret
+  return (ret, dat)
 
 def ensure_health_packet_version(fn):
   @wraps(fn)
@@ -235,9 +224,14 @@ class Panda:
     self._handle = None
     self._bcd_device = None
 
+    self.can_rx_overflow_buffer = b''
+
     # connect and set mcu type
     self._spi = spi
     self.connect(claim)
+
+    # reset comms
+    self.can_reset_communications()
 
   def close(self):
     self._handle.close()
@@ -653,6 +647,10 @@ class Panda:
   CAN_SEND_TIMEOUT_MS = 10
 
   @ensure_can_packet_version
+  def can_reset_communications(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xc0, 0, 0, b'')
+
+  @ensure_can_packet_version
   def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
     snds = pack_can_buffer(arr)
     while True:
@@ -681,7 +679,8 @@ class Panda:
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         print("CAN: BAD RECV, RETRYING")
         time.sleep(0.1)
-    return unpack_can_buffer(dat)
+    msgs, self.can_rx_overflow_buffer = unpack_can_buffer(self.can_rx_overflow_buffer + dat)
+    return msgs
 
   def can_clear(self, bus):
     """Clears all messages from the specified internal CAN ringbuffer as
