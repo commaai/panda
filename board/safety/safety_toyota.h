@@ -18,11 +18,11 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
   .angle_deg_to_can = 17.452007,  // 17.452006980802793
   .angle_rate_up_lookup = {
     {2., 7., 17.},
-    {3.5, .8, .2}
+    {3.5, 3.5, 3.5}
   },
   .angle_rate_down_lookup = {
     {2., 7., 17.},
-    {3.5, 3.5, .5}
+    {3.5, 3.5, 3.5}
   },
 };
 
