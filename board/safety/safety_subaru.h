@@ -84,6 +84,7 @@ const uint16_t SUBARU_PARAM_LONGITUDINAL = 2;
 bool subaru_gen2 = false;
 bool subaru_longitudinal = false;
 
+bool subaru_aeb = false
 
 static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -118,6 +119,10 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       torque_driver_new = ((GET_BYTES_04(to_push) >> 16) & 0x7FFU);
       torque_driver_new = -1 * to_signed(torque_driver_new, 11);
       update_sample(&torque_driver, torque_driver_new);
+    }
+
+    if ((addr == 0x220) && (bus == 2)) {
+      subaru_aeb = (GET_BIT(to_send, 38U) == 1)
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -172,12 +177,10 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   }
 
   if (subaru_longitudinal) {
-    const int bus = GET_BUS(to_push);
     // check es_brake brake_pressure limits
     if (addr == 0x220) {
-      bool aeb = (bus == 2) && (GET_BIT(to_send, 38U) == 1);
       int es_brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
-      violation |= !aeb && max_limit_check(es_brake_pressure, SUBARU_BRAKE_MAX, SUBARU_BRAKE_MIN);
+      violation |= !subaru_aeb && max_limit_check(es_brake_pressure, SUBARU_BRAKE_MAX, SUBARU_BRAKE_MIN);
     }
     // check es_distance cruise_throttle limits
     if ((addr == 0x221) && controls_allowed) {
