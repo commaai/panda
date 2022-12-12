@@ -172,6 +172,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   }
 
   if (subaru_longitudinal) {
+    const int bus = GET_BUS(to_push);
     // check es_brake brake_pressure limits
     if (addr == 0x220) {
       bool aeb = (bus == 2) && (GET_BIT(to_send, 38U) == 1);
