@@ -84,7 +84,7 @@ const uint16_t SUBARU_PARAM_LONGITUDINAL = 2;
 bool subaru_gen2 = false;
 bool subaru_longitudinal = false;
 
-bool subaru_aeb = false
+bool subaru_aeb = false;
 
 static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -123,7 +123,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     }
 
     if ((addr == 0x220) && (bus == alt_bus2)) {
-      subaru_aeb = (GET_BIT(to_push, 38U) == 1)
+      subaru_aeb = GET_BIT(to_push, 38U) != 0U;
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
