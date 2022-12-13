@@ -155,9 +155,6 @@ void red_init(void) {
   if (car_harness_status == HARNESS_STATUS_FLIPPED) {
     can_flip_buses(0, 2);
   }
-
-  // Init DAC
-  dac_init();
 }
 
 const harness_configuration red_harness_config = {
