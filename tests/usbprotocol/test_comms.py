@@ -43,6 +43,62 @@ class TestPandaComms(unittest.TestCase):
 
       assert unpackage_can_msg(can_pkt_rx) == message
 
+  def test_comms_reset_rx(self):
+    # store some test messages in the queue
+    test_msg = (0x100, 0, b"test", 0)
+    for _ in range(100):
+      can_pkt_tx = libpanda_py.make_CANPacket(test_msg[0], test_msg[3], test_msg[2])
+      lpp.can_push(lpp.rx_q, can_pkt_tx)
+
+    # read a small chunk such that we have some overflow
+    TINY_CHUNK_SIZE = 6
+    dat = libpanda_py.ffi.new(f"uint8_t[{TINY_CHUNK_SIZE}]")
+    rx_len = lpp.comms_can_read(dat, TINY_CHUNK_SIZE)
+    assert rx_len == TINY_CHUNK_SIZE, "comms_can_read returned too little data"
+
+    _, overflow = unpack_can_buffer(bytes(dat))
+    assert len(overflow) > 0, "overflow buffer should not be empty"
+
+    # reset the comms to clear the overflow buffer on the panda side
+    lpp.comms_can_reset()
+
+    # read a large chunk, which should now contain valid messages
+    LARGE_CHUNK_SIZE = 512
+    dat = libpanda_py.ffi.new(f"uint8_t[{LARGE_CHUNK_SIZE}]")
+    rx_len = lpp.comms_can_read(dat, LARGE_CHUNK_SIZE)
+    assert rx_len == LARGE_CHUNK_SIZE, "comms_can_read returned too little data"
+
+    msgs, _ = unpack_can_buffer(bytes(dat))
+    assert len(msgs) > 0, "message buffer should not be empty"
+    for m in msgs:
+      assert m == test_msg, "message buffer should contain valid test messages"
+
+  def test_comms_reset_tx(self):
+    # store some test messages in the queue
+    test_msg = (0x100, 0, b"test", 0)
+    packed = pack_can_buffer([test_msg for _ in range(100)])
+
+    # write a small chunk such that we have some overflow
+    TINY_CHUNK_SIZE = 6
+    lpp.comms_can_write(packed[0][:TINY_CHUNK_SIZE], TINY_CHUNK_SIZE)
+
+    # reset the comms to clear the overflow buffer on the panda side
+    lpp.comms_can_reset()
+
+    # write a full valid chunk, which should now contain valid messages
+    lpp.comms_can_write(packed[1], len(packed[1]))
+
+    # read the messages from the queue and make sure they're valid
+    queue_msgs = []
+    pkt = libpanda_py.ffi.new('CANPacket_t *')
+    while lpp.can_pop(TX_QUEUES[0], pkt):
+      queue_msgs.append(unpackage_can_msg(pkt))
+
+    assert len(queue_msgs) > 0, "message buffer should not be empty"
+    for m in queue_msgs:
+      assert m == test_msg, "message buffer should contain valid test messages"
+
+
   def test_can_send_usb(self):
     lpp.set_safety_hooks(Panda.SAFETY_ALLOUTPUT, 0)
 
