@@ -8,7 +8,7 @@
   * comms_can_write reads in this buffer in chunks.
   * both functions maintain an overflow buffer for a partial CANPacket_t that
     spans multiple transfers/chunks.
-  * the overflow buffers are reset by a dedicated control transfer (0xc0),
+  * the overflow buffers are reset by a dedicated control transfer handler,
     which is sent by the host on each start of a connection.
 */
 
