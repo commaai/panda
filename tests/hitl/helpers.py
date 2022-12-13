@@ -200,6 +200,7 @@ def panda_connect_and_init(fn=None, full_reset=True):
               assert can_health['total_rx_lost_cnt'] == 0
               assert can_health['total_tx_lost_cnt'] == 0
               assert can_health['total_error_cnt'] == 0
+              assert can_health['total_tx_checksum_error_cnt'] == 0
     finally:
       for p in pandas:
         try:

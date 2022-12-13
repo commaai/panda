@@ -226,6 +226,23 @@ bool can_tx_check_min_slots_free(uint32_t min) {
     (can_slots_empty(&can_txgmlan_q) >= min);
 }
 
+uint8_t calculate_checksum(uint8_t *dat, uint32_t len) {
+  uint8_t checksum = 0U;
+  for (uint32_t i = 0U; i < len; i++) {
+    checksum ^= dat[i];
+  }
+  return checksum;
+}
+
+void can_set_checksum(CANPacket_t *packet) {
+  packet->checksum = 0U;
+  packet->checksum = calculate_checksum((uint8_t *) packet, CANPACKET_HEAD_SIZE + GET_LEN(packet));
+}
+
+bool can_check_checksum(CANPacket_t *packet) {
+  return (calculate_checksum((uint8_t *) packet, CANPACKET_HEAD_SIZE + GET_LEN(packet)) == 0U);
+}
+
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
   if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
     if (bus_number < PANDA_BUS_CNT) {
@@ -240,6 +257,9 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
   } else {
     safety_tx_blocked += 1U;
     to_push->rejected = 1U;
+
+    // data changed
+    can_set_checksum(to_push);
     rx_buffer_overflow += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }
 }

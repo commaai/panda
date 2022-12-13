@@ -30,9 +30,15 @@ BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 DEBUG = os.getenv("PANDADEBUG") is not None
 
 USBPACKET_MAX_SIZE = 0x40
-CANPACKET_HEAD_SIZE = 0x5
+CANPACKET_HEAD_SIZE = 0x6
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
+
+def calculate_checksum(data):
+  res = 0
+  for b in data:
+    res ^= b
+  return res
 
 def pack_can_buffer(arr):
   snds = [b'']
@@ -42,13 +48,14 @@ def pack_can_buffer(arr):
 
     extended = 1 if address >= 0x800 else 0
     data_len_code = LEN_TO_DLC[len(dat)]
-    header = bytearray(5)
+    header = bytearray(CANPACKET_HEAD_SIZE)
     word_4b = address << 3 | extended << 2
     header[0] = (data_len_code << 4) | (bus << 1)
     header[1] = word_4b & 0xFF
     header[2] = (word_4b >> 8) & 0xFF
     header[3] = (word_4b >> 16) & 0xFF
     header[4] = (word_4b >> 24) & 0xFF
+    header[5] = calculate_checksum(header[:5] + dat)
 
     snds[-1] += header + dat
     if len(snds[-1]) > 256: # Limit chunks to 256 bytes
@@ -77,6 +84,8 @@ def unpack_can_buffer(dat):
     # we need more from the next transfer
     if data_len > len(dat) - CANPACKET_HEAD_SIZE:
       break
+
+    assert calculate_checksum(dat[:(CANPACKET_HEAD_SIZE+data_len)]) == 0, "CAN packet checksum incorrect"
 
     data = dat[CANPACKET_HEAD_SIZE:(CANPACKET_HEAD_SIZE+data_len)]
     dat = dat[(CANPACKET_HEAD_SIZE+data_len):]
@@ -176,9 +185,9 @@ class Panda:
 
   CAN_PACKET_VERSION = 4
   HEALTH_PACKET_VERSION = 11
-  CAN_HEALTH_PACKET_VERSION = 3
+  CAN_HEALTH_PACKET_VERSION = 4
   HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBB")
-  CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIHHBBB")
+  CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBB")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
@@ -507,11 +516,12 @@ class Panda:
       "total_tx_cnt": a[13],
       "total_rx_cnt": a[14],
       "total_fwd_cnt": a[15],
-      "can_speed": a[16],
-      "can_data_speed": a[17],
-      "canfd_enabled": a[18],
-      "brs_enabled": a[19],
-      "canfd_non_iso": a[20],
+      "total_tx_checksum_error_cnt": a[16],
+      "can_speed": a[17],
+      "can_data_speed": a[18],
+      "canfd_enabled": a[19],
+      "brs_enabled": a[20],
+      "canfd_non_iso": a[21],
     }
 
   # ******************* control *******************

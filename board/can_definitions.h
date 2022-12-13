@@ -6,7 +6,7 @@ const uint8_t PANDA_BUS_CNT = 4U;
 // bump this when changing the CAN packet
 #define CAN_PACKET_VERSION 4
 
-#define CANPACKET_HEAD_SIZE 5U
+#define CANPACKET_HEAD_SIZE 6U
 
 #if !defined(STM32F4) && !defined(STM32F2)
   #define CANFD
@@ -23,6 +23,7 @@ typedef struct {
   unsigned char returned : 1;
   unsigned char extended : 1;
   unsigned int addr : 29;
+  unsigned char checksum;
   unsigned char data[CANPACKET_DATA_SIZE_MAX];
 } __attribute__((packed, aligned(4))) CANPacket_t;
 
