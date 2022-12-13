@@ -646,7 +646,6 @@ class Panda:
   # Timeout is in ms. If set to 0, the timeout is infinite.
   CAN_SEND_TIMEOUT_MS = 10
 
-  @ensure_can_packet_version
   def can_reset_communications(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xc0, 0, 0, b'')
 
