@@ -12,6 +12,7 @@
 #include "stm32h7/lldac.h"
 #include "drivers/fake_siren.h"
 #include "drivers/rtc.h"
+#include "drivers/clock_source.h"
 #include "boards/red.h"
 #include "boards/red_chiplet.h"
 #include "boards/red_v2.h"
