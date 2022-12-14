@@ -9,6 +9,8 @@
 #include "drivers/fan.h"
 #include "stm32h7/llfan.h"
 #include "stm32h7/llrtc.h"
+#include "stm32h7/lldac.h"
+#include "drivers/fake_siren.h"
 #include "drivers/rtc.h"
 #include "boards/red.h"
 #include "boards/red_chiplet.h"
