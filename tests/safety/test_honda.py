@@ -549,19 +549,21 @@ class TestHondaBoschRadarlessLongSafety(HondaPcmEnableBase, TestHondaBoschSafety
   """
   # NO_GAS = -30000
   # MAX_GAS = 2000
-  MAX_BRAKE = -3.5
+  MAX_ACCEL = 2.0  # accel is used for brakes, but openpilot can set positive values
+  MIN_ACCEL = -3.5
+
   PT_BUS = 0
   STEER_BUS = 0
   BUTTONS_BUS = 2  # camera controls ACC, need to send buttons on bus 2
 
-  TX_MSGS = [[0xE4, 0], [0x296, 2], [0x33D, 0], [0x1C8, 0]]
-  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB, 0x1C8]}
+  TX_MSGS = [[0xE4, 0], [0x296, 2], [0x33D, 0], [0x1C8, 0], [0x30C, 0]]
+  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB, 0x1C8, 0x30C]}
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_ex_2022_can_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS | Panda.FLAG_HONDA_BOSCH_LONG)
-    self.safety.init_tests_honda()
+    self.safety.init_tests()
 
   def _send_accel_msg(self, accel):
     values = {
@@ -577,10 +579,10 @@ class TestHondaBoschRadarlessLongSafety(HondaPcmEnableBase, TestHondaBoschSafety
 
   # def test_brake_safety_check(self):
   #   for controls_allowed in [True, False]:
-  #     for accel in np.arange(0, self.MAX_BRAKE - 1, -0.01):
-  #       accel = round(accel, 2) # floats might not hit exact boundary conditions without rounding
+  #     for accel in np.arange(self.MIN_ACCEL - 1, self.MAX_ACCEL + 1, 0.01):
+  #       accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
   #       self.safety.set_controls_allowed(controls_allowed)
-  #       send = self.MAX_BRAKE <= accel <= 0 if controls_allowed else accel == 0
+  #       send = self.MIN_ACCEL <= accel <= self.MAX_ACCEL if controls_allowed else accel == 0
   #       self.assertEqual(send, self._tx(self._send_gas_brake_msg(self.NO_GAS, accel)), (controls_allowed, accel))
 
 

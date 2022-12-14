@@ -326,12 +326,10 @@ static int honda_tx_hook(CANPacket_t *to_send) {
   if ((addr == 0x1C8) && (bus == bus_pt)) {
     int accel = (GET_BYTE(to_send, 0) << 4) | (GET_BYTE(to_send, 1) >> 4);
     accel = to_signed(accel, 12);
-    if (!longitudinal_allowed) {
-      if (accel != 0) {
-        tx = 0;
-      }
-    }
-    if (accel < HONDA_BOSCH_ACCEL_MIN) {
+
+    bool violation = false;
+    violation |= longitudinal_accel_checks(accel, HONDA_BOSCH_LONG_LIMITS);
+    if (violation) {
       tx = 0;
     }
   }
