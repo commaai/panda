@@ -84,6 +84,5 @@ const board board_tres = {
   .set_fan_enabled = red_chiplet_set_fan_or_usb_load_switch,
   .set_ir_power = tres_set_ir_power,
   .set_phone_power = unused_set_phone_power,
-  .set_clock_source_mode = unused_set_clock_source_mode,
   .set_siren = fake_siren_set
 };
