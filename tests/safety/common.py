@@ -9,21 +9,6 @@ from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
 from panda.tests.libpanda import libpanda_py
 
-
-class Abstract(abc.ABC):
-  @abc.abstractmethod
-  def test_something(self):
-    pass
-
-
-class AbsSub(Abstract, abc.ABC):
-  pass
-
-
-class Sub(AbsSub):
-  pass
-
-
 MAX_WRONG_COUNTERS = 5
 
 
@@ -146,7 +131,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
         self.assertEqual(send, self._tx(self._interceptor_gas_cmd(gas)))
 
 
-class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, metaclass=abc.ABCMeta):
+class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
   MAX_RATE_UP = 0
   MAX_RATE_DOWN = 0
@@ -299,7 +284,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, metaclass=abc.ABCMeta):
       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
 
-class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, metaclass=abc.ABCMeta):
+class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   DRIVER_TORQUE_ALLOWANCE = 0
   DRIVER_TORQUE_FACTOR = 0
@@ -380,7 +365,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, metaclass=abc
       self.assertTrue(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA + 1))))
 
 
-class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, metaclass=abc.ABCMeta):
+class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   MAX_TORQUE_ERROR = 0
   TORQUE_MEAS_TOLERANCE = 0
