@@ -9,6 +9,21 @@ from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
 from panda.tests.libpanda import libpanda_py
 
+
+class Abstract(abc.ABC):
+  @abc.abstractmethod
+  def test_something(self):
+    pass
+
+
+class AbsSub(Abstract, abc.ABC):
+  pass
+
+
+class Sub(AbsSub):
+  pass
+
+
 MAX_WRONG_COUNTERS = 5
 
 
