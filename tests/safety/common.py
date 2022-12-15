@@ -131,7 +131,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
         self.assertEqual(send, self._tx(self._interceptor_gas_cmd(gas)))
 
 
-class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
+class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, metaclass=abc.ABCMeta):
 
   MAX_RATE_UP = 0
   MAX_RATE_DOWN = 0
@@ -284,7 +284,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
 
-class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
+class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, metaclass=abc.ABCMeta):
 
   DRIVER_TORQUE_ALLOWANCE = 0
   DRIVER_TORQUE_FACTOR = 0
@@ -365,7 +365,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       self.assertTrue(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA + 1))))
 
 
-class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
+class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, metaclass=abc.ABCMeta):
 
   MAX_TORQUE_ERROR = 0
   TORQUE_MEAS_TOLERANCE = 0
