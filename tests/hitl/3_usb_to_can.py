@@ -1,6 +1,6 @@
 import sys
 import time
-from flaky import flaky # pylint: disable=import-error
+from flaky import flaky  # pylint: disable=import-error
 from nose.tools import assert_equal, assert_less, assert_greater
 
 from panda import Panda
