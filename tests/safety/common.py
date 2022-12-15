@@ -284,7 +284,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=1)))
 
 
-class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
+class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   DRIVER_TORQUE_ALLOWANCE = 0
   DRIVER_TORQUE_FACTOR = 0
@@ -365,7 +365,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
       self.assertTrue(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA + 1))))
 
 
-class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
+class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   MAX_TORQUE_ERROR = 0
   TORQUE_MEAS_TOLERANCE = 0
