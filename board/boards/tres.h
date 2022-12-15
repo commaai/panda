@@ -53,6 +53,15 @@ void tres_init(void) {
   set_gpio_alternate(GPIOC, 9, GPIO_AF2_TIM3);
   pwm_init(TIM3, 4);
   tres_set_ir_power(0U);
+
+  // Fake siren
+  set_gpio_alternate(GPIOC, 10, GPIO_AF4_I2C5);
+  set_gpio_alternate(GPIOC, 11, GPIO_AF4_I2C5);
+  register_set_bits(&(GPIOC->OTYPER), GPIO_OTYPER_OT10 | GPIO_OTYPER_OT11); // open drain
+  fake_siren_init();
+
+  // Clock source
+  clock_source_init();
 }
 
 const board board_tres = {
@@ -78,6 +87,5 @@ const board board_tres = {
   .set_fan_enabled = red_chiplet_set_fan_or_usb_load_switch,
   .set_ir_power = tres_set_ir_power,
   .set_phone_power = unused_set_phone_power,
-  .set_clock_source_mode = unused_set_clock_source_mode,
-  .set_siren = unused_set_siren
+  .set_siren = fake_siren_set
 };
