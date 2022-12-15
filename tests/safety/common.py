@@ -131,7 +131,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
         self.assertEqual(send, self._tx(self._interceptor_gas_cmd(gas)))
 
 
-class TorqueSteeringSafetyTestBase(PandaSafetyTestBase):
+class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
   MAX_RATE_UP = 0
   MAX_RATE_DOWN = 0
@@ -295,10 +295,6 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
       cls.safety = None
       raise unittest.SkipTest
 
-  @abc.abstractmethod
-  def _torque_cmd_msg(self, torque, steer_req=1):
-    pass
-
   def test_non_realtime_limit_up(self):
     self.safety.set_torque_driver(0, 0)
     super().test_non_realtime_limit_up()
@@ -382,10 +378,6 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase):
 
   @abc.abstractmethod
   def _torque_meas_msg(self, torque):
-    pass
-
-  @abc.abstractmethod
-  def _torque_cmd_msg(self, torque, steer_req=1):
     pass
 
   def _set_prev_torque(self, t):
