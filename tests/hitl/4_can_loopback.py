@@ -2,7 +2,7 @@ import os
 import time
 import random
 import threading
-from flaky import flaky
+from flaky import flaky # pylint: disable=import-error
 from collections import defaultdict
 from nose.tools import assert_equal, assert_less, assert_greater
 
