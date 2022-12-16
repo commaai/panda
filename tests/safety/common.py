@@ -165,10 +165,6 @@ class SteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self._tx(self._generic_high_steer_cmd_msg(True)))
 
-    # now disable
-    self._rx(self._user_brake_msg(True))  # pylint: disable=no-member
-    self.assertFalse(self.safety.get_controls_allowed())
-
 
 class TorqueSteeringSafetyTestBase(SteeringSafetyTestBase, abc.ABC):
 
