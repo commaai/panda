@@ -131,7 +131,41 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
         self.assertEqual(send, self._tx(self._interceptor_gas_cmd(gas)))
 
 
-class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
+class SteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "SteeringSafetyTestBase":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  @abc.abstractmethod
+  def _generic_high_steer_cmd_msg(self, enabled: bool):
+    """
+    Subclasses should override and provide a steering command message with sufficient torque or angle for generic safety tests.
+    """
+
+  def test_steer_preenable_safety_check(self):
+    self._rx(self._speed_msg(0))  # pylint: disable=no-member
+    self._rx(self._user_brake_msg(True))  # pylint: disable=no-member
+    self.safety.set_controls_allowed(True)
+
+    # no steer should be allowed in pre-enabling state
+    self._rx(self._user_brake_msg(True))  # pylint: disable=no-member
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.assertFalse(self._tx(self._generic_high_steer_cmd_msg(True)))
+
+    # user releases brake, out of pre-enabling state
+    self._rx(self._user_brake_msg(False))  # pylint: disable=no-member
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self._tx(self._generic_high_steer_cmd_msg(True)))
+
+    # now disable
+    self._rx(self._user_brake_msg(True))  # pylint: disable=no-member
+    self.assertFalse(self.safety.get_controls_allowed())
+
+
+class TorqueSteeringSafetyTestBase(SteeringSafetyTestBase, abc.ABC):
 
   MAX_RATE_UP = 0
   MAX_RATE_DOWN = 0
@@ -150,6 +184,11 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
       cls.safety = None
       raise unittest.SkipTest
 
+  def _generic_high_steer_cmd_msg(self, enabled: bool):
+    torque_cmd = self.MAX_TORQUE if enabled else 0
+    self._set_prev_torque(torque_cmd)
+    return self._torque_cmd_msg(torque_cmd, enabled)
+
   @abc.abstractmethod
   def _torque_cmd_msg(self, torque, steer_req=1):
     pass
@@ -165,35 +204,6 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
         self._set_prev_torque(t)
         should_tx = abs(t) <= self.MAX_TORQUE and (enabled or abs(t) == 0)
         self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(t)))
-
-  def test_steer_preenable_safety_check(self):
-    # self.safety.set_controls_allowed(False)
-    self.safety.set_controls_allowed(True)
-    self.assertTrue(self.safety.get_controls_allowed())
-    self._rx(self._speed_msg(0))  # pylint: disable=no-member
-    self._rx(self._user_brake_msg(True))  # pylint: disable=no-member
-    self.assertFalse(self.safety.get_controls_allowed())
-
-    self.safety.set_controls_allowed(True)
-    self.assertTrue(self.safety.get_controls_allowed())
-    self._set_prev_torque(self.MAX_TORQUE)
-    # should_tx = abs(t) <= self.MAX_TORQUE and (enabled or abs(t) == 0)
-    self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE)))
-
-    self._rx(self._user_brake_msg(False))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self._set_prev_torque(self.MAX_TORQUE)
-    # should_tx = abs(t) <= self.MAX_TORQUE and (enabled or abs(t) == 0)
-    self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE)))
-
-
-
-    # for enabled in [0, 1]:
-    #   for t in range(-self.MAX_TORQUE * 2, self.MAX_TORQUE * 2):
-    #     self.safety.set_controls_allowed(enabled)
-    #     self._set_prev_torque(t)
-    #     should_tx = abs(t) <= self.MAX_TORQUE and (enabled or abs(t) == 0)
-    #     self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(t)))
 
   def test_non_realtime_limit_up(self):
     self.safety.set_controls_allowed(True)
@@ -498,7 +508,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
 
-class AngleSteeringSafetyTest(PandaSafetyTestBase):
+class AngleSteeringSafetyTest(SteeringSafetyTestBase):
 
   DEG_TO_CAN: int
 
@@ -511,6 +521,12 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     if cls.__name__ == "AngleSteeringSafetyTest":
       cls.safety = None
       raise unittest.SkipTest
+
+  def _generic_high_steer_cmd_msg(self, enabled: bool):
+    angle_cmd = 90 if enabled else 0  # 90 degrees is usually high acceleration
+    self._angle_meas_msg_array(angle_cmd)
+    self._set_prev_desired_angle(angle_cmd)
+    return self._angle_cmd_msg(angle_cmd, enabled)
 
   @abc.abstractmethod
   def _angle_cmd_msg(self, angle: float, enabled: bool):
