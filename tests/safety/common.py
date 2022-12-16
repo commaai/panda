@@ -108,6 +108,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
       self._rx(self._interceptor_user_gas(g))
       # Test we allow lateral, but not longitudinal
       self.assertTrue(self.safety.get_controls_allowed())
+      self.assertTrue(self.safety.get_lateral_allowed())
       self.assertEqual(g <= self.INTERCEPTOR_THRESHOLD, self.safety.get_longitudinal_allowed())
       # Make sure we can re-gain longitudinal actuation
       self._rx(self._interceptor_user_gas(0))
@@ -714,6 +715,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(self._user_gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
     # Test we allow lateral, but not longitudinal
     self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self.safety.get_lateral_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
     # Make sure we can re-gain longitudinal actuation
     self._rx(self._user_gas_msg(0))
@@ -760,13 +762,16 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(_user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
+    self.assertFalse(self.safety.get_lateral_allowed())
     self._rx(_user_brake_msg(0))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
+    self.assertTrue(self.safety.get_lateral_allowed())
     # rising edge of brake should disengage
     self._rx(_user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
+    self.assertFalse(self.safety.get_lateral_allowed())
     self._rx(_user_brake_msg(0))  # reset no brakes
 
   def test_not_allow_user_brake_when_moving(self, _user_brake_msg=None, get_brake_pressed_prev=None):
@@ -780,10 +785,12 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self._rx(_user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
+    self.assertFalse(self.safety.get_lateral_allowed())
     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
     self._rx(_user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
+    self.assertFalse(self.safety.get_lateral_allowed())
     self._rx(self._speed_msg(0))
 
   def test_sample_speed(self):
