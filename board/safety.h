@@ -87,7 +87,7 @@ bool get_longitudinal_allowed(void) {
 
 bool get_lateral_allowed(void) {
   // No steering allowed while pre-enabling at a standstill with brake
-  return controls_allowed && !brake_pressed_prev;
+  return controls_allowed && !(brake_pressed_prev || regen_braking_prev);
 }
 
 // Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8
