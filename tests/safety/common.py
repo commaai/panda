@@ -147,6 +147,10 @@ class SteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
     """
 
   def test_steer_preenable_safety_check(self):
+    """
+    Tests sending active, non-zero steer commands while pre-enabling at a standstill with brake held.
+    """
+
     self._rx(self._speed_msg(0))  # pylint: disable=no-member
     self._rx(self._user_brake_msg(True))  # pylint: disable=no-member
     self.safety.set_controls_allowed(True)
