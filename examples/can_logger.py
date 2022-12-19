@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import csv
+import time
 from panda import Panda
 
 def can_logger():
@@ -10,18 +11,20 @@ def can_logger():
     outputfile = open('output.csv', 'w')
     csvwriter = csv.writer(outputfile)
     # Write Header
-    csvwriter.writerow(['Bus', 'MessageID', 'Message', 'MessageLength'])
+    csvwriter.writerow(['Bus', 'MessageID', 'Message', 'MessageLength', 'Time'])
     print("Writing csv file output.csv. Press Ctrl-C to exit...\n")
 
     bus0_msg_cnt = 0
     bus1_msg_cnt = 0
     bus2_msg_cnt = 0
 
+    start_time = time.time()
     while True:
       can_recv = p.can_recv()
 
       for address, _, dat, src in can_recv:
-        csvwriter.writerow([str(src), str(hex(address)), f"0x{dat.hex()}", len(dat)])
+        csvwriter.writerow(
+          [str(src), str(hex(address)), f"0x{dat.hex()}", len(dat), str(time.time() - start_time)])
 
         if src == 0:
           bus0_msg_cnt += 1
