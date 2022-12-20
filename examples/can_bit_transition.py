@@ -45,7 +45,7 @@ class Info():
 
   def load(self, filename, start, end):
     """Given a CSV file, adds information about message IDs and their values."""
-    with open(filename, 'rb') as inp:
+    with open(filename, newline='') as inp:
       reader = csv.DictReader(inp)
       dtype = None
       for row in reader:
