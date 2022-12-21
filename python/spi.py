@@ -50,10 +50,9 @@ class SpiHandle:
     return cksum
 
   def _wait_for_ack(self, ack_val: int) -> None:
-    dat = b"\x00"
     start = time.monotonic()
     while (time.monotonic() - start) < ACK_TIMEOUT_SECONDS:
-      dat = self.spi.xfer2(b"\x12")
+      dat = self.spi.xfer2(b"\x12")[0]
       if dat == NACK:
         raise PandaSpiNackResponse
       elif dat == ack_val:
