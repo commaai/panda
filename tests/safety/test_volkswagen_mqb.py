@@ -2,7 +2,7 @@
 import unittest
 import numpy as np
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
@@ -143,7 +143,7 @@ class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
     self.safety.init_tests()
 
@@ -161,10 +161,11 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
   TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_ACC_02, 0], [MSG_ACC_06, 0], [MSG_ACC_07, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02, MSG_ACC_02, MSG_ACC_06, MSG_ACC_07]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
+  INACTIVE_ACCEL = 3.01
 
   def setUp(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, Panda.FLAG_VOLKSWAGEN_LONG_CONTROL)
     self.safety.init_tests()
 
@@ -207,9 +208,9 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
 
   def test_accel_safety_check(self):
     for controls_allowed in [True, False]:
-      for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.01):
+      for accel in np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.03):
         accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
-        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == 0
+        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == self.INACTIVE_ACCEL
         self.safety.set_controls_allowed(controls_allowed)
         # primary accel request used by ECU
         self.assertEqual(send, self._tx(self._acc_06_msg(accel)), (controls_allowed, accel))

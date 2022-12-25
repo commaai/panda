@@ -165,7 +165,7 @@ void putch(const char a) {
   (void)injectc(&uart_ring_debug, a);
 }
 
-void puts(const char *a) {
+void print(const char *a) {
   for (const char *in = a; *in; in++) {
     if (*in == '\n') putch('\r');
     putch(*in);
@@ -183,7 +183,7 @@ void putui(uint32_t i) {
     idx--;
     i_copy /= 10;
   } while (i_copy != 0U);
-  puts(&str[idx + 1U]);
+  print(&str[idx + 1U]);
 }
 
 void puthx(uint32_t i, uint8_t len) {
@@ -208,10 +208,10 @@ void puth4(unsigned int i) {
 void hexdump(const void *a, int l) {
   if (a != NULL) {
     for (int i=0; i < l; i++) {
-      if ((i != 0) && ((i & 0xf) == 0)) puts("\n");
+      if ((i != 0) && ((i & 0xf) == 0)) print("\n");
       puth2(((const unsigned char*)a)[i]);
-      puts(" ");
+      print(" ");
     }
   }
-  puts("\n");
+  print("\n");
 }

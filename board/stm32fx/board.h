@@ -48,7 +48,7 @@ void detect_board_type(void) {
       current_board = &board_pedal;
     #else
       hw_type = HW_TYPE_UNKNOWN;
-      puts("Hardware type is UNKNOWN!\n");
+      print("Hardware type is UNKNOWN!\n");
     #endif
   #endif
 }
