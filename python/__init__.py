@@ -249,6 +249,7 @@ class Panda:
     self._handle = None
 
     if self._spi:
+      print("using SPI")
       self._handle = SpiHandle()
 
       # TODO implement

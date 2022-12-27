@@ -71,7 +71,6 @@ void llspi_init(void) {
   register_set(&(DMA2_Stream3->PAR), (uint32_t)&(SPI1->DR), 0xFFFFFFFFU);
 
   // Enable SPI and the error interrupts
-  // TODO: verify clock phase and polarity
   register_set(&(SPI1->CR1), SPI_CR1_SPE, 0xFFFFU);
   register_set(&(SPI1->CR2), 0U, 0xF7U);
 
