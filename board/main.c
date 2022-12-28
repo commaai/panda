@@ -57,15 +57,15 @@ void debug_ring_callback(uart_ring *ring) {
 
     // enable CDP mode
     if (rcv == 'C') {
-      puts("switching USB to CDP mode\n");
+      print("switching USB to CDP mode\n");
       current_board->set_usb_power_mode(USB_POWER_CDP);
     }
     if (rcv == 'c') {
-      puts("switching USB to client mode\n");
+      print("switching USB to client mode\n");
       current_board->set_usb_power_mode(USB_POWER_CLIENT);
     }
     if (rcv == 'D') {
-      puts("switching USB to DCP mode\n");
+      print("switching USB to DCP mode\n");
       current_board->set_usb_power_mode(USB_POWER_DCP);
     }
   }
@@ -169,8 +169,7 @@ void tick_handler(void) {
     if (loop_counter == 0U) {
       can_live = pending_can_live;
 
-      current_board->usb_power_mode_tick(uptime_cnt);
-      //puth(usart1_dma); puts(" "); puth(DMA2_Stream5->M0AR); puts(" "); puth(DMA2_Stream5->NDTR); puts("\n");
+      //puth(usart1_dma); print(" "); puth(DMA2_Stream5->M0AR); print(" "); puth(DMA2_Stream5->NDTR); print("\n");
 
       // reset this every 16th pass
       if ((uptime_cnt & 0xFU) == 0U) {
