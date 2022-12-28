@@ -32,7 +32,7 @@ void pedal_set_led(uint8_t color, bool enabled) {
 
 void pedal_set_usb_power_mode(uint8_t mode){
   usb_power_mode = mode;
-  puts("Trying to set USB power mode on pedal. This is not supported.\n");
+  print("Trying to set USB power mode on pedal. This is not supported.\n");
 }
 
 void pedal_set_gps_mode(uint8_t mode) {

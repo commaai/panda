@@ -69,7 +69,7 @@ void black_set_usb_power_mode(uint8_t mode) {
       valid = true;
       break;
     default:
-      puts("Invalid USB power mode\n");
+      print("Invalid USB power mode\n");
       break;
   }
   if (valid) {
