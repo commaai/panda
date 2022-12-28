@@ -190,6 +190,9 @@ void dos_init(void) {
   dos_set_led(LED_GREEN, false);
   dos_set_led(LED_BLUE, false);
 
+  // Bootkick
+  dos_set_bootkick(true);
+
   // Set normal CAN mode
   dos_set_can_mode(CAN_MODE_NORMAL);
 
