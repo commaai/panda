@@ -157,6 +157,17 @@ void uno_usb_power_mode_tick(uint32_t uptime){
   }
 }
 
+void uno_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
+  UNUSED(ignition);
+  UNUSED(usb_enum);
+  UNUSED(heartbeat_seen);
+  if (bootkick_timer != 0U) {
+    bootkick_timer--;
+  } else {
+    uno_set_bootkick(false);
+  }
+}
+
 bool uno_check_ignition(void){
   // ignition is checked through harness
   return harness_check_ignition();
