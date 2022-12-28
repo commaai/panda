@@ -417,14 +417,14 @@ int main(void) {
         uint32_t div_mode = ((usb_power_mode == USB_POWER_DCP) ? 4U : 1U);
 
         // useful for debugging, fade breaks = panda is overloaded
-        for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {
+        for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += div_mode) {
           current_board->set_led(LED_RED, true);
           delay(fade >> 4);
           current_board->set_led(LED_RED, false);
           delay((MAX_LED_FADE - fade) >> 4);
         }
 
-        for (uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= 1U) {
+        for (uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= div_mode) {
           current_board->set_led(LED_RED, true);
           delay(fade >> 4);
           current_board->set_led(LED_RED, false);
