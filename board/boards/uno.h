@@ -261,6 +261,7 @@ const harness_configuration uno_harness_config = {
 
 const board board_uno = {
   .board_type = "Uno",
+  .board_tick = uno_board_tick,
   .harness_config = &uno_harness_config,
   .has_gps = true,
   .has_hw_gmlan = false,
