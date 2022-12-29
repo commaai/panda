@@ -24,6 +24,8 @@
 #include "safety/safety_hyundai_canfd.h"
 #endif
 
+#include "safety/safety_volvo.h"
+
 // from cereal.car.CarParams.SafetyModel
 #define SAFETY_SILENT 0U
 #define SAFETY_HONDA_NIDEC 1U
@@ -51,6 +53,8 @@
 #define SAFETY_FAW 26U
 #define SAFETY_BODY 27U
 #define SAFETY_HYUNDAI_CANFD 28U
+#define SAFETY_VOLVO_C1 29U
+#define SAFETY_VOLVO_EUCD 30U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
 uint16_t current_safety_param = 0;
@@ -308,6 +312,8 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
   {SAFETY_FORD, &ford_hooks},
 #endif
+  {SAFETY_VOLVO_C1, &volvo_c1_hooks},
+  {SAFETY_VOLVO_EUCD, &volvo_eucd_hooks},
 };
 
 int set_safety_hooks(uint16_t mode, uint16_t param) {
