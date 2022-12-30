@@ -20,10 +20,10 @@ if os.path.exists('/data/params/d/dp_atl'):
       atl_enabled = True
 
 sspoof_enabled = False
-if os.path.exists('/data/params/d/dp_sspoof'):
-  with open('/data/params/d/dp_sspoof') as f:
-    if (int(f.read().strip())) != 0:
-      sspoof_enabled = True
+# if os.path.exists('/data/params/d/dp_sspoof'):
+#   with open('/data/params/d/dp_sspoof') as f:
+#     if (int(f.read().strip())) != 0:
+#       sspoof_enabled = True
 
 if atl_enabled and sspoof_enabled and os.path.exists(TESTING_SSPOOF_FW_FN):
   DEFAULT_FW_FN = TESTING_SSPOOF_FW_FN
