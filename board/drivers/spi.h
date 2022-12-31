@@ -1,7 +1,7 @@
 #pragma once
 
-//#define SPI_BUF_SIZE 1024U
-#define SPI_BUF_SIZE 0x40U
+#define XFER_SIZE 0x40U
+#define SPI_BUF_SIZE 1024U
 
 #ifdef STM32H7
 __attribute__((section(".ram_d1"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
@@ -13,8 +13,7 @@ uint8_t spi_buf_tx[SPI_BUF_SIZE];
 
 #define SPI_CHECKSUM_START 0xABU
 #define SPI_SYNC_BYTE 0x5AU
-#define SPI_HACK 0x79U
-#define SPI_DACK 0x85U
+#define SPI_ACK 0x85U
 #define SPI_NACK 0x1FU
 
 // SPI states
@@ -38,7 +37,7 @@ void spi_init(void) {
   llspi_init();
 
   // Start the first packet!
-  llspi_mosi_dma(spi_buf_rx, SPI_BUF_SIZE);
+  llspi_mosi_dma(spi_buf_rx, XFER_SIZE);
 }
 
 bool check_checksum(uint8_t *data, uint16_t len) {
@@ -51,17 +50,17 @@ bool check_checksum(uint8_t *data, uint16_t len) {
 }
 
 void spi_handle_rx(void) {
-  // TODO: use the struct for this?
+  // TODO: use a struct for this?
   // parse header
   spi_endpoint = spi_buf_rx[1];
   spi_data_len_mosi = (spi_buf_rx[3] << 8) | spi_buf_rx[2];
-  //spi_data_len_miso = (spi_buf_rx[5] << 8) | spi_buf_rx[4];
-
-  // for debugging
-  (void)memset(spi_buf_tx, 99, SPI_BUF_SIZE);
+  spi_data_len_miso = (spi_buf_rx[5] << 8) | spi_buf_rx[4];
 
   bool response_ack = false;
   uint16_t response_len = 0U;
+
+  // for debugging, remove this
+  (void)memset(spi_buf_tx, 99, SPI_BUF_SIZE);
 
   if (spi_buf_rx[0] == SPI_SYNC_BYTE) {
     //print("- all good, got header: "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
@@ -76,19 +75,36 @@ void spi_handle_rx(void) {
         } else {
           print("SPI: wrong length of data for control handler, got "); puth(spi_data_len_mosi); print(", expected "); puth(sizeof(ControlPacket_t)); print("\n");
         }
+      } else if ((spi_endpoint == 1U) || (spi_endpoint == 0x81U)) {
+        if (spi_data_len_mosi == 0U) {
+          response_len = comms_can_read(&(spi_buf_tx[3]), spi_data_len_miso);
+          response_ack = true;
+        } else {
+          print("SPI: did not expect data for can_read\n");
+        }
+      } else if (spi_endpoint == 2U) {
+        comms_endpoint2_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
+        response_ack = true;
+      } else if (spi_endpoint == 3U) {
+        if (spi_data_len_mosi > 0U) {
+          comms_can_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
+          response_ack = true;
+        } else {
+          print("SPI: did expect data for can_write\n");
+        }
       } else {
-        print("- unknown endpoint "); puth(spi_endpoint); print("\n");
+        print("SPI: unexpected endpoint"); puth(spi_endpoint); print("\n");
       }
     } else {
-      print("- incorrect checksum "); hexdump(spi_buf_rx, SPI_HEADER_SIZE + spi_data_len_mosi);
+      print("SPI: bad checksum\n");
     }
   } else {
-    print("- incorrect header sync "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
+    print("SPI: incorrect header sync "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
   }
 
   if (spi_buf_rx[0] != 0x00) {
     // Setup response header
-    spi_buf_tx[0] = response_ack ? SPI_DACK : SPI_NACK;
+    spi_buf_tx[0] = response_ack ? SPI_ACK : SPI_NACK;
     spi_buf_tx[1] = response_len & 0xFFU;
     spi_buf_tx[2] = (response_len >> 8) & 0xFFU;
 
@@ -100,17 +116,13 @@ void spi_handle_rx(void) {
     spi_buf_tx[response_len + 3U] = checksum;
 
     // send off the response
-    llspi_miso_dma(spi_buf_tx, SPI_BUF_SIZE);
+    llspi_miso_dma(spi_buf_tx, spi_data_len_miso);
   } else {
-    print("- skip TX\n");
-    llspi_mosi_dma(spi_buf_rx, SPI_BUF_SIZE);
+    llspi_mosi_dma(spi_buf_rx, XFER_SIZE);
   }
 }
 
 void spi_handle_tx(void) {
-  // for debugging
-  (void)memset(spi_buf_rx, 99, SPI_BUF_SIZE);
-
   // back to reading
-  llspi_mosi_dma(spi_buf_rx, SPI_BUF_SIZE);
+  llspi_mosi_dma(spi_buf_rx, XFER_SIZE);
 }

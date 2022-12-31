@@ -15,3 +15,4 @@ pylint==2.15.4
 scons
 flaky
 spidev
+spidev2

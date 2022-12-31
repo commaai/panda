@@ -1,4 +1,5 @@
 void llspi_miso_dma(uint8_t *addr, int len) {
+  print("send\n");
   // disable DMA
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
   register_clear_bits(&(SPI1->CR2), SPI_CR2_TXDMAEN);
@@ -13,6 +14,7 @@ void llspi_miso_dma(uint8_t *addr, int len) {
 }
 
 void llspi_mosi_dma(uint8_t *addr, int len) {
+  print("read\n");
   // disable DMA
   register_clear_bits(&(SPI1->CR2), SPI_CR2_RXDMAEN);
   DMA2_Stream2->CR &= ~DMA_SxCR_EN;
@@ -36,6 +38,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
   ENTER_CRITICAL();
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
 
+  print("read d\n");
   spi_handle_rx();
 
   EXIT_CRITICAL();
@@ -45,6 +48,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
 void DMA2_Stream3_IRQ_Handler(void) {
   // Clear interrupt flag
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
+  print("send d\n");
 
   // Wait until the transaction is actually finished and clear the DR
   // TODO: needs a timeout here, otherwise it gets stuck with no master clock!
