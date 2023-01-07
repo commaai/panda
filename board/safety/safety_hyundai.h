@@ -285,11 +285,11 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
   }
 
   // UDS: Only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
-  if (addr == 2000) {
+  /*if (addr == 2000) {
     if ((GET_BYTES_04(to_send) != 0x00803E02U) || (GET_BYTES_48(to_send) != 0x0U)) {
       tx = 0;
     }
-  }
+  }*/
 
   // BUTTONS: used for resume spamming and cruise cancellation
   if ((addr == 1265) && !hyundai_longitudinal) {
