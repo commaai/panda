@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import os
+from collections import Counter
 
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety_replay.helpers import package_can_msg, init_segment
@@ -18,7 +19,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
     lr.reset()
 
   rx_tot, rx_invalid, tx_tot, tx_blocked, tx_controls, tx_controls_blocked = 0, 0, 0, 0, 0, 0
-  blocked_addrs = set()
+  blocked_addrs = Counter()
   invalid_addrs = set()
   start_t = None
 
@@ -34,7 +35,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
         if not sent:
           tx_blocked += 1
           tx_controls_blocked += safety.get_controls_allowed()
-          blocked_addrs.add(canmsg.address)
+          blocked_addrs[canmsg.address] += 1
 
           if "DEBUG" in os.environ:
             print("blocked bus %d msg %d at %f" % (canmsg.src, canmsg.address, (msg.logMonoTime - start_t) / (1e9)))
@@ -87,9 +88,9 @@ if __name__ == "__main__":
     for msg in lr:
       if msg.which() == 'carParams':
         if args.mode is None:
-          args.mode = msg.carParams.safetyConfigs[0].safetyModel.raw
+          args.mode = msg.carParams.safetyConfigs[-1].safetyModel.raw
         if args.param is None:
-          args.param = msg.carParams.safetyConfigs[0].safetyParam
+          args.param = msg.carParams.safetyConfigs[-1].safetyParam
         if args.alternative_experience is None:
           args.alternative_experience = msg.carParams.alternativeExperience
         break
