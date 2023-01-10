@@ -715,8 +715,10 @@ class Panda:
 
   def serial_write(self, port_number, ln):
     ret = 0
+    if type(ln) == str:
+      ln = bytes(ln, 'utf-8')
     for i in range(0, len(ln), 0x20):
-      ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + bytes(ln[i:i + 0x20], 'utf-8'))
+      ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + ln[i:i + 0x20])
     return ret
 
   def serial_clear(self, port_number):
@@ -835,3 +837,7 @@ class Panda:
   # ****************** Siren *****************
   def set_siren(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf6, int(enabled), 0, b'')
+
+  # ****************** Debug *****************
+  def set_green_led(self, enabled):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')
