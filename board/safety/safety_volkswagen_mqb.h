@@ -120,9 +120,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
   if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
 
-    // Update in-motion state by sampling front wheel speeds
-    // Signal: ESP_19.ESP_VL_Radgeschw_02 (front left) in scaled km/h
-    // Signal: ESP_19.ESP_VR_Radgeschw_02 (front right) in scaled km/h
+    // Update in-motion state by sampling wheel speeds
     if (addr == MSG_ESP_19) {
       // sum 4 wheel speeds
       int speed = 0;
