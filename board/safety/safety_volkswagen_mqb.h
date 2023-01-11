@@ -129,9 +129,8 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
       for (uint8_t i = 0U; i < 8U; i += 2U) {
         speed += GET_BYTE(to_push, i) | (GET_BYTE(to_push, i + 1U) << 8);
       }
-      // Check for average front speed in excess of 0.1m/s, 0.36km/h
-      // DBC speed scale 0.0075: 0.1m/s = 48, sum all wheels to compare
-      vehicle_moving = speed > (48 * 4);
+      // Check all wheel speeds for any movement
+      vehicle_moving = speed > 0;
     }
 
     // Update driver input torque samples

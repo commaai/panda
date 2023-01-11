@@ -109,8 +109,7 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
     // Signal: Bremse_1.Geschwindigkeit_neu__Bremse_1_
     if (addr == MSG_BREMSE_1) {
       int speed = ((GET_BYTE(to_push, 2) & 0xFEU) >> 1) | (GET_BYTE(to_push, 3) << 7);
-      // DBC speed scale 0.01: 0.1m/s = 36.
-      vehicle_moving = speed > 36;
+      vehicle_moving = speed > 0;
     }
 
     // Update driver input torque samples
