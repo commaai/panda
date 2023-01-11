@@ -9,8 +9,8 @@ from .helpers import test_all_pandas, panda_connect_and_init, check_signature
 @panda_connect_and_init(full_reset=False)
 def test_a_known_bootstub(p):
   # Test that compiled app can work with known production bootstub
-  KNOWN_H7_BOOTSTUB_FN = os.path.join(BASEDIR, "tests", "automated", "known_bootstub", "bootstub.panda_h7.bin")
-  KNOWN_BOOTSTUB_FN = os.path.join(BASEDIR, "tests", "automated", "known_bootstub", "bootstub.panda.bin")
+  KNOWN_H7_BOOTSTUB_FN = os.path.join(BASEDIR, "tests", "hitl", "known_bootstub", "bootstub.panda_h7.bin")
+  KNOWN_BOOTSTUB_FN = os.path.join(BASEDIR, "tests", "hitl", "known_bootstub", "bootstub.panda.bin")
 
   p.reset(enter_bootstub=True)
   p.reset(enter_bootloader=True)
@@ -39,7 +39,7 @@ def test_b_recover(p):
 def test_c_flash(p):
   # test flash from bootstub
   serial = p._serial
-  assert serial != None
+  assert serial is not None
   p.reset(enter_bootstub=True)
   p.close()
   time.sleep(2)

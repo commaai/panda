@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import unittest
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
@@ -25,7 +25,7 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
 
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, 0)
     self.safety.init_tests()
 
@@ -74,7 +74,6 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
 
 class TestChryslerRamDTSafety(TestChryslerSafety):
   TX_MSGS = [[177, 2], [166, 0], [250, 0]]
-  STANDSTILL_THRESHOLD = 3
   RELAY_MALFUNCTION_ADDR = 166
   FWD_BLACKLISTED_ADDRS = {2: [166, 250]}
 
@@ -85,7 +84,7 @@ class TestChryslerRamDTSafety(TestChryslerSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_ram_dt_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM_DT)
     self.safety.init_tests()
 
@@ -95,7 +94,6 @@ class TestChryslerRamDTSafety(TestChryslerSafety):
 
 class TestChryslerRamHDSafety(TestChryslerSafety):
   TX_MSGS = [[629, 0], [630, 0], [570, 2]]
-  STANDSTILL_THRESHOLD = 3
   RELAY_MALFUNCTION_ADDR = 630
   FWD_BLACKLISTED_ADDRS = {2: [629, 630]}
 
@@ -108,7 +106,7 @@ class TestChryslerRamHDSafety(TestChryslerSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_ram_hd_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM_HD)
     self.safety.init_tests()
 

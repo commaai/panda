@@ -14,6 +14,7 @@
 
 const CanMsg FORD_TX_MSGS[] = {
   {MSG_Steering_Data_FD1, 0, 8},
+  {MSG_Steering_Data_FD1, 2, 8},
   {MSG_ACCDATA_3, 0, 8},
   {MSG_Lane_Assist_Data1, 0, 8},
   {MSG_LateralMotionControl, 0, 8},
@@ -75,8 +76,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
-  UNUSED(longitudinal_allowed);
+static int ford_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);

@@ -37,7 +37,12 @@
 #define CAN_NUM_FROM_CANIF(CAN_DEV) (((CAN_DEV)==FDCAN1) ? 0UL : (((CAN_DEV) == FDCAN2) ? 1UL : 2UL))
 
 
-void puts(const char *a);
+void print(const char *a);
+
+// kbps multiplied by 10
+const uint32_t speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
+const uint32_t data_speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U, 20000U, 50000U};
+
 
 bool fdcan_request_init(FDCAN_GlobalTypeDef *CANx) {
   bool ret = true;
@@ -79,7 +84,7 @@ bool fdcan_exit_init(FDCAN_GlobalTypeDef *CANx) {
   return ret;
 }
 
-bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_speed, bool loopback, bool silent) {
+bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_speed, bool non_iso, bool loopback, bool silent) {
   UNUSED(speed);
   bool ret = fdcan_request_init(CANx);
 
@@ -92,6 +97,7 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
     CANx->TEST &= ~(FDCAN_TEST_LBCK);
     CANx->CCCR &= ~(FDCAN_CCCR_MON);
     CANx->CCCR &= ~(FDCAN_CCCR_ASM);
+    CANx->CCCR &= ~(FDCAN_CCCR_NISO);
 
     // TODO: add as a separate safety mode
     // Enable ASM restricted operation(for debug or automatic bitrate switching)
@@ -125,6 +131,11 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
 
     CANx->DBTP = (((sjw & 0xFU)-1U)<<FDCAN_DBTP_DSJW_Pos) | (((seg1 & 0x1FU)-1U)<<FDCAN_DBTP_DTSEG1_Pos) | (((seg2 & 0xFU)-1U)<<FDCAN_DBTP_DTSEG2_Pos) | (((prescaler & 0x1FU)-1U)<<FDCAN_DBTP_DBRP_Pos);
 
+    if (non_iso) {
+      // FD non-ISO mode
+      CANx->CCCR |= FDCAN_CCCR_NISO;
+    }
+
     // Silent loopback is known as internal loopback in the docs
     if (loopback) {
       CANx->CCCR |= FDCAN_CCCR_TEST;
@@ -137,10 +148,10 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
     }
     ret = fdcan_exit_init(CANx);
     if (!ret) {
-      puts(CAN_NAME_FROM_CANIF(CANx)); puts(" set_speed timed out! (2)\n");
+      print(CAN_NAME_FROM_CANIF(CANx)); print(" set_speed timed out! (2)\n");
     }
   } else {
-    puts(CAN_NAME_FROM_CANIF(CANx)); puts(" set_speed timed out! (1)\n");
+    print(CAN_NAME_FROM_CANIF(CANx)); print(" set_speed timed out! (1)\n");
   }
   return ret;
 }
@@ -200,6 +211,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
     CANx->IE &= 0x0U; // Reset all interrupts
     // Messages for INT0
     CANx->IE |= FDCAN_IE_RF0NE; // Rx FIFO 0 new message
+    CANx->IE |= FDCAN_IE_PEDE | FDCAN_IE_PEAE | FDCAN_IE_BOE | FDCAN_IE_EPE | FDCAN_IE_ELOE | FDCAN_IE_TEFLE | FDCAN_IE_RF0LE;
 
     // Messages for INT1 (Only TFE works??)
     CANx->ILS |= FDCAN_ILS_TFEL;
@@ -207,7 +219,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
 
     ret = fdcan_exit_init(CANx);
     if(!ret) {
-      puts(CAN_NAME_FROM_CANIF(CANx)); puts(" llcan_init timed out (2)!\n");
+      print(CAN_NAME_FROM_CANIF(CANx)); print(" llcan_init timed out (2)!\n");
     }
 
     if (CANx == FDCAN1) {
@@ -220,16 +232,17 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
       NVIC_EnableIRQ(FDCAN3_IT0_IRQn);
       NVIC_EnableIRQ(FDCAN3_IT1_IRQn);
     } else {
-      puts("Invalid CAN: initialization failed\n");
+      print("Invalid CAN: initialization failed\n");
     }
 
   } else {
-    puts(CAN_NAME_FROM_CANIF(CANx)); puts(" llcan_init timed out (1)!\n");
+    print(CAN_NAME_FROM_CANIF(CANx)); print(" llcan_init timed out (1)!\n");
   }
   return ret;
 }
 
 void llcan_clear_send(FDCAN_GlobalTypeDef *CANx) {
-  // From H7 datasheet: Transmit cancellation is not intended for Tx FIFO operation.
-  UNUSED(CANx);
+  CANx->TXBCR = 0xFFFFU; // Abort message transmission on error interrupt
+  // Clear error interrupts
+  CANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EW | FDCAN_IR_EP | FDCAN_IR_ELO | FDCAN_IR_BO | FDCAN_IR_TEFL | FDCAN_IR_RF0L);
 }

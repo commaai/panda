@@ -12,7 +12,7 @@
 
 #define CORE_FREQ 96U // in Mhz
 //APB1 - 48Mhz, APB2 - 96Mhz
-#define APB1_FREQ CORE_FREQ/2U 
+#define APB1_FREQ CORE_FREQ/2U
 #define APB2_FREQ CORE_FREQ/1U
 
 #define BOOTLOADER_ADDRESS 0x1FFF0004U
@@ -65,6 +65,11 @@
 #include "stm32fx/lladc.h"
 #include "stm32fx/board.h"
 #include "stm32fx/clock.h"
+
+#ifdef ENABLE_SPI
+  #include "drivers/spi.h"
+  #include "stm32fx/llspi.h"
+#endif
 
 #if !defined(BOOTSTUB) && (defined(PANDA) || defined(PEDAL_USB))
   #include "drivers/uart.h"

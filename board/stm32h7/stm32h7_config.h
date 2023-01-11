@@ -7,7 +7,7 @@
 
 #define CORE_FREQ 240U // in Mhz
 //APB1 - 120Mhz, APB2 - 120Mhz
-#define APB1_FREQ CORE_FREQ/2U 
+#define APB1_FREQ CORE_FREQ/2U
 #define APB2_FREQ CORE_FREQ/2U
 
 #define BOOTLOADER_ADDRESS 0x1FF09804U
@@ -55,12 +55,16 @@
 #include "stm32h7/interrupt_handlers.h"
 #include "drivers/timers.h"
 #include "stm32h7/lladc.h"
-#include "stm32h7/board.h"
-#include "stm32h7/clock.h"
 
 #if !defined(BOOTSTUB) && defined(PANDA)
   #include "drivers/uart.h"
   #include "stm32h7/lluart.h"
+#endif
+
+#include "stm32h7/board.h"
+#include "stm32h7/clock.h"
+
+#if !defined(BOOTSTUB) && defined(PANDA)
   #include "stm32h7/llexti.h"
 #endif
 
@@ -71,6 +75,9 @@
 #endif
 
 #include "stm32h7/llusb.h"
+
+#include "drivers/spi.h"
+#include "stm32h7/llspi.h"
 
 void early_gpio_float(void) {
   RCC->AHB4ENR = RCC_AHB4ENR_GPIOAEN | RCC_AHB4ENR_GPIOBEN | RCC_AHB4ENR_GPIOCEN | RCC_AHB4ENR_GPIODEN | RCC_AHB4ENR_GPIOEEN | RCC_AHB4ENR_GPIOFEN | RCC_AHB4ENR_GPIOGEN | RCC_AHB4ENR_GPIOHEN;
