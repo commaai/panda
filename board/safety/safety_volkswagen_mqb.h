@@ -125,7 +125,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
       // sum 4 wheel speeds
       int speed = 0;
       for (uint8_t i = 0U; i < 8U; i += 2U) {
-        speed += GET_BYTE(to_push, i) | (GET_BYTE(to_push, i + 1U) << 8);
+        speed += (int)(GET_BYTE(to_push, i) | (GET_BYTE(to_push, i + 1U) << 8));
       }
       // Check all wheel speeds for any movement
       vehicle_moving = speed > 0;
