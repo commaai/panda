@@ -1,4 +1,5 @@
 import math
+import time
 import struct
 import spidev
 import logging
@@ -12,9 +13,26 @@ DACK = 0x85
 NACK = 0x1F
 CHECKSUM_START = 0xAB
 
-MAX_RETRY_COUNT = 5
+ACK_TIMEOUT_SECONDS = 0.1
+MAX_XFER_RETRY_COUNT = 5
 
 USB_MAX_SIZE = 0x40
+
+
+class PandaSpiException(Exception):
+  pass
+
+class PandaSpiNackResponse(PandaSpiException):
+  pass
+
+class PandaSpiMissingAck(PandaSpiException):
+  pass
+
+class PandaSpiBadChecksum(PandaSpiException):
+  pass
+
+class PandaSpiTransferFailed(PandaSpiException):
+  pass
 
 # This mimics the handle given by libusb1 for easy interoperability
 class SpiHandle:
@@ -31,11 +49,22 @@ class SpiHandle:
       cksum ^= b
     return cksum
 
+  def _wait_for_ack(self, ack_val: int) -> None:
+    start = time.monotonic()
+    while (time.monotonic() - start) < ACK_TIMEOUT_SECONDS:
+      dat = self.spi.xfer2(b"\x12")[0]
+      if dat == NACK:
+        raise PandaSpiNackResponse
+      elif dat == ack_val:
+        return
+
+    raise PandaSpiMissingAck
+
   def _transfer(self, endpoint: int, data, max_rx_len: int = 1000) -> bytes:
     logging.debug("starting transfer: endpoint=%d, max_rx_len=%d", endpoint, max_rx_len)
     logging.debug("==============================================")
 
-    for n in range(MAX_RETRY_COUNT):
+    for n in range(MAX_XFER_RETRY_COUNT):
       logging.debug("\ntry #%d", n+1)
       try:
         logging.debug("- send header")
@@ -43,27 +72,16 @@ class SpiHandle:
         packet += bytes([reduce(lambda x, y: x^y, packet) ^ CHECKSUM_START])
         self.spi.xfer2(packet)
 
-        logging.debug("- waiting for ACK")
-        # TODO: add timeout?
-        dat = b"\x00"
-        while dat[0] not in [HACK, NACK]:
-          dat = self.spi.xfer2(b"\x12")
-
-        if dat[0] == NACK:
-          raise Exception("Got NACK response for header")
+        logging.debug("- waiting for header ACK")
+        self._wait_for_ack(HACK)
 
         # send data
         logging.debug("- sending data")
         packet = bytes([*data, self._calc_checksum(data)])
         self.spi.xfer2(packet)
 
-        logging.debug("- waiting for ACK")
-        dat = b"\x00"
-        while dat[0] not in [DACK, NACK]:
-          dat = self.spi.xfer2(b"\xab")
-
-        if dat[0] == NACK:
-          raise Exception("Got NACK response for data")
+        logging.debug("- waiting for data ACK")
+        self._wait_for_ack(DACK)
 
         # get response length, then response
         response_len_bytes = bytes(self.spi.xfer2(b"\x00" * 2))
@@ -72,12 +90,12 @@ class SpiHandle:
         logging.debug("- receiving response")
         dat = bytes(self.spi.xfer2(b"\x00" * (response_len + 1)))
         if self._calc_checksum([DACK, *response_len_bytes, *dat]) != 0:
-          raise Exception("SPI got bad checksum")
+          raise PandaSpiBadChecksum
 
         return dat[:-1]
-      except Exception:
+      except PandaSpiException:
         logging.exception("SPI transfer failed, %d retries left", n)
-    raise Exception(f"SPI transaction failed {MAX_RETRY_COUNT} times")
+    raise PandaSpiTransferFailed(f"SPI transaction failed {MAX_XFER_RETRY_COUNT} times")
 
   # libusb1 functions
   def close(self):

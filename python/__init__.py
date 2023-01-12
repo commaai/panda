@@ -198,9 +198,6 @@ class Panda:
   INTERNAL_DEVICES = (HW_TYPE_UNO, HW_TYPE_DOS)
   HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES)
 
-  CLOCK_SOURCE_MODE_DISABLED = 0
-  CLOCK_SOURCE_MODE_FREE_RUNNING = 1
-
   # first byte is for EPS scaling factor
   FLAG_TOYOTA_ALT_BRAKE = (1 << 8)
   FLAG_TOYOTA_STOCK_LONGITUDINAL = (2 << 8)
@@ -718,8 +715,10 @@ class Panda:
 
   def serial_write(self, port_number, ln):
     ret = 0
+    if type(ln) == str:
+      ln = bytes(ln, 'utf-8')
     for i in range(0, len(ln), 0x20):
-      ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + bytes(ln[i:i + 0x20], 'utf-8'))
+      ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + ln[i:i + 0x20])
     return ret
 
   def serial_clear(self, port_number):
@@ -835,10 +834,10 @@ class Panda:
   def set_phone_power(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, int(enabled), 0, b'')
 
-  # ************** Clock Source **************
-  def set_clock_source_mode(self, mode):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, int(mode), 0, b'')
-
   # ****************** Siren *****************
   def set_siren(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf6, int(enabled), 0, b'')
+
+  # ****************** Debug *****************
+  def set_green_led(self, enabled):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')

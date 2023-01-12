@@ -414,13 +414,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         }
       }
       break;
-    // **** 0xf5: set clock source mode
-    case 0xf5:
-      current_board->set_clock_source_mode(req->param1);
-      break;
     // **** 0xf6: set siren enabled
     case 0xf6:
       siren_enabled = (req->param1 != 0U);
+      break;
+    // **** 0xf7: set green led enabled
+    case 0xf7:
+      green_led_enabled = (req->param1 != 0U);
       break;
     // **** 0xf8: disable heartbeat checks
     case 0xf8:

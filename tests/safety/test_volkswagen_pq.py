@@ -23,7 +23,7 @@ MIN_ACCEL = -3.5
 class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   cruise_engaged = False
 
-  STANDSTILL_THRESHOLD = 1
+  STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = MSG_HCA_1
   RELAY_MALFUNCTION_BUS = 0
 
