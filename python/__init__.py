@@ -183,8 +183,7 @@ class Panda:
   HW_TYPE_RED_PANDA_V2 = b'\x08'
   HW_TYPE_TRES = b'\x09'
 
-  HW_TYPES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_PEDAL, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2]
-  HW_TYPE_NAMES = {
+  HW_TYPES = {
     HW_TYPE_WHITE_PANDA: "white",
     HW_TYPE_GREY_PANDA: "grey",
     HW_TYPE_BLACK_PANDA: "black",
@@ -569,7 +568,7 @@ class Panda:
     return ret
 
   def get_type_name(self):
-    return Panda.HW_TYPE_NAMES.get(self.get_type(), "unknown")
+    return Panda.HW_TYPES.get(self.get_type(), "unknown")
 
   # Returns tuple with health packet version and CAN packet/USB packet version
   def get_packets_versions(self):
