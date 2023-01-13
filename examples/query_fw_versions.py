@@ -6,13 +6,13 @@ from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseErr
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-s', '--serial', help="Serial number of panda to use")
   parser.add_argument("--rxoffset", default="")
   parser.add_argument("--nonstandard", action="store_true")
   parser.add_argument("--no-obd", action="store_true", help="Bus 1 will not be multiplexed to the OBD-II port")
   parser.add_argument("--debug", action="store_true")
   parser.add_argument("--addr")
   parser.add_argument("--bus")
+  parser.add_argument('-s', '--serial', help="Serial number of panda to use")
   args = parser.parse_args()
 
   if args.addr:
