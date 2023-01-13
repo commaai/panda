@@ -26,10 +26,9 @@ if __name__ == "__main__":
   assert len(pandas) == 8
 
   for serial in pandas:
-    pf = Panda(serial)
-    if pf.bootstub:
-      pf.flash()
-    pf.close()
+    with Panda(serial) as pf:
+      if pf.bootstub:
+        pf.flash()
 
   r.cycle_power(delay=0, ports=[1,2])
   r.close()
