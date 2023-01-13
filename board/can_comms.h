@@ -1,15 +1,15 @@
 /*
   CAN transactions to and from the host come in the form of
-  a 4 byte value called CAN_TRANSACTION_MAGIC followed by
   a certain number of CANPacket_t. The transaction is split
   into multiple transfers or chunks.
 
   * comms_can_read outputs this buffer in chunks of a specified length.
     chunks are always the given length, except the last one.
-  * comms_can_write reads in this buffer in chunks. start of the transaction
-    is denoted by the CAN_TRANSACTION_MAGIC value.
+  * comms_can_write reads in this buffer in chunks.
   * both functions maintain an overflow buffer for a partial CANPacket_t that
     spans multiple transfers/chunks.
+  * the overflow buffers are reset by a dedicated control transfer handler,
+    which is sent by the host on each start of a connection.
 */
 
 typedef struct {
@@ -19,22 +19,9 @@ typedef struct {
 } asm_buffer;
 
 asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U};
-uint32_t total_rx_size = 0U;
-bool add_magic = true;
 
 int comms_can_read(uint8_t *data, uint32_t max_len) {
   uint32_t pos = 0U;
-  bool added_magic = false;
-
-  if (add_magic && (max_len >= sizeof(uint32_t))) {
-    // Start of a transaction
-    *((uint32_t *)(void *) &data[0]) = CAN_TRANSACTION_MAGIC;
-    pos += sizeof(uint32_t);
-    add_magic = false;
-    can_read_buffer.ptr = 0U;
-    total_rx_size = 0U;
-    added_magic = true;
-  }
 
   // Send tail of previous message if it is in buffer
   if (can_read_buffer.ptr > 0U) {
@@ -45,7 +32,7 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
     can_read_buffer.ptr -= overflow_len;
   }
 
-  if ((total_rx_size + pos) < MAX_EP1_CHUNK_PER_BULK_TRANSFER) {
+  if (can_read_buffer.ptr == 0U) {
     // Fill rest of buffer with new data
     CANPacket_t can_packet;
     while ((pos < max_len) && can_pop(&can_rx_q, &can_packet)) {
@@ -55,7 +42,7 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
         pos += pckt_len;
       } else {
         (void)memcpy(&data[pos], &can_packet, max_len - pos);
-        can_read_buffer.ptr = pckt_len - (max_len - pos);
+        can_read_buffer.ptr += pckt_len - (max_len - pos);
         // cppcheck-suppress objectIndex
         (void)memcpy(can_read_buffer.data, &((uint8_t*)&can_packet)[(max_len - pos)], can_read_buffer.ptr);
         pos = max_len;
@@ -63,17 +50,6 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
     }
   }
 
-  if (pos != max_len) {
-    // Final packet for this transaction, prepare for the next one
-    add_magic = true;
-  }
-
-  if (added_magic && (pos == sizeof(uint32_t))) {
-    // Magic alone doesn't make sense
-    pos = 0U;
-  }
-
-  total_rx_size += pos;
   return pos;
 }
 
@@ -82,13 +58,6 @@ asm_buffer can_write_buffer = {.ptr = 0U, .tail_size = 0U};
 // send on CAN
 void comms_can_write(uint8_t *data, uint32_t len) {
   uint32_t pos = 0U;
-
-  if (*((uint32_t *)(void *) &data[0]) == CAN_TRANSACTION_MAGIC) {
-    // Got first packet from a stream, resetting buffer and counter
-    can_write_buffer.ptr = 0U;
-    can_write_buffer.tail_size = 0U;
-    pos += sizeof(uint32_t);
-  }
 
   // Assembling can message with data from buffer
   if (can_write_buffer.ptr != 0U) {
@@ -131,6 +100,13 @@ void comms_can_write(uint8_t *data, uint32_t len) {
       pos += can_write_buffer.ptr;
     }
   }
+}
+
+void comms_can_reset(void) {
+  can_write_buffer.ptr = 0U;
+  can_write_buffer.tail_size = 0U;
+  can_read_buffer.ptr = 0U;
+  can_read_buffer.tail_size = 0U;
 }
 
 // TODO: make this more general!
