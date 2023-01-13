@@ -38,7 +38,7 @@ if __name__ == "__main__":
     print("\nMultiple pandas found, choose one:")
     for serial in panda_serials:
       panda = Panda(serial)
-      print(f"  {serial}: type={panda.get_type_name()}, internal={panda.is_internal()}")
+      print(f"  {serial}: internal={panda.is_internal()}")
       panda.close()
     print()
     parser.print_help()

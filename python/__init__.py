@@ -183,17 +183,6 @@ class Panda:
   HW_TYPE_RED_PANDA_V2 = b'\x08'
   HW_TYPE_TRES = b'\x09'
 
-  HW_TYPES = {
-    HW_TYPE_WHITE_PANDA: "white",
-    HW_TYPE_GREY_PANDA: "grey",
-    HW_TYPE_BLACK_PANDA: "black",
-    HW_TYPE_PEDAL: "pedal",
-    HW_TYPE_UNO: "uno",
-    HW_TYPE_DOS: "dos",
-    HW_TYPE_RED_PANDA: "red",
-    HW_TYPE_RED_PANDA_V2: "red v2",
-  }
-
   CAN_PACKET_VERSION = 4
   HEALTH_PACKET_VERSION = 11
   CAN_HEALTH_PACKET_VERSION = 4
@@ -566,9 +555,6 @@ class Panda:
       ret = self._bcd_device
 
     return ret
-
-  def get_type_name(self):
-    return Panda.HW_TYPES.get(bytes(self.get_type()), "unknown")
 
   # Returns tuple with health packet version and CAN packet/USB packet version
   def get_packets_versions(self):
