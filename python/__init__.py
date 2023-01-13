@@ -568,7 +568,7 @@ class Panda:
     return ret
 
   def get_type_name(self):
-    return Panda.HW_TYPES.get(self.get_type(), "unknown")
+    return Panda.HW_TYPES.get(bytes(self.get_type()), "unknown")
 
   # Returns tuple with health packet version and CAN packet/USB packet version
   def get_packets_versions(self):
