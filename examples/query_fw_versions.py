@@ -37,9 +37,8 @@ if __name__ == "__main__":
   if args.serial is None and len(panda_serials) > 1:
     print("\nMultiple pandas found, choose one:")
     for serial in panda_serials:
-      panda = Panda(serial)
-      print(f"  {serial}: internal={panda.is_internal()}")
-      panda.close()
+      with Panda(serial) as panda:
+        print(f"  {serial}: internal={panda.is_internal()}")
     print()
     parser.print_help()
     exit()
