@@ -34,24 +34,17 @@ if __name__ == "__main__":
       uds_data_ids[uds_id] = "IDENTIFICATION_OPTION_SYSTEM_SUPPLIER_SPECIFIC"
 
   panda_serials = Panda.list()
-  if len(panda_serials) == 0:
-    print("no panda found")
-    exit(1)
   if args.serial is None and len(panda_serials) > 1:
     print("Multiple pandas found, choose one:")
     for serial in panda_serials:
       panda = Panda(serial)
-      print(f"  {serial}: type={panda.get_type_name()} internal={panda.is_internal()}")
+      print(f"  {serial}: type={panda.get_type_name()}, internal={panda.is_internal()}")
       panda.close()
     print()
     parser.print_help()
     exit(1)
-  elif args.serial is not None and args.serial not in panda_serials:
-    print(f"panda {args.serial} not found")
-    exit(1)
-  serial = args.serial if args.serial is not None else panda_serials[0]
 
-  panda = Panda(serial)
+  panda = Panda(serial=args.serial)
   panda.set_safety_mode(Panda.SAFETY_ELM327)
   print("querying addresses ...")
   with tqdm(addrs) as t:
