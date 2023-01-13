@@ -184,7 +184,16 @@ class Panda:
   HW_TYPE_TRES = b'\x09'
 
   HW_TYPES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_PEDAL, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2]
-  HW_TYPE_NAMES = ["white", "grey", "black", "pedal", "uno", "dos", "red", "red v2"]
+  HW_TYPE_NAMES = {
+    HW_TYPE_WHITE_PANDA: "white",
+    HW_TYPE_GREY_PANDA: "grey",
+    HW_TYPE_BLACK_PANDA: "black",
+    HW_TYPE_PEDAL: "pedal",
+    HW_TYPE_UNO: "uno",
+    HW_TYPE_DOS: "dos",
+    HW_TYPE_RED_PANDA: "red",
+    HW_TYPE_RED_PANDA_V2: "red v2",
+  }
 
   CAN_PACKET_VERSION = 4
   HEALTH_PACKET_VERSION = 11
@@ -560,10 +569,7 @@ class Panda:
     return ret
 
   def get_type_name(self):
-    try:
-      return Panda.HW_TYPE_NAMES[Panda.HW_TYPES.index(self.get_type())]
-    except ValueError:
-      return "unknown"
+    return Panda.HW_TYPE_NAMES.get(self.get_type(), "unknown")
 
   # Returns tuple with health packet version and CAN packet/USB packet version
   def get_packets_versions(self):
