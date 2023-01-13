@@ -9,6 +9,7 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--rxoffset', default="")
   parser.add_argument('--nonstandard', action='store_true')
+  parser.add_argument('--no-obd', action='store_true', help='Bus 1 will not be multiplexed to the OBD-II port')
   parser.add_argument('--debug', action='store_true')
   parser.add_argument('--addr')
   parser.add_argument('--bus')
@@ -33,7 +34,8 @@ if __name__ == "__main__":
       uds_data_ids[uds_id] = "IDENTIFICATION_OPTION_SYSTEM_SUPPLIER_SPECIFIC"
 
   panda = Panda()
-  panda.set_safety_mode(Panda.SAFETY_ELM327)
+  safety_param = 1 if args.no_obd else 0
+  panda.set_safety_mode(Panda.SAFETY_ELM327, safety_param)
   print("querying addresses ...")
   with tqdm(addrs) as t:
     for addr in t:
