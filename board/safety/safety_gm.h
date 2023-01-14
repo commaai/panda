@@ -1,27 +1,31 @@
-// board enforces
-//   in-state
-//      accel set/resume
-//   out-state
-//      cancel button
-//      regen paddle
-//      accel rising edge
-//      brake rising edge
-//      brake > 0mph
+const SteeringLimits GM_STEERING_LIMITS = {
+  .max_steer = 300,
+  .max_rate_up = 7,
+  .max_rate_down = 17,
+  .driver_torque_allowance = 50,
+  .driver_torque_factor = 4,
+  .max_rt_delta = 128,
+  .max_rt_interval = 250000,
+  .type = TorqueDriverLimited,
+};
 
-const int GM_MAX_STEER = 300;
-const int GM_MAX_RT_DELTA = 128;          // max delta torque allowed for real time checks
-const uint32_t GM_RT_INTERVAL = 250000;    // 250ms between real time checks
-const int GM_MAX_RATE_UP = 7;
-const int GM_MAX_RATE_DOWN = 17;
-const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
-const int GM_DRIVER_TORQUE_FACTOR = 4;
+const LongitudinalLimits GM_ASCM_LONG_LIMITS = {
+  .max_gas = 3072,
+  .min_gas = 1404,
+  .inactive_gas = 1404,
+  .max_brake = 400,
+};
+
+const LongitudinalLimits GM_CAM_LONG_LIMITS = {
+  .max_gas = 3400,
+  .min_gas = 1514,
+  .inactive_gas = 1554,
+  .max_brake = 400,
+};
+
+const LongitudinalLimits *gm_long_limits;
 
 const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
-
-const int GM_MAX_GAS = 3072;
-const int GM_MAX_REGEN = 1404;
-const int GM_MAX_BRAKE = 400;
-const int GM_INACTIVE_REGEN = 1404;
 
 const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
                                   {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
@@ -30,6 +34,9 @@ const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715,
 
 const CanMsg GM_CAM_TX_MSGS[] = {{384, 0, 4},  // pt bus
                                  {481, 2, 7}, {388, 2, 8}};  // camera bus
+
+const CanMsg GM_CAM_LONG_TX_MSGS[] = {{384, 0, 4}, {789, 0, 5}, {715, 0, 8}, {880, 0, 6},  // pt bus
+                                      {388, 2, 8}};  // camera bus
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 AddrCheckStruct gm_addr_checks[] = {
@@ -40,11 +47,13 @@ AddrCheckStruct gm_addr_checks[] = {
            {190, 0, 7, .expected_timestep = 100000U},    // Bolt EUV
            {190, 0, 8, .expected_timestep = 100000U}}},  // Escalade
   {.msg = {{452, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{201, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
 #define GM_RX_CHECK_LEN (sizeof(gm_addr_checks) / sizeof(gm_addr_checks[0]))
 addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
 
 const uint16_t GM_PARAM_HW_CAM = 1;
+const uint16_t GM_PARAM_HW_CAM_LONG = 2;
 
 enum {
   GM_BTN_UNPRESS = 1,
@@ -54,6 +63,7 @@ enum {
 };
 
 enum {GM_ASCM, GM_CAM} gm_hw = GM_ASCM;
+bool gm_cam_long = false;
 bool gm_pcm_cruise = false;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
@@ -81,25 +91,29 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     if ((addr == 481) && !gm_pcm_cruise) {
       int button = (GET_BYTE(to_push, 5) & 0x70U) >> 4;
 
+      // enter controls on falling edge of set or rising edge of resume (avoids fault)
+      bool set = (button != GM_BTN_SET) && (cruise_button_prev == GM_BTN_SET);
+      bool res = (button == GM_BTN_RESUME) && (cruise_button_prev != GM_BTN_RESUME);
+      if (set || res) {
+        controls_allowed = 1;
+      }
+
       // exit controls on cancel press
       if (button == GM_BTN_CANCEL) {
         controls_allowed = 0;
       }
 
-      // enter controls on falling edge of set or resume
-      bool set = (button == GM_BTN_UNPRESS) && (cruise_button_prev == GM_BTN_SET);
-      bool res = (button == GM_BTN_UNPRESS) && (cruise_button_prev == GM_BTN_RESUME);
-      if (set || res) {
-        controls_allowed = 1;
-      }
-
       cruise_button_prev = button;
     }
 
-    if (addr == 190) {
-      // Reference for signal and threshold:
-      // https://github.com/commaai/openpilot/blob/master/selfdrive/car/gm/carstate.py
+    // Reference for brake pressed signals:
+    // https://github.com/commaai/openpilot/blob/master/selfdrive/car/gm/carstate.py
+    if ((addr == 190) && (gm_hw == GM_ASCM)) {
       brake_pressed = GET_BYTE(to_push, 1) >= 8U;
+    }
+
+    if ((addr == 201) && (gm_hw == GM_CAM)) {
+      brake_pressed = GET_BIT(to_push, 40U) != 0U;
     }
 
     if (addr == 452) {
@@ -118,8 +132,8 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 
     bool stock_ecu_detected = (addr == 384);  // ASCMLKASteeringCmd
 
-    // Only check ASCMGasRegenCmd if ASCM, GM_CAM uses stock longitudinal
-    if ((gm_hw == GM_ASCM) && (addr == 715)) {
+    // Check ASCMGasRegenCmd only if we're blocking it
+    if (!gm_pcm_cruise && (addr == 715)) {
       stock_ecu_detected = true;
     }
     generic_rx_checks(stock_ecu_detected);
@@ -133,13 +147,17 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 // else
 //     block all commands that produce actuation
 
-static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int gm_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
   if (gm_hw == GM_CAM) {
-    tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
+    if (gm_cam_long) {
+      tx = msg_allowed(to_send, GM_CAM_LONG_TX_MSGS, sizeof(GM_CAM_LONG_TX_MSGS)/sizeof(GM_CAM_LONG_TX_MSGS[0]));
+    } else {
+      tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
+    }
   } else {
     tx = msg_allowed(to_send, GM_ASCM_TX_MSGS, sizeof(GM_ASCM_TX_MSGS)/sizeof(GM_ASCM_TX_MSGS[0]));
   }
@@ -148,12 +166,7 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   if (addr == 789) {
     int brake = ((GET_BYTE(to_send, 0) & 0xFU) << 8) + GET_BYTE(to_send, 1);
     brake = (0x1000 - brake) & 0xFFF;
-    if (!longitudinal_allowed) {
-      if (brake != 0) {
-        tx = 0;
-      }
-    }
-    if (brake > GM_MAX_BRAKE) {
+    if (longitudinal_brake_checks(brake, *gm_long_limits)) {
       tx = 0;
     }
   }
@@ -161,70 +174,24 @@ static int gm_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   // LKA STEER: safety check
   if (addr == 384) {
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1);
-    uint32_t ts = microsecond_timer_get();
-    bool violation = 0;
     desired_torque = to_signed(desired_torque, 11);
 
-    if (controls_allowed) {
-
-      // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, GM_MAX_STEER, -GM_MAX_STEER);
-
-      // *** torque rate limit check ***
-      violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-        GM_MAX_STEER, GM_MAX_RATE_UP, GM_MAX_RATE_DOWN,
-        GM_DRIVER_TORQUE_ALLOWANCE, GM_DRIVER_TORQUE_FACTOR);
-
-      // used next time
-      desired_torque_last = desired_torque;
-
-      // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, GM_MAX_RT_DELTA);
-
-      // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_torque_check_last);
-      if (ts_elapsed > GM_RT_INTERVAL) {
-        rt_torque_last = desired_torque;
-        ts_torque_check_last = ts;
-      }
-    }
-
-    // no torque if controls is not allowed
-    if (!controls_allowed && (desired_torque != 0)) {
-      violation = 1;
-    }
-
-    // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !controls_allowed) {
-      desired_torque_last = 0;
-      rt_torque_last = 0;
-      ts_torque_check_last = ts;
-    }
-
-    if (violation) {
+    if (steer_torque_cmd_checks(desired_torque, -1, GM_STEERING_LIMITS)) {
       tx = 0;
     }
   }
 
   // GAS/REGEN: safety check
   if (addr == 715) {
+    bool apply = GET_BIT(to_send, 0U) != 0U;
     int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
-    // Disabled message is !engaged with gas
-    // value that corresponds to inactive regen.
-    if (!longitudinal_allowed) {
-      if (gas_regen != GM_INACTIVE_REGEN) {
-        tx = 0;
-      }
-    }
-    // Need to allow apply bit in pre-enabled and overriding states
-    if (!controls_allowed) {
-      bool apply = GET_BIT(to_send, 0U) != 0U;
-      if (apply) {
-        tx = 0;
-      }
-    }
-    // Enforce gas/regen actuation limits (max_regen <= gas_regen <= max_gas)
-    if ((gas_regen < GM_MAX_REGEN) || (gas_regen > GM_MAX_GAS)) {
+
+    bool violation = false;
+    // Allow apply bit in pre-enabled and overriding states
+    violation |= !controls_allowed && apply;
+    violation |= longitudinal_gas_checks(gas_regen, *gm_long_limits);
+
+    if (violation) {
       tx = 0;
     }
   }
@@ -258,9 +225,11 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     }
 
     if (bus_num == 2) {
-      // block lkas message, forward all others
+      // block lkas message and acc messages if gm_cam_long, forward all others
       bool is_lkas_msg = (addr == 384);
-      if (!is_lkas_msg) {
+      bool is_acc_msg = (addr == 789) || (addr == 715) || (addr == 880);
+      int block_msg = is_lkas_msg || (is_acc_msg && gm_cam_long);
+      if (!block_msg) {
         bus_fwd = 0;
       }
     }
@@ -271,7 +240,18 @@ static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 static const addr_checks* gm_init(uint16_t param) {
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
-  gm_pcm_cruise = gm_hw == GM_CAM;
+
+  if (gm_hw == GM_ASCM) {
+    gm_long_limits = &GM_ASCM_LONG_LIMITS;
+  } else if (gm_hw == GM_CAM) {
+    gm_long_limits = &GM_CAM_LONG_LIMITS;
+  } else {
+  }
+
+#ifdef ALLOW_DEBUG
+  gm_cam_long = GET_FLAG(param, GM_PARAM_HW_CAM_LONG);
+#endif
+  gm_pcm_cruise = (gm_hw == GM_CAM) && !gm_cam_long;
   return &gm_rx_checks;
 }
 

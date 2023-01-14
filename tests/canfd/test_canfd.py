@@ -27,16 +27,15 @@ def panda_reset():
 
   for serial in Panda.list():
     if serial not in H7_PANDAS_EXCLUDE:
-      p = Panda(serial=serial)
-      if p.get_type() in H7_HW_TYPES:
-        assert p.recover(timeout=30)
-        panda_serials.append(serial)
-      p.close()
+      with Panda(serial=serial) as p:
+        if p.get_type() in H7_HW_TYPES:
+          assert p.recover(timeout=30)
+          panda_serials.append(serial)
 
   if len(panda_serials) < 2:
     print("Minimum two H7 type pandas should be connected.")
     assert False
-  
+
   return panda_serials
 
 def panda_init(serial, enable_canfd=False, enable_non_iso=False):

@@ -6,11 +6,11 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  RUN: docker run -v $GITHUB_WORKSPACE:/tmp/openpilot/panda -w /tmp/openpilot/panda --rm panda /bin/bash -c
-  PERSIST: docker run -v $GITHUB_WORKSPACE:/tmp/openpilot/panda -w /tmp/openpilot/panda --name panda panda /bin/bash -c
+  RUN: docker run -v ${{ github.workspace }}:/tmp/openpilot/panda -w /tmp/openpilot/panda --rm panda /bin/bash -c
+  PERSIST: docker run -v ${{ github.workspace }}:/tmp/openpilot/panda -w /tmp/openpilot/panda --name panda panda /bin/bash -c
   BUILD: |
       export DOCKER_BUILDKIT=1
-      docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile.panda .
+      docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile .
 
 jobs:
   docker_push:
@@ -39,11 +39,11 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Test python package installer
-        run: ${{ env.RUN }} "cd /tmp/openpilot/panda && python setup.py install"
-      - name: Build panda STM image and bootstub
-        run: ${{ env.RUN }} "cd /tmp/openpilot/panda && scons"
-      - name: Build pedal STM image and bootstub
-        run: ${{ env.RUN }} "cd /tmp/openpilot/panda && PEDAL=1 scons"
+        run: ${{ env.RUN }} "python setup.py install"
+      - name: Build panda + pedal images and bootstub
+        run: ${{ env.RUN }} "scons -j4"
+      - name: Build panda with SPI support
+        run: ${{ env.RUN }} "ENABLE_SPI=1 scons -j4"
 
   unit_tests:
     name: unit tests
@@ -53,9 +53,10 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: eval "$BUILD"
-      - name: Test pack/unpack for USB protocol
-        run: ${{ env.RUN }} "cd /tmp/openpilot/panda/tests/usbprotocol &&
-                   python -m unittest discover ."
+      - name: Build panda
+        run: $RUN "scons -j4"
+      - name: Test communication protocols
+        run: $RUN "cd tests/usbprotocol && ./test.sh"
 
   safety:
     name: safety
@@ -66,13 +67,14 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Run safety tests
-        timeout-minutes: 3
+        timeout-minutes: 4
         run: |
-          ${{ env.RUN }} "cd /tmp/openpilot && \
+          ${{ env.RUN }} "cd .. && \
                           scons -c && \
                           scons -j$(nproc) opendbc/ cereal/ && \
-                          cd panda/tests/safety && \
-                          ./test.sh"
+                          cd panda && \
+                          scons -j$(nproc) && \
+                          tests/safety/test.sh"
 
   safety_replay:
     name: safety replay
@@ -84,7 +86,7 @@ jobs:
         run: eval "$BUILD"
       - name: Run safety replay
         run: ${{ env.RUN }} "cd tests/safety_replay &&
-                             scons -u --test .. &&
+                             scons -u .. &&
                              ./test_safety_replay.py"
 
   misra:

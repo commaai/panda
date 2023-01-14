@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
+from parameterized import parameterized_class
 import unittest
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 from panda.tests.safety.hyundai_common import HyundaiButtonBase, HyundaiLongitudinalBase
+
+
 
 class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
 
@@ -34,6 +37,7 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
   SCC_BUS = 2
   STEER_BUS = 0
   STEER_MSG = ""
+  GAS_MSG = ("", "")
   BUTTONS_TX_BUS = 1
 
   @classmethod
@@ -60,12 +64,12 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
     return self.packer.make_can_msg_panda("TCS", self.PT_BUS, values)
 
   def _user_gas_msg(self, gas):
-    values = {"ACCELERATOR_PEDAL": gas}
-    return self.packer.make_can_msg_panda("ACCELERATOR", self.PT_BUS, values)
+    values = {self.GAS_MSG[1]: gas}
+    return self.packer.make_can_msg_panda(self.GAS_MSG[0], self.PT_BUS, values)
 
   def _pcm_status_msg(self, enable):
-    values = {"CRUISE_STATUS": 3 if enable else 0}
-    return self.packer.make_can_msg_panda("CRUISE_INFO", self.SCC_BUS, values)
+    values = {"ACCMode": 1 if enable else 0}
+    return self.packer.make_can_msg_panda("SCC_CONTROL", self.SCC_BUS, values)
 
   def _button_msg(self, buttons, main_button=0, bus=None):
     if bus is None:
@@ -77,7 +81,7 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
     return self.packer.make_can_msg_panda("CRUISE_BUTTONS", bus, values)
 
 
-class TestHyundaiCanfdHDA1(TestHyundaiCanfdBase):
+class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
 
   TX_MSGS = [[0x12A, 0], [0x1A0, 1], [0x1CF, 0], [0x1E0, 0]]
   RELAY_MALFUNCTION_ADDR = 0x12A
@@ -87,24 +91,54 @@ class TestHyundaiCanfdHDA1(TestHyundaiCanfdBase):
 
   STEER_MSG = "LFA"
   BUTTONS_TX_BUS = 2
+  SAFETY_PARAM: int
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ in ("TestHyundaiCanfdHDA1", "TestHyundaiCanfdHDA1AltButtons") or cls.__name__.endswith('Base'):
+      cls.packer = None
+      cls.safety = None
+      raise unittest.SkipTest
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_HYBRID_GAS)
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, self.SAFETY_PARAM)
     self.safety.init_tests()
 
-  def _user_gas_msg(self, gas):
-    values = {"ACCELERATOR_PEDAL": gas}
-    return self.packer.make_can_msg_panda("ACCELERATOR_ALT", self.PT_BUS, values)
+
+@parameterized_class([
+  # Radar SCC
+  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 0, "SAFETY_PARAM": 0},
+  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_EV_GAS},
+  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_HYBRID_GAS},
+  # Camera SCC
+  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_CAMERA_SCC},
+  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_EV_GAS | Panda.FLAG_HYUNDAI_CAMERA_SCC},
+  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_HYBRID_GAS | Panda.FLAG_HYUNDAI_CAMERA_SCC},
+])
+class TestHyundaiCanfdHDA1(TestHyundaiCanfdHDA1Base):
+  pass
 
 
-class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1):
+@parameterized_class([
+  # Radar SCC
+  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 0, "SAFETY_PARAM": 0},
+  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_EV_GAS},
+  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_HYBRID_GAS},
+  # Camera SCC
+  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_CAMERA_SCC},
+  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_EV_GAS | Panda.FLAG_HYUNDAI_CAMERA_SCC},
+  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_HYBRID_GAS | Panda.FLAG_HYUNDAI_CAMERA_SCC},
+])
+class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1Base):
+
+  SAFETY_PARAM: int
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
-    self.safety = libpandasafety_py.libpandasafety
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_HYBRID_GAS | Panda.FLAG_HYUNDAI_CANFD_ALT_BUTTONS)
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_ALT_BUTTONS | self.SAFETY_PARAM)
     self.safety.init_tests()
 
   def _button_msg(self, buttons, main_button=0, bus=1):
@@ -124,7 +158,7 @@ class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1):
         self.assertFalse(self._tx(self._button_msg(btn)))
 
 
-class TestHyundaiCanfdHDA2(TestHyundaiCanfdBase):
+class TestHyundaiCanfdHDA2EV(TestHyundaiCanfdBase):
 
   TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0]]
   RELAY_MALFUNCTION_ADDR = 0x50
@@ -135,15 +169,16 @@ class TestHyundaiCanfdHDA2(TestHyundaiCanfdBase):
   PT_BUS = 1
   SCC_BUS = 1
   STEER_MSG = "LKAS"
+  GAS_MSG = ("ACCELERATOR", "ACCELERATOR_PEDAL")
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_EV_GAS)
     self.safety.init_tests()
 
 
-class TestHyundaiCanfdHDA2Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2):
+class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV):
 
   TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0], [0x51, 0], [0x730, 1], [0x12a, 1], [0x160, 1],
              [0x1e0, 1], [0x1a0, 1], [0x1ea, 1], [0x200, 1], [0x345, 1], [0x1da, 1]]
@@ -152,20 +187,52 @@ class TestHyundaiCanfdHDA2Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2):
   DISABLED_ECU_ACTUATION_MSG = (0x1a0, 1)
 
   STEER_MSG = "LFA"
+  GAS_MSG = ("ACCELERATOR", "ACCELERATOR_PEDAL")
   STEER_BUS = 1
+
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_EV_GAS)
     self.safety.init_tests()
 
   def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
     values = {
-      "ACCEL_REQ": accel,
-      "ACCEL_REQ2": accel,
+      "aReqRaw": accel,
+      "aReqValue": accel,
     }
-    return self.packer.make_can_msg_panda("CRUISE_INFO", 1, values)
+    return self.packer.make_can_msg_panda("SCC_CONTROL", 1, values)
+
+
+class TestHyundaiCanfdHDALongHybrid(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base):
+
+  FWD_BLACKLISTED_ADDRS = {2: [0x12a, 0x1e0, 0x1a0]}
+
+  DISABLED_ECU_UDS_MSG = (0x730, 1)
+  DISABLED_ECU_ACTUATION_MSG = (0x1a0, 0)
+
+  STEER_MSG = "LFA"
+  GAS_MSG = ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL")
+  STEER_BUS = 0
+  SCC_BUS = 2
+
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_canfd")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CAMERA_SCC | Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_HYBRID_GAS)
+    self.safety.init_tests()
+
+  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
+    values = {
+      "aReqRaw": accel,
+      "aReqValue": accel,
+    }
+    return self.packer.make_can_msg_panda("SCC_CONTROL", 0, values)
+
+  # no knockout
+  def test_tester_present_allowed(self):
+    pass
 
 
 if __name__ == "__main__":
