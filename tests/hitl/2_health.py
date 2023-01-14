@@ -56,11 +56,10 @@ def test_hw_type(p):
   p.reset(enter_bootstub=True, reconnect=True)
   p.close()
   time.sleep(3)
-  pp = Panda(p.get_usb_serial())
-  assert pp.bootstub
-  assert pp.get_type() == hw_type, "Bootstub and app hw type mismatch"
-  assert pp.get_mcu_type() == mcu_type, "Bootstub and app MCU type mismatch"
-  pp.close()
+  with Panda(p.get_usb_serial()) as pp:
+    assert pp.bootstub
+    assert pp.get_type() == hw_type, "Bootstub and app hw type mismatch"
+    assert pp.get_mcu_type() == mcu_type, "Bootstub and app MCU type mismatch"
 
 
 @test_all_pandas
