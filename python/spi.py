@@ -1,8 +1,10 @@
+import fcntl
 import math
 import time
 import struct
 import spidev
 import logging
+from contextlib import contextmanager
 from functools import reduce
 from typing import List
 
@@ -33,6 +35,15 @@ class PandaSpiBadChecksum(PandaSpiException):
 
 class PandaSpiTransferFailed(PandaSpiException):
   pass
+
+
+@contextmanager
+def flocked(fd):
+  try:
+    fcntl.flock(fd, fcntl.LOCK_EX)
+    yield
+  finally:
+    fcntl.flock(fd, fcntl.LOCK_UN)
 
 # This mimics the handle given by libusb1 for easy interoperability
 class SpiHandle:
@@ -102,22 +113,26 @@ class SpiHandle:
     self.spi.close()
 
   def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = 0):
-    return self._transfer(0, struct.pack("<BHHH", request, value, index, 0))
+    with flocked(self.spi):
+      return self._transfer(0, struct.pack("<BHHH", request, value, index, 0))
 
   def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = 0):
-    return self._transfer(0, struct.pack("<BHHH", request, value, index, length))
+    with flocked(self.spi):
+      return self._transfer(0, struct.pack("<BHHH", request, value, index, length))
 
   # TODO: implement these properly
   def bulkWrite(self, endpoint: int, data: List[int], timeout: int = 0) -> int:
-    for x in range(math.ceil(len(data) / USB_MAX_SIZE)):
-      self._transfer(endpoint, data[USB_MAX_SIZE*x:USB_MAX_SIZE*(x+1)])
-    return len(data)
+    with flocked(self.spi):
+      for x in range(math.ceil(len(data) / USB_MAX_SIZE)):
+        self._transfer(endpoint, data[USB_MAX_SIZE*x:USB_MAX_SIZE*(x+1)])
+      return len(data)
 
   def bulkRead(self, endpoint: int, length: int, timeout: int = 0) -> bytes:
     ret: List[int] = []
-    for _ in range(math.ceil(length / USB_MAX_SIZE)):
-      d = self._transfer(endpoint, [], max_rx_len=USB_MAX_SIZE)
-      ret += d
-      if len(d) < USB_MAX_SIZE:
-        break
+    with flocked(self.spi):
+      for _ in range(math.ceil(length / USB_MAX_SIZE)):
+        d = self._transfer(endpoint, [], max_rx_len=USB_MAX_SIZE)
+        ret += d
+        if len(d) < USB_MAX_SIZE:
+          break
     return bytes(ret)
