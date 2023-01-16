@@ -17,7 +17,7 @@ from itertools import accumulate
 from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN, SECTOR_SIZES_FX, SECTOR_SIZES_H7
 from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7
 from .isotp import isotp_send, isotp_recv
-from .spi import SpiHandle
+from .spi import SpiHandle, PandaSpiException
 
 __version__ = '0.0.10'
 
@@ -227,7 +227,7 @@ class Panda:
   FLAG_GM_HW_CAM = 1
   FLAG_GM_HW_CAM_LONG = 2
 
-  def __init__(self, serial: Optional[str] = None, claim: bool = True, spi: bool = False, disable_checks: bool = True):
+  def __init__(self, serial: Optional[str] = None, claim: bool = True, disable_checks: bool = True):
     self._serial = serial
     self._disable_checks = disable_checks
 
@@ -237,7 +237,6 @@ class Panda:
     self.can_rx_overflow_buffer = b''
 
     # connect and set mcu type
-    self._spi = spi
     self.connect(claim)
 
     # reset comms
@@ -258,15 +257,10 @@ class Panda:
       self.close()
     self._handle = None
 
-    if self._spi:
-      self._handle = SpiHandle()
-
-      # TODO implement
-      self._serial = "SPIDEV"
-      self.bootstub = False
-
-    else:
-      self.usb_connect(claim=claim, wait=wait)
+    # try USB first, then SPI
+    #self.usb_connect(claim=claim, wait=wait)
+    if self._handle is None:
+      self.spi_connect()
 
     assert self._handle is not None
     self._mcu_type = self.get_mcu_type()
@@ -277,6 +271,25 @@ class Panda:
     if self._disable_checks:
       self.set_heartbeat_disabled()
       self.set_power_save(0)
+
+  def spi_connect(self):
+    self._handle = SpiHandle()
+
+    # get UID to confirm slave is present and up
+    spi_serial = None
+    try:
+      spi_serial = self.get_uid()
+    except PandaSpiException:
+      pass
+
+    if spi_serial is not None and ((self._serial is None) or (self._serial == spi_serial)):
+      self._serial = spi_serial
+
+      # TODO: detect this
+      self.bootstub = False
+    else:
+      # failed to connect
+      self._handle = None
 
   def usb_connect(self, claim=True, wait=False):
     context = usb1.USBContext()

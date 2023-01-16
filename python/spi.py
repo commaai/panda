@@ -82,6 +82,7 @@ class SpiHandle:
     logging.debug("starting transfer: endpoint=%d, max_rx_len=%d", endpoint, max_rx_len)
     logging.debug("==============================================")
 
+    exc = None
     for n in range(MAX_XFER_RETRY_COUNT):
       logging.debug("\ntry #%d", n+1)
       try:
@@ -111,9 +112,10 @@ class SpiHandle:
           raise PandaSpiBadChecksum
 
         return dat[:-1]
-      except PandaSpiException:
-        logging.exception("SPI transfer failed, %d retries left", n)
-    raise PandaSpiTransferFailed(f"SPI transaction failed {MAX_XFER_RETRY_COUNT} times")
+      except PandaSpiException as e:
+        exc = e
+        logging.debug("SPI transfer failed, %d retries left", n, exc_info=True)
+    raise exc
 
   # libusb1 functions
   def close(self):
