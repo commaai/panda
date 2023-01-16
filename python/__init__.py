@@ -257,7 +257,7 @@ class Panda:
     self._handle = None
 
     # try USB first, then SPI
-    #self.usb_connect(claim=claim, wait=wait)
+    self.usb_connect(claim=claim, wait=wait)
     if self._handle is None:
       self.spi_connect()
 
@@ -272,11 +272,10 @@ class Panda:
       self.set_power_save(0)
 
   def spi_connect(self):
-    self._handle = SpiHandle()
-
     # get UID to confirm slave is present and up
     spi_serial = None
     try:
+      self._handle = SpiHandle()
       spi_serial = self.get_uid()
     except PandaSpiException:
       pass
