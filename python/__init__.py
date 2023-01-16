@@ -331,6 +331,38 @@ class Panda:
 
     return handle, usb_serial, bootstub
 
+  @staticmethod
+  def list():
+    ret = Panda.usb_list()
+    ret += Panda.spi_list()
+    return list(set(ret))
+
+  @staticmethod
+  def usb_list():
+    context = usb1.USBContext()
+    ret = []
+    try:
+      for device in context.getDeviceList(skip_on_error=True):
+        if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
+          try:
+            serial = device.getSerialNumber()
+            if len(serial) == 24:
+              ret.append(serial)
+            else:
+              warnings.warn(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
+          except Exception:
+            continue
+    except Exception:
+      pass
+    return ret
+
+  @staticmethod
+  def spi_list():
+    handle, serial, bootstub = Panda.spi_connect(None)
+    if serial is not None:
+      return [serial, ]
+    return []
+
   def reset(self, enter_bootstub=False, enter_bootloader=False, reconnect=True):
     try:
       if enter_bootloader:
@@ -454,25 +486,6 @@ class Panda:
       if timeout is not None and (time.monotonic() - t_start) > timeout:
         return False
     return True
-
-  @staticmethod
-  def list():
-    context = usb1.USBContext()
-    ret = []
-    try:
-      for device in context.getDeviceList(skip_on_error=True):
-        if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
-          try:
-            serial = device.getSerialNumber()
-            if len(serial) == 24:
-              ret.append(serial)
-            else:
-              warnings.warn(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
-          except Exception:
-            continue
-    except Exception:
-      pass
-    return ret
 
   def call_control_api(self, msg):
     self._handle.controlWrite(Panda.REQUEST_OUT, msg, 0, 0, b'')
