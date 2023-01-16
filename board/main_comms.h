@@ -160,7 +160,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         (void)memcpy(resp, &can_health[req->param1], resp_len);
       }
       break;
-    // **** 0xd0: fetch serial number
+    // **** 0xc3: fetch MCU UID
+    case 0xc3:
+      (void)memcpy(resp, ((uint8_t *)UID_BASE), 12);
+      resp_len = 12;
+      break;
+    // **** 0xd0: fetch serial (aka the provisioned dongle ID)
     case 0xd0:
       // addresses are OTP
       if (req->param1 == 1U) {
