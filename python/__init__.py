@@ -284,7 +284,6 @@ class Panda:
 
     if spi_serial is not None and ((self._serial is None) or (self._serial == spi_serial)):
       self._serial = spi_serial
-
       # TODO: detect this
       self.bootstub = False
     else:
@@ -301,9 +300,10 @@ class Panda:
               this_serial = device.getSerialNumber()
             except Exception:
               continue
+
             if self._serial is None or this_serial == self._serial:
               self._serial = this_serial
-              print("opening device", self._serial, hex(device.getProductID()))
+              logging.debug("opening device", this_serial, hex(device.getProductID()))
               self.bootstub = device.getProductID() == 0xddee
               self._handle = device.open()
               if sys.platform not in ("win32", "cygwin", "msys", "darwin"):
@@ -319,8 +319,7 @@ class Panda:
 
               break
       except Exception as e:
-        print("exception", e)
-        traceback.print_exc()
+        logging.exception("USB connect error")
       if not wait or self._handle is not None:
         break
       context = usb1.USBContext()  # New context needed so new devices show up
@@ -361,8 +360,6 @@ class Panda:
         time.sleep(1.0)
     if not success:
       raise Exception("reconnect failed")
-
-
 
   @staticmethod
   def flash_static(handle, code, mcu_type):
