@@ -24,8 +24,13 @@ MAX_XFER_RETRY_COUNT = 5
 
 USB_MAX_SIZE = 0x40
 
+DEV_PATH = "/dev/spidev0.0"
+
 
 class PandaSpiException(Exception):
+  pass
+
+class PandaSpiUnavailable(PandaSpiException):
   pass
 
 class PandaSpiNackResponse(PandaSpiException):
@@ -52,8 +57,10 @@ def flocked(fd):
 # This mimics the handle given by libusb1 for easy interoperability
 class SpiHandle:
   def __init__(self):
+    if not os.path.exists(DEV_PATH):
+      raise PandaSpiUnavailable(f"SPI device not found: {DEV_PATH}")
     if spidev is None:
-      raise RuntimeError("spidev is not available")
+      raise PandaSpiUnavailable("spidev is not installed")
 
     self.spi = spidev.SpiDev()  # pylint: disable=c-extension-no-member
     self.spi.open(0, 0)

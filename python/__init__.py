@@ -7,7 +7,6 @@ import struct
 import hashlib
 import binascii
 import datetime
-import traceback
 import warnings
 import logging
 from functools import wraps
@@ -303,7 +302,7 @@ class Panda:
 
             if self._serial is None or this_serial == self._serial:
               self._serial = this_serial
-              logging.debug("opening device", this_serial, hex(device.getProductID()))
+              logging.debug("opening device %s %s", this_serial, hex(device.getProductID()))
               self.bootstub = device.getProductID() == 0xddee
               self._handle = device.open()
               if sys.platform not in ("win32", "cygwin", "msys", "darwin"):
@@ -318,7 +317,7 @@ class Panda:
                 self._bcd_device = bytearray([bcd >> 8, ])
 
               break
-      except Exception as e:
+      except Exception:
         logging.exception("USB connect error")
       if not wait or self._handle is not None:
         break
