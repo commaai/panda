@@ -347,7 +347,7 @@ class Panda:
         success = True
         break
       except Exception:
-        logging.debug("reconnecting is taking %d seconds..." % (i + 1))
+        logging.debug("reconnecting is taking %d seconds...", i + 1)
         try:
           dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial, self._mcu_type))
           dfu.recover()
@@ -397,7 +397,7 @@ class Panda:
     if not fn:
       fn = DEFAULT_H7_FW_FN if self._mcu_type == MCU_TYPE_H7 else DEFAULT_FW_FN
     assert os.path.isfile(fn)
-    logging.debug("flash: main version is " + self.get_version())
+    logging.debug("flash: main version is %s", self.get_version())
     if not self.bootstub:
       self.reset(enter_bootstub=True)
     assert(self.bootstub)
@@ -407,7 +407,7 @@ class Panda:
         code = f.read()
 
     # get version
-    logging.debug("flash: bootstub version is " + self.get_version())
+    logging.debug("flash: bootstub version is %s", self.get_version())
 
     # do flash
     Panda.flash_static(self._handle, code, mcu_type=self._mcu_type)
