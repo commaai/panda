@@ -1,7 +1,7 @@
 from .python import (Panda, PandaDFU, # noqa: F401
-                     BASEDIR, pack_can_buffer, unpack_can_buffer,
+                     BASEDIR, pack_can_buffer, unpack_can_buffer, calculate_checksum,
                      DEFAULT_FW_FN, DEFAULT_H7_FW_FN, MCU_TYPE_H7, MCU_TYPE_F4, DLC_TO_LEN, LEN_TO_DLC,
-                     ALTERNATIVE_EXPERIENCE, USBPACKET_MAX_SIZE)
+                     ALTERNATIVE_EXPERIENCE, USBPACKET_MAX_SIZE, CANPACKET_HEAD_SIZE)
 
 from .python.serial import PandaSerial  # noqa: F401
 

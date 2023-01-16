@@ -19,6 +19,7 @@ typedef struct {
   unsigned char returned : 1;
   unsigned char extended : 1;
   unsigned int addr : 29;
+  unsigned char checksum;
   unsigned char data[64];
 } CANPacket_t;
 """, packed=True)
@@ -46,8 +47,10 @@ extern can_ring *tx3_q;
 
 bool can_pop(can_ring *q, CANPacket_t *elem);
 bool can_push(can_ring *q, CANPacket_t *elem);
+void can_set_checksum(CANPacket_t *packet);
 int comms_can_read(uint8_t *data, uint32_t max_len);
 void comms_can_write(uint8_t *data, uint32_t len);
+void comms_can_reset(void);
 uint32_t can_slots_empty(can_ring *q);
 """)
 
@@ -83,5 +86,6 @@ def make_CANPacket(addr: int, bus: int, dat):
   ret[0].data_len_code = LEN_TO_DLC[len(dat)]
   ret[0].bus = bus
   ret[0].data = bytes(dat)
+  libpanda.can_set_checksum(ret)
 
   return ret

@@ -44,11 +44,10 @@ def test_c_flash(p):
   p.close()
   time.sleep(2)
 
-  np = Panda(serial)
-  assert np.bootstub
-  assert np._serial == serial
-  np.flash()
-  np.close()
+  with Panda(serial) as np:
+    assert np.bootstub
+    assert np._serial == serial
+    np.flash()
 
   p.reconnect()
   p.reset()
