@@ -90,7 +90,7 @@ class SpiHandle:
     logging.debug("starting transfer: endpoint=%d, max_rx_len=%d", endpoint, max_rx_len)
     logging.debug("==============================================")
 
-    exc = None
+    exc = PandaSpiException()
     for n in range(MAX_XFER_RETRY_COUNT):
       logging.debug("\ntry #%d", n+1)
       try:
