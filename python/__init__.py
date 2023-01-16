@@ -587,13 +587,19 @@ class Panda:
   def is_internal(self):
     return self.get_type() in Panda.INTERNAL_DEVICES
 
-  def get_serial(self):
+  def get_dongle_id(self):
+    """
+      Returns the comma-issued dongle ID from our
+    """
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
     hashsig, calc_hash = dat[0x1c:], hashlib.sha1(dat[0:0x1c]).digest()[0:4]
     assert(hashsig == calc_hash)
     return [dat[0:0x10].decode("utf8"), dat[0x10:0x10 + 10].decode("utf8")]
 
   def get_usb_serial(self):
+    """
+      Returns the UID from the MCU
+    """
     return self._serial
 
   def get_secret(self):
