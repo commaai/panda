@@ -255,9 +255,9 @@ class Panda:
     self._handle = None
 
     # try USB first, then SPI
-    self._handle, serial, self.bootstub = self.usb_connect(self._serial, claim=claim, wait=wait)
+    self._handle, serial, self.bootstub, self._bcd_device = self.usb_connect(self._serial, claim=claim, wait=wait)
     if self._handle is None:
-      self._handle, serial, self.bootstub = self.spi_connect(self._serial)
+      self._handle, serial, self.bootstub, _ = self.spi_connect(self._serial)
 
     if self._handle is None:
       raise Exception("failed to connect to panda")
@@ -290,11 +290,11 @@ class Panda:
       spi_serial = None
 
     # TODO: detect bootstub
-    return handle, spi_serial, False
+    return handle, spi_serial, False, None
 
   @staticmethod
   def usb_connect(serial, claim=True, wait=False):
-    handle, usb_serial, bootstub = None, None, None
+    handle, usb_serial, bootstub, bcd = None, None, None, None
     context = usb1.USBContext()
     while 1:
       try:
@@ -318,18 +318,18 @@ class Panda:
                 # handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
 
               # bcdDevice wasn't always set to the hw type, ignore if it's the old constant
-              #bcd = device.getbcdDevice()
-              #if bcd is not None and bcd != 0x2300:
-              #  self._bcd_device = bytearray([bcd >> 8, ])
+              this_bcd = device.getbcdDevice()
+              if this_bcd is not None and this_bcd != 0x2300:
+                bcd = bytearray([bcd >> 8, ])
 
               break
       except Exception:
         logging.exception("USB connect error")
-      if not wait or self._handle is not None:
+      if not wait or handle is not None:
         break
       context = usb1.USBContext()  # New context needed so new devices show up
 
-    return handle, usb_serial, bootstub
+    return handle, usb_serial, bootstub, bcd
 
   @staticmethod
   def list():
