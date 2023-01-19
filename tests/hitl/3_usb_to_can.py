@@ -67,7 +67,7 @@ def test_reliability(p):
     sys.stdout.flush()
 
 @test_all_pandas
-@flaky(max_runs=6, min_passes=1)
+@flaky(max_runs=3, min_passes=1)
 @panda_connect_and_init
 def test_throughput(p):
   # enable output mode

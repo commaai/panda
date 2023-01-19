@@ -47,7 +47,7 @@ def test_send_recv(p):
 
 
 @test_all_pandas
-@flaky(max_runs=6, min_passes=1)
+@flaky(max_runs=3, min_passes=1)
 @panda_connect_and_init
 def test_latency(p):
   def test(p_send, p_recv):
