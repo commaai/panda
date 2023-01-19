@@ -2,11 +2,15 @@ import fcntl
 import math
 import time
 import struct
-import spidev
 import logging
 from contextlib import contextmanager
 from functools import reduce
 from typing import List
+
+try:
+  import spidev
+except ImportError:
+  spidev = None
 
 # Constants
 SYNC = 0x5A
@@ -48,6 +52,9 @@ def flocked(fd):
 # This mimics the handle given by libusb1 for easy interoperability
 class SpiHandle:
   def __init__(self):
+    if spidev is None:
+      raise RuntimeError("spidev is not available")
+
     self.spi = spidev.SpiDev()  # pylint: disable=c-extension-no-member
     self.spi.open(0, 0)
 
