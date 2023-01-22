@@ -42,9 +42,8 @@ def init_all_pandas():
 
   for serial in Panda.list():
     if serial not in PANDAS_EXCLUDE:
-      p = Panda(serial=serial)
-      _all_pandas.append((serial, p.get_type()))
-      p.close()
+      with Panda(serial=serial) as p:
+        _all_pandas.append((serial, p.get_type()))
   print(f"Found {len(_all_pandas)} pandas")
 init_all_pandas()
 _all_panda_serials = [x[0] for x in _all_pandas]
@@ -165,9 +164,8 @@ def panda_connect_and_init(fn=None, full_reset=True):
         p.reset(reconnect=True)
         pandas.append(p)
       elif full_reset and s != PEDAL_SERIAL:
-        p = Panda(serial=s)
-        p.reset(reconnect=False)
-        p.close()
+        with Panda(serial=s) as p:
+          p.reset(reconnect=False)
 
     # Initialize pandas
     if full_reset:
@@ -200,6 +198,7 @@ def panda_connect_and_init(fn=None, full_reset=True):
               assert can_health['total_rx_lost_cnt'] == 0
               assert can_health['total_tx_lost_cnt'] == 0
               assert can_health['total_error_cnt'] == 0
+              assert can_health['total_tx_checksum_error_cnt'] == 0
     finally:
       for p in pandas:
         try:

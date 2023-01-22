@@ -13,7 +13,6 @@
 #define DEEPSLEEP_WAKEUP_DELAY 3U
 #define USBPACKET_MAX_SIZE 0x40U
 #define MAX_CAN_MSGS_PER_BULK_TRANSFER 51U
-#define MAX_EP1_CHUNK_PER_BULK_TRANSFER 16256U // max data stream chunk in bytes, shouldn't be higher than 16320 or counter will overflow
 
 // USB definitions
 #define USB_VID 0xBBAAU
