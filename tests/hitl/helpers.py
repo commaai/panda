@@ -120,7 +120,7 @@ def panda_connect_and_init(fn=None, full_reset=True):
     return partial(panda_connect_and_init, full_reset=full_reset)
 
   @wraps(fn)
-  def wrapper(panda_serials=None, **kwargs):
+  def wrapper(panda_serials, **kwargs):
     # Change panda_serials to a list
     if panda_serials is not None:
       if not isinstance(panda_serials, list):
@@ -133,7 +133,7 @@ def panda_connect_and_init(fn=None, full_reset=True):
     panda_jungle.set_obd(False)
     panda_jungle.set_harness_orientation(PandaJungle.HARNESS_ORIENTATION_1)
     for bus, speed in BUS_SPEEDS:
-        panda_jungle.set_can_speed_kbps(bus, speed)
+      panda_jungle.set_can_speed_kbps(bus, speed)
 
     # wait for all pandas to come up
     for _ in range(50):
@@ -147,22 +147,20 @@ def panda_connect_and_init(fn=None, full_reset=True):
       if s in panda_serials:
         p = Panda(serial=s)
         p.reset(reconnect=True)
+
+        p.set_can_loopback(False)
+        p.set_gmlan(None)
+        p.set_esp_power(False)
+        p.set_power_save(False)
+        for bus, speed in BUS_SPEEDS:
+          p.set_can_speed_kbps(bus, speed)
+        clear_can_buffers(p)
+        p.set_power_save(False)
+
         pandas.append(p)
       elif full_reset and s != PEDAL_SERIAL:
         with Panda(serial=s) as p:
           p.reset(reconnect=False)
-
-    # Initialize pandas
-    if full_reset:
-      for panda in pandas:
-        panda.set_can_loopback(False)
-        panda.set_gmlan(None)
-        panda.set_esp_power(False)
-        panda.set_power_save(False)
-        for bus, speed in BUS_SPEEDS:
-          panda.set_can_speed_kbps(bus, speed)
-        clear_can_buffers(panda)
-        panda.set_power_save(False)
 
     try:
       fn(*pandas, *kwargs)
@@ -175,7 +173,6 @@ def panda_connect_and_init(fn=None, full_reset=True):
           # Check health of each CAN core after test, normal to fail for test_gen2_loopback on OBD bus, so skipping
           if fn.__name__ != "test_gen2_loopback":
             for i in range(3):
-              print(fn.__name__)
               can_health = panda.can_health(i)
               assert can_health['bus_off_cnt'] == 0
               assert can_health['receive_error_cnt'] == 0
