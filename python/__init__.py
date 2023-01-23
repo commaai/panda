@@ -320,7 +320,7 @@ class Panda:
               # bcdDevice wasn't always set to the hw type, ignore if it's the old constant
               this_bcd = device.getbcdDevice()
               if this_bcd is not None and this_bcd != 0x2300:
-                bcd = bytearray([bcd >> 8, ])
+                bcd = bytearray([this_bcd >> 8, ])
 
               break
       except Exception:
@@ -358,7 +358,7 @@ class Panda:
 
   @staticmethod
   def spi_list():
-    handle, serial, bootstub = Panda.spi_connect(None)
+    _, _, bootstub, _ = Panda.spi_connect(None)
     if serial is not None:
       return [serial, ]
     return []
