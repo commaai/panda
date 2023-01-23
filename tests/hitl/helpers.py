@@ -4,7 +4,7 @@ import random
 import faulthandler
 from functools import wraps, partial
 from nose.tools import assert_equal
-from parameterized import parameterized, param
+from parameterized import parameterized
 
 from panda import Panda, DEFAULT_H7_FW_FN, DEFAULT_FW_FN, MCU_TYPE_H7
 from panda_jungle import PandaJungle  # pylint: disable=import-error
@@ -12,7 +12,6 @@ from panda_jungle import PandaJungle  # pylint: disable=import-error
 SPEED_NORMAL = 500
 SPEED_GMLAN = 33.3
 BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL), (3, SPEED_GMLAN)]
-TIMEOUT = 45
 H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2]
 GEN2_HW_TYPES = [Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO] + H7_HW_TYPES
 GPS_HW_TYPES = [Panda.HW_TYPE_GREY_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
@@ -44,30 +43,39 @@ def init_all_pandas():
     if serial not in PANDAS_EXCLUDE:
       with Panda(serial=serial) as p:
         _all_pandas.append((serial, p.get_type()))
-  print(f"Found {len(_all_pandas)} pandas")
+  print(f"{len(_all_pandas)} total pandas")
 init_all_pandas()
 _all_panda_serials = [x[0] for x in _all_pandas]
 
+def parameterized_panda_types(types):
+  serials = []
+  for typ in types:
+    for s, t in test_pandas:
+      if t == typ and s not in serials:
+        serials.append(s)
+        break
+    else:
+      raise IOError("No unused panda found for type: {}".format(typ))
+  return parameterized(serials)
+
 # Panda providers
+TESTED_HW_TYPES = (Panda.HW_TYPE_WHITE_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_UNO)
 test_pandas = _all_pandas[:]
+test_all_pandas = parameterized_panda_types(TESTED_HW_TYPES)
+test_all_gen2_pandas = parameterized_panda_types(GEN2_HW_TYPES)
+test_all_gps_pandas = parameterized_panda_types(GPS_HW_TYPES)
+
+# no grey for speedup, should be sufficiently covered by white for these tests
+test_all_gmlan_pandas = parameterized_panda_types([Panda.HW_TYPE_WHITE_PANDA, ])
+
 if PARTIAL_TESTS:
   # minimal set of pandas to get most of our coverage
   # * red panda covers STM32H7
   # * black panda covers STM32F4, GEN2, and GPS
-  test_pandas = [p for p in _all_pandas if p[1] in (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA)]
-test_all_pandas = parameterized(
-    list(map(lambda x: x[0], test_pandas))  # type: ignore
-  )
-test_all_gen2_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in GEN2_HW_TYPES, test_pandas)))  # type: ignore
-  )
-test_all_gps_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in GPS_HW_TYPES, test_pandas)))  # type: ignore
-  )
-test_white_and_grey = parameterized([
-    param(panda_type=Panda.HW_TYPE_WHITE_PANDA),
-    param(panda_type=Panda.HW_TYPE_GREY_PANDA)
-  ])
+  partial_pandas = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA)
+  test_all_pandas = parameterized_panda_types(partial_pandas)
+  test_all_gen2_pandas = parameterized_panda_types(partial_pandas)
+  test_all_gps_pandas = parameterized_panda_types([Panda.HW_TYPE_BLACK_PANDA, ])
 
 
 def time_many_sends(p, bus, p_recv=None, msg_count=100, msg_id=None, two_pandas=False):
@@ -106,29 +114,6 @@ def time_many_sends(p, bus, p_recv=None, msg_count=100, msg_id=None, two_pandas=
   comp_kbps = (1 + 11 + 1 + 1 + 1 + 4 + 8 * 8 + 15 + 1 + 1 + 1 + 7) * msg_count / end_time
 
   return comp_kbps
-
-def panda_type_to_serial(fn):
-  @wraps(fn)
-  def wrapper(panda_type=None, **kwargs):
-    # Change panda_types to a list
-    if panda_type is not None:
-      if not isinstance(panda_type, list):
-        panda_type = [panda_type]
-
-    # Find a panda with the correct types and add the corresponding serial
-    serials = []
-    for p_type in panda_type:
-      found = False
-      for serial, pt in _all_pandas:
-        # Never take the same panda twice
-        if (pt == p_type) and (serial not in serials):
-          serials.append(serial)
-          found = True
-          break
-      if not found:
-        raise IOError("No unused panda found for type: {}".format(p_type))
-    return fn(serials, **kwargs)
-  return wrapper
 
 def panda_connect_and_init(fn=None, full_reset=True):
   if not fn:
@@ -185,7 +170,7 @@ def panda_connect_and_init(fn=None, full_reset=True):
       # Check if the pandas did not throw any faults while running test
       for panda in pandas:
         if not panda.bootstub:
-          panda.reconnect()
+          #panda.reconnect()
           assert panda.health()['fault_status'] == 0
           # Check health of each CAN core after test, normal to fail for test_gen2_loopback on OBD bus, so skipping
           if fn.__name__ != "test_gen2_loopback":
