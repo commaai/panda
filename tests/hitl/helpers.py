@@ -1,3 +1,4 @@
+import concurrent.futures
 import os
 import time
 import random
@@ -142,8 +143,7 @@ def panda_connect_and_init(fn=None, full_reset=True):
       time.sleep(0.1)
 
     # Connect to pandas
-    pandas = []
-    for s in _all_panda_serials:
+    def cnnct(s):
       if s in panda_serials:
         p = Panda(serial=s)
         p.reset(reconnect=True)
@@ -156,11 +156,15 @@ def panda_connect_and_init(fn=None, full_reset=True):
           p.set_can_speed_kbps(bus, speed)
         clear_can_buffers(p)
         p.set_power_save(False)
-
-        pandas.append(p)
+        return p
       elif full_reset and s != PEDAL_SERIAL:
         with Panda(serial=s) as p:
           p.reset(reconnect=False)
+      return None
+
+    with concurrent.futures.ThreadPoolExecutor() as exc:
+      ps = list(exc.map(cnnct, _all_panda_serials, timeout=20))
+      pandas = [p for p in ps if p is not None]
 
     try:
       fn(*pandas, *kwargs)
