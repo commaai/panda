@@ -358,7 +358,7 @@ class Panda:
 
   @staticmethod
   def spi_list():
-    _, _, bootstub, _ = Panda.spi_connect(None)
+    _, serial, _, _ = Panda.spi_connect(None)
     if serial is not None:
       return [serial, ]
     return []
