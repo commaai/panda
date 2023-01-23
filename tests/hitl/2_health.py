@@ -35,7 +35,7 @@ def test_orientation_detection(p):
     seen_orientations.append(detected_harness_orientation)
 
 @test_all_pandas
-@panda_connect_and_init(full_reset=False)
+@panda_connect_and_init
 def test_voltage(p):
   for _ in range(10):
     voltage = p.health()['voltage']

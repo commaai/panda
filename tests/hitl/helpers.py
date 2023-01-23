@@ -15,7 +15,7 @@ SPEED_GMLAN = 33.3
 BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL), (3, SPEED_GMLAN)]
 H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2]
 GEN2_HW_TYPES = [Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO] + H7_HW_TYPES
-GPS_HW_TYPES = [Panda.HW_TYPE_GREY_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
+GPS_HW_TYPES = [Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
 PEDAL_SERIAL = 'none'
 JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
 PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE", "").strip().split(" ")
@@ -41,7 +41,7 @@ def init_all_pandas():
   time.sleep(5)
 
   for serial in Panda.list():
-    if serial not in PANDAS_EXCLUDE:
+    if serial not in PANDAS_EXCLUDE and serial != PEDAL_SERIAL:
       with Panda(serial=serial) as p:
         _all_pandas.append((serial, p.get_type()))
   print(f"{len(_all_pandas)} total pandas")
@@ -51,7 +51,7 @@ _all_panda_serials = [x[0] for x in _all_pandas]
 def parameterized_panda_types(types):
   serials = []
   for typ in types:
-    for s, t in test_pandas:
+    for s, t in _all_pandas:
       if t == typ and s not in serials:
         serials.append(s)
         break
@@ -60,8 +60,7 @@ def parameterized_panda_types(types):
   return parameterized(serials)
 
 # Panda providers
-TESTED_HW_TYPES = (Panda.HW_TYPE_WHITE_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_UNO)
-test_pandas = _all_pandas[:]
+TESTED_HW_TYPES = (Panda.HW_TYPE_WHITE_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2, Panda.HW_TYPE_UNO)
 test_all_pandas = parameterized_panda_types(TESTED_HW_TYPES)
 test_all_gen2_pandas = parameterized_panda_types(GEN2_HW_TYPES)
 test_all_gps_pandas = parameterized_panda_types(GPS_HW_TYPES)
@@ -116,9 +115,9 @@ def time_many_sends(p, bus, p_recv=None, msg_count=100, msg_id=None, two_pandas=
 
   return comp_kbps
 
-def panda_connect_and_init(fn=None, full_reset=True):
+def panda_connect_and_init(fn=None):
   if not fn:
-    return partial(panda_connect_and_init, full_reset=full_reset)
+    return partial(panda_connect_and_init)
 
   @wraps(fn)
   def wrapper(panda_serials, **kwargs):
@@ -157,7 +156,7 @@ def panda_connect_and_init(fn=None, full_reset=True):
         clear_can_buffers(p)
         p.set_power_save(False)
         return p
-      elif full_reset and s != PEDAL_SERIAL:
+      else:
         with Panda(serial=s) as p:
           p.reset(reconnect=False)
       return None
