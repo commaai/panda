@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
   pandas = PandaDFU.list()
   print("DFU pandas:", pandas)
-  assert len(pandas) == 8
+  assert len(pandas) == 7
 
   with concurrent.futures.ProcessPoolExecutor(max_workers=len(pandas)) as exc:
     def recover(serial):
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
   pandas = Panda.list()
   print(pandas)
-  assert len(pandas) == 8
+  assert len(pandas) == 7
 
   with concurrent.futures.ProcessPoolExecutor(max_workers=len(pandas)) as exc:
     def flash(serial):
