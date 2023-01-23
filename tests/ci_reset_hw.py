@@ -23,7 +23,7 @@ if __name__ == "__main__":
       PandaDFU(serial).recover()
     list(exc.map(recover, pandas, timeout=20))
 
-  r.cycle_power(delay=3, ports=[1, 2])
+  r.cycle_power(delay=7, ports=[1, 2])
 
   pandas = Panda.list()
   print(pandas)
