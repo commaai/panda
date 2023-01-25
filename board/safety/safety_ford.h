@@ -6,6 +6,7 @@
 #define MSG_EngVehicleSpThrottle2 0x202   // RX from PCM, for second vehicle speed
 #define MSG_Yaw_Data_FD1          0x91    // RX from RCM, for yaw rate
 #define MSG_Steering_Data_FD1     0x083   // TX by OP, various driver switches and LKAS/CC buttons
+#define MSG_ACCDATA               0x186   // TX by OP, ACC controls
 #define MSG_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
 #define MSG_Lane_Assist_Data1     0x3CA   // TX by OP, Lane Keep Assist
 #define MSG_LateralMotionControl  0x3D3   // TX by OP, Traffic Jam Assist
@@ -18,6 +19,7 @@
 const CanMsg FORD_TX_MSGS[] = {
   {MSG_Steering_Data_FD1, 0, 8},
   {MSG_Steering_Data_FD1, 2, 8},
+  {MSG_ACCDATA, 0, 8},
   {MSG_ACCDATA_3, 0, 8},
   {MSG_Lane_Assist_Data1, 0, 8},
   {MSG_LateralMotionControl, 0, 8},
@@ -219,7 +221,6 @@ static int ford_rx_hook(CANPacket_t *to_push) {
 }
 
 static int ford_tx_hook(CANPacket_t *to_send) {
-
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
