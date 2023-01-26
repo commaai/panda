@@ -65,7 +65,6 @@ class SpiHandle:
 
     self.spi = spidev.SpiDev()  # pylint: disable=c-extension-no-member
     self.spi.open(0, 0)
-
     self.spi.max_speed_hz = 30000000
 
   # helpers
