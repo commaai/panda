@@ -125,7 +125,7 @@ void red_init(void) {
 
   // B14: usb load switch, enabled by pull resistor on board, obsolete for red panda
   set_gpio_output_type(GPIOB, 14, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_pullup(GPIOB, 14, PULL_NONE);
+  set_gpio_pullup(GPIOB, 14, PULL_UP);
   set_gpio_mode(GPIOB, 14, MODE_OUTPUT);
   set_gpio_output(GPIOB, 14, 1);
 

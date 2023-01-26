@@ -1,6 +1,7 @@
 #pragma once
 
 #define SPI_BUF_SIZE 1024U
+#define SPI_TIMEOUT_US 10000U
 
 #ifdef STM32H7
 __attribute__((section(".ram_d1"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
@@ -143,15 +144,15 @@ void spi_handle_rx(void) {
   spi_state = next_rx_state;
 }
 
-void spi_handle_tx(void) {
-  if (spi_state == SPI_STATE_HEADER_ACK) {
-    // ACK was sent, queue up the RX buf for the data + checksum
-    spi_state = SPI_STATE_DATA_RX;
-    llspi_mosi_dma(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi + 1U);
-  } else if (spi_state == SPI_STATE_HEADER_NACK) {
+void spi_handle_tx(bool timed_out) {
+  if ((spi_state == SPI_STATE_HEADER_NACK) || timed_out) {
     // Reset state
     spi_state = SPI_STATE_HEADER;
     llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+  } else if (spi_state == SPI_STATE_HEADER_ACK) {
+    // ACK was sent, queue up the RX buf for the data + checksum
+    spi_state = SPI_STATE_DATA_RX;
+    llspi_mosi_dma(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi + 1U);
   } else if (spi_state == SPI_STATE_DATA_TX) {
     // Reset state
     spi_state = SPI_STATE_HEADER;

@@ -6,7 +6,7 @@ from .helpers import test_all_pandas, panda_connect_and_init, check_signature
 
 
 @test_all_pandas
-@panda_connect_and_init(full_reset=False)
+@panda_connect_and_init
 def test_a_known_bootstub(p):
   # Test that compiled app can work with known production bootstub
   KNOWN_H7_BOOTSTUB_FN = os.path.join(BASEDIR, "tests", "hitl", "known_bootstub", "bootstub.panda_h7.bin")
@@ -29,13 +29,13 @@ def test_a_known_bootstub(p):
   check_signature(p)
 
 @test_all_pandas
-@panda_connect_and_init(full_reset=False)
+@panda_connect_and_init
 def test_b_recover(p):
   assert p.recover(timeout=30)
   check_signature(p)
 
 @test_all_pandas
-@panda_connect_and_init(full_reset=False)
+@panda_connect_and_init
 def test_c_flash(p):
   # test flash from bootstub
   serial = p._serial

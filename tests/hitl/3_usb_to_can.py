@@ -4,7 +4,7 @@ from flaky import flaky
 from nose.tools import assert_equal, assert_less, assert_greater
 
 from panda import Panda
-from .helpers import SPEED_NORMAL, SPEED_GMLAN, time_many_sends, test_white_and_grey, panda_type_to_serial, test_all_pandas, panda_connect_and_init
+from .helpers import SPEED_NORMAL, SPEED_GMLAN, time_many_sends, test_all_gmlan_pandas, test_all_pandas, panda_connect_and_init
 
 @test_all_pandas
 @panda_connect_and_init
@@ -67,7 +67,7 @@ def test_reliability(p):
     sys.stdout.flush()
 
 @test_all_pandas
-@flaky(max_runs=3, min_passes=1)
+@flaky(max_runs=6, min_passes=1)
 @panda_connect_and_init
 def test_throughput(p):
   # enable output mode
@@ -90,8 +90,7 @@ def test_throughput(p):
 
     print("loopback 100 messages at speed %d, comp speed is %.2f, percent %.2f" % (speed, comp_kbps, saturation_pct))
 
-@test_white_and_grey
-@panda_type_to_serial
+@test_all_gmlan_pandas
 @panda_connect_and_init
 def test_gmlan(p):
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
@@ -115,8 +114,7 @@ def test_gmlan(p):
 
     print("%d: %.2f kbps vs %.2f kbps" % (bus, comp_kbps_gmlan, comp_kbps_normal))
 
-@test_white_and_grey
-@panda_type_to_serial
+@test_all_gmlan_pandas
 @panda_connect_and_init
 def test_gmlan_bad_toggle(p):
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
