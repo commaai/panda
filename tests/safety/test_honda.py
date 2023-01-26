@@ -538,8 +538,8 @@ class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS)
     self.safety.init_tests()
 
+  # These cars do not have 0x1BE (BRAKE_MODULE)
   def test_alt_disengage_on_brake(self):
-    # These cars do not have 0x1BE (BRAKE_MODULE)
     pass
 
 
