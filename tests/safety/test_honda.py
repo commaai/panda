@@ -575,6 +575,10 @@ class TestHondaBoschRadarlessLongSafety(HondaPcmEnableBase, TestHondaBoschSafety
   def test_spam_cancel_safety_check(self):
     pass
 
+  # These cars do not have 0x1BE (BRAKE_MODULE)
+  def test_alt_disengage_on_brake(self):
+    pass
+
   # TODO: make test_accel_actuation_limits test common
 
   # def test_brake_safety_check(self):
