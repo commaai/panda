@@ -524,7 +524,7 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
         self.assertEqual(send, self._tx(self._send_gas_brake_msg(self.NO_GAS, accel)), (controls_allowed, accel))
 
 
-class TestHondaBoschRadarless(HondaPcmEnableBase, TestHondaBoschSafetyBase):
+class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
   PT_BUS = 0
   STEER_BUS = 0
   BUTTONS_BUS = 2  # camera controls ACC, need to send buttons on bus 2
