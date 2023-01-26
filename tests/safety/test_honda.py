@@ -525,6 +525,9 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
 
 
 class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
+  """
+    Covers the Honda Bosch Radarless safety mode with stock longitudinal
+  """
   PT_BUS = 0
   STEER_BUS = 0
   BUTTONS_BUS = 2  # camera controls ACC, need to send buttons on bus 2
