@@ -2,7 +2,8 @@
 // Tres + Harness //
 // /////////////////
 
-bool tres_ir_enabled, tres_fan_enabled;
+bool tres_ir_enabled;
+bool tres_fan_enabled;
 void tres_update_fan_ir_power(void) {
   red_chiplet_set_fan_or_usb_load_switch(tres_ir_enabled || tres_fan_enabled);
 }
