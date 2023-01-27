@@ -1,7 +1,8 @@
 import usb1
 import struct
 import binascii
-from .config import McuType
+
+from .constants import McuType
 
 
 # *** DFU mode ***

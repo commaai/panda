@@ -13,7 +13,7 @@ from functools import wraps
 from typing import Optional
 from itertools import accumulate
 
-from .config import McuType
+from .constants import McuType
 from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
 from .spi import SpiHandle, PandaSpiException
