@@ -2,6 +2,8 @@
 uint32_t *prog_ptr = NULL;
 bool unlocked = false;
 
+void spi_init(void);
+
 #ifdef uart_ring
 void debug_ring_callback(uart_ring *ring) {}
 #endif
@@ -288,6 +290,11 @@ void soft_flasher_start(void) {
 
   // enable USB
   usb_init();
+
+  // enable SPI
+  if (current_board->has_spi) {
+    spi_init();
+  }
 
   // green LED on for flashing
   current_board->set_led(LED_GREEN, 1);

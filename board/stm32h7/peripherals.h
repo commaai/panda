@@ -85,7 +85,10 @@ void common_init_gpio(void) {
 
 void flasher_peripherals_init(void) {
   RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN;
+
+  // SPI + DMA
   RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;
+  RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
 }
 
 // Peripheral initialization
