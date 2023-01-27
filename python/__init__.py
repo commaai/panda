@@ -600,7 +600,7 @@ class Panda:
     else:
       return (0, 0, 0)
 
-  def get_mcu_type(self):
+  def get_mcu_type(self) -> McuType:
     hw_type = self.get_type()
     if hw_type in Panda.F2_DEVICES:
       return McuType.F2
@@ -608,7 +608,7 @@ class Panda:
       return McuType.F4
     elif hw_type in Panda.H7_DEVICES:
       return McuType.H7
-    return None
+    raise ValueError(f"unknown HW type: {hw_type}")
 
   def has_obd(self):
     return self.get_type() in Panda.HAS_OBD

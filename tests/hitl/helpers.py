@@ -210,6 +210,6 @@ def clear_can_buffers(panda):
 
 def check_signature(p):
   assert not p.bootstub, "Flashed firmware not booting. Stuck in bootstub."
-  firmware_sig = Panda.get_signature_from_firmware(p.get_mcu_type().app_path)
+  firmware_sig = Panda.get_signature_from_firmware(p.get_mcu_type().config.app_path)
   panda_sig = p.get_signature()
   assert_equal(panda_sig, firmware_sig)
