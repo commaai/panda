@@ -109,7 +109,6 @@ class PandaDFU:
     self.program_bootstub(code)
 
   def reset(self):
-    # **** Reset ****
     self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", self._mcu_type.bootstub_address))
     self.status()
     try:
