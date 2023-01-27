@@ -80,9 +80,13 @@ class TestFordSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("Lane_Assist_Data1", 0, values)
 
   # TJA command
-  def _tja_command_msg(self, enabled: bool):
+  def _tja_command_msg(self, enabled: bool, curvature: float = 0, curvature_rate: float = 0, path_offset: float = 0, path_angle: float = 0):
     values = {
       "LatCtl_D_Rq": 1 if enabled else 0,
+      "LatCtlCurv_No_Actl": curvature,
+      "LatCtlCurv_NoRate_Actl": curvature_rate,
+      "LatCtlPathOffst_L_Actl": path_offset,
+      "LatCtlPath_An_Actl": path_angle,
     }
     return self.packer.make_can_msg_panda("LateralMotionControl", 0, values)
 
@@ -97,6 +101,9 @@ class TestFordSafety(common.PandaSafetyTest):
 
   def test_steer_allowed(self):
     self.safety.set_controls_allowed(1)
+
+
+
     self.assertTrue(self._tx(self._tja_command_msg(1)))
     self.assertTrue(self.safety.get_controls_allowed())
 
