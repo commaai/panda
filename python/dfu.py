@@ -55,7 +55,7 @@ class PandaDFU:
     else:
       return binascii.hexlify(struct.pack("!HHH", uid_base[1] + uid_base[5], uid_base[0] + uid_base[4] + 0xA, uid_base[3])).upper().decode("utf-8")
 
-  def get_mcu_type(self, dev):
+  def get_mcu_type(self, dev) -> McuType:
     # TODO: Find a way to detect F4 vs F2
     # TODO: also check F4 BCD, don't assume in else
     return McuType.H7 if dev.getbcdDevice() == 512 else McuType.F4
@@ -98,18 +98,18 @@ class PandaDFU:
 
   def program_bootstub(self, code_bootstub):
     self.clear_status()
-    self.erase(self._mcu_type.bootstub_address)
-    self.erase(self._mcu_type.app_address)
-    self.program(self._mcu_type.bootstub_address, code_bootstub, self._mcu_type.block_size)
+    self.erase(self._mcu_type.config.bootstub_address)
+    self.erase(self._mcu_type.config.app_address)
+    self.program(self._mcu_type.config.bootstub_address, code_bootstub, self._mcu_type.config.block_size)
     self.reset()
 
   def recover(self):
-    with open(self._mcu_type.bootstub_path, "rb") as f:
+    with open(self._mcu_type.config.bootstub_path, "rb") as f:
       code = f.read()
     self.program_bootstub(code)
 
   def reset(self):
-    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", self._mcu_type.bootstub_address))
+    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", self._mcu_type.config.bootstub_address))
     self.status()
     try:
       self._handle.controlWrite(0x21, DFU_DNLOAD, 2, 0, b"")

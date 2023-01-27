@@ -1,13 +1,12 @@
 import os
-import copy
-from dataclasses import dataclass
-from typing import List
+import enum
+from typing import List, NamedTuple
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
 
-@dataclass
-class McuConfig:
+class McuConfig(NamedTuple):
+  mcu: str
   block_size: int
   sector_sizes: List[int]
   serial_number_address: int
@@ -16,7 +15,7 @@ class McuConfig:
   bootstub_address: int
   bootstub_path: str
 
-FxConfig = McuConfig(
+Fx = (
   0x800,
   [0x4000 for _ in range(4)] + [0x10000] + [0x20000 for _ in range(11)],
   0x1FFF79C0,
@@ -25,8 +24,11 @@ FxConfig = McuConfig(
   0x8000000,
   os.path.join(BASEDIR, "board", "obj", "bootstub.panda.bin"),
 )
+F2Config = McuConfig("STM32F2", *Fx)
+F4Config = McuConfig("STM32F4", *Fx)
 
 H7Config = McuConfig(
+  "STM32H7",
   0x400,
   # there is an 8th sector, but we use that for the provisioning chunk, so don't program over that!
   [0x20000 for _ in range(7)],
@@ -37,7 +39,12 @@ H7Config = McuConfig(
   os.path.join(BASEDIR, "board", "obj", "bootstub.panda_h7.bin"),
 )
 
-class McuType:
-  F2 = copy.deepcopy(FxConfig)
-  F4 = copy.deepcopy(FxConfig)
+@enum.unique
+class McuType(enum.Enum):
+  F2 = F2Config
+  F4 = F4Config
   H7 = H7Config
+
+  @property
+  def config(self):
+    return self.value

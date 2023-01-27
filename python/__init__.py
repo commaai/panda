@@ -407,7 +407,7 @@ class Panda:
     assert fr[4:8] == b"\xde\xad\xd0\x0d"
 
     # determine sectors to erase
-    apps_sectors_cumsum = accumulate(mcu_type.sector_sizes[1:])
+    apps_sectors_cumsum = accumulate(mcu_type.config.sector_sizes[1:])
     last_sector = next((i + 1 for i, v in enumerate(apps_sectors_cumsum) if v > len(code)), -1)
     assert last_sector >= 1, "Binary too small? No sector to erase."
     assert last_sector < 7, "Binary too large! Risk of overwriting provisioning chunk."
@@ -436,7 +436,7 @@ class Panda:
 
   def flash(self, fn=None, code=None, reconnect=True):
     if not fn:
-      fn = self._mcu_type.app_path
+      fn = self._mcu_type.config.app_path
     assert os.path.isfile(fn)
     logging.debug("flash: main version is %s", self.get_version())
     if not self.bootstub:
