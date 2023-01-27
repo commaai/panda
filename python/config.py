@@ -1,19 +1,43 @@
 import os
+import copy
+from dataclasses import dataclass
+from typing import List
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
-BOOTSTUB_ADDRESS = 0x8000000
 
-BLOCK_SIZE_FX = 0x800
-APP_ADDRESS_FX = 0x8004000
-SECTOR_SIZES_FX = [0x4000 for _ in range(4)] + [0x10000] + [0x20000 for _ in range(11)]
-DEVICE_SERIAL_NUMBER_ADDR_FX = 0x1FFF79C0
-DEFAULT_FW_FN = os.path.join(BASEDIR, "board", "obj", "panda.bin.signed")
-DEFAULT_BOOTSTUB_FN = os.path.join(BASEDIR, "board", "obj", "bootstub.panda.bin")
+@dataclass
+class McuConfig:
+  block_size: int
+  sector_sizes: List[int]
+  serial_number_address: int
+  app_address: int
+  app_path: str
+  bootstub_address: int
+  bootstub_path: str
 
-BLOCK_SIZE_H7 = 0x400
-APP_ADDRESS_H7 = 0x8020000
-SECTOR_SIZES_H7 = [0x20000 for _ in range(7)] # there is an 8th sector, but we use that for the provisioning chunk, so don't program over that!
-DEVICE_SERIAL_NUMBER_ADDR_H7 = 0x080FFFC0
-DEFAULT_H7_FW_FN = os.path.join(BASEDIR, "board", "obj", "panda_h7.bin.signed")
-DEFAULT_H7_BOOTSTUB_FN = os.path.join(BASEDIR, "board", "obj", "bootstub.panda_h7.bin")
+FxConfig = McuConfig(
+  0x800,
+  [0x4000 for _ in range(4)] + [0x10000] + [0x20000 for _ in range(11)],
+  0x1FFF79C0,
+  0x8004000,
+  os.path.join(BASEDIR, "board", "obj", "panda.bin.signed"),
+  0x8000000,
+  os.path.join(BASEDIR, "board", "obj", "bootstub.panda.bin"),
+)
+
+H7Config = McuConfig(
+  0x400,
+  # there is an 8th sector, but we use that for the provisioning chunk, so don't program over that!
+  [0x20000 for _ in range(7)],
+  0x080FFFC0,
+  0x8020000,
+  os.path.join(BASEDIR, "board", "obj", "panda_h7.bin.signed"),
+  0x8000000,
+  os.path.join(BASEDIR, "board", "obj", "bootstub.panda_h7.bin"),
+)
+
+class McuType:
+  F2 = copy.deepcopy(FxConfig)
+  F4 = copy.deepcopy(FxConfig)
+  H7 = H7Config
