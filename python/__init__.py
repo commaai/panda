@@ -13,8 +13,8 @@ from functools import wraps
 from typing import Optional
 from itertools import accumulate
 
-from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN, SECTOR_SIZES_FX, SECTOR_SIZES_H7
-from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7
+from .constants import McuType
+from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
 from .spi import SpiHandle, PandaSpiException
 
@@ -24,8 +24,6 @@ __version__ = '0.0.10'
 LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
 logging.basicConfig(level=LOGLEVEL, format='%(message)s')
 
-
-BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
 USBPACKET_MAX_SIZE = 0x40
 CANPACKET_HEAD_SIZE = 0x6
@@ -409,7 +407,7 @@ class Panda:
     assert fr[4:8] == b"\xde\xad\xd0\x0d"
 
     # determine sectors to erase
-    apps_sectors_cumsum = accumulate(SECTOR_SIZES_H7[1:] if mcu_type == MCU_TYPE_H7 else SECTOR_SIZES_FX[1:])
+    apps_sectors_cumsum = accumulate(mcu_type.config.sector_sizes[1:])
     last_sector = next((i + 1 for i, v in enumerate(apps_sectors_cumsum) if v > len(code)), -1)
     assert last_sector >= 1, "Binary too small? No sector to erase."
     assert last_sector < 7, "Binary too large! Risk of overwriting provisioning chunk."
@@ -438,7 +436,7 @@ class Panda:
 
   def flash(self, fn=None, code=None, reconnect=True):
     if not fn:
-      fn = DEFAULT_H7_FW_FN if self._mcu_type == MCU_TYPE_H7 else DEFAULT_FW_FN
+      fn = self._mcu_type.config.app_path
     assert os.path.isfile(fn)
     logging.debug("flash: main version is %s", self.get_version())
     if not self.bootstub:
@@ -602,15 +600,15 @@ class Panda:
     else:
       return (0, 0, 0)
 
-  def get_mcu_type(self):
+  def get_mcu_type(self) -> McuType:
     hw_type = self.get_type()
     if hw_type in Panda.F2_DEVICES:
-      return MCU_TYPE_F2
+      return McuType.F2
     elif hw_type in Panda.F4_DEVICES:
-      return MCU_TYPE_F4
+      return McuType.F4
     elif hw_type in Panda.H7_DEVICES:
-      return MCU_TYPE_H7
-    return None
+      return McuType.H7
+    raise ValueError(f"unknown HW type: {hw_type}")
 
   def has_obd(self):
     return self.get_type() in Panda.HAS_OBD
