@@ -29,8 +29,6 @@ class PandaSpiDFU:
       self._get_ack()
     except Exception:
       raise Exception("failed to connect to panda")
-    print("all good")
-    time.sleep(1.)
 
     # TODO: get MCU type
     self._mcu_type = McuType.H7
@@ -59,8 +57,8 @@ class PandaSpiDFU:
     # send data
     if data is not None:
       for d in data:
-        self.spi.xfer(d)
-        self._get_ack(timeout=30)
+        self.spi.xfer(self.add_checksum(d))
+        self._get_ack(timeout=20)
 
     # receive
     ret = None
@@ -85,8 +83,14 @@ class PandaSpiDFU:
     assert n == 1
     return ((ret[1] << 8) + ret[2])
 
+
+  def go_cmd(self, address: int):
+    self._cmd(0x21, data=[struct.pack('>I', address), ])
+
+  # ***** panda api *****
+
   def global_erase(self):
-    d = self.add_checksum(struct.pack('>H', 0xFFFF))
+    d = struct.pack('>H', 0xFFFF)
     self._cmd(0x44, data=[d, ])
 
   def program_bootstub(self):
@@ -102,9 +106,11 @@ class PandaSpiDFU:
         block += b'\xFF' * (256 - len(block))
 
       self._cmd(0x31, data=[
-        self.add_checksum(struct.pack('>I', address + i)),
-        self.add_checksum(bytes([len(block) - 1]) + block),
+        struct.pack('>I', address + i),
+        bytes([len(block) - 1]) + block,
       ])
       print(f"Written {len(block)} bytes to {hex(address + i)}")
       i += 256
 
+  def reset(self):
+    self.go_cmd(self._mcu_type.config.bootstub_address)

@@ -13,4 +13,8 @@ if __name__ == "__main__":
   print("done")
 
   p.program_bootstub()
+  print("flashed")
+
+  print("reset")
+  p.reset()
   print("done")
