@@ -115,10 +115,10 @@ class TestFordSafety(common.PandaSafetyTest):
                 self.safety.set_controls_allowed(controls_allowed)
 
                 enabled = steer_control_enabled or curvature != 0
-                should_block = path_offset != 0 or path_angle != 0 or curvature_rate != 0
-                should_block = should_block or (enabled and not controls_allowed)
+                should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
+                should_tx = should_tx and (not enabled or controls_allowed)
                 sent = self._tx(self._tja_command_msg(steer_control_enabled, path_offset, path_angle, curvature, curvature_rate))
-                self.assertEqual(not should_block, sent)
+                self.assertEqual(should_tx, sent)
 
   def test_prevent_lkas_action(self):
     self.safety.set_controls_allowed(1)
