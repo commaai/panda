@@ -1,11 +1,10 @@
 import os
 import time
 import struct
-import binascii
 from functools import reduce
 
 from .constants import McuType
-from .spi import spidev, flocked, DEV_PATH
+from .spi import SpiDevice
 
 SYNC = 0x5A
 ACK = 0x79
@@ -14,31 +13,25 @@ NACK = 0x1F
 # https://www.st.com/resource/en/application_note/an4286-spi-protocol-used-in-the-stm32-bootloader-stmicroelectronics.pdf
 class PandaSpiDFU:
   def __init__(self, dfu_serial):
-    if not os.path.exists(DEV_PATH):
-      raise PandaSpiUnavailable(f"SPI device not found: {DEV_PATH}")
-    if spidev is None:
-      raise PandaSpiUnavailable("spidev is not installed")
-
-    self.spi = spidev.SpiDev()  # pylint: disable=c-extension-no-member
-    self.spi.open(0, 0)
-    self.spi.max_speed_hz = 1000000
+    self.spi = SpiDevice(speed=1000000)
 
     # say hello
-    try:
-      self.spi.xfer([SYNC, ])
-      self._get_ack()
-    except Exception:
-      raise Exception("failed to connect to panda")
+    with self.spi.flocked() as spi:
+      try:
+        spi.xfer([SYNC, ])
+        self._get_ack(spi)
+      except Exception:
+        raise Exception("failed to connect to panda")
 
     self._mcu_type = self.get_mcu_type()
 
-  def _get_ack(self, timeout=1.0):
+  def _get_ack(self, spi, timeout=1.0):
     data = 0x00
     start_time = time.monotonic()
     while not data in [ACK, NACK] and (time.monotonic() - start_time < timeout):
-      data = self.spi.xfer([0x00, ])[0]
+      data = spi.xfer([0x00, ])[0]
       time.sleep(0.001)
-    self.spi.xfer([ACK, ])
+    spi.xfer([ACK, ])
 
     if data == NACK:
       raise Exception("Got NACK response")
@@ -46,25 +39,26 @@ class PandaSpiDFU:
       raise Exception(f"Missing ACK")
 
   def _cmd(self, cmd, data=None, read_bytes=0):
-    # sync
-    self.spi.xfer([SYNC, ])
+    with self.spi.flocked() as spi:
+      # sync
+      spi.xfer([SYNC, ])
 
-    # send command
-    self.spi.xfer([cmd, cmd ^ 0xFF])
-    self._get_ack()
+      # send command
+      spi.xfer([cmd, cmd ^ 0xFF])
+      self._get_ack(spi)
 
-    # send data
-    if data is not None:
-      for d in data:
-        self.spi.xfer(self.add_checksum(d))
-        self._get_ack(timeout=20)
+      # send data
+      if data is not None:
+        for d in data:
+          spi.xfer(self.add_checksum(d))
+          self._get_ack(spi, timeout=20)
 
-    # receive
-    ret = None
-    if read_bytes > 0:
-      # send busy byte
-      ret = self.spi.xfer([0x00, ]*(read_bytes + 1))[1:]
-      self._get_ack()
+      # receive
+      ret = None
+      if read_bytes > 0:
+        # send busy byte
+        ret = spi.xfer([0x00, ]*(read_bytes + 1))[1:]
+        self._get_ack(spi)
 
     return ret
 
