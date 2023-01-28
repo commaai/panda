@@ -30,7 +30,6 @@ class PandaSpiDFU:
     except Exception:
       raise Exception("failed to connect to panda")
 
-    # TODO: get MCU type
     self._mcu_type = self.get_mcu_type()
 
   def _get_ack(self, timeout=1.0):
@@ -74,28 +73,30 @@ class PandaSpiDFU:
 
   # ***** ST Bootloader functions *****
 
-  def get_bootloader_version(self):
+  def get_bootloader_version(self) -> int:
     return self._cmd(0x01, read_bytes=1)[0]
 
-  def get_id(self):
+  def get_id(self) -> int:
     ret = self._cmd(0x02, read_bytes=3)
     n, msb, lsb = ret
     assert n == 1
     return ((ret[1] << 8) + ret[2])
 
-
-  def go_cmd(self, address: int):
+  def go_cmd(self, address: int) -> None:
     self._cmd(0x21, data=[struct.pack('>I', address), ])
+
+  def erase(self, address: int) -> None:
+    d = struct.pack('>H', address)
+    self._cmd(0x44, data=[d, ])
 
   # ***** panda api *****
 
   def get_mcu_type(self) -> McuType:
-    mcu_by_id = {mcu: mcu.config.mcu_idcode for mcu in McuType}
-    return mcu_by_id.get(self.get_id())
+    mcu_by_id = {mcu.config.mcu_idcode: mcu for mcu in McuType}
+    return mcu_by_id[self.get_id()]
 
   def global_erase(self):
-    d = struct.pack('>H', 0xFFFF)
-    self._cmd(0x44, data=[d, ])
+    self.erase(0xFFFF)
 
   def program_bootstub(self):
     address = self._mcu_type.config.bootstub_address
