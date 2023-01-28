@@ -31,7 +31,7 @@ class PandaSpiDFU:
       raise Exception("failed to connect to panda")
 
     # TODO: get MCU type
-    self._mcu_type = McuType.H7
+    self._mcu_type = self.get_mcu_type()
 
   def _get_ack(self, timeout=1.0):
     data = 0x00
@@ -88,6 +88,10 @@ class PandaSpiDFU:
     self._cmd(0x21, data=[struct.pack('>I', address), ])
 
   # ***** panda api *****
+
+  def get_mcu_type(self) -> McuType:
+    mcu_by_id = {mcu: mcu.config.mcu_idcode for mcu in McuType}
+    return mcu_by_id.get(self.get_id())
 
   def global_erase(self):
     d = struct.pack('>H', 0xFFFF)
