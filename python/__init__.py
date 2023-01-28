@@ -227,8 +227,6 @@ class Panda:
     self._disable_checks = disable_checks
 
     self._handle = None
-    self._bcd_device = None
-
     self.can_rx_overflow_buffer = b''
 
     # connect and set mcu type
@@ -261,20 +259,20 @@ class Panda:
       raise Exception("failed to connect to panda")
 
     # Some fallback logic to determine panda and MCU type for old bootstubs,
-    # since we support multiple MCUs now and need to know which fw to flash.
+    # since we now support multiple MCUs and need to know which fw to flash.
     # Three cases to consider:
     # A) oldest bootstubs don't have any way to distinguish
     #    MCU or panda type
     # B) slightly newer (~2 weeks after first C3's built) bootstubs
     #    have the panda type set in the USB bcdDevice
-    # C) newest bootstub also implement the endpoint to get panda type
+    # C) latest bootstubs also implement the endpoint for panda type
     self._bcd_hw_type = None
     ret = self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
     missing_hw_type_endpoint = self.bootstub and ret.startswith(b'\xff\x00\xc1\x3e\xde\xad\xd0\x0d')
     if missing_hw_type_endpoint and bcd is not None:
       self._bcd_hw_type = bcd
 
-    # For case A, we assume F4 MCU type, since all H7 pandas at least have HW type set in the bcdDevice
+    # For case A, we assume F4 MCU type, since all H7 pandas should be case B at worst
     self._assume_f4_mcu = (self._bcd_hw_type is None) and missing_hw_type_endpoint
 
     self._serial = serial
