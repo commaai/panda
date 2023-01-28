@@ -12,8 +12,11 @@ if __name__ == "__main__":
   p.global_erase()
   print("done")
 
+  print("flashing bootstub")
   p.program_bootstub()
-  print("flashed")
+
+  print("flashing app")
+  p.program_app()
 
   print("reset")
   p.reset()

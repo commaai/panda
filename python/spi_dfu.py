@@ -90,14 +90,13 @@ class PandaSpiDFU:
   def global_erase(self):
     self.erase(0xFFFF)
 
-  def program_bootstub(self):
-    address = self._mcu_type.config.bootstub_address
-    with open(self._mcu_type.config.bootstub_path, 'rb') as f:
+  def program_file(self, address, fn):
+    with open(fn, 'rb') as f:
       code = f.read()
 
     i = 0
     while i < len(code):
-      print(i, len(code))
+      #print(i, len(code))
       block = code[i:i+256]
       if len(block) < 256:
         block += b'\xFF' * (256 - len(block))
@@ -106,8 +105,14 @@ class PandaSpiDFU:
         struct.pack('>I', address + i),
         bytes([len(block) - 1]) + block,
       ])
-      print(f"Written {len(block)} bytes to {hex(address + i)}")
+      #print(f"Written {len(block)} bytes to {hex(address + i)}")
       i += 256
+
+  def program_bootstub(self):
+    self.program_file(self._mcu_type.config.bootstub_address, self._mcu_type.config.bootstub_path)
+
+  def program_app(self):
+    self.program_file(self._mcu_type.config.app_address, self._mcu_type.config.app_path)
 
   def reset(self):
     self.go_cmd(self._mcu_type.config.bootstub_address)
