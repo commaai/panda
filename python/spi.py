@@ -65,7 +65,7 @@ class SpiDevice:
     self._spidev.max_speed_hz = speed
 
   @contextmanager
-  def flocked(self):
+  def acquire(self):
     try:
       SPI_LOCK.acquire()
       fcntl.flock(self._spidev, fcntl.LOCK_EX)
@@ -83,7 +83,7 @@ class SpiHandle:
   A class that mimics a libusb1 handle for panda SPI communications.
   """
   def __init__(self):
-    self.spi = SpiDevice()
+    self.dev = SpiDevice()
 
   # helpers
   def _calc_checksum(self, data: List[int]) -> int:
@@ -144,26 +144,26 @@ class SpiHandle:
 
   # libusb1 functions
   def close(self):
-    self.spi.close()
+    self.dev.close()
 
   def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = 0):
-    with self.spi.flocked() as spi:
+    with self.dev.acquire() as spi:
       return self._transfer(spi, 0, struct.pack("<BHHH", request, value, index, 0))
 
   def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = 0):
-    with self.spi.flocked() as spi:
+    with self.dev.acquire() as spi:
       return self._transfer(spi, 0, struct.pack("<BHHH", request, value, index, length))
 
   # TODO: implement these properly
   def bulkWrite(self, endpoint: int, data: List[int], timeout: int = 0) -> int:
-    with self.spi.flocked() as spi:
+    with self.dev.acquire() as spi:
       for x in range(math.ceil(len(data) / USB_MAX_SIZE)):
         self._transfer(spi, endpoint, data[USB_MAX_SIZE*x:USB_MAX_SIZE*(x+1)])
       return len(data)
 
   def bulkRead(self, endpoint: int, length: int, timeout: int = 0) -> bytes:
     ret: List[int] = []
-    with self.spi.flocked() as spi:
+    with self.dev.acquire() as spi:
       for _ in range(math.ceil(length / USB_MAX_SIZE)):
         d = self._transfer(spi, endpoint, [], max_rx_len=USB_MAX_SIZE)
         ret += d

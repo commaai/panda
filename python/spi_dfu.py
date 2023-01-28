@@ -1,4 +1,3 @@
-import os
 import time
 import struct
 from functools import reduce
@@ -13,22 +12,22 @@ NACK = 0x1F
 # https://www.st.com/resource/en/application_note/an4286-spi-protocol-used-in-the-stm32-bootloader-stmicroelectronics.pdf
 class PandaSpiDFU:
   def __init__(self, dfu_serial):
-    self.spi = SpiDevice(speed=1000000)
+    self.dev = SpiDevice(speed=1000000)
 
     # say hello
-    with self.spi.flocked() as spi:
+    with self.dev.acquire() as spi:
       try:
         spi.xfer([SYNC, ])
         self._get_ack(spi)
       except Exception:
-        raise Exception("failed to connect to panda")
+        raise Exception("failed to connect to panda")  # pylint: disable=W0707
 
     self._mcu_type = self.get_mcu_type()
 
   def _get_ack(self, spi, timeout=1.0):
     data = 0x00
     start_time = time.monotonic()
-    while not data in [ACK, NACK] and (time.monotonic() - start_time < timeout):
+    while data not in (ACK, NACK) and (time.monotonic() - start_time < timeout):
       data = spi.xfer([0x00, ])[0]
       time.sleep(0.001)
     spi.xfer([ACK, ])
@@ -36,10 +35,10 @@ class PandaSpiDFU:
     if data == NACK:
       raise Exception("Got NACK response")
     elif data != ACK:
-      raise Exception(f"Missing ACK")
+      raise Exception("Missing ACK")
 
   def _cmd(self, cmd, data=None, read_bytes=0):
-    with self.spi.flocked() as spi:
+    with self.dev.acquire() as spi:
       # sync
       spi.xfer([SYNC, ])
 
@@ -72,8 +71,7 @@ class PandaSpiDFU:
 
   def get_id(self) -> int:
     ret = self._cmd(0x02, read_bytes=3)
-    n, msb, lsb = ret
-    assert n == 1
+    assert ret[0] == 1
     return ((ret[1] << 8) + ret[2])
 
   def go_cmd(self, address: int) -> None:
