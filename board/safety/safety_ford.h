@@ -122,7 +122,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     unsigned int steer_control_type = (GET_BYTE(to_send, 4) >> 2) & 0x7U;
 
     unsigned int curvature = (GET_BYTE(to_send, 0) << 3) | (GET_BYTE(to_send, 1) >> 5);
-    unsigned int curvature_rate = ((GET_BYTE(to_send, 1) & 0x1F) << 8) | GET_BYTE(to_send, 2);
+    unsigned int curvature_rate = ((GET_BYTE(to_send, 1) & 0x1FU) << 8) | GET_BYTE(to_send, 2);
     unsigned int path_angle = (GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5);
     unsigned int path_offset = (GET_BYTE(to_send, 5) << 2) | (GET_BYTE(to_send, 6) >> 6);
 
