@@ -7,6 +7,7 @@ BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
 class McuConfig(NamedTuple):
   mcu: str
+  mcu_idcode: int
   block_size: int
   sector_sizes: List[int]
   serial_number_address: int
@@ -24,11 +25,12 @@ Fx = (
   0x8000000,
   os.path.join(BASEDIR, "board", "obj", "bootstub.panda.bin"),
 )
-F2Config = McuConfig("STM32F2", *Fx)
-F4Config = McuConfig("STM32F4", *Fx)
+F2Config = McuConfig("STM32F2", 0x411, *Fx)
+F4Config = McuConfig("STM32F4", 0x463, *Fx)
 
 H7Config = McuConfig(
   "STM32H7",
+  0x483,
   0x400,
   # there is an 8th sector, but we use that for the provisioning chunk, so don't program over that!
   [0x20000 for _ in range(7)],
