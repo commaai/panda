@@ -80,7 +80,7 @@ class SpiDevice:
     self._spidev.close()
 
 
-class SpiHandle(BaseHandle):
+class PandaSpiHandle(BaseHandle):
   """
   A class that mimics a libusb1 handle for panda SPI communications.
   """
