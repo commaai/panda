@@ -4,6 +4,7 @@ import struct
 import binascii
 from functools import reduce
 
+from .constants import McuType
 from .spi import spidev, flocked, DEV_PATH
 
 SYNC = 0x5A
@@ -31,10 +32,13 @@ class PandaSpiDFU:
     print("all good")
     time.sleep(1.)
 
-  def _get_ack(self):
-    # TODO: add timeout
+    # TODO: get MCU type
+    self._mcu_type = McuType.H7
+
+  def _get_ack(self, timeout=1.0):
     data = 0x00
-    while not data in [ACK, NACK]:
+    start_time = time.monotonic()
+    while not data in [ACK, NACK] and (time.monotonic() - start_time < timeout):
       data = self.spi.xfer([0x00, ])[0]
       time.sleep(0.001)
     self.spi.xfer([ACK, ])
@@ -42,7 +46,7 @@ class PandaSpiDFU:
     if data == NACK:
       raise Exception("Got NACK response")
     elif data != ACK:
-      raise Exception(f"Got bad response: {data}")
+      raise Exception(f"Missing ACK")
 
   def _cmd(self, cmd, data=None, read_bytes=0):
     # sync
@@ -54,8 +58,9 @@ class PandaSpiDFU:
 
     # send data
     if data is not None:
-      self.spi.xfer(data)
-      self._get_ack()
+      for d in data:
+        self.spi.xfer(d)
+        self._get_ack(timeout=30)
 
     # receive
     ret = None
@@ -80,6 +85,26 @@ class PandaSpiDFU:
     assert n == 1
     return ((ret[1] << 8) + ret[2])
 
-  def erase(self):
-    self._cmd(0x44, data=[self.add_checksum(struct.pack('>H', 0xFFFF)), ])
+  def global_erase(self):
+    d = self.add_checksum(struct.pack('>H', 0xFFFF))
+    self._cmd(0x44, data=[d, ])
+
+  def program_bootstub(self):
+    address = self._mcu_type.config.bootstub_address
+    with open(self._mcu_type.config.bootstub_path, 'rb') as f:
+      code = f.read()
+
+    i = 0
+    while i < len(code):
+      print(i, len(code))
+      block = code[i:i+256]
+      if len(block) < 256:
+        block += b'\xFF' * (256 - len(block))
+
+      self._cmd(0x31, data=[
+        self.add_checksum(struct.pack('>I', address + i)),
+        self.add_checksum(bytes([len(block) - 1]) + block),
+      ])
+      print(f"Written {len(block)} bytes to {hex(address + i)}")
+      i += 256
 

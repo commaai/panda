@@ -9,5 +9,8 @@ if __name__ == "__main__":
   print("MCU ID", p.get_id())
 
   print("erasing...")
-  p.erase()
+  p.global_erase()
+  print("done")
+
+  p.program_bootstub()
   print("done")
