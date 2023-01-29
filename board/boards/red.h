@@ -49,10 +49,6 @@ void red_set_led(uint8_t color, bool enabled) {
   }
 }
 
-void red_set_usb_load_switch(bool enabled) {
-  set_gpio_output(GPIOB, 14, !enabled);
-}
-
 void red_set_can_mode(uint8_t mode) {
   switch (mode) {
     case CAN_MODE_NORMAL:
@@ -123,16 +119,15 @@ void red_init(void) {
   set_gpio_pullup(GPIOB, 4, PULL_NONE);
   set_gpio_mode(GPIOB, 4, MODE_OUTPUT);
 
-  // B14: usb load switch
-  set_gpio_pullup(GPIOB, 14, PULL_NONE);
-  set_gpio_mode(GPIOB, 14, MODE_OUTPUT);
-
   //B1: 5VOUT_S
   set_gpio_pullup(GPIOB, 1, PULL_NONE);
   set_gpio_mode(GPIOB, 1, MODE_ANALOG);
 
-  // Turn on USB load switch.
-  red_set_usb_load_switch(true);
+  // B14: usb load switch, enabled by pull resistor on board, obsolete for red panda
+  set_gpio_output_type(GPIOB, 14, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_pullup(GPIOB, 14, PULL_UP);
+  set_gpio_mode(GPIOB, 14, MODE_OUTPUT);
+  set_gpio_output(GPIOB, 14, 1);
 
   // Initialize harness
   harness_init();

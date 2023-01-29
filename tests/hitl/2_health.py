@@ -35,7 +35,7 @@ def test_orientation_detection(p):
     seen_orientations.append(detected_harness_orientation)
 
 @test_all_pandas
-@panda_connect_and_init(full_reset=False)
+@panda_connect_and_init
 def test_voltage(p):
   for _ in range(10):
     voltage = p.health()['voltage']
@@ -53,14 +53,18 @@ def test_hw_type(p):
   mcu_type = p.get_mcu_type()
   assert mcu_type is not None
 
+  app_uid =  p.get_uid()
+  usb_serial = p.get_usb_serial()
+  assert app_uid == usb_serial
+
   p.reset(enter_bootstub=True, reconnect=True)
   p.close()
   time.sleep(3)
-  pp = Panda(p.get_usb_serial())
-  assert pp.bootstub
-  assert pp.get_type() == hw_type, "Bootstub and app hw type mismatch"
-  assert pp.get_mcu_type() == mcu_type, "Bootstub and app MCU type mismatch"
-  pp.close()
+  with Panda(p.get_usb_serial()) as pp:
+    assert pp.bootstub
+    assert pp.get_type() == hw_type, "Bootstub and app hw type mismatch"
+    assert pp.get_mcu_type() == mcu_type, "Bootstub and app MCU type mismatch"
+    assert pp.get_uid() == app_uid
 
 
 @test_all_pandas

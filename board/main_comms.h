@@ -147,7 +147,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       resp[0] = hw_type;
       resp_len = 1;
       break;
-    // **** 0xd0: fetch serial number
+    // **** 0xc2: CAN health stats
     case 0xc2:
       COMPILE_TIME_ASSERT(sizeof(can_health_t) <= USBPACKET_MAX_SIZE);
       if (req->param1 < 3U) {
@@ -160,6 +160,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         (void)memcpy(resp, &can_health[req->param1], resp_len);
       }
       break;
+    // **** 0xc3: fetch MCU UID
+    case 0xc3:
+      (void)memcpy(resp, ((uint8_t *)UID_BASE), 12);
+      resp_len = 12;
+      break;
+    // **** 0xd0: fetch serial (aka the provisioned dongle ID)
     case 0xd0:
       // addresses are OTP
       if (req->param1 == 1U) {

@@ -41,6 +41,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         resp[1] = 0xff;
       }
       break;
+    // **** 0xc3: fetch MCU UID
+    case 0xc3:
+      #ifdef UID_BASE
+        (void)memcpy(resp, ((uint8_t *)UID_BASE), 12);
+        resp_len = 12;
+      #endif
+      break;
     // **** 0xd0: fetch serial number
     case 0xd0:
       #ifndef STM32F2

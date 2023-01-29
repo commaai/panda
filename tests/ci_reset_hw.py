@@ -1,35 +1,40 @@
+#!/usr/bin/env python3
+import concurrent.futures
+
 from panda import Panda, PandaDFU
 from panda.tests.libs.resetter import Resetter
 
-
-# resets power for both jungles(ports 1 and 2) and USB hubs(port 3)
-# puts pandas into DFU mode and flashes bootstub + app
+# Reset + flash all CI hardware to get it into a consistent state
+# * ports 1-2 are jungles
+# * port 3 is for the USB hubs
 if __name__ == "__main__":
   r = Resetter()
 
   r.enable_boot(True)
-  r.cycle_power(delay=5, ports=[1,2,3])
+  r.cycle_power(delay=7, ports=[1, 2, 3])
   r.enable_boot(False)
 
   pandas = PandaDFU.list()
-  print(pandas)
-  assert len(pandas) == 8
+  print("DFU pandas:", pandas)
+  assert len(pandas) == 7
 
-  for serial in pandas:
-    p = PandaDFU(serial)
-    p.recover()
+  with concurrent.futures.ProcessPoolExecutor(max_workers=len(pandas)) as exc:
+    def recover(serial):
+      PandaDFU(serial).recover()
+    list(exc.map(recover, pandas, timeout=20))
 
-  r.cycle_power(delay=5, ports=[1,2])
+  r.cycle_power(delay=7, ports=[1, 2])
 
   pandas = Panda.list()
   print(pandas)
-  assert len(pandas) == 8
+  assert len(pandas) == 7
 
-  for serial in pandas:
-    pf = Panda(serial)
-    if pf.bootstub:
-      pf.flash()
-    pf.close()
+  with concurrent.futures.ProcessPoolExecutor(max_workers=len(pandas)) as exc:
+    def flash(serial):
+      with Panda(serial) as pf:
+        if pf.bootstub:
+          pf.flash()
+    list(exc.map(flash, pandas, timeout=20))
 
-  r.cycle_power(delay=0, ports=[1,2])
+  r.cycle_power(delay=0, ports=[1, 2])
   r.close()
