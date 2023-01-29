@@ -4,7 +4,7 @@ const SteeringLimits GM_STEERING_LIMITS = {
   .max_rate_down = 17,
   .driver_torque_allowance = 50,
   .driver_torque_factor = 4,
-  .max_rt_delta = 128,
+  .max_rt_delta = 105,  // the real time limit is 420/sec, a 20% buffer
   .max_rt_interval = 250000,
   .type = TorqueDriverLimited,
 };
