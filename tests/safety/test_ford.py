@@ -103,7 +103,7 @@ class TestFordSafety(common.PandaSafetyTest):
   def test_steer_allowed(self):
     path_offsets = np.arange(-5.12, 5.11, 1).round()
     path_angles = np.arange(-0.5, 0.5235, 0.1).round(1)
-    curvature_rates = np.arange(-0.001024, 0.00102375, 0.001).round(4)
+    curvature_rates = np.arange(-0.001024, 0.00102375, 0.001).round(3)
     curvatures = np.arange(-0.02, 0.02094, 0.01).round(2)
 
     for controls_allowed in (True, False):
