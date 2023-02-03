@@ -2,6 +2,7 @@
 #define SAFETY_VOLKSWAGEN_COMMON_H
 
 const uint16_t FLAG_VOLKSWAGEN_LONG_CONTROL = 1;
+const uint16_t FLAG_VOLKSWAGEN_ALKA = 2;
 
 bool volkswagen_longitudinal = false;
 bool volkswagen_set_button_prev = false;
