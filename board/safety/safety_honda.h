@@ -66,7 +66,7 @@ const uint16_t HONDA_PARAM_ALT_BRAKE = 1;
 const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
 const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
 const uint16_t HONDA_PARAM_RADARLESS = 8;
-const uint16_y HONDA_PARAM_ALKA = 16;
+const uint16_t HONDA_PARAM_ALKA = 16;
 
 enum {
   HONDA_BTN_NONE = 0,
