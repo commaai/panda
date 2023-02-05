@@ -13,10 +13,11 @@ from functools import wraps
 from typing import Optional
 from itertools import accumulate
 
-from .config import DEFAULT_FW_FN, DEFAULT_H7_FW_FN, SECTOR_SIZES_FX, SECTOR_SIZES_H7
-from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7
+from .constants import McuType
+from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
-from .spi import SpiHandle, PandaSpiException
+from .spi import PandaSpiHandle, PandaSpiException
+from .usb import PandaUsbHandle
 
 __version__ = '0.0.10'
 
@@ -24,8 +25,6 @@ __version__ = '0.0.10'
 LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
 logging.basicConfig(level=LOGLEVEL, format='%(message)s')
 
-
-BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
 USBPACKET_MAX_SIZE = 0x40
 CANPACKET_HEAD_SIZE = 0x6
@@ -231,8 +230,6 @@ class Panda:
     self._disable_checks = disable_checks
 
     self._handle = None
-    self._bcd_device = None
-
     self.can_rx_overflow_buffer = b''
 
     # connect and set mcu type
@@ -257,12 +254,29 @@ class Panda:
     self._handle = None
 
     # try USB first, then SPI
-    self._handle, serial, self.bootstub, self._bcd_device = self.usb_connect(self._serial, claim=claim, wait=wait)
+    self._handle, serial, self.bootstub, bcd = self.usb_connect(self._serial, claim=claim, wait=wait)
     if self._handle is None:
-      self._handle, serial, self.bootstub, _ = self.spi_connect(self._serial)
+      self._handle, serial, self.bootstub, bcd = self.spi_connect(self._serial)
 
     if self._handle is None:
       raise Exception("failed to connect to panda")
+
+    # Some fallback logic to determine panda and MCU type for old bootstubs,
+    # since we now support multiple MCUs and need to know which fw to flash.
+    # Three cases to consider:
+    # A) oldest bootstubs don't have any way to distinguish
+    #    MCU or panda type
+    # B) slightly newer (~2 weeks after first C3's built) bootstubs
+    #    have the panda type set in the USB bcdDevice
+    # C) latest bootstubs also implement the endpoint for panda type
+    self._bcd_hw_type = None
+    ret = self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
+    missing_hw_type_endpoint = self.bootstub and ret.startswith(b'\xff\x00\xc1\x3e\xde\xad\xd0\x0d')
+    if missing_hw_type_endpoint and bcd is not None:
+      self._bcd_hw_type = bcd
+
+    # For case A, we assume F4 MCU type, since all H7 pandas should be case B at worst
+    self._assume_f4_mcu = (self._bcd_hw_type is None) and missing_hw_type_endpoint
 
     self._serial = serial
     self._mcu_type = self.get_mcu_type()
@@ -280,7 +294,7 @@ class Panda:
     handle = None
     spi_serial = None
     try:
-      handle = SpiHandle()
+      handle = PandaSpiHandle()
       dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12)
       spi_serial = binascii.hexlify(dat).decode()
     except PandaSpiException:
@@ -331,7 +345,11 @@ class Panda:
         break
       context = usb1.USBContext()  # New context needed so new devices show up
 
-    return handle, usb_serial, bootstub, bcd
+    usb_handle = None
+    if handle is not None:
+      usb_handle = PandaUsbHandle(handle)
+
+    return usb_handle, usb_serial, bootstub, bcd
 
   @staticmethod
   def list():
@@ -411,7 +429,7 @@ class Panda:
     assert fr[4:8] == b"\xde\xad\xd0\x0d"
 
     # determine sectors to erase
-    apps_sectors_cumsum = accumulate(SECTOR_SIZES_H7[1:] if mcu_type == MCU_TYPE_H7 else SECTOR_SIZES_FX[1:])
+    apps_sectors_cumsum = accumulate(mcu_type.config.sector_sizes[1:])
     last_sector = next((i + 1 for i, v in enumerate(apps_sectors_cumsum) if v > len(code)), -1)
     assert last_sector >= 1, "Binary too small? No sector to erase."
     assert last_sector < 7, "Binary too large! Risk of overwriting provisioning chunk."
@@ -440,7 +458,7 @@ class Panda:
 
   def flash(self, fn=None, code=None, reconnect=True):
     if not fn:
-      fn = DEFAULT_H7_FW_FN if self._mcu_type == MCU_TYPE_H7 else DEFAULT_FW_FN
+      fn = self._mcu_type.config.app_path
     assert os.path.isfile(fn)
     logging.debug("flash: main version is %s", self.get_version())
     if not self.bootstub:
@@ -588,10 +606,9 @@ class Panda:
   def get_type(self):
     ret = self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
 
-    # bootstub doesn't implement this call, so fallback to bcdDevice
-    invalid_type = self.bootstub and (ret is None or len(ret) != 1)
-    if invalid_type and self._bcd_device is not None:
-      ret = self._bcd_device
+    # old bootstubs don't implement this endpoint, see comment in Panda.device
+    if self._bcd_hw_type is not None and (ret is None or len(ret) != 1):
+      ret = self._bcd_hw_type
 
     return ret
 
@@ -604,15 +621,20 @@ class Panda:
     else:
       return (0, 0, 0)
 
-  def get_mcu_type(self):
+  def get_mcu_type(self) -> McuType:
     hw_type = self.get_type()
     if hw_type in Panda.F2_DEVICES:
-      return MCU_TYPE_F2
+      return McuType.F2
     elif hw_type in Panda.F4_DEVICES:
-      return MCU_TYPE_F4
+      return McuType.F4
     elif hw_type in Panda.H7_DEVICES:
-      return MCU_TYPE_H7
-    return None
+      return McuType.H7
+    else:
+      # have to assume F4, see comment in Panda.connect
+      if self._assume_f4_mcu:
+        return McuType.F4
+
+    raise ValueError(f"unknown HW type: {hw_type}")
 
   def has_obd(self):
     return self.get_type() in Panda.HAS_OBD
