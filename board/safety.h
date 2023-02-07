@@ -318,7 +318,6 @@ const safety_hook_config safety_hook_registry[] = {
 
 int set_safety_hooks(uint16_t mode, uint16_t param) {
   // reset state set by safety mode
-  alka_enabled = false;
   safety_mode_cnt = 0U;
   relay_malfunction = false;
   gas_interceptor_detected = false;
@@ -531,6 +530,7 @@ bool longitudinal_interceptor_checks(CANPacket_t *to_send) {
 bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits) {
   bool violation = false;
   uint32_t ts = microsecond_timer_get();
+  bool alka_enabled = alternative_experience & ALT_EXP_ALKA;
 
   if (controls_allowed || alka_enabled) {
     // *** global torque limit check ***
@@ -616,6 +616,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 // Safety checks for angle-based steering commands
 bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const SteeringLimits limits) {
   bool violation = false;
+  bool alka_enabled = alternative_experience & ALT_EXP_ALKA;
 
   if ((controls_allowed || alka_enabled) && steer_control_enabled) {
     // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,

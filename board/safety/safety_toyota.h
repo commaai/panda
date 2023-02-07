@@ -49,7 +49,6 @@ addr_checks toyota_rx_checks = {toyota_addr_checks, TOYOTA_ADDR_CHECKS_LEN};
 const uint32_t TOYOTA_EPS_FACTOR = (1U << TOYOTA_PARAM_OFFSET) - 1U;
 const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2U << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_ALKA = 4U << TOYOTA_PARAM_OFFSET;
 
 bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
@@ -221,7 +220,6 @@ static const addr_checks* toyota_init(uint16_t param) {
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
-  alka_enabled = GET_FLAG(param, TOYOTA_PARAM_ALKA);
   return &toyota_rx_checks;
 }
 
