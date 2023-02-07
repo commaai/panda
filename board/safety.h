@@ -318,6 +318,7 @@ const safety_hook_config safety_hook_registry[] = {
 
 int set_safety_hooks(uint16_t mode, uint16_t param) {
   // reset state set by safety mode
+  alka_enabled = false;
   safety_mode_cnt = 0U;
   relay_malfunction = false;
   gas_interceptor_detected = false;
@@ -531,7 +532,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
   bool violation = false;
   uint32_t ts = microsecond_timer_get();
 
-  if (controls_allowed) {
+  if (controls_allowed || alka_enabled) {
     // *** global torque limit check ***
     violation |= max_limit_check(desired_torque, limits.max_steer, -limits.max_steer);
 
@@ -558,7 +559,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
   }
 
   // no torque if controls is not allowed
-  if (!controls_allowed && (desired_torque != 0)) {
+  if ((!controls_allowed && !alka_enabled) && (desired_torque != 0)) {
     violation = true;
   }
 
@@ -600,7 +601,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
   }
 
   // reset to 0 if either controls is not allowed or there's a violation
-  if (violation || !controls_allowed) {
+  if (violation || (!controls_allowed && !alka_enabled)) {
     valid_steer_req_count = 0;
     invalid_steer_req_count = 0;
     desired_torque_last = 0;
@@ -616,7 +617,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const SteeringLimits limits) {
   bool violation = false;
 
-  if (controls_allowed && steer_control_enabled) {
+  if ((controls_allowed || alka_enabled) && steer_control_enabled) {
     // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
     // add 1 to not false trigger the violation
     int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed) * limits.angle_deg_to_can) + 1.;
@@ -631,12 +632,12 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
   desired_angle_last = desired_angle;
 
   // Angle should be the same as current angle while not steering
-  violation |= (!controls_allowed &&
+  violation |= ((!controls_allowed && !alka_enabled) &&
                   ((desired_angle < (angle_meas.min - 1)) ||
                   (desired_angle > (angle_meas.max + 1))));
 
   // No angle control allowed when controls are not allowed
-  violation |= !controls_allowed && steer_control_enabled;
+  violation |= (!controls_allowed && !alka_enabled) && steer_control_enabled;
 
   return violation;
 }
