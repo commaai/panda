@@ -66,7 +66,6 @@ const uint16_t HONDA_PARAM_ALT_BRAKE = 1;
 const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
 const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
 const uint16_t HONDA_PARAM_RADARLESS = 8;
-const uint16_t HONDA_PARAM_ALKA = 16;
 
 enum {
   HONDA_BTN_NONE = 0,
@@ -376,7 +375,6 @@ static const addr_checks* honda_nidec_init(uint16_t param) {
   } else {
     honda_rx_checks = (addr_checks){honda_common_addr_checks, HONDA_COMMON_ADDR_CHECKS_LEN};
   }
-  alka_enabled = GET_FLAG(param, HONDA_PARAM_ALKA);
   return &honda_rx_checks;
 }
 

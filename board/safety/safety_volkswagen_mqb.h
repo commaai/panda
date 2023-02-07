@@ -105,7 +105,6 @@ static const addr_checks* volkswagen_mqb_init(uint16_t param) {
   volkswagen_mqb_brake_pedal_switch = false;
   volkswagen_mqb_brake_pressure_detected = false;
 
-  alka_enabled = GET_FLAG(param, FLAG_VOLKSWAGEN_ALKA);
 #ifdef ALLOW_DEBUG
   volkswagen_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
 #endif

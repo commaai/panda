@@ -91,7 +91,6 @@ static const addr_checks* volkswagen_pq_init(uint16_t param) {
   volkswagen_set_button_prev = false;
   volkswagen_resume_button_prev = false;
 
-  alka_enabled = GET_FLAG(param, FLAG_VOLKSWAGEN_ALKA);
 #ifdef ALLOW_DEBUG
   volkswagen_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
 #endif
