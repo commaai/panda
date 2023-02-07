@@ -6,6 +6,7 @@ const int HYUNDAI_PARAM_HYBRID_GAS = 2;
 const int HYUNDAI_PARAM_LONGITUDINAL = 4;
 const int HYUNDAI_PARAM_CAMERA_SCC = 8;
 const int HYUNDAI_PARAM_ALT_LIMITS = 64; // TODO: shift this down with the rest of the common flags
+const int HYUNDAI_PARAM_ALKA = 128;
 
 const uint8_t HYUNDAI_PREV_BUTTON_SAMPLES = 8;  // roughly 160 ms
 const uint32_t HYUNDAI_STANDSTILL_THRSLD = 30;  // ~1kph
@@ -30,6 +31,7 @@ void hyundai_common_init(uint16_t param) {
   hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
   hyundai_camera_scc = GET_FLAG(param, HYUNDAI_PARAM_CAMERA_SCC);
   hyundai_alt_limits = GET_FLAG(param, HYUNDAI_PARAM_ALT_LIMITS);
+  alka_enabled = GET_FLAG(param, HYUNDAI_PARAM_ALKA);
 
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
 
