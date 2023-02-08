@@ -240,6 +240,7 @@ void tick_handler(void) {
           // Also disable IR when the heartbeat goes missing
           current_board->set_ir_power(0U);
 
+          // TODO: need a SPI equivalent
           // If enumerated but no heartbeat (phone up, boardd not running), or when the SOM GPIO is pulled high by the ABL,
           // turn the fan on to cool the device
           if(usb_enumerated || current_board->read_som_gpio()){
