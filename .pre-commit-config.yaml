@@ -7,7 +7,6 @@ repos:
     -   id: check-merge-conflict
     -   id: check-symlinks
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.910-1
     hooks:
     -   id: mypy
         additional_dependencies: ['git+https://github.com/numpy/numpy-stubs', 'types-requests', 'types-atomicwrites',
