@@ -27,3 +27,7 @@ void unused_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
   UNUSED(usb_enum);
   UNUSED(heartbeat_seen);
 }
+
+bool unused_read_som_gpio(void) {
+  return false;
+}
