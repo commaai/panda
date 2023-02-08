@@ -39,10 +39,6 @@ void red_chiplet_set_fan_or_usb_load_switch(bool enabled) {
   set_gpio_output(GPIOD, 3, enabled);
 }
 
-bool red_chiplet_read_som_gpio (void){
-  return (get_gpio_input(GPIOC, 2) != 0);
-}
-
 void red_chiplet_init(void) {
   common_init_gpio();
 
