@@ -16,7 +16,8 @@ from itertools import accumulate
 from .constants import McuType
 from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
-from .spi import SpiHandle, PandaSpiException
+from .spi import PandaSpiHandle, PandaSpiException
+from .usb import PandaUsbHandle
 
 __version__ = '0.0.10'
 
@@ -291,7 +292,7 @@ class Panda:
     handle = None
     spi_serial = None
     try:
-      handle = SpiHandle()
+      handle = PandaSpiHandle()
       dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12)
       spi_serial = binascii.hexlify(dat).decode()
     except PandaSpiException:
@@ -342,7 +343,11 @@ class Panda:
         break
       context = usb1.USBContext()  # New context needed so new devices show up
 
-    return handle, usb_serial, bootstub, bcd
+    usb_handle = None
+    if handle is not None:
+      usb_handle = PandaUsbHandle(handle)
+
+    return usb_handle, usb_serial, bootstub, bcd
 
   @staticmethod
   def list():
