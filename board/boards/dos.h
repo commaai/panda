@@ -114,6 +114,10 @@ void dos_set_siren(bool enabled){
   set_gpio_output(GPIOC, 12, enabled);
 }
 
+bool dos_read_som_gpio (void){
+  return (get_gpio_input(GPIOC, 2) != 0);
+}
+
 void dos_init(void) {
   common_init_gpio();
 
@@ -146,6 +150,10 @@ void dos_init(void) {
 
   // C8: FAN PWM aka TIM3_CH3
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
+
+  // C2: SOM GPIO used as input (fan control at boot)
+  set_gpio_mode(GPIOC, 2, MODE_INPUT);
+  set_gpio_pullup(GPIOC, 2, PULL_DOWN);
 
   // Initialize IR PWM and set to 0%
   set_gpio_alternate(GPIOB, 7, GPIO_AF2_TIM4);
@@ -222,5 +230,6 @@ const board board_dos = {
   .set_fan_enabled = dos_set_fan_enabled,
   .set_ir_power = dos_set_ir_power,
   .set_phone_power = unused_set_phone_power,
-  .set_siren = dos_set_siren
+  .set_siren = dos_set_siren,
+  .read_som_gpio = dos_read_som_gpio
 };

@@ -16,8 +16,8 @@ class PandaUsbHandle(BaseHandle):
     return self._libusb_handle.controlRead(request_type, request, value, index, length, timeout)
 
   def bulkWrite(self, endpoint: int, data: List[int], timeout: int = 0) -> int:
-    return self._libusb_handle.bulkWrite(endpoint, data, timeout)
+    return self._libusb_handle.bulkWrite(endpoint, data, timeout)  # type: ignore
 
   def bulkRead(self, endpoint: int, length: int, timeout: int = 0) -> bytes:
-    return self._libusb_handle.bulkRead(endpoint, length, timeout)
+    return self._libusb_handle.bulkRead(endpoint, length, timeout)  # type: ignore
 
