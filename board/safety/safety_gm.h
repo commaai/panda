@@ -1,7 +1,7 @@
 const SteeringLimits GM_STEERING_LIMITS = {
   .max_steer = 300,
-  .max_rate_up = 7,
-  .max_rate_down = 17,
+  .max_rate_up = 10,
+  .max_rate_down = 25,
   .driver_torque_allowance = 50,
   .driver_torque_factor = 4,
   .max_rt_delta = 128,
