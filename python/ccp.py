@@ -102,7 +102,7 @@ class CcpClient():
         print("CAN RX buffer overflow!!!", file=sys.stderr)
       for rx_addr, _, rx_data_bytearray, rx_bus in msgs:
         if rx_bus == self.can_bus and rx_addr == self.rx_addr:
-          rx_data = bytes(rx_data_bytearray)  # convert bytearray to bytes
+          rx_data = bytes(rx_data_bytearray)
           if self.debug:
             print(f"CAN-RX: {hex(rx_addr)} - 0x{bytes.hex(rx_data)}")
           assert len(rx_data) == 8, f"message length not 8: {len(rx_data)}"
