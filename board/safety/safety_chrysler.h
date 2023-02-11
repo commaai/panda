@@ -8,6 +8,18 @@ const SteeringLimits CHRYSLER_STEERING_LIMITS = {
   .type = TorqueMotorLimited,
 };
 
+// temporary alternate limits until all Pacifica platform models
+// are moved to the new tuning with a higher rate
+const SteeringLimits CHRYSLER_LR_STEERING_LIMITS = {
+  .max_steer = 261,
+  .max_rt_delta = 112,
+  .max_rt_interval = 250000,
+  .max_rate_up = 3,
+  .max_rate_down = 3,
+  .max_torque_error = 80,
+  .type = TorqueMotorLimited,
+};
+
 const SteeringLimits CHRYSLER_RAM_DT_STEERING_LIMITS = {
   .max_steer = 261,
   .max_rt_delta = 112,
@@ -126,6 +138,9 @@ addr_checks chrysler_rx_checks = {chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN}
 
 const uint32_t CHRYSLER_PARAM_RAM_DT = 1U;  // set for Ram DT platform
 const uint32_t CHRYSLER_PARAM_RAM_HD = 2U;  // set for Ram DT platform
+const uint32_t CHRYSLER_PARAM_LOWER_RATE = 4U;
+
+bool chrysler_lower_steer_rate = false;
 
 enum {
   CHRYSLER_RAM_DT,
@@ -245,7 +260,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
     int desired_torque = ((GET_BYTE(to_send, start_byte) & 0x7U) << 8) | GET_BYTE(to_send, start_byte + 1);
     desired_torque -= 1024;
 
-    const SteeringLimits limits = (chrysler_platform == CHRYSLER_PACIFICA) ? CHRYSLER_STEERING_LIMITS :
+    const SteeringLimits limits = (chrysler_platform == CHRYSLER_PACIFICA) ? (chrysler_lower_steer_rate ? CHRYSLER_LR_STEERING_LIMITS : CHRYSLER_STEERING_LIMITS) :
                                   (chrysler_platform == CHRYSLER_RAM_DT) ? CHRYSLER_RAM_DT_STEERING_LIMITS : CHRYSLER_RAM_HD_STEERING_LIMITS;
     if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
       tx = 0;
@@ -299,6 +314,8 @@ static const addr_checks* chrysler_init(uint16_t param) {
     chrysler_addrs = &CHRYSLER_ADDRS;
     chrysler_rx_checks = (addr_checks){chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
   }
+
+  chrysler_lower_steer_rate = GET_FLAG(param, CHRYSLER_PARAM_LOWER_RATE);
 
   return &chrysler_rx_checks;
 }
