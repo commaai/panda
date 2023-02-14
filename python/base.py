@@ -23,3 +23,18 @@ class BaseHandle(ABC):
   @abstractmethod
   def bulkRead(self, endpoint: int, length: int, timeout: int = 0) -> bytes:
     ...
+
+
+class BaseSTBootloaderHandle(ABC):
+  @abstractmethod
+  def close(self) -> None:
+    ...
+
+  @abstractmethod
+  def erase(self, address: int) -> None:
+    ...
+
+  @abstractmethod
+  def reset(self, address: int) -> None:
+    ...
+

@@ -2,15 +2,9 @@ import usb1
 import struct
 import binascii
 
+from .base import STBootloaderUsbHandle
 from .constants import McuType
 
-
-# *** DFU mode ***
-DFU_DNLOAD = 1
-DFU_UPLOAD = 2
-DFU_GETSTATUS = 3
-DFU_CLRSTATUS = 4
-DFU_ABORT = 6
 
 class PandaDFU:
   def __init__(self, dfu_serial):
@@ -23,7 +17,7 @@ class PandaDFU:
         except Exception:
           continue
         if this_dfu_serial == dfu_serial or dfu_serial is None:
-          self._handle = device.open()
+          self._handle = STBootloaderUsbHandle(device.open())
           self._mcu_type = self.get_mcu_type(device)
           break
 
@@ -60,25 +54,8 @@ class PandaDFU:
     # TODO: also check F4 BCD, don't assume in else
     return McuType.H7 if dev.getbcdDevice() == 512 else McuType.F4
 
-  def status(self):
-    while 1:
-      dat = self._handle.controlRead(0x21, DFU_GETSTATUS, 0, 0, 6)
-      if dat[1] == 0:
-        break
-
-  def clear_status(self):
-    # Clear status
-    stat = self._handle.controlRead(0x21, DFU_GETSTATUS, 0, 0, 6)
-    if stat[4] == 0xa:
-      self._handle.controlRead(0x21, DFU_CLRSTATUS, 0, 0, 0)
-    elif stat[4] == 0x9:
-      self._handle.controlWrite(0x21, DFU_ABORT, 0, 0, b"")
-      self.status()
-    stat = str(self._handle.controlRead(0x21, DFU_GETSTATUS, 0, 0, 6))
-
   def erase(self, address):
-    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b"\x41" + struct.pack("I", address))
-    self.status()
+    self._handle.erase(addres)
 
   def program(self, address, dat, block_size=None):
     if block_size is None:
