@@ -86,3 +86,17 @@ def test_heartbeat(p):
   assert h['safety_mode'] == Panda.SAFETY_SILENT
   assert h['safety_param'] == 0
   assert h['controls_allowed'] == 0
+
+@test_all_pandas
+@panda_connect_and_init
+def test_microsecond_timer(p):
+  start_time = p.get_microsecond_timer()
+  time.sleep(1)
+  end_time = p.get_microsecond_timer()
+
+  # account for uint32 overflow
+  if end_time < start_time:
+    end_time += 2**32
+
+  time_diff = (end_time - start_time) / 1e6
+  assert 0.98 < time_diff  < 1.02, f"Timer not running at the correct speed! (got {time_diff:.2f}s instead of 1.0s)"

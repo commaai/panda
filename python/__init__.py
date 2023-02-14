@@ -892,6 +892,11 @@ class Panda:
     a = struct.unpack("HBBBBBB", dat)
     return datetime.datetime(a[0], a[1], a[2], a[4], a[5], a[6])
 
+  # ****************** Timer *****************
+  def get_microsecond_timer(self):
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xa8, 0, 0, 4)
+    return struct.unpack("I", dat)[0]
+
   # ******************* IR *******************
   def set_ir_power(self, percentage):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb0, int(percentage), 0, b'')
