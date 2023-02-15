@@ -39,6 +39,10 @@ void tres_set_fan_enabled(bool enabled) {
   tres_update_fan_ir_power();
 }
 
+bool tres_read_som_gpio (void){
+  return (get_gpio_input(GPIOC, 2) != 0);
+}
+
 void tres_init(void) {
   // Enable USB 3.3V LDO for USB block
   register_set_bits(&(PWR->CR3), PWR_CR3_USBREGEN);
@@ -46,6 +50,10 @@ void tres_init(void) {
   while ((PWR->CR3 & PWR_CR3_USB33RDY) == 0);
 
   red_chiplet_init();
+
+  // C2: SOM GPIO used as input (fan control at boot)
+  set_gpio_mode(GPIOC, 2, MODE_INPUT);
+  set_gpio_pullup(GPIOC, 2, PULL_DOWN);
 
   tres_set_bootkick(true);
 
@@ -101,5 +109,6 @@ const board board_tres = {
   .set_fan_enabled = tres_set_fan_enabled,
   .set_ir_power = tres_set_ir_power,
   .set_phone_power = unused_set_phone_power,
-  .set_siren = fake_siren_set
+  .set_siren = fake_siren_set,
+  .read_som_gpio = tres_read_som_gpio
 };
