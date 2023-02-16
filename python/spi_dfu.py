@@ -37,7 +37,8 @@ class PandaSpiDFU:
     elif data != ACK:
       raise Exception("Missing ACK")
 
-  def _cmd(self, cmd, data=None, read_bytes=0):
+  def _cmd(self, cmd, data=None, read_bytes=0) -> bytes:
+    ret = b""
     with self.dev.acquire() as spi:
       # sync
       spi.xfer([SYNC, ])
@@ -53,7 +54,6 @@ class PandaSpiDFU:
           self._get_ack(spi, timeout=20)
 
       # receive
-      ret = None
       if read_bytes > 0:
         # send busy byte
         ret = spi.xfer([0x00, ]*(read_bytes + 1))[1:]

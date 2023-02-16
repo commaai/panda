@@ -14,8 +14,8 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
   FWD_BLACKLISTED_ADDRS = {2: [658, 678]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-  MAX_RATE_UP = 6
-  MAX_RATE_DOWN = 6
+  MAX_RATE_UP = 3
+  MAX_RATE_DOWN = 3
   MAX_TORQUE = 261
   MAX_RT_DELTA = 112
   RT_INTERVAL = 250000
@@ -76,6 +76,9 @@ class TestChryslerRamDTSafety(TestChryslerSafety):
   TX_MSGS = [[177, 2], [166, 0], [250, 0]]
   RELAY_MALFUNCTION_ADDR = 166
   FWD_BLACKLISTED_ADDRS = {2: [166, 250]}
+
+  MAX_RATE_UP = 6
+  MAX_RATE_DOWN = 6
 
   DAS_BUS = 2
 
