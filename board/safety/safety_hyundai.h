@@ -88,7 +88,11 @@ AddrCheckStruct hyundai_legacy_addr_checks[] = {
 };
 #define HYUNDAI_LEGACY_ADDR_CHECK_LEN (sizeof(hyundai_legacy_addr_checks) / sizeof(hyundai_legacy_addr_checks[0]))
 
+
+const int HYUNDAI_PARAM_ESCC = 256;
+
 bool hyundai_legacy = false;
+bool hyundai_escc = false;
 
 addr_checks hyundai_rx_checks = {hyundai_addr_checks, HYUNDAI_ADDR_CHECK_LEN};
 
@@ -243,7 +247,7 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
   }
 
   // FCA11: Block any potential actuation
-  if (addr == 909) {
+  if ((addr == 909) && !hyundai_escc) {
     int CR_VSM_DecCmd = GET_BYTE(to_send, 1);
     int FCA_CmdAct = GET_BIT(to_send, 20U);
     int CF_VSM_DecCmdAct = GET_BIT(to_send, 31U);
@@ -258,15 +262,19 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
     int desired_accel_raw = (((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) - 1023U;
     int desired_accel_val = ((GET_BYTE(to_send, 5) << 3) | (GET_BYTE(to_send, 4) >> 5)) - 1023U;
 
-    int aeb_decel_cmd = GET_BYTE(to_send, 2);
-    int aeb_req = GET_BIT(to_send, 54U);
+    if (!hyundai_escc) {
+      int aeb_decel_cmd = GET_BYTE(to_send, 2);
+      int aeb_req = GET_BIT(to_send, 54U);
+    }
 
     bool violation = false;
 
     violation |= longitudinal_accel_checks(desired_accel_raw, HYUNDAI_LONG_LIMITS);
     violation |= longitudinal_accel_checks(desired_accel_val, HYUNDAI_LONG_LIMITS);
-    violation |= (aeb_decel_cmd != 0);
-    violation |= (aeb_req != 0);
+    if (!hyundai_escc) {
+      violation |= (aeb_decel_cmd != 0);
+      violation |= (aeb_req != 0);
+    }
 
     if (violation) {
       tx = 0;
@@ -285,7 +293,7 @@ static int hyundai_tx_hook(CANPacket_t *to_send) {
   }
 
   // UDS: Only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
-  if (addr == 2000) {
+  if ((addr == 2000) && !hyundai_escc) {
     if ((GET_BYTES_04(to_send) != 0x00803E02U) || (GET_BYTES_48(to_send) != 0x0U)) {
       tx = 0;
     }
@@ -324,6 +332,7 @@ static int hyundai_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 static const addr_checks* hyundai_init(uint16_t param) {
   hyundai_common_init(param);
   hyundai_legacy = false;
+  hyundai_escc = GET_FLAG(param, HYUNDAI_PARAM_ESCC);
 
   if (hyundai_camera_scc) {
     hyundai_longitudinal = false;
@@ -344,6 +353,7 @@ static const addr_checks* hyundai_legacy_init(uint16_t param) {
   hyundai_legacy = true;
   hyundai_longitudinal = false;
   hyundai_camera_scc = false;
+  hyundai_escc = GET_FLAG(param, HYUNDAI_PARAM_ESCC);
 
   hyundai_rx_checks = (addr_checks){hyundai_legacy_addr_checks, HYUNDAI_LEGACY_ADDR_CHECK_LEN};
   return &hyundai_rx_checks;
