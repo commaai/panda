@@ -10,7 +10,7 @@ struct fan_state_t {
 struct fan_state_t fan_state;
 
 #define FAN_I 0.001f
-#define FAN_STALL_THRESHOLD 25U
+#define FAN_STALL_THRESHOLD 48U  // ticks, in 8Hz loop
 
 void fan_set_power(uint8_t percentage){
   fan_state.target_rpm = ((current_board->fan_max_rpm * MIN(100U, MAX(0U, percentage))) / 100U);
