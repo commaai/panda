@@ -8,6 +8,8 @@ from panda.tests.safety.common import CANPackerPanda
 
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
+INACTIVE_ACCEL_PRIMARY = 3.01
+INACTIVE_ACCEL_SECONDARY = 3.02
 
 MSG_ESP_19 = 0xB2       # RX from ABS, for wheel speeds
 MSG_LH_EPS_03 = 0x9F    # RX from EPS, for driver steering torque
@@ -208,6 +210,7 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
 
   def test_accel_safety_check(self):
     for controls_allowed in [True, False]:
+      # Probe entire valid accel range
       for accel in np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.03):
         accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
         send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == self.INACTIVE_ACCEL
@@ -218,6 +221,10 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
         self.assertEqual(send, self._tx(self._acc_07_msg(accel)), (controls_allowed, accel))
         # ensure the optional secondary accel field remains disabled for now
         self.assertFalse(self._tx(self._acc_07_msg(accel, secondary_accel=accel)), (controls_allowed, accel))
+      # The inactive accel value is outside the normal valid range, and should always be accepted
+      self.safety.set_controls_allowed(controls_allowed)
+      self.assertTrue(self._tx(self._acc_06_msg(INACTIVE_ACCEL_PRIMARY)))
+      self.assertTrue(self._tx(self._acc_07_msg(INACTIVE_ACCEL_PRIMARY, secondary_accel=INACTIVE_ACCEL_SECONDARY)))
 
 
 if __name__ == "__main__":

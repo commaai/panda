@@ -19,6 +19,7 @@ MSG_LDW_1 = 0x5BE             # TX by OP, Lane line recognition and text alerts
 
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
+INACTIVE_ACCEL = 3.01
 
 class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   cruise_engaged = False
@@ -194,12 +195,16 @@ class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety):
 
   def test_accel_safety_check(self):
     for controls_allowed in [True, False]:
-      for accel in np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.005):
+      # Probe entire valid accel range
+      for accel in np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.03):
         accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
         send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == self.INACTIVE_ACCEL
         self.safety.set_controls_allowed(controls_allowed)
         # primary accel request used by ECU
         self.assertEqual(send, self._tx(self._accel_msg(accel)), (controls_allowed, accel))
+      # The inactive accel value is outside the normal valid range, and should always be accepted
+      self.safety.set_controls_allowed(controls_allowed)
+      self.assertTrue(self._tx(self._accel_msg(INACTIVE_ACCEL)))
 
 
 if __name__ == "__main__":
