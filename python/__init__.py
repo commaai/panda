@@ -13,6 +13,7 @@ from functools import wraps
 from typing import Optional
 from itertools import accumulate
 
+from .base import BaseHandle
 from .constants import McuType
 from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
@@ -423,7 +424,7 @@ class Panda:
       raise Exception("reconnect failed")
 
   @staticmethod
-  def flasher_present(handle) -> bool:
+  def flasher_present(handle: BaseHandle) -> bool:
     fr = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
     return fr[4:8] == b"\xde\xad\xd0\x0d"
 
