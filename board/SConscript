@@ -152,6 +152,9 @@ for project_name in build_projects:
     "-std=gnu11",
   ] + project["PROJECT_FLAGS"] + common_flags
 
+  if ("ENABLE_SPI" in os.environ or "h7" in project_name) and not project_name.startswith('pedal'):
+    flags.append('-DENABLE_SPI')
+
   project_env = Environment(
     ENV=os.environ,
     CC=PREFIX + 'gcc',
