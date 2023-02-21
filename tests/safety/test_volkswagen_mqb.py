@@ -8,8 +8,7 @@ from panda.tests.safety.common import CANPackerPanda
 
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
-INACTIVE_ACCEL_PRIMARY = 3.01
-INACTIVE_ACCEL_SECONDARY = 3.02
+INACTIVE_ACCEL = 3.01
 
 MSG_ESP_19 = 0xB2       # RX from ABS, for wheel speeds
 MSG_LH_EPS_03 = 0x9F    # RX from EPS, for driver steering torque
@@ -223,8 +222,8 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
         self.assertFalse(self._tx(self._acc_07_msg(accel, secondary_accel=accel)), (controls_allowed, accel))
       # The inactive accel value is outside the normal valid range, and should always be accepted
       self.safety.set_controls_allowed(controls_allowed)
-      self.assertTrue(self._tx(self._acc_06_msg(INACTIVE_ACCEL_PRIMARY)))
-      self.assertTrue(self._tx(self._acc_07_msg(INACTIVE_ACCEL_PRIMARY, secondary_accel=INACTIVE_ACCEL_SECONDARY)))
+      self.assertTrue(self._tx(self._acc_06_msg(INACTIVE_ACCEL)))
+      self.assertTrue(self._tx(self._acc_07_msg(INACTIVE_ACCEL, secondary_accel=round(INACTIVE_ACCEL, 2))))
 
 
 if __name__ == "__main__":
