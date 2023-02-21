@@ -8,6 +8,8 @@ class BaseHandle(ABC):
   def close(self) -> None:
     ...
 
+  # TODO: enforce a timeout for all comms to ensure USB and SPI behavior match
+
   @abstractmethod
   def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = 0) -> int:
     ...
