@@ -223,7 +223,7 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
       # The inactive accel value is outside the normal valid range, and should always be accepted
       self.safety.set_controls_allowed(controls_allowed)
       self.assertTrue(self._tx(self._acc_06_msg(INACTIVE_ACCEL)))
-      self.assertTrue(self._tx(self._acc_07_msg(INACTIVE_ACCEL, secondary_accel=round(INACTIVE_ACCEL, 2))))
+      self.assertTrue(self._tx(self._acc_07_msg(INACTIVE_ACCEL)))
 
 
 if __name__ == "__main__":
