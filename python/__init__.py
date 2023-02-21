@@ -31,12 +31,6 @@ DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
 
 
-def flasher_response(request: int):
-  ret = bytearray(b'\xff\x00\x00\x00\xde\xad\xd0\x0d')
-  ret[2] = request
-  ret[3] = (~request) & 0xff
-  return ret
-
 def calculate_checksum(data):
   res = 0
   for b in data:
@@ -303,11 +297,8 @@ class Panda:
       dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12)
       spi_serial = binascii.hexlify(dat).decode()
 
-      # flasher echo in bootstub
-      resp = flasher_response(0xb0)
-      resp[1] = 0xff
-      dat = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
-      bootstub = dat[:8] == resp
+      # check if we're in the bootstub
+      bootstub = Panda.flasher_present(handle)
     except PandaSpiException:
       pass
 
@@ -317,7 +308,6 @@ class Panda:
       spi_serial = None
       bootstub = False
 
-    # TODO: detect bootstub
     return handle, spi_serial, bootstub, None
 
   @staticmethod
@@ -433,12 +423,16 @@ class Panda:
       raise Exception("reconnect failed")
 
   @staticmethod
+  def flasher_present(handle) -> bool:
+    fr = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
+    return fr[4:8] == b"\xde\xad\xd0\x0d"
+
+  @staticmethod
   def flash_static(handle, code, mcu_type):
     assert mcu_type is not None, "must set valid mcu_type to flash"
 
     # confirm flasher is present
-    fr = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
-    assert fr[4:8] == b"\xde\xad\xd0\x0d"
+    assert Panda.flasher_present(handle)
 
     # determine sectors to erase
     apps_sectors_cumsum = accumulate(mcu_type.config.sector_sizes[1:])
