@@ -6,7 +6,12 @@ void gpio_usb_init(void) {
 }
 
 void gpio_spi_init(void) {
-
+  // A4-A7: SPI
+  set_gpio_alternate(GPIOA, 4, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 5, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 6, GPIO_AF5_SPI1);
+  set_gpio_alternate(GPIOA, 7, GPIO_AF5_SPI1);
+  register_set_bits(&(GPIOA->OSPEEDR), GPIO_OSPEEDER_OSPEEDR4 | GPIO_OSPEEDER_OSPEEDR5 | GPIO_OSPEEDER_OSPEEDR6 | GPIO_OSPEEDER_OSPEEDR7);
 }
 
 void gpio_usart2_init(void) {
