@@ -195,14 +195,15 @@ class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety):
 
   def test_accel_safety_check(self):
     for controls_allowed in [True, False]:
-      # Probe entire valid accel range
+      # Verify correct behavior for the valid accel range, and beyond
+      # The magic value INACTIVE_ACCEL is skipped due to the increment
       for accel in np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.03):
         accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
         send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == self.INACTIVE_ACCEL
         self.safety.set_controls_allowed(controls_allowed)
         # primary accel request used by ECU
         self.assertEqual(send, self._tx(self._accel_msg(accel)), (controls_allowed, accel))
-      # The inactive accel value is outside the normal valid range, and should always be accepted
+      # INACTIVE_ACCEL is outside the normal valid range, and should always be accepted
       self.safety.set_controls_allowed(controls_allowed)
       self.assertTrue(self._tx(self._accel_msg(INACTIVE_ACCEL)))
 
