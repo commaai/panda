@@ -5,6 +5,10 @@ void gpio_usb_init(void) {
   GPIOA->OSPEEDR = GPIO_OSPEEDER_OSPEEDR11 | GPIO_OSPEEDER_OSPEEDR12;
 }
 
+void gpio_spi_init(void) {
+
+}
+
 void gpio_usart2_init(void) {
   // A2,A3: USART 2 for debugging
   set_gpio_alternate(GPIOA, 2, GPIO_AF7_USART2);
