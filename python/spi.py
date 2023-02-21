@@ -96,8 +96,8 @@ class PandaSpiHandle(BaseHandle):
 
   def _wait_for_ack(self, spi, timeout: int, ack_val: int) -> None:
     start = time.monotonic()
-    timeout = max(timeout * 1e-4, MIN_ACK_TIMEOUT_SECONDS)
-    while (time.monotonic() - start) < timeout:
+    timeout_seconds = max(timeout * 1e-4, MIN_ACK_TIMEOUT_SECONDS)
+    while (time.monotonic() - start) < timeout_seconds:
       dat = spi.xfer2(b"\x12")[0]
       if dat == NACK:
         raise PandaSpiNackResponse

@@ -448,7 +448,7 @@ class Panda:
     # erase sectors
     logging.warning(f"flash: erasing sectors 1 - {last_sector}")
     for i in range(1, last_sector + 1):
-      handle.controlWrite(Panda.REQUEST_IN, 0xb2, i, 0, b'', timeout=15*1e4)
+      handle.controlWrite(Panda.REQUEST_IN, 0xb2, i, 0, b'', timeout=int(15*1e4))
 
     # flash over EP2
     STEP = 0x10
