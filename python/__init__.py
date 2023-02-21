@@ -25,11 +25,17 @@ __version__ = '0.0.10'
 LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
 logging.basicConfig(level=LOGLEVEL, format='%(message)s')
 
-
 USBPACKET_MAX_SIZE = 0x40
 CANPACKET_HEAD_SIZE = 0x6
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
+
+
+def flasher_response(request: int):
+  ret = bytearray(b'\xff\x00\x00\x00\xde\xad\xd0\x0d')
+  ret[2] = request
+  ret[3] = (~request) & 0xff
+  return ret
 
 def calculate_checksum(data):
   res = 0
@@ -291,20 +297,28 @@ class Panda:
     # get UID to confirm slave is present and up
     handle = None
     spi_serial = None
+    bootstub = None
     try:
       handle = PandaSpiHandle()
       dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12)
       spi_serial = binascii.hexlify(dat).decode()
+
+      # flasher echo in bootstub
+      resp = flasher_response(0xb0)
+      resp[1] = 0xff
+      dat = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
+      bootstub = dat[:8] == resp
     except PandaSpiException:
       pass
 
     # no connection or wrong panda
-    if spi_serial is None or (serial is not None and (spi_serial != serial)):
+    if None in (spi_serial, bootstub) or (serial is not None and (spi_serial != serial)):
       handle = None
       spi_serial = None
+      bootstub = False
 
     # TODO: detect bootstub
-    return handle, spi_serial, False, None
+    return handle, spi_serial, bootstub, None
 
   @staticmethod
   def usb_connect(serial, claim=True, wait=False):
