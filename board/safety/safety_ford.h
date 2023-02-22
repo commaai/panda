@@ -150,11 +150,6 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     if (steer_angle_cmd_checks(desired_curvature, steer_control_enabled, FORD_STEERING_LIMITS)) {
       tx = 0;
     }
-
-//    // No steer control allowed when controls are not allowed
-//    if (!controls_allowed && steer_control_enabled) {
-//      tx = 0;
-//    }
   }
 
   // 1 allows the message through
