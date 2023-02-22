@@ -30,6 +30,20 @@ AddrCheckStruct ford_addr_checks[] = {
 #define FORD_ADDR_CHECK_LEN (sizeof(ford_addr_checks) / sizeof(ford_addr_checks[0]))
 addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
 
+// Curvature rate limits
+const SteeringLimits FORD_STEERING_LIMITS = {
+  .angle_deg_to_can = 50000,  // 1 / (2e-5) rad to can
+  .angle_disable_near_angle_check = true,
+  .angle_rate_up_lookup = {
+    {7., 17., 27.},
+    {0.005, 0.00056, 0.0002}
+  },
+  .angle_rate_down_lookup = {
+    {7., 17., 27.},
+    {0.008, 0.00089, 0.00032}
+  },
+};
+
 #define INACTIVE_CURVATURE 1000U
 #define INACTIVE_CURVATURE_RATE 4096U
 #define INACTIVE_PATH_OFFSET 512U
@@ -120,21 +134,27 @@ static int ford_tx_hook(CANPacket_t *to_send) {
   if (addr == MSG_LateralMotionControl) {
     // Signal: LatCtl_D_Rq
     unsigned int steer_control_type = (GET_BYTE(to_send, 4) >> 2) & 0x7U;
-    unsigned int curvature = (GET_BYTE(to_send, 0) << 3) | (GET_BYTE(to_send, 1) >> 5);
-    unsigned int curvature_rate = ((GET_BYTE(to_send, 1) & 0x1FU) << 8) | GET_BYTE(to_send, 2);
-    unsigned int path_angle = (GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5);
-    unsigned int path_offset = (GET_BYTE(to_send, 5) << 2) | (GET_BYTE(to_send, 6) >> 6);
+    unsigned int raw_curvature = (GET_BYTE(to_send, 0) << 3) | (GET_BYTE(to_send, 1) >> 5);
+    unsigned int raw_curvature_rate = ((GET_BYTE(to_send, 1) & 0x1FU) << 8) | GET_BYTE(to_send, 2);
+    unsigned int raw_path_angle = (GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5);
+    unsigned int raw_path_offset = (GET_BYTE(to_send, 5) << 2) | (GET_BYTE(to_send, 6) >> 6);
+
 
     // These signals are not yet tested with the current safety limits
-    if ((curvature_rate != INACTIVE_CURVATURE_RATE) || (path_angle != INACTIVE_PATH_ANGLE) || (path_offset != INACTIVE_PATH_OFFSET)) {
+    if ((raw_curvature_rate != INACTIVE_CURVATURE_RATE) || (raw_path_angle != INACTIVE_PATH_ANGLE) || (raw_path_offset != INACTIVE_PATH_OFFSET)) {
       tx = 0;
     }
 
-    // No steer control allowed when controls are not allowed
-    bool steer_control_enabled = (steer_control_type != 0U) || (curvature != INACTIVE_CURVATURE);
-    if (!controls_allowed && steer_control_enabled) {
+    int desired_curvature = raw_curvature - 1000;
+    bool steer_control_enabled = (steer_control_type != 0U) || (raw_curvature != INACTIVE_CURVATURE);
+    if (steer_angle_cmd_checks(desired_curvature, steer_control_enabled, FORD_STEERING_LIMITS)) {
       tx = 0;
     }
+
+//    // No steer control allowed when controls are not allowed
+//    if (!controls_allowed && steer_control_enabled) {
+//      tx = 0;
+//    }
   }
 
   // 1 allows the message through
