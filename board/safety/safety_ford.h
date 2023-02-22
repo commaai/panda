@@ -70,7 +70,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     // Update vehicle yaw rate
     if (addr == MSG_Yaw_Data_FD1) {
       // Signal: VehYaw_W_Actl
-      ford_yaw_rate = ((GET_BYTE(to_push, 2) << 8) | GET_BYTE(to_push, 3)) * 0.0002 - 6.5;
+      ford_yaw_rate = ((GET_BYTE(to_push, 2) << 8U) | GET_BYTE(to_push, 3)) * 0.0002 - 6.5;
       // Signal: VehYawWActl_D_Qf
       ford_yaw_rate_valid = ((GET_BYTE(to_push, 6) >> 4) & 0x3U) == 3U;
     }
