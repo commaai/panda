@@ -139,7 +139,6 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     unsigned int raw_path_angle = (GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5);
     unsigned int raw_path_offset = (GET_BYTE(to_send, 5) << 2) | (GET_BYTE(to_send, 6) >> 6);
 
-
     // These signals are not yet tested with the current safety limits
     if ((raw_curvature_rate != INACTIVE_CURVATURE_RATE) || (raw_path_angle != INACTIVE_PATH_ANGLE) || (raw_path_offset != INACTIVE_PATH_OFFSET)) {
       tx = 0;
