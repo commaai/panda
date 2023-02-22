@@ -36,11 +36,11 @@ const SteeringLimits FORD_STEERING_LIMITS = {
   .angle_disable_near_angle_check = true,
   .angle_rate_up_lookup = {
     {7., 17., 27.},
-    {0.005, 0.00056, 0.0002}
+    {0.001, 0.00056, 0.0002}
   },
   .angle_rate_down_lookup = {
     {7., 17., 27.},
-    {0.008, 0.00089, 0.00032}
+    {0.002, 0.00089, 0.00032}
   },
 };
 

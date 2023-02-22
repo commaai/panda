@@ -40,8 +40,8 @@ class TestFordSafety(common.PandaSafetyTest, common.CurvatureSteeringSafetyTest)
   MAX_ANGLE: float = 0.01  # under 0.2 signal limit for avoiding overflow in tests
 
   ANGLE_DELTA_BP = [5., 15., 25.]
-  ANGLE_DELTA_V = [0.005, 0.00056, 0.0002]  # windup limit
-  ANGLE_DELTA_VU = [0.008, 0.00089, 0.00032]  # unwind limit
+  ANGLE_DELTA_V = [0.001, 0.00056, 0.0002]  # windup limit
+  ANGLE_DELTA_VU = [0.002, 0.00089, 0.00032]  # unwind limit
 
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
