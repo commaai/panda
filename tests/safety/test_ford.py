@@ -23,7 +23,7 @@ class Buttons:
   TJA_TOGGLE = 2
 
 
-class TestFordSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
+class TestFordSafety(common.PandaSafetyTest, common.CurvatureSteeringSafetyTest):
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_IPMA_Data
   RELAY_MALFUNCTION_BUS = 0
@@ -36,9 +36,8 @@ class TestFordSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   # Curvature control limits
-  # TODO: named angle for common tests
   DEG_TO_CAN = 50000  # 1 / (2e-5) rad to can
-  DISABLE_NEAR_ANGLE_CHECK = True  # desired curvature is 0 when disabled
+  MAX_ANGLE: float = 0.01  # under 0.2 signal limit for avoiding overflow in tests
 
   ANGLE_DELTA_BP = [5., 15., 25.]
   ANGLE_DELTA_V = [0.005, 0.00056, 0.0002]  # windup limit
@@ -50,16 +49,9 @@ class TestFordSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
     self.safety.init_tests()
 
-  # Patch common angle test class functions to work with curvature
-  # No curvature measurement, and angle cmd is TJA message with only curvature
+  # Angle cmd is TJA message with only curvature
   def _angle_cmd_msg(self, angle: float, enabled: bool):
     return self._tja_command_msg(enabled, 0, 0, angle, 0)
-
-  def _angle_meas_msg(self, angle: float):
-    pass
-
-  def _angle_meas_msg_array(self, angle):
-    pass
 
   # Driver brake pedal
   def _user_brake_msg(self, brake: bool):

@@ -475,6 +475,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
   DEG_TO_CAN: int
   DISABLE_NEAR_ANGLE_CHECK: bool = False
+  MAX_ANGLE: float = 300
 
   ANGLE_DELTA_BP: List[float]
   ANGLE_DELTA_V: List[float]  # windup limit
@@ -505,7 +506,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
     speeds = [0., 1., 5., 10., 15., 50.]
-    angles = [-0.015, -0.01, -0.001, 0, 0.001, 0.01, 0.015]
+    angles = np.linspace(-self.MAX_ANGLE, self.MAX_ANGLE, 11)
     for a in angles:
       for s in speeds:
         max_delta_up = np.interp(s, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
@@ -556,6 +557,23 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     self._set_prev_desired_angle(0)
     self.assertFalse(self._tx(self._angle_cmd_msg(0, True)))
     self.assertFalse(self.safety.get_controls_allowed())
+
+
+class CurvatureSteeringSafetyTest(AngleSteeringSafetyTest, abc.ABC):
+
+  DISABLE_NEAR_ANGLE_CHECK = True  # desired curvature is 0 when disabled
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "CurvatureSteeringSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  def _angle_meas_msg(self, angle: float):
+    pass
+
+  def _angle_meas_msg_array(self, angle):
+    pass
 
 
 @add_regen_tests
