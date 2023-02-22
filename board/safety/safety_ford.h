@@ -34,6 +34,21 @@ AddrCheckStruct ford_addr_checks[] = {
 #define FORD_ADDR_CHECK_LEN (sizeof(ford_addr_checks) / sizeof(ford_addr_checks[0]))
 addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
 
+// Curvature rate limits
+const SteeringLimits FORD_STEERING_LIMITS = {
+  .angle_rate_up_lookup = {
+    {7., 17., 27.},
+    {0.005, 0.00056, 0.0002}
+  },
+  .angle_rate_down_lookup = {
+    {7., 17., 27.},
+    {0.008, 0.00089, 0.00032}
+  },
+};
+
+#define MAX_CURVATURE 1000U  // TODO: this
+#define MIN_CURVATURE 1000U
+
 #define INACTIVE_CURVATURE 1000U
 #define INACTIVE_CURVATURE_RATE 4096U
 #define INACTIVE_PATH_OFFSET 512U
@@ -46,6 +61,7 @@ static bool ford_lkas_msg_check(int addr) {
       || (addr == MSG_IPMA_Data);
 }
 
+struct sample_t ford_yaw_rate_meas;
 float ford_yaw_rate = 0;
 bool ford_yaw_rate_valid = false;
 
@@ -71,6 +87,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (addr == MSG_Yaw_Data_FD1) {
       // Signal: VehYaw_W_Actl
       ford_yaw_rate = (((GET_BYTE(to_push, 2) << 8U) | GET_BYTE(to_push, 3)) * 0.0002) - 6.5;
+      update_sample(&ford_yaw_rate_meas, ford_yaw_rate);
       // Signal: VehYawWActl_D_Qf
       ford_yaw_rate_valid = ((GET_BYTE(to_push, 6) >> 4) & 0x3U) == 3U;
     }
@@ -151,11 +168,32 @@ static int ford_tx_hook(CANPacket_t *to_send) {
       tx = 0;
     }
 
-    // No steer control allowed when controls are not allowed
+    // No steer control allowed when controls are not allowed or yaw rate invalid
+    bool current_controls_allowed = controls_allowed && ford_yaw_rate_valid;
     bool steer_control_enabled = (steer_control_type != 0U) || (curvature != INACTIVE_CURVATURE);
-    if (!controls_allowed && steer_control_enabled) {
+    if (!current_controls_allowed && steer_control_enabled) {
       tx = 0;
     }
+
+    // Curvature rate limits
+    float delta_curvature_up = interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed);
+    float delta_curvature_down = interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed);
+
+    int highest_desired_curvature = desired_angle_last + ((desired_angle_last > 0) ? delta_curvature_up : delta_curvature_down);
+    int lowest_desired_curvature = desired_angle_last - ((desired_angle_last >= 0) ? delta_curvature_down : delta_curvature_up);
+
+    // TODO: min/max limits? angle control doesn't do this
+    if (curvature > 0.02)
+
+    if ((vehicle_speed > 12) && steer_control_enabled) {
+      float actual_curvature = ford_yaw_rate / vehicle_speed;
+      float desired_curvature = curvature * 2e-5 - 0.02;
+
+
+    }
+
+    // TODO: rate limits
+
   }
 
   // 1 allows the message through
