@@ -3,6 +3,7 @@
 #define MSG_EngVehicleSpThrottle  0x204   // RX from PCM, for driver throttle input
 #define MSG_DesiredTorqBrk        0x213   // RX from ABS, for standstill state
 #define MSG_BrakeSysFeatures      0x415   // RX from ABS, for vehicle speed
+#define MSG_Yaw_Data_FD1          0x91    // RX from GWM, for yaw rate
 #define MSG_Steering_Data_FD1     0x083   // TX by OP, various driver switches and LKAS/CC buttons
 #define MSG_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
 #define MSG_Lane_Assist_Data1     0x3CA   // TX by OP, Lane Keep Assist
@@ -28,6 +29,7 @@ AddrCheckStruct ford_addr_checks[] = {
   {.msg = {{MSG_EngVehicleSpThrottle, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_DesiredTorqBrk, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_BrakeSysFeatures, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_Yaw_Data_FD1, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
 };
 #define FORD_ADDR_CHECK_LEN (sizeof(ford_addr_checks) / sizeof(ford_addr_checks[0]))
 addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
@@ -43,6 +45,9 @@ static bool ford_lkas_msg_check(int addr) {
       || (addr == MSG_LateralMotionControl)
       || (addr == MSG_IPMA_Data);
 }
+
+float ford_yaw_rate = 0;
+bool ford_yaw_rate_valid = false;
 
 static int ford_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &ford_rx_checks, NULL, NULL, NULL);
@@ -60,6 +65,14 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (addr == MSG_BrakeSysFeatures) {
       // Signal: Veh_V_ActlBrk
       vehicle_speed = ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01;
+    }
+
+    // Update vehicle yaw rate
+    if (addr == MSG_Yaw_Data_FD1) {
+      // Signal: VehYaw_W_Actl
+      ford_yaw_rate = ((GET_BYTE(to_push, 2) << 8) | GET_BYTE(to_push, 3)) * 0.0002 - 6.5;
+      // Signal: VehYawWActl_D_Qf
+      ford_yaw_rate_valid = ((GET_BYTE(to_push, 6) >> 4) & 0x3U) == 3U;
     }
 
     // Update gas pedal
@@ -179,6 +192,8 @@ static int ford_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 static const addr_checks* ford_init(uint16_t param) {
   UNUSED(param);
 
+  ford_yaw_rate = 0;
+  ford_yaw_rate_valid = false;
   return &ford_rx_checks;
 }
 
