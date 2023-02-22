@@ -32,5 +32,5 @@ repos:
         - -rn
         - -sn
         - -j0
-        - --disable=C,R,W0613,W0511,W0212,W0201,W0311,W0106,W0603,W0621,W0703,E1136
+        - --disable=C,R,W0613,W0511,W0212,W0201,W0311,W0106,W0603,W0621,W0703,W1203,W1514,E1136
         - --generated-members="usb1.*"

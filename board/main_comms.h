@@ -66,6 +66,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
   timestamp_t t;
+  uint32_t time;
 
 #ifdef DEBUG_COMMS
   print("raw control request: "); hexdump(req, sizeof(ControlPacket_t)); print("\n");
@@ -121,6 +122,15 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       t.second = req->param1;
       rtc_set_time(t);
       break;
+    // **** 0xa8: get microsecond timer
+    case 0xa8:
+      time = microsecond_timer_get();
+      resp[0] = (time & 0x000000FFU);
+      resp[1] = ((time & 0x0000FF00U) >> 8U);
+      resp[2] = ((time & 0x00FF0000U) >> 16U);
+      resp[3] = ((time & 0xFF000000U) >> 24U);
+      resp_len = 4U;
+      break;
     // **** 0xb0: set IR power
     case 0xb0:
       current_board->set_ir_power(req->param1);
@@ -139,12 +149,16 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xb3:
       current_board->set_phone_power(req->param1 > 0U);
       break;
+    // **** 0xc0: reset communications
+    case 0xc0:
+      comms_can_reset();
+      break;
     // **** 0xc1: get hardware type
     case 0xc1:
       resp[0] = hw_type;
       resp_len = 1;
       break;
-    // **** 0xd0: fetch serial number
+    // **** 0xc2: CAN health stats
     case 0xc2:
       COMPILE_TIME_ASSERT(sizeof(can_health_t) <= USBPACKET_MAX_SIZE);
       if (req->param1 < 3U) {
@@ -157,6 +171,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         (void)memcpy(resp, &can_health[req->param1], resp_len);
       }
       break;
+    // **** 0xc3: fetch MCU UID
+    case 0xc3:
+      (void)memcpy(resp, ((uint8_t *)UID_BASE), 12);
+      resp_len = 12;
+      break;
+    // **** 0xd0: fetch serial (aka the provisioned dongle ID)
     case 0xd0:
       // addresses are OTP
       if (req->param1 == 1U) {
@@ -419,13 +439,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         }
       }
       break;
-    // **** 0xf5: set clock source mode
-    case 0xf5:
-      current_board->set_clock_source_mode(req->param1);
-      break;
     // **** 0xf6: set siren enabled
     case 0xf6:
       siren_enabled = (req->param1 != 0U);
+      break;
+    // **** 0xf7: set green led enabled
+    case 0xf7:
+      green_led_enabled = (req->param1 != 0U);
       break;
     // **** 0xf8: disable heartbeat checks
     case 0xf8:

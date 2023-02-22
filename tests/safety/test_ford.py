@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import numpy as np
 import unittest
 
 import panda.tests.safety.common as common
@@ -80,9 +81,13 @@ class TestFordSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("Lane_Assist_Data1", 0, values)
 
   # TJA command
-  def _tja_command_msg(self, enabled: bool):
+  def _tja_command_msg(self, enabled: bool, path_offset: float, path_angle: float, curvature: float, curvature_rate: float):
     values = {
       "LatCtl_D_Rq": 1 if enabled else 0,
+      "LatCtlPathOffst_L_Actl": path_offset,     # Path offset [-5.12|5.11] meter
+      "LatCtlPath_An_Actl": path_angle,          # Path angle [-0.5|0.5235] radians
+      "LatCtlCurv_NoRate_Actl": curvature_rate,  # Curvature rate [-0.001024|0.00102375] 1/meter^2
+      "LatCtlCurv_No_Actl": curvature,           # Curvature [-0.02|0.02094] 1/meter
     }
     return self.packer.make_can_msg_panda("LateralMotionControl", 0, values)
 
@@ -96,13 +101,23 @@ class TestFordSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("Steering_Data_FD1", bus, values)
 
   def test_steer_allowed(self):
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._tja_command_msg(1)))
-    self.assertTrue(self.safety.get_controls_allowed())
+    path_offsets = np.arange(-5.12, 5.11, 1).round()
+    path_angles = np.arange(-0.5, 0.5235, 0.1).round(1)
+    curvature_rates = np.arange(-0.001024, 0.00102375, 0.001).round(3)
+    curvatures = np.arange(-0.02, 0.02094, 0.01).round(2)
 
-    self.safety.set_controls_allowed(0)
-    self.assertFalse(self._tx(self._tja_command_msg(1)))
-    self.assertFalse(self.safety.get_controls_allowed())
+    for controls_allowed in (True, False):
+      for steer_control_enabled in (True, False):
+        for path_offset in path_offsets:
+          for path_angle in path_angles:
+            for curvature_rate in curvature_rates:
+              for curvature in curvatures:
+                self.safety.set_controls_allowed(controls_allowed)
+                enabled = steer_control_enabled or curvature != 0
+
+                should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
+                should_tx = should_tx and (not enabled or controls_allowed)
+                self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, path_offset, path_angle, curvature, curvature_rate)))
 
   def test_prevent_lkas_action(self):
     self.safety.set_controls_allowed(1)
