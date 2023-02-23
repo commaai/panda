@@ -612,6 +612,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
   if (controls_allowed && steer_control_enabled) {
     // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
     // add 1 to not false trigger the violation
+//    bool steer_up = apply_angle_last * apply_angle > 0. and abs(apply_angle) > abs(apply_angle_last);
     int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed) * limits.angle_deg_to_can) + 1.;
     int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed) * limits.angle_deg_to_can) + 1.;
 
@@ -625,9 +626,9 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
 
   // Angle should be the same as current angle while not steering
   if (!limits.angle_disable_near_angle_check) {
-    violation |= (!controls_allowed &&
-                    ((desired_angle < (angle_meas.min - 1)) ||
-                    (desired_angle > (angle_meas.max + 1))));
+//    violation |= (!controls_allowed &&
+//                    ((desired_angle < (angle_meas.min - 1)) ||
+//                    (desired_angle > (angle_meas.max + 1))));
   }
 
   // No angle control allowed when controls are not allowed
