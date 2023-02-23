@@ -82,6 +82,11 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
         vehicle_moving = ABS(vehicle_speed) > 0.1;
       }
 
+//      if (addr == 341) {
+//        vehicle_speed = ((GET_BYTE(to_push, 5) << 8) | GET_BYTE(to_push, 6)) * 0.00999999978 / 3.6;
+//        vehicle_moving = vehicle_speed >= 0.1;
+//      }
+
       if(addr == (tesla_powertrain ? 0x106 : 0x108)) {
         // Gas pressed
         gas_pressed = (GET_BYTE(to_push, 6) != 0U);

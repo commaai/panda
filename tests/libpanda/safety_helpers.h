@@ -75,6 +75,10 @@ bool get_vehicle_moving(void){
   return vehicle_moving;
 }
 
+float get_vehicle_speed(void){
+  return vehicle_speed;
+}
+
 bool get_acc_main_on(void){
   return acc_main_on;
 }
@@ -123,6 +127,10 @@ void set_desired_torque_last(int t){
 
 void set_desired_angle_last(int t){
   desired_angle_last = t;
+}
+
+int get_desired_angle_last(void){
+  return desired_angle_last;
 }
 
 
