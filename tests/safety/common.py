@@ -521,7 +521,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     max_delta_up = np.interp(self.safety.get_vehicle_speed(), self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
     max_delta_down = np.interp(self.safety.get_vehicle_speed(), self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
 
-    for angle in np.linspace(-10, 10, 2001).round(3):
+    for angle in np.linspace(-10, 10, 20001).round(3):
       # Set previous desired angle with CAN message to avoid rounding errors
       self._tx(self._angle_cmd_msg(angle, True))
 
