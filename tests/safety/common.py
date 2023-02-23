@@ -4,6 +4,7 @@ import unittest
 import importlib
 import numpy as np
 from typing import Optional, List, Dict
+from tqdm import tqdm
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
@@ -516,40 +517,41 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
   def test_limits_last_bp(self):
     speed = 50
-    self.safety.set_controls_allowed(True)
-    self._rx(self._speed_msg(speed))  # pylint: disable=no-member
-    max_delta_up = np.interp(self.safety.get_vehicle_speed(), self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
-    max_delta_down = np.interp(self.safety.get_vehicle_speed(), self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
+    for speed in tqdm(np.linspace(0, 30, 3001)):
+      self.safety.set_controls_allowed(True)
+      self._rx(self._speed_msg(speed + 1))  # pylint: disable=no-member
+      max_delta_up = np.interp(self.safety.get_vehicle_speed(), self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
+      max_delta_down = np.interp(self.safety.get_vehicle_speed(), self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
 
-    for angle in np.linspace(-10, 10, 20001).round(3):
-      # Set previous desired angle with CAN message to avoid rounding errors
-      self._tx(self._angle_cmd_msg(angle, True))
+      for angle in np.linspace(-10, 10, 1001):#.round(3):
+        # Set previous desired angle with CAN message to avoid rounding errors
+        self._tx(self._angle_cmd_msg(angle, True))
 
-      # Allow max delta up
-      # print(angle, angle + sign_of(angle) * max_delta_up)
-      desired_angle = apply_std_steer_angle_limits(angle - 100, angle, max_delta_up, max_delta_down)
-      print('set angle: {}, in safety: {}, sending angle: {}'.format(angle, self.safety.get_desired_angle_last(), desired_angle))
-      # print('prev_desired_angle: {}'.format(self.safety.get_desired_angle_last()))
-      tx = self._tx(self._angle_cmd_msg(desired_angle, True))
-      debug_values = self.safety.get_debug_value(), self.safety.get_debug_value_2()
-      if not tx:
-        print('debug value: {}, debug value 2: {}, desired_angle_last: {}'.format(*debug_values, self.safety.get_desired_angle_last()))
-        # print('prev angle: {}, limited desired angle: {}'.format(angle, desired_angle))
-      self.assertTrue(tx)
+        # Allow max delta up
+        # print(angle, angle + sign_of(angle) * max_delta_up)
+        desired_angle = apply_std_steer_angle_limits(angle - 100, angle, max_delta_up, max_delta_down)
+        # print('set angle: {}, in safety: {}, sending angle: {}'.format(angle, self.safety.get_desired_angle_last(), desired_angle))
+        # print('prev_desired_angle: {}'.format(self.safety.get_desired_angle_last()))
+        tx = self._tx(self._angle_cmd_msg(desired_angle, True))
+        debug_values = self.safety.get_debug_value(), self.safety.get_debug_value_2()
+        if not tx:
+          print('debug value: {}, debug value 2: {}, desired_angle_last: {}'.format(*debug_values, self.safety.get_desired_angle_last()))
+          # print('prev angle: {}, limited desired angle: {}'.format(angle, desired_angle))
+        self.assertTrue(tx)
 
-      print()
-      # # Allow negative max delta up
-      # desired_angle = apply_std_steer_angle_limits(angle - max_delta_up, angle, max_delta_up, max_delta_down)
-      # print('prev_desired_angle: {}'.format(self.safety.get_desired_angle_last()))
-      # tx = self._tx(self._angle_cmd_msg(desired_angle, True))
-      # self.assertTrue(tx)
+        # print()
+        # # Allow negative max delta up
+        # desired_angle = apply_std_steer_angle_limits(angle - max_delta_up, angle, max_delta_up, max_delta_down)
+        # print('prev_desired_angle: {}'.format(self.safety.get_desired_angle_last()))
+        # tx = self._tx(self._angle_cmd_msg(desired_angle, True))
+        # self.assertTrue(tx)
 
 
-      # desired_angle = apply_std_steer_angle_limits(angle + max_delta_down, angle, max_delta_up, max_delta_down)
-      # tx = self._tx(self._angle_cmd_msg(desired_angle, True))
-      # self.assertFalse(tx)
+        # desired_angle = apply_std_steer_angle_limits(angle + max_delta_down, angle, max_delta_up, max_delta_down)
+        # tx = self._tx(self._angle_cmd_msg(desired_angle, True))
+        # self.assertFalse(tx)
 
-    print(max_delta_up, max_delta_down)
+      # print(max_delta_up, max_delta_down)
 
   # TODO: kinda works
   # def test_non_realtime_limit_up(self):
