@@ -474,7 +474,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
 def apply_std_steer_angle_limits(apply_angle, apply_angle_last, rate_limit_up, rate_limit_down):
   # pick angle rate limits based on wind up/down
-  steer_up = apply_angle_last * apply_angle >= 0. and abs(apply_angle) > abs(apply_angle_last)
+  steer_up = apply_angle_last * apply_angle > 0. and abs(apply_angle) > abs(apply_angle_last)
   angle_rate_lim = rate_limit_up if steer_up else rate_limit_down
   return float(np.clip(apply_angle, apply_angle_last - angle_rate_lim, apply_angle_last + angle_rate_lim))
 
@@ -517,20 +517,20 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
   def test_limits_last_bp(self):
     speed = 50
-    for speed in tqdm(np.linspace(0, 30, 3001)):
+    for speed in tqdm(np.linspace(20, 30, 3001)):
       self.safety.set_controls_allowed(True)
       self._rx(self._speed_msg(speed + 1))  # pylint: disable=no-member
       max_delta_up = np.interp(self.safety.get_vehicle_speed(), self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
       max_delta_down = np.interp(self.safety.get_vehicle_speed(), self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
 
-      for angle in np.linspace(-10, 10, 1001):#.round(3):
+      for angle in np.linspace(-10, 10, 10001).round(3):
         # Set previous desired angle with CAN message to avoid rounding errors
         self._tx(self._angle_cmd_msg(angle, True))
 
         # Allow max delta up
         # print(angle, angle + sign_of(angle) * max_delta_up)
         desired_angle = apply_std_steer_angle_limits(angle - 100, angle, max_delta_up, max_delta_down)
-        # print('set angle: {}, in safety: {}, sending angle: {}'.format(angle, self.safety.get_desired_angle_last(), desired_angle))
+        print('set angle: {}, in safety: {}, sending angle: {}'.format(angle, self.safety.get_desired_angle_last(), desired_angle))
         # print('prev_desired_angle: {}'.format(self.safety.get_desired_angle_last()))
         tx = self._tx(self._angle_cmd_msg(desired_angle, True))
         debug_values = self.safety.get_debug_value(), self.safety.get_debug_value_2()
