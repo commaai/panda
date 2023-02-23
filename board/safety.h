@@ -613,7 +613,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
     // add 1 to not false trigger the violation. also fudge the speed by 1 m/s so rate limits are
     // always slightly above openpilot's in case we read an updated speed in between angle commands
-    // TODO: this speed fudge can be much lower, look at data to determine the lowest offset
+    // TODO: this speed fudge can be much lower, look at data to determine the lowest reasonable offset
     int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed + 1.) * limits.angle_deg_to_can) + 1.;
     int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed + 1.) * limits.angle_deg_to_can) + 1.;
 
