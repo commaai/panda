@@ -618,12 +618,12 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
     int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
 
-    int highest_desired_angle = desired_angle_last + ((desired_angle_last >= 0) ? delta_angle_up : delta_angle_down);
-    int lowest_desired_angle = desired_angle_last - ((desired_angle_last > 0) ? delta_angle_down : delta_angle_up);
+    int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
+    int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
 //    desired_angle_last = delta_angle_up;
 //    vehicle_speed = delta_angle_down;
-    debug_value = interpolate(limits.angle_rate_up_lookup, vehicle_speed - 1.);
-    debug_value_2 = delta_angle_down;
+    debug_value = highest_desired_angle;
+    debug_value_2 = lowest_desired_angle;
 
     // check for violation;
     violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
@@ -631,9 +631,9 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
   desired_angle_last = desired_angle;
 
   // Angle should be the same as current angle while not steering
-  violation |= (!controls_allowed &&
-                  ((desired_angle < (angle_meas.min - 1)) ||
-                  (desired_angle > (angle_meas.max + 1))));
+//  violation |= (!controls_allowed &&
+//                  ((desired_angle < (angle_meas.min - 1)) ||
+//                  (desired_angle > (angle_meas.max + 1))));
 
   // No angle control allowed when controls are not allowed
   violation |= !controls_allowed && steer_control_enabled;

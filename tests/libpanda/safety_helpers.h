@@ -138,7 +138,7 @@ float get_debug_value(void){
 }
 
 float get_debug_value_2(void){
-  return debug_value;
+  return debug_value_2;
 }
 
 
