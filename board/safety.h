@@ -330,6 +330,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   rt_torque_last = 0;
   ts_angle_last = 0;
   desired_angle_last = 0;
+  debug_value = 0;
   ts_torque_check_last = 0;
   ts_steer_req_mismatch_last = 0;
   valid_steer_req_count = 0;
@@ -621,6 +622,8 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     int lowest_desired_angle = desired_angle_last - ((desired_angle_last > 0) ? delta_angle_down : delta_angle_up);
 //    desired_angle_last = delta_angle_up;
 //    vehicle_speed = delta_angle_down;
+    debug_value = interpolate(limits.angle_rate_up_lookup, vehicle_speed - 1.);
+    debug_value_2 = delta_angle_down;
 
     // check for violation;
     violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
