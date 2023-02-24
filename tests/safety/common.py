@@ -3,7 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional, Union
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
@@ -564,7 +564,8 @@ class PandaSafetyTest(PandaSafetyTestBase):
                    *range(0x18DB00F1, 0x18DC00F1, 0x100),   # 29-bit UDS functional addressing
                    *range(0x3300, 0x3400),                  # Honda
                    0x10400060, 0x104c006c]                  # GMLAN (exceptions, range/format unclear)
-  STANDSTILL_THRESHOLD: Optional[float] = None
+  # False if safety mode uses a bit for vehicle_moving
+  STANDSTILL_THRESHOLD: Optional[Union[float, bool]] = None
   GAS_PRESSED_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR: Optional[int] = None
   RELAY_MALFUNCTION_BUS: Optional[int] = None
@@ -587,6 +588,10 @@ class PandaSafetyTest(PandaSafetyTestBase):
   @abc.abstractmethod
   def _speed_msg(self, speed):
     pass
+
+  @abc.abstractmethod
+  def _vehicle_moving_msg(self, speed: float):
+    return self._speed_msg(speed)
 
   @abc.abstractmethod
   def _user_gas_msg(self, gas):
@@ -711,7 +716,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
       _user_brake_msg = self._user_brake_msg
 
     # Brake was already pressed
-    self._rx(self._speed_msg(0))
+    self._rx(self._vehicle_moving_msg(0))
     self._rx(_user_brake_msg(1))
     self.safety.set_controls_allowed(1)
     self._rx(_user_brake_msg(1))
@@ -733,30 +738,49 @@ class PandaSafetyTest(PandaSafetyTestBase):
     # Brake was already pressed
     self._rx(_user_brake_msg(1))
     self.safety.set_controls_allowed(1)
-    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
+    self._rx(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD))
     self._rx(_user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
-    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
+    self._rx(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD + 1))
     self._rx(_user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
-    self._rx(self._speed_msg(0))
+    self._rx(self._vehicle_moving_msg(0))
 
-  def test_sample_speed(self):
+  def test_vehicle_moving(self):
     self.assertFalse(self.safety.get_vehicle_moving())
 
     # not moving
-    self.safety.safety_rx_hook(self._speed_msg(0))
+    self.safety.safety_rx_hook(self._vehicle_moving_msg(0))
     self.assertFalse(self.safety.get_vehicle_moving())
 
     # speed is at threshold
-    self.safety.safety_rx_hook(self._speed_msg(self.STANDSTILL_THRESHOLD))
+    self.safety.safety_rx_hook(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD))
     self.assertFalse(self.safety.get_vehicle_moving())
 
     # past threshold
-    self.safety.safety_rx_hook(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
+    self.safety.safety_rx_hook(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD + 1))
     self.assertTrue(self.safety.get_vehicle_moving())
+
+  # def test_vehicle_moving(self):
+  #   self.assertFalse(self.safety.get_vehicle_moving())
+  #
+  #   # not moving
+  #   self._rx(self._vehicle_moving_msg(False))
+  #   self.assertFalse(self.safety.get_vehicle_moving())
+  #
+  #   if self.STANDSTILL_THRESHOLD is False:
+  #     self._rx(self._vehicle_moving_msg(True))
+  #     self.assertTrue(self.safety.get_vehicle_moving())
+  #   else:
+  #     # speed is at threshold
+  #     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
+  #     self.assertFalse(self.safety.get_vehicle_moving())
+  #
+  #     # past threshold
+  #     self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
+  #     self.assertTrue(self.safety.get_vehicle_moving())
 
   def test_tx_hook_on_wrong_safety_mode(self):
     files = os.listdir(os.path.dirname(os.path.realpath(__file__)))

@@ -102,6 +102,9 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     values = {"%sWheelSpd" % s: speed for s in ["RL", "RR"]}
     return self.packer.make_can_msg_panda("EBCMWheelSpdRear", 0, values)
 
+  def _vehicle_moving_msg(self, vehicle_moving: bool):
+    return self._speed_msg(int(vehicle_moving))
+
   def _user_brake_msg(self, brake):
     # GM safety has a brake threshold of 8
     values = {"BrakePedalPos": 8 if brake else 0}

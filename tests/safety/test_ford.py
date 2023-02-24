@@ -57,6 +57,10 @@ class TestFordSafety(common.PandaSafetyTest):
     values = {"VehStop_D_Stat": 1 if speed <= self.STANDSTILL_THRESHOLD else 0}
     return self.packer.make_can_msg_panda("DesiredTorqBrk", 0, values)
 
+  def _vehicle_moving_msg(self, speed: float):
+    values = {"VehStop_D_Stat": 1 if speed <= self.STANDSTILL_THRESHOLD else 0}
+    return self.packer.make_can_msg_panda("DesiredTorqBrk", 0, values)
+
   # Drive throttle input
   def _user_gas_msg(self, gas: float):
     values = {"ApedPos_Pc_ActlArb": gas}
