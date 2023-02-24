@@ -330,8 +330,6 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   rt_torque_last = 0;
   ts_angle_last = 0;
   desired_angle_last = 0;
-  debug_value = 0;
-  debug_value_2 = 0;
   ts_torque_check_last = 0;
   ts_steer_req_mismatch_last = 0;
   valid_steer_req_count = 0;
@@ -621,8 +619,6 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
 
     int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
     int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
-    debug_value = highest_desired_angle;
-    debug_value_2 = lowest_desired_angle;
 
     // check for violation;
     violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
@@ -631,9 +627,9 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
 
   // Angle should be the same as current angle while not steering
   if (!limits.angle_disable_near_angle_check) {
-//    violation |= (!controls_allowed &&
-//                    ((desired_angle < (angle_meas.min - 1)) ||
-//                    (desired_angle > (angle_meas.max + 1))));
+    violation |= (!controls_allowed &&
+                    ((desired_angle < (angle_meas.min - 1)) ||
+                    (desired_angle > (angle_meas.max + 1))));
   }
 
   // No angle control allowed when controls are not allowed

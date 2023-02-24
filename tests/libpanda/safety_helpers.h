@@ -125,18 +125,6 @@ void set_desired_angle_last(int t){
   desired_angle_last = t;
 }
 
-int get_desired_angle_last(void){
-  return desired_angle_last;
-}
-
-float get_debug_value(void){
-  return debug_value;
-}
-
-float get_debug_value_2(void){
-  return debug_value_2;
-}
-
 
 // ***** car specific helpers *****
 
