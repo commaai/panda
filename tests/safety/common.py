@@ -543,13 +543,13 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
         if self.safety.get_desired_angle_last != 0:
           self._tx(self._angle_cmd_msg(angle, True))
           print('set angle: {}, angle in can: {}'.format(angle, self.safety.get_desired_angle_last()))
-          desired_angle = apply_std_steer_angle_limits(angle + 100, angle, max(max_delta_up * 2, 1), max(max_delta_down * 2, 1))
+          desired_angle = apply_std_steer_angle_limits(angle + 100, angle, max(max_delta_up * 1.5, 1), max(max_delta_down * 1.5, 1))
           tx = self._tx(self._angle_cmd_msg(desired_angle, True))
           self.assertFalse(tx, (speed, angle, desired_angle, self.safety.get_desired_angle_last(), self.safety.get_debug_value(), self.safety.get_debug_value_2()))
 
           self._tx(self._angle_cmd_msg(angle, True))
           # print('desired should be 0', self.safety.get_desired_angle_last())
-          desired_angle = apply_std_steer_angle_limits(angle - 100, angle, max(max_delta_up * 2, 1), max(max_delta_up * 2, 1))
+          desired_angle = apply_std_steer_angle_limits(angle - 100, angle, max(max_delta_up * 1.5, 1), max(max_delta_up * 1.5, 1))
           tx = self._tx(self._angle_cmd_msg(desired_angle, True))
           self.assertFalse(tx, (speed, angle, desired_angle, self.safety.get_desired_angle_last(), self.safety.get_debug_value(), self.safety.get_debug_value_2()))
         #   self._tx(self._angle_cmd_msg(angle, True))
