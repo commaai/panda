@@ -508,7 +508,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
     speeds = [0., 1., 5., 10., 15., 50.]
-    angles = np.linspace(0, self.HIGH_ANGLE, 11)
+    angles = np.linspace(0, self.HIGH_ANGLE, 1001)
     for a in angles:
       for s in speeds:
         max_delta_up = np.interp(s, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
@@ -549,9 +549,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        print(s, a, max_delta_down, a - sign_of(a) * (max_delta_down), a - sign_of(a) * (max_delta_down + self.ANGLE_RATE_VIOLATION_OFFSET))
-        desired_angle = a - sign_of(a) * (max_delta_down + self.ANGLE_RATE_VIOLATION_OFFSET)
-        self.assertFalse(self._tx(self._angle_cmd_msg(desired_angle, True)), (s, a, desired_angle, self.safety.get_desired_angle_last(), self.safety.get_debug_value(), self.safety.get_debug_value_2()))
+        self.assertFalse(self._tx(self._angle_cmd_msg(a - sign_of(a) * (max_delta_down + self.ANGLE_RATE_VIOLATION_OFFSET), True)))
 
         # Check desired steer should be the same as steer angle when controls are off
         if not self.DISABLE_NEAR_ANGLE_CHECK:
