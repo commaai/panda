@@ -64,6 +64,11 @@ class TestFordSafety(common.PandaSafetyTest, common.CurvatureSteeringSafetyTest)
     }
     return self.packer.make_can_msg_panda("EngBrakeData", 0, values)
 
+  # Vehicle speed
+  def _speed_msg_2(self, speed: float):
+    values = {"Veh_V_ActlBrk": speed * 3.6}
+    return self.packer.make_can_msg_panda("BrakeSysFeatures", 0, values)
+
   # Standstill state
   def _speed_msg(self, speed: float):
     values = {"VehStop_D_Stat": 1 if speed <= self.STANDSTILL_THRESHOLD else 0}

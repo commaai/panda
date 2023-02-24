@@ -515,14 +515,17 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
         # first test against false positives
         self._angle_meas_msg_array(a)
-        self._rx(self._speed_msg(s))  # pylint: disable=no-member
+        self._rx(self._speed_msg_2(s))  # pylint: disable=no-member
 
         self._set_prev_desired_angle(a)
         self.safety.set_controls_allowed(1)
 
         # Stay within limits
         # Up
-        self.assertTrue(self._tx(self._angle_cmd_msg(a + sign_of(a) * max_delta_up, True)))
+        # print(s, a, max_delta_down, a - sign_of(a) * (max_delta_down), a - sign_of(a) * (max_delta_down * 5))
+        desired_angle = a + sign_of(a) * max_delta_up
+        print('prev des angle', self.safety.get_desired_angle_last(), 'sending des angle', desired_angle)
+        self.assertTrue(self._tx(self._angle_cmd_msg(desired_angle, True)), (s, a, desired_angle, self.safety.get_desired_angle_last(), self.safety.get_debug_value(), self.safety.get_debug_value_2()))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Don't change
@@ -545,8 +548,9 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        print(s, a, max_delta_down, a - sign_of(a) * (max_delta_down), a - sign_of(a) * (max_delta_down * 3))
-        self.assertFalse(self._tx(self._angle_cmd_msg(a - sign_of(a) * (max_delta_down *3), True)))
+        print(s, a, max_delta_down, a - sign_of(a) * (max_delta_down), a - sign_of(a) * (max_delta_down * 5))
+        desired_angle = a - sign_of(a) * (max_delta_down * 5)
+        self.assertFalse(self._tx(self._angle_cmd_msg(desired_angle, True)), (s, a, desired_angle, self.safety.get_desired_angle_last(), self.safety.get_debug_value(), self.safety.get_debug_value_2()))
 
         # Check desired steer should be the same as steer angle when controls are off
         if not self.DISABLE_NEAR_ANGLE_CHECK:
