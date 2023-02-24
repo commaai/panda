@@ -37,7 +37,8 @@ class TestFordSafety(common.PandaSafetyTest, common.CurvatureSteeringSafetyTest)
 
   # Curvature control limits
   DEG_TO_CAN = 50000  # 1 / (2e-5) rad to can
-  MAX_ANGLE: float = 0.01  # under 0.2 signal limit for avoiding overflow in tests
+  HIGH_ANGLE = 0.01  # -0.02 to 0.02094
+  ANGLE_RATE_VIOLATION_OFFSET = 0.001
 
   ANGLE_DELTA_BP = [5., 15., 25.]
   ANGLE_DELTA_V = [0.004, 0.00044, 0.00016]  # windup limit

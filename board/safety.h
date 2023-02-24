@@ -622,7 +622,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
     int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
 
-    debug_value = vehicle_speed;
+    debug_value = interpolate(limits.angle_rate_up_lookup, vehicle_speed - 1.);
     debug_value_2 = interpolate(limits.angle_rate_down_lookup, vehicle_speed - 1.);
 
     // check for violation;
