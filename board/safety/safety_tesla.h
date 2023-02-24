@@ -133,7 +133,9 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
     // Steering control: (0.1 * val) - 1638.35 in deg.
     // We use 1/10 deg as a unit here
     int raw_angle_can = (((GET_BYTE(to_send, 0) & 0x7FU) << 8) | GET_BYTE(to_send, 1));
+//    desired_angle_last = raw_angle_can;
     int desired_angle = raw_angle_can - 16384;
+//    debug_value = desired_angle;
     int steer_control_type = GET_BYTE(to_send, 2) >> 6;
     bool steer_control_enabled = (steer_control_type != 0) &&  // NONE
                                  (steer_control_type != 3);    // DISABLED

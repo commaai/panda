@@ -3,7 +3,9 @@ import abc
 import unittest
 import importlib
 import numpy as np
+from tqdm import tqdm
 from typing import Optional, List, Dict
+from decimal import Decimal, ROUND_HALF_UP
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
@@ -471,6 +473,17 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
 
+def apply_std_steer_angle_limits(apply_angle, apply_angle_last, rate_limit_up, rate_limit_down):
+  # pick angle rate limits based on wind up/down
+  steer_up = apply_angle_last * apply_angle >= 0. and abs(apply_angle) > abs(apply_angle_last)
+  angle_rate_lim = rate_limit_up if steer_up else rate_limit_down
+  return float(np.clip(apply_angle, apply_angle_last - angle_rate_lim, apply_angle_last + angle_rate_lim))
+
+
+def round_2(i):
+  return int(Decimal(i).to_integral_value(rounding=ROUND_HALF_UP))
+
+
 class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
   DEG_TO_CAN: int
@@ -502,6 +515,53 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
   def _angle_meas_msg_array(self, angle):
     for _ in range(6):
       self._rx(self._angle_meas_msg(angle))
+
+  def test_non_realtime_limits(self):
+    self.safety.set_controls_allowed(True)
+    for speed in tqdm(np.linspace(20, 30, 3001)):
+      self._rx(self._speed_msg(speed + 1))  # pylint: disable=no-member
+      # max_delta_up = np.interp(self.safety.get_vehicle_speed(), self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
+      max_delta_up = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
+      # max_delta_down = np.interp(self.safety.get_vehicle_speed(), self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
+      max_delta_down = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
+
+      for angle in np.linspace(-10, 10, 10001):
+        # Set previous desired angle with CAN message to avoid rounding errors
+        self._tx(self._angle_cmd_msg(angle, True))
+
+        desired_angle = apply_std_steer_angle_limits(angle - 100, angle, max_delta_up, max_delta_down)
+        tx = self._tx(self._angle_cmd_msg(desired_angle, True))
+        self.assertTrue(tx, (speed, angle, desired_angle))
+
+        self._tx(self._angle_cmd_msg(angle, True))
+        desired_angle = apply_std_steer_angle_limits(angle + 100, angle, max_delta_up, max_delta_down)
+        tx = self._tx(self._angle_cmd_msg(desired_angle, True))
+        self.assertTrue(tx)
+
+        # else:
+        self._tx(self._angle_cmd_msg(angle, True))
+        if self.safety.get_desired_angle_last != 0:
+          self._tx(self._angle_cmd_msg(angle, True))
+          print('set angle: {}, angle in can: {}'.format(angle, self.safety.get_desired_angle_last()))
+          desired_angle = apply_std_steer_angle_limits(angle + 100, angle, max(max_delta_up * 2, 1), max(max_delta_down * 2, 1))
+          tx = self._tx(self._angle_cmd_msg(desired_angle, True))
+          self.assertFalse(tx, (speed, angle, desired_angle, self.safety.get_desired_angle_last(), self.safety.get_debug_value(), self.safety.get_debug_value_2()))
+
+          self._tx(self._angle_cmd_msg(angle, True))
+          # print('desired should be 0', self.safety.get_desired_angle_last())
+          desired_angle = apply_std_steer_angle_limits(angle - 100, angle, max(max_delta_up * 2, 1), max(max_delta_up * 2, 1))
+          tx = self._tx(self._angle_cmd_msg(desired_angle, True))
+          self.assertFalse(tx, (speed, angle, desired_angle, self.safety.get_desired_angle_last(), self.safety.get_debug_value(), self.safety.get_debug_value_2()))
+        #   self._tx(self._angle_cmd_msg(angle, True))
+        #   desired_angle = apply_std_steer_angle_limits(angle - 100, angle, max_delta_up * 2, max_delta_down * 2)
+        #   tx = self._tx(self._angle_cmd_msg(desired_angle, True))
+        #   self.assertFalse(tx)
+        # elif angle < 0:
+        #   self._tx(self._angle_cmd_msg(angle, True))
+        #   desired_angle = apply_std_steer_angle_limits(angle - 100, angle, max_delta_up, max_delta_down + 1)
+        #   tx = self._tx(self._angle_cmd_msg(desired_angle, True))
+        #   self.assertFalse(tx, (speed, angle, desired_angle))
+
 
   def test_non_realtime_limit_up(self):
     speeds = [0., 1., 5., 10., 15., 50.]  # TODO: use linspace
