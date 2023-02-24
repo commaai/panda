@@ -3,7 +3,6 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from tqdm import tqdm
 from typing import Dict, List, Optional
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
