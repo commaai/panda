@@ -3,7 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
@@ -588,6 +588,10 @@ class PandaSafetyTest(PandaSafetyTestBase):
   def _speed_msg(self, speed):
     pass
 
+  # Safety modes can override if vehicle_moving is driven by a different message
+  def _vehicle_moving_msg(self, speed: float):
+    return self._speed_msg(speed)
+
   @abc.abstractmethod
   def _user_gas_msg(self, gas):
     pass
@@ -711,7 +715,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
       _user_brake_msg = self._user_brake_msg
 
     # Brake was already pressed
-    self._rx(self._speed_msg(0))
+    self._rx(self._vehicle_moving_msg(0))
     self._rx(_user_brake_msg(1))
     self.safety.set_controls_allowed(1)
     self._rx(_user_brake_msg(1))
@@ -733,29 +737,29 @@ class PandaSafetyTest(PandaSafetyTestBase):
     # Brake was already pressed
     self._rx(_user_brake_msg(1))
     self.safety.set_controls_allowed(1)
-    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD))
+    self._rx(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD))
     self._rx(_user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())
-    self._rx(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
+    self._rx(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD + 1))
     self._rx(_user_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.get_longitudinal_allowed())
-    self._rx(self._speed_msg(0))
+    self._rx(self._vehicle_moving_msg(0))
 
-  def test_sample_speed(self):
+  def test_vehicle_moving(self):
     self.assertFalse(self.safety.get_vehicle_moving())
 
     # not moving
-    self.safety.safety_rx_hook(self._speed_msg(0))
+    self.safety.safety_rx_hook(self._vehicle_moving_msg(0))
     self.assertFalse(self.safety.get_vehicle_moving())
 
     # speed is at threshold
-    self.safety.safety_rx_hook(self._speed_msg(self.STANDSTILL_THRESHOLD))
+    self.safety.safety_rx_hook(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD))
     self.assertFalse(self.safety.get_vehicle_moving())
 
     # past threshold
-    self.safety.safety_rx_hook(self._speed_msg(self.STANDSTILL_THRESHOLD + 1))
+    self.safety.safety_rx_hook(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD + 1))
     self.assertTrue(self.safety.get_vehicle_moving())
 
   def test_tx_hook_on_wrong_safety_mode(self):
