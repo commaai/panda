@@ -60,14 +60,6 @@ void usb_outep3_resume_if_paused(void);
 #define  STRING_OFFSET_ICONFIGURATION                   0x04
 #define  STRING_OFFSET_IINTERFACE                       0x05
 
-// WebUSB requests
-#define  WEBUSB_REQ_GET_URL                             0x02
-
-// WebUSB types
-#define  WEBUSB_DESC_TYPE_URL                           0x03
-#define  WEBUSB_URL_SCHEME_HTTPS                        0x01
-#define  WEBUSB_URL_SCHEME_HTTP                         0x00
-
 // WinUSB requests
 #define  WINUSB_REQ_GET_COMPATID_DESCRIPTOR             0x04
 #define  WINUSB_REQ_GET_EXT_PROPS_OS                    0x05
@@ -241,74 +233,6 @@ uint8_t winusb_ext_prop_os_desc[] = {
   'D',0, 'e',0, 'v',0, 'i',0, 'c',0, 'e',0, 'I',0, 'n',0, 't',0, 'e',0, 'r',0, 'f',0, 'a',0, 'c',0, 'e',0, 'G',0, 'U',0, 'I',0, 'D',0, 0, 0, // bPropertyName (DeviceInterfaceGUID)
   0x4e, 0x00, 0x00, 0x00, // dwPropertyDataLength
   '{',0, 'c',0, 'c',0, 'e',0, '5',0, '2',0, '9',0, '1',0, 'c',0, '-',0, 'a',0, '6',0, '9',0, 'f',0, '-',0, '4',0 ,'9',0 ,'9',0 ,'5',0 ,'-',0, 'a',0, '4',0, 'c',0, '2',0, '-',0, '2',0, 'a',0, 'e',0, '5',0, '7',0, 'a',0, '5',0, '1',0, 'a',0, 'd',0, 'e',0, '9',0, '}',0, 0, 0, // bPropertyData ({CCE5291C-A69F-4995-A4C2-2AE57A51ADE9})
-};
-
-/*
-Binary Object Store descriptor used to expose WebUSB (and more WinUSB) metadata
-comments are from the wicg spec
-References used:
-  https://wicg.github.io/webusb/#webusb-platform-capability-descriptor
-  https://github.com/sowbug/weblight/blob/192ad7a0e903542e2aa28c607d98254a12a6399d/firmware/webusb.c
-  https://os.mbed.com/users/larsgk/code/USBDevice_WebUSB/file/1d8a6665d607/WebUSBDevice/
-
-*/
-uint8_t binary_object_store_desc[] = {
-  // BOS header
-  BINARY_OBJECT_STORE_DESCRIPTOR_LENGTH, // bLength, this is only the length of the header
-  BINARY_OBJECT_STORE_DESCRIPTOR, // bDescriptorType
-  0x39, 0x00, // wTotalLength (LSB, MSB)
-  0x02, // bNumDeviceCaps (WebUSB + WinUSB)
-
-  // -------------------------------------------------
-  // WebUSB descriptor
-  // header
-    0x18, // bLength, Size of this descriptor. Must be set to 24.
-    0x10, // bDescriptorType, DEVICE CAPABILITY descriptor
-    0x05, // bDevCapabilityType, PLATFORM capability
-    0x00, // bReserved, This field is reserved and shall be set to zero.
-
-  // PlatformCapabilityUUID, Must be set to {3408b638-09a9-47a0-8bfd-a0768815b665}.
-    0x38, 0xB6, 0x08, 0x34,
-    0xA9, 0x09, 0xA0, 0x47,
-    0x8B, 0xFD, 0xA0, 0x76,
-    0x88, 0x15, 0xB6, 0x65,
-  // </PlatformCapabilityUUID>
-
-  0x00, 0x01, // bcdVersion, Protocol version supported. Must be set to 0x0100.
-  WEBUSB_VENDOR_CODE, // bVendorCode, bRequest value used for issuing WebUSB requests.
-  // there used to be a concept of "allowed origins", but it was removed from the spec
-  // it was intended to be a security feature, but then the entire security model relies on domain ownership
-  // https://github.com/WICG/webusb/issues/49
-  // other implementations use various other indexed to leverate this no-longer-valid feature. we wont.
-  // the spec says we *must* reply to index 0x03 with the url, so we'll hint that that's the right index
-  0x03, // iLandingPage, URL descriptor index of the device’s landing page.
-
-  // -------------------------------------------------
-  // WinUSB descriptor
-  // header
-    0x1C, // Descriptor size (28 bytes)
-    0x10, // Descriptor type (Device Capability)
-    0x05, // Capability type (Platform)
-    0x00, // Reserved
-
-  // MS OS 2.0 Platform Capability ID (D8DD60DF-4589-4CC7-9CD2-659D9E648A9F)
-  // Indicates the device supports the Microsoft OS 2.0 descriptor
-    0xDF, 0x60, 0xDD, 0xD8,
-    0x89, 0x45, 0xC7, 0x4C,
-    0x9C, 0xD2, 0x65, 0x9D,
-    0x9E, 0x64, 0x8A, 0x9F,
-
-  0x00, 0x00, 0x03, 0x06, // Windows version, currently set to 8.1 (0x06030000)
-
-  WINUSB_PLATFORM_DESCRIPTOR_LENGTH, 0x00, // MS OS 2.0 descriptor size (word)
-  MS_VENDOR_CODE, 0x00 // vendor code, no alternate enumeration
-};
-
-uint8_t webusb_url_descriptor[] = {
-  0x14,                  /* bLength */
-  WEBUSB_DESC_TYPE_URL, // bDescriptorType
-  WEBUSB_URL_SCHEME_HTTPS, // bScheme
-  'u', 's', 'b', 'p', 'a', 'n', 'd', 'a', '.', 'c', 'o', 'm', 'm', 'a', '.', 'a', 'i'
 };
 
 // WinUSB 2.0 descriptor. This is what modern systems use
@@ -576,10 +500,6 @@ void usb_setup(void) {
           }
           USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
           break;
-        case USB_DESC_TYPE_BINARY_OBJECT_STORE:
-          USB_WritePacket(binary_object_store_desc, MIN(sizeof(binary_object_store_desc), setup.b.wLength.w), 0);
-          USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
-          break;
         default:
           // nothing here?
           USB_WritePacket(0, 0, 0);
@@ -599,19 +519,6 @@ void usb_setup(void) {
       current_int0_alt_setting = setup.b.wValue.w;
       USB_WritePacket(0, 0, 0);
       USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
-      break;
-    case WEBUSB_VENDOR_CODE:
-      switch (setup.b.wIndex.w) {
-        case WEBUSB_REQ_GET_URL:
-          USB_WritePacket(webusb_url_descriptor, MIN(sizeof(webusb_url_descriptor), setup.b.wLength.w), 0);
-          USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
-          break;
-        default:
-          // probably asking for allowed origins, which was removed from the spec
-          USB_WritePacket(0, 0, 0);
-          USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
-          break;
-      }
       break;
     case MS_VENDOR_CODE:
       switch (setup.b.wIndex.w) {
