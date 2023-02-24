@@ -523,10 +523,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
         # Stay within limits
         # Up
-        # print(s, a, max_delta_down, a - sign_of(a) * (max_delta_down), a - sign_of(a) * (max_delta_down * 5))
-        desired_angle = a + sign_of(a) * max_delta_up
-        print('prev des angle', self.safety.get_desired_angle_last(), 'sending des angle', desired_angle)
-        self.assertTrue(self._tx(self._angle_cmd_msg(desired_angle, True)), (s, a, desired_angle, self.safety.get_desired_angle_last(), self.safety.get_debug_value(), self.safety.get_debug_value_2()))
+        self.assertTrue(self._tx(self._angle_cmd_msg(a + sign_of(a) * max_delta_up, True)))
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Don't change
