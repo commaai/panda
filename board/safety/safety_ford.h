@@ -65,11 +65,11 @@ static bool ford_lkas_msg_check(int addr) {
 // Curvature rate limits
 const SteeringLimits FORD_STEERING_LIMITS = {
   .angle_rate_up_lookup = {
-    {7., 17., 27.},
+    {5., 15., 25.},
     {0.005, 0.00056, 0.0002}
   },
   .angle_rate_down_lookup = {
-    {7., 17., 27.},
+    {5., 15., 25.},
     {0.008, 0.00089, 0.00032}
   },
 };
