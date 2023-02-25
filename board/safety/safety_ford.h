@@ -75,14 +75,14 @@ static uint32_t ford_compute_checksum(CANPacket_t *to_push) {
     chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // Veh_V_ActlBrk
     chksum += GET_BYTE(to_push, 2) >> 6;                    // VehVActlBrk_D_Qf
     chksum += (GET_BYTE(to_push, 2) >> 2) & 0xFU;           // VehVActlBrk_No_Cnt
-    chksum = 0xff - chksum;
+    chksum = 0xFFU - chksum;
   } else if (addr == MSG_Yaw_Data_FD1) {
     chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // VehRol_W_Actl
     chksum += GET_BYTE(to_push, 2) + GET_BYTE(to_push, 3);  // VehYaw_W_Actl
     chksum += GET_BYTE(to_push, 5);                         // VehRollYaw_No_Cnt
     chksum += GET_BYTE(to_push, 6) >> 6;                    // VehRolWActl_D_Qf
     chksum += (GET_BYTE(to_push, 6) >> 4) & 0x3U;           // VehYawWActl_D_Qf
-    chksum = 0xff - chksum;
+    chksum = 0xFFU - chksum;
   } else {
   }
 
