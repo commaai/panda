@@ -25,6 +25,10 @@ const CanMsg FORD_TX_MSGS[] = {
 #define FORD_TX_LEN (sizeof(FORD_TX_MSGS) / sizeof(FORD_TX_MSGS[0]))
 
 AddrCheckStruct ford_addr_checks[] = {
+  // TODO: check checksum
+  {.msg = {{MSG_BrakeSysFeatures, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_Yaw_Data_FD1, 0, 8, .check_checksum = false, .max_counter = 255U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  // These messages have no counter or checksum
   {.msg = {{MSG_EngBrakeData, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_EngVehicleSpThrottle, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_DesiredTorqBrk, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
@@ -33,6 +37,32 @@ AddrCheckStruct ford_addr_checks[] = {
 };
 #define FORD_ADDR_CHECK_LEN (sizeof(ford_addr_checks) / sizeof(ford_addr_checks[0]))
 addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
+
+static uint8_t ford_get_counter(CANPacket_t *to_push) {
+  int addr = GET_ADDR(to_push);
+
+  uint8_t cnt;
+  if (addr == MSG_BrakeSysFeatures) {
+    cnt = (GET_BYTE(to_push, 2) >> 2) & 0xFU;
+  } else if (addr == MSG_Yaw_Data_FD1) {
+    cnt = GET_BYTE(to_push, 5);
+  } else {
+    cnt = 0;
+  }
+  return cnt;
+}
+
+#define INACTIVE_CURVATURE 1000U
+#define INACTIVE_CURVATURE_RATE 4096U
+#define INACTIVE_PATH_OFFSET 512U
+#define INACTIVE_PATH_ANGLE 1000U
+
+static bool ford_lkas_msg_check(int addr) {
+  return (addr == MSG_ACCDATA_3)
+      || (addr == MSG_Lane_Assist_Data1)
+      || (addr == MSG_LateralMotionControl)
+      || (addr == MSG_IPMA_Data);
+}
 
 // Curvature rate limits
 const SteeringLimits FORD_STEERING_LIMITS = {
@@ -49,24 +79,12 @@ const SteeringLimits FORD_STEERING_LIMITS = {
 #define MAX_CURVATURE 1000U  // TODO: this
 #define MIN_CURVATURE 1000U
 
-#define INACTIVE_CURVATURE 1000U
-#define INACTIVE_CURVATURE_RATE 4096U
-#define INACTIVE_PATH_OFFSET 512U
-#define INACTIVE_PATH_ANGLE 1000U
-
-static bool ford_lkas_msg_check(int addr) {
-  return (addr == MSG_ACCDATA_3)
-      || (addr == MSG_Lane_Assist_Data1)
-      || (addr == MSG_LateralMotionControl)
-      || (addr == MSG_IPMA_Data);
-}
-
 struct sample_t ford_yaw_rate_meas;
 float ford_yaw_rate = 0;
 bool ford_yaw_rate_valid = false;
 
 static int ford_rx_hook(CANPacket_t *to_push) {
-  bool valid = addr_safety_check(to_push, &ford_rx_checks, NULL, NULL, NULL);
+  bool valid = addr_safety_check(to_push, &ford_rx_checks, NULL, NULL, ford_get_counter);
 
   if (valid && (GET_BUS(to_push) == FORD_MAIN_BUS)) {
     int addr = GET_ADDR(to_push);
@@ -80,7 +98,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     // Update vehicle speed
     if (addr == MSG_BrakeSysFeatures) {
       // Signal: Veh_V_ActlBrk
-      vehicle_speed = ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01;
+      vehicle_speed = ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6;
     }
 
     // Update vehicle yaw rate

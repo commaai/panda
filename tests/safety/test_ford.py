@@ -35,6 +35,8 @@ class TestFordSafety(common.PandaSafetyTest):
   FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl, MSG_IPMA_Data]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
+  cnt_speed = 0
+
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
     self.safety = libpanda_py.libpanda
@@ -52,8 +54,11 @@ class TestFordSafety(common.PandaSafetyTest):
     }
     return self.packer.make_can_msg_panda("EngBrakeData", 0, values)
 
+  # Vehicle speed
   def _speed_msg(self, speed: float):
-    pass
+    values = {"Veh_V_ActlBrk": speed * 3.6, "VehVActlBrk_No_Cnt": self.cnt_speed % 16}
+    self.__class__.cnt_speed += 1
+    return self.packer.make_can_msg_panda("BrakeSysFeatures", 0, values)
 
   # Standstill state
   def _vehicle_moving_msg(self, speed: float):
