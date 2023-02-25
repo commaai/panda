@@ -237,13 +237,11 @@ static int ford_tx_hook(CANPacket_t *to_send) {
       int delta_angle_up = (interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
       int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
 
-      if (vehicle_speed <= 12) {
-        ford_curvature_meas.min = desired_curvature;
-        ford_curvature_meas.max = desired_curvature;
-      }
-
+      // we allow max curvature error at low speeds due to the low rates imposed by the EPS,
+      // and inaccuracy of curvature from yaw rate
+      int current_curvature_delta_max = (vehicle_speed > 12) ? CURVATURE_DELTA_MAX : 1000;
       violation |= dist_to_meas_check(desired_curvature, desired_angle_last, &ford_curvature_meas,
-                                      delta_angle_up, delta_angle_down, CURVATURE_DELTA_MAX);
+                                      delta_angle_up, delta_angle_down, current_curvature_delta_max);
 
     }
     desired_angle_last = desired_curvature;
