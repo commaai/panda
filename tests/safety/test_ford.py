@@ -81,8 +81,8 @@ class TestFordSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("EngBrakeData", 0, values)
 
   # Vehicle speed
-  def _speed_msg(self, speed: float):
-    values = {"Veh_V_ActlBrk": speed * 3.6, "VehVActlBrk_D_Qf": 3, "VehVActlBrk_No_Cnt": self.cnt_speed % 16}
+  def _speed_msg(self, speed: float, quality_flag=True):
+    values = {"Veh_V_ActlBrk": speed * 3.6, "VehVActlBrk_D_Qf": 3 if quality_flag else 0, "VehVActlBrk_No_Cnt": self.cnt_speed % 16}
     self.__class__.cnt_speed += 1
     return self.packer.make_can_msg_panda("BrakeSysFeatures", 0, values, fix_checksum=checksum)
 
@@ -154,6 +154,18 @@ class TestFordSafety(common.PandaSafetyTest):
       to_push[0].data[4] = 0
       self.assertFalse(self._rx(to_push))
       self.assertFalse(self.safety.get_controls_allowed())
+
+      self.safety.set_controls_allowed(True)
+      if msg == "speed":
+        to_push = self._speed_msg(0)
+        self.assertTrue(self._rx(to_push))
+        to_push = self._speed_msg(0, quality_flag=False)
+        self.assertFalse(self._rx(to_push))
+        self.assertFalse(self.safety.get_controls_allowed())
+      elif msg == "yaw":
+        to_push = self._yaw_rate_msg(0, 0)
+
+
 
   def test_steer_allowed(self):
     path_offsets = np.arange(-5.12, 5.11, 1).round()
