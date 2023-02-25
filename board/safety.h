@@ -216,7 +216,7 @@ bool addr_safety_check(CANPacket_t *to_push,
                        uint32_t (*get_checksum)(CANPacket_t *to_push),
                        uint32_t (*compute_checksum)(CANPacket_t *to_push),
                        uint8_t (*get_counter)(CANPacket_t *to_push),
-                       uint8_t (*get_quality_flag_valid)(CANPacket_t *to_push)) {
+                       bool (*get_quality_flag_valid)(CANPacket_t *to_push)) {
 
   int index = get_addr_check_index(to_push, rx_checks->check, rx_checks->len);
   update_addr_timestamp(rx_checks->check, index);

@@ -60,7 +60,7 @@ bool tesla_stock_aeb = false;
 
 static int tesla_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, tesla_powertrain ? (&tesla_pt_rx_checks) : (&tesla_rx_checks),
-                                 NULL, NULL, NULL);
+                                 NULL, NULL, NULL, NULL);
 
   if(valid) {
     int bus = GET_BUS(to_push);

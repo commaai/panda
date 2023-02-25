@@ -85,6 +85,7 @@ typedef struct {
   const int len;
   const bool check_checksum;         // true is checksum check is performed
   const uint8_t max_counter;         // maximum value of the counter. 0 means that the counter check is skipped
+  const bool check_quality_flag;         // maximum value of the counter. 0 means that the counter check is skipped
   const uint32_t expected_timestep;  // expected time between message updates [us]
 } CanMsgCheck;
 
@@ -134,7 +135,8 @@ bool addr_safety_check(CANPacket_t *to_push,
                        const addr_checks *rx_checks,
                        uint32_t (*get_checksum)(CANPacket_t *to_push),
                        uint32_t (*compute_checksum)(CANPacket_t *to_push),
-                       uint8_t (*get_counter)(CANPacket_t *to_push));
+                       uint8_t (*get_counter)(CANPacket_t *to_push),
+                       bool (*get_quality_flag_valid)(CANPacket_t *to_push));
 void generic_rx_checks(bool stock_ecu_detected);
 void relay_malfunction_set(void);
 void relay_malfunction_reset(void);
