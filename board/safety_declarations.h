@@ -97,6 +97,7 @@ typedef struct {
   int index;                         // if multiple messages are allowed to be checked, this stores the index of the first one seen. only msg[msg_index] will be used
   bool valid_checksum;               // true if and only if checksum check is passed
   int wrong_counters;                // counter of wrong counters, saturated between 0 and MAX_WRONG_COUNTERS
+  bool valid_quality_flag;           // true if the message's quality flag signifies signals are valid
   uint8_t last_counter;              // last counter value
   uint32_t last_timestamp;           // micro-s
   bool lagging;                      // true if and only if the time between updates is excessive
