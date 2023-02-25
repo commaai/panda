@@ -102,7 +102,9 @@ static bool ford_lkas_msg_check(int addr) {
 }
 
 // Curvature rate limits
+
 const SteeringLimits FORD_STEERING_LIMITS = {
+  .angle_deg_to_can = 50000,  // 1 / (2e-5) rad to can
   .angle_rate_up_lookup = {
     {5., 15., 25.},
     {0.005, 0.00056, 0.0002}
@@ -113,8 +115,8 @@ const SteeringLimits FORD_STEERING_LIMITS = {
   },
 };
 
-const float CURVATURE_DELTA_MAX = 0.002;  // (0.002 + .02) / 2e-5
-struct sample_t ford_yaw_rate_meas;
+const int CURVATURE_DELTA_MAX = 100;  // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
+struct sample_t ford_curvature_meas;
 float ford_yaw_rate = 0;
 bool ford_yaw_rate_valid = false;
 
@@ -140,8 +142,11 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (addr == MSG_Yaw_Data_FD1) {
       // Signal: VehYaw_W_Actl
       ford_yaw_rate = (((GET_BYTE(to_push, 2) << 8U) | GET_BYTE(to_push, 3)) * 0.0002) - 6.5;
-      update_sample(&ford_yaw_rate_meas, ford_yaw_rate);
-      // Signal: VehYawWActl_D_Qf
+      float current_curvature = ford_yaw_rate / MAX(vehicle_speed, 0.1);
+      // convert current curvature into units on CAN for desired curvature
+      int current_curvature_can = current_curvature * FORD_STEERING_LIMITS.angle_deg_to_can + 1;
+      update_sample(&ford_curvature_meas, current_curvature_can);
+      // Signal: VehYawWActl_D_Qf  TODO: check this generically
       ford_yaw_rate_valid = ((GET_BYTE(to_push, 6) >> 4) & 0x3U) == 3U;
     }
 
@@ -211,10 +216,12 @@ static int ford_tx_hook(CANPacket_t *to_send) {
   if (addr == MSG_LateralMotionControl) {
     // Signal: LatCtl_D_Rq
     unsigned int steer_control_type = (GET_BYTE(to_send, 4) >> 2) & 0x7U;
-    unsigned int curvature = (GET_BYTE(to_send, 0) << 3) | (GET_BYTE(to_send, 1) >> 5);
+    unsigned int raw_curvature = (GET_BYTE(to_send, 0) << 3) | (GET_BYTE(to_send, 1) >> 5);
     unsigned int curvature_rate = ((GET_BYTE(to_send, 1) & 0x1FU) << 8) | GET_BYTE(to_send, 2);
     unsigned int path_angle = (GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5);
     unsigned int path_offset = (GET_BYTE(to_send, 5) << 2) | (GET_BYTE(to_send, 6) >> 6);
+
+    bool violation = false;
 
     // These signals are not yet tested with the current safety limits
     if ((curvature_rate != INACTIVE_CURVATURE_RATE) || (path_angle != INACTIVE_PATH_ANGLE) || (path_offset != INACTIVE_PATH_OFFSET)) {
@@ -224,9 +231,35 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     // No steer control allowed when controls are not allowed or yaw rate invalid
     bool current_controls_allowed = controls_allowed && ford_yaw_rate_valid;
     bool steer_control_enabled = (steer_control_type != 0U) || (curvature != INACTIVE_CURVATURE);
-    if (!current_controls_allowed && steer_control_enabled) {
+    violation |= !controls_allowed && steer_control_enabled;
+
+    int desired_curvature = raw_curvature - 1000;  // *2e-5 to get real curvature
+
+//    int actual_curvature = desired_curvature;  // TODO: needed?
+    if ((vehicle_speed > 12) && steer_control_enabled) {
+      // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
+      // add 1 to not false trigger the violation. also fudge the speed by 1 m/s so rate limits are
+      // always slightly above openpilot's in case we read an updated speed in between angle commands
+      // TODO: this speed fudge can be much lower, look at data to determine the lowest reasonable offset
+      int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
+      int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
+
+      violation |= dist_to_meas_check(desired_curvature, desired_angle_last, &ford_curvature_meas,
+                                      delta_angle_up, delta_angle_down, CURVATURE_DELTA_MAX);
+
+    }
+    desired_angle_last = desired_curvature;
+
+    if (violation) {
       tx = 0;
     }
+
+    // END---
+
+
+    violation = dist_to_meas_check(desired_torque, desired_torque_last, &torque_meas,
+                                      limits.max_rate_up, limits.max_rate_down, limits.max_torque_error);
+
 
     if (controls_allowed && steer_control_enabled) {
       // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
