@@ -24,10 +24,12 @@ const CanMsg FORD_TX_MSGS[] = {
 #define FORD_TX_LEN (sizeof(FORD_TX_MSGS) / sizeof(FORD_TX_MSGS[0]))
 
 AddrCheckStruct ford_addr_checks[] = {
-  {.msg = {{MSG_EngBrakeData, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},         // NO COUNTER/CHECKSUM
-  {.msg = {{MSG_EngVehicleSpThrottle, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},  // COUNTER/CHECKSUM NOT SET
-  {.msg = {{MSG_DesiredTorqBrk, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},        // NO COUNTER/CHECKSUM
-  {.msg = {{MSG_BrakeSysFeatures, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},      // TODO: check checksum
+  // TODO: check checksum
+  {.msg = {{MSG_BrakeSysFeatures, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  // These messages have no counter or checksum
+  {.msg = {{MSG_EngBrakeData, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_EngVehicleSpThrottle, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_DesiredTorqBrk, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define FORD_ADDR_CHECK_LEN (sizeof(ford_addr_checks) / sizeof(ford_addr_checks[0]))
 addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
