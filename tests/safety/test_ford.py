@@ -44,6 +44,8 @@ class TestFordSafety(common.PandaSafetyTest, common.CurvatureSteeringSafetyTest)
   ANGLE_DELTA_V = [0.004, 0.00044, 0.00016]  # windup limit
   ANGLE_DELTA_VU = [0.006, 0.00066, 0.00024]  # unwind limit
 
+  cnt_speed = 0
+
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
     self.safety = libpanda_py.libpanda
@@ -67,7 +69,8 @@ class TestFordSafety(common.PandaSafetyTest, common.CurvatureSteeringSafetyTest)
 
   # Vehicle speed
   def _speed_msg(self, speed: float):
-    values = {"Veh_V_ActlBrk": speed * 3.6}
+    values = {"Veh_V_ActlBrk": speed * 3.6, "VehVActlBrk_No_Cnt": self.cnt_speed % 16}
+    self.__class__.cnt_speed += 1
     return self.packer.make_can_msg_panda("BrakeSysFeatures", 0, values)
 
   # Standstill state
