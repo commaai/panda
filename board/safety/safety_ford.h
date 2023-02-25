@@ -25,9 +25,8 @@ const CanMsg FORD_TX_MSGS[] = {
 #define FORD_TX_LEN (sizeof(FORD_TX_MSGS) / sizeof(FORD_TX_MSGS[0]))
 
 AddrCheckStruct ford_addr_checks[] = {
-  // TODO: check checksum
   {.msg = {{MSG_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_Yaw_Data_FD1, 0, 8, .check_checksum = false, .max_counter = 255U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_Yaw_Data_FD1, 0, 8, .check_checksum = true, .max_counter = 255U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   // These messages have no counter or checksum
   {.msg = {{MSG_EngBrakeData, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_EngVehicleSpThrottle, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -78,6 +77,12 @@ static uint32_t ford_compute_checksum(CANPacket_t *to_push) {
     chksum += (GET_BYTE(to_push, 2) >> 2) & 0xFU;           // VehVActlBrk_No_Cnt
     chksum = 0xff - chksum;
   } else if (addr == MSG_Yaw_Data_FD1) {
+    chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // VehRol_W_Actl
+    chksum += GET_BYTE(to_push, 2) + GET_BYTE(to_push, 3);  // VehYaw_W_Actl
+    chksum += GET_BYTE(to_push, 6) >> 6;                    // VehRolWActl_D_Qf
+    chksum += (GET_BYTE(to_push, 6) >> 4) & 0x3U;           // VehYawWActl_D_Qf
+    chksum += GET_BYTE(to_push, 5);                         // VehRollYaw_No_Cnt
+    chksum = 0xff - chksum;
   } else {
   }
 
