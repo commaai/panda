@@ -91,7 +91,7 @@ class TestFordSafety(common.PandaSafetyTest):
 
   # Vehicle speed
   def _speed_msg(self, speed: float):
-    values = {"Veh_V_ActlBrk": speed * 3.6, "VehVActlBrk_No_Cnt": self.cnt_speed % 16}
+    values = {"Veh_V_ActlBrk": speed * 3.6, "VehVActlBrk_D_Qf": 3, "VehVActlBrk_No_Cnt": self.cnt_speed % 16}
     self.__class__.cnt_speed += 1
     return self.packer.make_can_msg_panda("BrakeSysFeatures", 0, values, fix_checksum=checksum)
 
@@ -102,7 +102,7 @@ class TestFordSafety(common.PandaSafetyTest):
 
   # Current curvature
   def _yaw_rate_msg(self, curvature: float, speed: float):
-    values = {"VehYaw_W_Actl": curvature * speed, "VehYawWActl_D_Qf": 3, "VehRollYaw_No_Cnt": self.cnt_yaw_rate % 256}
+    values = {"VehYaw_W_Actl": curvature * speed, "VehYawWActl_D_Qf": 3, "VehRolWActl_D_Qf": 3, "VehRollYaw_No_Cnt": self.cnt_yaw_rate % 256}
     self.__class__.cnt_yaw_rate += 1
     return self.packer.make_can_msg_panda("Yaw_Data_FD1", 0, values, fix_checksum=checksum)
 
