@@ -10,11 +10,36 @@ from panda.tests.safety.common import CANPackerPanda
 
 MSG_EngBrakeData = 0x165          # RX from PCM, for driver brake pedal and cruise state
 MSG_EngVehicleSpThrottle = 0x204  # RX from PCM, for driver throttle input
+MSG_BrakeSysFeatures = 0x415      # RX from ABS, for vehicle speed
+MSG_Yaw_Data_FD1 = 0x91           # RX from RCM, for yaw rate
 MSG_Steering_Data_FD1 = 0x083     # TX by OP, various driver switches and LKAS/CC buttons
 MSG_ACCDATA_3 = 0x18A             # TX by OP, ACC/TJA user interface
 MSG_Lane_Assist_Data1 = 0x3CA     # TX by OP, Lane Keep Assist
 MSG_LateralMotionControl = 0x3D3  # TX by OP, Traffic Jam Assist
 MSG_IPMA_Data = 0x3D8             # TX by OP, IPMA and LKAS user interface
+
+
+def checksum(msg):
+  addr, t, dat, bus = msg
+  ret = bytearray(dat)
+
+  if addr == MSG_Yaw_Data_FD1:
+    chksum = dat[0] + dat[1]  # VehRol_W_Actl
+    chksum += dat[2] + dat[3]  # VehYaw_W_Actl
+    chksum += dat[5]  # VehRollYaw_No_Cnt
+    chksum += dat[6] >> 6  # VehRolWActl_D_Qf
+    chksum += (dat[6] >> 4) & 0x3  # VehYawWActl_D_Qf
+    chksum = 0xff - (chksum & 0xff)
+    ret[4] = chksum
+
+  elif addr == MSG_BrakeSysFeatures:
+    chksum = dat[0] + dat[1]  # Veh_V_ActlBrk
+    chksum += (dat[2] >> 2) & 0xf  # VehVActlBrk_No_Cnt
+    chksum += dat[2] >> 6  # VehVActlBrk_D_Qf
+    chksum = 0xff - (chksum & 0xff)
+    ret[3] = chksum
+
+  return addr, t, ret, bus
 
 
 class Buttons:
@@ -36,6 +61,7 @@ class TestFordSafety(common.PandaSafetyTest):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   cnt_speed = 0
+  cnt_yaw_rate = 0
 
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
@@ -56,14 +82,20 @@ class TestFordSafety(common.PandaSafetyTest):
 
   # Vehicle speed
   def _speed_msg(self, speed: float):
-    values = {"Veh_V_ActlBrk": speed * 3.6, "VehVActlBrk_No_Cnt": self.cnt_speed % 16}
+    values = {"Veh_V_ActlBrk": speed * 3.6, "VehVActlBrk_D_Qf": 3, "VehVActlBrk_No_Cnt": self.cnt_speed % 16}
     self.__class__.cnt_speed += 1
-    return self.packer.make_can_msg_panda("BrakeSysFeatures", 0, values)
+    return self.packer.make_can_msg_panda("BrakeSysFeatures", 0, values, fix_checksum=checksum)
 
   # Standstill state
   def _vehicle_moving_msg(self, speed: float):
     values = {"VehStop_D_Stat": 1 if speed <= self.STANDSTILL_THRESHOLD else 0}
     return self.packer.make_can_msg_panda("DesiredTorqBrk", 0, values)
+
+  # Current curvature
+  def _yaw_rate_msg(self, curvature: float, speed: float):
+    values = {"VehYaw_W_Actl": curvature * speed, "VehYawWActl_D_Qf": 3, "VehRolWActl_D_Qf": 3, "VehRollYaw_No_Cnt": self.cnt_yaw_rate % 256}
+    self.__class__.cnt_yaw_rate += 1
+    return self.packer.make_can_msg_panda("Yaw_Data_FD1", 0, values, fix_checksum=checksum)
 
   # Drive throttle input
   def _user_gas_msg(self, gas: float):
