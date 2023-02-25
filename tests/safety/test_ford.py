@@ -140,6 +140,21 @@ class TestFordSafety(common.PandaSafetyTest):
     }
     return self.packer.make_can_msg_panda("Steering_Data_FD1", bus, values)
 
+  def test_rx_hook(self):
+    # checksum checks
+    for msg in ["speed", "yaw"]:
+      self.safety.set_controls_allowed(True)
+      if msg == "speed":
+        to_push = self._speed_msg(0)
+      elif msg == "yaw":
+        to_push = self._yaw_rate_msg(0, 0)
+      self.assertTrue(self._rx(to_push))
+      self.assertTrue(self.safety.get_controls_allowed())
+      to_push[0].data[3] = 0
+      to_push[0].data[4] = 0
+      self.assertFalse(self._rx(to_push))
+      self.assertFalse(self.safety.get_controls_allowed())
+
   def test_steer_allowed(self):
     path_offsets = np.arange(-5.12, 5.11, 1).round()
     path_angles = np.arange(-0.5, 0.5235, 0.1).round(1)
