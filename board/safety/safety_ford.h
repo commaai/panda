@@ -25,8 +25,8 @@ const CanMsg FORD_TX_MSGS[] = {
 #define FORD_TX_LEN (sizeof(FORD_TX_MSGS) / sizeof(FORD_TX_MSGS[0]))
 
 AddrCheckStruct ford_addr_checks[] = {
-  {.msg = {{MSG_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_Yaw_Data_FD1, 0, 8, .check_checksum = true, .max_counter = 255U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_Yaw_Data_FD1, 0, 8, .check_checksum = true, .max_counter = 255U, .quality_flag=true, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   // These messages have no counter or checksum
   {.msg = {{MSG_EngBrakeData, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_EngVehicleSpThrottle, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -89,6 +89,19 @@ static uint32_t ford_compute_checksum(CANPacket_t *to_push) {
   return chksum;
 }
 
+static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
+  int addr = GET_ADDR(to_push);
+
+  bool valid = false;
+  if (addr == MSG_BrakeSysFeatures) {
+    valid = (GET_BYTE(to_push, 2) >> 6) == 0x3U;  // VehVActlBrk_D_Qf
+  } else if (addr == MSG_Yaw_Data_FD1) {
+    valid = (GET_BYTE(to_push, 6) >> 4) == 0xFU;  // VehRolWActl_D_Qf & VehYawWActl_D_Qf
+  } else {
+  }
+  return valid;
+}
+
 #define INACTIVE_CURVATURE 1000U
 #define INACTIVE_CURVATURE_RATE 4096U
 #define INACTIVE_PATH_OFFSET 512U
@@ -119,7 +132,8 @@ bool ford_yaw_rate_valid = false;
 struct sample_t ford_curvature_meas;
 
 static int ford_rx_hook(CANPacket_t *to_push) {
-  bool valid = addr_safety_check(to_push, &ford_rx_checks, ford_get_checksum, ford_compute_checksum, ford_get_counter);
+  bool valid = addr_safety_check(to_push, &ford_rx_checks,
+                                 ford_get_checksum, ford_compute_checksum, ford_get_counter, ford_get_quality_flag_valid);
 
   if (valid && (GET_BUS(to_push) == FORD_MAIN_BUS)) {
     int addr = GET_ADDR(to_push);
