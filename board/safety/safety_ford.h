@@ -39,7 +39,7 @@ static uint8_t ford_get_counter(CANPacket_t *to_push) {
 
   uint8_t cnt;
   if (addr == MSG_BrakeSysFeatures) {
-    cnt = (GET_BYTE(to_push, 2) >> 2) & 0x15U;
+    cnt = (GET_BYTE(to_push, 2) >> 2) & 0xFU;
   } else {
     cnt = 0;
   }
