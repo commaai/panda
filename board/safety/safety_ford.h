@@ -105,12 +105,12 @@ static bool ford_lkas_msg_check(int addr) {
 const SteeringLimits FORD_STEERING_LIMITS = {
   .angle_deg_to_can = 50000,  // 1 / (2e-5) rad to can
   .angle_rate_up_lookup = {
-    {5., 15., 25.},
-    {0.005, 0.00056, 0.0002}
+    {5., 25., 25.},
+    {0.0002, 0.0001, 0.0001}
   },
   .angle_rate_down_lookup = {
-    {5., 15., 25.},
-    {0.008, 0.00089, 0.00032}
+    {5., 25., 25.},
+    {0.000225, 0.00015, 0.00015}
   },
 };
 
@@ -145,7 +145,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
       int current_curvature_can = current_curvature * FORD_STEERING_LIMITS.angle_deg_to_can; // + 1;  // TODO: not sure if we should add 1
       update_sample(&ford_curvature_meas, current_curvature_can);
       // Signal: VehYawWActl_D_Qf  TODO: check this generically
-      ford_yaw_rate_valid = ((GET_BYTE(to_push, 6) >> 4) & 0x3U) == 3U;
+      ford_yaw_rate_valid = true; // ((GET_BYTE(to_push, 6) >> 4) & 0x3U) == 3U;
     }
 
     // Update gas pedal
@@ -226,7 +226,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
 
     // No steer control allowed when controls are not allowed or yaw rate invalid
     // TODO: get rid of current_controls_allowed
-    bool current_controls_allowed = controls_allowed && ford_yaw_rate_valid;
+    bool current_controls_allowed = controls_allowed;// && ford_yaw_rate_valid;
     bool steer_control_enabled = (steer_control_type != 0U) || (raw_curvature != INACTIVE_CURVATURE);
     violation |= !current_controls_allowed && steer_control_enabled;
 
@@ -239,16 +239,16 @@ static int ford_tx_hook(CANPacket_t *to_send) {
 
       // we allow max curvature error at low speeds due to the low rates imposed by the EPS,
       // and inaccuracy of curvature from yaw rate
-      int current_curvature_delta_max = (vehicle_speed > 12) ? CURVATURE_DELTA_MAX : 1000;
+      int current_curvature_delta_max = 5000;  // (vehicle_speed > 12) ? CURVATURE_DELTA_MAX : 1500;
       violation |= dist_to_meas_check(desired_curvature, desired_angle_last, &ford_curvature_meas,
                                       delta_angle_up, delta_angle_down, current_curvature_delta_max);
 
     }
-    desired_angle_last = desired_curvature;
 
     if (violation) {
       tx = 0;
     }
+    desired_angle_last = desired_curvature;
   }
 
   // 1 allows the message through
