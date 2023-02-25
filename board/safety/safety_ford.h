@@ -3,6 +3,7 @@
 #define MSG_EngVehicleSpThrottle  0x204   // RX from PCM, for driver throttle input
 #define MSG_DesiredTorqBrk        0x213   // RX from ABS, for standstill state
 #define MSG_BrakeSysFeatures      0x415   // RX from ABS, for vehicle speed
+#define MSG_Yaw_Data_FD1          0x91    // RX from RCM, for yaw rate
 #define MSG_Steering_Data_FD1     0x083   // TX by OP, various driver switches and LKAS/CC buttons
 #define MSG_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
 #define MSG_Lane_Assist_Data1     0x3CA   // TX by OP, Lane Keep Assist
@@ -26,6 +27,7 @@ const CanMsg FORD_TX_MSGS[] = {
 AddrCheckStruct ford_addr_checks[] = {
   // TODO: check checksum
   {.msg = {{MSG_BrakeSysFeatures, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_Yaw_Data_FD1, 0, 8, .check_checksum = false, .max_counter = 255U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   // These messages have no counter or checksum
   {.msg = {{MSG_EngBrakeData, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_EngVehicleSpThrottle, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -40,6 +42,8 @@ static uint8_t ford_get_counter(CANPacket_t *to_push) {
   uint8_t cnt;
   if (addr == MSG_BrakeSysFeatures) {
     cnt = (GET_BYTE(to_push, 2) >> 2) & 0xFU;
+  } else if (addr == MSG_Yaw_Data_FD1) {
+    cnt = GET_BYTE(to_push, 5);
   } else {
     cnt = 0;
   }
