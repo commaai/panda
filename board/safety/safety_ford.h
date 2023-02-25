@@ -113,9 +113,7 @@ const SteeringLimits FORD_STEERING_LIMITS = {
   },
 };
 
-#define MAX_CURVATURE 1000U  // TODO: this
-#define MIN_CURVATURE 1000U
-
+const float CURVATURE_DELTA_MAX = 0.002;  // (0.002 + .02) / 2e-5
 struct sample_t ford_yaw_rate_meas;
 float ford_yaw_rate = 0;
 bool ford_yaw_rate_valid = false;
@@ -230,15 +228,29 @@ static int ford_tx_hook(CANPacket_t *to_send) {
       tx = 0;
     }
 
+    if (controls_allowed && steer_control_enabled) {
+      // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
+      // add 1 to not false trigger the violation. also fudge the speed by 1 m/s so rate limits are
+      // always slightly above openpilot's in case we read an updated speed in between angle commands
+      // TODO: this speed fudge can be much lower, look at data to determine the lowest reasonable offset
+      int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
+      int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
+
+      int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
+      int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
+
+
+
+      // check for violation;
+      violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
+    }
+
     // Curvature rate limits
     float delta_curvature_up = interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed);
     float delta_curvature_down = interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed);
 
     int highest_desired_curvature = desired_angle_last + ((desired_angle_last > 0) ? delta_curvature_up : delta_curvature_down);
     int lowest_desired_curvature = desired_angle_last - ((desired_angle_last >= 0) ? delta_curvature_down : delta_curvature_up);
-
-    // TODO: min/max limits? angle control doesn't do this
-    if (curvature > 0.02)
 
     if ((vehicle_speed > 12) && steer_control_enabled) {
       float actual_curvature = ford_yaw_rate / vehicle_speed;
