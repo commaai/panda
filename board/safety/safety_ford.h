@@ -231,11 +231,16 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     violation |= !current_controls_allowed && steer_control_enabled;
 
     int desired_curvature = raw_curvature - 1000;  // *FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
-    if ((vehicle_speed > 12) && steer_control_enabled) {
+    if (steer_control_enabled) {
       // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
       // add 1 to not false trigger the violation.
       int delta_angle_up = (interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
       int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
+
+      if (vehicle_speed <= 12) {
+        ford_curvature_meas.min = desired_curvature;
+        ford_curvature_meas.max = desired_curvature;
+      }
 
       violation |= dist_to_meas_check(desired_curvature, desired_angle_last, &ford_curvature_meas,
                                       delta_angle_up, delta_angle_down, CURVATURE_DELTA_MAX);
