@@ -26,7 +26,7 @@ const CanMsg FORD_TX_MSGS[] = {
 
 AddrCheckStruct ford_addr_checks[] = {
   // TODO: check checksum
-  {.msg = {{MSG_BrakeSysFeatures, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_Yaw_Data_FD1, 0, 8, .check_checksum = false, .max_counter = 255U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   // These messages have no counter or checksum
   {.msg = {{MSG_EngBrakeData, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
@@ -52,6 +52,38 @@ static uint8_t ford_get_counter(CANPacket_t *to_push) {
   return cnt;
 }
 
+static uint32_t ford_get_checksum(CANPacket_t *to_push) {
+  int addr = GET_ADDR(to_push);
+
+  uint8_t chksum;
+  if (addr == MSG_BrakeSysFeatures) {
+    // Signal: VehVActlBrk_No_Cs
+    chksum = GET_BYTE(to_push, 3);
+  } else if (addr == MSG_Yaw_Data_FD1) {
+    // Signal: VehRollYawW_No_Cs
+    chksum = GET_BYTE(to_push, 4);
+  } else {
+    chksum = 0;
+  }
+  return chksum;
+}
+
+static uint32_t ford_compute_checksum(CANPacket_t *to_push) {
+  int addr = GET_ADDR(to_push);
+
+  uint8_t chksum = 0;
+  if (addr == MSG_BrakeSysFeatures) {
+    chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // Veh_V_ActlBrk
+    chksum += GET_BYTE(to_push, 2) >> 6;                    // VehVActlBrk_D_Qf
+    chksum += (GET_BYTE(to_push, 2) >> 2) & 0xFU;           // VehVActlBrk_No_Cnt
+    chksum = 0xff - chksum;
+  } else if (addr == MSG_Yaw_Data_FD1) {
+  } else {
+  }
+
+  return chksum;
+}
+
 #define INACTIVE_CURVATURE 1000U
 #define INACTIVE_CURVATURE_RATE 4096U
 #define INACTIVE_PATH_OFFSET 512U
@@ -65,7 +97,7 @@ static bool ford_lkas_msg_check(int addr) {
 }
 
 static int ford_rx_hook(CANPacket_t *to_push) {
-  bool valid = addr_safety_check(to_push, &ford_rx_checks, NULL, NULL, ford_get_counter);
+  bool valid = addr_safety_check(to_push, &ford_rx_checks, ford_get_checksum, ford_compute_checksum, ford_get_counter);
 
   if (valid && (GET_BUS(to_push) == FORD_MAIN_BUS)) {
     int addr = GET_ADDR(to_push);
