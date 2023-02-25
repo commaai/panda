@@ -2,6 +2,7 @@
 #define MSG_EngBrakeData          0x165   // RX from PCM, for driver brake pedal and cruise state
 #define MSG_EngVehicleSpThrottle  0x204   // RX from PCM, for driver throttle input
 #define MSG_DesiredTorqBrk        0x213   // RX from ABS, for standstill state
+#define MSG_BrakeSysFeatures      0x415   // RX from ABS, for vehicle speed
 #define MSG_Steering_Data_FD1     0x083   // TX by OP, various driver switches and LKAS/CC buttons
 #define MSG_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
 #define MSG_Lane_Assist_Data1     0x3CA   // TX by OP, Lane Keep Assist
@@ -23,12 +24,27 @@ const CanMsg FORD_TX_MSGS[] = {
 #define FORD_TX_LEN (sizeof(FORD_TX_MSGS) / sizeof(FORD_TX_MSGS[0]))
 
 AddrCheckStruct ford_addr_checks[] = {
+  // TODO: check checksum
+  {.msg = {{MSG_BrakeSysFeatures, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  // These messages have no counter or checksum
   {.msg = {{MSG_EngBrakeData, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_EngVehicleSpThrottle, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_DesiredTorqBrk, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define FORD_ADDR_CHECK_LEN (sizeof(ford_addr_checks) / sizeof(ford_addr_checks[0]))
 addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
+
+static uint8_t ford_get_counter(CANPacket_t *to_push) {
+  int addr = GET_ADDR(to_push);
+
+  uint8_t cnt;
+  if (addr == MSG_BrakeSysFeatures) {
+    cnt = (GET_BYTE(to_push, 2) >> 2) & 0xFU;
+  } else {
+    cnt = 0;
+  }
+  return cnt;
+}
 
 #define INACTIVE_CURVATURE 1000U
 #define INACTIVE_CURVATURE_RATE 4096U
@@ -43,7 +59,7 @@ static bool ford_lkas_msg_check(int addr) {
 }
 
 static int ford_rx_hook(CANPacket_t *to_push) {
-  bool valid = addr_safety_check(to_push, &ford_rx_checks, NULL, NULL, NULL);
+  bool valid = addr_safety_check(to_push, &ford_rx_checks, NULL, NULL, ford_get_counter);
 
   if (valid && (GET_BUS(to_push) == FORD_MAIN_BUS)) {
     int addr = GET_ADDR(to_push);
@@ -52,6 +68,12 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (addr == MSG_DesiredTorqBrk) {
       // Signal: VehStop_D_Stat
       vehicle_moving = ((GET_BYTE(to_push, 3) >> 3) & 0x3U) == 0U;
+    }
+
+    // Update vehicle speed
+    if (addr == MSG_BrakeSysFeatures) {
+      // Signal: Veh_V_ActlBrk
+      vehicle_speed = ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6;
     }
 
     // Update gas pedal
