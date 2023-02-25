@@ -239,8 +239,9 @@ bool addr_safety_check(CANPacket_t *to_push,
       rx_checks->check[index].wrong_counters = 0U;
     }
 
-    // quality flag check
-    if ((get_quality_flag_valid != NULL) && rx_checks->check[index].msg[rx_checks->check[index].index].check_quality_flag) {
+    // quality flag check. warning: this is not yet checked in openpilot's CAN parser,
+    // this may be the cause of blocked messages with some safety modes
+    if ((get_quality_flag_valid != NULL) && rx_checks->check[index].msg[rx_checks->check[index].index].quality_flag) {
       rx_checks->check[index].valid_quality_flag = get_quality_flag_valid(to_push);
     } else {
       rx_checks->check[index].valid_quality_flag = true;
