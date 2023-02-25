@@ -128,7 +128,6 @@ const SteeringLimits FORD_STEERING_LIMITS = {
 };
 
 const int CURVATURE_DELTA_MAX = 100;  // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
-bool ford_yaw_rate_valid = false;
 struct sample_t ford_curvature_meas;
 
 static int ford_rx_hook(CANPacket_t *to_push) {
@@ -158,8 +157,6 @@ static int ford_rx_hook(CANPacket_t *to_push) {
       // convert current curvature into units on CAN for desired curvature
       int current_curvature_can = current_curvature * FORD_STEERING_LIMITS.angle_deg_to_can; // + 1;  // TODO: not sure if we should add 1
       update_sample(&ford_curvature_meas, current_curvature_can);
-      // Signal: VehYawWActl_D_Qf  TODO: check this generically
-      ford_yaw_rate_valid = true; // ((GET_BYTE(to_push, 6) >> 4) & 0x3U) == 3U;
     }
 
     // Update gas pedal
@@ -239,10 +236,8 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     violation |= (curvature_rate != INACTIVE_CURVATURE_RATE) || (path_angle != INACTIVE_PATH_ANGLE) || (path_offset != INACTIVE_PATH_OFFSET);
 
     // No steer control allowed when controls are not allowed or yaw rate invalid
-    // TODO: get rid of current_controls_allowed
-    bool current_controls_allowed = controls_allowed;// && ford_yaw_rate_valid;
     bool steer_control_enabled = (steer_control_type != 0U) || (raw_curvature != INACTIVE_CURVATURE);
-    violation |= !current_controls_allowed && steer_control_enabled;
+    violation |= !controls_allowed && steer_control_enabled;
 
     int desired_curvature = raw_curvature - 1000;  // *FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
     if (steer_control_enabled) {
@@ -298,8 +293,6 @@ static int ford_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 static const addr_checks* ford_init(uint16_t param) {
   UNUSED(param);
-
-  ford_yaw_rate_valid = false;
 
   ford_curvature_meas.min = 0;
   ford_curvature_meas.max = 0;
