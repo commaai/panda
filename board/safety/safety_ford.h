@@ -59,7 +59,7 @@ static bool ford_lkas_msg_check(int addr) {
 }
 
 static int ford_rx_hook(CANPacket_t *to_push) {
-  bool valid = addr_safety_check(to_push, &ford_rx_checks, NULL, NULL, NULL);
+  bool valid = addr_safety_check(to_push, &ford_rx_checks, NULL, NULL, ford_get_counter);
 
   if (valid && (GET_BUS(to_push) == FORD_MAIN_BUS)) {
     int addr = GET_ADDR(to_push);
