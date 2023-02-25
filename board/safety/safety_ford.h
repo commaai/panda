@@ -41,8 +41,10 @@ static uint8_t ford_get_counter(CANPacket_t *to_push) {
 
   uint8_t cnt;
   if (addr == MSG_BrakeSysFeatures) {
+    // Signal: VehVActlBrk_No_Cnt
     cnt = (GET_BYTE(to_push, 2) >> 2) & 0xFU;
   } else if (addr == MSG_Yaw_Data_FD1) {
+    // Signal: VehRollYaw_No_Cnt
     cnt = GET_BYTE(to_push, 5);
   } else {
     cnt = 0;
