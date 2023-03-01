@@ -100,7 +100,7 @@ static const addr_checks* volkswagen_pq_init(uint16_t param) {
 static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &volkswagen_pq_rx_checks,
-                                volkswagen_pq_get_checksum, volkswagen_pq_compute_checksum, volkswagen_pq_get_counter);
+                                volkswagen_pq_get_checksum, volkswagen_pq_compute_checksum, volkswagen_pq_get_counter, NULL);
 
   if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
@@ -109,8 +109,7 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
     // Signal: Bremse_1.Geschwindigkeit_neu__Bremse_1_
     if (addr == MSG_BREMSE_1) {
       int speed = ((GET_BYTE(to_push, 2) & 0xFEU) >> 1) | (GET_BYTE(to_push, 3) << 7);
-      // DBC speed scale 0.01: 0.3m/s = 108.
-      vehicle_moving = speed > 108;
+      vehicle_moving = speed > 0;
     }
 
     // Update driver input torque samples

@@ -2,7 +2,15 @@
 // Tres + Harness //
 // /////////////////
 
+bool tres_ir_enabled;
+bool tres_fan_enabled;
+void tres_update_fan_ir_power(void) {
+  red_chiplet_set_fan_or_usb_load_switch(tres_ir_enabled || tres_fan_enabled);
+}
+
 void tres_set_ir_power(uint8_t percentage){
+  tres_ir_enabled = (percentage > 0U);
+  tres_update_fan_ir_power();
   pwm_set(TIM3, 4, percentage);
 }
 
@@ -25,6 +33,16 @@ void tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
   tres_ignition_prev = ignition;
 }
 
+void tres_set_fan_enabled(bool enabled) {
+  // NOTE: fan controller reset doesn't work on a tres if IR is enabled
+  tres_fan_enabled = enabled;
+  tres_update_fan_ir_power();
+}
+
+bool tres_read_som_gpio (void){
+  return (get_gpio_input(GPIOC, 2) != 0);
+}
+
 void tres_init(void) {
   // Enable USB 3.3V LDO for USB block
   register_set_bits(&(PWR->CR3), PWR_CR3_USBREGEN);
@@ -32,6 +50,10 @@ void tres_init(void) {
   while ((PWR->CR3 & PWR_CR3_USB33RDY) == 0);
 
   red_chiplet_init();
+
+  // C2: SOM GPIO used as input (fan control at boot)
+  set_gpio_mode(GPIOC, 2, MODE_INPUT);
+  set_gpio_pullup(GPIOC, 2, PULL_DOWN);
 
   tres_set_bootkick(true);
 
@@ -84,8 +106,9 @@ const board board_tres = {
   .set_can_mode = red_set_can_mode,
   .check_ignition = red_check_ignition,
   .read_current = unused_read_current,
-  .set_fan_enabled = red_chiplet_set_fan_or_usb_load_switch,
+  .set_fan_enabled = tres_set_fan_enabled,
   .set_ir_power = tres_set_ir_power,
   .set_phone_power = unused_set_phone_power,
-  .set_siren = fake_siren_set
+  .set_siren = fake_siren_set,
+  .read_som_gpio = tres_read_som_gpio
 };

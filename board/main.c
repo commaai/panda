@@ -170,7 +170,7 @@ void tick_handler(void) {
       #endif
 
       // set green LED to be controls allowed
-      current_board->set_led(LED_GREEN, controls_allowed);
+      current_board->set_led(LED_GREEN, controls_allowed | green_led_enabled);
 
       // turn off the blue LED, turned on by CAN
       // unless we are in power saving mode
@@ -241,8 +241,9 @@ void tick_handler(void) {
           current_board->set_ir_power(0U);
 
           // TODO: need a SPI equivalent
-          // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
-          if (usb_enumerated) {
+          // If enumerated but no heartbeat (phone up, boardd not running), or when the SOM GPIO is pulled high by the ABL,
+          // turn the fan on to cool the device
+          if(usb_enumerated || current_board->read_som_gpio()){
             fan_set_power(50U);
           } else {
             fan_set_power(0U);

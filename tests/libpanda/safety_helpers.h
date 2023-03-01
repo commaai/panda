@@ -10,9 +10,9 @@ bool addr_checks_valid() {
 
   for (int i = 0; i < current_rx_checks->len; i++) {
     const AddrCheckStruct addr = current_rx_checks->check[i];
-    bool valid = addr.msg_seen && !addr.lagging && addr.valid_checksum && (addr.wrong_counters < MAX_WRONG_COUNTERS);
+    bool valid = addr.msg_seen && !addr.lagging && addr.valid_checksum && (addr.wrong_counters < MAX_WRONG_COUNTERS) && addr.valid_quality_flag;
     if (!valid) {
-      printf("i %d seen %d lagging %d valid checksum %d wrong counters %d\n", i, addr.msg_seen, addr.lagging, addr.valid_checksum, addr.wrong_counters);
+      printf("i %d seen %d lagging %d valid checksum %d wrong counters %d valid quality flag %d\n", i, addr.msg_seen, addr.lagging, addr.valid_checksum, addr.wrong_counters, addr.valid_quality_flag);
       return false;
     }
   }

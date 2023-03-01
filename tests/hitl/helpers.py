@@ -1,21 +1,21 @@
+import concurrent.futures
 import os
 import time
 import random
 import faulthandler
 from functools import wraps, partial
 from nose.tools import assert_equal
-from parameterized import parameterized, param
+from parameterized import parameterized
 
-from panda import Panda, DEFAULT_H7_FW_FN, DEFAULT_FW_FN, MCU_TYPE_H7
+from panda import Panda
 from panda_jungle import PandaJungle  # pylint: disable=import-error
 
 SPEED_NORMAL = 500
 SPEED_GMLAN = 33.3
 BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL), (3, SPEED_GMLAN)]
-TIMEOUT = 45
 H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2]
 GEN2_HW_TYPES = [Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO] + H7_HW_TYPES
-GPS_HW_TYPES = [Panda.HW_TYPE_GREY_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
+GPS_HW_TYPES = [Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO]
 PEDAL_SERIAL = 'none'
 JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
 PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE", "").strip().split(" ")
@@ -41,34 +41,41 @@ def init_all_pandas():
   time.sleep(5)
 
   for serial in Panda.list():
-    if serial not in PANDAS_EXCLUDE:
-      p = Panda(serial=serial)
-      _all_pandas.append((serial, p.get_type()))
-      p.close()
-  print(f"Found {len(_all_pandas)} pandas")
+    if serial not in PANDAS_EXCLUDE and serial != PEDAL_SERIAL:
+      with Panda(serial=serial) as p:
+        _all_pandas.append((serial, p.get_type()))
+  print(f"{len(_all_pandas)} total pandas")
 init_all_pandas()
 _all_panda_serials = [x[0] for x in _all_pandas]
 
+def parameterized_panda_types(types):
+  serials = []
+  for typ in types:
+    for s, t in _all_pandas:
+      if t == typ and s not in serials:
+        serials.append(s)
+        break
+    else:
+      raise IOError("No unused panda found for type: {}".format(typ))
+  return parameterized(serials)
+
 # Panda providers
-test_pandas = _all_pandas[:]
+TESTED_HW_TYPES = (Panda.HW_TYPE_WHITE_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2, Panda.HW_TYPE_UNO)
+test_all_pandas = parameterized_panda_types(TESTED_HW_TYPES)
+test_all_gen2_pandas = parameterized_panda_types(GEN2_HW_TYPES)
+test_all_gps_pandas = parameterized_panda_types(GPS_HW_TYPES)
+
+# no grey for speedup, should be sufficiently covered by white for these tests
+test_all_gmlan_pandas = parameterized_panda_types([Panda.HW_TYPE_WHITE_PANDA, ])
+
 if PARTIAL_TESTS:
   # minimal set of pandas to get most of our coverage
   # * red panda covers STM32H7
   # * black panda covers STM32F4, GEN2, and GPS
-  test_pandas = [p for p in _all_pandas if p[1] in (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA)]
-test_all_pandas = parameterized(
-    list(map(lambda x: x[0], test_pandas))  # type: ignore
-  )
-test_all_gen2_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in GEN2_HW_TYPES, test_pandas)))  # type: ignore
-  )
-test_all_gps_pandas = parameterized(
-    list(map(lambda x: x[0], filter(lambda x: x[1] in GPS_HW_TYPES, test_pandas)))  # type: ignore
-  )
-test_white_and_grey = parameterized([
-    param(panda_type=Panda.HW_TYPE_WHITE_PANDA),
-    param(panda_type=Panda.HW_TYPE_GREY_PANDA)
-  ])
+  partial_pandas = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA)
+  test_all_pandas = parameterized_panda_types(partial_pandas)
+  test_all_gen2_pandas = parameterized_panda_types(partial_pandas)
+  test_all_gps_pandas = parameterized_panda_types([Panda.HW_TYPE_BLACK_PANDA, ])
 
 
 def time_many_sends(p, bus, p_recv=None, msg_count=100, msg_id=None, two_pandas=False):
@@ -108,35 +115,12 @@ def time_many_sends(p, bus, p_recv=None, msg_count=100, msg_id=None, two_pandas=
 
   return comp_kbps
 
-def panda_type_to_serial(fn):
-  @wraps(fn)
-  def wrapper(panda_type=None, **kwargs):
-    # Change panda_types to a list
-    if panda_type is not None:
-      if not isinstance(panda_type, list):
-        panda_type = [panda_type]
-
-    # Find a panda with the correct types and add the corresponding serial
-    serials = []
-    for p_type in panda_type:
-      found = False
-      for serial, pt in _all_pandas:
-        # Never take the same panda twice
-        if (pt == p_type) and (serial not in serials):
-          serials.append(serial)
-          found = True
-          break
-      if not found:
-        raise IOError("No unused panda found for type: {}".format(p_type))
-    return fn(serials, **kwargs)
-  return wrapper
-
-def panda_connect_and_init(fn=None, full_reset=True):
+def panda_connect_and_init(fn=None):
   if not fn:
-    return partial(panda_connect_and_init, full_reset=full_reset)
+    return partial(panda_connect_and_init)
 
   @wraps(fn)
-  def wrapper(panda_serials=None, **kwargs):
+  def wrapper(panda_serials, **kwargs):
     # Change panda_serials to a list
     if panda_serials is not None:
       if not isinstance(panda_serials, list):
@@ -149,7 +133,7 @@ def panda_connect_and_init(fn=None, full_reset=True):
     panda_jungle.set_obd(False)
     panda_jungle.set_harness_orientation(PandaJungle.HARNESS_ORIENTATION_1)
     for bus, speed in BUS_SPEEDS:
-        panda_jungle.set_can_speed_kbps(bus, speed)
+      panda_jungle.set_can_speed_kbps(bus, speed)
 
     # wait for all pandas to come up
     for _ in range(50):
@@ -158,28 +142,28 @@ def panda_connect_and_init(fn=None, full_reset=True):
       time.sleep(0.1)
 
     # Connect to pandas
-    pandas = []
-    for s in _all_panda_serials:
+    def cnnct(s):
       if s in panda_serials:
         p = Panda(serial=s)
         p.reset(reconnect=True)
-        pandas.append(p)
-      elif full_reset and s != PEDAL_SERIAL:
-        p = Panda(serial=s)
-        p.reset(reconnect=False)
-        p.close()
 
-    # Initialize pandas
-    if full_reset:
-      for panda in pandas:
-        panda.set_can_loopback(False)
-        panda.set_gmlan(None)
-        panda.set_esp_power(False)
-        panda.set_power_save(False)
+        p.set_can_loopback(False)
+        p.set_gmlan(None)
+        p.set_esp_power(False)
+        p.set_power_save(False)
         for bus, speed in BUS_SPEEDS:
-          panda.set_can_speed_kbps(bus, speed)
-        clear_can_buffers(panda)
-        panda.set_power_save(False)
+          p.set_can_speed_kbps(bus, speed)
+        clear_can_buffers(p)
+        p.set_power_save(False)
+        return p
+      else:
+        with Panda(serial=s) as p:
+          p.reset(reconnect=False)
+      return None
+
+    with concurrent.futures.ThreadPoolExecutor() as exc:
+      ps = list(exc.map(cnnct, _all_panda_serials, timeout=20))
+      pandas = [p for p in ps if p is not None]
 
     try:
       fn(*pandas, *kwargs)
@@ -187,12 +171,11 @@ def panda_connect_and_init(fn=None, full_reset=True):
       # Check if the pandas did not throw any faults while running test
       for panda in pandas:
         if not panda.bootstub:
-          panda.reconnect()
+          #panda.reconnect()
           assert panda.health()['fault_status'] == 0
           # Check health of each CAN core after test, normal to fail for test_gen2_loopback on OBD bus, so skipping
           if fn.__name__ != "test_gen2_loopback":
             for i in range(3):
-              print(fn.__name__)
               can_health = panda.can_health(i)
               assert can_health['bus_off_cnt'] == 0
               assert can_health['receive_error_cnt'] == 0
@@ -200,6 +183,7 @@ def panda_connect_and_init(fn=None, full_reset=True):
               assert can_health['total_rx_lost_cnt'] == 0
               assert can_health['total_tx_lost_cnt'] == 0
               assert can_health['total_error_cnt'] == 0
+              assert can_health['total_tx_checksum_error_cnt'] == 0
     finally:
       for p in pandas:
         try:
@@ -226,7 +210,6 @@ def clear_can_buffers(panda):
 
 def check_signature(p):
   assert not p.bootstub, "Flashed firmware not booting. Stuck in bootstub."
-  fn = DEFAULT_H7_FW_FN if p.get_mcu_type() == MCU_TYPE_H7 else DEFAULT_FW_FN
-  firmware_sig = Panda.get_signature_from_firmware(fn)
+  firmware_sig = Panda.get_signature_from_firmware(p.get_mcu_type().config.app_path)
   panda_sig = p.get_signature()
   assert_equal(panda_sig, firmware_sig)
