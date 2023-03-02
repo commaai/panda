@@ -507,7 +507,7 @@ class Panda:
     return True
 
   def up_to_date(self) -> bool:
-    current_signature = self.get_signature()
+    current = self.get_signature()
     expected = Panda.get_signature_from_firmware(self.get_mcu_type().config.app_path)
     return (current == expected)
 
