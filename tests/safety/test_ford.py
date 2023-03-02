@@ -158,7 +158,7 @@ class TestFordSafety(common.PandaSafetyTest):
           self.assertEqual(should_rx, self.safety.get_controls_allowed())
 
         # Mess with checksum to make it fail
-        to_push[0].data[3] = 0xff  # Speed checksum & half of yaw signal
+        to_push[0].data[3] = 0  # Speed checksum & half of yaw signal
         self.assertFalse(self._rx(to_push))
         self.assertFalse(self.safety.get_controls_allowed())
 
