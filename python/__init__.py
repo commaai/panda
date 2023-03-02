@@ -506,6 +506,11 @@ class Panda:
         return False
     return True
 
+  def up_to_date(self) -> bool:
+    current_signature = self.get_signature()
+    expected = Panda.get_signature_from_firmware(self.get_mcu_type().config.app_path)
+    return (current == expected)
+
   def call_control_api(self, msg):
     self._handle.controlWrite(Panda.REQUEST_OUT, msg, 0, 0, b'')
 
