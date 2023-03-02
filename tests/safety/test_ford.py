@@ -146,7 +146,6 @@ class TestFordSafety(common.PandaSafetyTest):
     for quality_flag in [True, False]:
       for msg in ["speed", "yaw"]:
         self.safety.set_controls_allowed(True)
-        should_rx = quality_flag
         # send multiple times to verify counter checks
         for _ in range(10):
           if msg == "speed":
@@ -154,8 +153,8 @@ class TestFordSafety(common.PandaSafetyTest):
           elif msg == "yaw":
             to_push = self._yaw_rate_msg(0, 0, quality_flag=quality_flag)
 
-          self.assertEqual(should_rx, self._rx(to_push))
-          self.assertEqual(should_rx, self.safety.get_controls_allowed())
+          self.assertEqual(quality_flag, self._rx(to_push))
+          self.assertEqual(quality_flag, self.safety.get_controls_allowed())
 
         # Mess with checksum to make it fail
         to_push[0].data[3] = 0  # Speed checksum & half of yaw signal
