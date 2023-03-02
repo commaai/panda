@@ -92,8 +92,9 @@ class TestFordSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("DesiredTorqBrk", 0, values)
 
   # Current curvature
-  def _yaw_rate_msg(self, curvature: float, speed: float):
-    values = {"VehYaw_W_Actl": curvature * speed, "VehYawWActl_D_Qf": 3, "VehRolWActl_D_Qf": 3, "VehRollYaw_No_Cnt": self.cnt_yaw_rate % 256}
+  def _yaw_rate_msg(self, curvature: float, speed: float, quality_flag=True):
+    values = {"VehYaw_W_Actl": curvature * speed, "VehYawWActl_D_Qf": 3 if quality_flag else 0,
+              "VehRolWActl_D_Qf": 3 if quality_flag else 0, "VehRollYaw_No_Cnt": self.cnt_yaw_rate % 256}
     self.__class__.cnt_yaw_rate += 1
     return self.packer.make_can_msg_panda("Yaw_Data_FD1", 0, values, fix_checksum=checksum)
 
@@ -141,31 +142,25 @@ class TestFordSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("Steering_Data_FD1", bus, values)
 
   def test_rx_hook(self):
-    # checksum checks
-    for msg in ["speed", "yaw"]:
-      self.safety.set_controls_allowed(True)
-      if msg == "speed":
-        to_push = self._speed_msg(0)
-      elif msg == "yaw":
-        to_push = self._yaw_rate_msg(0, 0)
-      self.assertTrue(self._rx(to_push))
-      self.assertTrue(self.safety.get_controls_allowed())
-      to_push[0].data[3] = 0
-      to_push[0].data[4] = 0
-      self.assertFalse(self._rx(to_push))
-      self.assertFalse(self.safety.get_controls_allowed())
+    # checksum, counter, and quality flag checks
+    for quality_flag in [True, False]:
+      for msg in ["speed", "yaw"]:
+        self.safety.set_controls_allowed(True)
+        should_rx = quality_flag
+        # send multiple times to verify counter checks
+        for _ in range(10):
+          if msg == "speed":
+            to_push = self._speed_msg(0, quality_flag=quality_flag)
+          elif msg == "yaw":
+            to_push = self._yaw_rate_msg(0, 0, quality_flag=quality_flag)
 
-      self.safety.set_controls_allowed(True)
-      if msg == "speed":
-        to_push = self._speed_msg(0)
-        self.assertTrue(self._rx(to_push))
-        to_push = self._speed_msg(0, quality_flag=False)
+          self.assertEqual(should_rx, self._rx(to_push))
+          self.assertEqual(should_rx, self.safety.get_controls_allowed())
+
+        # Mess with checksum to make it fail
+        to_push[0].data[3] = 0xff  # Speed checksum & half of yaw signal
         self.assertFalse(self._rx(to_push))
         self.assertFalse(self.safety.get_controls_allowed())
-      elif msg == "yaw":
-        to_push = self._yaw_rate_msg(0, 0)
-
-
 
   def test_steer_allowed(self):
     path_offsets = np.arange(-5.12, 5.11, 1).round()
