@@ -250,7 +250,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
 
       // we allow max curvature error at low speeds due to the low rates imposed by the EPS,
       // and inaccuracy of curvature from yaw rate
-      int current_curvature_delta_max = (vehicle_speed > 12) ? CURVATURE_DELTA_MAX : 1000;
+      int current_curvature_delta_max = (vehicle_speed > 13) ? CURVATURE_DELTA_MAX : 1000;
       violation |= dist_to_meas_check(desired_curvature, desired_angle_last, &ford_curvature_meas,
                                       delta_angle_up, delta_angle_down, current_curvature_delta_max);
 
