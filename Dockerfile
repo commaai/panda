@@ -51,7 +51,7 @@ ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
 
 ENV PANDA_PATH=/tmp/openpilot/panda
 ENV OPENPILOT_REF="ee0dd36a3c775dbd82493c84f4e7272c1eb3fcbd"
-ENV OPENDBC_REF="296f190000a2e71408e207ba21a2257cc853ec15"
+ENV OPENDBC_REF="e8e97fcf00be9a696be009aa37ca13c55b9f632c"
 
 COPY requirements.txt /tmp/
 RUN pyenv install 3.8.10 && \
@@ -89,3 +89,9 @@ RUN cd /tmp/openpilot && \
 RUN cd /tmp/openpilot && \
     pip install --no-cache-dir -r opendbc/requirements.txt && \
     pip install --no-cache-dir --upgrade aenum lru-dict pycurl tenacity atomicwrites serial smbus2
+
+
+# for Jenkins
+COPY README.md panda.tar.* /tmp/
+RUN mkdir /tmp/openpilot/panda && \
+    tar -xvf /tmp/panda.tar.gz -C /tmp/openpilot/panda/ || true

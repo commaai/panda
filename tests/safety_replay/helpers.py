@@ -44,7 +44,7 @@ def get_steer_torque(mode, to_send):
   return ret
 
 def package_can_msg(msg):
-  return libpanda_py.make_CANPacket(msg.address, msg.src, msg.dat)
+  return libpanda_py.make_CANPacket(msg.address, msg.src % 4, msg.dat)
 
 def init_segment(safety, lr, mode):
   sendcan = (msg for msg in lr if msg.which() == 'sendcan')

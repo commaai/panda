@@ -195,24 +195,25 @@ void ignition_can_hook(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
 
-  ignition_can_cnt = 0U;  // reset counter
-
   if (bus == 0) {
     // GM exception
     if ((addr == 0x160) && (len == 5)) {
       // this message isn't all zeros when ignition is on
       ignition_can = GET_BYTES_04(to_push) != 0U;
+      ignition_can_cnt = 0U;
     }
 
     // Tesla exception
     if ((addr == 0x348) && (len == 8)) {
       // GTW_status
       ignition_can = (GET_BYTE(to_push, 0) & 0x1U) != 0U;
+      ignition_can_cnt = 0U;
     }
 
     // Mazda exception
     if ((addr == 0x9E) && (len == 8)) {
       ignition_can = (GET_BYTE(to_push, 0) >> 5) == 0x6U;
+      ignition_can_cnt = 0U;
     }
 
   }
@@ -224,6 +225,23 @@ bool can_tx_check_min_slots_free(uint32_t min) {
     (can_slots_empty(&can_tx2_q) >= min) &&
     (can_slots_empty(&can_tx3_q) >= min) &&
     (can_slots_empty(&can_txgmlan_q) >= min);
+}
+
+uint8_t calculate_checksum(uint8_t *dat, uint32_t len) {
+  uint8_t checksum = 0U;
+  for (uint32_t i = 0U; i < len; i++) {
+    checksum ^= dat[i];
+  }
+  return checksum;
+}
+
+void can_set_checksum(CANPacket_t *packet) {
+  packet->checksum = 0U;
+  packet->checksum = calculate_checksum((uint8_t *) packet, CANPACKET_HEAD_SIZE + GET_LEN(packet));
+}
+
+bool can_check_checksum(CANPacket_t *packet) {
+  return (calculate_checksum((uint8_t *) packet, CANPACKET_HEAD_SIZE + GET_LEN(packet)) == 0U);
 }
 
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
@@ -240,6 +258,9 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
   } else {
     safety_tx_blocked += 1U;
     to_push->rejected = 1U;
+
+    // data changed
+    can_set_checksum(to_push);
     rx_buffer_overflow += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }
 }
