@@ -1,14 +1,24 @@
 import usb1
 import struct
 import binascii
+from typing import List
 
 from .base import STBootloaderUsbHandle
 from .constants import McuType
 
 
 class PandaDFU:
-  def __init__(self, dfu_serial):
-    self._handle = None
+  def __init__(self, dfu_serial: str):
+    self._handle = PandaDFU.connect(dfu_serial)
+    if self._handle is None:
+      raise Exception(f"failed to open DFU device {dfu_serial}")
+
+  @staticmethod
+  def connect(dfu_serial: str):
+    return PandaDFU.usb_connect(dfu_serial)
+
+  @staticmethod
+  def usb_connect(dfu_serial: str):
     context = usb1.USBContext()
     for device in context.getDeviceList(skip_on_error=True):
       if device.getVendorID() == 0x0483 and device.getProductID() == 0xdf11:
@@ -21,11 +31,18 @@ class PandaDFU:
           self._mcu_type = self.get_mcu_type(device)
           break
 
-    if self._handle is None:
-      raise Exception(f"failed to open DFU device {dfu_serial}")
+  @staticmethod
+  def spi_connect(dfu_serial: str):
+    pass
 
   @staticmethod
-  def list():
+  def list() -> List[str]:
+    ret = PandaDFU.usb_list()
+    ret += Panda.spi_list()
+    return list(set(ret))
+
+  @staticmethod
+  def usb_list() -> List[str]:
     context = usb1.USBContext()
     dfu_serials = []
     try:
@@ -38,6 +55,10 @@ class PandaDFU:
     except Exception:
       pass
     return dfu_serials
+
+  @staticmethod
+  def spi_list() -> List[str]:
+    return []
 
   @staticmethod
   def st_serial_to_dfu_serial(st, mcu_type=McuType.F4):
