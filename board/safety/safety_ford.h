@@ -120,12 +120,12 @@ static bool ford_lkas_msg_check(int addr) {
 const SteeringLimits FORD_STEERING_LIMITS = {
   .angle_deg_to_can = 50000,  // 1 / (2e-5) rad to can
   .angle_rate_up_lookup = {
-    {5., 25., 25.},
-    {0.0002, 0.0001, 0.0001}
+    {5., 25.},
+    {0.0002, 0.0001}
   },
   .angle_rate_down_lookup = {
-    {5., 25., 25.},
-    {0.000225, 0.00015, 0.00015}
+    {5., 25.},
+    {0.000225, 0.00015}
   },
 };
 
