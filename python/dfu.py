@@ -1,7 +1,7 @@
 import usb1
 import struct
 import binascii
-from typing import List, Iterable, Optional
+from typing import List, Tuple, Optional
 
 from .base import BaseSTBootloaderHandle
 from .usb import STBootloaderUSBHandle
@@ -10,14 +10,20 @@ from .constants import McuType
 
 class PandaDFU:
   def __init__(self, dfu_serial: str):
-    self._handle, self._mcu_type = PandaDFU.usb_connect(dfu_serial)
-    if self._handle is None:
-      self._handle, self._mcu_type = PandaDFU.spi_connect(dfu_serial)
-    if self._handle is None:
+    handle, mcu_type = PandaDFU.usb_connect(dfu_serial)
+    if None in (handle, mcu_type):
+      handle, mcu_type = PandaDFU.spi_connect(dfu_serial)
+    if None in (handle, mcu_type):
       raise Exception(f"failed to open DFU device {dfu_serial}")
 
+    # needed to make mypy work :(
+    assert handle is not None
+    assert mcu_type is not None
+    self._handle: BaseSTBootloaderHandle = handle
+    self._mcu_type: McuType = mcu_type
+
   @staticmethod
-  def usb_connect(dfu_serial: str) -> Iterable[Optional[BaseSTBootloaderHandle], Optional[McuType]] :
+  def usb_connect(dfu_serial: str) -> Tuple[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
     handle, mcu_type = None, None
     context = usb1.USBContext()
     for device in context.getDeviceList(skip_on_error=True):
@@ -37,7 +43,7 @@ class PandaDFU:
     return handle, mcu_type
 
   @staticmethod
-  def spi_connect(dfu_serial: str) -> Iterable[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
+  def spi_connect(dfu_serial: str) -> Tuple[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
     return None, None
 
   @staticmethod
@@ -94,5 +100,5 @@ class PandaDFU:
   def recover(self):
     with open(self._mcu_type.config.bootstub_path, "rb") as f:
       code = f.read()
-    self.program_bootstub(code, self._mcu_type.config.bootstub_address)
+    self.program_bootstub(code)
 
