@@ -61,7 +61,6 @@ def init_segment(safety, lr, mode):
 
   to_send = package_can_msg(msg)
   torque, angle = get_steer_value(mode, to_send)
-  print(torque, angle)
   if torque != 0:
     safety.set_controls_allowed(1)
     safety.set_desired_torque_last(torque)
