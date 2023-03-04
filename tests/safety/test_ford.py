@@ -88,6 +88,10 @@ class TestFordSafety(common.PandaSafetyTest):
     t = int(t * self.DEG_TO_CAN)
     self.safety.set_desired_angle_last(t)
 
+  def _set_curvature_meas(self, curvature, speed):
+    self._rx(self._speed_msg(speed))
+    self._rx(self._yaw_rate_msg(curvature * self.DEG_TO_CAN, speed))
+
   ### END ###
 
   def _torque_cmd_msg(self, torque, steer_req=1):
@@ -102,9 +106,7 @@ class TestFordSafety(common.PandaSafetyTest):
 
       torque_meas = self.MAX_CURVATURE_CAN - self.MAX_CURVATURE_DELTA_CAN - 50
 
-      self.safety.set_rt_torque_last(self.MAX_CURVATURE_CAN)
-      self.safety.set_torque_meas(torque_meas, torque_meas)  # TODO SET CURVATURE MEAS
-      self.safety.set_desired_torque_last(self.MAX_CURVATURE_CAN)
+      self._set_curvature_meas(self.MAX_CURVATURE_CAN, speed)  # TODO: figure out why this doesn't work
       self._set_prev_desired_angle(self.MAX_CURVATURE_CAN)
       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_CURVATURE_CAN - max_delta_down)))
 
