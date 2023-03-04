@@ -22,26 +22,30 @@ def is_steering_msg(mode, addr):
     ret = addr == 0x292
   elif mode == Panda.SAFETY_SUBARU:
     ret = addr == 0x122
+  elif mode == Panda.SAFETY_FORD:
+    ret = addr == 0x3d3
   return ret
 
-def get_steer_torque(mode, to_send):
-  ret = 0
+def get_steer_value(mode, to_send):
+  torque, angle = 0, 0
   if mode in (Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH):
-    ret = to_send.RDLR & 0xFFFF0000
+    torque = to_send.RDLR & 0xFFFF0000
   elif mode == Panda.SAFETY_TOYOTA:
-    ret = (to_send.RDLR & 0xFF00) | ((to_send.RDLR >> 16) & 0xFF)
-    ret = to_signed(ret, 16)
+    torque = (to_send.RDLR & 0xFF00) | ((to_send.RDLR >> 16) & 0xFF)
+    torque = to_signed(torque, 16)
   elif mode == Panda.SAFETY_GM:
-    ret = ((to_send.data[0] & 0x7) << 8) | to_send.data[1]
-    ret = to_signed(ret, 11)
+    torque = ((to_send.data[0] & 0x7) << 8) | to_send.data[1]
+    torque = to_signed(torque, 11)
   elif mode == Panda.SAFETY_HYUNDAI:
-    ret = (((to_send.data[3] & 0x7) << 8) | to_send.data[2]) - 1024
+    torque = (((to_send.data[3] & 0x7) << 8) | to_send.data[2]) - 1024
   elif mode == Panda.SAFETY_CHRYSLER:
-    ret = ((to_send.RDLR & 0x7) << 8) + ((to_send.RDLR & 0xFF00) >> 8) - 1024
+    torque = ((to_send.RDLR & 0x7) << 8) + ((to_send.RDLR & 0xFF00) >> 8) - 1024
   elif mode == Panda.SAFETY_SUBARU:
-    ret = ((to_send.RDLR >> 16) & 0x1FFF)
-    ret = to_signed(ret, 13)
-  return ret
+    torque = ((to_send.RDLR >> 16) & 0x1FFF)
+    torque = to_signed(torque, 13)
+  elif mode == Panda.SAFETY_FORD:
+    angle = ((to_send.data[0] << 3) | (to_send.data[1] >> 5)) - 1000
+  return torque, angle
 
 def package_can_msg(msg):
   return libpanda_py.make_CANPacket(msg.address, msg.src % 4, msg.dat)
@@ -56,8 +60,11 @@ def init_segment(safety, lr, mode):
     return
 
   to_send = package_can_msg(msg)
-  torque = get_steer_torque(mode, to_send)
+  torque, angle = get_steer_value(mode, to_send)
   if torque != 0:
     safety.set_controls_allowed(1)
     safety.set_desired_torque_last(torque)
-    assert safety.safety_tx_hook(to_send), "failed to initialize panda safety for segment"
+  elif angle != 0:
+    safety.set_controls_allowed(1)
+    safety.set_desired_angle_last(angle)
+  assert safety.safety_tx_hook(to_send), "failed to initialize panda safety for segment"
