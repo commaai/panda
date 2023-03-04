@@ -155,9 +155,9 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (addr == MSG_Yaw_Data_FD1) {
       // Signal: VehYaw_W_Actl
       float ford_yaw_rate = (((GET_BYTE(to_push, 2) << 8U) | GET_BYTE(to_push, 3)) * 0.0002) - 6.5;
-      float current_curvature = -ford_yaw_rate / MAX(vehicle_speed, 0.1);
-      // convert current curvature into units on CAN for desired curvature
-      int current_curvature_can = current_curvature * FORD_STEERING_LIMITS.angle_deg_to_can; // + 1;  // TODO: not sure if we should add 1
+      float current_curvature = ford_yaw_rate / MAX(vehicle_speed, 0.1);
+      // convert current curvature into units on CAN for comparison with desired curvature
+      int current_curvature_can = current_curvature * FORD_STEERING_LIMITS.angle_deg_to_can;
       update_sample(&ford_curvature_meas, current_curvature_can);
     }
 
