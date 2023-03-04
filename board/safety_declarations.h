@@ -185,6 +185,9 @@ bool safety_rx_checks_invalid = false;
 
 // for safety modes with torque steering control
 int desired_torque_last = 0;       // last desired steer torque
+float debug_value = 0;
+float debug_value_2 = 0;
+float debug_value_3 = 0;
 int rt_torque_last = 0;            // last desired torque for real time check
 int valid_steer_req_count = 0;     // counter for steer request bit matching non-zero torque
 int invalid_steer_req_count = 0;   // counter to allow multiple frames of mismatching torque request bit

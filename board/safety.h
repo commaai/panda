@@ -335,6 +335,9 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   acc_main_on = false;
   cruise_button_prev = 0;
   desired_torque_last = 0;
+  debug_value = 0;
+  debug_value_2 = 0;
+  debug_value_3 = 0;
   rt_torque_last = 0;
   ts_angle_last = 0;
   desired_angle_last = 0;
