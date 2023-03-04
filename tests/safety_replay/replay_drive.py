@@ -30,21 +30,17 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
 
     if msg.which() == 'sendcan':
      for canmsg in msg.sendcan:
-       to_send = package_can_msg(canmsg)
-       sent = safety.safety_tx_hook(to_send)
-       print('limit up: {}, limit down: {}'.format(safety.get_debug_value(), safety.get_debug_value_2()))
-       # print('vehicle speed: {} m/s'.format(safety.get_vehicle_speed()))
-       if not sent:
-         print('BLOCKED')
+        to_send = package_can_msg(canmsg)
+        sent = safety.safety_tx_hook(to_send)
+        if not sent:
+          tx_blocked += 1
+          tx_controls_blocked += safety.get_controls_allowed()
+          blocked_addrs[canmsg.address] += 1
 
-         tx_blocked += 1
-         tx_controls_blocked += safety.get_controls_allowed()
-         blocked_addrs[canmsg.address] += 1
-
-         if "DEBUG" in os.environ:
-           print("blocked bus %d msg %d at %f" % (canmsg.src, canmsg.address, (msg.logMonoTime - start_t) / (1e9)))
-       tx_controls += safety.get_controls_allowed()
-       tx_tot += 1
+          if "DEBUG" in os.environ:
+            print("blocked bus %d msg %d at %f" % (canmsg.src, canmsg.address, (msg.logMonoTime - start_t) / (1e9)))
+        tx_controls += safety.get_controls_allowed()
+        tx_tot += 1
     elif msg.which() == 'can':
       for canmsg in msg.can:
         # ignore msgs we sent
