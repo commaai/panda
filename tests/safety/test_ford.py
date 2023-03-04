@@ -65,9 +65,9 @@ class TestFordSafety(common.PandaSafetyTest):
   # HIGH_ANGLE = 0.014  # 0.02 - ANGLE_DELTA_VU[0] = 0.014
   # ANGLE_RATE_VIOLATION_OFFSET = 0.001
 
-  # ANGLE_DELTA_BP = [5., 15., 25.]
-  # ANGLE_DELTA_V = [0.004, 0.00044, 0.00016]  # windup limit
-  # ANGLE_DELTA_VU = [0.006, 0.00066, 0.00024]  # unwind limit
+  ANGLE_DELTA_BP = [5., 25.]
+  ANGLE_DELTA_V = [0.0002, 0.0001]  # windup limit
+  ANGLE_DELTA_VU = [0.000225, 0.00015]  # unwind limit
 
   cnt_speed = 0
   cnt_yaw_rate = 0
