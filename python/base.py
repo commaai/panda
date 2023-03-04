@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 
 # This mimics the handle given by libusb1 for easy interoperability
@@ -31,10 +31,14 @@ class BaseSTBootloaderHandle(ABC):
     ...
 
   @abstractmethod
+  def program(self, address: int, dat: bytes, block_size: Optional[int] = None) -> None:
+    ...
+
+  @abstractmethod
   def erase(self, address: int) -> None:
     ...
 
   @abstractmethod
-  def reset(self, address: int) -> None:
+  def jump(self, address: int) -> None:
     ...
 

@@ -1,24 +1,24 @@
 import usb1
 import struct
 import binascii
-from typing import List
+from typing import List, Iterable, Optional
 
-from .base import STBootloaderUsbHandle
+from .base import BaseSTBootloaderHandle
+from .usb import STBootloaderUSBHandle
 from .constants import McuType
 
 
 class PandaDFU:
   def __init__(self, dfu_serial: str):
-    self._handle = PandaDFU.connect(dfu_serial)
+    self._handle, self._mcu_type = PandaDFU.usb_connect(dfu_serial)
+    if self._handle is None:
+      self._handle, self._mcu_type = PandaDFU.spi_connect(dfu_serial)
     if self._handle is None:
       raise Exception(f"failed to open DFU device {dfu_serial}")
 
   @staticmethod
-  def connect(dfu_serial: str):
-    return PandaDFU.usb_connect(dfu_serial)
-
-  @staticmethod
-  def usb_connect(dfu_serial: str):
+  def usb_connect(dfu_serial: str) -> Iterable[Optional[BaseSTBootloaderHandle], Optional[McuType]] :
+    handle, mcu_type = None, None
     context = usb1.USBContext()
     for device in context.getDeviceList(skip_on_error=True):
       if device.getVendorID() == 0x0483 and device.getProductID() == 0xdf11:
@@ -27,18 +27,23 @@ class PandaDFU:
         except Exception:
           continue
         if this_dfu_serial == dfu_serial or dfu_serial is None:
-          self._handle = STBootloaderUsbHandle(device.open())
-          self._mcu_type = self.get_mcu_type(device)
+          handle = STBootloaderUSBHandle(device.open())
+          # TODO: move this into the handle
+          # TODO: Find a way to detect F4 vs F2
+          # TODO: also check F4 BCD, don't assume in else
+          mcu_type = McuType.H7 if device.getbcdDevice() == 512 else McuType.F4
           break
 
+    return handle, mcu_type
+
   @staticmethod
-  def spi_connect(dfu_serial: str):
-    pass
+  def spi_connect(dfu_serial: str) -> Iterable[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
+    return None, None
 
   @staticmethod
   def list() -> List[str]:
     ret = PandaDFU.usb_list()
-    ret += Panda.spi_list()
+    ret += PandaDFU.spi_list()
     return list(set(ret))
 
   @staticmethod
@@ -70,47 +75,24 @@ class PandaDFU:
     else:
       return binascii.hexlify(struct.pack("!HHH", uid_base[1] + uid_base[5], uid_base[0] + uid_base[4] + 0xA, uid_base[3])).upper().decode("utf-8")
 
-  def get_mcu_type(self, dev) -> McuType:
-    # TODO: Find a way to detect F4 vs F2
-    # TODO: also check F4 BCD, don't assume in else
-    return McuType.H7 if dev.getbcdDevice() == 512 else McuType.F4
+  def erase(self, address: int) -> None:
+    self._handle.erase(address)
 
-  def erase(self, address):
-    self._handle.erase(addres)
+  # *** helpers ***
 
-  def program(self, address, dat, block_size=None):
-    if block_size is None:
-      block_size = len(dat)
-
-    # Set Address Pointer
-    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", address))
-    self.status()
-
-    # Program
-    dat += b"\xFF" * ((block_size - len(dat)) % block_size)
-    for i in range(0, len(dat) // block_size):
-      ldat = dat[i * block_size:(i + 1) * block_size]
-      print("programming %d with length %d" % (i, len(ldat)))
-      self._handle.controlWrite(0x21, DFU_DNLOAD, 2 + i, 0, ldat)
-      self.status()
+  def reset(self):
+    self._handle.jump(self._mcu_type.config.bootstub_address)
 
   def program_bootstub(self, code_bootstub):
-    self.clear_status()
+    #self.clear_status()
     self.erase(self._mcu_type.config.bootstub_address)
     self.erase(self._mcu_type.config.app_address)
-    self.program(self._mcu_type.config.bootstub_address, code_bootstub, self._mcu_type.config.block_size)
+    self._handle.program(self._mcu_type.config.bootstub_address, code_bootstub, self._mcu_type.config.block_size)
     self.reset()
 
+  # TODO: rename to flash bootstub?
   def recover(self):
     with open(self._mcu_type.config.bootstub_path, "rb") as f:
       code = f.read()
-    self.program_bootstub(code)
+    self.program_bootstub(code, self._mcu_type.config.bootstub_address)
 
-  def reset(self):
-    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", self._mcu_type.config.bootstub_address))
-    self.status()
-    try:
-      self._handle.controlWrite(0x21, DFU_DNLOAD, 2, 0, b"")
-      _ = str(self._handle.controlRead(0x21, DFU_GETSTATUS, 0, 0, 6))
-    except Exception:
-      pass

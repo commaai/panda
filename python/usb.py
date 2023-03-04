@@ -1,4 +1,5 @@
-from typing import List
+import struct
+from typing import List, Optional
 
 from .base import BaseHandle, BaseSTBootloaderHandle
 
@@ -8,8 +9,6 @@ DFU_UPLOAD = 2
 DFU_GETSTATUS = 3
 DFU_CLRSTATUS = 4
 DFU_ABORT = 6
-
-i
 
 
 class PandaUsbHandle(BaseHandle):
@@ -34,10 +33,8 @@ class PandaUsbHandle(BaseHandle):
 
 
 class STBootloaderUSBHandle(BaseSTBootloaderHandle):
-  def __init__(self, handle):
-    self._handle = handle
-
-  # ** 
+  def __init__(self, libusb_handle):
+    self._handle = libusb_handle
 
   def status(self):
     while 1:
@@ -60,12 +57,28 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
   def close(self):
     self._handle.close()
 
+  def program(self, address: int, dat: bytes, block_size: Optional[int] = None) -> None:
+    if block_size is None:
+      block_size = len(dat)
+
+    # Set Address Pointer
+    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", address))
+    self.status()
+
+    # Program
+    dat += b"\xFF" * ((block_size - len(dat)) % block_size)
+    for i in range(0, len(dat) // block_size):
+      ldat = dat[i * block_size:(i + 1) * block_size]
+      print("programming %d with length %d" % (i, len(ldat)))
+      self._handle.controlWrite(0x21, DFU_DNLOAD, 2 + i, 0, ldat)
+      self.status()
+
   def erase(self, address):
     self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b"\x41" + struct.pack("I", address))
     self.status()
 
-  def reset(self):
-    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", self._mcu_type.config.bootstub_address))
+  def jump(self, address):
+    self._handle.controlWrite(0x21, DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", address))
     self.status()
     try:
       self._handle.controlWrite(0x21, DFU_DNLOAD, 2, 0, b"")
