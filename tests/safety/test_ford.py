@@ -78,6 +78,14 @@ class TestFordSafety(common.PandaSafetyTest):
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
     self.safety.init_tests()
 
+  ### TODO: MAKE THESE FUNCTIONS COMMON ###
+
+  def _set_prev_desired_angle(self, t):
+    t = int(t * self.DEG_TO_CAN)
+    self.safety.set_desired_angle_last(t)
+
+  ### END ###
+
   # Driver brake pedal
   def _user_brake_msg(self, brake: bool):
     # brake pedal and cruise state share same message, so we have to send
@@ -186,6 +194,7 @@ class TestFordSafety(common.PandaSafetyTest):
                 enabled = steer_control_enabled or curvature != 0
                 self._rx(self._speed_msg(5))
                 self._rx(self._yaw_rate_msg(curvature, 5))
+                self._set_prev_desired_angle(curvature)
 
                 should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
                 should_tx = should_tx and (not enabled or controls_allowed)
