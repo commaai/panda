@@ -245,9 +245,9 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     if (steer_control_enabled) {
       // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
       // add 1 to not false trigger the violation.
-      int delta_angle_up = (interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed - 1) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
-      int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed - 1) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
-      debug_value = interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, 30);
+      int delta_angle_up = (interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
+      int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
+      debug_value = delta_angle_up;
       debug_value_2 = delta_angle_down;
 
       // we allow max curvature error at low speeds due to the low rates imposed by the EPS,
