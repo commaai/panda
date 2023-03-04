@@ -62,6 +62,10 @@ class TestFordSafety(common.PandaSafetyTest):
 
   # Curvature control limits
   DEG_TO_CAN = 50000  # 1 / (2e-5) rad to can
+  MAX_CURVATURE = 0.02
+  MAX_CURVATURE_DELTA = 0.0002
+  MAX_CURVATURE_CAN = int(MAX_CURVATURE * DEG_TO_CAN)
+  MAX_CURVATURE_DELTA_CAN = int(MAX_CURVATURE_CAN * DEG_TO_CAN)
   # HIGH_ANGLE = 0.014  # 0.02 - ANGLE_DELTA_VU[0] = 0.014
   # ANGLE_RATE_VIOLATION_OFFSET = 0.001
 
@@ -85,6 +89,30 @@ class TestFordSafety(common.PandaSafetyTest):
     self.safety.set_desired_angle_last(t)
 
   ### END ###
+
+  def _torque_cmd_msg(self, torque, steer_req=1):
+    return self._tja_command_msg(steer_req, 0, 0, torque, 0)
+
+  def test_non_realtime_limit_down(self):
+    for speed in np.linspace(0, 50, 10):
+      max_delta_up = int(np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V) * self.DEG_TO_CAN)
+      max_delta_down = int(np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU) * self.DEG_TO_CAN)
+
+      self.safety.set_controls_allowed(True)
+
+      torque_meas = self.MAX_CURVATURE_CAN - self.MAX_CURVATURE_DELTA_CAN - 50
+
+      self.safety.set_rt_torque_last(self.MAX_CURVATURE_CAN)
+      self.safety.set_torque_meas(torque_meas, torque_meas)  # TODO SET CURVATURE MEAS
+      self.safety.set_desired_torque_last(self.MAX_CURVATURE_CAN)
+      self._set_prev_desired_angle(self.MAX_CURVATURE_CAN)
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_CURVATURE_CAN - max_delta_down)))
+
+      self.safety.set_rt_torque_last(self.MAX_CURVATURE_CAN)
+      self.safety.set_torque_meas(torque_meas, torque_meas)
+      self.safety.set_desired_torque_last(self.MAX_CURVATURE_CAN)
+      self._set_prev_desired_angle(self.MAX_CURVATURE_CAN)
+      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_CURVATURE_CAN - max_delta_down + 1)))
 
   # Driver brake pedal
   def _user_brake_msg(self, brake: bool):

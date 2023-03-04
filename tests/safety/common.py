@@ -380,11 +380,12 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
   def _torque_meas_msg(self, torque):
     pass
 
-  def _set_prev_torque(self, t):
+  def _set_prev_torque(self, t):  # _set_prev_steer and it would be angle or torque?
     super()._set_prev_torque(t)
     self.safety.set_torque_meas(t, t)
 
   def test_torque_absolute_limits(self):
+    # need to disable this check
     for controls_allowed in [True, False]:
       for torque in np.arange(-self.MAX_TORQUE - 1000, self.MAX_TORQUE + 1000, self.MAX_RATE_UP):
         self.safety.set_controls_allowed(controls_allowed)
