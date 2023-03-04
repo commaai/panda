@@ -120,12 +120,12 @@ static bool ford_lkas_msg_check(int addr) {
 const SteeringLimits FORD_STEERING_LIMITS = {
   .angle_deg_to_can = 50000,  // 1 / (2e-5) rad to can
   .angle_rate_up_lookup = {
-    {5., 25.},
-    {0.0002, 0.0001}
+    {5., 25., 25.},
+    {0.00025, 0.0002, 0.0002}
   },
   .angle_rate_down_lookup = {
-    {5., 25.},
-    {0.000225, 0.00015}
+    {5., 25., 25.},
+    {0.000125, 0.00005, 0.00005}
   },
 };
 
@@ -241,12 +241,14 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     bool steer_control_enabled = (steer_control_type != 0U) || (raw_curvature != INACTIVE_CURVATURE);
     violation |= !controls_allowed && steer_control_enabled;
 
-    int desired_curvature = raw_curvature - 1000;  // *FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
+    int desired_curvature = raw_curvature - 1000;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
     if (steer_control_enabled) {
       // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
       // add 1 to not false trigger the violation.
-      int delta_angle_up = (interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
-      int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
+      int delta_angle_up = (interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed - 1) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
+      int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed - 1) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
+      debug_value = interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, 30);
+      debug_value_2 = delta_angle_down;
 
       // we allow max curvature error at low speeds due to the low rates imposed by the EPS,
       // and inaccuracy of curvature from yaw rate
@@ -257,6 +259,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     }
 
     if (violation) {
+//      controls_allowed = 0;
       tx = 0;
     }
     desired_angle_last = desired_curvature;
