@@ -246,7 +246,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
       // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
       // add 1 to not false trigger the violation.
       int delta_angle_up = (interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
-      int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
+      int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed + 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) - 1.;
       debug_value = delta_angle_up;
       debug_value_2 = delta_angle_down;
       debug_value_3 = desired_curvature - desired_angle_last;
