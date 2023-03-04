@@ -29,9 +29,9 @@ def is_steering_msg(mode, addr):
 def get_steer_value(mode, to_send):
   torque, angle = 0, 0
   if mode in (Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH):
-    torque = (to_send.data[3] << 8) | to_send.data[2]
+    torque = ((to_send.data[3] << 8) | to_send.data[2]) << 16
   elif mode == Panda.SAFETY_TOYOTA:
-    torque = (to_send.data[1]) | (to_send.data[2])
+    torque = (to_send.data[1] << 8) | (to_send.data[2])
     torque = to_signed(torque, 16)
   elif mode == Panda.SAFETY_GM:
     torque = ((to_send.data[0] & 0x7) << 8) | to_send.data[1]
