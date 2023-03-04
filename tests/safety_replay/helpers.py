@@ -31,7 +31,7 @@ def get_steer_value(mode, to_send):
   if mode in (Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH):
     torque = to_send.RDLR & 0xFFFF0000
   elif mode == Panda.SAFETY_TOYOTA:
-    torque = (to_send.RDLR & 0xFF00) | ((to_send.RDLR >> 16) & 0xFF)
+    torque = (to_send.data[1]) | (to_send.data[2])
     torque = to_signed(torque, 16)
   elif mode == Panda.SAFETY_GM:
     torque = ((to_send.data[0] & 0x7) << 8) | to_send.data[1]
