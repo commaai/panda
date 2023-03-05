@@ -21,7 +21,7 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
 
   ANGLE_DELTA_BP = [0., 5., 15.]
   ANGLE_DELTA_V = [5., .8, .15]  # windup limit
-  ANGLE_DELTA_VU = [5., 3.5, 0.4]  # unwind limit
+  ANGLE_DELTA_VU = [5., 3.5, .4]  # unwind limit
 
   def setUp(self):
     self.packer = CANPackerPanda("nissan_x_trail_2017")
