@@ -122,6 +122,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
+    // ES_Brake Cruise_Brake_Active
     if ((addr == 0x220) && (bus == alt_bus2)) {
       subaru_aeb = GET_BIT(to_push, 38U) != 0U;
     }
