@@ -299,11 +299,6 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     self.safety.set_torque_driver(0, 0)
     super().test_non_realtime_limit_up()
 
-  # TODO: make this test something
-  def test_non_realtime_limit_down(self):
-    self.safety.set_torque_driver(0, 0)
-    self.safety.set_controls_allowed(True)
-
   def test_against_torque_driver(self):
     self.safety.set_controls_allowed(True)
 

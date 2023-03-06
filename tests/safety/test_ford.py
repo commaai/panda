@@ -111,11 +111,11 @@ class TestFordSafety(common.PandaSafetyTest):
         self._set_curvature_meas(torque_meas, speed)  # TODO: figure out why this doesn't work
       # self._set_prev_desired_angle(torque_meas)
       self.safety.set_desired_angle_last(self.MAX_CURVATURE_CAN)
-      print('set desired angle last', self.MAX_CURVATURE_CAN)
-      print('sending desired cmd: {} or {} CAN'.format((self.MAX_CURVATURE_CAN - max_delta_down) / self.DEG_TO_CAN, self.MAX_CURVATURE_CAN - max_delta_down))
+      # print('set desired angle last', self.MAX_CURVATURE_CAN)
+      # print('sending desired cmd: {} or {} CAN'.format((self.MAX_CURVATURE_CAN - max_delta_down) / self.DEG_TO_CAN, self.MAX_CURVATURE_CAN - max_delta_down))
       # self._tx(self._torque_cmd_msg((self.MAX_CURVATURE_CAN - max_delta_down) / self.DEG_TO_CAN))
       self.assertTrue(self._tx(self._torque_cmd_msg((self.MAX_CURVATURE_CAN - max_delta_down) / self.DEG_TO_CAN)), (self.MAX_CURVATURE_CAN, max_delta_down, self.MAX_CURVATURE_CAN - max_delta_down))
-      print('debug1: {}, debug2: {}, debug3: {}'.format(self.safety.get_debug_value(), self.safety.get_debug_value_2(), self.safety.get_debug_value_3()))
+      # print('debug1: {}, debug2: {}, debug3: {}'.format(self.safety.get_debug_value(), self.safety.get_debug_value_2(), self.safety.get_debug_value_3()))
 
       # TODO: something better than this
       # delta not checked at low speed
@@ -126,8 +126,31 @@ class TestFordSafety(common.PandaSafetyTest):
           self._set_curvature_meas(torque_meas, speed)  # TODO: figure out why this doesn't work
         self.safety.set_desired_angle_last(self.MAX_CURVATURE_CAN)
         self._tx(self._torque_cmd_msg((self.MAX_CURVATURE_CAN - max_delta_down + 2) / self.DEG_TO_CAN))
-        print('debug1: {}, debug2: {}, debug3: {}'.format(self.safety.get_debug_value(), self.safety.get_debug_value_2(), self.safety.get_debug_value_3()))
+        # print('debug1: {}, debug2: {}, debug3: {}'.format(self.safety.get_debug_value(), self.safety.get_debug_value_2(), self.safety.get_debug_value_3()))
         self.assertFalse(self._tx(self._torque_cmd_msg((self.MAX_CURVATURE_CAN - max_delta_down + 2) / self.DEG_TO_CAN)))
+
+  def _set_prev_torque(self, t):
+    self.safety.set_desired_angle_last(t)
+
+  def test_non_realtime_limit_up(self):
+    for speed in np.linspace(0, 50, 11):
+      max_delta_up = int(np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V) * self.DEG_TO_CAN)
+      max_delta_down = int(np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU) * self.DEG_TO_CAN)
+      self.safety.set_controls_allowed(True)
+
+      print(speed)
+      self._speed_msg(speed)
+      self._set_prev_torque(0)
+      self._tx(self._torque_cmd_msg(max_delta_up / self.DEG_TO_CAN))
+      print('debug1: {}, debug2: {}, debug3: {}'.format(self.safety.get_debug_value(), self.safety.get_debug_value_2(), self.safety.get_debug_value_3()))
+      self._set_prev_torque(0)
+      self.assertTrue(self._tx(self._torque_cmd_msg(-max_delta_up / self.DEG_TO_CAN)))
+
+      self._set_prev_torque(0)
+      self.assertFalse(self._tx((self._torque_cmd_msg(max_delta_up + 1 / self.DEG_TO_CAN))))
+      self.safety.set_controls_allowed(True)
+      self._set_prev_torque(0)
+      self.assertFalse(self._tx(self._torque_cmd_msg((-max_delta_up - 1) / self.DEG_TO_CAN)))
 
   # Driver brake pedal
   def _user_brake_msg(self, brake: bool):
