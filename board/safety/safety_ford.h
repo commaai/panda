@@ -154,11 +154,10 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     // Update vehicle yaw rate
     if (addr == MSG_Yaw_Data_FD1) {
       // Signal: VehYaw_W_Actl
-//      float ford_yaw_rate = (((GET_BYTE(to_push, 2) << 8U) | GET_BYTE(to_push, 3)) * 0.0002) - 6.5;
-//      float current_curvature = ford_yaw_rate / MAX(vehicle_speed, 0.1);
+      float ford_yaw_rate = (((GET_BYTE(to_push, 2) << 8U) | GET_BYTE(to_push, 3)) * 0.0002) - 6.5;
+      float current_curvature = ford_yaw_rate / MAX(vehicle_speed, 0.1);
       // convert current curvature into units on CAN for comparison with desired curvature
-      int current_curvature_can = 0;  // current_curvature * FORD_STEERING_LIMITS.angle_deg_to_can *100; // + (current_curvature > 0 ? 0.5 : -0.5);
-      debug_value_4 = current_curvature_can;
+      int current_curvature_can = current_curvature * FORD_STEERING_LIMITS.angle_deg_to_can + (current_curvature > 0 ? 0.5 : -0.5);
       update_sample(&ford_curvature_meas, current_curvature_can);
     }
 
@@ -243,7 +242,6 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     violation |= !controls_allowed && steer_control_enabled;
 
     int desired_curvature = raw_curvature - 1000;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
-    debug_value_3 = desired_curvature;
     if (steer_control_enabled) {
       // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
       // add 1 to not false trigger the violation.
@@ -251,7 +249,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
       int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed + 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) - 1.;
       debug_value = delta_angle_up;
       debug_value_2 = delta_angle_down;
-//      debug_value_3 = desired_curvature - desired_angle_last;
+      debug_value_3 = desired_curvature - desired_angle_last;
 
       // we allow max curvature error at low speeds due to the low rates imposed by the EPS,
       // and inaccuracy of curvature from yaw rate

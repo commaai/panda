@@ -32,11 +32,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
      for canmsg in msg.sendcan:
        to_send = package_can_msg(canmsg)
        sent = safety.safety_tx_hook(to_send)
-       # print('limit up: {}, limit down: {}, delta cmd: {}'.format(safety.get_debug_value(), safety.get_debug_value_2(), safety.get_debug_value_3()))
-       print('limit up: {}, limit down: {}, actual cmd: {}'.format(safety.get_debug_value(), safety.get_debug_value_2(), safety.get_debug_value_3()))
-       # print('val: {}, val_meas->min: {}, val_meas->max: {}'.format(safety.get_debug_value_5(), safety.get_debug_value_6(), safety.get_debug_value_7()))
-       print('val: {}, highest_allowed: {}, lowest_allowed: {}'.format(safety.get_debug_value_5(), safety.get_debug_value_6(), safety.get_debug_value_7()))
-       print('current curvature: {}'.format(safety.get_debug_value_4()))
+       print('limit up: {}, limit down: {}, delta cmd: {}'.format(safety.get_debug_value(), safety.get_debug_value_2(), safety.get_debug_value_3()))
        # print('vehicle speed: {} m/s'.format(safety.get_vehicle_speed()))
        if not sent:
          print('BLOCKED')

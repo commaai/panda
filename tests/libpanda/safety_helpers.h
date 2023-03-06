@@ -138,23 +138,7 @@ float get_debug_value_2(void){
 }
 
 float get_debug_value_3(void){
-  return debug_value_3;
-}
-
-float get_debug_value_4(void){
-  return debug_value_4;
-}
-
-float get_debug_value_5(void){
-  return debug_value_5;
-}
-
-float get_debug_value_6(void){
-  return debug_value_6;
-}
-
-float get_debug_value_7(void){
-  return debug_value_7;
+  return debug_value_2;
 }
 
 
