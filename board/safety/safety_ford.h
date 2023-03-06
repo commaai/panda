@@ -247,9 +247,9 @@ static int ford_tx_hook(CANPacket_t *to_send) {
       // add 1 to not false trigger the violation.
       int delta_angle_up = (interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
       int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed + 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) - 1.;
-      debug_value = delta_angle_up;
-      debug_value_2 = delta_angle_down;
-      debug_value_3 = desired_curvature - desired_angle_last;
+//      debug_value = delta_angle_up;
+//      debug_value_2 = delta_angle_down;
+//      debug_value_3 = desired_curvature - desired_angle_last;
 
       // we allow max curvature error at low speeds due to the low rates imposed by the EPS,
       // and inaccuracy of curvature from yaw rate
