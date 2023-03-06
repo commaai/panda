@@ -12,10 +12,10 @@ def test_dfu(p):
   assert Panda.wait_for_dfu(dfu_serial, timeout=20), "failed to enter DFU"
 
   dfu = PandaDFU(dfu_serial)
-  assert dfu._mcu_type == app_mcu_type
+  assert dfu.get_mcu_type() == app_mcu_type
 
   assert dfu_serial in PandaDFU.list()
 
-  dfu.clear_status()
+  dfu._handle.clear_status()
   dfu.reset()
   p.reconnect()
