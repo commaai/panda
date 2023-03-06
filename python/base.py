@@ -2,8 +2,11 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 
-# This mimics the handle given by libusb1 for easy interoperability
 class BaseHandle(ABC):
+  """
+    A handle to talk to a panda.
+    Borrows heavily from the libusb1 handle API.
+  """
   @abstractmethod
   def close(self) -> None:
     ...
@@ -26,8 +29,16 @@ class BaseHandle(ABC):
 
 
 class BaseSTBootloaderHandle(ABC):
+  """
+    A handle to talk to a panda while it's in the STM32 bootloader.
+  """
+
   @abstractmethod
   def close(self) -> None:
+    ...
+
+  @abstractmethod
+  def clear_status(self) -> None:
     ...
 
   @abstractmethod
