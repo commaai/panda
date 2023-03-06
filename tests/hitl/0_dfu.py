@@ -16,5 +16,6 @@ def test_dfu(p):
 
   assert dfu_serial in PandaDFU.list()
 
+  dfu.clear_status()
   dfu.reset()
   p.reconnect()
