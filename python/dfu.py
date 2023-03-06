@@ -4,6 +4,7 @@ import binascii
 from typing import List, Tuple, Optional
 
 from .base import BaseSTBootloaderHandle
+from .spi import STBootloaderSPIHandle, PandaSpiException
 from .usb import STBootloaderUSBHandle
 from .constants import McuType
 
@@ -41,8 +42,23 @@ class PandaDFU:
     return handle, mcu_type
 
   @staticmethod
-  def spi_connect(dfu_serial: Optional[str]) -> Tuple[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
-    return None, None
+  def spi_connect(dfu_serial: str) -> Tuple[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
+    handle, mcu_type = None, None
+
+    try:
+      # TODO: get mcu type
+      handle = STBootloaderSPIHandle()
+    except PandaSpiException:  # TODO: catch more specific exception
+      raise
+      pass
+
+    return handle, mcu_type
+
+  @staticmethod
+  def list() -> List[str]:
+    ret = PandaDFU.usb_list()
+    ret += PandaDFU.spi_list()
+    return list(set(ret))
 
   @staticmethod
   def list() -> List[str]:
@@ -67,7 +83,15 @@ class PandaDFU:
 
   @staticmethod
   def spi_list() -> List[str]:
-    return []
+    ret = []
+    try:
+      # TODO: get serial
+      PandaDFU.spi_connect('')
+      ret.append('spi')
+    except Exception:  # TODO: catch more specific exception
+      raise
+      pass
+    return ret
 
   @staticmethod
   def st_serial_to_dfu_serial(st: str, mcu_type: McuType = McuType.F4):

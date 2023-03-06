@@ -7,9 +7,9 @@ import logging
 import threading
 from contextlib import contextmanager
 from functools import reduce
-from typing import List
+from typing import List, Optional
 
-from .base import BaseHandle
+from .base import BaseHandle, BaseSTBootloaderHandle
 
 try:
   import spidev
@@ -172,3 +172,93 @@ class PandaSpiHandle(BaseHandle):
         if len(d) < USB_MAX_SIZE:
           break
     return bytes(ret)
+
+
+class STBootloaderSPIHandle(BaseSTBootloaderHandle):
+  """
+    Implementation of the STM32 SPI bootloader protocol described in:
+    https://www.st.com/resource/en/application_note/an4286-spi-protocol-used-in-the-stm32-bootloader-stmicroelectronics.pdf
+  """
+
+  SYNC = 0x5A
+  ACK = 0x79
+  NACK = 0x1F
+
+  def __init__(self):
+    self.dev = SpiDevice(speed=1000000)
+
+    # say hello
+    with self.dev.acquire() as spi:
+      try:
+        spi.xfer([self.SYNC, ])
+        self._get_ack(spi)
+      except Exception:
+        raise Exception("failed to connect to panda")  # pylint: disable=W0707
+
+    # TODO: implement this
+    #self._mcu_type = self.get_mcu_type()
+
+  def _get_ack(self, spi, timeout=1.0):
+    data = 0x00
+    start_time = time.monotonic()
+    while data not in (self.ACK, self.NACK) and (time.monotonic() - start_time < timeout):
+      data = spi.xfer([0x00, ])[0]
+      time.sleep(0.001)
+    spi.xfer([self.ACK, ])
+
+    if data == self.NACK:
+      raise Exception("Got NACK response")
+    elif data != self.ACK:
+      raise Exception("Missing ACK")
+
+  def _cmd(self, cmd, data=None, read_bytes=0) -> bytes:
+    ret = b""
+    with self.dev.acquire() as spi:
+      # sync
+      spi.xfer([self.SYNC, ])
+
+      # send command
+      spi.xfer([cmd, cmd ^ 0xFF])
+      self._get_ack(spi)
+
+      # send data
+      if data is not None:
+        for d in data:
+          spi.xfer(self.add_checksum(d))
+          self._get_ack(spi, timeout=20)
+
+      # receive
+      if read_bytes > 0:
+        # send busy byte
+        ret = spi.xfer([0x00, ]*(read_bytes + 1))[1:]
+        self._get_ack(spi)
+
+    return ret
+
+  def add_checksum(self, data):
+    return data + bytes([reduce(lambda a, b: a ^ b, data)])
+
+
+  # *** Bootloader commands ***
+
+  def go_cmd(self, address: int) -> None:
+    self._cmd(0x21, data=[struct.pack('>I', address), ])
+
+  # *** PandaDFU API ***
+
+  def clear_status(self) -> None:
+    # TODO: not a thing with SPI?
+    pass
+
+  def close(self):
+    self.dev.close()
+
+  def program(self, address: int, dat: bytes, block_size: Optional[int] = None) -> None:
+    pass
+
+  def erase(self, address):
+    d = struct.pack('>H', address)
+    self._cmd(0x44, data=[d, ])
+
+  def jump(self, address):
+    self.go_cmd(self._mcu_type.config.bootstub_address)
