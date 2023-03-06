@@ -46,7 +46,7 @@ class PandaDFU:
     return dfu_serials
 
   @staticmethod
-  def st_serial_to_dfu_serial(st, mcu_type=McuType.F4):
+  def st_serial_to_dfu_serial(st: str, mcu_type: McuType = McuType.F4):
     if st is None or st == "none":
       return None
     uid_base = struct.unpack("H" * 6, bytes.fromhex(st))
