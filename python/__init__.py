@@ -225,7 +225,7 @@ class Panda:
   FLAG_GM_HW_CAM_LONG = 2
 
   def __init__(self, serial: Optional[str] = None, claim: bool = True, disable_checks: bool = True):
-    self._serial = serial
+    self._connect_serial = serial
     self._disable_checks = disable_checks
 
     self._handle = None
@@ -253,9 +253,9 @@ class Panda:
     self._handle = None
 
     # try USB first, then SPI
-    self._handle, serial, self.bootstub, bcd = self.usb_connect(self._serial, claim=claim, wait=wait)
+    self._handle, serial, self.bootstub, bcd = self.usb_connect(self._connect_serial, claim=claim, wait=wait)
     if self._handle is None:
-      self._handle, serial, self.bootstub, bcd = self.spi_connect(self._serial)
+      self._handle, serial, self.bootstub, bcd = self.spi_connect(self._connect_serial)
 
     if self._handle is None:
       raise Exception("failed to connect to panda")
@@ -278,6 +278,7 @@ class Panda:
     self._assume_f4_mcu = (self._bcd_hw_type is None) and missing_hw_type_endpoint
 
     self._serial = serial
+    self._connect_serial = serial
     self._mcu_type = self.get_mcu_type()
     self.health_version, self.can_version, self.can_health_version = self.get_packets_versions()
     logging.debug("connected")
