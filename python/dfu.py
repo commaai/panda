@@ -9,21 +9,20 @@ from .constants import McuType
 
 
 class PandaDFU:
-  def __init__(self, dfu_serial: str):
+  def __init__(self, dfu_serial: Optional[str]):
+    # try USB, then SPI
     handle, mcu_type = PandaDFU.usb_connect(dfu_serial)
     if None in (handle, mcu_type):
       handle, mcu_type = PandaDFU.spi_connect(dfu_serial)
-    if None in (handle, mcu_type):
+
+    if handle is None or mcu_type is None:
       raise Exception(f"failed to open DFU device {dfu_serial}")
 
-    # needed to make mypy work :(
-    assert handle is not None
-    assert mcu_type is not None
     self._handle: BaseSTBootloaderHandle = handle
     self._mcu_type: McuType = mcu_type
 
   @staticmethod
-  def usb_connect(dfu_serial: str) -> Tuple[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
+  def usb_connect(dfu_serial: Optional[str]) -> Tuple[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
     handle, mcu_type = None, None
     context = usb1.USBContext()
     for device in context.getDeviceList(skip_on_error=True):
@@ -34,7 +33,6 @@ class PandaDFU:
           continue
         if this_dfu_serial == dfu_serial or dfu_serial is None:
           handle = STBootloaderUSBHandle(device.open())
-          # TODO: move this into the handle
           # TODO: Find a way to detect F4 vs F2
           # TODO: also check F4 BCD, don't assume in else
           mcu_type = McuType.H7 if device.getbcdDevice() == 512 else McuType.F4
@@ -43,7 +41,7 @@ class PandaDFU:
     return handle, mcu_type
 
   @staticmethod
-  def spi_connect(dfu_serial: str) -> Tuple[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
+  def spi_connect(dfu_serial: Optional[str]) -> Tuple[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
     return None, None
 
   @staticmethod
@@ -81,10 +79,11 @@ class PandaDFU:
     else:
       return binascii.hexlify(struct.pack("!HHH", uid_base[1] + uid_base[5], uid_base[0] + uid_base[4] + 0xA, uid_base[3])).upper().decode("utf-8")
 
+  def get_mcu_type(self, dev) -> McuType:
+    return self._mcu_type
+
   def erase(self, address: int) -> None:
     self._handle.erase(address)
-
-  # *** helpers ***
 
   def reset(self):
     self._handle.jump(self._mcu_type.config.bootstub_address)
