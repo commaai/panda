@@ -297,9 +297,9 @@ class Panda:
     bootstub = None
     try:
       handle = PandaSpiHandle()
-      bootstub = Panda.flasher_present(handle)
-      dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12)
+      dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12, timeout=100)
       spi_serial = binascii.hexlify(dat).decode()
+      bootstub = Panda.flasher_present(handle)
     except PandaSpiException:
       pass
 
