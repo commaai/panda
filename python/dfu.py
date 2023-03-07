@@ -78,14 +78,12 @@ class PandaDFU:
 
   @staticmethod
   def spi_list() -> List[str]:
-    ret = []
-    try:
-      h = PandaDFU.spi_connect(None)
-      dfu_serial = PandaDFU.st_serial_to_dfu_serial(h.get_uid(), h.get_mcu_type())
-      ret.append(dfu_serial)
-    except PandaSpiException:
-      pass
-    return ret
+    h = PandaDFU.spi_connect(None)
+    if h is None:
+      return []
+
+    dfu_serial = PandaDFU.st_serial_to_dfu_serial(h.get_uid(), h.get_mcu_type())
+    return [dfu_serial, ]
 
   @staticmethod
   def st_serial_to_dfu_serial(st: str, mcu_type: McuType = McuType.F4):
