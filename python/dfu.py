@@ -84,7 +84,6 @@ class PandaDFU:
       dfu_serial = PandaDFU.st_serial_to_dfu_serial(h.get_uid(), h.get_mcu_type())
       ret.append(dfu_serial)
     except PandaSpiException:
-      raise
       pass
     return ret
 
