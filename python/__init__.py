@@ -297,11 +297,9 @@ class Panda:
     bootstub = None
     try:
       handle = PandaSpiHandle()
+      bootstub = Panda.flasher_present(handle)
       dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12)
       spi_serial = binascii.hexlify(dat).decode()
-
-      # check if we're in the bootstub
-      bootstub = Panda.flasher_present(handle)
     except PandaSpiException:
       pass
 
@@ -450,7 +448,7 @@ class Panda:
     # erase sectors
     logging.warning(f"flash: erasing sectors 1 - {last_sector}")
     for i in range(1, last_sector + 1):
-      handle.controlWrite(Panda.REQUEST_IN, 0xb2, i, 0, b'', timeout=int(15*1e4))
+      handle.controlWrite(Panda.REQUEST_IN, 0xb2, i, 0, b'')
 
     # flash over EP2
     STEP = 0x10
