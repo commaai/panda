@@ -13,6 +13,7 @@ from functools import wraps
 from typing import Optional
 from itertools import accumulate
 
+from .base import BaseHandle
 from .constants import McuType
 from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
@@ -227,7 +228,8 @@ class Panda:
     self._connect_serial = serial
     self._disable_checks = disable_checks
 
-    self._handle = None
+    self._handle: BaseHandle
+    self._handle_open = False
     self.can_rx_overflow_buffer = b''
 
     # connect and set mcu type
@@ -243,13 +245,12 @@ class Panda:
     self.close()
 
   def close(self):
-    self._handle.close()
-    self._handle = None
+    if self._handle_open:
+      self._handle.close()
+      self._handle_open = False
 
   def connect(self, claim=True, wait=False):
-    if self._handle is not None:
-      self.close()
-    self._handle = None
+    self.close()
 
     # try USB first, then SPI
     self._handle, serial, self.bootstub, bcd = self.usb_connect(self._connect_serial, claim=claim, wait=wait)
@@ -278,6 +279,7 @@ class Panda:
 
     self._serial = serial
     self._connect_serial = serial
+    self._handle_open = True
     self._mcu_type = self.get_mcu_type()
     self.health_version, self.can_version, self.can_health_version = self.get_packets_versions()
     logging.debug("connected")
@@ -397,7 +399,7 @@ class Panda:
       self.reconnect()
 
   def reconnect(self):
-    if self._handle is not None:
+    if self._handle_open:
       self.close()
       time.sleep(1.0)
 
@@ -506,6 +508,11 @@ class Panda:
         return False
     return True
 
+  def up_to_date(self) -> bool:
+    current = self.get_signature()
+    expected = Panda.get_signature_from_firmware(self.get_mcu_type().config.app_path)
+    return (current == expected)
+
   def call_control_api(self, msg):
     self._handle.controlWrite(Panda.REQUEST_OUT, msg, 0, 0, b'')
 
@@ -597,7 +604,7 @@ class Panda:
     f.seek(-128, 2)  # Seek from end of file
     return f.read(128)
 
-  def get_signature(self):
+  def get_signature(self) -> bytes:
     part_1 = self._handle.controlRead(Panda.REQUEST_IN, 0xd3, 0, 0, 0x40)
     part_2 = self._handle.controlRead(Panda.REQUEST_IN, 0xd4, 0, 0, 0x40)
     return bytes(part_1 + part_2)
