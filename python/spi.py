@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from functools import reduce
 from typing import List, Optional
 
-from .base import BaseHandle, BaseSTBootloaderHandle
+from .base import BaseHandle, BaseSTBootloaderHandle, TIMEOUT
 from .constants import McuType, MCU_TYPE_BY_IDCODE
 
 try:
@@ -25,7 +25,7 @@ DACK = 0x85
 NACK = 0x1F
 CHECKSUM_START = 0xAB
 
-MIN_ACK_TIMEOUT_SECONDS = 0.1
+MIN_ACK_TIMEOUT_MS = 100
 MAX_XFER_RETRY_COUNT = 5
 
 USB_MAX_SIZE = 0x40
@@ -96,10 +96,11 @@ class PandaSpiHandle(BaseHandle):
       cksum ^= b
     return cksum
 
-  def _wait_for_ack(self, spi, timeout: int, ack_val: int) -> None:
+  def _wait_for_ack(self, spi, ack_val: int, timeout: int) -> None:
+    timeout_s = max(MIN_ACK_TIMEOUT_MS, timeout) * 1e-3
+
     start = time.monotonic()
-    timeout_seconds = max(timeout * 1e-4, MIN_ACK_TIMEOUT_SECONDS)
-    while (time.monotonic() - start) < timeout_seconds:
+    while (timeout == 0) or ((time.monotonic() - start) < timeout_s):
       dat = spi.xfer2(b"\x12")[0]
       if dat == NACK:
         raise PandaSpiNackResponse
@@ -122,7 +123,7 @@ class PandaSpiHandle(BaseHandle):
         spi.xfer2(packet)
 
         logging.debug("- waiting for header ACK")
-        self._wait_for_ack(spi, timeout, HACK)
+        self._wait_for_ack(spi, HACK, timeout)
 
         # send data
         logging.debug("- sending data")
@@ -130,7 +131,7 @@ class PandaSpiHandle(BaseHandle):
         spi.xfer2(packet)
 
         logging.debug("- waiting for data ACK")
-        self._wait_for_ack(spi, timeout, DACK)
+        self._wait_for_ack(spi, DACK, timeout)
 
         # get response length, then response
         response_len_bytes = bytes(spi.xfer2(b"\x00" * 2))
@@ -151,22 +152,22 @@ class PandaSpiHandle(BaseHandle):
   def close(self):
     self.dev.close()
 
-  def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = 0):
+  def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = TIMEOUT):
     with self.dev.acquire() as spi:
       return self._transfer(spi, 0, struct.pack("<BHHH", request, value, index, 0), timeout)
 
-  def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = 0):
+  def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = TIMEOUT):
     with self.dev.acquire() as spi:
       return self._transfer(spi, 0, struct.pack("<BHHH", request, value, index, length), timeout)
 
   # TODO: implement these properly
-  def bulkWrite(self, endpoint: int, data: List[int], timeout: int = 0) -> int:
+  def bulkWrite(self, endpoint: int, data: List[int], timeout: int = TIMEOUT) -> int:
     with self.dev.acquire() as spi:
       for x in range(math.ceil(len(data) / USB_MAX_SIZE)):
         self._transfer(spi, endpoint, data[USB_MAX_SIZE*x:USB_MAX_SIZE*(x+1)], timeout)
       return len(data)
 
-  def bulkRead(self, endpoint: int, length: int, timeout: int = 0) -> bytes:
+  def bulkRead(self, endpoint: int, length: int, timeout: int = TIMEOUT) -> bytes:
     ret: List[int] = []
     with self.dev.acquire() as spi:
       for _ in range(math.ceil(length / USB_MAX_SIZE)):
@@ -217,7 +218,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
     elif data != self.ACK:
       raise PandaSpiMissingAck
 
-  def _cmd(self, cmd: int, data: Optional[List[bytes]] = None, read_bytes: int = 0, predata=None) -> bytes:
+  def _cmd(self, cmd: int, data: Optional[List[bytes]] = None, read_bytes: int = TIMEOUT, predata=None) -> bytes:
     ret = b""
     with self.dev.acquire() as spi:
       # sync + command
