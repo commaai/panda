@@ -71,15 +71,16 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
   def close(self):
     self._libusb_handle.close()
 
-  def program(self, address: int, dat: bytes, block_size: int) -> None:
+  def program(self, address, dat):
     # Set Address Pointer
     self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", address))
     self._status()
 
     # Program
-    dat += b"\xFF" * ((block_size - len(dat)) % block_size)
-    for i in range(0, len(dat) // block_size):
-      ldat = dat[i * block_size:(i + 1) * block_size]
+    bs = self._mcu_type.config.block_size
+    dat += b"\xFF" * ((bs - len(dat)) % bs)
+    for i in range(0, len(dat) // bs):
+      ldat = dat[i * bs:(i + 1) * bs]
       print("programming %d with length %d" % (i, len(ldat)))
       self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 2 + i, 0, ldat)
       self._status()

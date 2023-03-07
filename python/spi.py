@@ -189,19 +189,21 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
     self.dev = SpiDevice(speed=1000000)
 
     # say hello
-    with self.dev.acquire() as spi:
-      try:
+    try:
+      with self.dev.acquire() as spi:
         spi.xfer([self.SYNC, ])
-        self._get_ack(spi)
-      except PandaSpiNackResponse:
-        # ok here, will only ACK the first time
-        pass
-      except Exception:
-        raise Exception("failed to connect to panda")  # pylint: disable=W0707
+        try:
+          self._get_ack(spi)
+        except PandaSpiNackResponse:
+          # NACK ok here, will only ACK the first time
+          pass
+
+      self._mcu_type = MCU_TYPE_BY_IDCODE[self.get_chip_id()]
+    except PandaSpiException:
+      raise PandaSpiException("failed to connect to panda")  # pylint: disable=W0707
 
     #dat = self.read(McuType.H7.config.uid_address, 12)
     #print("uid", repr(dat))
-    self._mcu_type = MCU_TYPE_BY_IDCODE[self.get_chip_id()]
 
   def _get_ack(self, spi, timeout=1.0):
     data = 0x00
@@ -313,26 +315,20 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
   def close(self):
     self.dev.close()
 
-  def program(self, address: int, dat: bytes, block_size: int) -> None:
-    i = 0
-    while i < len(dat):
-      print(i, len(dat))
-      block = dat[i:i+256]
-      if len(block) < 256:
-        block += b'\xFF' * (256 - len(block))
-
+  def program(self, address, dat):
+    bs = 256  # max for writing to flash over SPI
+    dat += b"\xFF" * ((bs - len(dat)) % bs)
+    for i in range(0, len(dat) // bs):
+      block = dat[i * bs:(i + 1) * bs]
       self._cmd(0x31, data=[
-        struct.pack('>I', address + i),
+        struct.pack('>I', address + i*bs),
         bytes([len(block) - 1]) + block,
       ])
-      #print(f"Written {len(block)} bytes to {hex(address + i)}")
-      i += 256
 
   def erase2(self, address):
     #d = struct.pack('>H', address)
     d = struct.pack('>I', address)
     self._cmd(0x44, data=[struct.pack('B', 1), d, ])
-
 
   def jump(self, address):
     self.go_cmd(self._mcu_type.config.bootstub_address)

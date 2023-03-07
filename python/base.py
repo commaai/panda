@@ -48,7 +48,7 @@ class BaseSTBootloaderHandle(ABC):
     ...
 
   @abstractmethod
-  def program(self, address: int, dat: bytes, block_size: int) -> None:
+  def program(self, address: int, dat: bytes) -> None:
     ...
 
   @abstractmethod

@@ -46,17 +46,10 @@ class PandaDFU:
     try:
       # TODO: verify serial matches
       handle = STBootloaderSPIHandle()
-    except PandaSpiException:  # TODO: catch more specific exception
-      raise
-      pass
+    except PandaSpiException:
+      handle = None
 
     return handle
-
-  @staticmethod
-  def list() -> List[str]:
-    ret = PandaDFU.usb_list()
-    ret += PandaDFU.spi_list()
-    return list(set(ret))
 
   @staticmethod
   def list() -> List[str]:
@@ -83,7 +76,7 @@ class PandaDFU:
   def spi_list() -> List[str]:
     ret = []
     try:
-      # TODO: get serial
+      # TODO: get real serial
       PandaDFU.spi_connect('')
       ret.append('spi')
     except Exception:  # TODO: catch more specific exception
@@ -104,9 +97,6 @@ class PandaDFU:
   def get_mcu_type(self) -> McuType:
     return self._mcu_type
 
-  def erase(self, address: int) -> None:
-    self._handle.erase(address)
-
   def reset(self):
     self._handle.jump(self._mcu_type.config.bootstub_address)
 
@@ -114,7 +104,7 @@ class PandaDFU:
     self._handle.clear_status()
     self._handle.erase_bootstub()
     self._handle.erase_app()
-    self._handle.program(self._mcu_type.config.bootstub_address, code_bootstub, self._mcu_type.config.block_size)
+    self._handle.program(self._mcu_type.config.bootstub_address, code_bootstub)
     self.reset()
 
   def recover(self):
