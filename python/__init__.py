@@ -245,12 +245,12 @@ class Panda:
     self.close()
 
   def close(self):
-    self._handle.close()
+    if self._handle_open:
+      self._handle.close()
+      self._handle_open = False
 
   def connect(self, claim=True, wait=False):
-    if self._handle_open:
-      self.close()
-    self._handle_open = False
+    self.close()
 
     # try USB first, then SPI
     self._handle, serial, self.bootstub, bcd = self.usb_connect(self._connect_serial, claim=claim, wait=wait)
@@ -398,7 +398,7 @@ class Panda:
       self.reconnect()
 
   def reconnect(self):
-    if self._handle is not None:
+    if self._handle_open:
       self.close()
       time.sleep(1.0)
 
