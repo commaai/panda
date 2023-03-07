@@ -13,6 +13,7 @@ from functools import wraps
 from typing import Optional
 from itertools import accumulate
 
+from .base import BaseHandle
 from .constants import McuType
 from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
@@ -227,7 +228,8 @@ class Panda:
     self._connect_serial = serial
     self._disable_checks = disable_checks
 
-    self._handle = None
+    self._handle: BaseHandle
+    self._handle_open = False
     self.can_rx_overflow_buffer = b''
 
     # connect and set mcu type
@@ -244,12 +246,11 @@ class Panda:
 
   def close(self):
     self._handle.close()
-    self._handle = None
 
   def connect(self, claim=True, wait=False):
-    if self._handle is not None:
+    if self._handle_open:
       self.close()
-    self._handle = None
+    self._handle_open = False
 
     # try USB first, then SPI
     self._handle, serial, self.bootstub, bcd = self.usb_connect(self._connect_serial, claim=claim, wait=wait)
@@ -602,7 +603,7 @@ class Panda:
     f.seek(-128, 2)  # Seek from end of file
     return f.read(128)
 
-  def get_signature(self):
+  def get_signature(self) -> bytes:
     part_1 = self._handle.controlRead(Panda.REQUEST_IN, 0xd3, 0, 0, 0x40)
     part_2 = self._handle.controlRead(Panda.REQUEST_IN, 0xd4, 0, 0, 0x40)
     return bytes(part_1 + part_2)
