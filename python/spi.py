@@ -218,7 +218,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
     elif data != self.ACK:
       raise PandaSpiMissingAck
 
-  def _cmd(self, cmd, data: Optional[List[bytes]] = None, read_bytes: int = 0) -> bytes:
+  def _cmd(self, cmd: int, data: Optional[List[bytes]] = None, read_bytes: int = 0, predata=None) -> bytes:
     ret = b""
     with self.dev.acquire() as spi:
       # sync
@@ -228,10 +228,18 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
       spi.xfer([cmd, cmd ^ 0xFF])
       self._get_ack(spi)
 
+      # "predata" - for commands that send the first data without a checksum
+      if predata is not None:
+        spi.xfer(predata)
+        self._get_ack(spi)
+
       # send data
       if data is not None:
         for d in data:
-          spi.xfer(self._add_checksum(d))
+          if predata is not None:
+            spi.xfer(d + bytes([self._checksum(predata + d), ]))
+          else:
+            spi.xfer(d + bytes([self._checksum(d), ]))
           self._get_ack(spi, timeout=20)
 
       # receive
@@ -243,12 +251,10 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
 
     return ret
 
-  def _add_checksum(self, data: bytes) -> bytes:
+  def _checksum(self, data: bytes) -> bytes:
     if len(data) == 1:
-      cksum = data[0] ^ 0xFF
-    else:
-      cksum = reduce(lambda a, b: a ^ b, data)
-    return data + bytes([cksum, ])
+      return data[0] ^ 0xFF
+    return reduce(lambda a, b: a ^ b, data)
 
   # *** Bootloader commands ***
 
@@ -265,37 +271,9 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
     self._cmd(0x21, data=[struct.pack('>I', address), ])
 
   def _erase_sector(self, sector: int):
-    with self.dev.acquire() as spi:
-      # sync
-      spi.xfer([self.SYNC, ])
-
-      # send command
-      cmd = 0x44
-      spi.xfer([cmd, cmd ^ 0xFF])
-      self._get_ack(spi, timeout=5)
-
-      print("send addr")
-      spi.xfer(struct.pack('>H', 0))
-      self._get_ack(spi)
-      print("- done")
-
-      # send data
-      data = [
-        self._add_checksum(struct.pack('>H', 0) + struct.pack('>H', sector))
-      ]
-      data[0] = data[0][2:]
-      if data is not None:
-        for d in data:
-          spi.xfer(self._add_checksum(d))
-          self._get_ack(spi, timeout=20)
-
-      # receive
-      read_bytes = 0
-      if read_bytes > 0:
-        # send busy byte
-        ret = spi.xfer([0x00, ]*(read_bytes + 1))[1:]
-        if data is None or len(data) == 0:
-          self._get_ack(spi)
+    p = struct.pack('>H', 0)  # number of sectors to erase
+    d = struct.pack('>H', sector)
+    self._cmd(0x44, data=[d, ], predata=p)
 
   # *** PandaDFU API ***
 
@@ -309,14 +287,14 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
   def get_mcu_type(self):
     return self._mcu_type
 
-  def clear_status(self) -> None:
+  def clear_status(self):
     pass
 
   def close(self):
     self.dev.close()
 
   def program(self, address, dat):
-    bs = 256  # max for writing to flash over SPI
+    bs = 256  # max block size for writing to flash over SPI
     dat += b"\xFF" * ((bs - len(dat)) % bs)
     for i in range(0, len(dat) // bs):
       block = dat[i * bs:(i + 1) * bs]
