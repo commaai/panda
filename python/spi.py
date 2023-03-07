@@ -235,9 +235,9 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
       if data is not None:
         for d in data:
           if predata is not None:
-            spi.xfer(d + bytes([self._checksum(predata + d), ]))
+            spi.xfer(d + self._checksum(predata + d))
           else:
-            spi.xfer(d + bytes([self._checksum(d), ]))
+            spi.xfer(d + self._checksum(d))
           self._get_ack(spi, timeout=20)
 
       # receive
@@ -251,8 +251,10 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
 
   def _checksum(self, data: bytes) -> bytes:
     if len(data) == 1:
-      return data[0] ^ 0xFF
-    return reduce(lambda a, b: a ^ b, data)
+      ret = data[0] ^ 0xFF
+    else:
+      ret = reduce(lambda a, b: a ^ b, data)
+    return bytes([ret, ])
 
   # *** Bootloader commands ***
 
@@ -282,7 +284,6 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
   # *** PandaDFU API ***
 
   def erase_app(self):
-    # TODO: erase all sectors
     self._erase_sector(1)
 
   def erase_bootstub(self):

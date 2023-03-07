@@ -1,5 +1,5 @@
 import struct
-from typing import List, Optional
+from typing import List
 
 from .base import BaseHandle, BaseSTBootloaderHandle
 from .constants import McuType

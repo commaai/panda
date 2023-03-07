@@ -1,7 +1,7 @@
 import usb1
 import struct
 import binascii
-from typing import List, Tuple, Optional
+from typing import List, Optional
 
 from .base import BaseSTBootloaderHandle
 from .spi import STBootloaderSPIHandle, PandaSpiException
@@ -12,6 +12,7 @@ from .constants import McuType
 class PandaDFU:
   def __init__(self, dfu_serial: Optional[str]):
     # try USB, then SPI
+    handle: Optional[BaseSTBootloaderHandle]
     handle = PandaDFU.usb_connect(dfu_serial)
     if handle is None:
       handle = PandaDFU.spi_connect(dfu_serial)
@@ -23,7 +24,7 @@ class PandaDFU:
     self._mcu_type: McuType = self._handle.get_mcu_type()
 
   @staticmethod
-  def usb_connect(dfu_serial: Optional[str]) -> Tuple[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
+  def usb_connect(dfu_serial: Optional[str]) -> Optional[STBootloaderUSBHandle]:
     handle = None
     context = usb1.USBContext()
     for device in context.getDeviceList(skip_on_error=True):
@@ -40,7 +41,7 @@ class PandaDFU:
     return handle
 
   @staticmethod
-  def spi_connect(dfu_serial: Optional[str]) -> Optional[BaseSTBootloaderHandle]:
+  def spi_connect(dfu_serial: Optional[str]) -> Optional[STBootloaderSPIHandle]:
     handle = None
     this_dfu_serial = None
 
