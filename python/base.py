@@ -1,9 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from .constants import McuType
 
-# This mimics the handle given by libusb1 for easy interoperability
+
 class BaseHandle(ABC):
+  """
+    A handle to talk to a panda.
+    Borrows heavily from the libusb1 handle API.
+  """
   @abstractmethod
   def close(self) -> None:
     ...
@@ -25,3 +30,38 @@ class BaseHandle(ABC):
   @abstractmethod
   def bulkRead(self, endpoint: int, length: int, timeout: int = 0) -> bytes:
     ...
+
+
+class BaseSTBootloaderHandle(ABC):
+  """
+    A handle to talk to a panda while it's in the STM32 bootloader.
+  """
+
+  @abstractmethod
+  def get_mcu_type(self) -> McuType:
+    ...
+
+  @abstractmethod
+  def close(self) -> None:
+    ...
+
+  @abstractmethod
+  def clear_status(self) -> None:
+    ...
+
+  @abstractmethod
+  def program(self, address: int, dat: bytes) -> None:
+    ...
+
+  @abstractmethod
+  def erase_app(self) -> None:
+    ...
+
+  @abstractmethod
+  def erase_bootstub(self) -> None:
+    ...
+
+  @abstractmethod
+  def jump(self, address: int) -> None:
+    ...
+
