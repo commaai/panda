@@ -219,10 +219,8 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
   def _cmd(self, cmd: int, data: Optional[List[bytes]] = None, read_bytes: int = 0, predata=None) -> bytes:
     ret = b""
     with self.dev.acquire() as spi:
-      # sync
+      # sync + command
       spi.xfer([self.SYNC, ])
-
-      # send command
       spi.xfer([cmd, cmd ^ 0xFF])
       self._get_ack(spi)
 
@@ -242,7 +240,6 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
 
       # receive
       if read_bytes > 0:
-        # send busy byte
         ret = spi.xfer([0x00, ]*(read_bytes + 1))[1:]
         if data is None or len(data) == 0:
           self._get_ack(spi)
@@ -276,7 +273,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
     dat = self.read(McuType.H7.config.uid_address, 12)
     return binascii.hexlify(dat).decode()
 
-  def _erase_sector(self, sector: int):
+  def erase_sector(self, sector: int):
     p = struct.pack('>H', 0)  # number of sectors to erase
     d = struct.pack('>H', sector)
     self._cmd(0x44, data=[d, ], predata=p)
@@ -284,10 +281,10 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
   # *** PandaDFU API ***
 
   def erase_app(self):
-    self._erase_sector(1)
+    self.erase_sector(1)
 
   def erase_bootstub(self):
-    self._erase_sector(0)
+    self.erase_sector(0)
 
   def get_mcu_type(self):
     return self._mcu_type
@@ -307,11 +304,6 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
         struct.pack('>I', address + i*bs),
         bytes([len(block) - 1]) + block,
       ])
-
-  def erase2(self, address):
-    #d = struct.pack('>H', address)
-    d = struct.pack('>I', address)
-    self._cmd(0x44, data=[struct.pack('B', 1), d, ])
 
   def jump(self, address):
     self.go_cmd(self._mcu_type.config.bootstub_address)
