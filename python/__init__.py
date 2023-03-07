@@ -279,6 +279,7 @@ class Panda:
 
     self._serial = serial
     self._connect_serial = serial
+    self._handle_open = True
     self._mcu_type = self.get_mcu_type()
     self.health_version, self.can_version, self.can_health_version = self.get_packets_versions()
     logging.debug("connected")
