@@ -10,6 +10,7 @@ from functools import reduce
 from typing import List, Optional
 
 from .base import BaseHandle, BaseSTBootloaderHandle
+from .constants import McuType, MCU_TYPE_BY_IDCODE
 
 try:
   import spidev
@@ -192,11 +193,15 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
       try:
         spi.xfer([self.SYNC, ])
         self._get_ack(spi)
+      except PandaSpiNackResponse:
+        # ok here, will only ACK the first time
+        pass
       except Exception:
         raise Exception("failed to connect to panda")  # pylint: disable=W0707
 
-    # TODO: implement this
-    #self._mcu_type = self.get_mcu_type()
+    #dat = self.read(McuType.H7.config.uid_address, 12)
+    #print("uid", repr(dat))
+    self._mcu_type = MCU_TYPE_BY_IDCODE[self.get_chip_id()]
 
   def _get_ack(self, spi, timeout=1.0):
     data = 0x00
@@ -207,11 +212,11 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
     spi.xfer([self.ACK, ])
 
     if data == self.NACK:
-      raise Exception("Got NACK response")
+      raise PandaSpiNackResponse
     elif data != self.ACK:
-      raise Exception("Missing ACK")
+      raise PandaSpiMissingAck
 
-  def _cmd(self, cmd, data=None, read_bytes=0) -> bytes:
+  def _cmd(self, cmd, data: Optional[List[bytes]] = None, read_bytes: int = 0) -> bytes:
     ret = b""
     with self.dev.acquire() as spi:
       # sync
@@ -224,27 +229,41 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
       # send data
       if data is not None:
         for d in data:
-          spi.xfer(self.add_checksum(d))
+          spi.xfer(self._add_checksum(d))
           self._get_ack(spi, timeout=20)
 
       # receive
       if read_bytes > 0:
         # send busy byte
         ret = spi.xfer([0x00, ]*(read_bytes + 1))[1:]
-        self._get_ack(spi)
+        if data is None or len(data) == 0:
+          self._get_ack(spi)
 
     return ret
 
-  def add_checksum(self, data):
+  def _add_checksum(self, data):
+    if len(data) == 1:
+      return data + bytes([data[0] ^ 0xff, ])
     return data + bytes([reduce(lambda a, b: a ^ b, data)])
 
-
   # *** Bootloader commands ***
+
+  def read(self, address: int, length: int):
+    data = [struct.pack('>I', address), struct.pack('B', length - 1)]
+    return self._cmd(0x11, data=data, read_bytes=length)
+
+  def get_chip_id(self) -> int:
+    r = self._cmd(0x02, read_bytes=3)
+    assert r[0] == 1  # response length - 1
+    return ((r[1] << 8) + r[2])
 
   def go_cmd(self, address: int) -> None:
     self._cmd(0x21, data=[struct.pack('>I', address), ])
 
   # *** PandaDFU API ***
+
+  def get_mcu_type(self):
+    return self._mcu_type
 
   def clear_status(self) -> None:
     # TODO: not a thing with SPI?

@@ -2,7 +2,7 @@ import struct
 from typing import List, Optional
 
 from .base import BaseHandle, BaseSTBootloaderHandle
-
+from .constants import McuType
 
 class PandaUsbHandle(BaseHandle):
   def __init__(self, libusb_handle):
@@ -32,14 +32,21 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
   DFU_CLRSTATUS = 4
   DFU_ABORT = 6
 
-  def __init__(self, libusb_handle):
+  def __init__(self, libusb_device, libusb_handle):
     self._libusb_handle = libusb_handle
+
+    # TODO: Find a way to detect F4 vs F2
+    # TODO: also check F4 BCD, don't assume in else
+    self._mcu_type = McuType.H7 if libusb_device.getbcdDevice() == 512 else McuType.F4
 
   def _status(self) -> None:
     while 1:
       dat = self._libusb_handle.controlRead(0x21, self.DFU_GETSTATUS, 0, 0, 6)
       if dat[1] == 0:
         break
+
+  def get_mcu_type(self):
+    return self._mcu_type
 
   def clear_status(self):
     # Clear status

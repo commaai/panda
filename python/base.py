@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
+from .constants import McuType
+
 
 class BaseHandle(ABC):
   """
@@ -32,6 +34,10 @@ class BaseSTBootloaderHandle(ABC):
   """
     A handle to talk to a panda while it's in the STM32 bootloader.
   """
+
+  @abstractmethod
+  def get_mcu_type(self) -> McuType:
+    ...
 
   @abstractmethod
   def close(self) -> None:

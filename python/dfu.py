@@ -12,19 +12,19 @@ from .constants import McuType
 class PandaDFU:
   def __init__(self, dfu_serial: Optional[str]):
     # try USB, then SPI
-    handle, mcu_type = PandaDFU.usb_connect(dfu_serial)
-    if None in (handle, mcu_type):
-      handle, mcu_type = PandaDFU.spi_connect(dfu_serial)
+    handle = PandaDFU.usb_connect(dfu_serial)
+    if handle is None:
+      handle = PandaDFU.spi_connect(dfu_serial)
 
-    if handle is None or mcu_type is None:
+    if handle is None:
       raise Exception(f"failed to open DFU device {dfu_serial}")
 
     self._handle: BaseSTBootloaderHandle = handle
-    self._mcu_type: McuType = mcu_type
+    self._mcu_type: McuType = self._handle.get_mcu_type()
 
   @staticmethod
   def usb_connect(dfu_serial: Optional[str]) -> Tuple[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
-    handle, mcu_type = None, None
+    handle = None
     context = usb1.USBContext()
     for device in context.getDeviceList(skip_on_error=True):
       if device.getVendorID() == 0x0483 and device.getProductID() == 0xdf11:
@@ -32,27 +32,25 @@ class PandaDFU:
           this_dfu_serial = device.open().getASCIIStringDescriptor(3)
         except Exception:
           continue
+
         if this_dfu_serial == dfu_serial or dfu_serial is None:
-          handle = STBootloaderUSBHandle(device.open())
-          # TODO: Find a way to detect F4 vs F2
-          # TODO: also check F4 BCD, don't assume in else
-          mcu_type = McuType.H7 if device.getbcdDevice() == 512 else McuType.F4
+          handle = STBootloaderUSBHandle(device, device.open())
           break
 
-    return handle, mcu_type
+    return handle
 
   @staticmethod
-  def spi_connect(dfu_serial: str) -> Tuple[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
-    handle, mcu_type = None, None
+  def spi_connect(dfu_serial: str) -> Optional[BaseSTBootloaderHandle]:
+    handle = None
 
     try:
-      # TODO: get mcu type
+      # TODO: verify serial matches
       handle = STBootloaderSPIHandle()
     except PandaSpiException:  # TODO: catch more specific exception
       raise
       pass
 
-    return handle, mcu_type
+    return handle
 
   @staticmethod
   def list() -> List[str]:
