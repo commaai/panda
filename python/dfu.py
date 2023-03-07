@@ -112,8 +112,8 @@ class PandaDFU:
 
   def program_bootstub(self, code_bootstub):
     self._handle.clear_status()
-    self.erase(self._mcu_type.config.bootstub_address)
-    self.erase(self._mcu_type.config.app_address)
+    self._handle.erase_bootstub()
+    self._handle.erase_app()
     self._handle.program(self._mcu_type.config.bootstub_address, code_bootstub, self._mcu_type.config.block_size)
     self.reset()
 

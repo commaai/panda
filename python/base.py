@@ -48,11 +48,15 @@ class BaseSTBootloaderHandle(ABC):
     ...
 
   @abstractmethod
-  def program(self, address: int, dat: bytes, block_size: Optional[int] = None) -> None:
+  def program(self, address: int, dat: bytes, block_size: int) -> None:
     ...
 
   @abstractmethod
-  def erase(self, address: int) -> None:
+  def erase_app(self) -> None:
+    ...
+
+  @abstractmethod
+  def erase_bootstub(self) -> None:
     ...
 
   @abstractmethod

@@ -45,8 +45,18 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
       if dat[1] == 0:
         break
 
+  def _erase_page_address(self, address: int) -> None:
+    self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 0, 0, b"\x41" + struct.pack("I", address))
+    self._status()
+
   def get_mcu_type(self):
     return self._mcu_type
+
+  def erase_app(self):
+    self._erase_page_address(self._mcu_type.config.app_address)
+
+  def erase_bootstub(self):
+    self._erase_page_address(self._mcu_type.config.bootstub_address)
 
   def clear_status(self):
     # Clear status
@@ -61,10 +71,7 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
   def close(self):
     self._libusb_handle.close()
 
-  def program(self, address: int, dat: bytes, block_size: Optional[int] = None) -> None:
-    if block_size is None:
-      block_size = len(dat)
-
+  def program(self, address: int, dat: bytes, block_size: int) -> None:
     # Set Address Pointer
     self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", address))
     self._status()
@@ -76,10 +83,6 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
       print("programming %d with length %d" % (i, len(ldat)))
       self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 2 + i, 0, ldat)
       self._status()
-
-  def erase(self, address):
-    self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 0, 0, b"\x41" + struct.pack("I", address))
-    self._status()
 
   def jump(self, address):
     self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", address))

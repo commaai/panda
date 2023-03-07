@@ -241,10 +241,12 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
 
     return ret
 
-  def _add_checksum(self, data):
+  def _add_checksum(self, data: bytes) -> bytes:
     if len(data) == 1:
-      return data + bytes([data[0] ^ 0xff, ])
-    return data + bytes([reduce(lambda a, b: a ^ b, data)])
+      cksum = data[0] ^ 0xFF
+    else:
+      cksum = reduce(lambda a, b: a ^ b, data)
+    return data + bytes([cksum, ])
 
   # *** Bootloader commands ***
 
@@ -260,24 +262,77 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
   def go_cmd(self, address: int) -> None:
     self._cmd(0x21, data=[struct.pack('>I', address), ])
 
+  def _erase_sector(self, sector: int):
+    with self.dev.acquire() as spi:
+      # sync
+      spi.xfer([self.SYNC, ])
+
+      # send command
+      cmd = 0x44
+      spi.xfer([cmd, cmd ^ 0xFF])
+      self._get_ack(spi, timeout=5)
+
+      print("send addr")
+      spi.xfer(struct.pack('>H', 0))
+      self._get_ack(spi)
+      print("- done")
+
+      # send data
+      data = [
+        self._add_checksum(struct.pack('>H', 0) + struct.pack('>H', sector))
+      ]
+      data[0] = data[0][2:]
+      if data is not None:
+        for d in data:
+          spi.xfer(self._add_checksum(d))
+          self._get_ack(spi, timeout=20)
+
+      # receive
+      read_bytes = 0
+      if read_bytes > 0:
+        # send busy byte
+        ret = spi.xfer([0x00, ]*(read_bytes + 1))[1:]
+        if data is None or len(data) == 0:
+          self._get_ack(spi)
+
   # *** PandaDFU API ***
+
+  def erase_app(self):
+    # TODO: erase all sectors
+    self._erase_sector(1)
+
+  def erase_bootstub(self):
+    self._erase_sector(0)
 
   def get_mcu_type(self):
     return self._mcu_type
 
   def clear_status(self) -> None:
-    # TODO: not a thing with SPI?
     pass
 
   def close(self):
     self.dev.close()
 
-  def program(self, address: int, dat: bytes, block_size: Optional[int] = None) -> None:
-    pass
+  def program(self, address: int, dat: bytes, block_size: int) -> None:
+    i = 0
+    while i < len(dat):
+      print(i, len(dat))
+      block = dat[i:i+256]
+      if len(block) < 256:
+        block += b'\xFF' * (256 - len(block))
 
-  def erase(self, address):
-    d = struct.pack('>H', address)
-    self._cmd(0x44, data=[d, ])
+      self._cmd(0x31, data=[
+        struct.pack('>I', address + i),
+        bytes([len(block) - 1]) + block,
+      ])
+      #print(f"Written {len(block)} bytes to {hex(address + i)}")
+      i += 256
+
+  def erase2(self, address):
+    #d = struct.pack('>H', address)
+    d = struct.pack('>I', address)
+    self._cmd(0x44, data=[struct.pack('B', 1), d, ])
+
 
   def jump(self, address):
     self.go_cmd(self._mcu_type.config.bootstub_address)
