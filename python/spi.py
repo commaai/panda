@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from functools import reduce
 from typing import List, Optional
 
-from .base import BaseHandle, BaseSTBootloaderHandle
+from .base import BaseHandle, BaseSTBootloaderHandle, TIMEOUT
 from .constants import McuType, MCU_TYPE_BY_IDCODE
 
 try:
@@ -150,22 +150,22 @@ class PandaSpiHandle(BaseHandle):
   def close(self):
     self.dev.close()
 
-  def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = 0):
+  def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = TIMEOUT):
     with self.dev.acquire() as spi:
       return self._transfer(spi, 0, struct.pack("<BHHH", request, value, index, 0))
 
-  def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = 0):
+  def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = TIMEOUT):
     with self.dev.acquire() as spi:
       return self._transfer(spi, 0, struct.pack("<BHHH", request, value, index, length))
 
   # TODO: implement these properly
-  def bulkWrite(self, endpoint: int, data: List[int], timeout: int = 0) -> int:
+  def bulkWrite(self, endpoint: int, data: List[int], timeout: int = TIMEOUT) -> int:
     with self.dev.acquire() as spi:
       for x in range(math.ceil(len(data) / USB_MAX_SIZE)):
         self._transfer(spi, endpoint, data[USB_MAX_SIZE*x:USB_MAX_SIZE*(x+1)])
       return len(data)
 
-  def bulkRead(self, endpoint: int, length: int, timeout: int = 0) -> bytes:
+  def bulkRead(self, endpoint: int, length: int, timeout: int = TIMEOUT) -> bytes:
     ret: List[int] = []
     with self.dev.acquire() as spi:
       for _ in range(math.ceil(length / USB_MAX_SIZE)):
@@ -216,7 +216,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
     elif data != self.ACK:
       raise PandaSpiMissingAck
 
-  def _cmd(self, cmd: int, data: Optional[List[bytes]] = None, read_bytes: int = 0, predata=None) -> bytes:
+  def _cmd(self, cmd: int, data: Optional[List[bytes]] = None, read_bytes: int = TIMEOUT, predata=None) -> bytes:
     ret = b""
     with self.dev.acquire() as spi:
       # sync + command

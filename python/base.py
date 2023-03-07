@@ -3,30 +3,32 @@ from typing import List
 
 from .constants import McuType
 
+TIMEOUT = int(15 * 1e3)  # default timeout, in milliseconds
 
 class BaseHandle(ABC):
   """
     A handle to talk to a panda.
     Borrows heavily from the libusb1 handle API.
   """
+
   @abstractmethod
   def close(self) -> None:
     ...
 
   @abstractmethod
-  def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = 0) -> int:
+  def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = TIMEOUT) -> int:
     ...
 
   @abstractmethod
-  def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = 0) -> bytes:
+  def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = TIMEOUT) -> bytes:
     ...
 
   @abstractmethod
-  def bulkWrite(self, endpoint: int, data: List[int], timeout: int = 0) -> int:
+  def bulkWrite(self, endpoint: int, data: List[int], timeout: int = TIMEOUT) -> int:
     ...
 
   @abstractmethod
-  def bulkRead(self, endpoint: int, length: int, timeout: int = 0) -> bytes:
+  def bulkRead(self, endpoint: int, length: int, timeout: int = TIMEOUT) -> bytes:
     ...
 
 
