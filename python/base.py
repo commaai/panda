@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List
+
+from .constants import McuType
 
 
 class BaseHandle(ABC):
@@ -34,6 +36,10 @@ class BaseSTBootloaderHandle(ABC):
   """
 
   @abstractmethod
+  def get_mcu_type(self) -> McuType:
+    ...
+
+  @abstractmethod
   def close(self) -> None:
     ...
 
@@ -42,11 +48,15 @@ class BaseSTBootloaderHandle(ABC):
     ...
 
   @abstractmethod
-  def program(self, address: int, dat: bytes, block_size: Optional[int] = None) -> None:
+  def program(self, address: int, dat: bytes) -> None:
     ...
 
   @abstractmethod
-  def erase(self, address: int) -> None:
+  def erase_app(self) -> None:
+    ...
+
+  @abstractmethod
+  def erase_bootstub(self) -> None:
     ...
 
   @abstractmethod

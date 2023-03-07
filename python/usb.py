@@ -1,8 +1,8 @@
 import struct
-from typing import List, Optional
+from typing import List
 
 from .base import BaseHandle, BaseSTBootloaderHandle
-
+from .constants import McuType
 
 class PandaUsbHandle(BaseHandle):
   def __init__(self, libusb_handle):
@@ -32,14 +32,31 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
   DFU_CLRSTATUS = 4
   DFU_ABORT = 6
 
-  def __init__(self, libusb_handle):
+  def __init__(self, libusb_device, libusb_handle):
     self._libusb_handle = libusb_handle
+
+    # TODO: Find a way to detect F4 vs F2
+    # TODO: also check F4 BCD, don't assume in else
+    self._mcu_type = McuType.H7 if libusb_device.getbcdDevice() == 512 else McuType.F4
 
   def _status(self) -> None:
     while 1:
       dat = self._libusb_handle.controlRead(0x21, self.DFU_GETSTATUS, 0, 0, 6)
       if dat[1] == 0:
         break
+
+  def _erase_page_address(self, address: int) -> None:
+    self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 0, 0, b"\x41" + struct.pack("I", address))
+    self._status()
+
+  def get_mcu_type(self):
+    return self._mcu_type
+
+  def erase_app(self):
+    self._erase_page_address(self._mcu_type.config.app_address)
+
+  def erase_bootstub(self):
+    self._erase_page_address(self._mcu_type.config.bootstub_address)
 
   def clear_status(self):
     # Clear status
@@ -54,25 +71,19 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
   def close(self):
     self._libusb_handle.close()
 
-  def program(self, address: int, dat: bytes, block_size: Optional[int] = None) -> None:
-    if block_size is None:
-      block_size = len(dat)
-
+  def program(self, address, dat):
     # Set Address Pointer
     self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", address))
     self._status()
 
     # Program
-    dat += b"\xFF" * ((block_size - len(dat)) % block_size)
-    for i in range(0, len(dat) // block_size):
-      ldat = dat[i * block_size:(i + 1) * block_size]
+    bs = self._mcu_type.config.block_size
+    dat += b"\xFF" * ((bs - len(dat)) % bs)
+    for i in range(0, len(dat) // bs):
+      ldat = dat[i * bs:(i + 1) * bs]
       print("programming %d with length %d" % (i, len(ldat)))
       self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 2 + i, 0, ldat)
       self._status()
-
-  def erase(self, address):
-    self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 0, 0, b"\x41" + struct.pack("I", address))
-    self._status()
 
   def jump(self, address):
     self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 0, 0, b"\x21" + struct.pack("I", address))
