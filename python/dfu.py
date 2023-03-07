@@ -40,13 +40,17 @@ class PandaDFU:
     return handle
 
   @staticmethod
-  def spi_connect(dfu_serial: str) -> Optional[BaseSTBootloaderHandle]:
+  def spi_connect(dfu_serial: Optional[str]) -> Optional[BaseSTBootloaderHandle]:
     handle = None
+    this_dfu_serial = None
 
     try:
-      # TODO: verify serial matches
       handle = STBootloaderSPIHandle()
+      this_dfu_serial = PandaDFU.st_serial_to_dfu_serial(handle.get_uid(), handle.get_mcu_type())
     except PandaSpiException:
+      handle = None
+
+    if dfu_serial is not None and dfu_serial != this_dfu_serial:
       handle = None
 
     return handle
@@ -76,10 +80,10 @@ class PandaDFU:
   def spi_list() -> List[str]:
     ret = []
     try:
-      # TODO: get real serial
-      PandaDFU.spi_connect('')
-      ret.append('spi')
-    except Exception:  # TODO: catch more specific exception
+      h = PandaDFU.spi_connect(None)
+      dfu_serial = PandaDFU.st_serial_to_dfu_serial(h.get_uid(), h.get_mcu_type())
+      ret.append(dfu_serial)
+    except PandaSpiException:
       raise
       pass
     return ret

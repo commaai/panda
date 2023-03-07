@@ -1,3 +1,4 @@
+import binascii
 import os
 import fcntl
 import math
@@ -202,9 +203,6 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
     except PandaSpiException:
       raise PandaSpiException("failed to connect to panda")  # pylint: disable=W0707
 
-    #dat = self.read(McuType.H7.config.uid_address, 12)
-    #print("uid", repr(dat))
-
   def _get_ack(self, spi, timeout=1.0):
     data = 0x00
     start_time = time.monotonic()
@@ -249,7 +247,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
         if data is None or len(data) == 0:
           self._get_ack(spi)
 
-    return ret
+    return bytes(ret)
 
   def _checksum(self, data: bytes) -> bytes:
     if len(data) == 1:
@@ -269,6 +267,12 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
 
   def go_cmd(self, address: int) -> None:
     self._cmd(0x21, data=[struct.pack('>I', address), ])
+
+  # *** helpers ***
+
+  def get_uid(self):
+    dat = self.read(McuType.H7.config.uid_address, 12)
+    return binascii.hexlify(dat).decode()
 
   def _erase_sector(self, sector: int):
     p = struct.pack('>H', 0)  # number of sectors to erase
