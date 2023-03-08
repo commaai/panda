@@ -136,6 +136,8 @@ class PandaSpiHandle(BaseHandle):
         # get response length, then response
         response_len_bytes = bytes(spi.xfer2(b"\x00" * 2))
         response_len = struct.unpack("<H", response_len_bytes)[0]
+        if response_len > max_rx_len:
+          raise PandaSpiException("response length greater than max")
 
         logging.debug("- receiving response")
         dat = bytes(spi.xfer2(b"\x00" * (response_len + 1)))
