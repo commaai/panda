@@ -136,6 +136,8 @@ class PandaSpiHandle(BaseHandle):
         # get response length, then response
         response_len_bytes = bytes(spi.xfer2(b"\x00" * 2))
         response_len = struct.unpack("<H", response_len_bytes)[0]
+        if response_len > max_rx_len:
+          raise PandaSpiException("response length greater than max")
 
         logging.debug("- receiving response")
         dat = bytes(spi.xfer2(b"\x00" * (response_len + 1)))
@@ -218,7 +220,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
     elif data != self.ACK:
       raise PandaSpiMissingAck
 
-  def _cmd(self, cmd: int, data: Optional[List[bytes]] = None, read_bytes: int = TIMEOUT, predata=None) -> bytes:
+  def _cmd(self, cmd: int, data: Optional[List[bytes]] = None, read_bytes: int = 0, predata=None) -> bytes:
     ret = b""
     with self.dev.acquire() as spi:
       # sync + command
