@@ -24,8 +24,6 @@
 #include "safety/safety_hyundai_canfd.h"
 #endif
 
-#include "safety/safety_volvo.h"
-
 // from cereal.car.CarParams.SafetyModel
 #define SAFETY_SILENT 0U
 #define SAFETY_HONDA_NIDEC 1U
@@ -53,8 +51,6 @@
 #define SAFETY_FAW 26U
 #define SAFETY_BODY 27U
 #define SAFETY_HYUNDAI_CANFD 28U
-#define SAFETY_VOLVO_C1 29U
-#define SAFETY_VOLVO_EUCD 30U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
 uint16_t current_safety_param = 0;
@@ -200,7 +196,7 @@ void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
 bool is_msg_valid(AddrCheckStruct addr_list[], int index) {
   bool valid = true;
   if (index != -1) {
-    if ((!addr_list[index].valid_checksum) || (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {
+    if (!addr_list[index].valid_checksum || !addr_list[index].valid_quality_flag || (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {
       valid = false;
       controls_allowed = 0;
     }
@@ -219,7 +215,8 @@ bool addr_safety_check(CANPacket_t *to_push,
                        const addr_checks *rx_checks,
                        uint32_t (*get_checksum)(CANPacket_t *to_push),
                        uint32_t (*compute_checksum)(CANPacket_t *to_push),
-                       uint8_t (*get_counter)(CANPacket_t *to_push)) {
+                       uint8_t (*get_counter)(CANPacket_t *to_push),
+                       bool (*get_quality_flag_valid)(CANPacket_t *to_push)) {
 
   int index = get_addr_check_index(to_push, rx_checks->check, rx_checks->len);
   update_addr_timestamp(rx_checks->check, index);
@@ -240,6 +237,13 @@ bool addr_safety_check(CANPacket_t *to_push,
       update_counter(rx_checks->check, index, counter);
     } else {
       rx_checks->check[index].wrong_counters = 0U;
+    }
+
+    // quality flag check
+    if ((get_quality_flag_valid != NULL) && rx_checks->check[index].msg[rx_checks->check[index].index].quality_flag) {
+      rx_checks->check[index].valid_quality_flag = get_quality_flag_valid(to_push);
+    } else {
+      rx_checks->check[index].valid_quality_flag = true;
     }
   }
   return is_msg_valid(rx_checks->check, index);
@@ -312,8 +316,6 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
   {SAFETY_FORD, &ford_hooks},
 #endif
-  {SAFETY_VOLVO_C1, &volvo_c1_hooks},
-  {SAFETY_VOLVO_EUCD, &volvo_eucd_hooks},
 };
 
 int set_safety_hooks(uint16_t mode, uint16_t param) {
@@ -620,9 +622,11 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
 
   if ((controls_allowed || alka_enabled) && steer_control_enabled) {
     // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
-    // add 1 to not false trigger the violation
-    int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed) * limits.angle_deg_to_can) + 1.;
-    int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed) * limits.angle_deg_to_can) + 1.;
+    // add 1 to not false trigger the violation. also fudge the speed by 1 m/s so rate limits are
+    // always slightly above openpilot's in case we read an updated speed in between angle commands
+    // TODO: this speed fudge can be much lower, look at data to determine the lowest reasonable offset
+    int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
+    int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
 
     int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
     int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
