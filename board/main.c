@@ -203,7 +203,6 @@ void tick_handler(void) {
       }
 
       // exit controls allowed if unused by openpilot for a few seconds
-      #ifdef HEARTBEAT_CHECK
       if (controls_allowed && !heartbeat_engaged) {
         heartbeat_engaged_mismatches += 1U;
         if (heartbeat_engaged_mismatches >= 3U) {
@@ -212,7 +211,6 @@ void tick_handler(void) {
       } else {
         heartbeat_engaged_mismatches = 0U;
       }
-      #endif
 
       if (!heartbeat_disabled) {
         // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
@@ -221,7 +219,6 @@ void tick_handler(void) {
           puth(heartbeat_counter);
           print(" seconds. Safety is set to SILENT mode.\n");
 
-          #ifdef HEARTBEAT_CHECK
           if (controls_allowed_countdown > 0U) {
             siren_countdown = 5U;
             controls_allowed_countdown = 0U;
@@ -231,7 +228,6 @@ void tick_handler(void) {
           if (is_car_safety_mode(current_safety_mode)) {
             heartbeat_lost = true;
           }
-          #endif
 
           if (current_safety_mode != SAFETY_SILENT) {
             set_safety_mode(SAFETY_SILENT, 0U);
