@@ -25,6 +25,7 @@ struct board {
   const bool has_canfd;
   const bool has_rtc_battery;
   const uint16_t fan_max_rpm;
+  const uint16_t adc_scale;
   board_init init;
   board_enable_can_transceiver enable_can_transceiver;
   board_enable_can_transceivers enable_can_transceivers;

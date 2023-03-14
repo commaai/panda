@@ -178,6 +178,7 @@ const board board_red = {
   .has_canfd = true,
   .has_rtc_battery = false,
   .fan_max_rpm = 0U,
+  .adc_scale = 5539U,
   .init = red_init,
   .enable_can_transceiver = red_enable_can_transceiver,
   .enable_can_transceivers = red_enable_can_transceivers,
