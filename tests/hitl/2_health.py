@@ -100,3 +100,9 @@ def test_microsecond_timer(p):
 
   time_diff = (end_time - start_time) / 1e6
   assert 0.98 < time_diff  < 1.02, f"Timer not running at the correct speed! (got {time_diff:.2f}s instead of 1.0s)"
+
+@test_all_pandas
+@panda_connect_and_init
+def test_adc_scale(p):
+  h = p.health()
+  assert 11500 < h['voltage']  < 12500, f"Reported voltage is beyond threshold (got {h['voltage']} instead of 12V +-0.5V)"
