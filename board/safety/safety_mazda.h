@@ -46,17 +46,15 @@ addr_checks mazda_ti_rx_checks = {mazda_ti_addr_checks, MAZDA_TI_ADDR_CHECKS_LEN
 
 // track msgs coming from OP so that we know what CAM msgs to drop and what to forward
 static int mazda_rx_hook(CANPacket_t *to_push) {
-
-  bool valid = addr_safety_check(to_push, &mazda_rx_checks, NULL, NULL, NULL, NULL);
+  bool valid = addr_safety_check(to_push, &mazda_rx_checks, NULL, NULL, NULL);
 
   if (((GET_ADDR(to_push) == TI_STEER_TORQUE)) &&
       ((GET_BYTE(to_push, 0) == GET_BYTE(to_push, 1)))) {
     torque_interceptor_detected = 1;
-    valid &= addr_safety_check(to_push, &mazda_ti_rx_checks, NULL, NULL, NULL, NULL);
+    valid &= addr_safety_check(to_push, &mazda_ti_rx_checks, NULL, NULL, NULL);
   }
 
   if (valid && (GET_BUS(to_push) == MAZDA_MAIN)) {
-
     int addr = GET_ADDR(to_push);
 
     if (addr == MAZDA_ENGINE_DATA) {
