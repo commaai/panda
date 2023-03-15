@@ -4,14 +4,8 @@
 
 bool tres_ir_enabled;
 bool tres_fan_enabled;
-uint8_t tres_fan_cooldown = 0U;
 void tres_update_fan_ir_power(void) {
-  if (tres_fan_enabled) {
-    // keep power on a few seconds after disabling to allow the fan to spin down
-    tres_fan_cooldown = 3U;
-  }
-
-  red_chiplet_set_fan_or_usb_load_switch(tres_ir_enabled || tres_fan_enabled || (tres_fan_cooldown > 0U));
+  red_chiplet_set_fan_or_usb_load_switch(tres_ir_enabled || tres_fan_enabled);
 }
 
 void tres_set_ir_power(uint8_t percentage){
@@ -37,11 +31,6 @@ void tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
 
   }
   tres_ignition_prev = ignition;
-
-  if (tres_fan_cooldown > 0U) {
-    tres_fan_cooldown--;
-  }
-  tres_update_fan_ir_power();
 }
 
 void tres_set_fan_enabled(bool enabled) {
@@ -104,8 +93,14 @@ const board board_tres = {
   .has_spi = true,
   .has_canfd = true,
   .has_rtc_battery = true,
+<<<<<<< HEAD
   .fan_max_rpm = 6600U,
   .adc_scale = 3021U,
+=======
+  .fan_max_rpm = 6500U,  // TODO: verify this, copied from dos
+  .fan_stall_recovery = false,
+  .fan_enable_cooldown_time = 3U,
+>>>>>>> 89777a58 (refactor to be inside the fan driver)
   .init = tres_init,
   .enable_can_transceiver = red_chiplet_enable_can_transceiver,
   .enable_can_transceivers = red_chiplet_enable_can_transceivers,

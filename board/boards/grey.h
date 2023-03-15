@@ -45,7 +45,12 @@ const board board_grey = {
   .has_canfd = false,
   .has_rtc_battery = false,
   .fan_max_rpm = 0U,
+<<<<<<< HEAD
   .adc_scale = 8862U,
+=======
+  .fan_stall_recovery = false,
+  .fan_enable_cooldown_time = 0U,
+>>>>>>> 89777a58 (refactor to be inside the fan driver)
   .init = grey_init,
   .enable_can_transceiver = white_enable_can_transceiver,
   .enable_can_transceivers = white_enable_can_transceivers,

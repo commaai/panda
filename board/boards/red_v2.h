@@ -14,7 +14,12 @@ const board board_red_v2 = {
   .has_canfd = true,
   .has_rtc_battery = true,
   .fan_max_rpm = 0U,
+<<<<<<< HEAD
   .adc_scale = 5539U,
+=======
+  .fan_stall_recovery = false,
+  .fan_enable_cooldown_time = 0U,
+>>>>>>> 89777a58 (refactor to be inside the fan driver)
   .init = red_chiplet_init,
   .enable_can_transceiver = red_chiplet_enable_can_transceiver,
   .enable_can_transceivers = red_chiplet_enable_can_transceivers,

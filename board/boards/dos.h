@@ -215,7 +215,12 @@ const board board_dos = {
   .has_canfd = false,
   .has_rtc_battery = true,
   .fan_max_rpm = 6500U,
+<<<<<<< HEAD
   .adc_scale = 8862U,
+=======
+  .fan_stall_recovery = true,
+  .fan_enable_cooldown_time = 0U,
+>>>>>>> 89777a58 (refactor to be inside the fan driver)
   .init = dos_init,
   .enable_can_transceiver = dos_enable_can_transceiver,
   .enable_can_transceivers = dos_enable_can_transceivers,
