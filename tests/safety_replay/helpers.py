@@ -39,7 +39,7 @@ def get_steer_value(mode, to_send):
   elif mode == Panda.SAFETY_HYUNDAI:
     torque = (((to_send.data[3] & 0x7) << 8) | to_send.data[2]) - 1024
   elif mode == Panda.SAFETY_CHRYSLER:
-    torque = ((to_send.data[0] & 0x7) << 8) | to_send.data[1] - 1024
+    torque = (((to_send.data[0] & 0x7) << 8) | to_send.data[1]) - 1024
   elif mode == Panda.SAFETY_SUBARU:
     torque = ((to_send.data[3] & 0x1F) << 8) | to_send.data[2]
     torque = -to_signed(torque, 13)
