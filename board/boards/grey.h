@@ -45,6 +45,7 @@ const board board_grey = {
   .has_canfd = false,
   .has_rtc_battery = false,
   .fan_max_rpm = 0U,
+  .adc_scale = 8862U,
   .init = grey_init,
   .enable_can_transceiver = white_enable_can_transceiver,
   .enable_can_transceivers = white_enable_can_transceivers,

@@ -1,9 +1,10 @@
 import usb1
 import struct
 import binascii
-from typing import List, Tuple, Optional
+from typing import List, Optional
 
 from .base import BaseSTBootloaderHandle
+from .spi import STBootloaderSPIHandle, PandaSpiException
 from .usb import STBootloaderUSBHandle
 from .constants import McuType
 
@@ -11,19 +12,20 @@ from .constants import McuType
 class PandaDFU:
   def __init__(self, dfu_serial: Optional[str]):
     # try USB, then SPI
-    handle, mcu_type = PandaDFU.usb_connect(dfu_serial)
-    if None in (handle, mcu_type):
-      handle, mcu_type = PandaDFU.spi_connect(dfu_serial)
+    handle: Optional[BaseSTBootloaderHandle]
+    handle = PandaDFU.usb_connect(dfu_serial)
+    if handle is None:
+      handle = PandaDFU.spi_connect(dfu_serial)
 
-    if handle is None or mcu_type is None:
+    if handle is None:
       raise Exception(f"failed to open DFU device {dfu_serial}")
 
     self._handle: BaseSTBootloaderHandle = handle
-    self._mcu_type: McuType = mcu_type
+    self._mcu_type: McuType = self._handle.get_mcu_type()
 
   @staticmethod
-  def usb_connect(dfu_serial: Optional[str]) -> Tuple[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
-    handle, mcu_type = None, None
+  def usb_connect(dfu_serial: Optional[str]) -> Optional[STBootloaderUSBHandle]:
+    handle = None
     context = usb1.USBContext()
     for device in context.getDeviceList(skip_on_error=True):
       if device.getVendorID() == 0x0483 and device.getProductID() == 0xdf11:
@@ -31,18 +33,28 @@ class PandaDFU:
           this_dfu_serial = device.open().getASCIIStringDescriptor(3)
         except Exception:
           continue
+
         if this_dfu_serial == dfu_serial or dfu_serial is None:
-          handle = STBootloaderUSBHandle(device.open())
-          # TODO: Find a way to detect F4 vs F2
-          # TODO: also check F4 BCD, don't assume in else
-          mcu_type = McuType.H7 if device.getbcdDevice() == 512 else McuType.F4
+          handle = STBootloaderUSBHandle(device, device.open())
           break
 
-    return handle, mcu_type
+    return handle
 
   @staticmethod
-  def spi_connect(dfu_serial: Optional[str]) -> Tuple[Optional[BaseSTBootloaderHandle], Optional[McuType]]:
-    return None, None
+  def spi_connect(dfu_serial: Optional[str]) -> Optional[STBootloaderSPIHandle]:
+    handle = None
+    this_dfu_serial = None
+
+    try:
+      handle = STBootloaderSPIHandle()
+      this_dfu_serial = PandaDFU.st_serial_to_dfu_serial(handle.get_uid(), handle.get_mcu_type())
+    except PandaSpiException:
+      handle = None
+
+    if dfu_serial is not None and dfu_serial != this_dfu_serial:
+      handle = None
+
+    return handle
 
   @staticmethod
   def list() -> List[str]:
@@ -67,6 +79,13 @@ class PandaDFU:
 
   @staticmethod
   def spi_list() -> List[str]:
+    try:
+      h = PandaDFU.spi_connect(None)
+      if h is not None:
+        dfu_serial = PandaDFU.st_serial_to_dfu_serial(h.get_uid(), h.get_mcu_type())
+        return [dfu_serial, ]
+    except PandaSpiException:
+      pass
     return []
 
   @staticmethod
@@ -82,17 +101,14 @@ class PandaDFU:
   def get_mcu_type(self) -> McuType:
     return self._mcu_type
 
-  def erase(self, address: int) -> None:
-    self._handle.erase(address)
-
   def reset(self):
     self._handle.jump(self._mcu_type.config.bootstub_address)
 
   def program_bootstub(self, code_bootstub):
     self._handle.clear_status()
-    self.erase(self._mcu_type.config.bootstub_address)
-    self.erase(self._mcu_type.config.app_address)
-    self._handle.program(self._mcu_type.config.bootstub_address, code_bootstub, self._mcu_type.config.block_size)
+    self._handle.erase_bootstub()
+    self._handle.erase_app()
+    self._handle.program(self._mcu_type.config.bootstub_address, code_bootstub)
     self.reset()
 
   def recover(self):

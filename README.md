@@ -22,7 +22,7 @@ pip install -r requirements.txt
 
 # macOS
 brew tap ArmMbed/homebrew-formulae
-brew install python dfu-util arm-none-eabi-gcc
+brew install python dfu-util arm-none-eabi-gcc gcc@12
 pip install -r requirements.txt
 ```
 
