@@ -51,7 +51,7 @@ ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
 
 ENV PANDA_PATH=/tmp/openpilot/panda
 ENV OPENPILOT_REF="ee0dd36a3c775dbd82493c84f4e7272c1eb3fcbd"
-ENV OPENDBC_REF="8ed5fdcaeb492559a44fd9a8ac6d36ceee86a700"
+ENV OPENDBC_REF="f369228e047a8069ccfd7c713277a8809a21f83b"
 
 COPY requirements.txt /tmp/
 RUN pyenv install 3.8.10 && \
@@ -70,7 +70,8 @@ RUN cd /tmp && \
     git fetch origin $OPENPILOT_REF && \
     git checkout $OPENPILOT_REF && \
     git submodule update --init cereal opendbc rednose_repo && \
-    git -C opendbc fetch && \
+    git -C opendbc remote add jyoung8607 https://github.com/jyoung8607/opendbc.git && \
+    git -C opendbc fetch jyoung8607 && \
     git -C opendbc checkout $OPENDBC_REF && \
     git -C opendbc reset --hard HEAD && \
     git -C opendbc clean -xfd && \
