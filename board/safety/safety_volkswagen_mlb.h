@@ -33,15 +33,12 @@ AddrCheckStruct volkswagen_mlb_addr_checks[] = {
 #define VOLKSWAGEN_MLB_ADDR_CHECKS_LEN (sizeof(volkswagen_mlb_addr_checks) / sizeof(volkswagen_mlb_addr_checks[0]))
 addr_checks volkswagen_mlb_rx_checks = {volkswagen_mlb_addr_checks, VOLKSWAGEN_MLB_ADDR_CHECKS_LEN};
 
-bool volkswagen_mlb_brake_pedal_switch = false;
-bool volkswagen_mlb_brake_pressure_detected = false;
-
 
 static const addr_checks* volkswagen_mlb_init(uint16_t param) {
   UNUSED(param);
 
-  volkswagen_mlb_brake_pedal_switch = false;
-  volkswagen_mlb_brake_pressure_detected = false;
+  volkswagen_brake_pedal_switch = false;
+  volkswagen_brake_pressure_detected = false;
 
   gen_crc_lookup_table_8(0x2F, volkswagen_crc8_lut_8h2f);
   return &volkswagen_mlb_rx_checks;
@@ -66,16 +63,9 @@ static int volkswagen_mlb_rx_hook(CANPacket_t *to_push) {
       vehicle_moving = speed > 0;
     }
 
-    // Update driver input torque samples
-    // Signal: LH_EPS_03.EPS_Lenkmoment (absolute torque)
-    // Signal: LH_EPS_03.EPS_VZ_Lenkmoment (direction)
+    // Update driver input torque
     if (addr == MSG_LH_EPS_03) {
-      int torque_driver_new = GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0x1FU) << 8);
-      int sign = (GET_BYTE(to_push, 6) & 0x80U) >> 7;
-      if (sign == 1) {
-        torque_driver_new *= -1;
-      }
-      update_sample(&torque_driver, torque_driver_new);
+      volkswagen_mlb_mqb_driver_input_torque(to_push);
     }
 
     if (addr == MSG_TSK_02) {
@@ -105,15 +95,14 @@ static int volkswagen_mlb_rx_hook(CANPacket_t *to_push) {
     // Signal: Motor_03.MO_Fahrer_bremst
     if (addr == MSG_MOTOR_03) {
       gas_pressed = GET_BYTE(to_push, 6) != 0U;
-      volkswagen_mlb_brake_pedal_switch = GET_BIT(to_push, 35U);
+      volkswagen_brake_pedal_switch = GET_BIT(to_push, 35U);
     }
 
-    // Signal: ESP_05.ESP_Fahrer_bremst (ESP detected driver brake pressure above platform specified threshold)
     if (addr == MSG_ESP_05) {
-      volkswagen_mlb_brake_pressure_detected = (GET_BYTE(to_push, 3) & 0x4U) >> 2;
+      volkswagen_mlb_mqb_brake_pressure_threshold(to_push);
     }
 
-    brake_pressed = volkswagen_mlb_brake_pedal_switch || volkswagen_mlb_brake_pressure_detected;
+    brake_pressed = volkswagen_brake_pedal_switch || volkswagen_brake_pressure_detected;
 
     generic_rx_checks((addr == MSG_HCA_01));
   }

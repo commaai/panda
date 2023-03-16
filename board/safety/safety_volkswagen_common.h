@@ -25,11 +25,12 @@
 
 
 const uint16_t FLAG_VOLKSWAGEN_LONG_CONTROL = 1;
-
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
 bool volkswagen_longitudinal = false;
 bool volkswagen_set_button_prev = false;
 bool volkswagen_resume_button_prev = false;
+bool volkswagen_brake_pedal_switch = false;
+bool volkswagen_brake_pressure_detected = false;
 
 
 static uint32_t volkswagen_mlb_mqb_get_checksum(CANPacket_t *to_push) {
@@ -73,6 +74,24 @@ static uint32_t volkswagen_mlb_mqb_compute_checksum(CANPacket_t *to_push) {
 
   crc = volkswagen_crc8_lut_8h2f[crc];
   return (uint8_t)(crc ^ 0xFFU);
+}
+
+void volkswagen_mlb_mqb_driver_input_torque(CANPacket_t *to_push) {
+  // Signal: LH_EPS_03.EPS_Lenkmoment (absolute torque)
+  // Signal: LH_EPS_03.EPS_VZ_Lenkmoment (direction)
+  int torque_driver_new = GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0x1FU) << 8);
+  int sign = (GET_BYTE(to_push, 6) & 0x80U) >> 7;
+  if (sign == 1) {
+    torque_driver_new *= -1;
+  }
+  update_sample(&torque_driver, torque_driver_new);
+  return;
+}
+
+// Signal: ESP_05.ESP_Fahrer_bremst (ESP detected driver brake pressure above platform specified threshold)
+void volkswagen_mlb_mqb_brake_pressure_threshold(CANPacket_t *to_push) {
+  volkswagen_brake_pressure_detected = (GET_BYTE(to_push, 3) & 0x4U) >> 2;
+  return;
 }
 
 #endif
