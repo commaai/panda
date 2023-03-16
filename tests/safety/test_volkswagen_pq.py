@@ -14,7 +14,7 @@ MSG_ACC_SYSTEM = 0x368        # TX by OP, longitudinal acceleration controls
 MSG_MOTOR_3 = 0x380           # RX from ECU, for driver throttle input
 MSG_GRA_NEU = 0x38A           # TX by OP, ACC control buttons for cancel/resume
 MSG_MOTOR_5 = 0x480           # RX from ECU, for ACC main switch state
-MSG_ACC_GRA_ANZIEGE = 0x56A   # TX by OP, ACC HUD
+MSG_ACC_GRA_ANZEIGE = 0x56A   # TX by OP, ACC HUD
 MSG_LDW_1 = 0x5BE             # TX by OP, Lane line recognition and text alerts
 
 MAX_ACCEL = 2.0
@@ -143,8 +143,8 @@ class TestVolkswagenPqStockSafety(TestVolkswagenPqSafety):
 
 
 class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety):
-  TX_MSGS = [[MSG_HCA_1, 0], [MSG_LDW_1, 0], [MSG_ACC_SYSTEM, 0], [MSG_ACC_GRA_ANZIEGE, 0]]
-  FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_1, MSG_LDW_1, MSG_ACC_SYSTEM, MSG_ACC_GRA_ANZIEGE]}
+  TX_MSGS = [[MSG_HCA_1, 0], [MSG_LDW_1, 0], [MSG_ACC_SYSTEM, 0], [MSG_ACC_GRA_ANZEIGE, 0]]
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_1, MSG_LDW_1, MSG_ACC_SYSTEM, MSG_ACC_GRA_ANZEIGE]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INACTIVE_ACCEL = 3.01
 

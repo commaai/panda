@@ -12,6 +12,6 @@ cffi==1.14.3
 crcmod
 pre-commit==2.13.0
 pylint==2.15.4
-scons
+scons==4.4.0
 flaky
 spidev
