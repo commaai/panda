@@ -1,23 +1,27 @@
 #ifndef SAFETY_VOLKSWAGEN_COMMON_H
 #define SAFETY_VOLKSWAGEN_COMMON_H
 
-#define MSG_LH_EPS_03   0x09F   // RX from EPS, for driver steering torque
-#define MSG_ESP_03      0x103   // RX from ABS, for wheel speeds
-#define MSG_MOTOR_03    0x105   // RX from ECU, for driver throttle input and brake switch status
-#define MSG_ESP_05      0x106   // RX from ABS, for brake switch state
-#define MSG_LS_01       0x10B   // TX by OP, ACC control buttons for cancel/resume
-#define MSG_TSK_02      0x10C   // RX from ECU, for ACC status from drivetrain coordinator
-#define MSG_HCA_01      0x126   // TX by OP, Heading Control Assist steering torque
-#define MSG_LDW_02      0x397   // TX by OP, Lane line recognition and text alerts
-
-#define MSG_ESP_19      0x0B2   // RX from ABS, for wheel speeds
-#define MSG_TSK_06      0x120   // RX from ECU, for ACC status from drivetrain coordinator
-#define MSG_MOTOR_20    0x121   // RX from ECU, for driver throttle input
-#define MSG_ACC_06      0x122   // TX by OP, ACC control instructions to the drivetrain coordinator
-#define MSG_GRA_ACC_01  0x12B   // TX by OP, ACC control buttons for cancel/resume
-#define MSG_ACC_07      0x12E   // TX by OP, ACC control instructions to the drivetrain coordinator
+// Common MLB/MQB messages
 #define MSG_ACC_02      0x30C   // TX by OP, ACC HUD data to the instrument cluster
+#define MSG_ESP_05      0x106   // RX from ABS, for brake switch state
+#define MSG_HCA_01      0x126   // TX by OP, ADAS Heading Control Assist steering torque
+#define MSG_LDW_02      0x397   // TX by OP, ADAS Lane line recognition and text alerts
+#define MSG_LH_EPS_03   0x09F   // RX from EPS, for driver steering torque
+
+// MLB only messages
+#define MSG_ESP_03      0x103   // RX from ABS, for wheel speeds
+#define MSG_LS_01       0x10B   // TX by OP, ACC control buttons for cancel/resume
+#define MSG_MOTOR_03    0x105   // RX from ECU, for driver throttle input and brake switch status
+#define MSG_TSK_02      0x10C   // RX from ECU, for ACC status from drivetrain coordinator
+
+// MQB only messages
+#define MSG_ACC_06      0x122   // TX by OP, ACC control instructions to the drivetrain coordinator
+#define MSG_ACC_07      0x12E   // TX by OP, ACC control instructions to the drivetrain coordinator
+#define MSG_ESP_19      0x0B2   // RX from ABS, for wheel speeds
+#define MSG_GRA_ACC_01  0x12B   // TX by OP, ACC control buttons for cancel/resume
 #define MSG_MOTOR_14    0x3BE   // RX from ECU, for brake switch status
+#define MSG_MOTOR_20    0x121   // RX from ECU, for driver throttle input
+#define MSG_TSK_06      0x120   // RX from ECU, for ACC status from drivetrain coordinator
 
 
 const uint16_t FLAG_VOLKSWAGEN_LONG_CONTROL = 1;
