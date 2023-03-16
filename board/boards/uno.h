@@ -251,12 +251,9 @@ const board board_uno = {
   .has_canfd = false,
   .has_rtc_battery = true,
   .fan_max_rpm = 5100U,
-<<<<<<< HEAD
   .adc_scale = 8862U,
-=======
   .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 0U,
->>>>>>> 89777a58 (refactor to be inside the fan driver)
   .init = uno_init,
   .enable_can_transceiver = uno_enable_can_transceiver,
   .enable_can_transceivers = uno_enable_can_transceivers,
