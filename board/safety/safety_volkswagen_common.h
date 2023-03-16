@@ -32,15 +32,15 @@ bool volkswagen_set_button_prev = false;
 bool volkswagen_resume_button_prev = false;
 
 
-static uint32_t volkswagen_mxb_get_checksum(CANPacket_t *to_push) {
+static uint32_t volkswagen_mlb_mqb_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
 }
 
-static uint8_t volkswagen_mxb_get_counter(CANPacket_t *to_push) {
+static uint8_t volkswagen_mlb_mqb_get_counter(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 1) & 0xFU;
 }
 
-static uint32_t volkswagen_mxb_compute_checksum(CANPacket_t *to_push) {
+static uint32_t volkswagen_mlb_mqb_compute_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
 
@@ -53,7 +53,7 @@ static uint32_t volkswagen_mxb_compute_checksum(CANPacket_t *to_push) {
     crc = volkswagen_crc8_lut_8h2f[crc];
   }
 
-  uint8_t counter = volkswagen_mxb_get_counter(to_push);
+  uint8_t counter = volkswagen_mlb_mqb_get_counter(to_push);
   switch(addr) {
     case MSG_LH_EPS_03:
       crc ^= (uint8_t[]){0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5}[counter];

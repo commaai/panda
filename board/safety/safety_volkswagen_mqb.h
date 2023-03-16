@@ -56,8 +56,8 @@ static const addr_checks* volkswagen_mqb_init(uint16_t param) {
 
 static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &volkswagen_mqb_rx_checks,
-                                 volkswagen_mxb_get_checksum, volkswagen_mxb_compute_checksum, volkswagen_mxb_get_counter, NULL);
+  bool valid = addr_safety_check(to_push, &volkswagen_mqb_rx_checks, volkswagen_mlb_mqb_get_checksum,
+                                 volkswagen_mlb_mqb_compute_checksum, volkswagen_mlb_mqb_get_counter, NULL);
 
   if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
