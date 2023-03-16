@@ -56,9 +56,9 @@ static int volkswagen_mlb_rx_hook(CANPacket_t *to_push) {
     // Signals: ESP_03.ESP_[VL|VR|HL|HR]_Radgeschw
     if (addr == MSG_ESP_03) {
       int speed = 0;
-      speed += GET_BYTE(to_push, 2) | ((GET_BYTE(to_push, 3) & 0xF) << 8);          // FL
+      speed += GET_BYTE(to_push, 2) | ((GET_BYTE(to_push, 3) & 0xFU) << 8);         // FL
       speed += ((GET_BYTE(to_push, 3) & 0xF0) >> 4) | (GET_BYTE(to_push, 4) << 4);  // FR
-      speed += GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0xF) << 8);          // RL
+      speed += GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0xFU) << 8);         // RL
       speed += ((GET_BYTE(to_push, 6) & 0xF0) >> 4) | (GET_BYTE(to_push, 7) << 4);  // RR
       vehicle_moving = speed > 0;
     }
@@ -134,7 +134,7 @@ static int volkswagen_mlb_tx_hook(CANPacket_t *to_send) {
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == MSG_LS_01) && !controls_allowed) {
     // disallow resume and set: bits 16 and 19
-    if (GET_BIT(to_send, 16) | GET_BIT(to_send, 19)) {
+    if (GET_BIT(to_send, 16U) || GET_BIT(to_send, 19U)) {
       tx = 0;
     }
   }
