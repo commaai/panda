@@ -778,7 +778,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
             # No point in comparing different Tesla safety modes
             if 'Tesla' in attr and 'Tesla' in current_test:
               continue
-            if {attr, current_test}.issubset({'TestToyotaSafetyTorque', 'TestToyotaAltBrakeSafety', 'TestToyotaStockLongitudinal'}):
+            if {attr, current_test}.issubset({'TestToyotaSafetyTorque', 'TestToyotaAltBrakeSafety', 'TestToyotaStockLongitudinal', 'TestToyotaSafetyAngle'}):
               continue
             if {attr, current_test}.issubset({'TestSubaruSafety', 'TestSubaruGen2Safety'}):
               continue
