@@ -53,8 +53,7 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest)
     return self.packer.make_can_msg_panda("STEERING_LKA", 0, values)
 
   def _lta_msg(self, req, req2, angle_cmd, setme_x64=100):
-    values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd,
-              "SETME_X64": setme_x64}
+    values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd, "SETME_X64": setme_x64}
     return self.packer.make_can_msg_panda("STEERING_LTA", 0, values)
 
   def _accel_msg(self, accel, cancel_req=0):
