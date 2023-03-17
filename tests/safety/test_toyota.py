@@ -27,7 +27,6 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest)
              [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
              [0x2E4, 0], [0x191, 0], [0x411, 0], [0x412, 0], [0x343, 0], [0x1D2, 0],  # LKAS + ACC
              [0x200, 0], [0x750, 0]]  # interceptor + blindspot monitor
-
   STANDSTILL_THRESHOLD = 0  # kph
   RELAY_MALFUNCTION_ADDR = 0x2E4
   RELAY_MALFUNCTION_BUS = 0
@@ -42,7 +41,7 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest)
       cls.safety = None
       raise unittest.SkipTest
 
-  # Both torque and angle safety modes test with torque and angle cmds
+  # Both torque and angle safety modes test with each other's steering commands
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"STEER_TORQUE_CMD": torque, "STEER_REQUEST": steer_req}
     return self.packer.make_can_msg_panda("STEERING_LKA", 0, values)
