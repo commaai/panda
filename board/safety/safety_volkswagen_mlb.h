@@ -60,7 +60,7 @@ static int volkswagen_mlb_rx_hook(CANPacket_t *to_push) {
       speed += (GET_BYTE(to_push, 4) << 4) | (GET_BYTE(to_push, 3) >> 4);    // FR
       speed += ((GET_BYTE(to_push, 6) & 0xFU) << 8) | GET_BYTE(to_push, 5);  // RL
       speed += (GET_BYTE(to_push, 7) << 4) | (GET_BYTE(to_push, 6) >> 4);    // RR
-      vehicle_moving = speed > 0;
+      vehicle_moving = speed > 0U;
     }
 
     // Update driver input torque
