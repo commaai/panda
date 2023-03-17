@@ -111,6 +111,23 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest)
             should_tx = np.isclose(accel, 0, atol=0.0001)
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
+  # Only allow LTA msgs with no actuation
+  def test_lta_steer_cmd(self):
+    for engaged in [True, False]:
+      self.safety.set_controls_allowed(engaged)
+      # good msg
+      self.assertTrue(self._tx(self._lta_msg(0, 0, 0)))
+      # bad msgs
+      self.assertFalse(self._tx(self._lta_msg(1, 0, 0)))
+      self.assertFalse(self._tx(self._lta_msg(0, 1, 0)))
+      self.assertFalse(self._tx(self._lta_msg(0, 0, 1)))
+      for _ in range(20):
+        req = random.choice([0, 1])
+        req2 = random.choice([0, 1])
+        angle = random.randint(-50, 50)
+        should_tx = not req and not req2 and angle == 0
+        self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle)))
+
   def test_rx_hook(self):
     # checksum checks
     for msg in ["trq", "pcm"]:
@@ -148,27 +165,6 @@ class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSaf
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE)
     self.safety.init_tests()
-
-  # TODO: we actually always want to test this for now
-  # Only allow LTA msgs with no actuation
-  def test_lta_steer_cmd(self):
-    for engaged in [True, False]:
-      self.safety.set_controls_allowed(engaged)
-
-      # good msg
-      self.assertTrue(self._tx(self._lta_msg(0, 0, 0)))
-
-      # bad msgs
-      self.assertFalse(self._tx(self._lta_msg(1, 0, 0)))
-      self.assertFalse(self._tx(self._lta_msg(0, 1, 0)))
-      self.assertFalse(self._tx(self._lta_msg(0, 0, 1)))
-
-      for _ in range(20):
-        req = random.choice([0, 1])
-        req2 = random.choice([0, 1])
-        angle = random.randint(-50, 50)
-        should_tx = not req and not req2 and angle == 0
-        self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle)))
 
 
 class TestToyotaSafetyAngle(TestToyotaSafetyBase):
