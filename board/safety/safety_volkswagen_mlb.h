@@ -24,11 +24,11 @@ const LongitudinalLimits VOLKSWAGEN_MLB_LONG_LIMITS = {
 const CanMsg VOLKSWAGEN_MLB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_LS_01, 0, 4}, {MSG_LS_01, 2, 4}, {MSG_LDW_02, 0, 8}};
 
 AddrCheckStruct volkswagen_mlb_addr_checks[] = {
-  {.msg = {{MSG_ESP_03, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_ESP_05, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_TSK_02, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 30000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MOTOR_03, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_ESP_03, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_ESP_05, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_TSK_02, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 30000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_MOTOR_03, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
 };
 #define VOLKSWAGEN_MLB_ADDR_CHECKS_LEN (sizeof(volkswagen_mlb_addr_checks) / sizeof(volkswagen_mlb_addr_checks[0]))
 addr_checks volkswagen_mlb_rx_checks = {volkswagen_mlb_addr_checks, VOLKSWAGEN_MLB_ADDR_CHECKS_LEN};
