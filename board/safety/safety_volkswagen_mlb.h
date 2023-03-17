@@ -56,10 +56,10 @@ static int volkswagen_mlb_rx_hook(CANPacket_t *to_push) {
     // Signals: ESP_03.ESP_[VL|VR|HL|HR]_Radgeschw
     if (addr == MSG_ESP_03) {
       int speed = 0;
-      speed += GET_BYTE(to_push, 2) | ((GET_BYTE(to_push, 3) & 0xFU) << 8);         // FL
-      speed += ((GET_BYTE(to_push, 3) & 0xF0) >> 4) | (GET_BYTE(to_push, 4) << 4);  // FR
-      speed += GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0xFU) << 8);         // RL
-      speed += ((GET_BYTE(to_push, 6) & 0xF0) >> 4) | (GET_BYTE(to_push, 7) << 4);  // RR
+      speed += ((GET_BYTE(to_push, 3) & 0xFU) << 8) | GET_BYTE(to_push, 2);  // FL
+      speed += (GET_BYTE(to_push, 4) << 4) | (GET_BYTE(to_push, 3) >> 4);    // FR
+      speed += ((GET_BYTE(to_push, 6) & 0xFU) << 8) | GET_BYTE(to_push, 5);  // RL
+      speed += (GET_BYTE(to_push, 7) << 4) | (GET_BYTE(to_push, 6) >> 4);    // RR
       vehicle_moving = speed > 0;
     }
 
