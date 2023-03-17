@@ -42,7 +42,6 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest)
       cls.safety = None
       raise unittest.SkipTest
 
-  # Used in the rx hook test
   def _torque_meas_msg(self, torque):
     values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
@@ -115,12 +114,15 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest)
   def test_lta_steer_cmd(self):
     for engaged in [True, False]:
       self.safety.set_controls_allowed(engaged)
+
       # good msg
       self.assertTrue(self._tx(self._lta_msg(0, 0, 0)))
+
       # bad msgs
       self.assertFalse(self._tx(self._lta_msg(1, 0, 0)))
       self.assertFalse(self._tx(self._lta_msg(0, 1, 0)))
       self.assertFalse(self._tx(self._lta_msg(0, 0, 1)))
+
       for _ in range(20):
         req = random.choice([0, 1])
         req2 = random.choice([0, 1])
