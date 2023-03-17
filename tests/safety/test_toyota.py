@@ -2,6 +2,7 @@
 import numpy as np
 import random
 import unittest
+import itertools
 
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
@@ -51,8 +52,9 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest)
     values = {"STEER_TORQUE_CMD": torque, "STEER_REQUEST": steer_req}
     return self.packer.make_can_msg_panda("STEERING_LKA", 0, values)
 
-  def _lta_msg(self, req, req2, angle_cmd):
-    values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd}
+  def _lta_msg(self, req, req2, angle_cmd, setme_x64=100):
+    values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd,
+              "SETME_X64": setme_x64}
     return self.packer.make_can_msg_panda("STEERING_LTA", 0, values)
 
   def _accel_msg(self, accel, cancel_req=0):
@@ -112,23 +114,14 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest)
 
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
-    for engaged in [True, False]:
+    for engaged, req, req2, setme_x64, angle in itertools.product([True, False],
+                                                                  [0, 1], [0, 1],
+                                                                  [0, 50, 100],
+                                                                  np.linspace(-20, 20, 5)):
       self.safety.set_controls_allowed(engaged)
 
-      # good msg
-      self.assertTrue(self._tx(self._lta_msg(0, 0, 0)))
-
-      # bad msgs
-      self.assertFalse(self._tx(self._lta_msg(1, 0, 0)))
-      self.assertFalse(self._tx(self._lta_msg(0, 1, 0)))
-      self.assertFalse(self._tx(self._lta_msg(0, 0, 1)))
-
-      for _ in range(20):
-        req = random.choice([0, 1])
-        req2 = random.choice([0, 1])
-        angle = random.randint(-50, 50)
-        should_tx = not req and not req2 and angle == 0
-        self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle)))
+      should_tx = not req and not req2 and angle == 0 and setme_x64 == 0
+      self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle, setme_x64)))
 
   def test_rx_hook(self):
     # checksum checks
@@ -179,22 +172,13 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase):
 
   # Only allow LKA msgs with no actuation
   def test_lka_steer_cmd(self):
-    for engaged in [True, False]:
+    for engaged, steer_req, torque in itertools.product([True, False],
+                                                        [0, 1],
+                                                        np.linspace(-1500, 1500, 7)):
       self.safety.set_controls_allowed(engaged)
 
-      # good msg
-      self.assertTrue(self._tx(self._torque_cmd_msg(0, 0)))
-
-      # # bad msgs
-      self.assertFalse(self._tx(self._torque_cmd_msg(1, 0)))
-      self.assertFalse(self._tx(self._torque_cmd_msg(0, 1)))
-      self.assertFalse(self._tx(self._torque_cmd_msg(1, 1)))
-
-      for _ in range(20):
-        req = random.choice([0, 1])
-        torque = random.randint(-1500, 1500)
-        should_tx = not req and torque == 0
-        self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(torque, req)))
+      should_tx = not steer_req and torque == 0
+      self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(torque, steer_req)))
 
 
 class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
