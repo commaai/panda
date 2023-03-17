@@ -55,7 +55,7 @@ static int volkswagen_mlb_rx_hook(CANPacket_t *to_push) {
     // Check all wheel speeds for any movement
     // Signals: ESP_03.ESP_[VL|VR|HL|HR]_Radgeschw
     if (addr == MSG_ESP_03) {
-      unsigned int speed = 0;
+      int speed = 0;
       speed += GET_BYTE(to_push, 2) | ((GET_BYTE(to_push, 3) & 0xFU) << 8);         // FL
       speed += ((GET_BYTE(to_push, 3) & 0xF0) >> 4) | (GET_BYTE(to_push, 4) << 4);  // FR
       speed += GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0xFU) << 8);         // RL
