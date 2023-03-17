@@ -18,11 +18,11 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
   .angle_deg_to_can = 17.452007,  // 17.452006980802793
   .angle_rate_up_lookup = {
     {2., 7., 17.},
-    {3.5, 3.5, 3.5}
+    {3.5 * 2, 3.5 * 2, 3.5 * 2}
   },
   .angle_rate_down_lookup = {
     {2., 7., 17.},
-    {3.5, 3.5, 3.5}
+    {3.5 * 2, 3.5 * 2, 3.5 * 2}
   },
 };
 
@@ -201,7 +201,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
     // LTA steering check
     // sent to prevent dash errors, no actuation is accepted
     if (addr == 0x191) {
-      // check the STEER_REQUEST, STEER_REQUEST_2, and STEER_ANGLE_CMD signals
+      // check the STEER_REQUEST, STEER_REQUEST_2, SETME_X64 STEER_ANGLE_CMD signals
       bool lta_request = GET_BIT(to_send, 0U) != 0U;
       bool lta_request2 = GET_BIT(to_send, 25U) != 0U;
       int setme_x64 = GET_BYTE(to_send, 5);
@@ -213,9 +213,12 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
         if (steer_angle_cmd_checks(lta_angle, steer_control_enabled, TOYOTA_STEERING_LIMITS)) {
           tx = 0;
         }
+        if (setme_x64 > 100) {
+          tx = 0;
+        }
       } else {
         // block LTA msgs with actuation requests
-        if (steer_control_enabled || (lta_angle != 0)) {
+        if (steer_control_enabled || (lta_angle != 0) || (setme_x64 != 0)) {
           tx = 0;
         }
       }
