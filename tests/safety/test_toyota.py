@@ -244,55 +244,5 @@ class TestToyotaStockLongitudinal(TestToyotaSafetyTorque):
     super().test_fwd_hook()
 
 
-# class TestToyotaLTA(TestToyotaSafety):
-#   MAX_TORQUE = 0
-#   MIN_VALID_STEERING_FRAMES = 0
-#   MAX_INVALID_STEERING_FRAMES = 0
-#   MIN_VALID_STEERING_RT_INTERVAL = 0
-#
-#   MAX_RT_DELTA = 0
-#   MAX_RATE_UP = 0
-#   MAX_RATE_DOWN = 0
-#
-#   def setUp(self):
-#     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-#     self.safety = libpanda_py.libpanda
-#     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_LTA)
-#     self.safety.init_tests()
-#
-#   # def test_torque_absolute_limits(self):
-#   #   pass
-#
-#   # Only allow LKA msgs with no actuation
-#   def test_lka_steer_cmd(self):
-#     for engaged in [True, False]:
-#       self.safety.set_controls_allowed(engaged)
-#
-#       # good msg
-#       # self.assertTrue(self._tx(self._lta_msg(0, 0, 0)))
-#       self.assertTrue(self._tx(self._torque_cmd_msg(0, 0)))
-#
-#       # bad msgs
-#       self.assertFalse(self._tx(self._torque_cmd_msg(1, 0)))
-#       self.assertFalse(self._tx(self._torque_cmd_msg(0, 1)))
-#       # self.assertFalse(self._tx(self._torque_cmd_msg(1, 1)))
-#
-#       # for _ in range(20):
-#       #   req = random.choice([0, 1])
-#       #   torque = random.randint(-1500, 1500)
-#       #   should_tx = not req and torque == 0
-#       #   self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(torque, req)))
-#
-#
-# # class TestToyotaStockLongitudinalLTA(TestToyotaStockLongitudinal, TestToyotaLTA):
-# #   # TODO: make sure this works
-# #   def setUp(self):
-# #     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-# #     self.safety = libpanda_py.libpanda
-# #     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE |
-# #                                  Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_LTA)
-# #     self.safety.init_tests()
-
-
 if __name__ == "__main__":
   unittest.main()
