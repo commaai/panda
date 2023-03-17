@@ -74,7 +74,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
 
     // Update driver input torque
     if (addr == MSG_LH_EPS_03) {
-      volkswagen_mlb_mqb_driver_input_torque(to_push);
+      update_sample(&torque_driver, volkswagen_mlb_mqb_driver_input_torque(to_push));
     }
 
     if (addr == MSG_TSK_06) {
@@ -125,7 +125,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
     }
 
     if (addr == MSG_ESP_05) {
-      volkswagen_mlb_mqb_brake_pressure_threshold(to_push);
+      volkswagen_brake_pressure_detected = volkswagen_mlb_mqb_brake_pressure_threshold(to_push);
     }
 
     brake_pressed = volkswagen_brake_pedal_switch || volkswagen_brake_pressure_detected;

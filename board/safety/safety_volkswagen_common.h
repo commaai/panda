@@ -76,7 +76,7 @@ static uint32_t volkswagen_mlb_mqb_compute_checksum(CANPacket_t *to_push) {
   return (uint8_t)(crc ^ 0xFFU);
 }
 
-void volkswagen_mlb_mqb_driver_input_torque(CANPacket_t *to_push) {
+static int volkswagen_mlb_mqb_driver_input_torque(CANPacket_t *to_push) {
   // Signal: LH_EPS_03.EPS_Lenkmoment (absolute torque)
   // Signal: LH_EPS_03.EPS_VZ_Lenkmoment (direction)
   int torque_driver_new = GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0x1FU) << 8);
@@ -84,14 +84,13 @@ void volkswagen_mlb_mqb_driver_input_torque(CANPacket_t *to_push) {
   if (sign == 1) {
     torque_driver_new *= -1;
   }
-  update_sample(&torque_driver, torque_driver_new);
-  return;
+  return torque_driver_new;
 }
 
-// Signal: ESP_05.ESP_Fahrer_bremst (ESP detected driver brake pressure above platform specified threshold)
-void volkswagen_mlb_mqb_brake_pressure_threshold(CANPacket_t *to_push) {
-  volkswagen_brake_pressure_detected = (GET_BYTE(to_push, 3) & 0x4U) >> 2;
-  return;
+static bool volkswagen_mlb_mqb_brake_pressure_threshold(CANPacket_t *to_push) {
+  // Signal: ESP_05.ESP_Fahrer_bremst (ESP detected driver brake pressure above threshold)
+  bool brake_pressure_detected = (GET_BYTE(to_push, 3) & 0x4U) >> 2;
+  return brake_pressure_detected;
 }
 
 #endif
