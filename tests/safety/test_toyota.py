@@ -198,6 +198,7 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase):
 
 
 class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
+
   def setUp(self):
     self.packer = CANPackerPanda("toyota_new_mc_pt_generated")
     self.safety = libpanda_py.libpanda
@@ -214,6 +215,7 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
 
 
 class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
+
   # Base fwd addresses minus ACC_CONTROL (0x343)
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
 
@@ -233,6 +235,7 @@ class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
 
 
 class TestToyotaStockLongitudinalTorque(TestToyotaStockLongitudinalBase, TestToyotaSafetyTorque):
+
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpanda_py.libpanda
@@ -241,6 +244,7 @@ class TestToyotaStockLongitudinalTorque(TestToyotaStockLongitudinalBase, TestToy
 
 
 class TestToyotaStockLongitudinalAngle(TestToyotaStockLongitudinalBase, TestToyotaSafetyAngle):
+
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpanda_py.libpanda
