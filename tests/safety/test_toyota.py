@@ -51,7 +51,6 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest)
     values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd}
     return self.packer.make_can_msg_panda("STEERING_LTA", 0, values)
 
-  # TODO: ensure order is same as before
   def _accel_msg(self, accel, cancel_req=0):
     values = {"ACCEL_CMD": accel, "CANCEL_REQ": cancel_req}
     return self.packer.make_can_msg_panda("ACC_CONTROL", 0, values)
@@ -79,6 +78,17 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest)
   def _interceptor_user_gas(self, gas):
     return interceptor_msg(gas, 0x201)
 
+  def test_block_aeb(self):
+    for controls_allowed in (True, False):
+      for bad in (True, False):
+        for _ in range(10):
+          self.safety.set_controls_allowed(controls_allowed)
+          dat = [random.randint(1, 255) for _ in range(7)]
+          if not bad:
+            dat = [0]*6 + dat[-1:]
+          msg = libpanda_py.make_CANPacket(0x283, 0, bytes(dat))
+          self.assertEqual(not bad, self._tx(msg))
+
   def test_accel_actuation_limits(self, stock_longitudinal=False):
     limits = ((MIN_ACCEL, MAX_ACCEL, ALTERNATIVE_EXPERIENCE.DEFAULT),
               (MIN_ACCEL, MAX_ACCEL, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
@@ -95,17 +105,6 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest)
           else:
             should_tx = np.isclose(accel, 0, atol=0.0001)
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
-
-  def test_block_aeb(self):
-    for controls_allowed in (True, False):
-      for bad in (True, False):
-        for _ in range(10):
-          self.safety.set_controls_allowed(controls_allowed)
-          dat = [random.randint(1, 255) for _ in range(7)]
-          if not bad:
-            dat = [0]*6 + dat[-1:]
-          msg = libpanda_py.make_CANPacket(0x283, 0, bytes(dat))
-          self.assertEqual(not bad, self._tx(msg))
 
   def test_rx_hook(self):
     # checksum checks
