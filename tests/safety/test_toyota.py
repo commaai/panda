@@ -37,7 +37,7 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest)
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "TestToyotaSafetyBase":
+    if cls.__name__.endswith("Base"):
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
