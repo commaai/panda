@@ -214,12 +214,8 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
 
 
 class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
+  # Base fwd addresses minus ACC_CONTROL (0x343)
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
-  # def setUp(self):
-  #   self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-  #   self.safety = libpanda_py.libpanda
-  #   self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
-  #   self.safety.init_tests()
 
   def test_accel_actuation_limits(self, stock_longitudinal=True):
     super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)
@@ -234,11 +230,6 @@ class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
         self.assertFalse(self._tx(self._accel_msg(accel)))
         should_tx = np.isclose(accel, 0, atol=0.0001)
         self.assertEqual(should_tx, self._tx(self._accel_msg(accel, cancel_req=1)))
-
-  def test_fwd_hook(self):
-    # forward ACC_CONTROL
-    # self.FWD_BLACKLISTED_ADDRS[2].remove(0x343)
-    super().test_fwd_hook()
 
 
 class TestToyotaStockLongitudinalTorque(TestToyotaStockLongitudinalBase, TestToyotaSafetyTorque):
