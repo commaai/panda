@@ -63,7 +63,7 @@ const uint32_t TOYOTA_PARAM_LTA = 4U << TOYOTA_PARAM_OFFSET;
 
 bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
-bool toyota_lta = false;  // TODO: more descriptive but short name
+bool toyota_lta = false;
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
 static uint32_t toyota_compute_checksum(CANPacket_t *to_push) {
@@ -204,6 +204,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
       // check the STEER_REQUEST, STEER_REQUEST_2, and STEER_ANGLE_CMD signals
       bool lta_request = GET_BIT(to_send, 0U) != 0U;
       bool lta_request2 = GET_BIT(to_send, 25U) != 0U;
+      int setme_x64 = GET_BYTE(to_send, 5);
       int lta_angle = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
       lta_angle = to_signed(lta_angle, 16);
 
@@ -234,6 +235,10 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
           tx = 0;
         }
       }
+      // When using LTA (angle control), assert no actuation on LKA message
+      if (toyota_lta && ((desired_torque != 0) || steer_req)) {
+        tx = 0;
+      }
     }
   }
 
@@ -246,6 +251,12 @@ static const addr_checks* toyota_init(uint16_t param) {
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
+
+#ifdef ALLOW_DEBUG
+  toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
+#else
+  toyota_lta = false;
+#endif
   return &toyota_rx_checks;
 }
 
