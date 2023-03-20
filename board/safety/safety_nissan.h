@@ -42,7 +42,7 @@ bool nissan_alt_eps = false;
 
 static int nissan_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &nissan_rx_checks, NULL, NULL, NULL);
+  bool valid = addr_safety_check(to_push, &nissan_rx_checks, NULL, NULL, NULL, NULL);
 
   if (valid) {
     int bus = GET_BUS(to_push);

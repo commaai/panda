@@ -39,7 +39,7 @@ def test_orientation_detection(p):
 def test_voltage(p):
   for _ in range(10):
     voltage = p.health()['voltage']
-    assert ((voltage > 10000) and (voltage < 14000))
+    assert ((voltage > 11000) and (voltage < 13000))
     time.sleep(0.1)
 
 @test_all_pandas
