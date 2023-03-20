@@ -2,6 +2,14 @@
 // Red Panda V2 with chiplet + Harness //
 // ///////////////////// //
 
+void red_panda_v2_init(void) {
+  // common chiplet init
+  red_chiplet_init();
+
+  // Turn on USB load switch
+  red_chiplet_set_fan_or_usb_load_switch(true);
+}
+
 const board board_red_v2 = {
   .board_type = "Red_v2",
   .board_tick = unused_board_tick,
