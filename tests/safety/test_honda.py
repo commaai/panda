@@ -561,7 +561,7 @@ class TestHondaBoschRadarlessLongSafety(HondaButtonEnableBase, TestHondaBoschRad
   MIN_ACCEL = -3.5
 
   TX_MSGS = [[0xE4, 0], [0x33D, 0], [0x1C8, 0], [0x30C, 0]]
-  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB, 0x1C8, 0x30C]}  # TODO: remove extra stuff
+  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB, 0x1C8, 0x30C]}
 
   def setUp(self):
     super().setUp()
