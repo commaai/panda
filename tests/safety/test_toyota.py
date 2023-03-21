@@ -7,10 +7,7 @@ import itertools
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg, ALTERNATIVE_EXPERIENCE
-
-MAX_ACCEL = 2.0
-MIN_ACCEL = -3.5
+from panda.tests.safety.common import CANPackerPanda, make_msg
 
 
 def interceptor_msg(gas, addr):
@@ -22,7 +19,8 @@ def interceptor_msg(gas, addr):
   return to_send
 
 
-class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest):
+class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest,
+                           common.LongitudinalAccelSafetyTest):
 
   TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
              [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
@@ -93,23 +91,6 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest)
             dat = [0]*6 + dat[-1:]
           msg = libpanda_py.make_CANPacket(0x283, 0, bytes(dat))
           self.assertEqual(not bad, self._tx(msg))
-
-  def test_accel_actuation_limits(self, stock_longitudinal=False):
-    limits = ((MIN_ACCEL, MAX_ACCEL, ALTERNATIVE_EXPERIENCE.DEFAULT),
-              (MIN_ACCEL, MAX_ACCEL, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
-
-    for min_accel, max_accel, alternative_experience in limits:
-      for accel in np.arange(min_accel - 1, max_accel + 1, 0.1):
-        for controls_allowed in [True, False]:
-          self.safety.set_controls_allowed(controls_allowed)
-          self.safety.set_alternative_experience(alternative_experience)
-          if stock_longitudinal:
-            should_tx = False
-          elif controls_allowed:
-            should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
-          else:
-            should_tx = np.isclose(accel, 0, atol=0.0001)
-          self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
@@ -211,7 +192,7 @@ class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
     """
     for controls_allowed in [True, False]:
       self.safety.set_controls_allowed(controls_allowed)
-      for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
+      for accel in np.arange(self.MIN_ACCEL - 1, self.MAX_ACCEL + 1, 0.1):
         self.assertFalse(self._tx(self._accel_msg(accel)))
         should_tx = np.isclose(accel, 0, atol=0.0001)
         self.assertEqual(should_tx, self._tx(self._accel_msg(accel, cancel_req=1)))
