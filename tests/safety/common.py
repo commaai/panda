@@ -131,6 +131,39 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
         self.assertEqual(send, self._tx(self._interceptor_gas_cmd(gas)))
 
 
+class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
+
+  MIN_ACCEL: float
+  MAX_ACCEL: float
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "LongitudinalAccelSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  @abc.abstractmethod
+  def _accel_msg(self, accel: float):
+    pass
+
+  def test_accel_actuation_limits(self, stock_longitudinal=False):
+    limits = ((self.MIN_ACCEL, self.MAX_ACCEL, ALTERNATIVE_EXPERIENCE.DEFAULT),
+              (self.MIN_ACCEL, self.MAX_ACCEL, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
+
+    for min_accel, max_accel, alternative_experience in limits:
+      for accel in np.arange(min_accel - 1, max_accel + 1, 0.1):
+        for controls_allowed in [True, False]:
+          self.safety.set_controls_allowed(controls_allowed)
+          self.safety.set_alternative_experience(alternative_experience)
+          if stock_longitudinal:
+            should_tx = False
+          elif controls_allowed:
+            should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
+          else:
+            should_tx = np.isclose(accel, 0, atol=0.0001)
+          self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
+
+
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
   MAX_RATE_UP = 0
