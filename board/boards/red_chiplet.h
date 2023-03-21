@@ -70,12 +70,9 @@ void red_chiplet_init(void) {
   set_gpio_pullup(GPIOD, 3, PULL_NONE);
   set_gpio_mode(GPIOD, 3, MODE_OUTPUT);
 
-  //B0: 5VOUT_S
+  // B0: 5VOUT_S
   set_gpio_pullup(GPIOB, 0, PULL_NONE);
   set_gpio_mode(GPIOB, 0, MODE_ANALOG);
-
-  // Turn on USB load switch.
-  red_chiplet_set_fan_or_usb_load_switch(true);
 
   // Initialize harness
   harness_init();
