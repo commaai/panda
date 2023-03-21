@@ -553,13 +553,11 @@ class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschRadarlessS
     self.safety.init_tests()
 
 
-class TestHondaBoschRadarlessLongSafety(HondaButtonEnableBase, TestHondaBoschRadarlessSafetyBase):
+class TestHondaBoschRadarlessLongSafety(common.LongitudinalAccelSafetyTest, HondaButtonEnableBase,
+                                        TestHondaBoschRadarlessSafetyBase):
   """
     Covers the Honda Bosch Radarless safety mode with longitudinal control
   """
-  MAX_ACCEL = 2.0
-  MIN_ACCEL = -3.5
-
   TX_MSGS = [[0xE4, 0], [0x33D, 0], [0x1C8, 0], [0x30C, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB, 0x1C8, 0x30C]}
 
@@ -569,7 +567,7 @@ class TestHondaBoschRadarlessLongSafety(HondaButtonEnableBase, TestHondaBoschRad
     self.safety.init_tests()
 
   # TODO: make this test something
-  def _send_accel_msg(self, accel):
+  def _accel_msg(self, accel):
     values = {
       "ACCEL_COMMAND": accel,
     }
