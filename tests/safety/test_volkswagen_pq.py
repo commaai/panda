@@ -17,8 +17,6 @@ MSG_MOTOR_5 = 0x480           # RX from ECU, for ACC main switch state
 MSG_ACC_GRA_ANZEIGE = 0x56A   # TX by OP, ACC HUD
 MSG_LDW_1 = 0x5BE             # TX by OP, Lane line recognition and text alerts
 
-MAX_ACCEL = 2.0
-MIN_ACCEL = -3.5
 
 class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   cruise_engaged = False
@@ -63,7 +61,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
     return self._motor_2_msg(cruise_engaged=enable)
 
   # Acceleration request to drivetrain coordinator
-  def _accel_msg(self, accel):
+  def _accel_cmd_msg(self, accel):
     values = {"ACS_Sollbeschl": accel}
     return self.packer.make_can_msg_panda("ACC_System", 0, values)
 
@@ -142,11 +140,14 @@ class TestVolkswagenPqStockSafety(TestVolkswagenPqSafety):
     self.assertTrue(self._tx(self._button_msg(resume=True)))
 
 
-class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety):
+class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety, common.LongitudinalAccelSafetyTest):
   TX_MSGS = [[MSG_HCA_1, 0], [MSG_LDW_1, 0], [MSG_ACC_SYSTEM, 0], [MSG_ACC_GRA_ANZEIGE, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_1, MSG_LDW_1, MSG_ACC_SYSTEM, MSG_ACC_GRA_ANZEIGE]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INACTIVE_ACCEL = 3.01
+
+  MAX_ACCEL = 2.0
+  MIN_ACCEL = -3.5
 
   def setUp(self):
     self.packer = CANPackerPanda("vw_golf_mk4")
@@ -191,15 +192,6 @@ class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety):
     self.safety.set_controls_allowed(1)
     self._rx(self._motor_5_msg(main_switch=False))
     self.assertFalse(self.safety.get_controls_allowed(), "controls allowed after ACC main switch off")
-
-  def test_accel_safety_check(self):
-    for controls_allowed in [True, False]:
-      for accel in np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.005):
-        accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
-        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == self.INACTIVE_ACCEL
-        self.safety.set_controls_allowed(controls_allowed)
-        # primary accel request used by ECU
-        self.assertEqual(send, self._tx(self._accel_msg(accel)), (controls_allowed, accel))
 
 
 if __name__ == "__main__":

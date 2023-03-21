@@ -100,7 +100,7 @@ class HyundaiLongitudinalBase:
   def _pcm_status_msg(self, enable):
     raise Exception
 
-  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
+  def _accel_cmd_msg(self, accel, aeb_req=False, aeb_decel=0):
     raise NotImplementedError
 
   def test_set_resume_buttons(self):
@@ -134,7 +134,7 @@ class HyundaiLongitudinalBase:
         accel = round(accel, 2) # floats might not hit exact boundary conditions without rounding
         self.safety.set_controls_allowed(controls_allowed)
         send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == 0
-        self.assertEqual(send, self._tx(self._accel_msg(accel)), (controls_allowed, accel))
+        self.assertEqual(send, self._tx(self._accel_cmd_msg(accel)), (controls_allowed, accel))
 
   def test_tester_present_allowed(self):
     """
