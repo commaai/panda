@@ -180,7 +180,7 @@ class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBase, TestHyundaiSafety):
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, Panda.FLAG_HYUNDAI_LONG)
     self.safety.init_tests()
 
-  def _accel_cmd_msg(self, accel, aeb_req=False, aeb_decel=0):
+  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
     values = {
       "aReqRaw": accel,
       "aReqValue": accel,
@@ -206,9 +206,9 @@ class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBase, TestHyundaiSafety):
     self.assertFalse(self._tx(self._fca11_msg(aeb_decel=1.0)))
 
   def test_no_aeb_scc12(self):
-    self.assertTrue(self._tx(self._accel_cmd_msg(0)))
-    self.assertFalse(self._tx(self._accel_cmd_msg(0, aeb_req=True)))
-    self.assertFalse(self._tx(self._accel_cmd_msg(0, aeb_decel=1.0)))
+    self.assertTrue(self._tx(self._accel_msg(0)))
+    self.assertFalse(self._tx(self._accel_msg(0, aeb_req=True)))
+    self.assertFalse(self._tx(self._accel_msg(0, aeb_decel=1.0)))
 
 
 if __name__ == "__main__":

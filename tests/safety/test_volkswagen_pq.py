@@ -61,7 +61,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
     return self._motor_2_msg(cruise_engaged=enable)
 
   # Acceleration request to drivetrain coordinator
-  def _accel_cmd_msg(self, accel):
+  def _accel_msg(self, accel):
     values = {"ACS_Sollbeschl": accel}
     return self.packer.make_can_msg_panda("ACC_System", 0, values)
 

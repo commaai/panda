@@ -105,7 +105,7 @@ class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
   def _pcm_status_msg(self, enable):
     raise Exception
 
-  def _accel_cmd_msg(self, accel, aeb_req=False, aeb_decel=0):
+  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
     raise NotImplementedError
 
   def test_set_resume_buttons(self):

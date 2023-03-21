@@ -54,7 +54,7 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest,
     values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd, "SETME_X64": setme_x64}
     return self.packer.make_can_msg_panda("STEERING_LTA", 0, values)
 
-  def _accel_cmd_msg(self, accel, cancel_req=0):
+  def _accel_msg(self, accel, cancel_req=0):
     values = {"ACCEL_CMD": accel, "CANCEL_REQ": cancel_req}
     return self.packer.make_can_msg_panda("ACC_CONTROL", 0, values)
 
@@ -193,9 +193,9 @@ class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
     for controls_allowed in [True, False]:
       self.safety.set_controls_allowed(controls_allowed)
       for accel in np.arange(self.MIN_ACCEL - 1, self.MAX_ACCEL + 1, 0.1):
-        self.assertFalse(self._tx(self._accel_cmd_msg(accel)))
+        self.assertFalse(self._tx(self._accel_msg(accel)))
         should_tx = np.isclose(accel, 0, atol=0.0001)
-        self.assertEqual(should_tx, self._tx(self._accel_cmd_msg(accel, cancel_req=1)))
+        self.assertEqual(should_tx, self._tx(self._accel_msg(accel, cancel_req=1)))
 
 
 class TestToyotaStockLongitudinalTorque(TestToyotaStockLongitudinalBase, TestToyotaSafetyTorque):
