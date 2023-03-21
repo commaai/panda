@@ -8,5 +8,6 @@ env = Environment(
   CPPPATH=[".", "../board"],
 )
 
+env.PrependENVPath('PATH', '/opt/homebrew/bin')
 env.SharedLibrary("safety/libpandasafety.so", ["safety/test.c"])
 env.SharedLibrary("usbprotocol/libpandaprotocol.so", ["usbprotocol/test.c"])
