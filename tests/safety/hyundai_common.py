@@ -1,6 +1,5 @@
-import unittest
-import numpy as np
 from typing import Tuple
+import unittest
 
 import panda.tests.safety.common as common
 from panda.tests.libpanda import libpanda_py
@@ -78,8 +77,6 @@ class HyundaiButtonBase:
 class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
   # pylint: disable=no-member,abstract-method
 
-  MAX_ACCEL = 2.0
-  MIN_ACCEL = -3.5
   DISABLED_ECU_UDS_MSG: Tuple[int, int]
   DISABLED_ECU_ACTUATION_MSG: Tuple[int, int]
 

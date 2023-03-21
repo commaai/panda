@@ -33,8 +33,6 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest,
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INTERCEPTOR_THRESHOLD = 805
   EPS_SCALE = 73
-  MAX_ACCEL = 2.0
-  MIN_ACCEL = -3.5
 
   @classmethod
   def setUpClass(cls):
