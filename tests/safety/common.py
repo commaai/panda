@@ -163,7 +163,7 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
           if stock_longitudinal:
             should_tx = False
           else:
-            should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000) and controls_allowed
+            should_tx = controls_allowed and int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
             should_tx = should_tx or np.isclose(accel, self.INACTIVE_ACCEL, atol=0.0001)
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
