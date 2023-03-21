@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import numpy as np
 import unittest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py

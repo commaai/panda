@@ -7,7 +7,7 @@ import itertools
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg, ALTERNATIVE_EXPERIENCE
+from panda.tests.safety.common import CANPackerPanda, make_msg
 
 
 def interceptor_msg(gas, addr):
