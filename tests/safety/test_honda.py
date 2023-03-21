@@ -407,7 +407,7 @@ class TestHondaBoschSafetyBase(HondaBase):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "TestHondaBoschSafetyBase":
+    if cls.__name__.endswith("Base"):
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
@@ -524,10 +524,8 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
         self.assertEqual(send, self._tx(self._send_gas_brake_msg(self.NO_GAS, accel)), (controls_allowed, accel))
 
 
-class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
-  """
-    Covers the Honda Bosch Radarless safety mode with stock longitudinal
-  """
+class TestHondaBoschRadarlessSafetyBase(TestHondaBoschSafetyBase):
+  """Base class for radarless Honda Bosch"""
   PT_BUS = 0
   STEER_BUS = 0
   BUTTONS_BUS = 2  # camera controls ACC, need to send buttons on bus 2
@@ -538,34 +536,39 @@ class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_ex_2022_can_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS)
-    self.safety.init_tests()
 
   # These cars do not have 0x1BE (BRAKE_MODULE)
   def test_alt_disengage_on_brake(self):
     pass
 
 
-class TestHondaBoschRadarlessLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
+class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschRadarlessSafetyBase):
+  """
+    Covers the Honda Bosch Radarless safety mode with stock longitudinal
+  """
+
+  def setUp(self):
+    super().setUp()
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS)
+    self.safety.init_tests()
+
+
+class TestHondaBoschRadarlessLongSafety(HondaButtonEnableBase, TestHondaBoschRadarlessSafetyBase):
   """
     Covers the Honda Bosch Radarless safety mode with longitudinal control
   """
   MAX_ACCEL = 2.0
   MIN_ACCEL = -3.5
 
-  PT_BUS = 0
-  STEER_BUS = 0
-  BUTTONS_BUS = 2  # camera controls ACC, need to send buttons on bus 2
-
-  TX_MSGS = [[0xE4, 0], [0x296, 2], [0x33D, 0], [0x1C8, 0], [0x30C, 0]]
-  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB, 0x1C8, 0x30C]}
+  TX_MSGS = [[0xE4, 0], [0x33D, 0], [0x1C8, 0], [0x30C, 0]]
+  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB, 0x1C8, 0x30C]}  # TODO: remove extra stuff
 
   def setUp(self):
-    self.packer = CANPackerPanda("honda_civic_ex_2022_can_generated")
-    self.safety = libpanda_py.libpanda
+    super().setUp()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS | Panda.FLAG_HONDA_BOSCH_LONG)
     self.safety.init_tests()
 
+  # TODO: make this test something
   def _send_accel_msg(self, accel):
     values = {
       "ACCEL_COMMAND": accel,
@@ -574,10 +577,6 @@ class TestHondaBoschRadarlessLongSafety(HondaButtonEnableBase, TestHondaBoschSaf
 
   # Longitudinal doesn't need to send buttons
   def test_spam_cancel_safety_check(self):
-    pass
-
-  # These cars do not have 0x1BE (BRAKE_MODULE)
-  def test_alt_disengage_on_brake(self):
     pass
 
 
