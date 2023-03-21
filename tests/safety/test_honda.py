@@ -566,7 +566,6 @@ class TestHondaBoschRadarlessLongSafety(common.LongitudinalAccelSafetyTest, Hond
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS | Panda.FLAG_HONDA_BOSCH_LONG)
     self.safety.init_tests()
 
-  # TODO: make this test something
   def _accel_msg(self, accel):
     values = {
       "ACCEL_COMMAND": accel,
