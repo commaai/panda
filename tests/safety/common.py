@@ -133,8 +133,8 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
 
 class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
 
-  MIN_ACCEL: float = 2.0
-  MAX_ACCEL: float = -3.5
+  MAX_ACCEL: float = 2.0
+  MIN_ACCEL: float = -3.5
   INACTIVE_ACCEL: float = 0.0
 
   @classmethod
