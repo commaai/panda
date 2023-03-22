@@ -2,4 +2,7 @@
 set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
-nosetests -x -v --with-flaky -s $(ls $DIR/$1*.py)
+cd $DIR
+
+#pytest -v -s --durations=0 $(ls 2_*.py)
+pytest -v -s --durations=0 5_gps.py

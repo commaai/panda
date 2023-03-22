@@ -1,12 +1,11 @@
 import time
+import pytest
 
 from panda import Panda
 from panda_jungle import PandaJungle  # pylint: disable=import-error
-from .helpers import panda_jungle, test_all_pandas, test_all_gen2_pandas, panda_connect_and_init
+from panda.tests.hitl.conftest import panda_jungle, PandaGroup
 
 
-@test_all_pandas
-@panda_connect_and_init
 def test_ignition(p):
   # Set harness orientation to #2, since the ignition line is on the wrong SBU bus :/
   panda_jungle.set_harness_orientation(PandaJungle.HARNESS_ORIENTATION_2)
@@ -18,8 +17,7 @@ def test_ignition(p):
     assert p.health()['ignition_line'] == ign
 
 
-@test_all_gen2_pandas
-@panda_connect_and_init
+@pytest.mark.test_panda_types(PandaGroup.GEN2)
 def test_orientation_detection(p):
   seen_orientations = []
   for i in range(3):
@@ -34,16 +32,12 @@ def test_orientation_detection(p):
       assert False
     seen_orientations.append(detected_harness_orientation)
 
-@test_all_pandas
-@panda_connect_and_init
 def test_voltage(p):
   for _ in range(10):
     voltage = p.health()['voltage']
     assert ((voltage > 11000) and (voltage < 13000))
     time.sleep(0.1)
 
-@test_all_pandas
-@panda_connect_and_init
 def test_hw_type(p):
   """
     hw type should be same in bootstub as application
@@ -67,9 +61,8 @@ def test_hw_type(p):
     assert pp.get_uid() == app_uid
 
 
-@test_all_pandas
-@panda_connect_and_init
 def test_heartbeat(p):
+  panda_jungle.set_ignition(True)
   # TODO: add more cases here once the tests aren't super slow
   p.set_safety_mode(mode=Panda.SAFETY_HYUNDAI, param=Panda.FLAG_HYUNDAI_LONG)
   p.send_heartbeat()
@@ -79,7 +72,7 @@ def test_heartbeat(p):
   # shouldn't do anything once we're in a car safety mode
   p.set_heartbeat_disabled()
 
-  time.sleep(6)
+  time.sleep(2.5)
 
   h = p.health()
   assert h['heartbeat_lost']
@@ -87,8 +80,6 @@ def test_heartbeat(p):
   assert h['safety_param'] == 0
   assert h['controls_allowed'] == 0
 
-@test_all_pandas
-@panda_connect_and_init
 def test_microsecond_timer(p):
   start_time = p.get_microsecond_timer()
   time.sleep(1)
