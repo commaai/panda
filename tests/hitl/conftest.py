@@ -13,16 +13,24 @@ SPEED_GMLAN = 33.3
 BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL), (3, SPEED_GMLAN)]
 
 
+PEDAL_SERIAL = 'none'
+JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
+PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE", "").strip().split(" ")
+PARTIAL_TESTS = os.environ.get("PARTIAL_TESTS", "0") == "1"
+
 class PandaGroup:
   H7 = (Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2)
   GEN2 = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO) + H7
   GPS = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO)
   GMLAN = (Panda.HW_TYPE_WHITE_PANDA, Panda.HW_TYPE_GREY_PANDA)
 
-PEDAL_SERIAL = 'none'
-JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
-PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE", "").strip().split(" ")
-PARTIAL_TESTS = os.environ.get("PARTIAL_TESTS", "0") == "1"
+  TESTED = (Panda.HW_TYPE_WHITE_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2, Panda.HW_TYPE_UNO)
+
+if PARTIAL_TESTS:
+  # minimal set of pandas to get most of our coverage
+  # * red panda covers GEN2, STM32H7
+  # * black panda covers STM32F4, GEN2, and GPS
+  PandaGroup.TESTED = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA)  # type: ignore
 
 # Find all pandas connected
 _all_pandas = {}
@@ -37,7 +45,14 @@ def init_all_pandas():
   for serial in Panda.list():
     if serial not in PANDAS_EXCLUDE and serial != PEDAL_SERIAL:
       with Panda(serial=serial) as p:
-        _all_pandas[serial] = p.get_type()
+        ptype = bytes(p.get_type())
+        if ptype in PandaGroup.TESTED:
+          _all_pandas[serial] = ptype
+
+  # ensure we have all tested panda types
+  missing_types = set(PandaGroup.TESTED) - set(_all_pandas.values())
+  assert len(missing_types) == 0, f"Missing panda types: {missing_types}"
+
   print(f"{len(_all_pandas)} total pandas")
 init_all_pandas()
 _all_panda_serials = list(_all_pandas.keys())
