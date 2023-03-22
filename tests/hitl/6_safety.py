@@ -2,6 +2,7 @@ import time
 
 from panda import Panda
 
+
 def test_safety_nooutput(p):
   p.set_safety_mode(Panda.SAFETY_SILENT)
   p.set_can_loopback(True)

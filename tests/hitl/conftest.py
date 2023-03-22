@@ -73,8 +73,36 @@ def pytest_make_parametrize_id(config, val, argname):
   return None
 
 
-@pytest.fixture(name='p', params=_all_panda_serials)
-def fixture_panda(request):
+@pytest.fixture(name='p')
+def func_fixture_panda(module_panda):
+  p = module_panda
+  yield p
+
+  if not p.connected:
+    p.reconnect()
+  if p.bootstub:
+    p.reset()
+
+  # Check for faults
+  assert p.health()['fault_status'] == 0
+
+  # Check health of each CAN core after test, normal to fail for test_gen2_loopback on OBD bus, so skipping
+  for i in range(3):
+    can_health = p.can_health(i)
+    assert can_health['bus_off_cnt'] == 0
+    assert can_health['receive_error_cnt'] == 0
+    assert can_health['transmit_error_cnt'] == 0
+    assert can_health['total_rx_lost_cnt'] == 0
+    assert can_health['total_tx_lost_cnt'] == 0
+    assert can_health['total_error_cnt'] == 0
+    assert can_health['total_tx_checksum_error_cnt'] == 0
+
+
+@pytest.fixture(name='module_panda', params=_all_panda_serials, scope='module')
+def fixture_panda_setup(request):
+  """
+    Clean up all pandas + jungle and return the panda under test.
+  """
   panda_serial = request.param
 
   mark = request.node.get_closest_marker('test_panda_types')
@@ -124,28 +152,4 @@ def fixture_panda(request):
     pandas = [p for p in ps if p is not None]
 
   # run test
-  yield pandas[0]
-
-  # teardown
-  try:
-    # Check if the pandas did not throw any faults while running test
-    for panda in pandas:
-      if not panda.bootstub:
-        #panda.reconnect()
-        assert panda.health()['fault_status'] == 0
-        # Check health of each CAN core after test, normal to fail for test_gen2_loopback on OBD bus, so skipping
-        for i in range(3):
-          can_health = panda.can_health(i)
-          assert can_health['bus_off_cnt'] == 0
-          assert can_health['receive_error_cnt'] == 0
-          assert can_health['transmit_error_cnt'] == 0
-          assert can_health['total_rx_lost_cnt'] == 0
-          assert can_health['total_tx_lost_cnt'] == 0
-          assert can_health['total_error_cnt'] == 0
-          assert can_health['total_tx_checksum_error_cnt'] == 0
-  finally:
-    for p in pandas:
-      try:
-        p.close()
-      except Exception:
-        pass
+  return pandas[0]

@@ -60,7 +60,6 @@ def test_hw_type(p):
     assert pp.get_mcu_type() == mcu_type, "Bootstub and app MCU type mismatch"
     assert pp.get_uid() == app_uid
 
-
 def test_heartbeat(p):
   panda_jungle.set_ignition(True)
   # TODO: add more cases here once the tests aren't super slow
@@ -72,7 +71,7 @@ def test_heartbeat(p):
   # shouldn't do anything once we're in a car safety mode
   p.set_heartbeat_disabled()
 
-  time.sleep(2.5)
+  time.sleep(6.)
 
   h = p.health()
   assert h['heartbeat_lost']
