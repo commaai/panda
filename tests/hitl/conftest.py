@@ -63,6 +63,9 @@ def pytest_configure(config):
   config.addinivalue_line(
     "markers", "test_panda_types(name): mark test to run only on specified panda types"
   )
+  config.addinivalue_line(
+    "markers", "panda_expect_can_error: mark test to "
+  )
 
 
 def pytest_make_parametrize_id(config, val, argname):
@@ -84,6 +87,8 @@ def func_fixture_panda(request, module_panda):
     test_types = mark.args[0]
     if _all_pandas[p.get_usb_serial()] not in test_types:
       pytest.skip(f"Not applicable, {test_types} pandas only")
+  mark = request.node.get_closest_marker('panda_expect_can_error')
+  expect_can_error = mark is not None
 
   p.reset()
   # Run test
@@ -99,16 +104,16 @@ def func_fixture_panda(request, module_panda):
   assert p.health()['fault_status'] == 0
 
   # Check health of each CAN core after test, normal to fail for test_gen2_loopback on OBD bus, so skipping
-  for i in range(3):
-    can_health = p.can_health(i)
-    assert can_health['bus_off_cnt'] == 0
-    assert can_health['receive_error_cnt'] == 0
-    assert can_health['transmit_error_cnt'] == 0
-    assert can_health['total_rx_lost_cnt'] == 0
-    assert can_health['total_tx_lost_cnt'] == 0
-    assert can_health['total_error_cnt'] == 0
-    assert can_health['total_tx_checksum_error_cnt'] == 0
-
+  if not expect_can_error:
+    for i in range(3):
+      can_health = p.can_health(i)
+      assert can_health['bus_off_cnt'] == 0
+      assert can_health['receive_error_cnt'] == 0
+      assert can_health['transmit_error_cnt'] == 0
+      assert can_health['total_rx_lost_cnt'] == 0
+      assert can_health['total_tx_lost_cnt'] == 0
+      assert can_health['total_error_cnt'] == 0
+      assert can_health['total_tx_checksum_error_cnt'] == 0
 
 @pytest.fixture(name='module_panda', params=_all_panda_serials, scope='module')
 def fixture_panda_setup(request):

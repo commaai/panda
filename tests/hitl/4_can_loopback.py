@@ -117,6 +117,7 @@ def test_latency(p):
   test(panda_jungle, p)
 
 
+@pytest.mark.panda_expect_can_error
 @pytest.mark.test_panda_types(PandaGroup.GEN2)
 def test_gen2_loopback(p):
   def test(p_send, p_recv, address=None):
