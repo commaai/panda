@@ -408,7 +408,6 @@ class Panda:
   def reconnect(self):
     if self._handle_open:
       self.close()
-      time.sleep(1.0)
 
     success = False
     # wait up to 15 seconds
