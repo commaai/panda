@@ -4,6 +4,4 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 cd $DIR
 
-#pytest -v -s --durations=0 *.py
-#pytest -v -s --durations=0 5_gps.py
-pytest -v -s --durations=0 3*.py 4*.py
+pytest --durations=0 --maxfail=1 *.py

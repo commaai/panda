@@ -3,28 +3,26 @@ import pytest
 
 from panda import Panda
 from panda_jungle import PandaJungle  # pylint: disable=import-error
-from panda.tests.hitl.conftest import panda_jungle, PandaGroup
+from panda.tests.hitl.conftest import PandaGroup
 
 
-def test_ignition(p):
+def test_ignition(p, panda_jungle):
   # Set harness orientation to #2, since the ignition line is on the wrong SBU bus :/
   panda_jungle.set_harness_orientation(PandaJungle.HARNESS_ORIENTATION_2)
   p.reset()
 
   for ign in (True, False):
     panda_jungle.set_ignition(ign)
-    time.sleep(2)
+    time.sleep(0.1)
     assert p.health()['ignition_line'] == ign
 
 
 @pytest.mark.test_panda_types(PandaGroup.GEN2)
-def test_orientation_detection(p):
+def test_orientation_detection(p, panda_jungle):
   seen_orientations = []
   for i in range(3):
     panda_jungle.set_harness_orientation(i)
-    time.sleep(0.25)
     p.reset()
-    time.sleep(0.25)
 
     detected_harness_orientation = p.health()['car_harness_status']
     print(f"Detected orientation: {detected_harness_orientation}")
@@ -60,7 +58,7 @@ def test_hw_type(p):
     assert pp.get_mcu_type() == mcu_type, "Bootstub and app MCU type mismatch"
     assert pp.get_uid() == app_uid
 
-def test_heartbeat(p):
+def test_heartbeat(p, panda_jungle):
   panda_jungle.set_ignition(True)
   # TODO: add more cases here once the tests aren't super slow
   p.set_safety_mode(mode=Panda.SAFETY_HYUNDAI, param=Panda.FLAG_HYUNDAI_LONG)

@@ -34,11 +34,11 @@ if PARTIAL_TESTS:
 
 # Find all pandas connected
 _all_pandas = {}
-panda_jungle = None
+_panda_jungle = None
 def init_all_pandas():
-  global panda_jungle
-  panda_jungle = PandaJungle(JUNGLE_SERIAL)
-  panda_jungle.set_panda_power(True)
+  global _panda_jungle
+  _panda_jungle = PandaJungle(JUNGLE_SERIAL)
+  _panda_jungle.set_panda_power(True)
 
   for serial in Panda.list():
     if serial not in PANDAS_EXCLUDE and serial != PEDAL_SERIAL:
@@ -57,13 +57,13 @@ _all_panda_serials = list(_all_pandas.keys())
 
 
 def init_jungle():
-  clear_can_buffers(panda_jungle)
-  panda_jungle.set_panda_power(True)
-  panda_jungle.set_can_loopback(False)
-  panda_jungle.set_obd(False)
-  panda_jungle.set_harness_orientation(PandaJungle.HARNESS_ORIENTATION_1)
+  clear_can_buffers(_panda_jungle)
+  _panda_jungle.set_panda_power(True)
+  _panda_jungle.set_can_loopback(False)
+  _panda_jungle.set_obd(False)
+  _panda_jungle.set_harness_orientation(PandaJungle.HARNESS_ORIENTATION_1)
   for bus, speed in BUS_SPEEDS:
-    panda_jungle.set_can_speed_kbps(bus, speed)
+    _panda_jungle.set_can_speed_kbps(bus, speed)
 
 
 def pytest_configure(config):
@@ -83,6 +83,11 @@ def pytest_make_parametrize_id(config, val, argname):
   return None
 
 
+@pytest.fixture(name='panda_jungle')
+def fixture__panda_jungle(request):
+  init_jungle()
+  return _panda_jungle
+
 @pytest.fixture(name='p')
 def func_fixture_panda(request, module_panda):
   p = module_panda
@@ -94,12 +99,9 @@ def func_fixture_panda(request, module_panda):
     test_types = mark.args[0]
     if _all_pandas[p.get_usb_serial()] not in test_types:
       pytest.skip(f"Not applicable, {test_types} pandas only")
-  mark = request.node.get_closest_marker('panda_expect_can_error')
-  expect_can_error = mark is not None
 
-  # ensure panda/jungle are clean
+  # TODO: reset is slow (2+ seconds)
   p.reset()
-  init_jungle()
 
   # Run test
   yield p
@@ -117,6 +119,8 @@ def func_fixture_panda(request, module_panda):
   assert p.health()['fault_status'] == 0
 
   # Check health of each CAN core after test, normal to fail for test_gen2_loopback on OBD bus, so skipping
+  mark = request.node.get_closest_marker('panda_expect_can_error')
+  expect_can_error = mark is not None
   if not expect_can_error:
     for i in range(3):
       can_health = p.can_health(i)

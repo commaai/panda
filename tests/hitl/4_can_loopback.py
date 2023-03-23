@@ -7,11 +7,11 @@ from flaky import flaky
 from collections import defaultdict
 
 from panda import Panda
-from panda.tests.hitl.conftest import panda_jungle, PandaGroup, PARTIAL_TESTS
+from panda.tests.hitl.conftest import PandaGroup, PARTIAL_TESTS
 from panda.tests.hitl.helpers import time_many_sends, clear_can_buffers
 
 @flaky(max_runs=3, min_passes=1)
-def test_send_recv(p):
+def test_send_recv(p, panda_jungle):
   def test(p_send, p_recv):
     p_send.set_can_loopback(False)
     p_recv.set_can_loopback(False)
@@ -45,7 +45,7 @@ def test_send_recv(p):
 
 
 @flaky(max_runs=6, min_passes=1)
-def test_latency(p):
+def test_latency(p, panda_jungle):
   def test(p_send, p_recv):
     p_send.set_can_loopback(False)
     p_recv.set_can_loopback(False)
@@ -119,7 +119,7 @@ def test_latency(p):
 
 @pytest.mark.panda_expect_can_error
 @pytest.mark.test_panda_types(PandaGroup.GEN2)
-def test_gen2_loopback(p):
+def test_gen2_loopback(p, panda_jungle):
   def test(p_send, p_recv, address=None):
     for bus in range(4):
       obd = False
@@ -163,7 +163,7 @@ def test_gen2_loopback(p):
   test(p, panda_jungle, 0x18DB33F1)
   test(panda_jungle, p, 0x18DB33F1)
 
-def test_bulk_write(p):
+def test_bulk_write(p, panda_jungle):
   # TODO: doesn't work in partial test mode
   if PARTIAL_TESTS:
     return
