@@ -85,6 +85,7 @@ def func_fixture_panda(request, module_panda):
     if _all_pandas[p.get_usb_serial()] not in test_types:
       pytest.skip(f"Not applicable, {test_types} pandas only")
 
+  p.reset()
   # Run test
   yield p
 
