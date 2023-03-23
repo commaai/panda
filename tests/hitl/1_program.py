@@ -2,13 +2,14 @@ import os
 import time
 
 from panda import Panda, PandaDFU, McuType, BASEDIR
-from .helpers import test_all_pandas, panda_connect_and_init, check_signature
 
+
+def check_signature(p):
+  assert not p.bootstub, "Flashed firmware not booting. Stuck in bootstub."
+  assert p.up_to_date()
 
 # TODO: make more comprehensive bootstub tests and run on a few production ones + current
 # TODO: also test release-signed app
-@test_all_pandas
-@panda_connect_and_init
 def test_a_known_bootstub(p):
   """
   Test that compiled app can work with known production bootstub
@@ -53,14 +54,10 @@ def test_a_known_bootstub(p):
     check_signature(p)
     assert not p.bootstub
 
-@test_all_pandas
-@panda_connect_and_init
 def test_b_recover(p):
   assert p.recover(timeout=30)
   check_signature(p)
 
-@test_all_pandas
-@panda_connect_and_init
 def test_c_flash(p):
   # test flash from bootstub
   serial = p._serial

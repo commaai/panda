@@ -3,7 +3,6 @@ numpy
 hexdump>=3.3
 pycryptodome==3.9.8
 tqdm>=4.14.0
-nose
 pytest
 parameterized
 requests
