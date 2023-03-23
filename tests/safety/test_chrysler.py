@@ -79,6 +79,7 @@ class TestChryslerRamDTSafety(TestChryslerSafety):
 
   MAX_RATE_UP = 6
   MAX_RATE_DOWN = 6
+  MAX_TORQUE = 350
 
   DAS_BUS = 2
 
