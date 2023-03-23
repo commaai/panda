@@ -36,9 +36,7 @@ if PARTIAL_TESTS:
 _all_pandas = {}
 panda_jungle = None
 def init_all_pandas():
-  global _all_pandas
   global panda_jungle
-
   panda_jungle = PandaJungle(JUNGLE_SERIAL)
   panda_jungle.set_panda_power(True)
 
@@ -57,6 +55,15 @@ def init_all_pandas():
 init_all_pandas()
 _all_panda_serials = list(_all_pandas.keys())
 
+
+def init_jungle():
+  clear_can_buffers(panda_jungle)
+  panda_jungle.set_panda_power(True)
+  panda_jungle.set_can_loopback(False)
+  panda_jungle.set_obd(False)
+  panda_jungle.set_harness_orientation(PandaJungle.HARNESS_ORIENTATION_1)
+  for bus, speed in BUS_SPEEDS:
+    panda_jungle.set_can_speed_kbps(bus, speed)
 
 
 def pytest_configure(config):
@@ -90,7 +97,10 @@ def func_fixture_panda(request, module_panda):
   mark = request.node.get_closest_marker('panda_expect_can_error')
   expect_can_error = mark is not None
 
+  # ensure panda/jungle are clean
   p.reset()
+  init_jungle()
+
   # Run test
   yield p
 
@@ -99,6 +109,9 @@ def func_fixture_panda(request, module_panda):
     p.reconnect()
   if p.bootstub:
     p.reset()
+
+  # TODO: would be nice to make these common checks in the teardown
+  # show up as failed tests instead of "errors"
 
   # Check for faults
   assert p.health()['fault_status'] == 0
@@ -123,13 +136,7 @@ def fixture_panda_setup(request):
   panda_serial = request.param
 
   # Initialize jungle
-  clear_can_buffers(panda_jungle)
-  panda_jungle.set_panda_power(True)
-  panda_jungle.set_can_loopback(False)
-  panda_jungle.set_obd(False)
-  panda_jungle.set_harness_orientation(PandaJungle.HARNESS_ORIENTATION_1)
-  for bus, speed in BUS_SPEEDS:
-    panda_jungle.set_can_speed_kbps(bus, speed)
+  init_jungle()
 
   # wait for all pandas to come up
   for _ in range(50):
@@ -162,4 +169,8 @@ def fixture_panda_setup(request):
     pandas = [p for p in ps if p is not None]
 
   # run test
-  return pandas[0]
+  yield pandas[0]
+
+  # Teardown
+  for p in pandas:
+    p.close()
