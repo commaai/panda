@@ -71,7 +71,7 @@ def pytest_configure(config):
     "markers", "test_panda_types(name): mark test to run only on specified panda types"
   )
   config.addinivalue_line(
-    "markers", "panda_expect_can_error: mark test to "
+    "markers", "panda_expect_can_error: mark test to ignore CAN health errors"
   )
 
 
