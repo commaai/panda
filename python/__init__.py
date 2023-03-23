@@ -402,7 +402,7 @@ class Panda:
       self.reconnect()
 
   @property
-  def connected(self):
+  def connected(self) -> bool:
     return self._handle_open
 
   def reconnect(self):

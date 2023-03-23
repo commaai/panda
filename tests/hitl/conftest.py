@@ -74,10 +74,21 @@ def pytest_make_parametrize_id(config, val, argname):
 
 
 @pytest.fixture(name='p')
-def func_fixture_panda(module_panda):
+def func_fixture_panda(request, module_panda):
   p = module_panda
+
+  # Check if test is applicable to this panda
+  mark = request.node.get_closest_marker('test_panda_types')
+  if mark:
+    assert len(mark.args) > 0, "Missing allowed panda types in mark"
+    test_types = mark.args[0]
+    if _all_pandas[p.get_usb_serial()] not in test_types:
+      pytest.skip(f"Not applicable, {test_types} pandas only")
+
+  # Run test
   yield p
 
+  # Teardown
   if not p.connected:
     p.reconnect()
   if p.bootstub:
@@ -104,13 +115,6 @@ def fixture_panda_setup(request):
     Clean up all pandas + jungle and return the panda under test.
   """
   panda_serial = request.param
-
-  mark = request.node.get_closest_marker('test_panda_types')
-  if mark:
-    assert len(mark.args) > 0, "Missing allowed panda types in mark"
-    test_types = mark.args[0]
-    if _all_pandas[panda_serial] not in test_types:
-      pytest.skip(f"Not applicable, {test_types} pandas only")
 
   # Initialize jungle
   clear_can_buffers(panda_jungle)

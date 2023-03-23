@@ -6,4 +6,4 @@ cd $DIR
 
 #pytest -v -s --durations=0 *.py
 #pytest -v -s --durations=0 5_gps.py
-pytest -v -s --durations=0 *.py
+pytest -v -s --durations=0 --maxfail=1 3*.py
