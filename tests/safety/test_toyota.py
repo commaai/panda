@@ -2,14 +2,12 @@
 import numpy as np
 import random
 import unittest
+import itertools
 
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg, ALTERNATIVE_EXPERIENCE
-
-MAX_ACCEL = 2.0
-MIN_ACCEL = -3.5
+from panda.tests.safety.common import CANPackerPanda, make_msg
 
 
 def interceptor_msg(gas, addr):
@@ -21,8 +19,8 @@ def interceptor_msg(gas, addr):
   return to_send
 
 
-class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
-                       common.MotorTorqueSteeringSafetyTest):
+class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest,
+                           common.LongitudinalAccelSafetyTest):
 
   TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
              [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
@@ -34,37 +32,26 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INTERCEPTOR_THRESHOLD = 805
-
-  MAX_RATE_UP = 15
-  MAX_RATE_DOWN = 25
-  MAX_TORQUE = 1500
-  MAX_RT_DELTA = 450
-  RT_INTERVAL = 250000
-  MAX_TORQUE_ERROR = 350
-  TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conservative for rounding
   EPS_SCALE = 73
 
-  # Safety around steering req bit
-  MIN_VALID_STEERING_FRAMES = 18
-  MAX_INVALID_STEERING_FRAMES = 1
-  MIN_VALID_STEERING_RT_INTERVAL = 170000  # a ~10% buffer, can send steer up to 110Hz
-
-  def setUp(self):
-    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE)
-    self.safety.init_tests()
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__.endswith("Base"):
+      cls.packer = None
+      cls.safety = None
+      raise unittest.SkipTest
 
   def _torque_meas_msg(self, torque):
     values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
 
+  # Both torque and angle safety modes test with each other's steering commands
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"STEER_TORQUE_CMD": torque, "STEER_REQUEST": steer_req}
     return self.packer.make_can_msg_panda("STEERING_LKA", 0, values)
 
-  def _lta_msg(self, req, req2, angle_cmd):
-    values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd}
+  def _lta_msg(self, req, req2, angle_cmd, setme_x64=100):
+    values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd, "SETME_X64": setme_x64}
     return self.packer.make_can_msg_panda("STEERING_LTA", 0, values)
 
   def _accel_msg(self, accel, cancel_req=0):
@@ -105,42 +92,16 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
           msg = libpanda_py.make_CANPacket(0x283, 0, bytes(dat))
           self.assertEqual(not bad, self._tx(msg))
 
-  def test_accel_actuation_limits(self, stock_longitudinal=False):
-    limits = ((MIN_ACCEL, MAX_ACCEL, ALTERNATIVE_EXPERIENCE.DEFAULT),
-              (MIN_ACCEL, MAX_ACCEL, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
-
-    for min_accel, max_accel, alternative_experience in limits:
-      for accel in np.arange(min_accel - 1, max_accel + 1, 0.1):
-        for controls_allowed in [True, False]:
-          self.safety.set_controls_allowed(controls_allowed)
-          self.safety.set_alternative_experience(alternative_experience)
-          if stock_longitudinal:
-            should_tx = False
-          elif controls_allowed:
-            should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
-          else:
-            should_tx = np.isclose(accel, 0, atol=0.0001)
-          self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
-
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
-    for engaged in [True, False]:
+    for engaged, req, req2, setme_x64, angle in itertools.product([True, False],
+                                                                  [0, 1], [0, 1],
+                                                                  [0, 50, 100],
+                                                                  np.linspace(-20, 20, 5)):
       self.safety.set_controls_allowed(engaged)
 
-      # good msg
-      self.assertTrue(self._tx(self._lta_msg(0, 0, 0)))
-
-      # bad msgs
-      self.assertFalse(self._tx(self._lta_msg(1, 0, 0)))
-      self.assertFalse(self._tx(self._lta_msg(0, 1, 0)))
-      self.assertFalse(self._tx(self._lta_msg(0, 0, 1)))
-
-      for _ in range(20):
-        req = random.choice([0, 1])
-        req2 = random.choice([0, 1])
-        angle = random.randint(-50, 50)
-        should_tx = not req and not req2 and angle == 0
-        self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle)))
+      should_tx = not req and not req2 and angle == 0 and setme_x64 == 0
+      self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle, setme_x64)))
 
   def test_rx_hook(self):
     # checksum checks
@@ -159,7 +120,49 @@ class TestToyotaSafety(common.PandaSafetyTest, common.InterceptorSafetyTest,
       self.assertFalse(self.safety.get_controls_allowed())
 
 
-class TestToyotaAltBrakeSafety(TestToyotaSafety):
+class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSafetyTest):
+
+  MAX_RATE_UP = 15
+  MAX_RATE_DOWN = 25
+  MAX_TORQUE = 1500
+  MAX_RT_DELTA = 450
+  RT_INTERVAL = 250000
+  MAX_TORQUE_ERROR = 350
+  TORQUE_MEAS_TOLERANCE = 1  # toyota safety adds one to be conservative for rounding
+
+  # Safety around steering req bit
+  MIN_VALID_STEERING_FRAMES = 18
+  MAX_INVALID_STEERING_FRAMES = 1
+  MIN_VALID_STEERING_RT_INTERVAL = 170000  # a ~10% buffer, can send steer up to 110Hz
+
+  def setUp(self):
+    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE)
+    self.safety.init_tests()
+
+
+class TestToyotaSafetyAngle(TestToyotaSafetyBase):
+
+  def setUp(self):
+    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_LTA)
+    self.safety.init_tests()
+
+  # Only allow LKA msgs with no actuation
+  def test_lka_steer_cmd(self):
+    for engaged, steer_req, torque in itertools.product([True, False],
+                                                        [0, 1],
+                                                        np.linspace(-1500, 1500, 7)):
+      self.safety.set_controls_allowed(engaged)
+
+      should_tx = not steer_req and torque == 0
+      self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(torque, steer_req)))
+
+
+class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
+
   def setUp(self):
     self.packer = CANPackerPanda("toyota_new_mc_pt_generated")
     self.safety = libpanda_py.libpanda
@@ -170,17 +173,15 @@ class TestToyotaAltBrakeSafety(TestToyotaSafety):
     values = {"BRAKE_PRESSED": brake}
     return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
 
-  # No LTA on these cars
+  # No LTA message in the DBC
   def test_lta_steer_cmd(self):
     pass
 
 
-class TestToyotaStockLongitudinal(TestToyotaSafety):
-  def setUp(self):
-    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
-    self.safety.init_tests()
+class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
+
+  # Base fwd addresses minus ACC_CONTROL (0x343)
+  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
 
   def test_accel_actuation_limits(self, stock_longitudinal=True):
     super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)
@@ -191,15 +192,28 @@ class TestToyotaStockLongitudinal(TestToyotaSafety):
     """
     for controls_allowed in [True, False]:
       self.safety.set_controls_allowed(controls_allowed)
-      for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
+      for accel in np.arange(self.MIN_ACCEL - 1, self.MAX_ACCEL + 1, 0.1):
         self.assertFalse(self._tx(self._accel_msg(accel)))
         should_tx = np.isclose(accel, 0, atol=0.0001)
         self.assertEqual(should_tx, self._tx(self._accel_msg(accel, cancel_req=1)))
 
-  def test_fwd_hook(self):
-    # forward ACC_CONTROL
-    self.FWD_BLACKLISTED_ADDRS[2].remove(0x343)
-    super().test_fwd_hook()
+
+class TestToyotaStockLongitudinalTorque(TestToyotaStockLongitudinalBase, TestToyotaSafetyTorque):
+
+  def setUp(self):
+    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
+    self.safety.init_tests()
+
+
+class TestToyotaStockLongitudinalAngle(TestToyotaStockLongitudinalBase, TestToyotaSafetyAngle):
+
+  def setUp(self):
+    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_LTA)
+    self.safety.init_tests()
 
 
 if __name__ == "__main__":
