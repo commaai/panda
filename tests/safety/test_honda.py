@@ -470,6 +470,7 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
     self.safety.init_tests()
 
   def _send_gas_brake_msg(self, gas, accel):
+    # TODO: test control on here too
     values = {
       "GAS_COMMAND": gas,
       "ACCEL_COMMAND": accel,
@@ -553,9 +554,10 @@ class TestHondaBoschRadarlessLongSafety(common.LongitudinalAccelSafetyTest, Hond
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS | Panda.FLAG_HONDA_BOSCH_LONG)
     self.safety.init_tests()
 
-  def _accel_msg(self, accel):
+  def _accel_msg(self, accel, control_on):
     values = {
       "ACCEL_COMMAND": accel,
+      "CONTROL_ON": control_on,
     }
     return self.packer.make_can_msg_panda("ACC_CONTROL", self.PT_BUS, values)
 

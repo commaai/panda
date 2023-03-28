@@ -6,9 +6,6 @@ from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
-MAX_ACCEL = 2.0
-MIN_ACCEL = -3.5
-
 MSG_ESP_19 = 0xB2       # RX from ABS, for wheel speeds
 MSG_LH_EPS_03 = 0x9F    # RX from EPS, for driver steering torque
 MSG_ESP_05 = 0x106      # RX from ABS, for brake light state
@@ -161,7 +158,7 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
   TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_ACC_02, 0], [MSG_ACC_06, 0], [MSG_ACC_07, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02, MSG_ACC_02, MSG_ACC_06, MSG_ACC_07]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
-  INACTIVE_ACCEL = 3.01
+  limits = common.LongitudinalLimits(inactive_accel=3.01)
 
   def setUp(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
@@ -208,9 +205,9 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
 
   def test_accel_safety_check(self):
     for controls_allowed in [True, False]:
-      for accel in np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.03):
+      for accel in np.arange(self.limits.min_accel - 2, self.limits.max_accel + 2, 0.03):
         accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
-        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == self.INACTIVE_ACCEL
+        send = self.limits.min_accel <= accel <= self.limits.max_accel if controls_allowed else accel == self.limits.inactive_accel
         self.safety.set_controls_allowed(controls_allowed)
         # primary accel request used by ECU
         self.assertEqual(send, self._tx(self._acc_06_msg(accel)), (controls_allowed, accel))

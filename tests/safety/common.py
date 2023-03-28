@@ -14,20 +14,20 @@ MAX_WRONG_COUNTERS = 5
 
 class LongitudinalLimits(NamedTuple):
   # acceleration cmd limits
-  max_accel: float
-  min_accel: float
-  inactive_accel: float
+  max_accel: float = 2.0
+  min_accel: float = -3.5
+  inactive_accel: float = 0.0
+  test_control_bit: bool = True
 
   # gas & brake cmd limits
   # inactive and min gas are 0 on most safety modes
-  max_gas: int
-  min_gas: int
-  inactive_gas:int
-  max_brake: int
+  max_gas: int = 0
+  min_gas: int = 0
+  inactive_gas: int = 0
+  max_brake: int = 0
 
   # speed cmd limits
-  inactive_speed: int
-
+  inactive_speed: int = 0
 
 
 def sign_of(a):
@@ -151,9 +151,10 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
 
 class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
 
-  MAX_ACCEL: float = 2.0
-  MIN_ACCEL: float = -3.5
-  INACTIVE_ACCEL: float = 0.0
+  # MAX_ACCEL: float = 2.0
+  # MIN_ACCEL: float = -3.5
+  # INACTIVE_ACCEL: float = 0.0
+  limits: LongitudinalLimits = LongitudinalLimits()
 
   @classmethod
   def setUpClass(cls):
@@ -162,29 +163,32 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
       raise unittest.SkipTest
 
   @abc.abstractmethod
-  def _accel_msg(self, accel: float):
+  def _accel_msg(self, accel: float, control_on: int = 1):
     pass
 
   def test_accel_limits_correct(self):
-    self.assertGreater(self.MAX_ACCEL, 0)
-    self.assertLess(self.MIN_ACCEL, 0)
+    self.assertGreater(self.limits.max_accel, 0)
+    self.assertLess(self.limits.min_accel, 0)
 
   def test_accel_actuation_limits(self, stock_longitudinal=False):
-    limits = ((self.MIN_ACCEL, self.MAX_ACCEL, ALTERNATIVE_EXPERIENCE.DEFAULT),
-              (self.MIN_ACCEL, self.MAX_ACCEL, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
+    limits = ((self.limits.min_accel, self.limits.max_accel, ALTERNATIVE_EXPERIENCE.DEFAULT),
+              (self.limits.min_accel, self.limits.max_accel, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
 
     for min_accel, max_accel, alternative_experience in limits:
       for accel in np.arange(min_accel - 1, max_accel + 1, 0.05):
         for controls_allowed in [True, False]:
-          self.safety.set_controls_allowed(controls_allowed)
-          self.safety.set_alternative_experience(alternative_experience)
-          if stock_longitudinal:
-            should_tx = False
-          elif controls_allowed:
-            should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
-          else:
-            should_tx = np.isclose(accel, self.INACTIVE_ACCEL, atol=0.0001)
-          self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
+          for control_bit in [True, False]:
+            self.safety.set_controls_allowed(controls_allowed)
+            self.safety.set_alternative_experience(alternative_experience)
+            if stock_longitudinal:
+              should_tx = False
+            elif controls_allowed:
+              should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
+            else:
+              should_tx = np.isclose(accel, self.limits.inactive_accel, atol=0.0001)
+              if self.limits.test_control_bit:
+                should_tx = should_tx and not control_bit
+            self.assertEqual(should_tx, self._tx(self._accel_msg(accel, control_bit)))
 
 
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):

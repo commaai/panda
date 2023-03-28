@@ -192,7 +192,7 @@ class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
     """
     for controls_allowed in [True, False]:
       self.safety.set_controls_allowed(controls_allowed)
-      for accel in np.arange(self.MIN_ACCEL - 1, self.MAX_ACCEL + 1, 0.1):
+      for accel in np.arange(self.limits.min_accel - 1, self.limits.max_accel + 1, 0.1):
         self.assertFalse(self._tx(self._accel_msg(accel)))
         should_tx = np.isclose(accel, 0, atol=0.0001)
         self.assertEqual(should_tx, self._tx(self._accel_msg(accel, cancel_req=1)))
