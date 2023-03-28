@@ -407,7 +407,7 @@ class TestHondaBoschSafetyBase(HondaBase):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__.endswith("Base"):
+    if cls.__name__ == "TestHondaBoschSafetyBase":
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
@@ -532,6 +532,13 @@ class TestHondaBoschRadarlessSafetyBase(TestHondaBoschSafetyBase):
 
   TX_MSGS = [[0xE4, 0], [0x296, 2], [0x33D, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "TestHondaBoschRadarlessSafetyBase":
+      cls.packer = None
+      cls.safety = None
+      raise unittest.SkipTest
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_ex_2022_can_generated")
