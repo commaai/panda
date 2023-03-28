@@ -3,13 +3,31 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, NamedTuple
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
 from panda.tests.libpanda import libpanda_py
 
 MAX_WRONG_COUNTERS = 5
+
+
+class LongitudinalLimits(NamedTuple):
+  # acceleration cmd limits
+  max_accel: float
+  min_accel: float
+  inactive_accel: float
+
+  # gas & brake cmd limits
+  # inactive and min gas are 0 on most safety modes
+  max_gas: int
+  min_gas: int
+  inactive_gas:int
+  max_brake: int
+
+  # speed cmd limits
+  inactive_speed: int
+
 
 
 def sign_of(a):
