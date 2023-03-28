@@ -188,7 +188,7 @@ class HondaBase(common.PandaSafetyTest):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "HondaBase":
+    if cls.__name__.endswith("Base"):
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
@@ -269,12 +269,6 @@ class TestHondaNidecSafetyBase(HondaBase):
 
   INTERCEPTOR_THRESHOLD = 492
   MAX_GAS = 198
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestHondaNidecSafetyBase":
-      cls.safety = None
-      raise unittest.SkipTest
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
@@ -405,13 +399,6 @@ class TestHondaBoschSafetyBase(HondaBase):
   TX_MSGS = [[0xE4, 0], [0xE5, 0], [0x296, 1], [0x33D, 0], [0x33DA, 0], [0x33DB, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestHondaBoschSafetyBase":
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
-
   def setUp(self):
     self.packer = CANPackerPanda("honda_accord_2018_can_generated")
     self.safety = libpanda_py.libpanda
@@ -532,13 +519,6 @@ class TestHondaBoschRadarlessSafetyBase(TestHondaBoschSafetyBase):
 
   TX_MSGS = [[0xE4, 0], [0x296, 2], [0x33D, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestHondaBoschRadarlessSafetyBase":
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_ex_2022_can_generated")
