@@ -18,7 +18,7 @@ void fake_siren_codec_enable(bool enabled) {
     success &= i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x4C, (1U << 7)); // Enable INA
     success &= i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x51, (1U << 7)); // Disable global shutdown
     if (!success) {
-      print("Failed to setup the codec for fake siren\n");
+      print("Siren codec enable failed\n");
       fault_occurred(FAULT_SIREN_MALFUNCTION);
     }
   } else {
