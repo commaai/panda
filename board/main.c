@@ -119,7 +119,7 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       }
       can_silent = ALL_CAN_LIVE;
       break;
-    case SAFETY_MAZDA
+    case SAFETY_MAZDA:
       set_intercept_relay(true);
       heartbeat_counter = 0U;
       heartbeat_lost = false;
