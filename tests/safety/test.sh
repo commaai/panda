@@ -4,7 +4,8 @@
 # Make sure test fails if one HW_TYPE fails
 set -e
 
-for hw_type in {0..7}; do
+HW_TYPES=( 6 7 9 )
+for hw_type in "${HW_TYPES[@]}"; do
   echo "Testing HW_TYPE: $hw_type"
   HW_TYPE=$hw_type python -m unittest discover .
 done

@@ -119,6 +119,15 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       }
       can_silent = ALL_CAN_LIVE;
       break;
+    case SAFETY_MAZDA
+      set_intercept_relay(true);
+      heartbeat_counter = 0U;
+      heartbeat_lost = false;
+      if (current_board->has_obd) {
+        current_board->set_can_mode(CAN_MODE_OBD_CAN2);
+      }
+      can_silent = ALL_CAN_LIVE;
+      break;
     default:
       set_intercept_relay(true);
       heartbeat_counter = 0U;
@@ -208,7 +217,7 @@ void tick_handler(void) {
         siren_countdown -= 1U;
       }
 
-      if (controls_allowed) {
+      if (controls_allowed || heartbeat_engaged) {
         controls_allowed_countdown = 30U;
       } else if (controls_allowed_countdown > 0U) {
         controls_allowed_countdown -= 1U;

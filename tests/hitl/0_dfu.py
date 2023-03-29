@@ -1,8 +1,5 @@
 from panda import Panda, PandaDFU
-from .helpers import test_all_pandas, panda_connect_and_init
 
-@test_all_pandas
-@panda_connect_and_init
 def test_dfu(p):
   app_mcu_type = p.get_mcu_type()
   dfu_serial = PandaDFU.st_serial_to_dfu_serial(p.get_usb_serial(), p.get_mcu_type())

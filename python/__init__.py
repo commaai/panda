@@ -201,6 +201,7 @@ class Panda:
   # first byte is for EPS scaling factor
   FLAG_TOYOTA_ALT_BRAKE = (1 << 8)
   FLAG_TOYOTA_STOCK_LONGITUDINAL = (2 << 8)
+  FLAG_TOYOTA_LTA = (4 << 8)
 
   FLAG_HONDA_ALT_BRAKE = 1
   FLAG_HONDA_BOSCH_LONG = 2
@@ -403,6 +404,10 @@ class Panda:
       pass
     if not enter_bootloader and reconnect:
       self.reconnect()
+
+  @property
+  def connected(self) -> bool:
+    return self._handle_open
 
   def reconnect(self):
     if self._handle_open:
