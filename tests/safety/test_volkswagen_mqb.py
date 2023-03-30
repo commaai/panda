@@ -85,7 +85,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
 
   # openpilot steering output torque
   def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"Assist_Torque": abs(torque), "Assist_VZ": torque < 0}
+    values = {"HCA_01_LM_Offset": abs(torque), "HCA_01_LM_OffSign": torque < 0}
     return self.packer.make_can_msg_panda("HCA_01", 0, values)
 
   # Cruise control buttons
