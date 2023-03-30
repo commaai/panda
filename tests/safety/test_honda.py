@@ -469,11 +469,13 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_BOSCH_LONG)
     self.safety.init_tests()
 
-  def _send_gas_brake_msg(self, gas, accel):
+  def _send_gas_brake_msg(self, gas, accel, aeb_prepare=0, aeb_braking=0):
     values = {
       "GAS_COMMAND": gas,
       "ACCEL_COMMAND": accel,
       "BRAKE_REQUEST": accel < 0,
+      "AEB_PREPARE": int(aeb_prepare),
+      "AEB_BRAKING": int(aeb_braking),
     }
     return self.packer.make_can_msg_panda("ACC_CONTROL", self.PT_BUS, values)
 
@@ -510,6 +512,9 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
         send = self.MIN_ACCEL <= accel <= self.MAX_ACCEL if controls_allowed else accel == 0
         self.assertEqual(send, self._tx(self._send_gas_brake_msg(self.NO_GAS, accel)), (controls_allowed, accel))
 
+  def test_no_aeb(self):
+    self.assertFalse(self._tx(self._send_gas_brake_msg(self.NO_GAS, 0, aeb_prepare=1)))
+    self.assertFalse(self._tx(self._send_gas_brake_msg(self.NO_GAS, 0, aeb_braking=1)))
 
 class TestHondaBoschRadarlessSafetyBase(TestHondaBoschSafetyBase):
   """Base class for radarless Honda Bosch"""
