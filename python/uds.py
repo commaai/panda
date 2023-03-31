@@ -470,6 +470,7 @@ class IsoTpMessage():
 
   def _isotp_rx_next(self, rx_data: bytes) -> None:
     # ISO 15765-2 specifies an eight byte CAN frame for ISO-TP communication
+    dat_offset = 0 if self._can_client.sub_addr is None else 1
     # assert len(rx_data) == 8, f"isotp - rx: invalid CAN frame length: {len(rx_data)}"
 
     print('rx_data', rx_data, rx_data[0], rx_data[0] >> 4)
@@ -532,7 +533,7 @@ class IsoTpMessage():
 
         # first frame = 6 bytes, each consecutive frame = 7 bytes
         num_bytes = self.max_len - 1
-        start = 6 + self.tx_idx * num_bytes
+        start = 6 - dat_offset + self.tx_idx * num_bytes
         count = rx_data[1]
         print('count is', count)
         end = start + count * num_bytes if count > 0 else self.tx_len
