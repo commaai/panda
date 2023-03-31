@@ -469,7 +469,6 @@ class IsoTpMessage():
       self.rx_done = True
       if self.debug:
         print(f"ISO-TP: RX - single frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
-      return
 
     # first rx_frame
     elif rx_data[0] >> 4 == 0x1:
@@ -484,7 +483,6 @@ class IsoTpMessage():
         print(f"ISO-TP: TX - flow control continue - {hex(self._can_client.tx_addr)}")
       # send flow control message
       self._can_client.send([self.flow_control_msg])
-      return
 
     # consecutive rx frame
     elif rx_data[0] >> 4 == 0x2:
@@ -500,7 +498,6 @@ class IsoTpMessage():
         self._can_client.send([self.flow_control_msg])
       if self.debug:
         print(f"ISO-TP: RX - consecutive frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
-      return
 
     # flow control
     elif rx_data[0] >> 4 == 0x3:
@@ -537,11 +534,13 @@ class IsoTpMessage():
         if self.debug:
           print(f"ISO-TP: TX - flow control wait - {hex(self._can_client.tx_addr)}")
 
-    # reserved
+    # 4-15 - reserved
     else:
-      assert False, f"isotp - rx: invalid frame type: {rx_data[0] >> 4}"
+      raise Exception(f"isotp - rx: invalid frame type: {rx_data[0] >> 4}")
+
 
 FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
+
 
 def get_rx_addr_for_tx_addr(tx_addr, rx_offset=0x8):
   if tx_addr in FUNCTIONAL_ADDRS:
