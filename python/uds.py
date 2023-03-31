@@ -555,7 +555,7 @@ def get_rx_addr_for_tx_addr(tx_addr, rx_offset=0x8):
   raise ValueError("invalid tx_addr: {}".format(tx_addr))
 
 
-class UdsClient:
+class UdsClient():
   def __init__(self, panda, tx_addr: int, rx_addr: int = None, bus: int = 0, sub_addr: int = None, timeout: float = 1,
                debug: bool = False, tx_timeout: float = 1, response_pending_timeout: float = 10):
     self.bus = bus
