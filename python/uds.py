@@ -442,9 +442,9 @@ class IsoTpMessage():
     try:
       while True:
         for msg in self._can_client.recv():
-          frame = self._isotp_rx_next(msg)
+          frame_type = self._isotp_rx_next(msg)
           start_time = time.monotonic()
-          rx_in_progress = frame == "consecutive"
+          rx_in_progress = frame_type == "consecutive"
           if self.tx_done and self.rx_done:
             return self.rx_dat, False
         # no timeout indicates non-blocking
