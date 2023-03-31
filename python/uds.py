@@ -532,9 +532,9 @@ class IsoTpMessage():
         if self.debug:
           print(f"ISO-TP: TX - flow control wait - {hex(self._can_client.tx_addr)}")
 
-    # reserved
+    # 4-15 - reserved
     else:
-      assert False, f"isotp - rx: invalid frame type: {rx_data[0] >> 4}"
+      raise Exception(f"isotp - rx: invalid frame type: {rx_data[0] >> 4}")
 
 
 FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
