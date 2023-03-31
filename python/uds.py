@@ -442,11 +442,11 @@ class IsoTpMessage():
     try:
       while True:
         for msg in self._can_client.recv():
-          self._isotp_rx_next(msg)
+          frame = self._isotp_rx_next(msg)
           start_time = time.monotonic()
-          updated = True
+          updated = updated or frame in ("consecutive", "single")
           if self.tx_done and self.rx_done:
-            return self.rx_dat, updated
+            return self.rx_dat, True
         # no timeout indicates non-blocking
         if timeout == 0:
           return None, updated
@@ -456,7 +456,7 @@ class IsoTpMessage():
       if self.debug and self.rx_dat:
         print(f"ISO-TP: RESPONSE - {hex(self._can_client.rx_addr)} 0x{bytes.hex(self.rx_dat)}")
 
-  def _isotp_rx_next(self, rx_data: bytes) -> None:
+  def _isotp_rx_next(self, rx_data: bytes) -> str:
     # ISO 15765-2 specifies an eight byte CAN frame for ISO-TP communication
     assert len(rx_data) == 8, f"isotp - rx: invalid CAN frame length: {len(rx_data)}"
 
@@ -469,6 +469,7 @@ class IsoTpMessage():
       self.rx_done = True
       if self.debug:
         print(f"ISO-TP: RX - single frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
+      return 'single'
 
     # first rx_frame
     elif rx_data[0] >> 4 == 0x1:
@@ -483,6 +484,7 @@ class IsoTpMessage():
         print(f"ISO-TP: TX - flow control continue - {hex(self._can_client.tx_addr)}")
       # send flow control message
       self._can_client.send([self.flow_control_msg])
+      return 'first'
 
     # consecutive rx frame
     elif rx_data[0] >> 4 == 0x2:
@@ -498,6 +500,7 @@ class IsoTpMessage():
         self._can_client.send([self.flow_control_msg])
       if self.debug:
         print(f"ISO-TP: RX - consecutive frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
+      return 'consecutive'
 
     # flow control
     elif rx_data[0] >> 4 == 0x3:
@@ -533,6 +536,7 @@ class IsoTpMessage():
         # wait (do nothing until next flow control message)
         if self.debug:
           print(f"ISO-TP: TX - flow control wait - {hex(self._can_client.tx_addr)}")
+      return 'flow'
 
     # 4-15 - reserved
     else:
