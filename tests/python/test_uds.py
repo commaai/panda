@@ -39,53 +39,49 @@ def make_response_dat(service_type, sub_addr, data: bytes = None):
 
 def build_isotp_message(tx_addr: int, rx_addr: int, data: bytes, sub_addr: int = None):
   panda = FakePanda([])
+  max_len = 8 if sub_addr is None else 7
 
   can_client_tx = CanClient(panda.can_send, panda.can_recv, tx_addr, rx_addr, 0, sub_addr, debug=True)
   can_client_rx = CanClient(panda.can_send, panda.can_recv, rx_addr, tx_addr, 0, sub_addr, debug=True)
 
-  max_len = 8 if sub_addr is None else 7
-  isotp_msg_tx = IsoTpMessage(can_client_tx, timeout=0, max_len=max_len, single_frame_mode=True)  # openpilot
-  isotp_msg_rx = IsoTpMessage(can_client_rx, timeout=0, max_len=max_len)  # car ECU
-  isotp_msg_rx.send(b"", setup_only=True)  # setup car ECU
+  # TODO: handle multiple messages in the buffer and test without single frame mode as well
+  isotp_msg_openpilot = IsoTpMessage(can_client_tx, timeout=0, max_len=max_len, single_frame_mode=True)
+  isotp_msg_ecu = IsoTpMessage(can_client_rx, timeout=0, max_len=max_len)
+
+  # setup car ECU
+  isotp_msg_ecu.send(b"", setup_only=True)
 
   # send data to car ECU and process responses
-  isotp_msg_tx.send(data)  # get first message
-  # panda.msg = panda.last_tx_msg  # put tx message in panda recv buffer
-  panda.msg = panda.tx_msgs.pop()  # put tx message in panda recv buffer
-  print('OP tx done, rx done', (isotp_msg_tx.tx_done, isotp_msg_tx.rx_done))
-  # return
+  isotp_msg_openpilot.send(data)
+  panda.msg = panda.tx_msgs.pop()  # put message to tx in recv buffer
 
-  while not (isotp_msg_tx.rx_done and isotp_msg_tx.rx_done):
+  while not (isotp_msg_openpilot.rx_done and isotp_msg_openpilot.rx_done):
     time.sleep(0.1)
     # car ECU receives OP's message
-    print(f'\ncar ECU receiving OP\'s message, {isotp_msg_rx.rx_done, isotp_msg_rx.tx_done=}')
+    # put message to
+    msg_from_op, _ = isotp_msg_ecu.recv()
 
-    msg, updated = isotp_msg_rx.recv()
-    print(f'car ECU receives OP\'s message, {isotp_msg_rx.rx_done, isotp_msg_rx.tx_done=}\n')
+    assert (msg_from_op is not None) != len(panda.tx_msgs)
     if len(panda.tx_msgs):
       panda.msg = panda.tx_msgs.pop()
 
-    if msg is not None:
-
-      service_type = msg[0]
+    if msg_from_op is not None:
+      service_type = msg_from_op[0]
       if service_type == SERVICE_TYPE.TESTER_PRESENT:
         # send back positive response
         print('sending back TESTER PRESENT + 0x40')
-        # isotp_msg_rx.send(bytes([SERVICE_TYPE.TESTER_PRESENT + 0x40]))
-        data_to_send_to_op = b"\x7e\x7e\x7e\x7e\x7e\x7e\x7e"
-        isotp_msg_rx.send(data_to_send_to_op)
-        print('tx msgs', panda.tx_msgs, f'{isotp_msg_rx.rx_done, isotp_msg_rx.tx_done=}')
+        isotp_msg_ecu.send(b"\x7e\x7e\x7e\x7e\x7e\x7e\x7e\x7e\x7e\x7e\x7e\x7e")
+        print('tx msgs', panda.tx_msgs, f'{isotp_msg_ecu.rx_done, isotp_msg_ecu.tx_done=}')
         # panda.msg = panda.last_tx_msg  # update rx message for OP to receive
         panda.msg = panda.tx_msgs.pop()  # update rx message for OP to receive
       else:
-        raise Exception
         # unsupported service type, send back 0x7f
         print('sending back unsupported service type')
-        isotp_msg_rx.send(bytes([0x7F, service_type]))
-        panda.msg = panda.last_tx_msg  # update rx message for OP to receive
+        isotp_msg_ecu.send(bytes([0x7F, service_type]))
+        panda.msg = panda.tx_msgs.pop()  # update rx message for OP to receive
 
     print('\n--- OP RECEIVING')
-    msg, _ = isotp_msg_tx.recv()
+    msg, _ = isotp_msg_openpilot.recv()
     print('OP RECEIVED:', msg)
 
     if msg is not None:
@@ -93,26 +89,6 @@ def build_isotp_message(tx_addr: int, rx_addr: int, data: bytes, sub_addr: int =
 
     print('sending BACK TO CAR: {}'.format(panda.msg))
     panda.msg = panda.tx_msgs.pop()  # relay any messages from OP to car ECU (like flow control continue)
-    # return
-    # return
-    # print(isotp_msg_tx.rx_done, isotp_msg_tx.tx_done)
-    # print(f'{ecu_response_msg=}')
-    # # print(panda.last_tx_msg)
-    # if data[0] == SERVICE_TYPE.TESTER_PRESENT:
-
-    # return
-
-  return msg
-  # print('\nStarting ECU side')
-  # ecu_response_msg, _ = isotp_msg_rx.recv()  # now the ECU receives the tx message OP sent and responds
-  # isotp_msg_rx.send(ecu_response_msg)
-  # print('ecu_response_msg', panda.last_tx_msg)
-  #
-  # print('\nStarting OP side again')
-  # ecu_response_msg, _ = isotp_msg_rx.recv()  # now we read what the car sent back
-  # print('Final response!', ecu_response_msg)
-  #
-  # return panda.tx_msgs
 
 
 class TestUds(unittest.TestCase):
