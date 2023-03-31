@@ -337,9 +337,10 @@ class CanClient():
             if self.debug:
               print(f"CAN-RX: {hex(rx_addr)} - 0x{bytes.hex(rx_data)}")
 
-            # Cut off sub addr in first byte
+            # Cut off sub addr in first byte and pad
             if self.sub_addr is not None:
               rx_data = rx_data[1:]
+              rx_data += "\x00"
 
             self.rx_buff.append(rx_data)
       # break when non-full buffer is processed
