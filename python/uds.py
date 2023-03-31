@@ -468,10 +468,9 @@ class IsoTpMessage():
       self.rx_done = True
       if self.debug:
         print(f"ISO-TP: RX - single frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
-      return
 
     # first rx_frame
-    if rx_data[0] >> 4 == 0x1:
+    elif rx_data[0] >> 4 == 0x1:
       self.rx_len = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
       self.rx_dat = rx_data[2:]
       self.rx_idx = 0
@@ -482,10 +481,9 @@ class IsoTpMessage():
         print(f"ISO-TP: TX - flow control continue - {hex(self._can_client.tx_addr)}")
       # send flow control message
       self._can_client.send([self.flow_control_msg])
-      return
 
     # consecutive rx frame
-    if rx_data[0] >> 4 == 0x2:
+    elif rx_data[0] >> 4 == 0x2:
       assert not self.rx_done, "isotp - rx: consecutive frame with no active frame"
       self.rx_idx += 1
       assert self.rx_idx & 0xF == rx_data[0] & 0xF, "isotp - rx: invalid consecutive frame index"
@@ -498,10 +496,9 @@ class IsoTpMessage():
         self._can_client.send([self.flow_control_msg])
       if self.debug:
         print(f"ISO-TP: RX - consecutive frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
-      return
 
     # flow control
-    if rx_data[0] >> 4 == 0x3:
+    elif rx_data[0] >> 4 == 0x3:
       assert not self.tx_done, "isotp - rx: flow control with no active frame"
       assert rx_data[0] != 0x32, "isotp - rx: flow-control overflow/abort"
       assert rx_data[0] == 0x30 or rx_data[0] == 0x31, "isotp - rx: flow-control transfer state indicator invalid"
@@ -535,7 +532,13 @@ class IsoTpMessage():
         if self.debug:
           print(f"ISO-TP: TX - flow control wait - {hex(self._can_client.tx_addr)}")
 
+    # 4-15 - reserved
+    else:
+      raise Exception(f"isotp - rx: invalid frame type: {rx_data[0] >> 4}")
+
+
 FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
+
 
 def get_rx_addr_for_tx_addr(tx_addr, rx_offset=0x8):
   if tx_addr in FUNCTIONAL_ADDRS:
