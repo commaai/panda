@@ -536,7 +536,9 @@ class IsoTpMessage():
     else:
       assert False, f"isotp - rx: invalid frame type: {rx_data[0] >> 4}"
 
+
 FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
+
 
 def get_rx_addr_for_tx_addr(tx_addr, rx_offset=0x8):
   if tx_addr in FUNCTIONAL_ADDRS:
