@@ -446,7 +446,7 @@ class IsoTpMessage():
           start_time = time.monotonic()
           rx_in_progress = frame == "consecutive"
           if self.tx_done and self.rx_done:
-            return self.rx_dat, rx_in_progress
+            return self.rx_dat, False
         # no timeout indicates non-blocking
         if timeout == 0:
           return None, rx_in_progress
