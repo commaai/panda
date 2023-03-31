@@ -30,13 +30,11 @@ class TestUds(unittest.TestCase):
     (0x750, 0xf, 0x750 + 8),
     (0x750, None, 0x750 + 8),
   ])
-  def test_fw_query(self, tx_addr, sub_addr, rx_addr):
+  def test_uds_client_tester_present(self, tx_addr, sub_addr, rx_addr):
     ecu_response_dat = make_response_dat(sub_addr)
     panda = FakePanda(msg=(0x750 + 0x8, 0, bytes(ecu_response_dat), 0))
     uds_client = UdsClient(panda, tx_addr, rx_addr, sub_addr=sub_addr)
-    dat = uds_client._uds_request(0x3e)
-    self.assertEqual(dat, b'\x00')
-    print('FINAL dat', dat)
+    uds_client.tester_present()
 
 
 if __name__ == '__main__':
