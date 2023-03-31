@@ -457,8 +457,8 @@ class IsoTpMessage():
         print(f"ISO-TP: RESPONSE - {hex(self._can_client.rx_addr)} 0x{bytes.hex(self.rx_dat)}")
 
   def _isotp_rx_next(self, rx_data: bytes) -> None:
-    dat_offset = 0 if self._can_client.sub_addr is None else 1
     # ISO 15765-2 specifies an eight byte CAN frame for ISO-TP communication
+    dat_offset = 0 if self._can_client.sub_addr is None else 1
     assert len(rx_data) == 8 - dat_offset, f"isotp - rx: invalid CAN frame length: {len(rx_data)}"
 
     # single rx_frame
