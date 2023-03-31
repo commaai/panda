@@ -468,7 +468,6 @@ class IsoTpMessage():
       self.rx_done = True
       if self.debug:
         print(f"ISO-TP: RX - single frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
-      return
 
     # first rx_frame
     elif rx_data[0] >> 4 == 0x1:
@@ -482,7 +481,6 @@ class IsoTpMessage():
         print(f"ISO-TP: TX - flow control continue - {hex(self._can_client.tx_addr)}")
       # send flow control message
       self._can_client.send([self.flow_control_msg])
-      return
 
     # consecutive rx frame
     elif rx_data[0] >> 4 == 0x2:
@@ -498,7 +496,6 @@ class IsoTpMessage():
         self._can_client.send([self.flow_control_msg])
       if self.debug:
         print(f"ISO-TP: RX - consecutive frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
-      return
 
     # flow control
     elif rx_data[0] >> 4 == 0x3:
