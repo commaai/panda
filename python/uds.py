@@ -564,7 +564,7 @@ class UdsClient:
     self.sub_addr = sub_addr
     self.timeout = timeout
     self.debug = debug
-    can_send_with_timeout = partial(panda.can_send, timeout=int(tx_timeout * 1000))
+    can_send_with_timeout = partial(panda.can_send, timeout=int(tx_timeout*1000))
     self._can_client = CanClient(can_send_with_timeout, panda.can_recv, self.tx_addr, self.rx_addr, self.bus, self.sub_addr, debug=self.debug)
     self.response_pending_timeout = response_pending_timeout
 
