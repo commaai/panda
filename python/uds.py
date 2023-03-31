@@ -509,6 +509,7 @@ class IsoTpMessage():
       assert self.rx_idx & 0xF == rx_data[0] & 0xF, "isotp - rx: invalid consecutive frame index"
       rx_size = self.rx_len - len(self.rx_dat)
       self.rx_dat += rx_data[1:1 + rx_size]
+      print(f'{self.rx_len, len(self.rx_dat), self.rx_dat=}')
       if self.rx_len == len(self.rx_dat):
         self.rx_done = True
       elif self.single_frame_mode:

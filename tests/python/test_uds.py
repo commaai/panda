@@ -54,12 +54,15 @@ def build_isotp_message(tx_addr: int, rx_addr: int, data: bytes, sub_addr: int =
   # send data to car ECU and process responses
   isotp_msg_openpilot.send(data)
   panda.msg = panda.tx_msgs.pop()  # put message to tx in recv buffer
+  print('sent first message to car ecu: {}'.format(data))
 
   while not (isotp_msg_openpilot.rx_done and isotp_msg_openpilot.rx_done):
     time.sleep(0.1)
+    print(f'\ncar ECU receiving OP\'s message, {isotp_msg_ecu.rx_done, isotp_msg_ecu.tx_done=}')
     # car ECU receives OP's message
     # put message to
     msg_from_op, _ = isotp_msg_ecu.recv()
+    print(f'car ECU receives OP\'s message, {isotp_msg_ecu.rx_done, isotp_msg_ecu.tx_done=}\n')
 
     assert (msg_from_op is not None) != len(panda.tx_msgs)
     if len(panda.tx_msgs):
@@ -70,7 +73,7 @@ def build_isotp_message(tx_addr: int, rx_addr: int, data: bytes, sub_addr: int =
       if service_type == SERVICE_TYPE.TESTER_PRESENT:
         # send back positive response
         print('sending back TESTER PRESENT + 0x40')
-        isotp_msg_ecu.send(b"\x7e\x7e\x7e\x7e\x7e\x7e\x7e\x7e\x7e\x7e\x7e\x7e")
+        isotp_msg_ecu.send(b"\x7f\x8f\x9f\xaf\xbf\xcf\xdf\xef\xff\x7f\x8f\x9f")
         print('tx msgs', panda.tx_msgs, f'{isotp_msg_ecu.rx_done, isotp_msg_ecu.tx_done=}')
         # panda.msg = panda.last_tx_msg  # update rx message for OP to receive
         panda.msg = panda.tx_msgs.pop()  # update rx message for OP to receive
@@ -87,8 +90,8 @@ def build_isotp_message(tx_addr: int, rx_addr: int, data: bytes, sub_addr: int =
     if msg is not None:
       return msg
 
-    print('sending BACK TO CAR: {}'.format(panda.msg))
     panda.msg = panda.tx_msgs.pop()  # relay any messages from OP to car ECU (like flow control continue)
+    print('sending BACK TO CAR: {}'.format(panda.msg))
 
 
 class TestUds(unittest.TestCase):
