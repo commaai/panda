@@ -463,7 +463,6 @@ class IsoTpMessage():
     # single rx_frame
     if rx_data[0] >> 4 == 0x0:
       self.rx_len = rx_data[0] & 0xFF
-      assert self.rx_len <= 0x7, f"isotp - rx: invalid single frame length: {self.rx_len}"
       self.rx_dat = rx_data[1:1 + self.rx_len]
       self.rx_idx = 0
       self.rx_done = True
@@ -474,7 +473,6 @@ class IsoTpMessage():
     # first rx_frame
     elif rx_data[0] >> 4 == 0x1:
       self.rx_len = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
-      assert self.rx_len <= 0xfff, f"isotp - rx: invalid first frame length: {self.rx_len}"
       self.rx_dat = rx_data[2:]
       self.rx_idx = 0
       self.rx_done = False
