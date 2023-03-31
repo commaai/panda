@@ -298,7 +298,7 @@ class CanClient():
     self.rx = can_recv
     self.tx_addr = tx_addr
     self.rx_addr = rx_addr
-    self.rx_buff = deque()  # type: Deque[Tuple[bytes, int]]
+    self.rx_buff = deque()  # type: Deque[bytes]
     self.sub_addr = sub_addr
     self.bus = bus
     self.debug = debug
@@ -337,18 +337,16 @@ class CanClient():
             if self.debug:
               print(f"CAN-RX: {hex(rx_addr)} - 0x{bytes.hex(rx_data)}")
 
-            dat_offset = 0 if self.sub_addr is None else 1
-            # # Cut off sub addr in first byte and pad
-            # if self.sub_addr is not None:
-            #   rx_data = rx_data[1:]
-            #   rx_data += "\x00"
+            # Cut off sub addr in first byte
+            if self.sub_addr is not None:
+              rx_data = rx_data[1:]
 
-            self.rx_buff.append((rx_data, dat_offset))
+            self.rx_buff.append(rx_data)
       # break when non-full buffer is processed
       if len(msgs) < 254:
         return
 
-  def recv(self, drain: bool = False) -> Generator[Tuple[bytes], None, None]:
+  def recv(self, drain: bool = False) -> Generator[bytes, None, None]:
     # buffer rx messages in case two response messages are received at once
     # (e.g. response pending and success/failure response)
     self._recv_buffer(drain)
@@ -443,8 +441,8 @@ class IsoTpMessage():
     updated = False
     try:
       while True:
-        for msg, dat_offset in self._can_client.recv():
-          self._isotp_rx_next(msg, dat_offset)
+        for msg in self._can_client.recv():
+          self._isotp_rx_next(msg)
           start_time = time.monotonic()
           updated = True
           if self.tx_done and self.rx_done:
@@ -458,25 +456,26 @@ class IsoTpMessage():
       if self.debug and self.rx_dat:
         print(f"ISO-TP: RESPONSE - {hex(self._can_client.rx_addr)} 0x{bytes.hex(self.rx_dat)}")
 
-  def _isotp_rx_next(self, rx_data: bytes, dat_offset: int) -> None:
+  def _isotp_rx_next(self, rx_data: bytes) -> None:
+    dat_offset = 0 if self._can_client.sub_addr is None else 1
     # ISO 15765-2 specifies an eight byte CAN frame for ISO-TP communication
     assert len(rx_data) == 8 - dat_offset, f"isotp - rx: invalid CAN frame length: {len(rx_data)}"
 
     # single rx_frame
-    if rx_data[dat_offset] >> 4 == 0x0:
-      self.rx_len = rx_data[dat_offset] & 0xFF
+    if rx_data[0] >> 4 == 0x0:
+      self.rx_len = rx_data[0] & 0xFF
       assert self.rx_len <= 0x7 - dat_offset, f"isotp - rx: invalid single frame length: {self.rx_len}"
-      self.rx_dat = rx_data[1 + dat_offset:1 + dat_offset + self.rx_len]
+      self.rx_dat = rx_data[1:1 + self.rx_len]
       self.rx_idx = 0
       self.rx_done = True
       if self.debug:
         print(f"ISO-TP: RX - single frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
 
     # first rx_frame
-    elif rx_data[dat_offset] >> 4 == 0x1:
-      self.rx_len = ((rx_data[dat_offset] & 0x0F) << 8) + rx_data[1 + dat_offset]
+    elif rx_data[0] >> 4 == 0x1:
+      self.rx_len = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
       assert 0x8 - dat_offset <= self.rx_len, f"isotp - rx: invalid first frame length: {self.rx_len}"
-      self.rx_dat = rx_data[2 + dat_offset:]
+      self.rx_dat = rx_data[2:]
       self.rx_idx = 0
       self.rx_done = False
       if self.debug:
@@ -487,12 +486,12 @@ class IsoTpMessage():
       self._can_client.send([self.flow_control_msg])
 
     # consecutive rx frame
-    elif rx_data[dat_offset] >> 4 == 0x2:
+    elif rx_data[0] >> 4 == 0x2:
       assert not self.rx_done, "isotp - rx: consecutive frame with no active frame"
       self.rx_idx += 1
-      assert self.rx_idx & 0xF == rx_data[dat_offset] & 0xF, "isotp - rx: invalid consecutive frame index"
+      assert self.rx_idx & 0xF == rx_data[0] & 0xF, "isotp - rx: invalid consecutive frame index"
       rx_size = self.rx_len - len(self.rx_dat)
-      self.rx_dat += rx_data[1 + dat_offset:1 + dat_offset + rx_size]
+      self.rx_dat += rx_data[1:1 + rx_size]
       if self.rx_len == len(self.rx_dat):
         self.rx_done = True
       elif self.single_frame_mode:
@@ -502,22 +501,22 @@ class IsoTpMessage():
         print(f"ISO-TP: RX - consecutive frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
 
     # flow control
-    elif rx_data[dat_offset] >> 4 == 0x3:
+    elif rx_data[0] >> 4 == 0x3:
       assert not self.tx_done, "isotp - rx: flow control with no active frame"
-      assert rx_data[dat_offset] != 0x32, "isotp - rx: flow-control overflow/abort"
-      assert rx_data[dat_offset] == 0x30 or rx_data[dat_offset] == 0x31, "isotp - rx: flow-control transfer state indicator invalid"
-      if rx_data[dat_offset] == 0x30:
+      assert rx_data[0] != 0x32, "isotp - rx: flow-control overflow/abort"
+      assert rx_data[0] == 0x30 or rx_data[0] == 0x31, "isotp - rx: flow-control transfer state indicator invalid"
+      if rx_data[0] == 0x30:
         if self.debug:
           print(f"ISO-TP: RX - flow control continue - {hex(self._can_client.tx_addr)}")
-        delay_ts = rx_data[2 + dat_offset] & 0x7F
+        delay_ts = rx_data[2] & 0x7F
         # scale is 1 milliseconds if first bit == 0, 100 micro seconds if first bit == 1
-        delay_div = 1000. if rx_data[2 + dat_offset] & 0x80 == 0 else 10000.
+        delay_div = 1000. if rx_data[2] & 0x80 == 0 else 10000.
         delay_sec = delay_ts / delay_div
 
         # first frame = 6 bytes, each consecutive frame = 7 bytes
         num_bytes = self.max_len - 1
         start = 6 + self.tx_idx * num_bytes
-        count = rx_data[1 + dat_offset]
+        count = rx_data[1]
         end = start + count * num_bytes if count > 0 else self.tx_len
         tx_msgs = []
         for i in range(start, end, num_bytes):
@@ -531,14 +530,14 @@ class IsoTpMessage():
           self.tx_done = True
         if self.debug:
           print(f"ISO-TP: TX - consecutive frame - {hex(self._can_client.tx_addr)} idx={self.tx_idx} done={self.tx_done}")
-      elif rx_data[dat_offset] == 0x31:
+      elif rx_data[0] == 0x31:
         # wait (do nothing until next flow control message)
         if self.debug:
           print(f"ISO-TP: TX - flow control wait - {hex(self._can_client.tx_addr)}")
 
     # 4-15 - reserved
     else:
-      raise Exception(f"isotp - rx: invalid frame type: {rx_data[dat_offset] >> 4}")
+      raise Exception(f"isotp - rx: invalid frame type: {rx_data[0] >> 4}")
 
 
 FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
