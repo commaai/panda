@@ -37,7 +37,7 @@ def make_response_dat(service_type, sub_addr, data: bytes = None):
   return bytes(ecu_rx_dat)
 
 
-def build_isotp_message(tx_addr: int, rx_addr: int, data: bytes, sub_addr: int = None):
+def simulate_isotp_communication(tx_addr: int, rx_addr: int, data: bytes, sub_addr: int = None):
   panda = FakePanda([])
   max_len = 8 if sub_addr is None else 7
 
@@ -97,7 +97,7 @@ def build_isotp_message(tx_addr: int, rx_addr: int, data: bytes, sub_addr: int =
 class TestUds(unittest.TestCase):
   def test_something(self):
     # build_isotp_message(0x750, 0x750 + 8, bytes([SERVICE_TYPE.TESTER_PRESENT]))
-    build_isotp_message(0x750, 0x750 + 8, b"\x3e", 0xf)
+    simulate_isotp_communication(0x750, 0x750 + 8, b"\x3e", 0xf)
     # print('built', build_isotp_message(0x750, 0x750 + 8, b'\x3e'))
 
 

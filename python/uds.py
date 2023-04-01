@@ -520,7 +520,7 @@ class IsoTpMessage():
 
     # flow control
     elif rx_data[0] >> 4 == 0x3:
-      print(f'FLOW frame, {self.tx_done}')
+      print(f'FLOW frame, {self.tx_done}, {self.tx_idx}')
       assert not self.tx_done, "isotp - rx: flow control with no active frame"
       assert rx_data[0] != 0x32, "isotp - rx: flow-control overflow/abort"
       assert rx_data[0] == 0x30 or rx_data[0] == 0x31, "isotp - rx: flow-control transfer state indicator invalid"
@@ -532,9 +532,9 @@ class IsoTpMessage():
         delay_div = 1000. if rx_data[2] & 0x80 == 0 else 10000.
         delay_sec = delay_ts / delay_div
 
-        # first frame = 6 bytes, each consecutive frame = 7 bytes
+        # first frame = 6 bytes, each consecutive frame = 7 bytes (sub addresses subtract a byte)
         num_bytes = self.max_len - 1
-        start = 6 - dat_offset + self.tx_idx * num_bytes
+        start = self.max_len - 2 + self.tx_idx * num_bytes
         count = rx_data[1]
         print('count is', count)
         end = start + count * num_bytes if count > 0 else self.tx_len
