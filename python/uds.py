@@ -145,7 +145,7 @@ class ISOTP_FRAME_TYPE(IntEnum):
   SINGLE = 0
   FIRST = 1
   CONSECUTIVE = 2
-  FLOW = 2
+  FLOW = 3
 
 class DynamicSourceDefinition(NamedTuple):
   data_identifier: int
@@ -466,8 +466,7 @@ class IsoTpMessage():
     # ISO 15765-2 specifies an eight byte CAN frame for ISO-TP communication
     assert len(rx_data) == self.max_len, f"isotp - rx: invalid CAN frame length: {len(rx_data)}"
 
-    # single rx_frame
-    if rx_data[0] >> 4 == 0x0:
+    if rx_data[0] >> 4 == ISOTP_FRAME_TYPE.SINGLE:
       self.rx_len = rx_data[0] & 0xFF
       assert self.rx_len < self.max_len, f"isotp - rx: invalid single frame length: {self.rx_len}"
       self.rx_dat = rx_data[1:1 + self.rx_len]
@@ -477,8 +476,7 @@ class IsoTpMessage():
         print(f"ISO-TP: RX - single frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       return ISOTP_FRAME_TYPE.SINGLE
 
-    # first rx_frame
-    elif rx_data[0] >> 4 == 0x1:
+    elif rx_data[0] >> 4 == ISOTP_FRAME_TYPE.FIRST:
       self.rx_len = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
       assert self.max_len <= self.rx_len, f"isotp - rx: invalid first frame length: {self.rx_len}"
       self.rx_dat = rx_data[2:]
@@ -492,8 +490,7 @@ class IsoTpMessage():
       self._can_client.send([self.flow_control_msg])
       return ISOTP_FRAME_TYPE.FIRST
 
-    # consecutive rx frame
-    elif rx_data[0] >> 4 == 0x2:
+    elif rx_data[0] >> 4 == ISOTP_FRAME_TYPE.CONSECUTIVE:
       assert not self.rx_done, "isotp - rx: consecutive frame with no active frame"
       self.rx_idx += 1
       assert self.rx_idx & 0xF == rx_data[0] & 0xF, "isotp - rx: invalid consecutive frame index"
@@ -508,8 +505,7 @@ class IsoTpMessage():
         print(f"ISO-TP: RX - consecutive frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       return ISOTP_FRAME_TYPE.CONSECUTIVE
 
-    # flow control
-    elif rx_data[0] >> 4 == 0x3:
+    elif rx_data[0] >> 4 == ISOTP_FRAME_TYPE.FLOW:
       assert not self.tx_done, "isotp - rx: flow control with no active frame"
       assert rx_data[0] != 0x32, "isotp - rx: flow-control overflow/abort"
       assert rx_data[0] == 0x30 or rx_data[0] == 0x31, "isotp - rx: flow-control transfer state indicator invalid"
