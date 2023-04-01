@@ -20,6 +20,11 @@ class FakePanda(Panda):
 
 def simulate_isotp_comms(tx_addr: int, rx_addr: int, request: bytes, response: bytes = None,
                          sub_addr: int = None):
+  """
+  Simulates a client and a server interacting with ISO-TP. openpilot is the client,
+  and a car ECU is the simulated server.
+  """
+
   panda = FakePanda()
   max_len = 8 if sub_addr is None else 7
 
