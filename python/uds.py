@@ -511,7 +511,7 @@ class IsoTpMessage():
 
         # first frame = 6 bytes, each consecutive frame = 7 bytes
         num_bytes = self.max_len - 1
-        start = 6 + self.tx_idx * num_bytes
+        start = self.max_len - 2 + self.tx_idx * num_bytes
         count = rx_data[1]
         end = start + count * num_bytes if count > 0 else self.tx_len
         tx_msgs = []
