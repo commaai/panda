@@ -509,7 +509,7 @@ class IsoTpMessage():
         delay_div = 1000. if rx_data[2] & 0x80 == 0 else 10000.
         delay_sec = delay_ts / delay_div
 
-        # first frame = 6 bytes, each consecutive frame = 7 bytes (sub addresses subtract a byte)
+        # first frame = 6 bytes, each consecutive frame = 7 bytes
         num_bytes = self.max_len - 1
         start = 6 + self.tx_idx * num_bytes
         count = rx_data[1]
