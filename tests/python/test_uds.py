@@ -41,7 +41,8 @@ def simulate_isotp_comms(tx_addr: int, rx_addr: int, request: bytes, response: b
   isotp_msg_openpilot.send(request)
   can_buf.rx_msg = can_buf.tx_msgs.pop()  # put message to tx in recv buffer
 
-  while not (isotp_msg_openpilot.rx_done and isotp_msg_openpilot.rx_done):
+  msg_from_ecu = None
+  while not (isotp_msg_openpilot.rx_done and isotp_msg_openpilot.tx_done):
     msg_from_op, _ = isotp_msg_ecu.recv()
 
     if msg_from_op is None:
@@ -62,14 +63,12 @@ def simulate_isotp_comms(tx_addr: int, rx_addr: int, request: bytes, response: b
       else:
         raise Exception(f"Service id not supported: {resp_sid}")
 
-    msg, _ = isotp_msg_openpilot.recv()
+    msg_from_ecu, _ = isotp_msg_openpilot.recv()
+    if msg_from_ecu is None:
+      # openpilot is either sending a consecutive frame or a flow control continue to car ECU
+      can_buf.rx_msg = can_buf.tx_msgs.pop()
 
-    # message complete from car ECU
-    if msg is not None:
-      return msg
-
-    # openpilot is either sending a consecutive frame or a flow control continue to car ECU
-    can_buf.rx_msg = can_buf.tx_msgs.pop()
+  return msg_from_ecu
 
 
 @parameterized_class([
