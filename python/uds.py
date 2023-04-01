@@ -141,6 +141,12 @@ class DYNAMIC_DEFINITION_TYPE(IntEnum):
   DEFINE_BY_MEMORY_ADDRESS = 2
   CLEAR_DYNAMICALLY_DEFINED_DATA_IDENTIFIER = 3
 
+class ISOTP_FRAME_TYPE(IntEnum):
+  SINGLE = 0
+  FIRST = 1
+  CONSECUTIVE = 2
+  FLOW = 2
+
 class DynamicSourceDefinition(NamedTuple):
   data_identifier: int
   position: int
@@ -444,7 +450,7 @@ class IsoTpMessage():
         for msg in self._can_client.recv():
           frame_type = self._isotp_rx_next(msg)
           start_time = time.monotonic()
-          rx_in_progress = frame_type == "consecutive"
+          rx_in_progress = frame_type == ISOTP_FRAME_TYPE.CONSECUTIVE
           if self.tx_done and self.rx_done:
             return self.rx_dat, False
         # no timeout indicates non-blocking
@@ -456,7 +462,7 @@ class IsoTpMessage():
       if self.debug and self.rx_dat:
         print(f"ISO-TP: RESPONSE - {hex(self._can_client.rx_addr)} 0x{bytes.hex(self.rx_dat)}")
 
-  def _isotp_rx_next(self, rx_data: bytes) -> str:
+  def _isotp_rx_next(self, rx_data: bytes) -> ISOTP_FRAME_TYPE:
     # ISO 15765-2 specifies an eight byte CAN frame for ISO-TP communication
     assert len(rx_data) == self.max_len, f"isotp - rx: invalid CAN frame length: {len(rx_data)}"
 
@@ -469,7 +475,7 @@ class IsoTpMessage():
       self.rx_done = True
       if self.debug:
         print(f"ISO-TP: RX - single frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
-      return 'single'
+      return ISOTP_FRAME_TYPE.SINGLE
 
     # first rx_frame
     elif rx_data[0] >> 4 == 0x1:
@@ -484,7 +490,7 @@ class IsoTpMessage():
         print(f"ISO-TP: TX - flow control continue - {hex(self._can_client.tx_addr)}")
       # send flow control message
       self._can_client.send([self.flow_control_msg])
-      return 'first'
+      return ISOTP_FRAME_TYPE.FIRST
 
     # consecutive rx frame
     elif rx_data[0] >> 4 == 0x2:
@@ -500,7 +506,7 @@ class IsoTpMessage():
         self._can_client.send([self.flow_control_msg])
       if self.debug:
         print(f"ISO-TP: RX - consecutive frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
-      return 'consecutive'
+      return ISOTP_FRAME_TYPE.CONSECUTIVE
 
     # flow control
     elif rx_data[0] >> 4 == 0x3:
@@ -536,7 +542,7 @@ class IsoTpMessage():
         # wait (do nothing until next flow control message)
         if self.debug:
           print(f"ISO-TP: TX - flow control wait - {hex(self._can_client.tx_addr)}")
-      return 'flow'
+      return ISOTP_FRAME_TYPE.FLOW
 
     # 4-15 - reserved
     else:
