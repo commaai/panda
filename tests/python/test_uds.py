@@ -27,12 +27,12 @@ def simulate_isotp_comms(tx_addr: int, rx_addr: int, request: bytes, response: b
   can_buf = MockCanBuffer()
   max_len = 8 if sub_addr is None else 7
 
-  can_client_openpilot = CanClient(can_buf.can_send, can_buf.can_recv, tx_addr, rx_addr, 0, sub_addr, debug=True)
-  can_client_ecu = CanClient(can_buf.can_send, can_buf.can_recv, rx_addr, tx_addr, 0, sub_addr, debug=True)
+  can_client_openpilot = CanClient(can_buf.can_send, can_buf.can_recv, tx_addr, rx_addr, 0, sub_addr)
+  can_client_ecu = CanClient(can_buf.can_send, can_buf.can_recv, rx_addr, tx_addr, 0, sub_addr)
 
   # TODO: handle multiple messages in the buffer and test without single frame mode as well
-  isotp_msg_openpilot = IsoTpMessage(can_client_openpilot, timeout=0, debug=True, max_len=max_len, single_frame_mode=True)
-  isotp_msg_ecu = IsoTpMessage(can_client_ecu, timeout=0, debug=True, max_len=max_len, single_frame_mode=True)
+  isotp_msg_openpilot = IsoTpMessage(can_client_openpilot, timeout=0, max_len=max_len, single_frame_mode=True)
+  isotp_msg_ecu = IsoTpMessage(can_client_ecu, timeout=0, max_len=max_len, single_frame_mode=True)
 
   # setup car ECU
   isotp_msg_ecu.send(b"", setup_only=True)
