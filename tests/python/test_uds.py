@@ -7,7 +7,7 @@ from panda.python.uds import SERVICE_TYPE, IsoTpMessage, CanClient, get_rx_addr_
 
 
 class FakePanda(Panda):
-  def __init__(self):
+  def __init__(self):  # ignore: super-init-not-called
     self.rx_msg = None
     self.tx_msgs = []
 
@@ -79,6 +79,9 @@ def simulate_isotp_comms(tx_addr: int, rx_addr: int, request: bytes, response: b
   {"tx_addr": 0x750, "sub_addr": 0xf},
 ])
 class TestUds(unittest.TestCase):
+  tx_addr: int
+  sub_addr: int
+
   def setUp(self):
     self.rx_addr = get_rx_addr_for_tx_addr(self.tx_addr)
 
