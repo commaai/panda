@@ -145,6 +145,10 @@ void spi_handle_rx(void) {
 }
 
 void spi_handle_tx(bool timed_out) {
+  if (timed_out) {
+    print("SPI: TX timeout\n");
+  }
+
   if ((spi_state == SPI_STATE_HEADER_NACK) || timed_out) {
     // Reset state
     spi_state = SPI_STATE_HEADER;

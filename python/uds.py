@@ -458,12 +458,12 @@ class IsoTpMessage():
 
   def _isotp_rx_next(self, rx_data: bytes) -> str:
     # ISO 15765-2 specifies an eight byte CAN frame for ISO-TP communication
-    assert len(rx_data) == 8, f"isotp - rx: invalid CAN frame length: {len(rx_data)}"
+    assert len(rx_data) == self.max_len, f"isotp - rx: invalid CAN frame length: {len(rx_data)}"
 
     # single rx_frame
     if rx_data[0] >> 4 == 0x0:
       self.rx_len = rx_data[0] & 0xFF
-      assert self.rx_len <= 0x7, f"isotp - rx: invalid single frame length: {self.rx_len}"
+      assert self.rx_len < self.max_len, f"isotp - rx: invalid single frame length: {self.rx_len}"
       self.rx_dat = rx_data[1:1 + self.rx_len]
       self.rx_idx = 0
       self.rx_done = True
@@ -474,7 +474,7 @@ class IsoTpMessage():
     # first rx_frame
     elif rx_data[0] >> 4 == 0x1:
       self.rx_len = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
-      assert 0x8 <= self.rx_len, f"isotp - rx: invalid first frame length: {self.rx_len}"
+      assert self.max_len <= self.rx_len, f"isotp - rx: invalid first frame length: {self.rx_len}"
       self.rx_dat = rx_data[2:]
       self.rx_idx = 0
       self.rx_done = False
@@ -517,7 +517,7 @@ class IsoTpMessage():
 
         # first frame = 6 bytes, each consecutive frame = 7 bytes
         num_bytes = self.max_len - 1
-        start = 6 + self.tx_idx * num_bytes
+        start = self.max_len - 2 + self.tx_idx * num_bytes
         count = rx_data[1]
         end = start + count * num_bytes if count > 0 else self.tx_len
         tx_msgs = []
@@ -563,15 +563,16 @@ def get_rx_addr_for_tx_addr(tx_addr, rx_offset=0x8):
 
 
 class UdsClient():
-  def __init__(self, panda, tx_addr: int, rx_addr: int = None, bus: int = 0, timeout: float = 1, debug: bool = False,
-               tx_timeout: float = 1, response_pending_timeout: float = 10):
+  def __init__(self, panda, tx_addr: int, rx_addr: int = None, bus: int = 0, sub_addr: int = None, timeout: float = 1,
+               debug: bool = False, tx_timeout: float = 1, response_pending_timeout: float = 10):
     self.bus = bus
     self.tx_addr = tx_addr
     self.rx_addr = rx_addr if rx_addr is not None else get_rx_addr_for_tx_addr(tx_addr)
+    self.sub_addr = sub_addr
     self.timeout = timeout
     self.debug = debug
     can_send_with_timeout = partial(panda.can_send, timeout=int(tx_timeout*1000))
-    self._can_client = CanClient(can_send_with_timeout, panda.can_recv, self.tx_addr, self.rx_addr, self.bus, debug=self.debug)
+    self._can_client = CanClient(can_send_with_timeout, panda.can_recv, self.tx_addr, self.rx_addr, self.bus, self.sub_addr, debug=self.debug)
     self.response_pending_timeout = response_pending_timeout
 
   # generic uds request
@@ -583,7 +584,8 @@ class UdsClient():
       req += data
 
     # send request, wait for response
-    isotp_msg = IsoTpMessage(self._can_client, timeout=self.timeout, debug=self.debug)
+    max_len = 8 if self.sub_addr is None else 7
+    isotp_msg = IsoTpMessage(self._can_client, timeout=self.timeout, debug=self.debug, max_len=max_len)
     isotp_msg.send(req)
     response_pending = False
     while True:
