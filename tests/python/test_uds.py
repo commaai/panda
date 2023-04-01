@@ -7,7 +7,7 @@ from panda.python.uds import SERVICE_TYPE, IsoTpMessage, CanClient, get_rx_addr_
 
 
 class FakePanda(Panda):
-  def __init__(self):  # ignore: super-init-not-called
+  def __init__(self):  # pylint: disable=super-init-not-called
     self.rx_msg = None
     self.tx_msgs = []
 
