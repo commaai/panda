@@ -42,15 +42,14 @@ def simulate_isotp_comms(tx_addr: int, rx_addr: int, request: bytes, response: b
   can_buf.rx_msg = can_buf.tx_msgs.pop()  # put message to tx in recv buffer
 
   while not (isotp_msg_openpilot.rx_done and isotp_msg_openpilot.rx_done):
-    # car ECU receives OP's message
     msg_from_op, _ = isotp_msg_ecu.recv()
 
     if msg_from_op is None:
-      # Car ECU is either sending a consecutive frame or a flow control continue to OP
+      # car ECU is either sending a consecutive frame or a flow control continue to OP
       can_buf.rx_msg = can_buf.tx_msgs.pop()
 
     else:
-      # Message complete from openpilot, now respond
+      # message complete from openpilot, now respond
       resp_sid = msg_from_op[0] if len(msg_from_op) > 0 else None
       if response is not None:
         isotp_msg_ecu.send(response)
@@ -65,7 +64,7 @@ def simulate_isotp_comms(tx_addr: int, rx_addr: int, request: bytes, response: b
 
     msg, _ = isotp_msg_openpilot.recv()
 
-    # Message complete from car ECU
+    # message complete from car ECU
     if msg is not None:
       return msg
 
