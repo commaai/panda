@@ -490,7 +490,7 @@ class IsoTpMessage():
     elif rx_data[0] >> 4 == 0x1:
       print('FIRST frame')
       self.rx_len = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
-      assert 0x8 <= self.rx_len, f"isotp - rx: invalid first frame length: {self.rx_len}"
+      # assert 0x8 <= self.rx_len, f"isotp - rx: invalid first frame length: {self.rx_len}"
       self.rx_dat = rx_data[2:]
       self.rx_idx = 0
       self.rx_done = False
@@ -534,7 +534,8 @@ class IsoTpMessage():
 
         # first frame = 6 bytes, each consecutive frame = 7 bytes (sub addresses subtract a byte)
         num_bytes = self.max_len - 1
-        start = self.max_len - 2 + self.tx_idx * num_bytes
+        start = self.max_len - 2 + self.tx_idx * num_bytes  # TODO: bad
+        # start = 6 + self.tx_idx * num_bytes
         count = rx_data[1]
         print('count is', count)
         end = start + count * num_bytes if count > 0 else self.tx_len

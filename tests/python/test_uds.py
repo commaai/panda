@@ -6,6 +6,7 @@ from unittest.mock import patch
 from panda import Panda
 from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseError, SERVICE_TYPE, SESSION_TYPE, DATA_IDENTIFIER_TYPE, IsoTpMessage, CanClient
 from parameterized import parameterized
+import itertools
 
 
 def p16(val):
@@ -37,7 +38,8 @@ def make_response_dat(service_type, sub_addr, data: bytes = None):
   return bytes(ecu_rx_dat)
 
 
-def simulate_isotp_communication(tx_addr: int, rx_addr: int, data: bytes, sub_addr: int = None):
+def simulate_isotp_comms(tx_addr: int, rx_addr: int, request: bytes, response: bytes = None,
+                         sub_addr: int = None):
   panda = FakePanda([])
   max_len = 8 if sub_addr is None else 7
 
@@ -46,41 +48,54 @@ def simulate_isotp_communication(tx_addr: int, rx_addr: int, data: bytes, sub_ad
 
   # TODO: handle multiple messages in the buffer and test without single frame mode as well
   isotp_msg_openpilot = IsoTpMessage(can_client_tx, timeout=0, max_len=max_len, single_frame_mode=True)
-  isotp_msg_ecu = IsoTpMessage(can_client_rx, timeout=0, max_len=max_len)
+  isotp_msg_ecu = IsoTpMessage(can_client_rx, timeout=0, max_len=max_len, single_frame_mode=True)
 
   # setup car ECU
   isotp_msg_ecu.send(b"", setup_only=True)
 
   # send data to car ECU and process responses
-  isotp_msg_openpilot.send(data)
+  isotp_msg_openpilot.send(request)
   panda.msg = panda.tx_msgs.pop()  # put message to tx in recv buffer
-  print('sent first message to car ecu: {}'.format(data))
+  print('sent first message to car ecu: {}'.format(request))
 
   while not (isotp_msg_openpilot.rx_done and isotp_msg_openpilot.rx_done):
-    time.sleep(0.1)
+    # time.sleep(0.1)
     print(f'\ncar ECU receiving OP\'s message, {isotp_msg_ecu.rx_done, isotp_msg_ecu.tx_done=}')
     # car ECU receives OP's message
     # put message to
     msg_from_op, _ = isotp_msg_ecu.recv()
     print(f'car ECU receives OP\'s message, {isotp_msg_ecu.rx_done, isotp_msg_ecu.tx_done=}\n')
 
-    assert (msg_from_op is not None) != len(panda.tx_msgs)
-    if len(panda.tx_msgs):
-      panda.msg = panda.tx_msgs.pop()
+    if (msg_from_op is not None) == len(panda.tx_msgs):
+      print('SHOULD NOT BE HERE:', msg_from_op, panda.tx_msgs)
+      raise Exception
 
-    if msg_from_op is not None:
-      service_type = msg_from_op[0]
-      if service_type == SERVICE_TYPE.TESTER_PRESENT:
+    if msg_from_op is None:
+      # Car ECU is either sending a consecutive frame or a flow control continue to OP
+      print('LEN TX MSGS')
+      panda.msg = panda.tx_msgs.pop()
+      print(panda.msg, panda.msg[2].hex())
+
+    else:
+      print('MSG_FROM_OP NOT NONE')
+      resp_sid = msg_from_op[0] if len(msg_from_op) > 0 else None
+      if response is not None:
+        print('sending back to OP', response)
+        isotp_msg_ecu.send(response)
+        panda.msg = panda.tx_msgs.pop()  # update rx message for OP to receive
+
+      elif resp_sid == SERVICE_TYPE.TESTER_PRESENT:
         # send back positive response
         print('sending back TESTER PRESENT + 0x40')
-        isotp_msg_ecu.send(b"\x7f\x8f\x9f\xaf\xbf\xcf\xdf\xef\xff\x7f\x8f\x9f")
+        isotp_msg_ecu.send(bytes([SERVICE_TYPE.TESTER_PRESENT + 0x40]))
         print('tx msgs', panda.tx_msgs, f'{isotp_msg_ecu.rx_done, isotp_msg_ecu.tx_done=}')
         # panda.msg = panda.last_tx_msg  # update rx message for OP to receive
         panda.msg = panda.tx_msgs.pop()  # update rx message for OP to receive
+
       else:
         # unsupported service type, send back 0x7f
         print('sending back unsupported service type')
-        isotp_msg_ecu.send(bytes([0x7F, service_type]))
+        isotp_msg_ecu.send(bytes([0x7F, resp_sid]))
         panda.msg = panda.tx_msgs.pop()  # update rx message for OP to receive
 
     print('\n--- OP RECEIVING')
@@ -95,26 +110,40 @@ def simulate_isotp_communication(tx_addr: int, rx_addr: int, data: bytes, sub_ad
 
 
 class TestUds(unittest.TestCase):
-  def test_something(self):
-    # build_isotp_message(0x750, 0x750 + 8, bytes([SERVICE_TYPE.TESTER_PRESENT]))
-    simulate_isotp_communication(0x750, 0x750 + 8, b"\x3e", 0xf)
-    # print('built', build_isotp_message(0x750, 0x750 + 8, b'\x3e'))
-
+  # def test_something(self):
+  #   # build_isotp_message(0x750, 0x750 + 8, bytes([SERVICE_TYPE.TESTER_PRESENT]))
+  #   for i in range(1, 200):
+  #     simulate_isotp_comms(0x750, 0x750 + 8, bytes(range(i)), sub_addr=None, response=bytes(range(i)))
+  #   # print('built', build_isotp_message(0x750, 0x750 + 8, b'\x3e'))
 
   # @parameterized.expand([
   #   (0x750, 0xf, 0x750 + 8),
   #   (0x750, None, 0x750 + 8),
   # ])
-  # def test_uds_client_tester_present(self, tx_addr, sub_addr, rx_addr):
+  # def test_tester_present(self, tx_addr, sub_addr, rx_addr):
   #   """
-  #   Tests UdsClient, IsoTpMessage, and the CanClient with a
+  #   Tests IsoTpMessage and CanClient both sending and responding to a
   #   tester present request with and without sub-addresses
   #   """
   #
-  #   ecu_response_dat = make_response_dat(SERVICE_TYPE.TESTER_PRESENT, sub_addr, b"\x00")
-  #   panda = FakePanda(msg=(rx_addr, 0, bytes(ecu_response_dat), 0))
-  #   uds_client = UdsClient(panda, tx_addr, rx_addr, sub_addr=sub_addr)
-  #   uds_client.tester_present()
+  #   response = simulate_isotp_comms(tx_addr, rx_addr, bytes([SERVICE_TYPE.TESTER_PRESENT]), sub_addr)
+  #   self.assertEqual(response, bytes([SERVICE_TYPE.TESTER_PRESENT + 0x40]))
+
+  @parameterized.expand([
+    (0x750, 0xf, 0x750 + 8),
+    (0x750, None, 0x750 + 8),
+  ])
+  # @parameterized.expand(itertools.product([(0x750, 0xf, 0x750 + 8), (0x750, None, 0x750 + 8)], range(10)))
+  def test_fw_query(self, tx_addr, sub_addr, rx_addr):
+    """
+    Tests all four ISO-TP frame types in both directions (sending as openpilot and the car ECU)
+    """
+
+    for dat_len in range(0x10):
+      # same data for both directions
+      data = bytes(range(dat_len))
+      response = simulate_isotp_comms(tx_addr, rx_addr, data, data, sub_addr)
+      self.assertEqual(response, data)
 
   # @parameterized.expand([
   #   (0x750, 0xf, 0x750 + 8),
