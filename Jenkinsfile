@@ -2,6 +2,7 @@ def docker_run(String step_label, int timeout_mins, String cmd) {
   timeout(time: timeout_mins, unit: 'MINUTES') {
     sh script: "docker run --rm --privileged \
           --env PARTIAL_TESTS=${env.PARTIAL_TESTS} \
+          --env PYTHONWARNINGS=error \
           --volume /dev/bus/usb:/dev/bus/usb \
           --volume /var/run/dbus:/var/run/dbus \
           --workdir /tmp/openpilot/panda \
@@ -32,6 +33,7 @@ export SOURCE_DIR=${env.SOURCE_DIR}
 export GIT_BRANCH=${env.GIT_BRANCH}
 export GIT_COMMIT=${env.GIT_COMMIT}
 export PYTHONPATH=${env.TEST_DIR}/../
+export PYTHONWARNINGS=error
 
 cd ${env.TEST_DIR} || true
 ${cmd}
@@ -61,6 +63,7 @@ pipeline {
   environment {
     CI = "1"
     PARTIAL_TESTS = "${env.BRANCH_NAME == 'master' ? ' ' : '1'}"
+    PYTHONWARNINGS= "error"
     DOCKER_IMAGE_TAG = "panda:build-${env.GIT_COMMIT}"
 
     TEST_DIR = "/data/panda"
