@@ -27,6 +27,7 @@ class PandaDFU:
   def usb_connect(dfu_serial: Optional[str]) -> Optional[STBootloaderUSBHandle]:
     handle = None
     context = usb1.USBContext()
+    context.open()
     for device in context.getDeviceList(skip_on_error=True):
       if device.getVendorID() == 0x0483 and device.getProductID() == 0xdf11:
         try:
@@ -64,15 +65,15 @@ class PandaDFU:
 
   @staticmethod
   def usb_list() -> List[str]:
-    context = usb1.USBContext()
     dfu_serials = []
     try:
-      for device in context.getDeviceList(skip_on_error=True):
-        if device.getVendorID() == 0x0483 and device.getProductID() == 0xdf11:
-          try:
-            dfu_serials.append(device.open().getASCIIStringDescriptor(3))
-          except Exception:
-            pass
+      with usb1.USBContext() as context:
+        for device in context.getDeviceList(skip_on_error=True):
+          if device.getVendorID() == 0x0483 and device.getProductID() == 0xdf11:
+            try:
+              dfu_serials.append(device.open().getASCIIStringDescriptor(3))
+            except Exception:
+              pass
     except Exception:
       pass
     return dfu_serials
