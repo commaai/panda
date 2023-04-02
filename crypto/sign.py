@@ -9,7 +9,8 @@ import binascii
 # increment this to make new hardware not run old versions
 VERSION = 2
 
-rsa = RSA.importKey(open(sys.argv[3]).read())
+with open(sys.argv[3]) as f:
+  rsa = RSA.importKey(f.read())
 
 with open(sys.argv[1], "rb") as f:
   dat = f.read()
