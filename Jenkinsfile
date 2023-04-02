@@ -84,6 +84,16 @@ pipeline {
           }
         }
 
+        stage('test tres') {
+          agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
+          steps {
+            phone_steps("panda-tres", [
+              ["build", "scons -j4"],
+              ["flash", "cd tests/ && ./ci_reset_internal_hw.py"],
+            ])
+          }
+        }
+
         stage ('Acquire resource locks') {
           options {
             lock(resource: "pandas")
