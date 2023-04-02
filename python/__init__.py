@@ -315,8 +315,9 @@ class Panda:
   @staticmethod
   def usb_connect(serial, claim=True, wait=False):
     handle, usb_serial, bootstub, bcd = None, None, None, None
-    context = usb1.USBContext()
     while 1:
+      context = usb1.USBContext()
+      context.open()
       try:
         for device in context.getDeviceList(skip_on_error=True):
           if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
@@ -347,7 +348,7 @@ class Panda:
         logging.exception("USB connect error")
       if not wait or handle is not None:
         break
-      context = usb1.USBContext()  # New context needed so new devices show up
+      context.close()
 
     usb_handle = None
     if handle is not None:
