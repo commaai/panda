@@ -612,9 +612,9 @@ class Panda:
 
   @staticmethod
   def get_signature_from_firmware(fn) -> bytes:
-    f = open(fn, 'rb')
-    f.seek(-128, 2)  # Seek from end of file
-    return f.read(128)
+    with open(fn, 'rb') as f:
+      f.seek(-128, 2)  # Seek from end of file
+      return f.read(128)
 
   def get_signature(self) -> bytes:
     part_1 = self._handle.controlRead(Panda.REQUEST_IN, 0xd3, 0, 0, 0x40)
