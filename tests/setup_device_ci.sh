@@ -45,6 +45,11 @@ EOF
 chmod +x $CONTINUE_PATH
 
 
+# set up environment
+if [ ! -d "$SOURCE_DIR" ]; then
+  git clone https://github.com/commaai/panda.git $SOURCE_DIR
+fi
+
 # setup panda_jungle
 cd $SOURCE_DIR/../
 if [ ! -d panda_jungle/ ]; then
@@ -55,10 +60,7 @@ git fetch --all
 git checkout -f master
 git reset --hard origin/master
 
-# set up environment
-if [ ! -d "$SOURCE_DIR" ]; then
-  git clone https://github.com/commaai/panda.git $SOURCE_DIR
-fi
+# checkout panda commit
 cd $SOURCE_DIR
 
 rm -f .git/index.lock
