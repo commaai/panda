@@ -32,6 +32,9 @@ if PARTIAL_TESTS:
   # * black panda covers STM32F4, GEN2, and GPS
   PandaGroup.TESTED = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA)  # type: ignore
 
+if os.path.isfile('/TICI'):
+  PandaGroup.TESTED = (Panda.HW_TYPE_DOS, )  # type: ignore
+
 # Find all pandas connected
 _all_pandas = {}
 _panda_jungle = None
@@ -84,7 +87,7 @@ def pytest_make_parametrize_id(config, val, argname):
 
 
 @pytest.fixture(name='panda_jungle')
-def fixture__panda_jungle(request):
+def fixture_panda_jungle(request):
   init_jungle()
   return _panda_jungle
 

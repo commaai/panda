@@ -83,6 +83,7 @@ pipeline {
             phone_steps("panda-dos", [
               ["build", "scons -j4"],
               ["flash", "cd tests/ && ./ci_reset_internal_hw.py"],
+              ["test", "cd tests/hitl && ./test.sh"],
             ])
           }
         }
