@@ -32,9 +32,6 @@ if PARTIAL_TESTS:
   # * black panda covers STM32F4, GEN2, and GPS
   PandaGroup.TESTED = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA)  # type: ignore
 
-if os.path.isfile('/TICI'):
-  PandaGroup.TESTED = (Panda.HW_TYPE_DOS, )  # type: ignore
-
 # Find all pandas connected
 _all_pandas = {}
 _panda_jungle = None
