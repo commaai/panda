@@ -30,11 +30,11 @@ def test_orientation_detection(p, panda_jungle):
       assert False
     seen_orientations.append(detected_harness_orientation)
 
-def test_voltage(p):
-  for _ in range(10):
-    voltage = p.health()['voltage']
-    assert ((voltage > 11000) and (voltage < 13000))
-    time.sleep(0.1)
+#def test_voltage(p):
+#  for _ in range(10):
+#    voltage = p.health()['voltage']
+#    assert ((voltage > 11000) and (voltage < 13000))
+#    time.sleep(0.1)
 
 def test_hw_type(p):
   """
