@@ -150,6 +150,7 @@ void tick_handler(void) {
 
     // tick drivers at 8Hz
     fan_tick();
+    usb_tick();
 
     // decimated to 1Hz
     if (loop_counter == 0U) {
@@ -194,7 +195,7 @@ void tick_handler(void) {
         siren_countdown -= 1U;
       }
 
-      if (controls_allowed) {
+      if (controls_allowed || heartbeat_engaged) {
         controls_allowed_countdown = 30U;
       } else if (controls_allowed_countdown > 0U) {
         controls_allowed_countdown -= 1U;

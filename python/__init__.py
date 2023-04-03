@@ -315,8 +315,9 @@ class Panda:
   @staticmethod
   def usb_connect(serial, claim=True, wait=False):
     handle, usb_serial, bootstub, bcd = None, None, None, None
-    context = usb1.USBContext()
     while 1:
+      context = usb1.USBContext()
+      context.open()
       try:
         for device in context.getDeviceList(skip_on_error=True):
           if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
@@ -347,7 +348,7 @@ class Panda:
         logging.exception("USB connect error")
       if not wait or handle is not None:
         break
-      context = usb1.USBContext()  # New context needed so new devices show up
+      context.close()
 
     usb_handle = None
     if handle is not None:
@@ -363,21 +364,21 @@ class Panda:
 
   @staticmethod
   def usb_list():
-    context = usb1.USBContext()
     ret = []
     try:
-      for device in context.getDeviceList(skip_on_error=True):
-        if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
-          try:
-            serial = device.getSerialNumber()
-            if len(serial) == 24:
-              ret.append(serial)
-            else:
-              warnings.warn(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
-          except Exception:
-            continue
+      with usb1.USBContext() as context:
+        for device in context.getDeviceList(skip_on_error=True):
+          if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
+            try:
+              serial = device.getSerialNumber()
+              if len(serial) == 24:
+                ret.append(serial)
+              else:
+                warnings.warn(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
+            except Exception:
+              continue
     except Exception:
-      pass
+      logging.exception("exception while listing pandas")
     return ret
 
   @staticmethod
@@ -400,6 +401,10 @@ class Panda:
       pass
     if not enter_bootloader and reconnect:
       self.reconnect()
+
+  @property
+  def connected(self) -> bool:
+    return self._handle_open
 
   def reconnect(self):
     if self._handle_open:
@@ -607,9 +612,9 @@ class Panda:
 
   @staticmethod
   def get_signature_from_firmware(fn) -> bytes:
-    f = open(fn, 'rb')
-    f.seek(-128, 2)  # Seek from end of file
-    return f.read(128)
+    with open(fn, 'rb') as f:
+      f.seek(-128, 2)  # Seek from end of file
+      return f.read(128)
 
   def get_signature(self) -> bytes:
     part_1 = self._handle.controlRead(Panda.REQUEST_IN, 0xd3, 0, 0, 0x40)

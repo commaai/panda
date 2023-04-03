@@ -28,6 +28,7 @@
 #define FAULT_INTERRUPT_RATE_EXTI           (1U << 22)
 #define FAULT_INTERRUPT_RATE_SPI            (1U << 23)
 #define FAULT_INTERRUPT_RATE_UART_7         (1U << 24)
+#define FAULT_SIREN_MALFUNCTION             (1U << 25)
 
 // Permanent faults
 #define PERMANENT_FAULTS 0U
