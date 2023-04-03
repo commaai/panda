@@ -150,6 +150,7 @@ void tick_handler(void) {
 
     // tick drivers at 8Hz
     fan_tick();
+    usb_tick();
 
     // decimated to 1Hz
     if (loop_counter == 0U) {
