@@ -12,6 +12,8 @@ env:
       export DOCKER_BUILDKIT=1
       docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile .
 
+  PYTHONWARNINGS: "error"
+
 jobs:
   docker_push:
     name: docker push
