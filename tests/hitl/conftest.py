@@ -20,8 +20,8 @@ PARTIAL_TESTS = os.environ.get("PARTIAL_TESTS", "0") == "1"
 HW_TYPES = os.environ.get("HW_TYPES", None)
 
 class PandaGroup:
-  H7 = (Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2)
-  GEN2 = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO) + H7
+  H7 = (Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2, Panda.HW_TYPE_TRES)
+  GEN2 = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO, Panda.HW_TYPE_DOS) + H7
   GPS = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO)
   GMLAN = (Panda.HW_TYPE_WHITE_PANDA, Panda.HW_TYPE_GREY_PANDA)
 
