@@ -2,16 +2,17 @@ import time
 import random
 
 
-def time_many_sends(p, bus, p_recv=None, msg_count=100, msg_id=None, two_pandas=False):
+def time_many_sends(p, bus, p_recv=None, msg_count=100, two_pandas=False):
   if p_recv is None:
     p_recv = p
-  if msg_id is None:
-    msg_id = random.randint(0x100, 0x200)
   if p == p_recv and two_pandas:
     raise ValueError("Cannot have two pandas that are the same panda")
 
+  msg_id = random.randint(0x100, 0x200)
+  to_send = [(msg_id, 0, b"\xaa" * 8, bus)] * msg_count
+
   start_time = time.monotonic()
-  p.can_send_many([(msg_id, 0, b"\xaa" * 8, bus)] * msg_count)
+  p.can_send_many(to_send)
   r = []
   r_echo = []
   r_len_expected = msg_count if two_pandas else msg_count * 2

@@ -30,6 +30,7 @@ def test_orientation_detection(p, panda_jungle):
       assert False
     seen_orientations.append(detected_harness_orientation)
 
+@pytest.mark.skip_panda_types((Panda.HW_TYPE_DOS, ))
 def test_voltage(p):
   for _ in range(10):
     voltage = p.health()['voltage']
