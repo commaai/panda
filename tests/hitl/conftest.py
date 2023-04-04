@@ -17,6 +17,7 @@ PEDAL_SERIAL = 'none'
 JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
 PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE", "").strip().split(" ")
 PARTIAL_TESTS = os.environ.get("PARTIAL_TESTS", "0") == "1"
+HW_TYPES = os.environ.get("HW_TYPES", None)
 
 class PandaGroup:
   H7 = (Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2)
@@ -31,9 +32,9 @@ if PARTIAL_TESTS:
   # * red panda covers GEN2, STM32H7
   # * black panda covers STM32F4, GEN2, and GPS
   PandaGroup.TESTED = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA)  # type: ignore
+elif HW_TYPES is not None:
+  PandaGroup.TESTED = [bytes([int(x), ]) for x in HW_TYPES.strip().split(",")] # type: ignore
 
-if os.path.isfile('/TICI'):
-  PandaGroup.TESTED = (Panda.HW_TYPE_DOS, )  # type: ignore
 
 # Find all pandas connected
 _all_pandas = {}
@@ -71,7 +72,10 @@ def init_jungle():
 
 def pytest_configure(config):
   config.addinivalue_line(
-    "markers", "test_panda_types(name): mark test to run only on specified panda types"
+    "markers", "test_panda_types(name): whitelist a test for specific panda types"
+  )
+  config.addinivalue_line(
+    "markers", "skip_panda_types(name): blacklist panda types from a test"
   )
   config.addinivalue_line(
     "markers", "panda_expect_can_error: mark test to ignore CAN health errors"
@@ -98,10 +102,17 @@ def func_fixture_panda(request, module_panda):
   # Check if test is applicable to this panda
   mark = request.node.get_closest_marker('test_panda_types')
   if mark:
-    assert len(mark.args) > 0, "Missing allowed panda types in mark"
+    assert len(mark.args) > 0, "Missing panda types argument in mark"
     test_types = mark.args[0]
     if _all_pandas[p.get_usb_serial()] not in test_types:
       pytest.skip(f"Not applicable, {test_types} pandas only")
+
+  mark = request.node.get_closest_marker('skip_panda_types')
+  if mark:
+    assert len(mark.args) > 0, "Missing panda types argument in mark"
+    skip_types = mark.args[0]
+    if _all_pandas[p.get_usb_serial()] in skip_types:
+      pytest.skip(f"Not applicable to {skip_types}")
 
   # TODO: reset is slow (2+ seconds)
   p.reset()
