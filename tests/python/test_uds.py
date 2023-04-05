@@ -103,16 +103,19 @@ class TestUds(unittest.TestCase):
       uds_client = UdsClient(can_buf, self.tx_addr, self.rx_addr, sub_addr=self.sub_addr)
 
       kill_event = threading.Event()
-      thread_a = threading.Thread(target=uds_server._uds_response, args=(kill_event,))
-      thread_a.start()
+      ud_thread = threading.Thread(target=uds_server._uds_response, args=(kill_event,))
+      ud_thread.start()
 
       uds_client.read_data_by_identifier(0xF180)
       print('CLIENT FINISHED')
       kill_event.set()
-      thread_a.join()
+      ud_thread.join()
       print('finished!')
     except KeyboardInterrupt:
       pass
+    finally:
+      kill_event.set()
+      ud_thread.join()
 
 
 
