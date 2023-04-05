@@ -335,7 +335,7 @@ class CanClient():
     while True:
       time.sleep(0.1)
       msgs = self.rx()
-      print('msgs', msgs)
+      # print('msgs', msgs)
       if drain:
         if self.debug:
           print("CAN-RX: drain - {}".format(len(msgs)))
