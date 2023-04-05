@@ -630,47 +630,6 @@ class UdsClient():
         print('Car ECU - bad request, sending back:', dat)
         isotp_msg.send(dat)
 
-      # return resp
-      continue
-
-      response_pending = False
-      resp_sid = resp[0] if len(resp) > 0 else None
-
-      # negative response
-      if resp_sid == 0x7F:
-        service_id = resp[1] if len(resp) > 1 else -1
-        try:
-          service_desc = SERVICE_TYPE(service_id).name
-        except BaseException:
-          service_desc = 'NON_STANDARD_SERVICE'
-        error_code = resp[2] if len(resp) > 2 else -1
-        try:
-          error_desc = _negative_response_codes[error_code]
-        except BaseException:
-          error_desc = resp[3:].hex()
-        # wait for another message if response pending
-        if error_code == 0x78:
-          response_pending = True
-          if self.debug:
-            print("UDS-RX: response pending")
-          continue
-        raise NegativeResponseError('{} - {}'.format(service_desc, error_desc), service_id, error_code)
-
-      # positive response
-      if service_type + 0x40 != resp_sid:
-        resp_sid_hex = hex(resp_sid) if resp_sid is not None else None
-        raise InvalidServiceIdError('invalid response service id: {}'.format(resp_sid_hex))
-
-      if subfunction is not None:
-        resp_sfn = resp[1] if len(resp) > 1 else None
-        if subfunction != resp_sfn:
-          resp_sfn_hex = hex(resp_sfn) if resp_sfn is not None else None
-          raise InvalidSubFunctioneError(f'invalid response subfunction: {resp_sfn_hex:x}')
-
-      # return data (exclude service id and sub-function id)
-      return resp[(1 if subfunction is None else 2):]
-    print('Car ECU - got kill event')
-
   # generic uds request
   def _uds_request(self, service_type: SERVICE_TYPE, subfunction: int = None, data: bytes = None) -> bytes:
     req = bytes([service_type])
