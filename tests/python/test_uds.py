@@ -4,7 +4,7 @@ import unittest
 import struct
 import threading
 
-from panda.python.uds import SERVICE_TYPE, DATA_IDENTIFIER_TYPE, DEFAULT_VIN, IsoTpMessage, CanClient, UdsClient, get_rx_addr_for_tx_addr
+from panda.python.uds import SERVICE_TYPE, DATA_IDENTIFIER_TYPE, DEFAULT_VIN, IsoTpMessage, UdsClient, get_rx_addr_for_tx_addr
 
 
 class UdsServer(UdsClient):
