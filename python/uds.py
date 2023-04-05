@@ -583,52 +583,8 @@ class UdsClient():
     self.debug = debug
     can_send_with_timeout = partial(panda.can_send, timeout=int(tx_timeout*1000))
     self._can_client = CanClient(can_send_with_timeout, panda.can_recv, self.tx_addr, self.rx_addr, self.bus, self.sub_addr, debug=self.debug)
+    self._server_can_client = CanClient(can_send_with_timeout, panda.can_recv, self.rx_addr, self.tx_addr, self.bus, self.sub_addr, debug=self.debug)
     self.response_pending_timeout = response_pending_timeout
-
-  def _uds_response(self, kill_event):
-    # send request, wait for response
-    max_len = 8 if self.sub_addr is None else 7
-    isotp_msg = IsoTpMessage(self._can_client, timeout=self.timeout, debug=self.debug, max_len=max_len, single_frame_mode=True)
-    isotp_msg.send(b"", setup_only=True)
-    response_pending = False
-    while not kill_event.is_set():
-      print(kill_event.is_set())
-      timeout = self.response_pending_timeout if response_pending else self.timeout
-      resp, _ = isotp_msg.recv(timeout)
-
-      # message from client not fully built
-      if resp is None:
-        continue
-
-      # got a message, now respond
-      resp_sid = resp[0] if len(resp) > 0 else None
-      print('got response!', resp, 'sid:', resp_sid)
-
-      if resp_sid == SERVICE_TYPE.TESTER_PRESENT:
-        dat = bytes([SERVICE_TYPE.TESTER_PRESENT + 0x40, 0x0])
-        print('Car ECU - sending back:', dat)
-        isotp_msg.send(dat)
-      elif resp_sid == SERVICE_TYPE.READ_DATA_BY_IDENTIFIER:
-        print('Car ECU - READ DATA')
-        assert len(resp) > 1
-        resp_data = struct.unpack('!H', resp[1:])[0]
-        print(resp_data)
-        if resp_data == DATA_IDENTIFIER_TYPE.VIN:
-          dat = bytes([resp_sid + 0x40]) + resp[1:] + DEFAULT_VIN.encode('utf-8')
-          print('Car ECU - sending back:', dat)
-          isotp_msg.send(dat)
-        else:
-          dat = bytes([0x7F, resp_sid, *resp[1:]])
-          print('Car ECU - bad data id, sending back:', dat)
-          isotp_msg.send(dat)
-
-      else:
-        dat = [0x7F]
-        if resp_sid is not None:
-          dat.append(resp_sid)
-        dat = bytes(dat)
-        print('Car ECU - bad request, sending back:', dat)
-        isotp_msg.send(dat)
 
   # generic uds request
   def _uds_request(self, service_type: SERVICE_TYPE, subfunction: int = None, data: bytes = None) -> bytes:
@@ -646,6 +602,7 @@ class UdsClient():
     while True:
       timeout = self.response_pending_timeout if response_pending else self.timeout
       resp, _ = isotp_msg.recv(timeout)
+      # print('got resp', resp)
 
       if resp is None:
         continue
