@@ -9,7 +9,7 @@ bool fake_siren_enabled = false;
 
 void fake_siren_codec_enable(bool enabled) {
   if (enabled) {
-    bool success = false;
+    bool success = true;
     success &= i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x2B, (1U << 1)); // Left speaker mix from INA1
     success &= i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x2C, (1U << 1)); // Right speaker mix from INA1
     success &= i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x3D, 0x17, 0b11111); // Left speaker volume
