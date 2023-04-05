@@ -19,11 +19,6 @@ class UdsServer(UdsClient):
       self.stop()
     self.uds_thread.start()
     print('UDS server started!')
-    # kill_event = threading.Event()
-    # can_buf = MockCanBuffer()
-    #
-    # # uds_server = UdsClient(can_buf, self.rx_addr, self.tx_addr, sub_addr=self.sub_addr, timeout=0)
-    # # uds_client = UdsClient(can_buf, self.tx_addr, self.rx_addr, sub_addr=self.sub_addr)
 
   def stop(self):
     self.kill_event.set()
