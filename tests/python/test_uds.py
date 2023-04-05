@@ -88,7 +88,7 @@ class MockCanBuffer:
 
 
 @parameterized_class([
-  # {"tx_addr": 0x750, "sub_addr": None},
+  {"tx_addr": 0x750, "sub_addr": None},
   {"tx_addr": 0x750, "sub_addr": 0xf},
 ])
 class TestUds(unittest.TestCase):
@@ -97,6 +97,12 @@ class TestUds(unittest.TestCase):
 
   def setUp(self):
     self.rx_addr = get_rx_addr_for_tx_addr(self.tx_addr)
+    can_buf = MockCanBuffer()
+    self.uds_server = UdsServer(can_buf, get_rx_addr_for_tx_addr(self.tx_addr), self.tx_addr, sub_addr=self.sub_addr)
+    self.uds_server.start()
+
+  def tearDown(self):
+    self.uds_server.stop()
 
   def test_tester_present(self):
     """
@@ -104,24 +110,15 @@ class TestUds(unittest.TestCase):
     tester present request with and without sub-addresses
     """
 
-    can_buf = MockCanBuffer()
-    uds_server = UdsServer(can_buf, self.rx_addr, self.tx_addr, sub_addr=self.sub_addr)
+    self.uds_server.tester_present()
 
-    uds_server.start()
-    uds_server.tester_present()
-    uds_server.stop()
+  def test_vin_query(self):
+    """
+    Tests all four ISO-TP frame types in both directions (sending as openpilot and the car ECU)
+    """
 
-  # def test_fw_query(self):
-  #   """
-  #   Tests all four ISO-TP frame types in both directions (sending as openpilot and the car ECU)
-  #   """
-  #
-  #   for dat_len in range(0x40):
-  #     with self.subTest(dat_len=dat_len):
-  #       # same data for both directions
-  #       data = bytes(range(dat_len))
-  #       response = simulate_isotp_comms(self.tx_addr, self.rx_addr, data, data, self.sub_addr)
-  #       self.assertEqual(response, data)
+    response = self.uds_server.read_data_by_identifier(DATA_IDENTIFIER_TYPE.VIN)
+    self.assertEqual(response.decode('utf-8'), DEFAULT_VIN)
 
 
 if __name__ == '__main__':
