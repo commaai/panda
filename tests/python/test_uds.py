@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import patch
 import threading
 
-from panda.python.uds import SERVICE_TYPE, DATA_IDENTIFIER_TYPE, IsoTpMessage, CanClient, UdsClient, get_rx_addr_for_tx_addr
+from panda.python.uds import SERVICE_TYPE, DATA_IDENTIFIER_TYPE, DEFAULT_VIN, IsoTpMessage, CanClient, UdsClient, get_rx_addr_for_tx_addr
 
 
 # @patch('panda.python.uds.CanClient', )
@@ -108,6 +108,7 @@ class TestUds(unittest.TestCase):
       uds_thread.start()
       uds_client.tester_present()
       response = uds_client.read_data_by_identifier(DATA_IDENTIFIER_TYPE.VIN)
+      self.assertEqual(response.encode('utf-8'), DEFAULT_VIN)
       print('Client: got resp:', response)
     finally:
       kill_event.set()
