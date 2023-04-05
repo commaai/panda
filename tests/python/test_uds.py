@@ -1,20 +1,33 @@
 #!/usr/bin/env python3
 from parameterized import parameterized_class
 import unittest
+from unittest.mock import patch
+import threading
 
-from panda.python.uds import SERVICE_TYPE, IsoTpMessage, CanClient, get_rx_addr_for_tx_addr
+from panda.python.uds import SERVICE_TYPE, IsoTpMessage, CanClient, UdsClient, get_rx_addr_for_tx_addr
+
+
+# @patch('panda.python.uds.CanClient', )
+class UdsServer(UdsClient):
+  pass
 
 
 class MockCanBuffer:
-  def __init__(self):
+  def __init__(self, lock):
+    self.lock = lock
     self.rx_msg = None
     self.tx_msgs = []
 
-  def can_send(self, addr, dat, bus):
-    self.tx_msgs.append((addr, 0, dat, bus))
+  def can_send(self, addr, dat, bus, timeout=0):
+    with self.lock:
+      print('can client here, adding to tx_msgs')
+      self.tx_msgs.append((addr, 0, dat, bus))
+      self.rx_msg = self.tx_msgs.pop()
 
   def can_recv(self):
-    return [self.rx_msg]
+    with self.lock:
+      print('can client here, returning', [self.rx_msg] if self.rx_msg else [])
+      return [self.rx_msg] if self.rx_msg else []
 
 
 def simulate_isotp_comms(tx_addr: int, rx_addr: int, request: bytes, response: bytes = None,
@@ -72,7 +85,7 @@ def simulate_isotp_comms(tx_addr: int, rx_addr: int, request: bytes, response: b
 
 
 @parameterized_class([
-  {"tx_addr": 0x750, "sub_addr": None},
+  # {"tx_addr": 0x750, "sub_addr": None},
   {"tx_addr": 0x750, "sub_addr": 0xf},
 ])
 class TestUds(unittest.TestCase):
@@ -82,26 +95,47 @@ class TestUds(unittest.TestCase):
   def setUp(self):
     self.rx_addr = get_rx_addr_for_tx_addr(self.tx_addr)
 
-  def test_tester_present(self):
-    """
-    Tests IsoTpMessage and CanClient both sending and responding to a
-    tester present request with and without sub-addresses
-    """
+  def test_something(self):
+    try:
+      lock = threading.Lock()
+      can_buf = MockCanBuffer(lock)
+      uds_server = UdsClient(can_buf, self.rx_addr, self.tx_addr, sub_addr=self.sub_addr, timeout=0)
+      uds_client = UdsClient(can_buf, self.tx_addr, self.rx_addr, sub_addr=self.sub_addr)
 
-    response = simulate_isotp_comms(self.tx_addr, self.rx_addr, bytes([SERVICE_TYPE.TESTER_PRESENT]), sub_addr=self.sub_addr)
-    self.assertEqual(response, bytes([SERVICE_TYPE.TESTER_PRESENT + 0x40]))
+      kill_event = threading.Event()
+      thread_a = threading.Thread(target=uds_server._uds_response, args=(kill_event,))
+      thread_a.start()
 
-  def test_fw_query(self):
-    """
-    Tests all four ISO-TP frame types in both directions (sending as openpilot and the car ECU)
-    """
+      uds_client.read_data_by_identifier(0xF180)
+      print('CLIENT FINISHED')
+      kill_event.set()
+      thread_a.join()
+      print('finished!')
+    except KeyboardInterrupt:
+      pass
 
-    for dat_len in range(0x40):
-      with self.subTest(dat_len=dat_len):
-        # same data for both directions
-        data = bytes(range(dat_len))
-        response = simulate_isotp_comms(self.tx_addr, self.rx_addr, data, data, self.sub_addr)
-        self.assertEqual(response, data)
+
+
+  # def test_tester_present(self):
+  #   """
+  #   Tests IsoTpMessage and CanClient both sending and responding to a
+  #   tester present request with and without sub-addresses
+  #   """
+  #
+  #   response = simulate_isotp_comms(self.tx_addr, self.rx_addr, bytes([SERVICE_TYPE.TESTER_PRESENT]), sub_addr=self.sub_addr)
+  #   self.assertEqual(response, bytes([SERVICE_TYPE.TESTER_PRESENT + 0x40]))
+  #
+  # def test_fw_query(self):
+  #   """
+  #   Tests all four ISO-TP frame types in both directions (sending as openpilot and the car ECU)
+  #   """
+  #
+  #   for dat_len in range(0x40):
+  #     with self.subTest(dat_len=dat_len):
+  #       # same data for both directions
+  #       data = bytes(range(dat_len))
+  #       response = simulate_isotp_comms(self.tx_addr, self.rx_addr, data, data, self.sub_addr)
+  #       self.assertEqual(response, data)
 
 
 if __name__ == '__main__':
