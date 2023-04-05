@@ -6,6 +6,8 @@ from typing import Callable, NamedTuple, Tuple, List, Deque, Generator, Optional
 from enum import IntEnum
 from functools import partial
 
+DEFAULT_VIN = '1H3110W0RLD5'
+
 class SERVICE_TYPE(IntEnum):
   DIAGNOSTIC_SESSION_CONTROL = 0x10
   ECU_RESET = 0x11
@@ -329,7 +331,7 @@ class CanClient():
     return bus == self.bus and addr == self.rx_addr
 
   def _recv_buffer(self, drain: bool = False) -> None:
-    print('top of recv buffer')
+    # print('top of recv buffer')
     while True:
       time.sleep(0.1)
       msgs = self.rx()
@@ -352,14 +354,14 @@ class CanClient():
 
             self.rx_buff.append(rx_data)
       # break when non-full buffer is processed
-      print('len msgs', len(msgs))
+      # print('len msgs', len(msgs))
       if len(msgs) < 254:
         return
 
   def recv(self, drain: bool = False) -> Generator[bytes, None, None]:
     # buffer rx messages in case two response messages are received at once
     # (e.g. response pending and success/failure response)
-    print('we could be here')
+    # print('we could be here')
     self._recv_buffer(drain)
     try:
       while True:
@@ -606,9 +608,26 @@ class UdsClient():
         dat = bytes([SERVICE_TYPE.TESTER_PRESENT + 0x40, 0x0])
         print('Car ECU - sending back:', dat)
         isotp_msg.send(dat)
+      elif resp_sid == SERVICE_TYPE.READ_DATA_BY_IDENTIFIER:
+        print('Car ECU - READ DATA')
+        assert len(resp) > 1
+        resp_data = struct.unpack('!H', resp[1:])[0]
+        print(resp_data)
+        if resp_data == DATA_IDENTIFIER_TYPE.VIN:
+          dat = bytes([resp_sid + 0x40]) + resp[1:] + DEFAULT_VIN.encode('utf-8')
+          print('Car ECU - sending back:', dat)
+          isotp_msg.send(dat)
+        else:
+          dat = bytes([0x7F, resp_sid, *resp[1:]])
+          print('Car ECU - bad data id, sending back:', dat)
+          isotp_msg.send(dat)
+
       else:
-        dat = bytes([0x7F, SERVICE_TYPE.TESTER_PRESENT])
-        print('Car ECU - sending back:', dat)
+        dat = [0x7F]
+        if resp_sid is not None:
+          dat.append(resp_sid)
+        dat = bytes(dat)
+        print('Car ECU - bad request, sending back:', dat)
         isotp_msg.send(dat)
 
       # return resp

@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import patch
 import threading
 
-from panda.python.uds import SERVICE_TYPE, IsoTpMessage, CanClient, UdsClient, get_rx_addr_for_tx_addr
+from panda.python.uds import SERVICE_TYPE, DATA_IDENTIFIER_TYPE, IsoTpMessage, CanClient, UdsClient, get_rx_addr_for_tx_addr
 
 
 # @patch('panda.python.uds.CanClient', )
@@ -13,20 +13,20 @@ class UdsServer(UdsClient):
 
 
 class MockCanBuffer:
-  def __init__(self, lock):
-    self.lock = lock
+  def __init__(self):
+    self.lock = threading.Lock()
     self.rx_msg = None
     self.tx_msgs = []
 
   def can_send(self, addr, dat, bus, timeout=0):
     with self.lock:
-      print('can client here, adding to tx_msgs')
+      # print('can client here, adding to tx_msgs')
       self.tx_msgs.append((addr, 0, dat, bus))
       self.rx_msg = self.tx_msgs.pop()
 
   def can_recv(self):
     with self.lock:
-      print('can client here, returning', [self.rx_msg] if self.rx_msg else [])
+      # print('can client here, returning', [self.rx_msg] if self.rx_msg else [])
       return [self.rx_msg] if self.rx_msg else []
 
 
@@ -96,27 +96,23 @@ class TestUds(unittest.TestCase):
     self.rx_addr = get_rx_addr_for_tx_addr(self.tx_addr)
 
   def test_something(self):
+    kill_event = threading.Event()
+    can_buf = MockCanBuffer()
+
+    uds_server = UdsClient(can_buf, self.rx_addr, self.tx_addr, sub_addr=self.sub_addr, timeout=0)
+    uds_client = UdsClient(can_buf, self.tx_addr, self.rx_addr, sub_addr=self.sub_addr)
+
+    uds_thread = threading.Thread(target=uds_server._uds_response, args=(kill_event,))
+
     try:
-      lock = threading.Lock()
-      can_buf = MockCanBuffer(lock)
-      uds_server = UdsClient(can_buf, self.rx_addr, self.tx_addr, sub_addr=self.sub_addr, timeout=0)
-      uds_client = UdsClient(can_buf, self.tx_addr, self.rx_addr, sub_addr=self.sub_addr)
-
-      kill_event = threading.Event()
-      ud_thread = threading.Thread(target=uds_server._uds_response, args=(kill_event,))
-      ud_thread.start()
-
-      uds_client.read_data_by_identifier(0xF180)
-      print('CLIENT FINISHED')
-      kill_event.set()
-      ud_thread.join()
-      print('finished!')
-    except KeyboardInterrupt:
-      pass
+      uds_thread.start()
+      uds_client.tester_present()
+      response = uds_client.read_data_by_identifier(DATA_IDENTIFIER_TYPE.VIN)
+      print('Client: got resp:', response)
     finally:
       kill_event.set()
-      ud_thread.join()
-
+      uds_thread.join()
+      print('finished!')
 
 
   # def test_tester_present(self):
