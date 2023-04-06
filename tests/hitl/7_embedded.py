@@ -9,7 +9,7 @@ def test_fan_controller(p):
     p.set_fan_power(power)
     time.sleep(10)
 
-    expected_rpm = Panda.MAX_FAN_RPMs[p.get_type()[0]] * power / 100
+    expected_rpm = Panda.MAX_FAN_RPMs[p.get_type()] * power / 100
     assert 0.95 * expected_rpm <= p.get_fan_rpm() <= 1.05 * expected_rpm
 
 @pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES)
