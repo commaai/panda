@@ -23,4 +23,20 @@ def test_fan_cooldown(p):
     assert p.get_fan_rpm() <= 7000
     time.sleep(0.5)
 
+@pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES)
+def test_fan_overshoot(p):
+  # make sure it's stopped completely
+  p.set_fan_power(0)
+  while p.get_fan_rpm() > 100:
+    time.sleep(0.1)
 
+  # set it to 30% power to mimic going onroad
+  p.set_fan_power(30)
+  max_rpm = 0
+  for _ in range(50):
+    max_rpm = max(max_rpm, p.get_fan_rpm())
+    time.sleep(0.1)
+
+  # tolerate 10% overshoot
+  expected_rpm = Panda.MAX_FAN_RPMs[p.get_type()] * 30 / 100
+  assert max_rpm <= 1.1 * expected_rpm, f"Fan overshoot: {max_rpm / expected_rpm * 100:.1f}%"
