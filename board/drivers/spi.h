@@ -147,8 +147,8 @@ void spi_handle_rx(void) {
   }
 
   spi_state = next_rx_state;
-  if (!checksum_valid && spi_checksum_error_count < __UINT16_MAX__) {
-    spi_checksum_error_count += 1;
+  if (!checksum_valid && (spi_checksum_error_count < __UINT16_MAX__)) {
+    spi_checksum_error_count += 1U;
   }
 }
 
