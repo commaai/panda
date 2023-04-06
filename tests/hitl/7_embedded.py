@@ -39,4 +39,4 @@ def test_fan_overshoot(p):
 
   # tolerate 10% overshoot
   expected_rpm = Panda.MAX_FAN_RPMs[bytes(p.get_type())] * 30 / 100
-  assert max_rpm <= 1.1 * expected_rpm, f"Fan overshoot: {max_rpm / expected_rpm * 100:.1f}%"
+  assert max_rpm <= 1.1 * expected_rpm, f"Fan overshoot: {(max_rpm / expected_rpm * 100) - 100:.1f}%"
