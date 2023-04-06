@@ -9,7 +9,7 @@ def test_fan_controller(p):
     p.set_fan_power(power)
     time.sleep(10)
 
-    expected_rpm = Panda.MAX_FAN_RPMs[p.get_type()] * power / 100
+    expected_rpm = Panda.MAX_FAN_RPMs[bytes(p.get_type())] * power / 100
     assert 0.95 * expected_rpm <= p.get_fan_rpm() <= 1.05 * expected_rpm
 
 @pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES)
@@ -38,5 +38,5 @@ def test_fan_overshoot(p):
     time.sleep(0.1)
 
   # tolerate 10% overshoot
-  expected_rpm = Panda.MAX_FAN_RPMs[p.get_type()] * 30 / 100
+  expected_rpm = Panda.MAX_FAN_RPMs[bytes(p.get_type())] * 30 / 100
   assert max_rpm <= 1.1 * expected_rpm, f"Fan overshoot: {max_rpm / expected_rpm * 100:.1f}%"
