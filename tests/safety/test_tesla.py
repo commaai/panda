@@ -124,12 +124,12 @@ class TestTeslaLongitudinalSafety(TestTeslaSafety):
 
     # stock system sends no AEB -> no forwarding, and OP is allowed to TX
     self.assertEqual(1, self._rx(no_aeb_msg_cam))
-    self.assertEqual(-1, self.safety.safety_fwd_hook(2, no_aeb_msg_cam))
+    self.assertEqual(-1, self.safety.safety_fwd_hook(2, no_aeb_msg_cam.addr))
     self.assertEqual(True, self._tx(no_aeb_msg))
 
     # stock system sends AEB -> forwarding, and OP is not allowed to TX
     self.assertEqual(1, self._rx(aeb_msg_cam))
-    self.assertEqual(0, self.safety.safety_fwd_hook(2, aeb_msg_cam))
+    self.assertEqual(0, self.safety.safety_fwd_hook(2, aeb_msg_cam.addr))
     self.assertEqual(False, self._tx(no_aeb_msg))
 
   def test_acc_accel_limits(self):
