@@ -158,6 +158,7 @@ void init_tests(void){
 
   // car-specific stuff
   honda_fwd_brake = false;
+  tesla_stock_aeb = false;
 }
 
 void set_gmlan_digital_output(int to_set){
