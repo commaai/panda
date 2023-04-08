@@ -7,7 +7,7 @@ from panda.tests.safety.common import CANPackerPanda
 
 
 class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
-  TX_MSGS = [[0x122, 0], [0x221, 0], [0x321, 0], [0x322, 0]]
+  TX_MSGS = [[0x122, 0], [0x221, 0], [0x321, 0], [0x322, 0], [0x323, 0]]
   STANDSTILL_THRESHOLD = 0  # kph
   RELAY_MALFUNCTION_ADDR = 0x122
   RELAY_MALFUNCTION_BUS = 0
@@ -64,7 +64,7 @@ class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
 
 
 class TestSubaruGen2Safety(TestSubaruSafety):
-  TX_MSGS = [[0x122, 0], [0x221, 1], [0x321, 0], [0x322, 0]]
+  TX_MSGS = [[0x122, 0], [0x221, 1], [0x321, 0], [0x322, 0], [0x323, 0]]
   ALT_BUS = 1
 
   MAX_RATE_UP = 40
