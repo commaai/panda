@@ -39,7 +39,6 @@ class UdsServer(UdsClient):
 
       # got a message, now respond
       resp_sid = resp[0] if len(resp) > 0 else None
-      print('got response!', resp, 'sid:', resp_sid)
 
       if resp_sid == SERVICE_TYPE.TESTER_PRESENT:
         dat = bytes([SERVICE_TYPE.TESTER_PRESENT + 0x40, 0x0])
