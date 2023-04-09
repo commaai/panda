@@ -331,11 +331,9 @@ class CanClient():
     return bus == self.bus and addr == self.rx_addr
 
   def _recv_buffer(self, drain: bool = False) -> None:
-    # print('top of recv buffer')
     while True:
       time.sleep(0.1)
       msgs = self.rx()
-      # print('msgs', msgs)
       if drain:
         if self.debug:
           print("CAN-RX: drain - {}".format(len(msgs)))
@@ -354,14 +352,12 @@ class CanClient():
 
             self.rx_buff.append(rx_data)
       # break when non-full buffer is processed
-      # print('len msgs', len(msgs))
       if len(msgs) < 254:
         return
 
   def recv(self, drain: bool = False) -> Generator[bytes, None, None]:
     # buffer rx messages in case two response messages are received at once
     # (e.g. response pending and success/failure response)
-    # print('we could be here')
     self._recv_buffer(drain)
     try:
       while True:
@@ -444,7 +440,6 @@ class IsoTpMessage():
         print(f"ISO-TP: TX - first frame - {hex(self._can_client.tx_addr)}")
       msg = (struct.pack("!H", 0x1000 | self.tx_len) + self.tx_dat[:self.max_len - 2]).ljust(self.max_len - 2, b"\x00")
     if not setup_only:
-      print('put msg in can_client', msg)
       self._can_client.send([msg])
 
   def recv(self, timeout=None) -> Tuple[Optional[bytes], bool]:
@@ -602,7 +597,6 @@ class UdsClient():
     while True:
       timeout = self.response_pending_timeout if response_pending else self.timeout
       resp, _ = isotp_msg.recv(timeout)
-      # print('got resp', resp)
 
       if resp is None:
         continue
