@@ -11,7 +11,7 @@ DEFAULT_VIN = '1H3110W0RLD5'
 
 class UdsServer(UdsClient):
   def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
+    super().__init__(*args, **kwargs, single_frame_mode=True)
     self.kill_event = threading.Event()
     self.uds_thread = threading.Thread(target=self._uds_response)
 
