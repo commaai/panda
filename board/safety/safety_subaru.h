@@ -202,10 +202,8 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+static int subaru_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
-
-  int addr = GET_ADDR(to_fwd);
 
   if (bus_num == 0) {
     // Global Platform

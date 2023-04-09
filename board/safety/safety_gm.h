@@ -1,8 +1,8 @@
 const SteeringLimits GM_STEERING_LIMITS = {
   .max_steer = 300,
   .max_rate_up = 10,
-  .max_rate_down = 25,
-  .driver_torque_allowance = 50,
+  .max_rate_down = 15,
+  .driver_torque_allowance = 65,
   .driver_torque_factor = 4,
   .max_rt_delta = 128,
   .max_rt_interval = 250000,
@@ -210,12 +210,11 @@ static int gm_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static int gm_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+static int gm_fwd_hook(int bus_num, int addr) {
 
   int bus_fwd = -1;
 
   if (gm_hw == GM_CAM) {
-    int addr = GET_ADDR(to_fwd);
     if (bus_num == 0) {
       // block PSCMStatus; forwarded through openpilot to hide an alert from the camera
       bool is_pscm_msg = (addr == 388);

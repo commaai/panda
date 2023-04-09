@@ -83,7 +83,7 @@ RUN cd /tmp/openpilot && \
     git clone https://github.com/commaai/panda_jungle.git && \
     cd panda_jungle && \
     git fetch && \
-    git checkout 7b7197c605915ac34f3d62f314edd84e2e78a759 && \
+    git checkout 3a791be1f1877a69cf45de16a670992380622297 && \
     rm -rf .git/
 
 RUN cd /tmp/openpilot && \
