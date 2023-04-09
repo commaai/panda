@@ -10,7 +10,6 @@ from panda.python.uds import SERVICE_TYPE, DATA_IDENTIFIER_TYPE, DEFAULT_VIN, Is
 class UdsServer(UdsClient):
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
-    # self.uds_client = UdsClient
     self.kill_event = threading.Event()
     self.uds_thread = threading.Thread(target=self._uds_response)
 
@@ -18,12 +17,10 @@ class UdsServer(UdsClient):
     if self.uds_thread.is_alive():
       self.stop()
     self.uds_thread.start()
-    print('UDS server started!')
 
   def stop(self):
     self.kill_event.set()
     self.uds_thread.join()
-    print('UDS server stopped!')
 
   def _uds_response(self):
     # send request, wait for response
@@ -72,19 +69,15 @@ class UdsServer(UdsClient):
 class MockCanBuffer:
   def __init__(self):
     self.lock = threading.Lock()
-    self.rx_msg = None
-    self.tx_msgs = []
+    self.rx_msg = []
 
   def can_send(self, addr, dat, bus, timeout=0):
     with self.lock:
-      # print('can client here, adding to tx_msgs')
-      self.tx_msgs.append((addr, 0, dat, bus))
-      self.rx_msg = self.tx_msgs.pop()
+      self.rx_msg = [(addr, 0, dat, bus)]
 
   def can_recv(self):
     with self.lock:
-      # print('can client here, returning', [self.rx_msg] if self.rx_msg else [])
-      return [self.rx_msg] if self.rx_msg else []
+      return self.rx_msg
 
 
 @parameterized_class([
