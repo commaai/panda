@@ -6,8 +6,6 @@ from typing import Callable, NamedTuple, Tuple, List, Deque, Generator, Optional
 from enum import IntEnum
 from functools import partial
 
-DEFAULT_VIN = '1H3110W0RLD5'
-
 class SERVICE_TYPE(IntEnum):
   DIAGNOSTIC_SESSION_CONTROL = 0x10
   ECU_RESET = 0x11
@@ -332,7 +330,6 @@ class CanClient():
 
   def _recv_buffer(self, drain: bool = False) -> None:
     while True:
-      time.sleep(0.1)
       msgs = self.rx()
       if drain:
         if self.debug:
