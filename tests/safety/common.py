@@ -654,18 +654,17 @@ class PandaSafetyTest(PandaSafetyTestBase):
     for bus in range(0, 3):
       for addr in self.SCANNED_ADDRS:
         self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
-        self.assertEqual(-1, self.safety.safety_fwd_hook(bus, make_msg(bus, addr, 8)))
+        self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
 
   def test_fwd_hook(self):
     # some safety modes don't forward anything, while others blacklist msgs
     for bus in range(0, 3):
       for addr in self.SCANNED_ADDRS:
         # assume len 8
-        msg = make_msg(bus, addr, 8)
         fwd_bus = self.FWD_BUS_LOOKUP.get(bus, -1)
         if bus in self.FWD_BLACKLISTED_ADDRS and addr in self.FWD_BLACKLISTED_ADDRS[bus]:
           fwd_bus = -1
-        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg), f"{addr=:#x} from {bus=} to {fwd_bus=}")
+        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, addr), f"{addr=:#x} from {bus=} to {fwd_bus=}")
 
   def test_spam_can_buses(self):
     for bus in range(0, 4):

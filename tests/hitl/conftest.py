@@ -132,6 +132,9 @@ def func_fixture_panda(request, module_panda):
   # Check for faults
   assert p.health()['fault_status'] == 0
 
+  # Check for SPI errors
+  assert p.health()['spi_checksum_error_count'] == 0
+
   # Check health of each CAN core after test, normal to fail for test_gen2_loopback on OBD bus, so skipping
   mark = request.node.get_closest_marker('panda_expect_can_error')
   expect_can_error = mark is not None
