@@ -149,10 +149,10 @@ void can_rx(uint8_t can_number) {
       // get the index of the next RX FIFO element (0 to FDCAN_RX_FIFO_0_EL_CNT - 1)
       uint8_t rx_fifo_idx = (uint8_t)((CANx->RXF0S >> FDCAN_RXF0S_F0GI_Pos) & 0x3F);
 
+      // Recommended to offset get index by at least +1 if RX FIFO is in overwrite mode and full (datasheet)
       if((CANx->RXF0S & FDCAN_RXF0S_F0F) == FDCAN_RXF0S_F0F) {
-        rx_fifo_idx += 1U; // Recommended get index offset by datasheet if RX FIFO is in overwrite mode and full
+        rx_fifo_idx = ((rx_fifo_idx + 1U) >= FDCAN_RX_FIFO_0_EL_CNT) ? 0U : (rx_fifo_idx + 1U);
       }
-      rx_fifo_idx = ((rx_fifo_idx >= FDCAN_RX_FIFO_0_EL_CNT) ? (rx_fifo_idx - FDCAN_RX_FIFO_0_EL_CNT) : rx_fifo_idx);
 
       uint32_t RxFIFO0SA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET);
       CANPacket_t to_push;
