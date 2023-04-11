@@ -56,7 +56,8 @@ def canfd_test(p_send, p_recv):
       for dlc in range(len(DLC_TO_LEN)):
         address = random.randrange(1, 1<<29)
         data = bytearray(random.getrandbits(8) for _ in range(DLC_TO_LEN[dlc]))
-        data[0] = calculate_checksum(data[1:] + bytes(str(address), encoding="utf-8"))
+        if len(data) >= 2:
+          data[0] = calculate_checksum(data[1:] + bytes(str(address), encoding="utf-8"))
         to_send.append([address, 0, data, bus])
         sent_msgs[bus].add((address, data))
 
@@ -67,7 +68,8 @@ def canfd_test(p_send, p_recv):
       incoming = p_recv.can_recv()
       for msg in incoming:
         address, _, data, bus = msg
-        assert calculate_checksum(data[1:] + bytes(str(address), encoding="utf-8")) == data[0]
+        if len(data) >= 2:
+          assert calculate_checksum(data[1:] + bytes(str(address), encoding="utf-8")) == data[0]
         k = (address, bytes(data))
         assert k in sent_msgs[bus], f"message {k} was never sent on bus {bus}"
         sent_msgs[bus].discard(k)
