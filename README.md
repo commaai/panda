@@ -16,7 +16,7 @@ It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?
 Setup dependencies:
 ```bash
 # Ubuntu
-sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip
+sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip libffi-dev
 ```
 ```bash
 # macOS
