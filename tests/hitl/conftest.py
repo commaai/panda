@@ -130,6 +130,7 @@ def func_fixture_panda(request, module_panda):
   # show up as failed tests instead of "errors"
 
   # Check for faults
+  assert p.health()['faults'] == 0
   assert p.health()['fault_status'] == 0
 
   # Check for SPI errors
