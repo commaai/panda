@@ -17,7 +17,7 @@ Setup your dependencies:
 
 ```bash
 # Ubuntu
-sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip scons
+sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip libffi-dev scons
 pip install -r requirements.txt
 
 # macOS
