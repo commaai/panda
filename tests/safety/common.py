@@ -156,6 +156,7 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
               (self.MIN_ACCEL, self.MAX_ACCEL, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
 
     for min_accel, max_accel, alternative_experience in limits:
+      # enforce we don't skip over 0 or inactive accel
       for accel in np.concatenate((np.arange(min_accel - 1, max_accel + 1, 0.05), [0, self.INACTIVE_ACCEL])):
         for controls_allowed in [True, False]:
           self.safety.set_controls_allowed(controls_allowed)
