@@ -24,8 +24,7 @@ const CanMsg SUBARU_TX_MSGS[] = {
   {0x122, 0, 8},
   {0x221, 0, 8},
   {0x321, 0, 8},
-  {0x322, 0, 8},
-  {0x323, 0, 8},
+  {0x322, 0, 8}
 };
 #define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
 
@@ -160,8 +159,11 @@ static int subaru_fwd_hook(int bus_num, int addr) {
     // 0x321 ES_DashStatus
     // 0x322 ES_LKAS_State
     // 0x323 INFOTAINMENT_STATUS
-    bool block_lkas = (addr == 0x122) || (addr == 0x321) || (addr == 0x322) || (addr == 0x323);
-    if (!block_lkas) {
+    bool block_infotainment = subaru_gen2 && (addr == 0x323);
+    bool block_lkas = (addr == 0x122) || (addr == 0x321) || (addr == 0x322);
+    bool block_addr = block_infotainment || block_lkas;
+    
+    if (!block_addr) {
       bus_fwd = 0;  // Main CAN
     }
   }
