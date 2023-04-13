@@ -13,25 +13,30 @@ It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?
 
 ## Usage
 
-Setup your dependencies:
-
+Setup dependencies:
 ```bash
 # Ubuntu
-sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip
-pip install -r requirements.txt
-
+sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip libffi-dev git
+```
+```bash
 # macOS
 brew tap ArmMbed/homebrew-formulae
 brew install python dfu-util arm-none-eabi-gcc gcc@12
-pip install -r requirements.txt
 ```
 
-### Python
-
-To install the library:
+Clone panda repository:
 ``` bash
 git clone https://github.com/commaai/panda.git
 cd panda
+```
+
+Install requirements:
+```bash
+pip install -r requirements.txt
+```
+
+Install library:
+``` bash
 python setup.py install
 ```
 
