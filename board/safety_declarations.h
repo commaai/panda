@@ -153,7 +153,7 @@ typedef const addr_checks* (*safety_hook_init)(uint16_t param);
 typedef int (*rx_hook)(CANPacket_t *to_push);
 typedef int (*tx_hook)(CANPacket_t *to_send);
 typedef int (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
-typedef int (*fwd_hook)(int bus_num, CANPacket_t *to_fwd);
+typedef int (*fwd_hook)(int bus_num, int addr);
 
 typedef struct {
   safety_hook_init init;

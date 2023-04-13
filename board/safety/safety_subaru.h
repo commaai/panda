@@ -147,7 +147,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+static int subaru_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   if (bus_num == 0) {
@@ -160,7 +160,6 @@ static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     // 0x321 ES_DashStatus
     // 0x322 ES_LKAS_State
     // 0x323 INFOTAINMENT_STATUS
-    int addr = GET_ADDR(to_fwd);
     bool block_lkas = (addr == 0x122) || (addr == 0x321) || (addr == 0x322) || (addr == 0x323);
     if (!block_lkas) {
       bus_fwd = 0;  // Main CAN
