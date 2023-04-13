@@ -41,8 +41,8 @@ typedef struct __attribute__((packed)) {
   uint8_t receive_error_cnt; // REC
   uint8_t transmit_error_cnt; // TEC
   uint32_t total_error_cnt; // How many times any error interrupt were invoked
-  uint32_t total_tx_lost_cnt; // Tx event FIFO element Lost
-  uint32_t total_rx_lost_cnt; // Rx FIFO 0 message Lost
+  uint32_t total_tx_lost_cnt; // Tx event FIFO element lost
+  uint32_t total_rx_lost_cnt; // Rx FIFO 0 message lost due to FIFO full condition
   uint32_t total_tx_cnt;
   uint32_t total_rx_cnt;
   uint32_t total_fwd_cnt; // Messages forwarded from one bus to another
