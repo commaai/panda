@@ -524,10 +524,6 @@ class TestHondaBoschRadarlessSafetyBase(TestHondaBoschSafetyBase):
     self.packer = CANPackerPanda("honda_civic_ex_2022_can_generated")
     self.safety = libpanda_py.libpanda
 
-  # These cars do not have 0x1BE (BRAKE_MODULE)
-  def test_alt_disengage_on_brake(self):
-    pass
-
 
 class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschRadarlessSafetyBase):
   """
