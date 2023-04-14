@@ -245,7 +245,6 @@ const board board_dos = {
   .set_usb_power_mode = dos_set_usb_power_mode,
   .set_gps_mode = unused_set_gps_mode,
   .set_can_mode = dos_set_can_mode,
-  .usb_power_mode_tick = unused_usb_power_mode_tick,
   .check_ignition = dos_check_ignition,
   .read_current = unused_read_current,
   .set_fan_enabled = dos_set_fan_enabled,

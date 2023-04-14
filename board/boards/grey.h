@@ -55,7 +55,6 @@ const board board_grey = {
   .set_usb_power_mode = white_set_usb_power_mode,
   .set_gps_mode = grey_set_gps_mode,
   .set_can_mode = white_set_can_mode,
-  .usb_power_mode_tick = unused_usb_power_mode_tick,
   .check_ignition = white_check_ignition,
   .read_current = white_read_current,
   .set_fan_enabled = unused_set_fan_enabled,

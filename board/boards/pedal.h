@@ -98,7 +98,6 @@ const board board_pedal = {
   .set_usb_power_mode = pedal_set_usb_power_mode,
   .set_gps_mode = pedal_set_gps_mode,
   .set_can_mode = pedal_set_can_mode,
-  .usb_power_mode_tick = unused_usb_power_mode_tick,
   .check_ignition = pedal_check_ignition,
   .read_current = unused_read_current,
   .set_fan_enabled = unused_set_fan_enabled,

@@ -32,7 +32,6 @@ const board board_red_v2 = {
   .set_usb_power_mode = unused_set_usb_power_mode,
   .set_gps_mode = unused_set_gps_mode,
   .set_can_mode = red_set_can_mode,
-  .usb_power_mode_tick = unused_usb_power_mode_tick,
   .check_ignition = red_check_ignition,
   .read_current = unused_read_current,
   .set_fan_enabled = unused_set_fan_enabled,

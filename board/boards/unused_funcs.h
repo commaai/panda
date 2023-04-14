@@ -2,10 +2,6 @@ void unused_set_gps_mode(uint8_t mode) {
   UNUSED(mode);
 }
 
-void unused_usb_power_mode_tick(uint32_t uptime) {
-  UNUSED(uptime);
-}
-
 void unused_set_ir_power(uint8_t percentage) {
   UNUSED(percentage);
 }
