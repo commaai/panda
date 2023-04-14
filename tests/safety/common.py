@@ -158,14 +158,15 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
     for min_accel, max_accel, alternative_experience in limits:
       # enforce we don't skip over 0 or inactive accel
       for accel in np.concatenate((np.arange(min_accel - 1, max_accel + 1, 0.05), [0, self.INACTIVE_ACCEL])):
+        accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
         for controls_allowed in [True, False]:
           self.safety.set_controls_allowed(controls_allowed)
           self.safety.set_alternative_experience(alternative_experience)
           if stock_longitudinal:
             should_tx = False
           else:
-            should_tx = controls_allowed and int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
-            should_tx = should_tx or int(accel * 1000) == int(self.INACTIVE_ACCEL * 1000)
+            should_tx = controls_allowed and min_accel <= accel <= max_accel
+            should_tx = should_tx or accel == self.INACTIVE_ACCEL
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
 
