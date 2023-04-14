@@ -165,7 +165,7 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
             should_tx = False
           else:
             should_tx = controls_allowed and int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
-            should_tx = should_tx or accel == self.INACTIVE_ACCEL
+            should_tx = should_tx or int(accel * 1000) == int(self.INACTIVE_ACCEL * 1000)
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
 
