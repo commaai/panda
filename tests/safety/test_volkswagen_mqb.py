@@ -212,8 +212,7 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
       for accel in np.concatenate((np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.03), [0, self.INACTIVE_ACCEL])):
         accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
         is_inactive_accel = accel == self.INACTIVE_ACCEL
-        send = controls_allowed and MIN_ACCEL <= accel <= MAX_ACCEL
-        send = send or is_inactive_accel
+        send = (controls_allowed and MIN_ACCEL <= accel <= MAX_ACCEL) or is_inactive_accel
         self.safety.set_controls_allowed(controls_allowed)
         # primary accel request used by ECU
         self.assertEqual(send, self._tx(self._acc_06_msg(accel)), (controls_allowed, accel))
