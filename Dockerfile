@@ -70,6 +70,7 @@ RUN cd /tmp && \
     git fetch origin $OPENPILOT_REF && \
     git checkout $OPENPILOT_REF && \
     git submodule update --init cereal opendbc rednose_repo && \
+    git -C opendbc fetch && \
     git -C opendbc checkout $OPENDBC_REF && \
     git -C opendbc reset --hard HEAD && \
     git -C opendbc clean -xfd && \
