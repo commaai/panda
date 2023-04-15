@@ -208,16 +208,18 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
 
   def test_accel_safety_check(self):
     for controls_allowed in [True, False]:
-      for accel in np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.03):
+      # enforce we don't skip over 0 or inactive accel
+      for accel in np.concatenate((np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.03), [0, self.INACTIVE_ACCEL])):
         accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
-        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == self.INACTIVE_ACCEL
+        is_inactive_accel = accel == self.INACTIVE_ACCEL
+        send = (controls_allowed and MIN_ACCEL <= accel <= MAX_ACCEL) or is_inactive_accel
         self.safety.set_controls_allowed(controls_allowed)
         # primary accel request used by ECU
         self.assertEqual(send, self._tx(self._acc_06_msg(accel)), (controls_allowed, accel))
         # additional accel request used by ABS/ESP
         self.assertEqual(send, self._tx(self._acc_07_msg(accel)), (controls_allowed, accel))
-        # ensure the optional secondary accel field remains disabled for now
-        self.assertFalse(self._tx(self._acc_07_msg(accel, secondary_accel=accel)), (controls_allowed, accel))
+        # ensure the optional secondary accel field remains inactive for now
+        self.assertEqual(is_inactive_accel, self._tx(self._acc_07_msg(accel, secondary_accel=accel)), (controls_allowed, accel))
 
 
 if __name__ == "__main__":
