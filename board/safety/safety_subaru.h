@@ -20,14 +20,14 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
   .type = TorqueDriverLimited,
 };
 
-const int SUBARU_BRAKE_MIN = 0;
-const int SUBARU_BRAKE_MAX = 400;
+const LongitudinalLimits SUBARU_LONG_LIMITS = {
+  .min_gas = 0,
+  .max_gas = 3400,
+  .min_rpm = 0,
+  .max_rpm = 3200,
+  .max_brake = 400,
+};
 
-const int SUBARU_THROTTLE_MIN = 0;
-const int SUBARU_THROTTLE_MAX = 3400;
-
-const int SUBARU_RPM_MIN = 0;
-const int SUBARU_RPM_MAX = 3200;
 
 const CanMsg SUBARU_TX_MSGS[] = {
   {0x122, 0, 8},
@@ -175,24 +175,29 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
       tx = 0;
     }
-
   }
 
   if (subaru_longitudinal) {
     // check es_brake brake_pressure limits
     if (addr == 0x220) {
       int es_brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
-      violation |= !subaru_aeb && max_limit_check(es_brake_pressure, SUBARU_BRAKE_MAX, SUBARU_BRAKE_MIN);
+      violation |= subaru_aeb || longitudinal_brake_checks(es_brake_pressure, SUBARU_LONG_LIMITS);
     }
+
     // check es_distance cruise_throttle limits
     if ((addr == 0x221) && controls_allowed && !gas_pressed) {
       int cruise_throttle = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
-      violation |= max_limit_check(cruise_throttle, SUBARU_THROTTLE_MAX, SUBARU_THROTTLE_MIN);
+      violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
     }
+
     // check es_status cruise_rpm limits
-    if ((addr == 0x222) && controls_allowed && !gas_pressed) {
+    if (addr == 0x222) {
       int cruise_rpm = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
-      violation |= max_limit_check(cruise_rpm, SUBARU_RPM_MAX, SUBARU_RPM_MIN);
+      if (get_longitudinal_allowed()) {
+        violation |= max_limit_check(cruise_rpm, SUBARU_LONG_LIMITS.max_rpm, SUBARU_LONG_LIMITS.min_rpm);
+      } else {
+        violation |= cruise_rpm != 0;
+      }
     }
   }
 
