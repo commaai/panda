@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import os
-import time
 import subprocess
 
 from panda import Panda
