@@ -258,6 +258,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
       try:
         return self._cmd_no_retry(cmd, data, read_bytes, predata)
       except PandaSpiException as e:
+        exc = e
         logging.debug("SPI transfer failed, %d retries left", MAX_XFER_RETRY_COUNT - n - 1, exc_info=True)
     raise exc
 
