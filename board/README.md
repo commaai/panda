@@ -4,8 +4,8 @@ Programming
 **Panda**
 
 ```
-./recover.py           # flash bootstub
-./flash.py             # flash application
+./recover.py      # flash bootstub
+./flash.py        # flash application
 ```
 
 Troubleshooting
