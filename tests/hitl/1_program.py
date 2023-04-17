@@ -33,7 +33,7 @@ def test_a_known_bootstub(p):
     p.reset(enter_bootstub=True)
     p.reset(enter_bootloader=True)
 
-    dfu_serial = PandaDFU.st_serial_to_dfu_serial(p._serial, p._mcu_type)
+    dfu_serial = p.get_dfu_serial()
     assert Panda.wait_for_dfu(dfu_serial, timeout=30)
 
     dfu = PandaDFU(dfu_serial)

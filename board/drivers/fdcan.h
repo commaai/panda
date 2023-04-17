@@ -61,9 +61,6 @@ void update_can_health_pkt(uint8_t can_number, bool error_irq) {
 
   if (error_irq) {
     can_health[can_number].total_error_cnt += 1U;
-    if ((CANx->IR & (FDCAN_IR_RF0L)) != 0) {
-      can_health[can_number].total_rx_lost_cnt += 1U;
-    }
     if ((CANx->IR & (FDCAN_IR_TEFL)) != 0) {
       can_health[can_number].total_tx_lost_cnt += 1U;
     }
@@ -152,6 +149,7 @@ void can_rx(uint8_t can_number) {
       // Recommended to offset get index by at least +1 if RX FIFO is in overwrite mode and full (datasheet)
       if((CANx->RXF0S & FDCAN_RXF0S_F0F) == FDCAN_RXF0S_F0F) {
         rx_fifo_idx = ((rx_fifo_idx + 1U) >= FDCAN_RX_FIFO_0_EL_CNT) ? 0U : (rx_fifo_idx + 1U);
+        can_health[can_number].total_rx_lost_cnt += 1U; // At least one message was lost
       }
 
       uint32_t RxFIFO0SA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET);

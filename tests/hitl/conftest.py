@@ -3,7 +3,7 @@ import os
 import time
 import pytest
 
-from panda import Panda
+from panda import Panda, PandaDFU
 from panda_jungle import PandaJungle  # pylint: disable=import-error
 from panda.tests.hitl.helpers import clear_can_buffers
 
@@ -61,6 +61,8 @@ _all_panda_serials = list(_all_pandas.keys())
 
 
 def init_jungle():
+  if _panda_jungle is None:
+    return
   clear_can_buffers(_panda_jungle)
   _panda_jungle.set_panda_power(True)
   _panda_jungle.set_can_loopback(False)
@@ -121,6 +123,11 @@ def func_fixture_panda(request, module_panda):
   yield p
 
   # Teardown
+
+  # reconnect
+  if p.get_dfu_serial() in PandaDFU.list():
+    PandaDFU(p.get_dfu_serial()).reset()
+    p.reconnect()
   if not p.connected:
     p.reconnect()
   if p.bootstub:
