@@ -156,16 +156,17 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
               (self.MIN_ACCEL, self.MAX_ACCEL, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
 
     for min_accel, max_accel, alternative_experience in limits:
-      for accel in np.arange(min_accel - 1, max_accel + 1, 0.05):
+      # enforce we don't skip over 0 or inactive accel
+      for accel in np.concatenate((np.arange(min_accel - 1, max_accel + 1, 0.05), [0, self.INACTIVE_ACCEL])):
+        accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
         for controls_allowed in [True, False]:
           self.safety.set_controls_allowed(controls_allowed)
           self.safety.set_alternative_experience(alternative_experience)
           if stock_longitudinal:
             should_tx = False
-          elif controls_allowed:
-            should_tx = int(min_accel * 1000) <= int(accel * 1000) <= int(max_accel * 1000)
           else:
-            should_tx = np.isclose(accel, self.INACTIVE_ACCEL, atol=0.0001)
+            should_tx = controls_allowed and min_accel <= accel <= max_accel
+            should_tx = should_tx or accel == self.INACTIVE_ACCEL
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
 
@@ -198,7 +199,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
-      for t in range(-self.MAX_TORQUE * 2, self.MAX_TORQUE * 2):
+      for t in range(int(-self.MAX_TORQUE * 1.5), int(self.MAX_TORQUE * 1.5)):
         self.safety.set_controls_allowed(enabled)
         self._set_prev_torque(t)
         if abs(t) > self.MAX_TORQUE or (not enabled and abs(t) > 0):
@@ -654,18 +655,17 @@ class PandaSafetyTest(PandaSafetyTestBase):
     for bus in range(0, 3):
       for addr in self.SCANNED_ADDRS:
         self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
-        self.assertEqual(-1, self.safety.safety_fwd_hook(bus, make_msg(bus, addr, 8)))
+        self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
 
   def test_fwd_hook(self):
     # some safety modes don't forward anything, while others blacklist msgs
     for bus in range(0, 3):
       for addr in self.SCANNED_ADDRS:
         # assume len 8
-        msg = make_msg(bus, addr, 8)
         fwd_bus = self.FWD_BUS_LOOKUP.get(bus, -1)
         if bus in self.FWD_BLACKLISTED_ADDRS and addr in self.FWD_BLACKLISTED_ADDRS[bus]:
           fwd_bus = -1
-        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, msg), f"{addr=:#x} from {bus=} to {fwd_bus=}")
+        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, addr), f"{addr=:#x} from {bus=} to {fwd_bus=}")
 
   def test_spam_can_buses(self):
     for bus in range(0, 4):

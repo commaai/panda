@@ -27,7 +27,7 @@ typedef struct {
 ffi.cdef("""
 int safety_rx_hook(CANPacket_t *to_send);
 int safety_tx_hook(CANPacket_t *to_push);
-int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd);
+int safety_fwd_hook(int bus_num, int addr);
 int set_safety_hooks(uint16_t mode, uint16_t param);
 """)
 
@@ -70,7 +70,7 @@ class Panda(PandaSafety):
   # safety
   def safety_rx_hook(self, to_send: CANPacket) -> int: ...
   def safety_tx_hook(self, to_push: CANPacket) -> int: ...
-  def safety_fwd_hook(self, bus_num: int, to_fwd: CANPacket) -> int: ...
+  def safety_fwd_hook(self, bus_num: int, addr: int) -> int: ...
   def set_safety_hooks(self, mode: int, param: int) -> int: ...
 
 
