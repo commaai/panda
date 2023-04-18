@@ -39,7 +39,8 @@ AddrCheckStruct honda_common_addr_checks[] = {
   {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},                   // SCM_BUTTONS
            {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // ENGINE_DATA
-  {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // POWERTRAIN_DATA
+  {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},                   // POWERTRAIN_DATA
+           {0x1BE, 0, 3, .check_checksum = true, .max_counter = 3U, .expected_timestep = 20000U}, { 0 }}},          // BRAKE_MODULE (for bosch radarless)
   {.msg = {{0x326, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // SCM_FEEDBACK
 };
 #define HONDA_COMMON_ADDR_CHECKS_LEN (sizeof(honda_common_addr_checks) / sizeof(honda_common_addr_checks[0]))
@@ -397,7 +398,7 @@ static const addr_checks* honda_bosch_init(uint16_t param) {
   honda_hw = HONDA_BOSCH;
   honda_bosch_radarless = GET_FLAG(param, HONDA_PARAM_RADARLESS);
   // Checking for alternate brake override from safety parameter
-  honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE) && !honda_bosch_radarless;
+  honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE);
 
   // radar disabled so allow gas/brakes
 #ifdef ALLOW_DEBUG
@@ -412,7 +413,7 @@ static const addr_checks* honda_bosch_init(uint16_t param) {
   return &honda_rx_checks;
 }
 
-static int honda_nidec_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+static int honda_nidec_fwd_hook(int bus_num, int addr) {
   // fwd from car to camera. also fwd certain msgs from camera to car
   // 0xE4 is steering on all cars except CRV and RDX, 0x194 for CRV and RDX,
   // 0x1FA is brake control, 0x30C is acc hud, 0x33D is lkas hud
@@ -424,7 +425,6 @@ static int honda_nidec_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
   if (bus_num == 2) {
     // block stock lkas messages and stock acc messages (if OP is doing ACC)
-    int addr = GET_ADDR(to_fwd);
     bool is_lkas_msg = (addr == 0xE4) || (addr == 0x194) || (addr == 0x33D);
     bool is_acc_hud_msg = addr == 0x30C;
     bool is_brake_msg = addr == 0x1FA;
@@ -437,14 +437,13 @@ static int honda_nidec_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return bus_fwd;
 }
 
-static int honda_bosch_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+static int honda_bosch_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   if (bus_num == 0) {
     bus_fwd = 2;
   }
   if (bus_num == 2)  {
-    int addr = GET_ADDR(to_fwd);
     int is_lkas_msg = (addr == 0xE4) || (addr == 0xE5) || (addr == 0x33D) || (addr == 0x33DA) || (addr == 0x33DB);
     int is_acc_msg = ((addr == 0x1C8) || (addr == 0x30C)) && honda_bosch_radarless && honda_bosch_long;
     bool block_msg = is_lkas_msg || is_acc_msg;

@@ -77,8 +77,8 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   return current_hooks->tx_lin(lin_num, data, len);
 }
 
-int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
-  return (relay_malfunction ? -1 : current_hooks->fwd(bus_num, to_fwd));
+int safety_fwd_hook(int bus_num, int addr) {
+  return (relay_malfunction ? -1 : current_hooks->fwd(bus_num, addr));
 }
 
 bool get_longitudinal_allowed(void) {
@@ -493,13 +493,9 @@ float interpolate(struct lookup_t xy, float x) {
 
 // Safety checks for longitudinal actuation
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits) {
-  bool violation = false;
-  if (!get_longitudinal_allowed()) {
-    violation |= desired_accel != limits.inactive_accel;
-  } else {
-    violation |= max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
-  }
-  return violation;
+  bool accel_valid = get_longitudinal_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
+  bool accel_inactive = desired_accel == limits.inactive_accel;
+  return !(accel_valid || accel_inactive);
 }
 
 bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits) {
