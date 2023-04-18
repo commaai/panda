@@ -3,7 +3,11 @@ import pytest
 
 from panda import Panda
 
-@pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES)
+pytestmark = [
+  pytest.mark.skip_panda_types(Panda.HW_TYPE_UNO),
+  pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES)
+]
+
 def test_fan_controller(p):
   for power in [50, 100]:
     p.set_fan_power(power)
@@ -12,7 +16,6 @@ def test_fan_controller(p):
     expected_rpm = Panda.MAX_FAN_RPMs[bytes(p.get_type())] * power / 100
     assert 0.95 * expected_rpm <= p.get_fan_rpm() <= 1.05 * expected_rpm
 
-@pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES)
 def test_fan_cooldown(p):
   # if the fan cooldown doesn't work, we get high frequency noise on the tach line 
   # while the rotor spins down. this makes sure it never goes beyond the expected max RPM
@@ -23,7 +26,6 @@ def test_fan_cooldown(p):
     assert p.get_fan_rpm() <= 7000
     time.sleep(0.5)
 
-@pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES)
 def test_fan_overshoot(p):
   # make sure it's stopped completely
   p.set_fan_power(0)
