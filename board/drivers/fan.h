@@ -48,7 +48,7 @@ void fan_tick(void){
           current_board->set_fan_enabled(false);
 
           // clip integral, can't fully reset otherwise we may always be stuck in stall detection
-          fan_state.error_integral = MIN(50.0f, MAX(0.0f, fan_state.error_integral));
+          fan_state.error_integral = MIN(0.0f, fan_state.error_integral);
         }
       } else {
         fan_state.stall_counter = 0U;
@@ -57,13 +57,10 @@ void fan_tick(void){
     }
 
     // Update controller
-    float feedforward = (fan_state.target_rpm * 100.0f) / current_board->fan_max_rpm;
-    float error = fan_state.target_rpm - fan_rpm_fast;
+    fan_state.error_integral += FAN_I * (fan_state.target_rpm - fan_rpm_fast);
+    fan_state.error_integral = MIN(100.0f, MAX(0.0f, fan_state.error_integral));
 
-    fan_state.error_integral += FAN_I * error;
-    fan_state.error_integral = MIN(70.0f, MAX(-70.0f, fan_state.error_integral));
-
-    fan_state.power = MIN(100U, MAX(0U, feedforward + fan_state.error_integral));
+    fan_state.power = MIN(100U, MAX(0U, fan_state.error_integral));
     pwm_set(TIM3, 3, fan_state.power);
 
     // Cooldown counter
