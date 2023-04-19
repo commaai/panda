@@ -104,6 +104,7 @@ class TestSubaruLongitudinalSafety(TestSubaruSafety):
     return self.packer.make_can_msg_panda("ES_Status", 0, values)
 
   def test_es_brake_msg(self):
+    self.safety.set_controls_allowed(1)
     self.assertTrue(self._tx(self._es_brake_msg()))
     self.assertTrue(self._tx(self._es_brake_msg(brake=self.MAX_BRAKE)))
     self.assertFalse(self._tx(self._es_brake_msg(brake=self.MAX_BRAKE+10)))
