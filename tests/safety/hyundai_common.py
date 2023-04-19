@@ -1,6 +1,7 @@
-import numpy as np
 from typing import Tuple
+import unittest
 
+import panda.tests.safety.common as common
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.common import make_msg
 
@@ -12,8 +13,6 @@ class Buttons:
   CANCEL = 4
 
 
-MAX_ACCEL = 2.0
-MIN_ACCEL = -3.5
 PREV_BUTTON_SAMPLES = 8
 ENABLE_BUTTONS = (Buttons.RESUME, Buttons.SET, Buttons.CANCEL)
 
@@ -75,11 +74,17 @@ class HyundaiButtonBase:
       self._rx(self._button_msg(Buttons.NONE))
 
 
-class HyundaiLongitudinalBase:
+class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
   # pylint: disable=no-member,abstract-method
 
   DISABLED_ECU_UDS_MSG: Tuple[int, int]
   DISABLED_ECU_ACTUATION_MSG: Tuple[int, int]
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "HyundaiLongitudinalBase":
+      cls.safety = None
+      raise unittest.SkipTest
 
   # override these tests from PandaSafetyTest, hyundai longitudinal uses button enable
   def test_disable_control_allowed_from_cruise(self):
@@ -127,14 +132,6 @@ class HyundaiLongitudinalBase:
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(Buttons.CANCEL))
     self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_accel_safety_check(self):
-    for controls_allowed in [True, False]:
-      for accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.01):
-        accel = round(accel, 2) # floats might not hit exact boundary conditions without rounding
-        self.safety.set_controls_allowed(controls_allowed)
-        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == 0
-        self.assertEqual(send, self._tx(self._accel_msg(accel)), (controls_allowed, accel))
 
   def test_tester_present_allowed(self):
     """
