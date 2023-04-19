@@ -245,7 +245,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
       // add 1 to not false trigger the violation.
       int delta_angle_up = (interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
       int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed + 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) - 1.;
-//      debug_value = delta_angle_up;
+      debug_value = delta_angle_up;
 //      debug_value_2 = delta_angle_down;
 //      debug_value_3 = desired_curvature - desired_angle_last;
 
@@ -260,7 +260,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
 
     // no curvature command if controls is not allowed
     bool steer_control_enabled = (steer_control_type != 0U);
-    debug_value = desired_curvature;
+    debug_value_2 = desired_curvature;
     if (!controls_allowed && ((desired_curvature != 0) || steer_control_enabled)) {
       violation = true;
     }

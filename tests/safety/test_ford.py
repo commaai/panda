@@ -93,10 +93,10 @@ class TestFordSafety(common.PandaSafetyTest):
   #   self.assertTrue(self._rx(self._yaw_rate_msg(curvature / self.DEG_TO_CAN, speed)))
   #
   # ### END ###
-  #
-  # def _torque_cmd_msg(self, torque, steer_req=1):
-  #   return self._tja_command_msg(bool(steer_req), 0, 0, torque, 0)
-  #
+
+  def _steer_cmd_msg(self, steer, steer_req=1):
+    return self._tja_command_msg(bool(steer_req), 0, 0, steer, 0)
+
   # def test_non_realtime_limit_down(self):
   #   for speed in np.linspace(0, 50, 11):
   #     max_delta_up = int(np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V) * self.DEG_TO_CAN)
@@ -131,26 +131,47 @@ class TestFordSafety(common.PandaSafetyTest):
   #
   # def _set_prev_torque(self, t):
   #   self.safety.set_desired_angle_last(t)
-  #
-  # def test_non_realtime_limit_up(self):
-  #   for speed in np.linspace(0, 50, 11):
-  #     max_delta_up = int(np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V) * self.DEG_TO_CAN)
-  #     max_delta_down = int(np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU) * self.DEG_TO_CAN)
-  #     self.safety.set_controls_allowed(True)
-  #
-  #     print(speed)
-  #     self._speed_msg(speed)
-  #     self._set_prev_torque(0)
-  #     self._tx(self._torque_cmd_msg(max_delta_up / self.DEG_TO_CAN))
-  #     print('debug1: {}, debug2: {}, debug3: {}'.format(self.safety.get_debug_value(), self.safety.get_debug_value_2(), self.safety.get_debug_value_3()))
-  #     self._set_prev_torque(0)
-  #     self.assertTrue(self._tx(self._torque_cmd_msg(-max_delta_up / self.DEG_TO_CAN)))
-  #
-  #     self._set_prev_torque(0)
-  #     self.assertFalse(self._tx((self._torque_cmd_msg(max_delta_up + 1 / self.DEG_TO_CAN))))
-  #     self.safety.set_controls_allowed(True)
-  #     self._set_prev_torque(0)
-  #     self.assertFalse(self._tx(self._torque_cmd_msg((-max_delta_up - 1) / self.DEG_TO_CAN)))
+
+  def test_non_realtime_limit_up(self):
+    # partial(_tja_command_msg(enabled: bool, path_offset: float, path_angle: float, curvature: float, curvature_rate: float):
+    for speed in np.linspace(0, 50, 11):
+      max_delta_up = int(np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V) * self.DEG_TO_CAN)
+      # max_delta_down = int(np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU) * self.DEG_TO_CAN)
+      self.safety.set_controls_allowed(True)
+
+      print(speed)
+      # torque just needs to set prev torque, we need speed, yaw, set prev desired angle
+      # EPS torque meas/error/delta safety has a helper set_torque_meas, we should make one of those,
+      # or at least make a helper to set speed and yaw
+      # self._set_prev_torque(0)
+      self._rx(self._speed_msg(speed))
+      self._rx(self._yaw_rate_msg(0, speed))
+      self._set_prev_desired_angle(0)
+      # print(f'from: {0}, to: {max_delta_up / self.DEG_TO_CAN}')
+      self.assertTrue(self._tx(self._steer_cmd_msg(max_delta_up / self.DEG_TO_CAN)))
+      # print('debug1: {}, debug2: {}, debug3: {}'.format(self.safety.get_debug_value(), self.safety.get_debug_value_2(), self.safety.get_debug_value_3()))
+
+      # self._set_prev_torque(0)
+      self._rx(self._speed_msg(speed))
+      self._rx(self._yaw_rate_msg(0, speed))
+      self._set_prev_desired_angle(0)
+      self.assertTrue(self._tx(self._steer_cmd_msg(-max_delta_up / self.DEG_TO_CAN)))
+
+      # self._set_prev_torque(0)
+      self._rx(self._speed_msg(speed))
+      self._rx(self._yaw_rate_msg(0, speed))
+      self._set_prev_desired_angle(0)
+      print(f'from: {0}, to: {(max_delta_up) / self.DEG_TO_CAN}')
+      print(f'from: {0}, to: {(max_delta_up + 3) / self.DEG_TO_CAN}')
+      print()
+      self.assertFalse(self._tx((self._steer_cmd_msg((max_delta_up + 3) / self.DEG_TO_CAN))), (self.safety.get_debug_value(), self.safety.get_debug_value_2()))
+
+      self.safety.set_controls_allowed(True)
+      # self._set_prev_torque(0)
+      self._rx(self._speed_msg(speed))
+      self._rx(self._yaw_rate_msg(0, speed))
+      self._set_prev_desired_angle(0)
+      self.assertFalse(self._tx(self._steer_cmd_msg((-max_delta_up - 3) / self.DEG_TO_CAN)))
 
   # Driver brake pedal
   def _user_brake_msg(self, brake: bool):
