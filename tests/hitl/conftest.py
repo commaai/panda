@@ -17,6 +17,7 @@ PEDAL_SERIAL = 'none'
 JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
 PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE", "").strip().split(" ")
 PARTIAL_TESTS = os.environ.get("PARTIAL_TESTS", "0") == "1"
+NO_JUNGLE = os.environ.get("NO_JUNGLE", "0") == "1"
 HW_TYPES = os.environ.get("HW_TYPES", None)
 
 class PandaGroup:
@@ -40,9 +41,10 @@ elif HW_TYPES is not None:
 _all_pandas = {}
 _panda_jungle = None
 def init_all_pandas():
-  global _panda_jungle
-  _panda_jungle = PandaJungle(JUNGLE_SERIAL)
-  _panda_jungle.set_panda_power(True)
+  if not NO_JUNGLE:
+    global _panda_jungle
+    _panda_jungle = PandaJungle(JUNGLE_SERIAL)
+    _panda_jungle.set_panda_power(True)
 
   for serial in Panda.list():
     if serial not in PANDAS_EXCLUDE and serial != PEDAL_SERIAL:
