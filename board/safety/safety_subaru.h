@@ -122,9 +122,10 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    // ES_Brake Cruise_Brake_Active
-    if ((addr == 0x220) && (bus == alt_bus2)) {
-      subaru_aeb = GET_BIT(to_push, 38U) != 0U;
+    // ES_LKAS_State LKAS_Alert: 2, 5, 6
+    if ((addr == 0x322) && (bus == alt_bus2)) {
+      int lkas_alert = ((GET_BYTE(to_push, 4) >> 3) & 5U);
+      subaru_aeb = (lkas_alert == 2U || lkas_alert == 5U || lkas_alert == 6U);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -139,7 +140,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     }
 
     if ((addr == 0x13c) && (bus == alt_bus)) {
-      brake_pressed = ((GET_BYTE(to_push, 7) >> 6) & 1U);
+      brake_pressed = GET_BIT(to_push, 62U) != 0U;
     }
 
     if ((addr == 0x40) && (bus == 0)) {
@@ -177,7 +178,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  if (subaru_longitudinal) {
+  if (subaru_longitudinal && controls_allowed) {
     // check es_brake brake_pressure limits
     if (addr == 0x220) {
       int es_brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
@@ -185,13 +186,13 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     }
 
     // check es_distance cruise_throttle limits
-    if ((addr == 0x221) && controls_allowed && !gas_pressed) {
+    if ((addr == 0x221) && !gas_pressed) {
       int cruise_throttle = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
       violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
     }
 
     // check es_status cruise_rpm limits
-    if (addr == 0x222) {
+    if ((addr == 0x222) && !gas_pressed) {
       int cruise_rpm = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
       if (get_longitudinal_allowed()) {
         violation |= max_limit_check(cruise_rpm, SUBARU_LONG_LIMITS.max_rpm, SUBARU_LONG_LIMITS.min_rpm);
