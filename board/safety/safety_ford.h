@@ -238,12 +238,9 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     // These signals are not yet tested with the current safety limits
     violation |= (curvature_rate != INACTIVE_CURVATURE_RATE) || (path_angle != INACTIVE_PATH_ANGLE) || (path_offset != INACTIVE_PATH_OFFSET);
 
-    // No steer control allowed when controls are not allowed or yaw rate invalid
-    bool steer_control_enabled = (steer_control_type != 0U) || (raw_curvature != INACTIVE_CURVATURE);
-    violation |= !controls_allowed && steer_control_enabled;
-
     int desired_curvature = raw_curvature - 1000;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
-    if (steer_control_enabled) {
+    if (controls_allowed) {
+      // max curvature check
       violation |= max_limit_check(desired_curvature, FORD_STEERING_LIMITS.max_steer, -FORD_STEERING_LIMITS.max_steer);
 
       // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
@@ -262,8 +259,13 @@ static int ford_tx_hook(CANPacket_t *to_send) {
 
     }
 
+    // no curvature command if controls is not allowed
+    bool steer_control_enabled = (steer_control_type != 0U);
+    if (!controls_allowed && ((desired_curvature != INACTIVE_CURVATURE) || steer_control_enabled)) {
+      violation = true;
+    }
+
     if (violation) {
-//      controls_allowed = 0;
       tx = 0;
     }
     desired_angle_last = desired_curvature;
