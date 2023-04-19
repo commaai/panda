@@ -233,10 +233,8 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     unsigned int path_angle = (GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5);
     unsigned int path_offset = (GET_BYTE(to_send, 5) << 2) | (GET_BYTE(to_send, 6) >> 6);
 
-    bool violation = false;
-
     // These signals are not yet tested with the current safety limits
-    violation |= (curvature_rate != INACTIVE_CURVATURE_RATE) || (path_angle != INACTIVE_PATH_ANGLE) || (path_offset != INACTIVE_PATH_OFFSET);
+    bool violation = (curvature_rate != INACTIVE_CURVATURE_RATE) || (path_angle != INACTIVE_PATH_ANGLE) || (path_offset != INACTIVE_PATH_OFFSET);
 
     int desired_curvature = raw_curvature - 1000;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
     if (controls_allowed) {
@@ -257,6 +255,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
       violation |= dist_to_meas_check(desired_curvature, desired_angle_last, &ford_curvature_meas,
                                       delta_angle_up, delta_angle_down, current_curvature_delta_max);
 
+      desired_angle_last = desired_curvature;
     }
 
     // no curvature command if controls is not allowed
@@ -265,10 +264,13 @@ static int ford_tx_hook(CANPacket_t *to_send) {
       violation = true;
     }
 
-    if (violation) {
-      tx = 0;
+    // reset to 0 if either controls is not allowed or there's a violation
+    if (violation || !controls_allowed) {
+      desired_angle_last = 0;
+      if (violation) {
+        tx = 0;
+      }
     }
-    desired_angle_last = desired_curvature;
   }
 
   // 1 allows the message through
