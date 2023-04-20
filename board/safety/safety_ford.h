@@ -230,16 +230,12 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     int desired_curvature = curvature - 1000;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
     if (controls_allowed) {
       if (vehicle_speed > 10) {
-      debug_value = desired_curvature;
-      debug_value_2 = angle_meas.min;
-      debug_value_3 = angle_meas.max;
         violation |= angle_dist_to_meas_check(desired_curvature, &angle_meas,
                                               CURVATURE_DELTA_MAX, FORD_STEERING_LIMITS.max_steer);
       }
     }
 
     // No curvature command if controls is not allowed
-//    debug_value_2 = desired_curvature;
     if (!controls_allowed && ((desired_curvature != 0) || steer_control_enabled)) {
       violation = true;
     }
