@@ -120,14 +120,6 @@ static bool ford_lkas_msg_check(int addr) {
 const SteeringLimits FORD_STEERING_LIMITS = {
   .max_steer = 1000,
   .angle_deg_to_can = 50000,  // 1 / (2e-5) rad to can
-//  .angle_rate_up_lookup = {
-//    {5., 25., 25.},
-//    {0.0002, 0.0001, 0.0001}
-//  },
-//  .angle_rate_down_lookup = {
-//    {5., 25., 25.},
-//    {0.000225, 0.00015, 0.00015}
-//  },
 };
 
 const int CURVATURE_DELTA_MAX = 100;  // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
@@ -227,8 +219,8 @@ static int ford_tx_hook(CANPacket_t *to_send) {
   // Safety check for LateralMotionControl action
   if (addr == MSG_LateralMotionControl) {
     // Signal: LatCtl_D_Rq
-    unsigned int steer_control_type = (GET_BYTE(to_send, 4) >> 2) & 0x7U;
-    unsigned int raw_curvature = (GET_BYTE(to_send, 0) << 3) | (GET_BYTE(to_send, 1) >> 5);
+    bool steer_control_enabled = ((GET_BYTE(to_send, 4) >> 2) & 0x7U) != 0U;
+    unsigned int curvature = (GET_BYTE(to_send, 0) << 3) | (GET_BYTE(to_send, 1) >> 5);
     unsigned int curvature_rate = ((GET_BYTE(to_send, 1) & 0x1FU) << 8) | GET_BYTE(to_send, 2);
     unsigned int path_angle = (GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5);
     unsigned int path_offset = (GET_BYTE(to_send, 5) << 2) | (GET_BYTE(to_send, 6) >> 6);
@@ -236,47 +228,22 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     // These signals are not yet tested with the current safety limits
     bool violation = (curvature_rate != INACTIVE_CURVATURE_RATE) || (path_angle != INACTIVE_PATH_ANGLE) || (path_offset != INACTIVE_PATH_OFFSET);
 
-    int desired_curvature = raw_curvature - 1000;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
+    int desired_curvature = curvature - 1000;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
     if (controls_allowed) {
-//      // max curvature check
-//      violation |= max_limit_check(desired_curvature, FORD_STEERING_LIMITS.max_steer, -FORD_STEERING_LIMITS.max_steer);
-
-      // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
-      // add 1 to not false trigger the violation.
-//      int delta_angle_up = (interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
-//      int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed + 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) - 1.;
-//      debug_value = delta_angle_up;
-//      debug_value_2 = delta_angle_down;
-//      debug_value_3 = desired_curvature - desired_angle_last;
-
-      // we allow max curvature error at low speeds due to the low rates imposed by the EPS,
-      // and inaccuracy of curvature from yaw rate.
-      // we also allow max curvature rates, as EPS enforces safe curvature rate limits
-//      int current_curvature_delta_max = (vehicle_speed > 13) ? CURVATURE_DELTA_MAX : FORD_STEERING_LIMITS.max_steer;
       if (vehicle_speed > 10) {
         violation |= angle_dist_to_meas_check(desired_curvature, &ford_curvature_meas,
                                               CURVATURE_DELTA_MAX, FORD_STEERING_LIMITS.max_steer);
       }
-//      violation |= dist_to_meas_check(desired_curvature, desired_angle_last, &ford_curvature_meas,
-//                                      FORD_STEERING_LIMITS.max_steer, FORD_STEERING_LIMITS.max_steer,
-//                                      current_curvature_delta_max);
-
-      desired_angle_last = desired_curvature;
     }
 
-    // no curvature command if controls is not allowed
-    bool steer_control_enabled = (steer_control_type != 0U);
+    // No curvature command if controls is not allowed
     debug_value_2 = desired_curvature;
     if (!controls_allowed && ((desired_curvature != 0) || steer_control_enabled)) {
       violation = true;
     }
 
-    // reset to 0 if either controls is not allowed or there's a violation
-    if (violation || !controls_allowed) {
-      desired_angle_last = 0;
-      if (violation) {
-        tx = 0;
-      }
+    if (violation) {
+      tx = 0;
     }
   }
 
