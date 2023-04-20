@@ -111,7 +111,7 @@ class TestFordSafety(common.PandaSafetyTest):
 
   # Current curvature
   def _yaw_rate_msg(self, curvature: float, speed: float, quality_flag=True):
-    values = {"VehYaw_W_Actl": curvature * max(speed, 0.1), "VehYawWActl_D_Qf": 3 if quality_flag else 0,
+    values = {"VehYaw_W_Actl": curvature * speed, "VehYawWActl_D_Qf": 3 if quality_flag else 0,
               "VehRolWActl_D_Qf": 3 if quality_flag else 0, "VehRollYaw_No_Cnt": self.cnt_yaw_rate % 256}
     self.__class__.cnt_yaw_rate += 1
     return self.packer.make_can_msg_panda("Yaw_Data_FD1", 0, values, fix_checksum=checksum)
@@ -193,7 +193,6 @@ class TestFordSafety(common.PandaSafetyTest):
               for curvature in curvatures:
                 self.safety.set_controls_allowed(controls_allowed)
                 enabled = steer_control_enabled or curvature != 0
-                self._curvature_meas_msg_array(curvature, 5)
 
                 should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
                 should_tx = should_tx and (not enabled or controls_allowed)
