@@ -123,7 +123,6 @@ const SteeringLimits FORD_STEERING_LIMITS = {
 };
 
 const int CURVATURE_DELTA_MAX = 100;  // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
-struct sample_t ford_curvature_meas;
 
 static int ford_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &ford_rx_checks,
@@ -151,7 +150,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
       float current_curvature = ford_yaw_rate / MAX(vehicle_speed, 0.1);
       // convert current curvature into units on CAN for comparison with desired curvature
       int current_curvature_can = current_curvature * FORD_STEERING_LIMITS.angle_deg_to_can + (current_curvature > 0 ? 0.5 : -0.5);
-      update_sample(&ford_curvature_meas, current_curvature_can);
+      update_sample(&angle_meas, current_curvature_can);
     }
 
     // Update gas pedal
@@ -232,9 +231,9 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     if (controls_allowed) {
       if (vehicle_speed > 10) {
       debug_value = desired_curvature;
-      debug_value_2 = ford_curvature_meas.min;
-      debug_value_3 = ford_curvature_meas.max;
-        violation |= angle_dist_to_meas_check(desired_curvature, &ford_curvature_meas,
+      debug_value_2 = angle_meas.min;
+      debug_value_3 = angle_meas.max;
+        violation |= angle_dist_to_meas_check(desired_curvature, &angle_meas,
                                               CURVATURE_DELTA_MAX, FORD_STEERING_LIMITS.max_steer);
       }
     }
@@ -282,9 +281,6 @@ static int ford_fwd_hook(int bus_num, int addr) {
 
 static const addr_checks* ford_init(uint16_t param) {
   UNUSED(param);
-
-  ford_curvature_meas.min = 0;
-  ford_curvature_meas.max = 0;
 
   return &ford_rx_checks;
 }
