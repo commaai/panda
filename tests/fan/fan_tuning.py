@@ -82,6 +82,6 @@ if __name__ == "__main__":
     p = Panda()
     for power in range(10, 101, 10):
       overshoot, max_rpm, max_power = get_overshoot_rpm(p, power)
-      print(f"Fan power {power}% overshoot: {overshoot:.2f}, Max RPM: {max_rpm}, Max power: {max_power}%")
+      print(f"Fan power {power}%: overshoot {overshoot:.2%}, Max RPM {max_rpm}, Max power {max_power}%")
   finally:
     event.set()
