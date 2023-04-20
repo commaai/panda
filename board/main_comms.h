@@ -39,6 +39,7 @@ int get_health_pkt(void *dat) {
   health->interrupt_load = interrupt_load;
 
   health->fan_power = fan_state.power;
+  health->fan_stall_count = fan_state.total_stall_count;
 
   return sizeof(*health);
 }
