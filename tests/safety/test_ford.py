@@ -85,7 +85,7 @@ class TestFordSafety(common.PandaSafetyTest):
     for _ in range(6):
       self._rx(self._yaw_rate_msg(curvature, speed))
 
-  def _steer_cmd_msg(self, steer, steer_req=1):
+  def _curvature_cmd_msg(self, steer, steer_req=1):
     return self._tja_command_msg(bool(steer_req), 0, 0, steer, 0)
 
   # Driver brake pedal
@@ -209,17 +209,17 @@ class TestFordSafety(common.PandaSafetyTest):
     self.safety.set_controls_allowed(1)
 
     for speed in np.linspace(0, 50, 11):
-      for initial_curv in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 101):
-        initial_curv = round_curvature_can(initial_curv)
-        self._curvature_meas_msg_array(initial_curv, speed)
+      for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 101):
+        initial_curvature = round_curvature_can(initial_curvature)
+        self._curvature_meas_msg_array(initial_curvature, speed)
 
         limit_command = speed > 10
-        for new_curv in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 101):
-          new_curv = round_curvature_can(new_curv)
+        for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 101):
+          new_curvature = round_curvature_can(new_curvature)
 
-          too_far_away = abs(new_curv - initial_curv) > self.MAX_CURVATURE_DELTA
+          too_far_away = abs(new_curvature - initial_curvature) > self.MAX_CURVATURE_DELTA
           should_tx = not limit_command or not too_far_away
-          self.assertEqual(should_tx, self._tx(self._steer_cmd_msg(new_curv)), (speed, initial_curv, new_curv, self.safety.get_debug_value(), self.safety.get_debug_value_2(), self.safety.get_debug_value_3()))
+          self.assertEqual(should_tx, self._tx(self._curvature_cmd_msg(new_curvature)), (speed, initial_curvature, new_curvature, self.safety.get_debug_value(), self.safety.get_debug_value_2(), self.safety.get_debug_value_3()))
 
   def test_prevent_lkas_action(self):
     self.safety.set_controls_allowed(1)
