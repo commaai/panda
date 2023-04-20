@@ -22,7 +22,7 @@ separate IRQs for RX and TX.
 - 17 slow bits = SOF + 11 ID + R1 + IDE + EDL + R0 + BRS
 - 23 fast bits = ESI + 4 DLC + 0 DATA + 17 CRC + CRC delimeter
 - 12 slow bits = ACK + DEL + 7 EOF + 3 IFS
-- all currently supported cars are 500Kbps / 2Mbps
+- all currently supported cars are 0.5 Mbps / 2 Mbps
 
 1 / ((29 bits / 0.5Mbps) + (23 bits / 2Mbps)) = 14388Hz
 */
