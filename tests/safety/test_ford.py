@@ -215,7 +215,7 @@ class TestFordSafety(common.PandaSafetyTest):
 
           too_far_away = abs(new_curvature - initial_curvature) > self.MAX_CURVATURE_DELTA
           should_tx = not limit_command or not too_far_away
-          self.assertEqual(should_tx, self._tx(self._curvature_cmd_msg(new_curvature)), (speed, initial_curvature, new_curvature, self.safety.get_debug_value(), self.safety.get_debug_value_2(), self.safety.get_debug_value_3()))
+          self.assertEqual(should_tx, self._tx(self._curvature_cmd_msg(new_curvature)))
 
   def test_prevent_lkas_action(self):
     self.safety.set_controls_allowed(1)
