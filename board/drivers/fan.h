@@ -17,8 +17,7 @@ const uint8_t FAN_STALL_THRESHOLD = 3U;
 
 
 void fan_set_power(uint8_t percentage) {
-  uint16_t perc = CLAMP((uint16_t)percentage, 0U, 100U);
-  fan_state.target_rpm = ((current_board->fan_max_rpm * perc) / 100U);
+  fan_state.target_rpm = ((current_board->fan_max_rpm * CLAMP(percentage, 0U, 100U)) / 100U);
 }
 
 void llfan_init(void);
@@ -39,7 +38,6 @@ void fan_tick(void) {
     bool fan_stalled = false;
     if (current_board->fan_stall_recovery) {
       if (fan_state.target_rpm > 0U) {
-        // TODO: is there any noise here?
         if (fan_rpm_fast == 0U) {
           fan_state.stall_counter = MIN(fan_state.stall_counter + 1U, 255U);
         } else {

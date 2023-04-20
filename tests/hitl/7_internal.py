@@ -46,7 +46,7 @@ def test_fan_cooldown(p):
     assert p.get_fan_rpm() <= 7000
     time.sleep(0.5)
 
-@pytest.mark.skip(reason="")
+@pytest.mark.skip(reason="fan controller overshoots on fans that need stall recovery")
 def test_fan_overshoot(p):
   # make sure it's stopped completely
   p.set_fan_power(0)
