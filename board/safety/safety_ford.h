@@ -253,7 +253,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
       // and inaccuracy of curvature from yaw rate.
       // we also allow max curvature rates, as EPS enforces safe curvature rate limits
 //      int current_curvature_delta_max = (vehicle_speed > 13) ? CURVATURE_DELTA_MAX : FORD_STEERING_LIMITS.max_steer;
-      if (vehicle_speed > 13) {
+      if (vehicle_speed > 10) {
         violation |= angle_dist_to_meas_check(desired_curvature, &ford_curvature_meas,
                                               CURVATURE_DELTA_MAX, FORD_STEERING_LIMITS.max_steer)
       }
