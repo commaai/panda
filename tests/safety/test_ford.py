@@ -70,10 +70,6 @@ class TestFordSafety(common.PandaSafetyTest):
   DEG_TO_CAN = 50000  # 1 / (2e-5) rad to can
   MAX_CURVATURE = 0.02
   MAX_CURVATURE_DELTA = 0.002
-  MAX_CURVATURE_CAN = int(MAX_CURVATURE * DEG_TO_CAN)
-  MAX_CURVATURE_DELTA_CAN = int(MAX_CURVATURE_DELTA * DEG_TO_CAN)
-  # HIGH_ANGLE = 0.014  # 0.02 - ANGLE_DELTA_VU[0] = 0.014
-  # ANGLE_RATE_VIOLATION_OFFSET = 0.001
 
   cnt_speed = 0
   cnt_yaw_rate = 0
