@@ -120,14 +120,14 @@ static bool ford_lkas_msg_check(int addr) {
 const SteeringLimits FORD_STEERING_LIMITS = {
   .max_steer = 1000,
   .angle_deg_to_can = 50000,  // 1 / (2e-5) rad to can
-  .angle_rate_up_lookup = {
-    {5., 25., 25.},
-    {0.0002, 0.0001, 0.0001}
-  },
-  .angle_rate_down_lookup = {
-    {5., 25., 25.},
-    {0.000225, 0.00015, 0.00015}
-  },
+//  .angle_rate_up_lookup = {
+//    {5., 25., 25.},
+//    {0.0002, 0.0001, 0.0001}
+//  },
+//  .angle_rate_down_lookup = {
+//    {5., 25., 25.},
+//    {0.000225, 0.00015, 0.00015}
+//  },
 };
 
 const int CURVATURE_DELTA_MAX = 100;  // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
@@ -238,22 +238,24 @@ static int ford_tx_hook(CANPacket_t *to_send) {
 
     int desired_curvature = raw_curvature - 1000;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
     if (controls_allowed) {
-      // max curvature check
-      violation |= max_limit_check(desired_curvature, FORD_STEERING_LIMITS.max_steer, -FORD_STEERING_LIMITS.max_steer);
+//      // max curvature check
+//      violation |= max_limit_check(desired_curvature, FORD_STEERING_LIMITS.max_steer, -FORD_STEERING_LIMITS.max_steer);
 
       // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
       // add 1 to not false trigger the violation.
-      int delta_angle_up = (interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
-      int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed + 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) - 1.;
-      debug_value = delta_angle_up;
+//      int delta_angle_up = (interpolate(FORD_STEERING_LIMITS.angle_rate_up_lookup, vehicle_speed - 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) + 1.;
+//      int delta_angle_down = (interpolate(FORD_STEERING_LIMITS.angle_rate_down_lookup, vehicle_speed + 1.) * FORD_STEERING_LIMITS.angle_deg_to_can) - 1.;
+//      debug_value = delta_angle_up;
 //      debug_value_2 = delta_angle_down;
 //      debug_value_3 = desired_curvature - desired_angle_last;
 
       // we allow max curvature error at low speeds due to the low rates imposed by the EPS,
-      // and inaccuracy of curvature from yaw rate
+      // and inaccuracy of curvature from yaw rate.
+      // we also allow max curvature rates, as EPS enforces safe curvature rate limits
       int current_curvature_delta_max = (vehicle_speed > 13) ? CURVATURE_DELTA_MAX : FORD_STEERING_LIMITS.max_steer;
       violation |= dist_to_meas_check(desired_curvature, desired_angle_last, &ford_curvature_meas,
-                                      delta_angle_up, delta_angle_down, current_curvature_delta_max);
+                                      FORD_STEERING_LIMITS.max_steer, FORD_STEERING_LIMITS.max_steer,
+                                      current_curvature_delta_max);
 
       desired_angle_last = desired_curvature;
     }
