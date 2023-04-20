@@ -85,9 +85,6 @@ class TestFordSafety(common.PandaSafetyTest):
     for _ in range(6):
       self._rx(self._yaw_rate_msg(curvature, speed))
 
-  def _curvature_cmd_msg(self, steer, steer_req=1):
-    return self._tja_command_msg(bool(steer_req), 0, 0, steer, 0)
-
   # Driver brake pedal
   def _user_brake_msg(self, brake: bool):
     # brake pedal and cruise state share same message, so we have to send
@@ -212,7 +209,7 @@ class TestFordSafety(common.PandaSafetyTest):
         for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 51):
           too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_DELTA
           should_tx = not limit_command or not too_far_away
-          self.assertEqual(should_tx, self._tx(self._curvature_cmd_msg(new_curvature)))
+          self.assertEqual(should_tx, self._tx(self._tja_command_msg(True, 0, 0, new_curvature, 0)))
 
   def test_prevent_lkas_action(self):
     self.safety.set_controls_allowed(1)
