@@ -4,7 +4,6 @@ import time
 import pytest
 
 from panda import Panda, PandaDFU
-from panda_jungle import PandaJungle  # pylint: disable=import-error
 from panda.tests.hitl.helpers import clear_can_buffers
 
 
@@ -42,6 +41,7 @@ _all_pandas = {}
 _panda_jungle = None
 def init_all_pandas():
   if not NO_JUNGLE:
+    from panda_jungle import PandaJungle  # pylint: disable=import-error
     global _panda_jungle
     _panda_jungle = PandaJungle(JUNGLE_SERIAL)
     _panda_jungle.set_panda_power(True)
