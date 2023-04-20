@@ -252,10 +252,14 @@ static int ford_tx_hook(CANPacket_t *to_send) {
       // we allow max curvature error at low speeds due to the low rates imposed by the EPS,
       // and inaccuracy of curvature from yaw rate.
       // we also allow max curvature rates, as EPS enforces safe curvature rate limits
-      int current_curvature_delta_max = (vehicle_speed > 13) ? CURVATURE_DELTA_MAX : FORD_STEERING_LIMITS.max_steer;
-      violation |= dist_to_meas_check(desired_curvature, desired_angle_last, &ford_curvature_meas,
-                                      FORD_STEERING_LIMITS.max_steer, FORD_STEERING_LIMITS.max_steer,
-                                      current_curvature_delta_max);
+//      int current_curvature_delta_max = (vehicle_speed > 13) ? CURVATURE_DELTA_MAX : FORD_STEERING_LIMITS.max_steer;
+      if (vehicle_speed > 13) {
+        violation |= angle_dist_to_meas_check(desired_curvature, &ford_curvature_meas,
+                                              CURVATURE_DELTA_MAX, FORD_STEERING_LIMITS.max_steer)
+      }
+//      violation |= dist_to_meas_check(desired_curvature, desired_angle_last, &ford_curvature_meas,
+//                                      FORD_STEERING_LIMITS.max_steer, FORD_STEERING_LIMITS.max_steer,
+//                                      current_curvature_delta_max);
 
       desired_angle_last = desired_curvature;
     }
