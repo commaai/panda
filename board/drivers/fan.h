@@ -6,6 +6,7 @@ struct fan_state_t {
   float error_integral;
   uint8_t stall_counter;
   uint8_t stall_threshold;  // in seconds
+  uint8_t total_stall_count;
   uint8_t cooldown_counter;
 } fan_state_t;
 struct fan_state_t fan_state;
@@ -49,10 +50,11 @@ void fan_tick(void) {
         if (fan_state.stall_counter > fan_state.stall_threshold*FAN_TICK_FREQ) {
           fan_stalled = true;
           fan_state.stall_counter = 0U;
+          fan_state.total_stall_count += 1U;
           fan_state.stall_threshold = CLAMP(fan_state.stall_threshold + 2U, FAN_STALL_THRESHOLD_MIN, FAN_STALL_THRESHOLD_MAX);
 
           // clip integral, can't fully reset otherwise we may always be stuck in stall detection
-          fan_state.error_integral = MIN(0.0f, fan_state.error_integral);
+          fan_state.error_integral = CLAMP(fan_state.error_integral, 0.0f, 70.0f);
         }
       } else {
         fan_state.stall_counter = 0U;
