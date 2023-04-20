@@ -204,7 +204,7 @@ class TestFordSafety(common.PandaSafetyTest):
                                    (controls_allowed, steer_control_enabled, path_offset, path_angle, curvature_rate, curvature, self.safety.get_debug_value()))
 
   def test_steer_meas_delta(self):
-    # This safety model enforces a maximum distance from measured and commanded curvature, only above a certain speed
+    """This safety model enforces a maximum distance from measured and commanded curvature, only above a certain speed"""
 
     self.safety.set_controls_allowed(1)
 
