@@ -206,14 +206,11 @@ class TestFordSafety(common.PandaSafetyTest):
 
     for speed in np.linspace(0, 50, 11):
       for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 51):
-        initial_curvature = round_curvature_can(initial_curvature)
         self._curvature_meas_msg_array(initial_curvature, speed)
 
         limit_command = speed > 10
         for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 51):
-          new_curvature = round_curvature_can(new_curvature)
-
-          too_far_away = abs(new_curvature - initial_curvature) > self.MAX_CURVATURE_DELTA
+          too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_DELTA
           should_tx = not limit_command or not too_far_away
           self.assertEqual(should_tx, self._tx(self._curvature_cmd_msg(new_curvature)))
 
