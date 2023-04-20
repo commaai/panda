@@ -335,9 +335,6 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   acc_main_on = false;
   cruise_button_prev = 0;
   desired_torque_last = 0;
-  debug_value = 0;
-  debug_value_2 = 0;
-  debug_value_3 = 0;
   rt_torque_last = 0;
   ts_angle_last = 0;
   desired_angle_last = 0;
@@ -434,9 +431,6 @@ bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
   // if we've exceeded the meas val, we must start moving toward 0
   int highest_allowed = MIN(highest_allowed_rl, MAX(val_last - MAX_RATE_DOWN, MAX(val_meas->max, 0) + MAX_ERROR));
   int lowest_allowed = MAX(lowest_allowed_rl, MIN(val_last + MAX_RATE_DOWN, MIN(val_meas->min, 0) - MAX_ERROR));
-  debug_value = highest_allowed;
-  debug_value_2 = lowest_allowed;
-  debug_value_3 = val;
 
   // check for violation
   return (val < lowest_allowed) || (val > highest_allowed);
