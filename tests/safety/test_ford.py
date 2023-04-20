@@ -195,8 +195,7 @@ class TestFordSafety(common.PandaSafetyTest):
                 with self.subTest((controls_allowed, steer_control_enabled, path_offset, path_angle, curvature_rate, curvature)):
                   self.safety.set_controls_allowed(controls_allowed)
                   enabled = steer_control_enabled or curvature != 0
-                  self._rx(self._speed_msg(5))
-                  self._rx(self._yaw_rate_msg(curvature, 5))
+                  self._curvature_meas_msg_array(curvature, 5)
 
                   should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
                   should_tx = should_tx and (not enabled or controls_allowed)
