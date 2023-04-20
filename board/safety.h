@@ -412,7 +412,7 @@ bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
 // check that commanded angle value isn't too far from measured
 bool angle_dist_to_meas_check(int val, struct sample_t *val_meas, const int MAX_ERROR, const int MAX_VAL) {
 
-  // val must always be near val_meas, limited the maximum value
+  // val must always be near val_meas, limited to the maximum value
   int highest_allowed = MIN(MAX(val_meas->max + MAX_ERROR, -MAX_VAL), MAX_VAL);
   int lowest_allowed = MIN(MAX(val_meas->min - MAX_ERROR, -MAX_VAL), MAX_VAL);
 
