@@ -44,8 +44,7 @@ def checksum(msg):
 
 def round_curvature_can(curvature):
   # rounds curvature as if it was sent on CAN
-  return round(curvature * 5e4) / 5e5
-  # return round(curvature * 5, 4) / 5
+  return round(curvature * 5, 4) / 5
 
 
 class Buttons:
@@ -192,15 +191,13 @@ class TestFordSafety(common.PandaSafetyTest):
           for path_angle in path_angles:
             for curvature_rate in curvature_rates:
               for curvature in curvatures:
-                with self.subTest((controls_allowed, steer_control_enabled, path_offset, path_angle, curvature_rate, curvature)):
-                  self.safety.set_controls_allowed(controls_allowed)
-                  enabled = steer_control_enabled or curvature != 0
-                  self._curvature_meas_msg_array(curvature, 5)
+                self.safety.set_controls_allowed(controls_allowed)
+                enabled = steer_control_enabled or curvature != 0
+                self._curvature_meas_msg_array(curvature, 5)
 
-                  should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
-                  should_tx = should_tx and (not enabled or controls_allowed)
-                  self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, path_offset, path_angle, curvature, curvature_rate)),
-                                   (controls_allowed, steer_control_enabled, path_offset, path_angle, curvature_rate, curvature, self.safety.get_debug_value()))
+                should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
+                should_tx = should_tx and (not enabled or controls_allowed)
+                self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, path_offset, path_angle, curvature, curvature_rate)))
 
   def test_steer_meas_delta(self):
     """This safety model enforces a maximum distance from measured and commanded curvature, only above a certain speed"""
