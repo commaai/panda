@@ -5,6 +5,7 @@ struct fan_state_t {
   uint8_t power;
   float error_integral;
   uint8_t stall_counter;
+  uint8_t total_stall_count;
   uint8_t cooldown_counter;
 } fan_state_t;
 struct fan_state_t fan_state;
@@ -44,6 +45,7 @@ void fan_tick(void){
         }
 
         if (fan_state.stall_counter > FAN_STALL_THRESHOLD) {
+          fan_state.total_stall_count += 1;
           // Stall detected, power cycling fan controller
           current_board->set_fan_enabled(false);
 
