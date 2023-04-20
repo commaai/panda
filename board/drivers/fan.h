@@ -5,7 +5,6 @@ struct fan_state_t {
   uint8_t power;
   float error_integral;
   uint8_t stall_counter;
-  uint8_t stall_threshold;  // in seconds
   uint8_t total_stall_count;
   uint8_t cooldown_counter;
 } fan_state_t;
@@ -14,8 +13,8 @@ struct fan_state_t fan_state;
 const float FAN_I = 0.001f;
 
 const uint8_t FAN_TICK_FREQ = 8U;
-const uint8_t FAN_STALL_THRESHOLD_MIN = 3U;
-const uint8_t FAN_STALL_THRESHOLD_MAX = 10U;
+const uint8_t FAN_STALL_THRESHOLD = 3U;
+
 
 void fan_set_power(uint8_t percentage) {
   fan_state.target_rpm = ((current_board->fan_max_rpm * CLAMP((uint16_t)percentage, 0U, 100U)) / 100U);
@@ -23,7 +22,6 @@ void fan_set_power(uint8_t percentage) {
 
 void llfan_init(void);
 void fan_init(void) {
-  fan_state.stall_threshold = FAN_STALL_THRESHOLD_MIN;
   fan_state.cooldown_counter = current_board->fan_enable_cooldown_time * FAN_TICK_FREQ;
   llfan_init();
 }
@@ -47,18 +45,16 @@ void fan_tick(void) {
           fan_state.stall_counter = 0U;
         }
 
-        if (fan_state.stall_counter > fan_state.stall_threshold*FAN_TICK_FREQ) {
+        if (fan_state.stall_counter > FAN_STALL_THRESHOLD*FAN_TICK_FREQ) {
           fan_stalled = true;
           fan_state.stall_counter = 0U;
           fan_state.total_stall_count += 1U;
-          fan_state.stall_threshold = CLAMP(fan_state.stall_threshold + 2U, FAN_STALL_THRESHOLD_MIN, FAN_STALL_THRESHOLD_MAX);
 
-          // clip integral, can't fully reset otherwise we may always be stuck in stall detection
-          fan_state.error_integral = CLAMP(fan_state.error_integral, 0.0f, 70.0f);
+          // datasheet gives this range as the minimum startup duty
+          fan_state.error_integral = CLAMP(fan_state.error_integral, 20.0f, 45.0f);
         }
       } else {
         fan_state.stall_counter = 0U;
-        fan_state.stall_threshold = 0U;
       }
     }
 
@@ -85,7 +81,6 @@ void fan_tick(void) {
     } else {
       float error = fan_state.target_rpm - fan_rpm_fast;
       fan_state.error_integral += FAN_I * error;
-      fan_state.error_integral = CLAMP(fan_state.error_integral, 0.0f, 100.0f);
     }
     fan_state.power = CLAMP(fan_state.error_integral, 0U, 100U);
 

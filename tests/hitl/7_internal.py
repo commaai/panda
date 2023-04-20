@@ -9,12 +9,19 @@ pytestmark = [
 ]
 
 def test_fan_controller(p):
-  for power in [50, 100]:
+  start_health = p.health()
+
+  for power in (50, 100):
     p.set_fan_power(power)
     time.sleep(10)
 
     expected_rpm = Panda.MAX_FAN_RPMs[bytes(p.get_type())] * power / 100
     assert 0.95 * expected_rpm <= p.get_fan_rpm() <= 1.05 * expected_rpm
+
+  # Ensure the stall detection is tested on dos
+  if p.get_type() == Panda.HW_TYPE_DOS:
+    stalls = p.health()['fan_stall_count'] - start_health['fan_stall_count']
+    assert stalls > 0
 
 def test_fan_cooldown(p):
   # if the fan cooldown doesn't work, we get high frequency noise on the tach line 
