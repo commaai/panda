@@ -56,6 +56,14 @@ void fan_tick(void){
       }
     }
 
+    #ifdef DEBUG_FAN
+      puth(fan_state.target_rpm);
+      print(" "); puth(fan_rpm_fast);
+      print(" "); puth(fan_state.power);
+      print(" "); puth(fan_state.stall_counter);
+      print("\n");
+    #endif
+
     // Update controller
     fan_state.error_integral += FAN_I * (fan_state.target_rpm - fan_rpm_fast);
     fan_state.error_integral = MIN(100.0f, MAX(0.0f, fan_state.error_integral));
