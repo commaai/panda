@@ -8,6 +8,13 @@
      __typeof__ (b) _b = (b); \
    (_a > _b) ? _a : _b; })
 
+#define CLAMP(x, low, high) ({\
+  __typeof__(x) __x = (x); \
+  __typeof__(low) __low = (low);\
+  __typeof__(high) __high = (high);\
+  __x > __high ? __high : (__x < __low ? __low : __x);\
+})
+
 #define ABS(a) \
  ({ __typeof__ (a) _a = (a); \
    (_a > 0) ? _a : (-_a); })
