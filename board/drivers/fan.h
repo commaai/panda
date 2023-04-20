@@ -17,7 +17,8 @@ const uint8_t FAN_STALL_THRESHOLD = 3U;
 
 
 void fan_set_power(uint8_t percentage) {
-  fan_state.target_rpm = ((current_board->fan_max_rpm * CLAMP((uint16_t)percentage, 0U, 100U)) / 100U);
+  uint16_t perc = CLAMP((uint16_t)percentage, 0U, 100U);
+  fan_state.target_rpm = ((current_board->fan_max_rpm * perc) / 100U);
 }
 
 void llfan_init(void);
@@ -45,7 +46,7 @@ void fan_tick(void) {
           fan_state.stall_counter = 0U;
         }
 
-        if (fan_state.stall_counter > FAN_STALL_THRESHOLD*FAN_TICK_FREQ) {
+        if (fan_state.stall_counter > (FAN_STALL_THRESHOLD*FAN_TICK_FREQ)) {
           fan_stalled = true;
           fan_state.stall_counter = 0U;
           fan_state.total_stall_count += 1U;
