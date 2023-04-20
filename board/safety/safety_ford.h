@@ -226,7 +226,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     // These signals are not yet tested with the current safety limits
     bool violation = (curvature_rate != INACTIVE_CURVATURE_RATE) || (path_angle != INACTIVE_PATH_ANGLE) || (path_offset != INACTIVE_PATH_OFFSET);
 
-    int desired_curvature = curvature - 1000;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
+    int desired_curvature = curvature - 1000U;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
     if (controls_allowed) {
       if (vehicle_speed > 10) {
         violation |= angle_dist_to_meas_check(desired_curvature, &angle_meas,
