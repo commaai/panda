@@ -4,8 +4,11 @@ import time
 import pytest
 
 from panda import Panda, PandaDFU
-from panda_jungle import PandaJungle  # pylint: disable=import-error
 from panda.tests.hitl.helpers import clear_can_buffers
+
+NO_JUNGLE = os.environ.get("NO_JUNGLE", "0") == "1"
+if not NO_JUNGLE:
+  from panda_jungle import PandaJungle  # pylint: disable=import-error
 
 
 SPEED_NORMAL = 500
@@ -17,7 +20,6 @@ PEDAL_SERIAL = 'none'
 JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
 PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE", "").strip().split(" ")
 PARTIAL_TESTS = os.environ.get("PARTIAL_TESTS", "0") == "1"
-NO_JUNGLE = os.environ.get("NO_JUNGLE", "0") == "1"
 HW_TYPES = os.environ.get("HW_TYPES", None)
 
 class PandaGroup:
