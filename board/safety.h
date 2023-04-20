@@ -413,6 +413,19 @@ bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
 }
 
 // check that commanded value isn't too far from measured
+// TODO: consider max value, can't go above that
+bool command_error_check(int val, struct sample_t *val_meas, const int MAX_ERROR) {
+
+  // if we've exceeded the meas val, we must start moving toward 0
+  //
+  int highest_allowed = val_meas->max + MAX_ERROR
+  int lowest_allowed = val_meas->min - MAX_ERROR
+
+  // check for violation
+  return (val < lowest_allowed) || (val > highest_allowed);
+}
+
+// check that commanded torque value isn't too far from measured
 bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
                         const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR) {
 
