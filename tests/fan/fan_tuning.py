@@ -2,8 +2,8 @@
 import json
 import time
 import threading
-from panda import Panda
 
+from panda import Panda
 
 def drain_serial(p):
   ret = []
@@ -18,6 +18,7 @@ def drain_serial(p):
 fan_cmd = 0.
 
 def logger(event):
+  # requires a build with DEBUG_FAN
   with Panda(claim=False) as p, open('/tmp/fan_log', 'w') as f:
     power = None
     target_rpm = None
@@ -79,7 +80,6 @@ if __name__ == "__main__":
 
   try:
     p = Panda()
-    #get_overshoot_rpm(p, 50)
     for power in range(10, 101, 10):
       overshoot, max_rpm, max_power = get_overshoot_rpm(p, power)
       print(f"Fan power {power}% overshoot: {overshoot:.2f}, Max RPM: {max_rpm}, Max power: {max_power}%")
