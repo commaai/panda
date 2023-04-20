@@ -26,13 +26,9 @@ def setup_safety_helpers(ffi):
   void set_desired_torque_last(int t);
   void set_rt_torque_last(int t);
   void set_desired_angle_last(int t);
-  float get_debug_value(void);
-  float get_debug_value_2(void);
-  float get_debug_value_3(void);
 
   bool get_cruise_engaged_prev(void);
   bool get_vehicle_moving(void);
-  float get_vehicle_speed(void);
   int get_hw_type(void);
   void set_timer(uint32_t t);
 
