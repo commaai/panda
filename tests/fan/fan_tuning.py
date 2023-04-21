@@ -44,10 +44,11 @@ def logger(event):
         'rpm_fast': rpm_fast,
         'rpm': p.get_fan_rpm(),
         'stall_counter': stall_count,
+        'total_stall_count': p.health()['fan_stall_count'],
       }
       f.write(json.dumps(dat) + '\n')
       time.sleep(1/16.)
-
+    p.set_fan_power(0)
 
 def get_overshoot_rpm(p, power):
   global fan_cmd
