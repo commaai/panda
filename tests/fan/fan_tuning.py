@@ -54,7 +54,7 @@ def get_overshoot_rpm(p, power):
 
   # make sure the fan is stopped completely
   fan_cmd = 0.
-  while p.get_fan_rpm() > 100:
+  while p.get_fan_rpm() > 0:
     time.sleep(0.1)
   time.sleep(3)
 
@@ -62,7 +62,7 @@ def get_overshoot_rpm(p, power):
   fan_cmd = power
   max_rpm = 0
   max_power = 0
-  for _ in range(70):
+  for _ in range(150):
     max_rpm = max(max_rpm, p.get_fan_rpm())
     max_power = max(max_power, p.health()['fan_power'])
     time.sleep(0.1)
@@ -80,7 +80,8 @@ if __name__ == "__main__":
 
   try:
     p = Panda()
-    for power in range(10, 101, 10):
+    #for power in range(10, 101, 10):
+    for power in (10, 30, 50, 100):
       overshoot, max_rpm, max_power = get_overshoot_rpm(p, power)
       print(f"Fan power {power}%: overshoot {overshoot:.2%}, Max RPM {max_rpm}, Max power {max_power}%")
   finally:

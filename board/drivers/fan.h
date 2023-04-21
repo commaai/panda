@@ -5,6 +5,7 @@ struct fan_state_t {
   uint8_t power;
   float error_integral;
   uint8_t stall_counter;
+  uint8_t stall_threshold;
   uint8_t total_stall_count;
   uint8_t cooldown_counter;
 } fan_state_t;
@@ -13,7 +14,8 @@ struct fan_state_t fan_state;
 const float FAN_I = 0.001f;
 
 const uint8_t FAN_TICK_FREQ = 8U;
-const uint8_t FAN_STALL_THRESHOLD = 3U;
+const uint8_t FAN_STALL_THRESHOLD_MIN = 3U;
+const uint8_t FAN_STALL_THRESHOLD_MAX = 8U;
 
 
 void fan_set_power(uint8_t percentage) {
@@ -22,6 +24,7 @@ void fan_set_power(uint8_t percentage) {
 
 void llfan_init(void);
 void fan_init(void) {
+  fan_state.stall_threshold = FAN_STALL_THRESHOLD_MIN;
   fan_state.cooldown_counter = current_board->fan_enable_cooldown_time * FAN_TICK_FREQ;
   llfan_init();
 }
@@ -44,9 +47,10 @@ void fan_tick(void) {
           fan_state.stall_counter = 0U;
         }
 
-        if (fan_state.stall_counter > (FAN_STALL_THRESHOLD*FAN_TICK_FREQ)) {
+        if (fan_state.stall_counter > (fan_state.stall_threshold*FAN_TICK_FREQ)) {
           fan_stalled = true;
           fan_state.stall_counter = 0U;
+          fan_state.stall_threshold = CLAMP(fan_state.stall_threshold + 2U, FAN_STALL_THRESHOLD_MIN, FAN_STALL_THRESHOLD_MAX);
           fan_state.total_stall_count += 1U;
 
           // datasheet gives this range as the minimum startup duty
@@ -54,6 +58,7 @@ void fan_tick(void) {
         }
       } else {
         fan_state.stall_counter = 0U;
+        fan_state.stall_threshold = FAN_STALL_THRESHOLD_MIN;
       }
     }
 
