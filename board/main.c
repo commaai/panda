@@ -356,7 +356,7 @@ int main(void) {
   }
 
   if (current_board->fan_max_rpm > 0U) {
-    llfan_init();
+    fan_init();
   }
 
   microsecond_timer_init();
