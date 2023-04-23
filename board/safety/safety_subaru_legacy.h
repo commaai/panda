@@ -11,7 +11,8 @@ const SteeringLimits SUBARU_L_STEERING_LIMITS = {
 
 const CanMsg SUBARU_L_TX_MSGS[] = {
   {0x161, 0, 8},
-  {0x164, 0, 8}
+  {0x164, 0, 8},
+  {0x140, 2, 8},
 };
 #define SUBARU_L_TX_MSGS_LEN (sizeof(SUBARU_L_TX_MSGS) / sizeof(SUBARU_L_TX_MSGS[0]))
 
@@ -87,7 +88,12 @@ static int subaru_legacy_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   if (bus_num == 0) {
-    bus_fwd = 2;  // Camera CAN
+    // Preglobal platform
+    // 0x140 is Throttle
+    int block_msg = (addr == 0x140);
+    if (!block_msg) {
+      bus_fwd = 2;  // Camera CAN
+    }
   }
 
   if (bus_num == 2) {
