@@ -124,8 +124,8 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
 
     // ES_LKAS_State LKAS_Alert: 2, 5, 6
     if ((addr == 0x322) && (bus == alt_bus2)) {
-      int lkas_alert = ((GET_BYTE(to_push, 4) >> 3) & 5U);
-      subaru_aeb = ((lkas_alert == 2U) || (lkas_alert == 5U) || (lkas_alert == 6U));
+      const int lkas_alert = ((GET_BYTE(to_push, 4) >> 3) & 5U);
+      subaru_aeb = ((lkas_alert == 2) || (lkas_alert == 5) || (lkas_alert == 6));
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
