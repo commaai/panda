@@ -214,12 +214,12 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
   }
 
   // Safety check for HCA_01 Heading Control Assist torque
-  // Signal: HCA_01.Assist_Torque (absolute torque)
-  // Signal: HCA_01.Assist_VZ (direction)
+  // Signal: HCA_01.HCA_01_LM_Offset (absolute torque)
+  // Signal: HCA_01.HCA_01_LM_OffSign (direction)
   if (addr == MSG_HCA_01) {
-    int desired_torque = GET_BYTE(to_send, 2) | ((GET_BYTE(to_send, 3) & 0x3FU) << 8);
-    int sign = (GET_BYTE(to_send, 3) & 0x80U) >> 7;
-    if (sign == 1) {
+    int desired_torque = GET_BYTE(to_send, 2) | ((GET_BYTE(to_send, 3) & 0x1U) << 8);
+    bool sign = GET_BIT(to_send, 31U);
+    if (sign) {
       desired_torque *= -1;
     }
 
@@ -265,8 +265,7 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static int volkswagen_mqb_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
-  int addr = GET_ADDR(to_fwd);
+static int volkswagen_mqb_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   switch (bus_num) {

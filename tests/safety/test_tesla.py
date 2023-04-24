@@ -50,7 +50,7 @@ class TestTeslaSafety(common.PandaSafetyTest):
     values = {"DI_cruiseState": 2 if enable else 0}
     return self.packer.make_can_msg_panda("DI_state", 0, values)
 
-  def _long_control_msg(self, set_speed, acc_val=0, jerk_limits=(0, 0), accel_limits=(0, 0), aeb_event=0):
+  def _long_control_msg(self, set_speed, acc_val=0, jerk_limits=(0, 0), accel_limits=(0, 0), aeb_event=0, bus=0):
     values = {
       "DAS_setSpeed": set_speed,
       "DAS_accState": acc_val,
@@ -60,7 +60,7 @@ class TestTeslaSafety(common.PandaSafetyTest):
       "DAS_accelMin": accel_limits[0],
       "DAS_accelMax": accel_limits[1],
     }
-    return self.packer.make_can_msg_panda("DAS_control", 0, values)
+    return self.packer.make_can_msg_panda("DAS_control", bus, values)
 
 
 class TestTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTest):
@@ -119,18 +119,18 @@ class TestTeslaLongitudinalSafety(TestTeslaSafety):
 
   def test_stock_aeb_passthrough(self):
     no_aeb_msg = self._long_control_msg(10, aeb_event=0)
-    aeb_msg = self._long_control_msg(10, aeb_event=1)
+    no_aeb_msg_cam = self._long_control_msg(10, aeb_event=0, bus=2)
+    aeb_msg_cam = self._long_control_msg(10, aeb_event=1, bus=2)
 
     # stock system sends no AEB -> no forwarding, and OP is allowed to TX
-    self.assertEqual(-1, self.safety.safety_fwd_hook(2, no_aeb_msg))
+    self.assertEqual(1, self._rx(no_aeb_msg_cam))
+    self.assertEqual(-1, self.safety.safety_fwd_hook(2, no_aeb_msg_cam.addr))
     self.assertEqual(True, self._tx(no_aeb_msg))
 
     # stock system sends AEB -> forwarding, and OP is not allowed to TX
-    self.assertEqual(0, self.safety.safety_fwd_hook(2, aeb_msg))
+    self.assertEqual(1, self._rx(aeb_msg_cam))
+    self.assertEqual(0, self.safety.safety_fwd_hook(2, aeb_msg_cam.addr))
     self.assertEqual(False, self._tx(no_aeb_msg))
-
-    # reset global state for next tests
-    self.assertEqual(-1, self.safety.safety_fwd_hook(2, no_aeb_msg))
 
   def test_acc_accel_limits(self):
     for controls_allowed in [True, False]:

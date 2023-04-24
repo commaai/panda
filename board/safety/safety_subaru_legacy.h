@@ -83,7 +83,7 @@ static int subaru_legacy_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static int subaru_legacy_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+static int subaru_legacy_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   if (bus_num == 0) {
@@ -94,7 +94,6 @@ static int subaru_legacy_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     // Preglobal platform
     // 0x161 is ES_CruiseThrottle
     // 0x164 is ES_LKAS
-    int addr = GET_ADDR(to_fwd);
     int block_msg = ((addr == 0x161) || (addr == 0x164));
     if (!block_msg) {
       bus_fwd = 0;  // Main CAN
