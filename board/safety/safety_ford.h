@@ -118,7 +118,7 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
 #define INACTIVE_CURVATURE_RATE 4096U
 #define INACTIVE_PATH_OFFSET 512U
 #define INACTIVE_PATH_ANGLE 1000U
-#define FORD_MAX_SPEED_DELTA 5.0
+#define FORD_MAX_SPEED_DELTA 2.5
 
 static bool ford_lkas_msg_check(int addr) {
   return (addr == MSG_ACCDATA_3)
