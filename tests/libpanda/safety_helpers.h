@@ -39,6 +39,10 @@ bool get_controls_allowed(void){
   return controls_allowed;
 }
 
+bool get_vehicle_state_mismatch(void){
+  return vehicle_state_mismatch;
+}
+
 int get_alternative_experience(void){
   return alternative_experience;
 }
