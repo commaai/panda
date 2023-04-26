@@ -153,7 +153,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (addr == MSG_EngVehicleSpThrottle2) {
       // Set vehicle state mismatch if speeds from ABS and PCM ECUs are too far apart.
       // Causes controls allowed to fall
-      // Signal: Veh_V_ActlEngz
+      // Signal: Veh_V_ActlEng
       float filtered_pcm_speed = ((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01 / 3.6;
       vehicle_state_mismatch = ABS(filtered_pcm_speed - vehicle_speed) > FORD_MAX_SPEED_DELTA;
     }
