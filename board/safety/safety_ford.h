@@ -120,8 +120,8 @@ static bool ford_lkas_msg_check(int addr) {
 const SteeringLimits FORD_STEERING_LIMITS = {
   .max_steer = 1000,
   .angle_deg_to_can = 50000,  // 1 / (2e-5) rad to can
+  .max_angle_error = 100,     // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
 };
-const int CURVATURE_DELTA_MAX = 100;  // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
 
 static int ford_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &ford_rx_checks,
@@ -231,7 +231,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     if (controls_allowed) {
       if (vehicle_speed > 10.) {
         violation |= angle_dist_to_meas_check(desired_curvature, &angle_meas,
-                                              CURVATURE_DELTA_MAX, FORD_STEERING_LIMITS.max_steer);
+                                              FORD_STEERING_LIMITS.max_angle_error, FORD_STEERING_LIMITS.max_steer);
       }
     }
 
