@@ -87,6 +87,7 @@ static uint32_t ford_compute_checksum(CANPacket_t *to_push) {
     chksum += (GET_BYTE(to_push, 2) >> 2) & 0xFU;           // VehVActlBrk_No_Cnt
     chksum = 0xFFU - chksum;
   } else if (addr == MSG_EngVehicleSpThrottle2) {
+    // GearRvrse_D_Actl does nothing
 
   } else if (addr == MSG_Yaw_Data_FD1) {
     chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // VehRol_W_Actl
