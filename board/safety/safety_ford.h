@@ -122,6 +122,13 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
   return valid;
 }
 
+const LongitudinalLimits FORD_LONG_LIMITS = {
+  // gas & brake cmd limits
+  .max_gas=700,
+  .min_gas=450,
+  .max_brake=4230,
+};
+
 #define INACTIVE_CURVATURE 1000U
 #define INACTIVE_CURVATURE_RATE 4096U
 #define INACTIVE_PATH_OFFSET 512U
@@ -226,6 +233,18 @@ static int ford_tx_hook(CANPacket_t *to_send) {
 
   if (!msg_allowed(to_send, FORD_TX_MSGS, FORD_TX_LEN)) {
     tx = 0;
+  }
+
+  if (addr == MSG_ACCDATA) {
+    int gas = ((GET_BYTE(to_send, 6) & 0x3U) << 8) | GET_BYTE(to_send, 7);
+    int brake = ((GET_BYTE(to_send, 0) & 0x1FU) << 8) | GET_BYTE(to_send, 1);
+    bool violation = false;
+    violation |= longitudinal_gas_checks(gas, FORD_LONG_LIMITS);
+    violation |= longitudinal_brake_checks(brake, FORD_LONG_LIMITS);
+
+    if (violation) {
+      tx = 0;
+    }
   }
 
   // Safety check for Steering_Data_FD1 button signals
