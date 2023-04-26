@@ -8,16 +8,16 @@ from panda import Panda
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.common import CANPackerPanda
 
-MSG_EngBrakeData = 0x165          # RX from PCM, for driver brake pedal and cruise state
-MSG_EngVehicleSpThrottle = 0x204  # RX from PCM, for driver throttle input
-MSG_BrakeSysFeatures = 0x415      # RX from ABS, for vehicle speed
-MSG_EngVehicleSpThrottle2 = 0x202 # RX from PCM, for second vehicle speed
-MSG_Yaw_Data_FD1 = 0x91           # RX from RCM, for yaw rate
-MSG_Steering_Data_FD1 = 0x083     # TX by OP, various driver switches and LKAS/CC buttons
-MSG_ACCDATA_3 = 0x18A             # TX by OP, ACC/TJA user interface
-MSG_Lane_Assist_Data1 = 0x3CA     # TX by OP, Lane Keep Assist
-MSG_LateralMotionControl = 0x3D3  # TX by OP, Traffic Jam Assist
-MSG_IPMA_Data = 0x3D8             # TX by OP, IPMA and LKAS user interface
+MSG_EngBrakeData = 0x165           # RX from PCM, for driver brake pedal and cruise state
+MSG_EngVehicleSpThrottle = 0x204   # RX from PCM, for driver throttle input
+MSG_BrakeSysFeatures = 0x415       # RX from ABS, for vehicle speed
+MSG_EngVehicleSpThrottle2 = 0x202  # RX from PCM, for second vehicle speed
+MSG_Yaw_Data_FD1 = 0x91            # RX from RCM, for yaw rate
+MSG_Steering_Data_FD1 = 0x083      # TX by OP, various driver switches and LKAS/CC buttons
+MSG_ACCDATA_3 = 0x18A              # TX by OP, ACC/TJA user interface
+MSG_Lane_Assist_Data1 = 0x3CA      # TX by OP, Lane Keep Assist
+MSG_LateralMotionControl = 0x3D3   # TX by OP, Traffic Jam Assist
+MSG_IPMA_Data = 0x3D8              # TX by OP, IPMA and LKAS user interface
 
 
 def checksum(msg):
