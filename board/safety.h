@@ -268,6 +268,11 @@ void generic_rx_checks(bool stock_ecu_detected) {
   }
   regen_braking_prev = regen_braking;
 
+  // exit controls if vehicle state mismatch is detected
+  if (vehicle_state_mismatch) {
+    controls_allowed = 0;
+  }
+
   // check if stock ECU is on bus broken by car harness
   if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && stock_ecu_detected) {
     relay_malfunction_set();
@@ -320,6 +325,7 @@ const safety_hook_config safety_hook_registry[] = {
 int set_safety_hooks(uint16_t mode, uint16_t param) {
   // reset state set by safety mode
   safety_mode_cnt = 0U;
+  vehicle_state_mismatch = false;
   relay_malfunction = false;
   gas_interceptor_detected = false;
   gas_interceptor_prev = 0;
