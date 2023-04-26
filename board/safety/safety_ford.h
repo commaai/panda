@@ -107,6 +107,8 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
   bool valid = false;
   if (addr == MSG_BrakeSysFeatures) {
     valid = (GET_BYTE(to_push, 2) >> 6) == 0x3U;  // VehVActlBrk_D_Qf
+  } else if (addr == MSG_EngVehicleSpThrottle2) {
+    valid = ((GET_BYTE(to_push, 4) >> 5) & 0x3U) == 0x3U;
   } else if (addr == MSG_Yaw_Data_FD1) {
     valid = (GET_BYTE(to_push, 6) >> 4) == 0xFU;  // VehRolWActl_D_Qf & VehYawWActl_D_Qf
   } else {
@@ -118,7 +120,7 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
 #define INACTIVE_CURVATURE_RATE 4096U
 #define INACTIVE_PATH_OFFSET 512U
 #define INACTIVE_PATH_ANGLE 1000U
-#define FORD_MAX_SPEED_DELTA 2.5
+#define FORD_MAX_SPEED_DELTA 2.5  // m/s
 
 static bool ford_lkas_msg_check(int addr) {
   return (addr == MSG_ACCDATA_3)
