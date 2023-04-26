@@ -159,25 +159,24 @@ class TestFordSafety(common.PandaSafetyTest):
     # checksum, counter, and quality flag checks
     for quality_flag in [True, False]:
       for msg in ["speed", "speed_2", "yaw"]:
-        with self.subTest(msg=msg, quality_flag=quality_flag):
-          self.safety.set_controls_allowed(True)
-          # send multiple times to verify counter checks
-          for _ in range(10):
-            if msg == "speed":
-              to_push = self._speed_msg(0, quality_flag=quality_flag)
-            elif msg == "speed_2":
-              to_push = self._speed_msg_2(0, quality_flag=quality_flag)
-            elif msg == "yaw":
-              to_push = self._yaw_rate_msg(0, 0, quality_flag=quality_flag)
+        self.safety.set_controls_allowed(True)
+        # send multiple times to verify counter checks
+        for _ in range(10):
+          if msg == "speed":
+            to_push = self._speed_msg(0, quality_flag=quality_flag)
+          elif msg == "speed_2":
+            to_push = self._speed_msg_2(0, quality_flag=quality_flag)
+          elif msg == "yaw":
+            to_push = self._yaw_rate_msg(0, 0, quality_flag=quality_flag)
 
-            self.assertEqual(quality_flag, self._rx(to_push))
-            self.assertEqual(quality_flag, self.safety.get_controls_allowed())
+          self.assertEqual(quality_flag, self._rx(to_push))
+          self.assertEqual(quality_flag, self.safety.get_controls_allowed())
 
-          # Mess with checksum to make it fail
-          to_push[0].data[1] = 0  # Speed 2 checksum
-          to_push[0].data[3] = 0  # Speed checksum & half of yaw signal
-          self.assertFalse(self._rx(to_push))
-          self.assertFalse(self.safety.get_controls_allowed())
+        # Mess with checksum to make it fail
+        to_push[0].data[1] = 0  # Speed 2 checksum
+        to_push[0].data[3] = 0  # Speed checksum & half of yaw signal
+        self.assertFalse(self._rx(to_push))
+        self.assertFalse(self.safety.get_controls_allowed())
 
   def test_steer_allowed(self):
     path_offsets = np.arange(-5.12, 5.11, 1).round()
