@@ -44,6 +44,7 @@ def checksum(msg):
     chksum = (dat[2] >> 3) & 0xf  # VehVActlEng_No_Cnt
     chksum += (dat[4] >> 5) & 0x3  # VehVActlEng_D_Qf
     chksum += dat[6] + dat[7]  # Veh_V_ActlEng
+    chksum = 0xff - (chksum & 0xff)
     ret[1] = chksum
 
   return addr, t, ret, bus
