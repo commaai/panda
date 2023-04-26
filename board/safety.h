@@ -139,24 +139,13 @@ int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], cons
   for (int i = 0; i < len; i++) {
     // if multiple msgs are allowed, determine which one is present on the bus
     if (!addr_list[i].msg_seen) {
-      int j = 0;
-//      for (uint8_t j = 0U; addr_list[i].msg[j].addr != 0; j++) {
-      while (1) {
-        print("j idx: "); puth(j); print("\n");
-        print("addr: "); puth(addr_list[i].msg[j].addr); print("\n");
-        print("bus: "); puth(addr_list[i].msg[j].bus); print("\n");
-        print("len: "); puth(addr_list[i].msg[j].len); print("\n\n");
-        if (addr_list[i].msg[j].addr == 0) {
-          break;
-        }
-//        print("j reached: %d\n", j);
+      for (uint8_t j = 0U; addr_list[i].msg[j].addr != 0; j++) {
         if ((addr == addr_list[i].msg[j].addr) && (bus == addr_list[i].msg[j].bus) &&
               (length == addr_list[i].msg[j].len)) {
           addr_list[i].index = j;
           addr_list[i].msg_seen = true;
-//          break;
+          break;
         }
-        j += 1;
       }
     }
 
