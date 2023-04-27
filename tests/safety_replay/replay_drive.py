@@ -32,7 +32,6 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
 
     # call tick at 1Hz
     if msg.logMonoTime - safety_tick_t > 1e9:
-      print('ticking!')
       safety_tick_t = msg.logMonoTime
       safety.safety_tick_current_rx_checks()
 
