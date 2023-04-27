@@ -263,7 +263,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     }
 
     // No curvature command if controls is not allowed
-    if (!controls_allowed && ((raw_curvature != INACTIVE_CURVATURE) || steer_control_enabled)) {
+    if (!controls_allowed && ((desired_curvature != 0) || steer_control_enabled)) {
       violation = true;
     }
 
