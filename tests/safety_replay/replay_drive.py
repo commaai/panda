@@ -30,7 +30,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
       safety_tick_t = msg.logMonoTime
     safety.set_timer((msg.logMonoTime // 1000) % 0xFFFFFFFF)
 
-    # call tick at 1Hz, allow 1s for addr checks to go valid
+    # call tick at 1Hz
     if msg.logMonoTime - safety_tick_t > 1e9:
       print('ticking!')
       safety_tick_t = msg.logMonoTime
