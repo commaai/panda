@@ -255,21 +255,39 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     bool violation = (raw_curvature_rate != INACTIVE_CURVATURE_RATE) || (raw_path_angle != INACTIVE_PATH_ANGLE) || (raw_path_offset != INACTIVE_PATH_OFFSET);
 
     int desired_curvature = raw_curvature - INACTIVE_CURVATURE;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
-    if (controls_allowed && steer_control_enabled) {
-      if (vehicle_speed > FORD_CURVATURE_DELTA_LIMIT_SPEED) {
+    if (controls_allowed) {
+      if (steer_control_enabled) {
+        if (vehicle_speed > FORD_CURVATURE_DELTA_LIMIT_SPEED) {
         violation |= angle_dist_to_meas_check(desired_curvature, &angle_meas,
                                               FORD_STEERING_LIMITS.max_angle_error, FORD_STEERING_LIMITS.max_steer);
       }
+      } else {
+        if (desired_curvature != 0) {
+          violation = true;
+        }
+      }
+    } else {
+      if ((desired_curvature != 0) || steer_control_enabled) {
+        violation = true;
+      }
     }
 
-    if (!steer_control_enabled && (desired_curvature != 0)) {
-      violation = true;
-    }
-
-    // No curvature command if controls is not allowed
-    if (!controls_allowed && ((desired_curvature != 0) || steer_control_enabled)) {
-      violation = true;
-    }
+//    int desired_curvature = raw_curvature - INACTIVE_CURVATURE;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
+//    if (controls_allowed && steer_control_enabled) {
+//      if (vehicle_speed > FORD_CURVATURE_DELTA_LIMIT_SPEED) {
+//        violation |= angle_dist_to_meas_check(desired_curvature, &angle_meas,
+//                                              FORD_STEERING_LIMITS.max_angle_error, FORD_STEERING_LIMITS.max_steer);
+//      }
+//    }
+//
+//    if (!steer_control_enabled && (desired_curvature != 0)) {
+//      violation = true;
+//    }
+//
+//    // No curvature command if controls is not allowed
+//    if (!controls_allowed && ((desired_curvature != 0) || steer_control_enabled)) {
+//      violation = true;
+//    }
 
     if (violation) {
       tx = 0;
