@@ -3,6 +3,7 @@
 #define MSG_EngVehicleSpThrottle  0x204   // RX from PCM, for driver throttle input
 #define MSG_DesiredTorqBrk        0x213   // RX from ABS, for standstill state
 #define MSG_BrakeSysFeatures      0x415   // RX from ABS, for vehicle speed
+#define MSG_EngVehicleSpThrottle2 0x202   // RX from PCM, for second vehicle speed
 #define MSG_Yaw_Data_FD1          0x91    // RX from RCM, for yaw rate
 #define MSG_Steering_Data_FD1     0x083   // TX by OP, various driver switches and LKAS/CC buttons
 #define MSG_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
@@ -28,6 +29,7 @@ const CanMsg FORD_TX_MSGS[] = {
 // this may be the cause of blocked messages
 AddrCheckStruct ford_addr_checks[] = {
   {.msg = {{MSG_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_EngVehicleSpThrottle2, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_Yaw_Data_FD1, 0, 8, .check_checksum = true, .max_counter = 255U, .quality_flag=true, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   // These messages have no counter or checksum
   {.msg = {{MSG_EngBrakeData, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
@@ -44,6 +46,9 @@ static uint8_t ford_get_counter(CANPacket_t *to_push) {
   if (addr == MSG_BrakeSysFeatures) {
     // Signal: VehVActlBrk_No_Cnt
     cnt = (GET_BYTE(to_push, 2) >> 2) & 0xFU;
+  } else if (addr == MSG_EngVehicleSpThrottle2) {
+    // Signal: VehVActlEng_No_Cnt
+    cnt = (GET_BYTE(to_push, 2) >> 3) & 0xFU;
   } else if (addr == MSG_Yaw_Data_FD1) {
     // Signal: VehRollYaw_No_Cnt
     cnt = GET_BYTE(to_push, 5);
@@ -60,6 +65,9 @@ static uint32_t ford_get_checksum(CANPacket_t *to_push) {
   if (addr == MSG_BrakeSysFeatures) {
     // Signal: VehVActlBrk_No_Cs
     chksum = GET_BYTE(to_push, 3);
+  } else if (addr == MSG_EngVehicleSpThrottle2) {
+    // Signal: VehVActlEng_No_Cs
+    chksum = GET_BYTE(to_push, 1);
   } else if (addr == MSG_Yaw_Data_FD1) {
     // Signal: VehRollYawW_No_Cs
     chksum = GET_BYTE(to_push, 4);
@@ -77,6 +85,11 @@ static uint32_t ford_compute_checksum(CANPacket_t *to_push) {
     chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // Veh_V_ActlBrk
     chksum += GET_BYTE(to_push, 2) >> 6;                    // VehVActlBrk_D_Qf
     chksum += (GET_BYTE(to_push, 2) >> 2) & 0xFU;           // VehVActlBrk_No_Cnt
+    chksum = 0xFFU - chksum;
+  } else if (addr == MSG_EngVehicleSpThrottle2) {
+    chksum += (GET_BYTE(to_push, 2) >> 3) & 0xFU;           // VehVActlEng_No_Cnt
+    chksum += (GET_BYTE(to_push, 4) >> 5) & 0x3U;           // VehVActlEng_D_Qf
+    chksum += GET_BYTE(to_push, 6) + GET_BYTE(to_push, 7);  // Veh_V_ActlEng
     chksum = 0xFFU - chksum;
   } else if (addr == MSG_Yaw_Data_FD1) {
     chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // VehRol_W_Actl
@@ -96,9 +109,11 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
 
   bool valid = false;
   if (addr == MSG_BrakeSysFeatures) {
-    valid = (GET_BYTE(to_push, 2) >> 6) == 0x3U;  // VehVActlBrk_D_Qf
+    valid = (GET_BYTE(to_push, 2) >> 6) == 0x3U;           // VehVActlBrk_D_Qf
+  } else if (addr == MSG_EngVehicleSpThrottle2) {
+    valid = ((GET_BYTE(to_push, 4) >> 5) & 0x3U) == 0x3U;  // VehVActlEng_D_Qf
   } else if (addr == MSG_Yaw_Data_FD1) {
-    valid = (GET_BYTE(to_push, 6) >> 4) == 0xFU;  // VehRolWActl_D_Qf & VehYawWActl_D_Qf
+    valid = (GET_BYTE(to_push, 6) >> 4) == 0xFU;           // VehRolWActl_D_Qf & VehYawWActl_D_Qf
   } else {
   }
   return valid;
@@ -108,6 +123,7 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
 #define INACTIVE_CURVATURE_RATE 4096U
 #define INACTIVE_PATH_OFFSET 512U
 #define INACTIVE_PATH_ANGLE 1000U
+#define FORD_MAX_SPEED_DELTA 2.0  // m/s
 
 static bool ford_lkas_msg_check(int addr) {
   return (addr == MSG_ACCDATA_3)
@@ -140,6 +156,15 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (addr == MSG_BrakeSysFeatures) {
       // Signal: Veh_V_ActlBrk
       vehicle_speed = ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6;
+    }
+
+    if (addr == MSG_EngVehicleSpThrottle2) {
+      // Disable controls if speeds from ABS and PCM ECUs are too far apart.
+      // Signal: Veh_V_ActlEng
+      float filtered_pcm_speed = ((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01 / 3.6;
+      if (ABS(filtered_pcm_speed - vehicle_speed) > FORD_MAX_SPEED_DELTA) {
+        controls_allowed = 0;
+      }
     }
 
     // Update vehicle yaw rate
