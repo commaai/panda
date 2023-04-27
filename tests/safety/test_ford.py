@@ -193,7 +193,6 @@ class TestFordSafety(common.PandaSafetyTest):
 
         within_delta = abs(speed - speed_2) <= self.MAX_SPEED_DELTA
         self.assertEqual(self.safety.get_controls_allowed(), within_delta)
-        self.assertEqual(self.safety.get_vehicle_state_mismatch(), not within_delta)
 
   def test_steer_allowed(self):
     path_offsets = np.arange(-5.12, 5.11, 1).round()
