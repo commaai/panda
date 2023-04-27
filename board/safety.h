@@ -424,7 +424,7 @@ bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
   int lowest_allowed = MAX(lowest_allowed_rl, MIN(val_last + MAX_RATE_DOWN, MIN(val_meas->min, 0) - MAX_ERROR));
 
   // check for violation
-  return (val < lowest_allowed) || (val > highest_allowed);
+  return max_limit_check(val, highest_allowed, lowest_allowed);
 }
 
 // check that commanded value isn't fighting against driver
@@ -447,7 +447,7 @@ bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
                                            MIN(driver_min_limit, 0)));
 
   // check for violation
-  return (val < lowest_allowed) || (val > highest_allowed);
+  return max_limit_check(val, highest_allowed, lowest_allowed);
 }
 
 
@@ -459,7 +459,7 @@ bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
   int lowest_val = MIN(val_last, 0) - MAX_RT_DELTA;
 
   // check for violation
-  return (val < lowest_val) || (val > highest_val);
+  return max_limit_check(val, highest_val, lowest_val);
 }
 
 
