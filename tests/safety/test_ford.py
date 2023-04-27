@@ -241,6 +241,8 @@ class TestFordSafety(common.PandaSafetyTest):
 
           limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
           for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 51):
+            # if not steer_control_enabled:
+            #   new_curvature = 0
             too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_DELTA
             should_tx = not limit_command or not too_far_away or not steer_control_enabled
             self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, new_curvature, 0)))
