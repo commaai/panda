@@ -124,7 +124,6 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
 #define INACTIVE_PATH_OFFSET 512U
 #define INACTIVE_PATH_ANGLE 1000U
 #define FORD_MAX_SPEED_DELTA 2.0  // m/s
-#define FORD_CURVATURE_DELTA_LIMIT_SPEED 10.0  // m/s
 
 static bool ford_lkas_msg_check(int addr) {
   return (addr == MSG_ACCDATA_3)
@@ -138,6 +137,9 @@ const SteeringLimits FORD_STEERING_LIMITS = {
   .max_steer = 1000,
   .angle_deg_to_can = 50000,  // 1 / (2e-5) rad to can
   .max_angle_error = 100,     // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
+
+  // no blending at low speed due to lack of torque wind-up and inaccurate current curvature
+  .angle_error_limit_speed = 10.0,  // m/s
 
   .disable_angle_rate_limits = true,
   .enforce_angle_error = true,
@@ -259,9 +261,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     bool violation = (raw_curvature_rate != INACTIVE_CURVATURE_RATE) || (raw_path_angle != INACTIVE_PATH_ANGLE) || (raw_path_offset != INACTIVE_PATH_OFFSET);
 
     int desired_curvature = raw_curvature - INACTIVE_CURVATURE;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
-    if (vehicle_speed > FORD_CURVATURE_DELTA_LIMIT_SPEED) {
-      violation |= steer_angle_cmd_checks(desired_curvature, steer_control_enabled, FORD_STEERING_LIMITS);
-    }
+    violation |= steer_angle_cmd_checks(desired_curvature, steer_control_enabled, FORD_STEERING_LIMITS);
 
     if (violation) {
       tx = 0;

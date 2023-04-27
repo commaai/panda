@@ -633,13 +633,15 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
 
   // check that commanded angle value isn't too far from measured, used to limit torque for some safety models
   if (controls_allowed && steer_control_enabled && limits.enforce_angle_error) {
-    // val must always be near angle_meas, limited to the maximum value
-    // add 1 to not false trigger the violation
-    int highest_allowed = CLAMP(angle_meas.max + limits.max_angle_error + 1, -limits.max_steer, limits.max_steer);
-    int lowest_allowed = CLAMP(angle_meas.min - limits.max_angle_error - 1, -limits.max_steer, limits.max_steer);
+    if (vehicle_speed > limits.angle_error_limit_speed) {
+      // val must always be near angle_meas, limited to the maximum value
+      // add 1 to not false trigger the violation
+      int highest_allowed = CLAMP(angle_meas.max + limits.max_angle_error + 1, -limits.max_steer, limits.max_steer);
+      int lowest_allowed = CLAMP(angle_meas.min - limits.max_angle_error - 1, -limits.max_steer, limits.max_steer);
 
-    // check for violation
-    violation |= max_limit_check(desired_angle, highest_allowed, lowest_allowed);
+      // check for violation
+      violation |= max_limit_check(desired_angle, highest_allowed, lowest_allowed);
+    }
   }
 
   // Angle should be the same as current angle while not steering
