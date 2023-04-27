@@ -87,8 +87,8 @@ static uint32_t ford_compute_checksum(CANPacket_t *to_push) {
     chksum += (GET_BYTE(to_push, 2) >> 2) & 0xFU;           // VehVActlBrk_No_Cnt
     chksum = 0xFFU - chksum;
   } else if (addr == MSG_EngVehicleSpThrottle2) {
-    chksum += (GET_BYTE(to_push, 2) >> 3) & 0xFU;            // VehVActlEng_No_Cnt
-    chksum += (GET_BYTE(to_push, 4) >> 5) & 0x3U;            // VehVActlEng_D_Qf
+    chksum += (GET_BYTE(to_push, 2) >> 3) & 0xFU;           // VehVActlEng_No_Cnt
+    chksum += (GET_BYTE(to_push, 4) >> 5) & 0x3U;           // VehVActlEng_D_Qf
     chksum += GET_BYTE(to_push, 6) + GET_BYTE(to_push, 7);  // Veh_V_ActlEng
     chksum = 0xFFU - chksum;
   } else if (addr == MSG_Yaw_Data_FD1) {
