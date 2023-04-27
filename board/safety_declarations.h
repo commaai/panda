@@ -8,7 +8,7 @@
 
 const int MAX_WRONG_COUNTERS = 5;
 const uint8_t MAX_MISSED_MSGS = 10U;
-#define MAX_ADDR_CHECK_MSGS 3
+#define MAX_ADDR_CHECK_MSGS 3U
 
 // sample struct that keeps 6 samples in memory
 struct sample_t {
