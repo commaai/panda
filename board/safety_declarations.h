@@ -70,7 +70,7 @@ typedef struct {
   const struct lookup_t angle_rate_down_lookup;
   const int max_angle_error;  // used to limit error between meas and cmd
 
-  const bool disable_rate_limits;
+  const bool disable_angle_rate_limits;
   const bool enforce_angle_error;
   const bool disable_near_angle_check;
 
