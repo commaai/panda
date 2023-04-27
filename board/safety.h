@@ -411,6 +411,18 @@ bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
   return (val > MAX_VAL) || (val < MIN_VAL);
 }
 
+// check that commanded angle value isn't too far from measured
+bool angle_dist_to_meas_check(int val, struct sample_t *val_meas, const int MAX_ERROR, const int MAX_VAL) {
+
+  // val must always be near val_meas, limited to the maximum value
+  // add 1 to not false trigger the violation
+  int highest_allowed = CLAMP(val_meas->max + MAX_ERROR + 1, -MAX_VAL, MAX_VAL);
+  int lowest_allowed = CLAMP(val_meas->min - MAX_ERROR - 1, -MAX_VAL, MAX_VAL);
+
+  // check for violation
+  return max_limit_check(val, highest_allowed, lowest_allowed);
+}
+
 // check that commanded torque value isn't too far from measured
 bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
                         const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR) {
@@ -615,7 +627,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const SteeringLimits limits) {
   bool violation = false;
 
-  if (controls_allowed && steer_control_enabled && !limits.disable_rate_limits) {
+  if (controls_allowed && steer_control_enabled) {
     // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
     // add 1 to not false trigger the violation. also fudge the speed by 1 m/s so rate limits are
     // always slightly above openpilot's in case we read an updated speed in between angle commands
@@ -631,23 +643,10 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
   }
   desired_angle_last = desired_angle;
 
-  // check that commanded angle value isn't too far from measured, used to limit torque for some safety models
-  if (controls_allowed && steer_control_enabled && limits.enforce_angle_error) {
-    // val must always be near angle_meas, limited to the maximum value
-    // add 1 to not false trigger the violation
-    int highest_allowed = CLAMP(angle_meas.max + limits.max_angle_error + 1, -limits.max_steer, limits.max_steer);
-    int lowest_allowed = CLAMP(angle_meas.min - limits.max_angle_error - 1, -limits.max_steer, limits.max_steer);
-
-    // check for violation
-    violation |= max_limit_check(desired_angle, highest_allowed, lowest_allowed);
-  }
-
-  if (!limits.disable_near_angle_check) {
-    // Angle should be the same as current angle while not steering
-    violation |= (!controls_allowed &&
-                    ((desired_angle < (angle_meas.min - 1)) ||
-                    (desired_angle > (angle_meas.max + 1))));
-  }
+  // Angle should be the same as current angle while not steering
+  violation |= (!controls_allowed &&
+                  ((desired_angle < (angle_meas.min - 1)) ||
+                  (desired_angle > (angle_meas.max + 1))));
 
   // No angle control allowed when controls are not allowed
   violation |= !controls_allowed && steer_control_enabled;
