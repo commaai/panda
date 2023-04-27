@@ -135,8 +135,8 @@ static bool ford_lkas_msg_check(int addr) {
 // Curvature rate limits
 const SteeringLimits FORD_STEERING_LIMITS = {
   .max_steer = 1000,
-  .angle_deg_to_can = 50000,  // 1 / (2e-5) rad to can
-  .max_angle_error = 100,     // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
+  .angle_deg_to_can = 50000,        // 1 / (2e-5) rad to can
+  .max_angle_error = 100,           // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
 
   // no blending at low speed due to lack of torque wind-up and inaccurate current curvature
   .angle_error_limit_speed = 10.0,  // m/s
