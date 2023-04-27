@@ -186,13 +186,11 @@ class TestFordSafety(common.PandaSafetyTest):
     for speed in np.arange(0, 40, 1):
       for speed_delta in np.arange(-5, 5, 0.1):
         speed_2 = round(max(speed + speed_delta, 0), 1)
-        # Set controls allowed in between rx since first message can reset it
         self._rx(self._speed_msg(speed))
-        self.safety.set_controls_allowed(True)
         self._rx(self._speed_msg_2(speed_2))
 
         within_delta = abs(speed - speed_2) <= self.MAX_SPEED_DELTA
-        self.assertEqual(self.safety.get_controls_allowed(), within_delta)
+        self.assertEqual(self.safety.get_vehicle_state_mismatch(), not within_delta)
 
   def test_steer_allowed(self):
     path_offsets = np.arange(-5.12, 5.11, 1).round()
