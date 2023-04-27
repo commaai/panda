@@ -68,6 +68,7 @@ typedef struct {
   const int angle_deg_to_can;
   const struct lookup_t angle_rate_up_lookup;
   const struct lookup_t angle_rate_down_lookup;
+  const int max_angle_error;  // used to limit error between meas and cmd
 } SteeringLimits;
 
 typedef struct {
@@ -124,6 +125,8 @@ uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
 bool max_limit_check(int val, const int MAX, const int MIN);
+bool angle_dist_to_meas_check(int val, struct sample_t *val_meas,
+  const int MAX_ERROR, const int MAX_VAL);
 bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
   const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR);
 bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
@@ -208,7 +211,7 @@ uint32_t heartbeat_engaged_mismatches = 0;  // count of mismatches between heart
 // for safety modes with angle steering control
 uint32_t ts_angle_last = 0;
 int desired_angle_last = 0;
-struct sample_t angle_meas;         // last 6 steer angles
+struct sample_t angle_meas;         // last 6 steer angles/curvatures
 
 // This can be set with a USB command
 // It enables features that allow alternative experiences, like not disengaging on gas press

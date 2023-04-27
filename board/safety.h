@@ -411,7 +411,19 @@ bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
   return (val > MAX_VAL) || (val < MIN_VAL);
 }
 
-// check that commanded value isn't too far from measured
+// check that commanded angle value isn't too far from measured
+bool angle_dist_to_meas_check(int val, struct sample_t *val_meas, const int MAX_ERROR, const int MAX_VAL) {
+
+  // val must always be near val_meas, limited to the maximum value
+  // add 1 to not false trigger the violation
+  int highest_allowed = CLAMP(val_meas->max + MAX_ERROR + 1, -MAX_VAL, MAX_VAL);
+  int lowest_allowed = CLAMP(val_meas->min - MAX_ERROR - 1, -MAX_VAL, MAX_VAL);
+
+  // check for violation
+  return max_limit_check(val, highest_allowed, lowest_allowed);
+}
+
+// check that commanded torque value isn't too far from measured
 bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
                         const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR) {
 

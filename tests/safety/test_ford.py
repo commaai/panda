@@ -50,6 +50,11 @@ def checksum(msg):
   return addr, t, ret, bus
 
 
+def round_curvature_can(curvature):
+  # rounds curvature as if it was sent on CAN
+  return round(curvature * 5, 4) / 5
+
+
 class Buttons:
   CANCEL = 0
   RESUME = 1
@@ -68,7 +73,14 @@ class TestFordSafety(common.PandaSafetyTest):
   FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl, MSG_IPMA_Data]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
+  # Max allowed delta between car speeds
   MAX_SPEED_DELTA = 2.0  # m/s
+
+  # Curvature control limits
+  DEG_TO_CAN = 50000  # 1 / (2e-5) rad to can
+  MAX_CURVATURE = 0.02
+  MAX_CURVATURE_DELTA = 0.002
+  CURVATURE_DELTA_LIMIT_SPEED = 10.0  # m/s
 
   cnt_speed = 0
   cnt_speed_2 = 0
@@ -79,6 +91,11 @@ class TestFordSafety(common.PandaSafetyTest):
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
     self.safety.init_tests()
+
+  def _reset_curvature_measurements(self, curvature, speed):
+    self._rx(self._speed_msg(speed))
+    for _ in range(6):
+      self._rx(self._yaw_rate_msg(curvature, speed))
 
   # Driver brake pedal
   def _user_brake_msg(self, brake: bool):
@@ -212,6 +229,20 @@ class TestFordSafety(common.PandaSafetyTest):
                 should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
                 should_tx = should_tx and (not enabled or controls_allowed)
                 self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, path_offset, path_angle, curvature, curvature_rate)))
+
+  def test_steer_meas_delta(self):
+    """This safety model enforces a maximum distance from measured and commanded curvature, only above a certain speed"""
+    self.safety.set_controls_allowed(1)
+
+    for speed in np.linspace(0, 50, 11):
+      for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 51):
+        self._reset_curvature_measurements(initial_curvature, speed)
+
+        limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
+        for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 51):
+          too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_DELTA
+          should_tx = not limit_command or not too_far_away
+          self.assertEqual(should_tx, self._tx(self._tja_command_msg(True, 0, 0, new_curvature, 0)))
 
   def test_prevent_lkas_action(self):
     self.safety.set_controls_allowed(1)

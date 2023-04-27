@@ -124,6 +124,7 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
 #define INACTIVE_PATH_OFFSET 512U
 #define INACTIVE_PATH_ANGLE 1000U
 #define FORD_MAX_SPEED_DELTA 2.0  // m/s
+#define FORD_CURVATURE_DELTA_LIMIT_SPEED 10.0  // m/s
 
 static bool ford_lkas_msg_check(int addr) {
   return (addr == MSG_ACCDATA_3)
@@ -131,6 +132,13 @@ static bool ford_lkas_msg_check(int addr) {
       || (addr == MSG_LateralMotionControl)
       || (addr == MSG_IPMA_Data);
 }
+
+// Curvature rate limits
+const SteeringLimits FORD_STEERING_LIMITS = {
+  .max_steer = 1000,
+  .angle_deg_to_can = 50000,  // 1 / (2e-5) rad to can
+  .max_angle_error = 100,     // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
+};
 
 static int ford_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &ford_rx_checks,
@@ -151,6 +159,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
       vehicle_speed = ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6;
     }
 
+    // Check vehicle speed against a second source
     if (addr == MSG_EngVehicleSpThrottle2) {
       // Disable controls if speeds from ABS and PCM ECUs are too far apart.
       // Signal: Veh_V_ActlEng
@@ -158,6 +167,17 @@ static int ford_rx_hook(CANPacket_t *to_push) {
       if (ABS(filtered_pcm_speed - vehicle_speed) > FORD_MAX_SPEED_DELTA) {
         controls_allowed = 0;
       }
+    }
+
+    // Update vehicle yaw rate
+    if (addr == MSG_Yaw_Data_FD1) {
+      // Signal: VehYaw_W_Actl
+      float ford_yaw_rate = (((GET_BYTE(to_push, 2) << 8U) | GET_BYTE(to_push, 3)) * 0.0002) - 6.5;
+      float current_curvature = ford_yaw_rate / MAX(vehicle_speed, 0.1);
+      // convert current curvature into units on CAN for comparison with desired curvature
+      int current_curvature_can = current_curvature * (float)FORD_STEERING_LIMITS.angle_deg_to_can +
+                                  ((current_curvature > 0.) ? 0.5 : -0.5);
+      update_sample(&angle_meas, current_curvature_can);
     }
 
     // Update gas pedal
@@ -225,20 +245,29 @@ static int ford_tx_hook(CANPacket_t *to_send) {
   // Safety check for LateralMotionControl action
   if (addr == MSG_LateralMotionControl) {
     // Signal: LatCtl_D_Rq
-    unsigned int steer_control_type = (GET_BYTE(to_send, 4) >> 2) & 0x7U;
-    unsigned int curvature = (GET_BYTE(to_send, 0) << 3) | (GET_BYTE(to_send, 1) >> 5);
-    unsigned int curvature_rate = ((GET_BYTE(to_send, 1) & 0x1FU) << 8) | GET_BYTE(to_send, 2);
-    unsigned int path_angle = (GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5);
-    unsigned int path_offset = (GET_BYTE(to_send, 5) << 2) | (GET_BYTE(to_send, 6) >> 6);
+    bool steer_control_enabled = ((GET_BYTE(to_send, 4) >> 2) & 0x7U) != 0U;
+    unsigned int raw_curvature = (GET_BYTE(to_send, 0) << 3) | (GET_BYTE(to_send, 1) >> 5);
+    unsigned int raw_curvature_rate = ((GET_BYTE(to_send, 1) & 0x1FU) << 8) | GET_BYTE(to_send, 2);
+    unsigned int raw_path_angle = (GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5);
+    unsigned int raw_path_offset = (GET_BYTE(to_send, 5) << 2) | (GET_BYTE(to_send, 6) >> 6);
 
     // These signals are not yet tested with the current safety limits
-    if ((curvature_rate != INACTIVE_CURVATURE_RATE) || (path_angle != INACTIVE_PATH_ANGLE) || (path_offset != INACTIVE_PATH_OFFSET)) {
-      tx = 0;
+    bool violation = (raw_curvature_rate != INACTIVE_CURVATURE_RATE) || (raw_path_angle != INACTIVE_PATH_ANGLE) || (raw_path_offset != INACTIVE_PATH_OFFSET);
+
+    int desired_curvature = raw_curvature - INACTIVE_CURVATURE;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
+    if (controls_allowed) {
+      if (vehicle_speed > FORD_CURVATURE_DELTA_LIMIT_SPEED) {
+        violation |= angle_dist_to_meas_check(desired_curvature, &angle_meas,
+                                              FORD_STEERING_LIMITS.max_angle_error, FORD_STEERING_LIMITS.max_steer);
+      }
     }
 
-    // No steer control allowed when controls are not allowed
-    bool steer_control_enabled = (steer_control_type != 0U) || (curvature != INACTIVE_CURVATURE);
-    if (!controls_allowed && steer_control_enabled) {
+    // No curvature command if controls is not allowed
+    if (!controls_allowed && ((desired_curvature != 0) || steer_control_enabled)) {
+      violation = true;
+    }
+
+    if (violation) {
       tx = 0;
     }
   }
