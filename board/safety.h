@@ -149,11 +149,13 @@ int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], cons
       }
     }
 
-    int idx = addr_list[i].index;
-    if ((addr == addr_list[i].msg[idx].addr) && (bus == addr_list[i].msg[idx].bus) &&
-        (length == addr_list[i].msg[idx].len)) {
-      index = i;
-      break;
+    if (addr_list[i].msg_seen) {
+      int idx = addr_list[i].index;
+      if ((addr == addr_list[i].msg[idx].addr) && (bus == addr_list[i].msg[idx].bus) &&
+          (length == addr_list[i].msg[idx].len)) {
+        index = i;
+        break;
+      }
     }
   }
   return index;
