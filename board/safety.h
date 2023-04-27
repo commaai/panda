@@ -420,7 +420,7 @@ bool angle_dist_to_meas_check(int val, struct sample_t *val_meas, const int MAX_
   int lowest_allowed = CLAMP(val_meas->min - MAX_ERROR - 1, -MAX_VAL, MAX_VAL);
 
   // check for violation
-  return (val < lowest_allowed) || (val > highest_allowed);
+  return max_limit_check(val, highest_allowed, lowest_allowed);
 }
 
 // check that commanded torque value isn't too far from measured
