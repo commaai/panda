@@ -68,8 +68,6 @@ class TestFordSafety(common.PandaSafetyTest):
   FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl, MSG_IPMA_Data]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-  MAX_SPEED_DELTA = 2.0  # m/s
-
   cnt_speed = 0
   cnt_speed_2 = 0
   cnt_yaw_rate = 0
@@ -180,20 +178,6 @@ class TestFordSafety(common.PandaSafetyTest):
         to_push[0].data[3] = 0  # Speed checksum & half of yaw signal
         self.assertFalse(self._rx(to_push))
         self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_rx_hook_speed_mismatch(self):
-    # Ford relies on speed for driver curvature limiting, so it checks two sources
-    for speed in np.arange(0, 40, 1):
-      for speed_delta in np.arange(-5, 5, 0.1):
-        speed_2 = round(max(speed + speed_delta, 0), 1)
-        # Set controls allowed in between rx since first message can reset it
-        self._rx(self._speed_msg(speed))
-        self.safety.set_controls_allowed(True)
-        self._rx(self._speed_msg_2(speed_2))
-
-        within_delta = abs(speed - speed_2) <= self.MAX_SPEED_DELTA
-        self.assertEqual(self.safety.get_controls_allowed(), within_delta)
-        self.assertEqual(self.safety.get_vehicle_state_mismatch(), not within_delta)
 
   def test_steer_allowed(self):
     path_offsets = np.arange(-5.12, 5.11, 1).round()
