@@ -137,6 +137,10 @@ const SteeringLimits FORD_STEERING_LIMITS = {
   .max_steer = 1000,
   .angle_deg_to_can = 50000,  // 1 / (2e-5) rad to can
   .max_angle_error = 100,     // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
+
+  .disable_rate_limits = true,
+  .enforce_angle_error = true,
+  .disable_near_angle_check = true,
 };
 
 static int ford_rx_hook(CANPacket_t *to_push) {
@@ -256,8 +260,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     int desired_curvature = curvature - 1000U;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
     if (controls_allowed) {
       if (vehicle_speed > 10.) {
-        violation |= angle_dist_to_meas_check(desired_curvature, &angle_meas,
-                                              FORD_STEERING_LIMITS.max_angle_error, FORD_STEERING_LIMITS.max_steer);
+        violation |= steer_angle_cmd_checks(desired_curvature, steer_control_enabled, FORD_STEERING_LIMITS);
       }
     }
 
