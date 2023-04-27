@@ -182,7 +182,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     // check es_brake brake_pressure limits
     if (addr == 0x220) {
       int es_brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
-      violation |= subaru_aeb || longitudinal_brake_checks(es_brake_pressure, SUBARU_LONG_LIMITS);
+      violation |= !subaru_aeb && longitudinal_brake_checks(es_brake_pressure, SUBARU_LONG_LIMITS);
     }
 
     // check es_distance cruise_throttle limits
