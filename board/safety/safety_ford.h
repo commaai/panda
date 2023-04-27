@@ -123,6 +123,7 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
 #define INACTIVE_CURVATURE_RATE 4096U
 #define INACTIVE_PATH_OFFSET 512U
 #define INACTIVE_PATH_ANGLE 1000U
+#define FORD_MAX_SPEED_DELTA 2.0  // m/s
 
 static bool ford_lkas_msg_check(int addr) {
   return (addr == MSG_ACCDATA_3)
@@ -148,6 +149,15 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (addr == MSG_BrakeSysFeatures) {
       // Signal: Veh_V_ActlBrk
       vehicle_speed = ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6;
+    }
+
+    if (addr == MSG_EngVehicleSpThrottle2) {
+      // Disable controls if speeds from ABS and PCM ECUs are too far apart.
+      // Signal: Veh_V_ActlEng
+      float filtered_pcm_speed = ((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01 / 3.6;
+      if (ABS(filtered_pcm_speed - vehicle_speed) > FORD_MAX_SPEED_DELTA) {
+        controls_allowed = 0;
+      }
     }
 
     // Update gas pedal

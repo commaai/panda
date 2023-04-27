@@ -2,9 +2,16 @@
 
 #define GET_BIT(msg, b) (((msg)->data[((b) / 8U)] >> ((b) % 8U)) & 0x1U)
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
-#define GET_BYTES_04(msg) ((msg)->data[0] | ((msg)->data[1] << 8U) | ((msg)->data[2] << 16U) | ((msg)->data[3] << 24U))
-#define GET_BYTES_48(msg) ((msg)->data[4] | ((msg)->data[5] << 8U) | ((msg)->data[6] << 16U) | ((msg)->data[7] << 24U))
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
+
+uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
+  uint32_t ret = 0U;
+  for (int i = 0; i < len; i++) {
+    const uint8_t shift = i * 8;
+    ret |= (((uint32_t)msg->data[start + i]) << shift);
+  }
+  return ret;
+}
 
 const int MAX_WRONG_COUNTERS = 5;
 const uint8_t MAX_MISSED_MSGS = 10U;

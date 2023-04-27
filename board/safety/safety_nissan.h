@@ -52,7 +52,7 @@ static int nissan_rx_hook(CANPacket_t *to_push) {
       if (addr == 0x2) {
         // Current steering angle
         // Factor -0.1, little endian
-        int angle_meas_new = (GET_BYTES_04(to_push) & 0xFFFFU);
+        int angle_meas_new = (GET_BYTES(to_push, 0, 4) & 0xFFFFU);
         // Need to multiply by 10 here as LKAS and Steering wheel are different base unit
         angle_meas_new = to_signed(angle_meas_new, 16) * 10;
 
