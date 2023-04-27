@@ -8,7 +8,7 @@
 
 const int MAX_WRONG_COUNTERS = 5;
 const uint8_t MAX_MISSED_MSGS = 10U;
-#define MAX_CAN_MSGS 3
+#define MAX_ADDR_CHECK_MSGS 3
 
 // sample struct that keeps 6 samples in memory
 struct sample_t {
@@ -93,16 +93,16 @@ typedef struct {
 // params and flags about checksum, counter and frequency checks for each monitored address
 typedef struct {
   // const params
-  const CanMsgCheck msg[MAX_CAN_MSGS]; // check either messages (e.g. honda steer)
+  const CanMsgCheck msg[MAX_ADDR_CHECK_MSGS];  // check either messages (e.g. honda steer)
   // dynamic flags
   bool msg_seen;
-  int index;                           // if multiple messages are allowed to be checked, this stores the index of the first one seen. only msg[msg_index] will be used
-  bool valid_checksum;                 // true if and only if checksum check is passed
-  int wrong_counters;                  // counter of wrong counters, saturated between 0 and MAX_WRONG_COUNTERS
-  bool valid_quality_flag;             // true if the message's quality/health/status signals are valid
-  uint8_t last_counter;                // last counter value
-  uint32_t last_timestamp;             // micro-s
-  bool lagging;                        // true if and only if the time between updates is excessive
+  int index;                         // if multiple messages are allowed to be checked, this stores the index of the first one seen. only msg[msg_index] will be used
+  bool valid_checksum;               // true if and only if checksum check is passed
+  int wrong_counters;                // counter of wrong counters, saturated between 0 and MAX_WRONG_COUNTERS
+  bool valid_quality_flag;           // true if the message's quality/health/status signals are valid
+  uint8_t last_counter;              // last counter value
+  uint32_t last_timestamp;           // micro-s
+  bool lagging;                      // true if and only if the time between updates is excessive
 } AddrCheckStruct;
 
 typedef struct {
