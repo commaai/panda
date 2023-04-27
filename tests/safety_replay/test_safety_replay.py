@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
   failed = []
   for route, mode, param, alt_exp in logs:
-    lr = LogReader(route)
+    lr = LogReader(route, sort_by_time=True)
 
     print("\nreplaying %s with safety mode %d, param %s, alternative experience %s" % (route, mode, param, alt_exp))
     if not replay_drive(lr, mode, param, alt_exp):
