@@ -125,8 +125,6 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
 #define INACTIVE_PATH_ANGLE 1000U
 #define FORD_MAX_SPEED_DELTA 2.5  // m/s
 
-float ford_filtered_pcm_speed = 0;
-
 static bool ford_lkas_msg_check(int addr) {
   return (addr == MSG_ACCDATA_3)
       || (addr == MSG_Lane_Assist_Data1)
@@ -147,17 +145,18 @@ static int ford_rx_hook(CANPacket_t *to_push) {
       vehicle_moving = ((GET_BYTE(to_push, 3) >> 3) & 0x3U) == 0U;
     }
 
-    // Update vehicle speed and set vehicle state mismatch if speeds from ABS and PCM ECUs are too far apart.
-    // Causes controls allowed to fall
+    // Update vehicle speed
     if (addr == MSG_BrakeSysFeatures) {
       // Signal: Veh_V_ActlBrk
       vehicle_speed = ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6;
-      vehicle_state_mismatch = ABS(ford_filtered_pcm_speed - vehicle_speed) > FORD_MAX_SPEED_DELTA;
     }
+
     if (addr == MSG_EngVehicleSpThrottle2) {
+      // Set vehicle state mismatch if speeds from ABS and PCM ECUs are too far apart.
+      // Causes controls allowed to fall
       // Signal: Veh_V_ActlEng
-      ford_filtered_pcm_speed = ((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01 / 3.6;
-      vehicle_state_mismatch = ABS(ford_filtered_pcm_speed - vehicle_speed) > FORD_MAX_SPEED_DELTA;
+      float filtered_pcm_speed = ((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01 / 3.6;
+      vehicle_state_mismatch = ABS(filtered_pcm_speed - vehicle_speed) > FORD_MAX_SPEED_DELTA;
     }
 
     // Update gas pedal
@@ -275,7 +274,6 @@ static int ford_fwd_hook(int bus_num, int addr) {
 
 static const addr_checks* ford_init(uint16_t param) {
   UNUSED(param);
-  ford_filtered_pcm_speed = 0;
 
   return &ford_rx_checks;
 }
