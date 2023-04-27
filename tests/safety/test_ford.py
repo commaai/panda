@@ -68,7 +68,7 @@ class TestFordSafety(common.PandaSafetyTest):
   FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl, MSG_IPMA_Data]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-  MAX_SPEED_DELTA = 2.5  # m/s
+  MAX_SPEED_DELTA = 2.0  # m/s
 
   cnt_speed = 0
   cnt_speed_2 = 0
