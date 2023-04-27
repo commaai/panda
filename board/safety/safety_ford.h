@@ -158,6 +158,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
       vehicle_speed = ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6;
     }
 
+    // Check vehicle speed against a second source
     if (addr == MSG_EngVehicleSpThrottle2) {
       // Disable controls if speeds from ABS and PCM ECUs are too far apart.
       // Signal: Veh_V_ActlEng
