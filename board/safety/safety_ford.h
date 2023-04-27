@@ -16,7 +16,17 @@
 #define FORD_MAIN_BUS 0U
 #define FORD_CAM_BUS  2U
 
-const CanMsg FORD_TX_MSGS[] = {
+const CanMsg FORD_STOCK_TX_MSGS[] = {
+  {MSG_Steering_Data_FD1, 0, 8},
+  {MSG_Steering_Data_FD1, 2, 8},
+  {MSG_ACCDATA_3, 0, 8},
+  {MSG_Lane_Assist_Data1, 0, 8},
+  {MSG_LateralMotionControl, 0, 8},
+  {MSG_IPMA_Data, 0, 8},
+};
+#define FORD_STOCK_TX_LEN (sizeof(FORD_STOCK_TX_MSGS) / sizeof(FORD_STOCK_TX_MSGS[0]))
+
+const CanMsg FORD_LONG_TX_MSGS[] = {
   {MSG_Steering_Data_FD1, 0, 8},
   {MSG_Steering_Data_FD1, 2, 8},
   {MSG_ACCDATA, 0, 8},
@@ -25,7 +35,7 @@ const CanMsg FORD_TX_MSGS[] = {
   {MSG_LateralMotionControl, 0, 8},
   {MSG_IPMA_Data, 0, 8},
 };
-#define FORD_TX_LEN (sizeof(FORD_TX_MSGS) / sizeof(FORD_TX_MSGS[0]))
+#define FORD_LONG_TX_LEN (sizeof(FORD_LONG_TX_MSGS) / sizeof(FORD_LONG_TX_MSGS[0]))
 
 // warning: quality flags are not yet checked in openpilot's CAN parser,
 // this may be the cause of blocked messages
@@ -121,6 +131,10 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
   }
   return valid;
 }
+
+const uint16_t FORD_PARAM_LONGITUDINAL = 1;
+
+bool ford_longitudinal = false;
 
 const LongitudinalLimits FORD_LONG_LIMITS = {
   // gas & brake cmd limits
@@ -231,13 +245,19 @@ static int ford_tx_hook(CANPacket_t *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
-  if (!msg_allowed(to_send, FORD_TX_MSGS, FORD_TX_LEN)) {
-    tx = 0;
+  if (ford_longitudinal) {
+    tx = msg_allowed(to_send, FORD_LONG_TX_MSGS, FORD_LONG_TX_LEN);
+  } else {
+    tx = msg_allowed(to_send, FORD_STOCK_TX_MSGS, FORD_STOCK_TX_LEN);
   }
 
+  // Safety check for ACCDATA accel and brake requests
   if (addr == MSG_ACCDATA) {
+    // Signal: AccPrpl_A_Rq
     int gas = ((GET_BYTE(to_send, 6) & 0x3U) << 8) | GET_BYTE(to_send, 7);
+    // Signal: AccBrkTot_A_Rq
     int brake = ((GET_BYTE(to_send, 0) & 0x1FU) << 8) | GET_BYTE(to_send, 1);
+
     bool violation = false;
     violation |= longitudinal_gas_checks(gas, FORD_LONG_LIMITS);
     violation |= longitudinal_brake_checks(brake, FORD_LONG_LIMITS);
@@ -309,8 +329,14 @@ static int ford_fwd_hook(int bus_num, int addr) {
       break;
     }
     case FORD_CAM_BUS: {
-      // Block stock LKAS messages
-      if (!ford_lkas_msg_check(addr)) {
+      if (ford_lkas_msg_check(addr)) {
+        // Block stock LKAS and UI messages
+        bus_fwd = -1;
+      } else if (ford_longitudinal && (addr == MSG_ACCDATA)) {
+        // Block stock ACC message
+        bus_fwd = -1;
+      } else {
+        // Forward remaining traffic
         bus_fwd = FORD_MAIN_BUS;
       }
       break;
@@ -327,7 +353,9 @@ static int ford_fwd_hook(int bus_num, int addr) {
 
 static const addr_checks* ford_init(uint16_t param) {
   UNUSED(param);
-
+#ifdef ALLOW_DEBUG
+  ford_longitudinal = GET_FLAG(param, FORD_PARAM_LONGITUDINAL);
+#endif
   return &ford_rx_checks;
 }
 
