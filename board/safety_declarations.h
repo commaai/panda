@@ -8,6 +8,7 @@
 
 const int MAX_WRONG_COUNTERS = 5;
 const uint8_t MAX_MISSED_MSGS = 10U;
+#define MAX_ADDR_CHECK_MSGS 3U
 
 // sample struct that keeps 6 samples in memory
 struct sample_t {
@@ -92,7 +93,7 @@ typedef struct {
 // params and flags about checksum, counter and frequency checks for each monitored address
 typedef struct {
   // const params
-  const CanMsgCheck msg[3];          // check either messages (e.g. honda steer). Array MUST terminate with an empty struct to know its length.
+  const CanMsgCheck msg[MAX_ADDR_CHECK_MSGS];  // check either messages (e.g. honda steer)
   // dynamic flags
   bool msg_seen;
   int index;                         // if multiple messages are allowed to be checked, this stores the index of the first one seen. only msg[msg_index] will be used
