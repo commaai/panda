@@ -39,6 +39,10 @@ bool get_controls_allowed(void){
   return controls_allowed;
 }
 
+void set_vehicle_state_mismatch(bool m){
+  vehicle_state_mismatch = m;
+}
+
 bool get_vehicle_state_mismatch(void){
   return vehicle_state_mismatch;
 }

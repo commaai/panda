@@ -858,3 +858,33 @@ class PandaSafetyTest(PandaSafetyTestBase):
         if current_test in ["TestNissanSafety", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
           continue
         self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} during {current_test} was allowed")
+
+  def test_vehicle_state_mismatch(self):
+    """
+    Tests that setting vehicle_state_mismatch sets controls_allowed to False on rx of a message.
+    Safety models can test that a specific condition sets vehicle_state_mismatch appropriately
+      and know that this test asserts behavior of the mismatch.
+    """
+
+    # rx 10 msgs and check controls_allowed doesn't fall until first rx with mismatch
+    self.safety.set_controls_allowed(True)
+    for _ in range(10):
+      self.assertTrue(self._rx(self._speed_msg(0)))
+      self.assertTrue(self.safety.get_controls_allowed())
+
+    self.safety.set_vehicle_state_mismatch(True)
+    self.assertTrue(self.safety.get_controls_allowed())
+
+    # assert controls_allowed stays low, even after vehicle_state_mismatch is cleared
+    for _ in range(10):
+      self.assertTrue(self._rx(self._speed_msg(0)))
+      self.assertFalse(self.safety.get_controls_allowed())
+
+    self.safety.set_vehicle_state_mismatch(False)
+    self.assertTrue(self._rx(self._speed_msg(0)))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+    # make sure we can recover
+    self.safety.set_controls_allowed(True)
+    self.assertTrue(self._rx(self._speed_msg(0)))
+    self.assertTrue(self.safety.get_controls_allowed())
