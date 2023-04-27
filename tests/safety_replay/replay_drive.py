@@ -22,11 +22,21 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   blocked_addrs = Counter()
   invalid_addrs = set()
   start_t = None
+  last_safety_tick = 0
 
-  for msg in lr:
+  for msg in filter(lambda m: m.which() in ['can', 'sendcan'], lr):
     if start_t is None:
       start_t = msg.logMonoTime
-    safety.set_timer(((msg.logMonoTime // 1000)) % 0xFFFFFFFF)
+    safety.set_timer((msg.logMonoTime // 1000) % 0xFFFFFFFF)
+
+    # call tick at 1Hz, allow 100ms for addr checks to go valid
+    if msg.logMonoTime - last_safety_tick > 1e9 and msg.logMonoTime - start_t > 1e8:
+      print('ticking!')
+      last_safety_tick = msg.logMonoTime
+      safety.safety_tick_current_rx_checks()
+    # print(msg.logMonoTime, start_t)
+    # if (msg.logMonoTime - start_t) > 1e8:
+    #   return
 
     if msg.which() == 'sendcan':
      for canmsg in msg.sendcan:
@@ -38,14 +48,12 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
           blocked_addrs[canmsg.address] += 1
 
           if "DEBUG" in os.environ:
-            print("blocked bus %d msg %d at %f" % (canmsg.src, canmsg.address, (msg.logMonoTime - start_t) / (1e9)))
+            print("blocked bus %d msg %d at %f" % (canmsg.src, canmsg.address, (msg.logMonoTime - start_t) / 1e9))
         tx_controls += safety.get_controls_allowed()
         tx_tot += 1
     elif msg.which() == 'can':
-      for canmsg in msg.can:
-        # ignore msgs we sent
-        if canmsg.src >= 128:
-          continue
+      # ignore msgs we sent
+      for canmsg in filter(lambda m: m.src < 128, msg.can):
         to_push = package_can_msg(canmsg)
         recv = safety.safety_rx_hook(to_push)
         if not recv:
@@ -82,7 +90,7 @@ if __name__ == "__main__":
 
   r = Route(s.route_name.canonical_name)
   logs = r.log_paths()[s.segment_num:s.segment_num+1] if s.segment_num >= 0 else r.log_paths()
-  lr = MultiLogIterator(logs)
+  lr = MultiLogIterator(logs, sort_by_time=True)
 
   if None in (args.mode, args.param, args.alternative_experience):
     for msg in lr:

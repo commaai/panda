@@ -170,6 +170,10 @@ void safety_tick(const addr_checks *rx_checks) {
       // Quite conservative to not risk false triggers.
       // 2s of lag is worse case, since the function is called at 1Hz
       bool lagging = elapsed_time > MAX(rx_checks->check[i].msg[rx_checks->check[i].index].expected_timestep * MAX_MISSED_MSGS, 1e6);
+      print("address: "); puth(rx_checks->check[i].msg[rx_checks->check[i].index].addr); print(", ");
+      print("lagging: "); puth(lagging); print("\n");
+      print("ts: "); puth(ts); print("\n");
+      print("last_ts: "); puth(rx_checks->check[i].last_timestamp); print("\n");
       rx_checks->check[i].lagging = lagging;
       if (lagging) {
         controls_allowed = 0;
@@ -179,6 +183,7 @@ void safety_tick(const addr_checks *rx_checks) {
         rx_checks_invalid = true;
       }
     }
+    print("\n");
   }
 
   safety_rx_checks_invalid = rx_checks_invalid;

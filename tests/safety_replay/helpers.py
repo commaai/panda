@@ -52,6 +52,25 @@ def package_can_msg(msg):
   return libpanda_py.make_CANPacket(msg.address, msg.src % 4, msg.dat)
 
 def init_segment(safety, lr, mode):
+  # start_t = None
+  # for msg in lr:
+  #   if start_t is None:
+  #     start_t = msg.logMonoTime
+  #
+  #   if msg.which() == 'can':
+  #     safety.set_timer((msg.logMonoTime // 1000) % 0xFFFFFFFF)
+  #     if msg.logMonoTime - start_t > 1e3:
+  #       break
+  #
+  #     for canmsg in msg.can:
+  #       if canmsg.src >= 128:
+  #         continue
+  #       to_push = package_can_msg(canmsg)
+  #       safety.safety_rx_hook(to_push)
+
+  # # Tick once to ensure rx checks are valid
+  # safety.safety_tick_current_rx_checks()
+
   sendcan = (msg for msg in lr if msg.which() == 'sendcan')
   steering_msgs = (can for msg in sendcan for can in msg.sendcan if is_steering_msg(mode, can.address))
 
