@@ -33,7 +33,8 @@ const CanMsg SUBARU_TX_MSGS[] = {
   {0x122, 0, 8},
   {0x221, 0, 8},
   {0x321, 0, 8},
-  {0x322, 0, 8}
+  {0x322, 0, 8},
+  {0x323, 0, 8},
 };
 #define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
 
@@ -53,7 +54,8 @@ const CanMsg SUBARU_GEN2_TX_MSGS[] = {
   {0x122, 0, 8},
   {0x221, 1, 8},
   {0x321, 0, 8},
-  {0x322, 0, 8}
+  {0x322, 0, 8},
+  {0x323, 0, 8}
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
 
@@ -229,9 +231,10 @@ static int subaru_fwd_hook(int bus_num, int addr) {
     // 0x222 is ES_Status
     // 0x321 is ES_DashStatus
     // 0x322 is ES_LKAS_State
-    bool block_common = (addr == 0x122) || (addr == 0x321) || (addr == 0x322);
+    // 0x323 INFOTAINMENT_STATUS
+    bool block_lkas = (addr == 0x122) || (addr == 0x321) || (addr == 0x322) || (addr == 0x323);
     bool block_long = (addr == 0x220) || (addr == 0x221) || (addr == 0x222);
-    bool block_msg = block_common || (subaru_longitudinal && block_long);
+    bool block_msg = block_lkas || (subaru_longitudinal && block_long);
     if (!block_msg) {
       bus_fwd = 0;  // Main CAN
     }

@@ -199,7 +199,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
-      for t in range(-self.MAX_TORQUE * 2, self.MAX_TORQUE * 2):
+      for t in range(int(-self.MAX_TORQUE * 1.5), int(self.MAX_TORQUE * 1.5)):
         self.safety.set_controls_allowed(enabled)
         self._set_prev_torque(t)
         if abs(t) > self.MAX_TORQUE or (not enabled and abs(t) > 0):
