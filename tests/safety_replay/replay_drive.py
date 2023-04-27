@@ -22,9 +22,8 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   blocked_addrs = Counter()
   invalid_addrs = set()
   start_t = None
-  last_safety_tick = 0
 
-  for msg in filter(lambda m: m.which() in ['can', 'sendcan'], lr):
+  for msg in filter(lambda m: m.which() in ('can', 'sendcan'), lr):
     if start_t is None:
       start_t = msg.logMonoTime
     safety.set_timer((msg.logMonoTime // 1000) % 0xFFFFFFFF)
