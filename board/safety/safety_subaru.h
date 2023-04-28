@@ -124,10 +124,10 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    // ES_LKAS_State LKAS_Alert: 2, 5, 6
+    // ES_LKAS_State LKAS_Alert: 5, 6
     if ((addr == 0x322) && (bus == alt_bus2)) {
       const int lkas_alert = ((GET_BYTE(to_push, 4) >> 3) & 5U);
-      subaru_aeb = ((lkas_alert == 2) || (lkas_alert == 5) || (lkas_alert == 6));
+      subaru_aeb = ((lkas_alert == 5) || (lkas_alert == 6));
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
