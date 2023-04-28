@@ -252,6 +252,7 @@ class TestFordSafety(common.PandaSafetyTest):
             if steer_control_enabled:
               should_tx = not limit_command or not too_far_away
             else:
+              # enforce angle error limit is disabled when steer request bit is 0
               should_tx = new_curvature == 0
             with self.subTest(steer_control_enabled=steer_control_enabled, speed=speed,
                               initial_curvature=initial_curvature, new_curvature=new_curvature):
