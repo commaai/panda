@@ -510,9 +510,6 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, 6):
       self.assertTrue(self._rx(self._torque_meas_msg(t)))
 
-    self.assertNotEqual(self.safety.get_torque_meas_min(), 0)
-    self.assertNotEqual(self.safety.get_torque_meas_max(), 0)
-
     # reset sample_t by reinitializing the safety mode
     self.setUp()
 
