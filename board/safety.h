@@ -77,8 +77,8 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   return current_hooks->tx_lin(lin_num, data, len);
 }
 
-int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
-  return (relay_malfunction ? -1 : current_hooks->fwd(bus_num, to_fwd));
+int safety_fwd_hook(int bus_num, int addr) {
+  return (relay_malfunction ? -1 : current_hooks->fwd(bus_num, addr));
 }
 
 bool get_longitudinal_allowed(void) {
@@ -139,7 +139,7 @@ int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], cons
   for (int i = 0; i < len; i++) {
     // if multiple msgs are allowed, determine which one is present on the bus
     if (!addr_list[i].msg_seen) {
-      for (uint8_t j = 0U; addr_list[i].msg[j].addr != 0; j++) {
+      for (uint8_t j = 0U; (j < MAX_ADDR_CHECK_MSGS) && (addr_list[i].msg[j].addr != 0); j++) {
         if ((addr == addr_list[i].msg[j].addr) && (bus == addr_list[i].msg[j].bus) &&
               (length == addr_list[i].msg[j].len)) {
           addr_list[i].index = j;
@@ -149,11 +149,13 @@ int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], cons
       }
     }
 
-    int idx = addr_list[i].index;
-    if ((addr == addr_list[i].msg[idx].addr) && (bus == addr_list[i].msg[idx].bus) &&
-        (length == addr_list[i].msg[idx].len)) {
-      index = i;
-      break;
+    if (addr_list[i].msg_seen) {
+      int idx = addr_list[i].index;
+      if ((addr == addr_list[i].msg[idx].addr) && (bus == addr_list[i].msg[idx].bus) &&
+          (length == addr_list[i].msg[idx].len)) {
+        index = i;
+        break;
+      }
     }
   }
   return index;
@@ -196,7 +198,7 @@ void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
 bool is_msg_valid(AddrCheckStruct addr_list[], int index) {
   bool valid = true;
   if (index != -1) {
-    if ((!addr_list[index].valid_checksum) || (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {
+    if (!addr_list[index].valid_checksum || !addr_list[index].valid_quality_flag || (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {
       valid = false;
       controls_allowed = 0;
     }
@@ -215,7 +217,8 @@ bool addr_safety_check(CANPacket_t *to_push,
                        const addr_checks *rx_checks,
                        uint32_t (*get_checksum)(CANPacket_t *to_push),
                        uint32_t (*compute_checksum)(CANPacket_t *to_push),
-                       uint8_t (*get_counter)(CANPacket_t *to_push)) {
+                       uint8_t (*get_counter)(CANPacket_t *to_push),
+                       bool (*get_quality_flag_valid)(CANPacket_t *to_push)) {
 
   int index = get_addr_check_index(to_push, rx_checks->check, rx_checks->len);
   update_addr_timestamp(rx_checks->check, index);
@@ -236,6 +239,13 @@ bool addr_safety_check(CANPacket_t *to_push,
       update_counter(rx_checks->check, index, counter);
     } else {
       rx_checks->check[index].wrong_counters = 0U;
+    }
+
+    // quality flag check
+    if ((get_quality_flag_valid != NULL) && rx_checks->check[index].msg[rx_checks->check[index].index].quality_flag) {
+      rx_checks->check[index].valid_quality_flag = get_quality_flag_valid(to_push);
+    } else {
+      rx_checks->check[index].valid_quality_flag = true;
     }
   }
   return is_msg_valid(rx_checks->check, index);
@@ -401,7 +411,7 @@ bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
   return (val > MAX_VAL) || (val < MIN_VAL);
 }
 
-// check that commanded value isn't too far from measured
+// check that commanded torque value isn't too far from measured
 bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
                         const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR) {
 
@@ -414,7 +424,7 @@ bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
   int lowest_allowed = MAX(lowest_allowed_rl, MIN(val_last + MAX_RATE_DOWN, MIN(val_meas->min, 0) - MAX_ERROR));
 
   // check for violation
-  return (val < lowest_allowed) || (val > highest_allowed);
+  return max_limit_check(val, highest_allowed, lowest_allowed);
 }
 
 // check that commanded value isn't fighting against driver
@@ -437,7 +447,7 @@ bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
                                            MIN(driver_min_limit, 0)));
 
   // check for violation
-  return (val < lowest_allowed) || (val > highest_allowed);
+  return max_limit_check(val, highest_allowed, lowest_allowed);
 }
 
 
@@ -449,7 +459,7 @@ bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
   int lowest_val = MIN(val_last, 0) - MAX_RT_DELTA;
 
   // check for violation
-  return (val < lowest_val) || (val > highest_val);
+  return max_limit_check(val, highest_val, lowest_val);
 }
 
 
@@ -485,13 +495,9 @@ float interpolate(struct lookup_t xy, float x) {
 
 // Safety checks for longitudinal actuation
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits) {
-  bool violation = false;
-  if (!get_longitudinal_allowed()) {
-    violation |= desired_accel != limits.inactive_accel;
-  } else {
-    violation |= max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
-  }
-  return violation;
+  bool accel_valid = get_longitudinal_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
+  bool accel_inactive = desired_accel == limits.inactive_accel;
+  return !(accel_valid || accel_inactive);
 }
 
 bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits) {
@@ -609,7 +615,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const SteeringLimits limits) {
   bool violation = false;
 
-  if (controls_allowed && steer_control_enabled) {
+  if (!limits.disable_angle_rate_limits && controls_allowed && steer_control_enabled) {
     // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
     // add 1 to not false trigger the violation. also fudge the speed by 1 m/s so rate limits are
     // always slightly above openpilot's in case we read an updated speed in between angle commands
@@ -625,11 +631,23 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
   }
   desired_angle_last = desired_angle;
 
-  // Angle should be the same as current angle while not steering
-  if (!limits.angle_disable_near_angle_check) {
-    violation |= (!controls_allowed &&
-                    ((desired_angle < (angle_meas.min - 1)) ||
-                    (desired_angle > (angle_meas.max + 1))));
+  // check that commanded angle value isn't too far from measured, used to limit torque for some safety modes
+  if (limits.enforce_angle_error && controls_allowed && steer_control_enabled) {
+    if (vehicle_speed > limits.angle_error_limit_speed) {
+      // val must always be near angle_meas, limited to the maximum value
+      // add 1 to not false trigger the violation
+      int highest_allowed = CLAMP(angle_meas.max + limits.max_angle_error + 1, -limits.max_steer, limits.max_steer);
+      int lowest_allowed = CLAMP(angle_meas.min - limits.max_angle_error - 1, -limits.max_steer, limits.max_steer);
+
+      // check for violation
+      violation |= max_limit_check(desired_angle, highest_allowed, lowest_allowed);
+    }
+  }
+
+  // Angle should either be 0 or same as current angle while not steering
+  if (!steer_control_enabled) {
+    violation |= (limits.inactive_angle_is_zero ? (desired_angle != 0) :
+                  max_limit_check(desired_angle, angle_meas.max + 1, angle_meas.min - 1));
   }
 
   // No angle control allowed when controls are not allowed

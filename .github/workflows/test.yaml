@@ -12,6 +12,8 @@ env:
       export DOCKER_BUILDKIT=1
       docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile .
 
+  PYTHONWARNINGS: "error"
+
 jobs:
   docker_push:
     name: docker push
@@ -44,6 +46,8 @@ jobs:
         run: ${{ env.RUN }} "scons -j4"
       - name: Build panda with SPI support
         run: ${{ env.RUN }} "ENABLE_SPI=1 scons -j4"
+      - name: Build with UBSan
+        run: ${{ env.RUN }} "scons -j4 --ubsan"
 
   unit_tests:
     name: unit tests
@@ -61,33 +65,40 @@ jobs:
   safety:
     name: safety
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        flags: ['', '--ubsan']
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Run safety tests
-        timeout-minutes: 4
+        timeout-minutes: 3
         run: |
           ${{ env.RUN }} "cd .. && \
                           scons -c && \
                           scons -j$(nproc) opendbc/ cereal/ && \
                           cd panda && \
-                          scons -j$(nproc) && \
+                          scons -j$(nproc) ${{ matrix.flags }} && \
                           tests/safety/test.sh"
 
   safety_replay:
     name: safety replay
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        flags: ['', '--ubsan']
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Run safety replay
-        run: ${{ env.RUN }} "cd tests/safety_replay &&
-                             scons -u .. &&
-                             ./test_safety_replay.py"
+        run: |
+          ${{ env.RUN }} "scons -j$(nproc) ${{ matrix.flags }} && \
+                          cd tests/safety_replay && \
+                          ./test_safety_replay.py"
 
   misra:
     name: misra c2012

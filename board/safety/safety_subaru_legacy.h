@@ -26,7 +26,7 @@ addr_checks subaru_l_rx_checks = {subaru_l_addr_checks, SUBARU_L_ADDR_CHECK_LEN}
 
 static int subaru_legacy_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &subaru_l_rx_checks, NULL, NULL, NULL);
+  bool valid = addr_safety_check(to_push, &subaru_l_rx_checks, NULL, NULL, NULL, NULL);
 
   if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
@@ -45,11 +45,11 @@ static int subaru_legacy_rx_hook(CANPacket_t *to_push) {
 
     // update vehicle moving with any non-zero wheel speed
     if (addr == 0xD4) {
-      vehicle_moving = ((GET_BYTES_04(to_push) >> 12) != 0U) || (GET_BYTES_48(to_push) != 0U);
+      vehicle_moving = ((GET_BYTES(to_push, 0, 4) >> 12) != 0U) || (GET_BYTES(to_push, 4, 4) != 0U);
     }
 
     if (addr == 0xD1) {
-      brake_pressed = ((GET_BYTES_04(to_push) >> 16) & 0xFFU) > 0U;
+      brake_pressed = ((GET_BYTES(to_push, 0, 4) >> 16) & 0xFFU) > 0U;
     }
 
     if (addr == 0x140) {
@@ -72,7 +72,7 @@ static int subaru_legacy_tx_hook(CANPacket_t *to_send) {
 
   // steer cmd checks
   if (addr == 0x164) {
-    int desired_torque = ((GET_BYTES_04(to_send) >> 8) & 0x1FFFU);
+    int desired_torque = ((GET_BYTES(to_send, 0, 4) >> 8) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
     if (steer_torque_cmd_checks(desired_torque, -1, SUBARU_L_STEERING_LIMITS)) {
@@ -83,7 +83,7 @@ static int subaru_legacy_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static int subaru_legacy_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+static int subaru_legacy_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   if (bus_num == 0) {
@@ -94,7 +94,6 @@ static int subaru_legacy_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     // Preglobal platform
     // 0x161 is ES_CruiseThrottle
     // 0x164 is ES_LKAS
-    int addr = GET_ADDR(to_fwd);
     int block_msg = ((addr == 0x161) || (addr == 0x164));
     if (!block_msg) {
       bus_fwd = 0;  // Main CAN
