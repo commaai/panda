@@ -615,7 +615,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const SteeringLimits limits) {
   bool violation = false;
 
-  if (controls_allowed && steer_control_enabled && !limits.disable_angle_rate_limits) {
+  if (!limits.disable_angle_rate_limits && controls_allowed && steer_control_enabled) {
     // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
     // add 1 to not false trigger the violation. also fudge the speed by 1 m/s so rate limits are
     // always slightly above openpilot's in case we read an updated speed in between angle commands
@@ -632,7 +632,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
   desired_angle_last = desired_angle;
 
   // check that commanded angle value isn't too far from measured, used to limit torque for some safety modes
-  if (controls_allowed && steer_control_enabled && limits.enforce_angle_error) {
+  if (limits.enforce_angle_err && controls_allowed && steer_control_enabled) {
     if (vehicle_speed > limits.angle_error_limit_speed) {
       // val must always be near angle_meas, limited to the maximum value
       // add 1 to not false trigger the violation
