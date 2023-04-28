@@ -72,7 +72,7 @@ typedef struct {
   const float angle_error_limit_speed;   // minimum speed to start limiting angle error
 
   const bool disable_angle_rate_limits;
-  const bool enforce_angle_error;        // enables max_angle_error_check
+  const bool enforce_angle_error;        // enables max_angle_error_check while enabled
   const bool inactive_angle_is_zero;     // if false, enforces angle to meas when disabled (default)
 } SteeringLimits;
 
