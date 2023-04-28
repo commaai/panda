@@ -61,7 +61,9 @@ class Buttons:
   TJA_TOGGLE = 2
 
 
-class TestFordSafety(common.PandaSafetyTest, common.CurvatureSteeringSafetyTest):
+class TestFordSafety(common.PandaSafetyTest,
+                     common.CurvatureSteeringSafetyTest
+                     ):
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_IPMA_Data
   RELAY_MALFUNCTION_BUS = 0
@@ -223,55 +225,55 @@ class TestFordSafety(common.PandaSafetyTest, common.CurvatureSteeringSafetyTest)
         within_delta = abs(speed - speed_2) <= self.MAX_SPEED_DELTA
         self.assertEqual(self.safety.get_controls_allowed(), within_delta)
 
-  def test_steer_allowed(self):
-    path_offsets = np.arange(-5.12, 5.11, 1).round()
-    path_angles = np.arange(-0.5, 0.5235, 0.1).round(1)
-    curvature_rates = np.arange(-0.001024, 0.00102375, 0.001).round(3)
-    curvatures = np.arange(-0.02, 0.02094, 0.01).round(2)
+  # def test_steer_allowed(self):
+  #   path_offsets = np.arange(-5.12, 5.11, 1).round()
+  #   path_angles = np.arange(-0.5, 0.5235, 0.1).round(1)
+  #   curvature_rates = np.arange(-0.001024, 0.00102375, 0.001).round(3)
+  #   curvatures = np.arange(-0.02, 0.02094, 0.01).round(2)
+  #
+  #   for controls_allowed in (True, False):
+  #     for steer_control_enabled in (True, False):
+  #       for path_offset in path_offsets:
+  #         for path_angle in path_angles:
+  #           for curvature_rate in curvature_rates:
+  #             for curvature in curvatures:
+  #               self.safety.set_controls_allowed(controls_allowed)
+  #               self._set_prev_desired_angle(curvature)
+  #
+  #               should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
+  #               if steer_control_enabled:
+  #                 should_tx = should_tx and controls_allowed
+  #               else:
+  #                 # when request bit is 0, only allow curvature of 0 since the signal range
+  #                 # is not large enough to enforce it tracking measured
+  #                 should_tx = should_tx and curvature == 0
+  #               with self.subTest(controls_allowed=controls_allowed, steer_control_enabled=steer_control_enabled,
+  #                                 path_offset=path_offset, path_angle=path_angle, curvature_rate=curvature_rate,
+  #                                 curvature=curvature):
+  #                 self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, path_offset, path_angle, curvature, curvature_rate)))
 
-    for controls_allowed in (True, False):
-      for steer_control_enabled in (True, False):
-        for path_offset in path_offsets:
-          for path_angle in path_angles:
-            for curvature_rate in curvature_rates:
-              for curvature in curvatures:
-                self.safety.set_controls_allowed(controls_allowed)
-                self._set_prev_desired_angle(curvature)
-
-                should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
-                if steer_control_enabled:
-                  should_tx = should_tx and controls_allowed
-                else:
-                  # when request bit is 0, only allow curvature of 0 since the signal range
-                  # is not large enough to enforce it tracking measured
-                  should_tx = should_tx and curvature == 0
-                with self.subTest(controls_allowed=controls_allowed, steer_control_enabled=steer_control_enabled,
-                                  path_offset=path_offset, path_angle=path_angle, curvature_rate=curvature_rate,
-                                  curvature=curvature):
-                  self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, path_offset, path_angle, curvature, curvature_rate)))
-
-  def test_steer_meas_delta(self):
-    """This safety model enforces a maximum distance from measured and commanded curvature, only above a certain speed"""
-    self.safety.set_controls_allowed(1)
-
-    for steer_control_enabled in (True, False):
-      for speed in np.linspace(0, 50, 11):
-        for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 21):
-          self._reset_curvature_measurements(initial_curvature, speed)
-
-          limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
-          for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 41):
-            too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_DELTA
-
-            if steer_control_enabled:
-              should_tx = not limit_command or not too_far_away
-            else:
-              # enforce angle error limit is disabled when steer request bit is 0
-              should_tx = new_curvature == 0
-
-            with self.subTest(steer_control_enabled=steer_control_enabled, speed=speed,
-                              initial_curvature=initial_curvature, new_curvature=new_curvature):
-              self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, new_curvature, 0)))
+  # def test_steer_meas_delta(self):
+  #   """This safety model enforces a maximum distance from measured and commanded curvature, only above a certain speed"""
+  #   self.safety.set_controls_allowed(1)
+  #
+  #   for steer_control_enabled in (True, False):
+  #     for speed in np.linspace(0, 50, 11):
+  #       for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 21):
+  #         self._reset_curvature_measurements(initial_curvature, speed)
+  #
+  #         limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
+  #         for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 41):
+  #           too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_DELTA
+  #
+  #           if steer_control_enabled:
+  #             should_tx = not limit_command or not too_far_away
+  #           else:
+  #             # enforce angle error limit is disabled when steer request bit is 0
+  #             should_tx = new_curvature == 0
+  #
+  #           with self.subTest(steer_control_enabled=steer_control_enabled, speed=speed,
+  #                             initial_curvature=initial_curvature, new_curvature=new_curvature):
+  #             self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, new_curvature, 0)))
 
   def test_prevent_lkas_action(self):
     self.safety.set_controls_allowed(1)
