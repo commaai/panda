@@ -597,6 +597,16 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
           should_tx = angle_meas == angle_cmd
           self.assertEqual(should_tx, self._tx(self._angle_cmd_msg(angle_cmd, False)))
 
+  def test_steer_control_enabled(self):
+    # Tests steer actuation bit
+    for controls_allowed in (True, False):
+      self.safety.set_controls_allowed(controls_allowed)
+
+      for steer_control_allowed in (True, False):
+
+        should_tx = not steer_control_allowed or controls_allowed
+        self.assertEqual(should_tx, self._tx(self._angle_cmd_msg(0, steer_control_allowed)))
+
 
 @add_regen_tests
 class PandaSafetyTest(PandaSafetyTestBase):
