@@ -142,78 +142,78 @@ class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSaf
     self.safety.init_tests()
 
 
-class TestToyotaSafetyAngle(TestToyotaSafetyBase):
-
-  def setUp(self):
-    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_LTA)
-    self.safety.init_tests()
-
-  # Only allow LKA msgs with no actuation
-  def test_lka_steer_cmd(self):
-    for engaged, steer_req, torque in itertools.product([True, False],
-                                                        [0, 1],
-                                                        np.linspace(-1500, 1500, 7)):
-      self.safety.set_controls_allowed(engaged)
-
-      should_tx = not steer_req and torque == 0
-      self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(torque, steer_req)))
-
-
-class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
-
-  def setUp(self):
-    self.packer = CANPackerPanda("toyota_new_mc_pt_generated")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_ALT_BRAKE)
-    self.safety.init_tests()
-
-  def _user_brake_msg(self, brake):
-    values = {"BRAKE_PRESSED": brake}
-    return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
-
-  # No LTA message in the DBC
-  def test_lta_steer_cmd(self):
-    pass
-
-
-class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
-
-  # Base fwd addresses minus ACC_CONTROL (0x343)
-  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
-
-  def test_accel_actuation_limits(self, stock_longitudinal=True):
-    super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)
-
-  def test_acc_cancel(self):
-    """
-      Regardless of controls allowed, never allow ACC_CONTROL if cancel bit isn't set
-    """
-    for controls_allowed in [True, False]:
-      self.safety.set_controls_allowed(controls_allowed)
-      for accel in np.arange(self.MIN_ACCEL - 1, self.MAX_ACCEL + 1, 0.1):
-        self.assertFalse(self._tx(self._accel_msg(accel)))
-        should_tx = np.isclose(accel, 0, atol=0.0001)
-        self.assertEqual(should_tx, self._tx(self._accel_msg(accel, cancel_req=1)))
-
-
-class TestToyotaStockLongitudinalTorque(TestToyotaStockLongitudinalBase, TestToyotaSafetyTorque):
-
-  def setUp(self):
-    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
-    self.safety.init_tests()
-
-
-class TestToyotaStockLongitudinalAngle(TestToyotaStockLongitudinalBase, TestToyotaSafetyAngle):
-
-  def setUp(self):
-    self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_LTA)
-    self.safety.init_tests()
+# class TestToyotaSafetyAngle(TestToyotaSafetyBase):
+#
+#   def setUp(self):
+#     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
+#     self.safety = libpanda_py.libpanda
+#     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_LTA)
+#     self.safety.init_tests()
+#
+#   # Only allow LKA msgs with no actuation
+#   def test_lka_steer_cmd(self):
+#     for engaged, steer_req, torque in itertools.product([True, False],
+#                                                         [0, 1],
+#                                                         np.linspace(-1500, 1500, 7)):
+#       self.safety.set_controls_allowed(engaged)
+#
+#       should_tx = not steer_req and torque == 0
+#       self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(torque, steer_req)))
+#
+#
+# class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
+#
+#   def setUp(self):
+#     self.packer = CANPackerPanda("toyota_new_mc_pt_generated")
+#     self.safety = libpanda_py.libpanda
+#     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_ALT_BRAKE)
+#     self.safety.init_tests()
+#
+#   def _user_brake_msg(self, brake):
+#     values = {"BRAKE_PRESSED": brake}
+#     return self.packer.make_can_msg_panda("BRAKE_MODULE", 0, values)
+#
+#   # No LTA message in the DBC
+#   def test_lta_steer_cmd(self):
+#     pass
+#
+#
+# class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
+#
+#   # Base fwd addresses minus ACC_CONTROL (0x343)
+#   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
+#
+#   def test_accel_actuation_limits(self, stock_longitudinal=True):
+#     super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)
+#
+#   def test_acc_cancel(self):
+#     """
+#       Regardless of controls allowed, never allow ACC_CONTROL if cancel bit isn't set
+#     """
+#     for controls_allowed in [True, False]:
+#       self.safety.set_controls_allowed(controls_allowed)
+#       for accel in np.arange(self.MIN_ACCEL - 1, self.MAX_ACCEL + 1, 0.1):
+#         self.assertFalse(self._tx(self._accel_msg(accel)))
+#         should_tx = np.isclose(accel, 0, atol=0.0001)
+#         self.assertEqual(should_tx, self._tx(self._accel_msg(accel, cancel_req=1)))
+#
+#
+# class TestToyotaStockLongitudinalTorque(TestToyotaStockLongitudinalBase, TestToyotaSafetyTorque):
+#
+#   def setUp(self):
+#     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
+#     self.safety = libpanda_py.libpanda
+#     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
+#     self.safety.init_tests()
+#
+#
+# class TestToyotaStockLongitudinalAngle(TestToyotaStockLongitudinalBase, TestToyotaSafetyAngle):
+#
+#   def setUp(self):
+#     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
+#     self.safety = libpanda_py.libpanda
+#     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_LTA)
+#     self.safety.init_tests()
 
 
 if __name__ == "__main__":

@@ -345,7 +345,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   valid_steer_req_count = 0;
   invalid_steer_req_count = 0;
 
-  torque_meas.max = 0;
+  torque_meas.min = 0;
   torque_meas.max = 0;
   torque_driver.min = 0;
   torque_driver.max = 0;
@@ -391,6 +391,7 @@ void update_sample(struct sample_t *sample, int sample_new) {
   int sample_size = sizeof(sample->values) / sizeof(sample->values[0]);
   for (int i = sample_size - 1; i > 0; i--) {
     sample->values[i] = sample->values[i-1];
+    print("sample[i]: "); puth(sample->values[i]); print("\n");
   }
   sample->values[0] = sample_new;
 
@@ -405,6 +406,7 @@ void update_sample(struct sample_t *sample, int sample_new) {
       sample->max = sample->values[i];
     }
   }
+  print("\n");
 }
 
 bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
