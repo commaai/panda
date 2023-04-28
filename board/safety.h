@@ -644,9 +644,8 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
   desired_angle_last = desired_angle;
 
   // Angle should be the same as current angle while not steering
-  if (!steer_control_enabled) {
-    violation |= max_limit_check(desired_angle, angle_meas.max + 1, angle_meas.min - 1);
-  }
+  violation |= (!steer_control_enabled &&
+                max_limit_check(desired_angle, angle_meas.max + 1, angle_meas.min - 1);
 
   // No angle control allowed when controls are not allowed
   violation |= !controls_allowed && steer_control_enabled;
