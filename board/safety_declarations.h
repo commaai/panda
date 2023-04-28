@@ -68,8 +68,8 @@ typedef struct {
   const int angle_deg_to_can;
   const struct lookup_t angle_rate_up_lookup;
   const struct lookup_t angle_rate_down_lookup;
-  const int max_angle_error;            // used to limit error between meas and cmd
-  const float angle_error_limit_speed;  // minimum speed to start limiting angle error
+  const int max_angle_error;             // used to limit error between meas and cmd
+  const float angle_error_limit_speed;   // minimum speed to start limiting angle error
 
   const bool disable_angle_rate_limits;
   const bool enforce_angle_error;        // enables max_angle_error_check
