@@ -507,7 +507,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   def test_reset_torque_measurements(self):
     # Tests that the torque measurement sample_t is reset on safety mode init
-    for t in np.random.randint(1, self.MAX_TORQUE, 6):
+    for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, 6):
       self.assertTrue(self._rx(self._torque_meas_msg(t)))
 
     self.assertNotEqual(self.safety.get_torque_meas_min(), 0)
