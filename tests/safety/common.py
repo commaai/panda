@@ -586,26 +586,20 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
   def test_angle_cmd_when_disabled(self):
     # Tests that only angles close to the meas are allowed while
     # steer actuation bit is 0, regardless of controls allowed.
-
     for controls_allowed in (True, False):
       self.safety.set_controls_allowed(controls_allowed)
 
-      for angle_meas in np.arange(-90, 91, 10):
-        self._angle_meas_msg_array(angle_meas)
+      for steer_control_enabled in (True, False):
 
-        for angle_cmd in np.arange(-90, 91, 10):
-          should_tx = angle_meas == angle_cmd
-          self.assertEqual(should_tx, self._tx(self._angle_cmd_msg(angle_cmd, False)))
+        for angle_meas in np.arange(-90, 91, 10):
+          self._angle_meas_msg_array(angle_meas)
 
-  def test_steer_control_enabled(self):
-    # Tests steer actuation bit
-    for controls_allowed in (True, False):
-      self.safety.set_controls_allowed(controls_allowed)
+          for angle_cmd in np.arange(-90, 91, 10):
+            self._set_prev_desired_angle(angle_cmd)
 
-      for steer_control_allowed in (True, False):
-
-        should_tx = not steer_control_allowed or controls_allowed
-        self.assertEqual(should_tx, self._tx(self._angle_cmd_msg(0, steer_control_allowed)))
+            # Allow message if controls are allowed if bit is 1, or if not angle is inactive (close to meas)
+            should_tx = controls_allowed if steer_control_enabled else angle_cmd == angle_meas
+            self.assertEqual(should_tx, self._tx(self._angle_cmd_msg(angle_cmd, steer_control_enabled)))
 
 
 @add_regen_tests
