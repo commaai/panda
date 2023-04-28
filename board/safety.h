@@ -627,6 +627,9 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
 
     if (limits.enforce_angle_error && vehicle_speed > limits.angle_error_limit_speed) {
+      print('lowest', min(max(prev_angle - down, meas - ERROR), prev_angle + up))
+      print('highest', max(min(prev_angle + up, meas + ERROR), (prev_angle - down)))  # prev des, meas
+
       int highest_allowed_err = CLAMP(angle_meas.max + limits.max_angle_error + 1, -limits.max_steer, limits.max_steer);
       int lowest_allowed_err = CLAMP(angle_meas.min - limits.max_angle_error - 1, -limits.max_steer, limits.max_steer);
     }
