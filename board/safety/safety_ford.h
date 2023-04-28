@@ -143,7 +143,7 @@ const SteeringLimits FORD_STEERING_LIMITS = {
 
   .disable_angle_rate_limits = true,
   .enforce_angle_error = true,
-  .disable_near_angle_check = true,
+  .inactive_angle_is_zero = true,
 };
 
 static int ford_rx_hook(CANPacket_t *to_push) {
