@@ -649,6 +649,9 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     violation |= (!controls_allowed &&
                     ((desired_angle < (angle_meas.min - 1)) ||
                     (desired_angle > (angle_meas.max + 1))));
+  } else {
+    // If steer control is not enabled, curvature must be 0
+    violation |= (!steer_control_enabled && (desired_angle != 0));
   }
 
   // No angle control allowed when controls are not allowed
