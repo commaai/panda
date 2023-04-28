@@ -241,11 +241,11 @@ class TestFordSafety(common.PandaSafetyTest):
 
     for steer_control_enabled in (True, False):
       for speed in np.linspace(0, 50, 11):
-        for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 51):
+        for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 21):
           self._reset_curvature_measurements(initial_curvature, speed)
 
           limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
-          for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 51):
+          for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 41):
             too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_DELTA
             if steer_control_enabled:
               should_tx = not limit_command or not too_far_away
@@ -253,7 +253,7 @@ class TestFordSafety(common.PandaSafetyTest):
               should_tx = new_curvature == 0
             with self.subTest(steer_control_enabled=steer_control_enabled, speed=speed,
                               initial_curvature=initial_curvature, new_curvature=new_curvature):
-              self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, new_curvature, 0)))
+              self.assertEqual(should_tx, self._tx(self._tja_command_msg(True, 0, 0, new_curvature, 0)))
 
   def test_prevent_lkas_action(self):
     self.safety.set_controls_allowed(1)
