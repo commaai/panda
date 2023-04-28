@@ -505,6 +505,30 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     self.assertTrue(self.safety.get_torque_meas_min() in min_range)
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
+  def test_reset_torque_measurements(self):
+    for t in np.random.randint(1, self.MAX_TORQUE, 6):
+      print('setting torque to', t)
+      self.assertTrue(self._rx(self._torque_meas_msg(t)))
+
+    self.assertNotEqual(self.safety.get_torque_meas_min(), 0)
+    self.assertNotEqual(self.safety.get_torque_meas_max(), 0)
+
+    # reset sample_t by reinitializing a safety mode
+    # self.safety.set_safety_hooks(0, 0)
+    self.setUp()
+
+    self.assertEqual(self.safety.get_torque_meas_min(), 0)
+    self.assertEqual(self.safety.get_torque_meas_max(), 0)
+
+    print('\n rxing one 0 now')
+    self.assertTrue(self._rx(self._torque_meas_msg(0)))
+
+    # self.assertEqual(self.safety.get_torque_meas_min(), 0)
+    # self.assertEqual(self.safety.get_torque_meas_max(), 0)
+
+    print('final range', self.safety.get_torque_meas_min(), self.safety.get_torque_meas_max())
+    print('hi')
+
 
 class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
