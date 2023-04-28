@@ -632,7 +632,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
   desired_angle_last = desired_angle;
 
   // check that commanded angle value isn't too far from measured, used to limit torque for some safety modes
-  if (limits.enforce_angle_err && controls_allowed && steer_control_enabled) {
+  if (limits.enforce_angle_error && controls_allowed && steer_control_enabled) {
     if (vehicle_speed > limits.angle_error_limit_speed) {
       // val must always be near angle_meas, limited to the maximum value
       // add 1 to not false trigger the violation
