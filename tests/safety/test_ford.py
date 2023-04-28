@@ -253,7 +253,7 @@ class TestFordSafety(common.PandaSafetyTest):
               should_tx = new_curvature == 0
             with self.subTest(steer_control_enabled=steer_control_enabled, speed=speed,
                               initial_curvature=initial_curvature, new_curvature=new_curvature):
-              self.assertEqual(should_tx, self._tx(self._tja_command_msg(True, 0, 0, new_curvature, 0)))
+              self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, new_curvature, 0)))
 
   def test_prevent_lkas_action(self):
     self.safety.set_controls_allowed(1)
