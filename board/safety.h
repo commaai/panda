@@ -623,17 +623,19 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
     int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
 
-    int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
-    int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
+    // angle limits flip when negative
+    delta_angle_up = (desired_angle_last > 0) ? delta_angle_up : delta_angle_down;
+    delta_angle_down = (desired_angle_last >= 0) ? delta_angle_down : delta_angle_up;
 
+    int highest_desired_angle = desired_angle_last + delta_angle_up;
+    int lowest_desired_angle = desired_angle_last - delta_angle_down;
+
+    // check that commanded angle value isn't too far from measured, used to limit torque for some safety modes
+    // angle rate limits have precedence, start moving in direction of meas with respect to rate limits if exceeded error
     if (limits.enforce_angle_error && vehicle_speed > limits.angle_error_limit_speed) {
       // TODO: use min/max of angle_meas, as well as add 1 to limits to be conservative
-      // TODO: can we just subtract and add limits at the end? does that work when negative?
       highest_allowed_angle = MAX(MIN(highest_desired_angle, angle_meas.max + limits.max_angle_error), (desired_angle_last - delta_angle_down)));
       lowest_allowed_angle = MIN(MAX(lowest_desired_angle, angle_meas.max - limits.max_angle_error), desired_angle_last + delta_angle_up));
-
-      int highest_allowed_err = CLAMP(angle_meas.max + limits.max_angle_error + 1, -limits.max_steer, limits.max_steer);
-      int lowest_allowed_err = CLAMP(angle_meas.min - limits.max_angle_error - 1, -limits.max_steer, limits.max_steer);
     }
 
     // check for violation;
