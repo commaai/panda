@@ -520,14 +520,14 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     self.assertEqual(self.safety.get_torque_meas_min(), 0)
     self.assertEqual(self.safety.get_torque_meas_max(), 0)
 
-    print('\n rxing one 0 now')
-    self.assertTrue(self._rx(self._torque_meas_msg(0)))
-
-    # self.assertEqual(self.safety.get_torque_meas_min(), 0)
-    # self.assertEqual(self.safety.get_torque_meas_max(), 0)
-
-    print('final range', self.safety.get_torque_meas_min(), self.safety.get_torque_meas_max())
-    print('hi')
+    # print('\n rxing one 0 now')
+    # self.assertTrue(self._rx(self._torque_meas_msg(0)))
+    #
+    # # self.assertEqual(self.safety.get_torque_meas_min(), 0)
+    # # self.assertEqual(self.safety.get_torque_meas_max(), 0)
+    #
+    # print('final range', self.safety.get_torque_meas_min(), self.safety.get_torque_meas_max())
+    # print('hi')
 
 
 class AngleSteeringSafetyTest(PandaSafetyTestBase):
