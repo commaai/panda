@@ -631,11 +631,10 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     int lowest_desired_angle = desired_angle_last - delta_angle_down;
 
     // check that commanded angle value isn't too far from measured, used to limit torque for some safety modes
-    // angle rate limits have precedence, start moving in direction of meas with respect to rate limits if exceeded error
+    // angle rate limits have precedence, start moving in direction of meas with respect to rate limits if error is exceeded
     if (limits.enforce_angle_error && vehicle_speed > limits.angle_error_limit_speed) {
-      // TODO: use min/max of angle_meas, as well as add 1 to limits to be conservative
-      highest_allowed_angle = MAX(MIN(highest_desired_angle, angle_meas.max + limits.max_angle_error), (desired_angle_last - delta_angle_down)));
-      lowest_allowed_angle = MIN(MAX(lowest_desired_angle, angle_meas.min - limits.max_angle_error), desired_angle_last + delta_angle_up));
+      highest_allowed_angle = MAX(MIN(highest_desired_angle, angle_meas.max + limits.max_angle_error + 1), (desired_angle_last - delta_angle_down)));
+      lowest_allowed_angle = MIN(MAX(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1), desired_angle_last + delta_angle_up));
     }
 
     // check for violation;
