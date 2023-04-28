@@ -124,7 +124,6 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
 #define INACTIVE_PATH_OFFSET 512U
 #define INACTIVE_PATH_ANGLE 1000U
 #define FORD_MAX_SPEED_DELTA 2.0  // m/s
-#define FORD_CURVATURE_DELTA_LIMIT_SPEED 10.0  // m/s
 
 static bool ford_lkas_msg_check(int addr) {
   return (addr == MSG_ACCDATA_3)
@@ -136,8 +135,15 @@ static bool ford_lkas_msg_check(int addr) {
 // Curvature rate limits
 const SteeringLimits FORD_STEERING_LIMITS = {
   .max_steer = 1000,
-  .angle_deg_to_can = 50000,  // 1 / (2e-5) rad to can
-  .max_angle_error = 100,     // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
+  .angle_deg_to_can = 50000,        // 1 / (2e-5) rad to can
+  .max_angle_error = 100,           // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
+
+  // no blending at low speed due to lack of torque wind-up and inaccurate current curvature
+  .angle_error_limit_speed = 10.0,  // m/s
+
+  .disable_angle_rate_limits = true,
+  .enforce_angle_error = true,
+  .inactive_angle_is_zero = true,
 };
 
 static int ford_rx_hook(CANPacket_t *to_push) {
@@ -254,23 +260,9 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     // These signals are not yet tested with the current safety limits
     bool violation = (raw_curvature_rate != INACTIVE_CURVATURE_RATE) || (raw_path_angle != INACTIVE_PATH_ANGLE) || (raw_path_offset != INACTIVE_PATH_OFFSET);
 
+    // Check angle error and steer_control_enabled
     int desired_curvature = raw_curvature - INACTIVE_CURVATURE;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
-    if (controls_allowed && steer_control_enabled) {
-      if (vehicle_speed > FORD_CURVATURE_DELTA_LIMIT_SPEED) {
-        violation |= angle_dist_to_meas_check(desired_curvature, &angle_meas,
-                                              FORD_STEERING_LIMITS.max_angle_error, FORD_STEERING_LIMITS.max_steer);
-      }
-    }
-
-    // If steer control is not enabled, curvature must be 0
-    if (!steer_control_enabled && (desired_curvature != 0)) {
-      violation = true;
-    }
-
-    // No curvature command if controls is not allowed
-    if (!controls_allowed && ((desired_curvature != 0) || steer_control_enabled)) {
-      violation = true;
-    }
+    violation |= steer_angle_cmd_checks(desired_curvature, steer_control_enabled, FORD_STEERING_LIMITS);
 
     if (violation) {
       tx = 0;
