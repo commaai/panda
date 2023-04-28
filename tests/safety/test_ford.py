@@ -229,7 +229,7 @@ class TestFordSafety(common.PandaSafetyTest):
                 if steer_control_enabled:
                   should_tx = should_tx and controls_allowed
                 else:
-                  # when request bit is 0, safety only allows curvature of 0 since the signal range
+                  # when request bit is 0, only allow curvature of 0 since the signal range
                   # is not large enough to enforce it tracking measured
                   should_tx = should_tx and curvature == 0
                 with self.subTest(controls_allowed=controls_allowed, steer_control_enabled=steer_control_enabled,
