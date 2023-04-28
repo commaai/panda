@@ -634,7 +634,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     // angle rate limits have precedence, start moving in direction of meas with respect to rate limits if error is exceeded
     if (limits.enforce_angle_error && vehicle_speed > limits.angle_error_limit_speed) {
       lowest_allowed_angle = CLAMP(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1, desired_angle_last + delta_angle_up);
-      highest_allowed_angle = CLAMP(highest_desired_angle, desired_angle_last - delta_angle_down, angle_meas.max + limits.max_angle_error + 1));
+      highest_allowed_angle = CLAMP(highest_desired_angle, desired_angle_last - delta_angle_down, angle_meas.max + limits.max_angle_error + 1);
 
       // TODO: these are good, verify above
 //      lowest_allowed_angle = MIN(MAX(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1), desired_angle_last + delta_angle_up));
