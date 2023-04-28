@@ -92,7 +92,7 @@ class TestFordSafety(common.PandaSafetyTest):
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
     self.safety.init_tests()
 
-  def _reset_curvature_measurements(self, curvature, speed):
+  def _reset_curvature_measurement(self, curvature, speed):
     self._rx(self._speed_msg(speed))
     for _ in range(6):
       self._rx(self._yaw_rate_msg(curvature, speed))
@@ -244,7 +244,7 @@ class TestFordSafety(common.PandaSafetyTest):
     for steer_control_enabled in (True, False):
       for speed in np.linspace(0, 50, 11):
         for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 21):
-          self._reset_curvature_measurements(initial_curvature, speed)
+          self._reset_curvature_measurement(initial_curvature, speed)
 
           limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
           for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 41):
