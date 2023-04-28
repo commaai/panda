@@ -535,7 +535,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     t = int(t * self.DEG_TO_CAN)
     self.safety.set_desired_angle_last(t)
 
-  def _angle_meas_msg_array(self, angle):
+  def _reset_angle_measurement(self, angle):
     for _ in range(6):
       self._rx(self._angle_meas_msg(angle))
 
@@ -549,7 +549,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
         max_delta_down = np.interp(s, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
 
         # first test against false positives
-        self._angle_meas_msg_array(a)
+        self._reset_angle_measurement(a)
         self._rx(self._speed_msg(s))  # pylint: disable=no-member
 
         self._set_prev_desired_angle(a)
@@ -595,7 +595,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
       for steer_control_enabled in (True, False):
         for angle_meas in np.arange(-90, 91, 10):
-          self._angle_meas_msg_array(angle_meas)
+          self._reset_angle_measurement(angle_meas)
 
           for angle_cmd in np.arange(-90, 91, 10):
             self._set_prev_desired_angle(angle_cmd)
