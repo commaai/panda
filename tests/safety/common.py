@@ -590,14 +590,13 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
       self.safety.set_controls_allowed(controls_allowed)
 
       for steer_control_enabled in (True, False):
-
         for angle_meas in np.arange(-90, 91, 10):
           self._angle_meas_msg_array(angle_meas)
 
           for angle_cmd in np.arange(-90, 91, 10):
             self._set_prev_desired_angle(angle_cmd)
 
-            # Allow message if controls are allowed if bit is 1, or if not angle is inactive (close to meas)
+            # controls_allowed is checked if actuation bit is 1, else the angle must be close to meas (inactive)
             should_tx = controls_allowed if steer_control_enabled else angle_cmd == angle_meas
             self.assertEqual(should_tx, self._tx(self._angle_cmd_msg(angle_cmd, steer_control_enabled)))
 
