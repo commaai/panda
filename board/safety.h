@@ -635,7 +635,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     if (limits.enforce_angle_error && vehicle_speed > limits.angle_error_limit_speed) {
       // TODO: use min/max of angle_meas, as well as add 1 to limits to be conservative
       highest_allowed_angle = MAX(MIN(highest_desired_angle, angle_meas.max + limits.max_angle_error), (desired_angle_last - delta_angle_down)));
-      lowest_allowed_angle = MIN(MAX(lowest_desired_angle, angle_meas.max - limits.max_angle_error), desired_angle_last + delta_angle_up));
+      lowest_allowed_angle = MIN(MAX(lowest_desired_angle, angle_meas.min - limits.max_angle_error), desired_angle_last + delta_angle_up));
     }
 
     // check for violation;
