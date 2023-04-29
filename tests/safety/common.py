@@ -627,15 +627,15 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
             self.assertEqual(should_tx, self._tx(self._angle_cmd_msg(angle_cmd, steer_control_enabled)))
 
   def test_reset_angle_measurements(self):
-    # Tests that the torque measurement sample_t is reset on safety mode init
+    # Tests that the angle measurement sample_t is reset on safety mode init
     for a in np.linspace(-90, 90, 6):
       self.assertTrue(self._rx(self._angle_meas_msg(a)))
 
     # reset sample_t by reinitializing the safety mode
     self.setUp()
 
-    self.assertEqual(self.safety.get_torque_meas_min(), 0)
-    self.assertEqual(self.safety.get_torque_meas_max(), 0)
+    self.assertEqual(self.safety.get_angle_meas_min(), 0)
+    self.assertEqual(self.safety.get_angle_meas_max(), 0)
 
 
 @add_regen_tests
