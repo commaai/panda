@@ -615,7 +615,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const SteeringLimits limits) {
   bool violation = false;
   print("\n");
-  print("desired angle: "); puth(desired_angle); print(", prev angle: "); puth(desired_angle_last); print("\n");
+  print("desired angle: "); puth(ABS(desired_angle)); print(", prev angle: "); puth(ABS(desired_angle_last)); print("\n");
 
   if (controls_allowed && steer_control_enabled) {
     // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
@@ -628,24 +628,30 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     print("delta_angle_down: "); puth(delta_angle_down); print("\n");
 
     // angle limits flip when negative
-    delta_angle_up = (desired_angle_last > 0) ? delta_angle_up : delta_angle_down;
-    delta_angle_down = (desired_angle_last >= 0) ? delta_angle_down : delta_angle_up;
+    int new_delta_angle_up = (desired_angle_last > 0) ? delta_angle_up : delta_angle_down;
+    int new_delta_angle_down = (desired_angle_last >= 0) ? delta_angle_down : delta_angle_up;
+    print("\ndelta_angle_up mod: "); puth(new_delta_angle_up); print("\n");
+    print("delta_angle_down mod: "); puth(new_delta_angle_down); print("\n");
 
-    int highest_desired_angle = desired_angle_last + delta_angle_up;
-    int lowest_desired_angle = desired_angle_last - delta_angle_down;
+    int highest_desired_angle = desired_angle_last + new_delta_angle_up;
+    int lowest_desired_angle = desired_angle_last - new_delta_angle_down;
+    print("highest_desired_angle1: "); puth(ABS(highest_desired_angle)); print("\n");
+    print("lowest_desired_angle1: "); puth(ABS(-lowest_desired_angle)); print("\n");
 
     // check that commanded angle value isn't too far from measured, used to limit torque for some safety modes
     // angle rate limits have precedence, start moving in direction of meas with respect to rate limits if error is exceeded
     if (limits.enforce_angle_error && vehicle_speed > limits.angle_error_limit_speed) {
-      lowest_desired_angle = CLAMP(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1, desired_angle_last + delta_angle_up);
-      highest_desired_angle = CLAMP(highest_desired_angle, desired_angle_last - delta_angle_down, angle_meas.max + limits.max_angle_error + 1);
+      lowest_desired_angle = CLAMP(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1, desired_angle_last + new_delta_angle_up);
+      highest_desired_angle = CLAMP(highest_desired_angle, desired_angle_last - new_delta_angle_down, angle_meas.max + limits.max_angle_error + 1);
 
       // TODO: these are good, verify above
-//      lowest_allowed_angle = MIN(MAX(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1), desired_angle_last + delta_angle_up));
-//      highest_allowed_angle = MAX(MIN(highest_desired_angle, angle_meas.max + limits.max_angle_error + 1), (desired_angle_last - delta_angle_down)));
+//      lowest_allowed_angle = MIN(MAX(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1), desired_angle_last + new_delta_angle_up));
+//      highest_allowed_angle = MAX(MIN(highest_desired_angle, angle_meas.max + limits.max_angle_error + 1), (desired_angle_last - new_delta_angle_down)));
     }
 
     // check for violation;
+    print("highest_desired_angle2: "); puth(ABS(highest_desired_angle)); print("\n");
+    print("lowest_desired_angle2: "); puth(ABS(-lowest_desired_angle)); print("\n");
     violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
   }
   desired_angle_last = desired_angle;

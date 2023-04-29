@@ -53,12 +53,12 @@ def checksum(msg):
 
 def round_curvature_can(curvature):
   # rounds curvature as if it was sent on CAN
-  return round(curvature * 5, 4) / 5
+  return round(round(curvature * 5, 4) / 5, 5)
 
 
 def round_curvature_can_2(curvature):
   # rounds curvature as if it was sent on CAN
-  return round((curvature + 0.02) / 2e-5) * 2e-5 - 0.02
+  return round(round((curvature + 0.02) / 2e-5) * 2e-5 - 0.02, 5)
 
 
 class Buttons:
@@ -109,7 +109,7 @@ class TestFordSafety(common.PandaSafetyTest,
     self.safety.init_tests()
 
   def _set_prev_desired_angle(self, t):
-    t = int(t * self.DEG_TO_CAN)
+    t = round(t * self.DEG_TO_CAN)
     self.safety.set_desired_angle_last(t)
 
   def _reset_curvature_measurement(self, curvature, speed):
@@ -278,7 +278,8 @@ class TestFordSafety(common.PandaSafetyTest,
         max_delta_down = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU) + 1/50000
 
         for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 11):#21):
-          self._reset_curvature_measurement(initial_curvature, speed)
+        # for initial_curvature in np.linspace(0, self.MAX_CURVATURE, 11):#21):
+          self._reset_curvature_measurement(round_curvature_can_2(initial_curvature), speed)
 
           limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
           for new_curvature in np.linspace(initial_curvature - max_delta_down * 2,
@@ -286,10 +287,11 @@ class TestFordSafety(common.PandaSafetyTest,
             # the max curvature allowed in safety is near the signal max
             new_curvature = np.clip(new_curvature, -self.MAX_CURVATURE, self.MAX_CURVATURE)
             print()
-            print(f'{new_curvature=}, {initial_curvature=}')
+            print(f'{new_curvature=}, {round_curvature_can_2(new_curvature)=}, {initial_curvature=}')
             act_delta = round_curvature_can_2(abs(round_curvature_can_2(new_curvature) - round_curvature_can_2(initial_curvature)))
             print('delta: {}'.format(act_delta))
-            if abs(new_curvature) > abs(initial_curvature):
+            # panda allows down rate limits at 0
+            if abs(new_curvature) > abs(initial_curvature) and abs(initial_curvature) > 0:
               violation = act_delta > max_delta_up
               print('up, rl is {}, violation: {}'.format(max_delta_up, violation))
             else:
@@ -305,14 +307,15 @@ class TestFordSafety(common.PandaSafetyTest,
               # enforce angle error limit is disabled when steer request bit is 0
               should_tx = new_curvature == 0
 
-            tx = self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, new_curvature, 0))
-            print(f'{should_tx=}, {tx=}, mismatch: {bool(should_tx) != bool(tx)}')
+            # tx = self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, new_curvature, 0))
+            # tx = self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, round_curvature_can_2(new_curvature), 0))
+            # print(f'{should_tx=}, {tx=}, mismatch: {bool(should_tx) != bool(tx)}')
 
             print()
             time.sleep(0.01)
             # with self.subTest(steer_control_enabled=steer_control_enabled, speed=speed,
             #                   initial_curvature=initial_curvature, new_curvature=new_curvature):
-            #   self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, new_curvature, 0)))
+            self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, round_curvature_can_2(new_curvature), 0)))
 
   # def test_steer_meas_delta(self):
   #   """This safety model enforces a maximum distance from measured and commanded curvature, only above a certain speed"""
