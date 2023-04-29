@@ -404,7 +404,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       self.assertTrue(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA + 1))))
 
   def test_reset_driver_torque_measurements(self):
-    # Tests that the torque measurement sample_t is reset on safety mode init
+    # Tests that the driver torque measurement sample_t is reset on safety mode init
     for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, 6):
       self.assertTrue(self._rx(self._torque_driver_msg(t)))
 
