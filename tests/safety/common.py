@@ -411,6 +411,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     # reset sample_t by reinitializing the safety mode
     self.setUp()
 
+    # rx one to update sample_t
     self.assertTrue(self._rx(self._torque_driver_msg(0)))
     self.assertEqual(self.safety.get_torque_driver_min(), 0)
     self.assertEqual(self.safety.get_torque_driver_max(), 0)
@@ -430,10 +431,6 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
   @abc.abstractmethod
   def _torque_meas_msg(self, torque):
     pass
-
-  def _reset_torque_measurement(self, torque):
-    for _ in range(6):
-      self._rx(self._torque_meas_msg(torque))
 
   def _set_prev_torque(self, t):
     super()._set_prev_torque(t)
@@ -641,6 +638,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     # reset sample_t by reinitializing the safety mode
     self.setUp()
 
+    # rx one to update sample_t
     self.assertTrue(self._rx(self._angle_meas_msg(0)))
     self.assertEqual(self.safety.get_angle_meas_min(), 0)
     self.assertEqual(self.safety.get_angle_meas_max(), 0)
