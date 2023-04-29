@@ -277,15 +277,16 @@ class TestFordSafety(common.PandaSafetyTest,
         max_delta_up = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V) + 1/50000
         max_delta_down = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU) + 1/50000
 
-        for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 11):#21):
+        for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 101):#21):
         # for initial_curvature in np.linspace(0, self.MAX_CURVATURE, 11):#21):
           self._reset_curvature_measurement(round_curvature_can_2(initial_curvature), speed)
 
           limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
-          for new_curvature in np.linspace(initial_curvature - max_delta_down * 2,
-                                           initial_curvature + max_delta_down * 2, 41):  # 41):
+          for new_curvature in np.linspace(initial_curvature - self.MAX_CURVATURE_DELTA * 2,
+                                           initial_curvature + self.MAX_CURVATURE_DELTA * 2, 101):  # 41):
             # the max curvature allowed in safety is near the signal max
             new_curvature = np.clip(new_curvature, -self.MAX_CURVATURE, self.MAX_CURVATURE)
+            new_curvature = round_curvature_can_2(new_curvature)
             print()
             print(f'{new_curvature=}, {round_curvature_can_2(new_curvature)=}, {initial_curvature=}')
             act_delta = round_curvature_can_2(abs(round_curvature_can_2(new_curvature) - round_curvature_can_2(initial_curvature)))
@@ -302,6 +303,7 @@ class TestFordSafety(common.PandaSafetyTest,
             if steer_control_enabled:
               too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_DELTA
               # under_rate_limit = max_delta_up
+              print(f'{too_far_away=}')
               should_tx = (not limit_command or not too_far_away) and not violation
             else:
               # enforce angle error limit is disabled when steer request bit is 0
