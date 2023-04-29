@@ -624,8 +624,8 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     // TODO: this speed fudge can be much lower, look at data to determine the lowest reasonable offset
     int delta_angle_up_upper = (interpolate(limits.angle_rate_up_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
     int delta_angle_down_upper = (interpolate(limits.angle_rate_down_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
-    print("delta_angle_up: "); puth(delta_angle_up); print("\n");
-    print("delta_angle_down: "); puth(delta_angle_down); print("\n");
+    print("delta_angle_up: "); puth(delta_angle_up_upper); print("\n");
+    print("delta_angle_down: "); puth(delta_angle_down_upper); print("\n");
 
     // angle limits flip when negative
     int new_delta_angle_up_upper = (desired_angle_last > 0) ? delta_angle_up_upper : delta_angle_down_upper;
@@ -648,11 +648,11 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     // check that commanded angle value isn't too far from measured, used to limit torque for some safety modes
     // angle rate limits have precedence, start moving in direction of meas with respect to rate limits if error is exceeded
     if (limits.enforce_angle_error && vehicle_speed > limits.angle_error_limit_speed) {
-      lowest_desired_angle = CLAMP(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1, desired_angle_last + new_delta_angle_up_upper);
-      highest_desired_angle = CLAMP(highest_desired_angle, desired_angle_last - new_delta_angle_down_upper, angle_meas.max + limits.max_angle_error + 1);
+      lowest_desired_angle = CLAMP(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1, desired_angle_last + new_delta_angle_up_lower);
+      highest_desired_angle = CLAMP(highest_desired_angle, desired_angle_last - new_delta_angle_down_lower, angle_meas.max + limits.max_angle_error + 1);
 
       // TODO: these are good, verify above
-//      lowest_allowed_angle = MIN(MAX(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1), desired_angle_last + new_delta_angle_up_upper));
+//      lowest_allowed_angle = MIN(MAX(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1), desired_angle_last + new_delta_angle_up_lower));
 //      highest_allowed_angle = MAX(MIN(highest_desired_angle, angle_meas.max + limits.max_angle_error + 1), (desired_angle_last - new_delta_angle_down_lower)));
     }
 
