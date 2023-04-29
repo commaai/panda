@@ -334,6 +334,10 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       cls.safety = None
       raise unittest.SkipTest
 
+  @abc.abstractmethod
+  def _torque_driver_msg(self, torque):
+    pass
+
   def test_non_realtime_limit_up(self):
     self.safety.set_torque_driver(0, 0)
     super().test_non_realtime_limit_up()
