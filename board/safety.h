@@ -345,6 +345,10 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   valid_steer_req_count = 0;
   invalid_steer_req_count = 0;
 
+  for (int i = 0; i < 6; i++) {
+    torque_meas.values[i] = 0;
+  }
+
   torque_meas.min = 0;
   torque_meas.max = 0;
   torque_driver.min = 0;
