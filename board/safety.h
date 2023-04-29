@@ -396,7 +396,6 @@ int to_signed(int d, int bits) {
 void update_sample(struct sample_t *sample, int sample_new) {
   for (int i = MAX_SAMPLE_VALS - 1; i > 0; i--) {
     sample->values[i] = sample->values[i-1];
-    print("sample[i]: "); puth(sample->values[i]); print("\n");
   }
   sample->values[0] = sample_new;
 
@@ -411,7 +410,6 @@ void update_sample(struct sample_t *sample, int sample_new) {
       sample->max = sample->values[i];
     }
   }
-  print("\n");
 }
 
 bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
