@@ -347,6 +347,8 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
 
   for (int i = 0; i < 6; i++) {
     torque_meas.values[i] = 0;
+    torque_driver.values[i] = 0;
+    angle_meas.values[i] = 0;
   }
 
   torque_meas.min = 0;
