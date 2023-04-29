@@ -614,6 +614,8 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 // Safety checks for angle-based steering commands
 bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const SteeringLimits limits) {
   bool violation = false;
+  print("\n");
+  print("desired angle: "); puth(desired_angle); print(", prev angle: "); puth(desired_angle_last); print("\n");
 
   if (controls_allowed && steer_control_enabled) {
     // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
@@ -622,6 +624,8 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     // TODO: this speed fudge can be much lower, look at data to determine the lowest reasonable offset
     int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
     int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
+    print("delta_angle_up: "); puth(delta_angle_up); print("\n");
+    print("delta_angle_down: "); puth(delta_angle_down); print("\n");
 
     // angle limits flip when negative
     delta_angle_up = (desired_angle_last > 0) ? delta_angle_up : delta_angle_down;
