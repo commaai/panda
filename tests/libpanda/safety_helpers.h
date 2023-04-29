@@ -125,6 +125,14 @@ void set_desired_angle_last(int t){
   desired_angle_last = t;
 }
 
+int get_angle_meas_min(void){
+  return angle_meas.min;
+}
+
+int get_angle_meas_max(void){
+  return angle_meas.max;
+}
+
 
 // ***** car specific helpers *****
 
