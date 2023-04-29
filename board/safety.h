@@ -345,7 +345,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   valid_steer_req_count = 0;
   invalid_steer_req_count = 0;
 
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < MAX_SAMPLE_VALS; i++) {
     torque_meas.values[i] = 0;
     torque_driver.values[i] = 0;
     angle_meas.values[i] = 0;
@@ -394,8 +394,7 @@ int to_signed(int d, int bits) {
 
 // given a new sample, update the sample_t struct
 void update_sample(struct sample_t *sample, int sample_new) {
-  int sample_size = sizeof(sample->values) / sizeof(sample->values[0]);
-  for (int i = sample_size - 1; i > 0; i--) {
+  for (int i = MAX_SAMPLE_VALS - 1; i > 0; i--) {
     sample->values[i] = sample->values[i-1];
     print("sample[i]: "); puth(sample->values[i]); print("\n");
   }
@@ -404,7 +403,7 @@ void update_sample(struct sample_t *sample, int sample_new) {
   // get the minimum and maximum measured samples
   sample->min = sample->values[0];
   sample->max = sample->values[0];
-  for (int i = 1; i < sample_size; i++) {
+  for (int i = 1; i < MAX_SAMPLE_VALS; i++) {
     if (sample->values[i] < sample->min) {
       sample->min = sample->values[i];
     }
