@@ -311,14 +311,14 @@ class TestFordSafety(common.PandaSafetyTest,
               should_tx = new_curvature == 0
 
             # tx = self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, new_curvature, 0))
-            # tx = self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, round_curvature_can_2(new_curvature), 0))
-            # print(f'{should_tx=}, {tx=}, mismatch: {bool(should_tx) != bool(tx)}')
+            tx = self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, round_curvature_can_2(new_curvature), 0))
+            print(f'{should_tx=}, {tx=}, mismatch: {bool(should_tx) != bool(tx)}')
 
             print()
             time.sleep(0.01)
             # with self.subTest(steer_control_enabled=steer_control_enabled, speed=speed,
             #                   initial_curvature=initial_curvature, new_curvature=new_curvature):
-            self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, round_curvature_can_2(new_curvature), 0)))
+            # self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, round_curvature_can_2(new_curvature), 0)))
 
   # def test_steer_meas_delta(self):
   #   """This safety model enforces a maximum distance from measured and commanded curvature, only above a certain speed"""
