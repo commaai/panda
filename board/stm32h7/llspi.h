@@ -82,8 +82,8 @@ void SPI4_IRQ_Handler(void) {
 void llspi_init(void) {
   // We expect less than 50 transactions (including control messages and CAN buffers) at the 100Hz boardd interval. Can be raised if needed.
   REGISTER_INTERRUPT(SPI4_IRQn, SPI4_IRQ_Handler, 5000000U, FAULT_INTERRUPT_RATE_SPI_DMA)
-  REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, 5000000U, FAULT_INTERRUPT_RATE_SPI_DMA)
-  REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, 5000000U, FAULT_INTERRUPT_RATE_SPI_DMA)
+  REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
+  REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
 
   // Setup MOSI DMA
   register_set(&(DMAMUX1_Channel10->CCR), 83U, 0xFFFFFFFFU);

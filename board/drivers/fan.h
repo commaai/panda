@@ -19,7 +19,6 @@ const uint8_t FAN_STALL_THRESHOLD_MAX = 8U;
 
 
 void fan_set_power(uint8_t percentage) {
-  percentage = 100U;
   fan_state.target_rpm = ((current_board->fan_max_rpm * CLAMP(percentage, 0U, 100U)) / 100U);
 }
 
