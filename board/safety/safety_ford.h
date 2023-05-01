@@ -3,6 +3,7 @@
 #define MSG_EngVehicleSpThrottle  0x204   // RX from PCM, for driver throttle input
 #define MSG_DesiredTorqBrk        0x213   // RX from ABS, for standstill state
 #define MSG_BrakeSysFeatures      0x415   // RX from ABS, for vehicle speed
+#define MSG_EngVehicleSpThrottle2 0x202   // RX from PCM, for second vehicle speed
 #define MSG_Yaw_Data_FD1          0x91    // RX from RCM, for yaw rate
 #define MSG_Steering_Data_FD1     0x083   // TX by OP, various driver switches and LKAS/CC buttons
 #define MSG_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
@@ -28,6 +29,8 @@ const CanMsg FORD_TX_MSGS[] = {
 // this may be the cause of blocked messages
 AddrCheckStruct ford_addr_checks[] = {
   {.msg = {{MSG_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  // TODO: MSG_EngVehicleSpThrottle2 has a counter that skips by 2, understand and enable counter check
+  {.msg = {{MSG_EngVehicleSpThrottle2, 0, 8, .check_checksum = true, .quality_flag=true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_Yaw_Data_FD1, 0, 8, .check_checksum = true, .max_counter = 255U, .quality_flag=true, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   // These messages have no counter or checksum
   {.msg = {{MSG_EngBrakeData, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
@@ -44,6 +47,9 @@ static uint8_t ford_get_counter(CANPacket_t *to_push) {
   if (addr == MSG_BrakeSysFeatures) {
     // Signal: VehVActlBrk_No_Cnt
     cnt = (GET_BYTE(to_push, 2) >> 2) & 0xFU;
+  } else if (addr == MSG_EngVehicleSpThrottle2) {
+    // Signal: VehVActlEng_No_Cnt
+    cnt = (GET_BYTE(to_push, 2) >> 3) & 0xFU;
   } else if (addr == MSG_Yaw_Data_FD1) {
     // Signal: VehRollYaw_No_Cnt
     cnt = GET_BYTE(to_push, 5);
@@ -60,6 +66,9 @@ static uint32_t ford_get_checksum(CANPacket_t *to_push) {
   if (addr == MSG_BrakeSysFeatures) {
     // Signal: VehVActlBrk_No_Cs
     chksum = GET_BYTE(to_push, 3);
+  } else if (addr == MSG_EngVehicleSpThrottle2) {
+    // Signal: VehVActlEng_No_Cs
+    chksum = GET_BYTE(to_push, 1);
   } else if (addr == MSG_Yaw_Data_FD1) {
     // Signal: VehRollYawW_No_Cs
     chksum = GET_BYTE(to_push, 4);
@@ -77,6 +86,11 @@ static uint32_t ford_compute_checksum(CANPacket_t *to_push) {
     chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // Veh_V_ActlBrk
     chksum += GET_BYTE(to_push, 2) >> 6;                    // VehVActlBrk_D_Qf
     chksum += (GET_BYTE(to_push, 2) >> 2) & 0xFU;           // VehVActlBrk_No_Cnt
+    chksum = 0xFFU - chksum;
+  } else if (addr == MSG_EngVehicleSpThrottle2) {
+    chksum += (GET_BYTE(to_push, 2) >> 3) & 0xFU;           // VehVActlEng_No_Cnt
+    chksum += (GET_BYTE(to_push, 4) >> 5) & 0x3U;           // VehVActlEng_D_Qf
+    chksum += GET_BYTE(to_push, 6) + GET_BYTE(to_push, 7);  // Veh_V_ActlEng
     chksum = 0xFFU - chksum;
   } else if (addr == MSG_Yaw_Data_FD1) {
     chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // VehRol_W_Actl
@@ -96,9 +110,11 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
 
   bool valid = false;
   if (addr == MSG_BrakeSysFeatures) {
-    valid = (GET_BYTE(to_push, 2) >> 6) == 0x3U;  // VehVActlBrk_D_Qf
+    valid = (GET_BYTE(to_push, 2) >> 6) == 0x3U;           // VehVActlBrk_D_Qf
+  } else if (addr == MSG_EngVehicleSpThrottle2) {
+    valid = ((GET_BYTE(to_push, 4) >> 5) & 0x3U) == 0x3U;  // VehVActlEng_D_Qf
   } else if (addr == MSG_Yaw_Data_FD1) {
-    valid = (GET_BYTE(to_push, 6) >> 4) == 0xFU;  // VehRolWActl_D_Qf & VehYawWActl_D_Qf
+    valid = (GET_BYTE(to_push, 6) >> 4) == 0xFU;           // VehRolWActl_D_Qf & VehYawWActl_D_Qf
   } else {
   }
   return valid;
@@ -108,6 +124,7 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
 #define INACTIVE_CURVATURE_RATE 4096U
 #define INACTIVE_PATH_OFFSET 512U
 #define INACTIVE_PATH_ANGLE 1000U
+#define FORD_MAX_SPEED_DELTA 2.0  // m/s
 
 static bool ford_lkas_msg_check(int addr) {
   return (addr == MSG_ACCDATA_3)
@@ -115,6 +132,20 @@ static bool ford_lkas_msg_check(int addr) {
       || (addr == MSG_LateralMotionControl)
       || (addr == MSG_IPMA_Data);
 }
+
+// Curvature rate limits
+const SteeringLimits FORD_STEERING_LIMITS = {
+  .max_steer = 1000,
+  .angle_deg_to_can = 50000,        // 1 / (2e-5) rad to can
+  .max_angle_error = 100,           // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
+
+  // no blending at low speed due to lack of torque wind-up and inaccurate current curvature
+  .angle_error_limit_speed = 10.0,  // m/s
+
+  .disable_angle_rate_limits = true,
+  .enforce_angle_error = true,
+  .inactive_angle_is_zero = true,
+};
 
 static int ford_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &ford_rx_checks,
@@ -133,6 +164,27 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (addr == MSG_BrakeSysFeatures) {
       // Signal: Veh_V_ActlBrk
       vehicle_speed = ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6;
+    }
+
+    // Check vehicle speed against a second source
+    if (addr == MSG_EngVehicleSpThrottle2) {
+      // Disable controls if speeds from ABS and PCM ECUs are too far apart.
+      // Signal: Veh_V_ActlEng
+      float filtered_pcm_speed = ((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01 / 3.6;
+      if (ABS(filtered_pcm_speed - vehicle_speed) > FORD_MAX_SPEED_DELTA) {
+        controls_allowed = 0;
+      }
+    }
+
+    // Update vehicle yaw rate
+    if (addr == MSG_Yaw_Data_FD1) {
+      // Signal: VehYaw_W_Actl
+      float ford_yaw_rate = (((GET_BYTE(to_push, 2) << 8U) | GET_BYTE(to_push, 3)) * 0.0002) - 6.5;
+      float current_curvature = ford_yaw_rate / MAX(vehicle_speed, 0.1);
+      // convert current curvature into units on CAN for comparison with desired curvature
+      int current_curvature_can = current_curvature * (float)FORD_STEERING_LIMITS.angle_deg_to_can +
+                                  ((current_curvature > 0.) ? 0.5 : -0.5);
+      update_sample(&angle_meas, current_curvature_can);
     }
 
     // Update gas pedal
@@ -200,20 +252,20 @@ static int ford_tx_hook(CANPacket_t *to_send) {
   // Safety check for LateralMotionControl action
   if (addr == MSG_LateralMotionControl) {
     // Signal: LatCtl_D_Rq
-    unsigned int steer_control_type = (GET_BYTE(to_send, 4) >> 2) & 0x7U;
-    unsigned int curvature = (GET_BYTE(to_send, 0) << 3) | (GET_BYTE(to_send, 1) >> 5);
-    unsigned int curvature_rate = ((GET_BYTE(to_send, 1) & 0x1FU) << 8) | GET_BYTE(to_send, 2);
-    unsigned int path_angle = (GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5);
-    unsigned int path_offset = (GET_BYTE(to_send, 5) << 2) | (GET_BYTE(to_send, 6) >> 6);
+    bool steer_control_enabled = ((GET_BYTE(to_send, 4) >> 2) & 0x7U) != 0U;
+    unsigned int raw_curvature = (GET_BYTE(to_send, 0) << 3) | (GET_BYTE(to_send, 1) >> 5);
+    unsigned int raw_curvature_rate = ((GET_BYTE(to_send, 1) & 0x1FU) << 8) | GET_BYTE(to_send, 2);
+    unsigned int raw_path_angle = (GET_BYTE(to_send, 3) << 3) | (GET_BYTE(to_send, 4) >> 5);
+    unsigned int raw_path_offset = (GET_BYTE(to_send, 5) << 2) | (GET_BYTE(to_send, 6) >> 6);
 
     // These signals are not yet tested with the current safety limits
-    if ((curvature_rate != INACTIVE_CURVATURE_RATE) || (path_angle != INACTIVE_PATH_ANGLE) || (path_offset != INACTIVE_PATH_OFFSET)) {
-      tx = 0;
-    }
+    bool violation = (raw_curvature_rate != INACTIVE_CURVATURE_RATE) || (raw_path_angle != INACTIVE_PATH_ANGLE) || (raw_path_offset != INACTIVE_PATH_OFFSET);
 
-    // No steer control allowed when controls are not allowed
-    bool steer_control_enabled = (steer_control_type != 0U) || (curvature != INACTIVE_CURVATURE);
-    if (!controls_allowed && steer_control_enabled) {
+    // Check angle error and steer_control_enabled
+    int desired_curvature = raw_curvature - INACTIVE_CURVATURE;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
+    violation |= steer_angle_cmd_checks(desired_curvature, steer_control_enabled, FORD_STEERING_LIMITS);
+
+    if (violation) {
       tx = 0;
     }
   }

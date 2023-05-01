@@ -183,7 +183,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
 
     // Signal: Motor_20.MO_Fahrpedalrohwert_01
     if (addr == MSG_MOTOR_20) {
-      gas_pressed = ((GET_BYTES_04(to_push) >> 12) & 0xFFU) != 0U;
+      gas_pressed = ((GET_BYTES(to_push, 0, 4) >> 12) & 0xFFU) != 0U;
     }
 
     // Signal: Motor_14.MO_Fahrer_bremst (ECU detected brake pedal switch F63)
