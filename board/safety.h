@@ -639,6 +639,8 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     // these are used as for tolerance allowance, since delta rate limits are liberally above openpilot's
     // and are used for both ensuring rate is below, or at least the limits (for curvature error limiting)
     int delta_angle_up_lower = (interpolate(limits.angle_rate_up_lookup, vehicle_speed + 1.) * limits.angle_deg_to_can);
+//    float test = (interpolate(limits.angle_rate_down_lookup, vehicle_speed + 1.) * limits.angle_deg_to_can * 1000);
+//    print("\ntest: "); puth(ABS(test)); print("\n");
     int delta_angle_down_lower = (interpolate(limits.angle_rate_down_lookup, vehicle_speed + 1.) * limits.angle_deg_to_can);
     int new_delta_angle_up_lower = (desired_angle_last > 0) ? delta_angle_up_lower : delta_angle_down_lower;
     int new_delta_angle_down_lower = (desired_angle_last >= 0) ? delta_angle_down_lower : delta_angle_up_lower;
