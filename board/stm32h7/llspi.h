@@ -34,6 +34,9 @@ void llspi_miso_dma(uint8_t *addr, int len) {
   // clear under-run while we were reading
   SPI4->IFCR |= SPI_IFCR_UDRC;
 
+  // setup interrupt on TXC
+  register_set(&(SPI4->IER), (1U << SPI_IER_EOTIE_Pos), 0x3FFU);
+
   // enable DMA
   register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
   DMA2_Stream3->CR |= DMA_SxCR_EN;
@@ -70,6 +73,8 @@ void SPI4_IRQ_Handler(void) {
   if (spi_tx_dma_done && ((SPI4->SR & SPI_SR_TXC) != 0)) {
     spi_tx_dma_done = false;
 
+    register_set(&(SPI4->IER), 0, 0x3FFU);
+
     volatile uint8_t dat = SPI4->TXDR;
     (void)dat;
     spi_handle_tx(false);
@@ -81,7 +86,7 @@ void SPI4_IRQ_Handler(void) {
 
 void llspi_init(void) {
   // We expect less than 50 transactions (including control messages and CAN buffers) at the 100Hz boardd interval. Can be raised if needed.
-  REGISTER_INTERRUPT(SPI4_IRQn, SPI4_IRQ_Handler, 5000000U, FAULT_INTERRUPT_RATE_SPI_DMA)
+  REGISTER_INTERRUPT(SPI4_IRQn, SPI4_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
   REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
   REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
 
@@ -96,7 +101,7 @@ void llspi_init(void) {
   register_set(&(DMA2_Stream3->PAR), (uint32_t)&(SPI4->TXDR), 0xFFFFFFFFU);
 
   // Enable SPI
-  register_set(&(SPI4->IER), (1U << SPI_IER_EOTIE_Pos), 0x3FFU);
+  register_set(&(SPI4->IER), 0, 0x3FFU);
   register_set(&(SPI4->CFG1), (7U << SPI_CFG1_DSIZE_Pos), SPI_CFG1_DSIZE_Msk);
   register_set(&(SPI4->UDRDR), 0xcd, 0xFFFFU);  // set under-run value for debugging
   register_set(&(SPI4->CR1), SPI_CR1_SPE, 0xFFFFU);
