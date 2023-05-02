@@ -22,16 +22,17 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   safety_tick_rx_invalid = False
   blocked_addrs = Counter()
   invalid_addrs = set()
-  start_t = None
 
-  for msg in filter(lambda m: m.which() in ('can', 'sendcan'), lr):
-    if start_t is None:
-      start_t = msg.logMonoTime
+  can_msgs = list(filter(lambda m: m.which() in ('can', 'sendcan'), lr))
+  start_t = can_msgs[0].logMonoTime
+  end_t = can_msgs[-1].logMonoTime
+  for idx, msg in enumerate(can_msgs):
     safety.set_timer((msg.logMonoTime // 1000) % 0xFFFFFFFF)
 
-    if msg.logMonoTime - start_t > 1e9:
+    # skip start and end of route, warm up/down period
+    if msg.logMonoTime - start_t > 1e9 and end_t - msg.logMonoTime > 1e9:
       safety.safety_tick_current_rx_checks()
-      safety_tick_rx_invalid |= safety_tick_rx_invalid or not safety.addr_checks_valid()
+      safety_tick_rx_invalid |= not safety.addr_checks_valid() or safety_tick_rx_invalid
 
     if msg.which() == 'sendcan':
      for canmsg in msg.sendcan:
