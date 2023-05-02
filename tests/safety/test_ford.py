@@ -269,7 +269,7 @@ class TestFordSafety(common.PandaSafetyTest,
   #
   #     print(f'\n{speed=}, {max_delta_up=}, {max_delta_down=}')
 
-  def test_rate_limit_up(self):
+  def test_curvature_rate_limit_up(self):
     self.safety.set_controls_allowed(True)
     small_curvature = 2 / self.DEG_TO_CAN  # significant small amount of curvature to cross boundary
     curvature_meas = self.MAX_CURVATURE_DELTA + 1e-3
@@ -304,7 +304,7 @@ class TestFordSafety(common.PandaSafetyTest,
         self._set_prev_desired_angle(0)
         self.assertFalse(self._tx(self._tja_command_msg(True, 0, 0, sign * (max_delta_up_upper + small_curvature), 0)))
 
-  def test_rate_limit_down(self):
+  def test_curvature_rate_limit_down(self):
     self.safety.set_controls_allowed(True)
     small_curvature = 2 / self.DEG_TO_CAN  # significant small amount of curvature to cross boundary
     curvature_meas = self.MAX_CURVATURE - self.MAX_CURVATURE_DELTA - 1e-3
@@ -342,87 +342,6 @@ class TestFordSafety(common.PandaSafetyTest,
         self._set_prev_desired_angle(sign * self.MAX_CURVATURE)
         curvature = self.MAX_CURVATURE - max_delta_down_upper - small_curvature
         self.assertFalse(self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
-
-  # def test_curvature_rate_limits_v2(self):
-  #   """
-  #   Tests a few scenarios:
-  #     -
-  #   """
-  #   self.safety.set_controls_allowed(1)
-  #
-  #   for steer_control_enabled in (True,):#(True, False):
-  #     for speed in np.linspace(0, 50, 101):
-  #       max_delta_up_upper = round_curvature_can_2(np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V) + 1/50000)
-  #       max_delta_down_upper = round_curvature_can_2(np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU) + 1/50000)
-  #
-  #       # Measured curvature can be above max command value
-  #       for meas_curvature in np.linspace(-self.MAX_CURVATURE * 2, self.MAX_CURVATURE * 2, 101):
-  #         meas_curvature = round_curvature_can_2(meas_curvature)
-  #         self._reset_curvature_measurement(meas_curvature, speed)
-  #         # print(meas_curvature)
-  #
-  #         for prev_curvature in np.linspace(-self.MAX_CURVATURE * 2, self.MAX_CURVATURE * 2, 101):
-  #           prev_curvature = round_curvature_can_2(prev_curvature)
-  #           self._set_prev_desired_angle(prev_curvature)
-  #
-  #           for new_curvature in np.linspace(prev_curvature - self.MAX_CURVATURE_DELTA * 2,
-  #                                            prev_curvature + self.MAX_CURVATURE_DELTA * 2, 101):
-  #             new_curvature = round_curvature_can_2(new_curvature)
-  #
-  #             print(meas_curvature, prev_curvature, new_curvature)
-  #             print()
-  #
-  #
-  #
-  #       return
-  #       # max_delta_down_upper = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
-  #       # max_delta_down_lower = np.interp(speed + 1, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
-  #
-  #       for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 201):#21):
-  #         initial_curvature = round_curvature_can_2(initial_curvature)
-  #       # for initial_curvature in np.linspace(0, self.MAX_CURVATURE, 11):#21):
-  #         self._reset_curvature_measurement(round_curvature_can_2(initial_curvature), speed)
-  #
-  #         limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
-  #         for new_curvature in np.linspace(initial_curvature - self.MAX_CURVATURE_DELTA * 2,
-  #                                          initial_curvature + self.MAX_CURVATURE_DELTA * 2, 201):  # 41):
-  #           # the max curvature allowed in safety is near the signal max
-  #           new_curvature = np.clip(new_curvature, -self.MAX_CURVATURE, self.MAX_CURVATURE)
-  #           new_curvature = round_curvature_can_2(new_curvature)
-  #           print()
-  #           print(f'{new_curvature=}, {round_curvature_can_2(new_curvature)=}, {initial_curvature=}')
-  #           act_delta = round_curvature_can_2(abs(round_curvature_can_2(new_curvature) - round_curvature_can_2(initial_curvature)))
-  #           print('delta: {}'.format(act_delta))
-  #           # panda allows down rate limits at 0
-  #           if abs(new_curvature) > abs(initial_curvature) and abs(initial_curvature) > 0:
-  #             violation = act_delta > max_delta_up_upper
-  #             print('up, rl is {}, violation: {}'.format(max_delta_up_upper, violation))
-  #           else:
-  #             violation = act_delta > max_delta_down_upper
-  #             print('down, rl is {}, violation: {}'.format(max_delta_down_upper, violation))
-  #           self._set_prev_desired_angle(round_curvature_can_2(initial_curvature))
-  #
-  #           if steer_control_enabled:
-  #             too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_DELTA
-  #             if too_far_away and not violation:
-  #               print('WARNINGWARNINGWARNINGWARNING', too_far_away, violation)
-  #               raise Exception
-  #             # under_rate_limit = max_delta_up
-  #             # print(f'{too_far_away=}')
-  #             should_tx = (not limit_command or not too_far_away) and not violation
-  #           else:
-  #             # enforce angle error limit is disabled when steer request bit is 0
-  #             should_tx = new_curvature == 0
-  #
-  #           # tx = self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, new_curvature, 0))
-  #           # tx = self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, round_curvature_can_2(new_curvature), 0))
-  #           # print(f'{should_tx=}, {tx=}, mismatch: {bool(should_tx) != bool(tx)}')
-  #
-  #           # print()
-  #           # time.sleep(0.01)
-  #           # with self.subTest(steer_control_enabled=steer_control_enabled, speed=speed,
-  #           #                   initial_curvature=initial_curvature, new_curvature=new_curvature):
-  #           self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, round_curvature_can_2(new_curvature), 0)), speed)
 
   # def test_curvature_rate_limits(self):
   #   """
