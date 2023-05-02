@@ -535,9 +535,6 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
   DEG_TO_CAN: int
-  DISABLE_NEAR_ANGLE_CHECK: bool = False
-  HIGH_ANGLE: float = 300  # reasonably high angle for command, not max to avoid overflowing signal
-  ANGLE_RATE_VIOLATION_OFFSET: float = 1
 
   ANGLE_DELTA_BP: List[float]
   ANGLE_DELTA_V: List[float]  # windup limit
@@ -568,7 +565,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
     speeds = [0., 1., 5., 10., 15., 50.]
-    angles = np.linspace(0, self.HIGH_ANGLE, 11)
+    angles = [-300, -100, -10, 0, 10, 100, 300]
     for a in angles:
       for s in speeds:
         max_delta_up = np.interp(s, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
@@ -596,7 +593,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
         # Inject too high rates
         # Up
-        self.assertFalse(self._tx(self._angle_cmd_msg(a + sign_of(a) * (max_delta_up + self.ANGLE_RATE_VIOLATION_OFFSET), True)))
+        self.assertFalse(self._tx(self._angle_cmd_msg(a + sign_of(a) * (max_delta_up + 1.1), True)))
 
         # Don't change
         self.safety.set_controls_allowed(1)
@@ -606,12 +603,11 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        self.assertFalse(self._tx(self._angle_cmd_msg(a - sign_of(a) * (max_delta_down + self.ANGLE_RATE_VIOLATION_OFFSET), True)))
+        self.assertFalse(self._tx(self._angle_cmd_msg(a - sign_of(a) * (max_delta_down + 1.1), True)))
 
         # Check desired steer should be the same as steer angle when controls are off
-        if not self.DISABLE_NEAR_ANGLE_CHECK:
-          self.safety.set_controls_allowed(0)
-          self.assertTrue(self._tx(self._angle_cmd_msg(a, False)))
+        self.safety.set_controls_allowed(0)
+        self.assertTrue(self._tx(self._angle_cmd_msg(a, False)))
 
   def test_angle_cmd_when_disabled(self):
     # Tests that only angles close to the meas are allowed while
@@ -640,23 +636,6 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
     self.assertEqual(self.safety.get_angle_meas_min(), 0)
     self.assertEqual(self.safety.get_angle_meas_max(), 0)
-
-
-class CurvatureSteeringSafetyTest(AngleSteeringSafetyTest, abc.ABC):
-
-  DISABLE_NEAR_ANGLE_CHECK = True  # desired curvature is 0 when disabled
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "CurvatureSteeringSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
-
-  def _angle_meas_msg(self, angle: float):
-    pass
-
-  def _angle_meas_msg_array(self, angle):
-    pass
 
 
 @add_regen_tests
