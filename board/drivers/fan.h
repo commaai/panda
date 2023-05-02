@@ -95,6 +95,11 @@ void fan_tick(void) {
 }
 #else
 // dp - C2 / EON Fan control logic
+void llfan_init(void);
+void fan_init(void) {
+  llfan_init();
+}
+
 void fan_set_power(uint8_t percentage){
   fan_state.power = percentage;
 }
