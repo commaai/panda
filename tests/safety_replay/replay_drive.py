@@ -18,8 +18,8 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
     init_segment(safety, lr, safety_mode)
     lr.reset()
 
-  safety_tick_rx_invalid = False
   rx_tot, rx_invalid, tx_tot, tx_blocked, tx_controls, tx_controls_blocked = 0, 0, 0, 0, 0, 0
+  safety_tick_rx_invalid = False
   blocked_addrs = Counter()
   invalid_addrs = set()
   start_t = None
