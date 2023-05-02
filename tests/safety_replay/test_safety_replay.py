@@ -17,8 +17,7 @@ logs = [
   ReplayRoute("38bfd238edecbcd7|2019-06-07--10-15-25.bz2", Panda.SAFETY_TOYOTA, 66),          # TOYOTA.PRIUS
   ReplayRoute("f89c604cf653e2bf|2018-09-29--13-46-50.bz2", Panda.SAFETY_GM),                  # GM.VOLT
   ReplayRoute("6fb4948a7ebe670e|2019-11-12--00-35-53.bz2", Panda.SAFETY_CHRYSLER),            # CHRYSLER.PACIFICA_2018_HYBRID
-  ReplayRoute("791340bc01ed993d|2019-04-08--10-26-00.bz2", Panda.SAFETY_SUBARU,               # SUBARU.OUTBACK
-              Panda.FLAG_SUBARU_GEN2),
+  ReplayRoute("791340bc01ed993d|2019-04-08--10-26-00.bz2", Panda.SAFETY_SUBARU),              # SUBARU.IMPREZA
   ReplayRoute("76b83eb0245de90e|2020-03-05--19-16-05.bz2", Panda.SAFETY_VOLKSWAGEN_MQB),      # VOLKSWAGEN.GOLF (stock ACC)
   ReplayRoute("3cfdec54aa035f3f|2022-10-13--14-58-58.bz2", Panda.SAFETY_VOLKSWAGEN_MQB,       # VOLKSWAGEN.GOLF (openpilot long)
               Panda.FLAG_VOLKSWAGEN_LONG_CONTROL),
