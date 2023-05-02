@@ -135,7 +135,7 @@ static bool ford_lkas_msg_check(int addr) {
 
 // Curvature rate limits
 const SteeringLimits FORD_STEERING_LIMITS = {
-  .max_steer = 1000,                // Max allowed curvature is very close to max signal value, need to limit
+  .max_steer = 1000,                // Max allowed curvature is very close to max signal value
   .angle_deg_to_can = 50000,        // 1 / (2e-5) rad to can
   .max_angle_error = 100,           // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
   .angle_rate_up_lookup = {         // Ford only uses two breakpoints
