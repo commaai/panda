@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import time
 import numpy as np
 import unittest
 
@@ -57,9 +56,7 @@ class Buttons:
   TJA_TOGGLE = 2
 
 
-class TestFordSafety(common.PandaSafetyTest,
-                     # common.CurvatureSteeringSafetyTest
-                     ):
+class TestFordSafety(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_IPMA_Data
   RELAY_MALFUNCTION_BUS = 0
@@ -79,10 +76,6 @@ class TestFordSafety(common.PandaSafetyTest,
   MAX_CURVATURE = 0.02
   MAX_CURVATURE_DELTA = 0.002
   CURVATURE_DELTA_LIMIT_SPEED = 10.0  # m/s
-
-  # todo new stuff
-  HIGH_ANGLE = 0.014  # 0.02 - ANGLE_DELTA_VU[0] = 0.014
-  ANGLE_RATE_VIOLATION_OFFSET = 0.001
 
   ANGLE_DELTA_BP = [5., 25., 25.]
   ANGLE_DELTA_V = [0.0002, 0.0001, 0.0001]  # windup limit
@@ -106,10 +99,6 @@ class TestFordSafety(common.PandaSafetyTest,
     self._rx(self._speed_msg(speed))
     for _ in range(6):
       self._rx(self._yaw_rate_msg(curvature, speed))
-
-  # Angle cmd is TJA message with only curvature
-  def _angle_cmd_msg(self, angle: float, enabled: bool):
-    return self._tja_command_msg(enabled, 0, 0, angle, 0)
 
   # Driver brake pedal
   def _user_brake_msg(self, brake: bool):
