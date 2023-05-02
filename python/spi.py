@@ -98,12 +98,12 @@ class PandaSpiHandle(BaseHandle):
       cksum ^= b
     return cksum
 
-  def _wait_for_ack(self, spi, ack_val: int, timeout: int) -> None:
+  def _wait_for_ack(self, spi, ack_val: int, timeout: int, tx: int) -> None:
     timeout_s = max(MIN_ACK_TIMEOUT_MS, timeout) * 1e-3
 
     start = time.monotonic()
     while (timeout == 0) or ((time.monotonic() - start) < timeout_s):
-      dat = spi.xfer2(b"\x12")[0]
+      dat = spi.xfer2([tx, ])[0]
       if dat == NACK:
         raise PandaSpiNackResponse
       elif dat == ack_val:
@@ -125,7 +125,7 @@ class PandaSpiHandle(BaseHandle):
         spi.xfer2(packet)
 
         logging.debug("- waiting for header ACK")
-        self._wait_for_ack(spi, HACK, timeout)
+        self._wait_for_ack(spi, HACK, timeout, 0x11)
 
         # send data
         logging.debug("- sending data")
@@ -133,7 +133,7 @@ class PandaSpiHandle(BaseHandle):
         spi.xfer2(packet)
 
         logging.debug("- waiting for data ACK")
-        self._wait_for_ack(spi, DACK, timeout)
+        self._wait_for_ack(spi, DACK, timeout, 0x13)
 
         # get response length, then response
         response_len_bytes = bytes(spi.xfer2(b"\x00" * 2))
