@@ -631,38 +631,35 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     print("delta_angle_down: "); puth(delta_angle_down_upper); print("\n");
 
     // angle limits flip when negative
-    int new_delta_angle_up_upper = (desired_angle_last > 0) ? delta_angle_up_upper : delta_angle_down_upper;
-    int new_delta_angle_down_upper = (desired_angle_last >= 0) ? delta_angle_down_upper : delta_angle_up_upper;
-    print("delta_angle_up mod: "); puth(new_delta_angle_up_upper); print("\n");
-    print("delta_angle_down mod: "); puth(new_delta_angle_down_upper); print("\n");
-
-    // these are used as for tolerance allowance, since delta rate limits are liberally above openpilot's
-    // and are used for both ensuring rate is below, or at least the limits (for curvature error limiting)
-    int delta_angle_up_lower = (interpolate(limits.angle_rate_up_lookup, vehicle_speed + 1.) * limits.angle_deg_to_can);
-//    float test = (interpolate(limits.angle_rate_down_lookup, vehicle_speed + 1.) * limits.angle_deg_to_can * 1000);
-//    print("\ntest: "); puth(ABS(test)); print("\n");
-    int delta_angle_down_lower = (interpolate(limits.angle_rate_down_lookup, vehicle_speed + 1.) * limits.angle_deg_to_can);
-    int new_delta_angle_up_lower = (desired_angle_last > 0) ? delta_angle_up_lower : delta_angle_down_lower;
-    int new_delta_angle_down_lower = (desired_angle_last >= 0) ? delta_angle_down_lower : delta_angle_up_lower;
-
-    int highest_desired_angle = desired_angle_last + new_delta_angle_up_upper;
-    int lowest_desired_angle = desired_angle_last - new_delta_angle_down_upper;
+    int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up_upper : delta_angle_down_upper);
+    int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down_upper : delta_angle_up_upper);
     print("\nhighest_desired_angle1: "); puth(ABS(highest_desired_angle)); print("\n");
     print("lowest_desired_angle1: "); puth(ABS(lowest_desired_angle)); print("\n");
 
     // check that commanded angle value isn't too far from measured, used to limit torque for some safety modes
     // angle rate limits have precedence, start moving in direction of meas with respect to rate limits if error is exceeded
     if (limits.enforce_angle_error && vehicle_speed > limits.angle_error_limit_speed) {
+      // these are used as for tolerance allowance, since delta rate limits are liberally above openpilot's
+      // and are used for both ensuring rate is below, or at least the limits (for curvature error limiting)
+      int delta_angle_up_lower = (interpolate(limits.angle_rate_up_lookup, vehicle_speed + 1.) * limits.angle_deg_to_can);
+      int delta_angle_down_lower = (interpolate(limits.angle_rate_down_lookup, vehicle_speed + 1.) * limits.angle_deg_to_can);
+
+      int highest_desired_angle_lower = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up_lower : delta_angle_down_lower);
+      int lowest_desired_angle_lower = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down_lower : delta_angle_up_lower);
+
+//      int new_delta_angle_up_lower = (desired_angle_last > 0) ? delta_angle_up_lower : delta_angle_down_lower;
+//      int new_delta_angle_down_lower = (desired_angle_last >= 0) ? delta_angle_down_lower : delta_angle_up_lower;
+
       if (angle_meas.min < 0) print("negative ");
       print("angle_meas.min: "); puth(ABS(angle_meas.min)); print(", angle_meas.max: "); puth(ABS(angle_meas.max)); print("\n");
-      print("new_delta_angle_up_lower: "); puth(ABS(new_delta_angle_up_lower)); print(", new_delta_angle_down_lower: "); puth(ABS(new_delta_angle_down_lower)); print("\n");
-      print("lowest_desired_angle: "); puth(ABS(lowest_desired_angle)); print(", 2nd term: "); puth(ABS(angle_meas.min - limits.max_angle_error - 1)); print(", 3rd term: "); puth(ABS(desired_angle_last + new_delta_angle_up_lower)); print("\n");
+//      print("new_delta_angle_up_lower: "); puth(ABS(new_delta_angle_up_lower)); print(", new_delta_angle_down_lower: "); puth(ABS(new_delta_angle_down_lower)); print("\n");
+//      print("lowest_desired_angle: "); puth(ABS(lowest_desired_angle)); print(", 2nd term: "); puth(ABS(angle_meas.min - limits.max_angle_error - 1)); print(", 3rd term: "); puth(ABS(desired_angle_last + new_delta_angle_up_lower)); print("\n");
 //      lowest_desired_angle = CLAMP(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1, desired_angle_last + new_delta_angle_up_lower);
 //      highest_desired_angle = CLAMP(highest_desired_angle, desired_angle_last - new_delta_angle_down_lower, angle_meas.max + limits.max_angle_error + 1);
 
       // TODO: these are good, verify above
-      lowest_desired_angle = MIN(MAX(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1), desired_angle_last + new_delta_angle_up_lower);
-      highest_desired_angle = MAX(MIN(highest_desired_angle, angle_meas.max + limits.max_angle_error + 1), (desired_angle_last - new_delta_angle_down_lower));
+      lowest_desired_angle = MIN(MAX(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1), highest_desired_angle_lower);
+      highest_desired_angle = MAX(MIN(highest_desired_angle, angle_meas.max + limits.max_angle_error + 1), lowest_desired_angle_lower);
 
       lowest_desired_angle = CLAMP(lowest_desired_angle, -limits.max_steer, limits.max_steer);
       highest_desired_angle = CLAMP(highest_desired_angle, -limits.max_steer, limits.max_steer);
