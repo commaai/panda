@@ -333,30 +333,6 @@ class TestFordSafety(common.PandaSafetyTest,
         curvature = self.MAX_CURVATURE - max_delta_down_upper - small_curvature
         self.assertFalse(self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
 
-  # def test_steer_meas_delta(self):
-  #   """This safety model enforces a maximum distance from measured and commanded curvature, only above a certain speed"""
-  #   self.safety.set_controls_allowed(1)
-  #
-  #   for steer_control_enabled in (True, False):
-  #     for speed in np.linspace(0, 50, 11):
-  #       for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 21):
-  #         self._reset_curvature_measurement(initial_curvature, speed)
-  #
-  #         limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
-  #         for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 41):
-  #           self._set_prev_desired_angle(new_curvature)
-  #
-  #           if steer_control_enabled:
-  #             too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_DELTA
-  #             should_tx = not limit_command or not too_far_away
-  #           else:
-  #             # enforce angle error limit is disabled when steer request bit is 0
-  #             should_tx = new_curvature == 0
-  #
-  #           with self.subTest(steer_control_enabled=steer_control_enabled, speed=speed,
-  #                             initial_curvature=initial_curvature, new_curvature=new_curvature):
-  #             self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, 0, 0, new_curvature, 0)))
-
   def test_prevent_lkas_action(self):
     self.safety.set_controls_allowed(1)
     self.assertFalse(self._tx(self._lkas_command_msg(1)))
