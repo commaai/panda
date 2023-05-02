@@ -183,20 +183,26 @@ class Panda:
   HW_TYPE_TRES = b'\x09'
 
   CAN_PACKET_VERSION = 4
-  HEALTH_PACKET_VERSION = 11
+  HEALTH_PACKET_VERSION = 13
   CAN_HEALTH_PACKET_VERSION = 4
   # dp - 2 extra "B" at the end:
   # "usb_power_mode": a[23],
   # "torque_interceptor_detected": a[24],
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBBBB")
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBBHBBB")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBB")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
   H7_DEVICES = (HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES)
 
-  INTERNAL_DEVICES = (HW_TYPE_UNO, HW_TYPE_DOS)
+  INTERNAL_DEVICES = (HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_TRES)
   HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES)
+
+  MAX_FAN_RPMs = {
+    HW_TYPE_UNO: 5100,
+    HW_TYPE_DOS: 6500,
+    HW_TYPE_TRES: 6600,
+  }
 
   # first byte is for EPS scaling factor
   FLAG_TOYOTA_ALT_BRAKE = (1 << 8)
@@ -319,8 +325,9 @@ class Panda:
   @staticmethod
   def usb_connect(serial, claim=True, wait=False):
     handle, usb_serial, bootstub, bcd = None, None, None, None
-    context = usb1.USBContext()
     while 1:
+      context = usb1.USBContext()
+      context.open()
       try:
         for device in context.getDeviceList(skip_on_error=True):
           if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
@@ -351,7 +358,7 @@ class Panda:
         logging.exception("USB connect error")
       if not wait or handle is not None:
         break
-      context = usb1.USBContext()  # New context needed so new devices show up
+      context.close()
 
     usb_handle = None
     if handle is not None:
@@ -367,21 +374,21 @@ class Panda:
 
   @staticmethod
   def usb_list():
-    context = usb1.USBContext()
     ret = []
     try:
-      for device in context.getDeviceList(skip_on_error=True):
-        if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
-          try:
-            serial = device.getSerialNumber()
-            if len(serial) == 24:
-              ret.append(serial)
-            else:
-              warnings.warn(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
-          except Exception:
-            continue
+      with usb1.USBContext() as context:
+        for device in context.getDeviceList(skip_on_error=True):
+          if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
+            try:
+              serial = device.getSerialNumber()
+              if len(serial) == 24:
+                ret.append(serial)
+              else:
+                warnings.warn(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
+            except Exception:
+              continue
     except Exception:
-      pass
+      logging.exception("exception while listing pandas")
     return ret
 
   @staticmethod
@@ -424,7 +431,7 @@ class Panda:
       except Exception:
         logging.debug("reconnecting is taking %d seconds...", i + 1)
         try:
-          dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial, self._mcu_type))
+          dfu = PandaDFU(self.get_dfu_serial())
           dfu.recover()
         except Exception:
           pass
@@ -496,7 +503,7 @@ class Panda:
       self.reconnect()
 
   def recover(self, timeout: Optional[int] = None, reset: bool = True) -> bool:
-    dfu_serial = PandaDFU.st_serial_to_dfu_serial(self._serial, self._mcu_type)
+    dfu_serial = self.get_dfu_serial()
 
     if reset:
       self.reset(enter_bootstub=True)
@@ -561,8 +568,10 @@ class Panda:
       "interrupt_load": a[20],
       "fan_power": a[21],
       "safety_rx_checks_invalid": a[22],
-      "usb_power_mode": a[23],
-      "torque_interceptor_detected": a[24],
+      "spi_checksum_error_count": a[23],
+      "fan_stall_count": a[24],
+      "usb_power_mode": a[25],
+      "torque_interceptor_detected": a[26],
     }
 
   @ensure_can_health_packet_version
@@ -617,9 +626,9 @@ class Panda:
 
   @staticmethod
   def get_signature_from_firmware(fn) -> bytes:
-    f = open(fn, 'rb')
-    f.seek(-128, 2)  # Seek from end of file
-    return f.read(128)
+    with open(fn, 'rb') as f:
+      f.seek(-128, 2)  # Seek from end of file
+      return f.read(128)
 
   def get_signature(self) -> bytes:
     part_1 = self._handle.controlRead(Panda.REQUEST_IN, 0xd3, 0, 0, 0x40)
@@ -680,6 +689,9 @@ class Panda:
       matches the MCU UID
     """
     return self._serial
+
+  def get_dfu_serial(self):
+    return PandaDFU.st_serial_to_dfu_serial(self._serial, self._mcu_type)
 
   def get_uid(self):
     """

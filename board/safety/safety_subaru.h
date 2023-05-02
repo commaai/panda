@@ -22,12 +22,10 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
 
 const CanMsg SUBARU_TX_MSGS[] = {
   {0x122, 0, 8},
-  {0x146, 0, 8},
   {0x221, 0, 8},
   {0x321, 0, 8},
   {0x322, 0, 8},
-  {0x40, 2, 8},
-  {0x139, 2, 8}
+  {0x323, 0, 8},
 };
 #define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
 
@@ -35,7 +33,8 @@ const CanMsg SUBARU_GEN2_TX_MSGS[] = {
   {0x122, 0, 8},
   {0x221, 1, 8},
   {0x321, 0, 8},
-  {0x322, 0, 8}
+  {0x322, 0, 8},
+  {0x323, 0, 8}
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
 
@@ -94,7 +93,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     int addr = GET_ADDR(to_push);
     if ((addr == 0x119) && (bus == 0)) {
       int torque_driver_new;
-      torque_driver_new = ((GET_BYTES_04(to_push) >> 16) & 0x7FFU);
+      torque_driver_new = ((GET_BYTES(to_push, 0, 4) >> 16) & 0x7FFU);
       torque_driver_new = -1 * to_signed(torque_driver_new, 11);
       update_sample(&torque_driver, torque_driver_new);
     }
@@ -107,7 +106,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
 
     // update vehicle moving with any non-zero wheel speed
     if ((addr == 0x13a) && (bus == alt_bus)) {
-      vehicle_moving = ((GET_BYTES_04(to_push) >> 12) != 0U) || (GET_BYTES_48(to_push) != 0U);
+      vehicle_moving = ((GET_BYTES(to_push, 0, 4) >> 12) != 0U) || (GET_BYTES(to_push, 4, 4) != 0U);
     }
 
     if ((addr == 0x13c) && (bus == alt_bus)) {
@@ -136,7 +135,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
   // steer cmd checks
   if (addr == 0x122) {
-    int desired_torque = ((GET_BYTES_04(to_send) >> 16) & 0x1FFFU);
+    int desired_torque = ((GET_BYTES(to_send, 0, 4) >> 16) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
     const SteeringLimits limits = subaru_gen2 ? SUBARU_GEN2_STEERING_LIMITS : SUBARU_STEERING_LIMITS;
@@ -148,34 +147,20 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+static int subaru_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
-  int addr = GET_ADDR(to_fwd);
 
   if (bus_num == 0) {
-    // bus_fwd = 2;  // Camera CAN   //Check this - possible fault
-    // Global platform
-    // 0x40 Throttle
-	// 0x122 ES_LKAS || (addr == 0x122)
-    // 0x139 Brake_Pedal  || (addr == 0x139)
-	// 0x146 Cruise_Buttons || (addr == 0x146)
-	// **** 0x11a ES_STEER_JP || (addr == 0x11a) 
-	// 0x174 Engine_Stop_Start   
-	// 0x660 STOP_START_STATE  || (addr == 0x660)
-    int block_msg = (addr == 0x40) || (addr == 0x139);  // to forward ES_LKAS on bus 0 as well
-    if (!block_msg) {
-      bus_fwd = 2;  // Camera CAN
-    }
+    bus_fwd = 2;  // forward to camera
   }
 
   if (bus_num == 2) {
     // Global platform
     // 0x122 ES_LKAS
-	// 0x146 Cruise_Buttons || (addr == 0x146)
-	// 0x221 ES_Distance
     // 0x321 ES_DashStatus
     // 0x322 ES_LKAS_State
-    bool block_lkas = (addr == 0x122) || (addr == 0x146)  || (addr == 0x221) || (addr == 0x321) || (addr == 0x322);
+    // 0x323 INFOTAINMENT_STATUS
+    bool block_lkas = (addr == 0x122) || (addr == 0x321) || (addr == 0x322) || (addr == 0x323);
     if (!block_lkas) {
       bus_fwd = 0;  // Main CAN
     }

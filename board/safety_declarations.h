@@ -2,12 +2,20 @@
 
 #define GET_BIT(msg, b) (((msg)->data[((b) / 8U)] >> ((b) % 8U)) & 0x1U)
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
-#define GET_BYTES_04(msg) ((msg)->data[0] | ((msg)->data[1] << 8U) | ((msg)->data[2] << 16U) | ((msg)->data[3] << 24U))
-#define GET_BYTES_48(msg) ((msg)->data[4] | ((msg)->data[5] << 8U) | ((msg)->data[6] << 16U) | ((msg)->data[7] << 24U))
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
+
+uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
+  uint32_t ret = 0U;
+  for (int i = 0; i < len; i++) {
+    const uint8_t shift = i * 8;
+    ret |= (((uint32_t)msg->data[start + i]) << shift);
+  }
+  return ret;
+}
 
 const int MAX_WRONG_COUNTERS = 5;
 const uint8_t MAX_MISSED_MSGS = 10U;
+#define MAX_ADDR_CHECK_MSGS 3U
 
 // sample struct that keeps 6 samples in memory
 struct sample_t {
@@ -60,6 +68,12 @@ typedef struct {
   const int angle_deg_to_can;
   const struct lookup_t angle_rate_up_lookup;
   const struct lookup_t angle_rate_down_lookup;
+  const int max_angle_error;             // used to limit error between meas and cmd while enabled
+  const float angle_error_limit_speed;   // minimum speed to start limiting angle error
+
+  const bool disable_angle_rate_limits;
+  const bool enforce_angle_error;        // enables max_angle_error check
+  const bool inactive_angle_is_zero;     // if false, enforces angle near meas when disabled (default)
 } SteeringLimits;
 
 typedef struct {
@@ -92,7 +106,7 @@ typedef struct {
 // params and flags about checksum, counter and frequency checks for each monitored address
 typedef struct {
   // const params
-  const CanMsgCheck msg[3];          // check either messages (e.g. honda steer). Array MUST terminate with an empty struct to know its length.
+  const CanMsgCheck msg[MAX_ADDR_CHECK_MSGS];  // check either messages (e.g. honda steer)
   // dynamic flags
   bool msg_seen;
   int index;                         // if multiple messages are allowed to be checked, this stores the index of the first one seen. only msg[msg_index] will be used
@@ -116,6 +130,8 @@ uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
 bool max_limit_check(int val, const int MAX, const int MIN);
+bool angle_dist_to_meas_check(int val, struct sample_t *val_meas,
+  const int MAX_ERROR, const int MAX_VAL);
 bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
   const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR);
 bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
@@ -153,7 +169,7 @@ typedef const addr_checks* (*safety_hook_init)(uint16_t param);
 typedef int (*rx_hook)(CANPacket_t *to_push);
 typedef int (*tx_hook)(CANPacket_t *to_send);
 typedef int (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
-typedef int (*fwd_hook)(int bus_num, CANPacket_t *to_fwd);
+typedef int (*fwd_hook)(int bus_num, int addr);
 
 typedef struct {
   safety_hook_init init;
@@ -201,7 +217,7 @@ uint32_t heartbeat_engaged_mismatches = 0;  // count of mismatches between heart
 // for safety modes with angle steering control
 uint32_t ts_angle_last = 0;
 int desired_angle_last = 0;
-struct sample_t angle_meas;         // last 6 steer angles
+struct sample_t angle_meas;         // last 6 steer angles/curvatures
 
 // This can be set with a USB command
 // It enables features that allow alternative experiences, like not disengaging on gas press

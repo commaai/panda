@@ -32,12 +32,15 @@ int get_health_pkt(void *dat) {
   health->heartbeat_lost_pkt = (uint8_t)(heartbeat_lost);
   health->safety_rx_checks_invalid = safety_rx_checks_invalid;
 
+  health->spi_checksum_error_count = spi_checksum_error_count;
+
   health->fault_status_pkt = fault_status;
   health->faults_pkt = faults;
 
   health->interrupt_load = interrupt_load;
 
   health->fan_power = fan_state.power;
+  health->fan_stall_count = fan_state.total_stall_count;
 
   health->usb_power_mode_pkt = usb_power_mode;
   return sizeof(*health);

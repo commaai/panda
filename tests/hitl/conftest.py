@@ -3,9 +3,12 @@ import os
 import time
 import pytest
 
-from panda import Panda
-from panda_jungle import PandaJungle  # pylint: disable=import-error
+from panda import Panda, PandaDFU
 from panda.tests.hitl.helpers import clear_can_buffers
+
+NO_JUNGLE = os.environ.get("NO_JUNGLE", "0") == "1"
+if not NO_JUNGLE:
+  from panda_jungle import PandaJungle  # pylint: disable=import-error
 
 
 SPEED_NORMAL = 500
@@ -17,10 +20,11 @@ PEDAL_SERIAL = 'none'
 JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
 PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE", "").strip().split(" ")
 PARTIAL_TESTS = os.environ.get("PARTIAL_TESTS", "0") == "1"
+HW_TYPES = os.environ.get("HW_TYPES", None)
 
 class PandaGroup:
-  H7 = (Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2)
-  GEN2 = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO) + H7
+  H7 = (Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2, Panda.HW_TYPE_TRES)
+  GEN2 = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO, Panda.HW_TYPE_DOS) + H7
   GPS = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO)
   GMLAN = (Panda.HW_TYPE_WHITE_PANDA, Panda.HW_TYPE_GREY_PANDA)
 
@@ -31,14 +35,18 @@ if PARTIAL_TESTS:
   # * red panda covers GEN2, STM32H7
   # * black panda covers STM32F4, GEN2, and GPS
   PandaGroup.TESTED = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA)  # type: ignore
+elif HW_TYPES is not None:
+  PandaGroup.TESTED = [bytes([int(x), ]) for x in HW_TYPES.strip().split(",")] # type: ignore
+
 
 # Find all pandas connected
 _all_pandas = {}
 _panda_jungle = None
 def init_all_pandas():
-  global _panda_jungle
-  _panda_jungle = PandaJungle(JUNGLE_SERIAL)
-  _panda_jungle.set_panda_power(True)
+  if not NO_JUNGLE:
+    global _panda_jungle
+    _panda_jungle = PandaJungle(JUNGLE_SERIAL)
+    _panda_jungle.set_panda_power(True)
 
   for serial in Panda.list():
     if serial not in PANDAS_EXCLUDE and serial != PEDAL_SERIAL:
@@ -57,6 +65,8 @@ _all_panda_serials = list(_all_pandas.keys())
 
 
 def init_jungle():
+  if _panda_jungle is None:
+    return
   clear_can_buffers(_panda_jungle)
   _panda_jungle.set_panda_power(True)
   _panda_jungle.set_can_loopback(False)
@@ -68,7 +78,10 @@ def init_jungle():
 
 def pytest_configure(config):
   config.addinivalue_line(
-    "markers", "test_panda_types(name): mark test to run only on specified panda types"
+    "markers", "test_panda_types(name): whitelist a test for specific panda types"
+  )
+  config.addinivalue_line(
+    "markers", "skip_panda_types(name): blacklist panda types from a test"
   )
   config.addinivalue_line(
     "markers", "panda_expect_can_error: mark test to ignore CAN health errors"
@@ -84,7 +97,7 @@ def pytest_make_parametrize_id(config, val, argname):
 
 
 @pytest.fixture(name='panda_jungle')
-def fixture__panda_jungle(request):
+def fixture_panda_jungle(request):
   init_jungle()
   return _panda_jungle
 
@@ -95,10 +108,17 @@ def func_fixture_panda(request, module_panda):
   # Check if test is applicable to this panda
   mark = request.node.get_closest_marker('test_panda_types')
   if mark:
-    assert len(mark.args) > 0, "Missing allowed panda types in mark"
+    assert len(mark.args) > 0, "Missing panda types argument in mark"
     test_types = mark.args[0]
     if _all_pandas[p.get_usb_serial()] not in test_types:
       pytest.skip(f"Not applicable, {test_types} pandas only")
+
+  mark = request.node.get_closest_marker('skip_panda_types')
+  if mark:
+    assert len(mark.args) > 0, "Missing panda types argument in mark"
+    skip_types = mark.args[0]
+    if _all_pandas[p.get_usb_serial()] in skip_types:
+      pytest.skip(f"Not applicable to {skip_types}")
 
   # TODO: reset is slow (2+ seconds)
   p.reset()
@@ -107,6 +127,11 @@ def func_fixture_panda(request, module_panda):
   yield p
 
   # Teardown
+
+  # reconnect
+  if p.get_dfu_serial() in PandaDFU.list():
+    PandaDFU(p.get_dfu_serial()).reset()
+    p.reconnect()
   if not p.connected:
     p.reconnect()
   if p.bootstub:
@@ -116,7 +141,11 @@ def func_fixture_panda(request, module_panda):
   # show up as failed tests instead of "errors"
 
   # Check for faults
+  assert p.health()['faults'] == 0
   assert p.health()['fault_status'] == 0
+
+  # Check for SPI errors
+  #assert p.health()['spi_checksum_error_count'] == 0
 
   # Check health of each CAN core after test, normal to fail for test_gen2_loopback on OBD bus, so skipping
   mark = request.node.get_closest_marker('panda_expect_can_error')

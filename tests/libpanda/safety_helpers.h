@@ -125,6 +125,14 @@ void set_desired_angle_last(int t){
   desired_angle_last = t;
 }
 
+int get_angle_meas_min(void){
+  return angle_meas.min;
+}
+
+int get_angle_meas_max(void){
+  return angle_meas.max;
+}
+
 
 // ***** car specific helpers *****
 
@@ -158,6 +166,7 @@ void init_tests(void){
 
   // car-specific stuff
   honda_fwd_brake = false;
+  tesla_stock_aeb = false;
 }
 
 void set_gmlan_digital_output(int to_set){

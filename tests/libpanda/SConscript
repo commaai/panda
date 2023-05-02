@@ -10,4 +10,12 @@ env = Environment(
 )
 env.PrependENVPath('PATH', '/opt/homebrew/bin')
 
+if GetOption('ubsan'):
+  flags = [
+    "-fsanitize=undefined",
+    "-fno-sanitize-recover=undefined",
+  ]
+  env['CFLAGS'] += flags
+  env['LINKFLAGS'] += flags
+
 env.SharedLibrary("libpanda.so", ["panda.c",])

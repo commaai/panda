@@ -8,6 +8,7 @@
 //#define DEBUG_SPI
 //#define DEBUG_FAULTS
 //#define DEBUG_COMMS
+//#define DEBUG_FAN
 
 #define CAN_INIT_TIMEOUT_MS 500U
 #define DEEPSLEEP_WAKEUP_DELAY 3U
