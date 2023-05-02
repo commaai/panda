@@ -101,8 +101,8 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
                                  subaru_get_checksum, subaru_compute_checksum, subaru_get_counter, NULL);
 
   if (valid) {
-    #define bus = GET_BUS(to_push);
-    #define alt_bus = subaru_gen2 ? 1 : 0;
+    const int bus = GET_BUS(to_push);
+    const int alt_bus = subaru_gen2 ? 1 : 0;
 
     int addr = GET_ADDR(to_push);
     if ((addr == MSG_Steering_Torque) && (bus == 0)) {
