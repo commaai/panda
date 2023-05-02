@@ -269,31 +269,46 @@ class TestFordSafety(common.PandaSafetyTest,
   #
   #     print(f'\n{speed=}, {max_delta_up=}, {max_delta_down=}')
 
-  def test_rate_limit_and_error(self):
-    speed = 12
+  def test_rate_limit_down(self):
     self.safety.set_controls_allowed(True)
-    max_delta_up = round_curvature_can_2(np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V) + 1/50000)
-    max_delta_down = round_curvature_can_2(np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU) + 1/50000)
-    # lower limits are to allow some tolerance on ramping towards meas when exceeding error, should be non-zero
-    # TODO: test non-zeroness
-    max_delta_up_lower = np.interp(speed + 1, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
-    max_delta_down_lower = np.interp(speed + 1, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
-    print()
-    print('rates', max_delta_up, max_delta_down)
-    print('rates lower', max_delta_up_lower, max_delta_down_lower)
-    self._reset_curvature_measurement(0, speed)
-    self._set_prev_desired_angle(round_curvature_can_2(0.02))
+    for speed in np.arange(0, 41, 5):
+      if speed > self.CURVATURE_DELTA_LIMIT_SPEED:
+        max_delta_up = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
+        max_delta_down = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
+        # lower limits are to allow some tolerance on ramping towards meas when exceeding error, should be non-zero
+        # TODO: test non-zeroness
+        max_delta_up_lower = np.interp(speed + 1, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
+        max_delta_down_lower = np.interp(speed + 1, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
+        print()
+        print('rates', max_delta_up, max_delta_down)
+        print('rates lower', max_delta_up_lower, max_delta_down_lower)
 
-    # cannot stay at current desired curvature, must ramp down
-    self.assertFalse(self._tx(self._tja_command_msg(True, 0, 0, 0.02, 0)))
+        for sign in (-1, 1):
+          # ramp down at slightly under min allowed rate
+          self._reset_curvature_measurement(0, speed)
+          self._set_prev_desired_angle(round_curvature_can_2(self.MAX_CURVATURE))
+          print('PREV CURV', self.MAX_CURVATURE)
+          curvature = self.MAX_CURVATURE - max_delta_down_lower + (2 / self.DEG_TO_CAN)
+          self.assertFalse(self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
 
-    # reset
-    self._reset_curvature_measurement(0, speed)
-    self._set_prev_desired_angle(round_curvature_can_2(0.02))
+          # ramp down at minimum max rate
+          self._reset_curvature_measurement(0, speed)
+          self._set_prev_desired_angle(round_curvature_can_2(sign * self.MAX_CURVATURE))
+          curvature = self.MAX_CURVATURE - max_delta_down_lower
+          self.assertTrue(self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
 
-    # ramp down at max rate
-    self.assertFalse(self._tx(self._tja_command_msg(True, 0, 0, round_curvature_can_2(0.02 - max_delta_down_lower + 1/50000), 0)))
-    # self.assertTrue(self._tx(self._tja_command_msg(True, 0, 0, round_curvature_can_2(0.02 - max_delta_down_lower), 0)))
+          # ramp down at max rate
+          self._reset_curvature_measurement(0, speed)
+          self._set_prev_desired_angle(round_curvature_can_2(sign * self.MAX_CURVATURE))
+          curvature = self.MAX_CURVATURE - max_delta_down
+          self.assertTrue(self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
+
+          # ramp down above max rate
+          self._reset_curvature_measurement(0, speed)
+          self._set_prev_desired_angle(round_curvature_can_2(sign * self.MAX_CURVATURE))
+          curvature = self.MAX_CURVATURE - max_delta_down - (2 / self.DEG_TO_CAN)
+          self.assertFalse(self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
+          # time.sleep(0.01)
 
   # def test_curvature_rate_limits(self):
   #   self.safety.set_controls_allowed(1)
