@@ -23,10 +23,10 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   blocked_addrs = Counter()
   invalid_addrs = set()
 
-  can_msgs = list(filter(lambda m: m.which() in ('can', 'sendcan'), lr))
+  can_msgs = [m for m in lr if m.which() in ('can', 'sendcan')]
   start_t = can_msgs[0].logMonoTime
   end_t = can_msgs[-1].logMonoTime
-  for idx, msg in enumerate(can_msgs):
+  for msg in can_msgs:
     safety.set_timer((msg.logMonoTime // 1000) % 0xFFFFFFFF)
 
     # skip start and end of route, warm up/down period
