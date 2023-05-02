@@ -20,19 +20,19 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
   .type = TorqueDriverLimited,
 };
 
-const int MSG_Brake_Status =  0x13c;
-const int MSG_CruiseControl = 0x240;
-const int MSG_Throttle = 0x40;
-const int MSG_Steering_Torque = 0x119;
-const int MSG_Wheel_Speeds = 0x13a;
+#define MSG_Brake_Status =  0x13c;
+#define MSG_CruiseControl = 0x240;
+#define MSG_Throttle = 0x40;
+#define MSG_Steering_Torque = 0x119;
+#define MSG_Wheel_Speeds = 0x13a;
 
-const int MSG_ES_LKAS = 0x122;
-const int MSG_ES_Brake = 0x220;
-const int MSG_ES_Distance = 0x221;
-const int MSG_ES_Status =  0x222;
-const int MSG_ES_DashStatus = 0x321;
-const int MSG_ES_LKAS_State = 0x322;
-const int MSG_INFOTAINMENT_STATUS = 0x323;
+#define MSG_ES_LKAS = 0x122;
+#define MSG_ES_Brake = 0x220;
+#define MSG_ES_Distance = 0x221;
+#define MSG_ES_Status =  0x222;
+#define MSG_ES_DashStatus = 0x321;
+#define MSG_ES_LKAS_State = 0x322;
+#define MSG_INFOTAINMENT_STATUS = 0x323;
 
 const CanMsg SUBARU_TX_MSGS[] = {
   {MSG_ES_LKAS, 0, 8},
@@ -101,8 +101,8 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
                                  subaru_get_checksum, subaru_compute_checksum, subaru_get_counter, NULL);
 
   if (valid) {
-    const int bus = GET_BUS(to_push);
-    const int alt_bus = subaru_gen2 ? 1 : 0;
+    #define bus = GET_BUS(to_push);
+    #define alt_bus = subaru_gen2 ? 1 : 0;
 
     int addr = GET_ADDR(to_push);
     if ((addr == MSG_Steering_Torque) && (bus == 0)) {
