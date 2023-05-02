@@ -18,6 +18,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
     init_segment(safety, lr, safety_mode)
     lr.reset()
 
+  safety_tick_rx_invalid = False
   rx_tot, rx_invalid, tx_tot, tx_blocked, tx_controls, tx_controls_blocked = 0, 0, 0, 0, 0, 0
   blocked_addrs = Counter()
   invalid_addrs = set()
@@ -30,6 +31,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
 
     if msg.logMonoTime - start_t > 1e9:
       safety.safety_tick_current_rx_checks()
+      safety_tick_rx_invalid |= safety_tick_rx_invalid or not safety.addr_checks_valid()
 
     if msg.which() == 'sendcan':
      for canmsg in msg.sendcan:
@@ -57,6 +59,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   print("\nRX")
   print("total rx msgs:", rx_tot)
   print("invalid rx msgs:", rx_invalid)
+  print("safety tick rx invalid:", safety_tick_rx_invalid)
   print("invalid addrs:", invalid_addrs)
   print("\nTX")
   print("total openpilot msgs:", tx_tot)
@@ -65,7 +68,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   print("blocked with controls allowed:", tx_controls_blocked)
   print("blocked addrs:", blocked_addrs)
 
-  return tx_controls_blocked == 0 and rx_invalid == 0
+  return tx_controls_blocked == 0 and rx_invalid == 0 and not safety_tick_rx_invalid
 
 if __name__ == "__main__":
   from tools.lib.route import Route, SegmentName
