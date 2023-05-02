@@ -51,16 +51,6 @@ def checksum(msg):
   return addr, t, ret, bus
 
 
-def round_curvature_can(curvature):
-  # rounds curvature as if it was sent on CAN
-  return round(round(curvature * 5, 4) / 5, 5)
-
-
-def round_curvature_can_2(curvature):
-  # rounds curvature as if it was sent on CAN
-  return round(round((curvature + 0.02) / 2e-5) * 2e-5 - 0.02, 5)
-
-
 class Buttons:
   CANCEL = 0
   RESUME = 1
