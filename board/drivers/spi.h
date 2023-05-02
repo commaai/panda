@@ -89,7 +89,7 @@ void spi_handle_rx(void) {
   } else if (spi_state == SPI_STATE_DATA_RX) {
     // We got everything! Based on the endpoint specified, call the appropriate handler
     uint16_t response_len = 0U;
-    bool response_ack = false;
+    bool reponse_ack = false;
     checksum_valid = check_checksum(&(spi_buf_rx[SPI_HEADER_SIZE]), spi_data_len_mosi + 1U);
     if (checksum_valid) {
       if (spi_endpoint == 0U) {
@@ -97,24 +97,24 @@ void spi_handle_rx(void) {
           ControlPacket_t ctrl;
           (void)memcpy(&ctrl, &spi_buf_rx[SPI_HEADER_SIZE], sizeof(ControlPacket_t));
           response_len = comms_control_handler(&ctrl, &spi_buf_tx[3]);
-          response_ack = true;
+          reponse_ack = true;
         } else {
           print("SPI: insufficient data for control handler\n");
         }
       } else if ((spi_endpoint == 1U) || (spi_endpoint == 0x81U)) {
         if (spi_data_len_mosi == 0U) {
           response_len = comms_can_read(&(spi_buf_tx[3]), spi_data_len_miso);
-          response_ack = true;
+          reponse_ack = true;
         } else {
           print("SPI: did not expect data for can_read\n");
         }
       } else if (spi_endpoint == 2U) {
         comms_endpoint2_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
-        response_ack = true;
+        reponse_ack = true;
       } else if (spi_endpoint == 3U) {
         if (spi_data_len_mosi > 0U) {
           comms_can_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
-          response_ack = true;
+          reponse_ack = true;
         } else {
           print("SPI: did expect data for can_write\n");
         }
@@ -123,12 +123,12 @@ void spi_handle_rx(void) {
       }
     } else {
       // Checksum was incorrect
-      response_ack = false;
+      reponse_ack = false;
       print("- incorrect data checksum\n");
     }
 
     // Setup response header
-    spi_buf_tx[0] = response_ack ? SPI_DACK : SPI_NACK;
+    spi_buf_tx[0] = reponse_ack ? SPI_DACK : SPI_NACK;
     spi_buf_tx[1] = response_len & 0xFFU;
     spi_buf_tx[2] = (response_len >> 8) & 0xFFU;
 
@@ -142,7 +142,7 @@ void spi_handle_rx(void) {
     // Write response
     llspi_miso_dma(spi_buf_tx, response_len + 4U);
 
-    next_rx_state = response_ack ? SPI_STATE_DATA_TX : SPI_STATE_HEADER_NACK;
+    next_rx_state = SPI_STATE_DATA_TX;
   } else {
     print("SPI: RX unexpected state: "); puth(spi_state); print("\n");
   }
