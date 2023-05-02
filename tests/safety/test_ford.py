@@ -241,7 +241,7 @@ class TestFordSafety(common.PandaSafetyTest):
   def test_curvature_rate_limit_up(self):
     """
     When the curvature error is exceeded, commanded curvature must start moving towards meas respecting rate limits.
-    Since panda allows higher rate limits to avoid false positive blocked msgs, we need to allow a lower rate to move towards meas.
+    Since panda allows higher rate limits to avoid false positives, we need to allow a lower rate to move towards meas.
     """
     self.safety.set_controls_allowed(True)
     small_curvature = 2 / self.DEG_TO_CAN  # significant small amount of curvature to cross boundary
