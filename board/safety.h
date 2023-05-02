@@ -638,6 +638,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
 
     // check that commanded angle value isn't too far from measured, used to limit torque for some safety modes
     // angle rate limits have precedence, start moving in direction of meas with respect to rate limits if error is exceeded
+//    print("vehicle speed: "); puth(vehicle_speed); print("\n");
     if (limits.enforce_angle_error && vehicle_speed > limits.angle_error_limit_speed) {
       // these are used as for tolerance allowance, since delta rate limits are liberally above openpilot's
       // and are used for both ensuring rate is below, or at least the limits (for curvature error limiting)
@@ -654,10 +655,21 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
       print("angle_meas.min: "); puth(ABS(angle_meas.min)); print(", angle_meas.max: "); puth(ABS(angle_meas.max)); print("\n");
 //      print("new_delta_angle_up_lower: "); puth(ABS(new_delta_angle_up_lower)); print(", new_delta_angle_down_lower: "); puth(ABS(new_delta_angle_down_lower)); print("\n");
 //      print("lowest_desired_angle: "); puth(ABS(lowest_desired_angle)); print(", 2nd term: "); puth(ABS(angle_meas.min - limits.max_angle_error - 1)); print(", 3rd term: "); puth(ABS(desired_angle_last + new_delta_angle_up_lower)); print("\n");
-//      lowest_desired_angle = CLAMP(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1, desired_angle_last + new_delta_angle_up_lower);
-//      highest_desired_angle = CLAMP(highest_desired_angle, desired_angle_last - new_delta_angle_down_lower, angle_meas.max + limits.max_angle_error + 1);
 
       // TODO: these are good, verify above
+      print("highest_desired_angle_lower: ");
+      if (highest_desired_angle_lower < 0) { print("-"); }
+      puth(ABS(highest_desired_angle_lower)); print("\n");
+
+
+      print("lowest_desired_angle_lower: ");
+      if (lowest_desired_angle_lower < 0) { print("-"); }
+      puth(ABS(lowest_desired_angle_lower)); print("\n");
+      if (lowest_desired_angle_lower > highest_desired_angle_lower) {
+        print("we have a problem here\n");
+      }
+
+
       lowest_desired_angle = MIN(MAX(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1), highest_desired_angle_lower);
       highest_desired_angle = MAX(MIN(highest_desired_angle, angle_meas.max + limits.max_angle_error + 1), lowest_desired_angle_lower);
 
