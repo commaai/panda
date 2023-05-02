@@ -245,7 +245,7 @@ class TestFordSafety(common.PandaSafetyTest):
 
     for speed in np.arange(0, 41, 5):
       limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
-      max_delta_up_upper = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
+      max_delta_up = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
       max_delta_up_lower = np.interp(speed + 1, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
 
       for sign in (-1, 1):
@@ -268,11 +268,11 @@ class TestFordSafety(common.PandaSafetyTest):
 
         # ramp up at max rate
         self._set_prev_desired_angle(sign * small_curvature)
-        self.assertTrue(self._tx(self._tja_command_msg(True, 0, 0, sign * (small_curvature + max_delta_up_upper), 0)))
+        self.assertTrue(self._tx(self._tja_command_msg(True, 0, 0, sign * (small_curvature + max_delta_up), 0)))
 
         # ramp up above max rate
         self._set_prev_desired_angle(sign * small_curvature)
-        self.assertFalse(self._tx(self._tja_command_msg(True, 0, 0, sign * (small_curvature + max_delta_up_upper + small_curvature), 0)))
+        self.assertFalse(self._tx(self._tja_command_msg(True, 0, 0, sign * (small_curvature + max_delta_up + small_curvature), 0)))
 
   def test_curvature_rate_limit_down(self):
     self.safety.set_controls_allowed(True)
@@ -281,7 +281,7 @@ class TestFordSafety(common.PandaSafetyTest):
 
     for speed in np.arange(0, 41, 5):
       limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
-      max_delta_down_upper = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
+      max_delta_down = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
       max_delta_down_lower = np.interp(speed + 1, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
 
       for sign in (-1, 1):
@@ -305,12 +305,12 @@ class TestFordSafety(common.PandaSafetyTest):
 
         # ramp down at max rate
         self._set_prev_desired_angle(sign * self.MAX_CURVATURE)
-        curvature = self.MAX_CURVATURE - max_delta_down_upper
+        curvature = self.MAX_CURVATURE - max_delta_down
         self.assertTrue(self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
 
         # ramp down above max rate
         self._set_prev_desired_angle(sign * self.MAX_CURVATURE)
-        curvature = self.MAX_CURVATURE - max_delta_down_upper - small_curvature
+        curvature = self.MAX_CURVATURE - max_delta_down - small_curvature
         self.assertFalse(self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
 
   def test_prevent_lkas_action(self):
