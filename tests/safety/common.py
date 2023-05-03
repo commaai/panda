@@ -647,13 +647,13 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
      - rx hook correctly parses and rounds the vehicle speed
      - sample is reset on safety mode init
     """
-    for speed in np.arange(0, 40, 1):
+    for speed in np.arange(0, 40, 0.5):
       for i in range(6):
-        self.assertTrue(self._rx(self._speed_msg(speed + i)))  # pylint: disable=no-member
+        self.assertTrue(self._rx(self._speed_msg(speed + i * 0.1)))  # pylint: disable=no-member
 
       # assert close by one decimal place
       self.assertLessEqual(abs(self.safety.get_vehicle_speed_min() - speed * 100), 1)
-      self.assertLessEqual(abs(self.safety.get_vehicle_speed_max() - (speed + 5) * 100), 1)
+      self.assertLessEqual(abs(self.safety.get_vehicle_speed_max() - (speed + 0.5) * 100), 1)
 
       # reset sample_t by reinitializing the safety mode
       self.setUp()
