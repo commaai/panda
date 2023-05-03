@@ -71,9 +71,9 @@ class TestTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTest):
   # Angle control limits
   DEG_TO_CAN = 10
 
-  ANGLE_DELTA_BP = [0., 5., 15.]
-  ANGLE_DELTA_V = [5., .8, .15]  # windup limit
-  ANGLE_DELTA_VU = [5., 3.5, .4]  # unwind limit
+  ANGLE_RATE_BP = [0., 5., 15.]
+  ANGLE_RATE_UP = [5., .8, .15]  # windup limit
+  ANGLE_RATE_DOWN = [5., 3.5, .4]  # unwind limit
 
   def setUp(self):
     self.packer = CANPackerPanda("tesla_can")
