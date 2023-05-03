@@ -209,7 +209,7 @@ class TestFordSafety(common.PandaSafetyTest):
   def test_angle_meas(self):
     """Tests rx hook correctly parses the curvature measurement from the vehicle speed and yaw rate"""
     for speed in np.arange(0.5, 40, 0.5):
-      for curvature in np.arange(0, 0.02, 2e-3):
+      for curvature in np.arange(0, self.MAX_CURVATURE * 2, 2e-3):
         self._rx(self._speed_msg(speed))
         for c in (curvature, -curvature, 0, 0, 0, 0):
           self._rx(self._yaw_rate_msg(c, speed))
