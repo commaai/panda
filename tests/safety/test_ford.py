@@ -75,7 +75,7 @@ class TestFordSafety(common.PandaSafetyTest):
   DEG_TO_CAN = 50000  # 1 / (2e-5) rad to can
   MAX_CURVATURE = 0.02
   MAX_CURVATURE_DELTA = 0.002
-  CURVATURE_DELTA_LIMIT_SPEED = 10.0  # m/s
+  CURVATURE_ERROR_LIMIT_SPEED = 10.0  # m/s
 
   ANGLE_RATE_BP = [5., 25., 25.]
   ANGLE_RATE_UP = [0.0002, 0.0001, 0.0001]  # windup limit
@@ -248,7 +248,7 @@ class TestFordSafety(common.PandaSafetyTest):
     curvature_meas = self.MAX_CURVATURE_DELTA + 1e-3
 
     for speed in np.arange(0, 40, 0.5):
-      limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
+      limit_command = speed > self.CURVATURE_ERROR_LIMIT_SPEED
       max_delta_up = np.interp(speed, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
       max_delta_up_lower = np.interp(speed + 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
 
@@ -283,7 +283,7 @@ class TestFordSafety(common.PandaSafetyTest):
     curvature_meas = self.MAX_CURVATURE - self.MAX_CURVATURE_DELTA - 1e-3
 
     for speed in np.arange(0, 40, 0.5):
-      limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
+      limit_command = speed > self.CURVATURE_ERROR_LIMIT_SPEED
       max_delta_down = np.interp(speed, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
       max_delta_down_lower = np.interp(speed + 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
 
