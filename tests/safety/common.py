@@ -642,7 +642,11 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     self.assertEqual(self.safety.get_angle_meas_max(), 0)
 
   def test_vehicle_speed_measurements(self):
-    # Tests that the vehicle_speed measurement sample_t is reset on safety mode init
+    """
+    Tests:
+     - rx hook correctly parses and rounds the vehicle speed
+     - sample is reset on safety mode init
+    """
     for speed in np.arange(0, 40, 1):
       for i in range(6):
         self.assertTrue(self._rx(self._speed_msg(speed + i)))  # pylint: disable=no-member
@@ -650,6 +654,12 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
       # assert close by one decimal place
       self.assertLessEqual(abs(self.safety.get_vehicle_speed_min() - speed * 100), 1)
       self.assertLessEqual(abs(self.safety.get_vehicle_speed_max() - (speed + 5) * 100), 1)
+
+      # reset sample_t by reinitializing the safety mode
+      self.setUp()
+
+      self.assertEqual(self.safety.get_vehicle_speed_min(), 0)
+      self.assertEqual(self.safety.get_vehicle_speed_max(), 0)
 
 
 @add_regen_tests
@@ -856,17 +866,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
     # past threshold
     self.safety.safety_rx_hook(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD + 1))
     self.assertTrue(self.safety.get_vehicle_moving())
-
-  def test_reset_speed_measurements(self):
-    # Tests that the vehicle_speed measurement sample_t is reset on safety mode init
-    for a in np.linspace(0, 40, 6):
-      self.assertTrue(self._rx(self._speed_msg(a)))
-
-    # reset sample_t by reinitializing the safety mode
-    self.setUp()
-
-    self.assertEqual(self.safety.get_vehicle_speed_min(), 0)
-    self.assertEqual(self.safety.get_vehicle_speed_max(), 0)
 
   def test_tx_hook_on_wrong_safety_mode(self):
     files = os.listdir(os.path.dirname(os.path.realpath(__file__)))
