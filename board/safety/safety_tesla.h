@@ -82,7 +82,7 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
         // Vehicle speed: ((0.05 * val) - 25) * MPH_TO_MPS
         float speed = (((((GET_BYTE(to_push, 3) & 0x0FU) << 8) | (GET_BYTE(to_push, 2))) * 0.05) - 25) * 0.447;
         vehicle_moving = speed > 0.1;
-        update_float_sample(&vehicle_speed, speed);
+        update_sample(&vehicle_speed, speed);
       }
 
       if(addr == (tesla_powertrain ? 0x106 : 0x108)) {

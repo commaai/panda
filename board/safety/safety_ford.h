@@ -170,7 +170,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     // Update vehicle speed
     if (addr == MSG_BrakeSysFeatures) {
       // Signal: Veh_V_ActlBrk
-      update_float_sample(&vehicle_speed, ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6);
+      update_sample(&vehicle_speed, ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6)
     }
 
     // Check vehicle speed against a second source
