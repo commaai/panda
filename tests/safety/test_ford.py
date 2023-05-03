@@ -212,26 +212,23 @@ class TestFordSafety(common.PandaSafetyTest):
     curvature_rates = np.arange(-0.001024, 0.00102375, 0.001).round(3)
     curvatures = np.arange(-0.02, 0.02094, 0.01).round(2)
 
-    for speed in (self.CURVATURE_ERROR_MIN_SPEED - 1,
-                  self.CURVATURE_ERROR_MIN_SPEED + 1):
-      self._rx(self._speed_msg(speed))
-      for controls_allowed in (True, False):
-        for steer_control_enabled in (True, False):
-          for path_offset in path_offsets:
-            for path_angle in path_angles:
-              for curvature_rate in curvature_rates:
-                for curvature in curvatures:
-                  self.safety.set_controls_allowed(controls_allowed)
-                  self._reset_curvature_measurement(curvature, speed)
+    for controls_allowed in (True, False):
+      for steer_control_enabled in (True, False):
+        for path_offset in path_offsets:
+          for path_angle in path_angles:
+            for curvature_rate in curvature_rates:
+              for curvature in curvatures:
+                self.safety.set_controls_allowed(controls_allowed)
+                self._reset_curvature_measurement(curvature, 0)
 
-                  should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
-                  # when request bit is 0, only allow curvature of 0 since the signal range
-                  # is not large enough to enforce it tracking measured
-                  should_tx = should_tx and (controls_allowed if steer_control_enabled else curvature == 0)
-                  with self.subTest(controls_allowed=controls_allowed, steer_control_enabled=steer_control_enabled,
-                                    path_offset=path_offset, path_angle=path_angle, curvature_rate=curvature_rate,
-                                    curvature=curvature, speed=speed):
-                    self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, path_offset, path_angle, curvature, curvature_rate)))
+                should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
+                # when request bit is 0, only allow curvature of 0 since the signal range
+                # is not large enough to enforce it tracking measured
+                should_tx = should_tx and (controls_allowed if steer_control_enabled else curvature == 0)
+                with self.subTest(controls_allowed=controls_allowed, steer_control_enabled=steer_control_enabled,
+                                  path_offset=path_offset, path_angle=path_angle, curvature_rate=curvature_rate,
+                                  curvature=curvature):
+                  self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, path_offset, path_angle, curvature, curvature_rate)))
 
   def test_steer_meas_delta(self):
     """This safety model enforces a maximum distance from measured and commanded curvature, only above a certain speed"""
