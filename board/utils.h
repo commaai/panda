@@ -22,11 +22,9 @@
   (_a > 0) ? _a : (-_a); \
 })
 
-#define ROUND(x) ({ \
-  __typeof__(x) __x = (x); \
-  __typeof__(low) __low = (low);\
-  __typeof__(high) __high = (high);\
-  (__x + 0.5) ? __high : ((__x < __low) ? __low : __x); \
+#define ROUND(a) ({ \
+  __typeof__ (a) _a = (a); \
+  _a + ((_a > 0) ? 0.5 : -0.5); \
 })
 
 #ifndef NULL
