@@ -221,6 +221,10 @@ class TestFordSafety(common.PandaSafetyTest):
         self.assertEqual(self.safety.get_angle_meas_min(), round(-curvature * self.DEG_TO_CAN))
         self.assertEqual(self.safety.get_angle_meas_max(), 0)
 
+        self._rx(self._yaw_rate_msg(0, speed))
+        self.assertEqual(self.safety.get_angle_meas_min(), 0)
+        self.assertEqual(self.safety.get_angle_meas_max(), 0)
+
   def test_steer_allowed(self):
     path_offsets = np.arange(-5.12, 5.11, 1).round()
     path_angles = np.arange(-0.5, 0.5235, 0.1).round(1)
