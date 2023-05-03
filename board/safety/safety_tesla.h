@@ -80,11 +80,7 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
 
       if(addr == (tesla_powertrain ? 0x116 : 0x118)) {
         // Vehicle speed: ((0.05 * val) - 25) * MPH_TO_MPS
-//        int speed_can = (((((GET_BYTE(to_push, 3) & 0x0FU) << 8) | (GET_BYTE(to_push, 2)))));
-//        print("speed_can: "); puth(speed_can); print("\n");
         float speed = (((((GET_BYTE(to_push, 3) & 0x0FU) << 8) | (GET_BYTE(to_push, 2))) * 0.05) - 25) * 0.447;
-//        print("speed*1000000: "); puth((int)(speed * 1000000)); print("\n");
-//        print("into sample: "); puth((int)((speed * 100.) + 0.5)); print("\n");
         vehicle_moving = ABS(speed) > 0.1;
         update_sample(&vehicle_speed, (speed * 100.) + 0.5);
       }

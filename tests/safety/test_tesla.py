@@ -109,66 +109,66 @@ class TestTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTest):
         self.assertEqual(tx, should_tx)
 
 
-# class TestTeslaLongitudinalSafety(TestTeslaSafety):
-#   def setUp(self):
-#     raise unittest.SkipTest
-#
-#   def test_no_aeb(self):
-#     for aeb_event in range(4):
-#       self.assertEqual(self._tx(self._long_control_msg(10, aeb_event=aeb_event)), aeb_event == 0)
-#
-#   def test_stock_aeb_passthrough(self):
-#     no_aeb_msg = self._long_control_msg(10, aeb_event=0)
-#     no_aeb_msg_cam = self._long_control_msg(10, aeb_event=0, bus=2)
-#     aeb_msg_cam = self._long_control_msg(10, aeb_event=1, bus=2)
-#
-#     # stock system sends no AEB -> no forwarding, and OP is allowed to TX
-#     self.assertEqual(1, self._rx(no_aeb_msg_cam))
-#     self.assertEqual(-1, self.safety.safety_fwd_hook(2, no_aeb_msg_cam.addr))
-#     self.assertEqual(True, self._tx(no_aeb_msg))
-#
-#     # stock system sends AEB -> forwarding, and OP is not allowed to TX
-#     self.assertEqual(1, self._rx(aeb_msg_cam))
-#     self.assertEqual(0, self.safety.safety_fwd_hook(2, aeb_msg_cam.addr))
-#     self.assertEqual(False, self._tx(no_aeb_msg))
-#
-#   def test_acc_accel_limits(self):
-#     for controls_allowed in [True, False]:
-#       self.safety.set_controls_allowed(controls_allowed)
-#       for min_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
-#         for max_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
-#           # floats might not hit exact boundary conditions without rounding
-#           min_accel = round(min_accel, 2)
-#           max_accel = round(max_accel, 2)
-#           if controls_allowed:
-#             send = (MIN_ACCEL <= min_accel <= MAX_ACCEL) and (MIN_ACCEL <= max_accel <= MAX_ACCEL)
-#           else:
-#             send = np.all(np.isclose([min_accel, max_accel], 0, atol=0.0001))
-#           self.assertEqual(send, self._tx(self._long_control_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])))
-#
-#
-# class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafety):
-#   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2], [0x2B9, 0]]
-#   RELAY_MALFUNCTION_ADDR = 0x488
-#   FWD_BLACKLISTED_ADDRS = {2: [0x2B9, 0x488]}
-#
-#   def setUp(self):
-#     self.packer = CANPackerPanda("tesla_can")
-#     self.safety = libpanda_py.libpanda
-#     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL)
-#     self.safety.init_tests()
-#
-#
-# class TestTeslaPTLongitudinalSafety(TestTeslaLongitudinalSafety):
-#   TX_MSGS = [[0x2BF, 0]]
-#   RELAY_MALFUNCTION_ADDR = 0x2BF
-#   FWD_BLACKLISTED_ADDRS = {2: [0x2BF]}
-#
-#   def setUp(self):
-#     self.packer = CANPackerPanda("tesla_powertrain")
-#     self.safety = libpanda_py.libpanda
-#     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL | Panda.FLAG_TESLA_POWERTRAIN)
-#     self.safety.init_tests()
+class TestTeslaLongitudinalSafety(TestTeslaSafety):
+  def setUp(self):
+    raise unittest.SkipTest
+
+  def test_no_aeb(self):
+    for aeb_event in range(4):
+      self.assertEqual(self._tx(self._long_control_msg(10, aeb_event=aeb_event)), aeb_event == 0)
+
+  def test_stock_aeb_passthrough(self):
+    no_aeb_msg = self._long_control_msg(10, aeb_event=0)
+    no_aeb_msg_cam = self._long_control_msg(10, aeb_event=0, bus=2)
+    aeb_msg_cam = self._long_control_msg(10, aeb_event=1, bus=2)
+
+    # stock system sends no AEB -> no forwarding, and OP is allowed to TX
+    self.assertEqual(1, self._rx(no_aeb_msg_cam))
+    self.assertEqual(-1, self.safety.safety_fwd_hook(2, no_aeb_msg_cam.addr))
+    self.assertEqual(True, self._tx(no_aeb_msg))
+
+    # stock system sends AEB -> forwarding, and OP is not allowed to TX
+    self.assertEqual(1, self._rx(aeb_msg_cam))
+    self.assertEqual(0, self.safety.safety_fwd_hook(2, aeb_msg_cam.addr))
+    self.assertEqual(False, self._tx(no_aeb_msg))
+
+  def test_acc_accel_limits(self):
+    for controls_allowed in [True, False]:
+      self.safety.set_controls_allowed(controls_allowed)
+      for min_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
+        for max_accel in np.arange(MIN_ACCEL - 1, MAX_ACCEL + 1, 0.1):
+          # floats might not hit exact boundary conditions without rounding
+          min_accel = round(min_accel, 2)
+          max_accel = round(max_accel, 2)
+          if controls_allowed:
+            send = (MIN_ACCEL <= min_accel <= MAX_ACCEL) and (MIN_ACCEL <= max_accel <= MAX_ACCEL)
+          else:
+            send = np.all(np.isclose([min_accel, max_accel], 0, atol=0.0001))
+          self.assertEqual(send, self._tx(self._long_control_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])))
+
+
+class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafety):
+  TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2], [0x2B9, 0]]
+  RELAY_MALFUNCTION_ADDR = 0x488
+  FWD_BLACKLISTED_ADDRS = {2: [0x2B9, 0x488]}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("tesla_can")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL)
+    self.safety.init_tests()
+
+
+class TestTeslaPTLongitudinalSafety(TestTeslaLongitudinalSafety):
+  TX_MSGS = [[0x2BF, 0]]
+  RELAY_MALFUNCTION_ADDR = 0x2BF
+  FWD_BLACKLISTED_ADDRS = {2: [0x2BF]}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("tesla_powertrain")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL | Panda.FLAG_TESLA_POWERTRAIN)
+    self.safety.init_tests()
 
 
 if __name__ == "__main__":

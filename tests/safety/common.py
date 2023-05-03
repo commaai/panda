@@ -566,105 +566,90 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     for _ in range(6):
       self._rx(self._speed_msg(speed))  # pylint: disable=no-member
 
-  # def test_angle_cmd_when_enabled(self):
-  #   # when controls are allowed, angle cmd rate limit is enforced
-  #   speeds = [0., 1., 5., 10., 15., 50.]
-  #   angles = [-300, -100, -10, 0, 10, 100, 300]
-  #   for a in angles:
-  #     for s in speeds:
-  #       max_delta_up = np.interp(s, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
-  #       max_delta_down = np.interp(s, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
-  #
-  #       # first test against false positives
-  #       self._reset_angle_measurement(a)
-  #       self._reset_speed_measurement(s)
-  #
-  #       self._set_prev_desired_angle(a)
-  #       self.safety.set_controls_allowed(1)
-  #
-  #       # Stay within limits
-  #       # Up
-  #       self.assertTrue(self._tx(self._angle_cmd_msg(a + sign_of(a) * max_delta_up, True)))
-  #       self.assertTrue(self.safety.get_controls_allowed())
-  #
-  #       # Don't change
-  #       self.assertTrue(self._tx(self._angle_cmd_msg(a, True)))
-  #       self.assertTrue(self.safety.get_controls_allowed())
-  #
-  #       # Down
-  #       self.assertTrue(self._tx(self._angle_cmd_msg(a - sign_of(a) * max_delta_down, True)))
-  #       self.assertTrue(self.safety.get_controls_allowed())
-  #
-  #       # Inject too high rates
-  #       # Up
-  #       self.assertFalse(self._tx(self._angle_cmd_msg(a + sign_of(a) * (max_delta_up + 1.1), True)))
-  #
-  #       # Don't change
-  #       self.safety.set_controls_allowed(1)
-  #       self._set_prev_desired_angle(a)
-  #       self.assertTrue(self.safety.get_controls_allowed())
-  #       self.assertTrue(self._tx(self._angle_cmd_msg(a, True)))
-  #       self.assertTrue(self.safety.get_controls_allowed())
-  #
-  #       # Down
-  #       self.assertFalse(self._tx(self._angle_cmd_msg(a - sign_of(a) * (max_delta_down + 1.1), True)))
-  #
-  #       # Check desired steer should be the same as steer angle when controls are off
-  #       self.safety.set_controls_allowed(0)
-  #       self.assertTrue(self._tx(self._angle_cmd_msg(a, False)))
-  #
-  # def test_angle_cmd_when_disabled(self):
-  #   # Tests that only angles close to the meas are allowed while
-  #   # steer actuation bit is 0, regardless of controls allowed.
-  #   for controls_allowed in (True, False):
-  #     self.safety.set_controls_allowed(controls_allowed)
-  #
-  #     for steer_control_enabled in (True, False):
-  #       for angle_meas in np.arange(-90, 91, 10):
-  #         self._reset_angle_measurement(angle_meas)
-  #
-  #         for angle_cmd in np.arange(-90, 91, 10):
-  #           self._set_prev_desired_angle(angle_cmd)
-  #
-  #           # controls_allowed is checked if actuation bit is 1, else the angle must be close to meas (inactive)
-  #           should_tx = controls_allowed if steer_control_enabled else angle_cmd == angle_meas
-  #           self.assertEqual(should_tx, self._tx(self._angle_cmd_msg(angle_cmd, steer_control_enabled)))
-  #
-  # def test_reset_angle_measurements(self):
-  #   # Tests that the angle measurement sample_t is reset on safety mode init
-  #   for a in np.linspace(-90, 90, 6):
-  #     self.assertTrue(self._rx(self._angle_meas_msg(a)))
-  #
-  #   # reset sample_t by reinitializing the safety mode
-  #   self.setUp()
-  #
-  #   self.assertEqual(self.safety.get_angle_meas_min(), 0)
-  #   self.assertEqual(self.safety.get_angle_meas_max(), 0)
+  def test_angle_cmd_when_enabled(self):
+    # when controls are allowed, angle cmd rate limit is enforced
+    speeds = [0., 1., 5., 10., 15., 50.]
+    angles = [-300, -100, -10, 0, 10, 100, 300]
+    for a in angles:
+      for s in speeds:
+        max_delta_up = np.interp(s, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
+        max_delta_down = np.interp(s, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
+
+        # first test against false positives
+        self._reset_angle_measurement(a)
+        self._reset_speed_measurement(s)
+
+        self._set_prev_desired_angle(a)
+        self.safety.set_controls_allowed(1)
+
+        # Stay within limits
+        # Up
+        self.assertTrue(self._tx(self._angle_cmd_msg(a + sign_of(a) * max_delta_up, True)))
+        self.assertTrue(self.safety.get_controls_allowed())
+
+        # Don't change
+        self.assertTrue(self._tx(self._angle_cmd_msg(a, True)))
+        self.assertTrue(self.safety.get_controls_allowed())
+
+        # Down
+        self.assertTrue(self._tx(self._angle_cmd_msg(a - sign_of(a) * max_delta_down, True)))
+        self.assertTrue(self.safety.get_controls_allowed())
+
+        # Inject too high rates
+        # Up
+        self.assertFalse(self._tx(self._angle_cmd_msg(a + sign_of(a) * (max_delta_up + 1.1), True)))
+
+        # Don't change
+        self.safety.set_controls_allowed(1)
+        self._set_prev_desired_angle(a)
+        self.assertTrue(self.safety.get_controls_allowed())
+        self.assertTrue(self._tx(self._angle_cmd_msg(a, True)))
+        self.assertTrue(self.safety.get_controls_allowed())
+
+        # Down
+        self.assertFalse(self._tx(self._angle_cmd_msg(a - sign_of(a) * (max_delta_down + 1.1), True)))
+
+        # Check desired steer should be the same as steer angle when controls are off
+        self.safety.set_controls_allowed(0)
+        self.assertTrue(self._tx(self._angle_cmd_msg(a, False)))
+
+  def test_angle_cmd_when_disabled(self):
+    # Tests that only angles close to the meas are allowed while
+    # steer actuation bit is 0, regardless of controls allowed.
+    for controls_allowed in (True, False):
+      self.safety.set_controls_allowed(controls_allowed)
+
+      for steer_control_enabled in (True, False):
+        for angle_meas in np.arange(-90, 91, 10):
+          self._reset_angle_measurement(angle_meas)
+
+          for angle_cmd in np.arange(-90, 91, 10):
+            self._set_prev_desired_angle(angle_cmd)
+
+            # controls_allowed is checked if actuation bit is 1, else the angle must be close to meas (inactive)
+            should_tx = controls_allowed if steer_control_enabled else angle_cmd == angle_meas
+            self.assertEqual(should_tx, self._tx(self._angle_cmd_msg(angle_cmd, steer_control_enabled)))
+
+  def test_reset_angle_measurements(self):
+    # Tests that the angle measurement sample_t is reset on safety mode init
+    for a in np.linspace(-90, 90, 6):
+      self.assertTrue(self._rx(self._angle_meas_msg(a)))
+
+    # reset sample_t by reinitializing the safety mode
+    self.setUp()
+
+    self.assertEqual(self.safety.get_angle_meas_min(), 0)
+    self.assertEqual(self.safety.get_angle_meas_max(), 0)
 
   def test_vehicle_speed_measurements(self):
     # Tests that the vehicle_speed measurement sample_t is reset on safety mode init
     for speed in np.arange(0, 40, 1):
-      print('START speed', speed)
-      # for s in (speed, speed + 1, 0, 0, 0, 0):
       for i in range(6):
-        # print('sending speed', speed + i)
         self.assertTrue(self._rx(self._speed_msg(speed + i)))  # pylint: disable=no-member
-
-      # print()
-      print(self.safety.get_vehicle_speed_min())
-      print(self.safety.get_vehicle_speed_max())
 
       # assert close by one decimal place
       self.assertLessEqual(abs(self.safety.get_vehicle_speed_min() - speed * 100), 1)
       self.assertLessEqual(abs(self.safety.get_vehicle_speed_max() - (speed + 5) * 100), 1)
-      print()
-      # self.assertEqual(self.safety.get_angle_meas_max(), round(curvature * self.DEG_TO_CAN))
-
-      # # reset sample_t by reinitializing the safety mode
-      # self.setUp()
-      #
-      # self.assertEqual(self.safety.get_vehicle_speed_min(), 0)
-      # self.assertEqual(self.safety.get_vehicle_speed_max(), 0)
 
 
 @add_regen_tests
