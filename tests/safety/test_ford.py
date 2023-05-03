@@ -256,7 +256,6 @@ class TestFordSafety(common.PandaSafetyTest):
         self._reset_curvature_measurement(sign * curvature_meas, speed)
 
         # stay the same
-        # TODO: small_curvature instead of zero since panda allows down limits at 0 to mask a Tesla bug
         self._set_prev_desired_angle(sign * small_curvature)
         self.assertEqual(not limit_command,
                          self._tx(self._tja_command_msg(True, 0, 0, sign * small_curvature, 0)))
