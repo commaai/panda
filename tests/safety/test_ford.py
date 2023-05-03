@@ -206,7 +206,7 @@ class TestFordSafety(common.PandaSafetyTest):
         within_delta = abs(speed - speed_2) <= self.MAX_SPEED_DELTA
         self.assertEqual(self.safety.get_controls_allowed(), within_delta)
 
-  def test_angle_meas(self):
+  def test_angle_measurements(self):
     """Tests rx hook correctly parses the curvature measurement from the vehicle speed and yaw rate"""
     for speed in np.arange(0.5, 40, 0.5):
       for curvature in np.arange(0, self.MAX_CURVATURE * 2, 2e-3):
