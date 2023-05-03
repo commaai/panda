@@ -50,11 +50,6 @@ def checksum(msg):
   return addr, t, ret, bus
 
 
-def round_curvature_can(curvature):
-  # rounds curvature as if it was sent on CAN
-  return round(curvature * 5, 4) / 5
-
-
 class Buttons:
   CANCEL = 0
   RESUME = 1
@@ -79,8 +74,8 @@ class TestFordSafety(common.PandaSafetyTest):
   # Curvature control limits
   DEG_TO_CAN = 50000  # 1 / (2e-5) rad to can
   MAX_CURVATURE = 0.02
-  MAX_CURVATURE_DELTA = 0.002
-  CURVATURE_DELTA_LIMIT_SPEED = 10.0  # m/s
+  MAX_CURVATURE_ERROR = 0.002
+  CURVATURE_ERROR_MIN_SPEED = 10.0  # m/s
 
   cnt_speed = 0
   cnt_speed_2 = 0
@@ -200,7 +195,7 @@ class TestFordSafety(common.PandaSafetyTest):
 
   def test_rx_hook_speed_mismatch(self):
     # Ford relies on speed for driver curvature limiting, so it checks two sources
-    for speed in np.arange(0, 40, 1):
+    for speed in np.arange(0, 40, 0.5):
       for speed_delta in np.arange(-5, 5, 0.1):
         speed_2 = round(max(speed + speed_delta, 0), 1)
         # Set controls allowed in between rx since first message can reset it
@@ -247,9 +242,9 @@ class TestFordSafety(common.PandaSafetyTest):
         for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 21):
           self._reset_curvature_measurement(initial_curvature, speed)
 
-          limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
+          limit_command = speed > self.CURVATURE_ERROR_MIN_SPEED
           for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 41):
-            too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_DELTA
+            too_far_away = round(abs(new_curvature - initial_curvature), 5) > self.MAX_CURVATURE_ERROR
 
             if steer_control_enabled:
               should_tx = not limit_command or not too_far_away
