@@ -22,11 +22,6 @@
   (_a > 0) ? _a : (-_a); \
 })
 
-#define ROUND(a) ({ \
-  __typeof__ (a) _a = (a); \
-  _a + ((_a > 0) ? 0.5 : -0.5); \
-})
-
 #ifndef NULL
 #define NULL ((void*)0)
 #endif
