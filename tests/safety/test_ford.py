@@ -252,18 +252,18 @@ class TestFordSafety(common.PandaSafetyTest):
       max_delta_up_lower = np.interp(speed + 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
 
       cases = [
-        (not limit_command, small_curvature),
-        (not limit_command, small_curvature + max_delta_up_lower - small_curvature),
-        (True, small_curvature + max_delta_up_lower),
-        (True, small_curvature + max_delta_up),
-        (False, small_curvature + max_delta_up + small_curvature),
+        (not limit_command, 0),
+        (not limit_command, max_delta_up_lower - small_curvature),
+        (True, max_delta_up_lower),
+        (True, max_delta_up),
+        (False, max_delta_up + small_curvature),
       ]
 
       for sign in (-1, 1):
         self._reset_curvature_measurement(sign * (self.MAX_CURVATURE_DELTA + 1e-3), speed)
         for should_tx, curvature in cases:
           self._set_prev_desired_angle(sign * small_curvature)
-          self.assertEqual(should_tx, self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
+          self.assertEqual(should_tx, self._tx(self._tja_command_msg(True, 0, 0, sign * (small_curvature + curvature), 0)))
 
   def test_curvature_rate_limit_down(self):
     self.safety.set_controls_allowed(True)
