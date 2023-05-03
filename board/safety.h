@@ -332,7 +332,6 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   regen_braking = false;
   regen_braking_prev = false;
   cruise_engaged_prev = false;
-  vehicle_speed = 0;
   vehicle_moving = false;
   acc_main_on = false;
   cruise_button_prev = 0;
@@ -345,6 +344,8 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   valid_steer_req_count = 0;
   invalid_steer_req_count = 0;
 
+  vehicle_speed.min = 0;
+  vehicle_speed.max = 0;
   torque_meas.min = 0;
   torque_meas.max = 0;
   torque_driver.min = 0;
@@ -620,8 +621,9 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     // add 1 to not false trigger the violation. also fudge the speed by 1 m/s so rate limits are
     // always slightly above openpilot's in case we read an updated speed in between angle commands
     // TODO: this speed fudge can be much lower, look at data to determine the lowest reasonable offset
-    int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
-    int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
+//    print("vehicle_speed: "); puth(1.584); print("\n");
+    int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed.values[0] - 1.) * limits.angle_deg_to_can) + 1.;
+    int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed.values[0] - 1.) * limits.angle_deg_to_can) + 1.;
 
     // allow down limits at zero since small floats will be rounded to 0
     int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
@@ -634,7 +636,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
 
   // check that commanded angle value isn't too far from measured, used to limit torque for some safety modes
   if (limits.enforce_angle_error && controls_allowed && steer_control_enabled) {
-    if (vehicle_speed > limits.angle_error_limit_speed) {
+    if (vehicle_speed.values[0] > limits.angle_error_limit_speed) {
       // val must always be near angle_meas, limited to the maximum value
       // add 1 to not false trigger the violation
       int highest_allowed = CLAMP(angle_meas.max + limits.max_angle_error + 1, -limits.max_steer, limits.max_steer);

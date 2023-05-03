@@ -193,7 +193,7 @@ bool brake_pressed_prev = false;
 bool regen_braking = false;
 bool regen_braking_prev = false;
 bool cruise_engaged_prev = false;
-float vehicle_speed = 0;
+struct sample_t vehicle_speed;
 bool vehicle_moving = false;
 bool acc_main_on = false;  // referred to as "ACC off" in ISO 15622:2018
 int cruise_button_prev = 0;
