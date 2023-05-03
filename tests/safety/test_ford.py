@@ -214,7 +214,6 @@ class TestFordSafety(common.PandaSafetyTest):
 
     for speed in (self.CURVATURE_ERROR_MIN_SPEED - 1,
                   self.CURVATURE_ERROR_MIN_SPEED + 1):
-      self._rx(self._speed_msg(speed))
       for controls_allowed in (True, False):
         for steer_control_enabled in (True, False):
           for path_offset in path_offsets:
@@ -222,6 +221,7 @@ class TestFordSafety(common.PandaSafetyTest):
               for curvature_rate in curvature_rates:
                 for curvature in curvatures:
                   self.safety.set_controls_allowed(controls_allowed)
+                  self._reset_curvature_measurement(curvature, speed)
 
                   should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
                   # when request bit is 0, only allow curvature of 0 since the signal range
