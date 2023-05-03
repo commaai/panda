@@ -203,7 +203,7 @@ class TestFordSafety(common.PandaSafetyTest):
 
   def test_rx_hook_speed_mismatch(self):
     # Ford relies on speed for driver curvature limiting, so it checks two sources
-    for speed in np.arange(0, 40, 1):
+    for speed in np.arange(0, 40, 0.5):
       for speed_delta in np.arange(-5, 5, 0.1):
         speed_2 = round(max(speed + speed_delta, 0), 1)
         # Set controls allowed in between rx since first message can reset it
@@ -247,7 +247,7 @@ class TestFordSafety(common.PandaSafetyTest):
     small_curvature = 2 / self.DEG_TO_CAN  # significant small amount of curvature to cross boundary
     curvature_meas = self.MAX_CURVATURE_DELTA + 1e-3
 
-    for speed in np.arange(0, 41, 5):
+    for speed in np.arange(0, 40, 0.5):
       limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
       max_delta_up = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
       max_delta_up_lower = np.interp(speed + 1, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
@@ -283,7 +283,7 @@ class TestFordSafety(common.PandaSafetyTest):
     small_curvature = 2 / self.DEG_TO_CAN  # significant small amount of curvature to cross boundary
     curvature_meas = self.MAX_CURVATURE - self.MAX_CURVATURE_DELTA - 1e-3
 
-    for speed in np.arange(0, 41, 5):
+    for speed in np.arange(0, 40, 0.5):
       limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
       max_delta_down = np.interp(speed, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
       max_delta_down_lower = np.interp(speed + 1, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
