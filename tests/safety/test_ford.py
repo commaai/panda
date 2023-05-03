@@ -122,7 +122,7 @@ class TestFordSafety(common.PandaSafetyTest):
 
   # Current curvature
   def _yaw_rate_msg(self, curvature: float, speed: float, quality_flag=True):
-    values = {"VehYaw_W_Actl": curvature * speed, "VehYawWActl_D_Qf": 3 if quality_flag else 0,
+    values = {"VehYaw_W_Actl": curvature * max(speed, 0.1), "VehYawWActl_D_Qf": 3 if quality_flag else 0,
               "VehRolWActl_D_Qf": 3 if quality_flag else 0, "VehRollYaw_No_Cnt": self.cnt_yaw_rate % 256}
     self.__class__.cnt_yaw_rate += 1
     return self.packer.make_can_msg_panda("Yaw_Data_FD1", 0, values, fix_checksum=checksum)
@@ -205,6 +205,21 @@ class TestFordSafety(common.PandaSafetyTest):
 
         within_delta = abs(speed - speed_2) <= self.MAX_SPEED_DELTA
         self.assertEqual(self.safety.get_controls_allowed(), within_delta)
+
+  def test_angle_meas(self):
+    curvature = 0.01
+    for speed in np.arange(0.5, 40, 0.5):
+      self._rx(self._speed_msg(speed))
+      for c in [curvature, -curvature, 0, 0, 0, 0]:
+        self._rx(self._yaw_rate_msg(c, speed))
+
+      self.assertEqual(self.safety.get_angle_meas_min(), -curvature * self.DEG_TO_CAN)
+      self.assertEqual(self.safety.get_angle_meas_max(), curvature * self.DEG_TO_CAN)
+
+      self._rx(self._yaw_rate_msg(0, speed))
+
+      self.assertEqual(self.safety.get_angle_meas_min(), -curvature * self.DEG_TO_CAN)
+      self.assertEqual(self.safety.get_angle_meas_max(), 0)
 
   def test_steer_allowed(self):
     path_offsets = np.arange(-5.12, 5.11, 1).round()
