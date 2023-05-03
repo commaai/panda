@@ -245,7 +245,6 @@ class TestFordSafety(common.PandaSafetyTest):
     """
     self.safety.set_controls_allowed(True)
     small_curvature = 2 / self.DEG_TO_CAN  # significant small amount of curvature to cross boundary
-    curvature_meas = self.MAX_CURVATURE_DELTA + 1e-3
 
     for speed in np.arange(0, 40, 0.5):
       limit_command = speed > self.MIN_CURVATURE_ERROR_SPEED
@@ -266,7 +265,7 @@ class TestFordSafety(common.PandaSafetyTest):
       ]
 
       for sign in (-1, 1):
-        self._reset_curvature_measurement(sign * curvature_meas, speed)
+        self._reset_curvature_measurement(sign * (self.MAX_CURVATURE_DELTA + 1e-3), speed)
         for should_tx, curvature in cases:
           self._set_prev_desired_angle(sign * small_curvature)
           self.assertEqual(should_tx, self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
@@ -274,7 +273,6 @@ class TestFordSafety(common.PandaSafetyTest):
   def test_curvature_rate_limit_down(self):
     self.safety.set_controls_allowed(True)
     small_curvature = 2 / self.DEG_TO_CAN  # significant small amount of curvature to cross boundary
-    curvature_meas = self.MAX_CURVATURE - self.MAX_CURVATURE_DELTA - 1e-3
 
     for speed in np.arange(0, 40, 0.5):
       limit_command = speed > self.MIN_CURVATURE_ERROR_SPEED
@@ -295,7 +293,7 @@ class TestFordSafety(common.PandaSafetyTest):
       ]
 
       for sign in (-1, 1):
-        self._reset_curvature_measurement(sign * curvature_meas, speed)
+        self._reset_curvature_measurement(sign * (self.MAX_CURVATURE - self.MAX_CURVATURE_DELTA - 1e-3), speed)
         for should_tx, curvature in cases:
           self._set_prev_desired_angle(sign * self.MAX_CURVATURE)
           self.assertEqual(should_tx, self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
