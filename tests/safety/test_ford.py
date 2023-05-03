@@ -287,34 +287,20 @@ class TestFordSafety(common.PandaSafetyTest):
       max_delta_down = np.interp(speed, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
       max_delta_down_lower = np.interp(speed + 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
 
+      cases = [
+        # should_tx, curvature
+        (not limit_command, self.MAX_CURVATURE),
+        (not limit_command, self.MAX_CURVATURE - max_delta_down_lower + small_curvature),
+        (True, self.MAX_CURVATURE - max_delta_down_lower),
+        (True, self.MAX_CURVATURE - max_delta_down),
+        (False, self.MAX_CURVATURE - max_delta_down - small_curvature),
+      ]
+
       for sign in (-1, 1):
         self._reset_curvature_measurement(sign * curvature_meas, speed)
-
-        # stay the same
-        self._set_prev_desired_angle(sign * self.MAX_CURVATURE)
-        self.assertEqual(not limit_command,
-                         self._tx(self._tja_command_msg(True, 0, 0, sign * self.MAX_CURVATURE, 0)))
-
-        # ramp down under min allowed rate
-        self._set_prev_desired_angle(sign * self.MAX_CURVATURE)
-        curvature = self.MAX_CURVATURE - max_delta_down_lower + small_curvature
-        self.assertEqual(not limit_command,
-                         self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
-
-        # ramp down at minimum max rate
-        self._set_prev_desired_angle(sign * self.MAX_CURVATURE)
-        curvature = self.MAX_CURVATURE - max_delta_down_lower
-        self.assertTrue(self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
-
-        # ramp down at max rate
-        self._set_prev_desired_angle(sign * self.MAX_CURVATURE)
-        curvature = self.MAX_CURVATURE - max_delta_down
-        self.assertTrue(self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
-
-        # ramp down above max rate
-        self._set_prev_desired_angle(sign * self.MAX_CURVATURE)
-        curvature = self.MAX_CURVATURE - max_delta_down - small_curvature
-        self.assertFalse(self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
+        for should_tx, curvature in cases:
+          self._set_prev_desired_angle(sign * self.MAX_CURVATURE)
+          self.assertEqual(should_tx, self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
 
   def test_prevent_lkas_action(self):
     self.safety.set_controls_allowed(1)
