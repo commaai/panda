@@ -210,7 +210,7 @@ class TestFordSafety(common.PandaSafetyTest):
     curvature = 0.01
     for speed in np.arange(0.5, 40, 0.5):
       self._rx(self._speed_msg(speed))
-      for c in [curvature, -curvature, 0, 0, 0, 0]:
+      for c in (curvature, -curvature, 0, 0, 0, 0):
         self._rx(self._yaw_rate_msg(c, speed))
 
       self.assertEqual(self.safety.get_angle_meas_min(), -curvature * self.DEG_TO_CAN)
