@@ -494,7 +494,7 @@ float interpolate(struct lookup_t xy, float x) {
 }
 
 int ROUND(float val) {
-  return val + ((val > 0) ? 0.5 : -0.5);;
+  return val + ((val > 0.0) ? 0.5 : -0.5);
 }
 
 // Safety checks for longitudinal actuation
