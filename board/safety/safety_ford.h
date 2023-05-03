@@ -171,7 +171,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
       // Disable controls if speeds from ABS and PCM ECUs are too far apart.
       // Signal: Veh_V_ActlEng
       float filtered_pcm_speed = ((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01 / 3.6;
-      if (ABS(filtered_pcm_speed - (vehicle_speed.values[0] / 100.)) > FORD_MAX_SPEED_DELTA) {
+      if (ABS(filtered_pcm_speed - ((float)vehicle_speed.values[0] / 100.)) > FORD_MAX_SPEED_DELTA) {
         controls_allowed = 0;
       }
     }
