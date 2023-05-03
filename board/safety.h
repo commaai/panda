@@ -332,6 +332,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   regen_braking = false;
   regen_braking_prev = false;
   cruise_engaged_prev = false;
+  vehicle_speed = 0;
   vehicle_moving = false;
   acc_main_on = false;
   cruise_button_prev = 0;
@@ -344,8 +345,6 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   valid_steer_req_count = 0;
   invalid_steer_req_count = 0;
 
-  vehicle_speed.min = 0;
-  vehicle_speed.max = 0;
   torque_meas.min = 0;
   torque_meas.max = 0;
   torque_driver.min = 0;
