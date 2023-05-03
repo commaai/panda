@@ -217,7 +217,6 @@ class TestFordSafety(common.PandaSafetyTest):
       self.assertEqual(self.safety.get_angle_meas_max(), curvature * self.DEG_TO_CAN)
 
       self._rx(self._yaw_rate_msg(0, speed))
-
       self.assertEqual(self.safety.get_angle_meas_min(), -curvature * self.DEG_TO_CAN)
       self.assertEqual(self.safety.get_angle_meas_max(), 0)
 
