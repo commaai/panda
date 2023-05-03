@@ -138,7 +138,7 @@ const SteeringLimits FORD_STEERING_LIMITS = {
   .max_steer = 1000,
   .angle_deg_to_can = 50000,        // 1 / (2e-5) rad to can
   .max_angle_error = 100,           // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
-  .angle_rate_up_lookup = {         // Ford only uses two breakpoints
+  .angle_rate_up_lookup = {
     {5., 25., 25.},
     {0.0002, 0.0001, 0.0001}
   },
