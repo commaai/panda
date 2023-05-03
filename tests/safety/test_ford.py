@@ -74,8 +74,8 @@ class TestFordSafety(common.PandaSafetyTest):
   # Curvature control limits
   DEG_TO_CAN = 50000  # 1 / (2e-5) rad to can
   MAX_CURVATURE = 0.02
-  MAX_CURVATURE_DELTA = 0.002
-  MIN_CURVATURE_ERROR_SPEED = 10.0  # m/s
+  MAX_CURVATURE_ERROR = 0.002
+  CURVATURE_ERROR_MIN_SPEED = 10.0  # m/s
 
   ANGLE_RATE_BP = [5., 25., 25.]
   ANGLE_RATE_UP = [0.0002, 0.0001, 0.0001]  # windup limit
@@ -247,7 +247,7 @@ class TestFordSafety(common.PandaSafetyTest):
     small_curvature = 2 / self.DEG_TO_CAN  # significant small amount of curvature to cross boundary
 
     for speed in np.arange(0, 40, 0.5):
-      limit_command = speed > self.MIN_CURVATURE_ERROR_SPEED
+      limit_command = speed > self.CURVATURE_ERROR_MIN_SPEED
       max_delta_up = np.interp(speed, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
       max_delta_up_lower = np.interp(speed + 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
 
@@ -260,7 +260,7 @@ class TestFordSafety(common.PandaSafetyTest):
       ]
 
       for sign in (-1, 1):
-        self._reset_curvature_measurement(sign * (self.MAX_CURVATURE_DELTA + 1e-3), speed)
+        self._reset_curvature_measurement(sign * (self.MAX_CURVATURE_ERROR + 1e-3), speed)
         for should_tx, curvature in cases:
           self._set_prev_desired_angle(sign * small_curvature)
           self.assertEqual(should_tx, self._tx(self._tja_command_msg(True, 0, 0, sign * (small_curvature + curvature), 0)))
@@ -270,7 +270,7 @@ class TestFordSafety(common.PandaSafetyTest):
     small_curvature = 2 / self.DEG_TO_CAN  # significant small amount of curvature to cross boundary
 
     for speed in np.arange(0, 40, 0.5):
-      limit_command = speed > self.MIN_CURVATURE_ERROR_SPEED
+      limit_command = speed > self.CURVATURE_ERROR_MIN_SPEED
       max_delta_down = np.interp(speed, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
       max_delta_down_lower = np.interp(speed + 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
 
@@ -283,7 +283,7 @@ class TestFordSafety(common.PandaSafetyTest):
       ]
 
       for sign in (-1, 1):
-        self._reset_curvature_measurement(sign * (self.MAX_CURVATURE - self.MAX_CURVATURE_DELTA - 1e-3), speed)
+        self._reset_curvature_measurement(sign * (self.MAX_CURVATURE - self.MAX_CURVATURE_ERROR - 1e-3), speed)
         for should_tx, curvature in cases:
           self._set_prev_desired_angle(sign * self.MAX_CURVATURE)
           self.assertEqual(should_tx, self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))

@@ -69,7 +69,7 @@ typedef struct {
   const struct lookup_t angle_rate_up_lookup;
   const struct lookup_t angle_rate_down_lookup;
   const int max_angle_error;             // used to limit error between meas and cmd while enabled
-  const float min_angle_error_speed;     // minimum speed to start limiting angle error
+  const float angle_error_min_speed;     // minimum speed to start limiting angle error
 
   const bool enforce_angle_error;        // enables max_angle_error check
   const bool inactive_angle_is_zero;     // if false, enforces angle near meas when disabled (default)
