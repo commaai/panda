@@ -212,8 +212,8 @@ class TestFordSafety(common.PandaSafetyTest):
     curvature_rates = np.arange(-0.001024, 0.00102375, 0.001).round(3)
     curvatures = np.arange(-0.02, 0.02094, 0.01).round(2)
 
-    for speed in (self.CURVATURE_DELTA_LIMIT_SPEED - 1,
-                  self.CURVATURE_DELTA_LIMIT_SPEED + 1):
+    for speed in (self.CURVATURE_ERROR_MIN_SPEED - 1,
+                  self.CURVATURE_ERROR_MIN_SPEED + 1):
       self._rx(self._speed_msg(speed))
       for controls_allowed in (True, False):
         for steer_control_enabled in (True, False):
