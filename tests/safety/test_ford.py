@@ -79,7 +79,7 @@ class TestFordSafety(common.PandaSafetyTest):
   # Curvature control limits
   DEG_TO_CAN = 50000  # 1 / (2e-5) rad to can
   MAX_CURVATURE = 0.02
-  MAX_CURVATURE_DELTA = 0.002
+  MAX_CURVATURE_ERROR = 0.002
   CURVATURE_DELTA_LIMIT_SPEED = 10.0  # m/s
 
   cnt_speed = 0
@@ -245,7 +245,7 @@ class TestFordSafety(common.PandaSafetyTest):
 
           limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
           for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 41):
-            too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_DELTA
+            too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_ERROR
 
             if steer_control_enabled:
               should_tx = not limit_command or not too_far_away
