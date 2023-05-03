@@ -540,9 +540,9 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
   DEG_TO_CAN: int
 
-  ANGLE_DELTA_BP: List[float]
-  ANGLE_DELTA_V: List[float]  # windup limit
-  ANGLE_DELTA_VU: List[float]  # unwind limit
+  ANGLE_RATE_BP: List[float]
+  ANGLE_RATE_UP: List[float]  # windup limit
+  ANGLE_RATE_DOWN: List[float]  # unwind limit
 
   @classmethod
   def setUpClass(cls):
@@ -572,8 +572,8 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     angles = [-300, -100, -10, 0, 10, 100, 300]
     for a in angles:
       for s in speeds:
-        max_delta_up = np.interp(s, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
-        max_delta_down = np.interp(s, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
+        max_delta_up = np.interp(s, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
+        max_delta_down = np.interp(s, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
 
         # first test against false positives
         self._reset_angle_measurement(a)
