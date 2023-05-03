@@ -562,6 +562,10 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     for _ in range(6):
       self._rx(self._angle_meas_msg(angle))
 
+  def _reset_speed_measurement(self, speed):
+    for _ in range(6):
+      self._rx(self._speed_msg(speed))  # pylint: disable=no-member
+
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
     speeds = [0., 1., 5., 10., 15., 50.]
@@ -573,7 +577,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
         # first test against false positives
         self._reset_angle_measurement(a)
-        self._rx(self._speed_msg(s))  # pylint: disable=no-member
+        self._reset_speed_measurement(s)
 
         self._set_prev_desired_angle(a)
         self.safety.set_controls_allowed(1)
