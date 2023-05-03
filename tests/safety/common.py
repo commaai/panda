@@ -10,6 +10,7 @@ from panda import ALTERNATIVE_EXPERIENCE
 from panda.tests.libpanda import libpanda_py
 
 MAX_WRONG_COUNTERS = 5
+VEHICLE_SPEED_FACTOR = 100
 
 
 def sign_of(a):
@@ -652,8 +653,8 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
         self.assertTrue(self._rx(self._speed_msg(speed + i * 0.1)))  # pylint: disable=no-member
 
       # assert close by one decimal place
-      self.assertLessEqual(abs(self.safety.get_vehicle_speed_min() - speed * 100), 1)
-      self.assertLessEqual(abs(self.safety.get_vehicle_speed_max() - (speed + 0.5) * 100), 1)
+      self.assertLessEqual(abs(self.safety.get_vehicle_speed_min() - speed * VEHICLE_SPEED_FACTOR), 1)
+      self.assertLessEqual(abs(self.safety.get_vehicle_speed_max() - (speed + 0.5) * VEHICLE_SPEED_FACTOR), 1)
 
       # reset sample_t by reinitializing the safety mode
       self.setUp()
