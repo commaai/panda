@@ -252,15 +252,10 @@ class TestFordSafety(common.PandaSafetyTest):
       max_delta_up_lower = np.interp(speed + 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
 
       cases = [
-        # stay the same
         (not limit_command, small_curvature),
-        # ramp up under min allowed rate
         (not limit_command, small_curvature + max_delta_up_lower - small_curvature),
-        # ramp up at minimum max rate
         (True, small_curvature + max_delta_up_lower),
-        # ramp up at max rate
         (True, small_curvature + max_delta_up),
-        # ramp up above max rate
         (False, small_curvature + max_delta_up + small_curvature),
       ]
 
@@ -280,15 +275,10 @@ class TestFordSafety(common.PandaSafetyTest):
       max_delta_down_lower = np.interp(speed + 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
 
       cases = [
-        # stay the same
         (not limit_command, self.MAX_CURVATURE),
-        # ramp down under min allowed rate
         (not limit_command, self.MAX_CURVATURE - max_delta_down_lower + small_curvature),
-        # ramp down at minimum max rate
         (True, self.MAX_CURVATURE - max_delta_down_lower),
-        # ramp down at max rate
         (True, self.MAX_CURVATURE - max_delta_down),
-        # ramp down above max rate
         (False, self.MAX_CURVATURE - max_delta_down - small_curvature),
       ]
 
