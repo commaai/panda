@@ -24,7 +24,7 @@
 
 #define ROUND(a) ({ \
   __typeof__ (a) _a = (a); \
-  _a + ((_a > 0) ? 0.5 : -0.5); \
+  (int)(_a + ((_a > 0) ? 0.5 : -0.5)); \
 })
 
 #ifndef NULL
