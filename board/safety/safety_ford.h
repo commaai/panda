@@ -163,12 +163,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     // Update vehicle speed
     if (addr == MSG_BrakeSysFeatures) {
       // Signal: Veh_V_ActlBrk
-      float speed = ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6;
-      print("updating sample: "); puth(speed * 10000); print("\n");
-//      update_sample(&vehicle_speed, speed * 100.);
       update_sample(&vehicle_speed, ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6 * 100. + 0.5);
-      print("in vehicle_speed sample int: "); puth(vehicle_speed.values[0]); print("\n");
-//      print("in vehicle_speed sample: "); puth(speed / 100.0 * 10000.); print("\n");
     }
 
     // Check vehicle speed against a second source
