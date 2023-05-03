@@ -206,6 +206,25 @@ class TestFordSafety(common.PandaSafetyTest):
         within_delta = abs(speed - speed_2) <= self.MAX_SPEED_DELTA
         self.assertEqual(self.safety.get_controls_allowed(), within_delta)
 
+  def test_angle_measurements(self):
+    """Tests rx hook correctly parses the curvature measurement from the vehicle speed and yaw rate"""
+    for speed in np.arange(0.5, 40, 0.5):
+      for curvature in np.arange(0, self.MAX_CURVATURE * 2, 2e-3):
+        self._rx(self._speed_msg(speed))
+        for c in (curvature, -curvature, 0, 0, 0, 0):
+          self._rx(self._yaw_rate_msg(c, speed))
+
+        self.assertEqual(self.safety.get_angle_meas_min(), round(-curvature * self.DEG_TO_CAN))
+        self.assertEqual(self.safety.get_angle_meas_max(), round(curvature * self.DEG_TO_CAN))
+
+        self._rx(self._yaw_rate_msg(0, speed))
+        self.assertEqual(self.safety.get_angle_meas_min(), round(-curvature * self.DEG_TO_CAN))
+        self.assertEqual(self.safety.get_angle_meas_max(), 0)
+
+        self._rx(self._yaw_rate_msg(0, speed))
+        self.assertEqual(self.safety.get_angle_meas_min(), 0)
+        self.assertEqual(self.safety.get_angle_meas_max(), 0)
+
   def test_steer_allowed(self):
     path_offsets = np.arange(-5.12, 5.11, 1).round()
     path_angles = np.arange(-0.5, 0.5235, 0.1).round(1)
