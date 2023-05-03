@@ -24,6 +24,12 @@ struct sample_t {
   int max;
 } sample_t_default = {.values = {0}, .min = 0, .max = 0};
 
+struct float_sample_t {
+  float values[6];
+  float min;
+  float max;
+} float_sample_t_default = {.values = {0.}, .min = 0., .max = 0.};
+
 // safety code requires floats
 struct lookup_t {
   float x[3];
@@ -128,6 +134,7 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
+void update_float_sample(struct float_sample_t *sample, float sample_new);
 bool max_limit_check(int val, const int MAX, const int MIN);
 bool angle_dist_to_meas_check(int val, struct sample_t *val_meas,
   const int MAX_ERROR, const int MAX_VAL);
@@ -192,7 +199,7 @@ bool brake_pressed_prev = false;
 bool regen_braking = false;
 bool regen_braking_prev = false;
 bool cruise_engaged_prev = false;
-struct sample_t vehicle_speed;
+struct float_sample_t vehicle_speed;
 bool vehicle_moving = false;
 bool acc_main_on = false;  // referred to as "ACC off" in ISO 15622:2018
 int cruise_button_prev = 0;
