@@ -80,7 +80,7 @@ class TestFordSafety(common.PandaSafetyTest):
   DEG_TO_CAN = 50000  # 1 / (2e-5) rad to can
   MAX_CURVATURE = 0.02
   MAX_CURVATURE_ERROR = 0.002
-  CURVATURE_DELTA_LIMIT_SPEED = 10.0  # m/s
+  CURVATURE_ERROR_MIN_SPEED = 10.0  # m/s
 
   cnt_speed = 0
   cnt_speed_2 = 0
@@ -243,7 +243,7 @@ class TestFordSafety(common.PandaSafetyTest):
         for initial_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 21):
           self._reset_curvature_measurement(initial_curvature, speed)
 
-          limit_command = speed > self.CURVATURE_DELTA_LIMIT_SPEED
+          limit_command = speed > self.CURVATURE_ERROR_MIN_SPEED
           for new_curvature in np.linspace(-self.MAX_CURVATURE, self.MAX_CURVATURE, 41):
             too_far_away = round_curvature_can(abs(new_curvature - initial_curvature)) > self.MAX_CURVATURE_ERROR
 

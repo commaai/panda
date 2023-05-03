@@ -140,7 +140,7 @@ const SteeringLimits FORD_STEERING_LIMITS = {
   .max_angle_error = 100,           // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
 
   // no blending at low speed due to lack of torque wind-up and inaccurate current curvature
-  .angle_error_limit_speed = 10.0,  // m/s
+  .angle_error_min_speed = 10.0,    // m/s
 
   .disable_angle_rate_limits = true,
   .enforce_angle_error = true,
