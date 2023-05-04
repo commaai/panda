@@ -630,11 +630,11 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
 
     // check that commanded angle value isn't too far from measured, used to limit torque for some safety modes
     // ensure we start moving in direction of meas while respecting rate limits if error is exceeded
-    if (limits.enforce_angle_error && (vehicle_speed > limits.angle_error_min_speed)) {
+    if (limits.enforce_angle_error && ((vehicle_speed.values[0] / VEHICLE_SPEED_FACTOR) > limits.angle_error_min_speed)) {
       // the rate limits above are liberally above openpilot's to avoid false positives.
       // likewise, allow a lower rate for moving towards meas when error is exceeded
-      int delta_angle_up_lower = (interpolate(limits.angle_rate_up_lookup, vehicle_speed + 1.) * limits.angle_deg_to_can);
-      int delta_angle_down_lower = (interpolate(limits.angle_rate_down_lookup, vehicle_speed + 1.) * limits.angle_deg_to_can);
+      int delta_angle_up_lower = (interpolate(limits.angle_rate_up_lookup, (vehicle_speed.max / VEHICLE_SPEED_FACTOR) + 1.) * limits.angle_deg_to_can);
+      int delta_angle_down_lower = (interpolate(limits.angle_rate_down_lookup, vehicle_speed.max / VEHICLE_SPEED_FACTOR + 1.) * limits.angle_deg_to_can);
 
       int highest_desired_angle_lower = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up_lower : delta_angle_down_lower);
       int lowest_desired_angle_lower = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down_lower : delta_angle_up_lower);
