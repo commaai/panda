@@ -53,11 +53,12 @@ uint8_t harness_detect_orientation(void) {
   uint8_t ret = HARNESS_STATUS_NC;
 
   #ifndef BOOTSTUB
-  uint32_t sbu1_voltage = adc_get_raw(current_board->harness_config->adc_channel_SBU1);
-  uint32_t sbu2_voltage = adc_get_raw(current_board->harness_config->adc_channel_SBU2);
+  uint16_t sbu1_voltage = adc_get_mV(current_board->harness_config->adc_channel_SBU1);
+  uint16_t sbu2_voltage = adc_get_mV(current_board->harness_config->adc_channel_SBU2);
+  uint16_t detection_threshold = current_board->avdd_mV / 2U;
 
   // Detect connection and orientation
-  if((sbu1_voltage < HARNESS_CONNECTED_THRESHOLD) || (sbu2_voltage < HARNESS_CONNECTED_THRESHOLD)){
+  if((sbu1_voltage < detection_threshold) || (sbu2_voltage < detection_threshold)){
     if (sbu1_voltage < sbu2_voltage) {
       // orientation flipped (PANDA_SBU1->HARNESS_SBU1(relay), PANDA_SBU2->HARNESS_SBU2(ign))
       ret = HARNESS_STATUS_FLIPPED;

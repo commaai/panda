@@ -30,9 +30,6 @@ separate IRQs for RX and TX.
 
 #define MAX_LED_FADE 10240U
 
-// Threshold voltage (mV) for either of the SBUs to be below before deciding harness is connected
-#define HARNESS_CONNECTED_THRESHOLD 40000U
-
 // There are 163 external interrupt sources (see stm32f735xx.h)
 #define NUM_INTERRUPTS 163U
 
