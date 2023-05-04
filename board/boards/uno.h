@@ -215,7 +215,7 @@ void uno_init(void) {
   }
 
   // Switch to phone usb mode if harness connection is powered by less than 7V
-  if(adc_get_voltage(current_board->adc_scale) < 7000U){
+  if(adc_get_mV(ADCCHAN_VIN, current_board->adc_scale) < 7000U){
     uno_set_usb_switch(true);
   } else {
     uno_set_usb_switch(false);
