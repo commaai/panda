@@ -214,7 +214,7 @@ void white_grey_common_init(void) {
   white_set_can_mode(CAN_MODE_NORMAL);
 
   // Init usb power mode
-  uint32_t voltage = adc_get_mV(ADCCHAN_VIN, current_board->adc_scale);
+  uint32_t voltage = adc_get_mV(ADCCHAN_VIN) * 11U;
   // Init in CDP mode only if panda is powered by 12V.
   // Otherwise a PC would not be able to flash a standalone panda
   if (voltage > 8000U) {  // 8V threshold
@@ -247,7 +247,7 @@ const board board_white = {
   .has_canfd = false,
   .has_rtc_battery = false,
   .fan_max_rpm = 0U,
-  .adc_scale = 8862U,
+  .avdd_mV = 3300U,
   .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 0U,
   .init = white_init,
