@@ -85,6 +85,7 @@ int get_vehicle_speed_min(void){
 
 int get_vehicle_speed_max(void){
   return vehicle_speed.max;
+}
 
 int get_current_safety_mode(void){
   return current_safety_mode;
