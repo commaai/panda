@@ -18,7 +18,7 @@ void adc_init(void) {
 
 uint16_t adc_get_raw(uint8_t channel) {
   // Select channel
-  register_set(&(ADC1->JSQR), (channel << 15U), 0x3FFFFFU);
+  register_set(&(ADC1->JSQR), ((uint32_t) channel << 15U), 0x3FFFFFU);
 
   // Start conversion
   ADC1->SR &= ~(ADC_SR_JEOC);
