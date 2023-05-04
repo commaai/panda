@@ -29,12 +29,5 @@ uint16_t adc_get_raw(uint8_t channel) {
 }
 
 uint16_t adc_get_mV(uint8_t channel) {
-  // REVC has a 10, 1 (1/11) voltage divider
-  // Here is the calculation for the scale (s)
-  // ADCV = VIN_S * (1/11) * (4095/3.3)
-  // RETVAL = ADCV * s = VIN_S*1000
-  // s = 1000/((4095/3.3)*(1/11)) = 8.8623046875
-
-  // Avoid needing floating point math, so output in mV
   return (adc_get_raw(channel) * current_board->avdd_mV) / 4095U;
 }
