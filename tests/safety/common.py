@@ -10,6 +10,7 @@ from panda import ALTERNATIVE_EXPERIENCE
 from panda.tests.libpanda import libpanda_py
 
 MAX_WRONG_COUNTERS = 5
+VEHICLE_SPEED_FACTOR = 100
 
 
 def sign_of(a):
@@ -551,6 +552,10 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
       raise unittest.SkipTest
 
   @abc.abstractmethod
+  def _speed_msg(self, speed):
+    pass
+
+  @abc.abstractmethod
   def _angle_cmd_msg(self, angle: float, enabled: bool):
     pass
 
@@ -566,6 +571,10 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     for _ in range(6):
       self._rx(self._angle_meas_msg(angle))
 
+  def _reset_speed_measurement(self, speed):
+    for _ in range(6):
+      self._rx(self._speed_msg(speed))
+
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
     speeds = [0., 1., 5., 10., 15., 50.]
@@ -577,7 +586,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
         # first test against false positives
         self._reset_angle_measurement(a)
-        self._rx(self._speed_msg(s))  # pylint: disable=no-member
+        self._reset_speed_measurement(s)
 
         self._set_prev_desired_angle(a)
         self.safety.set_controls_allowed(1)
@@ -640,6 +649,26 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
     self.assertEqual(self.safety.get_angle_meas_min(), 0)
     self.assertEqual(self.safety.get_angle_meas_max(), 0)
+
+  def test_vehicle_speed_measurements(self):
+    """
+    Tests:
+     - rx hook correctly parses and rounds the vehicle speed
+     - sample is reset on safety mode init
+    """
+    for speed in np.arange(0, 80, 0.5):
+      for i in range(6):
+        self.assertTrue(self._rx(self._speed_msg(speed + i * 0.1)))
+
+      # assert close by one decimal place
+      self.assertLessEqual(abs(self.safety.get_vehicle_speed_min() - speed * VEHICLE_SPEED_FACTOR), 1)
+      self.assertLessEqual(abs(self.safety.get_vehicle_speed_max() - (speed + 0.5) * VEHICLE_SPEED_FACTOR), 1)
+
+      # reset sample_t by reinitializing the safety mode
+      self._reset_safety_hooks()
+
+      self.assertEqual(self.safety.get_vehicle_speed_min(), 0)
+      self.assertEqual(self.safety.get_vehicle_speed_max(), 0)
 
 
 @add_regen_tests
