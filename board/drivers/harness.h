@@ -6,6 +6,7 @@ struct harness_t {
   uint8_t status;
   uint16_t sbu1_voltage_mV;
   uint16_t sbu2_voltage_mV;
+  bool relay_driven;
 };
 struct harness_t harness;
 
@@ -23,21 +24,21 @@ struct harness_configuration {
   uint8_t adc_channel_SBU2;
 };
 
-// this function will be the API for tici
 void set_intercept_relay(bool intercept) {
-  if (harness.status != HARNESS_STATUS_NC) {
-    if (intercept) {
-      print("switching harness to intercept (relay on)\n");
-    } else {
-      print("switching harness to passthrough (relay off)\n");
-    }
-
-    if(harness.status == HARNESS_STATUS_NORMAL){
-      set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, !intercept);
-    } else {
-      set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, !intercept);
-    }
+  if (harness.status == HARNESS_STATUS_NC) {
+    // no harness, no relay to drive
+    intercept = false;
   }
+
+  if (harness.status == HARNESS_STATUS_NORMAL) {
+    set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, true);
+    set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, !intercept);
+  } else {
+    set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, !intercept);
+    set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, true);
+  }
+
+  harness.relay_driven = intercept;
 }
 
 bool harness_check_ignition(void) {
@@ -94,7 +95,7 @@ void harness_init(void) {
     set_gpio_mode(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1, MODE_INPUT);
     set_gpio_mode(current_board->harness_config->GPIO_SBU2, current_board->harness_config->pin_SBU2, MODE_INPUT);
 
-    // keep busses connected by default
+    // keep buses connected by default
     set_intercept_relay(false);
   } else {
     print("failed to detect car harness!\n");
