@@ -101,6 +101,10 @@ uint8_t harness_detect_orientation(void) {
   return ret;
 }
 
+void harness_tick(void) {
+  harness.status = harness_detect_orientation();
+}
+
 void harness_init(void) {
   // delay such that the connection is fully made before trying orientation detection
   current_board->set_led(LED_BLUE, true);
