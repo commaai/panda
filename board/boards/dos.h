@@ -53,9 +53,9 @@ void dos_set_bootkick(bool enabled){
   set_gpio_output(GPIOC, 4, !enabled);
 }
 
-void dos_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
-  if (ignition && !usb_enum) {
-    // enable bootkick if ignition seen
+void dos_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {
+  if ((ignition && !usb_enum) || harness_inserted) {
+    // enable bootkick if ignition seen or if plugged into a harness
     dos_set_bootkick(true);
   } else if (heartbeat_seen) {
     // disable once openpilot is up

@@ -19,9 +19,9 @@ void tres_set_bootkick(bool enabled){
 }
 
 bool tres_ignition_prev = false;
-void tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
+void tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {
   UNUSED(usb_enum);
-  if (ignition && !tres_ignition_prev) {
+  if ((ignition && !tres_ignition_prev) || harness_inserted) {
     // enable bootkick on rising edge of ignition
     tres_set_bootkick(true);
   } else if (heartbeat_seen) {
