@@ -214,7 +214,7 @@ void white_grey_common_init(void) {
   white_set_can_mode(CAN_MODE_NORMAL);
 
   // Init usb power mode
-  uint32_t voltage = adc_get_mV(ADCCHAN_VIN) * 11U;
+  uint32_t voltage = adc_get_mV(ADCCHAN_VIN) * VIN_READOUT_DIVIDER;
   // Init in CDP mode only if panda is powered by 12V.
   // Otherwise a PC would not be able to flash a standalone panda
   if (voltage > 8000U) {  // 8V threshold
