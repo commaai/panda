@@ -26,20 +26,21 @@ struct harness_configuration {
 };
 
 void set_intercept_relay(bool intercept) {
+  bool drive_relay = intercept;
   if (harness.status == HARNESS_STATUS_NC) {
     // no harness, no relay to drive
-    intercept = false;
+    drive_relay = false;
   }
 
   // wait until we're not reading the analog voltages anymore
-  harness.relay_driven = intercept;
+  harness.relay_driven = drive_relay;
   while (harness.sbu_adc_lock == true) {}
 
   if (harness.status == HARNESS_STATUS_NORMAL) {
     set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, true);
-    set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, !intercept);
+    set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, !drive_relay);
   } else {
-    set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, !intercept);
+    set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, !drive_relay);
     set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, true);
   }
 }
