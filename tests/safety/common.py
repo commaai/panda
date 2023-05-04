@@ -58,6 +58,10 @@ class PandaSafetyTestBase(unittest.TestCase):
       cls.safety = None
       raise unittest.SkipTest
 
+  def _reset_safety_hooks(self):
+    self.safety.set_safety_hooks(self.safety.get_current_safety_mode(),
+                                 self.safety.get_current_safety_param())
+
   def _rx(self, msg):
     return self.safety.safety_rx_hook(msg)
 
@@ -658,10 +662,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
     if cls.__name__ == "PandaSafetyTest" or cls.__name__.endswith('Base'):
       cls.safety = None
       raise unittest.SkipTest
-
-  def _reset_safety_hooks(self):
-    self.safety.set_safety_hooks(self.safety.get_current_safety_mode(),
-                                 self.safety.get_current_safety_param())
 
   @abc.abstractmethod
   def _user_brake_msg(self, brake):
