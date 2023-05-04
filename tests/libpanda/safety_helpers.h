@@ -79,6 +79,14 @@ bool get_acc_main_on(void){
   return acc_main_on;
 }
 
+int get_current_safety_mode(void){
+  return current_safety_mode;
+}
+
+int get_current_safety_param(void){
+  return current_safety_param;
+}
+
 int get_hw_type(void){
   return hw_type;
 }

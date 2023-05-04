@@ -632,7 +632,8 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
       self.assertTrue(self._rx(self._angle_meas_msg(a)))
 
     # reset sample_t by reinitializing the safety mode
-    self.setUp()
+    # self.setUp()
+    self._reset_safety_hooks()
 
     self.assertEqual(self.safety.get_angle_meas_min(), 0)
     self.assertEqual(self.safety.get_angle_meas_max(), 0)
@@ -658,6 +659,11 @@ class PandaSafetyTest(PandaSafetyTestBase):
     if cls.__name__ == "PandaSafetyTest" or cls.__name__.endswith('Base'):
       cls.safety = None
       raise unittest.SkipTest
+
+  def _reset_safety_hooks(self):
+    print(self.safety.get_current_safety_mode(), self.safety.get_current_safety_param())
+    self.safety.set_safety_hooks(self.safety.get_current_safety_mode(), self.safety.get_current_safety_param())
+    # self.safety.set_safety_hooks(self.safety.get_current_safety_mode(), self.safety.get_current_safety_param())
 
   @abc.abstractmethod
   def _user_brake_msg(self, brake):
