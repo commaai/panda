@@ -13,26 +13,26 @@ const SteeringLimits SUBARU_L_STEERING_LIMITS = {
 // 0x161 is ES_CruiseThrottle
 // 0x164 is ES_LKAS
 
-#define MSG_CruiseControl         0x144
-#define MSG_Throttle              0x140
-#define MSG_Wheel_Speeds          0xD4
-#define MSG_Brake_Pedal           0xD1
-#define MSG_ES_LKAS               0x164
-#define MSG_ES_Distance           0x161
-#define MSG_Steering_Torque       0x371
+#define MSG_LEGACY_CruiseControl         0x144
+#define MSG_LEGACY_Throttle              0x140
+#define MSG_LEGACY_Wheel_Speeds          0xD4
+#define MSG_LEGACY_Brake_Pedal           0xD1
+#define MSG_LEGACY_ES_LKAS               0x164
+#define MSG_LEGACY_ES_Distance           0x161
+#define MSG_LEGACY_Steering_Torque       0x371
 
 
 const CanMsg SUBARU_L_TX_MSGS[] = {
-  {MSG_ES_Distance, 0, 8},
-  {MSG_ES_LKAS,     0, 8}
+  {MSG_LEGACY_ES_Distance, 0, 8},
+  {MSG_LEGACY_ES_LKAS,     0, 8}
 };
 #define SUBARU_L_TX_MSGS_LEN (sizeof(SUBARU_L_TX_MSGS) / sizeof(SUBARU_L_TX_MSGS[0]))
 
 // TODO: do checksum and counter checks after adding the signals to the outback dbc file
 AddrCheckStruct subaru_l_addr_checks[] = {
-  {.msg = {{MSG_Throttle,        0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_Steering_Torque, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_CruiseControl,   0, 8, .expected_timestep = 50000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_LEGACY_Throttle,        0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_LEGACY_Steering_Torque, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_LEGACY_CruiseControl,   0, 8, .expected_timestep = 50000U}, { 0 }, { 0 }}},
 };
 #define SUBARU_L_ADDR_CHECK_LEN (sizeof(subaru_l_addr_checks) / sizeof(subaru_l_addr_checks[0]))
 addr_checks subaru_l_rx_checks = {subaru_l_addr_checks, SUBARU_L_ADDR_CHECK_LEN};
@@ -43,7 +43,7 @@ static int subaru_legacy_rx_hook(CANPacket_t *to_push) {
 
   if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
-    if (addr == MSG_Steering_Torque) {
+    if (addr == MSG_LEGACY_Steering_Torque) {
       int torque_driver_new;
       torque_driver_new = (GET_BYTE(to_push, 3) >> 5) + (GET_BYTE(to_push, 4) << 3);
       torque_driver_new = to_signed(torque_driver_new, 11);
@@ -51,25 +51,25 @@ static int subaru_legacy_rx_hook(CANPacket_t *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if (addr == MSG_CruiseControl) {
+    if (addr == MSG_LEGACY_CruiseControl) {
       bool cruise_engaged = GET_BIT(to_push, 49U) != 0U;
       pcm_cruise_check(cruise_engaged);
     }
 
     // update vehicle moving with any non-zero wheel speed
-    if (addr == MSG_Wheel_Speeds) {
+    if (addr == MSG_LEGACY_Wheel_Speeds) {
       vehicle_moving = ((GET_BYTES(to_push, 0, 4) >> 12) != 0U) || (GET_BYTES(to_push, 4, 4) != 0U);
     }
 
-    if (addr == MSG_Brake_Pedal) {
+    if (addr == MSG_LEGACY_Brake_Pedal) {
       brake_pressed = ((GET_BYTES(to_push, 0, 4) >> 16) & 0xFFU) > 0U;
     }
 
-    if (addr == MSG_Throttle) {
+    if (addr == MSG_LEGACY_Throttle) {
       gas_pressed = GET_BYTE(to_push, 0) != 0U;
     }
 
-    generic_rx_checks((addr == MSG_ES_LKAS));
+    generic_rx_checks((addr == MSG_LEGACY_ES_LKAS));
   }
   return valid;
 }
@@ -84,7 +84,7 @@ static int subaru_legacy_tx_hook(CANPacket_t *to_send) {
   }
 
   // steer cmd checks
-  if (addr == MSG_ES_LKAS) {
+  if (addr == MSG_LEGACY_ES_LKAS) {
     int desired_torque = ((GET_BYTES(to_send, 0, 4) >> 8) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
@@ -104,7 +104,7 @@ static int subaru_legacy_fwd_hook(int bus_num, int addr) {
   }
 
   if (bus_num == 2) {
-    int block_msg = ((addr == MSG_ES_Distance) || (addr == MSG_ES_LKAS));
+    int block_msg = ((addr == MSG_LEGACY_ES_Distance) || (addr == MSG_LEGACY_ES_LKAS));
     if (!block_msg) {
       bus_fwd = 0;  // Main CAN
     }
