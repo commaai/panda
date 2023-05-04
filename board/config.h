@@ -15,6 +15,8 @@
 #define USBPACKET_MAX_SIZE 0x40U
 #define MAX_CAN_MSGS_PER_BULK_TRANSFER 51U
 
+#define VIN_READOUT_DIVIDER 11U
+
 // USB definitions
 #define USB_VID 0xBBAAU
 

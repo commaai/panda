@@ -67,7 +67,6 @@ separate IRQs for RX and TX.
 #include "stm32h7/peripherals.h"
 #include "stm32h7/interrupt_handlers.h"
 #include "drivers/timers.h"
-#include "stm32h7/lladc.h"
 
 #if !defined(BOOTSTUB) && defined(PANDA)
   #include "drivers/uart.h"
