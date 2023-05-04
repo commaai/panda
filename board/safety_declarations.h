@@ -14,10 +14,10 @@ uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
 }
 
 const int MAX_WRONG_COUNTERS = 5;
-// used to represent float vehicle speed in a sample_t
-const float VEHICLE_SPEED_FACTOR = 100.0;
 const uint8_t MAX_MISSED_MSGS = 10U;
 #define MAX_ADDR_CHECK_MSGS 3U
+// used to represent floating point vehicle speed in a sample_t
+#define VEHICLE_SPEED_FACTOR 100.0
 
 // sample struct that keeps 6 samples in memory
 struct sample_t {
