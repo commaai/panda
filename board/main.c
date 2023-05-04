@@ -152,7 +152,6 @@ void tick_handler(void) {
     // tick drivers at 8Hz
     fan_tick();
     usb_tick();
-    harness_tick();
     simple_watchdog_kick();
 
     // decimated to 1Hz
@@ -183,6 +182,7 @@ void tick_handler(void) {
       // tick drivers at 1Hz
       const bool recent_heartbeat = heartbeat_counter == 0U;
       current_board->board_tick(check_started(), usb_enumerated, recent_heartbeat);
+      harness_tick();
 
       // increase heartbeat counter and cap it at the uint32 limit
       if (heartbeat_counter < __UINT32_MAX__) {
