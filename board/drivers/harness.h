@@ -1,7 +1,13 @@
-uint8_t car_harness_status = 0U;
 #define HARNESS_STATUS_NC 0U
 #define HARNESS_STATUS_NORMAL 1U
 #define HARNESS_STATUS_FLIPPED 2U
+
+struct harness_t {
+  uint8_t status;
+  uint16_t sbu1_voltage_mV;
+  uint16_t sbu2_voltage_mV;
+};
+struct harness_t harness;
 
 struct harness_configuration {
   const bool has_harness;
@@ -19,14 +25,14 @@ struct harness_configuration {
 
 // this function will be the API for tici
 void set_intercept_relay(bool intercept) {
-  if (car_harness_status != HARNESS_STATUS_NC) {
+  if (harness.status != HARNESS_STATUS_NC) {
     if (intercept) {
       print("switching harness to intercept (relay on)\n");
     } else {
       print("switching harness to passthrough (relay off)\n");
     }
 
-    if(car_harness_status == HARNESS_STATUS_NORMAL){
+    if(harness.status == HARNESS_STATUS_NORMAL){
       set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, !intercept);
     } else {
       set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, !intercept);
@@ -36,7 +42,7 @@ void set_intercept_relay(bool intercept) {
 
 bool harness_check_ignition(void) {
   bool ret = false;
-  switch(car_harness_status){
+  switch(harness.status){
     case HARNESS_STATUS_NORMAL:
       ret = !get_gpio_input(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1);
       break;
@@ -53,13 +59,13 @@ uint8_t harness_detect_orientation(void) {
   uint8_t ret = HARNESS_STATUS_NC;
 
   #ifndef BOOTSTUB
-  uint16_t sbu1_voltage = adc_get_mV(current_board->harness_config->adc_channel_SBU1);
-  uint16_t sbu2_voltage = adc_get_mV(current_board->harness_config->adc_channel_SBU2);
+  harness.sbu1_voltage_mV = adc_get_mV(current_board->harness_config->adc_channel_SBU1);
+  harness.sbu2_voltage_mV = adc_get_mV(current_board->harness_config->adc_channel_SBU2);
   uint16_t detection_threshold = current_board->avdd_mV / 2U;
 
   // Detect connection and orientation
-  if((sbu1_voltage < detection_threshold) || (sbu2_voltage < detection_threshold)){
-    if (sbu1_voltage < sbu2_voltage) {
+  if((harness.sbu1_voltage_mV < detection_threshold) || (harness.sbu2_voltage_mV < detection_threshold)){
+    if (harness.sbu1_voltage_mV < harness.sbu2_voltage_mV) {
       // orientation flipped (PANDA_SBU1->HARNESS_SBU1(relay), PANDA_SBU2->HARNESS_SBU2(ign))
       ret = HARNESS_STATUS_FLIPPED;
     } else {
@@ -82,7 +88,7 @@ void harness_init(void) {
   uint8_t ret = harness_detect_orientation();
   if (ret != HARNESS_STATUS_NC) {
     print("detected car harness with orientation "); puth2(ret); print("\n");
-    car_harness_status = ret;
+    harness.status = ret;
 
     // set the SBU lines to be inputs before using the relay. The lines are not 5V tolerant in ADC mode!
     set_gpio_mode(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1, MODE_INPUT);
