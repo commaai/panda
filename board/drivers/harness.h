@@ -32,8 +32,11 @@ void set_intercept_relay(bool intercept) {
     drive_relay = false;
   }
 
+  if (drive_relay) {
+    harness.relay_driven = true;
+  }
+
   // wait until we're not reading the analog voltages anymore
-  harness.relay_driven = drive_relay;
   while (harness.sbu_adc_lock == true) {}
 
   if (harness.status == HARNESS_STATUS_NORMAL) {
@@ -42,6 +45,10 @@ void set_intercept_relay(bool intercept) {
   } else {
     set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, !drive_relay);
     set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, true);
+  }
+
+  if (!drive_relay) {
+    harness.relay_driven = false;
   }
 }
 
