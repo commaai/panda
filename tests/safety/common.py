@@ -665,7 +665,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
       self.assertLessEqual(abs(self.safety.get_vehicle_speed_max() - (speed + 0.5) * VEHICLE_SPEED_FACTOR), 1)
 
       # reset sample_t by reinitializing the safety mode
-      self.setUp()
+      self._reset_safety_hooks()
 
       self.assertEqual(self.safety.get_vehicle_speed_min(), 0)
       self.assertEqual(self.safety.get_vehicle_speed_max(), 0)
