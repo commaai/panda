@@ -96,8 +96,8 @@ class TestFordSafety(common.PandaSafetyTest):
     self.safety.set_desired_angle_last(t)
 
   def _reset_curvature_measurement(self, curvature, speed):
-    self._rx(self._speed_msg(speed))
     for _ in range(6):
+      self._rx(self._speed_msg(speed))
       self._rx(self._yaw_rate_msg(curvature, speed))
 
   # Driver brake pedal
@@ -248,6 +248,7 @@ class TestFordSafety(common.PandaSafetyTest):
               for curvature_rate in curvature_rates:
                 for curvature in curvatures:
                   self.safety.set_controls_allowed(controls_allowed)
+                  self._set_prev_desired_angle(curvature)
                   self._reset_curvature_measurement(curvature, speed)
 
                   should_tx = path_offset == 0 and path_angle == 0 and curvature_rate == 0
