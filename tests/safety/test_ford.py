@@ -62,13 +62,6 @@ class TestFordSafety(common.PandaSafetyTest):
   RELAY_MALFUNCTION_ADDR = MSG_IPMA_Data
   RELAY_MALFUNCTION_BUS = 0
 
-  TX_MSGS = [
-    [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA, 0], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
-    [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
-  ]
-  FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA, MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl, MSG_IPMA_Data]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
-
   # Max allowed delta between car speeds
   MAX_SPEED_DELTA = 2.0  # m/s
 
@@ -86,11 +79,12 @@ class TestFordSafety(common.PandaSafetyTest):
   cnt_speed_2 = 0
   cnt_yaw_rate = 0
 
-  def setUp(self):
-    self.packer = CANPackerPanda("ford_lincoln_base_pt")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
-    self.safety.init_tests()
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "TestFordSafety":
+      cls.packer = None
+      cls.safety = None
+      raise unittest.SkipTest
 
   def _set_prev_desired_angle(self, t):
     t = round(t * self.DEG_TO_CAN)
@@ -169,6 +163,14 @@ class TestFordSafety(common.PandaSafetyTest):
       "LatCtlCurv_No_Actl": curvature,           # Curvature [-0.02|0.02094] 1/meter
     }
     return self.packer.make_can_msg_panda("LateralMotionControl", 0, values)
+
+  # ACC command
+  def _acc_command_msg(self, gas: float, brake: float):
+    values = {
+      "AccPrpl_A_Rq": gas,      # [-5|5.23] m/s^2
+      "AccBrkTot_A_Rq": brake,  # [-20|11.9449] m/s^2
+    }
+    return self.packer.make_can_msg_panda("ACCDATA", 0, values)
 
   # Cruise control buttons
   def _acc_button_msg(self, button: int, bus: int):
@@ -334,6 +336,42 @@ class TestFordSafety(common.PandaSafetyTest):
       self._rx(self._pcm_status_msg(enabled))
       for bus in (0, 2):
         self.assertEqual(enabled, self._tx(self._acc_button_msg(Buttons.CANCEL, bus)))
+
+
+class TestFordStockSafety(TestFordSafety):
+  TX_MSGS = [
+    [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
+    [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
+  ]
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl, MSG_IPMA_Data]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("ford_lincoln_base_pt")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
+    self.safety.init_tests()
+
+
+class TestFordLongitudinalSafety(TestFordSafety):
+  TX_MSGS = [
+    [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA, 0], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
+    [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
+  ]
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA, MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl, MSG_IPMA_Data]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("ford_lincoln_base_pt")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_LONG_CONTROL)
+    self.safety.init_tests()
+
+  def test_gas_safety_check(self):
+    raise unittest.SkipTest("not implemented")
+
+  def test_brake_safety_check(self):
+    raise unittest.SkipTest("not implemented")
 
 
 if __name__ == "__main__":
