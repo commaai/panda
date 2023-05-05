@@ -66,6 +66,8 @@
 #include "stm32fx/board.h"
 #include "stm32fx/clock.h"
 
+#include "drivers/iwdg.h"
+
 #if defined(PANDA) || defined(BOOTSTUB)
   #include "drivers/spi.h"
   #include "stm32fx/llspi.h"
