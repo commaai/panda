@@ -5,8 +5,8 @@
 #endif
 
 typedef enum {
-  WATCHDOG_50MS = (400U - 1U),
-  WATCHDOG_500MS = 4000U,
+  WATCHDOG_50_MS = (400U - 1U),
+  WATCHDOG_500_MS = 4000U,
 } WatchdogTimeout;
 
 void watchdog_feed(void) {
@@ -14,7 +14,7 @@ void watchdog_feed(void) {
 }
 
 void watchdog_init(WatchdogTimeout timeout) {
-  // setup watchdog
+  // enable watchdog
   IND_WDG->KR = 0xCCCCU;
   IND_WDG->KR = 0x5555U;
 
@@ -25,6 +25,6 @@ void watchdog_init(WatchdogTimeout timeout) {
   // wait for watchdog to be updated
   while (IND_WDG->SR != 0U);
 
-  // start the watchdog
+  // start the countdown
   watchdog_feed();
 }

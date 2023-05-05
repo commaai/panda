@@ -369,7 +369,7 @@ int main(void) {
   current_board->enable_can_transceivers(true);
 
   // init watchdog for heartbeat loop, trigger after 4 8Hz cycles
-  watchdog_init(WATCHDOG_500MS);
+  //watchdog_init(WATCHDOG_500_MS);
   simple_watchdog_init(FAULT_HEARTBEAT_LOOP_WATCHDOG, (4U * 1000000U / 8U));
 
   // 8Hz timer
