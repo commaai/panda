@@ -4,27 +4,27 @@
 #define IWDG_RLR_RL_Msk 0xFFFU
 #endif
 
+typedef enum {
+  WATCHDOG_50MS = (400U - 1U),
+  WATCHDOG_500MS = 4000U,
+} WatchdogTimeout;
+
 void watchdog_feed(void) {
   IND_WDG->KR = 0xAAAAU;
 }
 
-void watchdog_init(void) {
+void watchdog_init(WatchdogTimeout timeout) {
   // setup watchdog
   IND_WDG->KR = 0xCCCCU;
   IND_WDG->KR = 0x5555U;
 
-  // 32KHz clock
-
-  // divider / 4
+  // 32KHz / 4 prescaler = 8000Hz
   register_set(&(IND_WDG->PR), 0x0U, IWDG_PR_PR_Msk);
+  register_set(&(IND_WDG->RLR), timeout, IWDG_RLR_RL_Msk);
 
-  // 0 = 0.125 ms, let's have a 50ms watchdog
-  register_set(&(IND_WDG->RLR), 4000U, IWDG_RLR_RL_Msk);
-
-  // wait for registers to be updated
+  // wait for watchdog to be updated
   while (IND_WDG->SR != 0U);
 
   // start the watchdog
-  //IND_WDG->KR = 0xCCCCU;
   watchdog_feed();
 }
