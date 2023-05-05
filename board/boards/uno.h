@@ -237,7 +237,7 @@ void uno_init(void) {
   }
 
   // Switch to phone usb mode if harness connection is powered by less than 7V
-  if(adc_get_voltage(current_board->adc_scale) < 7000U){
+  if((adc_get_mV(ADCCHAN_VIN) * VIN_READOUT_DIVIDER) < 7000U){
     uno_set_usb_switch(true);
   } else {
     uno_set_usb_switch(false);
@@ -273,7 +273,7 @@ const board board_uno = {
   .has_canfd = false,
   .has_rtc_battery = true,
   .fan_max_rpm = 5100U,
-  .adc_scale = 8862U,
+  .avdd_mV = 3300U,
   .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 0U,
   .init = uno_init,

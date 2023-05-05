@@ -307,6 +307,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
   {SAFETY_BODY, &body_hooks},
+  {SAFETY_FORD, &ford_hooks},
 #ifdef CANFD
   {SAFETY_HYUNDAI_CANFD, &hyundai_canfd_hooks},
 #endif
@@ -315,7 +316,6 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_SUBARU_LEGACY, &subaru_legacy_hooks},
   {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
-  {SAFETY_FORD, &ford_hooks},
 #endif
 };
 
@@ -332,7 +332,6 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   regen_braking = false;
   regen_braking_prev = false;
   cruise_engaged_prev = false;
-  vehicle_speed = 0;
   vehicle_moving = false;
   acc_main_on = false;
   cruise_button_prev = 0;
@@ -346,6 +345,8 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   invalid_steer_req_count = 0;
   torque_interceptor_detected = false;
 
+  vehicle_speed.min = 0;
+  vehicle_speed.max = 0;
   torque_meas.min = 0;
   torque_meas.max = 0;
   torque_driver.min = 0;
@@ -618,34 +619,41 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
   bool violation = false;
   bool alka_enabled = alternative_experience & ALT_EXP_ALKA;
 
-  if (!limits.disable_angle_rate_limits && (controls_allowed || alka_enabled) && steer_control_enabled) {
+  if ((controls_allowed || alka_enabled) && steer_control_enabled) {
     // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
     // add 1 to not false trigger the violation. also fudge the speed by 1 m/s so rate limits are
     // always slightly above openpilot's in case we read an updated speed in between angle commands
     // TODO: this speed fudge can be much lower, look at data to determine the lowest reasonable offset
-    int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
-    int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, vehicle_speed - 1.) * limits.angle_deg_to_can) + 1.;
+    int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, (vehicle_speed.min / VEHICLE_SPEED_FACTOR) - 1.) * limits.angle_deg_to_can) + 1.;
+    int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, (vehicle_speed.min / VEHICLE_SPEED_FACTOR) - 1.) * limits.angle_deg_to_can) + 1.;
 
+    // allow down limits at zero since small floats will be rounded to 0
     int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);
     int lowest_desired_angle = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down : delta_angle_up);
+
+    // check that commanded angle value isn't too far from measured, used to limit torque for some safety modes
+    // ensure we start moving in direction of meas while respecting rate limits if error is exceeded
+    if (limits.enforce_angle_error && ((vehicle_speed.values[0] / VEHICLE_SPEED_FACTOR) > limits.angle_error_min_speed)) {
+      // the rate limits above are liberally above openpilot's to avoid false positives.
+      // likewise, allow a lower rate for moving towards meas when error is exceeded
+      int delta_angle_up_lower = interpolate(limits.angle_rate_up_lookup, (vehicle_speed.max / VEHICLE_SPEED_FACTOR) + 1.) * limits.angle_deg_to_can;
+      int delta_angle_down_lower = interpolate(limits.angle_rate_down_lookup, (vehicle_speed.max / VEHICLE_SPEED_FACTOR) + 1.) * limits.angle_deg_to_can;
+
+      int highest_desired_angle_lower = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up_lower : delta_angle_down_lower);
+      int lowest_desired_angle_lower = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down_lower : delta_angle_up_lower);
+
+      lowest_desired_angle = MIN(MAX(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1), highest_desired_angle_lower);
+      highest_desired_angle = MAX(MIN(highest_desired_angle, angle_meas.max + limits.max_angle_error + 1), lowest_desired_angle_lower);
+
+      // don't enforce above the max steer
+      lowest_desired_angle = CLAMP(lowest_desired_angle, -limits.max_steer, limits.max_steer);
+      highest_desired_angle = CLAMP(highest_desired_angle, -limits.max_steer, limits.max_steer);
+    }
 
     // check for violation;
     violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
   }
   desired_angle_last = desired_angle;
-
-  // check that commanded angle value isn't too far from measured, used to limit torque for some safety modes
-  if (limits.enforce_angle_error && (controls_allowed || alka_enabled) && steer_control_enabled) {
-    if (vehicle_speed > limits.angle_error_limit_speed) {
-      // val must always be near angle_meas, limited to the maximum value
-      // add 1 to not false trigger the violation
-      int highest_allowed = CLAMP(angle_meas.max + limits.max_angle_error + 1, -limits.max_steer, limits.max_steer);
-      int lowest_allowed = CLAMP(angle_meas.min - limits.max_angle_error - 1, -limits.max_steer, limits.max_steer);
-
-      // check for violation
-      violation |= max_limit_check(desired_angle, highest_allowed, lowest_allowed);
-    }
-  }
 
   // Angle should either be 0 or same as current angle while not steering
   if (!steer_control_enabled) {

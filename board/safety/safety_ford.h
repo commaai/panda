@@ -138,11 +138,18 @@ const SteeringLimits FORD_STEERING_LIMITS = {
   .max_steer = 1000,
   .angle_deg_to_can = 50000,        // 1 / (2e-5) rad to can
   .max_angle_error = 100,           // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
+  .angle_rate_up_lookup = {
+    {5., 25., 25.},
+    {0.0002, 0.0001, 0.0001}
+  },
+  .angle_rate_down_lookup = {
+    {5., 25., 25.},
+    {0.000225, 0.00015, 0.00015}
+  },
 
   // no blending at low speed due to lack of torque wind-up and inaccurate current curvature
-  .angle_error_limit_speed = 10.0,  // m/s
+  .angle_error_min_speed = 10.0,    // m/s
 
-  .disable_angle_rate_limits = true,
   .enforce_angle_error = true,
   .inactive_angle_is_zero = true,
 };
@@ -163,7 +170,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     // Update vehicle speed
     if (addr == MSG_BrakeSysFeatures) {
       // Signal: Veh_V_ActlBrk
-      vehicle_speed = ((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6;
+      update_sample(&vehicle_speed, (((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6 * VEHICLE_SPEED_FACTOR) + 0.5);
     }
 
     // Check vehicle speed against a second source
@@ -171,7 +178,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
       // Disable controls if speeds from ABS and PCM ECUs are too far apart.
       // Signal: Veh_V_ActlEng
       float filtered_pcm_speed = ((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01 / 3.6;
-      if (ABS(filtered_pcm_speed - vehicle_speed) > FORD_MAX_SPEED_DELTA) {
+      if (ABS(filtered_pcm_speed - ((float)vehicle_speed.values[0] / VEHICLE_SPEED_FACTOR)) > FORD_MAX_SPEED_DELTA) {
         controls_allowed = 0;
       }
     }
@@ -180,7 +187,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (addr == MSG_Yaw_Data_FD1) {
       // Signal: VehYaw_W_Actl
       float ford_yaw_rate = (((GET_BYTE(to_push, 2) << 8U) | GET_BYTE(to_push, 3)) * 0.0002) - 6.5;
-      float current_curvature = ford_yaw_rate / MAX(vehicle_speed, 0.1);
+      float current_curvature = ford_yaw_rate / MAX(vehicle_speed.values[0] / VEHICLE_SPEED_FACTOR, 0.1);
       // convert current curvature into units on CAN for comparison with desired curvature
       int current_curvature_can = current_curvature * (float)FORD_STEERING_LIMITS.angle_deg_to_can +
                                   ((current_curvature > 0.) ? 0.5 : -0.5);
