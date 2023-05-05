@@ -65,8 +65,7 @@
 #include "drivers/timers.h"
 #include "stm32fx/board.h"
 #include "stm32fx/clock.h"
-
-#include "drivers/iwdg.h"
+#include "stm32fx/watchdog.h"
 
 #if defined(PANDA) || defined(BOOTSTUB)
   #include "drivers/spi.h"

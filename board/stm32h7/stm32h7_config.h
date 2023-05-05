@@ -75,8 +75,7 @@ separate IRQs for RX and TX.
 
 #include "stm32h7/board.h"
 #include "stm32h7/clock.h"
-
-#include "drivers/iwdg.h"
+#include "stm32h7/watchdog.h"
 
 #if !defined(BOOTSTUB) && defined(PANDA)
   #include "stm32h7/llexti.h"

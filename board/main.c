@@ -152,6 +152,7 @@ void tick_handler(void) {
     // tick drivers at 8Hz
     fan_tick();
     usb_tick();
+    watchdog_feed();
     simple_watchdog_kick();
 
     // decimated to 1Hz
@@ -368,6 +369,7 @@ int main(void) {
   current_board->enable_can_transceivers(true);
 
   // init watchdog for heartbeat loop, trigger after 4 8Hz cycles
+  watchdog_init();
   simple_watchdog_init(FAULT_HEARTBEAT_LOOP_WATCHDOG, (4U * 1000000U / 8U));
 
   // 8Hz timer
