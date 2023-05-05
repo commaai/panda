@@ -302,7 +302,7 @@ int main(void) {
   timer_init(TIM3, 15);
   NVIC_EnableIRQ(TIM3_IRQn);
 
-  watchdog_init();
+  watchdog_init(WATCHDOG_50_MS);
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();

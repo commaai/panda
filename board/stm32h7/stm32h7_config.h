@@ -44,6 +44,8 @@ separate IRQs for RX and TX.
 #define INTERRUPT_TIMER_IRQ TIM6_DAC_IRQn
 #define INTERRUPT_TIMER TIM6
 
+#define IND_WDG IWDG1
+
 #define PROVISION_CHUNK_ADDRESS 0x080FFFE0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x080FFFC0U
 
@@ -67,6 +69,7 @@ separate IRQs for RX and TX.
 #include "stm32h7/peripherals.h"
 #include "stm32h7/interrupt_handlers.h"
 #include "drivers/timers.h"
+#include "drivers/watchdog.h"
 
 #if !defined(BOOTSTUB) && defined(PANDA)
   #include "drivers/uart.h"
