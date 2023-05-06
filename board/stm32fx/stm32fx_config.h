@@ -36,6 +36,8 @@
 #define INTERRUPT_TIMER_IRQ TIM6_DAC_IRQn
 #define INTERRUPT_TIMER TIM6
 
+#define IND_WDG IWDG
+
 #define PROVISION_CHUNK_ADDRESS 0x1FFF79E0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x1FFF79C0U
 
@@ -63,9 +65,9 @@
 #include "stm32fx/peripherals.h"
 #include "stm32fx/interrupt_handlers.h"
 #include "drivers/timers.h"
-#include "stm32fx/lladc.h"
 #include "stm32fx/board.h"
 #include "stm32fx/clock.h"
+#include "drivers/watchdog.h"
 
 #if defined(PANDA) || defined(BOOTSTUB)
   #include "drivers/spi.h"
