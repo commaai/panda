@@ -494,6 +494,10 @@ float interpolate(struct lookup_t xy, float x) {
   return ret;
 }
 
+int ROUND(float val) {
+  return val + ((val > 0.0) ? 0.5 : -0.5);
+}
+
 // Safety checks for longitudinal actuation
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits) {
   bool accel_valid = get_longitudinal_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
