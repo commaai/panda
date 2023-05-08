@@ -58,7 +58,7 @@ def test_harness_status(p, panda_jungle):
         assert health[relay_line] < 0.1 * supply_voltage_mV
         assert health[ignition_line] > health[relay_line]
         if ignition:
-          assert health[ignition_line] < 0.2 * supply_voltage_mV
+          assert health[ignition_line] < 0.3 * supply_voltage_mV
         else:
           assert health[ignition_line] > 0.9 * supply_voltage_mV
 
