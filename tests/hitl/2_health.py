@@ -51,16 +51,16 @@ def test_harness_status(p, panda_jungle):
       if orientation == Panda.HARNESS_STATUS_NC:
         assert health['sbu1_voltage_mV'] > 0.9 * supply_voltage_mV
         assert health['sbu2_voltage_mV'] > 0.9 * supply_voltage_mV
-
-      relay_line = 'sbu1_voltage_mV' if flipped else 'sbu2_voltage_mV'
-      ignition_line = 'sbu2_voltage_mV' if flipped else 'sbu1_voltage_mV'
-
-      assert health[relay_line] < 0.1 * supply_voltage_mV
-      assert health[ignition_line] > health[relay_line]
-      if ignition:
-        assert health[ignition_line] < 0.2 * supply_voltage_mV
       else:
-        assert health[ignition_line] > 0.9 * supply_voltage_mV
+        relay_line = 'sbu1_voltage_mV' if (detected_orientation == Panda.HARNESS_STATUS_FLIPPED) else 'sbu2_voltage_mV'
+        ignition_line = 'sbu2_voltage_mV' if (detected_orientation == Panda.HARNESS_STATUS_FLIPPED) else 'sbu1_voltage_mV'
+
+        assert health[relay_line] < 0.1 * supply_voltage_mV
+        assert health[ignition_line] > health[relay_line]
+        if ignition:
+          assert health[ignition_line] < 0.2 * supply_voltage_mV
+        else:
+          assert health[ignition_line] > 0.9 * supply_voltage_mV
 
 
 
