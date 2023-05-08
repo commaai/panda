@@ -43,7 +43,7 @@ def test_harness_status(p, panda_jungle):
           assert detected_orientation == (Panda.HARNESS_STATUS_NORMAL if flipped else Panda.HARNESS_STATUS_FLIPPED)
 
       # Line ignition
-      assert health['ignition_line'] == ignition
+      assert health['ignition_line'] == (False if orientation == Panda.HARNESS_STATUS_NC else ignition)
 
       # SBU voltages
       supply_voltage_mV = 1800 if p.get_type() in [Panda.HW_TYPE_TRES, ] else 3300
