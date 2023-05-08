@@ -19,16 +19,25 @@ def test_ignition(p, panda_jungle):
 
 @pytest.mark.test_panda_types(PandaGroup.GEN2)
 def test_orientation_detection(p, panda_jungle):
-  seen_orientations = []
-  for i in range(3):
-    panda_jungle.set_harness_orientation(i)
-    p.reset()
+  flipped = None
+  for _ in range(2):
+    for orientation in [Panda.HARNESS_STATUS_NC, Panda.HARNESS_STATUS_NORMAL, Panda.HARNESS_STATUS_FLIPPED]:
+      panda_jungle.set_harness_orientation(orientation)
+      time.sleep(1)
 
-    detected_harness_orientation = p.health()['car_harness_status']
-    print(f"Detected orientation: {detected_harness_orientation}")
-    if (i == 0 and detected_harness_orientation != 0) or detected_harness_orientation in seen_orientations:
-      assert False
-    seen_orientations.append(detected_harness_orientation)
+      detected_orientation = p.health()['car_harness_status']
+      print(f"set: {orientation} detected: {detected_orientation}")
+
+      if orientation == Panda.HARNESS_STATUS_NC:
+        assert detected_orientation == Panda.HARNESS_STATUS_NC
+      else:
+        if flipped is None:
+          flipped = (detected_orientation != orientation)
+
+        if orientation == Panda.HARNESS_STATUS_NORMAL:
+          assert detected_orientation == (Panda.HARNESS_STATUS_FLIPPED if flipped else Panda.HARNESS_STATUS_NORMAL)
+        else:
+          assert detected_orientation == (Panda.HARNESS_STATUS_NORMAL if flipped else Panda.HARNESS_STATUS_FLIPPED)
 
 @pytest.mark.skip_panda_types((Panda.HW_TYPE_DOS, ))
 def test_voltage(p):
