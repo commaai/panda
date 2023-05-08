@@ -62,7 +62,7 @@ pipeline {
   agent any
   environment {
     CI = "1"
-    PARTIAL_TESTS = "${env.BRANCH_NAME == 'master' ? ' ' : '1'}"
+    //PARTIAL_TESTS = "${env.BRANCH_NAME == 'master' ? ' ' : '1'}"
     PYTHONWARNINGS= "error"
     DOCKER_IMAGE_TAG = "panda:build-${env.GIT_COMMIT}"
 
