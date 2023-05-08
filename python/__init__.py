@@ -182,9 +182,9 @@ class Panda:
   HW_TYPE_TRES = b'\x09'
 
   CAN_PACKET_VERSION = 4
-  HEALTH_PACKET_VERSION = 13
+  HEALTH_PACKET_VERSION = 14
   CAN_HEALTH_PACKET_VERSION = 4
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBBHB")
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBBHBHH")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBB")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
@@ -199,6 +199,10 @@ class Panda:
     HW_TYPE_DOS: 6500,
     HW_TYPE_TRES: 6600,
   }
+
+  HARNESS_STATUS_NC = 0
+  HARNESS_STATUS_NORMAL = 1
+  HARNESS_STATUS_FLIPPED = 2
 
   # first byte is for EPS scaling factor
   FLAG_TOYOTA_ALT_BRAKE = (1 << 8)
@@ -566,6 +570,8 @@ class Panda:
       "safety_rx_checks_invalid": a[22],
       "spi_checksum_error_count": a[23],
       "fan_stall_count": a[24],
+      "sbu1_voltage_mV": a[25],
+      "sbu2_voltage_mV": a[26],
     }
 
   @ensure_can_health_packet_version
