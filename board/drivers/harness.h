@@ -26,29 +26,31 @@ struct harness_configuration {
 };
 
 void set_intercept_relay(bool intercept) {
-  bool drive_relay = intercept;
-  if (harness.status == HARNESS_STATUS_NC) {
-    // no harness, no relay to drive
-    drive_relay = false;
-  }
+  if (current_board->harness_config->has_harness) {
+    bool drive_relay = intercept;
+    if (harness.status == HARNESS_STATUS_NC) {
+      // no harness, no relay to drive
+      drive_relay = false;
+    }
 
-  if (drive_relay) {
-    harness.relay_driven = true;
-  }
+    if (drive_relay) {
+      harness.relay_driven = true;
+    }
 
-  // wait until we're not reading the analog voltages anymore
-  while (harness.sbu_adc_lock == true) {}
+    // wait until we're not reading the analog voltages anymore
+    while (harness.sbu_adc_lock == true) {}
 
-  if (harness.status == HARNESS_STATUS_NORMAL) {
-    set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, true);
-    set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, !drive_relay);
-  } else {
-    set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, !drive_relay);
-    set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, true);
-  }
+    if (harness.status == HARNESS_STATUS_NORMAL) {
+      set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, true);
+      set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, !drive_relay);
+    } else {
+      set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, !drive_relay);
+      set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, true);
+    }
 
-  if (!drive_relay) {
-    harness.relay_driven = false;
+    if (!drive_relay) {
+      harness.relay_driven = false;
+    }
   }
 }
 
