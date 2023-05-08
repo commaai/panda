@@ -43,7 +43,7 @@ void set_intercept_relay(bool intercept) {
     if (harness.status == HARNESS_STATUS_NORMAL) {
       set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, true);
       set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, !drive_relay);
-    } else if (harness.status == HARNESS_STATUS_FLIPPED) {
+    } else {
       set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, !drive_relay);
       set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, true);
     }
