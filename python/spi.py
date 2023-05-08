@@ -228,7 +228,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
       # sync + command
       spi.xfer([self.SYNC, ])
       spi.xfer([cmd, cmd ^ 0xFF])
-      self._get_ack(spi)
+      self._get_ack(spi, timeout=0.1)
 
       # "predata" - for commands that send the first data without a checksum
       if predata is not None:
