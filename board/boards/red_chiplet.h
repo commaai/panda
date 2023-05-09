@@ -24,7 +24,7 @@ void red_chiplet_enable_can_transceiver(uint8_t transceiver, bool enabled) {
 }
 
 void red_chiplet_enable_can_transceivers(bool enabled) {
-  uint8_t main_bus = (car_harness_status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
+  uint8_t main_bus = (harness.status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
   for (uint8_t i=1U; i<=4U; i++) {
     // Leave main CAN always on for CAN-based ignition detection
     if (i == main_bus) {
@@ -92,7 +92,7 @@ void red_chiplet_init(void) {
   red_set_can_mode(CAN_MODE_NORMAL);
 
   // flip CAN0 and CAN2 if we are flipped
-  if (car_harness_status == HARNESS_STATUS_FLIPPED) {
+  if (harness.status == HARNESS_STATUS_FLIPPED) {
     can_flip_buses(0, 2);
   }
 }

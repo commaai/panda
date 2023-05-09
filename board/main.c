@@ -167,6 +167,7 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called at 8Hz
 uint8_t loop_counter = 0U;
+uint8_t previous_harness_status = HARNESS_STATUS_NC;
 void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
     // siren
@@ -203,8 +204,11 @@ void tick_handler(void) {
       current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
 
       // tick drivers at 1Hz
+      harness_tick();
+
       const bool recent_heartbeat = heartbeat_counter == 0U;
-      current_board->board_tick(check_started(), usb_enumerated, recent_heartbeat);
+      current_board->board_tick(check_started(), usb_enumerated, recent_heartbeat, ((harness.status != previous_harness_status) && (harness.status != HARNESS_STATUS_NC)));
+      previous_harness_status = harness.status;
 
       // increase heartbeat counter and cap it at the uint32 limit
       if (heartbeat_counter < __UINT32_MAX__) {
@@ -254,6 +258,9 @@ void tick_handler(void) {
           if (is_car_safety_mode(current_safety_mode)) {
             heartbeat_lost = true;
           }
+
+          // clear heartbeat engaged state
+          heartbeat_engaged = false;
 
           if (current_safety_mode != SAFETY_SILENT) {
             set_safety_mode(SAFETY_SILENT, 0U);
