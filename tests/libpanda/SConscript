@@ -1,5 +1,7 @@
+Import('CC', 'platform')
+
 env = Environment(
-  CC='gcc',
+  CC=CC,
   CFLAGS=[
     '-nostdlib',
     '-fno-builtin',
@@ -8,7 +10,8 @@ env = Environment(
   ],
   CPPPATH=[".", "../../board/"],
 )
-env.PrependENVPath('PATH', '/opt/homebrew/bin')
+if platform == "Darwin":
+  env.PrependENVPath('PATH', '/opt/homebrew/bin')
 
 if GetOption('ubsan'):
   flags = [
