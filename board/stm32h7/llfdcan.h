@@ -248,5 +248,6 @@ void llcan_clear_send(FDCAN_GlobalTypeDef *CANx) {
   // Clear error interrupts
   CANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EW | FDCAN_IR_EP | FDCAN_IR_ELO | FDCAN_IR_BO | FDCAN_IR_TEFL | FDCAN_IR_RF0L);
 
-  llcan_init(CANx);
+  bool ret = llcan_init(CANx);
+  UNUSED(ret);
 }
