@@ -45,11 +45,11 @@ static int subaru_legacy_rx_hook(CANPacket_t *to_push) {
 
     // update vehicle moving with any non-zero wheel speed
     if (addr == 0xD4) {
-      vehicle_moving = ((GET_BYTES_04(to_push) >> 12) != 0U) || (GET_BYTES_48(to_push) != 0U);
+      vehicle_moving = ((GET_BYTES(to_push, 0, 4) >> 12) != 0U) || (GET_BYTES(to_push, 4, 4) != 0U);
     }
 
     if (addr == 0xD1) {
-      brake_pressed = ((GET_BYTES_04(to_push) >> 16) & 0xFFU) > 0U;
+      brake_pressed = ((GET_BYTES(to_push, 0, 4) >> 16) & 0xFFU) > 0U;
     }
 
     if (addr == 0x140) {
@@ -72,7 +72,7 @@ static int subaru_legacy_tx_hook(CANPacket_t *to_send) {
 
   // steer cmd checks
   if (addr == 0x164) {
-    int desired_torque = ((GET_BYTES_04(to_send) >> 8) & 0x1FFFU);
+    int desired_torque = ((GET_BYTES(to_send, 0, 4) >> 8) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
     if (steer_torque_cmd_checks(desired_torque, -1, SUBARU_L_STEERING_LIMITS)) {

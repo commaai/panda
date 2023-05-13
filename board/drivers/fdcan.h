@@ -64,7 +64,12 @@ void update_can_health_pkt(uint8_t can_number, bool error_irq) {
     if ((CANx->IR & (FDCAN_IR_TEFL)) != 0) {
       can_health[can_number].total_tx_lost_cnt += 1U;
     }
-    llcan_clear_send(CANx);
+    // Actually reset can core only on arbitration or data phase errors
+    if ((CANx->IR & (FDCAN_IR_PED | FDCAN_IR_PEA)) != 0) {
+      llcan_clear_send(CANx);
+    }
+    // Clear error interrupts
+    CANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EW | FDCAN_IR_EP | FDCAN_IR_ELO | FDCAN_IR_BO | FDCAN_IR_TEFL | FDCAN_IR_RF0L);
   }
   EXIT_CRITICAL();
 }

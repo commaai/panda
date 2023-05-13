@@ -34,6 +34,9 @@ void llspi_miso_dma(uint8_t *addr, int len) {
   // clear under-run while we were reading
   SPI4->IFCR |= SPI_IFCR_UDRC;
 
+  // setup interrupt on TXC
+  register_set(&(SPI4->IER), (1U << SPI_IER_EOTIE_Pos), 0x3FFU);
+
   // enable DMA
   register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
   DMA2_Stream3->CR |= DMA_SxCR_EN;
@@ -52,28 +55,38 @@ void DMA2_Stream2_IRQ_Handler(void) {
 
 // panda -> master DMA finished
 void DMA2_Stream3_IRQ_Handler(void) {
-  // Clear interrupt flag
+  ENTER_CRITICAL();
+
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
+  spi_tx_dma_done = true;
 
-  // Wait until the transaction is actually finished and clear the DR.
-  // Timeout to prevent hang when the master clock stops.
-  bool timed_out = false;
-  uint32_t start_time = microsecond_timer_get();  
-  while (!(SPI4->SR & SPI_SR_TXC)) {
-    if (get_ts_elapsed(microsecond_timer_get(), start_time) > SPI_TIMEOUT_US) {
-      timed_out = true;
-      break;
-    }
+  EXIT_CRITICAL();
+}
+
+// panda TX finished
+void SPI4_IRQ_Handler(void) {
+  ENTER_CRITICAL();
+
+  // clear flag
+  SPI4->IFCR |= SPI_IFCR_EOTC;
+
+  if (spi_tx_dma_done && ((SPI4->SR & SPI_SR_TXC) != 0)) {
+    spi_tx_dma_done = false;
+
+    register_set(&(SPI4->IER), 0, 0x3FFU);
+
+    volatile uint8_t dat = SPI4->TXDR;
+    (void)dat;
+    spi_handle_tx(false);
   }
-  volatile uint8_t dat = SPI4->TXDR;
-  (void)dat;
 
-  spi_handle_tx(timed_out);
+  EXIT_CRITICAL();
 }
 
 
 void llspi_init(void) {
   // We expect less than 50 transactions (including control messages and CAN buffers) at the 100Hz boardd interval. Can be raised if needed.
+  REGISTER_INTERRUPT(SPI4_IRQn, SPI4_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
   REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
   REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
 
@@ -88,6 +101,7 @@ void llspi_init(void) {
   register_set(&(DMA2_Stream3->PAR), (uint32_t)&(SPI4->TXDR), 0xFFFFFFFFU);
 
   // Enable SPI
+  register_set(&(SPI4->IER), 0, 0x3FFU);
   register_set(&(SPI4->CFG1), (7U << SPI_CFG1_DSIZE_Pos), SPI_CFG1_DSIZE_Msk);
   register_set(&(SPI4->UDRDR), 0xcd, 0xFFFFU);  // set under-run value for debugging
   register_set(&(SPI4->CR1), SPI_CR1_SPE, 0xFFFFU);
@@ -95,4 +109,5 @@ void llspi_init(void) {
 
   NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+  NVIC_EnableIRQ(SPI4_IRQn);
 }

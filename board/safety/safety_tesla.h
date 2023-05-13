@@ -34,7 +34,7 @@ const CanMsg TESLA_PT_TX_MSGS[] = {
 #define TESLA_PT_TX_LEN (sizeof(TESLA_PT_TX_MSGS) / sizeof(TESLA_PT_TX_MSGS[0]))
 
 AddrCheckStruct tesla_addr_checks[] = {
-  {.msg = {{0x2b9, 0, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // DAS_control (25Hz)
+  {.msg = {{0x2b9, 2, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // DAS_control (25Hz)
   {.msg = {{0x370, 0, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // EPAS_sysStatus (25Hz)
   {.msg = {{0x108, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque1 (100Hz)
   {.msg = {{0x118, 0, 6, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque2 (100Hz)
@@ -49,7 +49,7 @@ AddrCheckStruct tesla_pt_addr_checks[] = {
   {.msg = {{0x106, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque1 (100Hz)
   {.msg = {{0x116, 0, 6, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque2 (100Hz)
   {.msg = {{0x1f8, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},   // BrakeMessage (50Hz)
-  {.msg = {{0x2bf, 0, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // DAS_control (25Hz)
+  {.msg = {{0x2bf, 2, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // DAS_control (25Hz)
   {.msg = {{0x256, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // DI_state (10Hz)
 };
 #define TESLA_PT_ADDR_CHECK_LEN (sizeof(tesla_pt_addr_checks) / sizeof(tesla_pt_addr_checks[0]))
@@ -80,8 +80,9 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
 
       if(addr == (tesla_powertrain ? 0x116 : 0x118)) {
         // Vehicle speed: ((0.05 * val) - 25) * MPH_TO_MPS
-        vehicle_speed = (((((GET_BYTE(to_push, 3) & 0x0FU) << 8) | (GET_BYTE(to_push, 2))) * 0.05) - 25) * 0.447;
-        vehicle_moving = ABS(vehicle_speed) > 0.1;
+        float speed = (((((GET_BYTE(to_push, 3) & 0x0FU) << 8) | (GET_BYTE(to_push, 2))) * 0.05) - 25) * 0.447;
+        vehicle_moving = ABS(speed) > 0.1;
+        update_sample(&vehicle_speed, ROUND(speed * VEHICLE_SPEED_FACTOR));
       }
 
       if(addr == (tesla_powertrain ? 0x106 : 0x108)) {

@@ -79,6 +79,22 @@ bool get_acc_main_on(void){
   return acc_main_on;
 }
 
+int get_vehicle_speed_min(void){
+  return vehicle_speed.min;
+}
+
+int get_vehicle_speed_max(void){
+  return vehicle_speed.max;
+}
+
+int get_current_safety_mode(void){
+  return current_safety_mode;
+}
+
+int get_current_safety_param(void){
+  return current_safety_param;
+}
+
 int get_hw_type(void){
   return hw_type;
 }
@@ -123,6 +139,14 @@ void set_desired_torque_last(int t){
 
 void set_desired_angle_last(int t){
   desired_angle_last = t;
+}
+
+int get_angle_meas_min(void){
+  return angle_meas.min;
+}
+
+int get_angle_meas_max(void){
+  return angle_meas.max;
 }
 
 
