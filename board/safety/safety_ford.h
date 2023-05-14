@@ -137,10 +137,17 @@ const uint16_t FORD_PARAM_LONGITUDINAL = 1;
 bool ford_longitudinal = false;
 
 const LongitudinalLimits FORD_LONG_LIMITS = {
-  // gas & brake cmd limits
-  .max_gas=700,
-  .min_gas=450,
-  .max_brake=4230,
+  // acceleration cmd limits (used for brakes)
+  // Signal: AccBrkTot_A_Rq
+  .max_accel = 5770,       //  2.5    m/s^s
+  .min_accel = 4230,       // -3.5    m/s^2
+  .inactive_accel = 5128,  // -0.0008 m/s^2
+
+  // gas cmd limits
+  // Signal: AccPrpl_A_Rq
+  .max_gas = 700,          //  2.5 m/s^2
+  .min_gas = 0,
+  .inactive_gas = 0,       // -5.0 m/s^2
 };
 
 #define INACTIVE_CURVATURE 1000U
@@ -256,11 +263,11 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     // Signal: AccPrpl_A_Rq
     int gas = ((GET_BYTE(to_send, 6) & 0x3U) << 8) | GET_BYTE(to_send, 7);
     // Signal: AccBrkTot_A_Rq
-    int brake = ((GET_BYTE(to_send, 0) & 0x1FU) << 8) | GET_BYTE(to_send, 1);
+    int accel = ((GET_BYTE(to_send, 0) & 0x1FU) << 8) | GET_BYTE(to_send, 1);
 
     bool violation = false;
+    violation |= longitudinal_accel_checks(accel, FORD_LONG_LIMITS);
     violation |= longitudinal_gas_checks(gas, FORD_LONG_LIMITS);
-    violation |= longitudinal_brake_checks(brake, FORD_LONG_LIMITS);
 
     if (violation) {
       tx = 0;
