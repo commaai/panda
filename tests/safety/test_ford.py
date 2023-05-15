@@ -57,6 +57,11 @@ class Buttons:
   TJA_TOGGLE = 2
 
 
+# Ford safety has two different configurations tested here:
+#  * stock longitudinal
+#  * openpilot longitudinal
+
+
 class TestFordSafety(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_IPMA_Data
