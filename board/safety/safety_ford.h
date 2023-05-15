@@ -9,6 +9,7 @@
 #define MSG_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
 #define MSG_Lane_Assist_Data1     0x3CA   // TX by OP, Lane Keep Assist
 #define MSG_LateralMotionControl  0x3D3   // TX by OP, Traffic Jam Assist
+#define MSG_LateralMotionControl2 0x3D6   // TX by OP, BlueCruise
 #define MSG_IPMA_Data             0x3D8   // TX by OP, IPMA and LKAS user interface
 
 // CAN bus numbers.
@@ -24,6 +25,16 @@ const CanMsg FORD_TX_MSGS[] = {
   {MSG_IPMA_Data, 0, 8},
 };
 #define FORD_TX_LEN (sizeof(FORD_TX_MSGS) / sizeof(FORD_TX_MSGS[0]))
+
+const CanMsg FORD_CANFD_TX_MSGS[] = {
+  {MSG_Steering_Data_FD1, 0, 8},
+  {MSG_Steering_Data_FD1, 2, 8},
+  {MSG_ACCDATA_3, 0, 8},
+  {MSG_Lane_Assist_Data1, 0, 8},
+  {MSG_LateralMotionControl2, 0, 8},
+  {MSG_IPMA_Data, 0, 8},
+};
+#define FORD_CANFD_TX_LEN (sizeof(FORD_CANFD_TX_MSGS) / sizeof(FORD_CANFD_TX_MSGS[0]))
 
 // warning: quality flags are not yet checked in openpilot's CAN parser,
 // this may be the cause of blocked messages
@@ -120,6 +131,10 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
   return valid;
 }
 
+const uint16_t FORD_PARAM_CANFD = 1;
+
+bool ford_canfd = false;
+
 #define INACTIVE_CURVATURE 1000U
 #define INACTIVE_CURVATURE_RATE 4096U
 #define INACTIVE_PATH_OFFSET 512U
@@ -130,6 +145,7 @@ static bool ford_lkas_msg_check(int addr) {
   return (addr == MSG_ACCDATA_3)
       || (addr == MSG_Lane_Assist_Data1)
       || (addr == MSG_LateralMotionControl)
+      || (addr == MSG_LateralMotionControl2)
       || (addr == MSG_IPMA_Data);
 }
 
@@ -219,12 +235,13 @@ static int ford_rx_hook(CANPacket_t *to_push) {
 }
 
 static int ford_tx_hook(CANPacket_t *to_send) {
-
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
-  if (!msg_allowed(to_send, FORD_TX_MSGS, FORD_TX_LEN)) {
-    tx = 0;
+  if (ford_canfd) {
+    tx = msg_allowed(to_send, FORD_CANFD_TX_MSGS, FORD_TX_LEN);
+  } else {
+    tx = msg_allowed(to_send, FORD_TX_MSGS, FORD_TX_LEN);
   }
 
   // Safety check for Steering_Data_FD1 button signals
@@ -275,6 +292,27 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     }
   }
 
+  // Safety check for LateralMotionControl2 action
+  if (addr == MSG_LateralMotionControl2) {
+    // Signal: LatCtl_D2_Rq
+    bool steer_control_enabled = ((GET_BYTE(to_send, 0) >> 4) & 0x7U) != 0U;
+    unsigned int raw_curvature = (GET_BYTE(to_send, 2) << 3) | (GET_BYTE(to_send, 3) >> 5);
+    unsigned int raw_curvature_rate = (GET_BYTE(to_send, 6) << 3) | (GET_BYTE(to_send, 7) >> 5);
+    unsigned int raw_path_angle = ((GET_BYTE(to_send, 3) & 0x1F) << 6) | (GET_BYTE(to_send, 4) >> 2);
+    unsigned int raw_path_offset = ((GET_BYTE(to_send, 4) & 0x3) << 8) | GET_BYTE(to_send, 5);
+
+    // These signals are not yet tested with the current safety limits
+    bool violation = (raw_curvature_rate != INACTIVE_CURVATURE_RATE) || (raw_path_angle != INACTIVE_PATH_ANGLE) || (raw_path_offset != INACTIVE_PATH_OFFSET);
+
+    // Check angle error and steer_control_enabled
+    int desired_curvature = raw_curvature - INACTIVE_CURVATURE;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
+    violation |= steer_angle_cmd_checks(desired_curvature, steer_control_enabled, FORD_STEERING_LIMITS);
+
+    if (violation) {
+      tx = 0;
+    }
+  }
+
   // 1 allows the message through
   return tx;
 }
@@ -306,8 +344,7 @@ static int ford_fwd_hook(int bus_num, int addr) {
 }
 
 static const addr_checks* ford_init(uint16_t param) {
-  UNUSED(param);
-
+  ford_canfd = GET_FLAG(param, FORD_PARAM_CANFD);
   return &ford_rx_checks;
 }
 
