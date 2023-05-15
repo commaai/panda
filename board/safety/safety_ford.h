@@ -298,8 +298,8 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     bool steer_control_enabled = ((GET_BYTE(to_send, 0) >> 4) & 0x7U) != 0U;
     unsigned int raw_curvature = (GET_BYTE(to_send, 2) << 3) | (GET_BYTE(to_send, 3) >> 5);
     unsigned int raw_curvature_rate = (GET_BYTE(to_send, 6) << 3) | (GET_BYTE(to_send, 7) >> 5);
-    unsigned int raw_path_angle = ((GET_BYTE(to_send, 3) & 0x1F) << 6) | (GET_BYTE(to_send, 4) >> 2);
-    unsigned int raw_path_offset = ((GET_BYTE(to_send, 4) & 0x3) << 8) | GET_BYTE(to_send, 5);
+    unsigned int raw_path_angle = ((GET_BYTE(to_send, 3) & 0x1FU) << 6) | (GET_BYTE(to_send, 4) >> 2);
+    unsigned int raw_path_offset = ((GET_BYTE(to_send, 4) & 0x3U) << 8) | GET_BYTE(to_send, 5);
 
     // These signals are not yet tested with the current safety limits
     bool violation = (raw_curvature_rate != INACTIVE_CURVATURE_RATE) || (raw_path_angle != INACTIVE_PATH_ANGLE) || (raw_path_offset != INACTIVE_PATH_OFFSET);
