@@ -20,8 +20,8 @@ sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip libffi-dev git
 ```
 ```bash
 # macOS
-brew tap ArmMbed/homebrew-formulae
-brew install python dfu-util arm-none-eabi-gcc gcc@12
+brew install --cask gcc-arm-embedded
+brew install python3 dfu-util gcc@12
 ```
 
 Clone panda repository:
