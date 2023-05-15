@@ -1,4 +1,4 @@
-const SteeringLimits SUBARU_PG = {
+const SteeringLimits SUBARU_PG_STEERING_LIMITS = {
   .max_steer = 2047,
   .max_rt_delta = 940,
   .max_rt_interval = 250000,
@@ -75,7 +75,7 @@ static int subaru_preglobal_tx_hook(CANPacket_t *to_send) {
     int desired_torque = ((GET_BYTES(to_send, 0, 4) >> 8) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
-    if (steer_torque_cmd_checks(desired_torque, -1, SUBARU_PG)) {
+    if (steer_torque_cmd_checks(desired_torque, -1, SUBARU_PG_STEERING_LIMITS)) {
       tx = 0;
     }
 
