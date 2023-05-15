@@ -11,7 +11,7 @@
 #include "safety/safety_hyundai.h"
 #include "safety/safety_chrysler.h"
 #include "safety/safety_subaru.h"
-#include "safety/safety_subaru_legacy.h"
+#include "safety/safety_subaru_preglobal.h"
 #include "safety/safety_mazda.h"
 #include "safety/safety_nissan.h"
 #include "safety/safety_volkswagen_mqb.h"
@@ -44,7 +44,7 @@
 #define SAFETY_NOOUTPUT 19U
 #define SAFETY_HONDA_BOSCH 20U
 #define SAFETY_VOLKSWAGEN_PQ 21U
-#define SAFETY_SUBARU_LEGACY 22U
+#define SAFETY_SUBARU_PREGLOBAL 22U
 #define SAFETY_HYUNDAI_LEGACY 23U
 #define SAFETY_HYUNDAI_COMMUNITY 24U
 #define SAFETY_STELLANTIS 25U
@@ -313,7 +313,7 @@ const safety_hook_config safety_hook_registry[] = {
 #endif
 #ifdef ALLOW_DEBUG
   {SAFETY_TESLA, &tesla_hooks},
-  {SAFETY_SUBARU_LEGACY, &subaru_legacy_hooks},
+  {SAFETY_SUBARU_PREGLOBAL, &subaru_preglobal_hooks},
   {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
 #endif
