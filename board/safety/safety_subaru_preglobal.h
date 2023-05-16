@@ -29,7 +29,7 @@ const CanMsg SUBARU_PG_TX_MSGS[] = {
 #define SUBARU_PG_TX_MSGS_LEN (sizeof(SUBARU_PG_TX_MSGS) / sizeof(SUBARU_PG_TX_MSGS[0]))
 
 // TODO: do checksum and counter checks after adding the signals to the outback dbc file
-AddrCheckStruct subaru_pg_addr_checks[] = {
+AddrCheckStruct subaru_preglobal_addr_checks[] = {
   {.msg = {{MSG_SUBARU_PG_Throttle,        0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_SUBARU_PG_Steering_Torque, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_SUBARU_PG_CruiseControl,   0, 8, .expected_timestep = 50000U}, { 0 }, { 0 }}},
