@@ -10,6 +10,7 @@ from panda import ALTERNATIVE_EXPERIENCE
 from panda.tests.libpanda import libpanda_py
 
 MAX_WRONG_COUNTERS = 5
+VEHICLE_SPEED_FACTOR = 100
 
 
 def sign_of(a):
@@ -57,6 +58,10 @@ class PandaSafetyTestBase(unittest.TestCase):
     if cls.__name__ == "PandaSafetyTestBase":
       cls.safety = None
       raise unittest.SkipTest
+
+  def _reset_safety_hooks(self):
+    self.safety.set_safety_hooks(self.safety.get_current_safety_mode(),
+                                 self.safety.get_current_safety_param())
 
   def _rx(self, msg):
     return self.safety.safety_rx_hook(msg)
@@ -409,7 +414,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       self.assertTrue(self._rx(self._torque_driver_msg(t)))
 
     # reset sample_t by reinitializing the safety mode
-    self.setUp()
+    self._reset_safety_hooks()
 
     self.assertEqual(self.safety.get_torque_driver_min(), 0)
     self.assertEqual(self.safety.get_torque_driver_max(), 0)
@@ -526,7 +531,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       self.assertTrue(self._rx(self._torque_meas_msg(t)))
 
     # reset sample_t by reinitializing the safety mode
-    self.setUp()
+    self._reset_safety_hooks()
 
     self.assertEqual(self.safety.get_torque_meas_min(), 0)
     self.assertEqual(self.safety.get_torque_meas_max(), 0)
@@ -536,15 +541,19 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
   DEG_TO_CAN: int
 
-  ANGLE_DELTA_BP: List[float]
-  ANGLE_DELTA_V: List[float]  # windup limit
-  ANGLE_DELTA_VU: List[float]  # unwind limit
+  ANGLE_RATE_BP: List[float]
+  ANGLE_RATE_UP: List[float]  # windup limit
+  ANGLE_RATE_DOWN: List[float]  # unwind limit
 
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "AngleSteeringSafetyTest":
       cls.safety = None
       raise unittest.SkipTest
+
+  @abc.abstractmethod
+  def _speed_msg(self, speed):
+    pass
 
   @abc.abstractmethod
   def _angle_cmd_msg(self, angle: float, enabled: bool):
@@ -562,18 +571,22 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     for _ in range(6):
       self._rx(self._angle_meas_msg(angle))
 
+  def _reset_speed_measurement(self, speed):
+    for _ in range(6):
+      self._rx(self._speed_msg(speed))
+
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
     speeds = [0., 1., 5., 10., 15., 50.]
     angles = [-300, -100, -10, 0, 10, 100, 300]
     for a in angles:
       for s in speeds:
-        max_delta_up = np.interp(s, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_V)
-        max_delta_down = np.interp(s, self.ANGLE_DELTA_BP, self.ANGLE_DELTA_VU)
+        max_delta_up = np.interp(s, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
+        max_delta_down = np.interp(s, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
 
         # first test against false positives
         self._reset_angle_measurement(a)
-        self._rx(self._speed_msg(s))  # pylint: disable=no-member
+        self._reset_speed_measurement(s)
 
         self._set_prev_desired_angle(a)
         self.safety.set_controls_allowed(1)
@@ -632,10 +645,30 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
       self.assertTrue(self._rx(self._angle_meas_msg(a)))
 
     # reset sample_t by reinitializing the safety mode
-    self.setUp()
+    self._reset_safety_hooks()
 
     self.assertEqual(self.safety.get_angle_meas_min(), 0)
     self.assertEqual(self.safety.get_angle_meas_max(), 0)
+
+  def test_vehicle_speed_measurements(self):
+    """
+    Tests:
+     - rx hook correctly parses and rounds the vehicle speed
+     - sample is reset on safety mode init
+    """
+    for speed in np.arange(0, 80, 0.5):
+      for i in range(6):
+        self.assertTrue(self._rx(self._speed_msg(speed + i * 0.1)))
+
+      # assert close by one decimal place
+      self.assertLessEqual(abs(self.safety.get_vehicle_speed_min() - speed * VEHICLE_SPEED_FACTOR), 1)
+      self.assertLessEqual(abs(self.safety.get_vehicle_speed_max() - (speed + 0.5) * VEHICLE_SPEED_FACTOR), 1)
+
+      # reset sample_t by reinitializing the safety mode
+      self._reset_safety_hooks()
+
+      self.assertEqual(self.safety.get_vehicle_speed_min(), 0)
+      self.assertEqual(self.safety.get_vehicle_speed_max(), 0)
 
 
 @add_regen_tests
@@ -832,15 +865,15 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertFalse(self.safety.get_vehicle_moving())
 
     # not moving
-    self.safety.safety_rx_hook(self._vehicle_moving_msg(0))
+    self._rx(self._vehicle_moving_msg(0))
     self.assertFalse(self.safety.get_vehicle_moving())
 
     # speed is at threshold
-    self.safety.safety_rx_hook(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD))
+    self._rx(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD))
     self.assertFalse(self.safety.get_vehicle_moving())
 
     # past threshold
-    self.safety.safety_rx_hook(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD + 1))
+    self._rx(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD + 1))
     self.assertTrue(self.safety.get_vehicle_moving())
 
   def test_tx_hook_on_wrong_safety_mode(self):

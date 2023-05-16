@@ -16,6 +16,8 @@ uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
 const int MAX_WRONG_COUNTERS = 5;
 const uint8_t MAX_MISSED_MSGS = 10U;
 #define MAX_ADDR_CHECK_MSGS 3U
+// used to represent floating point vehicle speed in a sample_t
+#define VEHICLE_SPEED_FACTOR 100.0
 
 // sample struct that keeps 6 samples in memory
 struct sample_t {
@@ -69,9 +71,8 @@ typedef struct {
   const struct lookup_t angle_rate_up_lookup;
   const struct lookup_t angle_rate_down_lookup;
   const int max_angle_error;             // used to limit error between meas and cmd while enabled
-  const float angle_error_limit_speed;   // minimum speed to start limiting angle error
+  const float angle_error_min_speed;     // minimum speed to start limiting angle error
 
-  const bool disable_angle_rate_limits;
   const bool enforce_angle_error;        // enables max_angle_error check
   const bool inactive_angle_is_zero;     // if false, enforces angle near meas when disabled (default)
 } SteeringLimits;
@@ -140,6 +141,7 @@ bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
 bool get_longitudinal_allowed(void);
 bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 float interpolate(struct lookup_t xy, float x);
+int ROUND(float val);
 void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]);
 void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]);
 bool msg_allowed(CANPacket_t *to_send, const CanMsg msg_list[], int len);
@@ -193,7 +195,7 @@ bool brake_pressed_prev = false;
 bool regen_braking = false;
 bool regen_braking_prev = false;
 bool cruise_engaged_prev = false;
-float vehicle_speed = 0;
+struct sample_t vehicle_speed;
 bool vehicle_moving = false;
 bool acc_main_on = false;  // referred to as "ACC off" in ISO 15622:2018
 int cruise_button_prev = 0;
