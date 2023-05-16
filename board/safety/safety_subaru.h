@@ -20,54 +20,54 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
   .type = TorqueDriverLimited,
 };
 
-#define MSG_Brake_Status          0x13c
-#define MSG_CruiseControl         0x240
-#define MSG_Throttle              0x40
-#define MSG_Steering_Torque       0x119
-#define MSG_Wheel_Speeds          0x13a
+#define MSG_SUBARU_G_Brake_Status          0x13c
+#define MSG_SUBARU_G_CruiseControl         0x240
+#define MSG_SUBARU_G_Throttle              0x40
+#define MSG_SUBARU_G_Steering_Torque       0x119
+#define MSG_SUBARU_G_Wheel_Speeds          0x13a
 
-#define MSG_ES_LKAS               0x122
-#define MSG_ES_Brake              0x220
-#define MSG_ES_Distance           0x221
-#define MSG_ES_Status             0x222
-#define MSG_ES_DashStatus         0x321
-#define MSG_ES_LKAS_State         0x322
-#define MSG_INFOTAINMENT_STATUS   0x323
+#define MSG_SUBARU_G_ES_LKAS               0x122
+#define MSG_SUBARU_G_ES_Brake              0x220
+#define MSG_SUBARU_G_ES_Distance           0x221
+#define MSG_SUBARU_G_ES_Status             0x222
+#define MSG_SUBARU_G_ES_DashStatus         0x321
+#define MSG_SUBARU_G_ES_LKAS_State         0x322
+#define MSG_SUBARU_G_INFOTAINMENT_STATUS   0x323
 
 const CanMsg SUBARU_TX_MSGS[] = {
-  {MSG_ES_LKAS, 0, 8},
-  {MSG_ES_Distance, 0, 8},
-  {MSG_ES_DashStatus, 0, 8},
-  {MSG_ES_LKAS_State, 0, 8},
-  {MSG_INFOTAINMENT_STATUS, 0, 8},
+  {MSG_SUBARU_G_ES_LKAS, 0, 8},
+  {MSG_SUBARU_G_ES_Distance, 0, 8},
+  {MSG_SUBARU_G_ES_DashStatus, 0, 8},
+  {MSG_SUBARU_G_ES_LKAS_State, 0, 8},
+  {MSG_SUBARU_G_INFOTAINMENT_STATUS, 0, 8},
 };
 #define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
 
 const CanMsg SUBARU_GEN2_TX_MSGS[] = {
-  {MSG_ES_LKAS, 0, 8},
-  {MSG_ES_Distance, 1, 8},
-  {MSG_ES_DashStatus, 0, 8},
-  {MSG_ES_LKAS_State, 0, 8},
-  {MSG_INFOTAINMENT_STATUS, 0, 8}
+  {MSG_SUBARU_G_ES_LKAS, 0, 8},
+  {MSG_SUBARU_G_ES_Distance, 1, 8},
+  {MSG_SUBARU_G_ES_DashStatus, 0, 8},
+  {MSG_SUBARU_G_ES_LKAS_State, 0, 8},
+  {MSG_SUBARU_G_INFOTAINMENT_STATUS, 0, 8}
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
 
 AddrCheckStruct subaru_addr_checks[] = {
-  {.msg = {{MSG_Throttle, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_Steering_Torque, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_Wheel_Speeds, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_Brake_Status, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_CruiseControl, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_G_Throttle, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_G_Steering_Torque, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_G_Wheel_Speeds, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_G_Brake_Status, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_G_CruiseControl, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
 };
 #define SUBARU_ADDR_CHECK_LEN (sizeof(subaru_addr_checks) / sizeof(subaru_addr_checks[0]))
 addr_checks subaru_rx_checks = {subaru_addr_checks, SUBARU_ADDR_CHECK_LEN};
 
 AddrCheckStruct subaru_gen2_addr_checks[] = {
-  {.msg = {{MSG_Throttle, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_Steering_Torque, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_Wheel_Speeds, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_Brake_Status, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_CruiseControl, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_G_Throttle, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_G_Steering_Torque, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_G_Wheel_Speeds, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_G_Brake_Status, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_G_CruiseControl, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
 };
 #define SUBARU_GEN2_ADDR_CHECK_LEN (sizeof(subaru_gen2_addr_checks) / sizeof(subaru_gen2_addr_checks[0]))
 addr_checks subaru_gen2_rx_checks = {subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
@@ -105,7 +105,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     const int alt_bus = subaru_gen2 ? 1 : 0;
 
     int addr = GET_ADDR(to_push);
-    if ((addr == MSG_Steering_Torque) && (bus == 0)) {
+    if ((addr == MSG_SUBARU_G_Steering_Torque) && (bus == 0)) {
       int torque_driver_new;
       torque_driver_new = ((GET_BYTES(to_push, 0, 4) >> 16) & 0x7FFU);
       torque_driver_new = -1 * to_signed(torque_driver_new, 11);
@@ -113,25 +113,25 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if ((addr == MSG_CruiseControl) && (bus == alt_bus)) {
+    if ((addr == MSG_SUBARU_G_CruiseControl) && (bus == alt_bus)) {
       bool cruise_engaged = GET_BIT(to_push, 41U) != 0U;
       pcm_cruise_check(cruise_engaged);
     }
 
     // update vehicle moving with any non-zero wheel speed
-    if ((addr == MSG_Wheel_Speeds) && (bus == alt_bus)) {
+    if ((addr == MSG_SUBARU_G_Wheel_Speeds) && (bus == alt_bus)) {
       vehicle_moving = ((GET_BYTES(to_push, 0, 4) >> 12) != 0U) || (GET_BYTES(to_push, 4, 4) != 0U);
     }
 
-    if ((addr == MSG_Brake_Status) && (bus == alt_bus)) {
+    if ((addr == MSG_SUBARU_G_Brake_Status) && (bus == alt_bus)) {
       brake_pressed = ((GET_BYTE(to_push, 7) >> 6) & 1U);
     }
 
-    if ((addr == MSG_Throttle) && (bus == 0)) {
+    if ((addr == MSG_SUBARU_G_Throttle) && (bus == 0)) {
       gas_pressed = GET_BYTE(to_push, 4) != 0U;
     }
 
-    generic_rx_checks((addr == MSG_ES_LKAS) && (bus == 0));
+    generic_rx_checks((addr == MSG_SUBARU_G_ES_LKAS) && (bus == 0));
   }
   return valid;
 }
@@ -148,7 +148,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   }
 
   // steer cmd checks
-  if (addr == MSG_ES_LKAS) {
+  if (addr == MSG_SUBARU_G_ES_LKAS) {
     int desired_torque = ((GET_BYTES(to_send, 0, 4) >> 16) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
@@ -170,7 +170,7 @@ static int subaru_fwd_hook(int bus_num, int addr) {
 
   if (bus_num == 2) {
     // Global platform
-    bool block_lkas = (addr == MSG_ES_LKAS) || (addr == MSG_ES_DashStatus) || (addr == MSG_ES_LKAS_State) || (addr == MSG_INFOTAINMENT_STATUS);
+    bool block_lkas = (addr == MSG_SUBARU_G_ES_LKAS) || (addr == MSG_SUBARU_G_ES_DashStatus) || (addr == MSG_SUBARU_G_ES_LKAS_State) || (addr == MSG_SUBARU_G_INFOTAINMENT_STATUS);
     if (!block_lkas) {
       bus_fwd = 0;  // Main CAN
     }
