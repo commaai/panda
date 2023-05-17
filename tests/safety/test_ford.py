@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import unittest
+import time
 
 import panda.tests.safety.common as common
 
@@ -366,17 +367,41 @@ class TestFordLongitudinalSafety(TestFordSafety):
   FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA, MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl, MSG_IPMA_Data]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
+  MAX_ACCEL = 2.0  # accel is used for brakes, but openpilot can set positive values
+  MIN_ACCEL = -3.5
+  INACTIVE_ACCEL = 0.0
+
+  MAX_GAS = 2.0
+  MIN_GAS = 0.0
+  INACTIVE_GAS = -5.0
+
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_LONG_CONTROL)
     self.safety.init_tests()
 
-  def test_gas_safety_check(self):
-    raise unittest.SkipTest("not implemented")
+  # def test_gas_safety_check(self):
+  #   # Test that uses _acc_command_msg function to test gas limits (setting accel to inactive_accel)
+  #   for controls_allowed in (True, False):
+  #     self.safety.set_controls_allowed(controls_allowed)
+  #     for gas in np.arange(self.MIN_GAS - 1, self.MAX_GAS + 2, 1):
+  #       should_tx = (controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
+  #       self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL)))
 
   def test_brake_safety_check(self):
-    raise unittest.SkipTest("not implemented")
+    # now a test for brake, with inactive gas for gas
+    for controls_allowed in (True, False):
+      self.safety.set_controls_allowed(controls_allowed)
+      for brake in np.arange(self.MIN_ACCEL - 1, self.MAX_ACCEL + 2, 0.05):
+        time.sleep(0.05)
+        should_tx = (controls_allowed and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
+        did_tx = self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake))
+        print(controls_allowed, brake, should_tx, did_tx, should_tx == did_tx)
+        # if should_tx != did_tx:
+        #   break
+        self.assertEqual(should_tx, did_tx, (controls_allowed, brake))
+        print()
 
 
 if __name__ == "__main__":

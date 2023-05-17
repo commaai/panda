@@ -266,8 +266,11 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     int accel = ((GET_BYTE(to_send, 0) & 0x1FU) << 8) | GET_BYTE(to_send, 1);
 
     bool violation = false;
+    print("accel: "); puth(accel); print("\n");
     violation |= longitudinal_accel_checks(accel, FORD_LONG_LIMITS);
+    print("violation1: "); puth(violation); print("\n");
     violation |= longitudinal_gas_checks(gas, FORD_LONG_LIMITS);
+    print("violation2: "); puth(violation); print("\n");
 
     if (violation) {
       tx = 0;
