@@ -134,15 +134,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.LongitudinalGasBrakeSafety
     values = {"ACCButtons": buttons}
     return self.packer.make_can_msg_panda("ASCMSteeringButton", self.BUTTONS_BUS, values)
 
-  def test_brake_safety_check(self):
-    for enabled in [0, 1]:
-      for b in range(0, 500):
-        self.safety.set_controls_allowed(enabled)
-        if abs(b) > self.MAX_BRAKE or (not enabled and b != 0):
-          self.assertFalse(self._tx(self._send_brake_msg(b)))
-        else:
-          self.assertTrue(self._tx(self._send_brake_msg(b)))
-
   def test_gas_safety_check(self):
     # Block if enabled and out of actuation range, disabled and not inactive regen, or if stock longitudinal
     for enabled in [0, 1]:
@@ -164,7 +155,7 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
 
   MAX_GAS = 3072
   MIN_GAS = 1404
-  INACTIVE_GAS = 1404
+  INACTIVE_GAS = 1404  # no regen
   MAX_BRAKE = 400
 
   def setUp(self):
@@ -175,9 +166,6 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
     self.safety.init_tests()
 
   def test_gas_actuation_limits(self):
-    pass
-
-  def test_brake_actuation_limits(self):
     pass
 
 
@@ -225,9 +213,6 @@ class TestGmCameraSafety(TestGmCameraSafetyBase):
       self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
 
   # GM Cam safety mode does not allow longitudinal messages
-  def test_brake_safety_check(self):
-    pass
-
   def test_gas_safety_check(self):
     pass
 
@@ -249,7 +234,7 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
 
   MAX_GAS = 3400
   MIN_GAS = 1514
-  INACTIVE_GAS = 1554
+  INACTIVE_GAS = 1554  # no regen
   MAX_BRAKE = 400
 
   def setUp(self):

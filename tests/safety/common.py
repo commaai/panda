@@ -178,7 +178,7 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
 
 class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
 
-  # MIN_GAS and INACTIVE_GAS are usually 0
+  # MIN_GAS and INACTIVE_GAS are usually both 0
   MAX_GAS: int = 0
   MIN_GAS: int = 0
   INACTIVE_GAS: int = 0
@@ -200,30 +200,36 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
 
   def test_gas_brake_limits_correct(self):
     self.assertGreater(self.MAX_GAS, 0)
+    # TODO: always allow inactive gas, we're just lucky it's always between
+    self.assertTrue(self.MIN_GAS <= self.INACTIVE_GAS <= self.MAX_GAS)
     self.assertLessEqual(self.MIN_GAS, self.MAX_GAS)
     self.assertGreater(self.MAX_BRAKE, 0)
 
   def test_gas_actuation_limits(self):
     # Simple test that asserts gas is only sent with min and max gas allowances
-    for gas in np.arange(self.MIN_GAS - 1, self.MAX_GAS + 2, 1):
-      for controls_allowed in [True, False]:
+    for controls_allowed in (True, False):
+      for gas in np.arange(round(self.MIN_GAS / 2), self.MAX_GAS + 100, 1):
         self.safety.set_controls_allowed(controls_allowed)
         # add debugging prints:
         did_tx = self._tx(self._send_gas_msg(gas))
         print("gas: ", gas, "controls_allowed: ", controls_allowed, "should_tx: ", controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS, "did_tx: ", did_tx)
         # test that gas command is within min gas and max gas when controls are allowed, but also allow gas if it's inactive at any time
-        self.assertEqual(controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS or gas == self.INACTIVE_GAS, did_tx)
+        should_tx = (controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
+        self.assertEqual(should_tx, did_tx)
 
+  # TODO: test stock longitudinal
   def test_brake_actuation_limits(self):
     # Simple test that asserts brake command is only sent with min and max brake allowances (min is 0, max is self.MAX_BRAKE)
-    for brake in np.arange(-1, self.MAX_BRAKE + 2, 1):
-      for controls_allowed in [True, False]:
-        self.safety.set_controls_allowed(controls_allowed)
+    for controls_allowed in (True, False):
+      self.safety.set_controls_allowed(controls_allowed)
+      for brake in np.arange(0, self.MAX_BRAKE * 2, 1):
+        should_tx = (controls_allowed and brake <= self.MAX_BRAKE) or brake == 0
+
         # add debugging prints:
         did_tx = self._tx(self._send_brake_msg(brake))
         print("brake: ", brake, "controls_allowed: ", controls_allowed, "should_tx: ", (controls_allowed and 0 <= brake <= self.MAX_BRAKE) or brake == 0, "did_tx: ", did_tx)
         # test that brake command is within min brake and max brake when controls are allowed, or 0 if controls are not allowed
-        self.assertEqual((controls_allowed and 0 <= brake <= self.MAX_BRAKE) or brake == 0, did_tx)
+        self.assertEqual(should_tx, did_tx)
 
 
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
