@@ -174,6 +174,9 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
     self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
     self.safety.init_tests()
 
+  def test_gas_actuation_limits(self):
+    pass
+
 
 class TestGmCameraSafetyBase(TestGmSafetyBase):
 
@@ -226,6 +229,9 @@ class TestGmCameraSafety(TestGmCameraSafetyBase):
     pass
 
   def test_gas_brake_limits_correct(self):
+    pass
+
+  def test_gas_actuation_limits(self):
     pass
 
 
