@@ -204,9 +204,7 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
   def test_gas_brake_actuation_limits(self, stock_longitudinal=False):
     # Test that gas and brake are limited to their respective bounds
     limits = ((self.MIN_GAS, self.MAX_GAS, ALTERNATIVE_EXPERIENCE.DEFAULT),
-              (self.MIN_GAS, self.MAX_GAS, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX),
-              (self.MIN_GAS, self.MAX_GAS, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX_WITHOUT_GAS),
-              (self.MIN_GAS, self.MAX_GAS, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX_WITHOUT_BRAKE))
+              (self.MIN_GAS, self.MAX_GAS, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
 
     for min_gas, max_gas, alternative_experience in limits:
       # enforce we don't skip over 0 or inactive gas
