@@ -686,10 +686,12 @@ class PandaSafetyTest(PandaSafetyTestBase):
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
 
+  packer: CANPackerPanda
+  safety: libpanda_py.Panda
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "PandaSafetyTest" or cls.__name__.endswith('Base'):
-      cls.safety = None
       raise unittest.SkipTest
 
   @abc.abstractmethod
