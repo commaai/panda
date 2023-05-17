@@ -1,6 +1,7 @@
 import time
 import pytest
 import random
+from unittest.mock import patch
 
 from panda import Panda
 from panda.python.spi import SpiDevice, PandaSpiNackResponse
@@ -18,18 +19,16 @@ class TestSpi:
     mocker.stop(spy)
 
   def test_bad_header(self, mocker, p):
-    with mocker.patch('panda.python.spi.SYNC', return_value=0):
+    with patch('panda.python.spi.SYNC', return_value=0):
       with pytest.raises(PandaSpiNackResponse):
         p.health()
-    mocker.stopall()
     self._ping(mocker, p)
 
   def test_bad_checksum(self, mocker, p):
     cnt = p.health()['spi_checksum_error_count']
-    with mocker.patch('panda.python.spi.PandaSpiHandle._calc_checksum', return_value=0):
+    with patch('panda.python.spi.PandaSpiHandle._calc_checksum', return_value=0):
       with pytest.raises(PandaSpiNackResponse):
         p.health()
-    mocker.stopall()
     self._ping(mocker, p)
     assert (p.health()['spi_checksum_error_count'] - cnt) > 0
 
