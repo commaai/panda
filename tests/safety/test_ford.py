@@ -372,7 +372,7 @@ class TestFordLongitudinalSafety(TestFordSafety):
   INACTIVE_ACCEL = 0.0
 
   MAX_GAS = 2.0
-  MIN_GAS = 0.0
+  MIN_GAS = -0.5
   INACTIVE_GAS = -5.0
 
   def setUp(self):
