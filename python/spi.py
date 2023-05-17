@@ -58,10 +58,13 @@ class SpiDevice:
   """
   Provides locked, thread-safe access to a panda's SPI interface.
   """
-  def __init__(self, speed=50000000):
+
+  MAX_SPEED = 50000000
+
+  def __init__(self, speed=MAX_SPEED):
     # 50MHz is the max of the 845. older rev comma three
     # may not support the full 50MHz
-    assert speed <= 50000000
+    assert speed <= self.MAX_SPEED
 
     if not os.path.exists(DEV_PATH):
       raise PandaSpiUnavailable(f"SPI device not found: {DEV_PATH}")
