@@ -195,7 +195,7 @@ class TestGmCameraSafetyBase(TestGmSafetyBase):
     return self.packer.make_can_msg_panda("ECMEngineStatus", 0, values)
 
 
-class TestGmCameraSafety(TestGmCameraSafetyBase):
+class TestGmCameraStockLongitudinalSafety(TestGmCameraSafetyBase):
   TX_MSGS = [[384, 0],  # pt bus
              [388, 2]]  # camera bus
   FWD_BLACKLISTED_ADDRS = {2: [384], 0: [388]}  # block LKAS message and PSCMStatus
