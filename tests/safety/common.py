@@ -214,8 +214,9 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
         did_tx = self._tx(self._send_gas_msg(gas))
         print("gas: ", gas, "controls_allowed: ", controls_allowed, "should_tx: ", controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS, "did_tx: ", did_tx)
         # test that gas command is within min gas and max gas when controls are allowed, but also allow gas if it's inactive at any time
-        should_tx = (controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
-        self.assertEqual(should_tx, did_tx)
+        should_tx = ((controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS) or
+                     (not controls_allowed and gas == self.INACTIVE_GAS))
+        self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas)))
 
   # TODO: test stock longitudinal
   def test_brake_actuation_limits(self):
@@ -229,7 +230,7 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
         did_tx = self._tx(self._send_brake_msg(brake))
         print("brake: ", brake, "controls_allowed: ", controls_allowed, "should_tx: ", (controls_allowed and 0 <= brake <= self.MAX_BRAKE) or brake == 0, "did_tx: ", did_tx)
         # test that brake command is within min brake and max brake when controls are allowed, or 0 if controls are not allowed
-        self.assertEqual(should_tx, did_tx)
+        self.assertEqual(should_tx, self._tx(self._send_brake_msg(brake)))
 
 
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
