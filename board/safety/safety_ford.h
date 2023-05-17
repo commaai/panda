@@ -145,8 +145,8 @@ const LongitudinalLimits FORD_LONG_LIMITS = {
 
   // gas cmd limits
   // Signal: AccPrpl_A_Rq
-  .max_gas = 700,          //  2.5 m/s^2
-  .min_gas = 0,
+  .max_gas = 700,          //  2.0 m/s^2
+  .min_gas = 500,          //  0.0 m/s^2
   .inactive_gas = 0,       // -5.0 m/s^2
 };
 
