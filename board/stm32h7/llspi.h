@@ -23,10 +23,9 @@ void llspi_mosi_dma(uint8_t *addr, int len) {
 
 // panda -> master DMA start
 void llspi_miso_dma(uint8_t *addr, int len) {
-  // disable DMA + SPI
+  // disable DMA
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
-  register_clear_bits(&(SPI4->CR1), SPI_CR1_SPE);
 
   // setup source and length
   register_set(&(DMA2_Stream3->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
@@ -35,13 +34,12 @@ void llspi_miso_dma(uint8_t *addr, int len) {
   // clear under-run while we were reading
   SPI4->IFCR |= SPI_IFCR_UDRC;
 
-  // setup interrupt on TXC (EOTIE)
+  // setup interrupt on TXC
   register_set(&(SPI4->IER), (1U << SPI_IER_EOTIE_Pos), 0x3FFU);
 
   // enable DMA
   register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
   DMA2_Stream3->CR |= DMA_SxCR_EN;
-  register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
 }
 
 // master -> panda DMA finished
