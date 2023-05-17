@@ -199,7 +199,6 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
 
   def test_gas_brake_limits_correct(self):
     self.assertGreater(self.MAX_GAS, 0)
-    self.assertLess(self.MIN_GAS, 0)
     self.assertGreater(self.MAX_BRAKE, 0)
 
   def test_gas_brake_actuation_limits(self, stock_longitudinal=False):

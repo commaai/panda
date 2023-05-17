@@ -55,7 +55,8 @@ class GmLongitudinalBase(common.PandaSafetyTest):
     pass
 
 
-class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestGmSafetyBase(common.PandaSafetyTest, common.LongitudinalGasBrakeSafetyTest,
+                       common.DriverTorqueSteeringSafetyTest):
   STANDSTILL_THRESHOLD = 10 * 0.0311
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0
@@ -69,11 +70,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   RT_INTERVAL = 250000
   DRIVER_TORQUE_ALLOWANCE = 65
   DRIVER_TORQUE_FACTOR = 4
-
-  MAX_GAS = 0
-  MAX_REGEN = 0
-  INACTIVE_REGEN = 0
-  MAX_BRAKE = 0
 
   PCM_CRUISE = True  # openpilot is tied to the PCM state if not longitudinal
 
@@ -152,8 +148,8 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     for enabled in [0, 1]:
       for gas_regen in range(0, 2 ** 12 - 1):
         self.safety.set_controls_allowed(enabled)
-        should_tx = ((enabled and self.MAX_REGEN <= gas_regen <= self.MAX_GAS) or
-                     (not enabled and gas_regen == self.INACTIVE_REGEN))
+        should_tx = ((enabled and self.MIN_GAS <= gas_regen <= self.MAX_GAS) or
+                     (not enabled and gas_regen == self.INACTIVE_GAS))
         self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
 
 
@@ -167,8 +163,8 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   BRAKE_BUS = 2
 
   MAX_GAS = 3072
-  MAX_REGEN = 1404
-  INACTIVE_REGEN = 1404
+  MIN_GAS = 1404
+  INACTIVE_GAS = 1404
   MAX_BRAKE = 400
 
   def setUp(self):
@@ -195,7 +191,7 @@ class TestGmCameraSafetyBase(TestGmSafetyBase):
     return self.packer.make_can_msg_panda("ECMEngineStatus", 0, values)
 
 
-class TestGmCameraStockLongitudinalSafety(TestGmCameraSafetyBase):
+class TestGmCameraSafety(TestGmCameraSafetyBase):
   TX_MSGS = [[384, 0],  # pt bus
              [388, 2]]  # camera bus
   FWD_BLACKLISTED_ADDRS = {2: [384], 0: [388]}  # block LKAS message and PSCMStatus
@@ -229,6 +225,9 @@ class TestGmCameraStockLongitudinalSafety(TestGmCameraSafetyBase):
   def test_gas_safety_check(self):
     pass
 
+  def test_gas_brake_limits_correct(self):
+    pass
+
 
 class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase):
   TX_MSGS = [[384, 0], [789, 0], [715, 0], [880, 0],  # pt bus
@@ -237,8 +236,8 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
   BUTTONS_BUS = 0  # rx only
 
   MAX_GAS = 3400
-  MAX_REGEN = 1514
-  INACTIVE_REGEN = 1554
+  MIN_GAS = 1514
+  INACTIVE_GAS = 1554
   MAX_BRAKE = 400
 
   def setUp(self):
