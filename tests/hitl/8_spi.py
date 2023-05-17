@@ -25,11 +25,13 @@ class TestSpi:
     self._ping(mocker, p)
 
   def test_bad_checksum(self, mocker, p):
+    cnt = p.health()['spi_checksum_error_count']
     with mocker.patch('panda.python.spi.PandaSpiHandle._calc_checksum', return_value=0):
       with pytest.raises(PandaSpiNackResponse):
         p.health()
     mocker.stopall()
     self._ping(mocker, p)
+    assert (p.health()['spi_checksum_error_count'] - cnt) > 0
 
   def test_non_existent_endpoint(self, mocker, p):
     for _ in range(10):
