@@ -139,8 +139,8 @@ bool ford_longitudinal = false;
 const LongitudinalLimits FORD_LONG_LIMITS = {
   // acceleration cmd limits (used for brakes)
   // Signal: AccBrkTot_A_Rq
-  .max_accel = 5770,       //  2.5    m/s^s
-  .min_accel = 4230,       // -3.5    m/s^2
+  .max_accel = 5641,       //  1.9999 m/s^s
+  .min_accel = 4231,       // -3.4991 m/s^2
   .inactive_accel = 5128,  // -0.0008 m/s^2
 
   // gas cmd limits
