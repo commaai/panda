@@ -62,7 +62,7 @@ class Buttons:
 #  * openpilot longitudinal
 
 
-class TestFordSafety(common.PandaSafetyTest):
+class TestFordSafetyBase(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_IPMA_Data
   RELAY_MALFUNCTION_BUS = 0
@@ -86,7 +86,7 @@ class TestFordSafety(common.PandaSafetyTest):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "TestFordSafety":
+    if cls.__name__ == "TestFordSafetyBase":
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
@@ -343,7 +343,7 @@ class TestFordSafety(common.PandaSafetyTest):
         self.assertEqual(enabled, self._tx(self._acc_button_msg(Buttons.CANCEL, bus)))
 
 
-class TestFordStockSafety(TestFordSafety):
+class TestFordStockSafety(TestFordSafetyBase):
   TX_MSGS = [
     [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
     [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
@@ -358,7 +358,7 @@ class TestFordStockSafety(TestFordSafety):
     self.safety.init_tests()
 
 
-class TestFordLongitudinalSafety(TestFordSafety):
+class TestFordLongitudinalSafety(TestFordSafetyBase):
   TX_MSGS = [
     [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA, 0], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
     [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
