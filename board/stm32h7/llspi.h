@@ -23,9 +23,10 @@ void llspi_mosi_dma(uint8_t *addr, int len) {
 
 // panda -> master DMA start
 void llspi_miso_dma(uint8_t *addr, int len) {
-  // disable DMA
+  // disable DMA + SPI
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
+  register_clear_bits(&(SPI4->CR1), SPI_CR1_SPE);
 
   // setup source and length
   register_set(&(DMA2_Stream3->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
@@ -34,12 +35,13 @@ void llspi_miso_dma(uint8_t *addr, int len) {
   // clear under-run while we were reading
   SPI4->IFCR |= SPI_IFCR_UDRC;
 
-  // setup interrupt on TXC
+  // setup interrupt on TXC (EOTIE)
   register_set(&(SPI4->IER), (1U << SPI_IER_EOTIE_Pos), 0x3FFU);
 
   // enable DMA
   register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
   DMA2_Stream3->CR |= DMA_SxCR_EN;
+  register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
 }
 
 // master -> panda DMA finished
@@ -48,7 +50,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
   ENTER_CRITICAL();
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
 
-  spi_handle_rx();
+  spi_rx_done();
 
   EXIT_CRITICAL();
 }
@@ -77,7 +79,7 @@ void SPI4_IRQ_Handler(void) {
 
     volatile uint8_t dat = SPI4->TXDR;
     (void)dat;
-    spi_handle_tx(false);
+    spi_tx_done(false);
   }
 
   EXIT_CRITICAL();
