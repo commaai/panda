@@ -374,8 +374,8 @@ int main(void) {
   // enable CAN TXs
   current_board->enable_can_transceivers(true);
 
-  // init watchdog for heartbeat loop, trigger after 4 8Hz cycles
-  simple_watchdog_init(FAULT_HEARTBEAT_LOOP_WATCHDOG, (4U * 1000000U / 8U));
+  // init watchdog for heartbeat loop, fed at 8Hz
+  simple_watchdog_init(FAULT_HEARTBEAT_LOOP_WATCHDOG, (3U * 1000000U / 8U));
 
   // 8Hz timer
   REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
