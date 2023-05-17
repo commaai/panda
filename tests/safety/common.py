@@ -4,6 +4,7 @@ import unittest
 import importlib
 import numpy as np
 from typing import Dict, List, Optional
+import time
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
@@ -199,11 +200,12 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
 
   def test_gas_brake_limits_correct(self):
     self.assertGreater(self.MAX_GAS, 0)
+    self.assertLessEqual(self.MIN_GAS, self.MAX_GAS)
     self.assertGreater(self.MAX_BRAKE, 0)
 
   def test_gas_actuation_limits(self):
     # Simple test that asserts gas is only sent with min and max gas allowances
-    for gas in np.arange(self.MIN_GAS - 1, self.MAX_GAS + 1, 1):
+    for gas in np.arange(self.MIN_GAS - 1, self.MAX_GAS + 2, 1):
       for controls_allowed in [True, False]:
         self.safety.set_controls_allowed(controls_allowed)
         # add debugging prints:
@@ -212,6 +214,16 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
         # test that gas command is within min gas and max gas when controls are allowed, but also allow gas if it's inactive at any time
         self.assertEqual(controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS or gas == self.INACTIVE_GAS, did_tx)
 
+  def test_brake_actuation_limits(self):
+    # Simple test that asserts brake command is only sent with min and max brake allowances (min is 0, max is self.MAX_BRAKE)
+    for brake in np.arange(-1, self.MAX_BRAKE + 2, 1):
+      for controls_allowed in [True, False]:
+        self.safety.set_controls_allowed(controls_allowed)
+        # add debugging prints:
+        did_tx = self._tx(self._send_brake_msg(brake))
+        print("brake: ", brake, "controls_allowed: ", controls_allowed, "should_tx: ", (controls_allowed and 0 <= brake <= self.MAX_BRAKE) or brake == 0, "did_tx: ", did_tx)
+        # test that brake command is within min brake and max brake when controls are allowed, or 0 if controls are not allowed
+        self.assertEqual((controls_allowed and 0 <= brake <= self.MAX_BRAKE) or brake == 0, did_tx)
 
 
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):

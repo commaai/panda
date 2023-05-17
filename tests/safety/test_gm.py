@@ -177,6 +177,9 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   def test_gas_actuation_limits(self):
     pass
 
+  def test_brake_actuation_limits(self):
+    pass
+
 
 class TestGmCameraSafetyBase(TestGmSafetyBase):
 
@@ -232,6 +235,9 @@ class TestGmCameraSafety(TestGmCameraSafetyBase):
     pass
 
   def test_gas_actuation_limits(self):
+    pass
+
+  def test_brake_actuation_limits(self):
     pass
 
 
