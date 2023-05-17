@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import numpy as np
 import unittest
-import time
 
 import panda.tests.safety.common as common
 
