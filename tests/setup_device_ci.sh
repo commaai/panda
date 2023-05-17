@@ -79,6 +79,7 @@ rsync -a --delete $SOURCE_DIR $TEST_DIR
 echo "$TEST_DIR synced with $GIT_COMMIT, t=$SECONDS"
 
 
+unset PYTHONWARNINGS
 if pip install --dry-run -r $SOURCE_DIR/requirements.txt | grep -i "would install" ; then
   echo "updating dependencies"
   sudo mount -o rw,remount /
