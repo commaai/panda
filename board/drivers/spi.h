@@ -80,13 +80,13 @@ void spi_rx_done(void) {
       // response: ACK and start receiving data portion
       spi_buf_tx[0] = SPI_HACK;
       next_rx_state = SPI_STATE_HEADER_ACK;
-      response_len = 1;
+      response_len = 1U;
     } else {
       // response: NACK and reset state machine
       print("- incorrect header sync or checksum "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
       spi_buf_tx[0] = SPI_NACK;
       next_rx_state = SPI_STATE_HEADER_NACK;
-      response_len = 1;
+      response_len = 1U;
     }
   } else if (spi_state == SPI_STATE_DATA_RX) {
     // We got everything! Based on the endpoint specified, call the appropriate handler
@@ -156,11 +156,11 @@ void spi_rx_done(void) {
   }
 
   // send out response
-  if (response_len == 0) {
+  if (response_len == 0U) {
     print("SPI: no response\n");
     spi_buf_tx[0] = SPI_NACK;
     spi_state = SPI_STATE_HEADER_NACK;
-    response_len = 1;
+    response_len = 1U;
   }
   llspi_miso_dma(spi_buf_tx, response_len);
 

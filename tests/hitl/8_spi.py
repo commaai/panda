@@ -1,10 +1,9 @@
-import time
 import pytest
 import random
 from unittest.mock import patch
 
 from panda import Panda
-from panda.python.spi import SpiDevice, PandaSpiNackResponse
+from panda.python.spi import PandaSpiNackResponse
 
 pytestmark = [
   pytest.mark.test_panda_types((Panda.HW_TYPE_TRES, ))
