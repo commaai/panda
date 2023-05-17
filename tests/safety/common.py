@@ -175,6 +175,67 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
 
+class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
+
+  # MIN_GAS and INACTIVE_GAS are usually 0
+  MAX_GAS: int = 0
+  MIN_GAS: int = 0
+  INACTIVE_GAS: int = 0
+  MAX_BRAKE: int = 0
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "LongitudinalGasBrakeSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  @abc.abstractmethod
+  def _send_gas_msg(self, gas: int):
+    pass
+
+  @abc.abstractmethod
+  def _send_brake_msg(self, brake: int):
+    pass
+
+  def test_gas_brake_limits_correct(self):
+    self.assertGreater(self.MAX_GAS, 0)
+    self.assertLess(self.MIN_GAS, 0)
+    self.assertGreater(self.MAX_BRAKE, 0)
+
+  def test_gas_brake_actuation_limits(self, stock_longitudinal=False):
+    # Test that gas and brake are limited to their respective bounds
+    limits = ((self.MIN_GAS, self.MAX_GAS, ALTERNATIVE_EXPERIENCE.DEFAULT),
+              (self.MIN_GAS, self.MAX_GAS, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX),
+              (self.MIN_GAS, self.MAX_GAS, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX_WITHOUT_GAS),
+              (self.MIN_GAS, self.MAX_GAS, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX_WITHOUT_BRAKE))
+
+    for min_gas, max_gas, alternative_experience in limits:
+      # enforce we don't skip over 0 or inactive gas
+      for gas in np.concatenate((np.arange(min_gas - 1, max_gas + 1, 0.05), [0, self.INACTIVE_GAS])):
+        gas = round(gas, 2)  # floats might not hit exact boundary conditions without rounding
+        for controls_allowed in [True, False]:
+          self.safety.set_controls_allowed(controls_allowed)
+          self.safety.set_alternative_experience(alternative_experience)
+          if stock_longitudinal:
+            should_tx = False
+          else:
+            should_tx = controls_allowed and min_gas <= gas <= max_gas
+            should_tx = should_tx or gas == self.INACTIVE_GAS
+          self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas)))
+
+    # Test that brake is limited to its bounds
+    for brake in np.arange(0, self.MAX_BRAKE + 1, 0.05):
+      brake = round(brake, 2)  # floats might not hit exact boundary conditions without rounding
+      for controls_allowed in [True, False]:
+        self.safety.set_controls_allowed(controls_allowed)
+        if stock_longitudinal:
+          should_tx = False
+        else:
+          should_tx = controls_allowed and 0 <= brake <= self.MAX_BRAKE
+        self.assertEqual(should_tx, self._tx(self._send_brake_msg(brake)))
+
+
+
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
   MAX_RATE_UP = 0
