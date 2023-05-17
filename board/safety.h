@@ -500,9 +500,9 @@ int ROUND(float val) {
 
 // Safety checks for longitudinal actuation
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits) {
-  bool accel_valid = !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
+  bool accel_valid = get_longitudinal_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
   bool accel_inactive = desired_accel == limits.inactive_accel;
-  return !((controls_allowed && accel_valid) || accel_inactive);
+  return !(accel_valid || accel_inactive);
 }
 
 bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits) {
@@ -510,9 +510,9 @@ bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limit
 }
 
 bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits) {
-  bool gas_valid = !max_limit_check(desired_gas, limits.max_gas, limits.min_gas);
+  bool gas_valid = get_longitudinal_allowed() && !max_limit_check(desired_gas, limits.max_gas, limits.min_gas);
   bool gas_inactive = desired_gas == limits.inactive_gas;
-  return !((controls_allowed && gas_valid) || gas_inactive);
+  return !(gas_valid || gas_inactive);
 }
 
 bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits) {
