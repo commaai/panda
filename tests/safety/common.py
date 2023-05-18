@@ -53,12 +53,13 @@ def add_regen_tests(cls):
 
 
 class PandaSafetyTestBase(unittest.TestCase):
+
+  packer: CANPackerPanda
+  safety: libpanda_py.Panda
+
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "PandaSafetyTestBase":
-      cls.safety = None
-      cls.packer = None
-      raise unittest.SkipTest
+    raise NotImplementedError
 
   def _reset_safety_hooks(self):
     self.safety.set_safety_hooks(self.safety.get_current_safety_mode(),
@@ -77,8 +78,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "InterceptorSafetyTest":
-      cls.safety = None
+    if cls.__name__ == "InterceptorSafetyTest" or cls.__name__.endswith('Base'):
       raise unittest.SkipTest
 
   @abc.abstractmethod
@@ -145,8 +145,7 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "LongitudinalAccelSafetyTest":
-      cls.safety = None
+    if cls.__name__ == "LongitudinalAccelSafetyTest" or cls.__name__.endswith('Base'):
       raise unittest.SkipTest
 
   @abc.abstractmethod
@@ -191,8 +190,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "TorqueSteeringSafetyTestBase":
-      cls.safety = None
+    if cls.__name__ == "TorqueSteeringSafetyTestBase" or cls.__name__.endswith('Base'):
       raise unittest.SkipTest
 
   @abc.abstractmethod
@@ -336,8 +334,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "DriverTorqueSteeringSafetyTest":
-      cls.safety = None
+    if cls.__name__ == "DriverTorqueSteeringSafetyTest" or cls.__name__.endswith('Base'):
       raise unittest.SkipTest
 
   @abc.abstractmethod
@@ -428,8 +425,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "MotorTorqueSteeringSafetyTest":
-      cls.safety = None
+    if cls.__name__ == "MotorTorqueSteeringSafetyTest" or cls.__name__.endswith('Base'):
       raise unittest.SkipTest
 
   @abc.abstractmethod
@@ -548,8 +544,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "AngleSteeringSafetyTest":
-      cls.safety = None
+    if cls.__name__ == "AngleSteeringSafetyTest" or cls.__name__.endswith('Base'):
       raise unittest.SkipTest
 
   @abc.abstractmethod
@@ -690,7 +685,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "PandaSafetyTest" or cls.__name__.endswith('Base'):
-      cls.safety = None
       raise unittest.SkipTest
 
   @abc.abstractmethod
