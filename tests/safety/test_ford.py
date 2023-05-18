@@ -84,11 +84,12 @@ class TestFordSafetyBase(common.PandaSafetyTest):
   cnt_speed_2 = 0
   cnt_yaw_rate = 0
 
+  packer: CANPackerPanda
+  safety: libpanda_py.Panda
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "TestFordSafetyBase":
-      cls.packer = None
-      cls.safety = None
       raise unittest.SkipTest
 
   def _set_prev_desired_angle(self, t):
