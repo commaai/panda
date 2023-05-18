@@ -388,7 +388,7 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
     return self.packer.make_can_msg_panda("ACCDATA", 0, values)
 
   def test_stock_aeb(self):
-    # Test that CmbbDeny_B_Actl is never 1, it prevents the ABS from actuating AEB requests from ACCDATA_2
+    # Test that CmbbDeny_B_Actl is never 1, it prevents the ABS module from actuating AEB requests from ACCDATA_2
     for controls_allowed in (True, False):
       self.safety.set_controls_allowed(controls_allowed)
       for cmbb_deny in (True, False):
