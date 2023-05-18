@@ -61,7 +61,6 @@ class Buttons:
 #  * stock longitudinal
 #  * openpilot longitudinal
 
-
 class TestFordSafetyBase(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 1
   RELAY_MALFUNCTION_ADDR = MSG_IPMA_Data
