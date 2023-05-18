@@ -3,6 +3,10 @@
 #define SPI_BUF_SIZE 1024U
 #define SPI_TIMEOUT_US 10000U
 
+// we expect less than 50 transactions (including control messages and
+// CAN buffers) at the 100Hz boardd interval, plus some buffer
+#define SPI_IRQ_RATE  6500U
+
 #ifdef STM32H7
 __attribute__((section(".ram_d1"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
 __attribute__((section(".ram_d1"))) uint8_t spi_buf_tx[SPI_BUF_SIZE];
@@ -43,10 +47,6 @@ void llspi_mosi_dma(uint8_t *addr, int len);
 void llspi_miso_dma(uint8_t *addr, int len);
 
 void spi_init(void) {
-  // clear buffers (for debugging)
-  (void)memset(spi_buf_rx, 0, SPI_BUF_SIZE);
-  (void)memset(spi_buf_tx, 0, SPI_BUF_SIZE);
-
   // platform init
   llspi_init();
 
@@ -127,8 +127,10 @@ void spi_rx_done(void) {
       response_ack = false;
       print("- incorrect data checksum ");
       puth2(spi_data_len_mosi);
-      print(" ");
+      print("\n");
+      hexdump(spi_buf_rx, SPI_HEADER_SIZE);
       hexdump(&(spi_buf_rx[SPI_HEADER_SIZE]), MIN(spi_data_len_mosi, 64));
+      print("\n");
     }
 
     if (!response_ack) {
