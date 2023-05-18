@@ -86,11 +86,6 @@ class TestFordSafetyBase(common.PandaSafetyTest):
   packer: CANPackerPanda
   safety: libpanda_py.Panda
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestFordSafetyBase":
-      raise unittest.SkipTest
-
   def _set_prev_desired_angle(self, t):
     t = round(t * self.DEG_TO_CAN)
     self.safety.set_desired_angle_last(t)
