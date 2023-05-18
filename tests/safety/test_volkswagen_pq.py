@@ -17,7 +17,7 @@ MSG_ACC_GRA_ANZEIGE = 0x56A   # TX by OP, ACC HUD
 MSG_LDW_1 = 0x5BE             # TX by OP, Lane line recognition and text alerts
 
 
-class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestVolkswagenPqSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   cruise_engaged = False
 
   STANDSTILL_THRESHOLD = 0
@@ -32,13 +32,6 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
 
   DRIVER_TORQUE_ALLOWANCE = 80
   DRIVER_TORQUE_FACTOR = 3
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestVolkswagenPqSafety":
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
 
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)
@@ -117,7 +110,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
     self.assertEqual(0, self.safety.get_torque_driver_min())
 
 
-class TestVolkswagenPqStockSafety(TestVolkswagenPqSafety):
+class TestVolkswagenPqStockSafety(TestVolkswagenPqSafetyBase):
   # Transmit of GRA_Neu is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
   TX_MSGS = [[MSG_HCA_1, 0], [MSG_GRA_NEU, 0], [MSG_GRA_NEU, 2], [MSG_LDW_1, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_1, MSG_LDW_1]}
@@ -139,7 +132,7 @@ class TestVolkswagenPqStockSafety(TestVolkswagenPqSafety):
     self.assertTrue(self._tx(self._button_msg(resume=True)))
 
 
-class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety, common.LongitudinalAccelSafetyTest):
+class TestVolkswagenPqLongSafety(TestVolkswagenPqSafetyBase, common.LongitudinalAccelSafetyTest):
   TX_MSGS = [[MSG_HCA_1, 0], [MSG_LDW_1, 0], [MSG_ACC_SYSTEM, 0], [MSG_ACC_GRA_ANZEIGE, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_1, MSG_LDW_1, MSG_ACC_SYSTEM, MSG_ACC_GRA_ANZEIGE]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
