@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import itertools
 import numpy as np
 import unittest
 
@@ -14,7 +13,6 @@ MSG_EngVehicleSpThrottle = 0x204   # RX from PCM, for driver throttle input
 MSG_BrakeSysFeatures = 0x415       # RX from ABS, for vehicle speed
 MSG_EngVehicleSpThrottle2 = 0x202  # RX from PCM, for second vehicle speed
 MSG_Yaw_Data_FD1 = 0x91            # RX from RCM, for yaw rate
-MSG_ACCDATA_2 = 0x187              # RX from IPMA, for AEB status
 MSG_Steering_Data_FD1 = 0x083      # TX by OP, various driver switches and LKAS/CC buttons
 MSG_ACCDATA = 0x186                # TX by OP, ACC controls
 MSG_ACCDATA_3 = 0x18A              # TX by OP, ACC/TJA user interface
@@ -136,10 +134,6 @@ class TestFordSafetyBase(common.PandaSafetyTest):
               "VehRolWActl_D_Qf": 3 if quality_flag else 0, "VehRollYaw_No_Cnt": self.cnt_yaw_rate % 256}
     self.__class__.cnt_yaw_rate += 1
     return self.packer.make_can_msg_panda("Yaw_Data_FD1", 0, values, fix_checksum=checksum)
-
-  def _stock_aeb_msg(self, aeb: bool):
-    values = {"CmbbBrkDecel_B_Rq": 1 if aeb else 0}
-    return self.packer.make_can_msg_panda("ACCDATA_2", 0, values)
 
   # Drive throttle input
   def _user_gas_msg(self, gas: float):
