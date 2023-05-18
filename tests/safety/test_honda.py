@@ -186,13 +186,6 @@ class HondaBase(common.PandaSafetyTest):
   cnt_powertrain_data = 0
   cnt_acc_state = 0
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__.endswith("Base"):
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
-
   def _powertrain_data_msg(self, cruise_on=None, brake_pressed=None, gas_pressed=None):
     # preserve the state
     if cruise_on is None:
@@ -271,8 +264,8 @@ class TestHondaNidecSafetyBase(HondaBase):
   MAX_GAS = 198
 
   def setUp(self):
-    self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
-    self.safety = libpanda_py.libpanda
+    # self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
+    # self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
     self.safety.init_tests()
 

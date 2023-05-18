@@ -53,10 +53,14 @@ def add_regen_tests(cls):
 
 
 class PandaSafetyTestBase(unittest.TestCase):
+  packer: CANPackerPanda
+  safety: libpanda_py.Panda
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "PandaSafetyTestBase":
-      cls.safety = None
+      # cls.safety = None
+      # cls.packer = None
       raise unittest.SkipTest
 
   def _reset_safety_hooks(self):

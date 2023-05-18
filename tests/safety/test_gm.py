@@ -77,13 +77,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
 
   PCM_CRUISE = True  # openpilot is tied to the PCM state if not longitudinal
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestGmSafetyBase":
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
-
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
