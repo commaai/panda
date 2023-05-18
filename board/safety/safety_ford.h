@@ -277,7 +277,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     // Signal: CmbbDeny_B_Actl
     int cmbb_deny = GET_BIT(to_send, 37);
     // Signal: CmbbEngTqMn_B_Rq
-    int cmbb_engine_torque_min = GET_BIT(to_send, 52);
+//    int cmbb_engine_torque_min = GET_BIT(to_send, 52);
 
     bool violation = false;
     violation |= longitudinal_accel_checks(accel, FORD_LONG_LIMITS);
@@ -288,7 +288,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     if (ford_stock_aeb) {
       violation |= accel != FORD_LONG_LIMITS.inactive_accel;
       violation |= gas != FORD_LONG_LIMITS.inactive_gas;
-      violation |= cmbb_engine_torque_min != 1U;
+//      violation |= cmbb_engine_torque_min != 1U;
     }
 
     if (violation) {

@@ -13,6 +13,7 @@ MSG_EngVehicleSpThrottle = 0x204   # RX from PCM, for driver throttle input
 MSG_BrakeSysFeatures = 0x415       # RX from ABS, for vehicle speed
 MSG_EngVehicleSpThrottle2 = 0x202  # RX from PCM, for second vehicle speed
 MSG_Yaw_Data_FD1 = 0x91            # RX from RCM, for yaw rate
+MSG_ACCDATA_2 = 0x187              # RX from IPMA, for AEB status
 MSG_Steering_Data_FD1 = 0x083      # TX by OP, various driver switches and LKAS/CC buttons
 MSG_ACCDATA = 0x186                # TX by OP, ACC controls
 MSG_ACCDATA_3 = 0x18A              # TX by OP, ACC/TJA user interface
@@ -134,6 +135,10 @@ class TestFordSafetyBase(common.PandaSafetyTest):
               "VehRolWActl_D_Qf": 3 if quality_flag else 0, "VehRollYaw_No_Cnt": self.cnt_yaw_rate % 256}
     self.__class__.cnt_yaw_rate += 1
     return self.packer.make_can_msg_panda("Yaw_Data_FD1", 0, values, fix_checksum=checksum)
+
+  def _stock_aeb_msg(self, aeb: bool):
+    values = {"CmbbBrkDecel_B_Rq": 1 if aeb else 0}
+    return self.packer.make_can_msg_panda("ACCDATA_2", 0, values)
 
   # Drive throttle input
   def _user_gas_msg(self, gas: float):
@@ -383,18 +388,22 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
   def test_gas_safety_check(self):
     for controls_allowed in (True, False):
       self.safety.set_controls_allowed(controls_allowed)
-      for gas in np.arange(self.MIN_GAS - 2, self.MAX_GAS + 2, 0.05):
-        gas = round(gas, 2)  # floats might not hit exact boundary conditions without rounding
-        should_tx = (controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
-        self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL)))
+      for aeb in (True, False):
+        self.assertTrue(self._rx(self._stock_aeb_msg(aeb)))
+        for gas in np.arange(self.MIN_GAS - 2, self.MAX_GAS + 2, 0.05):
+          gas = round(gas, 2)  # floats might not hit exact boundary conditions without rounding
+          should_tx = (controls_allowed and not aeb and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
+          self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL)))
 
   def test_brake_safety_check(self):
     for controls_allowed in (True, False):
       self.safety.set_controls_allowed(controls_allowed)
-      for brake in np.arange(self.MIN_ACCEL - 2, self.MAX_ACCEL + 2, 0.05):
-        brake = round(brake, 2)  # floats might not hit exact boundary conditions without rounding
-        should_tx = (controls_allowed and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
-        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake)), (controls_allowed, brake))
+      for aeb in (True, False):
+        self.assertTrue(self._rx(self._stock_aeb_msg(aeb)))
+        for brake in np.arange(self.MIN_ACCEL - 2, self.MAX_ACCEL + 2, 0.05):
+          brake = round(brake, 2)  # floats might not hit exact boundary conditions without rounding
+          should_tx = (controls_allowed and not aeb and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
+          self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake)), (controls_allowed, aeb, brake))
 
 
 if __name__ == "__main__":
