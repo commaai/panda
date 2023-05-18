@@ -379,27 +379,23 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
     self.safety.init_tests()
 
   # ACC command
-  def _acc_command_msg(self, gas: float, brake: float, cmbb_deny: bool = False, min_engine_torque: bool = False):
+  def _acc_command_msg(self, gas: float, brake: float, cmbb_deny: bool = False):
     values = {
-      "AccPrpl_A_Rq": gas,      # [-5|5.23] m/s^2
-      "AccBrkTot_A_Rq": brake,  # [-20|11.9449] m/s^2
-      "CmbbDeny_B_Actl": 1 if cmbb_deny else 0,
-      "CmbbEngTqMn_B_Rq": 1 if min_engine_torque else 0,
+      "AccPrpl_A_Rq": gas,                       # [-5|5.23] m/s^2
+      "AccBrkTot_A_Rq": brake,                   # [-20|11.9449] m/s^2
+      "CmbbDeny_B_Actl": 1 if cmbb_deny else 0,  # [0|1] deny AEB actuation
     }
     return self.packer.make_can_msg_panda("ACCDATA", 0, values)
 
   def test_stock_aeb(self):
+    # Test that CmbbDeny_B_Actl is never 1, it prevents the ABS from actuating AEB requests from ACCDATA_2
     for controls_allowed in (True, False):
       self.safety.set_controls_allowed(controls_allowed)
-      for aeb in (True, False):
-        self.assertTrue(self._rx(self._stock_aeb_msg(aeb)))
-
-        for cmbb_deny in (True, False):
-          for min_engine_torque in (True, False):
-            # cmbb_deny should always be false, and min_engine_torque should be true only when AEB
-            should_tx = not cmbb_deny and (not aeb or min_engine_torque)
-            self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, self.INACTIVE_ACCEL,
-                                                                       cmbb_deny, min_engine_torque)))
+      for cmbb_deny in (True, False):
+        should_tx = not cmbb_deny
+        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, self.INACTIVE_ACCEL, cmbb_deny)))
+        should_tx = controls_allowed and not cmbb_deny
+        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.MAX_GAS, self.MAX_ACCEL, cmbb_deny)))
 
   def test_gas_safety_check(self):
     for controls_allowed in (True, False):
