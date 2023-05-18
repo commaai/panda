@@ -55,7 +55,7 @@ def add_regen_tests(cls):
 class PandaSafetyTestBase(unittest.TestCase):
   @classmethod
   def setUpClass(cls):
-    if cls.__name__.endswith("Base"):
+    if cls.__name__ == "PandaSafetyTest" or cls.__name__.endswith("Base"):
       cls.safety = None
       raise unittest.SkipTest
 
@@ -70,7 +70,7 @@ class PandaSafetyTestBase(unittest.TestCase):
     return self.safety.safety_tx_hook(msg)
 
 
-class InterceptorSafetyTest(PandaSafetyTestBase):
+class InterceptorSafetyTestBase(PandaSafetyTestBase):
 
   INTERCEPTOR_THRESHOLD = 0
 
@@ -130,7 +130,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
         self.assertEqual(send, self._tx(self._interceptor_gas_cmd(gas)))
 
 
-class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
+class LongitudinalAccelSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
   MAX_ACCEL: float = 2.0
   MIN_ACCEL: float = -3.5
@@ -507,7 +507,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     self.assertEqual(self.safety.get_torque_meas_max(), 0)
 
 
-class AngleSteeringSafetyTest(PandaSafetyTestBase):
+class AngleSteeringSafetyTestBase(PandaSafetyTestBase):
 
   DEG_TO_CAN: int
 

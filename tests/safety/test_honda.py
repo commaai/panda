@@ -337,7 +337,7 @@ class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
     pass
 
 
-class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTest):
+class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTestBase):
   """
     Covers the Honda Nidec safety mode with a gas interceptor
   """
@@ -365,7 +365,7 @@ class TestHondaNidecAltSafety(TestHondaNidecSafety):
     return self.packer.make_can_msg_panda("SCM_BUTTONS", bus, values)
 
 
-class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTest):
+class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTestBase):
   """
     Covers the Honda Nidec safety mode with alt SCM messages and gas interceptor
   """
@@ -536,7 +536,7 @@ class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschRadarlessS
     self.safety.init_tests()
 
 
-class TestHondaBoschRadarlessLongSafety(common.LongitudinalAccelSafetyTest, HondaButtonEnableBase,
+class TestHondaBoschRadarlessLongSafety(common.LongitudinalAccelSafetyTestBase, HondaButtonEnableBase,
                                         TestHondaBoschRadarlessSafetyBase):
   """
     Covers the Honda Bosch Radarless safety mode with longitudinal control
