@@ -34,13 +34,6 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest,
   INTERCEPTOR_THRESHOLD = 805
   EPS_SCALE = 73
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__.endswith("Base"):
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
-
   def _torque_meas_msg(self, torque):
     values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
