@@ -399,7 +399,7 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
             # cmbb_deny should always be false, and min_engine_torque should be true only when AEB
             should_tx = not cmbb_deny and (not aeb or min_engine_torque)
             self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, self.INACTIVE_ACCEL,
-                                                                       cmbb_deny, min_engine_torque)), (aeb, cmbb_deny, min_engine_torque))
+                                                                       cmbb_deny, min_engine_torque)))
 
   def test_gas_safety_check(self):
     for controls_allowed in (True, False):
