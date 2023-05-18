@@ -381,7 +381,6 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
     return self.packer.make_can_msg_panda("ACCDATA", 0, values)
 
   def test_gas_safety_check(self):
-    # Test that uses _acc_command_msg function to test gas limits (setting accel to inactive_accel)
     for controls_allowed in (True, False):
       self.safety.set_controls_allowed(controls_allowed)
       for gas in np.arange(self.MIN_GAS - 2, self.MAX_GAS + 2, 0.05):
