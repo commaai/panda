@@ -40,13 +40,6 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
   GAS_MSG = ("", "")
   BUTTONS_TX_BUS = 1
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestHyundaiCanfdBase":
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
-
   def _torque_driver_msg(self, torque):
     values = {"STEERING_COL_TORQUE": torque}
     return self.packer.make_can_msg_panda("MDPS", self.PT_BUS, values)
@@ -96,8 +89,6 @@ class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
   @classmethod
   def setUpClass(cls):
     if cls.__name__ in ("TestHyundaiCanfdHDA1", "TestHyundaiCanfdHDA1AltButtons") or cls.__name__.endswith('Base'):
-      cls.packer = None
-      cls.safety = None
       raise unittest.SkipTest
 
   def setUp(self):
