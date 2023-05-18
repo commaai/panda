@@ -5,7 +5,6 @@
 #define MSG_BrakeSysFeatures      0x415   // RX from ABS, for vehicle speed
 #define MSG_EngVehicleSpThrottle2 0x202   // RX from PCM, for second vehicle speed
 #define MSG_Yaw_Data_FD1          0x91    // RX from RCM, for yaw rate
-#define MSG_ACCDATA_2             0x187   // RX from IPMA, for AEB status
 #define MSG_Steering_Data_FD1     0x083   // TX by OP, various driver switches and LKAS/CC buttons
 #define MSG_ACCDATA               0x186   // TX by OP, ACC controls
 #define MSG_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
@@ -137,7 +136,6 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
 const uint16_t FORD_PARAM_LONGITUDINAL = 1;
 
 bool ford_longitudinal = false;
-bool ford_stock_aeb = false;
 
 const LongitudinalLimits FORD_LONG_LIMITS = {
   // acceleration cmd limits (used for brakes)
@@ -225,12 +223,6 @@ static int ford_rx_hook(CANPacket_t *to_push) {
       update_sample(&angle_meas, ROUND(current_curvature * (float)FORD_STEERING_LIMITS.angle_deg_to_can));
     }
 
-    // Update AEB status
-    if (addr == MSG_ACCDATA_2) {
-      // Signal: CmbbBrkDecel_B_Rq
-      ford_stock_aeb = GET_BIT(to_push, 15) == 1U;
-    }
-
     // Update gas pedal
     if (addr == MSG_EngVehicleSpThrottle) {
       // Pedal position: (0.1 * val) in percent
@@ -281,7 +273,6 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     violation |= longitudinal_gas_checks(gas, FORD_LONG_LIMITS);
 
     // Safety check for stock AEB
-    // Signal: CmbbDeny_B_Actl
     violation |= cmbb_deny != 0U; // do not disable stock AEB
 
     if (violation) {
@@ -375,7 +366,6 @@ static int ford_fwd_hook(int bus_num, int addr) {
 
 static const addr_checks* ford_init(uint16_t param) {
   UNUSED(param);
-  ford_stock_aeb = false;
 #ifdef ALLOW_DEBUG
   ford_longitudinal = GET_FLAG(param, FORD_PARAM_LONGITUDINAL);
 #endif
