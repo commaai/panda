@@ -11,6 +11,10 @@ void llspi_mosi_dma(uint8_t *addr, int len) {
     (void)dat;
   }
 
+  // clear all pending
+  SPI4->IFCR |= (0x1FFU << 3U);
+  register_set(&(SPI4->IER), 0, 0x3FFU);
+
   // setup destination and length
   register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
   DMA2_Stream2->NDTR = len;
@@ -23,23 +27,25 @@ void llspi_mosi_dma(uint8_t *addr, int len) {
 
 // panda -> master DMA start
 void llspi_miso_dma(uint8_t *addr, int len) {
-  // disable DMA
+  // disable DMA + SPI
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
+  register_clear_bits(&(SPI4->CR1), SPI_CR1_SPE);
 
   // setup source and length
   register_set(&(DMA2_Stream3->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
   DMA2_Stream3->NDTR = len;
 
   // clear under-run while we were reading
-  SPI4->IFCR |= SPI_IFCR_UDRC;
+  SPI4->IFCR |= (0x1FFU << 3U);
 
   // setup interrupt on TXC
   register_set(&(SPI4->IER), (1U << SPI_IER_EOTIE_Pos), 0x3FFU);
 
-  // enable DMA
+  // enable DMA + SPI
   register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
   DMA2_Stream3->CR |= DMA_SxCR_EN;
+  register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
 }
 
 // master -> panda DMA finished
@@ -48,7 +54,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
   ENTER_CRITICAL();
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
 
-  spi_handle_rx();
+  spi_rx_done();
 
   EXIT_CRITICAL();
 }
@@ -68,16 +74,11 @@ void SPI4_IRQ_Handler(void) {
   ENTER_CRITICAL();
 
   // clear flag
-  SPI4->IFCR |= SPI_IFCR_EOTC;
+  SPI4->IFCR |= (0x1FFU << 3U);
 
   if (spi_tx_dma_done && ((SPI4->SR & SPI_SR_TXC) != 0)) {
     spi_tx_dma_done = false;
-
-    register_set(&(SPI4->IER), 0, 0x3FFU);
-
-    volatile uint8_t dat = SPI4->TXDR;
-    (void)dat;
-    spi_handle_tx(false);
+    spi_tx_done(false);
   }
 
   EXIT_CRITICAL();
@@ -85,10 +86,9 @@ void SPI4_IRQ_Handler(void) {
 
 
 void llspi_init(void) {
-  // We expect less than 50 transactions (including control messages and CAN buffers) at the 100Hz boardd interval. Can be raised if needed.
-  REGISTER_INTERRUPT(SPI4_IRQn, SPI4_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
-  REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
-  REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, 5000U, FAULT_INTERRUPT_RATE_SPI_DMA)
+  REGISTER_INTERRUPT(SPI4_IRQn, SPI4_IRQ_Handler, SPI_IRQ_RATE, FAULT_INTERRUPT_RATE_SPI_DMA)
+  REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, SPI_IRQ_RATE, FAULT_INTERRUPT_RATE_SPI_DMA)
+  REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, SPI_IRQ_RATE, FAULT_INTERRUPT_RATE_SPI_DMA)
 
   // Setup MOSI DMA
   register_set(&(DMAMUX1_Channel10->CCR), 83U, 0xFFFFFFFFU);

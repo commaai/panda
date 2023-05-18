@@ -58,7 +58,14 @@ class SpiDevice:
   """
   Provides locked, thread-safe access to a panda's SPI interface.
   """
-  def __init__(self, speed):
+
+  # 50MHz is the max of the 845. older rev comma three
+  # may not support the full 50MHz
+  MAX_SPEED = 50000000
+
+  def __init__(self, speed=MAX_SPEED):
+    assert speed <= self.MAX_SPEED
+
     if not os.path.exists(DEV_PATH):
       raise PandaSpiUnavailable(f"SPI device not found: {DEV_PATH}")
     if spidev is None:
@@ -87,9 +94,7 @@ class PandaSpiHandle(BaseHandle):
   A class that mimics a libusb1 handle for panda SPI communications.
   """
   def __init__(self):
-    # 50MHz is the max of the 845. older rev comma three
-    # may not support the full 50MHz
-    self.dev = SpiDevice(50000000)
+    self.dev = SpiDevice()
 
   # helpers
   def _calc_checksum(self, data: List[int]) -> int:
