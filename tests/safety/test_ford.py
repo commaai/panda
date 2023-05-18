@@ -169,14 +169,6 @@ class TestFordSafetyBase(common.PandaSafetyTest):
     }
     return self.packer.make_can_msg_panda("LateralMotionControl", 0, values)
 
-  # ACC command
-  def _acc_command_msg(self, gas: float, brake: float):
-    values = {
-      "AccPrpl_A_Rq": gas,      # [-5|5.23] m/s^2
-      "AccBrkTot_A_Rq": brake,  # [-20|11.9449] m/s^2
-    }
-    return self.packer.make_can_msg_panda("ACCDATA", 0, values)
-
   # Cruise control buttons
   def _acc_button_msg(self, button: int, bus: int):
     values = {
@@ -379,6 +371,14 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_LONG_CONTROL)
     self.safety.init_tests()
+
+  # ACC command
+  def _acc_command_msg(self, gas: float, brake: float):
+    values = {
+      "AccPrpl_A_Rq": gas,      # [-5|5.23] m/s^2
+      "AccBrkTot_A_Rq": brake,  # [-20|11.9449] m/s^2
+    }
+    return self.packer.make_can_msg_panda("ACCDATA", 0, values)
 
   def test_gas_safety_check(self):
     # Test that uses _acc_command_msg function to test gas limits (setting accel to inactive_accel)
