@@ -57,6 +57,7 @@ class PandaSafetyTestBase(unittest.TestCase):
   def setUpClass(cls):
     if cls.__name__ == "PandaSafetyTestBase":
       cls.safety = None
+      cls.packer = None
       raise unittest.SkipTest
 
   def _reset_safety_hooks(self):
