@@ -83,7 +83,6 @@ class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "HyundaiLongitudinalBase":
-      cls.safety = None
       raise unittest.SkipTest
 
   # override these tests from PandaSafetyTest, hyundai longitudinal uses button enable

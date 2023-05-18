@@ -22,7 +22,7 @@ MSG_ACC_02 = 0x30C      # TX by OP, ACC HUD data to the instrument cluster
 MSG_LDW_02 = 0x397      # TX by OP, Lane line recognition and text alerts
 
 
-class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestVolkswagenMqbSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR = MSG_HCA_01
   RELAY_MALFUNCTION_BUS = 0
@@ -35,13 +35,6 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
 
   DRIVER_TORQUE_ALLOWANCE = 80
   DRIVER_TORQUE_FACTOR = 3
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestVolkswagenMqbSafety":
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
 
   # Wheel speeds _esp_19_msg
   def _speed_msg(self, speed):
@@ -136,7 +129,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
     self.assertEqual(0, self.safety.get_torque_driver_min())
 
 
-class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
+class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafetyBase):
   TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_GRA_ACC_01, 0], [MSG_GRA_ACC_01, 2]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
@@ -157,7 +150,7 @@ class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
     self.assertTrue(self._tx(self._gra_acc_01_msg(resume=1)))
 
 
-class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
+class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafetyBase):
   TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_ACC_02, 0], [MSG_ACC_06, 0], [MSG_ACC_07, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02, MSG_ACC_02, MSG_ACC_06, MSG_ACC_07]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
