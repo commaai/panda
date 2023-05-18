@@ -120,7 +120,7 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTestB
       self.assertFalse(self.safety.get_controls_allowed())
 
 
-class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSafetyTest):
+class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSafetyTestBase):
 
   MAX_RATE_UP = 15
   MAX_RATE_DOWN = 25

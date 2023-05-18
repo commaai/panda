@@ -6,7 +6,7 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 
-class TestSubaruPreglobalSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestSubaruPreglobalSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTestBase):
   TX_MSGS = [[0x161, 0], [0x164, 0]]
   STANDSTILL_THRESHOLD = 0  # kph
   RELAY_MALFUNCTION_ADDR = 0x164

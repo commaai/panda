@@ -42,7 +42,7 @@ def checksum(msg):
   return addr, t, ret, bus
 
 
-class TestHyundaiSafety(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestHyundaiSafety(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTestBase):
   TX_MSGS = [[832, 0], [1265, 0], [1157, 0]]
   STANDSTILL_THRESHOLD = 30  # ~1kph
   RELAY_MALFUNCTION_ADDR = 832

@@ -55,7 +55,7 @@ class GmLongitudinalBase(common.PandaSafetyTest):
     pass
 
 
-class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTestBase):
   STANDSTILL_THRESHOLD = 10 * 0.0311
   RELAY_MALFUNCTION_ADDR = 384
   RELAY_MALFUNCTION_BUS = 0
