@@ -55,7 +55,7 @@ def add_regen_tests(cls):
 class PandaSafetyTestBase(unittest.TestCase):
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "PandaSafetyTestBase":
+    if cls.__name__.endswith("Base"):
       cls.safety = None
       raise unittest.SkipTest
 
@@ -73,12 +73,6 @@ class PandaSafetyTestBase(unittest.TestCase):
 class InterceptorSafetyTest(PandaSafetyTestBase):
 
   INTERCEPTOR_THRESHOLD = 0
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "InterceptorSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
 
   @abc.abstractmethod
   def _interceptor_gas_cmd(self, gas):
@@ -142,12 +136,6 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
   MIN_ACCEL: float = -3.5
   INACTIVE_ACCEL: float = 0.0
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "LongitudinalAccelSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
-
   @abc.abstractmethod
   def _accel_msg(self, accel: float):
     pass
@@ -187,12 +175,6 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
   MIN_VALID_STEERING_FRAMES = 0
   MAX_INVALID_STEERING_FRAMES = 0
   MIN_VALID_STEERING_RT_INTERVAL = 0
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TorqueSteeringSafetyTestBase":
-      cls.safety = None
-      raise unittest.SkipTest
 
   @abc.abstractmethod
   def _torque_cmd_msg(self, torque, steer_req=1):
@@ -333,12 +315,6 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
   DRIVER_TORQUE_ALLOWANCE = 0
   DRIVER_TORQUE_FACTOR = 0
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "DriverTorqueSteeringSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
-
   @abc.abstractmethod
   def _torque_driver_msg(self, torque):
     pass
@@ -424,12 +400,6 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   MAX_TORQUE_ERROR = 0
   TORQUE_MEAS_TOLERANCE = 0
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "MotorTorqueSteeringSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
 
   @abc.abstractmethod
   def _torque_meas_msg(self, torque):
@@ -544,12 +514,6 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
   ANGLE_RATE_BP: List[float]
   ANGLE_RATE_UP: List[float]  # windup limit
   ANGLE_RATE_DOWN: List[float]  # unwind limit
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "AngleSteeringSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
 
   @abc.abstractmethod
   def _speed_msg(self, speed):
@@ -685,12 +649,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
   RELAY_MALFUNCTION_BUS: Optional[int] = None
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "PandaSafetyTest" or cls.__name__.endswith('Base'):
-      cls.safety = None
-      raise unittest.SkipTest
 
   @abc.abstractmethod
   def _user_brake_msg(self, brake):
