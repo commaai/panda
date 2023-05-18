@@ -94,7 +94,7 @@ pipeline {
             phone_steps("panda-tres", [
               ["build", "scons -j4"],
               ["flash", "cd tests/ && ./ci_reset_internal_hw.py"],
-              ["test", "cd tests/hitl && HW_TYPES=9 pytest --durations=0 2*.py [5-7]*.py -k 'not test_fan_controller and not test_fan_overshoot'"],
+              ["test", "cd tests/hitl && HW_TYPES=9 pytest --durations=0 2*.py [5-9]*.py"],
             ])
           }
         }

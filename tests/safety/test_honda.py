@@ -296,7 +296,7 @@ class TestHondaNidecSafetyBase(HondaBase):
       self.safety.set_controls_allowed(controls_allowed)
       for pcm_gas in range(0, 255):
         for pcm_speed in range(0, 100):
-          send = pcm_gas <= self.MAX_GAS if controls_allowed else pcm_gas == 0 and pcm_speed == 0
+          send = (controls_allowed and pcm_gas <= self.MAX_GAS) or (pcm_gas == 0 and pcm_speed == 0)
           self.assertEqual(send, self._tx(self._send_acc_hud_msg(pcm_gas, pcm_speed)))
 
   def test_fwd_hook(self):
@@ -499,7 +499,7 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
       for gas in np.arange(self.NO_GAS, self.MAX_GAS + 2000, 100):
         accel = 0 if gas < 0 else gas / 1000
         self.safety.set_controls_allowed(controls_allowed)
-        send = gas <= self.MAX_GAS if controls_allowed else gas == self.NO_GAS
+        send = (controls_allowed and 0 <= gas <= self.MAX_GAS) or gas == self.NO_GAS
         self.assertEqual(send, self._tx(self._send_gas_brake_msg(gas, accel)), (controls_allowed, gas, accel))
 
   def test_brake_safety_check(self):

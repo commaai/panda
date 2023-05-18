@@ -150,7 +150,7 @@ class Panda:
   SAFETY_NOOUTPUT = 19
   SAFETY_HONDA_BOSCH = 20
   SAFETY_VOLKSWAGEN_PQ = 21
-  SAFETY_SUBARU_LEGACY = 22
+  SAFETY_SUBARU_PREGLOBAL = 22
   SAFETY_HYUNDAI_LEGACY = 23
   SAFETY_HYUNDAI_COMMUNITY = 24
   SAFETY_STELLANTIS = 25
@@ -235,7 +235,8 @@ class Panda:
   FLAG_GM_HW_CAM = 1
   FLAG_GM_HW_CAM_LONG = 2
 
-  FLAG_FORD_CANFD = 1
+  FLAG_FORD_LONG_CONTROL = 1
+  FLAG_FORD_CANFD = 2
 
   def __init__(self, serial: Optional[str] = None, claim: bool = True, disable_checks: bool = True):
     self._connect_serial = serial
