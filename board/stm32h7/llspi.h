@@ -12,7 +12,7 @@ void llspi_mosi_dma(uint8_t *addr, int len) {
   }
 
   // clear all pending
-  SPI4->IFCR |= (0x1FF << 3U);
+  SPI4->IFCR |= (0x1FFU << 3U);
   register_set(&(SPI4->IER), 0, 0x3FFU);
 
   // setup destination and length
@@ -37,7 +37,7 @@ void llspi_miso_dma(uint8_t *addr, int len) {
   DMA2_Stream3->NDTR = len;
 
   // clear under-run while we were reading
-  SPI4->IFCR |= (0x1FF << 3U);
+  SPI4->IFCR |= (0x1FFU << 3U);
 
   // setup interrupt on TXC
   register_set(&(SPI4->IER), (1U << SPI_IER_EOTIE_Pos), 0x3FFU);
@@ -74,7 +74,7 @@ void SPI4_IRQ_Handler(void) {
   ENTER_CRITICAL();
 
   // clear flag
-  SPI4->IFCR |= (0x1FF << 3U);
+  SPI4->IFCR |= (0x1FFU << 3U);
 
   if (spi_tx_dma_done && ((SPI4->SR & SPI_SR_TXC) != 0)) {
     spi_tx_dma_done = false;
