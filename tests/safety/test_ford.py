@@ -391,37 +391,32 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
   def test_stock_aeb(self):
     for controls_allowed in (True, False):
       self.safety.set_controls_allowed(controls_allowed)
-      for aeb, cmbb_deny, min_engine_torque in itertools.product([True, False], [True, False], [True, False]):
-        self._rx(self._stock_aeb_msg(aeb))
-        should_tx = not cmbb_deny and (min_engine_torque or not aeb)
-        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, self.INACTIVE_ACCEL, cmbb_deny, min_engine_torque)))
+      for aeb in (True, False):
+        self.assertTrue(self._rx(self._stock_aeb_msg(aeb)))
+
+        for cmbb_deny in (True, False):
+          for min_engine_torque in (True, False):
+            # cmbb_deny should always be false, and min_engine_torque should be true when AEB
+            should_tx = not cmbb_deny and (not aeb or min_engine_torque)
+            self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, self.INACTIVE_ACCEL,
+                                                                       cmbb_deny, min_engine_torque)), (aeb, cmbb_deny, min_engine_torque))
 
   def test_gas_safety_check(self):
     for controls_allowed in (True, False):
       self.safety.set_controls_allowed(controls_allowed)
-      for aeb in (True, False):
-        self.assertTrue(self._rx(self._stock_aeb_msg(aeb)))
-        for min_engine_torque in (True, False):
-          for gas in np.concatenate((np.arange(self.MIN_GAS - 2, self.MAX_GAS + 2, 0.05), [self.INACTIVE_GAS])):
-            gas = round(gas, 2)  # floats might not hit exact boundary conditions without rounding
-            should_tx = (controls_allowed and not aeb and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
-            if aeb and not min_engine_torque:
-              should_tx = False
-            self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL, False, min_engine_torque)))
+      for gas in np.concatenate((np.arange(self.MIN_GAS - 2, self.MAX_GAS + 2, 0.05), [self.INACTIVE_GAS])):
+        gas = round(gas, 2)  # floats might not hit exact boundary conditions without rounding
+        should_tx = (controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
+        self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL)))
 
   def test_brake_safety_check(self):
     for controls_allowed in (True, False):
       self.safety.set_controls_allowed(controls_allowed)
-      for aeb in (True, False):
-        self.assertTrue(self._rx(self._stock_aeb_msg(aeb)))
-        for min_engine_torque in (True, False):
-          for brake in np.arange(self.MIN_ACCEL - 2, self.MAX_ACCEL + 2, 0.05):
-            brake = round(brake, 2)  # floats might not hit exact boundary conditions without rounding
-            should_tx = (controls_allowed and not aeb and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
-            if aeb and not min_engine_torque:
-              should_tx = False
-            self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake, False, min_engine_torque)),
-                             (controls_allowed, aeb, brake))
+      for min_engine_torque in (True, False):
+        for brake in np.arange(self.MIN_ACCEL - 2, self.MAX_ACCEL + 2, 0.05):
+          brake = round(brake, 2)  # floats might not hit exact boundary conditions without rounding
+          should_tx = (controls_allowed and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
+          self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake)))
 
 
 if __name__ == "__main__":
