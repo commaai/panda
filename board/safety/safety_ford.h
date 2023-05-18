@@ -286,11 +286,9 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     // Safety checks for stock AEB
     violation |= cmbb_deny != 0U; // do not disable stock AEB
     if (ford_stock_aeb) {
-      print("ford stock aeb: "); puth(cmbb_engine_torque_min); print("\n");
       violation |= accel != FORD_LONG_LIMITS.inactive_accel;
       violation |= gas != FORD_LONG_LIMITS.inactive_gas;
       violation |= cmbb_engine_torque_min != 1U;
-      print("cmbb_engine_torque_min: "); puth(cmbb_engine_torque_min); print("\n");
     }
 
     if (violation) {

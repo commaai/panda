@@ -3,7 +3,6 @@ import numpy as np
 import unittest
 
 import panda.tests.safety.common as common
-import time
 
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
@@ -388,7 +387,6 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
     return self.packer.make_can_msg_panda("ACCDATA", 0, values)
 
   def test_gas_safety_check(self):
-    # TODO: why isn't aeb affecting gas
     for controls_allowed in (True, False):
       self.safety.set_controls_allowed(controls_allowed)
       for aeb in (True, False):
@@ -397,25 +395,23 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
           for gas in np.concatenate((np.arange(self.MIN_GAS - 2, self.MAX_GAS + 2, 0.05), [self.INACTIVE_GAS])):
             gas = round(gas, 2)  # floats might not hit exact boundary conditions without rounding
             should_tx = (controls_allowed and not aeb and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
-            # if aeb and not min_engine_torque:
-            #   should_tx = False
-            time.sleep(0.01)
-            print('controls_allowed', controls_allowed, 'aeb', aeb, 'min_engine_torque', min_engine_torque, 'gas', gas, 'should_tx', should_tx)
+            if aeb and not min_engine_torque:
+              should_tx = False
             self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL, min_engine_torque)))
 
-  # def test_brake_safety_check(self):
-  #   for controls_allowed in (True, False):
-  #     self.safety.set_controls_allowed(controls_allowed)
-  #     for aeb in (True, False):
-  #       self.assertTrue(self._rx(self._stock_aeb_msg(aeb)))
-  #       for min_engine_torque in (True, False):
-  #         for brake in np.arange(self.MIN_ACCEL - 2, self.MAX_ACCEL + 2, 0.05):
-  #           brake = round(brake, 2)  # floats might not hit exact boundary conditions without rounding
-  #           should_tx = (controls_allowed and not aeb and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
-  #           if aeb and not min_engine_torque:
-  #             should_tx = False
-  #           self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake, min_engine_torque)),
-  #                            (controls_allowed, aeb, brake))
+  def test_brake_safety_check(self):
+    for controls_allowed in (True, False):
+      self.safety.set_controls_allowed(controls_allowed)
+      for aeb in (True, False):
+        self.assertTrue(self._rx(self._stock_aeb_msg(aeb)))
+        for min_engine_torque in (True, False):
+          for brake in np.arange(self.MIN_ACCEL - 2, self.MAX_ACCEL + 2, 0.05):
+            brake = round(brake, 2)  # floats might not hit exact boundary conditions without rounding
+            should_tx = (controls_allowed and not aeb and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
+            if aeb and not min_engine_torque:
+              should_tx = False
+            self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake, min_engine_torque)),
+                             (controls_allowed, aeb, brake))
 
 
 if __name__ == "__main__":
