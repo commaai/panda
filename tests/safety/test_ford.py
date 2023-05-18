@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import itertools
 import numpy as np
 import unittest
 
@@ -378,13 +379,22 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
     self.safety.init_tests()
 
   # ACC command
-  def _acc_command_msg(self, gas: float, brake: float, min_engine_torque: bool = False):
+  def _acc_command_msg(self, gas: float, brake: float, cmbb_deny: bool = False, min_engine_torque: bool = False):
     values = {
       "AccPrpl_A_Rq": gas,      # [-5|5.23] m/s^2
       "AccBrkTot_A_Rq": brake,  # [-20|11.9449] m/s^2
+      "CmbbDeny_B_Actl": 1 if cmbb_deny else 0,
       "CmbbEngTqMn_B_Rq": 1 if min_engine_torque else 0,
     }
     return self.packer.make_can_msg_panda("ACCDATA", 0, values)
+
+  def test_stock_aeb(self):
+    for controls_allowed in (True, False):
+      self.safety.set_controls_allowed(controls_allowed)
+      for aeb, cmbb_deny, min_engine_torque in itertools.product([True, False], [True, False], [True, False]):
+        self._rx(self._stock_aeb_msg(aeb))
+        should_tx = not cmbb_deny and (min_engine_torque or not aeb)
+        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, self.INACTIVE_ACCEL, cmbb_deny, min_engine_torque)))
 
   def test_gas_safety_check(self):
     for controls_allowed in (True, False):
@@ -397,7 +407,7 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
             should_tx = (controls_allowed and not aeb and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
             if aeb and not min_engine_torque:
               should_tx = False
-            self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL, min_engine_torque)))
+            self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL, False, min_engine_torque)))
 
   def test_brake_safety_check(self):
     for controls_allowed in (True, False):
@@ -410,10 +420,9 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
             should_tx = (controls_allowed and not aeb and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
             if aeb and not min_engine_torque:
               should_tx = False
-            self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake, min_engine_torque)),
+            self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake, False, min_engine_torque)),
                              (controls_allowed, aeb, brake))
 
 
 if __name__ == "__main__":
   unittest.main()
-
