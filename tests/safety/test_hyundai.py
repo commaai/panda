@@ -4,7 +4,7 @@ from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
-from panda.tests.safety.hyundai_common import HyundaiButtonBase, HyundaiLongitudinalBase
+from panda.tests.safety.hyundai_common import HyundaiButtonBase, HyundaiLongitudinalBaseBase
 
 
 # 4 bit checkusm used in some hyundai messages
@@ -167,7 +167,7 @@ class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
     values = {"CR_Vcu_AccPedDep_Pos": gas}
     return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
 
-class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBase, TestHyundaiSafety):
+class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBaseBase, TestHyundaiSafety):
   TX_MSGS = [[832, 0], [1265, 0], [1157, 0], [1056, 0], [1057, 0], [1290, 0], [905, 0], [1186, 0], [909, 0], [1155, 0], [2000, 0]]
 
 

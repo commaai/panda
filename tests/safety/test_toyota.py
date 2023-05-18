@@ -19,8 +19,8 @@ def interceptor_msg(gas, addr):
   return to_send
 
 
-class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest,
-                           common.LongitudinalAccelSafetyTest):
+class TestBaseBaseToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTestBase,
+                                   common.LongitudinalAccelSafetyTestBase):
 
   TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
              [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
@@ -113,7 +113,7 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest,
       self.assertFalse(self.safety.get_controls_allowed())
 
 
-class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSafetyTest):
+class TestToyotaSafetyTorque(TestBaseBaseToyotaSafetyBase, common.MotorTorqueSteeringSafetyTest):
 
   MAX_RATE_UP = 15
   MAX_RATE_DOWN = 25
@@ -135,7 +135,7 @@ class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSaf
     self.safety.init_tests()
 
 
-class TestToyotaSafetyAngle(TestToyotaSafetyBase):
+class TestToyotaSafetyAngle(TestBaseBaseToyotaSafetyBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
@@ -171,7 +171,7 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
     pass
 
 
-class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
+class TestToyotaStockLongitudinalBase(TestBaseBaseToyotaSafetyBase):
 
   # Base fwd addresses minus ACC_CONTROL (0x343)
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}

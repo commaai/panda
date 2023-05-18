@@ -63,7 +63,7 @@ class TestTeslaSafety(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("DAS_control", bus, values)
 
 
-class TestTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTest):
+class TestBaseTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTestBase):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2]]
   RELAY_MALFUNCTION_ADDR = 0x488
   FWD_BLACKLISTED_ADDRS = {2: [0x488]}

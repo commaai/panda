@@ -5,7 +5,7 @@ from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
-from panda.tests.safety.hyundai_common import HyundaiButtonBase, HyundaiLongitudinalBase
+from panda.tests.safety.hyundai_common import HyundaiButtonBase, HyundaiLongitudinalBaseBase
 
 
 
@@ -169,7 +169,7 @@ class TestHyundaiCanfdHDA2EV(TestHyundaiCanfdBase):
     self.safety.init_tests()
 
 
-class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV):
+class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBaseBase, TestHyundaiCanfdHDA2EV):
 
   TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0], [0x51, 0], [0x730, 1], [0x12a, 1], [0x160, 1],
              [0x1e0, 1], [0x1a0, 1], [0x1ea, 1], [0x200, 1], [0x345, 1], [0x1da, 1]]
@@ -196,7 +196,7 @@ class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV
     return self.packer.make_can_msg_panda("SCC_CONTROL", 1, values)
 
 
-class TestHyundaiCanfdHDALongHybrid(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base):
+class TestHyundaiCanfdHDALongHybrid(HyundaiLongitudinalBaseBase, TestHyundaiCanfdHDA1Base):
 
   FWD_BLACKLISTED_ADDRS = {2: [0x12a, 0x1e0, 0x1a0]}
 

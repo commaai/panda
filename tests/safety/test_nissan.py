@@ -6,7 +6,7 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 
-class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
+class TestNissanSafetyBase(common.PandaSafetyTest, common.AngleSteeringSafetyTestBase):
 
   TX_MSGS = [[0x169, 0], [0x2b1, 0], [0x4cc, 0], [0x20b, 2], [0x280, 2]]
   STANDSTILL_THRESHOLD = 0
@@ -78,7 +78,7 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
         self.assertEqual(tx, should_tx)
 
 
-class TestNissanLeafSafety(TestNissanSafety):
+class TestNissanLeafSafety(TestNissanSafetyBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("nissan_leaf_2018")
