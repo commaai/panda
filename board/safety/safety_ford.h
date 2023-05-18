@@ -272,7 +272,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     violation |= longitudinal_gas_checks(gas, FORD_LONG_LIMITS);
 
     // Safety check for stock AEB
-    violation |= cmbb_deny != 0U; // do not disable stock AEB
+    violation |= cmbb_deny != 0; // do not disable stock AEB
 
     if (violation) {
       tx = 0;
