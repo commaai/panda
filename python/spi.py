@@ -120,8 +120,11 @@ class PandaSpiHandle(BaseHandle):
     logging.debug("starting transfer: endpoint=%d, max_rx_len=%d", endpoint, max_rx_len)
     logging.debug("==============================================")
 
+    n = 0
+    start = time.monotonic()
     exc = PandaSpiException()
-    for n in range(MAX_XFER_RETRY_COUNT):
+    while (time.monotonic() - start) < timeout:
+      n += 1
       logging.debug("\ntry #%d", n+1)
       try:
         logging.debug("- send header")
