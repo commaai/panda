@@ -123,7 +123,7 @@ class PandaSpiHandle(BaseHandle):
     n = 0
     start = time.monotonic()
     exc = PandaSpiException()
-    while (time.monotonic() - start) < timeout:
+    while (time.monotonic() - start) < timeout*1e-3:
       n += 1
       logging.debug("\ntry #%d", n+1)
       try:
