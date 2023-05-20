@@ -121,9 +121,9 @@ class PandaSpiHandle(BaseHandle):
     logging.debug("==============================================")
 
     n = 0
-    start = time.monotonic()
+    start_time = time.monotonic()
     exc = PandaSpiException()
-    while (time.monotonic() - start) < timeout*1e-3:
+    while (time.monotonic() - start_time) < timeout*1e-3:
       n += 1
       logging.debug("\ntry #%d", n+1)
       try:
@@ -132,16 +132,18 @@ class PandaSpiHandle(BaseHandle):
         packet += bytes([reduce(lambda x, y: x^y, packet) ^ CHECKSUM_START])
         spi.xfer2(packet)
 
+        to = timeout - (time.monotonic() - start_time)*1e3
         logging.debug("- waiting for header ACK")
-        self._wait_for_ack(spi, HACK, timeout, 0x11)
+        self._wait_for_ack(spi, HACK, to, 0x11)
 
         # send data
         logging.debug("- sending data")
         packet = bytes([*data, self._calc_checksum(data)])
         spi.xfer2(packet)
 
+        to = timeout - (time.monotonic() - start_time)*1e3
         logging.debug("- waiting for data ACK")
-        self._wait_for_ack(spi, DACK, timeout, 0x13)
+        self._wait_for_ack(spi, DACK, to, 0x13)
 
         # get response length, then response
         response_len_bytes = bytes(spi.xfer2(b"\x00" * 2))
@@ -157,7 +159,7 @@ class PandaSpiHandle(BaseHandle):
         return dat[:-1]
       except PandaSpiException as e:
         exc = e
-        logging.debug("SPI transfer failed, %d retries left", MAX_XFER_RETRY_COUNT - n - 1, exc_info=True)
+        logging.debug("SPI transfer failed, retrying", exc_info=True)
     raise exc
 
   # libusb1 functions

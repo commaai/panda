@@ -33,14 +33,14 @@ class TestSpi:
   def test_bad_header(self, mocker, p):
     with patch('panda.python.spi.SYNC', return_value=0):
       with pytest.raises(PandaSpiNackResponse):
-        p.health()
+        p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
     self._ping(mocker, p)
 
   def test_bad_checksum(self, mocker, p):
     cnt = p.health()['spi_checksum_error_count']
     with patch('panda.python.spi.PandaSpiHandle._calc_checksum', return_value=0):
       with pytest.raises(PandaSpiNackResponse):
-        p.health()
+        p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
     self._ping(mocker, p)
     assert (p.health()['spi_checksum_error_count'] - cnt) > 0
 
@@ -48,11 +48,11 @@ class TestSpi:
     for _ in range(10):
       ep = random.randint(4, 20)
       with pytest.raises(PandaSpiNackResponse):
-        p._handle.bulkRead(ep, random.randint(1, 1000))
+        p._handle.bulkRead(ep, random.randint(1, 1000), timeout=50)
 
       self._ping(mocker, p)
 
       with pytest.raises(PandaSpiNackResponse):
-        p._handle.bulkWrite(ep, b"abc")
+        p._handle.bulkWrite(ep, b"abc", timeout=50)
 
       self._ping(mocker, p)
