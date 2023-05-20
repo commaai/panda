@@ -134,7 +134,7 @@ class PandaSpiHandle(BaseHandle):
 
         to = timeout - (time.monotonic() - start_time)*1e3
         logging.debug("- waiting for header ACK")
-        self._wait_for_ack(spi, HACK, to, 0x11)
+        self._wait_for_ack(spi, HACK, int(to), 0x11)
 
         # send data
         logging.debug("- sending data")
@@ -143,7 +143,7 @@ class PandaSpiHandle(BaseHandle):
 
         to = timeout - (time.monotonic() - start_time)*1e3
         logging.debug("- waiting for data ACK")
-        self._wait_for_ack(spi, DACK, to, 0x13)
+        self._wait_for_ack(spi, DACK, int(to), 0x13)
 
         # get response length, then response
         response_len_bytes = bytes(spi.xfer2(b"\x00" * 2))
