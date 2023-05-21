@@ -100,6 +100,8 @@ void comms_can_write(uint8_t *data, uint32_t len) {
       pos += can_write_buffer.ptr;
     }
   }
+
+  refresh_can_tx_slots_available();
 }
 
 void comms_can_reset(void) {
