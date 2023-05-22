@@ -113,7 +113,7 @@ class PandaDFU:
     self._handle.program(self._mcu_type.config.bootstub_address, code_bootstub)
 
   def recover(self):
-    fn = os.path.join(FW_PATH, self._mcu_type.config.bootstub_path)
+    fn = os.path.join(FW_PATH, self._mcu_type.config.bootstub_fn)
     with open(fn, "rb") as f:
       code = f.read()
     self.program_bootstub(code)
