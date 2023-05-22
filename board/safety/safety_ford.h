@@ -6,6 +6,7 @@
 #define MSG_EngVehicleSpThrottle2 0x202   // RX from PCM, for second vehicle speed
 #define MSG_Yaw_Data_FD1          0x91    // RX from RCM, for yaw rate
 #define MSG_Steering_Data_FD1     0x083   // TX by OP, various driver switches and LKAS/CC buttons
+#define MSG_ACCDATA               0x186   // TX by OP, ACC controls
 #define MSG_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
 #define MSG_Lane_Assist_Data1     0x3CA   // TX by OP, Lane Keep Assist
 #define MSG_LateralMotionControl  0x3D3   // TX by OP, Traffic Jam Assist
@@ -15,7 +16,7 @@
 #define FORD_MAIN_BUS 0U
 #define FORD_CAM_BUS  2U
 
-const CanMsg FORD_TX_MSGS[] = {
+const CanMsg FORD_STOCK_TX_MSGS[] = {
   {MSG_Steering_Data_FD1, 0, 8},
   {MSG_Steering_Data_FD1, 2, 8},
   {MSG_ACCDATA_3, 0, 8},
@@ -23,7 +24,18 @@ const CanMsg FORD_TX_MSGS[] = {
   {MSG_LateralMotionControl, 0, 8},
   {MSG_IPMA_Data, 0, 8},
 };
-#define FORD_TX_LEN (sizeof(FORD_TX_MSGS) / sizeof(FORD_TX_MSGS[0]))
+#define FORD_STOCK_TX_LEN (sizeof(FORD_STOCK_TX_MSGS) / sizeof(FORD_STOCK_TX_MSGS[0]))
+
+const CanMsg FORD_LONG_TX_MSGS[] = {
+  {MSG_Steering_Data_FD1, 0, 8},
+  {MSG_Steering_Data_FD1, 2, 8},
+  {MSG_ACCDATA, 0, 8},
+  {MSG_ACCDATA_3, 0, 8},
+  {MSG_Lane_Assist_Data1, 0, 8},
+  {MSG_LateralMotionControl, 0, 8},
+  {MSG_IPMA_Data, 0, 8},
+};
+#define FORD_LONG_TX_LEN (sizeof(FORD_LONG_TX_MSGS) / sizeof(FORD_LONG_TX_MSGS[0]))
 
 // warning: quality flags are not yet checked in openpilot's CAN parser,
 // this may be the cause of blocked messages
@@ -119,6 +131,24 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
   }
   return valid;
 }
+
+const uint16_t FORD_PARAM_LONGITUDINAL = 1;
+
+bool ford_longitudinal = false;
+
+const LongitudinalLimits FORD_LONG_LIMITS = {
+  // acceleration cmd limits (used for brakes)
+  // Signal: AccBrkTot_A_Rq
+  .max_accel = 5641,       //  1.9999 m/s^s
+  .min_accel = 4231,       // -3.4991 m/s^2
+  .inactive_accel = 5128,  // -0.0008 m/s^2
+
+  // gas cmd limits
+  // Signal: AccPrpl_A_Rq
+  .max_gas = 700,          //  2.0 m/s^2
+  .min_gas = 450,          // -0.5 m/s^2
+  .inactive_gas = 0,       // -5.0 m/s^2
+};
 
 #define INACTIVE_CURVATURE 1000U
 #define INACTIVE_CURVATURE_RATE 4096U
@@ -219,12 +249,34 @@ static int ford_rx_hook(CANPacket_t *to_push) {
 }
 
 static int ford_tx_hook(CANPacket_t *to_send) {
-
   int tx = 1;
   int addr = GET_ADDR(to_send);
 
-  if (!msg_allowed(to_send, FORD_TX_MSGS, FORD_TX_LEN)) {
-    tx = 0;
+  if (ford_longitudinal) {
+    tx = msg_allowed(to_send, FORD_LONG_TX_MSGS, FORD_LONG_TX_LEN);
+  } else {
+    tx = msg_allowed(to_send, FORD_STOCK_TX_MSGS, FORD_STOCK_TX_LEN);
+  }
+
+  // Safety check for ACCDATA accel and brake requests
+  if (addr == MSG_ACCDATA) {
+    // Signal: AccPrpl_A_Rq
+    int gas = ((GET_BYTE(to_send, 6) & 0x3U) << 8) | GET_BYTE(to_send, 7);
+    // Signal: AccBrkTot_A_Rq
+    int accel = ((GET_BYTE(to_send, 0) & 0x1FU) << 8) | GET_BYTE(to_send, 1);
+    // Signal: CmbbDeny_B_Actl
+    int cmbb_deny = GET_BIT(to_send, 37U);
+
+    bool violation = false;
+    violation |= longitudinal_accel_checks(accel, FORD_LONG_LIMITS);
+    violation |= longitudinal_gas_checks(gas, FORD_LONG_LIMITS);
+
+    // Safety check for stock AEB
+    violation |= cmbb_deny != 0; // do not prevent stock AEB actuation
+
+    if (violation) {
+      tx = 0;
+    }
   }
 
   // Safety check for Steering_Data_FD1 button signals
@@ -289,8 +341,14 @@ static int ford_fwd_hook(int bus_num, int addr) {
       break;
     }
     case FORD_CAM_BUS: {
-      // Block stock LKAS messages
-      if (!ford_lkas_msg_check(addr)) {
+      if (ford_lkas_msg_check(addr)) {
+        // Block stock LKAS and UI messages
+        bus_fwd = -1;
+      } else if (ford_longitudinal && (addr == MSG_ACCDATA)) {
+        // Block stock ACC message
+        bus_fwd = -1;
+      } else {
+        // Forward remaining traffic
         bus_fwd = FORD_MAIN_BUS;
       }
       break;
@@ -307,7 +365,9 @@ static int ford_fwd_hook(int bus_num, int addr) {
 
 static const addr_checks* ford_init(uint16_t param) {
   UNUSED(param);
-
+#ifdef ALLOW_DEBUG
+  ford_longitudinal = GET_FLAG(param, FORD_PARAM_LONGITUDINAL);
+#endif
   return &ford_rx_checks;
 }
 
