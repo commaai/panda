@@ -110,10 +110,9 @@ class PandaDFU:
     self._handle.erase_bootstub()
     self._handle.erase_app()
     self._handle.program(self._mcu_type.config.bootstub_address, code_bootstub)
-    self.reset()
 
   def recover(self):
     with open(self._mcu_type.config.bootstub_path, "rb") as f:
       code = f.read()
     self.program_bootstub(code)
-
+    self.reset()
