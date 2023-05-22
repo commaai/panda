@@ -2,7 +2,7 @@
 set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
-export CERT=$DIR/../../xx/pandaextra/certs/release
+export CERT=/home/batman/xx/pandaextra/certs/release
 
 if [ ! -f "$CERT" ]; then
   echo "No release cert found, cannot build release."
