@@ -1,3 +1,4 @@
+import os
 import usb1
 import struct
 import binascii
