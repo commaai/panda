@@ -41,6 +41,7 @@ def test_a_known_bootstub(p):
       code = f.read()
 
     dfu.program_bootstub(code)
+    dfu.reset()
 
     p.connect(claim=False, wait=True)
 
