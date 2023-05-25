@@ -11,7 +11,7 @@
   #include "drivers/usb.h"
 #else
   // no serial either
-  void puts(const char *a) {
+  void print(const char *a) {
     UNUSED(a);
   }
   void puth(unsigned int i) {
@@ -54,7 +54,7 @@ void comms_endpoint2_write(uint8_t *data, uint32_t len) {
   UNUSED(data);
   UNUSED(len);
 }
-void usb_cb_ep3_out_complete(void) {}
+void refresh_can_tx_slots_available(void) {}
 
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
@@ -78,9 +78,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       }
       break;
     default:
-      puts("NO HANDLER ");
+      print("NO HANDLER ");
       puth(req->request);
-      puts("\n");
+      print("\n");
       break;
   }
   return resp_len;
@@ -122,7 +122,7 @@ const uint8_t crc_poly = 0xD5U;  // standard crc8
 void CAN1_RX0_IRQ_Handler(void) {
   while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
     #ifdef DEBUG
-      puts("CAN RX\n");
+      print("CAN RX\n");
     #endif
     int address = CAN->sFIFOMailBox[0].RIR >> 21;
     if (address == CAN_GAS_INPUT) {
@@ -135,7 +135,7 @@ void CAN1_RX0_IRQ_Handler(void) {
           enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
           NVIC_SystemReset();
         } else {
-          puts("Failed entering Softloader or Bootloader\n");
+          print("Failed entering Softloader or Bootloader\n");
         }
       }
 
@@ -151,9 +151,9 @@ void CAN1_RX0_IRQ_Handler(void) {
       if (crc_checksum(dat, CAN_GAS_SIZE - 1, crc_poly) == dat[5]) {
         if (((current_index + 1U) & COUNTER_CYCLE) == index) {
           #ifdef DEBUG
-            puts("setting gas ");
+            print("setting gas ");
             puth(value_0);
-            puts("\n");
+            print("\n");
           #endif
           if (enable) {
             gas_set_0 = value_0;
@@ -196,11 +196,11 @@ int led_value = 0;
 void TIM3_IRQ_Handler(void) {
   #ifdef DEBUG
     puth(TIM3->CNT);
-    puts(" ");
+    print(" ");
     puth(pdl0);
-    puts(" ");
+    print(" ");
     puth(pdl1);
-    puts("\n");
+    print("\n");
   #endif
 
   // check timer for sending the user pedal and clearing the CAN
@@ -222,7 +222,7 @@ void TIM3_IRQ_Handler(void) {
     // old can packet hasn't sent!
     state = FAULT_SEND;
     #ifdef DEBUG
-      puts("CAN MISS\n");
+      print("CAN MISS\n");
     #endif
   }
 
@@ -244,8 +244,8 @@ void TIM3_IRQ_Handler(void) {
 
 void pedal(void) {
   // read/write
-  pdl0 = adc_get(ADCCHAN_ACCEL0);
-  pdl1 = adc_get(ADCCHAN_ACCEL1);
+  pdl0 = adc_get_raw(ADCCHAN_ACCEL0);
+  pdl1 = adc_get_raw(ADCCHAN_ACCEL1);
 
   // write the pedal to the DAC
   if (state == NO_FAULT) {
@@ -292,7 +292,7 @@ int main(void) {
   // init can
   bool llcan_speed_set = llcan_set_speed(CAN1, 5000, false, false);
   if (!llcan_speed_set) {
-    puts("Failed to set llcan speed");
+    print("Failed to set llcan speed");
   }
 
   bool ret = llcan_init(CAN1);
@@ -302,9 +302,9 @@ int main(void) {
   timer_init(TIM3, 15);
   NVIC_EnableIRQ(TIM3_IRQn);
 
-  watchdog_init();
+  watchdog_init(WATCHDOG_50_MS);
 
-  puts("**** INTERRUPTS ON ****\n");
+  print("**** INTERRUPTS ON ****\n");
   enable_interrupts();
 
   // main pedal loop

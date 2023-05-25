@@ -5,13 +5,14 @@
 #include "boards/unused_funcs.h"
 
 // ///// Board definition and detection ///// //
+#include "stm32fx/lladc.h"
 #include "drivers/harness.h"
 #ifdef PANDA
   #include "drivers/fan.h"
   #include "stm32fx/llfan.h"
   #include "stm32fx/llrtc.h"
   #include "drivers/rtc.h"
-  #include "stm32fx/clock_source.h"
+  #include "drivers/clock_source.h"
   #include "boards/white.h"
   #include "boards/grey.h"
   #include "boards/black.h"
@@ -48,7 +49,7 @@ void detect_board_type(void) {
       current_board = &board_pedal;
     #else
       hw_type = HW_TYPE_UNKNOWN;
-      puts("Hardware type is UNKNOWN!\n");
+      print("Hardware type is UNKNOWN!\n");
     #endif
   #endif
 }

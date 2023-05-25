@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import unittest
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
@@ -27,7 +27,7 @@ class TestMazdaSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyT
 
   def setUp(self):
     self.packer = CANPackerPanda("mazda_2017")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_MAZDA, 0)
     self.safety.init_tests()
 
@@ -35,9 +35,9 @@ class TestMazdaSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyT
     values = {"STEER_TORQUE_MOTOR": torque}
     return self.packer.make_can_msg_panda("STEER_TORQUE", 0, values)
 
-#  def _torque_driver_msg(self, torque):
-#    values = {"STEER_TORQUE_DRIVER": torque}
-#    return self.packer.make_can_msg_panda("STEER_TORQUE", 0, values)
+  def _torque_driver_msg(self, torque):
+    values = {"STEER_TORQUE_SENSOR": torque}
+    return self.packer.make_can_msg_panda("STEER_TORQUE", 0, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKAS_REQUEST": torque}

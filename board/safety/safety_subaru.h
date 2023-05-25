@@ -38,7 +38,8 @@ const CanMsg SUBARU_TX_MSGS[] = {
   {0x122, 0, 8},
   {0x221, 0, 8},
   {0x321, 0, 8},
-  {0x322, 0, 8}
+  {0x322, 0, 8},
+  {0x323, 0, 8},
 };
 #define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
 
@@ -58,7 +59,8 @@ const CanMsg SUBARU_GEN2_TX_MSGS[] = {
   {0x122, 0, 8},
   {0x221, 1, 8},
   {0x321, 0, 8},
-  {0x322, 0, 8}
+  {0x322, 0, 8},
+  {0x323, 0, 8}
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
 
@@ -111,7 +113,7 @@ static uint32_t subaru_compute_checksum(CANPacket_t *to_push) {
 static int subaru_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &subaru_rx_checks,
-                                 subaru_get_checksum, subaru_compute_checksum, subaru_get_counter);
+                                 subaru_get_checksum, subaru_compute_checksum, subaru_get_counter, NULL);
 
   if (valid) {
     const int bus = GET_BUS(to_push);
@@ -120,7 +122,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     int addr = GET_ADDR(to_push);
     if ((addr == 0x119) && (bus == 0)) {
       int torque_driver_new;
-      torque_driver_new = ((GET_BYTES_04(to_push) >> 16) & 0x7FFU);
+      torque_driver_new = ((GET_BYTES(to_push, 0, 4) >> 16) & 0x7FFU);
       torque_driver_new = -1 * to_signed(torque_driver_new, 11);
       update_sample(&torque_driver, torque_driver_new);
     }
@@ -133,7 +135,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
 
     // update vehicle moving with any non-zero wheel speed
     if ((addr == 0x13a) && (bus == alt_bus)) {
-      vehicle_moving = ((GET_BYTES_04(to_push) >> 12) != 0U) || (GET_BYTES_48(to_push) != 0U);
+      vehicle_moving = ((GET_BYTES(to_push, 0, 4) >> 12) != 0U) || (GET_BYTES(to_push, 4, 4) != 0U);
     }
 
     if ((addr == 0x13c) && (bus == alt_bus)) {
@@ -160,7 +162,7 @@ bool subaru_rate_limit_check(int val, int val_last, const int MAX_VAL_DELTA) {
 }
 
 
-static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int subaru_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -176,7 +178,7 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   // steer cmd checks
   if (addr == 0x122) {
-    int desired_torque = ((GET_BYTES_04(to_send) >> 16) & 0x1FFFU);
+    int desired_torque = ((GET_BYTES(to_send, 0, 4) >> 16) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
     const SteeringLimits limits = subaru_gen2 ? SUBARU_GEN2_STEERING_LIMITS : SUBARU_STEERING_LIMITS;
@@ -224,7 +226,7 @@ static int subaru_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   return tx;
 }
 
-static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+static int subaru_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   int addr = GET_ADDR(to_fwd);
@@ -247,7 +249,8 @@ static int subaru_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     // 0x222 is ES_Status
     // 0x321 is ES_DashStatus
     // 0x322 is ES_LKAS_State
-    bool block_common = (addr == 0x122) || (addr == 0x321) || (addr == 0x322);
+    // 0x323 INFOTAINMENT_STATUS
+    bool block_common = (addr == 0x122) || (addr == 0x321) || (addr == 0x322) || (addr == 0x323);
     bool block_long = (addr == 0x220) || (addr == 0x221) || (addr == 0x222);
     bool block_msg = block_common || (subaru_longitudinal && block_long);
     if (!block_msg) {

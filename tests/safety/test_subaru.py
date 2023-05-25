@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 import unittest
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 
 class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
-  TX_MSGS = [[0x122, 0], [0x221, 0], [0x321, 0], [0x322, 0]]
+  TX_MSGS = [[0x122, 0], [0x221, 0], [0x321, 0], [0x322, 0], [0x323, 0]]
   STANDSTILL_THRESHOLD = 0  # kph
   RELAY_MALFUNCTION_ADDR = 0x122
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [0x122, 0x321, 0x322]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x122, 0x321, 0x322, 0x323]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   MAX_RATE_UP = 50
@@ -28,7 +28,7 @@ class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
 
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, 0)
     self.safety.init_tests()
 
@@ -64,7 +64,7 @@ class TestSubaruSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
 
 
 class TestSubaruGen2Safety(TestSubaruSafety):
-  TX_MSGS = [[0x122, 0], [0x221, 1], [0x321, 0], [0x322, 0]]
+  TX_MSGS = [[0x122, 0], [0x221, 1], [0x321, 0], [0x322, 0], [0x323, 0]]
   ALT_BUS = 1
 
   MAX_RATE_UP = 40
@@ -73,7 +73,7 @@ class TestSubaruGen2Safety(TestSubaruSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, Panda.FLAG_SUBARU_GEN2)
     self.safety.init_tests()
 

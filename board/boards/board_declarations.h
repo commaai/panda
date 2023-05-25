@@ -10,9 +10,9 @@ typedef uint32_t (*board_read_current)(void);
 typedef void (*board_set_ir_power)(uint8_t percentage);
 typedef void (*board_set_fan_enabled)(bool enabled);
 typedef void (*board_set_phone_power)(bool enabled);
-typedef void (*board_set_clock_source_mode)(uint8_t mode);
 typedef void (*board_set_siren)(bool enabled);
-typedef void (*board_board_tick)(bool ignition, bool usb_enum, bool heartbeat_seen);
+typedef void (*board_board_tick)(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted);
+typedef bool (*board_read_som_gpio)(void);
 
 struct board {
   const char *board_type;
@@ -25,6 +25,9 @@ struct board {
   const bool has_canfd;
   const bool has_rtc_battery;
   const uint16_t fan_max_rpm;
+  const uint16_t avdd_mV;
+  const bool fan_stall_recovery;
+  const uint8_t fan_enable_cooldown_time;
   board_init init;
   board_enable_can_transceiver enable_can_transceiver;
   board_enable_can_transceivers enable_can_transceivers;
@@ -36,9 +39,9 @@ struct board {
   board_set_ir_power set_ir_power;
   board_set_fan_enabled set_fan_enabled;
   board_set_phone_power set_phone_power;
-  board_set_clock_source_mode set_clock_source_mode;
   board_set_siren set_siren;
   board_board_tick board_tick;
+  board_read_som_gpio read_som_gpio;
 };
 
 // ******************* Definitions ********************

@@ -13,12 +13,14 @@
 // FDCAN core settings
 #define FDCAN_MESSAGE_RAM_SIZE 0x2800UL
 #define FDCAN_START_ADDRESS 0x4000AC00UL
-#define FDCAN_OFFSET 3412UL // bytes for each FDCAN module
-#define FDCAN_OFFSET_W 853UL // words for each FDCAN module
-#define FDCAN_END_ADDRESS 0x4000D3FCUL // Message RAM has a width of 4 Bytes
+#define FDCAN_OFFSET 3384UL // bytes for each FDCAN module, equally
+#define FDCAN_OFFSET_W 846UL // words for each FDCAN module, equally
+#define FDCAN_END_ADDRESS 0x4000D3FCUL // Message RAM has a width of 4 bytes
+
+// FDCAN_RX_FIFO_0_EL_CNT + FDCAN_TX_FIFO_EL_CNT can't exceed 47 elements (47 * 72 bytes = 3,384 bytes) per FDCAN module
 
 // RX FIFO 0
-#define FDCAN_RX_FIFO_0_EL_CNT 24UL
+#define FDCAN_RX_FIFO_0_EL_CNT 30UL
 #define FDCAN_RX_FIFO_0_HEAD_SIZE 8UL // bytes
 #define FDCAN_RX_FIFO_0_DATA_SIZE 64UL // bytes
 #define FDCAN_RX_FIFO_0_EL_SIZE (FDCAN_RX_FIFO_0_HEAD_SIZE + FDCAN_RX_FIFO_0_DATA_SIZE)
@@ -26,7 +28,7 @@
 #define FDCAN_RX_FIFO_0_OFFSET 0UL
 
 // TX FIFO
-#define FDCAN_TX_FIFO_EL_CNT 16UL
+#define FDCAN_TX_FIFO_EL_CNT 17UL
 #define FDCAN_TX_FIFO_HEAD_SIZE 8UL // bytes
 #define FDCAN_TX_FIFO_DATA_SIZE 64UL // bytes
 #define FDCAN_TX_FIFO_EL_SIZE (FDCAN_TX_FIFO_HEAD_SIZE + FDCAN_TX_FIFO_DATA_SIZE)
@@ -37,7 +39,7 @@
 #define CAN_NUM_FROM_CANIF(CAN_DEV) (((CAN_DEV)==FDCAN1) ? 0UL : (((CAN_DEV) == FDCAN2) ? 1UL : 2UL))
 
 
-void puts(const char *a);
+void print(const char *a);
 
 // kbps multiplied by 10
 const uint32_t speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
@@ -148,10 +150,10 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
     }
     ret = fdcan_exit_init(CANx);
     if (!ret) {
-      puts(CAN_NAME_FROM_CANIF(CANx)); puts(" set_speed timed out! (2)\n");
+      print(CAN_NAME_FROM_CANIF(CANx)); print(" set_speed timed out! (2)\n");
     }
   } else {
-    puts(CAN_NAME_FROM_CANIF(CANx)); puts(" set_speed timed out! (1)\n");
+    print(CAN_NAME_FROM_CANIF(CANx)); print(" set_speed timed out! (1)\n");
   }
   return ret;
 }
@@ -219,7 +221,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
 
     ret = fdcan_exit_init(CANx);
     if(!ret) {
-      puts(CAN_NAME_FROM_CANIF(CANx)); puts(" llcan_init timed out (2)!\n");
+      print(CAN_NAME_FROM_CANIF(CANx)); print(" llcan_init timed out (2)!\n");
     }
 
     if (CANx == FDCAN1) {
@@ -232,11 +234,11 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
       NVIC_EnableIRQ(FDCAN3_IT0_IRQn);
       NVIC_EnableIRQ(FDCAN3_IT1_IRQn);
     } else {
-      puts("Invalid CAN: initialization failed\n");
+      print("Invalid CAN: initialization failed\n");
     }
 
   } else {
-    puts(CAN_NAME_FROM_CANIF(CANx)); puts(" llcan_init timed out (1)!\n");
+    print(CAN_NAME_FROM_CANIF(CANx)); print(" llcan_init timed out (1)!\n");
   }
   return ret;
 }

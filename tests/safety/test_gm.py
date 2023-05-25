@@ -2,7 +2,7 @@
 import unittest
 from typing import Dict, List
 from panda import Panda
-from panda.tests.safety import libpandasafety_py
+from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
@@ -62,12 +62,12 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   BUTTONS_BUS = 0  # rx or tx
   BRAKE_BUS = 0  # tx only
 
-  MAX_RATE_UP = 7
-  MAX_RATE_DOWN = 17
+  MAX_RATE_UP = 10
+  MAX_RATE_DOWN = 15
   MAX_TORQUE = 300
   MAX_RT_DELTA = 128
   RT_INTERVAL = 250000
-  DRIVER_TORQUE_ALLOWANCE = 50
+  DRIVER_TORQUE_ALLOWANCE = 65
   DRIVER_TORQUE_FACTOR = 4
 
   MAX_GAS = 0
@@ -87,7 +87,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
     self.safety.init_tests()
 
@@ -153,7 +153,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
       for gas_regen in range(0, 2 ** 12 - 1):
         self.safety.set_controls_allowed(enabled)
         should_tx = ((enabled and self.MAX_REGEN <= gas_regen <= self.MAX_GAS) or
-                     (not enabled and gas_regen == self.INACTIVE_REGEN))
+                     gas_regen == self.INACTIVE_REGEN)
         self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
 
 
@@ -174,7 +174,7 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_GM, 0)
     self.safety.init_tests()
 
@@ -204,7 +204,7 @@ class TestGmCameraSafety(TestGmCameraSafetyBase):
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM)
     self.safety.init_tests()
 
@@ -244,7 +244,7 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM | Panda.FLAG_GM_HW_CAM_LONG)
     self.safety.init_tests()
 

@@ -19,7 +19,7 @@ void uno_enable_can_transceiver(uint8_t transceiver, bool enabled) {
       set_gpio_output(GPIOB, 10, !enabled);
       break;
     default:
-      puts("Invalid CAN transceiver ("); puth(transceiver); puts("): enabling failed\n");
+      print("Invalid CAN transceiver ("); puth(transceiver); print("): enabling failed\n");
       break;
   }
 }
@@ -27,7 +27,7 @@ void uno_enable_can_transceiver(uint8_t transceiver, bool enabled) {
 void uno_enable_can_transceivers(bool enabled) {
   for(uint8_t i=1U; i<=4U; i++){
     // Leave main CAN always on for CAN-based ignition detection
-    if((car_harness_status == HARNESS_STATUS_FLIPPED) ? (i == 3U) : (i == 1U)){
+    if((harness.status == HARNESS_STATUS_FLIPPED) ? (i == 3U) : (i == 1U)){
       uno_enable_can_transceiver(i, true);
     } else {
       uno_enable_can_transceiver(i, enabled);
@@ -93,7 +93,7 @@ void uno_set_gps_mode(uint8_t mode) {
       uno_set_gps_load_switch(true);
       break;
     default:
-      puts("Invalid ESP/GPS mode\n");
+      print("Invalid ESP/GPS mode\n");
       break;
   }
 }
@@ -102,7 +102,7 @@ void uno_set_can_mode(uint8_t mode){
   switch (mode) {
     case CAN_MODE_NORMAL:
     case CAN_MODE_OBD_CAN2:
-      if ((bool)(mode == CAN_MODE_NORMAL) != (bool)(car_harness_status == HARNESS_STATUS_FLIPPED)) {
+      if ((bool)(mode == CAN_MODE_NORMAL) != (bool)(harness.status == HARNESS_STATUS_FLIPPED)) {
         // B12,B13: disable OBD mode
         set_gpio_mode(GPIOB, 12, MODE_INPUT);
         set_gpio_mode(GPIOB, 13, MODE_INPUT);
@@ -121,15 +121,16 @@ void uno_set_can_mode(uint8_t mode){
       }
       break;
     default:
-      puts("Tried to set unsupported CAN mode: "); puth(mode); puts("\n");
+      print("Tried to set unsupported CAN mode: "); puth(mode); print("\n");
       break;
   }
 }
 
-void uno_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
+void uno_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {
   UNUSED(ignition);
   UNUSED(usb_enum);
   UNUSED(heartbeat_seen);
+  UNUSED(harness_inserted);
   if (bootkick_timer != 0U) {
     bootkick_timer--;
   } else {
@@ -192,10 +193,6 @@ void uno_init(void) {
   pwm_init(TIM4, 2);
   uno_set_ir_power(0U);
 
-  // Initialize fan and set to 0%
-  fan_init();
-  uno_set_fan_enabled(false);
-
   // Initialize harness
   harness_init();
 
@@ -214,12 +211,12 @@ void uno_init(void) {
   uno_set_can_mode(CAN_MODE_NORMAL);
 
   // flip CAN0 and CAN2 if we are flipped
-  if (car_harness_status == HARNESS_STATUS_FLIPPED) {
+  if (harness.status == HARNESS_STATUS_FLIPPED) {
     can_flip_buses(0, 2);
   }
 
   // Switch to phone usb mode if harness connection is powered by less than 7V
-  if(adc_get_voltage() < 7000U){
+  if((adc_get_mV(ADCCHAN_VIN) * VIN_READOUT_DIVIDER) < 7000U){
     uno_set_usb_switch(true);
   } else {
     uno_set_usb_switch(false);
@@ -255,6 +252,9 @@ const board board_uno = {
   .has_canfd = false,
   .has_rtc_battery = true,
   .fan_max_rpm = 5100U,
+  .avdd_mV = 3300U,
+  .fan_stall_recovery = false,
+  .fan_enable_cooldown_time = 0U,
   .init = uno_init,
   .enable_can_transceiver = uno_enable_can_transceiver,
   .enable_can_transceivers = uno_enable_can_transceivers,
@@ -266,6 +266,6 @@ const board board_uno = {
   .set_fan_enabled = uno_set_fan_enabled,
   .set_ir_power = uno_set_ir_power,
   .set_phone_power = uno_set_phone_power,
-  .set_clock_source_mode = unused_set_clock_source_mode,
-  .set_siren = unused_set_siren
+  .set_siren = unused_set_siren,
+  .read_som_gpio = unused_read_som_gpio
 };

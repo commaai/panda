@@ -3,7 +3,6 @@ numpy
 hexdump>=3.3
 pycryptodome==3.9.8
 tqdm>=4.14.0
-nose
 pytest
 parameterized
 requests
@@ -11,7 +10,8 @@ flake8==3.7.9
 cffi==1.14.3
 crcmod
 pre-commit==2.13.0
-pylint==2.5.2
-scons
+pylint==2.15.4
+scons==4.4.0
 flaky
 spidev
+pytest-mock
