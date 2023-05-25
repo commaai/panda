@@ -183,19 +183,19 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   if (subaru_longitudinal && controls_allowed) {
     // check es_brake brake_pressure limits
     if (addr == 0x220) {
-      int es_brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
+      int es_brake_pressure = ((GET_BYTES(to_send, 0, 4) >> 16) & 0xFFFFU);
       violation |= !subaru_aeb && longitudinal_brake_checks(es_brake_pressure, SUBARU_LONG_LIMITS);
     }
 
     // check es_distance cruise_throttle limits
     if ((addr == 0x221) && !gas_pressed) {
-      int cruise_throttle = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
+      int cruise_throttle = ((GET_BYTES(to_send, 0, 4) >> 16) & 0xFFFU);
       violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
     }
 
     // check es_status cruise_rpm limits
     if ((addr == 0x222) && !gas_pressed) {
-      int cruise_rpm = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
+      int cruise_rpm = ((GET_BYTES(to_send, 0, 4) >> 16) & 0xFFFU);
       if (get_longitudinal_allowed()) {
         violation |= max_limit_check(cruise_rpm, SUBARU_LONG_LIMITS.max_rpm, SUBARU_LONG_LIMITS.min_rpm);
       } else {
