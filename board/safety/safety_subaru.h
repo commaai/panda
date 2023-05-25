@@ -20,19 +20,14 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
   .type = TorqueDriverLimited,
 };
 
-const int SUBARU_BRAKE_MIN = 0;
-const int SUBARU_BRAKE_MAX = 400;
+const LongitudinalLimits SUBARU_LONG_LIMITS = {
+  .min_gas = 0,
+  .max_gas = 3400,
+  .min_rpm = 0,
+  .max_rpm = 3200,
+  .max_brake = 400,
+};
 
-const int SUBARU_THROTTLE_MIN = 0;
-const int SUBARU_THROTTLE_MAX = 3400;
-const int SUBARU_THROTTLE_DELTA = 50;
-
-const int SUBARU_RPM_MIN = 0;
-const int SUBARU_RPM_MAX = 3200;
-const int SUBARU_RPM_DELTA = 50;
-
-int subaru_cruise_throttle_last = 0;
-int subaru_cruise_rpm_last = 0;
 
 const CanMsg SUBARU_TX_MSGS[] = {
   {0x122, 0, 8},
@@ -91,6 +86,7 @@ const uint16_t SUBARU_PARAM_LONGITUDINAL = 2;
 bool subaru_gen2 = false;
 bool subaru_longitudinal = false;
 
+bool subaru_aeb = false;
 
 static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -118,6 +114,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
   if (valid) {
     const int bus = GET_BUS(to_push);
     const int alt_bus = subaru_gen2 ? 1 : 0;
+    const int alt_bus2 = subaru_gen2 ? 1 : 2;
 
     int addr = GET_ADDR(to_push);
     if ((addr == 0x119) && (bus == 0)) {
@@ -125,6 +122,12 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       torque_driver_new = ((GET_BYTES(to_push, 0, 4) >> 16) & 0x7FFU);
       torque_driver_new = -1 * to_signed(torque_driver_new, 11);
       update_sample(&torque_driver, torque_driver_new);
+    }
+
+    // ES_LKAS_State LKAS_Alert: 5, 6
+    if ((addr == 0x322) && (bus == alt_bus2)) {
+      const int lkas_alert = ((GET_BYTE(to_push, 4) >> 3) & 5U);
+      subaru_aeb = ((lkas_alert == 5) || (lkas_alert == 6));
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -139,7 +142,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     }
 
     if ((addr == 0x13c) && (bus == alt_bus)) {
-      brake_pressed = ((GET_BYTE(to_push, 7) >> 6) & 1U);
+      brake_pressed = GET_BIT(to_push, 62U) != 0U;
     }
 
     if ((addr == 0x40) && (bus == 0)) {
@@ -149,16 +152,6 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     generic_rx_checks((addr == 0x122) && (bus == 0));
   }
   return valid;
-}
-
-bool subaru_rate_limit_check(int val, int val_last, const int MAX_VAL_DELTA) {
-
-  // *** rate limit check ***
-  int highest_val = MAX(val_last, 0) + MAX_VAL_DELTA;
-  int lowest_val = MIN(val_last, 0) - MAX_VAL_DELTA;
-
-  // check for violation
-  return (val < lowest_val) || (val > highest_val);
 }
 
 
@@ -185,40 +178,31 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
       tx = 0;
     }
-
   }
 
-  // longitudinal checks
-  if (addr == 0x220) {
-    int brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
-
-    if (!longitudinal_allowed && (brake_pressure != 0)) {
-      violation = true;
+  if (subaru_longitudinal && controls_allowed) {
+    // check es_brake brake_pressure limits
+    if (addr == 0x220) {
+      int es_brake_pressure = ((GET_BYTES_04(to_send) >> 16) & 0xFFFFU);
+      violation |= !subaru_aeb && longitudinal_brake_checks(es_brake_pressure, SUBARU_LONG_LIMITS);
     }
-    violation |= max_limit_check(brake_pressure, SUBARU_BRAKE_MAX, SUBARU_BRAKE_MIN);
-  }
-  /* FIXME: write tests and fix eyesight faults
-  if (addr == 0x221) {
-    int cruise_throttle = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
 
-    if (!longitudinal_allowed && (cruise_throttle != 0)) {
-      violation = true;
+    // check es_distance cruise_throttle limits
+    if ((addr == 0x221) && !gas_pressed) {
+      int cruise_throttle = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
+      violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
     }
-    violation |= max_limit_check(cruise_throttle, SUBARU_THROTTLE_MAX, SUBARU_THROTTLE_MIN);
-    violation |= subaru_rate_limit_check(cruise_throttle, subaru_cruise_throttle_last, SUBARU_THROTTLE_DELTA);
-    subaru_cruise_throttle_last = cruise_throttle;
-  }
-  if (addr == 0x222) {
-    int cruise_rpm = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
 
-    if (!longitudinal_allowed && (cruise_rpm != 0)) {
-      violation = true;
+    // check es_status cruise_rpm limits
+    if ((addr == 0x222) && !gas_pressed) {
+      int cruise_rpm = ((GET_BYTES_04(to_send) >> 16) & 0xFFFU);
+      if (get_longitudinal_allowed()) {
+        violation |= max_limit_check(cruise_rpm, SUBARU_LONG_LIMITS.max_rpm, SUBARU_LONG_LIMITS.min_rpm);
+      } else {
+        violation |= cruise_rpm != 0;
+      }
     }
-    violation |= max_limit_check(cruise_rpm, SUBARU_RPM_MAX, SUBARU_RPM_MIN);
-    violation |= subaru_rate_limit_check(cruise_rpm, subaru_cruise_rpm_last, SUBARU_RPM_DELTA);
-    subaru_cruise_rpm_last = cruise_rpm;
   }
-  */
 
   if (violation) {
     tx = 0;
@@ -228,8 +212,6 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
 static int subaru_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
-
-  int addr = GET_ADDR(to_fwd);
 
   if (bus_num == 0) {
     // Global Platform
@@ -250,9 +232,9 @@ static int subaru_fwd_hook(int bus_num, int addr) {
     // 0x321 is ES_DashStatus
     // 0x322 is ES_LKAS_State
     // 0x323 INFOTAINMENT_STATUS
-    bool block_common = (addr == 0x122) || (addr == 0x321) || (addr == 0x322) || (addr == 0x323);
+    bool block_lkas = (addr == 0x122) || (addr == 0x321) || (addr == 0x322) || (addr == 0x323);
     bool block_long = (addr == 0x220) || (addr == 0x221) || (addr == 0x222);
-    bool block_msg = block_common || (subaru_longitudinal && block_long);
+    bool block_msg = block_lkas || (subaru_longitudinal && block_long);
     if (!block_msg) {
       bus_fwd = 0;  // Main CAN
     }

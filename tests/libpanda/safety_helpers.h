@@ -168,6 +168,10 @@ void set_honda_fwd_brake(bool c){
   honda_fwd_brake = c;
 }
 
+void set_subaru_aeb(bool c){
+  subaru_aeb = c;
+}
+
 void init_tests(void){
   // get HW_TYPE from env variable set in test.sh
   if (getenv("HW_TYPE")) {

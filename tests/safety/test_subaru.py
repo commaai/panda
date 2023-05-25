@@ -78,15 +78,50 @@ class TestSubaruGen2Safety(TestSubaruSafety):
     self.safety.init_tests()
 
 class TestSubaruLongitudinalSafety(TestSubaruSafety):
-  TX_MSGS = [[0x122, 0], [0x220, 0], [0x221, 0], [0x222, 0], [0x321, 0], [0x322, 0], [0x240, 2], [0x13c, 2]]
-  FWD_BLACKLISTED_ADDRS = {0: [0x240, 0x13c], 2: [0x122, 0x220, 0x221, 0x222, 0x321, 0x322]}
+  TX_MSGS = [[0x122, 0], [0x220, 0], [0x221, 0], [0x222, 0], [0x321, 0], [0x322, 0], [0x323, 0], [0x240, 2], [0x13c, 2]]
+  FWD_BLACKLISTED_ADDRS = {0: [0x240, 0x13c], 2: [0x122, 0x220, 0x221, 0x222, 0x321, 0x322, 0x323]}
+
+  MAX_RPM = 3200
+  MAX_BRAKE = 400
+  MAX_THROTTLE = 3400
 
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
-    self.safety = libpandasafety_py.libpandasafety
+    self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, Panda.FLAG_SUBARU_LONG)
     self.safety.init_tests()
 
+  def _es_brake_msg(self, brake=0):
+    values = {"Brake_Pressure": brake}
+    return self.packer.make_can_msg_panda("ES_Brake", 0, values)
+
+  def _es_distance_msg(self, throttle=0):
+    values = {"Cruise_Throttle": throttle}
+    return self.packer.make_can_msg_panda("ES_Distance", 0, values)
+
+  def _es_status_msg(self, rpm=0):
+    values = {"Cruise_RPM": rpm}
+    return self.packer.make_can_msg_panda("ES_Status", 0, values)
+
+  def test_es_brake_msg(self):
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self._tx(self._es_brake_msg()))
+    self.assertTrue(self._tx(self._es_brake_msg(brake=self.MAX_BRAKE)))
+    self.assertFalse(self._tx(self._es_brake_msg(brake=self.MAX_BRAKE+10)))
+    self.safety.set_subaru_aeb(1)
+    self.assertTrue(self._tx(self._es_brake_msg(brake=self.MAX_BRAKE+10)))
+
+  def test_es_distance_msg(self):
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self._tx(self._es_distance_msg()))
+    self.assertTrue(self._tx(self._es_distance_msg(throttle=self.MAX_THROTTLE)))
+    self.assertFalse(self._tx(self._es_distance_msg(throttle=self.MAX_THROTTLE+1)))
+
+  def test_es_status_msg(self):
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self._tx(self._es_status_msg()))
+    self.assertTrue(self._tx(self._es_status_msg(rpm=self.MAX_RPM)))
+    self.assertFalse(self._tx(self._es_status_msg(rpm=self.MAX_RPM+1)))
 
 
 if __name__ == "__main__":
