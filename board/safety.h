@@ -161,8 +161,9 @@ int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], cons
   return index;
 }
 
-// 1Hz safety function called by main. Now just a check for lagging safety messages
+// 1Hz safety function called by main
 void safety_tick(const addr_checks *rx_checks) {
+  // check for lagging messages
   bool rx_checks_invalid = false;
   uint32_t ts = microsecond_timer_get();
   if (rx_checks != NULL) {
@@ -182,8 +183,17 @@ void safety_tick(const addr_checks *rx_checks) {
       }
     }
   }
-
   safety_rx_checks_invalid = rx_checks_invalid;
+
+  // exit controls allowed if unused by openpilot for a few seconds
+  if (controls_allowed && !heartbeat_engaged) {
+    heartbeat_engaged_mismatches += 1U;
+    if (heartbeat_engaged_mismatches >= 3U) {
+      controls_allowed = 0U;
+    }
+  } else {
+    heartbeat_engaged_mismatches = 0U;
+  }
 }
 
 void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
