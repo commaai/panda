@@ -178,6 +178,9 @@ const LongitudinalLimits FORD_LONG_LIMITS = {
 #define INACTIVE_CURVATURE_RATE 4096U
 #define INACTIVE_PATH_OFFSET 512U
 #define INACTIVE_PATH_ANGLE 1000U
+
+#define CANFD_INACTIVE_CURVATURE_RATE 1024U
+
 #define FORD_MAX_SPEED_DELTA 2.0  // m/s
 
 static bool ford_lkas_msg_check(int addr) {
@@ -274,9 +277,8 @@ static int ford_rx_hook(CANPacket_t *to_push) {
 }
 
 static int ford_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
   int addr = GET_ADDR(to_send);
-
+  int tx;
   if (ford_canfd) {
     if (ford_longitudinal) {
       tx = msg_allowed(to_send, FORD_CANFD_LONG_TX_MSGS, FORD_CANFD_LONG_TX_LEN);
@@ -370,7 +372,7 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     unsigned int raw_path_offset = ((GET_BYTE(to_send, 4) & 0x3U) << 8) | GET_BYTE(to_send, 5);
 
     // These signals are not yet tested with the current safety limits
-    bool violation = (raw_curvature_rate != INACTIVE_CURVATURE_RATE) || (raw_path_angle != INACTIVE_PATH_ANGLE) || (raw_path_offset != INACTIVE_PATH_OFFSET);
+    bool violation = (raw_curvature_rate != CANFD_INACTIVE_CURVATURE_RATE) || (raw_path_angle != INACTIVE_PATH_ANGLE) || (raw_path_offset != INACTIVE_PATH_OFFSET);
 
     // Check angle error and steer_control_enabled
     int desired_curvature = raw_curvature - INACTIVE_CURVATURE;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
