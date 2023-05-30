@@ -231,6 +231,11 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
       NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
       NVIC_EnableIRQ(FDCAN2_IT1_IRQn);
     } else if (CANx == FDCAN3) {
+      // defaults to nearly the lowest priority,
+      // adjust to be right below FDCAN1 and FDCAN2
+      NVIC_SetPriority(FDCAN3_IT0_IRQn, 30);
+      NVIC_SetPriority(FDCAN3_IT1_IRQn, 31);
+
       NVIC_EnableIRQ(FDCAN3_IT0_IRQn);
       NVIC_EnableIRQ(FDCAN3_IT1_IRQn);
     } else {
