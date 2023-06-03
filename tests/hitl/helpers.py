@@ -2,6 +2,16 @@ import time
 import random
 
 
+def get_random_can_messages(n):
+  m = []
+  for _ in range(n):
+    bus = random.randrange(3)
+    addr = random.randrange(1 << 29)
+    dat = bytes([random.getrandbits(8) for _ in range(random.randrange(1, 9))])
+    m.append([addr, None, dat, bus])
+  return m
+
+
 def time_many_sends(p, bus, p_recv=None, msg_count=100, two_pandas=False):
   if p_recv is None:
     p_recv = p
