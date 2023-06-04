@@ -51,7 +51,7 @@ ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
 
 ENV PANDA_PATH=/tmp/openpilot/panda
 ENV OPENPILOT_REF="ee0dd36a3c775dbd82493c84f4e7272c1eb3fcbd"
-ENV OPENDBC_REF="bffa93d782437bd829b86f81361f497f28c0d71b"
+ENV OPENDBC_REF="9ae9fbfe56f79dca66c673a6479751a15ad61780"
 
 COPY requirements.txt /tmp/
 RUN pyenv install 3.8.10 && \
