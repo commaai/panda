@@ -89,7 +89,7 @@ def pytest_configure(config):
 
 def pytest_collection_modifyitems(items):
   for item in items:
-    if item.get_marker('execution_timeout') is None:
+    if item.get_closest_marker('execution_timeout') is None:
       item.add_marker(pytest.mark.execution_timeout(10))
 
 
