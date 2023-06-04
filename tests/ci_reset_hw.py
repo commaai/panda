@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import traceback
 import concurrent.futures
 
 from panda import Panda, PandaDFU
@@ -8,7 +7,7 @@ from panda.tests.libs.resetter import Resetter
 # Reset + flash all CI hardware to get it into a consistent state
 # * ports 1-2 are jungles
 # * port 3 is for the USB hubs
-def reset():
+if __name__ == "__main__":
   r = Resetter()
 
   r.enable_boot(True)
@@ -39,14 +38,3 @@ def reset():
 
   r.cycle_power(delay=0, ports=[1, 2])
   r.close()
-
-
-if __name__ == "__main__":
-  for _ in range(3):
-    try:
-      reset()
-      break
-    except Exception as e:
-      traceback.print_exc()
-  else:
-    exit(1)
