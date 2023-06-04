@@ -24,7 +24,7 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
   ANGLE_RATE_DOWN = [5., 3.5, .4]  # unwind limit
 
   def setUp(self):
-    self.packer = CANPackerPanda("nissan_x_trail_2017")
+    self.packer = CANPackerPanda("nissan_x_trail_2017_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
     self.safety.init_tests()
@@ -81,7 +81,7 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
 class TestNissanLeafSafety(TestNissanSafety):
 
   def setUp(self):
-    self.packer = CANPackerPanda("nissan_leaf_2018")
+    self.packer = CANPackerPanda("nissan_leaf_2018_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
     self.safety.init_tests()
