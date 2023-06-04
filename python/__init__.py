@@ -622,12 +622,6 @@ class Panda:
 
   # ******************* control *******************
 
-  def enter_bootloader(self):
-    try:
-      self._handle.controlWrite(Panda.REQUEST_OUT, 0xd1, 0, 0, b'')
-    except Exception:
-      logging.exception("exception while entering bootloader")
-
   def get_version(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40).decode('utf8')
 
