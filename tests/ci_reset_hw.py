@@ -45,5 +45,8 @@ if __name__ == "__main__":
   for _ in range(3):
     try:
       reset()
+      break
     except Exception as e:
       traceback.print_exc()
+  else:
+    exit(1)
