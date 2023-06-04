@@ -77,9 +77,3 @@ du -hs $SOURCE_DIR $SOURCE_DIR/.git
 rsync -a --delete $SOURCE_DIR $TEST_DIR
 
 echo "$TEST_DIR synced with $GIT_COMMIT, t=$SECONDS"
-
-sudo mount -o rw,remount /
-#sudo $(which pip) install -r /data/panda/requirements.txt
-sudo $(which pip) install pytest-timeouts
-sudo mount -o ro,remount /
-echo "installed requirements, t=$SECONDS"

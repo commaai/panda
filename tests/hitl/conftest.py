@@ -92,6 +92,9 @@ def pytest_collection_modifyitems(items):
     if item.get_closest_marker('execution_timeout') is None:
       item.add_marker(pytest.mark.execution_timeout(10))
 
+    item.add_marker(pytest.mark.setup_timeout(15))
+    item.add_marker(pytest.mark.teardown_timeout(10))
+
 
 def pytest_make_parametrize_id(config, val, argname):
   if val in _all_pandas:
