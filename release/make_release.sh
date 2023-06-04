@@ -19,4 +19,7 @@ rm obj/*
 scons -u
 cd obj
 RELEASE_NAME=$(awk '{print $1}' version)
-zip -j ../../release/panda-$RELEASE_NAME.zip version panda.bin.signed bootstub.panda.bin panda_h7.bin.signed bootstub.panda_h7.bin
+rm panda.bin panda_h7.bin
+mv panda.bin.signed panda.bin
+mv panda_h7.bin.signed panda_h7.bin
+zip -j ../../release/panda-$RELEASE_NAME.zip version panda.bin bootstub.panda.bin panda_h7.bin bootstub.panda_h7.bin

@@ -14,7 +14,7 @@ from typing import Optional
 from itertools import accumulate
 
 from .base import BaseHandle
-from .constants import FW_PATH, McuType
+from .constants import McuType
 from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
 from .spi import PandaSpiHandle, PandaSpiException
@@ -486,7 +486,7 @@ class Panda:
 
   def flash(self, fn=None, code=None, reconnect=True):
     if not fn:
-      fn = os.path.join(FW_PATH, self._mcu_type.config.app_fn)
+      fn = self._mcu_type.config.app_path
     assert os.path.isfile(fn)
     logging.debug("flash: main version is %s", self.get_version())
     if not self.bootstub:
@@ -539,8 +539,7 @@ class Panda:
 
   def up_to_date(self) -> bool:
     current = self.get_signature()
-    fn = os.path.join(FW_PATH, self.get_mcu_type().config.app_fn)
-    expected = Panda.get_signature_from_firmware(fn)
+    expected = Panda.get_signature_from_firmware(self.get_mcu_type().config.app_path)
     return (current == expected)
 
   def call_control_api(self, msg):
