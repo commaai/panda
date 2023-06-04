@@ -33,6 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     python \
     python-dev \
+    qt5-qmake \
     unzip \
     wget \
     zlib1g-dev \

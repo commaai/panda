@@ -17,7 +17,7 @@ repos:
     hooks:
     -   id: flake8
         args:
-        - --select=F,E112,E113,E304,E501,E502,E701,E702,E703,E71,E72,E731,W191,W6
+        - --select=F,E112,E113,E304,E501,E502,E701,E702,E703,E71,E72,E731,W191,W0719,W6
         - --exclude=tests/gmbitbang/*
         - --max-line-length=160
         - --statistics
