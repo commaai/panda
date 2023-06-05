@@ -34,7 +34,7 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ in ("TestSubaruSafetyBase", "TestSubaruLongitudinalSafetyBase"):
+    if cls.__name__ in ("TestSubaruSafetyBase", "TestSubaruGen2SafetyBase", "TestSubaruLongitudinalSafetyBase"):
       raise unittest.SkipTest
   
   def setUp(self):
@@ -72,8 +72,15 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
     return self.packer.make_can_msg_panda("Cruise_Status", self.ALT_BUS, values)
+
+class TestSubaruGen2SafetyBase(TestSubaruSafetyBase):
+  ALT_BUS = 1
+
+  MAX_RATE_UP = 40
+  MAX_RATE_DOWN = 40
+  MAX_TORQUE = 1000
   
-class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase):
+class TestSubaruLongitudinalSafetyBase:
   def _es_brake_msg(self, brake=0):
     values = {"Brake_Pressure": brake}
     return self.packer.make_can_msg_panda("ES_Brake", self.ALT_BUS, values)
@@ -113,29 +120,18 @@ class TestSubaruGen1Safety(TestSubaruSafetyBase):
   TX_MSGS = [[0x122, 0], [0x221, 0], [0x321, 0], [0x322, 0], [0x323, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0x122, 0x321, 0x322, 0x323]}
 
-class TestSubaruGen2Safety(TestSubaruSafetyBase):
-  ALT_BUS = 1
 
-  MAX_RATE_UP = 40
-  MAX_RATE_DOWN = 40
-  MAX_TORQUE = 1000
-
+class TestSubaruGen2Safety(TestSubaruGen2SafetyBase):
   FLAGS = Panda.FLAG_SUBARU_GEN2
   TX_MSGS = [[0x122, 0], [0x221, 1], [0x321, 0], [0x322, 0], [0x323, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0x122, 0x321, 0x322, 0x323]}
 
-class TestSubaruGen1LongitudinalSafety(TestSubaruLongitudinalSafetyBase):
+class TestSubaruGen1LongitudinalSafety(TestSubaruSafetyBase, TestSubaruLongitudinalSafetyBase):
   FLAGS = Panda.FLAG_SUBARU_LONG
   TX_MSGS = [[0x122, 0], [0x220, 0], [0x221, 0], [0x222, 0], [0x321, 0], [0x322, 0], [0x323, 0], [0x240, 2], [0x13c, 2]]
   FWD_BLACKLISTED_ADDRS = {0: [0x240, 0x13c], 2: [0x122, 0x220, 0x221, 0x222, 0x321, 0x322, 0x323]}
 
-class TestSubaruGen2LongitudinalSafety(TestSubaruLongitudinalSafetyBase):
-  ALT_BUS = 1
-
-  MAX_RATE_UP = 40
-  MAX_RATE_DOWN = 40
-  MAX_TORQUE = 1000
-
+class TestSubaruGen2LongitudinalSafety(TestSubaruGen2SafetyBase, TestSubaruLongitudinalSafetyBase):
   FLAGS = Panda.FLAG_SUBARU_LONG | Panda.FLAG_SUBARU_GEN2
   TX_MSGS = [[0x122, 0], [0x220, 1], [0x221, 1], [0x222, 1], [0x321, 0], [0x322, 0],
              [0x323, 0], [0x240, 2], [0x13c, 2], [0x787, 2], [0x121, 0], [0x22a, 0], [0x325, 0]]

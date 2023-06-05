@@ -47,6 +47,7 @@ def setup_safety_helpers(ffi):
   void set_honda_alt_brake_msg(bool c);
   void set_honda_bosch_long(bool c);
   int get_honda_hw(void);
+  void set_subaru_aeb(bool c);
   """)
 
 class PandaSafety:

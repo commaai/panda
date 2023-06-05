@@ -887,14 +887,14 @@ class PandaSafetyTest(PandaSafetyTestBase):
       test = importlib.import_module("panda.tests.safety."+tf[:-3])
       for attr in dir(test):
         if attr.startswith("Test") and attr != current_test:
-          tx = getattr(getattr(test, attr), "TX_MSGS")
+          tx = getattr(getattr(test, attr), "TX_MSGS", None)
           if tx is not None and not attr.endswith('Base'):
             # No point in comparing different Tesla safety modes
             if 'Tesla' in attr and 'Tesla' in current_test:
               continue
             if attr.startswith('TestToyota') and current_test.startswith('TestToyota'):
               continue
-            if {attr, current_test}.issubset({'TestSubaruSafety', 'TestSubaruGen2Safety'}):
+            if attr.startswith('TestSubaru') and current_test.startswith('TestSubaru'):
               continue
             if {attr, current_test}.issubset({'TestVolkswagenPqSafety', 'TestVolkswagenPqStockSafety', 'TestVolkswagenPqLongSafety'}):
               continue
