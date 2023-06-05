@@ -80,7 +80,7 @@ class TestSubaruGen2SafetyBase(TestSubaruSafetyBase):
   MAX_RATE_DOWN = 40
   MAX_TORQUE = 1000
   
-class TestSubaruLongitudinalSafetyBase:
+class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase):
   def _es_brake_msg(self, brake=0):
     values = {"Brake_Pressure": brake}
     return self.packer.make_can_msg_panda("ES_Brake", self.ALT_BUS, values)
@@ -126,7 +126,7 @@ class TestSubaruGen2Safety(TestSubaruGen2SafetyBase):
   TX_MSGS = [[0x122, 0], [0x221, 1], [0x321, 0], [0x322, 0], [0x323, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0x122, 0x321, 0x322, 0x323]}
 
-class TestSubaruGen1LongitudinalSafety(TestSubaruSafetyBase, TestSubaruLongitudinalSafetyBase):
+class TestSubaruGen1LongitudinalSafety(TestSubaruLongitudinalSafetyBase):
   FLAGS = Panda.FLAG_SUBARU_LONG
   TX_MSGS = [[0x122, 0], [0x220, 0], [0x221, 0], [0x222, 0], [0x321, 0], [0x322, 0], [0x323, 0], [0x240, 2], [0x13c, 2]]
   FWD_BLACKLISTED_ADDRS = {0: [0x240, 0x13c], 2: [0x122, 0x220, 0x221, 0x222, 0x321, 0x322, 0x323]}
