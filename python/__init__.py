@@ -14,7 +14,7 @@ from typing import Optional
 from itertools import accumulate
 
 from .base import BaseHandle
-from .constants import McuType
+from .constants import FW_PATH, McuType
 from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
 from .spi import PandaSpiHandle, PandaSpiException
@@ -402,14 +402,16 @@ class Panda:
     return []
 
   def reset(self, enter_bootstub=False, enter_bootloader=False, reconnect=True):
+    # no response is expected since it resets right away
+    timeout = 5000 if isinstance(self._handle, PandaSpiHandle) else 15000
     try:
       if enter_bootloader:
-        self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 0, 0, b'')
+        self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 0, 0, b'', timeout=timeout)
       else:
         if enter_bootstub:
-          self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 1, 0, b'')
+          self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 1, 0, b'', timeout=timeout)
         else:
-          self._handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'')
+          self._handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'', timeout=timeout)
     except Exception:
       pass
     if not enter_bootloader and reconnect:
@@ -484,7 +486,7 @@ class Panda:
 
   def flash(self, fn=None, code=None, reconnect=True):
     if not fn:
-      fn = self._mcu_type.config.app_path
+      fn = os.path.join(FW_PATH, self._mcu_type.config.app_fn)
     assert os.path.isfile(fn)
     logging.debug("flash: main version is %s", self.get_version())
     if not self.bootstub:
@@ -524,18 +526,21 @@ class Panda:
     return True
 
   @staticmethod
-  def wait_for_dfu(dfu_serial: str, timeout: Optional[int] = None) -> bool:
+  def wait_for_dfu(dfu_serial: Optional[str], timeout: Optional[int] = None) -> bool:
     t_start = time.monotonic()
-    while dfu_serial not in PandaDFU.list():
+    dfu_list = PandaDFU.list()
+    while (dfu_serial is None and len(dfu_list) == 0) or (dfu_serial is not None and dfu_serial not in dfu_list):
       logging.debug("waiting for DFU...")
       time.sleep(0.1)
       if timeout is not None and (time.monotonic() - t_start) > timeout:
         return False
+      dfu_list = PandaDFU.list()
     return True
 
   def up_to_date(self) -> bool:
     current = self.get_signature()
-    expected = Panda.get_signature_from_firmware(self.get_mcu_type().config.app_path)
+    fn = os.path.join(FW_PATH, self.get_mcu_type().config.app_fn)
+    expected = Panda.get_signature_from_firmware(fn)
     return (current == expected)
 
   def call_control_api(self, msg):
@@ -617,12 +622,6 @@ class Panda:
     }
 
   # ******************* control *******************
-
-  def enter_bootloader(self):
-    try:
-      self._handle.controlWrite(Panda.REQUEST_OUT, 0xd1, 0, 0, b'')
-    except Exception:
-      logging.exception("exception while entering bootloader")
 
   def get_version(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40).decode('utf8')

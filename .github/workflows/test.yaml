@@ -74,7 +74,7 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Run safety tests
-        timeout-minutes: 3
+        timeout-minutes: 4
         run: |
           ${{ env.RUN }} "cd .. && \
                           scons -c && \
