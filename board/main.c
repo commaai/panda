@@ -334,7 +334,6 @@ int main(void) {
 
   // print hello
   print("\n\n\n************************ MAIN START ************************\n");
-  log("main start");
 
   // check for non-supported board types
   if(hw_type == HW_TYPE_UNKNOWN){
@@ -350,6 +349,8 @@ int main(void) {
 
   // panda has an FPU, let's use it!
   enable_fpu();
+
+  log("main start");
 
   if (current_board->has_gps) {
     uart_init(&uart_ring_gps, 9600);

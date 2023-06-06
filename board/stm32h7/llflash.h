@@ -8,7 +8,7 @@ void flash_unlock(void) {
 }
 
 void flash_lock(void) {
-  FLASH->KEYR1 = 0x0000000;
+  FLASH->CR1 |= FLASH_CR_LOCK;
 }
 
 bool flash_erase_sector(uint8_t sector) {
