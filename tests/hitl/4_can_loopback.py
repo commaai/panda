@@ -11,6 +11,7 @@ from panda.tests.hitl.conftest import PandaGroup, PARTIAL_TESTS
 from panda.tests.hitl.helpers import time_many_sends, clear_can_buffers
 
 @flaky(max_runs=3, min_passes=1)
+@pytest.mark.execution_timeout(35)
 def test_send_recv(p, panda_jungle):
   def test(p_send, p_recv):
     p_send.set_can_loopback(False)
@@ -45,6 +46,7 @@ def test_send_recv(p, panda_jungle):
 
 
 @flaky(max_runs=6, min_passes=1)
+@pytest.mark.execution_timeout(30)
 def test_latency(p, panda_jungle):
   def test(p_send, p_recv):
     p_send.set_can_loopback(False)

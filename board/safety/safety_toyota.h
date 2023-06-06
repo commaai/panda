@@ -109,7 +109,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
 
     if (addr == 0xaa) {
       // check that all wheel speeds are at zero value with offset
-      bool standstill = (GET_BYTES_04(to_push) == 0x6F1A6F1AU) && (GET_BYTES_48(to_push) == 0x6F1A6F1AU);
+      bool standstill = (GET_BYTES(to_push, 0, 4) == 0x6F1A6F1AU) && (GET_BYTES(to_push, 4, 4) == 0x6F1A6F1AU);
       vehicle_moving = !standstill;
     }
 
@@ -181,7 +181,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
     // AEB: block all actuation. only used when DSU is unplugged
     if (addr == 0x283) {
       // only allow the checksum, which is the last byte
-      bool block = (GET_BYTES_04(to_send) != 0U) || (GET_BYTE(to_send, 4) != 0U) || (GET_BYTE(to_send, 5) != 0U);
+      bool block = (GET_BYTES(to_send, 0, 4) != 0U) || (GET_BYTE(to_send, 4) != 0U) || (GET_BYTE(to_send, 5) != 0U);
       if (block) {
         tx = 0;
       }
@@ -235,7 +235,7 @@ static const addr_checks* toyota_init(uint16_t param) {
   return &toyota_rx_checks;
 }
 
-static int toyota_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+static int toyota_fwd_hook(int bus_num, int addr) {
 
   int bus_fwd = -1;
 
@@ -244,7 +244,6 @@ static int toyota_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   }
 
   if (bus_num == 2) {
-    int addr = GET_ADDR(to_fwd);
     // block stock lkas messages and stock acc messages (if OP is doing ACC)
     // in TSS2, 0x191 is LTA which we need to block to avoid controls collision
     int is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191));

@@ -6,7 +6,7 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 
-class TestSubaruLegacySafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestSubaruPreglobalSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   TX_MSGS = [[0x161, 0], [0x164, 0]]
   STANDSTILL_THRESHOLD = 0  # kph
   RELAY_MALFUNCTION_ADDR = 0x164
@@ -27,7 +27,7 @@ class TestSubaruLegacySafety(common.PandaSafetyTest, common.DriverTorqueSteering
   def setUp(self):
     self.packer = CANPackerPanda("subaru_outback_2015_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_SUBARU_LEGACY, 0)
+    self.safety.set_safety_hooks(Panda.SAFETY_SUBARU_PREGLOBAL, 0)
     self.safety.init_tests()
 
   def _set_prev_torque(self, t):

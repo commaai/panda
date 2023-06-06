@@ -227,8 +227,7 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static int volkswagen_pq_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
-  int addr = GET_ADDR(to_fwd);
+static int volkswagen_pq_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   switch (bus_num) {

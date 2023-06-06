@@ -1,3 +1,4 @@
+import os
 import usb1
 import struct
 import binascii
@@ -6,7 +7,7 @@ from typing import List, Optional
 from .base import BaseSTBootloaderHandle
 from .spi import STBootloaderSPIHandle, PandaSpiException
 from .usb import STBootloaderUSBHandle
-from .constants import McuType
+from .constants import FW_PATH, McuType
 
 
 class PandaDFU:
@@ -27,6 +28,7 @@ class PandaDFU:
   def usb_connect(dfu_serial: Optional[str]) -> Optional[STBootloaderUSBHandle]:
     handle = None
     context = usb1.USBContext()
+    context.open()
     for device in context.getDeviceList(skip_on_error=True):
       if device.getVendorID() == 0x0483 and device.getProductID() == 0xdf11:
         try:
@@ -64,15 +66,15 @@ class PandaDFU:
 
   @staticmethod
   def usb_list() -> List[str]:
-    context = usb1.USBContext()
     dfu_serials = []
     try:
-      for device in context.getDeviceList(skip_on_error=True):
-        if device.getVendorID() == 0x0483 and device.getProductID() == 0xdf11:
-          try:
-            dfu_serials.append(device.open().getASCIIStringDescriptor(3))
-          except Exception:
-            pass
+      with usb1.USBContext() as context:
+        for device in context.getDeviceList(skip_on_error=True):
+          if device.getVendorID() == 0x0483 and device.getProductID() == 0xdf11:
+            try:
+              dfu_serials.append(device.open().getASCIIStringDescriptor(3))
+            except Exception:
+              pass
     except Exception:
       pass
     return dfu_serials
@@ -109,10 +111,10 @@ class PandaDFU:
     self._handle.erase_bootstub()
     self._handle.erase_app()
     self._handle.program(self._mcu_type.config.bootstub_address, code_bootstub)
-    self.reset()
 
   def recover(self):
-    with open(self._mcu_type.config.bootstub_path, "rb") as f:
+    fn = os.path.join(FW_PATH, self._mcu_type.config.bootstub_fn)
+    with open(fn, "rb") as f:
       code = f.read()
     self.program_bootstub(code)
-
+    self.reset()
