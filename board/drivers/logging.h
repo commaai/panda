@@ -44,7 +44,7 @@ void logging_init_bank(bank_t *bank) {
   for (uint32_t i = 1; i < (BANK_SIZE / sizeof(log_t)); i++) {
     log_t* log = &((log_t *) bank->base)[i];
 
-    if ((log->id != 0xFFFFU) && ((log->id != last_id + 1) || (last_id == 0xFFFFU))) {
+    if ((log->id != 0xFFFFU) && ((log->id != last_id + 1U) || (last_id == 0xFFFFU))) {
       bank->valid = false;
     }
 
@@ -57,7 +57,7 @@ void logging_init_bank(bank_t *bank) {
         }
       }
     } else {
-      bank->index = i + 1;
+      bank->index = i + 1U;
     }
 
     if(!bank->valid) {
@@ -73,7 +73,7 @@ void logging_init_bank(bank_t *bank) {
 }
 
 void logging_init(void) {
-  COMPILE_TIME_ASSERT(sizeof(log_t) == 64);
+  COMPILE_TIME_ASSERT(sizeof(log_t) == 64U);
 
   // Initialize banks
   log_bank[BANK_A].sector = LOGGING_FLASH_SECTOR_A;
@@ -102,7 +102,7 @@ void logging_init(void) {
       }
 
       // If non-continuous, erase the other bank
-      if ((log_bank[OTHER_BANK(logging_bank)].index != BANK_LOG_SIZE) || (LAST_LOG(&log_bank[OTHER_BANK(logging_bank)])->id != GET_LOG(&log_bank[logging_bank], 0)->id - 1)) {
+      if ((log_bank[OTHER_BANK(logging_bank)].index != BANK_LOG_SIZE) || (LAST_LOG(&log_bank[OTHER_BANK(logging_bank)])->id != GET_LOG(&log_bank[logging_bank], 0)->id - 1U)) {
         logging_erase_bank(&log_bank[OTHER_BANK(logging_bank)]);
       }
     }
@@ -124,7 +124,7 @@ void logging_tick(void) {
 
 void log(char* msg){
   log_t log = {0};
-  log.id = LAST_LOG(&log_bank[logging_bank])->id + 1;
+  log.id = LAST_LOG(&log_bank[logging_bank])->id + 1U;
   log.uptime = uptime_cnt;
   if (current_board->has_rtc_battery) {
     log.timestamp = rtc_get_raw_time();
