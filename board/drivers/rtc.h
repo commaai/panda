@@ -48,25 +48,22 @@ void rtc_set_time(timestamp_t time){
   enable_bdomain_protection();
 }
 
-timestamp_t rtc_get_time(void){
-  timestamp_t result;
-  // Init with zero values in case there is no RTC running
-  result.year = 0U;
-  result.month = 0U;
-  result.day = 0U;
-  result.weekday = 0U;
-  result.hour = 0U;
-  result.minute = 0U;
-  result.second = 0U;
-
+uint64_t rtc_get_raw_time(void) {
   // Wait until the register sync flag is set
   while((RTC->ISR & RTC_ISR_RSF) == 0){}
 
   // Read time and date registers. Since our HSE > 7*LSE, this should be fine.
-  uint32_t time = RTC->TR;
-  uint32_t date = RTC->DR;
+  return (((uint64_t) RTC->DR) << 32U) | ((uint64_t) RTC->TR);
+}
+
+timestamp_t rtc_get_time(void){
+  timestamp_t result;
+
+  uint64_t raw_time = rtc_get_raw_time();
 
   // Parse values
+  uint32_t time = (uint32_t) raw_time;
+  uint32_t date = (uint32_t) (raw_time >> 32U);
   result.year = from_bcd((date & (RTC_DR_YT | RTC_DR_YU)) >> RTC_DR_YU_Pos) + YEAR_OFFSET;
   result.month = from_bcd((date & (RTC_DR_MT | RTC_DR_MU)) >> RTC_DR_MU_Pos);
   result.day = from_bcd((date & (RTC_DR_DT | RTC_DR_DU)) >> RTC_DR_DU_Pos);

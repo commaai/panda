@@ -7,9 +7,13 @@ void flash_unlock(void) {
   FLASH->KEYR1 = 0xCDEF89AB;
 }
 
-bool flash_erase_sector(uint8_t sector, bool unlocked) {
+void flash_lock(void) {
+  FLASH->KEYR1 = 0x0000000;
+}
+
+bool flash_erase_sector(uint8_t sector) {
   // don't erase the bootloader(sector 0)
-  if (sector != 0 && sector < 8 && unlocked) {
+  if (sector != 0 && sector < 8 && !flash_is_locked()) {
     FLASH->CR1 = (sector << 8) | FLASH_CR_SER;
     FLASH->CR1 |= FLASH_CR_START;
     while (FLASH->SR1 & FLASH_SR_QW);
