@@ -89,7 +89,7 @@ void logging_tick(void) {
   flush_write_buffer();
 }
 
-void log(char* msg){
+void log(const char* msg){
   log_t log = {0};
   log.id = LOGGING_NEXT_ID(log_state.last_id);
   log_state.last_id = log.id;

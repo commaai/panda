@@ -13,13 +13,14 @@ void flash_lock(void) {
 
 bool flash_erase_sector(uint8_t sector) {
   // don't erase the bootloader(sector 0)
-  if (sector != 0U && sector < 8U && (!flash_is_locked())) {
+  bool ret = false;
+  if ((sector != 0U) && (sector < 8U) && (!flash_is_locked())) {
     FLASH->CR1 = (sector << 8) | FLASH_CR_SER;
     FLASH->CR1 |= FLASH_CR_START;
-    while (FLASH->SR1 & FLASH_SR_QW);
-    return true;
+    while ((FLASH->SR1 & FLASH_SR_QW) != 0U);
+    ret = true;
   }
-  return false;
+  return ret;
 }
 
 void flash_write_word(void *prog_ptr, uint32_t data) {
@@ -32,6 +33,6 @@ void flash_write_word(void *prog_ptr, uint32_t data) {
 void flush_write_buffer(void) {
   if (FLASH->SR1 & FLASH_SR_WBNE) {
     FLASH->CR1 |= FLASH_CR_FW;
-    while (FLASH->SR1 & FLASH_CR_FW);
+    while ((FLASH->SR1 & FLASH_CR_FW) != 0U);
   }
 }
