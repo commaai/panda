@@ -939,10 +939,16 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xa6, int(dt.minute), 0, b'')
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xa7, int(dt.second), 0, b'')
 
+  @staticmethod
+  def parse_timestamp(dat):
+    a = struct.unpack("HBBBBBB", dat)
+    if a[0] == 0:
+      return None
+    return datetime.datetime(a[0], a[1], a[2], a[4], a[5], a[6])
+
   def get_datetime(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xa0, 0, 0, 8)
-    a = struct.unpack("HBBBBBB", dat)
-    return datetime.datetime(a[0], a[1], a[2], a[4], a[5], a[6])
+    return self.parse_timestamp(dat)
 
   # ****************** Timer *****************
   def get_microsecond_timer(self):
@@ -977,9 +983,14 @@ class Panda:
   # ****************** Logging *****************
   def get_logs(self, get_all=False):
     logs = []
-    while True:
-      dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfd, 1 if get_all else 0, 0, 0x40)
-      if len(dat) == 0:
-        break
-      logs.append(dat)
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfd, 1 if get_all else 0, 0, 0x40)
+    while len(dat) > 0:
+      if len(dat) == 0x40:
+        logs.append({
+          'id': struct.unpack("H", dat[:2])[0],
+          'timestamp': self.parse_timestamp(dat[2:10]),
+          'uptime': struct.unpack("I", dat[10:14])[0],
+          'log': bytes(dat[14:]).decode('utf-8', 'ignore').strip('\x00'),
+        })
+      dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfd, 0, 0, 0x40)
     return logs

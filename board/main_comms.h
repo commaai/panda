@@ -481,7 +481,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // *** 0xfd: read logs
     case 0xfd:
       if (req->param1 == 1U) {
-        // TODO: reset read index to get all the logs
+        logging_find_read_index();
       }
 
       if (logging_read(resp)) {

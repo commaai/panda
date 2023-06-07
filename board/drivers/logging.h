@@ -3,9 +3,9 @@
 // This also matches the USB transfer size.
 typedef struct __attribute__((packed)) log_t {
   uint16_t id;
-  uint32_t timestamp;
+  timestamp_t timestamp;
   uint32_t uptime;
-  char msg[54];
+  char msg[50];
 } log_t;
 
 #define BANK_SIZE 0x20000U
@@ -37,6 +37,16 @@ void logging_erase(void) {
   log_state.write_index = 0U;
 }
 
+void logging_find_read_index(void) {
+  // Figure out the read index by the last empty slot
+  log_state.read_index = 0xFFFFU;
+  for (uint16_t i = 0U; i < LOG_SIZE; i++) {
+    if (log_arr[i].id == 0xFFFFU) {
+      log_state.read_index = LOGGING_NEXT_INDEX(i);
+    }
+  }
+}
+
 void logging_init(void) {
   COMPILE_TIME_ASSERT(sizeof(log_t) == 64U);
   COMPILE_TIME_ASSERT(LOGGING_FLASH_BASE_A + BANK_SIZE == LOGGING_FLASH_BASE_B);
@@ -49,13 +59,7 @@ void logging_init(void) {
     }
   }
 
-  // Figure out the read index by the last empty slot
-  log_state.read_index = 0xFFFFU;
-  for (uint16_t i = 0U; i < LOG_SIZE; i++) {
-    if (log_arr[i].id == 0xFFFFU) {
-      log_state.read_index = LOGGING_NEXT_INDEX(i);
-    }
-  }
+  logging_find_read_index();
 
   // At initialization, the read index should always be at the beginning of a bank
   // If not, clean slate
@@ -91,9 +95,7 @@ void log(char* msg){
   log_state.last_id = log.id;
   log.uptime = uptime_cnt;
   if (current_board->has_rtc_battery) {
-    log.timestamp = rtc_get_raw_time();
-  } else {
-    log.timestamp = 0;
+    log.timestamp = rtc_get_time();
   }
 
   for(uint8_t i = 0; i < sizeof(log.msg); i++) {
