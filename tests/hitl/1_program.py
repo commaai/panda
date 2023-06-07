@@ -1,5 +1,6 @@
 import os
 import time
+import pytest
 
 from panda import Panda, PandaDFU, McuType, BASEDIR
 
@@ -10,6 +11,7 @@ def check_signature(p):
 
 # TODO: make more comprehensive bootstub tests and run on a few production ones + current
 # TODO: also test release-signed app
+@pytest.mark.execution_timeout(30)
 def test_a_known_bootstub(p):
   """
   Test that compiled app can work with known production bootstub
@@ -41,6 +43,7 @@ def test_a_known_bootstub(p):
       code = f.read()
 
     dfu.program_bootstub(code)
+    dfu.reset()
 
     p.connect(claim=False, wait=True)
 
@@ -54,10 +57,12 @@ def test_a_known_bootstub(p):
     check_signature(p)
     assert not p.bootstub
 
+@pytest.mark.execution_timeout(15)
 def test_b_recover(p):
   assert p.recover(timeout=30)
   check_signature(p)
 
+@pytest.mark.execution_timeout(25)
 def test_c_flash(p):
   # test flash from bootstub
   serial = p._serial

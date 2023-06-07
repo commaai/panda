@@ -31,7 +31,7 @@ static int body_tx_hook(CANPacket_t *to_send) {
   }
 
   // Allow going into CAN flashing mode even if controls are not allowed
-  if (!controls_allowed && ((uint32_t)GET_BYTES_04(to_send) == 0xdeadfaceU) && ((uint32_t)GET_BYTES_48(to_send) == 0x0ab00b1eU)) {
+  if (!controls_allowed && (GET_BYTES(to_send, 0, 4) == 0xdeadfaceU) && (GET_BYTES(to_send, 4, 4) == 0x0ab00b1eU)) {
     tx = 1;
   }
 

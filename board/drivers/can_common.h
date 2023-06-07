@@ -147,7 +147,7 @@ void can_clear(can_ring *q) {
   q->r_ptr = 0;
   EXIT_CRITICAL();
   // handle TX buffer full with zero ECUs awake on the bus
-  usb_cb_ep3_out_complete();
+  refresh_can_tx_slots_available();
 }
 
 // assign CAN numbering
@@ -199,7 +199,7 @@ void ignition_can_hook(CANPacket_t *to_push) {
     // GM exception
     if ((addr == 0x160) && (len == 5)) {
       // this message isn't all zeros when ignition is on
-      ignition_can = GET_BYTES_04(to_push) != 0U;
+      ignition_can = GET_BYTES(to_push, 0, 4) != 0U;
       ignition_can_cnt = 0U;
     }
 

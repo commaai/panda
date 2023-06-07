@@ -77,7 +77,7 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
     self._status()
 
     # Program
-    bs = self._mcu_type.config.block_size
+    bs = min(len(dat), self._mcu_type.config.block_size)
     dat += b"\xFF" * ((bs - len(dat)) % bs)
     for i in range(0, len(dat) // bs):
       ldat = dat[i * bs:(i + 1) * bs]

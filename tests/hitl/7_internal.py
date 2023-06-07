@@ -8,6 +8,7 @@ pytestmark = [
   pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES)
 ]
 
+@pytest.mark.execution_timeout(50)
 def test_fan_controller(p):
   start_health = p.health()
 

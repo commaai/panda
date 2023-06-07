@@ -296,8 +296,8 @@ class TestHondaNidecSafetyBase(HondaBase):
       self.safety.set_controls_allowed(controls_allowed)
       for pcm_gas in range(0, 255):
         for pcm_speed in range(0, 100):
-          send = pcm_gas <= self.MAX_GAS if controls_allowed else pcm_gas == 0 and pcm_speed == 0
-          self.assertEqual(send, self.safety.safety_tx_hook(self._send_acc_hud_msg(pcm_gas, pcm_speed)))
+          send = (controls_allowed and pcm_gas <= self.MAX_GAS) or (pcm_gas == 0 and pcm_speed == 0)
+          self.assertEqual(send, self._tx(self._send_acc_hud_msg(pcm_gas, pcm_speed)))
 
   def test_fwd_hook(self):
     # normal operation, not forwarding AEB
@@ -483,10 +483,10 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
 
   def test_diagnostics(self):
     tester_present = libpanda_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x02\x3E\x80\x00\x00\x00\x00\x00")
-    self.assertTrue(self.safety.safety_tx_hook(tester_present))
+    self.assertTrue(self._tx(tester_present))
 
     not_tester_present = libpanda_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x03\xAA\xAA\x00\x00\x00\x00\x00")
-    self.assertFalse(self.safety.safety_tx_hook(not_tester_present))
+    self.assertFalse(self._tx(not_tester_present))
 
   def test_radar_alive(self):
     # If the radar knockout failed, make sure the relay malfunction is shown
@@ -499,8 +499,8 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
       for gas in np.arange(self.NO_GAS, self.MAX_GAS + 2000, 100):
         accel = 0 if gas < 0 else gas / 1000
         self.safety.set_controls_allowed(controls_allowed)
-        send = gas <= self.MAX_GAS if controls_allowed else gas == self.NO_GAS
-        self.assertEqual(send, self.safety.safety_tx_hook(self._send_gas_brake_msg(gas, accel)), (controls_allowed, gas, accel))
+        send = (controls_allowed and 0 <= gas <= self.MAX_GAS) or gas == self.NO_GAS
+        self.assertEqual(send, self._tx(self._send_gas_brake_msg(gas, accel)), (controls_allowed, gas, accel))
 
   def test_brake_safety_check(self):
     for controls_allowed in [True, False]:
