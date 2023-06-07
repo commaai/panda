@@ -973,3 +973,13 @@ class Panda:
   # ****************** Debug *****************
   def set_green_led(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')
+
+  # ****************** Logging *****************
+  def get_logs(self, get_all=False):
+    logs = []
+    while True:
+      dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfd, 1 if get_all else 0, 0, 0x40)
+      if len(dat) == 0:
+        break
+      logs.append(dat)
+    return logs
