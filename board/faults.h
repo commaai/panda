@@ -38,7 +38,7 @@ uint8_t fault_status = FAULT_STATUS_NONE;
 uint32_t faults = 0U;
 
 void fault_occurred(uint32_t fault) {
-  if ((faults & fault) != 0U) {
+  if ((faults & fault) == 0U) {
     if ((PERMANENT_FAULTS & fault) != 0U) {
       print("Permanent fault occurred: 0x"); puth(fault); print("\n");
       fault_status = FAULT_STATUS_PERMANENT;
