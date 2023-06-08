@@ -126,7 +126,11 @@ def parse_timestamp(dat):
   a = struct.unpack("HBBBBBB", dat)
   if a[0] == 0:
     return None
-  return datetime.datetime(a[0], a[1], a[2], a[4], a[5], a[6])
+
+  try:
+    return datetime.datetime(a[0], a[1], a[2], a[4], a[5], a[6])
+  except ValueError:
+    return None
 
 def unpack_log(dat):
   return {
