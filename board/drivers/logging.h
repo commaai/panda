@@ -11,9 +11,8 @@ typedef struct __attribute__((packed)) log_t {
 #define BANK_SIZE 0x20000U
 #define BANK_LOG_SIZE (BANK_SIZE / sizeof(log_t))
 #define LOG_SIZE (BANK_LOG_SIZE * 2U)
-#define IS_EMPTY(log_ptr) (*(uint64_t *) (log_ptr) == 0xFFFFFFFFFFFFFFFFU)
-#define LOGGING_NEXT_ID(id) ((id + 1U) % 0xFFFEU)
-#define LOGGING_NEXT_INDEX(index) ((index + 1U) % LOG_SIZE)
+#define LOGGING_NEXT_ID(id) (((id) + 1U) % 0xFFFEU)
+#define LOGGING_NEXT_INDEX(index) (((index) + 1U) % LOG_SIZE)
 
 struct logging_state_t {
   uint16_t read_index;
@@ -24,9 +23,11 @@ struct logging_state_t log_state = { 0 };
 log_t *log_arr = (log_t *) LOGGING_FLASH_BASE_A;
 
 void logging_erase_bank(uint8_t flash_sector) {
-  print("erasing bank "); puth(flash_sector); print("\n");
+  print("erasing sector "); puth(flash_sector); print("\n");
   flash_unlock();
-  flash_erase_sector(flash_sector);
+  if (!flash_erase_sector(flash_sector)) {
+    print("failed to erase sector "); puth(flash_sector); print("\n");
+  }
   flash_lock();
 }
 
@@ -49,11 +50,14 @@ void logging_find_read_index(void) {
 
 void logging_init(void) {
   COMPILE_TIME_ASSERT(sizeof(log_t) == 64U);
-  COMPILE_TIME_ASSERT(LOGGING_FLASH_BASE_A + BANK_SIZE == LOGGING_FLASH_BASE_B);
+  COMPILE_TIME_ASSERT((LOGGING_FLASH_BASE_A + BANK_SIZE) == LOGGING_FLASH_BASE_B);
 
   // Make sure all empty-ID logs are fully empty
+  log_t empty_log;
+  (void) memset(&empty_log, 0xFF, sizeof(log_t));
+
   for (uint16_t i = 0U; i < LOG_SIZE; i++) {
-    if (log_arr[i].id == 0xFFFFU && !IS_EMPTY(&log_arr[i])) {
+    if ((log_arr[i].id == 0xFFFFU) && (memcmp(&log_arr[i], &empty_log, sizeof(log_t)) != 0)) {
       logging_erase();
       break;
     }
@@ -78,10 +82,10 @@ void logging_init(void) {
       // Discontinuity in the index, shouldn't happen!
       logging_erase();
       break;
+    } else {
+      log_state.last_id = log_arr[log_state.write_index].id;
+      log_state.write_index = LOGGING_NEXT_INDEX(log_state.write_index);
     }
-
-    log_state.last_id = log_arr[log_state.write_index].id;
-    log_state.write_index = LOGGING_NEXT_INDEX(log_state.write_index);
   }
 }
 
@@ -98,31 +102,42 @@ void log(const char* msg){
     log.timestamp = rtc_get_time();
   }
 
-  for(uint8_t i = 0; i < sizeof(log.msg); i++) {
-    log.msg[i] = msg[i];
-    if (msg[i] == '\0') {
+  uint8_t i = 0U;
+  for (const char *in = msg; *in; in++) {
+    log.msg[i] = *in;
+    i++;
+    if (i >= sizeof(log.msg)) {
       break;
     }
   }
 
   // If we are at the beginning of a bank, erase it first and move the read pointer if needed
-  if (log_state.write_index == 0U) {
-    logging_erase_bank(LOGGING_FLASH_SECTOR_A);
-    if (log_state.read_index < BANK_LOG_SIZE && log_state.read_index != 0U) {
-      log_state.read_index = BANK_LOG_SIZE;
-    }
-  } else if (log_state.write_index == BANK_LOG_SIZE) {
-    // beginning to write in bank B
-    logging_erase_bank(LOGGING_FLASH_SECTOR_B);
-    if (log_state.read_index > BANK_LOG_SIZE) {
-      log_state.read_index = 0U;
-    }
+  switch (log_state.write_index) {
+    case 0U:
+      logging_erase_bank(LOGGING_FLASH_SECTOR_A);
+      if ((log_state.read_index < BANK_LOG_SIZE) && (log_state.read_index != 0U)) {
+        log_state.read_index = BANK_LOG_SIZE;
+      }
+      break;
+    case BANK_LOG_SIZE:
+      // beginning to write in bank B
+      logging_erase_bank(LOGGING_FLASH_SECTOR_B);
+      if (log_state.read_index > BANK_LOG_SIZE) {
+        log_state.read_index = 0U;
+      }
+      break;
+    default:
+      break;
   }
 
   // Write!
+  void *addr = &log_arr[log_state.write_index];
+  uint32_t data[sizeof(log_t) / sizeof(uint32_t)];
+  (void) memcpy(data, &log, sizeof(log_t));
+
   flash_unlock();
-  for (uint8_t i = 0U; i < sizeof(log_t) / sizeof(uint32_t); i++) {
-    flash_write_word(((uint32_t *) &log_arr[log_state.write_index]) + i, ((uint32_t *) &log)[i]);
+  for (uint8_t j = 0U; j < sizeof(log_t) / sizeof(uint32_t); j++) {
+    flash_write_word(&((uint32_t *) addr)[j], data[j]);
   }
   flash_lock();
 
@@ -131,15 +146,15 @@ void log(const char* msg){
 }
 
 bool logging_read(uint8_t *buffer) {
-  if (log_state.read_index == log_state.write_index) {
-    return false;
+  bool ret = false;
+  if (log_state.read_index != log_state.write_index) {
+    // Read the log
+    (void) memcpy(buffer, &log_arr[log_state.read_index], sizeof(log_t));
+
+    // Update the read index
+    log_state.read_index = LOGGING_NEXT_INDEX(log_state.read_index);
+
+    ret = true;
   }
-
-  // Read the log
-  memcpy(buffer, &log_arr[log_state.read_index], sizeof(log_t));
-
-  // Update the read index
-  log_state.read_index = LOGGING_NEXT_INDEX(log_state.read_index);
-
-  return true;
+  return ret;
 }

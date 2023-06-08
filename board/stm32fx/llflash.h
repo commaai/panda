@@ -11,7 +11,7 @@ void flash_lock(void) {
   FLASH->CR |= FLASH_CR_LOCK;
 }
 
-bool flash_erase_sector(uint8_t sector) {
+bool flash_erase_sector(uint16_t sector) {
   // don't erase the bootloader(sector 0)
   bool ret = false;
   if ((sector != 0U) && (sector < 12U) && (!flash_is_locked())) {
