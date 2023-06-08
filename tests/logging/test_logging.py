@@ -2,7 +2,9 @@
 
 import random
 import unittest
+import datetime
 
+from panda import unpack_log
 from panda.tests.libpanda import libpanda_py
 
 lpp = libpanda_py.libpanda
@@ -52,8 +54,24 @@ class TestLogging(unittest.TestCase):
     self.assertEqual(len(self._get_logs()), 0)
 
   def test_logging(self):
-    self._log("test")
-    self.assertEqual(len(self._get_logs()), 1)
+    msg = "testing 123"
+    self._log(msg)
+    logs = self._get_logs()
+    self.assertEqual(len(logs), 1)
+    log = unpack_log(bytes(logs[0]))
+    self.assertEqual(log['log'], msg)
+    self.assertEqual(log['uptime'], 0)
+    self.assertEqual(log['id'], 1)
+    self.assertEqual(log['timestamp'], datetime.datetime(1996, 4, 23, 4, 20, 20))
+
+  def test_bank_overflow(self):
+    for i in range(1, 10000):
+      self._log("test")
+
+      if i % 5 == 0:
+        lpp.logging_init()
+        expected_messages = (i % 2048) + (2048 if i >= 2048 else 0)
+        self.assertEqual(len(self._get_logs()), expected_messages)
 
 if __name__ == "__main__":
   unittest.main()

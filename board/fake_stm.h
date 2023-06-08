@@ -60,7 +60,7 @@ timestamp_t rtc_get_time() {
 }
 
 // Logging and flash
-uint32_t fake_logging_bank[0x40000];
+uint8_t fake_logging_bank[0x40000];
 #define LOGGING_FLASH_BASE_A (&fake_logging_bank[0])
 #define LOGGING_FLASH_BASE_B (&fake_logging_bank[0x20000])
 #define LOGGING_FLASH_SECTOR_A 5

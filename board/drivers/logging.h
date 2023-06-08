@@ -132,16 +132,16 @@ void log(const char* msg){
 
     // If we are at the beginning of a bank, erase it first and move the read pointer if needed
     switch (log_state.write_index) {
-      case 0U:
+      case ((2*BANK_LOG_SIZE) - 1):
         logging_erase_bank(LOGGING_FLASH_SECTOR_A);
-        if ((log_state.read_index < BANK_LOG_SIZE) && (log_state.read_index != 0U)) {
+        if ((log_state.read_index < BANK_LOG_SIZE)) {
           log_state.read_index = BANK_LOG_SIZE;
         }
         break;
-      case BANK_LOG_SIZE:
+      case (BANK_LOG_SIZE - 1):
         // beginning to write in bank B
         logging_erase_bank(LOGGING_FLASH_SECTOR_B);
-        if (log_state.read_index > BANK_LOG_SIZE) {
+        if ((log_state.read_index > BANK_LOG_SIZE)) {
           log_state.read_index = 0U;
         }
         break;
@@ -172,7 +172,7 @@ void log(const char* msg){
 
 bool logging_read(uint8_t *buffer) {
   bool ret = false;
-  if (log_state.read_index != log_state.write_index) {
+  if ((log_arr[log_state.read_index].id != 0xFFFFU) && (log_state.read_index != log_state.write_index)) {
     // Read the log
     (void) memcpy(buffer, &log_arr[log_state.read_index], sizeof(log_t));
 
