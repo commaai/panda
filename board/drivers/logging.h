@@ -92,6 +92,10 @@ void logging_init(void) {
       log_state.write_index = LOGGING_NEXT_INDEX(log_state.write_index);
     }
   }
+
+  // Reset rate limit
+  log_state.rate_limit_counter = 0U;
+  log_state.rate_limit_log_count = 0U;
 }
 
 // Call at 1Hz
