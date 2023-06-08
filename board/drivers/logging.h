@@ -109,19 +109,19 @@ void logging_tick(void) {
 void log(const char* msg){
   if (log_state.rate_limit_log_count < LOGGING_MAX_LOGS_PER_MINUTE) {
     ENTER_CRITICAL();
-    log_t log = {0};
-    log.id = LOGGING_NEXT_ID(log_state.last_id);
-    log_state.last_id = log.id;
-    log.uptime = uptime_cnt;
+    log_t new_log = {0};
+    new_log.id = LOGGING_NEXT_ID(log_state.last_id);
+    log_state.last_id = new_log.id;
+    new_log.uptime = uptime_cnt;
     if (current_board->has_rtc_battery) {
-      log.timestamp = rtc_get_time();
+      new_log.timestamp = rtc_get_time();
     }
 
     uint8_t i = 0U;
     for (const char *in = msg; *in; in++) {
-      log.msg[i] = *in;
+      new_log.msg[i] = *in;
       i++;
-      if (i >= sizeof(log.msg)) {
+      if (i >= sizeof(new_log.msg)) {
         break;
       }
     }
@@ -148,7 +148,7 @@ void log(const char* msg){
     // Write!
     void *addr = &log_arr[log_state.write_index];
     uint32_t data[sizeof(log_t) / sizeof(uint32_t)];
-    (void) memcpy(data, &log, sizeof(log_t));
+    (void) memcpy(data, &new_log, sizeof(log_t));
 
     flash_unlock();
     for (uint8_t j = 0U; j < sizeof(log_t) / sizeof(uint32_t); j++) {
