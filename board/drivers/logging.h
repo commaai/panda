@@ -14,10 +14,15 @@ typedef struct __attribute__((packed)) log_t {
 #define LOGGING_NEXT_ID(id) (((id) + 1U) % 0xFFFEU)
 #define LOGGING_NEXT_INDEX(index) (((index) + 1U) % LOG_SIZE)
 
+#define LOGGING_MAX_LOGS_PER_MINUTE 10U
+
 struct logging_state_t {
   uint16_t read_index;
   uint16_t write_index;
   uint16_t last_id;
+
+  uint8_t rate_limit_counter;
+  uint8_t rate_limit_log_count;
 };
 struct logging_state_t log_state = { 0 };
 log_t *log_arr = (log_t *) LOGGING_FLASH_BASE_A;
@@ -89,60 +94,76 @@ void logging_init(void) {
   }
 }
 
+// Call at 1Hz
 void logging_tick(void) {
   flush_write_buffer();
+
+  log_state.rate_limit_counter++;
+  if (log_state.rate_limit_counter >= 60U) {
+    log_state.rate_limit_counter = 0U;
+    log_state.rate_limit_log_count = 0U;
+    fault_recovered(FAULT_LOGGING_RATE_LIMIT);
+  }
 }
 
 void log(const char* msg){
-  log_t log = {0};
-  log.id = LOGGING_NEXT_ID(log_state.last_id);
-  log_state.last_id = log.id;
-  log.uptime = uptime_cnt;
-  if (current_board->has_rtc_battery) {
-    log.timestamp = rtc_get_time();
-  }
-
-  uint8_t i = 0U;
-  for (const char *in = msg; *in; in++) {
-    log.msg[i] = *in;
-    i++;
-    if (i >= sizeof(log.msg)) {
-      break;
+  if (log_state.rate_limit_log_count < LOGGING_MAX_LOGS_PER_MINUTE) {
+    ENTER_CRITICAL();
+    log_t log = {0};
+    log.id = LOGGING_NEXT_ID(log_state.last_id);
+    log_state.last_id = log.id;
+    log.uptime = uptime_cnt;
+    if (current_board->has_rtc_battery) {
+      log.timestamp = rtc_get_time();
     }
-  }
 
-  // If we are at the beginning of a bank, erase it first and move the read pointer if needed
-  switch (log_state.write_index) {
-    case 0U:
-      logging_erase_bank(LOGGING_FLASH_SECTOR_A);
-      if ((log_state.read_index < BANK_LOG_SIZE) && (log_state.read_index != 0U)) {
-        log_state.read_index = BANK_LOG_SIZE;
+    uint8_t i = 0U;
+    for (const char *in = msg; *in; in++) {
+      log.msg[i] = *in;
+      i++;
+      if (i >= sizeof(log.msg)) {
+        break;
       }
-      break;
-    case BANK_LOG_SIZE:
-      // beginning to write in bank B
-      logging_erase_bank(LOGGING_FLASH_SECTOR_B);
-      if (log_state.read_index > BANK_LOG_SIZE) {
-        log_state.read_index = 0U;
-      }
-      break;
-    default:
-      break;
+    }
+
+    // If we are at the beginning of a bank, erase it first and move the read pointer if needed
+    switch (log_state.write_index) {
+      case 0U:
+        logging_erase_bank(LOGGING_FLASH_SECTOR_A);
+        if ((log_state.read_index < BANK_LOG_SIZE) && (log_state.read_index != 0U)) {
+          log_state.read_index = BANK_LOG_SIZE;
+        }
+        break;
+      case BANK_LOG_SIZE:
+        // beginning to write in bank B
+        logging_erase_bank(LOGGING_FLASH_SECTOR_B);
+        if (log_state.read_index > BANK_LOG_SIZE) {
+          log_state.read_index = 0U;
+        }
+        break;
+      default:
+        break;
+    }
+
+    // Write!
+    void *addr = &log_arr[log_state.write_index];
+    uint32_t data[sizeof(log_t) / sizeof(uint32_t)];
+    (void) memcpy(data, &log, sizeof(log_t));
+
+    flash_unlock();
+    for (uint8_t j = 0U; j < sizeof(log_t) / sizeof(uint32_t); j++) {
+      flash_write_word(&((uint32_t *) addr)[j], data[j]);
+    }
+    flash_lock();
+
+    // Update the write index
+    log_state.write_index = LOGGING_NEXT_INDEX(log_state.write_index);
+    EXIT_CRITICAL();
+
+    log_state.rate_limit_log_count++;
+  } else {
+    fault_occurred(FAULT_LOGGING_RATE_LIMIT);
   }
-
-  // Write!
-  void *addr = &log_arr[log_state.write_index];
-  uint32_t data[sizeof(log_t) / sizeof(uint32_t)];
-  (void) memcpy(data, &log, sizeof(log_t));
-
-  flash_unlock();
-  for (uint8_t j = 0U; j < sizeof(log_t) / sizeof(uint32_t); j++) {
-    flash_write_word(&((uint32_t *) addr)[j], data[j]);
-  }
-  flash_lock();
-
-  // Update the write index
-  log_state.write_index = LOGGING_NEXT_INDEX(log_state.write_index);
 }
 
 bool logging_read(uint8_t *buffer) {
