@@ -536,6 +536,18 @@ class Panda:
       dfu_list = PandaDFU.list()
     return True
 
+  @staticmethod
+  def wait_for_panda(serial: Optional[str], timeout: int) -> bool:
+    t_start = time.monotonic()
+    serials = Panda.list()
+    while (serial is None and len(serials) == 0) or (serial is not None and serial not in serials):
+      logging.debug("waiting for panda...")
+      time.sleep(0.1)
+      if timeout is not None and (time.monotonic() - t_start) > timeout:
+        return False
+      serials = Panda.list()
+    return True
+
   def up_to_date(self) -> bool:
     current = self.get_signature()
     fn = os.path.join(FW_PATH, self.get_mcu_type().config.app_fn)
