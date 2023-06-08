@@ -123,3 +123,15 @@ def test_microsecond_timer(p):
 
   time_diff = (end_time - start_time) / 1e6
   assert 0.98 < time_diff  < 1.02, f"Timer not running at the correct speed! (got {time_diff:.2f}s instead of 1.0s)"
+
+def test_logging(p):
+  p.reset()
+
+  logs = p.get_logs(True)
+  assert len(logs) > 0
+  assert len(p.get_logs()) == 0
+
+  # we assume the start log is relatively recent
+  start_logs = filter(lambda x: x['log'] == 'main start', logs[-5:])
+  assert len(start_logs) > 0
+  assert start_logs[0]['uptime'] < 2
