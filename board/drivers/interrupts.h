@@ -65,8 +65,8 @@ void interrupt_timer_handler(void) {
   if (INTERRUPT_TIMER->SR != 0) {
     for (uint16_t i = 0U; i < NUM_INTERRUPTS; i++) {
       // Log IRQ call rate faults
-      if (check_interrupt_rate && (interrupts[irq_type].call_counter > interrupts[irq_type].max_call_rate)) {
-        print("Interrupt 0x"); puth(irq_type); print(" fired too often (0x"); puth(interrupts[irq_type].call_counter); print("/s)!\n");
+      if (check_interrupt_rate && (interrupts[i].call_counter > interrupts[i].max_call_rate)) {
+        print("Interrupt 0x"); puth(i); print(" fired too often (0x"); puth(interrupts[i].call_counter); print("/s)!\n");
       }
 
       // Reset interrupt counters
