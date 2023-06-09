@@ -193,6 +193,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         resp_len = 4U;
       }
       break;
+    // **** 0xc5: debug load CAN bus
+    case 0xc5:
+      if (req->param1 < 3U) {
+        systick_init(10);
+      }
+      break;
     // **** 0xd0: fetch serial (aka the provisioned dongle ID)
     case 0xd0:
       // addresses are OTP

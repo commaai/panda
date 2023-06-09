@@ -29,3 +29,9 @@ void tick_timer_init(void) {
   timer_init(TICK_TIMER, (uint16_t)((15.25*APB2_TIMER_FREQ)/8U));
   NVIC_EnableIRQ(TICK_TIMER_IRQ);
 }
+
+void systick_init(uint32_t rate) {
+  SysTick->LOAD = ((1000 / rate) * ((CORE_FREQ / 8U) * (SysTick->CALIB & SysTick_CALIB_TENMS_Msk))) - 1; // 1ms timebase
+  SysTick->VAL = 0;
+  SysTick->CTRL = SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_TICKINT_Msk;
+}
