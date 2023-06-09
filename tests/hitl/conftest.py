@@ -166,7 +166,7 @@ def func_fixture_panda(request, module_panda):
   logs = p.get_logs()
   log_id = logs[-1]['id'] if len(logs) > 0 else last_log_id
 
-  assert ((log_id - last_log_id) % 0xFFFE) == expected_logs, f"Unexpected logs: {logs}"
+  assert ((log_id - last_log_id) % 0xFFFE) == expected_logs, f"Unexpected logs. Last 5: {logs[-5:]}"
 
   # Check for SPI errors
   #assert p.health()['spi_checksum_error_count'] == 0
