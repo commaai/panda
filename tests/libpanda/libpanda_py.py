@@ -79,7 +79,7 @@ ffi.cdef("""
   void logging_init(void);
   void logging_tick(void);
   void log(const char* msg);
-  bool logging_read(uint8_t *buffer);
+  uint8_t logging_read(uint8_t *buffer);
 """)
 
 setup_safety_helpers(ffi)
@@ -105,7 +105,7 @@ class Panda(PandaSafety):
   def logging_init(self) -> None: ...
   def logging_tick(self) -> None: ...
   def log(self, msg: bytearray) -> None: ...
-  def logging_read(self, buffer: bytearray) -> bool: ...
+  def logging_read(self, buffer: bytearray) -> int: ...
   logging_bank: bytearray
   logging_bank_size: int
   logging_rate_limit: int

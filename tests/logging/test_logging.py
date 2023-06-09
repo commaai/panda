@@ -20,7 +20,7 @@ class TestLogging(unittest.TestCase):
     logs = []
     while True:
       log = libpanda_py.ffi.new("uint8_t[64]")
-      if not lpp.logging_read(log):
+      if lpp.logging_read(log) == 0:
         break
       logs.append(log)
     return logs
@@ -36,7 +36,7 @@ class TestLogging(unittest.TestCase):
 
     for i in range(lpp.logging_bank_size // 4):
       assert lpp.logging_bank[i] == 0xFFFFFFFF
-    self.assertFalse(lpp.logging_read(libpanda_py.ffi.new("uint8_t[64]")))
+    self.assertEqual(lpp.logging_read(libpanda_py.ffi.new("uint8_t[64]")), 0)
 
   def test_rate_limit(self):
     for _ in range(lpp.logging_rate_limit + 5):
