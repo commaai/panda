@@ -163,7 +163,7 @@ def func_fixture_panda(request, module_panda):
     assert len(mark.args) > 0, "Missing expected logs argument in mark"
     expected_logs += mark.args[0]
 
-  logs = p.get_logs()
+  logs.append(p.get_logs())
   log_id = logs[-1]['id'] if len(logs) > 0 else last_log_id
 
   assert ((log_id - last_log_id) % 0xFFFE) == expected_logs, f"Unexpected logs. Last 5: {logs[-5:]}"
