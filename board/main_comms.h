@@ -483,11 +483,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       if (req->param1 == 1U) {
         logging_find_read_index();
       }
-
-      if (logging_read(resp)) {
-        resp_len = sizeof(log_t);
-      }
-
+      resp_len = logging_read(resp);
       break;
     default:
       print("NO HANDLER ");

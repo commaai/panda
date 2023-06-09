@@ -4,8 +4,6 @@ misra-c2012-11.4
 misra-c2012-11.5
 # Advisory: as stated in the Misra document, use of goto statements in accordance to 15.2 and 15.3 is ok
 misra-c2012-15.1
-# Advisory: multiple breaks in a loop sounds more than fine
-misra-c2012-15.4
 # Advisory: union types can be used
 misra-c2012-19.2
 # Advisory: The # and ## preprocessor operators should not be used

@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "utils.h"
+#include "drivers/rtc_definitions.h"
 
 #define CANFD
 #define ALLOW_DEBUG
@@ -37,16 +38,6 @@ uint32_t microsecond_timer_get(void) {
 void register_set_bits(volatile uint32_t *addr, uint32_t val) {}
 
 // RTC
-typedef struct __attribute__((packed)) timestamp_t {
-  uint16_t year;
-  uint8_t month;
-  uint8_t day;
-  uint8_t weekday;
-  uint8_t hour;
-  uint8_t minute;
-  uint8_t second;
-} timestamp_t;
-
 timestamp_t rtc_get_time() {
   timestamp_t result;
   result.year = 1996;

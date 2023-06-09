@@ -1,14 +1,7 @@
-#define YEAR_OFFSET 2000U
 
-typedef struct __attribute__((packed)) timestamp_t {
-  uint16_t year;
-  uint8_t month;
-  uint8_t day;
-  uint8_t weekday;
-  uint8_t hour;
-  uint8_t minute;
-  uint8_t second;
-} timestamp_t;
+#include "rtc_definitions.h"
+
+#define YEAR_OFFSET 2000U
 
 uint8_t to_bcd(uint16_t value){
   return (((value / 10U) & 0x0FU) << 4U) | ((value % 10U) & 0x0FU);
