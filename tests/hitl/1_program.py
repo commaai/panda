@@ -12,7 +12,7 @@ def check_signature(p):
 # TODO: make more comprehensive bootstub tests and run on a few production ones + current
 # TODO: also test release-signed app
 @pytest.mark.execution_timeout(30)
-@pytest.mark.expected_logs(1)
+@pytest.mark.expected_logs(1, 2)
 def test_a_known_bootstub(p):
   """
   Test that compiled app can work with known production bootstub

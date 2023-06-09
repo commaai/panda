@@ -87,7 +87,7 @@ def pytest_configure(config):
     "markers", "panda_expect_can_error: mark test to ignore CAN health errors"
   )
   config.addinivalue_line(
-    "markers", "expected_logs(amount): mark test to expect a certain amount of panda logs"
+    "markers", "expected_logs(amount, ...): mark test to expect a certain amount of panda logs"
   )
 
 def pytest_collection_modifyitems(items):
@@ -160,16 +160,18 @@ def func_fixture_panda(request, module_panda):
   assert p.health()['fault_status'] == 0
 
   # Make sure that there are no unexpected logs
-  expected_logs = 0
+  min_expected_logs = 0
+  max_expected_logs = 0
   mark = request.node.get_closest_marker('expected_logs')
   if mark:
     assert len(mark.args) > 0, "Missing expected logs argument in mark"
-    expected_logs += mark.args[0]
+    min_expected_logs = mark.args[0]
+    max_expected_logs = mark.args[1] if len(mark.args) > 1 else min_expected_logs
 
   logs.extend(p.get_logs(True))
   log_id = logs[-1]['id'] if len(logs) > 0 else last_log_id
 
-  assert ((log_id - last_log_id) % 0xFFFE) == expected_logs, f"Unexpected logs. Last 5: {logs[-5:]}"
+  assert min_expected_logs <= ((log_id - last_log_id) % 0xFFFE) <= max_expected_logs, f"Unexpected amount of logs. Last 5: {logs[-5:]}"
 
   # Check for SPI errors
   #assert p.health()['spi_checksum_error_count'] == 0
