@@ -213,7 +213,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
     CANx->IE &= 0x0U; // Reset all interrupts
     // Messages for INT0
     CANx->IE |= FDCAN_IE_RF0NE; // Rx FIFO 0 new message
-    CANx->IE |= FDCAN_IE_PEDE | FDCAN_IE_PEAE | FDCAN_IE_BOE | FDCAN_IE_EPE | FDCAN_IE_ELOE | FDCAN_IE_TEFLE | FDCAN_IE_RF0LE;
+    CANx->IE |= FDCAN_IE_PEDE | FDCAN_IE_PEAE | FDCAN_IE_BOE | FDCAN_IE_EPE | FDCAN_IE_RF0LE;
 
     // Messages for INT1 (Only TFE works??)
     CANx->ILS |= FDCAN_ILS_TFEL;
