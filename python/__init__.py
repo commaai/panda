@@ -999,6 +999,9 @@ class Panda:
   def set_green_led(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')
 
+  def test_bus_load(self, bus):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xc5, int(bus), 0, b'')
+
   # ****************** Logging *****************
   def get_logs(self, last_id=None, get_all=False):
     assert (last_id is None) or (0 <= last_id < 0xFFFF)
