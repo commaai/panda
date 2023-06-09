@@ -405,12 +405,12 @@ class Panda:
     timeout = 5000 if isinstance(self._handle, PandaSpiHandle) else 15000
     try:
       if enter_bootloader:
-        self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 0, 0, b'', timeout=timeout)
+        self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 0, 0, b'', timeout=timeout, expect_disconnect=True)
       else:
         if enter_bootstub:
-          self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 1, 0, b'', timeout=timeout)
+          self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 1, 0, b'', timeout=timeout, expect_disconnect=True)
         else:
-          self._handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'', timeout=timeout)
+          self._handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'', timeout=timeout, expect_disconnect=True)
     except Exception:
       pass
     if not enter_bootloader and reconnect:
@@ -479,7 +479,7 @@ class Panda:
     # reset
     logging.warning("flash: resetting")
     try:
-      handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'')
+      handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'', expect_disconnect=True)
     except Exception:
       pass
 
