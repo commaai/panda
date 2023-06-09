@@ -157,14 +157,14 @@ def func_fixture_panda(request, module_panda):
   assert p.health()['fault_status'] == 0
 
   # Make sure that there are no unexpected logs
-  expected_logs = 1 # account for the reset log
+  expected_logs = 0
   mark = request.node.get_closest_marker('expected_logs')
   if mark:
     assert len(mark.args) > 0, "Missing expected logs argument in mark"
     expected_logs += mark.args[0]
 
   logs = p.get_logs()
-  log_id = logs[-1]['id'] if len(logs) > 0 else 0
+  log_id = logs[-1]['id'] if len(logs) > 0 else last_log_id
 
   assert ((log_id - last_log_id) % 0xFFFE) == expected_logs, f"Unexpected logs: {logs}"
 
