@@ -142,6 +142,7 @@ class PandaSpiHandle(BaseHandle):
         spi.xfer2(packet)
 
         if expect_disconnect:
+          logging.debug("- expecting disconnect, returning")
           return b""
         else:
           to = timeout - (time.monotonic() - start_time)*1e3
