@@ -116,7 +116,7 @@ class PandaSpiHandle(BaseHandle):
 
     raise PandaSpiMissingAck
 
-  def _transfer(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = 1000) -> bytes:
+  def _transfer(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = 1000, send_once: bool = False) -> bytes:
     logging.debug("starting transfer: endpoint=%d, max_rx_len=%d", endpoint, max_rx_len)
     logging.debug("==============================================")
 
@@ -125,7 +125,7 @@ class PandaSpiHandle(BaseHandle):
     exc = PandaSpiException()
     while (time.monotonic() - start_time) < timeout*1e-3:
       n += 1
-      logging.debug("\ntry #%d", n+1)
+      logging.debug("\ntry #%d", n)
       try:
         logging.debug("- send header")
         packet = struct.pack("<BBHH", SYNC, endpoint, len(data), max_rx_len)
@@ -159,16 +159,21 @@ class PandaSpiHandle(BaseHandle):
         return dat[:-1]
       except PandaSpiException as e:
         exc = e
-        logging.debug("SPI transfer failed, retrying", exc_info=True)
+        if send_once:
+          logging.debug("SPI transfer failed, not retrying", exc_info=True)
+          break
+        else:
+          logging.debug("SPI transfer failed, retrying", exc_info=True)
+
     raise exc
 
   # libusb1 functions
   def close(self):
     self.dev.close()
 
-  def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = TIMEOUT):
+  def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = TIMEOUT, send_once: bool = False):
     with self.dev.acquire() as spi:
-      return self._transfer(spi, 0, struct.pack("<BHHH", request, value, index, 0), timeout)
+      return self._transfer(spi, 0, struct.pack("<BHHH", request, value, index, 0), timeout, send_once=send_once)
 
   def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = TIMEOUT):
     with self.dev.acquire() as spi:
