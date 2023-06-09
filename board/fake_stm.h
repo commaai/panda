@@ -51,7 +51,7 @@ timestamp_t rtc_get_time() {
 }
 
 // Logging and flash
-uint8_t fake_logging_bank[0x40000];
+uint8_t fake_logging_bank[0x40000] __attribute__ ((aligned (4)));
 #define LOGGING_FLASH_BASE_A (&fake_logging_bank[0])
 #define LOGGING_FLASH_BASE_B (&fake_logging_bank[0x20000])
 #define LOGGING_FLASH_SECTOR_A 5
@@ -85,7 +85,7 @@ bool flash_erase_sector(uint8_t sector) {
 }
 
 void flash_write_word(void *prog_ptr, uint32_t data) {
-  if (flash_locked || prog_ptr < LOGGING_FLASH_BASE_A || prog_ptr >= (LOGGING_FLASH_BASE_A + sizeof(fake_logging_bank))) {
+  if (flash_locked || prog_ptr < (void *) LOGGING_FLASH_BASE_A || prog_ptr >= (void *) (LOGGING_FLASH_BASE_A + sizeof(fake_logging_bank))) {
     return;
   }
 

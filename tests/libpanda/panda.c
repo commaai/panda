@@ -33,7 +33,7 @@ can_ring *tx1_q = &can_tx1_q;
 can_ring *tx2_q = &can_tx2_q;
 can_ring *tx3_q = &can_tx3_q;
 
-uint32_t *logging_bank = fake_logging_bank;
+uint32_t *logging_bank = (uint32_t *) fake_logging_bank;
 uint32_t logging_bank_size = sizeof(fake_logging_bank);
 uint32_t logging_rate_limit = LOGGING_MAX_LOGS_PER_MINUTE;
 
