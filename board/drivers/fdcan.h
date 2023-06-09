@@ -65,7 +65,7 @@ void update_can_health_pkt(uint8_t can_number, bool error_irq) {
       can_health[can_number].total_tx_lost_cnt += 1U;
     }
     // Actually reset can core only on arbitration or data phase errors and when CEL couter reaches at least 0xF errors
-    if (((CANx->IR & (FDCAN_IR_PED | FDCAN_IR_PEA)) != 0) && ((ecr_reg & FDCAN_ECR_CEL) == 0xFU)) {
+    if (((CANx->IR & (FDCAN_IR_PED | FDCAN_IR_PEA)) != 0) && (((ecr_reg & FDCAN_ECR_CEL) >> FDCAN_ECR_CEL_Pos) == 0xFU)) {
       llcan_clear_send(CANx);
     }
     // Clear error interrupts
