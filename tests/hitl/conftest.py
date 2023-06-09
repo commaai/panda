@@ -86,6 +86,9 @@ def pytest_configure(config):
   config.addinivalue_line(
     "markers", "panda_expect_can_error: mark test to ignore CAN health errors"
   )
+  config.addinivalue_line(
+    "markers", "expected_logs(amount): mark test to expect a certain amount of panda logs"
+  )
 
 def pytest_collection_modifyitems(items):
   for item in items:
