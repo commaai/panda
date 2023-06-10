@@ -87,6 +87,14 @@ def pytest_configure(config):
     "markers", "panda_expect_can_error: mark test to ignore CAN health errors"
   )
 
+def pytest_collection_modifyitems(items):
+  for item in items:
+    if item.get_closest_marker('execution_timeout') is None:
+      item.add_marker(pytest.mark.execution_timeout(10))
+
+    item.add_marker(pytest.mark.setup_timeout(20))
+    item.add_marker(pytest.mark.teardown_timeout(20))
+
 
 def pytest_make_parametrize_id(config, val, argname):
   if val in _all_pandas:

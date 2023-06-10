@@ -406,12 +406,12 @@ class Panda:
     timeout = 5000 if isinstance(self._handle, PandaSpiHandle) else 15000
     try:
       if enter_bootloader:
-        self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 0, 0, b'', timeout=timeout)
+        self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 0, 0, b'', timeout=timeout, expect_disconnect=True)
       else:
         if enter_bootstub:
-          self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 1, 0, b'', timeout=timeout)
+          self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 1, 0, b'', timeout=timeout, expect_disconnect=True)
         else:
-          self._handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'', timeout=timeout)
+          self._handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'', timeout=timeout, expect_disconnect=True)
     except Exception:
       pass
     if not enter_bootloader and reconnect:
@@ -480,7 +480,7 @@ class Panda:
     # reset
     logging.warning("flash: resetting")
     try:
-      handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'')
+      handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'', expect_disconnect=True)
     except Exception:
       pass
 
@@ -535,6 +535,18 @@ class Panda:
       if timeout is not None and (time.monotonic() - t_start) > timeout:
         return False
       dfu_list = PandaDFU.list()
+    return True
+
+  @staticmethod
+  def wait_for_panda(serial: Optional[str], timeout: int) -> bool:
+    t_start = time.monotonic()
+    serials = Panda.list()
+    while (serial is None and len(serials) == 0) or (serial is not None and serial not in serials):
+      logging.debug("waiting for panda...")
+      time.sleep(0.1)
+      if timeout is not None and (time.monotonic() - t_start) > timeout:
+        return False
+      serials = Panda.list()
     return True
 
   def up_to_date(self) -> bool:
@@ -622,12 +634,6 @@ class Panda:
     }
 
   # ******************* control *******************
-
-  def enter_bootloader(self):
-    try:
-      self._handle.controlWrite(Panda.REQUEST_OUT, 0xd1, 0, 0, b'')
-    except Exception:
-      logging.exception("exception while entering bootloader")
 
   def get_version(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40).decode('utf8')
