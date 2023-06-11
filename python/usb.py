@@ -11,7 +11,7 @@ class PandaUsbHandle(BaseHandle):
   def close(self):
     self._libusb_handle.close()
 
-  def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = TIMEOUT):
+  def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = TIMEOUT, expect_disconnect: bool = False):
     return self._libusb_handle.controlWrite(request_type, request, value, index, data, timeout)
 
   def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = TIMEOUT):
