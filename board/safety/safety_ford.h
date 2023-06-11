@@ -10,7 +10,7 @@
 #define MSG_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
 #define MSG_Lane_Assist_Data1     0x3CA   // TX by OP, Lane Keep Assist
 #define MSG_LateralMotionControl  0x3D3   // TX by OP, Traffic Jam Assist
-#define MSG_LateralMotionControl2 0x3D6   // TX by OP, BlueCruise
+#define MSG_LateralMotionControl2 0x3D6   // TX by OP, alternate Traffic Jam Assist message
 #define MSG_IPMA_Data             0x3D8   // TX by OP, IPMA and LKAS user interface
 
 // CAN bus numbers.

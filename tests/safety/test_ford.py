@@ -18,6 +18,7 @@ MSG_ACCDATA = 0x186                # TX by OP, ACC controls
 MSG_ACCDATA_3 = 0x18A              # TX by OP, ACC/TJA user interface
 MSG_Lane_Assist_Data1 = 0x3CA      # TX by OP, Lane Keep Assist
 MSG_LateralMotionControl = 0x3D3   # TX by OP, Traffic Jam Assist
+MSG_LateralMotionControl2 = 0x3D6  # TX by OP, atlernate Traffic Jam Assist message
 MSG_IPMA_Data = 0x3D8              # TX by OP, IPMA and LKAS user interface
 
 
@@ -57,9 +58,11 @@ class Buttons:
   TJA_TOGGLE = 2
 
 
-# Ford safety has two different configurations tested here:
-#  * stock longitudinal
-#  * openpilot longitudinal
+# Ford safety has four different configurations tested here:
+#  * CAN with stock longitudinal
+#  * CAN with openpilot longitudinal
+#  * CAN FD with stock longitudinal
+#  * CAN FD with openpilot longitudinal
 
 class TestFordSafetyBase(common.PandaSafetyTest):
   STANDSTILL_THRESHOLD = 1
@@ -347,6 +350,21 @@ class TestFordStockSafety(TestFordSafetyBase):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
+    self.safety.init_tests()
+
+
+class TestFordCANFDStockSafety(TestFordSafetyBase):
+  TX_MSGS = [
+    [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
+    [MSG_LateralMotionControl2, 0], [MSG_IPMA_Data, 0],
+  ]
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl2, MSG_IPMA_Data]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("ford_lincoln_base_pt")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_CANFD)
     self.safety.init_tests()
 
 
