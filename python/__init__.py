@@ -265,6 +265,7 @@ class Panda:
   def connect(self, claim=True, wait=False):
     self.close()
 
+    self._handle = None
     while self._handle is None:
       # try USB first, then SPI
       self._handle, serial, self.bootstub, bcd = None, None, None, None
