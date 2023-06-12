@@ -59,7 +59,7 @@ class TestLogging(unittest.TestCase):
     logs = self._get_logs()
     self.assertEqual(len(logs), 1)
     log = unpack_log(bytes(logs[0]))
-    self.assertEqual(log['log'], msg)
+    self.assertEqual(log['msg'], msg)
     self.assertEqual(log['uptime'], 0)
     self.assertEqual(log['id'], 1)
     self.assertEqual(log['timestamp'], datetime.datetime(1996, 4, 23, 4, 20, 20))

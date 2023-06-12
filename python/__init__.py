@@ -137,7 +137,7 @@ def unpack_log(dat):
     'id': struct.unpack("H", dat[:2])[0],
     'timestamp': parse_timestamp(dat[2:10]),
     'uptime': struct.unpack("I", dat[10:14])[0],
-    'log': bytes(dat[14:]).decode('utf-8', 'ignore').strip('\x00'),
+    'msg': bytes(dat[14:]).decode('utf-8', 'ignore').strip('\x00'),
   }
 
 class ALTERNATIVE_EXPERIENCE:

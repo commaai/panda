@@ -134,6 +134,6 @@ def test_logging(p):
   assert len(p.get_logs()) == 0
 
   # we assume the start log is relatively recent
-  start_logs = list(filter(lambda x: x['log'] == 'main start', logs[-5:]))
+  start_logs = list(filter(lambda x: x['msg'] == 'main start', logs[-5:]))
   assert len(start_logs) > 0
   assert start_logs[0]['uptime'] < 2
