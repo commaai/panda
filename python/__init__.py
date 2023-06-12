@@ -265,13 +265,13 @@ class Panda:
   def connect(self, claim=True, wait=False):
     self.close()
 
-    first_run = True
-    while first_run or ((self._handle is None) and wait):
+    while self._handle is None:
       # try USB first, then SPI
       self._handle, serial, self.bootstub, bcd = None, None, None, None
       if self._handle is None:
         self._handle, serial, self.bootstub, bcd = self.spi_connect(self._connect_serial)
-      first_run = False
+      if not wait:
+        break
 
     if self._handle is None:
       raise Exception("failed to connect to panda")
