@@ -265,10 +265,13 @@ class Panda:
   def connect(self, claim=True, wait=False):
     self.close()
 
-    # try USB first, then SPI
-    self._handle, serial, self.bootstub, bcd = self.usb_connect(self._connect_serial, claim=claim, wait=wait)
-    if self._handle is None:
-      self._handle, serial, self.bootstub, bcd = self.spi_connect(self._connect_serial)
+    first_run = True
+    while first_run or ((self._handle is None) and wait):
+      # try USB first, then SPI
+      self._handle, serial, self.bootstub, bcd = None, None, None, None
+      if self._handle is None:
+        self._handle, serial, self.bootstub, bcd = self.spi_connect(self._connect_serial)
+      first_run = False
 
     if self._handle is None:
       raise Exception("failed to connect to panda")
@@ -327,44 +330,42 @@ class Panda:
   @staticmethod
   def usb_connect(serial, claim=True, wait=False):
     handle, usb_serial, bootstub, bcd = None, None, None, None
-    while 1:
-      context = usb1.USBContext()
-      context.open()
-      try:
-        for device in context.getDeviceList(skip_on_error=True):
-          if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
-            try:
-              this_serial = device.getSerialNumber()
-            except Exception:
-              continue
+    context = usb1.USBContext()
+    context.open()
+    try:
+      for device in context.getDeviceList(skip_on_error=True):
+        if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
+          try:
+            this_serial = device.getSerialNumber()
+          except Exception:
+            continue
 
-            if serial is None or this_serial == serial:
-              logging.debug("opening device %s %s", this_serial, hex(device.getProductID()))
+          if serial is None or this_serial == serial:
+            logging.debug("opening device %s %s", this_serial, hex(device.getProductID()))
 
-              usb_serial = this_serial
-              bootstub = device.getProductID() == 0xddee
-              handle = device.open()
-              if sys.platform not in ("win32", "cygwin", "msys", "darwin"):
-                handle.setAutoDetachKernelDriver(True)
-              if claim:
-                handle.claimInterface(0)
-                # handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
+            usb_serial = this_serial
+            bootstub = device.getProductID() == 0xddee
+            handle = device.open()
+            if sys.platform not in ("win32", "cygwin", "msys", "darwin"):
+              handle.setAutoDetachKernelDriver(True)
+            if claim:
+              handle.claimInterface(0)
+              # handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
 
-              # bcdDevice wasn't always set to the hw type, ignore if it's the old constant
-              this_bcd = device.getbcdDevice()
-              if this_bcd is not None and this_bcd != 0x2300:
-                bcd = bytearray([this_bcd >> 8, ])
+            # bcdDevice wasn't always set to the hw type, ignore if it's the old constant
+            this_bcd = device.getbcdDevice()
+            if this_bcd is not None and this_bcd != 0x2300:
+              bcd = bytearray([this_bcd >> 8, ])
 
-              break
-      except Exception:
-        logging.exception("USB connect error")
-      if not wait or handle is not None:
-        break
-      context.close()
+            break
+    except Exception:
+      logging.exception("USB connect error")
 
     usb_handle = None
     if handle is not None:
       usb_handle = PandaUsbHandle(handle)
+    else:
+      context.close()
 
     return usb_handle, usb_serial, bootstub, bcd
 
