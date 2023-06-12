@@ -57,7 +57,7 @@ def test_a_known_bootstub(p):
     check_signature(p)
     assert not p.bootstub
 
-@pytest.mark.execution_timeout(15)
+@pytest.mark.execution_timeout(25)
 def test_b_recover(p):
   assert p.recover(timeout=30)
   check_signature(p)

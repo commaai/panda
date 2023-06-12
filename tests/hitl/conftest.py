@@ -145,6 +145,8 @@ def func_fixture_panda(request, module_panda):
   if p.bootstub:
     p.reset()
 
+  assert not p.bootstub
+
   # TODO: would be nice to make these common checks in the teardown
   # show up as failed tests instead of "errors"
 
