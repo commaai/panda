@@ -42,6 +42,7 @@
 #define LOGGING_FLASH_SECTOR_B 11U
 #define LOGGING_FLASH_BASE_A 0x080C0000U
 #define LOGGING_FLASH_BASE_B 0x080E0000U
+#define LOGGING_FLASH_SECTOR_SIZE 0x20000U
 
 #include "can_definitions.h"
 #include "comms_definitions.h"
