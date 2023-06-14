@@ -30,7 +30,7 @@ void uart_rx_ring(uart_ring *q){
 
     uint16_t next_w_ptr = (q->w_ptr_rx + 1U) % q->rx_fifo_size;
 
-    if ((next_w_ptr == q->r_ptr_rx) && q->overwite) {
+    if ((next_w_ptr == q->r_ptr_rx) && q->overwrite) {
       // overwrite mode: drop oldest byte
       q->r_ptr_rx = (q->r_ptr_rx + 1U) % q->rx_fifo_size;
     }

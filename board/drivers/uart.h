@@ -33,7 +33,7 @@ typedef struct uart_ring {
     .rx_fifo_size = (size_rx), \
     .uart = (uart_ptr), \
     .callback = (callback_ptr), \
-    .dma_rx = (rx_dma) \
+    .dma_rx = (rx_dma), \
     .overwrite = (overwrite_mode) \
   };
 
