@@ -131,7 +131,7 @@ class TestFordSafetyBase(common.PandaSafetyTest):
   # Current curvature
   def _yaw_rate_msg(self, curvature: float, speed: float, quality_flag=True):
     values = {"VehYaw_W_Actl": curvature * speed, "VehYawWActl_D_Qf": 3 if quality_flag else 0,
-              "VehRolWActl_D_Qf": 3 if quality_flag else 0, "VehRollYaw_No_Cnt": self.cnt_yaw_rate % 256}
+              "VehRollYaw_No_Cnt": self.cnt_yaw_rate % 256}
     self.__class__.cnt_yaw_rate += 1
     return self.packer.make_can_msg_panda("Yaw_Data_FD1", 0, values, fix_checksum=checksum)
 
