@@ -136,6 +136,9 @@ def func_fixture_panda(request, module_panda):
   logs = p.get_logs()
   last_log_id = logs[-1]['id'] if len(logs) > 0 else 0
 
+  # ensure FW hasn't changed
+  assert p.up_to_date()
+
   # Run test
   yield p
 
