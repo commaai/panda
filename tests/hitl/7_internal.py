@@ -47,8 +47,10 @@ def test_fan_cooldown(p):
     assert p.get_fan_rpm() <= 7000
     time.sleep(0.5)
 
-@pytest.mark.skip(reason="fan controller overshoots on fans that need stall recovery")
 def test_fan_overshoot(p):
+  if p.get_type() == Panda.HW_TYPE_DOS:
+    pytest.skip("fan controller overshoots on fans that need stall recovery")
+
   # make sure it's stopped completely
   p.set_fan_power(0)
   while p.get_fan_rpm() > 0:
