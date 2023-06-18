@@ -611,6 +611,7 @@ class Panda:
       "fan_stall_count": a[24],
       "sbu1_voltage_mV": a[25],
       "sbu2_voltage_mV": a[26],
+      "controls_transition_reason": a[27],
     }
 
   @ensure_can_health_packet_version
