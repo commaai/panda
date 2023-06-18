@@ -674,8 +674,3 @@ void pcm_cruise_check(bool cruise_engaged) {
   }
   cruise_engaged_prev = cruise_engaged;
 }
-
-void controls_allowed_transition(bool allowed, ControlsTransitionReason transition_reason) {
-  controls_allowed = allowed;
-  controls_transition_reason = transition_reason;
-}

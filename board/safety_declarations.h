@@ -203,6 +203,12 @@ typedef enum {
 // This can be set by the safety hooks
 bool controls_allowed = false;
 ControlsTransitionReason controls_transition_reason = NoTransition;
+
+void controls_allowed_transition(bool allowed, ControlsTransitionReason transition_reason) {
+  controls_allowed = allowed;
+  controls_transition_reason = transition_reason;
+}
+
 bool relay_malfunction = false;
 bool gas_interceptor_detected = false;
 int gas_interceptor_prev = 0;
