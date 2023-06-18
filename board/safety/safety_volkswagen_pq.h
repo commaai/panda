@@ -130,7 +130,7 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
         // Signal: Motor_5.GRA_Hauptschalter
         acc_main_on = GET_BIT(to_push, 50U);
         if (!acc_main_on) {
-          controls_allowed = 0;
+          controls_allowed_transition(false, CruiseOff);
         }
       }
 
@@ -141,14 +141,18 @@ static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
         bool set_button = GET_BIT(to_push, 16U);
         bool resume_button = GET_BIT(to_push, 17U);
         if ((volkswagen_set_button_prev && !set_button) || (volkswagen_resume_button_prev && !resume_button)) {
-          controls_allowed = acc_main_on;
+          if (acc_main_on) {
+            controls_allowed_transition(true, SetPressed);
+          } else {
+            controls_allowed_transition(false, CruiseOff);
+          }
         }
         volkswagen_set_button_prev = set_button;
         volkswagen_resume_button_prev = resume_button;
         // Exit controls on rising edge of Cancel, override Set/Resume if present simultaneously
         // Signal: GRA_ACC_01.GRA_Abbrechen
         if (GET_BIT(to_push, 9U) == 1U) {
-          controls_allowed = 0;
+          controls_allowed_transition(false, CancelPressed);
         }
       }
     } else {

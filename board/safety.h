@@ -174,7 +174,7 @@ void safety_tick(const addr_checks *rx_checks) {
       bool lagging = elapsed_time > MAX(rx_checks->check[i].msg[rx_checks->check[i].index].expected_timestep * MAX_MISSED_MSGS, 1e6);
       rx_checks->check[i].lagging = lagging;
       if (lagging) {
-        controls_allowed = 0;
+        controls_allowed_transition(false, LagDetected);
       }
 
       if (lagging || !is_msg_valid(rx_checks->check, i)) {
@@ -200,7 +200,7 @@ bool is_msg_valid(AddrCheckStruct addr_list[], int index) {
   if (index != -1) {
     if (!addr_list[index].valid_checksum || !addr_list[index].valid_quality_flag || (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {
       valid = false;
-      controls_allowed = 0;
+      controls_allowed_transition(false, InvalidMessage);
     }
   }
   return valid;
@@ -254,19 +254,19 @@ bool addr_safety_check(CANPacket_t *to_push,
 void generic_rx_checks(bool stock_ecu_detected) {
   // exit controls on rising edge of gas press
   if (gas_pressed && !gas_pressed_prev && !(alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS)) {
-    controls_allowed = 0;
+    controls_allowed_transition(false, GasPressed);
   }
   gas_pressed_prev = gas_pressed;
 
   // exit controls on rising edge of brake press
   if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
-    controls_allowed = 0;
+    controls_allowed_transition(false, BrakePressed);
   }
   brake_pressed_prev = brake_pressed;
 
   // exit controls on rising edge of regen paddle
   if (regen_braking && (!regen_braking_prev || vehicle_moving)) {
-    controls_allowed = 0;
+    controls_allowed_transition(false, RegenBraking);
   }
   regen_braking_prev = regen_braking;
 
@@ -353,7 +353,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   angle_meas.min = 0;
   angle_meas.max = 0;
 
-  controls_allowed = false;
+  controls_allowed_transition(false, NoTransition);
   relay_malfunction_reset();
   safety_rx_checks_invalid = false;
 
@@ -667,10 +667,15 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
 void pcm_cruise_check(bool cruise_engaged) {
   // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
   if (!cruise_engaged) {
-    controls_allowed = false;
+    controls_allowed_transition(false, CruiseOff);
   }
   if (cruise_engaged && !cruise_engaged_prev) {
-    controls_allowed = true;
+    controls_allowed_transition(true, CruiseEngaged);
   }
   cruise_engaged_prev = cruise_engaged;
+}
+
+void controls_allowed_transition(bool allowed, ControlsTransitionReason transition_reason) {
+  controls_allowed = allowed;
+  controls_transition_reason = transition_reason;
 }
