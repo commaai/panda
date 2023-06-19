@@ -33,9 +33,18 @@
 
 // ********************* Serial debugging *********************
 
+bool last_started = false;
 bool check_started(void) {
   bool started = current_board->check_ignition() || ignition_can;
   ignition_seen |= started;
+
+  if (started && !last_started) {
+    log("started true");
+  } else if (!started && last_started) {
+    log("started false");
+  } else {}
+
+  last_started = started;
   return started;
 }
 

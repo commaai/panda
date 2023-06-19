@@ -51,6 +51,11 @@ void dos_set_led(uint8_t color, bool enabled) {
 
 void dos_set_bootkick(bool enabled){
   set_gpio_output(GPIOC, 4, !enabled);
+
+  if (enabled && !last_bootkick) {
+    log("bootkick");
+  }
+  last_bootkick = enabled;
 }
 
 void dos_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {

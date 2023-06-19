@@ -4,6 +4,7 @@ void puth(uint8_t i){ UNUSED(i); }
 void puth2(uint8_t i){ UNUSED(i); }
 void puth4(uint8_t i){ UNUSED(i); }
 void hexdump(const void *a, int l){ UNUSED(a); UNUSED(l); }
+void log(const char* msg) { UNUSED(msg); }
 typedef struct board board;
 typedef struct harness_configuration harness_configuration;
 // No CAN support on bootloader

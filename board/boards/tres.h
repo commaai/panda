@@ -16,6 +16,11 @@ void tres_set_ir_power(uint8_t percentage){
 
 void tres_set_bootkick(bool enabled){
   set_gpio_output(GPIOA, 0, !enabled);
+
+  if (enabled && !last_bootkick) {
+    log("bootkick");
+  }
+  last_bootkick = enabled;
 }
 
 bool tres_ignition_prev = false;

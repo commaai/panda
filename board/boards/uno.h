@@ -62,6 +62,11 @@ void uno_set_bootkick(bool enabled){
     // We want the pin to be floating, not forced high!
     set_gpio_mode(GPIOB, 14, MODE_INPUT);
   }
+
+  if (enabled && !last_bootkick) {
+    log("bootkick");
+  }
+  last_bootkick = enabled;
 }
 
 void uno_bootkick(void) {
