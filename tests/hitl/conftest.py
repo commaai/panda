@@ -72,6 +72,7 @@ def init_jungle():
   _panda_jungle.set_can_loopback(False)
   _panda_jungle.set_obd(False)
   _panda_jungle.set_harness_orientation(PandaJungle.HARNESS_ORIENTATION_1)
+  _panda_jungle.set_ignition(False)
   for bus, speed in BUS_SPEEDS:
     _panda_jungle.set_can_speed_kbps(bus, speed)
 
