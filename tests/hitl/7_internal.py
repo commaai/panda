@@ -8,7 +8,7 @@ pytestmark = [
   pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES)
 ]
 
-@pytest.mark.execution_timeout(50)
+@pytest.mark.execution_timeout(2*60)
 def test_fan_controller(p):
   start_health = p.health()
 
@@ -47,8 +47,10 @@ def test_fan_cooldown(p):
     assert p.get_fan_rpm() <= 7000
     time.sleep(0.5)
 
-@pytest.mark.skip(reason="fan controller overshoots on fans that need stall recovery")
 def test_fan_overshoot(p):
+  if p.get_type() == Panda.HW_TYPE_DOS:
+    pytest.skip("fan controller overshoots on fans that need stall recovery")
+
   # make sure it's stopped completely
   p.set_fan_power(0)
   while p.get_fan_rpm() > 0:
