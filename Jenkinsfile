@@ -94,7 +94,7 @@ pipeline {
             phone_steps("panda-tres", [
               ["build", "scons -j4"],
               ["flash", "cd tests/ && ./ci_reset_internal_hw.py"],
-              ["test", "cd tests/hitl && HW_TYPES=9 pytest --durations=0 2*.py [5-9]*.py"],
+              ["test", "cd tests/hitl && HW_TYPES=9 pytest --durations=0 [0-2]*.py [5-9]*.py"],
             ])
           }
         }
@@ -117,7 +117,9 @@ pipeline {
             stage('prep') {
               steps {
                 script {
-                  docker_run("reset hardware", 3, "python ./tests/ci_reset_hw.py")
+                  retry (3) {
+                    docker_run("reset hardware", 3, "python ./tests/ci_reset_hw.py")
+                  }
                 }
               }
             }

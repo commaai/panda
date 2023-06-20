@@ -48,11 +48,11 @@ class TestSpi:
     for _ in range(10):
       ep = random.randint(4, 20)
       with pytest.raises(PandaSpiNackResponse):
-        p._handle.bulkRead(ep, random.randint(1, 1000), timeout=50)
+        p._handle.bulkRead(ep, random.randint(1, 1000), timeout=35)
 
       self._ping(mocker, p)
 
       with pytest.raises(PandaSpiNackResponse):
-        p._handle.bulkWrite(ep, b"abc", timeout=50)
+        p._handle.bulkWrite(ep, b"abc", timeout=35)
 
       self._ping(mocker, p)
