@@ -60,8 +60,8 @@ void update_can_health_pkt(uint8_t can_number, bool error_irq) {
 
   if (error_irq) {
     can_health[can_number].total_error_cnt += 1U;
-    if ((CANx->IR & (FDCAN_IR_TEFL)) != 0) {
-      can_health[can_number].total_tx_lost_cnt += 1U;
+    if ((CANx->IR & (FDCAN_IR_RF0L)) != 0) {
+      can_health[can_number].total_rx_lost_cnt += 1U;
     }
     // Actually reset can core only on arbitration or data phase errors and when CEL couter reaches at least 100 errors
     if (((CANx->IR & (FDCAN_IR_PED | FDCAN_IR_PEA)) != 0) && (((ecr_reg & FDCAN_ECR_CEL) >> FDCAN_ECR_CEL_Pos) >= 100U)) {
