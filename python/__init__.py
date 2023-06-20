@@ -736,6 +736,10 @@ class Panda:
   def get_secret(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 1, 0, 0x10)
 
+  def get_interrupt_call_rate(self, irqnum):
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xc4, int(irqnum), 0, 4)
+    return struct.unpack("I", dat)[0]
+
   # ******************* configuration *******************
 
   def set_power_save(self, power_save_enabled=0):
