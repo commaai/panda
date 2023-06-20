@@ -32,7 +32,6 @@ void can_set_gmlan(uint8_t bus) {
   print("GMLAN not available on red panda\n");
 }
 
-// ***************************** CAN *****************************
 void update_can_health_pkt(uint8_t can_number, bool error_irq) {
   ENTER_CRITICAL();
 
@@ -74,6 +73,8 @@ void update_can_health_pkt(uint8_t can_number, bool error_irq) {
   EXIT_CRITICAL();
 }
 
+// ***************************** CAN *****************************
+// FDCANx_IT1 IRQ Handler (TX)
 void process_can(uint8_t can_number) {
   if (can_number != 0xffU) {
     ENTER_CRITICAL();
@@ -128,12 +129,11 @@ void process_can(uint8_t can_number) {
       }
     }
 
-    update_can_health_pkt(can_number, false);
     EXIT_CRITICAL();
   }
 }
 
-// CAN receive handlers
+// FDCANx_IT0 IRQ Handler (RX and errors)
 // blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number) {
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
@@ -217,8 +217,9 @@ void can_rx(uint8_t can_number) {
   }
 
   // Error handling
-  bool error_irq = ((CANx->IR & (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L)) != 0);
-  update_can_health_pkt(can_number, error_irq);
+  if ((CANx->IR & (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L | FDCAN_IR_ELO)) != 0) {
+    update_can_health_pkt(can_number, true);
+  }
 }
 
 void FDCAN1_IT0_IRQ_Handler(void) { can_rx(0); }
