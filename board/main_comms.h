@@ -181,6 +181,17 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       (void)memcpy(resp, ((uint8_t *)UID_BASE), 12);
       resp_len = 12;
       break;
+    case 0xc4:
+      // **** 0xc4: get interrupt call rate
+      if (req->param1 < NUM_INTERRUPTS) {
+        uint32_t load = interrupts[req->param1].call_rate;
+        resp[0] = (load & 0x000000FFU);
+        resp[1] = ((load & 0x0000FF00U) >> 8U);
+        resp[2] = ((load & 0x00FF0000U) >> 16U);
+        resp[3] = ((load & 0xFF000000U) >> 24U);
+        resp_len = 4U;
+      }
+      break;
     // **** 0xd0: fetch serial (aka the provisioned dongle ID)
     case 0xd0:
       // addresses are OTP
