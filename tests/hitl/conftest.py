@@ -67,6 +67,7 @@ _all_panda_serials = list(_all_pandas.keys())
 def init_jungle():
   if _panda_jungle is None:
     return
+  _panda_jungle.reset()
   clear_can_buffers(_panda_jungle)
   _panda_jungle.set_panda_power(True)
   _panda_jungle.set_can_loopback(False)
