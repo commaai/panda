@@ -2,7 +2,8 @@
 import argparse
 from tqdm import tqdm
 from panda import Panda
-from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseError, SESSION_TYPE, DATA_IDENTIFIER_TYPE
+from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseError, InvalidSubFunctionError, \
+                             SESSION_TYPE, DATA_IDENTIFIER_TYPE
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -65,7 +66,7 @@ if __name__ == "__main__":
         uds_client.tester_present()
         uds_client.diagnostic_session_control(SESSION_TYPE.DEFAULT)
         uds_client.diagnostic_session_control(SESSION_TYPE.EXTENDED_DIAGNOSTIC)
-      except NegativeResponseError:
+      except (NegativeResponseError, InvalidSubFunctionError):
         pass
       except MessageTimeoutError:
         continue
