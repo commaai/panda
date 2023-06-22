@@ -58,7 +58,7 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   can_health[can_number].transmit_error_cnt = ((ecr_reg & FDCAN_ECR_TEC) >> FDCAN_ECR_TEC_Pos);
 
 
-  if (ir_reg) {
+  if (ir_reg != 0U) {
     can_health[can_number].total_error_cnt += 1U;
     if ((ir_reg & (FDCAN_IR_RF0L)) != 0) {
       can_health[can_number].total_rx_lost_cnt += 1U;

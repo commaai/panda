@@ -73,7 +73,7 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint32_t esr_reg = CAN->ESR;
 
-  if (ir_reg) {
+  if (ir_reg != 0U) {
     can_health[can_number].total_error_cnt += 1U;
     llcan_clear_send(CAN);
   }
