@@ -32,7 +32,7 @@ void can_set_gmlan(uint8_t bus) {
   print("GMLAN not available on red panda\n");
 }
 
-void update_can_health_pkt(uint8_t can_number, bool error_irq) {
+void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   ENTER_CRITICAL();
 
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
@@ -58,13 +58,13 @@ void update_can_health_pkt(uint8_t can_number, bool error_irq) {
   can_health[can_number].transmit_error_cnt = ((ecr_reg & FDCAN_ECR_TEC) >> FDCAN_ECR_TEC_Pos);
 
 
-  if (error_irq) {
+  if (ir_reg) {
     can_health[can_number].total_error_cnt += 1U;
-    if ((CANx->IR & (FDCAN_IR_RF0L)) != 0) {
+    if ((ir_reg & (FDCAN_IR_RF0L)) != 0) {
       can_health[can_number].total_rx_lost_cnt += 1U;
     }
     // Actually reset can core only on arbitration or data phase errors and when CEL couter reaches at least 100 errors
-    if (((CANx->IR & (FDCAN_IR_PED | FDCAN_IR_PEA)) != 0) && (((ecr_reg & FDCAN_ECR_CEL) >> FDCAN_ECR_CEL_Pos) >= 100U)) {
+    if (((ir_reg & (FDCAN_IR_PED | FDCAN_IR_PEA)) != 0) && (((ecr_reg & FDCAN_ECR_CEL) >> FDCAN_ECR_CEL_Pos) >= 100U)) {
       llcan_clear_send(CANx);
     }
     // Clear error interrupts
@@ -138,6 +138,8 @@ void process_can(uint8_t can_number) {
 void can_rx(uint8_t can_number) {
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
+
+  uint32_t ir_reg = CANx->IR;
 
   // Clear all new messages from Rx FIFO 0
   CANx->IR |= FDCAN_IR_RF0N;
@@ -217,8 +219,8 @@ void can_rx(uint8_t can_number) {
   }
 
   // Error handling
-  if ((CANx->IR & (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L | FDCAN_IR_ELO)) != 0) {
-    update_can_health_pkt(can_number, true);
+  if ((ir_reg & (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L)) != 0) {
+    update_can_health_pkt(can_number, ir_reg);
   }
 }
 
