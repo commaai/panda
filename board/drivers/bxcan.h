@@ -69,7 +69,6 @@ void can_set_gmlan(uint8_t bus) {
 }
 
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
-  UNUSED(ir_reg);
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint32_t esr_reg = CAN->ESR;
 
