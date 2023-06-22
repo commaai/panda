@@ -68,11 +68,11 @@ void can_set_gmlan(uint8_t bus) {
   }
 }
 
-void update_can_health_pkt(uint8_t can_number, bool error_irq) {
+void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint32_t esr_reg = CAN->ESR;
 
-  if (error_irq) {
+  if (ir_reg != 0U) {
     can_health[can_number].total_error_cnt += 1U;
     llcan_clear_send(CAN);
   }
@@ -95,7 +95,7 @@ void update_can_health_pkt(uint8_t can_number, bool error_irq) {
 // CANx_SCE IRQ Handler
 void can_sce(uint8_t can_number) {
   ENTER_CRITICAL();
-  update_can_health_pkt(can_number, true);
+  update_can_health_pkt(can_number, 1U);
   EXIT_CRITICAL();
 }
 
