@@ -86,7 +86,6 @@ if __name__ == "__main__":
         except NegativeResponseError:
           pass
         except (MessageTimeoutError, InvalidSubAddressError):
-          print('Skipped for timeout or invalid sub-address')
           continue
 
         # Run queries against all standard UDS data identifiers, plus selected
