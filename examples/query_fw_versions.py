@@ -11,13 +11,10 @@ if __name__ == "__main__":
   parser.add_argument("--no-obd", action="store_true", help="Bus 1 will not be multiplexed to the OBD-II port")
   parser.add_argument("--debug", action="store_true")
   parser.add_argument("--addr")
-  # parser.add_argument("--subaddr", type=str, choices=list(map(str, range(256))) + ['scan'])
-  parser.add_argument("--subaddr", help="A hex sub-address or `scan` to scan the sub-address range for addr")
+  parser.add_argument("--sub_addr", "--subaddr", help="A hex sub-address or `scan` to scan the sub-address range")
   parser.add_argument("--bus")
   parser.add_argument('-s', '--serial', help="Serial number of panda to use")
   args = parser.parse_args()
-  print(args.addr, args.subaddr)
-  # exit()
 
   if args.addr:
     addrs = [int(args.addr, base=16)]
@@ -25,19 +22,14 @@ if __name__ == "__main__":
     addrs = [0x700 + i for i in range(256)]
     addrs += [0x18da0000 + (i << 8) + 0xf1 for i in range(256)]
 
-  scan_subaddrs, subaddr = False, None
-  if args.subaddr:
-    if len(addrs) != 1:
-      print("Specify an address to query sub-address")
-      parser.print_help()
-      exit()
-
-    if args.subaddr == "scan":
-      scan_subaddrs = True
+  sub_addrs = [None]
+  if args.sub_addr:
+    if args.sub_addr == "scan":
+      sub_addrs = list(range(0xff + 1))
     else:
-      subaddr = int(args.subaddr, base=16)
-      if subaddr > 0xff:
-        print(f"Invalid sub-address: {hex(subaddr)}, needs to be in range 0x0 to 0xff")
+      sub_addrs = [int(args.sub_addr, base=16)]
+      if sub_addrs[0] > 0xff:
+        print(f"Invalid sub-address: {hex(sub_addrs[0])}, needs to be in range 0x0 to 0xff")
         parser.print_help()
         exit()
 
@@ -78,32 +70,34 @@ if __name__ == "__main__":
         bus = int(args.bus)
       else:
         bus = 1 if panda.has_obd() else 0
-      rx_addr = addr + int(args.rxoffset, base=16) if args.rxoffset else None
-      uds_client = UdsClient(panda, addr, rx_addr, bus, timeout=0.2, debug=args.debug)
-      # Check for anything alive at this address, and switch to the highest
-      # available diagnostic session without security access
-      try:
-        uds_client.tester_present()
-        uds_client.diagnostic_session_control(SESSION_TYPE.DEFAULT)
-        uds_client.diagnostic_session_control(SESSION_TYPE.EXTENDED_DIAGNOSTIC)
-      except NegativeResponseError:
-        pass
-      except MessageTimeoutError:
-        continue
+      rx_addr = (addr + int(args.rxoffset, base=16)) if args.rxoffset else None
 
-      # Run queries against all standard UDS data identifiers, plus selected
-      # non-standardized identifier ranges if requested
-      resp = {}
-      for uds_data_id in sorted(uds_data_ids):
+      for sub_addr in sub_addrs:
+        uds_client = UdsClient(panda, addr, rx_addr, bus, sub_addr=sub_addr, timeout=0.2, debug=args.debug)
+        # Check for anything alive at this address, and switch to the highest
+        # available diagnostic session without security access
         try:
-          data = uds_client.read_data_by_identifier(uds_data_id)  # type: ignore
-          if data:
-            resp[uds_data_id] = data
-        except (NegativeResponseError, MessageTimeoutError):
+          uds_client.tester_present()
+          uds_client.diagnostic_session_control(SESSION_TYPE.DEFAULT)
+          uds_client.diagnostic_session_control(SESSION_TYPE.EXTENDED_DIAGNOSTIC)
+        except NegativeResponseError:
           pass
+        except MessageTimeoutError:
+          continue
 
-      if resp.keys():
-        results[addr] = resp
+        # Run queries against all standard UDS data identifiers, plus selected
+        # non-standardized identifier ranges if requested
+        resp = {}
+        for uds_data_id in sorted(uds_data_ids):
+          try:
+            data = uds_client.read_data_by_identifier(uds_data_id)  # type: ignore
+            if data:
+              resp[uds_data_id] = data
+          except (NegativeResponseError, MessageTimeoutError):
+            pass
+
+        if resp.keys():
+          results[addr] = resp
 
     if len(results.items()):
       for addr, resp in results.items():
