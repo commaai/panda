@@ -71,6 +71,7 @@ if __name__ == "__main__":
         bus = 1 if panda.has_obd() else 0
       rx_addr = addr + int(args.rxoffset, base=16) if args.rxoffset else None
 
+      # Try all sub-addresses for addr. By default, this is None
       for sub_addr in sub_addrs:
         uds_client = UdsClient(panda, addr, rx_addr, bus, sub_addr=sub_addr, timeout=0.2, debug=args.debug)
         # Check for anything alive at this address, and switch to the highest
