@@ -63,7 +63,6 @@ if __name__ == "__main__":
       # skip functional broadcast addrs
       if addr == 0x7df or addr == 0x18db33f1:
         continue
-      t.set_description(hex(addr))
 
       if args.bus:
         bus = int(args.bus)
@@ -73,6 +72,8 @@ if __name__ == "__main__":
 
       # Try all sub-addresses for addr. By default, this is None
       for sub_addr in sub_addrs:
+        sub_addr_str = hex(sub_addr) if sub_addr is not None else None
+        t.set_description(f"{hex(addr)}, {sub_addr_str}")
         uds_client = UdsClient(panda, addr, rx_addr, bus, sub_addr=sub_addr, timeout=0.2, debug=args.debug)
         # Check for anything alive at this address, and switch to the highest
         # available diagnostic session without security access
