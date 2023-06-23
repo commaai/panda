@@ -30,7 +30,7 @@ if __name__ == "__main__":
     else:
       sub_addrs = [int(args.sub_addr, base=16)]
       if sub_addrs[0] > 0xff:
-        print(f"Invalid sub-address: {hex(sub_addrs[0])}, needs to be in range 0x0 to 0xff")
+        print(f"Invalid sub-address: 0x{sub_addrs[0]:X}, needs to be in range 0x0 to 0xff")
         parser.print_help()
         exit()
 
