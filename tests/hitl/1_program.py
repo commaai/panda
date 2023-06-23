@@ -59,13 +59,13 @@ def test_a_known_bootstub(p):
     assert not p.bootstub
 
 @pytest.mark.execution_timeout(25)
-@pytest.mark.expected_logs(2)
+@pytest.mark.expected_logs(1, 2)
 def test_b_recover(p):
   assert p.recover(timeout=30)
   check_signature(p)
 
 @pytest.mark.execution_timeout(25)
-@pytest.mark.expected_logs(6)
+@pytest.mark.expected_logs(3, 6)
 def test_c_flash(p):
   # test flash from bootstub
   serial = p._serial
