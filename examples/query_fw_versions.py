@@ -70,6 +70,7 @@ if __name__ == "__main__":
       else:
         bus = 1 if panda.has_obd() else 0
       rx_addr = (addr + int(args.rxoffset, base=16)) if args.rxoffset else None
+
       for sub_addr in sub_addrs:
         uds_client = UdsClient(panda, addr, rx_addr, bus, sub_addr=sub_addr, timeout=0.2, debug=args.debug)
         # Check for anything alive at this address, and switch to the highest
@@ -95,11 +96,12 @@ if __name__ == "__main__":
             pass
 
         if resp.keys():
-          results[addr] = resp
+          results[(addr, sub_addr)] = resp
 
     if len(results.items()):
-      for addr, resp in results.items():
-        print(f"\n\n*** Results for address 0x{addr:X} ***\n\n")
+      for (addr, sub_addr), resp in results.items():
+        sub_addr_str = f", sub-address 0x{sub_addr:X}" if sub_addr is not None else ""
+        print(f"\n\n*** Results for address 0x{addr:X}{sub_addr_str} ***\n\n")
         for rid, dat in resp.items():
           print(f"0x{rid:02X} {uds_data_ids[rid]}: {dat}")
     else:
