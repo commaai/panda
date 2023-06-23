@@ -11,7 +11,7 @@ if __name__ == "__main__":
   parser.add_argument("--no-obd", action="store_true", help="Bus 1 will not be multiplexed to the OBD-II port")
   parser.add_argument("--debug", action="store_true")
   parser.add_argument("--addr")
-  parser.add_argument("--sub_addr", "--subaddr", help="A hex sub-address or `scan` to scan the sub-address range")
+  parser.add_argument("--sub_addr", "--subaddr", help="A hex sub-address or `scan` to scan the full sub-address range")
   parser.add_argument("--bus")
   parser.add_argument('-s', '--serial', help="Serial number of panda to use")
   args = parser.parse_args()
