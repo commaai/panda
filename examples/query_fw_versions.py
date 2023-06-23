@@ -11,16 +11,45 @@ if __name__ == "__main__":
   parser.add_argument("--no-obd", action="store_true", help="Bus 1 will not be multiplexed to the OBD-II port")
   parser.add_argument("--debug", action="store_true")
   parser.add_argument("--addr")
+  # parser.add_argument("--subaddr", type=str, choices=list(map(str, range(256))) + ['scan'])
+  parser.add_argument("--subaddr", help="A hex sub-address or `scan` to scan the sub-address range for addr")
   parser.add_argument("--bus")
   parser.add_argument('-s', '--serial', help="Serial number of panda to use")
   args = parser.parse_args()
+  print(args.addr, args.subaddr)
+  # exit()
 
   if args.addr:
     addrs = [int(args.addr, base=16)]
   else:
     addrs = [0x700 + i for i in range(256)]
     addrs += [0x18da0000 + (i << 8) + 0xf1 for i in range(256)]
-  results = {}
+
+  scan_subaddrs, subaddr = False, None
+  if args.subaddr:
+    if len(addrs) != 1:
+      print("Specify an address to query sub-address")
+      parser.print_help()
+      exit()
+
+    if args.subaddr == "scan":
+      scan_subaddrs = True
+    else:
+      subaddr = int(args.subaddr, base=16)
+      if subaddr > 0xff:
+        print(f"Invalid sub-address: {hex(subaddr)}, needs to be in range 0x0 to 0xff")
+        parser.print_help()
+        exit()
+
+  panda_serials = Panda.list()
+  if args.serial is None and len(panda_serials) > 1:
+    print("\nMultiple pandas found, choose one:")
+    for serial in panda_serials:
+      with Panda(serial) as panda:
+        print(f"  {serial}: internal={panda.is_internal()}")
+    print()
+    parser.print_help()
+    exit()
 
   uds_data_ids = {}
   for std_id in DATA_IDENTIFIER_TYPE:
@@ -33,15 +62,7 @@ if __name__ == "__main__":
     for uds_id in range(0xf1f0, 0xf200):
       uds_data_ids[uds_id] = "IDENTIFICATION_OPTION_SYSTEM_SUPPLIER_SPECIFIC"
 
-  panda_serials = Panda.list()
-  if args.serial is None and len(panda_serials) > 1:
-    print("\nMultiple pandas found, choose one:")
-    for serial in panda_serials:
-      with Panda(serial) as panda:
-        print(f"  {serial}: internal={panda.is_internal()}")
-    print()
-    parser.print_help()
-    exit()
+  results = {}
 
   panda = Panda(serial=args.serial)
   panda.set_safety_mode(Panda.SAFETY_ELM327, 1 if args.no_obd else 0)
