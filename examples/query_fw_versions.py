@@ -85,8 +85,10 @@ if __name__ == "__main__":
           uds_client.diagnostic_session_control(SESSION_TYPE.EXTENDED_DIAGNOSTIC)
         except NegativeResponseError:
           pass
-        except (MessageTimeoutError, InvalidSubAddressError):
+        except MessageTimeoutError:
           continue
+        except InvalidSubAddressError:
+          break
 
         # Run queries against all standard UDS data identifiers, plus selected
         # non-standardized identifier ranges if requested
