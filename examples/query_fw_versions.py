@@ -21,6 +21,7 @@ if __name__ == "__main__":
   else:
     addrs = [0x700 + i for i in range(256)]
     addrs += [0x18da0000 + (i << 8) + 0xf1 for i in range(256)]
+  results = {}
 
   sub_addrs = [None]
   if args.sub_addr:
@@ -33,16 +34,6 @@ if __name__ == "__main__":
         parser.print_help()
         exit()
 
-  panda_serials = Panda.list()
-  if args.serial is None and len(panda_serials) > 1:
-    print("\nMultiple pandas found, choose one:")
-    for serial in panda_serials:
-      with Panda(serial) as panda:
-        print(f"  {serial}: internal={panda.is_internal()}")
-    print()
-    parser.print_help()
-    exit()
-
   uds_data_ids = {}
   for std_id in DATA_IDENTIFIER_TYPE:
     uds_data_ids[std_id.value] = std_id.name
@@ -54,7 +45,15 @@ if __name__ == "__main__":
     for uds_id in range(0xf1f0, 0xf200):
       uds_data_ids[uds_id] = "IDENTIFICATION_OPTION_SYSTEM_SUPPLIER_SPECIFIC"
 
-  results = {}
+  panda_serials = Panda.list()
+  if args.serial is None and len(panda_serials) > 1:
+    print("\nMultiple pandas found, choose one:")
+    for serial in panda_serials:
+      with Panda(serial) as panda:
+        print(f"  {serial}: internal={panda.is_internal()}")
+    print()
+    parser.print_help()
+    exit()
 
   panda = Panda(serial=args.serial)
   panda.set_safety_mode(Panda.SAFETY_ELM327, 1 if args.no_obd else 0)
