@@ -67,6 +67,7 @@ _all_panda_serials = list(_all_pandas.keys())
 def init_jungle():
   if _panda_jungle is None:
     return
+  _panda_jungle.reset()
   clear_can_buffers(_panda_jungle)
   _panda_jungle.set_panda_power(True)
   _panda_jungle.set_can_loopback(False)
@@ -85,6 +86,9 @@ def pytest_configure(config):
   )
   config.addinivalue_line(
     "markers", "panda_expect_can_error: mark test to ignore CAN health errors"
+  )
+  config.addinivalue_line(
+    "markers", "expected_logs(amount, ...): mark test to expect a certain amount of panda logs"
   )
 
 def pytest_collection_modifyitems(items):
@@ -130,6 +134,11 @@ def func_fixture_panda(request, module_panda):
 
   # TODO: reset is slow (2+ seconds)
   p.reset()
+  logs = p.get_logs()
+  last_log_id = logs[-1]['id'] if len(logs) > 0 else 0
+
+  # ensure FW hasn't changed
+  assert p.up_to_date()
 
   # Run test
   yield p
@@ -145,12 +154,28 @@ def func_fixture_panda(request, module_panda):
   if p.bootstub:
     p.reset()
 
+  assert not p.bootstub
+
   # TODO: would be nice to make these common checks in the teardown
   # show up as failed tests instead of "errors"
 
   # Check for faults
   assert p.health()['faults'] == 0
   assert p.health()['fault_status'] == 0
+
+  # Make sure that there are no unexpected logs
+  min_expected_logs = 0
+  max_expected_logs = 0
+  mark = request.node.get_closest_marker('expected_logs')
+  if mark:
+    assert len(mark.args) > 0, "Missing expected logs argument in mark"
+    min_expected_logs = mark.args[0]
+    max_expected_logs = mark.args[1] if len(mark.args) > 1 else min_expected_logs
+
+  logs.extend(p.get_logs(True))
+  log_id = logs[-1]['id'] if len(logs) > 0 else last_log_id
+
+  assert min_expected_logs <= ((log_id - last_log_id) % 0xFFFE) <= max_expected_logs, f"Unexpected amount of logs. Last 5: {logs[-5:]}"
 
   # Check for SPI errors
   #assert p.health()['spi_checksum_error_count'] == 0

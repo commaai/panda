@@ -4,6 +4,7 @@ import random
 from panda import Panda, PandaDFU
 from panda.python.spi import SpiDevice
 
+@pytest.mark.expected_logs(1)
 def test_dfu(p):
   app_mcu_type = p.get_mcu_type()
   dfu_serial = p.get_dfu_serial()
@@ -22,6 +23,7 @@ def test_dfu(p):
   p.reconnect()
 
 
+@pytest.mark.expected_logs(1)
 @pytest.mark.test_panda_types((Panda.HW_TYPE_TRES, ))
 def test_dfu_with_spam(p):
   dfu_serial = p.get_dfu_serial()
