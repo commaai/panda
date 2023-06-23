@@ -69,7 +69,7 @@ if __name__ == "__main__":
         bus = int(args.bus)
       else:
         bus = 1 if panda.has_obd() else 0
-      rx_addr = (addr + int(args.rxoffset, base=16)) if args.rxoffset else None
+      rx_addr = addr + int(args.rxoffset, base=16) if args.rxoffset else None
 
       for sub_addr in sub_addrs:
         uds_client = UdsClient(panda, addr, rx_addr, bus, sub_addr=sub_addr, timeout=0.2, debug=args.debug)
