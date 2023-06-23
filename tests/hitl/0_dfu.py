@@ -4,7 +4,7 @@ import random
 from panda import Panda, PandaDFU
 from panda.python.spi import SpiDevice
 
-@pytest.mark.expected_logs(2)
+@pytest.mark.expected_logs(1)
 def test_dfu(p):
   app_mcu_type = p.get_mcu_type()
   dfu_serial = p.get_dfu_serial()
