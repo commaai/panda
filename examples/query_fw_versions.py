@@ -88,6 +88,7 @@ if __name__ == "__main__":
         except MessageTimeoutError:
           continue
         except InvalidSubAddressError:
+          print(f'*** Skipping address {hex(addr)}: {e}')
           break
 
         # Run queries against all standard UDS data identifiers, plus selected
