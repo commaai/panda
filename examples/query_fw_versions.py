@@ -87,7 +87,7 @@ if __name__ == "__main__":
           pass
         except MessageTimeoutError:
           continue
-        except InvalidSubAddressError:
+        except InvalidSubAddressError as e:
           print(f'*** Skipping address {hex(addr)}: {e}')
           break
 
