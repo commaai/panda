@@ -224,14 +224,14 @@ static int subaru_fwd_hook(int bus_num, int addr) {
   }
 
   if (bus_num == 2) {
-    // Global Platform
-    // 0x122 is ES_LKAS
-    // 0x220 is ES_Brake
-    // 0x221 is ES_Distance
-    // 0x222 is ES_Status
-    // 0x321 is ES_DashStatus
-    // 0x322 is ES_LKAS_State
-    // 0x323 INFOTAINMENT_STATUS
+    // Global platform
+    // 0x122 ES_LKAS
+    // 0x220 ES_Brake
+    // 0x221 ES_Distance
+    // 0x222 ES_Status
+    // 0x321 ES_DashStatus
+    // 0x322 ES_LKAS_State
+    // 0x323 ES_Infotainment
     bool block_lkas = (addr == 0x122) || (addr == 0x321) || (addr == 0x322) || (addr == 0x323);
     bool block_long = (addr == 0x220) || (addr == 0x221) || (addr == 0x222);
     bool block_msg = block_lkas || (subaru_longitudinal && block_long);
