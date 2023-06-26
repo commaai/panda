@@ -32,8 +32,7 @@ void can_set_gmlan(uint8_t bus) {
   print("GMLAN not available on red panda\n");
 }
 
-// ***************************** CAN *****************************
-void update_can_health_pkt(uint8_t can_number, bool error_irq) {
+void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   ENTER_CRITICAL();
 
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
@@ -59,13 +58,13 @@ void update_can_health_pkt(uint8_t can_number, bool error_irq) {
   can_health[can_number].transmit_error_cnt = ((ecr_reg & FDCAN_ECR_TEC) >> FDCAN_ECR_TEC_Pos);
 
 
-  if (error_irq) {
+  if (ir_reg != 0U) {
     can_health[can_number].total_error_cnt += 1U;
-    if ((CANx->IR & (FDCAN_IR_TEFL)) != 0) {
-      can_health[can_number].total_tx_lost_cnt += 1U;
+    if ((ir_reg & (FDCAN_IR_RF0L)) != 0) {
+      can_health[can_number].total_rx_lost_cnt += 1U;
     }
     // Actually reset can core only on arbitration or data phase errors and when CEL couter reaches at least 100 errors
-    if (((CANx->IR & (FDCAN_IR_PED | FDCAN_IR_PEA)) != 0) && (((ecr_reg & FDCAN_ECR_CEL) >> FDCAN_ECR_CEL_Pos) == 100U)) {
+    if (((ir_reg & (FDCAN_IR_PED | FDCAN_IR_PEA)) != 0) && (((ecr_reg & FDCAN_ECR_CEL) >> FDCAN_ECR_CEL_Pos) >= 100U)) {
       llcan_clear_send(CANx);
     }
     // Clear error interrupts
@@ -74,6 +73,8 @@ void update_can_health_pkt(uint8_t can_number, bool error_irq) {
   EXIT_CRITICAL();
 }
 
+// ***************************** CAN *****************************
+// FDCANx_IT1 IRQ Handler (TX)
 void process_can(uint8_t can_number) {
   if (can_number != 0xffU) {
     ENTER_CRITICAL();
@@ -128,16 +129,17 @@ void process_can(uint8_t can_number) {
       }
     }
 
-    update_can_health_pkt(can_number, false);
     EXIT_CRITICAL();
   }
 }
 
-// CAN receive handlers
+// FDCANx_IT0 IRQ Handler (RX and errors)
 // blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number) {
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
+
+  uint32_t ir_reg = CANx->IR;
 
   // Clear all new messages from Rx FIFO 0
   CANx->IR |= FDCAN_IR_RF0N;
@@ -217,8 +219,9 @@ void can_rx(uint8_t can_number) {
   }
 
   // Error handling
-  bool error_irq = ((CANx->IR & (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L)) != 0);
-  update_can_health_pkt(can_number, error_irq);
+  if ((ir_reg & (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L)) != 0) {
+    update_can_health_pkt(can_number, ir_reg);
+  }
 }
 
 void FDCAN1_IT0_IRQ_Handler(void) { can_rx(0); }
