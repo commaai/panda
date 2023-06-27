@@ -1,7 +1,6 @@
 import os
 from cffi import FFI
-from typing import List
-from typing_extensions import Protocol
+from typing import List, Protocol
 
 from panda import LEN_TO_DLC
 from panda.tests.libpanda.safety_helpers import PandaSafety, setup_safety_helpers

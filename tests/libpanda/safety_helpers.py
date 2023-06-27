@@ -1,5 +1,5 @@
 # panda safety helpers, from safety_helpers.c
-from typing_extensions import Protocol
+from typing import Protocol
 
 def setup_safety_helpers(ffi):
   ffi.cdef("""
