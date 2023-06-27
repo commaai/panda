@@ -110,6 +110,9 @@ bool llcan_init(CAN_TypeDef *CAN_obj) {
     // enable certain CAN interrupts
     register_set_bits(&(CAN_obj->IER), CAN_IER_TMEIE | CAN_IER_FMPIE0 | CAN_IER_ERRIE | CAN_IER_LECIE | CAN_IER_BOFIE | CAN_IER_EPVIE | CAN_IER_EWGIE | CAN_IER_FOVIE0 | CAN_IER_FFIE0);
 
+    // clear overrun flag on init
+    CAN_obj->RF0R &= ~(CAN_RF0R_FOVR0);
+
     if (CAN_obj == CAN1) {
       NVIC_EnableIRQ(CAN1_TX_IRQn);
       NVIC_EnableIRQ(CAN1_RX0_IRQn);

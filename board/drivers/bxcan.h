@@ -74,6 +74,12 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
 
   if (ir_reg != 0U) {
     can_health[can_number].total_error_cnt += 1U;
+
+    // RX message lost due to FIFO overrun
+    if ((CAN->RF0R & (CAN_RF0R_FOVR0)) != 0) {
+      can_health[can_number].total_rx_lost_cnt += 1U;
+      CAN->RF0R &= ~(CAN_RF0R_FOVR0);
+    }
     llcan_clear_send(CAN);
   }
 
@@ -164,11 +170,6 @@ void process_can(uint8_t can_number) {
 void can_rx(uint8_t can_number) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
-
-  if ((CAN->RF0R & (CAN_RF0R_FOVR0)) != 0) { // RX message lost due to FIFO overrun
-    can_health[can_number].total_rx_lost_cnt += 1U;
-    CAN->RF0R &= ~(CAN_RF0R_FOVR0);
-  }
 
   while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
     can_health[can_number].total_rx_cnt += 1U;
