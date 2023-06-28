@@ -102,10 +102,8 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
       can_health[can_number].total_rx_lost_cnt += 1U;
       CAN->RF0R &= ~(CAN_RF0R_FOVR0);
     }
-    if (can_health[can_number].transmit_error_cnt >= 100U) {
-      can_health[can_number].can_core_reset_cnt += 1U;
-      llcan_clear_send(CAN);
-    }
+    can_health[can_number].can_core_reset_cnt += 1U;
+    llcan_clear_send(CAN);
   }
 }
 

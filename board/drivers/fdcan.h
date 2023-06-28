@@ -73,7 +73,7 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
       can_health[can_number].total_rx_lost_cnt += 1U;
     }
     // Reset CAN core when TX error couter reaches at least 100 errors
-    if (can_health[can_number].transmit_error_cnt >= 100U) {
+    if (((ir_reg & (FDCAN_IR_PED | FDCAN_IR_PEA)) != 0) && (((ecr_reg & FDCAN_ECR_CEL) >> FDCAN_ECR_CEL_Pos) >= 100U)) {
       can_health[can_number].can_core_reset_cnt += 1U;
       can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCAN_TXFQS_TFFL & FDCAN_TXFQS_TFFL_Msk)); // TX FIFO msgs will be lost after reset
       llcan_clear_send(CANx);
@@ -81,6 +81,7 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
     // Clear error interrupts
     CANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L);
   }
+
   EXIT_CRITICAL();
 }
 
