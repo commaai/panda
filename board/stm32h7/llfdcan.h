@@ -158,6 +158,34 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
   return ret;
 }
 
+void llcan_irq_disable(FDCAN_GlobalTypeDef *CANx) {
+  if (CANx == FDCAN1) {
+    NVIC_DisableIRQ(FDCAN1_IT0_IRQn);
+    NVIC_DisableIRQ(FDCAN1_IT1_IRQn);
+  } else if (CANx == FDCAN2) {
+    NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
+    NVIC_DisableIRQ(FDCAN2_IT1_IRQn);
+  } else if (CANx == FDCAN3) {
+    NVIC_DisableIRQ(FDCAN3_IT0_IRQn);
+    NVIC_DisableIRQ(FDCAN3_IT1_IRQn);
+  } else {
+  }
+}
+
+void llcan_irq_enable(FDCAN_GlobalTypeDef *CANx) {
+  if (CANx == FDCAN1) {
+    NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
+    NVIC_EnableIRQ(FDCAN1_IT1_IRQn);
+  } else if (CANx == FDCAN2) {
+    NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
+    NVIC_EnableIRQ(FDCAN2_IT1_IRQn);
+  } else if (CANx == FDCAN3) {
+    NVIC_EnableIRQ(FDCAN3_IT0_IRQn);
+    NVIC_EnableIRQ(FDCAN3_IT1_IRQn);
+  } else {
+  }
+}
+
 bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
   uint32_t can_number = CAN_NUM_FROM_CANIF(CANx);
   bool ret = fdcan_request_init(CANx);
@@ -224,18 +252,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
       print(CAN_NAME_FROM_CANIF(CANx)); print(" llcan_init timed out (2)!\n");
     }
 
-    if (CANx == FDCAN1) {
-      NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
-      NVIC_EnableIRQ(FDCAN1_IT1_IRQn);
-    } else if (CANx == FDCAN2) {
-      NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
-      NVIC_EnableIRQ(FDCAN2_IT1_IRQn);
-    } else if (CANx == FDCAN3) {
-      NVIC_EnableIRQ(FDCAN3_IT0_IRQn);
-      NVIC_EnableIRQ(FDCAN3_IT1_IRQn);
-    } else {
-      print("Invalid CAN: initialization failed\n");
-    }
+    llcan_irq_enable(CANx);
 
   } else {
     print(CAN_NAME_FROM_CANIF(CANx)); print(" llcan_init timed out (1)!\n");
@@ -246,6 +263,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
 void llcan_clear_send(FDCAN_GlobalTypeDef *CANx) {
   // from datasheet: "Transmit cancellation is not intended for Tx FIFO operation."
   // so we need to clear pending transmission manually by resetting FDCAN core
+  CANx->IR |= 0x3FCFFFFFU; // clear all interrupts
   bool ret = llcan_init(CANx);
   UNUSED(ret);
 }

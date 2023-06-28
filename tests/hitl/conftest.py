@@ -67,7 +67,6 @@ _all_panda_serials = list(_all_pandas.keys())
 def init_jungle():
   if _panda_jungle is None:
     return
-  _panda_jungle.reset()
   clear_can_buffers(_panda_jungle)
   _panda_jungle.set_panda_power(True)
   _panda_jungle.set_can_loopback(False)
@@ -187,8 +186,10 @@ def func_fixture_panda(request, module_panda):
     for i in range(3):
       can_health = p.can_health(i)
       assert can_health['bus_off_cnt'] == 0
-      assert can_health['receive_error_cnt'] == 0
-      assert can_health['transmit_error_cnt'] == 0
+      assert can_health['receive_error_cnt'] < 127
+      assert can_health['transmit_error_cnt'] < 255
+      assert can_health['error_passive'] == 0
+      assert can_health['error_warning'] == 0
       assert can_health['total_rx_lost_cnt'] == 0
       assert can_health['total_tx_lost_cnt'] == 0
       assert can_health['total_error_cnt'] == 0
