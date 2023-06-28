@@ -201,9 +201,9 @@ class Panda:
 
   CAN_PACKET_VERSION = 4
   HEALTH_PACKET_VERSION = 14
-  CAN_HEALTH_PACKET_VERSION = 4
+  CAN_HEALTH_PACKET_VERSION = 5
   HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBBHBHH")
-  CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBB")
+  CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
@@ -650,6 +650,10 @@ class Panda:
       "canfd_enabled": a[19],
       "brs_enabled": a[20],
       "canfd_non_iso": a[21],
+      "irq0_call_rate": a[22],
+      "irq1_call_rate": a[23],
+      "irq2_call_rate": a[24],
+      "can_core_reset_count": a[25],
     }
 
   # ******************* control *******************

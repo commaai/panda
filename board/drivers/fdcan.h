@@ -11,6 +11,12 @@ typedef struct {
 
 FDCAN_GlobalTypeDef *cans[] = {FDCAN1, FDCAN2, FDCAN3};
 
+uint8_t can_irq_number[3][2] = {
+  { FDCAN1_IT0_IRQn, FDCAN1_IT1_IRQn },
+  { FDCAN2_IT0_IRQn, FDCAN2_IT1_IRQn },
+  { FDCAN3_IT0_IRQn, FDCAN3_IT1_IRQn },
+};
+
 bool can_set_speed(uint8_t can_number) {
   bool ret = true;
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
@@ -57,14 +63,19 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   can_health[can_number].receive_error_cnt = ((ecr_reg & FDCAN_ECR_REC) >> FDCAN_ECR_REC_Pos);
   can_health[can_number].transmit_error_cnt = ((ecr_reg & FDCAN_ECR_TEC) >> FDCAN_ECR_TEC_Pos);
 
+  can_health[can_number].irq0_call_rate = interrupts[can_irq_number[can_number][0]].call_rate;
+  can_health[can_number].irq1_call_rate = interrupts[can_irq_number[can_number][1]].call_rate;
+
 
   if (ir_reg != 0U) {
     can_health[can_number].total_error_cnt += 1U;
     if ((ir_reg & (FDCAN_IR_RF0L)) != 0) {
       can_health[can_number].total_rx_lost_cnt += 1U;
     }
-    // Actually reset can core only on arbitration or data phase errors and when CEL couter reaches at least 100 errors
+    // Reset CAN core when CEL couter reaches at least 100 errors
     if (((ir_reg & (FDCAN_IR_PED | FDCAN_IR_PEA)) != 0) && (((ecr_reg & FDCAN_ECR_CEL) >> FDCAN_ECR_CEL_Pos) >= 100U)) {
+      can_health[can_number].can_core_reset_cnt += 1U;
+      can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCAN_TXFQS_TFFL & FDCAN_TXFQS_TFFL_Msk)); // TX FIFO msgs will be lost after reset
       llcan_clear_send(CANx);
     }
     // Clear error interrupts
@@ -128,7 +139,6 @@ void process_can(uint8_t can_number) {
         refresh_can_tx_slots_available();
       }
     }
-
     EXIT_CRITICAL();
   }
 }
