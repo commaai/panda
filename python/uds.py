@@ -484,6 +484,7 @@ class IsoTpMessage():
       return ISOTP_FRAME_TYPE.SINGLE
 
     elif rx_data[0] >> 4 == ISOTP_FRAME_TYPE.FIRST:
+      assert self.rx_dat == b"", "isotp - rx: first frame with data already received"
       self.rx_len = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
       assert self.max_len <= self.rx_len, f"isotp - rx: invalid first frame length: {self.rx_len}"
       self.rx_dat = rx_data[2:]
