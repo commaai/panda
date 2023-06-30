@@ -3,6 +3,11 @@
 //       CAN3_TX, CAN3_RX0, CAN3_SCE
 
 CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
+uint8_t can_irq_number[3][3] = {
+  { CAN1_TX_IRQn, CAN1_RX0_IRQn, CAN1_SCE_IRQn },
+  { CAN2_TX_IRQn, CAN2_RX0_IRQn, CAN2_SCE_IRQn },
+  { CAN3_TX_IRQn, CAN3_RX0_IRQn, CAN3_SCE_IRQn },
+};
 
 bool can_set_speed(uint8_t can_number) {
   bool ret = true;
@@ -72,11 +77,6 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint32_t esr_reg = CAN->ESR;
 
-  if (ir_reg != 0U) {
-    can_health[can_number].total_error_cnt += 1U;
-    llcan_clear_send(CAN);
-  }
-
   can_health[can_number].bus_off = ((esr_reg & CAN_ESR_BOFF) >> CAN_ESR_BOFF_Pos);
   can_health[can_number].bus_off_cnt += can_health[can_number].bus_off;
   can_health[can_number].error_warning = ((esr_reg & CAN_ESR_EWGF) >> CAN_ESR_EWGF_Pos);
@@ -89,6 +89,22 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
 
   can_health[can_number].receive_error_cnt = ((esr_reg & CAN_ESR_REC) >> CAN_ESR_REC_Pos);
   can_health[can_number].transmit_error_cnt = ((esr_reg & CAN_ESR_TEC) >> CAN_ESR_TEC_Pos);
+
+  can_health[can_number].irq0_call_rate = interrupts[can_irq_number[can_number][0]].call_rate;
+  can_health[can_number].irq1_call_rate = interrupts[can_irq_number[can_number][1]].call_rate;
+  can_health[can_number].irq2_call_rate = interrupts[can_irq_number[can_number][2]].call_rate;
+
+  if (ir_reg != 0U) {
+    can_health[can_number].total_error_cnt += 1U;
+
+    // RX message lost due to FIFO overrun
+    if ((CAN->RF0R & (CAN_RF0R_FOVR0)) != 0) {
+      can_health[can_number].total_rx_lost_cnt += 1U;
+      CAN->RF0R &= ~(CAN_RF0R_FOVR0);
+    }
+    can_health[can_number].can_core_reset_cnt += 1U;
+    llcan_clear_send(CAN);
+  }
 }
 
 // ***************************** CAN *****************************
@@ -164,11 +180,6 @@ void process_can(uint8_t can_number) {
 void can_rx(uint8_t can_number) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
-
-  if ((CAN->RF0R & (CAN_RF0R_FOVR0)) != 0) { // RX message lost due to FIFO overrun
-    can_health[can_number].total_rx_lost_cnt += 1U;
-    CAN->RF0R &= ~(CAN_RF0R_FOVR0);
-  }
 
   while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
     can_health[can_number].total_rx_cnt += 1U;

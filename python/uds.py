@@ -232,6 +232,9 @@ class InvalidServiceIdError(Exception):
 class InvalidSubFunctionError(Exception):
   pass
 
+class InvalidSubAddressError(Exception):
+  pass
+
 _negative_response_codes = {
     0x00: 'positive response',
     0x10: 'general reject',
@@ -345,6 +348,8 @@ class CanClient():
 
             # Cut off sub addr in first byte
             if self.sub_addr is not None:
+              if rx_data[0] != self.sub_addr:
+                raise InvalidSubAddressError(f"isotp - rx: invalid sub-address: {rx_data[0]}, expected: {self.sub_addr}")
               rx_data = rx_data[1:]
 
             self.rx_buff.append(rx_data)
