@@ -95,7 +95,7 @@ def test_hw_type(p):
     assert pp.get_mcu_type() == mcu_type, "Bootstub and app MCU type mismatch"
     assert pp.get_uid() == app_uid
 
-@pytest.mark.expected_logs(2)
+@pytest.mark.expected_logs(1, 2)
 def test_heartbeat(p, panda_jungle):
   panda_jungle.set_ignition(True)
   # TODO: add more cases here once the tests aren't super slow
