@@ -307,7 +307,7 @@ class CanClient():
     self.rx = can_recv
     self.tx_addr = tx_addr
     self.rx_addr = rx_addr
-    self.rx_buff = deque()  # type: Deque[bytes]
+    self.rx_buff: Deque[bytes] = deque()
     self.sub_addr = sub_addr
     self.bus = bus
     self.debug = debug
