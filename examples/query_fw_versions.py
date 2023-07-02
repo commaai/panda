@@ -3,7 +3,8 @@ import argparse
 from typing import List, Optional
 from tqdm import tqdm
 from panda import Panda
-from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseError, SESSION_TYPE, DATA_IDENTIFIER_TYPE
+from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseError, InvalidSubAddressError, \
+                             SESSION_TYPE, DATA_IDENTIFIER_TYPE
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -86,6 +87,9 @@ if __name__ == "__main__":
           pass
         except MessageTimeoutError:
           continue
+        except InvalidSubAddressError as e:
+          print(f'*** Skipping address {hex(addr)}: {e}')
+          break
 
         # Run queries against all standard UDS data identifiers, plus selected
         # non-standardized identifier ranges if requested
@@ -95,7 +99,7 @@ if __name__ == "__main__":
             data = uds_client.read_data_by_identifier(uds_data_id)  # type: ignore
             if data:
               resp[uds_data_id] = data
-          except (NegativeResponseError, MessageTimeoutError):
+          except (NegativeResponseError, MessageTimeoutError, InvalidSubAddressError):
             pass
 
         if resp.keys():
