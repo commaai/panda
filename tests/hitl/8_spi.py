@@ -17,6 +17,10 @@ class TestSpi:
     assert spy.call_count == 2
     mocker.stop(spy)
 
+  def test_protocol_version(self, p):
+    v = p._handle.get_protocol_version()
+    assert v == b"\x01"
+
   def test_all_comm_types(self, mocker, p):
     spy = mocker.spy(p._handle, '_wait_for_ack')
 

@@ -167,6 +167,44 @@ class PandaSpiHandle(BaseHandle):
 
     raise exc
 
+  def get_protocol_version(self) -> bytes:
+    vers_str = b"VERSION"
+    def _get_version(spi) -> bytes:
+      spi.writebytes(vers_str)
+
+      logging.debug("- waiting for echo")
+      start = time.monotonic()
+      while True:
+        r = spi.readbytes(len(vers_str))
+        if bytes(r) == vers_str:
+          break
+        if (time.monotonic() - start) > 0.5:
+          raise PandaSpiException("timed out waiting for version echo")
+
+      # get response
+      logging.debug("- receiving response")
+      b = bytes(spi.readbytes(2))
+      rlen = struct.unpack("<H", b)[0]
+      if rlen > 1000:
+        raise PandaSpiException("response length greater than max")
+
+      dat = bytes(spi.readbytes(rlen))
+      resp = dat[:rlen//2]
+      resp_comp = dat[rlen//2:]
+      if resp != bytes([x ^ 0xff for x in resp_comp]):
+        raise PandaSpiException("data complement doesn't match")
+      return resp
+
+    exc = PandaSpiException()
+    with self.dev.acquire() as spi:
+      for _ in range(10):
+        try:
+          return _get_version(spi)
+        except PandaSpiException as e:
+          exc = e
+          logging.debug("SPI get protocol version failed, retrying", exc_info=True)
+    raise exc
+
   # libusb1 functions
   def close(self):
     self.dev.close()
