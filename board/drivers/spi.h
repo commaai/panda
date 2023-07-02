@@ -78,7 +78,31 @@ void spi_rx_done(void) {
   spi_data_len_mosi = (spi_buf_rx[3] << 8) | spi_buf_rx[2];
   spi_data_len_miso = (spi_buf_rx[5] << 8) | spi_buf_rx[4];
 
-  if (spi_state == SPI_STATE_HEADER) {
+  if (memcmp(spi_buf_rx, "VERSION", 7) == 0) {
+    // protocol version request, respond with:
+    // VERSION + 2 byte data length + data + data complement
+
+    // echo "VERSION"
+    memcpy(spi_buf_tx, "VERSION", 7);
+
+    // write response
+    int data_pos = 9;
+    uint16_t data_len = 1;
+    spi_buf_tx[data_pos] = 0x1;
+
+    // response complement
+    for (int i = 0; i < data_len; i++) {
+      spi_buf_tx[data_pos + data_len + i] = spi_buf_tx[data_pos + i] ^ 0xFF;
+    }
+
+    // data length
+    data_len = data_len*2;
+    spi_buf_tx[7] = data_len & 0xFFU;
+    spi_buf_tx[8] = (data_len >> 8) & 0xFFU;
+
+    response_len = 7 + 2 + data_len;
+    next_rx_state = SPI_STATE_HEADER_NACK;;
+  } else if (spi_state == SPI_STATE_HEADER) {
     checksum_valid = check_checksum(spi_buf_rx, SPI_HEADER_SIZE);
     if ((spi_buf_rx[0] == SPI_SYNC_BYTE) && checksum_valid) {
       // response: ACK and start receiving data portion
