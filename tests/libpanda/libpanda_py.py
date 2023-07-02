@@ -1,6 +1,6 @@
 import os
 from cffi import FFI
-from typing import List
+from typing import Any, List, Protocol
 
 from panda import LEN_TO_DLC
 from panda.tests.libpanda.safety_helpers import PandaSafety, setup_safety_helpers
@@ -94,7 +94,14 @@ class CANPacket:
   addr: int
   data: List[int]
 
-class Panda(PandaSafety):
+class Panda(PandaSafety, Protocol):
+  # CAN
+  tx1_q: Any
+  tx2_q: Any
+  tx3_q: Any
+  txgmlan_q: Any
+  def can_set_checksum(self, p: CANPacket) -> None: ...
+
   # safety
   def safety_rx_hook(self, to_send: CANPacket) -> int: ...
   def safety_tx_hook(self, to_push: CANPacket) -> int: ...
