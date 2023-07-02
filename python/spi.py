@@ -175,16 +175,16 @@ class PandaSpiHandle(BaseHandle):
       logging.debug("- waiting for echo")
       start = time.monotonic()
       while True:
-        dat = spi.readbytes(len(vers_str))
-        if bytes(dat) == vers_str:
+        r = spi.readbytes(len(vers_str))
+        if bytes(r) == vers_str:
           break
         if (time.monotonic() - start) > 0.5:
           raise PandaSpiException("timed out waiting for version echo")
 
       # get response
       logging.debug("- receiving response")
-      rlen = bytes(spi.readbytes(2))
-      rlen = struct.unpack("<H", rlen)[0]
+      b = bytes(spi.readbytes(2))
+      rlen = struct.unpack("<H", b)[0]
       if rlen > 1000:
         raise PandaSpiException("response length greater than max")
 
