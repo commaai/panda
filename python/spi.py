@@ -169,7 +169,7 @@ class PandaSpiHandle(BaseHandle):
 
   def get_protocol_version(self) -> bytes:
     vers_str = b"VERSION"
-    def _get_version(spi):
+    def _get_version(spi) -> bytes:
       spi.writebytes(vers_str)
 
       logging.debug("- waiting for echo")
@@ -200,7 +200,7 @@ class PandaSpiHandle(BaseHandle):
       for _ in range(10):
         try:
           return _get_version(spi)
-        except PandaSpiException:
+        except PandaSpiException as e:
           exc = e
           logging.debug("SPI get protocol version failed, retrying", exc_info=True)
     raise exc
