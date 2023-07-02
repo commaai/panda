@@ -83,24 +83,24 @@ void spi_rx_done(void) {
     // VERSION + 2 byte data length + data + data complement
 
     // echo "VERSION"
-    memcpy(spi_buf_tx, "VERSION", 7);
+    (void)memcpy(spi_buf_tx, "VERSION", 7);
 
     // write response
-    int data_pos = 9;
+    uint16_t data_pos = 9;
     uint16_t data_len = 1;
     spi_buf_tx[data_pos] = 0x1;
 
     // response complement
-    for (int i = 0; i < data_len; i++) {
-      spi_buf_tx[data_pos + data_len + i] = spi_buf_tx[data_pos + i] ^ 0xFF;
+    for (uint16_t i = 0U; i < data_len; i++) {
+      spi_buf_tx[data_pos + data_len + i] = spi_buf_tx[data_pos + i] ^ 0xFFU;
     }
 
     // data length
-    data_len = data_len*2;
+    data_len *= 2U;
     spi_buf_tx[7] = data_len & 0xFFU;
     spi_buf_tx[8] = (data_len >> 8) & 0xFFU;
 
-    response_len = 7 + 2 + data_len;
+    response_len = 7U + 2U + data_len;
     next_rx_state = SPI_STATE_HEADER_NACK;;
   } else if (spi_state == SPI_STATE_HEADER) {
     checksum_valid = check_checksum(spi_buf_rx, SPI_HEADER_SIZE);
