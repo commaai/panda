@@ -12,6 +12,7 @@ from typing import List, Optional
 
 from .base import BaseHandle, BaseSTBootloaderHandle, TIMEOUT
 from .constants import McuType, MCU_TYPE_BY_IDCODE
+from .utils import crc8_pedal
 
 try:
   import spidev
@@ -168,8 +169,6 @@ class PandaSpiHandle(BaseHandle):
     raise exc
 
   def get_protocol_version(self) -> bytes:
-    from panda.python.utils import crc8_pedal
-
     vers_str = b"VERSION"
     def _get_version(spi) -> bytes:
       spi.writebytes(vers_str)
@@ -181,7 +180,7 @@ class PandaSpiHandle(BaseHandle):
         if bytes(version_bytes).startswith(vers_str):
           break
         if (time.monotonic() - start) > 0.5:
-          raise PandaSpiException("timed out waiting for version echo")
+          raise PandaSpiMissingAck
 
       rlen = struct.unpack("<H", bytes(version_bytes[-2:]))[0]
       if rlen > 1000:
@@ -192,7 +191,7 @@ class PandaSpiHandle(BaseHandle):
       resp = dat[:-1]
       calculated_crc = crc8_pedal(bytes(version_bytes + resp))
       if calculated_crc != dat[-1]:
-        raise PandaSpiException("CRC doesn't match")
+        raise PandaSpiBadChecksum
       return bytes(resp)
 
     exc = PandaSpiException()
