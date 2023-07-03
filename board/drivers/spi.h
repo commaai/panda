@@ -86,9 +86,18 @@ void spi_rx_done(void) {
     (void)memcpy(spi_buf_tx, "VERSION", 7);
 
     // write response
+    uint16_t data_len = 0;
     uint16_t data_pos = 9;
-    uint16_t data_len = 1;
-    spi_buf_tx[data_pos] = 0x1;
+
+    // write serial
+    data_len += 12;
+    #ifdef UID_BASE
+    (void)memcpy(&spi_buf_tx[data_pos], ((uint8_t *)UID_BASE), 12);
+    #endif
+
+    // SPI protocol version
+    spi_buf_tx[data_pos + data_len] = 0x1;
+    data_len += 1;
 
     // response complement
     for (uint16_t i = 0U; i < data_len; i++) {

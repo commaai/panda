@@ -1,3 +1,4 @@
+import binascii
 import pytest
 import random
 from unittest.mock import patch
@@ -19,7 +20,12 @@ class TestSpi:
 
   def test_protocol_version(self, p):
     v = p._handle.get_protocol_version()
-    assert v == b"\x01"
+
+    u1 = p.get_uid()
+    u2 = binascii.hexlify(v[:len(u1)]).decode()
+    assert u1 == u2
+
+    assert v[len(u2):] == b"\x01"
 
   def test_all_comm_types(self, mocker, p):
     spy = mocker.spy(p._handle, '_wait_for_ack')
