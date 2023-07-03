@@ -79,7 +79,7 @@ uint16_t spi_version_packet(uint8_t *out) {
   data_len += 1U;
 
   // bootstub
-  out[data_pos + data_len] = USB_PID & 0xFF;
+  out[data_pos + data_len] = USB_PID & 0xFFU;
   data_len += 1U;
 
   // SPI protocol version
