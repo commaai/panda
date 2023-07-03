@@ -21,11 +21,10 @@ class TestSpi:
   def test_protocol_version(self, p):
     v = p._handle.get_protocol_version()
 
-    u1 = p.get_uid()
-    u2 = binascii.hexlify(v[:len(u1)]).decode()
-    assert u1 == u2
+    uid = binascii.hexlify(v[:-1]).decode()
+    assert uid == p.get_uid()
 
-    assert v[len(u2):] == b"\x01"
+    assert v[-1:] == b"\x01"
 
   def test_all_comm_types(self, mocker, p):
     spy = mocker.spy(p._handle, '_wait_for_ack')
