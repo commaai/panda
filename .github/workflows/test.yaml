@@ -63,8 +63,6 @@ jobs:
         run: $RUN "cd tests/usbprotocol && ./test.sh"
       - name: Test logging
         run: $RUN "cd tests/logging && ./test.sh"
-      - name: Test hitl
-        run: $RUN "cd tests/hitl && ./test.sh"
 
   safety:
     name: safety

@@ -4,4 +4,6 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 cd $DIR
 
-pytest --durations=0 --maxfail=1 *.py
+coverage run -m pytest --durations=0 --maxfail=1 *.py
+coverage report -m
+# codecov -t <your_token>
