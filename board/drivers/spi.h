@@ -71,8 +71,8 @@ uint16_t spi_version_packet(uint8_t *out) {
   // write serial
   #ifdef UID_BASE
   (void)memcpy(&out[data_pos], ((uint8_t *)UID_BASE), 12);
-  #endif
   data_len += 12U;
+  #endif
 
   // HW type
   out[data_pos + data_len] = hw_type;
