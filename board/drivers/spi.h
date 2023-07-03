@@ -90,14 +90,14 @@ void spi_rx_done(void) {
     uint16_t data_pos = 9;
 
     // write serial
-    data_len += 12;
     #ifdef UID_BASE
     (void)memcpy(&spi_buf_tx[data_pos], ((uint8_t *)UID_BASE), 12);
     #endif
+    data_len += 12U;
 
     // SPI protocol version
     spi_buf_tx[data_pos + data_len] = 0x1;
-    data_len += 1;
+    data_len += 1U;
 
     // response complement
     for (uint16_t i = 0U; i < data_len; i++) {
