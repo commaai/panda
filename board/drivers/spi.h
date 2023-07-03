@@ -95,6 +95,10 @@ void spi_rx_done(void) {
     #endif
     data_len += 12U;
 
+    // HW type
+    spi_buf_tx[data_pos + data_len] = hw_type;
+    data_len += 1U;
+
     // SPI protocol version
     spi_buf_tx[data_pos + data_len] = 0x1;
     data_len += 1U;
