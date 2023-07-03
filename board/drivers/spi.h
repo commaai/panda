@@ -50,6 +50,59 @@ void can_tx_comms_resume_spi(void) {
   spi_can_tx_ready = true;
 }
 
+uint16_t spi_version_packet(uint8_t *out) {
+  // this protocol version request is our stable API. its
+  // contents match that of the panda USB descriptors and
+  // are sufficent to list/enumerate a panda, determine
+  // panda type, and bootstub status.
+
+  // it protocol version request, respond with:
+  // VERSION + 2 byte data length + data + data complement
+
+  // echo "VERSION"
+  (void)memcpy(out, "VERSION", 7);
+
+  // write response
+  uint16_t data_len = 0;
+  uint16_t data_pos = 9;
+
+  // write serial
+  #ifdef UID_BASE
+  (void)memcpy(&out[data_pos], ((uint8_t *)UID_BASE), 12);
+  #endif
+  data_len += 12U;
+
+  // HW type
+  out[data_pos + data_len] = hw_type;
+  data_len += 1U;
+
+  /*
+  // bootstub
+  #ifdef BOOTSTUB
+  out[data_pos + data_len] = 0xab;
+  #else
+  out[data_pos + data_len] = 0xab;
+  #endif
+  data_len += 1U;
+  */
+
+  // SPI protocol version
+  out[data_pos + data_len] = 0x1;
+  data_len += 1U;
+
+  // response complement
+  for (uint16_t i = 0U; i < data_len; i++) {
+    out[data_pos + data_len + i] = out[data_pos + i] ^ 0xFFU;
+  }
+
+  // data length
+  data_len *= 2U;
+  out[7] = data_len & 0xFFU;
+  out[8] = (data_len >> 8) & 0xFFU;
+
+  return 7 + 2 + data_len;
+}
+
 void spi_init(void) {
   // platform init
   llspi_init();
@@ -79,41 +132,7 @@ void spi_rx_done(void) {
   spi_data_len_miso = (spi_buf_rx[5] << 8) | spi_buf_rx[4];
 
   if (memcmp(spi_buf_rx, "VERSION", 7) == 0) {
-    // protocol version request, respond with:
-    // VERSION + 2 byte data length + data + data complement
-
-    // echo "VERSION"
-    (void)memcpy(spi_buf_tx, "VERSION", 7);
-
-    // write response
-    uint16_t data_len = 0;
-    uint16_t data_pos = 9;
-
-    // write serial
-    #ifdef UID_BASE
-    (void)memcpy(&spi_buf_tx[data_pos], ((uint8_t *)UID_BASE), 12);
-    #endif
-    data_len += 12U;
-
-    // HW type
-    spi_buf_tx[data_pos + data_len] = hw_type;
-    data_len += 1U;
-
-    // SPI protocol version
-    spi_buf_tx[data_pos + data_len] = 0x1;
-    data_len += 1U;
-
-    // response complement
-    for (uint16_t i = 0U; i < data_len; i++) {
-      spi_buf_tx[data_pos + data_len + i] = spi_buf_tx[data_pos + i] ^ 0xFFU;
-    }
-
-    // data length
-    data_len *= 2U;
-    spi_buf_tx[7] = data_len & 0xFFU;
-    spi_buf_tx[8] = (data_len >> 8) & 0xFFU;
-
-    response_len = 7U + 2U + data_len;
+    response_len = spi_version_packet(spi_buf_tx);
     next_rx_state = SPI_STATE_HEADER_NACK;;
   } else if (spi_state == SPI_STATE_HEADER) {
     checksum_valid = check_checksum(spi_buf_rx, SPI_HEADER_SIZE);
