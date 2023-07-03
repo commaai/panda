@@ -12,6 +12,7 @@ from typing import List, Optional
 
 from .base import BaseHandle, BaseSTBootloaderHandle, TIMEOUT
 from .constants import McuType, MCU_TYPE_BY_IDCODE
+from .utils import crc8_pedal
 
 try:
   import spidev
@@ -175,25 +176,23 @@ class PandaSpiHandle(BaseHandle):
       logging.debug("- waiting for echo")
       start = time.monotonic()
       while True:
-        r = spi.readbytes(len(vers_str))
-        if bytes(r) == vers_str:
+        version_bytes = spi.readbytes(len(vers_str) + 2)
+        if bytes(version_bytes).startswith(vers_str):
           break
         if (time.monotonic() - start) > 0.5:
-          raise PandaSpiException("timed out waiting for version echo")
+          raise PandaSpiMissingAck
 
-      # get response
-      logging.debug("- receiving response")
-      b = bytes(spi.readbytes(2))
-      rlen = struct.unpack("<H", b)[0]
+      rlen = struct.unpack("<H", bytes(version_bytes[-2:]))[0]
       if rlen > 1000:
         raise PandaSpiException("response length greater than max")
 
-      dat = bytes(spi.readbytes(rlen))
-      resp = dat[:rlen//2]
-      resp_comp = dat[rlen//2:]
-      if resp != bytes([x ^ 0xff for x in resp_comp]):
-        raise PandaSpiException("data complement doesn't match")
-      return resp
+      # get response
+      dat = spi.readbytes(rlen + 1)
+      resp = dat[:-1]
+      calculated_crc = crc8_pedal(bytes(version_bytes + resp))
+      if calculated_crc != dat[-1]:
+        raise PandaSpiBadChecksum
+      return bytes(resp)
 
     exc = PandaSpiException()
     with self.dev.acquire() as spi:
