@@ -168,6 +168,8 @@ class PandaSpiHandle(BaseHandle):
     raise exc
 
   def get_protocol_version(self) -> bytes:
+    from panda.python.utils import crc8_pedal
+
     vers_str = b"VERSION"
     def _get_version(spi) -> bytes:
       spi.writebytes(vers_str)
@@ -175,25 +177,25 @@ class PandaSpiHandle(BaseHandle):
       logging.debug("- waiting for echo")
       start = time.monotonic()
       while True:
-        r = spi.readbytes(len(vers_str))
-        if bytes(r) == vers_str:
+        version_bytes = spi.readbytes(len(vers_str))
+        if bytes(version_bytes) == vers_str:
           break
         if (time.monotonic() - start) > 0.5:
           raise PandaSpiException("timed out waiting for version echo")
 
       # get response
       logging.debug("- receiving response")
-      b = bytes(spi.readbytes(2))
-      rlen = struct.unpack("<H", b)[0]
+      len_bytes = spi.readbytes(2)
+      rlen = struct.unpack("<H", bytes(len_bytes))[0]
       if rlen > 1000:
         raise PandaSpiException("response length greater than max")
 
-      dat = bytes(spi.readbytes(rlen))
-      resp = dat[:rlen//2]
-      resp_comp = dat[rlen//2:]
-      if resp != bytes([x ^ 0xff for x in resp_comp]):
-        raise PandaSpiException("data complement doesn't match")
-      return resp
+      dat = spi.readbytes(rlen + 1)
+      resp = dat[:-1]
+      calculated_crc = crc8_pedal(bytes(version_bytes + len_bytes + resp)[::-1])
+      if calculated_crc != dat[-1]:
+        raise PandaSpiException("CRC doesn't match")
+      return bytes(resp)
 
     exc = PandaSpiException()
     with self.dev.acquire() as spi:

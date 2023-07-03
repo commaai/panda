@@ -1,5 +1,7 @@
 #pragma once
 
+#include "crc.h"
+
 #define SPI_BUF_SIZE 1024U
 #define SPI_TIMEOUT_US 10000U
 
@@ -51,20 +53,20 @@ void can_tx_comms_resume_spi(void) {
 }
 
 uint16_t spi_version_packet(uint8_t *out) {
-  // this protocol version request is our stable API. its
-  // contents match that of the panda USB descriptors and
-  // are sufficent to list/enumerate a panda, determine
-  // panda type, and bootstub status.
+  // this protocol version request is a stable portion of
+  // our SPI protocol. its contents match that of the
+  // panda USB descriptors and are sufficent to list/enumerate
+  // a panda, determine panda type, and bootstub status.
 
-  // it protocol version request, respond with:
-  // VERSION + 2 byte data length + data + data complement
+  // the response is:
+  // VERSION + 2 byte data length + data + CRC8
 
   // echo "VERSION"
   (void)memcpy(out, "VERSION", 7);
 
   // write response
   uint16_t data_len = 0;
-  uint16_t data_pos = 9;
+  uint16_t data_pos = 7U + 2U;
 
   // write serial
   #ifdef UID_BASE
@@ -90,17 +92,16 @@ uint16_t spi_version_packet(uint8_t *out) {
   out[data_pos + data_len] = 0x1;
   data_len += 1U;
 
-  // response complement
-  for (uint16_t i = 0U; i < data_len; i++) {
-    out[data_pos + data_len + i] = out[data_pos + i] ^ 0xFFU;
-  }
-
   // data length
-  data_len *= 2U;
   out[7] = data_len & 0xFFU;
   out[8] = (data_len >> 8) & 0xFFU;
 
-  return 7 + 2 + data_len;
+  // CRC8
+  uint16_t resp_len = data_pos + data_len;
+  out[resp_len] = crc_checksum(out, resp_len, 0xD5U);
+  resp_len += 1U;
+
+  return resp_len;
 }
 
 void spi_init(void) {
