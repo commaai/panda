@@ -10,5 +10,3 @@ def crc8_pedal(data):
       else:
         crc <<= 1
   return crc
-
-

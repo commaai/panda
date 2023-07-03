@@ -177,23 +177,20 @@ class PandaSpiHandle(BaseHandle):
       logging.debug("- waiting for echo")
       start = time.monotonic()
       while True:
-        version_bytes = spi.readbytes(len(vers_str))
-        if bytes(version_bytes) == vers_str:
+        version_bytes = spi.readbytes(len(vers_str) + 2)
+        if bytes(version_bytes).startswith(vers_str):
           break
         if (time.monotonic() - start) > 0.5:
           raise PandaSpiException("timed out waiting for version echo")
 
-      # get response
-      logging.debug("- receiving response")
-      len_bytes = spi.readbytes(2)
-      rlen = struct.unpack("<H", bytes(len_bytes))[0]
+      rlen = struct.unpack("<H", bytes(version_bytes[-2:]))[0]
       if rlen > 1000:
         raise PandaSpiException("response length greater than max")
 
+      # get response
       dat = spi.readbytes(rlen + 1)
       resp = dat[:-1]
-      calculated_crc = crc8_pedal(bytes(version_bytes + len_bytes + resp))
-      print("***", bytes(version_bytes + len_bytes + resp), calculated_crc, dat[-1])
+      calculated_crc = crc8_pedal(bytes(version_bytes + resp))
       if calculated_crc != dat[-1]:
         raise PandaSpiException("CRC doesn't match")
       return bytes(resp)
