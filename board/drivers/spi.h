@@ -78,15 +78,9 @@ uint16_t spi_version_packet(uint8_t *out) {
   out[data_pos + data_len] = hw_type;
   data_len += 1U;
 
-  /*
   // bootstub
-  #ifdef BOOTSTUB
-  out[data_pos + data_len] = 0xab;
-  #else
-  out[data_pos + data_len] = 0xab;
-  #endif
+  out[data_pos + data_len] = USB_PID & 0xFF;
   data_len += 1U;
-  */
 
   // SPI protocol version
   out[data_pos + data_len] = 0x1;

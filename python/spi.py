@@ -192,7 +192,7 @@ class PandaSpiHandle(BaseHandle):
 
       dat = spi.readbytes(rlen + 1)
       resp = dat[:-1]
-      calculated_crc = crc8_pedal(bytes(version_bytes + len_bytes + resp)[::-1])
+      calculated_crc = crc8_pedal(bytes(version_bytes + len_bytes + resp))
       if calculated_crc != dat[-1]:
         raise PandaSpiException("CRC doesn't match")
       return bytes(resp)
