@@ -5,9 +5,9 @@
 #define SPI_BUF_SIZE 1024U
 #define SPI_TIMEOUT_US 10000U
 
-// we expect less than 50 transactions (including control messages and
-// CAN buffers) at the 100Hz boardd interval, plus some buffer
-#define SPI_IRQ_RATE  6500U
+// got max rate from hitting a non-existent endpoint
+// in a tight loop, plus some buffer
+#define SPI_IRQ_RATE  16000U
 
 #ifdef STM32H7
 __attribute__((section(".ram_d1"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
