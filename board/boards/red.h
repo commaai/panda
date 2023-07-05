@@ -22,7 +22,7 @@ void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
 }
 
 void red_enable_can_transceivers(bool enabled) {
-  uint8_t main_bus = (car_harness_status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
+  uint8_t main_bus = (harness.status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
   for (uint8_t i=1U; i<=4U; i++) {
     // Leave main CAN always on for CAN-based ignition detection
     if (i == main_bus) {
@@ -49,15 +49,11 @@ void red_set_led(uint8_t color, bool enabled) {
   }
 }
 
-void red_set_usb_load_switch(bool enabled) {
-  set_gpio_output(GPIOB, 14, !enabled);
-}
-
 void red_set_can_mode(uint8_t mode) {
   switch (mode) {
     case CAN_MODE_NORMAL:
     case CAN_MODE_OBD_CAN2:
-      if ((bool)(mode == CAN_MODE_NORMAL) != (bool)(car_harness_status == HARNESS_STATUS_FLIPPED)) {
+      if ((bool)(mode == CAN_MODE_NORMAL) != (bool)(harness.status == HARNESS_STATUS_FLIPPED)) {
         // B12,B13: disable normal mode
         set_gpio_pullup(GPIOB, 12, PULL_NONE);
         set_gpio_mode(GPIOB, 12, MODE_ANALOG);
@@ -123,16 +119,15 @@ void red_init(void) {
   set_gpio_pullup(GPIOB, 4, PULL_NONE);
   set_gpio_mode(GPIOB, 4, MODE_OUTPUT);
 
-  // B14: usb load switch
-  set_gpio_pullup(GPIOB, 14, PULL_NONE);
-  set_gpio_mode(GPIOB, 14, MODE_OUTPUT);
-
   //B1: 5VOUT_S
   set_gpio_pullup(GPIOB, 1, PULL_NONE);
   set_gpio_mode(GPIOB, 1, MODE_ANALOG);
 
-  // Turn on USB load switch.
-  red_set_usb_load_switch(true);
+  // B14: usb load switch, enabled by pull resistor on board, obsolete for red panda
+  set_gpio_output_type(GPIOB, 14, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_pullup(GPIOB, 14, PULL_UP);
+  set_gpio_mode(GPIOB, 14, MODE_OUTPUT);
+  set_gpio_output(GPIOB, 14, 1);
 
   // Initialize harness
   harness_init();
@@ -152,7 +147,7 @@ void red_init(void) {
   red_set_can_mode(CAN_MODE_NORMAL);
 
   // flip CAN0 and CAN2 if we are flipped
-  if (car_harness_status == HARNESS_STATUS_FLIPPED) {
+  if (harness.status == HARNESS_STATUS_FLIPPED) {
     can_flip_buses(0, 2);
   }
 }
@@ -183,6 +178,9 @@ const board board_red = {
   .has_canfd = true,
   .has_rtc_battery = false,
   .fan_max_rpm = 0U,
+  .avdd_mV = 3300U,
+  .fan_stall_recovery = false,
+  .fan_enable_cooldown_time = 0U,
   .init = red_init,
   .enable_can_transceiver = red_enable_can_transceiver,
   .enable_can_transceivers = red_enable_can_transceivers,
@@ -194,6 +192,6 @@ const board board_red = {
   .set_fan_enabled = unused_set_fan_enabled,
   .set_ir_power = unused_set_ir_power,
   .set_phone_power = unused_set_phone_power,
-  .set_clock_source_mode = unused_set_clock_source_mode,
-  .set_siren = unused_set_siren
+  .set_siren = unused_set_siren,
+  .read_som_gpio = unused_read_som_gpio
 };

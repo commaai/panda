@@ -10,9 +10,9 @@ bool addr_checks_valid() {
 
   for (int i = 0; i < current_rx_checks->len; i++) {
     const AddrCheckStruct addr = current_rx_checks->check[i];
-    bool valid = addr.msg_seen && !addr.lagging && addr.valid_checksum && (addr.wrong_counters < MAX_WRONG_COUNTERS);
+    bool valid = addr.msg_seen && !addr.lagging && addr.valid_checksum && (addr.wrong_counters < MAX_WRONG_COUNTERS) && addr.valid_quality_flag;
     if (!valid) {
-      printf("i %d seen %d lagging %d valid checksum %d wrong counters %d\n", i, addr.msg_seen, addr.lagging, addr.valid_checksum, addr.wrong_counters);
+      printf("i %d seen %d lagging %d valid checksum %d wrong counters %d valid quality flag %d\n", i, addr.msg_seen, addr.lagging, addr.valid_checksum, addr.wrong_counters, addr.valid_quality_flag);
       return false;
     }
   }
@@ -79,6 +79,22 @@ bool get_acc_main_on(void){
   return acc_main_on;
 }
 
+int get_vehicle_speed_min(void){
+  return vehicle_speed.min;
+}
+
+int get_vehicle_speed_max(void){
+  return vehicle_speed.max;
+}
+
+int get_current_safety_mode(void){
+  return current_safety_mode;
+}
+
+int get_current_safety_param(void){
+  return current_safety_param;
+}
+
 int get_hw_type(void){
   return hw_type;
 }
@@ -125,6 +141,14 @@ void set_desired_angle_last(int t){
   desired_angle_last = t;
 }
 
+int get_angle_meas_min(void){
+  return angle_meas.min;
+}
+
+int get_angle_meas_max(void){
+  return angle_meas.max;
+}
+
 
 // ***** car specific helpers *****
 
@@ -158,6 +182,7 @@ void init_tests(void){
 
   // car-specific stuff
   honda_fwd_brake = false;
+  tesla_stock_aeb = false;
 }
 
 void set_gmlan_digital_output(int to_set){

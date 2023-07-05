@@ -1,5 +1,14 @@
+import platform
+
+CC = 'gcc'
+system = platform.system()
+if system == 'Darwin':
+  # gcc installed by homebrew has version suffix (e.g. gcc-12) in order to be  
+  # distinguishable from system one - which acts as a symlink to clang
+  CC += '-12'
+
 env = Environment(
-  CC='gcc',
+  CC=CC,
   CFLAGS=[
     '-nostdlib',
     '-fno-builtin',
@@ -8,5 +17,15 @@ env = Environment(
   ],
   CPPPATH=[".", "../../board/"],
 )
+if system == "Darwin":
+  env.PrependENVPath('PATH', '/opt/homebrew/bin')
+
+if GetOption('ubsan'):
+  flags = [
+    "-fsanitize=undefined",
+    "-fno-sanitize-recover=undefined",
+  ]
+  env['CFLAGS'] += flags
+  env['LINKFLAGS'] += flags
 
 env.SharedLibrary("libpanda.so", ["panda.c",])

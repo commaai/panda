@@ -62,12 +62,12 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   BUTTONS_BUS = 0  # rx or tx
   BRAKE_BUS = 0  # tx only
 
-  MAX_RATE_UP = 7
-  MAX_RATE_DOWN = 17
+  MAX_RATE_UP = 10
+  MAX_RATE_DOWN = 15
   MAX_TORQUE = 300
   MAX_RT_DELTA = 128
   RT_INTERVAL = 250000
-  DRIVER_TORQUE_ALLOWANCE = 50
+  DRIVER_TORQUE_ALLOWANCE = 65
   DRIVER_TORQUE_FACTOR = 4
 
   MAX_GAS = 0
@@ -153,7 +153,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
       for gas_regen in range(0, 2 ** 12 - 1):
         self.safety.set_controls_allowed(enabled)
         should_tx = ((enabled and self.MAX_REGEN <= gas_regen <= self.MAX_GAS) or
-                     (not enabled and gas_regen == self.INACTIVE_REGEN))
+                     gas_regen == self.INACTIVE_REGEN)
         self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
 
 

@@ -13,12 +13,14 @@
 // FDCAN core settings
 #define FDCAN_MESSAGE_RAM_SIZE 0x2800UL
 #define FDCAN_START_ADDRESS 0x4000AC00UL
-#define FDCAN_OFFSET 3412UL // bytes for each FDCAN module
-#define FDCAN_OFFSET_W 853UL // words for each FDCAN module
-#define FDCAN_END_ADDRESS 0x4000D3FCUL // Message RAM has a width of 4 Bytes
+#define FDCAN_OFFSET 3384UL // bytes for each FDCAN module, equally
+#define FDCAN_OFFSET_W 846UL // words for each FDCAN module, equally
+#define FDCAN_END_ADDRESS 0x4000D3FCUL // Message RAM has a width of 4 bytes
+
+// FDCAN_RX_FIFO_0_EL_CNT + FDCAN_TX_FIFO_EL_CNT can't exceed 47 elements (47 * 72 bytes = 3,384 bytes) per FDCAN module
 
 // RX FIFO 0
-#define FDCAN_RX_FIFO_0_EL_CNT 24UL
+#define FDCAN_RX_FIFO_0_EL_CNT 30UL
 #define FDCAN_RX_FIFO_0_HEAD_SIZE 8UL // bytes
 #define FDCAN_RX_FIFO_0_DATA_SIZE 64UL // bytes
 #define FDCAN_RX_FIFO_0_EL_SIZE (FDCAN_RX_FIFO_0_HEAD_SIZE + FDCAN_RX_FIFO_0_DATA_SIZE)
@@ -26,7 +28,7 @@
 #define FDCAN_RX_FIFO_0_OFFSET 0UL
 
 // TX FIFO
-#define FDCAN_TX_FIFO_EL_CNT 16UL
+#define FDCAN_TX_FIFO_EL_CNT 17UL
 #define FDCAN_TX_FIFO_HEAD_SIZE 8UL // bytes
 #define FDCAN_TX_FIFO_DATA_SIZE 64UL // bytes
 #define FDCAN_TX_FIFO_EL_SIZE (FDCAN_TX_FIFO_HEAD_SIZE + FDCAN_TX_FIFO_DATA_SIZE)
@@ -156,6 +158,34 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *CANx, uint32_t speed, uint32_t data_sp
   return ret;
 }
 
+void llcan_irq_disable(FDCAN_GlobalTypeDef *CANx) {
+  if (CANx == FDCAN1) {
+    NVIC_DisableIRQ(FDCAN1_IT0_IRQn);
+    NVIC_DisableIRQ(FDCAN1_IT1_IRQn);
+  } else if (CANx == FDCAN2) {
+    NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
+    NVIC_DisableIRQ(FDCAN2_IT1_IRQn);
+  } else if (CANx == FDCAN3) {
+    NVIC_DisableIRQ(FDCAN3_IT0_IRQn);
+    NVIC_DisableIRQ(FDCAN3_IT1_IRQn);
+  } else {
+  }
+}
+
+void llcan_irq_enable(FDCAN_GlobalTypeDef *CANx) {
+  if (CANx == FDCAN1) {
+    NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
+    NVIC_EnableIRQ(FDCAN1_IT1_IRQn);
+  } else if (CANx == FDCAN2) {
+    NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
+    NVIC_EnableIRQ(FDCAN2_IT1_IRQn);
+  } else if (CANx == FDCAN3) {
+    NVIC_EnableIRQ(FDCAN3_IT0_IRQn);
+    NVIC_EnableIRQ(FDCAN3_IT1_IRQn);
+  } else {
+  }
+}
+
 bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
   uint32_t can_number = CAN_NUM_FROM_CANIF(CANx);
   bool ret = fdcan_request_init(CANx);
@@ -211,7 +241,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
     CANx->IE &= 0x0U; // Reset all interrupts
     // Messages for INT0
     CANx->IE |= FDCAN_IE_RF0NE; // Rx FIFO 0 new message
-    CANx->IE |= FDCAN_IE_PEDE | FDCAN_IE_PEAE | FDCAN_IE_BOE | FDCAN_IE_EPE | FDCAN_IE_ELOE | FDCAN_IE_TEFLE | FDCAN_IE_RF0LE;
+    CANx->IE |= FDCAN_IE_PEDE | FDCAN_IE_PEAE | FDCAN_IE_BOE | FDCAN_IE_EPE | FDCAN_IE_RF0LE;
 
     // Messages for INT1 (Only TFE works??)
     CANx->ILS |= FDCAN_ILS_TFEL;
@@ -222,18 +252,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
       print(CAN_NAME_FROM_CANIF(CANx)); print(" llcan_init timed out (2)!\n");
     }
 
-    if (CANx == FDCAN1) {
-      NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
-      NVIC_EnableIRQ(FDCAN1_IT1_IRQn);
-    } else if (CANx == FDCAN2) {
-      NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
-      NVIC_EnableIRQ(FDCAN2_IT1_IRQn);
-    } else if (CANx == FDCAN3) {
-      NVIC_EnableIRQ(FDCAN3_IT0_IRQn);
-      NVIC_EnableIRQ(FDCAN3_IT1_IRQn);
-    } else {
-      print("Invalid CAN: initialization failed\n");
-    }
+    llcan_irq_enable(CANx);
 
   } else {
     print(CAN_NAME_FROM_CANIF(CANx)); print(" llcan_init timed out (1)!\n");
@@ -242,7 +261,9 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
 }
 
 void llcan_clear_send(FDCAN_GlobalTypeDef *CANx) {
-  CANx->TXBCR = 0xFFFFU; // Abort message transmission on error interrupt
-  // Clear error interrupts
-  CANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EW | FDCAN_IR_EP | FDCAN_IR_ELO | FDCAN_IR_BO | FDCAN_IR_TEFL | FDCAN_IR_RF0L);
+  // from datasheet: "Transmit cancellation is not intended for Tx FIFO operation."
+  // so we need to clear pending transmission manually by resetting FDCAN core
+  CANx->IR |= 0x3FCFFFFFU; // clear all interrupts
+  bool ret = llcan_init(CANx);
+  UNUSED(ret);
 }

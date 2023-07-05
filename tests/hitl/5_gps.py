@@ -1,9 +1,11 @@
 import time
-from panda import PandaSerial
-from .helpers import test_all_gps_pandas, panda_connect_and_init
+import pytest
 
-@test_all_gps_pandas
-@panda_connect_and_init
+from panda import PandaSerial
+from panda.tests.hitl.conftest import PandaGroup
+
+
+@pytest.mark.test_panda_types(PandaGroup.GPS)
 def test_gps_version(p):
   serial = PandaSerial(p, 1, 9600)
   # Reset and check twice to make sure the enabling works

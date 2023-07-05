@@ -14,6 +14,7 @@ void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 uint8_t hw_type = 0;
 const board *current_board;
 uint32_t uptime_cnt = 0;
+bool green_led_enabled = false;
 
 // heartbeat state
 uint32_t heartbeat_counter = 0;
