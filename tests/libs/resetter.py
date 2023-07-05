@@ -3,7 +3,7 @@ import usb1
 
 
 class Resetter():
-  def __init__(self):
+  def __init__(self) -> None:
     self._handle = None
     self.connect()
 
@@ -13,12 +13,12 @@ class Resetter():
   def __exit__(self, *args):
     self.close()
 
-  def close(self):
+  def close(self) -> None:
     self._handle.close()
     self._context.close()
     self._handle = None
 
-  def connect(self):
+  def connect(self) -> None:
     if self._handle:
       self.close()
 
@@ -36,13 +36,13 @@ class Resetter():
           print(e)
     assert self._handle
 
-  def enable_power(self, port, enabled):
+  def enable_power(self, port, enabled) -> None:
     self._handle.controlWrite((usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE), 0xff, port, enabled, b'')
 
-  def enable_boot(self, enabled):
+  def enable_boot(self, enabled) -> None:
     self._handle.controlWrite((usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE), 0xff, 0, enabled, b'')
 
-  def cycle_power(self, delay=5, dfu=False, ports=None):
+  def cycle_power(self, delay=5, dfu=False, ports=None) -> None:
     if ports is None:
       ports = [1, 2, 3]
 
