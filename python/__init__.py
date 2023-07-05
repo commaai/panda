@@ -735,7 +735,7 @@ class Panda:
   def get_secret(self) -> bytes:
     return self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 1, 0, 0x10)
 
-  def get_interrupt_call_rate(self, irqnum) -> bytes:
+  def get_interrupt_call_rate(self, irqnum):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xc4, int(irqnum), 0, 4)
     return struct.unpack("I", dat)[0]
 
@@ -850,7 +850,7 @@ class Panda:
 
   # ******************* isotp *******************
 
-  def isotp_send(self, addr, dat, bus, recvaddr=None, subaddr=None) -> bytes:
+  def isotp_send(self, addr, dat, bus, recvaddr=None, subaddr=None) -> None:
     return isotp_send(self, dat, addr, bus, recvaddr, subaddr)
 
   def isotp_recv(self, addr, bus=0, sendaddr=None, subaddr=None) -> bytes:
@@ -960,13 +960,13 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xa6, int(dt.minute), 0, b'')
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xa7, int(dt.second), 0, b'')
 
-  def get_datetime(self) -> bytes:
+  def get_datetime(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xa0, 0, 0, 8)
     a = struct.unpack("HBBBBBB", dat)
     return datetime.datetime(a[0], a[1], a[2], a[4], a[5], a[6])
 
   # ****************** Timer *****************
-  def get_microsecond_timer(self) -> bytes:
+  def get_microsecond_timer(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xa8, 0, 0, 4)
     return struct.unpack("I", dat)[0]
 
@@ -978,7 +978,7 @@ class Panda:
   def set_fan_power(self, percentage) -> None:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb1, int(percentage), 0, b'')
 
-  def get_fan_rpm(self) -> bytes:
+  def get_fan_rpm(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xb2, 0, 0, 2)
     a = struct.unpack("H", dat)
     return a[0]

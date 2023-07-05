@@ -12,7 +12,7 @@ def msg(x):
   return ret.ljust(8, b"\x00")
 
 kmsgs = []
-def recv(panda, cnt, addr, nbus):
+def recv(panda, cnt, addr, nbus) -> bytes:
   global kmsgs
   ret: List[bytes] = []
 
@@ -28,8 +28,8 @@ def recv(panda, cnt, addr, nbus):
     kmsgs = nmsgs[-256:]
   return ret
 
-def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
-  msg = recv(panda, 1, addr, bus)[0]
+def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr) -> bytes:
+  msg: bytes = recv(panda, 1, addr, bus)[0]
 
   # TODO: handle other subaddr also communicating
   assert msg[0] == subaddr
@@ -61,7 +61,7 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
 
 # **** import below this line ****
 
-def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None, rate=None):
+def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None, rate=None) -> None:
   if recvaddr is None:
     recvaddr = addr + 8
 
@@ -103,7 +103,7 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None, rate=None):
           panda.can_send(addr, dat, bus)
           time.sleep(rate)
 
-def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
+def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None) -> bytes:
   if sendaddr is None:
     sendaddr = addr - 8
 
