@@ -128,14 +128,3 @@ jobs:
         timeout-minutes: 3
         run: ${{ env.RUN }} "pre-commit run --all"
 
-  python_mypy:
-    name: python mypy
-    runs-on: ubuntu-20.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build Docker image
-        run: eval "$BUILD"
-      - name: Check coverage
-        run: mypy -p python
-

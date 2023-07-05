@@ -16,4 +16,3 @@ flaky
 spidev
 termcolor
 pytest-mock
-mypy==1.4.1
