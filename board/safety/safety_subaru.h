@@ -171,7 +171,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     }
   }
   if ((addr == 0x124) && subaru_forester_2022) {
-    int desired_torque = ((GET_BYTES_48(to_send) >> 8) & 0x3FFFFU);
+    int desired_torque = ((GET_BYTES(to_send, 4, 8) >> 8) & 0x3FFFFU);
     desired_torque = -1 * to_signed(desired_torque, 17);
 
     const SteeringLimits limits = SUBARU_STEERING_LIMITS;
