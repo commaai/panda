@@ -8,8 +8,8 @@ import hashlib
 import binascii
 import datetime
 import logging
-from functools import wraps, partial
-from typing import Optional
+from functools import wraps
+from typing import Optional, List, Any
 from itertools import accumulate
 
 from .base import BaseHandle
@@ -231,6 +231,7 @@ class Panda:
     self._connect_serial = serial
     self._disable_checks = disable_checks
 
+    self.bootstub: bool
     self._handle: BaseHandle
     self._handle_open = False
     self.can_rx_overflow_buffer = b''
@@ -303,7 +304,7 @@ class Panda:
     # get UID to confirm slave is present and up
     handle = None
     spi_serial = None
-    bootstub = None
+    bootstub: bool = None
     spi_version = None
     try:
       handle = PandaSpiHandle()

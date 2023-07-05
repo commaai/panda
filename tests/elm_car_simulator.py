@@ -9,6 +9,7 @@ import binascii
 import time
 import threading
 from collections import deque
+from typing import Deque, Tuple
 
 from panda import Panda
 
@@ -29,9 +30,9 @@ class ELMCarSimulator():
         self.__lin_enable = lin
         self.__lin_monitor_thread = threading.Thread(target=self.__lin_monitor)
 
-        self.__can_multipart_data = None
+        self.__can_multipart_data: bytes = None
         self.__can_kbaud = can_kbaud
-        self.__can_extra_noise_msgs = deque()
+        self.__can_extra_noise_msgs: Deque[Tuple] = deque()
         self.__can_enable = can
         self.__can11b = can11b
         self.__can29b = can29b

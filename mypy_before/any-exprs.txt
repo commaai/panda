@@ -1,0 +1,41 @@
+                                   Name   Anys   Exprs   Coverage
+-----------------------------------------------------------------
+                           panda.python     48     474     89.87%
+                      panda.python.base      1      53     98.11%
+                       panda.python.ccp     43    1078     96.01%
+                 panda.python.constants      2      66     96.97%
+                       panda.python.dfu     79     238     66.81%
+                     panda.python.isotp      0       3    100.00%
+                    panda.python.serial      1       1      0.00%
+                       panda.python.spi    122     658     81.46%
+                       panda.python.uds     69    2563     97.31%
+                       panda.python.usb     26     103     74.76%
+                  panda.tests.benchmark     13      60     78.33%
+        panda.tests.black_loopback_test      6      43     86.05%
+  panda.tests.black_white_loopback_test      6      51     88.24%
+panda.tests.black_white_relay_endurance      6      51     88.24%
+     panda.tests.black_white_relay_test      6      51     88.24%
+            panda.tests.bulk_write_test     12      13      7.69%
+                panda.tests.can_printer      1      14     92.86%
+                panda.tests.ci_reset_hw      7      71     90.14%
+       panda.tests.ci_reset_internal_hw     11      71     84.51%
+              panda.tests.debug_console     17     146     88.36%
+                       panda.tests.echo     18      44     59.09%
+          panda.tests.elm_car_simulator      4      80     95.00%
+             panda.tests.elm_throughput      7      38     81.58%
+                panda.tests.get_version      6      20     70.00%
+         panda.tests.gmlan_harness_test     31     169     81.66%
+         panda.tests.gps_stability_test     10     139     92.81%
+                panda.tests.health_test      4      38     89.47%
+                    panda.tests.ir_test      1      30     96.67%
+          panda.tests.location_listener     12      82     85.37%
+              panda.tests.loopback_test      6      43     86.05%
+          panda.tests.message_drop_test     14     154     90.91%
+    panda.tests.read_winusb_descriptors      6       6      0.00%
+                 panda.tests.relay_test      4      27     85.19%
+                   panda.tests.rtc_test      2      26     92.31%
+                   panda.tests.spam_can      6      38     84.21%
+            panda.tests.standalone_test     13      83     84.34%
+             panda.tests.tucan_loopback      6      43     86.05%
+-----------------------------------------------------------------
+                                  Total    626    6868     90.89%

@@ -1,5 +1,6 @@
 import binascii
 import time
+from typing import List
 
 DEBUG = False
 
@@ -13,7 +14,7 @@ def msg(x):
 kmsgs = []
 def recv(panda, cnt, addr, nbus):
   global kmsgs
-  ret = []
+  ret: List[bytes] = []
 
   while len(ret) < cnt:
     kmsgs += panda.can_recv()

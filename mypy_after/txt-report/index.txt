@@ -1,0 +1,50 @@
+Mypy Type Check Coverage Summary
+================================
+
+Script: index
+
++-----------------------------------------+-------------------+----------+
+| Module                                  | Imprecision       | Lines    |
++-----------------------------------------+-------------------+----------+
+| panda.python                            |  48.67% imprecise | 1013 LOC |
+| panda.python.base                       |   1.49% imprecise |   67 LOC |
+| panda.python.ccp                        |  14.09% imprecise |  362 LOC |
+| panda.python.constants                  |   3.51% imprecise |   57 LOC |
+| panda.python.dfu                        |  25.83% imprecise |  120 LOC |
+| panda.python.isotp                      |  60.14% imprecise |  143 LOC |
+| panda.python.serial                     |  68.57% imprecise |   35 LOC |
+| panda.python.spi                        |  30.77% imprecise |  377 LOC |
+| panda.python.uds                        |  10.98% imprecise |  938 LOC |
+| panda.python.usb                        |  45.26% imprecise |   95 LOC |
+| panda.python.utils                      |  83.33% imprecise |   12 LOC |
+| panda.tests                             |   0.00% imprecise |    0 LOC |
+| panda.tests.benchmark                   |  27.91% imprecise |   43 LOC |
+| panda.tests.black_loopback_test         |  54.10% imprecise |  122 LOC |
+| panda.tests.black_white_loopback_test   |  53.37% imprecise |  163 LOC |
+| panda.tests.black_white_relay_endurance |  52.35% imprecise |  170 LOC |
+| panda.tests.black_white_relay_test      |  50.35% imprecise |  141 LOC |
+| panda.tests.bulk_write_test             |  14.29% imprecise |   49 LOC |
+| panda.tests.can_printer                 |  46.15% imprecise |   39 LOC |
+| panda.tests.ci_reset_hw                 |  37.50% imprecise |   40 LOC |
+| panda.tests.ci_reset_internal_hw        |  36.17% imprecise |   47 LOC |
+| panda.tests.debug_console               |  14.29% imprecise |   63 LOC |
+| panda.tests.echo                        |  35.00% imprecise |   20 LOC |
+| panda.tests.elm_car_simulator           |  65.05% imprecise |  329 LOC |
+| panda.tests.elm_throughput              |  54.55% imprecise |   44 LOC |
+| panda.tests.get_version                 |  42.86% imprecise |    7 LOC |
+| panda.tests.gmlan_harness_test          |  44.44% imprecise |   81 LOC |
+| panda.tests.gps_stability_test          |  50.30% imprecise |  165 LOC |
+| panda.tests.health_test                 |  11.11% imprecise |   18 LOC |
+| panda.tests.ir_test                     |   5.88% imprecise |   17 LOC |
+| panda.tests.location_listener           |  35.56% imprecise |   45 LOC |
+| panda.tests.loopback_test               |  54.17% imprecise |  120 LOC |
+| panda.tests.message_drop_test           |  44.29% imprecise |   70 LOC |
+| panda.tests.read_winusb_descriptors     |   2.94% imprecise |   34 LOC |
+| panda.tests.relay_test                  |  25.00% imprecise |   16 LOC |
+| panda.tests.rtc_test                    |  15.38% imprecise |   13 LOC |
+| panda.tests.spam_can                    |  22.73% imprecise |   22 LOC |
+| panda.tests.standalone_test             |  31.43% imprecise |   35 LOC |
+| panda.tests.tucan_loopback              |  51.69% imprecise |  118 LOC |
++-----------------------------------------+-------------------+----------+
+| Total                                   |  36.51% imprecise | 5250 LOC |
++-----------------------------------------+-------------------+----------+
