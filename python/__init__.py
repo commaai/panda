@@ -305,7 +305,7 @@ class Panda:
     # get UID to confirm slave is present and up
     handle = None
     spi_serial = None
-    bootstub: bool = None
+    bootstub: bool = False
     spi_version = None
     try:
       handle = PandaSpiHandle()
@@ -343,7 +343,7 @@ class Panda:
     return None, handle, spi_serial, bootstub, None
 
   @classmethod
-  def usb_connect(cls, serial, claim=True) -> None:
+  def usb_connect(cls, serial, claim=True) -> tuple | None:
     handle, usb_serial, bootstub, bcd = None, None, None, None
     context = usb1.USBContext()
     context.open()
@@ -609,7 +609,7 @@ class Panda:
     }
 
   @ensure_can_health_packet_version
-  def can_health(self, can_number) -> dict[str, bytes]:
+  def can_health(self, can_number) -> dict[str, bytes | str]:
     LEC_ERROR_CODE = {
       0: "No error",
       1: "Stuff error",
@@ -653,7 +653,7 @@ class Panda:
 
   # ******************* control *******************
 
-  def get_version(self) -> bytes:
+  def get_version(self) -> str:
     return self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40).decode('utf8')
 
   @staticmethod
@@ -677,7 +677,7 @@ class Panda:
     return ret
 
   # Returns tuple with health packet version and CAN packet/USB packet version
-  def get_packets_versions(self) -> tuple[bytes, bytes, bytes]:
+  def get_packets_versions(self) -> tuple[int, int, int]:
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xdd, 0, 0, 3)
     if dat and len(dat) == 3:
       a = struct.unpack("BBB", dat)
@@ -741,16 +741,16 @@ class Panda:
 
   # ******************* configuration *******************
 
-  def set_power_save(self, power_save_enabled=0) -> bytes:
+  def set_power_save(self, power_save_enabled=0) -> None:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe7, int(power_save_enabled), 0, b'')
 
-  def enable_deepsleep(self) -> bytes:
+  def enable_deepsleep(self) -> None:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xfb, 0, 0, b'')
 
-  def set_esp_power(self, on) -> bytes:
+  def set_esp_power(self, on) -> None:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xd9, int(on), 0, b'')
 
-  def esp_reset(self, bootmode=0) -> bytes:
+  def esp_reset(self, bootmode=0) -> None:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xda, int(bootmode), 0, b'')
     time.sleep(0.2)
 
@@ -858,7 +858,7 @@ class Panda:
 
   # ******************* serial *******************
 
-  def serial_read(self, port_number) -> List[bytes]:
+  def serial_read(self, port_number) -> bytes:
     ret = []
     while 1:
       lret = bytes(self._handle.controlRead(Panda.REQUEST_IN, 0xe0, port_number, 0, 0x40))
