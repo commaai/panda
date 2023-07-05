@@ -42,14 +42,18 @@ void logging_erase(void) {
   log_state.write_index = 0U;
 }
 
-void logging_find_read_index(void) {
+void logging_find_read_index(uint16_t last_id) {
   // Figure out the read index by the last empty slot
-  log_state.read_index = 0xFFFFU;
+  log_state.read_index = BANK_LOG_CAPACITY;
   for (uint16_t i = 0U; i < TOTAL_LOG_CAPACITY; i++) {
-    if (log_arr[i].id == 0xFFFFU) {
+    if (log_arr[i].id == last_id) {
       log_state.read_index = logging_next_index(i);
     }
   }
+}
+
+void logging_init_read_index(void) {
+  return logging_find_read_index(0xFFFFU);
 }
 
 void logging_init(void) {
@@ -67,7 +71,7 @@ void logging_init(void) {
     }
   }
 
-  logging_find_read_index();
+  logging_init_read_index();
 
   // At initialization, the read index should always be at the beginning of a bank
   // If not, clean slate

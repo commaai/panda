@@ -1000,11 +1000,13 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')
 
   # ****************** Logging *****************
-  def get_logs(self, get_all=False):
+  def get_logs(self, last_id=None, get_all=False):
+    assert (last_id is None) or (0 <= last_id < 0xFFFF)
+
     logs = []
-    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfd, 1 if get_all else 0, 0, 0x40)
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfd, 1 if get_all else 0, last_id if last_id is not None else 0xFFFF, 0x40)
     while len(dat) > 0:
       if len(dat) == 0x40:
         logs.append(unpack_log(dat))
-      dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfd, 0, 0, 0x40)
+      dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfd, 0, 0xFFFF, 0x40)
     return logs
