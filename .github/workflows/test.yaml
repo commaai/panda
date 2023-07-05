@@ -137,4 +137,4 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Check coverage
-        run: python -m mypy -p python
+        run: mypy -p python
