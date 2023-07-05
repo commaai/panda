@@ -1,13 +1,13 @@
                                    Name   Anys   Exprs   Coverage
 -----------------------------------------------------------------
-                           panda.python     48     474     89.87%
+                           panda.python     49     474     89.66%
                       panda.python.base      1      53     98.11%
                        panda.python.ccp     43    1078     96.01%
                  panda.python.constants      2      66     96.97%
                        panda.python.dfu     79     238     66.81%
                      panda.python.isotp      0       3    100.00%
                     panda.python.serial      1       1      0.00%
-                       panda.python.spi    122     658     81.46%
+                       panda.python.spi    140     658     78.72%
                        panda.python.uds     69    2563     97.31%
                        panda.python.usb     26     103     74.76%
                   panda.tests.benchmark     13      60     78.33%
@@ -18,7 +18,7 @@ panda.tests.black_white_relay_endurance      6      51     88.24%
             panda.tests.bulk_write_test     12      13      7.69%
                 panda.tests.can_printer      1      14     92.86%
                 panda.tests.ci_reset_hw      7      71     90.14%
-       panda.tests.ci_reset_internal_hw     11      71     84.51%
+       panda.tests.ci_reset_internal_hw     12      72     83.33%
               panda.tests.debug_console     17     146     88.36%
                        panda.tests.echo     18      44     59.09%
           panda.tests.elm_car_simulator      4      80     95.00%
@@ -38,4 +38,4 @@ panda.tests.black_white_relay_endurance      6      51     88.24%
             panda.tests.standalone_test     13      83     84.34%
              panda.tests.tucan_loopback      6      43     86.05%
 -----------------------------------------------------------------
-                                  Total    626    6868     90.89%
+                                  Total    646    6869     90.60%

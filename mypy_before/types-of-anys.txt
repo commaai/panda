@@ -1,13 +1,13 @@
                                    Name   Unannotated   Explicit   Unimported   Omitted Generics   Error   Special Form   Implementation Artifact
 -------------------------------------------------------------------------------------------------------------------------------------------------
-                           panda.python            60          1           28                  0       0              0                         0
+                           panda.python            61          1           28                  0       0              0                         0
                       panda.python.base             1          0            0                  0       0              0                         0
                        panda.python.ccp            41         42            0                 10       0              0                         0
                  panda.python.constants             3          0            0                  0       0              0                         0
                        panda.python.dfu            21         30           58                  0       0              0                         0
                      panda.python.isotp             0          0            0                  0       0              0                         0
                     panda.python.serial             0          0            0                  0       0              0                         0
-                       panda.python.spi           150         25            1                  0       0              0                         0
+                       panda.python.spi           156         25            1                  0       0              0                         0
                        panda.python.uds            50         70            0                  0       0              0                         0
                        panda.python.usb            26          1            0                  0       0              0                         0
                      panda.python.utils             0          0            0                  0       0              0                         0
@@ -20,7 +20,7 @@ panda.tests.black_white_relay_endurance             6         11            0   
             panda.tests.bulk_write_test             0          0            0                  0       0              0                         0
                 panda.tests.can_printer             2          0            0                  0       0              0                         0
                 panda.tests.ci_reset_hw            34         12            0                  0       0              0                         0
-       panda.tests.ci_reset_internal_hw            43          0            0                  0       0              0                         0
+       panda.tests.ci_reset_internal_hw            44          0            0                  0       0              0                         0
               panda.tests.debug_console            26          9            0                  0       0              0                         0
                        panda.tests.echo            28          0            0                  0       0              0                         0
           panda.tests.elm_car_simulator            18          0            0                  0       0              0                         0
@@ -40,4 +40,4 @@ panda.tests.black_white_relay_endurance             6         11            0   
             panda.tests.standalone_test            33          1            0                  0       0              0                         0
              panda.tests.tucan_loopback             6         11            0                  0       0              0                         0
 -------------------------------------------------------------------------------------------------------------------------------------------------
-                                  Total           824        319           96                 10       0              0                         0
+                                  Total           832        319           96                 10       0              0                         0

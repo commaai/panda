@@ -1,0 +1,50 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="../../mypy-html.css">
+</head>
+<body>
+<h2>panda.python.utils</h2>
+<table>
+<caption>python/utils.py</caption>
+<tbody><tr>
+<td class="table-lines"><pre><span id="L1" class="lineno"><a class="lineno" href="#L1">1</a></span>
+<span id="L2" class="lineno"><a class="lineno" href="#L2">2</a></span>
+<span id="L3" class="lineno"><a class="lineno" href="#L3">3</a></span>
+<span id="L4" class="lineno"><a class="lineno" href="#L4">4</a></span>
+<span id="L5" class="lineno"><a class="lineno" href="#L5">5</a></span>
+<span id="L6" class="lineno"><a class="lineno" href="#L6">6</a></span>
+<span id="L7" class="lineno"><a class="lineno" href="#L7">7</a></span>
+<span id="L8" class="lineno"><a class="lineno" href="#L8">8</a></span>
+<span id="L9" class="lineno"><a class="lineno" href="#L9">9</a></span>
+<span id="L10" class="lineno"><a class="lineno" href="#L10">10</a></span>
+<span id="L11" class="lineno"><a class="lineno" href="#L11">11</a></span>
+<span id="L12" class="lineno"><a class="lineno" href="#L12">12</a></span>
+</pre></td>
+<td class="table-code"><pre><span class="line-any" title="No Anys on this line!">def crc8_pedal(data):</span>
+<span class="line-any" title="Any Types on this line: 
+Unannotated (x1)">  crc = 0xFF    # standard init value</span>
+<span class="line-any" title="Any Types on this line: 
+Unannotated (x1)">  poly = 0xD5   # standard crc8: x8+x7+x6+x4+x2+1</span>
+<span class="line-any" title="Any Types on this line: 
+Unannotated (x3)">  size = len(data)</span>
+<span class="line-any" title="Any Types on this line: 
+Unannotated (x6)">  for i in range(size - 1, -1, -1):</span>
+<span class="line-any" title="Any Types on this line: 
+Unannotated (x4)">    crc ^= data[i]</span>
+<span class="line-any" title="Any Types on this line: 
+Unannotated (x1)">    for _ in range(8):</span>
+<span class="line-any" title="Any Types on this line: 
+Unannotated (x3)">      if ((crc &amp; 0x80) != 0):</span>
+<span class="line-any" title="Any Types on this line: 
+Unannotated (x6)">        crc = ((crc &lt;&lt; 1) ^ poly) &amp; 0xFF</span>
+<span class="line-empty" title="No Anys on this line!">      else:</span>
+<span class="line-any" title="Any Types on this line: 
+Unannotated (x1)">        crc &lt;&lt;= 1</span>
+<span class="line-any" title="Any Types on this line: 
+Unannotated (x1)">  return crc</span>
+</pre></td>
+</tr></tbody>
+</table>
+</body>
+</html>
