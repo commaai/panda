@@ -201,7 +201,7 @@ class ELMCarSimulator():
     def can_add_extra_noise(self, noise_msg, addr=None):
         self.__can_extra_noise_msgs.append((addr, noise_msg))
 
-    def _can_send(self, addr, msg):
+    def _can_send(self, addr, msg) -> None:
         if not self.__silent:
             print("    CAN Reply (%x)" % addr, binascii.hexlify(msg))
         self.panda.can_send(addr, msg + b'\x00' * (8 - len(msg)), 0)
