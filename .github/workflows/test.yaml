@@ -14,8 +14,8 @@ env:
   RUN: docker run -v ${{ github.workspace }}:/tmp/openpilot/panda -w /tmp/openpilot/panda --rm panda /bin/bash -c
   PERSIST: docker run -v ${{ github.workspace }}:/tmp/openpilot/panda -w /tmp/openpilot/panda --name panda panda /bin/bash -c
   BUILD: |
-      export DOCKER_BUILDKIT=1
-      docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile .
+    export DOCKER_BUILDKIT=1
+    docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile .
 
   PYTHONWARNINGS: "error"
 
@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        flags: ['', '--ubsan']
+        flags: ["", "--ubsan"]
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
@@ -128,4 +128,13 @@ jobs:
         timeout-minutes: 3
         run: ${{ env.RUN }} "pre-commit run --all"
 
-
+  python_mypy:
+    name: python mypy
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Docker image
+        run: eval "$BUILD"
+      - name: Check coverage
+        run: python -m mypy -p python

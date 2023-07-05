@@ -15,3 +15,5 @@ scons>=4.4.0
 flaky
 spidev
 termcolor
+pytest-mock
+mypy==1.4.1
