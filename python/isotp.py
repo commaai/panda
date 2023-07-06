@@ -1,6 +1,6 @@
 import binascii
 import time
-from typing import List, Iterable
+from typing import List
 
 DEBUG = False
 
