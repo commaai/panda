@@ -74,7 +74,7 @@ class PandaDFU:
   @staticmethod
   def list() -> List[str]: # noqa: A003
     ret = PandaDFU.usb_list()
-    ret += PandaDFU.spi_list()
+    ret += [item for item in PandaDFU.spi_list() if item is not None]
     return list(set(ret))
 
   @staticmethod
@@ -93,7 +93,7 @@ class PandaDFU:
     return dfu_serials
 
   @staticmethod
-  def spi_list() -> List[str]:
+  def spi_list() -> List[Optional[str]]:
     try:
       _, h = PandaDFU.spi_connect(None)
       if h is not None:
@@ -104,7 +104,7 @@ class PandaDFU:
     return []
 
   @staticmethod
-  def st_serial_to_dfu_serial(st: str, mcu_type: McuType = McuType.F4) -> Optional[str]:
+  def st_serial_to_dfu_serial(st: Optional[str], mcu_type: McuType = McuType.F4) -> Optional[str]:
     if st is None or st == "none":
       return None
     uid_base = struct.unpack("H" * 6, bytes.fromhex(st))

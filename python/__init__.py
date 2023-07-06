@@ -10,7 +10,7 @@ import binascii
 import datetime
 import logging
 from functools import wraps
-from typing import Optional, List
+from typing import Optional, List, Union
 from itertools import accumulate
 
 from .base import BaseHandle
@@ -233,7 +233,7 @@ class Panda:
     self._disable_checks = disable_checks
 
     self.bootstub: bool
-    self._handle: PandaSpiHandle | PandaUsbHandle
+    self._handle: Union[PandaSpiHandle, PandaUsbHandle]
     self._handle_open: bool = False
     self.can_rx_overflow_buffer: bytes = b''
 
@@ -257,21 +257,24 @@ class Panda:
         self._context.close()
 
   def connect(self, claim=True, wait=False) -> None:
-    serial: str
+    handle: Optional[Union[PandaSpiHandle, PandaUsbHandle]]
+    serial: Optional[str]
     bcd: bytearray | None
     self.close()
 
-    self._handle = None
-    while self._handle is None:
+    handle = None
+    while handle is None:
       # try USB first, then SPI
-      self._context, self._handle, serial, self.bootstub, bcd = self.usb_connect(self._connect_serial, claim=claim)
-      if self._handle is None:
-        self._context, self._handle, serial, self.bootstub, bcd = self.spi_connect(self._connect_serial)
+      self._context, handle, serial, self.bootstub, bcd = self.usb_connect(self._connect_serial, claim=claim)
+      if handle is None:
+        self._context,   handle, serial, self.bootstub, bcd = self.spi_connect(self._connect_serial)
       if not wait:
-        break
+          break
 
-    if self._handle is None:
+    if handle is None:
       raise Exception("failed to connect to panda")
+    
+    self.handle = handle
 
     # Some fallback logic to determine panda and MCU type for old bootstubs,
     # since we now support multiple MCUs and need to know which fw to flash.
@@ -303,11 +306,11 @@ class Panda:
       self.set_power_save(0)
 
   @classmethod
-  def spi_connect(cls, serial, ignore_version=False) -> tuple[PandaSpiHandle, Optional[str], bool, None]:
+  def spi_connect(cls, serial, ignore_version=False) -> tuple[Optional[PandaSpiHandle], Optional[str], bool, None]:
     # get UID to confirm slave is present and up
-    handle: PandaSpiHandle = None
-    spi_serial = None
-    bootstub: bool = False
+    handle: Optional[PandaSpiHandle]
+    spi_serial: str
+    bootstub: bool
     spi_version = None
     try:
       handle = PandaSpiHandle()
@@ -333,7 +336,7 @@ class Panda:
     # no connection or wrong panda
     if None in (spi_serial, bootstub) or (serial is not None and (spi_serial != serial)):
       handle = None
-      spi_serial = None
+      spi_serial = ""
       bootstub = False
 
     # ensure our protocol version matches the panda
@@ -345,11 +348,11 @@ class Panda:
     return None, handle, spi_serial, bootstub, None
 
   @classmethod
-  def usb_connect(cls, serial, claim=True) -> tuple[PandaUsbHandle, Optional[str], bool, bytearray]:
-    handle = None
-    usb_serial:str = None
-    bootstub: bool = None
-    bcd: bytearray = None
+  def usb_connect(cls, serial, claim=True) -> tuple[Optional[PandaUsbHandle], Optional[str], bool, bytearray]:
+    handle: Optional[PandaUsbHandle]
+    usb_serial:str
+    bootstub: bool
+    bcd: bytearray
     context = usb1.USBContext()
     context.open()
     try:
@@ -367,9 +370,9 @@ class Panda:
             bootstub = (device.getProductID() & 0xF0) == 0xe0
             handle = device.open()
             if sys.platform not in ("win32", "cygwin", "msys", "darwin"):
-              handle.setAutoDetachKernelDriver(True)
+              handle.setAutoDetachKernelDriver(True) # type: ignore
             if claim:
-              handle.claimInterface(0)
+              handle.claimInterface(0) # type: ignore
               # handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
 
             # bcdDevice wasn't always set to the hw type, ignore if it's the old constant
@@ -384,8 +387,6 @@ class Panda:
     usb_handle = None
     if handle is not None:
       usb_handle = PandaUsbHandle(handle)
-    else:
-      context.close()
 
     return context, usb_handle, usb_serial, bootstub, bcd
 
@@ -703,7 +704,8 @@ class Panda:
       if self._assume_f4_mcu:
         return McuType.F4
 
-    raise ValueError(f"unknown HW type: {hw_type}")
+    raise ValueError(f"unknown HW type: {hw_type.decode('utf-8')}")
+  
 
   def has_obd(self) -> bool:
     return self.get_type() in Panda.HAS_OBD
@@ -834,7 +836,7 @@ class Panda:
     dat = bytearray()
     while True:
       try:
-        dat = self._handle.bulkRead(1, 16384) # Max receive batch size + 2 extra reserve frames
+        dat = bytearray(self._handle.bulkRead(1, 16384)) # Max receive batch size + 2 extra reserve frames
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         logging.error("CAN: BAD RECV, RETRYING")
@@ -858,7 +860,7 @@ class Panda:
   def isotp_send(self, addr, dat, bus, recvaddr=None, subaddr=None) -> None:
     return isotp_send(self, dat, addr, bus, recvaddr, subaddr)
 
-  def isotp_recv(self, addr, bus=0, sendaddr=None, subaddr=None) -> List[bytes]:
+  def isotp_recv(self, addr, bus=0, sendaddr=None, subaddr=None) -> bytes:
     return isotp_recv(self, addr, bus, sendaddr, subaddr)
 
   # ******************* serial *******************
