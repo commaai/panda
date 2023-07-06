@@ -21,8 +21,8 @@ const SteeringLimits SUBARU_PG_STEERING_LIMITS = {
 #define MSG_SUBARU_PG_ES_Distance           0x161
 #define MSG_SUBARU_PG_Steering_Torque       0x371
 
-#define SUBARU_PG_MAIN_BUS 0U
-#define SUBARU_PG_CAM_BUS  2U
+#define SUBARU_PG_MAIN_BUS 0
+#define SUBARU_PG_CAM_BUS  2
 
 const CanMsg SUBARU_PG_TX_MSGS[] = {
   {MSG_SUBARU_PG_ES_Distance, SUBARU_PG_MAIN_BUS, 8},
@@ -45,7 +45,7 @@ static int subaru_preglobal_rx_hook(CANPacket_t *to_push) {
 
   const int bus = GET_BUS(to_push);
 
-  if (valid && bus == SUBARU_PG_MAIN_BUS) {
+  if (valid && (bus == SUBARU_PG_MAIN_BUS)) {
     int addr = GET_ADDR(to_push);
     if (addr == MSG_SUBARU_PG_Steering_Torque) {
       int torque_driver_new;
