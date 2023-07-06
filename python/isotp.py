@@ -1,6 +1,6 @@
 import binascii
 import time
-from typing import List
+from typing import List, Iterable
 
 DEBUG = False
 
@@ -12,7 +12,9 @@ def msg(x):
   return ret.ljust(8, b"\x00")
 
 kmsgs = []
-def recv(panda, cnt, addr, nbus) -> bytes:
+
+
+def recv(panda, cnt, addr, nbus) -> List[bytes]:
   global kmsgs
   ret: List[bytes] = []
 
@@ -28,8 +30,10 @@ def recv(panda, cnt, addr, nbus) -> bytes:
     kmsgs = nmsgs[-256:]
   return ret
 
-def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr) -> bytes:
+
+def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
   msg: bytes = recv(panda, 1, addr, bus)[0]
+  dat: bytes
 
   # TODO: handle other subaddr also communicating
   assert msg[0] == subaddr
@@ -103,7 +107,8 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None, rate=None) ->
           panda.can_send(addr, dat, bus)
           time.sleep(rate)
 
-def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None) -> bytes:
+
+def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None) -> List[bytes]:
   if sendaddr is None:
     sendaddr = addr - 8
 

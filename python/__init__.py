@@ -233,9 +233,9 @@ class Panda:
     self._disable_checks = disable_checks
 
     self.bootstub: bool
-    self._handle: BaseHandle
-    self._handle_open = False
-    self.can_rx_overflow_buffer = b''
+    self._handle: PandaSpiHandle | PandaUsbHandle
+    self._handle_open: bool = False
+    self.can_rx_overflow_buffer: bytes = b''
 
     # connect and set mcu type
     self.connect(claim)
@@ -257,6 +257,7 @@ class Panda:
         self._context.close()
 
   def connect(self, claim=True, wait=False) -> None:
+    bcd: bytearray | None
     self.close()
 
     self._handle = None
@@ -301,9 +302,9 @@ class Panda:
       self.set_power_save(0)
 
   @classmethod
-  def spi_connect(cls, serial, ignore_version=False):
+  def spi_connect(cls, serial, ignore_version=False) -> tuple[PandaSpiHandle, str, bool, None]:
     # get UID to confirm slave is present and up
-    handle = None
+    handle: PandaSpiHandle = None
     spi_serial = None
     bootstub: bool = False
     spi_version = None
@@ -343,8 +344,9 @@ class Panda:
     return None, handle, spi_serial, bootstub, None
 
   @classmethod
-  def usb_connect(cls, serial, claim=True) -> tuple | None:
-    handle, usb_serial, bootstub, bcd = None, None, None, None
+  def usb_connect(cls, serial, claim=True) -> tuple[PandaUsbHandle, str, bool, bytearray]:
+    handle: PandaUsbHandle = None
+    usb_serial, bootstub, bcd = None, None, None
     context = usb1.USBContext()
     context.open()
     try:
@@ -391,7 +393,7 @@ class Panda:
     return list(set(ret))
 
   @classmethod
-  def usb_list(cls) -> List[Optional[bytes]]:
+  def usb_list(cls):
     ret = []
     try:
       with usb1.USBContext() as context:
