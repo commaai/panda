@@ -335,7 +335,6 @@ class Panda:
       # TODO: check for protocol version mismatch
       handle = PandaSpiHandle()
       dat = handle.get_protocol_version()
-      print("dat", dat)
 
       spi_serial = binascii.hexlify(dat[:12]).decode()
       pid = dat[13]

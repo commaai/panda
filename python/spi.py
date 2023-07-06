@@ -225,7 +225,7 @@ class PandaSpiHandle(BaseHandle):
         version_bytes = spi.readbytes(len(vers_str) + 2)
         if bytes(version_bytes).startswith(vers_str):
           break
-        if (time.monotonic() - start) > 0.5:
+        if (time.monotonic() - start) > 0.01:
           raise PandaSpiMissingAck
 
       rlen = struct.unpack("<H", bytes(version_bytes[-2:]))[0]
