@@ -32,7 +32,7 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
 #define MSG_SUBARU_ES_Status             0x222
 #define MSG_SUBARU_ES_DashStatus         0x321
 #define MSG_SUBARU_ES_LKAS_State         0x322
-#define MSG_SUBARU_ES_Infotainment        0x323
+#define MSG_SUBARU_ES_Infotainment       0x323
 
 const CanMsg SUBARU_TX_MSGS[] = {
   {MSG_SUBARU_ES_LKAS,             0, 8},
