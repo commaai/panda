@@ -35,7 +35,7 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
 #define MSG_SUBARU_ES_Infotainment       0x323
 
 #define SUBARU_MAIN_BUS 0U
-#define SUBARU_ALT_BUS  0U
+#define SUBARU_ALT_BUS  1U
 #define SUBARU_CAM_BUS  2U
 
 const CanMsg SUBARU_TX_MSGS[] = {
