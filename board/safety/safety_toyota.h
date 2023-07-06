@@ -103,7 +103,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
 
       // sample gas pedal
       if (!gas_interceptor_detected) {
-        gas_pressed = ((GET_BYTE(to_push, 0) >> 4) & 1U) == 0U;
+        gas_pressed = GET_BIT(to_send, 4U) != 0U;
       }
     }
 
