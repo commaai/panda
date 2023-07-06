@@ -21,18 +21,20 @@ const SteeringLimits SUBARU_PG_STEERING_LIMITS = {
 #define MSG_SUBARU_PG_ES_Distance           0x161
 #define MSG_SUBARU_PG_Steering_Torque       0x371
 
+#define SUBARU_PG_MAIN_BUS 0U
+#define SUBARU_PG_CAM_BUS  2U
 
 const CanMsg SUBARU_PG_TX_MSGS[] = {
-  {MSG_SUBARU_PG_ES_Distance, 0, 8},
-  {MSG_SUBARU_PG_ES_LKAS,     0, 8}
+  {MSG_SUBARU_PG_ES_Distance, SUBARU_PG_MAIN_BUS, 8},
+  {MSG_SUBARU_PG_ES_LKAS,     SUBARU_PG_MAIN_BUS, 8}
 };
 #define SUBARU_PG_TX_MSGS_LEN (sizeof(SUBARU_PG_TX_MSGS) / sizeof(SUBARU_PG_TX_MSGS[0]))
 
 // TODO: do checksum and counter checks after adding the signals to the outback dbc file
 AddrCheckStruct subaru_preglobal_addr_checks[] = {
-  {.msg = {{MSG_SUBARU_PG_Throttle,        0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_PG_Steering_Torque, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_PG_CruiseControl,   0, 8, .expected_timestep = 50000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_PG_Throttle,        SUBARU_PG_MAIN_BUS, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_PG_Steering_Torque, SUBARU_PG_MAIN_BUS, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_PG_CruiseControl,   SUBARU_PG_MAIN_BUS, 8, .expected_timestep = 50000U}, { 0 }, { 0 }}},
 };
 #define SUBARU_PG_ADDR_CHECK_LEN (sizeof(subaru_preglobal_addr_checks) / sizeof(subaru_preglobal_addr_checks[0]))
 addr_checks subaru_preglobal_rx_checks = {subaru_preglobal_addr_checks, SUBARU_PG_ADDR_CHECK_LEN};
@@ -41,7 +43,9 @@ static int subaru_preglobal_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &subaru_preglobal_rx_checks, NULL, NULL, NULL, NULL);
 
-  if (valid && (GET_BUS(to_push) == 0U)) {
+  const int bus = GET_BUS(to_push);
+
+  if (valid && bus == SUBARU_PG_MAIN_BUS) {
     int addr = GET_ADDR(to_push);
     if (addr == MSG_SUBARU_PG_Steering_Torque) {
       int torque_driver_new;
@@ -99,14 +103,14 @@ static int subaru_preglobal_tx_hook(CANPacket_t *to_send) {
 static int subaru_preglobal_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
-  if (bus_num == 0) {
-    bus_fwd = 2;  // Camera CAN
+  if (bus_num == SUBARU_PG_MAIN_BUS) {
+    bus_fwd = SUBARU_PG_CAM_BUS;  // Camera CAN
   }
 
-  if (bus_num == 2) {
+  if (bus_num == SUBARU_PG_CAM_BUS) {
     int block_msg = ((addr == MSG_SUBARU_PG_ES_Distance) || (addr == MSG_SUBARU_PG_ES_LKAS));
     if (!block_msg) {
-      bus_fwd = 0;  // Main CAN
+      bus_fwd = SUBARU_PG_MAIN_BUS;  // Main CAN
     }
   }
 
