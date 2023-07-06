@@ -31,7 +31,7 @@ def recv(panda, cnt, addr, nbus) -> List[bytes]:
   return ret
 
 
-def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
+def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr) -> List[bytes]:
   msg: bytes = recv(panda, 1, addr, bus)[0]
   dat: bytes
 

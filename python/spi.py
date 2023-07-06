@@ -270,7 +270,7 @@ class PandaSpiHandle(BaseHandle):
   def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = TIMEOUT, expect_disconnect: bool = False):
     return self._transfer(0, struct.pack("<BHHH", request, value, index, 0), timeout, expect_disconnect=expect_disconnect)
 
-  def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = TIMEOUT):
+  def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = TIMEOUT) -> bytes:
     return self._transfer(0, struct.pack("<BHHH", request, value, index, length), timeout, max_rx_len=length)
 
   def bulkWrite(self, endpoint: int, data: bytes, timeout: int = TIMEOUT) -> int:

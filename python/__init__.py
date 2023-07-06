@@ -257,6 +257,7 @@ class Panda:
         self._context.close()
 
   def connect(self, claim=True, wait=False) -> None:
+    serial: str
     bcd: bytearray | None
     self.close()
 
@@ -302,7 +303,7 @@ class Panda:
       self.set_power_save(0)
 
   @classmethod
-  def spi_connect(cls, serial, ignore_version=False) -> tuple[PandaSpiHandle, str, bool, None]:
+  def spi_connect(cls, serial, ignore_version=False) -> tuple[PandaSpiHandle, Optional[str], bool, None]:
     # get UID to confirm slave is present and up
     handle: PandaSpiHandle = None
     spi_serial = None
@@ -344,9 +345,11 @@ class Panda:
     return None, handle, spi_serial, bootstub, None
 
   @classmethod
-  def usb_connect(cls, serial, claim=True) -> tuple[PandaUsbHandle, str, bool, bytearray]:
-    handle: PandaUsbHandle = None
-    usb_serial, bootstub, bcd = None, None, None
+  def usb_connect(cls, serial, claim=True) -> tuple[PandaUsbHandle, Optional[str], bool, bytearray]:
+    handle = None
+    usb_serial:str = None
+    bootstub: bool = None
+    bcd: bytearray = None
     context = usb1.USBContext()
     context.open()
     try:
@@ -855,7 +858,7 @@ class Panda:
   def isotp_send(self, addr, dat, bus, recvaddr=None, subaddr=None) -> None:
     return isotp_send(self, dat, addr, bus, recvaddr, subaddr)
 
-  def isotp_recv(self, addr, bus=0, sendaddr=None, subaddr=None) -> bytes:
+  def isotp_recv(self, addr, bus=0, sendaddr=None, subaddr=None) -> List[bytes]:
     return isotp_recv(self, addr, bus, sendaddr, subaddr)
 
   # ******************* serial *******************
