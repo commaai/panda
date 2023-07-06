@@ -32,14 +32,14 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
 #define MSG_SUBARU_ES_Status             0x222
 #define MSG_SUBARU_ES_DashStatus         0x321
 #define MSG_SUBARU_ES_LKAS_State         0x322
-#define MSG_SUBARU_ES_Infotainment   0x323
+#define MSG_SUBARU_ES_Infotainment        0x323
 
 const CanMsg SUBARU_TX_MSGS[] = {
   {MSG_SUBARU_ES_LKAS,             0, 8},
   {MSG_SUBARU_ES_Distance,         0, 8},
   {MSG_SUBARU_ES_DashStatus,       0, 8},
   {MSG_SUBARU_ES_LKAS_State,       0, 8},
-  {MSG_SUBARU_ES_Infotainment, 0, 8},
+  {MSG_SUBARU_ES_Infotainment,     0, 8},
 };
 #define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
 
@@ -48,7 +48,7 @@ const CanMsg SUBARU_GEN2_TX_MSGS[] = {
   {MSG_SUBARU_ES_Distance,         1, 8},
   {MSG_SUBARU_ES_DashStatus,       0, 8},
   {MSG_SUBARU_ES_LKAS_State,       0, 8},
-  {MSG_SUBARU_ES_Infotainment, 0, 8}
+  {MSG_SUBARU_ES_Infotainment,     0, 8}
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
 
