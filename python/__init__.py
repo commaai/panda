@@ -332,10 +332,16 @@ class Panda:
     spi_serial = None
     bootstub = None
     try:
+      # TODO: check for protocol version mismatch
       handle = PandaSpiHandle()
-      dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12, timeout=100)
-      spi_serial = binascii.hexlify(dat).decode()
-      bootstub = Panda.flasher_present(handle)
+      dat = handle.get_protocol_version()
+      print("dat", dat)
+
+      spi_serial = binascii.hexlify(dat[:12]).decode()
+      pid = dat[13]
+      if pid not in (0xcc, 0xee):
+        raise PandaSpiException("bad bootstub status")
+      bootstub = pid == 0xee
     except PandaSpiException:
       pass
 
