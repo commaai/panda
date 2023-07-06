@@ -114,7 +114,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
 
       // sample gas pedal
       if (!gas_interceptor_detected) {
-        gas_pressed = ((GET_BYTE(to_push, 0) >> 4) & 1U) == 0U;
+        gas_pressed = GET_BIT(to_push, 4U) == 0U;
       }
     }
 
@@ -126,8 +126,8 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
 
     // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224
     if (((addr == 0x224) && toyota_alt_brake) || ((addr == 0x226) && !toyota_alt_brake)) {
-      int byte = (addr == 0x224) ? 0 : 4;
-      brake_pressed = ((GET_BYTE(to_push, byte) >> 5) & 1U) != 0U;
+      uint8_t bit = (addr == 0x224) ? 5U : 37U;
+      brake_pressed = GET_BIT(to_push, bit) != 0U;
     }
 
     // sample gas interceptor
