@@ -198,5 +198,3 @@ const safety_hooks subaru_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = subaru_fwd_hook,
 };
-
-
