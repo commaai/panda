@@ -334,6 +334,7 @@ class Panda:
       handle = PandaSpiHandle()
       dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12, timeout=100)
       spi_serial = binascii.hexlify(dat).decode()
+      time.sleep(1)
       bootstub = Panda.flasher_present(handle)
     except PandaSpiException:
       pass
