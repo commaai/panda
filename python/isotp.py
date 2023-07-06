@@ -4,14 +4,14 @@ from typing import List
 
 DEBUG = False
 
-def msg(x):
+def msg(x: bytes) -> bytes:
   if DEBUG:
     print("S:", binascii.hexlify(x))
   assert len(x) <= 7
   ret = bytes([len(x)]) + x
   return ret.ljust(8, b"\x00")
 
-kmsgs = []
+kmsgs = List[Tuple[int, int, int, int]] = []
 
 
 def recv(panda, cnt, addr, nbus) -> List[bytes]:

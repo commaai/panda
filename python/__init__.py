@@ -350,7 +350,7 @@ class Panda:
   @classmethod
   def usb_connect(cls, serial, claim=True) -> tuple[Optional[PandaUsbHandle], Optional[str], bool, bytearray]:
     handle: Optional[PandaUsbHandle]
-    usb_serial:str
+    usb_serial: str
     bootstub: bool
     bcd: bytearray
     context = usb1.USBContext()
