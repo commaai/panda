@@ -229,18 +229,16 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
       int desired_torque = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
       desired_torque = to_signed(desired_torque, 16);
       bool steer_req = GET_BIT(to_send, 0U) != 0U;
+
+      // When using LTA (angle control), assert no actuation on LKA message
       if (toyota_lta) {
-        if (desired_torque != 0 || steer_req) {
+        if ((desired_torque != 0) || steer_req)) {
           tx = 0;
         }
       } else {
         if (steer_torque_cmd_checks(desired_torque, steer_req, TOYOTA_STEERING_LIMITS)) {
           tx = 0;
         }
-      }
-      // When using LTA (angle control), assert no actuation on LKA message
-      if (toyota_lta && ((desired_torque != 0) || steer_req)) {
-        tx = 0;
       }
     }
   }
@@ -252,7 +250,6 @@ static const addr_checks* toyota_init(uint16_t param) {
   gas_interceptor_detected = 0;
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
-  toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
 
 #ifdef ALLOW_DEBUG
