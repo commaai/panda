@@ -4,6 +4,7 @@ hexdump>=3.3
 pycryptodome==3.9.8
 tqdm>=4.14.0
 pytest
+pytest-timeouts
 parameterized
 requests
 flake8==3.7.9
@@ -14,3 +15,4 @@ pylint==2.15.4
 scons==4.4.0
 flaky
 spidev
+pytest-mock

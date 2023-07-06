@@ -12,6 +12,7 @@ from typing import List, Optional
 
 from .base import BaseHandle, BaseSTBootloaderHandle, TIMEOUT
 from .constants import McuType, MCU_TYPE_BY_IDCODE
+from .utils import crc8_pedal
 
 try:
   import spidev
@@ -58,7 +59,14 @@ class SpiDevice:
   """
   Provides locked, thread-safe access to a panda's SPI interface.
   """
-  def __init__(self, speed):
+
+  # 50MHz is the max of the 845. older rev comma three
+  # may not support the full 50MHz
+  MAX_SPEED = 50000000
+
+  def __init__(self, speed=MAX_SPEED):
+    assert speed <= self.MAX_SPEED
+
     if not os.path.exists(DEV_PATH):
       raise PandaSpiUnavailable(f"SPI device not found: {DEV_PATH}")
     if spidev is None:
@@ -87,9 +95,7 @@ class PandaSpiHandle(BaseHandle):
   A class that mimics a libusb1 handle for panda SPI communications.
   """
   def __init__(self):
-    # 50MHz is the max of the 845. older rev comma three
-    # may not support the full 50MHz
-    self.dev = SpiDevice(50000000)
+    self.dev = SpiDevice()
 
   # helpers
   def _calc_checksum(self, data: List[int]) -> int:
@@ -111,54 +117,100 @@ class PandaSpiHandle(BaseHandle):
 
     raise PandaSpiMissingAck
 
-  def _transfer(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = 1000) -> bytes:
+  def _transfer(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = 1000, expect_disconnect: bool = False) -> bytes:
     logging.debug("starting transfer: endpoint=%d, max_rx_len=%d", endpoint, max_rx_len)
     logging.debug("==============================================")
 
+    n = 0
+    start_time = time.monotonic()
     exc = PandaSpiException()
-    for n in range(MAX_XFER_RETRY_COUNT):
-      logging.debug("\ntry #%d", n+1)
+    while (time.monotonic() - start_time) < timeout*1e-3:
+      n += 1
+      logging.debug("\ntry #%d", n)
       try:
         logging.debug("- send header")
         packet = struct.pack("<BBHH", SYNC, endpoint, len(data), max_rx_len)
         packet += bytes([reduce(lambda x, y: x^y, packet) ^ CHECKSUM_START])
         spi.xfer2(packet)
 
+        to = timeout - (time.monotonic() - start_time)*1e3
         logging.debug("- waiting for header ACK")
-        self._wait_for_ack(spi, HACK, timeout, 0x11)
+        self._wait_for_ack(spi, HACK, int(to), 0x11)
 
         # send data
         logging.debug("- sending data")
         packet = bytes([*data, self._calc_checksum(data)])
         spi.xfer2(packet)
 
-        logging.debug("- waiting for data ACK")
-        self._wait_for_ack(spi, DACK, timeout, 0x13)
+        if expect_disconnect:
+          logging.debug("- expecting disconnect, returning")
+          return b""
+        else:
+          to = timeout - (time.monotonic() - start_time)*1e3
+          logging.debug("- waiting for data ACK")
+          self._wait_for_ack(spi, DACK, int(to), 0x13)
 
-        # get response length, then response
-        response_len_bytes = bytes(spi.xfer2(b"\x00" * 2))
-        response_len = struct.unpack("<H", response_len_bytes)[0]
-        if response_len > max_rx_len:
-          raise PandaSpiException("response length greater than max")
+          # get response length, then response
+          response_len_bytes = bytes(spi.xfer2(b"\x00" * 2))
+          response_len = struct.unpack("<H", response_len_bytes)[0]
+          if response_len > max_rx_len:
+            raise PandaSpiException("response length greater than max")
 
-        logging.debug("- receiving response")
-        dat = bytes(spi.xfer2(b"\x00" * (response_len + 1)))
-        if self._calc_checksum([DACK, *response_len_bytes, *dat]) != 0:
-          raise PandaSpiBadChecksum
+          logging.debug("- receiving response")
+          dat = bytes(spi.xfer2(b"\x00" * (response_len + 1)))
+          if self._calc_checksum([DACK, *response_len_bytes, *dat]) != 0:
+            raise PandaSpiBadChecksum
 
-        return dat[:-1]
+          return dat[:-1]
       except PandaSpiException as e:
         exc = e
-        logging.debug("SPI transfer failed, %d retries left", MAX_XFER_RETRY_COUNT - n - 1, exc_info=True)
+        logging.debug("SPI transfer failed, retrying", exc_info=True)
+
+    raise exc
+
+  def get_protocol_version(self) -> bytes:
+    vers_str = b"VERSION"
+    def _get_version(spi) -> bytes:
+      spi.writebytes(vers_str)
+
+      logging.debug("- waiting for echo")
+      start = time.monotonic()
+      while True:
+        version_bytes = spi.readbytes(len(vers_str) + 2)
+        if bytes(version_bytes).startswith(vers_str):
+          break
+        if (time.monotonic() - start) > 0.5:
+          raise PandaSpiMissingAck
+
+      rlen = struct.unpack("<H", bytes(version_bytes[-2:]))[0]
+      if rlen > 1000:
+        raise PandaSpiException("response length greater than max")
+
+      # get response
+      dat = spi.readbytes(rlen + 1)
+      resp = dat[:-1]
+      calculated_crc = crc8_pedal(bytes(version_bytes + resp))
+      if calculated_crc != dat[-1]:
+        raise PandaSpiBadChecksum
+      return bytes(resp)
+
+    exc = PandaSpiException()
+    with self.dev.acquire() as spi:
+      for _ in range(10):
+        try:
+          return _get_version(spi)
+        except PandaSpiException as e:
+          exc = e
+          logging.debug("SPI get protocol version failed, retrying", exc_info=True)
     raise exc
 
   # libusb1 functions
   def close(self):
     self.dev.close()
 
-  def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = TIMEOUT):
+  def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = TIMEOUT, expect_disconnect: bool = False):
     with self.dev.acquire() as spi:
-      return self._transfer(spi, 0, struct.pack("<BHHH", request, value, index, 0), timeout)
+      return self._transfer(spi, 0, struct.pack("<BHHH", request, value, index, 0), timeout, expect_disconnect=expect_disconnect)
 
   def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = TIMEOUT):
     with self.dev.acquire() as spi:
