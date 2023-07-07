@@ -174,7 +174,10 @@ static int subaru_fwd_hook(int bus_num, int addr) {
 
   if (bus_num == SUBARU_CAM_BUS) {
     // Global platform
-    bool block_lkas = (addr == MSG_SUBARU_ES_LKAS) || (addr == MSG_SUBARU_ES_DashStatus) || (addr == MSG_SUBARU_ES_LKAS_State) || (addr == MSG_SUBARU_ES_Infotainment);
+    bool block_lkas = ((addr == MSG_SUBARU_ES_LKAS) ||
+                       (addr == MSG_SUBARU_ES_DashStatus) ||
+                       (addr == MSG_SUBARU_ES_LKAS_State) ||
+                       (addr == MSG_SUBARU_ES_Infotainment));
     if (!block_lkas) {
       bus_fwd = SUBARU_MAIN_BUS;  // Main CAN
     }
