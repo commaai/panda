@@ -15,7 +15,8 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
   .has_steer_req_tolerance = true,
 
   // LTA angle limits
-  .angle_deg_to_can = 17.452007,  // 17.452006980802793
+  // factor for STEER_TORQUE_SENSOR->STEER_ANGLE & STEERING_LTA->STEER_ANGLE_CMD (1 / 0.0573)
+  .angle_deg_to_can = 17.452007,
   .angle_rate_up_lookup = {
     {5., 25., 25.},
     {0.36, 0.18, 0.18}
