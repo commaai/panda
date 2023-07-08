@@ -232,7 +232,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
       bool steer_req = GET_BIT(to_send, 0U) != 0U;
       // When using LTA (angle control), assert no actuation on LKA message
       if (toyota_lta) {
-        if ((desired_torque != 0) || steer_req)) {
+        if ((desired_torque != 0) || steer_req) {
           tx = 0;
         }
       } else {
