@@ -647,19 +647,6 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
       highest_desired_angle = CLAMP(highest_desired_angle, -limits.max_steer, limits.max_steer);
     }
 
-    if (true) {
-      print("torque_meas: "); puth(ABS(torque_meas.max)); print("\n");
-      if (torque_meas.max < -1500) {
-        print("high torque, engaged: "); puth(steer_control_enabled); print("\n");
-        int lowest_desired_angle_lower = desired_angle_last - ((desired_angle_last >= 0) ? delta_angle_down_lower : delta_angle_up_lower);
-      }
-
-
-
-//      lowest_desired_angle = MIN(MAX(lowest_desired_angle, angle_meas.min - limits.max_angle_error - 1), highest_desired_angle_lower);
-
-    }
-
     // check for violation;
     violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
   }
