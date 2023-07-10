@@ -175,14 +175,14 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
 
 
 class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
-  MIN_BRAKE = 0
-  MAX_BRAKE = None
+  MIN_BRAKE: int = 0
+  MAX_BRAKE: Optional[int] = None
 
-  MIN_RPM = 0
-  MAX_RPM = None
+  MIN_RPM: int = 0
+  MAX_RPM: Optional[int] = None
 
-  MIN_THROTTLE = 0
-  MAX_THROTTLE = None
+  MIN_THROTTLE: int = 0
+  MAX_THROTTLE: Optional[int] = None
 
   @classmethod
   def setUpClass(cls):

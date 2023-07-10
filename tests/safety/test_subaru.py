@@ -35,6 +35,7 @@ def long_tx_msgs():
 
 
 class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+  FLAGS = 0
   STANDSTILL_THRESHOLD = 0 # kph
   RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS
   RELAY_MALFUNCTION_BUS = 0
@@ -120,9 +121,8 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
                                MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
 
   def _brake_msg(self, brake, aeb=False, bus=None):
-    if bus is None: bus = self.ALT_BUS
     values = {"Brake_Pressure": brake, "AEB_Status": 8 if aeb else 0}
-    return self.packer.make_can_msg_panda("ES_Brake", bus, values)
+    return self.packer.make_can_msg_panda("ES_Brake", self.ALT_BUS if bus is None else bus, values)
 
   def _throttle_msg(self, throttle):
     values = {"Cruise_Throttle": throttle}
