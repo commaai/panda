@@ -202,12 +202,12 @@ class Panda:
 
   CAN_PACKET_VERSION = 4
   HEALTH_PACKET_VERSION = 14
-  CAN_HEALTH_PACKET_VERSION = 4
-  # dp - 2 extra "B" at the end:
+  CAN_HEALTH_PACKET_VERSION = 5
+  #dp - 2 extra "B" at the end:
   # "usb_power_mode": a[23],
   # "torque_interceptor_detected": a[24],
   HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBBHBHHBB")
-  CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBB")
+  CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
   F2_DEVICES = (HW_TYPE_PEDAL, )
   F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
@@ -656,6 +656,10 @@ class Panda:
       "canfd_enabled": a[19],
       "brs_enabled": a[20],
       "canfd_non_iso": a[21],
+      "irq0_call_rate": a[22],
+      "irq1_call_rate": a[23],
+      "irq2_call_rate": a[24],
+      "can_core_reset_count": a[25],
     }
 
   # ******************* control *******************
@@ -1002,11 +1006,13 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')
 
   # ****************** Logging *****************
-  def get_logs(self, get_all=False):
+  def get_logs(self, last_id=None, get_all=False):
+    assert (last_id is None) or (0 <= last_id < 0xFFFF)
+
     logs = []
-    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfd, 1 if get_all else 0, 0, 0x40)
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfd, 1 if get_all else 0, last_id if last_id is not None else 0xFFFF, 0x40)
     while len(dat) > 0:
       if len(dat) == 0x40:
         logs.append(unpack_log(dat))
-      dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfd, 0, 0, 0x40)
+      dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfd, 0, 0xFFFF, 0x40)
     return logs

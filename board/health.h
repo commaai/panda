@@ -33,7 +33,7 @@ struct __attribute__((packed)) health_t {
   uint8_t torque_interceptor_detected_pkt;
 };
 
-#define CAN_HEALTH_PACKET_VERSION 4
+#define CAN_HEALTH_PACKET_VERSION 5
 typedef struct __attribute__((packed)) {
   uint8_t bus_off;
   uint32_t bus_off_cnt;
@@ -57,4 +57,8 @@ typedef struct __attribute__((packed)) {
   uint8_t canfd_enabled;
   uint8_t brs_enabled;
   uint8_t canfd_non_iso;
+  uint32_t irq0_call_rate;
+  uint32_t irq1_call_rate;
+  uint32_t irq2_call_rate;
+  uint32_t can_core_reset_cnt;
 } can_health_t;

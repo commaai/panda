@@ -11,7 +11,6 @@
 #include "early_init.h"
 #include "provision.h"
 
-#include "power_saving.h"
 #include "safety.h"
 
 #include "health.h"
@@ -23,6 +22,8 @@
 #else
   #include "drivers/bxcan.h"
 #endif
+
+#include "power_saving.h"
 
 #include "obj/gitversion.h"
 
@@ -275,14 +276,11 @@ void tick_handler(void) {
           // Also disable IR when the heartbeat goes missing
           current_board->set_ir_power(0U);
 
-          // TODO: need a SPI equivalent
-          // If enumerated but no heartbeat (phone up, boardd not running), or when the SOM GPIO is pulled high by the ABL,
-          // turn the fan on to cool the device
-          if(usb_enumerated || current_board->read_som_gpio()){
-            fan_set_power(50U);
-          } else {
-            fan_set_power(0U);
-          }
+          // Run fan when device is up, but not talking to us
+          // * bootloader enables the SOM GPIO on boot
+          // * fallback to USB enumerated where supported
+          bool enabled = usb_enumerated || current_board->read_som_gpio();
+          fan_set_power(enabled ? 50U : 0U);
         }
 
         // enter CDP mode when car starts to ensure we are charging a turned off EON
