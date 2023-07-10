@@ -12,6 +12,7 @@ from typing import List, Optional
 
 from .base import BaseHandle, BaseSTBootloaderHandle, TIMEOUT
 from .constants import McuType, MCU_TYPE_BY_IDCODE
+from .utils import crc8_pedal
 
 try:
   import spidev
@@ -165,6 +166,42 @@ class PandaSpiHandle(BaseHandle):
         exc = e
         logging.debug("SPI transfer failed, retrying", exc_info=True)
 
+    raise exc
+
+  def get_protocol_version(self) -> bytes:
+    vers_str = b"VERSION"
+    def _get_version(spi) -> bytes:
+      spi.writebytes(vers_str)
+
+      logging.debug("- waiting for echo")
+      start = time.monotonic()
+      while True:
+        version_bytes = spi.readbytes(len(vers_str) + 2)
+        if bytes(version_bytes).startswith(vers_str):
+          break
+        if (time.monotonic() - start) > 0.5:
+          raise PandaSpiMissingAck
+
+      rlen = struct.unpack("<H", bytes(version_bytes[-2:]))[0]
+      if rlen > 1000:
+        raise PandaSpiException("response length greater than max")
+
+      # get response
+      dat = spi.readbytes(rlen + 1)
+      resp = dat[:-1]
+      calculated_crc = crc8_pedal(bytes(version_bytes + resp))
+      if calculated_crc != dat[-1]:
+        raise PandaSpiBadChecksum
+      return bytes(resp)
+
+    exc = PandaSpiException()
+    with self.dev.acquire() as spi:
+      for _ in range(10):
+        try:
+          return _get_version(spi)
+        except PandaSpiException as e:
+          exc = e
+          logging.debug("SPI get protocol version failed, retrying", exc_info=True)
     raise exc
 
   # libusb1 functions
