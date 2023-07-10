@@ -104,7 +104,6 @@ const uint16_t SUBARU_PARAM_LONGITUDINAL = 2;
 bool subaru_gen2 = false;
 bool subaru_longitudinal = false;
 
-bool subaru_aeb = false;
 
 static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -144,7 +143,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
 
     if ((addr == MSG_SUBARU_ES_Brake) && (bus == alt_cam_bus)) {
       const int aeb_status = (GET_BYTE(to_push, 4) & 0xFU);
-      subaru_aeb = aeb_status == 8;
+      stock_aeb = (aeb_status == 8);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -201,7 +200,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     // check es_brake brake_pressure limits
     if (addr == MSG_SUBARU_ES_Brake) {
       int es_brake_pressure = ((GET_BYTES(to_send, 0, 4) >> 16) & 0xFFFFU);
-      violation |= !subaru_aeb && longitudinal_brake_checks(es_brake_pressure, SUBARU_LONG_LIMITS);
+      violation |= !stock_aeb && longitudinal_brake_checks(es_brake_pressure, SUBARU_LONG_LIMITS);
     }
 
     // check es_distance cruise_throttle limits

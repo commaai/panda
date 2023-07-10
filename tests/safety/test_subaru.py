@@ -139,15 +139,15 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
     # Allow higher braking when AEB is triggered
     self.safety.set_controls_allowed(1)
 
-    self.assertFalse(self.safety.get_subaru_aeb())
+    self.assertFalse(self.safety.get_stock_aeb())
     self._rx(self._aeb_msg(False))
-    self.assertFalse(self.safety.get_subaru_aeb())
+    self.assertFalse(self.safety.get_stock_aeb())
 
     self.assertTrue(self._tx(self._brake_msg(brake=self.MAX_BRAKE)))
     self.assertFalse(self._tx(self._brake_msg(brake=self.MAX_BRAKE+10)))
 
     self._rx(self._aeb_msg(True))
-    self.assertTrue(self.safety.get_subaru_aeb())
+    self.assertTrue(self.safety.get_stock_aeb())
 
     self.assertTrue(self._tx(self._brake_msg(brake=self.MAX_BRAKE+10)))
 

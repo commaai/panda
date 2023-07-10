@@ -21,6 +21,8 @@ def setup_safety_helpers(ffi):
   int get_vehicle_speed_max(void);
   int get_current_safety_mode(void);
   int get_current_safety_param(void);
+  void set_stock_aeb(bool c);
+  bool get_stock_aeb();
 
   void set_torque_meas(int min, int max);
   int get_torque_meas_min(void);
@@ -48,8 +50,6 @@ def setup_safety_helpers(ffi):
   void set_honda_alt_brake_msg(bool c);
   void set_honda_bosch_long(bool c);
   int get_honda_hw(void);
-  void set_subaru_aeb(bool c);
-  bool get_subaru_aeb();
   """)
 
 class PandaSafety(Protocol):
@@ -99,6 +99,6 @@ class PandaSafety(Protocol):
   def set_honda_bosch_long(self, c: bool) -> None: ...
   def get_honda_hw(self) -> int: ...
 
-  def set_subaru_aeb(self, c: bool) -> None: ...
-  def get_subaru_aeb(self) -> bool: ...
+  def set_stock_aeb(self, c: bool) -> None: ...
+  def get_stock_aeb(self) -> bool: ...
 

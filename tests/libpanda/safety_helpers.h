@@ -168,12 +168,12 @@ void set_honda_fwd_brake(bool c){
   honda_fwd_brake = c;
 }
 
-void set_subaru_aeb(bool c){
-  subaru_aeb = c;
+void set_stock_aeb(bool c){
+  stock_aeb = c;
 }
 
-bool get_subaru_aeb(){
-  return subaru_aeb;
+bool get_stock_aeb(){
+  return stock_aeb;
 }
 
 void init_tests(void){
