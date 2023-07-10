@@ -49,6 +49,7 @@ def setup_safety_helpers(ffi):
   void set_honda_bosch_long(bool c);
   int get_honda_hw(void);
   void set_subaru_aeb(bool c);
+  bool get_subaru_aeb();
   """)
 
 class PandaSafety(Protocol):
@@ -99,4 +100,5 @@ class PandaSafety(Protocol):
   def get_honda_hw(self) -> int: ...
 
   def set_subaru_aeb(self, c: bool) -> None: ...
+  def get_subaru_aeb(self) -> bool: ...
 

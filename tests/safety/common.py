@@ -137,7 +137,6 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
 
 
 class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
-
   MAX_ACCEL: float = 2.0
   MIN_ACCEL: float = -3.5
   INACTIVE_ACCEL: float = 0.0
@@ -174,6 +173,77 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
             should_tx = should_tx or accel == self.INACTIVE_ACCEL
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
+
+class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
+  MIN_BRAKE: int = 0
+  MAX_BRAKE: int = None
+
+  MIN_RPM: int = 0
+  MAX_RPM: int = None
+
+  MIN_THROTTLE: int = 0
+  MAX_THROTTLE: int = None
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "LongitudinalGasBrakeSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  @abc.abstractmethod
+  def _throttle_msg(self, throttle: int):
+    pass
+
+  @abc.abstractmethod
+  def _rpm_msg(self, rpm: int):
+    pass
+
+  @abc.abstractmethod
+  def _brake_msg(self, brake: int):
+    pass
+
+  def test_gas_brake_limits_correct(self):
+    # Assert that max brake, and at least one of max rpm or max throttle is set
+    self.assertTrue(self.MAX_BRAKE is not None)
+    self.assertTrue(self.MAX_RPM is not None or self.MAX_THROTTLE is not None)
+
+    self.assertGreater(self.MAX_BRAKE, self.MIN_BRAKE)
+    self.assertGreater(self.MAX_RPM, self.MIN_RPM)
+    self.assertGreater(self.MAX_THROTTLE, self.MIN_THROTTLE)
+
+  def test_throttle_safety_check(self):
+    for enabled in [0, 1]:
+      for g in range(int(self.MIN_THROTTLE * 1.5), int(self.MAX_THROTTLE * 1.5)):
+        self.safety.set_controls_allowed(enabled)
+        if g > self.MAX_THROTTLE or (not enabled and abs(g) > 0):
+          self.assertFalse(self._tx(self._throttle_msg(g)))
+        else:
+          self.assertTrue(self._tx(self._throttle_msg(g)))
+  
+  def test_rpm_safety_check(self):
+    if self.MAX_RPM is None:
+      raise unittest.SkipTest
+    
+    for enabled in [0, 1]:
+      for r in range(int(self.MIN_RPM), int(self.MAX_RPM * 1.2)):
+        self.safety.set_controls_allowed(enabled)
+        if r > self.MAX_RPM or (not enabled and abs(r) > 0):
+          self.assertFalse(self._tx(self._rpm_msg(r)))
+        else:
+          self.assertTrue(self._tx(self._rpm_msg(r)))
+  
+  def test_throttle_safety_check(self):
+    if self.MAX_THROTTLE is None:
+      raise unittest.SkipTest
+    
+    for enabled in [0, 1]:
+      for t in range(int(self.MIN_THROTTLE), int(self.MAX_THROTTLE * 1.2)):
+        self.safety.set_controls_allowed(enabled)
+        if t > self.MAX_THROTTLE or (not enabled and abs(t) > 0):
+          self.assertFalse(self._tx(self._throttle_msg(t)), msg=f"{t} throttle was allowed when {enabled}")
+        else:
+          self.assertTrue(self._tx(self._throttle_msg(t)))
+        
 
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
@@ -894,7 +964,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
               continue
             if attr.startswith('TestToyota') and current_test.startswith('TestToyota'):
               continue
-            if {attr, current_test}.issubset({'TestSubaruSafety', 'TestSubaruGen2Safety', 'TestSubaruLongitudinalSafety'}):
+            if {attr, current_test}.issubset({'TestSubaruGen1Safety', 'TestSubaruGen2Safety', 'TestSubaruGen1LongitudinalSafety'}):
               continue
             if {attr, current_test}.issubset({'TestVolkswagenPqSafety', 'TestVolkswagenPqStockSafety', 'TestVolkswagenPqLongSafety'}):
               continue

@@ -172,6 +172,10 @@ void set_subaru_aeb(bool c){
   subaru_aeb = c;
 }
 
+bool get_subaru_aeb(){
+  return subaru_aeb;
+}
+
 void init_tests(void){
   // get HW_TYPE from env variable set in test.sh
   if (getenv("HW_TYPE")) {
