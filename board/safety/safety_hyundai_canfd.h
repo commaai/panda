@@ -22,7 +22,7 @@ const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
 #define HYUNDAI_CANFD_CRUISE_BUTTONS            0x1CF
 #define HYUNDAI_CANFD_CAM_0x2A4                 0x2A4
 #define HYUNDAI_CANFD_ADRV_0x51                 0x51
-#define HYUNDAI_CANFD_UDS_ADAS_TESTER_PRESENT   0x730
+#define HYUNDAI_CANFD_ADAS_TESTER_PRESENT       0x730
 #define HYUNDAI_CANFD_LFA                       0x12A
 #define HYUNDAI_CANFD_ADRV_0x160                0x160
 #define HYUNDAI_CANFD_LFAHDA_CLUSTER            0x1E0
@@ -303,7 +303,7 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {
   }
 
   // UDS: only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
-  if ((addr == HYUNDAI_CANFD_UDS_ADAS_TESTER_PRESENT) && hyundai_canfd_hda2) {
+  if ((addr == HYUNDAI_CANFD_ADAS_TESTER_PRESENT) && hyundai_canfd_hda2) {
     if ((GET_BYTES(to_send, 0, 4) != 0x00803E02U) || (GET_BYTES(to_send, 4, 4) != 0x0U)) {
       tx = 0;
     }
