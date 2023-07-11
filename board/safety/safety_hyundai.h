@@ -71,39 +71,39 @@ const CanMsg HYUNDAI_CAMERA_SCC_TX_MSGS[] = {
 };
 
 AddrCheckStruct hyundai_addr_checks[] = {
-  {.msg = {{MSG_HYUNDAI_EMS16,     HYUNDAI_MAIN_BUS, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-           {MSG_HYUNDAI_E_EMS11,   HYUNDAI_MAIN_BUS, 8, .expected_timestep = 10000U}, { 0 }}},
-  {.msg = {{MSG_HYUNDAI_WHL_SPD11, HYUNDAI_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_HYUNDAI_TCS13,     HYUNDAI_MAIN_BUS, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_HYUNDAI_SCC12,     HYUNDAI_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_EMS16,     HYUNDAI_MAIN_BUS, 8, .check_checksum =  true, .max_counter =  3U, .expected_timestep = 10000U},
+           {MSG_HYUNDAI_E_EMS11,   HYUNDAI_MAIN_BUS, 8,                                              .expected_timestep = 10000U}, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_WHL_SPD11, HYUNDAI_MAIN_BUS, 8, .check_checksum =  true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_TCS13,     HYUNDAI_MAIN_BUS, 8, .check_checksum =  true, .max_counter =  7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_SCC12,     HYUNDAI_MAIN_BUS, 8, .check_checksum =  true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define HYUNDAI_ADDR_CHECK_LEN (sizeof(hyundai_addr_checks) / sizeof(hyundai_addr_checks[0]))
 
 AddrCheckStruct hyundai_cam_scc_addr_checks[] = {
-  {.msg = {{MSG_HYUNDAI_EMS16,     HYUNDAI_MAIN_BUS, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-           {MSG_HYUNDAI_E_EMS11,   HYUNDAI_MAIN_BUS, 8, .expected_timestep = 10000U}, { 0 }}},
-  {.msg = {{MSG_HYUNDAI_WHL_SPD11, HYUNDAI_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_HYUNDAI_TCS13,     HYUNDAI_MAIN_BUS, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_HYUNDAI_SCC12,     HYUNDAI_CAM_BUS,  8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_EMS16,     HYUNDAI_MAIN_BUS, 8, .check_checksum =  true, .max_counter =  3U, .expected_timestep = 10000U},
+           {MSG_HYUNDAI_E_EMS11,   HYUNDAI_MAIN_BUS, 8,                                             .expected_timestep = 10000U}, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_WHL_SPD11, HYUNDAI_MAIN_BUS, 8, .check_checksum =  true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_TCS13,     HYUNDAI_MAIN_BUS, 8, .check_checksum =  true, .max_counter =  7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_SCC12,     HYUNDAI_CAM_BUS,  8, .check_checksum =  true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define HYUNDAI_CAM_SCC_ADDR_CHECK_LEN (sizeof(hyundai_cam_scc_addr_checks) / sizeof(hyundai_cam_scc_addr_checks[0]))
 
 AddrCheckStruct hyundai_long_addr_checks[] = {
-  {.msg = {{MSG_HYUNDAI_EMS16,     HYUNDAI_MAIN_BUS, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-           {MSG_HYUNDAI_E_EMS11,   HYUNDAI_MAIN_BUS, 8, .expected_timestep = 10000U}, { 0 }}},
-  {.msg = {{MSG_HYUNDAI_WHL_SPD11, HYUNDAI_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_HYUNDAI_TCS13,     HYUNDAI_MAIN_BUS, 8, .check_checksum = true, .max_counter = 7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_EMS16,     HYUNDAI_MAIN_BUS, 8, .check_checksum =  true, .max_counter =  3U, .expected_timestep = 10000U},
+           {MSG_HYUNDAI_E_EMS11,   HYUNDAI_MAIN_BUS, 8,                                              .expected_timestep = 10000U}, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_WHL_SPD11, HYUNDAI_MAIN_BUS, 8, .check_checksum =  true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_TCS13,     HYUNDAI_MAIN_BUS, 8, .check_checksum =  true, .max_counter =  7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_HYUNDAI_CLU11,     HYUNDAI_MAIN_BUS, 4, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define HYUNDAI_LONG_ADDR_CHECK_LEN (sizeof(hyundai_long_addr_checks) / sizeof(hyundai_long_addr_checks[0]))
 
 // older hyundai models have less checks due to missing counters and checksums
 AddrCheckStruct hyundai_legacy_addr_checks[] = {
-  {.msg = {{MSG_HYUNDAI_EMS16,     HYUNDAI_MAIN_BUS, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-           {MSG_HYUNDAI_E_EMS11,   HYUNDAI_MAIN_BUS, 8, .expected_timestep = 10000U}, { 0 }}},
-  {.msg = {{MSG_HYUNDAI_WHL_SPD11, HYUNDAI_MAIN_BUS, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_HYUNDAI_TCS13,     HYUNDAI_MAIN_BUS, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_HYUNDAI_SCC12,     HYUNDAI_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_EMS16,     HYUNDAI_MAIN_BUS, 8, .check_checksum =  true, .max_counter =  3U, .expected_timestep = 10000U},
+           {MSG_HYUNDAI_E_EMS11,   HYUNDAI_MAIN_BUS, 8,                                              .expected_timestep = 10000U}, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_WHL_SPD11, HYUNDAI_MAIN_BUS, 8,                                              .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_TCS13,     HYUNDAI_MAIN_BUS, 8,                                              .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_HYUNDAI_SCC12,     HYUNDAI_MAIN_BUS, 8, .check_checksum =  true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 #define HYUNDAI_LEGACY_ADDR_CHECK_LEN (sizeof(hyundai_legacy_addr_checks) / sizeof(hyundai_legacy_addr_checks[0]))
 
