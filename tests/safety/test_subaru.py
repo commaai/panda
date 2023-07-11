@@ -120,9 +120,9 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
                                MSG_SUBARU_ES_Status, MSG_SUBARU_ES_DashStatus,
                                MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
 
-  def _brake_msg(self, brake, aeb=False, bus=None):
-    values = {"Brake_Pressure": brake, "AEB_Status": 8 if aeb else 0}
-    return self.packer.make_can_msg_panda("ES_Brake", self.ALT_BUS if bus is None else bus, values)
+  def _brake_msg(self, brake):
+    values = {"Brake_Pressure": brake}
+    return self.packer.make_can_msg_panda("ES_Brake", self.ALT_BUS, values)
 
   def _throttle_msg(self, throttle):
     values = {"Cruise_Throttle": throttle}
@@ -131,25 +131,6 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
   def _rpm_msg(self, rpm):
     values = {"Cruise_RPM": rpm}
     return self.packer.make_can_msg_panda("ES_Status", self.ALT_BUS, values)
-
-  def _aeb_msg(self, aeb):
-    return self._brake_msg(5, aeb, bus=2)
-
-  def test_aeb_passthrough(self):
-    # Allow higher braking when AEB is triggered
-    self.safety.set_controls_allowed(1)
-
-    self.assertFalse(self.safety.get_stock_aeb())
-    self._rx(self._aeb_msg(False))
-    self.assertFalse(self.safety.get_stock_aeb())
-
-    self.assertTrue(self._tx(self._brake_msg(brake=self.MAX_BRAKE)))
-    self.assertFalse(self._tx(self._brake_msg(brake=self.MAX_BRAKE+10)))
-
-    self._rx(self._aeb_msg(True))
-    self.assertTrue(self.safety.get_stock_aeb())
-
-    self.assertTrue(self._tx(self._brake_msg(brake=self.MAX_BRAKE+10)))
 
 
 class TestSubaruGen1Safety(TestSubaruSafetyBase):

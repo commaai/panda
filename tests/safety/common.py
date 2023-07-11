@@ -212,7 +212,6 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
     self.assertGreater(self.MAX_THROTTLE, self.MIN_THROTTLE)
 
   def test_brake_safety_check(self):
-    self.safety.set_stock_aeb(0)
     for enabled in [0, 1]:
       for b in range(self.MIN_BRAKE, int(self.MAX_BRAKE * 1.5)):
         self.safety.set_controls_allowed(enabled)
