@@ -54,7 +54,7 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
   {MSG_SUBARU_ES_LKAS_State,   SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_Infotainment, SUBARU_MAIN_BUS, 8}, \
 
-#define SUBARU_COMMON_LONG_TX_MSGS(alt_bus)                \
+#define SUBARU_COMMON_LONG_TX_MSGS(alt_bus)         \
   {MSG_SUBARU_ES_Brake,        SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_Status,       SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_Brake_Status,    SUBARU_CAM_BUS,  8}, \
