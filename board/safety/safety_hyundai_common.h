@@ -17,9 +17,9 @@ enum {
   HYUNDAI_BTN_CANCEL = 4,
 };
 
-#define HYUNDAI_MAIN_BUS 0U
-#define HYUNDAI_SUB_BUS  1U
-#define HYUNDAI_CAM_BUS  2U
+#define HYUNDAI_MAIN_BUS 0
+#define HYUNDAI_SUB_BUS  1
+#define HYUNDAI_CAM_BUS  2
 
 // common state
 bool hyundai_ev_gas_signal = false;
