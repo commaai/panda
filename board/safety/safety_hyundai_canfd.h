@@ -24,7 +24,7 @@ const CanMsg HYUNDAI_CANFD_HDA2_TX_MSGS[] = {
   {0x2A4, 0, 24}, // CAM_0x2A4
 };
 
-const CanMsg HYUNDAI_CANFD_HDA2_TX_MSGS[] = {
+const CanMsg HYUNDAI_CANFD_HDA2_ALT_STEERING_TX_MSGS[] = {
   {0x110, 0, 32},  // LKAS_ALT
   {0x1CF, 1, 8},  // CRUISE_BUTTON
 };
@@ -257,7 +257,11 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
 
   if (hyundai_canfd_hda2 && !hyundai_longitudinal) {
-    tx = msg_allowed(to_send, HYUNDAI_CANFD_HDA2_TX_MSGS, sizeof(HYUNDAI_CANFD_HDA2_TX_MSGS)/sizeof(HYUNDAI_CANFD_HDA2_TX_MSGS[0]));
+    if (hyundai_canfd_hda2_alt_steering) {
+      tx = msg_allowed(to_send, HYUNDAI_CANFD_HDA2_ALT_STEERING_TX_MSGS, sizeof(HYUNDAI_CANFD_HDA2_ALT_STEERING_TX_MSGS)/sizeof(HYUNDAI_CANFD_HDA2_ALT_STEERING_TX_MSGS[0]));
+    } else {
+      tx = msg_allowed(to_send, HYUNDAI_CANFD_HDA2_TX_MSGS, sizeof(HYUNDAI_CANFD_HDA2_TX_MSGS)/sizeof(HYUNDAI_CANFD_HDA2_TX_MSGS[0]));
+    }
   } else if (hyundai_canfd_hda2 && hyundai_longitudinal) {
     tx = msg_allowed(to_send, HYUNDAI_CANFD_HDA2_LONG_TX_MSGS, sizeof(HYUNDAI_CANFD_HDA2_LONG_TX_MSGS)/sizeof(HYUNDAI_CANFD_HDA2_LONG_TX_MSGS[0]));
   } else {
