@@ -23,9 +23,8 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
 const LongitudinalLimits SUBARU_LONG_LIMITS = {
   .min_gas = 0,
   .max_gas = 3400,
-  .min_rpm = 0,
-  .max_rpm = 3200,
   .max_brake = 400,
+  .inactive_gas = 0
 };
 
 #define MSG_SUBARU_Brake_Status          0x13c
@@ -60,39 +59,37 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
   {MSG_SUBARU_Brake_Status,    SUBARU_CAM_BUS,  8}, \
   {MSG_SUBARU_CruiseControl,   SUBARU_CAM_BUS,  8}, \
 
+#define SUBARU_COMMON_ADDR_CHECKS(alt_bus)                                                                                                            \
+  {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_Wheel_Speeds,    alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_Brake_Status,    alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_CruiseControl,   alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}}, \
 
 const CanMsg SUBARU_TX_MSGS[] = {
-  SUBARU_COMMON_TX_MSGS(0)
+  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS)
 };
 #define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
 
 const CanMsg SUBARU_LONG_TX_MSGS[] = {
-  SUBARU_COMMON_TX_MSGS(0)
-  SUBARU_COMMON_LONG_TX_MSGS(0)
+  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS)
+  SUBARU_COMMON_LONG_TX_MSGS(SUBARU_MAIN_BUS)
 };
 #define SUBARU_LONG_TX_MSGS_LEN (sizeof(SUBARU_LONG_TX_MSGS) / sizeof(SUBARU_LONG_TX_MSGS[0]))
 
 const CanMsg SUBARU_GEN2_TX_MSGS[] = {
-  SUBARU_COMMON_TX_MSGS(1)
+  SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS)
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
 
 AddrCheckStruct subaru_addr_checks[] = {
-  {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_Wheel_Speeds,    SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_Brake_Status,    SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_CruiseControl,   SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
+  SUBARU_COMMON_ADDR_CHECKS(SUBARU_MAIN_BUS)
 };
 #define SUBARU_ADDR_CHECK_LEN (sizeof(subaru_addr_checks) / sizeof(subaru_addr_checks[0]))
 addr_checks subaru_rx_checks = {subaru_addr_checks, SUBARU_ADDR_CHECK_LEN};
 
 AddrCheckStruct subaru_gen2_addr_checks[] = {
-  {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_Wheel_Speeds,    SUBARU_ALT_BUS,  8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_Brake_Status,    SUBARU_ALT_BUS,  8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_CruiseControl,   SUBARU_ALT_BUS,  8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
+  SUBARU_COMMON_ADDR_CHECKS(SUBARU_ALT_BUS)
 };
 #define SUBARU_GEN2_ADDR_CHECK_LEN (sizeof(subaru_gen2_addr_checks) / sizeof(subaru_gen2_addr_checks[0]))
 addr_checks subaru_gen2_rx_checks = {subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
@@ -198,19 +195,9 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     }
 
     // check es_distance cruise_throttle limits
-    if ((addr == MSG_SUBARU_ES_Distance) && !gas_pressed) {
+    if (addr == MSG_SUBARU_ES_Distance) {
       int cruise_throttle = ((GET_BYTES(to_send, 0, 4) >> 16) & 0xFFFU);
       violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
-    }
-
-    // check es_status cruise_rpm limits
-    if ((addr == MSG_SUBARU_ES_Status) && !gas_pressed) {
-      int cruise_rpm = ((GET_BYTES(to_send, 0, 4) >> 16) & 0xFFFU);
-      if (get_longitudinal_allowed()) {
-        violation |= max_limit_check(cruise_rpm, SUBARU_LONG_LIMITS.max_rpm, SUBARU_LONG_LIMITS.min_rpm);
-      } else {
-        violation |= cruise_rpm != 0;
-      }
     }
   }
 

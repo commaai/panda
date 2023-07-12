@@ -178,9 +178,6 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
   MIN_BRAKE: int = 0
   MAX_BRAKE: Optional[int] = None
 
-  MIN_RPM: int = 0
-  MAX_RPM: Optional[int] = None
-
   MIN_THROTTLE: int = 0
   MAX_THROTTLE: Optional[int] = None
 
@@ -195,20 +192,15 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
     pass
 
   @abc.abstractmethod
-  def _rpm_msg(self, rpm: int):
-    pass
-
-  @abc.abstractmethod
   def _brake_msg(self, brake: int):
     pass
 
   def test_gas_brake_limits_correct(self):
-    # Assert that max brake, and at least one of max rpm or max throttle is set
+    # Assert that max brake and max throttle is set
     self.assertTrue(self.MAX_BRAKE is not None)
-    self.assertTrue(self.MAX_RPM is not None or self.MAX_THROTTLE is not None)
+    self.assertTrue(self.MAX_THROTTLE is not None)
 
     self.assertGreater(self.MAX_BRAKE, self.MIN_BRAKE)
-    self.assertGreater(self.MAX_RPM, self.MIN_RPM)
     self.assertGreater(self.MAX_THROTTLE, self.MIN_THROTTLE)
 
   def test_brake_safety_check(self):
@@ -219,18 +211,6 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
           self.assertFalse(self._tx(self._brake_msg(b)))
         else:
           self.assertTrue(self._tx(self._brake_msg(b)))
-  
-  def test_rpm_safety_check(self):
-    if self.MAX_RPM is None:
-      raise unittest.SkipTest
-    
-    for enabled in [0, 1]:
-      for r in range(self.MIN_RPM, int(self.MAX_RPM * 1.2)):
-        self.safety.set_controls_allowed(enabled)
-        if r > self.MAX_RPM or (not enabled and abs(r) > 0):
-          self.assertFalse(self._tx(self._rpm_msg(r)))
-        else:
-          self.assertTrue(self._tx(self._rpm_msg(r)))
   
   def test_throttle_safety_check(self):
     if self.MAX_THROTTLE is None:
