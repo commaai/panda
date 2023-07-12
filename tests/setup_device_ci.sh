@@ -62,7 +62,7 @@ git reset --hard origin/master
 
 # setup device/SOM state
 SOM_ST_IO=49
-echo $SOM_ST_IO > /sys/class/gpio/export
+echo $SOM_ST_IO > /sys/class/gpio/export || true
 echo out > /sys/class/gpio/gpio${SOM_ST_IO}/direction
 echo 1 > /sys/class/gpio/gpio${SOM_ST_IO}/value
 
