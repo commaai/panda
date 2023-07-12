@@ -194,11 +194,12 @@ void tick_handler(void) {
       previous_harness_status = harness.status;
 
       // log device boot time
-      if (just_bootkicked) {
+      const bool som_running = current_board->read_som_gpio();
+      if (just_bootkicked && !som_running) {
         waiting_to_boot = true;
       }
       if (waiting_to_boot) {
-        if (current_board->read_som_gpio()) {
+        if (som_running) {
           log("device booted");
           waiting_to_boot = false;
         } else if (waiting_to_boot_count == 10U) {
