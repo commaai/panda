@@ -203,6 +203,8 @@ void tick_handler(void) {
           waiting_to_boot = false;
         } else if (waiting_to_boot_count == 10U) {
           log("not booted after 10s");
+        } else {
+
         }
         waiting_to_boot_count += 1U;
       }
