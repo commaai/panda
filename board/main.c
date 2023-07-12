@@ -147,6 +147,8 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 // called at 8Hz
 uint8_t loop_counter = 0U;
 uint8_t previous_harness_status = HARNESS_STATUS_NC;
+uint32_t waiting_to_boot_count = 0;
+bool waiting_to_boot = true;
 void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
     // siren
@@ -187,8 +189,23 @@ void tick_handler(void) {
       logging_tick();
 
       const bool recent_heartbeat = heartbeat_counter == 0U;
-      current_board->board_tick(check_started(), usb_enumerated, recent_heartbeat, ((harness.status != previous_harness_status) && (harness.status != HARNESS_STATUS_NC)));
+      const bool harness_inserted = (harness.status != previous_harness_status) && (harness.status != HARNESS_STATUS_NC);
+      const bool just_bootkicked = current_board->board_tick(check_started(), usb_enumerated, recent_heartbeat, harness_inserted);
       previous_harness_status = harness.status;
+
+      // log device boot time
+      if (just_bootkicked) {
+        waiting_to_boot = true;
+      }
+      if (waiting_to_boot) {
+        if (current_board->read_som_gpio()) {
+          log("device booted");
+          waiting_to_boot = false;
+        } else if (waiting_to_boot_count == 10U) {
+          log("not booted after 10s");
+        }
+        waiting_to_boot_count += 1U;
+      }
 
       // increase heartbeat counter and cap it at the uint32 limit
       if (heartbeat_counter < __UINT32_MAX__) {
