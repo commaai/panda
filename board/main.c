@@ -148,7 +148,7 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 uint8_t loop_counter = 0U;
 uint8_t previous_harness_status = HARNESS_STATUS_NC;
 uint32_t waiting_to_boot_count = 0;
-bool waiting_to_boot = true;
+bool waiting_to_boot = false;
 void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
     // siren
