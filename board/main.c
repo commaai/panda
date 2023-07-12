@@ -196,6 +196,7 @@ void tick_handler(void) {
       // log device boot time
       const bool som_running = current_board->read_som_gpio();
       if (just_bootkicked && !som_running) {
+        log("bootkick");
         waiting_to_boot = true;
       }
       if (waiting_to_boot) {
