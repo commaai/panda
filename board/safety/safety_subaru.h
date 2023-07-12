@@ -22,8 +22,8 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
 
 const LongitudinalLimits SUBARU_LONG_LIMITS = {
   .min_gas = 0,
-  .max_gas = 3400,
-  .max_brake = 400,
+  .max_gas = 3400,   // approx  2.5 m/s^2
+  .max_brake = 400,  // approx -2.5 m/s^2
   .inactive_gas = 0
 };
 
