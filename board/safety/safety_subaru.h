@@ -39,8 +39,8 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
 #define SUBARU_ALT_BUS  1
 #define SUBARU_CAM_BUS  2
 
-#define SUBARU_COMMON_TX_MSGS(alt_bus)              \
-  {MSG_SUBARU_ES_LKAS,         SUBARU_MAIN_BUS, 8}, \
+#define SUBARU_COMMON_TX_MSGS(alt_bus, lkas_msg)    \
+  {lkas_msg,                   SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_Distance,     alt_bus,         8}, \
   {MSG_SUBARU_ES_DashStatus,   SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_LKAS_State,   SUBARU_MAIN_BUS, 8}, \
@@ -51,52 +51,50 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
   {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
   {.msg = {{MSG_SUBARU_Wheel_Speeds,    alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
   {.msg = {{MSG_SUBARU_Brake_Status,    alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
+
+#define SUBARU_GEN12_ADDR_CHECKS(alt_bus)                                                                                                             \
   {.msg = {{MSG_SUBARU_CruiseControl,   alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}}, \
 
 const CanMsg SUBARU_TX_MSGS[] = {
-  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS)
+  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS)
 };
 #define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
 
 const CanMsg SUBARU_GEN2_TX_MSGS[] = {
-  SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS)
+  SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS, MSG_SUBARU_ES_LKAS)
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
 
-const CanMsg SUBARU_FORESTER_2022_TX_MSGS[] = {
-  {0x124, 0, 8},
-  {0x221, 0, 8},
-  {0x321, 0, 8},
-  {0x322, 0, 8},
+const CanMsg SUBARU_GEN3_TX_MSGS[] = {
+  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS_ALT)
 };
-#define SUBARU_FORESTER_2022_TX_MSGS_LEN (sizeof(SUBARU_FORESTER_2022_TX_MSGS) / sizeof(SUBARU_FORESTER_2022_TX_MSGS[0]))
+#define SUBARU_GEN3_TX_MSGS_LEN (sizeof(SUBARU_GEN3_TX_MSGS) / sizeof(SUBARU_GEN3_TX_MSGS[0]))
 
 AddrCheckStruct subaru_addr_checks[] = {
   SUBARU_COMMON_ADDR_CHECKS(SUBARU_MAIN_BUS)
+  SUBARU_GEN12_ADDR_CHECKS(SUBARU_MAIN_BUS)
 };
 #define SUBARU_ADDR_CHECK_LEN (sizeof(subaru_addr_checks) / sizeof(subaru_addr_checks[0]))
 addr_checks subaru_rx_checks = {subaru_addr_checks, SUBARU_ADDR_CHECK_LEN};
 
 AddrCheckStruct subaru_gen2_addr_checks[] = {
   SUBARU_COMMON_ADDR_CHECKS(SUBARU_ALT_BUS)
+  SUBARU_GEN12_ADDR_CHECKS(SUBARU_ALT_BUS)
 };
 #define SUBARU_GEN2_ADDR_CHECK_LEN (sizeof(subaru_gen2_addr_checks) / sizeof(subaru_gen2_addr_checks[0]))
 addr_checks subaru_gen2_rx_checks = {subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
 
-AddrCheckStruct subaru_forester_2022_addr_checks[] = {
-  {.msg = {{ 0x40, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x119, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{0x13a, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{0x13c, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+AddrCheckStruct subaru_gen3_addr_checks[] = {
+  SUBARU_COMMON_ADDR_CHECKS(SUBARU_MAIN_BUS)
   {.msg = {{0x222, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
   {.msg = {{0x321, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
-#define SUBARU_FORESTER_2022_ADDR_CHECK_LEN (sizeof(subaru_forester_2022_addr_checks) / sizeof(subaru_forester_2022_addr_checks[0]))
+#define SUBARU_GEN3_ADDR_CHECK_LEN (sizeof(subaru_gen3_addr_checks) / sizeof(subaru_gen3_addr_checks[0]))
 
 const uint16_t SUBARU_PARAM_GEN2 = 1;
-const uint16_t SUBARU_PARAM_FORESTER_2022 = 2;
+const uint16_t SUBARU_PARAM_GEN3 = 2;
 bool subaru_gen2 = false;
-bool subaru_forester_2022 = false;
+bool subaru_gen3 = false;
 
 
 static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
@@ -125,7 +123,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
   if (valid) {
     const int bus = GET_BUS(to_push);
     const int alt_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
-    const int stock_ecu = subaru_forester_2022 ? 0x124 : 0x122;
+    const int stock_ecu = subaru_gen3 ? 0x124 : 0x122;
 
     int addr = GET_ADDR(to_push);
     if ((addr == MSG_SUBARU_Steering_Torque) && (bus == SUBARU_MAIN_BUS)) {
@@ -136,12 +134,12 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_bus) && !subaru_forester_2022) {
+    if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_bus) && !subaru_gen3) {
       bool cruise_engaged = GET_BIT(to_push, 41U) != 0U;
       pcm_cruise_check(cruise_engaged);
     }
 
-    if ((addr == MSG_SUBARU_ES_Status) && (bus == 2) && subaru_forester_2022) {
+    if ((addr == MSG_SUBARU_ES_Status) && (bus == SUBARU_CAM_BUS) && subaru_gen3) {
       bool cruise_engaged = GET_BIT(to_push, 29U) != 0U;
       pcm_cruise_check(cruise_engaged);
     }
@@ -171,14 +169,14 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
   if (subaru_gen2) {
     tx = msg_allowed(to_send, SUBARU_GEN2_TX_MSGS, SUBARU_GEN2_TX_MSGS_LEN);
-  } else if (subaru_forester_2022) {
-    tx = msg_allowed(to_send, SUBARU_FORESTER_2022_TX_MSGS, SUBARU_FORESTER_2022_TX_MSGS_LEN);
+  } else if (subaru_gen3) {
+    tx = msg_allowed(to_send, SUBARU_GEN3_TX_MSGS, SUBARU_GEN3_TX_MSGS_LEN);
   } else {
     tx = msg_allowed(to_send, SUBARU_TX_MSGS, SUBARU_TX_MSGS_LEN);
   }
 
   // steer cmd checks
-  if ((addr == MSG_SUBARU_ES_LKAS) && !subaru_forester_2022) {
+  if ((addr == MSG_SUBARU_ES_LKAS) && !subaru_gen3) {
     int desired_torque = ((GET_BYTES(to_send, 0, 4) >> 16) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
@@ -187,7 +185,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
       tx = 0;
     }
   }
-  if ((addr == MSG_SUBARU_ES_LKAS_ALT) && subaru_forester_2022) {
+  if ((addr == MSG_SUBARU_ES_LKAS_ALT) && subaru_gen3) {
     int desired_torque = ((GET_BYTES(to_send, 4, 8) >> 8) & 0x3FFFFU);
     desired_torque = -1 * to_signed(desired_torque, 17);
 
@@ -209,10 +207,11 @@ static int subaru_fwd_hook(int bus_num, int addr) {
 
   if (bus_num == SUBARU_CAM_BUS) {
     // Global platform
-    bool block_lkas = ((addr == MSG_SUBARU_ES_LKAS) ||
-                       (addr == MSG_SUBARU_ES_DashStatus) ||
-                       (addr == MSG_SUBARU_ES_LKAS_State) ||
-                       (addr == MSG_SUBARU_ES_Infotainment));
+    bool block_lkas = (((addr == MSG_SUBARU_ES_LKAS)     && !subaru_gen3) ||
+                       ((addr == MSG_SUBARU_ES_LKAS_ALT) &&  subaru_gen3) ||
+                        (addr == MSG_SUBARU_ES_DashStatus) ||
+                        (addr == MSG_SUBARU_ES_LKAS_State) ||
+                        (addr == MSG_SUBARU_ES_Infotainment));
     if (!block_lkas) {
       bus_fwd = SUBARU_MAIN_BUS;  // Main CAN
     }
@@ -223,12 +222,12 @@ static int subaru_fwd_hook(int bus_num, int addr) {
 
 static const addr_checks* subaru_init(uint16_t param) {
   subaru_gen2 = GET_FLAG(param, SUBARU_PARAM_GEN2);
-  subaru_forester_2022 = GET_FLAG(param, SUBARU_PARAM_FORESTER_2022);
+  subaru_gen3 = GET_FLAG(param, SUBARU_PARAM_GEN3);
 
   if (subaru_gen2) {
     subaru_rx_checks = (addr_checks){subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
-  } else if (subaru_forester_2022) {
-    subaru_rx_checks = (addr_checks){subaru_forester_2022_addr_checks, SUBARU_FORESTER_2022_ADDR_CHECK_LEN};
+  } else if (subaru_gen3) {
+    subaru_rx_checks = (addr_checks){subaru_gen3_addr_checks, SUBARU_GEN3_ADDR_CHECK_LEN};
   } else {
     subaru_rx_checks = (addr_checks){subaru_addr_checks, SUBARU_ADDR_CHECK_LEN};
   }
