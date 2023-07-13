@@ -186,7 +186,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     }
   }
   if ((addr == MSG_SUBARU_ES_LKAS_ALT) && subaru_gen3) {
-    int desired_torque = ((GET_BYTES(to_send, 4, 8) >> 8) & 0x3FFFFU);
+    int desired_torque = ((GET_BYTES(to_send, 4, 4) >> 8) & 0x3FFFFU);
     desired_torque = -1 * to_signed(desired_torque, 17);
 
     const SteeringLimits limits = SUBARU_STEERING_LIMITS;
