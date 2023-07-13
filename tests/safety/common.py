@@ -202,29 +202,23 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
 
     self.assertGreater(self.MAX_BRAKE, self.MIN_BRAKE)
     self.assertGreater(self.MAX_THROTTLE, self.MIN_THROTTLE)
+  
+  def _generic_limit_safety_check(self, msg_function, MIN_VALUE, MAX_VALUE, MAX_VALUE_MULTIPLIER):
+    for enabled in [0, 1]:
+      for v in range(int(MIN_VALUE), int(MAX_VALUE*MAX_VALUE_MULTIPLIER)):
+        self.safety.set_controls_allowed(enabled)
+        if v > MAX_VALUE or (not enabled and abs(v) > 0):
+          self.assertFalse(self._tx(msg_function(v)))
+        else:
+          self.assertTrue(self._tx(msg_function(v)))
 
   def test_brake_safety_check(self):
-    for enabled in [0, 1]:
-      for b in range(self.MIN_BRAKE, int(self.MAX_BRAKE * 1.5)):
-        self.safety.set_controls_allowed(enabled)
-        if b > self.MAX_BRAKE or (not enabled and abs(b) > 0):
-          self.assertFalse(self._tx(self._brake_msg(b)))
-        else:
-          self.assertTrue(self._tx(self._brake_msg(b)))
+    self._generic_limit_safety_check(self._brake_msg, self.MIN_BRAKE, self.MAX_BRAKE, 1.5)
   
   def test_throttle_safety_check(self):
-    if self.MAX_THROTTLE is None:
-      raise unittest.SkipTest
-    
-    for enabled in [0, 1]:
-      for t in range(self.MIN_THROTTLE, int(self.MAX_THROTTLE * 1.2)):
-        self.safety.set_controls_allowed(enabled)
-        if t > self.MAX_THROTTLE or (not enabled and abs(t) > 0):
-          self.assertFalse(self._tx(self._throttle_msg(t)))
-        else:
-          self.assertTrue(self._tx(self._throttle_msg(t)))
-        
+    self._generic_limit_safety_check(self._throttle_msg, self.MIN_THROTTLE, self.MAX_THROTTLE, 1.2)
 
+        
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
   MAX_RATE_UP = 0

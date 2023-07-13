@@ -111,7 +111,6 @@ class TestSubaruGen2SafetyBase(TestSubaruSafetyBase):
 
 
 class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.LongitudinalGasBrakeSafetyTest):
-  MAX_RPM = 3200
   MAX_THROTTLE = 3400
   MAX_BRAKE = 400
   
@@ -131,6 +130,9 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
   def _rpm_msg(self, rpm):
     values = {"Cruise_RPM": rpm}
     return self.packer.make_can_msg_panda("ES_Status", self.ALT_BUS, values)
+
+  def test_rpm_safety_check(self):
+    self._generic_limit_safety_check(self._rpm_msg, self.MIN_THROTTLE, self.MAX_THROTTLE, 1.2)
 
 
 class TestSubaruGen1Safety(TestSubaruSafetyBase):
