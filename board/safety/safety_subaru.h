@@ -21,10 +21,11 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
 };
 
 const LongitudinalLimits SUBARU_LONG_LIMITS = {
-  .max_gas = 3400,   // approx  1.2 m/s^2 at low speeds, less at higher speeds
-  .inactive_gas = 808,
-  .max_brake = 400,  // approx -2.5 m/s^2
+  .max_gas = 3400,      // approx  1.2 m/s^2 at low speeds, less at higher speeds
+  .inactive_gas = 1818, // this is zero acceleration
+  .max_brake = 600,     // approx -3.5 m/s^2
 };
+
 #define MSG_SUBARU_Brake_Status          0x13c
 #define MSG_SUBARU_CruiseControl         0x240
 #define MSG_SUBARU_Throttle              0x40

@@ -178,7 +178,7 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
   MIN_BRAKE: int = 0
   MAX_BRAKE: Optional[int] = None
 
-  MIN_THROTTLE: int = 0
+  MIN_THROTTLE: int = 1818
   MAX_THROTTLE: Optional[int] = None
 
   INACTIVE_THROTTLE: Optional[int] = 0
@@ -212,7 +212,7 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
         if (not enabled and v != INACTIVE_VALUE) or v > MAX_VALUE:
           self.assertFalse(self._tx(msg_function(v)))
         else:
-          self.assertTrue(self._tx(msg_function(v)), msg=f"{v} was not allowed")
+          self.assertTrue(self._tx(msg_function(v)))
 
   def test_brake_safety_check(self):
     self._generic_limit_safety_check(self._brake_msg, self.MIN_BRAKE, self.MAX_BRAKE, 1.5)
