@@ -21,10 +21,11 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
 };
 
 const LongitudinalLimits SUBARU_LONG_LIMITS = {
+  .max_brake = 400,  // approx -2.5 m/s^2
+
   .min_gas = 0,
   .max_gas = 3400,   // approx  1.2 m/s^2 at low speeds, less at higher speeds
-  .max_brake = 400,  // approx -2.5 m/s^2
-  .inactive_gas = 0
+  .inactive_gas = 808,
 };
 
 #define MSG_SUBARU_Brake_Status          0x13c
@@ -198,12 +199,6 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     if (addr == MSG_SUBARU_ES_Distance) {
       int cruise_throttle = ((GET_BYTES(to_send, 0, 4) >> 16) & 0xFFFU);
       violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
-    }
-
-    // check es_status cruise_rpm limits
-    if (addr == MSG_SUBARU_ES_Status) {
-      int cruise_rpm = ((GET_BYTES(to_send, 0, 4) >> 16) & 0xFFFU);
-      violation |= longitudinal_gas_checks(cruise_rpm, SUBARU_LONG_LIMITS);
     }
   }
 
