@@ -42,7 +42,7 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
 
   @classmethod
   def setUpClass(cls):
-    super().setUpClass(cls)
+    super().setUpClass()
     if cls.__name__ == "TestHyundaiCanfdBase":
       cls.packer = None
       cls.safety = None
