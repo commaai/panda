@@ -112,7 +112,7 @@ class TestSubaruGen2SafetyBase(TestSubaruSafetyBase):
 
 class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.LongitudinalGasBrakeSafetyTest):
   MAX_THROTTLE = 3400
-  MAX_BRAKE = 400
+  MAX_BRAKE = 600
   INACTIVE_THROTTLE = 1818
   
   FWD_BLACKLISTED_ADDRS = {0: [MSG_SUBARU_CruiseControl, MSG_SUBARU_Brake_Status],
