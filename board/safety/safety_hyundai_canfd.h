@@ -248,7 +248,6 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {
 
   int tx = 0;
   int addr = GET_ADDR(to_send);
-//  print("here\n");
 
   if (hyundai_canfd_hda2 && !hyundai_longitudinal) {
     tx = msg_allowed(to_send, HYUNDAI_CANFD_HDA2_TX_MSGS, sizeof(HYUNDAI_CANFD_HDA2_TX_MSGS)/sizeof(HYUNDAI_CANFD_HDA2_TX_MSGS[0]));
@@ -257,7 +256,6 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {
   } else {
     tx = msg_allowed(to_send, HYUNDAI_CANFD_HDA1_TX_MSGS, sizeof(HYUNDAI_CANFD_HDA1_TX_MSGS)/sizeof(HYUNDAI_CANFD_HDA1_TX_MSGS[0]));
   }
-//  print("tx: "); puth(tx); print("\n");
 
   // steering
   const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? 0x50 : 0x12a;
