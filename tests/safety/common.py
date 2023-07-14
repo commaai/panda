@@ -190,7 +190,6 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
   @classmethod
   def setUpClass(cls):
-    super().setUpClass(cls)
     if cls.__name__ == "TorqueSteeringSafetyTestBase":
       cls.safety = None
       raise unittest.SkipTest
