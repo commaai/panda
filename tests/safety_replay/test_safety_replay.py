@@ -33,6 +33,7 @@ logs = [
   ReplayRoute("bd6a637565e91581_2021-10-29--22-18-31--1--rlog.bz2", Panda.SAFETY_MAZDA),      # MAZDA.CX9_2021
   ReplayRoute("1a5d045d2c531a6d_2022-06-07--22-03-00--1--rlog.bz2", Panda.SAFETY_HONDA_BOSCH, # HONDA.CIVIC_2022
               Panda.FLAG_HONDA_RADARLESS, ALT_EXP.DISABLE_DISENGAGE_ON_GAS),
+  ReplayRoute("e886087f430e7fe7_2023-06-16--23-06-36--10--rlog.bz2", Panda.SAFETY_FORD),      # FORD
 ]
 
 
