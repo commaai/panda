@@ -6,19 +6,18 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 
-class MSG_SUBARU:
-  Brake_Status     = 0x13c
-  CruiseControl    = 0x240
-  Throttle         = 0x40
-  Steering_Torque  = 0x119
-  Wheel_Speeds     = 0x13a
-  ES_LKAS          = 0x122
-  ES_Brake         = 0x220
-  ES_Distance      = 0x221
-  ES_Status        = 0x222
-  ES_DashStatus    = 0x321
-  ES_LKAS_State    = 0x322
-  ES_Infotainment  = 0x323
+MSG_SUBARU_Brake_Status     = 0x13c
+MSG_SUBARU_CruiseControl    = 0x240
+MSG_SUBARU_Throttle         = 0x40
+MSG_SUBARU_Steering_Torque  = 0x119
+MSG_SUBARU_Wheel_Speeds     = 0x13a
+MSG_SUBARU_ES_LKAS          = 0x122
+MSG_SUBARU_ES_Brake         = 0x220
+MSG_SUBARU_ES_Distance      = 0x221
+MSG_SUBARU_ES_Status        = 0x222
+MSG_SUBARU_ES_DashStatus    = 0x321
+MSG_SUBARU_ES_LKAS_State    = 0x322
+MSG_SUBARU_ES_Infotainment  = 0x323
 
 SUBARU_MAIN_BUS = 0
 SUBARU_ALT_BUS  = 1
@@ -26,20 +25,20 @@ SUBARU_CAM_BUS  = 2
 
 
 def lkas_tx_msgs(alt_bus):
-  return [[MSG_SUBARU.ES_LKAS,          SUBARU_MAIN_BUS], 
-          [MSG_SUBARU.ES_Distance,      alt_bus],
-          [MSG_SUBARU.ES_DashStatus,    SUBARU_MAIN_BUS],
-          [MSG_SUBARU.ES_LKAS_State,    SUBARU_MAIN_BUS],
-          [MSG_SUBARU.ES_Infotainment,  SUBARU_MAIN_BUS]]
+  return [[MSG_SUBARU_ES_LKAS,          SUBARU_MAIN_BUS], 
+          [MSG_SUBARU_ES_Distance,      alt_bus],
+          [MSG_SUBARU_ES_DashStatus,    SUBARU_MAIN_BUS],
+          [MSG_SUBARU_ES_LKAS_State,    SUBARU_MAIN_BUS],
+          [MSG_SUBARU_ES_Infotainment,  SUBARU_MAIN_BUS]]
 
 
 class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   FLAGS = 0
   STANDSTILL_THRESHOLD = 0 # kph
-  RELAY_MALFUNCTION_ADDR = MSG_SUBARU.ES_LKAS
+  RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS
   RELAY_MALFUNCTION_BUS = SUBARU_MAIN_BUS
   FWD_BUS_LOOKUP = {SUBARU_MAIN_BUS: SUBARU_CAM_BUS, SUBARU_CAM_BUS: SUBARU_MAIN_BUS}
-  FWD_BLACKLISTED_ADDRS = {SUBARU_CAM_BUS: [MSG_SUBARU.ES_LKAS, MSG_SUBARU.ES_DashStatus, MSG_SUBARU.ES_LKAS_State, MSG_SUBARU.ES_Infotainment]}
+  FWD_BLACKLISTED_ADDRS = {SUBARU_CAM_BUS: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
 
   MAX_RATE_UP = 50
   MAX_RATE_DOWN = 70
