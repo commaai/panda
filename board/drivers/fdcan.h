@@ -17,6 +17,8 @@ uint8_t can_irq_number[3][2] = {
   { FDCAN3_IT0_IRQn, FDCAN3_IT1_IRQn },
 };
 
+#define CAN_ACK_ERROR 3U
+
 bool can_set_speed(uint8_t can_number) {
   bool ret = true;
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
@@ -39,8 +41,6 @@ void can_set_gmlan(uint8_t bus) {
 }
 
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
-  ENTER_CRITICAL();
-
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
   uint32_t psr_reg = CANx->PSR;
   uint32_t ecr_reg = CANx->ECR;
@@ -68,20 +68,21 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
 
 
   if (ir_reg != 0U) {
+    // Clear error interrupts
+    CANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L);
     can_health[can_number].total_error_cnt += 1U;
+    // Check for RX FIFO overflow
     if ((ir_reg & (FDCAN_IR_RF0L)) != 0) {
       can_health[can_number].total_rx_lost_cnt += 1U;
     }
-    // Reset CAN core when CEL couter reaches at least 100 errors
-    if (((ir_reg & (FDCAN_IR_PED | FDCAN_IR_PEA)) != 0) && (((ecr_reg & FDCAN_ECR_CEL) >> FDCAN_ECR_CEL_Pos) >= 100U)) {
+    // While multiplexing between buses 1 and 3 we are getting ACK errors that overwhelm CAN core
+    // By resseting CAN core when no ACK is detected for a while(until TEC counter reaches 127) it can recover faster
+    if (((can_health[can_number].last_error == CAN_ACK_ERROR) || (can_health[can_number].last_data_error == CAN_ACK_ERROR)) && (can_health[can_number].transmit_error_cnt > 127U)) {
       can_health[can_number].can_core_reset_cnt += 1U;
-      can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCAN_TXFQS_TFFL & FDCAN_TXFQS_TFFL_Msk)); // TX FIFO msgs will be lost after reset
+      can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (CANx->TXFQS & FDCAN_TXFQS_TFFL)); // TX FIFO msgs will be lost after reset
       llcan_clear_send(CANx);
     }
-    // Clear error interrupts
-    CANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L);
   }
-  EXIT_CRITICAL();
 }
 
 // ***************************** CAN *****************************
