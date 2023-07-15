@@ -41,8 +41,6 @@ void can_set_gmlan(uint8_t bus) {
 }
 
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
-  ENTER_CRITICAL();
-
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
   uint32_t psr_reg = CANx->PSR;
   uint32_t ecr_reg = CANx->ECR;
@@ -84,8 +82,7 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
       can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (CANx->TXFQS & FDCAN_TXFQS_TFFL)); // TX FIFO msgs will be lost after reset
       llcan_clear_send(CANx);
     }
-   }
-   EXIT_CRITICAL();
+  }
 }
 
 // ***************************** CAN *****************************
