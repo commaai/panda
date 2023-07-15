@@ -77,7 +77,8 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint32_t esr_reg = CAN->ESR;
 
-  can_health[can_number].bus_off = ((esr_reg & CAN_ESR_BOFF) >> CAN_ESR_BOFF_Pos);
+  // can_health[can_number].bus_off = ((esr_reg & CAN_ESR_BOFF) >> CAN_ESR_BOFF_Pos);
+  can_health[can_number].bus_off = (CAN->MCR & CAN_MCR_NART); // FIXME: remove!
   can_health[can_number].bus_off_cnt += can_health[can_number].bus_off;
   can_health[can_number].error_warning = ((esr_reg & CAN_ESR_EWGF) >> CAN_ESR_EWGF_Pos);
   can_health[can_number].error_passive = ((esr_reg & CAN_ESR_EPVF) >> CAN_ESR_EPVF_Pos);
@@ -180,6 +181,11 @@ void process_can(uint8_t can_number) {
 void can_rx(uint8_t can_number) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
+
+  // Enable automatic retransmission of messages after some activity on the bus
+  if (can_health[can_number].total_rx_cnt != 0U && (CAN->MCR & CAN_MCR_NART) != 0U) {
+    CAN->MCR &= ~(CAN_MCR_NART);
+  }
 
   while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
     can_health[can_number].total_rx_cnt += 1U;

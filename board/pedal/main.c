@@ -1,6 +1,7 @@
 // ********************* Includes *********************
 //#define PEDAL_USB
 #include "../config.h"
+#include "stm32fx/llbxcan.h"
 
 #include "early_init.h"
 #include "crc.h"

@@ -18,8 +18,10 @@
 #include "drivers/can_common.h"
 
 #ifdef STM32H7
+  #include "stm32h7/llfdcan.h"
   #include "drivers/fdcan.h"
 #else
+  #include "stm32fx/llbxcan.h"
   #include "drivers/bxcan.h"
 #endif
 

@@ -15,6 +15,7 @@
 #define can_speed_to_prescaler(x) (CAN_PCLK / CAN_QUANTA * 10U / (x))
 
 #define CAN_NAME_FROM_CANIF(CAN_DEV) (((CAN_DEV)==CAN1) ? "CAN1" : (((CAN_DEV) == CAN2) ? "CAN2" : "CAN3"))
+#define CAN_NUM_FROM_CANIF(CAN_DEV) (((CAN_DEV)==CAN1) ? 0UL : (((CAN_DEV) == CAN2) ? 1UL : 2UL))
 
 void print(const char *a);
 
@@ -115,6 +116,16 @@ void llcan_irq_enable(CAN_TypeDef *CAN_obj) {
 
 bool llcan_init(CAN_TypeDef *CAN_obj) {
   bool ret = true;
+
+  #ifndef PEDAL
+  uint32_t can_number = CAN_NUM_FROM_CANIF(CAN_obj);
+  can_health[can_number].total_rx_cnt = 0;
+  can_health[can_number].total_tx_cnt = 0;
+  can_health[can_number].total_error_cnt = 0;
+  #endif
+
+  // Disable automatic retransmission until we see any bus activity
+  CAN_obj->MCR |= CAN_MCR_NART;
 
   // Enter init mode
   register_set_bits(&(CAN_obj->FMR), CAN_FMR_FINIT);

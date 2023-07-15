@@ -190,11 +190,15 @@ bool llcan_init(FDCAN_GlobalTypeDef *CANx) {
   uint32_t can_number = CAN_NUM_FROM_CANIF(CANx);
   bool ret = fdcan_request_init(CANx);
 
+  can_health[can_number].total_rx_cnt = 0;
+  can_health[can_number].total_tx_cnt = 0;
+  can_health[can_number].total_error_cnt = 0;
+
   if (ret) {
     // Enable config change
     CANx->CCCR |= FDCAN_CCCR_CCE;
-    // Enable automatic retransmission
-    CANx->CCCR &= ~(FDCAN_CCCR_DAR);
+    // Disable automatic retransmission until we see any bus activity
+    CANx->CCCR |= FDCAN_CCCR_DAR;
     // Enable transmission pause feature
     CANx->CCCR |= FDCAN_CCCR_TXP;
     // Disable protocol exception handling

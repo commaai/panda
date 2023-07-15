@@ -87,10 +87,6 @@ separate IRQs for RX and TX.
   #include "stm32h7/llexti.h"
 #endif
 
-#ifndef BOOTSTUB
-  #include "stm32h7/llfdcan.h"
-#endif
-
 #include "stm32h7/llusb.h"
 
 #include "drivers/spi.h"

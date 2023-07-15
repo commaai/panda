@@ -87,10 +87,6 @@
   #include "stm32fx/llexti.h"
 #endif
 
-#ifndef BOOTSTUB
-  #include "stm32fx/llbxcan.h"
-#endif
-
 #if defined(PANDA) || defined(BOOTSTUB) || defined(PEDAL_USB)
   #include "stm32fx/llusb.h"
 #endif
