@@ -111,20 +111,21 @@ class PandaSpiHandle(BaseHandle):
   """
   def __init__(self):
     self.dev = SpiDevice()
-    self.fileno = self.dev._spidev.fileno()
-
-    self.tx_buf = bytearray(1024)
-    self.rx_buf = bytearray(1024)
-    tx_buf_raw = ctypes.c_char.from_buffer(self.tx_buf)
-    rx_buf_raw = ctypes.c_char.from_buffer(self.rx_buf)
-
-    self.ioctl_data = PandaSpiTransfer()
-    self.ioctl_data.tx_buf = ctypes.addressof(tx_buf_raw)
-    self.ioctl_data.rx_buf = ctypes.addressof(rx_buf_raw)
 
     self._transfer = self._transfer_spidev
+
     if "KERN" in os.environ:
       self._transfer = self._transfer_kernel_driver
+
+      self.tx_buf = bytearray(1024)
+      self.rx_buf = bytearray(1024)
+      tx_buf_raw = ctypes.c_char.from_buffer(self.tx_buf)
+      rx_buf_raw = ctypes.c_char.from_buffer(self.rx_buf)
+
+      self.ioctl_data = PandaSpiTransfer()
+      self.ioctl_data.tx_buf = ctypes.addressof(tx_buf_raw)
+      self.ioctl_data.rx_buf = ctypes.addressof(rx_buf_raw)
+      self.fileno = self.dev._spidev.fileno()
 
   # helpers
   def _calc_checksum(self, data: List[int]) -> int:

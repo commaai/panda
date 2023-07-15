@@ -155,6 +155,6 @@ static long panda_transfer(struct spidev_data *spidev, struct spi_device *spi, u
       break;
     }
   }
-  dev_dbg(&spi->dev, "took %d tries\n", i);
+  dev_dbg(&spi->dev, "took %d tries\n", i+1);
   return ret;
 }
