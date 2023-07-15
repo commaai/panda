@@ -19,28 +19,31 @@ MSG_SUBARU_ES_DashStatus    = 0x321
 MSG_SUBARU_ES_LKAS_State    = 0x322
 MSG_SUBARU_ES_Infotainment  = 0x323
 
+SUBARU_MAIN_BUS = 0
+SUBARU_ALT_BUS  = 1
+SUBARU_CAM_BUS  = 2
+
 
 def lkas_tx_msgs(alt_bus):
-  return [[MSG_SUBARU_ES_LKAS,          0], 
+  return [[MSG_SUBARU_ES_LKAS,          SUBARU_MAIN_BUS], 
           [MSG_SUBARU_ES_Distance,      alt_bus],
-          [MSG_SUBARU_ES_DashStatus,    0],
-          [MSG_SUBARU_ES_LKAS_State,    0],
-          [MSG_SUBARU_ES_Infotainment,  0]]
+          [MSG_SUBARU_ES_DashStatus,    SUBARU_MAIN_BUS],
+          [MSG_SUBARU_ES_LKAS_State,    SUBARU_MAIN_BUS],
+          [MSG_SUBARU_ES_Infotainment,  SUBARU_MAIN_BUS]]
 
 def long_tx_msgs():
-  return [[MSG_SUBARU_ES_Brake,         0],
-          [MSG_SUBARU_ES_Status,        0],
-          [MSG_SUBARU_CruiseControl,    2],
-          [MSG_SUBARU_Brake_Status,     2]]
-
+  return [[MSG_SUBARU_ES_Brake,         SUBARU_MAIN_BUS],
+          [MSG_SUBARU_ES_Status,        SUBARU_MAIN_BUS],
+          [MSG_SUBARU_CruiseControl,    SUBARU_CAM_BUS],
+          [MSG_SUBARU_Brake_Status,     SUBARU_CAM_BUS]]
 
 class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   FLAGS = 0
   STANDSTILL_THRESHOLD = 0 # kph
   RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS
-  RELAY_MALFUNCTION_BUS = 0
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
-  FWD_BLACKLISTED_ADDRS = {2: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
+  RELAY_MALFUNCTION_BUS = SUBARU_MAIN_BUS
+  FWD_BUS_LOOKUP = {SUBARU_MAIN_BUS: SUBARU_CAM_BUS, SUBARU_CAM_BUS: SUBARU_MAIN_BUS}
+  FWD_BLACKLISTED_ADDRS = {SUBARU_CAM_BUS: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
 
   MAX_RATE_UP = 50
   MAX_RATE_DOWN = 70
@@ -52,7 +55,7 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
   DRIVER_TORQUE_ALLOWANCE = 60
   DRIVER_TORQUE_FACTOR = 50
 
-  ALT_BUS = 0
+  ALT_BUS = SUBARU_MAIN_BUS
 
   MAX_RATE_UP = 50
   MAX_RATE_DOWN = 70
@@ -103,7 +106,7 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
 
 
 class TestSubaruGen2SafetyBase(TestSubaruSafetyBase):
-  ALT_BUS = 1
+  ALT_BUS = SUBARU_ALT_BUS
 
   MAX_RATE_UP = 40
   MAX_RATE_DOWN = 40
@@ -135,12 +138,12 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
 
 class TestSubaruGen1Safety(TestSubaruSafetyBase):
   FLAGS = 0
-  TX_MSGS = lkas_tx_msgs(0)
+  TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS)
 
 
 class TestSubaruGen2Safety(TestSubaruGen2SafetyBase):
   FLAGS = Panda.FLAG_SUBARU_GEN2
-  TX_MSGS = lkas_tx_msgs(1)
+  TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS)
 
 
 class TestSubaruGen1LongitudinalSafety(TestSubaruLongitudinalSafetyBase):

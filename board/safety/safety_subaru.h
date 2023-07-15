@@ -44,7 +44,6 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
 #define SUBARU_ALT_BUS  1
 #define SUBARU_CAM_BUS  2
 
-
 #define SUBARU_COMMON_TX_MSGS(alt_bus)              \
   {MSG_SUBARU_ES_LKAS,         SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_Distance,     alt_bus,         8}, \
