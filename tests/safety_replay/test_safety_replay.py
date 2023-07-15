@@ -14,8 +14,8 @@ ReplayRoute = namedtuple("ReplayRoute", ("route", "safety_mode", "param", "alter
 
 logs = [
   # TODO: need a route with updated safety stuff
-  #ReplayRoute("8de015561e1ea4a0|2023-07-02--20-14-07--9--rlog.bz2", Panda.SAFETY_SUBARU,      # SUBARU.CROSSTREK (openpilot long)
-  #            Panda.FLAG_SUBARU_LONG, ALT_EXP.DISABLE_DISENGAGE_ON_GAS),   
+  ReplayRoute("8de015561e1ea4a0|2023-07-15--09-44-25--0--rlog.bz2", Panda.SAFETY_SUBARU,      # SUBARU.CROSSTREK (openpilot long)
+              Panda.FLAG_SUBARU_LONG, ALT_EXP.DISABLE_DISENGAGE_ON_GAS),   
   ReplayRoute("2425568437959f9d|2019-12-22--16-24-37.bz2", Panda.SAFETY_HONDA_NIDEC),         # HONDA.CIVIC (fcw presents: 0x1FA blocked as expected)
   ReplayRoute("38bfd238edecbcd7|2019-06-07--10-15-25.bz2", Panda.SAFETY_TOYOTA, 66),          # TOYOTA.PRIUS
   ReplayRoute("f89c604cf653e2bf|2018-09-29--13-46-50.bz2", Panda.SAFETY_GM),                  # GM.VOLT
