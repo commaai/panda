@@ -1,4 +1,5 @@
 # panda safety helpers, from safety_helpers.c
+from typing import Protocol
 
 def setup_safety_helpers(ffi):
   ffi.cdef("""
@@ -34,6 +35,7 @@ def setup_safety_helpers(ffi):
   int get_angle_meas_max(void);
 
   bool get_cruise_engaged_prev(void);
+  void set_cruise_engaged_prev(bool engaged);
   bool get_vehicle_moving(void);
   int get_hw_type(void);
   void set_timer(uint32_t t);
@@ -49,7 +51,7 @@ def setup_safety_helpers(ffi):
   int get_honda_hw(void);
   """)
 
-class PandaSafety:
+class PandaSafety(Protocol):
   def set_controls_allowed(self, c: bool) -> None: ...
   def get_controls_allowed(self) -> bool: ...
   def get_longitudinal_allowed(self) -> bool: ...
@@ -82,6 +84,7 @@ class PandaSafety:
   def get_angle_meas_max(self) -> int: ...
 
   def get_cruise_engaged_prev(self) -> bool: ...
+  def set_cruise_engaged_prev(self, enabled: bool) -> None: ...
   def get_vehicle_moving(self) -> bool: ...
   def get_hw_type(self) -> int: ...
   def set_timer(self, t: int) -> None: ...

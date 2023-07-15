@@ -55,8 +55,8 @@ ENV OPENPILOT_REF="e276d2a417a5133fb91c93b2ef30df68a7d5f225"
 ENV OPENDBC_REF="9ae9fbfe56f79dca66c673a6479751a15ad61780"
 
 COPY requirements.txt /tmp/
-RUN pyenv install 3.8.10 && \
-    pyenv global 3.8.10 && \
+RUN pyenv install 3.11.4 && \
+    pyenv global 3.11.4 && \
     pyenv rehash && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
