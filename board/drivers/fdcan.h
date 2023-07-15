@@ -39,8 +39,6 @@ void can_set_gmlan(uint8_t bus) {
 }
 
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
-  ENTER_CRITICAL();
-
   FDCAN_GlobalTypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
   uint32_t psr_reg = CANx->PSR;
   uint32_t ecr_reg = CANx->ECR;
@@ -81,7 +79,6 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
     // Clear error interrupts
     CANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L);
   }
-  EXIT_CRITICAL();
 }
 
 // ***************************** CAN *****************************
