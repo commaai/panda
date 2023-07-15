@@ -25,8 +25,10 @@ separate IRQs for RX and TX.
 - all currently supported cars are 0.5 Mbps / 2 Mbps
 
 1 / ((29 bits / 0.5Mbps) + (23 bits / 2Mbps)) = 14388Hz
+
+Add extra margin as the same IRQ is used for RX and errors.
 */
-#define CAN_INTERRUPT_RATE 16000U
+#define CAN_INTERRUPT_RATE 21000U
 
 #define MAX_LED_FADE 10240U
 
