@@ -77,9 +77,9 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
   uint32_t esr_reg = CAN->ESR;
 
-  // can_health[can_number].bus_off = ((esr_reg & CAN_ESR_BOFF) >> CAN_ESR_BOFF_Pos);
-  can_health[can_number].bus_off = (CAN->MCR & CAN_MCR_NART); // FIXME: remove!
-  can_health[can_number].bus_off_cnt += can_health[can_number].bus_off;
+  can_health[can_number].bus_off = ((esr_reg & CAN_ESR_BOFF) >> CAN_ESR_BOFF_Pos);
+  // can_health[can_number].bus_off_cnt += can_health[can_number].bus_off;
+  can_health[can_number].bus_off_cnt = (CAN->MCR & CAN_MCR_NART); // FIXME: remove!
   can_health[can_number].error_warning = ((esr_reg & CAN_ESR_EWGF) >> CAN_ESR_EWGF_Pos);
   can_health[can_number].error_passive = ((esr_reg & CAN_ESR_EPVF) >> CAN_ESR_EPVF_Pos);
 

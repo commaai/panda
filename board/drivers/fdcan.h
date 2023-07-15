@@ -45,9 +45,9 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   uint32_t psr_reg = CANx->PSR;
   uint32_t ecr_reg = CANx->ECR;
 
-  // can_health[can_number].bus_off = ((psr_reg & FDCAN_PSR_BO) >> FDCAN_PSR_BO_Pos);
-  can_health[can_number].bus_off = (CANx->CCCR & FDCAN_CCCR_DAR); // FIXME: remove!
-  can_health[can_number].bus_off_cnt += can_health[can_number].bus_off;
+  can_health[can_number].bus_off = ((psr_reg & FDCAN_PSR_BO) >> FDCAN_PSR_BO_Pos);
+  // can_health[can_number].bus_off_cnt += can_health[can_number].bus_off;
+  can_health[can_number].bus_off_cnt = (CANx->CCCR & FDCAN_CCCR_DAR); // FIXME: remove!
   can_health[can_number].error_warning = ((psr_reg & FDCAN_PSR_EW) >> FDCAN_PSR_EW_Pos);
   can_health[can_number].error_passive = ((psr_reg & FDCAN_PSR_EP) >> FDCAN_PSR_EP_Pos);
 
