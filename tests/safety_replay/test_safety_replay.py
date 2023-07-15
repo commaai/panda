@@ -13,7 +13,6 @@ BASE_URL = "https://commadataci.blob.core.windows.net/openpilotci/"
 ReplayRoute = namedtuple("ReplayRoute", ("route", "safety_mode", "param", "alternative_experience"), defaults=(0, 0))
 
 logs = [
-  # TODO: need a route with updated safety stuff
   ReplayRoute("8de015561e1ea4a0|2023-07-15--09-44-25--0--rlog.bz2", Panda.SAFETY_SUBARU,      # SUBARU.CROSSTREK (openpilot long)
               Panda.FLAG_SUBARU_LONG, ALT_EXP.DISABLE_DISENGAGE_ON_GAS),   
   ReplayRoute("2425568437959f9d|2019-12-22--16-24-37.bz2", Panda.SAFETY_HONDA_NIDEC),         # HONDA.CIVIC (fcw presents: 0x1FA blocked as expected)
