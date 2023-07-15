@@ -56,17 +56,6 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
   DRIVER_TORQUE_FACTOR = 50
 
   ALT_BUS = SUBARU_MAIN_BUS
-
-  MAX_RATE_UP = 50
-  MAX_RATE_DOWN = 70
-  MAX_TORQUE = 2047
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__.endswith("Base"):
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
   
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
