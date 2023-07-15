@@ -178,10 +178,10 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
   MIN_BRAKE: int = 0
   MAX_BRAKE: Optional[int] = None
 
-  MIN_THROTTLE: int = 1818
-  MAX_THROTTLE: Optional[int] = None
+  MIN_GAS: int = 1818
+  MAX_GAS: Optional[int] = None
 
-  INACTIVE_THROTTLE: Optional[int] = 0
+  INACTIVE_GAS: Optional[int] = 0
 
   @classmethod
   def setUpClass(cls):
@@ -190,7 +190,7 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
       raise unittest.SkipTest
   
   @abc.abstractmethod
-  def _throttle_msg(self, throttle: int):
+  def _gas_msg(self, gas: int):
     pass
 
   @abc.abstractmethod
@@ -200,16 +200,16 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
   def test_gas_brake_limits_correct(self):
     # Assert that max brake and max throttle is set
     self.assertTrue(self.MAX_BRAKE is not None)
-    self.assertTrue(self.MAX_THROTTLE is not None)
+    self.assertTrue(self.MAX_GAS is not None)
 
     self.assertGreater(self.MAX_BRAKE, self.MIN_BRAKE)
-    self.assertGreater(self.MAX_THROTTLE, self.MIN_THROTTLE)
+    self.assertGreater(self.MAX_GAS, self.MIN_GAS)
   
-  def _generic_limit_safety_check(self, msg_function, MIN_VALUE, MAX_VALUE, MAX_VALUE_MULTIPLIER, INACTIVE_VALUE=0):
+  def _generic_limit_safety_check(self, msg_function, min_value, max_value, max_value_multiplier, inactive_value=0):
     for enabled in [0, 1]:
-      for v in range(int(MIN_VALUE), int(MAX_VALUE*MAX_VALUE_MULTIPLIER)):
+      for v in range(int(min_value), int(max_value*max_value_multiplier)):
         self.safety.set_controls_allowed(enabled)
-        if (not enabled and v != INACTIVE_VALUE) or v > MAX_VALUE or v < MIN_VALUE:
+        if (not enabled and v != inactive_value) or v > max_value or v < min_value:
           self.assertFalse(self._tx(msg_function(v)))
         else:
           self.assertTrue(self._tx(msg_function(v)))
@@ -218,7 +218,7 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
     self._generic_limit_safety_check(self._brake_msg, self.MIN_BRAKE, self.MAX_BRAKE, 1.5)
   
   def test_throttle_safety_check(self):
-    self._generic_limit_safety_check(self._throttle_msg, self.MIN_THROTTLE, self.MAX_THROTTLE, 1.2, self.INACTIVE_THROTTLE)
+    self._generic_limit_safety_check(self._gas_msg, self.MIN_GAS, self.MAX_GAS, 1.2, self.INACTIVE_GAS)
 
         
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):

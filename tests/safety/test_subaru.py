@@ -103,9 +103,9 @@ class TestSubaruGen2SafetyBase(TestSubaruSafetyBase):
 
 
 class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.LongitudinalGasBrakeSafetyTest):
-  MAX_THROTTLE = 3400
+  MAX_GAS = 3400
   MAX_BRAKE = 600
-  INACTIVE_THROTTLE = 1818
+  INACTIVE_GAS = 1818
   
   FWD_BLACKLISTED_ADDRS = {0: [MSG_SUBARU_CruiseControl, MSG_SUBARU_Brake_Status],
                            2: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_Brake, MSG_SUBARU_ES_Distance,
@@ -116,8 +116,8 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
     values = {"Brake_Pressure": brake}
     return self.packer.make_can_msg_panda("ES_Brake", self.ALT_BUS, values)
 
-  def _throttle_msg(self, throttle):
-    values = {"Cruise_Throttle": throttle}
+  def _gas_msg(self, gas):
+    values = {"Cruise_Throttle": gas}
     return self.packer.make_can_msg_panda("ES_Distance", self.ALT_BUS, values)
 
   def _rpm_msg(self, rpm):
