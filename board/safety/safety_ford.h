@@ -420,10 +420,11 @@ static int ford_fwd_hook(int bus_num, int addr) {
 }
 
 static const addr_checks* ford_init(uint16_t param) {
+  UNUSED(param);
 #ifdef ALLOW_DEBUG
   ford_longitudinal = GET_FLAG(param, FORD_PARAM_LONGITUDINAL);
-#endif
   ford_canfd = GET_FLAG(param, FORD_PARAM_CANFD);
+#endif
   return &ford_rx_checks;
 }
 
