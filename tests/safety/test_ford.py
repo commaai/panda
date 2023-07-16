@@ -69,6 +69,8 @@ class TestFordSafetyBase(common.PandaSafetyTest):
   RELAY_MALFUNCTION_ADDR = MSG_IPMA_Data
   RELAY_MALFUNCTION_BUS = 0
 
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
   # Max allowed delta between car speeds
   MAX_SPEED_DELTA = 2.0  # m/s
 
@@ -358,7 +360,6 @@ class TestFordStockSafety(TestFordSafetyBase):
     [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
   ]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl, MSG_IPMA_Data]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
@@ -375,7 +376,6 @@ class TestFordCANFDStockSafety(TestFordSafetyBase):
     [MSG_LateralMotionControl2, 0], [MSG_IPMA_Data, 0],
   ]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl2, MSG_IPMA_Data]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
@@ -385,8 +385,6 @@ class TestFordCANFDStockSafety(TestFordSafetyBase):
 
 
 class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
-
   MAX_ACCEL = 2.0  # accel is used for brakes, but openpilot can set positive values
   MIN_ACCEL = -3.5
   INACTIVE_ACCEL = 0.0
@@ -437,6 +435,8 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
 
 
 class TestFordLongitudinalSafety(TestFordLongitudinalSafetyBase):
+  STEER_MESSAGE = MSG_LateralMotionControl
+
   TX_MSGS = [
     [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA, 0], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
     [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
