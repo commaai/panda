@@ -254,6 +254,7 @@ class Panda:
   FLAG_GM_HW_CAM_LONG = 2
 
   FLAG_FORD_LONG_CONTROL = 1
+  FLAG_FORD_CANFD = 2
 
   def __init__(self, serial: Optional[str] = None, claim: bool = True, disable_checks: bool = True):
     self._connect_serial = serial

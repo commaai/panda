@@ -9,7 +9,8 @@
 #define FORD_ACCDATA               0x186   // TX by OP, ACC controls
 #define FORD_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
 #define FORD_Lane_Assist_Data1     0x3CA   // TX by OP, Lane Keep Assist
-#define FORD_LateralMotionControl  0x3D3   // TX by OP, Traffic Jam Assist
+#define FORD_LateralMotionControl  0x3D3   // TX by OP, Lateral Control message
+#define FORD_LateralMotionControl2 0x3D6   // TX by OP, alternate Lateral Control message
 #define FORD_IPMA_Data             0x3D8   // TX by OP, IPMA and LKAS user interface
 
 // CAN bus numbers.
@@ -36,6 +37,27 @@ const CanMsg FORD_LONG_TX_MSGS[] = {
   {FORD_IPMA_Data, 0, 8},
 };
 #define FORD_LONG_TX_LEN (sizeof(FORD_LONG_TX_MSGS) / sizeof(FORD_LONG_TX_MSGS[0]))
+
+const CanMsg FORD_CANFD_STOCK_TX_MSGS[] = {
+  {FORD_Steering_Data_FD1, 0, 8},
+  {FORD_Steering_Data_FD1, 2, 8},
+  {FORD_ACCDATA_3, 0, 8},
+  {FORD_Lane_Assist_Data1, 0, 8},
+  {FORD_LateralMotionControl2, 0, 8},
+  {FORD_IPMA_Data, 0, 8},
+};
+#define FORD_CANFD_STOCK_TX_LEN (sizeof(FORD_CANFD_STOCK_TX_MSGS) / sizeof(FORD_CANFD_STOCK_TX_MSGS[0]))
+
+const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
+  {FORD_Steering_Data_FD1, 0, 8},
+  {FORD_Steering_Data_FD1, 2, 8},
+  {FORD_ACCDATA, 0, 8},
+  {FORD_ACCDATA_3, 0, 8},
+  {FORD_Lane_Assist_Data1, 0, 8},
+  {FORD_LateralMotionControl2, 0, 8},
+  {FORD_IPMA_Data, 0, 8},
+};
+#define FORD_CANFD_LONG_TX_LEN (sizeof(FORD_CANFD_LONG_TX_MSGS) / sizeof(FORD_CANFD_LONG_TX_MSGS[0]))
 
 // warning: quality flags are not yet checked in openpilot's CAN parser,
 // this may be the cause of blocked messages
@@ -133,8 +155,10 @@ static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
 }
 
 const uint16_t FORD_PARAM_LONGITUDINAL = 1;
+const uint16_t FORD_PARAM_CANFD = 2;
 
 bool ford_longitudinal = false;
+bool ford_canfd = false;
 
 const LongitudinalLimits FORD_LONG_LIMITS = {
   // acceleration cmd limits (used for brakes)
@@ -154,12 +178,16 @@ const LongitudinalLimits FORD_LONG_LIMITS = {
 #define FORD_INACTIVE_CURVATURE_RATE 4096U
 #define FORD_INACTIVE_PATH_OFFSET 512U
 #define FORD_INACTIVE_PATH_ANGLE 1000U
+
+#define FORD_CANFD_INACTIVE_CURVATURE_RATE 1024U
+
 #define FORD_MAX_SPEED_DELTA 2.0  // m/s
 
 static bool ford_lkas_msg_check(int addr) {
   return (addr == FORD_ACCDATA_3)
       || (addr == FORD_Lane_Assist_Data1)
       || (addr == FORD_LateralMotionControl)
+      || (addr == FORD_LateralMotionControl2)
       || (addr == FORD_IPMA_Data);
 }
 
@@ -249,13 +277,20 @@ static int ford_rx_hook(CANPacket_t *to_push) {
 }
 
 static int ford_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
   int addr = GET_ADDR(to_send);
-
-  if (ford_longitudinal) {
-    tx = msg_allowed(to_send, FORD_LONG_TX_MSGS, FORD_LONG_TX_LEN);
+  int tx;
+  if (ford_canfd) {
+    if (ford_longitudinal) {
+      tx = msg_allowed(to_send, FORD_CANFD_LONG_TX_MSGS, FORD_CANFD_LONG_TX_LEN);
+    } else {
+      tx = msg_allowed(to_send, FORD_CANFD_STOCK_TX_MSGS, FORD_CANFD_STOCK_TX_LEN);
+    }
   } else {
-    tx = msg_allowed(to_send, FORD_STOCK_TX_MSGS, FORD_STOCK_TX_LEN);
+    if (ford_longitudinal) {
+      tx = msg_allowed(to_send, FORD_LONG_TX_MSGS, FORD_LONG_TX_LEN);
+    } else {
+      tx = msg_allowed(to_send, FORD_STOCK_TX_MSGS, FORD_STOCK_TX_LEN);
+    }
   }
 
   // Safety check for ACCDATA accel and brake requests
@@ -327,6 +362,27 @@ static int ford_tx_hook(CANPacket_t *to_send) {
     }
   }
 
+  // Safety check for LateralMotionControl2 action
+  if (addr == FORD_LateralMotionControl2) {
+    // Signal: LatCtl_D2_Rq
+    bool steer_control_enabled = ((GET_BYTE(to_send, 0) >> 4) & 0x7U) != 0U;
+    unsigned int raw_curvature = (GET_BYTE(to_send, 2) << 3) | (GET_BYTE(to_send, 3) >> 5);
+    unsigned int raw_curvature_rate = (GET_BYTE(to_send, 6) << 3) | (GET_BYTE(to_send, 7) >> 5);
+    unsigned int raw_path_angle = ((GET_BYTE(to_send, 3) & 0x1FU) << 6) | (GET_BYTE(to_send, 4) >> 2);
+    unsigned int raw_path_offset = ((GET_BYTE(to_send, 4) & 0x3U) << 8) | GET_BYTE(to_send, 5);
+
+    // These signals are not yet tested with the current safety limits
+    bool violation = (raw_curvature_rate != FORD_CANFD_INACTIVE_CURVATURE_RATE) || (raw_path_angle != FORD_INACTIVE_PATH_ANGLE) || (raw_path_offset != FORD_INACTIVE_PATH_OFFSET);
+
+    // Check angle error and steer_control_enabled
+    int desired_curvature = raw_curvature - FORD_INACTIVE_CURVATURE;  // /FORD_STEERING_LIMITS.angle_deg_to_can to get real curvature
+    violation |= steer_angle_cmd_checks(desired_curvature, steer_control_enabled, FORD_STEERING_LIMITS);
+
+    if (violation) {
+      tx = 0;
+    }
+  }
+
   // 1 allows the message through
   return tx;
 }
@@ -367,6 +423,7 @@ static const addr_checks* ford_init(uint16_t param) {
   UNUSED(param);
 #ifdef ALLOW_DEBUG
   ford_longitudinal = GET_FLAG(param, FORD_PARAM_LONGITUDINAL);
+  ford_canfd = GET_FLAG(param, FORD_PARAM_CANFD);
 #endif
   return &ford_rx_checks;
 }
