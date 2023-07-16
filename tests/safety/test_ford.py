@@ -72,6 +72,8 @@ class TestFordSafetyBase(common.PandaSafetyTest):
   # Max allowed delta between car speeds
   MAX_SPEED_DELTA = 2.0  # m/s
 
+  STEER_MESSAGE = 0
+
   # Curvature control limits
   DEG_TO_CAN = 50000  # 1 / (2e-5) rad to can
   MAX_CURVATURE = 0.02
@@ -163,14 +165,24 @@ class TestFordSafetyBase(common.PandaSafetyTest):
 
   # LCA command
   def _lat_ctl_msg(self, enabled: bool, path_offset: float, path_angle: float, curvature: float, curvature_rate: float):
-    values = {
-      "LatCtl_D_Rq": 1 if enabled else 0,
-      "LatCtlPathOffst_L_Actl": path_offset,     # Path offset [-5.12|5.11] meter
-      "LatCtlPath_An_Actl": path_angle,          # Path angle [-0.5|0.5235] radians
-      "LatCtlCurv_NoRate_Actl": curvature_rate,  # Curvature rate [-0.001024|0.00102375] 1/meter^2
-      "LatCtlCurv_No_Actl": curvature,           # Curvature [-0.02|0.02094] 1/meter
-    }
-    return self.packer.make_can_msg_panda("LateralMotionControl", 0, values)
+    if self.STEER_MESSAGE == MSG_LateralMotionControl:
+      values = {
+        "LatCtl_D_Rq": 1 if enabled else 0,
+        "LatCtlPathOffst_L_Actl": path_offset,     # Path offset [-5.12|5.11] meter
+        "LatCtlPath_An_Actl": path_angle,          # Path angle [-0.5|0.5235] radians
+        "LatCtlCurv_NoRate_Actl": curvature_rate,  # Curvature rate [-0.001024|0.00102375] 1/meter^2
+        "LatCtlCurv_No_Actl": curvature,           # Curvature [-0.02|0.02094] 1/meter
+      }
+      return self.packer.make_can_msg_panda("LateralMotionControl", 0, values)
+    elif self.STEER_MESSAGE == MSG_LateralMotionControl2:
+      values = {
+        "LatCtl_D2_Rq": 1 if enabled else 0,
+        "LatCtlPathOffst_L_Actl": path_offset,     # Path offset [-5.12|5.11] meter
+        "LatCtlPath_An_Actl": path_angle,          # Path angle [-0.5|0.5235] radians
+        "LatCtlCrv_NoRate2_Actl": curvature_rate,  # Curvature rate [-0.001024|0.001023] 1/meter^2
+        "LatCtlCurv_No_Actl": curvature,           # Curvature [-0.02|0.02094] 1/meter
+      }
+      return self.packer.make_can_msg_panda("LateralMotionControl2", 0, values)
 
   # Cruise control buttons
   def _acc_button_msg(self, button: int, bus: int):
@@ -339,6 +351,8 @@ class TestFordSafetyBase(common.PandaSafetyTest):
 
 
 class TestFordStockSafety(TestFordSafetyBase):
+  STEER_MESSAGE = MSG_LateralMotionControl
+
   TX_MSGS = [
     [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
     [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
@@ -354,6 +368,8 @@ class TestFordStockSafety(TestFordSafetyBase):
 
 
 class TestFordCANFDStockSafety(TestFordSafetyBase):
+  STEER_MESSAGE = MSG_LateralMotionControl2
+
   TX_MSGS = [
     [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
     [MSG_LateralMotionControl2, 0], [MSG_IPMA_Data, 0],
@@ -368,12 +384,7 @@ class TestFordCANFDStockSafety(TestFordSafetyBase):
     self.safety.init_tests()
 
 
-class TestFordLongitudinalSafety(TestFordSafetyBase):
-  TX_MSGS = [
-    [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA, 0], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
-    [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
-  ]
-  FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA, MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl, MSG_IPMA_Data]}
+class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   MAX_ACCEL = 2.0  # accel is used for brakes, but openpilot can set positive values
@@ -384,11 +395,10 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
   MIN_GAS = -0.5
   INACTIVE_GAS = -5.0
 
-  def setUp(self):
-    self.packer = CANPackerPanda("ford_lincoln_base_pt")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_LONG_CONTROL)
-    self.safety.init_tests()
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "TestFordLongitudinalSafetyBase":
+      raise unittest.SkipTest
 
   # ACC command
   def _acc_command_msg(self, gas: float, brake: float, cmbb_deny: bool = False):
@@ -424,6 +434,36 @@ class TestFordLongitudinalSafety(TestFordSafetyBase):
         brake = round(brake, 2)  # floats might not hit exact boundary conditions without rounding
         should_tx = (controls_allowed and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
         self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake)))
+
+
+class TestFordLongitudinalSafety(TestFordLongitudinalSafetyBase):
+  TX_MSGS = [
+    [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA, 0], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
+    [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
+  ]
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA, MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl, MSG_IPMA_Data]}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("ford_lincoln_base_pt")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_LONG_CONTROL)
+    self.safety.init_tests()
+
+
+class TestFordCANFDLongitudinalSafety(TestFordLongitudinalSafetyBase):
+  STEER_MESSAGE = MSG_LateralMotionControl2
+
+  TX_MSGS = [
+    [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA, 0], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
+    [MSG_LateralMotionControl2, 0], [MSG_IPMA_Data, 0],
+  ]
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA, MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl2, MSG_IPMA_Data]}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("ford_lincoln_base_pt")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_LONG_CONTROL | Panda.FLAG_FORD_CANFD)
+    self.safety.init_tests()
 
 
 if __name__ == "__main__":
