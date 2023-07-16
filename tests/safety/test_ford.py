@@ -17,8 +17,8 @@ MSG_Steering_Data_FD1 = 0x083      # TX by OP, various driver switches and LKAS/
 MSG_ACCDATA = 0x186                # TX by OP, ACC controls
 MSG_ACCDATA_3 = 0x18A              # TX by OP, ACC/TJA user interface
 MSG_Lane_Assist_Data1 = 0x3CA      # TX by OP, Lane Keep Assist
-MSG_LateralMotionControl = 0x3D3   # TX by OP, Traffic Jam Assist
-MSG_LateralMotionControl2 = 0x3D6  # TX by OP, alternate Traffic Jam Assist message
+MSG_LateralMotionControl = 0x3D3   # TX by OP, Lateral Control message
+MSG_LateralMotionControl2 = 0x3D6  # TX by OP, alternate Lateral Control message
 MSG_IPMA_Data = 0x3D8              # TX by OP, IPMA and LKAS user interface
 
 
@@ -161,8 +161,8 @@ class TestFordSafetyBase(common.PandaSafetyTest):
     }
     return self.packer.make_can_msg_panda("Lane_Assist_Data1", 0, values)
 
-  # TJA command
-  def _tja_command_msg(self, enabled: bool, path_offset: float, path_angle: float, curvature: float, curvature_rate: float):
+  # LCA command
+  def _lat_ctl_msg(self, enabled: bool, path_offset: float, path_angle: float, curvature: float, curvature_rate: float):
     values = {
       "LatCtl_D_Rq": 1 if enabled else 0,
       "LatCtlPathOffst_L_Actl": path_offset,     # Path offset [-5.12|5.11] meter
@@ -261,7 +261,7 @@ class TestFordSafetyBase(common.PandaSafetyTest):
                   with self.subTest(controls_allowed=controls_allowed, steer_control_enabled=steer_control_enabled,
                                     path_offset=path_offset, path_angle=path_angle, curvature_rate=curvature_rate,
                                     curvature=curvature):
-                    self.assertEqual(should_tx, self._tx(self._tja_command_msg(steer_control_enabled, path_offset, path_angle, curvature, curvature_rate)))
+                    self.assertEqual(should_tx, self._tx(self._lat_ctl_msg(steer_control_enabled, path_offset, path_angle, curvature, curvature_rate)))
 
   def test_curvature_rate_limit_up(self):
     """
@@ -288,7 +288,7 @@ class TestFordSafetyBase(common.PandaSafetyTest):
         self._reset_curvature_measurement(sign * (self.MAX_CURVATURE_ERROR + 1e-3), speed)
         for should_tx, curvature in cases:
           self._set_prev_desired_angle(sign * small_curvature)
-          self.assertEqual(should_tx, self._tx(self._tja_command_msg(True, 0, 0, sign * (small_curvature + curvature), 0)))
+          self.assertEqual(should_tx, self._tx(self._lat_ctl_msg(True, 0, 0, sign * (small_curvature + curvature), 0)))
 
   def test_curvature_rate_limit_down(self):
     self.safety.set_controls_allowed(True)
@@ -311,7 +311,7 @@ class TestFordSafetyBase(common.PandaSafetyTest):
         self._reset_curvature_measurement(sign * (self.MAX_CURVATURE - self.MAX_CURVATURE_ERROR - 1e-3), speed)
         for should_tx, curvature in cases:
           self._set_prev_desired_angle(sign * self.MAX_CURVATURE)
-          self.assertEqual(should_tx, self._tx(self._tja_command_msg(True, 0, 0, sign * curvature, 0)))
+          self.assertEqual(should_tx, self._tx(self._lat_ctl_msg(True, 0, 0, sign * curvature, 0)))
 
   def test_prevent_lkas_action(self):
     self.safety.set_controls_allowed(1)

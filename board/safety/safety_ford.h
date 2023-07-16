@@ -9,8 +9,8 @@
 #define FORD_ACCDATA               0x186   // TX by OP, ACC controls
 #define FORD_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
 #define FORD_Lane_Assist_Data1     0x3CA   // TX by OP, Lane Keep Assist
-#define FORD_LateralMotionControl  0x3D3   // TX by OP, Traffic Jam Assist
-#define FORD_LateralMotionControl2 0x3D6   // TX by OP, alternate Traffic Jam Assist message
+#define FORD_LateralMotionControl  0x3D3   // TX by OP, Lateral Control message
+#define FORD_LateralMotionControl2 0x3D6   // TX by OP, alternate Lateral Control message
 #define FORD_IPMA_Data             0x3D8   // TX by OP, IPMA and LKAS user interface
 
 // CAN bus numbers.
