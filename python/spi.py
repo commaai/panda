@@ -40,6 +40,9 @@ DEV_PATH = "/dev/spidev0.0"
 class PandaSpiException(Exception):
   pass
 
+class PandaProtocolMismatch(PandaSpiException):
+  pass
+
 class PandaSpiUnavailable(PandaSpiException):
   pass
 
