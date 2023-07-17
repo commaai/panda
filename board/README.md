@@ -36,7 +36,7 @@ echo "out" > /sys/class/gpio/gpio124/direction
 echo 0 > /sys/class/gpio/gpio124/value
 ```
 
-With these done you should see "STM Device in DFU mode" or something similar when you run lsusb. If you do you should be able to run the recover.sh script in the panda folder. It may still be held in DFU after the flash, in which case run the following to get it out of DFU
+With these done you should see "STM Device in DFU mode" or something similar when you run lsusb. If you do you should be able to run the recover.py script in the panda/board folder. It may still be held in DFU after the flash, in which case run the following to get it out of DFU
 
 ```
 echo 124 > /sys/class/gpio/export
