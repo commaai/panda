@@ -1,5 +1,7 @@
 #include "safety_hyundai_common.h"
 
+#define HYUNDAI_CANFD_A_CAN 1
+
 const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
   .max_steer = 270,
   .max_rt_delta = 112,
@@ -341,8 +343,8 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
   hyundai_canfd_hda2 = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2);
   hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
 
-  hyundai_pt_bus = hyundai_canfd_hda2 ? 1 : 0;
-  hyundai_scc_bus = hyundai_camera_scc ? 2 : hyundai_pt_bus;
+  hyundai_pt_bus = hyundai_canfd_hda2 ? HYUNDAI_CANFD_A_CAN : HYUNDAI_PT_CAN;
+  hyundai_scc_bus = hyundai_camera_scc ? HYUNDAI_CAM_CAN : hyundai_pt_bus;
 
   // no long for ICE yet
   if (!hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {

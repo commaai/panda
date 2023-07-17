@@ -1,6 +1,9 @@
 #ifndef SAFETY_HYUNDAI_COMMON_H
 #define SAFETY_HYUNDAI_COMMON_H
 
+#define HYUNDAI_PT_CAN  0
+#define HYUNDAI_CAM_CAN 2
+
 const int HYUNDAI_PARAM_EV_GAS = 1;
 const int HYUNDAI_PARAM_HYBRID_GAS = 2;
 const int HYUNDAI_PARAM_LONGITUDINAL = 4;
@@ -35,8 +38,8 @@ void hyundai_common_init(uint16_t param) {
 
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
 
-  hyundai_pt_bus = 0;
-  hyundai_scc_bus = hyundai_camera_scc ? 2 : hyundai_pt_bus;
+  hyundai_pt_bus = HYUNDAI_PT_CAN;
+  hyundai_scc_bus = hyundai_camera_scc ? HYUNDAI_CAM_CAN : hyundai_pt_bus;
 
 #ifdef ALLOW_DEBUG
   hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_LONGITUDINAL);
