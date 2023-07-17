@@ -110,9 +110,7 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
 // ***************************** CAN *****************************
 // CANx_SCE IRQ Handler
 void can_sce(uint8_t can_number) {
-  ENTER_CRITICAL();
   update_can_health_pkt(can_number, 1U);
-  EXIT_CRITICAL();
 }
 
 // CANx_TX IRQ Handler

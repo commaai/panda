@@ -38,40 +38,38 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
 #define SUBARU_ALT_BUS  1
 #define SUBARU_CAM_BUS  2
 
+#define SUBARU_COMMON_TX_MSGS(alt_bus)              \
+  {MSG_SUBARU_ES_LKAS,         SUBARU_MAIN_BUS, 8}, \
+  {MSG_SUBARU_ES_Distance,     alt_bus,         8}, \
+  {MSG_SUBARU_ES_DashStatus,   SUBARU_MAIN_BUS, 8}, \
+  {MSG_SUBARU_ES_LKAS_State,   SUBARU_MAIN_BUS, 8}, \
+  {MSG_SUBARU_ES_Infotainment, SUBARU_MAIN_BUS, 8}, \
+
+#define SUBARU_COMMON_ADDR_CHECKS(alt_bus)                                                                                                            \
+  {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_Wheel_Speeds,    alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_Brake_Status,    alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_CruiseControl,   alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}}, \
+
 const CanMsg SUBARU_TX_MSGS[] = {
-  {MSG_SUBARU_ES_LKAS,         SUBARU_MAIN_BUS, 8},
-  {MSG_SUBARU_ES_Distance,     SUBARU_MAIN_BUS, 8},
-  {MSG_SUBARU_ES_DashStatus,   SUBARU_MAIN_BUS, 8},
-  {MSG_SUBARU_ES_LKAS_State,   SUBARU_MAIN_BUS, 8},
-  {MSG_SUBARU_ES_Infotainment, SUBARU_MAIN_BUS, 8},
+  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS)
 };
 #define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
 
 const CanMsg SUBARU_GEN2_TX_MSGS[] = {
-  {MSG_SUBARU_ES_LKAS,         SUBARU_MAIN_BUS, 8},
-  {MSG_SUBARU_ES_Distance,     SUBARU_ALT_BUS,  8},
-  {MSG_SUBARU_ES_DashStatus,   SUBARU_MAIN_BUS, 8},
-  {MSG_SUBARU_ES_LKAS_State,   SUBARU_MAIN_BUS, 8},
-  {MSG_SUBARU_ES_Infotainment, SUBARU_MAIN_BUS, 8}
+  SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS)
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
 
 AddrCheckStruct subaru_addr_checks[] = {
-  {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_Wheel_Speeds,    SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_Brake_Status,    SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_CruiseControl,   SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
+  SUBARU_COMMON_ADDR_CHECKS(SUBARU_MAIN_BUS)
 };
 #define SUBARU_ADDR_CHECK_LEN (sizeof(subaru_addr_checks) / sizeof(subaru_addr_checks[0]))
 addr_checks subaru_rx_checks = {subaru_addr_checks, SUBARU_ADDR_CHECK_LEN};
 
 AddrCheckStruct subaru_gen2_addr_checks[] = {
-  {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_Wheel_Speeds,    SUBARU_ALT_BUS,  8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_Brake_Status,    SUBARU_ALT_BUS,  8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_CruiseControl,   SUBARU_ALT_BUS,  8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
+  SUBARU_COMMON_ADDR_CHECKS(SUBARU_ALT_BUS)
 };
 #define SUBARU_GEN2_ADDR_CHECK_LEN (sizeof(subaru_gen2_addr_checks) / sizeof(subaru_gen2_addr_checks[0]))
 addr_checks subaru_gen2_rx_checks = {subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
