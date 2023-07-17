@@ -20,8 +20,9 @@ logs = [
   ReplayRoute("0744286ead2fbb96|2023-05-01--16-27-01--35--rlog.bz2", Panda.SAFETY_SUBARU),    # SUBARU.IMPREZA
   ReplayRoute("bad6ae3584ece5b5|2023-04-29--11-23-48--7--rlog.bz2", Panda.SAFETY_SUBARU,      # SUBARU.OUTBACK
               Panda.FLAG_SUBARU_GEN2, ALT_EXP.DISABLE_DISENGAGE_ON_GAS),
-  ReplayRoute("7fd1e4f3a33c1673|2022-12-04--15-09-53--4--rlog.bz2", Panda.SAFETY_SUBARU,      # SUBARU.FORESTER_2022
-              Panda.FLAG_SUBARU_GEN3),
+  # TODO: need a route without sng from martinl
+  #ReplayRoute("7fd1e4f3a33c1673|2022-12-04--15-09-53--4--rlog.bz2", Panda.SAFETY_SUBARU,      # SUBARU.FORESTER_2022
+  #            Panda.FLAG_SUBARU_GEN3),
   ReplayRoute("76b83eb0245de90e|2020-03-05--19-16-05.bz2", Panda.SAFETY_VOLKSWAGEN_MQB),      # VOLKSWAGEN.GOLF (stock ACC)
   ReplayRoute("3cfdec54aa035f3f|2022-10-13--14-58-58.bz2", Panda.SAFETY_VOLKSWAGEN_MQB,       # VOLKSWAGEN.GOLF (openpilot long)
               Panda.FLAG_VOLKSWAGEN_LONG_CONTROL),
