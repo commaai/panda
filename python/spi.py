@@ -40,6 +40,9 @@ DEV_PATH = "/dev/spidev0.0"
 class PandaSpiException(Exception):
   pass
 
+class PandaProtocolMismatch(PandaSpiException):
+  pass
+
 class PandaSpiUnavailable(PandaSpiException):
   pass
 
@@ -109,6 +112,9 @@ class PandaSpiHandle(BaseHandle):
   """
   A class that mimics a libusb1 handle for panda SPI communications.
   """
+
+  PROTOCOL_VERSION = 1
+
   def __init__(self):
     self.dev = SpiDevice()
 
@@ -225,7 +231,7 @@ class PandaSpiHandle(BaseHandle):
         version_bytes = spi.readbytes(len(vers_str) + 2)
         if bytes(version_bytes).startswith(vers_str):
           break
-        if (time.monotonic() - start) > 0.5:
+        if (time.monotonic() - start) > 0.01:
           raise PandaSpiMissingAck
 
       rlen = struct.unpack("<H", bytes(version_bytes[-2:]))[0]
