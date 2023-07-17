@@ -198,7 +198,7 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
     pass
 
   def test_gas_brake_limits_correct(self):
-    # Assert that max brake and max throttle is set
+    # Assert that max brake and max gas is set
     self.assertTrue(self.MAX_BRAKE is not None)
     self.assertTrue(self.MAX_GAS is not None)
 
@@ -217,7 +217,7 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
   def test_brake_safety_check(self):
     self._generic_limit_safety_check(self._brake_msg, self.MIN_BRAKE, self.MAX_BRAKE, 1.5)
   
-  def test_throttle_safety_check(self):
+  def test_gas_safety_check(self):
     self._generic_limit_safety_check(self._gas_msg, self.MIN_GAS, self.MAX_GAS, 1.2, self.INACTIVE_GAS)
 
         
