@@ -17,7 +17,7 @@ from .base import BaseHandle
 from .constants import FW_PATH, McuType
 from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
-from .spi import PandaSpiHandle, PandaSpiException
+from .spi import PandaSpiHandle, PandaSpiException, PandaProtocolMismatch
 from .usb import PandaUsbHandle
 
 __version__ = '0.0.10'
@@ -326,7 +326,7 @@ class Panda:
       self.set_power_save(0)
 
   @staticmethod
-  def spi_connect(serial):
+  def spi_connect(serial, ignore_version=False):
     # get UID to confirm slave is present and up
     handle = None
     spi_serial = None
@@ -339,7 +339,7 @@ class Panda:
       spi_serial = binascii.hexlify(dat[:12]).decode()
       pid = dat[13]
       if pid not in (0xcc, 0xee):
-        raise PandaSpiException("bad bootstub status")
+        raise PandaSpiException("invalid bootstub status")
       bootstub = pid == 0xee
     except PandaSpiException:
       pass
@@ -349,6 +349,11 @@ class Panda:
       handle = None
       spi_serial = None
       bootstub = False
+
+    if handle is not None and not ignore_version:
+      panda_version = dat[14]
+      if panda_version != handle.PROTOCOL_VERSION:
+        raise PandaProtocolMismatch(f"panda protocol mismatch: expected {handle.PROTOCOL_VERSION}, got {panda_version}. reflash panda")
 
     return handle, spi_serial, bootstub, None
 
@@ -421,7 +426,7 @@ class Panda:
 
   @staticmethod
   def spi_list():
-    _, serial, _, _ = Panda.spi_connect(None)
+    _, serial, _, _ = Panda.spi_connect(None, ignore_version=True)
     if serial is not None:
       return [serial, ]
     return []

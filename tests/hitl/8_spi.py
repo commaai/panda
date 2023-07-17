@@ -4,7 +4,7 @@ import random
 from unittest.mock import patch
 
 from panda import Panda
-from panda.python.spi import PandaSpiNackResponse
+from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse
 
 pytestmark = [
   pytest.mark.test_panda_types((Panda.HW_TYPE_TRES, ))
@@ -18,8 +18,17 @@ class TestSpi:
     assert spy.call_count == 2
     mocker.stop(spy)
 
+  def test_protocol_version_check(self, p):
+    with patch('panda.python.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
+      # connect but raise protocol error
+      with pytest.raises(PandaProtocolMismatch):
+        p2 = Panda(p._serial)
+
+      # list should still work
+      assert p._serial in Panda.list()
+
   @pytest.mark.expected_logs(2)
-  def test_protocol_version(self, p):
+  def test_protocol_version_data(self, p):
     for bootstub in (False, True):
       p.reset(enter_bootstub=bootstub)
       v = p._handle.get_protocol_version()
