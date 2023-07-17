@@ -331,16 +331,25 @@ class Panda:
     handle = None
     spi_serial = None
     bootstub = None
+    spi_version = None
     try:
-      # TODO: check for protocol version mismatch
       handle = PandaSpiHandle()
-      dat = handle.get_protocol_version()
 
-      spi_serial = binascii.hexlify(dat[:12]).decode()
-      pid = dat[13]
-      if pid not in (0xcc, 0xee):
-        raise PandaSpiException("invalid bootstub status")
-      bootstub = pid == 0xee
+      # connect by protcol version
+      try:
+        dat = handle.get_protocol_version()
+        spi_serial = binascii.hexlify(dat[:12]).decode()
+        pid = dat[13]
+        if pid not in (0xcc, 0xee):
+          raise PandaSpiException("invalid bootstub status")
+        bootstub = pid == 0xee
+        spi_version = dat[14]
+      except PandaSpiException:
+        # fallback, we'll raise a protocol mismatch later
+        dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12, timeout=100)
+        spi_serial = binascii.hexlify(dat).decode()
+        bootstub = Panda.flasher_present(handle)
+        spi_version = 0
     except PandaSpiException:
       pass
 
@@ -351,9 +360,8 @@ class Panda:
       bootstub = False
 
     if handle is not None and not ignore_version:
-      panda_version = dat[14]
-      if panda_version != handle.PROTOCOL_VERSION:
-        raise PandaProtocolMismatch(f"panda protocol mismatch: expected {handle.PROTOCOL_VERSION}, got {panda_version}. reflash panda")
+      if spi_version != handle.PROTOCOL_VERSION:
+        raise PandaProtocolMismatch(f"panda protocol mismatch: expected {handle.PROTOCOL_VERSION}, got {spi_version}. reflash panda")
 
     return handle, spi_serial, bootstub, None
 

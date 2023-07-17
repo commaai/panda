@@ -22,7 +22,7 @@ class TestSpi:
     with patch('panda.python.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
       # connect but raise protocol error
       with pytest.raises(PandaProtocolMismatch):
-        p2 = Panda(p._serial)
+        Panda(p._serial)
 
       # list should still work
       assert p._serial in Panda.list()
