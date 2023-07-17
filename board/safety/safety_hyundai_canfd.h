@@ -172,10 +172,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
-  const int pt_bus = hyundai_canfd_hda2 ? 1 : 0;
-  const int scc_bus = hyundai_camera_scc ? 2 : pt_bus;
-
-  if (valid && (bus == pt_bus)) {
+  if (valid && (bus == hyundai_pt_bus)) {
     // driver torque
     if (addr == 0xea) {
       int torque_driver_new = ((GET_BYTE(to_push, 11) & 0x1fU) << 8U) | GET_BYTE(to_push, 10);
@@ -223,7 +220,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     }
   }
 
-  if (valid && (bus == scc_bus)) {
+  if (valid && (bus == hyundai_scc_bus)) {
     // cruise state
     if ((addr == 0x1a0) && !hyundai_longitudinal) {
       bool cruise_engaged = ((GET_BYTE(to_push, 8) >> 4) & 0x3U) != 0U;
@@ -236,8 +233,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   if (hyundai_longitudinal) {
     // on HDA2, ensure ADRV ECU is still knocked out
     // on others, ensure accel msg is blocked from camera
-    const int stock_scc_bus = hyundai_canfd_hda2 ? 1 : 0;
-    stock_ecu_detected = stock_ecu_detected || ((addr == 0x1a0) && (bus == stock_scc_bus));
+    stock_ecu_detected = stock_ecu_detected || ((addr == 0x1a0) && (bus == hyundai_pt_bus));
   }
   generic_rx_checks(stock_ecu_detected);
 
@@ -344,6 +340,9 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
   gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
   hyundai_canfd_hda2 = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2);
   hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
+
+  hyundai_pt_bus = hyundai_canfd_hda2 ? 1 : 0;
+  hyundai_scc_bus = hyundai_camera_scc ? 2 : hyundai_pt_bus;
 
   // no long for ICE yet
   if (!hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
