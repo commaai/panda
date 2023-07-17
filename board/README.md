@@ -17,7 +17,9 @@ If panda is blinking fast with green LED, use `flash.py`.
 Otherwise if LED is off and panda can't be seen with `lsusb` command
 use [panda paw](https://comma.ai/shop/products/panda-paw) to go into DFU mode on Comma 2 and external panda.
 
-For the Comma 3's internal panda run these commands. 
+[dfu-util](http://github.com/dsigma/dfu-util.git) for flashing
+
+For the Comma 3's internal panda run these commands if LED is off and panda can't be seen with `lsusb` command.
 You can ignore any output about the device resource being busy.
 
 ```
@@ -50,6 +52,3 @@ echo "out" > /sys/class/gpio/gpio124/direction
 echo 0 > /sys/class/gpio/gpio124/value
 ```
 
-
-
-[dfu-util](http://github.com/dsigma/dfu-util.git) for flashing
