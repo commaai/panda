@@ -104,8 +104,9 @@ class TestSubaruGen2SafetyBase(TestSubaruSafetyBase):
 
 class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.LongitudinalGasBrakeSafetyTest):
   MAX_GAS = 3400
-  MAX_BRAKE = 600
   INACTIVE_GAS = 1818
+
+  MAX_BRAKE = 600
   
   FWD_BLACKLISTED_ADDRS = {0: [MSG_SUBARU_CruiseControl, MSG_SUBARU_Brake_Status],
                            2: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_Brake, MSG_SUBARU_ES_Distance,

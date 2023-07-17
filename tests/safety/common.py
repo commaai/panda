@@ -178,7 +178,7 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
   MIN_BRAKE: int = 0
   MAX_BRAKE: Optional[int] = None
 
-  MIN_GAS: int = 1818
+  MIN_GAS: int = 0
   MAX_GAS: Optional[int] = None
 
   INACTIVE_GAS: Optional[int] = 0
@@ -198,7 +198,7 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
     pass
 
   def test_gas_brake_limits_correct(self):
-    # Assert that max brake and max gas is set
+    # Assert that max brake and max throttle is set
     self.assertTrue(self.MAX_BRAKE is not None)
     self.assertTrue(self.MAX_GAS is not None)
 
