@@ -125,7 +125,7 @@ bool llcan_init(CAN_TypeDef *CAN_obj) {
   can_health[can_number].total_error_cnt = 0;
 
   // Disable automatic retransmission until we see any bus activity
-  CAN_obj->MCR |= CAN_MCR_NART;
+  register_set_bits(&(CAN_obj->MCR), CAN_MCR_NART);
 
   // Enter init mode
   register_set_bits(&(CAN_obj->FMR), CAN_FMR_FINIT);
