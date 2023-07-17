@@ -18,14 +18,17 @@ class TestSpi:
     assert spy.call_count == 2
     mocker.stop(spy)
 
+  @pytest.mark.expected_logs(2)
   def test_protocol_version_check(self, p):
-    with patch('panda.python.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
-      # connect but raise protocol error
-      with pytest.raises(PandaProtocolMismatch):
-        Panda(p._serial)
+    for bootstub in (False, True):
+      p.reset(enter_bootstub=bootstub)
+      with patch('panda.python.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
+        # list should still work with wrong version
+        assert p._serial in Panda.list()
 
-      # list should still work
-      assert p._serial in Panda.list()
+        # connect but raise protocol error
+        with pytest.raises(PandaProtocolMismatch):
+          Panda(p._serial)
 
   @pytest.mark.expected_logs(2)
   def test_protocol_version_data(self, p):

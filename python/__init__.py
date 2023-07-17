@@ -345,7 +345,7 @@ class Panda:
         bootstub = pid == 0xee
         spi_version = dat[14]
       except PandaSpiException:
-        # fallback, we'll raise a protocol mismatch later
+        # fallback, we'll raise a protocol mismatch below
         dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12, timeout=100)
         spi_serial = binascii.hexlify(dat).decode()
         bootstub = Panda.flasher_present(handle)
