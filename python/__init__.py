@@ -359,9 +359,11 @@ class Panda:
       spi_serial = None
       bootstub = False
 
+    # ensure our protocol version matches the panda
     if handle is not None and not ignore_version:
       if spi_version != handle.PROTOCOL_VERSION:
-        raise PandaProtocolMismatch(f"panda protocol mismatch: expected {handle.PROTOCOL_VERSION}, got {spi_version}. reflash panda")
+        err = f"panda protocol mismatch: expected {handle.PROTOCOL_VERSION}, got {spi_version}. reflash panda"
+        raise PandaProtocolMismatch(err)
 
     return handle, spi_serial, bootstub, None
 
