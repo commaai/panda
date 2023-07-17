@@ -73,9 +73,11 @@ void dos_set_usb_power_mode(uint8_t mode) {
   }
 }
 
-void dos_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {
+bool dos_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {
+  bool ret = false;
   if ((ignition && !usb_enum) || harness_inserted) {
     // enable bootkick if ignition seen or if plugged into a harness
+    ret = true;
     dos_set_bootkick(true);
   } else if (heartbeat_seen) {
     // disable once openpilot is up
@@ -83,6 +85,7 @@ void dos_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harn
   } else {
 
   }
+  return ret;
 }
 
 void dos_set_can_mode(uint8_t mode){
