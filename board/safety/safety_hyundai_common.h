@@ -1,6 +1,9 @@
 #ifndef SAFETY_HYUNDAI_COMMON_H
 #define SAFETY_HYUNDAI_COMMON_H
 
+#define HYUNDAI_PT_CAN  0
+#define HYUNDAI_CAM_CAN 2
+
 const int HYUNDAI_PARAM_EV_GAS = 1;
 const int HYUNDAI_PARAM_HYBRID_GAS = 2;
 const int HYUNDAI_PARAM_LONGITUDINAL = 4;
@@ -30,6 +33,8 @@ bool hyundai_longitudinal = false;
 bool hyundai_camera_scc = false;
 bool hyundai_alt_limits = false;
 uint8_t hyundai_last_button_interaction;  // button messages since the user pressed an enable button
+int hyundai_pt_bus;
+int hyundai_scc_bus;
 
 void hyundai_common_init(uint16_t param) {
   hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
@@ -38,6 +43,9 @@ void hyundai_common_init(uint16_t param) {
   hyundai_alt_limits = GET_FLAG(param, HYUNDAI_PARAM_ALT_LIMITS);
 
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
+
+  hyundai_pt_bus = HYUNDAI_PT_CAN;
+  hyundai_scc_bus = hyundai_camera_scc ? HYUNDAI_CAM_CAN : hyundai_pt_bus;
 
 #ifdef ALLOW_DEBUG
   hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_LONGITUDINAL);
