@@ -334,24 +334,6 @@ void RTC_WKUP_IRQ_Handler(void) {
   }
 }
 
-void SysTick_Handler(void) {
-
-  if ((SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk) != 0) {
-    CANPacket_t to_send;
-
-    to_send.returned = 0U;
-    to_send.rejected = 0U;
-    to_send.extended = 0U;
-    to_send.addr = 0x201U;
-    to_send.bus = 0U;
-    to_send.data_len_code = 8U;
-    (void)memcpy(to_send.data, "\xff\xff\xff\xff\xff\xff\xff\xff", dlc_to_len[to_send.data_len_code]);
-    can_set_checksum(&to_send);
-
-    can_send(&to_send, to_send.bus, true);
-  }
-}
-
 
 int main(void) {
   // Init interrupt table
