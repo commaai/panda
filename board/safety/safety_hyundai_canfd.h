@@ -67,7 +67,7 @@ const CanMsg HYUNDAI_CANFD_HDA2_LONG_TX_MSGS[] = {
 const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
   {HYUNDAI_CANFD_LFA,            HYUNDAI_PT_CAN,  16},
   {HYUNDAI_CANFD_SCC_CONTROL,    HYUNDAI_PT_CAN,  32},
-  {HYUNDAI_CANFD_CRUISE_BUTTONS, HYUNDAI_CAM_BUS,  8},
+  {HYUNDAI_CANFD_CRUISE_BUTTONS, HYUNDAI_CAM_CAN,  8},
   {HYUNDAI_CANFD_LFAHDA_CLUSTER, HYUNDAI_PT_CAN,  16},
 };
 
@@ -82,7 +82,7 @@ AddrCheckStruct hyundai_canfd_addr_checks[] = {
   {.msg = {{HYUNDAI_CANFD_MDPS,               HYUNDAI_CANFD_A_CAN, 24, .check_checksum = true,  .max_counter = 0xffU, .expected_timestep = 10000U},
            {HYUNDAI_CANFD_MDPS,               HYUNDAI_PT_CAN,      24, .check_checksum = true,  .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }}},
   {.msg = {{HYUNDAI_CANFD_SCC_CONTROL,        HYUNDAI_CANFD_A_CAN, 32, .check_checksum = true,  .max_counter = 0xffU, .expected_timestep = 20000U},
-           {HYUNDAI_CANFD_SCC_CONTROL,        HYUNDAI_CAM_BUS,     32, .check_checksum = true,  .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }}},
+           {HYUNDAI_CANFD_SCC_CONTROL,        HYUNDAI_CAM_CAN,     32, .check_checksum = true,  .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }}},
   {.msg = {{HYUNDAI_CANFD_CRUISE_BUTTONS,     HYUNDAI_CANFD_A_CAN,  8, .check_checksum = false, .max_counter =  0xfU, .expected_timestep = 20000U},
            {HYUNDAI_CANFD_CRUISE_BUTTONS,     HYUNDAI_PT_CAN,       8, .check_checksum = false, .max_counter =  0xfU, .expected_timestep = 20000U},
            {HYUNDAI_CANFD_CRUISE_BUTTONS_ALT, HYUNDAI_PT_CAN,      16, .check_checksum = false, .max_counter = 0xffU, .expected_timestep = 20000U}}},
@@ -253,7 +253,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   }
 
   const int steer_addr = hyundai_canfd_hda2 ? HYUNDAI_CANFD_LKAS : HYUNDAI_CANFD_LFA;
-  bool stock_ecu_detected = (addr == steer_addr) && (bus == HYUNDAI_MAIN_BUS);
+  bool stock_ecu_detected = (addr == steer_addr) && (bus == HYUNDAI_PT_CAN);
   if (hyundai_longitudinal) {
     // on HDA2, ensure ADRV ECU is still knocked out
     // on others, ensure accel msg is blocked from camera
@@ -336,9 +336,9 @@ static int hyundai_canfd_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   if (bus_num == HYUNDAI_PT_CAN) {
-    bus_fwd = HYUNDAI_CAM_BUS;
+    bus_fwd = HYUNDAI_CAM_CAN;
   }
-  if (bus_num == HYUNDAI_CAM_BUS) {
+  if (bus_num == HYUNDAI_CAM_CAN) {
     // LKAS for HDA2, LFA for HDA1
     int is_lkas_msg = (((addr == HYUNDAI_CANFD_LKAS) || (addr == HYUNDAI_CANFD_CAM_0x2A4)) && hyundai_canfd_hda2);
     int is_lfa_msg = ((addr == HYUNDAI_CANFD_LFA) && !hyundai_canfd_hda2);

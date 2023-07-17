@@ -20,12 +20,6 @@ enum {
   HYUNDAI_BTN_CANCEL = 4,
 };
 
-enum {
-  HYUNDAI_MAIN_BUS = 0,
-  HYUNDAI_SUB_BUS = 1,
-  HYUNDAI_CAM_BUS = 2,
-};
-
 // common state
 bool hyundai_ev_gas_signal = false;
 bool hyundai_hybrid_gas_signal = false;
