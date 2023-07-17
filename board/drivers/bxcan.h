@@ -182,7 +182,7 @@ void can_rx(uint8_t can_number) {
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
 
   // Enable automatic retransmission of messages after some activity on the bus
-  if (can_health[can_number].total_rx_cnt != 0U && (CAN->MCR & CAN_MCR_NART) != 0U) {
+  if ((can_health[can_number].total_rx_cnt != 0U) && ((CAN->MCR & CAN_MCR_NART) != 0U)) {
     CAN->MCR &= ~(CAN_MCR_NART);
   }
 
