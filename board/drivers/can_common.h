@@ -21,8 +21,6 @@ uint32_t tx_buffer_overflow = 0;
 uint32_t rx_buffer_overflow = 0;
 uint32_t gmlan_send_errs = 0;
 
-can_health_t can_health[] = {{0}, {0}, {0}};
-
 extern int can_live;
 extern int pending_can_live;
 

@@ -54,6 +54,7 @@ separate IRQs for RX and TX.
 
 #include "can_definitions.h"
 #include "comms_definitions.h"
+#include "health.h"
 
 #ifndef BOOTSTUB
   #include "main_declarations.h"
@@ -85,6 +86,10 @@ separate IRQs for RX and TX.
 
 #if !defined(BOOTSTUB) && defined(PANDA)
   #include "stm32h7/llexti.h"
+#endif
+
+#ifndef BOOTSTUB
+  #include "stm32h7/llfdcan.h"
 #endif
 
 #include "stm32h7/llusb.h"

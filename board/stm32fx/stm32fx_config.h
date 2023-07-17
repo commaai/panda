@@ -46,6 +46,7 @@
 
 #include "can_definitions.h"
 #include "comms_definitions.h"
+#include "health.h"
 
 #ifndef BOOTSTUB
   #ifdef PANDA
@@ -85,6 +86,10 @@
 
 #if !defined(PEDAL_USB) && !defined(PEDAL) && !defined(BOOTSTUB)
   #include "stm32fx/llexti.h"
+#endif
+
+#ifndef BOOTSTUB
+  #include "stm32fx/llbxcan.h"
 #endif
 
 #if defined(PANDA) || defined(BOOTSTUB) || defined(PEDAL_USB)

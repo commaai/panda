@@ -19,6 +19,8 @@
 
 void print(const char *a);
 
+can_health_t can_health[] = {{0}, {0}, {0}};
+
 // kbps multiplied by 10
 const uint32_t speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
 const uint32_t data_speeds[] = {0U}; // No separate data speed, dummy
@@ -117,12 +119,10 @@ void llcan_irq_enable(CAN_TypeDef *CAN_obj) {
 bool llcan_init(CAN_TypeDef *CAN_obj) {
   bool ret = true;
 
-  #ifndef PEDAL
   uint32_t can_number = CAN_NUM_FROM_CANIF(CAN_obj);
   can_health[can_number].total_rx_cnt = 0;
   can_health[can_number].total_tx_cnt = 0;
   can_health[can_number].total_error_cnt = 0;
-  #endif
 
   // Disable automatic retransmission until we see any bus activity
   CAN_obj->MCR |= CAN_MCR_NART;
