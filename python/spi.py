@@ -183,7 +183,7 @@ class PandaSpiHandle(BaseHandle):
         raise PandaSpiException(f"response length greater than max ({max_rx_len} {response_len})")
 
       # read rest
-      remaining = response_len - preread_len
+      remaining = (response_len + 1) - preread_len
       if remaining > 0:
         dat += bytes(spi.readbytes(remaining))
 
