@@ -37,6 +37,11 @@ def test_reliability(p):
   p.set_can_loopback(True)
   p.set_can_speed_kbps(0, 1000)
 
+  # Check warm up idea
+  p.can_send(0x1aa, b"message", 0)
+  time.sleep(0.05)
+  r = p.can_recv()
+
   addrs = list(range(100, 100 + MSG_COUNT))
   ts = [(j, 0, b"\xaa" * 8, 0) for j in addrs]
 
