@@ -42,6 +42,7 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
 
   @classmethod
   def setUpClass(cls):
+    super().setUpClass()
     if cls.__name__ == "TestHyundaiCanfdBase":
       cls.packer = None
       cls.safety = None
@@ -95,7 +96,8 @@ class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ in ("TestHyundaiCanfdHDA1", "TestHyundaiCanfdHDA1AltButtons") or cls.__name__.endswith('Base'):
+    super().setUpClass()
+    if cls.__name__ in ("TestHyundaiCanfdHDA1", "TestHyundaiCanfdHDA1AltButtons"):
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
