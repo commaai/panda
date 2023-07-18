@@ -108,7 +108,7 @@ class TestSubaruGen2Safety(TestSubaruGen2SafetyBase):
   FLAGS = Panda.FLAG_SUBARU_GEN2
   TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS)
 
-class TestSubaruGen3Safety(TestSubaruSafetyBase):
+class TestSubaruForester2022Safety(TestSubaruSafetyBase):
   TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS_ALT)
   RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS_ALT
   FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr(MSG_SUBARU_ES_LKAS_ALT)
