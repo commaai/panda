@@ -66,3 +66,10 @@ def clear_can_buffers(panda):
     if (time.monotonic() - st) > 10:
       print("Unable to clear can buffers for panda ", panda.get_serial())
       assert False
+
+
+def warmup_panda(panda, bus=0):
+  # We send one msg to get it back and to turn on auto retransission, immitates alive bus
+    panda.can_send(0x1aa, b"message", bus)
+    time.sleep(0.05)
+    _ = panda.can_recv()
