@@ -1,45 +1,71 @@
 import os
 import time
+import pytest
 
 from panda import Panda, PandaDFU, McuType, BASEDIR
-from .helpers import test_all_pandas, panda_connect_and_init, check_signature
 
 
-@test_all_pandas
-@panda_connect_and_init
+def check_signature(p):
+  assert not p.bootstub, "Flashed firmware not booting. Stuck in bootstub."
+  assert p.up_to_date()
+
+# TODO: make more comprehensive bootstub tests and run on a few production ones + current
+# TODO: also test release-signed app
+@pytest.mark.execution_timeout(30)
+@pytest.mark.expected_logs(1, 2)
 def test_a_known_bootstub(p):
   """
   Test that compiled app can work with known production bootstub
   """
   known_bootstubs = {
-    McuType.F4: "bootstub.panda.bin",
-    McuType.H7: "bootstub.panda_h7.bin",
+    # covers the two cases listed in Panda.connect
+    McuType.F4: [
+      # case A - no bcdDevice or panda type, has to assume F4
+      "bootstub_f4_first_dos_production.panda.bin",
+
+      # case B - just bcdDevice
+      "bootstub_f4_only_bcd.panda.bin",
+    ],
+    McuType.H7: ["bootstub.panda_h7.bin"],
   }
 
-  p.reset(enter_bootstub=True)
-  p.reset(enter_bootloader=True)
+  for kb in known_bootstubs[p.get_mcu_type()]:
+    app_ids = (p.get_mcu_type(), p.get_usb_serial())
+    assert None not in app_ids
 
-  dfu_serial = PandaDFU.st_serial_to_dfu_serial(p._serial, p._mcu_type)
-  assert Panda.wait_for_dfu(dfu_serial, timeout=30)
+    p.reset(enter_bootstub=True)
+    p.reset(enter_bootloader=True)
 
-  dfu = PandaDFU(dfu_serial)
-  fn = known_bootstubs[p._mcu_type]
-  with open(os.path.join(BASEDIR, "tests/hitl/known_bootstub", fn), "rb") as f:
-    code = f.read()
+    dfu_serial = p.get_dfu_serial()
+    assert Panda.wait_for_dfu(dfu_serial, timeout=30)
 
-  dfu.program_bootstub(code)
-  p.connect(True, True)
-  p.flash()
-  check_signature(p)
+    dfu = PandaDFU(dfu_serial)
+    with open(os.path.join(BASEDIR, "tests/hitl/known_bootstub", kb), "rb") as f:
+      code = f.read()
 
-@test_all_pandas
-@panda_connect_and_init
+    dfu.program_bootstub(code)
+    dfu.reset()
+
+    p.connect(claim=False, wait=True)
+
+    # check for MCU or serial mismatch
+    with Panda(p._serial, claim=False) as np:
+      bootstub_ids = (np.get_mcu_type(), np.get_usb_serial())
+      assert app_ids == bootstub_ids
+
+    # ensure we can flash app and it jumps to app
+    p.flash()
+    check_signature(p)
+    assert not p.bootstub
+
+@pytest.mark.execution_timeout(25)
+@pytest.mark.expected_logs(1)
 def test_b_recover(p):
   assert p.recover(timeout=30)
   check_signature(p)
 
-@test_all_pandas
-@panda_connect_and_init
+@pytest.mark.execution_timeout(25)
+@pytest.mark.expected_logs(3)
 def test_c_flash(p):
   # test flash from bootstub
   serial = p._serial

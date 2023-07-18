@@ -45,6 +45,9 @@ const board board_grey = {
   .has_canfd = false,
   .has_rtc_battery = false,
   .fan_max_rpm = 0U,
+  .avdd_mV = 3300U,
+  .fan_stall_recovery = false,
+  .fan_enable_cooldown_time = 0U,
   .init = grey_init,
   .enable_can_transceiver = white_enable_can_transceiver,
   .enable_can_transceivers = white_enable_can_transceivers,
@@ -56,5 +59,6 @@ const board board_grey = {
   .set_fan_enabled = unused_set_fan_enabled,
   .set_ir_power = unused_set_ir_power,
   .set_phone_power = unused_set_phone_power,
-  .set_siren = unused_set_siren
+  .set_siren = unused_set_siren,
+  .read_som_gpio = unused_read_som_gpio
 };

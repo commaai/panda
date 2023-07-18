@@ -24,10 +24,10 @@ typedef union _USB_Setup {
 USB_Setup_TypeDef;
 
 bool usb_enumerated = false;
+uint16_t usb_last_frame_num = 0U;
 
 void usb_init(void);
-void usb_cb_ep3_out_complete(void);
-void usb_outep3_resume_if_paused(void);
+void refresh_can_tx_slots_available(void);
 
 // **** supporting defines ****
 
@@ -471,6 +471,12 @@ char to_hex_char(int a) {
   return ret;
 }
 
+void usb_tick(void) {
+  uint16_t current_frame_num = (USBx_DEVICE->DSTS & USB_OTG_DSTS_FNSOF_Msk) >> USB_OTG_DSTS_FNSOF_Pos;
+  usb_enumerated = (current_frame_num != usb_last_frame_num);
+  usb_last_frame_num = current_frame_num;
+}
+
 void usb_setup(void) {
   int resp_len;
   ControlPacket_t control_req;
@@ -673,22 +679,9 @@ void usb_irqhandler(void) {
     print("connector ID status change\n");
   }
 
-  if ((gintsts & USB_OTG_GINTSTS_ESUSP) != 0) {
-    print("ESUSP detected\n");
-  }
-
-  if ((gintsts & USB_OTG_GINTSTS_EOPF) != 0) {
-    usb_enumerated = true;
-  }
-
   if ((gintsts & USB_OTG_GINTSTS_USBRST) != 0) {
     print("USB reset\n");
-    usb_enumerated = false;
     usb_reset();
-  }
-
-  if ((gintsts & USB_OTG_GINTSTS_USBSUSP) != 0) {
-    usb_enumerated = false;
   }
 
   if ((gintsts & USB_OTG_GINTSTS_ENUMDNE) != 0) {
@@ -814,7 +807,7 @@ void usb_irqhandler(void) {
       #endif
       // NAK cleared by process_can (if tx buffers have room)
       outep3_processing = false;
-      usb_cb_ep3_out_complete();
+      refresh_can_tx_slots_available();
     } else if ((USBx_OUTEP(3)->DOEPINT & 0x2000) != 0) {
       #ifdef DEBUG_USB
         print("  OUT3 PACKET WTF\n");
@@ -932,7 +925,7 @@ void usb_irqhandler(void) {
   //USBx->GINTMSK = 0xFFFFFFFF & ~(USB_OTG_GINTMSK_NPTXFEM | USB_OTG_GINTMSK_PTXFEM | USB_OTG_GINTSTS_SOF | USB_OTG_GINTSTS_EOPF);
 }
 
-void usb_outep3_resume_if_paused(void) {
+void can_tx_comms_resume_usb(void) {
   ENTER_CRITICAL();
   if (!outep3_processing && (USBx_OUTEP(3)->DOEPCTL & USB_OTG_DOEPCTL_NAKSTS) != 0) {
     USBx_OUTEP(3)->DOEPTSIZ = (32U << 19) | 0x800U;
