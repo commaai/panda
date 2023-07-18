@@ -473,7 +473,12 @@ class IsoTpMessage():
     # assert len(rx_data) == self.max_len, f"isotp - rx: invalid CAN frame length: {len(rx_data)}"
 
     if rx_data[0] >> 4 == ISOTP_FRAME_TYPE.SINGLE:
-      self.rx_len = ((rx_data[0] & 0x0F) << 8) | rx_data[1]
+      self.rx_len = rx_data[0] & 0x0F
+      # "if the first byte of SF=0, then second byte specifies the size of the data."
+      # - https://en.wikipedia.org/wiki/CAN_FD
+      # TODO: checking 0 length is not correct since ISO-TP on CAN can also transmit empty frames
+      if self.rx_len == 0x0:
+        self.rx_len = ((rx_data[0] & 0x0F) << 8) | rx_data[1]
       # assert self.rx_len < self.max_len, f"isotp - rx: invalid single frame length: {self.rx_len}"
       self.rx_dat = rx_data[2:2 + self.rx_len]
       self.rx_idx = 0
