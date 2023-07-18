@@ -113,7 +113,7 @@ class TestSubaruGen3Safety(TestSubaruSafetyBase):
   RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS_ALT
   FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr(MSG_SUBARU_ES_LKAS_ALT)
 
-  FLAGS = Panda.FLAG_SUBARU_GEN3
+  FLAGS = Panda.FLAG_SUBARU_LKAS_ALT | Panda.FLAG_SUBARU_ES_STATUS
 
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}

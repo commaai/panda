@@ -65,10 +65,10 @@ const CanMsg SUBARU_GEN2_TX_MSGS[] = {
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
 
-const CanMsg SUBARU_GEN3_TX_MSGS[] = {
+const CanMsg SUBARU_ALT_LKAS_TX_MSGS[] = {
   SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS_ALT)
 };
-#define SUBARU_GEN3_TX_MSGS_LEN (sizeof(SUBARU_GEN3_TX_MSGS) / sizeof(SUBARU_GEN3_TX_MSGS[0]))
+#define SUBARU_ALT_LKAS_TX_MSGS_LEN (sizeof(SUBARU_ALT_LKAS_TX_MSGS) / sizeof(SUBARU_ALT_LKAS_TX_MSGS[0]))
 
 AddrCheckStruct subaru_addr_checks[] = {
   SUBARU_COMMON_ADDR_CHECKS(SUBARU_MAIN_BUS)
@@ -84,17 +84,19 @@ AddrCheckStruct subaru_gen2_addr_checks[] = {
 #define SUBARU_GEN2_ADDR_CHECK_LEN (sizeof(subaru_gen2_addr_checks) / sizeof(subaru_gen2_addr_checks[0]))
 addr_checks subaru_gen2_rx_checks = {subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
 
-AddrCheckStruct subaru_gen3_addr_checks[] = {
+AddrCheckStruct subaru_es_status_addr_checks[] = {
   SUBARU_COMMON_ADDR_CHECKS(SUBARU_MAIN_BUS)
-  {.msg = {{0x222, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
-  {.msg = {{0x321, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_ES_Status, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}},
 };
-#define SUBARU_GEN3_ADDR_CHECK_LEN (sizeof(subaru_gen3_addr_checks) / sizeof(subaru_gen3_addr_checks[0]))
+#define SUBARU_ES_STATUS_ADDR_CHECK_LEN (sizeof(subaru_es_status_addr_checks) / sizeof(subaru_es_status_addr_checks[0]))
 
 const uint16_t SUBARU_PARAM_GEN2 = 1;
-const uint16_t SUBARU_PARAM_GEN3 = 2;
+const uint16_t SUBARU_PARAM_LKAS_ALT = 2;
+const uint16_t SUBARU_PARAM_ES_STATUS = 4; // Use ES_Status for cruise_activated
+
 bool subaru_gen2 = false;
-bool subaru_gen3 = false;
+bool lkas_alt = false;
+bool es_status = false;
 
 
 static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
@@ -123,7 +125,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
   if (valid) {
     const int bus = GET_BUS(to_push);
     const int alt_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
-    const int stock_ecu = subaru_gen3 ? 0x124 : 0x122;
+    const int stock_ecu = lkas_alt ? MSG_SUBARU_ES_LKAS_ALT : MSG_SUBARU_ES_LKAS;
 
     int addr = GET_ADDR(to_push);
     if ((addr == MSG_SUBARU_Steering_Torque) && (bus == SUBARU_MAIN_BUS)) {
@@ -134,12 +136,12 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_bus) && !subaru_gen3) {
+    if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_bus) && !es_status) {
       bool cruise_engaged = GET_BIT(to_push, 41U) != 0U;
       pcm_cruise_check(cruise_engaged);
     }
 
-    if ((addr == MSG_SUBARU_ES_Status) && (bus == SUBARU_CAM_BUS) && subaru_gen3) {
+    if ((addr == MSG_SUBARU_ES_Status) && (bus == SUBARU_CAM_BUS) && es_status) {
       bool cruise_engaged = GET_BIT(to_push, 29U) != 0U;
       pcm_cruise_check(cruise_engaged);
     }
@@ -169,14 +171,14 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
   if (subaru_gen2) {
     tx = msg_allowed(to_send, SUBARU_GEN2_TX_MSGS, SUBARU_GEN2_TX_MSGS_LEN);
-  } else if (subaru_gen3) {
-    tx = msg_allowed(to_send, SUBARU_GEN3_TX_MSGS, SUBARU_GEN3_TX_MSGS_LEN);
+  } else if (lkas_alt) {
+    tx = msg_allowed(to_send, SUBARU_ALT_LKAS_TX_MSGS, SUBARU_ALT_LKAS_TX_MSGS_LEN);
   } else {
     tx = msg_allowed(to_send, SUBARU_TX_MSGS, SUBARU_TX_MSGS_LEN);
   }
 
   // steer cmd checks
-  if ((addr == MSG_SUBARU_ES_LKAS) && !subaru_gen3) {
+  if ((addr == MSG_SUBARU_ES_LKAS) && !lkas_alt) {
     int desired_torque = ((GET_BYTES(to_send, 0, 4) >> 16) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
@@ -185,7 +187,8 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
       tx = 0;
     }
   }
-  if ((addr == MSG_SUBARU_ES_LKAS_ALT) && subaru_gen3) {
+
+  if ((addr == MSG_SUBARU_ES_LKAS_ALT) && lkas_alt) {
     int desired_torque = ((GET_BYTES(to_send, 4, 4) >> 8) & 0x3FFFFU);
     desired_torque = -1 * to_signed(desired_torque, 17);
 
@@ -207,8 +210,8 @@ static int subaru_fwd_hook(int bus_num, int addr) {
 
   if (bus_num == SUBARU_CAM_BUS) {
     // Global platform
-    bool block_lkas = (((addr == MSG_SUBARU_ES_LKAS)     && !subaru_gen3) ||
-                       ((addr == MSG_SUBARU_ES_LKAS_ALT) &&  subaru_gen3) ||
+    bool block_lkas = (((addr == MSG_SUBARU_ES_LKAS)     && !lkas_alt) ||
+                       ((addr == MSG_SUBARU_ES_LKAS_ALT) &&  lkas_alt) ||
                         (addr == MSG_SUBARU_ES_DashStatus) ||
                         (addr == MSG_SUBARU_ES_LKAS_State) ||
                         (addr == MSG_SUBARU_ES_Infotainment));
@@ -222,12 +225,13 @@ static int subaru_fwd_hook(int bus_num, int addr) {
 
 static const addr_checks* subaru_init(uint16_t param) {
   subaru_gen2 = GET_FLAG(param, SUBARU_PARAM_GEN2);
-  subaru_gen3 = GET_FLAG(param, SUBARU_PARAM_GEN3);
+  lkas_alt = GET_FLAG(param, SUBARU_PARAM_LKAS_ALT);
+  es_status = GET_FLAG(param, SUBARU_PARAM_ES_STATUS);
 
   if (subaru_gen2) {
     subaru_rx_checks = (addr_checks){subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
-  } else if (subaru_gen3) {
-    subaru_rx_checks = (addr_checks){subaru_gen3_addr_checks, SUBARU_GEN3_ADDR_CHECK_LEN};
+  } else if (es_status) {
+    subaru_rx_checks = (addr_checks){subaru_es_status_addr_checks, SUBARU_ES_STATUS_ADDR_CHECK_LEN};
   } else {
     subaru_rx_checks = (addr_checks){subaru_addr_checks, SUBARU_ADDR_CHECK_LEN};
   }
