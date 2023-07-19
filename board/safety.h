@@ -533,21 +533,25 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 
   if (controls_allowed) {
     // *** global torque limit check ***
-    violation |= max_limit_check(desired_torque, limits.max_steer, -limits.max_steer);
+    violation |= max_limit_check(desired_torque, limits.max_steer, -limits.max_steer) 
+              ? (log(TORQUE_CHK_LOG_TAG "max_limit exceeded"), true) : false;
 
     // *** torque rate limit check ***
     if (limits.type == TorqueDriverLimited) {
       violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
                                       limits.max_steer, limits.max_rate_up, limits.max_rate_down,
-                                      limits.driver_torque_allowance, limits.driver_torque_factor);
+                                      limits.driver_torque_allowance, limits.driver_torque_factor)
+                ? (log(TORQUE_CHK_LOG_TAG "driver_limit exceeded"), true) : false;
     } else {
       violation |= dist_to_meas_check(desired_torque, desired_torque_last, &torque_meas,
-                                      limits.max_rate_up, limits.max_rate_down, limits.max_torque_error);
+                                      limits.max_rate_up, limits.max_rate_down, limits.max_torque_error)
+                ? (log(TORQUE_CHK_LOG_TAG "dist_to_meas exceeded"), true) : false;
     }
     desired_torque_last = desired_torque;
 
     // *** torque real time rate limit check ***
-    violation |= rt_rate_limit_check(desired_torque, rt_torque_last, limits.max_rt_delta);
+    violation |= rt_rate_limit_check(desired_torque, rt_torque_last, limits.max_rt_delta)
+              ? (log(TORQUE_CHK_LOG_TAG "rt_rate_limit exceeded"), true) : false;
 
     // every RT_INTERVAL set the new limits
     uint32_t ts_elapsed = get_ts_elapsed(ts, ts_torque_check_last);
@@ -558,36 +562,33 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
   }
 
   // no torque if controls is not allowed
-  if (!controls_allowed && (desired_torque != 0)) {
-    violation = true;
-  }
+  violation |= (!controls_allowed && (desired_torque != 0)) 
+            ? (log(TORQUE_CHK_LOG_TAG "desired_torque != 0"), true) : false;
+
 
   // certain safety modes set their steer request bit low for one or more frame at a
   // predefined max frequency to avoid steering faults in certain situations
   bool steer_req_mismatch = (steer_req == 0) && (desired_torque != 0);
   if (!limits.has_steer_req_tolerance) {
-    if (steer_req_mismatch) {
-      violation = true;
-    }
+    violation |= (steer_req_mismatch)
+              ? (log(TORQUE_CHK_LOG_TAG "steer_req_mismatch"), true) : false;
 
   } else {
     if (steer_req_mismatch) {
       if (invalid_steer_req_count == 0) {
         // disallow torque cut if not enough recent matching steer_req messages
-        if (valid_steer_req_count < limits.min_valid_request_frames) {
-          violation = true;
-        }
+        violation |= (valid_steer_req_count < limits.min_valid_request_frames) 
+                  ? (log(TORQUE_CHK_LOG_TAG "valid_steer_req_count too low"), true) : false;
 
         // or we've cut torque too recently in time
         uint32_t ts_elapsed = get_ts_elapsed(ts, ts_steer_req_mismatch_last);
-        if (ts_elapsed < limits.min_valid_request_rt_interval) {
-          violation = true;
-        }
+        violation |= (ts_elapsed < limits.min_valid_request_rt_interval) 
+                  ? (log(TORQUE_CHK_LOG_TAG "cut torque too recently"), true) : false;
+
       } else {
         // or we're cutting more frames consecutively than allowed
-        if (invalid_steer_req_count >= limits.max_invalid_request_frames) {
-          violation = true;
-        }
+        violation |= (invalid_steer_req_count >= limits.max_invalid_request_frames) 
+                  ? (log(TORQUE_CHK_LOG_TAG "cut more consecutive frames than allowed"), true) : false;
       }
 
       valid_steer_req_count = 0;
@@ -648,18 +649,27 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     }
 
     // check for violation;
-    violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
+    violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle)
+              ? (log(ANGLE_CHK_LOG_TAG "steer control enabled, max_limit exceeded"), true) : false;
+
   }
   desired_angle_last = desired_angle;
 
   // Angle should either be 0 or same as current angle while not steering
   if (!steer_control_enabled) {
-    violation |= (limits.inactive_angle_is_zero ? (desired_angle != 0) :
-                  max_limit_check(desired_angle, angle_meas.max + 1, angle_meas.min - 1));
+    if (limits.inactive_angle_is_zero) {
+      violation |= (desired_angle != 0) 
+                ? (log(ANGLE_CHK_LOG_TAG "steer control disabled, desired_angle != 0"), true) : false;
+    } else {
+      violation |= (max_limit_check(desired_angle, angle_meas.max + 1, angle_meas.min - 1))
+                ? (log(ANGLE_CHK_LOG_TAG "steer control disabled, max_limit exceed"), true) : false;
+    }
   }
 
   // No angle control allowed when controls are not allowed
-  violation |= !controls_allowed && steer_control_enabled;
+  violation |= (!controls_allowed && steer_control_enabled)
+            ? (log(ANGLE_CHK_LOG_TAG "steer_control_enabled"), true) : false;
+
 
   return violation;
 }
