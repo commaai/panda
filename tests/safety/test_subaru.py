@@ -33,7 +33,7 @@ def lkas_tx_msgs(alt_bus):
           [MSG_SUBARU_ES_Infotainment,  SUBARU_MAIN_BUS]]
 
 
-def fwd_blacklisted_addr(additional_messages=[]):
+def fwd_blacklisted_addr(*additional_messages):
   return {SUBARU_CAM_BUS: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment, *additional_messages]}
 
 class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
@@ -110,7 +110,7 @@ class TestSubaruGen2Safety(TestSubaruGen2SafetyBase):
 class TestSubaruForester2022Safety(TestSubaruSafetyBase):
   TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS)
   RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS_ALT
-  FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr([MSG_SUBARU_ES_LKAS_ALT])
+  FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr(MSG_SUBARU_ES_LKAS_ALT)
 
   FLAGS = Panda.FLAG_SUBARU_LKAS_ALT | Panda.FLAG_SUBARU_ES_STATUS
 
