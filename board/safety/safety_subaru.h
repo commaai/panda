@@ -1,4 +1,4 @@
-#define SUBARU_TORQUE_STEERING_LIMITS_GENERATOR(name, steer_max, rate_up, rate_down)    \
+#define SUBARU_STEERING_LIMITS_GENERATOR(name, steer_max, rate_up, rate_down)    \
   const SteeringLimits name = {                                                  \
     .max_steer = steer_max,                                                      \
     .max_rt_delta = 940,                                                         \
@@ -10,8 +10,8 @@
     .type = TorqueDriverLimited,                                                 \
   };
 
-SUBARU_TORQUE_STEERING_LIMITS_GENERATOR(SUBARU_STEERING_LIMITS, 2047, 50, 70)
-SUBARU_TORQUE_STEERING_LIMITS_GENERATOR(SUBARU_GEN2_STEERING_LIMITS, 1000, 40, 40)
+SUBARU_STEERING_LIMITS_GENERATOR(SUBARU_STEERING_LIMITS, 2047, 50, 70)
+SUBARU_STEERING_LIMITS_GENERATOR(SUBARU_GEN2_STEERING_LIMITS, 1000, 40, 40)
 
 
 #define MSG_SUBARU_Brake_Status          0x13c
