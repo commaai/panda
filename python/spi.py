@@ -113,7 +113,7 @@ class PandaSpiHandle(BaseHandle):
   A class that mimics a libusb1 handle for panda SPI communications.
   """
 
-  PROTOCOL_VERSION = 1
+  PROTOCOL_VERSION = 2
 
   def __init__(self) -> None:
     self.dev = SpiDevice()
