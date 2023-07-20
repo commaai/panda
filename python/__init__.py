@@ -17,7 +17,7 @@ from .base import BaseHandle
 from .constants import FW_PATH, McuType
 from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
-from .spi import PandaSpiHandle, PandaSpiException
+from .spi import PandaSpiHandle, PandaSpiException, PandaProtocolMismatch
 from .usb import PandaUsbHandle
 
 __version__ = '0.0.10'
@@ -26,7 +26,6 @@ __version__ = '0.0.10'
 LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
 logging.basicConfig(level=LOGLEVEL, format='%(message)s')
 
-USBPACKET_MAX_SIZE = 0x40
 CANPACKET_HEAD_SIZE = 0x6
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
@@ -255,6 +254,7 @@ class Panda:
   FLAG_GM_HW_CAM_LONG = 2
 
   FLAG_FORD_LONG_CONTROL = 1
+  FLAG_FORD_CANFD = 2
 
   def __init__(self, serial: Optional[str] = None, claim: bool = True, disable_checks: bool = True):
     self._connect_serial = serial
@@ -326,16 +326,30 @@ class Panda:
       self.set_power_save(0)
 
   @staticmethod
-  def spi_connect(serial):
+  def spi_connect(serial, ignore_version=False):
     # get UID to confirm slave is present and up
     handle = None
     spi_serial = None
     bootstub = None
+    spi_version = None
     try:
       handle = PandaSpiHandle()
-      dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12, timeout=100)
-      spi_serial = binascii.hexlify(dat).decode()
-      bootstub = Panda.flasher_present(handle)
+
+      # connect by protcol version
+      try:
+        dat = handle.get_protocol_version()
+        spi_serial = binascii.hexlify(dat[:12]).decode()
+        pid = dat[13]
+        if pid not in (0xcc, 0xee):
+          raise PandaSpiException("invalid bootstub status")
+        bootstub = pid == 0xee
+        spi_version = dat[14]
+      except PandaSpiException:
+        # fallback, we'll raise a protocol mismatch below
+        dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12, timeout=100)
+        spi_serial = binascii.hexlify(dat).decode()
+        bootstub = Panda.flasher_present(handle)
+        spi_version = 0
     except PandaSpiException:
       pass
 
@@ -344,6 +358,12 @@ class Panda:
       handle = None
       spi_serial = None
       bootstub = False
+
+    # ensure our protocol version matches the panda
+    if handle is not None and not ignore_version:
+      if spi_version != handle.PROTOCOL_VERSION:
+        err = f"panda protocol mismatch: expected {handle.PROTOCOL_VERSION}, got {spi_version}. reflash panda"
+        raise PandaProtocolMismatch(err)
 
     return handle, spi_serial, bootstub, None
 
@@ -416,7 +436,7 @@ class Panda:
 
   @staticmethod
   def spi_list():
-    _, serial, _, _ = Panda.spi_connect(None)
+    _, serial, _, _ = Panda.spi_connect(None, ignore_version=True)
     if serial is not None:
       return [serial, ]
     return []
