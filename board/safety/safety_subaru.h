@@ -39,8 +39,8 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
 #define SUBARU_ALT_BUS  1
 #define SUBARU_CAM_BUS  2
 
-#define SUBARU_COMMON_TX_MSGS(alt_bus, lkas_msg)    \
-  {lkas_msg,                   SUBARU_MAIN_BUS, 8}, \
+#define SUBARU_COMMON_TX_MSGS(alt_bus)    \
+  {MSG_SUBARU_ES_LKAS,         SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_Distance,     alt_bus,         8}, \
   {MSG_SUBARU_ES_DashStatus,   SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_LKAS_State,   SUBARU_MAIN_BUS, 8}, \
@@ -56,19 +56,14 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
   {.msg = {{MSG_SUBARU_CruiseControl,   alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}}, \
 
 const CanMsg SUBARU_TX_MSGS[] = {
-  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS)
+  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS)
 };
 #define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
 
 const CanMsg SUBARU_GEN2_TX_MSGS[] = {
-  SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS, MSG_SUBARU_ES_LKAS)
+  SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS)
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
-
-const CanMsg SUBARU_ALT_LKAS_TX_MSGS[] = {
-  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS_ALT)
-};
-#define SUBARU_ALT_LKAS_TX_MSGS_LEN (sizeof(SUBARU_ALT_LKAS_TX_MSGS) / sizeof(SUBARU_ALT_LKAS_TX_MSGS[0]))
 
 AddrCheckStruct subaru_addr_checks[] = {
   SUBARU_COMMON_ADDR_CHECKS(SUBARU_MAIN_BUS)
@@ -171,28 +166,16 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
   if (subaru_gen2) {
     tx = msg_allowed(to_send, SUBARU_GEN2_TX_MSGS, SUBARU_GEN2_TX_MSGS_LEN);
-  } else if (lkas_alt) {
-    tx = msg_allowed(to_send, SUBARU_ALT_LKAS_TX_MSGS, SUBARU_ALT_LKAS_TX_MSGS_LEN);
   } else {
     tx = msg_allowed(to_send, SUBARU_TX_MSGS, SUBARU_TX_MSGS_LEN);
   }
 
   // steer cmd checks
-  if ((addr == MSG_SUBARU_ES_LKAS) && !lkas_alt) {
+  if ((addr == MSG_SUBARU_ES_LKAS)) {
     int desired_torque = ((GET_BYTES(to_send, 0, 4) >> 16) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
     const SteeringLimits limits = subaru_gen2 ? SUBARU_GEN2_STEERING_LIMITS : SUBARU_STEERING_LIMITS;
-    if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
-      tx = 0;
-    }
-  }
-
-  if ((addr == MSG_SUBARU_ES_LKAS_ALT) && lkas_alt) {
-    int desired_torque = ((GET_BYTES(to_send, 4, 4) >> 8) & 0x3FFFFU);
-    desired_torque = -1 * to_signed(desired_torque, 17);
-
-    const SteeringLimits limits = SUBARU_STEERING_LIMITS;
     if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
       tx = 0;
     }
@@ -210,8 +193,8 @@ static int subaru_fwd_hook(int bus_num, int addr) {
 
   if (bus_num == SUBARU_CAM_BUS) {
     // Global platform
-    bool block_lkas = (((addr == MSG_SUBARU_ES_LKAS)     && !lkas_alt) ||
-                       ((addr == MSG_SUBARU_ES_LKAS_ALT) &&  lkas_alt) ||
+    bool block_lkas =  ((addr == MSG_SUBARU_ES_LKAS)        ||
+                       ((addr == MSG_SUBARU_ES_LKAS_ALT) && lkas_alt) ||
                         (addr == MSG_SUBARU_ES_DashStatus) ||
                         (addr == MSG_SUBARU_ES_LKAS_State) ||
                         (addr == MSG_SUBARU_ES_Infotainment));
