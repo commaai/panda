@@ -67,12 +67,12 @@ def test_latency(p, panda_jungle):
         p_recv.set_can_speed_kbps(bus, speed)
         time.sleep(0.05)
 
+        warmup_panda(p_send, bus)
+        warmup_panda(p_recv, bus)
+
         # clear can buffers
         clear_can_buffers(p_send)
         clear_can_buffers(p_recv)
-
-        warmup_panda(p_send, bus)
-        warmup_panda(p_recv, bus)
 
         latencies = []
         comp_kbps_list = []
