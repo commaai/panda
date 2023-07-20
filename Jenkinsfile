@@ -82,7 +82,7 @@ pipeline {
           steps {
             phone_steps("panda-dos", [
               ["build", "scons -j4"],
-              ["flash", "cd tests/ && ./ci_reset_internal_hw.py"],
+              ["flash", "cd tests/ && ./reflash_internal_panda.py"],
               ["test", "cd tests/hitl && HW_TYPES=6 pytest --durations=0 [2-7]*.py -k 'not test_send_recv'"],
             ])
           }
@@ -93,7 +93,7 @@ pipeline {
           steps {
             phone_steps("panda-tres", [
               ["build", "scons -j4"],
-              ["flash", "cd tests/ && ./ci_reset_internal_hw.py"],
+              ["flash", "cd tests/ && ./reflash_internal_panda.py"],
               ["test", "cd tests/hitl && HW_TYPES=9 pytest --durations=0 2*.py [5-9]*.py"],
             ])
           }
