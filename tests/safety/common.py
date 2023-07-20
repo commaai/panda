@@ -548,6 +548,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
   ANGLE_RATE_DOWN: List[float]  # unwind limit
 
   VEHICLE_SPEED_PRECISION = 1
+  ANGLE_PRECISION = 1
 
   @classmethod
   def setUpClass(cls):
@@ -610,7 +611,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
         # Inject too high rates
         # Up
-        self.assertFalse(self._tx(self._angle_cmd_msg(a + sign_of(a) * (max_delta_up + 1.1), True)))
+        self.assertFalse(self._tx(self._angle_cmd_msg(a + sign_of(a) * (max_delta_up + self.ANGLE_PRECISION + 0.1), True)))
 
         # Don't change
         self.safety.set_controls_allowed(1)
@@ -620,7 +621,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
         self.assertTrue(self.safety.get_controls_allowed())
 
         # Down
-        self.assertFalse(self._tx(self._angle_cmd_msg(a - sign_of(a) * (max_delta_down + 1.1), True)))
+        self.assertFalse(self._tx(self._angle_cmd_msg(a - sign_of(a) * (max_delta_down + self.ANGLE_PRECISION + 0.1), True)))
 
         # Check desired steer should be the same as steer angle when controls are off
         self.safety.set_controls_allowed(0)

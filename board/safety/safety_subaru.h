@@ -15,11 +15,11 @@
 const SteeringLimits SUBARU_STEERING_LIMITS       = SUBARU_STEERING_LIMITS_GENERATOR(2047, 50, 70);
 const SteeringLimits SUBARU_GEN2_STEERING_LIMITS  = SUBARU_STEERING_LIMITS_GENERATOR(1000, 40, 40);
 
-#define STEER_ANGLE_RATIO 100
+#define STEER_ANGLE_MEAS_FACTOR -0.0217
+#define STEER_ANGLE_CMD_FACTOR  -100
+
 const SteeringLimits SUBARU_ANGLE_STEERING_LIMITS = {
-  .driver_torque_factor = 50,
-  .driver_torque_allowance = 60,
-  .angle_deg_to_can = STEER_ANGLE_RATIO,
+  .angle_deg_to_can = 1,
   .angle_rate_up_lookup = {
     {0},
     {1}
@@ -143,8 +143,8 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       torque_driver_new = -1 * to_signed(torque_driver_new, 11);
       update_sample(&torque_driver, torque_driver_new);
 
-      int angle_meas_new = (GET_BYTES(to_push, 4, 4) & 0xFFFFU);
-      angle_meas_new = to_signed(angle_meas_new, 16);
+      int angle_meas_new = (GET_BYTES(to_push, 4, 2) & 0xFFFFU);
+      angle_meas_new = ROUND(to_signed(angle_meas_new, 16) * STEER_ANGLE_MEAS_FACTOR);
       update_sample(&angle_meas, angle_meas_new);
     }
 
@@ -211,10 +211,12 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
   if ((addr == MSG_SUBARU_ES_LKAS_ANGLE)) {
     int desired_angle = ((GET_BYTES(to_send, 4, 4) >> 8) & 0x3FFFFU);
-    desired_angle = -1 * to_signed(desired_angle, 17);
+    desired_angle = -1 * to_signed(desired_angle, 17) / 100;
+
+    bool lkas_request = GET_BIT(to_send, 12);
 
     const SteeringLimits limits = SUBARU_ANGLE_STEERING_LIMITS;
-    if (steer_angle_cmd_checks(desired_angle, -1, limits)) {
+    if (steer_angle_cmd_checks(desired_angle, lkas_request, limits)) {
       tx = 0;
     }
   }

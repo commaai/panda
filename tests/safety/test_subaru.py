@@ -123,7 +123,7 @@ class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafety
   FLAGS = Panda.FLAG_SUBARU_LKAS_ANGLE | Panda.FLAG_SUBARU_ES_STATUS
 
   def _angle_cmd_msg(self, angle, steer_req=1):
-    values = {"LKAS_Output": angle}
+    values = {"LKAS_Output": angle, "LKAS_Request": steer_req}
     return self.packer.make_can_msg_panda("ES_LKAS_ANGLE", 0, values)
 
   def _angle_meas_msg(self, angle):
@@ -135,6 +135,8 @@ class TestSubaruForester2022Safety(TestSubaruAngleSafetyBase):
   ANGLE_RATE_BP = [0]
   ANGLE_RATE_UP = [1]
   ANGLE_RATE_DOWN = [1]
+
+  ANGLE_PRECISION = 2
 
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
