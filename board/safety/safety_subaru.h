@@ -1,5 +1,5 @@
-#define SUBARU_STEERING_LIMITS_GENERATOR(name, steer_max, rate_up, rate_down)    \
-  const SteeringLimits name = {                                                  \
+#define SUBARU_STEERING_LIMITS_GENERATOR(steer_max, rate_up, rate_down)    \
+  {                                                                              \
     .max_steer = steer_max,                                                      \
     .max_rt_delta = 940,                                                         \
     .max_rt_interval = 250000,                                                   \
@@ -8,11 +8,11 @@
     .driver_torque_factor = 50,                                                  \
     .driver_torque_allowance = 60,                                               \
     .type = TorqueDriverLimited,                                                 \
-  };
+  }                                                                              \
 
-SUBARU_STEERING_LIMITS_GENERATOR(SUBARU_STEERING_LIMITS, 2047, 50, 70)
-SUBARU_STEERING_LIMITS_GENERATOR(SUBARU_GEN2_STEERING_LIMITS, 1000, 40, 40)
-SUBARU_STEERING_LIMITS_GENERATOR(SUBARU_ANGLE_STEERING_LIMITS, 90, 0.25, 0.25)
+const SteeringLimits SUBARU_STEERING_LIMITS       = SUBARU_STEERING_LIMITS_GENERATOR(2047, 50, 70);
+const SteeringLimits SUBARU_GEN2_STEERING_LIMITS  = SUBARU_STEERING_LIMITS_GENERATOR(1000, 40, 40);
+const SteeringLimits SUBARU_ANGLE_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERATOR(90, 0.25, 0.25)
 
 
 #define MSG_SUBARU_Brake_Status          0x13c
@@ -60,10 +60,10 @@ const CanMsg SUBARU_GEN2_TX_MSGS[] = {
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
 
-const CanMsg SUBARU_ALT_LKAS_TX_MSGS[] = {
-  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS_ALT)
+const CanMsg SUBARU_LKAS_ANGLE_TX_MSGS[] = {
+  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS_ANGLE)
 };
-#define SUBARU_ALT_LKAS_TX_MSGS_LEN (sizeof(SUBARU_ALT_LKAS_TX_MSGS) / sizeof(SUBARU_ALT_LKAS_TX_MSGS[0]))
+#define SSUBARU_LKAS_ANGLE_TX_MSGS_LEN (sizeof(SUBARU_LKAS_ANGLE_TX_MSGS) / sizeof(SUBARU_LKAS_ANGLE_TX_MSGS[0]))
 
 AddrCheckStruct subaru_addr_checks[] = {
   SUBARU_COMMON_ADDR_CHECKS(SUBARU_MAIN_BUS)
@@ -167,7 +167,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   if (subaru_gen2) {
     tx = msg_allowed(to_send, SUBARU_GEN2_TX_MSGS, SUBARU_GEN2_TX_MSGS_LEN);
   } else if (lkas_angle) {
-    tx = msg_allowed(to_send, SUBARU_ALT_LKAS_TX_MSGS, SUBARU_ALT_LKAS_TX_MSGS_LEN);
+    tx = msg_allowed(to_send, SUBARU_LKAS_ANGLE_TX_MSGS, SUBARU_LKAS_ANGLE_TX_MSGS_LEN);
   } else {
     tx = msg_allowed(to_send, SUBARU_TX_MSGS, SUBARU_TX_MSGS_LEN);
   }
@@ -205,8 +205,8 @@ static int subaru_fwd_hook(int bus_num, int addr) {
 
   if (bus_num == SUBARU_CAM_BUS) {
     // Global platform
-    bool block_lkas = (((addr == MSG_SUBARU_ES_LKAS)     && !lkas_alt) ||
-                       ((addr == MSG_SUBARU_ES_LKAS_ALT) &&  lkas_alt) ||
+    bool block_lkas = (((addr == MSG_SUBARU_ES_LKAS)       && !lkas_angle) ||
+                       ((addr == MSG_SUBARU_ES_LKAS_ANGLE) &&  lkas_angle) ||
                         (addr == MSG_SUBARU_ES_DashStatus) ||
                         (addr == MSG_SUBARU_ES_LKAS_State) ||
                         (addr == MSG_SUBARU_ES_Infotainment));
