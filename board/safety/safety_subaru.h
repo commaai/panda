@@ -49,8 +49,8 @@ const SteeringLimits SUBARU_ANGLE_STEERING_LIMITS = {
 #define SUBARU_ALT_BUS  1
 #define SUBARU_CAM_BUS  2
 
-#define SUBARU_COMMON_TX_MSGS(alt_bus)    \
-  {MSG_SUBARU_ES_LKAS,         SUBARU_MAIN_BUS, 8}, \
+#define SUBARU_COMMON_TX_MSGS(alt_bus, lkas_msg)    \
+  {lkas_msg,                   SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_Distance,     alt_bus,         8}, \
   {MSG_SUBARU_ES_DashStatus,   SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_LKAS_State,   SUBARU_MAIN_BUS, 8}, \
@@ -66,12 +66,12 @@ const SteeringLimits SUBARU_ANGLE_STEERING_LIMITS = {
   {.msg = {{MSG_SUBARU_CruiseControl,   alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}}, \
 
 const CanMsg SUBARU_TX_MSGS[] = {
-  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS)
+  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS)
 };
 #define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
 
 const CanMsg SUBARU_GEN2_TX_MSGS[] = {
-  SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS)
+  SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS, MSG_SUBARU_ES_LKAS)
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
 
