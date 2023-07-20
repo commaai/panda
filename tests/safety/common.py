@@ -547,6 +547,8 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
   ANGLE_RATE_UP: List[float]  # windup limit
   ANGLE_RATE_DOWN: List[float]  # unwind limit
 
+  VEHICLE_SPEED_PRECISION = 1
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "AngleSteeringSafetyTest":
@@ -661,10 +663,10 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     for speed in np.arange(0, 80, 0.5):
       for i in range(6):
         self.assertTrue(self._rx(self._speed_msg(speed + i * 0.1)))
-
+      
       # assert close by one decimal place
-      self.assertLessEqual(abs(self.safety.get_vehicle_speed_min() - speed * VEHICLE_SPEED_FACTOR), 1)
-      self.assertLessEqual(abs(self.safety.get_vehicle_speed_max() - (speed + 0.5) * VEHICLE_SPEED_FACTOR), 1)
+      self.assertLessEqual(abs(self.safety.get_vehicle_speed_min() - speed * VEHICLE_SPEED_FACTOR), self.VEHICLE_SPEED_PRECISION)
+      self.assertLessEqual(abs(self.safety.get_vehicle_speed_max() - (speed + 0.5) * VEHICLE_SPEED_FACTOR), self.VEHICLE_SPEED_PRECISION)
 
       # reset sample_t by reinitializing the safety mode
       self._reset_safety_hooks()

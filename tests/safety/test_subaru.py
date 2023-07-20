@@ -12,7 +12,7 @@ MSG_SUBARU_Throttle         = 0x40
 MSG_SUBARU_Steering_Torque  = 0x119
 MSG_SUBARU_Wheel_Speeds     = 0x13a
 MSG_SUBARU_ES_LKAS          = 0x122
-MSG_SUBARU_ES_LKAS_ALT      = 0x124
+MSG_SUBARU_ES_LKAS_ANGLE    = 0x124
 MSG_SUBARU_ES_Brake         = 0x220
 MSG_SUBARU_ES_Distance      = 0x221
 MSG_SUBARU_ES_Status        = 0x222
@@ -36,7 +36,7 @@ def lkas_tx_msgs(alt_bus, lkas_msg=MSG_SUBARU_ES_LKAS):
 def fwd_blacklisted_addr(lkas_msg=MSG_SUBARU_ES_LKAS):
   return {SUBARU_CAM_BUS: [lkas_msg, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
 
-class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestSubaruSafetyBase(common.PandaSafetyTest):
   FLAGS = 0
   STANDSTILL_THRESHOLD = 0 # kph
   RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS
@@ -55,6 +55,8 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
 
   ALT_BUS = SUBARU_MAIN_BUS
 
+  VEHICLE_SPEED_PRECISION = 3
+
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
     self.safety = libpanda_py.libpanda
@@ -71,17 +73,13 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
     return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
 
   def _speed_msg(self, speed):
-    # subaru safety doesn't use the scaled value, so undo the scaling
-    values = {s: speed * 0.057 for s in ["FR", "FL", "RR", "RL"]}
-    return self.packer.make_can_msg_panda("Wheel_Speeds", self.ALT_BUS, values)
+    values = {s: speed for s in ["FR", "FL", "RR", "RL"]}
+    msg = self.packer.make_can_msg_panda("Wheel_Speeds", self.ALT_BUS, values)
+    return msg
 
   def _user_brake_msg(self, brake):
     values = {"Brake": brake}
     return self.packer.make_can_msg_panda("Brake_Status", self.ALT_BUS, values)
-
-  def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"LKAS_Output": torque}
-    return self.packer.make_can_msg_panda("ES_LKAS", 0, values)
 
   def _user_gas_msg(self, gas):
     values = {"Throttle_Pedal": gas}
@@ -92,14 +90,20 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
     return self.packer.make_can_msg_panda("CruiseControl", self.ALT_BUS, values)
 
 
-class TestSubaruGen2SafetyBase(TestSubaruSafetyBase):
+class TestSubaruTorqueSafetyBase(TestSubaruSafetyBase, common.DriverTorqueSteeringSafetyTest):
+  def _torque_cmd_msg(self, torque, steer_req=1):
+    values = {"LKAS_Output": torque}
+    return self.packer.make_can_msg_panda("ES_LKAS", 0, values)
+
+
+class TestSubaruGen2SafetyBase(TestSubaruTorqueSafetyBase):
   ALT_BUS = SUBARU_ALT_BUS
 
   MAX_RATE_UP = 40
   MAX_RATE_DOWN = 40
   MAX_TORQUE = 1000
 
-class TestSubaruGen1Safety(TestSubaruSafetyBase):
+class TestSubaruGen1Safety(TestSubaruTorqueSafetyBase):
   FLAGS = 0
   TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS)
 
@@ -108,20 +112,34 @@ class TestSubaruGen2Safety(TestSubaruGen2SafetyBase):
   FLAGS = Panda.FLAG_SUBARU_GEN2
   TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS)
 
-class TestSubaruForester2022Safety(TestSubaruSafetyBase):
-  TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS_ALT)
-  RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS_ALT
-  FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr(MSG_SUBARU_ES_LKAS_ALT)
+
+class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafetyTest):
+  TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS_ANGLE)
+  RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS_ANGLE
+  FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr(MSG_SUBARU_ES_LKAS_ANGLE)
+
+  DEG_TO_CAN = 1
 
   FLAGS = Panda.FLAG_SUBARU_LKAS_ANGLE | Panda.FLAG_SUBARU_ES_STATUS
+
+  def _angle_cmd_msg(self, angle, steer_req=1):
+    values = {"LKAS_Output": angle}
+    return self.packer.make_can_msg_panda("ES_LKAS_ANGLE", 0, values)
+
+  def _angle_meas_msg(self, angle):
+    values = {"Steering_Angle": angle}
+    return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
+
+
+class TestSubaruForester2022Safety(TestSubaruAngleSafetyBase):
+  ANGLE_RATE_BP = [0]
+  ANGLE_RATE_UP = [1]
+  ANGLE_RATE_DOWN = [1]
 
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
     return self.packer.make_can_msg_panda("ES_Status", 2, values)
 
-  def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"LKAS_Output": torque}
-    return self.packer.make_can_msg_panda("ES_LKAS_ALT", 0, values)
 
 if __name__ == "__main__":
   unittest.main()
