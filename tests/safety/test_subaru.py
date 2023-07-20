@@ -74,8 +74,7 @@ class TestSubaruSafetyBase(common.PandaSafetyTest):
 
   def _speed_msg(self, speed):
     values = {s: speed for s in ["FR", "FL", "RR", "RL"]}
-    msg = self.packer.make_can_msg_panda("Wheel_Speeds", self.ALT_BUS, values)
-    return msg
+    return self.packer.make_can_msg_panda("Wheel_Speeds", self.ALT_BUS, values)
 
   def _user_brake_msg(self, brake):
     values = {"Brake": brake}
