@@ -84,7 +84,7 @@ uint16_t spi_version_packet(uint8_t *out) {
   data_len += 1U;
 
   // SPI protocol version
-  out[data_pos + data_len] = 0x1;
+  out[data_pos + data_len] = 0x2;
   data_len += 1U;
 
   // data length
