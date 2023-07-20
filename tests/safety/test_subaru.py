@@ -25,16 +25,16 @@ SUBARU_ALT_BUS  = 1
 SUBARU_CAM_BUS  = 2
 
 
-def lkas_tx_msgs(alt_bus, lkas_msg=MSG_SUBARU_ES_LKAS):
-  return [[lkas_msg,                    SUBARU_MAIN_BUS], 
+def lkas_tx_msgs(alt_bus):
+  return [[MSG_SUBARU_ES_LKAS,          SUBARU_MAIN_BUS], 
           [MSG_SUBARU_ES_Distance,      alt_bus],
           [MSG_SUBARU_ES_DashStatus,    SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_LKAS_State,    SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_Infotainment,  SUBARU_MAIN_BUS]]
 
 
-def fwd_blacklisted_addr(lkas_msg=MSG_SUBARU_ES_LKAS):
-  return {SUBARU_CAM_BUS: [lkas_msg, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
+def fwd_blacklisted_addr(*additional_messages):
+  return {SUBARU_CAM_BUS: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment, *additional_messages]}
 
 class TestSubaruSafetyBase(common.PandaSafetyTest):
   FLAGS = 0
@@ -42,7 +42,7 @@ class TestSubaruSafetyBase(common.PandaSafetyTest):
   RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS
   RELAY_MALFUNCTION_BUS = SUBARU_MAIN_BUS
   FWD_BUS_LOOKUP = {SUBARU_MAIN_BUS: SUBARU_CAM_BUS, SUBARU_CAM_BUS: SUBARU_MAIN_BUS}
-  FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr(MSG_SUBARU_ES_LKAS)
+  FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr()
   MAX_RATE_UP = 50
   MAX_RATE_DOWN = 70
   MAX_TORQUE = 2047
@@ -107,7 +107,6 @@ class TestSubaruGen1Safety(TestSubaruTorqueSafetyBase):
   FLAGS = 0
   TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS)
 
-
 class TestSubaruGen2Safety(TestSubaruGen2SafetyBase):
   FLAGS = Panda.FLAG_SUBARU_GEN2
   TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS)
@@ -142,6 +141,12 @@ class TestSubaruForester2022Safety(TestSubaruAngleSafetyBase):
     values = {"Cruise_Activated": enable}
     return self.packer.make_can_msg_panda("ES_Status", 2, values)
 
+
+  def test_alt_lkas_msg(self):
+    self.assertTrue(self._tx(self._angle_cmd_msg(0, 0)))
+    self.assertFalse(self._tx(self._angle_cmd_msg(0, 1)))
+    self.assertFalse(self._tx(self._angle_cmd_msg(10, 0)))
+    self.assertFalse(self._tx(self._angle_cmd_msg(-10, 0)))
 
 if __name__ == "__main__":
   unittest.main()
