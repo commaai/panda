@@ -122,10 +122,10 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
 
     // update vehicle moving with any non-zero wheel speed
     if ((addr == MSG_SUBARU_Wheel_Speeds) && (bus == alt_bus)) {
-      uint32_t fr = GET_BYTES(to_push, 1, 3) >> 4 & 0x1FFF;
-      uint32_t rr = GET_BYTES(to_push, 3, 3) >> 1 & 0x1FFF;
-      uint32_t rl = GET_BYTES(to_push, 4, 3) >> 6 & 0x1FFF;
-      uint32_t fl = GET_BYTES(to_push, 6, 2) >> 3 & 0x1FFF;
+      uint32_t fr = (GET_BYTES(to_push, 1, 3) >> 4) & 0x1FFFU;
+      uint32_t rr = (GET_BYTES(to_push, 3, 3) >> 1) & 0x1FFFU;
+      uint32_t rl = (GET_BYTES(to_push, 4, 3) >> 6) & 0x1FFFU;
+      uint32_t fl = (GET_BYTES(to_push, 6, 2) >> 3) & 0x1FFFU;
 
       vehicle_moving = (fr > 0) || (rr > 0) || (rl > 0) || (fl > 0);
 
