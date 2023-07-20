@@ -127,9 +127,9 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       uint32_t rl = (GET_BYTES(to_push, 4, 3) >> 6) & 0x1FFFU;
       uint32_t fl = (GET_BYTES(to_push, 6, 2) >> 3) & 0x1FFFU;
 
-      vehicle_moving = (fr > 0) || (rr > 0) || (rl > 0) || (fl > 0);
+      vehicle_moving = (fr > 0U) || (rr > 0U) || (rl > 0U) || (fl > 0U);
 
-      float speed = (fr + rr + rl + fl) / 4 * WHEEL_SPEED_FACTOR;
+      float speed = (fr + rr + rl + fl) / 4U * WHEEL_SPEED_FACTOR;
       update_sample(&vehicle_speed, ROUND(speed * VEHICLE_SPEED_FACTOR));
     }
 
