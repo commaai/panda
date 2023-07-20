@@ -8,7 +8,7 @@ from collections import defaultdict
 
 from panda import Panda
 from panda.tests.hitl.conftest import PandaGroup, PARTIAL_TESTS
-from panda.tests.hitl.helpers import time_many_sends, clear_can_buffers
+from panda.tests.hitl.helpers import time_many_sends, clear_can_buffers, warmup_panda
 
 @flaky(max_runs=3, min_passes=1)
 @pytest.mark.execution_timeout(35)
@@ -65,11 +65,14 @@ def test_latency(p, panda_jungle):
       for speed in (10, 20, 50, 100, 125, 250, 500, 1000):
         p_send.set_can_speed_kbps(bus, speed)
         p_recv.set_can_speed_kbps(bus, speed)
-        time.sleep(0.1)
+        time.sleep(0.05)
 
         # clear can buffers
         clear_can_buffers(p_send)
         clear_can_buffers(p_recv)
+
+        warmup_panda(p_send, bus)
+        warmup_panda(p_recv, bus)
 
         latencies = []
         comp_kbps_list = []
