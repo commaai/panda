@@ -108,7 +108,7 @@ class TestSubaruGen2Safety(TestSubaruGen2SafetyBase):
   TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS)
 
 class TestSubaruForester2022Safety(TestSubaruSafetyBase):
-  TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS)
+  TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS) + [[MSG_SUBARU_ES_LKAS_ALT, SUBARU_MAIN_BUS]]
   RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS_ALT
   FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr(MSG_SUBARU_ES_LKAS_ALT)
 
@@ -118,6 +118,15 @@ class TestSubaruForester2022Safety(TestSubaruSafetyBase):
     values = {"Cruise_Activated": enable}
     return self.packer.make_can_msg_panda("ES_Status", 2, values)
 
+  def _angle_cmd_msg(self, angle, steer_req=1):
+    values = {"LKAS_Output": angle, "LKAS_Request": steer_req}
+    return self.packer.make_can_msg_panda("ES_LKAS_ALT", 0, values)
+
+  def test_alt_lkas_msg(self):
+    self.assertTrue(self._tx(self._angle_cmd_msg(0, 0)))
+    self.assertFalse(self._tx(self._angle_cmd_msg(0, 1)))
+    self.assertFalse(self._tx(self._angle_cmd_msg(10, 0)))
+    self.assertFalse(self._tx(self._angle_cmd_msg(-10, 0)))
 
 if __name__ == "__main__":
   unittest.main()

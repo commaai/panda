@@ -65,6 +65,12 @@ const CanMsg SUBARU_GEN2_TX_MSGS[] = {
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
 
+const CanMsg SUBARU_LKAS_ALT_TX_MSGS[] = {
+  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS)
+  {MSG_SUBARU_ES_LKAS_ALT,         SUBARU_MAIN_BUS, 8}, \
+};
+#define SUBARU_LKAS_ALT_TX_MSGS_LEN (sizeof(SUBARU_LKAS_ALT_TX_MSGS) / sizeof(SUBARU_LKAS_ALT_TX_MSGS[0]))
+
 AddrCheckStruct subaru_addr_checks[] = {
   SUBARU_COMMON_ADDR_CHECKS(SUBARU_MAIN_BUS)
   SUBARU_GEN12_ADDR_CHECKS(SUBARU_MAIN_BUS)
@@ -166,6 +172,8 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
   if (subaru_gen2) {
     tx = msg_allowed(to_send, SUBARU_GEN2_TX_MSGS, SUBARU_GEN2_TX_MSGS_LEN);
+  } else if(lkas_alt) {
+    tx = msg_allowed(to_send, SUBARU_LKAS_ALT_TX_MSGS, SUBARU_LKAS_ALT_TX_MSGS_LEN);
   } else {
     tx = msg_allowed(to_send, SUBARU_TX_MSGS, SUBARU_TX_MSGS_LEN);
   }
@@ -177,6 +185,18 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
     const SteeringLimits limits = subaru_gen2 ? SUBARU_GEN2_STEERING_LIMITS : SUBARU_STEERING_LIMITS;
     if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
+      tx = 0;
+    }
+  }
+
+  // only allow zero steer and no steer request for now
+  if ((addr == MSG_SUBARU_ES_LKAS_ALT)) {
+    int desired_angle = ((GET_BYTES(to_send, 4, 4) >> 8) & 0x3FFFFU);
+    desired_angle = -1 * to_signed(desired_angle, 17);
+
+    int request_angle = GET_BIT(to_send, 12);
+
+    if(desired_angle != 0 || request_angle != 0){
       tx = 0;
     }
   }
