@@ -98,6 +98,9 @@ AddrCheckStruct subaru_es_status_addr_checks[] = {
 };
 #define SUBARU_ES_STATUS_ADDR_CHECK_LEN (sizeof(subaru_es_status_addr_checks) / sizeof(subaru_es_status_addr_checks[0]))
 
+#define STEER_ANGLE_MEAS_FACTOR -0.0217
+#define WHEEL_SPEED_FACTOR 0.057
+
 const uint16_t SUBARU_PARAM_GEN2 = 1;
 const uint16_t SUBARU_PARAM_LKAS_ANGLE = 2;
 const uint16_t SUBARU_PARAM_ES_STATUS = 4; // Use ES_Status for cruise_activated
@@ -159,14 +162,14 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
 
     // update vehicle moving with any non-zero wheel speed
     if ((addr == MSG_SUBARU_Wheel_Speeds) && (bus == alt_bus)) {
-      uint32_t fr = GET_BYTES(to_push, 1, 3) >> 4 & 0x1FFF;
-      uint32_t rr = GET_BYTES(to_push, 3, 3) >> 1 & 0x1FFF;
-      uint32_t rl = GET_BYTES(to_push, 4, 3) >> 6 & 0x1FFF;
-      uint32_t fl = GET_BYTES(to_push, 6, 2) >> 3 & 0x1FFF;
+      uint32_t fr = (GET_BYTES(to_push, 1, 3) >> 4) & 0x1FFFU;
+      uint32_t rr = (GET_BYTES(to_push, 3, 3) >> 1) & 0x1FFFU;
+      uint32_t rl = (GET_BYTES(to_push, 4, 3) >> 6) & 0x1FFFU;
+      uint32_t fl = (GET_BYTES(to_push, 6, 2) >> 3) & 0x1FFFU;
 
-      float speed = (fr + rr + rl + fl) / 4 * 0.057;
-      vehicle_moving = speed > 0;
+      vehicle_moving = (fr > 0U) || (rr > 0U) || (rl > 0U) || (fl > 0U);
 
+      float speed = (fr + rr + rl + fl) / 4U * WHEEL_SPEED_FACTOR;
       update_sample(&vehicle_speed, ROUND(speed * VEHICLE_SPEED_FACTOR));
     }
 
