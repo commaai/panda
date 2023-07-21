@@ -20,6 +20,7 @@
 void print(const char *a);
 
 can_health_t can_health[] = {{0}, {0}, {0}};
+bool auto_retransmit = false;
 
 // kbps multiplied by 10
 const uint32_t speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};

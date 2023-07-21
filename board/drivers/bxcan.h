@@ -229,8 +229,9 @@ void can_rx(uint8_t can_number) {
   }
 
   // Enable automatic retransmission of messages after some activity on the bus
-  if (((CAN->MCR & CAN_MCR_NART) != 0U) && (can_health[can_number].total_rx_cnt != 0U)) {
+  if ((!auto_retransmit) && (can_health[can_number].total_rx_cnt != 0U)) {
     register_clear_bits(&(CAN->MCR), CAN_MCR_NART);
+    auto_retransmit = true;
   }
 }
 

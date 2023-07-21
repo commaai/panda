@@ -229,11 +229,12 @@ void can_rx(uint8_t can_number) {
   }
 
   // Enable automatic retransmission of messages after some activity on the bus
-  if (((CANx->CCCR & FDCAN_CCCR_DAR) != 0U) && (can_health[can_number].total_rx_cnt != 0U)) {
+  if ((!auto_retransmit) && (can_health[can_number].total_rx_cnt != 0U)) {
     (void)fdcan_request_init(CANx);
     CANx->CCCR |= FDCAN_CCCR_CCE;
     CANx->CCCR &= ~(FDCAN_CCCR_DAR);
     (void)fdcan_exit_init(CANx);
+    auto_retransmit = true;
   }
 
   // Error handling
