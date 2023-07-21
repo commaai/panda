@@ -19,12 +19,12 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS  = SUBARU_STEERING_LIMITS_GENER
 const SteeringLimits SUBARU_ANGLE_STEERING_LIMITS = {
   .angle_deg_to_can = 1,
   .angle_rate_up_lookup = {
-    {0},
-    {1}
+    {0,5,10},
+    {1,1,1}
   },
   .angle_rate_down_lookup = {
-    {0},
-    {1}
+    {0,5,10},
+    {1,1,1}
   },
 };
 
@@ -214,7 +214,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     int desired_angle = ((GET_BYTES(to_send, 4, 4) >> 8) & 0x3FFFFU);
     desired_angle = -1 * to_signed(desired_angle, 17) / 100;
 
-    bool lkas_request = GET_BIT(to_send, 12);
+    bool lkas_request = GET_BIT(to_send, 12U);
 
     const SteeringLimits limits = SUBARU_ANGLE_STEERING_LIMITS;
     if (steer_angle_cmd_checks(desired_angle, lkas_request, limits)) {
