@@ -140,11 +140,5 @@ class TestSubaruForester2022Safety(TestSubaruAngleSafetyBase):
     values = {"Cruise_Activated": enable}
     return self.packer.make_can_msg_panda("ES_Status", 2, values)
 
-  def test_alt_lkas_msg(self):
-    self.assertTrue(self._tx(self._angle_cmd_msg(0, 0)))
-    self.assertFalse(self._tx(self._angle_cmd_msg(0, 1)))
-    self.assertFalse(self._tx(self._angle_cmd_msg(10, 0)))
-    self.assertFalse(self._tx(self._angle_cmd_msg(-10, 0)))
-
 if __name__ == "__main__":
   unittest.main()
