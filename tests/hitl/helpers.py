@@ -12,7 +12,7 @@ def get_random_can_messages(n):
   return m
 
 
-def time_many_sends(p, bus, p_recv=None, msg_count=500, two_pandas=False):
+def time_many_sends(p, bus, p_recv=None, msg_count=250, two_pandas=False):
   if p_recv is None:
     p_recv = p
   if p == p_recv and two_pandas:
