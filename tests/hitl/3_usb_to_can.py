@@ -78,8 +78,6 @@ def test_throughput(p):
     p.set_can_speed_kbps(0, speed)
     time.sleep(0.05)
 
-    warmup_panda(p, 0)
-
     comp_kbps = time_many_sends(p, 0)
 
     # bit count from https://en.wikipedia.org/wiki/CAN_bus
