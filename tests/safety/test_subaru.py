@@ -94,7 +94,7 @@ class TestSubaruGen2SafetyBase(TestSubaruSafetyBase):
 
   MAX_RATE_UP = 40
   MAX_RATE_DOWN = 40
-  MAX_TORQUE = 1000
+  MAX_TORQUE = 1400
 
 class TestSubaruGen1Safety(TestSubaruSafetyBase):
   FLAGS = 0
