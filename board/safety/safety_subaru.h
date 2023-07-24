@@ -1,24 +1,18 @@
-const SteeringLimits SUBARU_STEERING_LIMITS = {
-  .max_steer = 2047,
-  .max_rt_delta = 940,
-  .max_rt_interval = 250000,
-  .max_rate_up = 50,
-  .max_rate_down = 70,
-  .driver_torque_factor = 50,
-  .driver_torque_allowance = 60,
-  .type = TorqueDriverLimited,
-};
+#define SUBARU_STEERING_LIMITS_GENERATOR(steer_max, rate_up, rate_down)          \
+  {                                                                              \
+    .max_steer = (steer_max),                                                    \
+    .max_rt_delta = 940,                                                         \
+    .max_rt_interval = 250000,                                                   \
+    .max_rate_up = (rate_up),                                                    \
+    .max_rate_down = (rate_down),                                                \
+    .driver_torque_factor = 50,                                                  \
+    .driver_torque_allowance = 60,                                               \
+    .type = TorqueDriverLimited,                                                 \
+  }                                                                              \
 
-const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = {
-  .max_steer = 1000,
-  .max_rt_delta = 940,
-  .max_rt_interval = 250000,
-  .max_rate_up = 40,
-  .max_rate_down = 40,
-  .driver_torque_factor = 50,
-  .driver_torque_allowance = 60,
-  .type = TorqueDriverLimited,
-};
+const SteeringLimits SUBARU_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERATOR(2047, 50, 70);
+const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERATOR(1000, 40, 40);
+
 
 #define MSG_SUBARU_Brake_Status          0x13c
 #define MSG_SUBARU_CruiseControl         0x240
