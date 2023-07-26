@@ -13,7 +13,6 @@
 const SteeringLimits SUBARU_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERATOR(2047, 50, 70);
 const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERATOR(1000, 40, 40);
 
-
 #define MSG_SUBARU_Brake_Status          0x13c
 #define MSG_SUBARU_CruiseControl         0x240
 #define MSG_SUBARU_Throttle              0x40
@@ -68,8 +67,8 @@ AddrCheckStruct subaru_gen2_addr_checks[] = {
 #define SUBARU_GEN2_ADDR_CHECK_LEN (sizeof(subaru_gen2_addr_checks) / sizeof(subaru_gen2_addr_checks[0]))
 addr_checks subaru_gen2_rx_checks = {subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
 
-#define STEER_ANGLE_MEAS_FACTOR -0.0217
-#define WHEEL_SPEED_FACTOR 0.057
+
+#define SUBARU_STEER_ANGLE_MEAS_FACTOR -2.17
 
 const uint16_t SUBARU_PARAM_GEN2 = 1;
 bool subaru_gen2 = false;
@@ -110,7 +109,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
 
       int angle_meas_new = (GET_BYTES(to_push, 4, 2) & 0xFFFFU);
-      angle_meas_new = ROUND(to_signed(angle_meas_new, 16) * STEER_ANGLE_MEAS_FACTOR);
+      angle_meas_new = ROUND(to_signed(angle_meas_new, 16) * SUBARU_STEER_ANGLE_MEAS_FACTOR);
       update_sample(&angle_meas, angle_meas_new);
     }
 
@@ -129,7 +128,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
 
       vehicle_moving = (fr > 0U) || (rr > 0U) || (rl > 0U) || (fl > 0U);
 
-      float speed = (fr + rr + rl + fl) / 4U * WHEEL_SPEED_FACTOR;
+      float speed = (fr + rr + rl + fl) / 4U * 0.057;
       update_sample(&vehicle_speed, ROUND(speed * VEHICLE_SPEED_FACTOR));
     }
 
