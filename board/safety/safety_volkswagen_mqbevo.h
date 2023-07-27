@@ -1,32 +1,22 @@
 #include "safety_volkswagen_common.h"
 
 // lateral limits
-const SteeringLimits VOLKSWAGEN_MQB_STEERING_LIMITS = {
-  .max_steer = 300,              // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
+const SteeringLimits VOLKSWAGEN_MQBEVO_STEERING_LIMITS = {
+  .max_steer = 370,              // TODO: true max TBD
   .max_rt_delta = 75,            // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
   .max_rt_interval = 250000,     // 250ms between real time checks
-  .max_rate_up = 4,              // 2.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
-  .max_rate_down = 10,           // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
+  .max_rate_up = 10,             // TODO: maximums TBD
+  .max_rate_down = 10,           // TODO: maximums TBD
   .driver_torque_allowance = 80,
   .driver_torque_factor = 3,
   .type = TorqueDriverLimited,
 };
 
-// longitudinal limits
-// acceleration in m/s2 * 1000 to avoid floating point math
-const LongitudinalLimits VOLKSWAGEN_MQB_LONG_LIMITS = {
-  .max_accel = 2000,
-  .min_accel = -3500,
-  .inactive_accel = 3010,  // VW sends one increment above the max range when inactive
-};
-
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{VW_MSG_HCA_01, 0, 8}, {VW_MSG_GRA_ACC_01, 0, 8},
-                                               {VW_MSG_GRA_ACC_01, 2, 8}, {VW_MSG_LDW_02, 0, 8}};
-const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{VW_MSG_HCA_01, 0, 8}, {VW_MSG_LDW_02, 0, 8}, {VW_MSG_ACC_02, 0, 8},
-                                              {VW_MSG_ACC_06, 0, 8}, {VW_MSG_ACC_07, 0, 8}};
+const CanMsg VOLKSWAGEN_MQBEVO_STOCK_TX_MSGS[] = {{VW_MSG_HCA_01, 0, 8}, {VW_MSG_GRA_ACC_01, 0, 8},
+                                                  {VW_MSG_GRA_ACC_01, 2, 8}, {VW_MSG_LDW_02, 0, 8}};
 
-AddrCheckStruct volkswagen_mqb_addr_checks[] = {
+AddrCheckStruct volkswagen_mqbevo_addr_checks[] = {
   {.msg = {{VW_MSG_ESP_19, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{VW_MSG_LH_EPS_03, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{VW_MSG_ESP_05, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
@@ -34,17 +24,17 @@ AddrCheckStruct volkswagen_mqb_addr_checks[] = {
   {.msg = {{VW_MSG_MOTOR_20, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{VW_MSG_MOTOR_14, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
-#define VOLKSWAGEN_MQB_ADDR_CHECKS_LEN (sizeof(volkswagen_mqb_addr_checks) / sizeof(volkswagen_mqb_addr_checks[0]))
-addr_checks volkswagen_mqb_rx_checks = {volkswagen_mqb_addr_checks, VOLKSWAGEN_MQB_ADDR_CHECKS_LEN};
+#define VOLKSWAGEN_MQBEVO_ADDR_CHECKS_LEN (sizeof(volkswagen_mqbevo_addr_checks) / sizeof(volkswagen_mqbevo_addr_checks[0]))
+addr_checks volkswagen_mqbevo_rx_checks = {volkswagen_mqbevo_addr_checks, VOLKSWAGEN_MQBEVO_ADDR_CHECKS_LEN};
 
 
-static const addr_checks* volkswagen_mqb_init(uint16_t param) {
+static const addr_checks* volkswagen_mqbevo_init(uint16_t param) {
   volkswagen_common_init(param);
-  return &volkswagen_mqb_rx_checks;
+  return &volkswagen_mqbevo_rx_checks;
 }
 
-static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
-  bool valid = addr_safety_check(to_push, &volkswagen_mqb_rx_checks, volkswagen_mqb_get_checksum,
+static int volkswagen_mqbevo_rx_hook(CANPacket_t *to_push) {
+  bool valid = addr_safety_check(to_push, &volkswagen_mqbevo_rx_checks, volkswagen_mqb_get_checksum,
                                  volkswagen_mqb_compute_crc, volkswagen_mqb_get_counter, NULL);
 
   if (valid && (GET_BUS(to_push) == 0U)) {
@@ -133,15 +123,11 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
+static int volkswagen_mqbevo_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   int tx = 1;
 
-  if (volkswagen_longitudinal) {
-    tx = msg_allowed(to_send, VOLKSWAGEN_MQB_LONG_TX_MSGS, sizeof(VOLKSWAGEN_MQB_LONG_TX_MSGS) / sizeof(VOLKSWAGEN_MQB_LONG_TX_MSGS[0]));
-  } else {
-    tx = msg_allowed(to_send, VOLKSWAGEN_MQB_STOCK_TX_MSGS, sizeof(VOLKSWAGEN_MQB_STOCK_TX_MSGS) / sizeof(VOLKSWAGEN_MQB_STOCK_TX_MSGS[0]));
-  }
+  tx = msg_allowed(to_send, VOLKSWAGEN_MQBEVO_STOCK_TX_MSGS, sizeof(VOLKSWAGEN_MQBEVO_STOCK_TX_MSGS) / sizeof(VOLKSWAGEN_MQBEVO_STOCK_TX_MSGS[0]));
 
   // Safety check for HCA_01 Heading Control Assist torque
   // Signal: HCA_01.HCA_01_LM_Offset (absolute torque)
@@ -195,7 +181,7 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static int volkswagen_mqb_fwd_hook(int bus_num, int addr) {
+static int volkswagen_mqbevo_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   switch (bus_num) {
@@ -204,11 +190,8 @@ static int volkswagen_mqb_fwd_hook(int bus_num, int addr) {
       bus_fwd = 2;
       break;
     case 2:
-      if ((addr == VW_MSG_HCA_01) || (addr == VW_MSG_LDW_02)) {
+      if ((addr == VW_MSG_HCA_NEW)) {
         // openpilot takes over LKAS steering control and related HUD messages from the camera
-        bus_fwd = -1;
-      } else if (volkswagen_longitudinal && ((addr == VW_MSG_ACC_02) || (addr == VW_MSG_ACC_06) || (addr == VW_MSG_ACC_07))) {
-        // openpilot takes over acceleration/braking control and related HUD messages from the stock ACC radar
         bus_fwd = -1;
       } else {
         // Forward all remaining traffic from Extended CAN devices to J533 gateway
@@ -224,10 +207,10 @@ static int volkswagen_mqb_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-const safety_hooks volkswagen_mqb_hooks = {
-  .init = volkswagen_mqb_init,
-  .rx = volkswagen_mqb_rx_hook,
-  .tx = volkswagen_mqb_tx_hook,
+const safety_hooks volkswagen_mqbevo_hooks = {
+  .init = volkswagen_mqbevo_init,
+  .rx = volkswagen_mqbevo_rx_hook,
+  .tx = volkswagen_mqbevo_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
-  .fwd = volkswagen_mqb_fwd_hook,
+  .fwd = volkswagen_mqbevo_fwd_hook,
 };

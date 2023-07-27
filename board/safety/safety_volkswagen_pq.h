@@ -48,6 +48,12 @@ AddrCheckStruct volkswagen_pq_addr_checks[] = {
 #define VOLKSWAGEN_PQ_ADDR_CHECKS_LEN (sizeof(volkswagen_pq_addr_checks) / sizeof(volkswagen_pq_addr_checks[0]))
 addr_checks volkswagen_pq_rx_checks = {volkswagen_pq_addr_checks, VOLKSWAGEN_PQ_ADDR_CHECKS_LEN};
 
+
+static const addr_checks* volkswagen_pq_init(uint16_t param) {
+  volkswagen_common_init(param);
+  return &volkswagen_pq_rx_checks;
+}
+
 static uint32_t volkswagen_pq_get_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
@@ -83,18 +89,6 @@ static uint32_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
   }
 
   return checksum;
-}
-
-static const addr_checks* volkswagen_pq_init(uint16_t param) {
-  UNUSED(param);
-
-  volkswagen_set_button_prev = false;
-  volkswagen_resume_button_prev = false;
-
-#ifdef ALLOW_DEBUG
-  volkswagen_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
-#endif
-  return &volkswagen_pq_rx_checks;
 }
 
 static int volkswagen_pq_rx_hook(CANPacket_t *to_push) {
