@@ -111,25 +111,25 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
       }
     }
 
-    // Signal: Motor_20.MO_Fahrpedalrohwert_01
     if (addr == VW_MSG_MOTOR_20) {
+      // Signal: Motor_20.MO_Fahrpedalrohwert_01
       gas_pressed = ((GET_BYTES(to_push, 0, 4) >> 12) & 0xFFU) != 0U;
     }
 
-    // Signal: Motor_14.MO_Fahrer_bremst (ECU detected brake pedal switch F63)
     if (addr == VW_MSG_MOTOR_14) {
-      volkswagen_brake_pedal_switch = (GET_BYTE(to_push, 3) & 0x10U) >> 4;
+      // Signal: Motor_14.MO_Fahrer_bremst (ECU detected brake pedal switch F63)
+      volkswagen_brake_pedal_switch = GET_BIT(to_push, 28U);
     }
 
-    // Signal: ESP_05.ESP_Fahrer_bremst (ESP detected driver brake pressure above platform specified threshold)
     if (addr == VW_MSG_ESP_05) {
-      volkswagen_brake_pressure_detected = (GET_BYTE(to_push, 3) & 0x4U) >> 2;
+      // Signal: ESP_05.ESP_Fahrer_bremst (ESP detected driver brake pressure above platform specified threshold)
+      volkswagen_brake_pressure_detected = GET_BIT(to_push, 26U);
     }
 
     brake_pressed = volkswagen_brake_pedal_switch || volkswagen_brake_pressure_detected;
-
     generic_rx_checks((addr == VW_MSG_HCA_01));
   }
+
   return valid;
 }
 
@@ -182,16 +182,15 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
-  // This avoids unintended engagements while still allowing resume spam
-  if ((addr == VW_MSG_GRA_ACC_01) && !controls_allowed) {
-    // disallow resume and set: bits 16 and 19
-    if ((GET_BYTE(to_send, 2) & 0x9U) != 0U) {
+  if (addr == VW_MSG_GRA_ACC_01) {
+    // Disallow resume and set while controls are disabled
+    // Signal: GRA_ACC_01.GRA_Tip_Setzen
+    // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
+    if (!controls_allowed && (GET_BIT(to_send, 16) || GET_BIT(to_send, 19))) {
       tx = 0;
     }
   }
 
-  // 1 allows the message through
   return tx;
 }
 

@@ -27,7 +27,9 @@ bool volkswagen_brake_pressure_detected = false;
 #define VW_MSG_ACC_02           0x30C   // TX by OP, ACC HUD data to the instrument cluster
 
 // MQBevo
+#define VW_MSG_ESP_NEW_1        0xFC    // RX from ABS, for wheel speeds
 #define VW_MSG_MOTOR_NEW_1      0x10B   // RX from ECU, for ACC status from drivetrain coordinator
+#define VW_MSG_ESP_NEW_3        0x139   // RX from ABS, for brake pressure and brake pressed state
 #define VW_MSG_HCA_NEW          0x303   // TX by OP, steering torque control message
 
 // PQ25/PQ35/PQ46/NMS
