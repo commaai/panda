@@ -68,8 +68,6 @@ AddrCheckStruct subaru_gen2_addr_checks[] = {
 addr_checks subaru_gen2_rx_checks = {subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
 
 
-#define SUBARU_STEER_ANGLE_MEAS_FACTOR -2.17
-
 const uint16_t SUBARU_PARAM_GEN2 = 1;
 bool subaru_gen2 = false;
 
@@ -109,7 +107,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
 
       int angle_meas_new = (GET_BYTES(to_push, 4, 2) & 0xFFFFU);
-      angle_meas_new = ROUND(to_signed(angle_meas_new, 16) * SUBARU_STEER_ANGLE_MEAS_FACTOR);
+      angle_meas_new = ROUND(to_signed(angle_meas_new, 16) * -.0217 * 100);
       update_sample(&angle_meas, angle_meas_new);
     }
 

@@ -537,12 +537,12 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     self.assertEqual(self.safety.get_torque_meas_min(), 0)
     self.assertEqual(self.safety.get_torque_meas_max(), 0)
 
-class MeasurementSafetyTest:
-  DEG_TO_CAN: int
+class MeasurementSafetyTest(PandaSafetyTestBase):
+  DEG_TO_CAN: int = 1
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "MeasuredSafetyTest":
+    if cls.__name__ == "MeasurementSafetyTest":
       cls.safety = None
       raise unittest.SkipTest
 
@@ -554,13 +554,8 @@ class MeasurementSafetyTest:
   def _speed_msg(self, speed):
     pass
   
-  def common_measurement_test(self, msg_func, min, max, factor, get_min_func, get_max_func):
-    """
-    Tests:
-     - rx hook correctly parses and rounds the vehicle speed
-     - sample is reset on safety mode init
-    """
-    for val in np.arange(min, max, 0.5):
+  def common_measurement_test(self, msg_func, min_value, max_value, factor, get_min_func, get_max_func):
+    for val in np.arange(min_value, max_value, 0.5):
       for i in range(6):
         self.assertTrue(self._rx(msg_func(val + i * 0.1)))
 
@@ -581,9 +576,7 @@ class MeasurementSafetyTest:
     self.common_measurement_test(self._angle_meas_msg, -180, 180, self.DEG_TO_CAN, self.safety.get_angle_meas_min, self.safety.get_angle_meas_max)
 
 
-
-class AngleSteeringSafetyTest(PandaSafetyTestBase, MeasurementSafetyTest):
-
+class AngleSteeringSafetyTest(MeasurementSafetyTest):
   ANGLE_RATE_BP: List[float]
   ANGLE_RATE_UP: List[float]  # windup limit
   ANGLE_RATE_DOWN: List[float]  # unwind limit
