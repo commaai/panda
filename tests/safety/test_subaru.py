@@ -70,7 +70,6 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
     return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
 
   def _speed_msg(self, speed):
-    # subaru safety doesn't use the scaled value, so undo the scaling
     values = {s: speed for s in ["FR", "FL", "RR", "RL"]}
     return self.packer.make_can_msg_panda("Wheel_Speeds", self.ALT_BUS, values)
 
