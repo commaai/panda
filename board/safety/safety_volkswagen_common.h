@@ -11,27 +11,36 @@ bool volkswagen_brake_pedal_switch = false;
 bool volkswagen_brake_pressure_detected = false;
 
 // Shared between MQB and MQBevo
-
-#define VW_MSG_LH_EPS_03    0x09F   // RX from EPS, for driver steering torque
-#define VW_MSG_HCA_01       0x126   // TX by OP, Heading Control Assist steering torque
-#define VW_MSG_GRA_ACC_01   0x12B   // TX by OP, ACC control buttons for cancel/resume
-#define VW_MSG_LDW_02       0x397   // TX by OP, Lane line recognition and text alerts
-#define VW_MSG_MOTOR_14     0x3BE   // RX from ECU, for brake switch status
+#define VW_MSG_LH_EPS_03        0x09F   // RX from EPS, for driver steering torque
+#define VW_MSG_HCA_01           0x126   // TX by OP, Heading Control Assist steering torque
+#define VW_MSG_GRA_ACC_01       0x12B   // TX by OP, ACC control buttons for cancel/resume
+#define VW_MSG_LDW_02           0x397   // TX by OP, Lane line recognition and text alerts
+#define VW_MSG_MOTOR_14         0x3BE   // RX from ECU, for brake switch status
 
 // MQB
-
-#define VW_MSG_ESP_19       0x0B2   // RX from ABS, for wheel speeds
-#define VW_MSG_ESP_05       0x106   // RX from ABS, for brake switch state
-#define VW_MSG_TSK_06       0x120   // RX from ECU, for ACC status from drivetrain coordinator
-#define VW_MSG_MOTOR_20     0x121   // RX from ECU, for driver throttle input
-#define VW_MSG_ACC_06       0x122   // TX by OP, ACC control instructions to the drivetrain coordinator
-#define VW_MSG_ACC_07       0x12E   // TX by OP, ACC control instructions to the drivetrain coordinator
-#define VW_MSG_ACC_02       0x30C   // TX by OP, ACC HUD data to the instrument cluster
+#define VW_MSG_ESP_19           0x0B2   // RX from ABS, for wheel speeds
+#define VW_MSG_ESP_05           0x106   // RX from ABS, for brake switch state
+#define VW_MSG_TSK_06           0x120   // RX from ECU, for ACC status from drivetrain coordinator
+#define VW_MSG_MOTOR_20         0x121   // RX from ECU, for driver throttle input
+#define VW_MSG_ACC_06           0x122   // TX by OP, ACC control instructions to the drivetrain coordinator
+#define VW_MSG_ACC_07           0x12E   // TX by OP, ACC control instructions to the drivetrain coordinator
+#define VW_MSG_ACC_02           0x30C   // TX by OP, ACC HUD data to the instrument cluster
 
 // MQBevo
+#define VW_MSG_MOTOR_NEW_1      0x10B   // RX from ECU, for ACC status from drivetrain coordinator
+#define VW_MSG_HCA_NEW          0x303   // TX by OP, steering torque control message
 
-#define VW_MSG_MOTOR_NEW_1  0x10B   // RX from ECU, for ACC status from drivetrain coordinator
-#define VW_MSG_HCA_NEW      0x303   // TX by OP, steering torque control message
+// PQ25/PQ35/PQ46/NMS
+#define VW_MSG_LENKHILFE_3      0x0D0   // RX from EPS, for steering angle and driver steering torque
+#define VW_MSG_HCA_1            0x0D2   // TX by OP, Heading Control Assist steering torque
+#define VW_MSG_BREMSE_1         0x1A0   // RX from ABS, for ego speed
+#define VW_MSG_MOTOR_2          0x288   // RX from ECU, for CC state and brake switch state
+#define VW_MSG_ACC_SYSTEM       0x368   // TX by OP, longitudinal acceleration controls
+#define VW_MSG_MOTOR_3          0x380   // RX from ECU, for driver throttle input
+#define VW_MSG_GRA_NEU          0x38A   // TX by OP, ACC control buttons for cancel/resume
+#define VW_MSG_MOTOR_5          0x480   // RX from ECU, for ACC main switch state
+#define VW_MSG_ACC_GRA_ANZEIGE  0x56A   // TX by OP, ACC HUD
+#define VW_MSG_LDW_1            0x5BE   // TX by OP, Lane line recognition and text alerts
 
 
 static void volkswagen_common_init(uint16_t param) {

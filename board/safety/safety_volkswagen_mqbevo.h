@@ -3,10 +3,10 @@
 // lateral limits
 const SteeringLimits VOLKSWAGEN_MQBEVO_STEERING_LIMITS = {
   .max_steer = 370,              // TODO: true max TBD
-  .max_rt_delta = 75,            // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
+  .max_rt_delta = 188,           // TODO: true max TBD, 10 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 125 ; 125 * 1.5 for safety pad = 187.5
   .max_rt_interval = 250000,     // 250ms between real time checks
-  .max_rate_up = 10,             // TODO: maximums TBD
-  .max_rate_down = 10,           // TODO: maximums TBD
+  .max_rate_up = 10,             // TODO: true max TBD
+  .max_rate_down = 10,           // TODO: true max TBD
   .driver_torque_allowance = 80,
   .driver_torque_factor = 3,
   .type = TorqueDriverLimited,
