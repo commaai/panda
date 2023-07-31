@@ -56,7 +56,7 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
   DRIVER_TORQUE_FACTOR = 50
 
   ALT_BUS = SUBARU_MAIN_BUS
-  
+
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
     self.safety = libpanda_py.libpanda

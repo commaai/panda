@@ -137,6 +137,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
 
 
 class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
+
   MAX_ACCEL: float = 2.0
   MIN_ACCEL: float = -3.5
   INACTIVE_ACCEL: float = 0.0
@@ -175,6 +176,7 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
 
 
 class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
+
   MIN_BRAKE: int = 0
   MAX_BRAKE: Optional[int] = None
 

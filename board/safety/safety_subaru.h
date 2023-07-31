@@ -16,7 +16,7 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERA
 
 const LongitudinalLimits SUBARU_LONG_LIMITS = {
   .max_gas = 3400,      // approx  1.2 m/s^2 at low speeds, less at higher speeds
-  .inactive_gas = 1818, // this is zero acceleration
+  .inactive_gas = 1818, // this is zero acceleration, and 808 appears to be engine braking
   .max_brake = 600,     // approx -3.5 m/s^2
 };
 
@@ -153,7 +153,6 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-
 static int subaru_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
@@ -174,9 +173,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     desired_torque = -1 * to_signed(desired_torque, 13);
 
     const SteeringLimits limits = subaru_gen2 ? SUBARU_GEN2_STEERING_LIMITS : SUBARU_STEERING_LIMITS;
-    if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
-      tx = 0;
-    }
+    violation |= steer_torque_cmd_checks(desired_torque, -1, limits);
   }
 
   if (subaru_longitudinal) {
@@ -204,6 +201,9 @@ static int subaru_fwd_hook(int bus_num, int addr) {
 
   if (bus_num == SUBARU_MAIN_BUS) {
     // Global Platform
+
+    // we need to intercept CruiseControl to keep eyesight in a "ready" state,
+    // and Brake_Staus to fake the ES_Brake feedback signal to eyesight
     bool block_msg = subaru_longitudinal && ((addr == MSG_SUBARU_Brake_Status) || (addr == MSG_SUBARU_CruiseControl));
     if (!block_msg) {
       bus_fwd = SUBARU_CAM_BUS;  // to the eyesight camera
