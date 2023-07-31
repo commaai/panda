@@ -103,6 +103,7 @@ class TestSubaruGen2SafetyBase(TestSubaruSafetyBase):
 
 
 class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.LongitudinalGasBrakeSafetyTest):
+  MIN_GAS = 808
   MAX_GAS = 3400
   INACTIVE_GAS = 1818
 
