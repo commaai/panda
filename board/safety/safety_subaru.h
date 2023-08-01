@@ -49,8 +49,6 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
 #define SUBARU_COMMON_LONG_TX_MSGS(alt_bus)         \
   {MSG_SUBARU_ES_Brake,        SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_Status,       SUBARU_MAIN_BUS, 8}, \
-  {MSG_SUBARU_Brake_Status,    SUBARU_CAM_BUS,  8}, \
-  {MSG_SUBARU_CruiseControl,   SUBARU_CAM_BUS,  8}, \
 
 #define SUBARU_COMMON_ADDR_CHECKS(alt_bus)                                                                                                            \
   {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}}, \
@@ -201,14 +199,7 @@ static int subaru_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   if (bus_num == SUBARU_MAIN_BUS) {
-    // Global Platform
-
-    // we need to intercept CruiseControl to keep eyesight in a "ready" state,
-    // and Brake_Staus to fake the ES_Brake feedback signal to eyesight
-    bool block_msg = subaru_longitudinal && ((addr == MSG_SUBARU_Brake_Status) || (addr == MSG_SUBARU_CruiseControl));
-    if (!block_msg) {
-      bus_fwd = SUBARU_CAM_BUS;  // to the eyesight camera
-    }
+    bus_fwd = SUBARU_CAM_BUS;  // to the eyesight camera
   }
 
   if (bus_num == SUBARU_CAM_BUS) {

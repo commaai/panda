@@ -33,9 +33,7 @@ def lkas_tx_msgs(alt_bus):
 
 def long_tx_msgs():
   return [[MSG_SUBARU_ES_Brake,         SUBARU_MAIN_BUS],
-          [MSG_SUBARU_ES_Status,        SUBARU_MAIN_BUS],
-          [MSG_SUBARU_CruiseControl,    SUBARU_CAM_BUS],
-          [MSG_SUBARU_Brake_Status,     SUBARU_CAM_BUS]]
+          [MSG_SUBARU_ES_Status,        SUBARU_MAIN_BUS]]
 
 class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   FLAGS = 0
