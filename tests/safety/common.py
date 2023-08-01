@@ -209,7 +209,7 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
   
   def _generic_limit_safety_check(self, msg_function, min_allowed_value: int, max_allowed_value: int, inactive_value=0):
     for enabled in [0, 1]:
-      for v in range(0, max_allowed_value+1):
+      for v in np.concatenate((np.arange(min_allowed_value - 1, max_allowed_value + 1, 1), [0, inactive_value])):
         self.safety.set_controls_allowed(enabled)
         if (not enabled and v != inactive_value) or v > max_allowed_value or v < min_allowed_value:
           self.assertFalse(self._tx(msg_function(v)), (v, min_allowed_value, max_allowed_value))
