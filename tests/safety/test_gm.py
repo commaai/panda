@@ -144,7 +144,7 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   BRAKE_BUS = 2
 
   MAX_GAS = 3072
-  MIN_GAS = 1404
+  MIN_GAS = 1404 # Max Regen
   INACTIVE_GAS = 1404
   MAX_BRAKE = 400
 
