@@ -107,8 +107,7 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
 
   MAX_BRAKE = 600
   
-  FWD_BLACKLISTED_ADDRS = {0: [MSG_SUBARU_CruiseControl, MSG_SUBARU_Brake_Status],
-                           2: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_Brake, MSG_SUBARU_ES_Distance,
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_Brake, MSG_SUBARU_ES_Distance,
                                MSG_SUBARU_ES_Status, MSG_SUBARU_ES_DashStatus,
                                MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
 
