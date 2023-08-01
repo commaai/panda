@@ -396,6 +396,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       can_loopback = (req->param1 > 0U);
       can_init_all();
       break;
+    // **** 0xe6: set custom clock source period
+    case 0xe6:
+      clock_source_set_period(req->param1);
+      break;
     // **** 0xe7: set power save state
     case 0xe7:
       set_power_save_state(req->param1);
