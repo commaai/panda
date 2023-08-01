@@ -894,7 +894,7 @@ class Panda:
 
   def serial_write(self, port_number, ln):
     ret = 0
-    if type(ln) == str:
+    if isinstance(ln, str):
       ln = bytes(ln, 'utf-8')
     for i in range(0, len(ln), 0x20):
       ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + ln[i:i + 0x20])
