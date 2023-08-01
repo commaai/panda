@@ -3,7 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
@@ -207,20 +207,20 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
     self.assertGreater(self.MAX_BRAKE, self.MIN_BRAKE)
     self.assertGreater(self.MAX_GAS, self.MIN_GAS)
   
-  def _generic_limit_safety_check(self, msg_function, min_value, max_value, max_value_multiplier, inactive_value=0):
+  def _generic_limit_safety_check(self, msg_function, min_allowed_value: int, max_allowed_value: int, inactive_value=0):
     for enabled in [0, 1]:
-      for v in range(0, int(max_value*max_value_multiplier)):
+      for v in range(0, max_allowed_value+1):
         self.safety.set_controls_allowed(enabled)
-        if (not enabled and v != inactive_value) or v > max_value or v < min_value:
-          self.assertFalse(self._tx(msg_function(v)), (v, min_value, max_value))
+        if (not enabled and v != inactive_value) or v > max_allowed_value or v < min_allowed_value:
+          self.assertFalse(self._tx(msg_function(v)), (v, min_allowed_value, max_allowed_value))
         else:
-          self.assertTrue(self._tx(msg_function(v)), (v, min_value, max_value))
+          self.assertTrue(self._tx(msg_function(v)), (v, min_allowed_value, max_allowed_value))
 
   def test_brake_safety_check(self):
-    self._generic_limit_safety_check(self._brake_msg, self.MIN_BRAKE, self.MAX_BRAKE, 1.5)
+    self._generic_limit_safety_check(self._brake_msg, self.MIN_BRAKE, self.MAX_BRAKE)
   
   def test_gas_safety_check(self):
-    self._generic_limit_safety_check(self._gas_msg, self.MIN_GAS, self.MAX_GAS, 1.2, self.INACTIVE_GAS)
+    self._generic_limit_safety_check(self._gas_msg, self.MIN_GAS, self.MAX_GAS, self.INACTIVE_GAS)
 
         
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):

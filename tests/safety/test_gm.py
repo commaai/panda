@@ -199,13 +199,6 @@ class TestGmCameraSafety(TestGmCameraSafetyBase):
       self._rx(self._pcm_status_msg(enabled))
       self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
 
-  # GM Cam safety mode does not allow longitudinal messages
-  def test_brake_safety_check(self):
-    pass
-
-  def test_gas_safety_check(self):
-    pass
-
 
 class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase):
   TX_MSGS = [[384, 0], [789, 0], [715, 0], [880, 0],  # pt bus
