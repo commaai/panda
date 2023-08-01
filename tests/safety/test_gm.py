@@ -14,7 +14,7 @@ class Buttons:
   CANCEL = 6
 
 
-class GmLongitudinalBase(common.PandaSafetyTest):
+class GmLongitudinalBase(common.PandaSafetyTest, common.LongitudinalGasBrakeSafetyTest):
   # pylint: disable=no-member,abstract-method
 
   PCM_CRUISE = False  # openpilot can control the PCM state if longitudinal
@@ -53,6 +53,14 @@ class GmLongitudinalBase(common.PandaSafetyTest):
 
   def _pcm_status_msg(self, enable):
     pass
+  
+  def _brake_msg(self, brake):
+    values = {"FrictionBrakeCmd": -brake}
+    return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", self.BRAKE_BUS, values)
+
+  def _gas_msg(self, gas):
+    values = {"GasRegenCmd": gas}
+    return self.packer.make_can_msg_panda("ASCMGasRegenCmd", 0, values)
 
 
 class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
@@ -69,11 +77,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   RT_INTERVAL = 250000
   DRIVER_TORQUE_ALLOWANCE = 65
   DRIVER_TORQUE_FACTOR = 4
-
-  MAX_GAS = 0
-  MAX_REGEN = 0
-  INACTIVE_REGEN = 0
-  MAX_BRAKE = 0
 
   PCM_CRUISE = True  # openpilot is tied to the PCM state if not longitudinal
 
@@ -118,14 +121,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
       values["CruiseState"] = self.safety.get_controls_allowed()
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
-  def _send_brake_msg(self, brake):
-    values = {"FrictionBrakeCmd": -brake}
-    return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", self.BRAKE_BUS, values)
-
-  def _send_gas_msg(self, gas):
-    values = {"GasRegenCmd": gas}
-    return self.packer.make_can_msg_panda("ASCMGasRegenCmd", 0, values)
-
   def _torque_driver_msg(self, torque):
     values = {"LKADriverAppldTrq": torque}
     return self.packer.make_can_msg_panda("PSCMStatus", 0, values)
@@ -138,24 +133,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     values = {"ACCButtons": buttons}
     return self.packer.make_can_msg_panda("ASCMSteeringButton", self.BUTTONS_BUS, values)
 
-  def test_brake_safety_check(self):
-    for enabled in [0, 1]:
-      for b in range(0, 500):
-        self.safety.set_controls_allowed(enabled)
-        if abs(b) > self.MAX_BRAKE or (not enabled and b != 0):
-          self.assertFalse(self._tx(self._send_brake_msg(b)))
-        else:
-          self.assertTrue(self._tx(self._send_brake_msg(b)))
-
-  def test_gas_safety_check(self):
-    # Block if enabled and out of actuation range, disabled and not inactive regen, or if stock longitudinal
-    for enabled in [0, 1]:
-      for gas_regen in range(0, 2 ** 12 - 1):
-        self.safety.set_controls_allowed(enabled)
-        should_tx = ((enabled and self.MAX_REGEN <= gas_regen <= self.MAX_GAS) or
-                     gas_regen == self.INACTIVE_REGEN)
-        self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
-
 
 class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   TX_MSGS = [[384, 0], [1033, 0], [1034, 0], [715, 0], [880, 0],  # pt bus
@@ -167,8 +144,8 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   BRAKE_BUS = 2
 
   MAX_GAS = 3072
-  MAX_REGEN = 1404
-  INACTIVE_REGEN = 1404
+  MIN_GAS = 1404
+  INACTIVE_GAS = 1404
   MAX_BRAKE = 400
 
   def setUp(self):
@@ -237,8 +214,8 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
   BUTTONS_BUS = 0  # rx only
 
   MAX_GAS = 3400
-  MAX_REGEN = 1514
-  INACTIVE_REGEN = 1554
+  MIN_GAS = 1514 # Max regen
+  INACTIVE_GAS = 1554
   MAX_BRAKE = 400
 
   def setUp(self):
