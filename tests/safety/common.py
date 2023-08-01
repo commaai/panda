@@ -3,7 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from typing import Callable, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
