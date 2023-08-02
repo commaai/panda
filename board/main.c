@@ -157,6 +157,7 @@ void tick_handler(void) {
     // tick drivers at 8Hz
     fan_tick();
     usb_tick();
+    harness_tick();
     simple_watchdog_kick();
 
     // decimated to 1Hz
@@ -185,7 +186,6 @@ void tick_handler(void) {
       current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
 
       // tick drivers at 1Hz
-      harness_tick();
       logging_tick();
 
       const bool recent_heartbeat = heartbeat_counter == 0U;
