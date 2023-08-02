@@ -23,7 +23,7 @@ uint16_t adc_get_raw(uint8_t channel) {
 
   ADC1->SMPR1 = (0b010 << (channel * 3U));
   ADC1->PCSEL_RES0 = (0x1U << channel);
-  ADC1->CFGR2 = (255U << ADC_CFGR2_OVSR_Pos) | (0b1000 << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE;
+  ADC1->CFGR2 = (127U << ADC_CFGR2_OVSR_Pos) | (0b0111 << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE;
 
   ADC1->CR |= ADC_CR_ADSTART;
   while (!(ADC1->ISR & ADC_ISR_EOC));
