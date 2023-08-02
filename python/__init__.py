@@ -900,7 +900,7 @@ class Panda:
 
   def serial_write(self, port_number, ln):
     ret = 0
-    if type(ln) == str:
+    if isinstance(ln, str):
       ln = bytes(ln, 'utf-8')
     for i in range(0, len(ln), 0x20):
       ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + ln[i:i + 0x20])
@@ -1024,6 +1024,12 @@ class Panda:
   # ****************** Debug *****************
   def set_green_led(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')
+
+  def set_clock_source_period(self, period):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe6, period, 0, b'')
+
+  def force_relay_drive(self, intercept_relay_drive, ignition_relay_drive):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xc5, (int(intercept_relay_drive) | int(ignition_relay_drive) << 1), 0, b'')
 
   # ****************** Logging *****************
   def get_logs(self, last_id=None, get_all=False):
