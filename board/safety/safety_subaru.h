@@ -98,7 +98,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
 
   if (valid) {
     const int bus = GET_BUS(to_push);
-    const int alt_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
+    const int alt_main_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
 
     int addr = GET_ADDR(to_push);
     if ((addr == MSG_SUBARU_Steering_Torque) && (bus == SUBARU_MAIN_BUS)) {
@@ -109,18 +109,18 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_bus)) {
+    if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_main_bus)) {
       bool cruise_engaged = GET_BIT(to_push, 41U) != 0U;
       pcm_cruise_check(cruise_engaged);
     }
 
     // update vehicle moving with any non-zero wheel speed
-    if ((addr == MSG_SUBARU_Wheel_Speeds) && (bus == alt_bus)) {
+    if ((addr == MSG_SUBARU_Wheel_Speeds) && (bus == alt_main_bus)) {
       vehicle_moving = ((GET_BYTES(to_push, 0, 4) >> 12) != 0U) || (GET_BYTES(to_push, 4, 4) != 0U);
     }
 
-    if ((addr == MSG_SUBARU_Brake_Status) && (bus == alt_bus)) {
-      brake_pressed = ((GET_BYTE(to_push, 7) >> 6) & 1U);
+    if ((addr == MSG_SUBARU_Brake_Status) && (bus == alt_main_bus)) {
+      brake_pressed = GET_BIT(to_push, 62U) != 0U;
     }
 
     if ((addr == MSG_SUBARU_Throttle) && (bus == SUBARU_MAIN_BUS)) {
@@ -136,6 +136,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
+  bool violation = false;
 
   if (subaru_gen2) {
     tx = msg_allowed(to_send, SUBARU_GEN2_TX_MSGS, SUBARU_GEN2_TX_MSGS_LEN);
@@ -149,10 +150,11 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     desired_torque = -1 * to_signed(desired_torque, 13);
 
     const SteeringLimits limits = subaru_gen2 ? SUBARU_GEN2_STEERING_LIMITS : SUBARU_STEERING_LIMITS;
-    if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
-      tx = 0;
-    }
+    violation |= steer_torque_cmd_checks(desired_torque, -1, limits);
+  }
 
+  if (violation){
+    tx = 0;
   }
   return tx;
 }
