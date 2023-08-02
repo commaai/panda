@@ -119,6 +119,7 @@ def test_gmlan_bad_toggle(p):
     assert comp_kbps_normal > (0.6 * SPEED_NORMAL)
     assert comp_kbps_normal < (1.0 * SPEED_NORMAL)
 
+@pytest.mark.panda_expect_can_error
 @pytest.mark.skip_panda_types(PandaGroup.GMLAN)
 def test_gmlan_bitbang(p):
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
