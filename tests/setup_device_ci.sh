@@ -59,6 +59,7 @@ cd panda_jungle
 git fetch --all
 git checkout -f master
 git reset --hard origin/master
+board/flash.py
 
 # setup device/SOM state
 SOM_ST_IO=49
