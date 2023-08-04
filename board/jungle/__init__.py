@@ -8,7 +8,7 @@ from panda import Panda, PandaDFU
 from panda.python.constants import McuType
 
 BASEDIR = os.path.dirname(os.path.realpath(__file__))
-FW_PATH = os.path.join(BASEDIR, "board/obj/")
+FW_PATH = os.path.join(BASEDIR, "obj/")
 
 
 def ensure_jungle_health_packet_version(fn):
