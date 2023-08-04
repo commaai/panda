@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import time
-import subprocess
 import unittest
 
 from panda import Panda, PandaJungle, CanHandle, McuType, BASEDIR
@@ -44,7 +43,6 @@ class TestPedal(unittest.TestCase):
     return msgs
 
   def test_usb_fw(self):
-    subprocess.check_output(f"cd {BASEDIR} && PEDAL=1 PEDAL_USB=1 scons", shell=True)
     self._flash_over_can(PEDAL_BUS, f"{BASEDIR}/board/pedal/obj/pedal_usb.bin.signed")
     time.sleep(2)
     with Panda(PEDAL_SERIAL) as p:
@@ -52,7 +50,6 @@ class TestPedal(unittest.TestCase):
     self.assertTrue(self._listen_can_frames() > 40)
 
   def test_nonusb_fw(self):
-    subprocess.check_output(f"cd {BASEDIR} && PEDAL=1 scons", shell=True)
     self._flash_over_can(PEDAL_BUS, f"{BASEDIR}board/pedal/obj/pedal.bin.signed")
     time.sleep(2)
     self.assertTrue(self._listen_can_frames() > 40)
