@@ -16,3 +16,4 @@ scons==4.4.0
 flaky
 spidev
 pytest-mock
+termcolor

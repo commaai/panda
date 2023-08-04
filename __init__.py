@@ -5,3 +5,7 @@ from .python.canhandle import CanHandle # noqa: F401
 from .python import (Panda, PandaDFU, # noqa: F401
                      pack_can_buffer, unpack_can_buffer, calculate_checksum, unpack_log,
                      DLC_TO_LEN, LEN_TO_DLC, ALTERNATIVE_EXPERIENCE, CANPACKET_HEAD_SIZE)
+
+
+# panda jungle
+from .board.jungle import PandaJungle, PandaJungleDFU # noqa: F401

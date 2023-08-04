@@ -75,7 +75,7 @@ separate IRQs for RX and TX.
 #include "drivers/watchdog.h"
 #include "stm32h7/llflash.h"
 
-#if !defined(BOOTSTUB) && defined(PANDA)
+#if !defined(BOOTSTUB)
   #include "drivers/uart.h"
   #include "stm32h7/lluart.h"
 #endif

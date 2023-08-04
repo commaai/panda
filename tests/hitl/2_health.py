@@ -2,7 +2,7 @@ import time
 import pytest
 
 from panda import Panda
-from panda_jungle import PandaJungle  # pylint: disable=import-error
+from panda import PandaJungle
 from panda.tests.hitl.conftest import PandaGroup
 
 @pytest.mark.expected_logs(1)

@@ -182,6 +182,9 @@ SConscript('board/SConscript')
 # pedal fw
 SConscript('board/pedal/SConscript')
 
+# panda jungle fw
+SConscript('board/jungle/SConscript')
+
 # test files
 if GetOption('test'):
   SConscript('tests/libpanda/SConscript')
