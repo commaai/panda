@@ -25,7 +25,4 @@ build_projects["pedal_usb"] = copy.deepcopy(build_projects["pedal"])
 build_projects["pedal_usb"]["PROJECT_FLAGS"].append("-DPEDAL_USB")
 
 for project_name, project in build_projects.items():
-  flags = [
-    "-DPANDA_BUS_CNT=4",
-  ]
-  build_project(project_name, project, flags)
+  build_project(project_name, project, [])

@@ -11,7 +11,6 @@ build_projects = {
 for project_name, project in build_projects.items():
   flags = [
     "-DPANDA",
-    "-DPANDA_BUS_CNT=4",
   ]
   if ("ENABLE_SPI" in os.environ or "h7" in project_name) and not project_name.startswith('pedal'):
     flags.append('-DENABLE_SPI')
