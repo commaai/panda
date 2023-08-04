@@ -1,8 +1,10 @@
 import struct
 import signal
 
+from .base import BaseHandle
 
-class CanHandle(object):
+
+class CanHandle(BaseHandle):
   def __init__(self, p, bus):
     self.p = p
     self.bus = bus
@@ -29,7 +31,10 @@ class CanHandle(object):
 
     return ret
 
-  def controlWrite(self, request_type, request, value, index, data, timeout=0):
+  def close(self):
+    pass
+
+  def controlWrite(self, request_type, request, value, index, data, timeout=0, expect_disconnect=False):
     # ignore data in reply, panda doesn't use it
     return self.controlRead(request_type, request, value, index, 0, timeout)
 

@@ -3,8 +3,8 @@ import os
 import time
 import subprocess
 import unittest
-from panda import Panda, PandaJungle, McuType, BASEDIR
-from panda.tests.pedal.canhandle import CanHandle
+
+from panda import Panda, PandaJungle, CanHandle, McuType, BASEDIR
 
 
 JUNGLE_SERIAL = os.getenv("PEDAL_JUNGLE")
