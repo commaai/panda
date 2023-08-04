@@ -7,6 +7,8 @@ BUILDER = "DEV"
 
 common_flags = []
 
+panda_root = Dir('.').abspath
+
 if os.getenv("RELEASE"):
   BUILD_TYPE = "RELEASE"
   cert_fn = os.getenv("CERT")
@@ -14,7 +16,7 @@ if os.getenv("RELEASE"):
   assert os.path.exists(cert_fn), 'Certificate file not found. Please specify absolute path'
 else:
   BUILD_TYPE = "DEBUG"
-  cert_fn = File("#certs/debug").srcnode().abspath
+  cert_fn = File("./certs/debug").srcnode().abspath
   common_flags += ["-DALLOW_DEBUG"]
 
   if os.getenv("DEBUG"):
@@ -33,7 +35,7 @@ def get_version(builder, build_type):
 def get_key_header(name):
   from Crypto.PublicKey import RSA
 
-  public_fn = File(f'#certs/{name}.pub').srcnode().abspath
+  public_fn = File(f'./certs/{name}.pub').srcnode().abspath
   with open(public_fn) as f:
     rsa = RSA.importKey(f.read())
   assert(rsa.size_in_bits() == 1024)
@@ -78,12 +80,12 @@ def build_project(project_name, project, extra_flags):
   ]
 
   includes = [
-    ".",
-    "..",
-    Dir("#").abspath,
-    Dir("#board/").abspath,
-    Dir("#board/stm32fx/inc").abspath,
-    Dir("#board/stm32h7/inc").abspath,
+    '.',
+    '..',
+    panda_root,
+    f"{panda_root}/board/",
+    f"{panda_root}/board/stm32fx/inc",
+    f"{panda_root}/board/stm32h7/inc",
   ]
 
   env = Environment(
@@ -106,10 +108,10 @@ def build_project(project_name, project, extra_flags):
 
   # Bootstub
   crypto_obj = [
-    env.Object(f"rsa-{project_name}", "#crypto/rsa.c"),
-    env.Object(f"sha-{project_name}", "#crypto/sha.c")
+    env.Object(f"rsa-{project_name}", f"{panda_root}/crypto/rsa.c"),
+    env.Object(f"sha-{project_name}", f"{panda_root}/crypto/sha.c")
   ]
-  bootstub_obj = env.Object(f"bootstub-{project_name}", project.get("BOOTSTUB", "#board/bootstub.c"))
+  bootstub_obj = env.Object(f"bootstub-{project_name}", File(project.get("BOOTSTUB", f"{panda_root}/board/bootstub.c")))
   bootstub_elf = env.Program(f"obj/bootstub.{project_name}.elf",
                                      [startup] + crypto_obj + [bootstub_obj])
   env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
@@ -121,14 +123,14 @@ def build_project(project_name, project, extra_flags):
   main_bin = env.Objcopy(f"obj/{project_name}.bin", main_elf)
 
   # Sign main
-  sign_py = File("#crypto/sign.py").srcnode().abspath
+  sign_py = File(f"{panda_root}/crypto/sign.py").srcnode().abspath
   env.Command(f"obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
 
 
 base_project_f4 = {
   "MAIN": "main.c",
-  "STARTUP_FILE": "#board/stm32fx/startup_stm32f413xx.s",
-  "LINKER_SCRIPT": "#board/stm32fx/stm32f4_flash.ld",
+  "STARTUP_FILE": File("./board/stm32fx/startup_stm32f413xx.s"),
+  "LINKER_SCRIPT": File("./board/stm32fx/stm32f4_flash.ld"),
   "APP_START_ADDRESS": "0x8004000",
   "PROJECT_FLAGS": [
     "-mcpu=cortex-m4",
@@ -144,8 +146,8 @@ base_project_f4 = {
 
 base_project_h7 = {
   "MAIN": "main.c",
-  "STARTUP_FILE": "#board/stm32h7/startup_stm32h7x5xx.s",
-  "LINKER_SCRIPT": "#board/stm32h7/stm32h7x5_flash.ld",
+  "STARTUP_FILE": File("./board/stm32h7/startup_stm32h7x5xx.s"),
+  "LINKER_SCRIPT": File("./board/stm32h7/stm32h7x5_flash.ld"),
   "APP_START_ADDRESS": "0x8020000",
   "PROJECT_FLAGS": [
     "-mcpu=cortex-m7",
