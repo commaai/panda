@@ -68,8 +68,10 @@ AddrCheckStruct subaru_gen2_addr_checks[] = {
 #define SUBARU_GEN2_ADDR_CHECK_LEN (sizeof(subaru_gen2_addr_checks) / sizeof(subaru_gen2_addr_checks[0]))
 addr_checks subaru_gen2_rx_checks = {subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
 
+
 const uint16_t SUBARU_PARAM_GEN2 = 1;
 bool subaru_gen2 = false;
+
 
 static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
