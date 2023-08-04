@@ -181,7 +181,7 @@ SConscript('board/SConscript')
 SConscript('board/pedal/SConscript')
 
 # panda jungle fw
-SConscript('board/jungle/board/SConscript')
+SConscript('board/jungle/SConscript')
 
 # test files
 if GetOption('test'):
