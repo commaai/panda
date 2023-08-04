@@ -95,14 +95,14 @@ void tick_handler(void) {
 #ifdef FINAL_PROVISIONING
     // Ignition blinking
     uint8_t ignition_bitmask = 0U;
-    for(uint8_t i = 0U; i < 6U; i++) {
+    for (uint8_t i = 0U; i < 6U; i++) {
       ignition_bitmask |= ((loop_counter % 12U) < ((uint32_t) i + 2U)) << i;
     }
     current_board->set_individual_ignition(ignition_bitmask);
 
     // SBU voltage reporting
     if (current_board->has_sbu_sense) {
-      for(uint8_t i = 0U; i < 6U; i++) {
+      for (uint8_t i = 0U; i < 6U; i++) {
         CANPacket_t pkt = { 0 };
         pkt.data_len_code = 8U;
         pkt.addr = 0x100U + i;
@@ -114,6 +114,7 @@ void tick_handler(void) {
       }
     }
 #else
+    // toggle ignition on button press
     static bool prev_button_status = false;
     if (!current_button_status && prev_button_status && button_press_cnt < 10){
       current_board->set_ignition(!ignition);

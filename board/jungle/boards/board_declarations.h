@@ -1,5 +1,3 @@
-#include "unused_funcs.h"
-
 // ******************** Prototypes ********************
 typedef void (*board_init)(void);
 typedef void (*board_set_led)(uint8_t color, bool enabled);
@@ -65,3 +63,8 @@ struct board {
 uint8_t harness_orientation = HARNESS_ORIENTATION_NONE;
 uint8_t can_mode = CAN_MODE_NORMAL;
 uint8_t ignition = 0U;
+
+
+void unused_set_individual_ignition(uint8_t bitmask) {
+  UNUSED(bitmask);
+}
