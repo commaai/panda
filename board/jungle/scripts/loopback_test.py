@@ -26,7 +26,6 @@ def print_colored(text, color):
   cprint(text + " "*40, color, end="\r")
 
 def connect_to_pandas():
-  global pandas, panda_serials
   print_colored("Connecting to pandas", "blue")
   # Connect to pandas
   pandas = []
@@ -87,8 +86,6 @@ def can_loopback(sender):
 #################################################################
 
 def test_loopback():
-  global pandas
-
   # disable safety modes
   for panda in pandas:
     panda.set_safety_mode(Panda.SAFETY_ELM327 if FOR_RELEASE_BUILDS else Panda.SAFETY_ALLOUTPUT)
@@ -108,7 +105,7 @@ def test_loopback():
 ############################# MAIN ##############################
 #################################################################
 jungle = None
-pandas = []
+pandas = []  # type: ignore
 panda_serials = []
 counter = 0
 
