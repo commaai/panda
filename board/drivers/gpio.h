@@ -75,7 +75,7 @@ void gpio_set_all_output(const gpio_t *pins, uint8_t num_pins, bool enabled) {
 }
 
 void gpio_set_bitmask(const gpio_t *pins, uint8_t num_pins, uint32_t bitmask) {
-  for(uint8_t i = 0; i < num_pins; i++) {
+  for (uint8_t i = 0; i < num_pins; i++) {
     set_gpio_output(pins[i].bank, pins[i].pin, (bitmask >> i) & 1U);
   }
 }
