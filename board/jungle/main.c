@@ -49,7 +49,7 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 }
 
 // called at 8Hz
-uint8_t loop_counter = 0U;
+uint32_t loop_counter = 0U;
 uint16_t button_press_cnt = 0U;
 void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
@@ -93,12 +93,28 @@ void tick_handler(void) {
     }
 
 #ifdef FINAL_PROVISIONING
-    // ign on for 0.3s, off for 0.2s
-    const bool ign = (loop_counter % (3+2)) < 3;
-    if (ign != ignition) {
-      current_board->set_ignition(ign);
+    // Ignition blinking
+    uint8_t ignition_bitmask = 0U;
+    for (uint8_t i = 0U; i < 6U; i++) {
+      ignition_bitmask |= ((loop_counter % 12U) < ((uint32_t) i + 2U)) << i;
+    }
+    current_board->set_individual_ignition(ignition_bitmask);
+
+    // SBU voltage reporting
+    if (current_board->has_sbu_sense) {
+      for (uint8_t i = 0U; i < 6U; i++) {
+        CANPacket_t pkt = { 0 };
+        pkt.data_len_code = 8U;
+        pkt.addr = 0x100U + i;
+        *(uint16_t *) &pkt.data[0] = current_board->get_sbu_mV(i + 1U, SBU1);
+        *(uint16_t *) &pkt.data[2] = current_board->get_sbu_mV(i + 1U, SBU2);
+        pkt.data[4] = (ignition_bitmask >> i) & 1U;
+        can_set_checksum(&pkt);
+        can_send(&pkt, 0U, false);
+      }
     }
 #else
+    // toggle ignition on button press
     static bool prev_button_status = false;
     if (!current_button_status && prev_button_status && button_press_cnt < 10){
       current_board->set_ignition(!ignition);

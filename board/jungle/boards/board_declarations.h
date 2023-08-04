@@ -5,6 +5,7 @@ typedef void (*board_board_tick)(void);
 typedef bool (*board_get_button)(void);
 typedef void (*board_set_panda_power)(bool enabled);
 typedef void (*board_set_ignition)(bool enabled);
+typedef void (*board_set_individual_ignition)(uint8_t bitmask);
 typedef void (*board_set_harness_orientation)(uint8_t orientation);
 typedef void (*board_set_can_mode)(uint8_t mode);
 typedef void (*board_enable_can_transciever)(uint8_t transciever, bool enabled);
@@ -14,6 +15,7 @@ typedef uint16_t (*board_get_sbu_mV)(uint8_t channel, uint8_t sbu);
 struct board {
   const char *board_type;
   const bool has_canfd;
+  const bool has_sbu_sense;
   const uint16_t avdd_mV;
   board_init init;
   board_set_led set_led;
@@ -21,6 +23,7 @@ struct board {
   board_get_button get_button;
   board_set_panda_power set_panda_power;
   board_set_ignition set_ignition;
+  board_set_individual_ignition set_individual_ignition;
   board_set_harness_orientation set_harness_orientation;
   board_set_can_mode set_can_mode;
   board_enable_can_transciever enable_can_transciever;
@@ -59,4 +62,9 @@ struct board {
 // ********************* Globals **********************
 uint8_t harness_orientation = HARNESS_ORIENTATION_NONE;
 uint8_t can_mode = CAN_MODE_NORMAL;
-bool ignition = false;
+uint8_t ignition = 0U;
+
+
+void unused_set_individual_ignition(uint8_t bitmask) {
+  UNUSED(bitmask);
+}

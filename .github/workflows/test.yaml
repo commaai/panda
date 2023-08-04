@@ -48,6 +48,8 @@ jobs:
         run: ${{ env.RUN }} "ENABLE_SPI=1 scons -j4"
       - name: Build with UBSan
         run: ${{ env.RUN }} "scons -j4 --ubsan"
+      - name: Build jungle firmware with FINAL_PROVISIONING support
+        run: ${{ env.RUN }} "FINAL_PROVISIONING=1 scons -j4 board/jungle"
 
   unit_tests:
     name: unit tests
