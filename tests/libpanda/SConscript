@@ -14,6 +14,7 @@ env = Environment(
     '-fno-builtin',
     '-std=gnu11',
     '-Wfatal-errors',
+    '-DPANDA_BUS_CNT=4',
   ],
   CPPPATH=[".", "../../board/"],
 )
