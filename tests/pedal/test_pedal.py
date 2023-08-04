@@ -3,9 +3,8 @@ import os
 import time
 import subprocess
 import unittest
-from panda import Panda, BASEDIR
+from panda import Panda, CanHandle, BASEDIR
 from panda_jungle import PandaJungle  # pylint: disable=import-error
-from panda.tests.pedal.canhandle import CanHandle
 
 
 JUNGLE_SERIAL = os.getenv("PEDAL_JUNGLE")
