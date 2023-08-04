@@ -184,6 +184,7 @@ class Panda:
   GMLAN_CAN2 = 1
   GMLAN_CAN3 = 2
 
+  USB_PIDS = (0xddee, 0xddcc)
   REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
   REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
 
@@ -204,9 +205,9 @@ class Panda:
   HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBBHBHH")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
-  F2_DEVICES = (HW_TYPE_PEDAL, )
-  F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
-  H7_DEVICES = (HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES)
+  F2_DEVICES = [HW_TYPE_PEDAL, ]
+  F4_DEVICES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS]
+  H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES]
 
   INTERNAL_DEVICES = (HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_TRES)
   HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES)
@@ -324,8 +325,8 @@ class Panda:
       self.set_heartbeat_disabled()
       self.set_power_save(0)
 
-  @staticmethod
-  def spi_connect(serial, ignore_version=False):
+  @classmethod
+  def spi_connect(cls, serial, ignore_version=False):
     # get UID to confirm slave is present and up
     handle = None
     spi_serial = None
@@ -366,14 +367,14 @@ class Panda:
 
     return handle, spi_serial, bootstub, None
 
-  @staticmethod
-  def usb_connect(serial, claim=True):
+  @classmethod
+  def usb_connect(cls, serial, claim=True):
     handle, usb_serial, bootstub, bcd = None, None, None, None
     context = usb1.USBContext()
     context.open()
     try:
       for device in context.getDeviceList(skip_on_error=True):
-        if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
+        if device.getVendorID() == 0xbbaa and device.getProductID() in cls.USB_PIDS:
           try:
             this_serial = device.getSerialNumber()
           except Exception:
@@ -383,7 +384,7 @@ class Panda:
             logging.debug("opening device %s %s", this_serial, hex(device.getProductID()))
 
             usb_serial = this_serial
-            bootstub = device.getProductID() == 0xddee
+            bootstub = (device.getProductID() & 0xF0) == 0xe0
             handle = device.open()
             if sys.platform not in ("win32", "cygwin", "msys", "darwin"):
               handle.setAutoDetachKernelDriver(True)
@@ -408,19 +409,19 @@ class Panda:
 
     return usb_handle, usb_serial, bootstub, bcd
 
-  @staticmethod
-  def list():
-    ret = Panda.usb_list()
-    ret += Panda.spi_list()
+  @classmethod
+  def list(cls):
+    ret = cls.usb_list()
+    ret += cls.spi_list()
     return list(set(ret))
 
-  @staticmethod
-  def usb_list():
+  @classmethod
+  def usb_list(cls):
     ret = []
     try:
       with usb1.USBContext() as context:
         for device in context.getDeviceList(skip_on_error=True):
-          if device.getVendorID() == 0xbbaa and device.getProductID() in (0xddcc, 0xddee):
+          if device.getVendorID() == 0xbbaa and device.getProductID() in cls.USB_PIDS:
             try:
               serial = device.getSerialNumber()
               if len(serial) == 24:
@@ -433,9 +434,9 @@ class Panda:
       logging.exception("exception while listing pandas")
     return ret
 
-  @staticmethod
-  def spi_list():
-    _, serial, _, _ = Panda.spi_connect(None, ignore_version=True)
+  @classmethod
+  def spi_list(cls):
+    _, serial, _, _ = cls.spi_connect(None, ignore_version=True)
     if serial is not None:
       return [serial, ]
     return []

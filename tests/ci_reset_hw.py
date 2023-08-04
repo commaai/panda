@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 import concurrent.futures
 
-from panda import Panda, PandaDFU
+from panda import Panda, PandaDFU, PandaJungle
 from panda.tests.libs.resetter import Resetter
-from panda_jungle import PandaJungle  # pylint: disable=import-error
 
 # Reset + flash all CI hardware to get it into a consistent state
 # * ports 1-2 are jungles

@@ -11,7 +11,7 @@ from panda import Panda
 
 JUNGLE = "JUNGLE" in os.environ
 if JUNGLE:
-  from panda_jungle import PandaJungle # pylint: disable=import-error
+  from panda import PandaJungle
 
 # Generate unique messages
 NUM_MESSAGES_PER_BUS = 10000

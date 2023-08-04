@@ -50,16 +50,9 @@ if [ ! -d "$SOURCE_DIR" ]; then
   git clone https://github.com/commaai/panda.git $SOURCE_DIR
 fi
 
-# setup panda_jungle
-cd $SOURCE_DIR/../
-if [ ! -d panda_jungle/ ]; then
-  git clone https://github.com/commaai/panda_jungle.git
-fi
-cd panda_jungle
-git fetch --all
-git checkout -f master
-git reset --hard origin/master
-board/flash.py
+# reflash jungle
+cd board/jungle
+./flash.py
 
 # setup device/SOM state
 SOM_ST_IO=49
