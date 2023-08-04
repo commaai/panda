@@ -17,8 +17,8 @@ else:
   cert_fn = File("#certs/debug").srcnode().abspath
   common_flags += ["-DALLOW_DEBUG"]
 
-if os.getenv("DEBUG"):
-  common_flags += ["-DDEBUG"]
+  if os.getenv("DEBUG"):
+    common_flags += ["-DDEBUG"]
 
 def objcopy(source, target, env, for_signature):
     return '$OBJCOPY -O binary %s %s' % (source[0], target[0])
@@ -158,7 +158,6 @@ base_project_h7 = {
     "-g",
   ],
 }
-
 
 Export('base_project_f4', 'base_project_h7', 'build_project')
 
