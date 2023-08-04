@@ -90,12 +90,12 @@ void board_v2_set_harness_orientation(uint8_t orientation) {
     case HARNESS_ORIENTATION_1:
       gpio_set_all_output(sbu1_ignition_pins, sizeof(sbu1_ignition_pins) / sizeof(gpio_t), false);
       gpio_set_all_output(sbu1_relay_pins, sizeof(sbu1_relay_pins) / sizeof(gpio_t), true);
-      gpio_set_all_output(sbu2_ignition_pins, sizeof(sbu2_ignition_pins) / sizeof(gpio_t), ignition);
+      gpio_set_bitmask(sbu2_ignition_pins, sizeof(sbu2_ignition_pins) / sizeof(gpio_t), ignition);
       gpio_set_all_output(sbu2_relay_pins, sizeof(sbu2_relay_pins) / sizeof(gpio_t), false);
       harness_orientation = orientation;
       break;
     case HARNESS_ORIENTATION_2:
-      gpio_set_all_output(sbu1_ignition_pins, sizeof(sbu1_ignition_pins) / sizeof(gpio_t), ignition);
+      gpio_set_bitmask(sbu1_ignition_pins, sizeof(sbu1_ignition_pins) / sizeof(gpio_t), ignition);
       gpio_set_all_output(sbu1_relay_pins, sizeof(sbu1_relay_pins) / sizeof(gpio_t), false);
       gpio_set_all_output(sbu2_ignition_pins, sizeof(sbu2_ignition_pins) / sizeof(gpio_t), false);
       gpio_set_all_output(sbu2_relay_pins, sizeof(sbu2_relay_pins) / sizeof(gpio_t), true);
@@ -156,7 +156,12 @@ bool board_v2_get_button(void) {
 }
 
 void board_v2_set_ignition(bool enabled) {
-  ignition = enabled;
+  ignition = enabled ? 0xFFU : 0U;
+  board_v2_set_harness_orientation(harness_orientation);
+}
+
+void board_v2_set_individual_ignition(uint8_t bitmask) {
+  ignition = bitmask;
   board_v2_set_harness_orientation(harness_orientation);
 }
 
@@ -192,7 +197,7 @@ float board_v2_get_channel_power(uint8_t channel) {
   return ret;
 }
 
-uint16_t board_v1_get_sbu_mV(uint8_t channel, uint8_t sbu) {
+uint16_t board_v2_get_sbu_mV(uint8_t channel, uint8_t sbu) {
   uint16_t ret = 0U;
   if ((channel >= 1U) && (channel <= 6U)) {
     switch(sbu){
@@ -263,6 +268,7 @@ void board_v2_tick(void) {}
 const board board_v2 = {
   .board_type = "V2",
   .has_canfd = true,
+  .has_sbu_sense = true,
   .avdd_mV = 3300U,
   .init = &board_v2_init,
   .set_led = &board_v2_set_led,
@@ -270,9 +276,10 @@ const board board_v2 = {
   .get_button = &board_v2_get_button,
   .set_panda_power = &board_v2_set_panda_power,
   .set_ignition = &board_v2_set_ignition,
+  .set_individual_ignition = &board_v2_set_individual_ignition,
   .set_harness_orientation = &board_v2_set_harness_orientation,
   .set_can_mode = &board_v2_set_can_mode,
   .enable_can_transciever = &board_v2_enable_can_transciever,
   .get_channel_power = &board_v2_get_channel_power,
-  .get_sbu_mV = &board_v1_get_sbu_mV,
+  .get_sbu_mV = &board_v2_get_sbu_mV,
 };
