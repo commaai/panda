@@ -110,7 +110,7 @@ void tick_handler(void) {
         *(uint16_t *) &pkt.data[2] = current_board->get_sbu_mV(i + 1U, SBU2);
         pkt.data[4] = (ignition_bitmask >> i) & 1U;
         can_set_checksum(&pkt);
-        can_send(&pkt, 0U);
+        can_send(&pkt, 0U, false);
       }
     }
 #else
