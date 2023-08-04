@@ -182,8 +182,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       (void)memcpy(resp, ((uint8_t *)UID_BASE), 12);
       resp_len = 12;
       break;
+    // **** 0xc4: get interrupt call rate
     case 0xc4:
-      // **** 0xc4: get interrupt call rate
       if (req->param1 < NUM_INTERRUPTS) {
         uint32_t load = interrupts[req->param1].call_rate;
         resp[0] = (load & 0x000000FFU);
@@ -192,6 +192,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         resp[3] = ((load & 0xFF000000U) >> 24U);
         resp_len = 4U;
       }
+      break;
+    // **** 0xc5: DEBUG: drive relay
+    case 0xc5:
+      set_intercept_relay((req->param1 & 0x1U), (req->param1 & 0x2U));
       break;
     // **** 0xd0: fetch serial (aka the provisioned dongle ID)
     case 0xd0:
@@ -395,6 +399,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xe5:
       can_loopback = (req->param1 > 0U);
       can_init_all();
+      break;
+    // **** 0xe6: set custom clock source period
+    case 0xe6:
+      clock_source_set_period(req->param1);
       break;
     // **** 0xe7: set power save state
     case 0xe7:
