@@ -3,8 +3,7 @@ import os
 import time
 import subprocess
 import unittest
-from panda import Panda, BASEDIR
-from panda_jungle import PandaJungle  # pylint: disable=import-error
+from panda import Panda, PandaJungle, McuType, BASEDIR
 from panda.tests.pedal.canhandle import CanHandle
 
 
@@ -30,7 +29,7 @@ class TestPedal(unittest.TestCase):
 
     time.sleep(0.1)
     with open(fw_file, "rb") as code:
-      PandaJungle.flash_static(CanHandle(self.jungle, bus), code.read())
+      PandaJungle.flash_static(CanHandle(self.jungle, bus), code.read(), McuType.F2)
 
   def _listen_can_frames(self):
     self.jungle.can_clear(0xFFFF)

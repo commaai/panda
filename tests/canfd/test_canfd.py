@@ -4,7 +4,7 @@ import time
 import random
 from collections import defaultdict
 from panda import Panda, calculate_checksum
-from panda_jungle import PandaJungle  # pylint: disable=import-error
+from panda import PandaJungle
 
 H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2]
 JUNGLE_SERIAL = os.getenv("JUNGLE")

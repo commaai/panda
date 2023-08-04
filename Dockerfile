@@ -81,13 +81,6 @@ RUN cd /tmp && \
     rm -rf /tmp/tmppilot
 
 RUN cd /tmp/openpilot && \
-    git clone https://github.com/commaai/panda_jungle.git && \
-    cd panda_jungle && \
-    git fetch && \
-    git checkout 3a791be1f1877a69cf45de16a670992380622297 && \
-    rm -rf .git/
-
-RUN cd /tmp/openpilot && \
     pip install --no-cache-dir -r opendbc/requirements.txt && \
     pip install --no-cache-dir --upgrade aenum lru-dict pycurl tenacity atomicwrites serial smbus2
 
