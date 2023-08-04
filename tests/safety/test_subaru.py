@@ -52,7 +52,7 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
 
   ALT_BUS = SUBARU_MAIN_BUS
 
-  DEG_TO_CAN = 100
+  DEG_TO_CAN = -46.08
 
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
