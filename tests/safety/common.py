@@ -538,7 +538,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     self.assertEqual(self.safety.get_torque_meas_max(), 0)
 
 class MeasurementSafetyTest(PandaSafetyTestBase):
-  DEG_TO_CAN: int = 1
+  DEG_TO_CAN: float = 1
 
   @classmethod
   def setUpClass(cls):
