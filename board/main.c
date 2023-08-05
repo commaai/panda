@@ -371,13 +371,6 @@ int main(void) {
 
   log("main start");
 
-  if (current_board->has_gps) {
-    uart_init(&uart_ring_gps, 9600);
-  } else {
-    // enable ESP uart
-    uart_init(&uart_ring_gps, 115200);
-  }
-
   if (current_board->has_lin) {
     // enable LIN
     uart_init(&uart_ring_lin1, 10400);
