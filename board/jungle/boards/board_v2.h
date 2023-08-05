@@ -107,7 +107,29 @@ void board_v2_set_harness_orientation(uint8_t orientation) {
   }
 }
 
+void board_v2_enable_can_transciever(uint8_t transciever, bool enabled) {
+  switch (transciever){
+    case 1U:
+      set_gpio_output(GPIOG, 11, !enabled);
+      break;
+    case 2U:
+      set_gpio_output(GPIOB, 3, !enabled);
+      break;
+    case 3U:
+      set_gpio_output(GPIOD, 7, !enabled);
+      break;
+    case 4U:
+      set_gpio_output(GPIOB, 4, !enabled);
+      break;
+    default:
+      print("Invalid CAN transciever ("); puth(transciever); print("): enabling failed\n");
+      break;
+  }
+}
+
 void board_v2_set_can_mode(uint8_t mode) {
+  board_v2_enable_can_transciever(2U, false);
+  board_v2_enable_can_transciever(4U, false);
   switch (mode) {
     case CAN_MODE_NORMAL:
       // B12,B13: disable normal mode
@@ -124,6 +146,7 @@ void board_v2_set_can_mode(uint8_t mode) {
       set_gpio_pullup(GPIOB, 6, PULL_NONE);
       set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
       can_mode = CAN_MODE_NORMAL;
+      board_v2_enable_can_transciever(2U, true);
       break;
     case CAN_MODE_OBD_CAN2:
       // B5,B6: disable normal mode
@@ -139,6 +162,7 @@ void board_v2_set_can_mode(uint8_t mode) {
       set_gpio_pullup(GPIOB, 13, PULL_NONE);
       set_gpio_alternate(GPIOB, 13, GPIO_AF9_FDCAN2);
       can_mode = CAN_MODE_OBD_CAN2;
+      board_v2_enable_can_transciever(4U, true);
       break;
     default:
       break;
@@ -163,26 +187,6 @@ void board_v2_set_ignition(bool enabled) {
 void board_v2_set_individual_ignition(uint8_t bitmask) {
   ignition = bitmask;
   board_v2_set_harness_orientation(harness_orientation);
-}
-
-void board_v2_enable_can_transciever(uint8_t transciever, bool enabled) {
-  switch (transciever){
-    case 1U:
-      set_gpio_output(GPIOG, 11, !enabled);
-      break;
-    case 2U:
-      set_gpio_output(GPIOB, 3, !enabled);
-      break;
-    case 3U:
-      set_gpio_output(GPIOD, 7, !enabled);
-      break;
-    case 4U:
-      set_gpio_output(GPIOB, 4, !enabled);
-      break;
-    default:
-      print("Invalid CAN transciever ("); puth(transciever); print("): enabling failed\n");
-      break;
-  }
 }
 
 float board_v2_get_channel_power(uint8_t channel) {
