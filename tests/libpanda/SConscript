@@ -3,7 +3,7 @@ import platform
 CC = 'gcc'
 system = platform.system()
 if system == 'Darwin':
-  # gcc installed by homebrew has version suffix (e.g. gcc-12) in order to be  
+  # gcc installed by homebrew has version suffix (e.g. gcc-12) in order to be
   # distinguishable from system one - which acts as a symlink to clang
   CC += '-12'
 

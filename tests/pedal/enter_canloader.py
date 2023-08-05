@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 import time
 import argparse
-from panda import Panda, McuType
-from panda.tests.pedal.canhandle import CanHandle
+from panda import Panda, CanHandle, McuType
 
 
 if __name__ == "__main__":

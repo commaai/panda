@@ -8,7 +8,7 @@ from panda.tests.hitl.helpers import clear_can_buffers
 
 NO_JUNGLE = os.environ.get("NO_JUNGLE", "0") == "1"
 if not NO_JUNGLE:
-  from panda_jungle import PandaJungle  # pylint: disable=import-error
+  from panda import PandaJungle
 
 
 SPEED_NORMAL = 500

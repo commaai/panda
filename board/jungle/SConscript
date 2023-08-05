@@ -4,15 +4,15 @@ import copy
 Import('build_project', 'base_project_f4', 'base_project_h7')
 
 build_projects = {
-  "panda": base_project_f4,
-  "panda_h7": base_project_h7,
+  "panda_jungle": base_project_f4,
+  "panda_jungle_h7": base_project_h7,
 }
 
 for project_name, project in build_projects.items():
   flags = [
-    "-DPANDA",
+    "-DPANDA_JUNGLE",
   ]
-  if ("ENABLE_SPI" in os.environ or "h7" in project_name) and not project_name.startswith('pedal'):
-    flags.append('-DENABLE_SPI')
+  if os.getenv("FINAL_PROVISIONING"):
+    flags += ["-DFINAL_PROVISIONING"]
 
   build_project(project_name, project, flags)
