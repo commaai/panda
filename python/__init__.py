@@ -7,7 +7,6 @@ import struct
 import hashlib
 import binascii
 import datetime
-import warnings
 import logging
 from functools import wraps
 from typing import Optional
@@ -427,7 +426,7 @@ class Panda:
               if len(serial) == 24:
                 ret.append(serial)
               else:
-                warnings.warn(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
+                logging.warning(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
             except Exception:
               continue
     except Exception:
