@@ -106,6 +106,10 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       torque_driver_new = ((GET_BYTES(to_push, 0, 4) >> 16) & 0x7FFU);
       torque_driver_new = -1 * to_signed(torque_driver_new, 11);
       update_sample(&torque_driver, torque_driver_new);
+
+      int angle_meas_new = (GET_BYTES(to_push, 4, 2) & 0xFFFFU);
+      angle_meas_new = ROUND(to_signed(angle_meas_new, 16));
+      update_sample(&angle_meas, angle_meas_new);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -116,7 +120,15 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
 
     // update vehicle moving with any non-zero wheel speed
     if ((addr == MSG_SUBARU_Wheel_Speeds) && (bus == alt_main_bus)) {
-      vehicle_moving = ((GET_BYTES(to_push, 0, 4) >> 12) != 0U) || (GET_BYTES(to_push, 4, 4) != 0U);
+      uint32_t fr = (GET_BYTES(to_push, 1, 3) >> 4) & 0x1FFFU;
+      uint32_t rr = (GET_BYTES(to_push, 3, 3) >> 1) & 0x1FFFU;
+      uint32_t rl = (GET_BYTES(to_push, 4, 3) >> 6) & 0x1FFFU;
+      uint32_t fl = (GET_BYTES(to_push, 6, 2) >> 3) & 0x1FFFU;
+
+      vehicle_moving = (fr > 0U) || (rr > 0U) || (rl > 0U) || (fl > 0U);
+
+      float speed = (fr + rr + rl + fl) / 4U * 0.057;
+      update_sample(&vehicle_speed, ROUND(speed * VEHICLE_SPEED_FACTOR));
     }
 
     if ((addr == MSG_SUBARU_Brake_Status) && (bus == alt_main_bus)) {
