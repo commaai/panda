@@ -464,23 +464,21 @@ class Panda:
   def reconnect(self):
     if self._handle_open:
       self.close()
-      time.sleep(1.0)
 
     success = False
     # wait up to 15 seconds
-    for i in range(0, 15):
+    for _ in range(0, 15*10):
       try:
         self.connect()
         success = True
         break
       except Exception:
-        logging.debug("reconnecting is taking %d seconds...", i + 1)
         try:
           dfu = PandaDFU(self.get_dfu_serial())
           dfu.recover()
         except Exception:
           pass
-        time.sleep(1.0)
+      time.sleep(0.1)
     if not success:
       raise Exception("reconnect failed")
 
