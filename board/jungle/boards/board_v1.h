@@ -49,6 +49,7 @@ void board_v1_set_can_mode(uint8_t mode) {
       set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
       set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
       can_mode = CAN_MODE_NORMAL;
+      board_v1_enable_can_transciever(2U, true);
       break;
     case CAN_MODE_OBD_CAN2:
       print("Setting OBD CAN mode\n");
@@ -60,13 +61,12 @@ void board_v1_set_can_mode(uint8_t mode) {
       set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
       set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
       can_mode = CAN_MODE_OBD_CAN2;
+      board_v1_enable_can_transciever(4U, true);
       break;
     default:
       print("Tried to set unsupported CAN mode: "); puth(mode); print("\n");
       break;
   }
-  board_v1_enable_can_transciever(2U, true);
-  board_v1_enable_can_transciever(4U, true);
 }
 
 void board_v1_set_harness_orientation(uint8_t orientation) {
