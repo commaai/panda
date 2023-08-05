@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import concurrent.futures
 
-from panda import Panda, PandaDFU
+from panda import Panda, PandaDFU, PandaJungle
 from panda.tests.libs.resetter import Resetter
 
 # Reset + flash all CI hardware to get it into a consistent state
@@ -38,3 +38,9 @@ if __name__ == "__main__":
 
   r.cycle_power(delay=0, ports=[1, 2])
   r.close()
+
+  # flash jungles
+  pjs = PandaJungle.list()
+  for s in pjs:
+    with PandaJungle(serial=s) as pj:
+      pj.flash()
