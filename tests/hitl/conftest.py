@@ -75,6 +75,9 @@ def init_jungle():
   for bus, speed in BUS_SPEEDS:
     _panda_jungle.set_can_speed_kbps(bus, speed)
 
+  # ensure FW hasn't changed
+  assert _panda_jungle.up_to_date()
+
 
 def pytest_configure(config):
   config.addinivalue_line(
