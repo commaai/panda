@@ -43,9 +43,6 @@ if __name__ == "__main__":
           pf.flash()
     list(exc.map(flash, pandas, timeout=20))
 
-  r.cycle_power(delay=0, ports=[1, 2])
-  r.close()
-
   print("flashing jungle")
   # flash jungles
   pjs = PandaJungle.list()
@@ -54,3 +51,6 @@ if __name__ == "__main__":
     with PandaJungle(serial=s) as pj:
       print(f"- flashing {s}")
       pj.flash()
+
+  r.cycle_power(delay=0, ports=[1, 2])
+  r.close()
