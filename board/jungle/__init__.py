@@ -48,6 +48,10 @@ class PandaJungle(Panda):
   HARNESS_ORIENTATION_1 = 1
   HARNESS_ORIENTATION_2 = 2
 
+  @classmethod
+  def spi_connect(cls, serial, ignore_version=False):
+    return None, None, None, None
+
   def flash(self, fn=None, code=None, reconnect=True):
     if not fn:
       fn = os.path.join(FW_PATH, self._mcu_type.config.app_fn.replace("panda", "panda_jungle"))
@@ -78,6 +82,12 @@ class PandaJungle(Panda):
     elif hw_type in PandaJungle.H7_DEVICES:
       return McuType.H7
     raise ValueError(f"unknown HW type: {hw_type}")
+
+  def up_to_date(self) -> bool:
+    current = self.get_signature()
+    fn = os.path.join(FW_PATH, self.get_mcu_type().config.app_fn.replace("panda", "panda_jungle"))
+    expected = Panda.get_signature_from_firmware(fn)
+    return (current == expected)
 
   # ******************* health *******************
 

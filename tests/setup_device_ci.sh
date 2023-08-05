@@ -50,10 +50,6 @@ if [ ! -d "$SOURCE_DIR" ]; then
   git clone https://github.com/commaai/panda.git $SOURCE_DIR
 fi
 
-# reflash jungle
-cd board/jungle
-./flash.py
-
 # setup device/SOM state
 SOM_ST_IO=49
 echo $SOM_ST_IO > /sys/class/gpio/export || true
