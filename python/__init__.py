@@ -481,7 +481,9 @@ class Panda:
   @staticmethod
   def flasher_present(handle: BaseHandle) -> bool:
     fr = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
-    return fr[4:8] == b"\xde\xad\xd0\x0d"
+    if fr[4:8] == b"\xab\xad\xb0\x07":
+      logging.warning("Hit DFU bug, will NOT jump to application code. Power cycle the board to recover.")
+    return fr[4:8] in [b"\xde\xad\xd0\x0d", b"\xab\xad\xb0\x07"]
 
   @staticmethod
   def flash_static(handle, code, mcu_type):

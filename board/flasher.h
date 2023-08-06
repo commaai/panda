@@ -12,7 +12,11 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
 
   // flasher machine
   memset(resp, 0, 4);
-  memcpy(resp+4, "\xde\xad\xd0\x0d", 4);
+  if (failed_clock_init) {
+    memcpy(resp+4, "\xab\xad\xb0\x07", 4);
+  } else {
+    memcpy(resp+4, "\xde\xad\xd0\x0d", 4);
+  }
   resp[0] = 0xff;
   resp[2] = req->request;
   resp[3] = ~req->request;
