@@ -28,12 +28,7 @@ class PandaGroup:
 
   TESTED = (Panda.HW_TYPE_WHITE_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2, Panda.HW_TYPE_UNO)
 
-if PARTIAL_TESTS:
-  # minimal set of pandas to get most of our coverage
-  # * red panda covers GEN2, STM32H7
-  # * black panda covers STM32F4, and GEN2
-  PandaGroup.TESTED = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA)  # type: ignore
-elif HW_TYPES is not None:
+if HW_TYPES is not None:
   PandaGroup.TESTED = [bytes([int(x), ]) for x in HW_TYPES.strip().split(",")] # type: ignore
 
 
