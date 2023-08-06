@@ -47,7 +47,7 @@ def init_all_pandas():
     _panda_jungle.set_panda_power(True)
 
   for serial in Panda.list():
-    if serial not in PANDAS_EXCLUDE and serial != 'pedal':
+    if serial not in PANDAS_EXCLUDE:
       with Panda(serial=serial) as p:
         ptype = bytes(p.get_type())
         if ptype in PandaGroup.TESTED:
