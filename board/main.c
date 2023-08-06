@@ -308,7 +308,7 @@ void tick_handler(void) {
 void EXTI_IRQ_Handler(void) {
   if (check_exti_irq()) {
     exti_irq_clear();
-    clock_init();
+    clock_init(false);
 
     set_power_save_state(POWER_SAVE_STATUS_DISABLED);
     deepsleep_allowed = false;
@@ -322,7 +322,7 @@ void EXTI_IRQ_Handler(void) {
 uint8_t rtc_counter = 0;
 void RTC_WKUP_IRQ_Handler(void) {
   exti_irq_clear();
-  clock_init();
+  clock_init(false);
 
   rtc_counter++;
   if ((rtc_counter % 2U) == 0U) {
@@ -345,7 +345,7 @@ int main(void) {
   disable_interrupts();
 
   // init early devices
-  clock_init();
+  clock_init(false);
   peripherals_init();
   detect_board_type();
   adc_init();

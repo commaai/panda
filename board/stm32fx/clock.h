@@ -1,4 +1,8 @@
-void clock_init(void) {
+bool failed_clock_init = false;
+
+void clock_init(bool allow_vos3) {
+  UNUSED(allow_vos3);
+
   // enable external oscillator
   register_set_bits(&(RCC->CR), RCC_CR_HSEON);
   while ((RCC->CR & RCC_CR_HSERDY) == 0);

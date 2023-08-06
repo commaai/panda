@@ -38,14 +38,14 @@ int main(void) {
   init_interrupts(true);
 
   disable_interrupts();
-  clock_init();
+  clock_init(true);
   detect_board_type();
 
 #ifdef PANDA_JUNGLE
   current_board->set_panda_power(true);
 #endif
 
-  if (enter_bootloader_mode == ENTER_SOFTLOADER_MAGIC) {
+  if ((enter_bootloader_mode == ENTER_SOFTLOADER_MAGIC) || failed_clock_init) {
     enter_bootloader_mode = 0;
     soft_flasher_start();
   }

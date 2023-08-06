@@ -138,7 +138,7 @@ int main(void) {
   disable_interrupts();
 
   // init early devices
-  clock_init();
+  clock_init(false);
   peripherals_init();
   detect_board_type();
 
