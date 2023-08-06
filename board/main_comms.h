@@ -262,28 +262,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xd8:
       NVIC_SystemReset();
       break;
-    // **** 0xd9: set ESP power
-    case 0xd9:
-      if (req->param1 == 1U) {
-        current_board->set_gps_mode(GPS_ENABLED);
-      } else if (req->param1 == 2U) {
-        current_board->set_gps_mode(GPS_BOOTMODE);
-      } else {
-        current_board->set_gps_mode(GPS_DISABLED);
-      }
-      break;
-    // **** 0xda: reset ESP, with optional boot mode
-    case 0xda:
-      current_board->set_gps_mode(GPS_DISABLED);
-      delay(1000000);
-      if (req->param1 == 1U) {
-        current_board->set_gps_mode(GPS_BOOTMODE);
-      } else {
-        current_board->set_gps_mode(GPS_ENABLED);
-      }
-      delay(1000000);
-      current_board->set_gps_mode(GPS_ENABLED);
-      break;
     // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
     case 0xdb:
       if(current_board->has_obd){
@@ -341,11 +319,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       ur = get_ring_by_number(req->param1);
       if (!ur) {
         break;
-      }
-
-      // TODO: Remove this again and fix boardd code to hande the message bursts instead of single chars
-      if (ur == &uart_ring_gps) {
-        dma_pointer_handler(ur, DMA2_Stream5->NDTR);
       }
 
       // read

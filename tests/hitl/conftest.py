@@ -25,7 +25,6 @@ HW_TYPES = os.environ.get("HW_TYPES", None)
 class PandaGroup:
   H7 = (Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2, Panda.HW_TYPE_TRES)
   GEN2 = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO, Panda.HW_TYPE_DOS) + H7
-  GPS = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_UNO)
   GMLAN = (Panda.HW_TYPE_WHITE_PANDA, Panda.HW_TYPE_GREY_PANDA)
 
   TESTED = (Panda.HW_TYPE_WHITE_PANDA, Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2, Panda.HW_TYPE_UNO)
@@ -33,7 +32,7 @@ class PandaGroup:
 if PARTIAL_TESTS:
   # minimal set of pandas to get most of our coverage
   # * red panda covers GEN2, STM32H7
-  # * black panda covers STM32F4, GEN2, and GPS
+  # * black panda covers STM32F4, and GEN2
   PandaGroup.TESTED = (Panda.HW_TYPE_BLACK_PANDA, Panda.HW_TYPE_RED_PANDA)  # type: ignore
 elif HW_TYPES is not None:
   PandaGroup.TESTED = [bytes([int(x), ]) for x in HW_TYPES.strip().split(",")] # type: ignore
@@ -222,7 +221,6 @@ def fixture_panda_setup(request):
 
       p.set_can_loopback(False)
       p.set_gmlan(None)
-      p.set_esp_power(False)
       p.set_power_save(False)
       for bus, speed in BUS_SPEEDS:
         p.set_can_speed_kbps(bus, speed)
