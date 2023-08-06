@@ -198,8 +198,13 @@ uint16_t string_product_desc[] = {
 
 // default serial number when we're not a panda
 uint16_t string_serial_desc[] = {
+#ifdef PEDAL
+  STRING_DESCRIPTOR_HEADER(5),
+  'p', 'e', 'd', 'a', 'l'
+#else
   STRING_DESCRIPTOR_HEADER(4),
   'n', 'o', 'n', 'e'
+#endif
 };
 
 // a string containing the default configuration index
@@ -565,8 +570,6 @@ void usb_setup(void) {
                 }
 
                 USB_WritePacket(resp, MIN(resp[0], setup.b.wLength.w), 0);
-              #elif PEDAL
-                USB_WritePacket("pedal", MIN(5, setup.b.wLength.w), 0);
               #else
                 USB_WritePacket((const uint8_t *)string_serial_desc, MIN(sizeof(string_serial_desc), setup.b.wLength.w), 0);
               #endif
