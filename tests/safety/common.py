@@ -553,7 +553,7 @@ class MeasurementSafetyTest(PandaSafetyTestBase):
   @abc.abstractmethod
   def _speed_msg(self, speed):
     pass
-  
+
   def common_measurement_test(self, msg_func, min_value, max_value, factor, get_min_func, get_max_func):
     for val in np.arange(min_value, max_value, 0.5):
       for i in range(6):
@@ -571,7 +571,7 @@ class MeasurementSafetyTest(PandaSafetyTestBase):
 
   def test_vehicle_speed_measurements(self):
     self.common_measurement_test(self._speed_msg, 0, 80, VEHICLE_SPEED_FACTOR, self.safety.get_vehicle_speed_min, self.safety.get_vehicle_speed_max)
-  
+
   def test_steering_angle_measurements(self):
     self.common_measurement_test(self._angle_meas_msg, -180, 180, self.DEG_TO_CAN, self.safety.get_angle_meas_min, self.safety.get_angle_meas_max)
 
