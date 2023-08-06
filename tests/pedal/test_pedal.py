@@ -7,7 +7,6 @@ from panda import Panda, PandaJungle, CanHandle, McuType, BASEDIR
 
 
 JUNGLE_SERIAL = os.getenv("PEDAL_JUNGLE")
-PEDAL_SERIAL = 'none'
 PEDAL_BUS = 1
 
 class TestPedal(unittest.TestCase):
@@ -45,7 +44,7 @@ class TestPedal(unittest.TestCase):
   def test_usb_fw(self):
     self._flash_over_can(PEDAL_BUS, f"{BASEDIR}/board/pedal/obj/pedal_usb.bin.signed")
     time.sleep(2)
-    with Panda(PEDAL_SERIAL) as p:
+    with Panda('pedal') as p:
       self.assertTrue(p.get_type() == Panda.HW_TYPE_PEDAL)
     self.assertTrue(self._listen_can_frames() > 40)
 

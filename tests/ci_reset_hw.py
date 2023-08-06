@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
   pandas = Panda.list()
   print(pandas)
-  assert len(pandas) == 7
+  assert len(pandas) >= 7
 
   with concurrent.futures.ProcessPoolExecutor(max_workers=len(pandas)) as exc:
     def flash(serial):

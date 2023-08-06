@@ -16,7 +16,6 @@ SPEED_GMLAN = 33.3
 BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL), (3, SPEED_GMLAN)]
 
 
-PEDAL_SERIAL = 'none'
 JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
 PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE", "").strip().split(" ")
 PARTIAL_TESTS = os.environ.get("PARTIAL_TESTS", "0") == "1"
@@ -48,7 +47,7 @@ def init_all_pandas():
     _panda_jungle.set_panda_power(True)
 
   for serial in Panda.list():
-    if serial not in PANDAS_EXCLUDE and serial != PEDAL_SERIAL:
+    if serial not in PANDAS_EXCLUDE:
       with Panda(serial=serial) as p:
         ptype = bytes(p.get_type())
         if ptype in PandaGroup.TESTED:
