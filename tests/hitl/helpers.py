@@ -64,5 +64,4 @@ def clear_can_buffers(panda):
     r = panda.can_recv()
     time.sleep(0.05)
     if (time.monotonic() - st) > 10:
-      print("Unable to clear can buffers for panda ", panda.get_serial())
-      assert False
+      raise Exception("Unable to clear can buffers for panda ", panda.get_serial())

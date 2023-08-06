@@ -43,7 +43,7 @@ def test_loopback():
         break
     if not found:
       cprint("\nFAILED", "red")
-      assert False
+      raise AssertionError
 
 #################################################################
 ############################# MAIN ##############################
