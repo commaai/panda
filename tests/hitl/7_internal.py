@@ -49,7 +49,7 @@ def test_fan_cooldown(p):
 
 def test_fan_overshoot(p):
   if p.get_type() == Panda.HW_TYPE_DOS:
-    pytest.skip("fan controller overshoots on fans that need stall recovery")
+    pytest.skip("panda's fan controller overshoots on the comma three fans that need stall recovery")
 
   # make sure it's stopped completely
   p.set_fan_power(0)
