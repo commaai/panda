@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 
 """Used to Reverse/Test ELM protocol auto detect and OBD message response without a car."""
 
@@ -100,8 +99,10 @@ class ELMCarSimulator():
                     print("Invalid bytes at start of message")
                     print("    BUFF", lin_buff)
                     continue
-                if len(lin_buff) < msglen + 4: continue
-                if lin_checksum(lin_buff[:-1]) != lin_buff[-1]: continue
+                if len(lin_buff) < msglen + 4:
+                  continue
+                if lin_checksum(lin_buff[:-1]) != lin_buff[-1]:
+                  continue
                 self.__lin_process_msg(lin_buff[0] & 0xF8,  # Priority
                                        lin_buff[1], lin_buff[2], lin_buff[3:-1])
                 lin_buff = bytearray()
