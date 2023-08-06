@@ -884,7 +884,8 @@ class PandaSafetyTest(PandaSafetyTestBase):
       test = importlib.import_module("panda.tests.safety."+tf[:-3])
       for attr in dir(test):
         if attr.startswith("Test") and attr != current_test:
-          tx = getattr(getattr(test, attr), "TX_MSGS")
+          tc = getattr(test, attr)
+          tx = tc.TX_MSGS
           if tx is not None and not attr.endswith('Base'):
             # No point in comparing different Tesla safety modes
             if 'Tesla' in attr and 'Tesla' in current_test:

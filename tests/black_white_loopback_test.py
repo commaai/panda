@@ -30,8 +30,7 @@ def run_test(sleep_duration):
 
   # make sure two pandas are connected
   if len(pandas) != 2:
-    print("Connect white/grey and black panda to run this test!")
-    assert False
+    raise Exception("Connect white/grey and black panda to run this test!")
 
   # connect
   pandas[0] = Panda(pandas[0])
@@ -48,8 +47,7 @@ def run_test(sleep_duration):
     black_panda = pandas[1]
     other_panda = pandas[0]
   else:
-    print("Connect white/grey and black panda to run this test!")
-    assert False
+    raise Exception("Connect white/grey and black panda to run this test!")
 
   # disable safety modes
   black_panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
@@ -130,8 +128,7 @@ def test_buses(black_panda, other_panda, direction, test_array, sleep_duration):
       loop_buses.append(loop[3])
     if len(cans_loop) == 0:
       print("  No loop")
-      if not os.getenv("NOASSERT"):
-        assert False
+      assert not os.getenv("NOASSERT")
 
     # test loop buses
     recv_buses.sort()
@@ -141,8 +138,7 @@ def test_buses(black_panda, other_panda, direction, test_array, sleep_duration):
         zero_bus_errors += 1
       else:
         nonzero_bus_errors += 1
-      if not os.getenv("NOASSERT"):
-        assert False
+      assert not os.getenv("NOASSERT")
     else:
       print("  TEST PASSED")
 
@@ -159,5 +155,5 @@ if __name__ == "__main__":
     while True:
       run_test(sleep_duration=args.sleep)
   else:
-    for i in range(args.n):
+    for _ in range(args.n):
       run_test(sleep_duration=args.sleep)
