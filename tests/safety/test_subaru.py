@@ -25,7 +25,7 @@ SUBARU_CAM_BUS  = 2
 
 
 def lkas_tx_msgs(alt_bus):
-  return [[MSG_SUBARU_ES_LKAS,          SUBARU_MAIN_BUS], 
+  return [[MSG_SUBARU_ES_LKAS,          SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_Distance,      alt_bus],
           [MSG_SUBARU_ES_DashStatus,    SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_LKAS_State,    SUBARU_MAIN_BUS],

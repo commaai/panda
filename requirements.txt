@@ -1,3 +1,4 @@
+ruff
 libusb1==2.0.1
 numpy
 hexdump>=3.3
