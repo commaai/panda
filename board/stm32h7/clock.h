@@ -30,7 +30,7 @@ void clock_init(bool allow_vos3) {
   // In this case, we can continue in VOS3, but not everything is expected to work.
   uint32_t counter = 0U;
   while ((PWR->CSR1 & PWR_CSR1_ACTVOSRDY) == 0) {
-    if ((counter >= 0x10000000U) && allow_vos3) {
+    if ((counter >= 0x100000U) && allow_vos3) {
       failed_clock_init = true;
       break;
     }
@@ -39,7 +39,7 @@ void clock_init(bool allow_vos3) {
 
   counter = 0U;
   while ((PWR->CSR1 & PWR_CSR1_ACTVOS) != (PWR->D3CR & PWR_D3CR_VOS)) {
-    if ((counter >= 0x10000000U) && allow_vos3) {
+    if ((counter >= 0x100000U) && allow_vos3) {
       failed_clock_init = true;
       break;
     }
