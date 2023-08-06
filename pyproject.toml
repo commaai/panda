@@ -1,0 +1,6 @@
+# https://beta.ruff.rs/docs/configuration/#using-pyprojecttoml
+[tool.ruff]
+select = ["E", "F", "W"]
+ignore = ["W292", "E741"]
+line-length = 160
+target-version="py311"
