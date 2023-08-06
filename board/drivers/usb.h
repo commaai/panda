@@ -565,6 +565,8 @@ void usb_setup(void) {
                 }
 
                 USB_WritePacket(resp, MIN(resp[0], setup.b.wLength.w), 0);
+              #elif PEDAL
+                USB_WritePacket("pedal", MIN(5, setup.b.wLength.w), 0);
               #else
                 USB_WritePacket((const uint8_t *)string_serial_desc, MIN(sizeof(string_serial_desc), setup.b.wLength.w), 0);
               #endif

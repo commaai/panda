@@ -49,6 +49,8 @@ class TestPedal(unittest.TestCase):
       self.assertTrue(p.get_type() == Panda.HW_TYPE_PEDAL)
     self.assertTrue(self._listen_can_frames() > 40)
 
+    assert "pedal" in Panda.list()
+
   def test_nonusb_fw(self):
     self._flash_over_can(PEDAL_BUS, f"{BASEDIR}board/pedal/obj/pedal.bin.signed")
     time.sleep(2)
