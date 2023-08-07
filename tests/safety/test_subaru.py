@@ -100,17 +100,38 @@ class TestSubaruGen2SafetyBase(TestSubaruSafetyBase):
   MAX_TORQUE = 1000
 
 
-class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.LongitudinalGasBrakeSafetyTest):
+class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase):
   MIN_GAS = 808
   MAX_GAS = 3400
   INACTIVE_GAS = 1818
+  MAX_POSSIBLE_GAS = 2**12
 
+  MIN_BRAKE = 0
   MAX_BRAKE = 600
+  MAX_POSSIBLE_BRAKE = 2**16
   
   FWD_BLACKLISTED_ADDRS = {2: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_Brake, MSG_SUBARU_ES_Distance,
                                MSG_SUBARU_ES_Status, MSG_SUBARU_ES_DashStatus,
                                MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
+  
+  def _generic_limit_safety_check(self, msg_function, min_value, max_value, max_possible_value, inactive_value=0):
+    for enabled in [0, 1]:
+      for v in range(min_value, max_possible_value):
+        self.safety.set_controls_allowed(enabled)
+        if (not enabled and v != inactive_value) or v > max_value or v < min_value:
+          self.assertFalse(self._tx(msg_function(v)))
+        else:
+          self.assertTrue(self._tx(msg_function(v)))
 
+  def test_brake_safety_check(self):
+    self._generic_limit_safety_check(self._brake_msg, self.MIN_BRAKE, self.MAX_BRAKE, self.MAX_POSSIBLE_BRAKE)
+  
+  def test_gas_safety_check(self):
+    self._generic_limit_safety_check(self._gas_msg, self.MIN_GAS, self.MAX_GAS, self.MAX_POSSIBLE_GAS, self.INACTIVE_GAS)
+
+  def test_rpm_safety_check(self):
+    self._generic_limit_safety_check(self._rpm_msg, self.MIN_GAS, self.MAX_GAS, self.MAX_POSSIBLE_GAS, self.INACTIVE_GAS)
+  
   def _brake_msg(self, brake):
     values = {"Brake_Pressure": brake}
     return self.packer.make_can_msg_panda("ES_Brake", self.ALT_BUS, values)
