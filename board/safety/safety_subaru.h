@@ -236,7 +236,7 @@ static int subaru_fwd_hook(int bus_num, int addr) {
                        (addr == MSG_SUBARU_ES_DashStatus) ||
                        (addr == MSG_SUBARU_ES_LKAS_State) ||
                        (addr == MSG_SUBARU_ES_Infotainment));
- 
+
     bool block_long = (addr == MSG_SUBARU_ES_Brake) || (addr == MSG_SUBARU_ES_Distance) || (addr == MSG_SUBARU_ES_Status);
     bool block_msg = block_lkas || (subaru_longitudinal && block_long);
     if (!block_msg) {
