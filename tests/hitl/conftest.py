@@ -6,6 +6,9 @@ import pytest
 from panda import Panda, PandaDFU, PandaJungle
 from panda.tests.hitl.helpers import clear_can_buffers
 
+# needed to get output when using xdist
+#import sys
+#sys.stdout = sys.stderr
 
 SPEED_NORMAL = 500
 SPEED_GMLAN = 33.3
@@ -84,9 +87,6 @@ def pytest_configure(config):
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(items):
-  import sys
-  sys.stdout = sys.stderr
-  print("\n\n\n**** itemzzz")
   for item in items:
     if item.get_closest_marker('execution_timeout') is None:
       item.add_marker(pytest.mark.execution_timeout(10))
@@ -98,9 +98,6 @@ def pytest_collection_modifyitems(items):
     serial = item.name.split("serial=")[1].split(",")[0]
     assert len(serial) == 24
     item.add_marker(pytest.mark.xdist_group(serial))
-
-    print(item.name, repr(serial))
-  print("**** items\n\n\n")
 
 
 def pytest_make_parametrize_id(config, val, argname):
@@ -178,7 +175,7 @@ def func_fixture_panda(request, module_panda):
   logs.extend(p.get_logs(True))
   log_id = logs[-1]['id'] if len(logs) > 0 else last_log_id
 
-  #assert min_expected_logs <= ((log_id - last_log_id) % 0xFFFE) <= max_expected_logs, f"Unexpected amount of logs. Last 5: {logs[-5:]}"
+  assert min_expected_logs <= ((log_id - last_log_id) % 0xFFFE) <= max_expected_logs, f"Unexpected amount of logs. Last 5: {logs[-5:]}"
 
   # Check for SPI errors
   #assert p.health()['spi_checksum_error_count'] == 0
@@ -206,6 +203,7 @@ def fixture_panda_setup(request):
   """
   panda_serial = request.param
 
+  # parallel mode
   if NO_JUNGLE:
     print("CONNECTING TO", panda_serial, os.environ['PYTEST_XDIST_WORKER'])
     panda = Panda(serial=panda_serial)
@@ -213,7 +211,6 @@ def fixture_panda_setup(request):
     panda.close()
     return
 
-  """
   # Initialize jungle
   init_jungle()
 
@@ -223,7 +220,6 @@ def fixture_panda_setup(request):
       break
     time.sleep(0.1)
 
-  abc
   # Connect to pandas
   def cnnct(s):
     if s == panda_serial:
@@ -238,9 +234,9 @@ def fixture_panda_setup(request):
       clear_can_buffers(p)
       p.set_power_save(False)
       return p
-    #else:
-    #  with Panda(serial=s) as p:
-    #    p.reset(reconnect=False)
+    else:
+      with Panda(serial=s) as p:
+        p.reset(reconnect=False)
     return None
 
   with concurrent.futures.ThreadPoolExecutor() as exc:
@@ -253,92 +249,3 @@ def fixture_panda_setup(request):
   # Teardown
   for p in pandas:
     p.close()
-  """
-
-
-from xdist.scheduler.load import LoadScheduling
-class PandaScheduler(LoadScheduling):
-  def add_node_collection(self, node, collection):
-    print("*******************88 *add node collection !!!!")
-    super().add_node_collection(node, collection)
-
-  def check_schedule(self, node, duration=0):
-    print("!!!!!!!!!!!!!!!!!!!!! check schedule AAAAAAAAAAAAAA")
-    super().check_schedule(node, duration)
-
-  def schedule(self):
-    """Initiate distribution of the test collection
-
-    Initiate scheduling of the items across the nodes.  If this
-    gets called again later it behaves the same as calling
-    ``.check_schedule()`` on all nodes so that newly added nodes
-    will start to be used.
-
-    This is called by the ``DSession.worker_collectionfinish`` hook
-    if ``.collection_is_completed`` is True.
-    """
-    assert self.collection_is_completed
-
-    print("\n\n\n********* config ***********")
-    print("num nodes", self.numnodes)
-
-    # Initial distribution already happened, reschedule on all nodes
-    if self.collection is not None:
-      for node in self.nodes:
-        self.check_schedule(node)
-      return
-
-    # XXX allow nodes to have different collections
-    if not self._check_nodes_have_same_collection():
-      self.log("**Different tests collected, aborting run**")
-      return
-
-    # Collections are identical, create the index of pending items.
-    self.collection = list(self.node2collection.values())[0]
-    self.pending[:] = range(len(self.collection))
-    if not self.collection:
-      return
-
-    if self.maxschedchunk is None:
-      self.maxschedchunk = len(self.collection)
-
-    # Send a batch of tests to run. If we don't have at least two
-    # tests per node, we have to send them all so that we can send
-    # shutdown signals and get all nodes working.
-    if len(self.pending) < 2 * len(self.nodes):
-      # Distribute tests round-robin. Try to load all nodes if there are
-      # enough tests. The other branch tries sends at least 2 tests
-      # to each node - which is suboptimal when you have less than
-      # 2 * len(nodes) tests.
-      nodes = cycle(self.nodes)
-      for i in range(len(self.pending)):
-        self._send_tests(next(nodes), 1)
-    else:
-      # Send batches of consecutive tests. By default, pytest sorts tests
-      # in order for optimal single-threaded execution, minimizing the
-      # number of necessary fixture setup/teardown. Try to keep that
-      # optimal order for every worker.
-
-      # how many items per node do we have about?
-      items_per_node = len(self.collection) // len(self.node2pending)
-      # take a fraction of tests for initial distribution
-      node_chunksize = min(items_per_node // 4, self.maxschedchunk)
-      node_chunksize = max(node_chunksize, 2)
-      # and initialize each node with a chunk of tests
-      for node in self.nodes:
-        self._send_tests(node, node_chunksize)
-
-    if not self.pending:
-      # initial distribution sent all tests, start node shutdown
-      for node in self.nodes:
-        node.shutdown()
-
-    print("********* config ***********\n\n\n")
-
-from xdist.scheduler.loadgroup import LoadGroupScheduling
-
-@pytest.mark.trylast
-def pytest_xdist_make_scheduler(config, log):
-  #return PandaScheduler(config, log)
-  print("\n\n***** scheduling")
-  return LoadGroupScheduling(config, log)
