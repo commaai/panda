@@ -118,7 +118,7 @@ def pytest_make_parametrize_id(config, val, argname):
   return None
 
 
-@pytest.fixture(name='panda_jungle', scope='session')
+@pytest.fixture(name='panda_jungle', scope='function')
 def fixture_panda_jungle(request):
   init_jungle()
   return _panda_jungle
