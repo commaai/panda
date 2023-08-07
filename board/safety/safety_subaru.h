@@ -108,7 +108,8 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
 
       int angle_meas_new = (GET_BYTES(to_push, 4, 2) & 0xFFFFU);
-      angle_meas_new = ROUND(to_signed(angle_meas_new, 16));
+      // convert Steering_Torque -> Steering_Angle to centidegrees, to match the ES_LKAS_ANGLE angle request units
+      angle_meas_new = ROUND(to_signed(angle_meas_new, 16) * 2.17);
       update_sample(&angle_meas, angle_meas_new);
     }
 
