@@ -1,14 +1,14 @@
-import concurrent.futures
 import os
-import time
 import pytest
+import concurrent.futures
 
 from panda import Panda, PandaDFU, PandaJungle
 from panda.tests.hitl.helpers import clear_can_buffers
 
 # needed to get output when using xdist
-#import sys
-#sys.stdout = sys.stderr
+if "DEBUG" in os.environ:
+  import sys
+  sys.stdout = sys.stderr
 
 SPEED_NORMAL = 500
 SPEED_GMLAN = 33.3
@@ -19,6 +19,11 @@ JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
 NO_JUNGLE = os.environ.get("NO_JUNGLE", "0") == "1"
 PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE", "").strip().split(" ")
 HW_TYPES = os.environ.get("HW_TYPES", None)
+
+PARALLEL = "PARALLEL" in os.environ
+NON_PARALLEL = "NON_PARALLEL" in os.environ
+if PARALLEL:
+  NO_JUNGLE = True
 
 class PandaGroup:
   H7 = (Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2, Panda.HW_TYPE_TRES)
@@ -99,6 +104,11 @@ def pytest_collection_modifyitems(items):
     assert len(serial) == 24
     item.add_marker(pytest.mark.xdist_group(serial))
 
+    needs_jungle = "panda_jungle" in item.fixturenames
+    if PARALLEL and needs_jungle:
+      item.add_marker(pytest.mark.skip(reason="no jungle tests in PARALLEL mode"))
+    elif NON_PARALLEL and not needs_jungle:
+      item.add_marker(pytest.mark.skip(reason="only running jungle tests"))
 
 def pytest_make_parametrize_id(config, val, argname):
   if val in _all_pandas:
@@ -203,22 +213,8 @@ def fixture_panda_setup(request):
   """
   panda_serial = request.param
 
-  # parallel mode
-  if NO_JUNGLE:
-    print("CONNECTING TO", panda_serial, os.environ['PYTEST_XDIST_WORKER'])
-    panda = Panda(serial=panda_serial)
-    yield panda
-    panda.close()
-    return
-
   # Initialize jungle
   init_jungle()
-
-  # wait for all pandas to come up
-  for _ in range(50):
-    if set(_all_panda_serials).issubset(set(Panda.list())):
-      break
-    time.sleep(0.1)
 
   # Connect to pandas
   def cnnct(s):
@@ -234,7 +230,7 @@ def fixture_panda_setup(request):
       clear_can_buffers(p)
       p.set_power_save(False)
       return p
-    else:
+    elif not PARALLEL:
       with Panda(serial=s) as p:
         p.reset(reconnect=False)
     return None

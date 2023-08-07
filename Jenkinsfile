@@ -133,7 +133,8 @@ pipeline {
             stage('HITL tests') {
               steps {
                 script {
-                  docker_run("HITL tests", 35, 'PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE="1d0002000c51303136383232 2f002e000c51303136383232" ./tests/hitl/test.sh')
+                  docker_run("parallel tests", 35, 'PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE="1d0002000c51303136383232 2f002e000c51303136383232" ./tests/hitl/run_parallel_tests.sh')
+                  docker_run("serial tests", 35, 'PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE="1d0002000c51303136383232 2f002e000c51303136383232" ./tests/hitl/run_serial_tests.sh')
                 }
               }
             }
