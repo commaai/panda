@@ -135,6 +135,7 @@ def test_gen2_loopback(p, panda_jungle):
   test(p, panda_jungle, 0x18DB33F1)
   test(panda_jungle, p, 0x18DB33F1)
 
+  # TODO: why it's not being reset by fixtures reinit?
   p.set_obd(False)
   panda_jungle.set_obd(False)
 
