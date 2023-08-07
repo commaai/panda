@@ -68,7 +68,9 @@ bool dos_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harn
   return ret;
 }
 
-void dos_set_can_mode(uint8_t mode){
+void dos_set_can_mode(uint8_t mode) {
+  dos_enable_can_transceiver(2U, false);
+  dos_enable_can_transceiver(4U, false);
   switch (mode) {
     case CAN_MODE_NORMAL:
     case CAN_MODE_OBD_CAN2:
@@ -80,6 +82,7 @@ void dos_set_can_mode(uint8_t mode){
         // B5,B6: normal CAN2 mode
         set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
         set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
+        dos_enable_can_transceiver(2U, true);
       } else {
         // B5,B6: disable normal CAN2 mode
         set_gpio_mode(GPIOB, 5, MODE_INPUT);
@@ -88,6 +91,7 @@ void dos_set_can_mode(uint8_t mode){
         // B12,B13: OBD mode
         set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
         set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
+        dos_enable_can_transceiver(4U, true);
       }
       break;
     default:
