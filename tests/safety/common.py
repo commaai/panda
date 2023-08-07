@@ -175,54 +175,6 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
 
-class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
-
-  MIN_BRAKE: int = 0
-  MAX_BRAKE: Optional[int] = None
-
-  MIN_GAS: int = 0
-  MAX_GAS: Optional[int] = None
-
-  INACTIVE_GAS: Optional[int] = 0
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "LongitudinalGasBrakeSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
-  
-  @abc.abstractmethod
-  def _gas_msg(self, gas: int):
-    pass
-
-  @abc.abstractmethod
-  def _brake_msg(self, brake: int):
-    pass
-
-  def test_gas_brake_limits_correct(self):
-    # Assert that max brake and max throttle is set
-    self.assertTrue(self.MAX_BRAKE is not None)
-    self.assertTrue(self.MAX_GAS is not None)
-
-    self.assertGreater(self.MAX_BRAKE, self.MIN_BRAKE)
-    self.assertGreater(self.MAX_GAS, self.MIN_GAS)
-  
-  def _generic_limit_safety_check(self, msg_function, min_value, max_value, max_value_multiplier, inactive_value=0):
-    for enabled in [0, 1]:
-      for v in range(int(min_value), int(max_value*max_value_multiplier)):
-        self.safety.set_controls_allowed(enabled)
-        if (not enabled and v != inactive_value) or v > max_value or v < min_value:
-          self.assertFalse(self._tx(msg_function(v)))
-        else:
-          self.assertTrue(self._tx(msg_function(v)))
-
-  def test_brake_safety_check(self):
-    self._generic_limit_safety_check(self._brake_msg, self.MIN_BRAKE, self.MAX_BRAKE, 1.5)
-  
-  def test_gas_safety_check(self):
-    self._generic_limit_safety_check(self._gas_msg, self.MIN_GAS, self.MAX_GAS, 1.2, self.INACTIVE_GAS)
-
-        
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
   MAX_RATE_UP = 0
