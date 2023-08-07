@@ -472,11 +472,7 @@ class Panda:
         success = True
         break
       except Exception:
-        try:
-          dfu = PandaDFU(self.get_dfu_serial())
-          dfu.recover()
-        except Exception:
-          pass
+        pass
       time.sleep(0.1)
     if not success:
       raise Exception("reconnect failed")
