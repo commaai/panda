@@ -147,6 +147,8 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 // called at 8Hz
 uint8_t loop_counter = 0U;
 uint8_t previous_harness_status = HARNESS_STATUS_NC;
+uint32_t waiting_to_boot_count = 0;
+bool waiting_to_boot = false;
 void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
     // siren
@@ -187,8 +189,27 @@ void tick_handler(void) {
       logging_tick();
 
       const bool recent_heartbeat = heartbeat_counter == 0U;
-      current_board->board_tick(check_started(), usb_enumerated, recent_heartbeat, ((harness.status != previous_harness_status) && (harness.status != HARNESS_STATUS_NC)));
+      const bool harness_inserted = (harness.status != previous_harness_status) && (harness.status != HARNESS_STATUS_NC);
+      const bool just_bootkicked = current_board->board_tick(check_started(), usb_enumerated, recent_heartbeat, harness_inserted);
       previous_harness_status = harness.status;
+
+      // log device boot time
+      const bool som_running = current_board->read_som_gpio();
+      if (just_bootkicked && !som_running) {
+        log("bootkick");
+        waiting_to_boot = true;
+      }
+      if (waiting_to_boot) {
+        if (som_running) {
+          log("device booted");
+          waiting_to_boot = false;
+        } else if (waiting_to_boot_count == 10U) {
+          log("not booted after 10s");
+        } else {
+
+        }
+        waiting_to_boot_count += 1U;
+      }
 
       // increase heartbeat counter and cap it at the uint32 limit
       if (heartbeat_counter < __UINT32_MAX__) {
@@ -253,14 +274,11 @@ void tick_handler(void) {
           // Also disable IR when the heartbeat goes missing
           current_board->set_ir_power(0U);
 
-          // TODO: need a SPI equivalent
-          // If enumerated but no heartbeat (phone up, boardd not running), or when the SOM GPIO is pulled high by the ABL,
-          // turn the fan on to cool the device
-          if(usb_enumerated || current_board->read_som_gpio()){
-            fan_set_power(50U);
-          } else {
-            fan_set_power(0U);
-          }
+          // Run fan when device is up, but not talking to us
+          // * bootloader enables the SOM GPIO on boot
+          // * fallback to USB enumerated where supported
+          bool enabled = usb_enumerated || current_board->read_som_gpio();
+          fan_set_power(enabled ? 50U : 0U);
         }
       }
 
