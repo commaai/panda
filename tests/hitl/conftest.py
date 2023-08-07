@@ -1,15 +1,14 @@
-import concurrent.futures
 import os
-import time
 import pytest
+import concurrent.futures
 
-from panda import Panda, PandaDFU
+from panda import Panda, PandaDFU, PandaJungle
 from panda.tests.hitl.helpers import clear_can_buffers
 
-NO_JUNGLE = os.environ.get("NO_JUNGLE", "0") == "1"
-if not NO_JUNGLE:
-  from panda import PandaJungle
-
+# needed to get output when using xdist
+if "DEBUG" in os.environ:
+  import sys
+  sys.stdout = sys.stderr
 
 SPEED_NORMAL = 500
 SPEED_GMLAN = 33.3
@@ -17,9 +16,14 @@ BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL), (3, SPEED
 
 
 JUNGLE_SERIAL = os.getenv("PANDAS_JUNGLE")
+NO_JUNGLE = os.environ.get("NO_JUNGLE", "0") == "1"
 PANDAS_EXCLUDE = os.getenv("PANDAS_EXCLUDE", "").strip().split(" ")
-PARTIAL_TESTS = os.environ.get("PARTIAL_TESTS", "0") == "1"
 HW_TYPES = os.environ.get("HW_TYPES", None)
+
+PARALLEL = "PARALLEL" in os.environ
+NON_PARALLEL = "NON_PARALLEL" in os.environ
+if PARALLEL:
+  NO_JUNGLE = True
 
 class PandaGroup:
   H7 = (Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2, Panda.HW_TYPE_TRES)
@@ -43,7 +47,7 @@ def init_all_pandas():
 
   for serial in Panda.list():
     if serial not in PANDAS_EXCLUDE:
-      with Panda(serial=serial) as p:
+      with Panda(serial=serial, claim=False) as p:
         ptype = bytes(p.get_type())
         if ptype in PandaGroup.TESTED:
           _all_pandas[serial] = ptype
@@ -54,7 +58,7 @@ def init_all_pandas():
 
   print(f"{len(_all_pandas)} total pandas")
 init_all_pandas()
-_all_panda_serials = list(_all_pandas.keys())
+_all_panda_serials = list(sorted(_all_pandas.keys()))
 
 
 def init_jungle():
@@ -86,6 +90,7 @@ def pytest_configure(config):
     "markers", "expected_logs(amount, ...): mark test to expect a certain amount of panda logs"
   )
 
+@pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(items):
   for item in items:
     if item.get_closest_marker('execution_timeout') is None:
@@ -94,6 +99,16 @@ def pytest_collection_modifyitems(items):
     item.add_marker(pytest.mark.setup_timeout(20))
     item.add_marker(pytest.mark.teardown_timeout(20))
 
+    # xdist grouping by panda
+    serial = item.name.split("serial=")[1].split(",")[0]
+    assert len(serial) == 24
+    item.add_marker(pytest.mark.xdist_group(serial))
+
+    needs_jungle = "panda_jungle" in item.fixturenames
+    if PARALLEL and needs_jungle:
+      item.add_marker(pytest.mark.skip(reason="no jungle tests in PARALLEL mode"))
+    elif NON_PARALLEL and not needs_jungle:
+      item.add_marker(pytest.mark.skip(reason="only running jungle tests"))
 
 def pytest_make_parametrize_id(config, val, argname):
   if val in _all_pandas:
@@ -103,12 +118,12 @@ def pytest_make_parametrize_id(config, val, argname):
   return None
 
 
-@pytest.fixture(name='panda_jungle')
+@pytest.fixture(name='panda_jungle', scope='function')
 def fixture_panda_jungle(request):
   init_jungle()
   return _panda_jungle
 
-@pytest.fixture(name='p')
+@pytest.fixture(name='p', scope='function')
 def func_fixture_panda(request, module_panda):
   p = module_panda
 
@@ -201,12 +216,6 @@ def fixture_panda_setup(request):
   # Initialize jungle
   init_jungle()
 
-  # wait for all pandas to come up
-  for _ in range(50):
-    if set(_all_panda_serials).issubset(set(Panda.list())):
-      break
-    time.sleep(0.1)
-
   # Connect to pandas
   def cnnct(s):
     if s == panda_serial:
@@ -221,7 +230,7 @@ def fixture_panda_setup(request):
       clear_can_buffers(p)
       p.set_power_save(False)
       return p
-    else:
+    elif not PARALLEL:
       with Panda(serial=s) as p:
         p.reset(reconnect=False)
     return None
