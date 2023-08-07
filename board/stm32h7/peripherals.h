@@ -125,9 +125,14 @@ void peripherals_init(void) {
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;  // clock source timer
 
   RCC->APB1HENR |= RCC_APB1HENR_FDCANEN; // FDCAN core enable
-  RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN; // Enable ADC clocks
+  RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN; // Enable ADC12 clocks
 
   RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;
+
+#ifdef PANDA_JUNGLE
+  RCC->AHB3ENR |= RCC_AHB3ENR_SDMMC1EN; // SDMMC
+  RCC->AHB4ENR |= RCC_AHB4ENR_ADC3EN; // Enable ADC3 clocks
+#endif
 
   // HS USB enable, also LP is needed for CSleep state(__WFI())
   RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN;

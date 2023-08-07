@@ -1,5 +1,6 @@
 import time
 import random
+from typing import Optional
 
 
 def get_random_can_messages(n):
@@ -51,7 +52,11 @@ def time_many_sends(p, bus, p_recv=None, msg_count=100, two_pandas=False):
   return comp_kbps
 
 
-def clear_can_buffers(panda):
+def clear_can_buffers(panda, speed: Optional[int] = None):
+  if speed is not None:
+    for bus in range(3):
+      panda.set_can_speed_kbps(bus, speed)
+
   # clear tx buffers
   for i in range(4):
     panda.can_clear(i)
@@ -64,5 +69,4 @@ def clear_can_buffers(panda):
     r = panda.can_recv()
     time.sleep(0.05)
     if (time.monotonic() - st) > 10:
-      print("Unable to clear can buffers for panda ", panda.get_serial())
-      assert False
+      raise Exception("Unable to clear can buffers for panda ", panda.get_serial())

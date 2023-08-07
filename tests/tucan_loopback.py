@@ -20,8 +20,7 @@ def run_test(sleep_duration):
   print(pandas)
 
   if len(pandas) < 2:
-    print("Two pandas are needed for test")
-    assert False
+    raise Exception("Two pandas are needed for test")
 
   run_test_w_pandas(pandas, sleep_duration)
 
@@ -114,5 +113,5 @@ if __name__ == "__main__":
     while True:
       run_test(sleep_duration=args.sleep)
   else:
-    for i in range(args.n):
+    for _ in range(args.n):
       run_test(sleep_duration=args.sleep)
