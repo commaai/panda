@@ -15,9 +15,9 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERA
 
 
 const LongitudinalLimits SUBARU_LONG_LIMITS = {
-  .min_gas = 808,
+  .min_gas = 808,       // engine braking
   .max_gas = 3400,      // approx  2 m/s^2 when maxing cruise_rpm and cruise_throttle
-  .inactive_gas = 1818, // this is zero acceleration, and 808 appears to be engine braking
+  .inactive_gas = 1818, // this is zero acceleration
   .max_brake = 600,     // approx -3.5 m/s^2
 };
 
@@ -187,24 +187,22 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     violation |= steer_torque_cmd_checks(desired_torque, -1, limits);
   }
 
-  if (subaru_longitudinal) {
-    // check es_brake brake_pressure limits
-    if (addr == MSG_SUBARU_ES_Brake) {
-      int es_brake_pressure = ((GET_BYTES(to_send, 0, 4) >> 16) & 0xFFFFU);
-      violation |= longitudinal_brake_checks(es_brake_pressure, SUBARU_LONG_LIMITS);
-    }
+  // check es_brake brake_pressure limits
+  if (addr == MSG_SUBARU_ES_Brake) {
+    int es_brake_pressure = GET_BYTES(to_send, 2, 2);
+    violation |= longitudinal_brake_checks(es_brake_pressure, SUBARU_LONG_LIMITS);
+  }
 
-    // check es_distance cruise_throttle limits
-    if (addr == MSG_SUBARU_ES_Distance) {
-      int cruise_throttle = ((GET_BYTES(to_send, 0, 4) >> 16) & 0xFFFU);
-      violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
-    }
+  // check es_distance cruise_throttle limits
+  if (addr == MSG_SUBARU_ES_Distance) {
+    int cruise_throttle = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
+    violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
+  }
 
-    // check es_status cruise_rpm limits
-    if (addr == MSG_SUBARU_ES_Status) {
-      int cruise_rpm = ((GET_BYTES(to_send, 0, 4) >> 16) & 0xFFFU);
-      violation |= longitudinal_gas_checks(cruise_rpm, SUBARU_LONG_LIMITS);
-    }
+  // check es_status cruise_rpm limits
+  if (addr == MSG_SUBARU_ES_Status) {
+    int cruise_rpm = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
+    violation |= longitudinal_gas_checks(cruise_rpm, SUBARU_LONG_LIMITS);
   }
 
   if (violation) {
@@ -244,7 +242,7 @@ static const addr_checks* subaru_init(uint16_t param) {
   subaru_gen2 = GET_FLAG(param, SUBARU_PARAM_GEN2);
 
 #ifdef ALLOW_DEBUG
-  subaru_longitudinal = GET_FLAG(param, SUBARU_PARAM_LONGITUDINAL);
+  subaru_longitudinal = GET_FLAG(param, SUBARU_PARAM_LONGITUDINAL) && !subaru_gen2;
 #endif
 
   if (subaru_gen2) {
