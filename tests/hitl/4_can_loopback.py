@@ -135,6 +135,10 @@ def test_gen2_loopback(p, panda_jungle):
   test(p, panda_jungle, 0x18DB33F1)
   test(panda_jungle, p, 0x18DB33F1)
 
+  # TODO: why it's not being reset by fixtures reinit?
+  p.set_obd(False)
+  panda_jungle.set_obd(False)
+
 def test_bulk_write(p, panda_jungle):
   # The TX buffers on pandas is 0x100 in length.
   NUM_MESSAGES_PER_BUS = 10000

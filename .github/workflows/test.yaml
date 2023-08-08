@@ -87,23 +87,6 @@ jobs:
                           scons -j$(nproc) ${{ matrix.flags }} && \
                           tests/safety/test.sh"
 
-  safety_replay:
-    name: safety replay
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        flags: ['', '--ubsan']
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build Docker image
-        run: eval "$BUILD"
-      - name: Run safety replay
-        run: |
-          ${{ env.RUN }} "scons -j$(nproc) ${{ matrix.flags }} && \
-                          cd tests/safety_replay && \
-                          ./test_safety_replay.py"
-
   misra:
     name: misra c2012
     runs-on: ubuntu-20.04

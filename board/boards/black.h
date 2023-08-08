@@ -53,7 +53,9 @@ void black_set_usb_load_switch(bool enabled) {
   set_gpio_output(GPIOB, 1, !enabled);
 }
 
-void black_set_can_mode(uint8_t mode){
+void black_set_can_mode(uint8_t mode) {
+  black_enable_can_transceiver(2U, false);
+  black_enable_can_transceiver(4U, false);
   switch (mode) {
     case CAN_MODE_NORMAL:
     case CAN_MODE_OBD_CAN2:
@@ -65,6 +67,8 @@ void black_set_can_mode(uint8_t mode){
         // B5,B6: normal CAN2 mode
         set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
         set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
+        black_enable_can_transceiver(2U, true);
+
       } else {
         // B5,B6: disable normal CAN2 mode
         set_gpio_mode(GPIOB, 5, MODE_INPUT);
@@ -73,6 +77,7 @@ void black_set_can_mode(uint8_t mode){
         // B12,B13: OBD mode
         set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
         set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
+        black_enable_can_transceiver(4U, true);
       }
       break;
     default:
