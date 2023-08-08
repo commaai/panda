@@ -226,7 +226,6 @@ static int subaru_fwd_hook(int bus_num, int addr) {
   if (bus_num == SUBARU_MAIN_BUS) {
     bool block_msg = subaru_longitudinal && ((addr == MSG_SUBARU_Brake_Status) || (addr == MSG_SUBARU_CruiseControl));
     if (!block_msg) {
-      bus_fwd = 2;  // to the eyesight camera
       bus_fwd = SUBARU_CAM_BUS;  // forward to camera
     }
   }
