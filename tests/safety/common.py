@@ -72,10 +72,10 @@ class PandaSafetyTestBase(unittest.TestCase):
   def _generic_limit_safety_check(self, msg_function, min_allowed_value: float, max_allowed_value: float, min_test_value: float,
                                         max_test_value: float, test_delta: float = 1, inactive_value: float = 0, msg_allowed=True):
     """
-      Enforces that only a specific range of values in a msg_function are allowed to be sent, only when controls_allowed is true.
+      Enforces that a signal within a message is only allowed to be sent within a specific range, min_allowed_value -> max_allowed_value.
       Tests the range of min_test_value -> max_test_value with a delta of test_delta.
-      Message is always allowed if value is equal to inactive_value.
-      Message is never allowed if msg_allowed is false, for example when openpilot long is not enabled.
+      Message is also only allowed to be sent when controls_allowed is true, unless the value is equal to inactive_value.
+      Message is never allowed in msg_allowed is false, for example when stock longitudinal is enabled and you are sending acceleration requests.
     """
 
     # Ensure that we at least test the allowed_value range
@@ -88,7 +88,7 @@ class PandaSafetyTestBase(unittest.TestCase):
         v = round(v, 2)  # floats might not hit exact boundary conditions without rounding
         self.safety.set_controls_allowed(controls_allowed)
         should_tx = controls_allowed and min_allowed_value <= v <= max_allowed_value
-        should_tx = should_tx or 
+        should_tx = (should_tx or v == inactive_value) and msg_allowed
         self.assertEqual(self._tx(msg_function(v)), should_tx, (controls_allowed, should_tx, v))
 
 
