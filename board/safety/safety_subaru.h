@@ -98,7 +98,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
 
   if (valid) {
     const int bus = GET_BUS(to_push);
-    const int alt_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
+    const int alt_main_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
 
     int addr = GET_ADDR(to_push);
     if ((addr == MSG_SUBARU_Steering_Torque) && (bus == SUBARU_MAIN_BUS)) {
@@ -106,21 +106,34 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
       torque_driver_new = ((GET_BYTES(to_push, 0, 4) >> 16) & 0x7FFU);
       torque_driver_new = -1 * to_signed(torque_driver_new, 11);
       update_sample(&torque_driver, torque_driver_new);
+
+      int angle_meas_new = (GET_BYTES(to_push, 4, 2) & 0xFFFFU);
+      // convert Steering_Torque -> Steering_Angle to centidegrees, to match the ES_LKAS_ANGLE angle request units
+      angle_meas_new = ROUND(to_signed(angle_meas_new, 16) * 2.17);
+      update_sample(&angle_meas, angle_meas_new);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_bus)) {
+    if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_main_bus)) {
       bool cruise_engaged = GET_BIT(to_push, 41U) != 0U;
       pcm_cruise_check(cruise_engaged);
     }
 
     // update vehicle moving with any non-zero wheel speed
-    if ((addr == MSG_SUBARU_Wheel_Speeds) && (bus == alt_bus)) {
-      vehicle_moving = ((GET_BYTES(to_push, 0, 4) >> 12) != 0U) || (GET_BYTES(to_push, 4, 4) != 0U);
+    if ((addr == MSG_SUBARU_Wheel_Speeds) && (bus == alt_main_bus)) {
+      uint32_t fr = (GET_BYTES(to_push, 1, 3) >> 4) & 0x1FFFU;
+      uint32_t rr = (GET_BYTES(to_push, 3, 3) >> 1) & 0x1FFFU;
+      uint32_t rl = (GET_BYTES(to_push, 4, 3) >> 6) & 0x1FFFU;
+      uint32_t fl = (GET_BYTES(to_push, 6, 2) >> 3) & 0x1FFFU;
+
+      vehicle_moving = (fr > 0U) || (rr > 0U) || (rl > 0U) || (fl > 0U);
+
+      float speed = (fr + rr + rl + fl) / 4U * 0.057;
+      update_sample(&vehicle_speed, ROUND(speed * VEHICLE_SPEED_FACTOR));
     }
 
-    if ((addr == MSG_SUBARU_Brake_Status) && (bus == alt_bus)) {
-      brake_pressed = ((GET_BYTE(to_push, 7) >> 6) & 1U);
+    if ((addr == MSG_SUBARU_Brake_Status) && (bus == alt_main_bus)) {
+      brake_pressed = GET_BIT(to_push, 62U) != 0U;
     }
 
     if ((addr == MSG_SUBARU_Throttle) && (bus == SUBARU_MAIN_BUS)) {
@@ -136,6 +149,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
+  bool violation = false;
 
   if (subaru_gen2) {
     tx = msg_allowed(to_send, SUBARU_GEN2_TX_MSGS, SUBARU_GEN2_TX_MSGS_LEN);
@@ -149,10 +163,11 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     desired_torque = -1 * to_signed(desired_torque, 13);
 
     const SteeringLimits limits = subaru_gen2 ? SUBARU_GEN2_STEERING_LIMITS : SUBARU_STEERING_LIMITS;
-    if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
-      tx = 0;
-    }
+    violation |= steer_torque_cmd_checks(desired_torque, -1, limits);
+  }
 
+  if (violation){
+    tx = 0;
   }
   return tx;
 }

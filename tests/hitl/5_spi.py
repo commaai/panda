@@ -3,12 +3,32 @@ import pytest
 import random
 from unittest.mock import patch
 
-from panda import Panda
-from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse
+from panda import Panda, PandaDFU
+from panda.python.spi import SpiDevice, PandaProtocolMismatch, PandaSpiNackResponse
 
 pytestmark = [
   pytest.mark.test_panda_types((Panda.HW_TYPE_TRES, ))
 ]
+
+@pytest.mark.skip("doesn't work, bootloader seems to ignore commands once it sees junk")
+@pytest.mark.expected_logs(0)
+def test_dfu_with_spam(p):
+  dfu_serial = p.get_dfu_serial()
+
+  # enter DFU
+  p.reset(enter_bootstub=True)
+  p.reset(enter_bootloader=True)
+  assert Panda.wait_for_dfu(dfu_serial, timeout=19), "failed to enter DFU"
+
+  # send junk
+  d = SpiDevice()
+  for _ in range(9):
+    with d.acquire() as spi:
+      dat = [random.randint(-1, 255) for _ in range(random.randint(1, 100))]
+      spi.xfer(dat)
+
+    # should still show up
+    assert dfu_serial in PandaDFU.list()
 
 class TestSpi:
   def _ping(self, mocker, panda):

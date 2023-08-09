@@ -3,7 +3,7 @@ import unittest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda
+from panda.tests.safety.common import CANPackerPanda, MeasurementSafetyTest
 
 
 MSG_SUBARU_Brake_Status     = 0x13c
@@ -25,14 +25,14 @@ SUBARU_CAM_BUS  = 2
 
 
 def lkas_tx_msgs(alt_bus):
-  return [[MSG_SUBARU_ES_LKAS,          SUBARU_MAIN_BUS], 
+  return [[MSG_SUBARU_ES_LKAS,          SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_Distance,      alt_bus],
           [MSG_SUBARU_ES_DashStatus,    SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_LKAS_State,    SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_Infotainment,  SUBARU_MAIN_BUS]]
 
 
-class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest, MeasurementSafetyTest):
   FLAGS = 0
   STANDSTILL_THRESHOLD = 0 # kph
   RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS
@@ -52,6 +52,8 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
 
   ALT_BUS = SUBARU_MAIN_BUS
 
+  DEG_TO_CAN = -100
+
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
     self.safety = libpanda_py.libpanda
@@ -68,9 +70,12 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
     return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
 
   def _speed_msg(self, speed):
-    # subaru safety doesn't use the scaled value, so undo the scaling
-    values = {s: speed * 0.057 for s in ["FR", "FL", "RR", "RL"]}
+    values = {s: speed for s in ["FR", "FL", "RR", "RL"]}
     return self.packer.make_can_msg_panda("Wheel_Speeds", self.ALT_BUS, values)
+
+  def _angle_meas_msg(self, angle):
+    values = {"Steering_Angle": angle}
+    return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
 
   def _user_brake_msg(self, brake):
     values = {"Brake": brake}

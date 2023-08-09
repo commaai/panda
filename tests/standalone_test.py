@@ -13,7 +13,7 @@ if __name__ == "__main__":
   print(p.health())
 
   t1 = time.time()
-  for i in range(100):
+  for _ in range(100):
     p.get_serial()
   t2 = time.time()
   print("100 requests took %.2f ms" % ((t2 - t1) * 1000))
