@@ -82,13 +82,14 @@ class PandaSafetyTestBase(unittest.TestCase):
     self.assertGreater(max_test_value, max_allowed_value)
     self.assertLessEqual(min_test_value, min_allowed_value)
 
-    for controls_allowed in [0, 1]:
+    for controls_allowed in [False, True]:
       # enforce we don't skip over 0 or inactive
       for v in np.concatenate((np.arange(min_test_value, max_test_value, test_delta), np.array([0, inactive_value]))):
         v = round(v, 2)  # floats might not hit exact boundary conditions without rounding
         self.safety.set_controls_allowed(controls_allowed)
-        should_tx = (controls_allowed or v == inactive_value) and (v <= max_allowed_value and v >= min_allowed_value) and msg_allowed
-        self.assertEqual(self._tx(msg_function(v)), should_tx, (controls_allowed, v))
+        should_tx = controls_allowed and min_allowed_value <= v <= max_allowed_value
+        should_tx = should_tx or 
+        self.assertEqual(self._tx(msg_function(v)), should_tx, (controls_allowed, should_tx, v))
 
 
 class InterceptorSafetyTest(PandaSafetyTestBase):
