@@ -70,7 +70,7 @@ class PandaSafetyTestBase(unittest.TestCase):
     return self.safety.safety_tx_hook(msg)
 
   def _generic_limit_safety_check(self, msg_function, min_allowed_value: float, max_allowed_value: float, min_test_value: float,
-                                        max_test_value: float, test_delta: float = 1, inactive_value=0, msg_allowed=True):
+                                        max_test_value: float, test_delta: float = 1, inactive_value: float = 0, msg_allowed=True):
     """
       Enforces that only a specific range of values in a msg_function are allowed to be sent, only when controls_allowed is true.
       Tests the range of min_test_value -> max_test_value with a delta of test_delta.
@@ -84,7 +84,7 @@ class PandaSafetyTestBase(unittest.TestCase):
 
     for controls_allowed in [0, 1]:
       # enforce we don't skip over 0 or inactive
-      for v in np.concatenate((np.arange(min_test_value, max_test_value, test_delta), [0, inactive_value])):
+      for v in np.concatenate((np.arange(min_test_value, max_test_value, test_delta), np.array([0, inactive_value]))):
         v = round(v, 2)  # floats might not hit exact boundary conditions without rounding
         self.safety.set_controls_allowed(controls_allowed)
         should_tx = (controls_allowed or v == inactive_value) and (v <= max_allowed_value and v >= min_allowed_value) and msg_allowed
