@@ -197,6 +197,12 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
   INACTIVE_GAS = 0
   MAX_POSSIBLE_GAS: Optional[int] = None
 
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "LongitudinalGasBrakeSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
   @abc.abstractmethod
   def _gas_msg(self, gas: int):
     pass
@@ -222,54 +228,6 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
     self._generic_limit_safety_check(self._gas_msg, self.MIN_GAS, self.MAX_GAS, 0, self.MAX_POSSIBLE_GAS, 1, self.INACTIVE_GAS)
 
 
-class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
-
-  MIN_BRAKE: int = 0
-  MAX_BRAKE: Optional[int] = None
-
-  MIN_GAS: int = 0
-  MAX_GAS: Optional[int] = None
-
-  INACTIVE_GAS: Optional[int] = 0
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "LongitudinalGasBrakeSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
-  
-  @abc.abstractmethod
-  def _gas_msg(self, gas: int):
-    pass
-
-  @abc.abstractmethod
-  def _brake_msg(self, brake: int):
-    pass
-
-  def test_gas_brake_limits_correct(self):
-    # Assert that max brake and max throttle is set
-    self.assertTrue(self.MAX_BRAKE is not None)
-    self.assertTrue(self.MAX_GAS is not None)
-
-    self.assertGreater(self.MAX_BRAKE, self.MIN_BRAKE)
-    self.assertGreater(self.MAX_GAS, self.MIN_GAS)
-  
-  def _generic_limit_safety_check(self, msg_function, min_allowed_value: int, max_allowed_value: int, inactive_value=0):
-    for enabled in [0, 1]:
-      for v in np.concatenate((np.arange(min_allowed_value - 1, max_allowed_value + 1, 1), [0, inactive_value])):
-        self.safety.set_controls_allowed(enabled)
-        if (not enabled and v != inactive_value) or v > max_allowed_value or v < min_allowed_value:
-          self.assertFalse(self._tx(msg_function(v)), (v, min_allowed_value, max_allowed_value))
-        else:
-          self.assertTrue(self._tx(msg_function(v)), (v, min_allowed_value, max_allowed_value))
-
-  def test_brake_safety_check(self):
-    self._generic_limit_safety_check(self._brake_msg, self.MIN_BRAKE, self.MAX_BRAKE)
-  
-  def test_gas_safety_check(self):
-    self._generic_limit_safety_check(self._gas_msg, self.MIN_GAS, self.MAX_GAS, self.INACTIVE_GAS)
-
-        
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
   MAX_RATE_UP = 0
