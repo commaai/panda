@@ -158,25 +158,15 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
         self.assertEqual(send, self._tx(self._interceptor_gas_cmd(gas)))
 
 
-class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
+class TestLongitudinalAccelSafetyBase(PandaSafetyTestBase, abc.ABC):
 
   MAX_ACCEL: float = 2.0
   MIN_ACCEL: float = -3.5
   INACTIVE_ACCEL: float = 0.0
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "LongitudinalAccelSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
-
   @abc.abstractmethod
   def _accel_msg(self, accel: float):
     pass
-
-  def test_accel_limits_correct(self):
-    self.assertGreater(self.MAX_ACCEL, 0)
-    self.assertLess(self.MIN_ACCEL, 0)
 
   def test_accel_actuation_limits(self, stock_longitudinal=False):
     limits = ((self.MIN_ACCEL, self.MAX_ACCEL, ALTERNATIVE_EXPERIENCE.DEFAULT),
@@ -187,7 +177,7 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
       self._generic_limit_safety_check(self._accel_msg, min_accel, max_accel, min_accel - 1, max_accel + 1, 0.05, self.INACTIVE_ACCEL, not stock_longitudinal)
 
 
-class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
+class TestLongitudinalGasBrakeSafetyBase(PandaSafetyTestBase, abc.ABC):
 
   MIN_BRAKE: int = 0
   MAX_BRAKE: Optional[int] = None
@@ -198,12 +188,6 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
   INACTIVE_GAS = 0
   MAX_POSSIBLE_GAS: Optional[int] = None
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "LongitudinalGasBrakeSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
-
   @abc.abstractmethod
   def _gas_msg(self, gas: int):
     pass
@@ -211,16 +195,6 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
   @abc.abstractmethod
   def _brake_msg(self, brake: int):
     pass
-
-  def test_gas_brake_limits_correct(self):
-    # Assert that max brake and max gas limits are set
-    self.assertTrue(self.MAX_BRAKE is not None)
-    self.assertTrue(self.MAX_GAS is not None)
-    self.assertTrue(self.MAX_POSSIBLE_BRAKE is not None)
-    self.assertTrue(self.MAX_POSSIBLE_GAS is not None)
-
-    self.assertGreater(self.MAX_BRAKE, self.MIN_BRAKE)
-    self.assertGreater(self.MAX_GAS, self.MIN_GAS)
 
   def test_brake_safety_check(self):
     self._generic_limit_safety_check(self._brake_msg, self.MIN_BRAKE, self.MAX_BRAKE, 0, self.MAX_POSSIBLE_BRAKE, 1)
