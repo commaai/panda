@@ -192,6 +192,13 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
   INACTIVE_GAS = 0
   MAX_POSSIBLE_GAS: Optional[int] = None
 
+  def test_gas_brake_limits_correct(self):
+    self.assertIsNotNone(self.MAX_POSSIBLE_BRAKE)
+    self.assertIsNotNone(self.MAX_POSSIBLE_GAS)
+
+    self.assertGreater(self.MAX_BRAKE, self.MIN_BRAKE)
+    self.assertGreater(self.MAX_GAS, self.MIN_GAS)
+
   @abc.abstractmethod
   def _gas_msg(self, gas: int):
     pass
