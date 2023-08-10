@@ -74,7 +74,7 @@ class HyundaiButtonBase:
       self._rx(self._button_msg(Buttons.NONE))
 
 
-class HyundaiLongitudinalBase(common.TestLongitudinalAccelSafetyBase):
+class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
   # pylint: disable=no-member,abstract-method
 
   DISABLED_ECU_UDS_MSG: Tuple[int, int]

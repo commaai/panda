@@ -536,7 +536,7 @@ class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschRadarlessS
     self.safety.init_tests()
 
 
-class TestHondaBoschRadarlessLongSafety(common.TestLongitudinalAccelSafetyBase, HondaButtonEnableBase,
+class TestHondaBoschRadarlessLongSafety(common.LongitudinalAccelSafetyTest, HondaButtonEnableBase,
                                         TestHondaBoschRadarlessSafetyBase):
   """
     Covers the Honda Bosch Radarless safety mode with longitudinal control

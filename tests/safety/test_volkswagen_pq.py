@@ -139,7 +139,7 @@ class TestVolkswagenPqStockSafety(TestVolkswagenPqSafety):
     self.assertTrue(self._tx(self._button_msg(resume=True)))
 
 
-class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety, common.TestLongitudinalAccelSafetyBase):
+class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety, common.LongitudinalAccelSafetyTest):
   TX_MSGS = [[MSG_HCA_1, 0], [MSG_LDW_1, 0], [MSG_ACC_SYSTEM, 0], [MSG_ACC_GRA_ANZEIGE, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_1, MSG_LDW_1, MSG_ACC_SYSTEM, MSG_ACC_GRA_ANZEIGE]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}

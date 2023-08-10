@@ -158,7 +158,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
         self.assertEqual(send, self._tx(self._interceptor_gas_cmd(gas)))
 
 
-class TestLongitudinalAccelSafetyBase(PandaSafetyTestBase, abc.ABC):
+class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
 
   MAX_ACCEL: float = 2.0
   MIN_ACCEL: float = -3.5
@@ -181,7 +181,7 @@ class TestLongitudinalAccelSafetyBase(PandaSafetyTestBase, abc.ABC):
       self._generic_limit_safety_check(self._accel_msg, min_accel, max_accel, min_accel - 1, max_accel + 1, 0.05, self.INACTIVE_ACCEL, not stock_longitudinal)
 
 
-class TestLongitudinalGasBrakeSafetyBase(PandaSafetyTestBase, abc.ABC):
+class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
 
   MIN_BRAKE: int = 0
   MAX_BRAKE: Optional[int] = None
