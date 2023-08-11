@@ -77,7 +77,7 @@ class PandaSafetyTestBase(unittest.TestCase):
       Enforces that a signal within a message is only allowed to be sent within a specific range, min_allowed_value -> max_allowed_value.
       Tests the range of min_test_value -> max_test_value with a delta of test_delta.
       Message is also only allowed to be sent when controls_allowed is true, unless the value is equal to inactive_value.
-      Message is never allowed in msg_allowed is false, for example when stock longitudinal is enabled and you are sending acceleration requests.
+      Message is never allowed if msg_allowed is false, for example when stock longitudinal is enabled and you are sending acceleration requests.
     """
 
     # Ensure that we at least test the allowed_value range
