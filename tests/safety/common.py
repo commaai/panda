@@ -53,6 +53,8 @@ def add_regen_tests(cls):
 
 
 class PandaSafetyTestBase(unittest.TestCase):
+  safety: libpanda_py.Panda
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "PandaSafetyTestBase":
@@ -68,6 +70,28 @@ class PandaSafetyTestBase(unittest.TestCase):
 
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
+
+  def _generic_limit_safety_check(self, msg_function, min_allowed_value: float, max_allowed_value: float, min_possible_value: float,
+                                  max_possible_value: float, test_delta: float = 1, inactive_value: float = 0, msg_allowed=True):
+    """
+      Enforces that a signal within a message is only allowed to be sent within a specific range, min_allowed_value -> max_allowed_value.
+      Tests the range of min_possible_value -> max_possible_value with a delta of test_delta.
+      Message is also only allowed to be sent when controls_allowed is true, unless the value is equal to inactive_value.
+      Message is never allowed if msg_allowed is false, for example when stock longitudinal is enabled and you are sending acceleration requests.
+    """
+
+    # Ensure that we at least test the allowed_value range
+    self.assertGreater(max_possible_value, max_allowed_value)
+    self.assertLessEqual(min_possible_value, min_allowed_value)
+
+    for controls_allowed in [False, True]:
+      # enforce we don't skip over 0 or inactive
+      for v in np.concatenate((np.arange(min_possible_value, max_possible_value, test_delta), np.array([0, inactive_value]))):
+        v = round(v, 2)  # floats might not hit exact boundary conditions without rounding
+        self.safety.set_controls_allowed(controls_allowed)
+        should_tx = controls_allowed and min_allowed_value <= v <= max_allowed_value
+        should_tx = (should_tx or v == inactive_value) and msg_allowed
+        self.assertEqual(self._tx(msg_function(v)), should_tx, (controls_allowed, should_tx, v))
 
 
 class InterceptorSafetyTest(PandaSafetyTestBase):
@@ -142,12 +166,6 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
   MIN_ACCEL: float = -3.5
   INACTIVE_ACCEL: float = 0.0
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "LongitudinalAccelSafetyTest":
-      cls.safety = None
-      raise unittest.SkipTest
-
   @abc.abstractmethod
   def _accel_msg(self, accel: float):
     pass
@@ -161,18 +179,41 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
               (self.MIN_ACCEL, self.MAX_ACCEL, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
 
     for min_accel, max_accel, alternative_experience in limits:
-      # enforce we don't skip over 0 or inactive accel
-      for accel in np.concatenate((np.arange(min_accel - 1, max_accel + 1, 0.05), [0, self.INACTIVE_ACCEL])):
-        accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
-        for controls_allowed in [True, False]:
-          self.safety.set_controls_allowed(controls_allowed)
-          self.safety.set_alternative_experience(alternative_experience)
-          if stock_longitudinal:
-            should_tx = False
-          else:
-            should_tx = controls_allowed and min_accel <= accel <= max_accel
-            should_tx = should_tx or accel == self.INACTIVE_ACCEL
-          self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
+      self.safety.set_alternative_experience(alternative_experience)
+      self._generic_limit_safety_check(self._accel_msg, min_accel, max_accel, min_accel - 1, max_accel + 1, 0.05, self.INACTIVE_ACCEL, not stock_longitudinal)
+
+
+class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
+
+  MIN_BRAKE: int = 0
+  MAX_BRAKE: Optional[int] = None
+  MAX_POSSIBLE_BRAKE: Optional[int] = None
+
+  MIN_GAS: int = 0
+  MAX_GAS: Optional[int] = None
+  INACTIVE_GAS = 0
+  MAX_POSSIBLE_GAS: Optional[int] = None
+
+  def test_gas_brake_limits_correct(self):
+    self.assertIsNotNone(self.MAX_POSSIBLE_BRAKE)
+    self.assertIsNotNone(self.MAX_POSSIBLE_GAS)
+
+    self.assertGreater(self.MAX_BRAKE, self.MIN_BRAKE)
+    self.assertGreater(self.MAX_GAS, self.MIN_GAS)
+
+  @abc.abstractmethod
+  def _send_gas_msg(self, gas: int):
+    pass
+
+  @abc.abstractmethod
+  def _send_brake_msg(self, brake: int):
+    pass
+
+  def test_brake_safety_check(self):
+    self._generic_limit_safety_check(self._send_brake_msg, self.MIN_BRAKE, self.MAX_BRAKE, 0, self.MAX_POSSIBLE_BRAKE, 1)
+
+  def test_gas_safety_check(self):
+    self._generic_limit_safety_check(self._send_gas_msg, self.MIN_GAS, self.MAX_GAS, 0, self.MAX_POSSIBLE_GAS, 1, self.INACTIVE_GAS)
 
 
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
